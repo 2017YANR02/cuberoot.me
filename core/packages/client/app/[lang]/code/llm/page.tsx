@@ -24,13 +24,13 @@ const CARDS: Card[] = [
     zh: {
       title: 'Claude',
       sub: 'Anthropic LLM',
-      tagline: 'Anthropic 的对话 / 工具 / 代码大模型。cuberoot.me 几乎每一行新代码的合写者,1M 上下文能把整个仓库塞进一次会话。',
+      tagline: 'Anthropic 的对话 / 工具 / 代码大模型。本项目迁移到 Codex 前的主要历史协作模型。',
       meta: 'Anthropic · Opus 4.7',
     },
     en: {
       title: 'Claude',
       sub: 'Anthropic LLM',
-      tagline: 'Anthropic’s chat / tool-use / coding LLM. Co-author of nearly every new line of code here — the whole repo fits in one 1M-context session.',
+      tagline: 'Anthropic’s chat / tool-use / coding LLM. The project’s main historical collaborator before the migration to Codex.',
       meta: 'Anthropic · Opus 4.7',
     },
   },
@@ -41,13 +41,13 @@ const CARDS: Card[] = [
     zh: {
       title: 'Claude Code',
       sub: 'CLI Agent',
-      tagline: 'Anthropic 官方 CLI agent。整个 cuberoot.me 100% 在它里面写 —— Read / Edit / Bash / Grep 加子 agent、skill、memory,取代了 IDE 大半交互。',
+      tagline: 'Anthropic 官方 CLI agent。本项目曾经的主维护环境,现已完全迁移到 Codex。',
       meta: 'Anthropic · v2',
     },
     en: {
       title: 'Claude Code',
       sub: 'CLI Agent',
-      tagline: 'Anthropic’s official CLI agent. 100% of cuberoot.me is written inside it — Read / Edit / Bash / Grep plus subagents, skills and memory replace most of an IDE.',
+      tagline: 'Anthropic’s official CLI agent. The project’s former primary maintenance environment, now fully migrated to Codex.',
       meta: 'Anthropic · v2',
     },
   },
@@ -107,8 +107,8 @@ export default function CodeLlmPage() {
         </h1>
         <p className="code-index-sub">
           {tr({
-            zh: '驱动 cuberoot.me 日常开发的大语言模型。从对话模型 Claude、官方 CLI agent Claude Code、高性价比的代理式模型 Claude Sonnet 5,到 Anthropic 最强的 Claude Fable 5 —— 这套站点几乎每一行新代码都由它们合写。',
-            en: 'The large language models behind cuberoot.me’s day-to-day development. From the Claude chat model, the official CLI agent Claude Code, and the cost-efficient agentic Claude Sonnet 5, to Anthropic’s most capable Claude Fable 5 — nearly every new line of code on this site is co-written by them.'
+            zh: '记录 cuberoot.me 与大语言模型协作历史的档案。从对话模型 Claude、官方 CLI agent Claude Code,到 Claude Sonnet 5 与 Claude Fable 5;当前项目维护环境已迁移到 Codex。',
+            en: 'An archive of cuberoot.me’s collaboration history with large language models, from Claude and the Claude Code CLI agent to Claude Sonnet 5 and Claude Fable 5. The project’s current maintenance environment is Codex.'
           })}
         </p>
       </header>

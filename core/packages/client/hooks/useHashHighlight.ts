@@ -26,7 +26,7 @@
  * router.replace 改 hash 不会触发 hashchange,高亮要立刻生效就得手动 setHash。
  * 走原生 <a href="#..."> 的调用方无需 setHash(浏览器会派发 hashchange)。
  *
- * 片段不是页内状态(是「现在指着哪一项」的名片,供复制分享),与 CLAUDE.md「URL 状态
+ * 片段不是页内状态(是「现在指着哪一项」的名片,供复制分享),与 AGENTS.md「URL 状态
  * 统一 nuqs」不冲突;写片段走 lib/url_hash.ts 的 replaceHash 或原生 <a>。
  */
 import { useCallback, useEffect, useRef, useState, type DependencyList } from 'react';

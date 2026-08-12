@@ -136,6 +136,13 @@ export interface SimCubeViewProps {
    */
   animate?: boolean;
   /**
+   * Optional /sim stickering preset. The orientation is the same whole-cube
+   * rotation prefix accepted by /sim's stickering control (for example `x2`
+   * moves the canonical D-stage mask onto U).
+   */
+  stickering?: string;
+  stickeringOrientation?: string;
+  /**
    * 镜头角度。
    *
    *   'iso'   引擎自己的等轴视角(上下 30° / 左右 −33.75°),三个面都露一点 —— 看状态用。
@@ -169,6 +176,8 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     sensorBasis = sensorBasisForBrand(null),
     mirror = mirrorForBrand(null),
     animate = false,
+    stickering = '',
+    stickeringOrientation = '',
     view = 'iso',
     onReady,
     ariaLabel,
@@ -314,6 +323,36 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     world.scene.updateMatrix();
     mountRef.current?.invalidate();
   }, [ready, view]);
+
+  // ── /sim stage mask. ──
+  // Keep the visualcube bridge out of the ordinary live-cube bundle: most
+  // callers show every sticker, so only stage-aware embeds pay for the mask.
+  useEffect(() => {
+    const mount = mountRef.current;
+    const world = mount?.world;
+    if (!ready || !mount || !world) return;
+    let cancelled = false;
+
+    if (!stickering || stickering === 'full') {
+      (world.cube as NxnCube).instancedRenderer.setStickering(null);
+      mount.invalidate();
+      return;
+    }
+
+    void Promise.all([
+      import('@/app/[lang]/sim/engine/nxn/stickering'),
+      import('@/app/[lang]/sim/engine/nxn/vcStageMask'),
+    ]).then(([engine, visualcube]) => {
+      if (cancelled || mountRef.current !== mount) return;
+      const cube = world.cube as NxnCube;
+      const mask = engine.stickeringMaskFn(cube.order, stickering, stickeringOrientation)
+        ?? visualcube.resolveStageMaskFn(cube.order, stickering, stickeringOrientation);
+      cube.instancedRenderer.setStickering(mask);
+      mount.invalidate();
+    });
+
+    return () => { cancelled = true; };
+  }, [ready, stickering, stickeringOrientation]);
 
   // ── Sticker state. ──
   //

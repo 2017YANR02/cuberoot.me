@@ -93,7 +93,7 @@ html:not([data-palette-scheme=dark]) .wse-page {
   font-size: 14px;
   height: 34px;
 }
-/* 下拉贴合最长选项,不被 column flex 拉满整列宽(全站下拉一律内容自适应,见 CLAUDE.md) */
+/* 下拉贴合最长选项,不被 column flex 拉满整列宽(全站下拉一律内容自适应,见 AGENTS.md) */
 .wse-filter .wse-filter-select {
   width: fit-content;
   min-width: 0;

@@ -12,9 +12,7 @@
 
 use std::sync::Arc;
 
-use crate::cube_common::{
-    alg_rotation, array_to_index, rot_map, state_space, valid_moves, Move,
-};
+use crate::cube_common::{alg_rotation, array_to_index, rot_map, state_space, valid_moves, Move};
 use crate::move_tables::MoveTable;
 
 /// 规范块 DBL 的角索引与 3 条棱索引(DB, DL, BL)。
@@ -115,7 +113,13 @@ impl Block222Solver {
         let edges: Vec<i32> = CANON_EDGES.iter().map(|&e| (2 * e) as i32).collect();
         let e3_solved = array_to_index(&edges, 3, 2, 12) as usize;
         let pt = Self::build_pt(mt_edge3.as_u32(), mt_corn.as_u32(), corn_solved, e3_solved);
-        Block222Solver { mt_edge3, mt_corn, pt, corn_solved, e3_solved }
+        Block222Solver {
+            mt_edge3,
+            mt_corn,
+            pt,
+            corn_solved,
+            e3_solved,
+        }
     }
 
     /// 全空间 frontier BFS(单线程,~4.6M 转移)。
@@ -150,7 +154,12 @@ impl Block222Solver {
 
     /// 距离表最大深度(块的 God's number,信息用)。
     pub fn max_depth(&self) -> u8 {
-        self.pt.iter().copied().filter(|&v| v != 255).max().unwrap_or(0)
+        self.pt
+            .iter()
+            .copied()
+            .filter(|&v| v != 255)
+            .max()
+            .unwrap_or(0)
     }
 
     /// 共轭:alg → rot 视角 → y^k 帧的 move 索引序列。
@@ -316,7 +325,7 @@ mod tests {
 
         // 默认视角(底 D)规范块 DBL:U/R/F 不碰 → 仍有块为 0;D/L/B 破坏全部 4 个贴底块?
         // 注意 get_stats 是 4 块最小:U 不碰任何贴 D 块 → 0;D 整层位移 4 块 → 1。
-        let z0 = |scr: &str| s.get_stats(&string_to_alg(scr), &["",])[0];
+        let z0 = |scr: &str| s.get_stats(&string_to_alg(scr), &[""])[0];
         assert_eq!(z0("U"), 0);
         assert_eq!(z0("D"), 1);
         assert_eq!(z0(""), 0);
@@ -400,13 +409,21 @@ mod tests {
         let start = home(
             c as u8,
             0,
-            [(edges[0] as u8, 0), (edges[1] as u8, 0), (edges[2] as u8, 0)],
+            [
+                (edges[0] as u8, 0),
+                (edges[1] as u8, 0),
+                (edges[2] as u8, 0),
+            ],
         );
         let mut dist: HashMap<u64, u8> = HashMap::new();
         dist.insert(start, 0);
         let mut frontier = vec![(
             (c as u8, 0u8),
-            [(edges[0] as u8, 0u8), (edges[1] as u8, 0u8), (edges[2] as u8, 0u8)],
+            [
+                (edges[0] as u8, 0u8),
+                (edges[1] as u8, 0u8),
+                (edges[2] as u8, 0u8),
+            ],
         )];
         let mut d = 0u8;
         while !frontier.is_empty() {
@@ -456,11 +473,15 @@ mod tests {
 
     /// 确定性伪随机打乱(LCG,免外部依赖)。
     fn pseudo_scramble(seed: u64, len: usize) -> Vec<Move> {
-        let mut x = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        let mut x = seed
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
         let mut out = Vec::with_capacity(len);
         let mut prev = 18usize;
         for _ in 0..len {
-            x = x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            x = x
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
             let (vmoves, vcnt) = valid_moves();
             let row = &vmoves[prev];
             let m = row[(x >> 33) as usize % vcnt[prev] as usize] as usize;
@@ -523,7 +544,11 @@ mod tests {
         assert_eq!(count.len(), 8);
         assert!(count.values().all(|&c| c == 3));
         for k in 0..4 {
-            assert!(block_label(0, k).starts_with('D'), "rot0 yk{} not D-layer", k);
+            assert!(
+                block_label(0, k).starts_with('D'),
+                "rot0 yk{} not D-layer",
+                k
+            );
         }
         // 规范:rot0 yk0 = DBL
         assert_eq!(block_label(0, 0), "DBL");

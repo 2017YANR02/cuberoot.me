@@ -1,0 +1,10 @@
+# URL 状态 hook (~/.codex/hooks/block-raw-history-url-state.ps1) 的本项目豁免清单。
+# 以 / 结尾 = 目录(路径含即豁免);否则按文件后缀匹配。
+# client 部分与 tests/url-state-no-raw-history.test.ts 的 ALLOWLIST 保持一致。
+
+# client 确属特殊的文件(zustand data-blob / maplibre / 自定义编码 / 全局 infra / 文档示例)
+i18n/i18n-client.ts
+app/[lang]/wca/globe/GlobeMapClient.tsx
+app/[lang]/calc/_components/stores/calc_store.ts
+app/[lang]/recon/submit/ReconSubmitForm.tsx
+app/[lang]/code/stack/_tools/react-router.tsx

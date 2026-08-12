@@ -176,7 +176,7 @@ pwsh verify.ps1 -Inputs scramble_5.txt   # 只跑某个输入
 solver 系列(6 analyzer + table_generator)全部移植并 golden bit-exact。剩下:
 
 1. **dist 系列续译**:`D:\cube\solver_wip\` 还有 ~30 个 cpp(xxcross_1_col / cross_6_col /
-   pseudo_cross_* 等),同模板,详见 CLAUDE.md。
+   pseudo_cross_* 等),同模板,详见 AGENTS.md。
 
 ✅ **已完成**:
 - std_analyzer:Phase 11,XXCross/XXXCross/XXXXCross 接入 huge 表(C4C5E0E1 / C4C6E0E2 / mt_edge6),全 30 列 golden bit-exact(前 20 scramble)

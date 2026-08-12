@@ -36,17 +36,17 @@ describe('reconstruction ground-truth commit gate', () => {
   });
 
   it('denies through the supported JSON decision and keeps CI as the fallback', () => {
-    const hook = readFileSync(join(REPO_ROOT, '.claude', 'hooks', 'recon-ground-truth-gate.ps1'), 'utf8');
+    const hook = readFileSync(join(REPO_ROOT, '.codex', 'hooks', 'recon-ground-truth-gate.ps1'), 'utf8');
     expect(hook).toContain("permissionDecision = 'deny'");
     expect(hook).toContain('check-staged');
     expect(hook).not.toMatch(/exit\s+2\b/);
 
     const codexHooks = JSON.parse(readFileSync(join(REPO_ROOT, '.codex', 'hooks.json'), 'utf8'));
-    const bashGroup = codexHooks.hooks.PreToolUse.find(
+    const commandGroup = codexHooks.hooks.PreToolUse.find(
       (group: { matcher?: string }) => group.matcher === '^Bash$',
     );
-    expect(bashGroup, '缺少 Bash PreToolUse 守卫组').toBeDefined();
-    expect(bashGroup.hooks.some(
+    expect(commandGroup, '缺少 Codex Bash PreToolUse 守卫组').toBeDefined();
+    expect(commandGroup.hooks.some(
       (entry: { commandWindows?: string }) => entry.commandWindows?.includes('recon-ground-truth-gate.ps1'),
     )).toBe(true);
 

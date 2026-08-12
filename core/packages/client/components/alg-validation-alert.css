@@ -121,7 +121,7 @@
 
 .ava-row-chev { color: var(--faint-foreground); }
 
-/* 窄屏:公式和原因各占一行,别横向溢出(CLAUDE.md「移动端 / 桌面端都要适配」) */
+/* 窄屏:公式和原因各占一行,别横向溢出(AGENTS.md「移动端 / 桌面端都要适配」) */
 @media (max-width: 640px) {
   .ava-row {
     grid-template-columns: minmax(0, 1fr) auto;

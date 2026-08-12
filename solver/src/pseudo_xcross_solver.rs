@@ -280,7 +280,10 @@ impl PsCcPrune {
             let (im, ic) = if k == 0 {
                 (cross0, corn0)
             } else {
-                (mt_edge4[cross0 + mv] as usize, mt_corn[corn0 * 18 + mv] as usize)
+                (
+                    mt_edge4[cross0 + mv] as usize,
+                    mt_corn[corn0 * 18 + mv] as usize,
+                )
             };
             tbl[im + ic] = 0;
         }
@@ -604,15 +607,18 @@ impl PseudoSmallSolver {
     // ---------------- stage 2: pseudo_xxcross(2 corner + 2 edge)----------------
 
     fn solve_xxcross(&self, st: &[ConjState; 4], lower: u32) -> u32 {
-        const PAIRS: [(usize, usize); 6] =
-            [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
+        const PAIRS: [(usize, usize); 6] = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
 
         // task:2 corner slot × 2 edge slot,edge 两种配对(直/交叉)。
         let mut tasks: Vec<([PsPair; 2], u32)> = Vec::with_capacity(72);
         for &cp in &PAIRS {
             for &ep in &PAIRS {
                 for swap in 0..2 {
-                    let (e0, e1) = if swap == 0 { (ep.0, ep.1) } else { (ep.1, ep.0) };
+                    let (e0, e1) = if swap == 0 {
+                        (ep.0, ep.1)
+                    } else {
+                        (ep.1, ep.0)
+                    };
                     let d0 = Self::get_diff(cp.0 as u32, e0 as u32);
                     let d1 = Self::get_diff(cp.1 as u32, e1 as u32);
                     let p0 = PsPair {
@@ -650,8 +656,7 @@ impl PseudoSmallSolver {
     // ---------------- stage 3: pseudo_xxxcross(3 corner + 3 edge)----------------
 
     fn solve_xxxcross(&self, st: &[ConjState; 4], lower: u32) -> u32 {
-        const TRIPLES: [[usize; 3]; 4] =
-            [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]];
+        const TRIPLES: [[usize; 3]; 4] = [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]];
         const PERMS: [[usize; 3]; 6] = [
             [0, 1, 2],
             [0, 2, 1],
@@ -895,7 +900,7 @@ impl PseudoSmallSolver {
                 continue;
             }
             let solved = all_cc0 && eo_ok; // 全 pair cc 解且伪棱归位 ⟺ 该子集已解
-            // raw 搜索 m(ref 共轭帧)→ 真实 rot 帧 move。
+                                           // raw 搜索 m(ref 共轭帧)→ 真实 rot 帧 move。
             let real_m = cj[m][inv_ref];
             path.push(real_m);
             if depth == 1 {
@@ -913,8 +918,7 @@ impl PseudoSmallSolver {
     /// 构造某 stage 的全部候选 task(N 个 PsPair),与 solve_{xcross,xxcross,xxxcross}
     /// 同构,返回 (pairs, 根启发式 h)。stage 0(cross)单独处理,不走此路。
     fn build_tasks(&self, st: &[ConjState; 4], stage: usize) -> Vec<(Vec<PsPair>, u32)> {
-        const PAIRS: [(usize, usize); 6] =
-            [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
+        const PAIRS: [(usize, usize); 6] = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
         const TRIPLES: [[usize; 3]; 4] = [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]];
         const PERMS: [[usize; 3]; 6] = [
             [0, 1, 2],
@@ -947,8 +951,11 @@ impl PseudoSmallSolver {
                 for &cp in &PAIRS {
                     for &ep in &PAIRS {
                         for swap in 0..2 {
-                            let (e0, e1) =
-                                if swap == 0 { (ep.0, ep.1) } else { (ep.1, ep.0) };
+                            let (e0, e1) = if swap == 0 {
+                                (ep.0, ep.1)
+                            } else {
+                                (ep.1, ep.0)
+                            };
                             let d0 = Self::get_diff(cp.0 as u32, e0 as u32);
                             let d1 = Self::get_diff(cp.1 as u32, e1 as u32);
                             let p0 = mk(cp.0, d0);
@@ -1019,7 +1026,15 @@ impl PseudoSmallSolver {
             let mut path = Vec::new();
             for d in best_len..=(best_len + extra).min(18) {
                 let mut cross_out: Vec<Vec<u8>> = Vec::new();
-                self.enum_cross(i1 * 18, i2 * 18, d, 18, &mut path, &mut cross_out, cap - out.len());
+                self.enum_cross(
+                    i1 * 18,
+                    i2 * 18,
+                    d,
+                    18,
+                    &mut path,
+                    &mut cross_out,
+                    cap - out.len(),
+                );
                 for sol in cross_out {
                     out.push((rot.to_string(), vec![], sol));
                 }
@@ -1041,7 +1056,11 @@ impl PseudoSmallSolver {
         if !force.is_empty() {
             let want: std::collections::BTreeSet<usize> = force.iter().copied().collect();
             tasks.retain(|(pairs, _)| {
-                pairs.iter().map(|p| p.slot).collect::<std::collections::BTreeSet<usize>>() == want
+                pairs
+                    .iter()
+                    .map(|p| p.slot)
+                    .collect::<std::collections::BTreeSet<usize>>()
+                    == want
             });
         }
 
@@ -1102,7 +1121,14 @@ impl PseudoSmallSolver {
 // pt_pscross 是无限制距离的可采纳下界,对任意 mask 仍可采纳 ⇒ IDA* 首达即真·受限最优
 // (≤ max_depth),超界返回 99 哨兵。pseudo 系无 frame:每条解 frame = 传入 rot。
 impl PseudoSmallSolver {
-    fn cross_search_masked(&self, i1: usize, i2: usize, depth: u32, prev: u8, vm: &ValidMovesTable) -> bool {
+    fn cross_search_masked(
+        &self,
+        i1: usize,
+        i2: usize,
+        depth: u32,
+        prev: u8,
+        vm: &ValidMovesTable,
+    ) -> bool {
         let (vmoves, vcnt) = vm;
         let count = vcnt[prev as usize] as usize;
         let row = &vmoves[prev as usize];
@@ -1146,7 +1172,13 @@ impl PseudoSmallSolver {
         99
     }
 
-    fn search_pairs_masked(&self, pairs: &[PsPair], depth: u32, prev: u8, vm: &ValidMovesTable) -> bool {
+    fn search_pairs_masked(
+        &self,
+        pairs: &[PsPair],
+        depth: u32,
+        prev: u8,
+        vm: &ValidMovesTable,
+    ) -> bool {
         let (vmoves, vcnt) = vm;
         let count = vcnt[prev as usize] as usize;
         let row = &vmoves[prev as usize];
@@ -1157,7 +1189,13 @@ impl PseudoSmallSolver {
         let ref_slot = pairs[0].slot;
 
         let mut local: u64 = 0;
-        let mut next = [PsPair { im: 0, ic: 0, ie: 0, slot: 0, diff: 0 }; 3];
+        let mut next = [PsPair {
+            im: 0,
+            ic: 0,
+            ie: 0,
+            slot: 0,
+            diff: 0,
+        }; 3];
         for k in 0..count {
             let m = row[k] as usize;
             local += 1;
@@ -1175,7 +1213,13 @@ impl PseudoSmallSolver {
                 if leaf_ok && n_ie != 2 * p.diff {
                     leaf_ok = false;
                 }
-                next[j] = PsPair { im: n_im, ic: n_ic, ie: n_ie, slot: p.slot, diff: p.diff };
+                next[j] = PsPair {
+                    im: n_im,
+                    ic: n_ic,
+                    ie: n_ie,
+                    slot: p.slot,
+                    diff: p.diff,
+                };
             }
             if pruned {
                 continue;
@@ -1194,7 +1238,14 @@ impl PseudoSmallSolver {
         false
     }
 
-    fn solve_pairs_task_masked(&self, pairs: &[PsPair], h: u32, lower: u32, max_d: u32, vm: &ValidMovesTable) -> u32 {
+    fn solve_pairs_task_masked(
+        &self,
+        pairs: &[PsPair],
+        h: u32,
+        lower: u32,
+        max_d: u32,
+        vm: &ValidMovesTable,
+    ) -> u32 {
         let root_solved = pairs
             .iter()
             .all(|p| self.cc.h(p.im, p.ic) == 0 && p.ie == 2 * p.diff);
@@ -1243,7 +1294,11 @@ impl PseudoSmallSolver {
                     }
                     best
                 };
-                if v >= 99 { None } else { Some(v) }
+                if v >= 99 {
+                    None
+                } else {
+                    Some(v)
+                }
             })
             .collect()
     }
@@ -1314,7 +1369,13 @@ impl PseudoSmallSolver {
         let ref_slot = pairs[0].slot;
         let inv_ref = (4 - ref_slot) & 3;
 
-        let mut next = [PsPair { im: 0, ic: 0, ie: 0, slot: 0, diff: 0 }; 3];
+        let mut next = [PsPair {
+            im: 0,
+            ic: 0,
+            ie: 0,
+            slot: 0,
+            diff: 0,
+        }; 3];
         for k in 0..count {
             if out.len() >= cap {
                 return;
@@ -1339,7 +1400,13 @@ impl PseudoSmallSolver {
                 if n_ie != 2 * p.diff {
                     eo_ok = false;
                 }
-                next[j] = PsPair { im: n_im, ic: n_ic, ie: n_ie, slot: p.slot, diff: p.diff };
+                next[j] = PsPair {
+                    im: n_im,
+                    ic: n_ic,
+                    ie: n_ie,
+                    slot: p.slot,
+                    diff: p.diff,
+                };
             }
             if pruned {
                 continue;
@@ -1396,7 +1463,16 @@ impl PseudoSmallSolver {
             let mut path = Vec::new();
             for d in best_len..=(best_len + extra).min(cap_d) {
                 let mut cross_out: Vec<Vec<u8>> = Vec::new();
-                self.enum_cross_masked(i1 * 18, i2 * 18, d, 18, &mut path, &mut cross_out, cap - out.len(), &vm);
+                self.enum_cross_masked(
+                    i1 * 18,
+                    i2 * 18,
+                    d,
+                    18,
+                    &mut path,
+                    &mut cross_out,
+                    cap - out.len(),
+                    &vm,
+                );
                 for sol in cross_out {
                     out.push((rot.to_string(), vec![], sol));
                 }
@@ -1415,7 +1491,11 @@ impl PseudoSmallSolver {
         if !force.is_empty() {
             let want: std::collections::BTreeSet<usize> = force.iter().copied().collect();
             tasks.retain(|(pairs, _)| {
-                pairs.iter().map(|p| p.slot).collect::<std::collections::BTreeSet<usize>>() == want
+                pairs
+                    .iter()
+                    .map(|p| p.slot)
+                    .collect::<std::collections::BTreeSet<usize>>()
+                    == want
             });
         }
         let cap_d = 18u32.min(max_depth);
@@ -1454,7 +1534,15 @@ impl PseudoSmallSolver {
                 }
                 let combo: Vec<usize> = pairs.iter().map(|p| p.slot).collect();
                 let mut task_out: Vec<Vec<u8>> = Vec::new();
-                self.enum_pairs_masked(pairs, d, 18, &mut path, &mut task_out, cap - out.len(), &vm);
+                self.enum_pairs_masked(
+                    pairs,
+                    d,
+                    18,
+                    &mut path,
+                    &mut task_out,
+                    cap - out.len(),
+                    &vm,
+                );
                 for sol in task_out {
                     out.push((rot.to_string(), combo.clone(), sol));
                 }
@@ -1579,9 +1667,8 @@ mod tests {
         let pt_pscross = Arc::new(PackedPruneTable::from_bin(&read("pt_pscross.bin")));
 
         let t_build = Instant::now();
-        let solver = PseudoSmallSolver::from_tables(
-            mt_edge2, mt_edge4, mt_corn, mt_edge, pt_pscross,
-        );
+        let solver =
+            PseudoSmallSolver::from_tables(mt_edge2, mt_edge4, mt_corn, mt_edge, pt_pscross);
         eprintln!(
             "[pseudo-small] cross+corner BFS built in {:.1}ms ({:.1}MB RAM)",
             t_build.elapsed().as_secs_f64() * 1e3,
@@ -1592,15 +1679,21 @@ mod tests {
         let cases: &[(&str, [u32; 24])] = &[
             (
                 "U B' L R2 U B2 R2 U2 B2 U R2 U2 F2 B' R' B2 F' U2 L2 R",
-                [6, 6, 6, 6, 5, 6, 6, 7, 7, 7, 6, 7, 8, 8, 8, 9, 7, 9, 11, 10, 10, 10, 9, 11],
+                [
+                    6, 6, 6, 6, 5, 6, 6, 7, 7, 7, 6, 7, 8, 8, 8, 9, 7, 9, 11, 10, 10, 10, 9, 11,
+                ],
             ),
             (
                 "D2 L B2 R2 D R2 D R2 B2 R2 D2 L' D2 B D2 U2 R2 D' B2 R",
-                [6, 5, 6, 4, 5, 5, 8, 5, 7, 5, 6, 6, 9, 5, 9, 8, 9, 9, 11, 8, 11, 10, 11, 11],
+                [
+                    6, 5, 6, 4, 5, 5, 8, 5, 7, 5, 6, 6, 9, 5, 9, 8, 9, 9, 11, 8, 11, 10, 11, 11,
+                ],
             ),
             (
                 "B2 D' F2 L' U' R' D R2 F D' B2 L2 F2 R2 B' R2 L2 U2 L",
-                [6, 6, 6, 6, 6, 5, 7, 6, 6, 6, 7, 6, 9, 8, 8, 7, 9, 9, 10, 10, 11, 10, 10, 11],
+                [
+                    6, 6, 6, 6, 6, 5, 7, 6, 6, 6, 7, 6, 9, 8, 8, 7, 9, 9, 10, 10, 11, 10, 10, 11,
+                ],
             ),
         ];
 
@@ -1676,7 +1769,9 @@ mod tests {
         // 第 1 条(同 pseudo_small_matches_golden,布局 [stage*6 + rot])。
         let cases: &[(&str, [u32; 24])] = &[(
             "U B' L R2 U B2 R2 U2 B2 U R2 U2 F2 B' R' B2 F' U2 L2 R",
-            [6, 6, 6, 6, 5, 6, 6, 7, 7, 7, 6, 7, 8, 8, 8, 9, 7, 9, 11, 10, 10, 10, 9, 11],
+            [
+                6, 6, 6, 6, 5, 6, 6, 7, 7, 7, 6, 7, 8, 8, 8, 9, 7, 9, 11, 10, 10, 10, 9, 11,
+            ],
         )];
 
         for (scr, exp) in cases {
@@ -1703,20 +1798,33 @@ mod tests {
                     if len == 0 {
                         continue;
                     }
-                    assert!(!results.is_empty(), "no sols `{}` rot={} stage={}", scr, rot, stage);
+                    assert!(
+                        !results.is_empty(),
+                        "no sols `{}` rot={} stage={}",
+                        scr,
+                        rot,
+                        stage
+                    );
 
                     for (frame, combo, sol) in &results {
                         // pseudo 无 frame:每条解 frame 必为传入 rot。
                         assert_eq!(
-                            frame.as_str(), *rot,
+                            frame.as_str(),
+                            *rot,
                             "frame mismatch `{}` rot={} stage={}: got '{}'",
-                            scr, rot, stage, frame
+                            scr,
+                            rot,
+                            stage,
+                            frame
                         );
                         assert_eq!(
                             sol.len() as u32,
                             len,
                             "sol not optimal `{}` rot={} stage={}: {:?}",
-                            scr, rot, stage, sol
+                            scr,
+                            rot,
+                            stage,
+                            sol
                         );
 
                         // frame(=rot)帧打乱基底。
@@ -1726,7 +1834,12 @@ mod tests {
 
                         if stage == 0 {
                             // pseudo_cross:两棱组 pt_pscross == 0。combo 必空。
-                            assert!(combo.is_empty(), "cross combo nonempty `{}` rot={}", scr, rot);
+                            assert!(
+                                combo.is_empty(),
+                                "cross combo nonempty `{}` rot={}",
+                                scr,
+                                rot
+                            );
                             let mt = solver.mt_edge2.as_u32();
                             let mut i1 = state_space::EDGE2_A_SOLVED;
                             let mut i2 = state_space::EDGE2_B_SOLVED;
@@ -1739,7 +1852,9 @@ mod tests {
                                 solver.pt_pscross.get(idx),
                                 0,
                                 "cross unsolved `{}` rot={} sol={:?}",
-                                scr, rot, sol
+                                scr,
+                                rot,
+                                sol
                             );
                             continue;
                         }

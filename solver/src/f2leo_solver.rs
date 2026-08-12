@@ -417,8 +417,9 @@ impl F2leoSolver {
     /// `on_face`:每定下一个视角就报出去。视角 k = min(朝向 2k, 2k+1),故朝向 2k+1 一算完
     /// 该视角即成定局(深阶段整格要几十秒,前端靠它逐格填数)。
     pub fn get_stage(&self, alg: &[Move], stage: usize, on_face: FaceProgress<'_>) -> Vec<u32> {
-        const ROTS12: [&str; 12] =
-            ["", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y"];
+        const ROTS12: [&str; 12] = [
+            "", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y",
+        ];
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         let mut v = [0u32; 12];
         for (r, rot) in ROTS12.iter().enumerate() {
@@ -446,8 +447,9 @@ impl F2leoSolver {
         let mut xxxc = [0u32; 12];
 
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
-        const ROTS12: [&str; 12] =
-            ["", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y"];
+        const ROTS12: [&str; 12] = [
+            "", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y",
+        ];
 
         for (r, rot) in ROTS12.iter().enumerate() {
             let mut a = base.clone();
@@ -650,7 +652,11 @@ impl F2leoSolver {
         force: &[usize],
     ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
-        let y_frame = if rot.is_empty() { "y".to_string() } else { format!("{} y", rot) };
+        let y_frame = if rot.is_empty() {
+            "y".to_string()
+        } else {
+            format!("{} y", rot)
+        };
         let frames = [rot.to_string(), y_frame];
 
         // ---- stage 0:cross + 4 棱 EO(无 combo)----
@@ -707,7 +713,16 @@ impl F2leoSolver {
                     let eo18: [usize; 4] = std::array::from_fn(|t| edg[t] * 18);
                     let mut frame_out: Vec<Vec<u8>> = Vec::new();
                     let mut path = Vec::new();
-                    self.enum_cross(i1 * 18, i2 * 18, eo18, d, 18, &mut path, &mut frame_out, cap - out.len());
+                    self.enum_cross(
+                        i1 * 18,
+                        i2 * 18,
+                        eo18,
+                        d,
+                        18,
+                        &mut path,
+                        &mut frame_out,
+                        cap - out.len(),
+                    );
                     for sol in frame_out {
                         out.push((frames[fi].clone(), vec![], sol));
                     }
@@ -791,8 +806,17 @@ impl F2leoSolver {
             }
             let mut path = Vec::new();
             s.enum_combo(
-                ctx.e4_24, &corn18[..n], &edge18[..n], &egoal[..n], &free18[..nf],
-                &prune_refs[..n], d, 18, &mut path, out, cap,
+                ctx.e4_24,
+                &corn18[..n],
+                &edge18[..n],
+                &egoal[..n],
+                &free18[..nf],
+                &prune_refs[..n],
+                d,
+                18,
+                &mut path,
+                out,
+                cap,
             );
         };
 
@@ -892,7 +916,14 @@ impl F2leoSolver {
     }
 
     /// 受限版 solve_cross:max_depth 内无解返回 99。
-    fn solve_cross_masked(&self, i1: usize, i2: usize, eo: [usize; 4], vm: &ValidMovesTable, max_depth: u32) -> u32 {
+    fn solve_cross_masked(
+        &self,
+        i1: usize,
+        i2: usize,
+        eo: [usize; 4],
+        vm: &ValidMovesTable,
+        max_depth: u32,
+    ) -> u32 {
         let pr = self.pt_cross.get((i1 as u64) * (E2 as u64) + i2 as u64) as u32;
         if pr == 0 && eo.iter().all(|&e| e % 2 == 0) {
             return 0;
@@ -1094,8 +1125,9 @@ impl F2leoSolver {
         mask: MoveMask,
         max_depth: u32,
     ) -> Vec<Option<u32>> {
-        const ROTS12: [&str; 12] =
-            ["", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y"];
+        const ROTS12: [&str; 12] = [
+            "", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y",
+        ];
         let vm = valid_moves_masked(mask);
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         let mut v = [99u32; 12];
@@ -1107,13 +1139,19 @@ impl F2leoSolver {
                 0 => self.solve_cross_masked(i1, i2, edg, &vm, CAP_CROSS.min(max_depth)),
                 1 => self.solve_stage_masked(e4_24, &corn, &edg, &XC, CAP_XC.min(max_depth), &vm),
                 2 => self.solve_stage_masked(e4_24, &corn, &edg, &XXC, CAP_XXC.min(max_depth), &vm),
-                _ => self.solve_stage_masked(e4_24, &corn, &edg, &XXXC, CAP_XXXC.min(max_depth), &vm),
+                _ => {
+                    self.solve_stage_masked(e4_24, &corn, &edg, &XXXC, CAP_XXXC.min(max_depth), &vm)
+                }
             };
         }
         (0..6)
             .map(|k| {
                 let best = v[2 * k].min(v[2 * k + 1]);
-                if best >= 99 { None } else { Some(best) }
+                if best >= 99 {
+                    None
+                } else {
+                    Some(best)
+                }
             })
             .collect()
     }
@@ -1289,7 +1327,11 @@ impl F2leoSolver {
     ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let vm = valid_moves_masked(mask);
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
-        let y_frame = if rot.is_empty() { "y".to_string() } else { format!("{} y", rot) };
+        let y_frame = if rot.is_empty() {
+            "y".to_string()
+        } else {
+            format!("{} y", rot)
+        };
         let frames = [rot.to_string(), y_frame];
 
         // ---- stage 0:cross + 4 棱 EO ----
@@ -1321,7 +1363,17 @@ impl F2leoSolver {
                     let eo18: [usize; 4] = std::array::from_fn(|t| edg[t] * 18);
                     let mut probe: Vec<Vec<u8>> = Vec::new();
                     let mut path = Vec::new();
-                    self.enum_cross_masked(i1 * 18, i2 * 18, eo18, d, 18, &mut path, &mut probe, 1, &vm);
+                    self.enum_cross_masked(
+                        i1 * 18,
+                        i2 * 18,
+                        eo18,
+                        d,
+                        18,
+                        &mut path,
+                        &mut probe,
+                        1,
+                        &vm,
+                    );
                     if !probe.is_empty() {
                         tied.push((fi, i1, i2, edg));
                     }
@@ -1344,7 +1396,17 @@ impl F2leoSolver {
                     let eo18: [usize; 4] = std::array::from_fn(|t| edg[t] * 18);
                     let mut frame_out: Vec<Vec<u8>> = Vec::new();
                     let mut path = Vec::new();
-                    self.enum_cross_masked(i1 * 18, i2 * 18, eo18, d, 18, &mut path, &mut frame_out, cap - out.len(), &vm);
+                    self.enum_cross_masked(
+                        i1 * 18,
+                        i2 * 18,
+                        eo18,
+                        d,
+                        18,
+                        &mut path,
+                        &mut frame_out,
+                        cap - out.len(),
+                        &vm,
+                    );
                     for sol in frame_out {
                         out.push((frames[fi].clone(), vec![], sol));
                     }
@@ -1420,8 +1482,18 @@ impl F2leoSolver {
             }
             let mut path = Vec::new();
             s.enum_combo_masked(
-                ctx.e4_24, &corn18[..n], &edge18[..n], &egoal[..n], &free18[..nf],
-                &prune_refs[..n], d, 18, &mut path, out, cap, &vm,
+                ctx.e4_24,
+                &corn18[..n],
+                &edge18[..n],
+                &egoal[..n],
+                &free18[..nf],
+                &prune_refs[..n],
+                d,
+                18,
+                &mut path,
+                out,
+                cap,
+                &vm,
             );
         };
 
@@ -1488,9 +1560,7 @@ impl F2leoSolver {
 // 仅 native;wasm 路径仍用 `F2leoSolver`(小表 cascade)。需 huge 表 +
 // `CUBE_ALLOW_HUGE_TABLES=1`(否则 manager ensure huge 会 panic)。
 #[cfg(not(target_arch = "wasm32"))]
-use crate::cube_common::{
-    array_to_index, conj_moves_flat, get_diagonal_view, get_neighbor_view,
-};
+use crate::cube_common::{array_to_index, conj_moves_flat, get_diagonal_view, get_neighbor_view};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::executor::bump_node_count;
 
@@ -1624,7 +1694,12 @@ impl F2leoBigSolver {
     }
 
     /// 单视角 huge 表查值:pair (a,b) 优先 neighbor,否则 diagonal。对应 std `pair_huge`。
-    fn pair_huge<'a>(&'a self, st: &[BigVirt; 4], a: usize, b: usize) -> (u32, u32, i32, &'a PackedPruneTable) {
+    fn pair_huge<'a>(
+        &'a self,
+        st: &[BigVirt; 4],
+        a: usize,
+        b: usize,
+    ) -> (u32, u32, i32, &'a PackedPruneTable) {
         let v_nb = get_neighbor_view(a as i32, b as i32);
         if v_nb != -1 {
             let s = &st[v_nb as usize];
@@ -1638,7 +1713,15 @@ impl F2leoBigSolver {
 
     /// huge 表推进 + 剪枝。对应 std `huge_check`(conj=-1 视为不剪)。
     #[inline]
-    fn huge_check(&self, conj: i32, table: &PackedPruneTable, e6: u32, c2: u32, m: usize, depth: u32) -> (bool, u32, u32) {
+    fn huge_check(
+        &self,
+        conj: i32,
+        table: &PackedPruneTable,
+        e6: u32,
+        c2: u32,
+        m: usize,
+        depth: u32,
+    ) -> (bool, u32, u32) {
         if conj == -1 {
             return (false, 0, 0);
         }
@@ -1701,7 +1784,16 @@ impl F2leoBigSolver {
 
     // ---------------- XCross(单槽 pt_cross_C4E0 + 3 自由棱 EO)----------------
 
-    fn search_x1(&self, i1: usize, i2: usize, i3: usize, slot: usize, free18: &[usize], depth: u32, prev: u8) -> bool {
+    fn search_x1(
+        &self,
+        i1: usize,
+        i2: usize,
+        i3: usize,
+        slot: usize,
+        free18: &[usize],
+        depth: u32,
+        prev: u8,
+    ) -> bool {
         let (vmoves, vcnt) = valid_moves();
         let count = vcnt[prev as usize] as usize;
         let row = &vmoves[prev as usize];
@@ -1774,7 +1866,15 @@ impl F2leoBigSolver {
                 let max_d = CAP_XC.min(best.saturating_sub(1));
                 let mut found = 99;
                 for d in h.max(1)..=max_d {
-                    if self.search_x1(st[s].im as usize, (st[s].ic as usize) * 18, (st[s].ie as usize) * 18, s, &free18[..nf], d, 18) {
+                    if self.search_x1(
+                        st[s].im as usize,
+                        (st[s].ic as usize) * 18,
+                        (st[s].ie as usize) * 18,
+                        s,
+                        &free18[..nf],
+                        d,
+                        18,
+                    ) {
                         found = d;
                         break;
                     }
@@ -1789,7 +1889,16 @@ impl F2leoBigSolver {
     // ---------------- XXCross(1 张 pair huge 表 + 2 自由棱 EO)----------------
 
     #[allow(clippy::too_many_arguments)]
-    fn search_x2(&self, e6: u32, c2: u32, conj: i32, table: &PackedPruneTable, free18: &[usize], depth: u32, prev: u8) -> bool {
+    fn search_x2(
+        &self,
+        e6: u32,
+        c2: u32,
+        conj: i32,
+        table: &PackedPruneTable,
+        free18: &[usize],
+        depth: u32,
+        prev: u8,
+    ) -> bool {
         let (vmoves, vcnt) = valid_moves();
         let count = vcnt[prev as usize] as usize;
         let row = &vmoves[prev as usize];
@@ -1976,8 +2085,9 @@ impl F2leoBigSolver {
     /// 6 视角 × 4 阶段,返回 24 值,顺序 [cross×6, xcross×6, xxcross×6, xxxcross×6]。
     /// 12 朝向 = 6 面 × {无 y, y};每面折叠取 min(F2LEO 的 EO 轴可由 y 自由选)。
     pub fn get_stats(&self, alg: &[Move]) -> Vec<u32> {
-        const ROTS12: [&str; 12] =
-            ["", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y"];
+        const ROTS12: [&str; 12] = [
+            "", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y",
+        ];
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         let mut cross = [0u32; 12];
         let mut xc = [0u32; 12];
@@ -2072,8 +2182,7 @@ mod enum_tests {
             for stage in 0..3usize {
                 let counts = solver.get_stage(&alg, stage, None);
                 for face in 0..6usize {
-                    let (len, sols) =
-                        solver.enumerate_small(&alg, ROTS[face], stage, 0, 100, &[]);
+                    let (len, sols) = solver.enumerate_small(&alg, ROTS[face], stage, 0, 100, &[]);
                     assert_eq!(
                         len, counts[face],
                         "f2leo len mismatch scr={scr} stage={stage} face={face}: enum {len} vs count {}",

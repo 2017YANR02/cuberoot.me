@@ -13,9 +13,7 @@
 use std::sync::{Arc, OnceLock};
 
 use crate::block222_solver::{face_map, CORNER_FACE_MASK, CORNER_NAMES, ROTS6};
-use crate::cube_common::{
-    alg_rotation, array_to_index, rot_map, state_space, valid_moves, Move,
-};
+use crate::cube_common::{alg_rotation, array_to_index, rot_map, state_space, valid_moves, Move};
 use crate::move_tables::MoveTable;
 
 /// 规范 1x2x3 的 2 角(DBL, DLF)与 3 棱(BL, FL, DL)。
@@ -173,7 +171,19 @@ pub(crate) fn enumerate_product(
             out.push(path.clone());
         } else if h > 0 {
             // h==0 且 depth>1:已解却还要再走 depth-1 步 → 更短解 + 无效尾动,跳过。
-            enumerate_product(mt_a, mt_b, b_space, pt, na, nb, depth - 1, m as u8, path, out, cap);
+            enumerate_product(
+                mt_a,
+                mt_b,
+                b_space,
+                pt,
+                na,
+                nb,
+                depth - 1,
+                m as u8,
+                path,
+                out,
+                cap,
+            );
         }
         path.pop();
     }
@@ -219,12 +229,23 @@ impl RouxS1Solver {
             state_space::CORNER2 * state_space::EDGE3,
             start,
         ));
-        RouxS1Solver { mt_corn2, mt_edge3, pt, c2_solved, e3_solved }
+        RouxS1Solver {
+            mt_corn2,
+            mt_edge3,
+            pt,
+            c2_solved,
+            e3_solved,
+        }
     }
 
     /// 距离表最大深度(1x2x3 的 God's number,信息用)。
     pub fn max_depth(&self) -> u8 {
-        self.pt.iter().copied().filter(|&v| v != 255).max().unwrap_or(0)
+        self.pt
+            .iter()
+            .copied()
+            .filter(|&v| v != 255)
+            .max()
+            .unwrap_or(0)
     }
 
     /// 从 SOLVED 走 buf,返回 (c2_idx, e3_idx)。
@@ -353,7 +374,12 @@ impl FbSquareSolver {
                 c_solved * state_space::EDGE2 + e_solved,
             );
         }
-        FbSquareSolver { mt_corn, mt_edge2, pt, solved }
+        FbSquareSolver {
+            mt_corn,
+            mt_edge2,
+            pt,
+            solved,
+        }
     }
 
     /// 两表最大深度的较大值(方块 God's number,信息用)。
@@ -542,10 +568,13 @@ pub(crate) mod tests {
     }
 
     /// 暴力距离表:radix-24 key = ((((c0*24+c1)*24+e0)*24+e1)*24+e2,Vec<u8> 全 24^5。
-    fn brute_s1_table(corners: [usize; 2], edges: [usize; 3], ct: &[[u8; 18]; 24], et: &[[u8; 18]; 24]) -> Vec<u8> {
-        let key = |st: &[u8; 5]| -> usize {
-            st.iter().fold(0usize, |k, &s| k * 24 + s as usize)
-        };
+    fn brute_s1_table(
+        corners: [usize; 2],
+        edges: [usize; 3],
+        ct: &[[u8; 18]; 24],
+        et: &[[u8; 18]; 24],
+    ) -> Vec<u8> {
+        let key = |st: &[u8; 5]| -> usize { st.iter().fold(0usize, |k, &s| k * 24 + s as usize) };
         let start = [
             (3 * corners[0]) as u8,
             (3 * corners[1]) as u8,
@@ -610,11 +639,15 @@ pub(crate) mod tests {
 
     /// 确定性伪随机打乱(LCG,免外部依赖)。
     pub(crate) fn pseudo_scramble(seed: u64, len: usize) -> Vec<Move> {
-        let mut x = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        let mut x = seed
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
         let mut out = Vec::with_capacity(len);
         let mut prev = 18usize;
         for _ in 0..len {
-            x = x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            x = x
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
             let (vmoves, vcnt) = valid_moves();
             let row = &vmoves[prev];
             let m = row[(x >> 33) as usize % vcnt[prev] as usize] as usize;
@@ -698,7 +731,11 @@ pub(crate) mod tests {
                     let label = s1_block_label(ri, k);
                     let (corners, edges, table) = &tables[label];
                     let want = brute_s1_dist(table, *corners, *edges, &ct, &et, &alg) as u32;
-                    assert_eq!(got, want, "seed={} rot={:?} yk={} label={}", seed, rot, k, label);
+                    assert_eq!(
+                        got, want,
+                        "seed={} rot={:?} yk={} label={}",
+                        seed, rot, k, label
+                    );
                 }
             }
         }
@@ -730,7 +767,11 @@ pub(crate) mod tests {
                     let mut buf = conj_buf(&alg, rot, sol.yk);
                     buf.extend_from_slice(&sol.moves);
                     let (c, e) = s.walk(&buf);
-                    assert_eq!(s.pt[c * state_space::EDGE3 + e], 0, "sol doesn't solve block");
+                    assert_eq!(
+                        s.pt[c * state_space::EDGE3 + e],
+                        0,
+                        "sol doesn't solve block"
+                    );
                 }
             }
         }
@@ -768,7 +809,10 @@ pub(crate) mod tests {
     fn square_pieces(label: &str) -> (usize, [usize; 2]) {
         let (cname, fch) = label.split_once('-').unwrap();
         let corner = CORNER_NAMES.iter().position(|&n| n == cname).unwrap();
-        let face = FACE_CHARS.iter().position(|&c| c.to_string() == fch).unwrap() as u8;
+        let face = FACE_CHARS
+            .iter()
+            .position(|&c| c.to_string() == fch)
+            .unwrap() as u8;
         let cm = CORNER_FACE_MASK[corner];
         let mut edges = [0usize; 2];
         let mut n = 0;
@@ -782,8 +826,17 @@ pub(crate) mod tests {
         (corner, edges)
     }
 
-    fn brute_square_table(corner: usize, edges: [usize; 2], ct: &[[u8; 18]; 24], et: &[[u8; 18]; 24]) -> Vec<u8> {
-        let start = [(3 * corner) as u8, (2 * edges[0]) as u8, (2 * edges[1]) as u8];
+    fn brute_square_table(
+        corner: usize,
+        edges: [usize; 2],
+        ct: &[[u8; 18]; 24],
+        et: &[[u8; 18]; 24],
+    ) -> Vec<u8> {
+        let start = [
+            (3 * corner) as u8,
+            (2 * edges[0]) as u8,
+            (2 * edges[1]) as u8,
+        ];
         let key = |st: &[u8; 3]| st.iter().fold(0usize, |k, &s| k * 24 + s as usize);
         let mut dist = vec![255u8; 24usize.pow(3)];
         dist[key(&start)] = 0;
@@ -793,7 +846,11 @@ pub(crate) mod tests {
             let mut next = Vec::new();
             for st in &frontier {
                 for m in 0..18 {
-                    let ns = [ct[st[0] as usize][m], et[st[1] as usize][m], et[st[2] as usize][m]];
+                    let ns = [
+                        ct[st[0] as usize][m],
+                        et[st[1] as usize][m],
+                        et[st[2] as usize][m],
+                    ];
                     let k = key(&ns);
                     if dist[k] == 255 {
                         dist[k] = d + 1;
@@ -814,7 +871,10 @@ pub(crate) mod tests {
         let s = FbSquareSolver::new();
 
         for w in 0..2 {
-            assert!(s.pt[w].iter().all(|&v| v != 255), "unreachable square states");
+            assert!(
+                s.pt[w].iter().all(|&v| v != 255),
+                "unreachable square states"
+            );
         }
         let md = s.max_depth();
         assert!((5..=9).contains(&md), "suspicious square max depth {}", md);
@@ -867,7 +927,11 @@ pub(crate) mod tests {
                         let got = s.solve_one(&alg, rot, k, w);
                         let label = square_label(ri, k, w);
                         let (corner, edges, table) = &tables[label];
-                        let mut st = [(3 * corner) as u8, (2 * edges[0]) as u8, (2 * edges[1]) as u8];
+                        let mut st = [
+                            (3 * corner) as u8,
+                            (2 * edges[0]) as u8,
+                            (2 * edges[1]) as u8,
+                        ];
                         for &m in &alg {
                             st = [
                                 ct[st[0] as usize][m.index()],
@@ -875,7 +939,8 @@ pub(crate) mod tests {
                                 et[st[2] as usize][m.index()],
                             ];
                         }
-                        let want = table[st.iter().fold(0usize, |kk, &v| kk * 24 + v as usize)] as u32;
+                        let want =
+                            table[st.iter().fold(0usize, |kk, &v| kk * 24 + v as usize)] as u32;
                         assert_eq!(got, want, "seed={} rot={} yk={} w={}", seed, ri, k, w);
                     }
                 }

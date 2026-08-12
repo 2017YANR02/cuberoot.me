@@ -21,7 +21,7 @@ use crate::block223_solver::{block223_label, Block223Solver};
 use crate::chain_solver::{chain_json, parse_chain_config, ChainSolver};
 use crate::cross_restrict_solver::{CrossRestrictSolver, MOVE_NAMES_54, ROTS_FACE};
 use crate::cross_solver::CrossSolver;
-use crate::xcross_restrict_solver::XCrossRestrictSolver;
+use crate::cube222_solver::Cube222Solver;
 use crate::cube_common::{state_space, string_to_alg, MOVE_NAMES};
 use crate::daisy_solver::{daisy_label, DaisySolver};
 use crate::dr_solver::{dr_axis_label, DrSolver};
@@ -36,14 +36,14 @@ use crate::htr_solver::HtrSolver;
 use crate::move_tables::MoveTable;
 use crate::mt_gen;
 use crate::pair_solver::PairSolver;
-use crate::cube222_solver::Cube222Solver;
 use crate::prune_tables::PackedPruneTable;
 use crate::pseudo_f2leo_solver::PseudoF2leoSolver;
-use crate::pyraminx_solver::{parse_pyraminx, PyraminxSolver};
-use crate::skewb_solver::{parse_skewb, SkewbSolver};
 use crate::pseudo_pair_solver::PseudoPairSmallSolver;
 use crate::pseudo_xcross_solver::PseudoSmallSolver;
+use crate::pyraminx_solver::{parse_pyraminx, PyraminxSolver};
 use crate::roux_s1_solver::{s1_block_label, square_label, FbSquareSolver, RouxS1Solver};
+use crate::skewb_solver::{parse_skewb, SkewbSolver};
+use crate::xcross_restrict_solver::XCrossRestrictSolver;
 use crate::xcross_solver::XCrossSolver;
 
 /// 6 个 cube 视角(哪一面当底)。顺序对应 CSV 后缀 _z0/_z2/_z3/_z1/_x3/_x1。
@@ -281,7 +281,10 @@ impl Block222SolverWasm {
                 } else {
                     format!("{} {}", rot, y)
                 };
-                (fmt_moves(&frame, &s.moves), block_label(fi, s.yk).to_string())
+                (
+                    fmt_moves(&frame, &s.moves),
+                    block_label(fi, s.yk).to_string(),
+                )
             })
             .collect();
         sols_json(len, &items)
@@ -330,8 +333,10 @@ impl Roux223SolverWasm {
 
     fn ensure_s1(&self) {
         if self.s1.borrow().is_none() {
-            *self.s1.borrow_mut() =
-                Some(RouxS1Solver::from_tables(self.mt_c2.clone(), self.mt_e3.clone()));
+            *self.s1.borrow_mut() = Some(RouxS1Solver::from_tables(
+                self.mt_c2.clone(),
+                self.mt_e3.clone(),
+            ));
         }
     }
 
@@ -375,7 +380,14 @@ impl Roux223SolverWasm {
     /// 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。`m` 前缀 =
     /// rot + y^k;`c` = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名 /
     /// f2b "D(LR)" 块对)。
-    pub fn solve_moves(&self, scramble: &str, stage: u32, face: u32, extra: u32, cap: u32) -> String {
+    pub fn solve_moves(
+        &self,
+        scramble: &str,
+        stage: u32,
+        face: u32,
+        extra: u32,
+        cap: u32,
+    ) -> String {
         let alg = string_to_alg(scramble);
         let fi = (face as usize).min(5);
         let rot = ROTS[fi];
@@ -407,7 +419,10 @@ impl Roux223SolverWasm {
             1 => {
                 self.ensure_s1();
                 let b = self.s1.borrow();
-                let (len, sols) = b.as_ref().unwrap().enumerate_face(&alg, rot, extra, cap as usize);
+                let (len, sols) =
+                    b.as_ref()
+                        .unwrap()
+                        .enumerate_face(&alg, rot, extra, cap as usize);
                 (
                     len,
                     sols.iter()
@@ -437,7 +452,10 @@ impl Roux223SolverWasm {
             4 => {
                 self.ensure_f2b();
                 let b = self.f2b.borrow();
-                let (len, sols) = b.as_ref().unwrap().enumerate_face(&alg, rot, extra, cap as usize);
+                let (len, sols) =
+                    b.as_ref()
+                        .unwrap()
+                        .enumerate_face(&alg, rot, extra, cap as usize);
                 (
                     len,
                     sols.iter()
@@ -453,7 +471,10 @@ impl Roux223SolverWasm {
             _ => {
                 self.ensure_223();
                 let b = self.b223.borrow();
-                let (len, sols) = b.as_ref().unwrap().enumerate_face(&alg, rot, extra, cap as usize);
+                let (len, sols) =
+                    b.as_ref()
+                        .unwrap()
+                        .enumerate_face(&alg, rot, extra, cap as usize);
                 (
                     len,
                     sols.iter()
@@ -514,7 +535,14 @@ impl EoDrSolverWasm {
 
     /// 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。`m` 前缀 =
     /// rot + y^k;`c` = 目标标签(EO 轴 "FB" / EOLine "D(FB)" / DR 轴 "UD")。
-    pub fn solve_moves(&self, scramble: &str, stage: u32, face: u32, extra: u32, cap: u32) -> String {
+    pub fn solve_moves(
+        &self,
+        scramble: &str,
+        stage: u32,
+        face: u32,
+        extra: u32,
+        cap: u32,
+    ) -> String {
         let alg = string_to_alg(scramble);
         let fi = (face as usize).min(5);
         let rot = ROTS[fi];
@@ -550,7 +578,10 @@ impl EoDrSolverWasm {
             _ => {
                 self.ensure_dr();
                 let b = self.dr.borrow();
-                let (len, sols) = b.as_ref().unwrap().enumerate_face(&alg, rot, extra, cap as usize);
+                let (len, sols) =
+                    b.as_ref()
+                        .unwrap()
+                        .enumerate_face(&alg, rot, extra, cap as usize);
                 (
                     len,
                     sols.iter()
@@ -582,7 +613,9 @@ impl HtrSolverWasm {
     #[wasm_bindgen(constructor)]
     #[allow(clippy::new_without_default)]
     pub fn new() -> HtrSolverWasm {
-        HtrSolverWasm { htr: RefCell::new(None) }
+        HtrSolverWasm {
+            htr: RefCell::new(None),
+        }
     }
 
     fn ensure(&self) {
@@ -613,7 +646,11 @@ impl HtrSolverWasm {
         let fi = (face as usize).min(5);
         let rot = ROTS[fi];
         let b = self.htr.borrow();
-        match b.as_ref().unwrap().enumerate_face(&alg, rot, extra, cap as usize) {
+        match b
+            .as_ref()
+            .unwrap()
+            .enumerate_face(&alg, rot, extra, cap as usize)
+        {
             Some((len, sols)) => {
                 let items: Vec<(String, String)> = sols
                     .iter()
@@ -640,7 +677,9 @@ impl HtrPhase2SolverWasm {
     #[wasm_bindgen(constructor)]
     #[allow(clippy::new_without_default)]
     pub fn new() -> HtrPhase2SolverWasm {
-        HtrPhase2SolverWasm { htr2: RefCell::new(None) }
+        HtrPhase2SolverWasm {
+            htr2: RefCell::new(None),
+        }
     }
 
     fn ensure(&self) {
@@ -671,7 +710,11 @@ impl HtrPhase2SolverWasm {
         let fi = (face as usize).min(5);
         let rot = ROTS[fi];
         let b = self.htr2.borrow();
-        match b.as_ref().unwrap().enumerate_face(&alg, rot, extra, cap as usize) {
+        match b
+            .as_ref()
+            .unwrap()
+            .enumerate_face(&alg, rot, extra, cap as usize)
+        {
             Some((len, sols)) => {
                 let items: Vec<(String, String)> = sols
                     .iter()
@@ -698,7 +741,9 @@ impl FrSolverWasm {
     #[wasm_bindgen(constructor)]
     #[allow(clippy::new_without_default)]
     pub fn new() -> FrSolverWasm {
-        FrSolverWasm { fr: RefCell::new(None) }
+        FrSolverWasm {
+            fr: RefCell::new(None),
+        }
     }
 
     fn ensure(&self) {
@@ -729,7 +774,11 @@ impl FrSolverWasm {
         let fi = (face as usize).min(5);
         let rot = ROTS[fi];
         let b = self.fr.borrow();
-        match b.as_ref().unwrap().enumerate_face(&alg, rot, extra, cap as usize) {
+        match b
+            .as_ref()
+            .unwrap()
+            .enumerate_face(&alg, rot, extra, cap as usize)
+        {
             Some((len, sols)) => {
                 let items: Vec<(String, String)> = sols
                     .iter()
@@ -755,7 +804,9 @@ impl ChainSolverWasm {
     #[wasm_bindgen(constructor)]
     #[allow(clippy::new_without_default)]
     pub fn new() -> ChainSolverWasm {
-        ChainSolverWasm { inner: RefCell::new(None) }
+        ChainSolverWasm {
+            inner: RefCell::new(None),
+        }
     }
 
     fn ensure(&self) {
@@ -794,13 +845,17 @@ impl Cube222SolverWasm {
     #[wasm_bindgen(constructor)]
     #[allow(clippy::new_without_default)]
     pub fn new() -> Cube222SolverWasm {
-        Cube222SolverWasm { cube222: RefCell::new(None) }
+        Cube222SolverWasm {
+            cube222: RefCell::new(None),
+        }
     }
 
     /// 用预算好的全空间距离表(3,674,160 字节)即时构造(秒算:静态资源直载,
     /// 跳过现场 BFS)。worker 拉 opt_222.bin.gz 解压后传入。
     pub fn from_dist(dist: &[u8]) -> Cube222SolverWasm {
-        Cube222SolverWasm { cube222: RefCell::new(Some(Cube222Solver::from_dist(dist.to_vec()))) }
+        Cube222SolverWasm {
+            cube222: RefCell::new(Some(Cube222Solver::from_dist(dist.to_vec()))),
+        }
     }
 
     fn ensure(&self) {
@@ -843,13 +898,17 @@ impl PyraminxSolverWasm {
     #[wasm_bindgen(constructor)]
     #[allow(clippy::new_without_default)]
     pub fn new() -> PyraminxSolverWasm {
-        PyraminxSolverWasm { pyra: RefCell::new(None) }
+        PyraminxSolverWasm {
+            pyra: RefCell::new(None),
+        }
     }
 
     /// 用预算好的核心全空间距离表(933,120 字节)即时构造(秒算:静态资源直载,
     /// 跳过现场 BFS)。worker 拉 opt_pyraminx.bin.gz 解压后传入。
     pub fn from_dist(dist: &[u8]) -> PyraminxSolverWasm {
-        PyraminxSolverWasm { pyra: RefCell::new(Some(PyraminxSolver::from_dist(dist.to_vec()))) }
+        PyraminxSolverWasm {
+            pyra: RefCell::new(Some(PyraminxSolver::from_dist(dist.to_vec()))),
+        }
     }
 
     fn ensure(&self) {
@@ -891,13 +950,17 @@ impl SkewbSolverWasm {
     #[wasm_bindgen(constructor)]
     #[allow(clippy::new_without_default)]
     pub fn new() -> SkewbSolverWasm {
-        SkewbSolverWasm { skewb: RefCell::new(None) }
+        SkewbSolverWasm {
+            skewb: RefCell::new(None),
+        }
     }
 
     /// 用预算好的全空间距离表(3,149,280 字节)即时构造(秒算:静态资源直载,
     /// 跳过现场 BFS)。worker 拉 opt_skewb.bin.gz 解压后传入。
     pub fn from_dist(dist: &[u8]) -> SkewbSolverWasm {
-        SkewbSolverWasm { skewb: RefCell::new(Some(SkewbSolver::from_dist(dist.to_vec()))) }
+        SkewbSolverWasm {
+            skewb: RefCell::new(Some(SkewbSolver::from_dist(dist.to_vec()))),
+        }
     }
 
     fn ensure(&self) {
@@ -1079,21 +1142,31 @@ impl CrossSolverWasm {
             return sols_json(len, &items);
         }
         let k = (variant.min(4)) as usize; // 1..=4 槽
-        // 每条解带自己的槽位组合(并列最优时含多个不同槽)。
+                                           // 每条解带自己的槽位组合(并列最优时含多个不同槽)。
         let label = |combo: &[usize]| {
-            combo.iter().map(|&s| SLOT_LABELS[s]).collect::<Vec<_>>().join(" ")
+            combo
+                .iter()
+                .map(|&s| SLOT_LABELS[s])
+                .collect::<Vec<_>>()
+                .join(" ")
         };
         // 流式回调:每枚举到一条解即 fmt + label 后 call 进 JS(worker postMessage 给 UI)。
-        let mut emit = |combo: &[usize], p: &[u8]| emit_sol(on_sol, &fmt_moves(rot, p), &label(combo), p.len());
+        let mut emit = |combo: &[usize], p: &[u8]| {
+            emit_sol(on_sol, &fmt_moves(rot, p), &label(combo), p.len())
+        };
         // combo 非空 = 用户指定槽位(只枚举该 combo);空 = 自动挑最优槽。
         let slots = parse_combo(combo);
         let (len, sols) = if slots.is_empty() {
-            self.xcross().enumerate_best(&alg, rot, k, extra, cap, &mut emit)
+            self.xcross()
+                .enumerate_best(&alg, rot, k, extra, cap, &mut emit)
         } else {
-            self.xcross().enumerate_combo(&alg, rot, &slots, extra, cap, &mut emit)
+            self.xcross()
+                .enumerate_combo(&alg, rot, &slots, extra, cap, &mut emit)
         };
-        let items: Vec<(String, String)> =
-            sols.iter().map(|(combo, p)| (fmt_moves(rot, p), label(combo))).collect();
+        let items: Vec<(String, String)> = sols
+            .iter()
+            .map(|(combo, p)| (fmt_moves(rot, p), label(combo)))
+            .collect();
         sols_json(len, &items)
     }
 
@@ -1105,7 +1178,9 @@ impl CrossSolverWasm {
         let alg = string_to_alg(scramble);
         let rot = [ROTS[(face as usize).min(5)]];
         if variant == 0 {
-            return self.cross.get_stats_masked(&alg, &rot, mask, CROSS_MASK_DEPTH)[0]
+            return self
+                .cross
+                .get_stats_masked(&alg, &rot, mask, CROSS_MASK_DEPTH)[0]
                 .unwrap_or(u32::MAX);
         }
         let max_v = (variant.min(4) - 1) as usize; // 1→0(xc) .. 4→3(xxxxc)
@@ -1133,10 +1208,14 @@ impl CrossSolverWasm {
         let rot = ROTS[(face as usize).min(5)];
         let cap = cap as usize;
         if variant == 0 {
-            return match self
-                .cross
-                .enumerate_solutions_masked(&alg, rot, extra, cap, mask, CROSS_MASK_DEPTH)
-            {
+            return match self.cross.enumerate_solutions_masked(
+                &alg,
+                rot,
+                extra,
+                cap,
+                mask,
+                CROSS_MASK_DEPTH,
+            ) {
                 Some((len, sols)) => {
                     let items: Vec<(String, String)> = sols
                         .iter()
@@ -1153,23 +1232,47 @@ impl CrossSolverWasm {
         }
         let k = (variant.min(4)) as usize; // 1..=4 槽
         let label = |combo: &[usize]| {
-            combo.iter().map(|&s| SLOT_LABELS[s]).collect::<Vec<_>>().join(" ")
+            combo
+                .iter()
+                .map(|&s| SLOT_LABELS[s])
+                .collect::<Vec<_>>()
+                .join(" ")
         };
-        let mut emit = |combo: &[usize], p: &[u8]| emit_sol(on_sol, &fmt_moves(rot, p), &label(combo), p.len());
+        let mut emit = |combo: &[usize], p: &[u8]| {
+            emit_sol(on_sol, &fmt_moves(rot, p), &label(combo), p.len())
+        };
         let slots = parse_combo(combo);
         let (len, sols) = if slots.is_empty() {
-            self.xcross()
-                .enumerate_best_masked(&alg, rot, k, extra, cap, mask, XCROSS_MASK_DEPTH, &mut emit)
+            self.xcross().enumerate_best_masked(
+                &alg,
+                rot,
+                k,
+                extra,
+                cap,
+                mask,
+                XCROSS_MASK_DEPTH,
+                &mut emit,
+            )
         } else {
-            self.xcross()
-                .enumerate_combo_masked(&alg, rot, &slots, extra, cap, mask, XCROSS_MASK_DEPTH, &mut emit)
+            self.xcross().enumerate_combo_masked(
+                &alg,
+                rot,
+                &slots,
+                extra,
+                cap,
+                mask,
+                XCROSS_MASK_DEPTH,
+                &mut emit,
+            )
         };
         // best_len==99 = 限制下(或超界)无解 → u32::MAX 哨兵 + 空解集(同 cross None 分支语义)。
         if len >= 99 {
             return sols_json(u32::MAX, &[]);
         }
-        let items: Vec<(String, String)> =
-            sols.iter().map(|(combo, p)| (fmt_moves(rot, p), label(combo))).collect();
+        let items: Vec<(String, String)> = sols
+            .iter()
+            .map(|(combo, p)| (fmt_moves(rot, p), label(combo)))
+            .collect();
         sols_json(len, &items)
     }
 }
@@ -1237,13 +1340,21 @@ impl F2leoSolverWasm {
     /// F2LEO 24 值:[cross×6, xcross×6, xxcross×6, xxxcross×6](6 = 已折叠 z0/z2/z3/z1/x3/x1)。
     pub fn solve_f2leo(&self, scramble: &str) -> Vec<u32> {
         self.ensure_f2leo();
-        self.f2leo.borrow().as_ref().unwrap().get_stats(&string_to_alg(scramble))
+        self.f2leo
+            .borrow()
+            .as_ref()
+            .unwrap()
+            .get_stats(&string_to_alg(scramble))
     }
 
     /// Pseudo F2LEO 24 值,顺序同上。
     pub fn solve_pseudo_f2leo(&self, scramble: &str) -> Vec<u32> {
         self.ensure_pseudo();
-        self.pseudo.borrow().as_ref().unwrap().get_stats(&string_to_alg(scramble))
+        self.pseudo
+            .borrow()
+            .as_ref()
+            .unwrap()
+            .get_stats(&string_to_alg(scramble))
     }
 
     /// 单阶段 6 值(stage 0=cross/1=xc/2=xxc/3=xxxc)。cross 极快 → UI 先单算 cross 秒出,
@@ -1278,10 +1389,18 @@ impl F2leoSolverWasm {
         let prog = cb.as_ref().map(|f| f as &dyn Fn(usize, u32));
         if pseudo {
             self.ensure_pseudo();
-            self.pseudo.borrow().as_ref().unwrap().get_stage(&alg, st, prog)
+            self.pseudo
+                .borrow()
+                .as_ref()
+                .unwrap()
+                .get_stage(&alg, st, prog)
         } else {
             self.ensure_f2leo();
-            self.f2leo.borrow().as_ref().unwrap().get_stage(&alg, st, prog)
+            self.f2leo
+                .borrow()
+                .as_ref()
+                .unwrap()
+                .get_stage(&alg, st, prog)
         }
     }
 
@@ -1317,28 +1436,50 @@ impl F2leoSolverWasm {
         let (len, raw) = if pseudo {
             self.ensure_pseudo();
             let b = self.pseudo.borrow();
-            b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force)
+            b.as_ref()
+                .unwrap()
+                .enumerate_small(&alg, rot, stage, extra, cap, &force)
         } else {
             self.ensure_f2leo();
             let b = self.f2leo.borrow();
-            b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force)
+            b.as_ref()
+                .unwrap()
+                .enumerate_small(&alg, rot, stage, extra, cap, &force)
         };
-        let items: Vec<(String, String)> =
-            raw.iter().map(|(frame, combo, p)| (fmt_moves(frame, p), label(combo))).collect();
+        let items: Vec<(String, String)> = raw
+            .iter()
+            .map(|(frame, combo, p)| (fmt_moves(frame, p), label(combo)))
+            .collect();
         sols_json(len, &items)
     }
 
     /// 受限步法版 solve_f2leo_stage:`mask` = 18 个 move 的 bitmask。限制下无解的视角
     /// 返回 u32::MAX 哨兵(client 显示 '-')。variant_mask_depth(mask) 封顶。
-    pub fn solve_f2leo_stage_masked(&self, scramble: &str, pseudo: bool, stage: u32, mask: u32) -> Vec<u32> {
+    pub fn solve_f2leo_stage_masked(
+        &self,
+        scramble: &str,
+        pseudo: bool,
+        stage: u32,
+        mask: u32,
+    ) -> Vec<u32> {
         let alg = string_to_alg(scramble);
         let st = stage.min(3) as usize;
         let out = if pseudo {
             self.ensure_pseudo();
-            self.pseudo.borrow().as_ref().unwrap().get_stage_masked(&alg, st, mask, variant_mask_depth(mask))
+            self.pseudo.borrow().as_ref().unwrap().get_stage_masked(
+                &alg,
+                st,
+                mask,
+                variant_mask_depth(mask),
+            )
         } else {
             self.ensure_f2leo();
-            self.f2leo.borrow().as_ref().unwrap().get_stage_masked(&alg, st, mask, variant_mask_depth(mask))
+            self.f2leo.borrow().as_ref().unwrap().get_stage_masked(
+                &alg,
+                st,
+                mask,
+                variant_mask_depth(mask),
+            )
         };
         out.into_iter().map(|v| v.unwrap_or(u32::MAX)).collect()
     }
@@ -1361,24 +1502,48 @@ impl F2leoSolverWasm {
         let stage = stage.min(3) as usize;
         let cap = cap as usize;
         let label = |combo: &[usize]| {
-            combo.iter().map(|&s| SLOT_LABELS[s.min(3)]).collect::<Vec<_>>().join(" ")
+            combo
+                .iter()
+                .map(|&s| SLOT_LABELS[s.min(3)])
+                .collect::<Vec<_>>()
+                .join(" ")
         };
         let force = parse_combo(combo);
         let (len, raw) = if pseudo {
             self.ensure_pseudo();
             let b = self.pseudo.borrow();
-            b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, cap, &force, mask, variant_mask_depth(mask))
+            b.as_ref().unwrap().enumerate_small_masked(
+                &alg,
+                rot,
+                stage,
+                extra,
+                cap,
+                &force,
+                mask,
+                variant_mask_depth(mask),
+            )
         } else {
             self.ensure_f2leo();
             let b = self.f2leo.borrow();
-            b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, cap, &force, mask, variant_mask_depth(mask))
+            b.as_ref().unwrap().enumerate_small_masked(
+                &alg,
+                rot,
+                stage,
+                extra,
+                cap,
+                &force,
+                mask,
+                variant_mask_depth(mask),
+            )
         };
         // best_len==99 = 限制下(或超界)无解 → u32::MAX 哨兵 + 空解集。
         if len >= 99 {
             return sols_json(u32::MAX, &[]);
         }
-        let items: Vec<(String, String)> =
-            raw.iter().map(|(frame, combo, p)| (fmt_moves(frame, p), label(combo))).collect();
+        let items: Vec<(String, String)> = raw
+            .iter()
+            .map(|(frame, combo, p)| (fmt_moves(frame, p), label(combo)))
+            .collect();
         sols_json(len, &items)
     }
 }
@@ -1513,7 +1678,11 @@ impl VariantSolverWasm {
         match variant {
             0 => {
                 self.ensure_pair();
-                self.pair.borrow().as_ref().unwrap().get_stats_small(&alg, &ROTS)
+                self.pair
+                    .borrow()
+                    .as_ref()
+                    .unwrap()
+                    .get_stats_small(&alg, &ROTS)
             }
             1 => {
                 self.ensure_eo();
@@ -1521,11 +1690,19 @@ impl VariantSolverWasm {
             }
             2 => {
                 self.ensure_pseudo();
-                self.pseudo.borrow().as_ref().unwrap().pseudo_get_stats_small(&alg)
+                self.pseudo
+                    .borrow()
+                    .as_ref()
+                    .unwrap()
+                    .pseudo_get_stats_small(&alg)
             }
             3 => {
                 self.ensure_pseudo_pair();
-                self.pseudo_pair.borrow().as_ref().unwrap().pseudo_pair_get_stats_small(&alg)
+                self.pseudo_pair
+                    .borrow()
+                    .as_ref()
+                    .unwrap()
+                    .pseudo_pair_get_stats_small(&alg)
             }
             _ => vec![0; 24],
         }
@@ -1562,15 +1739,20 @@ impl VariantSolverWasm {
         match variant {
             0 => {
                 self.ensure_pair();
-                self.pair
-                    .borrow()
-                    .as_ref()
-                    .unwrap()
-                    .get_stage_small(&alg, &ROTS, stage as usize, prog)
+                self.pair.borrow().as_ref().unwrap().get_stage_small(
+                    &alg,
+                    &ROTS,
+                    stage as usize,
+                    prog,
+                )
             }
             1 => {
                 self.ensure_eo();
-                self.eo.borrow().as_ref().unwrap().eo_get_stage_small(&alg, stage as usize, prog)
+                self.eo
+                    .borrow()
+                    .as_ref()
+                    .unwrap()
+                    .eo_get_stage_small(&alg, stage as usize, prog)
             }
             2 => {
                 self.ensure_pseudo();
@@ -1626,33 +1808,47 @@ impl VariantSolverWasm {
         // enumerate_small 现统一返回 (best_len, Vec<(frame, combo, sol)>):每条解带自己的 frame
         // (eo 破 y 对称可能 rot·y)+ 槽位(并列最优可能跨不同槽)。
         let pack = |len: u32, raw: Vec<(String, Vec<usize>, Vec<u8>)>| -> String {
-            let items: Vec<(String, String)> =
-                raw.iter().map(|(frame, combo, p)| (fmt_moves(frame, p), label(combo))).collect();
+            let items: Vec<(String, String)> = raw
+                .iter()
+                .map(|(frame, combo, p)| (fmt_moves(frame, p), label(combo)))
+                .collect();
             sols_json(len, &items)
         };
         match variant {
             0 => {
                 self.ensure_pair();
                 let b = self.pair.borrow();
-                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force, base);
+                let (len, raw) = b
+                    .as_ref()
+                    .unwrap()
+                    .enumerate_small(&alg, rot, stage, extra, cap, &force, base);
                 pack(len, raw)
             }
             1 => {
                 self.ensure_eo();
                 let b = self.eo.borrow();
-                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force);
+                let (len, raw) = b
+                    .as_ref()
+                    .unwrap()
+                    .enumerate_small(&alg, rot, stage, extra, cap, &force);
                 pack(len, raw)
             }
             2 => {
                 self.ensure_pseudo();
                 let b = self.pseudo.borrow();
-                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force);
+                let (len, raw) = b
+                    .as_ref()
+                    .unwrap()
+                    .enumerate_small(&alg, rot, stage, extra, cap, &force);
                 pack(len, raw)
             }
             3 => {
                 self.ensure_pseudo_pair();
                 let b = self.pseudo_pair.borrow();
-                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force, base);
+                let (len, raw) = b
+                    .as_ref()
+                    .unwrap()
+                    .enumerate_small(&alg, rot, stage, extra, cap, &force, base);
                 pack(len, raw)
             }
             _ => sols_json(0, &[]),
@@ -1661,25 +1857,49 @@ impl VariantSolverWasm {
 
     /// 受限步法版 solve_stage(单阶段 6 视角)。`mask` = 18 个 move 的 bitmask;限制下无解的
     /// 视角返回 u32::MAX 哨兵(client 显示 '-')。variant_mask_depth(mask) 封顶。
-    pub fn solve_stage_masked(&self, scramble: &str, variant: u32, stage: u32, mask: u32) -> Vec<u32> {
+    pub fn solve_stage_masked(
+        &self,
+        scramble: &str,
+        variant: u32,
+        stage: u32,
+        mask: u32,
+    ) -> Vec<u32> {
         let alg = string_to_alg(scramble);
         let st = stage as usize;
         let out: Vec<Option<u32>> = match variant {
             0 => {
                 self.ensure_pair();
-                self.pair.borrow().as_ref().unwrap().get_stage_small_masked(&alg, &ROTS, st, mask, variant_mask_depth(mask))
+                self.pair.borrow().as_ref().unwrap().get_stage_small_masked(
+                    &alg,
+                    &ROTS,
+                    st,
+                    mask,
+                    variant_mask_depth(mask),
+                )
             }
             1 => {
                 self.ensure_eo();
-                self.eo.borrow().as_ref().unwrap().eo_get_stage_small_masked(&alg, st, mask, variant_mask_depth(mask))
+                self.eo
+                    .borrow()
+                    .as_ref()
+                    .unwrap()
+                    .eo_get_stage_small_masked(&alg, st, mask, variant_mask_depth(mask))
             }
             2 => {
                 self.ensure_pseudo();
-                self.pseudo.borrow().as_ref().unwrap().pseudo_get_stage_small_masked(&alg, st, mask, variant_mask_depth(mask))
+                self.pseudo
+                    .borrow()
+                    .as_ref()
+                    .unwrap()
+                    .pseudo_get_stage_small_masked(&alg, st, mask, variant_mask_depth(mask))
             }
             3 => {
                 self.ensure_pseudo_pair();
-                self.pseudo_pair.borrow().as_ref().unwrap().pseudo_pair_get_stage_small_masked(&alg, st, mask, variant_mask_depth(mask))
+                self.pseudo_pair
+                    .borrow()
+                    .as_ref()
+                    .unwrap()
+                    .pseudo_pair_get_stage_small_masked(&alg, st, mask, variant_mask_depth(mask))
             }
             _ => vec![None; 6],
         };
@@ -1706,14 +1926,20 @@ impl VariantSolverWasm {
         let cap = cap as usize;
         let force = parse_combo(combo);
         let label = |combo: &[usize]| {
-            combo.iter().map(|&s| SLOT_LABELS[s.min(3)]).collect::<Vec<_>>().join(" ")
+            combo
+                .iter()
+                .map(|&s| SLOT_LABELS[s.min(3)])
+                .collect::<Vec<_>>()
+                .join(" ")
         };
         let pack = |len: u32, raw: Vec<(String, Vec<usize>, Vec<u8>)>| -> String {
             if len >= 99 {
                 return sols_json(u32::MAX, &[]);
             }
-            let items: Vec<(String, String)> =
-                raw.iter().map(|(frame, combo, p)| (fmt_moves(frame, p), label(combo))).collect();
+            let items: Vec<(String, String)> = raw
+                .iter()
+                .map(|(frame, combo, p)| (fmt_moves(frame, p), label(combo)))
+                .collect();
             sols_json(len, &items)
         };
         let d = variant_mask_depth(mask);
@@ -1721,25 +1947,37 @@ impl VariantSolverWasm {
             0 => {
                 self.ensure_pair();
                 let b = self.pair.borrow();
-                let (len, raw) = b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, cap, &force, base, mask, d);
+                let (len, raw) = b
+                    .as_ref()
+                    .unwrap()
+                    .enumerate_small_masked(&alg, rot, stage, extra, cap, &force, base, mask, d);
                 pack(len, raw)
             }
             1 => {
                 self.ensure_eo();
                 let b = self.eo.borrow();
-                let (len, raw) = b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, cap, &force, mask, d);
+                let (len, raw) = b
+                    .as_ref()
+                    .unwrap()
+                    .enumerate_small_masked(&alg, rot, stage, extra, cap, &force, mask, d);
                 pack(len, raw)
             }
             2 => {
                 self.ensure_pseudo();
                 let b = self.pseudo.borrow();
-                let (len, raw) = b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, cap, &force, mask, d);
+                let (len, raw) = b
+                    .as_ref()
+                    .unwrap()
+                    .enumerate_small_masked(&alg, rot, stage, extra, cap, &force, mask, d);
                 pack(len, raw)
             }
             3 => {
                 self.ensure_pseudo_pair();
                 let b = self.pseudo_pair.borrow();
-                let (len, raw) = b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, cap, &force, base, mask, d);
+                let (len, raw) = b
+                    .as_ref()
+                    .unwrap()
+                    .enumerate_small_masked(&alg, rot, stage, extra, cap, &force, base, mask, d);
                 pack(len, raw)
             }
             _ => sols_json(u32::MAX, &[]),
@@ -1812,7 +2050,12 @@ impl CrossRestrictSolverWasm {
         let allowed: u64 = ((allowed_hi as u64) << 32) | (allowed_lo as u64);
         let sc = CrossRestrictSolver::parse_scramble(scramble);
         let sols = self.solver.solve_face_restricted_enum(
-            &sc, face as usize, allowed, max_rot_count, extra, cap as usize,
+            &sc,
+            face as usize,
+            allowed,
+            max_rot_count,
+            extra,
+            cap as usize,
         );
         if sols.is_empty() {
             return sols_json(u32::MAX, &[]);
@@ -1822,7 +2065,10 @@ impl CrossRestrictSolverWasm {
             .iter()
             .map(|s| {
                 (
-                    s.iter().map(|&m| MOVE_NAMES_54[m]).collect::<Vec<_>>().join(" "),
+                    s.iter()
+                        .map(|&m| MOVE_NAMES_54[m])
+                        .collect::<Vec<_>>()
+                        .join(" "),
                     String::new(),
                 )
             })
@@ -1908,7 +2154,11 @@ impl XCrossRestrictSolverWasm {
                 .clamp(XCR_GRID_MIN_PER_COMBO, XCR_GRID_MAX_PER_COMBO)
         };
         let grid = self.solver.solve_xcross_restricted_grid_budgeted(
-            &sc, allowed, max_rot_count, per_combo, k as usize,
+            &sc,
+            allowed,
+            max_rot_count,
+            per_combo,
+            k as usize,
         );
         let arr = grid
             .iter()
@@ -1952,16 +2202,32 @@ impl XCrossRestrictSolverWasm {
         // 与全站其他求解器约定一致(`.m` 含视角前缀);face 0 前缀为空。len 不含前缀(旋转免费)。
         let pfx = ROTS_FACE[(face as usize).min(5)];
         let with_pfx = |body: String| -> String {
-            if pfx.is_empty() { body } else { format!("{} {}", pfx, body) }
+            if pfx.is_empty() {
+                body
+            } else {
+                format!("{} {}", pfx, body)
+            }
         };
         // 流式回调:每枚举到一条解即格式化(54-move 记号 + 视角前缀,c 恒空串)后 call 进 JS。
         let mut emit = |seq: &[usize]| {
-            let body = seq.iter().map(|&x| MOVE_NAMES_54[x]).collect::<Vec<_>>().join(" ");
+            let body = seq
+                .iter()
+                .map(|&x| MOVE_NAMES_54[x])
+                .collect::<Vec<_>>()
+                .join(" ");
             emit_sol(on_sol, &with_pfx(body), "", seq.len());
         };
         let sols = self.solver.solve_xcross_restricted_enum_budgeted(
-            &sc, face as usize, allowed, max_rot_count, extra, cap as usize, XCR_NODE_LIMIT,
-            k as usize, combo_v, &mut emit,
+            &sc,
+            face as usize,
+            allowed,
+            max_rot_count,
+            extra,
+            cap as usize,
+            XCR_NODE_LIMIT,
+            k as usize,
+            combo_v,
+            &mut emit,
         );
         if sols.is_empty() {
             return sols_json(u32::MAX, &[]);
@@ -1971,7 +2237,12 @@ impl XCrossRestrictSolverWasm {
             .iter()
             .map(|s| {
                 (
-                    with_pfx(s.iter().map(|&m| MOVE_NAMES_54[m]).collect::<Vec<_>>().join(" ")),
+                    with_pfx(
+                        s.iter()
+                            .map(|&m| MOVE_NAMES_54[m])
+                            .collect::<Vec<_>>()
+                            .join(" "),
+                    ),
                     String::new(),
                 )
             })

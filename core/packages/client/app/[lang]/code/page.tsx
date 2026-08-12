@@ -124,14 +124,14 @@ const CARDS: Card[] = [
     zh: {
       title: '大模型',
       sub: 'Large Language Models',
-      tagline: '驱动 CubeRoot 日常开发的大语言模型:对话/工具/代码 LLM Claude、官方 CLI agent Claude Code,以及 Anthropic 最强的 Claude Fable 5',
-      meta: 'Claude · Claude Code · Fable 5',
+      tagline: 'CubeRoot 与大语言模型协作的历史档案:Claude、Claude Code、Claude Fable 5,以及迁移到 Codex 的过程',
+      meta: 'Claude 历史 · Codex 迁移',
     },
     en: {
       title: 'LLMs',
       sub: 'Large Language Models',
-      tagline: 'The large language models behind CubeRoot’s day-to-day development: Claude, the official CLI agent Claude Code, and Anthropic’s most capable Claude Fable 5',
-      meta: 'Claude · Claude Code · Fable 5',
+      tagline: 'An archive of CubeRoot’s work with large language models: Claude, Claude Code, Claude Fable 5, and the migration to Codex',
+      meta: 'Claude history · Codex migration',
     },
   },
   {

@@ -77,12 +77,24 @@ pub enum Move {
 
 impl Move {
     pub const ALL: [Move; 18] = [
-        Move::U, Move::U2, Move::UPrime,
-        Move::D, Move::D2, Move::DPrime,
-        Move::L, Move::L2, Move::LPrime,
-        Move::R, Move::R2, Move::RPrime,
-        Move::F, Move::F2, Move::FPrime,
-        Move::B, Move::B2, Move::BPrime,
+        Move::U,
+        Move::U2,
+        Move::UPrime,
+        Move::D,
+        Move::D2,
+        Move::DPrime,
+        Move::L,
+        Move::L2,
+        Move::LPrime,
+        Move::R,
+        Move::R2,
+        Move::RPrime,
+        Move::F,
+        Move::F2,
+        Move::FPrime,
+        Move::B,
+        Move::B2,
+        Move::BPrime,
     ];
 
     #[inline]
@@ -101,9 +113,8 @@ impl Move {
 }
 
 pub const MOVE_NAMES: [&str; 18] = [
-    "U", "U2", "U'", "D", "D2", "D'",
-    "L", "L2", "L'", "R", "R2", "R'",
-    "F", "F2", "F'", "B", "B2", "B'",
+    "U", "U2", "U'", "D", "D2", "D'", "L", "L2", "L'", "R", "R2", "R'", "F", "F2", "F'", "B", "B2",
+    "B'",
 ];
 
 // ---------- State ----------
@@ -249,53 +260,131 @@ const Z0E: [u8; 12] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 pub const MOVE_STATES: [State; 18] = [
     // U
-    make_move([3, 0, 1, 2, 4, 5, 6, 7], Z0, [0, 1, 2, 3, 7, 4, 5, 6, 8, 9, 10, 11], Z0E),
+    make_move(
+        [3, 0, 1, 2, 4, 5, 6, 7],
+        Z0,
+        [0, 1, 2, 3, 7, 4, 5, 6, 8, 9, 10, 11],
+        Z0E,
+    ),
     // U2
-    make_move([2, 3, 0, 1, 4, 5, 6, 7], Z0, [0, 1, 2, 3, 6, 7, 4, 5, 8, 9, 10, 11], Z0E),
+    make_move(
+        [2, 3, 0, 1, 4, 5, 6, 7],
+        Z0,
+        [0, 1, 2, 3, 6, 7, 4, 5, 8, 9, 10, 11],
+        Z0E,
+    ),
     // U'
-    make_move([1, 2, 3, 0, 4, 5, 6, 7], Z0, [0, 1, 2, 3, 5, 6, 7, 4, 8, 9, 10, 11], Z0E),
+    make_move(
+        [1, 2, 3, 0, 4, 5, 6, 7],
+        Z0,
+        [0, 1, 2, 3, 5, 6, 7, 4, 8, 9, 10, 11],
+        Z0E,
+    ),
     // D
-    make_move([0, 1, 2, 3, 5, 6, 7, 4], Z0, [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 8], Z0E),
+    make_move(
+        [0, 1, 2, 3, 5, 6, 7, 4],
+        Z0,
+        [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 8],
+        Z0E,
+    ),
     // D2
-    make_move([0, 1, 2, 3, 6, 7, 4, 5], Z0, [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 8, 9], Z0E),
+    make_move(
+        [0, 1, 2, 3, 6, 7, 4, 5],
+        Z0,
+        [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 8, 9],
+        Z0E,
+    ),
     // D'
-    make_move([0, 1, 2, 3, 7, 4, 5, 6], Z0, [0, 1, 2, 3, 4, 5, 6, 7, 11, 8, 9, 10], Z0E),
+    make_move(
+        [0, 1, 2, 3, 7, 4, 5, 6],
+        Z0,
+        [0, 1, 2, 3, 4, 5, 6, 7, 11, 8, 9, 10],
+        Z0E,
+    ),
     // L
-    make_move([4, 1, 2, 0, 7, 5, 6, 3], [2, 0, 0, 1, 1, 0, 0, 2],
-              [11, 1, 2, 7, 4, 5, 6, 0, 8, 9, 10, 3], Z0E),
+    make_move(
+        [4, 1, 2, 0, 7, 5, 6, 3],
+        [2, 0, 0, 1, 1, 0, 0, 2],
+        [11, 1, 2, 7, 4, 5, 6, 0, 8, 9, 10, 3],
+        Z0E,
+    ),
     // L2
-    make_move([7, 1, 2, 4, 3, 5, 6, 0], Z0, [3, 1, 2, 0, 4, 5, 6, 11, 8, 9, 10, 7], Z0E),
+    make_move(
+        [7, 1, 2, 4, 3, 5, 6, 0],
+        Z0,
+        [3, 1, 2, 0, 4, 5, 6, 11, 8, 9, 10, 7],
+        Z0E,
+    ),
     // L'
-    make_move([3, 1, 2, 7, 0, 5, 6, 4], [2, 0, 0, 1, 1, 0, 0, 2],
-              [7, 1, 2, 11, 4, 5, 6, 3, 8, 9, 10, 0], Z0E),
+    make_move(
+        [3, 1, 2, 7, 0, 5, 6, 4],
+        [2, 0, 0, 1, 1, 0, 0, 2],
+        [7, 1, 2, 11, 4, 5, 6, 3, 8, 9, 10, 0],
+        Z0E,
+    ),
     // R
-    make_move([0, 2, 6, 3, 4, 1, 5, 7], [0, 1, 2, 0, 0, 2, 1, 0],
-              [0, 5, 9, 3, 4, 2, 6, 7, 8, 1, 10, 11], Z0E),
+    make_move(
+        [0, 2, 6, 3, 4, 1, 5, 7],
+        [0, 1, 2, 0, 0, 2, 1, 0],
+        [0, 5, 9, 3, 4, 2, 6, 7, 8, 1, 10, 11],
+        Z0E,
+    ),
     // R2
-    make_move([0, 6, 5, 3, 4, 2, 1, 7], Z0, [0, 2, 1, 3, 4, 9, 6, 7, 8, 5, 10, 11], Z0E),
+    make_move(
+        [0, 6, 5, 3, 4, 2, 1, 7],
+        Z0,
+        [0, 2, 1, 3, 4, 9, 6, 7, 8, 5, 10, 11],
+        Z0E,
+    ),
     // R'
-    make_move([0, 5, 1, 3, 4, 6, 2, 7], [0, 1, 2, 0, 0, 2, 1, 0],
-              [0, 9, 5, 3, 4, 1, 6, 7, 8, 2, 10, 11], Z0E),
+    make_move(
+        [0, 5, 1, 3, 4, 6, 2, 7],
+        [0, 1, 2, 0, 0, 2, 1, 0],
+        [0, 9, 5, 3, 4, 1, 6, 7, 8, 2, 10, 11],
+        Z0E,
+    ),
     // F
-    make_move([0, 1, 3, 7, 4, 5, 2, 6], [0, 0, 1, 2, 0, 0, 2, 1],
-              [0, 1, 6, 10, 4, 5, 3, 7, 8, 9, 2, 11],
-              [0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0]),
+    make_move(
+        [0, 1, 3, 7, 4, 5, 2, 6],
+        [0, 0, 1, 2, 0, 0, 2, 1],
+        [0, 1, 6, 10, 4, 5, 3, 7, 8, 9, 2, 11],
+        [0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0],
+    ),
     // F2
-    make_move([0, 1, 7, 6, 4, 5, 3, 2], Z0, [0, 1, 3, 2, 4, 5, 10, 7, 8, 9, 6, 11], Z0E),
+    make_move(
+        [0, 1, 7, 6, 4, 5, 3, 2],
+        Z0,
+        [0, 1, 3, 2, 4, 5, 10, 7, 8, 9, 6, 11],
+        Z0E,
+    ),
     // F'
-    make_move([0, 1, 6, 2, 4, 5, 7, 3], [0, 0, 1, 2, 0, 0, 2, 1],
-              [0, 1, 10, 6, 4, 5, 2, 7, 8, 9, 3, 11],
-              [0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0]),
+    make_move(
+        [0, 1, 6, 2, 4, 5, 7, 3],
+        [0, 0, 1, 2, 0, 0, 2, 1],
+        [0, 1, 10, 6, 4, 5, 2, 7, 8, 9, 3, 11],
+        [0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0],
+    ),
     // B
-    make_move([1, 5, 2, 3, 0, 4, 6, 7], [1, 2, 0, 0, 2, 1, 0, 0],
-              [4, 8, 2, 3, 1, 5, 6, 7, 0, 9, 10, 11],
-              [1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]),
+    make_move(
+        [1, 5, 2, 3, 0, 4, 6, 7],
+        [1, 2, 0, 0, 2, 1, 0, 0],
+        [4, 8, 2, 3, 1, 5, 6, 7, 0, 9, 10, 11],
+        [1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+    ),
     // B2
-    make_move([5, 4, 2, 3, 1, 0, 6, 7], Z0, [1, 0, 2, 3, 8, 5, 6, 7, 4, 9, 10, 11], Z0E),
+    make_move(
+        [5, 4, 2, 3, 1, 0, 6, 7],
+        Z0,
+        [1, 0, 2, 3, 8, 5, 6, 7, 4, 9, 10, 11],
+        Z0E,
+    ),
     // B'
-    make_move([4, 0, 2, 3, 5, 1, 6, 7], [1, 2, 0, 0, 2, 1, 0, 0],
-              [8, 4, 2, 3, 0, 5, 6, 7, 1, 9, 10, 11],
-              [1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]),
+    make_move(
+        [4, 0, 2, 3, 5, 1, 6, 7],
+        [1, 2, 0, 0, 2, 1, 0, 0],
+        [8, 4, 2, 3, 0, 5, 6, 7, 1, 9, 10, 11],
+        [1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+    ),
 ];
 
 #[inline]
@@ -331,12 +420,7 @@ const BASE_ARRAY: [[i32; 6]; 4] = [
 // base_array2[tmp2][i] = 剩余数:
 //   tmp2=2 (pn=12): [12, 11, 10, 9, 8, 7]
 //   tmp2=3 (pn=8):  [8, 7, 6, 5, 4, 3]
-const BASE_ARRAY2: [[i32; 6]; 4] = [
-    [0; 6],
-    [0; 6],
-    [12, 11, 10, 9, 8, 7],
-    [8, 7, 6, 5, 4, 3],
-];
+const BASE_ARRAY2: [[i32; 6]; 4] = [[0; 6], [0; 6], [12, 11, 10, 9, 8, 7], [8, 7, 6, 5, 4, 3]];
 
 // c_array2[c][n] = c^n (c=2 用于 EO 累计,容量 12;c=3 用于 CO,容量 8)
 const C_ARRAY2_C2: [i32; 12] = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
@@ -534,8 +618,7 @@ pub fn sym_moves_flat() -> &'static [[u8; 12]; 18] {
     static V: OnceLock<[[u8; 12]; 18]> = OnceLock::new();
     V.get_or_init(|| {
         let rot_names = [
-            "", "y", "z2", "z2 y", "z'", "z' y",
-            "z", "z y", "x'", "x' y", "x", "x y",
+            "", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y",
         ];
         let mut tbl = [[0u8; 12]; 18];
         for m in 0..18u8 {
@@ -592,8 +675,7 @@ pub fn valid_moves() -> &'static ValidMovesTable {
             for i in 0..18i32 {
                 let bad = (prev < 18)
                     && (i / 3 == prev / 3
-                        || ((i / 3) / 2 == (prev / 3) / 2
-                            && (prev / 3) % 2 > (i / 3) % 2));
+                        || ((i / 3) / 2 == (prev / 3) / 2 && (prev / 3) % 2 > (i / 3) % 2));
                 if !bad {
                     flat[prev as usize][c] = i as u8;
                     c += 1;
@@ -629,9 +711,7 @@ pub fn valid_moves_masked(mask: MoveMask) -> ValidMovesTable {
 // ---------- 移动表构造引擎 ----------
 
 /// 逆操作映射表:inv[m] = m 的逆 move(数值上)。
-pub const INV_MOVE: [u8; 18] = [
-    2, 1, 0, 5, 4, 3, 8, 7, 6, 11, 10, 9, 14, 13, 12, 17, 16, 15,
-];
+pub const INV_MOVE: [u8; 18] = [2, 1, 0, 5, 4, 3, 8, 7, 6, 11, 10, 9, 14, 13, 12, 17, 16, 15];
 
 /// 翻译自 C++ createMultiMoveTable。stride=18。
 ///
@@ -782,8 +862,12 @@ pub fn read_table_le_u32<P: AsRef<Path>>(path: P) -> Result<Vec<u32>, TableError
 
 #[inline]
 pub fn get_neighbor_view(s1: i32, s2: i32) -> i32 {
-    if (s2 - s1 + 4) % 4 == 1 { return s1; }
-    if (s1 - s2 + 4) % 4 == 1 { return s2; }
+    if (s2 - s1 + 4) % 4 == 1 {
+        return s1;
+    }
+    if (s1 - s2 + 4) % 4 == 1 {
+        return s2;
+    }
     -1
 }
 
@@ -791,8 +875,12 @@ pub fn get_neighbor_view(s1: i32, s2: i32) -> i32 {
 pub fn get_diagonal_view(s1: i32, s2: i32) -> i32 {
     let mn = s1.min(s2);
     let mx = s1.max(s2);
-    if mn == 0 && mx == 2 { return 0; }
-    if mn == 1 && mx == 3 { return 1; }
+    if mn == 0 && mx == 2 {
+        return 0;
+    }
+    if mn == 1 && mx == 3 {
+        return 1;
+    }
     -1
 }
 
@@ -810,13 +898,21 @@ pub fn get_plus_table_idx(s_base: i32, s_target: i32) -> i32 {
 #[inline]
 pub fn get_e2_type(e1: i32, e2: i32) -> i32 {
     let diff = (e2 - e1 + 4) & 3;
-    if diff == 2 { 1 } else { 0 }
+    if diff == 2 {
+        1
+    } else {
+        0
+    }
 }
 
 #[inline]
 pub fn get_c2_type(c1: i32, c2: i32) -> i32 {
     let diff = (c2 - c1 + 4) & 3;
-    if diff == 2 { 1 } else { 0 }
+    if diff == 2 {
+        1
+    } else {
+        0
+    }
 }
 
 // ---------- 测试辅助:跨模块共享 env-lock ----------
@@ -858,21 +954,27 @@ mod tests {
     #[test]
     fn u_quad_identity() {
         let mut s = State::solved();
-        for _ in 0..4 { s.apply(Move::U); }
+        for _ in 0..4 {
+            s.apply(Move::U);
+        }
         assert_eq!(s, State::solved());
     }
 
     #[test]
     fn l_quad_identity() {
         let mut s = State::solved();
-        for _ in 0..4 { s.apply(Move::L); }
+        for _ in 0..4 {
+            s.apply(Move::L);
+        }
         assert_eq!(s, State::solved());
     }
 
     #[test]
     fn r_quad_identity() {
         let mut s = State::solved();
-        for _ in 0..4 { s.apply(Move::R); }
+        for _ in 0..4 {
+            s.apply(Move::R);
+        }
         assert_eq!(s, State::solved());
     }
 
@@ -880,7 +982,9 @@ mod tests {
     fn d_f_b_quad_identity() {
         for m in [Move::D, Move::F, Move::B] {
             let mut s = State::solved();
-            for _ in 0..4 { s.apply(m); }
+            for _ in 0..4 {
+                s.apply(m);
+            }
             assert_eq!(s, State::solved(), "{:?} ^4 != id", m);
         }
     }

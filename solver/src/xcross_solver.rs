@@ -467,8 +467,7 @@ impl XCrossSolver {
             };
 
             // --- 2. XXCross ---
-            const PAIRS: [(usize, usize); 6] =
-                [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
+            const PAIRS: [(usize, usize); 6] = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
             let mut t2: [(usize, usize, u32); 6] = std::array::from_fn(|i| {
                 let (a, b) = PAIRS[i];
                 let (e6, c2, conj, table) = self.pair_huge(&st, a, b, nb, dg);
@@ -502,8 +501,7 @@ impl XCrossSolver {
             xxc[r] = best;
 
             // --- 3. XXXCross ---
-            const TRIPS: [(usize, usize, usize); 4] =
-                [(0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3)];
+            const TRIPS: [(usize, usize, usize); 4] = [(0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3)];
             let mut t3: [(usize, usize, usize, u32); 4] = std::array::from_fn(|i| {
                 let (a, b, c) = TRIPS[i];
                 let h = [(a, b), (b, c), (c, a)]
@@ -841,7 +839,11 @@ impl XCrossSolver {
         let mut a = base.clone();
         alg_rotation(&mut a, rot);
         let st: [VirtState; 4] = std::array::from_fn(|j| self.get_virt(&a, j));
-        let h = combo.iter().map(|&s| self.slot_h(&st[s])).max().unwrap_or(99);
+        let h = combo
+            .iter()
+            .map(|&s| self.slot_h(&st[s]))
+            .max()
+            .unwrap_or(99);
         let max_d = match combo.len() {
             1 => 12,
             2 => 14,
@@ -885,7 +887,14 @@ impl XCrossSolver {
                     );
                 }
                 let mut combo_out: Vec<Vec<u8>> = Vec::new();
-                self.enumerate_multi(&coords[..n], d, 18, &mut path, &mut combo_out, cap - out.len());
+                self.enumerate_multi(
+                    &coords[..n],
+                    d,
+                    18,
+                    &mut path,
+                    &mut combo_out,
+                    cap - out.len(),
+                );
                 for sol in combo_out {
                     emit(combo, &sol);
                     out.push((combo.clone(), sol));
@@ -933,8 +942,9 @@ impl XCrossSolver {
             }
 
             // --- XXCross:min over 6 pair ---
-            let mut t2: [(usize, usize, u32); 6] =
-                std::array::from_fn(|i| (PAIRS[i].0, PAIRS[i].1, h0[PAIRS[i].0].max(h0[PAIRS[i].1])));
+            let mut t2: [(usize, usize, u32); 6] = std::array::from_fn(|i| {
+                (PAIRS[i].0, PAIRS[i].1, h0[PAIRS[i].0].max(h0[PAIRS[i].1]))
+            });
             t2.sort_by_key(|t| t.2);
             let mut best = 99u32;
             for &(a0, b0, h) in &t2 {
@@ -1281,7 +1291,11 @@ impl XCrossSolver {
         let mut a = base.clone();
         alg_rotation(&mut a, rot);
         let st: [VirtState; 4] = std::array::from_fn(|j| self.get_virt(&a, j));
-        let h = combo.iter().map(|&s| self.slot_h(&st[s])).max().unwrap_or(99);
+        let h = combo
+            .iter()
+            .map(|&s| self.slot_h(&st[s]))
+            .max()
+            .unwrap_or(99);
         let cap_d = match combo.len() {
             1 => 12u32,
             2 => 14,
@@ -1292,7 +1306,8 @@ impl XCrossSolver {
         if best_len == 0 || best_len >= 99 {
             return (best_len, Vec::new());
         }
-        let out = self.enumerate_tied_masked(&st, &[combo.to_vec()], best_len, extra, cap, &vm, emit);
+        let out =
+            self.enumerate_tied_masked(&st, &[combo.to_vec()], best_len, extra, cap, &vm, emit);
         (best_len, out)
     }
 
@@ -1425,16 +1440,46 @@ mod tests {
 
         // 每行 24 值 = [xcross×6, xxcross×6, xxxcross×6, xxxxcross×6]
         let cases: &[(&str, &str, [u32; 24])] = &[
-            ("22001", "B2 U' L2 U F2 L2 D2 L2 U F2 L F2 L D U L' D2 F' U2 B",
-                [7,7,8,7,9,7, 9,10,10,9,10,9, 11,11,11,12,12,10, 14,14,14,13,14,14]),
-            ("23001", "D2 U L2 B2 R2 F2 R2 U2 R2 D' R' D B2 U B' R B' D B' L'",
-                [7,7,6,8,7,5, 10,9,8,9,9,8, 12,11,11,11,12,11, 13,13,12,13,14,12]),
-            ("24001", "L2 D F2 D' B2 L2 R2 U2 F2 D L' U2 R2 B' R F R2 D' U F L' F'",
-                [8,7,8,8,8,7, 10,9,10,9,10,9, 12,11,11,11,12,11, 14,14,14,13,13,14]),
-            ("25001", "U' B2 U2 F2 L2 D' F2 L2 B' D2 B' L' F R D L' B2 L2 B2 D' L2 U",
-                [8,7,7,7,7,7, 10,9,9,10,9,9, 12,10,12,12,12,12, 14,13,15,14,14,15]),
-            ("26001", "U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2",
-                [3,8,7,4,6,5, 5,10,10,5,8,7, 9,11,11,8,10,9, 12,14,13,11,13,12]),
+            (
+                "22001",
+                "B2 U' L2 U F2 L2 D2 L2 U F2 L F2 L D U L' D2 F' U2 B",
+                [
+                    7, 7, 8, 7, 9, 7, 9, 10, 10, 9, 10, 9, 11, 11, 11, 12, 12, 10, 14, 14, 14, 13,
+                    14, 14,
+                ],
+            ),
+            (
+                "23001",
+                "D2 U L2 B2 R2 F2 R2 U2 R2 D' R' D B2 U B' R B' D B' L'",
+                [
+                    7, 7, 6, 8, 7, 5, 10, 9, 8, 9, 9, 8, 12, 11, 11, 11, 12, 11, 13, 13, 12, 13,
+                    14, 12,
+                ],
+            ),
+            (
+                "24001",
+                "L2 D F2 D' B2 L2 R2 U2 F2 D L' U2 R2 B' R F R2 D' U F L' F'",
+                [
+                    8, 7, 8, 8, 8, 7, 10, 9, 10, 9, 10, 9, 12, 11, 11, 11, 12, 11, 14, 14, 14, 13,
+                    13, 14,
+                ],
+            ),
+            (
+                "25001",
+                "U' B2 U2 F2 L2 D' F2 L2 B' D2 B' L' F R D L' B2 L2 B2 D' L2 U",
+                [
+                    8, 7, 7, 7, 7, 7, 10, 9, 9, 10, 9, 9, 12, 10, 12, 12, 12, 12, 14, 13, 15, 14,
+                    14, 15,
+                ],
+            ),
+            (
+                "26001",
+                "U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2",
+                [
+                    3, 8, 7, 4, 6, 5, 5, 10, 10, 5, 8, 7, 9, 11, 11, 8, 10, 9, 12, 14, 13, 11, 13,
+                    12,
+                ],
+            ),
         ];
 
         let rots = ["", "z2", "z'", "z", "x'", "x"];
@@ -1447,7 +1492,9 @@ mod tests {
                 got.as_slice(),
                 expected.as_slice(),
                 "small cascade id {} mismatch:\n got {:?}\n exp {:?}",
-                id, got, expected
+                id,
+                got,
+                expected
             );
         }
     }
@@ -1470,8 +1517,15 @@ mod tests {
 
         // k=4 = 全 4 槽 = xxxxcross;cap 拉高确保 14 步全部解都枚举出来
         let (best_len, items) = solver.enumerate_best(&alg, "", 4, 0, 100_000, &mut |_, _| {});
-        assert_eq!(best_len, 14, "xxxxcross optimal must be 14, got {}", best_len);
-        assert!(items.iter().all(|(c, _)| *c == vec![0, 1, 2, 3]), "全 4 槽 combo");
+        assert_eq!(
+            best_len, 14,
+            "xxxxcross optimal must be 14, got {}",
+            best_len
+        );
+        assert!(
+            items.iter().all(|(c, _)| *c == vec![0, 1, 2, 3]),
+            "全 4 槽 combo"
+        );
 
         let strs: Vec<String> = items
             .iter()
@@ -1495,7 +1549,10 @@ mod tests {
             target,
             strs.len()
         );
-        eprintln!("enumerated {} optimal (14-move) xxxxcross solutions; or18 ref found ✓", strs.len());
+        eprintln!(
+            "enumerated {} optimal (14-move) xxxxcross solutions; or18 ref found ✓",
+            strs.len()
+        );
     }
 
     /// 回归:枚举(含 +2 松弛)出的 XCross 解不得带「无效尾动」——
@@ -1539,7 +1596,10 @@ mod tests {
                     max_h > 0,
                     "rot={:?} 解去掉末步后已解(冗余尾动): {}",
                     rot,
-                    path.iter().map(|&m| MOVE_NAMES[m as usize]).collect::<Vec<_>>().join(" "),
+                    path.iter()
+                        .map(|&m| MOVE_NAMES[m as usize])
+                        .collect::<Vec<_>>()
+                        .join(" "),
                 );
                 total += 1;
             }
@@ -1562,8 +1622,14 @@ mod tests {
         std::env::set_var("CUBE_TABLE_DIR", &dir);
 
         let scrambles: &[(&str, &str)] = &[
-            ("26001", "U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2"),
-            ("25001", "U' B2 U2 F2 L2 D' F2 L2 B' D2 B' L' F R D L' B2 L2 B2 D' L2 U"),
+            (
+                "26001",
+                "U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2",
+            ),
+            (
+                "25001",
+                "U' B2 U2 F2 L2 D' F2 L2 B' D2 B' L' F R D L' B2 L2 B2 D' L2 U",
+            ),
         ];
         let rots = ["", "z2", "z'", "z", "x'", "x"];
         eprintln!("\n=== xxxxcross HUGE-path node ceiling (perfect pair heuristic) ===");
@@ -1575,7 +1641,13 @@ mod tests {
             let out = solver.get_stats(&alg, &rots);
             let ms = t.elapsed().as_secs_f64() * 1e3;
             let nodes = GLOBAL_NODES.load(Ordering::Relaxed);
-            eprintln!("{}: {:>8.1}ms  nodes={:>12}  f2l={:?}", id, ms, nodes, &out[18..24]);
+            eprintln!(
+                "{}: {:>8.1}ms  nodes={:>12}  f2l={:?}",
+                id,
+                ms,
+                nodes,
+                &out[18..24]
+            );
         }
     }
 
@@ -1594,11 +1666,26 @@ mod tests {
         std::env::set_var("CUBE_TABLE_DIR", &dir);
 
         let scrambles: &[(&str, &str)] = &[
-            ("22001", "B2 U' L2 U F2 L2 D2 L2 U F2 L F2 L D U L' D2 F' U2 B"),
-            ("23001", "D2 U L2 B2 R2 F2 R2 U2 R2 D' R' D B2 U B' R B' D B' L'"),
-            ("24001", "L2 D F2 D' B2 L2 R2 U2 F2 D L' U2 R2 B' R F R2 D' U F L' F'"),
-            ("25001", "U' B2 U2 F2 L2 D' F2 L2 B' D2 B' L' F R D L' B2 L2 B2 D' L2 U"),
-            ("26001", "U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2"),
+            (
+                "22001",
+                "B2 U' L2 U F2 L2 D2 L2 U F2 L F2 L D U L' D2 F' U2 B",
+            ),
+            (
+                "23001",
+                "D2 U L2 B2 R2 F2 R2 U2 R2 D' R' D B2 U B' R B' D B' L'",
+            ),
+            (
+                "24001",
+                "L2 D F2 D' B2 L2 R2 U2 F2 D L' U2 R2 B' R F R2 D' U F L' F'",
+            ),
+            (
+                "25001",
+                "U' B2 U2 F2 L2 D' F2 L2 B' D2 B' L' F R D L' B2 L2 B2 D' L2 U",
+            ),
+            (
+                "26001",
+                "U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2",
+            ),
         ];
         let rots = ["", "z2", "z'", "z", "x'", "x"];
         let solver = XCrossSolver::new(false);
@@ -1618,7 +1705,12 @@ mod tests {
             tot_nodes += nodes;
             eprintln!("{}: {:>8.1}ms  nodes={:>12}  f2l={:?}", id, ms, nodes, f2l);
         }
-        eprintln!("TOTAL: {:.1}ms  nodes={}  (avg {:.1}ms/scramble)\n", tot_ms, tot_nodes, tot_ms / 5.0);
+        eprintln!(
+            "TOTAL: {:.1}ms  nodes={}  (avg {:.1}ms/scramble)\n",
+            tot_ms,
+            tot_nodes,
+            tot_ms / 5.0
+        );
     }
 
     /// Phase 2 基准:小表 cascade 逐变体(cross/xc/xxc/xxxc/xxxxc)单视角(rot="")
@@ -1637,15 +1729,29 @@ mod tests {
         std::env::set_var("CUBE_TABLE_DIR", &dir);
 
         let scrambles: &[(&str, &str)] = &[
-            ("22001", "B2 U' L2 U F2 L2 D2 L2 U F2 L F2 L D U L' D2 F' U2 B"),
-            ("23001", "D2 U L2 B2 R2 F2 R2 U2 R2 D' R' D B2 U B' R B' D B' L'"),
-            ("24001", "L2 D F2 D' B2 L2 R2 U2 F2 D L' U2 R2 B' R F R2 D' U F L' F'"),
-            ("25001", "U' B2 U2 F2 L2 D' F2 L2 B' D2 B' L' F R D L' B2 L2 B2 D' L2 U"),
-            ("26001", "U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2"),
+            (
+                "22001",
+                "B2 U' L2 U F2 L2 D2 L2 U F2 L F2 L D U L' D2 F' U2 B",
+            ),
+            (
+                "23001",
+                "D2 U L2 B2 R2 F2 R2 U2 R2 D' R' D B2 U B' R B' D B' L'",
+            ),
+            (
+                "24001",
+                "L2 D F2 D' B2 L2 R2 U2 F2 D L' U2 R2 B' R F R2 D' U F L' F'",
+            ),
+            (
+                "25001",
+                "U' B2 U2 F2 L2 D' F2 L2 B' D2 B' L' F R D L' B2 L2 B2 D' L2 U",
+            ),
+            (
+                "26001",
+                "U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2",
+            ),
         ];
         const PAIRS: [(usize, usize); 6] = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
-        const TRIPS: [(usize, usize, usize); 4] =
-            [(0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3)];
+        const TRIPS: [(usize, usize, usize); 4] = [(0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3)];
 
         let cross_solver = CrossSolver::new(false);
         let solver = XCrossSolver::new(false);
@@ -1654,11 +1760,15 @@ mod tests {
         let mut agg: [(f64, u64); 5] = [(0.0, 0); 5];
 
         eprintln!("\n=== small cascade per-stage bench (rot=\"\", single rotation) ===");
-        eprintln!("{:<7} {:>10} {:>10} {:>10} {:>10} {:>10}", "id", "cross", "xc", "xxc", "xxxc", "xxxxc");
+        eprintln!(
+            "{:<7} {:>10} {:>10} {:>10} {:>10} {:>10}",
+            "id", "cross", "xc", "xxc", "xxxc", "xxxxc"
+        );
         for (id, scr) in scrambles {
             let alg = string_to_alg(scr);
-            let st: [VirtState; 4] = std::array::from_fn(|k| solver.get_virt(
-                &alg.iter().map(|m| m.index() as u8).collect::<Vec<_>>(), k));
+            let st: [VirtState; 4] = std::array::from_fn(|k| {
+                solver.get_virt(&alg.iter().map(|m| m.index() as u8).collect::<Vec<_>>(), k)
+            });
             let h0: [u32; 4] = std::array::from_fn(|k| solver.slot_h(&st[k]));
             let mut ms = [0.0f64; 5];
 
@@ -1674,7 +1784,9 @@ mod tests {
             order.sort_by_key(|&k| h0[k]);
             let mut best = 99u32;
             for &k in &order {
-                if h0[k] >= best { break; }
+                if h0[k] >= best {
+                    break;
+                }
                 best = best.min(solver.solve_subset(&st, &[k], h0[k], 0, 12));
             }
             let xc = best;
@@ -1684,12 +1796,15 @@ mod tests {
             // xxc: min over 6 pairs
             GLOBAL_NODES.store(0, Ordering::Relaxed);
             let t = Instant::now();
-            let mut t2: [(usize, usize, u32); 6] = std::array::from_fn(|i|
-                (PAIRS[i].0, PAIRS[i].1, h0[PAIRS[i].0].max(h0[PAIRS[i].1])));
+            let mut t2: [(usize, usize, u32); 6] = std::array::from_fn(|i| {
+                (PAIRS[i].0, PAIRS[i].1, h0[PAIRS[i].0].max(h0[PAIRS[i].1]))
+            });
             t2.sort_by_key(|t| t.2);
             let mut best = 99u32;
             for &(a, b, h) in &t2 {
-                if h >= best { break; }
+                if h >= best {
+                    break;
+                }
                 best = best.min(solver.solve_subset(&st, &[a, b], h, xc, 14));
             }
             let xxc = best;
@@ -1706,7 +1821,9 @@ mod tests {
             t3.sort_by_key(|t| t.3);
             let mut best = 99u32;
             for &(x, y, z, h) in &t3 {
-                if h >= best { break; }
+                if h >= best {
+                    break;
+                }
                 best = best.min(solver.solve_subset(&st, &[x, y, z], h, xxc, 16));
             }
             let xxxc = best;
@@ -1721,15 +1838,22 @@ mod tests {
             ms[4] = t.elapsed().as_secs_f64() * 1e3;
             agg[4].1 += GLOBAL_NODES.load(Ordering::Relaxed);
 
-            for i in 0..5 { agg[i].0 += ms[i]; }
-            eprintln!("{:<7} {:>9.1}ms {:>9.1}ms {:>9.1}ms {:>9.1}ms {:>9.1}ms",
-                id, ms[0], ms[1], ms[2], ms[3], ms[4]);
+            for i in 0..5 {
+                agg[i].0 += ms[i];
+            }
+            eprintln!(
+                "{:<7} {:>9.1}ms {:>9.1}ms {:>9.1}ms {:>9.1}ms {:>9.1}ms",
+                id, ms[0], ms[1], ms[2], ms[3], ms[4]
+            );
         }
-        eprintln!("{:<7} {:>9.1}ms {:>9.1}ms {:>9.1}ms {:>9.1}ms {:>9.1}ms", "TOTAL",
-            agg[0].0, agg[1].0, agg[2].0, agg[3].0, agg[4].0);
-        eprintln!("nodes:  cross={} xc={} xxc={} xxxc={} xxxxc={}",
-            agg[0].1, agg[1].1, agg[2].1, agg[3].1, agg[4].1);
+        eprintln!(
+            "{:<7} {:>9.1}ms {:>9.1}ms {:>9.1}ms {:>9.1}ms {:>9.1}ms",
+            "TOTAL", agg[0].0, agg[1].0, agg[2].0, agg[3].0, agg[4].0
+        );
+        eprintln!(
+            "nodes:  cross={} xc={} xxc={} xxxc={} xxxxc={}",
+            agg[0].1, agg[1].1, agg[2].1, agg[3].1, agg[4].1
+        );
         eprintln!("(单视角;analyzer 实际 ×6 视角。WASM 预估 ×1.5-3。)\n");
     }
-
 }

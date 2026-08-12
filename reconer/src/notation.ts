@@ -1,7 +1,7 @@
 /**
  * notation.ts — 动作 token 级工具 (面提取 / 逆操作 / 指法剥离)。
  *
- * 约定 (见 CLAUDE.md「Notation 约定」):
+ * 约定 (见 AGENTS.md「Notation 约定」):
  *   涉及 U D L R F r f x y; 不涉及 B E M S z。
  *   ↑↓· 是指法记号, ... 是卡顿, 解析时都剥离。
  */

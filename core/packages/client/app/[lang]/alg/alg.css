@@ -1111,8 +1111,8 @@ a.alg-community-author:hover {
   font-size: 12px;
   color: var(--foreground);
   background: none;
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 12rem;
+  min-width: min(100%, 12rem);
   word-break: break-word;
 }
 .alg-community-notes {
@@ -1198,8 +1198,12 @@ a.alg-community-author:hover {
   border-style: solid;
 }
 
-@media (max-width: 480px) {
+/* 公式卡片需要给长公式和投稿元信息留出可读宽度；只看图画廊仍由更高优先级的 is-cards 规则保持多列。 */
+@media (max-width: 680px) {
   .alg-case-list { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
   /* 只看图时窄屏仍保持两列画廊 —— 一列太空、认图效率低 */
   .alg-case-list.is-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   /* 套列表 / 子组选择窄屏都走四列 —— 一屏能看全一个魔方的所有套(或一组的所有子组),

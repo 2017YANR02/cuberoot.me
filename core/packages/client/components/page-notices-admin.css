@@ -100,7 +100,7 @@
   color: var(--muted-foreground);
 }
 
-/* 窄屏:正文另起一行,路径与标签留在首行(CLAUDE.md「移动端 / 桌面端都要适配」) */
+/* 窄屏:正文另起一行,路径与标签留在首行(AGENTS.md「移动端 / 桌面端都要适配」) */
 @media (max-width: 640px) {
   .pna-row {
     grid-template-columns: auto minmax(0, 1fr) auto auto;

@@ -12,6 +12,7 @@ import {
   randomFaceScramble,
   solverFacesForColors,
   stageSlotCombos,
+  stageTrainingMask,
   type StageTrainingConfig,
 } from '@/app/[lang]/timer/_lib/stage-training';
 
@@ -19,7 +20,7 @@ const faceletsAfter = (scramble: string) => toFaceletString(applyScramble(3, scr
 
 describe('stage training scramble construction', () => {
   it('locks the requested fixed lengths', () => {
-    expect(STAGE_FIXED_LENGTH).toEqual({ cross: 8, xcross: 10, xxcross: 10, xxxcross: 12 });
+    expect(STAGE_FIXED_LENGTH).toEqual({ cross: 8, xcross: 10, xxcross: 12, xxxcross: 12 });
   });
 
   it('generates an exact-length canonical face-turn sequence', () => {
@@ -38,6 +39,30 @@ describe('stage training scramble construction', () => {
     const extended = appendRandomFaceMove("R U2 F'", () => 0);
     expect(countFaceMoves(extended)).toBe(4);
     expect(extended.split(' ').at(-1)?.[0]).not.toBe('F');
+  });
+
+  it('does not append an opposite-face sandwich that can be shortened', () => {
+    expect(appendRandomFaceMove('R U D', () => 0)).toBe('R U D L');
+  });
+});
+
+describe('stage training /sim mask', () => {
+  it('uses the native Cross mask and follows every cross colour', () => {
+    const masks = Array.from({ length: 6 }, (_, face) => stageTrainingMask({ face, combo: '' }, 'cross'));
+    expect(masks.map((mask) => mask.name)).toEqual(Array(6).fill('Cross'));
+    expect(new Set(masks.map((mask) => mask.orientation)).size).toBe(6);
+  });
+
+  it('rotates XCross and XXXCross masks onto the solver-selected slots', () => {
+    expect(stageTrainingMask({ face: 0, combo: 'FR' }, 'xcross')).toEqual({ name: 'xcross', orientation: '' });
+    expect(stageTrainingMask({ face: 0, combo: 'BL BR FL' }, 'xxxcross')).toEqual({ name: 'xxxcross', orientation: '' });
+    expect(stageTrainingMask({ face: 0, combo: 'BL' }, 'xcross').orientation).not.toBe('');
+  });
+
+  it('selects the adjacent or diagonal XXCross shape before rotating it', () => {
+    expect(stageTrainingMask({ face: 0, combo: 'FR FL' }, 'xxcross')).toEqual({ name: 'xxcross', orientation: '' });
+    expect(stageTrainingMask({ face: 0, combo: 'FR BL' }, 'xxcross')).toEqual({ name: 'xxcross_diag', orientation: '' });
+    expect(stageTrainingMask({ face: 3, combo: 'BL FR' }, 'xxcross').name).toBe('xxcross_diag');
   });
 });
 

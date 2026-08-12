@@ -9,7 +9,8 @@
  */
 
 import { faceletToCubie, type CubieCube } from '@/lib/cube-facelet';
-import { FACE_EDGES, f2lSlots, type FaceIdx } from '@/lib/cross-trainer/model';
+import { orientationXform } from '@/app/[lang]/sim/engine/nxn/stickering';
+import { FACE_EDGES, FACE_LETTERS, f2lSlots, type FaceIdx } from '@/lib/cross-trainer/model';
 
 export type StageTrainingStage = 'cross' | 'xcross' | 'xxcross' | 'xxxcross';
 export type StageTrainingMode = 'plan' | 'guess' | 'smart';
@@ -37,12 +38,17 @@ export interface StageQuestion {
   combo: string;
 }
 
+export interface StageTrainingMask {
+  name: 'Cross' | 'xcross' | 'xxcross' | 'xxcross_diag' | 'xxxcross';
+  orientation: string;
+}
+
 export const STAGE_ORDER: StageTrainingStage[] = ['cross', 'xcross', 'xxcross', 'xxxcross'];
 
 export const STAGE_FIXED_LENGTH: Record<StageTrainingStage, number> = {
   cross: 8,
   xcross: 10,
-  xxcross: 10,
+  xxcross: 12,
   xxxcross: 12,
 };
 
@@ -157,7 +163,11 @@ export function randomFaceScramble(length: number, rng: () => number = Math.rand
 export function appendRandomFaceMove(base: string, rng: () => number = Math.random): string {
   const tokens = base.trim().split(/\s+/).filter(Boolean);
   const lastFace = tokens.at(-1)?.[0] ?? '';
-  const faces = SCRAMBLE_FACES.filter((face) => face !== lastFace);
+  const previousFace = tokens.at(-2)?.[0] ?? '';
+  const faces = SCRAMBLE_FACES.filter((face) => (
+    face !== lastFace
+    && !(face === previousFace && OPPOSITE[face] === lastFace)
+  ));
   const face = faces[Math.floor(rng() * faces.length) % faces.length];
   const suffix = SUFFIXES[Math.floor(rng() * SUFFIXES.length) % SUFFIXES.length];
   return [...tokens, face + suffix].join(' ');
@@ -202,6 +212,85 @@ function physicalSlotIndex(solverFace: number, solverSlot: number): number {
   const a = PHYSICAL_FACE[orientation[aPosition]];
   const b = PHYSICAL_FACE[orientation[bPosition]];
   return f2lSlots(crossFace).findIndex((slot) => FACE_EDGES[a].includes(slot.edge) && FACE_EDGES[b].includes(slot.edge));
+}
+
+// /sim face ids are L,R,D,U,B,F; the solver/model uses U,R,F,D,L,B.
+const SIM_FACE_BY_PHYSICAL = [3, 1, 5, 2, 0, 4] as const;
+const PHYSICAL_FACE_BY_SIM = [4, 1, 3, 0, 5, 2] as const;
+const ORIENTATION_PREFIXES = [
+  '', 'y', 'y2', "y'",
+  'x', 'x y', 'x y2', "x y'",
+  'x2', 'x2 y', 'x2 y2', "x2 y'",
+  "x'", "x' y", "x' y2", "x' y'",
+  'z', 'z y', 'z y2', "z y'",
+  "z'", "z' y", "z' y2", "z' y'",
+] as const;
+
+const CANONICAL_SLOT_INDEX = Object.fromEntries(
+  f2lSlots(3).map((slot, index) => [slot.name, index]),
+) as Record<string, number>;
+const FACE_INDEX = Object.fromEntries(FACE_LETTERS.map((face, index) => [face, index])) as Record<string, number>;
+
+function physicalFaceMap(orientation: string): number[] {
+  const simMap = orientationXform(orientation).facePerm;
+  return SIM_FACE_BY_PHYSICAL.map((simFace) => PHYSICAL_FACE_BY_SIM[simMap[simFace]]);
+}
+
+function mappedCanonicalSlot(slotName: string, faceMap: number[]): number {
+  const mappedName = [...slotName]
+    .map((face) => faceMap[FACE_INDEX[face]])
+    .sort((a, b) => a - b)
+    .map((face) => FACE_LETTERS[face])
+    .join('');
+  const entry = Object.entries(CANONICAL_SLOT_INDEX).find(([name]) => (
+    [...name].sort().join('') === [...mappedName].sort().join('')
+  ));
+  return entry?.[1] ?? -1;
+}
+
+function solverComboSlots(combo: string): number[] {
+  return (combo.match(/(?:BL|BR|FR|FL)/g) ?? [])
+    .map((name) => STAGE_SLOT_LABELS.indexOf(name as typeof STAGE_SLOT_LABELS[number]))
+    .filter((slot) => slot >= 0);
+}
+
+/** The exact /sim stage mask for the colour and slot combination chosen by the solver. */
+export function stageTrainingMask(question: Pick<StageQuestion, 'face' | 'combo'>, stage: StageTrainingStage): StageTrainingMask {
+  const solverSlots = solverComboSlots(question.combo);
+  const physicalFace = SOLVER_FACE_TO_PHYSICAL[question.face] ?? SOLVER_FACE_TO_PHYSICAL[0];
+  const physicalSlots = solverSlots.map((solverSlot) => physicalSlotIndex(question.face, solverSlot));
+
+  let name: StageTrainingMask['name'] = 'Cross';
+  let canonicalSlots: number[] = [];
+  if (stage === 'xcross') {
+    name = 'xcross';
+    canonicalSlots = [0]; // FR
+  } else if (stage === 'xxcross') {
+    const diagonal = solverSlots.length === 2 && Math.abs(solverSlots[0] - solverSlots[1]) === 2;
+    name = diagonal ? 'xxcross_diag' : 'xxcross';
+    canonicalSlots = diagonal ? [0, 2] : [0, 1]; // FR+BL or FR+FL
+  } else if (stage === 'xxxcross') {
+    name = 'xxxcross';
+    canonicalSlots = [1, 2, 3]; // every D slot except FR
+  }
+
+  const wanted = [...canonicalSlots].sort((a, b) => a - b).join(',');
+  const orientation = ORIENTATION_PREFIXES.find((prefix) => {
+    const faceMap = physicalFaceMap(prefix);
+    if (faceMap[physicalFace] !== 3) return false;
+    if (canonicalSlots.length === 0) return true;
+    if (physicalSlots.length !== canonicalSlots.length || physicalSlots.some((slot) => slot < 0)) return false;
+    const mapped = physicalSlots
+      .map((slot) => mappedCanonicalSlot(f2lSlots(physicalFace)[slot]?.name ?? '', faceMap))
+      .sort((a, b) => a - b)
+      .join(',');
+    return mapped === wanted;
+  });
+
+  // A solver combo is expected for every XCross-family answer. If an older
+  // worker omits it, still place the right-shaped mask on the right cross face.
+  const faceOnly = ORIENTATION_PREFIXES.find((prefix) => physicalFaceMap(prefix)[physicalFace] === 3) ?? '';
+  return { name, orientation: orientation ?? faceOnly };
 }
 
 const solvedEdge = (cube: CubieCube, edge: number) => cube.ep[edge] === edge && cube.eo[edge] === 0;

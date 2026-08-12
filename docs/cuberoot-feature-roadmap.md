@@ -135,7 +135,7 @@ Top 3 surprises from peer research:
 #### C6. Motion chart / Bar chart race（条形竞赛动画 / Bar Chart Race）
 - **Description**: 从 1982-06-05 到今天，国家奖牌数 / 注册选手数 / 平均成绩的逐年动画。
 - **Reference sites**: [Flourish](https://flourish.studio) 上常见，但 WCA 数据无人做。
-- **Implementation sketch**: 复用 `/wca/viz` D3 栈；时间锚点严格按 CLAUDE.md 默认 2003-08-22 起，但聚合包含 1982。
+- **Implementation sketch**: 复用 `/wca/viz` D3 栈；时间锚点严格按 AGENTS.md 默认 2003-08-22 起，但聚合包含 1982。
 - **Priority**: P1
 - **Effort**: M
 

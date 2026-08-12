@@ -7,11 +7,13 @@ description: "写 / 改 Codex 拦截钩子(PreToolUse guard hook)时用 —— �
 
 要在**写入 / 命令执行那一刻**拦住违规(裸 `history.*`、`onClick` 当导航、手写繁体、危险命令、自启浏览器…),写一个 PreToolUse 钩子。
 
-钩子在两处:全局 `~/.Codex/hooks/`(跨项目)+ 项目 `<repo>/.Codex/hooks/`;**注册在 `~/.Codex/settings.json` 的 `hooks.PreToolUse`**(matcher `Edit|Write|MultiEdit` 拦写入,`Bash|PowerShell` 拦命令)。改完直接生效(每次工具调用从磁盘读)。
+项目钩子放 `<repo>/.codex/hooks/`,注册在 `<repo>/.codex/hooks.json`。写入匹配 `apply_patch`,命令必须匹配 Codex hook 的规范名 `Bash`(不是工具 API 名 `shell_command`)。修改配置后新开 Codex 会话,再用 `/hooks` 信任当前定义哈希。
+
+当前 Codex 的 `apply_patch` 原始补丁位于 `tool_input.command`,命令同样位于 `tool_input.command`;复用旧结构化写入检测器时先经项目 `adapt-codex-write-payload.mjs` 转成 `{file_path,content}`。
 
 ## 铁律 1:拦截用 JSON deny,**禁 `exit 2`**
 
-本环境跑 **auto 权限模式**(`~/.Codex/settings.json` 的 `permissions.defaultMode:"auto"` + `skipAutoPermissionPrompt`)。此模式下 **`exit 2` 拦截被静默忽略** —— 钩子照样 fire、也确实返回 2,但工具照常执行(文件照写)。2026-06-14 实测确认。官方 docs 没写这层模式交互。
+本环境的自动权限模式会静默忽略 `exit 2`:钩子会运行,工具仍可能执行。统一输出 JSON deny 并 `exit 0`。
 
 **只有往 stdout 打 JSON `permissionDecision:"deny"` + `exit 0` 各模式都生效。** 命中违规就输出这段:
 
@@ -68,7 +70,7 @@ exit $LASTEXITCODE                                       # wrapper 原样透传 
 
 ## 铁律 2:**必须真触发验证**(别只喂管道)
 
-改完**必须用真的 Edit/Write/Bash 工具调用触发一次**,确认被拒。**禁**只 `echo $json | pwsh hook.ps1` 看 exit code —— 那只验脚本逻辑,**不验 harness 是否采纳决定**(本会话两次栽在这:脚本对、harness 不拦)。
+改完**必须新开会话并在 `/hooks` 信任当前哈希,再用真的 `apply_patch` / shell 工具调用触发一次**,确认被拒。**禁**只 `echo $json | pwsh hook.ps1` 看 exit code —— 那只验脚本逻辑,不验 harness 是否采纳决定。
 
 - 测写入违规:文件**被拒 = 没创建**即成功。
 - 测命令违规:注意你的**测试命令本身可能含触发串而自拦**(曾用 `chrome --headless` 测,自己的 PowerShell 调用被拦了 —— 恰好是端到端证明)。
@@ -77,15 +79,15 @@ exit $LASTEXITCODE                                       # wrapper 原样透传 
 ## 其它约定(照现有钩子)
 
 - **scope 过滤**:只扫该管的文件 / 命令(`.tsx/.ts`、跳 `node_modules/.next/dist/test`)。
-- **豁免两途**:违规处行内注释 `allow-xxx`(eslint-disable 风格)+ 项目 `.Codex/<rule>-allowlist.txt`(范例见 `block-raw-history-url-state.ps1`)。
+- **豁免两途**:违规处行内注释 `allow-xxx`(eslint-disable 风格)+ 项目 `.codex/<rule>-allowlist.txt`(范例见 `block-raw-history-url-state.ps1`)。
 - **fail-open**:解析失败 / 工具缺失一律 `exit 0`,别把正常编辑卡死;**CI 是最终兜底**。
 - **分层**:写入即拦(本钩子)+ CI vitest 守卫两层都铺(全局 AGENTS.md「立约束要分层」)。
-- 路径用 `$PSScriptRoot` 自解析,别依赖 `$env:CLAUDE_PROJECT_DIR`(会话根可能在 repo 根或 core/,拼错会 fail-open)。
+- 路径用 `$PSScriptRoot` 自解析,别依赖会话 cwd(可能在 repo 根或 core/,拼错会 fail-open)。
 
 ## 现成范例
 
-- 纯 pwsh,Edit/Write:`~/.Codex/hooks/block-raw-history-url-state.ps1`、`block-button-navigation.ps1`
-- pwsh→node 委托(两规则):`<repo>/.Codex/hooks/block-handwritten-trad.ps1` → `core/packages/client/scripts/hook-detect-handwritten-trad.mjs`(裸 isZh 三目 + 手写繁体)
-- 纯 node,Bash/PowerShell:`~/.Codex/hooks/guard-browser-launch.mjs`
+- Codex `apply_patch` 多文件补丁解析:`core/packages/client/scripts/hook-detect-nested-links.mjs`
+- pwsh→node 委托:`<repo>/.codex/hooks/block-component-reimplementation.ps1`
+- 命令守卫:`<repo>/.codex/hooks/recon-ground-truth-gate.ps1`
 
-背景见 memory `reference_pretooluse_hook_auto_mode_deny`。
+规范名、输入结构与信任流程以 `https://learn.chatgpt.com/docs/hooks` 为准。

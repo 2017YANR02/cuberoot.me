@@ -40,5 +40,6 @@ export default defineConfig({
     environment: 'node',
     testTimeout: 120_000,
     pool: 'threads',
+    maxWorkers: 14,
   },
 });

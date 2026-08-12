@@ -38,7 +38,7 @@
  * EXIT CODE  non-zero if any page shows real overflow (usable as a gate).
  *
  * NOTE: per global rules, ad-hoc chromium launches must kill WebRTC first; this loads
- * ~/.claude/bin/pw-no-webrtc.cjs and calls disableWebRTC(ctx) before newPage() (same
+ * ~/.codex/bin/pw-no-webrtc.cjs and calls disableWebRTC(ctx) before newPage() (same
  * kill the Playwright MCP applies). Helper is user-machine-local; warns + continues if absent.
  */
 const os = require('os');
@@ -51,7 +51,7 @@ const { chromium } = pw;
 
 let disableWebRTC = async () => {};
 try {
-  ({ disableWebRTC } = require(path.join(os.homedir(), '.claude', 'bin', 'pw-no-webrtc.cjs')));
+  ({ disableWebRTC } = require(path.join(os.homedir(), '.codex', 'bin', 'pw-no-webrtc.cjs')));
 } catch {
   console.warn('[warn] pw-no-webrtc helper not found; WebRTC not disabled (dev-only harness).');
 }

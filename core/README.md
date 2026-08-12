@@ -24,7 +24,7 @@ core/packages/
 | Recon API contract | [../docs/recon-api.md](../docs/recon-api.md) |
 | 服务器部署运维 | [../CUBEROOT_ME.md](../CUBEROOT_ME.md) |
 | nginx vhost 部署 | [../ops/nginx/README.md](../ops/nginx/README.md) |
-| AI 行为指引 | [../CLAUDE.md](../CLAUDE.md) |
+| AI 行为指引 | [../AGENTS.md](../AGENTS.md) |
 
 ## 快速命令
 

@@ -83,7 +83,11 @@ pub fn parse_pyraminx(s: &str) -> Result<Vec<PyraMove>, String> {
             "'" | "2" | "2'" | "'2" => true, // 阶 3:X2 = X'
             _ => return Err(format!("bad pyraminx suffix: {}", tok)),
         };
-        out.push(PyraMove { axis, prime, tip: head.is_ascii_lowercase() });
+        out.push(PyraMove {
+            axis,
+            prime,
+            tip: head.is_ascii_lowercase(),
+        });
     }
     Ok(out)
 }
@@ -98,8 +102,12 @@ pub struct PyraState {
 }
 
 impl PyraState {
-    pub const SOLVED: PyraState =
-        PyraState { ep: [0, 1, 2, 3, 4, 5], eo: [0; 6], co: [0; 4], tips: [0; 4] };
+    pub const SOLVED: PyraState = PyraState {
+        ep: [0, 1, 2, 3, 4, 5],
+        eo: [0; 6],
+        co: [0; 4],
+        tips: [0; 4],
+    };
 
     /// 大写顺时针一步(120°)。
     fn apply_core_cw(&mut self, axis: usize) {
@@ -225,7 +233,12 @@ fn encode_core(st: &PyraState) -> usize {
 fn decode_core(idx: usize) -> PyraState {
     let co = co_unrank(idx % PYRA_CO);
     let r = idx / PYRA_CO;
-    PyraState { ep: ep_unrank(r / PYRA_EO), eo: eo_unrank(r % PYRA_EO), co, tips: [0; 4] }
+    PyraState {
+        ep: ep_unrank(r / PYRA_EO),
+        eo: eo_unrank(r % PYRA_EO),
+        co,
+        tips: [0; 4],
+    }
 }
 
 /// 一条最优解:core 为大写 move 序列,tips 为小写收尾;len = core.len()+tips.len()。
@@ -269,7 +282,11 @@ impl PyraminxSolver {
             let st = decode_core(idx);
             for m in 0..8u8 {
                 let mut s2 = st;
-                s2.apply(PyraMove { axis: m / 2, prime: m % 2 == 1, tip: false });
+                s2.apply(PyraMove {
+                    axis: m / 2,
+                    prime: m % 2 == 1,
+                    tip: false,
+                });
                 mt[idx * 8 + m as usize] = encode_core(&s2) as u32;
             }
         }
@@ -302,8 +319,16 @@ impl PyraminxSolver {
     /// 浏览器端「秒算」:静态资源直载距离表,免每会话首查重建。查询走
     /// solve_one / solve_split / enumerate_lean(全 State 级,不依赖 mt)。
     pub fn from_dist(dist: Vec<u8>) -> Self {
-        assert_eq!(dist.len(), PYRA_CORE_STATES, "pyraminx core dist table size mismatch");
-        PyraminxSolver { mt: Vec::new(), dist, solved: encode_core(&PyraState::SOLVED) }
+        assert_eq!(
+            dist.len(),
+            PYRA_CORE_STATES,
+            "pyraminx core dist table size mismatch"
+        );
+        PyraminxSolver {
+            mt: Vec::new(),
+            dist,
+            solved: encode_core(&PyraState::SOLVED),
+        }
     }
 
     /// 核心全空间距离表原始字节(落盘成静态资源用)。
@@ -313,7 +338,12 @@ impl PyraminxSolver {
 
     /// 核心距离表最大深度(实测核心 God's number)。
     pub fn max_depth(&self) -> u8 {
-        self.dist.iter().copied().filter(|&v| v != 255).max().unwrap_or(0)
+        self.dist
+            .iter()
+            .copied()
+            .filter(|&v| v != 255)
+            .max()
+            .unwrap_or(0)
     }
 
     /// 核心各深度态数分布。
@@ -363,7 +393,11 @@ impl PyraminxSolver {
             for m in 0..8u8 {
                 let ni = self.mt[base + m as usize] as usize;
                 if self.dist[ni] == d - 1 {
-                    core.push(PyraMove { axis: m / 2, prime: m % 2 == 1, tip: false });
+                    core.push(PyraMove {
+                        axis: m / 2,
+                        prime: m % 2 == 1,
+                        tip: false,
+                    });
                     cur = ni;
                     d -= 1;
                     stepped = true;
@@ -378,7 +412,11 @@ impl PyraminxSolver {
             // 核心解后 tip_i = r_i(不随核心解选取变,见模块注释)。
             let r = (st0.tips[i as usize] + 3 - st0.co[i as usize]) % 3;
             if r != 0 {
-                tips.push(PyraMove { axis: i, prime: r == 1, tip: true });
+                tips.push(PyraMove {
+                    axis: i,
+                    prime: r == 1,
+                    tip: true,
+                });
             }
         }
         let len = (core.len() + tips.len()) as u32;
@@ -402,7 +440,11 @@ impl PyraminxSolver {
                 let st = decode_core(i as usize);
                 for m in 0..8u8 {
                     let mut s2 = st;
-                    s2.apply(PyraMove { axis: m / 2, prime: m % 2 == 1, tip: false });
+                    s2.apply(PyraMove {
+                        axis: m / 2,
+                        prime: m % 2 == 1,
+                        tip: false,
+                    });
                     let ni = encode_core(&s2);
                     if dist[ni] == 255 {
                         dist[ni] = d + 1;
@@ -413,7 +455,11 @@ impl PyraminxSolver {
             d += 1;
             frontier = next;
         }
-        PyraminxSolver { mt: Vec::new(), dist, solved }
+        PyraminxSolver {
+            mt: Vec::new(),
+            dist,
+            solved,
+        }
     }
 
     /// 一条最优解(State 级回溯,不依赖 mt,lean 实例可用):语义同 enumerate。
@@ -425,7 +471,11 @@ impl PyraminxSolver {
         while d > 0 {
             let before = d;
             for m in 0..8u8 {
-                let mv = PyraMove { axis: m / 2, prime: m % 2 == 1, tip: false };
+                let mv = PyraMove {
+                    axis: m / 2,
+                    prime: m % 2 == 1,
+                    tip: false,
+                };
                 let mut ns = st;
                 ns.apply(mv);
                 if self.dist[encode_core(&ns)] == d - 1 {
@@ -442,7 +492,11 @@ impl PyraminxSolver {
             // 核心解后 tip_i = r_i(不随核心解选取变,见模块注释)。
             let r = (st0.tips[i as usize] + 3 - st0.co[i as usize]) % 3;
             if r != 0 {
-                tips.push(PyraMove { axis: i, prime: r == 1, tip: true });
+                tips.push(PyraMove {
+                    axis: i,
+                    prime: r == 1,
+                    tip: true,
+                });
             }
         }
         let len = (core.len() + tips.len()) as u32;
@@ -456,11 +510,13 @@ mod tests {
     use std::collections::HashMap;
 
     /// jaapsch.net/puzzles/pyraminx.htm 公开核心距离分布(2026-06-11 抓取核对)。
-    const JAAPSCH_CORE_HIST: [usize; 12] =
-        [1, 8, 48, 288, 1728, 9896, 51808, 220111, 480467, 166276, 2457, 32];
+    const JAAPSCH_CORE_HIST: [usize; 12] = [
+        1, 8, 48, 288, 1728, 9896, 51808, 220111, 480467, 166276, 2457, 32,
+    ];
 
     fn lcg(x: u64) -> u64 {
-        x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407)
+        x.wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407)
     }
 
     /// 确定性伪随机词。core_only=true 只出大写。
@@ -499,7 +555,11 @@ mod tests {
         for a in 0..4u8 {
             let mut st = PyraState::SOLVED;
             for _ in 0..3 {
-                st.apply(PyraMove { axis: a, prime: false, tip: false });
+                st.apply(PyraMove {
+                    axis: a,
+                    prime: false,
+                    tip: false,
+                });
             }
             assert_eq!(st, PyraState::SOLVED, "axis {} order != 3", a);
         }
@@ -510,7 +570,11 @@ mod tests {
         // 每个大写 move 恰翻 2 棱(eo 和恒偶)
         for a in 0..4u8 {
             let mut st = PyraState::SOLVED;
-            st.apply(PyraMove { axis: a, prime: false, tip: false });
+            st.apply(PyraMove {
+                axis: a,
+                prime: false,
+                tip: false,
+            });
             assert_eq!(st.eo.iter().filter(|&&o| o == 1).count(), 2, "axis {}", a);
         }
 
@@ -549,7 +613,11 @@ mod tests {
             for st in &frontier {
                 for m in 0..8u8 {
                     let mut ns = *st;
-                    ns.apply(PyraMove { axis: m / 2, prime: m % 2 == 1, tip: false });
+                    ns.apply(PyraMove {
+                        axis: m / 2,
+                        prime: m % 2 == 1,
+                        tip: false,
+                    });
                     ns.tips = [0; 4]; // 核心闭包:tips 不参与(大写会动 tips,清零归核心)
                     if let std::collections::hash_map::Entry::Vacant(e) = map.entry(ns) {
                         e.insert(d + 1);
@@ -585,7 +653,11 @@ mod tests {
                     continue;
                 }
                 let mut ns = *st;
-                ns.apply(PyraMove { axis: v % 8 / 2, prime: v % 2 == 1, tip: v >= 8 });
+                ns.apply(PyraMove {
+                    axis: v % 8 / 2,
+                    prime: v % 2 == 1,
+                    tip: v >= 8,
+                });
                 if dfs(&ns, depth - 1, v as i32) {
                     return true;
                 }
@@ -662,7 +734,12 @@ mod tests {
             st.apply_all(&alg);
             st.apply_all(&sol.core);
             st.apply_all(&sol.tips);
-            assert_eq!(st, PyraState::SOLVED, "lean solution not solved, seed={}", seed);
+            assert_eq!(
+                st,
+                PyraState::SOLVED,
+                "lean solution not solved, seed={}",
+                seed
+            );
         }
         assert_eq!(lean.enumerate_lean(&[]).len, 0);
     }
@@ -678,14 +755,24 @@ mod tests {
         for seed in 0..40u64 {
             let len = 1 + (seed as usize) % 25;
             let alg = pseudo_word(21000 + seed, len, false);
-            assert_eq!(loaded.solve_one(&alg), lean.solve_one(&alg), "seed={}", seed);
+            assert_eq!(
+                loaded.solve_one(&alg),
+                lean.solve_one(&alg),
+                "seed={}",
+                seed
+            );
             let sol = loaded.enumerate_lean(&alg);
             assert_eq!(sol.len, lean.solve_one(&alg), "seed={}", seed);
             let mut st = PyraState::SOLVED;
             st.apply_all(&alg);
             st.apply_all(&sol.core);
             st.apply_all(&sol.tips);
-            assert_eq!(st, PyraState::SOLVED, "loaded solution not solved, seed={}", seed);
+            assert_eq!(
+                st,
+                PyraState::SOLVED,
+                "loaded solution not solved, seed={}",
+                seed
+            );
         }
     }
 
@@ -745,7 +832,12 @@ mod tests {
                     bad += 1;
                 }
             }
-            assert_eq!(dv, s.dist[core] + bad, "additive metric mismatch idx={}", idx);
+            assert_eq!(
+                dv,
+                s.dist[core] + bad,
+                "additive metric mismatch idx={}",
+                idx
+            );
             hist[dv as usize] += 1;
         }
 
@@ -763,4 +855,3 @@ mod tests {
         assert_eq!(hist.iter().sum::<usize>(), PYRA_FULL_STATES);
     }
 }
-

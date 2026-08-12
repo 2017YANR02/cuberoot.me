@@ -139,7 +139,7 @@
 .scramble-src-evt { width: 1.05em; height: 1.05em; flex-shrink: 0; }
 .scramble-src-meta { color: var(--muted-foreground); }
 
-/* 「按难度生成」的题面行:这条打乱是哪个阶段、几步,外加按需展开的一条最优解。
+/* 「按难度生成」的打乱行:这条打乱是哪个阶段、几步,外加按需展开的一条最优解。
    同 .scramble-src-row 独占整行(父容器 flex-wrap),不加外框,层级只靠 gap 与字重。
    答案本身是公式,走等宽字体;其余走界面字体并复位 word-spacing(父级是等宽打乱区)。 */
 .trainer-case {

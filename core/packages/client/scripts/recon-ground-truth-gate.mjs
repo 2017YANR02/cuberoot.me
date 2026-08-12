@@ -19,7 +19,7 @@ const STAMP_VERSION = 1;
 const GROUND_TRUTH_TEST = 'tests/recon_ground_truth.test.ts';
 
 const EXACT_GUARDED_PATHS = new Set([
-  '.claude/hooks/recon-ground-truth-gate.ps1',
+  '.codex/hooks/recon-ground-truth-gate.ps1',
   '.codex/hooks.json',
   '.githooks/pre-commit',
   'core/packages/client/scripts/recon-ground-truth-gate.mjs',

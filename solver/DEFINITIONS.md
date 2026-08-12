@@ -220,4 +220,4 @@ Pseudo Cross / XCross / XXCross / XXXCross + Pseudo Pair(语义同上,前缀阶�
 
 ## 缩写
 
-见 `CLAUDE.md` 的"缩写约定"(sz/ed/cn/cr/ps/ins/ex/mt/pt/adj/diag)。
+见 `AGENTS.md` 的"缩写约定"(sz/ed/cn/cr/ps/ins/ex/mt/pt/adj/diag)。

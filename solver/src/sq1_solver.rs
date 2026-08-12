@@ -78,7 +78,11 @@ pub enum Sq1Token {
 }
 
 impl Sq1State {
-    pub const SOLVED: Sq1State = Sq1State { top: SOLVED_TOP, bottom: SOLVED_BOTTOM, ml: 0 };
+    pub const SOLVED: Sq1State = Sq1State {
+        top: SOLVED_TOP,
+        bottom: SOLVED_BOTTOM,
+        ml: 0,
+    };
 
     #[inline]
     fn rotl(v: u64, k: u32) -> u64 {
@@ -98,7 +102,11 @@ impl Sq1State {
     /// 层转(自由,0 步):top 左旋 a 槽、bottom 左旋 b 槽。
     #[inline]
     pub fn turned(&self, a: u32, b: u32) -> Sq1State {
-        Sq1State { top: Self::rotl(self.top, a), bottom: Self::rotl(self.bottom, b), ml: self.ml }
+        Sq1State {
+            top: Self::rotl(self.top, a),
+            bottom: Self::rotl(self.bottom, b),
+            ml: self.ml,
+        }
     }
 
     /// 该层两个切缝(槽 5|6 与 11|0)都不劈角。
@@ -322,13 +330,20 @@ pub fn parse_compact(s: &str) -> Result<Vec<Sq1Token>, String> {
 pub fn invert_scramble(ts: &[Sq1Token]) -> Vec<Sq1Token> {
     fn inv_amt(d: i8) -> i8 {
         let a = ((d as i32 % 12) + 12) % 12; // 0..11
-        let ia = (12 - a) % 12;              // 逆量 0..11
-        if ia > 6 { (ia - 12) as i8 } else { ia as i8 }
+        let ia = (12 - a) % 12; // 逆量 0..11
+        if ia > 6 {
+            (ia - 12) as i8
+        } else {
+            ia as i8
+        }
     }
-    ts.iter().rev().map(|t| match t {
-        Sq1Token::Turn(x, y) => Sq1Token::Turn(inv_amt(*x), inv_amt(*y)),
-        Sq1Token::Slash => Sq1Token::Slash,
-    }).collect()
+    ts.iter()
+        .rev()
+        .map(|t| match t {
+            Sq1Token::Turn(x, y) => Sq1Token::Turn(inv_amt(*x), inv_amt(*y)),
+            Sq1Token::Slash => Sq1Token::Slash,
+        })
+        .collect()
 }
 
 /// 打乱串 → token 序列,**自动识别记号**:含 `(` ⇒ WCA 记号(`parse_scramble`),否则 ⇒ 简写记号
@@ -467,11 +482,23 @@ fn full_unrank(idx: usize) -> Sq1State {
     let rest2 = rest / 40320;
     let cp = unrank8(rest2 % 40320);
     let sc = rest2 / 40320; // 0..4
-    let top_pat = if (sc >> 1) & 1 == 1 { SQ_PAT_B } else { SQ_PAT_A };
+    let top_pat = if (sc >> 1) & 1 == 1 {
+        SQ_PAT_B
+    } else {
+        SQ_PAT_A
+    };
     let bot_pat = if sc & 1 == 1 { SQ_PAT_B } else { SQ_PAT_A };
     Sq1State {
-        top: build_square_layer(top_pat, &[cp[0], cp[1], cp[2], cp[3]], &[ep[0], ep[1], ep[2], ep[3]]),
-        bottom: build_square_layer(bot_pat, &[cp[4], cp[5], cp[6], cp[7]], &[ep[4], ep[5], ep[6], ep[7]]),
+        top: build_square_layer(
+            top_pat,
+            &[cp[0], cp[1], cp[2], cp[3]],
+            &[ep[0], ep[1], ep[2], ep[3]],
+        ),
+        bottom: build_square_layer(
+            bot_pat,
+            &[cp[4], cp[5], cp[6], cp[7]],
+            &[ep[4], ep[5], ep[6], ep[7]],
+        ),
         ml,
     }
 }
@@ -687,10 +714,46 @@ impl Sq1Solver {
             o
         };
         let comb_map = |n: u64| (n & 1) | (n & 8);
-        let c4_map = |n: u64| if n & 1 == 1 { if n < 8 { n } else { 9 } } else { 0 };
-        let e4_map = |n: u64| if n & 1 == 1 { 1 } else if n < 8 { n } else { 8 };
-        let c4b_map = |n: u64| if n & 1 == 1 { if n < 8 { 1 } else { n } } else { 0 };
-        let e4b_map = |n: u64| if n & 1 == 1 { 1 } else if n < 8 { 0 } else { n };
+        let c4_map = |n: u64| {
+            if n & 1 == 1 {
+                if n < 8 {
+                    n
+                } else {
+                    9
+                }
+            } else {
+                0
+            }
+        };
+        let e4_map = |n: u64| {
+            if n & 1 == 1 {
+                1
+            } else if n < 8 {
+                n
+            } else {
+                8
+            }
+        };
+        let c4b_map = |n: u64| {
+            if n & 1 == 1 {
+                if n < 8 {
+                    1
+                } else {
+                    n
+                }
+            } else {
+                0
+            }
+        };
+        let e4b_map = |n: u64| {
+            if n & 1 == 1 {
+                1
+            } else if n < 8 {
+                0
+            } else {
+                n
+            }
+        };
         let seed = |f: &dyn Fn(u64) -> u64| Sq1State {
             top: pj(SOLVED_TOP, f),
             bottom: pj(SOLVED_BOTTOM, f),
@@ -954,7 +1017,11 @@ impl Sq1Solver {
             }
             layers[li] = v;
         }
-        Sq1State { top: layers[0], bottom: layers[1], ml }
+        Sq1State {
+            top: layers[0],
+            bottom: layers[1],
+            ml,
+        }
     }
 
     /// phase-1 启发值 = 五张投影表取 max(单次融合扫描,一次 shape 查找,
@@ -1262,13 +1329,16 @@ impl Sq1Solver {
         if (t ^ root.ml) & 1 == 1 {
             t += 1;
         }
-        let mut memo = P2Memo { exact: HashMap::new(), fail_below: HashMap::new() };
+        let mut memo = P2Memo {
+            exact: HashMap::new(),
+            fail_below: HashMap::new(),
+        };
         loop {
             let mut path: Vec<(u8, u8)> = Vec::new();
             if self.dfs1(&root, rpt, rpb, t, true, &mut memo, &mut path) {
                 debug_assert_eq!(path.len(), t as usize);
                 let found = path.len() as u32; // 首次成功的实长(= t,防御性取实测)
-                // 装配:root 归一并入第一刀;逐刀 replay 取末态求对位。
+                                               // 装配:root 归一并入第一刀;逐刀 replay 取末态求对位。
                 let mut cur = *st;
                 let mut sol = Vec::new();
                 for (k, &(a, b)) in path.iter().enumerate() {
@@ -1339,7 +1409,10 @@ impl Sq1Solver {
         if (t ^ root.ml) & 1 == 1 {
             t += 1;
         }
-        let mut memo = P2Memo { exact: HashMap::new(), fail_below: HashMap::new() };
+        let mut memo = P2Memo {
+            exact: HashMap::new(),
+            fail_below: HashMap::new(),
+        };
         let result = loop {
             let mut path: Vec<(u8, u8)> = Vec::new();
             if self.dfs1(&root, rpt, rpb, t, true, &mut memo, &mut path) {
@@ -1562,7 +1635,11 @@ fn build_sq_wca(moves: &[[u8; 8]], rots: &[[u8; 8]]) -> Vec<u8> {
 /// 代价 = 每轮重扫全表(~直径轮),一次性建表可接受。正确性:`scan_bfs_matches_build_sq_wca`
 /// 用它重建单类 csq/esq 逐字节等于 frontier 版 `build_sq_wca`。native-only(rayon)。
 #[cfg(not(target_arch = "wasm32"))]
-fn scan_bfs_par(size: usize, seed: usize, neighbors: impl Fn(usize, &mut Vec<usize>) + Sync) -> Vec<u8> {
+fn scan_bfs_par(
+    size: usize,
+    seed: usize,
+    neighbors: impl Fn(usize, &mut Vec<usize>) + Sync,
+) -> Vec<u8> {
     use rayon::prelude::*;
     use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
     let dist: Vec<AtomicU8> = (0..size).map(|_| AtomicU8::new(255)).collect();
@@ -1669,7 +1746,10 @@ static TT_GLOBAL_ENTRIES: std::sync::atomic::AtomicUsize = std::sync::atomic::At
 fn tt_budget() -> usize {
     static B: OnceLock<usize> = OnceLock::new();
     *B.get_or_init(|| {
-        std::env::var("SQ1_TT_BUDGET").ok().and_then(|s| s.parse().ok()).unwrap_or(240_000_000)
+        std::env::var("SQ1_TT_BUDGET")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(240_000_000)
     })
 }
 
@@ -1819,7 +1899,7 @@ pub struct Sq1WcaSolver {
     base: &'static Sq1Solver,
     /// 5 张全空间 WCA 投影距离表(未打包,*2 含 ml;索引复用 base 的 *_idx 函数)。
     comb: Vec<u8>, // SHAPE_COUNT*70*70*2
-    c4: Vec<u8>,   // SHAPE_COUNT*1680*2
+    c4: Vec<u8>, // SHAPE_COUNT*1680*2
     e4: Vec<u8>,
     c4b: Vec<u8>,
     e4b: Vec<u8>,
@@ -1885,10 +1965,46 @@ impl Sq1WcaSolver {
             o
         };
         let comb_map = |n: u64| (n & 1) | (n & 8);
-        let c4_map = |n: u64| if n & 1 == 1 { if n < 8 { n } else { 9 } } else { 0 };
-        let e4_map = |n: u64| if n & 1 == 1 { 1 } else if n < 8 { n } else { 8 };
-        let c4b_map = |n: u64| if n & 1 == 1 { if n < 8 { 1 } else { n } } else { 0 };
-        let e4b_map = |n: u64| if n & 1 == 1 { 1 } else if n < 8 { 0 } else { n };
+        let c4_map = |n: u64| {
+            if n & 1 == 1 {
+                if n < 8 {
+                    n
+                } else {
+                    9
+                }
+            } else {
+                0
+            }
+        };
+        let e4_map = |n: u64| {
+            if n & 1 == 1 {
+                1
+            } else if n < 8 {
+                n
+            } else {
+                8
+            }
+        };
+        let c4b_map = |n: u64| {
+            if n & 1 == 1 {
+                if n < 8 {
+                    1
+                } else {
+                    n
+                }
+            } else {
+                0
+            }
+        };
+        let e4b_map = |n: u64| {
+            if n & 1 == 1 {
+                1
+            } else if n < 8 {
+                0
+            } else {
+                n
+            }
+        };
         let seed = |f: &dyn Fn(u64) -> u64| Sq1State {
             top: pj(SOLVED_TOP, f),
             bottom: pj(SOLVED_BOTTOM, f),
@@ -1898,16 +2014,20 @@ impl Sq1WcaSolver {
             Self::build_proj_wca_auto(base, SHAPE_COUNT * 70 * 70 * 2, seed(&comb_map), |b, s| {
                 b.comb_idx(s)
             });
-        let c4 =
-            Self::build_proj_wca_auto(base, SHAPE_COUNT * 1680 * 2, seed(&c4_map), |b, s| b.c4_idx(s));
-        let e4 =
-            Self::build_proj_wca_auto(base, SHAPE_COUNT * 1680 * 2, seed(&e4_map), |b, s| b.e4_idx(s));
-        let c4b = Self::build_proj_wca_auto(base, SHAPE_COUNT * 1680 * 2, seed(&c4b_map), |b, s| {
-            b.c4b_idx(s)
+        let c4 = Self::build_proj_wca_auto(base, SHAPE_COUNT * 1680 * 2, seed(&c4_map), |b, s| {
+            b.c4_idx(s)
         });
-        let e4b = Self::build_proj_wca_auto(base, SHAPE_COUNT * 1680 * 2, seed(&e4b_map), |b, s| {
-            b.e4b_idx(s)
+        let e4 = Self::build_proj_wca_auto(base, SHAPE_COUNT * 1680 * 2, seed(&e4_map), |b, s| {
+            b.e4_idx(s)
         });
+        let c4b =
+            Self::build_proj_wca_auto(base, SHAPE_COUNT * 1680 * 2, seed(&c4b_map), |b, s| {
+                b.c4b_idx(s)
+            });
+        let e4b =
+            Self::build_proj_wca_auto(base, SHAPE_COUNT * 1680 * 2, seed(&e4b_map), |b, s| {
+                b.e4b_idx(s)
+            });
         // phase-2 方形子群表(复用 twist 求解器的 action 推导,但 WCA 加权:旋转 cost 1)。
         // lite(slash via WCA)只需 h_le_wca 的 cornp/edgep/小投影表 ⇒ 跳过 csq/esq/jsq/jsq_full。
         let (csq, esq) = if lite {
@@ -1917,10 +2037,31 @@ impl Sq1WcaSolver {
             (build_sq_wca(&sig, &rhoc), build_sq_wca(&tau, &rhoe))
         };
         let (cornp, edgep) = Self::load_or_build_pdbs(base);
-        let jsq_full = if lite { Vec::new() } else { Self::load_or_build_jsq_full() };
+        let jsq_full = if lite {
+            Vec::new()
+        } else {
+            Self::load_or_build_jsq_full()
+        };
         // jsq_full 精确(覆盖 jsq 的陪集启发)⇒ 在位则免载 3.25GB jsq。
-        let jsq = if lite || !jsq_full.is_empty() { Vec::new() } else { Self::load_or_build_jsq() };
-        Sq1WcaSolver { base, comb, c4, e4, c4b, e4b, csq, esq, cornp, edgep, jsq, jsq_full }
+        let jsq = if lite || !jsq_full.is_empty() {
+            Vec::new()
+        } else {
+            Self::load_or_build_jsq()
+        };
+        Sq1WcaSolver {
+            base,
+            comb,
+            c4,
+            e4,
+            c4b,
+            e4b,
+            csq,
+            esq,
+            cornp,
+            edgep,
+            jsq,
+            jsq_full,
+        }
     }
 
     /// 大 PDB(角/棱全 8 件)加载或按需构建。盘缓存命中即直读;缺表且 `SQ1_BUILD_PDB=1`
@@ -1929,12 +2070,20 @@ impl Sq1WcaSolver {
     #[cfg(not(target_arch = "wasm32"))]
     fn load_or_build_pdbs(base: &'static Sq1Solver) -> (Vec<u8>, Vec<u8>) {
         let size = SHAPE_COUNT * 40320 * 2;
-        let corn = Self::load_or_build_one("sq1_wca_cornp.bin", size, base, |b, s| b.corn_idx(s), |b, ix| {
-            b.unrank_pdb(ix as usize, true)
-        });
-        let edge = Self::load_or_build_one("sq1_wca_edgep.bin", size, base, |b, s| b.edge_idx(s), |b, ix| {
-            b.unrank_pdb(ix as usize, false)
-        });
+        let corn = Self::load_or_build_one(
+            "sq1_wca_cornp.bin",
+            size,
+            base,
+            |b, s| b.corn_idx(s),
+            |b, ix| b.unrank_pdb(ix as usize, true),
+        );
+        let edge = Self::load_or_build_one(
+            "sq1_wca_edgep.bin",
+            size,
+            base,
+            |b, s| b.edge_idx(s),
+            |b, ix| b.unrank_pdb(ix as usize, false),
+        );
         (corn, edge)
     }
 
@@ -1956,7 +2105,10 @@ impl Sq1WcaSolver {
         if std::env::var("SQ1_BUILD_PDB").as_deref() != Ok("1") {
             return Vec::new();
         }
-        eprintln!("[sq1] building {} ({} entries, index-frontier parallel) ...", name, size);
+        eprintln!(
+            "[sq1] building {} ({} entries, index-frontier parallel) ...",
+            name, size
+        );
         let t = Self::build_pdb_idx_par(base, size, idx_of, unrank);
         if let Some(dir) = path.parent() {
             let _ = std::fs::create_dir_all(dir);
@@ -2045,7 +2197,10 @@ impl Sq1WcaSolver {
         if std::env::var("SQ1_BUILD_PDB").as_deref() != Ok("1") {
             return Vec::new();
         }
-        eprintln!("[sq1] building sq1_wca_jsqfull.bin ({} entries, scan-based, exact phase-2) ...", JSQ_FULL_SIZE);
+        eprintln!(
+            "[sq1] building sq1_wca_jsqfull.bin ({} entries, scan-based, exact phase-2) ...",
+            JSQ_FULL_SIZE
+        );
         let t = Self::build_jsq_full(Sq1Solver::shared());
         if let Some(dir) = path.parent() {
             let _ = std::fs::create_dir_all(dir);
@@ -2506,7 +2661,10 @@ impl Sq1WcaSolver {
                     }
                 }
             }
-            assert!(found, "p2_reconstruct: no gradient move (jsq_full inconsistent)");
+            assert!(
+                found,
+                "p2_reconstruct: no gradient move (jsq_full inconsistent)"
+            );
         }
     }
 
@@ -2572,7 +2730,10 @@ impl Sq1WcaSolver {
         }
         // root 若 slash-legal,h(st) 是 admissible 起点;否则首步必为 turn(≥1 步)。
         let mut bound = if st.slash_legal() { self.h(st) } else { 1 };
-        let mut memo = P2Memo { exact: HashMap::new(), fail_below: HashMap::new() };
+        let mut memo = P2Memo {
+            exact: HashMap::new(),
+            fail_below: HashMap::new(),
+        };
         let mut tt: HashMap<u128, u8> = HashMap::new(); // A4 phase-1 置换表(跨 bound 复用)
         let result = loop {
             let mut path: Vec<Sq1Token> = Vec::new();
@@ -2609,7 +2770,10 @@ impl Sq1WcaSolver {
         DEADLINE_ON.store(true, Ordering::Relaxed);
 
         let mut bound = if st.slash_legal() { self.h(st) } else { 1 };
-        let mut memo = P2Memo { exact: HashMap::new(), fail_below: HashMap::new() };
+        let mut memo = P2Memo {
+            exact: HashMap::new(),
+            fail_below: HashMap::new(),
+        };
         let mut tt: HashMap<u128, u8> = HashMap::new();
         let result = loop {
             let mut path: Vec<Sq1Token> = Vec::new();
@@ -2693,7 +2857,10 @@ impl Sq1WcaSolver {
         if g == bound {
             return is_exact_solved(&s);
         }
-        let key = (s.top as u128) | ((s.bottom as u128) << 48) | ((s.ml as u128) << 96) | ((g as u128) << 97);
+        let key = (s.top as u128)
+            | ((s.bottom as u128) << 48)
+            | ((s.ml as u128) << 96)
+            | ((g as u128) << 97);
         if tt.contains(&key) {
             return false;
         }
@@ -2825,10 +2992,17 @@ impl Sq1WcaSolver {
             return None;
         }
         if g == bound {
-            return if is_exact_solved(&s) { Some(Vec::new()) } else { None };
+            return if is_exact_solved(&s) {
+                Some(Vec::new())
+            } else {
+                None
+            };
         }
         let rem = bound - g;
-        let key = (s.top as u128) | ((s.bottom as u128) << 48) | ((s.ml as u128) << 96) | ((g as u128) << 97);
+        let key = (s.top as u128)
+            | ((s.bottom as u128) << 48)
+            | ((s.ml as u128) << 96)
+            | ((g as u128) << 97);
         if let Some(fail) = tt.get(key) {
             if fail >= rem {
                 return None;
@@ -2872,12 +3046,13 @@ impl Sq1WcaSolver {
         kids.sort_unstable_by_key(|k| k.0);
 
         let solve_child = |&(_, tok, c): &(u8, Sq1Token, Sq1State)| -> Option<Vec<Sq1Token>> {
-            self.dfs_slash_alt_par(c, g + 1, bound, tt, cancel, split).map(|mut sub| {
-                let mut p = Vec::with_capacity(sub.len() + 1);
-                p.push(tok);
-                p.append(&mut sub);
-                p
-            })
+            self.dfs_slash_alt_par(c, g + 1, bound, tt, cancel, split)
+                .map(|mut sub| {
+                    let mut p = Vec::with_capacity(sub.len() + 1);
+                    p.push(tok);
+                    p.append(&mut sub);
+                    p
+                })
         };
 
         let found = if g < split && kids.len() > 1 {
@@ -2942,7 +3117,10 @@ impl Sq1WcaSolver {
                     p.per_bound = 0;
                 }
             });
-            let mut memo = P2Memo { exact: HashMap::new(), fail_below: HashMap::new() };
+            let mut memo = P2Memo {
+                exact: HashMap::new(),
+                fail_below: HashMap::new(),
+            };
             let mut path = Vec::new();
             let found = self.dfs(*st, 0, bound, LM_NONE, &mut memo, &mut path, &mut tt);
             let (pb, total, aborted, fsd, secs) = wca_profile::STATE.with(|c| {
@@ -2979,7 +3157,11 @@ impl Sq1WcaSolver {
         if let Some(c) = solved {
             out.push_str(&format!("\n  SOLVED={}", c));
         }
-        out.push_str(&format!("\n  TT_entries={} (budget={})", tt.len(), tt_budget()));
+        out.push_str(&format!(
+            "\n  TT_entries={} (budget={})",
+            tt.len(),
+            tt_budget()
+        ));
         TT_GLOBAL_ENTRIES.fetch_sub(tt.len(), std::sync::atomic::Ordering::Relaxed);
         out
     }
@@ -3120,7 +3302,8 @@ impl Sq1WcaSolver {
     #[cfg(not(target_arch = "wasm32"))]
     pub fn solve_with_solution_parallel(&self, st: &Sq1State, split: u8) -> (u32, Vec<Sq1Token>) {
         // 无超时:必出可证最优(深尾可能很久;有时限需求用 _deadline)。
-        self.solve_par_core(st, split, None).expect("no-deadline parallel solve cannot time out")
+        self.solve_par_core(st, split, None)
+            .expect("no-deadline parallel solve cannot time out")
     }
 
     /// EPIC ④ + 看门狗:`deadline` 到点 ⇒ 怪物,返 `None`(调用方记 `id,M`)。**绝不死等**:墙钟看门狗
@@ -3204,9 +3387,13 @@ impl Sq1WcaSolver {
             self.p2_reconstruct(*s, d, &mut tail);
             return Some((d, tail));
         }
-        let mut memo = P2Memo { exact: HashMap::new(), fail_below: HashMap::new() };
+        let mut memo = P2Memo {
+            exact: HashMap::new(),
+            fail_below: HashMap::new(),
+        };
         let mut tail = Vec::new();
-        self.p2_dist_le_wca(s, cap, &mut memo, &mut tail).map(|d| (d, tail))
+        self.p2_dist_le_wca(s, cap, &mut memo, &mut tail)
+            .map(|d| (d, tail))
     }
 
     /// 并行 IDA* DFS。返回 `Some((solved 时的 g = 总深度, 本节点→SOLVED 的 token 路径))`。
@@ -3287,12 +3474,13 @@ impl Sq1WcaSolver {
         // 子树求解:成功则把"本节点→子"的 token 接到子返回路径前(各线程独立 path,不共享 &mut)。
         let solve_child =
             |&(_, tok, c, clm): &(u8, Sq1Token, Sq1State, u8)| -> Option<(u8, Vec<Sq1Token>)> {
-                self.dfs_par(c, g + 1, bound, clm, tt, cancel, split).map(|(cost, mut sub)| {
-                    let mut p = Vec::with_capacity(sub.len() + 1);
-                    p.push(tok);
-                    p.append(&mut sub);
-                    (cost, p)
-                })
+                self.dfs_par(c, g + 1, bound, clm, tt, cancel, split)
+                    .map(|(cost, mut sub)| {
+                        let mut p = Vec::with_capacity(sub.len() + 1);
+                        p.push(tok);
+                        p.append(&mut sub);
+                        (cost, p)
+                    })
             };
 
         let found = if g < split && n > 1 {
@@ -3337,7 +3525,8 @@ mod tests {
     use std::collections::HashSet;
 
     fn lcg(x: u64) -> u64 {
-        x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407)
+        x.wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407)
     }
 
     /// 合法 (a,b)+slash 随机游走(确定性)。返回 (末态, 每刀的转量)。
@@ -3423,7 +3612,17 @@ mod tests {
             }
             o
         };
-        let c4_map = |n: u64| if n & 1 == 1 { if n < 8 { n } else { 9 } } else { 0 };
+        let c4_map = |n: u64| {
+            if n & 1 == 1 {
+                if n < 8 {
+                    n
+                } else {
+                    9
+                }
+            } else {
+                0
+            }
+        };
         let seed = Sq1State {
             top: pj(SOLVED_TOP, &c4_map),
             bottom: pj(SOLVED_BOTTOM, &c4_map),
@@ -3433,7 +3632,10 @@ mod tests {
         let serial = Sq1WcaSolver::build_proj_wca(base, size, seed, |b, s| b.c4_idx(s));
         let par = Sq1WcaSolver::build_proj_wca_par(base, size, seed, |b, s| b.c4_idx(s));
         assert_eq!(serial.len(), par.len());
-        assert_eq!(serial, par, "parallel BFS must equal serial BFS byte-for-byte");
+        assert_eq!(
+            serial, par,
+            "parallel BFS must equal serial BFS byte-for-byte"
+        );
     }
 
     /// A1:unrank_pdb 必须是 corn_idx / edge_idx 在整个索引空间(296M each)上的精确逆。
@@ -3445,7 +3647,11 @@ mod tests {
         for &(carry, name) in &[(true, "corn"), (false, "edge")] {
             for i in 0..size {
                 let s = base.unrank_pdb(i, carry);
-                let got = if carry { base.corn_idx(&s) } else { base.edge_idx(&s) };
+                let got = if carry {
+                    base.corn_idx(&s)
+                } else {
+                    base.edge_idx(&s)
+                };
                 assert_eq!(got, i, "{} unrank round-trip failed at index {}", name, i);
             }
         }
@@ -3475,7 +3681,11 @@ mod tests {
                 move |b, ix| b.unrank_pdb(ix as usize, carry),
             );
             assert_eq!(built.len(), disk.len());
-            assert!(built == disk, "{}: index-frontier builder != disk (old builder)", name);
+            assert!(
+                built == disk,
+                "{}: index-frontier builder != disk (old builder)",
+                name
+            );
             eprintln!("[idxbuild] {} byte-identical ({} bytes) ✓", name, size);
         }
     }
@@ -3619,7 +3829,10 @@ mod tests {
     }
 
     fn state_to_ostate(s: &Sq1State) -> OState {
-        let mut o = OState { c: [0; 24], ml: s.ml };
+        let mut o = OState {
+            c: [0; 24],
+            ml: s.ml,
+        };
         for i in 0..12 {
             o.c[i] = Sq1State::nib(s.top, i);
             o.c[12 + i] = Sq1State::nib(s.bottom, i);
@@ -3687,7 +3900,12 @@ mod tests {
                 assert!(o_slash_legal(&o_st));
                 a_st = a_st.slashed();
                 o_st = o_slash(&o_st);
-                assert_eq!(state_to_ostate(&a_st), o_st, "mechanics drift, seed={}", seed);
+                assert_eq!(
+                    state_to_ostate(&a_st),
+                    o_st,
+                    "mechanics drift, seed={}",
+                    seed
+                );
             }
         }
     }
@@ -3786,7 +4004,11 @@ mod tests {
         let goal = o_goal_set();
         // 24 组 ≤3 刀 + 8 组 4 刀
         for seed in 0..32u64 {
-            let tw = if seed < 24 { 1 + (seed as usize) % 3 } else { 4 };
+            let tw = if seed < 24 {
+                1 + (seed as usize) % 3
+            } else {
+                4
+            };
             let (st, _) = random_walk(5000 + seed, tw);
             let want = o_iddfs(&state_to_ostate(&st), tw, &goal)
                 .expect("oracle must solve within walk length") as u32;
@@ -3896,7 +4118,10 @@ mod tests {
                 "replay seed={}",
                 seed
             );
-            eprintln!("  seed={} opt={} serial={:.3}s parallel={:.3}s", seed, par, ts, tp);
+            eprintln!(
+                "  seed={} opt={} serial={:.3}s parallel={:.3}s",
+                seed, par, ts, tp
+            );
         }
     }
 
@@ -4022,7 +4247,10 @@ mod tests {
             );
             checked += 1;
         }
-        eprintln!("WCA oracle cross-check: {} states (stride {})", checked, stride);
+        eprintln!(
+            "WCA oracle cross-check: {} states (stride {})",
+            checked, stride
+        );
     }
 
     /// 表规模 / 可达 / 投影直径(回归锁;改表逻辑必须显式改这里)。
@@ -4039,9 +4267,13 @@ mod tests {
             let mx = t.iter().filter(|&&v| v != 255).copied().max().unwrap();
             (reach, mx)
         };
-        for (name, t) in
-            [("comb", &w.comb), ("c4", &w.c4), ("e4", &w.e4), ("c4b", &w.c4b), ("e4b", &w.e4b)]
-        {
+        for (name, t) in [
+            ("comb", &w.comb),
+            ("c4", &w.c4),
+            ("e4", &w.e4),
+            ("c4b", &w.c4b),
+            ("e4b", &w.e4b),
+        ] {
             let (r, m) = stats(t);
             eprintln!("WCA {:4} reach={} (len={}) max={}", name, r, t.len(), m);
         }
@@ -4099,7 +4331,8 @@ mod tests {
     #[cfg(not(target_arch = "wasm32"))]
     fn p2_exact_indep(w: &Sq1WcaSolver, s: Sq1State) -> u8 {
         let (cp, ep) = sq_proj_arrays(&s);
-        let mut t = w.csq[rank8(&cp) * 2 + s.ml as usize].max(w.esq[rank8(&ep) * 2 + s.ml as usize]);
+        let mut t =
+            w.csq[rank8(&cp) * 2 + s.ml as usize].max(w.esq[rank8(&ep) * 2 + s.ml as usize]);
         loop {
             if p2_dfs_indep(w, s, 0, t, LM_NONE) {
                 return t;
@@ -4125,7 +4358,11 @@ mod tests {
                 buf.push(rank8(&apply_action(&cp, r)) * 2 + ml as usize);
             }
         });
-        assert_eq!(scan_c, build_sq_wca(&sig, &rhoc), "scan corner != build_sq_wca");
+        assert_eq!(
+            scan_c,
+            build_sq_wca(&sig, &rhoc),
+            "scan corner != build_sq_wca"
+        );
         let scan_e = scan_bfs_par(80640, 0, |i, buf| {
             let ml = (i & 1) as u8;
             let ep = unrank8(i >> 1);
@@ -4136,7 +4373,11 @@ mod tests {
                 buf.push(rank8(&apply_action(&ep, r)) * 2 + ml as usize);
             }
         });
-        assert_eq!(scan_e, build_sq_wca(&tau, &rhoe), "scan edge != build_sq_wca");
+        assert_eq!(
+            scan_e,
+            build_sq_wca(&tau, &rhoe),
+            "scan edge != build_sq_wca"
+        );
     }
 
     /// 配对 action 完备性 + 健全性:BFS 枚举方形态,验每个物理出边(slash / 方形保形旋转)
@@ -4167,7 +4408,8 @@ mod tests {
                     let (tc, te) = sq_proj_arrays(&r);
                     assert!(
                         rot.iter()
-                            .any(|(rc, re)| apply_action(&cp, rc) == tc && apply_action(&ep, re) == te),
+                            .any(|(rc, re)| apply_action(&cp, rc) == tc
+                                && apply_action(&ep, re) == te),
                         "rotation ({},{}) not reproduced by any rot pair",
                         a,
                         b
@@ -4183,7 +4425,8 @@ mod tests {
                     assert!(
                         slash
                             .iter()
-                            .any(|(mc, me)| apply_action(&cp, mc) == tc && apply_action(&ep, me) == te),
+                            .any(|(mc, me)| apply_action(&cp, mc) == tc
+                                && apply_action(&ep, me) == te),
                         "slash not reproduced by any slash pair"
                     );
                     checked += 1;
@@ -4198,7 +4441,11 @@ mod tests {
                 }
             }
         }
-        eprintln!("jsq actions sound: {} transitions over {} square states", checked, seen.len());
+        eprintln!(
+            "jsq actions sound: {} transitions over {} square states",
+            checked,
+            seen.len()
+        );
         assert!(checked > 1000, "too few transitions: {}", checked);
     }
 
@@ -4212,7 +4459,9 @@ mod tests {
         let mut probes: Vec<usize> = vec![0, solved, JSQ_FULL_SIZE - 1];
         let mut x = 0x9e3779b97f4a7c15u64;
         for _ in 0..2_000_000 {
-            x = x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            x = x
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
             probes.push((x as usize) % JSQ_FULL_SIZE);
         }
         for sc in 0..4usize {
@@ -4251,7 +4500,11 @@ mod tests {
                 push(c, &mut q);
             }
         }
-        eprintln!("full_idx roundtrip: {} probes + {} BFS square states ✓", probes.len(), n);
+        eprintln!(
+            "full_idx roundtrip: {} probes + {} BFS square states ✓",
+            probes.len(),
+            n
+        );
         assert!(n > 500);
     }
 
@@ -4264,8 +4517,15 @@ mod tests {
     fn wca_a3_jsqfull_exact() {
         use std::collections::{HashSet, VecDeque};
         let w = Sq1WcaSolver::shared();
-        assert!(!w.jsq_full.is_empty(), "jsq_full not loaded; build with SQ1_BUILD_PDB=1 first");
-        assert_eq!(w.jsq_full[full_idx(&Sq1State::SOLVED)], 0, "jsq_full[SOLVED] must be 0");
+        assert!(
+            !w.jsq_full.is_empty(),
+            "jsq_full not loaded; build with SQ1_BUILD_PDB=1 first"
+        );
+        assert_eq!(
+            w.jsq_full[full_idx(&Sq1State::SOLVED)],
+            0,
+            "jsq_full[SOLVED] must be 0"
+        );
         let mut seen: HashSet<(u64, u64, u8)> = HashSet::new();
         let mut q: VecDeque<(Sq1State, u32)> = VecDeque::new();
         let s0 = Sq1State::SOLVED;
@@ -4275,7 +4535,11 @@ mod tests {
         while let Some((z, depth)) = q.pop_front() {
             let d = w.jsq_full[full_idx(&z)];
             let exact = p2_exact_indep(w, z);
-            assert_eq!(d, exact, "jsq_full {} != independent exact {} (depth {})", d, exact, depth);
+            assert_eq!(
+                d, exact,
+                "jsq_full {} != independent exact {} (depth {})",
+                d, exact, depth
+            );
             n += 1;
             if depth < 4 {
                 let mut push = |r: Sq1State, q: &mut VecDeque<(Sq1State, u32)>| {
@@ -4313,7 +4577,10 @@ mod tests {
                 return;
             }
         }
-        eprintln!("[sq1] building jsq_full ({} entries, scan-based, lean) ...", JSQ_FULL_SIZE);
+        eprintln!(
+            "[sq1] building jsq_full ({} entries, scan-based, lean) ...",
+            JSQ_FULL_SIZE
+        );
         let t = Sq1WcaSolver::build_jsq_full(Sq1Solver::shared());
         if let Some(dir) = path.parent() {
             let _ = std::fs::create_dir_all(dir);
@@ -4333,7 +4600,10 @@ mod tests {
     fn wca_a3_jsq_admissible_dominant() {
         use std::collections::{HashSet, VecDeque};
         let w = Sq1WcaSolver::shared();
-        assert!(!w.jsq.is_empty(), "jsq not loaded; build with SQ1_BUILD_PDB=1 first");
+        assert!(
+            !w.jsq.is_empty(),
+            "jsq not loaded; build with SQ1_BUILD_PDB=1 first"
+        );
         assert_eq!(w.jsq[0], 0, "jsq[solved coset] must be 0");
         let mut seen: HashSet<(u64, u64, u8)> = HashSet::new();
         let mut q: VecDeque<(Sq1State, u32)> = VecDeque::new();
@@ -4346,9 +4616,21 @@ mod tests {
             let j = w.jsq[jidx(&cp, &ep, z.ml)];
             let marg =
                 w.csq[rank8(&cp) * 2 + z.ml as usize].max(w.esq[rank8(&ep) * 2 + z.ml as usize]);
-            assert!(j >= marg, "jsq {} < max(csq,esq) {} (not dominant) depth {}", j, marg, depth);
+            assert!(
+                j >= marg,
+                "jsq {} < max(csq,esq) {} (not dominant) depth {}",
+                j,
+                marg,
+                depth
+            );
             let exact = p2_exact_indep(w, z);
-            assert!(j <= exact, "jsq {} > exact phase-2 {} (NOT admissible) depth {}", j, exact, depth);
+            assert!(
+                j <= exact,
+                "jsq {} > exact phase-2 {} (NOT admissible) depth {}",
+                j,
+                exact,
+                depth
+            );
             n += 1;
             if depth < 4 {
                 let mut push = |r: Sq1State, q: &mut VecDeque<(Sq1State, u32)>| {
@@ -4449,12 +4731,16 @@ mod tests {
             let mut turns = 0usize;
             for part in s.split('/') {
                 let p = part.trim();
-                if p.is_empty() { continue; }
+                if p.is_empty() {
+                    continue;
+                }
                 if let (Some(l), Some(r)) = (p.find('('), p.find(')')) {
                     if let Some((a, b)) = p[l + 1..r].split_once(',') {
                         let a: i32 = a.trim().parse().unwrap_or(0);
                         let b: i32 = b.trim().parse().unwrap_or(0);
-                        if !(a == 0 && b == 0) { turns += 1; }
+                        if !(a == 0 && b == 0) {
+                            turns += 1;
+                        }
                     }
                 }
             }
@@ -4464,39 +4750,62 @@ mod tests {
         fn inv_disp(d: i8) -> i8 {
             let a = ((d as i32 % 12) + 12) % 12;
             let ia = (12 - a) % 12;
-            if ia > 6 { (ia - 12) as i8 } else { ia as i8 }
+            if ia > 6 {
+                (ia - 12) as i8
+            } else {
+                ia as i8
+            }
         }
         // 最优打乱 = 最优解逆序(每层转取逆,slash 自逆)。
         fn invert(ts: &[Sq1Token]) -> Vec<Sq1Token> {
-            ts.iter().rev().map(|t| match t {
-                Sq1Token::Turn(x, y) => Sq1Token::Turn(inv_disp(*x), inv_disp(*y)),
-                Sq1Token::Slash => Sq1Token::Slash,
-            }).collect()
+            ts.iter()
+                .rev()
+                .map(|t| match t {
+                    Sq1Token::Turn(x, y) => Sq1Token::Turn(inv_disp(*x), inv_disp(*y)),
+                    Sq1Token::Slash => Sq1Token::Slash,
+                })
+                .collect()
         }
 
         let path = std::env::var("SQ1_CORPUS")
             .unwrap_or_else(|_| "D:/cube/scramble/puzzle/sq1/scrambles.txt".into());
-        let n: usize = std::env::var("SQ1_EX_N").ok().and_then(|s| s.parse().ok()).unwrap_or(12);
+        let n: usize = std::env::var("SQ1_EX_N")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(12);
         let txt = std::fs::read_to_string(&path).expect("corpus scrambles.txt");
         let w = Sq1WcaSolver::shared();
-        assert!(!w.jsq_full.is_empty(), "jsq_full not loaded; examples need the exact table");
+        assert!(
+            !w.jsq_full.is_empty(),
+            "jsq_full not loaded; examples need the exact table"
+        );
         for line in txt.lines().take(n) {
             let line = line.trim();
-            if line.is_empty() { continue; }
+            if line.is_empty() {
+                continue;
+            }
             let (id, scr) = line.split_once(',').unwrap();
             let st = state_from_scramble(scr).unwrap();
             let (cost, sol) = w.solve_with_solution(&st);
             let inv = invert(&sol);
             // 校验:最优打乱(逆解)从 SOLVED 出发 replay == 原态。
             let mut r = Sq1State::SOLVED;
-            for t in &inv { r.apply(*t).unwrap(); }
+            for t in &inv {
+                r.apply(*t).unwrap();
+            }
             assert_eq!(
-                (r.top, r.bottom, r.ml), (st.top, st.bottom, st.ml),
-                "id={} optimal-scramble replay mismatch", id
+                (r.top, r.bottom, r.ml),
+                (st.top, st.bottom, st.ml),
+                "id={} optimal-scramble replay mismatch",
+                id
             );
             eprintln!(
                 "id={} orig_wca={} optimal={} | opt_scramble= {} | opt_solution= {}",
-                id, orig_wca_len(scr), cost, scramble_to_string(&inv), scramble_to_string(&sol)
+                id,
+                orig_wca_len(scr),
+                cost,
+                scramble_to_string(&inv),
+                scramble_to_string(&sol)
             );
         }
     }
@@ -4513,7 +4822,13 @@ mod tests {
             let (wca, sol) = w.solve_with_solution(&st);
             let twist = exact.solve_one(&st);
             assert!(twist <= wca, "twist {} > wca {}, seed={}", twist, wca, seed);
-            assert!(wca <= 2 * twist + 1, "wca {} > 2*twist+1={}, seed={}", wca, 2 * twist + 1, seed);
+            assert!(
+                wca <= 2 * twist + 1,
+                "wca {} > 2*twist+1={}, seed={}",
+                wca,
+                2 * twist + 1,
+                seed
+            );
             assert!(wca <= 27, "wca {} > 27, seed={}", wca, seed);
             assert_eq!(sol.len() as u32, wca, "token count = wca, seed={}", seed);
             let mut r = st;
@@ -4543,20 +4858,34 @@ mod tests {
             let near = crate::sq1_twophase::solve_wca(&st);
             let near_tw = crate::sq1_twophase::solve_twist(&st);
             assert!(wca <= near, "id={} wca-opt {} > near {}", id, wca, near);
-            assert!(wca <= 2 * near_tw + 1, "id={} wca {} > 2*near_tw+1", id, wca);
+            assert!(
+                wca <= 2 * near_tw + 1,
+                "id={} wca {} > 2*near_tw+1",
+                id,
+                wca
+            );
             assert!(wca <= 27, "id={} wca {} > 27", id, wca);
             assert_eq!(sol.len() as u32, wca);
             let mut r = st;
             for t in &sol {
                 r.apply(*t).unwrap();
             }
-            assert_eq!((r.top, r.bottom, r.ml), (SOLVED_TOP, SOLVED_BOTTOM, 0), "id={} replay", id);
+            assert_eq!(
+                (r.top, r.bottom, r.ml),
+                (SOLVED_TOP, SOLVED_BOTTOM, 0),
+                "id={} replay",
+                id
+            );
             sum += wca;
             mx = mx.max(wca);
             n += 1;
         }
         assert_eq!(n, 81);
-        eprintln!("WCA-opt on 81 real scrambles: mean={:.2} max={}", sum as f64 / 81.0, mx);
+        eprintln!(
+            "WCA-opt on 81 real scrambles: mean={:.2} max={}",
+            sum as f64 / 81.0,
+            mx
+        );
     }
 
     /// 诊断:逐步打印 seed=63 的解,定位 replay 偏离点。
@@ -4565,7 +4894,13 @@ mod tests {
         let w = Sq1WcaSolver::shared();
         let (st, _) = random_walk(40_000 + 63, 9);
         let (wca, sol) = w.solve_with_solution(&st);
-        eprintln!("scramble: top={:#x} bottom={:#x} ml={} square={}", st.top, st.bottom, st.ml, st.is_square_shape());
+        eprintln!(
+            "scramble: top={:#x} bottom={:#x} ml={} square={}",
+            st.top,
+            st.bottom,
+            st.ml,
+            st.is_square_shape()
+        );
         eprintln!("wca={} sol={:?}", wca, sol);
         let mut r = st;
         for (i, t) in sol.iter().enumerate() {
@@ -4573,7 +4908,13 @@ mod tests {
             r.apply(*t).unwrap();
             eprintln!(
                 "  [{:2}] {:?}: top={:#x} bottom={:#x} ml={} sq={} (was_sq={})",
-                i, t, r.top, r.bottom, r.ml, r.is_square_shape(), before_sq
+                i,
+                t,
+                r.top,
+                r.bottom,
+                r.ml,
+                r.is_square_shape(),
+                before_sq
             );
         }
         eprintln!(
@@ -4697,7 +5038,10 @@ mod tests {
         let data = std::fs::read_to_string(path).expect("corpus");
         let w = Sq1WcaSolver::shared();
         // 选 h 最接近目标(默认 15 = 均值,代表典型硬态)的 1 条。SQ1_CALIB_H 可覆盖。
-        let target: u32 = std::env::var("SQ1_CALIB_H").ok().and_then(|s| s.parse().ok()).unwrap_or(15);
+        let target: u32 = std::env::var("SQ1_CALIB_H")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(15);
         let mut best: Option<(u32, String, Sq1State)> = None;
         for line in data.lines() {
             let line = line.trim();
@@ -4744,28 +5088,46 @@ mod tests {
     fn wca_profile_file() {
         let path = std::env::var("SQ1_PROFILE_FILE")
             .unwrap_or_else(|_| "../core/.tmp/sq1_wca/diag/profile_in.txt".to_string());
-        let data = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {}: {}", path, e));
+        let data =
+            std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {}: {}", path, e));
         let node_cap: u64 = std::env::var("SQ1_PROFILE_NODECAP")
-            .ok().and_then(|s| s.parse().ok()).unwrap_or(2_000_000_000);
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(2_000_000_000);
         let time_cap: u128 = std::env::var("SQ1_PROFILE_TIMECAP_MS")
-            .ok().and_then(|s| s.parse().ok()).unwrap_or(60_000);
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(60_000);
         let w = Sq1WcaSolver::shared();
-        eprintln!("jsq_full loaded: {}  cornp/edgep: {}/{}",
-            !w.jsq_full.is_empty(), !w.cornp.is_empty(), !w.edgep.is_empty());
+        eprintln!(
+            "jsq_full loaded: {}  cornp/edgep: {}/{}",
+            !w.jsq_full.is_empty(),
+            !w.cornp.is_empty(),
+            !w.edgep.is_empty()
+        );
         for line in data.lines() {
             let line = line.trim();
-            if line.is_empty() { continue; }
+            if line.is_empty() {
+                continue;
+            }
             let (id, scr) = line.split_once(',').unwrap_or(("?", line));
             let st = match state_from_scramble(scr) {
                 Ok(s) => s,
-                Err(e) => { eprintln!("id={} parse err: {}", id, e); continue; }
+                Err(e) => {
+                    eprintln!("id={} parse err: {}", id, e);
+                    continue;
+                }
             };
             let h = w.h(&st);
             let near_tw = crate::sq1_twophase::solve_twist(&st);
             let near_wca = crate::sq1_twophase::solve_wca(&st);
             eprintln!(
                 "\n=== id={} h={} near_twist={} near_wca={} gap≈{} ===",
-                id, h, near_tw, near_wca, near_wca as i32 - h as i32
+                id,
+                h,
+                near_tw,
+                near_wca,
+                near_wca as i32 - h as i32
             );
             eprintln!("{}", w.solve_profile(&st, node_cap, time_cap));
         }

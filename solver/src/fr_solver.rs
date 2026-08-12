@@ -170,7 +170,12 @@ impl FrSolver {
             coset_id.insert(key_of(g), id);
         }
 
-        FrSolver { mt, dist, h_members, coset_id }
+        FrSolver {
+            mt,
+            dist,
+            h_members,
+            coset_id,
+        }
     }
 
     /// 陪集数(= 距离表长度,= |G3|/|H|)。
@@ -329,7 +334,8 @@ mod tests {
     use std::sync::OnceLock;
 
     fn lcg(x: u64) -> u64 {
-        x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407)
+        x.wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407)
     }
 
     /// 给定 move 池的确定性伪随机词。
@@ -338,7 +344,9 @@ mod tests {
         let mut out = Vec::with_capacity(len);
         for _ in 0..len {
             x = lcg(x);
-            out.push(Move::from_index(pool[(x >> 33) as usize % pool.len()] as usize));
+            out.push(Move::from_index(
+                pool[(x >> 33) as usize % pool.len()] as usize,
+            ));
         }
         out
     }
@@ -717,7 +725,11 @@ mod tests {
                     continue;
                 }
                 assert!(!sols.is_empty(), "{} no sols seed={}", axis, seed);
-                assert!(sols.iter().any(|x| x.len == best), "{} optimal missing", axis);
+                assert!(
+                    sols.iter().any(|x| x.len == best),
+                    "{} optimal missing",
+                    axis
+                );
 
                 for sol in &sols {
                     assert!(sol.len >= best && sol.len <= best + 1, "{} budget", axis);
@@ -796,12 +808,10 @@ mod tests {
         let h = HtrPhase2Solver::new();
         // htr2 角表 96 行、棱表 6912 行(各 ×6 列)—— 与本模块声明一致。
         assert_eq!(h.solve_one(&[], "", 0), Some(0)); // sanity:htr2 可构造且 solved=0
-        // 直接断言两个闭包群的 State 级大小。
-        let hc_cps: HashSet<[u8; 8]> =
-            g3_closure().iter().map(|st| st.cp_co().0).collect();
+                                                      // 直接断言两个闭包群的 State 级大小。
+        let hc_cps: HashSet<[u8; 8]> = g3_closure().iter().map(|st| st.cp_co().0).collect();
         assert_eq!(hc_cps.len(), HC, "corner closure (Hc) != 96");
-        let g3_eps: HashSet<[u8; 12]> =
-            g3_closure().iter().map(|st| st.ep_eo().0).collect();
+        let g3_eps: HashSet<[u8; 12]> = g3_closure().iter().map(|st| st.ep_eo().0).collect();
         assert_eq!(g3_eps.len(), EDGES, "G3 edge closure != 6912");
         assert_eq!(g3_closure().len(), G3_STATES);
     }
@@ -826,7 +836,11 @@ mod tests {
 
         // 距离表全可达 + 唯一目标(陪集 0 = H)。
         assert!(s.dist.iter().all(|&v| v != 255), "unreachable coset");
-        assert_eq!(s.dist.iter().filter(|&&v| v == 0).count(), 1, "目标陪集应唯一");
+        assert_eq!(
+            s.dist.iter().filter(|&&v| v == 0).count(),
+            1,
+            "目标陪集应唯一"
+        );
 
         // 锁基线:观测到的 FR 最大 BFS 深度(FR God's number)。
         let md = s.max_depth();
@@ -842,8 +856,9 @@ mod tests {
         let s = FrSolver::new();
 
         // G3_MOVES = 6 双转,且均自逆。
-        let g3_self_inv: Vec<u8> =
-            (0..18u8).filter(|&m| is_g3(m as usize) && INV_MOVE[m as usize] == m).collect();
+        let g3_self_inv: Vec<u8> = (0..18u8)
+            .filter(|&m| is_g3(m as usize) && INV_MOVE[m as usize] == m)
+            .collect();
         assert_eq!(g3_self_inv, G3_MOVES.to_vec());
 
         // FR 目标 move(L2 R2 F2 B2)单步 → 0(已在 H 内)。
@@ -881,8 +896,7 @@ mod tests {
         }
 
         // is_fr 一致性:任意打乱 × 全 (rot,yk),与 State 级 HTR 判定对照。
-        let g3_keys: HashSet<[u8; 20]> =
-            g3_closure().iter().map(key_of_st).collect();
+        let g3_keys: HashSet<[u8; 20]> = g3_closure().iter().map(key_of_st).collect();
         for seed in 0..10u64 {
             let alg = pseudo_scramble(seed, 18);
             for (ri, rot) in ROTS6.iter().enumerate() {
@@ -949,7 +963,11 @@ mod tests {
             frontier = next;
         }
         assert_eq!(bdist.len(), G3_STATES, "FR brute space != |G3|");
-        assert_eq!(*bdist.values().max().unwrap(), s.max_depth(), "god number mismatch");
+        assert_eq!(
+            *bdist.values().max().unwrap(),
+            s.max_depth(),
+            "god number mismatch"
+        );
 
         // 逐态:对每个 G3 态,solver.state_coord → dist 必等于独立 BFS 距离;
         // 且 dist==0 ⟺ fr_done(完全独立判定)。
@@ -986,7 +1004,11 @@ mod tests {
                 for &m in &buf {
                     st.apply(Move::from_index(m as usize));
                 }
-                assert_eq!(bdist[&key_of_st(&st)] as u32, best, "best != independent min");
+                assert_eq!(
+                    bdist[&key_of_st(&st)] as u32,
+                    best,
+                    "best != independent min"
+                );
 
                 if best == 0 {
                     assert!(sols.is_empty());
@@ -1023,7 +1045,9 @@ mod tests {
         }
 
         // 非 HTR 输入 → None。
-        assert!(s.enumerate_face(&string_to_alg("R U F"), "", 0, 5).is_none());
+        assert!(s
+            .enumerate_face(&string_to_alg("R U F"), "", 0, 5)
+            .is_none());
         assert_eq!(s.solve_one(&string_to_alg("R U F"), "", 0), None);
     }
 }

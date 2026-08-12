@@ -263,8 +263,7 @@ impl HtrSolver {
                 let s = i as usize % SPLIT;
                 for &m in &G2_MOVES {
                     let m = m as usize;
-                    let ni =
-                        mt_cp[c * 18 + m] as usize * SPLIT + mt_split[s * 18 + m] as usize;
+                    let ni = mt_cp[c * 18 + m] as usize * SPLIT + mt_split[s * 18 + m] as usize;
                     if dist[ni] == 255 {
                         dist[ni] = d + 1;
                         next.push(ni as u32);
@@ -275,12 +274,23 @@ impl HtrSolver {
             frontier = next;
         }
 
-        HtrSolver { mt_cp, mt_split, dist, orbit_a, ud_index }
+        HtrSolver {
+            mt_cp,
+            mt_split,
+            dist,
+            orbit_a,
+            ud_index,
+        }
     }
 
     /// 距离表最大深度(DR→HTR God's number,信息用)。
     pub fn max_depth(&self) -> u8 {
-        self.dist.iter().copied().filter(|&v| v != 255).max().unwrap_or(0)
+        self.dist
+            .iter()
+            .copied()
+            .filter(|&v| v != 255)
+            .max()
+            .unwrap_or(0)
     }
 
     /// DR 检查 + 坐标提取(规范帧 State)。非 DR → None。
@@ -424,7 +434,8 @@ mod tests {
     use std::sync::OnceLock;
 
     fn lcg(x: u64) -> u64 {
-        x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407)
+        x.wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407)
     }
 
     /// 给定 move 池的确定性伪随机词。
@@ -433,7 +444,9 @@ mod tests {
         let mut out = Vec::with_capacity(len);
         for _ in 0..len {
             x = lcg(x);
-            out.push(Move::from_index(pool[(x >> 33) as usize % pool.len()] as usize));
+            out.push(Move::from_index(
+                pool[(x >> 33) as usize % pool.len()] as usize,
+            ));
         }
         out
     }
@@ -642,9 +655,13 @@ mod tests {
             let (mep, meo) = ms.ep_eo();
             let dr_preserving = mco.iter().all(|&v| v == 0)
                 && meo.iter().all(|&v| v == 0)
-                && (0..12)
-                    .all(|p| (s.ud_index[p] == 255) == (s.ud_index[mep[p] as usize] == 255));
-            assert_eq!(dr_preserving, G2_MOVES.contains(&(m as u8)), "G2 set wrong at {}", m);
+                && (0..12).all(|p| (s.ud_index[p] == 255) == (s.ud_index[mep[p] as usize] == 255));
+            assert_eq!(
+                dr_preserving,
+                G2_MOVES.contains(&(m as u8)),
+                "G2 set wrong at {}",
+                m
+            );
             assert_eq!(is_g2(m), G2_MOVES.contains(&(m as u8)));
         }
         let g3_derived: Vec<u8> = G2_MOVES
@@ -898,7 +915,10 @@ mod tests {
                 for sol in &sols {
                     assert!(sol.len >= best && sol.len <= best + 1);
                     assert_eq!(sol.moves.len() as u32, sol.len);
-                    assert!(sol.moves.iter().all(|&m| is_g2(m as usize)), "non-G2 move in sol");
+                    assert!(
+                        sol.moves.iter().all(|&m| is_g2(m as usize)),
+                        "non-G2 move in sol"
+                    );
                     let mut buf = conj_buf(&alg, rot, 0);
                     buf.extend_from_slice(&sol.moves);
                     let (c, sp) = s.coords(&buf).expect("sol must stay DR");
@@ -921,7 +941,9 @@ mod tests {
         }
 
         // 非 DR 输入 → None
-        assert!(s.enumerate_face(&string_to_alg("R U F"), "", 0, 5).is_none());
+        assert!(s
+            .enumerate_face(&string_to_alg("R U F"), "", 0, 5)
+            .is_none());
         assert_eq!(s.solve_one(&string_to_alg("R U F"), "", 0), None);
     }
 }

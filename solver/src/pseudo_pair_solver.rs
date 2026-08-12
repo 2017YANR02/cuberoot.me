@@ -213,8 +213,7 @@ impl PseudoPairSolver {
         let mt_e = self.mt_edge.as_u32();
         let cj = conj_moves_flat();
 
-        let mut cur_mul: u32 =
-            state_space::CROSS_SOLVED as u32 * state_space::CORNER as u32;
+        let mut cur_mul: u32 = state_space::CROSS_SOLVED as u32 * state_space::CORNER as u32;
         let mut cur_cn: u32 = 12; // C4 起始
         let mut cur_e: [u32; 4] = [0, 2, 4, 6];
 
@@ -249,8 +248,7 @@ impl PseudoPairSolver {
         let mt_e4 = self.mt_edge4.as_u32();
         let cj = conj_moves_flat();
         let rm = rot_map();
-        let virt_cross =
-            state_space::CROSS_SOLVED as u32 * state_space::CORNER as u32;
+        let virt_cross = state_space::CROSS_SOLVED as u32 * state_space::CORNER as u32;
 
         // 1. Corner2
         {
@@ -258,7 +256,11 @@ impl PseudoPairSolver {
             let r2 = (((pslot3 as i32 - slot_k as i32 + 4) & 3) + 4) as u32;
             let (k1, k2) = if r1 < r2 { (r1, r2) } else { (r2, r1) };
             let is_diag = k2.wrapping_sub(k1) == 2;
-            let table = if is_diag { AuxTable::PsCrossC4C6 } else { AuxTable::PsCrossC4C5 };
+            let table = if is_diag {
+                AuxTable::PsCrossC4C6
+            } else {
+                AuxTable::PsCrossC4C5
+            };
             let (rot_idx, target): (usize, [i32; 2]) = if is_diag {
                 let rot = if k1 == 4 { 0 } else { 3 };
                 (rot, [12, 18])
@@ -299,7 +301,11 @@ impl PseudoPairSolver {
             let r2 = ((slot3 as i32 - slot_k as i32 + 4) & 3) as u32;
             let (k1, k2) = if r1 < r2 { (r1, r2) } else { (r2, r1) };
             let is_diag = k2.wrapping_sub(k1) == 2;
-            let table = if is_diag { AuxTable::PsCrossE0E2 } else { AuxTable::PsCrossE0E1 };
+            let table = if is_diag {
+                AuxTable::PsCrossE0E2
+            } else {
+                AuxTable::PsCrossE0E1
+            };
             let (rot_idx, target): (usize, [i32; 2]) = if is_diag {
                 let rot = if k1 == 0 { 0 } else { 1 };
                 (rot, [0, 4])
@@ -354,8 +360,7 @@ impl PseudoPairSolver {
         let mt_e4 = self.mt_edge4.as_u32();
         let cj = conj_moves_flat();
         let rm = rot_map();
-        let virt_cross =
-            state_space::CROSS_SOLVED as u32 * state_space::CORNER as u32;
+        let virt_cross = state_space::CROSS_SOLVED as u32 * state_space::CORNER as u32;
 
         // 1. Corner3
         {
@@ -434,9 +439,13 @@ impl PseudoPairSolver {
     // --- search_1: Cross + Pair on 1 slot ---
     fn search_1(
         &self,
-        i1: usize, i2: usize, i3: usize,
-        depth: u32, prev: u8,
-        prune1: &PackedPruneTable, edge_prune: &PackedPruneTable,
+        i1: usize,
+        i2: usize,
+        i3: usize,
+        depth: u32,
+        prev: u8,
+        prune1: &PackedPruneTable,
+        edge_prune: &PackedPruneTable,
     ) -> bool {
         let (vmoves, vcnt) = valid_moves();
         let count = vcnt[prev as usize] as usize;
@@ -478,13 +487,23 @@ impl PseudoPairSolver {
     #[allow(clippy::too_many_arguments)]
     fn search_2(
         &self,
-        i1: usize, i2: usize, i4: usize, i5: usize, i6: usize,
-        depth: u32, prev: u8,
+        i1: usize,
+        i2: usize,
+        i4: usize,
+        i5: usize,
+        i6: usize,
+        depth: u32,
+        prev: u8,
         pslot2: usize,
-        prune1: &PackedPruneTable, edge_prune1: &PackedPruneTable,
+        prune1: &PackedPruneTable,
+        edge_prune1: &PackedPruneTable,
         prune_xc2: &PackedPruneTable,
-        xc2_cr: usize, xc2_cn: usize,
-        xc2_e0: usize, xc2_e1: usize, xc2_e2: usize, xc2_e3: usize,
+        xc2_cr: usize,
+        xc2_cn: usize,
+        xc2_e0: usize,
+        xc2_e1: usize,
+        xc2_e2: usize,
+        xc2_e3: usize,
         diff2: u32,
         edge_solved2: u32,
     ) -> bool {
@@ -538,13 +557,25 @@ impl PseudoPairSolver {
                     return true;
                 }
             } else if self.search_2(
-                n1, n2 * 18, n4 * 18, n5 * 18, n6 * 18,
-                depth - 1, i as u8, pslot2,
-                prune1, edge_prune1, prune_xc2,
-                xc2_cr_n, xc2_cn_n * 18,
-                xc2_e_n[0] * 18, xc2_e_n[1] * 18,
-                xc2_e_n[2] * 18, xc2_e_n[3] * 18,
-                diff2, edge_solved2,
+                n1,
+                n2 * 18,
+                n4 * 18,
+                n5 * 18,
+                n6 * 18,
+                depth - 1,
+                i as u8,
+                pslot2,
+                prune1,
+                edge_prune1,
+                prune_xc2,
+                xc2_cr_n,
+                xc2_cn_n * 18,
+                xc2_e_n[0] * 18,
+                xc2_e_n[1] * 18,
+                xc2_e_n[2] * 18,
+                xc2_e_n[3] * 18,
+                diff2,
+                edge_solved2,
             ) {
                 bump_node_count(local);
                 return true;
@@ -558,16 +589,28 @@ impl PseudoPairSolver {
     #[allow(clippy::too_many_arguments)]
     fn search_3(
         &self,
-        i1: usize, i2: usize, i7: usize, i8: usize, i9: usize,
-        depth: u32, prev: u8,
+        i1: usize,
+        i2: usize,
+        i7: usize,
+        i8: usize,
+        i9: usize,
+        depth: u32,
+        prev: u8,
         pslot3: usize,
-        prune1: &PackedPruneTable, edge_prune1: &PackedPruneTable,
+        prune1: &PackedPruneTable,
+        edge_prune1: &PackedPruneTable,
         prune_xc3: &PackedPruneTable,
-        num_aux: usize, aux_states: &[AuxState; MAX_AUX],
-        xc3_cr: usize, xc3_cn: usize,
-        xc3_e0: usize, xc3_e1: usize, xc3_e2: usize, xc3_e3: usize,
+        num_aux: usize,
+        aux_states: &[AuxState; MAX_AUX],
+        xc3_cr: usize,
+        xc3_cn: usize,
+        xc3_e0: usize,
+        xc3_e1: usize,
+        xc3_e2: usize,
+        xc3_e3: usize,
         diff3: u32,
-        edge_solved2: u32, edge_solved3: u32,
+        edge_solved2: u32,
+        edge_solved3: u32,
     ) -> bool {
         let (vmoves, vcnt) = valid_moves();
         let count = vcnt[prev as usize] as usize;
@@ -601,7 +644,8 @@ impl PseudoPairSolver {
                 let n_idx = mt_aux[(cur.current_idx as usize) * 18 + m_rot];
                 let n_cr = mt_e4[(cur.current_cross_scaled as usize) + m_rot];
                 let lookup_cross = (n_cr / 24) as u64;
-                let idx_aux: u64 = lookup_cross * Self::aux_multiplier(cur.table) as u64 + n_idx as u64;
+                let idx_aux: u64 =
+                    lookup_cross * Self::aux_multiplier(cur.table) as u64 + n_idx as u64;
                 if self.aux_pt(cur.table).get(idx_aux) as u32 >= depth {
                     aux_pruned = true;
                     break;
@@ -651,19 +695,38 @@ impl PseudoPairSolver {
             let n8 = mt_e[i8 + i] as usize;
             let n9 = mt_e[i9 + i] as usize;
             if depth == 1 {
-                if p1 == 0 && pe1 == 0 && p_xc3 == 0 && n8 as u32 == edge_solved2 && n9 as u32 == edge_solved3 {
+                if p1 == 0
+                    && pe1 == 0
+                    && p_xc3 == 0
+                    && n8 as u32 == edge_solved2
+                    && n9 as u32 == edge_solved3
+                {
                     bump_node_count(local);
                     return true;
                 }
             } else if self.search_3(
-                n1, n2 * 18, n7 * 18, n8 * 18, n9 * 18,
-                depth - 1, i as u8, pslot3,
-                prune1, edge_prune1, prune_xc3,
-                num_aux, &next_aux,
-                xc3_cr_n, xc3_cn_n * 18,
-                xc3_e_n[0] * 18, xc3_e_n[1] * 18,
-                xc3_e_n[2] * 18, xc3_e_n[3] * 18,
-                diff3, edge_solved2, edge_solved3,
+                n1,
+                n2 * 18,
+                n7 * 18,
+                n8 * 18,
+                n9 * 18,
+                depth - 1,
+                i as u8,
+                pslot3,
+                prune1,
+                edge_prune1,
+                prune_xc3,
+                num_aux,
+                &next_aux,
+                xc3_cr_n,
+                xc3_cn_n * 18,
+                xc3_e_n[0] * 18,
+                xc3_e_n[1] * 18,
+                xc3_e_n[2] * 18,
+                xc3_e_n[3] * 18,
+                diff3,
+                edge_solved2,
+                edge_solved3,
             ) {
                 bump_node_count(local);
                 return true;
@@ -677,17 +740,33 @@ impl PseudoPairSolver {
     #[allow(clippy::too_many_arguments)]
     fn search_4(
         &self,
-        i1: usize, i2: usize, i4: usize, i6: usize, i8: usize,
-        i9: usize, i10: usize, i11: usize, i12: usize,
-        depth: u32, prev: u8,
+        i1: usize,
+        i2: usize,
+        i4: usize,
+        i6: usize,
+        i8: usize,
+        i9: usize,
+        i10: usize,
+        i11: usize,
+        i12: usize,
+        depth: u32,
+        prev: u8,
         pslot4: usize,
-        prune1: &PackedPruneTable, edge_prune1: &PackedPruneTable,
+        prune1: &PackedPruneTable,
+        edge_prune1: &PackedPruneTable,
         prune_xc4: &PackedPruneTable,
-        num_aux: usize, aux_states: &[AuxState; MAX_AUX],
-        xc4_cr: usize, xc4_cn: usize,
-        xc4_e0: usize, xc4_e1: usize, xc4_e2: usize, xc4_e3: usize,
+        num_aux: usize,
+        aux_states: &[AuxState; MAX_AUX],
+        xc4_cr: usize,
+        xc4_cn: usize,
+        xc4_e0: usize,
+        xc4_e1: usize,
+        xc4_e2: usize,
+        xc4_e3: usize,
         diff4: u32,
-        edge_solved2: u32, edge_solved3: u32, edge_solved4: u32,
+        edge_solved2: u32,
+        edge_solved3: u32,
+        edge_solved4: u32,
     ) -> bool {
         let (vmoves, vcnt) = valid_moves();
         let count = vcnt[prev as usize] as usize;
@@ -721,7 +800,8 @@ impl PseudoPairSolver {
                 let n_idx = mt_aux[(cur.current_idx as usize) * 18 + m_rot];
                 let n_cr = mt_e4[(cur.current_cross_scaled as usize) + m_rot];
                 let lookup_cross = (n_cr / 24) as u64;
-                let idx_aux: u64 = lookup_cross * Self::aux_multiplier(cur.table) as u64 + n_idx as u64;
+                let idx_aux: u64 =
+                    lookup_cross * Self::aux_multiplier(cur.table) as u64 + n_idx as u64;
                 if self.aux_pt(cur.table).get(idx_aux) as u32 >= depth {
                     aux_pruned = true;
                     break;
@@ -771,7 +851,9 @@ impl PseudoPairSolver {
             let n12 = mt_e[i12 + i] as usize;
 
             if depth == 1 {
-                if p1 == 0 && pe1 == 0 && p_xc4 == 0
+                if p1 == 0
+                    && pe1 == 0
+                    && p_xc4 == 0
                     && n10 as u32 == edge_solved2
                     && n11 as u32 == edge_solved3
                     && n12 as u32 == edge_solved4
@@ -780,15 +862,33 @@ impl PseudoPairSolver {
                     return true;
                 }
             } else if self.search_4(
-                n1, n2 * 18, n4 * 18, n6 * 18, n8 * 18,
-                n9 * 18, n10 * 18, n11 * 18, n12 * 18,
-                depth - 1, i as u8, pslot4,
-                prune1, edge_prune1, prune_xc4,
-                num_aux, &next_aux,
-                xc4_cr_n, xc4_cn_n * 18,
-                xc4_e_n[0] * 18, xc4_e_n[1] * 18,
-                xc4_e_n[2] * 18, xc4_e_n[3] * 18,
-                diff4, edge_solved2, edge_solved3, edge_solved4,
+                n1,
+                n2 * 18,
+                n4 * 18,
+                n6 * 18,
+                n8 * 18,
+                n9 * 18,
+                n10 * 18,
+                n11 * 18,
+                n12 * 18,
+                depth - 1,
+                i as u8,
+                pslot4,
+                prune1,
+                edge_prune1,
+                prune_xc4,
+                num_aux,
+                &next_aux,
+                xc4_cr_n,
+                xc4_cn_n * 18,
+                xc4_e_n[0] * 18,
+                xc4_e_n[1] * 18,
+                xc4_e_n[2] * 18,
+                xc4_e_n[3] * 18,
+                diff4,
+                edge_solved2,
+                edge_solved3,
+                edge_solved4,
             ) {
                 bump_node_count(local);
                 return true;
@@ -811,7 +911,10 @@ impl PseudoPairSolver {
                 let single_edge_index: [u32; 4] = [0, 2, 4, 6];
 
                 // Per-rotation task ordering
-                struct Task { rot_idx: usize, h: u32 }
+                struct Task {
+                    rot_idx: usize,
+                    h: u32,
+                }
                 let mut tasks: Vec<Task> = Vec::with_capacity(rotations.len());
                 for (r, rot) in rotations.iter().enumerate() {
                     let mut a: Vec<u8> = base_alg.to_vec();
@@ -819,7 +922,10 @@ impl PseudoPairSolver {
                     let (idx1, idx2, idx3) = self.get_rotated_indices(&a, slot1, pslot1);
                     let h1 = prune1.get((idx1 + idx2) as u64) as u32;
                     let h2 = edge_prune.get((idx3 * 24 + idx2) as u64) as u32;
-                    tasks.push(Task { rot_idx: r, h: h1.max(h2) });
+                    tasks.push(Task {
+                        rot_idx: r,
+                        h: h1.max(h2),
+                    });
                 }
                 tasks.sort_by_key(|t| t.h);
 
@@ -883,24 +989,27 @@ impl PseudoPairSolver {
                         let diff2 = ((slot2 as i32 - pslot2 as i32 + 4) & 3) as u32;
                         let prune_xc2 = &self.pt_pscross_c4e[diff2 as usize];
 
-                        struct Task { rot_idx: usize, h: u32 }
+                        struct Task {
+                            rot_idx: usize,
+                            h: u32,
+                        }
                         let mut tasks: Vec<Task> = Vec::with_capacity(rotations.len());
                         for (r, rot) in rotations.iter().enumerate() {
                             let mut a: Vec<u8> = base_alg.to_vec();
                             alg_rotation(&mut a, rot);
-                            let (idx1, idx2, idx5) =
-                                self.get_rotated_indices(&a, slot1, pslot1);
-                            let (_, idx4, _) =
-                                self.get_rotated_indices(&a, slot2, pslot2);
+                            let (idx1, idx2, idx5) = self.get_rotated_indices(&a, slot1, pslot1);
+                            let (_, idx4, _) = self.get_rotated_indices(&a, slot2, pslot2);
                             let h1 = prune1.get((idx1 + idx2) as u64) as u32;
                             let h2 = _prune2.get((idx1 + idx4) as u64) as u32;
                             let h3 = edge_prune1.get((idx5 * 24 + idx2) as u64) as u32;
                             let st = self.get_conj_state_xc(&a, pslot2);
-                            let conj_idx_xc2: u64 =
-                                (st.cross as u64 + st.corner as u64) * 24
-                                    + st.edge[diff2 as usize] as u64;
+                            let conj_idx_xc2: u64 = (st.cross as u64 + st.corner as u64) * 24
+                                + st.edge[diff2 as usize] as u64;
                             let h4 = prune_xc2.get(conj_idx_xc2) as u32;
-                            tasks.push(Task { rot_idx: r, h: h1.max(h2).max(h3).max(h4) });
+                            tasks.push(Task {
+                                rot_idx: r,
+                                h: h1.max(h2).max(h3).max(h4),
+                            });
                         }
                         tasks.sort_by_key(|t| t.h);
 
@@ -913,27 +1022,26 @@ impl PseudoPairSolver {
                             let max_depth = std::cmp::min(20, cur_best.saturating_sub(1));
                             let mut a: Vec<u8> = base_alg.to_vec();
                             alg_rotation(&mut a, rotations[r]);
-                            let (idx1, idx2, idx5) =
-                                self.get_rotated_indices(&a, slot1, pslot1);
-                            let (_, idx4, idx6) =
-                                self.get_rotated_indices(&a, slot2, pslot2);
+                            let (idx1, idx2, idx5) = self.get_rotated_indices(&a, slot1, pslot1);
+                            let (_, idx4, idx6) = self.get_rotated_indices(&a, slot2, pslot2);
                             let edge_solved2 = single_edge_index[slot2];
                             let p1_tmp = prune1.get((idx1 + idx2) as u64) as u32;
                             let p2_tmp = _prune2.get((idx1 + idx4) as u64) as u32;
                             let pe_tmp = edge_prune1.get((idx5 * 24 + idx2) as u64) as u32;
                             let st = self.get_conj_state_xc(&a, pslot2);
-                            let conj_idx_xc2: u64 =
-                                (st.cross as u64 + st.corner as u64) * 24
-                                    + st.edge[diff2 as usize] as u64;
+                            let conj_idx_xc2: u64 = (st.cross as u64 + st.corner as u64) * 24
+                                + st.edge[diff2 as usize] as u64;
                             let pxc2_tmp = prune_xc2.get(conj_idx_xc2) as u32;
-                            if p1_tmp == 0 && p2_tmp == 0 && pe_tmp == 0 && pxc2_tmp == 0
+                            if p1_tmp == 0
+                                && p2_tmp == 0
+                                && pe_tmp == 0
+                                && pxc2_tmp == 0
                                 && idx6 == edge_solved2
                             {
                                 min_xxc[r] = 0;
                                 continue;
                             }
-                            let mut start_d =
-                                p1_tmp.max(p2_tmp).max(pe_tmp).max(pxc2_tmp);
+                            let mut start_d = p1_tmp.max(p2_tmp).max(pe_tmp).max(pxc2_tmp);
                             // 跨阶段下界
                             if min_xc[r] != u32::MAX {
                                 start_d = start_d.max(min_xc[r]);
@@ -945,9 +1053,12 @@ impl PseudoPairSolver {
                                     (idx4 as usize) * 18,
                                     (idx5 as usize) * 18,
                                     (idx6 as usize) * 18,
-                                    d, 18,
+                                    d,
+                                    18,
                                     pslot2,
-                                    prune1, edge_prune1, prune_xc2,
+                                    prune1,
+                                    edge_prune1,
+                                    prune_xc2,
                                     st.cross as usize,
                                     (st.corner as usize) * 18,
                                     (st.edge[0] as usize) * 18,
@@ -970,12 +1081,7 @@ impl PseudoPairSolver {
     }
 
     // --- xxxcross_analyze: pairs/complements 模式 × 6 rots ---
-    fn xxxcross_analyze(
-        &self,
-        base_alg: &[u8],
-        rotations: &[&str],
-        min_xxc: &[u32],
-    ) -> Vec<u32> {
+    fn xxxcross_analyze(&self, base_alg: &[u8], rotations: &[&str], min_xxc: &[u32]) -> Vec<u32> {
         let mut min_xxxc = vec![u32::MAX; rotations.len()];
         let single_edge_index: [u32; 4] = [0, 2, 4, 6];
 
@@ -999,21 +1105,25 @@ impl PseudoPairSolver {
                         let diff3 = ((slot3 as i32 - pslot3 as i32 + 4) & 3) as u32;
                         let prune_xc3 = &self.pt_pscross_c4e[diff3 as usize];
 
-                        struct Task { rot_idx: usize, h: u32 }
+                        struct Task {
+                            rot_idx: usize,
+                            h: u32,
+                        }
                         let mut tasks: Vec<Task> = Vec::with_capacity(rotations.len());
                         for (r, rot) in rotations.iter().enumerate() {
                             let mut a: Vec<u8> = base_alg.to_vec();
                             alg_rotation(&mut a, rot);
-                            let (idx1, idx2, idx7) =
-                                self.get_rotated_indices(&a, slot1, pslot1);
+                            let (idx1, idx2, idx7) = self.get_rotated_indices(&a, slot1, pslot1);
                             let h1 = prune1.get((idx1 + idx2) as u64) as u32;
                             let h4 = edge_prune1.get((idx7 * 24 + idx2) as u64) as u32;
                             let st = self.get_conj_state_xc(&a, pslot3);
-                            let conj_idx_xc3: u64 =
-                                (st.cross as u64 + st.corner as u64) * 24
-                                    + st.edge[diff3 as usize] as u64;
+                            let conj_idx_xc3: u64 = (st.cross as u64 + st.corner as u64) * 24
+                                + st.edge[diff3 as usize] as u64;
                             let h5 = prune_xc3.get(conj_idx_xc3) as u32;
-                            tasks.push(Task { rot_idx: r, h: h1.max(h4).max(h5) });
+                            tasks.push(Task {
+                                rot_idx: r,
+                                h: h1.max(h4).max(h5),
+                            });
                         }
                         tasks.sort_by_key(|t| t.h);
 
@@ -1026,24 +1136,23 @@ impl PseudoPairSolver {
                             let max_depth = std::cmp::min(20, cur_best.saturating_sub(1));
                             let mut a: Vec<u8> = base_alg.to_vec();
                             alg_rotation(&mut a, rotations[r]);
-                            let (idx1, idx2, idx7) =
-                                self.get_rotated_indices(&a, slot1, pslot1);
-                            let (_, _idx4, idx8) =
-                                self.get_rotated_indices(&a, slot2, pslot2);
-                            let (_, _idx6, idx9) =
-                                self.get_rotated_indices(&a, slot3, pslot3);
+                            let (idx1, idx2, idx7) = self.get_rotated_indices(&a, slot1, pslot1);
+                            let (_, _idx4, idx8) = self.get_rotated_indices(&a, slot2, pslot2);
+                            let (_, _idx6, idx9) = self.get_rotated_indices(&a, slot3, pslot3);
                             let edge_solved2 = single_edge_index[slot2];
                             let edge_solved3 = single_edge_index[slot3];
                             let p1_tmp = prune1.get((idx1 + idx2) as u64) as u32;
                             let pe_tmp = edge_prune1.get((idx7 * 24 + idx2) as u64) as u32;
                             let st = self.get_conj_state_xc(&a, pslot3);
-                            let conj_idx_xc3: u64 =
-                                (st.cross as u64 + st.corner as u64) * 24
-                                    + st.edge[diff3 as usize] as u64;
+                            let conj_idx_xc3: u64 = (st.cross as u64 + st.corner as u64) * 24
+                                + st.edge[diff3 as usize] as u64;
                             let pxc3_tmp = prune_xc3.get(conj_idx_xc3) as u32;
 
-                            if p1_tmp == 0 && pe_tmp == 0 && pxc3_tmp == 0
-                                && idx8 == edge_solved2 && idx9 == edge_solved3
+                            if p1_tmp == 0
+                                && pe_tmp == 0
+                                && pxc3_tmp == 0
+                                && idx8 == edge_solved2
+                                && idx9 == edge_solved3
                             {
                                 min_xxxc[r] = 0;
                                 continue;
@@ -1062,10 +1171,14 @@ impl PseudoPairSolver {
                                     (idx7 as usize) * 18,
                                     (idx8 as usize) * 18,
                                     (idx9 as usize) * 18,
-                                    d, 18,
+                                    d,
+                                    18,
                                     pslot3,
-                                    prune1, edge_prune1, prune_xc3,
-                                    num_aux, &aux_init,
+                                    prune1,
+                                    edge_prune1,
+                                    prune_xc3,
+                                    num_aux,
+                                    &aux_init,
                                     st.cross as usize,
                                     (st.corner as usize) * 18,
                                     (st.edge[0] as usize) * 18,
@@ -1073,7 +1186,8 @@ impl PseudoPairSolver {
                                     (st.edge[2] as usize) * 18,
                                     (st.edge[3] as usize) * 18,
                                     diff3,
-                                    edge_solved2, edge_solved3,
+                                    edge_solved2,
+                                    edge_solved3,
                                 ) {
                                     min_xxxc[r] = d;
                                     break;
@@ -1088,17 +1202,10 @@ impl PseudoPairSolver {
     }
 
     // --- xxxxcross_analyze: 4×4 (i, j) → complement3 ---
-    fn xxxxcross_analyze(
-        &self,
-        base_alg: &[u8],
-        rotations: &[&str],
-        min_xxxc: &[u32],
-    ) -> Vec<u32> {
+    fn xxxxcross_analyze(&self, base_alg: &[u8], rotations: &[&str], min_xxxc: &[u32]) -> Vec<u32> {
         let mut min_xxxxc = vec![u32::MAX; rotations.len()];
         let single_edge_index: [u32; 4] = [0, 2, 4, 6];
-        const COMPLEMENT3: [[usize; 3]; 4] = [
-            [1, 2, 3], [0, 2, 3], [0, 1, 3], [0, 1, 2],
-        ];
+        const COMPLEMENT3: [[usize; 3]; 4] = [[1, 2, 3], [0, 2, 3], [0, 1, 3], [0, 1, 2]];
 
         // i 从 3 到 0(对应 C++ 中的 for i = 3; i >= 0; --i)
         for i in (0..4).rev() {
@@ -1123,7 +1230,10 @@ impl PseudoPairSolver {
                 let diff4 = ((slot4 as i32 - pslot4 as i32 + 4) & 3) as u32;
                 let prune_xc4 = &self.pt_pscross_c4e[diff4 as usize];
 
-                struct Task { rot_idx: usize, h: u32 }
+                struct Task {
+                    rot_idx: usize,
+                    h: u32,
+                }
                 let mut tasks: Vec<Task> = Vec::with_capacity(rotations.len());
                 for (r, rot) in rotations.iter().enumerate() {
                     let mut a: Vec<u8> = base_alg.to_vec();
@@ -1138,10 +1248,13 @@ impl PseudoPairSolver {
                     let h4 = _prune4.get((idx1 + idx8) as u64) as u32;
                     let h5 = edge_prune1.get((idx9 * 24 + idx2) as u64) as u32;
                     let st = self.get_conj_state_xc(&a, pslot4);
-                    let conj_idx_xc4: u64 = (st.cross as u64 + st.corner as u64) * 24
-                        + st.edge[diff4 as usize] as u64;
+                    let conj_idx_xc4: u64 =
+                        (st.cross as u64 + st.corner as u64) * 24 + st.edge[diff4 as usize] as u64;
                     let h6 = prune_xc4.get(conj_idx_xc4) as u32;
-                    tasks.push(Task { rot_idx: r, h: h1.max(h2).max(h3).max(h4).max(h5).max(h6) });
+                    tasks.push(Task {
+                        rot_idx: r,
+                        h: h1.max(h2).max(h3).max(h4).max(h5).max(h6),
+                    });
                 }
                 tasks.sort_by_key(|t| t.h);
 
@@ -1167,13 +1280,19 @@ impl PseudoPairSolver {
                     let p4_tmp = _prune4.get((idx1 + idx8) as u64) as u32;
                     let pe_tmp = edge_prune1.get((idx9 * 24 + idx2) as u64) as u32;
                     let st = self.get_conj_state_xc(&a, pslot4);
-                    let conj_idx_xc4: u64 = (st.cross as u64 + st.corner as u64) * 24
-                        + st.edge[diff4 as usize] as u64;
+                    let conj_idx_xc4: u64 =
+                        (st.cross as u64 + st.corner as u64) * 24 + st.edge[diff4 as usize] as u64;
                     let pxc4_tmp = prune_xc4.get(conj_idx_xc4) as u32;
 
-                    if p1_tmp == 0 && p2_tmp == 0 && p3_tmp == 0 && p4_tmp == 0
-                        && pe_tmp == 0 && pxc4_tmp == 0
-                        && idx10 == edge_solved2 && idx11 == edge_solved3 && idx12 == edge_solved4
+                    if p1_tmp == 0
+                        && p2_tmp == 0
+                        && p3_tmp == 0
+                        && p4_tmp == 0
+                        && pe_tmp == 0
+                        && pxc4_tmp == 0
+                        && idx10 == edge_solved2
+                        && idx11 == edge_solved3
+                        && idx12 == edge_solved4
                     {
                         min_xxxxc[r] = 0;
                         continue;
@@ -1200,10 +1319,14 @@ impl PseudoPairSolver {
                             (idx10 as usize) * 18,
                             (idx11 as usize) * 18,
                             (idx12 as usize) * 18,
-                            d, 18,
+                            d,
+                            18,
                             pslot4,
-                            prune1, edge_prune1, prune_xc4,
-                            num_aux, &aux_init,
+                            prune1,
+                            edge_prune1,
+                            prune_xc4,
+                            num_aux,
+                            &aux_init,
                             st.cross as usize,
                             (st.corner as usize) * 18,
                             (st.edge[0] as usize) * 18,
@@ -1211,7 +1334,9 @@ impl PseudoPairSolver {
                             (st.edge[2] as usize) * 18,
                             (st.edge[3] as usize) * 18,
                             diff4,
-                            edge_solved2, edge_solved3, edge_solved4,
+                            edge_solved2,
+                            edge_solved3,
+                            edge_solved4,
                         ) {
                             min_xxxxc[r] = d;
                             break;
@@ -1231,10 +1356,18 @@ impl PseudoPairSolver {
         let xxxc = self.xxxcross_analyze(&base_alg, rotations, &xxc);
         let xxxxc = self.xxxxcross_analyze(&base_alg, rotations, &xxxc);
         let mut out = Vec::with_capacity(4 * rotations.len());
-        for v in xc { out.push(if v == u32::MAX { 0 } else { v }); }
-        for v in xxc { out.push(if v == u32::MAX { 0 } else { v }); }
-        for v in xxxc { out.push(if v == u32::MAX { 0 } else { v }); }
-        for v in xxxxc { out.push(if v == u32::MAX { 0 } else { v }); }
+        for v in xc {
+            out.push(if v == u32::MAX { 0 } else { v });
+        }
+        for v in xxc {
+            out.push(if v == u32::MAX { 0 } else { v });
+        }
+        for v in xxxc {
+            out.push(if v == u32::MAX { 0 } else { v });
+        }
+        for v in xxxxc {
+            out.push(if v == u32::MAX { 0 } else { v });
+        }
         out
     }
 }
@@ -1288,7 +1421,10 @@ impl PpCcPrune {
             let (im, ic) = if k == 0 {
                 (cross0, corn0)
             } else {
-                (mt_edge4[cross0 + mv] as usize, mt_corn[corn0 * 18 + mv] as usize)
+                (
+                    mt_edge4[cross0 + mv] as usize,
+                    mt_corn[corn0 * 18 + mv] as usize,
+                )
             };
             tbl[im + ic] = 0;
         }
@@ -1334,7 +1470,7 @@ impl PpInsPrune {
 
         let index3 = (2 * diff) as u64; // EDGE_INDICES[diff]
         let index2: usize = 12; // CORNER_INDICES[0] = C4
-        // 与 create_pt_pscross_ins_c 完全一致的 seed 选择
+                                // 与 create_pt_pscross_ins_c 完全一致的 seed 选择
         let (am, tmp_moves): (&[&str], &[i32]) = match index3 {
             0 => (&["L U L'", "L U' L'", "B' U B", "B' U' B"], &[0, 3, 4, 5]),
             2 => (&["R' U R", "R' U' R", "B U B'", "B U' B'"], &[5, 0, 3, 4]),
@@ -1623,7 +1759,11 @@ impl PseudoPairSmallSolver {
         let mt_e = self.mt_edge.as_u32();
         let cj = conj_moves_flat();
 
-        let mut out = [PpConjState { im: 0, ic: 0, ie_rel: [0; 4] }; 4];
+        let mut out = [PpConjState {
+            im: 0,
+            ic: 0,
+            ie_rel: [0; 4],
+        }; 4];
         for slot_k in 0..4 {
             let mut cur_mul: u32 =
                 (state_space::CROSS_SOLVED as u32) * (state_space::CORNER as u32);
@@ -1637,7 +1777,11 @@ impl PseudoPairSmallSolver {
                     cur_e[k] = mt_e[(cur_e[k] as usize) * 18 + mc];
                 }
             }
-            out[slot_k] = PpConjState { im: cur_mul, ic: cur_cn / 18, ie_rel: cur_e };
+            out[slot_k] = PpConjState {
+                im: cur_mul,
+                ic: cur_cn / 18,
+                ie_rel: cur_e,
+            };
         }
         out
     }
@@ -1870,10 +2014,7 @@ impl PseudoPairSmallSolver {
                                 let p = Self::mk_pair(st, pc, pe);
                                 let q0 = Self::mk_xc(st, c0, e0);
                                 let q1 = Self::mk_xc(st, c1, e1);
-                                let h = self
-                                    .pair_h(&p)
-                                    .max(self.xc_h(&q0))
-                                    .max(self.xc_h(&q1));
+                                let h = self.pair_h(&p).max(self.xc_h(&q0)).max(self.xc_h(&q1));
                                 tasks.push((p, [q0, q1], h));
                             }
                         }
@@ -1898,7 +2039,12 @@ impl PseudoPairSmallSolver {
         // pair corner pc + edge pe;剩余 3 corner 配剩余 3 edge 的所有排列(6 种)。
         let mut tasks: Vec<(PpPair, [PpXc; 3], u32)> = Vec::new();
         const PERMS: [[usize; 3]; 6] = [
-            [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0],
+            [0, 1, 2],
+            [0, 2, 1],
+            [1, 0, 2],
+            [1, 2, 0],
+            [2, 0, 1],
+            [2, 1, 0],
         ];
         for pc in 0..4 {
             for pe in 0..4 {
@@ -2167,10 +2313,8 @@ impl PseudoPairSmallSolver {
                                         let p = Self::mk_pair(&st, pc, pe);
                                         let q0 = Self::mk_xc(&st, c0, e0);
                                         let q1 = Self::mk_xc(&st, c1, e1);
-                                        let h = self
-                                            .pair_h(&p)
-                                            .max(self.xc_h(&q0))
-                                            .max(self.xc_h(&q1));
+                                        let h =
+                                            self.pair_h(&p).max(self.xc_h(&q0)).max(self.xc_h(&q1));
                                         tasks.push((p, vec![q0, q1], h));
                                     }
                                 }
@@ -2181,7 +2325,12 @@ impl PseudoPairSmallSolver {
             }
             _ => {
                 const PERMS: [[usize; 3]; 6] = [
-                    [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0],
+                    [0, 1, 2],
+                    [0, 2, 1],
+                    [1, 0, 2],
+                    [1, 2, 0],
+                    [2, 0, 1],
+                    [2, 1, 0],
                 ];
                 for pc in 0..4 {
                     for pe in 0..4 {
@@ -2212,7 +2361,10 @@ impl PseudoPairSmallSolver {
         if !force.is_empty() {
             let want: std::collections::BTreeSet<usize> = force.iter().copied().collect();
             tasks.retain(|(_p, xc, _)| {
-                xc.iter().map(|q| q.slot).collect::<std::collections::BTreeSet<usize>>() == want
+                xc.iter()
+                    .map(|q| q.slot)
+                    .collect::<std::collections::BTreeSet<usize>>()
+                    == want
             });
         }
         if (base >= 0 || !force.is_empty()) && tasks.is_empty() {
@@ -2338,7 +2490,8 @@ impl PseudoPairSmallSolver {
                                         let p = Self::mk_pair(st, pc, pe);
                                         let q0 = Self::mk_xc(st, c0, e0);
                                         let q1 = Self::mk_xc(st, c1, e1);
-                                        let h = self.pair_h(&p).max(self.xc_h(&q0)).max(self.xc_h(&q1));
+                                        let h =
+                                            self.pair_h(&p).max(self.xc_h(&q0)).max(self.xc_h(&q1));
                                         tasks.push((p, vec![q0, q1], h));
                                     }
                                 }
@@ -2349,7 +2502,12 @@ impl PseudoPairSmallSolver {
             }
             _ => {
                 const PERMS: [[usize; 3]; 6] = [
-                    [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0],
+                    [0, 1, 2],
+                    [0, 2, 1],
+                    [1, 0, 2],
+                    [1, 2, 0],
+                    [2, 0, 1],
+                    [2, 1, 0],
                 ];
                 for pc in 0..4 {
                     for pe in 0..4 {
@@ -2374,7 +2532,14 @@ impl PseudoPairSmallSolver {
         tasks
     }
 
-    fn search_masked(&self, p: &PpPair, xc: &[PpXc], depth: u32, prev: u8, vm: &ValidMovesTable) -> bool {
+    fn search_masked(
+        &self,
+        p: &PpPair,
+        xc: &[PpXc],
+        depth: u32,
+        prev: u8,
+        vm: &ValidMovesTable,
+    ) -> bool {
         let (vmoves, vcnt) = vm;
         let count = vcnt[prev as usize] as usize;
         let row = &vmoves[prev as usize];
@@ -2410,7 +2575,13 @@ impl PseudoPairSmallSolver {
                     break;
                 }
                 let q_ie = mt_e[q.ie as usize * 18 + m_q] as u32;
-                nxc[j] = PpXc { im: q_im, ic: q_ic, ie: q_ie, slot: q.slot, diff: q.diff };
+                nxc[j] = PpXc {
+                    im: q_im,
+                    ic: q_ic,
+                    ie: q_ie,
+                    slot: q.slot,
+                    diff: q.diff,
+                };
             }
             if pruned {
                 continue;
@@ -2432,7 +2603,13 @@ impl PseudoPairSmallSolver {
                     return true;
                 }
             } else {
-                let np = PpPair { im: n_im, ic: n_ic, ie: n_ie, slot: p.slot, diff: p.diff };
+                let np = PpPair {
+                    im: n_im,
+                    ic: n_ic,
+                    ie: n_ie,
+                    slot: p.slot,
+                    diff: p.diff,
+                };
                 if self.search_masked(&np, &nxc[..n], depth - 1, m as u8, vm) {
                     bump_node_count(local);
                     return true;
@@ -2443,10 +2620,20 @@ impl PseudoPairSmallSolver {
         false
     }
 
-    fn solve_task_masked(&self, p: &PpPair, xc: &[PpXc], h: u32, lower: u32, max_d: u32, vm: &ValidMovesTable) -> u32 {
+    fn solve_task_masked(
+        &self,
+        p: &PpPair,
+        xc: &[PpXc],
+        h: u32,
+        lower: u32,
+        max_d: u32,
+        vm: &ValidMovesTable,
+    ) -> u32 {
         let root_solved = self.ins[p.diff as usize].h(p.im, p.ic) == 0
             && self.pair[p.diff as usize].h(p.ie, p.ic) == 0
-            && xc.iter().all(|q| self.cc.h(q.im, q.ic) == 0 && q.ie == 2 * q.diff);
+            && xc
+                .iter()
+                .all(|q| self.cc.h(q.im, q.ic) == 0 && q.ie == 2 * q.diff);
         if root_solved {
             return 0;
         }
@@ -2486,7 +2673,11 @@ impl PseudoPairSmallSolver {
                     let res = self.solve_task_masked(p, xc, *h, 0, max_d, &vm);
                     best = best.min(res);
                 }
-                if best >= 99 { None } else { Some(best) }
+                if best >= 99 {
+                    None
+                } else {
+                    Some(best)
+                }
             })
             .collect()
     }
@@ -2543,7 +2734,13 @@ impl PseudoPairSmallSolver {
                     break;
                 }
                 let q_ie = mt_e[q.ie as usize * 18 + m_q] as u32;
-                nxc[j] = PpXc { im: q_im, ic: q_ic, ie: q_ie, slot: q.slot, diff: q.diff };
+                nxc[j] = PpXc {
+                    im: q_im,
+                    ic: q_ic,
+                    ie: q_ie,
+                    slot: q.slot,
+                    diff: q.diff,
+                };
             }
             if pruned {
                 continue;
@@ -2565,7 +2762,13 @@ impl PseudoPairSmallSolver {
                     out.push(path.clone());
                 }
             } else if !solved {
-                let np = PpPair { im: n_im, ic: n_ic, ie: n_ie, slot: p.slot, diff: p.diff };
+                let np = PpPair {
+                    im: n_im,
+                    ic: n_ic,
+                    ie: n_ie,
+                    slot: p.slot,
+                    diff: p.diff,
+                };
                 self.enum_collect_masked(&np, &nxc[..n], depth - 1, m as u8, path, out, cap, vm);
             }
             path.pop();
@@ -2600,7 +2803,10 @@ impl PseudoPairSmallSolver {
         if !force.is_empty() {
             let want: std::collections::BTreeSet<usize> = force.iter().copied().collect();
             tasks.retain(|(_p, xc, _)| {
-                xc.iter().map(|q| q.slot).collect::<std::collections::BTreeSet<usize>>() == want
+                xc.iter()
+                    .map(|q| q.slot)
+                    .collect::<std::collections::BTreeSet<usize>>()
+                    == want
             });
         }
         if (base >= 0 || !force.is_empty()) && tasks.is_empty() {
@@ -2645,7 +2851,16 @@ impl PseudoPairSmallSolver {
                 combo.push(p.slot);
                 combo.extend(xc.iter().map(|q| q.slot));
                 let mut combo_out: Vec<Vec<u8>> = Vec::new();
-                self.enum_collect_masked(p, xc, d, 18, &mut path, &mut combo_out, cap - out.len(), &vm);
+                self.enum_collect_masked(
+                    p,
+                    xc,
+                    d,
+                    18,
+                    &mut path,
+                    &mut combo_out,
+                    cap - out.len(),
+                    &vm,
+                );
                 for sol in combo_out {
                     out.push((frame.clone(), combo.clone(), sol));
                 }
@@ -2705,15 +2920,21 @@ mod small_tests {
         let cases: &[(&str, [u32; 24])] = &[
             (
                 "U B' L R2 U B2 R2 U2 B2 U R2 U2 F2 B' R' B2 F' U2 L2 R",
-                [6, 6, 6, 7, 5, 6, 6, 7, 7, 7, 6, 8, 9, 9, 8, 9, 7, 10, 11, 12, 11, 11, 10, 11],
+                [
+                    6, 6, 6, 7, 5, 6, 6, 7, 7, 7, 6, 8, 9, 9, 8, 9, 7, 10, 11, 12, 11, 11, 10, 11,
+                ],
             ),
             (
                 "D2 L B2 R2 D R2 D R2 B2 R2 D2 L' D2 B D2 U2 R2 D' B2 R",
-                [6, 5, 6, 4, 5, 5, 8, 5, 7, 5, 7, 7, 9, 5, 9, 8, 9, 9, 12, 10, 12, 10, 12, 11],
+                [
+                    6, 5, 6, 4, 5, 5, 8, 5, 7, 5, 7, 7, 9, 5, 9, 8, 9, 9, 12, 10, 12, 10, 12, 11,
+                ],
             ),
             (
                 "B2 D' F2 L' U' R' D R2 F D' B2 L2 F2 R2 B' R2 L2 U2 L",
-                [6, 6, 6, 6, 6, 5, 7, 7, 7, 6, 7, 6, 9, 9, 9, 8, 9, 9, 11, 11, 12, 11, 11, 11],
+                [
+                    6, 6, 6, 6, 6, 5, 7, 7, 7, 6, 7, 6, 9, 9, 9, 8, 9, 9, 11, 11, 12, 11, 11, 11,
+                ],
             ),
         ];
 
@@ -2774,7 +2995,9 @@ mod small_tests {
         // 第 1 条打乱 + golden(同 pseudo_pair_small_matches_golden,布局 [stage*6 + rot])。
         let cases: &[(&str, [u32; 24])] = &[(
             "U B' L R2 U B2 R2 U2 B2 U R2 U2 F2 B' R' B2 F' U2 L2 R",
-            [6, 6, 6, 7, 5, 6, 6, 7, 7, 7, 6, 8, 9, 9, 8, 9, 7, 10, 11, 12, 11, 11, 10, 11],
+            [
+                6, 6, 6, 7, 5, 6, 6, 7, 7, 7, 6, 8, 9, 9, 8, 9, 7, 10, 11, 12, 11, 11, 10, 11,
+            ],
         )];
 
         for (scr, exp) in cases {
@@ -2786,7 +3009,11 @@ mod small_tests {
                     let (len, items) = solver.enumerate_small(&alg, rot, stage, 0, 20, &[], -1);
                     eprintln!(
                         "[pp-enum] rot={:?} stage={} len={} sols={} {:.0}ms",
-                        rot, stage, len, items.len(), t.elapsed().as_secs_f64() * 1e3
+                        rot,
+                        stage,
+                        len,
+                        items.len(),
+                        t.elapsed().as_secs_f64() * 1e3
                     );
                     assert_eq!(
                         len, want,
@@ -2796,7 +3023,13 @@ mod small_tests {
                     if len == 0 {
                         continue;
                     }
-                    assert!(!items.is_empty(), "no sols `{}` rot={} stage={}", scr, rot, stage);
+                    assert!(
+                        !items.is_empty(),
+                        "no sols `{}` rot={} stage={}",
+                        scr,
+                        rot,
+                        stage
+                    );
 
                     // rot 后打乱基底。
                     let mut base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
@@ -2808,7 +3041,10 @@ mod small_tests {
                             frame.as_str(),
                             *rot,
                             "frame must equal rot `{}` rot={} stage={}: got {:?}",
-                            scr, rot, stage, frame
+                            scr,
+                            rot,
+                            stage,
+                            frame
                         );
                     }
 
@@ -2820,7 +3056,10 @@ mod small_tests {
                             sol.len() as u32,
                             len,
                             "sol not optimal `{}` rot={} stage={}: {:?}",
-                            scr, rot, stage, sol
+                            scr,
+                            rot,
+                            stage,
+                            sol
                         );
                         let mut full = base.clone();
                         full.extend_from_slice(sol);
@@ -2833,8 +3072,7 @@ mod small_tests {
                         let mut pair_ok = false;
                         for d in 0..4u32 {
                             if solver.ins[d as usize].h(st[tgt].im, st[tgt].ic) == 0
-                                && solver.pair[d as usize]
-                                    .h(st[tgt].ie_rel[d as usize], st[tgt].ic)
+                                && solver.pair[d as usize].h(st[tgt].ie_rel[d as usize], st[tgt].ic)
                                     == 0
                             {
                                 let es = ((tgt as u32 + d) % 4) as usize;
@@ -2860,7 +3098,11 @@ mod small_tests {
                                 solver.cc.h(st[s].im, st[s].ic),
                                 0,
                                 "xc slot {} cc unsolved `{}` rot={} stage={} sol={:?}",
-                                s, scr, rot, stage, sol
+                                s,
+                                scr,
+                                rot,
+                                stage,
+                                sol
                             );
                             let mut xc_ok = false;
                             for d in 0..4u32 {
