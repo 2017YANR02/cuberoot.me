@@ -10,6 +10,8 @@ import { describe, it, expect } from 'vitest';
 import { execSync } from 'node:child_process';
 
 const RASTER = /\.(png|jpe?g|webp|gif|bmp|avif)$/i;
+const ANDROID_GENERATED_RESOURCE =
+  /^core\/packages\/mobile\/android\/app\/src\/main\/res\/(?:drawable(?:-land|-port)?-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/splash|drawable\/splash|mipmap-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/ic_launcher(?:_foreground|_round)?)\.png$/;
 
 // 整路径豁免(确属必须随仓库、又不能进 public/ 的图;目前为空)。
 const ALLOWLIST = new Set<string>([]);
@@ -37,6 +39,7 @@ describe('No stray raster images under core/ (debug-image guard)', () => {
         f.startsWith('core/') &&
         RASTER.test(f) &&
         !f.includes('/public/') &&
+        !ANDROID_GENERATED_RESOURCE.test(f) &&
         !ALLOWLIST.has(f),
     );
     expect(
