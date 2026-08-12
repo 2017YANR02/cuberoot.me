@@ -33,6 +33,9 @@ describe('第一层已还原条件下的第二层分布', () => {
     expect(variantDataRef('second_layer', 'second_layer')).toEqual({
       variant: 'second_layer', stage: 'second_layer', recentMetric: 'second_layer',
     });
+    expect(variantDataRef('lbl', 'second_layer')).toEqual({
+      variant: 'second_layer', stage: 'second_layer', recentMetric: 'second_layer',
+    });
     expect(uiVariantOf('second_layer')).toBe('lbl');
     expect(uiVariantOptions((v) => v === 'std')).not.toContain('lbl');
     expect(uiVariantOptions((v) => v === 'second_layer')).toContain('lbl');
@@ -64,6 +67,10 @@ describe('第一层已还原条件下的第二层分布', () => {
     const page = read('core/packages/client/app/[lang]/scramble/stats/page.tsx');
     expect(page).toContain("const FIRST_LAYER_SOLVED_SET_KEY = 'first_layer_solved'");
     expect(page).toContain('客户端不运行搜索');
+    // 深链 / 旧设置可能残留 UI 聚合键 lbl。页面必须先用真实数据键渲染 options,
+    // 再把 URL 规范化,不能让原生 select 出现 value 存在但 option 为空的白框。
+    expect(page).toContain('currentSet.variants[sourceVariant]?.stages');
+    expect(page).toContain('!currentSet.variants[variant] && currentSet.variants[sourceVariant]');
 
     const variants = read('core/packages/scramble-stats-build/src/variants.ts');
     const recent = read('core/packages/scramble-stats-build/src/build_recent_scrambles.ts');
