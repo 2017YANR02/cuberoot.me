@@ -36,7 +36,10 @@ import { recognizeOllExact, recognizePllExact } from '../components/cfop_recogni
 import { htmMoves } from './htm';
 import { normalizeSolve } from './orient';
 import ollData from '@cuberoot/shared/data/oll.json';
+import type { StageSegments } from '@cuberoot/shared/timer';
 import type { EventId, Solve } from '../types';
+
+export type { StageSegments } from '@cuberoot/shared/timer';
 
 /**
  * Events where a CFOP segmentation means anything. Single source for everyone
@@ -55,44 +58,6 @@ export interface SolveMove {
   m: string;
   /** ms since solve start. */
   ts: number;
-}
-
-export interface StageSegments {
-  /** ms since solve start at which each stage was first completed. */
-  crossDoneMs: number | null;
-  f2lDoneMs: number | null;
-  ollDoneMs: number | null;
-  solvedMs: number | null;
-  /** Index into `moves` of the move that FIRST completed each stage.
-   *  Two stages sharing an index means the later one was skipped (an
-   *  XCross jumps scrambled → f2l in one move; an OLL skip lands f2l and
-   *  oll together). Optional because solves persisted before these fields
-   *  existed carry a StageSegments without them — recompute via
-   *  `computeStageSegments` when you need indices (step_metrics does). */
-  crossEndIdx?: number | null;
-  f2lEndIdx?: number | null;
-  ollEndIdx?: number | null;
-  solvedEndIdx?: number | null;
-  /** Per-stage durations (ms); null when the stage was not reached. */
-  crossMs: number | null;
-  f2lMs: number | null;
-  ollMs: number | null;
-  pllMs: number | null;
-  /** HTM count attributable to each stage (face turns within the stage's
-   *  move range). null when stage not reached. */
-  crossHtm: number | null;
-  f2lHtm: number | null;
-  ollHtm: number | null;
-  pllHtm: number | null;
-  /** Best-effort cross face label (e.g. "D-cross") at cross-done time;
-   *  null if cross wasn't reached or no face matched. */
-  crossSide: string | null;
-  /** Compact OLL case label (e.g. "OLL 21 (H)" or "OLL skip"); null when
-   *  F2L wasn't reached or recognizer didn't match. */
-  ollCase: string | null;
-  /** Compact PLL case label (e.g. "PLL T" or "PLL skip"); null when OLL
-   *  wasn't reached or recognizer didn't match. */
-  pllCase: string | null;
 }
 
 const ROTATION_FAMILIES = new Set(['x', 'y', 'z', 'X', 'Y', 'Z']);
