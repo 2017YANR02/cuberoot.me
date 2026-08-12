@@ -9,9 +9,9 @@ const ROOT = path.resolve(__dirname, '../../../..');
 const read = (p: string) => readFileSync(path.join(ROOT, p), 'utf8');
 
 describe('First Face / First Layer 全链路登记', () => {
-  it('一个方法下保留两个阶段，且浏览器 need 零下载', () => {
+  it('一个方法下保留两个阶段，且浏览器只装载预构建 bundle', () => {
     expect(VARIANT_STAGES.first_layer).toEqual(['first_face', 'first_layer']);
-    expect(TABLE_SETS.first_layer).toEqual([]);
+    expect(TABLE_SETS.first_layer).toEqual(['opt_first_layer']);
     expect(RECENT_METRIC_ORDER).toContain('first_face');
     expect(RECENT_METRIC_ORDER).toContain('first_layer');
   });

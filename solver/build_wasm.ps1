@@ -27,12 +27,12 @@ Write-Host "[2/4] wasm-bindgen (target web)..." -ForegroundColor Cyan
 Remove-Item -Recurse -Force (Join-Path $out "cross_solver*") -ErrorAction SilentlyContinue
 wasm-bindgen $wasm --out-dir $out --target web --out-name cross_solver
 
-# 注:mt_* 自 2026-07-27 起由 WASM 内 mt_gen 现场生成,浏览器不再下载它们(TABLE_SETS 只列
-# pt_/opt_)。这里仍一并 gzip:产物是 native 侧表的镜像,留着可对拍、也是回滚保险。
+# 注:mt_* 默认由 WASM 内 mt_gen 现场生成,浏览器不单独下载它们(TABLE_SETS 只列 pt_/opt_)。
+# First Layer 的最终移动表已封进 opt_first_layer,避免客户端跑大 BFS。其余 mt_* 镜像仍用于对拍/回滚。
 Write-Host "[3/4] gzip tables..." -ForegroundColor Cyan
 $tdir = Join-Path $out "tables"
 New-Item -ItemType Directory -Force -Path $tdir | Out-Null
-$names = @("pt_cross", "pt_cross_C4E0", "mt_edge2", "mt_edge3", "mt_edge4", "mt_corn", "mt_corn2", "mt_edge", "pt_cross_ins_C4", "pt_pair_C4E0", "pt_ep4eo12", "mt_eo12", "mt_eo12_alt", "mt_ep4", "pt_pscross")
+$names = @("pt_cross", "pt_cross_C4E0", "mt_edge2", "mt_edge3", "mt_edge4", "mt_corn", "mt_corn2", "mt_edge", "pt_cross_ins_C4", "pt_pair_C4E0", "pt_ep4eo12", "mt_eo12", "mt_eo12_alt", "mt_ep4", "pt_pscross", "opt_first_layer")
 foreach ($n in $names) {
   $src = Join-Path $root "tables\$n.bin"
   $dst = Join-Path $tdir "$n.bin.gz"
