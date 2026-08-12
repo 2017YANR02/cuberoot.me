@@ -1707,7 +1707,7 @@ export default function TrainerRunClient() {
                   <div className="trainer-scramble-row" key={i}>
                     {/* 每条自带标记条(与左边「上三个」那三张卡片一一对应):
                         屏上三题各是各的,一条公共标记条指谁都不对。 */}
-                    {row.c && (
+                    {showStageThumb && row.c && (
                       <div className="trainer-stage-marks">
                         <CaseMarkBar k={caseKey(row.c)} />
                       </div>
@@ -1723,11 +1723,14 @@ export default function TrainerRunClient() {
                         local
                       />
                     )}
-                    <ScrambleHeader
-                      scramble={shownScramble(row.s)}
-                      label={i === 0 && copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
-                      font={scrambleFont}
-                    />
+                    <div className="trainer-scramble-line">
+                      {!showStageThumb && row.c && <CaseMarkBar k={caseKey(row.c)} />}
+                      <ScrambleHeader
+                        scramble={shownScramble(row.s)}
+                        label={i === 0 && copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
+                        font={scrambleFont}
+                      />
+                    </div>
                   </div>
                 ))}
             </div>
@@ -1751,7 +1754,7 @@ export default function TrainerRunClient() {
               打乱还没算出来时(虚拟集)不出图 —— 空 setup 会渲染成一个已还原的方块,那是假的。 */}
           {!multi && (scramblePending ? scrambleLoading : (
             <>
-              {currentCase && (
+              {showStageThumb && currentCase && (
                 <div className="trainer-figure">
                   <CaseMarkBar k={caseKey(currentCase)} />
                   {/* 出题时出识别图,动手之后才换实时那颗 —— 换的时机归 TrainerLiveCube 管,
@@ -1778,12 +1781,15 @@ export default function TrainerRunClient() {
                   )}
                 </div>
               )}
-              {/* 打乱公式紧跟在图下方(图关掉时它就是这一段的头一行) */}
-              <ScrambleHeader
-                scramble={shownScramble(currentScramble)}
-                label={copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
-                font={scrambleFont}
-              />
+              {/* 打乱公式紧跟在图下方；关图后星标并到公式左侧，不再占一整行。 */}
+              <div className="trainer-scramble-line">
+                {!showStageThumb && currentCase && <CaseMarkBar k={caseKey(currentCase)} />}
+                <ScrambleHeader
+                  scramble={shownScramble(currentScramble)}
+                  label={copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
+                  font={scrambleFont}
+                />
+              </div>
             </>
           ))}
           {/* 离屏预取下一题的图(size=140,与主屏/左卡同一 URL → 共用浏览器缓存):换题后它就是
