@@ -8,12 +8,22 @@ let playerMounts = 0;
 let playerUnmounts = 0;
 
 vi.mock('@/components/AlgPlayer/AlgPlayer', () => ({
-  default: function PlayerProbe({ alg, controlMode }: { alg: string; controlMode?: string }) {
+  default: function PlayerProbe({ alg, autoPlay, loop, controlMode }: {
+    alg: string;
+    autoPlay?: boolean;
+    loop?: boolean;
+    controlMode?: string;
+  }) {
     useEffect(() => {
       playerMounts++;
       return () => { playerUnmounts++; };
     }, []);
-    return createElement('output', { 'data-testid': 'player-alg', 'data-control-mode': controlMode }, alg);
+    return createElement('output', {
+      'data-testid': 'player-alg',
+      'data-auto-play': String(Boolean(autoPlay)),
+      'data-loop': String(Boolean(loop)),
+      'data-control-mode': controlMode,
+    }, alg);
   },
 }));
 
@@ -74,6 +84,8 @@ describe('MoveNotationDemo player lifecycle', () => {
 
     expect(host.querySelector('[data-testid="player-alg"]')?.textContent).toBe('R');
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-control-mode')).toBe('replay');
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-auto-play')).toBe('true');
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-loop')).toBe('false');
     expect(playerMounts).toBe(1);
     expect(playerUnmounts).toBe(0);
   });
