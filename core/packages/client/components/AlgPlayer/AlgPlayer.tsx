@@ -15,6 +15,7 @@ import type { AlgPuzzle } from '@cuberoot/shared';
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import { pickStickering } from './stickering';
 import AlgSimPlayer from './AlgSimPlayer';
+import { resolvePlayerSetup } from './player-setup';
 
 export interface AlgPlayerHandle {
   /** 拿到底层 cubing.js TwistyPlayer 实例,给光标 sync 等高级用法用 */
@@ -45,6 +46,12 @@ interface Props {
   puzzle: AlgPuzzle;
   set: string;
   setup?: string;
+  /** 从还原态演示输入的转动。记号教学用;公式预览默认仍从公式的逆状态开始。 */
+  startSolved?: boolean;
+  /** 装好后自动播放;尊重 prefers-reduced-motion。 */
+  autoPlay?: boolean;
+  /** 自动播放到末尾后从头重播。 */
+  loop?: boolean;
   /** 自定义尺寸,默认 260px;`fillPane=true` 时忽略 */
   size?: number;
   /** 撑满父容器(用 ResizeObserver 把像素尺寸直接写入 player),否则用 size 固定方形 */
@@ -58,16 +65,18 @@ interface Props {
   engine?: 'sim' | 'twisty';
 }
 
-/** NxN 才有 sim 版;其余记号各是一套文法,`/sim` 的解析器与公式库存法不一一对应。 */
-const SIM_CAPABLE = new Set<AlgPuzzle>(['2x2', '3x3', '4x4', '5x5']);
+/** 公式库默认只给 NxN 用 sim;教学页可显式启用文法一致的金字塔和斜转。 */
+const DEFAULT_SIM = new Set<AlgPuzzle>(['2x2', '3x3', '4x4', '5x5']);
+const EXPLICIT_SIM = new Set<AlgPuzzle>([...DEFAULT_SIM, 'pyraminx', 'skewb']);
 
 const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, ref) {
-  const useSim = (props.engine ?? (SIM_CAPABLE.has(props.puzzle) ? 'sim' : 'twisty')) === 'sim'
-    && SIM_CAPABLE.has(props.puzzle);
+  const requestedEngine = props.engine ?? (DEFAULT_SIM.has(props.puzzle) ? 'sim' : 'twisty');
+  const useSim = requestedEngine === 'sim' && EXPLICIT_SIM.has(props.puzzle);
   if (useSim) {
     return (
       <AlgSimPlayer
         alg={props.alg} puzzle={props.puzzle} set={props.set} setup={props.setup}
+        startSolved={props.startSolved} autoPlay={props.autoPlay} loop={props.loop}
         size={props.size ?? 260} fillPane={props.fillPane}
       />
     );
@@ -75,7 +84,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
   return <TwistyAlgPlayer {...props} ref={ref} />;
 });
 
-const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPlayer({ alg, puzzle, set, setup, size = 260, fillPane = false }, ref) {
+const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPlayer({ alg, puzzle, set, setup, startSolved = false, autoPlay = false, loop = false, size = 260, fillPane = false }, ref) {
   const hostRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
@@ -87,12 +96,10 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let player: any = null;
     let ro: ResizeObserver | null = null;
+    let replayTimer: ReturnType<typeof setInterval> | null = null;
     const normalized = normalizeAlgForTwisty(puzzle, alg);
     const stickering = pickStickering(puzzle, set);
-    // 优先用 setup(rotation-free),否则用 alg 的 inverse(可能带 rotation)
-    const setupForTwisty = setup && setup.trim()
-      ? normalizeAlgForTwisty(puzzle, setup)
-      : `(${normalized})'`;
+    const setupForTwisty = resolvePlayerSetup(puzzle, alg, setup, startSolved);
     // NOTE: 播的是库里的完整公式(含收尾 AUF),动画才停在还原态。前端只在**显示/复制**时
     // 用 displayAlg() 剥掉那个 AUF —— 别把 displayAlg 的结果传进来。
     import('cubing/twisty').then((mod) => {
@@ -132,6 +139,15 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
         }
         host.appendChild(player);
         playerRef.current = player;
+        const canAutoPlay = autoPlay && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (canAutoPlay) {
+          player.play?.();
+          if (loop) {
+            replayTimer = setInterval(() => {
+              try { player.timestamp = 0; player.play?.(); } catch { /* player may be between frames */ }
+            }, 1800);
+          }
+        }
       } catch (err) {
         console.warn(`[AlgPlayer] ${puzzle} alg failed: ${alg}`, err);
         host.innerHTML = `<div style="font-size:12px;color:#888;padding:8px">player unavailable</div>`;
@@ -139,11 +155,12 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
     }).catch(err => console.warn('Failed to load cubing library:', err));
     return () => {
       cancelled = true;
+      if (replayTimer) clearInterval(replayTimer);
       if (ro) ro.disconnect();
       if (player && host.contains(player)) host.removeChild(player);
       if (playerRef.current === player) playerRef.current = null;
     };
-  }, [alg, puzzle, set, setup, size, fillPane]);
+  }, [alg, puzzle, set, setup, startSolved, autoPlay, loop, size, fillPane]);
   // NOTE: 固定 host 尺寸,player 重 mount 时容器占位不丢,父布局不抖
   const hostStyle: CSSProperties = fillPane
     ? { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }

@@ -11,6 +11,7 @@ import { describe, it, expect } from 'vitest';
 import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import { normalizeAlgForTwisty } from '@/components/AlgPlayer/AlgPlayer';
+import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
 
 const kpuzzle = await cube3x3x3.kpuzzle();
 const playable = (s: string) => {
@@ -57,5 +58,16 @@ describe('normalizeAlgForTwisty', () => {
 
   it('认不出来的东西不静默改写 —— 原样退回,别硬塞半截给播放器', () => {
     expect(normalizeAlgForTwisty('3x3', 'R U @@@ F')).toBe('R U @@@ F');
+  });
+});
+
+describe('resolvePlayerSetup', () => {
+  it('记号教学从复原态开始', () => {
+    expect(resolvePlayerSetup('3x3', 'R', undefined, true)).toBe('');
+  });
+
+  it('普通公式预览仍优先使用显式 setup,否则从公式逆态开始', () => {
+    expect(resolvePlayerSetup('3x3', 'R U', 'F R', false)).toBe('F R');
+    expect(resolvePlayerSetup('3x3', 'R U', undefined, false)).toBe("(R U)'");
   });
 });
