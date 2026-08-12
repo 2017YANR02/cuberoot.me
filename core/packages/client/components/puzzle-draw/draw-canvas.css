@@ -1,7 +1,8 @@
 .draw-canvas {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  grid-template-columns: minmax(0, var(--draw-canvas-preview-width, 512px)) minmax(220px, 280px);
   align-items: start;
+  justify-content: center;
   gap: 24px;
   width: 100%;
   max-width: 100%;
@@ -20,6 +21,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
+  max-width: var(--draw-canvas-preview-width, 512px);
   min-width: 0;
   overflow: hidden;
   background: color-mix(in srgb, var(--foreground) 4%, transparent);

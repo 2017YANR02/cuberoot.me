@@ -1,5 +1,15 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { cleanFilenameBase, renderDrawSvg } from '@/components/puzzle-draw/DrawCanvas';
+
+const drawCanvasSource = readFileSync(
+  new URL('../components/puzzle-draw/DrawCanvas.tsx', import.meta.url),
+  'utf8',
+);
+const drawCanvasCss = readFileSync(
+  new URL('../components/puzzle-draw/draw-canvas.css', import.meta.url),
+  'utf8',
+);
 
 describe('renderDrawSvg', () => {
   it('emits the same paint document used by preview and export', () => {
@@ -30,5 +40,16 @@ describe('renderDrawSvg', () => {
     expect(cleanFilenameBase('  my/drawing.svg  ')).toBe('my-drawing');
     expect(cleanFilenameBase('sq1:*?<>|.png')).toBe('sq1-');
     expect(cleanFilenameBase('...')).toBe('');
+  });
+
+  it('keeps desktop previews at their configured width while allowing narrow screens to shrink', () => {
+    expect(drawCanvasSource).toContain("'--draw-canvas-preview-width': `${width}px`");
+    expect(drawCanvasCss).toContain(
+      'grid-template-columns: minmax(0, var(--draw-canvas-preview-width, 512px)) minmax(220px, 280px);',
+    );
+    expect(drawCanvasCss).toContain('max-width: var(--draw-canvas-preview-width, 512px);');
+    expect(drawCanvasCss).toMatch(
+      /@media \(max-width: 720px\)[\s\S]*?grid-template-columns: minmax\(0, 1fr\);/,
+    );
   });
 });
