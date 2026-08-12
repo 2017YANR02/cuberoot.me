@@ -6,6 +6,7 @@ import {
   useId,
   useMemo,
   useState,
+  type CSSProperties,
   type PointerEvent,
 } from 'react';
 import { persistItem } from '@/lib/safe-storage';
@@ -257,6 +258,9 @@ export function DrawCanvas({
   const resolvedFilenameBase = cleanFilenameBase(customFilename)
     || cleanFilenameBase(filenameBase)
     || 'puzzle-drawing';
+  const canvasStyle = {
+    '--draw-canvas-preview-width': `${width}px`,
+  } as CSSProperties;
 
   useEffect(() => {
     try {
@@ -337,7 +341,7 @@ export function DrawCanvas({
   };
 
   return (
-    <div className={`draw-canvas${className ? ` ${className}` : ''}`}>
+    <div className={`draw-canvas${className ? ` ${className}` : ''}`} style={canvasStyle}>
       <div className="draw-canvas-main">
         <div
           className="draw-canvas-preview"
