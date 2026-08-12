@@ -1,7 +1,7 @@
 # CubeRoot 移动端商店提交资料
 
-最后核对：2026-08-12  
-适用构建：`@cuberoot/mobile` `0.1.0`，Android `versionCode 1000`  
+最后核对：2026-08-12
+适用构建：`@cuberoot/mobile` `0.1.0`，Android `versionCode 1000`
 应用标识：`me.cuberoot.app`
 
 这份文件是 Google Play 提交表、未来 App Store Connect 提交表和审核备注的单一工作稿。每次加入登录、云同步、分析、崩溃上报、广告、付费、BLE 或新的原生权限后，必须先更新本文件和隐私政策，再生成新商店构建。
