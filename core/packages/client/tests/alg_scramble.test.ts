@@ -15,7 +15,9 @@
  */
 import { describe, expect, it } from 'vitest';
 import type { AlgCase } from '@cuberoot/shared';
+import { cube3x3x3 } from 'cubing/puzzles';
 import { caseScramble } from '@/lib/alg_scramble';
+import { normalizeAlg } from '@/lib/alg_normalize';
 import { validateAlgCase } from '@/lib/alg_validation';
 
 /** 取自线上 `/v1/alg/sets/3x3/{pll,1lll}`,只留本测试要用的字段。 */
@@ -67,11 +69,29 @@ const F: Record<string, AlgCase> = {
     algs: [[{ alg: "U r U R' U R U2 r' U' R U2 R' U' F' U F R U' R' U'" }]],
     meta: { no: 911, inv: 984, scramble: "(R U R2' F R F') (R U R' F) (R U R' U') F2 U2 F" } as AlgCase['meta'],
   },
+  // 用户报告的真实回归样本:只在末尾补 U 仍不等于缩略图,必须前后各补一次 AUF。
+  UB9: {
+    name: 'ZBLL U 28', subgroup: 'U/UB', setup: "l F' L F L' F R' F' R U2' R U2 R2' x",
+    sticker: { kind: 'face', us: 'bybyyyyyy', ub: 'ybyoooooo', uf: 'gogrrrrrr', ul: 'orrbbbbbb', ur: 'ogrgggggg' },
+    algs: [[{ alg: "x' (· R2 U2' R' U2 R' F R F') (L F' L' F) l'" }]],
+    meta: {
+      no: 128,
+      inv: 128,
+      scramble: "x' (· R2 U2' R' U2 R' F R F') (L F' L' F) l'",
+      optimal: { htm: { len: 13, scramble: "L U' R U R' U L' U' L F2 L F2 L2" } },
+    } as AlgCase['meta'],
+  },
 };
 
 const byNo = new Map(Object.values(F).map((c) => [c.meta!.no, c]));
 
 const AUF = ['', 'U', 'U2', "U'"];
+const kpuzzle = await cube3x3x3.kpuzzle();
+
+function sameExactState(a: string, b: string): boolean {
+  const solved = kpuzzle.defaultPattern();
+  return solved.applyAlg(normalizeAlg('3x3', a)).isIdentical(solved.applyAlg(normalizeAlg('3x3', b)));
+}
 
 /**
  * 这条打乱是不是真打出了这张 case:摆完再用它自己的首条公式解,应当还原。
@@ -91,20 +111,20 @@ async function scrambleShowsCase(scramble: string, c: AlgCase, set: string): Pro
 }
 
 describe('caseScramble — 每张 case 的打乱', () => {
-  it('已有 meta.scramble 就原样用,不重算', () => {
-    expect(caseScramble(F.Aa, byNo)).toEqual({ text: "x· R2' D2 (R U R' D2) R U' R x'", fromInvCase: true });
+  it('已有 meta.scramble 就优先使用,相位一致时不改写', () => {
+    expect(caseScramble(F.Aa, byNo, '3x3')).toEqual({ text: "x· R2' D2 (R U R' D2) R U' R x'", fromInvCase: true });
   });
 
-  it('缺 scramble + 指针可信 → 取逆 case 的首条公式(剥掉起手 AUF)', () => {
-    expect(caseScramble(F.Ua, byNo)).toEqual({ text: "M2 U' M U2 M' U' M2", fromInvCase: true });
-    expect(caseScramble(F['1LLL 4 44'], byNo)).toEqual({
-      text: "r U R' U R U2 r' U' R U2 R' U' F' U F R U' R' U'",
+  it('缺 scramble + 指针可信 → 取逆 case 的首条公式并补齐相位', () => {
+    expect(caseScramble(F.Ua, byNo, '3x3')).toEqual({ text: "U M2 U' M U2 M' U' M2 U'", fromInvCase: true });
+    expect(caseScramble(F['1LLL 4 44'], byNo, '3x3')).toEqual({
+      text: "U2 r U R' U R U2 r' U' R U2 R' U' F' U F R U' R' U' U",
       fromInvCase: true,
     });
   });
 
   it('缺 scramble + 逆 case 那条印证不上 → 退回 setup,不端出逆 case 的公式', () => {
-    const got = caseScramble(F['1LLL 6 7'], byNo)!;
+    const got = caseScramble(F['1LLL 6 7'], byNo, '3x3')!;
     expect(got).toEqual({ text: "F R U R' U' F' U F U R U' R' F' y", fromInvCase: false });
     // 钉住反面:指针指的那条**确实**是错的,退回不是白退
     expect(got.text).not.toContain('f R U');
@@ -112,16 +132,36 @@ describe('caseScramble — 每张 case 的打乱', () => {
 
   it('既没 meta 也没 setup(sq1 那张已还原的 case)→ null,不编一条空打乱', () => {
     const solved = { name: 'Square / Square', subgroup: 'Solved', setup: '', sticker: F.Ua.sticker, algs: [[]] } as AlgCase;
-    expect(caseScramble(solved, new Map())).toBe(null);
+    expect(caseScramble(solved, new Map(), 'sq1')).toBe(null);
+  });
+
+  it('UB9 会在打乱前后补齐 AUF,逐贴纸等于缩略图相位', () => {
+    const got = caseScramble(F.UB9, byNo, '3x3')!;
+    expect(got.text).toBe("U' x' (· R2 U2' R' U2 R' F R F') (L F' L' F) l' U'");
+    expect(sameExactState(got.text, F.UB9.setup)).toBe(true);
+  });
+
+  it('其它打乱类型也对齐到同一张缩略图', () => {
+    const got = caseScramble(F.UB9, byNo, '3x3', 'htm')!;
+    expect(got.text).not.toBe(F.UB9.setup);
+    expect(sameExactState(got.text, F.UB9.setup)).toBe(true);
   });
 
   it('每条打乱都真打出它自己那张 case(cubing.js 判)', async () => {
     for (const [key, set] of [['Ua', 'pll'], ['Aa', 'pll'], ['1LLL 6 7', '1lll'], ['1LLL 4 44', '1lll']] as const) {
       const c = F[key];
-      const s = caseScramble(c, byNo)!;
+      const s = caseScramble(c, byNo, '3x3')!;
       expect(await scrambleShowsCase(s.text, c, set), `${key}: 打乱 "${s.text}" 应打出这张 case`).toBe(true);
     }
   }, 60_000);
+
+  it('返回的打乱不只属于同一 AUF 轨道,还与 setup 精确同相位', () => {
+    for (const key of ['Ua', 'Aa', '1LLL 6 7', '1LLL 4 44', 'UB9'] as const) {
+      const c = F[key];
+      const s = caseScramble(c, byNo, '3x3')!;
+      expect(sameExactState(s.text, c.setup), `${key}: 打乱应与 setup 逐贴纸一致`).toBe(true);
+    }
+  });
 
   it('坏指针那条若照单全收会打出别的 case —— 钉住判据不白设', async () => {
     const wrong = F['1LLL 7 12'].algs[0][0].alg;
