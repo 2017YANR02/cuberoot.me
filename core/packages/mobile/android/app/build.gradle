@@ -7,17 +7,18 @@ def versionParts = mobilePackage.version.toString().tokenize('.')
 if (versionParts.size() != 3 || !versionParts.every { part -> part ==~ /\d+/ }) {
     throw new GradleException("packages/mobile/package.json must use numeric major.minor.patch versioning")
 }
-def versionNumbers = versionParts.collect { it.toInteger() }
+def versionNumbers = versionParts.collect { it.toLong() }
 if (versionNumbers[1] > 999 || versionNumbers[2] > 999) {
     throw new GradleException('Minor and patch versions must stay between 0 and 999')
 }
-def mobileVersionCode = (System.getenv('MOBILE_VERSION_CODE')
+def mobileVersionCodeLong = (System.getenv('MOBILE_VERSION_CODE')
         ?: (versionNumbers[0] * 1_000_000
         + versionNumbers[1] * 1_000
-        + versionNumbers[2]).toString()).toInteger()
-if (mobileVersionCode < 1 || mobileVersionCode > 2_100_000_000) {
+        + versionNumbers[2]).toString()).toLong()
+if (mobileVersionCodeLong < 1 || mobileVersionCodeLong > 2_100_000_000) {
     throw new GradleException('MOBILE_VERSION_CODE must be between 1 and 2100000000')
 }
+def mobileVersionCode = mobileVersionCodeLong.toInteger()
 
 def uploadSigning = [
     storeFile: System.getenv('MOBILE_UPLOAD_KEYSTORE_FILE'),

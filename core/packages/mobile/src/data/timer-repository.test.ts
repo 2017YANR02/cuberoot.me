@@ -51,7 +51,7 @@ describe('mobile timer repository contract', () => {
   it('creates and persists an empty store on first load', async () => {
     const { driver, repo } = repository();
     const data = await repo.load();
-    expect(data.activeSessionId).toBe('id-0');
+    expect(data.database.activeSessionId).toBe('id-0');
     expect(driver.data).toEqual(data);
   });
 
@@ -62,6 +62,21 @@ describe('mobile timer repository contract', () => {
       repo.addSolve({ timeMs: 2_000, penalty: '+2', scramble: 'U', event: '333' }),
     ]);
     expect(activeTimerSolves(await repo.load(), '333').map((solve) => solve.timeMs)).toEqual([1_000, 2_000]);
+  });
+
+  it('persists a flat v1 app envelope as nested v2 on load', async () => {
+    const driver = new MemoryDriver();
+    driver.data = {
+      schemaVersion: 1,
+      sessions: [{ id: 'legacy', name: 'Legacy', createdTs: 1 }],
+      activeSessionId: 'legacy',
+      dataBySession: { legacy: {} },
+      settings: { event: '333', inspectionSec: 0, holdMs: 300, language: 'en', theme: 'system' },
+    };
+    const { repo } = repository(driver);
+
+    await expect(repo.load()).resolves.toMatchObject({ schemaVersion: 2, database: { version: 3 } });
+    expect(driver.data).toMatchObject({ schemaVersion: 2, database: { version: 3 } });
   });
 
   it('updates penalty/comment and deletes one solve', async () => {
@@ -122,7 +137,7 @@ describe('mobile timer repository contract', () => {
     const driver = new MemoryDriver();
     driver.data = { schemaVersion: 999 };
     const target = repository(driver);
-    await expect(target.repo.importJson(backup)).resolves.toMatchObject({ schemaVersion: 1 });
+    await expect(target.repo.importJson(backup)).resolves.toMatchObject({ schemaVersion: 2 });
     expect(driver.recovery).toEqual({ schemaVersion: 999 });
     expect(await target.repo.hasImportRecovery()).toBe(false);
   });

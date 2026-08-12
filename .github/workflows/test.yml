@@ -182,11 +182,37 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug assembleRelease bundleRelease --no-daemon --max-workers=14
-          jarsigner -verify app/build/outputs/bundle/release/app-release.aab
-          permissions=$("$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" manifest permissions app/build/outputs/apk/release/app-release.apk)
+          apk=app/build/outputs/apk/release/app-release.apk
+          aab=app/build/outputs/bundle/release/app-release.aab
+          analyzer="$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer"
+
+          signing_output=$(jarsigner -verify "$aab" 2>&1)
+          echo "$signing_output"
+          if ! grep -Fq 'jar verified.' <<<"$signing_output" || grep -Fiq 'jar is unsigned' <<<"$signing_output"; then
+            echo "Release AAB is not verifiably signed"
+            exit 1
+          fi
+
+          build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$build_tools/apksigner" verify --verbose "$apk"
+
+          expected_version_name=$(node -p "require('../package.json').version")
+          expected_version_code=$(node -e "const [a,b,c]=require('../package.json').version.split('.').map(Number); console.log(a*1000000+b*1000+c)")
+          expected_target_sdk=$(sed -n 's/.*targetSdkVersion = \([0-9]*\).*/\1/p' variables.gradle)
+          test "$("$analyzer" manifest application-id "$apk")" = 'me.cuberoot.app'
+          test "$("$analyzer" manifest version-name "$apk")" = "$expected_version_name"
+          test "$("$analyzer" manifest version-code "$apk")" = "$expected_version_code"
+          test "$("$analyzer" manifest target-sdk "$apk")" = "$expected_target_sdk"
+
+          permissions=$("$analyzer" manifest permissions "$apk" | sort)
+          expected_permissions=$(printf '%s\n' \
+            'android.permission.ACCESS_NETWORK_STATE' \
+            'android.permission.INTERNET' \
+            'me.cuberoot.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION' | sort)
           echo "$permissions"
-          if echo "$permissions" | grep -Eq 'CAMERA|RECORD_AUDIO|ACCESS_FINE_LOCATION|ACCESS_COARSE_LOCATION'; then
-            echo "Release artifact requests a forbidden sensitive permission"
+          if [[ "$permissions" != "$expected_permissions" ]]; then
+            echo "Release manifest permissions differ from the exact allowlist"
+            diff -u <(printf '%s\n' "$expected_permissions") <(printf '%s\n' "$permissions") || true
             exit 1
           fi
 

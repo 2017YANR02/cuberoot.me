@@ -19,10 +19,11 @@ import sharp from 'sharp';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ICONS = join(HERE, '..', 'public', 'icons');
 
-const MARK_VB = '71.81 4.82 686.92 392.99'; // CubeRoot-mark.svg 的 viewBox(已收紧到墨迹)
 const BG = '#ffffff';
 
 const raw = readFileSync(join(ICONS, 'CubeRoot-mark.svg'), 'utf8');
+const markViewBox = raw.match(/<svg[^>]*\bviewBox="([^"]+)"/)?.[1];
+if (!markViewBox) throw new Error('CubeRoot-mark.svg must declare a viewBox');
 const inner = raw.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
 
 /** 把横版 mark 居中嵌进一个 size×size 的不透明方块。pad 是四边留白占比。 */
@@ -31,7 +32,7 @@ function compose(size, pad) {
   const box = size - inset * 2;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`
     + `<rect width="${size}" height="${size}" fill="${BG}"/>`
-    + `<svg x="${inset}" y="${inset}" width="${box}" height="${box}" viewBox="${MARK_VB}" preserveAspectRatio="xMidYMid meet">${inner}</svg>`
+    + `<svg x="${inset}" y="${inset}" width="${box}" height="${box}" viewBox="${markViewBox}" preserveAspectRatio="xMidYMid meet">${inner}</svg>`
     + `</svg>`;
 }
 

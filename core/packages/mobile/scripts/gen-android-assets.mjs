@@ -4,7 +4,7 @@
 //
 //   pnpm --filter @cuberoot/mobile assets:android
 
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -17,7 +17,8 @@ const RES = join(HERE, '..', 'android', 'app', 'src', 'main', 'res');
 const regularIcon = join(BRAND_ICONS, 'icon-512.png');
 const safeIcon = join(BRAND_ICONS, 'icon-maskable-512.png');
 const lightMark = join(BRAND_ICONS, 'CubeRoot-mark.svg');
-const darkMark = join(BRAND_ICONS, 'CubeRoot-mark-dark.svg');
+const lightMarkSvg = readFileSync(lightMark, 'utf8');
+const darkMarkSvg = Buffer.from(lightMarkSvg.replaceAll('#3f3f3f', '#fff'));
 
 const densities = {
   mdpi: 1,
@@ -40,7 +41,7 @@ for (const [density, scale] of Object.entries(densities)) {
 // Android's system splash expects a 288dp canvas with artwork inside the
 // central 192dp safe circle. An unqualified drawable is treated as mdpi and
 // scaled by Android, so one generated bitmap per theme is sufficient.
-for (const [directoryName, source] of [['drawable', lightMark], ['drawable-night', darkMark]]) {
+for (const [directoryName, source] of [['drawable', lightMark], ['drawable-night', darkMarkSvg]]) {
   const directory = join(RES, directoryName);
   mkdirSync(directory, { recursive: true });
   const art = await sharp(source, { density: 512 })
