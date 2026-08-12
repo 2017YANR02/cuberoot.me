@@ -68,6 +68,10 @@
 多个相关 UI 方法共享表时**合并一个类 + 一个 need**(照 `Roux223SolverWasm`:Roux FB 与
 Petrus 223 两方法 4 阶段 flat stage id 0..3,微表 eager、5.3M 表 RefCell 惰性且 s1/223 共享)。
 
+**客户端预计算原则**:只要表能在构建机提前生成，就不要把 BFS / 大移动表生成留给客户端。
+浏览器应下载版本化压缩资产并直载；只有几十毫秒级微表才允许现场生成。native 分析器可保留
+更快、内存更宽松的 u8/现场构建路径。First Layer 的 `opt_first_layer` 是大冷启动范本。
+
 **重建仪式**(改 Rust 后必走,顺序固定):
 1. `build_wasm.ps1` 的 `$names` 数组加新表名(若引了新 mt/pt)→ `pwsh solver/build_wasm.ps1`。
 2. copy `pkg-web/cross_solver.js`、`cross_solver_bg.wasm`(+两个 `.d.ts`)→ `tools/solver/rust-cross/`;

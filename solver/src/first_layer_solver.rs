@@ -9,7 +9,7 @@
 //! 最优距离、完整直方图和直径。First Layer 的有标号空间有
 //! P(8,4)·3^4 × P(12,4)·2^4 = 25,866,086,400 态，不整表展开；IDA* 使用
 //! First Face 精确表、角4 PDB、棱4 PDB、角棱联合排列 PDB 的最大值，仍严格最优。
-//! 所有表均在内存现场生成，不写入磁盘。
+//! native 分析器现场生成；浏览器只装载离线预构建的 packed bundle，不在客户端跑 BFS。
 
 use std::sync::{Arc, OnceLock};
 
@@ -31,6 +31,41 @@ pub const FIRST_FACE_STATES: usize = FACE_CORNERS * FACE_EDGES;
 pub const FIRST_LAYER_STATES: u64 = CORNER4 as u64 * state_space::CROSS as u64;
 pub const FIRST_LAYER_CERTIFIED_LOWER_BOUND: u32 = 11;
 pub const FIRST_LAYER_UPPER_BOUND: u32 = 20; // 整个三阶还原的 HTM 直径，因此也是本目标上界。
+pub const FIRST_FACE_HISTOGRAM: [u64; 11] = [
+    1, 12, 150, 1_886, 21_916, 242_166, 2_292_695, 14_228_012, 25_293_406, 2_825_994, 162,
+];
+
+const PRECOMPUTED_MAGIC: &[u8; 8] = b"FLAYOPT1";
+const PRECOMPUTED_VERSION: u32 = 1;
+const PRECOMPUTED_SECTION_BYTES: [usize; 10] = [
+    CORNER4 * 18 * 4,
+    state_space::CROSS * 18 * 4,
+    CORNER4 * 2,
+    state_space::CROSS * 2,
+    CORNER4 * 2,
+    state_space::CROSS * 2,
+    FIRST_FACE_STATES.div_ceil(2),
+    CORNER4.div_ceil(2),
+    state_space::CROSS.div_ceil(2),
+    (CORNER_PERM4 * state_space::EP4).div_ceil(2),
+];
+const PRECOMPUTED_HEADER_BYTES: usize = PRECOMPUTED_MAGIC.len()
+    + 4
+    + 4
+    + PRECOMPUTED_SECTION_BYTES.len() * 8
+    + 4
+    + FIRST_FACE_HISTOGRAM.len() * 8;
+pub const FIRST_LAYER_PRECOMPUTED_BYTES: usize = PRECOMPUTED_HEADER_BYTES
+    + PRECOMPUTED_SECTION_BYTES[0]
+    + PRECOMPUTED_SECTION_BYTES[1]
+    + PRECOMPUTED_SECTION_BYTES[2]
+    + PRECOMPUTED_SECTION_BYTES[3]
+    + PRECOMPUTED_SECTION_BYTES[4]
+    + PRECOMPUTED_SECTION_BYTES[5]
+    + PRECOMPUTED_SECTION_BYTES[6]
+    + PRECOMPUTED_SECTION_BYTES[7]
+    + PRECOMPUTED_SECTION_BYTES[8]
+    + PRECOMPUTED_SECTION_BYTES[9];
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum FirstLayerStage {
@@ -74,6 +109,82 @@ struct SubsetCodec {
     ranks: Vec<u16>,
     masks: Vec<u16>,
     orientation_states: usize,
+}
+
+/// native 保留 u8 直查吞吐；浏览器资产装载为 4-bit，省下载与 WASM 常驻内存。
+enum DistanceTable {
+    Bytes(Vec<u8>),
+    Nibbles { len: usize, bytes: Vec<u8> },
+}
+
+impl DistanceTable {
+    fn from_distances(distances: Vec<u8>) -> Self {
+        assert!(
+            distances.iter().all(|&value| value < 16),
+            "distance does not fit a nibble"
+        );
+        Self::Bytes(distances)
+    }
+
+    fn from_packed(len: usize, bytes: Vec<u8>) -> Result<Self, String> {
+        if bytes.len() != len.div_ceil(2) {
+            return Err(format!(
+                "packed table length mismatch: got {}, expected {}",
+                bytes.len(),
+                len.div_ceil(2)
+            ));
+        }
+        if len & 1 == 1 && bytes.last().is_some_and(|value| value >> 4 != 0) {
+            return Err("packed table has a non-zero unused high nibble".to_owned());
+        }
+        Ok(Self::Nibbles { len, bytes })
+    }
+
+    #[inline]
+    fn get(&self, index: usize) -> u8 {
+        match self {
+            Self::Bytes(bytes) => bytes[index],
+            Self::Nibbles { len, bytes } => {
+                debug_assert!(index < *len);
+                let byte = bytes[index / 2];
+                if index & 1 == 0 {
+                    byte & 0x0f
+                } else {
+                    byte >> 4
+                }
+            }
+        }
+    }
+
+    fn max_value(&self) -> u8 {
+        match self {
+            Self::Bytes(bytes) => bytes.iter().copied().max().unwrap_or(0),
+            Self::Nibbles { len, .. } => (0..*len).map(|index| self.get(index)).max().unwrap_or(0),
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn write_packed<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        match self {
+            Self::Nibbles { bytes, .. } => writer.write_all(bytes),
+            Self::Bytes(distances) => {
+                let mut packed = vec![0u8; 64 * 1024];
+                for chunk in distances.chunks(packed.len() * 2) {
+                    let out_len = chunk.len().div_ceil(2);
+                    packed[..out_len].fill(0);
+                    for (index, &value) in chunk.iter().enumerate() {
+                        if index & 1 == 0 {
+                            packed[index / 2] = value;
+                        } else {
+                            packed[index / 2] |= value << 4;
+                        }
+                    }
+                    writer.write_all(&packed[..out_len])?;
+                }
+                Ok(())
+            }
+        }
+    }
 }
 
 impl SubsetCodec {
@@ -144,11 +255,11 @@ struct FirstLayerTables {
     e4_to_face: Vec<u16>,
     c4_to_perm: Vec<u16>,
     e4_to_perm: Vec<u16>,
-    pt_first_face: Vec<u8>,
-    pt_c4: Vec<u8>,
-    pt_e4: Vec<u8>,
+    pt_first_face: DistanceTable,
+    pt_c4: DistanceTable,
+    pt_e4: DistanceTable,
     /// 忽略朝向但同时跟踪四角、四棱身份，idx=cp4*EP4+ep4。
-    pt_layer_perm: Vec<u8>,
+    pt_layer_perm: DistanceTable,
     c4_solved: usize,
     e4_solved: usize,
     first_face_histogram: Vec<u64>,
@@ -180,6 +291,19 @@ impl FirstLayerSolver {
         }
     }
 
+    /// 浏览器入口：只解析离线生成的最终表，不构建移动表或运行 BFS。
+    pub fn from_precomputed(bytes: &[u8]) -> Result<Self, String> {
+        Ok(Self {
+            tables: Arc::new(FirstLayerTables::from_precomputed(bytes)?),
+        })
+    }
+
+    /// native 导出器入口；资产格式带 magic/version/section lengths/histogram。
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn write_precomputed<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        self.tables.write_precomputed(writer)
+    }
+
     pub fn first_face_max_depth(&self) -> u8 {
         (self.tables.first_face_histogram.len() - 1) as u8
     }
@@ -191,9 +315,9 @@ impl FirstLayerSolver {
     /// 可证明的底层直径下界；精确上界见 FIRST_LAYER_UPPER_BOUND。
     pub fn first_layer_pdb_lower_bound(&self) -> u8 {
         [
-            self.tables.pt_c4.iter().copied().max().unwrap_or(0),
-            self.tables.pt_e4.iter().copied().max().unwrap_or(0),
-            self.tables.pt_layer_perm.iter().copied().max().unwrap_or(0),
+            self.tables.pt_c4.max_value(),
+            self.tables.pt_e4.max_value(),
+            self.tables.pt_layer_perm.max_value(),
             self.first_face_max_depth(),
         ]
         .into_iter()
@@ -225,7 +349,7 @@ impl FirstLayerSolver {
     fn face_h(&self, c: usize, e: usize) -> u8 {
         let qc = self.tables.c4_to_face[c] as usize;
         let qe = self.tables.e4_to_face[e] as usize;
-        self.tables.pt_first_face[qc * FACE_EDGES + qe]
+        self.tables.pt_first_face.get(qc * FACE_EDGES + qe)
     }
 
     #[inline]
@@ -233,9 +357,9 @@ impl FirstLayerSolver {
         let cp = self.tables.c4_to_perm[c] as usize;
         let ep = self.tables.e4_to_perm[e] as usize;
         self.face_h(c, e)
-            .max(self.tables.pt_c4[c])
-            .max(self.tables.pt_e4[e])
-            .max(self.tables.pt_layer_perm[cp * state_space::EP4 + ep])
+            .max(self.tables.pt_c4.get(c))
+            .max(self.tables.pt_e4.get(e))
+            .max(self.tables.pt_layer_perm.get(cp * state_space::EP4 + ep))
     }
 
     fn stage_h(&self, stage: FirstLayerStage, c: usize, e: usize) -> u8 {
@@ -400,7 +524,7 @@ impl FirstLayerTables {
         let mt_fe = build_subset_moves(&ecodec, false);
         let face_goal_c = ccodec.encode(&TRACKED_CORNERS.map(|p| (p as u8, 0)));
         let face_goal_e = ecodec.encode(&TRACKED_EDGES.map(|p| (p as u8, 0)));
-        let pt_first_face = build_product_pt(
+        let pt_first_face_raw = build_product_pt(
             &mt_fc,
             FACE_CORNERS,
             &mt_fe,
@@ -408,29 +532,32 @@ impl FirstLayerTables {
             face_goal_c,
             face_goal_e,
         );
-        let first_face_histogram = histogram(&pt_first_face);
+        let first_face_histogram = histogram(&pt_first_face_raw);
+        assert_eq!(first_face_histogram, FIRST_FACE_HISTOGRAM);
+        let pt_first_face = DistanceTable::from_distances(pt_first_face_raw);
 
         let c4_to_face = build_labeled_maps(CORNER4, 4, 3, 8, &ccodec, true);
         let e4_to_face = build_labeled_maps(state_space::CROSS, 4, 2, 12, &ecodec, true);
         let c4_to_perm = build_labeled_maps(CORNER4, 4, 3, 8, &ccodec, false);
         let e4_to_perm = build_labeled_maps(state_space::CROSS, 4, 2, 12, &ecodec, false);
 
-        let pt_c4 = build_single_pt(&mt_c4, CORNER4, c4_solved);
-        let pt_e4 = build_single_pt(&mt_e4, state_space::CROSS, e4_solved);
+        let pt_c4 = DistanceTable::from_distances(build_single_pt(&mt_c4, CORNER4, c4_solved));
+        let pt_e4 =
+            DistanceTable::from_distances(build_single_pt(&mt_e4, state_space::CROSS, e4_solved));
 
         let mt_cp4 = build_perm_moves(8, true);
         let mt_ep4 = build_perm_moves(12, false);
         let cp4_solved = array_to_index(&TRACKED_CORNERS, 4, 1, 8) as usize;
         let ep4_solved = array_to_index(&TRACKED_EDGES, 4, 1, 12) as usize;
         assert_eq!(ep4_solved, state_space::EP4_SOLVED);
-        let pt_layer_perm = build_product_pt(
+        let pt_layer_perm = DistanceTable::from_distances(build_product_pt(
             &mt_cp4,
             CORNER_PERM4,
             &mt_ep4,
             state_space::EP4,
             cp4_solved,
             ep4_solved,
-        );
+        ));
 
         Self {
             mt_c4,
@@ -448,6 +575,221 @@ impl FirstLayerTables {
             first_face_histogram,
         }
     }
+
+    fn from_precomputed(bytes: &[u8]) -> Result<Self, String> {
+        if bytes.len() != FIRST_LAYER_PRECOMPUTED_BYTES {
+            return Err(format!(
+                "first-layer bundle length mismatch: got {}, expected {}",
+                bytes.len(),
+                FIRST_LAYER_PRECOMPUTED_BYTES
+            ));
+        }
+        let mut cursor = 0usize;
+        if take_bytes(bytes, &mut cursor, PRECOMPUTED_MAGIC.len())? != PRECOMPUTED_MAGIC {
+            return Err("first-layer bundle magic mismatch".to_owned());
+        }
+        let version = read_u32(bytes, &mut cursor)?;
+        if version != PRECOMPUTED_VERSION {
+            return Err(format!("unsupported first-layer bundle version {version}"));
+        }
+        let section_count = read_u32(bytes, &mut cursor)? as usize;
+        if section_count != PRECOMPUTED_SECTION_BYTES.len() {
+            return Err(format!(
+                "first-layer section count mismatch: got {section_count}, expected {}",
+                PRECOMPUTED_SECTION_BYTES.len()
+            ));
+        }
+        for expected in PRECOMPUTED_SECTION_BYTES {
+            let got = read_u64(bytes, &mut cursor)? as usize;
+            if got != expected {
+                return Err(format!(
+                    "first-layer section length mismatch: got {got}, expected {expected}"
+                ));
+            }
+        }
+        let histogram_len = read_u32(bytes, &mut cursor)? as usize;
+        if histogram_len != FIRST_FACE_HISTOGRAM.len() {
+            return Err(format!(
+                "first-face histogram length mismatch: got {histogram_len}, expected {}",
+                FIRST_FACE_HISTOGRAM.len()
+            ));
+        }
+        let mut first_face_histogram = Vec::with_capacity(histogram_len);
+        for _ in 0..histogram_len {
+            first_face_histogram.push(read_u64(bytes, &mut cursor)?);
+        }
+        if first_face_histogram != FIRST_FACE_HISTOGRAM {
+            return Err("first-face histogram mismatch".to_owned());
+        }
+
+        let mt_c4 = read_u32_vec(bytes, &mut cursor, PRECOMPUTED_SECTION_BYTES[0])?;
+        let mt_e4 = read_u32_vec(bytes, &mut cursor, PRECOMPUTED_SECTION_BYTES[1])?;
+        let c4_to_face = read_u16_vec(bytes, &mut cursor, PRECOMPUTED_SECTION_BYTES[2])?;
+        let e4_to_face = read_u16_vec(bytes, &mut cursor, PRECOMPUTED_SECTION_BYTES[3])?;
+        let c4_to_perm = read_u16_vec(bytes, &mut cursor, PRECOMPUTED_SECTION_BYTES[4])?;
+        let e4_to_perm = read_u16_vec(bytes, &mut cursor, PRECOMPUTED_SECTION_BYTES[5])?;
+        let pt_first_face = DistanceTable::from_packed(
+            FIRST_FACE_STATES,
+            take_bytes(bytes, &mut cursor, PRECOMPUTED_SECTION_BYTES[6])?.to_vec(),
+        )?;
+        let pt_c4 = DistanceTable::from_packed(
+            CORNER4,
+            take_bytes(bytes, &mut cursor, PRECOMPUTED_SECTION_BYTES[7])?.to_vec(),
+        )?;
+        let pt_e4 = DistanceTable::from_packed(
+            state_space::CROSS,
+            take_bytes(bytes, &mut cursor, PRECOMPUTED_SECTION_BYTES[8])?.to_vec(),
+        )?;
+        let pt_layer_perm = DistanceTable::from_packed(
+            CORNER_PERM4 * state_space::EP4,
+            take_bytes(bytes, &mut cursor, PRECOMPUTED_SECTION_BYTES[9])?.to_vec(),
+        )?;
+        if cursor != bytes.len() {
+            return Err("first-layer bundle has trailing bytes".to_owned());
+        }
+
+        if mt_c4.iter().any(|&value| value as usize >= CORNER4)
+            || mt_e4
+                .iter()
+                .any(|&value| value as usize >= state_space::CROSS)
+            || c4_to_face
+                .iter()
+                .any(|&value| value as usize >= FACE_CORNERS)
+            || e4_to_face.iter().any(|&value| value as usize >= FACE_EDGES)
+            || c4_to_perm
+                .iter()
+                .any(|&value| value as usize >= CORNER_PERM4)
+            || e4_to_perm
+                .iter()
+                .any(|&value| value as usize >= state_space::EP4)
+        {
+            return Err("first-layer bundle contains an out-of-range index".to_owned());
+        }
+
+        let c4_solved = array_to_index(&TRACKED_CORNERS.map(|p| 3 * p), 4, 3, 8) as usize;
+        let e4_solved = array_to_index(&TRACKED_EDGES.map(|p| 2 * p), 4, 2, 12) as usize;
+        let face_index =
+            c4_to_face[c4_solved] as usize * FACE_EDGES + e4_to_face[e4_solved] as usize;
+        let perm_index =
+            c4_to_perm[c4_solved] as usize * state_space::EP4 + e4_to_perm[e4_solved] as usize;
+        if pt_first_face.get(face_index) != 0
+            || pt_c4.get(c4_solved) != 0
+            || pt_e4.get(e4_solved) != 0
+            || pt_layer_perm.get(perm_index) != 0
+        {
+            return Err("first-layer bundle does not encode the solved state".to_owned());
+        }
+
+        Ok(Self {
+            mt_c4,
+            mt_e4,
+            c4_to_face,
+            e4_to_face,
+            c4_to_perm,
+            e4_to_perm,
+            pt_first_face,
+            pt_c4,
+            pt_e4,
+            pt_layer_perm,
+            c4_solved,
+            e4_solved,
+            first_face_histogram,
+        })
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn write_precomputed<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        writer.write_all(PRECOMPUTED_MAGIC)?;
+        writer.write_all(&PRECOMPUTED_VERSION.to_le_bytes())?;
+        writer.write_all(&(PRECOMPUTED_SECTION_BYTES.len() as u32).to_le_bytes())?;
+        for length in PRECOMPUTED_SECTION_BYTES {
+            writer.write_all(&(length as u64).to_le_bytes())?;
+        }
+        writer.write_all(&(self.first_face_histogram.len() as u32).to_le_bytes())?;
+        for &count in &self.first_face_histogram {
+            writer.write_all(&count.to_le_bytes())?;
+        }
+        write_u32_slice(writer, &self.mt_c4)?;
+        write_u32_slice(writer, &self.mt_e4)?;
+        write_u16_slice(writer, &self.c4_to_face)?;
+        write_u16_slice(writer, &self.e4_to_face)?;
+        write_u16_slice(writer, &self.c4_to_perm)?;
+        write_u16_slice(writer, &self.e4_to_perm)?;
+        self.pt_first_face.write_packed(writer)?;
+        self.pt_c4.write_packed(writer)?;
+        self.pt_e4.write_packed(writer)?;
+        self.pt_layer_perm.write_packed(writer)?;
+        Ok(())
+    }
+}
+
+fn take_bytes<'a>(bytes: &'a [u8], cursor: &mut usize, len: usize) -> Result<&'a [u8], String> {
+    let end = cursor
+        .checked_add(len)
+        .ok_or_else(|| "first-layer bundle offset overflow".to_owned())?;
+    let out = bytes
+        .get(*cursor..end)
+        .ok_or_else(|| "first-layer bundle is truncated".to_owned())?;
+    *cursor = end;
+    Ok(out)
+}
+
+fn read_u32(bytes: &[u8], cursor: &mut usize) -> Result<u32, String> {
+    Ok(u32::from_le_bytes(
+        take_bytes(bytes, cursor, 4)?.try_into().unwrap(),
+    ))
+}
+
+fn read_u64(bytes: &[u8], cursor: &mut usize) -> Result<u64, String> {
+    Ok(u64::from_le_bytes(
+        take_bytes(bytes, cursor, 8)?.try_into().unwrap(),
+    ))
+}
+
+fn read_u32_vec(bytes: &[u8], cursor: &mut usize, byte_len: usize) -> Result<Vec<u32>, String> {
+    if byte_len % 4 != 0 {
+        return Err("u32 section is not aligned".to_owned());
+    }
+    Ok(take_bytes(bytes, cursor, byte_len)?
+        .chunks_exact(4)
+        .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+        .collect())
+}
+
+fn read_u16_vec(bytes: &[u8], cursor: &mut usize, byte_len: usize) -> Result<Vec<u16>, String> {
+    if byte_len % 2 != 0 {
+        return Err("u16 section is not aligned".to_owned());
+    }
+    Ok(take_bytes(bytes, cursor, byte_len)?
+        .chunks_exact(2)
+        .map(|chunk| u16::from_le_bytes(chunk.try_into().unwrap()))
+        .collect())
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn write_u32_slice<W: std::io::Write>(writer: &mut W, values: &[u32]) -> std::io::Result<()> {
+    let mut buffer = vec![0u8; 64 * 1024];
+    for chunk in values.chunks(buffer.len() / 4) {
+        let bytes = &mut buffer[..chunk.len() * 4];
+        for (slot, value) in bytes.chunks_exact_mut(4).zip(chunk) {
+            slot.copy_from_slice(&value.to_le_bytes());
+        }
+        writer.write_all(bytes)?;
+    }
+    Ok(())
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn write_u16_slice<W: std::io::Write>(writer: &mut W, values: &[u16]) -> std::io::Result<()> {
+    let mut buffer = vec![0u8; 64 * 1024];
+    for chunk in values.chunks(buffer.len() / 2) {
+        let bytes = &mut buffer[..chunk.len() * 2];
+        for (slot, value) in bytes.chunks_exact_mut(2).zip(chunk) {
+            slot.copy_from_slice(&value.to_le_bytes());
+        }
+        writer.write_all(bytes)?;
+    }
+    Ok(())
 }
 
 fn move_piece(position: u8, orientation: u8, m: Move, corner: bool) -> (u8, u8) {
@@ -695,6 +1037,26 @@ mod tests {
             solver.solve_one(FirstLayerStage::FirstLayer, &witness, ""),
             FIRST_LAYER_CERTIFIED_LOWER_BOUND
         );
+    }
+
+    #[test]
+    fn precomputed_bundle_round_trip() {
+        let solver = solver();
+        let mut bytes = Vec::with_capacity(FIRST_LAYER_PRECOMPUTED_BYTES);
+        solver.write_precomputed(&mut bytes).unwrap();
+        assert_eq!(bytes.len(), FIRST_LAYER_PRECOMPUTED_BYTES);
+
+        let restored = FirstLayerSolver::from_precomputed(&bytes).unwrap();
+        for scramble in include_str!("../testdata/scramble_5.txt").lines() {
+            let alg = string_to_alg(&scramble[scramble.find(',').unwrap() + 1..]);
+            assert_eq!(
+                restored.get_stats(&alg, &ROTS6),
+                solver.get_stats(&alg, &ROTS6)
+            );
+        }
+
+        bytes[0] ^= 1;
+        assert!(FirstLayerSolver::from_precomputed(&bytes).is_err());
     }
 
     /// 完整 State + 物理目标谓词 + IDDFS，绕开所有坐标/PDB，核对短深最优性及 6 视角。

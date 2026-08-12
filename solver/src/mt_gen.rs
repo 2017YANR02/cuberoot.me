@@ -6,7 +6,8 @@
 //! (mt_edge4 一张就 17.4MB / gz 8.3MB),而现场生成只要几十毫秒。
 //!
 //! 因此 wasm 路径改为:pt_*(BFS 深搜出来的剪枝表,生成要几十秒,只能下载)照旧 fetch;
-//! mt_*(移动表)一律在 worker 里现场建。`TABLE_SETS` 里再无 mt_* 条目。
+//! mt_*(移动表)默认在 worker 里现场建。First Layer 的大冷启动例外：最终移动表随
+//! `opt_first_layer` bundle 一起离线装载；`TABLE_SETS` 仍不单列 mt_* 文件。
 //!
 //! 正确性:本模块就是 manager 那几个 gen_mt_* 的同一份代码(基础生成器直接搬过来,派生表
 //! 走同一个 `create_multi_move_table{,2}`),故与 tables/*.bin 逐字节相同 —— 由

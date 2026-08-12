@@ -5,7 +5,7 @@
 pub mod cube_common;
 pub mod move_tables;
 // mt_gen:12 张 mt_* 移动表的运行时生成(native + wasm)。浏览器端靠它把 mt_* 从下载清单里
-// 彻底去掉(mt_edge4 一张就 gz 8.3MB),现场建只要几十毫秒。
+// 默认不单独下载 mt_*；First Layer 的大冷启动例外，最终移动表封进预构建 opt bundle。
 pub mod mt_gen;
 pub mod prune_tables;
 

@@ -3,8 +3,8 @@
 // 零拷贝共享表需要 SharedArrayBuffer + COOP/COEP,本页没发这些头,故不共享。
 //
 // 下载量(2026-07-27 重划):
-//   · mt_*(移动表)全部由 WASM 现场生成(见 solver/src/mt_gen.rs),**不再下载** ——
-//     它们是纯运动学产物,生成只要几十毫秒,却曾占去 gz 8.8MB(mt_edge4 一张就 8.3MB)。
+//   · mt_*(移动表)默认由 WASM 现场生成(见 solver/src/mt_gen.rs),不单独下载；
+//     First Layer 例外,最终移动表封进 opt_first_layer,避免客户端执行 4490 万态 BFS。
 //   · pt_*(BFS 剪枝表)仍须下载,是唯一的网络成本。
 //   · std 池再拆两段:建池只拉 pt_cross(gz 50KB)就能算纯十字;xcross+ 要的
 //     pt_cross_C4E0(gz 20MB)由 `ensureXCross()` 在用户真的切到那些阶段时才补。
@@ -18,7 +18,7 @@ import { BASE, TV, claimXCrossGz, releaseXCrossGz, tablesBaseUrl } from './rust-
 
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效。
 // 每次重建 wasm/worker 必须 bump。
-const V = 'v=20260811b';
+const V = 'v=20260811c';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -42,10 +42,12 @@ export const TABLE_BYTES: Record<string, number> = {
   opt_222: 3674160,
   opt_pyraminx: 933120,
   opt_skewb: 3149280,
+  // First Face / First Layer 最终移动表 + 4-bit PDB bundle；客户端只装载，不跑 BFS。
+  opt_first_layer: 57383828,
 };
 
 // 各 need 首次加载的表清单 —— 必须与 cross-solver-worker.js 的 init 分支严格一致。
-// **只列 pt_*/opt_*(必须下载的 BFS 产物)**;mt_* 一律 WASM 现场生成,不在此列。
+// **只列 pt_*/opt_*(必须下载的预构建产物)**;mt_* 不作为独立文件列出。
 // eodr / htr / htr2 / fr / chain 零表下载(微表/距离表现场从内置运动学建)。
 // pocket / pyraminx / skewb 拉预算好的全空间距离表 opt_*(秒算,from_dist 直载,
 // 表缺失时 worker 回退现场 BFS)。
@@ -63,7 +65,7 @@ export const TABLE_SETS: Record<'cross' | 'cross_restrict' | 'xcross_restrict' |
   ],
   block222: [],
   daisy: [],
-  first_layer: [],
+  first_layer: ['opt_first_layer'],
   roux223: [],
   eodr: [],
   htr: [],

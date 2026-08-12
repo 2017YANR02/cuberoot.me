@@ -771,7 +771,7 @@ if (Symbol.dispose) F2leoSolverWasm.prototype[Symbol.dispose] = F2leoSolverWasm.
 
 /**
  * 三阶 First Face / First Layer 两阶段求解器。两阶段共用角4/棱4移动表与
- * First Face / 角 / 棱 / 联合排列 PDB，零下载、首次查询惰性现场构建。
+ * First Face / 角 / 棱 / 联合排列 PDB；全部从预构建 bundle 装载，客户端不跑 BFS。
  */
 export class FirstLayerSolverWasm {
     __destroy_into_raw() {
@@ -784,9 +784,17 @@ export class FirstLayerSolverWasm {
         const ptr = this.__destroy_into_raw();
         wasm.__wbg_firstlayersolverwasm_free(ptr, 0);
     }
-    constructor() {
-        const ret = wasm.firstlayersolverwasm_new();
-        this.__wbg_ptr = ret;
+    /**
+     * @param {Uint8Array} precomputed
+     */
+    constructor(precomputed) {
+        const ptr0 = passArray8ToWasm0(precomputed, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.firstlayersolverwasm_new(ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        this.__wbg_ptr = ret[0];
         FirstLayerSolverWasmFinalization.register(this, this.__wbg_ptr, this);
         return this;
     }
