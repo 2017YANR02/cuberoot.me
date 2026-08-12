@@ -732,15 +732,7 @@ impl XCrossSolver {
         99
     }
 
-    /// Exact HTM distance for the conditional LBL Second Layer problem.
-    ///
-    /// The input contains the four labelled middle-layer edge pieces (piece 0..3),
-    /// encoded as `2 * physical_position + orientation`. A valid conditional input
-    /// has four distinct positions in 0..=7:the complete first layer is fixed, while
-    /// the four untracked U-layer edges fill the remaining positions. Search is still
-    /// unrestricted and may temporarily disturb the first layer; the goal restores it
-    /// and solves all four middle edges.
-    pub fn second_layer_distance(&self, middle_edges: [u8; 4]) -> Option<u32> {
+    fn second_layer_state(&self, middle_edges: [u8; 4]) -> Option<[VirtState; 4]> {
         let mut seen = 0u16;
         for &code in &middle_edges {
             let pos = (code / 2) as usize;
@@ -751,12 +743,15 @@ impl XCrossSolver {
         }
 
         let solved_im = (state_space::CROSS_SOLVED * state_space::CORNER) as u32;
-        let st: [VirtState; 4] = std::array::from_fn(|slot| VirtState {
+        Some(std::array::from_fn(|slot| VirtState {
             im: solved_im,
             ic: IDX_C4,
             ie: self.second_layer_edge_map[slot][middle_edges[slot] as usize] as u32,
             ..VirtState::default()
-        });
+        }))
+    }
+
+    fn second_layer_distance_from_state(&self, st: &[VirtState; 4]) -> u32 {
         let h = st.iter().map(|s| self.slot_h(s)).max().unwrap_or(0);
         // Any cube state is at most 20 HTM from solved, so 20 is a strict upper
         // bound for this weaker target as well. Returning 99 would be a bug.
@@ -765,7 +760,46 @@ impl XCrossSolver {
             distance <= 20,
             "conditional second-layer search exceeded cube upper bound"
         );
-        Some(distance)
+        distance
+    }
+
+    /// Exact HTM distance for the conditional LBL Second Layer problem.
+    ///
+    /// The input contains the four labelled middle-layer edge pieces (piece 0..3),
+    /// encoded as `2 * physical_position + orientation`. A valid conditional input
+    /// has four distinct positions in 0..=7:the complete first layer is fixed, while
+    /// the four untracked U-layer edges fill the remaining positions. Search is still
+    /// unrestricted and may temporarily disturb the first layer; the goal restores it
+    /// and solves all four middle edges.
+    pub fn second_layer_distance(&self, middle_edges: [u8; 4]) -> Option<u32> {
+        let st = self.second_layer_state(middle_edges)?;
+        Some(self.second_layer_distance_from_state(&st))
+    }
+
+    /// One optimal move-index path from the conditional state to solved F2L.
+    /// Offline corpus builders invert this path to obtain a representative scramble;
+    /// the browser never runs this search.
+    pub fn second_layer_solution(&self, middle_edges: [u8; 4]) -> Option<Vec<u8>> {
+        let st = self.second_layer_state(middle_edges)?;
+        let depth = self.second_layer_distance_from_state(&st);
+        if depth == 0 {
+            return Some(Vec::new());
+        }
+        let coords: [(usize, usize, usize, usize); 4] = std::array::from_fn(|slot| {
+            (
+                st[slot].im as usize,
+                (st[slot].ic as usize) * 18,
+                (st[slot].ie as usize) * 18,
+                slot,
+            )
+        });
+        let mut paths = Vec::with_capacity(1);
+        self.enumerate_multi(&coords, depth, 18, &mut Vec::new(), &mut paths, 1);
+        let path = paths
+            .pop()
+            .expect("exact conditional distance must have an optimal witness");
+        debug_assert_eq!(path.len(), depth as usize);
+        Some(path)
     }
 
     /// K 槽多解枚举:把 `coords` 对应的子集在恰好 `depth` 步内的所有解(rotated frame

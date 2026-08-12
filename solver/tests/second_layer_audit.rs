@@ -43,6 +43,16 @@ fn middle_edge_codes(state: &State) -> [u8; 4] {
     })
 }
 
+fn inverse_path(path: &[u8]) -> Vec<Move> {
+    path.iter()
+        .rev()
+        .map(|&m| {
+            let i = m as usize;
+            Move::from_index((i / 3) * 3 + [2, 1, 0][i % 3])
+        })
+        .collect()
+}
+
 /// std wording: a solved cross and every one of the four F2L slots.
 fn xxxxcross_done(state: &State) -> bool {
     let cross = D_CROSS_EDGES.iter().all(|&p| piece_solved(state, false, p));
@@ -172,6 +182,35 @@ fn conditional_coordinate_matches_normal_alg_path() {
     }
     assert_eq!(solver.second_layer_distance([0, 0, 4, 6]), None);
     assert_eq!(solver.second_layer_distance([0, 2, 4, 16]), None);
+}
+
+#[test]
+fn optimal_witness_inverts_to_a_replayable_first_layer_solved_scramble() {
+    let solver = solver();
+    let fixtures = [
+        [0, 2, 4, 6],
+        [1, 2, 4, 6],
+        [8, 2, 4, 6],
+        [14, 12, 10, 8],
+        [3, 7, 11, 15],
+    ];
+    for codes in fixtures {
+        let solution = solver.second_layer_solution(codes).unwrap();
+        let mut state = State::SOLVED;
+        for m in inverse_path(&solution) {
+            state.apply(m);
+        }
+        assert!(first_layer_done(&state), "codes={codes:?}");
+        assert_eq!(middle_edge_codes(&state), codes, "codes={codes:?}");
+        assert_eq!(
+            solution.len() as u32,
+            solver.second_layer_distance(codes).unwrap()
+        );
+        for &m in &solution {
+            state.apply(Move::from_index(m as usize));
+        }
+        assert!(second_layer_done(&state), "codes={codes:?}");
+    }
 }
 
 #[test]
