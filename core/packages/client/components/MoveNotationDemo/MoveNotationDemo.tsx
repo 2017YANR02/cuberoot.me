@@ -62,7 +62,6 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
           set=""
           startSolved
           autoPlay
-          loop
           controlMode="replay"
           moveDurationMs={1000}
           engine={engine}

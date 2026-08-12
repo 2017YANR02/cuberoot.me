@@ -54,10 +54,6 @@ export default function NotationPage() {
         <header className="alg-notation-hero">
           <p className="alg-notation-kicker">3×3</p>
           <h1>{t('中文转动记号', 'Chinese move notation')}</h1>
-          <p>{t(
-            '这里说明公式库里的傻瓜和紧凑两种中文显示。点选任意记号，下方魔方会立即演示对应转动。',
-            'This page explains the foolproof and compact Chinese display modes used by the algorithm library. Select any symbol to see the move immediately.',
-          )}</p>
           <Link href="/regulation/notation" className="alg-notation-reference">
             {t('查看标准英文记号说明', 'Read the standard notation guide')}
             <ArrowUpRight size={14} aria-hidden="true" />
@@ -69,8 +65,8 @@ export default function NotationPage() {
             <p>COMPACT</p>
             <h2 id="compact-map-title">{t('紧凑记号动图', 'Compact notation animation')}</h2>
             <span>{t(
-              '选择右侧记号；动图会从复原状态循环播放。',
-              'Choose a symbol; the player loops that move from the solved state.',
+              '选择右侧记号；动图会从复原状态演示一次。',
+              'Choose a symbol; the player shows that move once from the solved state.',
             )}</span>
           </div>
           <MoveNotationDemo puzzle="3x3" moves={compactDemoOptions()} variant="compact" />
