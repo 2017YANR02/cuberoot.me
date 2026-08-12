@@ -9,16 +9,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { ChevronLeft, ChevronRight, LogOut, Settings, Rewind, IdCard, GraduationCap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import FollowedComps from '@/components/FollowedComps';
 import AlgValidationAlert from '@/components/AlgValidationAlert';
+import AdminSubmissionsPanel from '@/components/AdminSubmissionsPanel';
 import PageNoticesAdmin from '@/components/PageNoticesAdmin';
 import { AccountPanel, LoginForm, WcaLinkPrompt, DeleteAccountPanel, type SignedIn } from '@/components/AuthPanel';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
-import { useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
+import { ADMIN_WCA_IDS, useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
 import { tr, useLang } from '@/i18n/tr';
 import './account.css';
 
@@ -34,7 +35,7 @@ export default function AccountPage() {
   // 跟着 URL 走;push 进历史,浏览器后退能层层退回。setter 只用来在登出时清掉参数。
   const [view, setView] = useQueryState(
     'view',
-    parseAsStringEnum<'main' | 'signin' | 'delete'>(['main', 'signin', 'delete']).withDefault('main').withOptions({ history: 'push' }),
+    parseAsStringEnum<'main' | 'signin' | 'delete' | 'submissions'>(['main', 'signin', 'delete', 'submissions']).withDefault('main').withOptions({ history: 'push' }),
   );
 
   // 'wait' = 还没判定(SSR / 正在跳走)—— auth-store 从 localStorage 同步初始化,服务端恒为
@@ -44,8 +45,8 @@ export default function AccountPage() {
   const next = useRef<string | null>(null);
 
   useDocumentTitle(
-    mode !== 'me' ? '登录' : view === 'delete' ? '注销账号' : '我的',
-    mode !== 'me' ? 'Sign in' : view === 'delete' ? 'Delete account' : 'My account',
+    mode !== 'me' ? '登录' : view === 'delete' ? '注销账号' : view === 'submissions' ? '公式投稿' : '我的',
+    mode !== 'me' ? 'Sign in' : view === 'delete' ? 'Delete account' : view === 'submissions' ? 'Algorithm submissions' : 'My account',
   );
 
   /** 拿到会话后该去哪:有回跳就回去,否则留在本页。 */
@@ -80,6 +81,7 @@ export default function AccountPage() {
   // 我的公开页入口 —— 只有绑了 WCA 的账号才有;学习进度是本地公式标记,人人都有。
   // 没绑的人在原位看到「绑定 WCA 账号」:注册那步跳过了、或后来才拿到 WCA ID,都从这里回来。
   const wcaId = user?.wcaId;
+  const isAdmin = !!wcaId && ADMIN_WCA_IDS.includes(wcaId);
   const cards = [
     ...(wcaId ? [
       {
@@ -112,6 +114,13 @@ export default function AccountPage() {
       title: tr({ zh: '学习进度', en: 'Learning Progress' }),
       desc: tr({ zh: '跨公式集的掌握进度总览', en: 'Mastery progress across all sets' }),
     },
+    ...(isAdmin ? [{
+      key: 'submissions',
+      href: '/account?view=submissions',
+      icon: <Inbox size={22} className="account-card-icon" />,
+      title: tr({ zh: '公式投稿', en: 'Algorithm submissions' }),
+      desc: tr({ zh: '查看最近提交的公式', en: 'Review recent algorithm submissions' }),
+    }] : []),
   ];
 
   return (
@@ -120,7 +129,7 @@ export default function AccountPage() {
         {/* 面包屑往上一层:设置视图回「我的」,主视图回首页。设置视图里**不再放齿轮** ——
             人已经在里面了,亮着的齿轮长得像入口却干着出口的活,没人读得出来。
             一个方向一个入口:进设置靠齿轮,出设置靠这条面包屑。 */}
-        {view === 'signin' ? (
+        {view === 'signin' || view === 'submissions' ? (
           <AppLink href="/account" className="account-back" prefetch={false}>
             <ChevronLeft size={16} />
             <span>{t('我的', 'My account')}</span>
@@ -207,6 +216,13 @@ export default function AccountPage() {
             </>
           )}
         </>
+      )}
+
+      {mode === 'me' && isAdmin && view === 'submissions' && (
+        <AdminSubmissionsPanel
+          lang={uiLang}
+          onClose={() => { void setView(null, { history: 'replace' }); }}
+        />
       )}
     </div>
   );
