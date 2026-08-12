@@ -76,6 +76,17 @@ export function cubeColorGroups(label: string): CubeColorGroup[] {
   return groups;
 }
 
+/** 白底复盘里四个 F2L 槽位的贴纸左右顺序。未知组合保持原顺序。 */
+export function f2lDisplayColors(colors: string): string {
+  const order: Record<string, string> = {
+    BR: 'BR', RB: 'BR',
+    GR: 'GR', RG: 'GR',
+    OB: 'OB', BO: 'OB',
+    GO: 'GO', OG: 'GO',
+  };
+  return order[colors] ?? colors;
+}
+
 export interface CubeColorChipProps {
   /** 色字母,1~2 片(`'GR'` 这样的整串也收)。认不出的字母整个不渲染。 */
   colors: string | readonly ColorLetter[];

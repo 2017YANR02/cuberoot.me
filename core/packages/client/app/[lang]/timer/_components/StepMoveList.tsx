@@ -34,7 +34,7 @@
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 
-import CubeColorChip, { leadingCubeColors } from '@/components/CubeColorChip/CubeColorChip';
+import CubeColorChip, { f2lDisplayColors, leadingCubeColors } from '@/components/CubeColorChip/CubeColorChip';
 import { tr } from '@/i18n/tr';
 
 import type { ReconTextResult, ReconTextLine } from '../_lib/reconstruct/recon_text';
@@ -203,11 +203,14 @@ export default function StepMoveList({
                     )}
                     {line.label && (() => {
                       const colors = leadingCubeColors(line.label);
+                      const visibleLabel = colors
+                        ? line.label.slice(colors.length).replace(/^\/?/, '').trimStart()
+                        : line.label;
                       return (
                         <span className="sml-label">
                           {'// '}
-                          {colors && <CubeColorChip colors={colors} className="sml-label-chip" />}
-                          {line.label}
+                          {colors && <CubeColorChip colors={f2lDisplayColors(colors)} className="sml-label-chip" />}
+                          {visibleLabel}
                         </span>
                       );
                     })()}

@@ -16,7 +16,7 @@
  */
 import { describe, it, expect } from 'vitest';
 
-import { cubeColorGroups, isCubeColorLetters, leadingCubeColors } from '@/components/CubeColorChip/CubeColorChip';
+import { cubeColorGroups, f2lDisplayColors, isCubeColorLetters, leadingCubeColors } from '@/components/CubeColorChip/CubeColorChip';
 
 describe('leadingCubeColors', () => {
   it('两片配色的标注 → 两个字母', () => {
@@ -69,5 +69,19 @@ describe('cubeColorGroups', () => {
     expect(cubeColorGroups('OLL-V+')).toEqual([]);
     expect(cubeColorGroups('PLL-A+')).toEqual([]);
     expect(cubeColorGroups('cancel into R U')).toEqual([]);
+  });
+});
+
+describe('f2lDisplayColors', () => {
+  it('白底四槽按贴纸的视觉左右顺序显示', () => {
+    expect(f2lDisplayColors('RB')).toBe('BR');
+    expect(f2lDisplayColors('RG')).toBe('GR');
+    expect(f2lDisplayColors('BO')).toBe('OB');
+    expect(f2lDisplayColors('OG')).toBe('GO');
+  });
+
+  it('单色十字和未知组合保持原顺序', () => {
+    expect(f2lDisplayColors('W')).toBe('W');
+    expect(f2lDisplayColors('WY')).toBe('WY');
   });
 });
