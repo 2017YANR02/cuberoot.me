@@ -253,3 +253,29 @@ export interface VariantDataRef { variant: string; stage: string; recentMetric: 
 export const variantDataRef = (uiVariant: string, stage: string): VariantDataRef => ({
   variant: dataVariantOfStage(uiVariant, stage), stage, recentMetric: stage,
 });
+
+/**
+ * 把 URL / 旧设置里的方法与阶段收敛到当前数据集真正存在的坐标。
+ * 优先留在同一个 UI 方法内(LBL / 砖 / EO),再回退到数据集首项；返回值可直接用于
+ * 本帧渲染，不能只等 effect 改 URL，否则原生 select 会短暂或持续显示空白值。
+ */
+export const normalizeVariantDataRef = (
+  variants: Record<string, { stages: readonly string[] }>,
+  variant: string,
+  stage: string,
+): VariantDataRef | null => {
+  const direct = variantDataRef(variant, stage);
+  if (variants[direct.variant]?.stages.includes(direct.stage)) return direct;
+
+  const uiVariant = uiVariantOf(variant);
+  for (const candidateStage of uiStagesOf(uiVariant)) {
+    const candidate = variantDataRef(uiVariant, candidateStage);
+    if (variants[candidate.variant]?.stages.includes(candidate.stage)) return candidate;
+  }
+
+  for (const [candidateVariant, data] of Object.entries(variants)) {
+    const candidateStage = data.stages[0];
+    if (candidateStage) return variantDataRef(candidateVariant, candidateStage);
+  }
+  return null;
+};
