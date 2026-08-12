@@ -19,13 +19,14 @@ describe('formatAlgNotation', () => {
     );
   });
 
-  it('keeps rotations and slice moves in their original notation', () => {
-    expect(formatAlgNotation("x y2 z' E M' S2", 'zh-cstimer')).toBe("x，y2，z'，E，M'，S2");
+  it('renders rotations and slice moves with the requested Chinese symbols', () => {
+    expect(formatAlgNotation("x y2 z' E M' S2", 'zh-cstimer')).toBe("天，地2，人'，赤，中'，经2");
+    expect(formatAlgNotation("e m' s2", 'zh-cstimer')).toBe("赤，中'，经2");
   });
 
   it('renders compact Chinese notation without standard move tokens', () => {
     expect(formatAlgNotation("R U2' U' r R2 f' Uw x M'", 'zh-compact')).toBe(
-      "右顺 上180 上逆 右双顺 右180 前双逆 上双顺 x M'",
+      "右顺 上180 上逆 右双顺 右180 前双逆 上双顺 天 中'",
     );
   });
 
