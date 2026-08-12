@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
+    "test": "vitest run",
     "typecheck": "tsgo --noEmit",
     "cap:add:android": "cap add android",
     "cap:sync": "pnpm build && cap sync android",
@@ -17,6 +18,7 @@
     "@capacitor/core": "8.5.0",
     "@capacitor/inappbrowser": "4.0.2",
     "@capacitor/network": "8.0.1",
+    "@cuberoot/shared": "workspace:*",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -27,6 +29,7 @@
     "@typescript/native-preview": "7.0.0-dev.20260517.1",
     "@vitejs/plugin-react": "^6.0.5",
     "typescript": "^5",
-    "vite": "8.0.1"
+    "vite": "8.0.1",
+    "vitest": "^4.1.6"
   }
 }
