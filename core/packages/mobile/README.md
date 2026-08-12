@@ -1,12 +1,15 @@
 # CubeRoot Mobile
 
-React + Vite + Capacitor 8 app shell. Android is the first native target; iOS can be added from macOS later without duplicating the React UI.
+React + Vite + Capacitor 8 app. Android is the first native target; iOS can be added from macOS later without duplicating the React UI.
 
-The bundled React screen is a startup and offline fallback. On a native device it opens the production site with Capacitor's InAppBrowser WebView, so normal website releases appear in the app without rebuilding the APK or future IPA. Native-only capabilities stay in this package.
+The bundled app is local-first: timing, scrambles, statistics, settings and history work from the packaged `dist/` without a network connection. The full website is an explicit secondary link, never the app's runtime or automatic start screen.
 
 ## Maintenance rule
 
-Do not recreate website pages, components, or business logic in this package. Reuse the live site by default. Mobile-owned code is limited to startup, offline fallback, and capabilities that require a native bridge; shared domain logic must be extracted to a shared package rather than copied.
+- Keep framework-free timer, scramble, validation, statistics and serialization logic in `@cuberoot/shared` so the website and app import the same implementation.
+- Keep mobile-owned code to the compact native workflow, IndexedDB adapter and native bridges.
+- Fetch changing content through versioned APIs or static data instead of copying it into the app.
+- Do not reproduce the full website inside this package.
 
 ## Commands
 
@@ -14,6 +17,7 @@ Run these from `core/`:
 
 ```powershell
 pnpm --filter @cuberoot/mobile dev
+pnpm --filter @cuberoot/mobile test
 pnpm --filter @cuberoot/mobile typecheck
 pnpm --filter @cuberoot/mobile build
 pnpm --filter @cuberoot/mobile cap:sync
@@ -21,6 +25,10 @@ pnpm --filter @cuberoot/mobile android:open
 ```
 
 `cap:sync` builds the web app and copies it into the native Android project. Run it after changing React code and before making a native build.
+
+## Persistence
+
+`src/data/timer-repository.ts` is the only mobile timer storage boundary. It writes schema-versioned `TimerStoreData` from `@cuberoot/shared/timer` to IndexedDB and serializes concurrent changes. Invalid data is rejected without overwriting the existing database. JSON export/import uses the same shared decoder.
 
 ## Permanent identifiers
 
