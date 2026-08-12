@@ -96,6 +96,7 @@ cargo test --release -- --ignored     # 8 个 ignored(中表 + e2e XCross + pseu
 | `src/bin/dist_xcross_2col.rs` | 双色 XCross 分布(D4h 16-elem,8 张 109MB pruning 表,70 partition × 24 perm × 16 ori × AVX2 conv3,11 深度),~17 分钟 |
 | `src/bin/dist_tracked.rs` | 通用 tracked-piece 分布:A×B 两因子(Corners/Edges/EdgePos/EoWord/**EdgeSet** 分量拼)+ 多源 packed4 BFS;目标集开关 `fold_y`(两条 EO 轴取最短)/ `d_offset`(伪口径);`verify` 对八条金标 + 三条恒等式;大 preset 走 `CUBE_ALLOW_HUGE_TABLES=1` |
 | `src/bin/first_layer_gods_number.rs` | First Layer 258.66 亿态严格直径证明器,2-bit 6.02GiB,≤14线程,25GB硬限,不进浏览器 |
+| `run_first_layer_gods_number.ps1` | First Layer God 数一键运行:A/B 整层断点、资源门、低优先级、实时进度/ETA/日志 |
 | `EXACT_DIST_EXPANSION.md` | 站内「完整状态空间」缺的那些格子的台账:坐标 / 内存 / 算法 / 跑法 / 回填清单 |
 | `src/bin/dist_*_0f.rs` | 11 个 0 步状态数 bin(容斥;1col 子空间 / 2col,6col 全空间 + cube laws) |
 | `src/bin/state_cross_1col.rs` | 单色 cross 1..8 步 scramble,输出 1..8.txt(190K 行) |

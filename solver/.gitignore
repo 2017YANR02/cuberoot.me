@@ -1,5 +1,6 @@
 /target/
 /tables/
+/checkpoints/
 *.bin
 .tmp/
 # 仅根目录运行时产物;testdata/ 下的 golden csv 是源,需 commit

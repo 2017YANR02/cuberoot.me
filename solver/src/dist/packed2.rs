@@ -19,8 +19,17 @@ const LOW_BITS: u64 = 0x5555_5555_5555_5555;
 pub struct LayerProgress {
     pub depth: u32,
     pub count: u64,
+    /// States in this layer whose B coordinate equals the optional selector.
+    pub selected_b_count: u64,
     pub cumulative: u64,
     pub witness: usize,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ScanProgress {
+    pub depth: u32,
+    pub rows_done: usize,
+    pub rows_total: usize,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -31,6 +40,37 @@ pub struct ExactBfsProof {
     pub deepest_state: usize,
     /// Move indices that are not universal self-loops in this quotient graph.
     pub effective_moves: Vec<u8>,
+    /// Per-layer counts for an optional fixed B coordinate.
+    pub selected_b_histogram: Vec<u64>,
+}
+
+/// Owned state needed to resume at the next unprocessed BFS layer.
+///
+/// `words` deliberately remains atomic: loading a checkpoint may be followed
+/// immediately by a parallel layer scan, without a second 6 GiB allocation or
+/// an unsafe representation conversion.
+pub struct Packed2Resume {
+    pub words: Vec<AtomicU64>,
+    pub current_colour: u8,
+    pub next_colour: u8,
+    pub next_depth: u32,
+    pub cumulative: u64,
+    pub histogram: Vec<u64>,
+    pub selected_b_histogram: Vec<u64>,
+    pub deepest_state: usize,
+}
+
+/// Borrowed, layer-boundary snapshot. No Rayon workers are active while the
+/// callback runs, so the caller may serialize every atomic word consistently.
+pub struct Packed2Snapshot<'a> {
+    pub words: &'a [AtomicU64],
+    pub current_colour: u8,
+    pub next_colour: u8,
+    pub next_depth: u32,
+    pub cumulative: u64,
+    pub histogram: &'a [u64],
+    pub selected_b_histogram: &'a [u64],
+    pub deepest_state: usize,
 }
 
 #[inline]
@@ -92,6 +132,41 @@ pub fn bfs_multi_packed2_exact<F>(
 where
     F: FnMut(LayerProgress),
 {
+    bfs_multi_packed2_exact_resumable(
+        a_size,
+        b_size,
+        starts,
+        mt_a,
+        mt_b,
+        None,
+        None,
+        None,
+        |progress, _| {
+            on_layer(progress);
+            Ok(())
+        },
+    )
+}
+
+/// Resumable variant of [`bfs_multi_packed2_exact`].
+///
+/// The callback runs only after a layer is fully processed and the frontier
+/// colours have been swapped. A successfully serialized snapshot therefore
+/// resumes at `next_depth` without repeating or skipping any state.
+pub fn bfs_multi_packed2_exact_resumable<F>(
+    a_size: usize,
+    b_size: usize,
+    starts: &[usize],
+    mt_a: &[i32],
+    mt_b: &[i32],
+    resume: Option<Packed2Resume>,
+    selected_b: Option<usize>,
+    scan_reporter: Option<&(dyn Fn(ScanProgress) + Sync)>,
+    mut on_layer: F,
+) -> Result<ExactBfsProof, String>
+where
+    F: FnMut(LayerProgress, Packed2Snapshot<'_>) -> Result<(), String>,
+{
     let total = a_size
         .checked_mul(b_size)
         .ok_or_else(|| "packed2 state count overflow".to_owned())?;
@@ -118,6 +193,13 @@ where
     }
     if starts.is_empty() {
         return Err("packed2 start set is empty".to_owned());
+    }
+    if let Some(b) = selected_b {
+        if b >= b_size {
+            return Err(format!(
+                "packed2 selected B coordinate {b} out of range {b_size}"
+            ));
+        }
     }
     if let Some((index, value)) = mt_a
         .iter()
@@ -158,33 +240,106 @@ where
     let allocation_bytes = word_count
         .checked_mul(std::mem::size_of::<AtomicU64>())
         .ok_or_else(|| "packed2 allocation bytes overflow".to_owned())?;
-    let mut table = Vec::new();
-    table
-        .try_reserve_exact(word_count)
-        .map_err(|e| format!("cannot reserve {allocation_bytes} packed2 bytes: {e}"))?;
-    table.resize_with(word_count, || AtomicU64::new(0));
-    for &start in starts {
-        if start >= total {
-            return Err(format!("packed2 start {start} out of range {total}"));
+    let (
+        table,
+        mut current,
+        mut next,
+        mut depth,
+        mut cumulative,
+        mut histogram,
+        mut selected_b_histogram,
+        mut deepest_state,
+    ) = if let Some(resume) = resume {
+        if resume.words.len() != word_count {
+            return Err(format!(
+                "packed2 resume word count mismatch: got {}, expected {word_count}",
+                resume.words.len()
+            ));
         }
-        let (a, b) = (start / b_size, start % b_size);
-        discover(
-            &table[a * words_per_row + b / STATES_PER_WORD],
-            b % STATES_PER_WORD,
+        if !matches!(
+            (resume.current_colour, resume.next_colour),
+            (FRONTIER_A, FRONTIER_B) | (FRONTIER_B, FRONTIER_A)
+        ) {
+            return Err(format!(
+                "packed2 resume colours are invalid: current={}, next={}",
+                resume.current_colour, resume.next_colour
+            ));
+        }
+        if resume.next_depth as usize != resume.histogram.len() {
+            return Err(format!(
+                "packed2 resume depth/histogram mismatch: depth={}, bins={}",
+                resume.next_depth,
+                resume.histogram.len()
+            ));
+        }
+        if resume.selected_b_histogram.len() != resume.histogram.len() {
+            return Err(format!(
+                "packed2 resume selected-B histogram mismatch: selected bins={}, all bins={}",
+                resume.selected_b_histogram.len(),
+                resume.histogram.len()
+            ));
+        }
+        let histogram_sum = resume.histogram.iter().try_fold(0u64, |sum, &count| {
+            sum.checked_add(count)
+                .ok_or_else(|| "packed2 resume histogram overflow".to_owned())
+        })?;
+        if histogram_sum != resume.cumulative || resume.cumulative > total as u64 {
+            return Err(format!(
+                "packed2 resume cumulative mismatch: histogram={histogram_sum}, stored={}, total={total}",
+                resume.cumulative
+            ));
+        }
+        if resume.deepest_state >= total {
+            return Err(format!(
+                "packed2 resume witness {} out of range {total}",
+                resume.deepest_state
+            ));
+        }
+        (
+            resume.words,
+            resume.current_colour,
+            resume.next_colour,
+            resume.next_depth,
+            resume.cumulative,
+            resume.histogram,
+            resume.selected_b_histogram,
+            resume.deepest_state,
+        )
+    } else {
+        let mut table = Vec::new();
+        table
+            .try_reserve_exact(word_count)
+            .map_err(|e| format!("cannot reserve {allocation_bytes} packed2 bytes: {e}"))?;
+        table.resize_with(word_count, || AtomicU64::new(0));
+        for &start in starts {
+            if start >= total {
+                return Err(format!("packed2 start {start} out of range {total}"));
+            }
+            let (a, b) = (start / b_size, start % b_size);
+            discover(
+                &table[a * words_per_row + b / STATES_PER_WORD],
+                b % STATES_PER_WORD,
+                FRONTIER_A,
+            );
+        }
+        (
+            table,
             FRONTIER_A,
-        );
-    }
-
-    let mut current = FRONTIER_A;
-    let mut next = FRONTIER_B;
-    let mut depth = 0u32;
-    let mut cumulative = 0u64;
-    let mut histogram = Vec::new();
-    let mut deepest_state = starts[0];
+            FRONTIER_B,
+            0,
+            0,
+            Vec::new(),
+            Vec::new(),
+            starts[0],
+        )
+    };
 
     loop {
         let count = AtomicU64::new(0);
+        let selected_count = AtomicU64::new(0);
         let witness = AtomicU64::new(u64::MAX);
+        let rows_done = std::sync::atomic::AtomicUsize::new(0);
+        let scan_interval = (a_size / 64).max(1);
 
         (0..a_size).into_par_iter().with_min_len(32).for_each(|a| {
             let mut next_a = [0usize; 18];
@@ -194,6 +349,12 @@ where
             let row_word = a * words_per_row;
             let mut local_count = 0u64;
             let mut local_witness = u64::MAX;
+            if let Some(b) = selected_b {
+                let word = table[row_word + b / STATES_PER_WORD].load(Ordering::Relaxed);
+                if ((word >> ((b % STATES_PER_WORD) * 2)) & 3) as u8 == current {
+                    selected_count.fetch_add(1, Ordering::Relaxed);
+                }
+            }
 
             for group_start in (0..words_per_row).step_by(WORD_GROUP) {
                 let group_len = (words_per_row - group_start).min(WORD_GROUP);
@@ -250,6 +411,16 @@ where
                 count.fetch_add(local_count, Ordering::Relaxed);
                 witness.fetch_min(local_witness, Ordering::Relaxed);
             }
+            if let Some(reporter) = scan_reporter {
+                let done = rows_done.fetch_add(1, Ordering::Relaxed) + 1;
+                if done % scan_interval == 0 || done == a_size {
+                    reporter(ScanProgress {
+                        depth,
+                        rows_done: done,
+                        rows_total: a_size,
+                    });
+                }
+            }
         });
 
         let layer_count = count.load(Ordering::Relaxed);
@@ -261,17 +432,33 @@ where
             .checked_add(layer_count)
             .ok_or_else(|| "packed2 visited count overflow".to_owned())?;
         histogram.push(layer_count);
+        let layer_selected_count = selected_count.load(Ordering::Relaxed);
+        selected_b_histogram.push(layer_selected_count);
         deepest_state = layer_witness;
-        on_layer(LayerProgress {
+        let progress = LayerProgress {
             depth,
             count: layer_count,
+            selected_b_count: layer_selected_count,
             cumulative,
             witness: layer_witness,
-        });
+        };
         depth = depth
             .checked_add(1)
             .ok_or_else(|| "packed2 BFS depth overflow".to_owned())?;
         std::mem::swap(&mut current, &mut next);
+        on_layer(
+            progress,
+            Packed2Snapshot {
+                words: &table,
+                current_colour: current,
+                next_colour: next,
+                next_depth: depth,
+                cumulative,
+                histogram: &histogram,
+                selected_b_histogram: &selected_b_histogram,
+                deepest_state,
+            },
+        )?;
     }
 
     Ok(ExactBfsProof {
@@ -279,6 +466,7 @@ where
         visited: cumulative,
         deepest_state,
         effective_moves: effective_moves.into_iter().map(|m| m as u8).collect(),
+        selected_b_histogram,
     })
 }
 
@@ -306,8 +494,23 @@ mod tests {
         let (a_size, b_size) = (4usize, 64usize);
         let mt_a = cycle_moves(a_size, 0, 2);
         let mt_b = cycle_moves(b_size, 3, 5);
-        let proof = bfs_multi_packed2_exact(a_size, b_size, &[0], &mt_a, &mt_b, |_| {})
-            .expect("packed2 BFS");
+        let scan_reports = std::sync::atomic::AtomicUsize::new(0);
+        let scan_reporter = |progress: ScanProgress| {
+            assert!(progress.rows_done <= progress.rows_total);
+            scan_reports.fetch_add(1, Ordering::Relaxed);
+        };
+        let proof = bfs_multi_packed2_exact_resumable(
+            a_size,
+            b_size,
+            &[0],
+            &mt_a,
+            &mt_b,
+            None,
+            Some(7),
+            Some(&scan_reporter),
+            |_, _| Ok(()),
+        )
+        .expect("packed2 BFS");
 
         let mut distance = vec![u8::MAX; a_size * b_size];
         let mut queue = VecDeque::from([0usize]);
@@ -324,14 +527,20 @@ mod tests {
         }
         let max = *distance.iter().max().unwrap() as usize;
         let mut expected = vec![0u64; max + 1];
-        for d in distance {
+        let mut selected = vec![0u64; max + 1];
+        for (state, d) in distance.into_iter().enumerate() {
             expected[d as usize] += 1;
+            if state % b_size == 7 {
+                selected[d as usize] += 1;
+            }
         }
 
         assert_eq!(proof.histogram, expected);
+        assert_eq!(proof.selected_b_histogram, selected);
         assert_eq!(proof.visited, (a_size * b_size) as u64);
         assert_eq!(proof.histogram.len() - 1, 34);
         assert_eq!(proof.effective_moves, vec![0, 2, 3, 5]);
+        assert!(scan_reports.load(Ordering::Relaxed) > 0);
     }
 
     #[test]
@@ -347,5 +556,78 @@ mod tests {
         assert_eq!(packed2_bytes(4), 1);
         assert_eq!(packed2_bytes(5), 2);
         assert_eq!(packed2_product_bytes(24, 24), Some(24 * 8));
+    }
+
+    #[test]
+    fn layer_snapshot_resumes_exactly_and_counts_selected_b() {
+        let (a_size, b_size) = (4usize, 64usize);
+        let mt_a = cycle_moves(a_size, 0, 2);
+        let mt_b = cycle_moves(b_size, 3, 5);
+        let full = bfs_multi_packed2_exact_resumable(
+            a_size,
+            b_size,
+            &[0],
+            &mt_a,
+            &mt_b,
+            None,
+            Some(7),
+            None,
+            |_, _| Ok(()),
+        )
+        .expect("full resumable BFS");
+
+        let mut saved = None;
+        let stopped = bfs_multi_packed2_exact_resumable(
+            a_size,
+            b_size,
+            &[0],
+            &mt_a,
+            &mt_b,
+            None,
+            Some(7),
+            None,
+            |progress, snapshot| {
+                if progress.depth == 9 {
+                    saved = Some(Packed2Resume {
+                        words: snapshot
+                            .words
+                            .iter()
+                            .map(|word| AtomicU64::new(word.load(Ordering::Relaxed)))
+                            .collect(),
+                        current_colour: snapshot.current_colour,
+                        next_colour: snapshot.next_colour,
+                        next_depth: snapshot.next_depth,
+                        cumulative: snapshot.cumulative,
+                        histogram: snapshot.histogram.to_vec(),
+                        selected_b_histogram: snapshot.selected_b_histogram.to_vec(),
+                        deepest_state: snapshot.deepest_state,
+                    });
+                    return Err("intentional checkpoint stop".to_owned());
+                }
+                Ok(())
+            },
+        );
+        assert_eq!(stopped.unwrap_err(), "intentional checkpoint stop");
+
+        let resumed = bfs_multi_packed2_exact_resumable(
+            a_size,
+            b_size,
+            &[0],
+            &mt_a,
+            &mt_b,
+            saved,
+            Some(7),
+            None,
+            |_, _| Ok(()),
+        )
+        .expect("resumed BFS");
+        assert_eq!(resumed.histogram, full.histogram);
+        assert_eq!(resumed.selected_b_histogram, full.selected_b_histogram);
+        assert_eq!(
+            resumed.selected_b_histogram.iter().sum::<u64>(),
+            a_size as u64
+        );
+        assert_eq!(resumed.deepest_state, full.deepest_state);
+        assert_eq!(resumed.visited, full.visited);
     }
 }
