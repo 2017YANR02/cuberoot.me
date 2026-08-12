@@ -153,6 +153,7 @@ export default class Controller {
 
   update(): void {
     const angle = this.contingle + this.angle;
+    if (!Number.isFinite(angle)) return;
     // 动画关:拖动期间不让层/整体实时跟手转(保持在 rest),松手时由 handleUp fast 吸附到 90°,
     // 全程无中间角度。holdPartial(半转停调试)是另一套语义,走它自己的冻结分支,不受此影响。
     if (this.instantTurns && !this.holdPartial) return;
@@ -204,7 +205,17 @@ export default class Controller {
     return null;
   }
 
-  intersect(point: THREE.Vector2, plane: THREE.Plane): THREE.Vector3 {
+  intersect(point: THREE.Vector2, plane: THREE.Plane): THREE.Vector3 | null {
+    if (
+      !Number.isFinite(point.x) ||
+      !Number.isFinite(point.y) ||
+      !Number.isFinite(this.world.width) ||
+      !Number.isFinite(this.world.height) ||
+      this.world.width <= 0 ||
+      this.world.height <= 0
+    ) {
+      return null;
+    }
     const x = (point.x / this.world.width) * 2 - 1;
     const y = -(point.y / this.world.height) * 2 + 1;
     this.ray.origin.setFromMatrixPosition(this.world.camera.matrixWorld);
@@ -212,8 +223,10 @@ export default class Controller {
     this.matrix.copy(this.world.scene.matrix);
     this.matrix.invert();
     this.ray.applyMatrix4(this.matrix);
-    const result = new THREE.Vector3(Infinity, Infinity, Infinity);
-    this.ray.intersectPlane(plane, result);
+    const result = this.ray.intersectPlane(plane, new THREE.Vector3());
+    if (!result || !Number.isFinite(result.x) || !Number.isFinite(result.y) || !Number.isFinite(result.z)) {
+      return null;
+    }
     return result;
   }
 
@@ -344,11 +357,25 @@ export default class Controller {
       } else {
         const start = this.intersect(this.down, this.holder.plane);
         const end = this.intersect(this.move, this.holder.plane);
+        if (!start || !end) {
+          // A fast swipe can put the current ray parallel to the held face plane.
+          // Cancel this gesture so pointer-up cannot reinterpret it as a sticker tap.
+          this.rotating = false;
+          this.dragging = false;
+          this.holder.index = -1;
+          return;
+        }
         this.vector.subVectors(end, start);
         let x = this.vector.x;
         let y = this.vector.y;
         let z = this.vector.z;
         const max = Math.max(Math.abs(x), Math.abs(y), Math.abs(z));
+        if (!Number.isFinite(max) || max === 0) {
+          this.rotating = false;
+          this.dragging = false;
+          this.holder.index = -1;
+          return;
+        }
         x = Math.abs(x) === max ? x : 0;
         y = Math.abs(y) === max ? y : 0;
         z = Math.abs(z) === max ? z : 0;
@@ -396,12 +423,14 @@ export default class Controller {
       if (this.group) {
         const start = this.intersect(this.down, this.holder.plane);
         const end = this.intersect(this.move, this.holder.plane);
+        if (!start || !end) return;
         this.vector.subVectors(end, start).multiply(this.holder.vector);
         const vector = CubeGroup.AXIS_VECTOR[this.group.axis];
-        this.angle =
+        const angle =
           ((-(this.vector.x + this.vector.y + this.vector.z) * (vector.x + vector.y + vector.z)) / Cubelet.SIZE) *
           Math.PI *
           this.sensitivity;
+        if (Number.isFinite(angle)) this.angle = angle;
       } else {
         const dx = this.move.x - this.down.x;
         const dy = this.move.y - this.down.y;
@@ -466,6 +495,8 @@ export default class Controller {
       }
     }
     if (this.rotating) {
+      if (!Number.isFinite(this.angle)) this.angle = 0;
+      if (!Number.isFinite(this.contingle)) this.contingle = 0;
       // Debug hold-partial: freeze a single-layer turn at its current dragged
       // angle (no 90° snap, no bake/record). Only single slices (no wide/alt,
       // no whole-cube orbit) and only when not view-locked.
@@ -535,6 +566,15 @@ export default class Controller {
   tick: number = new Date().getTime();
   hover = -1;
   touch = (action: TouchAction): boolean => {
+    if (
+      (action.type === "touchstart" ||
+        action.type === "mousedown" ||
+        action.type === "mousemove" ||
+        action.type === "touchmove") &&
+      (!Number.isFinite(action.x) || !Number.isFinite(action.y))
+    ) {
+      return false;
+    }
     switch (action.type) {
       case "touchstart":
       case "mousedown":
