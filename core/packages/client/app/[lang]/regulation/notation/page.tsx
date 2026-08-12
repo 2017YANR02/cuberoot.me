@@ -2,8 +2,8 @@
 
 // /regulation/notation — WCA Regulations Article 12 (Notation).
 //
-// The visual showcase of the guide: every move symbol for every puzzle is shown
-// as a small 3D cube that continuously loops that single move (NotationMove).
+// The visual showcase of the guide: each move family shares one /sim-backed
+// player, while a compact selector switches the symbol being demonstrated.
 // Square-1 and Clock are explained with bespoke diagrams + tables instead of 3D
 // (sq1 3D in cubing.js is unreliable; clock notation reads better as a diagram).
 //
@@ -15,7 +15,7 @@ import { Sparkles } from 'lucide-react';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';
 import { RegSection, Callout, RegList } from '../_components/primitives';
-import NotationMove from './NotationMove';
+import MoveNotationDemo from '@/components/MoveNotationDemo/MoveNotationDemo';
 import './notation.css';
 import { T } from '@/i18n/tr';
 
@@ -39,7 +39,7 @@ export default function NotationPage() {
         )}
       >
         <p className="reg-sec-lede" style={{ marginTop: 0 }}>
-          {<T zh={<>每种魔方都有自己的一套字母,但思路是统一的:<b>一个大写字母代表转动哪一层或哪个面</b>,后面可以跟修饰符表示方向和角度。下面按魔方种类逐一演示 —— 每个方块都在<b>循环播放那一步转动</b>,点一下可以立即重播。</>} en={<>Each puzzle has its own letters, but the idea is the same: <b>one capital letter says which face or layer turns</b>, and an optional suffix says how far and which way. Below, every puzzle is demonstrated move by move — each cube <b>loops that one turn on repeat</b>; tap any tile to replay it now.</>} />}
+          {<T zh={<>每种魔方都有自己的一套字母,但思路是统一的:<b>一个大写字母代表转动哪一层或哪个面</b>,后面可以跟修饰符表示方向和角度。下面按魔方种类逐一演示,选择记号后可直接播放、逐步查看,也可进入完整模拟器自由拖动。</>} en={<>Each puzzle has its own letters, but the idea is the same: <b>one capital letter says which face or layer turns</b>, and an optional suffix says how far and which way. Choose a symbol below to play it, step through it, or open the full simulator for hands-on exploration.</>} />}
         </p>
       </RegSection>
 
@@ -51,34 +51,34 @@ export default function NotationPage() {
           <T zh={<>三阶的六个面各有一个字母:<K>F</K> 前、<K>B</K> 后、<K>R</K> 右、<K>L</K> 左、<K>U</K> 顶、<K>D</K> 底。单独一个字母 = 把那个面<b>顺时针转 90°</b>(以正对该面的视角为准)。</>} en={<>Each of the six faces has a letter: <K>F</K> front, <K>B</K> back, <K>R</K> right, <K>L</K> left, <K>U</K> up, <K>D</K> down. A bare letter means turn that face <b>90° clockwise</b>, as seen looking straight at it.</>} />
         }
       >
-        <div className="nt-grid">
-          <NotationMove puzzle="3x3x3" move="R" caption={t('右面顺时针 90°', 'Right face, 90° clockwise')} />
-          <NotationMove puzzle="3x3x3" move="R'" symbol="R'" caption={t('加 撇号 = 逆时针', "Add ' for counter-clockwise")} />
-          <NotationMove puzzle="3x3x3" move="R2" caption={t('加 2 = 转半圈 180°', 'Add 2 for a 180° half turn')} />
-          <NotationMove puzzle="3x3x3" move="U" caption={t('顶面顺时针 90°', 'Up face, 90° clockwise')} />
-          <NotationMove puzzle="3x3x3" move="F" caption={t('前面顺时针 90°', 'Front face, 90° clockwise')} />
-          <NotationMove puzzle="3x3x3" move="L" caption={t('左面顺时针 90°', 'Left face, 90° clockwise')} />
-        </div>
+        <MoveNotationDemo puzzle="3x3" moves={[
+          { move: 'R', caption: t('右面顺时针 90°', 'Right face, 90° clockwise') },
+          { move: "R'", caption: t('加撇号:逆时针', "Add ': counter-clockwise") },
+          { move: 'R2', caption: t('加 2:转半圈 180°', 'Add 2: a 180° half turn') },
+          { move: 'U', caption: t('顶面顺时针 90°', 'Up face, 90° clockwise') },
+          { move: 'F', caption: t('前面顺时针 90°', 'Front face, 90° clockwise') },
+          { move: 'L', caption: t('左面顺时针 90°', 'Left face, 90° clockwise') },
+        ]} />
 
         <h3 className="reg-sub-title">{t('宽层转动:带两层一起', 'Wide turns: two layers at once')}</h3>
         <p className="reg-sec-lede" style={{ marginTop: 0 }}>
           {<T zh={<>字母后加 <K>w</K>(wide,“宽”)表示连<b>外侧两层</b>一起转,比如 <K>Rw</K>、<K>Uw</K>。常见的小写写法 <K>r</K> <K>u</K> 与之等价。</>} en={<>A <K>w</K> suffix (“wide”) turns the <b>outer two layers</b> together, e.g. <K>Rw</K>, <K>Uw</K>. The lowercase forms <K>r</K> <K>u</K> mean the same thing.</>} />}
         </p>
-        <div className="nt-grid">
-          <NotationMove puzzle="3x3x3" move="Rw" caption={t('右侧两层一起顺时针', 'Right two layers, clockwise')} />
-          <NotationMove puzzle="3x3x3" move="Uw" caption={t('顶部两层一起顺时针', 'Top two layers, clockwise')} />
-          <NotationMove puzzle="3x3x3" move="Fw" caption={t('前侧两层一起顺时针', 'Front two layers, clockwise')} />
-        </div>
+        <MoveNotationDemo puzzle="3x3" moves={[
+          { move: 'Rw', caption: t('右侧两层一起顺时针', 'Right two layers, clockwise') },
+          { move: 'Uw', caption: t('顶部两层一起顺时针', 'Top two layers, clockwise') },
+          { move: 'Fw', caption: t('前侧两层一起顺时针', 'Front two layers, clockwise') },
+        ]} />
 
         <h3 className="reg-sub-title">{t('整体旋转:转的是整个魔方', 'Rotations: turning the whole puzzle')}</h3>
         <p className="reg-sec-lede" style={{ marginTop: 0 }}>
           {<T zh={<>小写 <K>x</K> <K>y</K> <K>z</K> 不动任何一层,而是把<b>整个魔方</b>转一下,用来换观察角度。<K>x</K> 跟 <K>R</K> 同向、<K>y</K> 跟 <K>U</K> 同向、<K>z</K> 跟 <K>F</K> 同向。它们不计入步数。</>} en={<>Lowercase <K>x</K> <K>y</K> <K>z</K> turn the <b>whole puzzle</b> without moving any single layer — used to re-orient your view. <K>x</K> follows <K>R</K>, <K>y</K> follows <K>U</K>, <K>z</K> follows <K>F</K>. They don't count as moves.</>} />}
         </p>
-        <div className="nt-grid">
-          <NotationMove puzzle="3x3x3" move="x" caption={t('整体绕 R 轴翻', 'Whole cube, around the R axis')} />
-          <NotationMove puzzle="3x3x3" move="y" caption={t('整体绕 U 轴转', 'Whole cube, around the U axis')} />
-          <NotationMove puzzle="3x3x3" move="z" caption={t('整体绕 F 轴转', 'Whole cube, around the F axis')} />
-        </div>
+        <MoveNotationDemo puzzle="3x3" moves={[
+          { move: 'x', caption: t('整体绕 R 轴翻', 'Whole cube, around the R axis') },
+          { move: 'y', caption: t('整体绕 U 轴转', 'Whole cube, around the U axis') },
+          { move: 'z', caption: t('整体绕 F 轴转', 'Whole cube, around the F axis') },
+        ]} />
       </RegSection>
 
       {/* ── Big cubes ──────────────────────────────────────── */}
@@ -100,12 +100,12 @@ export default function NotationPage() {
                                                                                   So <K>Rw</K> is just shorthand for <K>2Rw</K> — wide defaults to 2 layers.
                                                                                 </>} />}
         </Callout>
-        <div className="nt-grid nt-grid-lg" style={{ marginTop: 22 }}>
-          <NotationMove puzzle="4x4x4" move="R" caption={t('R:只转最外右层', 'R: outer right layer only')} />
-          <NotationMove puzzle="4x4x4" move="2R" caption={t('2R:右起第 2 层', '2R: the 2nd layer from the right')} />
-          <NotationMove puzzle="4x4x4" move="Rw" caption={t('Rw:外侧 2 层', 'Rw: outer 2 layers')} />
-          <NotationMove puzzle="4x4x4" move="3Rw" caption={t('3Rw:外侧 3 层', '3Rw: outer 3 layers')} />
-        </div>
+        <MoveNotationDemo puzzle="4x4" moves={[
+          { move: 'R', caption: t('只转最外右层', 'Outer right layer only') },
+          { move: '2R', caption: t('右起第 2 层', 'The 2nd layer from the right') },
+          { move: 'Rw', caption: t('外侧 2 层', 'Outer 2 layers') },
+          { move: '3Rw', caption: t('外侧 3 层', 'Outer 3 layers') },
+        ]} />
         <p className="reg-foot-note">
           {t(
             '同一套规则适用于 5×5、6×6、7×7 等所有 NxN —— 数字越大、层数越多,字母含义不变。',
@@ -122,14 +122,14 @@ export default function NotationPage() {
           <T zh={<>五魔方的官方打乱记号只用三种动作。<K>R++</K> / <K>R--</K> 表示<b>右侧一组竖排面</b>转 144°(两格),<K>D++</K> / <K>D--</K> 表示<b>底部一组横排面</b>转 144°;<K>U</K> / <K>U'</K> 只转<b>顶面</b>一格(72°)。<code className="nt-k">++</code> 为顺时针、<code className="nt-k">--</code> 为逆时针。</>} en={<>Megaminx scrambles use just three kinds of move. <K>R++</K> / <K>R--</K> turn a <b>vertical column of faces</b> by 144° (two notches), <K>D++</K> / <K>D--</K> turn a <b>horizontal row</b> by 144°, and <K>U</K> / <K>U'</K> turn only the <b>top face</b> by one notch (72°). <code className="nt-k">++</code> is clockwise, <code className="nt-k">--</code> counter-clockwise.</>} />
         }
       >
-        <div className="nt-grid nt-grid-lg">
-          <NotationMove puzzle="megaminx" move="R++" symbol="R++" caption={t('竖排面顺时针 144°', 'Vertical column, 144° CW')} />
-          <NotationMove puzzle="megaminx" move="R--" symbol="R--" caption={t('竖排面逆时针 144°', 'Vertical column, 144° CCW')} />
-          <NotationMove puzzle="megaminx" move="D++" symbol="D++" caption={t('横排面顺时针 144°', 'Horizontal row, 144° CW')} />
-          <NotationMove puzzle="megaminx" move="D--" symbol="D--" caption={t('横排面逆时针 144°', 'Horizontal row, 144° CCW')} />
-          <NotationMove puzzle="megaminx" move="U" caption={t('顶面顺时针 72°', 'Top face, 72° CW')} />
-          <NotationMove puzzle="megaminx" move="U'" symbol="U'" caption={t('顶面逆时针 72°', 'Top face, 72° CCW')} />
-        </div>
+        <MoveNotationDemo puzzle="megaminx" moves={[
+          { move: 'R++', caption: t('竖排面顺时针 144°', 'Vertical column, 144° CW') },
+          { move: 'R--', caption: t('竖排面逆时针 144°', 'Vertical column, 144° CCW') },
+          { move: 'D++', caption: t('横排面顺时针 144°', 'Horizontal row, 144° CW') },
+          { move: 'D--', caption: t('横排面逆时针 144°', 'Horizontal row, 144° CCW') },
+          { move: 'U', caption: t('顶面顺时针 72°', 'Top face, 72° CW') },
+          { move: "U'", caption: t('顶面逆时针 72°', 'Top face, 72° CCW') },
+        ]} />
       </RegSection>
 
       {/* ── Pyraminx ───────────────────────────────────────── */}
@@ -140,14 +140,14 @@ export default function NotationPage() {
           <T zh={<>金字塔有四个顶点。<b>大写</b> <K>U</K> <K>L</K> <K>R</K> <K>B</K> 表示绕某个顶点把<b>外侧两层</b>一起转 120°;<b>小写</b> <K>u</K> <K>l</K> <K>r</K> <K>b</K> 只转那个<b>顶角的尖块</b>。加撇号即逆时针。</>} en={<>The Pyraminx has four corners. <b>Capitals</b> <K>U</K> <K>L</K> <K>R</K> <K>B</K> turn the <b>outer two layers</b> around a corner by 120°; <b>lowercase</b> <K>u</K> <K>l</K> <K>r</K> <K>b</K> turn only that <b>corner tip</b>. A prime makes it counter-clockwise.</>} />
         }
       >
-        <div className="nt-grid">
-          <NotationMove puzzle="pyraminx" move="U" caption={t('上顶点:两层', 'Up corner: two layers')} />
-          <NotationMove puzzle="pyraminx" move="u" caption={t('上顶点:只转尖', 'Up corner: tip only')} />
-          <NotationMove puzzle="pyraminx" move="R" caption={t('右顶点:两层', 'Right corner: two layers')} />
-          <NotationMove puzzle="pyraminx" move="L" caption={t('左顶点:两层', 'Left corner: two layers')} />
-          <NotationMove puzzle="pyraminx" move="B" caption={t('后顶点:两层', 'Back corner: two layers')} />
-          <NotationMove puzzle="pyraminx" move="r" caption={t('右顶点:只转尖', 'Right corner: tip only')} />
-        </div>
+        <MoveNotationDemo puzzle="pyraminx" moves={[
+          { move: 'U', caption: t('上顶点:两层', 'Up corner: two layers') },
+          { move: 'u', caption: t('上顶点:只转尖', 'Up corner: tip only') },
+          { move: 'R', caption: t('右顶点:两层', 'Right corner: two layers') },
+          { move: 'L', caption: t('左顶点:两层', 'Left corner: two layers') },
+          { move: 'B', caption: t('后顶点:两层', 'Back corner: two layers') },
+          { move: 'r', caption: t('右顶点:只转尖', 'Right corner: tip only') },
+        ]} />
       </RegSection>
 
       {/* ── Skewb ──────────────────────────────────────────── */}
@@ -158,12 +158,12 @@ export default function NotationPage() {
           <T zh={<>斜转沿着<b>对角顶点轴</b>切开。四个字母各指一个顶点附近的那一块:<K>U</K> 上、<K>R</K> 右下、<K>L</K> 左下、<K>B</K> 后,顺时针转 120°;加撇号即逆时针。</>} en={<>The Skewb cuts along <b>diagonal corner axes</b>. Each letter names the layer around one corner: <K>U</K> upper, <K>R</K> bottom-right, <K>L</K> bottom-left, <K>B</K> back, turned 120° clockwise; a prime reverses it.</>} />
         }
       >
-        <div className="nt-grid">
-          <NotationMove puzzle="skewb" move="R" caption={t('右下顶点 120°', 'Bottom-right corner, 120°')} />
-          <NotationMove puzzle="skewb" move="U" caption={t('上顶点 120°', 'Upper corner, 120°')} />
-          <NotationMove puzzle="skewb" move="L" caption={t('左下顶点 120°', 'Bottom-left corner, 120°')} />
-          <NotationMove puzzle="skewb" move="B" caption={t('后顶点 120°', 'Back corner, 120°')} />
-        </div>
+        <MoveNotationDemo puzzle="skewb" moves={[
+          { move: 'R', caption: t('右下顶点 120°', 'Bottom-right corner, 120°') },
+          { move: 'U', caption: t('上顶点 120°', 'Upper corner, 120°') },
+          { move: 'L', caption: t('左下顶点 120°', 'Bottom-left corner, 120°') },
+          { move: 'B', caption: t('后顶点 120°', 'Back corner, 120°') },
+        ]} />
       </RegSection>
 
       {/* ── Square-1 (diagram, not 3D) ─────────────────────── */}
