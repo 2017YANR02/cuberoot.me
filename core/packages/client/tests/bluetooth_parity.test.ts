@@ -59,7 +59,7 @@ import {
 } from '@/tests/_bt_frame_fixtures';
 
 /**
- * The csTimer clone is a local read-only checkout (see repo CLAUDE.md). Without
+ * The csTimer clone is a local read-only checkout (see repo AGENTS.md). Without
  * it there is no oracle, so skip loudly rather than pretend to pass.
  */
 const HAVE_CSTIMER = cstimerFileExists();

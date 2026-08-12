@@ -26,7 +26,7 @@ const os = require('os');
 const path = require('path');
 const { chromium } = require('@playwright/test');
 // 起 ad-hoc playwright 前必须先禁 WebRTC(全局规矩);kill 走 homedir 解析,别硬编码机器路径。
-const { disableWebRTC } = require(path.join(os.homedir(), '.claude', 'bin', 'pw-no-webrtc.cjs'));
+const { disableWebRTC } = require(path.join(os.homedir(), '.codex', 'bin', 'pw-no-webrtc.cjs'));
 
 const CHROME = process.env.SAFE_CHROME_BIN
   || 'C:/Users/CubeRoot/AppData/Local/ms-playwright/chromium-1217/chrome-win64/chrome.exe';

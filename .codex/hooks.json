@@ -1,35 +1,63 @@
 {
-  "description": "Repository enforcement hooks.",
+  "description": "Repository enforcement hooks for Codex.",
   "hooks": {
-    "PreToolUse": [
+    "SessionStart": [
       {
-        "matcher": "^(apply_patch|functions\\.exec|exec)$",
+        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.claude/hooks/block-component-reimplementation.ps1\"",
-            "commandWindows": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.claude/hooks/block-component-reimplementation.ps1\"",
+            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/check-guards-drift-session.ps1\"",
+            "commandWindows": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/check-guards-drift-session.ps1\"",
             "timeout": 15,
-            "statusMessage": "Checking shared component reuse"
-          },
-          {
-            "type": "command",
-            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.claude/hooks/block-nested-links.ps1\"",
-            "commandWindows": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.claude/hooks/block-nested-links.ps1\"",
-            "timeout": 15,
-            "statusMessage": "Checking nested links"
+            "statusMessage": "Checking guard documentation drift"
           }
         ]
-      },
+      }
+    ],
+    "PreToolUse": [
       {
         "matcher": "^Bash$",
         "hooks": [
           {
             "type": "command",
-            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.claude/hooks/recon-ground-truth-gate.ps1\"",
-            "commandWindows": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.claude/hooks/recon-ground-truth-gate.ps1\"",
+            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/adapt-codex-command-payload.mjs\" \"$(git rev-parse --show-toplevel)/.codex/hooks/recon-ground-truth-gate.ps1\"",
+            "commandWindows": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/adapt-codex-command-payload.mjs\" \"$(git rev-parse --show-toplevel)/.codex/hooks/recon-ground-truth-gate.ps1\"",
+            "timeout": 30,
+            "statusMessage": "Checking Codex command guards"
+          }
+        ]
+      },
+      {
+        "matcher": "apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/adapt-codex-write-payload.mjs\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-component-reimplementation.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-nested-links.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-raw-checkbox.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-unclamped-anchored-panel.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-handwritten-trad.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-server-forwarded-for.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-comp-name-year-regex.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-banned-words.ps1\"",
+            "commandWindows": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/adapt-codex-write-payload.mjs\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-component-reimplementation.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-nested-links.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-raw-checkbox.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-unclamped-anchored-panel.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-handwritten-trad.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-server-forwarded-for.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-comp-name-year-regex.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-banned-words.ps1\"",
+            "timeout": 30,
+            "statusMessage": "Checking Codex write guards"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/calc-test-reminder.ps1\"",
+            "commandWindows": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/calc-test-reminder.ps1\"",
             "timeout": 15,
-            "statusMessage": "Checking reconstruction ground truth"
+            "statusMessage": "Checking calculator test reminder"
+          },
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/code-data-sync-reminder.ps1\"",
+            "commandWindows": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/code-data-sync-reminder.ps1\"",
+            "timeout": 15,
+            "statusMessage": "Checking code documentation sync"
           }
         ]
       }

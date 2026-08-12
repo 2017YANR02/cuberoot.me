@@ -2,7 +2,7 @@
 //
 // WHY: 全站 180 个页面是 'use client',client 组件不能 export metadata,标题历史上
 // 全靠 useDocumentTitle 在 hydration 之后设 —— 爬虫拿到的 HTML 里 202 个 URL 一个
-// <title> 都没有。修法是同目录建 server layout.tsx(见 CLAUDE.md「页面标题 / SEO
+// <title> 都没有。修法是同目录建 server layout.tsx(见 AGENTS.md「页面标题 / SEO
 // metadata」)。
 //
 // 但漏配是**静默**的:新页面会被 app/sitemap.ts 自动扫进站点地图(等于主动请爬虫来
@@ -35,7 +35,7 @@ const APP = join(ROOT, 'app', '[lang]');
 //
 // 前 7 条是**哨兵壳**:dynamicParams=false + generateStaticParams 返回 '_',真实
 // URL 被 rewrite 到 /_,服务端根本拿不到参数值。要给它们真标题只能改成动态渲染,
-// 而那是唯一会撞 Vercel 配额的改动(见 CLAUDE.md「省 Vercel 配额」②)。这些页的
+// 而那是唯一会撞 Vercel 配额的改动(见 AGENTS.md「省 Vercel 配额」②)。这些页的
 // tab 标题仍由客户端 hook 提供 —— 用户看得对,爬虫看不到,是刻意的取舍。
 // 后 2 条是 dev/poc 页,app/sitemap.ts 的 EXCLUDE 也把它们排除在站点地图外。
 const ALLOWLIST = new Map<string, string>([

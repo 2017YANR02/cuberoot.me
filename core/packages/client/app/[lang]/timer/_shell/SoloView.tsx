@@ -2308,7 +2308,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                         : tr({ zh: '与打乱不符', en: 'Doesn’t match' })}
                     </span>
                   )}
-              {/* 「按难度生成」的题面 + 答案(只在该来源下有 meta 时出现)。 */}
+              {/* 「按难度生成」的打乱 + 答案(只在该来源下有 meta 时出现)。 */}
               {!scrambleLoading && !trainerLoading && <TrainerCaseBar scramble={scramble} isZh={isZh} />}
               {wcaSrcDisplay && (
                 <div className="scramble-src-row">

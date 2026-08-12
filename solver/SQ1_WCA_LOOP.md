@@ -15,7 +15,7 @@
 ## §0 LOOP PROTOCOL(每轮照做)
 
 1. **读本文件 + `SQ1_WCA_GODS_NUMBER.md` 全文**,从 §1 自顶向下找第一个未打勾单元(尊重 EPIC 顺序)。状态只信"代码(git)+ 这两份 md",从不靠记忆;每轮读文件重建状态。
-2. **遇 `⛔ GATE`**(需用户拍板的大取舍,如启动多日级 `D_WCA` 全枚举):**停 loop,不 ScheduleWakeup**,§3 写清取舍,正文一句话摘要,等用户。绝不擅自跨 gate。
+2. **遇 `⛔ GATE`**(需用户拍板的大取舍,如启动多日级 `D_WCA` 全枚举):**停 loop,不继续调度**,§3 写清取舍,正文一句话摘要,等用户。绝不擅自跨 gate。
 3. **执行该单元**。重活(建大表 / `cargo test --release` 全量 / 长跑求解)**放后台或派 fresh 子 agent**,主 loop 只收 ≤20 行摘要,保持瘦。给子 agent 的 prompt 用指针(读本文件第 X 单元 + 笔记对应节),别内联长 spec。
 4. **内存门(严禁 OOM —— 本机 32GB 但常被占,实测某刻仅 3GB 可用)**:
    - **建表前必查可用内存**(`Get-CimInstance Win32_OperatingSystem` 的 `FreePhysicalMemory` KB)。
@@ -30,14 +30,13 @@
    - **Rust**:`cargo test --release`(相关测试)绿;`cargo check --target wasm32-unknown-unknown` 仍编过(deploy 用 wasm,大表/fs 须 cfg-gate 掉)。
    - 门真跑两次仍不过 → **红灯**,停 loop,§3 记失败摘要,等用户。**内存不够跑门 ≠ 红灯** → 降级跳过、§2 记欠账、继续。
 6. **诚实记录(用户硬要求)**:成功**与失败**都写进 `SQ1_WCA_GODS_NUMBER.md` §5 尝试记录 + §7 坑。给后人省坑,别只记成功。
-7. **提交**:`git add` **只加本单元改的文件**(别 `git add .`),英文 commit message 结尾带
-   `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`,**自动 commit 不 push**。大表是 gitignored,不进 commit。
+7. **提交**:`git add` **只加本单元改的文件**(别 `git add .`),英文 commit message 不添加旧 agent 署名,**自动 commit 不 push**。大表是 gitignored,不进 commit。
 8. **更新本文件 + 笔记**:勾任务;§2 追加一行(日期 + 单元 + 短 hash);单独 commit 这两份 md(可断点续)。
 9. **决定下一步**:默认一路推进直到 backlog 清空。
-   - 还有未 gate 单元 → `ScheduleWakeup`(self-paced;有后台长 build/test 时 delay 对齐它,一般 200-600s),**原样回传同一条 /loop 指令**。
+   - 还有未 gate 单元 → 在当前持续任务中直接开始下一个单元;后台长 build/test 用等待机制取回结果。
    - backlog 全勾 / 下一个是 `⛔ GATE` → **停**,正文收尾总结。
    - 红灯 / 连续 ~3 轮没推进任何单元 → 停,§3 交代。
-   - 安全网:单 session 连推 ~12 单元仍没到完成信号 → 停一次,提示 `/clear` 重 `/loop` 续。
+   - 安全网:单 session 连推 ~12 单元仍没到完成信号 → 停一次,提示在新会话重发 `/loop` 续。
 10. **不可碰**:**绝不删 near-optimal 求解器 `sq1_twophase`**(留作对照 + 深尾回退,用户 2026-06-16 锁)。**绝不跑全 125 万打乱灌注 / static 发布**(那是 `📦 MANUAL`,§3 留交接)。
 
 ---
@@ -95,7 +94,7 @@
 - 2026-06-16 **A0 提交基线**(48a1c7e13):Sq1WcaSolver(+1047 行)+ analyzer SQ1_WCA_EXACT 提交;3 测绿(`wca_matches_oracle` 5568 态 / `wca_tables_baseline` / `pdb_par_matches_serial`,56s)。下一步 A1。
 - 2026-06-16 **A2 诊断**(先于 A1,见 §3 重排理由):加 bounded profiler,profile 5 真深态;定论瓶颈 = 弱 h + phase-2 现搜时间槽,**杠杆 = A3 联合精确 phase-2 表**。native 测过、wasm lib check 过。下一步 A1(为 A3 铺内存安全 builder)。
 - 2026-06-16 **A1 内存安全 builder**(313ed1e28):`build_pdb_idx_par`(u32 frontier + `unrank8`/`unrank_pdb`),corn/edge 切过去;round-trip + byte-diff(两表逐字节同旧表)双门绿,峰值 WS 3.6GB→1.24GB。下一步 A3(联合精确 phase-2 表)。
-- 2026-06-16 **A3 jsq 联合 phase-2 表(半成)**(9d2e7c4ed):角×棱联合 3.25GB 表替 sq_h_wca,scan-based 建(8 线程 ~65min,峰值仅表本身 + 原地转换免 2×)。正确性全绿(可采纳/支配性 + oracle 5568 逐字节 + 最优性保持)。效果 777 >5min→35.6s、775 1.3s,但 774/776/778 仍 >90s。profile 定论:jsq 是更强剪枝但没消灭 phase-2 时间槽(776/778)、碰不到 phase-1 爆炸(774/777)。**<30s-all 待 A3-full + A4,§3 取舍等用户。** 另:用户改线程 14→8(全局 CLAUDE.md + §0.4)。
+- 2026-06-16 **A3 jsq 联合 phase-2 表(半成)**(9d2e7c4ed):角×棱联合 3.25GB 表替 sq_h_wca,scan-based 建(8 线程 ~65min,峰值仅表本身 + 原地转换免 2×)。正确性全绿(可采纳/支配性 + oracle 5568 逐字节 + 最优性保持)。效果 777 >5min→35.6s、775 1.3s,但 774/776/778 仍 >90s。profile 定论:jsq 是更强剪枝但没消灭 phase-2 时间槽(776/778)、碰不到 phase-1 爆炸(774/777)。**<30s-all 待 A3-full + A4,§3 取舍等用户。** 另:用户改线程 14→8(全局 AGENTS.md + §0.4)。
 - 2026-06-16 **A3-full 精确 phase-2 表收尾**(aa93699b7 码 + 本轮建表+实测;线程 8→12):13GB `jsq_full`(补 per-layer shape 位的精确双射)建成(`build_jsq_full_only`,12 线程 ~52min,scan-based + 原地转换,无 OOM)⇒ phase-2 变 O(1) 精确查表 + 梯度重建(无搜索)。门全绿:`wca_a3_jsqfull_exact`(3104 态 == 独立精确)+ oracle 5568 + `wca_a3_deep_timing` **5 真深态零超时**(774=22@6.7s 775=19@0.26s 776=22@37.86s 777=20@0.52s 778=22@5.0s)。**意外:精确 h 顺带杀了 phase-1 爆炸(774/777 秒级)**,推翻 jsq-lite 悲观外推。残留 776@37.86s 纯 phase-1 → A4(soft-gate)。**EPIC A 达标,下一步 EPIC B(精确步数进管道)。**
 
 ---

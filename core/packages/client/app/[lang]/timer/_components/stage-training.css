@@ -129,6 +129,12 @@
   margin: 6px 0 16px;
 }
 
+/* /sim 引擎按宿主尺寸创建画布；两边必须明确，避免 canvas 首次测量后反向锁住布局。 */
+.stage-training-cube-3d {
+  width: 190px;
+  height: 190px;
+}
+
 .stage-training-prompt {
   min-width: 0;
 }

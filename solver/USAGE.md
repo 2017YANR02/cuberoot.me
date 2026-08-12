@@ -118,6 +118,6 @@ $env:CUBE_EO_NO_DIAG = "1"
 
 - `README.md`:进度表 + 路线图
 - `PORTING_NOTES.md`:每个 phase 的设计决策、C++ 端歧义、与 C++ 差异
-- `CLAUDE.md`:文件地图 + 缩写约定 + 工程规矩
+- `AGENTS.md`:文件地图 + 缩写约定 + 工程规矩
 - C++ 源:`D:\cube\solver\`(只读参考)
 - Golden:`D:\cube\solver\golden\scramble_1000_{std,pseudo,pair,pseudo_pair,eo}.txt`

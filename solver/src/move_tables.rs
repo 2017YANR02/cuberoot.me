@@ -30,8 +30,8 @@ use std::sync::{Arc, Mutex, OnceLock};
 use memmap2::Mmap;
 
 use crate::cube_common::{
-    self as cc, create_multi_move_table, create_multi_move_table2, state_space,
-    write_table_le_u32, MAGIC,
+    self as cc, create_multi_move_table, create_multi_move_table2, state_space, write_table_le_u32,
+    MAGIC,
 };
 
 // ---------- 路径 ----------
@@ -158,321 +158,391 @@ impl MoveTable {
 mod manager {
     use super::*;
 
-const N_TABLES: usize = 12;
+    const N_TABLES: usize = 12;
 
-#[derive(Copy, Clone, Debug)]
-#[repr(usize)]
-enum TableId {
-    Edge = 0,
-    Corn = 1,
-    Edge2 = 2,
-    Edge3 = 3,
-    Edge4 = 4,
-    Edge6 = 5,
-    Corn2 = 6,
-    Corn3 = 7,
-    Eo12 = 8,
-    Eo12Alt = 9,
-    Ep1 = 10,
-    Ep4 = 11,
-}
-
-const TABLE_FILES: [&str; N_TABLES] = [
-    "mt_edge.bin",
-    "mt_corn.bin",
-    "mt_edge2.bin",
-    "mt_edge3.bin",
-    "mt_edge4.bin",
-    "mt_edge6.bin",
-    "mt_corn2.bin",
-    "mt_corn3.bin",
-    "mt_eo12.bin",
-    "mt_eo12_alt.bin",
-    "mt_ep1.bin",
-    "mt_ep4.bin",
-];
-
-// ---------- Manager ----------
-
-pub struct MoveTableManager {
-    slots: [Mutex<Option<Arc<MoveTable>>>; N_TABLES],
-}
-
-impl MoveTableManager {
-    pub(crate) fn new() -> Self {
-        // 数组用 from_fn 初始化,因为 Mutex 不是 Copy
-        let slots = std::array::from_fn(|_| Mutex::new(None));
-        MoveTableManager { slots }
+    #[derive(Copy, Clone, Debug)]
+    #[repr(usize)]
+    enum TableId {
+        Edge = 0,
+        Corn = 1,
+        Edge2 = 2,
+        Edge3 = 3,
+        Edge4 = 4,
+        Edge6 = 5,
+        Corn2 = 6,
+        Corn3 = 7,
+        Eo12 = 8,
+        Eo12Alt = 9,
+        Ep1 = 10,
+        Ep4 = 11,
     }
-}
 
-pub fn instance() -> &'static MoveTableManager {
-    static INST: OnceLock<MoveTableManager> = OnceLock::new();
-    INST.get_or_init(MoveTableManager::new)
-}
+    const TABLE_FILES: [&str; N_TABLES] = [
+        "mt_edge.bin",
+        "mt_corn.bin",
+        "mt_edge2.bin",
+        "mt_edge3.bin",
+        "mt_edge4.bin",
+        "mt_edge6.bin",
+        "mt_corn2.bin",
+        "mt_corn3.bin",
+        "mt_eo12.bin",
+        "mt_eo12_alt.bin",
+        "mt_ep1.bin",
+        "mt_ep4.bin",
+    ];
 
-// ---------- 公共 ensure / release 接口 ----------
+    // ---------- Manager ----------
 
-macro_rules! ensure_release {
-    ($ensure:ident, $release:ident, $id:expr, $gen:ident, $state_count:expr, $stride:expr) => {
-        impl MoveTableManager {
-            pub fn $ensure(&self) -> Arc<MoveTable> {
-                self.ensure_with($id, $state_count, $stride, $gen)
-            }
+    pub struct MoveTableManager {
+        slots: [Mutex<Option<Arc<MoveTable>>>; N_TABLES],
+    }
 
-            pub fn $release(&self) {
-                self.release_slot($id);
-            }
+    impl MoveTableManager {
+        pub(crate) fn new() -> Self {
+            // 数组用 from_fn 初始化,因为 Mutex 不是 Copy
+            let slots = std::array::from_fn(|_| Mutex::new(None));
+            MoveTableManager { slots }
         }
-    };
-}
+    }
 
-ensure_release!(ensure_edge, release_edge, TableId::Edge as usize, gen_mt_edge,
-    state_space::EDGE as u32, 18);
-ensure_release!(ensure_corn, release_corn, TableId::Corn as usize, gen_mt_corn,
-    state_space::CORNER as u32, 18);
-ensure_release!(ensure_edge2, release_edge2, TableId::Edge2 as usize, gen_mt_edge2,
-    state_space::EDGE2 as u32, 18);
-ensure_release!(ensure_edge3, release_edge3, TableId::Edge3 as usize, gen_mt_edge3,
-    state_space::EDGE3 as u32, 18);
-ensure_release!(ensure_edge4, release_edge4, TableId::Edge4 as usize, gen_mt_edge4,
-    state_space::CROSS as u32, 24);
-ensure_release!(ensure_corn2, release_corn2, TableId::Corn2 as usize, gen_mt_corn2,
-    state_space::CORNER2 as u32, 18);
-ensure_release!(ensure_corn3, release_corn3, TableId::Corn3 as usize, gen_mt_corn3,
-    state_space::CORNER3 as u32, 18);
-ensure_release!(ensure_eo12, release_eo12, TableId::Eo12 as usize, gen_mt_eo12,
-    state_space::EO12 as u32, 18);
-ensure_release!(ensure_eo12_alt, release_eo12_alt, TableId::Eo12Alt as usize, gen_mt_eo12_alt,
-    state_space::EO12 as u32, 18);
-ensure_release!(ensure_ep1, release_ep1, TableId::Ep1 as usize, gen_mt_ep1,
-    12, 18);
-ensure_release!(ensure_ep4, release_ep4, TableId::Ep4 as usize, gen_mt_ep4,
-    state_space::EP4 as u32, 18);
+    pub fn instance() -> &'static MoveTableManager {
+        static INST: OnceLock<MoveTableManager> = OnceLock::new();
+        INST.get_or_init(MoveTableManager::new)
+    }
 
-// edge6 单独处理(默认 panic)
-impl MoveTableManager {
-    pub fn ensure_edge6(&self) -> Arc<MoveTable> {
-        let allow = std::env::var("CUBE_ALLOW_HUGE_TABLES")
-            .map(|v| v == "1")
-            .unwrap_or(false);
-        let path = table_path(TABLE_FILES[TableId::Edge6 as usize]);
-        if !path.exists() && !allow {
-            panic!(
-                "mt_edge6 generation disabled, size ~3GB; \
+    // ---------- 公共 ensure / release 接口 ----------
+
+    macro_rules! ensure_release {
+        ($ensure:ident, $release:ident, $id:expr, $gen:ident, $state_count:expr, $stride:expr) => {
+            impl MoveTableManager {
+                pub fn $ensure(&self) -> Arc<MoveTable> {
+                    self.ensure_with($id, $state_count, $stride, $gen)
+                }
+
+                pub fn $release(&self) {
+                    self.release_slot($id);
+                }
+            }
+        };
+    }
+
+    ensure_release!(
+        ensure_edge,
+        release_edge,
+        TableId::Edge as usize,
+        gen_mt_edge,
+        state_space::EDGE as u32,
+        18
+    );
+    ensure_release!(
+        ensure_corn,
+        release_corn,
+        TableId::Corn as usize,
+        gen_mt_corn,
+        state_space::CORNER as u32,
+        18
+    );
+    ensure_release!(
+        ensure_edge2,
+        release_edge2,
+        TableId::Edge2 as usize,
+        gen_mt_edge2,
+        state_space::EDGE2 as u32,
+        18
+    );
+    ensure_release!(
+        ensure_edge3,
+        release_edge3,
+        TableId::Edge3 as usize,
+        gen_mt_edge3,
+        state_space::EDGE3 as u32,
+        18
+    );
+    ensure_release!(
+        ensure_edge4,
+        release_edge4,
+        TableId::Edge4 as usize,
+        gen_mt_edge4,
+        state_space::CROSS as u32,
+        24
+    );
+    ensure_release!(
+        ensure_corn2,
+        release_corn2,
+        TableId::Corn2 as usize,
+        gen_mt_corn2,
+        state_space::CORNER2 as u32,
+        18
+    );
+    ensure_release!(
+        ensure_corn3,
+        release_corn3,
+        TableId::Corn3 as usize,
+        gen_mt_corn3,
+        state_space::CORNER3 as u32,
+        18
+    );
+    ensure_release!(
+        ensure_eo12,
+        release_eo12,
+        TableId::Eo12 as usize,
+        gen_mt_eo12,
+        state_space::EO12 as u32,
+        18
+    );
+    ensure_release!(
+        ensure_eo12_alt,
+        release_eo12_alt,
+        TableId::Eo12Alt as usize,
+        gen_mt_eo12_alt,
+        state_space::EO12 as u32,
+        18
+    );
+    ensure_release!(
+        ensure_ep1,
+        release_ep1,
+        TableId::Ep1 as usize,
+        gen_mt_ep1,
+        12,
+        18
+    );
+    ensure_release!(
+        ensure_ep4,
+        release_ep4,
+        TableId::Ep4 as usize,
+        gen_mt_ep4,
+        state_space::EP4 as u32,
+        18
+    );
+
+    // edge6 单独处理(默认 panic)
+    impl MoveTableManager {
+        pub fn ensure_edge6(&self) -> Arc<MoveTable> {
+            let allow = std::env::var("CUBE_ALLOW_HUGE_TABLES")
+                .map(|v| v == "1")
+                .unwrap_or(false);
+            let path = table_path(TABLE_FILES[TableId::Edge6 as usize]);
+            if !path.exists() && !allow {
+                panic!(
+                    "mt_edge6 generation disabled, size ~3GB; \
                  set CUBE_ALLOW_HUGE_TABLES=1 to opt in"
-            );
+                );
+            }
+            self.ensure_with(
+                TableId::Edge6 as usize,
+                state_space::EDGE6 as u32,
+                18,
+                gen_mt_edge6,
+            )
         }
-        self.ensure_with(
-            TableId::Edge6 as usize,
-            state_space::EDGE6 as u32,
-            18,
-            gen_mt_edge6,
-        )
+
+        pub fn release_edge6(&self) {
+            self.release_slot(TableId::Edge6 as usize);
+        }
     }
 
-    pub fn release_edge6(&self) {
-        self.release_slot(TableId::Edge6 as usize);
+    // ---------- 内部:加载或生成 ----------
+
+    impl MoveTableManager {
+        fn ensure_with(
+            &self,
+            id: usize,
+            state_count: u32,
+            stride: u32,
+            gen_fn: fn(&MoveTableManager) -> Vec<u32>,
+        ) -> Arc<MoveTable> {
+            // 快速路径:已加载
+            {
+                let g = self.slots[id].lock().unwrap();
+                if let Some(t) = g.as_ref() {
+                    return Arc::clone(t);
+                }
+            }
+            // 慢路径:需要 load/gen。注意要在不持锁的状态下调用 gen_fn,因为依赖表会反过来锁。
+            let path = table_path(TABLE_FILES[id]);
+            ensure_parent_dir(&path);
+
+            let expected_entries = (state_count as u64) * (stride as u64);
+
+            if !path.exists() {
+                let data = gen_fn(self);
+                assert_eq!(
+                    data.len() as u64,
+                    expected_entries,
+                    "generated {} has unexpected length {} (expected {})",
+                    TABLE_FILES[id],
+                    data.len(),
+                    expected_entries
+                );
+                write_table_le_u32(&path, &data).expect("write table");
+            }
+
+            let table = load_table_from_disk(&path, expected_entries, state_count, stride);
+            let arc = Arc::new(table);
+            let mut g = self.slots[id].lock().unwrap();
+            // 并发兜底:别人可能在我们 gen 完前先放了一个
+            if let Some(existing) = g.as_ref() {
+                Arc::clone(existing)
+            } else {
+                *g = Some(Arc::clone(&arc));
+                arc
+            }
+        }
+
+        fn release_slot(&self, id: usize) {
+            let mut g = self.slots[id].lock().unwrap();
+            *g = None;
+        }
     }
-}
 
-// ---------- 内部:加载或生成 ----------
+    fn ensure_parent_dir(p: &Path) {
+        if let Some(dir) = p.parent() {
+            if !dir.as_os_str().is_empty() && !dir.exists() {
+                let _ = fs::create_dir_all(dir);
+            }
+        }
+    }
 
-impl MoveTableManager {
-    fn ensure_with(
-        &self,
-        id: usize,
+    fn load_table_from_disk(
+        path: &Path,
+        expected_entries: u64,
         state_count: u32,
         stride: u32,
-        gen_fn: fn(&MoveTableManager) -> Vec<u32>,
-    ) -> Arc<MoveTable> {
-        // 快速路径:已加载
-        {
-            let g = self.slots[id].lock().unwrap();
-            if let Some(t) = g.as_ref() {
-                return Arc::clone(t);
-            }
-        }
-        // 慢路径:需要 load/gen。注意要在不持锁的状态下调用 gen_fn,因为依赖表会反过来锁。
-        let path = table_path(TABLE_FILES[id]);
-        ensure_parent_dir(&path);
+    ) -> MoveTable {
+        let file = File::open(path).expect("open table file");
+        let meta = file.metadata().expect("stat table");
+        let total = meta.len();
+        let expected_bytes = 12 + expected_entries * 4;
+        assert_eq!(
+            total,
+            expected_bytes,
+            "table file {} has wrong size {} (expected {})",
+            path.display(),
+            total,
+            expected_bytes
+        );
 
-        let expected_entries = (state_count as u64) * (stride as u64);
+        // SAFETY: 我们承诺在 mmap 生命周期内文件不被修改(本工程只写一次再 mmap)。
+        let mmap = unsafe { Mmap::map(&file) }.expect("mmap table");
+        // 校验 magic + entry_count
+        assert_eq!(&mmap[..8], MAGIC, "bad magic in {}", path.display());
+        let n = u32::from_le_bytes(mmap[8..12].try_into().unwrap()) as u64;
+        assert_eq!(
+            n,
+            expected_entries,
+            "entry_count mismatch in {}",
+            path.display()
+        );
 
-        if !path.exists() {
-            let data = gen_fn(self);
-            assert_eq!(
-                data.len() as u64,
-                expected_entries,
-                "generated {} has unexpected length {} (expected {})",
-                TABLE_FILES[id],
-                data.len(),
-                expected_entries
-            );
-            write_table_le_u32(&path, &data).expect("write table");
-        }
-
-        let table = load_table_from_disk(&path, expected_entries, state_count, stride);
-        let arc = Arc::new(table);
-        let mut g = self.slots[id].lock().unwrap();
-        // 并发兜底:别人可能在我们 gen 完前先放了一个
-        if let Some(existing) = g.as_ref() {
-            Arc::clone(existing)
-        } else {
-            *g = Some(Arc::clone(&arc));
-            arc
+        MoveTable {
+            data: TableStorage::Mmap(mmap),
+            state_count,
+            stride,
         }
     }
 
-    fn release_slot(&self, id: usize) {
-        let mut g = self.slots[id].lock().unwrap();
-        *g = None;
+    // ---------- 基础表生成器 ----------
+    // 单棱 / 单角 / 单棱位置 / EO 四个基础生成器搬去 crate::mt_gen(顶层,wasm 也能调),
+    // 这里直接复用同一份 —— 浏览器端的 mt_* 现场生成与本管理器落盘的必须逐字节相同。
+    use crate::mt_gen::{
+        create_mt_corn, create_mt_edge, create_mt_eo, create_mt_eo_alt, create_mt_ep,
+    };
+
+    // ---------- 12 张 gen_* 函数:从依赖表派生 ----------
+
+    fn gen_mt_edge(_mgr: &MoveTableManager) -> Vec<u32> {
+        create_mt_edge()
     }
-}
 
-fn ensure_parent_dir(p: &Path) {
-    if let Some(dir) = p.parent() {
-        if !dir.as_os_str().is_empty() && !dir.exists() {
-            let _ = fs::create_dir_all(dir);
-        }
+    fn gen_mt_corn(_mgr: &MoveTableManager) -> Vec<u32> {
+        create_mt_corn()
     }
-}
 
-fn load_table_from_disk(
-    path: &Path,
-    expected_entries: u64,
-    state_count: u32,
-    stride: u32,
-) -> MoveTable {
-    let file = File::open(path).expect("open table file");
-    let meta = file.metadata().expect("stat table");
-    let total = meta.len();
-    let expected_bytes = 12 + expected_entries * 4;
-    assert_eq!(
-        total, expected_bytes,
-        "table file {} has wrong size {} (expected {})",
-        path.display(),
-        total,
-        expected_bytes
-    );
-
-    // SAFETY: 我们承诺在 mmap 生命周期内文件不被修改(本工程只写一次再 mmap)。
-    let mmap = unsafe { Mmap::map(&file) }.expect("mmap table");
-    // 校验 magic + entry_count
-    assert_eq!(&mmap[..8], MAGIC, "bad magic in {}", path.display());
-    let n = u32::from_le_bytes(mmap[8..12].try_into().unwrap()) as u64;
-    assert_eq!(
-        n, expected_entries,
-        "entry_count mismatch in {}",
-        path.display()
-    );
-
-    MoveTable {
-        data: TableStorage::Mmap(mmap),
-        state_count,
-        stride,
+    fn gen_mt_ep1(_mgr: &MoveTableManager) -> Vec<u32> {
+        create_mt_ep()
     }
-}
 
-// ---------- 基础表生成器 ----------
-// 单棱 / 单角 / 单棱位置 / EO 四个基础生成器搬去 crate::mt_gen(顶层,wasm 也能调),
-// 这里直接复用同一份 —— 浏览器端的 mt_* 现场生成与本管理器落盘的必须逐字节相同。
-use crate::mt_gen::{create_mt_corn, create_mt_edge, create_mt_eo, create_mt_eo_alt, create_mt_ep};
+    fn gen_mt_eo12(_mgr: &MoveTableManager) -> Vec<u32> {
+        create_mt_eo()
+    }
 
-// ---------- 12 张 gen_* 函数:从依赖表派生 ----------
+    fn gen_mt_eo12_alt(_mgr: &MoveTableManager) -> Vec<u32> {
+        create_mt_eo_alt()
+    }
 
-fn gen_mt_edge(_mgr: &MoveTableManager) -> Vec<u32> {
-    create_mt_edge()
-}
+    /// helper:把依赖表 (u32 切片) 转 i32 喂给 create_multi_move_table*
+    fn as_i32(slice: &[u32]) -> Vec<i32> {
+        slice.iter().map(|&x| x as i32).collect()
+    }
 
-fn gen_mt_corn(_mgr: &MoveTableManager) -> Vec<u32> {
-    create_mt_corn()
-}
+    fn gen_mt_edge2(mgr: &MoveTableManager) -> Vec<u32> {
+        let edge = mgr.ensure_edge();
+        let basic = as_i32(edge.as_u32());
+        create_multi_move_table(2, 2, 12, state_space::EDGE2 as i32, &basic)
+            .into_iter()
+            .map(|x| x as u32)
+            .collect()
+    }
 
-fn gen_mt_ep1(_mgr: &MoveTableManager) -> Vec<u32> {
-    create_mt_ep()
-}
+    fn gen_mt_edge3(mgr: &MoveTableManager) -> Vec<u32> {
+        let edge = mgr.ensure_edge();
+        let basic = as_i32(edge.as_u32());
+        create_multi_move_table(3, 2, 12, state_space::EDGE3 as i32, &basic)
+            .into_iter()
+            .map(|x| x as u32)
+            .collect()
+    }
 
-fn gen_mt_eo12(_mgr: &MoveTableManager) -> Vec<u32> {
-    create_mt_eo()
-}
+    fn gen_mt_edge4(mgr: &MoveTableManager) -> Vec<u32> {
+        let edge = mgr.ensure_edge();
+        let basic = as_i32(edge.as_u32());
+        create_multi_move_table2(4, 2, 12, state_space::CROSS as i32, &basic)
+            .into_iter()
+            .map(|x| x as u32)
+            .collect()
+    }
 
-fn gen_mt_eo12_alt(_mgr: &MoveTableManager) -> Vec<u32> {
-    create_mt_eo_alt()
-}
+    fn gen_mt_edge6(mgr: &MoveTableManager) -> Vec<u32> {
+        let edge = mgr.ensure_edge();
+        let basic = as_i32(edge.as_u32());
+        create_multi_move_table(6, 2, 12, state_space::EDGE6 as i32, &basic)
+            .into_iter()
+            .map(|x| x as u32)
+            .collect()
+    }
 
-/// helper:把依赖表 (u32 切片) 转 i32 喂给 create_multi_move_table*
-fn as_i32(slice: &[u32]) -> Vec<i32> {
-    slice.iter().map(|&x| x as i32).collect()
-}
+    fn gen_mt_corn2(mgr: &MoveTableManager) -> Vec<u32> {
+        let corn = mgr.ensure_corn();
+        let basic = as_i32(corn.as_u32());
+        create_multi_move_table(2, 3, 8, state_space::CORNER2 as i32, &basic)
+            .into_iter()
+            .map(|x| x as u32)
+            .collect()
+    }
 
-fn gen_mt_edge2(mgr: &MoveTableManager) -> Vec<u32> {
-    let edge = mgr.ensure_edge();
-    let basic = as_i32(edge.as_u32());
-    create_multi_move_table(2, 2, 12, state_space::EDGE2 as i32, &basic)
-        .into_iter()
-        .map(|x| x as u32)
-        .collect()
-}
+    fn gen_mt_corn3(mgr: &MoveTableManager) -> Vec<u32> {
+        let corn = mgr.ensure_corn();
+        let basic = as_i32(corn.as_u32());
+        create_multi_move_table(3, 3, 8, state_space::CORNER3 as i32, &basic)
+            .into_iter()
+            .map(|x| x as u32)
+            .collect()
+    }
 
-fn gen_mt_edge3(mgr: &MoveTableManager) -> Vec<u32> {
-    let edge = mgr.ensure_edge();
-    let basic = as_i32(edge.as_u32());
-    create_multi_move_table(3, 2, 12, state_space::EDGE3 as i32, &basic)
-        .into_iter()
-        .map(|x| x as u32)
-        .collect()
-}
+    fn gen_mt_ep4(mgr: &MoveTableManager) -> Vec<u32> {
+        let ep1 = mgr.ensure_ep1();
+        let basic = as_i32(ep1.as_u32());
+        create_multi_move_table(4, 1, 12, state_space::EP4 as i32, &basic)
+            .into_iter()
+            .map(|x| x as u32)
+            .collect()
+    }
 
-fn gen_mt_edge4(mgr: &MoveTableManager) -> Vec<u32> {
-    let edge = mgr.ensure_edge();
-    let basic = as_i32(edge.as_u32());
-    create_multi_move_table2(4, 2, 12, state_space::CROSS as i32, &basic)
-        .into_iter()
-        .map(|x| x as u32)
-        .collect()
-}
-
-fn gen_mt_edge6(mgr: &MoveTableManager) -> Vec<u32> {
-    let edge = mgr.ensure_edge();
-    let basic = as_i32(edge.as_u32());
-    create_multi_move_table(6, 2, 12, state_space::EDGE6 as i32, &basic)
-        .into_iter()
-        .map(|x| x as u32)
-        .collect()
-}
-
-fn gen_mt_corn2(mgr: &MoveTableManager) -> Vec<u32> {
-    let corn = mgr.ensure_corn();
-    let basic = as_i32(corn.as_u32());
-    create_multi_move_table(2, 3, 8, state_space::CORNER2 as i32, &basic)
-        .into_iter()
-        .map(|x| x as u32)
-        .collect()
-}
-
-fn gen_mt_corn3(mgr: &MoveTableManager) -> Vec<u32> {
-    let corn = mgr.ensure_corn();
-    let basic = as_i32(corn.as_u32());
-    create_multi_move_table(3, 3, 8, state_space::CORNER3 as i32, &basic)
-        .into_iter()
-        .map(|x| x as u32)
-        .collect()
-}
-
-fn gen_mt_ep4(mgr: &MoveTableManager) -> Vec<u32> {
-    let ep1 = mgr.ensure_ep1();
-    let basic = as_i32(ep1.as_u32());
-    create_multi_move_table(4, 1, 12, state_space::EP4 as i32, &basic)
-        .into_iter()
-        .map(|x| x as u32)
-        .collect()
-}
-
-// 用一下 cc::Move 让导入不报 unused
-const _: fn() = || {
-    let _ = cc::Move::U;
-};
+    // 用一下 cc::Move 让导入不报 unused
+    const _: fn() = || {
+        let _ = cc::Move::U;
+    };
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -539,7 +609,11 @@ mod tests {
             // 在 mt_edge 里 i = 2*edge+ori,起始位置=edge,所以
             //   i=14 (edge=7,ori=0) move=U(0): 应该返回 2*4 + 0 = 8
             let v = t1.as_u32();
-            assert_eq!(v[18 * 14 + 0], 8, "edge 7 under U should land at pos 4 ori 0");
+            assert_eq!(
+                v[18 * 14 + 0],
+                8,
+                "edge 7 under U should land at pos 4 ori 0"
+            );
 
             // 释放并重新 ensure -> 走 mmap 路径,内容必须一致
             mgr.release_edge();

@@ -197,7 +197,10 @@ impl Default for ChainConfig {
             dr: StageCfg::new(true, 0, 5),
             htr: StageCfg::new(true, 1, 3),
             fr: StageCfg::new(false, 0, 2),
-            fin: StageCfg { niss: false, ..StageCfg::new(true, 0, 1) },
+            fin: StageCfg {
+                niss: false,
+                ..StageCfg::new(true, 0, 1)
+            },
             max_chains: 10,
         }
     }
@@ -306,8 +309,10 @@ impl ChainSolver {
             return Vec::new();
         }
         let scr_idx: Vec<u8> = scr.iter().map(|m| m.index() as u8).collect();
-        let scr_inv: Vec<Move> =
-            rev_inv(&scr_idx).iter().map(|&m| Move::from_index(m as usize)).collect();
+        let scr_inv: Vec<Move> = rev_inv(&scr_idx)
+            .iter()
+            .map(|&m| Move::from_index(m as usize))
+            .collect();
         let excl = [
             parse_excluded(&cfg.eo.excluded),
             parse_excluded(&cfg.dr.excluded),
@@ -315,7 +320,14 @@ impl ChainSolver {
             parse_excluded(&cfg.fr.excluded),
             parse_excluded(&cfg.fin.excluded),
         ];
-        let mut search = Search { s: self, cfg, excl, scr, scr_inv, results: Vec::new() };
+        let mut search = Search {
+            s: self,
+            cfg,
+            excl,
+            scr,
+            scr_inv,
+            results: Vec::new(),
+        };
         search.stage_eo(&[], &[], &[], 0);
         search.results
     }
@@ -345,7 +357,11 @@ fn is_excluded(
     inv_side: bool,
 ) -> bool {
     let empty: &[u8] = &[];
-    let (sn, si) = if inv_side { (empty, step) } else { (step, empty) };
+    let (sn, si) = if inv_side {
+        (empty, step)
+    } else {
+        (step, empty)
+    };
     excl.iter().any(|(en, ei)| {
         en.len() == cum_n.len() + sn.len()
             && ei.len() == cum_i.len() + si.len()
@@ -501,9 +517,15 @@ impl Search<'_> {
                 // 兄弟 yk 已 EO 完成(rot_best==0)时 enumerate_face 早返回空解集,
                 // 本轴(axis_best>0)会整支静默消失 → 退回单 yk 枚举兜住本轴。
                 let sols = if rot_best == 0 {
-                    self.s.eoline.enumerate_face_yk(alg, rot, yk, 0, hi - axis_best, EO_ENUM_CAP).1
+                    self.s
+                        .eoline
+                        .enumerate_face_yk(alg, rot, yk, 0, hi - axis_best, EO_ENUM_CAP)
+                        .1
                 } else {
-                    self.s.eoline.enumerate_face(alg, rot, 0, hi - rot_best, EO_ENUM_CAP).1
+                    self.s
+                        .eoline
+                        .enumerate_face(alg, rot, 0, hi - rot_best, EO_ENUM_CAP)
+                        .1
                 };
                 let refs: Vec<&S1Sol> = sols.iter().filter(|x| x.yk == yk).collect();
                 let inv = inv_conj_map(rot, yk);
@@ -561,8 +583,7 @@ impl Search<'_> {
                 }
                 let refs: Vec<&S1Sol> = sols.iter().collect();
                 let inv = inv_conj_map(rot, 0);
-                for (mv, len) in windowed(cfg, best, &refs, &inv, &self.excl[1], n, i, *inv_side)
-                {
+                for (mv, len) in windowed(cfg, best, &refs, &inv, &self.excl[1], n, i, *inv_side) {
                     cands.push((axis, *inv_side, mv, len));
                 }
             }
@@ -621,8 +642,7 @@ impl Search<'_> {
                 };
                 let refs: Vec<&S1Sol> = sols.iter().collect();
                 let inv = inv_conj_map(rot, 0);
-                for (mv, len) in windowed(cfg, best, &refs, &inv, &self.excl[2], n, i, *inv_side)
-                {
+                for (mv, len) in windowed(cfg, best, &refs, &inv, &self.excl[2], n, i, *inv_side) {
                     cands.push((axis, *inv_side, mv, len));
                 }
             }
@@ -659,14 +679,12 @@ impl Search<'_> {
         for (inv_side, alg) in &self.words(cfg, n, i) {
             for axis in dedup_axes(&cfg.axes) {
                 let rot = ROTS6[dr_slot(axis)];
-                let Some((best, sols)) = fr.enumerate_face(alg, rot, cfg.extra, FR_ENUM_CAP)
-                else {
+                let Some((best, sols)) = fr.enumerate_face(alg, rot, cfg.extra, FR_ENUM_CAP) else {
                     continue; // 该视角非 HTR(HTR 启用时不会发生;G3 对旋转不变)
                 };
                 let refs: Vec<&S1Sol> = sols.iter().collect();
                 let inv = inv_conj_map(rot, 0);
-                for (mv, len) in windowed(cfg, best, &refs, &inv, &self.excl[3], n, i, *inv_side)
-                {
+                for (mv, len) in windowed(cfg, best, &refs, &inv, &self.excl[3], n, i, *inv_side) {
                     cands.push((axis, *inv_side, mv, len));
                 }
             }
@@ -701,7 +719,10 @@ impl Search<'_> {
             return;
         }
         let alg = self.normal_word(n, i);
-        let Some((best, sols)) = self.s.htr2.enumerate_face(&alg, "", cfg.extra, FIN_ENUM_CAP)
+        let Some((best, sols)) = self
+            .s
+            .htr2
+            .enumerate_face(&alg, "", cfg.extra, FIN_ENUM_CAP)
         else {
             return; // 残差非 HTR(HTR 启用时不会发生)
         };
@@ -815,13 +836,19 @@ fn apply_stage(j: Option<&mini_json::J>, st: &mut StageCfg) {
         st.niss = b;
     }
     if let Some(a) = o.get("axes").and_then(|v| v.as_arr()) {
-        let axes: Vec<Axis> = a.iter().filter_map(|v| v.as_str().and_then(Axis::parse)).collect();
+        let axes: Vec<Axis> = a
+            .iter()
+            .filter_map(|v| v.as_str().and_then(Axis::parse))
+            .collect();
         if !axes.is_empty() {
             st.axes = axes;
         }
     }
     if let Some(a) = o.get("excluded").and_then(|v| v.as_arr()) {
-        st.excluded = a.iter().filter_map(|v| v.as_str().map(str::to_string)).collect();
+        st.excluded = a
+            .iter()
+            .filter_map(|v| v.as_str().map(str::to_string))
+            .collect();
     }
 }
 
@@ -933,7 +960,11 @@ mod mini_json {
         {
             *p += 1;
         }
-        std::str::from_utf8(&b[start..*p]).ok()?.parse::<f64>().ok().map(J::Num)
+        std::str::from_utf8(&b[start..*p])
+            .ok()?
+            .parse::<f64>()
+            .ok()
+            .map(J::Num)
     }
 
     fn string(b: &[u8], p: &mut usize) -> Option<String> {
@@ -1049,8 +1080,7 @@ mod tests {
         S.get_or_init(ChainSolver::new)
     }
 
-    const FIX1: &str =
-        "R' U' F D2 L2 F R2 U2 R2 B D2 L B2 L' B D' U R2 D L2 U' R' U' F";
+    const FIX1: &str = "R' U' F D2 L2 F R2 U2 R2 B D2 L B2 L' B D' U R2 D L2 U' R' U' F";
     const FIX2: &str = "D B U B2 R2 U' L2 D2 R2 D' L D2 B D' L2 F' D L' D'";
 
     /// 锁死的最优链总长基线(NISS 关,FR 关 = P3 行为;改算法时主动改 = review 信号)。
@@ -1065,7 +1095,13 @@ mod tests {
 
     /// 全阶段 niss 关 = P3 normal-side 行为。
     fn niss_off(mut cfg: ChainConfig) -> ChainConfig {
-        for st in [&mut cfg.eo, &mut cfg.dr, &mut cfg.htr, &mut cfg.fr, &mut cfg.fin] {
+        for st in [
+            &mut cfg.eo,
+            &mut cfg.dr,
+            &mut cfg.htr,
+            &mut cfg.fr,
+            &mut cfg.fin,
+        ] {
             st.niss = false;
         }
         cfg
@@ -1085,7 +1121,10 @@ mod tests {
 
     /// 顺序重放(仅 normal-side 链合法):S + 各步 moves。
     fn apply_all(scr: &str, steps: &[ChainStep]) -> State {
-        assert!(steps.iter().all(|st| !st.inv), "apply_all only valid for normal-side chains");
+        assert!(
+            steps.iter().all(|st| !st.inv),
+            "apply_all only valid for normal-side chains"
+        );
         let mut st = State::SOLVED;
         for m in string_to_alg(scr) {
             st.apply(m);
@@ -1122,9 +1161,8 @@ mod tests {
     /// 构造表示词:normal = rev_inv(I)++S++N;inverse = rev_inv(N)++rev_inv(S)++I。
     fn repr_words(scr: &str, n: &[u8], i: &[u8]) -> (Vec<Move>, Vec<Move>) {
         let s_idx = to_idx(scr);
-        let to_moves = |v: Vec<u8>| -> Vec<Move> {
-            v.iter().map(|&m| Move::from_index(m as usize)).collect()
-        };
+        let to_moves =
+            |v: Vec<u8>| -> Vec<Move> { v.iter().map(|&m| Move::from_index(m as usize)).collect() };
         let nw = [rev_inv(i), s_idx.clone(), n.to_vec()].concat();
         let iw = [rev_inv(n), rev_inv(&s_idx), i.to_vec()].concat();
         (to_moves(nw), to_moves(iw))
@@ -1163,14 +1201,25 @@ mod tests {
                     fwd[m] = conj_buf(&[Move::from_index(m)], rot, yk)[0];
                 }
                 for m in 0..18usize {
-                    assert_eq!(inv[fwd[m] as usize], m as u8, "inv∘fwd != id rot={} yk={}", ri, yk);
-                    assert_eq!(fwd[inv[m] as usize], m as u8, "fwd∘inv != id rot={} yk={}", ri, yk);
+                    assert_eq!(
+                        inv[fwd[m] as usize], m as u8,
+                        "inv∘fwd != id rot={} yk={}",
+                        ri, yk
+                    );
+                    assert_eq!(
+                        fwd[inv[m] as usize], m as u8,
+                        "fwd∘inv != id rot={} yk={}",
+                        ri, yk
+                    );
                 }
                 // 同态:任意 HOME 词 w + conj 帧词 s。
                 let w = string_to_alg("R U2 F' L D B2 R' F");
                 let s: Vec<u8> = vec![0, 13, 9, 4, 17]; // U F2 R D2 B'(conj 帧)
                 let mut wid: Vec<Move> = w.clone();
-                wid.extend(s.iter().map(|&m| Move::from_index(inv[m as usize] as usize)));
+                wid.extend(
+                    s.iter()
+                        .map(|&m| Move::from_index(inv[m as usize] as usize)),
+                );
                 let lhs = conj_buf(&wid, rot, yk);
                 let mut rhs = conj_buf(&w, rot, yk);
                 rhs.extend_from_slice(&s);
@@ -1193,12 +1242,19 @@ mod tests {
             for w in chains.windows(2) {
                 assert!(w[0].total <= w[1].total, "chains not sorted");
             }
-            assert_eq!(chains[0].total, best_total, "optimal total baseline drifted ({})", scr);
+            assert_eq!(
+                chains[0].total, best_total,
+                "optimal total baseline drifted ({})",
+                scr
+            );
             for c in &chains {
                 // 阶段结构:默认配置 = eo,dr,htr,fin;niss 关 ⇒ 全 normal 侧。
                 let kinds: Vec<&str> = c.steps.iter().map(|st| st.kind).collect();
                 assert_eq!(kinds, vec!["eo", "dr", "htr", "fin"], "stage kinds");
-                assert!(c.steps.iter().all(|st| !st.inv), "niss-off must be normal-side only");
+                assert!(
+                    c.steps.iter().all(|st| !st.inv),
+                    "niss-off must be normal-side only"
+                );
                 // cumulative 单调 + total 一致。
                 let mut cum = 0u32;
                 for st in &c.steps {
@@ -1208,7 +1264,12 @@ mod tests {
                 }
                 assert_eq!(c.total, cum, "total != sum of lens");
                 // 物理重放:打乱 + 全链 HOME 帧 move → 复原。线性化解与顺序重放等价。
-                assert_eq!(apply_all(scr, &c.steps), State::SOLVED, "chain does not solve ({})", scr);
+                assert_eq!(
+                    apply_all(scr, &c.steps),
+                    State::SOLVED,
+                    "chain does not solve ({})",
+                    scr
+                );
                 assert_eq!(replay_linear(scr, c), State::SOLVED);
             }
         }
@@ -1223,7 +1284,11 @@ mod tests {
         assert_eq!(rev_inv(&rev_inv(&x)), x, "rev_inv must be an involution");
         let mut xi = x.clone();
         xi.extend(rev_inv(&x));
-        assert_eq!(apply_idx(&xi), State::SOLVED, "x ++ rev_inv(x) must be identity");
+        assert_eq!(
+            apply_idx(&xi),
+            State::SOLVED,
+            "x ++ rev_inv(x) must be identity"
+        );
 
         // 表示等价:w1 = rev_inv(I)++S++N(normal 表示)与 w2 = S++N++rev_inv(I)
         // (线性化判据)共轭:v(w1) = v(rev_inv(I)) v(w2) v(rev_inv(I))⁻¹,
@@ -1246,7 +1311,12 @@ mod tests {
             let w2: Vec<u8> = [s_idx.clone(), nm.clone(), ri.clone()].concat();
             // 共轭关系实证:state(w1) == state(rev_inv(I) ++ w2 ++ rev_inv(rev_inv(I)))。
             let conj: Vec<u8> = [ri.clone(), w2.clone(), rev_inv(&ri)].concat();
-            assert_eq!(apply_idx(&w1), apply_idx(&conj), "conjugacy broken case {}", k);
+            assert_eq!(
+                apply_idx(&w1),
+                apply_idx(&conj),
+                "conjugacy broken case {}",
+                k
+            );
             // 复原等价。
             assert_eq!(
                 apply_idx(&w1) == State::SOLVED,
@@ -1256,7 +1326,12 @@ mod tests {
             );
             // 前两 case 按构造必复原(防全空验证)。
             if k < 2 {
-                assert_eq!(apply_idx(&w2), State::SOLVED, "solving case {} must solve", k);
+                assert_eq!(
+                    apply_idx(&w2),
+                    State::SOLVED,
+                    "solving case {} must solve",
+                    k
+                );
             }
         }
     }
@@ -1277,9 +1352,16 @@ mod tests {
                 assert!(w[0].total <= w[1].total, "chains not sorted");
             }
             println!("NISS-ON best total {} = {}", scr, chains[0].total);
-            assert_eq!(chains[0].total, best_total, "NISS-on baseline drifted ({})", scr);
+            assert_eq!(
+                chains[0].total, best_total,
+                "NISS-on baseline drifted ({})",
+                scr
+            );
             // NISS 是 normal-only 的超集搜索:最优只会更好或持平。
-            assert!(chains[0].total <= off_total, "NISS-on best must be <= NISS-off best");
+            assert!(
+                chains[0].total <= off_total,
+                "NISS-on best must be <= NISS-off best"
+            );
             for c in &chains {
                 let kinds: Vec<&str> = c.steps.iter().map(|st| st.kind).collect();
                 assert_eq!(kinds, vec!["eo", "dr", "htr", "fin"], "stage kinds");
@@ -1319,7 +1401,10 @@ mod tests {
                 }
             }
         }
-        assert!(found, "no inverse-side step in any NISS chain — fixtures need replacing");
+        assert!(
+            found,
+            "no inverse-side step in any NISS chain — fixtures need replacing"
+        );
     }
 
     // ---------- NISS 条件式阶段健全性:任一侧步骤后两种表示同时在轨 ----------
@@ -1361,7 +1446,10 @@ mod tests {
                             // HtrSolver 条件式接受(G2 子群对称)。
                             let rot = ROTS6[dr_slot(axis_of_variant(&step.variant))];
                             assert!(s.htr.is_dr(&nw, rot, 0), "normal repr not DR after dr step");
-                            assert!(s.htr.is_dr(&iw, rot, 0), "inverse repr not DR after dr step");
+                            assert!(
+                                s.htr.is_dr(&iw, rot, 0),
+                                "inverse repr not DR after dr step"
+                            );
                             if step.inv {
                                 inv_dr_checked += 1;
                             }
@@ -1430,7 +1518,8 @@ mod tests {
         c2.eo.excluded = vec![mismatching];
         let keep = s.solve_chain(FIX1, &c2);
         assert!(
-            keep.iter().any(|c| c.steps[0].inv == eo0.inv && c.steps[0].moves_string() == m),
+            keep.iter()
+                .any(|c| c.steps[0].inv == eo0.inv && c.steps[0].moves_string() == m),
             "wrong-side exclude must not remove the step"
         );
     }
@@ -1503,7 +1592,10 @@ mod tests {
         let mut cfg = niss_off(ChainConfig::default());
         cfg.eo.excluded = vec![eo0_str.clone()];
         let chains = s.solve_chain(FIX2, &cfg);
-        assert!(!chains.is_empty(), "excluding one EO must not kill all chains");
+        assert!(
+            !chains.is_empty(),
+            "excluding one EO must not kill all chains"
+        );
         for c in &chains {
             assert_ne!(c.steps[0].moves_string(), eo0_str, "excluded EO leaked");
             assert_eq!(apply_all(FIX2, &c.steps), State::SOLVED);
@@ -1560,9 +1652,9 @@ mod tests {
     /// FR 轴(floppy 轴)→ HOME 帧 floppy 收尾子群 H 的 4 个双转生成元。
     fn fr_home_gens(axis: Axis) -> [u8; 4] {
         match axis {
-            Axis::Ud => [7, 10, 13, 16],  // L2 R2 F2 B2(U/D 不动)
-            Axis::Fb => [1, 4, 7, 10],    // U2 D2 L2 R2(F/B 不动)
-            Axis::Lr => [1, 4, 13, 16],   // U2 D2 F2 B2(L/R 不动)
+            Axis::Ud => [7, 10, 13, 16], // L2 R2 F2 B2(U/D 不动)
+            Axis::Fb => [1, 4, 7, 10],   // U2 D2 L2 R2(F/B 不动)
+            Axis::Lr => [1, 4, 13, 16],  // U2 D2 F2 B2(L/R 不动)
         }
     }
 
@@ -1593,7 +1685,11 @@ mod tests {
         for c in &on {
             let kinds: Vec<&str> = c.steps.iter().map(|st| st.kind).collect();
             assert_eq!(kinds, vec!["eo", "dr", "htr", "fr", "fin"]);
-            assert_eq!(apply_all(FIX1, &c.steps), State::SOLVED, "fr-enabled chain not solved");
+            assert_eq!(
+                apply_all(FIX1, &c.steps),
+                State::SOLVED,
+                "fr-enabled chain not solved"
+            );
             // post-FR 残差 ∈ 该轴 floppy 子群(独立 State 闭包,不经 solver 坐标)。
             let fr_idx = c.steps.iter().position(|st| st.kind == "fr").unwrap();
             let axis = axis_of_variant(&c.steps[fr_idx].variant);
@@ -1698,7 +1794,10 @@ mod tests {
         assert!(c.fr.enabled);
         assert_eq!(c.fr.axes, vec![Axis::Fb]);
         assert!(!c.fin.enabled);
-        assert!(!c.fin.niss, "fin niss must be forced false even if config says true");
+        assert!(
+            !c.fin.niss,
+            "fin niss must be forced false even if config says true"
+        );
         // dr 未给 → 缺省不动(niss 默认开)。
         assert_eq!(c.dr.cap, 5);
         assert!(c.dr.niss);
@@ -1719,16 +1818,25 @@ mod tests {
         let s = solver();
         let alg = string_to_alg(EO_FB_COMPLETE);
         // fixture 前提:EO 恰好只在 FB 轴完成。
-        assert_eq!(s.eoline.solve_one_eo(&alg, "", 0), 0, "FB must be EO-complete");
+        assert_eq!(
+            s.eoline.solve_one_eo(&alg, "", 0),
+            0,
+            "FB must be EO-complete"
+        );
         let lr_best = s.eoline.solve_one_eo(&alg, "", 1);
         let ud_best = s.eoline.solve_one_eo(&alg, "x'", 0);
         assert!(lr_best > 0 && ud_best > 0, "LR/UD must not be EO-complete");
 
         // bug 实锤:rot 级合并枚举因 yk0 best==0 早返回空 → LR 解集为空(修前
         // stage_eo 据此把 LR 整支静默丢掉);单 yk 枚举兜回非空解集。
-        let (b, sols) = s.eoline.enumerate_face(&alg, "", 0, lr_best + 1, EO_ENUM_CAP);
+        let (b, sols) = s
+            .eoline
+            .enumerate_face(&alg, "", 0, lr_best + 1, EO_ENUM_CAP);
         assert_eq!(b, 0);
-        assert!(sols.is_empty(), "rot-level enumerate must be empty when sibling yk best==0");
+        assert!(
+            sols.is_empty(),
+            "rot-level enumerate must be empty when sibling yk best==0"
+        );
         let (b1, sols1) = s.eoline.enumerate_face_yk(&alg, "", 1, 0, 1, EO_ENUM_CAP);
         assert_eq!(b1, lr_best);
         assert!(!sols1.is_empty() && sols1.iter().all(|x| x.yk == 1));
@@ -1782,8 +1890,7 @@ mod tests {
         let hostile = format!("{}1{}", "[".repeat(10_000), "]".repeat(10_000));
         assert!(mini_json::parse(&hostile).is_none());
         // 对象嵌套同限。
-        let deep_obj =
-            format!("{}1{}", "{\"a\":".repeat(10_000), "}".repeat(10_000));
+        let deep_obj = format!("{}1{}", "{\"a\":".repeat(10_000), "}".repeat(10_000));
         assert!(mini_json::parse(&deep_obj).is_none());
         // 配置层:敌意输入整体回落默认配置,不 panic。
         let cfg = parse_chain_config(&hostile);
@@ -1812,7 +1919,10 @@ mod tests {
             let t0 = std::time::Instant::now();
             let json = chain_json(&s.solve_chain(scr, &cfg));
             let ms = t0.elapsed().as_millis();
-            assert!(json.starts_with("{\"chains\":[{"), "chains must be nonempty");
+            assert!(
+                json.starts_with("{\"chains\":[{"),
+                "chains must be nonempty"
+            );
             println!("TIMING\t{}\t{}\t{}ms", scr, cfg_json, ms);
             println!("PARITY\t{}\t{}\t{}", scr, cfg_json, json);
         }

@@ -164,7 +164,7 @@ for (const l of existing) {
   if (U_END_RE.test(sol)) {
     console.error(`out.csv 里有旧口径的行(解首/末是 U 系):${l.slice(0, 70)}`);
     console.error('旧口径算的是「展示相位那个代表元」的最优,不是这个 case 的最优,不能混用。');
-    console.error(`先把它挪走再跑:pwsh -NoProfile -File "$HOME/.claude/bin/trash.ps1" ${OUT}`);
+    console.error(`先把它挪走再跑:pwsh -NoProfile -File "$HOME/.codex/bin/trash.ps1" ${OUT}`);
     process.exit(2);
   }
 }

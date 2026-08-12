@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // PreToolUse detector: block reads of the client-forgeable X-Forwarded-For header as an
 // IP source in server source writes. Reads the hook payload on stdin ({tool_name,
-// tool_input}), scans the NEW content (Write.content / Edit.new_string / MultiEdit.edits[])
+// tool_input}), scans normalized newly added content
 // of a core/packages/server/src/ .ts file and DENIES (JSON permissionDecision=deny on
 // stdout + exit 0; exit 2 is ignored in auto mode) when it reads x-forwarded-for.
 // Request IP must come from getIp(c) (utils/analytics_helpers.ts, the single source),

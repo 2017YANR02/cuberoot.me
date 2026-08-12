@@ -69,7 +69,11 @@ pub struct SkewbMove {
 
 impl SkewbMove {
     pub fn name(&self) -> String {
-        format!("{}{}", SKEWB_AXIS_NAMES[self.axis as usize], if self.prime { "'" } else { "" })
+        format!(
+            "{}{}",
+            SKEWB_AXIS_NAMES[self.axis as usize],
+            if self.prime { "'" } else { "" }
+        )
     }
 }
 
@@ -105,8 +109,11 @@ pub struct SkewbState {
 }
 
 impl SkewbState {
-    pub const SOLVED: SkewbState =
-        SkewbState { centers: [0, 1, 2, 3, 4, 5], cp: [0, 1, 2, 3, 4, 5, 6, 7], co: [0; 8] };
+    pub const SOLVED: SkewbState = SkewbState {
+        centers: [0, 1, 2, 3, 4, 5],
+        cp: [0, 1, 2, 3, 4, 5, 6, 7],
+        co: [0; 8],
+    };
 
     /// 顺时针一步(120°)。
     fn apply_cw(&mut self, axis: usize) {
@@ -284,7 +291,11 @@ pub struct SkewbSol {
 
 impl SkewbSol {
     pub fn to_string_moves(&self) -> String {
-        self.moves.iter().map(|m| m.name()).collect::<Vec<_>>().join(" ")
+        self.moves
+            .iter()
+            .map(|m| m.name())
+            .collect::<Vec<_>>()
+            .join(" ")
     }
 }
 
@@ -331,7 +342,10 @@ impl SkewbSolver {
                 sum_o2_by_rp[rp] = s2;
                 for v in 0..8u8 {
                     let mut ns = *st;
-                    ns.apply(SkewbMove { axis: v / 2, prime: v % 2 == 1 });
+                    ns.apply(SkewbMove {
+                        axis: v / 2,
+                        prime: v % 2 == 1,
+                    });
                     if seen.insert(ns) {
                         next.push(ns);
                     }
@@ -339,8 +353,14 @@ impl SkewbSolver {
             }
             frontier = next;
         }
-        assert!(sum_o1_by_rq.iter().all(|&v| v != 255), "rq coverage incomplete");
-        assert!(sum_o2_by_rp.iter().all(|&v| v != 255), "rp coverage incomplete");
+        assert!(
+            sum_o1_by_rq.iter().all(|&v| v != 255),
+            "rq coverage incomplete"
+        );
+        assert!(
+            sum_o2_by_rp.iter().all(|&v| v != 255),
+            "rp coverage incomplete"
+        );
 
         // 全空间 BFS(转移现场 decode/apply/encode,无移动表)。
         let solved = encode(&SkewbState::SOLVED);
@@ -354,7 +374,10 @@ impl SkewbSolver {
                 let st = decode(i as usize, &sum_o1_by_rq, &sum_o2_by_rp);
                 for v in 0..8u8 {
                     let mut ns = st;
-                    ns.apply(SkewbMove { axis: v / 2, prime: v % 2 == 1 });
+                    ns.apply(SkewbMove {
+                        axis: v / 2,
+                        prime: v % 2 == 1,
+                    });
                     let ni = encode(&ns);
                     if dist[ni] == 255 {
                         dist[ni] = d + 1;
@@ -374,7 +397,10 @@ impl SkewbSolver {
     /// encode,不依赖约束表 — 约束表仅 decode/构造期用)。
     pub fn from_dist(dist: Vec<u8>) -> Self {
         assert_eq!(dist.len(), SKEWB_STATES, "skewb dist table size mismatch");
-        SkewbSolver { dist, solved: encode(&SkewbState::SOLVED) }
+        SkewbSolver {
+            dist,
+            solved: encode(&SkewbState::SOLVED),
+        }
     }
 
     /// 全空间距离表原始字节(落盘成静态资源用)。
@@ -384,7 +410,12 @@ impl SkewbSolver {
 
     /// 距离表最大深度(实测 God's number)。
     pub fn max_depth(&self) -> u8 {
-        self.dist.iter().copied().filter(|&v| v != 255).max().unwrap_or(0)
+        self.dist
+            .iter()
+            .copied()
+            .filter(|&v| v != 255)
+            .max()
+            .unwrap_or(0)
     }
 
     /// 各深度态数分布。
@@ -419,7 +450,10 @@ impl SkewbSolver {
         while d > 0 {
             let mut stepped = false;
             for v in 0..8u8 {
-                let mv = SkewbMove { axis: v / 2, prime: v % 2 == 1 };
+                let mv = SkewbMove {
+                    axis: v / 2,
+                    prime: v % 2 == 1,
+                };
                 let mut ns = st;
                 ns.apply(mv);
                 let ni = encode(&ns);
@@ -435,7 +469,10 @@ impl SkewbSolver {
             assert!(stepped, "distance table walk stuck");
         }
         debug_assert_eq!(cur, self.solved);
-        SkewbSol { len: moves.len() as u32, moves }
+        SkewbSol {
+            len: moves.len() as u32,
+            moves,
+        }
     }
 }
 
@@ -446,11 +483,13 @@ mod tests {
 
     /// jaapsch.net/puzzles/skewb.htm 公开距离分布(2026-06-11 抓取核对;
     /// jaap 四轴 move 集与 WCA 集经整体旋转共轭同构,分布相同 — 本测试即实证)。
-    const JAAPSCH_HIST: [usize; 12] =
-        [1, 8, 48, 288, 1728, 10248, 59304, 315198, 1225483, 1455856, 81028, 90];
+    const JAAPSCH_HIST: [usize; 12] = [
+        1, 8, 48, 288, 1728, 10248, 59304, 315198, 1225483, 1455856, 81028, 90,
+    ];
 
     fn lcg(x: u64) -> u64 {
-        x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407)
+        x.wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407)
     }
 
     /// 确定性伪随机词。
@@ -460,7 +499,10 @@ mod tests {
         for _ in 0..len {
             x = lcg(x);
             let v = (x >> 33) as usize % 8;
-            out.push(SkewbMove { axis: (v / 2) as u8, prime: v % 2 == 1 });
+            out.push(SkewbMove {
+                axis: (v / 2) as u8,
+                prime: v % 2 == 1,
+            });
         }
         out
     }
@@ -477,14 +519,20 @@ mod tests {
         assert_eq!(s.dist.len(), SKEWB_STATES);
 
         // 全可达(编码恰为闭包的双射)+ solved 唯一
-        assert!(s.dist.iter().all(|&v| v != 255), "unreachable state in table");
+        assert!(
+            s.dist.iter().all(|&v| v != 255),
+            "unreachable state in table"
+        );
         assert_eq!(s.dist.iter().filter(|&&v| v == 0).count(), 1);
 
         // 阶 3:X X X = id;X X' = id(件级)
         for a in 0..4u8 {
             let mut st = SkewbState::SOLVED;
             for _ in 0..3 {
-                st.apply(SkewbMove { axis: a, prime: false });
+                st.apply(SkewbMove {
+                    axis: a,
+                    prime: false,
+                });
             }
             assert_eq!(st, SkewbState::SOLVED, "axis {} order != 3", a);
         }
@@ -532,7 +580,10 @@ mod tests {
             for st in &frontier {
                 for v in 0..8u8 {
                     let mut ns = *st;
-                    ns.apply(SkewbMove { axis: v / 2, prime: v % 2 == 1 });
+                    ns.apply(SkewbMove {
+                        axis: v / 2,
+                        prime: v % 2 == 1,
+                    });
                     if let std::collections::hash_map::Entry::Vacant(e) = map.entry(ns) {
                         e.insert(d + 1);
                         next.push(ns);
@@ -567,7 +618,10 @@ mod tests {
                     continue;
                 }
                 let mut ns = *st;
-                ns.apply(SkewbMove { axis, prime: v % 2 == 1 });
+                ns.apply(SkewbMove {
+                    axis,
+                    prime: v % 2 == 1,
+                });
                 if dfs(&ns, depth - 1, axis as i32) {
                     return true;
                 }
@@ -627,12 +681,22 @@ mod tests {
         for seed in 0..40u64 {
             let len = 1 + (seed as usize) % 25;
             let alg = pseudo_word(27000 + seed, len);
-            assert_eq!(loaded.solve_one(&alg), full.solve_one(&alg), "seed={}", seed);
+            assert_eq!(
+                loaded.solve_one(&alg),
+                full.solve_one(&alg),
+                "seed={}",
+                seed
+            );
             let sol = loaded.enumerate(&alg);
             let mut st = SkewbState::SOLVED;
             st.apply_all(&alg);
             st.apply_all(&sol.moves);
-            assert_eq!(st, SkewbState::SOLVED, "loaded solution not solved, seed={}", seed);
+            assert_eq!(
+                st,
+                SkewbState::SOLVED,
+                "loaded solution not solved, seed={}",
+                seed
+            );
         }
     }
 }

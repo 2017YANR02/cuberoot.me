@@ -19,24 +19,19 @@
 //     otherwise CI_GUARDS_UI / CI_GUARDS_DRIFT / CI_GUARDS_API).
 //   - _guards.ts references a renamed/deleted test → fix the `test` field.
 //
-// Scope limit (documented, not enforced here): only checks what's actually IN this
-// repo. The global PreToolUse hooks registered in ~/.claude/settings.json (most of
-// section 02 "process-level guards" on the page, plus the non-project-scoped half of
-// PAIRED_GUARDS — block-static-onclick-button.ps1, block-button-navigation.ps1,
-// block-raw-history-url-state.ps1, block-nuqs-ime-input.mjs) live on the developer's
-// machine, not in this repo, so CI has no way to verify those filenames exist. Only
-// the project-scoped hooks (.claude/hooks/ at the repo root) are checked below.
+// Scope limit: CI verifies project-scoped hooks checked into this repo. User-scoped
+// hooks live under ~/.codex and are documented here but validated on the workstation.
 // guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
-import { PAIRED_GUARDS, CI_GUARDS_UI, CI_GUARDS_DRIFT, CI_GUARDS_API } from '@/app/[lang]/code/guards/_guards';
+import { PAIRED_GUARDS, PROCESS_GUARDS, CI_GUARDS_UI, CI_GUARDS_DRIFT, CI_GUARDS_API } from '@/app/[lang]/code/guards/_guards';
 
 const HERE = dirname(fileURLToPath(import.meta.url)); // packages/client/tests
 const ROOT = join(HERE, '..'); // packages/client
 const REPO_ROOT = join(ROOT, '..', '..', '..'); // packages/client -> packages -> core -> repo root
-const HOOKS_DIR = join(REPO_ROOT, '.claude', 'hooks');
+const HOOKS_DIR = join(REPO_ROOT, '.codex', 'hooks');
 const CODEX_HOOKS = join(REPO_ROOT, '.codex', 'hooks.json');
 const GIT_PRE_COMMIT = join(REPO_ROOT, '.githooks', 'pre-commit');
 
@@ -95,18 +90,43 @@ describe('/code/guards stays in sync with guard-registry-marked tests', () => {
   });
 
   it('the project-scoped guard hooks still exist on disk', () => {
-    // Only project-scoped hooks (checked into this repo's .claude/hooks/) are
-    // verifiable from CI — the global ones live in ~/.claude on the developer's
-    // machine and aren't part of this repo. See file header for the full list.
-    const projectHooks = [
-      'block-component-reimplementation.ps1',
-      'block-raw-checkbox.ps1',
-      'block-handwritten-trad.ps1',
-      'recon-ground-truth-gate.ps1',
-    ];
-    const missing = projectHooks.filter((h) => !existsSync(join(HOOKS_DIR, h)));
-    expect(missing, `Missing project-scoped hook file(s) in .claude/hooks/:\n${missing.join('\n')}`).toEqual([]);
+    const projectHooks = new Set([
+      ...PAIRED_GUARDS.filter(({ scope }) => scope === 'project').map(({ hook }) => hook.split('→')[0].trim()),
+      ...PROCESS_GUARDS.filter(({ scope }) => scope === 'project').map(({ hook }) => hook),
+    ]);
+    const missing = [...projectHooks].filter((hook) => !existsSync(join(HOOKS_DIR, hook)));
+    expect(missing, `Missing project-scoped hook file(s) in .codex/hooks/:\n${missing.join('\n')}`).toEqual([]);
     expect(existsSync(CODEX_HOOKS), 'Missing project-scoped Codex hooks.json').toBe(true);
     expect(existsSync(GIT_PRE_COMMIT), 'Missing repository pre-commit hook').toBe(true);
+  });
+
+  it('every documented write/process hook is registered for Codex', () => {
+    const config = JSON.parse(readFileSync(CODEX_HOOKS, 'utf8'));
+    const registeredFor = (field: 'command' | 'commandWindows') => {
+      const registered = new Set<string>();
+      for (const group of config.hooks.PreToolUse) {
+        for (const hook of group.hooks) {
+          for (const match of String(hook[field] ?? '').matchAll(/[\w-]+\.(?:ps1|mjs|cjs)/g)) {
+            if (!match[0].startsWith('adapt-codex-')) registered.add(match[0]);
+          }
+        }
+      }
+      return registered;
+    };
+    const registered = registeredFor('command');
+    const registeredWindows = registeredFor('commandWindows');
+    expect([...registeredWindows].sort(), 'commandWindows hook targets drifted from command').toEqual([...registered].sort());
+    const documented = new Set([
+      ...PAIRED_GUARDS.filter(({ scope }) => scope === 'project').map((guard) => guard.hook.split('→')[0].trim()),
+      ...PROCESS_GUARDS.filter(({ scope }) => scope === 'project').map((guard) => guard.hook),
+    ]);
+    expect(
+      [...documented].filter((name) => !registered.has(name)),
+      'Documented hooks missing from .codex/hooks.json',
+    ).toEqual([]);
+    expect(
+      [...registered].filter((name) => !documented.has(name)),
+      'Codex hooks missing from /code/guards',
+    ).toEqual([]);
   });
 });

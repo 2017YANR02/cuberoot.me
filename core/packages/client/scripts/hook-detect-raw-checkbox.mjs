@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // PreToolUse detector: block raw <input type="checkbox"> (☑) in client .tsx writes.
 // Reads the hook payload on stdin ({tool_name, tool_input}), scans the NEW content
-// (Write.content / Edit.new_string / MultiEdit.edits[]) and DENIES (JSON
+// from normalized newly added content and DENIES (JSON
 // permissionDecision=deny on stdout + exit 0; exit 2 is ignored in auto mode) when it
 // adds a `type="checkbox"`. Boolean toggles must use <BoolToggle> (knob left, label
 // right); genuine multi-select grids can opt out with an inline `allow-checkbox: reason`.

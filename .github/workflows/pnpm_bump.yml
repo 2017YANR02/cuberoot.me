@@ -30,7 +30,7 @@ jobs:
         with:
           sparse-checkout: |
             core
-            .claude/hooks
+            .codex/hooks
           filter: blob:none
 
       - name: 看看有没有新版
@@ -129,9 +129,7 @@ jobs:
 
           Verified in CI before this PR was opened: the version installs via action-setup,
           pnpm install --frozen-lockfile accepts the existing lockfile untouched, and build +
-          typecheck + the full test suite pass on it.
-
-          Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
+          typecheck + the full test suite pass on it."
           git push -u origin "$BRANCH"
           gh pr create --title "chore(deps): pnpm $CURRENT -> $LATEST" --body "\
           pnpm \`$CURRENT\` → \`$LATEST\`。

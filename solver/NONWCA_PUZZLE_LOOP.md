@@ -44,9 +44,9 @@
 ## §0 LOOP PROTOCOL(每轮照做)
 
 1. **读本文件全文**。在 §1 自顶向下找第一个未打勾任务(尊重 TIER 顺序:A→B→C→soft-gate→D)。
-2. **遇到 `⛔ GATE` / `⏸ soft-gate`**:**停 loop,不 ScheduleWakeup**。§3 写清要用户拍板的取舍,正文一句话摘要,等用户。绝不擅自跨过。
+2. **遇到 `⛔ GATE` / `⏸ soft-gate`**:**停 loop,不继续调度**。§3 写清要用户拍板的取舍,正文一句话摘要,等用户。绝不擅自跨过。
    ⚠ `📦 MANUAL` **不是 gate** —— 它是「loop 跳过这条、§3 留交接、继续下一个」(采样分布灌注/发布留用户),别当 gate 停住。
-3. **否则把该单元整体派给一个 fresh 子 agent**(`Agent` 工具,general-purpose)。**主 loop 不亲自写求解器代码 / 不读大文件**——只给子 agent 一段自包含 prompt:
+3. **否则把该单元整体派给一个 fresh 子 agent**(用 Codex `spawn_agent`)。**主 loop 不亲自写求解器代码 / 不读大文件**——只给子 agent 一段自包含 prompt:
    - 「读本文件 §4 共享套路 + §1 的 <单元> 条目 + 调 skill `new-substep-solver`(§0 七步)」
    - 本单元的档位(A/B/C/D)+ cstimer 源码指针(移动语义照抄)+ 验收门(§0.4)+ 提交规则(§0.5)
    - 要求干到验收门过、自行 commit,**只回 ≤20 行摘要**(改了哪些文件 / 门过没 / commit 短 hash / blocker)。
@@ -59,13 +59,13 @@
    - **typecheck**(照 §0.0 #1,两个都跑 + `; echo EXIT=$?`,无管道):`typecheck`(tsgo)+ `typecheck:tsc` 均 EXIT=0。
    - **分布(C/D 档专属,2026-06-21)**:**分布数据必须离线预计算**(§0.0 #6)—— build 脚本 `build_puzzle_sampled_dist.ts` 跑出 `stats/scramble/dist_<event>.json`(`histogram` 求和 == `sampleCount`),DistView **只 fetch+渲染、零求解器 import**;grep 该 DistView 确认进页**不调任何 `solve*`**(无 `setSamples`/`cancelRef`/「采样中」现场循环)。A/B 档分布是全空间精确直方图、数据现成,不在此约束内。
    - **UI**:playwright 开 `127.0.0.1:3000/scramble/solver?event=<id>` 桌面 + 390px,0 console error,**预览渲染**(solved 自证:纯色 / 复原态),分布页 `?event=<id>` 渲染。dev server 不在 `127.0.0.1:3000` → UI 验证标 §4 欠账继续,**绝不自己 `pnpm dev`**。
-5. **提交(子 agent 在单元内做)**:`git add` **只加本单元改动的文件**(别 `git add .`),commit(英文 message,结尾 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`),**不 push**。跳过了 UI 门 → message 前缀 `[untested-ui]` + §4 登记。
+5. **提交(子 agent 在单元内做)**:`git add` **只加本单元改动的文件**(别 `git add .`),commit(英文 message,不添加旧 agent 署名),**不 push**。跳过了 UI 门 → message 前缀 `[untested-ui]` + §4 登记。
 6. **更新并提交本文件**:勾掉任务;§2 追加一行(日期 + 单元 + commit 短 hash);有采样分布灌注/发布 → §3 MANUAL;有测试欠账 → §4。然后 `git add solver/NONWCA_PUZZLE_LOOP.md` 单独 commit(主 loop 自己做)。
 7. **决定下一步(Ralph:跑到底)**:
-   - **还有未 gate backlog** → `ScheduleWakeup`(self-paced ~150–240s;有后台 build/test 则对齐),**原样回传同一条 /loop 指令**。这是常态。
+   - **还有未 gate backlog** → 在当前持续任务中直接开始下一个单元;后台 build/test 用等待机制取回结果。
    - **完成信号:全打勾 / 下一个是 `⏸ soft-gate(TIER D)`** → **停**,正文给收尾总结。
    - **红灯**(验收门真跑两次仍不过)→ 停,§3 写失败摘要,等用户。
-   - **安全网**:单 session 连续推进 ~15 个单元仍没到完成信号 → 停一次,提示 `/clear` 重 `/loop` 续。
+   - **安全网**:单 session 连续推进 ~15 个单元仍没到完成信号 → 停一次,提示在新会话重发 `/loop` 续。
 8. **上下文防腐(主 loop 一直瘦)**:真相只在 git(代码)+ 本文件(进度/决策),从不靠「记得」;每轮读文件重建状态。重活全在 fresh 子 agent 里干完即弃;派发给子 agent 的 prompt 要短(详细 spec 写进 §1 条目 / §4),只给指针。
 
 ---

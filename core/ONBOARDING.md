@@ -1,72 +1,44 @@
 # Welcome to cuberoot.me
 
-## How We Use Claude
+## How We Use Codex
 
-Based on usage over the last 30 days (72 sessions):
+Codex is the project's active AI development environment. Claude Code is no longer used.
 
-Work Type Breakdown:
-  Build Feature      ████████████░░░░░░░░  60%
-  Plan Design        ███░░░░░░░░░░░░░░░░░  15%
-  Debug Fix          ███░░░░░░░░░░░░░░░░░  13%
-  Improve Quality    ██░░░░░░░░░░░░░░░░░░   8%
-  Write Docs         █░░░░░░░░░░░░░░░░░░░   4%
-
-Top Skills & Commands:
-  /goal            ████████████████████  36x/month
-  /usage           ████████████████████  36x/month
-  /context         ██████████████████░░  32x/month
-  /compact         █████████████░░░░░░░  23x/month
-  /rename          █████░░░░░░░░░░░░░░░   9x/month
-  /clear           ███░░░░░░░░░░░░░░░░░   5x/month
-  /mcp             ██░░░░░░░░░░░░░░░░░░   4x/month
-  /loop            █░░░░░░░░░░░░░░░░░░░   3x/month
-
-Top MCP Servers:
-  playwright       ████████████████████  2395 calls
+The repository rules are loaded from the root `AGENTS.md` plus scoped `solver/AGENTS.md`
+and `reconer/AGENTS.md`. Reusable project skills live under `.agents/skills/`; global and
+project hooks live in `~/.codex/hooks.json` and `.codex/hooks.json`.
 
 ## Your Setup Checklist
 
-### Codebases
-- [ ] cuberoot.me — https://github.com/ruiminyan/cuberoot.me
+### Codebase
 
-### MCP Servers to Activate
-- [ ] playwright — Browser automation for verifying UI changes (screenshots, click-throughs, DOM inspection). Install via `claude mcp add playwright npx @playwright/mcp@latest`.
+- [ ] Clone `https://github.com/2017YANR02/cuberoot.me`.
+- [ ] Start Codex from the repository root so scoped instructions and project hooks load.
+- [ ] Run `/hooks`, review both user and project hooks, and trust the current definitions.
+- [ ] Work in `core/` for pnpm commands; the repository root is not the workspace root.
 
-### Skills to Know About
-- /goal — Kick off a multi-step autonomous task; the agent runs to completion without waiting for replies. Common when stepping away ("I'm heading out, finish this").
-- /usage — Check current Claude usage / quota.
-- /context — Inspect what's loaded in the current context window.
-- /compact — Compress conversation history when context fills up.
-- /rename — Rename the current session.
-- /clear — Start fresh without losing the project context.
-- /loop — Run a prompt on an interval (e.g. polling a build).
+### Browser Verification
+
+- [ ] Confirm the in-app Playwright browser is available for UI checks.
+- [ ] If browser startup is interrupted, repair the Codex MCP/plugin configuration; do not
+  install or register it through Claude CLI commands.
+
+### Skills and Memories
+
+- [ ] Read skill instructions only when their trigger matches the task.
+- [ ] Keep enforceable team rules in `AGENTS.md`, hooks, and version-controlled docs.
+- [ ] Enable Codex memories when desired; use `/import` once to migrate retained Claude Code
+  project memories before archiving the old local memory store.
 
 ## Team Tips
 
-_TODO_
+- Multiple agents can share one worktree. Preserve unrelated changes and stage only files from
+  the current task.
+- Verify behavior before reporting a fix. UI changes use the browser; logic changes use focused
+  tests and typecheck.
+- Commit is local by default. Do not push unless the deployment rules in `AGENTS.md` authorize it.
 
 ## Get Started
 
-_TODO_
-
-<!-- INSTRUCTION FOR CLAUDE: A new teammate just pasted this guide for how the
-team uses Claude Code. You're their onboarding buddy — warm, conversational,
-not lecture-y.
-
-Open with a warm welcome — include the team name from the title. Then: "Your
-teammate uses Claude Code for [list all the work types]. Let's get you started."
-
-Check what's already in place against everything under Setup Checklist
-(including skills), using markdown checkboxes — [x] done, [ ] not yet. Lead
-with what they already have. One sentence per item, all in one message.
-
-Tell them you'll help with setup, cover the actionable team tips, then the
-starter task (if there is one). Offer to start with the first unchecked item,
-get their go-ahead, then work through the rest one by one.
-
-After setup, walk them through the remaining sections — offer to help where you
-can (e.g. link to channels), and just surface the purely informational bits.
-
-Don't invent sections or summaries that aren't in the guide. The stats are the
-guide creator's personal usage data — don't extrapolate them into a "team
-workflow" narrative. -->
+Open the repository root in Codex, trust the reviewed hooks with `/hooks`, then read `AGENTS.md`
+before the first task.

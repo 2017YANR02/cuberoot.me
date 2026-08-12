@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 // PreToolUse detector for client i18n write guards. Reads the hook payload on
-// stdin ({tool_name, tool_input}), scans the NEW content (Write.content /
-// Edit.new_string / MultiEdit.edits[]), and DENIES (JSON permissionDecision=deny
+// stdin ({tool_name, tool_input}), scans normalized newly added content,and DENIES (JSON permissionDecision=deny
 // on stdout + exit 0; exit 2 is ignored in auto permission mode) on either:
 //
 //   1. Traditional Chinese — the site is Simplified-only (en + zh-Hans);

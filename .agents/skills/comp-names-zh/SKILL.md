@@ -14,7 +14,7 @@ description: "Use when regenerating `stats/comp_names_zh.json`, debugging Chines
 - 表格 / 列表用 `<CompCell … date={comp.start_date} />`；`date` **必填**（`string | null`），逼你表态。
 - 其它渲染点 `localizeCompName(id, name, isZh, { date })`。
 - 页面上**没写**年份的地方（搜索下拉、无日期列的榜单、比赛详情页 H1 与复制名）传 `null` / 不传 —— 那里年号是唯一的区分信息。
-- 唯一实现是 `stripCompYear`，**禁**在调用点手写 `/\s*20\d\d\s*$/` 之类正则。守卫：写入即拦 `.Codex/hooks/block-comp-name-year-regex.ps1` + CI `tests/comp-year-single-source.test.ts`。
+- 唯一实现是 `stripCompYear`，**禁**在调用点手写 `/\s*20\d\d\s*$/` 之类正则。守卫：写入即拦 `.codex/hooks/block-comp-name-year-regex.ps1` + CI `tests/comp-year-single-source.test.ts`。
 
 ## 数据：`stats/comp_names_zh.json`
 

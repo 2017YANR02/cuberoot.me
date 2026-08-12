@@ -26,8 +26,8 @@
 pub const MOVE_NAMES_54: [&str; 54] = [
     "U", "U2", "U'", "D", "D2", "D'", "L", "L2", "L'", "R", "R2", "R'", "F", "F2", "F'", "B", "B2",
     "B'", "u", "u2", "u'", "d", "d2", "d'", "l", "l2", "l'", "r", "r2", "r'", "f", "f2", "f'", "b",
-    "b2", "b'", "M", "M2", "M'", "E", "E2", "E'", "S", "S2", "S'", "x", "x2", "x'", "y", "y2", "y'",
-    "z", "z2", "z'",
+    "b2", "b'", "M", "M2", "M'", "E", "E2", "E'", "S", "S2", "S'", "x", "x2", "x'", "y", "y2",
+    "y'", "z", "z2", "z'",
 ];
 
 /// 6 个视角(哪一面当底)对应的 rotation 前缀,与 `wasm.rs` 的 `ROTS` 完全一致。
@@ -577,7 +577,11 @@ pub fn build_rotation_edge_dests() -> [[(u8, u8); 12]; 9] {
                     reo[nx] = val;
                     frontier.push(nx);
                 } else {
-                    assert_eq!(reo[nx], val, "rotation eo inconsistency for face map {:?}", f);
+                    assert_eq!(
+                        reo[nx], val,
+                        "rotation eo inconsistency for face map {:?}",
+                        f
+                    );
                 }
             }
         }
@@ -637,10 +641,7 @@ pub fn center_vec_of(ci: usize) -> [u8; 6] {
 
 /// center[6] 向量 → center-index(供 xcross_restrict 重建 center_trans)。
 pub fn center_index_of(v: &[u8; 6]) -> Option<u8> {
-    INDEX_TO_CENTER
-        .iter()
-        .position(|x| x == v)
-        .map(|i| i as u8)
+    INDEX_TO_CENTER.iter().position(|x| x == v).map(|i| i as u8)
 }
 
 /// 在 center 向量 cur 上施加 move m,返回新 center 向量(供 xcross_restrict 重建 center_trans)。
@@ -798,7 +799,13 @@ impl CrossRestrictSolver {
         max_rot_count: u32,
     ) -> Option<Vec<usize>> {
         let (start_coord, start_center) = self.apply_scramble(scramble);
-        self.solve_from(start_coord, start_center, allowed, center_offset, max_rot_count)
+        self.solve_from(
+            start_coord,
+            start_center,
+            allowed,
+            center_offset,
+            max_rot_count,
+        )
     }
 
     /// 解「从角度 face 看的十字」:等价于现有 analyzer 的 `search_cross(alg, ROTS[face])`。
@@ -866,7 +873,13 @@ impl CrossRestrictSolver {
         let goal_centers = [0u8]; // center_offset = [0]
 
         // 精确最优(尊重 rot 预算);无解 → 空。
-        let opt = match self.solve_from(start_coord, start_center, allowed, &goal_centers, max_rot_count) {
+        let opt = match self.solve_from(
+            start_coord,
+            start_center,
+            allowed,
+            &goal_centers,
+            max_rot_count,
+        ) {
             Some(p) => p.len() as u32,
             None => return Vec::new(),
         };
@@ -907,8 +920,18 @@ impl CrossRestrictSolver {
             }
             let mut path: Vec<usize> = Vec::new();
             self.dfs_exact(
-                start_coord, start_center, 0, 0, lim, &h, &allowed_moves, &goal_centers,
-                max_rot_count, &mut path, &mut sols, cap,
+                start_coord,
+                start_center,
+                0,
+                0,
+                lim,
+                &h,
+                &allowed_moves,
+                &goal_centers,
+                max_rot_count,
+                &mut path,
+                &mut sols,
+                cap,
             );
         }
         sols.truncate(cap);
@@ -962,8 +985,18 @@ impl CrossRestrictSolver {
             let ncen = self.step_center(center, m);
             path.push(m);
             self.dfs_exact(
-                nc, ncen, rots + if is_rot { 1 } else { 0 }, depth + 1, lim, h,
-                allowed_moves, goal_centers, max_rot, path, sols, cap,
+                nc,
+                ncen,
+                rots + if is_rot { 1 } else { 0 },
+                depth + 1,
+                lim,
+                h,
+                allowed_moves,
+                goal_centers,
+                max_rot,
+                path,
+                sols,
+                cap,
             );
             path.pop();
             if sols.len() >= cap {
@@ -1391,7 +1424,11 @@ mod tests {
             for i in 0..6 {
                 nc[i] = self.center[CENTER[m][i] as usize];
             }
-            FullState { ep: nep, eo: neo, center: nc }
+            FullState {
+                ep: nep,
+                eo: neo,
+                center: nc,
+            }
         }
     }
 
@@ -1474,7 +1511,13 @@ mod tests {
             // 长度 ∈ [opt, opt+2],首条 = 最优
             assert_eq!(sols[0].len(), opt, "seed={} first not optimal", seed);
             for s in &sols {
-                assert!(s.len() >= opt && s.len() <= opt + 2, "seed={} len {} opt {}", seed, s.len(), opt);
+                assert!(
+                    s.len() >= opt && s.len() <= opt + 2,
+                    "seed={} len {} opt {}",
+                    seed,
+                    s.len(),
+                    opt
+                );
             }
             // 去重
             let set: std::collections::HashSet<&Vec<usize>> = sols.iter().collect();
@@ -1488,13 +1531,21 @@ mod tests {
                 for &m in s {
                     st = st.apply(m);
                 }
-                assert!(st.cross_solved_centers_home(), "seed={} sol {:?} does not solve cross", seed, s);
+                assert!(
+                    st.cross_solved_centers_home(),
+                    "seed={} sol {:?} does not solve cross",
+                    seed,
+                    s
+                );
             }
             if sols.len() > 1 {
                 saw_multi = true;
             }
         }
-        assert!(saw_multi, "enumeration never returned >1 solution — suspicious");
+        assert!(
+            saw_multi,
+            "enumeration never returned >1 solution — suspicious"
+        );
     }
 
     // ===== D. 受限不可解:只许 {U,U2,U'} 必返回 None 且不挂 =====
@@ -1528,11 +1579,18 @@ mod tests {
             .solve(&scramble, mask_all_54(), &all, 1)
             .expect("with any center offset and rotations this must solve");
         let rot_used = sol.iter().filter(|&&m| m >= 45).count();
-        assert!(rot_used <= 1, "max_rot_count=1 violated: {} rotations", rot_used);
+        assert!(
+            rot_used <= 1,
+            "max_rot_count=1 violated: {} rotations",
+            rot_used
+        );
 
         // max_rot=0 时解里不能有 rotation。
         let sol0 = solver.solve(&scramble, mask_all_54(), &all, 0).unwrap();
-        assert!(sol0.iter().all(|&m| m < 45), "max_rot=0 but solution has rotation");
+        assert!(
+            sol0.iter().all(|&m| m < 45),
+            "max_rot=0 but solution has rotation"
+        );
     }
 
     // ===== E. 旋转真正打开「触达」:<R,U> 解不了的打乱,加 x2 + 旋转预算后可解 =====
@@ -1569,7 +1627,11 @@ mod tests {
 
         // 旋转数 <= 2(尊重 max_rot_count)。
         let rot_used = sol.iter().filter(|&&m| m >= 45).count();
-        assert!(rot_used <= 2, "max_rot_count=2 violated: {} rotations", rot_used);
+        assert!(
+            rot_used <= 2,
+            "max_rot_count=2 violated: {} rotations",
+            rot_used
+        );
         // 只许 <R,U> 面动 + x2 旋转。
         for &m in &sol {
             assert!(

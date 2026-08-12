@@ -94,13 +94,13 @@ INSERT INTO ops_commands (id, category, position, chips, title_zh, title_en, des
   ]$chips$::jsonb,
   $tzh$收尾审查 + AI 移交自检$tzh$,
   $ten$Wrap-up review + AI handoff self-check$ten$,
-  $dzh$任务结束跑这套清单,确保未来 AI 凭现有 skill / memory 能接手同类任务。$dzh$,
-  $den$Run this at end of task to ensure a future AI can pick up similar work from current skill / memory alone.$den$,
+  $dzh$任务结束跑这套清单,确保未来 Codex 凭现有 AGENTS.md / skill / memory / hook 能接手同类任务。$dzh$,
+  $den$Run this at end of task to ensure a future Codex session can pick up similar work from current AGENTS.md, skills, memories, and hooks.$den$,
   $cmd$收尾审查:
-1. skill / memory / CLAUDE.md 是否需要更新?要更新必须极简
+1. AGENTS.md / skill / memory / hook 是否需要更新?要更新必须极简
 2. 用 git add 指定路径只提交你改的文件 (不要 -A)
 3. 一句话总结本次工作 + 1-2 条未来注意事项
-4. 自检:仅凭现有 skill / memory,未来 AI 能独立接手同类任务吗?$cmd$
+4. 自检:仅凭现有 AGENTS.md / skill / memory / hook,未来 Codex 能独立接手同类任务吗?$cmd$
 );
 
 -- ── prompt: 性能优化判定 ──────────────────────────────────────────

@@ -11,7 +11,7 @@
 // 这是 ratchet:BASELINE 锁存量(存量面板待逐个补钳/声明,只降不升),新写的锚定面板必须带声明。
 // 运行时全机制实测走 pnpm -F @cuberoot/client audit:overflow(popup pass 会点开每个
 // [aria-haspopup]/[aria-expanded] 触发器实测越界)。写入即拦的孪生 hook:
-// .claude/hooks/block-unclamped-anchored-panel.ps1(本测试为权威口径)。
+// .codex/hooks/block-unclamped-anchored-panel.ps1(本测试为权威口径)。
 // guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';

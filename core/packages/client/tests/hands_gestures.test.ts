@@ -1,7 +1,7 @@
 /**
  * /sim 手部指法 rig — 手势分类映射回归。
  * 锁死 (轴, 层类别, 转向) → (weld/flick, 左/右手, 手指) 的约定:改映射 = 有意为之,
- * 顺手更新这里的 baseline(参照 CLAUDE.md「主动改 baseline 当 review 信号」)。
+ * 顺手更新这里的 baseline(参照 AGENTS.md「主动改 baseline 当 review 信号」)。
  */
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';

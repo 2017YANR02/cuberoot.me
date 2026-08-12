@@ -126,6 +126,49 @@ export function countHtm(moves: SolveMove[]): number {
 }
 
 /**
+ * Count the moves the user physically executed during a smart-cube drill.
+ * Smart cubes emit a double turn as two equal quarter-turn notifications, so
+ * an adjacent equal pair is one HTM move. Opposing turns and longer runs are
+ * still charged instead of disappearing through algebraic cancellation.
+ */
+export function countExecutedHtm(moves: SolveMove[]): number {
+  let count = 0;
+  let pendingKey = '';
+  let pendingDirection = 0;
+
+  const flush = (): void => {
+    if (pendingKey) count++;
+    pendingKey = '';
+    pendingDirection = 0;
+  };
+
+  for (const move of moves) {
+    const turn = turnOf(move.m);
+    if (!turn) {
+      flush();
+      continue;
+    }
+    if (Math.abs(turn.signedQuarters) === 2) {
+      flush();
+      count++;
+      continue;
+    }
+    const direction = Math.sign(turn.signedQuarters);
+    if (pendingKey === turn.key && pendingDirection === direction) {
+      count++;
+      pendingKey = '';
+      pendingDirection = 0;
+      continue;
+    }
+    flush();
+    pendingKey = turn.key;
+    pendingDirection = direction;
+  }
+  flush();
+  return count;
+}
+
+/**
  * 同一条流,但**一个四分之一转一条**,什么都不合。
  *
  * 谱子那一层要的是这一份,因为「同面连着的合成半转」和「相对面配成中层」抢同一批

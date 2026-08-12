@@ -152,12 +152,23 @@ impl HtrPhase2Solver {
             frontier = next;
         }
 
-        HtrPhase2Solver { mt_corn, mt_edge, dist, corn_rank, edge_rank }
+        HtrPhase2Solver {
+            mt_corn,
+            mt_edge,
+            dist,
+            corn_rank,
+            edge_rank,
+        }
     }
 
     /// 距离表最大深度(HTR phase-2 / Thistlethwaite phase-4 God's number)。
     pub fn max_depth(&self) -> u8 {
-        self.dist.iter().copied().filter(|&v| v != 255).max().unwrap_or(0)
+        self.dist
+            .iter()
+            .copied()
+            .filter(|&v| v != 255)
+            .max()
+            .unwrap_or(0)
     }
 
     /// HTR 检查 + 坐标提取(规范帧 State)。非 HTR → None。
@@ -290,7 +301,8 @@ mod tests {
     use std::sync::OnceLock;
 
     fn lcg(x: u64) -> u64 {
-        x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407)
+        x.wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407)
     }
 
     /// 给定 move 池的确定性伪随机词。
@@ -299,7 +311,9 @@ mod tests {
         let mut out = Vec::with_capacity(len);
         for _ in 0..len {
             x = lcg(x);
-            out.push(Move::from_index(pool[(x >> 33) as usize % pool.len()] as usize));
+            out.push(Move::from_index(
+                pool[(x >> 33) as usize % pool.len()] as usize,
+            ));
         }
         out
     }
@@ -342,8 +356,9 @@ mod tests {
         let s = HtrPhase2Solver::new();
 
         // move 集合语义:G3 = 6 双转,且 = 18-move 中 U2/D2/L2/R2/F2/B2;均自逆。
-        let g3_self_inv: Vec<u8> =
-            (0..18u8).filter(|&m| is_g3(m as usize) && INV_MOVE[m as usize] == m).collect();
+        let g3_self_inv: Vec<u8> = (0..18u8)
+            .filter(|&m| is_g3(m as usize) && INV_MOVE[m as usize] == m)
+            .collect();
         assert_eq!(g3_self_inv, G3_MOVES.to_vec());
         for m in 0..18usize {
             assert_eq!(is_g3(m), G3_MOVES.contains(&(m as u8)));
@@ -353,7 +368,11 @@ mod tests {
         assert_eq!(s.dist.len(), G4_STATES);
         assert_eq!(G4_STATES, 663_552);
         assert!(s.dist.iter().all(|&v| v != 255), "unreachable states found");
-        assert_eq!(s.dist.iter().filter(|&&v| v == 0).count(), 1, "目标应唯一(solved)");
+        assert_eq!(
+            s.dist.iter().filter(|&&v| v == 0).count(),
+            1,
+            "目标应唯一(solved)"
+        );
         assert_eq!(s.corn_rank.len(), HC);
         assert_eq!(s.edge_rank.len(), EDGES);
         // HTR phase-2 / Thistlethwaite phase-4 God's number(只数双转步)实测 15。
@@ -560,7 +579,10 @@ mod tests {
                 for sol in &sols {
                     assert!(sol.len >= best && sol.len <= best + 1);
                     assert_eq!(sol.moves.len() as u32, sol.len);
-                    assert!(sol.moves.iter().all(|&m| is_g3(m as usize)), "non-G3 move in sol");
+                    assert!(
+                        sol.moves.iter().all(|&m| is_g3(m as usize)),
+                        "non-G3 move in sol"
+                    );
                     let mut buf = conj_buf(&alg, rot, 0);
                     buf.extend_from_slice(&sol.moves);
                     let (c, e) = s.coords(&buf).expect("sol must stay HTR");
@@ -583,7 +605,9 @@ mod tests {
         }
 
         // 非 HTR 输入 → None。
-        assert!(s.enumerate_face(&string_to_alg("R U F"), "", 0, 5).is_none());
+        assert!(s
+            .enumerate_face(&string_to_alg("R U F"), "", 0, 5)
+            .is_none());
         assert_eq!(s.solve_one(&string_to_alg("R U F"), "", 0), None);
     }
 }

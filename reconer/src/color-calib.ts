@@ -35,7 +35,7 @@ export interface ColorCalib {
   rejectD2: number;
   /** 可选 kNN 分类器 (Lab 特征): 在场时 calibClassify 优先走它。逐类对角高斯在本
    * 数据上样本内仅 ~55% (曲香蕉状类 + 极不平衡拖垮参数模型), 同批格 kNN-LOO 74%
-   * (欠债 ~19 点)。倒推解码器不需过 75% 锚定悬崖, 更准即纯增益 (见 CLAUDE.md 正⑭)。 */
+   * (欠债 ~19 点)。倒推解码器不需过 75% 锚定悬崖, 更准即纯增益 (见 AGENTS.md 正⑭)。 */
   knn?: ColorKnn;
 }
 

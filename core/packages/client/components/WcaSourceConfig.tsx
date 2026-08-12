@@ -31,7 +31,7 @@ import { statsUrl } from '@/lib/stats-base';
 import { tr } from '@/i18n/tr';
 import './wca-source.css';
 
-// WCA history floor (WC1982) — see CLAUDE.md. No scrambles exist before it.
+// WCA history floor (WC1982) — see AGENTS.md. No scrambles exist before it.
 const WCA_MIN_DATE = '1982-06-05';
 
 // 难度过滤只适用 3x3-family(随机态打乱,有十字/方法步数);其余项目无此数据。

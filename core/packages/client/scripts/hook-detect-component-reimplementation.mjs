@@ -185,7 +185,7 @@ export function writesFromHookPayload(payload) {
 function loadPathAllowlist() {
   try {
     const here = dirname(fileURLToPath(import.meta.url));
-    const file = resolve(here, '../../../../.Codex/component-reimplementation-allowlist.txt');
+    const file = resolve(here, '../../../../.codex/component-reimplementation-allowlist.txt');
     return new Set(
       readFileSync(file, 'utf8')
         .split(/\r?\n/)

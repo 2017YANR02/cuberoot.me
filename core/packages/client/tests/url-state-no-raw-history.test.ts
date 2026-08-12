@@ -1,6 +1,6 @@
 // URL 状态约定守卫:全站页内 URL 状态必须走 nuqs(useQueryState / useQueryStates),
 // 禁裸 history.pushState / history.replaceState 和手写 popstate 监听。
-// 约定见仓库根 CLAUDE.md「URL 状态 / 后退导航(全站统一 nuqs)」。
+// 约定见仓库根 AGENTS.md「URL 状态 / 后退导航(全站统一 nuqs)」。
 //
 // 真正特殊的(maplibre / canvas / worker 序列化 / 全局非 React infra)走 ALLOWLIST,
 // 各文件内已带 `// eslint-disable-next-line no-restricted-syntax, no-restricted-globals` + 理由注释。

@@ -294,16 +294,31 @@ mod tests {
         // (id, scramble, [cross_z0, cross_z2, cross_z3, cross_z1, cross_x3, cross_x1])
         // 列顺序对照 csv header:cross_z0/z2/z3/z1/x3/x1 对应 rot ""/z2/z'/z/x'/x
         let cases: &[(&str, &str, [u32; 6])] = &[
-            ("22001", "B2 U' L2 U F2 L2 D2 L2 U F2 L F2 L D U L' D2 F' U2 B",
-                [6, 6, 6, 5, 7, 5]),
-            ("23001", "D2 U L2 B2 R2 F2 R2 U2 R2 D' R' D B2 U B' R B' D B' L'",
-                [6, 6, 6, 6, 5, 5]),
-            ("24001", "L2 D F2 D' B2 L2 R2 U2 F2 D L' U2 R2 B' R F R2 D' U F L' F'",
-                [6, 6, 7, 7, 6, 6]),
-            ("25001", "U' B2 U2 F2 L2 D' F2 L2 B' D2 B' L' F R D L' B2 L2 B2 D' L2 U",
-                [6, 6, 5, 6, 6, 6]),
-            ("26001", "U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2",
-                [3, 6, 6, 4, 6, 5]),
+            (
+                "22001",
+                "B2 U' L2 U F2 L2 D2 L2 U F2 L F2 L D U L' D2 F' U2 B",
+                [6, 6, 6, 5, 7, 5],
+            ),
+            (
+                "23001",
+                "D2 U L2 B2 R2 F2 R2 U2 R2 D' R' D B2 U B' R B' D B' L'",
+                [6, 6, 6, 6, 5, 5],
+            ),
+            (
+                "24001",
+                "L2 D F2 D' B2 L2 R2 U2 F2 D L' U2 R2 B' R F R2 D' U F L' F'",
+                [6, 6, 7, 7, 6, 6],
+            ),
+            (
+                "25001",
+                "U' B2 U2 F2 L2 D' F2 L2 B' D2 B' L' F R D L' B2 L2 B2 D' L2 U",
+                [6, 6, 5, 6, 6, 6],
+            ),
+            (
+                "26001",
+                "U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2",
+                [3, 6, 6, 4, 6, 5],
+            ),
         ];
 
         let rots = ["", "z2", "z'", "z", "x'", "x"];
@@ -316,7 +331,9 @@ mod tests {
                 got.as_slice(),
                 expected,
                 "id {} mismatch: got {:?} expected {:?}",
-                id, got, expected
+                id,
+                got,
+                expected
             );
         }
 
@@ -326,7 +343,8 @@ mod tests {
     // ---------- move-mask(M1) ----------
 
     fn lcg(x: u64) -> u64 {
-        x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407)
+        x.wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407)
     }
 
     /// 给定 move 池的确定性伪随机词。
@@ -335,7 +353,9 @@ mod tests {
         let mut out = Vec::with_capacity(len);
         for _ in 0..len {
             x = lcg(x);
-            out.push(Move::from_index(pool[(x >> 33) as usize % pool.len()] as usize));
+            out.push(Move::from_index(
+                pool[(x >> 33) as usize % pool.len()] as usize,
+            ));
         }
         out
     }
@@ -492,7 +512,11 @@ mod tests {
                 for &m in sol {
                     s2.apply(Move::from_index(m as usize));
                 }
-                assert!(cross_done(&s2), "solution doesn't reach cross seed={}", seed);
+                assert!(
+                    cross_done(&s2),
+                    "solution doesn't reach cross seed={}",
+                    seed
+                );
             }
         }
 

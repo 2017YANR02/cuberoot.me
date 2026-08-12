@@ -77,12 +77,22 @@ impl Block223Solver {
             state_space::CORNER2 * state_space::EDGE2,
             s1.c2_solved * state_space::EDGE2 + e2_solved,
         );
-        Block223Solver { s1, mt_edge2, pt_ce2, e2_solved }
+        Block223Solver {
+            s1,
+            mt_edge2,
+            pt_ce2,
+            e2_solved,
+        }
     }
 
     /// pt_ce2 最大深度(信息用)。
     pub fn max_depth_ce2(&self) -> u8 {
-        self.pt_ce2.iter().copied().filter(|&v| v != 255).max().unwrap_or(0)
+        self.pt_ce2
+            .iter()
+            .copied()
+            .filter(|&v| v != 255)
+            .max()
+            .unwrap_or(0)
     }
 
     /// 从 SOLVED 走 buf,返回 (c2, e3, e2)。
@@ -291,10 +301,10 @@ impl Block223Solver {
 mod tests {
     use super::*;
     use crate::cube_common::{rot_map, string_to_alg, test_env_lock, State};
+    use crate::roux_s1_solver::s1_block_label;
     use crate::roux_s1_solver::tests::{
         corner_trans, edge_trans, pseudo_scramble, s1_block_pieces,
     };
-    use crate::roux_s1_solver::s1_block_label;
     use std::path::PathBuf;
 
     fn setup_dir(name: &str) -> PathBuf {

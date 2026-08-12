@@ -156,15 +156,32 @@ impl DrSolver {
             state_space::EO12 * SLICE,
             SLICE_SOLVED,
         );
-        let pt_co_slice =
-            build_pt_product(&mt_co, &mt_slice, SLICE, CO8 * SLICE, SLICE_SOLVED);
-        DrSolver { mt_eo, mt_co, mt_slice, pt_eo_slice, pt_co_slice }
+        let pt_co_slice = build_pt_product(&mt_co, &mt_slice, SLICE, CO8 * SLICE, SLICE_SOLVED);
+        DrSolver {
+            mt_eo,
+            mt_co,
+            mt_slice,
+            pt_eo_slice,
+            pt_co_slice,
+        }
     }
 
     /// 两张剪枝表最大深度(信息用)。
     pub fn max_depths(&self) -> (u8, u8) {
-        let a = self.pt_eo_slice.iter().copied().filter(|&v| v != 255).max().unwrap_or(0);
-        let b = self.pt_co_slice.iter().copied().filter(|&v| v != 255).max().unwrap_or(0);
+        let a = self
+            .pt_eo_slice
+            .iter()
+            .copied()
+            .filter(|&v| v != 255)
+            .max()
+            .unwrap_or(0);
+        let b = self
+            .pt_co_slice
+            .iter()
+            .copied()
+            .filter(|&v| v != 255)
+            .max()
+            .unwrap_or(0);
         (a, b)
     }
 
@@ -342,9 +359,7 @@ mod tests {
     fn state_dr_done(st: &State) -> bool {
         let (_, co) = st.cp_co();
         let (ep, eo) = st.ep_eo();
-        co.iter().all(|&v| v == 0)
-            && eo.iter().all(|&v| v == 0)
-            && (0..4).all(|i| ep[i] < 4)
+        co.iter().all(|&v| v == 0) && eo.iter().all(|&v| v == 0) && (0..4).all(|i| ep[i] < 4)
     }
 
     #[test]
@@ -364,8 +379,12 @@ mod tests {
         for _ in 0..30 {
             let mut alg = Vec::new();
             for _ in 0..15 {
-                x = x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-                alg.push(Move::from_index(dr_moves[(x >> 33) as usize % dr_moves.len()]));
+                x = x
+                    .wrapping_mul(6364136223846793005)
+                    .wrapping_add(1442695040888963407);
+                alg.push(Move::from_index(
+                    dr_moves[(x >> 33) as usize % dr_moves.len()],
+                ));
             }
             assert_eq!(s.solve_one(&alg, "", 0), 0, "DR-subgroup alg not dist 0");
         }
