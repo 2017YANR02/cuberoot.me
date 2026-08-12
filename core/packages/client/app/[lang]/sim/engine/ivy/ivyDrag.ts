@@ -17,8 +17,6 @@ import type IvyCube from './IvyCube';
 import type { IvyMove } from './IvyCube';
 import { scoreCornerTwist } from '../cuberDrag';
 
-export { applyPartial as ivyApplyPartial, snapBack as ivySnapBack } from '../cuberDrag';
-
 const _raycaster = new THREE.Raycaster();
 const _ndc = new THREE.Vector2();
 
@@ -71,17 +69,16 @@ export interface IvyLivePlan {
  *  Null only if every candidate is degenerate (axis edge-on at the grab point). */
 export function ivyResolveLive(
   cube: IvyCube,
-  camera: THREE.Camera,
   hit: IvyHit,
-  downX: number, downY: number,
-  curX: number, curY: number,
+  _scene: THREE.Scene, camera: THREE.Camera,
+  dragX: number, dragY: number,
   width: number, height: number,
 ): IvyLivePlan | null {
   const score = scoreCornerTwist(
     hit.candidates,
     (axis) => cube.cornerAxisVec(axis).transformDirection(cube.matrixWorld),
     hit.pointWorld, hit.centerWorld,
-    curX - downX, curY - downY,
+    dragX, dragY,
     camera, width, height,
   );
   if (!score) return null;
@@ -92,11 +89,10 @@ export function ivyResolveLive(
 /** Back-compat: just the move (discrete-fire path). */
 export function ivyResolveMove(
   cube: IvyCube,
-  camera: THREE.Camera,
   hit: IvyHit,
-  downX: number, downY: number,
-  curX: number, curY: number,
+  scene: THREE.Scene, camera: THREE.Camera,
+  dragX: number, dragY: number,
   width: number, height: number,
 ): IvyMove | null {
-  return ivyResolveLive(cube, camera, hit, downX, downY, curX, curY, width, height)?.move ?? null;
+  return ivyResolveLive(cube, hit, scene, camera, dragX, dragY, width, height)?.move ?? null;
 }

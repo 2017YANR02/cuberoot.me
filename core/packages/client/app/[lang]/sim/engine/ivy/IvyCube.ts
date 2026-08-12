@@ -47,8 +47,8 @@ import type { TweenCube } from '../TweenTwister';
 
 export interface IvyMove { axis: number; times: number; name: string; }
 
-/** Ivy anims are quaternion-only (corners turn in place). Alias the shared type
- *  so existing IvyAnim references + the SimPage import keep working. */
+/** Ivy anims are quaternion-only (corners turn in place). Semantic alias for the
+ *  shared non-NxN animation plan. */
 export type IvyAnim = PieceAnim;
 
 // Face order = lib/ivy-solver: U R F B L D = 0..5.

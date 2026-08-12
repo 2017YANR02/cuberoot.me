@@ -1,6 +1,6 @@
 /**
  * Shared drag-to-turn GESTURE controller for the discrete corner/edge-turning engine
- * puzzles (Dino, Redi, Rex — 120° corner twists — and Heli — 180° edge twists). Their
+ * puzzles (Ivy, Dino, Redi, Rex, Heli, Gear, Skewb, Pyraminx, Megaminx, and FTO). Their
  * pointer flow is byte-identical: pointerdown grabs the cube (or misses → orbit the
  * view), the first pointermove past a threshold raycasts from the down point, scores the
  * drag against the candidate axes, and either fires the whole discrete move or — in the
@@ -12,8 +12,8 @@
  * + orbit fallback + freeze plumbing so each puzzle's drag file is just its raycast and
  * SimPage just wires one adapter (≈12 lines) instead of copying ~175 lines of dispatch.
  *
- * The partial-turn apply/snap-back are the same `cuberDrag` primitives every corner-turn
- * puzzle already re-exports, so they live here directly rather than in each adapter.
+ * Partial-turn apply/snap-back use the shared `cuberDrag` primitives directly rather
+ * than routing through puzzle-specific aliases.
  */
 import type * as THREE from 'three';
 import type World from './world';
@@ -126,6 +126,11 @@ export class CornerTurnGesture<C extends TwistableCube<M>, M, H> implements Corn
   }
 
   cancel(): void {
+    if (this.live) {
+      snapBack(this.live.anims);
+      this.ctx.world.dirty = true;
+      this.live = null;
+    }
     this.pending = false;
     this.fired = false;
     this.rotating = false;
@@ -133,7 +138,7 @@ export class CornerTurnGesture<C extends TwistableCube<M>, M, H> implements Corn
   }
 
   onPinchStart(): void {
-    this.rotating = false;
+    this.cancel();
   }
 
   isOrbiting(): boolean {
@@ -162,6 +167,15 @@ export class CornerTurnGesture<C extends TwistableCube<M>, M, H> implements Corn
       const { x: localX, y: localY } = this.localXY(e);
       const dx = localX - this.downX;
       const dy = localY - this.downY;
+      if (
+        !Number.isFinite(localX) || !Number.isFinite(localY) ||
+        !Number.isFinite(dx) || !Number.isFinite(dy) ||
+        !Number.isFinite(world.width) || !Number.isFinite(world.height) ||
+        world.width <= 0 || world.height <= 0
+      ) {
+        this.cancel();
+        return true;
+      }
       if (Math.hypot(dx, dy) < this.adapter.threshold) return false; // not yet → let pinch see it
       this.fired = true; // consume this gesture either as a turn or orbit
       const cube = world.cube;
@@ -176,7 +190,13 @@ export class CornerTurnGesture<C extends TwistableCube<M>, M, H> implements Corn
             // Live partial turn: resolve axis + drag tangent, begin (pivots tracked
             // live, NOT committed) — frozen on pointerup.
             const plan = this.adapter.resolveLive(cube, this.hit, world.scene, world.camera, dx, dy, world.width, world.height);
-            if (plan) {
+            if (
+              plan &&
+              Number.isFinite(plan.tangentX) &&
+              Number.isFinite(plan.tangentY) &&
+              Number.isFinite(this.adapter.fullPx) &&
+              this.adapter.fullPx > 0
+            ) {
               this.ctx.clearPartialFreeze();
               const anims = this.adapter.beginMove(cube, plan.move, plan.dir ?? 1);
               this.live = { anims, tx: plan.tangentX, ty: plan.tangentY, downX: this.downX, downY: this.downY };
