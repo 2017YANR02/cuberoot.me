@@ -1789,7 +1789,7 @@ a.alg-community-author:hover {
   min-width: 0;
 }
 .alg-meta-scramble-row > h3,
-.alg-meta-scramble-row > select {
+.alg-meta-scramble-row > .alg-meta-scramble-kind {
   flex: none;
 }
 .alg-meta-scramble-row > .alg-meta-algline {

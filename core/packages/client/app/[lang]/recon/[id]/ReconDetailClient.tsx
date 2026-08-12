@@ -1661,6 +1661,10 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime, event }: {
 
   return (
     <div className="detail-section">
+      <div className="detail-section-label">
+        {t('recon.alternativeCount', { count: alts.length })}
+      </div>
+
       {myKey ? (
         <div className="alt-add-bar">
           <Link href={`/recon/${reconId}/alt`} className="recon-btn recon-btn-edit alt-add-link" title={t('recon.addAlternative')}>
