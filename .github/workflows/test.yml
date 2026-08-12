@@ -108,6 +108,61 @@ jobs:
         working-directory: core
         run: pnpm exec knip --include files,dependencies,unlisted,binaries --no-config-hints
 
+  # 移动端与网站共享 timer 内核，但有独立的 Vite/Capacitor/Gradle 构建链。
+  # 单独并行跑，既锁住共享契约，也不会拉长前端快测的关键路径。
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            core
+          filter: blob:none
+
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: core/package.json
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: core/pnpm-lock.yaml
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Install dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared timer core
+        working-directory: core
+        run: pnpm --filter @cuberoot/shared build
+
+      - name: Typecheck mobile
+        working-directory: core
+        run: pnpm --filter @cuberoot/mobile typecheck
+
+      - name: Test mobile data adapters
+        working-directory: core
+        run: pnpm --filter @cuberoot/mobile test
+
+      - name: Build and sync Capacitor assets
+        working-directory: core
+        run: pnpm --filter @cuberoot/mobile cap:sync
+
+      - name: Compile Android APK and AAB
+        working-directory: core/packages/mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug bundleDebug --no-daemon
+
   # analyzer_worker 会做深度搜索并加载多份 WASM。独占 runner 可避免与 360+ 个快测文件
   # 互抢 CPU；它与主 test job 并行，所以既保留精确回归，也缩短整条 workflow 墙钟。
   analyzer-worker:
