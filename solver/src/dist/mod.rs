@@ -12,4 +12,5 @@
 pub mod bfs;
 pub mod combo;
 pub mod mask;
+pub mod packed2;
 pub mod packed4;

@@ -85,6 +85,7 @@ cargo test --release -- --ignored     # 8 个 ignored(中表 + e2e XCross + pseu
 | `src/bin/eo_cross_analyzer.rs` | eo_cross_analyzer 二进制,id + 5×6 = 31 列 CSV |
 | `src/bin/pseudo_pair_analyzer.rs` | pseudo_pair_analyzer 二进制,id + 4×6 = 25 列 CSV |
 | `src/dist/bfs.rs` | dist 共享:通用 byte-valued BFS 距离表(raw-byte race-permit) |
+| `src/dist/packed2.rs` | dist 共享:2-bit 四色波前 BFS,无深度上限,按层精确计数+最深态见证 |
 | `src/dist/packed4.rs` | dist 共享:4-bit packed BFS(nibble CAS + AVX2 64-nibble 块跳过),`bfs_xxcross_packed4` (e×c layout) |
 | `src/dist/mask.rs` | dist 共享:28 个 popcount==2 mask + 28×28 disjoint 邻接 |
 | `src/dist/combo.rs` | dist 共享:组合数学(perm/binom/POW2/POW3/FACT/count_legal_states/w_sub),0 步容斥用 |
@@ -94,6 +95,7 @@ cargo test --release -- --ignored     # 8 个 ignored(中表 + e2e XCross + pseu
 | `src/bin/dist_cross_{1col,2col,6col}.rs` | 1/2/6 色 Cross 分布(_2col 走 W/Y 独立 495×495 mask 容斥;_6col 走 6 BFS + AVX2 32-batch min-reduction,`--faces` 收窄取 min 的面集) |
 | `src/bin/dist_xcross_2col.rs` | 双色 XCross 分布(D4h 16-elem,8 张 109MB pruning 表,70 partition × 24 perm × 16 ori × AVX2 conv3,11 深度),~17 分钟 |
 | `src/bin/dist_tracked.rs` | 通用 tracked-piece 分布:A×B 两因子(Corners/Edges/EdgePos/EoWord/**EdgeSet** 分量拼)+ 多源 packed4 BFS;目标集开关 `fold_y`(两条 EO 轴取最短)/ `d_offset`(伪口径);`verify` 对八条金标 + 三条恒等式;大 preset 走 `CUBE_ALLOW_HUGE_TABLES=1` |
+| `src/bin/first_layer_gods_number.rs` | First Layer 258.66 亿态严格直径证明器,2-bit 6.02GiB,≤14线程,25GB硬限,不进浏览器 |
 | `EXACT_DIST_EXPANSION.md` | 站内「完整状态空间」缺的那些格子的台账:坐标 / 内存 / 算法 / 跑法 / 回填清单 |
 | `src/bin/dist_*_0f.rs` | 11 个 0 步状态数 bin(容斥;1col 子空间 / 2col,6col 全空间 + cube laws) |
 | `src/bin/state_cross_1col.rs` | 单色 cross 1..8 步 scramble,输出 1..8.txt(190K 行) |
