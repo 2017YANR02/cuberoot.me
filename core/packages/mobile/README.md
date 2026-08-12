@@ -27,11 +27,28 @@ pnpm --filter @cuberoot/mobile android:open
 
 `cap:sync` builds the web app and copies it into the native Android project. Run it after changing React code and before making a native build.
 
-`assets:android` regenerates every Android launcher density and the light/dark Android system splash from the website's existing `public/icons` output. Android applies the platform-safe splash mask and density scaling, so there is no second brand source or hand-maintained resolution set.
+`assets:android` first regenerates the website/PWA icons, then derives every Android launcher density and the light/dark Android system splash. The brand SVG and one locked `sharp` dependency are the only sources, so there is no second hand-maintained image set. CI reruns the generator and fails on tracked or untracked drift.
 
 ## Persistence
 
-`src/data/timer-repository.ts` is the only mobile timer storage boundary. It writes schema-versioned `TimerStoreData` from `@cuberoot/shared/timer` to IndexedDB and serializes concurrent changes. Invalid data is rejected without overwriting the existing database. JSON export/import uses the same shared decoder.
+`src/data/timer-repository.ts` is the only mobile timer storage boundary. It writes schema-versioned `TimerStoreData` from `@cuberoot/shared/timer` to IndexedDB and serializes concurrent changes. The website and App use the same v1/v2/v3 decoder and migration chain. Import is limited to 10 MB, previews record counts, writes an atomic recovery copy, and offers one undo; invalid data never replaces the current valid database.
+
+## Android release build
+
+`package.json` is the single `versionName` source. Gradle derives `versionCode` as `major * 1,000,000 + minor * 1,000 + patch`; set `MOBILE_VERSION_CODE` only when Play requires a higher monotonic code without changing the public version.
+
+Keep the real upload keystore and passwords outside the repository. From `core/packages/mobile/android/`, set all four variables together and require signing:
+
+```powershell
+$env:MOBILE_UPLOAD_KEYSTORE_FILE = 'C:\secure\cuberoot-upload.jks'
+$env:MOBILE_UPLOAD_STORE_PASSWORD = '<from password manager>'
+$env:MOBILE_UPLOAD_KEY_ALIAS = 'cuberoot-upload'
+$env:MOBILE_UPLOAD_KEY_PASSWORD = '<from password manager>'
+$env:MOBILE_REQUIRE_RELEASE_SIGNING = 'true'
+./gradlew.bat clean assembleRelease bundleRelease --no-daemon --max-workers=14
+```
+
+The Play upload artifact is `app/build/outputs/bundle/release/app-release.aab`. CI uses a disposable key to prove that release signing works; it is not the production upload key. Enroll the real key in Play App Signing, back it up through the password-management process, and verify internal-track upgrade/rollback before production.
 
 ## Permanent identifiers
 
@@ -44,4 +61,4 @@ The debug suffix lets development builds coexist with the signed release app. Do
 
 ## Windows Android prerequisites
 
-Install Android Studio 2025.2.1 or newer and an Android SDK platform. The InAppBrowser plugin requires Android API 26 or newer, so Android 8.0 is the minimum runtime target. Compile and target with the latest stable SDK.
+Install Android Studio 2025.2.1 or newer and an Android SDK platform. The Capacitor 8 project uses Android API 26 as its minimum runtime and currently targets API 36. External website/privacy links use the official Capacitor Browser plugin; the App does not request camera, microphone, location, or Bluetooth permissions until those features are implemented and tested.
