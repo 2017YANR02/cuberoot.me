@@ -47,6 +47,27 @@
 }
 .fb-textarea::placeholder { color: var(--faint-foreground); }
 
+.fb-url-field {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 10px;
+}
+.fb-url-label {
+  flex: none; white-space: nowrap;
+  font-size: 13px; color: var(--muted-foreground);
+}
+.fb-url-input {
+  flex: 1; min-width: 0; box-sizing: border-box;
+  padding: 8px 10px; border-radius: 9px;
+  font: inherit; font-size: 13px;
+  background: var(--background); color: var(--foreground);
+  border: 1px solid var(--input);
+  transition: border-color .15s, box-shadow .15s;
+}
+.fb-url-input:focus {
+  outline: none; border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 22%, transparent);
+}
+
 /* 附件缩略图 */
 .fb-attachments { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .fb-thumb {
