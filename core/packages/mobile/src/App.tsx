@@ -334,7 +334,7 @@ export function App() {
               className={`timer-pad timer-pad--${timer.machine.phase}`}
               data-timer-pad
               onContextMenu={(event) => event.preventDefault()}
-              onPointerCancel={timer.pointerUp}
+              onPointerCancel={timer.pointerCancel}
               onPointerDown={timer.pointerDown}
               onPointerUp={timer.pointerUp}
               type="button"

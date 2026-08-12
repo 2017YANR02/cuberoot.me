@@ -60,6 +60,24 @@ describe('shared timer machine', () => {
     expect(released.state.inspectionStartedAtMs).toBe(0);
   });
 
+  it('cancels an armed press without accidentally starting', () => {
+    const holding = apply(initialTimerMachineState(), { type: 'press-down', nowMs: 0 }).state;
+    const ready = apply(holding, { type: 'hold-ready' }).state;
+    const cancelled = apply(ready, { type: 'cancel-press' });
+    expect(cancelled.state.phase).toBe('idle');
+    expect(cancelled.effects).toEqual(['hold-cancelled']);
+
+    const inspecting = apply(initialTimerMachineState(), { type: 'press-down', nowMs: 0 }, inspection).state;
+    const inspectionReady = apply(
+      apply(inspecting, { type: 'press-down', nowMs: 2_000 }, inspection).state,
+      { type: 'hold-ready' },
+      inspection,
+    ).state;
+    const inspectionCancelled = apply(inspectionReady, { type: 'cancel-press' }, inspection);
+    expect(inspectionCancelled.state.phase).toBe('inspecting');
+    expect(inspectionCancelled.state.inspectionStartedAtMs).toBe(0);
+  });
+
   it('supports inspection starting on release', () => {
     const config = { ...inspection, inspectionTrigger: 'up' as const };
     const pressed = apply(initialTimerMachineState(), { type: 'press-down', nowMs: 10 }, config);
@@ -69,6 +87,14 @@ describe('shared timer machine', () => {
     const released = apply(pressed.state, { type: 'press-up', nowMs: 20 }, config);
     expect(released.state.phase).toBe('inspecting');
     expect(released.state.inspectionStartedAtMs).toBe(20);
+  });
+
+  it('clears a pending release-triggered inspection when the press is cancelled', () => {
+    const config = { ...inspection, inspectionTrigger: 'up' as const };
+    const pending = apply(initialTimerMachineState(), { type: 'press-down', nowMs: 10 }, config).state;
+    const cancelled = apply(pending, { type: 'cancel-press' }, config);
+    expect(cancelled.state).toEqual(initialTimerMachineState());
+    expect(cancelled.effects).toEqual(['hold-cancelled']);
   });
 
   it('locks inspection penalties to the start instant boundaries', () => {
