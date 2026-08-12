@@ -46,7 +46,7 @@ import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
-import { variantLabel, stageLabel } from '@/lib/scramble-variants';
+import { variantLabel, stageLabel, variantDataRef } from '@/lib/scramble-variants';
 import SolveTabs from '../_components/SolveTabs';
 import LazyVisible from '../_components/LazyVisible';
 import './analyze.css';
@@ -109,6 +109,7 @@ function loadWcaSrc(): WcaSourceSettings {
 }
 // WcaSourceSettings → wca_pool 的 WcaSourceSpec(event 恒 333;难度关或步数空则不带 diff)。
 function specFromWcaSrc(s: WcaSourceSettings): WcaSourceSpec {
+  const diffRef = variantDataRef(s.wcaDiffVariant, s.wcaDiffStage);
   return {
     event: '333' as EventId,
     mode: s.wcaScrambleMode,
@@ -117,7 +118,7 @@ function specFromWcaSrc(s: WcaSourceSettings): WcaSourceSpec {
     optimal: s.wcaUseOptimal,
     diff: s.wcaDifficultyOn && s.wcaDiffSteps.length
       ? {
-        variant: s.wcaDiffVariant, stage: s.wcaDiffStage, colors: s.wcaDiffColors,
+        variant: diffRef.variant, stage: diffRef.stage, colors: s.wcaDiffColors,
         steps: s.wcaDiffSteps, merged: s.wcaDiffMerged,
       }
       : undefined,
