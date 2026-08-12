@@ -1,0 +1,35 @@
+.privacy-page {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 48px 22px 80px;
+  color: var(--foreground);
+}
+
+.privacy-page h1 {
+  margin: 0;
+  font-size: clamp(2rem, 7vw, 3.4rem);
+  letter-spacing: -0.05em;
+}
+
+.privacy-page h2 {
+  margin: 36px 0 10px;
+  font-size: 1.1rem;
+}
+
+.privacy-page p,
+.privacy-page li {
+  line-height: 1.75;
+}
+
+.privacy-page ul {
+  padding-left: 1.25rem;
+}
+
+.privacy-page a {
+  color: var(--accent);
+}
+
+.privacy-updated {
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+}
