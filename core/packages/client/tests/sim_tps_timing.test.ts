@@ -2,9 +2,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import { TwistAction } from '@/app/[lang]/sim/engine/nxn/twister';
 import ClockBoard from '@/app/[lang]/sim/engine/clock/clockBoard';
+import { DEFAULT_SETTINGS } from '@/app/[lang]/sim/SettingDrawer';
 import tweener, { Tween } from '@/app/[lang]/sim/engine/tweener';
 import { timing } from '@/app/[lang]/sim/engine/tweenTiming';
 import {
+  SIM_DEFAULT_TPS,
   elapsedMsToSimTicks,
   simSpeedToTicks,
   simSpeedToTps,
@@ -29,6 +31,8 @@ describe('sim TPS timing', () => {
     expect(simTpsToSpeed(0.5)).toBe(0);
     expect(simTpsToSpeed(6)).toBe(100);
     expect(simSpeedToTicks(Number.NaN)).toBe(65);
+    expect(simSpeedToTps(simTpsToSpeed(SIM_DEFAULT_TPS))).toBeCloseTo(0.9, 12);
+    expect(simSpeedToTps(DEFAULT_SETTINGS.speed)).toBeCloseTo(0.9, 12);
   });
 
   it('finishes at the same elapsed time at 60 Hz and 240 Hz', () => {
