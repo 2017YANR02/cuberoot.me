@@ -20,6 +20,7 @@
 import { type ReactNode, type RefObject } from 'react';
 import type { PuzzleKind } from '@/app/[lang]/sim/engine/world';
 import ReconPlayerBase, { type ReconPlayerAdapter } from '@/components/recon/ReconPlayerBase';
+import { invertAlg } from '@/lib/cube3';
 
 /** The minimal move surface every TweenTwister puzzle cube shares (skewb / pyra / …). */
 interface TweenTwisterCube<M> {
@@ -33,10 +34,12 @@ interface TweenTwisterCube<M> {
 
 export default function TweenReconPlayer<M>({
   scramble, alg, puzzleKind, parseMoves, kind,
-  fillPane = false, backView = false, hideControls = false, playerRef, fullscreenButton,
+  anchorAtEnd = false, fillPane = false, backView = false, hideControls = false, playerRef, fullscreenButton,
 }: {
   scramble: string;
   alg: string;
+  /** Start from alg inverse and finish at the setup state. */
+  anchorAtEnd?: boolean;
   /** world.setPuzzle target for this puzzle (e.g. 'skewb', 'pyraminx'). */
   puzzleKind: PuzzleKind;
   /** Split the solution alg string into this puzzle's engine moves. */
@@ -53,7 +56,7 @@ export default function TweenReconPlayer<M>({
   const adapter: ReconPlayerAdapter<M> = {
     kind,
     backView,
-    deps: [puzzleKind],
+    deps: [puzzleKind, anchorAtEnd],
     parseMoves,
     setupPuzzle: (world) => {
       if (world.puzzleKind !== puzzleKind) world.setPuzzle(puzzleKind);
@@ -62,7 +65,7 @@ export default function TweenReconPlayer<M>({
       if (world.puzzleKind !== puzzleKind) return;
       const cube = world.cube as unknown as TweenTwisterCube<M>;
       cube.twister.finish();
-      cube.twister.setup(sc);
+      cube.twister.setup(anchorAtEnd ? `${sc} ${invertAlg(alg)}`.trim() : sc);
       const target = Math.max(0, Math.min(n, moves.length));
       for (let i = 0; i < target; i++) cube.applyMoveInstant(moves[i]);
       world.dirty = true;

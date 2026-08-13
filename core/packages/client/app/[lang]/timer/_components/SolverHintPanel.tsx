@@ -61,6 +61,8 @@ const PANEL_TITLE = { zh: '解法', en: 'Solve' };
 interface Props {
   scramble: string;
   isZh: boolean;
+  resultsPanelOpen?: boolean;
+  onOpen?: () => void;
 }
 
 /** 换题回调。右栏形态下换题归主区(计时面板的径向手势 + 键盘),全屏浮层把整屏盖住了,
@@ -172,7 +174,14 @@ function SolverSheet({ scramble, isZh, compact, onClose, onDock, onPrevScramble,
   );
 }
 
-export default function SolverHintPanel({ scramble, isZh, onPrevScramble, onNextScramble }: Props & ScrambleNav) {
+export default function SolverHintPanel({
+  scramble,
+  isZh,
+  resultsPanelOpen = false,
+  onOpen,
+  onPrevScramble,
+  onNextScramble,
+}: Props & ScrambleNav) {
   const isPhone = useIsMobile(560);
   const isDesktopRail = !useIsMobile(1023); // ≥1024 时面板是右侧 ~360px 窄栏
 
@@ -217,9 +226,22 @@ export default function SolverHintPanel({ scramble, isZh, onPrevScramble, onNext
     void setSheetOpen(null, { history: 'replace' });
   }, [setSheetOpen]);
   const openSheet = () => {
+    onOpen?.();
     pushedRef.current = true;
     void setSheetOpen(true);
   };
+
+  // 解法栏与成绩 / 图表 / 统计栏共用右侧空间，只保留一个。父页面打开成绩栏时
+  // 立即隐藏这里的内容，再同步收起内部状态；从浏览器历史恢复解法浮层时则反向
+  // 通知父页面关闭成绩栏。
+  useEffect(() => {
+    if (!resultsPanelOpen) return;
+    setRailOpen(false);
+    if (sheetOpen) closeSheet();
+  }, [closeSheet, resultsPanelOpen, sheetOpen]);
+  useEffect(() => {
+    if (sheetOpen) onOpen?.();
+  }, [onOpen, sheetOpen]);
 
   // 桌面切形态:记住选择,并按新形态开 / 关浮层。
   const pickFull = (v: boolean) => {
@@ -238,10 +260,10 @@ export default function SolverHintPanel({ scramble, isZh, onPrevScramble, onNext
     }
   }, [isDesktopRail, fullPref, railOpen, sheetOpen, setSheetOpen]);
 
-  const open = isDesktopRail ? railOpen : sheetOpen;
+  const open = !resultsPanelOpen && (isDesktopRail ? railOpen : sheetOpen);
   // 右栏正被全屏浮层顶替:内容卸载(同一条打乱不解两遍),但 data-open 保持,
   // 关掉浮层就回到原样的宽栏。
-  const railBodyOpen = isDesktopRail && railOpen && !sheetOpen;
+  const railBodyOpen = !resultsPanelOpen && isDesktopRail && railOpen && !sheetOpen;
 
   const toggle = () => {
     if (!isDesktopRail) {
@@ -249,11 +271,10 @@ export default function SolverHintPanel({ scramble, isZh, onPrevScramble, onNext
       openSheet();
       return;
     }
-    setRailOpen((o) => {
-      const next = !o;
-      persistItem(LS_KEY, next ? '1' : '0');
-      return next;
-    });
+    const next = !railOpen;
+    if (next) onOpen?.();
+    setRailOpen(next);
+    persistItem(LS_KEY, next ? '1' : '0');
   };
 
   const title = tr(PANEL_TITLE);
@@ -284,7 +305,7 @@ export default function SolverHintPanel({ scramble, isZh, onPrevScramble, onNext
           </div>
         )}
       </aside>
-      {sheetOpen && mounted && createPortal(
+      {sheetOpen && !resultsPanelOpen && mounted && createPortal(
         // 紧凑排版只给真手机;平板 / 桌面全屏都够宽,摊开排。
         // 桌面多给一个形态开关(切回右栏 = 关浮层并记住);手机没有右栏,只留 ✕。
         <SolverSheet

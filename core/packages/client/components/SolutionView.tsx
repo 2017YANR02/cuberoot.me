@@ -27,7 +27,10 @@ function sourceTextLength(node: Node): number {
     const replacedLength = node.dataset.reconTextLength;
     if (replacedLength != null) return Number(replacedLength);
   }
-  return (node.textContent || '').length;
+  if (node.nodeType === Node.TEXT_NODE) return (node.textContent || '').length;
+  let length = 0;
+  for (const child of node.childNodes) length += sourceTextLength(child);
+  return length;
 }
 
 function getTextOffsetInElement(el: HTMLElement): number {
@@ -111,7 +114,8 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
   // 光标字符偏移 + 当前招式高亮区间(声明式渲染)。text 变化时清空(偏移失效)。
   const [cursorOffset, setCursorOffset] = useState<number | null>(null);
   const [hlRange, setHlRange] = useState<[number, number] | null>(null);
-  const crossColor = useMemo(() => crossColorFromReconText(text), [text]);
+  const plainText = useMemo(() => text.replace(/\r\n?/g, '\n'), [text]);
+  const crossColor = useMemo(() => crossColorFromReconText(plainText), [plainText]);
 
   useEffect(() => {
     cursorOffsetRef.current = null;
@@ -153,18 +157,17 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
     if (!el) return;
     let offset = getTextOffsetInElement(el);
     if (offset < 0) return;
-    const plainText = el.textContent || '';
     const result = findTokenPositions(plainText);
     offset = snapCaretToLine(offset, plainText, result);
     moveCaret(plainText, offset);
-  }, [moveCaret]);
+  }, [moveCaret, plainText]);
 
   // NOTE: 方向键导航——左右按 token 跳转,上下按行跳转
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (!['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
     const el = preRef.current;
     if (!el || !playerRef.current) return;
-    const fullText = el.textContent || '';
+    const fullText = plainText;
     const tokens = findTokenPositions(fullText);
     if (tokens.length === 0) return;
     const cur = cursorOffsetRef.current ?? 0;
@@ -204,9 +207,9 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
     if (newPos === cur) return;
     e.preventDefault();
     moveCaret(fullText, newPos);
-  }, [playerRef, moveCaret]);
+  }, [playerRef, moveCaret, plainText]);
 
-  const lines = useMemo(() => text.split(/\r?\n/), [text]);
+  const lines = useMemo(() => plainText.split('\n'), [plainText]);
   // 每行起始的全局字符偏移(含换行),用于把全局 cursorOffset / hlRange 映射到行内局部位置。
   const lineStarts = useMemo(() => {
     const out: number[] = [];

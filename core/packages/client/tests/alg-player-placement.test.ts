@@ -25,10 +25,26 @@ describe('algorithm player placement', () => {
 
   it('renders one correctly oriented shared player for every multi-orientation slot', () => {
     const detail = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx');
+    const styles = read('app/[lang]/alg/alg.css');
 
     expect(detail).toMatch(/caseObj\.algs\.map\(\(oriAlgs, oi\) => \{[\s\S]*?const orientedSetup = oriAdjustSetup\(caseObj\.setup, oi\);/);
     expect(detail).toMatch(/className="alg-case-detail-ori-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{caseViewAlg\(selectedEntry\.alg, effectiveViewAngle\)\}[\s\S]*?setup=\{caseViewSetup\(selectedEntry\.setup \?\? orientedSetup, effectiveViewAngle\)\}/);
     expect(detail).toContain('inlinePlayer={!multiOri}');
     expect(detail).toContain('{!multiOri && (');
+    expect(detail).toContain('autoPlay={playRequest > 0}');
+    expect(detail).toContain('playRequest={playRequest}');
+    expect(detail).toContain("alg-case-detail-lean${multiOri ? ' is-multi-ori' : ''}");
+    expect(styles).toContain('.alg-case-detail-lean.is-multi-ori');
+    expect(styles).toContain('.alg-case-detail-ori > .alg-alg-sortable:has(.alg-alg-row.is-expanded)');
+  });
+
+  it('binds the shared sim pointer bridge so dragging the cube changes only the view', () => {
+    const player = read('components/AlgPlayer/AlgSimPlayer.tsx');
+
+    expect(player).toContain("import('@/app/[lang]/sim/Toucher')");
+    expect(player).toContain('toucher.init(m.renderer.domElement, world.controller.touch)');
+    expect(player).toContain("world.controller.dragEmpty = 'view'");
+    expect(player).toContain('world.controller.onOrbit = (dx, dy) => orbitSceneFree(world, dx, dy, ORBIT_K)');
+    expect(player).toContain('toucher.destroy()');
   });
 });

@@ -5,8 +5,9 @@
  * ReconEnginePlayer(sq1 / NxN → 自有 cuber 引擎,其余 → cubing.js TwistySection)。
  * 从 /recon/[id] 详情页抽出,详情页与统一成绩弹窗(AttemptPopover)共用,避免重复。
  *
- * 无 scramble 时不渲染(只录了空成绩的边界)。hideControls=true 时隐藏播放器自带
- * 控制条,改用画面内播放/暂停浮层(成绩弹窗内嵌预览用;仍可点解法 scrub)。
+ * 无 scramble 但有解法时锚定终点:从解法逆序所得的状态播到还原。只有打乱和解法
+ * 都为空时才不渲染。hideControls=true 时隐藏播放器自带控制条,改用画面内播放/暂停
+ * 浮层(成绩弹窗内嵌预览用;仍可点解法 scrub)。
  */
 
 import { type ReactNode, type RefObject } from 'react';
@@ -28,13 +29,14 @@ export default function ReconPlayerCanvas({
   /** 全屏/退出全屏按钮(详情页持有 fullscreen 状态)。 */
   fullscreenButton?: ReactNode;
 }) {
-  if (!scramble) return null;
+  if (!scramble && !displayText) return null;
 
   return (
     <ReconEnginePlayer
       event={event}
       scramble={scramble}
       solution={displayText}
+      anchorAtEnd={!scramble}
       playerRef={playerRef}
       fillPane={fillPane}
       hideControls={hideControls}

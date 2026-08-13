@@ -17,6 +17,7 @@ import { type ReactNode, type RefObject } from 'react';
 import type World from '@/app/[lang]/sim/engine/world';
 import type NxnCube from '@/app/[lang]/sim/engine/nxn/cube';
 import ReconPlayerBase, { type ReconPlayerAdapter } from '@/components/recon/ReconPlayerBase';
+import { invertAlg } from '@/lib/cube3';
 
 /** Whitespace-tokenize an alg into individual moves (matches the form's caret
  *  move-count which splits on /\s+/). */
@@ -26,10 +27,12 @@ function tokenize(alg: string): string[] {
 
 export default function CuberReconPlayer({
   scramble, alg, order, fillPane = false, playerRef, hideControls = false, fullscreenButton,
-  backView = true,
+  backView = true, anchorAtEnd = false,
 }: {
   scramble: string;
   alg: string;
+  /** Start from alg inverse and finish at the setup state. */
+  anchorAtEnd?: boolean;
   /** NxN order (2..7). */
   order: number;
   /** 右上角背面小窗。默认开(复盘流程要它);嵌在窄栏里的小播放器可关掉 —— 小窗按主画布
@@ -46,7 +49,7 @@ export default function CuberReconPlayer({
     kind: 'nxn-cuber',
     backView,
     faceHints: true,
-    deps: [order],
+    deps: [order, anchorAtEnd],
     parseMoves: tokenize,
     setupPuzzle: (world: World) => {
       if (world.puzzleKind !== order) world.setPuzzle(order);
@@ -56,7 +59,10 @@ export default function CuberReconPlayer({
       const cube = world.cube as NxnCube;
       const target = Math.max(0, Math.min(n, moves.length));
       const prefix = moves.slice(0, target).join(' ');
-      cube.twister.setup((sc + ' ' + prefix).trim());
+      const base = anchorAtEnd
+        ? `${sc} ${invertAlg(moves.join(' '))}`.trim()
+        : sc;
+      cube.twister.setup(`${base} ${prefix}`.trim());
       world.dirty = true;
       return target;
     },

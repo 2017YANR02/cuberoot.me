@@ -16,10 +16,11 @@ export interface MoveNotationDemoProps {
   puzzle: AlgPuzzle;
   moves: MoveNotationOption[];
   variant?: 'list' | 'compact';
+  showReplay?: boolean;
 }
 
 /** One shared player per move family; selecting a row swaps the demonstrated move. */
-export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: MoveNotationDemoProps) {
+export default function MoveNotationDemo({ puzzle, moves, variant = 'list', showReplay = true }: MoveNotationDemoProps) {
   const t = useT();
   const [selectedMove, setSelectedMove] = useState(moves[0]?.move ?? '');
   const [playRequest, setPlayRequest] = useState(0);
@@ -41,7 +42,7 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
           startSolved
           autoPlay
           playRequest={playRequest}
-          controlMode="replay"
+          controlMode={showReplay ? 'replay' : 'none'}
           engine={engine}
           size={260}
         />

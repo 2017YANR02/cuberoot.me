@@ -723,6 +723,23 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
         </SettingsSection>
 
         <SettingsSection
+          category="timer"
+          activeCategory={activeCategory}
+          title={tr({ zh: '项目与分组', en: 'Events and sessions' })}
+        >
+          <BooleanRow
+            label={tr({ zh: '切换项目时匹配分组', en: 'Match session when changing event' })}
+            value={s.autoSessionForEvent}
+            onChange={(v) => updateSettings({ autoSessionForEvent: v })}
+          />
+          <BooleanRow
+            label={tr({ zh: '切换分组时匹配项目', en: 'Match event when changing session' })}
+            value={s.autoEventForSession}
+            onChange={(v) => updateSettings({ autoEventForSession: v })}
+          />
+        </SettingsSection>
+
+        <SettingsSection
           category="smart-cube"
           activeCategory={activeCategory}
           title={tr({ zh: '连接后的行为', en: 'Connected cube behavior' })}

@@ -3,7 +3,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { useT } from '@/hooks/useT';
 import { invertFtoEifAlgorithm, parseFtoEifAlgorithm, renderFtoEifSvg } from '@/lib/fto-eif-image';
-import type { AlgPlayerHandle } from './AlgPlayer';
+import type { AlgPlayerControlMode, AlgPlayerHandle } from './AlgPlayer';
 import AlgPlaybackControls from './AlgPlaybackControls';
 import './alg-sim-player.css';
 
@@ -37,7 +37,7 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
   autoPlay?: boolean;
   playRequest?: number;
   loop?: boolean;
-  controlMode?: 'full' | 'replay';
+  controlMode?: AlgPlayerControlMode;
   moveDurationMs?: number;
   size?: number;
   fillPane?: boolean;
@@ -121,19 +121,21 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
           {t('不支持的 EIF 记号', 'Unsupported EIF notation')}: {invalid.join(' ')}
         </p>
       )}
-      <AlgPlaybackControls
-        step={step}
-        count={parsedAlg.tokens.length}
-        playing={playing}
-        onStepChange={setStep}
-        onPlayingChange={setPlaying}
-        mode={controlMode}
-        onReplay={controlMode === 'replay' ? () => {
-          setStep(0);
-          setPlaying(true);
-          setReplayRequest(request => request + 1);
-        } : undefined}
-      />
+      {controlMode !== 'none' && (
+        <AlgPlaybackControls
+          step={step}
+          count={parsedAlg.tokens.length}
+          playing={playing}
+          onStepChange={setStep}
+          onPlayingChange={setPlaying}
+          mode={controlMode}
+          onReplay={controlMode === 'replay' ? () => {
+            setStep(0);
+            setPlaying(true);
+            setReplayRequest(request => request + 1);
+          } : undefined}
+        />
+      )}
     </div>
   );
 });

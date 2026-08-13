@@ -21,16 +21,19 @@ import {
   type SessionMeta,
 } from '../_lib/storage/db';
 import { tr } from '@/i18n/tr';
+import type { EventId } from '../_lib/types';
 
 interface Props {
   isZh: boolean;
+  event: EventId;
   /** Called after any change that affects the active session's data set
    *  (switch / clear / delete) so the parent re-runs loadAll(). Also called
-   *  after rename so the label refreshes. */
-  onSessionsChanged: () => void;
+   *  after rename so the label refreshes. The id is provided only when the
+   *  active session itself changed. */
+  onSessionsChanged: (activeSessionId?: string) => void;
 }
 
-export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
+export default function SessionSwitcher({ isZh, event, onSessionsChanged }: Props) {
   const [sessions, setSessions] = useState<SessionMeta[]>([]);
   const [activeId, setActiveId] = useState<string>('');
   const [open, setOpen] = useState(false);
@@ -81,7 +84,7 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
     setActiveSession(id);
     refresh();
     closeAll();
-    onSessionsChanged();
+    onSessionsChanged(id);
   };
 
   const startCreate = () => {
@@ -94,13 +97,13 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
   const commitCreate = () => {
     const name = draft.trim();
     if (!name) { setCreating(false); setDraft(''); return; }
-    const id = createSession(name);
+    const id = createSession(name, event);
     setActiveSession(id);
     refresh();
     setCreating(false);
     setDraft('');
     setOpen(false);
-    onSessionsChanged();
+    onSessionsChanged(id);
   };
 
   const startRename = (s: SessionMeta) => {
@@ -137,7 +140,7 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
     if (!ok) return;
     const newActive = deleteSession(s.id);
     refresh();
-    if (newActive !== null && s.id === activeId) onSessionsChanged();
+    if (newActive !== null && s.id === activeId) onSessionsChanged(newActive);
   };
 
   return (
