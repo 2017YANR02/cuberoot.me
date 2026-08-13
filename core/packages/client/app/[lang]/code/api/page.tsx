@@ -58,7 +58,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_srs alg_sets alg_sweep announced_comps article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live documents feedback forum health historical_ranks
-//   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon recon_ground_truth scramble_555
+//   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon recon_ground_truth scramble_555 teacher_directory
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wiki
 // ─ covers-routes-end ─
@@ -349,6 +349,11 @@ const ENDPOINTS: Ep[] = [
   { d: 'wechat', m: 'GET', p: '/v1/wechat/jssdk-signature', g: 'public', zh: '微信 JS-SDK wx.config 签名(朋友圈/会话分享卡片;未配公众号返回 disabled)', en: 'WeChat JS-SDK wx.config signature (Moments/chat share card; returns disabled when the MP account is unconfigured)' },
 
   // ---- content ----
+  { d: 'content', m: 'GET', p: '/v1/teachers', g: 'public', c: 'cdn', zh: '魔方老师与培训机构目录', en: 'Cube teacher and training-school directory' },
+  { d: 'content', m: 'GET', p: '/v1/teachers/mine', g: 'login', c: 'no-store', zh: '我发布的老师与机构资料', en: 'Teacher and school profiles I published' },
+  { d: 'content', m: 'POST', p: '/v1/teachers', g: 'login', zh: '发布老师或机构资料', en: 'Publish a teacher or school profile' },
+  { d: 'content', m: 'PUT', p: '/v1/teachers/:id', g: 'login', zh: '作者改自己的资料,管理员可改任意资料', en: 'Authors edit their own profiles; admins edit any' },
+  { d: 'content', m: 'DELETE', p: '/v1/teachers/:id', g: 'login', zh: '作者删自己的资料,管理员可删任意资料', en: 'Authors delete their own profiles; admins delete any' },
   { d: 'content', m: 'GET', p: '/v1/wiki/terms', g: 'public', c: 'cdn', zh: '术语表', en: 'Wiki terms' },
   { d: 'content', m: 'POST', p: '/v1/wiki/terms', g: 'login', zh: '加术语', en: 'Add term' },
   { d: 'content', m: 'PATCH', p: '/v1/wiki/terms/:id', g: 'admin', zh: '改术语', en: 'Edit term' },
