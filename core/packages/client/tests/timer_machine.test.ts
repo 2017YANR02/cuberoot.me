@@ -157,6 +157,38 @@ describe('shared timer machine', () => {
     expect(stopped.solve?.timeMs).toBe(0);
   });
 
+  it('uses the exact external-timer reading when stopping', () => {
+    const running = apply(initialTimerMachineState(), {
+      type: 'start-now',
+      nowMs: 10_000,
+      elapsedMs: 321,
+    }).state;
+    const stopped = apply(running, {
+      type: 'stop-external',
+      timeMs: 12_345,
+      inspectionMs: 8_123,
+    });
+
+    expect(stopped.state.phase).toBe('stopped');
+    expect(stopped.state.lastMs).toBe(12_345);
+    expect(stopped.solve).toEqual({
+      timeMs: 12_345,
+      inspectionMs: 8_123,
+      autoPenalty: 'ok',
+    });
+    expect(stopped.effects).toEqual(['run-stopped']);
+  });
+
+  it('still records an external stop when its RUNNING notification was missed', () => {
+    const stopped = apply(initialTimerMachineState(), {
+      type: 'stop-external',
+      timeMs: 9876,
+    });
+
+    expect(stopped.state.phase).toBe('stopped');
+    expect(stopped.solve?.timeMs).toBe(9876);
+  });
+
   it('reset and cancel clear pending inspection state', () => {
     const config = { ...inspection, inspectionTrigger: 'up' as const };
     const pending = apply(initialTimerMachineState(), { type: 'press-down', nowMs: 0 }, config).state;
