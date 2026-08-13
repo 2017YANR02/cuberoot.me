@@ -2,6 +2,7 @@
 export const SIM_TICKS_PER_SECOND = 60;
 export const SIM_MIN_TPS = 0.5;
 export const SIM_MAX_TPS = 6;
+export const SIM_DEFAULT_TPS = 0.9;
 
 function finiteOr(value: number, fallback: number): number {
   return Number.isFinite(value) ? value : fallback;
@@ -9,7 +10,7 @@ function finiteOr(value: number, fallback: number): number {
 
 export function simSpeedToTicks(speed: number): number {
   const clamped = Math.min(100, Math.max(0, finiteOr(speed, 50)));
-  return Math.round(120 - (clamped / 100) * 110);
+  return 120 - (clamped / 100) * 110;
 }
 
 export function simSpeedToTps(speed: number): number {

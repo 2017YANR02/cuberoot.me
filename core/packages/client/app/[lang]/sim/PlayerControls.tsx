@@ -129,6 +129,7 @@ import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
 import { ClearButton } from '@/components/ClearButton';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
 import { eventDisplayName } from '@/lib/wca-events';
+import { simSpeedToTps, simTpsToSpeed } from '@/lib/sim_timing';
 import AlgInput from '@/components/AlgInput';
 import PlaybackBar from '@/components/PlaybackBar';
 import './player-controls.css';
@@ -1027,7 +1028,7 @@ export default function PlayerControls({
   const [optimalScrambleStatus, setOptimalScrambleStatus] = useState<string | null>(null);
   const optimalScrambleAbortRef = useRef<AbortController | null>(null);
 
-  // 播放/单步转速(帧/90°)= 抽屉「转动速度」的基准 mapFrames(settings.speed)。
+  // 播放/单步 TPS = 抽屉 TPS 的每个公式 token 标称 tick 数。
   // 手动拖动 / 键盘 / 播放 / 单步全用这一个速度(2026-07-09 用户要求统一为单一旋钮;
   // 旧的独立「×」播放倍率已删)。timing.frames 是与抽屉共用的全局,禁在 mount/slider
   // 时裸写抢顺序 —— 播放与单步路径显式 set(此处即写回同值,幂等),用完立刻 restore
@@ -1586,7 +1587,7 @@ export default function PlayerControls({
     // 故节拍由 interval 周期给:timing.frames 帧 @60fps ≈ 该步本应播放的时长,瞬切后等同节拍
     // (否则一帧就冲到底,看不到逐步)。开 → 16ms 高频轮询,按动画完成逐步推进(原行为)。
     const animatePlayback = settings.animatePlayback !== false;
-    // 播放期间全局帧数切到播放速度,停止(cleanup)恢复抽屉「转动速度」值。
+    // 播放期间全局 tick 数切到播放速度,停止(cleanup)恢复抽屉 TPS 值。
     timing.frames = playbackFrames;
     const stepDelayMs = Math.max(80, Math.round((playbackFrames / 60) * 1000));
     playTimerRef.current = window.setInterval(() => {
@@ -2723,7 +2724,7 @@ function PercentRow({
  *  - 缩放 → 倍率:引擎 world.scale = 0.5 + v/100;cubing.js 用 cameraDistance [9,3] 逼近同档感受。
  *  - 左右/上下 → 旋转角度(度):引擎 scene.rotation ±90°;cubing.js 经度全程 ±180°(纬度同 ±90°),
  *    所以左右按渲染路径二选一。上下正值 = 俯视(相机在上)。
- *  - 转动速度 → 每秒转动步数:引擎 mapFrames 帧/90°,按 60fps 折算;cubing.js tempo 档近似同速。 */
+ *  - TPS → 每秒公式 token 数:引擎按真实 elapsed time 推进;cubing.js 使用相同精确倍率。 */
 // 灵敏度 → 相对默认(滑杆 50)的倍率。它同时驱动三种手感 —— 拖贴纸转层的角速度
 // (controller.sensitivity)、拖空白转视角的 rad/px(mapOrbitK)、SQ1 拖拽(mapTurnDragFactor)
 // —— 三者都是 mapSensitivity(v) 的常数倍,所以只有"相对默认几倍"对三条路径同时精确;
@@ -2742,7 +2743,7 @@ const UNIT_YAW_ENGINE: SliderUnit = { to: (v) => (50 - v) * 1.8, from: (d) => 50
 const UNIT_YAW_TWISTY: SliderUnit = { to: (v) => (50 - v) * 3.6, from: (d) => 50 - d / 3.6, min: -180, max: 180, step: 1, decimals: 0, suffix: '°' };
 // 上下(pitch):(50−v)·1.8 本就「上 = 正 = 俯视」,默认 33 → +31°,符号无需翻。
 const UNIT_PITCH: SliderUnit = { to: (v) => (50 - v) * 1.8, from: (d) => 50 - d / 1.8, min: -90, max: 90, step: 1, decimals: 0, suffix: '°' };
-const UNIT_TPS: SliderUnit = { to: (v) => 60 / mapFrames(v), from: (tps) => (120 - 60 / tps) / 1.1, min: 0.5, max: 6, step: 0.1, decimals: 1 };
+const UNIT_TPS: SliderUnit = { to: simSpeedToTps, from: simTpsToSpeed, min: 0.5, max: 6, step: 0.1, decimals: 1 };
 
 function PuzzleSettings({
   order, onOrderChange, puzzleKind, onPuzzleChange,
@@ -2943,7 +2944,7 @@ function PuzzleSettings({
                 : t('跟手倍率(相对默认):同时作用于拖层转动、拖空白转视角、SQ1 拖拽', 'Responsiveness relative to the default — scales layer drags, view drags and SQ1 drags alike'))} />
             <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} disabled={!caps.supports.scale} unit={UNIT_SCALE} title={hint(caps.supports.scale) ?? t('缩放倍率', 'Zoom factor')} />
             <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} disabled={!caps.supports.perspective} unit={UNIT_FOCAL} title={hint(caps.supports.perspective) ?? t('35mm 等效焦距(小 = 广角畸变强,大 = 接近正交)', '35mm-equivalent focal length (low = wide-angle distortion, high = near-orthographic)')} />
-            <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
+            <Slider label={t('TPS', 'TPS')} value={settings.speed} onChange={(v) => set('speed', v)} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
           </div>
           {/* 视角盘:「左右 / 上下」两条滑条合成一个平面直角坐标系 —— 可拖圆点 + 两个精确度数框
               (打 30 正好 30)。右 = 正(看右面)、上 = 正(俯视),纯显示层符号,不改底层 3D 旋转。
