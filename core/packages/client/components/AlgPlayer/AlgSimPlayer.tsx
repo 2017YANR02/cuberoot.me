@@ -32,6 +32,7 @@ import type { PuzzleKind } from '@/app/[lang]/sim/engine/world';
 import { pickStickering } from './stickering';
 import { resolvePlayerSetup, resolvePreviewTiming, resolveSimMoveDurationScale } from './player-setup';
 import AlgPlaybackControls from './AlgPlaybackControls';
+import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import './alg-sim-player.css';
 
 const LOOP_PAUSE_MS = 900;
@@ -61,7 +62,6 @@ async function preloadEngine() {
   return {
     mountSimWorld: embed.mountSimWorld,
     orbitSceneFree: view.orbitSceneFree,
-    resetSceneView: view.resetSceneView,
     ORBIT_K: view.ORBIT_K,
     timing: timingMod.timing,
     stickeringMaskFn: stickering.stickeringMaskFn,
@@ -69,12 +69,13 @@ async function preloadEngine() {
 }
 
 export default function AlgSimPlayer({
-  alg, puzzle, set, setup, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false,
+  alg, puzzle, set, setup, orientation = '', startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false,
 }: {
   alg: string;
   puzzle: AlgPuzzle;
   set: string;
   setup?: string;
+  orientation?: string;
   startSolved?: boolean;
   autoPlay?: boolean;
   playRequest?: number;
@@ -115,7 +116,8 @@ export default function AlgSimPlayer({
   const [replayRequest, setReplayRequest] = useState(0);
   const [ready, setReady] = useState(false);
   const mountRef = useRef<SimMount | null>(null);
-  const resetViewRef = useRef<() => void>(() => {});
+  const orientationRef = useRef(orientation);
+  orientationRef.current = orientation;
   /** 上一帧同步到引擎的状态 —— 用来判断「是不是刚好往前一步」。 */
   const lastRef = useRef<{ setupAlg: string; step: number } | null>(null);
 
@@ -132,7 +134,7 @@ export default function AlgSimPlayer({
 
   const mount = useCallback(async (host: HTMLElement) => {
     const {
-      mountSimWorld, orbitSceneFree, resetSceneView, ORBIT_K, timing, stickeringMaskFn,
+      mountSimWorld, orbitSceneFree, ORBIT_K, timing, stickeringMaskFn,
     } = await preloadEngine();
 
     const m = mountSimWorld({ host, puzzle: puzzleKind, interactive: true });
@@ -145,10 +147,12 @@ export default function AlgSimPlayer({
     world.controller.paintMode = true;
     world.controller.dragEmpty = 'orbit';
     world.controller.onOrbit = (dx, dy) => orbitSceneFree(world, dx, dy, ORBIT_K);
-    resetViewRef.current = () => { resetSceneView(world); m.invalidate(); };
 
     const order = NXN_ORDER[puzzle];
     const name = pickStickering(puzzle, set);
+    if (order) {
+      (cube as Cube).instancedRenderer.setFaceColorOverride(orientedCubeFaceColors(orientationRef.current));
+    }
     if (order && name) {
       (cube as Cube).instancedRenderer.setStickering(stickeringMaskFn(order, name) ?? null);
     }
@@ -163,6 +167,14 @@ export default function AlgSimPlayer({
       lastRef.current = null;
     };
   }, [puzzleKind, puzzle, set, previewTiming.frames]);
+
+  /** 菜单切换只重贴当前预览的颜色，不重建 world，也不改变 case 状态。 */
+  useEffect(() => {
+    const m = mountRef.current;
+    if (!m || !ready || !NXN_ORDER[puzzle]) return;
+    (m.world.cube as Cube).instancedRenderer.setFaceColorOverride(orientedCubeFaceColors(orientation));
+    m.invalidate();
+  }, [orientation, puzzle, ready]);
 
   /**
    * 把 (setup, step) 同步到引擎。只有「同一条公式、刚好 +1 步」才播动画,
@@ -206,7 +218,6 @@ export default function AlgSimPlayer({
         size={size}
         mount={mount}
         onReady={() => setReady(true)}
-        onResetView={controlMode === 'full' ? () => resetViewRef.current() : undefined}
         busyLabel={t('正在加载魔方', 'Loading the cube')}
       />
       <AlgPlaybackControls

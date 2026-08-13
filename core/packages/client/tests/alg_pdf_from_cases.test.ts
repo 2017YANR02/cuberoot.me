@@ -99,6 +99,12 @@ describe('algSheetFromCases', () => {
     expect(simplified.cases[0].thumb?.simplifyRecognition).toBe(true);
   });
 
+  it('PDF 缩略图跟随网页选择的魔方拿法', () => {
+    const c = mkCase({ name: 'T', algs: [[{ alg: "R U R'" }]] });
+    const sheet = algSheetFromCases({ ...base, cases: [c], orientation: '' });
+    expect(sheet.cases[0].thumb?.orientation).toBe('');
+  });
+
   it('PDF 的图、打乱和公式跟随网页观察角度', () => {
     const c = mkCase({
       name: 'T',

@@ -10,7 +10,7 @@
  *     `timer/_lib/scramble/pre_scramble.ts` 里 csTimer 平价的 preScr/preScrT 两档;
  *   - /predict 不转状态,只用 `orientedFaceColors` 把颜色重贴到固定的几何面上。
  */
-import type { CubeFace } from './cube-colors';
+import { CUBE_FILL, type CubeFace } from './cube-colors';
 
 export interface CubeOrientationOption {
   /** 整体转前缀,'' = 不转(UF)。 */
@@ -90,4 +90,28 @@ export function orientedFaceColors(prefix: string): Record<CubeFace, CubeFace> {
 export function faceShowingColor(shown: Record<CubeFace, CubeFace>, color: CubeFace): CubeFace {
   for (const f of Object.keys(shown) as CubeFace[]) if (shown[f] === color) return f;
   return color;
+}
+
+/** 朝向对应的六面实色。给 3D 渲染器做实例级覆写，不改 `/sim` 的全局用户配色。 */
+export function orientedCubeFaceColors(prefix: string): Record<CubeFace, string> {
+  const shown = orientedFaceColors(prefix);
+  return Object.fromEntries(
+    (Object.keys(shown) as CubeFace[]).map(face => [face, CUBE_FILL[shown[face]]]),
+  ) as Record<CubeFace, string>;
+}
+
+const VISUALCUBE_COLOR_CODE: Record<CubeFace, string> = {
+  U: 'w', D: 'y', F: 'g', B: 'b', L: 'o', R: 'r',
+};
+const VISUALCUBE_FACE_ORDER: CubeFace[] = ['U', 'R', 'F', 'D', 'L', 'B'];
+
+/** VisualCube 的 `sch=`(U R F D L B)；`topOnly` 保留 OLL 的单色识别图语义。 */
+export function visualCubeSchemeForOrientation(prefix: string, topOnly = false): string {
+  const shown = orientedFaceColors(prefix);
+  if (topOnly) {
+    return VISUALCUBE_FACE_ORDER
+      .map(face => face === 'U' ? CUBE_FILL[shown.U].slice(1) : '404040')
+      .join(',');
+  }
+  return VISUALCUBE_FACE_ORDER.map(face => VISUALCUBE_COLOR_CODE[shown[face]]).join('');
 }

@@ -17,7 +17,7 @@ import { pickStickering } from './stickering';
 import AlgSimPlayer from './AlgSimPlayer';
 import FtoEifAlgPlayer from './FtoEifAlgPlayer';
 import AlgPlaybackControls from './AlgPlaybackControls';
-import { resolvePlayerSetup, resolveTwistyTempoScale } from './player-setup';
+import { DEFAULT_ALG_MOVE_DURATION_MS, resolvePlayerSetup, resolveTwistyTempoScale } from './player-setup';
 
 export interface AlgPlayerHandle {
   /** 拿到底层 cubing.js TwistyPlayer 实例,给光标 sync 等高级用法用 */
@@ -49,6 +49,8 @@ interface Props {
   puzzle: AlgPuzzle;
   set: string;
   setup?: string;
+  /** NxN 预览的整体拿方；只重贴颜色，不改公式状态。 */
+  orientation?: string;
   /** 从还原态演示输入的转动。记号教学用;公式预览默认仍从公式的逆状态开始。 */
   startSolved?: boolean;
   /** 装好后自动播放;尊重 prefers-reduced-motion。 */
@@ -59,7 +61,7 @@ interface Props {
   loop?: boolean;
   /** 完整播放条或仅重播按钮。记号教学使用极简重播模式。 */
   controlMode?: 'full' | 'replay';
-  /** 单步教学示例的动画时长(ms)。不传时保留公式预览的快速节奏。 */
+  /** 每个 STM 的动画时长(ms)，默认 1000。 */
   moveDurationMs?: number;
   /** 自定义尺寸,默认 260px;`fillPane=true` 时忽略 */
   size?: number;
@@ -79,6 +81,7 @@ const DEFAULT_SIM = new Set<AlgPuzzle>(['2x2', '3x3', '4x4', '5x5']);
 const EXPLICIT_SIM = new Set<AlgPuzzle>([...DEFAULT_SIM, 'pyraminx', 'skewb']);
 
 const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, ref) {
+  const moveDurationMs = props.moveDurationMs ?? DEFAULT_ALG_MOVE_DURATION_MS;
   if (props.puzzle === 'fto') {
     return (
       <FtoEifAlgPlayer
@@ -90,7 +93,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         playRequest={props.playRequest}
         loop={props.loop}
         controlMode={props.controlMode}
-        moveDurationMs={props.moveDurationMs}
+        moveDurationMs={moveDurationMs}
         size={props.size}
         fillPane={props.fillPane}
       />
@@ -102,14 +105,15 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
     return (
       <AlgSimPlayer
         alg={props.alg} puzzle={props.puzzle} set={props.set} setup={props.setup}
+        orientation={props.orientation}
         startSolved={props.startSolved} autoPlay={props.autoPlay} loop={props.loop}
         playRequest={props.playRequest}
         controlMode={props.controlMode}
-        moveDurationMs={props.moveDurationMs} size={props.size ?? 260} fillPane={props.fillPane}
+        moveDurationMs={moveDurationMs} size={props.size ?? 260} fillPane={props.fillPane}
       />
     );
   }
-  return <TwistyAlgPlayer {...props} ref={ref} />;
+  return <TwistyAlgPlayer {...props} moveDurationMs={moveDurationMs} ref={ref} />;
 });
 
 const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPlayer({ alg, puzzle, set, setup, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false }, ref) {

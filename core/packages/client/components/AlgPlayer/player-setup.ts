@@ -2,8 +2,9 @@ import type { AlgPuzzle } from '@cuberoot/shared';
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import { invertFtoEifAlgorithm } from '@/lib/fto-eif-image';
 
-/** 公式预览沿用的快速动画;记号教学可单独传入更慢的单步时长。 */
-export const DEFAULT_PREVIEW_TIMING = { frames: 8, stepMs: 260 } as const;
+/** 公式动画和记号教学共用 1 STM/s 的默认节奏。 */
+export const DEFAULT_ALG_MOVE_DURATION_MS = 1000;
+export const DEFAULT_PREVIEW_TIMING = { frames: 60, stepMs: DEFAULT_ALG_MOVE_DURATION_MS } as const;
 const SIM_FRAMES_PER_SECOND = 60;
 
 export function resolveSimMoveDurationScale(puzzle: AlgPuzzle, move: string): number {

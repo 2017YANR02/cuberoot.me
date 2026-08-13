@@ -7,11 +7,14 @@ import { Face, Masking, makeMasking } from '@cuberoot/visualcube';
 import {
   caseThumbPlan,
   cubeThumbParams,
+  DEFAULT_ALG_CUBE_ORIENTATION,
   supportsCaseViewAngle,
+  supportsCubeOrientation,
   supportsRecognitionSimplification,
   type CaseThumbPlanInput,
 } from '@/lib/alg_thumb_plan';
 import { algCaseSvg } from '@/lib/alg_pdf/case_svg';
+import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 
 // guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 
@@ -40,6 +43,51 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     expect(caseThumbPlan(input('pyraminx')).renderer).toBe('engine');
     expect(caseThumbPlan(input('skewb')).renderer).toBe('inline-svg');
     expect(caseThumbPlan(input('fto')).renderer).toBe('inline-svg');
+  });
+
+  it('NxN 默认沿用黄顶红前，切换拿法时网页与 PDF 一起重贴色', async () => {
+    expect(DEFAULT_ALG_CUBE_ORIENTATION).toBe("z2 y'");
+    const base = { puzzle: '3x3' as const, set: 'f2l', sticker: { kind: 'f2l' as const, fl: '' }, alg: "R U R'" };
+    const existing = caseThumbPlan(base);
+    const standard = caseThumbPlan({ ...base, orientation: '' });
+    expect(existing.renderer).toBe('visualcube');
+    expect(standard.renderer).toBe('visualcube');
+    if (existing.renderer !== 'visualcube' || standard.renderer !== 'visualcube') {
+      throw new Error('expected visualcube plans');
+    }
+    expect(existing.params.scheme).toBe('ygrwbo');
+    expect(standard.params.scheme).toBe('wrgyob');
+    expect(orientedCubeFaceColors(DEFAULT_ALG_CUBE_ORIENTATION)).toMatchObject({
+      U: '#FEFE00',
+      R: '#00D800',
+      F: '#EE0000',
+      D: '#FFFFFF',
+      L: '#0000F2',
+      B: '#FFA100',
+    });
+    expect(supportsCubeOrientation('3x3', cubeThumbParams('3x3', 'f2l', base.sticker))).toBe(true);
+    await expect(algCaseSvg({ ...base, orientation: '' }))
+      .resolves.not.toBe(await algCaseSvg(base));
+  });
+
+  it('OLL 换拿法只改变顶色，显式教学配色不开放朝向菜单', () => {
+    const oll = caseThumbPlan({ puzzle: '3x3', set: 'oll', sticker: FACE, alg: "R U R'" });
+    const standard = caseThumbPlan({ puzzle: '3x3', set: 'oll', sticker: FACE, alg: "R U R'", orientation: '' });
+    expect(oll.renderer).toBe('visualcube');
+    expect(standard.renderer).toBe('visualcube');
+    if (oll.renderer !== 'visualcube' || standard.renderer !== 'visualcube') {
+      throw new Error('expected visualcube plans');
+    }
+    expect(oll.params.scheme).toBe('FEFE00,404040,404040,404040,404040,404040');
+    expect(standard.params.scheme).toBe('FFFFFF,404040,404040,404040,404040,404040');
+
+    const semantic = cubeThumbParams('3x3', 'oll', {
+      ...FACE,
+      mask: 'oll',
+      scheme: 'wrgoyb',
+    });
+    expect(semantic.scheme).toBe('wrgoyb');
+    expect(supportsCubeOrientation('3x3', semantic)).toBe(false);
   });
 
   it('FTO 的网页与 PDF 使用逐字相同的 EIF SVG', async () => {
