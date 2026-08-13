@@ -1678,6 +1678,14 @@ a.alg-community-author:hover {
   align-items: start;
   gap: 24px;
 }
+.alg-case-detail-lean.is-multi-ori {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.alg-case-detail-lean.is-multi-ori .alg-case-detail-lean-aside {
+  width: 100%;
+}
 .alg-case-detail-lean-aside {
   display: flex;
   flex-direction: column;
@@ -1723,7 +1731,8 @@ a.alg-community-author:hover {
 }
 .alg-case-detail-ori > .alg-alg-row:hover,
 .alg-case-detail-ori > .alg-alg-row.is-expanded,
-.alg-case-detail-ori > .alg-alg-sortable:hover {
+.alg-case-detail-ori > .alg-alg-sortable:hover,
+.alg-case-detail-ori > .alg-alg-sortable:has(.alg-alg-row.is-expanded) {
   position: relative;
   z-index: 1;
 }

@@ -2159,6 +2159,18 @@ export default function PlayerControls({
         {is3x3 && (
           <button
             type="button"
+            className="sim-player-scramble"
+            onClick={handleDeriveScramble}
+            disabled={derivingScramble || !algDraft.trim()}
+            title={t('从下方解法反推打乱', 'Derive scramble from the solution below')}
+            aria-label={t('反推打乱', 'Derive scramble')}
+          >
+            {derivingScramble ? <Loader2 size={14} className="sim-spin" /> : <Search size={14} />}
+          </button>
+        )}
+        {is3x3 && (
+          <button
+            type="button"
             className="sim-player-scramble sim-player-scramble-optimal"
             onClick={handleOptimalScramble}
             disabled={optimalScrambleBusy}
@@ -2180,18 +2192,6 @@ export default function PlayerControls({
         >
           <Play size={14} />
         </button>
-        {is3x3 && (
-          <button
-            type="button"
-            className="sim-player-scramble"
-            onClick={handleDeriveScramble}
-            disabled={derivingScramble || !algDraft.trim()}
-            title={t('从下方解法反推打乱', 'Derive scramble from the solution below')}
-            aria-label={t('反推打乱', 'Derive scramble')}
-          >
-            {derivingScramble ? <Loader2 size={14} className="sim-spin" /> : <Search size={14} />}
-          </button>
-        )}
       </div>
       {optimalScrambleStatus && (
         <div className="sim-player-status">

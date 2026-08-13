@@ -115,4 +115,24 @@ describe('MoveNotationDemo player lifecycle', () => {
     await act(async () => buttons[0].click());
     expect(onReplay).toHaveBeenCalledOnce();
   });
+
+  it('can omit playback controls while preserving click-to-play requests', async () => {
+    await act(async () => {
+      root.render(createElement(MoveNotationDemo, {
+        puzzle: '3x3',
+        moves: [
+          { move: 'U', caption: '上' },
+          { move: 'D', caption: '下' },
+        ],
+        variant: 'compact',
+        showReplay: false,
+      }));
+    });
+
+    const buttons = host.querySelectorAll<HTMLButtonElement>('.move-notation-option');
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-control-mode')).toBe('none');
+
+    await act(async () => buttons[1].click());
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-play-request')).toBe('1');
+  });
 });

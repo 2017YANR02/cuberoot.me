@@ -12,7 +12,7 @@
  *    `twister.setup(exp)`(先复位再整体重放,瞬时)和 `twister.push(exp)`(排队播动画)。
  *    所以只有「刚好往前走一步」才 push 出动画,其余(拖进度条 / 后退 / 换公式)一律
  *    整条 setup 重来。同一套取舍见 `/predict` 的题板。
- * 2. **拖拽只转视角,不转层**。`paintMode` + `dragEmpty='orbit'` 把每一次拖都判成看视角,
+ * 2. **拖拽只转视角,不转层**。`paintMode` + `dragEmpty='view'` 把每一次拖都判成看视角,
  *    再配 `orbitSceneFree`(只转场景,不折成整体转体)—— 折成转体会改动魔方本身的状态,
  *    那是画板要的,预览不要。
  * 3. **转速是引擎的模块级全局**(`timing.frames`),用完必须还回去,否则会漏给整站其它嵌入点。
@@ -29,6 +29,7 @@ import { useT } from '@/hooks/useT';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type { PuzzleKind } from '@/app/[lang]/sim/engine/world';
+import type { AlgPlayerControlMode } from './AlgPlayer';
 import { pickStickering } from './stickering';
 import { resolvePlayerSetup, resolvePreviewTiming, resolveSimMoveDurationScale } from './player-setup';
 import AlgPlaybackControls from './AlgPlaybackControls';
@@ -53,11 +54,12 @@ type PreviewTwister = {
 };
 
 async function preloadEngine() {
-  const [embed, view, timingMod, stickering] = await Promise.all([
+  const [embed, view, timingMod, stickering, toucherMod] = await Promise.all([
     import('@/components/sim-embed/mountSimWorld'),
     import('@/app/[lang]/sim/engine/viewControls'),
     import('@/app/[lang]/sim/engine/tweenTiming'),
     import('@/app/[lang]/sim/engine/nxn/stickering'),
+    import('@/app/[lang]/sim/Toucher'),
   ]);
   return {
     mountSimWorld: embed.mountSimWorld,
@@ -65,6 +67,7 @@ async function preloadEngine() {
     ORBIT_K: view.ORBIT_K,
     timing: timingMod.timing,
     stickeringMaskFn: stickering.stickeringMaskFn,
+    Toucher: toucherMod.default,
   };
 }
 
@@ -80,7 +83,7 @@ export default function AlgSimPlayer({
   autoPlay?: boolean;
   playRequest?: number;
   loop?: boolean;
-  controlMode?: 'full' | 'replay';
+  controlMode?: AlgPlayerControlMode;
   moveDurationMs?: number;
   size?: number;
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
@@ -134,7 +137,7 @@ export default function AlgSimPlayer({
 
   const mount = useCallback(async (host: HTMLElement) => {
     const {
-      mountSimWorld, orbitSceneFree, ORBIT_K, timing, stickeringMaskFn,
+      mountSimWorld, orbitSceneFree, ORBIT_K, timing, stickeringMaskFn, Toucher,
     } = await preloadEngine();
 
     const m = mountSimWorld({ host, puzzle: puzzleKind, interactive: true });
@@ -144,8 +147,10 @@ export default function AlgSimPlayer({
 
     // 拖 = 看视角。paintMode 关掉「拖层」那条路,dragEmpty 让空处拖也算看视角;
     // orbitSceneFree 只转场景,不把超出的角度折成整体转体(那会改魔方状态)。
+    const toucher = new Toucher();
+    toucher.init(m.renderer.domElement, world.controller.touch);
     world.controller.paintMode = true;
-    world.controller.dragEmpty = 'orbit';
+    world.controller.dragEmpty = 'view';
     world.controller.onOrbit = (dx, dy) => orbitSceneFree(world, dx, dy, ORBIT_K);
 
     const order = NXN_ORDER[puzzle];
@@ -162,6 +167,7 @@ export default function AlgSimPlayer({
 
     return () => {
       timing.frames = prevFrames;
+      toucher.destroy();
       m.dispose();
       mountRef.current = null;
       lastRef.current = null;
@@ -220,19 +226,21 @@ export default function AlgSimPlayer({
         onReady={() => setReady(true)}
         busyLabel={t('正在加载魔方', 'Loading the cube')}
       />
-      <AlgPlaybackControls
-        step={step}
-        count={moves.length}
-        playing={playing}
-        onStepChange={setStep}
-        onPlayingChange={setPlaying}
-        mode={controlMode}
-        onReplay={controlMode === 'replay' ? () => {
-          setStep(0);
-          setPlaying(true);
-          setReplayRequest(request => request + 1);
-        } : undefined}
-      />
+      {controlMode !== 'none' && (
+        <AlgPlaybackControls
+          step={step}
+          count={moves.length}
+          playing={playing}
+          onStepChange={setStep}
+          onPlayingChange={setPlaying}
+          mode={controlMode}
+          onReplay={controlMode === 'replay' ? () => {
+            setStep(0);
+            setPlaying(true);
+            setReplayRequest(request => request + 1);
+          } : undefined}
+        />
+      )}
     </div>
   );
 }

@@ -75,6 +75,7 @@ import './recon_detail.css';
 import '@/components/wca-results/attempts-grid.css';
 import { AvgDec } from '@/components/wca-results/AvgDec';
 import { tr } from '@/i18n/tr';
+import { buildSimQuery, simPuzzleForReconEvent } from '@/lib/sim-recon-link';
 
 const YOUTUBE_LOGO = '/assets/youtube_logo.svg';
 const BILIBILI_LOGO = '/assets/bilibili_logo.svg';
@@ -398,8 +399,8 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
       </div>
 
       <div className="detail-content-pane">
-        {scramble && solutionText && (
-          <ExternalLinks event={solve.event} scramble={playerScramble} alg={cleanForPlayer(solutionText)} solveId={solve.id} caption={caption} copyText={fullCopyText} />
+        {solutionText && (
+          <ExternalLinks event={solve.event} scramble={playerScramble} alg={solutionText} solveId={solve.id} caption={caption} copyText={fullCopyText} />
         )}
 
         {(scramble || solutionText) && (
@@ -407,7 +408,9 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
             {captionHeader && (
               <div className="detail-caption-header">{captionHeader}</div>
             )}
-            {scramble && <div className="detail-scramble-line">{displayScramble}{optimalScrambleTag}</div>}
+            <div className="detail-scramble-line">
+              {scramble ? <>{displayScramble}{optimalScrambleTag}</> : tr({ zh: '暂无打乱', en: 'No scramble available' })}
+            </div>
             {solutionText && (
               <SolutionView
                 text={displayText}
@@ -516,7 +519,10 @@ function ExternalLinks({ event, scramble, alg, solveId, caption, copyText }: {
   // 外站出链(alg.cubing.net / cubedb.net)只给管理员——普通读者用不上,且
   // 参数是给上游站排查复盘数据用的。useIsAdmin 是 hydration-safe 版,不能裸读 store。
   const isAdminUser = useIsAdmin();
-  const { algUrl, algSiteName, cubedbUrl } = buildExternalLinks(event, scramble, alg);
+  const playerAlg = cleanForPlayer(alg);
+  const { algUrl, algSiteName, cubedbUrl } = buildExternalLinks(event, scramble, playerAlg);
+  const simPuzzle = simPuzzleForReconEvent(event);
+  const simHref = simPuzzle ? `/sim?${buildSimQuery(simPuzzle, scramble, alg)}` : null;
   const shareUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/recon/${solveId}`
     : `/recon/${solveId}`;
@@ -548,6 +554,7 @@ function ExternalLinks({ event, scramble, alg, solveId, caption, copyText }: {
           <a href={cubedbUrl} target="_blank" rel="noopener noreferrer">cubedb.net</a>
         </>
       )}
+      {simHref && <Link href={simHref} prefetch={false}>{tr({ zh: '模拟器', en: 'simulator' })}</Link>}
       <a href="#" onClick={copyTo(shareUrl)}>{t('recon.link')}</a>
       {caption && <a href="#" onClick={copyTo(caption)}>{t('recon.caption')}</a>}
       {copyText && (

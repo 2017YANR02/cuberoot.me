@@ -55,11 +55,14 @@ export function buildReconSubmitQuery(reconEvent: string, scramble: string, solu
   return params.toString();
 }
 
-/** Build the /sim query string from recon state (raw moves, sim decodes them). */
+/** Build the /sim query string from recon state (raw moves, sim decodes them).
+ *  Without a scramble, anchor the solution at the solved endpoint so the
+ *  simulator can still replay a reconstruction backwards from solved. */
 export function buildSimQuery(simPuzzle: string, scramble: string, solution: string): string {
   const params = new URLSearchParams();
   params.set('puzzle', simPuzzle);
   if (scramble.trim()) params.set('setup', scramble.trim());
   if (solution.trim()) params.set('alg', solution.trim());
+  if (!scramble.trim() && solution.trim()) params.set('anchor', 'end');
   return params.toString();
 }

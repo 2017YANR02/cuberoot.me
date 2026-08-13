@@ -290,6 +290,9 @@ export default function SimPage() {
       cuts: parseAsString,
       alg: parseAsString,
       setup: parseAsString,
+      // Playback setup anchor. Written when the selector changes so copied links
+      // reproduce whether the alg starts at setup or finishes at setup.
+      anchor: parseAsStringEnum(['start', 'end'] as const),
       imageInverse: parseAsStringEnum(['1'] as const),
       // Which renderer for an ENGINE_TWISTY puzzle: 'group' = the in-house Three.js engine
       // + a live group-theory panel backed by the vendored puzzle-geometry (the default —
@@ -479,7 +482,22 @@ export default function SimPage() {
   }, [fullscreen]);
 
   const [worldTick, setWorldTick] = useState(0);
-  const [settings, setSettings] = useState<SimSettings>(() => loadSettings());
+  const [settings, setSettings] = useState<SimSettings>(() => {
+    const saved = loadSettings();
+    if (!query.anchor) return saved;
+    return { ...saved, playbackMode: query.anchor === 'end' ? 'algorithm' : 'moves' };
+  });
+  useEffect(() => {
+    if (!query.anchor) return;
+    const playbackMode = query.anchor === 'end' ? 'algorithm' : 'moves';
+    setSettings((prev) => prev.playbackMode === playbackMode ? prev : { ...prev, playbackMode });
+  }, [query.anchor]);
+  const handleSettingsChange = useCallback((next: SimSettings) => {
+    if (next.playbackMode !== settings.playbackMode) {
+      void setQuery({ anchor: next.playbackMode === 'algorithm' ? 'end' : 'start' });
+    }
+    setSettings(next);
+  }, [setQuery, settings.playbackMode]);
   const [keymap, setKeymap] = useState<Record<string, KeyMove>>(() => loadKeymap());
   const keymapRef = useRef(keymap);
   useEffect(() => { keymapRef.current = keymap; saveKeymap(keymap); }, [keymap]);
@@ -2176,7 +2194,7 @@ export default function SimPage() {
             puzzleKind={puzzleKind}
             onPuzzleChange={handlePuzzle}
             settings={settings}
-            onSettingsChange={setSettings}
+            onSettingsChange={handleSettingsChange}
             transCore={transCore ? TRANS_CORE : null}
             keymap={keymap}
             onKeymapChange={setKeymap}

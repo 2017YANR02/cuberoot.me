@@ -40,12 +40,14 @@ import './recon-engine-player.css';
 const NXN_RE = /^[2-7]x[2-7]x[2-7]$/;
 
 export default function ReconEnginePlayer({
-  event, scramble, solution, playerRef, fillPane = false, backView, hideControls = false, fullscreenButton,
+  event, scramble, solution, anchorAtEnd = false, playerRef, fillPane = false, backView, hideControls = false, fullscreenButton,
 }: {
   event: string;
   scramble: string;
   /** Solution to play. sq1 gets it raw; NxN / skewb / pyra go through cleanForPlayer. */
   solution: string;
+  /** Treat setup as the solved endpoint, so playback starts from solution inverse. */
+  anchorAtEnd?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: RefObject<any>;
   fillPane?: boolean;
@@ -66,6 +68,7 @@ export default function ReconEnginePlayer({
       <Sq1ReconPlayer
         scramble={scramble}
         alg={solution}
+        anchorAtEnd={anchorAtEnd}
         playerRef={playerRef}
         fillPane={fillPane}
         backView={backView}
@@ -79,6 +82,7 @@ export default function ReconEnginePlayer({
       <CuberReconPlayer
         scramble={scramble}
         alg={cleanForPlayer(solution)}
+        anchorAtEnd={anchorAtEnd}
         order={parseInt(puzzleId, 10)}
         playerRef={playerRef}
         fillPane={fillPane}
@@ -96,6 +100,7 @@ export default function ReconEnginePlayer({
         parseMoves={parseSkewbMoves}
         scramble={scramble}
         alg={cleanForPlayer(solution)}
+        anchorAtEnd={anchorAtEnd}
         playerRef={playerRef}
         fillPane={fillPane}
         hideControls={hideControls}
@@ -112,6 +117,7 @@ export default function ReconEnginePlayer({
         parseMoves={parsePyraMoves}
         scramble={scramble}
         alg={cleanForPlayer(solution)}
+        anchorAtEnd={anchorAtEnd}
         playerRef={playerRef}
         fillPane={fillPane}
         hideControls={hideControls}
@@ -131,6 +137,7 @@ export default function ReconEnginePlayer({
         fillPane={fillPane}
         backView={backView}
         hideControls={hideControls}
+        playbackMode={anchorAtEnd ? 'algorithm' : 'moves'}
       />
       {/* cubing.js's native bottom-row control panel has no slot for extra buttons
           (unlike the shared <PlaybackBar> the other puzzles use), so the fullscreen
