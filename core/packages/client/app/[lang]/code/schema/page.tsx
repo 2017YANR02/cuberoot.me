@@ -23,7 +23,7 @@ interface Table {
 
 type DomainKey =
   | 'mirror' | 'derived' | 'scramble' | 'recon' | 'alg'
-  | 'comp' | 'studio' | 'commerce' | 'community' | 'analytics';
+  | 'comp' | 'studio' | 'commerce' | 'community';
 
 const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
   { key: 'mirror', dot: '#5BA8FF', name: { zh: 'WCA 镜像', en: 'WCA mirror' }, sub: { zh: '每日开发者导出离线重建', en: 'rebuilt offline from the daily export' } },
@@ -35,7 +35,6 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
   { key: 'studio', dot: '#67C18E', name: { zh: '用户产物', en: 'User artifacts' }, sub: { zh: '计时 / 训练 / 绘图', en: 'timer, trainer, paint' } },
   { key: 'commerce', dot: '#A78BFA', name: { zh: '会员 & 赞助 & 反馈', en: 'Commerce & feedback' }, sub: { zh: '订阅 / 致谢 / 反馈', en: 'membership, sponsors, feedback' } },
   { key: 'community', dot: '#4FC3DC', name: { zh: '社区内容 & 站务', en: 'Community & ops' }, sub: { zh: '长文 / wiki / 导航 / runbook', en: 'articles, wiki, nav, runbook' } },
-  { key: 'analytics', dot: '#E0B341', name: { zh: '流量', en: 'Analytics' }, sub: { zh: '自建,无第三方追踪', en: 'self-hosted, no 3rd-party' } },
 ];
 
 const TABLES: Table[] = [
@@ -242,11 +241,6 @@ const TABLES: Table[] = [
     { name: 'sids, pick, rest', note: { zh: '自建遮罩的贴纸清单,同 ?stickeringMask= 编码', en: 'the sticker list of a custom mask — same encoding as ?stickeringMask=' } },
   ] },
 
-  // ── analytics ───────────────────────────────────────────
-  { name: 'pageviews', domain: 'analytics', origin: '0008', purpose: { zh: 'PV 明细:按日轮换的访客 hash,无 cookie', en: 'Pageview events with a daily-rotating visitor hash, no cookie' }, cols: [
-    { name: 'ts, path' }, { name: 'visitor_id BYTEA', note: { zh: '16 字节按日轮换 hash', en: '16-byte daily-rotating hash' } }, { name: 'ref_domain', note: { zh: '归一到 eTLD+1', en: 'normalised to eTLD+1' } }, { name: 'country, ua_class, dwell_ms' },
-  ] },
-  { name: 'traffic_daily', domain: 'analytics', origin: '0008', purpose: { zh: '日聚合:路径 / 来源 / 国家', en: 'Daily rollup by path / referrer / country' } },
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
@@ -374,6 +368,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 121, slug: 'lowcubes_fto_megaminx', desc: { zh: '数据迁移：导入 LowCubes / Raul Low 的 216 个 FTO L3T 情况与 151 个 Megaminx Full PLL 情况，setup 按上游记号规则严格取逆。', en: 'Data migration: import 216 LowCubes / Raul Low FTO L3T cases and 151 Megaminx Full PLL cases, with each setup exactly inverted under the upstream notation rules.' } },
   { n: 122, slug: 'collaborative_documents', desc: { zh: '新增通用实时协作文档与成员权限表，正文以 Yjs 状态持久化。', en: 'Add general real-time collaborative documents and member roles, persisting body content as Yjs state.' } },
   { n: 123, slug: 'collaborative_resource_kinds', desc: { zh: '协作资源增加 document / spreadsheet 类型，在同一权限与 Yjs 实时同步底座上支持在线表格。', en: 'Add document / spreadsheet resource kinds so online spreadsheets share the existing permissions and Yjs real-time foundation.' } },
+  { n: 125, slug: 'drop_traffic_analytics', desc: { zh: '退役自建流量统计并删除 pageviews 与 traffic_daily。', en: 'Retire self-hosted traffic analytics and drop pageviews and traffic_daily.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
