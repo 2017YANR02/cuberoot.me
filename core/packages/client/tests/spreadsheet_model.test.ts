@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { HyperFormula } from 'hyperformula';
-import { calculateSpreadsheetFormulas, rewriteFormulasForSheetRename } from '@/lib/spreadsheet-formulas';
+import { calculateSpreadsheetFormulas, rewriteFormulasForSheetRename, rewriteFormulasForStructure } from '@/lib/spreadsheet-formulas';
 import {
   cellAddress, columnIndex, columnLabel, formatCalculatedValue, normalizedRange,
   formatSpreadsheetCellValue, parseCellAddress, parseClipboardTable, parseFormulaValue,
-  rangeAddresses, rangeToTsv, sortSpreadsheetRangeRows, usedBounds,
+  rangeAddresses, rangeToTsv, serializeRange, shiftAddressRecord, shiftSerializedRanges,
+  sortSpreadsheetRangeRows, usedBounds, type SpreadsheetSheet,
 } from '@/lib/spreadsheet-model';
 
 describe('spreadsheet model', () => {
@@ -89,6 +90,37 @@ describe('spreadsheet model', () => {
     }];
     expect(rewriteFormulasForSheetRename(sheets, 'Old data', 'New data')).toEqual({
       summary: { A1: "='New data'!A1*2" },
+    });
+  });
+
+  it('moves sparse cell metadata and merged ranges during row and column edits', () => {
+    expect(shiftAddressRecord({ A1: 'head', B2: 'body', C3: 'tail' }, 'row', 1, 'insert', 100)).toEqual({
+      A1: 'head', B3: 'body', C4: 'tail',
+    });
+    expect(shiftAddressRecord({ A1: 'head', B2: 'body', C3: 'tail' }, 'column', 1, 'delete', 26)).toEqual({
+      A1: 'head', B3: 'tail',
+    });
+    const merge = { start: { row: 1, column: 1 }, end: { row: 2, column: 2 } };
+    expect(serializeRange(merge)).toBe('B2:C3');
+    expect(shiftSerializedRanges(['B2:C3'], 'row', 0, 'insert', 100)).toEqual(['B3:C4']);
+    expect(shiftSerializedRanges(['B2:C3'], 'row', 1, 'delete', 100)).toEqual([]);
+  });
+
+  it('rewrites local and cross-sheet formulas during structural edits', () => {
+    const sheets: SpreadsheetSheet[] = [{
+      id: 'data', name: 'Data', rowCount: 100, columnCount: 26,
+      cells: { A1: '2', A2: '3', B1: '=SUM(A1:A2)' }, styles: {}, widths: {},
+    }, {
+      id: 'summary', name: 'Summary', rowCount: 100, columnCount: 26,
+      cells: { A1: '=Data!B1' }, styles: {}, widths: {},
+    }];
+    expect(rewriteFormulasForStructure(sheets, 'data', 'row', 0, 'insert')).toEqual({
+      data: { B2: '=SUM(A2:A3)' },
+      summary: { A1: '=Data!B2' },
+    });
+    expect(rewriteFormulasForStructure(sheets, 'data', 'row', 99, 'insert')).toEqual({
+      data: { B1: '=SUM(A1:A2)' },
+      summary: { A1: '=Data!B1' },
     });
   });
 });

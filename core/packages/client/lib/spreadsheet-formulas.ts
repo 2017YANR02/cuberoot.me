@@ -1,5 +1,5 @@
 import { HyperFormula } from 'hyperformula';
-import { parseCellAddress, parseFormulaValue, type SpreadsheetSheet } from '@/lib/spreadsheet-model';
+import { cellAddress, parseCellAddress, parseFormulaValue, type SpreadsheetSheet } from '@/lib/spreadsheet-model';
 
 export interface SpreadsheetFormulaResult {
   values: Record<string, Record<string, unknown>>;
@@ -69,6 +69,41 @@ export function rewriteFormulasForSheetRename(
       }
     }
     return patches;
+  } finally {
+    engine.destroy();
+  }
+}
+
+export function rewriteFormulasForStructure(
+  sheets: SpreadsheetSheet[],
+  targetSheetId: string,
+  axis: 'row' | 'column',
+  index: number,
+  mode: 'insert' | 'delete',
+): Record<string, Record<string, string>> {
+  const formulas: Record<string, Record<string, string>> = {};
+  const target = sheets.find((sheet) => sheet.id === targetSheetId);
+  if (!target) return formulas;
+  const engine = buildFormulaEngine(sheets);
+  try {
+    const targetId = engine.getSheetId(target.name);
+    if (targetId === undefined) return formulas;
+    if (axis === 'row') {
+      if (mode === 'insert') engine.addRows(targetId, [index, 1]);
+      else engine.removeRows(targetId, [index, 1]);
+    } else if (mode === 'insert') engine.addColumns(targetId, [index, 1]);
+    else engine.removeColumns(targetId, [index, 1]);
+
+    for (const sheet of sheets) {
+      const sheetId = engine.getSheetId(sheet.name);
+      if (sheetId === undefined) continue;
+      engine.getSheetSerialized(sheetId).forEach((row, rowIndex) => row.forEach((value, columnIndex) => {
+        if (typeof value === 'string' && value.startsWith('=')) {
+          (formulas[sheet.id] ??= {})[cellAddress(rowIndex, columnIndex)] = value;
+        }
+      }));
+    }
+    return formulas;
   } finally {
     engine.destroy();
   }
