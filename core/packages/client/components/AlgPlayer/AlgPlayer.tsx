@@ -53,6 +53,8 @@ interface Props {
   startSolved?: boolean;
   /** 装好后自动播放;尊重 prefers-reduced-motion。 */
   autoPlay?: boolean;
+  /** 数值变化时从头播放一次，不重建播放器。 */
+  playRequest?: number;
   /** 自动播放到末尾后从头重播。 */
   loop?: boolean;
   /** 完整播放条或仅重播按钮。记号教学使用极简重播模式。 */
@@ -85,6 +87,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         setup={props.setup}
         startSolved={props.startSolved}
         autoPlay={props.autoPlay}
+        playRequest={props.playRequest}
         loop={props.loop}
         controlMode={props.controlMode}
         moveDurationMs={props.moveDurationMs}
@@ -100,6 +103,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
       <AlgSimPlayer
         alg={props.alg} puzzle={props.puzzle} set={props.set} setup={props.setup}
         startSolved={props.startSolved} autoPlay={props.autoPlay} loop={props.loop}
+        playRequest={props.playRequest}
         controlMode={props.controlMode}
         moveDurationMs={props.moveDurationMs} size={props.size ?? 260} fillPane={props.fillPane}
       />
@@ -108,7 +112,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
   return <TwistyAlgPlayer {...props} ref={ref} />;
 });
 
-const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPlayer({ alg, puzzle, set, setup, startSolved = false, autoPlay = false, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false }, ref) {
+const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPlayer({ alg, puzzle, set, setup, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false }, ref) {
   const hostRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
@@ -188,6 +192,20 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
       if (playerRef.current === player) playerRef.current = null;
     };
   }, [alg, puzzle, set, setup, startSolved, autoPlay, loop, controlMode, moveDurationMs, size, fillPane]);
+
+  const handledPlayRequestRef = useRef(playRequest);
+  useEffect(() => {
+    if (handledPlayRequestRef.current === playRequest) return;
+    handledPlayRequestRef.current = playRequest;
+    const player = playerRef.current;
+    if (!player) return;
+    try {
+      player.pause?.();
+      player.timestamp = 0;
+      player.play?.();
+    } catch { /* player may still be initializing */ }
+  }, [playRequest]);
+
   // NOTE: 固定 host 尺寸,player 重 mount 时容器占位不丢,父布局不抖
   const hostStyle: CSSProperties = fillPane
     ? { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }

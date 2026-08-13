@@ -34,7 +34,11 @@
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 
-import CubeColorChip, { f2lDisplayColors, leadingCubeColors } from '@/components/CubeColorChip/CubeColorChip';
+import CubeColorChip, {
+  crossColorFromLabels,
+  f2lDisplayColors,
+  leadingCubeColors,
+} from '@/components/CubeColorChip/CubeColorChip';
 import { tr } from '@/i18n/tr';
 
 import type { ReconTextResult, ReconTextLine } from '../_lib/reconstruct/recon_text';
@@ -87,6 +91,7 @@ export default function StepMoveList({
 
   if (!recon || recon.lines.length === 0) return null;
   const groups = groupLines(recon.lines);
+  const crossColor = crossColorFromLabels(recon.lines.map(line => line.label));
 
   /** 这一行的徽章。槽走 slotReference,其余走 stages。 */
   const gradeFor = (line: ReconTextLine): 'optimal' | null => {
@@ -209,7 +214,7 @@ export default function StepMoveList({
                       return (
                         <span className="sml-label">
                           {'// '}
-                          {colors && <CubeColorChip colors={f2lDisplayColors(colors)} className="sml-label-chip" />}
+                          {colors && <CubeColorChip colors={f2lDisplayColors(colors, crossColor)} className="sml-label-chip" />}
                           {visibleLabel}
                         </span>
                       );

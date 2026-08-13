@@ -35,6 +35,7 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
   setup?: string;
   startSolved?: boolean;
   autoPlay?: boolean;
+  playRequest?: number;
   loop?: boolean;
   controlMode?: 'full' | 'replay';
   moveDurationMs?: number;
@@ -45,6 +46,7 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
   setup,
   startSolved = false,
   autoPlay = false,
+  playRequest = 0,
   loop = false,
   controlMode = 'full',
   moveDurationMs = 260,
@@ -77,7 +79,8 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     setStep(0);
     setPlaying(true);
-  }, [autoPlay, setupAlg, parsedAlg.tokens.length]);
+    setReplayRequest(request => request + 1);
+  }, [alg, autoPlay, playRequest, setupAlg, parsedAlg.tokens.length]);
 
   useEffect(() => {
     if (!playing) return;

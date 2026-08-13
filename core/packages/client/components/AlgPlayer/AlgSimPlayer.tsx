@@ -69,7 +69,7 @@ async function preloadEngine() {
 }
 
 export default function AlgSimPlayer({
-  alg, puzzle, set, setup, startSolved = false, autoPlay = false, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false,
+  alg, puzzle, set, setup, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false,
 }: {
   alg: string;
   puzzle: AlgPuzzle;
@@ -77,6 +77,7 @@ export default function AlgSimPlayer({
   setup?: string;
   startSolved?: boolean;
   autoPlay?: boolean;
+  playRequest?: number;
   loop?: boolean;
   controlMode?: 'full' | 'replay';
   moveDurationMs?: number;
@@ -126,7 +127,8 @@ export default function AlgSimPlayer({
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     setStep(0);
     setPlaying(true);
-  }, [ready, autoPlay, setupAlg, moves.length]);
+    setReplayRequest(request => request + 1);
+  }, [ready, autoPlay, alg, playRequest, setupAlg, moves.length]);
 
   const mount = useCallback(async (host: HTMLElement) => {
     const {
