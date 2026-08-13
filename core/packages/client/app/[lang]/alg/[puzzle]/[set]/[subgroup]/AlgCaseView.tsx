@@ -9,7 +9,7 @@
  * 两种正文,按有没有富元数据分流:
  *  - 有 `meta`(zbll / 1lll / pll / ell):复用 {@link AlgCaseMetaContent}(镜像/逆/概率/最优解…),
  *    关联缩略图走 `jump:'link'`(真 <a>,中键可新开),slug 从全集唯一表拿。
- *  - 无 `meta`(f2l / oll / coll / cmll / zbls …):精简正文 —— 大魔方图 + 可播放公式行。
+ *  - 无 `meta`(f2l / oll / coll / cmll / zbls …):精简正文 —— 槽位魔方图 + 可播放公式行。
  *  - 两者都挂社区公式(登录用户可加/改自己的)。
  *
  * admin 的三件套和 case 列表页对齐,只是粒度降到这一张 case:标题旁的铅笔开
@@ -407,10 +407,12 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
         </div>
       ) : (
         <div className="alg-case-detail-lean">
-          <div className="alg-case-detail-lean-aside">
-            <div className="alg-case-detail-lean-thumb">
-              <CaseThumb puzzle={puzzle} set={set} sticker={caseObj.sticker} alg={caseObj.algs[0]?.[0]?.alg || caseObj.setup || ''} setup={caseObj.setup} size={116} sq1BlackTop={sq1BlackTop} viewAngle={effectiveViewAngle} orientation={effectiveOrientation} />
-            </div>
+          <div className={`alg-case-detail-lean-aside${multiOri ? ' is-without-thumb' : ''}`}>
+            {!multiOri && (
+              <div className="alg-case-detail-lean-thumb">
+                <CaseThumb puzzle={puzzle} set={set} sticker={caseObj.sticker} alg={caseObj.algs[0]?.[0]?.alg || caseObj.setup || ''} setup={caseObj.setup} size={116} sq1BlackTop={sq1BlackTop} viewAngle={effectiveViewAngle} orientation={effectiveOrientation} />
+              </div>
+            )}
             {mirror?.card && (
               <div className="alg-mirror-row">
                 <span className="alg-mirror-label">{tr({ zh: '镜像 case', en: 'Mirror case' })}</span>
@@ -434,12 +436,14 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
           </div>
           <div className={`alg-case-detail-lean-algs${multiOri ? ' is-multi-ori' : ''}`}>
             {caseObj.algs.map((oriAlgs, oi) => {
+              const orientedSetup = oriAdjustSetup(caseObj.setup, oi);
+              const firstAlg = oriAlgs[0]?.alg ?? caseObj.standard ?? '';
               const rows = oriAlgs.map((entry, i) => {
                 // setup 必须跟着朝向走 —— 四个槽共用一条原始 setup 时,FL/BL/BR 演的是别的 case
                 const row = (
                   <PlayableAlgRow
                     entry={entry} puzzle={puzzle} set={set} ori={oi}
-                    setup={oriAdjustSetup(caseObj.setup, oi)}
+                    setup={orientedSetup}
                     mirror={mirror ? { partner: mirror.partner, self: mirror.self } : undefined}
                     viewAngle={effectiveViewAngle}
                     orientation={effectiveOrientation}
@@ -452,6 +456,21 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
               return (
                 <div key={oi} className="alg-case-detail-ori">
                   {multiOri && <div className="alg-case-detail-ori-label">{shortOriName(oriNames![oi])}</div>}
+                  {multiOri && (
+                    <div className="alg-case-detail-ori-thumb">
+                      <CaseThumb
+                        puzzle={puzzle}
+                        set={set}
+                        sticker={caseObj.sticker}
+                        alg={firstAlg || orientedSetup || ''}
+                        setup={orientedSetup}
+                        size={116}
+                        sq1BlackTop={sq1BlackTop}
+                        viewAngle={effectiveViewAngle}
+                        orientation={effectiveOrientation}
+                      />
+                    </div>
+                  )}
                   {dragAlgs ? withDnd(oi)(rows) : rows}
                 </div>
               );

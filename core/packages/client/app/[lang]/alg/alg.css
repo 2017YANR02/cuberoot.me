@@ -1671,7 +1671,7 @@ a.alg-community-author:hover {
   overflow: visible;
 }
 
-/* 非 meta case(f2l / oll / coll / cmll / zbls …)的精简正文:大魔方图 + 可播放公式行。 */
+/* 非 meta case(f2l / oll / coll / cmll / zbls …)的精简正文:槽位魔方图 + 可播放公式行。 */
 .alg-case-detail-lean {
   display: grid;
   grid-template-columns: 136px minmax(0, 1fr);
@@ -1733,6 +1733,10 @@ a.alg-community-author:hover {
   font-weight: 600;
   color: var(--muted-foreground);
 }
+.alg-case-detail-ori-thumb {
+  margin-bottom: 6px;
+  line-height: 0;
+}
 
 @media (max-width: 680px) {
   .alg-case-detail {
@@ -1754,6 +1758,11 @@ a.alg-community-author:hover {
   }
   .alg-case-detail-lean-thumb { grid-row: 1 / span 3; }
   .alg-case-detail-lean-aside > :not(.alg-case-detail-lean-thumb) { grid-column: 2; }
+  .alg-case-detail-lean-aside.is-without-thumb {
+    display: flex;
+    flex-direction: column;
+  }
+  .alg-case-detail-lean-aside.is-without-thumb > * { grid-column: auto; }
   .alg-case-detail-lean-aside .alg-mirror-row {
     align-items: flex-start;
     flex-direction: column;
