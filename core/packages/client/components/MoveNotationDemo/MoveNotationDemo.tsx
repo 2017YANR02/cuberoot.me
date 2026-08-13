@@ -42,7 +42,6 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
           autoPlay
           playRequest={playRequest}
           controlMode="replay"
-          moveDurationMs={1000}
           engine={engine}
           size={260}
         />

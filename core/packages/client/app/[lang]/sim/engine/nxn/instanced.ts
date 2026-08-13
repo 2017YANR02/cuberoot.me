@@ -28,6 +28,8 @@ import { injectStickerOutline, setStickerOutlineScale, type OutlineUniform } fro
 import { engineHomeSid } from "./netIndex";
 import { setPanelFanGap } from "./panelFan";
 
+type CubeFaceLabel = "U" | "D" | "L" | "R" | "F" | "B";
+
 const HALF = Cubelet.SIZE / 2;
 /** FM_FIXED_COLOR 的预解析副本 —— 色值单一源在 stickering.ts,这里只是把它变成
  *  THREE.Color,免 resolveStickerColor 每次重解析字符串。 */
@@ -133,6 +135,8 @@ export default class InstancedRenderer extends THREE.Group {
    * 打乱 / slice 动画中标注的始终是同一批实体块。只改 instance color,不动矩阵,
    * 与 strip(remove)/ 镜面 / rebuildAll 正交。 */
   private stickeringCodes: Uint8Array | null = null;
+  /** 嵌入式预览可独立重贴色；null 时仍走 /sim 的全局用户配色。 */
+  private faceColorOverride: Partial<Record<CubeFaceLabel, string>> | null = null;
   /** FM_DIM 下纯白压到哪。白色减半 = 灰,会跟 FM_IGNORED 那档灰撞,所以 /sim 压到
    *  `#dddddd`(cubing.js PG3D 同款)。代价是它跟满色白几乎分不出 —— 板子上同时有满色白
    *  贴纸时(/predict)调成更暗的一档,让「压暗的白」一眼是暗的。 */
@@ -1129,7 +1133,10 @@ export default class InstancedRenderer extends THREE.Group {
     // 预解析过(见 FM_FIXED_3D):这里每帧跑 376k 次,不能再走字符串解析。
     const fixed = FM_FIXED_3D.get(code);
     if (fixed) { this.tmpColor.copy(fixed); return; }
-    this.tmpColor.set(COLORS[faceLabel ?? "Gray"] ?? COLORS.Gray);
+    const overridden = faceLabel
+      ? this.faceColorOverride?.[faceLabel as CubeFaceLabel]
+      : undefined;
+    this.tmpColor.set(overridden ?? COLORS[faceLabel ?? "Gray"] ?? COLORS.Gray);
     if (code === FM_DIM) {
       if (this.tmpColor.getHex() === 0xffffff) {
         this.tmpColor.set(this.dimWhite);
@@ -1205,10 +1212,16 @@ export default class InstancedRenderer extends THREE.Group {
     this.cube.dirty = true;
   }
 
+  /** 只覆盖当前 renderer 的六面色；公式预览换拿方时不能污染同页或 `/sim`。 */
+  setFaceColorOverride(map: Partial<Record<CubeFaceLabel, string>> | null): void {
+    this.faceColorOverride = map ? { ...map } : null;
+    this.refreshStickerColors();
+  }
+
   /** 用户改了 6 面色:写 COLORS map + 重刷所有 sticker / hint instance color。
    * sticker 用原色,hint 走 computeHintColor 跟当前 bg 预混。
    * cubelet.colors[face] 是 logical label ("L"/"R"/"U"/"D"/"F"/"B"),COLORS 改了下次 applyStick 也自动走新色。 */
-  setFaceColors(map: Partial<Record<"U" | "D" | "L" | "R" | "F" | "B", string>>): void {
+  setFaceColors(map: Partial<Record<CubeFaceLabel, string>>): void {
     for (const k of ["U", "D", "L", "R", "F", "B"] as const) {
       const v = map[k];
       if (v) COLORS[k] = v;

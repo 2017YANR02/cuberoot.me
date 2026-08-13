@@ -8,7 +8,7 @@ import type { AlgPuzzle, AlgSticker } from '@cuberoot/shared';
 import { VisualCube } from '@/components/VisualCube';
 import { PuzzleSVG } from '@/components/PuzzleSVG';
 import { EnginePuzzleSVG } from '@/components/EnginePuzzleSVG';
-import { caseThumbPlan } from '@/lib/alg_thumb_plan';
+import { caseThumbPlan, DEFAULT_ALG_CUBE_ORIENTATION } from '@/lib/alg_thumb_plan';
 import type { CaseViewAngle } from '@/lib/alg_display';
 
 export function CaseThumb({
@@ -16,6 +16,7 @@ export function CaseThumb({
   sq1BlackTop = true,
   simplifyRecognition = false,
   viewAngle = 'default',
+  orientation = DEFAULT_ALG_CUBE_ORIENTATION,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -37,10 +38,12 @@ export function CaseThumb({
   simplifyRecognition?: boolean;
   /** Rotate an applicable last-layer case by U / U2 / U' while keeping its solution coherent. */
   viewAngle?: CaseViewAngle;
+  /** Recolour an NxN diagram to the selected whole-cube holding orientation. */
+  orientation?: string;
 }) {
   const plan = useMemo(() => caseThumbPlan({
-    puzzle, set, sticker, alg, setup, mask: maskOverride, sq1BlackTop, simplifyRecognition, viewAngle,
-  }), [puzzle, set, sticker, alg, setup, maskOverride, sq1BlackTop, simplifyRecognition, viewAngle]);
+    puzzle, set, sticker, alg, setup, mask: maskOverride, sq1BlackTop, simplifyRecognition, viewAngle, orientation,
+  }), [puzzle, set, sticker, alg, setup, maskOverride, sq1BlackTop, simplifyRecognition, viewAngle, orientation]);
 
   if (plan.renderer === 'inline-svg') {
     return (

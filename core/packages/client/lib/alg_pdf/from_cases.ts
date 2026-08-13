@@ -69,6 +69,8 @@ export interface FromCasesOptions {
   simplifyRecognition?: boolean;
   /** 顶层 case 的观察角度；打乱、缩略图与公式一起旋转。 */
   viewAngle?: CaseViewAngle;
+  /** 网页当前选择的魔方拿法；PDF 缩略图必须同步。 */
+  orientation?: string;
 }
 
 export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
@@ -110,6 +112,7 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
               puzzle, set, sticker: c.sticker, alg: firstAlg || c.setup || '', setup, size: 160,
               ...(puzzle === 'sq1' ? { sq1BlackTop: o.sq1BlackTop ?? true } : {}),
               ...(o.simplifyRecognition ? { simplifyRecognition: true } : {}),
+              ...(o.orientation !== undefined ? { orientation: o.orientation } : {}),
             }
           : undefined,
       });

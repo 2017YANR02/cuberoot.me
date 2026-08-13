@@ -25,10 +25,13 @@ import {
 } from '@cuberoot/shared';
 import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
+import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import {
   cubeThumbParams,
+  DEFAULT_ALG_CUBE_ORIENTATION,
   LEVEL2_PICKER_MASK,
   supportsCaseViewAngle,
+  supportsCubeOrientation,
   supportsRecognitionSimplification,
   usesSvThumbStyle,
 } from '@/lib/alg_thumb_plan';
@@ -55,6 +58,8 @@ import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { buildOllNameByGroup, displayAlgCaseName, primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { sortByCp } from '@/lib/alg_cp_order';
+import { sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
+import { CUBE_ORIENTATIONS, visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import { ALG_TAG_LABEL, ALG_TAGS } from '@/lib/alg_tags';
 import {
   CASE_VIEW_ANGLES,
@@ -101,6 +106,7 @@ function SvThumbImages({
   smallSize,
   simplifyRecognition = false,
   viewAngle = 'default',
+  orientation = DEFAULT_ALG_CUBE_ORIENTATION,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -111,6 +117,7 @@ function SvThumbImages({
   smallSize: number;
   simplifyRecognition?: boolean;
   viewAngle?: CaseViewAngle;
+  orientation?: string;
 }) {
   return (
     <>
@@ -124,12 +131,14 @@ function SvThumbImages({
         loading="lazy"
         simplifyRecognition={simplifyRecognition}
         viewAngle={viewAngle}
+        orientation={orientation}
       />
       <VisualCube
         algorithm={caseViewAlg(alg, viewAngle)}
         setup={caseViewSetup(setup ?? '', viewAngle)}
         view="iso"
         mask="wv"
+        scheme={visualCubeSchemeForOrientation(orientation)}
         size={smallSize}
         loading="lazy"
         alt=""
@@ -148,10 +157,14 @@ const RECOGNIZE_SETS_3X3 = new Set(['oll', 'pll', 'coll', 'ell', 'zbll', '1lll']
 const ZBLL_DIAGRAM_MODES = ['full', 'simplified', 'dual'] as const;
 type ZbllDiagramMode = (typeof ZBLL_DIAGRAM_MODES)[number];
 
-/** 打乱行。复制的是**屏幕上这一条**(sq1 之类会重排格式),不是库里的原文。 */
-function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
+/** 打乱行。复制的是**屏幕上这一条**(含当前记号模式),不是库里的原文。 */
+function SetupLine({ puzzle, setup, notationStyle }: {
+  puzzle: string;
+  setup: string;
+  notationStyle: AlgNotationStyle;
+}) {
   const { copied, copy } = useCopy();
-  const text = formatScrambleForEvent(puzzle, setup);
+  const text = formatAlgNotation(formatScrambleForEvent(puzzle, setup), notationStyle);
   return (
     <div className="alg-case-standard">
       <Shuffle size={13} className="alg-case-icon" aria-label={tr({ zh: '打乱', en: 'Setup' })} />
@@ -168,7 +181,7 @@ function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
   );
 }
 
-function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, invalid, mirror, ori = 0, notationStyle, viewAngle }: {
+function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, invalid, mirror, ori = 0, notationStyle, viewAngle, orientation }: {
   entry: AlgEntry; expanded: boolean; onToggle: () => void; animatable: boolean;
   puzzle: AlgPuzzle; set: string; setup?: string; invalid?: string;
   /** 有值 = 这个 set 吃镜像系统,行尾出翻转图标;`partner` 是伙伴 case 名(没建链时为 null) */
@@ -177,6 +190,7 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
   ori?: number;
   notationStyle: AlgNotationStyle;
   viewAngle: CaseViewAngle;
+  orientation: string;
 }) {
   const { alg, algHtml } = entry;
   const { copied, copy } = useCopy();
@@ -248,6 +262,7 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
           puzzle={puzzle}
           set={set}
           setup={playerSetup === undefined ? undefined : caseViewSetup(playerSetup, viewAngle)}
+          orientation={orientation}
         />
       )}
     </>
@@ -541,6 +556,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     'angle',
     parseAsStringEnum<CaseViewAngle>([...CASE_VIEW_ANGLES]).withDefault('default'),
   );
+  const [orientation, setOrientation] = useQueryState(
+    'orientation',
+    parseAsStringEnum<string>(CUBE_ORIENTATIONS.map(option => option.value))
+      .withDefault(DEFAULT_ALG_CUBE_ORIENTATION),
+  );
   const [optimalMetric, setOptimalMetric] = useQueryState(
     'metric',
     parseAsStringEnum<OptimalMetric>([...OPTIMAL_METRICS]).withDefault('htm'),
@@ -765,9 +785,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
    * 只动这一份 —— `data.cases` 保持库里的原顺序,admin 拖动重排写回的还是它。
    */
   const orderedCases = useMemo(() => {
-    const ordered = sortByCp(set, data?.cases ?? []);
+    const ordered = sortAlgItemsBySignedLabel(
+      sortByCp(set, data?.cases ?? []),
+      c => primaryCaseName(puzzleParam, set, c),
+    );
     return collection ? ordered.filter(collection.include) : ordered;
-  }, [data, set, collection]);
+  }, [collection, data, puzzleParam, set]);
 
   const scopedCases = useMemo(() => {
     if (!subgroupSlug) return orderedCases;
@@ -816,9 +839,17 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     if (!sample || !isPuzzle(puzzleParam)) return false;
     return supportsCaseViewAngle(cubeThumbParams(puzzleParam, set, sample.sticker));
   }, [puzzleParam, scopedCases, set]);
+  const canChooseOrientation = useMemo(() => {
+    if (!isPuzzle(puzzleParam) || scopedCases.length === 0) return false;
+    return scopedCases.every(c => supportsCubeOrientation(
+      puzzleParam,
+      cubeThumbParams(puzzleParam, set, c.sticker),
+    ));
+  }, [puzzleParam, scopedCases, set]);
   // OLL 的总览和分类页都是 case 选择器；角度只留在 /oll/<case> 详情页。
   const canChooseViewAngleHere = canChooseViewAngle && set !== 'oll';
   const effectiveViewAngle: CaseViewAngle = canChooseViewAngleHere ? viewAngle : 'default';
+  const effectiveOrientation = canChooseOrientation ? orientation : DEFAULT_ALG_CUBE_ORIENTATION;
   const useSvDualThumb = usesSvThumbStyle(puzzleParam, set);
   const useZbllDualThumb = canShowAllCases && zbllDiagramMode === 'dual';
   const dualLargeThumbSize = effectiveView === 'cards' ? (narrow ? 84 : 96) : 108;
@@ -873,9 +904,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       const query = new URLSearchParams();
       if (puzzleParam === 'sq1' && !sq1BlackTop) query.set('black', 'false');
       if (effectiveViewAngle !== 'default') query.set('angle', effectiveViewAngle);
+      if (effectiveOrientation !== DEFAULT_ALG_CUBE_ORIENTATION) query.set('orientation', effectiveOrientation);
       return query.size > 0 ? `${href}?${query}` : href;
     },
-    [effectiveViewAngle, slugMap, puzzleParam, set, sq1BlackTop],
+    [effectiveOrientation, effectiveViewAngle, slugMap, puzzleParam, set, sq1BlackTop],
   );
 
   if (!validPuzzle || !meta) {
@@ -898,6 +930,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     return Array.from(map.entries());
   }, [visibleCases, slugLevel, meta.umbrella]);
   const showSubSubgroupPicker = subSubgroups.length > 1;
+  const canChooseOrientationHere = canChooseOrientation && !showSubgroupPicker && !showSubSubgroupPicker;
 
   const rawBackTo = collection?.backHref ?? (slugLevel === 'sub' && subParentSlug
     ? `/alg/${puzzleParam}/${set}/${subParentSlug}`
@@ -947,6 +980,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       sq1BlackTop,
       simplifyRecognition: recognitionSimplified,
       viewAngle: effectiveViewAngle,
+      orientation: effectiveOrientation,
     });
   };
 
@@ -1031,6 +1065,17 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             </select>
           </label>
         )}
+        {data && canChooseOrientationHere && (
+          <label className="alg-view-angle">
+            <span>{tr({ zh: '朝向', en: 'Holding' })}</span>
+            <CubeOrientationSelect
+              className="alg-header-select"
+              value={effectiveOrientation}
+              onChange={value => void setOrientation(value)}
+              ariaLabel={tr({ zh: '魔方朝向', en: 'Cube holding orientation' })}
+            />
+          </label>
+        )}
         {data && !collection && availableMetrics.length > 0 && (!showSubgroupPicker || canShowAllCases) && selectedOptimalRange && (
           <div className="alg-optimal-filter" role="group" aria-label={tr({ zh: '按最优步数筛选', en: 'Filter by optimal move count' })}>
             <span className="alg-optimal-filter-label">{tr({ zh: '最优', en: 'Optimal' })}</span>
@@ -1094,7 +1139,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               <option value="zh-compact">{tr({ zh: '紧凑', en: 'Compact' })}</option>
               <option value="zh-cstimer">{tr({ zh: '傻瓜', en: 'Foolproof' })}</option>
             </select>
-            {notationStyle === 'zh-compact' && (
+            {displayedNotationStyle !== 'standard' && (
               <Link href="/alg/3x3/notation" prefetch={false} className="alg-back">
                 <HelpCircle size={15} aria-hidden="true" />
                 {tr({ zh: '记号说明', en: 'Notation guide' })}
@@ -1304,6 +1349,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                 smallSize={dualSmallThumbSize}
                                 simplifyRecognition={recognitionSimplified}
                                 viewAngle={effectiveViewAngle}
+                                orientation={effectiveOrientation}
                               />
                             </>
                           ) : useZbllDualThumb ? (
@@ -1318,6 +1364,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                 loading="lazy"
                                 simplifyRecognition
                                 viewAngle={effectiveViewAngle}
+                                orientation={effectiveOrientation}
                               />
                               <CaseThumb
                                 puzzle={puzzleParam as AlgPuzzle}
@@ -1328,6 +1375,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                 size={dualSmallThumbSize}
                                 loading="lazy"
                                 viewAngle={effectiveViewAngle}
+                                orientation={effectiveOrientation}
                               />
                             </>
                           ) : (
@@ -1344,6 +1392,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               sq1BlackTop={sq1BlackTop}
                               simplifyRecognition={recognitionSimplified}
                               viewAngle={effectiveViewAngle}
+                              orientation={effectiveOrientation}
                             />
                           )}
                         </div>
@@ -1375,6 +1424,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                             <SetupLine
                               puzzle={puzzleParam}
                               setup={caseViewSetup(oriAdjustSetup(c.setup, oriIdx), effectiveViewAngle)}
+                              notationStyle={displayedNotationStyle}
                             />
                           )}
                         </div>
@@ -1404,6 +1454,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                 mirror={mirrorFor(c)}
                                 notationStyle={displayedNotationStyle}
                                 viewAngle={effectiveViewAngle}
+                                orientation={effectiveOrientation}
                               />
                             );
                             const key = `${entry.altId ?? ''}::${trueIdx}`;

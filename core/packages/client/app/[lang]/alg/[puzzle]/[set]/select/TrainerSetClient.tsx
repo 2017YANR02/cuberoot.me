@@ -17,7 +17,8 @@ import {
 import { caseKey } from '@/lib/trainer-case-key';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { sortByCp } from '@/lib/alg_cp_order';
-import { displayZbllToken } from '@/lib/alg_case_display';
+import { displayZbllToken, primaryCaseName } from '@/lib/alg_case_display';
+import { sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
 import { CaseTreePicker } from '@/app/[lang]/alg/_trainer/trainer-components';
 import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
 import SetProgressStrip from '@/app/[lang]/alg/_trainer/SetProgressStrip';
@@ -129,13 +130,19 @@ export default function TrainerSetClient() {
   // 顺序和公式库一致(ZBLL / COLL 把角块已成型和对角换提到组内最前),否则同一批 case
   // 在库里和选集页排得不一样。
   const scopedCases = useMemo(() => {
-    const all = sortByCp(setSlug, cases);
+    const allByCp = sortByCp(setSlug, cases);
+    const all = puzzle
+      ? sortAlgItemsBySignedLabel(
+          allByCp,
+          c => primaryCaseName(puzzle, c.srcSet ?? setSlug, c),
+        )
+      : allByCp;
     if (!scopeSlug || all.length === 0) return all;
     const parts = (c: AlgCase) => (c.subgroup || '').toLowerCase().split('/');
     const isTop = all.some(c => parts(c)[0] === scopeSlug);
     const hit = all.filter(c => (isTop ? parts(c)[0] : parts(c)[1]) === scopeSlug);
     return hit.length > 0 ? hit : all;
-  }, [cases, scopeSlug, setSlug]);
+  }, [cases, puzzle, scopeSlug, setSlug]);
 
   // 过滤后的可见 case(过滤只影响显示,不动 selected)。进度统计在 SetProgressStrip 里算。
   const visibleCases = useMemo(() => {
