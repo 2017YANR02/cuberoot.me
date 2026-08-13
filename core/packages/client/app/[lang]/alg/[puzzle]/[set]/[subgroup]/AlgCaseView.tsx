@@ -77,8 +77,8 @@ function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
   );
 }
 
-/** 可播放的公式行(点一下展开 3D 动画)。非 meta 精简正文用,复用列表的 .alg-alg-* 样式。 */
-function PlayableAlgRow({ entry, puzzle, set, setup, mirror, ori = 0, viewAngle, orientation }: {
+/** 可播放的公式行:单朝向就地展开,多槽页切换槽位共享播放器。 */
+function PlayableAlgRow({ entry, puzzle, set, setup, mirror, ori = 0, viewAngle, orientation, selected = false, onSelect, inlinePlayer = true }: {
   entry: AlgEntry; puzzle: AlgPuzzle; set: string; setup?: string;
   /** 有值 = 这个 set 吃镜像系统,行尾出 ⧉;`partner` 是伙伴 case 名(没建链时为 null) */
   mirror?: { partner: string | null; self: string };
@@ -86,6 +86,11 @@ function PlayableAlgRow({ entry, puzzle, set, setup, mirror, ori = 0, viewAngle,
   ori?: number;
   viewAngle: CaseViewAngle;
   orientation: string;
+  /** 多槽详情页用公式行切换槽位上方的共享播放器。 */
+  selected?: boolean;
+  onSelect?: () => void;
+  /** 单朝向页仍在行下展开播放器;多槽页传 false 避免重复播放器。 */
+  inlinePlayer?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [mirrorOpen, setMirrorOpen] = useState(false);
@@ -94,15 +99,21 @@ function PlayableAlgRow({ entry, puzzle, set, setup, mirror, ori = 0, viewAngle,
   const shown = formatScrambleForEvent(puzzle, displayAlg(angledAlg));
   const len = entry.stm == null ? null : stm(displayAlg(angledAlg));
   const playerSetup = entry.setup ?? setup;
+  const active = onSelect ? selected : open;
+  const activate = () => {
+    if (onSelect) onSelect();
+    else setOpen(o => !o);
+  };
   return (
     <>
       <div
         role="button"
         tabIndex={0}
-        className={`alg-alg-row${open ? ' is-expanded' : ''}`}
-        onClick={() => setOpen(o => !o)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(o => !o); } }}
-        title={open ? 'collapse' : 'play'}
+        className={`alg-alg-row${active ? ' is-expanded' : ''}`}
+        aria-pressed={onSelect ? selected : undefined}
+        onClick={activate}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); } }}
+        title={onSelect ? undefined : open ? 'collapse' : 'play'}
       >
         <span className="alg-alg-text">
           {shown}
@@ -127,7 +138,7 @@ function PlayableAlgRow({ entry, puzzle, set, setup, mirror, ori = 0, viewAngle,
       {mirror && mirrorOpen && (
         <AlgMirrorPanel alg={angledAlg} puzzle={puzzle} mirrorName={mirror.partner} selfName={mirror.self} ori={ori} />
       )}
-      {open && (
+      {inlinePlayer && open && (
         <AlgPlayer
           alg={angledAlg}
           puzzle={puzzle}
@@ -147,7 +158,11 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
    * 代价是关联缩略图(镜像/逆)那份 `data` 会短暂过期,刷新即一致。
    */
   const [caseObj, setCaseObj] = useState(caseProp);
-  useEffect(() => { setCaseObj(caseProp); }, [caseProp]);
+  const [selectedAlgByOri, setSelectedAlgByOri] = useState<Record<number, number>>({});
+  useEffect(() => {
+    setCaseObj(caseProp);
+    setSelectedAlgByOri({});
+  }, [caseProp]);
   const [deleted, setDeleted] = useState(false);
   const [sq1BlackTop, setSq1BlackTop] = useQueryState(
     'black',
@@ -437,7 +452,9 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
           <div className={`alg-case-detail-lean-algs${multiOri ? ' is-multi-ori' : ''}`}>
             {caseObj.algs.map((oriAlgs, oi) => {
               const orientedSetup = oriAdjustSetup(caseObj.setup, oi);
-              const firstAlg = oriAlgs[0]?.alg ?? caseObj.standard ?? '';
+              const requestedAlgIdx = selectedAlgByOri[oi] ?? 0;
+              const selectedAlgIdx = requestedAlgIdx < oriAlgs.length ? requestedAlgIdx : 0;
+              const selectedEntry = oriAlgs[selectedAlgIdx];
               const rows = oriAlgs.map((entry, i) => {
                 // setup 必须跟着朝向走 —— 四个槽共用一条原始 setup 时,FL/BL/BR 演的是别的 case
                 const row = (
@@ -447,6 +464,9 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                     mirror={mirror ? { partner: mirror.partner, self: mirror.self } : undefined}
                     viewAngle={effectiveViewAngle}
                     orientation={effectiveOrientation}
+                    selected={multiOri && i === selectedAlgIdx}
+                    onSelect={multiOri ? () => setSelectedAlgByOri(current => ({ ...current, [oi]: i })) : undefined}
+                    inlinePlayer={!multiOri}
                   />
                 );
                 return dragAlgs
@@ -456,18 +476,15 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
               return (
                 <div key={oi} className="alg-case-detail-ori">
                   {multiOri && <div className="alg-case-detail-ori-label">{shortOriName(oriNames![oi])}</div>}
-                  {multiOri && (
-                    <div className="alg-case-detail-ori-thumb">
-                      <CaseThumb
+                  {multiOri && selectedEntry && (
+                    <div className="alg-case-detail-ori-player">
+                      <AlgPlayer
+                        alg={caseViewAlg(selectedEntry.alg, effectiveViewAngle)}
                         puzzle={puzzle}
                         set={set}
-                        sticker={caseObj.sticker}
-                        alg={firstAlg || orientedSetup || ''}
-                        setup={orientedSetup}
-                        size={116}
-                        sq1BlackTop={sq1BlackTop}
-                        viewAngle={effectiveViewAngle}
+                        setup={caseViewSetup(selectedEntry.setup ?? orientedSetup, effectiveViewAngle)}
                         orientation={effectiveOrientation}
+                        size={260}
                       />
                     </div>
                   )}
