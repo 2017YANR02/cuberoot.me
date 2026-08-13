@@ -59,7 +59,7 @@ function TeachingPage() {
     <main className="teaching-page">
       <header className="teaching-hero">
         <BackHome />
-        <p className="teaching-eyebrow"><T zh="三阶魔方录播微课" en="Recorded 3×3 micro-lessons" /></p>
+        <p className="teaching-eyebrow"><T zh="三阶魔方录播课" en="Recorded 3×3 lessons" /></p>
         <h1><T zh="课程树与完整提词稿" en="Curriculum and complete teleprompter scripts" /></h1>
         <p className="teaching-lead">
           <T
@@ -69,7 +69,7 @@ function TeachingPage() {
         </p>
 
         <div className="teaching-stats" aria-label={tr({ zh: '课程规模', en: 'Course scale' })}>
-          <span><strong>{TEACHING_LESSON_COUNT}</strong> <T zh="节微课" en="micro-lessons" /></span>
+          <span><strong>{TEACHING_LESSON_COUNT}</strong> <T zh="节课" en="lessons" /></span>
           <span><strong>1–5</strong> <T zh="分钟一节" en="minutes each" /></span>
           <span><strong>{average}</strong> <T zh="分钟平均" en="minutes average" /></span>
           <span><strong>{formatDuration(TEACHING_TOTAL_MINUTES)}</strong> <T zh="总时长" en="total" /></span>
@@ -90,7 +90,7 @@ function TeachingPage() {
 
       <section className="teaching-principles" aria-labelledby="recording-rules">
         <div className="teaching-section-heading">
-          <p className="teaching-kicker"><T zh="微课规则" en="Micro-lesson rules" /></p>
+          <p className="teaching-kicker"><T zh="课程规则" en="Lesson rules" /></p>
           <h2 id="recording-rules"><T zh="一节一件事，看完马上练" en="One goal per lesson, then practise immediately" /></h2>
         </div>
         <div className="teaching-principle-grid">
@@ -227,10 +227,10 @@ function TeachingPage() {
           <h2 id="production-title"><T zh="按模块批量录，不按整门课硬撑" en="Record in module batches, not one huge course" /></h2>
         </div>
         <ol>
-          <li><strong><T zh="先录五节试听微课。" en="Record the five trial lessons first. " /></strong><T zh="验证机位、手部特写、字幕字号和学员能否完成结尾挑战。" en="Validate camera angles, hand close-ups, subtitle size, and whether learners can pass each final challenge." /></li>
+          <li><strong><T zh="先录五节试听课。" en="Record the five trial lessons first. " /></strong><T zh="验证机位、手部特写、字幕字号和学员能否完成结尾挑战。" en="Validate camera angles, hand close-ups, subtitle size, and whether learners can pass each final challenge." /></li>
           <li><strong><T zh="再录层先法前八节。" en="Then record the first eight beginner lessons. " /></strong><T zh="让 3–5 位目标学员试看，记录他们在哪个判断停住。" en="Test with three to five target learners and record where their decisions stop." /></li>
           <li><strong><T zh="模板稳定后按模块录。" en="Batch by module once the template is stable. " /></strong><T zh="同类案例统一起始角度、公式卡和过关提示。" en="Keep starting angles, algorithm cards, and pass prompts consistent across related cases." /></li>
-          <li><strong><T zh="试听只承诺真实下一步。" en="Let the trial promise only a real next step. " /></strong><T zh="结尾展示 24 节层先法地图，并邀请家长领取练习清单或进入完整课程。" en="Show the 24-lesson beginner map and invite parents to collect the practice sheet or continue into the full course." /></li>
+          <li><strong><T zh="试听只承诺真实下一步。" en="Let the trial promise only a real next step. " /></strong><T zh="结尾展示 26 节层先法地图，并邀请家长领取练习清单或进入完整课程。" en="Show the 26-lesson beginner map and invite parents to collect the practice sheet or continue into the full course." /></li>
         </ol>
       </section>
 

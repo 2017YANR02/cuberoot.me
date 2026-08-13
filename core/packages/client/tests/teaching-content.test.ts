@@ -11,10 +11,10 @@ import { OLL_ORDER, PLL_LABELS, ZBLL_CASE_COUNTS } from '../app/[lang]/teaching/
 import { SECTIONS } from '../lib/landing-sections';
 
 describe('teaching course plan', () => {
-  it('keeps the three-course micro-lesson structure and duration baseline', () => {
-    expect(TEACHING_COURSES.map((course) => courseLessons(course).length)).toEqual([5, 24, 588]);
-    expect(TEACHING_LESSON_COUNT).toBe(617);
-    expect(TEACHING_TOTAL_MINUTES).toBe(1717);
+  it('keeps the three-course lesson structure and duration baseline', () => {
+    expect(TEACHING_COURSES.map((course) => courseLessons(course).length)).toEqual([5, 26, 588]);
+    expect(TEACHING_LESSON_COUNT).toBe(619);
+    expect(TEACHING_TOTAL_MINUTES).toBe(1724);
 
     const cfop = TEACHING_COURSES[2];
     expect(cfop.stages.map((stage) => stageLessons(stage).length)).toEqual([3, 15, 73, 483, 14]);
