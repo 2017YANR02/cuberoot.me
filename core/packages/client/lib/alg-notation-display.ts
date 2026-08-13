@@ -4,7 +4,7 @@ import { tokenizeMoves, type ParsedMove } from '@cuberoot/shared/alg-notation';
  * 公式列表的展示记号。标准记号永远保留为真源；其它选项只能改显示和复制文本，
  * 不能送进播放器、校验器或数据库。以后新增中文记号时在这里加一种 style 即可。
  */
-export const ALG_NOTATION_STYLES = ['standard', 'zh-cstimer', 'zh-compact'] as const;
+export const ALG_NOTATION_STYLES = ['standard', 'dumb', 'zh-compact'] as const;
 export type AlgNotationStyle = (typeof ALG_NOTATION_STYLES)[number];
 
 const FACE_ZH: Record<string, string> = {
@@ -68,7 +68,7 @@ function doubleLayerOf(move: ParsedMove): '' | '双' | null {
   return isWideFamily && (move.layer == null || move.layer === '2') ? '双' : null;
 }
 
-function moveToCsTimerZh(move: ParsedMove): string {
+function moveToDumbZh(move: ParsedMove): string {
   const specialMove = specialMoveToZh(move);
   if (specialMove) return specialMove;
   if (move.kind === 'rotation' || move.kind === 'slice') return move.raw;
@@ -134,14 +134,14 @@ export function formatAlgNotation(alg: string, style: AlgNotationStyle): string 
   if (style === 'standard' || alg.length === 0) return alg;
 
   const pieces = displayPieces(alg);
-  const moveDisplay = style === 'zh-compact' ? moveToCompactZh : moveToCsTimerZh;
+  const moveDisplay = style === 'zh-compact' ? moveToCompactZh : moveToDumbZh;
   const moveSeparator = style === 'zh-compact' ? ' ' : '，';
   return pieces.map((piece, index) => {
     if (piece.moves) return piece.moves.map(moveDisplay).join(moveSeparator);
 
     // 傻瓜记号用逗号隔开连续转动；紧凑记号保留原空格。括号、换位子标点和未知内容照原文保留。
     if (/^\s+$/.test(piece.raw) && pieces[index - 1]?.moves && pieces[index + 1]?.moves) {
-      return style === 'zh-cstimer' ? '，' : piece.raw;
+      return style === 'dumb' ? '，' : piece.raw;
     }
     return piece.raw;
   }).join('');

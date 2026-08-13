@@ -1113,7 +1113,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             >
               <option value="standard">{tr({ zh: '英文', en: 'English' })}</option>
               <option value="zh-compact">{tr({ zh: '紧凑', en: 'Compact' })}</option>
-              <option value="zh-cstimer">{tr({ zh: '傻瓜', en: 'Foolproof' })}</option>
+              <option value="dumb">{tr({ zh: '傻瓜', en: 'Foolproof' })}</option>
             </select>
             {displayedNotationStyle !== 'standard' && (
               <Link href="/alg/3x3/notation" prefetch={false} className="alg-back">

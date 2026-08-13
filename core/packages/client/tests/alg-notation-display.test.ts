@@ -7,21 +7,21 @@ describe('formatAlgNotation', () => {
     expect(formatAlgNotation(alg, 'standard')).toBe(alg);
   });
 
-  it('renders all six faces with csTimer-style Chinese directions', () => {
-    expect(formatAlgNotation("F' L2 R U' D B2", 'zh-cstimer')).toBe(
+  it('renders all six faces with foolproof Chinese directions', () => {
+    expect(formatAlgNotation("F' L2 R U' D B2", 'dumb')).toBe(
       '前面逆时针转90度，左面转180度，右面顺时针转90度，上面逆时针转90度，下面顺时针转90度，后面转180度',
     );
   });
 
   it('renders lowercase and w-suffixed turns as double-layer turns', () => {
-    expect(formatAlgNotation("f' r2 Uw Lw' 2Fw", 'zh-cstimer')).toBe(
+    expect(formatAlgNotation("f' r2 Uw Lw' 2Fw", 'dumb')).toBe(
       '前面双层逆时针转90度，右面双层转180度，上面双层顺时针转90度，左面双层逆时针转90度，前面双层顺时针转90度',
     );
   });
 
   it('renders rotations and slice moves with the requested Chinese symbols', () => {
-    expect(formatAlgNotation("x y2 z' E M' S2", 'zh-cstimer')).toBe("天，地2，人'，赤，中'，经2");
-    expect(formatAlgNotation("e m' s2", 'zh-cstimer')).toBe("赤，中'，经2");
+    expect(formatAlgNotation("x y2 z' E M' S2", 'dumb')).toBe("天，地2，人'，赤，中'，经2");
+    expect(formatAlgNotation("e m' s2", 'dumb')).toBe("赤，中'，经2");
   });
 
   it('renders compact Chinese notation without standard move tokens', () => {
@@ -37,14 +37,14 @@ describe('formatAlgNotation', () => {
   });
 
   it('preserves grouping, commutator punctuation, and unknown text', () => {
-    expect(formatAlgNotation("(R U R')2 [F, B']", 'zh-cstimer')).toBe(
+    expect(formatAlgNotation("(R U R')2 [F, B']", 'dumb')).toBe(
       '(右面顺时针转90度，上面顺时针转90度，右面逆时针转90度)2 [前面顺时针转90度, 后面逆时针转90度]',
     );
-    expect(formatAlgNotation('R note U', 'zh-cstimer')).toBe('右面顺时针转90度 note 上面顺时针转90度');
+    expect(formatAlgNotation('R note U', 'dumb')).toBe('右面顺时针转90度 note 上面顺时针转90度');
   });
 
   it('returns empty and unsupported layer notation safely', () => {
-    expect(formatAlgNotation('', 'zh-cstimer')).toBe('');
-    expect(formatAlgNotation('3Rw R0 2R', 'zh-cstimer')).toBe('3Rw，R0，2R');
+    expect(formatAlgNotation('', 'dumb')).toBe('');
+    expect(formatAlgNotation('3Rw R0 2R', 'dumb')).toBe('3Rw，R0，2R');
   });
 });
