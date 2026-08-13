@@ -169,7 +169,8 @@ export default function LandingPage() {
                     <div className="card-name">{t(card.nameKey)}</div>
                   </>
                 );
-                const isDisabled = Boolean(card.comingSoon || (card.adminOnly && !isAdmin));
+                if (card.adminOnly && !isAdmin) return null;
+                const isDisabled = Boolean(card.comingSoon);
                 const className = `card tier-${card.tier}${isDisabled ? ' is-disabled' : ''}`;
                 if (isDisabled) {
                   return (

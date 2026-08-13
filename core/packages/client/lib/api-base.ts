@@ -48,3 +48,10 @@ export function publicApiUrl(path: string): string {
 export function streamApiUrl(path: string): string {
   return (process.env.NEXT_PUBLIC_API_ORIGIN || 'https://api.cuberoot.me') + path;
 }
+
+/** WebSocket equivalent of streamApiUrl: always connect to the API origin directly. */
+export function websocketApiUrl(path: string): string {
+  const url = new URL(path, process.env.NEXT_PUBLIC_API_ORIGIN || 'https://api.cuberoot.me');
+  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+  return url.toString();
+}
