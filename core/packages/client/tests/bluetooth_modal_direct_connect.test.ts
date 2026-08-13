@@ -67,6 +67,7 @@ describe('BluetoothModal direct connection attempt', () => {
     });
 
     expect(host.textContent).toContain('Connecting…');
+    expect(host.textContent).not.toContain('Supported timing devices');
 
     await act(async () => {
       rejectAttempt(new BluetoothConnectError('picker', '用户取消选择'));
