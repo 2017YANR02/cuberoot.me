@@ -12,6 +12,7 @@ import { Alg } from 'cubing/alg';
 import { cube3x3x3, puzzles } from 'cubing/puzzles';
 import { normalizeAlgForTwisty } from '@/components/AlgPlayer/AlgPlayer';
 import {
+  DEFAULT_ALG_MOVE_DURATION_MS,
   DEFAULT_PREVIEW_TIMING,
   resolvePlayerSetup,
   resolvePreviewTiming,
@@ -91,7 +92,9 @@ describe('resolvePlayerSetup', () => {
 });
 
 describe('notation demo timing', () => {
-  it('保留普通公式预览的快速节奏', () => {
+  it('公式预览和记号教学默认共用每 STM 一秒', () => {
+    expect(DEFAULT_ALG_MOVE_DURATION_MS).toBe(1000);
+    expect(DEFAULT_PREVIEW_TIMING).toEqual({ frames: 60, stepMs: 1000 });
     expect(resolvePreviewTiming()).toBe(DEFAULT_PREVIEW_TIMING);
     expect(resolveTwistyTempoScale()).toBeUndefined();
   });

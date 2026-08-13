@@ -2,7 +2,7 @@
 // 选项表在 lib/cube-orientation.ts;这里只负责渲染 + 兜住表外的值(不认识的前缀
 // 补一项占位,免得 select 显示成空白)。
 //
-// 消费方:/timer 设置面板的「预打乱朝向 / 训练预打乱朝向」、/sim 播放条的阶段遮罩朝向。
+// 消费方:/timer 设置面板、/sim 播放条、/predict 与 /alg 公式图。
 import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
 
 export default function CubeOrientationSelect({

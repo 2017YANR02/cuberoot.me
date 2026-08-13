@@ -5,7 +5,7 @@
  * 而 `localeCompare` 默认反着来。凡是在代码里排组名的地方都要走同一个比较器。
  */
 import { describe, it, expect } from 'vitest';
-import { compareAlgGroupLabel } from '@/lib/alg_group_order';
+import { compareAlgGroupLabel, sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
 
 const sorted = (xs: string[]) => [...xs].sort(compareAlgGroupLabel);
 
@@ -33,5 +33,30 @@ describe('compareAlgGroupLabel', () => {
 
   it('前后空白不影响', () => {
     expect(compareAlgGroupLabel(' A+ ', 'A+')).toBe(0);
+  });
+});
+
+describe('sortAlgItemsBySignedLabel', () => {
+  it('只交换同底名的正负 case，保留不同 case 的数据库槽位', () => {
+    const rows = [
+      { id: 1, name: 'B-' },
+      { id: 2, name: 'A+' },
+      { id: 3, name: 'B+' },
+      { id: 4, name: 'A-' },
+      { id: 5, name: 'C' },
+    ];
+    expect(sortAlgItemsBySignedLabel(rows, row => row.name).map(row => row.name))
+      .toEqual(['B+', 'A+', 'B-', 'A-', 'C']);
+  });
+
+  it('显示名带括号别名时仍把 + 放在 - 前', () => {
+    const rows = [{ name: 'U- (Ua)' }, { name: 'U+ (Ub)' }];
+    expect(sortAlgItemsBySignedLabel(rows, row => row.name).map(row => row.name))
+      .toEqual(['U+ (Ub)', 'U- (Ua)']);
+  });
+
+  it('名字中间的减号不是正负后缀，不改变原顺序', () => {
+    const rows = [{ name: 'ZBLL S-13' }, { name: 'ZBLL S-2' }];
+    expect(sortAlgItemsBySignedLabel(rows, row => row.name)).toEqual(rows);
   });
 });

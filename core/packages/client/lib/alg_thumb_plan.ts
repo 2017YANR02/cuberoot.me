@@ -15,6 +15,10 @@ import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/lib/sq1-svg';
 import { sq1StageHiddenStickerIds } from '@/lib/sq1-stage-mask';
 import { caseViewAlg, caseViewSetup, type CaseViewAngle } from '@/lib/alg_display';
 import { invertFtoEifAlgorithm, renderFtoEifSvg } from '@/lib/fto-eif-image';
+import { visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
+
+/** 公式库沿用既有缩略图的黄顶红前拿法。 */
+export const DEFAULT_ALG_CUBE_ORIENTATION = "z2 y'";
 
 export const PUZZLE_SIZE: Record<AlgPuzzle, number> = {
   '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5,
@@ -63,6 +67,11 @@ export function supportsRecognitionSimplification(params: CubeThumbParams): bool
 /** Whether a case uses a flat last-layer view where a U-angle choice is meaningful. */
 export function supportsCaseViewAngle(params: CubeThumbParams): boolean {
   return params.view === 'plan' || params.view === 'oll' || params.view === 'pll';
+}
+
+/** 普通 NxN 图都能换拿方；显式 scheme 表达教学语义，不能擅自重贴色。 */
+export function supportsCubeOrientation(puzzle: AlgPuzzle, params: CubeThumbParams): boolean {
+  return ['2x2', '3x3', '4x4', '5x5'].includes(puzzle) && !params.scheme;
 }
 
 function pickView(
@@ -138,6 +147,8 @@ export interface CaseThumbPlanInput {
   simplifyRecognition?: boolean;
   /** User-selected final U-layer angle for applicable last-layer views. */
   viewAngle?: CaseViewAngle;
+  /** User-selected whole-cube holding orientation. */
+  orientation?: string;
 }
 
 function driverFor(setup: string | undefined, alg: string): AlgDriver {
@@ -155,6 +166,7 @@ export function caseThumbPlan({
   sq1BlackTop = true,
   simplifyRecognition = false,
   viewAngle = 'default',
+  orientation = DEFAULT_ALG_CUBE_ORIENTATION,
 }: CaseThumbPlanInput): CaseThumbPlan {
   if (puzzle === 'sq1') {
     const normalizedSet = set.toLowerCase();
@@ -236,12 +248,16 @@ export function caseThumbPlan({
 
   const params = cubeThumbParams(puzzle, set, sticker, mask);
   const angle = supportsCaseViewAngle(params) ? viewAngle : 'default';
+  const orientedScheme = supportsCubeOrientation(puzzle, params)
+    ? visualCubeSchemeForOrientation(orientation, params.view === 'oll' && !params.mask)
+    : params.scheme;
   return {
     renderer: 'visualcube',
     algorithm: caseViewAlg(alg, angle),
     setup: setup === undefined ? undefined : caseViewSetup(setup, angle),
     params: {
       ...params,
+      ...(orientedScheme ? { scheme: orientedScheme } : {}),
       ...(puzzle === '3x3' && simplifyRecognition && supportsRecognitionSimplification(params)
         ? {
             planSimplify: {

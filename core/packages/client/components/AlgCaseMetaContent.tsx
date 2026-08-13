@@ -92,6 +92,8 @@ interface Props {
   onScrambleKindChange?: (kind: ScrambleKind) => void;
   /** 顶层 case 的观察角度；详情页传入，训练弹窗沿用库里的默认角度。 */
   viewAngle?: CaseViewAngle;
+  /** 详情页选择的魔方拿法；训练弹窗沿用公式库默认拿法。 */
+  orientation?: string;
 }
 
 export default function AlgCaseMetaContent({
@@ -101,6 +103,7 @@ export default function AlgCaseMetaContent({
   scrambleKind = 'inv',
   onScrambleKindChange,
   viewAngle = 'default',
+  orientation,
 }: Props) {
   /**
    * 没有 meta 的集(虚拟集 LSLL、库里还没补元数据的集)一样要能看:空对象兜底后
@@ -263,6 +266,7 @@ export default function AlgCaseMetaContent({
                 setup={f.case.setup}
                 size={76}
                 viewAngle={viewAngle}
+                orientation={orientation}
               />
               <span className="alg-meta-related-label">{labelText}</span>
               <span className="alg-meta-related-name">{primaryCaseName(puzzle, set, f.case)}</span>
