@@ -92,7 +92,7 @@ export default function NotationPage() {
                 <span key={alg}>
                   <code>{alg}</code>
                   <b>→</b>
-                  <strong>{formatAlgNotation(alg, 'zh-cstimer')}</strong>
+                  <strong>{formatAlgNotation(alg, 'dumb')}</strong>
                 </span>
               ))}
             </div>
