@@ -2,6 +2,8 @@ name: Deploy Contests
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * *'
   push:
     branches: [main]
     paths:
@@ -93,6 +95,8 @@ jobs:
           cp -r "$APP/server/email/templates" "$BUNDLE/server/email/templates"
           cp -r "$APP/server/db/drizzle" "$BUNDLE/migrations"
           cp ops/contests/apply-migrations.sh "$BUNDLE/apply-migrations.sh"
+          cp ops/contests/sync-public-data.sh "$BUNDLE/sync-public-data.sh"
+          cp ops/contests/extract-event-categories.mjs "$BUNDLE/extract-event-categories.mjs"
 
           cat > "$BUNDLE/start.sh" <<'EOF'
           #!/bin/sh
@@ -106,7 +110,7 @@ jobs:
           exec "$NODE_DIR/bin/node" server.js
           EOF
 
-          chmod +x "$BUNDLE/start.sh" "$BUNDLE/apply-migrations.sh"
+          chmod +x "$BUNDLE/start.sh" "$BUNDLE/apply-migrations.sh" "$BUNDLE/sync-public-data.sh"
           tar -czf /tmp/contests-next.tar.gz -C "$BUNDLE" .
           ls -lh /tmp/contests-next.tar.gz
 
@@ -157,11 +161,13 @@ jobs:
           rm -f /tmp/contests-next.tar.gz
           test -x "$STAGE/start.sh"
           test -x "$STAGE/apply-migrations.sh"
+          test -x "$STAGE/sync-public-data.sh"
 
           set -a
           . /etc/contests-next.env
           set +a
           "$STAGE/apply-migrations.sh" "$STAGE/migrations"
+          "$STAGE/sync-public-data.sh"
 
           if [ -d "$LIVE" ]; then
             find /www/wwwroot -maxdepth 1 -name 'contests-next.bak-*' -exec rm -rf {} +
@@ -189,8 +195,13 @@ jobs:
               fi
             done
             READY="$(curl -fsS http://127.0.0.1:3005/api/healthcheck/ready 2>/dev/null || true)"
-            if [ "$PAGES_OK" = true ] && echo "$READY" | grep -q '"status":"ready"'; then
-              echo "OK: contests-next served all public routes and passed readiness checks"
+            EVENTS="$(curl -fsS http://127.0.0.1:3005/api/default/events 2>/dev/null || true)"
+            CONTESTS="$(curl -fsS http://127.0.0.1:3005/api/default/competitions 2>/dev/null || true)"
+            if [ "$PAGES_OK" = true ] \
+              && echo "$READY" | grep -q '"status":"ready"' \
+              && echo "$EVENTS" | grep -q '"eventId"' \
+              && echo "$CONTESTS" | grep -q '"competitionId"'; then
+              echo "OK: contests-next served all public routes, upstream data, and readiness checks"
               exit 0
             fi
             sleep 1
