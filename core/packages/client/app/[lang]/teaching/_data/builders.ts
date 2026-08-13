@@ -57,7 +57,7 @@ function defaultScript(title: LocalizedText, outcome: LocalizedText, kind: Lesso
   if (kind === 'example') {
     return [
       l(`这节用一个完整例子练“${title.zh}”。重点不是跟上我的速度，而是看懂每一次选择。`, `This lesson uses a full example to practise “${title.en}.” The goal is not to match my speed; it is to understand every decision.`),
-      l('【展示起始状态和打乱，给孩子五秒观察】', '[Show the starting state and scramble, then allow five seconds to inspect.]'),
+      l('【展示起始状态和打乱，给学员五秒观察】', '[Show the starting state and scramble, then allow five seconds to inspect.]'),
       l('先暂停视频，告诉我你最先会处理什么。没有唯一答案，但你的选择要保护已经完成的部分，并为下一步留下好位置。', 'Pause and tell me what you would solve first. There may be more than one good answer, but your choice should protect solved pieces and leave a useful next step.'),
       l('我开始以后，每完成一个小目标都会停一下，说出下一步要找的块、我看到了什么，以及为什么选这条路线。', 'Once I begin, I will pause after each small goal to name the next pieces, the clue I saw, and why I chose this route.'),
       l('【完成一次保留真实停顿的俯拍示范】', '[Record one overhead solve with the real decision pauses left in.]'),
