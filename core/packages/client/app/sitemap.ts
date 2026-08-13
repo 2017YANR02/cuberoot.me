@@ -26,6 +26,11 @@ const BASE = 'https://cuberoot.me';
 // Kept OUT (dev/poc/internal pages, no SEO value). Locale-stripped path, exact.
 const EXCLUDE = new Set(['ffmpeg-poc', 'jsonEditor']);
 
+// Long-form content that currently exists only in Simplified Chinese. The
+// English route renders a noindex language notice, so it must not be listed as
+// an alternate or x-default for the real Chinese article.
+const ZH_ONLY = new Set(['teaching']);
+
 // Dynamic-segment pages worth indexing at a specific value (the scan skips
 // [param] dirs since it can't know which values are valid).
 //
@@ -107,10 +112,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // (git does not preserve them), and this file must stay I/O-free, which rules
   // out shelling out to git log. Omitting the field is the honest option; the
   // recon sitemap, which has genuine per-item dates, still emits it.
-  return routes.map((path) => ({
-    url: en(path),
-    alternates: {
-      languages: { en: en(path), zh: zh(path), 'x-default': en(path) },
-    },
-  }));
+  return routes.map((path) => {
+    if (ZH_ONLY.has(path)) return { url: zh(path) };
+    return {
+      url: en(path),
+      alternates: {
+        languages: { en: en(path), zh: zh(path), 'x-default': en(path) },
+      },
+    };
+  });
 }
