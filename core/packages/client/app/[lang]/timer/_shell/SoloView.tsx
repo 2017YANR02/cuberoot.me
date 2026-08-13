@@ -79,6 +79,7 @@ import { installFakeCube } from '../_lib/bluetooth/fake_cube';
 import { nxnSizeForEvent } from '../_lib/cube/colors';
 import { DIGIT_OPENS_SOLVE, bindingForEvent, resolveKeymap } from '../_lib/keymap';
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
+import { useBluetoothTimer } from '../_lib/bluetooth/timer';
 import { useStackmat } from '../_lib/stackmat';
 import { useMultiStage } from '../_lib/multistage';
 import { useBldMemo } from '../_lib/useBldMemo';
@@ -133,6 +134,7 @@ const BldHelperModal = dynamic(() => import('../_components/BldHelperModal'), { 
 const SolveModal = dynamic(() => import('../_components/SolveModal'), { ssr: false });
 const ReconstructModal = dynamic(() => import('../_components/ReconstructModal'), { ssr: false });
 const BluetoothModal = dynamic(() => import('../_components/BluetoothModal'), { ssr: false });
+const BluetoothTimerModal = dynamic(() => import('../_components/BluetoothTimerModal'), { ssr: false });
 const StackmatModal = dynamic(() => import('../_components/StackmatModal'), { ssr: false });
 const TrainerSubsetModal = dynamic(() => import('../_components/TrainerSubsetModal'), { ssr: false });
 const StatsModal = dynamic(() => import('../_components/StatsModal'), { ssr: false });
@@ -1420,16 +1422,79 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     return () => { subs.delete(inspector); };
   }, []);
 
-  // ── External timing device (Stackmat mic) ───────────────────────
+  // ── External timing devices (BLE smart timer / Stackmat mic) ───
   // Record the time the device measured verbatim rather than re-timing locally.
-  const externalTimeRecordRef = useRef<((ms: number) => void) | null>(null);
-  externalTimeRecordRef.current = (ms: number) => {
-    const solve = makeSolve({ timeMs: ms, scramble: scrambleAtStartRef.current, event, penalty: 'ok' });
+  // A BLE timer can keep running while the page's own timer phase stays idle,
+  // so it supplies an explicit event/scramble snapshot captured at hands-on.
+  type ExternalAttempt = { event: EventId; scramble: string };
+  type ExternalRecordContext = ExternalAttempt & { inspectionMs?: number };
+  const externalTimeRecordRef = useRef<((ms: number, context?: ExternalRecordContext) => void) | null>(null);
+  externalTimeRecordRef.current = (ms: number, context?: ExternalRecordContext) => {
+    if (!Number.isFinite(ms) || ms < 0) {
+      setInfoToast({
+        msg: tr({ zh: '计时器返回了无效读数，未保存成绩', en: 'The timer returned an invalid reading; no result was saved' }),
+      });
+      return;
+    }
+    const solveEvent = context?.event ?? eventAtStartRef.current;
+    const solve = makeSolve({
+      timeMs: Math.round(ms),
+      scramble: context?.scramble ?? scrambleAtStartRef.current,
+      event: solveEvent,
+      penalty: 'ok',
+    });
+    if (context?.inspectionMs !== undefined
+      && Number.isFinite(context.inspectionMs)
+      && context.inspectionMs > 0) {
+      solve.inspectionMs = Math.round(context.inspectionMs);
+    }
     setLastPenalty('ok');
-    setByEvent(prev => ({ ...prev, [event]: [...(prev[event] ?? []), solve] }));
+    setByEvent(prev => ({ ...prev, [solveEvent]: [...(prev[solveEvent] ?? []), solve] }));
     nextScramble();
   };
   const stackmat = useStackmat({ onStop: (ms) => externalTimeRecordRef.current?.(ms) });
+
+  const [bluetoothTimerMacPrompt, setBluetoothTimerMacPrompt] = useState<{ deviceName: string } | null>(null);
+  const bluetoothTimerMacResolverRef = useRef<((mac: string | null) => void) | null>(null);
+  const requestBluetoothTimerMac = useCallback((deviceName: string) => new Promise<string | null>((resolve) => {
+    bluetoothTimerMacResolverRef.current = resolve;
+    setBluetoothTimerMacPrompt({ deviceName });
+  }), []);
+  const resolveBluetoothTimerMac = useCallback((mac: string | null) => {
+    bluetoothTimerMacResolverRef.current?.(mac);
+    bluetoothTimerMacResolverRef.current = null;
+    setBluetoothTimerMacPrompt(null);
+  }, []);
+  const bluetoothTimerAttemptRef = useRef<ExternalAttempt | null>(null);
+  const bluetoothTimer = useBluetoothTimer({
+    onNeedMac: requestBluetoothTimerMac,
+    onEvent: (timerEvent) => {
+      if (timerEvent.state === 'IDLE' || timerEvent.state === 'GAN_RESET') {
+        bluetoothTimerAttemptRef.current = null;
+        return;
+      }
+      if (timerEvent.state === 'HANDS_ON'
+        || timerEvent.state === 'GET_SET'
+        || timerEvent.state === 'INSPECTION'
+        || timerEvent.state === 'RUNNING') {
+        bluetoothTimerAttemptRef.current ??= { event, scramble };
+      }
+    },
+    onStop: (ms, timerEvent) => {
+      const attempt = bluetoothTimerAttemptRef.current ?? { event, scramble };
+      externalTimeRecordRef.current?.(ms, { ...attempt, inspectionMs: timerEvent.inspectTime });
+      bluetoothTimerAttemptRef.current = null;
+    },
+    onConnectionLost: () => {
+      const interrupted = bluetoothTimerAttemptRef.current !== null;
+      bluetoothTimerAttemptRef.current = null;
+      setInfoToast({
+        msg: interrupted
+          ? tr({ zh: '蓝牙计时器已断开，这一次可能无法自动记录', en: 'Bluetooth timer disconnected; this attempt may not be recorded automatically' })
+          : tr({ zh: '蓝牙计时器连接断开', en: 'Bluetooth timer disconnected' }),
+      });
+    },
+  });
 
   // ── Metronome ───────────────────────────────────────────────────
   // Holds the shared metronome on for the inspect/solve stretch instead of
@@ -1639,6 +1704,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
   const [bluetoothConnectAttempt, setBluetoothConnectAttempt] = useState<Promise<void> | null>(null);
   const bluetoothConnectingRef = useRef(false);
+  const [bluetoothTimerOpen, setBluetoothTimerOpen] = useState(false);
   const [stackmatOpen, setStackmatOpen] = useState(false);
   const [trainerSubsetOpen, setTrainerSubsetOpen] = useState<'oll' | 'pll' | null>(null);
   const [statsModalOpen, setStatsModalOpen] = useState(false);
@@ -1693,7 +1759,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // 整屏那一形态要算进「有东西盖住计时器」—— 否则空格会穿到后面预备计时。
   const panelFullscreen = panelTab !== null && !isDesktop;
   const otherModalOpen =
-    settingsOpen || bluetoothOpen || stackmatOpen ||
+    settingsOpen || bluetoothOpen || bluetoothTimerOpen || stackmatOpen ||
     trainerSubsetOpen !== null || statsModalOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
     drillModalOpen || stageTrainingOpen || bldHelperOpen || panelFullscreen ||
@@ -1855,6 +1921,16 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     // which made the Stackmat toggle unreachable on desktop — exactly where a
     // Stackmat is most likely to be plugged in.
     {
+      icon: <Bluetooth size={14} />,
+      label: bluetoothTimer.status.connected
+        ? tr({
+            zh: `蓝牙计时器：${bluetoothTimer.status.deviceName}`,
+            en: `Bluetooth timer: ${bluetoothTimer.status.deviceName}`,
+          })
+        : tr({ zh: '蓝牙智能计时器', en: 'Bluetooth smart timer' }),
+      onClick: () => setBluetoothTimerOpen(true),
+    },
+    {
       icon: <Mic size={14} />,
       label: stackmat.status.listening
         ? tr({ zh: 'Stackmat 监听中', en: 'Stackmat listening' })
@@ -1896,7 +1972,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     }), onClick: () => window.print() },
     { icon: <Trash2 size={14} />, label: tr({ zh: '清空当前项目', en: 'Clear current event'
     }), onClick: clearAll, danger: true, disabled: !solves.length },
-  ], [isZh, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, i18n, event]);
+  ], [isZh, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, bluetoothTimer.status.connected, bluetoothTimer.status.deviceName, i18n, event]);
 
   const allSolves = useMemo(() => {
     const out: Solve[] = [];
@@ -2660,6 +2736,19 @@ export default function SoloView({ playersControl }: SoloViewProps) {
 
       {stackmatOpen && (
         <StackmatModal stackmat={stackmat} onClose={() => setStackmatOpen(false)} />
+      )}
+
+      {bluetoothTimerOpen && (
+        <BluetoothTimerModal
+          timer={bluetoothTimer}
+          macPrompt={bluetoothTimerMacPrompt}
+          onSubmitMac={resolveBluetoothTimerMac}
+          onCancelMac={() => resolveBluetoothTimerMac(null)}
+          onClose={() => {
+            if (bluetoothTimerMacResolverRef.current) resolveBluetoothTimerMac(null);
+            setBluetoothTimerOpen(false);
+          }}
+        />
       )}
 
       {statsModalOpen && <StatsModal event={event} solves={solves} isZh={isZh} onClose={() => setStatsModalOpen(false)} />}
