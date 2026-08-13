@@ -11777,6 +11777,11 @@
       "country": "Uzbekistan",
       "iso2": "UZ"
     },
+    "2023TANG15": {
+      "name": "Enoch Tangprasittipol",
+      "country": "Thailand",
+      "iso2": "TH"
+    },
     "2007SUGA01": {
       "name": "Nobuaki Suga (菅信昭)",
       "country": "Japan",
@@ -24232,6 +24237,9 @@
     },
     "MaomingOpen2026": {
       "name": "Maoming Open 2026"
+    },
+    "RatchaphruekOpen2026": {
+      "name": "Ratchaphruek Open 2026"
     },
     "ZhanjiangOpen2026": {
       "name": "Zhanjiang Open 2026"
@@ -43169,6 +43177,9 @@
     "TokyoBLDSummer2026": {
       "name": "Tokyo BLD Summer 2026"
     },
+    "GreenwoODDs2026": {
+      "name": "GreenwoODDs 2026"
+    },
     "SkarupLastChance2011": {
       "name": "Skårup Last Chance 2011"
     },
@@ -44222,9 +44233,6 @@
     "IrishChampionshipFMC2026": {
       "name": "Irish Championship FMC 2026"
     },
-    "SilentKoreaOpen2026": {
-      "name": "Silent Korea Open 2026"
-    },
     "ChinaFMShanghai2011": {
       "name": "China FM Shanghai 2011"
     },
@@ -44554,6 +44562,9 @@
     },
     "BarbyCube2026": {
       "name": "Barby Cube 2026"
+    },
+    "SilentKoreaOpen2026": {
+      "name": "Silent Korea Open 2026"
     },
     "SilesianMinxFest2026": {
       "name": "Silesian Minx Fest 2026"
@@ -48365,6 +48376,9 @@
     "DontDNFDavis2026": {
       "name": "Don't DNF Davis 2026"
     },
+    "DavisBigSummer2026": {
+      "name": "Davis Big Summer 2026"
+    },
     "VSUOpen2016": {
       "name": "VSU Open 2016"
     },
@@ -49018,6 +49032,12 @@
     },
     "KantoSpring2026": {
       "name": "Kanto Spring 2026"
+    },
+    "FutureParkTHCubeBattle2026": {
+      "name": "Future Park TH Cube Battle 2026"
+    },
+    "ToowoombaCarnival2026": {
+      "name": "Toowoomba Carnival 2026"
     },
     "LagartoOpen2012": {
       "name": "Lagarto Open 2012"
