@@ -1,13 +1,12 @@
 /**
  * Shared tween timing for the non-NxN cuber engines (Ivy / Dino / Redi / SQ1).
- * They all animate on the one speed slider, so the frame count + duration curve
- * live here instead of on the NxN `CubeGroup` (which used to own them).
+ * They all animate on the one speed slider, so the nominal tick count lives here
+ * instead of on the NxN `CubeGroup` (which used to own it).
  *
- * `timing.frames` = frames per 90° turn (the speed knob writes it; mutable across
- * imports via the holder object). `tweenDuration` scales it sub-linearly by the
- * move magnitude `d` (in 90° units): 90° = frames, 180° ≈ 1.33×frames, 30° =
- * 0.5×frames. The NxN engine reads `timing.frames` too, so everything stays in
- * lockstep if the curve is retuned.
+ * `timing.frames` is retained as the export-compatible name, but now means 60 Hz
+ * nominal ticks per formula token. Live animation advances those ticks from real
+ * elapsed milliseconds, so monitor refresh rate cannot change TPS. Formula tokens
+ * always use the full value; `tweenDuration` remains only for partial drag settling.
  */
 export const timing = { frames: 30 };
 
