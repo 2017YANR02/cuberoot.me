@@ -5,7 +5,7 @@
  * Ported from packages/client-vite/src/pages/LandingPage.tsx.
  * NOTE: particle-canvas code dropped — SHOW_PARTICLES was already false upstream.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { Heart, Radio, Trophy, ListOrdered, LogIn, User, type LucideIcon } from 'lucide-react';
@@ -31,6 +31,7 @@ const TodayRecon = dynamic(() => import('@/components/TodayRecon'), {
 import { useEffectiveTheme } from '@/lib/theme';
 import '../landing.css';
 import { tr } from '@/i18n/tr';
+import { isAdminWcaId } from '@cuberoot/shared/admin';
 
 // 原单张「WCA 统计」hero 拆成四张直达卡;统计卡保留 WCA 标志作品牌锚点,其余用 lucide 图标。
 const WCA_ENTRIES: { href: string; zh: string; en: string; Icon?: LucideIcon; img?: string }[] = [
@@ -65,6 +66,11 @@ export default function LandingPage() {
   // 右上角 登录 / 我的 入口,两态都是真链接、都指 /account(全站无登录弹层)。useAuthUser
   // 是 hydration-safe(SSG 首帧按未登录渲染,挂载后才切到已登录),避免 SSG/CSR 错配。
   const user = useAuthUser();
+  const isAdmin = isAdminWcaId(user?.wcaId);
+  const searchCards = useMemo(
+    () => SEARCH_CARDS.filter((card) => !card.adminOnly || isAdmin),
+    [isAdmin],
+  );
   const pathname = usePathname();
   // 已登录时右上角只保留头像(去掉名字);无头像退回 User 图标。
   const authInner = user && (
@@ -97,7 +103,7 @@ export default function LandingPage() {
         <img src={mounted && effectiveTheme === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png'} alt="" className="brand-logo" />
         <span className="brand-name">{t('brand')}</span>
       </div>
-      <LandingSearch cards={SEARCH_CARDS} lang={lang} />
+      <LandingSearch cards={searchCards} lang={lang} />
 
       {/* 两行 hero 的共同外壳。桌面是 5 + 4 两个独立网格;手机端外壳自己变成 3 列网格、
           两个子网格 display:contents,9 张卡直接排成 3 行 3 个(见 landing.css)。 */}
@@ -163,8 +169,9 @@ export default function LandingPage() {
                     <div className="card-name">{t(card.nameKey)}</div>
                   </>
                 );
-                const className = `card tier-${card.tier}${card.comingSoon ? ' is-disabled' : ''}`;
-                if (card.comingSoon) {
+                const isDisabled = Boolean(card.comingSoon || (card.adminOnly && !isAdmin));
+                const className = `card tier-${card.tier}${isDisabled ? ' is-disabled' : ''}`;
+                if (isDisabled) {
                   return (
                     <div key={card.id} className={className} id={`card-${card.id}`}
                       title={t('comingSoon')} aria-disabled="true" role="link">

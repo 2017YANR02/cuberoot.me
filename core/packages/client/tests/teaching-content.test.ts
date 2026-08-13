@@ -5,6 +5,7 @@ import {
   TEACHING_LESSON_COUNT,
   TEACHING_TOTAL_MINUTES,
 } from '../app/[lang]/teaching/_data';
+import { SECTIONS } from '../lib/landing-sections';
 
 describe('teaching course plan', () => {
   it('keeps the promised course size and child-sized lesson range', () => {
@@ -29,9 +30,21 @@ describe('teaching course plan', () => {
     ]);
   });
 
-  it('keeps the Chinese-only article out of the English sitemap', () => {
+  it('marks the homepage entry as administrator-only', () => {
+    const teachingCard = SECTIONS
+      .flatMap((section) => section.cards)
+      .find((card) => card.id === 'teaching');
+
+    expect(teachingCard).toMatchObject({
+      href: '/teaching',
+      internal: true,
+      adminOnly: true,
+    });
+  });
+
+  it('keeps the administrator-only page out of the sitemap', () => {
     const entries = sitemap();
     const teachingEntries = entries.filter((entry) => entry.url.endsWith('/teaching'));
-    expect(teachingEntries).toEqual([{ url: 'https://cuberoot.me/zh/teaching' }]);
+    expect(teachingEntries).toEqual([]);
   });
 });
