@@ -70,16 +70,16 @@
 .doc-color-tool { position: relative; display: grid; flex: 0 0 32px; width: 32px; height: 30px; place-items: center; border-radius: calc(var(--radius) - 5px); cursor: pointer; }
 .doc-color-tool:hover { background: color-mix(in srgb, var(--primary) 13%, var(--muted)); }
 .doc-color-tool > span { font-weight: 650; line-height: 1; }
-.doc-color-tool input { position: absolute; right: 5px; bottom: 2px; left: 5px; width: 22px; height: 4px; padding: 0; border: 0; opacity: .85; cursor: pointer; }
-.doc-color-tool input:disabled { cursor: default; opacity: .35; }
+.doc-color-input { position: absolute; right: 5px; bottom: 2px; left: 5px; width: 22px; height: 4px; padding: 0; border: 0; opacity: .85; cursor: pointer; }
+.doc-color-input:disabled { cursor: default; opacity: .35; }
 .doc-searchbar {
   position: sticky; top: 142px; z-index: 29; display: flex; align-items: center; gap: 7px; width: fit-content; max-width: calc(100% - 24px);
   margin: 7px 12px 0 auto; padding: 6px 8px; border: 1px solid var(--border-default); border-radius: var(--radius); background: var(--background);
   box-shadow: 0 6px 20px color-mix(in srgb, var(--foreground) 10%, transparent);
 }
-.doc-searchbar input { width: 150px; padding: 6px 8px; border: 1px solid var(--border-default); border-radius: calc(var(--radius) - 5px); background: transparent; color: var(--foreground); }
-.doc-searchbar > button:not(.clear-btn) { padding: 6px 8px; border: 0; border-radius: calc(var(--radius) - 5px); background: var(--muted); color: var(--foreground); white-space: nowrap; cursor: pointer; }
-.doc-searchbar > button:disabled { opacity: .4; cursor: default; }
+.doc-search-input { width: 150px; padding: 6px 8px; border: 1px solid var(--border-default); border-radius: calc(var(--radius) - 5px); background: transparent; color: var(--foreground); }
+.doc-search-action { padding: 6px 8px; border: 0; border-radius: calc(var(--radius) - 5px); background: var(--muted); color: var(--foreground); white-space: nowrap; cursor: pointer; }
+.doc-search-action:disabled { opacity: .4; cursor: default; }
 .doc-mode-notice { display: flex; align-items: center; gap: 7px; width: min(820px, calc(100% - 24px)); margin: 10px auto 0; color: var(--muted-foreground); font-size: .8rem; }
 
 .doc-canvas-row { display: flex; align-items: flex-start; gap: 18px; width: min(1180px, calc(100% - 24px)); margin: 12px auto 0; }
@@ -118,15 +118,15 @@
 }
 .doc-side-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 8px; border-bottom: 1px solid var(--border-default); background: var(--background); }
 .doc-side-tabs { display: flex; align-items: center; gap: 3px; }
-.doc-side-tabs button { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 5px 9px; border: 0; border-radius: calc(var(--radius) - 4px); background: transparent; color: var(--muted-foreground); cursor: pointer; }
-.doc-side-tabs button[aria-selected='true'] { background: var(--muted); color: var(--primary); }
+.doc-side-tab { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 5px 9px; border: 0; border-radius: calc(var(--radius) - 4px); background: transparent; color: var(--muted-foreground); cursor: pointer; }
+.doc-side-tab[aria-selected='true'] { background: var(--muted); color: var(--primary); }
 .doc-side-head > .clear-btn { margin-left: auto; }
 .doc-side-content { padding: 14px 16px 22px; }
 .doc-side-content h2 { margin: 0 0 14px; font-size: 1rem; }
 .doc-side-composer { margin-bottom: 14px; }
-.doc-side-composer textarea, .doc-reply-composer textarea { display: block; width: 100%; min-height: 68px; resize: vertical; padding: 9px 10px; border: 1px solid var(--border-default); border-radius: calc(var(--radius) - 3px); background: transparent; color: var(--foreground); font: inherit; }
-.doc-side-composer > button, .doc-reply-composer > button { margin-top: 7px; padding: 7px 11px; border: 0; border-radius: calc(var(--radius) - 4px); background: var(--primary); color: var(--primary-foreground); cursor: pointer; }
-.doc-side-composer > button:disabled, .doc-reply-composer > button:disabled { opacity: .4; cursor: default; }
+.doc-comment-input { display: block; width: 100%; min-height: 68px; resize: vertical; padding: 9px 10px; border: 1px solid var(--border-default); border-radius: calc(var(--radius) - 3px); background: transparent; color: var(--foreground); font: inherit; }
+.doc-comment-submit { margin-top: 7px; padding: 7px 11px; border: 0; border-radius: calc(var(--radius) - 4px); background: var(--primary); color: var(--primary-foreground); cursor: pointer; }
+.doc-comment-submit:disabled { opacity: .4; cursor: default; }
 .doc-side-composer blockquote, .doc-comment blockquote { margin: 0 0 8px; padding-left: 9px; border-left: 2px solid var(--primary); color: var(--muted-foreground); font-size: .78rem; }
 .doc-composer-hint, .doc-side-empty { color: var(--muted-foreground); font-size: .8rem; }
 .doc-comment, .doc-suggestion { padding: 13px 0; border-top: 1px solid var(--border-default); }
@@ -137,7 +137,7 @@
 .doc-comment > p, .doc-reply p { margin: 7px 0; font-size: .86rem; white-space: pre-wrap; }
 .doc-reply { margin: 9px 0 0 12px; padding-left: 10px; border-left: 2px solid var(--border-default); }
 .doc-comment-actions, .doc-suggestion-actions { display: flex; gap: 5px; margin-top: 7px; }
-.doc-comment-actions button, .doc-suggestion-actions button { padding: 5px 8px; border: 0; border-radius: calc(var(--radius) - 5px); background: var(--muted); color: var(--foreground); cursor: pointer; }
+.doc-comment-action, .doc-suggestion-action { padding: 5px 8px; border: 0; border-radius: calc(var(--radius) - 5px); background: var(--muted); color: var(--foreground); cursor: pointer; }
 .doc-reply-composer { margin-top: 8px; }
 .doc-suggestion-before, .doc-suggestion-after { margin: 8px 0; padding: 7px 8px; border-radius: calc(var(--radius) - 5px); font-size: .82rem; white-space: pre-wrap; }
 .doc-suggestion-before { background: color-mix(in srgb, var(--destructive) 12%, transparent); text-decoration: line-through; }
@@ -175,7 +175,7 @@
   .doc-follow-button svg { width: 17px; height: 17px; }
   .doc-toolbar { top: 95px; margin-inline: 6px; }
   .doc-searchbar { top: 137px; width: calc(100% - 12px); margin-inline: 6px; overflow-x: auto; }
-  .doc-searchbar input { flex: 0 0 130px; }
+  .doc-search-input { flex: 0 0 130px; }
   .doc-canvas-row { width: calc(100% - 12px); margin-top: 7px; }
   .doc-editor .tiptap { min-height: calc(100vh - 148px); padding: 28px 18px; }
   .doc-sidebar { position: fixed; inset: 143px 0 0 auto; z-index: 45; width: min(360px, 100vw); max-height: none; border-left: 1px solid var(--border-default); box-shadow: -8px 0 28px color-mix(in srgb, var(--foreground) 15%, transparent); }
