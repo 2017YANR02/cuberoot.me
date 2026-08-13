@@ -7,6 +7,7 @@ import {
   Compass, Grid2x2, Trophy, Timer as TimerIcon, Code as CodeIcon,
   Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap,
+  FileText,
   type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
@@ -43,6 +44,7 @@ export const TEXTS: Record<string, { en: string; zh: string
 },
   alg:             { en: 'Tutorial',   zh: '教程' },
   teaching:        { en: 'Teaching', zh: '教学' },
+  documents:       { en: 'Docs', zh: '文档' },
   algdb:           { en: 'Algorithms', zh: '公式' },
   wiki:            { en: 'Wiki', zh: 'Wiki' },
   quiz:            { en: 'Quiz', zh: '问答' },
@@ -166,6 +168,7 @@ export const SECTIONS: Section[] = [
     },
     cards: [
       { id: 'teaching', href: '/teaching', internal: true, tier: 'medium', Icon: GraduationCap, nameKey: 'teaching', adminOnly: true },
+      { id: 'documents', href: '/docs', internal: true, tier: 'medium', Icon: FileText, nameKey: 'documents', adminOnly: true },
       { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg' },
       { id: 'quiz',     href: '/quiz',     internal: true, tier: 'medium', Icon: CircleQuestionMark, nameKey: 'quiz' },
       { id: 'wiki',     href: '/wiki',     internal: true, tier: 'medium', Icon: BookA,      nameKey: 'wiki' },

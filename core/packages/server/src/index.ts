@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
+import { createNodeWebSocket } from '@hono/node-ws';
 import { authRoutes } from './routes/auth.js';
 import { accountAuthRoutes } from './routes/account_auth.js';
 import { progressRoutes } from './routes/progress.js';
@@ -56,6 +57,8 @@ import { videoRoomsRoutes } from './routes/video_rooms.js';
 import { wechatJssdkRoutes } from './routes/wechat_jssdk.js';
 import { quizRoutes } from './routes/quiz.js';
 import { smsReceiptRoutes } from './routes/sms_receipt.js';
+import { documentRoutes } from './routes/documents.js';
+import { collaborativeDocuments } from './documents/realtime.js';
 import { ensureDaemon as ensureCubeoptDaemon, isEnabled as cubeoptEnabled } from './cubeopt/daemon.js';
 import { startWcaPastResultsMonitor } from './monitors/wca_past_results.js';
 import { startWatchedForeignRegMonitor } from './monitors/watched_foreign_reg.js';
@@ -66,6 +69,7 @@ import { startPrewarmCron } from './routes/cubing_live.js';
 import { startMonitors } from './monitors/index.js';
 
 const app = new Hono();
+const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 
 // CORS 配置——允许前端跨域请求
 // NOTE: Vercel/Next 服务的 cuberoot.me 跨域调 api.cuberoot.me,所以页面 origin 是 cuberoot.me。
@@ -164,7 +168,26 @@ app.route('/v1', battleRoomsRoutes);
 app.route('/v1', videoRoomsRoutes);
 app.route('/v1', wechatJssdkRoutes);
 app.route('/v1', quizRoutes);
+app.get('/v1/documents/realtime', upgradeWebSocket((c) => {
+  let connection: ReturnType<typeof collaborativeDocuments.handleConnection> | undefined;
+  return {
+    onOpen(_event, ws) {
+      if (!ws.raw) return;
+      ws.raw.binaryType = 'arraybuffer';
+      connection = collaborativeDocuments.handleConnection(ws.raw, c.req.raw, {} as never);
+    },
+    onMessage(event) {
+      const data = event.data;
+      if (typeof data === 'string') return;
+      connection?.handleMessage(new Uint8Array(data as ArrayBuffer));
+    },
+    onClose() {
+      connection?.handleClose();
+    },
+  };
+}));
 app.route('/v1', smsReceiptRoutes);
+app.route('/v1', documentRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).
@@ -234,6 +257,7 @@ startWatchedForeignRegMonitor();
 
 const PORT = Number(process.env.PORT) || 3001;
 
-serve({ fetch: app.fetch, port: PORT, hostname: '0.0.0.0' }, () => {
+const server = serve({ fetch: app.fetch, port: PORT, hostname: '0.0.0.0' }, () => {
   console.log(`Trainer API running on port ${PORT}`);
 });
+injectWebSocket(server);

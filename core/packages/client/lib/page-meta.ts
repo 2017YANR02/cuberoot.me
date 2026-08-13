@@ -240,6 +240,11 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'documentation': { title: { zh: '文档', en: 'Documentation' } },
+  'docs': {
+    title: { zh: '协作文档', en: 'Collaborative Docs' },
+    description: { zh: '多人实时编辑、自动保存并按成员授权的在线文档。', en: 'Real-time collaborative documents with autosave and member permissions.' },
+  },
+  'docs/edit': { title: { zh: '编辑协作文档', en: 'Edit Collaborative Document' } },
   'eocross_trainer': { title: { zh: 'EO 十字训练', en: 'EOCross Trainer' } },
   'feedback': { title: { zh: '我的反馈', en: 'My feedback' } },
   'feedback/admin': { title: { zh: '反馈审核', en: 'Feedback' } },
