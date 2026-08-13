@@ -6,8 +6,8 @@
  * Lazy-imports cubing/twisty(~150 KB),所以仅在真正用到时才加载。
  * 接受 (alg, puzzle, set, setup),挂载到一个 div 容器里。
  *
- * 提供给两处用:
- *  - AlgCategoryView:用户点击公式行展开后播放
+ * 主要入口:
+ *  - case 详情页:用户点击公式行展开后播放
  *  - AlgEditor (admin):编辑时显示当前 focused 行的预览,核对公式
  */
 import { useEffect, useRef, useImperativeHandle, forwardRef, type CSSProperties } from 'react';

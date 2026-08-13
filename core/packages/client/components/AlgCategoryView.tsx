@@ -6,7 +6,7 @@
  * Restored (2026-06-16) to parity with the Vite version:
  *   - CommunityAlgs (logged-in users add/edit/delete their own algs per case, validated on save)
  *   - Admin tooling: AdminCaseEditor + ValidationReportModal + dnd-kit reorder (admin-gated)
- *   - AlgPlayer (cubing.js TwistyPlayer) — click an alg row to expand + play the 3D animation
+ *   - Formula rows stay compact here; 3D playback lives on each case detail page
  *
  * Keeps: subgroup picker (umbrella sets), second-level picker, ori switcher,
  * per-case ori cycle, subgroup collapse, sticker/setup/HTML alg rendering.
@@ -40,7 +40,6 @@ import CommunityAlgs from '@/components/CommunityAlgs';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
 import type { AlgInvalidMark } from '@/components/AlgEditor';
 import ValidationReportModal from '@/components/ValidationReportModal';
-import AlgPlayer from '@/components/AlgPlayer';
 import SortableAlgRow from '@/components/SortableAlgRow';
 import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
 import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
@@ -181,25 +180,23 @@ function SetupLine({ puzzle, setup, notationStyle }: {
   );
 }
 
-function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, invalid, mirror, ori = 0, notationStyle, viewAngle, orientation }: {
-  entry: AlgEntry; expanded: boolean; onToggle: () => void; animatable: boolean;
-  puzzle: AlgPuzzle; set: string; setup?: string; invalid?: string;
+function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAngle }: {
+  entry: AlgEntry;
+  puzzle: AlgPuzzle; invalid?: string;
   /** 有值 = 这个 set 吃镜像系统,行尾出翻转图标;`partner` 是伙伴 case 名(没建链时为 null) */
   mirror?: { partner: string | null; self: string };
   /** 这条公式在第几个视角(0=FR),镜像面板要拿它算落点 */
   ori?: number;
   notationStyle: AlgNotationStyle;
   viewAngle: CaseViewAngle;
-  orientation: string;
 }) {
   const { alg, algHtml } = entry;
   const { copied, copy } = useCopy();
   const [mirrorOpen, setMirrorOpen] = useState(false);
-  // 显示 / 复制都剥掉收尾 AUF;下面的 AlgPlayer 拿的仍是完整公式,动画才停在还原态。
+  // 列表只负责显示 / 复制,剥掉收尾 AUF；完整公式的动画统一放到 case 详情页。
   const angledAlg = caseViewAlg(alg, viewAngle);
   const standardAlgShown = formatScrambleForEvent(puzzle, displayAlg(angledAlg));
   const algShown = formatAlgNotation(standardAlgShown, notationStyle);
-  const playerSetup = entry.setup ?? setup;
   // 步数要数**屏幕上这一条**。`entry.stm` 是入库值(含收尾 AUF),拿它当徽章就会
   // 出现「显示 10 步、徽章写 11」。
   const shownStm = useMemo(
@@ -209,17 +206,8 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
   return (
     <>
       <div
-        role="button"
-        tabIndex={0}
-        className={`alg-alg-row${expanded ? ' is-expanded' : ''}${invalid ? ' is-invalid' : ''}`}
-        onClick={animatable ? onToggle : undefined}
-        onKeyDown={(e) => {
-          if (animatable && (e.key === 'Enter' || e.key === ' ')) {
-            e.preventDefault();
-            onToggle();
-          }
-        }}
-        title={invalid ?? (animatable ? (expanded ? 'collapse' : 'play') : 'copy')}
+        className={`alg-alg-row${invalid ? ' is-invalid' : ''}`}
+        title={invalid}
       >
         {/* 就是这条过不了校验 —— 卡片红框只说「这张有问题」,不说是哪条 */}
         {invalid && <AlertTriangle size={13} className="alg-alg-invalid-icon" aria-label={invalid} />}
@@ -255,15 +243,6 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
       </div>
       {mirror && mirrorOpen && (
         <AlgMirrorPanel alg={angledAlg} puzzle={puzzle} mirrorName={mirror.partner} selfName={mirror.self} ori={ori} />
-      )}
-      {expanded && animatable && (
-        <AlgPlayer
-          alg={angledAlg}
-          puzzle={puzzle}
-          set={set}
-          setup={playerSetup === undefined ? undefined : caseViewSetup(playerSetup, viewAngle)}
-          orientation={orientation}
-        />
       )}
     </>
   );
@@ -495,7 +474,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const [editorState, setEditorState] = useState<AdminEditorState | null>(null);
   const [validationOpen, setValidationOpen] = useState(false);
   const [validationRefreshKey, setValidationRefreshKey] = useState(0);
-  const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [flashId, setFlashId] = useState<number | null>(null);
   /** 点中的那张卡(黄框)。它同时是 URL 片段的来源 —— 复制地址栏就能把这张卡发给别人。 */
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -577,8 +555,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     ? 'simplified'
     : zbllDiagramParam;
   const recognitionSimplified = canShowAllCases ? zbllDiagramMode === 'simplified' : simplified;
-  const animatable = true;
-
   // 列表视图(`cards` 只看图 / `full` 公式内联)。语义 + localStorage key 都在
   // AlgViewModeToggle 里,`/alg` 下所有 case 列表页共用同一个偏好。
   const [view, changeView] = useAlgViewMode();
@@ -1314,7 +1290,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         ? tr({ zh: '这个 case 有公式校验不通过', en: 'This case has failing algs' })
                         : undefined}
                     >
-                      {/* 整卡跳到这张 case 的独立页(缩略图 + 名字 = 跳转区;公式/复制/播放/社区区
+                      {/* 整卡跳到这张 case 的独立页(缩略图 + 名字 = 跳转区;公式/复制/社区区
                           z-index 抬到覆盖层之上,照常交互)。真 <a>,中键可新开。 */}
                       <Link
                         href={caseDetailHref(c)}
@@ -1434,32 +1410,24 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         {(() => {
                           // 筛了标签就别拖:看到的是子集,拖出来的顺序对不上真实数组
                           const dragAlgs = isAdmin && c.id != null && !filtering;
-                          const rows = algsForOri.map((entry, i) => {
-                            const rowKey = `${c.name}::${oriIdx}::${i}`;
-                            const expanded = expandedKey === rowKey;
+                          const rows = algsForOri.map((entry) => {
                             // 校验结果 / 拖动 id 都按**未筛选**的下标走(标签筛选只是个视图)——
                             // 拿对象身份换回真下标
                             const trueIdx = allAlgsForOri.indexOf(entry);
                             const row = (
                               <AlgRow
                                 entry={entry}
-                                expanded={expanded}
-                                onToggle={() => setExpandedKey(expanded ? null : rowKey)}
-                                animatable={animatable}
                                 puzzle={puzzleParam as AlgPuzzle}
-                                set={set}
-                                setup={oriAdjustSetup(c.setup, oriIdx)}
                                 invalid={c.id != null ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
                                 ori={oriIdx}
                                 mirror={mirrorFor(c)}
                                 notationStyle={displayedNotationStyle}
                                 viewAngle={effectiveViewAngle}
-                                orientation={effectiveOrientation}
                               />
                             );
                             const key = `${entry.altId ?? ''}::${trueIdx}`;
-                            // 不拖的时候一层壳都不加 —— AlgRow 是 fragment(行 + 展开的播放器),
-                            // 套个 div 会把它俩和列表的 gap 关系改掉
+                            // 不拖的时候一层壳都不加 —— AlgRow 还可能带镜像公式面板,
+                            // 套个 div 会把它和列表的 gap 关系改掉
                             return dragAlgs
                               ? (
                                 <SortableAlgRow key={key} id={algDragId(c.id!, oriIdx, trueIdx)} draggable>
