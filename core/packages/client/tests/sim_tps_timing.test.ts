@@ -31,8 +31,8 @@ describe('sim TPS timing', () => {
     expect(simTpsToSpeed(0.5)).toBe(0);
     expect(simTpsToSpeed(6)).toBe(100);
     expect(simSpeedToTicks(Number.NaN)).toBe(65);
-    expect(simSpeedToTps(simTpsToSpeed(SIM_DEFAULT_TPS))).toBeCloseTo(0.9, 12);
-    expect(simSpeedToTps(DEFAULT_SETTINGS.speed)).toBeCloseTo(0.9, 12);
+    expect(simSpeedToTps(simTpsToSpeed(SIM_DEFAULT_TPS))).toBeCloseTo(1.0, 12);
+    expect(simSpeedToTps(DEFAULT_SETTINGS.speed)).toBeCloseTo(1.0, 12);
   });
 
   it('finishes at the same elapsed time at 60 Hz and 240 Hz', () => {
