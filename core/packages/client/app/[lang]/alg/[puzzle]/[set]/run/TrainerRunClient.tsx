@@ -52,7 +52,7 @@ import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { useAlgSrs, autoMarkFromSrs } from '@/lib/alg-srs-store';
 import { useAlgSweep } from '@/lib/alg-sweep-store';
 import { gradeFromSolve } from '@/lib/alg-srs';
-import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
+import { trainerSheetFromCases } from '@/lib/alg_pdf/from_trainer';
 import '@/app/[lang]/alg/_trainer/trainer.css';
 import '@/app/[lang]/alg/_trainer/memory.css';
 import '@/app/[lang]/alg/alg.css';
@@ -959,17 +959,30 @@ export default function TrainerRunClient() {
   const memoPool = pool.length > 0 ? pool : memoScopeKeys;
 
   // 打印范围与本场出题范围同源:普通训练是「勾选 ∩ scope」,记忆模式没勾选时则
-  // 回落到 scope 全集。按 cases 过滤可保留公式库规范序,不把随机出题顺序印进表里。
+  // 回落到 scope 全集。这里只固定题库的规范序;覆盖乱序 / 随机抽题在点 PDF 时才现算。
   const printableKeys = new Set(isMemo ? memoPool : pool);
   const printableCases = cases.filter(c => printableKeys.has(caseKey(c)));
   const pdfScopeSlug = scopeSlug?.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
-  const buildPdfSheet = () => algSheetFromCases({
+  const pdfSourcePath = `/alg/${puzzleParam}/${setSlug}/run${scopeSlug ? `?scope=${encodeURIComponent(scopeSlug)}` : ''}`;
+  const buildPdfSheet = () => trainerSheetFromCases({
     puzzle,
     set: setSlug,
     cases: printableCases,
-    title: `${puzzle} ${tr(meta)}${scopeSuffix ? `: ${scopeSuffix}` : ''}`,
-    sourcePath: `/alg/${puzzleParam}/${setSlug}/run${scopeSlug ? `?scope=${encodeURIComponent(scopeSlug)}` : ''}`,
-    filename: `${puzzleParam}-${setSlug}${pdfScopeSlug ? `-${pdfScopeSlug}` : ''}`,
+    title: `${puzzle} ${tr(meta)}${scopeSuffix ? `: ${scopeSuffix}` : ''} ${tr({ zh: '训练题', en: 'Practice' })}`,
+    subtitle: `${tr({
+      zh: `${printableCases.length} 道打乱`,
+      en: `${printableCases.length} scramble${printableCases.length === 1 ? '' : 's'}`,
+    })} — cuberoot.me${pdfSourcePath}`,
+    filename: `${puzzleParam}-${setSlug}${pdfScopeSlug ? `-${pdfScopeSlug}` : ''}-trainer`,
+    mode,
+    probMode,
+    recapOrder,
+    scrambleKind,
+    scrambleOpts: mode === 'memo'
+      ? { preAuf: false, postAuf: false, randomInitialD: false, randomFinalAuf: false, randomFinalY: false }
+      : splitScrambleOpts,
+    showThumb: showStageThumb,
+    pureScramble,
   });
 
   // 本机没选 case:房间模式(题面来自服务端队列)不算「未选」,不拦。经邀请链接进来时
@@ -1150,7 +1163,12 @@ export default function TrainerRunClient() {
           {/* 打印和进度紧凑贴在齿轮左侧:absolute 脱流,齿轮仍精确居中。
               合练的 case 来自不同 set,不能拿一个 set 契约渲染整份 PDF,先不露错误入口。 */}
           <div className="trainer-top-actions">
-            {!isMix && printableCases.length > 0 && <AlgPdfButton build={buildPdfSheet} />}
+            {!isMix && printableCases.length > 0 && (
+              <AlgPdfButton
+                build={buildPdfSheet}
+                title={tr({ zh: '下载可打印的训练打乱', en: 'Download printable training scrambles' })}
+              />
+            )}
             <Link href="/alg/progress" className="trainer-progress-link" prefetch={false}>
               {tr({ zh: '进度', en: 'Progress' })}
             </Link>
