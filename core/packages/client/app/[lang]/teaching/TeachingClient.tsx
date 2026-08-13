@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Clock3, Mic2, Target, Video } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from '@/components/AppLink';
@@ -26,6 +26,15 @@ const KIND_LABELS: Record<LessonKind, LocalizedText> = {
   resource: { zh: '资料', en: 'Sheet' },
   milestone: { zh: '过关', en: 'Checkpoint' },
 };
+
+const TEACHING_ACCESS_KEY = 'teaching-preview-access';
+const TEACHING_PASSWORD_HASH = '94ddc9c97aff29f4c52486f4d2124a5c839a3a25af08d9d1b07f464a212ecbe2';
+
+async function matchesTeachingPassword(password: string) {
+  const bytes = new TextEncoder().encode(password);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('') === TEACHING_PASSWORD_HASH;
+}
 
 function courseMinutes(course: MicroCourse) {
   return lessonMinutes(courseLessons(course));
@@ -239,15 +248,54 @@ function TeachingPage() {
   );
 }
 
-function TeachingAccessNotice() {
+function TeachingAccessNotice({ onUnlock }: { onUnlock: () => void }) {
   const pathname = usePathname();
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(false);
+  const [checking, setChecking] = useState(false);
+
+  async function submitPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setChecking(true);
+    const matches = await matchesTeachingPassword(password);
+    setChecking(false);
+    if (!matches) {
+      setError(true);
+      return;
+    }
+    try { sessionStorage.setItem(TEACHING_ACCESS_KEY, 'granted'); } catch { /* Storage may be unavailable in privacy mode. */ }
+    onUnlock();
+  }
 
   return (
     <main className="teaching-page teaching-language-fallback">
       <BackHome />
       <p className="teaching-eyebrow"><T zh="课程筹备中" en="Coming soon" /></p>
       <h1><T zh="教学页面暂未公开" en="This teaching page is not public yet" /></h1>
-      <p><T zh="目前仅供管理员预览课程内容，正式课程准备好后再向所有人开放。" en="For now, only administrators can preview the course content." /></p>
+      <p><T zh="管理员或持有预览密码的学员可以查看课程内容。" en="Administrators and learners with the preview password can view the course content." /></p>
+      <form className="teaching-access-form" onSubmit={submitPassword}>
+        <label htmlFor="teaching-password"><T zh="预览密码" en="Preview password" /></label>
+        <div className="teaching-access-row">
+          <input
+            id="teaching-password"
+            type="password"
+            inputMode="numeric"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => {
+              setPassword(event.target.value);
+              setError(false);
+            }}
+            aria-invalid={error}
+            aria-describedby={error ? 'teaching-password-error' : undefined}
+            required
+          />
+          <button type="submit" disabled={checking}>
+            {checking ? <T zh="验证中" en="Checking" /> : <T zh="查看课程" en="View course" />}
+          </button>
+        </div>
+        {error && <p id="teaching-password-error" role="alert"><T zh="密码不正确，请重新输入。" en="Incorrect password. Please try again." /></p>}
+      </form>
       <Link href={`/account${nextQuery(pathname)}`} className="teaching-admin-login" prefetch={false}>
         <T zh="登录管理员账号" en="Administrator sign in" />
       </Link>
@@ -258,9 +306,13 @@ function TeachingAccessNotice() {
 export default function TeachingClient({ lang: _lang }: { lang: string }) {
   const isAdmin = useIsAdmin();
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const [previewAccess, setPreviewAccess] = useState(false);
+  useEffect(() => {
+    try { setPreviewAccess(sessionStorage.getItem(TEACHING_ACCESS_KEY) === 'granted'); } catch { /* Storage may be unavailable in privacy mode. */ }
+    setMounted(true);
+  }, []);
 
   if (!mounted) return null;
-  if (!isAdmin) return <TeachingAccessNotice />;
+  if (!isAdmin && !previewAccess) return <TeachingAccessNotice onUnlock={() => setPreviewAccess(true)} />;
   return <TeachingPage />;
 }
