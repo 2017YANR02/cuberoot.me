@@ -22,4 +22,12 @@ describe('algorithm player placement', () => {
     expect(meta).toContain("import AlgPlayer from '@/components/AlgPlayer'");
     expect(meta).toContain('{expanded && (');
   });
+
+  it('renders a correctly oriented thumbnail for every multi-orientation slot', () => {
+    const detail = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx');
+
+    expect(detail).toMatch(/caseObj\.algs\.map\(\(oriAlgs, oi\) => \{[\s\S]*?const orientedSetup = oriAdjustSetup\(caseObj\.setup, oi\);/);
+    expect(detail).toMatch(/className="alg-case-detail-ori-thumb"[\s\S]*?<CaseThumb[\s\S]*?alg=\{firstAlg \|\| orientedSetup \|\| ''\}[\s\S]*?setup=\{orientedSetup\}/);
+    expect(detail).toContain('{!multiOri && (');
+  });
 });
