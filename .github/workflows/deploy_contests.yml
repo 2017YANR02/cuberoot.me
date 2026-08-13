@@ -206,23 +206,29 @@ jobs:
 
           for i in $(seq 1 30); do
             PAGES_OK=true
+            FAILED_ROUTE=""
             for ROUTE in / /default /about /competitions /records /rankings; do
               PAGE="$(curl -fsSL "https://contests.cuberoot.me${ROUTE}" 2>/dev/null || true)"
-              if ! echo "$PAGE" | grep -q '<html' || echo "$PAGE" | grep -q 'Internal Server Error'; then
+              if [[ "$PAGE" != *'<html'* || "$PAGE" == *'Internal Server Error'* || "$PAGE" == *'Error while loading'* ]]; then
                 PAGES_OK=false
+                FAILED_ROUTE="$ROUTE"
                 break
               fi
             done
             READY="$(curl -fsS http://127.0.0.1:3005/api/healthcheck/ready 2>/dev/null || true)"
             EVENTS="$(curl -fsS http://127.0.0.1:3005/api/default/events 2>/dev/null || true)"
             CONTESTS="$(curl -fsS http://127.0.0.1:3005/api/default/competitions 2>/dev/null || true)"
-            if [ "$PAGES_OK" = true ] \
-              && echo "$READY" | grep -q '"status":"ready"' \
-              && echo "$EVENTS" | grep -q '"eventId"' \
-              && echo "$CONTESTS" | grep -q '"competitionId"'; then
+            READY_OK=false
+            EVENTS_OK=false
+            CONTESTS_OK=false
+            [[ "$READY" == *'"status":"ready"'* ]] && READY_OK=true
+            [[ "$EVENTS" == *'"eventId"'* ]] && EVENTS_OK=true
+            [[ "$CONTESTS" == *'"competitionId"'* ]] && CONTESTS_OK=true
+            if [[ "$PAGES_OK" == true && "$READY_OK" == true && "$EVENTS_OK" == true && "$CONTESTS_OK" == true ]]; then
               echo "OK: contests-next served all public routes, upstream data, and readiness checks"
               exit 0
             fi
+            echo "Health attempt $i: pages=$PAGES_OK failed_route=${FAILED_ROUTE:-none} readiness=$READY_OK events=$EVENTS_OK contests=$CONTESTS_OK"
             sleep 1
           done
 
