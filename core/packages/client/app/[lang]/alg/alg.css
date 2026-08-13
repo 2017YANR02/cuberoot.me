@@ -958,7 +958,7 @@ html[data-theme=dark] .alg-root {
 .alg-case-drag-handle:active { cursor: grabbing; }
 
 /* 公式行的拖动 handle(admin)—— 第一条公式是主推解法,顺序得能改。
-   压在行的左内侧、平时半隐:行本身是「点了播动画」的按钮,handle 不能把它顶变形,
+   压在行的左内侧、平时半隐:详情页的行本身还会「点了播动画」,handle 不能把它顶变形,
    也不该在四条公式旁边杵四个大灰块。悬停 / 拖动时才显形。 */
 .alg-alg-sortable { position: relative; touch-action: none; }
 .alg-alg-drag-handle {
@@ -1829,6 +1829,7 @@ a.alg-community-author:hover {
   gap: 8px;
   min-width: 0;
 }
+.alg-meta-algline.is-playable { cursor: pointer; }
 .alg-meta-algline-label {
   flex: none;
   font-size: 11px;
