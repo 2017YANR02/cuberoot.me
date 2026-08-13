@@ -35,7 +35,29 @@ describe('Bluetooth smart-timer source', () => {
     const prefixes = options.filters?.map(filter => filter.namePrefix);
     expect(prefixes).toContain('QY-Timer');
     expect(prefixes).toContain('QY-Adapter');
-    expect(onNeedMac).toHaveBeenCalledWith('QY-Timer-V003');
+    expect(onNeedMac).toHaveBeenCalledWith('QY-Timer-V003', undefined);
+    expect(gattConnect).not.toHaveBeenCalled();
+    expect(source.connected).toBe(false);
+  });
+
+  it('asks the user to confirm a name-derived QiYi MAC instead of silently guessing', async () => {
+    const gattConnect = vi.fn();
+    const picked = {
+      name: 'QY-Timer-x-8F2A',
+      gatt: { connected: false, connect: gattConnect },
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    } as unknown as BluetoothDevice;
+    Object.defineProperty(navigator, 'bluetooth', {
+      configurable: true,
+      value: { requestDevice: vi.fn(() => Promise.resolve(picked)) },
+    });
+    const onNeedMac = vi.fn(() => Promise.resolve(null));
+    const source = createBluetoothTimerSource({ onNeedMac });
+
+    await source.connect();
+
+    expect(onNeedMac).toHaveBeenCalledWith('QY-Timer-x-8F2A', 'CC:A1:00:00:8F:2A');
     expect(gattConnect).not.toHaveBeenCalled();
     expect(source.connected).toBe(false);
   });

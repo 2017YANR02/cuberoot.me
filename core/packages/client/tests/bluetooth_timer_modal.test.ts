@@ -109,4 +109,21 @@ describe('BluetoothTimerModal', () => {
     });
     expect(disconnect).toHaveBeenCalledOnce();
   });
+
+  it('prefills the name-derived QiYi MAC for confirmation', async () => {
+    await act(async () => {
+      root.render(createElement(BluetoothTimerModal, {
+        timer: timerHandle(),
+        macPrompt: {
+          deviceName: 'QY-Timer-x-8F2A',
+          suggestedMac: 'CC:A1:00:00:8F:2A',
+        },
+        onSubmitMac: vi.fn(),
+        onCancelMac: vi.fn(),
+        onClose: vi.fn(),
+      }));
+    });
+
+    expect(host.querySelector<HTMLInputElement>('input')?.value).toBe('CC:A1:00:00:8F:2A');
+  });
 });

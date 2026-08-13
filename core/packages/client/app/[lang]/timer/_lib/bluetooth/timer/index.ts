@@ -113,7 +113,7 @@ export interface BluetoothTimerSourceOptions {
    * advertisements or from its device name. Resolve "XX:XX:XX:XX:XX:XX", or
    * null to give up. Without a MAC the QiYi timer never answers the hello.
    */
-  onNeedMac?: (deviceName: string) => Promise<string | null>;
+  onNeedMac?: (deviceName: string, suggestedMac?: string) => Promise<string | null>;
   /** Fired when the GATT link drops on its own (not via disconnect()). */
   onConnectionLost?: () => void;
 }
@@ -231,10 +231,16 @@ export function createBluetoothTimerSource(
       // browser connects. csTimer's qiyitimer.js does the same.
       let mac: string | null = null;
       if (picker.needsMac) {
-        mac = normalizeMac(await watchAdvertisementsMac(picked, { specs: [QIYI_MAC_ADV] }))
-          ?? qiyiTimerMacFromName(picked.name);
+        const advertisedMac = normalizeMac(
+          await watchAdvertisementsMac(picked, { specs: [QIYI_MAC_ADV] }),
+        );
+        const suggestedMac = qiyiTimerMacFromName(picked.name) ?? undefined;
+        mac = advertisedMac;
+        // Match csTimer's `reqMacAddr(true, ...)`: when the advertisement API
+        // cannot reveal the real address, show the name-derived default for
+        // confirmation instead of silently opening a connection with a guess.
         if (!mac && opts.onNeedMac) {
-          try { mac = normalizeMac(await opts.onNeedMac(picked.name ?? '')); }
+          try { mac = normalizeMac(await opts.onNeedMac(picked.name ?? '', suggestedMac)); }
           catch { mac = null; }
         }
         // QiYi ignores a hello without the exact MAC, leaving a connection

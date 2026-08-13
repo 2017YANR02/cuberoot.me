@@ -49,6 +49,13 @@ import {
   extractMacFromManufacturerData,
   normalizeMac,
 } from '@/app/[lang]/timer/_lib/bluetooth/mac';
+import {
+  QIYI_TIMER_READ_CHAR,
+  QIYI_TIMER_SERVICE,
+  QIYI_TIMER_WRITE_CHAR,
+  qiyiTimerDriver,
+} from '@/app/[lang]/timer/_lib/bluetooth/timer/qiyi_timer';
+import { makeFakeGatt } from '@/tests/_fake_gatt';
 
 const extractQiyiTimerMac = (mf: BluetoothManufacturerData | DataView): string | null =>
   extractMacFromManufacturerData(mf, [QIYI_MAC_ADV]);
@@ -362,6 +369,42 @@ describe('QiYi timer message framing', () => {
       0x2a, 0x8f, 0x00, 0x00, 0xa1, 0xcc,
     ]);
     expect(buildQiyiHelloContent('not-a-mac')).toBeNull();
+  });
+});
+
+describe('QiYi timer handshake', () => {
+  function timerGatt() {
+    return makeFakeGatt('QY-Timer-x-8F2A', {
+      [QIYI_TIMER_SERVICE]: [QIYI_TIMER_WRITE_CHAR, QIYI_TIMER_READ_CHAR],
+    });
+  }
+
+  it('falls back to the supported explicit GATT write mode', async () => {
+    const gatt = timerGatt();
+    const write = gatt.char(QIYI_TIMER_SERVICE, QIYI_TIMER_WRITE_CHAR);
+    let explicitWrites = 0;
+    write.writeValue = async () => { throw new Error('legacy write unavailable'); };
+    Object.defineProperty(write, 'properties', {
+      configurable: true,
+      value: { write: true, writeWithoutResponse: false },
+    });
+    write.writeValueWithResponse = async () => { explicitWrites++; };
+
+    const started = await qiyiTimerDriver.start(gatt.asServer, () => {}, {
+      mac: 'CC:A1:00:00:8F:2A',
+    });
+
+    expect(explicitWrites).toBe(2);
+    started.cleanup();
+  });
+
+  it('rejects a failed hello instead of reporting a silent connection', async () => {
+    const gatt = timerGatt();
+    gatt.char(QIYI_TIMER_SERVICE, QIYI_TIMER_WRITE_CHAR).failWrites = true;
+
+    await expect(qiyiTimerDriver.start(gatt.asServer, () => {}, {
+      mac: 'CC:A1:00:00:8F:2A',
+    })).rejects.toThrow('fake write failure');
   });
 });
 
