@@ -224,7 +224,6 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'code/solvers': { title: { zh: '求解器', en: 'Solvers' } },
   'code/stack': { title: { zh: '技术栈', en: 'Stack' } },
   'code/tokens': { title: { zh: '设计令牌', en: 'Design Tokens' } },
-  'code/traffic': { title: { zh: '流量', en: 'Traffic' } },
   'code/utils': { title: { zh: '速查', en: 'Hooks & Utils' } },
   'code/wca-export': { title: { zh: 'WST 数据导出', en: 'WST Export' } },
   'code/wca-rest-api': { title: { zh: 'WCA REST API', en: 'WCA REST API' } },
