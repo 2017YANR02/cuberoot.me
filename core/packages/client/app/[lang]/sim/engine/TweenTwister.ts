@@ -2,9 +2,9 @@
  * TweenTwister — animation orchestrator shared by the non-NxN cuber engines
  * (Ivy / Dino / Redi / SQ1). Uses the global `tweener` so the sim's offline mp4
  * export (`tweener.paused=true` + manual `tweener.update()` stepping) records every puzzle.
- * One tween per move; frames synced with the speed slider via `tweenTiming`.
+ * One tween per move; every parsed formula token occupies one TPS beat.
  *
- * Subclass and implement `parse` + `framesFor`. Override `beginAnims` / `twist`
+ * Subclass and implement `parse`. Override `beginAnims` / `twist`
  * for puzzle quirks (SQ1 threads a slice direction + gates illegal slices).
  *
  * Playback contract (relied on by PlayerControls' completion-driven play loop):
@@ -15,6 +15,7 @@
  */
 import tweener, { type Tween } from './tweener';
 import { applyAnimFrame, type PieceAnim } from './pieceAnim';
+import { timing } from './tweenTiming';
 import type MoveHistory from './MoveHistory';
 
 /** The cube surface a TweenTwister drives. All four engines conform. */
@@ -43,8 +44,6 @@ export default abstract class TweenTwister<TMove> {
 
   /** Parse a scramble / alg string into discrete moves. */
   protected abstract parse(scramble: string): TMove[];
-  /** Tween length in frames for `move` (magnitude-dependent). */
-  protected abstract framesFor(move: TMove): number;
   /** Anims for a move; override to inject a direction (SQ1 slice). */
   protected beginAnims(move: TMove): PieceAnim[] { return this.cube.beginMove(move); }
 
@@ -142,7 +141,9 @@ export default abstract class TweenTwister<TMove> {
 
   protected _animate(move: TMove): void {
     const anims = this.beginAnims(move);
-    const frames = Math.max(2, Math.round(this.framesFor(move)));
+    // TPS counts notation tokens, not degrees: U2, a 120° corner turn, a clock
+    // sweep and a whole-puzzle rotation each consume exactly one beat.
+    const frames = Math.max(2, timing.frames);
     this.activeTween = tweener.tween(0, 1, frames, (v) => {
       applyAnimFrame(anims, v);
       this.cube.dirty = true;

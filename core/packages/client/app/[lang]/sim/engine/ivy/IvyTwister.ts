@@ -1,10 +1,9 @@
 /**
  * IvyTwister — IvyCube's animation orchestrator. The queue / setup / push /
  * twist / undo / redo machinery lives in the shared TweenTwister base; Ivy only
- * supplies its parser and (constant 120°) tween length.
+ * supplies its parser.
  */
 import TweenTwister from '../TweenTwister';
-import { tweenDuration } from '../tweenTiming';
 import type IvyCube from './IvyCube';
 import type { IvyMove } from './IvyCube';
 
@@ -37,6 +36,4 @@ export function parseIvyMoves(scramble: string): IvyMove[] {
 export default class IvyTwister extends TweenTwister<IvyMove> {
   constructor(cube: IvyCube) { super(cube); }
   protected parse(scramble: string): IvyMove[] { return parseIvyMoves(scramble); }
-  // Every Ivy corner twist is 120° ≈ 4/3 of a 90° turn.
-  protected framesFor(): number { return tweenDuration(4 / 3); }
 }

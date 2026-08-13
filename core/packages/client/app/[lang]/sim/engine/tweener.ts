@@ -1,4 +1,6 @@
 // Ported from huazhechen/cuber (MIT) — src/cuber/tweener.ts
+import { elapsedMsToSimTicks } from '@/lib/sim_timing';
+
 export class Tween {
   begin: number;
   end: number;
@@ -17,8 +19,9 @@ export class Tween {
     this.callback(this.end);
   }
 
-  update(): boolean {
-    this.value++;
+  update(deltaTicks = 1): boolean {
+    if (!Number.isFinite(deltaTicks) || deltaTicks <= 0) return false;
+    this.value += deltaTicks;
     let elapsed = this.value / this.duration;
     elapsed = elapsed > 1 ? 1 : elapsed;
     elapsed = elapsed < 0 ? 0 : elapsed;
@@ -33,6 +36,7 @@ export class Tweener {
   tweens: Tween[];
   /** 暂停 rAF 自动推进。导出 mp4 时离线 manual tick,需要先停掉自动 update 避免冲突。 */
   paused = false;
+  private lastFrameMs: number | null = null;
 
   get length(): number {
     return this.tweens.length;
@@ -44,13 +48,15 @@ export class Tweener {
     // 内核(cube/group/twister)import 它 → 无 rAF 环境(Node/服务端)构造即炸。
     // headless 下不起自动环:调用方要么走 finish()(setup/reset 已如此,瞬时到位),
     // 要么手动 update()(mp4 离线 tick 同款)。
-    if (typeof requestAnimationFrame !== 'undefined') this.loop();
+    if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(this.loop.bind(this));
   }
 
-  loop(): void {
+  loop(frameMs: number): void {
     requestAnimationFrame(this.loop.bind(this));
+    const deltaTicks = this.lastFrameMs === null ? 0 : elapsedMsToSimTicks(frameMs - this.lastFrameMs);
+    this.lastFrameMs = frameMs;
     if (this.paused) return;
-    this.update();
+    this.update(deltaTicks);
   }
 
   tween(begin: number, end: number, duration: number, update: (v: number) => boolean | void): Tween {
@@ -59,12 +65,12 @@ export class Tweener {
     return tween;
   }
 
-  update(): boolean {
+  update(deltaTicks = 1): boolean {
     if (this.tweens.length === 0) return false;
     let i = 0;
     let len = this.tweens.length;
     while (i < len) {
-      if (this.tweens[i].update()) {
+      if (this.tweens[i].update(deltaTicks)) {
         this.tweens.splice(i, 1);
         len--;
       } else {

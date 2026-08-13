@@ -27,7 +27,6 @@ import * as THREE from 'three';
 import MoveHistory from '../MoveHistory';
 import TweenTwister, { type TweenCube } from '../TweenTwister';
 import { makeAnim, type PieceAnim } from '../pieceAnim';
-import { tweenDuration } from '../tweenTiming';
 import {
   CLOCK_BACK_CORNER_DIAL, CLOCK_BACK_QUAD, CLOCK_FRONT_CORNER_DIAL, CLOCK_FRONT_QUAD,
   SOLVED_CLOCK, clockMovesToString, parseClockMoves, withClockFlipParity,
@@ -263,17 +262,11 @@ export default class ClockBoard extends THREE.Group implements TweenCube<ClockSt
   }
 }
 
-/** 魔表的动画编排:解析交给 `parseClockSteps`,时长按扫动格数走(转得多就转得久)。 */
+/** 魔表的动画编排:解析交给 `parseClockSteps`,每个 token 统一占一个 TPS 节拍。 */
 export class ClockTwister extends TweenTwister<ClockStep> {
   constructor(board: ClockBoard) { super(board); }
 
   protected parse(alg: string): ClockStep[] { return parseClockSteps(alg); }
-
-  /** 一格 30° = 1/3 个 90° 转;翻面给个固定短时长。 */
-  protected framesFor(step: ClockStep): number {
-    if (step.kind === 'flip') return tweenDuration(2 / 3);
-    return tweenDuration(Math.max(1, Math.abs(clockSweep(step.move.amount))) / 3);
-  }
 
   /** SVG 用:是否还有 tween 在跑(含排队中的)。 */
   get busy(): boolean {
