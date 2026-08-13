@@ -25,6 +25,13 @@ describe('purifyScramble', () => {
     expect(purifyScramble('3x3', "U3' R")).toBe("U3' R");
   });
 
+  it('合并 setup 原文中相邻的同层转动', () => {
+    expect(purifyScramble('3x3', "R U' R' U2 F R' F' R U2 U'"))
+      .toBe("R U' R' U2 F R' F' R U");
+    expect(purifyScramble('4x4', "Rw R Rw2 M m"))
+      .toBe("Rw R Rw2 M m");
+  });
+
   it('五魔方另一套文法,只剥标注不做 2 归一', () => {
     expect(purifyScramble('megaminx', "R++ D-- ↑ R2' U'")).toBe("R++ D-- R2' U'");
   });
