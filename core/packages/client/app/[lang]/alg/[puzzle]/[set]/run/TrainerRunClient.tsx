@@ -22,6 +22,7 @@ import GestureWheel from '@/components/GestureWheel';
 import BoolToggle from '@/components/BoolToggle';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import AlgCaseMetaModal from '@/components/AlgCaseMetaModal';
+import AlgPdfButton from '@/components/AlgPdfButton';
 import { CaseThumb } from '@/components/CaseThumb';
 import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
@@ -51,6 +52,7 @@ import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { useAlgSrs, autoMarkFromSrs } from '@/lib/alg-srs-store';
 import { useAlgSweep } from '@/lib/alg-sweep-store';
 import { gradeFromSolve } from '@/lib/alg-srs';
+import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
 import '@/app/[lang]/alg/_trainer/trainer.css';
 import '@/app/[lang]/alg/_trainer/memory.css';
 import '@/app/[lang]/alg/alg.css';
@@ -956,6 +958,20 @@ export default function TrainerRunClient() {
   // 所以没勾选时回落到本页范围内的全部 case,而不是把人赶去选择页。
   const memoPool = pool.length > 0 ? pool : memoScopeKeys;
 
+  // 打印范围与本场出题范围同源:普通训练是「勾选 ∩ scope」,记忆模式没勾选时则
+  // 回落到 scope 全集。按 cases 过滤可保留公式库规范序,不把随机出题顺序印进表里。
+  const printableKeys = new Set(isMemo ? memoPool : pool);
+  const printableCases = cases.filter(c => printableKeys.has(caseKey(c)));
+  const pdfScopeSlug = scopeSlug?.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+  const buildPdfSheet = () => algSheetFromCases({
+    puzzle,
+    set: setSlug,
+    cases: printableCases,
+    title: `${puzzle} ${tr(meta)}${scopeSuffix ? `: ${scopeSuffix}` : ''}`,
+    sourcePath: `/alg/${puzzleParam}/${setSlug}/run${scopeSlug ? `?scope=${encodeURIComponent(scopeSlug)}` : ''}`,
+    filename: `${puzzleParam}-${setSlug}${pdfScopeSlug ? `-${pdfScopeSlug}` : ''}`,
+  });
+
   // 本机没选 case:房间模式(题面来自服务端队列)不算「未选」,不拦。经邀请链接进来时
   // 显示「正在加入房间…」而非「去选择」,避免加入完成前闪一下空态;链接失效则给原因 + 出口。
   if (pool.length === 0 && cases.length > 0 && !room && !isMemo) {
@@ -1131,10 +1147,14 @@ export default function TrainerRunClient() {
         {/* 训练选项全收进齿轮弹出面板,齿轮居中吸在页面正上方
             (data-no-timer:面板空白不触发按压计时) */}
         <div className="trainer-opts trainer-opts--top" data-no-timer ref={optsRef}>
-          {/* 进度入口贴在齿轮左侧:absolute 脱流,齿轮仍精确居中。 */}
-          <Link href="/alg/progress" className="trainer-progress-link" prefetch={false}>
-            {tr({ zh: '进度', en: 'Progress' })}
-          </Link>
+          {/* 打印和进度紧凑贴在齿轮左侧:absolute 脱流,齿轮仍精确居中。
+              合练的 case 来自不同 set,不能拿一个 set 契约渲染整份 PDF,先不露错误入口。 */}
+          <div className="trainer-top-actions">
+            {!isMix && printableCases.length > 0 && <AlgPdfButton build={buildPdfSheet} />}
+            <Link href="/alg/progress" className="trainer-progress-link" prefetch={false}>
+              {tr({ zh: '进度', en: 'Progress' })}
+            </Link>
+          </div>
           <button
             type="button"
             className="trainer-opts-gear"
