@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Bold, ChevronLeft, FileDown, FileText, Heading2, Italic, List, ListOrdered, Quote, Redo2, Share2, Trash2, Undo2, UserPlus } from 'lucide-react';
+import { Bold, ChevronLeft, FileDown, FileText, Heading2, Italic, List, ListOrdered, Quote, Redo2, Share2, Undo2 } from 'lucide-react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Collaboration from '@tiptap/extension-collaboration';
@@ -10,16 +10,12 @@ import CollaborationCaret from '@tiptap/extension-collaboration-caret';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import * as Y from 'yjs';
 import AppLink from '@/components/AppLink';
-import { ClearButton } from '@/components/ClearButton';
+import { CollaborativeSharePanel } from '@/components/collaboration/CollaborativeSharePanel';
 import WcaAuth from '@/components/WcaAuth';
 import { T, tr } from '@/i18n/tr';
 import { websocketApiUrl } from '@/lib/api-base';
 import { getSessionToken, getWcaToken, useAuthUser } from '@/lib/auth-store';
-import {
-  addDocumentMember, fetchDocument, removeDocumentMember, searchDocumentPeople,
-  updateDocumentMember, updateDocumentTitle, type DocumentDetails,
-  type DocumentPerson, type DocumentRole,
-} from '@/lib/document-api';
+import { fetchDocument, updateDocumentTitle, type DocumentDetails } from '@/lib/document-api';
 import { exportDocumentDocx, exportDocumentPdf } from '@/lib/document-export';
 import './editor.css';
 
@@ -28,12 +24,6 @@ type EditorSession = { ydoc: Y.Doc; provider: HocuspocusProvider };
 
 function websocketUrl(): string {
   return websocketApiUrl('/v1/documents/realtime');
-}
-
-function roleLabel(role: DocumentRole) {
-  if (role === 'owner') return tr({ zh: '所有者', en: 'Owner' });
-  if (role === 'editor') return tr({ zh: '可编辑', en: 'Editor' });
-  return tr({ zh: '只读', en: 'Viewer' });
 }
 
 function ToolbarButton({ active, disabled, label, onClick, children }: {
@@ -108,87 +98,6 @@ function CollaborativeEditor({ session, details, title, onError }: {
   );
 }
 
-function SharePanel({ id, details, reload, close }: {
-  id: string; details: DocumentDetails; reload: () => Promise<void>; close: () => void;
-}) {
-  const [query, setQuery] = useState('');
-  const [people, setPeople] = useState<DocumentPerson[]>([]);
-  const [role, setRole] = useState<'editor' | 'viewer'>('editor');
-  const [busy, setBusy] = useState('');
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (query.trim().length < 2) { setPeople([]); return; }
-    const timer = window.setTimeout(() => {
-      searchDocumentPeople(query.trim()).then(setPeople).catch((cause) => setError((cause as Error).message));
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, [query]);
-
-  const add = async (person: DocumentPerson) => {
-    setBusy(person.key); setError('');
-    try { await addDocumentMember(id, person.key, role); setQuery(''); setPeople([]); await reload(); }
-    catch (cause) { setError((cause as Error).message); }
-    finally { setBusy(''); }
-  };
-  const changeRole = async (key: string, nextRole: 'editor' | 'viewer') => {
-    setBusy(key); setError('');
-    try { await updateDocumentMember(id, key, nextRole); await reload(); }
-    catch (cause) { setError((cause as Error).message); }
-    finally { setBusy(''); }
-  };
-  const remove = async (key: string) => {
-    setBusy(key); setError('');
-    try { await removeDocumentMember(id, key); await reload(); }
-    catch (cause) { setError((cause as Error).message); }
-    finally { setBusy(''); }
-  };
-
-  return (
-    <div className="doc-share-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
-      <section className="doc-share" role="dialog" aria-modal="true" aria-labelledby="doc-share-title">
-        <div className="doc-share-head">
-          <h2 id="doc-share-title"><T zh="共享文档" en="Share document" /></h2>
-          <ClearButton variant="standalone" ariaLabel={tr({ zh: '关闭', en: 'Close' })} onClick={close} />
-        </div>
-        <div className="doc-invite-row">
-          <label className="doc-search-wrap">
-            <span className="sr-only"><T zh="搜索用户" en="Search people" /></span>
-            <input className="doc-search-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tr({ zh: '姓名或 WCA ID', en: 'Name or WCA ID' })} autoFocus />
-            {query && <ClearButton onClick={() => setQuery('')} preserveFocus />}
-          </label>
-          <select className="doc-invite-role" value={role} onChange={(event) => setRole(event.target.value as 'editor' | 'viewer')} aria-label={tr({ zh: '邀请权限', en: 'Invite role' })}>
-            <option value="editor">{tr({ zh: '可编辑', en: 'Editor' })}</option>
-            <option value="viewer">{tr({ zh: '只读', en: 'Viewer' })}</option>
-          </select>
-        </div>
-        {people.length > 0 && <div className="doc-people-results">{people.map((person) => (
-          <button className="doc-person-option" key={person.key} type="button" onClick={() => void add(person)} disabled={busy === person.key}>
-            <UserPlus size={16} aria-hidden="true" /><span>{person.name}</span>{person.wcaId && <small>{person.wcaId}</small>}
-          </button>
-        ))}</div>}
-        {error && <p className="docs-error" role="alert">{error}</p>}
-        <h3><T zh="已有成员" en="People with access" /></h3>
-        <div className="doc-member-list">{details.members.map((member) => (
-          <div className="doc-member" key={member.key}>
-            <span className="doc-member-name">{member.name}</span>
-            {member.role === 'owner' ? <span className="doc-member-role">{roleLabel(member.role)}</span> : <>
-              <select className="doc-member-role-select" value={member.role} disabled={busy === member.key}
-                onChange={(event) => void changeRole(member.key, event.target.value as 'editor' | 'viewer')}
-                aria-label={tr({ zh: `${member.name} 的权限`, en: `Role for ${member.name}` })}>
-                <option value="editor">{tr({ zh: '可编辑', en: 'Editor' })}</option>
-                <option value="viewer">{tr({ zh: '只读', en: 'Viewer' })}</option>
-              </select>
-              <button type="button" className="doc-remove" onClick={() => void remove(member.key)} disabled={busy === member.key}
-                aria-label={tr({ zh: `移除 ${member.name}`, en: `Remove ${member.name}` })}><Trash2 size={16} /></button>
-            </>}
-          </div>
-        ))}</div>
-      </section>
-    </div>
-  );
-}
-
 export default function DocumentEditorPage() {
   const [id] = useQueryState('id', parseAsString.withDefault(''));
   const user = useAuthUser();
@@ -202,7 +111,11 @@ export default function DocumentEditorPage() {
 
   const load = useCallback(async () => {
     if (!id || !user) return;
-    try { const next = await fetchDocument(id); setDetails(next); setTitle(next.document.title); setError(''); }
+    try {
+      const next = await fetchDocument(id);
+      if (next.document.kind !== 'document') throw new Error(tr({ zh: '这不是协作文档。', en: 'This resource is not a document.' }));
+      setDetails(next); setTitle(next.document.title); setError('');
+    }
     catch (cause) { setError((cause as Error).message); }
   }, [id, user]);
   useEffect(() => { void load(); }, [load]);
@@ -254,7 +167,7 @@ export default function DocumentEditorPage() {
       {!user && !details && <div className="doc-auth-needed"><T zh="请先登录，再打开共享给你的文档。" en="Sign in to open a document shared with you." /></div>}
       {user && !details && !error && <p className="doc-editor-loading"><T zh="正在加载文档…" en="Loading document…" /></p>}
       {details && session && <CollaborativeEditor session={session} details={details} title={title} onError={setError} />}
-      {shareOpen && details && <SharePanel id={id} details={details} reload={load} close={() => setShareOpen(false)} />}
+      {shareOpen && details && <CollaborativeSharePanel id={id} kind="document" details={details} reload={load} close={() => setShareOpen(false)} />}
     </main>
   );
 }

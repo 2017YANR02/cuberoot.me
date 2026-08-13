@@ -146,8 +146,8 @@ const TABLES: Table[] = [
   ] },
   { name: 'timer_sessions', domain: 'studio', origin: 'snapshot', purpose: { zh: '计时器分组 / 分段', en: 'Timer sessions / groups' } },
   { name: 'train_results', domain: 'studio', origin: 'snapshot', purpose: { zh: '公式计时训练成绩', en: 'Trainer (timed-alg) results' } },
-  { name: 'collaborative_documents', domain: 'studio', origin: '0122', purpose: { zh: '通用协作文档：标题、所有者与可合并的 Yjs 正文状态', en: 'General collaborative docs: title, owner, and mergeable Yjs body state' }, cols: [
-    { name: 'id (UUID PK), title, owner_key' }, { name: 'ydoc_state BYTEA', note: { zh: 'Yjs 二进制更新，保留并发编辑语义', en: 'Binary Yjs update preserving concurrent-edit semantics' } }, { name: 'created_at, updated_at' },
+  { name: 'collaborative_documents', domain: 'studio', origin: '0122', evolved: [123], purpose: { zh: '通用协作文档与在线表格：标题、类型、所有者及可合并的 Yjs 状态', en: 'Collaborative docs and spreadsheets: title, kind, owner, and mergeable Yjs state' }, cols: [
+    { name: 'id (UUID PK), title, kind, owner_key' }, { name: 'ydoc_state BYTEA', note: { zh: 'Yjs 二进制更新，保留并发编辑语义', en: 'Binary Yjs update preserving concurrent-edit semantics' } }, { name: 'created_at, updated_at' },
   ] },
   { name: 'collaborative_document_members', domain: 'studio', origin: '0122', naturalKey: true, purpose: { zh: '协作文档成员与 owner / editor / viewer 权限', en: 'Collaborative-document membership and owner / editor / viewer roles' }, cols: [
     { name: 'document_id, user_key (PK)' }, { name: 'role, added_by, created_at' },
@@ -373,6 +373,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 120, slug: 'drop_alg_mark_starred', desc: { zh: '退役公式训练器星标：删除纯星标记录，收紧 status 为非空，并移除 starred 列。', en: 'Retire alg-trainer stars: delete star-only rows, require a status, and remove the starred column.' } },
   { n: 121, slug: 'lowcubes_fto_megaminx', desc: { zh: '数据迁移：导入 LowCubes / Raul Low 的 216 个 FTO L3T 情况与 151 个 Megaminx Full PLL 情况，setup 按上游记号规则严格取逆。', en: 'Data migration: import 216 LowCubes / Raul Low FTO L3T cases and 151 Megaminx Full PLL cases, with each setup exactly inverted under the upstream notation rules.' } },
   { n: 122, slug: 'collaborative_documents', desc: { zh: '新增通用实时协作文档与成员权限表，正文以 Yjs 状态持久化。', en: 'Add general real-time collaborative documents and member roles, persisting body content as Yjs state.' } },
+  { n: 123, slug: 'collaborative_resource_kinds', desc: { zh: '协作资源增加 document / spreadsheet 类型，在同一权限与 Yjs 实时同步底座上支持在线表格。', en: 'Add document / spreadsheet resource kinds so online spreadsheets share the existing permissions and Yjs real-time foundation.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

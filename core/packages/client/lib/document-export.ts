@@ -122,7 +122,7 @@ export function documentExportFilename(title: string, extension: 'docx' | 'pdf')
   return `${stem}.${extension}`;
 }
 
-function saveBlob(blob: Blob, filename: string): void {
+export function saveBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;

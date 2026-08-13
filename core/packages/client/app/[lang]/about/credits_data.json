@@ -1,5 +1,12 @@
 [
   {
+    "name": "Handsontable/HyperFormula",
+    "url": "https://github.com/handsontable/hyperformula",
+    "zh": "在线协作表格的公式计算引擎（GPL-3.0）",
+    "en": "Formula engine for collaborative spreadsheets (GPL-3.0)",
+    "long_en": "HyperFormula evaluates formulas, ranges, and cross-sheet references in the collaborative spreadsheet editor."
+  },
+  {
     "name": "or18/RubiksSolverDemo",
     "url": "https://github.com/or18/RubiksSolverDemo",
     "zh": "3x3 求解器 demo + PWA 脚手架",

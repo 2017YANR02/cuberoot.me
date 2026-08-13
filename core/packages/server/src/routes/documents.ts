@@ -4,7 +4,7 @@ import sanitizeHtml from 'sanitize-html';
 import { generateJSON } from '@tiptap/html/server';
 import StarterKit from '@tiptap/starter-kit';
 import { TiptapTransformer } from '@hocuspocus/transformer';
-import { encodeStateAsUpdate } from 'yjs';
+import { Doc as YDoc, Map as YMap, encodeStateAsUpdate } from 'yjs';
 import { query } from '../db/connection.js';
 import {
   ADMIN_WCA_IDS,
@@ -20,11 +20,16 @@ export const documentRoutes = new Hono();
 const NO_STORE = 'no-store';
 const MAX_DOCX_BYTES = 20 * 1024 * 1024;
 const ROLES = new Set(['editor', 'viewer']);
+const KINDS = new Set(['document', 'spreadsheet']);
+const MAX_SPREADSHEET_CELLS = 100_000;
+const MAX_SPREADSHEET_TEXT = 20_000_000;
 
 type Role = 'owner' | 'editor' | 'viewer';
+type DocumentKind = 'document' | 'spreadsheet';
 type DocumentRow = {
   id: string;
   title: string;
+  kind: DocumentKind;
   owner_key: string;
   role: Role;
   created_at: Date | string;
@@ -48,6 +53,7 @@ function documentJson(row: DocumentRow) {
   return {
     id: row.id,
     title: row.title,
+    kind: row.kind,
     ownerKey: row.owner_key,
     role: row.role,
     createdAt: row.created_at,
@@ -57,7 +63,7 @@ function documentJson(row: DocumentRow) {
 
 async function accessFor(documentId: string, user: WcaUser): Promise<DocumentRow | null> {
   const rows = await query<DocumentRow>(
-    `SELECT d.id, d.title, d.owner_key, m.role, d.created_at, d.updated_at
+    `SELECT d.id, d.title, d.kind, d.owner_key, m.role, d.created_at, d.updated_at
      FROM collaborative_documents d
      JOIN collaborative_document_members m ON m.document_id = d.id
      WHERE d.id = ? AND m.user_key = ?`,
@@ -67,7 +73,6 @@ async function accessFor(documentId: string, user: WcaUser): Promise<DocumentRow
 }
 
 async function canManage(documentId: string, user: WcaUser): Promise<boolean> {
-  if (ADMIN_WCA_IDS.includes(user.wcaId)) return true;
   const access = await accessFor(documentId, user);
   return access?.role === 'owner';
 }
@@ -78,17 +83,72 @@ function initialState(html: string): Uint8Array {
   return encodeStateAsUpdate(ydoc);
 }
 
-async function createDocument(owner: WcaUser, title: string, html: string) {
-  const state = initialState(html);
+type InitialSheet = { name?: unknown; cells?: unknown };
+
+function cleanSheetName(value: unknown, index: number): string {
+  if (typeof value !== 'string') return `Sheet ${index + 1}`;
+  return value.replace(/[\\/?*\[\]:\u0000-\u001f]/g, '').trim().slice(0, 100) || `Sheet ${index + 1}`;
+}
+
+function spreadsheetState(value: unknown): Uint8Array {
+  const input = typeof value === 'object' && value ? value as { sheets?: unknown } : {};
+  const inputSheets = Array.isArray(input.sheets) ? input.sheets.slice(0, 50) as InitialSheet[] : [];
+  const sheets = inputSheets.length ? inputSheets : [{ name: 'Sheet 1', cells: {} }];
+  const ydoc = new YDoc();
+  const ySheets = ydoc.getArray<YMap<unknown>>('sheets');
+  let totalCells = 0;
+  let totalText = 0;
+  const usedNames = new Set<string>();
+  for (const [index, inputSheet] of sheets.entries()) {
+    const sheet = new YMap<unknown>();
+    const cells = new YMap<string>();
+    const styles = new YMap<string>();
+    const widths = new YMap<number>();
+    const sourceCells = typeof inputSheet?.cells === 'object' && inputSheet.cells ? inputSheet.cells as Record<string, unknown> : {};
+    let maxRow = 100;
+    let maxColumn = 26;
+    for (const [address, raw] of Object.entries(sourceCells)) {
+      if (!/^[A-Z]{1,3}[1-9][0-9]{0,3}$/.test(address) || typeof raw !== 'string') continue;
+      const match = /^([A-Z]+)(\d+)$/.exec(address)!;
+      let column = 0;
+      for (const letter of match[1]) column = column * 26 + letter.charCodeAt(0) - 64;
+      const row = Number(match[2]);
+      if (column > 200 || row > 10_000) continue;
+      totalCells += 1;
+      if (totalCells > MAX_SPREADSHEET_CELLS) throw new Error('Spreadsheet exceeds 100,000 non-empty cells');
+      totalText += raw.length;
+      if (totalText > MAX_SPREADSHEET_TEXT) throw new Error('Spreadsheet text exceeds 20,000,000 characters');
+      cells.set(address, raw.slice(0, 50_000));
+      maxColumn = Math.max(maxColumn, column);
+      maxRow = Math.max(maxRow, row);
+    }
+    const baseName = cleanSheetName(inputSheet?.name, index);
+    let sheetName = baseName;
+    let suffix = 2;
+    while (usedNames.has(sheetName.toLocaleLowerCase())) sheetName = `${baseName.slice(0, 95)} ${suffix++}`;
+    usedNames.add(sheetName.toLocaleLowerCase());
+    sheet.set('id', crypto.randomUUID());
+    sheet.set('name', sheetName);
+    sheet.set('rowCount', maxRow);
+    sheet.set('columnCount', maxColumn);
+    sheet.set('cells', cells);
+    sheet.set('styles', styles);
+    sheet.set('widths', widths);
+    ySheets.push([sheet]);
+  }
+  return encodeStateAsUpdate(ydoc);
+}
+
+async function createDocument(owner: WcaUser, title: string, kind: DocumentKind, state: Uint8Array) {
   const rows = await query<{ id: string }>(
     `WITH inserted AS (
-       INSERT INTO collaborative_documents (title, owner_key, ydoc_state)
-       VALUES (?, ?, ?) RETURNING id
+       INSERT INTO collaborative_documents (title, kind, owner_key, ydoc_state)
+       VALUES (?, ?, ?, ?) RETURNING id
      )
      INSERT INTO collaborative_document_members (document_id, user_key, role, added_by)
      SELECT id, ?, 'owner', ? FROM inserted
      RETURNING document_id AS id`,
-    [title, owner.wcaId, state, owner.wcaId, owner.wcaId],
+    [title, kind, owner.wcaId, state, owner.wcaId, owner.wcaId],
   );
   return rows[0].id;
 }
@@ -96,13 +156,15 @@ async function createDocument(owner: WcaUser, title: string, html: string) {
 documentRoutes.get('/documents', async (c) => {
   c.header('Cache-Control', NO_STORE);
   const me = await requireAuth(c);
+  const requestedKind = c.req.query('kind');
+  const kind = requestedKind && KINDS.has(requestedKind) ? requestedKind as DocumentKind : null;
   const rows = await query<DocumentRow>(
-    `SELECT d.id, d.title, d.owner_key, m.role, d.created_at, d.updated_at
+    `SELECT d.id, d.title, d.kind, d.owner_key, m.role, d.created_at, d.updated_at
      FROM collaborative_documents d
      JOIN collaborative_document_members m ON m.document_id = d.id
-     WHERE m.user_key = ?
+     WHERE m.user_key = ? AND (?::text IS NULL OR d.kind = ?)
      ORDER BY d.updated_at DESC`,
-    [me.wcaId],
+    [me.wcaId, kind, kind],
   );
   return c.json({ documents: rows.map(documentJson) });
 });
@@ -112,7 +174,15 @@ documentRoutes.post('/documents', async (c) => {
   checkRateLimit(getIp(c));
   const me = await requireAdmin(c);
   const body: Record<string, unknown> = await c.req.json<Record<string, unknown>>().catch(() => ({}));
-  const id = await createDocument(me, cleanTitle(body.title), '<p></p>');
+  const kind = typeof body.kind === 'string' && KINDS.has(body.kind) ? body.kind as DocumentKind : 'document';
+  let state: Uint8Array;
+  try {
+    state = kind === 'spreadsheet' ? spreadsheetState(body.spreadsheet) : initialState('<p></p>');
+  } catch (cause) {
+    return c.json({ error: cause instanceof Error ? cause.message : 'Invalid spreadsheet' }, 400);
+  }
+  const fallback = kind === 'spreadsheet' ? 'Untitled spreadsheet' : 'Untitled document';
+  const id = await createDocument(me, cleanTitle(body.title, fallback), kind, state);
   return c.json({ id }, 201);
 });
 
@@ -143,7 +213,7 @@ documentRoutes.post('/documents/import', async (c) => {
     allowedSchemes: ['http', 'https', 'data'],
   });
   const fallback = file.name.replace(/\.docx$/i, '');
-  const id = await createDocument(owner, cleanTitle(form.title, fallback), safeHtml || '<p></p>');
+  const id = await createDocument(owner, cleanTitle(form.title, fallback), 'document', initialState(safeHtml || '<p></p>'));
   return c.json({ id, warnings: converted.messages.map((message) => message.message) }, 201);
 });
 
@@ -191,7 +261,7 @@ documentRoutes.get('/documents/:id', async (c) => {
   );
   return c.json({
     document: documentJson(doc),
-    canManage: doc.role === 'owner' || ADMIN_WCA_IDS.includes(me.wcaId),
+    canManage: doc.role === 'owner',
     members: members.map((member) => ({
       key: member.user_key,
       name: member.display_name || member.wca_id || member.user_key,

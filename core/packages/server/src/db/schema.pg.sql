@@ -861,6 +861,7 @@ CREATE TRIGGER wca_teachers_updated_at BEFORE UPDATE ON wca_teachers
 CREATE TABLE collaborative_documents (
   id           UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   title        VARCHAR(240) NOT NULL,
+  kind         VARCHAR(16)  NOT NULL DEFAULT 'document' CHECK (kind IN ('document', 'spreadsheet')),
   owner_key    VARCHAR(20)  NOT NULL,
   ydoc_state   BYTEA        NOT NULL,
   created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -868,6 +869,8 @@ CREATE TABLE collaborative_documents (
 );
 CREATE INDEX idx_collaborative_documents_owner_updated
   ON collaborative_documents(owner_key, updated_at DESC);
+CREATE INDEX idx_collaborative_documents_kind_updated
+  ON collaborative_documents(kind, updated_at DESC);
 
 CREATE TABLE collaborative_document_members (
   document_id  UUID        NOT NULL REFERENCES collaborative_documents(id) ON DELETE CASCADE,
