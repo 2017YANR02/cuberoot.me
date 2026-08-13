@@ -43,7 +43,8 @@ export default function TodayRecon({ lang }: Props) {
     };
   }, []);
 
-  if (!recons || recons.length === 0) return null;
+  if (recons === null) return <div className="today-recon" aria-hidden="true" />;
+  if (recons.length === 0) return null;
 
   return (
     <div className="today-recon">

@@ -1,10 +1,6 @@
 'use client';
 
-/**
- * Site entrypoint — Landing page.
- * Ported from packages/client-vite/src/pages/LandingPage.tsx.
- * NOTE: particle-canvas code dropped — SHOW_PARTICLES was already false upstream.
- */
+/** Site entrypoint — Landing page. */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
@@ -18,16 +14,22 @@ import LazyVisible from '@/components/LazyVisible';
 import { TEXTS, SECTIONS, PRIMARY_CARDS, SEARCH_CARDS } from '@/lib/landing-sections';
 
 // Below-the-fold widgets — dynamic to defer client hydrate / chunk fetch.
-// Min-height placeholders match approximate rendered sizes to avoid layout
-// shift on first paint.
+// The dynamic fallback and viewport placeholder use the same measured height,
+// so crossing the lazy boundary does not collapse the page before data arrives.
+const HOME_WIDGET_HEIGHT = {
+  recentScrambles: 320,
+  todayRecon: 360,
+  ongoingComps: 240,
+} as const;
+
 const OngoingComps = dynamic(() => import('@/components/OngoingComps'), {
-  loading: () => <div style={{ minHeight: 56 }} aria-hidden="true" />,
+  loading: () => <div style={{ minHeight: HOME_WIDGET_HEIGHT.ongoingComps }} aria-hidden="true" />,
 });
 const RecentScrambles = dynamic(() => import('@/components/RecentScrambles'), {
-  loading: () => <div style={{ minHeight: 40 }} aria-hidden="true" />,
+  loading: () => <div style={{ minHeight: HOME_WIDGET_HEIGHT.recentScrambles }} aria-hidden="true" />,
 });
 const TodayRecon = dynamic(() => import('@/components/TodayRecon'), {
-  loading: () => <div style={{ minHeight: 40 }} aria-hidden="true" />,
+  loading: () => <div style={{ minHeight: HOME_WIDGET_HEIGHT.todayRecon }} aria-hidden="true" />,
 });
 import { useEffectiveTheme } from '@/lib/theme';
 import '../landing.css';
@@ -138,14 +140,14 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <LazyVisible minHeight={40} rootMargin="240px 0px" unwrapWhenVisible>
+      <LazyVisible minHeight={HOME_WIDGET_HEIGHT.recentScrambles} rootMargin="120px 0px" unwrapWhenVisible>
         <RecentScrambles lang={lang} />
       </LazyVisible>
-      <LazyVisible minHeight={40} rootMargin="240px 0px" unwrapWhenVisible>
+      <LazyVisible minHeight={HOME_WIDGET_HEIGHT.todayRecon} rootMargin="120px 0px" unwrapWhenVisible>
         <TodayRecon lang={lang} />
       </LazyVisible>
 
-      <LazyVisible minHeight={56} rootMargin="240px 0px" unwrapWhenVisible>
+      <LazyVisible minHeight={HOME_WIDGET_HEIGHT.ongoingComps} rootMargin="120px 0px" unwrapWhenVisible>
         <OngoingComps lang={lang} />
       </LazyVisible>
 

@@ -3,13 +3,13 @@
  * 3x3 CFOP scramble analyzer Worker — TS-source-equivalent runtime artifact.
  *
  * Type-stripped from src/pages/analyze/worker/analyzer.worker.ts. Lives in
- * public/ rather than going through Vite's worker bundling because:
+ * public/ rather than the Next/Turbopack module graph because:
  *   - importScripts() is a classic-worker-only API
- *   - Vite's bundled "classic" workers still inherit module-strict-mode semantics
- *     in some cases, breaking the legacy data files (boohoo.js et al.) which
+ *   - Bundled workers use module-strict-mode semantics, breaking the legacy
+ *     data files (boohoo.js et al.) which
  *     assign implicit globals (no var/let/const)
- *   - Plain JS in public/ is served verbatim by Vite + GH Pages and runs as
- *     a pure classic worker, guaranteed sloppy mode at top level
+ *   - Next serves public/ verbatim, so this runs as a pure classic worker with
+ *     the required sloppy-mode semantics at top level
  *
  * Keep this file in sync manually with analyzer.worker.ts (drop type annotations
  * only — control flow MUST stay identical to preserve byte-identical totals).

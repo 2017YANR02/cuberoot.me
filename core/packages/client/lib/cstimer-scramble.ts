@@ -4,8 +4,8 @@
  * Source lives at tools/cstimer-scramble/ (GPLv3 — see UPSTREAM.txt there);
  * we drive it through a single classic Web Worker at
  *   tools/cstimer-scramble/scrambler.worker.js
- * served by Vite's serveRepoRoot plugin in dev and by deploy_core/mirror in
- * prod. Catalog below maps our event ids to cstimer's internal keys + a
+ * exposed through the Next /tools route in dev and the static origin in
+ * production. Catalog below maps our event ids to cstimer's internal keys + a
  * default length for random-move scramblers.
  */
 
