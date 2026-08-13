@@ -7,12 +7,15 @@
 .recent-scrambles {
   width: 100%;
   max-width: 1100px;
-  min-height: 320px;
   margin: 0 auto 2.5rem;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 0.6rem;
+}
+
+.recent-scrambles--loading {
+  min-height: 320px;
 }
 
 .rs-topbar, .rs-head { display: contents; }

@@ -5,11 +5,14 @@
 .today-recon {
   width: 100%;
   max-width: 1100px;
-  min-height: 360px;
   margin: 0 auto 2.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.today-recon--loading {
+  min-height: 360px;
 }
 
 .tr-head {
