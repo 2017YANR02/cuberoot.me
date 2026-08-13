@@ -4,6 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EXPORT_URL="${CONTESTS_UPSTREAM_EXPORT_URL:-https://cubingcontests.com/api/default/export/v1/csv}"
 EVENTS_URL="${CONTESTS_UPSTREAM_EVENTS_URL:-https://cubingcontests.com/api/default/events}"
+EXPORT_FILE="${CONTESTS_UPSTREAM_EXPORT_FILE:-}"
+EVENTS_FILE="${CONTESTS_UPSTREAM_EVENTS_FILE:-}"
 
 for variable in DB_HOST DB_PORT DB_NAME DB_USERNAME DB_PASSWORD; do
   if [ -z "${!variable:-}" ]; then
@@ -22,9 +24,14 @@ done
 IMPORT_DIR="$(mktemp -d)"
 trap 'rm -rf "$IMPORT_DIR"; unset PGPASSWORD' EXIT
 
-echo "Downloading the Cubing Contests public export..."
-curl --fail --silent --show-error --location --retry 3 --max-time 180 \
-  "$EXPORT_URL" --output "$IMPORT_DIR/export.zip"
+echo "Preparing the Cubing Contests public export..."
+if [ -n "$EXPORT_FILE" ]; then
+  test -s "$EXPORT_FILE"
+  cp "$EXPORT_FILE" "$IMPORT_DIR/export.zip"
+else
+  curl --fail --silent --show-error --location --retry 3 --max-time 300 \
+    "$EXPORT_URL" --output "$IMPORT_DIR/export.zip"
+fi
 unzip -q "$IMPORT_DIR/export.zip" -d "$IMPORT_DIR/export"
 
 for file in export_events.csv export_persons.csv export_contests.csv export_rounds.csv export_results.csv metadata.json; do
@@ -39,8 +46,13 @@ if ! grep -q '"export_format_version"[[:space:]]*:[[:space:]]*"v1"' "$IMPORT_DIR
   exit 1
 fi
 
-curl --fail --silent --show-error --location --retry 3 --max-time 60 \
-  "$EVENTS_URL" --output "$IMPORT_DIR/events.json"
+if [ -n "$EVENTS_FILE" ]; then
+  test -s "$EVENTS_FILE"
+  cp "$EVENTS_FILE" "$IMPORT_DIR/events.json"
+else
+  curl --fail --silent --show-error --location --retry 3 --max-time 120 \
+    "$EVENTS_URL" --output "$IMPORT_DIR/events.json"
+fi
 node "$SCRIPT_DIR/extract-event-categories.mjs" \
   "$IMPORT_DIR/events.json" "$IMPORT_DIR/export/export_event_categories.csv"
 
