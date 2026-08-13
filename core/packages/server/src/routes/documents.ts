@@ -42,6 +42,7 @@ type MemberRow = {
   avatar_url: string | null;
   wca_id: string | null;
 };
+type SubscriptionRow = { subscribed: boolean; last_seen_at: Date | string };
 
 function cleanTitle(value: unknown, fallback = 'Untitled document'): string {
   if (typeof value !== 'string') return fallback;
@@ -259,6 +260,11 @@ documentRoutes.get('/documents/:id', async (c) => {
      ORDER BY CASE m.role WHEN 'owner' THEN 0 WHEN 'editor' THEN 1 ELSE 2 END, m.created_at`,
     [doc.id],
   );
+  const subscriptions = await query<SubscriptionRow>(
+    `SELECT subscribed, last_seen_at FROM collaborative_document_subscriptions
+     WHERE document_id = ? AND user_key = ?`,
+    [doc.id, me.wcaId],
+  );
   return c.json({
     document: documentJson(doc),
     canManage: doc.role === 'owner',
@@ -268,7 +274,44 @@ documentRoutes.get('/documents/:id', async (c) => {
       avatar: member.avatar_url || '',
       role: member.role,
     })),
+    subscription: {
+      subscribed: subscriptions[0]?.subscribed ?? false,
+      lastSeenAt: subscriptions[0]?.last_seen_at ?? null,
+    },
   });
+});
+
+documentRoutes.put('/documents/:id/subscription', async (c) => {
+  c.header('Cache-Control', NO_STORE);
+  checkRateLimit(getIp(c), { bucket: 'document-write', max: 60 });
+  const me = await requireAuth(c);
+  const id = c.req.param('id');
+  if (!(await accessFor(id, me))) return c.json({ error: 'Document not found' }, 404);
+  const body: Record<string, unknown> = await c.req.json<Record<string, unknown>>().catch(() => ({}));
+  if (typeof body.subscribed !== 'boolean') return c.json({ error: 'subscribed must be a boolean' }, 400);
+  const rows = await query<SubscriptionRow>(
+    `INSERT INTO collaborative_document_subscriptions (document_id, user_key, subscribed, last_seen_at)
+     VALUES (?, ?, ?, NOW())
+     ON CONFLICT (document_id, user_key) DO UPDATE SET subscribed = EXCLUDED.subscribed, last_seen_at = NOW()
+     RETURNING subscribed, last_seen_at`,
+    [id, me.wcaId, body.subscribed],
+  );
+  return c.json({ subscribed: rows[0].subscribed, lastSeenAt: rows[0].last_seen_at });
+});
+
+documentRoutes.post('/documents/:id/seen', async (c) => {
+  c.header('Cache-Control', NO_STORE);
+  checkRateLimit(getIp(c), { bucket: 'document-seen', max: 120 });
+  const me = await requireAuth(c);
+  const id = c.req.param('id');
+  if (!(await accessFor(id, me))) return c.json({ error: 'Document not found' }, 404);
+  await query(
+    `INSERT INTO collaborative_document_subscriptions (document_id, user_key, subscribed, last_seen_at)
+     VALUES (?, ?, FALSE, NOW())
+     ON CONFLICT (document_id, user_key) DO UPDATE SET last_seen_at = NOW()`,
+    [id, me.wcaId],
+  );
+  return c.json({ ok: true });
 });
 
 documentRoutes.patch('/documents/:id', async (c) => {

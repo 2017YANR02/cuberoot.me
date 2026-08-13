@@ -151,6 +151,9 @@ const TABLES: Table[] = [
   { name: 'collaborative_document_members', domain: 'studio', origin: '0122', naturalKey: true, purpose: { zh: '协作文档成员与 owner / editor / viewer 权限', en: 'Collaborative-document membership and owner / editor / viewer roles' }, cols: [
     { name: 'document_id, user_key (PK)' }, { name: 'role, added_by, created_at' },
   ] },
+  { name: 'collaborative_document_subscriptions', domain: 'studio', origin: '0124', naturalKey: true, purpose: { zh: '协作资源按用户保存修改订阅、最后查看与通知节流时间', en: 'Per-user subscriptions, last-seen timestamps, and notification throttling for collaborative resources' }, cols: [
+    { name: 'document_id, user_key (PK)' }, { name: 'subscribed, last_seen_at, last_notified_at, updated_at' },
+  ] },
   { name: 'alg_case_marks', domain: 'studio', origin: '0076', naturalKey: true, purpose: { zh: '训练器 per-case 学习标记(不熟/已掌握)', en: 'Per-case learning marks in the alg trainer (shaky/mastered)' }, cols: [
     { name: 'wca_id, puzzle, set_slug, case_key', note: { zh: '自然键;case_key = subgroup|name', en: 'natural key; case_key = subgroup|name' } }, { name: 'status, updated_at' },
   ] },
@@ -368,6 +371,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 121, slug: 'lowcubes_fto_megaminx', desc: { zh: '数据迁移：导入 LowCubes / Raul Low 的 216 个 FTO L3T 情况与 151 个 Megaminx Full PLL 情况，setup 按上游记号规则严格取逆。', en: 'Data migration: import 216 LowCubes / Raul Low FTO L3T cases and 151 Megaminx Full PLL cases, with each setup exactly inverted under the upstream notation rules.' } },
   { n: 122, slug: 'collaborative_documents', desc: { zh: '新增通用实时协作文档与成员权限表，正文以 Yjs 状态持久化。', en: 'Add general real-time collaborative documents and member roles, persisting body content as Yjs state.' } },
   { n: 123, slug: 'collaborative_resource_kinds', desc: { zh: '协作资源增加 document / spreadsheet 类型，在同一权限与 Yjs 实时同步底座上支持在线表格。', en: 'Add document / spreadsheet resource kinds so online spreadsheets share the existing permissions and Yjs real-time foundation.' } },
+  { n: 124, slug: 'document_subscriptions', desc: { zh: '为协作文档与表格增加按用户保存的修改订阅、最后查看时间与通知节流。', en: 'Add per-user change subscriptions, last-seen timestamps, and throttled notifications for collaborative documents and spreadsheets.' } },
   { n: 125, slug: 'drop_traffic_analytics', desc: { zh: '退役自建流量统计并删除 pageviews 与 traffic_daily。', en: 'Retire self-hosted traffic analytics and drop pageviews and traffic_daily.' } },
 ];
 
