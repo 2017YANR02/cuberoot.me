@@ -52,6 +52,7 @@
  */
 
 import { aesEcbDecrypt, aesEcbEncrypt, expandKey, type AesRoundKeys } from '../gan_crypto';
+import { writeGattValue } from '../driver';
 import { QIYI_CIC_LIST, macStringToBytes, normalizeMac } from '../mac';
 import { crc16Modbus } from '../crc';
 import type { BluetoothTimerDriver, BluetoothTimerStartResult } from './driver';
@@ -374,17 +375,19 @@ export const qiyiTimerDriver: BluetoothTimerDriver = {
     let writeChain: Promise<void> = Promise.resolve();
     const send = (sendSN: number, ackSN: number, cmd: number, data: ArrayLike<number>): Promise<void> => {
       const packets = encodeQiyiTimerPackets(sendSN, ackSN, cmd, data, roundKeys);
-      writeChain = writeChain.then(async () => {
+      const queued = writeChain.then(async () => {
         for (const pkt of packets) {
           if (closed) return;
           const ab = new ArrayBuffer(pkt.length);
           new Uint8Array(ab).set(pkt);
-          await writeChar.writeValue(ab);
+          await writeGattValue(writeChar, ab);
         }
-      }).catch(() => {
-        // A failed write must not poison the chain for later messages.
       });
-      return writeChain;
+      // Keep later messages usable, but return this message's real outcome to
+      // the caller. In particular, a failed hello must not become a false
+      // "connected" state with a timer that can never emit notifications.
+      writeChain = queued.catch(() => {});
+      return queued;
     };
 
     const onChar = (ev: Event): void => {
@@ -399,7 +402,7 @@ export const qiyiTimerDriver: BluetoothTimerDriver = {
       if (!decoded) return;
       if (decoded.needsAck) {
         // csTimer: sendAck(ackSN + 1, sendSN, 0x1003) with a single 0x00 byte.
-        void send((frame.ackSN + 1) >>> 0, frame.sendSN, QIYI_CMD_DATA, [0x00]);
+        void send((frame.ackSN + 1) >>> 0, frame.sendSN, QIYI_CMD_DATA, [0x00]).catch(() => {});
       }
       emit(decoded.event);
     };
@@ -411,11 +414,7 @@ export const qiyiTimerDriver: BluetoothTimerDriver = {
     // subscribe so a user-supplied MAC can be retried on the open connection.
     const hello = ctx?.mac ? buildQiyiHelloContent(ctx.mac) : null;
     if (hello) {
-      try {
-        await send(1, 0, 1, hello);
-      } catch {
-        // Non-fatal: surfaced to the user as "no events arriving".
-      }
+      await send(1, 0, 1, hello);
     }
 
     return {
