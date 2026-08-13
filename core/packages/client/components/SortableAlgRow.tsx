@@ -4,7 +4,8 @@
  * 一条公式的 sortable 外壳(admin 才拖得动)—— case 列表页({@link AlgCategoryView})
  * 和 case 详情页(`AlgCaseView`)共用同一份,别各写一遍。
  *
- * handle 单独一个 —— 整行是「点了播放动画」的 role=button,不能拿它当拖把。
+ * handle 单独一个 —— 详情页公式行还负责展开动画,列表页公式行也要保留复制 / 镜像操作,
+ * 都不能拿整行当拖把。
  * 内层 DndContext 嵌在 case 那层里:外层的 listeners 只挂在卡片的 grip 上,两边不打架。
  *
  * 落库端点由调用方给(`reorderCaseAlgs`),这里只管拖的那层壳。

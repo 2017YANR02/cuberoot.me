@@ -392,6 +392,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             caseObj={caseObj}
             puzzle={puzzle}
             set={set}
+            playable
             byNo={byNo}
             jump={{ kind: 'link', href: hrefFor }}
             scrambleKind={scrambleKind}

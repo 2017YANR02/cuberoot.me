@@ -16,6 +16,7 @@ import Link from '@/components/AppLink';
 import type { AlgCase, AlgCaseMeta, AlgPuzzle } from '@cuberoot/shared';
 import { stm } from '@cuberoot/shared/alg-notation';
 import { CaseThumb } from '@/components/CaseThumb';
+import AlgPlayer from '@/components/AlgPlayer';
 import { useCopy } from '@/hooks/useCopy';
 import { ALG_SET_UNIVERSE, LL_UNIVERSE_TOTAL, caseOrbit, probabilityFraction } from '@/lib/alg_probability';
 import { alignScrambleToSetup, caseScramble } from '@/lib/alg_scramble';
@@ -38,18 +39,40 @@ import { tr } from '@/i18n/tr';
 
 const METRIC_LABEL: Record<string, string> = { stm: 'STM', sqtm: 'SQTM', htm: 'HTM', qtm: 'QTM' };
 
-/** 一行「标签 + 可复制的公式」(`len` 给了就在右边挂步数徽章) */
-function AlgLine({ label, alg, len }: { label: string; alg: string; len?: number }) {
+/** 一行「标签 + 可复制的公式」(`len` 给了就在右边挂步数徽章)。 */
+function AlgLine({ label, alg, len, playable = false, expanded = false, onToggle }: {
+  label: string;
+  alg: string;
+  len?: number;
+  playable?: boolean;
+  expanded?: boolean;
+  onToggle?: () => void;
+}) {
   const { copied, copy } = useCopy();
   return (
-    <div className="alg-meta-algline">
+    <div
+      className={`alg-meta-algline${playable ? ' is-playable' : ''}${expanded ? ' is-expanded' : ''}`}
+      role={playable ? 'button' : undefined}
+      tabIndex={playable ? 0 : undefined}
+      aria-expanded={playable ? expanded : undefined}
+      onClick={playable ? onToggle : undefined}
+      onKeyDown={playable ? (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onToggle?.();
+        }
+      } : undefined}
+      title={playable
+        ? (expanded ? tr({ zh: '收起动画', en: 'Collapse animation' }) : tr({ zh: '播放动画', en: 'Play animation' }))
+        : undefined}
+    >
       {label && <span className="alg-meta-algline-label">{label}</span>}
       <code className="alg-meta-algline-code">{alg}</code>
       {len != null && <span className="alg-meta-algline-len" title="STM">{len}</span>}
       <button
         type="button"
         className="alg-meta-copy"
-        onClick={() => copy(alg)}
+        onClick={(event) => { event.stopPropagation(); copy(alg); }}
         title={tr({ zh: '复制', en: 'Copy' })}
       >
         {copied ? <Check size={12} /> : <Copy size={12} />}
@@ -94,6 +117,8 @@ interface Props {
   viewAngle?: CaseViewAngle;
   /** 详情页选择的魔方拿法；训练弹窗沿用公式库默认拿法。 */
   orientation?: string;
+  /** 详情页启用；训练弹窗保持紧凑静态正文。 */
+  playable?: boolean;
 }
 
 export default function AlgCaseMetaContent({
@@ -104,6 +129,7 @@ export default function AlgCaseMetaContent({
   onScrambleKindChange,
   viewAngle = 'default',
   orientation,
+  playable = false,
 }: Props) {
   /**
    * 没有 meta 的集(虚拟集 LSLL、库里还没补元数据的集)一样要能看:空对象兜底后
@@ -111,12 +137,16 @@ export default function AlgCaseMetaContent({
    * 不能让 `caseObj.meta` 直接是 undefined —— `m.no` / `m.sym` 会当场抛。
    */
   const m = (caseObj.meta ?? {}) as AlgCaseMeta;
+  const [expandedAlgKey, setExpandedAlgKey] = useState<string | null>(null);
 
   /** 首个朝向的公式(1lll / zbll / pll / ell 都只有一个朝向)。显示 / 步数都剥掉收尾 AUF。 */
   const algs = useMemo(() => (caseObj.algs[0] ?? []).map(a => {
-    const shown = displayAlg(caseViewAlg(a.alg, viewAngle));
+    const playbackAlg = caseViewAlg(a.alg, viewAngle);
+    const shown = displayAlg(playbackAlg);
     return {
       key: a.altId ?? shown,
+      entry: a,
+      playbackAlg,
       text: formatScrambleForEvent(puzzle, shown),
       len: a.stm == null ? undefined : stm(shown),
       tags: a.tags ?? [],
@@ -346,15 +376,44 @@ export default function AlgCaseMetaContent({
 
       <div className="alg-meta-case">
         <div className="alg-meta-case-algs">
-          {algsWrap(algs.map((a, i) => algRowWrap(
-            <AlgLine
-              key={a.key}
-              label={a.tags.map(t => ALG_TAG_LABEL[t]()).join(' ')}
-              alg={a.text}
-              len={a.len}
-            />,
-            i,
-          )))}
+          {algsWrap(algs.map((a, i) => {
+            const rowKey = `${a.key}:${i}`;
+            const expanded = playable && expandedAlgKey === rowKey;
+            if (!playable) {
+              return algRowWrap(
+                <AlgLine
+                  key={rowKey}
+                  label={a.tags.map(t => ALG_TAG_LABEL[t]()).join(' ')}
+                  alg={a.text}
+                  len={a.len}
+                />,
+                i,
+              );
+            }
+            const playerSetup = a.entry.setup ?? caseObj.setup;
+            return algRowWrap(
+              <div key={rowKey} className="alg-meta-playable-row">
+                <AlgLine
+                  label={a.tags.map(t => ALG_TAG_LABEL[t]()).join(' ')}
+                  alg={a.text}
+                  len={a.len}
+                  playable
+                  expanded={expanded}
+                  onToggle={() => setExpandedAlgKey(current => current === rowKey ? null : rowKey)}
+                />
+                {expanded && (
+                  <AlgPlayer
+                    alg={a.playbackAlg}
+                    puzzle={puzzle}
+                    set={set}
+                    setup={playerSetup === undefined ? undefined : caseViewSetup(playerSetup, viewAngle)}
+                    orientation={orientation}
+                  />
+                )}
+              </div>,
+              i,
+            );
+          }))}
         </div>
       </div>
 
