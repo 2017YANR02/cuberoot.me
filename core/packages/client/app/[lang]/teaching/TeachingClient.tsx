@@ -98,7 +98,7 @@ function TeachingPage() {
           <article>
             <Video aria-hidden="true" />
             <h3><T zh="三个固定镜头" en="Three fixed shots" /></h3>
-            <p><T zh="标准形状、慢速执行、正常速度结果。孩子暂停视频也能看清拿法和目标块。" en="Standard case, slow execution, and normal-speed result so grips and target pieces remain clear." /></p>
+            <p><T zh="标准形状、慢速执行、正常速度结果。学员暂停视频也能看清拿法和目标块。" en="Standard case, slow execution, and normal-speed result so grips and target pieces remain clear." /></p>
           </article>
           <article>
             <Mic2 aria-hidden="true" />
@@ -218,8 +218,8 @@ function TeachingPage() {
           <h2 id="production-title"><T zh="按模块批量录，不按整门课硬撑" en="Record in module batches, not one huge course" /></h2>
         </div>
         <ol>
-          <li><strong><T zh="先录五节试听微课。" en="Record the five trial lessons first. " /></strong><T zh="验证机位、手部特写、字幕字号和孩子能否完成结尾挑战。" en="Validate camera angles, hand close-ups, subtitle size, and whether children can pass each final challenge." /></li>
-          <li><strong><T zh="再录层先法前八节。" en="Then record the first eight beginner lessons. " /></strong><T zh="让 3–5 个目标年龄孩子试看，记录他们在哪个判断停住。" en="Test with three to five children in the target age group and record where their decisions stop." /></li>
+          <li><strong><T zh="先录五节试听微课。" en="Record the five trial lessons first. " /></strong><T zh="验证机位、手部特写、字幕字号和学员能否完成结尾挑战。" en="Validate camera angles, hand close-ups, subtitle size, and whether learners can pass each final challenge." /></li>
+          <li><strong><T zh="再录层先法前八节。" en="Then record the first eight beginner lessons. " /></strong><T zh="让 3–5 位目标学员试看，记录他们在哪个判断停住。" en="Test with three to five target learners and record where their decisions stop." /></li>
           <li><strong><T zh="模板稳定后按模块录。" en="Batch by module once the template is stable. " /></strong><T zh="同类案例统一起始角度、公式卡和过关提示。" en="Keep starting angles, algorithm cards, and pass prompts consistent across related cases." /></li>
           <li><strong><T zh="试听只承诺真实下一步。" en="Let the trial promise only a real next step. " /></strong><T zh="结尾展示 24 节层先法地图，并邀请家长领取练习清单或进入完整课程。" en="Show the 24-lesson beginner map and invite parents to collect the practice sheet or continue into the full course." /></li>
         </ol>
