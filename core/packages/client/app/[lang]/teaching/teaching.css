@@ -364,6 +364,19 @@
   margin-top: 18px;
 }
 
+.teaching-admin-login {
+  align-self: flex-start;
+  display: inline-flex;
+  margin-top: 18px;
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.teaching-admin-login:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 820px) {
   .teaching-course-nav,
   .teaching-principle-grid {

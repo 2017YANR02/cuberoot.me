@@ -101,6 +101,7 @@ export interface CardConfig {
   iconImg?: string;
   nameKey: keyof typeof TEXTS;
   comingSoon?: boolean;
+  adminOnly?: boolean;
 }
 
 type I18n = { en: string; zh: string; };
@@ -164,7 +165,7 @@ export const SECTIONS: Section[] = [
     sub:     { en: 'Course plans, illustrated tutorials, a bilingual glossary, the full WCA regulations, the group theory underneath — and a quiz to check what stuck.', zh: '录播课教学方案、图文教程、双语术语表、WCA 规则全文、魔方背后的群论,以及一套问答检验你记住了多少。'
     },
     cards: [
-      { id: 'teaching', href: '/teaching', internal: true, tier: 'medium', Icon: GraduationCap, nameKey: 'teaching' },
+      { id: 'teaching', href: '/teaching', internal: true, tier: 'medium', Icon: GraduationCap, nameKey: 'teaching', adminOnly: true },
       { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg' },
       { id: 'quiz',     href: '/quiz',     internal: true, tier: 'medium', Icon: CircleQuestionMark, nameKey: 'quiz' },
       { id: 'wiki',     href: '/wiki',     internal: true, tier: 'medium', Icon: BookA,      nameKey: 'wiki' },
@@ -211,6 +212,7 @@ export const SEARCH_CARDS: LandingSearchCard[] = [
         id: c.id,
         href: c.href,
         internal: c.internal,
+        adminOnly: c.adminOnly,
         nameEn: TEXTS[c.nameKey].en,
         nameZh: TEXTS[c.nameKey].zh,
         sectionTitleEn: sec.eyebrow.en,

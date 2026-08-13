@@ -114,6 +114,7 @@ export default function DeskPetSearch({
   metronomeOpen: boolean;
   onToggleMetronome: () => void;
 }) {
+  const searchCards = SEARCH_CARDS.filter((card) => !card.adminOnly || isAdmin());
   const backdropRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const [donateOpen, setDonateOpen] = useState(false);
@@ -214,7 +215,7 @@ export default function DeskPetSearch({
     >
       <style>{CSS}</style>
       <div className="deskpet-search-box" ref={boxRef}>
-        <LandingSearch cards={SEARCH_CARDS} lang={lang} />
+        <LandingSearch cards={searchCards} lang={lang} />
       </div>
       <div className="deskpet-toolbar">
         <HomeLink className="icon-only" prefetch={false} onClick={onClose}

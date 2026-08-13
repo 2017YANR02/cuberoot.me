@@ -20,6 +20,7 @@ export interface SiteSearchCard {
   id: string;
   href: string;
   internal: boolean;
+  adminOnly?: boolean;
   nameEn: string;
   nameZh: string;
   sectionTitleEn: string;
