@@ -54,19 +54,19 @@
 .doc-remove { appearance: none; border: 0; background: transparent; color: var(--muted-foreground); cursor: pointer; }
 .doc-invite-row { display: flex; align-items: stretch; gap: 8px; margin-top: 18px; }
 .doc-search-wrap { position: relative; flex: 1; min-width: 0; }
-.doc-search-wrap input, .doc-invite-row select, .doc-member select { height: 38px; border: 1px solid var(--border-default); border-radius: calc(var(--radius) - 4px); background: var(--background); color: var(--foreground); font: inherit; }
-.doc-search-wrap input { width: 100%; padding: 0 34px 0 10px; }
+.doc-search-input, .doc-invite-role, .doc-member-role-select { height: 38px; border: 1px solid var(--border-default); border-radius: calc(var(--radius) - 4px); background: var(--background); color: var(--foreground); font: inherit; }
+.doc-search-input { width: 100%; padding: 0 34px 0 10px; }
 .doc-search-wrap .clear-btn { position: absolute; top: 50%; right: 7px; transform: translateY(-50%); }
 .doc-people-results { display: grid; margin-top: 4px; border: 1px solid var(--border-default); border-radius: calc(var(--radius) - 4px); overflow: hidden; }
-.doc-people-results button { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 7px 10px; border: 0; border-bottom: 1px solid var(--border-default); background: var(--background); color: var(--foreground); text-align: left; cursor: pointer; }
-.doc-people-results button:last-child { border-bottom: 0; }
-.doc-people-results button:hover { background: var(--muted); }
+.doc-person-option { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 7px 10px; border: 0; border-bottom: 1px solid var(--border-default); background: var(--background); color: var(--foreground); text-align: left; cursor: pointer; }
+.doc-person-option:last-child { border-bottom: 0; }
+.doc-person-option:hover { background: var(--muted); }
 .doc-people-results small { margin-left: auto; color: var(--muted-foreground); }
 .doc-member-list { display: grid; gap: 4px; }
 .doc-member { display: flex; align-items: center; gap: 8px; min-height: 42px; }
 .doc-member-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .doc-member-role { color: var(--muted-foreground); font-size: .85rem; }
-.doc-member select { height: 34px; align-self: center; }
+.doc-member-role-select { height: 34px; align-self: center; }
 .doc-remove { display: grid; place-items: center; width: 34px; height: 34px; }
 .doc-remove:hover { color: var(--destructive); }
 
@@ -79,5 +79,5 @@
   .doc-toolbar { top: 104px; }
   .doc-editor, .doc-toolbar { width: calc(100% - 12px); }
   .doc-editor .tiptap { min-height: calc(100vh - 164px); padding: 28px 18px; }
-  .doc-invite-row select { max-width: 112px; }
+  .doc-invite-role { max-width: 112px; }
 }
