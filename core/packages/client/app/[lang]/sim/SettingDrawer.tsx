@@ -315,7 +315,7 @@ function mapPerspective(v: number): number { return 2 + (v / 100) * 8; }        
 function mapYaw(v: number): number { return ((v / 50 - 1) * Math.PI) / 2; }     // scene.rotation.y
 function mapPitch(v: number): number { return ((1 - v / 50) * Math.PI) / 2; }   // scene.rotation.x
 // speed:0=慢 100=快 → 每个公式 token 的 60 Hz 标称 tick 数(越小越快)。
-// rAF 按真实 elapsed time 推进;默认 0.9 TPS = 66.67 ticks,不受显示器刷新率影响。
+// rAF 按真实 elapsed time 推进;默认 1.0 TPS = 60 ticks,不受显示器刷新率影响。
 // export 给 PlayerControls:播放/单步用完自己的播放速度后恢复抽屉值(同一全局 timing.frames)。
 export function mapFrames(v: number): number { return simSpeedToTicks(v); }
 

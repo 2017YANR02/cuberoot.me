@@ -2,7 +2,7 @@
 export const SIM_TICKS_PER_SECOND = 60;
 export const SIM_MIN_TPS = 0.5;
 export const SIM_MAX_TPS = 6;
-export const SIM_DEFAULT_TPS = 0.9;
+export const SIM_DEFAULT_TPS = 1.0;
 
 function finiteOr(value: number, fallback: number): number {
   return Number.isFinite(value) ? value : fallback;
