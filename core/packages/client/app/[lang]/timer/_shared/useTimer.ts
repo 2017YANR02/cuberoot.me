@@ -35,6 +35,8 @@ export interface TimerHandle {
   reset: () => void;
   /** Start immediately for a synchronized countdown, optionally backdated. */
   startNow: (elapsedMs?: number) => void;
+  /** Stop at an exact time measured by an external hardware timer. */
+  stopExternal: (timeMs: number, inspectionMs?: number) => void;
   /** Start an armed attempt from a smart-cube move timestamp. */
   startFromCube: (atMs?: number) => boolean;
   /** Cancel an in-progress arm while preserving the last displayed solve. */
@@ -201,6 +203,10 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     dispatch({ type: 'start-now', nowMs: performance.now(), elapsedMs });
   }, [dispatch]);
 
+  const stopExternal = useCallback((timeMs: number, inspectionMs = 0) => {
+    dispatch({ type: 'stop-external', timeMs, inspectionMs });
+  }, [dispatch]);
+
   const startFromCube = useCallback((atMs?: number): boolean => {
     const transition = dispatch({
       type: 'start-from-cube',
@@ -233,6 +239,7 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     onPressUp,
     reset,
     startNow,
+    stopExternal,
     startFromCube,
     cancelArm,
   };

@@ -1424,8 +1424,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
 
   // ── External timing devices (BLE smart timer / Stackmat mic) ───
   // Record the time the device measured verbatim rather than re-timing locally.
-  // A BLE timer can keep running while the page's own timer phase stays idle,
-  // so it supplies an explicit event/scramble snapshot captured at hands-on.
+  // A BLE timer drives the page's live display while it runs, then supplies an
+  // explicit event/scramble snapshot and exact hardware reading when it stops.
   type ExternalAttempt = { event: EventId; scramble: string };
   type ExternalRecordContext = ExternalAttempt & { inspectionMs?: number };
   const externalTimeRecordRef = useRef<((ms: number, context?: ExternalRecordContext) => void) | null>(null);
@@ -1471,23 +1471,43 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     onEvent: (timerEvent) => {
       if (timerEvent.state === 'IDLE' || timerEvent.state === 'GAN_RESET') {
         bluetoothTimerAttemptRef.current = null;
+        timer.reset();
+        phaseSnapshotRef.current = 'idle';
+        return;
+      }
+      if (timerEvent.state === 'DISCONNECT') {
+        if (bluetoothTimerAttemptRef.current !== null) timer.reset();
+        bluetoothTimerAttemptRef.current = null;
+        phaseSnapshotRef.current = 'idle';
         return;
       }
       if (timerEvent.state === 'HANDS_ON'
         || timerEvent.state === 'GET_SET'
-        || timerEvent.state === 'INSPECTION'
-        || timerEvent.state === 'RUNNING') {
+        || timerEvent.state === 'INSPECTION') {
         bluetoothTimerAttemptRef.current ??= { event, scramble };
+      }
+      if (timerEvent.state === 'RUNNING') {
+        bluetoothTimerAttemptRef.current ??= { event, scramble };
+        // QiYi reports the device reading when RUNNING begins, then csTimer
+        // advances the browser display locally until the exact STOPPED frame.
+        // Starting from that reading mirrors cstimer/src/js/timer/bttimer.js.
+        timer.startNow(timerEvent.solveTime ?? 0);
+        phaseSnapshotRef.current = 'running';
       }
     },
     onStop: (ms, timerEvent) => {
       const attempt = bluetoothTimerAttemptRef.current ?? { event, scramble };
-      externalTimeRecordRef.current?.(ms, { ...attempt, inspectionMs: timerEvent.inspectTime });
+      eventAtStartRef.current = attempt.event;
+      scrambleAtStartRef.current = attempt.scramble;
+      timer.stopExternal(ms, timerEvent.inspectTime);
+      phaseSnapshotRef.current = 'stopped';
       bluetoothTimerAttemptRef.current = null;
     },
     onConnectionLost: () => {
       const interrupted = bluetoothTimerAttemptRef.current !== null;
       bluetoothTimerAttemptRef.current = null;
+      if (interrupted) timer.reset();
+      phaseSnapshotRef.current = 'idle';
       setInfoToast({
         msg: interrupted
           ? tr({ zh: '蓝牙计时器已断开，这一次可能无法自动记录', en: 'Bluetooth timer disconnected; this attempt may not be recorded automatically' })
