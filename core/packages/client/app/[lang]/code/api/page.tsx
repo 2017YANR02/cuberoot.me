@@ -41,6 +41,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'feedback', zh: '反馈', en: 'Feedback' },
   { key: 'notification', zh: '通知', en: 'Notifications' },
   { key: 'forum', zh: '论坛', en: 'Forum' },
+  { key: 'documents', zh: '协作文档', en: 'Collaborative docs' },
   { key: 'quiz', zh: '知识问答', en: 'Quiz' },
   { key: 'content', zh: '内容与运维', en: 'Content & ops' },
   { key: 'timer', zh: '计时器', en: 'Timer' },
@@ -57,7 +58,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_srs alg_sets alg_sweep analytics announced_comps article auth battle_rooms calendar cn_comp_names colpi
-//   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
+//   comp_follows cube cubeopt_solve cubing_live documents feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon recon_ground_truth scramble_555
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wiki
@@ -318,6 +319,18 @@ const ENDPOINTS: Ep[] = [
   { d: 'forum', m: 'GET', p: '/v1/forum/reports', g: 'admin', zh: '举报列表(默认待处理,?all=1 全部)', en: 'List reports (open by default, ?all=1 for all)' },
   { d: 'forum', m: 'POST', p: '/v1/forum/reports/:id/resolve', g: 'admin', zh: '标记举报已处理', en: 'Mark report resolved' },
   { d: 'forum', m: 'GET', p: '/v1/forum/review', g: 'admin', zh: '待审核队列(新用户主题 + 回帖)', en: 'Review queue (new users’ threads + replies)' },
+
+  // ---- collaborative documents ----
+  { d: 'documents', m: 'GET', p: '/v1/documents', g: 'login', c: 'no-store', zh: '我的协作文档列表', en: 'Collaborative documents available to me' },
+  { d: 'documents', m: 'POST', p: '/v1/documents', g: 'admin', c: 'no-store', zh: '新建空白协作文档', en: 'Create a blank collaborative document' },
+  { d: 'documents', m: 'POST', p: '/v1/documents/import', g: 'admin', c: 'no-store', zh: '把 DOCX 导入协作文档', en: 'Import a DOCX as a collaborative document' },
+  { d: 'documents', m: 'GET', p: '/v1/documents/people', g: 'login', c: 'no-store', zh: '搜索可邀请的站内用户', en: 'Search registered users to invite' },
+  { d: 'documents', m: 'GET', p: '/v1/documents/:id', g: 'login', c: 'no-store', zh: '文档元数据、本人权限与成员', en: 'Document metadata, my role, and members' },
+  { d: 'documents', m: 'PATCH', p: '/v1/documents/:id', g: 'login', c: 'no-store', zh: '所有者或管理员修改文档标题', en: 'Owner or admin updates the document title' },
+  { d: 'documents', m: 'POST', p: '/v1/documents/:id/members', g: 'login', c: 'no-store', zh: '所有者或管理员添加成员', en: 'Owner or admin adds a member' },
+  { d: 'documents', m: 'PATCH', p: '/v1/documents/:id/members/:userKey', g: 'login', c: 'no-store', zh: '所有者或管理员修改成员权限', en: 'Owner or admin changes a member role' },
+  { d: 'documents', m: 'DELETE', p: '/v1/documents/:id/members/:userKey', g: 'login', c: 'no-store', zh: '所有者或管理员移除成员', en: 'Owner or admin removes a member' },
+  { d: 'documents', m: 'GET', p: '/v1/documents/realtime', g: 'login', c: 'no-store', zh: 'Yjs 实时协作 WebSocket', en: 'Yjs real-time collaboration WebSocket' },
   { d: 'forum', m: 'POST', p: '/v1/forum/review/:type/:id/:action', g: 'admin', zh: '审核:通过 / 驳回(thread|post,驳回可附原因)', en: 'Moderate: approve / reject (thread|post, optional reject reason)' },
 
   // ---- quiz 社区题(登录用户出题,直接上线 + 举报) ----

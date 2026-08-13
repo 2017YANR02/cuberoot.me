@@ -1,0 +1,64 @@
+.docs-page {
+  width: min(920px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 64px;
+}
+
+.docs-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 24px 0 30px;
+}
+
+.docs-header h1 { margin: 0 0 7px; font-size: clamp(1.7rem, 4vw, 2.35rem); }
+.docs-header p { margin: 0; color: var(--muted-foreground); }
+.docs-header-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+
+.docs-button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--border-default);
+  border-radius: calc(var(--radius) - 4px);
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  cursor: pointer;
+}
+
+.docs-button:hover:not(:disabled) { background: var(--muted); }
+.docs-button:disabled { opacity: .55; cursor: wait; }
+.docs-button-primary { border-color: var(--primary); background: var(--primary); color: var(--primary-foreground); }
+.docs-button-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 88%, var(--foreground)); }
+
+.docs-list { display: grid; gap: 2px; }
+.docs-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--border-default);
+  color: inherit;
+  text-decoration: none;
+}
+.docs-row:hover { background: var(--muted); }
+.docs-row-main { display: grid; gap: 4px; min-width: 0; flex: 1; }
+.docs-row-main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.docs-row-main span, .docs-role, .docs-muted { color: var(--muted-foreground); font-size: .86rem; }
+.docs-role { white-space: nowrap; }
+.docs-empty { display: grid; justify-items: start; gap: 10px; color: var(--muted-foreground); padding: 36px 0; }
+.docs-empty p, .docs-error { margin: 0; }
+.docs-text-link { color: var(--primary); }
+.docs-error { color: var(--destructive); }
+
+@media (max-width: 600px) {
+  .docs-page { width: min(100% - 24px, 920px); padding-top: 18px; }
+  .docs-header { display: grid; gap: 16px; }
+  .docs-header-actions { width: 100%; }
+  .docs-row { padding-inline: 4px; }
+}
