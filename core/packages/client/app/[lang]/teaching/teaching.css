@@ -468,6 +468,62 @@
   line-height: 1.7;
 }
 
+.teaching-access-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
+  max-width: 430px;
+}
+
+.teaching-access-form label {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.teaching-access-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.teaching-access-row input {
+  min-width: 0;
+  width: min(240px, 100%);
+  padding: 10px 12px;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+}
+
+.teaching-access-row input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.teaching-access-row button {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.teaching-access-row button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.teaching-access-form > p {
+  margin: 0;
+  color: var(--destructive);
+  font-size: 0.9rem;
+}
+
 .teaching-language-toggle {
   margin-top: 18px;
 }
