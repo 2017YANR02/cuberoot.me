@@ -52,12 +52,12 @@ ssh root@cuberoot 'cd /opt/cube555 && javac -d dist -cp "dist:lib/twophase.jar" 
 
 Windows 上 cube555 已 clone 在 `D:\cube\cube555\`,本地 dev 时:
 
-```bash
-# 启 Hono dev(指 PORT=3002 + CUBE555_HOME 到本地 cube555 目录)
-PORT=3002 CUBE555_HOME='D:/cube/cube555' pnpm --filter @cuberoot/server dev
+```powershell
+# 启 Hono dev(Next 的本地 API rewrite 固定连 3001)
+$env:PORT='3001'; $env:CUBE555_HOME='D:/cube/cube555'; pnpm --filter @cuberoot/server dev
 
-# Vite proxy /v1 → 127.0.0.1:3002(在 vite.config.ts 加一行,见注释)
-pnpm --filter @cuberoot/client dev
+# 仅让 /v1/scramble/* 经 Next rewrites 连接本地 Hono
+$env:LOCAL_DOMAINS='scramble'; pnpm --filter @cuberoot/client dev
 ```
 
 ## 配置环境变量

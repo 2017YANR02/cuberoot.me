@@ -125,17 +125,17 @@ export const TAILSCALE: StackTool = {
   cuberoot: {
     zh: (
       <>
-        <p>cuberoot.me 用 Tailscale 的姿势只有一个:<strong>跨设备共享本地 dev server</strong>。开发机跑 Vite (<code>http://127.0.0.1:5173/</code>), 加入 tailnet 之后, 在同 WiFi 下手机 / 平板直接打开 <code>https://alienware.tail171d80.ts.net/</code> 就能看实时 dev 页面 —— 真域名 + 真 cert, 不是局域网 IP 那种"浏览器一直警告"的状态。</p>
+        <p>cuberoot.me 用 Tailscale 的姿势只有一个:<strong>跨设备共享本地 dev server</strong>。开发机跑 Next (<code>http://127.0.0.1:3000/</code>),加入 tailnet 之后,手机 / 平板通过已配置的 HTTPS 开发域名查看实时页面,不依赖局域网 IP。</p>
         <p>因为是真 https + 公网可解析的域名, WCA OAuth 也愿意把它当合法 callback。dev 流程里 3 个 callback 都已登记:<code>localhost</code> (PC 本机) / ts.net 子域 (同 WiFi 下手机) / <code>dev.cuberoot.me</code> (蜂窝网或 ts.net 不通时的备路, DNS A 记录另解析)。三条路覆盖了"我在哪都能登录 dev 实例"。</p>
-        <p>这里踩过一个坑值得记:<strong>切 dev / prod API base 的判断永远走 <code>import.meta.env.DEV</code>, 不能用 <code>hostname === 'localhost'</code></strong>。因为 ts.net 子域 / <code>dev.cuberoot.me</code> 的 hostname 不是 localhost, 用 hostname 检测会被骗到 prod API base 上, 然后跨域被 CORS 拦死。<code>shared/</code> 包同理直接读 <code>(import.meta as {'{ env? }'}).env?.DEV</code>, 不能依赖任何 hostname。</p>
+        <p>这里踩过一个坑值得记:<strong>切 dev / prod API base 永远走 <code>process.env.NODE_ENV</code>,不能用 <code>hostname === 'localhost'</code></strong>。隧道域名 / <code>dev.cuberoot.me</code> 的 hostname 不是 localhost,用 hostname 检测会错走生产地址。浏览器开发请求统一交给 Next rewrites 做同源转发。</p>
         <p>生产环境不在 tailnet 里 —— 部署是 nginx + 公网域名, Tailscale 只参与开发链路。整个站没有任何运行时依赖 tailnet (符合"自成一体"原则), 它纯粹是开发体验的放大器。</p>
       </>
     ),
     en: (
       <>
-        <p>cuberoot.me uses Tailscale for exactly one thing: <strong>sharing a local dev server across devices</strong>. The dev box runs Vite at <code>http://127.0.0.1:5173/</code>; once it joins the tailnet, the phone or tablet on the same WiFi opens <code>https://alienware.tail171d80.ts.net/</code> directly and sees the live dev page — real hostname, real cert, none of the "browser keeps warning you about a LAN IP" pain.</p>
+        <p>cuberoot.me uses Tailscale for exactly one thing: <strong>sharing a local dev server across devices</strong>. The dev box runs Next at <code>http://127.0.0.1:3000/</code>; once it joins the tailnet, phones and tablets open the configured HTTPS development hostname and see the live page without depending on a LAN IP.</p>
         <p>Because it's real HTTPS on a publicly resolvable hostname, WCA OAuth happily accepts it as a valid callback. Three callbacks are registered: <code>localhost</code> (PC), the ts.net subdomain (phone on the same WiFi), and <code>dev.cuberoot.me</code> (cellular fallback when ts.net isn't reachable, resolved via DNS A record). Three paths cover "log into the dev instance from anywhere."</p>
-        <p>One gotcha worth recording: <strong>switch dev / prod API base via <code>import.meta.env.DEV</code>, never via <code>hostname === 'localhost'</code></strong>. The ts.net subdomain and <code>dev.cuberoot.me</code> aren't "localhost," so hostname checks point dev at the prod API base and get killed by CORS. The <code>shared/</code> package follows the same rule with <code>(import.meta as {'{ env? }'}).env?.DEV</code> — never branch on hostname.</p>
+        <p>One gotcha worth recording: <strong>switch dev / prod API base via <code>process.env.NODE_ENV</code>, never via <code>hostname === 'localhost'</code></strong>. Tunnel hostnames and <code>dev.cuberoot.me</code> are not "localhost," so hostname checks choose the wrong origin. Browser development requests stay same-origin through Next rewrites.</p>
         <p>Production lives outside the tailnet — deployment is nginx + a public domain. Tailscale participates only in the development loop. The site has zero runtime dependency on the tailnet (in line with the "self-contained" principle); it is purely a developer-experience amplifier.</p>
       </>
     ),

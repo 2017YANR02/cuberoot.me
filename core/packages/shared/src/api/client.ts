@@ -6,7 +6,7 @@ export const wcaApi = axios.create({
   timeout: 10000,
 });
 
-// NOTE: CubeRoot Trainer 后端 API（开发环境通过 Vite proxy 转发）
+// NOTE: CubeRoot Trainer 后端 API（开发环境通过 Next rewrites 转发）
 export const trainerApi = axios.create({
   baseURL: '/api',
   timeout: 5000,

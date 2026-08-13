@@ -1,6 +1,5 @@
-// Dev-only catch-all that serves /tools/* from the repo root's tools/ directory,
-// mirroring Vite's `serveRepoRoot` plugin. See app/stats/[...slug]/route.ts for
-// the same pattern + rationale.
+// Dev-only catch-all that serves /tools/* from the repo root's tools/ directory.
+// See app/stats/[...slug]/route.ts for the same pattern + rationale.
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';

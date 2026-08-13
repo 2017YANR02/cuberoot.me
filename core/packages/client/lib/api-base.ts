@@ -1,5 +1,5 @@
 // Ported from packages/client-vite/src/utils/api_base.ts.
-// Next equivalent of import.meta.env.DEV is process.env.NODE_ENV.
+// Client-visible mode selection uses process.env.NODE_ENV.
 // Override via NEXT_PUBLIC_API_ORIGIN (NEXT_PUBLIC_* is inlined into the client bundle).
 
 export const API_ORIGIN = (() => {

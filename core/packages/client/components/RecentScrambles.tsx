@@ -15,7 +15,7 @@
 //    4x4–7x7 / megaminx / clock are fixed-length with no difficulty data → not listed at all.
 // 显示的打乱一律是**最优等态打乱**(同 /timer 真题的「最优打乱」,无 toggle):与该场原打乱同一魔方态、
 // 步数最短。同态 ⇒ 各阶段步数 / 难度值不变。仅「打乱长度」视图例外(那按的就是原打乱长度)。
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
@@ -371,10 +371,17 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
 export default function RecentScrambles({ lang }: Props) {
   const isZh = lang === 'zh';
   const lp = langPrefix(lang);
-  const [data, setData] = useState<RecentScramblesJson | null>(null);
+  const [data, setData] = useState<RecentScramblesJson | null>();
   const [dist, setDist] = useState<DistributionJson | null>(null);
   const [eventsJson, setEventsJson] = useState<RecentScramblesEventsJson | null>(null);
   const [event, setEvent] = useState('333');
+  const aliveRef = useRef(true);
+  const extrasStartedRef = useRef(false);
+
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => { aliveRef.current = false; };
+  }, []);
 
   // 异步加载 comp-country 索引,完成后 bump version 触发重渲染拿比赛国旗 + 中文名
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
@@ -383,20 +390,41 @@ export default function RecentScrambles({ lang }: Props) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    let on = true;
     fetch(statsUrl('/stats/scramble/recent_scrambles.json'), { cache: 'no-cache' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((j: RecentScramblesJson | null) => { if (on) setData(j); })
-      .catch(() => { if (on) setData(null); });
-    fetch(statsUrl('/stats/scramble/distribution.json') + '?v=20260614opt')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j: DistributionJson | null) => { if (on) setDist(j); })
-      .catch(() => { if (on) setDist(null); });
-    void fetchRecentScramblesEvents().then((j) => { if (on) setEventsJson(j); });
-    return () => {
-      on = false;
-    };
+      .then((j: RecentScramblesJson | null) => { if (aliveRef.current) setData(j); })
+      .catch(() => { if (aliveRef.current) setData(null); });
   }, []);
+
+  // 先拿默认 333 卡片；项目全集和完整概率分布等首批内容画完后再补。
+  // 用户开始触碰控件时立即预热，保证功能完整，同时避免三个大 JSON 同时下载、解析。
+  const loadExtras = useCallback(() => {
+    if (extrasStartedRef.current) return;
+    extrasStartedRef.current = true;
+
+    void fetchRecentScramblesEvents()
+      .then((j) => { if (aliveRef.current) setEventsJson(j); });
+    void fetch(statsUrl('/stats/scramble/distribution.json') + '?v=20260614opt')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: DistributionJson | null) => { if (aliveRef.current) setDist(j); })
+      .catch(() => { if (aliveRef.current) setDist(null); });
+  }, []);
+
+  useEffect(() => {
+    if (!data) return;
+    let idleId: number | undefined;
+    const timerId = window.setTimeout(() => {
+      if ('requestIdleCallback' in window) {
+        idleId = window.requestIdleCallback(loadExtras, { timeout: 2000 });
+      } else {
+        loadExtras();
+      }
+    }, 1200);
+    return () => {
+      window.clearTimeout(timerId);
+      if (idleId !== undefined && 'cancelIdleCallback' in window) window.cancelIdleCallback(idleId);
+    };
+  }, [data, loadExtras]);
 
   // 333 是否有数据(本批含可展示的变体)。
   const has333 = useMemo(() => {
@@ -422,10 +450,10 @@ export default function RecentScrambles({ lang }: Props) {
     return s;
   }, [has333, eventsJson]);
 
-  const dateRange = batchDateRange(data, eventsJson);
+  const dateRange = batchDateRange(data ?? null, eventsJson);
 
-  // 数据未到齐 / 无任何可展示项目时不渲染(保持原行为)。
-  if (data === null && eventsJson === null) return null;
+  // 主数据到达前保留与成品区块一致的几何尺寸，避免动态 chunk 已到、JSON 未到时先塌陷。
+  if (data === undefined) return <div className="recent-scrambles" aria-hidden="true" />;
   if (availableEvents.size === 0) return null;
 
   const curEvent = availableEvents.has(event) ? event : (availableEvents.has('333') ? '333' : [...availableEvents][0]);
@@ -440,7 +468,12 @@ export default function RecentScrambles({ lang }: Props) {
   }];
 
   return (
-    <div className="recent-scrambles">
+    <div
+      className="recent-scrambles"
+      onPointerEnter={loadExtras}
+      onFocusCapture={loadExtras}
+      onTouchStart={loadExtras}
+    >
       <div className="rs-topbar">
         <span className="rs-title">{tr({ zh: '近期打乱', en: 'Recent Scrambles' })}</span>
         {dateRange && <span className="rs-date-range">{dateRange}</span>}

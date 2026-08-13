@@ -219,6 +219,9 @@ export default function OngoingComps({ lang }: Props) {
   const regCount = useMemo(() => comps ? countActionableReg(comps, Date.now()) : 0, [comps]);
 
   const total = buckets.upcoming.length + buckets.inProgress.length + buckets.past.length;
+  if (comps === null && announced === null && records.length === 0) {
+    return <div className="ongoing-comps" aria-hidden="true" />;
+  }
   if (total === 0 && records.length === 0 && announcedList.length === 0 && regCount === 0) return null;
 
   // 只显示有数据的 tab(某分类为空 → 直接隐藏该 tab,不留灰态)

@@ -5,6 +5,7 @@
 .today-recon {
   width: 100%;
   max-width: 1100px;
+  min-height: 360px;
   margin: 0 auto 2.5rem;
   display: flex;
   flex-direction: column;

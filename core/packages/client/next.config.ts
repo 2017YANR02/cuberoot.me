@@ -28,8 +28,7 @@ const nextConfig: NextConfig = {
 
   // Dev-only: allow the frp tunnel host (dev.cuberoot.me → frp → 127.0.0.1:3000)
   // to hit /_next/* dev assets + HMR. Next 16 dev blocks cross-origin requests to
-  // internal resources unless the origin is listed here (mirrors Vite's
-  // server.allowedHosts). Ignored in prod/Vercel.
+  // internal resources unless the origin is listed here. Ignored in prod/Vercel.
   allowedDevOrigins: ["dev.cuberoot.me", "*.cuberoot.me"],
 
   // Tree-shake named exports from large libs that ship a barrel index.
@@ -42,8 +41,7 @@ const nextConfig: NextConfig = {
 
   // Keep trailing slashes intact so /tools/cstimer/ stays as-is and the
   // iframe's relative URLs resolve to /tools/cstimer/css/... not /tools/css/...
-  // (matches Vite's serveRepoRoot behavior). Pages without slashes still work
-  // because the [...slug] route handler accepts either.
+  // Pages without slashes still work because the [...slug] route handler accepts either.
   skipTrailingSlashRedirect: true,
 
   transpilePackages: ["mp4box", "mediainfo.js"],
@@ -53,8 +51,7 @@ const nextConfig: NextConfig = {
   // cubing.js worker compat: see app/cubing-chunks/[...slug]/route.ts +
   // patches/cubing@0.63.3.patch. Patched cubing chunks point worker URL at
   // /cubing-chunks/search-worker-entry.js, where the route handler
-  // esbuild-bundles it into a self-contained ESM (mirroring Vite's worker
-  // pre-bundling). Required because Turbopack does not produce
+  // esbuild-bundles it into a self-contained ESM. Required because Turbopack does not produce
   // worker-runtime-independent bundles for nested module workers.
   //
   // The route handler reads cubing chunks via fs.readFile at runtime, so
@@ -85,14 +82,14 @@ const nextConfig: NextConfig = {
   // COOP/COEP 只发给真用 SharedArrayBuffer (cubeopt-wasm) 的 /scramble/solver。
   // 历史 nginx 把 analyzer 一起套了 — 但 analyzer 用 classic worker + emscripten
   // (无 SAB),COEP=require-corp 会拦住 /analyze-worker/analyzer.js (Chrome 即使
-  // 同源 classic worker 在 COEP 下也要 CORP);跟 Vite dev (无 COEP) 行为不一致。
+  // 同源 classic worker 在 COEP 下也要 CORP)。
   // 全站打开会把所有跨域 <img> (WCA 头像) 拦死。
   //
   // ⚠️ 关键 (2026-06-06 修):页面发了 COEP:require-corp 后,该页里 `new Worker()`
   // 加载的**任何 worker 脚本响应自身也必须带 COEP:require-corp**,否则浏览器在
   // cross-origin-isolated 上下文里直接拒绝实例化(opaque error,无 message)。
-  // Vite 时代是 server.headers 全站发 COEP=credentialless(连静态 worker 脚本一起带),
-  // 所以 worker 能加载;Next 只给页面发 → cubeopt 主 worker (/cubeopt/wasm-worker.js)、
+  // 页面只有 COEP 而 worker 响应没带对应响应头时,cubeopt 主 worker
+  // (/cubeopt/wasm-worker.js)、
   // 它 import 的 emscripten pthread worker (/cubeopt/cube48opt*.mjs)、以及 kociemba
   // module worker (Turbopack 产到 /_next/static/*) 全部加载失败 → solver 永远卡"忙"。
   // 修法:给这些 worker/资产路径补 COEP:require-corp(同源资产再加 CORP:same-origin)。
@@ -104,8 +101,8 @@ const nextConfig: NextConfig = {
       { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
     ];
     return [
-      // Kill-switch service worker (public/sw.js): never cache, so stale Vite-era
-      // clients pick up the self-destruct script on their next update check.
+      // Kill-switch service worker (public/sw.js): never cache, so clients with
+      // the retired worker pick up the self-destruct script on their next update check.
       {
         source: "/sw.js",
         headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
@@ -300,13 +297,13 @@ const nextConfig: NextConfig = {
     };
   },
 
-  // 1:1 with packages/client-vite/src/App.tsx <Navigate> redirects. Query strings
-  // auto-pass through (e.g. /analyze?lang=zh → /scramble/analyzer?lang=zh).
+  // Legacy public URL redirects. Query strings auto-pass through
+  // (e.g. /analyze?lang=zh → /scramble/analyzer?lang=zh).
   // /average → /calc?tab=average merges with any incoming ?lang=zh.
   // permanent: true = 308 (cached forever); these URL renames are stable.
   async redirects() {
     return [
-      // Back-compat for the earlier Next port shape /tutorial/p/<slug>; Vite uses /tutorial/<slug>.
+      // Back-compat for the earlier Next route shape /tutorial/p/<slug>.
       { source: "/tutorial/p/:slug", destination: "/tutorial/:slug", permanent: true },
       { source: "/analyze", destination: "/scramble/analyzer", permanent: true },
       { source: "/average", destination: "/calc?tab=average", permanent: true },
@@ -341,8 +338,7 @@ const nextConfig: NextConfig = {
       // /battle is retired — the battle experience lives only at /timer?players=2..4.
       // No redirect: old /battle URLs 404 on purpose.
       // /blog/* → blog.cuberoot.me (双轨:境内 nginx 在主域 vhost ^~ /blog/ alias 直 serve;
-      // next.cuberoot.me 没这个 alias,统一跳子域。Vite 由 SPA BlogRedirectFallback 兜底,
-      // Next 这里在 next.config 层直接发 redirect。)
+      // next.cuberoot.me 没这个 alias,统一由 Next 配置跳到子域。)
       { source: "/blog", destination: "https://blog.cuberoot.me/", permanent: false },
       { source: "/blog/:path*", destination: "https://blog.cuberoot.me/:path*", permanent: false },
     ];

@@ -65,10 +65,9 @@ const CONTENT_TYPE: Record<string, string> = {
 // Cubing's search-worker-entry.js (and its sibling chunks it transitively
 // imports) contain bare module specifiers like "random-uint-below" and
 // "cubing/alg" that browser-native ESM cannot resolve in a `type:"module"`
-// Worker. Vite handles this by bundling workers via esbuild at build time.
-// Turbopack bundles them into the main chunk graph but those bundled chunks
-// depend on Turbopack's runtime — which workers don't have. So we mirror Vite:
-// when the worker entry is fetched, esbuild it on-the-fly into one
+// Worker. Turbopack bundles it into the main chunk graph, but those bundled chunks
+// depend on Turbopack's runtime — which workers don't have. When the worker entry
+// is fetched, esbuild it on-the-fly into one
 // self-contained ESM file with all deps inlined.
 const bundleCache = new Map<string, { mtimeMs: number; body: string }>();
 

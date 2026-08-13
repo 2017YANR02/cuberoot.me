@@ -1,8 +1,7 @@
 /**
  * Simple-query renderer — turns a small map of `alg / view / mask / size / cubeSize / sch / bg / cc / co`
  * params into a complete `<svg>` string. Encapsulates the `view → mask + view + scheme` preset
- * mapping so the Hono server route, the Vite dev middleware, and any client-side caller all stay
- * in lock-step.
+ * mapping so the Hono server route and every programmatic caller stay in lock-step.
  *
  * Not the full PHP query API (no `arw`/`fc`/`fd`/...). For those, build `ICubeOptions` directly.
  */
