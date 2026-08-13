@@ -1,7 +1,7 @@
 import IframePage from '@/components/IframePage';
 
 const CONTESTS_APP_URL = process.env.NEXT_PUBLIC_CONTESTS_APP_URL
-  || (process.env.NODE_ENV === 'development' ? 'http://localhost:3005' : 'https://contests.cuberoot.me');
+  || (process.env.NODE_ENV === 'development' ? 'http://localhost:3005/default' : 'https://contests.cuberoot.me/default');
 
 export default function Page() {
   return (
