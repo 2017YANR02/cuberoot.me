@@ -3,7 +3,8 @@ import { HyperFormula } from 'hyperformula';
 import { calculateSpreadsheetFormulas, rewriteFormulasForSheetRename } from '@/lib/spreadsheet-formulas';
 import {
   cellAddress, columnIndex, columnLabel, formatCalculatedValue, normalizedRange,
-  parseCellAddress, parseClipboardTable, parseFormulaValue, rangeAddresses, rangeToTsv, usedBounds,
+  formatSpreadsheetCellValue, parseCellAddress, parseClipboardTable, parseFormulaValue,
+  rangeAddresses, rangeToTsv, sortSpreadsheetRangeRows, usedBounds,
 } from '@/lib/spreadsheet-model';
 
 describe('spreadsheet model', () => {
@@ -32,6 +33,28 @@ describe('spreadsheet model', () => {
 
   it('finds the used range while ignoring invalid or empty cells', () => {
     expect(usedBounds({ A1: 'x', Z20: 'y', AA4: '', nope: 'z' })).toEqual({ rows: 20, columns: 26 });
+  });
+
+  it('formats numbers with spreadsheet number styles', () => {
+    expect(formatSpreadsheetCellValue('0.125', null, { numberFormat: 'percent', decimals: 1 }, 'zh-CN')).toBe('12.5%');
+    expect(formatSpreadsheetCellValue('=A1*2', 12.5, { numberFormat: 'currency' }, 'zh-CN')).toContain('12.50');
+    expect(formatSpreadsheetCellValue('001', null, {}, 'zh-CN')).toBe('001');
+    expect(formatSpreadsheetCellValue('', null, { numberFormat: 'number' }, 'zh-CN')).toBe('');
+  });
+
+  it('sorts a selected row range while moving cell styles with each row', () => {
+    const sorted = sortSpreadsheetRangeRows(
+      { A1: '10', B1: 'ten', A2: '2', B2: 'two', A3: '', B3: 'blank' },
+      { B1: { bold: true }, B2: { italic: true } },
+      { start: { row: 0, column: 0 }, end: { row: 2, column: 1 } },
+      'asc',
+    );
+    expect(sorted.cells).toMatchObject({ A1: '2', B1: 'two', A2: '10', B2: 'ten', B3: 'blank' });
+    expect(sorted.styles).toEqual({ B1: { italic: true }, B2: { bold: true } });
+    expect(() => sortSpreadsheetRangeRows(
+      { A1: '=SUM(B1:B2)' }, {},
+      { start: { row: 0, column: 0 }, end: { row: 0, column: 0 } }, 'asc',
+    )).toThrow('FORMULA_IN_SORT_RANGE');
   });
 
   it('evaluates formulas and cross-sheet references with the production engine', () => {

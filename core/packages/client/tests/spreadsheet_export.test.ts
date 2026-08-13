@@ -11,14 +11,15 @@ describe('spreadsheet XLSX export', () => {
     const blob = await buildSpreadsheetXlsx([{
       id: 'one', name: 'Data', rowCount: 100, columnCount: 26,
       cells: { A1: '12.5', A2: 'true', B1: '文字', C1: '=SUM(A1,2)' },
-      styles: {}, widths: { '0': 144 },
+      styles: { A1: { numberFormat: 'currency', decimals: 1 } }, widths: { '0': 144 },
     }, {
       id: 'two', name: 'Other', rowCount: 100, columnCount: 26,
       cells: { A1: 'second' }, styles: {}, widths: {},
     }]);
-    const workbook = XLSX.read(await blob.arrayBuffer(), { type: 'array', cellFormula: true });
+    const workbook = XLSX.read(await blob.arrayBuffer(), { type: 'array', cellFormula: true, cellNF: true });
     expect(workbook.SheetNames).toEqual(['Data', 'Other']);
     expect(workbook.Sheets.Data.A1).toMatchObject({ t: 'n', v: 12.5 });
+    expect(workbook.Sheets.Data.A1.z).toBe('¥#,##0.0');
     expect(workbook.Sheets.Data.A2).toMatchObject({ t: 'b', v: true });
     expect(workbook.Sheets.Data.B1.v).toBe('文字');
     expect(workbook.Sheets.Data.C1.f).toBe('SUM(A1,2)');
