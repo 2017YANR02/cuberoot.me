@@ -117,8 +117,9 @@ export async function trainerSheetFromCases(o: TrainerSheetOptions): Promise<Tra
     const firstAlg = c.algs.flat()[0]?.alg ?? c.standard ?? '';
 
     out.push({
-      name: `${i + 1}.`,
-      algs: [shown],
+      // 训练题单没有 case 名;编号直接并入打乱,共用排版器便不会预留名称行。
+      name: '',
+      algs: [`${i + 1}. ${shown}`],
       thumb: o.showThumb
         ? { puzzle: o.puzzle, set: o.set, sticker: c.sticker, alg: firstAlg, setup: raw, size: 160 }
         : undefined,

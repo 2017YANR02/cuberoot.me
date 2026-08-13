@@ -47,8 +47,8 @@ describe('trainer PDF', () => {
   it('prints sequential coverage as numbered scrambles without case names or solutions', async () => {
     const sheet = await trainerSheetFromCases(options());
 
-    expect(sheet.cases.map(c => c.name)).toEqual(['1.', '2.', '3.']);
-    expect(sheet.cases.map(c => c.algs)).toEqual([['R'], ['F'], ['L']]);
+    expect(sheet.cases.map(c => c.name)).toEqual(['', '', '']);
+    expect(sheet.cases.map(c => c.algs)).toEqual([['1. R'], ['2. F'], ['3. L']]);
     expect(sheet.cases.every(c => c.setup === undefined && c.thumb === undefined)).toBe(true);
     expect(JSON.stringify(sheet.cases)).not.toContain('solution-');
     expect(JSON.stringify(sheet.cases)).not.toContain('"A"');
@@ -60,8 +60,8 @@ describe('trainer PDF', () => {
       random: () => 0,
     }));
 
-    expect(sheet.cases.map(c => c.algs[0])).toEqual(['F', 'L', 'R']);
-    expect(new Set(sheet.cases.map(c => c.algs[0]))).toEqual(new Set(['R', 'F', 'L']));
+    expect(sheet.cases.map(c => c.algs[0])).toEqual(['1. F', '2. L', '3. R']);
+    expect(new Set(sheet.cases.map(c => c.algs[0].replace(/^\d+\. /, '')))).toEqual(new Set(['R', 'F', 'L']));
   });
 
   it('draws independently with replacement in random mode', async () => {
@@ -70,7 +70,7 @@ describe('trainer PDF', () => {
       random: () => 0.99,
     }));
 
-    expect(sheet.cases.map(c => c.algs[0])).toEqual(['L', 'L', 'L']);
+    expect(sheet.cases.map(c => c.algs[0])).toEqual(['1. L', '2. L', '3. L']);
   });
 
   it('uses pure scramble only for printed text and keeps the raw scramble for the optional image', async () => {
@@ -81,7 +81,7 @@ describe('trainer PDF', () => {
       showThumb: true,
     }));
 
-    expect(sheet.cases[0].algs).toEqual(["R U R'"]);
+    expect(sheet.cases[0].algs).toEqual(["1. R U R'"]);
     expect(sheet.cases[0].thumb?.setup).toBe("(R U R')");
   });
 
