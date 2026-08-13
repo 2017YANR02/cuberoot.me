@@ -5,8 +5,7 @@ import { Clock3, Mic2, Target, Video } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
-import LangToggle from '@/components/LangToggle';
-import { T } from '@/i18n/tr';
+import { T, tr } from '@/i18n/tr';
 import { nextQuery, useIsAdmin } from '@/lib/auth-store';
 import {
   courseLessons,
@@ -16,16 +15,16 @@ import {
   TEACHING_LESSON_COUNT,
   TEACHING_TOTAL_MINUTES,
 } from './_data';
-import type { LessonKind, MicroCourse, Module } from './_data/types';
+import type { LessonKind, LocalizedText, MicroCourse, Module } from './_data/types';
 import './teaching.css';
 
-const KIND_LABELS: Record<LessonKind, string> = {
-  concept: '概念',
-  case: '案例',
-  drill: '跟练',
-  example: '例解',
-  resource: '资料',
-  milestone: '过关',
+const KIND_LABELS: Record<LessonKind, LocalizedText> = {
+  concept: { zh: '概念', en: 'Concept' },
+  case: { zh: '案例', en: 'Case' },
+  drill: { zh: '跟练', en: 'Drill' },
+  example: { zh: '例解', en: 'Example' },
+  resource: { zh: '资料', en: 'Sheet' },
+  milestone: { zh: '过关', en: 'Checkpoint' },
 };
 
 function courseMinutes(course: MicroCourse) {
@@ -39,36 +38,41 @@ function moduleMinutes(module: Module) {
 function formatDuration(minutes: number) {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  return rest ? `${hours} 小时 ${rest} 分钟` : `${hours} 小时`;
+  if (hours === 0) return tr({ zh: `${rest} 分钟`, en: `${rest} min` });
+  if (rest === 0) return tr({ zh: `${hours} 小时`, en: `${hours} hr` });
+  return tr({ zh: `${hours} 小时 ${rest} 分钟`, en: `${hours} hr ${rest} min` });
 }
 
-function ChineseTeachingPage() {
+function TeachingPage() {
   const average = (TEACHING_TOTAL_MINUTES / TEACHING_LESSON_COUNT).toFixed(1);
 
   return (
     <main className="teaching-page">
       <header className="teaching-hero">
         <BackHome />
-        <p className="teaching-eyebrow">儿童三阶魔方录播微课</p>
-        <h1>课程树与提词稿</h1>
+        <p className="teaching-eyebrow"><T zh="儿童三阶魔方录播微课" en="Recorded 3x3 micro-lessons for children" /></p>
+        <h1><T zh="课程树与完整提词稿" en="Curriculum and complete teleprompter scripts" /></h1>
         <p className="teaching-lead">
-          先用试听课获得第一次成功，再用层先法独立复原，最后按案例系统学习 CFOP。每节只讲一个目标，适合暂停、跟练和反复复习。
+          <T
+            zh="先用试听课获得第一次成功，再用层先法独立复原，最后按案例系统学习 CFOP。每节只讲一个目标，适合暂停、跟练和反复复习。"
+            en="Begin with a first win in the trial, learn an independent solve with the beginner method, then study CFOP case by case. Every lesson has one goal and is designed for pausing and practice."
+          />
         </p>
 
-        <div className="teaching-stats" aria-label="课程规模">
-          <span><strong>{TEACHING_LESSON_COUNT}</strong> 节微课</span>
-          <span><strong>1–5</strong> 分钟一节</span>
-          <span><strong>{average}</strong> 分钟平均</span>
-          <span><strong>{formatDuration(TEACHING_TOTAL_MINUTES)}</strong> 总时长</span>
+        <div className="teaching-stats" aria-label={tr({ zh: '课程规模', en: 'Course scale' })}>
+          <span><strong>{TEACHING_LESSON_COUNT}</strong> <T zh="节微课" en="micro-lessons" /></span>
+          <span><strong>1–5</strong> <T zh="分钟一节" en="minutes each" /></span>
+          <span><strong>{average}</strong> <T zh="分钟平均" en="minutes average" /></span>
+          <span><strong>{formatDuration(TEACHING_TOTAL_MINUTES)}</strong> <T zh="总时长" en="total" /></span>
         </div>
 
-        <nav className="teaching-course-nav" aria-label="跳转到课程">
+        <nav className="teaching-course-nav" aria-label={tr({ zh: '跳转到课程', en: 'Jump to course' })}>
           {TEACHING_COURSES.map((course) => {
             const lessons = courseLessons(course);
             return (
               <a key={course.id} href={`#${course.id}`}>
-                <span>{course.label}</span>
-                {lessons.length} 节：{course.title}
+                <span>{tr(course.label)}</span>
+                {lessons.length} <T zh="节：" en="lessons: " />{tr(course.title)}
               </a>
             );
           })}
@@ -77,29 +81,29 @@ function ChineseTeachingPage() {
 
       <section className="teaching-principles" aria-labelledby="recording-rules">
         <div className="teaching-section-heading">
-          <p className="teaching-kicker">微课规则</p>
-          <h2 id="recording-rules">一节一件事，看完马上练</h2>
+          <p className="teaching-kicker"><T zh="微课规则" en="Micro-lesson rules" /></p>
+          <h2 id="recording-rules"><T zh="一节一件事，看完马上练" en="One goal per lesson, then practise immediately" /></h2>
         </div>
         <div className="teaching-principle-grid">
           <article>
             <Clock3 aria-hidden="true" />
-            <h3>1–5 分钟</h3>
-            <p>单个案例通常 2–3 分钟；需要完整跟练、阶段过关或例解时才延长到 4–5 分钟。</p>
+            <h3><T zh="1–5 分钟" en="1–5 minutes" /></h3>
+            <p><T zh="单个案例通常 2–3 分钟；完整跟练、阶段过关或例解才延长到 4–5 分钟。" en="A single case usually takes 2–3 minutes; drills, checkpoints, and examples may take 4–5." /></p>
           </article>
           <article>
             <Target aria-hidden="true" />
-            <h3>一个过关标准</h3>
-            <p>结尾必须能判断是否学会，例如连续五次做对、说出判断理由，或完整完成一个阶段。</p>
+            <h3><T zh="一个过关标准" en="One pass target" /></h3>
+            <p><T zh="结尾必须能判断是否学会，例如连续做对、说出判断理由，或完整完成一个阶段。" en="Every ending has a test: repeat accurately, explain the recognition clue, or complete a stage." /></p>
           </article>
           <article>
             <Video aria-hidden="true" />
-            <h3>三个固定镜头</h3>
-            <p>标准形状、慢速执行、正常速度结果。孩子随时暂停，也能看清拿法和目标块的位置。</p>
+            <h3><T zh="三个固定镜头" en="Three fixed shots" /></h3>
+            <p><T zh="标准形状、慢速执行、正常速度结果。孩子暂停视频也能看清拿法和目标块。" en="Standard case, slow execution, and normal-speed result so grips and target pieces remain clear." /></p>
           </article>
           <article>
             <Mic2 aria-hidden="true" />
-            <h3>儿童口语提词</h3>
-            <p>方括号里是镜头提示，不需要念；其余内容可以直接口播，再按录制时的自然语气微调。</p>
+            <h3><T zh="儿童口语提词" en="Child-friendly narration" /></h3>
+            <p><T zh="方括号里是镜头提示，不需要念；其余内容可直接口播，再按录制语气微调。" en="Bracketed lines are production directions. Everything else can be read aloud and adjusted naturally while recording." /></p>
           </article>
         </div>
       </section>
@@ -113,13 +117,13 @@ function ChineseTeachingPage() {
             <div className="teaching-course-head">
               <div className="teaching-course-number" aria-hidden="true">0{courseIndex + 1}</div>
               <div>
-                <p className="teaching-kicker">{course.label}</p>
-                <h2 id={`${course.id}-title`}>{course.title}</h2>
-                <p>{course.summary}</p>
+                <p className="teaching-kicker">{tr(course.label)}</p>
+                <h2 id={`${course.id}-title`}>{tr(course.title)}</h2>
+                <p>{tr(course.summary)}</p>
                 <dl className="teaching-course-meta">
-                  <div><dt>适合</dt><dd>{course.audience}</dd></div>
-                  <div><dt>结构</dt><dd>{course.stages.length} 个阶段，{moduleCount} 个模块，{lessons.length} 节</dd></div>
-                  <div><dt>时长</dt><dd>约 {formatDuration(courseMinutes(course))}</dd></div>
+                  <div><dt><T zh="适合" en="For" /></dt><dd>{tr(course.audience)}</dd></div>
+                  <div><dt><T zh="结构" en="Structure" /></dt><dd>{course.stages.length} <T zh="个阶段，" en="stages, " />{moduleCount} <T zh="个模块，" en="modules, " />{lessons.length} <T zh="节" en="lessons" /></dd></div>
+                  <div><dt><T zh="时长" en="Duration" /></dt><dd><T zh="约 " en="About " />{formatDuration(courseMinutes(course))}</dd></div>
                 </dl>
               </div>
             </div>
@@ -130,54 +134,54 @@ function ChineseTeachingPage() {
                 return (
                   <details key={stage.id} className="teaching-stage" open={courseIndex < 2 || stageIndex === 0}>
                     <summary>
-                      <span className="teaching-stage-index">阶段 {stageIndex + 1}</span>
-                      <span className="teaching-stage-title">{stage.title}</span>
-                      <span className="teaching-stage-summary">{stage.summary}</span>
-                      <span className="teaching-stage-count">{lessonsInStage.length} 节</span>
+                      <span className="teaching-stage-index"><T zh="阶段 " en="Stage " />{stageIndex + 1}</span>
+                      <span className="teaching-stage-title">{tr(stage.title)}</span>
+                      <span className="teaching-stage-summary">{tr(stage.summary)}</span>
+                      <span className="teaching-stage-count">{lessonsInStage.length} <T zh="节" en="lessons" /></span>
                     </summary>
 
                     <div className="teaching-modules">
-                      {stage.modules.map((module, moduleIndex) => (
-                        <details key={module.id} id={module.id} className="teaching-module" open={courseIndex === 0 || (courseIndex === 1 && moduleIndex === 0)}>
+                      {stage.modules.map((courseModule, moduleIndex) => (
+                        <details key={courseModule.id} id={courseModule.id} className="teaching-module" open={courseIndex === 0 || (courseIndex === 1 && moduleIndex === 0)}>
                           <summary>
                             <span className="teaching-module-index">{String(moduleIndex + 1).padStart(2, '0')}</span>
-                            <span className="teaching-module-title">{module.title}</span>
-                            <span className="teaching-module-summary">{module.summary}</span>
-                            <span className="teaching-module-count">{module.lessons.length} 节，{moduleMinutes(module)} 分钟</span>
+                            <span className="teaching-module-title">{tr(courseModule.title)}</span>
+                            <span className="teaching-module-summary">{tr(courseModule.summary)}</span>
+                            <span className="teaching-module-count">{courseModule.lessons.length} <T zh="节，" en="lessons, " />{formatDuration(moduleMinutes(courseModule))}</span>
                           </summary>
 
                           <div className="teaching-module-body">
-                            {module.resource && (
-                              <Link href={module.resource.href} className="teaching-module-resource" prefetch={false}>
-                                {module.resource.label}
+                            {courseModule.resource && (
+                              <Link href={courseModule.resource.href} className="teaching-module-resource" prefetch={false}>
+                                {tr(courseModule.resource.label)}
                               </Link>
                             )}
 
                             <div className="teaching-lessons">
-                              {module.lessons.map((lesson, lessonIndex) => (
+                              {courseModule.lessons.map((lesson, lessonIndex) => (
                                 <details key={lesson.id} className="teaching-lesson" open={courseIndex === 0 && moduleIndex === 0 && lessonIndex === 0}>
                                   <summary>
                                     <span className="teaching-lesson-index">{String(lessonIndex + 1).padStart(2, '0')}</span>
-                                    <span className="teaching-lesson-kind">{KIND_LABELS[lesson.kind]}</span>
-                                    <span className="teaching-lesson-title">{lesson.title}</span>
-                                    <span className="teaching-lesson-outcome">{lesson.outcome}</span>
-                                    <span className="teaching-lesson-time">{lesson.minutes} 分钟</span>
+                                    <span className="teaching-lesson-kind">{tr(KIND_LABELS[lesson.kind])}</span>
+                                    <span className="teaching-lesson-title">{tr(lesson.title)}</span>
+                                    <span className="teaching-lesson-outcome">{tr(lesson.outcome)}</span>
+                                    <span className="teaching-lesson-time">{lesson.minutes} <T zh="分钟" en="min" /></span>
                                   </summary>
 
                                   <div className="teaching-lesson-body">
                                     <aside className="teaching-shot-list">
-                                      <h3>拍摄清单</h3>
+                                      <h3><T zh="拍摄清单" en="Shot list" /></h3>
                                       <ol>
-                                        {lesson.shots.map((shot) => <li key={shot}>{shot}</li>)}
+                                        {lesson.shots.map((shot, shotIndex) => <li key={shotIndex}>{tr(shot)}</li>)}
                                       </ol>
                                       {lesson.formulas && (
                                         <div className="teaching-formulas">
-                                          <h3>本节公式卡</h3>
-                                          {lesson.formulas.map((formula) => (
-                                            <div key={formula.name} className="teaching-formula">
-                                              <strong>{formula.name}</strong>
+                                          <h3><T zh="本节公式卡" en="Algorithm card" /></h3>
+                                          {lesson.formulas.map((formula, formulaIndex) => (
+                                            <div key={formulaIndex} className="teaching-formula">
+                                              <strong>{tr(formula.name)}</strong>
                                               <code>{formula.alg}</code>
-                                              <p>{formula.note}</p>
+                                              <p>{tr(formula.note)}</p>
                                             </div>
                                           ))}
                                         </div>
@@ -185,10 +189,10 @@ function ChineseTeachingPage() {
                                     </aside>
 
                                     <article className="teaching-script">
-                                      <h3>提词稿</h3>
+                                      <h3><T zh="完整口播" en="Complete narration" /></h3>
                                       {lesson.script.map((line, lineIndex) => (
-                                        <p key={`${lesson.id}-${lineIndex}`} className={line.startsWith('【') ? 'teaching-stage-direction' : undefined}>
-                                          {line}
+                                        <p key={`${lesson.id}-${lineIndex}`} className={line.zh.startsWith('【') ? 'teaching-stage-direction' : undefined}>
+                                          {tr(line)}
                                         </p>
                                       ))}
                                     </article>
@@ -210,39 +214,27 @@ function ChineseTeachingPage() {
 
       <section className="teaching-production" aria-labelledby="production-title">
         <div className="teaching-section-heading">
-          <p className="teaching-kicker">录制顺序</p>
-          <h2 id="production-title">按模块批量录，不按整门课硬撑</h2>
+          <p className="teaching-kicker"><T zh="录制顺序" en="Recording order" /></p>
+          <h2 id="production-title"><T zh="按模块批量录，不按整门课硬撑" en="Record in module batches, not one huge course" /></h2>
         </div>
         <ol>
-          <li><strong>先录五节试听微课。</strong>验证机位、手部特写、字幕字号和孩子是否能在每节结尾完成挑战。</li>
-          <li><strong>再录层先法前八节。</strong>找 3–5 个目标年龄孩子试看，记录他们在哪个判断停住，而不只问“喜欢吗”。</li>
-          <li><strong>固定模板后按模块录制。</strong>同一天集中拍同类案例，统一起始角度、公式卡和过关提示，减少反复布置机位。</li>
-          <li><strong>引流只承诺真实下一步。</strong>试听结尾展示 24 节层先法地图，并邀请家长领取练习清单或进入完整课程，不制造虚假倒计时。</li>
+          <li><strong><T zh="先录五节试听微课。" en="Record the five trial lessons first. " /></strong><T zh="验证机位、手部特写、字幕字号和孩子能否完成结尾挑战。" en="Validate camera angles, hand close-ups, subtitle size, and whether children can pass each final challenge." /></li>
+          <li><strong><T zh="再录层先法前八节。" en="Then record the first eight beginner lessons. " /></strong><T zh="让 3–5 个目标年龄孩子试看，记录他们在哪个判断停住。" en="Test with three to five children in the target age group and record where their decisions stop." /></li>
+          <li><strong><T zh="模板稳定后按模块录。" en="Batch by module once the template is stable. " /></strong><T zh="同类案例统一起始角度、公式卡和过关提示。" en="Keep starting angles, algorithm cards, and pass prompts consistent across related cases." /></li>
+          <li><strong><T zh="试听只承诺真实下一步。" en="Let the trial promise only a real next step. " /></strong><T zh="结尾展示 24 节层先法地图，并邀请家长领取练习清单或进入完整课程。" en="Show the 24-lesson beginner map and invite parents to collect the practice sheet or continue into the full course." /></li>
         </ol>
       </section>
 
       <footer className="teaching-references">
-        <h2>编排参考与原创边界</h2>
+        <h2><T zh="编排参考与原创边界" en="Curriculum references and original-writing boundary" /></h2>
         <p>
-          CFOP 的阶段划分和案例覆盖参考了{' '}
-          <a href="https://app.cubing.gg/my/view/course?id=edhm7vue" target="_blank" rel="noreferrer">Tymon’s CFOP Course</a>
-          {' '}与{' '}
-          <a href="https://cubeskills.com/categories/3x3" target="_blank" rel="noreferrer">CubeSkills 三阶目录</a>
-          。案例编号采用通用魔方分类；中文教学顺序、镜头清单和提词稿均为本站重新编写。公式在正式录制前需与站内公式库逐项核对。
+          <T zh="课程范围参考了 " en="The curriculum scope was informed by " />
+          <a href="https://app.cubing.gg/my/view/course?id=edhm7vue" target="_blank" rel="noreferrer">Tymon&apos;s CFOP Course</a>
+          <T zh=" 与 " en=" and " />
+          <a href="https://cubeskills.com/categories/3x3" target="_blank" rel="noreferrer">CubeSkills 3x3</a>
+          <T zh="。案例编号采用通用魔方分类；中英文教学顺序、镜头清单和完整口播均为本站重新编写。正式录制前请与站内公式库逐项核对公式。" en=". Case numbers use standard cubing classifications. The bilingual sequence, shot lists, and complete narration are original to this site. Verify every algorithm against the site library before recording." />
         </p>
       </footer>
-    </main>
-  );
-}
-
-function EnglishFallback() {
-  return (
-    <main className="teaching-page teaching-language-fallback">
-      <BackHome />
-      <p className="teaching-eyebrow">Recorded course plan</p>
-      <h1>This page is currently available in Simplified Chinese only</h1>
-      <p>The curriculum and teleprompter scripts are written for a Chinese-language children’s course.</p>
-      <LangToggle className="teaching-language-toggle" />
     </main>
   );
 }
@@ -263,13 +255,12 @@ function TeachingAccessNotice() {
   );
 }
 
-export default function TeachingClient({ lang }: { lang: string }) {
+export default function TeachingClient({ lang: _lang }: { lang: string }) {
   const isAdmin = useIsAdmin();
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
   if (!mounted) return null;
   if (!isAdmin) return <TeachingAccessNotice />;
-  if (lang !== 'zh') return <EnglishFallback />;
-  return <ChineseTeachingPage />;
+  return <TeachingPage />;
 }

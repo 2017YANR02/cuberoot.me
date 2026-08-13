@@ -1,16 +1,21 @@
 export type LessonKind = 'concept' | 'case' | 'drill' | 'example' | 'resource' | 'milestone';
 
+export interface LocalizedText {
+  en: string;
+  zh: string;
+}
+
 export interface Lesson {
   id: string;
-  title: string;
+  title: LocalizedText;
   minutes: number;
-  outcome: string;
-  shots: string[];
-  script: string[];
+  outcome: LocalizedText;
+  shots: LocalizedText[];
+  script: LocalizedText[];
   formulas?: Array<{
-    name: string;
+    name: LocalizedText;
     alg: string;
-    note: string;
+    note: LocalizedText;
   }>;
 }
 
@@ -20,28 +25,28 @@ export interface MicroLesson extends Lesson {
 
 export interface Module {
   id: string;
-  title: string;
-  summary: string;
+  title: LocalizedText;
+  summary: LocalizedText;
   lessons: MicroLesson[];
   resource?: {
-    label: string;
+    label: LocalizedText;
     href: string;
   };
 }
 
 export interface Stage {
   id: string;
-  title: string;
-  summary: string;
+  title: LocalizedText;
+  summary: LocalizedText;
   modules: Module[];
 }
 
 export interface Course {
   id: 'trial' | 'beginner' | 'cfop';
-  label: string;
-  title: string;
-  summary: string;
-  audience: string;
+  label: LocalizedText;
+  title: LocalizedText;
+  summary: LocalizedText;
+  audience: LocalizedText;
   lessons: Lesson[];
 }
 
