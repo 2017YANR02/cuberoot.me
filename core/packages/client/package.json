@@ -66,6 +66,7 @@
     "fuse.js": "^7.3.0",
     "html-react-parser": "^6.0.1",
     "html-to-image": "^1.11.13",
+    "hyperformula": "^3.4.0",
     "i18next": "^24.2.3",
     "jspdf": "^4.2.1",
     "katex": "^0.16.47",

@@ -2140,4 +2140,11 @@ export const CATALOG: ComponentEntry[] = [
       en: `NxN does not use this: its「自动转体」lives on the controller's onOrbit → the same orbitSceneAutoRotate. Pitch is always clamped to ±90°: folding pitch is only seamless when the yaw sits on a quadrant, otherwise it jumps a frame (/sim keeps the x fold anyway because that mode records the drag as an x move).`,
     },
   },
+  {
+    name: 'CollaborativeSharePanel',
+    import: "import { CollaborativeSharePanel } from '@/components/collaboration/CollaborativeSharePanel';",
+    category: 'more',
+    zh: `协作资源共用的成员权限面板：搜索 WCA 用户、邀请为编辑者或查看者、修改权限和移除成员。文档与在线表格共用同一实现。`,
+    en: `Shared member-permissions panel for collaborative resources: search WCA users, invite editors or viewers, change roles, and remove members. Used by both documents and online spreadsheets.`,
+  },
 ];

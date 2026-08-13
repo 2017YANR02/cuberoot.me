@@ -41,7 +41,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'feedback', zh: '反馈', en: 'Feedback' },
   { key: 'notification', zh: '通知', en: 'Notifications' },
   { key: 'forum', zh: '论坛', en: 'Forum' },
-  { key: 'documents', zh: '协作文档', en: 'Collaborative docs' },
+  { key: 'documents', zh: '协作文档与表格', en: 'Collaborative docs & sheets' },
   { key: 'quiz', zh: '知识问答', en: 'Quiz' },
   { key: 'content', zh: '内容与运维', en: 'Content & ops' },
   { key: 'timer', zh: '计时器', en: 'Timer' },
@@ -321,8 +321,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'forum', m: 'GET', p: '/v1/forum/review', g: 'admin', zh: '待审核队列(新用户主题 + 回帖)', en: 'Review queue (new users’ threads + replies)' },
 
   // ---- collaborative documents ----
-  { d: 'documents', m: 'GET', p: '/v1/documents', g: 'login', c: 'no-store', zh: '我的协作文档列表', en: 'Collaborative documents available to me' },
-  { d: 'documents', m: 'POST', p: '/v1/documents', g: 'admin', c: 'no-store', zh: '新建空白协作文档', en: 'Create a blank collaborative document' },
+  { d: 'documents', m: 'GET', p: '/v1/documents', g: 'login', c: 'no-store', zh: '按 kind 查询我的协作文档或表格', en: 'List my collaborative docs or sheets by kind' },
+  { d: 'documents', m: 'POST', p: '/v1/documents', g: 'admin', c: 'no-store', zh: '新建协作文档或表格，可附初始表格数据', en: 'Create a collaborative document or spreadsheet, optionally with initial sheet data' },
   { d: 'documents', m: 'POST', p: '/v1/documents/import', g: 'admin', c: 'no-store', zh: '把 DOCX 导入协作文档', en: 'Import a DOCX as a collaborative document' },
   { d: 'documents', m: 'GET', p: '/v1/documents/people', g: 'login', c: 'no-store', zh: '搜索可邀请的站内用户', en: 'Search registered users to invite' },
   { d: 'documents', m: 'GET', p: '/v1/documents/:id', g: 'login', c: 'no-store', zh: '文档元数据、本人权限与成员', en: 'Document metadata, my role, and members' },

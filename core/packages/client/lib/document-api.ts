@@ -2,10 +2,12 @@ import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 
 export type DocumentRole = 'owner' | 'editor' | 'viewer';
+export type DocumentKind = 'document' | 'spreadsheet';
 
 export interface CollaborativeDocument {
   id: string;
   title: string;
+  kind: DocumentKind;
   ownerKey: string;
   role: DocumentRole;
   createdAt: string;
@@ -32,9 +34,9 @@ export interface DocumentDetails {
   members: DocumentMember[];
 }
 
-export async function fetchDocuments(): Promise<CollaborativeDocument[]> {
+export async function fetchDocuments(kind: DocumentKind = 'document'): Promise<CollaborativeDocument[]> {
   const result = await handleApi<{ documents: CollaborativeDocument[] }>(
-    await fetch(apiUrl('/v1/documents'), { headers: authHeaders(false), cache: 'no-store' }),
+    await fetch(apiUrl(`/v1/documents?kind=${kind}`), { headers: authHeaders(false), cache: 'no-store' }),
   );
   return result.documents;
 }
@@ -46,11 +48,19 @@ export async function fetchDocument(id: string): Promise<DocumentDetails> {
   }));
 }
 
-export async function createDocument(title: string): Promise<{ id: string }> {
+export interface InitialSpreadsheet {
+  sheets: Array<{ name: string; cells: Record<string, string> }>;
+}
+
+export async function createDocument(
+  title: string,
+  kind: DocumentKind = 'document',
+  spreadsheet?: InitialSpreadsheet,
+): Promise<{ id: string }> {
   return handleApi(await fetch(apiUrl('/v1/documents'), {
     method: 'POST',
     headers: authHeaders(),
-    body: JSON.stringify({ title }),
+    body: JSON.stringify({ title, kind, spreadsheet }),
   }));
 }
 
