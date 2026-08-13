@@ -189,8 +189,119 @@
   color: var(--muted-foreground);
 }
 
-.teaching-lessons {
+.teaching-stages {
   border-top: 1px solid var(--border-strong);
+}
+
+.teaching-stage {
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.teaching-stage > summary,
+.teaching-module > summary {
+  display: grid;
+  align-items: baseline;
+  cursor: pointer;
+  list-style: none;
+}
+
+.teaching-stage > summary {
+  grid-template-columns: 84px minmax(150px, 0.65fr) minmax(240px, 1.4fr) max-content 20px;
+  gap: 18px;
+  padding: 24px 4px;
+}
+
+.teaching-stage > summary::-webkit-details-marker,
+.teaching-module > summary::-webkit-details-marker,
+.teaching-lesson > summary::-webkit-details-marker {
+  display: none;
+}
+
+.teaching-stage > summary::after,
+.teaching-module > summary::after,
+.teaching-lesson > summary::after {
+  content: '+';
+  color: var(--accent);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.teaching-stage > summary::after {
+  grid-column: 5;
+}
+
+.teaching-stage[open] > summary::after,
+.teaching-module[open] > summary::after,
+.teaching-lesson[open] > summary::after {
+  content: '−';
+}
+
+.teaching-stage-index,
+.teaching-stage-count,
+.teaching-module-index,
+.teaching-module-count {
+  color: var(--muted-foreground);
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.teaching-stage-title {
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.teaching-stage-summary,
+.teaching-module-summary {
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.teaching-modules {
+  margin: 0 0 28px 36px;
+  border-top: 1px solid var(--border-default);
+}
+
+.teaching-module {
+  scroll-margin-top: 20px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.teaching-module > summary {
+  grid-template-columns: 40px minmax(180px, 0.75fr) minmax(240px, 1.3fr) max-content 20px;
+  gap: 16px;
+  padding: 20px 4px;
+}
+
+.teaching-module > summary::after {
+  grid-column: 5;
+}
+
+.teaching-module-title {
+  font-weight: 750;
+}
+
+.teaching-module-body {
+  padding: 0 4px 28px 56px;
+}
+
+.teaching-module-resource {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 14px;
+  color: var(--accent);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.teaching-module-resource:hover {
+  text-decoration: underline;
+}
+
+.teaching-lessons {
+  border-top: 1px solid var(--border-default);
 }
 
 .teaching-lesson {
@@ -199,28 +310,16 @@
 
 .teaching-lesson summary {
   display: grid;
-  grid-template-columns: 48px minmax(180px, 0.85fr) minmax(260px, 1.4fr) max-content 20px;
-  gap: 16px;
+  grid-template-columns: 38px 52px minmax(170px, 0.8fr) minmax(240px, 1.3fr) max-content 20px;
+  gap: 12px;
   align-items: baseline;
-  padding: 19px 4px;
+  padding: 17px 4px;
   cursor: pointer;
   list-style: none;
 }
 
-.teaching-lesson summary::-webkit-details-marker {
-  display: none;
-}
-
 .teaching-lesson summary::after {
-  content: '+';
-  grid-column: 5;
-  color: var(--accent);
-  font-size: 1.25rem;
-  line-height: 1;
-}
-
-.teaching-lesson[open] summary::after {
-  content: '−';
+  grid-column: 6;
 }
 
 .teaching-lesson-index,
@@ -234,6 +333,15 @@
   font-weight: 750;
 }
 
+.teaching-lesson-kind {
+  width: max-content;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
 .teaching-lesson-outcome {
   color: var(--muted-foreground);
   font-size: 0.92rem;
@@ -244,7 +352,7 @@
   display: grid;
   grid-template-columns: minmax(210px, 0.62fr) minmax(0, 1.7fr);
   gap: 44px;
-  padding: 12px 4px 44px 68px;
+  padding: 12px 4px 40px 102px;
 }
 
 .teaching-lesson-body h3 {
@@ -393,22 +501,54 @@
     grid-template-columns: 68px minmax(0, 1fr);
   }
 
-  .teaching-lesson summary {
-    grid-template-columns: 38px minmax(0, 1fr) max-content 20px;
+  .teaching-stage > summary {
+    grid-template-columns: 72px minmax(0, 1fr) max-content 20px;
   }
 
-  .teaching-lesson summary::after {
+  .teaching-stage > summary::after {
     grid-column: 4;
   }
 
-  .teaching-lesson-outcome {
+  .teaching-stage-summary {
     grid-column: 2 / 4;
+  }
+
+  .teaching-modules {
+    margin-left: 20px;
+  }
+
+  .teaching-module > summary {
+    grid-template-columns: 34px minmax(0, 1fr) max-content 20px;
+  }
+
+  .teaching-module > summary::after {
+    grid-column: 4;
+  }
+
+  .teaching-module-summary {
+    grid-column: 2 / 4;
+  }
+
+  .teaching-module-body {
+    padding-left: 38px;
+  }
+
+  .teaching-lesson summary {
+    grid-template-columns: 32px 48px minmax(0, 1fr) max-content 20px;
+  }
+
+  .teaching-lesson summary::after {
+    grid-column: 5;
+  }
+
+  .teaching-lesson-outcome {
+    grid-column: 3 / 5;
   }
 
   .teaching-lesson-body {
     grid-template-columns: 1fr;
     gap: 32px;
-    padding-left: 42px;
+    padding-left: 80px;
   }
 }
 
@@ -459,31 +599,89 @@
     grid-template-columns: 44px 1fr;
   }
 
+  .teaching-stage > summary {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    gap: 7px 10px;
+    padding: 20px 0;
+  }
+
+  .teaching-stage > summary::after {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .teaching-stage-index,
+  .teaching-stage-title,
+  .teaching-stage-count,
+  .teaching-stage-summary {
+    grid-column: 1;
+  }
+
+  .teaching-stage-count {
+    grid-row: 3;
+  }
+
+  .teaching-stage-summary {
+    grid-row: 4;
+  }
+
+  .teaching-modules {
+    margin-left: 10px;
+  }
+
+  .teaching-module > summary {
+    grid-template-columns: 28px minmax(0, 1fr) max-content;
+    gap: 7px 9px;
+    padding: 17px 0;
+  }
+
+  .teaching-module > summary::after {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .teaching-module-title {
+    grid-column: 2;
+  }
+
+  .teaching-module-count,
+  .teaching-module-summary {
+    grid-column: 2 / 4;
+  }
+
+  .teaching-module-summary {
+    grid-row: 3;
+  }
+
+  .teaching-module-body {
+    padding: 0 0 24px 28px;
+  }
+
   .teaching-lesson summary {
-    grid-template-columns: 30px minmax(0, 1fr) max-content;
+    grid-template-columns: 26px max-content minmax(0, 1fr) max-content;
     gap: 8px;
     padding: 16px 0;
   }
 
   .teaching-lesson summary::after {
-    grid-column: 3;
+    grid-column: 4;
     grid-row: 1;
   }
 
   .teaching-lesson-time {
-    grid-column: 2;
+    grid-column: 3;
     grid-row: 2;
     font-size: 0.82rem;
   }
 
   .teaching-lesson-outcome {
-    grid-column: 2 / 4;
+    grid-column: 3 / 5;
     grid-row: 3;
   }
 
   .teaching-lesson-body {
     gap: 28px;
-    padding: 10px 0 36px 30px;
+    padding: 10px 0 36px 34px;
   }
 
   .teaching-script {
