@@ -46,7 +46,6 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'content', zh: '内容与运维', en: 'Content & ops' },
   { key: 'timer', zh: '计时器', en: 'Timer' },
   { key: 'calendar', zh: '日历', en: 'Calendar' },
-  { key: 'analytics', zh: '访问统计', en: 'Analytics' },
   { key: 'system', zh: '系统与渲染', en: 'System & render' },
 ];
 
@@ -57,7 +56,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   equals the set mounted via app.route('/v1', …) in packages/server/src/index.ts.
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
-//   account_auth alg alg_lsll alg_marks alg_srs alg_sets alg_sweep analytics announced_comps article auth battle_rooms calendar cn_comp_names colpi
+//   account_auth alg alg_lsll alg_marks alg_srs alg_sets alg_sweep announced_comps article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live documents feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon recon_ground_truth scramble_555
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
@@ -451,11 +450,6 @@ const ENDPOINTS: Ep[] = [
   { d: 'calendar', m: 'POST', p: '/v1/calendar/share/rotate', g: 'login', zh: '换一条分享链接,旧的立刻失效', en: 'Reset the share link, invalidating the old one' },
   { d: 'calendar', m: 'GET', p: '/v1/calendar/public/:token', g: 'public', c: 'no-store', zh: '公开读;busy 档在服务端就抹掉标题 / 说明 / 地点 / 参与者', en: 'Public read; at the busy level titles, notes, location and guests are stripped server-side' },
   { d: 'calendar', m: 'GET', p: '/v1/calendar/public/:token/ics', g: 'public', c: 'short', zh: '公开订阅源,Google / Apple 日历可直接订阅', en: 'Public subscription feed for Google / Apple Calendar' },
-
-  // ---- analytics ----
-  { d: 'analytics', m: 'POST', p: '/v1/analytics/pv', g: 'public', c: 'no-store', zh: '上报页面访问(beacon)', en: 'Report page view (beacon)' },
-  { d: 'analytics', m: 'POST', p: '/v1/analytics/dwell', g: 'public', c: 'no-store', zh: '上报停留时长', en: 'Report dwell time' },
-  { d: 'analytics', m: 'GET', p: '/v1/analytics/summary', g: 'admin', zh: '访问统计汇总', en: 'Traffic summary' },
 
   // ---- system ----
   { d: 'system', m: 'GET', p: '/v1/health', g: 'public', c: 'no-store', zh: '健康检查', en: 'Health check' },

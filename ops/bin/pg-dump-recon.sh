@@ -10,7 +10,7 @@
 #  此前因列表残缺实际仍 ~156M/天,非注释所说的 9M。)
 # 真正不可重建的(recons / 公式库 alg_* / 社区 article*/wiki_* / 用户成绩 timer_*/train_results /
 # 账号+OAuth token wca_users / 监控 watched_*/monitor_* / 运维 ops_commands / nav_sites /
-# 分析历史 pageviews/traffic_daily / 管道状态 *_dump_state / 迁移账本 _schema_migrations)
+# 管道状态 *_dump_state / 迁移账本 _schema_migrations)
 # 全部照备。新增「用户表」无需登记(默认就备,只有派生大表才需加进下面排除列表)。
 #
 # 加密用 PGPASSWORD env;不写 pgpass 文件。
