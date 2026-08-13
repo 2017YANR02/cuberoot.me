@@ -1,6 +1,6 @@
 import { saveBlob } from '@/lib/document-export';
 import { calculateSpreadsheetFormulas } from '@/lib/spreadsheet-formulas';
-import { cellAddress, columnLabel, formatSpreadsheetCellValue, parseCellAddress, usedBounds, type CellStyle, type SpreadsheetSheet } from '@/lib/spreadsheet-model';
+import { cellAddress, columnLabel, formatSpreadsheetCellValue, parseCellAddress, parseSerializedRange, usedBounds, type CellStyle, type SpreadsheetSheet } from '@/lib/spreadsheet-model';
 
 function safeFilename(title: string, extension: string): string {
   const stem = title.replace(/[<>:"/\\|?*\u0000-\u001f\u007f]/g, '_').replace(/[. ]+$/g, '').trim().slice(0, 120) || 'spreadsheet';
@@ -36,9 +36,14 @@ export async function buildSpreadsheetXlsx(sheets: SpreadsheetSheet[]): Promise<
   const used = new Set<string>();
   for (const sheet of sheets) {
     const worksheet: Record<string, unknown> = {};
-    const bounds = usedBounds(sheet.cells);
-    for (const [address, raw] of Object.entries(sheet.cells)) {
-      if (!raw) continue;
+    const exportAddresses = new Set([...Object.keys(sheet.cells), ...Object.keys(sheet.styles), ...Object.keys(sheet.notes || {}), ...Object.keys(sheet.links || {})]);
+    for (const serialized of sheet.merges || []) {
+      const range = parseSerializedRange(serialized); if (!range) continue;
+      exportAddresses.add(cellAddress(range.end.row, range.end.column));
+    }
+    const bounds = usedBounds(Object.fromEntries(Array.from(exportAddresses, (address) => [address, 'x'])));
+    for (const address of exportAddresses) {
+      const raw = sheet.cells[address] || '';
       const cell = raw.startsWith('=')
         ? { t: 'n', f: raw.slice(1), v: 0 }
         : /^(true|false)$/i.test(raw)
@@ -46,12 +51,22 @@ export async function buildSpreadsheetXlsx(sheets: SpreadsheetSheet[]): Promise<
           : /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(raw.trim())
             ? { t: 'n', v: Number(raw) }
             : { t: 's', v: raw };
-      const numberFormat = excelNumberFormat(sheet.styles[address] || {});
-      worksheet[address] = numberFormat ? { ...cell, z: numberFormat } : cell;
+      const style = sheet.styles[address] || {};
+      const numberFormat = excelNumberFormat(style);
+      const link = sheet.links?.[address]; const note = sheet.notes?.[address];
+      worksheet[address] = {
+        ...cell,
+        ...(numberFormat ? { z: numberFormat } : {}),
+        ...(link ? { l: { Target: link } } : {}),
+        ...(note ? { c: [{ a: 'CubeRoot', t: note }] } : {}),
+      };
     }
     worksheet['!ref'] = `A1:${columnLabel(bounds.columns - 1)}${bounds.rows}`;
     worksheet['!cols'] = Array.from({ length: bounds.columns }, (_, index) => ({
       wpx: sheet.widths[String(index)] || 100,
+    }));
+    worksheet['!merges'] = (sheet.merges || []).map(parseSerializedRange).filter(Boolean).map((range) => ({
+      s: { r: range!.start.row, c: range!.start.column }, e: { r: range!.end.row, c: range!.end.column },
     }));
     XLSX.utils.book_append_sheet(workbook, worksheet as never, safeSheetName(sheet.name, used));
   }
