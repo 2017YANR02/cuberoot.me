@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { THEME_BOOTSTRAP, LANG_BOOTSTRAP } from "@/lib/theme-bootstrap";
 import DeskPet from "@/components/DeskPet";
 import AuthRouteBridge from "@/components/AuthRouteBridge";
@@ -108,6 +109,7 @@ export default function RootLayout({
           <AuthTokenRefresher />
           <StickyScrollGuard />
         </AppNuqsAdapter>
+        <Analytics />
       </body>
     </html>
   );
