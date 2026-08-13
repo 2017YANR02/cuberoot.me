@@ -32,6 +32,7 @@ export type TimerMachineAction =
   | { type: 'cancel-press' }
   | { type: 'hold-ready' }
   | { type: 'start-now'; nowMs: number; elapsedMs?: number }
+  | { type: 'stop-external'; timeMs: number; inspectionMs?: number }
   | { type: 'start-from-cube'; nowMs: number; atMs?: number }
   | { type: 'cancel-arm' }
   | { type: 'reset' };
@@ -188,6 +189,27 @@ export function transitionTimer(
       nowMs - elapsedMs,
       config,
     );
+  }
+
+  if (action.type === 'stop-external') {
+    const timeMs = finiteNonNegative(action.timeMs);
+    const inspectionMs = finiteNonNegative(action.inspectionMs ?? 0);
+    const solve: SolveResult = { timeMs, inspectionMs, autoPenalty: 'ok' };
+    return {
+      state: {
+        ...state,
+        phase: 'stopped',
+        lastMs: timeMs,
+        startedAtMs: null,
+        inspectionStartedAtMs: null,
+        inspectionSec: null,
+        autoPenalty: null,
+        pendingInspectionStart: false,
+      },
+      effects: ['run-stopped'],
+      solve,
+      accepted: true,
+    };
   }
 
   if (action.type === 'start-from-cube') {
