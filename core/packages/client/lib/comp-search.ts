@@ -44,6 +44,8 @@ export function isCancelledComp(
 
 let cache: Comp[] | null = null;
 let inflight: Promise<Comp[]> | null = null;
+let landingCache: Comp[] | null = null;
+let landingInflight: Promise<Comp[]> | null = null;
 
 function normalizeCountry(raw: string): string {
   if (!raw) return '';
@@ -69,6 +71,37 @@ export async function loadComps(): Promise<Comp[]> {
     })();
   }
   return inflight;
+}
+
+/** Homepage competition window: every upcoming competition plus enough recent
+ * history for the existing previous-30-days tab. Full history remains available
+ * through loadComps(), but is only needed after the user starts a comp search. */
+export async function loadLandingComps(): Promise<Comp[]> {
+  if (landingCache) return landingCache;
+  if (!landingInflight) {
+    landingInflight = Promise.all([
+      fetch(statsUrl('/stats/recent_past_comps.json')).then(async (response) => {
+        if (!response.ok) throw new Error('recent past competitions unavailable');
+        const rows: unknown = await response.json();
+        if (!Array.isArray(rows)) throw new Error('invalid recent past competitions');
+        return rows as Comp[];
+      }),
+      fetch(statsUrl('/stats/all_upcoming_comps.json')).then(async (response) => {
+        if (!response.ok) throw new Error('upcoming competitions unavailable');
+        const rows: unknown = await response.json();
+        if (!Array.isArray(rows)) throw new Error('invalid upcoming competitions');
+        return rows as Comp[];
+      }),
+      loadFlagData({ persons: false }).catch(() => 0),
+    ]).then(([past, upcoming]) => {
+      const rows = new Map<string, Comp>();
+      for (const comp of past) rows.set(comp.id, comp);
+      for (const comp of upcoming) rows.set(comp.id, comp);
+      landingCache = [...rows.values()].map((c) => ({ ...c, country: normalizeCountry(c.country) }));
+      return landingCache;
+    }).catch(() => loadComps());
+  }
+  return landingInflight;
 }
 
 interface SynEntry { tokens: string[]; phrase?: boolean }

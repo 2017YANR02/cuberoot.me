@@ -48,7 +48,7 @@ import { compSourceLine } from '@/lib/comp-schedule';
 import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { variantLabel, stageLabel, variantDataRef } from '@/lib/scramble-variants';
 import SolveTabs from '../_components/SolveTabs';
-import LazyVisible from '../_components/LazyVisible';
+import LazyVisible from '@/components/LazyVisible';
 import './analyze.css';
 
 // 分布区(下半区)懒载:求解/分布合页后,analyzer(3×3 阶段/CFOP/DR)下方接同一份分布。

@@ -17,6 +17,7 @@ export default function LazyVisible({
   rootMargin = '300px',
   minHeight = 320,
   className,
+  unwrapWhenVisible = false,
 }: {
   children: ReactNode;
   /** 提前量:容器距视口多远就预挂(默认提前 300px,滚到时已就绪) */
@@ -24,6 +25,8 @@ export default function LazyVisible({
   /** 未挂载时占位最小高度,避免滚动跳动 */
   minHeight?: number;
   className?: string;
+  /** 挂载后移除占位 wrapper,供依赖既有顶层 margin / selector 的内容使用。 */
+  unwrapWhenVisible?: boolean;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const [show, setShow] = useState(false);
@@ -46,6 +49,8 @@ export default function LazyVisible({
     io.observe(el);
     return () => io.disconnect();
   }, [show, rootMargin]);
+
+  if (show && unwrapWhenVisible) return children;
 
   return (
     <div ref={ref} className={className} style={show ? undefined : { minHeight }}>

@@ -14,6 +14,7 @@ import LangToggle from '@/components/LangToggle';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import LandingSearch from '@/components/LandingSearch';
+import LazyVisible from '@/components/LazyVisible';
 import { TEXTS, SECTIONS, PRIMARY_CARDS, SEARCH_CARDS } from '@/lib/landing-sections';
 
 // Below-the-fold widgets — dynamic to defer client hydrate / chunk fetch.
@@ -137,10 +138,16 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <RecentScrambles lang={lang} />
-      <TodayRecon lang={lang} />
+      <LazyVisible minHeight={40} rootMargin="240px 0px" unwrapWhenVisible>
+        <RecentScrambles lang={lang} />
+      </LazyVisible>
+      <LazyVisible minHeight={40} rootMargin="240px 0px" unwrapWhenVisible>
+        <TodayRecon lang={lang} />
+      </LazyVisible>
 
-      <OngoingComps lang={lang} />
+      <LazyVisible minHeight={56} rootMargin="240px 0px" unwrapWhenVisible>
+        <OngoingComps lang={lang} />
+      </LazyVisible>
 
       <div className="cards-sections">
         {SECTIONS.map((sec) => (
