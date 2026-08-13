@@ -49,7 +49,7 @@ import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { SPEC_BY_EVENT } from './_puzzle-specs';
-import LazyVisible from '../_components/LazyVisible';
+import LazyVisible from '@/components/LazyVisible';
 
 const Loading = () => <div style={{ padding: 16 }}>Loading…</div>;
 

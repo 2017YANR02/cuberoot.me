@@ -154,6 +154,11 @@ jobs:
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_all_comps.ts
 
+      - name: Build compact homepage competition window
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
+        working-directory: core/packages/stats-build
+        run: npx tsx src/bin/build_landing_comps.ts
+
       - name: Generate /wca/prediction historical trends JSON
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build

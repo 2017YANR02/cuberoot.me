@@ -157,7 +157,7 @@ export default function LandingSearch({ cards, lang }: Props) {
     personMatches, compMatches,
     reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
     totalCount, yearMatch,
-  } = useSiteSearch(query, 'eager', { cards });
+  } = useSiteSearch(query, 'lazy', { cards });
 
   useEffect(() => {
     setExpandedPersons(false);
