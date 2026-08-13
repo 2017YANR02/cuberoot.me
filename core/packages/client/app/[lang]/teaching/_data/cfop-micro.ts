@@ -298,7 +298,7 @@ const exampleSolves = module(
 export const CFOP_MICRO_COURSE: MicroCourse = {
   id: 'cfop',
   label: l('CFOP', 'CFOP'),
-  title: l('588 节微课，从入门流程到完整进阶案例', '588 micro-lessons from beginner flow to complete advanced cases'),
+  title: l('588 节课，从入门流程到完整进阶案例', '588 lessons from beginner flow to complete advanced cases'),
   summary: l('完整覆盖十字、F2L、OLL、PLL、COLL、ZBLL、练习方法、11 张资料表与 3 个复原例解；每个标准案例独立成课。', 'Complete coverage of Cross, F2L, OLL, PLL, COLL, ZBLL, practice advice, 11 sheets, and 3 reconstructions, with every standard case as its own lesson.'),
   audience: l('已经能独立复原，准备系统学习 CFOP 并逐步提速的学员', 'Learners who can solve independently and are ready to learn CFOP systematically'),
   stages: [

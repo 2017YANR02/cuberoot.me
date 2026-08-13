@@ -94,7 +94,7 @@ function defaultScript(title: LocalizedText, outcome: LocalizedText, kind: Lesso
   }
 
   return [
-    l(`这节微课只解决一个问题：“${title.zh}”。学完马上练，不需要一次记很多内容。`, `This micro-lesson solves one problem: “${title.en}.” You will practise immediately, so there is no need to remember too much at once.`),
+    l(`这节课只解决一个问题：“${title.zh}”。学完马上练，不需要一次记很多内容。`, `This lesson solves one problem: “${title.en}.” You will practise immediately, so there is no need to remember too much at once.`),
     l('【正面说完目标，切到俯拍画面】', '[State the goal to camera, then switch to the overhead view.]'),
     l('先把魔方放稳，保持我们约定的正面和顶面。拿法固定以后，判断才不会跟着魔方一起变。', 'Set the cube down in the agreed front-and-top orientation. A consistent grip keeps the recognition rule from changing as the cube moves.'),
     l('请先观察我指到的位置。我们只找一个最明显的线索，再用这个线索决定下一步，不靠猜。', 'Watch the location I point to. We will use one clear clue to decide the next step instead of guessing.'),
