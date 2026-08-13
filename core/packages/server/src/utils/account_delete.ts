@@ -67,6 +67,7 @@ export const ANONYMIZE_TABLES: readonly { table: string; idCol: string; nameCol?
   { table: 'article', idCol: 'owner_wca_id', nameCol: 'owner_name' },
   { table: 'article_image', idCol: 'owner_wca_id' },
   { table: 'article_report', idCol: 'reporter_wca_id' },
+  { table: 'teacher_directory_entries', idCol: 'owner_key', nameCol: 'owner_name' },
   // 我给别人文档添加成员的操作痕迹不属于被邀请人,只切断操作者身份。
   { table: 'collaborative_document_members', idCol: 'added_by' },
 ];

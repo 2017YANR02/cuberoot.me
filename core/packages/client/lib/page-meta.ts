@@ -456,6 +456,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'A recorded 3×3 cubing course covering trial lessons, the beginner method, and CFOP, with timings, shot lists, and complete scripts.',
     },
   },
+  'teachers': {
+    title: { zh: '魔方老师与培训机构', en: 'Cube Teachers & Schools' },
+    description: {
+      zh: '查找魔方老师与培训机构,了解教学方向、授课方式和联系信息;登录用户也可发布并维护自己的介绍。',
+      en: 'Find cube teachers and training schools by specialty, teaching mode and location, or sign in to publish and maintain your own profile.',
+    },
+  },
   'tutorial': {
     title: { zh: '魔方教程', en: 'Cubing Tutorials' },
     description: {
