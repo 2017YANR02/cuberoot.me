@@ -181,7 +181,7 @@ jobs:
 
           for i in $(seq 1 30); do
             PAGES_OK=true
-            for ROUTE in /default /about /competitions /records /rankings; do
+            for ROUTE in / /default /about /competitions /records /rankings; do
               PAGE="$(curl -fsSL "https://contests.cuberoot.me${ROUTE}" 2>/dev/null || true)"
               if ! echo "$PAGE" | grep -q '<html' || echo "$PAGE" | grep -q 'Internal Server Error'; then
                 PAGES_OK=false
