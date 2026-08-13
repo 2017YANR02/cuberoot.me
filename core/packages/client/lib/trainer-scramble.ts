@@ -1,6 +1,6 @@
 // Ported from packages/client-vite/src/utils/trainerScramble.ts
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
-import { flattenAlg } from '@cuberoot/shared/alg-notation';
+import { flattenAlg, mergeAdjacentMoves } from '@cuberoot/shared/alg-notation';
 import { equivalentPyraScramble } from './pyraminx-solver';
 import { allowedPostAuf, oriCornersOnly, type OrientationSel } from './alg_ll_orientation';
 import { tr } from '@/i18n/tr';
@@ -346,7 +346,11 @@ export function purifyScramble(puzzle: AlgPuzzle | undefined, s: string): string
   try {
     const flat = flattenAlg(s);
     // 只改 `2'`(`3Rw2'` 同理),**不碰其它角度**:`U3'` = `U'`,写成 `U3` 就是另一个招式。
-    return puzzle === 'megaminx' ? flat : flat.replace(/2'/g, '2');
+    if (puzzle === 'megaminx') return flat;
+    const normalized = flat.replace(/2'/g, '2');
+    // setup 原文有时已经含相邻同层转动(例如 `U2 U'`)；纯打乱要给用户可直接照做的最简序列。
+    // 复用共享记号层的 token 感知合并，避免把 `Rw R`、`M m` 或不同层前缀误当成同一步。
+    try { return mergeAdjacentMoves(normalized); } catch { return normalized; }
   } catch {
     return s;
   }
