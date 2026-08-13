@@ -233,6 +233,13 @@ const TABLES: Table[] = [
     { name: 'actor_key, actor_name' }, { name: 'title, excerpt, link' }, { name: 'created_at, read_at' },
   ] },
   { name: 'nav_sites', domain: 'community', origin: '0001', evolved: [2], purpose: { zh: '/site 网址导航(group_id 避 SQL 关键字)', en: 'The /site link directory' } },
+  { name: 'teacher_directory_entries', domain: 'community', origin: '0126', purpose: { zh: '/teachers 魔方老师与培训机构目录;登录用户维护自己的资料,管理员维护全部资料', en: 'The /teachers cube teacher and training-school directory; signed-in users maintain their own profiles and admins maintain all profiles' }, cols: [
+    { name: 'kind', note: { zh: 'teacher / organization', en: 'teacher / organization' } },
+    { name: 'name_zh / name_en, location_zh / location_en, description_zh / description_en' },
+    { name: 'specialties_zh / specialties_en JSONB, teaching_mode, contact, website, wca_id' },
+    { name: 'is_curated', note: { zh: '管理员认证资料', en: 'admin-curated profile' } },
+    { name: 'owner_key, owner_name', note: { zh: '作者身份与显示名;公开列表不返回 owner_key', en: 'author identity and display name; the public list omits owner_key' } },
+  ] },
   { name: 'ops_commands', domain: 'community', origin: '0010', evolved: [11], purpose: { zh: '/code/ops runbook 命令 + 提示词模板', en: 'Commands + prompts behind the /code/ops runbook' } },
   { name: 'page_notices', domain: 'community', origin: '0073', purpose: { zh: '每页顶部管理员通知条(维护中/WIP/bug),按路径匹配', en: 'Per-page admin notice bars (maintenance/WIP/bug), matched by path' } },
   { name: 'pattern_examples', domain: 'community', origin: '0091', purpose: { zh: '/scramble/pattern/search 的示例预设:管理员在页面上摆好图案就能存一条,q 存的就是可分享的 ?q= 编码', en: 'Example presets for /scramble/pattern/search: an admin lays out a pattern and saves it; q holds the same shareable ?q= encoding the page uses' }, cols: [
@@ -373,6 +380,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 123, slug: 'collaborative_resource_kinds', desc: { zh: '协作资源增加 document / spreadsheet 类型，在同一权限与 Yjs 实时同步底座上支持在线表格。', en: 'Add document / spreadsheet resource kinds so online spreadsheets share the existing permissions and Yjs real-time foundation.' } },
   { n: 124, slug: 'document_subscriptions', desc: { zh: '为协作文档与表格增加按用户保存的修改订阅、最后查看时间与通知节流。', en: 'Add per-user change subscriptions, last-seen timestamps, and throttled notifications for collaborative documents and spreadsheets.' } },
   { n: 125, slug: 'drop_traffic_analytics', desc: { zh: '退役自建流量统计并删除 pageviews 与 traffic_daily。', en: 'Retire self-hosted traffic analytics and drop pageviews and traffic_daily.' } },
+  { n: 126, slug: 'teacher_directory', desc: { zh: '新增魔方老师与培训机构目录,预置颜瑞民老师资料,支持作者自主管理与管理员管理。', en: 'Add the cube teacher and training-school directory, seed Ruimin Yan’s profile, and support owner and admin management.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
