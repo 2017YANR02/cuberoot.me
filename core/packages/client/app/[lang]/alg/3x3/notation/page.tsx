@@ -1,6 +1,5 @@
 'use client';
 
-import { ArrowUpRight } from 'lucide-react';
 import Link from '@/components/AppLink';
 import MoveNotationDemo, { type MoveNotationOption } from '@/components/MoveNotationDemo/MoveNotationDemo';
 import { useT } from '@/hooks/useT';
@@ -34,8 +33,7 @@ const COMPACT_DEMO_MOVES: DemoMove[] = [
   { move: 'S' },
 ];
 
-const FOOLPROOF_EXAMPLES = ['R', "U'", 'r', 'F2'];
-const COMPACT_EXAMPLES = ['R', "U'", 'R2', 'F', "F'", 'r', "u'", 'x', 'M'];
+const MODE_EXAMPLES = ['R', "U'", 'r', 'F2'];
 
 function compactDemoOptions(): MoveNotationOption[] {
   return COMPACT_DEMO_MOVES.map(({ move, source }) => ({
@@ -52,36 +50,28 @@ export default function NotationPage() {
     <main className="alg-root alg-notation-page">
       <div className="alg-notation-shell">
         <header className="alg-notation-hero">
-          <p className="alg-notation-kicker">3×3</p>
           <h1>{t('中文转动记号', 'Chinese move notation')}</h1>
           <Link href="/regulation/notation" className="alg-notation-reference">
-            {t('查看标准英文记号说明', 'Read the standard notation guide')}
-            <ArrowUpRight size={14} aria-hidden="true" />
+            {t('英文记号', 'English notation')}
           </Link>
         </header>
 
-        <section className="alg-notation-demo-section" aria-labelledby="compact-map-title">
-          <div className="alg-notation-section-heading">
-            <p>COMPACT</p>
-            <h2 id="compact-map-title">{t('紧凑记号动图', 'Compact notation animation')}</h2>
-            <span>{t(
-              '选择右侧记号；动图会从复原状态演示一次。',
-              'Choose a symbol; the player shows that move once from the solved state.',
-            )}</span>
-          </div>
+        <section
+          className="alg-notation-demo-section"
+          aria-label={t('紧凑记号动画', 'Compact notation animation')}
+        >
           <MoveNotationDemo puzzle="3x3" moves={compactDemoOptions()} variant="compact" />
         </section>
 
         <div className="alg-notation-modes">
           <section aria-labelledby="compact-rule-title">
-            <p className="alg-notation-mode-label">{t('紧凑', 'Compact')}</p>
-            <h2 id="compact-rule-title">{t('保留 2 和撇号', 'Keep 2 and the prime mark')}</h2>
+            <h2 id="compact-rule-title">{t('紧凑', 'Compact')}</h2>
             <p>{t(
-              '不写后缀表示顺时针 90°，撇号表示逆时针 90°，2 表示 180°。',
-              'No suffix means 90° clockwise, a prime means 90° counterclockwise, and 2 means 180°.',
+              '顺转不加符号，逆转加撇号，180° 加 2。',
+              'No suffix for clockwise, a prime for counterclockwise, and 2 for 180°.',
             )}</p>
             <div className="alg-notation-examples">
-              {COMPACT_EXAMPLES.map(alg => (
+              {MODE_EXAMPLES.map(alg => (
                 <span key={alg}>
                   <code>{alg}</code>
                   <b>→</b>
@@ -92,14 +82,13 @@ export default function NotationPage() {
           </section>
 
           <section aria-labelledby="foolproof-rule-title">
-            <p className="alg-notation-mode-label">{t('傻瓜', 'Foolproof')}</p>
-            <h2 id="foolproof-rule-title">{t('把方向完整写出来', 'Write the direction in full')}</h2>
+            <h2 id="foolproof-rule-title">{t('傻瓜', 'Foolproof')}</h2>
             <p>{t(
-              '适合还不熟悉字母和后缀的用户；转体和中层转动仍显示 x、y、z、E、M、S。',
-              'This is easier while learning face letters and suffixes. Rotations and slice moves remain x, y, z, E, M, and S.',
+              '直接写出方向；转体和中层仍用 x、y、z、E、M、S。',
+              'Write the direction in full; rotations and slice moves remain x, y, z, E, M, and S.',
             )}</p>
             <div className="alg-notation-long-examples">
-              {FOOLPROOF_EXAMPLES.map(alg => (
+              {MODE_EXAMPLES.map(alg => (
                 <span key={alg}>
                   <code>{alg}</code>
                   <b>→</b>

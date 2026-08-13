@@ -8,9 +8,10 @@ let playerMounts = 0;
 let playerUnmounts = 0;
 
 vi.mock('@/components/AlgPlayer/AlgPlayer', () => ({
-  default: function PlayerProbe({ alg, autoPlay, loop, controlMode }: {
+  default: function PlayerProbe({ alg, autoPlay, playRequest, loop, controlMode }: {
     alg: string;
     autoPlay?: boolean;
+    playRequest?: number;
     loop?: boolean;
     controlMode?: string;
   }) {
@@ -21,15 +22,10 @@ vi.mock('@/components/AlgPlayer/AlgPlayer', () => ({
     return createElement('output', {
       'data-testid': 'player-alg',
       'data-auto-play': String(Boolean(autoPlay)),
+      'data-play-request': String(playRequest ?? 0),
       'data-loop': String(Boolean(loop)),
       'data-control-mode': controlMode,
     }, alg);
-  },
-}));
-
-vi.mock('@/components/AppLink', () => ({
-  default: function LinkProbe({ href, children }: { href: string; children: unknown }) {
-    return createElement('a', { href }, children as never);
   },
 }));
 
@@ -86,8 +82,15 @@ describe('MoveNotationDemo player lifecycle', () => {
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-control-mode')).toBe('replay');
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-auto-play')).toBe('true');
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-loop')).toBe('false');
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-play-request')).toBe('5');
+    expect(host.querySelector('.move-notation-current')).toBeNull();
+    expect(host.querySelector('.move-notation-open')).toBeNull();
     expect(playerMounts).toBe(1);
     expect(playerUnmounts).toBe(0);
+
+    await act(async () => buttons[2].click());
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-play-request')).toBe('6');
+    expect(playerMounts).toBe(1);
   });
 
   it('renders only one replay button in the teaching control mode', async () => {

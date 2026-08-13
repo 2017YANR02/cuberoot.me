@@ -12,12 +12,24 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { ArrowRightLeft } from 'lucide-react';
-import CubeColorChip, { cubeColorGroups, f2lDisplayColors } from '@/components/CubeColorChip/CubeColorChip';
+import CubeColorChip, {
+  crossColorFromReconText,
+  cubeColorGroups,
+  f2lDisplayColors,
+} from '@/components/CubeColorChip/CubeColorChip';
 import { findTokenPositions, extractAlgFromText, syncPlayerToMoveCount, countMovesExpanded, type TokenPosition } from '@/lib/recon-alg-utils';
 import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
 import './solution_view.css';
 
 /** 获取点击在 DOM 元素纯文本中的绝对偏移 */
+function sourceTextLength(node: Node): number {
+  if (node instanceof HTMLElement) {
+    const replacedLength = node.dataset.reconTextLength;
+    if (replacedLength != null) return Number(replacedLength);
+  }
+  return (node.textContent || '').length;
+}
+
 function getTextOffsetInElement(el: HTMLElement): number {
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0) return -1;
@@ -28,7 +40,7 @@ function getTextOffsetInElement(el: HTMLElement): number {
   while (current && current !== el) {
     let prev = current.previousSibling;
     while (prev) {
-      offset += (prev.textContent || '').length;
+      offset += sourceTextLength(prev);
       prev = prev.previousSibling;
     }
     current = current.parentNode;
@@ -99,6 +111,7 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
   // 光标字符偏移 + 当前招式高亮区间(声明式渲染)。text 变化时清空(偏移失效)。
   const [cursorOffset, setCursorOffset] = useState<number | null>(null);
   const [hlRange, setHlRange] = useState<[number, number] | null>(null);
+  const crossColor = useMemo(() => crossColorFromReconText(text), [text]);
 
   useEffect(() => {
     cursorOffsetRef.current = null;
@@ -242,7 +255,11 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
           ? commentStart + 2 + (line.slice(commentStart + 2).match(/^\s*/)?.[0].length ?? 0)
           : -1;
         const labelColorGroups = labelStart >= 0
-          ? cubeColorGroups(line.slice(labelStart)).map(group => ({ ...group, start: group.start + labelStart }))
+          ? cubeColorGroups(line.slice(labelStart)).map(group => ({
+              ...group,
+              start: group.start + labelStart,
+              end: group.end + labelStart,
+            }))
           : [];
         const colorsAt = new Map(labelColorGroups.map(group => [group.start, group.colors]));
 
@@ -260,15 +277,18 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
           const a = sorted[s], b = sorted[s + 1];
           const colors = colorsAt.get(a);
           if (colors) {
-            parts.push(<CubeColorChip key={`color${a}`} colors={f2lDisplayColors(colors)} className="recon-label-chip" />);
+            parts.push(
+              <span key={`color${a}`} data-recon-text-length={colors.length}>
+                <CubeColorChip colors={f2lDisplayColors(colors, crossColor)} className="recon-label-chip" />
+              </span>,
+            );
           }
           if (localCursor === a) parts.push(<span key={`c${a}`} className="detail-cursor" />);
           const seg = line.slice(a, b);
           if (!seg) continue;
           const isColorCode = labelColorGroups.some(group => a >= group.start && b <= group.end);
           if (isColorCode) {
-            // 保留原文字节点供光标偏移计算,视觉上由紧邻的色块完全替代。
-            parts.push(<span key={`code${a}`} className="recon-color-code" aria-hidden="true">{seg}</span>);
+            // 原字母完全不渲染；色块 wrapper 的 data 长度负责维持点击光标的原始偏移。
             continue;
           }
           const inHl = hasHl && a >= Math.max(0, hlS) && b <= Math.min(line.length, hlE);

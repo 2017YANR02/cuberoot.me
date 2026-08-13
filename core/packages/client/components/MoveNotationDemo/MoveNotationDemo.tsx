@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { ArrowUpRight } from 'lucide-react';
 import type { AlgPuzzle } from '@cuberoot/shared';
-import Link from '@/components/AppLink';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import { useT } from '@/hooks/useT';
 import './move-notation-demo.css';
@@ -20,27 +18,11 @@ export interface MoveNotationDemoProps {
   variant?: 'list' | 'compact';
 }
 
-const SIM_PUZZLE: Record<AlgPuzzle, string> = {
-  '2x2': '2',
-  '3x3': '3',
-  '4x4': '4',
-  '5x5': '5',
-  sq1: 'sq1',
-  megaminx: 'megaminx',
-  pyraminx: 'pyraminx',
-  skewb: 'skewb',
-  fto: 'fto',
-};
-
-function simHref(puzzle: AlgPuzzle, move: string): string {
-  const renderer = puzzle === 'megaminx' ? '&renderer=cubing' : '';
-  return `/sim?puzzle=${SIM_PUZZLE[puzzle]}&alg=${encodeURIComponent(move)}${renderer}`;
-}
-
 /** One shared player per move family; selecting a row swaps the demonstrated move. */
 export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: MoveNotationDemoProps) {
   const t = useT();
   const [selectedMove, setSelectedMove] = useState(moves[0]?.move ?? '');
+  const [playRequest, setPlayRequest] = useState(0);
   const selected = moves.find(option => option.move === selectedMove) ?? moves[0];
 
   if (!selected) return null;
@@ -52,29 +34,18 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
   return (
     <div className={`move-notation-demo is-${variant}`}>
       <div className="move-notation-stage">
-        <div className="move-notation-current" aria-live="polite">
-          <code>{selected.symbol ?? selected.move}</code>
-          <span>{selected.caption}</span>
-        </div>
         <AlgPlayer
           alg={selected.move}
           puzzle={puzzle}
           set=""
           startSolved
           autoPlay
+          playRequest={playRequest}
           controlMode="replay"
           moveDurationMs={1000}
           engine={engine}
           size={260}
         />
-        <Link
-          href={simHref(puzzle, selected.move)}
-          prefetch={false}
-          className="move-notation-open"
-        >
-          {t('在完整模拟器中打开', 'Open in the full simulator')}
-          <ArrowUpRight size={14} aria-hidden="true" />
-        </Link>
       </div>
 
       <div className="move-notation-options" aria-label={t('选择要演示的记号', 'Choose a move to demonstrate')}>
@@ -86,7 +57,10 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
               type="button"
               className={`move-notation-option${active ? ' is-active' : ''}`}
               aria-pressed={active}
-              onClick={() => setSelectedMove(option.move)}
+              onClick={() => {
+                setSelectedMove(option.move);
+                setPlayRequest(request => request + 1);
+              }}
             >
               <code>{option.symbol ?? option.move}</code>
               <span>{option.caption}</span>

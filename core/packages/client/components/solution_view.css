@@ -27,19 +27,6 @@
   height: 11px;
 }
 
-/* 字母仍留在 DOM 中维持点击光标的原始文本偏移,画面上由色块替代。 */
-.recon-color-code {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 /* 解法文本中的可视闪烁光标 */
 .detail-cursor {
   display: inline-block;
