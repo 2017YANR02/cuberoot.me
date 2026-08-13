@@ -245,6 +245,11 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     description: { zh: '多人实时编辑、自动保存并按成员授权的在线文档。', en: 'Real-time collaborative documents with autosave and member permissions.' },
   },
   'docs/edit': { title: { zh: '编辑协作文档', en: 'Edit Collaborative Document' } },
+  'sheets': {
+    title: { zh: '协作表格', en: 'Collaborative Spreadsheets' },
+    description: { zh: '实时共同编辑表格,支持公式、多人协作和 Excel 导入导出。', en: 'Edit spreadsheets together with formulas, live collaboration, and Excel import and export.' },
+  },
+  'sheets/edit': { title: { zh: '编辑协作表格', en: 'Edit Collaborative Spreadsheet' } },
   'eocross_trainer': { title: { zh: 'EO 十字训练', en: 'EOCross Trainer' } },
   'feedback': { title: { zh: '我的反馈', en: 'My feedback' } },
   'feedback/admin': { title: { zh: '反馈审核', en: 'Feedback' } },

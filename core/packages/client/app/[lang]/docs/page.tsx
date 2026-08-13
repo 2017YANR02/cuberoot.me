@@ -84,7 +84,7 @@ export default function DocumentsPage() {
       <header className="docs-header">
         <div>
           <h1><T zh="协作文档" en="Collaborative docs" /></h1>
-          <p><T zh="实时共同编辑、自动保存并按成员授权。" en="Edit together in real time, with autosave and member permissions." /></p>
+          <p><T zh="这里只显示你拥有或别人共享给你的文档。" en="Only documents you own or that others share with you appear here." /></p>
         </div>
         <div className="docs-header-actions">
           {isAdmin && (
