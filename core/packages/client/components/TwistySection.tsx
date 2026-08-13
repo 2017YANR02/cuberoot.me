@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, type MutableRefObject } from 'react';
 import FaceOverlay, { type FaceTable } from './FaceOverlay';
 import ReconPlayOverlay from './recon/ReconPlayOverlay';
 import { applyTwistyCoreOpacity } from './twistyCoreOpacity';
+import { simSpeedToTps, uniformSimTimeline } from '@/lib/sim_timing';
 import './TwistySection.css';
 
 // Pyraminx 4 vertex 方向。screenSlot mode:字母 (U/L/R/B) 不绑定具体 vertex,
@@ -83,7 +84,7 @@ const clampDist = (d: number): number => Math.max(CAM_DIST_MIN, Math.min(CAM_DIS
  *  - viewAngle 0..100 → cameraLongitude:0/100 = ±180°,50 = 0
  *  - viewGradient 0..100 → cameraLatitude:0/100 = ±90°,50 = 0
  *    (跟 SettingDrawer mapYaw/mapPitch 同方向)
- *  - speed 0..100 → tempoScale:[0.2, 4]
+ *  - speed 0..100 → exact [0.5, 6] TPS; every expanded Move/Pause leaf is one beat
  *  - hint → hintFacelets 'floating' / 'none'
  */
 export interface TwistySettings {
@@ -182,6 +183,7 @@ export default function TwistySection({
   // 手拧锁 → addMove wrap 里吞掉指针产生的 move。用 ref 让开关一变不必重建 player。
   const pointerTurnsRef = useRef(true);
   useEffect(() => { pointerTurnsRef.current = settings?.pointerTurns !== false; }, [settings?.pointerTurns]);
+  const simTimingEnabled = settings != null;
 
   // NOTE: 自动加载 cubing 库——import 完成后 setCtor 触发重渲染
   useEffect(() => {
@@ -377,6 +379,24 @@ export default function TwistySection({
     try { player.alg = alg; } catch { /* parser 拒绝就忽略 */ }
   }, [alg]);
 
+  // /sim defines TPS per expanded notation leaf, independent of turn angle.
+  // cubing.js defaults a double turn to 1.5× a quarter turn, so supply a custom
+  // one-second-per-leaf timeline and let tempoScale convert that baseline to TPS.
+  useEffect(() => {
+    const player = playerInstRef.current;
+    if (!player || !simTimingEnabled) return;
+    let current = true;
+    void import('cubing/alg').then(({ Alg, Move, Pause }) => {
+      if (!current || playerInstRef.current !== player) return;
+      try {
+        const leaves = [...new Alg(alg).expand().childAlgNodes()]
+          .filter((node) => node instanceof Move || node instanceof Pause);
+        player.experimentalModel.animationTimelineLeavesRequest.set(uniformSimTimeline(leaves));
+      } catch { /* parser rejects incomplete live input */ }
+    });
+    return () => { current = false; };
+  }, [alg, playerNonce, simTimingEnabled]);
+
   // setup 同步 — 同上但走 experimentalSetupAlg。
   useEffect(() => {
     const player = playerInstRef.current;
@@ -409,9 +429,7 @@ export default function TwistySection({
     const yawDeg = ((settings.viewAngle - 50) / 50) * 180;
     const pitchDeg = ((50 - settings.viewGradient) / 50) * 90;
     const dist = scaleToDist(settings.scale);
-    const tempo = settings.speed <= 50
-      ? 0.2 + (settings.speed / 50) * 0.8
-      : 1 + ((settings.speed - 50) / 50) * 3;
+    const tempo = simSpeedToTps(settings.speed);
     const isNewPlayer = prevNonceRef.current !== playerNonce;
     if (isNewPlayer || prevYawRef.current !== settings.viewAngle) {
       try { player.cameraLongitude = yawDeg; } catch { /* */ }

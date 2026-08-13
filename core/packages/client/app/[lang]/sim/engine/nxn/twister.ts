@@ -792,7 +792,7 @@ export default class Twister {
       return true;
     }
     for (const rotate of list) {
-      success = rotate.group.twist((Math.PI / 2) * rotate.twist, fast);
+      success = rotate.group.twist((Math.PI / 2) * rotate.twist, fast, true);
       // force = instant sync (playback jumpToStep etc.). If the target layer can't lock
       // because a perpendicular layer is stranded holding with no tween (e.g. a drag's
       // snap-back overlapping a jumpToStep), tweener.finish() can't release it and this
@@ -801,7 +801,7 @@ export default class Twister {
       let guard = 8;
       while (!success && force && guard-- > 0) {
         tweener.finish();
-        success = rotate.group.twist((Math.PI / 2) * rotate.twist, fast);
+        success = rotate.group.twist((Math.PI / 2) * rotate.twist, fast, true);
       }
       if (!success && force) console.warn('[sim] twister.twist(force): layer never locked, skipped');
     }
