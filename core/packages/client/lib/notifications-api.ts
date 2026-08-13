@@ -7,6 +7,7 @@ export type NotificationKind =
   | 'forum_thread' | 'forum_reply' | 'forum_report'
   | 'forum_review' | 'forum_approved' | 'forum_rejected'
   | 'comp_reg'
+  | 'document_change'
   | 'cal_reminder' | 'cal_invite' | 'cal_rsvp';
 
 export interface SiteNotification {

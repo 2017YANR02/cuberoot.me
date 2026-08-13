@@ -32,6 +32,8 @@ export interface DocumentDetails {
   document: CollaborativeDocument;
   canManage: boolean;
   members: DocumentMember[];
+  /** Optional while the frontend and API roll out independently. */
+  subscription?: { subscribed: boolean; lastSeenAt: string | null };
 }
 
 export async function fetchDocuments(kind: DocumentKind = 'document'): Promise<CollaborativeDocument[]> {
@@ -110,6 +112,21 @@ export async function updateDocumentMember(id: string, userKey: string, role: Ex
 export async function removeDocumentMember(id: string, userKey: string): Promise<void> {
   await handleApi(await fetch(apiUrl(`/v1/documents/${encodeURIComponent(id)}/members/${encodeURIComponent(userKey)}`), {
     method: 'DELETE',
+    headers: authHeaders(false),
+  }));
+}
+
+export async function updateDocumentSubscription(id: string, subscribed: boolean): Promise<{ subscribed: boolean; lastSeenAt: string }> {
+  return handleApi(await fetch(apiUrl(`/v1/documents/${encodeURIComponent(id)}/subscription`), {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify({ subscribed }),
+  }));
+}
+
+export async function markDocumentSeen(id: string): Promise<void> {
+  await handleApi(await fetch(apiUrl(`/v1/documents/${encodeURIComponent(id)}/seen`), {
+    method: 'POST',
     headers: authHeaders(false),
   }));
 }

@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ChevronLeft, MessageSquare, Reply, GitBranch, LogIn, Check, MessagesSquare, Flag,
   Hourglass, CircleCheck, CircleX, Plane, BellRing, CalendarPlus, CalendarCheck,
+  FilePenLine,
 } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
@@ -33,6 +34,7 @@ const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
   forum_approved: CircleCheck,
   forum_rejected: CircleX,
   comp_reg: Plane,
+  document_change: FilePenLine,
   cal_reminder: BellRing,
   cal_invite: CalendarPlus,
   cal_rsvp: CalendarCheck,
@@ -69,6 +71,7 @@ export default function NotificationsPage() {
     forum_approved: t('通过了你的帖子', 'approved your post'),
     forum_rejected: t('驳回了你的帖子', 'declined your post'),
     comp_reg: t('报名了国外比赛', 'registered for an overseas competition'),
+    document_change: t('修改了你关注的协作文件', 'updated a collaborative file you follow'),
     cal_reminder: t('日程提醒', 'Event reminder'),
     cal_invite: t('邀请你参加日程', 'invited you to an event'),
     cal_rsvp: t('回应了你的日程邀请', 'responded to your invitation'),
