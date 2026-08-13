@@ -437,6 +437,53 @@ export default function WhyCubePage() {
           </p>
         </Sec>
 
+        {/* ── Beyond memorizing algorithms ─────────────────── */}
+        <Sec
+          eyebrow={t('从会还原到速拧', 'From solving to speedcubing')}
+          title={t('公式只是通行证', 'Algorithms are only the entry ticket')}
+          lede={t(
+            '记住流程和公式，能让孩子把魔方还原；真正的速拧，则是在几秒钟里把观察、判断、执行和调整连成一个不停顿的闭环。',
+            'Learning the steps and algorithms gets a child to a solved cube. Real speedcubing is the continuous loop of observing, deciding, executing and adjusting — all within a few seconds.'
+          )}
+        >
+          <div className="wc-benefits wc-benefits-4">
+            <Benefit icon={<Search size={24} />} title={t('看见并跟踪', 'See and track')}>
+              {t(
+                '从许多色块里迅速找到目标，在转动中继续追踪它会落到哪里。观察不是“看得久”，而是抓得准、跟得住。',
+                'Find the target among many pieces, then keep track of where each turn will send it. Observation is not looking longer — it is noticing accurately and tracking continuously.'
+              )}
+            </Benefit>
+            <Benefit icon={<Workflow size={24} />} title={t('即时规划', 'Plan in real time')}>
+              {t(
+                '把当前情况和学过的思路组合起来，选出下一段简洁、可执行的路线。同一个问题有多种解法，快也要建立在看得懂、做得到之上。',
+                'Combine the current position with familiar ideas and choose a short, executable next route. A case can have many solutions; speed still depends on choosing one you can understand and perform.'
+              )}
+            </Benefit>
+            <Benefit icon={<Hand size={24} />} title={t('流畅执行', 'Execute smoothly')}>
+              {t(
+                '让指法符合手指发力规律，让双手、视线和思路保持同步。真正省下时间的，往往不是手更快，而是动作之间没有停顿。',
+                'Use finger tricks that fit how the hands move, keeping both hands, eyes and thought in sync. The biggest time savings often come not from faster hands, but from removing pauses.'
+              )}
+            </Benefit>
+            <Benefit icon={<Target size={24} />} title={t('压力下稳定', 'Stay steady under pressure')}>
+              {t(
+                '计时会把差距细化到百分之一秒。孩子要学会在紧张时保持节奏，也要接受失误、复盘原因，再开始下一次。',
+                'Timing can separate results by a hundredth of a second. A child learns to hold a rhythm under pressure, accept mistakes, review what happened and begin the next attempt.'
+              )}
+            </Benefit>
+          </div>
+          <Callout
+            tone="accent"
+            icon={<TimerIcon size={17} />}
+            label={t('秒数是反馈，不是目的', 'The clock is feedback, not the purpose')}
+          >
+            {t(
+              '“练到 6 秒有什么用？”没有一个必须拿来交换的功利用途。它的意义在一次次清楚的反馈里：魔方有没有还原、哪里停顿了、这次为什么更快，都能立刻看见。每一次突破，检验的是专注、执行、耐心和心态；最后的数字，只是把这段过程记录下来。',
+              '“What practical use is a six-second solve?” It does not need a single transactional answer. Its value is in repeated, unambiguous feedback: whether the cube is solved, where the pauses were and why this attempt was faster are all immediately visible. Each breakthrough tests focus, execution, patience and composure; the final number simply records that process.'
+            )}
+          </Callout>
+        </Sec>
+
         {/* ── Screen-free ───────────────────────────────────── */}
         <Sec
           eyebrow={t('不用屏幕', 'Screen-free')}
