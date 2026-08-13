@@ -1,6 +1,6 @@
 import { saveBlob } from '@/lib/document-export';
 import { calculateSpreadsheetFormulas } from '@/lib/spreadsheet-formulas';
-import { cellAddress, columnLabel, formatCalculatedValue, parseCellAddress, usedBounds, type SpreadsheetSheet } from '@/lib/spreadsheet-model';
+import { cellAddress, columnLabel, formatSpreadsheetCellValue, parseCellAddress, usedBounds, type CellStyle, type SpreadsheetSheet } from '@/lib/spreadsheet-model';
 
 function safeFilename(title: string, extension: string): string {
   const stem = title.replace(/[<>:"/\\|?*\u0000-\u001f\u007f]/g, '_').replace(/[. ]+$/g, '').trim().slice(0, 120) || 'spreadsheet';
@@ -19,6 +19,17 @@ function safeSheetName(name: string, used: Set<string>): string {
   return candidate;
 }
 
+function excelNumberFormat(style: CellStyle): string | undefined {
+  const format = style.numberFormat || 'general';
+  if (format === 'general') return undefined;
+  const fallback = format === 'currency' ? 2 : format === 'percent' ? 0 : 2;
+  const decimals = Math.min(10, Math.max(0, style.decimals ?? fallback));
+  const fraction = decimals ? `.${'0'.repeat(decimals)}` : '';
+  if (format === 'currency') return `¥#,##0${fraction}`;
+  if (format === 'percent') return `0${fraction}%`;
+  return `0${fraction}`;
+}
+
 export async function buildSpreadsheetXlsx(sheets: SpreadsheetSheet[]): Promise<Blob> {
   const XLSX = await import('xlsx');
   const workbook = XLSX.utils.book_new();
@@ -35,7 +46,8 @@ export async function buildSpreadsheetXlsx(sheets: SpreadsheetSheet[]): Promise<
           : /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(raw.trim())
             ? { t: 'n', v: Number(raw) }
             : { t: 's', v: raw };
-      worksheet[address] = cell;
+      const numberFormat = excelNumberFormat(sheet.styles[address] || {});
+      worksheet[address] = numberFormat ? { ...cell, z: numberFormat } : cell;
     }
     worksheet['!ref'] = `A1:${columnLabel(bounds.columns - 1)}${bounds.rows}`;
     worksheet['!cols'] = Array.from({ length: bounds.columns }, (_, index) => ({
@@ -89,7 +101,7 @@ export function buildSpreadsheetCsv(sheet: SpreadsheetSheet, allSheets: Spreadsh
   const lines = Array.from({ length: bounds.rows }, (_, row) => Array.from({ length: bounds.columns }, (_, column) => {
     const address = cellAddress(row, column);
     const raw = sheet.cells[address] || '';
-    return quote(raw.startsWith('=') ? formatCalculatedValue(calculated.values[sheet.id]?.[address]) : raw);
+    return quote(formatSpreadsheetCellValue(raw, calculated.values[sheet.id]?.[address], sheet.styles[address] || {}, 'zh-CN'));
   }).join(','));
   return new Blob([`\uFEFF${lines.join('\r\n')}`], { type: 'text/csv;charset=utf-8' });
 }
@@ -138,7 +150,7 @@ export async function buildSpreadsheetPdf(title: string, sheet: SpreadsheetSheet
           const value = row < rowStart
             ? column < columnStart ? '' : columnLabel(column)
             : column < columnStart ? String(row + 1)
-              : raw.startsWith('=') ? formatCalculatedValue(calculated.values[sheet.id]?.[cellAddress(row, column)]) : raw;
+              : formatSpreadsheetCellValue(raw, calculated.values[sheet.id]?.[cellAddress(row, column)], sheet.styles[cellAddress(row, column)] || {}, 'zh-CN');
           const text = pdf.splitTextToSize(value, width - 5)[0] || '';
           pdf.text(text, x + 2.5, y + 12, { baseline: 'alphabetic' });
         }
