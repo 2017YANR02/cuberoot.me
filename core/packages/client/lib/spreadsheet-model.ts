@@ -1,11 +1,18 @@
 export type CellAlignment = 'left' | 'center' | 'right';
+export type CellNumberFormat = 'general' | 'number' | 'currency' | 'percent';
+export type CellFontFamily = 'sans' | 'serif' | 'mono';
 
 export interface CellStyle {
   bold?: boolean;
   italic?: boolean;
+  strikethrough?: boolean;
   align?: CellAlignment;
   fill?: string;
   color?: string;
+  fontFamily?: CellFontFamily;
+  fontSize?: number;
+  numberFormat?: CellNumberFormat;
+  decimals?: number;
 }
 
 export interface SpreadsheetSheet {
@@ -88,6 +95,76 @@ export function formatCalculatedValue(value: unknown): string {
     return labels[type] || '#ERROR!';
   }
   return String(value);
+}
+
+export function formatSpreadsheetCellValue(
+  raw: string,
+  calculated: unknown,
+  style: CellStyle = {},
+  locale = 'en-US',
+): string {
+  const value = raw.startsWith('=') ? calculated : raw;
+  const format = style.numberFormat || 'general';
+  if (format === 'general') return raw.startsWith('=') ? formatCalculatedValue(value) : raw;
+  if (value === '' || value === null || value === undefined) return '';
+  const numeric = typeof value === 'number' ? value : Number(String(value).trim());
+  if (!Number.isFinite(numeric)) return raw.startsWith('=') ? formatCalculatedValue(value) : raw;
+  const defaultDecimals = format === 'currency' ? 2 : format === 'percent' ? 0 : 2;
+  const decimals = Math.min(10, Math.max(0, style.decimals ?? defaultDecimals));
+  return new Intl.NumberFormat(locale, {
+    style: format === 'currency' ? 'currency' : format === 'percent' ? 'percent' : 'decimal',
+    currency: format === 'currency' ? 'CNY' : undefined,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(numeric);
+}
+
+export function sortSpreadsheetRangeRows(
+  cells: Record<string, string>,
+  styles: Record<string, CellStyle>,
+  range: CellRange,
+  direction: 'asc' | 'desc',
+  locale = 'en-US',
+): { cells: Record<string, string>; styles: Record<string, CellStyle> } {
+  const normalized = normalizedRange(range);
+  const addresses = rangeAddresses(normalized);
+  if (addresses.some((address) => (cells[address] || '').startsWith('='))) {
+    throw new Error('FORMULA_IN_SORT_RANGE');
+  }
+  const rows = Array.from(
+    { length: normalized.end.row - normalized.start.row + 1 },
+    (_, offset) => normalized.start.row + offset,
+  );
+  const firstColumn = normalized.start.column;
+  rows.sort((leftRow, rightRow) => {
+    const left = cells[cellAddress(leftRow, firstColumn)] || '';
+    const right = cells[cellAddress(rightRow, firstColumn)] || '';
+    if (!left && !right) return leftRow - rightRow;
+    if (!left) return 1;
+    if (!right) return -1;
+    const leftNumber = Number(left);
+    const rightNumber = Number(right);
+    const compared = Number.isFinite(leftNumber) && Number.isFinite(rightNumber)
+      ? leftNumber - rightNumber
+      : left.localeCompare(right, locale, { numeric: true, sensitivity: 'base' });
+    return direction === 'asc' ? compared : -compared;
+  });
+  const nextCells = { ...cells };
+  const nextStyles = { ...styles };
+  for (const address of addresses) {
+    delete nextCells[address];
+    delete nextStyles[address];
+  }
+  rows.forEach((sourceRow, destinationOffset) => {
+    const destinationRow = normalized.start.row + destinationOffset;
+    for (let column = normalized.start.column; column <= normalized.end.column; column += 1) {
+      const sourceAddress = cellAddress(sourceRow, column);
+      const destinationAddress = cellAddress(destinationRow, column);
+      if (cells[sourceAddress]) nextCells[destinationAddress] = cells[sourceAddress];
+      if (styles[sourceAddress]) nextStyles[destinationAddress] = styles[sourceAddress];
+    }
+  });
+  return { cells: nextCells, styles: nextStyles };
 }
 
 export function parseClipboardTable(text: string): string[][] {
