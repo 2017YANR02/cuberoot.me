@@ -446,10 +446,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'teaching': {
-    title: { zh: '儿童魔方课教学大纲与提词稿', en: 'Children’s Cubing Course Plan' },
+    title: { zh: '魔方教学', en: 'Cubing Lessons' },
     description: {
-      zh: '面向儿童的三阶魔方录播课方案:试听课、层先法与 CFOP 共 38 节,含时长、拍摄清单和逐节提词稿。',
-      en: 'A 38-lesson recorded-course plan for teaching children the 3×3 cube, covering a trial course, the beginner method and CFOP.',
+      zh: '三阶魔方录播课教学方案:试听课、层先法与 CFOP,含时长、拍摄清单和逐节提词稿。',
+      en: 'A recorded 3×3 cubing course covering trial lessons, the beginner method, and CFOP, with timings, shot lists, and complete scripts.',
     },
   },
   'tutorial': {

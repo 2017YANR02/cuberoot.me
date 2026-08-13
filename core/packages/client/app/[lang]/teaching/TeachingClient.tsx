@@ -50,7 +50,7 @@ function TeachingPage() {
     <main className="teaching-page">
       <header className="teaching-hero">
         <BackHome />
-        <p className="teaching-eyebrow"><T zh="儿童三阶魔方录播微课" en="Recorded 3x3 micro-lessons for children" /></p>
+        <p className="teaching-eyebrow"><T zh="三阶魔方录播微课" en="Recorded 3×3 micro-lessons" /></p>
         <h1><T zh="课程树与完整提词稿" en="Curriculum and complete teleprompter scripts" /></h1>
         <p className="teaching-lead">
           <T
@@ -102,7 +102,7 @@ function TeachingPage() {
           </article>
           <article>
             <Mic2 aria-hidden="true" />
-            <h3><T zh="儿童口语提词" en="Child-friendly narration" /></h3>
+            <h3><T zh="口语化提词" en="Natural narration" /></h3>
             <p><T zh="方括号里是镜头提示，不需要念；其余内容可直接口播，再按录制语气微调。" en="Bracketed lines are production directions. Everything else can be read aloud and adjusted naturally while recording." /></p>
           </article>
         </div>
