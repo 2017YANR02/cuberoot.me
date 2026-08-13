@@ -220,7 +220,7 @@ export default function OngoingComps({ lang }: Props) {
 
   const total = buckets.upcoming.length + buckets.inProgress.length + buckets.past.length;
   if (comps === null && announced === null && records.length === 0) {
-    return <div className="ongoing-comps" aria-hidden="true" />;
+    return <div className="ongoing-comps ongoing-comps--loading" aria-hidden="true" />;
   }
   if (total === 0 && records.length === 0 && announcedList.length === 0 && regCount === 0) return null;
 
