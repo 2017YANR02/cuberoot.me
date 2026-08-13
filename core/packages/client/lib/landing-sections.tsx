@@ -6,7 +6,7 @@ import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, Code as CodeIcon,
   Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, Eye, Palette,
-  CircleQuestionMark, Globe2, CalendarDays, Video,
+  CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap,
   type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
@@ -42,6 +42,7 @@ export const TEXTS: Record<string, { en: string; zh: string
   scramble:        { en: 'Scramble', zh: '打乱'
 },
   alg:             { en: 'Tutorial',   zh: '教程' },
+  teaching:        { en: 'Teaching', zh: '教学' },
   algdb:           { en: 'Algorithms', zh: '公式' },
   wiki:            { en: 'Wiki', zh: 'Wiki' },
   quiz:            { en: 'Quiz', zh: '问答' },
@@ -160,9 +161,10 @@ export const SECTIONS: Section[] = [
     eyebrow: { en: 'LEARN', zh: '学习' },
     title:   { en: 'Tutorials, terms, rules.', zh: '教程、术语、规则。'
     },
-    sub:     { en: 'Illustrated tutorials, a bilingual glossary, the full WCA regulations, the group theory underneath — and a quiz to check what stuck.', zh: '图文教程、双语术语表、WCA 规则全文、魔方背后的群论,以及一套问答检验你记住了多少。'
+    sub:     { en: 'Course plans, illustrated tutorials, a bilingual glossary, the full WCA regulations, the group theory underneath — and a quiz to check what stuck.', zh: '录播课教学方案、图文教程、双语术语表、WCA 规则全文、魔方背后的群论,以及一套问答检验你记住了多少。'
     },
     cards: [
+      { id: 'teaching', href: '/teaching', internal: true, tier: 'medium', Icon: GraduationCap, nameKey: 'teaching' },
       { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg' },
       { id: 'quiz',     href: '/quiz',     internal: true, tier: 'medium', Icon: CircleQuestionMark, nameKey: 'quiz' },
       { id: 'wiki',     href: '/wiki',     internal: true, tier: 'medium', Icon: BookA,      nameKey: 'wiki' },

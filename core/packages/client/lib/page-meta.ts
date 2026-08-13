@@ -440,6 +440,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Convert one moment into local time anywhere in the world, and find the hours that work for everyone across time zones — daylight saving handled automatically.',
     },
   },
+  'teaching': {
+    title: { zh: '儿童魔方课教学大纲与提词稿', en: 'Children’s Cubing Course Plan' },
+    description: {
+      zh: '面向儿童的三阶魔方录播课方案:试听课、层先法与 CFOP 共 38 节,含时长、拍摄清单和逐节提词稿。',
+      en: 'A 38-lesson recorded-course plan for teaching children the 3×3 cube, covering a trial course, the beginner method and CFOP.',
+    },
+  },
   'tutorial': {
     title: { zh: '魔方教程', en: 'Cubing Tutorials' },
     description: {
