@@ -5,8 +5,8 @@ export const TRIAL_MICRO_COURSE: MicroCourse = {
   id: 'trial',
   label: l('试听课', 'Trial course'),
   title: l('五次小成功，完成第一次挑战', 'Five small wins and a first real challenge'),
-  summary: l('不急着讲完整复原。五节微课先消除畏难，让孩子认识目标块、做出白色小花，并清楚看到后续学习路线。', 'These five micro-lessons remove the fear of the cube, teach the first target pieces, build a white daisy, and show the path ahead.'),
-  audience: l('第一次接触三阶魔方的孩子和正在选课的家长', 'Children meeting the 3x3 for the first time and parents choosing a course'),
+  summary: l('不急着讲完整复原。五节微课先消除畏难，让学员认识目标块、做出白色小花，并清楚看到后续学习路线。', 'These five micro-lessons remove the fear of the cube, teach the first target pieces, build a white daisy, and show the path ahead.'),
+  audience: l('第一次接触三阶魔方的学员和正在选课的家长', 'Learners meeting the 3×3 for the first time and parents choosing a course'),
   stages: [
     {
       id: 'trial-start',
@@ -29,7 +29,7 @@ export const TRIAL_MICRO_COURSE: MicroCourse = {
                 l('会复原的人不是每次都猜对，而是知道一条可以重复走通的路线。接下来每一节，我们只走路线中的一小步。', 'Solvers do not guess correctly every time. They know a route that works again and again. Each lesson will cover one small step on that route.'),
                 l('做错不代表失败，只说明我们找到了一个需要再看一次的位置。慢一点、看清楚，你一样可以做到。', 'A mistake is not failure. It simply shows us the place to inspect again. Slow down, look carefully, and you can do it too.'),
                 l('请把魔方拿起来，随便转两下，再停住。无论它看起来多乱，中心、棱和角仍然遵守固定规则。', 'Pick up the cube, make two random turns, and stop. No matter how mixed it looks, its centers, edges, and corners still follow fixed rules.'),
-                l('【让孩子暂停，自己打乱两步再复原两步】', '[Invite the child to pause, make two turns, then undo both turns.]'),
+                l('【让学员暂停，自己打乱两步再复原两步】', '[Invite the learner to pause, make two turns, then undo both turns.]'),
                 l('你刚刚已经验证了一件事：动作可以记录，也可以倒着走回来。后面的复原，就是把很多个可理解的小动作排好顺序。', 'You have already proved something important: moves can be recorded and reversed. A full solve is simply many understandable actions placed in the right order.'),
                 l('今天先记住一句话：魔方不是靠运气。下一节，我们认识负责带路的中心块。', 'Remember one sentence today: the cube is not luck. Next, we will meet the center pieces that guide every face.'),
               ],
