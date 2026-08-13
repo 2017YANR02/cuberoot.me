@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * 「下载 PDF」按钮 —— `/alg` 下任何列 case 的页面都能挂,点一下把当前这批 case
- * (图 + 名字 + 公式)排成可打印的 A4。排版在 `lib/alg_pdf/sheet.ts`。
+ * 「下载 PDF」按钮 —— `/alg` 下任何需要打印 case 的页面都能挂,点一下
+ * 把当前内容排成可打印的 A4。排版在 `lib/alg_pdf/sheet.ts`。
  *
  * 几件事值得注意:
  *  - 生成器(jsPDF + svg2pdf,还可能带出 /sim 引擎渲染异形拼图)只在点击那一刻
@@ -28,13 +28,16 @@ const THEME_KEY = 'alg-pdf-theme';
 
 export interface AlgPdfButtonProps {
   /** 点击那一刻现算的整份表(标题 / case / 文件名) */
-  build: () => Omit<AlgPdfSheetInput, 'onProgress' | 'shouldCancel' | 'theme'>;
+  build: () => Omit<AlgPdfSheetInput, 'onProgress' | 'shouldCancel' | 'theme'>
+    | Promise<Omit<AlgPdfSheetInput, 'onProgress' | 'shouldCancel' | 'theme'>>;
   className?: string;
   /** 按钮文字 */
   label?: string;
+  /** 按钮提示;训练题单与公式表的用途不同 */
+  title?: string;
 }
 
-export default function AlgPdfButton({ build, className, label = 'PDF' }: AlgPdfButtonProps) {
+export default function AlgPdfButton({ build, className, label = 'PDF', title }: AlgPdfButtonProps) {
   const [pct, setPct] = useState<number | null>(null);
   const [theme, setTheme] = useState<AlgPdfTheme>('light');
   const [open, setOpen] = useState(false);
@@ -69,7 +72,7 @@ export default function AlgPdfButton({ build, className, label = 'PDF' }: AlgPdf
     setPct(0);
     try {
       const { downloadAlgSheet } = await import('@/lib/alg_pdf/sheet');
-      const sheet = build();
+      const sheet = await build();
       if (!sheet.cases.length) return;
       await downloadAlgSheet({
         // 二维码指向当前地址,但去掉 hash(#case 锚点这类只在本次会话有意义)
@@ -114,7 +117,7 @@ export default function AlgPdfButton({ build, className, label = 'PDF' }: AlgPdf
         }}
         title={busy
           ? tr({ zh: '点击取消', en: 'Click to cancel' })
-          : tr({ zh: '下载 PDF —— 打印用的公式表', en: 'Download a printable PDF sheet' })}
+          : title ?? tr({ zh: '下载 PDF —— 打印用的公式表', en: 'Download a printable PDF sheet' })}
       >
         {busy ? `${pct}%` : label}
       </button>
