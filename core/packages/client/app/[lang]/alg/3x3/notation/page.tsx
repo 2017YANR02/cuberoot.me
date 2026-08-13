@@ -19,12 +19,12 @@ const COMPACT_DEMO_MOVES: DemoMove[] = [
   { move: 'R' },
   { move: 'F' },
   { move: 'B' },
-  { move: 'u', source: 'u / Uw' },
-  { move: 'd', source: 'd / Dw' },
-  { move: 'l', source: 'l / Lw' },
-  { move: 'r', source: 'r / Rw' },
-  { move: 'f', source: 'f / Fw' },
-  { move: 'b', source: 'b / Bw' },
+  { move: 'u', source: 'u' },
+  { move: 'd', source: 'd' },
+  { move: 'l', source: 'l' },
+  { move: 'r', source: 'r' },
+  { move: 'f', source: 'f' },
+  { move: 'b', source: 'b' },
   { move: 'x' },
   { move: 'y' },
   { move: 'z' },
@@ -60,7 +60,7 @@ export default function NotationPage() {
           className="alg-notation-demo-section"
           aria-label={t('紧凑记号动画', 'Compact notation animation')}
         >
-          <MoveNotationDemo puzzle="3x3" moves={compactDemoOptions()} variant="compact" />
+          <MoveNotationDemo puzzle="3x3" moves={compactDemoOptions()} variant="compact" showReplay={false} />
         </section>
 
         <div className="alg-notation-modes">

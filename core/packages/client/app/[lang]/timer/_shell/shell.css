@@ -1207,7 +1207,21 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   padding: 12px 14px 18px;
+}
+.shell-panel-body::-webkit-scrollbar { width: 10px; }
+.shell-panel-body::-webkit-scrollbar-track { background: transparent; }
+.shell-panel-body::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--foreground) 22%, transparent);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  border-radius: 999px;
+}
+.shell-panel-body::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--foreground) 32%, transparent);
+  background-clip: padding-box;
 }
 
 /* ── Session switcher (top of Times tab) ────────────────── */
@@ -1453,7 +1467,12 @@ html[data-theme=dark] { --scramble-fg: #fff; }
       "main    panel";
     transition: grid-template-columns 160ms ease;
   }
-  .timer-shell.panel-open { grid-template-columns: 1fr 360px; }
+  /* 面板打开时把壳限制在视口内，右栏内容才会在 .shell-panel-body 内形成
+     独立滚动条，而不是继续把整页往下撑长。 */
+  .timer-shell.panel-open {
+    height: 100dvh;
+    grid-template-columns: 1fr 360px;
+  }
   .shell-topbar { grid-area: topbar; }
   .shell-main { grid-area: main; }
   .shell-panel--rail {

@@ -25,6 +25,8 @@ export interface AlgPlayerHandle {
   getPlayer(): any | null;
 }
 
+export type AlgPlayerControlMode = 'full' | 'replay' | 'none';
+
 /** Map our AlgPuzzle slug to cubing.js's TwistyPlayer puzzle id. */
 export const TWISTY_PUZZLE: Record<AlgPuzzle, string> = {
   '2x2': '2x2x2',
@@ -60,7 +62,7 @@ interface Props {
   /** 自动播放到末尾后从头重播。 */
   loop?: boolean;
   /** 完整播放条或仅重播按钮。记号教学使用极简重播模式。 */
-  controlMode?: 'full' | 'replay';
+  controlMode?: AlgPlayerControlMode;
   /** 每个 STM 的动画时长(ms)，默认 1000。 */
   moveDurationMs?: number;
   /** 自定义尺寸,默认 260px;`fillPane=true` 时忽略 */
@@ -146,7 +148,7 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
           puzzle: TWISTY_PUZZLE[puzzle],
           experimentalSetupAlg: setupForTwisty,
           alg: normalized,
-          controlPanel: controlMode === 'replay' ? 'none' : 'bottom-row',
+          controlPanel: controlMode === 'full' ? 'bottom-row' : 'none',
           background: 'none',
           hintFacelets: 'none',
           backView: 'none',

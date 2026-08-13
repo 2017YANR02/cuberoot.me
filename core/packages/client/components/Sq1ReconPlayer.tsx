@@ -21,10 +21,12 @@ import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
 import ReconPlayerBase, { type ReconPlayerAdapter } from '@/components/recon/ReconPlayerBase';
 
 export default function Sq1ReconPlayer({
-  scramble, alg, fillPane = false, playerRef, backView = false, hideControls = false, fullscreenButton,
+  scramble, alg, anchorAtEnd = false, fillPane = false, playerRef, backView = false, hideControls = false, fullscreenButton,
 }: {
   scramble: string;
   alg: string;
+  /** Start from alg inverse and finish at the setup state. */
+  anchorAtEnd?: boolean;
   fillPane?: boolean;
   /** Show an always-on back-view mini window (recon submit forces it). */
   backView?: boolean;
@@ -37,6 +39,7 @@ export default function Sq1ReconPlayer({
   const adapter: ReconPlayerAdapter<Sq1Move> = {
     kind: 'sq1',
     backView,
+    deps: [anchorAtEnd],
     parseMoves: (a) => parseSq1Tokens(a) as Sq1Move[],
     setupPuzzle: (world: World) => {
       if (world.puzzleKind !== 'sq1') world.setPuzzle('sq1');
@@ -46,6 +49,14 @@ export default function Sq1ReconPlayer({
       const cube = world.cube as Sq1Cube;
       cube.twister.finish();
       cube.twister.setup(sc);
+      if (anchorAtEnd) {
+        for (let i = moves.length - 1; i >= 0; i--) {
+          const move = moves[i];
+          cube.applyMoveInstant(move.kind === 'slice'
+            ? move
+            : { kind: 'turn', top: -move.top, bot: -move.bot });
+        }
+      }
       const target = Math.max(0, Math.min(n, moves.length));
       for (let i = 0; i < target; i++) cube.applyMoveInstant(moves[i]);
       world.dirty = true;

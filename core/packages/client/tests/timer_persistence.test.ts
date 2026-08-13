@@ -80,6 +80,18 @@ describe('shared timer persistence schema', () => {
     expect(decodeTimerStoreData(data)).toBeNull();
   });
 
+  it('round-trips a session event association and rejects unknown events', () => {
+    const data = createTimerStoreData(0, 'a');
+    data.database.sessions[0].event = '333';
+    expect(decodeTimerStoreData(data)?.database.sessions[0].event).toBe('333');
+
+    const invalid = structuredClone(data) as unknown as {
+      database: { sessions: Array<{ event: string }> };
+    };
+    invalid.database.sessions[0].event = 'unknown';
+    expect(decodeTimerStoreData(invalid)).toBeNull();
+  });
+
   it('uses one migration chain for website and app backups', () => {
     const environment = { nowMs: 100, sessionId: 'migrated', language: 'en' as const };
     const legacyV2 = JSON.stringify({

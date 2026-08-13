@@ -172,6 +172,56 @@ export function getActiveSessionId(): string {
   return loadRaw().activeSessionId;
 }
 
+function sessionEventIn(db: DbShapeV3, session: SessionMeta): EventId | null {
+  if (session.event) return session.event;
+  const populated = Object.entries(db.dataBySession[session.id] ?? {})
+    .filter(([, solves]) => (solves?.length ?? 0) > 0)
+    .map(([event]) => event as EventId);
+  return populated.length === 1 ? populated[0] : null;
+}
+
+/** Explicit association, or a safe inference for a legacy single-event session. */
+export function getSessionEvent(id: string): EventId | null {
+  const db = loadRaw();
+  const session = db.sessions.find(s => s.id === id);
+  return session ? sessionEventIn(db, session) : null;
+}
+
+/** Update the event that should be selected when this session is activated. */
+export function setSessionEvent(id: string, event: EventId): void {
+  const db = loadRaw();
+  const session = db.sessions.find(s => s.id === id);
+  if (!session || session.event === event) return;
+  session.event = event;
+  saveRaw(db);
+}
+
+/**
+ * Activate a session associated with `event`, preferring the current session.
+ * Returns the matching id, or null when no unambiguous association exists.
+ */
+export function activateSessionForEvent(event: EventId): string | null {
+  const db = loadRaw();
+  const active = db.sessions.find(s => s.id === db.activeSessionId);
+  const ordered = active
+    ? [active, ...db.sessions.filter(s => s.id !== active.id)]
+    : db.sessions;
+  const match = ordered.find(session => sessionEventIn(db, session) === event);
+  if (!match) return null;
+
+  let changed = false;
+  if (!match.event) {
+    match.event = event;
+    changed = true;
+  }
+  if (db.activeSessionId !== match.id) {
+    db.activeSessionId = match.id;
+    changed = true;
+  }
+  if (changed) saveRaw(db);
+  return match.id;
+}
+
 export function setActiveSession(id: string): void {
   const db = loadRaw();
   if (!db.sessions.some(s => s.id === id)) return;
@@ -181,11 +231,16 @@ export function setActiveSession(id: string): void {
 }
 
 /** Create a new (empty) session and return its id. Does NOT switch to it. */
-export function createSession(name: string): string {
+export function createSession(name: string, event?: EventId): string {
   const db = loadRaw();
   const id = genSessionId();
   const trimmed = name.trim();
-  db.sessions.push({ id, name: trimmed || defaultSessionName(), createdTs: Date.now() });
+  db.sessions.push({
+    id,
+    name: trimmed || defaultSessionName(),
+    createdTs: Date.now(),
+    ...(event ? { event } : {}),
+  });
   db.dataBySession[id] = {};
   saveRaw(db);
   return id;
@@ -258,6 +313,8 @@ export function moveSolveToSession(solveId: string, targetSessionId: string): bo
   const existing = toBe[movedEvent] ?? [];
   toBe[movedEvent] = [...existing, moved].sort((a, b) => a.ts - b.ts);
   db.dataBySession[targetSessionId] = toBe;
+  const targetSession = db.sessions.find(s => s.id === targetSessionId);
+  if (targetSession && !targetSession.event) targetSession.event = movedEvent;
 
   saveRaw(db);
   return true;
@@ -396,6 +453,8 @@ export function replaceSolves(eventId: EventId, solves: Solve[]): void {
   const be = activeByEvent(db);
   be[eventId] = solves.slice().sort((a, b) => a.ts - b.ts);
   db.dataBySession[db.activeSessionId] = be;
+  const active = db.sessions.find(s => s.id === db.activeSessionId);
+  if (active) active.event = eventId;
   saveRaw(db);
 }
 
@@ -409,6 +468,8 @@ export function appendSolves(eventId: EventId, solves: Solve[]): void {
   const existing = be[eventId] ?? [];
   be[eventId] = [...existing, ...solves].sort((a, b) => a.ts - b.ts);
   db.dataBySession[db.activeSessionId] = be;
+  const active = db.sessions.find(s => s.id === db.activeSessionId);
+  if (active) active.event = eventId;
   saveRaw(db);
 }
 

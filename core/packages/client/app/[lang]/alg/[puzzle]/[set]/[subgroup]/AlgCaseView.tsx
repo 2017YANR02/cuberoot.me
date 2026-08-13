@@ -159,9 +159,11 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
    */
   const [caseObj, setCaseObj] = useState(caseProp);
   const [selectedAlgByOri, setSelectedAlgByOri] = useState<Record<number, number>>({});
+  const [playRequestByOri, setPlayRequestByOri] = useState<Record<number, number>>({});
   useEffect(() => {
     setCaseObj(caseProp);
     setSelectedAlgByOri({});
+    setPlayRequestByOri({});
   }, [caseProp]);
   const [deleted, setDeleted] = useState(false);
   const [sq1BlackTop, setSq1BlackTop] = useQueryState(
@@ -421,7 +423,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
           />
         </div>
       ) : (
-        <div className="alg-case-detail-lean">
+        <div className={`alg-case-detail-lean${multiOri ? ' is-multi-ori' : ''}`}>
           <div className={`alg-case-detail-lean-aside${multiOri ? ' is-without-thumb' : ''}`}>
             {!multiOri && (
               <div className="alg-case-detail-lean-thumb">
@@ -455,6 +457,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
               const requestedAlgIdx = selectedAlgByOri[oi] ?? 0;
               const selectedAlgIdx = requestedAlgIdx < oriAlgs.length ? requestedAlgIdx : 0;
               const selectedEntry = oriAlgs[selectedAlgIdx];
+              const playRequest = playRequestByOri[oi] ?? 0;
               const rows = oriAlgs.map((entry, i) => {
                 // setup 必须跟着朝向走 —— 四个槽共用一条原始 setup 时,FL/BL/BR 演的是别的 case
                 const row = (
@@ -465,7 +468,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                     viewAngle={effectiveViewAngle}
                     orientation={effectiveOrientation}
                     selected={multiOri && i === selectedAlgIdx}
-                    onSelect={multiOri ? () => setSelectedAlgByOri(current => ({ ...current, [oi]: i })) : undefined}
+                    onSelect={multiOri ? () => {
+                      setSelectedAlgByOri(current => ({ ...current, [oi]: i }));
+                      setPlayRequestByOri(current => ({ ...current, [oi]: (current[oi] ?? 0) + 1 }));
+                    } : undefined}
                     inlinePlayer={!multiOri}
                   />
                 );
@@ -485,6 +491,8 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                         setup={caseViewSetup(selectedEntry.setup ?? orientedSetup, effectiveViewAngle)}
                         orientation={effectiveOrientation}
                         size={260}
+                        autoPlay={playRequest > 0}
+                        playRequest={playRequest}
                       />
                     </div>
                   )}

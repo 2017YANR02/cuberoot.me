@@ -13,6 +13,8 @@ export interface TimerSessionMeta {
   id: string;
   name: string;
   createdTs: number;
+  /** Event selected for this session. Optional for pre-association backups. */
+  event?: EventId;
 }
 
 export interface TimerStoreSettings {
@@ -225,7 +227,13 @@ function decodeSolve(value: unknown, event: EventId): Solve | null {
 function decodeSession(value: unknown): TimerSessionMeta | null {
   if (!isRecord(value) || !isSafeKey(value.id)) return null;
   if (typeof value.name !== 'string' || value.name.length === 0 || !isValidDateMs(value.createdTs)) return null;
-  return { id: value.id, name: value.name, createdTs: value.createdTs };
+  if (value.event !== undefined && !isEventId(value.event)) return null;
+  return {
+    id: value.id,
+    name: value.name,
+    createdTs: value.createdTs,
+    ...(value.event === undefined ? {} : { event: value.event }),
+  };
 }
 
 function decodeSettings(value: unknown): TimerStoreSettings | null {

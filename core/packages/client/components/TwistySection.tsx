@@ -114,7 +114,7 @@ export interface TwistySettings {
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
 export default function TwistySection({
-  puzzle, puzzleDescription, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView, hideControls = false, experimentalStickering,
+  puzzle, puzzleDescription, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView, playbackMode, hideControls = false, experimentalStickering,
 }: {
   puzzle: string;
   /** cubing.js PuzzleGeometry description string (e.g. "c e 0"). When set, the
@@ -129,6 +129,8 @@ export default function TwistySection({
   /** 强制 cubing.js 原生 backView ('top-right' / 'none')，独立于 settings。
    *  undefined = 不接管(走 settings.backView,如 /sim);true/false = 强制开关(recon)。 */
   backView?: boolean;
+  /** Explicit setup anchor for callers without /sim settings (for example recon). */
+  playbackMode?: 'moves' | 'algorithm';
   /** 隐藏 cubing.js 原生底部控制条(controlPanel:'none'),改用画面内播放/暂停浮层。
    *  嵌成绩弹窗预览时用,详情/提交页默认 false(保留原生 scrubber/play)。 */
   hideControls?: boolean;
@@ -448,6 +450,14 @@ export default function TwistySection({
     prevPitchRef.current = settings.viewGradient;
     prevNonceRef.current = playerNonce;
   }, [settings?.viewAngle, settings?.viewGradient, settings?.scale, settings?.speed, settings?.hint, settings?.backView, settings?.playbackMode, settings, playerNonce]);
+
+  // Recon and other lightweight callers do not pass a full settings object. An
+  // explicit prop still needs to drive cubing.js's setup anchor in that path.
+  useEffect(() => {
+    const player = playerInstRef.current;
+    if (!player || !playbackMode) return;
+    try { player.experimentalSetupAnchor = playbackMode === 'algorithm' ? 'end' : 'start'; } catch { /* */ }
+  }, [playbackMode, playerNonce]);
 
   const coreOpacity = settings?.coreOpacity ?? 100;
   const coreOpacityEnabled = settings != null;

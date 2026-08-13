@@ -64,6 +64,7 @@ import { isNonWcaEvent, prefetchNonWca, nextNonWcaScramble } from '../_lib/scram
 import {
   loadAll, saveAll, makeSolve,
   listSessions, getActiveSessionId, moveSolveToSession,
+  activateSessionForEvent, getSessionEvent, setSessionEvent,
 } from '../_lib/storage/db';
 import { formatTargetTime, useSettings, getSettings, updateSettings } from '../_lib/settings';
 import { warmupSound } from '../_lib/sound';
@@ -258,6 +259,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
 
   // ── Side panel (desktop rail / 非桌面整屏) ──────────────────────
   const [panelTab, setPanelTab] = useState<PanelTab | null>(null);
+  const closeResultsPanel = useCallback(() => setPanelTab(null), []);
   const [chartKind, setChartKind] = useState<ChartKind>('histogram');
 
   // ── State: per-event solve lists ────────────────────────────────
@@ -304,6 +306,28 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => { persistItem('cuberoot-timer.event', event); }, [event]);
+
+  const selectEvent = useCallback((nextEvent: EventId) => {
+    if (nextEvent === event) return;
+    const previousSessionId = getActiveSessionId();
+    const matchedSessionId = settings.autoSessionForEvent
+      ? activateSessionForEvent(nextEvent)
+      : null;
+
+    if (matchedSessionId && matchedSessionId !== previousSessionId) {
+      reloadActiveSession();
+    } else if (!matchedSessionId) {
+      setSessionEvent(previousSessionId, nextEvent);
+    }
+    void setEvent(nextEvent);
+  }, [event, reloadActiveSession, setEvent, settings.autoSessionForEvent]);
+
+  const handleSessionsChanged = useCallback((activeSessionId?: string) => {
+    reloadActiveSession();
+    if (!activeSessionId || !settings.autoEventForSession) return;
+    const associatedEvent = getSessionEvent(activeSessionId);
+    if (associatedEvent && associatedEvent !== event) void setEvent(associatedEvent);
+  }, [event, reloadActiveSession, setEvent, settings.autoEventForSession]);
 
   const solves = useMemo(() => byEvent[event] ?? [], [byEvent, event]);
 
@@ -2101,7 +2125,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     if (panelTab === 'times') {
       return (
         <>
-          <SessionSwitcher isZh={isZh} onSessionsChanged={reloadActiveSession} />
+          <SessionSwitcher
+            isZh={isZh}
+            event={event}
+            onSessionsChanged={handleSessionsChanged}
+          />
           {/* 这一档就是这些把本身:会话切换器 + 那张单子。算出来的数都在「统计」那档。 */}
           <HistoryPanel
             solves={solves}
@@ -2176,7 +2204,16 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // 解法提示(仅 333)。同一个组件在两处挂点里二选一:桌面进右侧 .shell-rail(展开成竖栏),
   // 手机进顶栏那一组控件的末尾(点开 = 全屏浮层)。写成一个变量,免得两处各写一遍 props。
   const solverHintPanel = event === '333'
-    ? <SolverHintPanel scramble={scramble} isZh={isZh} onPrevScramble={sheetPrevScramble} onNextScramble={sheetNextScramble} />
+    ? (
+        <SolverHintPanel
+          scramble={scramble}
+          isZh={isZh}
+          resultsPanelOpen={panelTab !== null}
+          onOpen={closeResultsPanel}
+          onPrevScramble={sheetPrevScramble}
+          onNextScramble={sheetNextScramble}
+        />
+      )
     : null;
 
   return (
@@ -2199,7 +2236,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             isZh={isZh}
             selectedEvent={selectorActiveId}
             groups={eventPickerGroups}
-            onSelect={(id) => setEvent(selectorIdToEvent(id))}
+            onSelect={(id) => selectEvent(selectorIdToEvent(id))}
             dataNoTimer
           />
           {/* 打乱来源:随机 / WCA 真题 / 手动输入。放在项目选择器右侧,和「人数」下拉同一组。

@@ -27,6 +27,12 @@ export interface TimerSettings {
   /** Hide running time (show only "...") until the timer stops. */
   hideTime: boolean;
 
+  /** When the event changes, activate a session associated with that event. */
+  autoSessionForEvent: boolean;
+
+  /** When the active session changes, select its associated event. */
+  autoEventForSession: boolean;
+
   /** Show the cube net preview alongside the scramble. */
   showCubePreview: boolean;
 
@@ -321,6 +327,8 @@ export const DEFAULTS: TimerSettings = {
   soundsEnabled: false,
   volume: 0.5,
   hideTime: false,
+  autoSessionForEvent: false,
+  autoEventForSession: false,
   showCubePreview: true,
   precision: 3,
   runningPrecision: 3,
