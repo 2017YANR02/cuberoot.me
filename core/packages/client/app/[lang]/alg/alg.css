@@ -1733,9 +1733,8 @@ a.alg-community-author:hover {
   font-weight: 600;
   color: var(--muted-foreground);
 }
-.alg-case-detail-ori-thumb {
+.alg-case-detail-ori-player {
   margin-bottom: 6px;
-  line-height: 0;
 }
 
 @media (max-width: 680px) {

@@ -23,11 +23,12 @@ describe('algorithm player placement', () => {
     expect(meta).toContain('{expanded && (');
   });
 
-  it('renders a correctly oriented thumbnail for every multi-orientation slot', () => {
+  it('renders one correctly oriented shared player for every multi-orientation slot', () => {
     const detail = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx');
 
     expect(detail).toMatch(/caseObj\.algs\.map\(\(oriAlgs, oi\) => \{[\s\S]*?const orientedSetup = oriAdjustSetup\(caseObj\.setup, oi\);/);
-    expect(detail).toMatch(/className="alg-case-detail-ori-thumb"[\s\S]*?<CaseThumb[\s\S]*?alg=\{firstAlg \|\| orientedSetup \|\| ''\}[\s\S]*?setup=\{orientedSetup\}/);
+    expect(detail).toMatch(/className="alg-case-detail-ori-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{caseViewAlg\(selectedEntry\.alg, effectiveViewAngle\)\}[\s\S]*?setup=\{caseViewSetup\(selectedEntry\.setup \?\? orientedSetup, effectiveViewAngle\)\}/);
+    expect(detail).toContain('inlinePlayer={!multiOri}');
     expect(detail).toContain('{!multiOri && (');
   });
 });
