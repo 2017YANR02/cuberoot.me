@@ -14,9 +14,20 @@
  * `B`(蓝)是不少 case 名的首字母。所以这个判据的失败方式是「给 OLL 摆一个橙块」,
  * 看着像功能正常、其实在骗人。这里把两边都钉死。
  */
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, it, expect } from 'vitest';
 
-import { cubeColorGroups, f2lDisplayColors, isCubeColorLetters, leadingCubeColors } from '@/components/CubeColorChip/CubeColorChip';
+import {
+  crossColorFromLabel,
+  crossColorFromLabels,
+  crossColorFromReconText,
+  cubeColorGroups,
+  f2lDisplayColors,
+  isCubeColorLetters,
+  leadingCubeColors,
+} from '@/components/CubeColorChip/CubeColorChip';
+import SolutionView from '@/components/SolutionView';
 
 describe('leadingCubeColors', () => {
   it('两片配色的标注 → 两个字母', () => {
@@ -74,14 +85,70 @@ describe('cubeColorGroups', () => {
 
 describe('f2lDisplayColors', () => {
   it('白底四槽按贴纸的视觉左右顺序显示', () => {
-    expect(f2lDisplayColors('RB')).toBe('BR');
-    expect(f2lDisplayColors('RG')).toBe('GR');
-    expect(f2lDisplayColors('BO')).toBe('OB');
-    expect(f2lDisplayColors('OG')).toBe('GO');
+    expect(f2lDisplayColors('RB', 'W')).toBe('BR');
+    expect(f2lDisplayColors('RG', 'W')).toBe('GR');
+    expect(f2lDisplayColors('BO', 'W')).toBe('OB');
+    expect(f2lDisplayColors('OG', 'W')).toBe('GO');
   });
 
-  it('单色十字和未知组合保持原顺序', () => {
-    expect(f2lDisplayColors('W')).toBe('W');
-    expect(f2lDisplayColors('WY')).toBe('WY');
+  it('六种底色都按转到底面后的 F→R→B→L 顺序显示', () => {
+    const rings = {
+      W: 'GOBR', Y: 'GRBO', G: 'WRYO', B: 'YRWO', R: 'GWBY', O: 'GYBW',
+    } as const;
+    for (const [cross, ring] of Object.entries(rings)) {
+      for (let i = 0; i < ring.length; i++) {
+        for (let j = i + 1; j < ring.length; j++) {
+          const expected = `${ring[i]}${ring[j]}`;
+          expect(f2lDisplayColors(`${ring[j]}${ring[i]}`, cross as keyof typeof rings)).toBe(expected);
+        }
+      }
+    }
+  });
+
+  it('单色、非相邻颜色和未知十字保持原顺序', () => {
+    expect(f2lDisplayColors('W', 'W')).toBe('W');
+    expect(f2lDisplayColors('WY', 'W')).toBe('WY');
+    expect(f2lDisplayColors('RB', null)).toBe('RB');
+  });
+});
+
+describe('cross color extraction', () => {
+  it('识别 cross / xcross / xxcross / xxxcross 标签', () => {
+    expect(crossColorFromLabel('W cross')).toBe('W');
+    expect(crossColorFromLabel('Y xcross (BR)')).toBe('Y');
+    expect(crossColorFromLabel('G xxcross (WR+YO)')).toBe('G');
+    expect(crossColorFromLabel('B xxxcross')).toBe('B');
+    expect(crossColorFromLabel('GR')).toBeNull();
+  });
+
+  it('计时器标签和已有复盘文字都能给后续 F2L 行提供底色', () => {
+    expect(crossColorFromLabels(['OLL-F-', 'O xcross', 'GY'])).toBe('O');
+    expect(crossColorFromReconText([
+      "z2 // inspection",
+      "F L B // W cross",
+      "U R U' // RB",
+    ].join('\n'))).toBe('W');
+  });
+});
+
+describe('SolutionView color labels', () => {
+  it('色块替代的颜色字母全部退出可见布局', () => {
+    const text = [
+      '// W xcross (GO)',
+      '// F2L 2 (BR)',
+      '// F2L 3 (BO)',
+      '// F2L 4 (GR)',
+    ].join('\n');
+    const html = renderToStaticMarkup(createElement(SolutionView, {
+      text,
+      playerRef: { current: null },
+    }));
+
+    expect(html.match(/data-recon-text-length=/g)).toHaveLength(5);
+    expect(html).not.toContain('>W xcross');
+    expect(html).not.toContain('>GO<');
+    expect(html).not.toContain('>BR<');
+    expect(html).not.toContain('>BO<');
+    expect(html).not.toContain('>GR<');
   });
 });

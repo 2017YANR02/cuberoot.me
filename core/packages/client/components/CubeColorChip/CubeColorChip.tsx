@@ -76,15 +76,57 @@ export function cubeColorGroups(label: string): CubeColorGroup[] {
   return groups;
 }
 
-/** 白底复盘里四个 F2L 槽位的贴纸左右顺序。未知组合保持原顺序。 */
-export function f2lDisplayColors(colors: string): string {
-  const order: Record<string, string> = {
-    BR: 'BR', RB: 'BR',
-    GR: 'GR', RG: 'GR',
-    OB: 'OB', BO: 'OB',
-    GO: 'GO', OG: 'GO',
-  };
-  return order[colors] ?? colors;
+/**
+ * 各色十字转到底面以后,F→R→B→L 四个侧面的标准配色。
+ *
+ * 朝向和 timer/reconstruct/orient.ts 的 ROTATION_TO_D 完全相同:白 U 用 z2、
+ * 绿 F 用 x'、蓝 B 用 x、红 R 用 z、橙 L 用 z',黄 D 不动。F2L 的双色块按
+ * 这条侧面环里靠前的颜色在左显示,所以白底的 RB 会稳定显示成 BR；另外五种底色
+ * 也走同一条几何规则,不是各自碰运气沿用识别器给出的字母顺序。
+ */
+const F2L_SIDE_RING_BY_CROSS: Readonly<Record<ColorLetter, string>> = Object.freeze({
+  W: 'GOBR',
+  Y: 'GRBO',
+  G: 'WRYO',
+  B: 'YRWO',
+  R: 'GWBY',
+  O: 'GYBW',
+});
+
+/** 从一条复盘标签里读十字颜色；普通 F2L / OLL / PLL 标签返回 null。 */
+export function crossColorFromLabel(label: string | null | undefined): ColorLetter | null {
+  if (!label) return null;
+  const match = /^([WYGBOR])\s+x*cross\b/i.exec(label.trim());
+  return match ? match[1].toUpperCase() as ColorLetter : null;
+}
+
+/** 从一组标签里找这把的十字颜色。 */
+export function crossColorFromLabels(labels: readonly (string | null | undefined)[]): ColorLetter | null {
+  for (const label of labels) {
+    const color = crossColorFromLabel(label);
+    if (color) return color;
+  }
+  return null;
+}
+
+/** 从 /recon 的整段解法文字里找这把的十字颜色。 */
+export function crossColorFromReconText(text: string): ColorLetter | null {
+  const labels = text.split('\n').map((line) => {
+    const commentStart = line.indexOf('//');
+    return commentStart >= 0 ? line.slice(commentStart + 2).trimStart() : null;
+  });
+  return crossColorFromLabels(labels);
+}
+
+/** 按当前十字底色统一 F2L 两片贴纸的左右顺序；信息不足时保持原顺序。 */
+export function f2lDisplayColors(colors: string, crossColor: ColorLetter | null): string {
+  if (colors.length !== 2 || !crossColor) return colors;
+  const ring = F2L_SIDE_RING_BY_CROSS[crossColor];
+  const [a, b] = colors;
+  const ai = ring.indexOf(a);
+  const bi = ring.indexOf(b);
+  if (ai < 0 || bi < 0) return colors;
+  return ai <= bi ? colors : `${b}${a}`;
 }
 
 export interface CubeColorChipProps {
