@@ -682,9 +682,14 @@
   white-space: nowrap;
 }
 .trainer-progress-link {
-  font-size: 0.82rem;
+  font-size: 13px;
+  line-height: 16px;
   color: var(--muted-foreground);
   text-decoration: none;
+}
+.trainer-top-actions .alg-pdf,
+.trainer-top-actions .alg-pdf-btn {
+  line-height: 16px;
 }
 @media (hover: hover) {
   .trainer-progress-link:hover { color: var(--foreground); }
@@ -707,7 +712,8 @@
   top: 50%;
   transform: translateY(-50%);
   white-space: nowrap;
-  font-size: 0.82rem;
+  font-size: 13px;
+  line-height: 16px;
   color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
 }

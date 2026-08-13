@@ -16,7 +16,7 @@ import { loadPdfLogo, drawPdfLogo } from '@/lib/pdf-logo';
 import { algCaseSvg, type CaseSvgInput } from './case_svg';
 
 export interface AlgPdfCase {
-  /** 卡片主名(`Aa` / `U1` / `AD`) */
+  /** 卡片主名(`Aa` / `U1` / `AD`);空字符串表示不保留独立名称行。 */
   name: string;
   /** 副名或编号(`#12`);跟在主名后面,灰色小字 */
   sub?: string;
@@ -209,7 +209,8 @@ export async function buildAlgSheet({
       const setup = c.setup ? wrap(c.setup, t.setup, tw) : [];
       const lines = c.algs.map(a => wrap(a, t.alg, tw));
       const nLines = lines.reduce((n, l) => n + l.length, 0);
-      const textH = t.name + 2 + setup.length * (t.setup + 2) + nLines * t.line;
+      const nameH = c.name ? t.name + 2 : 0;
+      const textH = nameH + setup.length * (t.setup + 2) + nLines * t.line;
       return { c, setup, lines, h: Math.max(imgSize, textH) + 2 * CELL_PAD };
     });
   };
@@ -340,18 +341,20 @@ export async function buildAlgSheet({
         if (svg) await embedSvg(doc, svgStringToElement(svg), x + CELL_PAD, y + CELL_PAD, img, img);
       }
 
-      doc.setFont(SANS, 'bold');
-      doc.setFontSize(T.name);
-      doc.setTextColor(pal.title);
-      doc.text(c.name, x + textX, ty + T.name - 1);
-      if (c.sub) {
-        const w = doc.getTextWidth(c.name);
-        doc.setFont(SANS, 'normal');
-        doc.setFontSize(T.name - 1);
-        doc.setTextColor(pal.faint);
-        doc.text(c.sub, x + textX + w + 4, ty + T.name - 1);
+      if (c.name) {
+        doc.setFont(SANS, 'bold');
+        doc.setFontSize(T.name);
+        doc.setTextColor(pal.title);
+        doc.text(c.name, x + textX, ty + T.name - 1);
+        if (c.sub) {
+          const w = doc.getTextWidth(c.name);
+          doc.setFont(SANS, 'normal');
+          doc.setFontSize(T.name - 1);
+          doc.setTextColor(pal.faint);
+          doc.text(c.sub, x + textX + w + 4, ty + T.name - 1);
+        }
+        ty += T.name + 2;
       }
-      ty += T.name + 2;
 
       if (setup.length) {
         doc.setFont(FONT_MONO, 'normal');
