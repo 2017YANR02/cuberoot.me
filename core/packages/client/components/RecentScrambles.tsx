@@ -453,7 +453,7 @@ export default function RecentScrambles({ lang }: Props) {
   const dateRange = batchDateRange(data ?? null, eventsJson);
 
   // 主数据到达前保留与成品区块一致的几何尺寸，避免动态 chunk 已到、JSON 未到时先塌陷。
-  if (data === undefined) return <div className="recent-scrambles" aria-hidden="true" />;
+  if (data === undefined) return <div className="recent-scrambles recent-scrambles--loading" aria-hidden="true" />;
   if (availableEvents.size === 0) return null;
 
   const curEvent = availableEvents.has(event) ? event : (availableEvents.has('333') ? '333' : [...availableEvents][0]);
