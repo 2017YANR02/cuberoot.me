@@ -670,13 +670,18 @@
   margin-top: 12px;
 }
 
-/* 进度总览:贴在齿轮左侧,absolute 脱流让齿轮仍精确居中。 */
-.trainer-progress-link {
+/* 打印和进度总览:紧凑贴在齿轮左侧,absolute 脱流让齿轮仍精确居中。 */
+.trainer-top-actions {
   position: absolute;
   right: calc(100% + 8px);
   top: 50%;
   transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
   white-space: nowrap;
+}
+.trainer-progress-link {
   font-size: 0.82rem;
   color: var(--muted-foreground);
   text-decoration: none;
@@ -684,9 +689,9 @@
 @media (hover: hover) {
   .trainer-progress-link:hover { color: var(--foreground); }
 }
-/* 窄屏齿轮改行内靠右(见下方 media query),进度入口也回到行内。 */
+/* 窄屏齿轮改行内靠右(见下方 media query),打印和进度入口也回到行内。 */
 @media (max-width: 768px) {
-  .trainer-progress-link {
+  .trainer-top-actions {
     position: static;
     transform: none;
     align-self: center;
