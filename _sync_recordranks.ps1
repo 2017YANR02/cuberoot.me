@@ -172,6 +172,7 @@ if ($currentRef -ne $revision)
         'client/.env.example',
         'client/package.json5',
         'client/pnpm-lock.yaml',
+        'client/proxy.ts',
         'client/server/db/drizzle',
         'client/server/logger.ts',
         'client/app/api/healthcheck/healthcheck.ts'
@@ -202,6 +203,7 @@ else
 
 $loggerSource = [IO.File]::ReadAllText((Join-Path $RecordRanksDir 'client\server\logger.ts'))
 $healthcheckSource = [IO.File]::ReadAllText((Join-Path $RecordRanksDir 'client\app\api\healthcheck\healthcheck.ts'))
+$proxySource = [IO.File]::ReadAllText((Join-Path $RecordRanksDir 'client\proxy.ts'))
 if ($loggerSource -notmatch 'const logflareConfigured = Boolean\(' -or
     $loggerSource -notmatch 'transport \? pino\(transport\) : pino\(\)')
 {
@@ -212,7 +214,13 @@ if ($healthcheckSource -notmatch '!process\.env\.EMAIL_HOST \|\| !process\.env\.
 {
     throw '本站的可选 SMTP 健康检查补丁已丢失；不要推送，先核对 healthcheck.ts。'
 }
-Write-Host '  本站 Logflare/SMTP 兼容补丁仍有效。' -ForegroundColor DarkGray
+if ($proxySource -notmatch 'function getSingleTenantDestination' -or
+    $proxySource -notmatch 'NextResponse\.redirect\(getSingleTenantDestination' -or
+    $proxySource -match 'NextResponse\.rewrite\(request\.url\.replace')
+{
+    throw '本站的单租户公开路由兼容补丁已丢失；不要推送，先核对 proxy.ts。'
+}
+Write-Host '  本站 Logflare、SMTP、单租户路由兼容补丁仍有效。' -ForegroundColor DarkGray
 
 $clientDir = Join-Path $RecordRanksDir 'client'
 $validationEnv = [ordered]@{

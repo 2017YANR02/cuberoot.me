@@ -180,10 +180,17 @@ jobs:
           systemctl restart contests-next
 
           for i in $(seq 1 30); do
-            PAGE="$(curl -fsSL http://127.0.0.1:3005/default 2>/dev/null || true)"
+            PAGES_OK=true
+            for ROUTE in /default /about /competitions /records /rankings; do
+              PAGE="$(curl -fsSL "https://contests.cuberoot.me${ROUTE}" 2>/dev/null || true)"
+              if ! echo "$PAGE" | grep -q '<html' || echo "$PAGE" | grep -q 'Internal Server Error'; then
+                PAGES_OK=false
+                break
+              fi
+            done
             READY="$(curl -fsS http://127.0.0.1:3005/api/healthcheck/ready 2>/dev/null || true)"
-            if echo "$PAGE" | grep -q '<html' && echo "$READY" | grep -q '"status":"ready"'; then
-              echo "OK: contests-next served HTML and passed readiness checks"
+            if [ "$PAGES_OK" = true ] && echo "$READY" | grep -q '"status":"ready"'; then
+              echo "OK: contests-next served all public routes and passed readiness checks"
               exit 0
             fi
             sleep 1
