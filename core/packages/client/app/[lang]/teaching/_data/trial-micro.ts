@@ -5,7 +5,7 @@ export const TRIAL_MICRO_COURSE: MicroCourse = {
   id: 'trial',
   label: l('试听课', 'Trial course'),
   title: l('五次小成功，完成第一次挑战', 'Five small wins and a first real challenge'),
-  summary: l('不急着讲完整复原。五节微课先消除畏难，让学员认识目标块、做出白色小花，并清楚看到后续学习路线。', 'These five micro-lessons remove the fear of the cube, teach the first target pieces, build a white daisy, and show the path ahead.'),
+  summary: l('不急着讲完整复原。五节课先消除畏难，让学员认识目标块、做出白色小花，并清楚看到后续学习路线。', 'These five lessons remove the fear of the cube, teach the first target pieces, build a white daisy, and show the path ahead.'),
   audience: l('第一次接触三阶魔方的学员和正在选课的家长', 'Learners meeting the 3×3 for the first time and parents choosing a course'),
   stages: [
     {
@@ -24,7 +24,7 @@ export const TRIAL_MICRO_COURSE: MicroCourse = {
               minutes: 2,
               outcome: l('能说出复原靠的是可重复路线，而不是碰运气', 'Explain that solving follows a repeatable route rather than luck'),
               script: [
-                l('你好，欢迎来到魔方微课。先看同一个魔方：它可以乱成这样，也可以一步一步回到六面整齐。', 'Hello and welcome. The same cube can look completely scrambled, then return to six neat faces one step at a time.'),
+                l('你好，欢迎来到魔方课。先看同一个魔方：它可以乱成这样，也可以一步一步回到六面整齐。', 'Hello and welcome. The same cube can look completely scrambled, then return to six neat faces one step at a time.'),
                 l('【展示打乱状态，再快速切到复原状态】', '[Show the scrambled cube, then cut to the solved cube.]'),
                 l('会复原的人不是每次都猜对，而是知道一条可以重复走通的路线。接下来每一节，我们只走路线中的一小步。', 'Solvers do not guess correctly every time. They know a route that works again and again. Each lesson will cover one small step on that route.'),
                 l('做错不代表失败，只说明我们找到了一个需要再看一次的位置。慢一点、看清楚，你一样可以做到。', 'A mistake is not failure. It simply shows us the place to inspect again. Slow down, look carefully, and you can do it too.'),
