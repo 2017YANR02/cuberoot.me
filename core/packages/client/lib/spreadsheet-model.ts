@@ -1,12 +1,30 @@
 export type CellAlignment = 'left' | 'center' | 'right';
+export type CellVerticalAlignment = 'top' | 'middle' | 'bottom';
+export type CellWrapMode = 'overflow' | 'wrap' | 'clip';
 export type CellNumberFormat = 'general' | 'number' | 'currency' | 'percent';
 export type CellFontFamily = 'sans' | 'serif' | 'mono';
+
+export type CellValidation =
+  | { type: 'checkbox' }
+  | { type: 'dropdown'; options: string[] };
+
+export interface ConditionalFormatRule {
+  id: string;
+  range: string;
+  type: 'greaterThan' | 'lessThan' | 'contains';
+  value: string;
+  fill: string;
+}
 
 export interface CellStyle {
   bold?: boolean;
   italic?: boolean;
   strikethrough?: boolean;
   align?: CellAlignment;
+  verticalAlign?: CellVerticalAlignment;
+  wrap?: CellWrapMode;
+  rotation?: -45 | 0 | 45;
+  border?: boolean;
   fill?: string;
   color?: string;
   fontFamily?: CellFontFamily;
@@ -23,6 +41,13 @@ export interface SpreadsheetSheet {
   cells: Record<string, string>;
   styles: Record<string, CellStyle>;
   widths: Record<string, number>;
+  notes?: Record<string, string>;
+  links?: Record<string, string>;
+  validations?: Record<string, CellValidation>;
+  merges?: string[];
+  conditionalRules?: ConditionalFormatRule[];
+  frozenRows?: number;
+  frozenColumns?: number;
 }
 
 export interface CellPoint { row: number; column: number }
@@ -72,6 +97,82 @@ export function rangeAddresses(range: CellRange): string[] {
     for (let column = normalized.start.column; column <= normalized.end.column; column += 1) {
       output.push(cellAddress(row, column));
     }
+  }
+  return output;
+}
+
+export function serializeRange(range: CellRange): string {
+  const value = normalizedRange(range);
+  return `${cellAddress(value.start.row, value.start.column)}:${cellAddress(value.end.row, value.end.column)}`;
+}
+
+export function parseSerializedRange(value: string): CellRange | null {
+  const [startValue, endValue, extra] = value.split(':');
+  if (extra !== undefined) return null;
+  const start = parseCellAddress(startValue);
+  const end = parseCellAddress(endValue || startValue);
+  return start && end ? normalizedRange({ start, end }) : null;
+}
+
+export function rangesIntersect(left: CellRange, right: CellRange): boolean {
+  const a = normalizedRange(left);
+  const b = normalizedRange(right);
+  return a.start.row <= b.end.row && a.end.row >= b.start.row
+    && a.start.column <= b.end.column && a.end.column >= b.start.column;
+}
+
+export function containingMerge(merges: string[] = [], point: CellPoint): CellRange | null {
+  for (const merge of merges) {
+    const range = parseSerializedRange(merge);
+    if (range && point.row >= range.start.row && point.row <= range.end.row
+      && point.column >= range.start.column && point.column <= range.end.column) return range;
+  }
+  return null;
+}
+
+export function shiftAddressRecord<T>(
+  record: Record<string, T>,
+  axis: 'row' | 'column',
+  index: number,
+  mode: 'insert' | 'delete',
+  limit: number,
+): Record<string, T> {
+  const output: Record<string, T> = {};
+  for (const [address, value] of Object.entries(record)) {
+    const point = parseCellAddress(address);
+    if (!point) continue;
+    const coordinate = axis === 'row' ? point.row : point.column;
+    if (mode === 'delete' && coordinate === index) continue;
+    const shifted = mode === 'insert' ? coordinate >= index ? coordinate + 1 : coordinate : coordinate > index ? coordinate - 1 : coordinate;
+    if (shifted < 0 || shifted >= limit) continue;
+    const next = axis === 'row' ? { ...point, row: shifted } : { ...point, column: shifted };
+    output[cellAddress(next.row, next.column)] = value;
+  }
+  return output;
+}
+
+export function shiftSerializedRanges(
+  ranges: string[] = [],
+  axis: 'row' | 'column',
+  index: number,
+  mode: 'insert' | 'delete',
+  limit: number,
+): string[] {
+  const output: string[] = [];
+  for (const serialized of ranges) {
+    const range = parseSerializedRange(serialized);
+    if (!range) continue;
+    const start = axis === 'row' ? range.start.row : range.start.column;
+    const end = axis === 'row' ? range.end.row : range.end.column;
+    if (mode === 'delete' && index >= start && index <= end) continue;
+    const shift = (coordinate: number) => mode === 'insert'
+      ? coordinate >= index ? coordinate + 1 : coordinate
+      : coordinate > index ? coordinate - 1 : coordinate;
+    const next = axis === 'row'
+      ? { start: { ...range.start, row: shift(range.start.row) }, end: { ...range.end, row: shift(range.end.row) } }
+      : { start: { ...range.start, column: shift(range.start.column) }, end: { ...range.end, column: shift(range.end.column) } };
+    const endCoordinate = axis === 'row' ? next.end.row : next.end.column;
+    if (endCoordinate < limit) output.push(serializeRange(next));
   }
   return output;
 }

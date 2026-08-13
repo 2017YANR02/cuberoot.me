@@ -21,8 +21,8 @@
 .sheet-menu-trigger { appearance: none; min-height: 28px; padding: 0 9px; border: 0; border-radius: calc(var(--radius) - 7px); background: transparent; color: inherit; font: inherit; font-size: .82rem; cursor: pointer; }
 .sheet-menu-trigger:hover, .sheet-menu-trigger[aria-expanded="true"] { background: var(--muted); }
 .sheet-menu-trigger:focus-visible, .sheet-menu-item:focus-visible, .sheet-tool:focus-visible, .sheet-tool-select:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
-.sheet-menu-panel { position: absolute; top: calc(100% + 3px); left: 0; z-index: 50; display: flex; align-items: stretch; flex-direction: column; width: max-content; min-width: 190px; max-width: min(330px, calc(100vw - 16px)); padding: 5px; border: 1px solid var(--border-default); border-radius: calc(var(--radius) - 4px); background: var(--popover); color: var(--popover-foreground); box-shadow: 0 12px 32px color-mix(in srgb, var(--foreground) 18%, transparent); /* anchored-panel: clamped */ }
-.sheet-menu-item { appearance: none; min-height: 33px; padding: 0 10px; border: 0; border-radius: calc(var(--radius) - 7px); background: transparent; color: inherit; text-align: left; font: inherit; font-size: .8rem; white-space: nowrap; cursor: pointer; }
+.sheet-menu-panel { position: absolute; top: calc(100% + 3px); left: 0; z-index: 50; display: flex; align-items: stretch; flex-direction: column; width: max-content; min-width: 190px; max-width: min(330px, calc(100vw - 16px)); max-height: min(70vh, 560px); overflow-y: auto; padding: 5px; border: 1px solid var(--border-default); border-radius: calc(var(--radius) - 4px); background: var(--popover); color: var(--popover-foreground); box-shadow: 0 12px 32px color-mix(in srgb, var(--foreground) 18%, transparent); scrollbar-width: thin; /* anchored-panel: clamped */ }
+.sheet-menu-item { appearance: none; display: flex; align-items: center; flex: 0 0 auto; min-height: 33px; padding: 0 10px; border: 0; border-radius: calc(var(--radius) - 7px); background: transparent; color: inherit; text-align: left; text-decoration: none; font: inherit; font-size: .8rem; white-space: nowrap; cursor: pointer; }
 .sheet-menu-item:hover:not(:disabled) { background: var(--muted); }
 .sheet-menu-item:disabled { opacity: .42; cursor: default; }
 .sheet-menu-divider { height: 1px; margin: 4px 5px; background: var(--border-default); }
@@ -60,7 +60,21 @@
 .sheet-column-resize { position: absolute; top: 0; right: -4px; z-index: 2; width: 8px; height: 100%; border: 0; background: transparent; cursor: col-resize; touch-action: none; }
 .sheet-grid-row { position: absolute; left: 0; height: 25px; }
 .sheet-row-head { position: sticky; left: 0; z-index: 12; display: grid; place-items: center; width: 46px; height: 25px; border-right: 1px solid var(--border-default); border-bottom: 1px solid var(--border-default); background: var(--muted); color: var(--muted-foreground); font-size: .72rem; user-select: none; }
-.sheet-cell { position: absolute; top: 0; height: 25px; overflow: hidden; padding: 3px 5px; border-right: 1px solid var(--border-default); border-bottom: 1px solid var(--border-default); background: var(--background); color: var(--foreground); font-size: .79rem; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; user-select: none; }
+.sheet-cell { position: absolute; top: 0; display: flex; align-items: center; height: 25px; overflow: hidden; padding: 3px 5px; border-right: 1px solid var(--border-default); border-bottom: 1px solid var(--border-default); background: var(--background); color: var(--foreground); font-size: .79rem; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; user-select: none; }
+.sheet-cell-value, .sheet-cell-link { display: block; max-width: 100%; overflow: hidden; color: inherit; text-overflow: ellipsis; }
+.sheet-cell-link { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+.sheet-cell.is-wrapped { white-space: normal; }
+.sheet-cell.is-wrapped .sheet-cell-value, .sheet-cell.is-wrapped .sheet-cell-link { white-space: normal; overflow-wrap: anywhere; text-overflow: clip; }
+.sheet-cell.has-border::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; box-shadow: inset 0 0 0 1px var(--foreground); }
+.sheet-cell.has-note::before { content: ''; position: absolute; top: 0; right: 0; z-index: 2; width: 0; height: 0; border-top: 7px solid var(--signal-warning); border-left: 7px solid transparent; }
+.sheet-cell-checkbox { width: 15px; height: 15px; margin: 0; accent-color: var(--primary); }
+.sheet-cell-dropdown { min-width: 0; max-width: 100%; height: 21px; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; }
+.sheet-column-head.is-frozen { z-index: 23; box-shadow: 1px 0 var(--border-default); }
+.sheet-grid-row.is-frozen { z-index: 9; }
+.sheet-grid-row.is-frozen .sheet-cell { background-color: var(--background); }
+.sheet-cell.is-frozen { z-index: 10; box-shadow: 1px 0 var(--border-default); }
+.sheet-grid-row.is-frozen .sheet-cell.is-frozen { z-index: 11; }
+.sheet-grid-scroll.is-gridless .sheet-cell:not(.has-border) { border-color: transparent; }
 .sheet-cell.is-selected { background: color-mix(in srgb, var(--primary) 9%, var(--background)); box-shadow: inset 0 0 0 1px var(--primary); }
 .sheet-cell.is-remote { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--primary) 58%, var(--signal-warning)); }
 .sheet-cell.is-selected.is-remote { box-shadow: inset 0 0 0 1px var(--primary), inset 0 0 0 3px color-mix(in srgb, var(--primary) 58%, var(--signal-warning)); }
@@ -86,9 +100,8 @@
   .sheet-action { min-height: 32px; padding-inline: 8px; }
   .sheet-action svg + span { display: none; }
   .sheet-toolbar { padding-inline: 5px; }
-  .sheet-menu-bar { min-height: 32px; padding-inline: 4px; }
+  .sheet-menu-bar { min-height: 32px; padding: 2px 4px; flex-wrap: wrap; }
   .sheet-menu-trigger { padding-inline: 7px; font-size: .78rem; }
-  .sheet-menu.is-secondary { display: none; }
   .sheet-name-box { flex-basis: 62px; }
   .sheet-dimension { display: none; }
   .sheet-selection-summary { max-width: 115px; overflow: hidden; text-overflow: ellipsis; }

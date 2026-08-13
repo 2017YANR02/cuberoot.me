@@ -7,21 +7,25 @@ import { buildSpreadsheetCsv, buildSpreadsheetPdf, buildSpreadsheetXlsx, parseSp
 afterEach(() => vi.unstubAllGlobals());
 
 describe('spreadsheet XLSX export', () => {
-  it('preserves sheets, formulas, numbers, booleans, text, and column widths', async () => {
+  it('preserves sheets, formulas, numbers, booleans, links, notes, merges, and column widths', async () => {
     const blob = await buildSpreadsheetXlsx([{
       id: 'one', name: 'Data', rowCount: 100, columnCount: 26,
       cells: { A1: '12.5', A2: 'true', B1: '文字', C1: '=SUM(A1,2)' },
-      styles: { A1: { numberFormat: 'currency', decimals: 1 } }, widths: { '0': 144 },
+      styles: { A1: { numberFormat: 'currency', decimals: 1, bold: true }, D1: { align: 'center' } }, widths: { '0': 144 },
+      links: { B1: 'https://cuberoot.me' }, notes: { D1: 'Review this' }, merges: ['D1:E2'],
     }, {
       id: 'two', name: 'Other', rowCount: 100, columnCount: 26,
       cells: { A1: 'second' }, styles: {}, widths: {},
     }]);
-    const workbook = XLSX.read(await blob.arrayBuffer(), { type: 'array', cellFormula: true, cellNF: true });
+    const workbook = XLSX.read(await blob.arrayBuffer(), { type: 'array', cellFormula: true, cellNF: true, cellStyles: true });
     expect(workbook.SheetNames).toEqual(['Data', 'Other']);
     expect(workbook.Sheets.Data.A1).toMatchObject({ t: 'n', v: 12.5 });
     expect(workbook.Sheets.Data.A1.z).toBe('¥#,##0.0');
     expect(workbook.Sheets.Data.A2).toMatchObject({ t: 'b', v: true });
     expect(workbook.Sheets.Data.B1.v).toBe('文字');
+    expect(workbook.Sheets.Data.B1.l?.Target).toBe('https://cuberoot.me');
+    expect(workbook.Sheets.Data.D1.c?.[0].t).toBe('Review this');
+    expect(workbook.Sheets.Data['!merges']).toEqual([{ s: { r: 0, c: 3 }, e: { r: 1, c: 4 } }]);
     expect(workbook.Sheets.Data.C1.f).toBe('SUM(A1,2)');
     expect(workbook.Sheets.Other.A1.v).toBe('second');
 
