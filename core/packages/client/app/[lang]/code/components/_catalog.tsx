@@ -773,6 +773,14 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'LazyVisible',
+    import: "import LazyVisible from '@/components/LazyVisible';",
+    category: 'more',
+    zh: '视口懒挂载容器：内容接近可见区域后才挂载并保持，用于避免折叠线下的重组件和数据请求争抢首屏资源。',
+    en: 'Viewport-deferred mount container that stays mounted once nearby, keeping below-the-fold components and data requests out of the initial render.',
+    note: { zh: '用 minHeight 防止滚动跳动；依赖原顶层布局时传 unwrapWhenVisible。', en: 'Use minHeight to avoid scroll jumps; pass unwrapWhenVisible when the child must preserve its original top-level layout.' },
+  },
+  {
     name: 'WcaTeacherCell',
     import: "import { WcaTeacherCell, WcaTeacherColumnHeader, WcaTeacherNote, useWcaTeachers } from '@/components/WcaTeacherCell';",
     category: 'more',

@@ -3,10 +3,11 @@
 // Landing page — 3-tab comp view (upcoming / in-progress / past month)
 // In-progress: grouped by country (flag-only header).
 // Upcoming / past: grouped by date, country flag prefix on each chip.
-// Data: lib/comp-search.ts loadComps() — LandingSearch (when present) preloads, this shares the cache.
+// Data: recent_past_comps.json + all_upcoming_comps.json; full history remains
+// lazy behind homepage search input.
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { loadComps, type Comp } from '@/lib/comp-search';
+import { loadLandingComps, type Comp } from '@/lib/comp-search';
 import { compLinkProps } from '@/lib/comp-link';
 import { localizeCompName } from '@/lib/comp-localize';
 import { Flag } from '@/components/Flag';
@@ -152,30 +153,13 @@ export default function OngoingComps({ lang }: Props) {
 
   useEffect(() => {
     let mounted = true;
-
-    const kick = () => {
+    loadLandingComps().then(all => {
       if (!mounted) return;
-      loadComps().then(all => {
-        if (!mounted) return;
-        setComps(all);
-      }).catch(() => { if (mounted) setComps([]); });
-    };
-
-    type RIC = (cb: () => void, opts?: { timeout?: number }) => number;
-    type CIC = (id: number) => void;
-    const w = window as Window & { requestIdleCallback?: RIC; cancelIdleCallback?: CIC };
-    let idleId: number | null = null;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    if (w.requestIdleCallback) {
-      idleId = w.requestIdleCallback(kick, { timeout: 2000 });
-    } else {
-      timeoutId = setTimeout(kick, 200);
-    }
+      setComps(all);
+    }).catch(() => { if (mounted) setComps([]); });
 
     return () => {
       mounted = false;
-      if (idleId !== null) w.cancelIdleCallback?.(idleId);
-      if (timeoutId !== null) clearTimeout(timeoutId);
     };
   }, []);
 

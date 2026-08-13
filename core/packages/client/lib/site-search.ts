@@ -323,15 +323,16 @@ export function useSiteSearch(
 
   const [aboutEntries, setAboutEntries] = useState<AboutRecord[]>(() => aboutEntriesCache ?? []);
 
-  useEffect(() => {
-    loadStatIndex().then(j => { if (j) setStatIndex(j); });
-  }, []);
-
   const deferredRawQuery = useDeferredValue(query);
   const q = deferredRawQuery.trim().toLowerCase();
   const qRaw = deferredRawQuery.trim();
   const xSearchEnabled = qRaw.length >= (hasNonLatin(qRaw) ? 1 : MIN_LEN_LATIN);
   const tokens = useMemo(() => tokenize(q), [q]);
+
+  useEffect(() => {
+    if (prefetch === 'lazy' && !xSearchEnabled) return;
+    loadStatIndex().then(j => { if (j) setStatIndex(j); });
+  }, [prefetch, xSearchEnabled]);
 
   // 敲下第一个字才把 about 注册表拉进来(见 loadAboutEntries)。
   useEffect(() => {

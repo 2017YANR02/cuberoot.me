@@ -379,33 +379,22 @@ export default function RecentScrambles({ lang }: Props) {
   // 异步加载 comp-country 索引,完成后 bump version 触发重渲染拿比赛国旗 + 中文名
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
   useEffect(() => {
-    void loadFlagData().then((v) => { if (v !== flagVer) setFlagVer(v); });
+    void loadFlagData({ persons: false }).then((v) => { if (v !== flagVer) setFlagVer(v); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let on = true;
-    const kick = () => {
-      if (!on) return;
-      fetch(statsUrl('/stats/scramble/recent_scrambles.json'), { cache: 'no-cache' })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((j: RecentScramblesJson | null) => { if (on) setData(j); })
-        .catch(() => { if (on) setData(null); });
-      fetch(statsUrl('/stats/scramble/distribution.json') + '?v=20260614opt')
-        .then((r) => (r.ok ? r.json() : null))
-        .then((j: DistributionJson | null) => { if (on) setDist(j); })
-        .catch(() => { if (on) setDist(null); });
-      void fetchRecentScramblesEvents().then((j) => { if (on) setEventsJson(j); });
-    };
-    type RIC = (cb: () => void, opts?: { timeout?: number }) => number;
-    const w = window as Window & { requestIdleCallback?: RIC; cancelIdleCallback?: (id: number) => void };
-    let idleId: number | null = null;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    if (w.requestIdleCallback) idleId = w.requestIdleCallback(kick, { timeout: 2000 });
-    else timeoutId = setTimeout(kick, 200);
+    fetch(statsUrl('/stats/scramble/recent_scrambles.json'), { cache: 'no-cache' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: RecentScramblesJson | null) => { if (on) setData(j); })
+      .catch(() => { if (on) setData(null); });
+    fetch(statsUrl('/stats/scramble/distribution.json') + '?v=20260614opt')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: DistributionJson | null) => { if (on) setDist(j); })
+      .catch(() => { if (on) setDist(null); });
+    void fetchRecentScramblesEvents().then((j) => { if (on) setEventsJson(j); });
     return () => {
       on = false;
-      if (idleId !== null) w.cancelIdleCallback?.(idleId);
-      if (timeoutId !== null) clearTimeout(timeoutId);
     };
   }, []);
 
