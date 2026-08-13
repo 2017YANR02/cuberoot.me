@@ -237,6 +237,10 @@ export function createBluetoothTimerSource(
           try { mac = normalizeMac(await opts.onNeedMac(picked.name ?? '')); }
           catch { mac = null; }
         }
+        // QiYi ignores a hello without the exact MAC, leaving a connection
+        // that looks successful but never emits data. Cancelling the manual
+        // fallback must therefore cancel the connection before GATT opens.
+        if (!mac) return;
       }
 
       const server = await picked.gatt.connect();

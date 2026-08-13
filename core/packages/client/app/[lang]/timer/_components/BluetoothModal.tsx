@@ -84,12 +84,6 @@ const GYRO_TAG_STYLE: CSSProperties = {
   background: 'color-mix(in srgb, var(--accent) 14%, transparent)',
 };
 
-const SUPPORTED_TIMERS: SupportedDevice[] = [
-  { zh: 'GAN 智能计时器', en: 'GAN Smart Timer' },
-  { zh: '奇艺智能计时器 / 转接器', en: 'QiYi Timer / Adapter' },
-  { zh: 'Stackmat（走麦克风，不是蓝牙）', en: 'Stackmat (via microphone, not Bluetooth)' },
-];
-
 /**
  * What failed, at which step, and what to try next.
  *
@@ -399,13 +393,6 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
                   en: 'Compatibility depends on the Bluetooth protocol and firmware. New models such as GAN i4, i Carry 4, GAN16 ui, and MoYu WeiLong V11 AI may work but are not yet hardware-verified here. Similarly named non-smart, 2×2, and shape-mod smart cubes are not supported. “Gyro” means this site can read orientation.',
                 })}
               </p>
-              <div style={{ margin: '8px 0 4px' }}>{tr({ zh: '支持的计时设备：', en: 'Supported timing devices:'
-            })}</div>
-              <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55 }}>
-                {SUPPORTED_TIMERS.map((t) => (
-                  <li key={t.en}>{tr(t)}</li>
-                ))}
-              </ul>
             </div>
             <button
               className="bt-connect-btn"
