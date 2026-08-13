@@ -55,6 +55,20 @@ jobs:
         working-directory: recordranks/client
         run: pnpm install --frozen-lockfile
 
+      - name: Download and validate upstream public data
+        run: |
+          mkdir -p /tmp/contests-public
+          curl --fail --silent --show-error --location --retry 3 --max-time 300 \
+            https://cubingcontests.com/api/default/export/v1/csv \
+            --output /tmp/contests-public/export.zip
+          curl --fail --silent --show-error --location --retry 3 --max-time 120 \
+            https://cubingcontests.com/api/default/events \
+            --output /tmp/contests-public/events.json
+          unzip -tq /tmp/contests-public/export.zip
+          node ops/contests/extract-event-categories.mjs \
+            /tmp/contests-public/events.json /tmp/contests-public/event-categories.csv
+          test -s /tmp/contests-public/event-categories.csv
+
       - name: Build RecordRanks standalone
         working-directory: recordranks/client
         env:
@@ -97,6 +111,8 @@ jobs:
           cp ops/contests/apply-migrations.sh "$BUNDLE/apply-migrations.sh"
           cp ops/contests/sync-public-data.sh "$BUNDLE/sync-public-data.sh"
           cp ops/contests/extract-event-categories.mjs "$BUNDLE/extract-event-categories.mjs"
+          cp /tmp/contests-public/export.zip "$BUNDLE/upstream-export.zip"
+          cp /tmp/contests-public/events.json "$BUNDLE/upstream-events.json"
 
           cat > "$BUNDLE/start.sh" <<'EOF'
           #!/bin/sh
@@ -148,7 +164,8 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          ssh -i ~/.ssh/id -o ServerAliveInterval=30 -o ServerAliveCountMax=10 \
+            "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
           set -euo pipefail
           LIVE=/www/wwwroot/contests-next
           STAGE=/www/wwwroot/contests-next.new
@@ -167,7 +184,9 @@ jobs:
           . /etc/contests-next.env
           set +a
           "$STAGE/apply-migrations.sh" "$STAGE/migrations"
-          "$STAGE/sync-public-data.sh"
+          CONTESTS_UPSTREAM_EXPORT_FILE="$STAGE/upstream-export.zip" \
+            CONTESTS_UPSTREAM_EVENTS_FILE="$STAGE/upstream-events.json" \
+            "$STAGE/sync-public-data.sh"
 
           if [ -d "$LIVE" ]; then
             find /www/wwwroot -maxdepth 1 -name 'contests-next.bak-*' -exec rm -rf {} +
