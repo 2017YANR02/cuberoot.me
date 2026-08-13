@@ -42,7 +42,7 @@ For DOM mounting use `cubeSVG(container, options)`; for canvas rasterisation `cu
 renderCubeSVG('?pzl=3&alg=R+U+R%27+U%27&arw=U0U2-blue&ac=red&size=256')
 ```
 
-### 2. HTTP — `GET /api/visualcube.svg` (server)
+### 2. HTTP — `GET /v1/visualcube.svg` (server)
 
 Simplified URL API (8 params: `alg / view / mask / size / cubeSize / bg / cc / co`; `cubeSize` also accepts PHP-style `pzl`), returns `image/svg+xml` (cached 24h).
 
@@ -51,15 +51,15 @@ https://api.cuberoot.me/v1/visualcube.svg?alg=R+U+R%27+U%27+R+U2+R%27&view=oll&s
 https://api.cuberoot.me/v1/visualcube.svg?alg=Rw+U2+Rw+U2+Rw+U2+Rw%27+U2+Lw+U2+Rw%27+U2+Rw+U2+Rw%27+U2+Rw%27&cubeSize=4&view=oll&size=128
 ```
 
-Both server route + Vite dev middleware delegate to `renderFromSimpleQuery` for guaranteed parity (dev hits a local middleware in `vite.config.ts` `visualcubeDev()` plugin — no proxy roundtrip, no need to redeploy server before testing).
+The Hono route delegates to `renderFromSimpleQuery`, the same pure renderer used by programmatic callers. Website development reaches `/v1/visualcube.svg` through the Next rewrite path; there is no frontend middleware or second renderer.
 
-Full parameter table is rendered (collapsed) at the bottom of the [`/visualcube` page](https://www.cuberoot.me/visualcube). Source of truth: `packages/visualcube/src/preset.ts`.
+The source of truth for the supported query parameters is `packages/visualcube/src/preset.ts`.
 
 This endpoint does NOT accept the full PHP query API (no `arw` / `ac` / `sch` / `fc` / `fd`). For those, use the programmatic API or build your own server route.
 
 ### 4. Programmatic — `renderFromSimpleQuery(query)` → SVG string
 
-Same simplified-query mapping as the HTTP endpoint, callable from anywhere (Hono server, Vite middleware, client code):
+Same simplified-query mapping as the HTTP endpoint, callable from Hono, Next server code, or other tooling:
 
 ```ts
 import { renderFromSimpleQuery } from '@cuberoot/visualcube'
@@ -164,4 +164,4 @@ sr-visualizer (the TS source we forked) ports most of PHP visualcube but is miss
 
 ## Related
 
-- [VisualCube Editor 2.0](https://github.com/roudai/VisualCubeEditor2) — Vue + sr-visualizer GUI editor by @roudai; the `/visualcube` page in this repo (`packages/client-vite/src/pages/visualcube/VisualCubeEditorPage.tsx`) replicates its UI in React with the renderer wired through this package, gaining the extra PHP parameters (`ac`, `view=trans`, extended masks).
+- [VisualCube Editor 2.0](https://github.com/roudai/VisualCubeEditor2) — Vue + sr-visualizer GUI editor by @roudai. Its interaction ideas informed the retired standalone editor; current website rendering uses this package through shared React components and the `/sim` image tools.
