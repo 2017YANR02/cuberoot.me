@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import sitemap from '../app/sitemap';
 import {
+  courseLessons,
+  stageLessons,
   TEACHING_COURSES,
   TEACHING_LESSON_COUNT,
   TEACHING_TOTAL_MINUTES,
@@ -8,26 +10,31 @@ import {
 import { SECTIONS } from '../lib/landing-sections';
 
 describe('teaching course plan', () => {
-  it('keeps the promised course size and child-sized lesson range', () => {
-    expect(TEACHING_COURSES.map((course) => course.lessons.length)).toEqual([3, 13, 22]);
-    expect(TEACHING_LESSON_COUNT).toBe(38);
-    expect(TEACHING_TOTAL_MINUTES).toBe(339);
+  it('keeps the three-course micro-lesson structure and duration baseline', () => {
+    expect(TEACHING_COURSES.map((course) => courseLessons(course).length)).toEqual([5, 24, 242]);
+    expect(TEACHING_LESSON_COUNT).toBe(271);
+    expect(TEACHING_TOTAL_MINUTES).toBe(694);
 
-    const lessons = TEACHING_COURSES.flatMap((course) => course.lessons);
+    const cfop = TEACHING_COURSES[2];
+    expect(cfop.stages.map((stage) => stageLessons(stage).length)).toEqual([3, 15, 73, 136, 15]);
+    expect(TEACHING_COURSES.map((course) => (
+      course.stages.reduce((total, stage) => total + stage.modules.length, 0)
+    ))).toEqual([1, 5, 18]);
+
+    const lessons = TEACHING_COURSES.flatMap(courseLessons);
     expect(new Set(lessons.map((lesson) => lesson.id)).size).toBe(lessons.length);
     for (const lesson of lessons) {
-      expect(lesson.minutes).toBeGreaterThanOrEqual(5);
-      expect(lesson.minutes).toBeLessThanOrEqual(15);
+      expect(lesson.minutes).toBeGreaterThanOrEqual(1);
+      expect(lesson.minutes).toBeLessThanOrEqual(5);
       expect(lesson.shots.length).toBeGreaterThanOrEqual(3);
-      expect(lesson.script.length).toBeGreaterThanOrEqual(4);
+      expect(lesson.script.length).toBeGreaterThanOrEqual(5);
     }
 
-    const formulaLessonIds = lessons
-      .filter((lesson) => lesson.formulas?.length)
-      .map((lesson) => lesson.id);
-    expect(formulaLessonIds).toEqual([
-      'cfop-16', 'cfop-17', 'cfop-18', 'cfop-19', 'cfop-20', 'cfop-21',
-    ]);
+    const ids = TEACHING_COURSES.flatMap((course) => course.stages.flatMap((stage) => [
+      stage.id,
+      ...stage.modules.map((module) => module.id),
+    ]));
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it('marks the homepage entry as administrator-only', () => {
