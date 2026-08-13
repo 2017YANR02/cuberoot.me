@@ -15,7 +15,7 @@ import { formatMs } from '../_lib/stats';
 
 interface Props {
   timer: BluetoothTimerHandle;
-  macPrompt: { deviceName: string } | null;
+  macPrompt: { deviceName: string; suggestedMac?: string } | null;
   onSubmitMac: (mac: string) => void;
   onCancelMac: () => void;
   onClose: () => void;
@@ -98,7 +98,7 @@ export default function BluetoothTimerModal({
 
   useEffect(() => {
     if (!macPrompt) return;
-    setMacInput('');
+    setMacInput(macPrompt.suggestedMac ?? '');
     setMacError('');
   }, [macPrompt]);
 

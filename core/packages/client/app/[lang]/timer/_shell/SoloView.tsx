@@ -1454,11 +1454,14 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   };
   const stackmat = useStackmat({ onStop: (ms) => externalTimeRecordRef.current?.(ms) });
 
-  const [bluetoothTimerMacPrompt, setBluetoothTimerMacPrompt] = useState<{ deviceName: string } | null>(null);
+  const [bluetoothTimerMacPrompt, setBluetoothTimerMacPrompt] = useState<{
+    deviceName: string;
+    suggestedMac?: string;
+  } | null>(null);
   const bluetoothTimerMacResolverRef = useRef<((mac: string | null) => void) | null>(null);
-  const requestBluetoothTimerMac = useCallback((deviceName: string) => new Promise<string | null>((resolve) => {
+  const requestBluetoothTimerMac = useCallback((deviceName: string, suggestedMac?: string) => new Promise<string | null>((resolve) => {
     bluetoothTimerMacResolverRef.current = resolve;
-    setBluetoothTimerMacPrompt({ deviceName });
+    setBluetoothTimerMacPrompt({ deviceName, suggestedMac });
   }), []);
   const resolveBluetoothTimerMac = useCallback((mac: string | null) => {
     bluetoothTimerMacResolverRef.current?.(mac);
