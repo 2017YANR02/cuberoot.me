@@ -257,8 +257,8 @@ export function StatsList({
 }
 
 /**
- * 不计时模式的「历史」面板:列出打乱历史(hist.list),点某条 = 跳回查看那条打乱(主屏 +
- * 上/下卡片一起切过去)。不计时没有用时可统计 —— 列的是 case 本身,当前所在条高亮。
+ * 不计时模式的「历史」面板:列出打乱历史(hist.list),但排除主屏当前题 —— 它已经有中央
+ * 大图,底栏再放一遍没有信息增量。点某条 = 跳回查看那条打乱(主屏 + 上/下卡片一起切过去)。
  *
  * 每条只出**打乱图**(按该条**实际打乱**渲染,含 AUF —— 与主屏那张同源,不是 case 规范
  * setup):回看时认的就是那张图,名字和公式摆出来既占地方,又在训练模式下等于直接给答案。
@@ -288,6 +288,14 @@ export function histPageWindow(cur: number, count: number): (number | '…')[] {
   return out;
 }
 
+/** 最新在前并排除当前游标项；保留原始下标供 jumpToHist 使用。 */
+export function previousHistoryEntries<T>(list: readonly T[], currentIdx: number): ReadonlyArray<readonly [T, number]> {
+  return list
+    .map((entry, index) => [entry, index] as const)
+    .filter(([, index]) => index !== currentIdx)
+    .reverse();
+}
+
 export function HistoryList({
   hist, cases, puzzle, set, onPick, onShowCase,
 }: {
@@ -306,28 +314,22 @@ export function HistoryList({
   // set 名当页首已给(topbar「3×3 · ZBLL …」),卡片里再顶个 "ZBLL " 冗余 —— 剥掉只留组号。
   const setPrefix = new RegExp('^' + set.toUpperCase() + '\\s+', 'i');
 
-  // 同 StatsList:最新在最前。`i` 必须是原始下标(onPick / 高亮都按它),
-  // 所以先带上下标再倒序,别 reverse 完拿新下标。
+  // 同 StatsList:最新在最前。当前题由中央大图展示,历史栏只留其余条目。
+  // `i` 必须是原始下标(onPick 按它),所以过滤、倒序时一直带着下标。
   const ordered = useMemo(
-    () => hist.list.map((e, i) => [e, i] as const).reverse(),
-    [hist.list],
+    () => previousHistoryEntries(hist.list, hist.idx),
+    [hist.list, hist.idx],
   );
   const pageCount = Math.max(1, Math.ceil(ordered.length / HIST_PAGE));
-  // 当前所在那条落在第几页(倒序里的位置 / 每页条数)
-  const activePage = Math.min(
-    pageCount - 1,
-    Math.max(0, Math.floor((hist.list.length - 1 - hist.idx) / HIST_PAGE)),
-  );
-  const [page, setPage] = useState(activePage);
-  // 换新打乱(游标回队尾)或点某条回看时,把页跟过去 —— 否则高亮的那条不在眼前。
-  // 只在 activePage 真变了才动:手动翻页浏览时它不变,选择就不会被抢走。
-  useEffect(() => { setPage(activePage); }, [activePage]);
+  const [page, setPage] = useState(0);
+  // 当前题变化后回到最新历史；手动翻页时 idx 不变,不会被抢回首页。
+  useEffect(() => { setPage(0); }, [hist.idx]);
   const cur = Math.min(page, pageCount - 1);
   const shown = ordered.slice(cur * HIST_PAGE, cur * HIST_PAGE + HIST_PAGE);
 
   return (
     <div className="trainer-stats-card">
-      {hist.list.length === 0 ? (
+      {ordered.length === 0 ? (
         <div className="trainer-stats-empty">{tr({ zh: '暂无打乱历史', en: 'No scrambles yet'
         })}</div>
       ) : (
@@ -336,20 +338,18 @@ export function HistoryList({
             {shown.map(([e, i]) => {
             const c = findCaseByKey(cases, e.key);
             const name = (c ? primaryCaseName(puzzle, set, c) : e.name).replace(setPrefix, '');
-            const active = hist.idx === i;
             const alg = c ? (c.algs.flat()[0]?.alg ?? c.standard ?? '') : '';
             return (
               // 真 <button>:iOS Safari 的 tap 只在原生可交互元素上可靠(与 solve 卡同一理由)
               <button
                 key={i}
                 type="button"
-                className={`trainer-hist-item${active ? ' is-active' : ''}`}
+                className="trainer-hist-item"
                 // 回看那条打乱 + 摊开这个 case:一次点击两件事,因为它们是同一个意图
                 // (「这题我看看」)。没有 meta 的集(虚拟集等)照弹 —— 弹窗里还有图和全部公式。
                 onClick={() => { onPick(i); if (c) onShowCase?.(c); }}
                 title={`${name} ${e.scramble}`}
                 aria-label={name}
-                aria-current={active ? 'true' : undefined}
               >
                 {c ? (
                   <CaseThumb

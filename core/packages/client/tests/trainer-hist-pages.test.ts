@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { histPageWindow } from '@/app/[lang]/alg/_trainer/trainer-components';
+import {
+  histPageWindow,
+  previousHistoryEntries,
+} from '@/app/[lang]/alg/_trainer/trainer-components';
 
 /**
  * 历史面板的页码窗口。要害只有一条:页数再多,渲染出来的格子数也得有上界 ——
@@ -54,5 +57,25 @@ describe('histPageWindow', () => {
     expect(histPageWindow(0, 12)).toEqual([0, 1, 2, 3, '…', 11]);
     expect(histPageWindow(11, 12)).toEqual([0, '…', 8, 9, 10, 11]);
     expect(histPageWindow(5, 12)).toEqual([0, '…', 4, 5, 6, '…', 11]);
+  });
+});
+
+describe('previousHistoryEntries', () => {
+  it('排除中央正在展示的当前题并保留跳转所需的原始下标', () => {
+    expect(previousHistoryEntries(['first', 'current', 'latest'], 1)).toEqual([
+      ['latest', 2],
+      ['first', 0],
+    ]);
+  });
+
+  it('当前题是唯一记录时历史栏为空', () => {
+    expect(previousHistoryEntries(['current'], 0)).toEqual([]);
+  });
+
+  it('没有有效游标时保留全部记录', () => {
+    expect(previousHistoryEntries(['first', 'latest'], -1)).toEqual([
+      ['latest', 1],
+      ['first', 0],
+    ]);
   });
 });
