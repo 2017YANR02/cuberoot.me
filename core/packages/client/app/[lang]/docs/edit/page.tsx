@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Bold, ChevronLeft, Heading2, Italic, List, ListOrdered, Quote, Redo2, Share2, Trash2, Undo2, UserPlus } from 'lucide-react';
+import { Bold, ChevronLeft, FileDown, FileText, Heading2, Italic, List, ListOrdered, Quote, Redo2, Share2, Trash2, Undo2, UserPlus } from 'lucide-react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Collaboration from '@tiptap/extension-collaboration';
@@ -20,6 +20,7 @@ import {
   updateDocumentMember, updateDocumentTitle, type DocumentDetails,
   type DocumentPerson, type DocumentRole,
 } from '@/lib/document-api';
+import { exportDocumentDocx, exportDocumentPdf } from '@/lib/document-export';
 import './editor.css';
 
 type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
@@ -44,9 +45,12 @@ function ToolbarButton({ active, disabled, label, onClick, children }: {
   );
 }
 
-function CollaborativeEditor({ session, details }: { session: EditorSession; details: DocumentDetails }) {
+function CollaborativeEditor({ session, details, title, onError }: {
+  session: EditorSession; details: DocumentDetails; title: string; onError: (message: string) => void;
+}) {
   const user = useAuthUser();
   const readOnly = details.document.role === 'viewer';
+  const [exporting, setExporting] = useState<'docx' | 'pdf' | ''>('');
   const editor = useEditor({
     immediatelyRender: false,
     editable: !readOnly,
@@ -63,6 +67,19 @@ function CollaborativeEditor({ session, details }: { session: EditorSession; det
   useEffect(() => { editor?.setEditable(!readOnly); }, [editor, readOnly]);
   if (!editor) return <p className="doc-editor-loading"><T zh="正在打开编辑器…" en="Opening editor…" /></p>;
 
+  const exportFile = async (format: 'docx' | 'pdf') => {
+    setExporting(format);
+    onError('');
+    try {
+      if (format === 'docx') await exportDocumentDocx(title, editor.getJSON());
+      else await exportDocumentPdf(title, editor.getJSON());
+    } catch (cause) {
+      onError(cause instanceof Error ? cause.message : tr({ zh: '导出失败', en: 'Export failed' }));
+    } finally {
+      setExporting('');
+    }
+  };
+
   return (
     <>
       <div className="doc-toolbar" aria-label={tr({ zh: '格式工具栏', en: 'Formatting toolbar' })}>
@@ -75,6 +92,15 @@ function CollaborativeEditor({ session, details }: { session: EditorSession; det
         <ToolbarButton label={tr({ zh: '项目符号列表', en: 'Bullet list' })} active={editor.isActive('bulletList')} disabled={readOnly} onClick={() => editor.chain().focus().toggleBulletList().run()}><List size={17} /></ToolbarButton>
         <ToolbarButton label={tr({ zh: '编号列表', en: 'Numbered list' })} active={editor.isActive('orderedList')} disabled={readOnly} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered size={17} /></ToolbarButton>
         <ToolbarButton label={tr({ zh: '引用', en: 'Quote' })} active={editor.isActive('blockquote')} disabled={readOnly} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote size={17} /></ToolbarButton>
+        <span className="doc-tool-separator" />
+        <button type="button" className="doc-tool doc-export-tool" disabled={Boolean(exporting)}
+          onClick={() => void exportFile('docx')} title={tr({ zh: '导出 Word 文档', en: 'Export Word document' })}>
+          <FileText size={16} /><span>{exporting === 'docx' ? <T zh="生成中" en="Exporting" /> : 'Word'}</span>
+        </button>
+        <button type="button" className="doc-tool doc-export-tool" disabled={Boolean(exporting)}
+          onClick={() => void exportFile('pdf')} title={tr({ zh: '导出 PDF', en: 'Export PDF' })}>
+          <FileDown size={16} /><span>{exporting === 'pdf' ? <T zh="生成中" en="Exporting" /> : 'PDF'}</span>
+        </button>
         {readOnly && <span className="doc-readonly"><T zh="只读" en="Read only" /></span>}
       </div>
       <EditorContent editor={editor} className="doc-editor" />
@@ -227,7 +253,7 @@ export default function DocumentEditorPage() {
       {error && <p className="doc-page-error" role="alert">{error}</p>}
       {!user && !details && <div className="doc-auth-needed"><T zh="请先登录，再打开共享给你的文档。" en="Sign in to open a document shared with you." /></div>}
       {user && !details && !error && <p className="doc-editor-loading"><T zh="正在加载文档…" en="Loading document…" /></p>}
-      {details && session && <CollaborativeEditor session={session} details={details} />}
+      {details && session && <CollaborativeEditor session={session} details={details} title={title} onError={setError} />}
       {shareOpen && details && <SharePanel id={id} details={details} reload={load} close={() => setShareOpen(false)} />}
     </main>
   );
