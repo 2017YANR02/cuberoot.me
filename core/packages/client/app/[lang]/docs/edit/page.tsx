@@ -128,16 +128,16 @@ function SharePanel({ id, details, reload, close }: {
         <div className="doc-invite-row">
           <label className="doc-search-wrap">
             <span className="sr-only"><T zh="搜索用户" en="Search people" /></span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tr({ zh: '姓名或 WCA ID', en: 'Name or WCA ID' })} autoFocus />
+            <input className="doc-search-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tr({ zh: '姓名或 WCA ID', en: 'Name or WCA ID' })} autoFocus />
             {query && <ClearButton onClick={() => setQuery('')} preserveFocus />}
           </label>
-          <select value={role} onChange={(event) => setRole(event.target.value as 'editor' | 'viewer')} aria-label={tr({ zh: '邀请权限', en: 'Invite role' })}>
+          <select className="doc-invite-role" value={role} onChange={(event) => setRole(event.target.value as 'editor' | 'viewer')} aria-label={tr({ zh: '邀请权限', en: 'Invite role' })}>
             <option value="editor">{tr({ zh: '可编辑', en: 'Editor' })}</option>
             <option value="viewer">{tr({ zh: '只读', en: 'Viewer' })}</option>
           </select>
         </div>
         {people.length > 0 && <div className="doc-people-results">{people.map((person) => (
-          <button key={person.key} type="button" onClick={() => void add(person)} disabled={busy === person.key}>
+          <button className="doc-person-option" key={person.key} type="button" onClick={() => void add(person)} disabled={busy === person.key}>
             <UserPlus size={16} aria-hidden="true" /><span>{person.name}</span>{person.wcaId && <small>{person.wcaId}</small>}
           </button>
         ))}</div>}
@@ -147,7 +147,7 @@ function SharePanel({ id, details, reload, close }: {
           <div className="doc-member" key={member.key}>
             <span className="doc-member-name">{member.name}</span>
             {member.role === 'owner' ? <span className="doc-member-role">{roleLabel(member.role)}</span> : <>
-              <select value={member.role} disabled={busy === member.key}
+              <select className="doc-member-role-select" value={member.role} disabled={busy === member.key}
                 onChange={(event) => void changeRole(member.key, event.target.value as 'editor' | 'viewer')}
                 aria-label={tr({ zh: `${member.name} 的权限`, en: `Role for ${member.name}` })}>
                 <option value="editor">{tr({ zh: '可编辑', en: 'Editor' })}</option>
