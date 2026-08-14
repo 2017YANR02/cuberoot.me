@@ -416,6 +416,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             onScrambleKindChange={setScrambleKind}
             viewAngle={effectiveViewAngle}
             orientation={effectiveOrientation}
+            preserveAlgOrder={dragAlgs}
             algsWrap={dragAlgs ? withDnd(0) : undefined}
             algRowWrap={dragAlgs
               ? (row, i) => <SortableAlgRow key={algDragId(0, i)} id={algDragId(0, i)} draggable>{row}</SortableAlgRow>

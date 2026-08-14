@@ -28,6 +28,12 @@ import {
   type SrsGrade, type SrsQueueItem, type SrsRec,
 } from '@/lib/alg-srs';
 import { tr } from '@/i18n/tr';
+import {
+  findPreferredAlg,
+  nonPreferredSolutions,
+  preferredAlgSlot,
+  usePreferredAlgs,
+} from '@/lib/alg-preferred-algs';
 
 /** 四档自评。颜色沿用全站状态色:忘了=危险、犹豫=警告、记得=成功、秒答=品牌强调。 */
 const GRADES: Array<{ g: SrsGrade; cls: string; zh: string; en: string; hint: { zh: string; en: string } }> = [
@@ -120,6 +126,19 @@ export default function MemoryTrainer({
   const card = queue[pos] ?? null;
   const c = card ? findCaseByKey(cases, card.key) ?? null : null;
   const rec = card ? recs[card.key] : undefined;
+  const preferenceSet = c?.srcSet ?? set;
+  const preferredSnapshot = usePreferredAlgs(state => state.snapshots[`${puzzle}/${preferenceSet}`]);
+  const loadPreferred = usePreferredAlgs(state => state.load);
+  const preferredRef = c ? preferredSnapshot?.items[preferredAlgSlot(c)] : undefined;
+  const primary = c
+    ? findPreferredAlg(c.algs[0] ?? [], preferredRef) ?? c.algs.flat()[0]
+    : undefined;
+  const alternativeSolutions = useMemo(() => {
+    if (!c || !preferredRef) return [];
+    const setCases = cases.filter(candidate => (candidate.srcSet ?? set) === preferenceSet);
+    return nonPreferredSolutions(c, setCases, preferredRef);
+  }, [c, cases, preferenceSet, preferredRef, set]);
+  useEffect(() => { loadPreferred(puzzle, preferenceSet); }, [loadPreferred, preferenceSet, puzzle]);
 
   // 打乱只在换卡时生成一次(每次 render 重算会让画面上的打乱抖动)
   const [scramble, setScramble] = useState('');
@@ -129,7 +148,11 @@ export default function MemoryTrainer({
     // 记忆模式一律不加首尾 AUF —— 与 store 的 `aufOpts` 同一条规矩:这里是「看着图把公式
     // 回忆出来」,题面必须与揭示的那条公式逐字对得上。随机 U 不改 case,却会让揭示出来的公式
     // 对不上眼前这张图(LSLL 尤其明显:给的是机器算的最优解,差一个 AUF 就照着做不出来)。
-    const gen = () => generateScramble(c, puzzle, scrambleKind, { preAuf: false, postAuf: false });
+    const gen = () => generateScramble(c, puzzle, scrambleKind, {
+      preAuf: false,
+      postAuf: false,
+      alternativeSolutions,
+    });
     const s = gen();
     setScramble(s);
     if (s) return;
@@ -137,7 +160,7 @@ export default function MemoryTrainer({
     let stale = false;
     void resolveCase(c).then(() => { if (!stale) setScramble(gen()); });
     return () => { stale = true; };
-  }, [c, puzzle, scrambleKind, resolveCase]);
+  }, [alternativeSolutions, c, puzzle, scrambleKind, resolveCase]);
 
   const shownScramble = pureScramble ? purifyScramble(puzzle, scramble) : scramble;
   const previews = useMemo(() => previewIntervals(rec, Date.now()), [rec]);
@@ -322,7 +345,6 @@ export default function MemoryTrainer({
 
   const k = caseKey(c);
   const phase = srsPhase(rec);
-  const primary = c.algs.flat()[0];
   const pct = plannedTotal > 0 ? Math.min(100, (pos / Math.max(plannedTotal, queue.length)) * 100) : 0;
   /**
    * 三类卡片的名字。到期那类叫「到期」不叫「复习」—— 顶上那个模式 tab 已经占了「复习」
@@ -377,7 +399,7 @@ export default function MemoryTrainer({
             >
               <CaseThumb
                 puzzle={puzzle}
-                set={set}
+                set={preferenceSet}
                 sticker={c.sticker}
                 alg={primary?.alg ?? c.standard ?? ''}
                 setup={scramble || c.setup}
