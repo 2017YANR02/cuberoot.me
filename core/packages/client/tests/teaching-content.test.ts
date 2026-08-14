@@ -11,7 +11,7 @@ import {
 } from '../app/[lang]/teaching/_data';
 import { OLL_ORDER, PLL_LABELS, ZBLL_CASE_COUNTS } from '../app/[lang]/teaching/_data/cfop-micro';
 import { ADVANCED_COURSE_FALLBACK } from '../app/[lang]/teaching/_data/advanced-course-fallback';
-import { SECTIONS } from '../lib/landing-sections';
+import { SECTIONS, TEXTS } from '../lib/landing-sections';
 
 describe('teaching course plan', () => {
   it('keeps the three-course lesson structure and duration baseline', () => {
@@ -123,6 +123,7 @@ describe('teaching course plan', () => {
       internal: true,
       adminOnly: true,
     });
+    expect(TEXTS.teaching).toEqual({ zh: '课程', en: 'Courses' });
   });
 
   it('keeps the administrator-only page out of the sitemap', () => {
