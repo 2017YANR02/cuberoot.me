@@ -28,9 +28,9 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     scope: 'project',
     hook: 'block-component-reimplementation.ps1 → hook-detect-component-reimplementation.mjs',
     test: 'component-reuse-guard.test.ts',
-    baseline: '关闭按钮 79 ↓;项目选择器 0',
-    zh: { title: '重复实现已有组件', desc: '用规则表拦高置信度的重复造轮子,不是用模糊相似度乱猜。手写关闭/清除叉号统一复用 ClearButton;页面内自写项目下拉或原生项目 select 统一复用 PuzzlePicker(/wca 展开式项目行用 WcaEventSelector)。Codex apply_patch 写入即拦,CI 对项目选择器保持零存量、对旧关闭按钮只降不升;真正不同的交互行内 allow-component-reimplementation 并写理由。' },
-    en: { title: 'Reimplementing cataloged components', desc: 'A rule registry blocks high-confidence reinventions instead of guessing from fuzzy similarity. Hand-written close/clear crosses route through ClearButton; page-local puzzle dropdowns and native puzzle selects route through PuzzlePicker (expanded /wca event rows use WcaEventSelector). Codex apply_patch is blocked at write time; CI keeps puzzle-selector debt at zero and ratchets legacy close buttons down. Genuinely different interactions require an inline allow-component-reimplementation reason.' },
+    baseline: '关闭按钮 79 ↓;项目选择器 0;BackHome 根节点 14 ↓',
+    zh: { title: '组件复用与放置契约', desc: '规则表拦高置信度的重复造轮子和错误放置。手写关闭/清除叉号统一复用 ClearButton;页面内项目选择统一复用 PuzzlePicker(/wca 展开式项目行用 WcaEventSelector);BackHome 必须位于与正文同宽的 header/topbar/wrap。Codex apply_patch 写入即拦,CI 对零存量规则保持为零、对旧存量只降不升;确有例外时行内写 allow-component-reimplementation 和理由。' },
+    en: { title: 'Component reuse and placement contracts', desc: 'A rule registry blocks high-confidence reinventions and unsafe placement. Close/clear crosses use ClearButton; page-local puzzle selection uses PuzzlePicker (expanded /wca event rows use WcaEventSelector); BackHome stays in the same-width header/topbar/wrap as the body. Codex apply_patch is blocked at write time; CI keeps zero-debt rules at zero and ratchets legacy debt down. Real exceptions need an inline allow-component-reimplementation reason.' },
   },
   {
     id: 'nested-links',

@@ -20,6 +20,11 @@ const PICKER_OPEN_STATE = /const\s*\[\s*[A-Za-z_$][\w$]*(?:event|puzzle)[\w$]*(?
 const CROSS = /<X\b|[×✕]/;
 const CLOSE_OR_CLEAR =
   /(?:aria-label|ariaLabel|title|className|class)\s*=\s*[\s\S]{0,260}?(?:关闭|清除|close|clear|dismiss)|\bonClose\b/i;
+const BACK_HOME_TAG = /<BackHome\b([^>]*)\/>/gi;
+const BACK_HOME_DIRECT_ROOT = /<(?:div|main|section)\b[^>]*className\s*=\s*['"]([^'"]+)['"][^>]*>\s*(?:\{\/\*[\s\S]*?\*\/\}\s*)*<BackHome\b([^>]*)\/>/gi;
+const PAGE_ROOT_CLASS = /(?:^|[-_\s])(?:root|page|app)(?:$|[-_\s])/i;
+const SAFE_BACK_HOME_CONTAINER = /(?:^|[-_\s])(?:header|topbar|head|wrap|container|hero|sidebar|back-row)(?:$|[-_\s])/i;
+const OPEN_LAYOUT_CONTAINER = /<(?:div|main|section|header|nav|aside)\b[^>]*className\s*=\s*['"]([^'"]+)['"][^>]*>/gi;
 
 export const COMPONENT_REUSE_RULES = [
   {
@@ -40,6 +45,15 @@ export const COMPONENT_REUSE_RULES = [
     reason:
       '检测到页面内重新实现项目选择菜单。下拉统一复用 PuzzlePicker；/wca 页内展开式 21 项图标行复用 WcaEventSelector。',
   },
+  {
+    id: 'back-home-layout',
+    component: 'BackHome',
+    importStatement: "import BackHome from '@/components/BackHome';",
+    replacement:
+      '<div className="page-back-row"><BackHome /></div>',
+    reason:
+      '检测到 BackHome 直接挂在 full-bleed 页面根节点，或新增位置没有明确布局归属。请放进与正文同宽的 header/topbar/wrap/back-row，避免返回入口贴到视口边缘。',
+  },
 ];
 
 function normalizePath(value) {
@@ -49,6 +63,36 @@ function normalizePath(value) {
 function exemptionNear(source, index, block) {
   const before = source.slice(Math.max(0, index - 260), index);
   return before.includes(EXEMPTION) || block.includes(EXEMPTION);
+}
+
+function backHomeHasOwnLayout(props) {
+  return /\bclassName\s*=/.test(props);
+}
+
+function hasSafeBackHomeContainer(source, index) {
+  const before = source.slice(Math.max(0, index - 1600), index);
+  OPEN_LAYOUT_CONTAINER.lastIndex = 0;
+  let latestClass = '';
+  let match;
+  while ((match = OPEN_LAYOUT_CONTAINER.exec(before))) latestClass = match[1];
+  return SAFE_BACK_HOME_CONTAINER.test(latestClass);
+}
+
+export function scanNewBackHomePlacements(source) {
+  const violations = [];
+  BACK_HOME_TAG.lastIndex = 0;
+  let match;
+  while ((match = BACK_HOME_TAG.exec(source))) {
+    if (backHomeHasOwnLayout(match[1])) continue;
+    if (exemptionNear(source, match.index, match[0])) continue;
+    if (hasSafeBackHomeContainer(source, match.index)) continue;
+    violations.push({
+      ruleId: 'back-home-layout',
+      index: match.index,
+      snippet: match[0].replace(/\s+/g, ' ').slice(0, 180),
+    });
+  }
+  return violations;
 }
 
 export function scanComponentReimplementations(source) {
@@ -112,6 +156,23 @@ export function scanComponentReimplementations(source) {
     if (!/<button\b/i.test(block) || !/(?:<EventIcon\b|<CubingIcon\b)/i.test(block)) continue;
     if (/<(?:PuzzlePicker|WcaEventSelector)\b/.test(block)) continue;
     addPickerViolation(match.index, block);
+  }
+
+  // BackHome inherits only typography; its horizontal placement belongs to the page.
+  // A bare link directly under a full-bleed root is therefore almost always the
+  // viewport-edge bug this rule was introduced for. Existing intentional roots can
+  // add a semantic className or a reasoned exemption.
+  BACK_HOME_DIRECT_ROOT.lastIndex = 0;
+  while ((match = BACK_HOME_DIRECT_ROOT.exec(source))) {
+    if (SAFE_BACK_HOME_CONTAINER.test(match[1])) continue;
+    if (!PAGE_ROOT_CLASS.test(match[1])) continue;
+    if (backHomeHasOwnLayout(match[2])) continue;
+    if (exemptionNear(source, match.index, match[0])) continue;
+    violations.push({
+      ruleId: 'back-home-layout',
+      index: match.index,
+      snippet: match[0].replace(/\s+/g, ' ').slice(0, 180),
+    });
   }
   return violations;
 }
@@ -209,7 +270,15 @@ export function violationsFromHookPayload(payload, pathAllowlist = loadPathAllow
     if (!inScope(write.filePath)) continue;
     const repoRelative = write.filePath.replace(/^.*?(core\/packages\/client\/)/i, '$1');
     if (pathAllowlist.has(repoRelative)) continue;
-    for (const violation of scanComponentReimplementations(write.content)) {
+    const fileViolations = [
+      ...scanComponentReimplementations(write.content),
+      ...scanNewBackHomePlacements(write.content),
+    ];
+    const seen = new Set();
+    for (const violation of fileViolations) {
+      const key = `${violation.ruleId}:${violation.index}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
       violations.push({ ...violation, filePath: write.filePath });
     }
   }
@@ -239,9 +308,10 @@ if (isMain) {
     const violations = violationsFromHookPayload(payload);
     if (violations.length) {
       const rule = COMPONENT_REUSE_RULES.find((item) => item.id === violations[0].ruleId);
+      const exceptionKind = rule.id === 'back-home-layout' ? '不同布局' : '不同交互';
       deny(
         `${rule.reason}\n${rule.importStatement}\n替换为: ${rule.replacement}\n` +
-        `确属不同交互时，在该按钮前注明 // ${EXEMPTION}: <具体理由>。详见 /code/components。`,
+        `确属${exceptionKind}时，在对应 JSX 前注明 // ${EXEMPTION}: <具体理由>。详见 /code/components。`,
       );
     }
     process.exit(0);

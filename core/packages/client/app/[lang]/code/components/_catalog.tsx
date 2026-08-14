@@ -479,7 +479,7 @@ function AppLinkDemo() {
 }
 
 function BackHomeDemo() {
-  return <BackHome />;
+  return <div className="catalog-demo-header"><BackHome /></div>;
 }
 
 /* ── catalog ────────────────────────────────────────────────────────────── */
@@ -1050,9 +1050,9 @@ export const CATALOG: ComponentEntry[] = [
     name: 'BackHome',
     import: "import BackHome from '@/components/BackHome';",
     category: 'nav',
-    zh: '一级内容/枢纽页统一的「← 首页」返回件(基于 HomeLink + 共享 .back-home 样式)。放页面最外层容器顶部;沉浸式工具页不用、靠浏览器后退。',
-    en: 'The one consistent "← Home" affordance for first-level content/hub pages (wraps HomeLink with the shared .back-home style). Drop at the top of the page container; immersive tool pages skip it and rely on browser back.',
-    usage: '<BackHome />',
+    zh: '一级内容/枢纽页统一的「← 首页」返回件(基于 HomeLink + 共享 .back-home 样式)。必须放进与正文同宽的 header/topbar/wrap,禁直接挂在铺满视口的页面根节点;沉浸式工具页不用、靠浏览器后退。',
+    en: 'The consistent "← Home" affordance for first-level content/hub pages (HomeLink plus the shared .back-home style). Keep it inside the same-width header/topbar/wrap as the body, never directly under a full-bleed page root; immersive tools rely on browser back.',
+    usage: '<div className="page-header"><BackHome /></div>',
     Demo: BackHomeDemo,
   },
   {
