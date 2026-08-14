@@ -9,6 +9,7 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   COMPONENT_REUSE_RULES,
+  scanNewBackHomePlacements,
   scanComponentReimplementations,
   violationsFromHookPayload,
 } from '../scripts/hook-detect-component-reimplementation.mjs';
@@ -17,6 +18,22 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_ROOT = join(ROOT, '..', '..', '..');
 const SCAN_DIRS = ['app', 'components'];
 const BASELINE = 79; // 2026-08-07 legacy close/clear cross buttons; ratchet down only.
+const BACK_HOME_ROOT_ALLOWLIST = new Set([
+  'app/[lang]/calc/page.tsx',
+  'app/[lang]/courses/TeachingClient.tsx',
+  'app/[lang]/docs/page.tsx',
+  'app/[lang]/forum/page.tsx',
+  'app/[lang]/frame-count/FrameCountPage.tsx',
+  'app/[lang]/icon/page.tsx',
+  'app/[lang]/memo/page.tsx',
+  'app/[lang]/mosaic/page.tsx',
+  'app/[lang]/recon/page.tsx',
+  'app/[lang]/scramble/page.tsx',
+  'app/[lang]/sheets/page.tsx',
+  'app/[lang]/teachers/page.tsx',
+  'app/[lang]/wb/page.tsx',
+  'app/[lang]/why-cube/page.tsx',
+]);
 
 function safeReaddir(dir: string) {
   try { return readdirSync(dir, { withFileTypes: true }); } catch { return []; }
@@ -70,6 +87,34 @@ describe('component reuse rule registry', () => {
       }`)).toEqual([]);
   });
 
+  it('requires BackHome to belong to an explicit content-width container', () => {
+    const directRoot = `
+      <main className="demo-page">
+        <BackHome />
+        <h1>Demo</h1>
+      </main>`;
+    expect(scanComponentReimplementations(directRoot).map((hit) => hit.ruleId))
+      .toContain('back-home-layout');
+    expect(scanNewBackHomePlacements('<BackHome />').map((hit) => hit.ruleId))
+      .toContain('back-home-layout');
+
+    expect(scanComponentReimplementations(`
+      <main className="demo-page">
+        <header className="demo-header"><BackHome /></header>
+      </main>`)).toEqual([]);
+    expect(scanComponentReimplementations(
+      '<div className="page-header"><BackHome /></div>',
+    )).toEqual([]);
+    expect(scanNewBackHomePlacements(`
+      <div className="demo-back-row">
+        <BackHome />
+      </div>`)).toEqual([]);
+    expect(scanComponentReimplementations(`
+      <main className="demo-page">
+        <BackHome className="demo-back" />
+      </main>`)).toEqual([]);
+  });
+
   it('keeps the named product surfaces on the shared PuzzlePicker', () => {
     const surfaces = [
       join(ROOT, 'components', 'RecentScrambles.tsx'),
@@ -115,13 +160,38 @@ describe('component reuse rule registry', () => {
     expect(violationsFromHookPayload(exec, new Set())).toHaveLength(1);
   });
 
+  it('blocks an unowned BackHome write while allowing a named layout row', () => {
+    const filePath = 'D:/cube/cuberoot.me/core/packages/client/app/demo/page.tsx';
+    expect(violationsFromHookPayload({
+      tool_input: { file_path: filePath, new_string: '<BackHome />' },
+    }, new Set()).map((hit) => hit.ruleId)).toContain('back-home-layout');
+    expect(violationsFromHookPayload({
+      tool_input: {
+        file_path: filePath,
+        new_string: '<div className="demo-back-row"><BackHome /></div>',
+      },
+    }, new Set())).toEqual([]);
+  });
+
+  it('pins the alg puzzle BackHome above the title inside the shared-width header', () => {
+    const page = readFileSync(join(ROOT, 'app', '[lang]', 'alg', '[puzzle]', 'AlgPuzzleClient.tsx'), 'utf8');
+    const css = readFileSync(join(ROOT, 'app', '[lang]', 'alg', 'alg.css'), 'utf8');
+    expect(page).toMatch(
+      /className="alg-cat-header alg-cat-header--puzzle">\s*<div className="alg-puzzle-back-row">\s*<BackHome \/>\s*<\/div>\s*<h1 className="alg-cat-title">/,
+    );
+    expect(css).toMatch(/\.alg-puzzle-back-row\s*\{[^}]*flex-basis:\s*100%;[^}]*\}/);
+  });
+
   it('keeps source violations at or below the legacy baseline', () => {
     const counts = new Map<string, number>();
     const offenders: string[] = [];
+    const backHomeRootFiles: string[] = [];
     for (const base of SCAN_DIRS) {
       for (const file of walk(join(ROOT, base))) {
         const hits = scanComponentReimplementations(readFileSync(file, 'utf8'));
-        if (hits.length) offenders.push(`${hits.map((hit) => hit.ruleId).join(',')}\t${relative(ROOT, file)}`);
+        const filePath = relative(ROOT, file).replaceAll('\\', '/');
+        if (hits.length) offenders.push(`${hits.map((hit) => hit.ruleId).join(',')}\t${filePath}`);
+        if (hits.some((hit) => hit.ruleId === 'back-home-layout')) backHomeRootFiles.push(filePath);
         for (const hit of hits) counts.set(hit.ruleId, (counts.get(hit.ruleId) ?? 0) + 1);
       }
     }
@@ -134,6 +204,13 @@ describe('component reuse rule registry', () => {
       counts.get('puzzle-picker') ?? 0,
       `Page-local project selectors must be consolidated into PuzzlePicker.\n${offenders.join('\n')}`,
     ).toBe(0);
+    const unexpectedBackHomeRoots = backHomeRootFiles
+      .filter((file) => !BACK_HOME_ROOT_ALLOWLIST.has(file));
+    expect(
+      unexpectedBackHomeRoots,
+      `Bare BackHome must live inside a content-width header/topbar/wrap/back-row, not directly under a page root.\n` +
+        `${unexpectedBackHomeRoots.join('\n')}`,
+    ).toEqual([]);
   });
 
   it('is wired into the repository apply_patch hook and the component catalog', () => {
@@ -151,5 +228,7 @@ describe('component reuse rule registry', () => {
     expect(catalog).toContain("import { ClearButton } from '@/components/ClearButton';");
     expect(catalog).toContain("name: 'PuzzlePicker'");
     expect(catalog).toContain("import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';");
+    expect(catalog).toContain("name: 'BackHome'");
+    expect(catalog).toContain('必须放进与正文同宽的 header/topbar/wrap');
   });
 });
