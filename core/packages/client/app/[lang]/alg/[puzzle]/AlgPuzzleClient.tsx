@@ -287,8 +287,10 @@ export default function AlgPuzzleClient() {
 
   return (
     <div className="alg-root">
-      <BackHome />
       <div className="alg-cat-header alg-cat-header--puzzle">
+        <div className="alg-puzzle-back-row">
+          <BackHome />
+        </div>
         <h1 className="alg-cat-title">{tr({ zh: '公式库', en: 'Algorithm DB' })}</h1>
         {/* 项目切换:原落地页那一排卡片压成一个下拉,每项仍是真链接 */}
         <AlgPuzzleSelect current={puzzle} isZh={isZh} />
