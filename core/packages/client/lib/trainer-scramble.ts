@@ -292,6 +292,8 @@ export interface TrainerScrambleOpts {
   orientation?: OrientationSel;
   /** 本场的 set slug —— 判据按 set 走(CMLL 只看角块)。合练时以 case 自带的 `srcSet` 为准。 */
   orientationSet?: string | null;
+  /** 记忆模式防认题：从这些非主公式中任选一条取逆，优先级高于常规打乱类型。 */
+  alternativeSolutions?: readonly string[];
 }
 
 export function generateScramble(
@@ -300,8 +302,13 @@ export function generateScramble(
   kind: ScrambleKind = 'inv',
   opts?: TrainerScrambleOpts,
 ): string {
-  // 这个 case 没有选定的那种打乱 → 退回 inv(整个 set 里只有一部分 case 有)
-  const base = baseForKind(c, kind, puzzle) ?? baseForKind(c, 'inv', puzzle);
+  const alternatives = opts?.alternativeSolutions?.map(s => s.trim()).filter(Boolean) ?? [];
+  // 记忆模式指定主公式后，优先用其它解法的逆式出题，避免从熟悉的打乱形状反推答案。
+  // 没有其它解法时才回到用户原先选择的打乱类型。
+  const alternative = alternatives.length > 0 ? pick(alternatives) : null;
+  const base = alternative
+    ? (puzzle === 'fto' ? invertFtoEifAlgorithm(alternative) : inverseAlg(alternative))
+    : baseForKind(c, kind, puzzle) ?? baseForKind(c, 'inv', puzzle);
   if (!base) return '';
 
   // 起手随机 AUF(pre-AUF):打乱前先 U^k,case 不变(起手/收尾 AUF 同属一条轨道),

@@ -11,7 +11,7 @@
  * 所以 `byNo` 一定查得到(查不到只显示编号,不猜)。背景见 AlgCaseMetaModal 顶部注释。
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Star } from 'lucide-react';
 import Link from '@/components/AppLink';
 import type { AlgCase, AlgCaseMeta, AlgPuzzle } from '@cuberoot/shared';
 import { stm } from '@cuberoot/shared/alg-notation';
@@ -36,17 +36,28 @@ import {
 } from '@/lib/alg_display';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { tr } from '@/i18n/tr';
+import {
+  findPreferredAlg,
+  preferredAlgRef,
+  preferredAlgSlot,
+  sortPreferredAlgs,
+  usePreferredAlgs,
+} from '@/lib/alg-preferred-algs';
 
 const METRIC_LABEL: Record<string, string> = { stm: 'STM', sqtm: 'SQTM', htm: 'HTM', qtm: 'QTM' };
 
 /** 一行「标签 + 可复制的公式」(`len` 给了就在右边挂步数徽章)。 */
-function AlgLine({ label, alg, len, playable = false, expanded = false, onToggle }: {
+function AlgLine({
+  label, alg, len, playable = false, expanded = false, onToggle, preferred = false, onPreferredToggle,
+}: {
   label: string;
   alg: string;
   len?: number;
   playable?: boolean;
   expanded?: boolean;
   onToggle?: () => void;
+  preferred?: boolean;
+  onPreferredToggle?: () => void;
 }) {
   const { copied, copy } = useCopy();
   return (
@@ -69,6 +80,19 @@ function AlgLine({ label, alg, len, playable = false, expanded = false, onToggle
       {label && <span className="alg-meta-algline-label">{label}</span>}
       <code className="alg-meta-algline-code">{alg}</code>
       {len != null && <span className="alg-meta-algline-len" title="STM">{len}</span>}
+      {onPreferredToggle && (
+        <button
+          type="button"
+          className="alg-meta-copy alg-meta-primary"
+          onClick={(event) => { event.stopPropagation(); onPreferredToggle(); }}
+          title={preferred
+            ? tr({ zh: '取消主公式', en: 'Clear primary algorithm' })
+            : tr({ zh: '设为主公式', en: 'Set as primary algorithm' })}
+          aria-pressed={preferred}
+        >
+          <Star size={13} fill={preferred ? 'currentColor' : 'none'} />
+        </button>
+      )}
       <button
         type="button"
         className="alg-meta-copy"
@@ -119,6 +143,8 @@ interface Props {
   orientation?: string;
   /** 详情页启用；训练弹窗保持紧凑静态正文。 */
   playable?: boolean;
+  /** 管理员拖拽时保持数据库原始顺序，避免个人置顶改变拖拽索引。 */
+  preserveAlgOrder?: boolean;
 }
 
 export default function AlgCaseMetaContent({
@@ -130,6 +156,7 @@ export default function AlgCaseMetaContent({
   viewAngle = 'default',
   orientation,
   playable = false,
+  preserveAlgOrder = false,
 }: Props) {
   /**
    * 没有 meta 的集(虚拟集 LSLL、库里还没补元数据的集)一样要能看:空对象兜底后
@@ -138,20 +165,36 @@ export default function AlgCaseMetaContent({
    */
   const m = (caseObj.meta ?? {}) as AlgCaseMeta;
   const [expandedAlgKey, setExpandedAlgKey] = useState<string | null>(null);
+  const preferenceSet = caseObj.srcSet ?? set;
+  const preferenceKey = `${puzzle}/${preferenceSet}`;
+  const preferredSnapshot = usePreferredAlgs(state => state.snapshots[preferenceKey]);
+  const loadPreferred = usePreferredAlgs(state => state.load);
+  const setPreferred = usePreferredAlgs(state => state.setPreferred);
+  const preferredSlot = preferredAlgSlot(caseObj);
+  const preferredRef = preferredSnapshot?.items[preferredSlot];
+
+  useEffect(() => { loadPreferred(puzzle, preferenceSet); }, [loadPreferred, preferenceSet, puzzle]);
 
   /** 首个朝向的公式(1lll / zbll / pll / ell 都只有一个朝向)。显示 / 步数都剥掉收尾 AUF。 */
-  const algs = useMemo(() => (caseObj.algs[0] ?? []).map(a => {
+  const algs = useMemo(() => {
+    const entries = preserveAlgOrder
+      ? (caseObj.algs[0] ?? []).map((entry, originalIndex) => ({ entry, originalIndex }))
+      : sortPreferredAlgs(caseObj.algs[0] ?? [], preferredRef);
+    return entries.map(({ entry: a, originalIndex }) => {
     const playbackAlg = caseViewAlg(a.alg, viewAngle);
     const shown = displayAlg(playbackAlg);
     return {
       key: a.altId ?? shown,
       entry: a,
+      originalIndex,
+      ref: preferredAlgRef(a),
       playbackAlg,
       text: formatScrambleForEvent(puzzle, shown),
       len: a.stm == null ? undefined : stm(shown),
       tags: a.tags ?? [],
     };
-  }), [caseObj.algs, puzzle, viewAngle]);
+    });
+  }, [caseObj.algs, preferredRef, preserveAlgOrder, puzzle, viewAngle]);
 
   /**
    * 这一族:镜像 / 逆 / 镜像逆 连起来的那一小撮 case(含当前这张),拆成三堆。
@@ -286,13 +329,15 @@ export default function AlgCaseMetaContent({
       <div className="alg-meta-related-grid alg-meta-top-grid">
         {family.map(f => {
           const labelText = f.labels.join(', ');
+          const familySlot = preferredAlgSlot(f.case);
+          const familyPreferred = findPreferredAlg(f.case.algs[0] ?? [], preferredSnapshot?.items[familySlot]);
           const inner = (
             <>
               <CaseThumb
                 puzzle={puzzle}
                 set={set}
                 sticker={f.case.sticker}
-                alg={f.case.algs[0]?.[0]?.alg || f.case.setup || ''}
+                alg={familyPreferred?.alg || f.case.algs[0]?.[0]?.alg || f.case.setup || ''}
                 setup={f.case.setup}
                 size={76}
                 viewAngle={viewAngle}
@@ -376,27 +421,42 @@ export default function AlgCaseMetaContent({
 
       <div className="alg-meta-case">
         <div className="alg-meta-case-algs">
-          {algsWrap(algs.map((a, i) => {
-            const rowKey = `${a.key}:${i}`;
+          {algsWrap(algs.map((a) => {
+            const rowKey = `${a.key}:${a.originalIndex}`;
             const expanded = playable && expandedAlgKey === rowKey;
+            const isPreferred = a.ref === preferredRef;
+            const label = [
+              isPreferred ? tr({ zh: '主公式', en: 'Primary' }) : '',
+              a.tags.map(t => ALG_TAG_LABEL[t]()).join(' '),
+            ].filter(Boolean).join(' ');
+            const togglePreferred = () => setPreferred(
+              puzzle,
+              preferenceSet,
+              preferredSlot,
+              isPreferred ? null : a.ref,
+            );
             if (!playable) {
               return algRowWrap(
                 <AlgLine
                   key={rowKey}
-                  label={a.tags.map(t => ALG_TAG_LABEL[t]()).join(' ')}
+                  label={label}
                   alg={a.text}
                   len={a.len}
+                  preferred={isPreferred}
+                  onPreferredToggle={togglePreferred}
                 />,
-                i,
+                a.originalIndex,
               );
             }
             const playerSetup = a.entry.setup ?? caseObj.setup;
             return algRowWrap(
               <div key={rowKey} className="alg-meta-playable-row">
                 <AlgLine
-                  label={a.tags.map(t => ALG_TAG_LABEL[t]()).join(' ')}
+                  label={label}
                   alg={a.text}
                   len={a.len}
+                  preferred={isPreferred}
+                  onPreferredToggle={togglePreferred}
                   playable
                   expanded={expanded}
                   onToggle={() => setExpandedAlgKey(current => current === rowKey ? null : rowKey)}
@@ -411,7 +471,7 @@ export default function AlgCaseMetaContent({
                   />
                 )}
               </div>,
-              i,
+              a.originalIndex,
             );
           }))}
         </div>

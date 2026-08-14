@@ -56,7 +56,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   equals the set mounted via app.route('/v1', …) in packages/server/src/index.ts.
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
-//   account_auth alg alg_lsll alg_marks alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps article auth battle_rooms calendar cn_comp_names colpi
+//   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live documents feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
@@ -249,6 +249,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'alg', m: 'PUT', p: '/v1/alg/marks/:puzzle/:set', g: 'login', zh: '批量写 case 标记', en: 'Bulk-write case marks' },
   { d: 'alg', m: 'GET', p: '/v1/alg/time-attack-order/:puzzle/:set', g: 'login', zh: '我的公式连拧顺序', en: 'My algorithm time attack order' },
   { d: 'alg', m: 'PUT', p: '/v1/alg/time-attack-order/:puzzle/:set', g: 'login', zh: '保存公式连拧顺序', en: 'Save an algorithm time attack order' },
+  { d: 'alg', m: 'GET', p: '/v1/alg/preferred-algs/:puzzle/:set', g: 'login', zh: '我的主公式偏好', en: 'My primary algorithm preferences' },
+  { d: 'alg', m: 'PUT', p: '/v1/alg/preferred-algs/:puzzle/:set', g: 'login', zh: '保存主公式偏好', en: 'Save primary algorithm preferences' },
   { d: 'alg', m: 'GET', p: '/v1/alg/srs', g: 'login', zh: '跨 set 记忆记录 + 每日复习量(进度总览)', en: 'Cross-set memory records + daily review log' },
   { d: 'alg', m: 'GET', p: '/v1/alg/srs/:puzzle/:set', g: 'login', zh: '我的 case 记忆调度状态', en: 'My per-case memory schedule' },
   { d: 'alg', m: 'PUT', p: '/v1/alg/srs/:puzzle/:set', g: 'login', zh: '批量写记忆调度状态', en: 'Bulk-write memory schedule' },
