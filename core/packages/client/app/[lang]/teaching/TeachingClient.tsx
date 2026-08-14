@@ -16,6 +16,7 @@ import {
   TEACHING_TOTAL_MINUTES,
 } from './_data';
 import type { LessonKind, LocalizedText, MicroCourse, Module } from './_data/types';
+import AdvancedCourseSection from './AdvancedCourseSection';
 import './teaching.css';
 
 const KIND_LABELS: Record<LessonKind, LocalizedText> = {
@@ -52,7 +53,7 @@ function formatDuration(minutes: number) {
   return tr({ zh: `${hours} 小时 ${rest} 分钟`, en: `${hours} hr ${rest} min` });
 }
 
-function TeachingPage() {
+function TeachingPage({ isAdmin }: { isAdmin: boolean }) {
   const average = (TEACHING_TOTAL_MINUTES / TEACHING_LESSON_COUNT).toFixed(1);
 
   return (
@@ -63,8 +64,8 @@ function TeachingPage() {
         <h1><T zh="课程树与完整提词稿" en="Curriculum and complete teleprompter scripts" /></h1>
         <p className="teaching-lead">
           <T
-            zh="先用试听课获得第一次成功，再用层先法独立复原，最后按案例系统学习 CFOP。每节只讲一个目标，适合暂停、跟练和反复复习。"
-            en="Begin with a first win in the trial, learn an independent solve with the beginner method, then study CFOP case by case. Every lesson has one goal and is designed for pausing and practice."
+            zh="先用试听课获得第一次成功，再用层先法独立复原，按案例系统学习 CFOP，之后继续拓展三阶与二阶进阶内容。每节只讲一个目标，适合暂停、跟练和反复复习。"
+            en="Begin with a first win in the trial, learn an independent solve with the beginner method, study CFOP case by case, then continue into advanced 3×3 and 2×2 topics. Every lesson has one goal and is designed for pausing and practice."
           />
         </p>
 
@@ -85,6 +86,10 @@ function TeachingPage() {
               </a>
             );
           })}
+          <a href="#advanced">
+            <span><T zh="后续课程" en="Further courses" /></span>
+            <T zh="两条路线：三阶与二阶进阶" en="Two tracks: advanced 3×3 and 2×2" />
+          </a>
         </nav>
       </header>
 
@@ -221,6 +226,8 @@ function TeachingPage() {
         );
       })}
 
+      <AdvancedCourseSection isAdmin={isAdmin} />
+
       <section className="teaching-production" aria-labelledby="production-title">
         <div className="teaching-section-heading">
           <p className="teaching-kicker"><T zh="录制顺序" en="Recording order" /></p>
@@ -230,7 +237,8 @@ function TeachingPage() {
           <li><strong><T zh="先录五节试听课。" en="Record the five trial lessons first. " /></strong><T zh="验证机位、手部特写、字幕字号和学员能否完成结尾挑战。" en="Validate camera angles, hand close-ups, subtitle size, and whether learners can pass each final challenge." /></li>
           <li><strong><T zh="再录层先法前八节。" en="Then record the first eight beginner lessons. " /></strong><T zh="让 3–5 位目标学员试看，记录他们在哪个判断停住。" en="Test with three to five target learners and record where their decisions stop." /></li>
           <li><strong><T zh="模板稳定后按模块录。" en="Batch by module once the template is stable. " /></strong><T zh="同类案例统一起始角度、公式卡和过关提示。" en="Keep starting angles, algorithm cards, and pass prompts consistent across related cases." /></li>
-          <li><strong><T zh="试听只承诺真实下一步。" en="Let the trial promise only a real next step. " /></strong><T zh="结尾展示 26 节层先法地图，并邀请家长领取练习清单或进入完整课程。" en="Show the 26-lesson beginner map and invite parents to collect the practice sheet or continue into the full course." /></li>
+          <li><strong><T zh="试听结尾明确引导购买。" en="End the trial with a clear purchase path. " /></strong><T zh="不会独立复原的学员选择 26 节层先法正式课；已经会复原并想提速的学员选择 CFOP 正式课；零基础且希望继续提速的学员先学层先法，再进入 CFOP。" en="Learners who cannot solve independently choose the 26-lesson beginner-method course; learners who can solve and want more speed choose CFOP; complete beginners who want to progress further take the beginner method first, then CFOP." /></li>
+          <li><strong><T zh="CFOP 稳定后再录后续课程。" en="Record further courses after CFOP is stable. " /></strong><T zh="三阶路线继续补足高级 CFOP、其他解法、预判、公式原理与复盘；二阶路线逐步进入 CLL、EG、LEG 与 TCLL。" en="The 3×3 track continues through advanced CFOP, other methods, lookahead, algorithm theory, and solve review; the 2×2 track progresses into CLL, EG, LEG, and TCLL." /></li>
         </ol>
       </section>
 
@@ -314,5 +322,5 @@ export default function TeachingClient({ lang: _lang }: { lang: string }) {
 
   if (!mounted) return null;
   if (!isAdmin && !previewAccess) return <TeachingAccessNotice onUnlock={() => setPreviewAccess(true)} />;
-  return <TeachingPage />;
+  return <TeachingPage isAdmin={isAdmin} />;
 }

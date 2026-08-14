@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import sitemap from '../app/sitemap';
 import {
   courseLessons,
@@ -8,6 +10,7 @@ import {
   TEACHING_TOTAL_MINUTES,
 } from '../app/[lang]/teaching/_data';
 import { OLL_ORDER, PLL_LABELS, ZBLL_CASE_COUNTS } from '../app/[lang]/teaching/_data/cfop-micro';
+import { ADVANCED_COURSE_FALLBACK } from '../app/[lang]/teaching/_data/advanced-course-fallback';
 import { SECTIONS } from '../lib/landing-sections';
 
 describe('teaching course plan', () => {
@@ -71,6 +74,37 @@ describe('teaching course plan', () => {
     expect(ids.indexOf('cfop-advanced-f2l-18')).toBeLessThan(ids.indexOf('cfop-advanced-f2l-free-slot'));
     expect(ids.indexOf('cfop-advanced-f2l-free-slot')).toBeLessThan(ids.indexOf('cfop-advanced-f2l-19'));
     expect(ids.indexOf('cfop-finish-01')).toBeLessThan(ids.indexOf('cfop-sheet-01'));
+  });
+
+  it('keeps the post-CFOP fallback aligned with the seeded course tracks', () => {
+    expect(ADVANCED_COURSE_FALLBACK.filter((lesson) => lesson.track === '333')).toHaveLength(48);
+    expect(ADVANCED_COURSE_FALLBACK.filter((lesson) => lesson.track === '222')).toHaveLength(10);
+    expect(new Set(ADVANCED_COURSE_FALLBACK.map((lesson) => lesson.id)).size).toBe(58);
+    for (const lesson of ADVANCED_COURSE_FALLBACK) {
+      expect(lesson.titleZh.trim()).not.toBe('');
+      expect(lesson.titleEn.trim()).not.toBe('');
+      expect(lesson.titleEn).not.toMatch(/[\u3400-\u9fff]/);
+      expect(lesson.minutes).toBeGreaterThanOrEqual(1);
+      expect(lesson.minutes).toBeLessThanOrEqual(60);
+    }
+
+    const migration = readFileSync(
+      join(import.meta.dirname, '../../server/migrations/0127_teaching_advanced_lessons.sql'),
+      'utf8',
+    );
+    const seeded = [...migration.matchAll(/^\s*\('(333|222)',\s*(\d+),\s*'([^']*)',\s*'([^']*)'\)[,;]$/gm)]
+      .map((match) => ({
+        track: match[1],
+        position: Number(match[2]),
+        titleZh: match[3],
+        titleEn: match[4],
+      }));
+    expect(seeded).toEqual(ADVANCED_COURSE_FALLBACK.map(({ track, position, titleZh, titleEn }) => ({
+      track,
+      position,
+      titleZh,
+      titleEn,
+    })));
   });
 
   it('marks the homepage entry as administrator-only', () => {

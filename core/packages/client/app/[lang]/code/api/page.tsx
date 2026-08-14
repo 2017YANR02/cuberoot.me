@@ -58,7 +58,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_srs alg_sets alg_sweep announced_comps article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live documents feedback forum health historical_ranks
-//   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon recon_ground_truth scramble_555 teacher_directory
+//   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wiki
 // ─ covers-routes-end ─
@@ -354,6 +354,11 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'POST', p: '/v1/teachers', g: 'login', zh: '发布老师或机构资料', en: 'Publish a teacher or school profile' },
   { d: 'content', m: 'PUT', p: '/v1/teachers/:id', g: 'login', zh: '作者改自己的资料,管理员可改任意资料', en: 'Authors edit their own profiles; admins edit any' },
   { d: 'content', m: 'DELETE', p: '/v1/teachers/:id', g: 'login', zh: '作者删自己的资料,管理员可删任意资料', en: 'Authors delete their own profiles; admins delete any' },
+  { d: 'content', m: 'GET', p: '/v1/teaching/advanced', g: 'public', c: 'no-store', zh: 'CFOP 后续三阶与二阶课程', en: 'Post-CFOP 3×3 and 2×2 lessons' },
+  { d: 'content', m: 'POST', p: '/v1/teaching/advanced', g: 'admin', c: 'no-store', zh: '新增一节后续课程', en: 'Add a further-course lesson' },
+  { d: 'content', m: 'PUT', p: '/v1/teaching/advanced/reorder', g: 'admin', c: 'no-store', zh: '调整一条课程路线的顺序', en: 'Reorder one course track' },
+  { d: 'content', m: 'PUT', p: '/v1/teaching/advanced/:id', g: 'admin', c: 'no-store', zh: '修改后续课程标题、说明和时长', en: 'Edit a further-course title, notes, and duration' },
+  { d: 'content', m: 'DELETE', p: '/v1/teaching/advanced/:id', g: 'admin', c: 'no-store', zh: '删除一节后续课程', en: 'Delete a further-course lesson' },
   { d: 'content', m: 'GET', p: '/v1/wiki/terms', g: 'public', c: 'cdn', zh: '术语表', en: 'Wiki terms' },
   { d: 'content', m: 'POST', p: '/v1/wiki/terms', g: 'login', zh: '加术语', en: 'Add term' },
   { d: 'content', m: 'PATCH', p: '/v1/wiki/terms/:id', g: 'admin', zh: '改术语', en: 'Edit term' },

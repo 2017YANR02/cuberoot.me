@@ -1,0 +1,83 @@
+import type { AdvancedCourseLesson, AdvancedCourseTrack } from '@/lib/teaching-api';
+
+const THREE_BY_THREE: [string, string][] = [
+  ['剩下的 PLL 学习，更多的指法', 'Remaining PLL cases and more fingertricks'],
+  ['公式和指法优化', 'Algorithm and fingertrick optimization'],
+  ['TPS 和步数的权衡与 CFOP 分段计时', 'Balancing TPS and move count with CFOP splits'],
+  ['OLS 子集、末层子集与 LSLL 介绍', 'OLS subsets, last-layer subsets, and LSLL'],
+  ['F2L 转基态', 'Returning F2L cases to a standard state'],
+  ['非标 F2L', 'Non-standard F2L'],
+  ['F2L 接 OLL', 'F2L-to-OLL transitions'],
+  ['PLL 九格和六格观察', 'Nine-sticker and six-sticker PLL recognition'],
+  ['记忆公式：公式形态、触发器与阶段转化', 'Memorizing algorithms: shapes, triggers, and phase transitions'],
+  ['十字盲拧', 'Blindfolded Cross'],
+  ['十字预判与保留 F2L', 'Cross prediction while preserving the first F2L pair'],
+  ['F2L 预判', 'F2L lookahead'],
+  ['预控', 'Precontrol'],
+  ['预控基态', 'Standard-state precontrol'],
+  ['桥式对 CFOP 的帮助', 'How Roux ideas help CFOP'],
+  ['XCross：钥匙孔和筑砖', 'XCross: keyhole and blockbuilding'],
+  ['盲拧 F2L 与多向 F2L', 'Blindfolded and multi-angle F2L'],
+  ['AUF 和 Pre-AUF', 'AUF and Pre-AUF'],
+  ['X-look', 'X-look'],
+  ['ZZ、Petrus 与筑砖（112、122、222、223、T、P）', 'ZZ, Petrus, and blockbuilding (112, 122, 222, 223, T, P)'],
+  ['色向和 F2L 色向', 'Color orientation and F2L color orientation'],
+  ['部分和简单控棱：EOLS', 'Partial and simple edge control: EOLS'],
+  ['控十字：VHLS', 'Cross control: VHLS'],
+  ['简单 COLL、2GLL、ZBLS 与 ZBLL', 'Introductory COLL, 2GLL, ZBLS, and ZBLL'],
+  ['预判 OLL', 'OLL lookahead'],
+  ['预判 PLL', 'PLL lookahead'],
+  ['WV、BLE、MW 及其镜像', 'WV, BLE, MW, and their mirrors'],
+  ['杰登槽', 'Jayden slot'],
+  ['对角多组入槽', 'Diagonal multi-pair insertion'],
+  ['PSF2L', 'PSF2L'],
+  ['OLLCP 与 Anti-OLL', 'OLLCP and Anti-OLL'],
+  ['OOLS', 'OOLS'],
+  ['抗阻训练', 'Resistance training'],
+  ['比赛规则和注意事项', 'Competition rules and practical reminders'],
+  ['魔方和数学的联系：抽象代数与魔方群结构', 'Cubes and mathematics: abstract algebra and the cube group'],
+  ['换位子：公式原理、公式的公式与创造公式', 'Commutators: principles, meta-algorithms, and creating algorithms'],
+  ['魔方公式的本质', 'What cube algorithms really are'],
+  ['Cube Explorer 与 Python 学习', 'Learning with Cube Explorer and Python'],
+  ['最少步', 'Fewest Moves'],
+  ['NISS', 'NISS'],
+  ['Mehta', 'Mehta'],
+  ['解法分析与复盘', 'Solve analysis and review'],
+  ['双色底与六色底', 'Dual-neutral and color-neutral solving'],
+  ['魔方大数据统计', 'Big-data analysis for cubing'],
+  ['魔方资源、网站与术语的使用', 'Using cubing resources, websites, and terminology'],
+  ['神打和困难打乱的应用', 'Applying lucky and difficult scrambles'],
+  ['花式', 'Cube patterns'],
+  ['定性和定量评价公式并选择公式与指法', 'Evaluating and choosing algorithms and fingertricks'],
+];
+
+const TWO_BY_TWO: [string, string][] = [
+  ['面先法', 'Face-first method'],
+  ['OLL 与 PBL 多向', 'Multi-angle OLL and PBL'],
+  ['底面', 'First face'],
+  ['底层', 'First layer'],
+  ['CLL', 'CLL'],
+  ['EG1', 'EG-1'],
+  ['Anti-CLL', 'Anti-CLL'],
+  ['EG2', 'EG-2'],
+  ['部分预判与全预判', 'Partial and full lookahead'],
+  ['LEG 与 TCLL', 'LEG and TCLL'],
+];
+
+function lessons(track: AdvancedCourseTrack, rows: [string, string][], idOffset: number): AdvancedCourseLesson[] {
+  return rows.map(([titleZh, titleEn], position) => ({
+    id: idOffset + position,
+    track,
+    position,
+    titleZh,
+    titleEn,
+    descriptionZh: '',
+    descriptionEn: '',
+    minutes: 5,
+  }));
+}
+
+export const ADVANCED_COURSE_FALLBACK = [
+  ...lessons('333', THREE_BY_THREE, 1),
+  ...lessons('222', TWO_BY_TWO, 1001),
+];
