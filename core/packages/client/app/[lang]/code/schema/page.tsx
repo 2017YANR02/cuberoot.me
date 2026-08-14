@@ -162,6 +162,11 @@ const TABLES: Table[] = [
     { name: 'case_keys JSONB', note: { zh: '只存 canonical key 数组，不复制公式内容', en: 'canonical-key array only; algorithm content is not duplicated' } },
     { name: 'updated_at', note: { zh: '本地与云端合并的 LWW 版本号', en: 'LWW version for local/cloud merging' } },
   ] },
+  { name: 'alg_preferred_algs', domain: 'studio', origin: '0131', naturalKey: true, purpose: { zh: '公式记忆按用户和公式集保存的主公式偏好', en: 'Per-user primary algorithm preferences for each algorithm set' }, cols: [
+    { name: 'wca_id, puzzle, set_slug (PK)' },
+    { name: 'items JSONB', note: { zh: 'case 与朝向到稳定公式引用的映射，不复制公式内容', en: 'case-and-orientation map to stable algorithm references; algorithm content is not duplicated' } },
+    { name: 'updated_at', note: { zh: '本地与云端整份合并的 LWW 版本号', en: 'whole-snapshot LWW version for local/cloud merging' } },
+  ] },
   { name: 'alg_case_srs', domain: 'studio', origin: '0089', naturalKey: true, purpose: { zh: '公式记忆(间隔重复)per-case 调度状态:到期时刻 / 间隔 / 难度因子 / 遗忘次数 / 最近 12 次评分。与手动标记分表 —— 清标记不该抹掉记忆曲线', en: 'Per-case spaced-repetition schedule for algs: due, interval, ease, lapses, last 12 grades. Kept apart from manual marks — clearing a mark must not wipe the memory curve' }, cols: [
     { name: 'wca_id, puzzle, set_slug, case_key', note: { zh: '自然键;同 alg_case_marks', en: 'natural key; same shape as alg_case_marks' } }, { name: 'due, ivl, ease' }, { name: 'reps, lapses, streak' }, { name: 'hist', note: { zh: '最近 12 次评分,2bit/次', en: 'last 12 grades, 2 bits each' } }, { name: 'reviewed_at', note: { zh: '上次复习,兼作 LWW 版本号', en: 'last review; doubles as the LWW version' } },
   ] },
@@ -396,6 +401,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 128, slug: 'teacher_directory_visibility', desc: { zh: '老师与机构资料新增公开开关，作者可隐藏自己的资料；颜瑞民资料先设为仅本人可见。', en: 'Add owner-controlled visibility to teacher and school profiles, initially hiding Ruimin Yan’s entry from the public directory.' } },
   { n: 129, slug: 'alg_chain_orders', desc: { zh: '新增公式集连拧顺序表，登录用户可按公式集和子集跨设备保存自定义顺序。', en: 'Add per-set and per-subset time-attack orders so signed-in users can keep custom orders across devices.' } },
   { n: 130, slug: 'teacher_directory_contacts', desc: { zh: '老师与机构资料增加按平台存储的多种公开联系方式，并保留原有联系方式。', en: 'Add platform-specific public contact methods to teacher and school profiles while preserving existing contact data.' } },
+  { n: 131, slug: 'alg_preferred_algs', desc: { zh: '新增公式记忆主公式偏好表，登录用户可跨设备同步每个 case 的主公式。', en: 'Add primary algorithm preferences so signed-in users can sync one primary algorithm per case across devices.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
