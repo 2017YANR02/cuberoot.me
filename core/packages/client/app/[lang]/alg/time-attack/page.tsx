@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
+import { parseAsString, parseAsStringEnum, useQueryStates } from 'nuqs';
 import {
   DndContext,
   KeyboardSensor,
@@ -22,12 +22,22 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, RotateCcw, Shuffle } from 'lucide-react';
-import { getAlgSetMeta, loadAlg, type AlgCase, type AlgFile } from '@cuberoot/shared';
+import {
+  ALG_CATALOG,
+  ALG_PUZZLES,
+  getAlgSetMeta,
+  loadAlg,
+  type AlgCase,
+  type AlgFile,
+  type AlgPuzzle,
+} from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
+import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
 import { useAuthUser } from '@/lib/auth-store';
 import { sortByCp } from '@/lib/alg_cp_order';
 import { displayZbllToken, primaryCaseName } from '@/lib/alg_case_display';
 import { sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
+import { eventDisplayName } from '@/lib/wca-events';
 import {
   caseMap,
   casesForTimeAttackScope,
@@ -45,27 +55,35 @@ import { tr } from '@/i18n/tr';
 import '../alg.css';
 import './time-attack.css';
 
-const TIME_ATTACK_SETS = ['oll', 'pll', 'coll', 'zbll'] as const;
-type TimeAttackSet = (typeof TIME_ATTACK_SETS)[number];
 type SyncState = 'local' | 'loading' | 'saving' | 'saved' | 'error';
 
-function scopeLabel(setSlug: TimeAttackSet, scope: string): string {
+function scopeLabel(setSlug: string, scope: string): string {
   return scope.split('/').map((part) => (
     setSlug === 'zbll' ? displayZbllToken(part) : part.toUpperCase()
   )).join(' / ');
 }
 
-function SortableCase({ c, setSlug, index }: { c: AlgCase; setSlug: TimeAttackSet; index: number }) {
+function SortableCase({
+  c,
+  puzzle,
+  setSlug,
+  index,
+}: {
+  c: AlgCase;
+  puzzle: AlgPuzzle;
+  setSlug: string;
+  index: number;
+}) {
   const key = caseKey(c);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: key });
   const style: CSSProperties = { transform: CSS.Transform.toString(transform), transition };
-  const alg = c.algs[0]?.[0]?.alg || c.setup || '';
+  const alg = c.algs.flat()[0]?.alg ?? c.standard ?? '';
   return (
     <div ref={setNodeRef} style={style} className={`alg-time-attack-case${isDragging ? ' is-dragging' : ''}`}>
       <span className="alg-time-attack-index" aria-hidden="true">{index + 1}</span>
       <div className="alg-time-attack-thumb">
         <CaseThumb
-          puzzle="3x3"
+          puzzle={puzzle}
           set={setSlug}
           sticker={c.sticker}
           alg={alg}
@@ -88,19 +106,33 @@ function SortableCase({ c, setSlug, index }: { c: AlgCase; setSlug: TimeAttackSe
 }
 
 export default function AlgTimeAttackPage() {
-  useTranslation();
+  const { i18n } = useTranslation();
   const user = useAuthUser();
-  const [setSlug, setSetSlug] = useQueryState(
-    'set',
-    parseAsStringEnum<TimeAttackSet>([...TIME_ATTACK_SETS]).withDefault('oll'),
-  );
-  const [scope, setScope] = useQueryState('scope', parseAsString.withDefault(''));
+  const [{ puzzle, set: requestedSetSlug, scope }, setQuery] = useQueryStates({
+    puzzle: parseAsStringEnum<AlgPuzzle>([...ALG_PUZZLES]).withDefault('3x3'),
+    set: parseAsString.withDefault('oll'),
+    scope: parseAsString.withDefault(''),
+  });
+  const availableSets = ALG_CATALOG[puzzle];
+  const setSlug = getAlgSetMeta(puzzle, requestedSetSlug)
+    ? requestedSetSlug
+    : availableSets[0].slug;
   const [data, setData] = useState<AlgFile | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [order, setOrder] = useState<string[]>([]);
   const [syncState, setSyncState] = useState<SyncState>('local');
   const saveSequence = useRef(0);
   const lastUpdated = useRef(0);
+  const isZh = i18n.language.startsWith('zh');
+  const puzzlePickerGroups = useMemo<readonly PuzzlePickerGroup[]>(() => [{
+    id: 'algorithm-puzzles',
+    label: tr({ zh: '公式库项目', en: 'Algorithm puzzles' }),
+    items: ALG_PUZZLES.map((item) => ({
+      id: item,
+      label: eventDisplayName(item, isZh),
+      textLabel: item,
+    })),
+  }], [isZh]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -112,21 +144,26 @@ export default function AlgTimeAttackPage() {
     let active = true;
     setData(null);
     setLoadError(false);
-    void loadAlg('3x3', setSlug).then((next) => {
+    void loadAlg(puzzle, setSlug).then((next) => {
       if (active) setData(next);
     }).catch(() => {
       if (active) setLoadError(true);
     });
     return () => { active = false; };
-  }, [setSlug]);
+  }, [puzzle, setSlug]);
+
+  useEffect(() => {
+    if (requestedSetSlug === setSlug) return;
+    void setQuery({ set: setSlug, scope: '' });
+  }, [requestedSetSlug, setQuery, setSlug]);
 
   const sortedCases = useMemo(() => {
     if (!data) return [];
     return sortAlgItemsBySignedLabel(
       sortByCp(setSlug, data.cases),
-      (c) => primaryCaseName('3x3', setSlug, c),
+      (c) => primaryCaseName(puzzle, setSlug, c),
     );
-  }, [data, setSlug]);
+  }, [data, puzzle, setSlug]);
   const scopes = useMemo(() => timeAttackScopes(sortedCases), [sortedCases]);
   const scopedCases = useMemo(
     () => casesForTimeAttackScope(sortedCases, scope),
@@ -145,15 +182,15 @@ export default function AlgTimeAttackPage() {
       return;
     }
     let active = true;
-    const local = readLocalTimeAttackOrder('3x3', setSlug, scope);
+    const local = readLocalTimeAttackOrder(puzzle, setSlug, scope);
     setOrder(normalizeTimeAttackOrder(canonicalKeys, local?.keys));
     setSyncState(user ? 'loading' : 'local');
     if (!user) return () => { active = false; };
 
-    void fetchCloudTimeAttackOrder('3x3', setSlug, scope).then(async (cloud) => {
+    void fetchCloudTimeAttackOrder(puzzle, setSlug, scope).then(async (cloud) => {
       if (!active) return;
       // 网络返回前用户可能已经排过一次，再读本机，确保刚发生的修改赢过旧云端。
-      const currentLocal = readLocalTimeAttackOrder('3x3', setSlug, scope);
+      const currentLocal = readLocalTimeAttackOrder(puzzle, setSlug, scope);
       const winner = newerTimeAttackOrder(currentLocal, cloud);
       const keys = normalizeTimeAttackOrder(canonicalKeys, winner?.keys);
       let snapshot: TimeAttackOrderSnapshot | null = winner ? { ...winner, keys } : null;
@@ -162,36 +199,36 @@ export default function AlgTimeAttackPage() {
       setOrder(keys);
       if (snapshot) {
         lastUpdated.current = Math.max(lastUpdated.current, snapshot.updatedAt);
-        writeLocalTimeAttackOrder('3x3', setSlug, scope, snapshot);
+        writeLocalTimeAttackOrder(puzzle, setSlug, scope, snapshot);
       }
       if (snapshot && (repaired || !cloud || snapshot.updatedAt > cloud.updatedAt)) {
-        await saveCloudTimeAttackOrder('3x3', setSlug, scope, snapshot);
+        await saveCloudTimeAttackOrder(puzzle, setSlug, scope, snapshot);
       }
       if (active) setSyncState('saved');
     }).catch(() => {
       if (active) setSyncState('error');
     });
     return () => { active = false; };
-  }, [canonicalKeys, scope, setSlug, user]);
+  }, [canonicalKeys, puzzle, scope, setSlug, user]);
 
   const persistOrder = useCallback((keys: string[]) => {
     const updatedAt = Math.max(Date.now(), lastUpdated.current + 1);
     lastUpdated.current = updatedAt;
     const snapshot = { keys, updatedAt };
     setOrder(keys);
-    writeLocalTimeAttackOrder('3x3', setSlug, scope, snapshot);
+    writeLocalTimeAttackOrder(puzzle, setSlug, scope, snapshot);
     if (!user) {
       setSyncState('local');
       return;
     }
     const sequence = ++saveSequence.current;
     setSyncState('saving');
-    void saveCloudTimeAttackOrder('3x3', setSlug, scope, snapshot).then(() => {
+    void saveCloudTimeAttackOrder(puzzle, setSlug, scope, snapshot).then(() => {
       if (sequence === saveSequence.current) setSyncState('saved');
     }).catch(() => {
       if (sequence === saveSequence.current) setSyncState('error');
     });
-  }, [scope, setSlug, user]);
+  }, [puzzle, scope, setSlug, user]);
 
   const onDragEnd = useCallback((event: DragEndEvent) => {
     if (!event.over || event.active.id === event.over.id) return;
@@ -212,7 +249,7 @@ export default function AlgTimeAttackPage() {
     persistOrder(next);
   }, [order, persistOrder]);
 
-  const meta = getAlgSetMeta('3x3', setSlug);
+  const meta = getAlgSetMeta(puzzle, setSlug);
   const topScopes = scopes.filter((item) => item.depth === 1);
   const nestedScopes = scopes.filter((item) => item.depth > 1);
   const syncText: Record<SyncState, string> = {
@@ -237,25 +274,36 @@ export default function AlgTimeAttackPage() {
       </header>
 
       <div className="alg-time-attack-controls">
+        <div className="alg-time-attack-field">
+          <span>{tr({ zh: '项目', en: 'Puzzle' })}</span>
+          <PuzzlePicker
+            isZh={isZh}
+            selectedEvent={puzzle}
+            groups={puzzlePickerGroups}
+            onSelect={(id) => {
+              if (!(ALG_PUZZLES as readonly string[]).includes(id)) return;
+              const nextPuzzle = id as AlgPuzzle;
+              void setQuery({ puzzle: nextPuzzle, set: ALG_CATALOG[nextPuzzle][0].slug, scope: '' });
+            }}
+          />
+        </div>
         <label className="alg-time-attack-field">
           <span>{tr({ zh: '公式集', en: 'Set' })}</span>
           <select
             className="alg-time-attack-select"
             value={setSlug}
             onChange={(event) => {
-              void setSetSlug(event.target.value as TimeAttackSet);
-              void setScope('');
+              void setQuery({ set: event.target.value, scope: '' });
             }}
           >
-            {TIME_ATTACK_SETS.map((slug) => {
-              const item = getAlgSetMeta('3x3', slug);
-              return <option key={slug} value={slug}>{item?.short ?? slug.toUpperCase()}</option>;
-            })}
+            {availableSets.map((item) => (
+              <option key={item.slug} value={item.slug}>{item.short ?? tr({ en: item.en, zh: item.zh })}</option>
+            ))}
           </select>
         </label>
         <label className="alg-time-attack-field">
           <span>{tr({ zh: '范围', en: 'Scope' })}</span>
-          <select className="alg-time-attack-select" value={scope} onChange={(event) => void setScope(event.target.value)}>
+          <select className="alg-time-attack-select" value={scope} onChange={(event) => void setQuery({ scope: event.target.value })}>
             <option value="">{tr({ zh: '全部', en: 'All' })}</option>
             {topScopes.map((item) => <option key={item.value} value={item.value}>{scopeLabel(setSlug, item.value)}</option>)}
             {nestedScopes.length > 0 && (
@@ -291,7 +339,9 @@ export default function AlgTimeAttackPage() {
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <SortableContext items={order} strategy={rectSortingStrategy}>
             <div className="alg-time-attack-grid">
-              {orderedCases.map((c, index) => <SortableCase key={caseKey(c)} c={c} setSlug={setSlug} index={index} />)}
+              {orderedCases.map((c, index) => (
+                <SortableCase key={caseKey(c)} c={c} puzzle={puzzle} setSlug={setSlug} index={index} />
+              ))}
             </div>
           </SortableContext>
         </DndContext>

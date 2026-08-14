@@ -122,8 +122,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'alg/time-attack': {
     title: { zh: '公式连拧', en: 'Algorithm Time Attack' },
     description: {
-      zh: '按自定义顺序连续练习 OLL、PLL、COLL 与 ZBLL，只显示魔方图，支持分组练习与登录同步。',
-      en: 'Drill OLL, PLL, COLL, and ZBLL continuously in a custom order using diagrams only, with subset practice and signed-in sync.',
+      zh: '按自定义顺序连续练习公式库中的各种项目与公式集，只显示魔方图，支持分组练习与登录同步。',
+      en: 'Drill every supported puzzle and algorithm set continuously in a custom order using diagrams only, with subset practice and signed-in sync.',
     },
   },
   'alg/3x3/notation': {

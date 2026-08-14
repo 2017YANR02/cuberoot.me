@@ -1,16 +1,16 @@
 import { Hono } from 'hono';
+import { ALG_PUZZLES, getAlgSetMeta, type AlgPuzzle } from '@cuberoot/shared/alg';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
 
 export const algTimeAttackOrderRoutes = new Hono();
 
-const TIME_ATTACK_SETS = new Set(['oll', 'pll', 'coll', 'zbll']);
 const MAX_KEYS = 5000;
 
 function parseScope(raw: string | undefined): string | null {
   const scope = (raw ?? '').trim().toLowerCase();
-  if (scope.length > 96 || !/^[a-z0-9+_/-]*$/.test(scope)) return null;
+  if (scope.length > 96 || /[\x00-\x1f\x7f]/.test(scope)) return null;
   return scope;
 }
 
@@ -24,7 +24,9 @@ function validCaseKey(value: unknown): value is string {
 function parseTarget(puzzleRaw: string | undefined, setRaw: string | undefined) {
   const puzzle = (puzzleRaw ?? '').trim().toLowerCase();
   const setSlug = (setRaw ?? '').trim().toLowerCase();
-  return puzzle === '3x3' && TIME_ATTACK_SETS.has(setSlug) ? { puzzle, setSlug } : null;
+  if (!(ALG_PUZZLES as readonly string[]).includes(puzzle)) return null;
+  const algPuzzle = puzzle as AlgPuzzle;
+  return getAlgSetMeta(algPuzzle, setSlug) ? { puzzle: algPuzzle, setSlug } : null;
 }
 
 interface OrderRow {

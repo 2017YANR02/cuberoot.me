@@ -447,9 +447,6 @@ export function collapseAlgGroupsByDefault(
 ): boolean {
   return caseCount > 100 && !umbrella && !(puzzle === 'sq1' && ['cs', 'csp', 'obl'].includes(set));
 }
-
-const TIME_ATTACK_SETS_3X3 = new Set(['oll', 'pll', 'coll', 'zbll']);
-
 export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initialData, collection }: AlgCategoryViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
@@ -1155,9 +1152,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             {tr({ zh: '训练', en: 'Train' })}
           </Link>
         )}
-        {data && !collection && puzzleParam === '3x3' && TIME_ATTACK_SETS_3X3.has(set) && (
+        {data && !collection && validPuzzle && (
           <Link
-            href={`/alg/time-attack?set=${set}${timeAttackScope ? `&scope=${encodeURIComponent(timeAttackScope)}` : ''}`}
+            href={`/alg/time-attack?puzzle=${puzzleParam}&set=${set}${timeAttackScope ? `&scope=${encodeURIComponent(timeAttackScope)}` : ''}`}
             className="alg-recog-cta"
             prefetch={false}
           >
