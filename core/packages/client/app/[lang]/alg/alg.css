@@ -94,6 +94,9 @@ html[data-theme=dark] .alg-root {
 }
 /* 公式库页首(/alg 与 /alg/<puzzle>):里面有下拉按钮,baseline 对齐会把这排顶歪 */
 .alg-cat-header--puzzle { align-items: center; }
+.alg-puzzle-back-row {
+  flex-basis: 100%;
+}
 
 /* ── 项目下拉(取代落地页的项目卡片)── */
 .alg-puzzle-select { position: relative; }
