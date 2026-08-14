@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: {
     {
       title: {
         zh: `${s.labelZh}:3x3 极限预测`,
-        // Colon, not an em-dash: metadataFromEntry appends " — CubeRoot".
+        // Colon keeps the section name and prediction label visually distinct.
         en: `${s.labelEn}: how fast can 3x3 get?`,
       },
       description: {

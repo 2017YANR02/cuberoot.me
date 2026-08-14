@@ -14,8 +14,8 @@ import type { Metadata } from 'next';
 // it. So each route gets a three-line layout.tsx that calls pageMetadata('<route>')
 // and renders children unchanged.
 //
-// The zh/en strings below were seeded from the existing useDocumentTitle calls,
-// so tab titles are unchanged; this file is hand-maintained from here on.
+// The zh/en strings below were seeded from the existing useDocumentTitle calls;
+// subpage browser titles use these page names without repeating the site brand.
 // Adding a route: add an entry here, then create the layout.tsx (see any
 // existing one). A route with no entry simply inherits the site-wide defaults,
 // which is the old behaviour — never a crash.
@@ -32,8 +32,6 @@ export interface PageMetaEntry {
 }
 
 const BRAND = 'CubeRoot';
-// Same separator useDocumentTitle uses, so the browser tab reads identically
-// before and after hydration.
 const SEP = ' — ';
 // Re-included on every openGraph object below: Next REPLACES the parent
 // openGraph per segment rather than deep-merging, so a page that sets its own
@@ -42,13 +40,11 @@ const SEP = ' — ';
 const SHARE_IMAGE = '/icons/CubeRoot.png';
 
 export const PAGE_META: Record<string, PageMetaEntry> = {
-  // The landing page called useDocumentTitle('', ''), i.e. the tab just read
-  // "CubeRoot". That is the one page where a bare brand name is the weakest
-  // possible title, so it gets a real one here.
+  // The landing page is the only browser tab that keeps the site name.
   '': {
     title: {
-      zh: '魔方工具:求解器、复盘与 WCA 统计',
-      en: 'Speedcubing Tools, Solvers and WCA Statistics',
+      zh: 'CubeRoot',
+      en: 'CubeRoot',
     },
     description: {
       zh: '魔方工具站:求解器、复盘、公式训练、打乱分析与 WCA 统计,中英双语,全部免费。',
@@ -536,17 +532,15 @@ function pick(lang: string): 'zh' | 'en' {
  *  that derive entries from their own data (e.g. the regulation chapters). */
 export function metadataFromEntry(entry: PageMetaEntry, lang: string): Metadata {
   const l = pick(lang);
-  // Brand leads: "CubeRoot — 魔方工具…". The tab strip truncates from the right,
-  // so a narrow tab still shows who the site is. Empty page title degrades to the
-  // bare brand, matching useDocumentTitle rather than emitting a bare separator.
   const page = entry.title[l].trim();
-  const title = page ? `${BRAND}${SEP}${page}` : BRAND;
+  const title = page || BRAND;
+  const shareTitle = page && page !== BRAND ? `${BRAND}${SEP}${page}` : BRAND;
   const description = entry.description?.[l];
   return {
     title,
     ...(description ? { description } : {}),
     openGraph: {
-      title,
+      title: shareTitle,
       ...(description ? { description } : {}),
       type: 'website',
       siteName: BRAND,
@@ -554,7 +548,7 @@ export function metadataFromEntry(entry: PageMetaEntry, lang: string): Metadata 
     },
     twitter: {
       card: 'summary',
-      title,
+      title: shareTitle,
       ...(description ? { description } : {}),
       images: [SHARE_IMAGE],
     },

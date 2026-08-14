@@ -26,7 +26,7 @@ type Bi = { en: string; zh: string };
 function pick(l: Bi, lang: string): string {
   return lang.startsWith('zh') ? l.zh : l.en;
 }
-const FALLBACK: Bi = { en: 'Forum | CubeRoot', zh: '论坛 | CubeRoot' };
+const FALLBACK: Bi = { en: 'Forum', zh: '论坛' };
 const DISCUSS: Bi = { en: 'discussion', zh: '讨论' };
 const LANG_PREFIX: Bi = { en: '', zh: '/zh' };
 
@@ -48,12 +48,12 @@ export async function generateMetadata({ params }: {
   const forumDesc = seo.forumName ? `${seo.forumName} ${pick(DISCUSS, lang)}` : '';
   const description = seo.excerpt || forumDesc;
   return {
-    title: `${seo.title} | CubeRoot`,
+    title: seo.title,
     description,
     alternates: { canonical },
     robots: { index: false, follow: true },
     // Per-segment openGraph replaces the site default, so re-include images.
-    openGraph: { title: seo.title, description, url: canonical, type: 'article', images: ['/icons/CubeRoot.png'] },
+    openGraph: { title: `CubeRoot — ${seo.title}`, description, url: canonical, type: 'article', images: ['/icons/CubeRoot.png'] },
   };
 }
 

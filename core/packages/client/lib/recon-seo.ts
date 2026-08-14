@@ -141,7 +141,7 @@ const DESC_TAIL: Bi = {
 };
 const DESC_DE: Bi = { en: ' ', zh: ' 的 ' };
 
-/** Page <title>. zh: "选手 项目 成绩 比赛 复盘 | CubeRoot"; en: "Person event time reconstruction — comp | CubeRoot". */
+/** Page <title>. zh: "选手 项目 成绩 比赛 复盘"; en: "Person event time reconstruction — comp". */
 export function buildReconTitle(solve: ReconSolve, isZh: boolean): string {
   const { person, event, time, comp } = reconTitleParts(solve, isZh);
   const reconWord = seoLabel('reconWord', isZh);
@@ -149,12 +149,12 @@ export function buildReconTitle(solve: ReconSolve, isZh: boolean): string {
     const head = [person, event, time].filter(Boolean).join(' ');
     const core = head ? `${head} ${reconWord}` : 'Reconstruction';
     const withComp = comp ? `${core} — ${comp}` : core;
-    return `${withComp} | CubeRoot`;
+    return withComp;
   }
   const head = [person, event, time].filter(Boolean).join(' ');
   const withComp = comp ? `${head} ${comp}`.trim() : head;
   const core = `${withComp ? withComp + ' ' : ''}${reconWord}`.trim();
-  return `${core} | CubeRoot`;
+  return core;
 }
 
 /** One-line meta description: method, time, comp, date. */
