@@ -248,19 +248,8 @@
     letter-spacing: 0.02em;
 }
 
-.opponent-display {
-    font-family: 'Segment7Standard', monospace;
-    font-size: clamp(1.0rem, 3.5vw, 1.3rem);
-    color: var(--faint-foreground);
-    text-align: center;
-    min-height: 1.2em;
-    letter-spacing: 0.02em;
-    margin-top: -50px;
-}
-
 /* NOTE: 专门针对冒号的样式 */
 .time-display .colon,
-.opponent-display .colon,
 .ao5-display .colon {
     font-family: 'Roboto Mono', monospace;
     font-size: 0.9em;
@@ -1930,19 +1919,15 @@ body.solo .scramble-img {
     border-bottom: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
 }
 
-/* side 布局下 ao5 和 opponent 显示适配 */
+/* side 布局下 ao5 显示适配 */
 .side-layout .ao5-display {
     font-size: clamp(0.65rem, 2vw, 0.85rem);
-}
-
-.side-layout .opponent-display {
-    font-size: clamp(0.8rem, 2.5vw, 1.1rem);
 }
 
 /* ==========================================================
    BattleView 集成新增样式 (Phase 3 — 对战并入 /timer)
    author token-clean / 适配旧 dark-locked 表;旧 .event-overlay-grid
-   被 WcaEventSelector 替代,这里只管包裹尺寸 + 对手区图标拆分。
+   被 WcaEventSelector 替代,这里只管包裹尺寸。
    ========================================================== */
 
 /* WcaEventSelector overlay 包裹:充满 .player-area,居中可滚动 */
@@ -1956,23 +1941,6 @@ body.solo .scramble-img {
 }
 .event-overlay-inner .wca-stats-event-selector {
     justify-content: center;
-}
-
-/* 对手区:lucide Swords 图标静态渲染 + 时间子 span(RAF 只写时间) */
-.opponent-display {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.35em;
-}
-.opponent-icon {
-    display: inline-flex;
-    align-items: center;
-    color: var(--faint-foreground);
-}
-.opponent-time {
-    display: inline-block;
-    min-width: 1em;
 }
 
 /* Solo 底部导航里的模式 pill(solo 无 middle-bar,pill 塞这里) */
