@@ -20,6 +20,7 @@ describe('algorithm time attack order', () => {
 
   it('uses the time attack storage namespace', () => {
     expect(timeAttackOrderStorageKey('3x3', 'zbll', 'u/h')).toBe('alg:time-attack-order:v1:3x3/zbll/u/h');
+    expect(timeAttackOrderStorageKey('sq1', 'pbl', '')).toBe('alg:time-attack-order:v1:sq1/pbl/all');
   });
 
   it('keeps reading orders saved under the legacy namespace', () => {
