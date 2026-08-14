@@ -4,8 +4,8 @@
 // content/hub pages (calc, recon, scramble, math, regulation, …). Immersive tool
 // pages (timer/sim/paint/solver) intentionally rely on browser back instead.
 // Wraps HomeLink (lang-correct home href) with a shared `.back-home` style so
-// pages don't each hand-roll their own back-link CSS. Drop it at the top of the
-// page's outermost container / header.
+// pages don't each hand-roll their own back-link CSS. Place it inside the same-width
+// header/topbar/wrap as the body, never directly under a full-bleed page root.
 
 import { ChevronLeft } from 'lucide-react';
 import HomeLink from './HomeLink';
