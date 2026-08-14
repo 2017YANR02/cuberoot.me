@@ -19,6 +19,8 @@ import {
   fetchTeacherDirectory,
   mergeTeacherDirectoryEntries,
   updateTeacherDirectoryEntry,
+  type DirectoryContactKey,
+  type DirectoryContacts,
   type DirectoryEntryKind,
   type DirectoryTeachingMode,
   type TeacherDirectoryDraft,
@@ -27,11 +29,28 @@ import {
 import './teachers.css';
 
 const KINDS = ['all', 'teacher', 'organization'] as const;
+const URL_CONTACT_KEYS = new Set<DirectoryContactKey>([
+  'youtube', 'bilibili', 'douyin', 'kuaishou', 'xiaohongshu', 'facebook',
+]);
+const CONTACT_FIELDS: { key: DirectoryContactKey; label: { zh: string; en: string }; placeholder?: { zh: string; en: string } }[] = [
+  { key: 'wechat', label: { zh: '微信', en: 'WeChat' }, placeholder: { zh: '微信号', en: 'WeChat ID' } },
+  { key: 'qq', label: { zh: 'QQ', en: 'QQ' }, placeholder: { zh: 'QQ 号', en: 'QQ number' } },
+  { key: 'email', label: { zh: '邮箱', en: 'Email' }, placeholder: { zh: 'name@example.com', en: 'name@example.com' } },
+  { key: 'phone', label: { zh: '手机号', en: 'Phone' }, placeholder: { zh: '含国家或地区代码（如需要）', en: 'Include country or region code if needed' } },
+  { key: 'youtube', label: { zh: 'YouTube', en: 'YouTube' }, placeholder: { zh: 'https://youtube.com/…', en: 'https://youtube.com/…' } },
+  { key: 'bilibili', label: { zh: 'B站主页', en: 'Bilibili' }, placeholder: { zh: 'https://space.bilibili.com/…', en: 'https://space.bilibili.com/…' } },
+  { key: 'douyin', label: { zh: '抖音主页', en: 'Douyin' }, placeholder: { zh: 'https://www.douyin.com/…', en: 'https://www.douyin.com/…' } },
+  { key: 'kuaishou', label: { zh: '快手主页', en: 'Kuaishou' }, placeholder: { zh: 'https://www.kuaishou.com/…', en: 'https://www.kuaishou.com/…' } },
+  { key: 'xiaohongshu', label: { zh: '小红书主页', en: 'Xiaohongshu' }, placeholder: { zh: 'https://www.xiaohongshu.com/…', en: 'https://www.xiaohongshu.com/…' } },
+  { key: 'wechatChannels', label: { zh: '视频号', en: 'WeChat Channels' }, placeholder: { zh: '视频号名称或账号', en: 'Channel name or ID' } },
+  { key: 'facebook', label: { zh: 'Facebook', en: 'Facebook' }, placeholder: { zh: 'https://facebook.com/…', en: 'https://facebook.com/…' } },
+  { key: 'other', label: { zh: '其他联系方式', en: 'Other contact' } },
+];
 
 const EMPTY_DRAFT: TeacherDirectoryDraft = {
   kind: 'teacher', nameZh: '', nameEn: '', locationZh: '', locationEn: '',
   specialtiesZh: [], specialtiesEn: [], teachingMode: 'both',
-  descriptionZh: '', descriptionEn: '', contact: '', website: '', wcaId: '',
+  descriptionZh: '', descriptionEn: '', contacts: {}, website: '', wcaId: '',
   isCurated: false, isVisible: true,
 };
 
@@ -49,7 +68,7 @@ function entryToDraft(entry: TeacherDirectoryEntry): TeacherDirectoryDraft {
     locationZh: entry.locationZh, locationEn: entry.locationEn,
     specialtiesZh: entry.specialtiesZh, specialtiesEn: entry.specialtiesEn,
     teachingMode: entry.teachingMode, descriptionZh: entry.descriptionZh,
-    descriptionEn: entry.descriptionEn, contact: entry.contact, website: entry.website,
+    descriptionEn: entry.descriptionEn, contacts: { ...entry.contacts }, website: entry.website,
     wcaId: entry.wcaId, isCurated: entry.isCurated, isVisible: entry.isVisible,
   };
 }
@@ -60,6 +79,22 @@ function splitTags(value: string): string[] {
 
 function websiteLabel(value: string): string {
   try { return new URL(value).hostname.replace(/^www\./, ''); } catch { return value; }
+}
+
+function contactHref(key: DirectoryContactKey, value: string): string | undefined {
+  if (URL_CONTACT_KEYS.has(key)) return value;
+  if (key === 'email') return `mailto:${value}`;
+  if (key === 'phone') return `tel:${value.replace(/[^\d+*#]/g, '')}`;
+  return undefined;
+}
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 function modeLabel(mode: DirectoryTeachingMode): string {
@@ -81,6 +116,10 @@ function DirectoryEntry({ entry, canEdit, onEdit }: {
   const alternateName = [entry.nameZh, entry.nameEn].find((candidate) => candidate && candidate !== name);
   const location = localText(entry.locationZh, entry.locationEn);
   const tags = localTags(entry.specialtiesZh, entry.specialtiesEn);
+  const contacts = CONTACT_FIELDS.flatMap((field) => {
+    const value = entry.contacts[field.key];
+    return value ? [{ ...field, value, href: contactHref(field.key, value) }] : [];
+  });
   return (
     <article className="directory-entry">
       <div className="directory-entry-heading">
@@ -102,7 +141,20 @@ function DirectoryEntry({ entry, canEdit, onEdit }: {
           {entry.wcaId && <PersonLink wcaId={entry.wcaId} className="directory-link">WCA {entry.wcaId}</PersonLink>}
           {entry.website && <a className="directory-link" href={entry.website} target="_blank" rel="noreferrer">{websiteLabel(entry.website)}<ExternalLink size={14} /></a>}
         </div>
-        {entry.contact && <p className="directory-contact"><strong>{tr({ zh: '联系', en: 'Contact' })}:</strong> {entry.contact}</p>}
+        {contacts.length > 0 && (
+          <div className="directory-contacts">
+            <strong>{tr({ zh: '联系方式', en: 'Contact' })}</strong>
+            <div className="directory-contact-list">
+              {contacts.map(({ key, label, value, href }) => href ? (
+                <a key={key} className="directory-contact-item directory-link" href={href} target={URL_CONTACT_KEYS.has(key) ? '_blank' : undefined} rel={URL_CONTACT_KEYS.has(key) ? 'noreferrer' : undefined}>
+                  <span className="directory-contact-label">{tr(label)}</span><span>{value}</span>{URL_CONTACT_KEYS.has(key) && <ExternalLink size={13} />}
+                </a>
+              ) : (
+                <span key={key} className="directory-contact-item"><span className="directory-contact-label">{tr(label)}</span><span>{value}</span></span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </article>
   );
@@ -133,14 +185,27 @@ function DirectoryEditor({ initial, isAdmin, onClose, onSaved, onDeleted }: {
     setDraft((current) => ({ ...current, [key]: value }));
   };
 
+  const setContact = (key: DirectoryContactKey, value: string) => {
+    setDraft((current) => ({
+      ...current,
+      contacts: { ...current.contacts, [key]: value },
+    }));
+  };
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setError('');
-    const payload = { ...draft, specialtiesZh: splitTags(tagsZh), specialtiesEn: splitTags(tagsEn) };
+    const contacts = Object.fromEntries(
+      Object.entries(draft.contacts).map(([key, value]) => [key, value.trim()]).filter(([, value]) => value),
+    ) as DirectoryContacts;
+    const payload = { ...draft, contacts, specialtiesZh: splitTags(tagsZh), specialtiesEn: splitTags(tagsEn) };
     if (!(payload.nameZh.trim() || payload.nameEn.trim())) return setError(tr({ zh: '请至少填写一个语言的名称。', en: 'Add a name in at least one language.' }));
     if (!(payload.descriptionZh.trim() || payload.descriptionEn.trim())) return setError(tr({ zh: '请至少填写一个语言的介绍。', en: 'Add a description in at least one language.' }));
-    if (!(payload.contact.trim() || payload.website.trim())) return setError(tr({ zh: '请填写公开联系方式或网站。', en: 'Add a public contact method or website.' }));
-    if (payload.website && !/^https?:\/\//i.test(payload.website)) return setError(tr({ zh: '网站地址需以 http:// 或 https:// 开头。', en: 'The website must begin with http:// or https://.' }));
+    if (!(Object.keys(payload.contacts).length || payload.website.trim())) return setError(tr({ zh: '请至少填写一种公开联系方式或网站。', en: 'Add at least one public contact method or website.' }));
+    if (payload.website && !isHttpUrl(payload.website)) return setError(tr({ zh: '网站地址需以 http:// 或 https:// 开头。', en: 'The website must begin with http:// or https://.' }));
+    const invalidUrlContact = CONTACT_FIELDS.find(({ key }) => URL_CONTACT_KEYS.has(key) && payload.contacts[key] && !isHttpUrl(payload.contacts[key]));
+    if (invalidUrlContact) return setError(tr({ zh: `${invalidUrlContact.label.zh}需填写以 http:// 或 https:// 开头的主页链接。`, en: `${invalidUrlContact.label.en} must be a profile URL beginning with http:// or https://.` }));
+    if (payload.contacts.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.contacts.email)) return setError(tr({ zh: '邮箱格式不正确。', en: 'The email address is invalid.' }));
     if (payload.wcaId && !/^\d{4}[A-Z]{4}\d{2}$/.test(payload.wcaId.trim().toUpperCase())) return setError(tr({ zh: 'WCA ID 格式不正确。', en: 'The WCA ID format is invalid.' }));
     payload.wcaId = payload.wcaId.trim().toUpperCase();
     setSaving(true);
@@ -186,10 +251,26 @@ function DirectoryEditor({ initial, isAdmin, onClose, onSaved, onDeleted }: {
             <label><span>{tr({ zh: '中文介绍', en: 'Chinese introduction' })}</span><textarea className="directory-field-control directory-textarea-control" value={draft.descriptionZh} onChange={(event) => setField('descriptionZh', event.target.value)} rows={7} maxLength={4000} /></label>
             <label><span>{tr({ zh: '英文介绍', en: 'English introduction' })}</span><textarea className="directory-field-control directory-textarea-control" value={draft.descriptionEn} onChange={(event) => setField('descriptionEn', event.target.value)} rows={7} maxLength={4000} /></label>
           </div>
-          <div className="directory-form-grid">
-            <label><span>{tr({ zh: '公开联系方式', en: 'Public contact' })}</span><input className="directory-field-control" value={draft.contact} onChange={(event) => setField('contact', event.target.value)} maxLength={500} /></label>
-            <label><span>{tr({ zh: '网站', en: 'Website' })}</span><input className="directory-field-control" type="url" value={draft.website} onChange={(event) => setField('website', event.target.value)} placeholder="https://" maxLength={500} /></label>
-          </div>
+          <fieldset className="directory-contact-fields">
+            <legend>{tr({ zh: '公开联系方式', en: 'Public contact methods' })}</legend>
+            <p>{tr({ zh: '按需填写，空着的项目不会公开显示。', en: 'Fill in only what you use. Empty fields will not be shown.' })}</p>
+            <div className="directory-form-grid">
+              {CONTACT_FIELDS.map((field) => (
+                <label key={field.key}>
+                  <span>{tr(field.label)}</span>
+                  <input
+                    className="directory-field-control"
+                    type={field.key === 'email' ? 'email' : field.key === 'phone' ? 'tel' : 'text'}
+                    value={draft.contacts[field.key] ?? ''}
+                    onChange={(event) => setContact(field.key, event.target.value)}
+                    placeholder={field.placeholder ? tr(field.placeholder) : undefined}
+                    maxLength={500}
+                  />
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <label><span>{tr({ zh: '个人网站或机构官网', en: 'Personal or organization website' })}</span><input className="directory-field-control" type="url" value={draft.website} onChange={(event) => setField('website', event.target.value)} placeholder="https://" maxLength={500} /></label>
           <label className="directory-wca-field"><span>WCA ID</span><input className="directory-field-control" value={draft.wcaId} onChange={(event) => setField('wcaId', event.target.value.toUpperCase())} placeholder="2017YANR02" maxLength={10} /></label>
           <BoolToggle value={draft.isVisible} onChange={(value) => setField('isVisible', value)} label={tr({ zh: '公开显示', en: 'Show publicly' })} />
           {!draft.isVisible && <p className="directory-form-note">{tr({ zh: '隐藏后，只有你登录时能看到这条资料。', en: 'When hidden, only you can see this entry while signed in.' })}</p>}
@@ -254,7 +335,7 @@ function TeachersDirectoryClient() {
     return entries.filter((entry) => {
       if (kind !== 'all' && entry.kind !== kind) return false;
       if (!needle) return true;
-      return [entry.nameZh, entry.nameEn, entry.locationZh, entry.locationEn, entry.descriptionZh, entry.descriptionEn, entry.wcaId, ...entry.specialtiesZh, ...entry.specialtiesEn].join('\n').toLocaleLowerCase().includes(needle);
+      return [entry.nameZh, entry.nameEn, entry.locationZh, entry.locationEn, entry.descriptionZh, entry.descriptionEn, entry.wcaId, ...Object.values(entry.contacts), ...entry.specialtiesZh, ...entry.specialtiesEn].join('\n').toLocaleLowerCase().includes(needle);
     });
   }, [entries, kind, query]);
 

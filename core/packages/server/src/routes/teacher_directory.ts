@@ -18,6 +18,15 @@ export const teacherDirectoryRoutes = new Hono();
 
 type EntryKind = 'teacher' | 'organization';
 type TeachingMode = 'online' | 'in_person' | 'both';
+const CONTACT_KEYS = [
+  'wechat', 'qq', 'email', 'phone', 'youtube', 'bilibili', 'douyin', 'kuaishou',
+  'xiaohongshu', 'wechatChannels', 'facebook', 'other',
+] as const;
+type ContactKey = typeof CONTACT_KEYS[number];
+type DirectoryContacts = Partial<Record<ContactKey, string>>;
+const URL_CONTACT_KEYS = new Set<ContactKey>([
+  'youtube', 'bilibili', 'douyin', 'kuaishou', 'xiaohongshu', 'facebook',
+]);
 
 interface DirectoryDraft {
   kind: EntryKind;
@@ -30,6 +39,7 @@ interface DirectoryDraft {
   specialtiesZh: string[];
   specialtiesEn: string[];
   teachingMode: TeachingMode;
+  contacts: DirectoryContacts;
   contact: string;
   website: string;
   wcaId: string;
@@ -49,6 +59,7 @@ interface DirectoryRow {
   specialties_zh: string[] | null;
   specialties_en: string[] | null;
   teaching_mode: TeachingMode;
+  contacts: DirectoryContacts | null;
   contact: string;
   website: string;
   wca_id: string | null;
@@ -62,7 +73,7 @@ interface DirectoryRow {
 
 const COLUMNS = `id, kind, name_zh, name_en, location_zh, location_en,
   description_zh, description_en, specialties_zh, specialties_en, teaching_mode,
-  contact, website, wca_id, is_curated, is_visible, owner_key, owner_name, created_at, updated_at`;
+  contacts, contact, website, wca_id, is_curated, is_visible, owner_key, owner_name, created_at, updated_at`;
 const KINDS: readonly EntryKind[] = ['teacher', 'organization'];
 const MODES: readonly TeachingMode[] = ['online', 'in_person', 'both'];
 
@@ -89,8 +100,39 @@ function cleanTags(value: unknown): string[] {
   return result;
 }
 
-function readDraft(body: Partial<DirectoryDraft>, defaultVisible = true): DirectoryDraft {
+function cleanContacts(value: unknown, legacyContact = ''): DirectoryContacts {
+  const contacts: DirectoryContacts = {};
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const source = value as Record<string, unknown>;
+    for (const key of CONTACT_KEYS) {
+      const contactValue = cleanText(source[key], 500);
+      if (contactValue) contacts[key] = contactValue;
+    }
+  }
+  if (Object.keys(contacts).length === 0 && legacyContact) {
+    contacts.other = cleanText(legacyContact, 500);
+  }
+  return contacts;
+}
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function readDraft(
+  body: Partial<DirectoryDraft>,
+  defaults?: { isVisible: boolean; contacts: DirectoryContacts; contact: string },
+): DirectoryDraft {
   const wcaId = cleanText(body.wcaId, 20).toUpperCase();
+  const rawContact = cleanText(body.contact, 300);
+  const contacts = body.contacts === undefined && defaults
+    ? cleanContacts(defaults.contacts, defaults.contact)
+    : cleanContacts(body.contacts, rawContact);
   return {
     kind: KINDS.includes(body.kind as EntryKind) ? body.kind as EntryKind : 'teacher',
     nameZh: cleanText(body.nameZh, 160),
@@ -104,25 +146,25 @@ function readDraft(body: Partial<DirectoryDraft>, defaultVisible = true): Direct
     teachingMode: MODES.includes(body.teachingMode as TeachingMode)
       ? body.teachingMode as TeachingMode
       : 'both',
-    contact: cleanText(body.contact, 300),
+    contacts,
+    contact: rawContact || cleanText(Object.values(contacts)[0], 300),
     website: cleanText(body.website, 2000),
     wcaId,
     isCurated: body.isCurated === true,
-    isVisible: typeof body.isVisible === 'boolean' ? body.isVisible : defaultVisible,
+    isVisible: typeof body.isVisible === 'boolean' ? body.isVisible : defaults?.isVisible ?? true,
   };
 }
 
 function validateDraft(draft: DirectoryDraft): string | null {
   if (!draft.nameZh && !draft.nameEn) return 'name_required';
   if (!draft.descriptionZh && !draft.descriptionEn) return 'description_required';
-  if (!draft.contact && !draft.website) return 'contact_required';
-  if (draft.website) {
-    try {
-      const url = new URL(draft.website);
-      if (url.protocol !== 'http:' && url.protocol !== 'https:') return 'website_invalid';
-    } catch {
-      return 'website_invalid';
-    }
+  if (Object.keys(draft.contacts).length === 0 && !draft.website) return 'contact_required';
+  if (draft.website && !isHttpUrl(draft.website)) return 'website_invalid';
+  for (const key of URL_CONTACT_KEYS) {
+    if (draft.contacts[key] && !isHttpUrl(draft.contacts[key])) return `${key}_invalid`;
+  }
+  if (draft.contacts.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.contacts.email)) {
+    return 'email_invalid';
   }
   if (draft.wcaId && !/^\d{4}[A-Z]{4}\d{2}$/.test(draft.wcaId)) return 'wca_id_invalid';
   return null;
@@ -141,6 +183,7 @@ function toJson(row: DirectoryRow, withOwner = false) {
     specialtiesZh: row.specialties_zh ?? [],
     specialtiesEn: row.specialties_en ?? [],
     teachingMode: row.teaching_mode,
+    contacts: cleanContacts(row.contacts, row.contact),
     contact: row.contact,
     website: row.website,
     wcaId: row.wca_id ?? '',
@@ -193,14 +236,14 @@ teacherDirectoryRoutes.post('/teachers', async (c) => {
   const rows = await query<DirectoryRow>(
     `INSERT INTO teacher_directory_entries
        (kind, name_zh, name_en, location_zh, location_en, description_zh, description_en,
-        specialties_zh, specialties_en, teaching_mode, contact, website, wca_id,
+        specialties_zh, specialties_en, teaching_mode, contacts, contact, website, wca_id,
         is_curated, is_visible, owner_key, owner_name)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?, ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?, ?, ?, ?, ?, ?)
      RETURNING ${COLUMNS}`,
     [
       draft.kind, draft.nameZh, draft.nameEn, draft.locationZh, draft.locationEn,
       draft.descriptionZh, draft.descriptionEn, draft.specialtiesZh, draft.specialtiesEn,
-      draft.teachingMode, draft.contact, draft.website, draft.wcaId || null,
+      draft.teachingMode, draft.contacts, draft.contact, draft.website, draft.wcaId || null,
       admin ? draft.isCurated : false, draft.isVisible, user.wcaId, user.name,
     ],
   );
@@ -223,20 +266,24 @@ teacherDirectoryRoutes.put('/teachers/:id', async (c) => {
     return c.json({ error: 'Cannot edit this directory entry' }, 403);
   }
 
-  const draft = readDraft(await c.req.json<Partial<DirectoryDraft>>(), existing[0].is_visible);
+  const draft = readDraft(await c.req.json<Partial<DirectoryDraft>>(), {
+    isVisible: existing[0].is_visible,
+    contacts: existing[0].contacts ?? {},
+    contact: existing[0].contact,
+  });
   const error = validateDraft(draft);
   if (error) return c.json({ error: 'Invalid directory entry', code: error }, 400);
   const rows = await query<DirectoryRow>(
     `UPDATE teacher_directory_entries SET
        kind = ?, name_zh = ?, name_en = ?, location_zh = ?, location_en = ?,
        description_zh = ?, description_en = ?, specialties_zh = ?::jsonb,
-       specialties_en = ?::jsonb, teaching_mode = ?, contact = ?, website = ?,
+       specialties_en = ?::jsonb, teaching_mode = ?, contacts = ?::jsonb, contact = ?, website = ?,
        wca_id = ?, is_curated = ?, is_visible = ?
      WHERE id = ? RETURNING ${COLUMNS}`,
     [
       draft.kind, draft.nameZh, draft.nameEn, draft.locationZh, draft.locationEn,
       draft.descriptionZh, draft.descriptionEn, draft.specialtiesZh, draft.specialtiesEn,
-      draft.teachingMode, draft.contact, draft.website, draft.wcaId || null,
+      draft.teachingMode, draft.contacts, draft.contact, draft.website, draft.wcaId || null,
       admin ? draft.isCurated : existing[0].is_curated, draft.isVisible, id,
     ],
   );

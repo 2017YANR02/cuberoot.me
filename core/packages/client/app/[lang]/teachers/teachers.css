@@ -132,8 +132,19 @@
 .directory-link { gap: 5px; }
 .directory-link { color: var(--foreground); text-decoration-color: var(--border-default); text-underline-offset: 3px; }
 .directory-link:hover { color: var(--accent); }
-.directory-contact { margin: 14px 0 0; color: var(--muted-foreground); font-size: 0.86rem; overflow-wrap: anywhere; }
-.directory-contact strong { color: var(--foreground); }
+.directory-contacts { margin-top: 16px; font-size: 0.86rem; }
+.directory-contacts > strong { color: var(--foreground); }
+.directory-contact-list { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 8px; }
+.directory-contact-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+.directory-contact-item > span:not(.directory-contact-label) { min-width: 0; }
+.directory-contact-label { color: var(--foreground); font-weight: 600; white-space: nowrap; }
 .directory-state { margin: 0; padding: 42px 0; color: var(--muted-foreground); }
 .directory-load-error,
 .directory-form-error { color: var(--destructive); }
@@ -167,6 +178,9 @@
 .directory-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .directory-form label { align-items: flex-start; gap: 6px; color: var(--muted-foreground); font-size: 0.82rem; }
 .directory-form label > span { width: max-content; max-width: 100%; white-space: nowrap; }
+.directory-contact-fields { min-width: 0; margin: 0; border: 0; padding: 0; }
+.directory-contact-fields legend { margin-bottom: 6px; color: var(--foreground); font-size: 0.9rem; font-weight: 700; }
+.directory-contact-fields > p { margin: 0 0 12px; color: var(--muted-foreground); font-size: 0.8rem; }
 .directory-field-control { padding: 9px 10px; color: var(--foreground); font-size: 0.92rem; }
 .directory-textarea-control { min-height: 150px; resize: vertical; line-height: 1.55; }
 .directory-wca-field { width: min(240px, 100%); }

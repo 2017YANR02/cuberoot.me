@@ -3,6 +3,22 @@ import { authHeaders, handleApi } from './admin-api';
 
 export type DirectoryEntryKind = 'teacher' | 'organization';
 export type DirectoryTeachingMode = 'online' | 'in_person' | 'both';
+export const DIRECTORY_CONTACT_KEYS = [
+  'wechat',
+  'qq',
+  'email',
+  'phone',
+  'youtube',
+  'bilibili',
+  'douyin',
+  'kuaishou',
+  'xiaohongshu',
+  'wechatChannels',
+  'facebook',
+  'other',
+] as const;
+export type DirectoryContactKey = typeof DIRECTORY_CONTACT_KEYS[number];
+export type DirectoryContacts = Partial<Record<DirectoryContactKey, string>>;
 
 export interface TeacherDirectoryEntry {
   id: number;
@@ -16,7 +32,7 @@ export interface TeacherDirectoryEntry {
   teachingMode: DirectoryTeachingMode;
   descriptionZh: string;
   descriptionEn: string;
-  contact: string;
+  contacts: DirectoryContacts;
   website: string;
   wcaId: string;
   isCurated: boolean;
@@ -37,19 +53,41 @@ export interface TeacherDirectoryDraft {
   teachingMode: DirectoryTeachingMode;
   descriptionZh: string;
   descriptionEn: string;
-  contact: string;
+  contacts: DirectoryContacts;
   website: string;
   wcaId: string;
   isCurated: boolean;
   isVisible: boolean;
 }
 
-type TeacherDirectoryEntryWire = Omit<TeacherDirectoryEntry, 'isVisible'> & {
+type TeacherDirectoryEntryWire = Omit<TeacherDirectoryEntry, 'isVisible' | 'contacts'> & {
   isVisible?: boolean;
+  contacts?: unknown;
+  contact?: string;
 };
 
+export function normalizeDirectoryContacts(value: unknown, legacyContact = ''): DirectoryContacts {
+  const contacts: DirectoryContacts = {};
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const source = value as Record<string, unknown>;
+    for (const key of DIRECTORY_CONTACT_KEYS) {
+      const contactValue = typeof source[key] === 'string' ? source[key].trim() : '';
+      if (contactValue) contacts[key] = contactValue;
+    }
+  }
+  if (Object.keys(contacts).length === 0 && legacyContact.trim()) {
+    contacts.other = legacyContact.trim();
+  }
+  return contacts;
+}
+
 function normalizeTeacherDirectoryEntry(entry: TeacherDirectoryEntryWire): TeacherDirectoryEntry {
-  return { ...entry, isVisible: entry.isVisible !== false };
+  const { contact = '', ...rest } = entry;
+  return {
+    ...rest,
+    contacts: normalizeDirectoryContacts(entry.contacts, contact),
+    isVisible: entry.isVisible !== false,
+  };
 }
 
 export function mergeTeacherDirectoryEntries(
@@ -66,7 +104,7 @@ export function mergeTeacherDirectoryEntries(
 
 export async function fetchTeacherDirectory(): Promise<TeacherDirectoryEntry[]> {
   const data = await handleApi<{ entries: TeacherDirectoryEntryWire[] }>(
-    await fetch(apiUrl('/v1/teachers?v=2')),
+    await fetch(apiUrl('/v1/teachers?v=3')),
   );
   return data.entries.map(normalizeTeacherDirectoryEntry);
 }
