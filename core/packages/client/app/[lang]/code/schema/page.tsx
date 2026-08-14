@@ -241,7 +241,7 @@ const TABLES: Table[] = [
   { name: 'teacher_directory_entries', domain: 'community', origin: '0126', purpose: { zh: '/teachers 魔方老师与培训机构目录;登录用户维护自己的资料,管理员维护全部资料', en: 'The /teachers cube teacher and training-school directory; signed-in users maintain their own profiles and admins maintain all profiles' }, cols: [
     { name: 'kind', note: { zh: 'teacher / organization', en: 'teacher / organization' } },
     { name: 'name_zh / name_en, location_zh / location_en, description_zh / description_en' },
-    { name: 'specialties_zh / specialties_en JSONB, teaching_mode, contact, website, wca_id' },
+    { name: 'specialties_zh / specialties_en JSONB, teaching_mode, contacts JSONB, contact (legacy), website, wca_id' },
     { name: 'is_curated, is_visible', note: { zh: '管理员认证与作者控制的公开状态', en: 'admin curation and owner-controlled public visibility' } },
     { name: 'owner_key, owner_name', note: { zh: '作者身份与显示名;公开列表不返回 owner_key', en: 'author identity and display name; the public list omits owner_key' } },
   ] },
@@ -395,6 +395,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 127, slug: 'teaching_advanced_lessons', desc: { zh: '新增 CFOP 后续课程表,预置 48 节三阶和 10 节二阶双语课程,由管理员增删改与排序。', en: 'Add the post-CFOP lesson table, seed 48 bilingual 3×3 lessons and 10 bilingual 2×2 lessons, and provide administrator CRUD and ordering.' } },
   { n: 128, slug: 'teacher_directory_visibility', desc: { zh: '老师与机构资料新增公开开关，作者可隐藏自己的资料；颜瑞民资料先设为仅本人可见。', en: 'Add owner-controlled visibility to teacher and school profiles, initially hiding Ruimin Yan’s entry from the public directory.' } },
   { n: 129, slug: 'alg_chain_orders', desc: { zh: '新增公式集连拧顺序表，登录用户可按公式集和子集跨设备保存自定义顺序。', en: 'Add per-set and per-subset time-attack orders so signed-in users can keep custom orders across devices.' } },
+  { n: 130, slug: 'teacher_directory_contacts', desc: { zh: '老师与机构资料增加按平台存储的多种公开联系方式，并保留原有联系方式。', en: 'Add platform-specific public contact methods to teacher and school profiles while preserving existing contact data.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

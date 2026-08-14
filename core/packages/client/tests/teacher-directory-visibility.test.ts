@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   mergeTeacherDirectoryEntries,
+  normalizeDirectoryContacts,
   type TeacherDirectoryEntry,
 } from '@/lib/teacher-directory-api';
 
@@ -23,7 +24,7 @@ function entry(id: number, isVisible: boolean, nameZh: string): TeacherDirectory
     teachingMode: 'both',
     descriptionZh: '介绍',
     descriptionEn: '',
-    contact: '',
+    contacts: {},
     website: 'https://cuberoot.me/',
     wcaId: '',
     isCurated: false,
@@ -52,5 +53,20 @@ describe('teacher directory visibility', () => {
       source.indexOf("teacherDirectoryRoutes.get('/teachers/mine'"),
     );
     expect(publicRoute).toContain('WHERE is_visible = TRUE');
+  });
+
+  it('normalizes supported contact methods and preserves legacy contact text', () => {
+    expect(normalizeDirectoryContacts({
+      wechat: ' cube-root ',
+      youtube: 'https://youtube.com/@cuberoot',
+      unknownPlatform: 'ignored',
+      qq: '',
+    })).toEqual({
+      wechat: 'cube-root',
+      youtube: 'https://youtube.com/@cuberoot',
+    });
+    expect(normalizeDirectoryContacts(undefined, 'legacy contact')).toEqual({
+      other: 'legacy contact',
+    });
   });
 });
