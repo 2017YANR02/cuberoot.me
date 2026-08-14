@@ -61,7 +61,7 @@ function TeachingPage({ isAdmin }: { isAdmin: boolean }) {
       <header className="teaching-hero">
         <BackHome />
         <p className="teaching-eyebrow"><T zh="三阶魔方录播课" en="Recorded 3×3 lessons" /></p>
-        <h1><T zh="课程树与完整提词稿" en="Curriculum and complete teleprompter scripts" /></h1>
+        <h1><T zh="课程" en="Courses" /></h1>
         <p className="teaching-lead">
           <T
             zh="先用试听课获得第一次成功，再用层先法独立复原，按案例系统学习 CFOP，之后继续拓展三阶与二阶进阶内容。每节只讲一个目标，适合暂停、跟练和反复复习。"

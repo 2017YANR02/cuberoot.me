@@ -327,72 +327,68 @@ export function HistoryList({
   const cur = Math.min(page, pageCount - 1);
   const shown = ordered.slice(cur * HIST_PAGE, cur * HIST_PAGE + HIST_PAGE);
 
+  // 当前题由主屏展示；还没有其他打乱时，底部历史区不占位。
+  if (ordered.length === 0) return null;
+
   return (
     <div className="trainer-stats-card">
-      {ordered.length === 0 ? (
-        <div className="trainer-stats-empty">{tr({ zh: '暂无打乱历史', en: 'No scrambles yet'
-        })}</div>
-      ) : (
-        <>
-          <div className="trainer-hist-grid">
-            {shown.map(([e, i]) => {
-            const c = findCaseByKey(cases, e.key);
-            const name = (c ? primaryCaseName(puzzle, set, c) : e.name).replace(setPrefix, '');
-            const alg = c ? (c.algs.flat()[0]?.alg ?? c.standard ?? '') : '';
-            return (
-              // 真 <button>:iOS Safari 的 tap 只在原生可交互元素上可靠(与 solve 卡同一理由)
-              <button
-                key={i}
-                type="button"
-                className="trainer-hist-item"
-                // 回看那条打乱 + 摊开这个 case:一次点击两件事,因为它们是同一个意图
-                // (「这题我看看」)。没有 meta 的集(虚拟集等)照弹 —— 弹窗里还有图和全部公式。
-                onClick={() => { onPick(i); if (c) onShowCase?.(c); }}
-                title={`${name} ${e.scramble}`}
-                aria-label={name}
-              >
-                {c ? (
-                  <CaseThumb
-                    puzzle={puzzle}
-                    set={set}
-                    sticker={c.sticker}
-                    alg={alg}
-                    // 图从该条的实际打乱渲染(含 pre/post-AUF),否则与回看时主屏那张对不上
-                    setup={e.scramble || c.setup}
-                    size={56}
-                    // 每页最多 10 张,在本地同步生成可让新历史项与按钮同帧出现,不等 SVG 网络请求。
-                    local
-                  />
-                ) : (
-                  // 这一条的 case 已不在当前选集里(切过 set / 合练成员变了):没有图可画,
-                  // 退回名字,总好过一个空按钮。
-                  <span className="trainer-hist-name">{name}</span>
-                )}
-              </button>
-            );
-            })}
-          </div>
-          {pageCount > 1 && (
-            <div className="trainer-hist-pages">
-              {histPageWindow(cur, pageCount).map((p, slot) => (p === '…' ? (
-                <span key={`gap${slot}`} className="trainer-hist-gap" aria-hidden>…</span>
+      <div className="trainer-hist-grid">
+        {shown.map(([e, i]) => {
+          const c = findCaseByKey(cases, e.key);
+          const name = (c ? primaryCaseName(puzzle, set, c) : e.name).replace(setPrefix, '');
+          const alg = c ? (c.algs.flat()[0]?.alg ?? c.standard ?? '') : '';
+          return (
+            // 真 <button>:iOS Safari 的 tap 只在原生可交互元素上可靠(与 solve 卡同一理由)
+            <button
+              key={i}
+              type="button"
+              className="trainer-hist-item"
+              // 回看那条打乱 + 摊开这个 case:一次点击两件事,因为它们是同一个意图
+              // (「这题我看看」)。没有 meta 的集(虚拟集等)照弹 —— 弹窗里还有图和全部公式。
+              onClick={() => { onPick(i); if (c) onShowCase?.(c); }}
+              title={`${name} ${e.scramble}`}
+              aria-label={name}
+            >
+              {c ? (
+                <CaseThumb
+                  puzzle={puzzle}
+                  set={set}
+                  sticker={c.sticker}
+                  alg={alg}
+                  // 图从该条的实际打乱渲染(含 pre/post-AUF),否则与回看时主屏那张对不上
+                  setup={e.scramble || c.setup}
+                  size={56}
+                  // 每页最多 10 张,在本地同步生成可让新历史项与按钮同帧出现,不等 SVG 网络请求。
+                  local
+                />
               ) : (
-                <button
-                  key={p}
-                  type="button"
-                  className={`trainer-hist-page${p === cur ? ' is-active' : ''}`}
-                  onClick={() => setPage(p)}
-                  aria-current={p === cur ? 'page' : undefined}
-                  title={p === 0
-                    ? tr({ zh: `最新 ${HIST_PAGE} 条`, en: `Latest ${HIST_PAGE}` })
-                    : tr({ zh: `再往前第 ${p} 页`, en: `Page ${p + 1}` })}
-                >
-                  {p + 1}
-                </button>
-              )))}
-            </div>
-          )}
-        </>
+                // 这一条的 case 已不在当前选集里(切过 set / 合练成员变了):没有图可画,
+                // 退回名字,总好过一个空按钮。
+                <span className="trainer-hist-name">{name}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      {pageCount > 1 && (
+        <div className="trainer-hist-pages">
+          {histPageWindow(cur, pageCount).map((p, slot) => (p === '…' ? (
+            <span key={`gap${slot}`} className="trainer-hist-gap" aria-hidden>…</span>
+          ) : (
+            <button
+              key={p}
+              type="button"
+              className={`trainer-hist-page${p === cur ? ' is-active' : ''}`}
+              onClick={() => setPage(p)}
+              aria-current={p === cur ? 'page' : undefined}
+              title={p === 0
+                ? tr({ zh: `最新 ${HIST_PAGE} 条`, en: `Latest ${HIST_PAGE}` })
+                : tr({ zh: `再往前第 ${p} 页`, en: `Page ${p + 1}` })}
+            >
+              {p + 1}
+            </button>
+          )))}
+        </div>
       )}
     </div>
   );

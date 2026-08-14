@@ -28,8 +28,8 @@ import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { displayZbllToken } from '@/lib/alg_case_display';
 import {
-  availableKinds, purifyScramble, SCRAMBLE_KINDS, trainerSetScrambleFeatures,
-  type ScrambleKind,
+  availableKinds, F2L_SLOTS, purifyScramble, SCRAMBLE_KINDS, trainerSetScrambleFeatures,
+  type F2LSlot, type ScrambleKind,
 } from '@/lib/trainer-scramble';
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
 import { virtualAlgSet } from '@/lib/alg-virtual-sets';
@@ -79,6 +79,47 @@ const subscribeSplitScreen = (onChange: () => void) => {
 /** Split view deliberately excludes phones, including wide landscape phones. */
 function useSplitScreenAvailable(): boolean {
   return useSyncExternalStore(subscribeSplitScreen, splitScreenSnapshot, splitScreenServerSnapshot);
+}
+
+function F2LSlotPicker({
+  slots,
+  onChange,
+}: {
+  slots: readonly F2LSlot[];
+  onChange: (slots: readonly F2LSlot[]) => void;
+}) {
+  return (
+    <div className="trainer-opts-row">
+      <span className="trainer-opts-label">{tr({ zh: '槽位', en: 'Slots' })}</span>
+      <div
+        className="trainer-ori-cells"
+        role="group"
+        aria-label={tr({ zh: 'F2L 槽位', en: 'F2L slots' })}
+      >
+        {F2L_SLOTS.map(slot => {
+          const selected = slots.includes(slot);
+          const lastSelected = selected && slots.length === 1;
+          return (
+            <button
+              key={slot}
+              type="button"
+              className={`trainer-ori-cell trainer-slot-cell${selected ? ' is-on' : ''}`}
+              aria-pressed={selected}
+              disabled={lastSelected}
+              title={lastSelected
+                ? tr({ zh: '至少保留一个槽位', en: 'Keep at least one slot' })
+                : undefined}
+              onClick={() => onChange(
+                selected ? slots.filter(value => value !== slot) : [...slots, slot],
+              )}
+            >
+              {slot}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default function TrainerRunClient() {
@@ -217,8 +258,8 @@ export default function TrainerRunClient() {
   const setRandomInitialD = useTrainerStore(s => s.setRandomInitialD);
   const randomFinalAuf = useTrainerStore(s => s.randomFinalAuf);
   const setRandomFinalAuf = useTrainerStore(s => s.setRandomFinalAuf);
-  const randomFinalY = useTrainerStore(s => s.randomFinalY);
-  const setRandomFinalY = useTrainerStore(s => s.setRandomFinalY);
+  const f2lSlots = useTrainerStore(s => s.f2lSlots);
+  const setF2LSlots = useTrainerStore(s => s.setF2LSlots);
   const oriSel = useTrainerStore(s => s.oriSel);
   const setOriSel = useTrainerStore(s => s.setOriSel);
   const resetOriSel = useTrainerStore(s => s.resetOriSel);
@@ -430,11 +471,11 @@ export default function TrainerRunClient() {
       postAuf,
       randomInitialD: features.randomInitialD && randomInitialD,
       randomFinalAuf: features.randomFinalAuf && randomFinalAuf,
-      randomFinalY: features.randomFinalY && randomFinalY,
+      f2lSlots: features.f2lSlots ? f2lSlots : undefined,
       orientation: oriSel,
       orientationSet: isMix ? null : setSlug,
     };
-  }, [puzzle, isMix, setSlug, preAuf, postAuf, randomInitialD, randomFinalAuf, randomFinalY, oriSel]);
+  }, [puzzle, isMix, setSlug, preAuf, postAuf, randomInitialD, randomFinalAuf, f2lSlots, oriSel]);
 
   // 改了选中的 case 之后,原先选的那种打乱可能一个 case 都不再支持 —— 此时 <select> 的
   // value 落空、显示成一片空白。退回 `inv`(它永远支持)。
@@ -979,7 +1020,7 @@ export default function TrainerRunClient() {
     recapOrder,
     scrambleKind,
     scrambleOpts: mode === 'memo'
-      ? { preAuf: false, postAuf: false, randomInitialD: false, randomFinalAuf: false, randomFinalY: false }
+      ? { preAuf: false, postAuf: false, randomInitialD: false, randomFinalAuf: false, f2lSlots: ['FR'] }
       : splitScrambleOpts,
     showThumb: showStageThumb,
     pureScramble,
@@ -1113,7 +1154,8 @@ export default function TrainerRunClient() {
   // 两者用同一 showStats 偏好,互补出现;都开着侧栏才铺。
   // 没有成绩时不摆空统计框；第一把完成后再出现成绩列表。
   const statsVisible = timing && showStats && solves.length > 0;
-  const historyVisible = !timing && showStats;
+  const historyVisible = !timing && showStats
+    && hist.list.some((_, index) => index !== hist.idx);
   // 三块各自成列:上一个在左、统计在右、历史铺满底部。哪块空了哪列就不占宽。
   const leftShown = showPrevCard;
 
@@ -1131,7 +1173,7 @@ export default function TrainerRunClient() {
   const setAdjustSupported = !isMemo && (
     setScrambleFeatures.randomInitialD
     || setScrambleFeatures.randomFinalAuf
-    || setScrambleFeatures.randomFinalY
+    || setScrambleFeatures.f2lSlots
   );
   /** 有没有钉过朝向 —— 空数组的组在 store 里是删掉而不是留空的,所以数键就够 */
   const oriPinned = Object.keys(oriSel).length > 0;
@@ -1572,29 +1614,27 @@ export default function TrainerRunClient() {
                 </div>
               )}
               {setAdjustSupported && (
-                <div className="trainer-opts-row">
-                  {setScrambleFeatures.randomInitialD && (
-                    <BoolToggle
-                      value={randomInitialD}
-                      onChange={setRandomInitialD}
-                      label={tr({ zh: '随机 D 调整', en: 'Random D setup' })}
-                    />
+                <>
+                  <div className="trainer-opts-row">
+                    {setScrambleFeatures.randomInitialD && (
+                      <BoolToggle
+                        value={randomInitialD}
+                        onChange={setRandomInitialD}
+                        label={tr({ zh: '随机 D 调整', en: 'Random D setup' })}
+                      />
+                    )}
+                    {setScrambleFeatures.randomFinalAuf && (
+                      <BoolToggle
+                        value={randomFinalAuf}
+                        onChange={setRandomFinalAuf}
+                        label="AUF"
+                      />
+                    )}
+                  </div>
+                  {setScrambleFeatures.f2lSlots && (
+                    <F2LSlotPicker slots={f2lSlots} onChange={setF2LSlots} />
                   )}
-                  {setScrambleFeatures.randomFinalAuf && (
-                    <BoolToggle
-                      value={randomFinalAuf}
-                      onChange={setRandomFinalAuf}
-                      label="AUF"
-                    />
-                  )}
-                  {setScrambleFeatures.randomFinalY && (
-                    <BoolToggle
-                      value={randomFinalY}
-                      onChange={setRandomFinalY}
-                      label="y"
-                    />
-                  )}
-                </div>
+                </>
               )}
               {/* 极简:侧栏两块各自可隐藏(issue #30)。统计=成绩用时列表,不计时根本
                   没有用时可统计 —— 不计时时连开关一起隐掉,而不是留一个永远关着的死开关。 */}

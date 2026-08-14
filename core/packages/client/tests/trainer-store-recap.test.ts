@@ -140,7 +140,7 @@ describe('trainer-store recap queue', () => {
     expect(curRecap()).toEqual({ pos: 2, total: 2 });
   });
 
-  it('F2L 覆盖模式用最少 16 题走完全部 AUF × y 组合', () => {
+  it('F2L 覆盖模式用最少 16 题走完全部 AUF × 槽位组合', () => {
     const f2lCase: AlgCase = {
       subgroup: 'T',
       name: 'F2L',
@@ -150,7 +150,7 @@ describe('trainer-store recap queue', () => {
     };
     const st = useTrainerStore.getState();
     st.setRandomFinalAuf(true);
-    st.setRandomFinalY(true);
+    st.setF2LSlots(['FR', 'FL', 'BL', 'BR']);
     st.setShowRecapRoundEnd(false);
     st.loadSession('3x3', 'f2l', [f2lCase]);
     st.setSelected([caseKey(f2lCase)]);

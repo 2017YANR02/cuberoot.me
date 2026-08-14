@@ -2,7 +2,7 @@
  * 训练器当前设置 → 可打印的打乱题单。
  *
  * PDF 与屏幕上的出题规则同源:覆盖模式每个 case 一次,随机模式独立抽题;
- * AUF / y / 纯打乱都交给训练器现有生成器。每格只印编号和打乱,不放 case 名或还原公式。
+ * AUF / 槽位 / 纯打乱都交给训练器现有生成器。每格只印编号和打乱,不放 case 名或还原公式。
  */
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { caseOrbit } from '@/lib/alg_probability';
@@ -77,14 +77,15 @@ function trainerQuestions(o: TrainerSheetOptions, random: () => number): AlgCase
 
 function f2lAdjustmentPicker(o: TrainerSheetOptions, random: () => number) {
   const useAuf = o.scrambleOpts.randomFinalAuf === true;
-  const useY = o.scrambleOpts.randomFinalY === true;
-  if (o.mode !== 'recap' || (!useAuf && !useY)) return () => undefined;
+  const slots = o.scrambleOpts.f2lSlots ?? ['FR'];
+  const useSlotAdjustment = slots.length !== 1 || slots[0] !== 'FR';
+  if (o.mode !== 'recap' || (!useAuf && !useSlotAdjustment)) return () => undefined;
 
   let bag: F2LFinalAdjustment[] = [];
   let last = '';
   return (): F2LFinalAdjustment | undefined => {
     if (bag.length === 0) {
-      bag = shuffle(f2lFinalAdjustmentVariants(useAuf, useY), random);
+      bag = shuffle(f2lFinalAdjustmentVariants(useAuf, slots), random);
       const nextIndex = bag.length - 1;
       const next = bag[nextIndex];
       if (nextIndex > 0 && `${next.auf}|${next.y}` === last) {
