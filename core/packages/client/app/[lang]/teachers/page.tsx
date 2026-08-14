@@ -3,9 +3,10 @@
 import { Suspense, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
-import { BadgeCheck, ExternalLink, GraduationCap, MapPin, Pencil, Plus } from 'lucide-react';
+import { BadgeCheck, ExternalLink, EyeOff, GraduationCap, MapPin, Pencil, Plus } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
+import BoolToggle from '@/components/BoolToggle';
 import { ClearButton } from '@/components/ClearButton';
 import PersonLink from '@/components/PersonLink';
 import SearchInput from '@/components/SearchInput';
@@ -16,6 +17,7 @@ import {
   deleteTeacherDirectoryEntry,
   fetchMyTeacherDirectory,
   fetchTeacherDirectory,
+  mergeTeacherDirectoryEntries,
   updateTeacherDirectoryEntry,
   type DirectoryEntryKind,
   type DirectoryTeachingMode,
@@ -29,7 +31,8 @@ const KINDS = ['all', 'teacher', 'organization'] as const;
 const EMPTY_DRAFT: TeacherDirectoryDraft = {
   kind: 'teacher', nameZh: '', nameEn: '', locationZh: '', locationEn: '',
   specialtiesZh: [], specialtiesEn: [], teachingMode: 'both',
-  descriptionZh: '', descriptionEn: '', contact: '', website: '', wcaId: '', isCurated: false,
+  descriptionZh: '', descriptionEn: '', contact: '', website: '', wcaId: '',
+  isCurated: false, isVisible: true,
 };
 
 function localText(zh: string, en: string): string {
@@ -47,7 +50,7 @@ function entryToDraft(entry: TeacherDirectoryEntry): TeacherDirectoryDraft {
     specialtiesZh: entry.specialtiesZh, specialtiesEn: entry.specialtiesEn,
     teachingMode: entry.teachingMode, descriptionZh: entry.descriptionZh,
     descriptionEn: entry.descriptionEn, contact: entry.contact, website: entry.website,
-    wcaId: entry.wcaId, isCurated: entry.isCurated,
+    wcaId: entry.wcaId, isCurated: entry.isCurated, isVisible: entry.isVisible,
   };
 }
 
@@ -84,6 +87,7 @@ function DirectoryEntry({ entry, canEdit, onEdit }: {
         <div className="directory-entry-labels">
           <span>{kindLabel(entry.kind)}</span>
           {entry.isCurated && <span className="directory-curated"><BadgeCheck size={14} />{tr({ zh: '站方录入', en: 'Curated' })}</span>}
+          {!entry.isVisible && <span className="directory-curated"><EyeOff size={14} />{tr({ zh: '仅自己可见', en: 'Only visible to you' })}</span>}
         </div>
         <h2>{name}</h2>
         {alternateName && <p className="directory-alt-name">{alternateName}</p>}
@@ -187,6 +191,8 @@ function DirectoryEditor({ initial, isAdmin, onClose, onSaved, onDeleted }: {
             <label><span>{tr({ zh: '网站', en: 'Website' })}</span><input className="directory-field-control" type="url" value={draft.website} onChange={(event) => setField('website', event.target.value)} placeholder="https://" maxLength={500} /></label>
           </div>
           <label className="directory-wca-field"><span>WCA ID</span><input className="directory-field-control" value={draft.wcaId} onChange={(event) => setField('wcaId', event.target.value.toUpperCase())} placeholder="2017YANR02" maxLength={10} /></label>
+          <BoolToggle value={draft.isVisible} onChange={(value) => setField('isVisible', value)} label={tr({ zh: '公开显示', en: 'Show publicly' })} />
+          {!draft.isVisible && <p className="directory-form-note">{tr({ zh: '隐藏后，只有你登录时能看到这条资料。', en: 'When hidden, only you can see this entry while signed in.' })}</p>}
           <p className="directory-form-note">{tr({ zh: '名称和介绍至少填写一种语言。联系方式会公开显示，请勿填写不希望公开的信息。', en: 'A name and introduction are required in at least one language. Contact details are public, so only add information you want to share.' })}</p>
           {error && <p className="directory-form-error" role="alert">{error}</p>}
           <div className="directory-form-actions"><button type="submit" className="directory-primary-button" disabled={saving}>{saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存', en: 'Save' })}</button><button type="button" className="directory-secondary-button" onClick={onClose} disabled={saving}>{tr({ zh: '取消', en: 'Cancel' })}</button>{initial && <button type="button" className="directory-delete-button" onClick={remove} disabled={saving}>{tr({ zh: '删除', en: 'Delete' })}</button>}</div>
@@ -203,27 +209,45 @@ function TeachersDirectoryClient() {
   const isAdmin = useIsAdmin();
   const [query, setQuery] = useQueryState('q', parseAsString.withDefault(''));
   const [kind, setKind] = useQueryState('type', parseAsStringEnum([...KINDS]).withDefault('all'));
-  const [entries, setEntries] = useState<TeacherDirectoryEntry[]>([]);
-  const [myIds, setMyIds] = useState<Set<number>>(new Set());
+  const [publicEntries, setPublicEntries] = useState<TeacherDirectoryEntry[]>([]);
+  const [myEntries, setMyEntries] = useState<TeacherDirectoryEntry[]>([]);
+  const [loadedOwnerKey, setLoadedOwnerKey] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [myLoadError, setMyLoadError] = useState('');
   const [editing, setEditing] = useState<TeacherDirectoryEntry | null | undefined>();
 
   useEffect(() => {
     let active = true;
-    fetchTeacherDirectory().then((data) => { if (active) setEntries(data); })
+    fetchTeacherDirectory().then((data) => { if (active) setPublicEntries(data); })
       .catch(() => { if (active) setLoadError(tr({ zh: '名录暂时无法加载。', en: 'The directory could not be loaded.' })); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
 
   useEffect(() => {
-    if (!ownerKey) { setMyIds(new Set()); return; }
+    if (!ownerKey) {
+      setMyEntries([]);
+      setLoadedOwnerKey('');
+      setMyLoadError('');
+      return;
+    }
     let active = true;
-    fetchMyTeacherDirectory().then((data) => { if (active) setMyIds(new Set(data.map((entry) => entry.id))); })
-      .catch(() => { if (active) setMyIds(new Set()); });
+    setMyLoadError('');
+    fetchMyTeacherDirectory()
+      .then((data) => { if (active) setMyEntries(data); })
+      .catch(() => { if (active) { setMyEntries([]); setMyLoadError(tr({ zh: '你的资料暂时无法加载。', en: 'Your entries could not be loaded.' })); } })
+      .finally(() => { if (active) setLoadedOwnerKey(ownerKey); });
     return () => { active = false; };
   }, [ownerKey]);
+
+  const ownedEntries = loadedOwnerKey === ownerKey ? myEntries : [];
+  const entries = useMemo(
+    () => mergeTeacherDirectoryEntries(publicEntries, ownedEntries),
+    [ownedEntries, publicEntries],
+  );
+  const myIds = useMemo(() => new Set(ownedEntries.map((entry) => entry.id)), [ownedEntries]);
+  const directoryLoading = loading || (!!ownerKey && loadedOwnerKey !== ownerKey);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
@@ -235,12 +259,21 @@ function TeachersDirectoryClient() {
   }, [entries, kind, query]);
 
   const saveEntry = (saved: TeacherDirectoryEntry) => {
-    setEntries((current) => current.some((entry) => entry.id === saved.id) ? current.map((entry) => entry.id === saved.id ? saved : entry) : [saved, ...current]);
-    setMyIds((current) => new Set(current).add(saved.id)); setEditing(undefined);
+    setPublicEntries((current) => {
+      const withoutSaved = current.filter((entry) => entry.id !== saved.id);
+      return saved.isVisible ? [saved, ...withoutSaved] : withoutSaved;
+    });
+    if (saved.ownerKey === ownerKey) {
+      setMyEntries((current) => current.some((entry) => entry.id === saved.id)
+        ? current.map((entry) => entry.id === saved.id ? saved : entry)
+        : [saved, ...current]);
+    }
+    setEditing(undefined);
   };
   const deleteEntry = (id: number) => {
-    setEntries((current) => current.filter((entry) => entry.id !== id));
-    setMyIds((current) => { const next = new Set(current); next.delete(id); return next; }); setEditing(undefined);
+    setPublicEntries((current) => current.filter((entry) => entry.id !== id));
+    setMyEntries((current) => current.filter((entry) => entry.id !== id));
+    setEditing(undefined);
   };
 
   return (
@@ -258,9 +291,10 @@ function TeachersDirectoryClient() {
         <label className="directory-kind-filter"><span>{tr({ zh: '类型', en: 'Type' })}</span><select className="directory-kind-control" value={kind} onChange={(event) => { void setKind(event.target.value as typeof kind); }}><option value="all">{tr({ zh: '全部', en: 'All' })}</option><option value="teacher">{tr({ zh: '魔方老师', en: 'Teachers' })}</option><option value="organization">{tr({ zh: '培训机构', en: 'Schools' })}</option></select></label>
       </div>
       <section className="directory-list" aria-label={tr({ zh: '老师与机构名录', en: 'Teacher and school directory' })}>
-        {loading && <p className="directory-state">{tr({ zh: '正在加载名录…', en: 'Loading the directory…' })}</p>}
-        {!loading && loadError && <p className="directory-state directory-load-error">{loadError}</p>}
-        {!loading && !loadError && filtered.length === 0 && <p className="directory-state">{tr({ zh: '没有找到符合条件的资料。', en: 'No matching entries.' })}</p>}
+        {directoryLoading && <p className="directory-state">{tr({ zh: '正在加载名录…', en: 'Loading the directory…' })}</p>}
+        {!directoryLoading && loadError && <p className="directory-state directory-load-error">{loadError}</p>}
+        {!directoryLoading && !loadError && myLoadError && <p className="directory-state directory-load-error">{myLoadError}</p>}
+        {!directoryLoading && !loadError && filtered.length === 0 && <p className="directory-state">{tr({ zh: '没有找到符合条件的资料。', en: 'No matching entries.' })}</p>}
         {filtered.map((entry) => <DirectoryEntry key={entry.id} entry={entry} canEdit={isAdmin || myIds.has(entry.id)} onEdit={() => setEditing(entry)} />)}
       </section>
       {editing !== undefined && <DirectoryEditor initial={editing} isAdmin={isAdmin} onClose={() => setEditing(undefined)} onSaved={saveEntry} onDeleted={deleteEntry} />}

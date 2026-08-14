@@ -237,7 +237,7 @@ const TABLES: Table[] = [
     { name: 'kind', note: { zh: 'teacher / organization', en: 'teacher / organization' } },
     { name: 'name_zh / name_en, location_zh / location_en, description_zh / description_en' },
     { name: 'specialties_zh / specialties_en JSONB, teaching_mode, contact, website, wca_id' },
-    { name: 'is_curated', note: { zh: '管理员认证资料', en: 'admin-curated profile' } },
+    { name: 'is_curated, is_visible', note: { zh: '管理员认证与作者控制的公开状态', en: 'admin curation and owner-controlled public visibility' } },
     { name: 'owner_key, owner_name', note: { zh: '作者身份与显示名;公开列表不返回 owner_key', en: 'author identity and display name; the public list omits owner_key' } },
   ] },
   { name: 'teaching_advanced_lessons', domain: 'community', origin: '0127', purpose: { zh: '/teaching 的 CFOP 后续课程池;管理员维护三阶和二阶路线的双语内容', en: 'Post-CFOP lesson pool for /teaching; administrators maintain bilingual 3×3 and 2×2 tracks' }, cols: [
@@ -388,6 +388,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 125, slug: 'drop_traffic_analytics', desc: { zh: '退役自建流量统计并删除 pageviews 与 traffic_daily。', en: 'Retire self-hosted traffic analytics and drop pageviews and traffic_daily.' } },
   { n: 126, slug: 'teacher_directory', desc: { zh: '新增魔方老师与培训机构目录,预置颜瑞民老师资料,支持作者自主管理与管理员管理。', en: 'Add the cube teacher and training-school directory, seed Ruimin Yan’s profile, and support owner and admin management.' } },
   { n: 127, slug: 'teaching_advanced_lessons', desc: { zh: '新增 CFOP 后续课程表,预置 48 节三阶和 10 节二阶双语课程,由管理员增删改与排序。', en: 'Add the post-CFOP lesson table, seed 48 bilingual 3×3 lessons and 10 bilingual 2×2 lessons, and provide administrator CRUD and ordering.' } },
+  { n: 128, slug: 'teacher_directory_visibility', desc: { zh: '老师与机构资料新增公开开关，作者可隐藏自己的资料；颜瑞民资料先设为仅本人可见。', en: 'Add owner-controlled visibility to teacher and school profiles, initially hiding Ruimin Yan’s entry from the public directory.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
