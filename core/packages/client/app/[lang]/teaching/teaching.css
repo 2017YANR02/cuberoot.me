@@ -433,8 +433,7 @@
   color: var(--destructive);
 }
 
-.teaching-advanced-status button,
-.teaching-advanced-error button {
+.teaching-advanced-retry {
   margin-left: 8px;
   padding: 0;
   border: 0;
@@ -518,7 +517,7 @@
   gap: 2px;
 }
 
-.teaching-advanced-actions button {
+.teaching-advanced-action {
   display: inline-grid;
   place-items: center;
   padding: 6px;
@@ -529,18 +528,18 @@
   cursor: pointer;
 }
 
-.teaching-advanced-actions button:hover:not(:disabled),
-.teaching-advanced-actions button:focus-visible {
+.teaching-advanced-action:hover:not(:disabled),
+.teaching-advanced-action:focus-visible {
   background: var(--accent-soft);
   color: var(--accent);
 }
 
-.teaching-advanced-actions button:last-child:hover:not(:disabled),
-.teaching-advanced-actions button:last-child:focus-visible {
+.teaching-advanced-delete-action:hover:not(:disabled),
+.teaching-advanced-delete-action:focus-visible {
   color: var(--destructive);
 }
 
-.teaching-advanced-actions button:disabled {
+.teaching-advanced-action:disabled {
   cursor: default;
   opacity: 0.3;
 }
@@ -567,7 +566,7 @@
   font-size: 1.2rem;
 }
 
-.teaching-advanced-editor-head button {
+.teaching-advanced-cancel {
   padding: 0;
   border: 0;
   background: transparent;
@@ -593,9 +592,7 @@
   font-weight: 700;
 }
 
-.teaching-advanced-editor input,
-.teaching-advanced-editor textarea,
-.teaching-advanced-editor select {
+.teaching-advanced-field-control {
   box-sizing: border-box;
   width: 100%;
   padding: 9px 10px;
@@ -607,20 +604,18 @@
   font-weight: 400;
 }
 
-.teaching-advanced-editor textarea {
+.teaching-advanced-textarea-control {
   resize: vertical;
   line-height: 1.55;
 }
 
-.teaching-advanced-editor select,
+.teaching-advanced-select-control,
 .teaching-advanced-duration,
-.teaching-advanced-duration input {
+.teaching-advanced-duration-control {
   width: fit-content;
 }
 
-.teaching-advanced-editor input:focus-visible,
-.teaching-advanced-editor textarea:focus-visible,
-.teaching-advanced-editor select:focus-visible {
+.teaching-advanced-field-control:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
@@ -705,7 +700,7 @@
   gap: 10px;
 }
 
-.teaching-access-row input {
+.teaching-access-input {
   min-width: 0;
   width: min(240px, 100%);
   padding: 10px 12px;
@@ -716,12 +711,12 @@
   font: inherit;
 }
 
-.teaching-access-row input:focus-visible {
+.teaching-access-input:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
-.teaching-access-row button {
+.teaching-access-submit {
   padding: 10px 16px;
   border: 0;
   border-radius: 8px;
@@ -732,7 +727,7 @@
   cursor: pointer;
 }
 
-.teaching-access-row button:disabled {
+.teaching-access-submit:disabled {
   cursor: wait;
   opacity: 0.65;
 }
