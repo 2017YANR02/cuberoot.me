@@ -5,18 +5,18 @@ export const TRIAL_MICRO_COURSE: MicroCourse = {
   id: 'trial',
   label: l('试听课', 'Trial course'),
   title: l('五次小成功，完成第一次挑战', 'Five small wins and a first real challenge'),
-  summary: l('不急着讲完整复原。五节课先消除畏难，让学员认识目标块、做出白色小花，并清楚看到后续学习路线。', 'These five lessons remove the fear of the cube, teach the first target pieces, build a white daisy, and show the path ahead.'),
+  summary: l('五节课先让学员完成白色小花、建立信心，最后明确介绍层先法与 CFOP 两套正式课程，引导学员选择并购买适合自己的课程。', 'Five lessons help learners build a white daisy and gain confidence, then clearly introduce the full beginner-method and CFOP courses so each learner can choose and purchase the right path.'),
   audience: l('第一次接触三阶魔方的学员和正在选课的家长', 'Learners meeting the 3×3 for the first time and parents choosing a course'),
   stages: [
     {
       id: 'trial-start',
       title: l('第一次上手', 'First contact'),
-      summary: l('每节只完成一个看得见的小目标，试听结束时留下明确的下一步。', 'Each lesson ends with one visible result and the trial ends with a clear next step.'),
+      summary: l('每节只完成一个看得见的小目标，试听结束时明确说明两套正式课程的区别和购买入口。', 'Each lesson ends with one visible result, and the trial closes by explaining the difference between the two full courses and where to purchase them.'),
       modules: [
         {
           id: 'trial-success',
           title: l('先体验“我做得到”', 'Start with “I can do this”'),
-          summary: l('从认识魔方到做出白色小花，不塞入需要背诵的公式。', 'Move from meeting the cube to making a white daisy without memorising algorithms.'),
+          summary: l('从认识魔方到做出白色小花，让学员先体验学习效果，再根据当前基础选择层先法或 CFOP 正式课程。', 'Move from meeting the cube to making a white daisy, demonstrate the learning experience, then guide learners to the full beginner-method or CFOP course that matches their current level.'),
           lessons: [
             microLesson({
               id: 'trial-01',
@@ -55,19 +55,23 @@ export const TRIAL_MICRO_COURSE: MicroCourse = {
             }),
             microLesson({
               id: 'trial-05',
-              title: l('四片花瓣与完整路线预告', 'Four petals and the full-course preview'),
+              title: l('四片花瓣与正式课程选择', 'Four petals and choosing a full course'),
               minutes: 4,
-              outcome: l('能做出白色小花，并说出完整课程的三个阶段', 'Make a white daisy and name the three parts of the full learning path'),
+              outcome: l('能做出白色小花，并根据自己的基础选择层先法或 CFOP 正式课程', 'Make a white daisy and choose the full beginner-method or CFOP course that matches the learner’s level'),
               kind: 'milestone',
               script: [
                 l('把刚才的方法重复四次，四块白色棱块就会围在黄色中心旁边，像一朵白色小花。', 'Repeat the same idea four times. The four white edges will surround the yellow center like a white daisy.'),
                 l('【俯拍完成第四片花瓣，停留三秒】', '[Complete the fourth petal overhead and hold for three seconds.]'),
                 l('先检查四片花瓣都是棱块，不是白色角块。再转动顶层，确认每片花瓣都能跟着黄色中心一起移动。', 'Check that all four petals are edges, not white corners. Turn the top layer and confirm that every petal travels around the yellow center.'),
                 l('你已经不是只会乱转魔方了。你刚刚完成了复原路线中的第一个真实目标。', 'You are no longer just turning randomly. You have completed the first real goal on the solving route.'),
-                l('【把试听五节的成果依次显示在屏幕上】', '[Show the result from each of the five trial lessons on screen.]'),
-                l('完整课程会先带你独立复原，再学更顺手的 CFOP，最后练观察和提速。每一步仍然会像今天一样，拆成很短的小挑战。', 'The full course first teaches an independent solve, then smoother CFOP, then observation and speed. Every step remains a short challenge like today.'),
+                l('【把试听五节的成果依次显示在屏幕上，再出现层先法和 CFOP 两条课程路线】', '[Show the result from each of the five trial lessons, then reveal the beginner-method and CFOP course paths.]'),
+                l('试听课到这里结束，接下来有两套正式课程可以选择。它们不是难度不同的同一套内容，而是分别解决“学会复原”和“系统提速”两个目标。', 'The trial ends here, and there are two full courses to choose from. They are not simply easier and harder versions of the same material: one teaches a complete solve, while the other develops systematic speed.'),
+                l('如果你现在还不能独立复原三阶魔方，就选择层先法正式课。课程会从魔方结构和动作语言开始，把完整复原拆成 26 课，最后带你独立完成六面复原。', 'If you cannot yet solve a 3×3 independently, choose the full beginner-method course. It starts with cube structure and move language, divides the complete solve into 26 lessons, and guides you to an independent solve.'),
+                l('如果你已经能够独立复原，并且想减少停顿、提高速度，就选择 CFOP 正式课。课程会系统学习十字、F2L、OLL 和 PLL，再逐步进入观察、预判和进阶案例。', 'If you can already solve independently and want fewer pauses and faster times, choose the full CFOP course. It systematically covers Cross, F2L, OLL, and PLL before moving into recognition, lookahead, and advanced cases.'),
+                l('如果你是零基础，又希望以后继续提速，推荐先完成层先法正式课，再进入 CFOP 正式课。这样每一步都有基础，不需要跳着背公式。', 'If you are starting from zero and want to become faster later, complete the full beginner-method course first, then continue into the full CFOP course. This gives every new skill a foundation instead of forcing you to memorize algorithms out of sequence.'),
+                l('两套正式课仍然采用今天的学习方式：一课只增加一个判断或动作，看完立即练习，并用明确的过关标准检查是否真正掌握。', 'Both full courses use the same learning format you experienced today: one new decision or action per lesson, immediate practice, and a clear checkpoint to confirm mastery.'),
                 l('如果今天有一步不稳定，不用重看全部内容。回到对应编号，只练那一个小目标，成功三次再继续。', 'If one step feels uncertain, do not replay everything. Return to that numbered lesson, practise only its small goal, and continue after three successes.'),
-                l('课后挑战：打乱白色棱块，再独立做出两次白色小花。家长可以拍下结果，领取下一阶段练习清单。', 'After-class challenge: scramble the white edges and make the daisy twice independently. A parent can save a photo and collect the next-stage practice sheet.'),
+                l('课后挑战：打乱白色棱块，再独立做出两次白色小花。完成后，请点击视频下方适合你的正式课程：不会独立复原就购买层先法课，已经会复原并想提速就购买 CFOP 课。我们正式课程见。', 'After-class challenge: scramble the white edges and make the daisy twice independently. When you finish, select the full course below this video: purchase the beginner-method course if you cannot solve independently, or the CFOP course if you can solve and want to become faster. See you in the full course.'),
               ],
             }),
           ],
