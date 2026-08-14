@@ -164,7 +164,7 @@ export default function AdvancedCourseSection({ isAdmin }: { isAdmin: boolean })
         </div>
       </div>
 
-      {error && <p className={usingFallback ? 'teaching-advanced-status' : 'teaching-advanced-error'} role="alert">{error} {!loading && <button type="button" onClick={() => void load()}><T zh="重试" en="Retry" /></button>}</p>}
+      {error && <p className={usingFallback ? 'teaching-advanced-status' : 'teaching-advanced-error'} role="alert">{error} {!loading && <button className="teaching-advanced-retry" type="button" onClick={() => void load()}><T zh="重试" en="Retry" /></button>}</p>}
       {loading && <p className="teaching-advanced-status"><T zh="正在加载后续课程…" en="Loading further courses…" /></p>}
 
       {!loading && TRACKS.map((track, trackIndex) => {
@@ -194,10 +194,10 @@ export default function AdvancedCourseSection({ isAdmin }: { isAdmin: boolean })
                     <span className="teaching-advanced-minutes">{lesson.minutes} <T zh="分钟" en="min" /></span>
                     {isAdmin && !usingFallback && (
                       <div className="teaching-advanced-actions">
-                        <button type="button" onClick={() => void move(lesson, -1)} disabled={index === 0} aria-label={tr({ zh: '上移', en: 'Move up' })}><ChevronUp aria-hidden="true" /></button>
-                        <button type="button" onClick={() => void move(lesson, 1)} disabled={index === trackLessons.length - 1} aria-label={tr({ zh: '下移', en: 'Move down' })}><ChevronDown aria-hidden="true" /></button>
-                        <button type="button" onClick={() => openEdit(lesson)} aria-label={tr({ zh: '编辑', en: 'Edit' })}><Pencil aria-hidden="true" /></button>
-                        <button type="button" onClick={() => void remove(lesson)} aria-label={tr({ zh: '删除', en: 'Delete' })}><Trash2 aria-hidden="true" /></button>
+                        <button className="teaching-advanced-action" type="button" onClick={() => void move(lesson, -1)} disabled={index === 0} aria-label={tr({ zh: '上移', en: 'Move up' })}><ChevronUp aria-hidden="true" /></button>
+                        <button className="teaching-advanced-action" type="button" onClick={() => void move(lesson, 1)} disabled={index === trackLessons.length - 1} aria-label={tr({ zh: '下移', en: 'Move down' })}><ChevronDown aria-hidden="true" /></button>
+                        <button className="teaching-advanced-action" type="button" onClick={() => openEdit(lesson)} aria-label={tr({ zh: '编辑', en: 'Edit' })}><Pencil aria-hidden="true" /></button>
+                        <button className="teaching-advanced-action teaching-advanced-delete-action" type="button" onClick={() => void remove(lesson)} aria-label={tr({ zh: '删除', en: 'Delete' })}><Trash2 aria-hidden="true" /></button>
                       </div>
                     )}
                   </li>
@@ -212,23 +212,23 @@ export default function AdvancedCourseSection({ isAdmin }: { isAdmin: boolean })
         <form ref={editorRef} className="teaching-advanced-editor" onSubmit={save}>
           <div className="teaching-advanced-editor-head">
             <h3>{editingId === 'new' ? <T zh="新增课程" en="Add lesson" /> : <T zh="编辑课程" en="Edit lesson" />}</h3>
-            <button type="button" onClick={() => setEditingId(null)}><T zh="取消" en="Cancel" /></button>
+            <button className="teaching-advanced-cancel" type="button" onClick={() => setEditingId(null)}><T zh="取消" en="Cancel" /></button>
           </div>
           {editingId === 'new' && (
             <label><T zh="路线" en="Track" />
-              <select value={draft.track} onChange={(event) => setDraft((current) => ({ ...current, track: event.target.value as AdvancedCourseTrack }))}>
+              <select className="teaching-advanced-field-control teaching-advanced-select-control" value={draft.track} onChange={(event) => setDraft((current) => ({ ...current, track: event.target.value as AdvancedCourseTrack }))}>
                 <option value="333"><T zh="三阶进阶" en="Advanced 3×3" /></option>
                 <option value="222"><T zh="二阶进阶" en="Advanced 2×2" /></option>
               </select>
             </label>
           )}
           <div className="teaching-advanced-editor-grid">
-            <label><T zh="中文标题" en="Chinese title" /><input maxLength={200} required value={draft.titleZh} onChange={(event) => setDraft((current) => ({ ...current, titleZh: event.target.value }))} /></label>
-            <label><T zh="英文标题" en="English title" /><input maxLength={200} required value={draft.titleEn} onChange={(event) => setDraft((current) => ({ ...current, titleEn: event.target.value }))} /></label>
-            <label><T zh="中文课程说明或口播提纲" en="Chinese notes or narration outline" /><textarea maxLength={20000} rows={6} value={draft.descriptionZh} onChange={(event) => setDraft((current) => ({ ...current, descriptionZh: event.target.value }))} /></label>
-            <label><T zh="英文课程说明或口播提纲" en="English notes or narration outline" /><textarea maxLength={20000} rows={6} value={draft.descriptionEn} onChange={(event) => setDraft((current) => ({ ...current, descriptionEn: event.target.value }))} /></label>
+            <label><T zh="中文标题" en="Chinese title" /><input className="teaching-advanced-field-control" maxLength={200} required value={draft.titleZh} onChange={(event) => setDraft((current) => ({ ...current, titleZh: event.target.value }))} /></label>
+            <label><T zh="英文标题" en="English title" /><input className="teaching-advanced-field-control" maxLength={200} required value={draft.titleEn} onChange={(event) => setDraft((current) => ({ ...current, titleEn: event.target.value }))} /></label>
+            <label><T zh="中文课程说明或口播提纲" en="Chinese notes or narration outline" /><textarea className="teaching-advanced-field-control teaching-advanced-textarea-control" maxLength={20000} rows={6} value={draft.descriptionZh} onChange={(event) => setDraft((current) => ({ ...current, descriptionZh: event.target.value }))} /></label>
+            <label><T zh="英文课程说明或口播提纲" en="English notes or narration outline" /><textarea className="teaching-advanced-field-control teaching-advanced-textarea-control" maxLength={20000} rows={6} value={draft.descriptionEn} onChange={(event) => setDraft((current) => ({ ...current, descriptionEn: event.target.value }))} /></label>
           </div>
-          <label className="teaching-advanced-duration"><T zh="时长（分钟）" en="Duration (minutes)" /><input type="number" min={1} max={60} required value={draft.minutes} onChange={(event) => setDraft((current) => ({ ...current, minutes: Number(event.target.value) }))} /></label>
+          <label className="teaching-advanced-duration"><T zh="时长（分钟）" en="Duration (minutes)" /><input className="teaching-advanced-field-control teaching-advanced-duration-control" type="number" min={1} max={60} required value={draft.minutes} onChange={(event) => setDraft((current) => ({ ...current, minutes: Number(event.target.value) }))} /></label>
           <button className="teaching-advanced-save" type="submit" disabled={saving}>{saving ? <T zh="保存中" en="Saving" /> : <T zh="保存课程" en="Save lesson" />}</button>
         </form>
       )}
