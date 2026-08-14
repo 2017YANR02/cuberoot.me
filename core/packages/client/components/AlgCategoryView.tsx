@@ -15,7 +15,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryState, useQueryStates, parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, AlertTriangle, FlipHorizontal2, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, AlertTriangle, FlipHorizontal2, HelpCircle, Star } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -88,6 +88,12 @@ import {
   type OptimalComparison,
   type OptimalMetric,
 } from '@/lib/alg_case_optimal';
+import {
+  preferredAlgRef,
+  preferredAlgSlot,
+  sortPreferredAlgs,
+  usePreferredAlgs,
+} from '@/lib/alg-preferred-algs';
 
 // oriAdjustSetup / shortOriName 已提到 lib/alg_display 与 case 详情页共用(详情页原先漏了它们,见那里的注释)。
 
@@ -180,7 +186,7 @@ function SetupLine({ puzzle, setup, notationStyle }: {
   );
 }
 
-function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAngle }: {
+function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAngle, preferred = false, onPreferredToggle }: {
   entry: AlgEntry;
   puzzle: AlgPuzzle; invalid?: string;
   /** 有值 = 这个 set 吃镜像系统,行尾出翻转图标;`partner` 是伙伴 case 名(没建链时为 null) */
@@ -189,6 +195,8 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
   ori?: number;
   notationStyle: AlgNotationStyle;
   viewAngle: CaseViewAngle;
+  preferred?: boolean;
+  onPreferredToggle?: () => void;
 }) {
   const { alg, algHtml } = entry;
   const { copied, copy } = useCopy();
@@ -230,6 +238,19 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
             title={tr({ zh: '镜像公式', en: 'Mirrored algs' })}
           >
             <FlipHorizontal2 size={14} />
+          </button>
+        )}
+        {onPreferredToggle && (
+          <button
+            type="button"
+            className="alg-alg-copy-btn"
+            onClick={(e) => { e.stopPropagation(); onPreferredToggle(); }}
+            title={preferred
+              ? tr({ zh: '取消主公式', en: 'Clear primary algorithm' })
+              : tr({ zh: '设为主公式', en: 'Set as primary algorithm' })}
+            aria-pressed={preferred}
+          >
+            <Star size={14} fill={preferred ? 'currentColor' : 'none'} className="alg-alg-copy-icon" />
           </button>
         )}
         <button
@@ -463,6 +484,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   // Curated child routes own their server metadata; do not overwrite it after hydration.
   useDocumentTitle(algSetTitle, algSetTitle, !collection);
   const [data, setData] = useState<AlgFile | null>(initialData ?? null);
+  const preferredSnapshots = usePreferredAlgs(state => state.snapshots);
+  const loadPreferred = usePreferredAlgs(state => state.load);
+  const setPreferred = usePreferredAlgs(state => state.setPreferred);
   const [error, setError] = useState<string | null>(null);
   const [activeOri, setActiveOri] = useState(0);
   const [caseOri, setCaseOri] = useState<Record<string, number>>({});
@@ -674,6 +698,14 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       applyCollapse(d);
     }).catch(e => setError(String(e)));
   }, [puzzleParam, set, validPuzzle, meta, isAdmin, initialData]);
+
+  useEffect(() => {
+    if (!data || !validPuzzle) return;
+    const sourceSets = new Set(data.cases.map(c => c.srcSet ?? set));
+    for (const sourceSet of sourceSets) {
+      loadPreferred(puzzleParam as AlgPuzzle, sourceSet);
+    }
+  }, [data, loadPreferred, puzzleParam, set, validPuzzle]);
 
   /** admin 才扫。case 改完(data 变 / validationRefreshKey)重扫,红标跟着消。 */
   useEffect(() => {
@@ -1282,7 +1314,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   const rawOri = caseOri[c.name] ?? activeOri;
                   const oriIdx = rawOri < c.algs.length ? rawOri : 0;
                   const allAlgsForOri = c.algs[oriIdx] ?? c.algs[0] ?? [];
-                  const algsForOri = algsUnderFilter(allAlgsForOri);
+                  const preferenceSet = c.srcSet ?? set;
+                  const preferenceSlot = preferredAlgSlot(c, oriIdx);
+                  const preferredRef = preferredSnapshots[`${puzzleParam}/${preferenceSet}`]?.items[preferenceSlot];
+                  const sortedAlgsForOri = sortPreferredAlgs(allAlgsForOri, preferredRef).map(row => row.entry);
+                  const algsForOri = algsUnderFilter(sortedAlgsForOri);
                   const oriCount = c.algs.length;
                   // 缩略图始终用**未筛选**的首条 —— 筛选只该影响公式列表,不该换掉 case 的图
                   const firstAlg = allAlgsForOri[0]?.alg ?? c.standard ?? '';
@@ -1434,6 +1470,13 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                 mirror={mirrorFor(c)}
                                 notationStyle={displayedNotationStyle}
                                 viewAngle={effectiveViewAngle}
+                                preferred={preferredAlgRef(entry) === preferredRef}
+                                onPreferredToggle={() => setPreferred(
+                                  puzzleParam as AlgPuzzle,
+                                  preferenceSet,
+                                  preferenceSlot,
+                                  preferredAlgRef(entry) === preferredRef ? null : preferredAlgRef(entry),
+                                )}
                               />
                             );
                             const key = `${entry.altId ?? ''}::${trueIdx}`;
