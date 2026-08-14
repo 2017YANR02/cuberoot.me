@@ -13,7 +13,7 @@
  *    棱),于是规范化到了错的面,末层指纹全查不中、标签退化成泛 `// OLL`。
  *    这里对着那个真局面钉死正确答案。
  *
- * 末层的精确 case 名(`OLL-F-` / `PLL-T`)要查公式库,而公式库在 API 上 ——
+ * 末层的精确 case 名(`OLL-P+` / `PLL-T`)要查公式库,而公式库在 API 上 ——
  * 拉不到就跳过那一条并吼一声,拉得到就必须是精确名,不接受泛标签。
  *
  * 用的是和 `f2l_slots.test.ts` / `f2l_slot_reference.test.ts` 同一条真解法。
@@ -139,7 +139,7 @@ describe('buildReconText', () => {
       return;
     }
     const r = await build();
-    expect(r.lines.find(l => l.key === 'oll')?.label).toBe('OLL-F-');
+    expect(r.lines.find(l => l.key === 'oll')?.label).toBe('OLL-P+');
     expect(r.lines.find(l => l.key === 'pll')?.label).toBe('PLL-T');
   });
 
