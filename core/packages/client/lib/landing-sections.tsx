@@ -43,7 +43,7 @@ export const TEXTS: Record<string, { en: string; zh: string
   scramble:        { en: 'Scramble', zh: '打乱'
 },
   alg:             { en: 'Tutorial',   zh: '教程' },
-  teaching:        { en: 'Teaching', zh: '教学' },
+  teaching:        { en: 'Courses', zh: '课程' },
   teachers:        { en: 'Teachers & Schools', zh: '老师与机构' },
   documents:       { en: 'Docs', zh: '文档' },
   spreadsheets:    { en: 'Sheets', zh: '表格' },
