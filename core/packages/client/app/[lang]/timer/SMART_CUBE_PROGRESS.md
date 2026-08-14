@@ -2006,7 +2006,7 @@ U F2 R' F2 U2 R                   // BR (0.400+1.400)
 U B' U2 B                         // BO (0.400+0.600)
 F L F L' F2 U' F                  // RG (0.200+1.400)
 U2 L' U L U' L' U' L              // OG (0.600+1.200)
-U2 F U R U' R' F'                 // OLL-F- (0.600+1.000)
+U2 F U R U' R' F'                 // OLL-P+ (0.600+1.000)
 U' F2 U' F2 D R2 B2 U B2 D' R2 U  // PLL-T (0.400+3.200)
 ```
 
@@ -2018,7 +2018,7 @@ U' F2 U' F2 D R2 B2 U B2 D' R2 U  // PLL-T (0.400+3.200)
 |---|---|
 | 认阶段(cross / xcross / f2l / oll / pll / solved) | `lib/stage_detect.ts` 的 `detectStage` |
 | 把「上一行末局面 → 这一行末局面」翻译成标签 | `lib/popup_suggest.ts` 的 `buildCommentSuggestions` |
-| 末层 case 名(`OLL-F-` / `PLL-T` / `ZBLL-Pi61`) | `lib/{oll,pll,zbll}_lookup.ts` + `alg_case_display.ts` |
+| 末层 case 名(`OLL-P+` / `PLL-T` / `ZBLL-Pi61`) | `lib/{oll,pll,zbll}_lookup.ts` + `alg_case_display.ts` |
 
 新写的 `_lib/reconstruct/recon_text.ts` **只做一件事**:把 timer 自己的步骤边界翻译成
 两个 `KPattern`,交给上面那个函数,取它排第一的那条建议。排序不是我们重新定的 ——
@@ -2036,7 +2036,7 @@ U' F2 U' F2 D R2 B2 U B2 D' R2 U  // PLL-T (0.400+3.200)
 
 ### 挖出来的真 bug:十字面认错,末层标签全退化成泛 `// OLL`
 
-接上去第一次跑,末层拿到的是 `// OLL` 而不是 `OLL-F-`。**不是我们这边少传参数**,
+接上去第一次跑,末层拿到的是 `// OLL` 而不是 `OLL-P+`。**不是我们这边少传参数**,
 根因在 `lib/stage_detect.ts` 的 `crossOnDRotation`:
 
 它取「**第一个**四条棱都归位的面」当十字面。F2L 拧完之后,侧面也可能凑齐四条 ——
