@@ -1,9 +1,16 @@
 /**
- * Pre-built fingerprint → algs lookup for OLL recon autofill.
+ * OLL lookup for recon autofill.
  *
- * Same idea as `f2l_lookup` but for the OLL stage. Fingerprint = U-color
- * mask of the 20 last-layer stickers (8 top + 12 around U layer). Two states
- * with identical masks are the same OLL case at the same AUF.
+ * The fingerprint table is the fast path. Fingerprint = U-color mask of the
+ * 20 last-layer stickers (8 top + 12 around U layer).
+ *
+ * Raw sticker fingerprints are not complete across all cross colours: an OLL
+ * alg can solve a non-default-cross state whose fingerprint differs from the
+ * representative state built from the default frame. On a fingerprint miss we
+ * therefore try the precomputed DB alg transformations and retain only those
+ * that `detectStage` verifies as orienting the last layer. This mirrors the
+ * robust F2L/ZBLL lookup rule: the simulated result, not a lossy key, is the
+ * source of truth.
  *
  * Build cost: ~912 simulations on first use (228 alg variants × 4 AUFs).
  *
@@ -11,7 +18,7 @@
  * `bestOrientationAlg` and prefixes the returned alg with the same canonRot.
  */
 
-import type { KPattern } from 'cubing/kpuzzle';
+import type { KPattern, KTransformation } from 'cubing/kpuzzle';
 import { getCube3, simplifyAlg, invertAlg } from './cube3';
 import {
   CORNER_STICKERS, EDGE_STICKERS,
@@ -19,6 +26,7 @@ import {
 } from './sticker_tables';
 import { loadAlg } from '@cuberoot/shared/alg';
 import { forEachYielding } from './build-yield';
+import { detectStage } from './stage_detect';
 
 export interface OllAlgEntry {
   /** Alg in canonical frame (already includes any pre-AUF wrap). */
@@ -55,15 +63,28 @@ function ollFingerprint(p: KPattern): string {
   return out;
 }
 
-let _tablePromise: Promise<Map<string, OllAlgEntry[]>> | null = null;
+interface FlatOllAlg extends OllAlgEntry {
+  transformation: KTransformation;
+}
 
-async function buildTable(): Promise<Map<string, OllAlgEntry[]>> {
-  if (_tablePromise) return _tablePromise;
+interface OllLookupIndex {
+  table: Map<string, OllAlgEntry[]>;
+  algs: FlatOllAlg[];
+  algByText: Map<string, FlatOllAlg>;
+}
+
+let _indexPromise: Promise<OllLookupIndex> | null = null;
+
+async function buildIndex(): Promise<OllLookupIndex> {
+  if (_indexPromise) return _indexPromise;
   const pending = (async () => {
     const db = await loadAlg('3x3', 'oll');
     const kp = await getCube3();
     const solved = kp.defaultPattern();
     const t = new Map<string, OllAlgEntry[]>();
+    const algs: FlatOllAlg[] = [];
+    const algByText = new Map<string, FlatOllAlg>();
+    const seenAlgs = new Set<string>();
 
     // Yields between cases — see build-yield.ts. Without it this loop is one
     // ~400ms task and the reconstruction panel cannot be scrolled while it runs.
@@ -84,6 +105,20 @@ async function buildTable(): Promise<Map<string, OllAlgEntry[]>> {
           const fp = ollFingerprint(state);
           const composed = simplifyAlg(aufInv ? `${aufInv} ${a}` : a);
           if (!composed) continue;
+          if (!seenAlgs.has(composed)) {
+            try {
+              const flat = {
+                alg: composed,
+                caseName: c.name,
+                transformation: kp.algToTransformation(composed),
+              };
+              algs.push(flat);
+              algByText.set(composed, flat);
+              seenAlgs.add(composed);
+            } catch {
+              continue;
+            }
+          }
           const arr = t.get(fp) ?? [];
           if (!arr.some(e => e.alg === composed)) {
             arr.push({ alg: composed, caseName: c.name });
@@ -92,13 +127,13 @@ async function buildTable(): Promise<Map<string, OllAlgEntry[]>> {
         }
       }
     });
-    return t;
+    return { table: t, algs, algByText };
   })();
-  _tablePromise = pending.catch((error) => {
-    _tablePromise = null;
+  _indexPromise = pending.catch((error) => {
+    _indexPromise = null;
     throw error;
   });
-  return _tablePromise;
+  return _indexPromise;
 }
 
 /**
@@ -112,17 +147,46 @@ async function buildTable(): Promise<Map<string, OllAlgEntry[]>> {
  * Idempotent: the promise is cached, so extra calls are a no-op.
  */
 export function prewarmOllTable(): void {
-  void buildTable().catch(() => {/* a failed prewarm must stay silent */});
+  void buildIndex().catch(() => {/* a failed prewarm must stay silent */});
 }
 
 export async function lookupOllAlgs(canonical: KPattern): Promise<OllAlgEntry[]> {
-  const t = await buildTable();
+  const index = await buildIndex();
   const fp = ollFingerprint(canonical);
-  return t.get(fp) ?? [];
+  const exact = index.table.get(fp);
+
+  const verify = async (candidates: FlatOllAlg[]): Promise<OllAlgEntry[]> => {
+    const verified: OllAlgEntry[] = [];
+    for (const candidate of candidates) {
+      let post: KPattern;
+      try {
+        post = canonical.applyTransformation(candidate.transformation);
+      } catch {
+        continue;
+      }
+      const stage = (await detectStage(post)).stage;
+      if (stage !== 'oll' && stage !== 'solved') continue;
+      verified.push({ alg: candidate.alg, caseName: candidate.caseName });
+    }
+    return verified;
+  };
+
+  // A cross-colour collision can produce a non-empty but wrong fingerprint
+  // bucket, so even fast-path entries must pass the state transition check.
+  if (exact?.length) {
+    const exactCandidates = exact.flatMap(entry => {
+      const candidate = index.algByText.get(entry.alg);
+      return candidate ? [{ ...entry, transformation: candidate.transformation }] : [];
+    });
+    const verifiedExact = await verify(exactCandidates);
+    if (verifiedExact.length) return verifiedExact;
+  }
+
+  return verify(index.algs);
 }
 
 export function warmupOllTable(): Promise<void> {
-  return buildTable().then(() => undefined);
+  return buildIndex().then(() => undefined);
 }
 
 export { ollFingerprint };
