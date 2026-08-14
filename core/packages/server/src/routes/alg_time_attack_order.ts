@@ -3,9 +3,9 @@ import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
 
-export const algChainOrderRoutes = new Hono();
+export const algTimeAttackOrderRoutes = new Hono();
 
-const CHAIN_SETS = new Set(['oll', 'pll', 'coll', 'zbll']);
+const TIME_ATTACK_SETS = new Set(['oll', 'pll', 'coll', 'zbll']);
 const MAX_KEYS = 5000;
 
 function parseScope(raw: string | undefined): string | null {
@@ -24,7 +24,7 @@ function validCaseKey(value: unknown): value is string {
 function parseTarget(puzzleRaw: string | undefined, setRaw: string | undefined) {
   const puzzle = (puzzleRaw ?? '').trim().toLowerCase();
   const setSlug = (setRaw ?? '').trim().toLowerCase();
-  return puzzle === '3x3' && CHAIN_SETS.has(setSlug) ? { puzzle, setSlug } : null;
+  return puzzle === '3x3' && TIME_ATTACK_SETS.has(setSlug) ? { puzzle, setSlug } : null;
 }
 
 interface OrderRow {
@@ -32,7 +32,7 @@ interface OrderRow {
   updated_at: string;
 }
 
-algChainOrderRoutes.get('/alg/chain-order/:puzzle/:set', async (c) => {
+algTimeAttackOrderRoutes.get('/alg/time-attack-order/:puzzle/:set', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
@@ -52,7 +52,7 @@ algChainOrderRoutes.get('/alg/chain-order/:puzzle/:set', async (c) => {
   return c.json({ keys, updatedAt: Number(row.updated_at) });
 });
 
-algChainOrderRoutes.put('/alg/chain-order/:puzzle/:set', async (c) => {
+algTimeAttackOrderRoutes.put('/alg/time-attack-order/:puzzle/:set', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
