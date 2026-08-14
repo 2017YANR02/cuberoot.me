@@ -245,7 +245,7 @@ const TABLES: Table[] = [
     { name: 'is_curated, is_visible', note: { zh: '管理员认证与作者控制的公开状态', en: 'admin curation and owner-controlled public visibility' } },
     { name: 'owner_key, owner_name', note: { zh: '作者身份与显示名;公开列表不返回 owner_key', en: 'author identity and display name; the public list omits owner_key' } },
   ] },
-  { name: 'teaching_advanced_lessons', domain: 'community', origin: '0127', purpose: { zh: '/teaching 的 CFOP 后续课程池;管理员维护三阶和二阶路线的双语内容', en: 'Post-CFOP lesson pool for /teaching; administrators maintain bilingual 3×3 and 2×2 tracks' }, cols: [
+  { name: 'teaching_advanced_lessons', domain: 'community', origin: '0127', purpose: { zh: '/courses 的 CFOP 后续课程池;管理员维护三阶和二阶路线的双语内容', en: 'Post-CFOP lesson pool for /courses; administrators maintain bilingual 3×3 and 2×2 tracks' }, cols: [
     { name: 'track, position', note: { zh: 'track 为 333 / 222,position 控制路线内顺序', en: 'track is 333 / 222; position controls order within a track' } },
     { name: 'title_zh / title_en', note: { zh: '两种语言标题均必填', en: 'both language titles are required' } },
     { name: 'description_zh / description_en', note: { zh: '课程说明或口播提纲,允许留空', en: 'optional lesson notes or narration outlines' } },

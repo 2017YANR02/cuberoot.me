@@ -456,7 +456,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Convert one moment into local time anywhere in the world, and find the hours that work for everyone across time zones — daylight saving handled automatically.',
     },
   },
-  'teaching': {
+  'courses': {
     title: { zh: '课程', en: 'Courses' },
     description: {
       zh: '三阶魔方录播课教学方案:试听课、层先法与 CFOP,含时长、拍摄清单和逐节提词稿。',
