@@ -12,7 +12,7 @@ import { TOC } from '../_data/toc';
 // same reason the regulation chapters read "WCA Regulations: Notation": the bare
 // section name ("Quotient groups") gives a search result no way to tell this
 // page from any other algebra page. Leading rather than trailing also avoids a
-// second em-dash, since metadataFromEntry appends " — CubeRoot".
+// second em-dash in narrow browser tabs.
 export async function generateMetadata({ params }: {
   params: Promise<{ lang: string; slug: string }>;
 }): Promise<Metadata> {

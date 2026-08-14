@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: {
     {
       title: {
         zh: `${stat.titleZh}:WCA 统计`,
-        // Colon, not an em-dash: metadataFromEntry appends " — CubeRoot".
+        // Colon keeps the statistic name and section label visually distinct.
         en: `${stat.titleEn}: WCA statistics`,
       },
       description: {
