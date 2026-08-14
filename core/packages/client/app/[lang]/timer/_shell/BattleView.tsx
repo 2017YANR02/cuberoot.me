@@ -4,10 +4,10 @@
  * BattleView — the 对战 (1v1 Battle) mode hosted inside /timer.
  *
  * This is the battle experience that used to be its own /battle route. The
- * engine (battle_store.ts) + the RAF DOM-write display hooks are kept
- * BEHAVIORALLY UNTOUCHED — they still write timeRef.innerHTML and the per-player
- * opponent-N span directly with ZERO per-tick React render. Components + engine
- * now live in ../_battle, since /timer is their only consumer.
+ * engine (battle_store.ts) + the RAF DOM-write timer hooks are kept
+ * BEHAVIORALLY UNTOUCHED — they still write timeRef.innerHTML directly with ZERO
+ * per-tick React render. Components + engine now live in ../_battle, since
+ * /timer is their only consumer.
  *
  * Changes vs the old standalone page:
  *   - accepts the shell `playersControl` (人数 select) and renders it into the
@@ -19,9 +19,7 @@
  *     with per-cell score/event/penalty controls (CellControls)
  *   - per-player event picker uses components/WcaEventSelector (green active)
  *     instead of BattleEventPicker + the in-area overlay grid
- *   - the ⚔️ emoji opponent prefix + icon_timer.png nav icon are replaced with
- *     lucide Swords / Timer (no-emoji rule); the RAF path writes ONLY the time
- *     string into a child span, the icon is rendered once in JSX
+ *   - icon_timer.png nav icon is replaced with lucide Timer (no-emoji rule)
  *   - no RankBadge here: the WR/NR badge is a Solo-only affordance (SoloView),
  *     多人对战比的是同一条打乱下谁更快,叠一层世界排名只是噪音
  *   - imports re-pointed to timer/_shared (stats-core / format)
@@ -30,7 +28,7 @@
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Settings as SettingsIcon, ClipboardList, Trophy, RotateCcw, Eye, EyeOff, Swords, Timer as TimerIcon } from 'lucide-react';
+import { Settings as SettingsIcon, ClipboardList, Trophy, RotateCcw, Eye, EyeOff, Timer as TimerIcon } from 'lucide-react';
 import { useBattleStore, battleToTimerEvent, timerToBattleEvent, keyToPlayer, prefetchBattleScrambles, isScrambleHidden } from '@/app/[lang]/timer/_battle/engine/battle_store';
 import { PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from '@/app/[lang]/timer/_battle/engine/constants';
 import { loadScrambleEngine } from '@/app/[lang]/timer/_battle/engine/engine_loader';
@@ -149,7 +147,6 @@ function useKeyboardControls() {
 
 // NOTE: 计时器动画 hook — 通过 RAF 直接写 DOM（不走 React state）
 // 1:1 翻译自 battle.js startTimerAnimation()（行 918~934）
-// 唯一改动:对手区域只写时间到 #opponent-N 子 span,⚔️ 图标由 JSX 静态渲染一次。
 function useTimerAnimation(playerId: number, timeRef: React.RefObject<HTMLDivElement | null>) {
   const rafRef = useRef<number | null>(null);
 
@@ -169,18 +166,6 @@ function useTimerAnimation(playerId: number, timeRef: React.RefObject<HTMLDivEle
           const timeStr = curr.showTime ? formatTime(elapsed, curr.timerPrecision) : '';
           if (timeRef.current) {
             timeRef.current.innerHTML = timeStr;
-          }
-          // NOTE: 对手已停表时，在对手区域实时显示此玩家还在跑的时间
-          // 1:1 翻译自 battle.js startTimerAnimation()（行 928~930）
-          // 只写时间到 #opponent-N 子 span(图标静态);仅 2 人模式有镜像区
-          if (curr.mode === '1v1' && curr.playerCount === 2) {
-            const oppId = 1 - playerId;
-            if (curr.players[oppId].hasFinished) {
-              const oppEl = document.getElementById(`opponent-${oppId}`);
-              if (oppEl) {
-                oppEl.innerHTML = timeStr;
-              }
-            }
           }
           rafRef.current = requestAnimationFrame(tick);
         };
@@ -223,37 +208,6 @@ function useInspectionDisplay(playerId: number, timeRef: React.RefObject<HTMLDiv
     });
     return () => unsubscribe();
   }, [playerId, timeRef]);
-}
-
-// NOTE: 对手成绩显示 hook — 在本方区域显示对手的最终成绩
-// 1:1 翻译自 battle.js renderOpponent() 调用逻辑（行 616~618, 996~1001）
-// 只写时间到 #opponent-N 子 span(⚔️ 图标由 JSX 静态渲染)
-function useOpponentDisplay(playerId: number, iconRef: React.RefObject<HTMLSpanElement | null>) {
-  useEffect(() => {
-    const unsubscribe = useBattleStore.subscribe((state) => {
-      if (state.mode !== '1v1' || state.playerCount !== 2) return;
-
-      const el = document.getElementById(`opponent-${playerId}`);
-      if (!el) return;
-
-      const oppId = 1 - playerId;
-      const opp = state.players[oppId];
-
-      if (opp.hasFinished && !opp.isTiming) {
-        // NOTE: 对手已完成 → 显示对手的最终成绩（含罚时）
-        const effTime = opp.penalty === PENALTY.DNF ? Infinity
-          : (opp.penalty === PENALTY.PLUS2 ? opp.time + 2000 : opp.time);
-        const label = effTime === Infinity ? 'DNF' : formatTime(effTime, state.timerPrecision);
-        el.innerHTML = label;
-        if (iconRef.current) iconRef.current.style.display = '';
-      } else if (!opp.hasFinished && !opp.isTiming) {
-        // NOTE: 回合重置 → 清空对手成绩
-        el.innerHTML = '';
-        if (iconRef.current) iconRef.current.style.display = 'none';
-      }
-    });
-    return () => unsubscribe();
-  }, [playerId, iconRef]);
 }
 
 // ===== PenaltyDropdown 组件 =====
@@ -451,14 +405,11 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
   const store = useBattleStore();
   const areaRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef<HTMLDivElement>(null);
-  const oppIconRef = useRef<HTMLSpanElement>(null);
 
   // NOTE: 高频计时器动画（不走 React re-render）
   useTimerAnimation(playerId, timeRef);
   // NOTE: Inspection 倒计时显示
   useInspectionDisplay(playerId, timeRef);
-  // NOTE: 对手成绩显示（1v1 模式）
-  useOpponentDisplay(playerId, oppIconRef);
 
   // NOTE: 原生 pointer 事件处理 — 每位玩家独立 pointerId(两个拇指可独立 arm)
   useEffect(() => {
@@ -560,10 +511,6 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
     '--bg-opacity': String(store.bgOpacity),
   } as React.CSSProperties;
 
-  // 对手已完成才显示对手区(图标默认隐藏,subscribe 控制显隐);仅 2 人模式有镜像区
-  const opp = store.playerCount === 2 ? store.players[1 - playerId] : null;
-  const oppShown = !!opp && opp.hasFinished && !opp.isTiming;
-
   return (
     <div
       className={areaClasses}
@@ -582,16 +529,6 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
         className="ao5-display"
         dangerouslySetInnerHTML={{ __html: ao5Text }}
       />
-
-      {/* 对手成绩（仅 2 人 versus 布局）— ⚔️ 用 lucide Swords 静态渲染,RAF 只写时间到子 span */}
-      {store.mode === '1v1' && store.playerCount === 2 && store.layout === 'versus' && (
-        <div className="opponent-display">
-          <span className="opponent-icon" ref={oppIconRef} style={{ display: oppShown ? '' : 'none' }}>
-            <Swords size={14} />
-          </span>
-          <span id={`opponent-${playerId}`} className="opponent-time" />
-        </div>
-      )}
 
       {/* 打乱文字 + 图 + WCA 来源。田字格里同排一对玩家共用一条打乱时 hideScramble=true,
           改由父级在两格之间的共享行(grid-scramble-row)统一渲染一份。 */}
