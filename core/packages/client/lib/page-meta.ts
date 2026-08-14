@@ -457,7 +457,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'teaching': {
-    title: { zh: '魔方教学', en: 'Cubing Lessons' },
+    title: { zh: '课程', en: 'Courses' },
     description: {
       zh: '三阶魔方录播课教学方案:试听课、层先法与 CFOP,含时长、拍摄清单和逐节提词稿。',
       en: 'A recorded 3×3 cubing course covering trial lessons, the beginner method, and CFOP, with timings, shot lists, and complete scripts.',
