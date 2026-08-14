@@ -858,6 +858,16 @@
 .trainer-ori-cell.is-on { opacity: 1; }
 .trainer-ori-cell[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--toggle-on); }
 .trainer-ori-cell:hover { opacity: 1; }
+.trainer-slot-cell {
+  min-width: 40px;
+  justify-content: center;
+  padding: 6px 8px;
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+.trainer-slot-cell:disabled { cursor: not-allowed; opacity: 1; }
 
 /* ─── sidebar (solve card + stats) ─── */
 .trainer-sidebar {

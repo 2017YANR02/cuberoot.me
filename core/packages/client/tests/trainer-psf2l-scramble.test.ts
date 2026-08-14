@@ -22,7 +22,7 @@ describe('PSF2L trainer D adjustment', () => {
     expect(trainerSetScrambleFeatures('3x3', 'psf2l')).toEqual({
       randomInitialD: true,
       randomFinalAuf: false,
-      randomFinalY: false,
+      f2lSlots: false,
     });
     expect(trainerSetScrambleFeatures('2x2', 'psf2l').randomInitialD).toBe(false);
   });

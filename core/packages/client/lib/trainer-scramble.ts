@@ -8,6 +8,15 @@ import { invertFtoEifAlgorithm, parseFtoEifAlgorithm } from '@/lib/fto-eif-image
 
 const AUF = ['', 'U', 'U2', "U'"] as const;
 const Y = ['', 'y', 'y2', "y'"] as const;
+export const F2L_SLOTS = ['FR', 'FL', 'BL', 'BR'] as const;
+export type F2LSlot = (typeof F2L_SLOTS)[number];
+// cubing.js / WCA 的 y 方向:标准 FR 槽依次移到 FL、BL、BR。
+const F2L_SLOT_Y: Record<F2LSlot, (typeof Y)[number]> = {
+  FR: '',
+  FL: 'y',
+  BL: 'y2',
+  BR: "y'",
+};
 const D_ADJUSTMENTS = ['D', 'D2', "D'"] as const;
 /** 金字塔的顶层是 3 阶轴,只有 U / U' 两种「不是不转」的对齐(没有 U2)。 */
 const PYRA_AUF = ['', 'U', "U'"];
@@ -157,7 +166,7 @@ export function caseBaseAlg(c: AlgCase): string {
 export interface TrainerSetScrambleFeatures {
   randomInitialD: boolean;
   randomFinalAuf: boolean;
-  randomFinalY: boolean;
+  f2lSlots: boolean;
 }
 
 export interface F2LFinalAdjustment {
@@ -165,20 +174,42 @@ export interface F2LFinalAdjustment {
   y: (typeof Y)[number];
 }
 
-/** 覆盖模式的 F2L 收尾候选:开两项 = 4×4 共 16 项，只开一项 = 4 项。 */
+/** 外部数据只接受四个标准槽位,去重并固定为设置里的显示顺序。 */
+export function normalizeF2LSlots(
+  value: unknown,
+  fallback: readonly F2LSlot[] = F2L_SLOTS,
+): F2LSlot[] {
+  if (!Array.isArray(value)) return [...fallback];
+  const selected = new Set(value.filter((slot): slot is F2LSlot => (
+    typeof slot === 'string' && F2L_SLOTS.includes(slot as F2LSlot)
+  )));
+  const normalized = F2L_SLOTS.filter(slot => selected.has(slot));
+  return normalized.length > 0 ? normalized : [...fallback];
+}
+
+const f2lSlotYs = (slots: readonly F2LSlot[] | undefined): readonly (typeof Y)[number][] => (
+  slots === undefined ? Y.slice(0, 1) : normalizeF2LSlots(slots, ['FR']).map(slot => F2L_SLOT_Y[slot])
+);
+
+const pickF2LSlotY = (slots: readonly F2LSlot[] | undefined): (typeof Y)[number] => {
+  const ys = f2lSlotYs(slots);
+  return ys.length === 1 ? ys[0] : pick(ys);
+};
+
+/** 覆盖模式的 F2L 收尾候选:AUF 四相位 × 用户选中的槽位。 */
 export function f2lFinalAdjustmentVariants(
   randomFinalAuf: boolean,
-  randomFinalY: boolean,
+  f2lSlots: readonly F2LSlot[],
 ): F2LFinalAdjustment[] {
   const aufs = randomFinalAuf ? AUF : AUF.slice(0, 1);
-  const ys = randomFinalY ? Y : Y.slice(0, 1);
+  const ys = f2lSlotYs(f2lSlots);
   return aufs.flatMap(auf => ys.map(y => ({ auf, y })));
 }
 
 const NO_SET_SCRAMBLE_FEATURES: TrainerSetScrambleFeatures = {
   randomInitialD: false,
   randomFinalAuf: false,
-  randomFinalY: false,
+  f2lSlots: false,
 };
 
 /**
@@ -190,10 +221,10 @@ export function trainerSetScrambleFeatures(
   set: string | null | undefined,
 ): TrainerSetScrambleFeatures {
   if (puzzle === '3x3' && (set === 'f2l' || set === 'adv-f2l')) {
-    return { randomInitialD: false, randomFinalAuf: true, randomFinalY: true };
+    return { randomInitialD: false, randomFinalAuf: true, f2lSlots: true };
   }
   if (puzzle === '3x3' && set === 'psf2l') {
-    return { randomInitialD: true, randomFinalAuf: false, randomFinalY: false };
+    return { randomInitialD: true, randomFinalAuf: false, f2lSlots: false };
   }
   return NO_SET_SCRAMBLE_FEATURES;
 }
@@ -253,9 +284,9 @@ export interface TrainerScrambleOpts {
   randomInitialD?: boolean;
   /** F2L 系特化:打乱末尾随机补 U / U2 / U' / 无。 */
   randomFinalAuf?: boolean;
-  /** F2L 系特化:打乱末尾随机补 y / y2 / y' / 无。 */
-  randomFinalY?: boolean;
-  /** 覆盖模式预先排好的 F2L AUF × y 组合；传入时不再各自独立随机。 */
+  /** F2L / 进阶 F2L:只把标准 FR case 转到这些槽位;省略 = 保持 FR。 */
+  f2lSlots?: readonly F2LSlot[];
+  /** 覆盖模式预先排好的 F2L AUF × 槽位组合；传入时不再各自独立随机。 */
   f2lFinalAdjustment?: F2LFinalAdjustment;
   /** 顶层朝向偏好(朝向组键 → 允许的相位),见 `lib/alg_ll_orientation`。 */
   orientation?: OrientationSel;
@@ -283,7 +314,7 @@ export function generateScramble(
         ? replaceOuterDAdjustment(base, pick(D_ADJUSTMENTS))
         : base;
       const finalAuf = opts?.f2lFinalAdjustment?.auf ?? (opts?.randomFinalAuf ? pick(AUF) : '');
-      const finalY = opts?.f2lFinalAdjustment?.y ?? (opts?.randomFinalY ? pick(Y) : '');
+      const finalY = opts?.f2lFinalAdjustment?.y ?? pickF2LSlotY(opts?.f2lSlots);
       const withAuf = joinWithAufMerge('', adjustedBase.split(/\s+/).filter(Boolean), finalAuf);
       return appendYMerge(withAuf, finalY);
     }

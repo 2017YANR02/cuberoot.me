@@ -143,7 +143,7 @@ export const BEGINNER_MICRO_COURSE: MicroCourse = {
   label: l('层先法', 'Beginner method'),
   title: l('26 个关卡，从认识魔方到独立复原', '26 checkpoints from meeting the cube to an independent solve'),
   summary: l('把完整复原拆成五个模块。每节只新增一个判断或动作，学员可以看完立刻练，家长也能按编号检查进度。', 'A full solve split into five modules. Each lesson adds one decision or action so learners can practise immediately and parents can follow progress by number.'),
-  audience: l('约 7 岁以上、能分辨颜色并愿意暂停跟练的零基础学员', 'Beginners around age seven or older who can distinguish colors and pause to practise'),
+  audience: l('能分辨颜色并愿意暂停跟练的零基础学员', 'Beginners who can distinguish colors and pause to practise'),
   stages: [{
     id: 'beginner-full-solve',
     title: l('零基础完整复原', 'Complete beginner solve'),

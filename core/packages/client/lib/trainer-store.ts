@@ -4,8 +4,9 @@
 import { create } from 'zustand';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import {
-  generateScramble, cstimerStyleScramble, f2lFinalAdjustmentVariants,
-  trainerSetScrambleFeatures, type F2LFinalAdjustment, type ScrambleKind,
+  generateScramble, cstimerStyleScramble, F2L_SLOTS, f2lFinalAdjustmentVariants,
+  normalizeF2LSlots, trainerSetScrambleFeatures, type F2LFinalAdjustment,
+  type F2LSlot, type ScrambleKind,
 } from './trainer-scramble';
 import { caseKey, findCaseByKey } from './trainer-case-key';
 import { histBack, histForward, histPush, type ScrambleHist } from './scramble-history';
@@ -162,8 +163,8 @@ interface TrainerPrefs {
   randomInitialD: boolean;
   /** F2L / 进阶 F2L:打乱末尾随机补 AUF。 */
   randomFinalAuf: boolean;
-  /** F2L / 进阶 F2L:打乱末尾随机补 y 转体。 */
-  randomFinalY: boolean;
+  /** F2L / 进阶 F2L:允许出题的槽位,至少一个。 */
+  f2lSlots: F2LSlot[];
   /**
    * 顶层朝向偏好:朝向组键 → 允许的相位(见 `lib/alg_ll_orientation`)。收尾 AUF 的
    * 细化版 —— 不是「随机四选一」而是「只出这几个方向」。组键按形状算,跨 set 通用,
@@ -206,7 +207,7 @@ interface TrainerPrefs {
   smartCube: boolean;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
-  preAuf: true, postAuf: true, randomInitialD: true, randomFinalAuf: true, randomFinalY: true,
+  preAuf: true, postAuf: true, randomInitialD: true, randomFinalAuf: true, f2lSlots: [...F2L_SLOTS],
   oriSel: {}, timing: false, mode: 'recap', probMode: 'uniform',
   recapOrder: 'shuffle', showRecapRoundEnd: true, timerFont: 'lcd', scrambleFont: 'sans',
   showPrevCard: true, showStats: true, showStageThumb: true,
@@ -220,7 +221,17 @@ const loadPrefs = (): TrainerPrefs => {
   if (typeof window === 'undefined') return DEFAULT_PREFS;
   try {
     const raw = localStorage.getItem(PREFS_KEY);
-    if (raw) return { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<TrainerPrefs>) };
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<TrainerPrefs> & { randomFinalY?: unknown };
+      // 旧版只有「随机 y」布尔值:关 = 只练 FR,开 / 缺省 = 四槽全练。
+      const legacySlots = parsed.randomFinalY === false ? ['FR'] as const : F2L_SLOTS;
+      const { randomFinalY: _legacyRandomFinalY, ...current } = parsed;
+      return {
+        ...DEFAULT_PREFS,
+        ...current,
+        f2lSlots: normalizeF2LSlots(parsed.f2lSlots, legacySlots),
+      };
+    }
   } catch { /* ignore */ }
   return DEFAULT_PREFS;
 };
@@ -234,7 +245,7 @@ const persistPrefs = (p: TrainerPrefs) => {
 const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   preAuf: st.preAuf, postAuf: st.postAuf,
   randomInitialD: st.randomInitialD,
-  randomFinalAuf: st.randomFinalAuf, randomFinalY: st.randomFinalY,
+  randomFinalAuf: st.randomFinalAuf, f2lSlots: st.f2lSlots,
   oriSel: st.oriSel, timing: st.timing, mode: st.mode,
   probMode: st.probMode, recapOrder: st.recapOrder, showRecapRoundEnd: st.showRecapRoundEnd,
   timerFont: st.timerFont, scrambleFont: st.scrambleFont,
@@ -347,7 +358,7 @@ interface TrainerState {
   postAuf: boolean;
   randomInitialD: boolean;
   randomFinalAuf: boolean;
-  randomFinalY: boolean;
+  f2lSlots: F2LSlot[];
   oriSel: Record<string, number[]>;
   timing: boolean;
   mode: TrainerMode;
@@ -404,7 +415,7 @@ interface TrainerState {
   setPostAuf: (v: boolean) => void;
   setRandomInitialD: (v: boolean) => void;
   setRandomFinalAuf: (v: boolean) => void;
-  setRandomFinalY: (v: boolean) => void;
+  setF2LSlots: (slots: readonly F2LSlot[]) => void;
   /** 改某个朝向组的相位偏好。`offs` 为空 / 覆盖全部 = 该组不限制(存成空数组)。 */
   setOriSel: (key: string, offs: readonly number[]) => void;
   /** 清掉全部朝向限制,回到「随机四选一」。 */
@@ -582,18 +593,18 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   const aufOpts = (st: {
     mode: TrainerMode; puzzle: AlgPuzzle | null; set: string | null;
     preAuf: boolean; postAuf: boolean; randomInitialD: boolean;
-    randomFinalAuf: boolean; randomFinalY: boolean;
+    randomFinalAuf: boolean; f2lSlots: F2LSlot[];
     oriSel: Record<string, number[]>;
   }) => {
     const features = trainerSetScrambleFeatures(st.puzzle, st.set);
     return st.mode === 'memo'
-      ? { preAuf: false, postAuf: false, randomInitialD: false, randomFinalAuf: false, randomFinalY: false }
+      ? { preAuf: false, postAuf: false, randomInitialD: false, randomFinalAuf: false, f2lSlots: ['FR'] as F2LSlot[] }
       : {
           preAuf: st.preAuf,
           postAuf: st.postAuf,
           randomInitialD: features.randomInitialD && st.randomInitialD,
           randomFinalAuf: features.randomFinalAuf && st.randomFinalAuf,
-          randomFinalY: features.randomFinalY && st.randomFinalY,
+          f2lSlots: features.f2lSlots ? st.f2lSlots : undefined,
           orientation: st.oriSel,
           orientationSet: st.set,
         };
@@ -602,17 +613,18 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   const nextF2LFinalAdjustment = (st: TrainerState): F2LFinalAdjustment | undefined => {
     const features = trainerSetScrambleFeatures(st.puzzle, st.set);
     const useAuf = features.randomFinalAuf && st.randomFinalAuf;
-    const useY = features.randomFinalY && st.randomFinalY;
-    if (st.mode !== 'recap' || (!useAuf && !useY)) return undefined;
+    const slots = features.f2lSlots ? normalizeF2LSlots(st.f2lSlots, ['FR']) : ['FR'] as F2LSlot[];
+    const useSlotAdjustment = slots.length !== 1 || slots[0] !== 'FR';
+    if (st.mode !== 'recap' || (!useAuf && !useSlotAdjustment)) return undefined;
 
-    const sig = `${st.puzzle ?? ''}|${st.set ?? ''}|${useAuf ? 1 : 0}|${useY ? 1 : 0}`;
+    const sig = `${st.puzzle ?? ''}|${st.set ?? ''}|${useAuf ? 1 : 0}|${slots.join(',')}`;
     if (f2lAdjustmentSig !== sig) {
       f2lAdjustmentSig = sig;
       f2lAdjustmentBag = [];
       lastF2LAdjustment = '';
     }
     if (f2lAdjustmentBag.length === 0) {
-      f2lAdjustmentBag = shuffle(f2lFinalAdjustmentVariants(useAuf, useY));
+      f2lAdjustmentBag = shuffle(f2lFinalAdjustmentVariants(useAuf, slots));
       // 两袋交界也尽量不连续重复；袋内覆盖保证不受影响。
       const nextIdx = f2lAdjustmentBag.length - 1;
       const next = f2lAdjustmentBag[nextIdx];
@@ -1145,7 +1157,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       postAuf: opts?.noAufDefault ? false : prefs.postAuf,
       randomInitialD: prefs.randomInitialD,
       randomFinalAuf: prefs.randomFinalAuf,
-      randomFinalY: prefs.randomFinalY,
+      f2lSlots: prefs.f2lSlots,
       // 朝向偏好按形状分组、跨 set 通用,没有「本场默认关」这回事 —— 直接取落盘的。
       oriSel: prefs.oriSel,
       selected,
@@ -1265,9 +1277,11 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       persistPrefs(prefsOf(get()));
       regenCurrent(true);
     },
-    setRandomFinalY: (v) => {
+    setF2LSlots: (slots) => {
+      const next = normalizeF2LSlots(slots, []);
+      if (next.length === 0) return;
       resetF2LAdjustmentBag();
-      set({ randomFinalY: v });
+      set({ f2lSlots: next });
       persistPrefs(prefsOf(get()));
       regenCurrent(true);
     },

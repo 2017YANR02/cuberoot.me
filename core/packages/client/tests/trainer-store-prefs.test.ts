@@ -31,7 +31,7 @@ describe('trainer-store 开关联动', () => {
     st().setShowStageThumb(true);
     st().setRandomInitialD(true);
     st().setRandomFinalAuf(true);
-    st().setRandomFinalY(true);
+    st().setF2LSlots(['FR', 'FL', 'BL', 'BR']);
     st().setShowRecapRoundEnd(true);
   });
 
@@ -71,23 +71,24 @@ describe('trainer-store 开关联动', () => {
     expect(st().postAuf).toBe(false);
   });
 
-  it('公式集特化的随机 D / AUF / y 偏好会一起持久化', () => {
+  it('公式集特化的随机 D / AUF / 槽位偏好会一起持久化', () => {
     st().setRandomInitialD(false);
     st().setRandomFinalAuf(false);
-    st().setRandomFinalY(false);
+    st().setF2LSlots(['FL', 'BR']);
 
     const saved = JSON.parse(g.localStorage!.getItem('trainer:prefs') ?? '{}');
     expect(saved.randomInitialD).toBe(false);
     expect(saved.randomFinalAuf).toBe(false);
-    expect(saved.randomFinalY).toBe(false);
+    expect(saved.f2lSlots).toEqual(['FL', 'BR']);
+    expect(saved.randomFinalY).toBeUndefined();
   });
 
-  it('新偏好默认开启 F2L AUF / y 和本轮结束提示', () => {
+  it('新偏好默认开启 F2L AUF / 四槽和本轮结束提示', () => {
     g.localStorage = makeLocalStorage();
     st().hydratePrefs();
 
     expect(st().randomFinalAuf).toBe(true);
-    expect(st().randomFinalY).toBe(true);
+    expect(st().f2lSlots).toEqual(['FR', 'FL', 'BL', 'BR']);
     expect(st().showRecapRoundEnd).toBe(true);
   });
 
@@ -102,14 +103,28 @@ describe('trainer-store 开关联动', () => {
     g.localStorage!.setItem('trainer:prefs', JSON.stringify({ timing: true }));
     st().setRandomInitialD(false);
     st().setRandomFinalAuf(false);
-    st().setRandomFinalY(false);
-    // 上面两个 setter 会覆盖存储,重新放回旧版快照再补水。
+    st().setF2LSlots(['FR']);
+    // 上面三个 setter 会覆盖存储,重新放回旧版快照再补水。
     g.localStorage!.setItem('trainer:prefs', JSON.stringify({ timing: true }));
     st().hydratePrefs();
 
     expect(st().randomInitialD).toBe(true);
     expect(st().randomFinalAuf).toBe(true);
-    expect(st().randomFinalY).toBe(true);
+    expect(st().f2lSlots).toEqual(['FR', 'FL', 'BL', 'BR']);
     expect(st().showRecapRoundEnd).toBe(true);
+  });
+
+  it('旧版关闭随机 y 会迁移为只练 FR', () => {
+    g.localStorage!.setItem('trainer:prefs', JSON.stringify({ randomFinalY: false }));
+    st().hydratePrefs();
+
+    expect(st().f2lSlots).toEqual(['FR']);
+  });
+
+  it('不允许把 F2L 槽位清空', () => {
+    st().setF2LSlots(['BL']);
+    st().setF2LSlots([]);
+
+    expect(st().f2lSlots).toEqual(['BL']);
   });
 });
