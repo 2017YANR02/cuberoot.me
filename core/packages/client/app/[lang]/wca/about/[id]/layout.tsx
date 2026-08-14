@@ -6,9 +6,8 @@ import { metadataFromEntry } from '@/lib/page-meta';
 // registry, so naming them is free. These pages explain method — exactly the
 // kind of page a search or an assistant should be able to find by name.
 
-/** Registry titles often read "<name> — <subtitle>"; metadataFromEntry appends
- *  " — CubeRoot", so keep only the head and let the subtitle live in the
- *  description rather than emit a title with two em-dashes. */
+/** Registry titles often read "<name> — <subtitle>"; keep only the head and let
+ *  the subtitle live in the description so narrow tabs retain the unique name. */
 const head = (s: string): string => s.split(/\s+[—–]\s+/)[0].trim();
 
 /** Intro is a paragraph or list of paragraphs with light **bold** markup. */

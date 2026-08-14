@@ -96,8 +96,8 @@ export const CATALOG: UtilEntry[] = [
     imp: "import { useDocumentTitle } from '@/hooks/useDocumentTitle';",
     usage: "useDocumentTitle('组件库', 'Components');",
     category: 'hook',
-    zh: '设置浏览器标签标题(带 CubeRoot 后缀,卸载时复位),SSR 安全。',
-    en: 'Sets the document title (CubeRoot suffix, resets on unmount), SSR-safe.',
+    zh: '设置仅含页面名的浏览器标签标题(首页回退为 CubeRoot),SSR 安全。',
+    en: 'Sets the page-only document title (landing page falls back to CubeRoot), SSR-safe.',
   },
   {
     name: 'useHashHighlight',

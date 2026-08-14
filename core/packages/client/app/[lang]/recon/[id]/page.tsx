@@ -17,9 +17,9 @@ export function generateStaticParams() {
 }
 
 // Fallback metadata when the recon can't be fetched (404 / API down).
-const FALLBACK_TITLE = { en: 'Reconstruction | CubeRoot', zh: '复盘 | CubeRoot' };
+const FALLBACK_TITLE = { en: 'Reconstruction', zh: '复盘' };
 // Private recon — generic noindex title (content never reaches SSR).
-const PRIVATE_TITLE = { en: 'Private reconstruction | CubeRoot', zh: '私享复盘 | CubeRoot' };
+const PRIVATE_TITLE = { en: 'Private reconstruction', zh: '私享复盘' };
 
 export async function generateMetadata({ params }: {
   params: Promise<{ lang: string; id: string }>;
@@ -49,6 +49,7 @@ export async function generateMetadata({ params }: {
   // any slug variant onto one canonical — Phase 1's consolidation mechanism).
   const canonical = reconCanonical(id, lang, reconPathSeg(solve));
   const title = buildReconTitle(solve, isZh);
+  const shareTitle = `CubeRoot — ${title}`;
   const description = buildReconDescription(solve, isZh);
   // 不公开列出(unlisted)= 有链接可看但不进搜索 → noindex;否则非 WCA / 练习是薄内容也 noindex;
   // 公开的 WCA 复盘才索引。
@@ -64,7 +65,7 @@ export async function generateMetadata({ params }: {
     // Next replaces the parent openGraph per segment, so re-include an image or
     // this page's share card loses the site-wide default thumbnail (→ text-only
     // on WeChat). Reuse the brand mark; a per-solve image can replace it later.
-    openGraph: { title, description, url: canonical, type: 'article', images: ['/icons/CubeRoot.png'] },
+    openGraph: { title: shareTitle, description, url: canonical, type: 'article', images: ['/icons/CubeRoot.png'] },
   };
 }
 

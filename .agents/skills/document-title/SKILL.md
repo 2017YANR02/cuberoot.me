@@ -1,6 +1,6 @@
 ---
 name: document-title
-description: "Use when adding/changing a page's browser tab title (the `<title>` / `document.title` text shown in Chrome tab strip and history). Single entry point: `useDocumentTitle(zh, en)` hook in `utils/useDocumentTitle.ts`. Auto-flips on LangToggle, auto-cleans up on unmount. NEVER write `document.title = ...` in new code. Triggers: \"tab 名\", \"tab 标题\", \"浏览器标题\", \"页面标题\", \"document.title\", \"document title\", \"tab title\", \"browser title\", \"网页标题\", \"useDocumentTitle\"."
+description: "Use when adding/changing a page's browser tab title (the `<title>` / `document.title` text shown in Chrome tab strip and history). Single entry point: `useDocumentTitle(zh, en)` hook in `utils/useDocumentTitle.ts`. Subpages show only the page name; the landing page is `CubeRoot`. NEVER write `document.title = ...` in new code. Triggers: \"tab 名\", \"tab 标题\", \"浏览器标题\", \"页面标题\", \"document.title\", \"document title\", \"tab title\", \"browser title\", \"网页标题\", \"useDocumentTitle\"."
 ---
 
 # 浏览器 tab 标题(document.title)
@@ -20,7 +20,7 @@ export default function MyPage() {
 }
 ```
 
-输出 `页面中文名 — CubeRoot` / `Page English Name — CubeRoot`(em-dash 分隔)。unmount 自动 reset 回 `CubeRoot`。
+输出 `页面中文名` / `Page English Name`。只有首页显示 `CubeRoot`;unmount 自动 reset 回 `CubeRoot`。
 
 ## 动态标题(数据驱动)
 
@@ -38,12 +38,11 @@ useDocumentTitle(title, title);  // 已本地化字符串就两个参数传同�
 
 ## 禁
 
-- ❌ `document.title = '...'` — bypass hook,会忘 cleanup、忘双语、忘后缀格式。
+- ❌ `document.title = '...'` — bypass hook,会忘 cleanup、忘双语。
 - ❌ `react-helmet` / `react-helmet-async` — 纯 SPA 不需要,这个 hook 已够。
-- ❌ 自己拼 `xxx — CubeRoot` 字面量 — 后缀格式由 hook 锁,改格式只改一处。
-- ❌ 分隔符乱用 `· | -` — 全站锁死 em-dash `—`,跟 `/code/*` 老页一致。
+- ❌ 自己拼 `CubeRoot` 前后缀 — favicon 已承担品牌识别,窄 tab 只留页面名。
 - ❌ 写带 emoji 的 title — tab 字体下错位,且 fatigue。
-- ❌ 给 LandingPage(`/`)加 hook — 默认 `<title>CubeRoot</title>` 已够,加了反而把首页变成 `CubeRoot — CubeRoot`。
+- ❌ 给 LandingPage(`/`)加 hook — 首页已有服务端 `<title>CubeRoot</title>`。
 
 ## 历史遗留(技术债,不主动碰)
 
