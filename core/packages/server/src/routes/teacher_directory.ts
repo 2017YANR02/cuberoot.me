@@ -34,6 +34,7 @@ interface DirectoryDraft {
   website: string;
   wcaId: string;
   isCurated: boolean;
+  isVisible: boolean;
 }
 
 interface DirectoryRow {
@@ -52,6 +53,7 @@ interface DirectoryRow {
   website: string;
   wca_id: string | null;
   is_curated: boolean;
+  is_visible: boolean;
   owner_key: string;
   owner_name: string;
   created_at: Date;
@@ -60,7 +62,7 @@ interface DirectoryRow {
 
 const COLUMNS = `id, kind, name_zh, name_en, location_zh, location_en,
   description_zh, description_en, specialties_zh, specialties_en, teaching_mode,
-  contact, website, wca_id, is_curated, owner_key, owner_name, created_at, updated_at`;
+  contact, website, wca_id, is_curated, is_visible, owner_key, owner_name, created_at, updated_at`;
 const KINDS: readonly EntryKind[] = ['teacher', 'organization'];
 const MODES: readonly TeachingMode[] = ['online', 'in_person', 'both'];
 
@@ -87,7 +89,7 @@ function cleanTags(value: unknown): string[] {
   return result;
 }
 
-function readDraft(body: Partial<DirectoryDraft>): DirectoryDraft {
+function readDraft(body: Partial<DirectoryDraft>, defaultVisible = true): DirectoryDraft {
   const wcaId = cleanText(body.wcaId, 20).toUpperCase();
   return {
     kind: KINDS.includes(body.kind as EntryKind) ? body.kind as EntryKind : 'teacher',
@@ -106,6 +108,7 @@ function readDraft(body: Partial<DirectoryDraft>): DirectoryDraft {
     website: cleanText(body.website, 2000),
     wcaId,
     isCurated: body.isCurated === true,
+    isVisible: typeof body.isVisible === 'boolean' ? body.isVisible : defaultVisible,
   };
 }
 
@@ -142,6 +145,7 @@ function toJson(row: DirectoryRow, withOwner = false) {
     website: row.website,
     wcaId: row.wca_id ?? '',
     isCurated: row.is_curated,
+    isVisible: row.is_visible,
     ...(withOwner ? { ownerKey: row.owner_key, ownerName: row.owner_name } : {}),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -159,6 +163,7 @@ async function requireDirectoryEditor(c: Context): Promise<{ user: WcaUser; admi
 teacherDirectoryRoutes.get('/teachers', async (c) => {
   const rows = await query<DirectoryRow>(
     `SELECT ${COLUMNS} FROM teacher_directory_entries
+     WHERE is_visible = TRUE
      ORDER BY is_curated DESC, created_at, id`,
   );
   if (rows.length === 0) noStore(c);
@@ -189,14 +194,14 @@ teacherDirectoryRoutes.post('/teachers', async (c) => {
     `INSERT INTO teacher_directory_entries
        (kind, name_zh, name_en, location_zh, location_en, description_zh, description_en,
         specialties_zh, specialties_en, teaching_mode, contact, website, wca_id,
-        is_curated, owner_key, owner_name)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?, ?, ?, ?, ?)
+        is_curated, is_visible, owner_key, owner_name)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?, ?, ?, ?, ?, ?)
      RETURNING ${COLUMNS}`,
     [
       draft.kind, draft.nameZh, draft.nameEn, draft.locationZh, draft.locationEn,
       draft.descriptionZh, draft.descriptionEn, draft.specialtiesZh, draft.specialtiesEn,
       draft.teachingMode, draft.contact, draft.website, draft.wcaId || null,
-      admin ? draft.isCurated : false, user.wcaId, user.name,
+      admin ? draft.isCurated : false, draft.isVisible, user.wcaId, user.name,
     ],
   );
   return c.json({ entry: toJson(rows[0], true) }, 201);
@@ -218,7 +223,7 @@ teacherDirectoryRoutes.put('/teachers/:id', async (c) => {
     return c.json({ error: 'Cannot edit this directory entry' }, 403);
   }
 
-  const draft = readDraft(await c.req.json<Partial<DirectoryDraft>>());
+  const draft = readDraft(await c.req.json<Partial<DirectoryDraft>>(), existing[0].is_visible);
   const error = validateDraft(draft);
   if (error) return c.json({ error: 'Invalid directory entry', code: error }, 400);
   const rows = await query<DirectoryRow>(
@@ -226,13 +231,13 @@ teacherDirectoryRoutes.put('/teachers/:id', async (c) => {
        kind = ?, name_zh = ?, name_en = ?, location_zh = ?, location_en = ?,
        description_zh = ?, description_en = ?, specialties_zh = ?::jsonb,
        specialties_en = ?::jsonb, teaching_mode = ?, contact = ?, website = ?,
-       wca_id = ?, is_curated = ?
+       wca_id = ?, is_curated = ?, is_visible = ?
      WHERE id = ? RETURNING ${COLUMNS}`,
     [
       draft.kind, draft.nameZh, draft.nameEn, draft.locationZh, draft.locationEn,
       draft.descriptionZh, draft.descriptionEn, draft.specialtiesZh, draft.specialtiesEn,
       draft.teachingMode, draft.contact, draft.website, draft.wcaId || null,
-      admin ? draft.isCurated : existing[0].is_curated, id,
+      admin ? draft.isCurated : existing[0].is_curated, draft.isVisible, id,
     ],
   );
   return c.json({ entry: toJson(rows[0], true) });
