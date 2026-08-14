@@ -35,7 +35,7 @@ function options(overrides: Partial<TrainerSheetOptions> = {}): TrainerSheetOpti
       preAuf: false,
       postAuf: false,
       randomFinalAuf: false,
-      randomFinalY: false,
+      f2lSlots: ['FR'],
     },
     showThumb: false,
     pureScramble: false,
@@ -85,7 +85,7 @@ describe('trainer PDF', () => {
     expect(sheet.cases[0].thumb?.setup).toBe("(R U R')");
   });
 
-  it('covers all enabled AUF and y endings once per adjustment bag', async () => {
+  it('covers all enabled AUF and slot endings once per adjustment bag', async () => {
     const repeated = Array.from({ length: 16 }, (_, i) => f2lCase(`F2L-${i}`, 'R'));
     const sheet = await trainerSheetFromCases(options({
       cases: repeated,
@@ -93,7 +93,7 @@ describe('trainer PDF', () => {
         preAuf: false,
         postAuf: false,
         randomFinalAuf: true,
-        randomFinalY: true,
+        f2lSlots: ['FR', 'FL', 'BL', 'BR'],
       },
       showThumb: true,
       random: () => 0,

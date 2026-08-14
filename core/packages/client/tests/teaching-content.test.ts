@@ -76,6 +76,12 @@ describe('teaching course plan', () => {
     expect(ids.indexOf('cfop-finish-01')).toBeLessThan(ids.indexOf('cfop-sheet-01'));
   });
 
+  it('keeps age restrictions out of the teaching page', () => {
+    const content = JSON.stringify({ courses: TEACHING_COURSES, advanced: ADVANCED_COURSE_FALLBACK });
+    expect(content).not.toMatch(/\d+\s*岁|岁以上|岁以下|周岁|年龄/);
+    expect(content).not.toMatch(/\bage(?:d|s)?\b|\byears?[- ]old\b|\bolder than\b|\byounger than\b/i);
+  });
+
   it('keeps the post-CFOP fallback aligned with the seeded course tracks', () => {
     expect(ADVANCED_COURSE_FALLBACK.filter((lesson) => lesson.track === '333')).toHaveLength(48);
     expect(ADVANCED_COURSE_FALLBACK.filter((lesson) => lesson.track === '222')).toHaveLength(10);
