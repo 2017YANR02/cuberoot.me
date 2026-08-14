@@ -8,9 +8,9 @@ import {
   TEACHING_COURSES,
   TEACHING_LESSON_COUNT,
   TEACHING_TOTAL_MINUTES,
-} from '../app/[lang]/teaching/_data';
-import { OLL_ORDER, PLL_LABELS, ZBLL_CASE_COUNTS } from '../app/[lang]/teaching/_data/cfop-micro';
-import { ADVANCED_COURSE_FALLBACK } from '../app/[lang]/teaching/_data/advanced-course-fallback';
+} from '../app/[lang]/courses/_data';
+import { OLL_ORDER, PLL_LABELS, ZBLL_CASE_COUNTS } from '../app/[lang]/courses/_data/cfop-micro';
+import { ADVANCED_COURSE_FALLBACK } from '../app/[lang]/courses/_data/advanced-course-fallback';
 import { SECTIONS, TEXTS } from '../lib/landing-sections';
 
 describe('teaching course plan', () => {
@@ -119,7 +119,7 @@ describe('teaching course plan', () => {
       .find((card) => card.id === 'teaching');
 
     expect(teachingCard).toMatchObject({
-      href: '/teaching',
+      href: '/courses',
       internal: true,
       adminOnly: true,
     });
@@ -128,7 +128,7 @@ describe('teaching course plan', () => {
 
   it('keeps the administrator-only page out of the sitemap', () => {
     const entries = sitemap();
-    const teachingEntries = entries.filter((entry) => entry.url.endsWith('/teaching'));
-    expect(teachingEntries).toEqual([]);
+    const courseEntries = entries.filter((entry) => entry.url.endsWith('/courses'));
+    expect(courseEntries).toEqual([]);
   });
 });

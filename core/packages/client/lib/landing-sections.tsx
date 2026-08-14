@@ -169,7 +169,7 @@ export const SECTIONS: Section[] = [
     sub:     { en: 'Find teachers and schools, browse course plans and illustrated tutorials, learn the terms, regulations and group theory, then use a quiz to check what stuck.', zh: '寻找魔方老师和培训机构,浏览录播课方案与图文教程,学习术语、规则和群论,再用问答检验掌握程度。'
     },
     cards: [
-      { id: 'teaching', href: '/teaching', internal: true, tier: 'medium', Icon: GraduationCap, nameKey: 'teaching', adminOnly: true },
+      { id: 'teaching', href: '/courses', internal: true, tier: 'medium', Icon: GraduationCap, nameKey: 'teaching', adminOnly: true },
       { id: 'teachers', href: '/teachers', internal: true, tier: 'medium', Icon: School, nameKey: 'teachers' },
       { id: 'documents', href: '/docs', internal: true, tier: 'medium', Icon: FileText, nameKey: 'documents' },
       { id: 'spreadsheets', href: '/sheets', internal: true, tier: 'medium', Icon: Table2, nameKey: 'spreadsheets' },
