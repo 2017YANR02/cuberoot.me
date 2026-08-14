@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import { pageMetadata } from '@/lib/page-meta';
 
-const teachingMetadata = pageMetadata('teaching');
+const coursesMetadata = pageMetadata('courses');
 
 export async function generateMetadata({ params }: {
   params: Promise<{ lang: string }>;
 }): Promise<Metadata> {
-  const metadata = await teachingMetadata({ params });
+  const metadata = await coursesMetadata({ params });
   return { ...metadata, robots: { index: false, follow: false } };
 }
 
