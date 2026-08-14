@@ -166,27 +166,27 @@ function DirectoryEditor({ initial, isAdmin, onClose, onSaved, onDeleted }: {
           <ClearButton variant="standalone" ariaLabel={tr({ zh: '关闭', en: 'Close' })} onClick={saving ? () => undefined : onClose} />
         </div>
         <form onSubmit={submit} className="directory-form">
-          <label><span>{tr({ zh: '类型', en: 'Type' })}</span><select value={draft.kind} onChange={(event) => setField('kind', event.target.value as DirectoryEntryKind)}><option value="teacher">{tr({ zh: '魔方老师', en: 'Teacher' })}</option><option value="organization">{tr({ zh: '培训机构', en: 'School' })}</option></select></label>
+          <label><span>{tr({ zh: '类型', en: 'Type' })}</span><select className="directory-field-control" value={draft.kind} onChange={(event) => setField('kind', event.target.value as DirectoryEntryKind)}><option value="teacher">{tr({ zh: '魔方老师', en: 'Teacher' })}</option><option value="organization">{tr({ zh: '培训机构', en: 'School' })}</option></select></label>
           <div className="directory-form-grid">
-            <label><span>{tr({ zh: '中文名称', en: 'Chinese name' })}</span><input value={draft.nameZh} onChange={(event) => setField('nameZh', event.target.value)} maxLength={120} /></label>
-            <label><span>{tr({ zh: '英文名称', en: 'English name' })}</span><input value={draft.nameEn} onChange={(event) => setField('nameEn', event.target.value)} maxLength={120} /></label>
-            <label><span>{tr({ zh: '中文地点', en: 'Location in Chinese' })}</span><input value={draft.locationZh} onChange={(event) => setField('locationZh', event.target.value)} maxLength={160} /></label>
-            <label><span>{tr({ zh: '英文地点', en: 'Location in English' })}</span><input value={draft.locationEn} onChange={(event) => setField('locationEn', event.target.value)} maxLength={160} /></label>
+            <label><span>{tr({ zh: '中文名称', en: 'Chinese name' })}</span><input className="directory-field-control" value={draft.nameZh} onChange={(event) => setField('nameZh', event.target.value)} maxLength={120} /></label>
+            <label><span>{tr({ zh: '英文名称', en: 'English name' })}</span><input className="directory-field-control" value={draft.nameEn} onChange={(event) => setField('nameEn', event.target.value)} maxLength={120} /></label>
+            <label><span>{tr({ zh: '中文地点', en: 'Location in Chinese' })}</span><input className="directory-field-control" value={draft.locationZh} onChange={(event) => setField('locationZh', event.target.value)} maxLength={160} /></label>
+            <label><span>{tr({ zh: '英文地点', en: 'Location in English' })}</span><input className="directory-field-control" value={draft.locationEn} onChange={(event) => setField('locationEn', event.target.value)} maxLength={160} /></label>
           </div>
-          <label><span>{tr({ zh: '授课方式', en: 'Teaching mode' })}</span><select value={draft.teachingMode} onChange={(event) => setField('teachingMode', event.target.value as DirectoryTeachingMode)}><option value="both">{tr({ zh: '线上及线下', en: 'Online and in person' })}</option><option value="online">{tr({ zh: '线上教学', en: 'Online' })}</option><option value="in_person">{tr({ zh: '线下教学', en: 'In person' })}</option></select></label>
+          <label><span>{tr({ zh: '授课方式', en: 'Teaching mode' })}</span><select className="directory-field-control" value={draft.teachingMode} onChange={(event) => setField('teachingMode', event.target.value as DirectoryTeachingMode)}><option value="both">{tr({ zh: '线上及线下', en: 'Online and in person' })}</option><option value="online">{tr({ zh: '线上教学', en: 'Online' })}</option><option value="in_person">{tr({ zh: '线下教学', en: 'In person' })}</option></select></label>
           <div className="directory-form-grid">
-            <label><span>{tr({ zh: '中文擅长方向', en: 'Specialties in Chinese' })}</span><input value={tagsZh} onChange={(event) => setTagsZh(event.target.value)} placeholder={tr({ zh: '逗号分隔，最多 8 项', en: 'Comma-separated, up to 8' })} /></label>
-            <label><span>{tr({ zh: '英文擅长方向', en: 'Specialties in English' })}</span><input value={tagsEn} onChange={(event) => setTagsEn(event.target.value)} placeholder={tr({ zh: '逗号分隔，最多 8 项', en: 'Comma-separated, up to 8' })} /></label>
-          </div>
-          <div className="directory-form-grid">
-            <label><span>{tr({ zh: '中文介绍', en: 'Chinese introduction' })}</span><textarea value={draft.descriptionZh} onChange={(event) => setField('descriptionZh', event.target.value)} rows={7} maxLength={4000} /></label>
-            <label><span>{tr({ zh: '英文介绍', en: 'English introduction' })}</span><textarea value={draft.descriptionEn} onChange={(event) => setField('descriptionEn', event.target.value)} rows={7} maxLength={4000} /></label>
+            <label><span>{tr({ zh: '中文擅长方向', en: 'Specialties in Chinese' })}</span><input className="directory-field-control" value={tagsZh} onChange={(event) => setTagsZh(event.target.value)} placeholder={tr({ zh: '逗号分隔，最多 8 项', en: 'Comma-separated, up to 8' })} /></label>
+            <label><span>{tr({ zh: '英文擅长方向', en: 'Specialties in English' })}</span><input className="directory-field-control" value={tagsEn} onChange={(event) => setTagsEn(event.target.value)} placeholder={tr({ zh: '逗号分隔，最多 8 项', en: 'Comma-separated, up to 8' })} /></label>
           </div>
           <div className="directory-form-grid">
-            <label><span>{tr({ zh: '公开联系方式', en: 'Public contact' })}</span><input value={draft.contact} onChange={(event) => setField('contact', event.target.value)} maxLength={500} /></label>
-            <label><span>{tr({ zh: '网站', en: 'Website' })}</span><input type="url" value={draft.website} onChange={(event) => setField('website', event.target.value)} placeholder="https://" maxLength={500} /></label>
+            <label><span>{tr({ zh: '中文介绍', en: 'Chinese introduction' })}</span><textarea className="directory-field-control directory-textarea-control" value={draft.descriptionZh} onChange={(event) => setField('descriptionZh', event.target.value)} rows={7} maxLength={4000} /></label>
+            <label><span>{tr({ zh: '英文介绍', en: 'English introduction' })}</span><textarea className="directory-field-control directory-textarea-control" value={draft.descriptionEn} onChange={(event) => setField('descriptionEn', event.target.value)} rows={7} maxLength={4000} /></label>
           </div>
-          <label className="directory-wca-field"><span>WCA ID</span><input value={draft.wcaId} onChange={(event) => setField('wcaId', event.target.value.toUpperCase())} placeholder="2017YANR02" maxLength={10} /></label>
+          <div className="directory-form-grid">
+            <label><span>{tr({ zh: '公开联系方式', en: 'Public contact' })}</span><input className="directory-field-control" value={draft.contact} onChange={(event) => setField('contact', event.target.value)} maxLength={500} /></label>
+            <label><span>{tr({ zh: '网站', en: 'Website' })}</span><input className="directory-field-control" type="url" value={draft.website} onChange={(event) => setField('website', event.target.value)} placeholder="https://" maxLength={500} /></label>
+          </div>
+          <label className="directory-wca-field"><span>WCA ID</span><input className="directory-field-control" value={draft.wcaId} onChange={(event) => setField('wcaId', event.target.value.toUpperCase())} placeholder="2017YANR02" maxLength={10} /></label>
           <p className="directory-form-note">{tr({ zh: '名称和介绍至少填写一种语言。联系方式会公开显示，请勿填写不希望公开的信息。', en: 'A name and introduction are required in at least one language. Contact details are public, so only add information you want to share.' })}</p>
           {error && <p className="directory-form-error" role="alert">{error}</p>}
           <div className="directory-form-actions"><button type="submit" className="directory-primary-button" disabled={saving}>{saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存', en: 'Save' })}</button><button type="button" className="directory-secondary-button" onClick={onClose} disabled={saving}>{tr({ zh: '取消', en: 'Cancel' })}</button>{initial && <button type="button" className="directory-delete-button" onClick={remove} disabled={saving}>{tr({ zh: '删除', en: 'Delete' })}</button>}</div>
@@ -255,7 +255,7 @@ function TeachersDirectoryClient() {
       </header>
       <div className="directory-toolbar">
         <SearchInput value={query} onChange={(value) => { void setQuery(value || null); }} className="directory-search" inputClassName="directory-search-input" placeholder={tr({ zh: '搜索姓名、地点或擅长方向', en: 'Search names, places, or specialties' })} />
-        <label className="directory-kind-filter"><span>{tr({ zh: '类型', en: 'Type' })}</span><select value={kind} onChange={(event) => { void setKind(event.target.value as typeof kind); }}><option value="all">{tr({ zh: '全部', en: 'All' })}</option><option value="teacher">{tr({ zh: '魔方老师', en: 'Teachers' })}</option><option value="organization">{tr({ zh: '培训机构', en: 'Schools' })}</option></select></label>
+        <label className="directory-kind-filter"><span>{tr({ zh: '类型', en: 'Type' })}</span><select className="directory-kind-control" value={kind} onChange={(event) => { void setKind(event.target.value as typeof kind); }}><option value="all">{tr({ zh: '全部', en: 'All' })}</option><option value="teacher">{tr({ zh: '魔方老师', en: 'Teachers' })}</option><option value="organization">{tr({ zh: '培训机构', en: 'Schools' })}</option></select></label>
       </div>
       <section className="directory-list" aria-label={tr({ zh: '老师与机构名录', en: 'Teacher and school directory' })}>
         {loading && <p className="directory-state">{tr({ zh: '正在加载名录…', en: 'Loading the directory…' })}</p>}

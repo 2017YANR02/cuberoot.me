@@ -57,10 +57,8 @@
 }
 .directory-search { width: min(360px, 100%); }
 .directory-search-input,
-.directory-kind-filter select,
-.directory-form input,
-.directory-form select,
-.directory-form textarea {
+.directory-kind-control,
+.directory-field-control {
   width: 100%;
   border: 1px solid var(--border-default);
   border-radius: 9px;
@@ -71,10 +69,8 @@
 }
 .directory-search-input { height: 42px; padding: 0 38px 0 12px; }
 .directory-search-input:focus,
-.directory-kind-filter select:focus,
-.directory-form input:focus,
-.directory-form select:focus,
-.directory-form textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.directory-kind-control:focus,
+.directory-field-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .directory-kind-filter {
   display: flex;
   flex-direction: column;
@@ -84,7 +80,7 @@
   font-size: 0.78rem;
   white-space: nowrap;
 }
-.directory-kind-filter select { width: max-content; height: 42px; padding: 0 32px 0 11px; }
+.directory-kind-control { width: max-content; height: 42px; padding: 0 32px 0 11px; }
 
 .directory-entry {
   display: grid;
@@ -171,10 +167,8 @@
 .directory-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .directory-form label { align-items: flex-start; gap: 6px; color: var(--muted-foreground); font-size: 0.82rem; }
 .directory-form label > span { width: max-content; max-width: 100%; white-space: nowrap; }
-.directory-form input,
-.directory-form select,
-.directory-form textarea { padding: 9px 10px; color: var(--foreground); font-size: 0.92rem; }
-.directory-form textarea { min-height: 150px; resize: vertical; line-height: 1.55; }
+.directory-field-control { padding: 9px 10px; color: var(--foreground); font-size: 0.92rem; }
+.directory-textarea-control { min-height: 150px; resize: vertical; line-height: 1.55; }
 .directory-wca-field { width: min(240px, 100%); }
 .directory-form-note,
 .directory-form-error { margin: 0; font-size: 0.8rem; line-height: 1.55; }

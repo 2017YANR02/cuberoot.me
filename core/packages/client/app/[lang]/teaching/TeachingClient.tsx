@@ -285,6 +285,7 @@ function TeachingAccessNotice({ onUnlock }: { onUnlock: () => void }) {
         <label htmlFor="teaching-password"><T zh="预览密码" en="Preview password" /></label>
         <div className="teaching-access-row">
           <input
+            className="teaching-access-input"
             id="teaching-password"
             type="password"
             inputMode="numeric"
@@ -298,7 +299,7 @@ function TeachingAccessNotice({ onUnlock }: { onUnlock: () => void }) {
             aria-describedby={error ? 'teaching-password-error' : undefined}
             required
           />
-          <button type="submit" disabled={checking}>
+          <button className="teaching-access-submit" type="submit" disabled={checking}>
             {checking ? <T zh="验证中" en="Checking" /> : <T zh="查看课程" en="View course" />}
           </button>
         </div>
