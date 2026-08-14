@@ -23,6 +23,7 @@ import { deletedOwnerKey } from '@cuberoot/shared/account';
 export const PURGE_TABLES: readonly (readonly [string, string])[] = [
   ['comp_follows', 'wca_id'],            // 关注的比赛
   ['alg_case_marks', 'wca_id'],          // 公式掌握标记
+  ['alg_chain_orders', 'wca_id'],        // 公式集连拧顺序
   ['alg_case_srs', 'wca_id'],            // 公式记忆调度
   ['alg_set_progress', 'wca_id'],        // 「过遍」进度(轮次 + 游标 + 折叠时刻)
   ['alg_srs_daily', 'wca_id'],           // 每日复习计数

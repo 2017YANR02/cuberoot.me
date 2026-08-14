@@ -929,3 +929,15 @@ CREATE INDEX idx_teaching_advanced_track_position
   ON teaching_advanced_lessons(track, position, id);
 CREATE TRIGGER teaching_advanced_lessons_updated_at BEFORE UPDATE ON teaching_advanced_lessons
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
+
+-- 公式集连拧的用户自定义顺序(0129)。只存 case canonical key，不复制公式内容。
+CREATE TABLE alg_chain_orders (
+  wca_id     VARCHAR(20) NOT NULL,
+  puzzle     VARCHAR(16) NOT NULL,
+  set_slug   VARCHAR(32) NOT NULL,
+  scope      VARCHAR(96) NOT NULL DEFAULT '',
+  case_keys  JSONB       NOT NULL DEFAULT '[]'::jsonb,
+  updated_at BIGINT      NOT NULL,
+  PRIMARY KEY (wca_id, puzzle, set_slug, scope),
+  CHECK (jsonb_typeof(case_keys) = 'array')
+);

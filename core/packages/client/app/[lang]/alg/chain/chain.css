@@ -1,0 +1,237 @@
+.alg-chain-page {
+  padding-bottom: 64px;
+}
+
+.alg-chain-header,
+.alg-chain-controls,
+.alg-chain-summary,
+.alg-chain-grid {
+  width: min(1200px, calc(100% - 48px));
+  margin-inline: auto;
+}
+
+.alg-chain-header {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding-top: 28px;
+}
+
+.alg-chain-header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+.alg-chain-kicker {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.alg-chain-intro {
+  max-width: 620px;
+  margin: 14px 0 0;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.alg-chain-sync {
+  margin-bottom: 4px;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.alg-chain-sync.is-saving,
+.alg-chain-sync.is-loading {
+  color: var(--accent);
+}
+
+.alg-chain-sync.is-error {
+  color: var(--destructive);
+}
+
+.alg-chain-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+
+.alg-chain-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  color: var(--muted-foreground);
+  font-size: 0.74rem;
+}
+
+.alg-chain-select,
+.alg-chain-action {
+  min-height: 38px;
+  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+}
+
+.alg-chain-select {
+  width: max-content;
+  max-width: min(72vw, 260px);
+  padding: 7px 30px 7px 10px;
+}
+
+.alg-chain-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+
+.alg-chain-action:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 48%, transparent);
+  color: var(--accent);
+}
+
+.alg-chain-action:disabled {
+  cursor: default;
+  opacity: 0.42;
+}
+
+.alg-chain-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+}
+
+.alg-chain-summary strong {
+  color: var(--foreground);
+  font-size: 1rem;
+}
+
+.alg-chain-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 20px 10px;
+  margin-top: 14px;
+}
+
+.alg-chain-case {
+  position: relative;
+  min-width: 0;
+  min-height: 132px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  transition: background 120ms ease, opacity 120ms ease;
+}
+
+.alg-chain-case:hover,
+.alg-chain-case:focus-within,
+.alg-chain-case.is-dragging {
+  background: var(--accent-soft);
+}
+
+.alg-chain-case.is-dragging {
+  z-index: 2;
+  opacity: 0.78;
+}
+
+.alg-chain-thumb {
+  width: min(100%, 116px);
+  aspect-ratio: 1;
+  line-height: 0;
+}
+
+.alg-chain-thumb > .puzzle-art {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.alg-chain-index {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  color: var(--faint-foreground);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.alg-chain-handle {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: grab;
+  touch-action: none;
+}
+
+.alg-chain-handle:hover,
+.alg-chain-handle:focus-visible {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  outline: none;
+}
+
+.alg-chain-handle:active {
+  cursor: grabbing;
+}
+
+@media (max-width: 480px) {
+  .alg-chain-header,
+  .alg-chain-controls,
+  .alg-chain-summary,
+  .alg-chain-grid {
+    width: min(100% - 32px, 1200px);
+  }
+
+  .alg-chain-header {
+    padding-top: 20px;
+  }
+
+  .alg-chain-controls {
+    gap: 8px;
+  }
+
+  .alg-chain-grid {
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: 14px 6px;
+  }
+
+  .alg-chain-case {
+    min-height: 118px;
+  }
+
+  .alg-chain-handle {
+    width: 44px;
+    height: 44px;
+    top: -1px;
+    right: -1px;
+  }
+}

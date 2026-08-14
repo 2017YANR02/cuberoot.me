@@ -448,6 +448,8 @@ export function collapseAlgGroupsByDefault(
   return caseCount > 100 && !umbrella && !(puzzle === 'sq1' && ['cs', 'csp', 'obl'].includes(set));
 }
 
+const CHAIN_DRILL_SETS_3X3 = new Set(['oll', 'pll', 'coll', 'zbll']);
+
 export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initialData, collection }: AlgCategoryViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
@@ -755,6 +757,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     }
     return null;
   }, [data, slugLevel, subgroupSlug]);
+  const chainScope = slugLevel === 'sub' && subParentSlug && subgroupSlug
+    ? `${subParentSlug}/${subgroupSlug}`
+    : subgroupSlug;
 
   /**
    * 展示用的排序:ZBLL / COLL 把「角块已成型」(U)和「对角换」(D)提到所在组的最前。
@@ -1148,6 +1153,15 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             prefetch={false}
           >
             {tr({ zh: '训练', en: 'Train' })}
+          </Link>
+        )}
+        {data && !collection && puzzleParam === '3x3' && CHAIN_DRILL_SETS_3X3.has(set) && (
+          <Link
+            href={`/alg/chain?set=${set}${chainScope ? `&scope=${encodeURIComponent(chainScope)}` : ''}`}
+            className="alg-recog-cta"
+            prefetch={false}
+          >
+            {tr({ zh: '连拧', en: 'Chain' })}
           </Link>
         )}
         {/* 观察训练:只认图形不还原,和上面的「训练」是同一套 case 的另一种练法,
