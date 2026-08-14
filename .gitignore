@@ -7,6 +7,9 @@ _deploy/
 # Gemini agent data
 .data_cache/
 
+# Root workspace dependencies
+/node_modules/
+
 # 数据库配置（含密码，禁止提交）
 database.yml
 
