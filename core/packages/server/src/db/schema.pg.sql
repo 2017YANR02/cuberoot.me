@@ -891,6 +891,7 @@ CREATE TABLE teacher_directory_entries (
   website          TEXT         NOT NULL DEFAULT '',
   wca_id           VARCHAR(20),
   is_curated       BOOLEAN      NOT NULL DEFAULT FALSE,
+  is_visible       BOOLEAN      NOT NULL DEFAULT TRUE,
   owner_key        VARCHAR(20)  NOT NULL,
   owner_name       VARCHAR(200) NOT NULL,
   created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
