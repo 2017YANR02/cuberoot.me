@@ -119,6 +119,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'alg/3bld/timer': { title: { zh: '盲拧练习计时', en: 'BLD Practice Timer' } },
   'alg/3bld/twist': { title: { zh: '翻角公式训练', en: 'Corner Twist Trainer' } },
   'alg/commutator': { title: { zh: '换位子', en: 'Commutator' } },
+  'alg/chain': {
+    title: { zh: '公式连拧', en: 'Algorithm Chain Drill' },
+    description: {
+      zh: '按自定义顺序连续练习 OLL、PLL、COLL 与 ZBLL，只显示魔方图，支持分组练习与登录同步。',
+      en: 'Drill OLL, PLL, COLL, and ZBLL continuously in a custom order using diagrams only, with subset practice and signed-in sync.',
+    },
+  },
   'alg/3x3/notation': {
     title: { zh: '三阶中文转动记号', en: 'Chinese 3×3 Move Notation' },
     description: {
