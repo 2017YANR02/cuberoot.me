@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
+import { usePathname } from 'next/navigation';
 import { parseAsString, parseAsStringEnum, useQueryStates } from 'nuqs';
 import {
   DndContext,
@@ -32,8 +33,9 @@ import {
   type AlgPuzzle,
 } from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
+import AppLink from '@/components/AppLink';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
-import { useAuthUser } from '@/lib/auth-store';
+import { nextQuery, useAuthUser } from '@/lib/auth-store';
 import { sortByCp } from '@/lib/alg_cp_order';
 import { displayZbllToken, primaryCaseName } from '@/lib/alg_case_display';
 import { sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
@@ -107,6 +109,7 @@ function SortableCase({
 
 export default function AlgTimeAttackPage() {
   const { i18n } = useTranslation();
+  const pathname = usePathname();
   const user = useAuthUser();
   const [{ puzzle, set: requestedSetSlug, scope }, setQuery] = useQueryStates({
     puzzle: parseAsStringEnum<AlgPuzzle>([...ALG_PUZZLES]).withDefault('3x3'),
@@ -259,6 +262,7 @@ export default function AlgTimeAttackPage() {
     saved: tr({ zh: '已保存', en: 'Saved' }),
     error: tr({ zh: '本机已保存，云同步失败', en: 'Saved locally; cloud sync failed' }),
   };
+  const returnPath = `${pathname}?puzzle=${encodeURIComponent(puzzle)}&set=${encodeURIComponent(setSlug)}${scope ? `&scope=${encodeURIComponent(scope)}` : ''}`;
 
   return (
     <main className="alg-root alg-time-attack-page">
@@ -326,7 +330,11 @@ export default function AlgTimeAttackPage() {
       <div className="alg-time-attack-summary">
         <strong>{meta?.short ?? setSlug.toUpperCase()}</strong>
         <span>{tr({ zh: `${orderedCases.length} 张图`, en: `${orderedCases.length} diagrams` })}</span>
-        {!user && <span>{tr({ zh: '登录后可跨设备同步顺序', en: 'Sign in to sync this order across devices' })}</span>}
+        {!user && (
+          <AppLink href={`/account${nextQuery(returnPath)}`} prefetch={false} className="alg-time-attack-login">
+            {tr({ zh: '登录，保存并同步当前顺序', en: 'Sign in to save and sync this order' })}
+          </AppLink>
+        )}
       </div>
 
       {loadError ? (
