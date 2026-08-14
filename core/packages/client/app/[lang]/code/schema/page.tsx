@@ -240,6 +240,12 @@ const TABLES: Table[] = [
     { name: 'is_curated', note: { zh: '管理员认证资料', en: 'admin-curated profile' } },
     { name: 'owner_key, owner_name', note: { zh: '作者身份与显示名;公开列表不返回 owner_key', en: 'author identity and display name; the public list omits owner_key' } },
   ] },
+  { name: 'teaching_advanced_lessons', domain: 'community', origin: '0127', purpose: { zh: '/teaching 的 CFOP 后续课程池;管理员维护三阶和二阶路线的双语内容', en: 'Post-CFOP lesson pool for /teaching; administrators maintain bilingual 3×3 and 2×2 tracks' }, cols: [
+    { name: 'track, position', note: { zh: 'track 为 333 / 222,position 控制路线内顺序', en: 'track is 333 / 222; position controls order within a track' } },
+    { name: 'title_zh / title_en', note: { zh: '两种语言标题均必填', en: 'both language titles are required' } },
+    { name: 'description_zh / description_en', note: { zh: '课程说明或口播提纲,允许留空', en: 'optional lesson notes or narration outlines' } },
+    { name: 'minutes', note: { zh: '管理员可调的预计时长,范围 1–60 分钟', en: 'administrator-editable estimate from 1 to 60 minutes' } },
+  ] },
   { name: 'ops_commands', domain: 'community', origin: '0010', evolved: [11], purpose: { zh: '/code/ops runbook 命令 + 提示词模板', en: 'Commands + prompts behind the /code/ops runbook' } },
   { name: 'page_notices', domain: 'community', origin: '0073', purpose: { zh: '每页顶部管理员通知条(维护中/WIP/bug),按路径匹配', en: 'Per-page admin notice bars (maintenance/WIP/bug), matched by path' } },
   { name: 'pattern_examples', domain: 'community', origin: '0091', purpose: { zh: '/scramble/pattern/search 的示例预设:管理员在页面上摆好图案就能存一条,q 存的就是可分享的 ?q= 编码', en: 'Example presets for /scramble/pattern/search: an admin lays out a pattern and saves it; q holds the same shareable ?q= encoding the page uses' }, cols: [
@@ -381,6 +387,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 124, slug: 'document_subscriptions', desc: { zh: '为协作文档与表格增加按用户保存的修改订阅、最后查看时间与通知节流。', en: 'Add per-user change subscriptions, last-seen timestamps, and throttled notifications for collaborative documents and spreadsheets.' } },
   { n: 125, slug: 'drop_traffic_analytics', desc: { zh: '退役自建流量统计并删除 pageviews 与 traffic_daily。', en: 'Retire self-hosted traffic analytics and drop pageviews and traffic_daily.' } },
   { n: 126, slug: 'teacher_directory', desc: { zh: '新增魔方老师与培训机构目录,预置颜瑞民老师资料,支持作者自主管理与管理员管理。', en: 'Add the cube teacher and training-school directory, seed Ruimin Yan’s profile, and support owner and admin management.' } },
+  { n: 127, slug: 'teaching_advanced_lessons', desc: { zh: '新增 CFOP 后续课程表,预置 48 节三阶和 10 节二阶双语课程,由管理员增删改与排序。', en: 'Add the post-CFOP lesson table, seed 48 bilingual 3×3 lessons and 10 bilingual 2×2 lessons, and provide administrator CRUD and ordering.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
