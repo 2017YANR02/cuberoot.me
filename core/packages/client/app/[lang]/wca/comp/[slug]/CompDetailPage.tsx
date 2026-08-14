@@ -45,7 +45,7 @@ import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import { rememberRecent } from '@/lib/comp-recent';
 import { useLiveStream, applyResultPatch, type LivePatch, type WsStatus } from '@/hooks/useLiveStream';
-import { useWcaLiveStream, type WcaLiveRoundUpdate } from '@/hooks/useWcaLiveStream';
+import { mergeWcaLiveRoundRows, useWcaLiveStream, type WcaLiveRoundUpdate } from '@/hooks/useWcaLiveStream';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import LangToggle from '@/components/LangToggle';
 import { useCompFollows, FollowStar } from '@/components/CompFollow';
@@ -1250,7 +1250,8 @@ export default function CompDetailPage() {
     setData(prev => {
       if (!prev) return prev;
       const key = `${update.eventId}:${update.roundTypeId}`;
-      const rows = update.rows as LiveResult[];
+      const incomingRows = update.rows as LiveResult[];
+      const rows = mergeWcaLiveRoundRows(prev.resultsByRound[key] ?? [], incomingRows);
       for (const r of rows) {
         applyLiveRecordTags(r, prev.users[String(r.n)], prev.currentRecords);
       }
