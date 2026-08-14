@@ -4,23 +4,28 @@ import { authHeaders, handleApi } from './admin-api';
 import { persistItem } from './safe-storage';
 import { caseKey } from './trainer-case-key';
 
-export interface ChainOrderSnapshot {
+export interface TimeAttackOrderSnapshot {
   keys: string[];
   updatedAt: number;
 }
 
-export interface ChainScope {
+export interface TimeAttackScope {
   value: string;
   depth: number;
 }
 
-const STORAGE_PREFIX = 'alg:chain-order:v1';
+const STORAGE_PREFIX = 'alg:time-attack-order:v1';
+const LEGACY_STORAGE_PREFIX = 'alg:chain-order:v1';
 
-export function chainOrderStorageKey(puzzle: string, setSlug: string, scope: string): string {
+export function timeAttackOrderStorageKey(puzzle: string, setSlug: string, scope: string): string {
   return `${STORAGE_PREFIX}:${puzzle}/${setSlug}/${scope || 'all'}`;
 }
 
-export function normalizeChainOrder(
+function legacyOrderStorageKey(puzzle: string, setSlug: string, scope: string): string {
+  return `${LEGACY_STORAGE_PREFIX}:${puzzle}/${setSlug}/${scope || 'all'}`;
+}
+
+export function normalizeTimeAttackOrder(
   canonicalKeys: readonly string[],
   savedKeys: readonly string[] | null | undefined,
 ): string[] {
@@ -40,18 +45,18 @@ export function normalizeChainOrder(
   return normalized;
 }
 
-export function newerChainOrder(
-  local: ChainOrderSnapshot | null,
-  cloud: ChainOrderSnapshot | null,
-): ChainOrderSnapshot | null {
+export function newerTimeAttackOrder(
+  local: TimeAttackOrderSnapshot | null,
+  cloud: TimeAttackOrderSnapshot | null,
+): TimeAttackOrderSnapshot | null {
   if (!local) return cloud;
   if (!cloud) return local;
   return local.updatedAt > cloud.updatedAt ? local : cloud;
 }
 
-export function chainScopes(cases: readonly AlgCase[]): ChainScope[] {
+export function timeAttackScopes(cases: readonly AlgCase[]): TimeAttackScope[] {
   const seen = new Set<string>();
-  const scopes: ChainScope[] = [];
+  const scopes: TimeAttackScope[] = [];
   for (const c of cases) {
     const parts = c.subgroup.trim().toLowerCase().split('/').filter(Boolean);
     for (let depth = 1; depth <= parts.length; depth += 1) {
@@ -64,7 +69,7 @@ export function chainScopes(cases: readonly AlgCase[]): ChainScope[] {
   return scopes;
 }
 
-export function casesForChainScope(cases: readonly AlgCase[], scope: string): AlgCase[] {
+export function casesForTimeAttackScope(cases: readonly AlgCase[], scope: string): AlgCase[] {
   const wanted = scope.trim().toLowerCase();
   if (!wanted) return [...cases];
   const exact = cases.filter((c) => {
@@ -79,12 +84,13 @@ export function casesForChainScope(cases: readonly AlgCase[], scope: string): Al
   return paths.size === 1 ? tokenHits : [];
 }
 
-export function readLocalChainOrder(puzzle: string, setSlug: string, scope: string): ChainOrderSnapshot | null {
+export function readLocalTimeAttackOrder(puzzle: string, setSlug: string, scope: string): TimeAttackOrderSnapshot | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = localStorage.getItem(chainOrderStorageKey(puzzle, setSlug, scope));
+    const raw = localStorage.getItem(timeAttackOrderStorageKey(puzzle, setSlug, scope))
+      ?? localStorage.getItem(legacyOrderStorageKey(puzzle, setSlug, scope));
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<ChainOrderSnapshot>;
+    const parsed = JSON.parse(raw) as Partial<TimeAttackOrderSnapshot>;
     if (!Array.isArray(parsed.keys) || typeof parsed.updatedAt !== 'number') return null;
     return {
       keys: parsed.keys.filter((key): key is string => typeof key === 'string'),
@@ -95,25 +101,25 @@ export function readLocalChainOrder(puzzle: string, setSlug: string, scope: stri
   }
 }
 
-export function writeLocalChainOrder(
+export function writeLocalTimeAttackOrder(
   puzzle: string,
   setSlug: string,
   scope: string,
-  snapshot: ChainOrderSnapshot,
+  snapshot: TimeAttackOrderSnapshot,
 ): boolean {
-  return persistItem(chainOrderStorageKey(puzzle, setSlug, scope), JSON.stringify(snapshot));
+  return persistItem(timeAttackOrderStorageKey(puzzle, setSlug, scope), JSON.stringify(snapshot));
 }
 
 function orderPath(puzzle: string, setSlug: string, scope: string): string {
   const query = scope ? `?scope=${encodeURIComponent(scope)}` : '';
-  return `/v1/alg/chain-order/${encodeURIComponent(puzzle)}/${encodeURIComponent(setSlug)}${query}`;
+  return `/v1/alg/time-attack-order/${encodeURIComponent(puzzle)}/${encodeURIComponent(setSlug)}${query}`;
 }
 
-export async function fetchCloudChainOrder(
+export async function fetchCloudTimeAttackOrder(
   puzzle: string,
   setSlug: string,
   scope: string,
-): Promise<ChainOrderSnapshot | null> {
+): Promise<TimeAttackOrderSnapshot | null> {
   const data = await handleApi<{ keys: string[]; updatedAt: number }>(
     await fetch(apiUrl(orderPath(puzzle, setSlug, scope)), {
       headers: authHeaders(false),
@@ -123,11 +129,11 @@ export async function fetchCloudChainOrder(
   return data.updatedAt > 0 ? data : null;
 }
 
-export async function saveCloudChainOrder(
+export async function saveCloudTimeAttackOrder(
   puzzle: string,
   setSlug: string,
   scope: string,
-  snapshot: ChainOrderSnapshot,
+  snapshot: TimeAttackOrderSnapshot,
 ): Promise<void> {
   await handleApi(await fetch(apiUrl(orderPath(puzzle, setSlug, scope)), {
     method: 'PUT',
