@@ -32,18 +32,18 @@ const KINDS = ['all', 'teacher', 'organization'] as const;
 const URL_CONTACT_KEYS = new Set<DirectoryContactKey>([
   'youtube', 'bilibili', 'douyin', 'kuaishou', 'xiaohongshu', 'facebook',
 ]);
-const CONTACT_FIELDS: { key: DirectoryContactKey; label: { zh: string; en: string }; placeholder?: { zh: string; en: string } }[] = [
-  { key: 'wechat', label: { zh: '微信', en: 'WeChat' }, placeholder: { zh: '微信号', en: 'WeChat ID' } },
-  { key: 'qq', label: { zh: 'QQ', en: 'QQ' }, placeholder: { zh: 'QQ 号', en: 'QQ number' } },
-  { key: 'email', label: { zh: '邮箱', en: 'Email' }, placeholder: { zh: 'name@example.com', en: 'name@example.com' } },
-  { key: 'phone', label: { zh: '手机号', en: 'Phone' }, placeholder: { zh: '含国家或地区代码（如需要）', en: 'Include country or region code if needed' } },
-  { key: 'youtube', label: { zh: 'YouTube', en: 'YouTube' }, placeholder: { zh: 'https://youtube.com/…', en: 'https://youtube.com/…' } },
-  { key: 'bilibili', label: { zh: 'B站主页', en: 'Bilibili' }, placeholder: { zh: 'https://space.bilibili.com/…', en: 'https://space.bilibili.com/…' } },
-  { key: 'douyin', label: { zh: '抖音主页', en: 'Douyin' }, placeholder: { zh: 'https://www.douyin.com/…', en: 'https://www.douyin.com/…' } },
-  { key: 'kuaishou', label: { zh: '快手主页', en: 'Kuaishou' }, placeholder: { zh: 'https://www.kuaishou.com/…', en: 'https://www.kuaishou.com/…' } },
-  { key: 'xiaohongshu', label: { zh: '小红书主页', en: 'Xiaohongshu' }, placeholder: { zh: 'https://www.xiaohongshu.com/…', en: 'https://www.xiaohongshu.com/…' } },
-  { key: 'wechatChannels', label: { zh: '视频号', en: 'WeChat Channels' }, placeholder: { zh: '视频号名称或账号', en: 'Channel name or ID' } },
-  { key: 'facebook', label: { zh: 'Facebook', en: 'Facebook' }, placeholder: { zh: 'https://facebook.com/…', en: 'https://facebook.com/…' } },
+const CONTACT_FIELDS: { key: DirectoryContactKey; label: { zh: string; en: string } }[] = [
+  { key: 'wechat', label: { zh: '微信', en: 'WeChat' } },
+  { key: 'qq', label: { zh: 'QQ', en: 'QQ' } },
+  { key: 'email', label: { zh: '邮箱', en: 'Email' } },
+  { key: 'phone', label: { zh: '手机号', en: 'Phone' } },
+  { key: 'youtube', label: { zh: 'YouTube', en: 'YouTube' } },
+  { key: 'bilibili', label: { zh: 'B站主页', en: 'Bilibili' } },
+  { key: 'douyin', label: { zh: '抖音主页', en: 'Douyin' } },
+  { key: 'kuaishou', label: { zh: '快手主页', en: 'Kuaishou' } },
+  { key: 'xiaohongshu', label: { zh: '小红书主页', en: 'Xiaohongshu' } },
+  { key: 'wechatChannels', label: { zh: '视频号', en: 'WeChat Channels' } },
+  { key: 'facebook', label: { zh: 'Facebook', en: 'Facebook' } },
   { key: 'other', label: { zh: '其他联系方式', en: 'Other contact' } },
 ];
 
@@ -263,7 +263,6 @@ function DirectoryEditor({ initial, isAdmin, onClose, onSaved, onDeleted }: {
                     type={field.key === 'email' ? 'email' : field.key === 'phone' ? 'tel' : 'text'}
                     value={draft.contacts[field.key] ?? ''}
                     onChange={(event) => setContact(field.key, event.target.value)}
-                    placeholder={field.placeholder ? tr(field.placeholder) : undefined}
                     maxLength={500}
                   />
                 </label>
