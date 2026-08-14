@@ -448,7 +448,7 @@ export function collapseAlgGroupsByDefault(
   return caseCount > 100 && !umbrella && !(puzzle === 'sq1' && ['cs', 'csp', 'obl'].includes(set));
 }
 
-const CHAIN_DRILL_SETS_3X3 = new Set(['oll', 'pll', 'coll', 'zbll']);
+const TIME_ATTACK_SETS_3X3 = new Set(['oll', 'pll', 'coll', 'zbll']);
 
 export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initialData, collection }: AlgCategoryViewProps) {
   const { i18n } = useTranslation();
@@ -757,7 +757,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     }
     return null;
   }, [data, slugLevel, subgroupSlug]);
-  const chainScope = slugLevel === 'sub' && subParentSlug && subgroupSlug
+  const timeAttackScope = slugLevel === 'sub' && subParentSlug && subgroupSlug
     ? `${subParentSlug}/${subgroupSlug}`
     : subgroupSlug;
 
@@ -1155,13 +1155,13 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             {tr({ zh: '训练', en: 'Train' })}
           </Link>
         )}
-        {data && !collection && puzzleParam === '3x3' && CHAIN_DRILL_SETS_3X3.has(set) && (
+        {data && !collection && puzzleParam === '3x3' && TIME_ATTACK_SETS_3X3.has(set) && (
           <Link
-            href={`/alg/chain?set=${set}${chainScope ? `&scope=${encodeURIComponent(chainScope)}` : ''}`}
+            href={`/alg/time-attack?set=${set}${timeAttackScope ? `&scope=${encodeURIComponent(timeAttackScope)}` : ''}`}
             className="alg-recog-cta"
             prefetch={false}
           >
-            {tr({ zh: '连拧', en: 'Chain' })}
+            {tr({ zh: '连拧', en: 'Time Attack' })}
           </Link>
         )}
         {/* 观察训练:只认图形不还原,和上面的「训练」是同一套 case 的另一种练法,

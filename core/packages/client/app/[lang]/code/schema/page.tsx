@@ -157,7 +157,7 @@ const TABLES: Table[] = [
   { name: 'alg_case_marks', domain: 'studio', origin: '0076', naturalKey: true, purpose: { zh: '训练器 per-case 学习标记(不熟/已掌握)', en: 'Per-case learning marks in the alg trainer (shaky/mastered)' }, cols: [
     { name: 'wca_id, puzzle, set_slug, case_key', note: { zh: '自然键;case_key = subgroup|name', en: 'natural key; case_key = subgroup|name' } }, { name: 'status, updated_at' },
   ] },
-  { name: 'alg_chain_orders', domain: 'studio', origin: '0129', naturalKey: true, purpose: { zh: '公式集连拧按用户、公式集和范围保存的自定义 case 顺序', en: 'Per-user custom case order for each algorithm set and chain-drill scope' }, cols: [
+  { name: 'alg_chain_orders', domain: 'studio', origin: '0129', naturalKey: true, purpose: { zh: '公式集连拧按用户、公式集和范围保存的自定义 case 顺序', en: 'Per-user custom case order for each algorithm set and time-attack scope' }, cols: [
     { name: 'wca_id, puzzle, set_slug, scope (PK)' },
     { name: 'case_keys JSONB', note: { zh: '只存 canonical key 数组，不复制公式内容', en: 'canonical-key array only; algorithm content is not duplicated' } },
     { name: 'updated_at', note: { zh: '本地与云端合并的 LWW 版本号', en: 'LWW version for local/cloud merging' } },
@@ -394,7 +394,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 126, slug: 'teacher_directory', desc: { zh: '新增魔方老师与培训机构目录,预置颜瑞民老师资料,支持作者自主管理与管理员管理。', en: 'Add the cube teacher and training-school directory, seed Ruimin Yan’s profile, and support owner and admin management.' } },
   { n: 127, slug: 'teaching_advanced_lessons', desc: { zh: '新增 CFOP 后续课程表,预置 48 节三阶和 10 节二阶双语课程,由管理员增删改与排序。', en: 'Add the post-CFOP lesson table, seed 48 bilingual 3×3 lessons and 10 bilingual 2×2 lessons, and provide administrator CRUD and ordering.' } },
   { n: 128, slug: 'teacher_directory_visibility', desc: { zh: '老师与机构资料新增公开开关，作者可隐藏自己的资料；颜瑞民资料先设为仅本人可见。', en: 'Add owner-controlled visibility to teacher and school profiles, initially hiding Ruimin Yan’s entry from the public directory.' } },
-  { n: 129, slug: 'alg_chain_orders', desc: { zh: '新增公式集连拧顺序表，登录用户可按公式集和子集跨设备保存自定义顺序。', en: 'Add per-set and per-subset chain-drill orders so signed-in users can keep custom orders across devices.' } },
+  { n: 129, slug: 'alg_chain_orders', desc: { zh: '新增公式集连拧顺序表，登录用户可按公式集和子集跨设备保存自定义顺序。', en: 'Add per-set and per-subset time-attack orders so signed-in users can keep custom orders across devices.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
