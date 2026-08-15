@@ -121,7 +121,7 @@ import { stickeringMaskFn, type StickeringMaskFn } from './engine/nxn/stickering
 import {
   CUSTOM_STICKERING, CUSTOM_TREATMENTS, customMaskFn, pickedSids, toggleSids, type PickGrain,
 } from './engine/nxn/customStickering';
-import { resolveStageMaskFn } from './engine/nxn/vcStageMask';
+import { resolveStageMaskFn, visualcubeMaskForStickering } from './engine/nxn/vcStageMask';
 import { isPresetMask, presetMaskFn } from './engine/nxn/maskConfig';
 import { useSimMasks } from './useSimMasks';
 import { resolveEngineArrows } from './engine/nxn/vcArrowBridge';
@@ -585,11 +585,16 @@ export default function SimPage() {
     // only changes anything for Sarah users. (No chirality translation is needed — sr and cubing.js
     // agree on R/U/L/B move semantics, verified.)
     const applied = puzzleParam === 'skewb' ? toWcaSkewb(raw, skewbNotation) : raw;
+    const stageMask = imgPuzzle.puzzleType === 'cube'
+      ? visualcubeMaskForStickering(imgPuzzle.cubeSize, query.stickering)
+      : '';
     return {
       algType: 'alg', algorithm: applied,
+      stageMask, maskAlg: stageMask ? query.stickeringRot : '',
       faceU: fc.U, faceR: fc.R, faceF: fc.F, faceD: fc.D, faceL: fc.L, faceB: fc.B,
     };
-  }, [settings.faceColors, setupParam, algParam, puzzleParam, skewbNotation]);
+  }, [settings.faceColors, setupParam, algParam, puzzleParam, skewbNotation,
+      imgPuzzle, query.stickering, query.stickeringRot]);
   const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle, inherit: imgInherit });
 
   // trans(X 光)不是单纯换张伴图,而是接管内核外观的预设:选中时内核色 / 内核不透明度
@@ -1685,6 +1690,8 @@ export default function SimPage() {
     if (imgSpec.cubeSize !== imgPuzzle.cubeSize) patch.cubeSize = imgPuzzle.cubeSize;
     if (imgSpec.algType !== imgInherit.algType) patch.algType = imgInherit.algType;
     if (imgSpec.algorithm !== imgInherit.algorithm) patch.algorithm = imgInherit.algorithm;
+    if (imgSpec.stageMask !== imgInherit.stageMask) patch.stageMask = imgInherit.stageMask;
+    if (imgSpec.maskAlg !== imgInherit.maskAlg) patch.maskAlg = imgInherit.maskAlg;
     if (imgSpec.faceU !== imgInherit.faceU) patch.faceU = imgInherit.faceU;
     if (imgSpec.faceR !== imgInherit.faceR) patch.faceR = imgInherit.faceR;
     if (imgSpec.faceF !== imgInherit.faceF) patch.faceF = imgInherit.faceF;
