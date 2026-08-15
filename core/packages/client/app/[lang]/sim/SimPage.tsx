@@ -125,6 +125,7 @@ import { resolveStageMaskFn, visualcubeMaskForStickering } from './engine/nxn/vc
 import { isPresetMask, presetMaskFn } from './engine/nxn/maskConfig';
 import { useSimMasks } from './useSimMasks';
 import { resolveEngineArrows } from './engine/nxn/vcArrowBridge';
+import { resolveCaps } from './simCaps';
 import SimCubeNet from './_SimCubeNet';
 import SimClockBoard from './_SimClockBoard';
 import {
@@ -596,6 +597,15 @@ export default function SimPage() {
   }, [settings.faceColors, setupParam, algParam, puzzleParam, skewbNotation,
       imgPuzzle, query.stickering, query.stickeringRot]);
   const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle, inherit: imgInherit });
+  // Static/spec rendering is an exact fallback only when it can encode every visible
+  // piece of simulator state. Unsupported stage stickerings must wait for the live
+  // engine mirror; otherwise a cold/private window can export a plausible but different
+  // full puzzle before the first engine frame arrives.
+  const stickeringAffectsView = query.stickering !== 'full'
+    && resolveCaps(puzzleParam, query.renderer).supports.stickering;
+  const staticFallbackExact = !stickeringAffectsView
+    || (typeof puzzleParam === 'number'
+      && visualcubeMaskForStickering(puzzleParam, query.stickering) !== '');
 
   // trans(X 光)不是单纯换张伴图,而是接管内核外观的预设:选中时内核色 / 内核不透明度
   // 由 TRANS_CORE 顶掉,3D 与伴图同吃这一份 —— 否则会出现「大魔方实心、小图半透明」。
@@ -1684,7 +1694,7 @@ export default function SimPage() {
   useEffect(() => {
     // engine-only 拼图(fto / 枫叶…)不消费 spec(伴图直出 engineSvg),别把
     // 'cube' 默认映射 + 视角标定写进 URL 的 img_* 参数。
-    if (imageStudioEngineOnly) return;
+    if (imageStudioEngineOnly || !staticFallbackExact) return;
     const patch: Partial<ImageSpec> = {};
     if (imgSpec.puzzleType !== imgPuzzle.puzzleType) patch.puzzleType = imgPuzzle.puzzleType;
     if (imgSpec.cubeSize !== imgPuzzle.cubeSize) patch.cubeSize = imgPuzzle.cubeSize;
@@ -1749,7 +1759,7 @@ export default function SimPage() {
       }
     }
     if (Object.keys(patch).length > 0) setImgSpec(patch);
-  }, [imageStudioEngineOnly, imgPuzzle, imgInherit, imgSpec,
+  }, [imageStudioEngineOnly, staticFallbackExact, imgPuzzle, imgInherit, imgSpec,
       settings.viewAngle, settings.viewGradient, settings.perspective, setImgSpec]);
 
   // ── 引擎 BSP 伴图镜像(sr / visualcube 伴图退役,Phase 3)────────────────
@@ -1773,7 +1783,7 @@ export default function SimPage() {
   const srCompanionForced = imgEngineMode === 'sr';
   const [engineSvg, setEngineSvg] = useState<string | null>(null);
   useEffect(() => {
-    const active = imageOpen && !srCompanionForced;
+    const active = imageOpen && (!srCompanionForced || !staticFallbackExact);
     if (!active) { setEngineSvg(null); return; }
     // 贴纸遮罩(mask 直映):有派生表的拼图把灰化烙进镜像;没有的整程置 null,
     // PuzzleImage 落回 spec 渲染器(sr/visualcube 认 mask)—— 哪条路都不丢遮罩。
@@ -1862,8 +1872,20 @@ export default function SimPage() {
             // 不然选了 OLL,大魔方灰了侧面而小图还是整颗满色。
             const maskFn = stickeringMaskFor(nxn);
             const stickering = maskFn ? nxn.serializeStickering(maskFn) : null;
+            // 图片面板的逐贴纸遮罩写在还原槽位。把同一 maskFn 交给 Cube 序列化,
+            // 让选区跟着贴纸走到当前局面;直接按当前位置涂会在做转动后遮错格。
+            const imageMaskFn = imgSpec.stickerMask
+              ? customMaskFn(nxn.order, imgSpec.stickerMask, 'ignored', 'regular')
+              : null;
+            const imageMaskCodes = imageMaskFn ? nxn.serializeStickering(imageMaskFn) : null;
+            const stickerMask = imageMaskCodes ? {
+              selected: imageMaskCodes,
+              color: imgSpec.maskColor || MASK_COLOR,
+            } : undefined;
             const sig = cv + '|' + nxn.order + '|' + serialized
-              + '|' + (stickering ? stickering.join('') : '');
+              + '|' + (stickering ? stickering.join('') : '')
+              + '|' + (imageMaskCodes ? imageMaskCodes.join('') : '')
+              + '|' + (stickerMask?.color ?? '');
             if (sig === exportedSig) return;
             exportedSig = sig;
             try {
@@ -1878,6 +1900,7 @@ export default function SimPage() {
                   order: nxn.order,
                   faceColors: fc,
                   stickering: stickering ?? undefined,
+                  stickerMask,
                   spec: {
                     ...imgSpec,
                     cubeColor: renderSettings.coreColor,
@@ -1888,6 +1911,7 @@ export default function SimPage() {
                 : renderCubeNetSvg({
                   serialized, order: nxn.order, faceColors: fc,
                   stickering: stickering ?? undefined,
+                  stickerMask,
                 }));
             } catch (err) {
               console.warn('[sim] flat companion export failed', err);
@@ -1924,7 +1948,9 @@ export default function SimPage() {
               // 即渲 hiddenFaces),不是"仅 trans 视图"。normal 视图把壳不透明度调低
               // (X 光)时 VC 会透出 B/L/D 背贴纸,引擎也必须跟。
               showHidden: renderSettings.coreOpacity < 100,
-              mask: maskKeys?.size ? { keys: maskKeys, color: MASK_COLOR } : undefined,
+              mask: maskKeys?.size
+                ? { keys: maskKeys, color: imgSpec.maskColor || MASK_COLOR }
+                : undefined,
               // 箭头标注(退役对照表 §2b):DSL `U0U2-red` → 引擎贴纸世界中心线段。
               // NxN 专属(resolveEngineArrows 自查 schematicInstancedPoly + N≥2,非
               // NxN 返 []);面朝背时导出器 project 得 null 自动跳过。
@@ -1944,9 +1970,12 @@ export default function SimPage() {
         }
         return;
       }
-      // twisty 路径。spec 可渲染拼图(skewb/pyra/mega 在 cubing.js 渲染下)保持
-      // 既有 sr 伴图,不抢:只有 engine-only 拼图走 vantage 镜像。
-      if (!imageStudioEngineOnly) { if (exportedSig) { exportedSig = ''; setEngineSvg(null); } return; }
+      // twisty 路径。通常由 spec 精确渲染;engine-only 或 spec 表达不了当前阶段
+      // (例如 megaminx LS)时才走 vantage 镜像。
+      if (!imageStudioEngineOnly && staticFallbackExact) {
+        if (exportedSig) { exportedSig = ''; setEngineSvg(null); }
+        return;
+      }
       const tp = twistyPlayerRef.current as TwistyPlayerLike | null;
       if (!tp) { if (exportedSig) { exportedSig = ''; setEngineSvg(null); } return; }
       if (tp !== twistyFor) { twistyFor = tp; twistyView = null; }
@@ -1975,7 +2004,8 @@ export default function SimPage() {
     raf = requestAnimationFrame(tick);
     return () => { disposed = true; cancelAnimationFrame(raf); };
   }, [imageOpen, srCompanionForced, imageStudioEngineOnly,
-      imgSpec.stickerMask, imgPuzzle.puzzleType,
+      staticFallbackExact,
+      imgSpec.stickerMask, imgSpec.maskColor, imgPuzzle.puzzleType,
       // 伴图外观跟 3D 走同一份设置(见上面 exportSimSvgSchematic 的注释);trans 预设
       // 已经叠在 renderSettings 里,所以这里跟着它走而不是原始 settings。
       renderSettings.coreColor, renderSettings.coreOpacity,
@@ -2284,6 +2314,7 @@ export default function SimPage() {
             previewHost={imageHost}
             engineSvg={engineSvg}
             engineOnly={imageStudioEngineOnly}
+            staticFallbackExact={staticFallbackExact}
             compare={imgEngineMode === 'both'}
           />
           {/* 阶段速查整本都是 NxN,只对 cube 露出。 */}
@@ -2330,6 +2361,7 @@ export default function SimPage() {
                 spec={imgSpec}
                 onSpecChange={setImgSpec}
                 externalImage={drawDocument}
+                staticFallbackExact={true}
               />
             ) : null}
           />

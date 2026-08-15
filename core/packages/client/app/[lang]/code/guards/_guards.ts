@@ -33,6 +33,15 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     en: { title: 'Component reuse and placement contracts', desc: 'A rule registry blocks high-confidence reinventions and unsafe placement. Close/clear crosses use ClearButton; page-local puzzle selection uses PuzzlePicker (expanded /wca event rows use WcaEventSelector); BackHome stays in the same-width header/topbar/wrap as the body. Codex apply_patch is blocked at write time; CI keeps zero-debt rules at zero and ratchets legacy debt down. Real exceptions need an inline allow-component-reimplementation reason.' },
   },
   {
+    id: 'puzzle-image-state-parity',
+    scope: 'project',
+    hook: 'block-puzzle-image-state-parity.ps1 → hook-detect-puzzle-image-state-parity.mjs',
+    test: 'puzzle-image-state-parity-guard.test.ts',
+    baseline: '0',
+    zh: { title: '魔方图状态一致性', desc: '实时预览与 SVG/PNG 导出必须来自能完整表达当前状态的同一来源。PuzzleImageStudio 宿主显式声明 staticFallbackExact;静态渲染器无法表达阶段、遮罩或实时局面时等待 engineSvg,禁止冷启动静默退回完整魔方。Codex 写入即拦,CI 扫全站宿主和核心回退顺序。' },
+    en: { title: 'Puzzle-image state parity', desc: 'Live previews and SVG/PNG exports must share a source that fully represents the visible state. Every PuzzleImageStudio host declares staticFallbackExact; when the static renderer cannot encode a stage, mask, or live position, exports wait for engineSvg instead of silently falling back to a full puzzle. Codex blocks invalid writes and CI scans every host plus fallback ordering.' },
+  },
+  {
     id: 'nested-links',
     scope: 'project',
     hook: 'block-nested-links.ps1 → hook-detect-nested-links.mjs',

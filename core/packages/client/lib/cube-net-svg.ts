@@ -12,12 +12,20 @@
 // 交互式 `_SimCubeNet` 仍从这里取布局常量(单一源,与导出件逐格对齐)。
 
 import { GAP, STROKE_W, renderUnfoldedStateSvg } from '@cuberoot/shared/cube-unfolded-svg';
-import { faceletDisplayColor, type FaceletMask } from '@/app/[lang]/sim/engine/nxn/stickering';
+import {
+  FM_REGULAR, faceletDisplayColor, type FaceletMask,
+} from '@/app/[lang]/sim/engine/nxn/stickering';
 
 export type NetFaceLetter = 'U' | 'R' | 'F' | 'D' | 'L' | 'B';
 
 export const NET_GAP = GAP;           // 面间距(格单位)= tnoodle 2/10
 export const NET_STROKE_W = STROKE_W; // 贴纸描边(相对 1×1 格)= tnoodle 1/10
+
+/** 当前局面下逐格选区。`selected` 与 Cube.serialize() 共用下标,所以选区可随块移动。 */
+export interface SerializedStickerMask {
+  selected: ArrayLike<number | boolean>;
+  color: string;
+}
 
 /** serialize() 串里的 URFDLB 块顺序。 */
 export const NET_FACE_ORDER: NetFaceLetter[] = ['U', 'R', 'F', 'D', 'L', 'B'];
@@ -49,6 +57,8 @@ export interface CubeNetSvgOptions {
   /** 阶段遮罩码,下标同 `serialized`(Cube.serializeStickering)。省略 = 整颗原色。
    *  灰 / 暗 / 青那几档的色值走 faceletDisplayColor,与 3D 同一份。 */
   stickering?: ArrayLike<number>;
+  /** 图片面板的逐贴纸遮罩,已由 Cube.serializeStickering 变换到当前局面。 */
+  stickerMask?: SerializedStickerMask;
 }
 
 /** URFDLB 面字母 → 引擎面色;非法字符落灰。 */
@@ -71,10 +81,13 @@ export function renderCubeNetSvg(opts: CubeNetSvgOptions): string {
   return renderUnfoldedStateSvg(N, (f, row, col) => {
     const face = CSTIMER_FACES[f];
     const local = row * N + col;
-    if (maskKeys?.has(`${face}:${local}`)) return maskColor!;
     const idx = NET_FACE_ORDER.indexOf(face) * N * N + local;
     const color = colorOf(facelets[idx] ?? '', opts.faceColors);
-    const code = opts.stickering?.[idx];
-    return code ? faceletDisplayColor(code as FaceletMask, color) : color;
+    const code = (opts.stickering?.[idx] ?? FM_REGULAR) as FaceletMask;
+    // 阶段语义优先:被阶段隐藏/压暗的格不能被图片选区重新涂亮。
+    if (code !== FM_REGULAR) return faceletDisplayColor(code, color);
+    if (opts.stickerMask?.selected[idx]) return opts.stickerMask.color;
+    if (maskKeys?.has(`${face}:${local}`)) return maskColor!;
+    return color;
   });
 }
