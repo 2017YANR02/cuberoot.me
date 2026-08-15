@@ -339,27 +339,6 @@ export default function AlgPuzzleClient() {
       {regularSets.length > 0 && (
         <div className="alg-bento">
           {regularSets.map(renderSetCard)}
-          {puzzle === 'sq1' && !picking && (
-            <AlgCard
-              href="/recognize/sq1-shape/guide"
-              prefetch={false}
-              thumb={firstCases.cs && (
-                <CaseThumb
-                  puzzle="sq1"
-                  set="cs"
-                  sticker={firstCases.cs.sticker}
-                  alg={firstCases.cs.algs.flat()[0]?.alg ?? firstCases.cs.standard ?? ''}
-                  setup={firstCases.cs.setup}
-                  size={thumbSize}
-                  local
-                  sq1BlackTop={sq1BlackTop}
-                  sq1Layer="top"
-                />
-              )}
-              title={tr({ zh: '形状命名', en: 'Shape Names' })}
-              count={29}
-            />
-          )}
         </div>
       )}
 
