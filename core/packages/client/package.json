@@ -12,7 +12,7 @@
     "typecheck:tsc": "tsc --noEmit",
     "reg:check": "node scripts/reg-check.mjs",
     "reg:clauses": "node scripts/build-reg-clauses.mjs",
-    "test": "vitest run",
+    "test": "vitest run --exclude tests/cross_trainer_reach.test.ts && vitest run tests/cross_trainer_reach.test.ts",
     "test:recon-ground-truth": "node scripts/recon-ground-truth-gate.mjs run",
     "test:watch": "vitest",
     "test:slow": "node scripts/test-slow.mjs",

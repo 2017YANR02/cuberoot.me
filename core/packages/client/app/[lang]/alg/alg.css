@@ -287,8 +287,8 @@ html[data-theme=dark] .alg-root {
   }
 }
 /* 「下载 PDF」—— 把当前这批 case 排成可打印的 A4(components/AlgPdfButton) */
-/* 页首靠右那一排(PDF / 训练 / 观察)一律纯文字:无框、无图标、同一个字号,
-   靠颜色和字重分主次。页头是 align-items:baseline,按钮里塞图标会把基线抬到图标盒子上
+/* 页首靠右那一排(PDF / 训练 / 观察)一律纯文字:无框、无图标、同一个字号、颜色和字重。
+   页头是 align-items:baseline,按钮里塞图标会把基线抬到图标盒子上
    (实测比纯文字的高 1.7px),一排就站不齐 —— 所以这排不用 lucide。 */
 .alg-pdf {
   position: relative;
@@ -353,25 +353,25 @@ html[data-theme=dark] .alg-root {
 .alg-cat-header .alg-pdf { margin-left: auto; }
 .alg-cat-header:not(:has(.alg-pdf)) .alg-train-cta { margin-left: auto; }
 
-/* 「开始训练」CTA —— 跳到 /alg/<puzzle>/<set>/select 的计时训练流(镜像 trainer-start-btn 配色) */
+/* 「开始训练」CTA —— 跳到 /alg/<puzzle>/<set>/select 的计时训练流 */
 .alg-train-cta {
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none !important;
-  transition: color 0.15s;
-}
-.alg-train-cta:hover { color: color-mix(in srgb, var(--accent) 65%, var(--foreground)); }
-
-/* 「观察」—— 同一套 case 的识别训练(/recognize/<set>)。次于「训练」,所以只描边不填底 */
-.alg-recog-cta {
-  color: color-mix(in srgb, var(--accent) 60%, var(--muted-foreground));
+  color: var(--muted-foreground);
   font-size: 13px;
   font-weight: 500;
   text-decoration: none !important;
   transition: color 0.15s;
 }
-.alg-recog-cta:hover { color: var(--accent); }
+.alg-train-cta:hover { color: var(--foreground); }
+
+/* 「观察」—— 同一套 case 的识别训练(/recognize/<set>) */
+.alg-recog-cta {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none !important;
+  transition: color 0.15s;
+}
+.alg-recog-cta:hover { color: var(--foreground); }
 
 /* 「训练专区」—— 某阶下的方法训练器(非 per-set 计时,不在套列表里) */
 .alg-train-modules {

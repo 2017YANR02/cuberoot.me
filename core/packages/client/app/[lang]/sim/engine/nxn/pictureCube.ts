@@ -27,14 +27,19 @@ const EDIT_SOURCE_MAX_SIDE = 2048;
 
 export type PictureRotation = 0 | 90 | 180 | 270;
 
+export const PICTURE_CROP_MIN_ZOOM = 1;
+export const PICTURE_CROP_MAX_ZOOM = 4;
+
 export interface PictureCrop {
   rotation: PictureRotation;
   /** Position of the image inside the square crop, normalized to [-1, 1]. */
   x: number;
   y: number;
+  /** Multiplier applied after the image has been scaled to cover the crop. */
+  zoom: number;
 }
 
-export const DEFAULT_PICTURE_CROP: PictureCrop = { rotation: 0, x: 0, y: 0 };
+export const DEFAULT_PICTURE_CROP: PictureCrop = { rotation: 0, x: 0, y: 0, zoom: 1 };
 
 export interface PictureCropGeometry {
   scale: number;
@@ -109,8 +114,13 @@ function clampCropPosition(value: number): number {
   return Math.max(-1, Math.min(1, Number.isFinite(value) ? value : 0));
 }
 
+function clampCropZoom(value: number): number {
+  if (!Number.isFinite(value)) return PICTURE_CROP_MIN_ZOOM;
+  return Math.max(PICTURE_CROP_MIN_ZOOM, Math.min(PICTURE_CROP_MAX_ZOOM, value));
+}
+
 export function normalizePictureCrop(
-  value: { rotation?: number; x?: number; y?: number } | null | undefined,
+  value: { rotation?: number; x?: number; y?: number; zoom?: number } | null | undefined,
 ): PictureCrop {
   const rawRotation = Number.isFinite(value?.rotation) ? Number(value?.rotation) : 0;
   const rotation = (((Math.round(rawRotation / 90) * 90) % 360) + 360) % 360 as PictureRotation;
@@ -118,6 +128,7 @@ export function normalizePictureCrop(
     rotation,
     x: clampCropPosition(value?.x ?? 0),
     y: clampCropPosition(value?.y ?? 0),
+    zoom: clampCropZoom(value?.zoom ?? PICTURE_CROP_MIN_ZOOM),
   };
 }
 
@@ -136,7 +147,7 @@ export function pictureCropGeometry(
   const sideways = normalized.rotation === 90 || normalized.rotation === 270;
   const rotatedWidth = sideways ? safeHeight : safeWidth;
   const rotatedHeight = sideways ? safeWidth : safeHeight;
-  const scale = Math.max(safeSize / rotatedWidth, safeSize / rotatedHeight);
+  const scale = Math.max(safeSize / rotatedWidth, safeSize / rotatedHeight) * normalized.zoom;
   const drawnWidth = rotatedWidth * scale;
   const drawnHeight = rotatedHeight * scale;
   const overflowX = Math.max(0, drawnWidth - safeSize);
@@ -150,6 +161,67 @@ export function pictureCropGeometry(
     offsetX: normalized.x * overflowX / 2,
     offsetY: normalized.y * overflowY / 2,
   };
+}
+
+/** Move the picture by crop-canvas pixels. When the current zoom has no room
+ * for that movement, increase it only as much as needed to keep the crop full. */
+export function panPictureCropBy(
+  width: number,
+  height: number,
+  size: number,
+  crop: PictureCrop,
+  deltaX: number,
+  deltaY: number,
+): PictureCrop {
+  const current = normalizePictureCrop(crop);
+  const currentGeometry = pictureCropGeometry(width, height, size, current);
+  const baseGeometry = pictureCropGeometry(width, height, size, {
+    ...current,
+    zoom: PICTURE_CROP_MIN_ZOOM,
+  });
+  const safeSize = Math.max(1, size);
+  const desiredOffsetX = currentGeometry.offsetX + (Number.isFinite(deltaX) ? deltaX : 0);
+  const desiredOffsetY = currentGeometry.offsetY + (Number.isFinite(deltaY) ? deltaY : 0);
+  const neededZoomX = (safeSize + Math.abs(desiredOffsetX) * 2) / baseGeometry.drawnWidth;
+  const neededZoomY = (safeSize + Math.abs(desiredOffsetY) * 2) / baseGeometry.drawnHeight;
+  const next = normalizePictureCrop({
+    ...current,
+    zoom: Math.max(current.zoom, neededZoomX, neededZoomY),
+  });
+  const nextGeometry = pictureCropGeometry(width, height, size, next);
+  return normalizePictureCrop({
+    ...next,
+    x: nextGeometry.overflowX > 0 ? desiredOffsetX * 2 / nextGeometry.overflowX : 0,
+    y: nextGeometry.overflowY > 0 ? desiredOffsetY * 2 / nextGeometry.overflowY : 0,
+  });
+}
+
+/** Zoom while keeping the image point beneath `anchor` under `target`. All
+ * coordinates are relative to the crop center, in crop-canvas pixels. Supplying
+ * a different target also supports the translation that occurs during a pinch. */
+export function zoomPictureCropAt(
+  width: number,
+  height: number,
+  size: number,
+  crop: PictureCrop,
+  zoom: number,
+  anchorX: number,
+  anchorY: number,
+  targetX = anchorX,
+  targetY = anchorY,
+): PictureCrop {
+  const current = normalizePictureCrop(crop);
+  const currentGeometry = pictureCropGeometry(width, height, size, current);
+  const next = normalizePictureCrop({ ...current, zoom });
+  const nextGeometry = pictureCropGeometry(width, height, size, next);
+  const scaleRatio = nextGeometry.scale / currentGeometry.scale;
+  const offsetX = targetX - (anchorX - currentGeometry.offsetX) * scaleRatio;
+  const offsetY = targetY - (anchorY - currentGeometry.offsetY) * scaleRatio;
+  return normalizePictureCrop({
+    ...next,
+    x: nextGeometry.overflowX > 0 ? offsetX * 2 / nextGeometry.overflowX : 0,
+    y: nextGeometry.overflowY > 0 ? offsetY * 2 / nextGeometry.overflowY : 0,
+  });
 }
 
 export function drawPictureCrop(

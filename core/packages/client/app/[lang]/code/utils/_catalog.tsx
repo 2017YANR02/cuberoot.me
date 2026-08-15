@@ -216,11 +216,11 @@ export const CATALOG: UtilEntry[] = [
   },
   {
     name: 'useLiveStream',
-    sig: 'useLiveStream({ compId, applyPatch }): WsStatus',
+    sig: 'useLiveStream({ compId, rounds, focusRound, applyPatch }): WsStatus',
     imp: "import { useLiveStream } from '@/hooks/useLiveStream';",
     category: 'hook',
-    zh: 'cubing.com WebSocket 实时成绩流(指数退避重连 + ping 保活)。',
-    en: 'cubing.com WebSocket live-results stream (backoff reconnect + ping).',
+    zh: 'cubing.com WebSocket 实时成绩流(当前轮即时校准、指数退避重连、断线后全量补齐)。',
+    en: 'cubing.com WebSocket live-results stream (focused-round sync, backoff reconnect, and full recovery after disconnect).',
   },
   {
     name: 'useWcaLiveStream',

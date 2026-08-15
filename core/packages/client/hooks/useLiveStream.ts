@@ -48,17 +48,27 @@ function compareResult(a: LiveResultRow, b: LiveResultRow, format: string): numb
 interface UseLiveStreamArgs {
   /** 已 fetch 的 comp 元数据,需要 compId 才能 subscribe;为空 = 不连。 */
   compId: number | null;
+  /** 比赛全部轮次;仅断线重连后逐轮补拉 result.all,避免漏掉断线窗口的增量。 */
+  rounds: readonly LiveRoundRef[];
+  /** 当前展示轮次;首次连接和切换轮次时各校准一次,缓存先显示、不阻塞首屏。 */
+  focusRound: LiveRoundRef | null;
   /** 在收到 result.new / result.update / round.update / users 时调用,patch 整个 CompData。 */
   applyPatch: (patch: LivePatch) => void;
+}
+
+export interface LiveRoundRef {
+  eventId: string;
+  roundTypeId: string;
 }
 
 export type LivePatch =
   | { kind: 'result.new'; result: LiveResultRow; roundFormat: string }
   | { kind: 'result.update'; result: LiveResultRow; roundFormat: string }
+  | { kind: 'result.all'; eventId: string; roundTypeId: string; results: LiveResultRow[] }
   | { kind: 'round.update'; round: { i: string; e: string; s?: number; rn?: number; tt?: number; n?: number; name?: string } }
   | { kind: 'users'; users: Record<string, { number: number; name: string; wcaid: string; region: string }> };
 
-export function useLiveStream({ compId, applyPatch }: UseLiveStreamArgs) {
+export function useLiveStream({ compId, rounds, focusRound, applyPatch }: UseLiveStreamArgs) {
   const [status, setStatus] = useState<WsStatus>('idle');
   const wsRef = useRef<WebSocket | null>(null);
   const pingTimerRef = useRef<number | null>(null);
@@ -66,11 +76,44 @@ export function useLiveStream({ compId, applyPatch }: UseLiveStreamArgs) {
   // 用 ref 锁定最新 applyPatch,避免 effect 依赖它而频繁重连
   const applyRef = useRef(applyPatch);
   applyRef.current = applyPatch;
+  const roundsRef = useRef(rounds);
+  roundsRef.current = rounds;
+  const focusRoundRef = useRef(focusRound);
+  focusRoundRef.current = focusRound;
+  const syncRoundRef = useRef<(round: LiveRoundRef) => void>(() => {});
 
   useEffect(() => {
     if (compId == null) return;
     let cancelled = false;
     let backoff = 1000;
+    let needsRecovery = false;
+    let syncQueue: LiveRoundRef[] = [];
+    let syncPending: LiveRoundRef | null = null;
+    const syncedKeys = new Set<string>();
+    const keyOf = (round: LiveRoundRef) => `${round.eventId}:${round.roundTypeId}`;
+
+    // result.all 不带请求参数,空数组也无法反推轮次,所以必须逐轮串行补拉。
+    const fetchNextSnapshot = (ws: WebSocket) => {
+      if (cancelled || syncPending || ws.readyState !== WebSocket.OPEN) return;
+      const round = syncQueue.shift();
+      if (!round) return;
+      syncPending = round;
+      ws.send(JSON.stringify({
+        type: 'result',
+        action: 'fetch',
+        params: { event: round.eventId, round: round.roundTypeId, filter: 'all' },
+      }));
+    };
+
+    const queueRoundSync = (round: LiveRoundRef) => {
+      const key = keyOf(round);
+      if (syncedKeys.has(key) || (syncPending && keyOf(syncPending) === key)
+        || syncQueue.some(item => keyOf(item) === key)) return;
+      syncQueue.push(round);
+      const ws = wsRef.current;
+      if (ws) fetchNextSnapshot(ws);
+    };
+    syncRoundRef.current = queueRoundSync;
 
     const connect = () => {
       if (cancelled) return;
@@ -79,6 +122,7 @@ export function useLiveStream({ compId, applyPatch }: UseLiveStreamArgs) {
       try {
         ws = new WebSocket('wss://cubing.com/ws');
       } catch {
+        needsRecovery = true;
         setStatus('error');
         scheduleReconnect();
         return;
@@ -89,9 +133,22 @@ export function useLiveStream({ compId, applyPatch }: UseLiveStreamArgs) {
         if (cancelled) return ws.close();
         setStatus('open');
         backoff = 1000;
-        // subscribe to competition; we don't re-fetch result.all here
-        // (the initial /v1/cubing-live/:slug HTTP gave us the snapshot)
         ws.send(JSON.stringify({ type: 'competition', competitionId: compId }));
+        // 首屏先显示 HTTP 缓存,再只校准当前轮;断线重连才补齐全部有效轮次。
+        if (needsRecovery) {
+          const seen = new Set<string>();
+          syncQueue = [focusRoundRef.current, ...roundsRef.current].filter((round): round is LiveRoundRef => {
+            if (!round) return false;
+            const key = keyOf(round);
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+          syncPending = null;
+          syncedKeys.clear();
+          needsRecovery = false;
+        }
+        fetchNextSnapshot(ws);
         // periodic ping to keep upstream alive (upstream timeout ~55s on live.min.js)
         pingTimerRef.current = window.setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify('ping'));
@@ -106,7 +163,18 @@ export function useLiveStream({ compId, applyPatch }: UseLiveStreamArgs) {
         } catch { return; }
         if (msg.code !== 200) return;
 
-        if (msg.type === 'result.new' && msg.data && typeof msg.data === 'object') {
+        if (msg.type === 'result.all' && Array.isArray(msg.data) && syncPending) {
+          const round = syncPending;
+          syncPending = null;
+          syncedKeys.add(keyOf(round));
+          applyRef.current({
+            kind: 'result.all',
+            eventId: round.eventId,
+            roundTypeId: round.roundTypeId,
+            results: msg.data as LiveResultRow[],
+          });
+          fetchNextSnapshot(ws);
+        } else if (msg.type === 'result.new' && msg.data && typeof msg.data === 'object') {
           const r = msg.data as LiveResultRow;
           applyRef.current({ kind: 'result.new', result: r, roundFormat: r.f });
         } else if (msg.type === 'result.update' && msg.data && typeof msg.data === 'object') {
@@ -117,7 +185,7 @@ export function useLiveStream({ compId, applyPatch }: UseLiveStreamArgs) {
         } else if (msg.type === 'users' && msg.data && typeof msg.data === 'object') {
           applyRef.current({ kind: 'users', users: msg.data as Record<string, { number: number; name: string; wcaid: string; region: string }> });
         }
-        // result.all / round.all 这里不处理 —— HTTP 快照已经给了
+        // round.all 不处理:轮次元数据由 HTTP 快照和 round.update 维护。
       };
 
       ws.onerror = () => {
@@ -127,6 +195,10 @@ export function useLiveStream({ compId, applyPatch }: UseLiveStreamArgs) {
       ws.onclose = () => {
         if (pingTimerRef.current) { clearInterval(pingTimerRef.current); pingTimerRef.current = null; }
         if (cancelled) return;
+        needsRecovery = true;
+        syncQueue = [];
+        syncPending = null;
+        syncedKeys.clear();
         setStatus('closed');
         scheduleReconnect();
       };
@@ -146,6 +218,7 @@ export function useLiveStream({ compId, applyPatch }: UseLiveStreamArgs) {
     connect();
     return () => {
       cancelled = true;
+      syncRoundRef.current = () => {};
       if (pingTimerRef.current) clearInterval(pingTimerRef.current);
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       pingTimerRef.current = null;
@@ -158,6 +231,10 @@ export function useLiveStream({ compId, applyPatch }: UseLiveStreamArgs) {
       }
     };
   }, [compId]);
+
+  useEffect(() => {
+    if (focusRound) syncRoundRef.current(focusRound);
+  }, [focusRound?.eventId, focusRound?.roundTypeId]);
 
   return status;
 }
