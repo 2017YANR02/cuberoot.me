@@ -7,6 +7,7 @@
 // 已删。
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { RecognizeButton } from '@/lib/recognize-sets';
+import './OnScreenKeyboard.css';
 
 interface ButtonFeedback {
   key: string | null;
@@ -17,9 +18,10 @@ interface OnScreenKeyboardProps {
   buttons: RecognizeButton[];
   /** 返回判定结果,用来给按钮闪一下绿/红;返回 null 表示这次点击没被受理。 */
   onAnswer: (value: string) => 'correct' | 'wrong' | null;
+  className?: string;
 }
 
-export default function OnScreenKeyboard({ buttons, onAnswer }: OnScreenKeyboardProps) {
+export default function OnScreenKeyboard({ buttons, onAnswer, className }: OnScreenKeyboardProps) {
   const [feedback, setFeedback] = useState<ButtonFeedback>({ key: null, type: null });
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -54,7 +56,7 @@ export default function OnScreenKeyboard({ buttons, onAnswer }: OnScreenKeyboard
   };
 
   return (
-    <div className="on-screen-keyboard">
+    <div className={`on-screen-keyboard${className ? ` ${className}` : ''}`}>
       {buttons.map(({ value, label, sub }) => (
         <button
           key={value}

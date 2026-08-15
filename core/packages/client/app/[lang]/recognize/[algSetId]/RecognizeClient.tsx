@@ -12,6 +12,7 @@ import { sessionStoreFor, useSessionHydrated } from '@/lib/session-store';
 import { isHelpKey } from '@/lib/pll-helpers';
 import { recognizeSetFor } from '@/lib/recognize-sets';
 import { VisualCube } from '@/components/VisualCube';
+import { CaseThumb } from '@/components/CaseThumb';
 import { tr } from '@/i18n/tr';
 
 export default function RecognizeClient() {
@@ -244,14 +245,27 @@ export default function RecognizeClient() {
       <div style={{ margin: '1rem 0' }}>
         {image && (
           <div style={{ filter: gameState === 'paused' ? 'brightness(0.15)' : 'none' }}>
-            <VisualCube
-              setup={image.setup}
-              view={image.view}
-              mask={image.mask}
-              size={image.size}
-              hideGreySides={image.hideGreySides}
-              alt={currentCase ? recog.label(currentCase.name) : undefined}
-            />
+            {image.renderer === 'sq1-top-layer' && image.sticker ? (
+              <CaseThumb
+                puzzle="sq1"
+                set="cs"
+                sticker={image.sticker}
+                alg={image.alg ?? ''}
+                setup={image.setup}
+                size={image.size}
+                local
+                sq1Layer="top"
+              />
+            ) : (
+              <VisualCube
+                setup={image.setup}
+                view={image.view}
+                mask={image.mask}
+                size={image.size}
+                hideGreySides={image.hideGreySides}
+                alt={currentCase ? recog.label(currentCase.name) : undefined}
+              />
+            )}
           </div>
         )}
       </div>
@@ -276,7 +290,11 @@ export default function RecognizeClient() {
       )}
 
       {trainMode === 'recognition' && gameState === 'playing' && (
-        <OnScreenKeyboard buttons={recog.buttons()} onAnswer={submitAnswer} />
+        <OnScreenKeyboard
+          buttons={recog.buttons()}
+          onAnswer={submitAnswer}
+          className={recog.id === 'sq1-shape' ? 'on-screen-keyboard--wide-labels' : undefined}
+        />
       )}
 
       {gameState === 'playing' && (

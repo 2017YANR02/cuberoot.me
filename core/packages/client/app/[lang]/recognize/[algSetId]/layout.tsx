@@ -11,6 +11,7 @@ const SETS: Record<string, { zh: string; en: string; caseCount: number }> = {
   ell: { zh: 'ELL', en: 'ELL', caseCount: 25 },
   zbll: { zh: 'ZBLL', en: 'ZBLL', caseCount: 472 },
   '1lll': { zh: '1LLL', en: '1LLL', caseCount: 3397 },
+  'sq1-shape': { zh: 'Square-1 形状命名', en: 'Square-1 Shape Names', caseCount: 29 },
 };
 
 export async function generateMetadata({ params }: {
