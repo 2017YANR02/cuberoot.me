@@ -201,10 +201,12 @@ describe('Square-1 单层形状命名', () => {
       algCase('Kite / Square'),
       algCase('Kite / Barrel'),
       algCase('Square / Kite'),
+      algCase('Left paw / Right fist'),
+      algCase('Right fist / Left paw'),
       algCase(' / Star'),
       algCase('broken'),
     ]);
-    expect(questions.map(({ name }) => name)).toEqual(['Kite', 'Square']);
+    expect(questions.map(({ name }) => name)).toEqual(['Kite', 'Square', 'L paw', 'R fist']);
     expect(questions[0].source.name).toBe('Kite / Square');
   });
 
