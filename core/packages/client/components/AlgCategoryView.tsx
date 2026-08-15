@@ -15,7 +15,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryState, useQueryStates, parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, AlertTriangle, FlipHorizontal2, HelpCircle, Star } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, AlertTriangle, FlipHorizontal2, HelpCircle, Pin } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -246,11 +246,11 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
             className="alg-alg-copy-btn"
             onClick={(e) => { e.stopPropagation(); onPreferredToggle(); }}
             title={preferred
-              ? tr({ zh: '取消主公式', en: 'Clear primary algorithm' })
-              : tr({ zh: '设为主公式', en: 'Set as primary algorithm' })}
+              ? tr({ zh: '取消置顶', en: 'Unpin algorithm' })
+              : tr({ zh: '置顶公式', en: 'Pin algorithm' })}
             aria-pressed={preferred}
           >
-            <Star size={14} fill={preferred ? 'currentColor' : 'none'} className="alg-alg-copy-icon" />
+            <Pin size={14} fill={preferred ? 'currentColor' : 'none'} className="alg-alg-copy-icon" aria-hidden="true" />
           </button>
         )}
         <button

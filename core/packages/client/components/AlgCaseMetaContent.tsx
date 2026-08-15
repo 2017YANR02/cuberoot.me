@@ -11,7 +11,7 @@
  * 所以 `byNo` 一定查得到(查不到只显示编号,不猜)。背景见 AlgCaseMetaModal 顶部注释。
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Copy, Check, Star } from 'lucide-react';
+import { Copy, Check, Pin } from 'lucide-react';
 import Link from '@/components/AppLink';
 import type { AlgCase, AlgCaseMeta, AlgPuzzle } from '@cuberoot/shared';
 import { stm } from '@cuberoot/shared/alg-notation';
@@ -86,11 +86,11 @@ function AlgLine({
           className="alg-meta-copy alg-meta-primary"
           onClick={(event) => { event.stopPropagation(); onPreferredToggle(); }}
           title={preferred
-            ? tr({ zh: '取消主公式', en: 'Clear primary algorithm' })
-            : tr({ zh: '设为主公式', en: 'Set as primary algorithm' })}
+            ? tr({ zh: '取消置顶', en: 'Unpin algorithm' })
+            : tr({ zh: '置顶公式', en: 'Pin algorithm' })}
           aria-pressed={preferred}
         >
-          <Star size={13} fill={preferred ? 'currentColor' : 'none'} />
+          <Pin size={13} fill={preferred ? 'currentColor' : 'none'} aria-hidden="true" />
         </button>
       )}
       <button
@@ -426,7 +426,7 @@ export default function AlgCaseMetaContent({
             const expanded = playable && expandedAlgKey === rowKey;
             const isPreferred = a.ref === preferredRef;
             const label = [
-              isPreferred ? tr({ zh: '主公式', en: 'Primary' }) : '',
+              isPreferred ? tr({ zh: '已置顶', en: 'Pinned' }) : '',
               a.tags.map(t => ALG_TAG_LABEL[t]()).join(' '),
             ].filter(Boolean).join(' ');
             const togglePreferred = () => setPreferred(
