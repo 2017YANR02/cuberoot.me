@@ -1138,6 +1138,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         {data && !showSubgroupPicker && !showSubSubgroupPicker && !showAllCases && !collection?.cardsOnly && (
           <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />
         )}
+        {!collection && !subgroupParam && puzzleParam === 'sq1' && set === 'cs' && (
+          <Link href="/recognize/sq1-shape/guide" className="alg-recog-cta" prefetch={false}>
+            {tr({ zh: '形状命名', en: 'Shape names' })}
+          </Link>
+        )}
         {isZh && data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && puzzleParam === '3x3' && (
           <>
             <select
