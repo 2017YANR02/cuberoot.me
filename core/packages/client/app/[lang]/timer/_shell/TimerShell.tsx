@@ -29,8 +29,9 @@ import dynamic from 'next/dynamic';
 import { useQueryState, createParser } from 'nuqs';
 import SoloView from './SoloView';
 import { tr } from '@/i18n/tr';
+import { useIsAdmin } from '@/lib/auth-store';
 import TimerPresencePanel from '../_components/TimerPresencePanel';
-import { useTimerPresence, type TimerPresenceMix } from '../_lib/presence';
+import { useTimerPresence, type TimerPresenceReport } from '../_lib/presence';
 
 // 首帧恒 Solo(见下面的 mounted gate),对战两个视图连同 _battle 引擎和 battle.css
 // 只在真的切到 players>=2 / net 时才下载 —— 静态 import 会把它们焊进首屏那个 chunk。
@@ -51,7 +52,14 @@ const parseAsPlayers = createParser<PlayersMode>({
 
 export default function TimerShell() {
   const [mounted, setMounted] = useState(false);
-  const [presenceMix, setPresenceMix] = useState<TimerPresenceMix>({ normal: 1, smart: 0 });
+  const [presenceReport, setPresenceReport] = useState<TimerPresenceReport>({
+    normal: 1,
+    smart: 0,
+    mode: 'solo',
+    results: [],
+    devices: [],
+  });
+  const canViewPresence = useIsAdmin();
   const [playersParam, setPlayersParam] = useQueryState(
     'players',
     parseAsPlayers.withDefault(1).withOptions({ history: 'push', clearOnDefault: false }),
@@ -99,8 +107,10 @@ export default function TimerShell() {
       <option value="net">{tr({ zh: '联机', en: 'Online' })}</option>
     </select>
   );
-  const presenceSnapshot = useTimerPresence(presenceMix);
-  const presenceControl = <TimerPresencePanel snapshot={presenceSnapshot} />;
+  const presenceSnapshot = useTimerPresence(presenceReport, canViewPresence);
+  const presenceControl = canViewPresence
+    ? <TimerPresencePanel snapshot={presenceSnapshot} />
+    : null;
 
   // First paint is always Solo (mounted gate keeps SSG calm). After mount, if
   // ?players=net we render <NetBattleView/>, ?players>=2 renders <BattleView/>;
@@ -111,7 +121,7 @@ export default function TimerShell() {
       <NetBattleView
         playersControl={playersControl}
         presenceControl={presenceControl}
-        onPresenceChange={setPresenceMix}
+        onPresenceChange={setPresenceReport}
         onExitNet={() => { void setRoomParam(null); void setPlayersParam(1); }}
       />
     );
@@ -122,7 +132,7 @@ export default function TimerShell() {
         playerCount={playerCount}
         playersControl={playersControl}
         presenceControl={presenceControl}
-        onPresenceChange={setPresenceMix}
+        onPresenceChange={setPresenceReport}
       />
     );
   }
@@ -131,7 +141,7 @@ export default function TimerShell() {
     <SoloView
       playersControl={playersControl}
       presenceControl={presenceControl}
-      onPresenceChange={setPresenceMix}
+      onPresenceChange={setPresenceReport}
     />
   );
 }
