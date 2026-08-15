@@ -25,6 +25,7 @@ const BACK_HOME_DIRECT_ROOT = /<(?:div|main|section)\b[^>]*className\s*=\s*['"](
 const PAGE_ROOT_CLASS = /(?:^|[-_\s])(?:root|page|app)(?:$|[-_\s])/i;
 const SAFE_BACK_HOME_CONTAINER = /(?:^|[-_\s])(?:header|topbar|head|wrap|container|hero|sidebar|back-row)(?:$|[-_\s])/i;
 const OPEN_LAYOUT_CONTAINER = /<(?:div|main|section|header|nav|aside)\b[^>]*className\s*=\s*['"]([^'"]+)['"][^>]*>/gi;
+const ALG_CASE_VIEW_PATH = /\/app\/\[lang\]\/alg\/\[puzzle\]\/\[set\]\/\[subgroup\]\/AlgCaseView\.tsx$/i;
 
 export const COMPONENT_REUSE_RULES = [
   {
@@ -53,6 +54,14 @@ export const COMPONENT_REUSE_RULES = [
       '<div className="page-back-row"><BackHome /></div>',
     reason:
       '检测到 BackHome 直接挂在 full-bleed 页面根节点，或新增位置没有明确布局归属。请放进与正文同宽的 header/topbar/wrap/back-row，避免返回入口贴到视口边缘。',
+  },
+  {
+    id: 'alg-case-detail-layout',
+    component: 'AlgCaseView',
+    importStatement: "import AlgCaseView from './AlgCaseView';",
+    replacement: '<AlgCaseView puzzle={puzzle} set={set} caseObj={caseObj} data={data} />',
+    reason:
+      '公式 case 详情统一复用 AlgCaseView：静态主图走 CaseThumb，动画走 AlgPlayer；多朝向也必须保留主图。',
   },
 ];
 
@@ -93,6 +102,21 @@ export function scanNewBackHomePlacements(source) {
     });
   }
   return violations;
+}
+
+export function scanAlgCaseDetailLayout(filePath, source) {
+  const normalized = normalizePath(filePath);
+  if (!ALG_CASE_VIEW_PATH.test(normalized)) return [];
+  const conditionalThumb = /is-without-thumb/.exec(source)
+    ?? (/!\s*multiOri/.test(source) && /(?:<CaseThumb\b|alg-case-detail-lean-thumb)/.test(source)
+      ? /!\s*multiOri/.exec(source)
+      : null);
+  if (!conditionalThumb || exemptionNear(source, conditionalThumb.index, conditionalThumb[0])) return [];
+  return [{
+    ruleId: 'alg-case-detail-layout',
+    index: conditionalThumb.index,
+    snippet: conditionalThumb[0],
+  }];
 }
 
 export function scanComponentReimplementations(source) {
@@ -273,6 +297,7 @@ export function violationsFromHookPayload(payload, pathAllowlist = loadPathAllow
     const fileViolations = [
       ...scanComponentReimplementations(write.content),
       ...scanNewBackHomePlacements(write.content),
+      ...scanAlgCaseDetailLayout(write.filePath, write.content),
     ];
     const seen = new Set();
     for (const violation of fileViolations) {
@@ -308,7 +333,7 @@ if (isMain) {
     const violations = violationsFromHookPayload(payload);
     if (violations.length) {
       const rule = COMPONENT_REUSE_RULES.find((item) => item.id === violations[0].ruleId);
-      const exceptionKind = rule.id === 'back-home-layout' ? '不同布局' : '不同交互';
+      const exceptionKind = rule.id === 'back-home-layout' || rule.id === 'alg-case-detail-layout' ? '不同布局' : '不同交互';
       deny(
         `${rule.reason}\n${rule.importStatement}\n替换为: ${rule.replacement}\n` +
         `确属${exceptionKind}时，在对应 JSX 前注明 // ${EXEMPTION}: <具体理由>。详见 /code/components。`,

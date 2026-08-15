@@ -109,6 +109,7 @@ pnpm --filter @cuberoot/client lint
 - 吸顶表头走 `components/sticky-table.css`(`.sticky-scroll` + `.sticky-thead`),禁手写 sticky thead;契约见文件头注。
 - 新可复用组件/hook 登记 `/code` catalog(`_catalog.tsx`)。CI 守卫:`code-catalog-sync` + `code-tokens-drift`。
 - 项目下拉统一用 `components/PuzzlePicker`;`/wca` 页内展开式项目行用 `WcaEventSelector`;禁页面内自写项目菜单。hook + CI 守卫:`component-reuse-guard`。
+- `/alg` case 详情统一走 `AlgCaseView`:静态主图用 `CaseThumb`,动画用 `AlgPlayer`,多朝向也不得省略主图或另造详情结构。
 - 全局固定按钮对齐内容右沿:`right: max(16px, calc((100vw - <content-max-width>) / 2))`。
 - chip/tab/下拉项不显示数量计数。
 - WCA 时间锚点:时间序列默认视图从 2003-08-22 起步(第 0 帧 = 1982 快照),统计聚合必含 1982 场。

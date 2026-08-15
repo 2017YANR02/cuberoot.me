@@ -9,6 +9,7 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   COMPONENT_REUSE_RULES,
+  scanAlgCaseDetailLayout,
   scanNewBackHomePlacements,
   scanComponentReimplementations,
   violationsFromHookPayload,
@@ -172,6 +173,18 @@ describe('component reuse rule registry', () => {
         new_string: '<div className="demo-back-row"><BackHome /></div>',
       },
     }, new Set())).toEqual([]);
+  });
+
+  it('keeps the static CaseThumb in the canonical multi-orientation case detail', () => {
+    const filePath = 'D:/cube/cuberoot.me/core/packages/client/app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx';
+    expect(scanAlgCaseDetailLayout(filePath, `
+      {!multiOri && (
+        <div className="alg-case-detail-lean-thumb"><CaseThumb /></div>
+      )}
+    `).map((hit) => hit.ruleId)).toContain('alg-case-detail-layout');
+    expect(scanAlgCaseDetailLayout(filePath, `
+      <div className="alg-case-detail-lean-thumb"><CaseThumb /></div>
+    `)).toEqual([]);
   });
 
   it('pins the alg puzzle BackHome above the title inside the shared-width header', () => {

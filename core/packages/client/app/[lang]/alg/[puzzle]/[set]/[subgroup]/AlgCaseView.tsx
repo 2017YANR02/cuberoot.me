@@ -425,12 +425,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
         </div>
       ) : (
         <div className={`alg-case-detail-lean${multiOri ? ' is-multi-ori' : ''}`}>
-          <div className={`alg-case-detail-lean-aside${multiOri ? ' is-without-thumb' : ''}`}>
-            {!multiOri && (
-              <div className="alg-case-detail-lean-thumb">
-                <CaseThumb puzzle={puzzle} set={set} sticker={caseObj.sticker} alg={caseObj.algs[0]?.[0]?.alg || caseObj.setup || ''} setup={caseObj.setup} size={116} sq1BlackTop={sq1BlackTop} viewAngle={effectiveViewAngle} orientation={effectiveOrientation} />
-              </div>
-            )}
+          <div className="alg-case-detail-lean-aside">
+            <div className="alg-case-detail-lean-thumb">
+              <CaseThumb puzzle={puzzle} set={set} sticker={caseObj.sticker} alg={caseObj.algs[0]?.[0]?.alg || caseObj.setup || ''} setup={caseObj.setup} size={116} sq1BlackTop={sq1BlackTop} viewAngle={effectiveViewAngle} orientation={effectiveOrientation} />
+            </div>
             {mirror?.card && (
               <div className="alg-mirror-row">
                 <span className="alg-mirror-label">{tr({ zh: '镜像 case', en: 'Mirror case' })}</span>

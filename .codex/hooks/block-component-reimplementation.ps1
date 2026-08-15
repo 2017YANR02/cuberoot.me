@@ -9,8 +9,9 @@ $OutputEncoding = New-Object System.Text.UTF8Encoding $false
 $payload = [Console]::In.ReadToEnd()
 if ([string]::IsNullOrEmpty($payload)) { exit 0 }
 
-# Cheap gate for the current registry: close/clear buttons, project selectors, and BackHome placement.
-if ($payload -notmatch '<button|<select|<X\b|<BackHome\b|×|✕|关闭|close|clear|dismiss|EventIcon|CubingIcon|EventPicker|PuzzlePicker|PuzzleTypeSelect|eventPickerOpen|puzzlePickerOpen') { exit 0 }
+# Cheap gate for the current registry: close/clear buttons, project selectors, BackHome placement,
+# and the canonical algorithm case-detail layout.
+if ($payload -notmatch '<button|<select|<X\b|<BackHome\b|<CaseThumb\b|multiOri|is-without-thumb|×|✕|关闭|close|clear|dismiss|EventIcon|CubingIcon|EventPicker|PuzzlePicker|PuzzleTypeSelect|eventPickerOpen|puzzlePickerOpen') { exit 0 }
 
 $detector = Join-Path $PSScriptRoot '../../core/packages/client/scripts/hook-detect-component-reimplementation.mjs'
 if (-not (Test-Path $detector)) { exit 0 } # fail open; CI is authoritative
