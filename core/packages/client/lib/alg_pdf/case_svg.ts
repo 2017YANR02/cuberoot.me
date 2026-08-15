@@ -107,7 +107,9 @@ async function renderCaseSvg({
   }
   const p = plan.params;
   return renderFromSimpleQuery({
-    ...(plan.setup ? { setup: plan.setup } : { case: plan.algorithm }),
+    ...(p.faceletColors
+      ? { fc: p.faceletColors, ...(p.faceletAlg ? { alg: p.faceletAlg } : {}) }
+      : plan.setup ? { setup: plan.setup } : { case: plan.algorithm }),
     view: p.view,
     size,
     pzl: p.puzzleSize,

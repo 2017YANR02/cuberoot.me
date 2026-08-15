@@ -3,11 +3,12 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { AlgPuzzle } from '@cuberoot/shared';
-import { Face, Masking, makeMasking } from '@cuberoot/visualcube';
+import { buildSimpleOptions, Face, Masking, makeMasking, renderFromSimpleQuery } from '@cuberoot/visualcube';
 import {
   caseThumbPlan,
   cubeThumbParams,
   DEFAULT_ALG_CUBE_ORIENTATION,
+  speedCubeDbF2lFaceletColors,
   supportsCaseViewAngle,
   supportsCubeOrientation,
   supportsRecognitionSimplification,
@@ -68,6 +69,70 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     expect(supportsCubeOrientation('3x3', cubeThumbParams('3x3', 'f2l', base.sticker))).toBe(true);
     await expect(algCaseSvg({ ...base, orientation: '' }))
       .resolves.not.toBe(await algCaseSvg(base));
+  });
+
+  it('AF2L 使用上游逐贴纸投影，只保留非标 F2L 相关块', async () => {
+    const fl = 'lllllllbllolgglggwlllloloollolgglggwllllolool';
+    const expectedFacelets = [
+      'dddddddbd', // U
+      'ddddodood', // R
+      'dodggdggw', // F
+      'ddddddddd', // D
+      'ddddodood', // L
+      'dodggdggw', // B
+    ].join('');
+    expect(speedCubeDbF2lFaceletColors(fl)).toBe(expectedFacelets);
+
+    const spec = {
+      puzzle: '3x3' as const,
+      set: 'adv-f2l',
+      sticker: { kind: 'f2l' as const, fl },
+      alg: "R U' R' U R2 F R F' R",
+      setup: "f R S' R' F' R",
+    };
+    const plan = caseThumbPlan(spec);
+    expect(plan.renderer).toBe('visualcube');
+    if (plan.renderer !== 'visualcube') throw new Error('expected visualcube plan');
+    expect(plan.params).toMatchObject({
+      view: 'iso',
+      faceletColors: expectedFacelets,
+      faceletAlg: "z2 z2 y'",
+      puzzleSize: 3,
+    });
+    expect(plan.params.mask).toBeUndefined();
+    expect(plan.params.scheme).toBeUndefined();
+    expect(plan.setup).toBeUndefined();
+    const svg = await algCaseSvg(spec);
+    expect(svg).toContain('#404040');
+    expect(svg).toContain('#00D800');
+    expect(svg).toContain('#FFA100');
+    expect(svg).not.toContain('#EE0000');
+
+    const standard = caseThumbPlan({ ...spec, orientation: '' });
+    expect(standard.renderer).toBe('visualcube');
+    if (standard.renderer === 'visualcube') {
+      expect(standard.params.faceletColors).toBe(expectedFacelets);
+      expect(standard.params.faceletAlg).toBe('z2');
+    }
+
+    const fallback = caseThumbPlan({ ...spec, sticker: { kind: 'f2l' as const, fl: '' } });
+    expect(fallback.renderer).toBe('visualcube');
+    if (fallback.renderer === 'visualcube') {
+      expect(fallback.params.view).toBe('f2l');
+      expect(fallback.params.faceletColors).toBeUndefined();
+      expect(fallback.setup).toBe(spec.setup);
+    }
+  });
+
+  it('visualcube 只接受长度匹配的最终逐贴纸颜色，无显式转体时不套默认公式', () => {
+    const facelets = 'd'.repeat(54);
+    const options = buildSimpleOptions({ fc: facelets, view: 'iso', size: 96 });
+    expect(options.stickerColors).toEqual(Array(54).fill('#404040'));
+    expect(options.algorithm).toBeUndefined();
+    expect(buildSimpleOptions({ fc: facelets, alg: "y'" }).algorithm).toBe("y'");
+    expect(buildSimpleOptions({ fc: 'd'.repeat(53) }).stickerColors).toBeUndefined();
+    expect(buildSimpleOptions({ fc: `${'d'.repeat(53)}x` }).stickerColors).toBeUndefined();
+    expect(renderFromSimpleQuery({ fc: facelets, view: 'iso', size: 96 })).toContain('#404040');
   });
 
   it('OLL 换拿法只改变顶色，显式教学配色不开放朝向菜单', () => {

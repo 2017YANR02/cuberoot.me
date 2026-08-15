@@ -86,7 +86,8 @@ export function CaseThumb({
         setup={plan.setup}
         view={p.view}
         mask={p.mask}
-        faceletMask={p.faceletMask}
+        faceletColors={p.faceletColors}
+        faceletAlg={p.faceletAlg}
         scheme={p.scheme}
         hideGreySides={p.hideGreySides}
         planSimplify={p.planSimplify}
