@@ -1,7 +1,7 @@
 import { isMultiLocationCity } from './comp_city_identity';
 
 export const RECORD_PLACE_VERSION = 2 as const;
-export const RECORD_PLACE_DETAIL_VERSION = 1 as const;
+export const RECORD_PLACE_DETAIL_VERSION = 2 as const;
 
 export const RECORD_METRICS = ['wr', 'cr', 'nr'] as const;
 export type RecordMetric = (typeof RECORD_METRICS)[number];
@@ -42,6 +42,8 @@ export interface RecordPlaceDetailEntry {
   n: string;
   /** Raw WCA result value. */
   v: number;
+  /** Ordered round attempts. */
+  a: number[] | null;
 }
 
 export interface RecordPlaceDetailCompetition {
@@ -216,7 +218,9 @@ function isDetailEntry(value: unknown): value is RecordPlaceDetailEntry {
     && typeof entry.e === 'string' && entry.e.length > 0
     && typeof entry.p === 'string' && entry.p.length > 0
     && typeof entry.n === 'string' && entry.n.trim().length > 0
-    && typeof entry.v === 'number' && Number.isSafeInteger(entry.v) && entry.v > 0;
+    && typeof entry.v === 'number' && Number.isSafeInteger(entry.v) && entry.v > 0
+    && (entry.a === null || (Array.isArray(entry.a)
+      && entry.a.every((attempt) => Number.isSafeInteger(attempt))));
 }
 
 export function isRecordPlaceDetailShard(value: unknown): value is RecordPlaceDetailShard {

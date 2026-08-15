@@ -12,6 +12,7 @@ export interface RecordEntry {
   p: string;    // WCA person ID
   n: string;    // persons.name (含括号中文)
   v: number;    // centiseconds
+  a: number[] | null; // 该轮按 attempt_number 排序的成绩
 }
 
 let _summary: Record<string, RecordTop> | null = null;
