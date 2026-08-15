@@ -34,12 +34,16 @@ describe('algorithm player placement', () => {
     expect(detail).toContain('autoPlay={playRequest > 0}');
     expect(detail).toContain('playRequest={playRequest}');
     expect(detail).toContain("alg-case-detail-lean${multiOri ? ' is-multi-ori' : ''}");
+    expect(detail).toMatch(/className="alg-case-detail-ori-main"[\s\S]*?className="alg-case-detail-ori-player"[\s\S]*?className="alg-case-detail-ori-algs"/);
     expect(detail).toMatch(/className="alg-case-detail-lean-thumb"[\s\S]*?<CaseThumb/);
     expect(detail).not.toContain('{!multiOri && (');
     expect(detail).not.toContain('is-without-thumb');
+    expect(styles).toMatch(/\.alg-case-detail-lean-algs\.is-multi-ori\s*\{\s*gap:\s*24px;/);
+    expect(styles).toMatch(/\.alg-case-detail-ori-main\s*\{[\s\S]*?grid-template-columns:\s*300px minmax\(0, 1fr\);/);
     expect(styles).toContain('@media (max-width: 900px)');
     expect(styles).toContain('.alg-case-detail-lean.is-multi-ori .alg-case-detail-lean-aside');
-    expect(styles).toContain('.alg-case-detail-ori > .alg-alg-sortable:has(.alg-alg-row.is-expanded)');
+    expect(styles).toContain('.alg-case-detail-ori-algs > .alg-alg-sortable:has(.alg-alg-row.is-expanded)');
+    expect(styles).toMatch(/@media \(max-width: 680px\)[\s\S]*?\.alg-case-detail-ori-main\s*\{[\s\S]*?flex-direction:\s*column;/);
   });
 
   it('routes every canonical case detail through the shared AlgCaseView', () => {

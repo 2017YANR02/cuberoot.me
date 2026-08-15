@@ -481,21 +481,27 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
               return (
                 <div key={oi} className="alg-case-detail-ori">
                   {multiOri && <div className="alg-case-detail-ori-label">{shortOriName(oriNames![oi])}</div>}
-                  {multiOri && selectedEntry && (
-                    <div className="alg-case-detail-ori-player">
-                      <AlgPlayer
-                        alg={caseViewAlg(selectedEntry.alg, effectiveViewAngle)}
-                        puzzle={puzzle}
-                        set={set}
-                        setup={caseViewSetup(selectedEntry.setup ?? orientedSetup, effectiveViewAngle)}
-                        orientation={effectiveOrientation}
-                        size={260}
-                        autoPlay={playRequest > 0}
-                        playRequest={playRequest}
-                      />
+                  {multiOri ? (
+                    <div className="alg-case-detail-ori-main">
+                      {selectedEntry && (
+                        <div className="alg-case-detail-ori-player">
+                          <AlgPlayer
+                            alg={caseViewAlg(selectedEntry.alg, effectiveViewAngle)}
+                            puzzle={puzzle}
+                            set={set}
+                            setup={caseViewSetup(selectedEntry.setup ?? orientedSetup, effectiveViewAngle)}
+                            orientation={effectiveOrientation}
+                            size={260}
+                            autoPlay={playRequest > 0}
+                            playRequest={playRequest}
+                          />
+                        </div>
+                      )}
+                      <div className="alg-case-detail-ori-algs">
+                        {dragAlgs ? withDnd(oi)(rows) : rows}
+                      </div>
                     </div>
-                  )}
-                  {dragAlgs ? withDnd(oi)(rows) : rows}
+                  ) : (dragAlgs ? withDnd(oi)(rows) : rows)}
                 </div>
               );
             })}
