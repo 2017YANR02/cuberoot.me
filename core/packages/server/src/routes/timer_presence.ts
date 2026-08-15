@@ -68,26 +68,26 @@ interface TimerPresenceRouteOptions {
   identifyIp?: (c: Context) => string;
 }
 
-function shortString(value: unknown, max: number): string | null {
+function boundedString(value: unknown, max: number): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
-  return trimmed && trimmed.length <= max ? trimmed : null;
+  return trimmed ? trimmed.slice(0, max) : null;
 }
 
-function parseResults(value: unknown): TimerPresenceResult[] | null {
+function parseResults(value: unknown): TimerPresenceResult[] {
   if (value === undefined) return [];
-  if (!Array.isArray(value) || value.length > MAX_RESULTS) return null;
+  if (!Array.isArray(value)) return [];
   const results: TimerPresenceResult[] = [];
-  for (const raw of value) {
-    if (!raw || typeof raw !== 'object') return null;
+  for (const raw of value.slice(0, MAX_RESULTS)) {
+    if (!raw || typeof raw !== 'object') continue;
     const r = raw as Record<string, unknown>;
-    const event = shortString(r.event, 32);
-    const label = r.label === undefined ? undefined : shortString(r.label, 24);
+    const event = boundedString(r.event, 32);
+    const label = r.label === undefined ? undefined : boundedString(r.label, 24);
     const penalty = r.penalty;
-    if (!event || (r.label !== undefined && !label)) return null;
-    if (!Number.isInteger(r.timeMs) || (r.timeMs as number) < 0 || (r.timeMs as number) > MAX_RESULT_MS) return null;
-    if (!['ok', '+2', 'DNF', 'DNS', 'dnf'].includes(String(penalty))) return null;
-    if (r.at !== undefined && (!Number.isInteger(r.at) || (r.at as number) < 0)) return null;
+    if (!event) continue;
+    if (!Number.isInteger(r.timeMs) || (r.timeMs as number) < 0 || (r.timeMs as number) > MAX_RESULT_MS) continue;
+    if (!['ok', '+2', 'DNF', 'DNS', 'dnf'].includes(String(penalty))) continue;
+    if (r.at !== undefined && (!Number.isInteger(r.at) || (r.at as number) < 0)) continue;
     results.push({
       event,
       timeMs: r.timeMs as number,
@@ -99,16 +99,16 @@ function parseResults(value: unknown): TimerPresenceResult[] | null {
   return results;
 }
 
-function parseDevices(value: unknown): TimerPresenceDevice[] | null {
+function parseDevices(value: unknown): TimerPresenceDevice[] {
   if (value === undefined) return [];
-  if (!Array.isArray(value) || value.length > MAX_DEVICES) return null;
+  if (!Array.isArray(value)) return [];
   const devices: TimerPresenceDevice[] = [];
-  for (const raw of value) {
-    if (!raw || typeof raw !== 'object') return null;
+  for (const raw of value.slice(0, MAX_DEVICES)) {
+    if (!raw || typeof raw !== 'object') continue;
     const d = raw as Record<string, unknown>;
-    const name = shortString(d.name, 128);
-    const id = d.id === undefined ? undefined : shortString(d.id, 128);
-    if (!name || (d.id !== undefined && !id)) return null;
+    const name = boundedString(d.name, 128);
+    const id = d.id === undefined ? undefined : boundedString(d.id, 512);
+    if (!name) continue;
     devices.push({ name, ...(id ? { id } : {}) });
   }
   return devices;
@@ -205,7 +205,6 @@ export function createTimerPresenceRoutes(options: TimerPresenceRouteOptions = {
       }
       const results = parseResults(body.results);
       const devices = parseDevices(body.devices);
-      if (!results || !devices) return c.json({ error: 'invalid presence details' }, 400);
       if (!entries.has(body.id) && entries.size >= maxEntries) {
         return c.json({ error: 'presence capacity reached' }, 503);
       }

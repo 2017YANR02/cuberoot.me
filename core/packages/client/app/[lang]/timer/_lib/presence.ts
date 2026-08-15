@@ -48,6 +48,7 @@ export interface TimerPresenceSnapshot extends TimerPresenceMix {
 
 const ENDPOINT = '/v1/timer/presence?v=2';
 const HEARTBEAT_MS = 10_000;
+type PresenceFetch = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
 function isSnapshot(value: unknown): value is TimerPresenceSnapshot {
   if (!value || typeof value !== 'object') return false;
@@ -80,6 +81,38 @@ export function battlePresenceMix(
   return { normal: count - smart, smart };
 }
 
+/** Optional metadata must never prevent the core ordinary/smart count update. */
+export async function sendTimerPresenceHeartbeat(
+  id: string,
+  report: TimerPresenceReport,
+  offline = false,
+  request: PresenceFetch = fetch,
+): Promise<void> {
+  const post = (body: object) => request(apiUrl(ENDPOINT), {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+    cache: 'no-store',
+    credentials: 'omit',
+    keepalive: true,
+  });
+  const body = offline
+    ? { id, normal: 0, smart: 0 }
+    : { id, ...report };
+  let response = await post(body);
+  if (!offline && response.status === 400) {
+    response = await post({
+      id,
+      normal: report.normal,
+      smart: report.smart,
+      mode: report.mode,
+      results: [],
+      devices: [],
+    });
+  }
+  if (!response.ok) throw new Error(`Timer presence request failed: ${response.status}`);
+}
+
 /**
  * Production tabs report live details. Only an authenticated administrator
  * polls the snapshot; development pages never inflate the production count.
@@ -99,16 +132,7 @@ export function useTimerPresence(
 
     const write = async (offline = false) => {
       if (!shouldReport) return;
-      await fetch(apiUrl(ENDPOINT), {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify(offline
-          ? { id, normal: 0, smart: 0 }
-          : { id, ...reportRef.current }),
-        cache: 'no-store',
-        credentials: 'omit',
-        keepalive: true,
-      });
+      await sendTimerPresenceHeartbeat(id, reportRef.current, offline);
     };
 
     const read = async () => {
