@@ -17,11 +17,13 @@ import {
 
 interface Props {
   className?: string;
+  triggerColumns?: RollingStatKey[];
 }
 
-export default function RollingStatsPicker({ className }: Props) {
+export default function RollingStatsPicker({ className, triggerColumns }: Props) {
   const settings = useSettings();
   const columns = sanitizeRollingStatColumns(settings.statsRollingColumns);
+  const columnsKey = columns.join(',');
   const [open, setOpen] = useState(false);
   const [customDraft, setCustomDraft] = useState('');
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -53,7 +55,7 @@ export default function RollingStatsPicker({ className }: Props) {
       window.removeEventListener('resize', positionPanel);
       window.removeEventListener('scroll', positionPanel, true);
     };
-  }, [open, columns.length]);
+  }, [open, columnsKey]);
 
   useEffect(() => {
     if (!open) return;
@@ -92,19 +94,48 @@ export default function RollingStatsPicker({ className }: Props) {
   };
 
   const label = tr({ zh: '统计列', en: 'Stats columns' });
+  const isColumnTrigger = Boolean(triggerColumns?.length);
 
   return (
-    <div className={['rolling-stats-picker', className].filter(Boolean).join(' ')} ref={wrapRef}>
-      <button
-        type="button"
-        className="rolling-stats-trigger"
-        onClick={() => setOpen(value => !value)}
-        aria-expanded={open}
-        aria-haspopup="dialog"
-      >
-        <Columns3 size={13} />
-        {label}
-      </button>
+    <div
+      className={[
+        'rolling-stats-picker',
+        isColumnTrigger && 'rolling-stats-column-pickers',
+        className,
+      ].filter(Boolean).join(' ')}
+      ref={wrapRef}
+      style={isColumnTrigger ? {
+        gridColumn: `span ${triggerColumns!.length}`,
+        gridTemplateColumns: `repeat(${triggerColumns!.length}, minmax(0, 1fr))`,
+      } : undefined}
+    >
+      {isColumnTrigger ? triggerColumns!.map(key => (
+        <button
+          type="button"
+          className="hao-head rolling-stats-column-trigger"
+          key={key}
+          onClick={() => setOpen(value => !value)}
+          aria-expanded={open}
+          aria-haspopup="dialog"
+          aria-label={tr({
+            zh: `更改统计列，当前 ${key}`,
+            en: `Change stats columns, currently ${key}`,
+          })}
+        >
+          {key}
+        </button>
+      )) : (
+        <button
+          type="button"
+          className="rolling-stats-trigger"
+          onClick={() => setOpen(value => !value)}
+          aria-expanded={open}
+          aria-haspopup="dialog"
+        >
+          <Columns3 size={13} />
+          {label}
+        </button>
+      )}
       {open && createPortal(
         <div
           ref={panelRef}

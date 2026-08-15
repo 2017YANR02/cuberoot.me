@@ -770,6 +770,22 @@
 }
 .history-header .history-stat-picker { margin-bottom: 0; }
 .history-header .rolling-stats-trigger { padding: 2px 6px; font-size: 11px; }
+.rolling-stats-column-pickers {
+  display: grid;
+  align-self: stretch;
+  width: auto;
+  margin-bottom: 0;
+  gap: 8px;
+}
+.rolling-stats-column-trigger {
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.rolling-stats-column-trigger:hover { text-decoration: underline; text-underline-offset: 2px; }
 .history-list {
   flex: 1;
   overflow-y: auto;

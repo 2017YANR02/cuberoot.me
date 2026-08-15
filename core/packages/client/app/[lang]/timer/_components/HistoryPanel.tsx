@@ -587,7 +587,9 @@ export default function HistoryPanel({
         <span>{tr({ zh: '历史', en: 'History'
         })}</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {panelEvent !== '333mbld' && <RollingStatsPicker className="history-stat-picker" />}
+          {panelEvent !== '333mbld' && visibleStatColumns.length === 0 && (
+            <RollingStatsPicker className="history-stat-picker" />
+          )}
           {!isMobile && (
             <button
               type="button"
@@ -1060,7 +1062,9 @@ export default function HistoryPanel({
             <span>{panelEvent === '333mbld'
               ? tr({ zh: '成绩', en: 'Result' })
               : tr({ zh: '时间', en: 'Time' })}</span>
-            {visibleStatColumns.map(key => <span key={key} className="hao-head">{key}</span>)}
+            {visibleStatColumns.length > 0 && (
+              <RollingStatsPicker triggerColumns={visibleStatColumns} />
+            )}
           </div>
         )}
         {filteredReversed.map((s, listIdx) => {
