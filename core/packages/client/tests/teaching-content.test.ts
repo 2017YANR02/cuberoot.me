@@ -61,7 +61,7 @@ describe('teaching course plan', () => {
     }
   });
 
-  it('starts the trial with the four introduction lessons and applies Chinese-only overrides', () => {
+  it('starts the trial with four introduction lessons and applies bilingual overrides', () => {
     const trial = TEACHING_COURSES[0];
     expect(courseLessons(trial).slice(0, 4).map((lesson) => lesson.id)).toEqual([
       'trial-intro-speedcubing',
@@ -86,12 +86,35 @@ describe('teaching course plan', () => {
     });
     expect(merged.shots.map((line) => line.zh)).toEqual(['镜头一', '镜头二']);
     expect(merged.script.map((line) => line.zh)).toEqual(['第一段', '第二段']);
+
+    const bilingual = courseLessons(mergeTrialLessonOverrides(trial, [{
+      lessonId: original.id,
+      titleZh: '修改后的标题',
+      outcomeZh: '修改后的目标',
+      titleEn: 'Updated title',
+      outcomeEn: 'Updated goal',
+      minutes: 4,
+      shotsZh: ['镜头一', '镜头二'],
+      shotsEn: ['Shot one', 'Shot two'],
+      scriptZh: ['第一段', '第二段'],
+      scriptEn: ['Paragraph one', 'Paragraph two'],
+      needsEnglishSync: false,
+    }]))[0];
+    expect(bilingual.title.en).toBe('Updated title');
+    expect(bilingual.outcome.en).toBe('Updated goal');
+    expect(bilingual.shots.map((line) => line.en)).toEqual(['Shot one', 'Shot two']);
+    expect(bilingual.script.map((line) => line.en)).toEqual(['Paragraph one', 'Paragraph two']);
   });
 
   it('keeps trial writes administrator-only and stores JSON arrays without double encoding', () => {
     const route = readFileSync(join(import.meta.dirname, '../../server/src/routes/teaching.ts'), 'utf8');
     expect(route).toMatch(/put\('\/teaching\/trial\/:lessonId'[\s\S]*?requireAdminOrApiKey\(c\)/);
+    expect(route).toMatch(/put\('\/teaching\/trial\/:lessonId\/english'[\s\S]*?requireAdminOrApiKey\(c\)/);
     expect(route).toMatch(/shots_zh = EXCLUDED\.shots_zh/);
+    expect(route).toMatch(/english_stale = TRUE/);
+    expect(route).toMatch(/english_stale = FALSE/);
+    expect(route).toMatch(/content_revision = \?/);
+    expect(route).toMatch(/content_revision = teaching_trial_lesson_overrides\.content_revision \+ 1/);
     expect(route).toMatch(/\[lessonId,[\s\S]*lesson\.shotsZh, lesson\.scriptZh\]/);
   });
 

@@ -1,8 +1,8 @@
 import type { TrialLessonOverride } from '@/lib/teaching-api';
 import type { LocalizedText, MicroCourse } from './types';
 
-function chineseLines(lines: string[], current: LocalizedText[]): LocalizedText[] {
-  return lines.map((zh, index) => ({ zh, en: current[index]?.en ?? '' }));
+function localizedLines(zhLines: string[], enLines: string[] | null | undefined, current: LocalizedText[]): LocalizedText[] {
+  return zhLines.map((zh, index) => ({ zh, en: enLines?.[index] ?? current[index]?.en ?? '' }));
 }
 
 export function mergeTrialLessonOverrides(
@@ -21,11 +21,11 @@ export function mergeTrialLessonOverrides(
           if (!override) return lesson;
           return {
             ...lesson,
-            title: { ...lesson.title, zh: override.titleZh },
-            outcome: { ...lesson.outcome, zh: override.outcomeZh },
+            title: { zh: override.titleZh, en: override.titleEn?.trim() || lesson.title.en },
+            outcome: { zh: override.outcomeZh, en: override.outcomeEn?.trim() || lesson.outcome.en },
             minutes: override.minutes,
-            shots: chineseLines(override.shotsZh, lesson.shots),
-            script: chineseLines(override.scriptZh, lesson.script),
+            shots: localizedLines(override.shotsZh, override.shotsEn, lesson.shots),
+            script: localizedLines(override.scriptZh, override.scriptEn, lesson.script),
           };
         }),
       })),

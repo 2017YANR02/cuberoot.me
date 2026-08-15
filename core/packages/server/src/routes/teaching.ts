@@ -1,4 +1,4 @@
-/** 课程可维护内容：公开读取，管理员维护。Schema: migrations 0127、0133。 */
+/** 课程可维护内容：公开读取，管理员维护。Schema: migrations 0127、0133、0134。 */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
 import { getIp } from '../utils/analytics_helpers.js';
@@ -34,9 +34,15 @@ interface TrialLessonRow {
   lesson_id: string;
   title_zh: string;
   outcome_zh: string;
+  title_en: string | null;
+  outcome_en: string | null;
   minutes: number;
   shots_zh: string[];
   script_zh: string[];
+  shots_en: string[] | null;
+  script_en: string[] | null;
+  english_stale: boolean;
+  content_revision: number;
   created_at: Date;
   updated_at: Date;
 }
@@ -49,8 +55,18 @@ interface TrialLessonInput {
   scriptZh?: unknown;
 }
 
+interface TrialLessonEnglishInput {
+  titleEn?: unknown;
+  outcomeEn?: unknown;
+  shotsEn?: unknown;
+  scriptEn?: unknown;
+  sourceRevision?: unknown;
+}
+
 const COLUMNS = `id, track, position, title_zh, title_en,
   description_zh, description_en, minutes, created_at, updated_at`;
+const TRIAL_COLUMNS = `lesson_id, title_zh, outcome_zh, title_en, outcome_en, minutes,
+  shots_zh, script_zh, shots_en, script_en, english_stale, content_revision, created_at, updated_at`;
 
 function noStore(c: { header: (key: string, value: string) => void }) {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -106,14 +122,35 @@ function normalizeTrialLesson(body: TrialLessonInput) {
   return { titleZh, outcomeZh, minutes, shotsZh, scriptZh };
 }
 
+function normalizeTrialLessonEnglish(body: TrialLessonEnglishInput) {
+  const titleEn = textField(body.titleEn, 200);
+  const outcomeEn = textField(body.outcomeEn, 1000);
+  const shotsEn = textList(body.shotsEn, 30, 2000);
+  const scriptEn = textList(body.scriptEn, 100, 5000);
+  const sourceRevision = Number(body.sourceRevision);
+  if (!titleEn || !outcomeEn || !shotsEn || !scriptEn) return null;
+  if (!Number.isInteger(sourceRevision) || sourceRevision < 1) return null;
+  return { titleEn, outcomeEn, shotsEn, scriptEn, sourceRevision };
+}
+
+function validTrialLessonId(lessonId: string) {
+  return lessonId.length <= 80 && /^trial-[a-z0-9-]+$/.test(lessonId);
+}
+
 function trialRowToJson(row: TrialLessonRow) {
   return {
     lessonId: row.lesson_id,
     titleZh: row.title_zh,
     outcomeZh: row.outcome_zh,
+    titleEn: row.title_en,
+    outcomeEn: row.outcome_en,
     minutes: Number(row.minutes),
     shotsZh: row.shots_zh,
     scriptZh: row.script_zh,
+    shotsEn: row.shots_en,
+    scriptEn: row.script_en,
+    needsEnglishSync: row.english_stale,
+    contentRevision: Number(row.content_revision),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -122,10 +159,42 @@ function trialRowToJson(row: TrialLessonRow) {
 teachingRoutes.get('/teaching/trial', async (c) => {
   noStore(c);
   const rows = await query<TrialLessonRow>(
-    `SELECT lesson_id, title_zh, outcome_zh, minutes, shots_zh, script_zh, created_at, updated_at
+    `SELECT ${TRIAL_COLUMNS}
      FROM teaching_trial_lesson_overrides ORDER BY lesson_id`,
   );
   return c.json(rows.map(trialRowToJson));
+});
+
+teachingRoutes.put('/teaching/trial/:lessonId/english', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+  const lessonId = c.req.param('lessonId');
+  if (!validTrialLessonId(lessonId)) return c.json({ error: 'Invalid trial lesson id' }, 400);
+  const lesson = normalizeTrialLessonEnglish(await c.req.json<TrialLessonEnglishInput>());
+  if (!lesson) return c.json({ error: 'Invalid English trial lesson' }, 400);
+
+  const current = await query<{ shots_count: number | string; script_count: number | string }>(
+    `SELECT jsonb_array_length(shots_zh) AS shots_count,
+       jsonb_array_length(script_zh) AS script_count
+     FROM teaching_trial_lesson_overrides WHERE lesson_id = ?`,
+    [lessonId],
+  );
+  if (current.length === 0) return c.json({ error: 'Trial lesson not found' }, 404);
+  if (Number(current[0].shots_count) !== lesson.shotsEn.length
+    || Number(current[0].script_count) !== lesson.scriptEn.length) {
+    return c.json({ error: 'English item counts must match Chinese content' }, 409);
+  }
+
+  const rows = await query<TrialLessonRow>(
+    `UPDATE teaching_trial_lesson_overrides SET
+       title_en = ?, outcome_en = ?, shots_en = ?::jsonb, script_en = ?::jsonb,
+       english_stale = FALSE
+     WHERE lesson_id = ? AND content_revision = ? RETURNING ${TRIAL_COLUMNS}`,
+    [lesson.titleEn, lesson.outcomeEn, lesson.shotsEn, lesson.scriptEn, lessonId, lesson.sourceRevision],
+  );
+  if (rows.length === 0) return c.json({ error: 'Chinese content changed during translation; refetch and retry' }, 409);
+  return c.json(trialRowToJson(rows[0]));
 });
 
 teachingRoutes.put('/teaching/trial/:lessonId', async (c) => {
@@ -133,9 +202,7 @@ teachingRoutes.put('/teaching/trial/:lessonId', async (c) => {
   checkRateLimit(getIp(c));
   await requireAdminOrApiKey(c);
   const lessonId = c.req.param('lessonId');
-  if (lessonId.length > 80 || !/^trial-[a-z0-9-]+$/.test(lessonId)) {
-    return c.json({ error: 'Invalid trial lesson id' }, 400);
-  }
+  if (!validTrialLessonId(lessonId)) return c.json({ error: 'Invalid trial lesson id' }, 400);
   const lesson = normalizeTrialLesson(await c.req.json<TrialLessonInput>());
   if (!lesson) return c.json({ error: 'Invalid trial lesson' }, 400);
 
@@ -148,8 +215,26 @@ teachingRoutes.put('/teaching/trial/:lessonId', async (c) => {
        outcome_zh = EXCLUDED.outcome_zh,
        minutes = EXCLUDED.minutes,
        shots_zh = EXCLUDED.shots_zh,
-       script_zh = EXCLUDED.script_zh
-     RETURNING lesson_id, title_zh, outcome_zh, minutes, shots_zh, script_zh, created_at, updated_at`,
+       script_zh = EXCLUDED.script_zh,
+       title_en = CASE
+         WHEN jsonb_array_length(teaching_trial_lesson_overrides.shots_zh) = jsonb_array_length(EXCLUDED.shots_zh)
+          AND jsonb_array_length(teaching_trial_lesson_overrides.script_zh) = jsonb_array_length(EXCLUDED.script_zh)
+         THEN teaching_trial_lesson_overrides.title_en ELSE NULL END,
+       outcome_en = CASE
+         WHEN jsonb_array_length(teaching_trial_lesson_overrides.shots_zh) = jsonb_array_length(EXCLUDED.shots_zh)
+          AND jsonb_array_length(teaching_trial_lesson_overrides.script_zh) = jsonb_array_length(EXCLUDED.script_zh)
+         THEN teaching_trial_lesson_overrides.outcome_en ELSE NULL END,
+       shots_en = CASE
+         WHEN jsonb_array_length(teaching_trial_lesson_overrides.shots_zh) = jsonb_array_length(EXCLUDED.shots_zh)
+          AND jsonb_array_length(teaching_trial_lesson_overrides.script_zh) = jsonb_array_length(EXCLUDED.script_zh)
+         THEN teaching_trial_lesson_overrides.shots_en ELSE NULL END,
+       script_en = CASE
+         WHEN jsonb_array_length(teaching_trial_lesson_overrides.shots_zh) = jsonb_array_length(EXCLUDED.shots_zh)
+          AND jsonb_array_length(teaching_trial_lesson_overrides.script_zh) = jsonb_array_length(EXCLUDED.script_zh)
+         THEN teaching_trial_lesson_overrides.script_en ELSE NULL END,
+       english_stale = TRUE,
+       content_revision = teaching_trial_lesson_overrides.content_revision + 1
+     RETURNING ${TRIAL_COLUMNS}`,
     [lessonId, lesson.titleZh, lesson.outcomeZh, lesson.minutes, lesson.shotsZh, lesson.scriptZh],
   );
   return c.json(trialRowToJson(rows[0]));

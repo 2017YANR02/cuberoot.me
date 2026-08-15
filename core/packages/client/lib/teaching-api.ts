@@ -29,14 +29,26 @@ export interface TrialLessonOverride {
   lessonId: string;
   titleZh: string;
   outcomeZh: string;
+  titleEn?: string | null;
+  outcomeEn?: string | null;
   minutes: number;
   shotsZh: string[];
   scriptZh: string[];
+  shotsEn?: string[] | null;
+  scriptEn?: string[] | null;
+  needsEnglishSync?: boolean;
+  contentRevision?: number;
   createdAt?: string;
   updatedAt?: string;
 }
 
-export type TrialLessonDraft = Omit<TrialLessonOverride, 'lessonId' | 'createdAt' | 'updatedAt'>;
+export interface TrialLessonDraft {
+  titleZh: string;
+  outcomeZh: string;
+  minutes: number;
+  shotsZh: string[];
+  scriptZh: string[];
+}
 
 export async function fetchTrialLessonOverrides(): Promise<TrialLessonOverride[]> {
   return handleApi(await fetch(apiUrl('/v1/teaching/trial'), { cache: 'no-store' }));
