@@ -13,7 +13,9 @@ export function pickStickering(puzzle: AlgPuzzle, set: string): string | undefin
   switch (set) {
     case 'f2l': case 'adv-f2l': case 'psf2l':     return 'F2L';
     case 'oll': case 'ollcp':                     return 'OLL';
-    case 'pll': case 'anti-pll':                  return 'PLL';
+    // 公式详情页需要看清顶层的真实配色；PLL / ZBLL 的同名阶段遮罩会把
+    // U 面主贴纸压暗，只保留侧面排列信息。LL 遮罩恰好是顶层全原色、F2L 变暗。
+    case 'pll': case 'anti-pll': case 'zbll': case '1lll': return 'LL';
     case 'coll':                                  return 'COLL';
     case 'cmll': case '2-look-cmll': case 'oh-cmll': return 'CMLL';
     case 'ell':                                   return 'ELL';
@@ -21,8 +23,6 @@ export function pickStickering(puzzle: AlgPuzzle, set: string): string | undefin
     case 'zbls':                                  return 'ZBLS';
     case 'vls':                                   return 'VLS';
     case 'wv':                                    return 'WVLS';
-    case 'zbll':                                  return 'ZBLL';
-    case '1lll':                                  return 'LL';
     case 'eo4a': case 'lse-eolr':                 return 'EO';
     case 'sv': case 'sbls': case 'fruf':          return 'LS';
     default:                                      return undefined;

@@ -6,6 +6,7 @@ import {
   stickeringMaskFn, stickeringGroupsFor,
   FM_REGULAR, FM_DIM, FM_IGNORED, FM_ORIENTED, FM_ORIENTED2,
 } from '@/app/[lang]/sim/engine/nxn/stickering';
+import { pickStickering } from '@/components/AlgPlayer/stickering';
 import { FACE } from '@/app/[lang]/sim/engine/define';
 
 /** initial = x + y·N + z·N²(y=N-1 为 U,z=N-1 为 F,x=N-1 为 R) */
@@ -47,6 +48,16 @@ describe('stickeringMaskFn 3x3', () => {
     expect(m(P3.UF, FACE.F)).toBe(FM_REGULAR);
     expect(m(P3.UFR, FACE.R)).toBe(FM_REGULAR);
     expect(m(P3.Uc, FACE.U)).toBe(FM_DIM);
+    expect(m(P3.FL, FACE.F)).toBe(FM_DIM);
+  });
+
+  it('LL:顶层每一面贴纸都保持原色,F2L 暗', () => {
+    const m = stickeringMaskFn(3, 'LL')!;
+    expect(m(P3.UF, FACE.U)).toBe(FM_REGULAR);
+    expect(m(P3.UF, FACE.F)).toBe(FM_REGULAR);
+    expect(m(P3.UFR, FACE.U)).toBe(FM_REGULAR);
+    expect(m(P3.UFR, FACE.R)).toBe(FM_REGULAR);
+    expect(m(P3.Uc, FACE.U)).toBe(FM_REGULAR);
     expect(m(P3.FL, FACE.F)).toBe(FM_DIM);
   });
 
@@ -155,6 +166,12 @@ describe('stickeringMaskFn 3x3', () => {
     expect(m(P3.UF, FACE.U)).toBe(FM_IGNORED);
     expect(m(P3.BR, FACE.B)).toBe(FM_IGNORED);
     expect(m(P3.Bc, FACE.B)).toBe(FM_DIM);       // B 中心:忽略后又被中心规则改暗
+  });
+});
+
+describe('算法公式页顶层配色', () => {
+  it.each(['pll', 'anti-pll', 'zbll', '1lll'])('%s 使用整层原色的 LL 遮罩', (set) => {
+    expect(pickStickering('3x3', set)).toBe('LL');
   });
 });
 
