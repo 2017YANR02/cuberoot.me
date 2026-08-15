@@ -1701,38 +1701,55 @@ a.alg-community-author:hover {
   gap: 10px;
   min-width: 0;
 }
-/* F2L 等四视角公式按槽位排成 2×2,而不是把四组纵向拉成长页。 */
+/* F2L 等多朝向详情一行只放一个槽位:动画与对应公式横向配对，避免视觉串组。 */
 .alg-case-detail-lean-algs.is-multi-ori {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
-  gap: 14px 16px;
+  gap: 24px;
 }
 .alg-case-detail-ori {
   display: flex;
   flex-direction: column;
   gap: 0;
 }
+.alg-case-detail-ori-main {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+  min-width: 0;
+}
+.alg-case-detail-ori-algs {
+  min-width: 0;
+}
 /* 同一朝向的公式是一个连续列表:相邻行共用一条边,不要各画一条横线再留缝。
    普通访客的行直接相邻;管理员多一层 sortable 外壳,两种 DOM 都要拼起来。 */
 .alg-case-detail-ori > .alg-alg-row:has(+ .alg-alg-row),
-.alg-case-detail-ori > .alg-alg-sortable:has(+ .alg-alg-sortable) > .alg-alg-row {
+.alg-case-detail-ori > .alg-alg-sortable:has(+ .alg-alg-sortable) > .alg-alg-row,
+.alg-case-detail-ori-algs > .alg-alg-row:has(+ .alg-alg-row),
+.alg-case-detail-ori-algs > .alg-alg-sortable:has(+ .alg-alg-sortable) > .alg-alg-row {
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
 }
 .alg-case-detail-ori > .alg-alg-row + .alg-alg-row,
-.alg-case-detail-ori > .alg-alg-sortable + .alg-alg-sortable {
+.alg-case-detail-ori > .alg-alg-sortable + .alg-alg-sortable,
+.alg-case-detail-ori-algs > .alg-alg-row + .alg-alg-row,
+.alg-case-detail-ori-algs > .alg-alg-sortable + .alg-alg-sortable {
   margin-top: -1px;
 }
 .alg-case-detail-ori > .alg-alg-row + .alg-alg-row,
-.alg-case-detail-ori > .alg-alg-sortable + .alg-alg-sortable > .alg-alg-row {
+.alg-case-detail-ori > .alg-alg-sortable + .alg-alg-sortable > .alg-alg-row,
+.alg-case-detail-ori-algs > .alg-alg-row + .alg-alg-row,
+.alg-case-detail-ori-algs > .alg-alg-sortable + .alg-alg-sortable > .alg-alg-row {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }
 .alg-case-detail-ori > .alg-alg-row:hover,
 .alg-case-detail-ori > .alg-alg-row.is-expanded,
 .alg-case-detail-ori > .alg-alg-sortable:hover,
-.alg-case-detail-ori > .alg-alg-sortable:has(.alg-alg-row.is-expanded) {
+.alg-case-detail-ori > .alg-alg-sortable:has(.alg-alg-row.is-expanded),
+.alg-case-detail-ori-algs > .alg-alg-row:hover,
+.alg-case-detail-ori-algs > .alg-alg-row.is-expanded,
+.alg-case-detail-ori-algs > .alg-alg-sortable:hover,
+.alg-case-detail-ori-algs > .alg-alg-sortable:has(.alg-alg-row.is-expanded) {
   position: relative;
   z-index: 1;
 }
@@ -1743,11 +1760,10 @@ a.alg-community-author:hover {
   color: var(--muted-foreground);
 }
 .alg-case-detail-ori-player {
-  margin-bottom: 6px;
+  width: 300px;
 }
 
-/* 两个动画列至少各留出完整播放器宽度；中等宽度先把静态信息移到上方，
-   不牺牲动画可读性，也不提前把 FR / FL 拆成冗长单列。 */
+/* 中等宽度先把静态信息移到上方，把整行留给动画与公式。 */
 @media (max-width: 900px) {
   .alg-case-detail-lean.is-multi-ori {
     display: flex;
@@ -1792,12 +1808,17 @@ a.alg-community-author:hover {
     margin: 0;
   }
   .alg-case-detail-lean-algs.is-multi-ori {
-    display: flex;
-    flex-direction: column;
     gap: 10px;
     width: 100%;
   }
   .alg-case-detail-ori { width: 100%; }
+  .alg-case-detail-ori-main {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .alg-case-detail-ori-player { width: 100%; }
+  .alg-case-detail-ori-algs { width: 100%; }
 }
 
 .alg-meta-section {
