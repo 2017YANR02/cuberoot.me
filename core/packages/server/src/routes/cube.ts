@@ -12,6 +12,7 @@
  *   view                     cube:     iso | plan | f2l | oll | pll | pll-iso | trans | net
  *                            non-cube: iso | top | net | wca   (was: variant=)
  *   mask                     explicit Masking enum value
+ *   fc                       exact facelet colours in U R F D L B order
  *   sch                      face colors U R F D L B (cube renderer only): `wrgyob`
  *                            abbreviations or comma hex/names, `#` optional. Default
  *                            stays the legacy yellow-top scheme (alg-case ecosystem);
@@ -146,6 +147,7 @@ cubeRoutes.get('/visualcube.svg', async (c) => {
     setup: q('setup'),
     view,
     mask: q('mask'),
+    fc: q('fc'),
     sch: q('sch'),
     size: q('size'),
     cubeSize: q('cubeSize'),

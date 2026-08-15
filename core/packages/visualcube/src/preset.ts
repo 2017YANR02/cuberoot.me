@@ -1,14 +1,15 @@
 /**
- * Simple-query renderer — turns a small map of `alg / view / mask / size / cubeSize / sch / bg / cc / co`
+ * Simple-query renderer — turns a small map of `alg / view / mask / fc / size / cubeSize / sch / bg / cc / co`
  * params into a complete `<svg>` string. Encapsulates the `view → mask + view + scheme` preset
  * mapping so the Hono server route and every programmatic caller stay in lock-step.
  *
- * Not the full PHP query API (no `arw`/`fc`/`fd`/...). For those, build `ICubeOptions` directly.
+ * Not the full PHP query API (no `arw`/`fd`/...). For those, build `ICubeOptions` directly.
  */
 import { Face, Masking } from './cube/constants.js';
 import type { ICubeOptions } from './cube/options.js';
 import { renderCubeSVG } from './index.js';
 import { parseColorScheme } from './cube/parsing/colorScheme.js';
+import { parseFaceletColors } from './cube/parsing/faceletColors.js';
 
 const DEFAULT_ALG = "R U R' U R U2 R'"; // Sune (OLL 27)
 const DEFAULT_SIZE = 256;
@@ -58,6 +59,8 @@ export interface SimpleVisualCubeQuery {
   view?: string;
   /** Explicit Masking enum value; overrides the view-implied mask. */
   mask?: string;
+  /** Exact final-state facelet colours, exactly 6N² compact colour codes in U R F D L B order. */
+  fc?: string;
   /** SVG width/height, capped 32..1000. */
   size?: string | number;
   /** NxN puzzle dimension, 2..7. Accepts both `cubeSize` and PHP-style `pzl`. */
@@ -98,6 +101,11 @@ function intParam(raw: string | number | undefined): number | undefined {
   return Number.isNaN(n) ? undefined : n;
 }
 
+function parseFinalFacelets(raw: string | undefined, faceletCount: number): string[] | undefined {
+  if (!raw || raw.length !== faceletCount || !/^[dwyrobg]+$/i.test(raw)) return undefined;
+  return parseFaceletColors(raw.toLowerCase());
+}
+
 /** Build the merged ICubeOptions for a simple-query request. Public for testing. */
 export function buildSimpleOptions(q: SimpleVisualCubeQuery): ICubeOptions {
   const view = q.view ?? 'iso';
@@ -107,11 +115,14 @@ export function buildSimpleOptions(q: SimpleVisualCubeQuery): ICubeOptions {
   const cubeSize = (cubeSizeN < PUZZLE_SIZE_MIN || cubeSizeN > PUZZLE_SIZE_MAX) ? 3 : cubeSizeN;
 
   const opts: ICubeOptions = { width: size, height: size, cubeSize };
+  const stickerColors = parseFinalFacelets(q.fc, 6 * cubeSize * cubeSize);
+  if (stickerColors) opts.stickerColors = stickerColors;
   // Precedence: `case` (inverse) > `setup` (forward alias) > `alg` (forward, default).
   // `alg` and `setup` are both forward — the dual name is just to keep call sites self-documenting.
   if (q.case !== undefined) opts.case = q.case;
   else if (q.setup !== undefined) opts.algorithm = q.setup;
-  else opts.algorithm = q.alg ?? DEFAULT_ALG;
+  else if (q.alg !== undefined) opts.algorithm = q.alg;
+  else if (!stickerColors) opts.algorithm = DEFAULT_ALG;
 
   const bg = parseColorParam(q.bg);
   const cc = parseColorParam(q.cc);

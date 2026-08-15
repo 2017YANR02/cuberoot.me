@@ -51,10 +51,26 @@ export const LEVEL2_PICKER_MASK: Record<string, string> = {
 export interface CubeThumbParams {
   view: 'iso' | 'plan' | 'oll' | 'pll' | 'f2l' | 'pll-iso';
   mask?: string;
+  faceletColors?: string;
+  /** Forward whole-cube rotation applied to exact facelet colours. */
+  faceletAlg?: string;
   scheme?: string;
   hideGreySides?: boolean;
   planSimplify?: PlanSimplifyOptions;
   puzzleSize: number;
+}
+
+/** SpeedCubeDB F2L thumbnails store five exact 3x3 projections as U, F, R, B, L.
+ *  Preserve those real colours, replace its hidden `l` stickers with VisualCube
+ *  dark grey, and reorder to U R F D L B. The caller then rotates this fixed
+ *  yellow-top/green-front state into the selected holding. */
+export function speedCubeDbF2lFaceletColors(fl: string): string | undefined {
+  if (!/^[lwyrobg]{45}$/i.test(fl)) return undefined;
+  const normalize = (face: string) => face.toLowerCase().replaceAll('l', 'd');
+  const faces = Array.from({ length: 5 }, (_, index) => fl.slice(index * 9, (index + 1) * 9));
+  return [faces[0], faces[2], faces[1], 'lllllllll', faces[4], faces[3]]
+    .map(normalize)
+    .join('');
 }
 
 /** Whether the optional recognition filter can remove information from this view. */
@@ -251,13 +267,22 @@ export function caseThumbPlan({
   const orientedScheme = supportsCubeOrientation(puzzle, params)
     ? visualCubeSchemeForOrientation(orientation, params.view === 'oll' && !params.mask)
     : params.scheme;
+  const f2lFaceletColors = puzzle === '3x3' && sticker.kind === 'f2l'
+    ? speedCubeDbF2lFaceletColors(sticker.fl)
+    : undefined;
   return {
     renderer: 'visualcube',
     algorithm: caseViewAlg(alg, angle),
-    setup: setup === undefined ? undefined : caseViewSetup(setup, angle),
+    setup: f2lFaceletColors ? undefined : setup === undefined ? undefined : caseViewSetup(setup, angle),
     params: {
       ...params,
-      ...(orientedScheme ? { scheme: orientedScheme } : {}),
+      ...(f2lFaceletColors ? {
+        view: 'iso' as const,
+        mask: undefined,
+        faceletColors: f2lFaceletColors,
+        faceletAlg: `z2 ${orientation}`.trim(),
+      } : {}),
+      ...(!f2lFaceletColors && orientedScheme ? { scheme: orientedScheme } : {}),
       ...(puzzle === '3x3' && simplifyRecognition && supportsRecognitionSimplification(params)
         ? {
             planSimplify: {

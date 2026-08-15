@@ -15,6 +15,10 @@ interface Props {
   view: 'iso' | 'plan' | 'f2l' | 'oll' | 'pll' | 'pll-iso' | 'trans';
   /** Explicit Masking enum value (e.g. 'vh', 'wv', 'els'). Overrides the view-implied mask. */
   mask?: string;
+  /** Exact final-state 6N² compact colour codes in U R F D L B order. */
+  faceletColors?: string;
+  /** Forward whole-cube rotation applied only when `faceletColors` is present. */
+  faceletAlg?: string;
   /** U R F D L B face colours, using the visualcube `sch=` format. Only for semantic diagrams. */
   scheme?: string;
   /** Plan simplification: keep every sticker carrying the U-face colour. Defaults to renderer behavior. */
@@ -50,12 +54,12 @@ interface Props {
 
 // Ported from packages/client-vite/src/components/VisualCube.tsx — minus the SW interception note
 // (Next.js bundles a fresh SW; for now this hits the api.cuberoot.me endpoint directly in prod).
-export function VisualCube({ algorithm = '', setup, view, mask, scheme, showLastLayerColor, planSimplify, size = 88, puzzleSize = 3, alt = 'Cube state', loading, local, hideGreySides }: Props) {
+export function VisualCube({ algorithm = '', setup, view, mask, faceletColors, faceletAlg, scheme, showLastLayerColor, planSimplify, size = 88, puzzleSize = 3, alt = 'Cube state', loading, local, hideGreySides }: Props) {
   // 同一组参数喂两条路:本地渲染直接调 server 端点用的那个函数,URL 版把它们拼成 query。
   const svg = useMemo(() => {
     if (!local) return null;
     return renderFromSimpleQuery({
-      ...(setup ? { setup } : { case: algorithm }),
+      ...(faceletColors ? { fc: faceletColors, ...(faceletAlg ? { alg: faceletAlg } : {}) } : setup ? { setup } : { case: algorithm }),
       view, size, pzl: puzzleSize, ...(mask ? { mask } : {}),
       ...(scheme ? { sch: scheme } : {}),
       ...(hideGreySides ? { ngs: '1' } : {}),
@@ -67,12 +71,15 @@ export function VisualCube({ algorithm = '', setup, view, mask, scheme, showLast
       ...(planSimplify?.forceShow ? { pfs: planSimplify.forceShow } : {}),
       ...(planSimplify?.forceHide ? { pfh: planSimplify.forceHide } : {}),
     });
-  }, [local, algorithm, setup, view, mask, scheme, showLastLayerColor, planSimplify, size, puzzleSize, hideGreySides]);
+  }, [local, algorithm, setup, view, mask, faceletColors, faceletAlg, scheme, showLastLayerColor, planSimplify, size, puzzleSize, hideGreySides]);
 
   const src = useMemo(() => {
     if (local) return '';
     const params = new URLSearchParams({ view, size: String(size) });
-    if (setup) params.set('setup', setup);
+    if (faceletColors) {
+      params.set('fc', faceletColors);
+      if (faceletAlg) params.set('alg', faceletAlg);
+    } else if (setup) params.set('setup', setup);
     else params.set('case', algorithm);
     if (mask) params.set('mask', mask);
     if (scheme) params.set('sch', scheme);
@@ -86,7 +93,7 @@ export function VisualCube({ algorithm = '', setup, view, mask, scheme, showLast
     // 新 query key = 新缓存键,老链接的 24h CDN 缓存不受影响,无需 bump v=。
     if (hideGreySides) params.set('ngs', '1');
     return apiUrl(`/v1/visualcube.svg?${params}`);
-  }, [local, algorithm, setup, view, mask, scheme, showLastLayerColor, planSimplify, size, puzzleSize, hideGreySides]);
+  }, [local, algorithm, setup, view, mask, faceletColors, faceletAlg, scheme, showLastLayerColor, planSimplify, size, puzzleSize, hideGreySides]);
 
   // puzzle-art:柔和度的统一钩子(见 globals.css),贴纸色不走 token,靠它跟。
   if (svg) {
