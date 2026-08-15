@@ -1203,7 +1203,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         )}
         {!collection && !subgroupParam && puzzleParam === '3x3' && set === 'zbll' && (
           <Link href="/alg/3x3/zbll/simple" className="alg-recog-cta" prefetch={false}>
-            {tr({ zh: '简单 ZBLL', en: 'Simple ZBLL' })}
+            {tr({ zh: '简单', en: 'Simple' })}
           </Link>
         )}
         {!collection && !subgroupParam && puzzleParam === '3x3' && (set === 'pll' || set === 'oll') && (

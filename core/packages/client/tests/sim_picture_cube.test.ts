@@ -10,9 +10,11 @@ import {
   emptyPictureFaces,
   normalizePictureCrop,
   normalizePictureFaces,
+  panPictureCropBy,
   pictureCropGeometry,
   pictureFacesKey,
   renderPictureCubeNetSvg,
+  zoomPictureCropAt,
 } from '@/app/[lang]/sim/engine/nxn/pictureCube';
 
 describe('picture cube face data', () => {
@@ -35,17 +37,17 @@ describe('picture cube face data', () => {
     expect(pictureFacesKey(faces)).toBe(PICTURE_FACE_ORDER.map((face) => faces[face]).join('\u0000'));
   });
 
-  it('normalizes crop rotation and pan bounds', () => {
-    expect(normalizePictureCrop({ rotation: 89, x: -2, y: Number.NaN })).toEqual({
-      rotation: 90, x: -1, y: 0,
+  it('normalizes crop rotation, pan, and zoom bounds', () => {
+    expect(normalizePictureCrop({ rotation: 89, x: -2, y: Number.NaN, zoom: 99 })).toEqual({
+      rotation: 90, x: -1, y: 0, zoom: 4,
     });
-    expect(normalizePictureCrop({ rotation: -90, x: 0.25, y: 2 })).toEqual({
-      rotation: 270, x: 0.25, y: 1,
+    expect(normalizePictureCrop({ rotation: -90, x: 0.25, y: 2, zoom: 0.2 })).toEqual({
+      rotation: 270, x: 0.25, y: 1, zoom: 1,
     });
   });
 
   it('maps wide-image pan to the exact cover overflow and swaps axes after rotation', () => {
-    expect(pictureCropGeometry(800, 400, 400, { rotation: 0, x: -1, y: 0 })).toEqual({
+    expect(pictureCropGeometry(800, 400, 400, { rotation: 0, x: -1, y: 0, zoom: 1 })).toEqual({
       scale: 1,
       drawnWidth: 800,
       drawnHeight: 400,
@@ -54,7 +56,7 @@ describe('picture cube face data', () => {
       offsetX: -200,
       offsetY: 0,
     });
-    expect(pictureCropGeometry(800, 400, 400, { rotation: 90, x: 0, y: 1 })).toEqual({
+    expect(pictureCropGeometry(800, 400, 400, { rotation: 90, x: 0, y: 1, zoom: 1 })).toEqual({
       scale: 1,
       drawnWidth: 400,
       drawnHeight: 800,
@@ -63,6 +65,83 @@ describe('picture cube face data', () => {
       offsetX: 0,
       offsetY: 200,
     });
+  });
+
+  it('expands both crop axes at higher zoom', () => {
+    expect(pictureCropGeometry(800, 400, 400, {
+      rotation: 0, x: 0.5, y: -1, zoom: 2,
+    })).toEqual({
+      scale: 2,
+      drawnWidth: 1600,
+      drawnHeight: 800,
+      overflowX: 1200,
+      overflowY: 400,
+      offsetX: 300,
+      offsetY: -200,
+    });
+  });
+
+  it('adds only the zoom needed when dragging an image with no crop overflow', () => {
+    const moved = panPictureCropBy(
+      400,
+      400,
+      400,
+      { rotation: 0, x: 0, y: 0, zoom: 1 },
+      40,
+      -20,
+    );
+    expect(moved.zoom).toBeCloseTo(1.2);
+    expect(moved.x).toBeCloseTo(1);
+    expect(moved.y).toBeCloseTo(-0.5);
+    expect(pictureCropGeometry(400, 400, 400, moved)).toMatchObject({
+      offsetX: 40,
+      offsetY: -20,
+    });
+  });
+
+  it('unlocks the covered axis when dragging a wide image vertically', () => {
+    const moved = panPictureCropBy(
+      800,
+      400,
+      400,
+      { rotation: 0, x: 0, y: 0, zoom: 1 },
+      0,
+      40,
+    );
+    expect(moved.zoom).toBeCloseTo(1.2);
+    expect(moved.x).toBe(0);
+    expect(moved.y).toBeCloseTo(1);
+  });
+
+  it('keeps the image beneath the zoom anchor stationary', () => {
+    const zoomed = zoomPictureCropAt(
+      800,
+      400,
+      400,
+      { rotation: 0, x: 0, y: 0, zoom: 1 },
+      2,
+      100,
+      0,
+    );
+    expect(zoomed.zoom).toBe(2);
+    expect(zoomed.x).toBeCloseTo(-1 / 6);
+    expect(zoomed.y).toBe(0);
+  });
+
+  it('follows the moving center of a pinch while zooming', () => {
+    const zoomed = zoomPictureCropAt(
+      800,
+      400,
+      400,
+      { rotation: 0, x: 0, y: 0, zoom: 1 },
+      2,
+      0,
+      0,
+      40,
+      -20,
+    );
+    expect(zoomed.x).toBeCloseTo(1 / 15);
+    expect(zoomed.y).toBeCloseTo(-0.1);
   });
 });
 

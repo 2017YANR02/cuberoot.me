@@ -16,6 +16,9 @@
  *     says "too rare"). Same budget, same number of shots a real user gets;
  *   · only combinations the panel can actually produce: a fixed slot is offered for ONE cross
  *     colour only (`GenDiffConfig` hides the slot picker as soon as the subset grows).
+ *
+ * This file runs in a second, isolated Vitest pass (`package.json`): its production wall-clock
+ * budget must measure the generator, not scheduler stalls from 400+ concurrently loaded files.
  */
 
 import { describe, expect, it } from 'vitest';
