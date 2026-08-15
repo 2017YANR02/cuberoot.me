@@ -1,0 +1,4 @@
+interface:
+  display_name: "同步课程英文"
+  short_description: "Translate pending Chinese course edits into natural English"
+  default_prompt: "Use $sync-course-english to sync pending Chinese course edits into natural English."

@@ -26,9 +26,11 @@ function lines(value: string) {
 
 export default function TrialLessonEditor({
   lesson,
+  needsEnglishSync,
   onSaved,
 }: {
   lesson: MicroLesson;
+  needsEnglishSync: boolean;
   onSaved: (override: TrialLessonOverride) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -66,9 +68,14 @@ export default function TrialLessonEditor({
 
   if (!open) {
     return (
-      <button className="teaching-trial-edit" type="button" onClick={startEditing}>
-        <Pencil aria-hidden="true" /> <T zh="编辑本节中文" en="Edit this lesson in Chinese" />
-      </button>
+      <div className="teaching-trial-actions">
+        <button className="teaching-trial-edit" type="button" onClick={startEditing}>
+          <Pencil aria-hidden="true" /> <T zh="编辑本节中文" en="Edit this lesson in Chinese" />
+        </button>
+        {needsEnglishSync && (
+          <span><T zh="英文待同步。告诉 AI“同步课程英文”即可。" en="English sync pending." /></span>
+        )}
+      </div>
     );
   }
 

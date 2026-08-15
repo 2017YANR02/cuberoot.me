@@ -1000,14 +1000,20 @@ CREATE INDEX idx_teaching_advanced_track_position
 CREATE TRIGGER teaching_advanced_lessons_updated_at BEFORE UPDATE ON teaching_advanced_lessons
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
--- 试听课中文内容覆盖(0133)。默认双语稿留在前端源码，管理员只维护中文字段。
+-- 试听课双语内容覆盖(0133, 0134)。中文由管理员维护，英文由 AI 同步。
 CREATE TABLE teaching_trial_lesson_overrides (
   lesson_id   VARCHAR(80)   PRIMARY KEY,
   title_zh    VARCHAR(200)  NOT NULL,
   outcome_zh  VARCHAR(1000) NOT NULL,
+  title_en    VARCHAR(200),
+  outcome_en  VARCHAR(1000),
   minutes     SMALLINT      NOT NULL CHECK (minutes BETWEEN 1 AND 60),
   shots_zh    JSONB         NOT NULL,
   script_zh   JSONB         NOT NULL,
+  shots_en    JSONB,
+  script_en   JSONB,
+  english_stale BOOLEAN     NOT NULL DEFAULT TRUE,
+  content_revision INTEGER  NOT NULL DEFAULT 1 CHECK (content_revision > 0),
   created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   CHECK (lesson_id ~ '^trial-[a-z0-9-]+$'),
@@ -1016,7 +1022,24 @@ CREATE TABLE teaching_trial_lesson_overrides (
   CHECK (jsonb_typeof(shots_zh) = 'array'),
   CHECK (jsonb_array_length(shots_zh) BETWEEN 1 AND 30),
   CHECK (jsonb_typeof(script_zh) = 'array'),
-  CHECK (jsonb_array_length(script_zh) BETWEEN 1 AND 100)
+  CHECK (jsonb_array_length(script_zh) BETWEEN 1 AND 100),
+  CONSTRAINT teaching_trial_english_complete CHECK (
+    (title_en IS NULL AND outcome_en IS NULL AND shots_en IS NULL AND script_en IS NULL)
+    OR (
+      title_en IS NOT NULL
+      AND outcome_en IS NOT NULL
+      AND shots_en IS NOT NULL
+      AND script_en IS NOT NULL
+      AND length(trim(title_en)) > 0
+      AND length(trim(outcome_en)) > 0
+      AND jsonb_typeof(shots_en) = 'array'
+      AND jsonb_array_length(shots_en) BETWEEN 1 AND 30
+      AND jsonb_array_length(shots_en) = jsonb_array_length(shots_zh)
+      AND jsonb_typeof(script_en) = 'array'
+      AND jsonb_array_length(script_en) BETWEEN 1 AND 100
+      AND jsonb_array_length(script_en) = jsonb_array_length(script_zh)
+    )
+  )
 );
 CREATE TRIGGER teaching_trial_lesson_overrides_updated_at
   BEFORE UPDATE ON teaching_trial_lesson_overrides
