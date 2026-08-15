@@ -6,7 +6,7 @@
  * puzzle renderer, view, mask, or colour scheme represents a case. Both ask
  * this module for the same plan and only adapt that plan to their output API.
  */
-import type { AlgPuzzle, AlgSticker } from '@cuberoot/shared';
+import { requires3x3AlgCaseSetup, type AlgPuzzle, type AlgSticker } from '@cuberoot/shared';
 import type { PlanSimplifyOptions } from '@cuberoot/visualcube';
 import { toWca as toWcaSkewb, invert as invertSkewbAlg } from '@cuberoot/shared/skewb-notation';
 import { invertSq1Alg } from '@cuberoot/shared/sq1-notation';
@@ -51,6 +51,8 @@ export const LEVEL2_PICKER_MASK: Record<string, string> = {
 export interface CubeThumbParams {
   view: 'iso' | 'plan' | 'oll' | 'pll' | 'f2l' | 'pll-iso';
   mask?: string;
+  /** Use the bundled renderer when this plan relies on a query feature that an older API may not know. */
+  renderLocally?: boolean;
   faceletColors?: string;
   /** Forward whole-cube rotation applied to exact facelet colours. */
   faceletAlg?: string;
@@ -58,19 +60,6 @@ export interface CubeThumbParams {
   hideGreySides?: boolean;
   planSimplify?: PlanSimplifyOptions;
   puzzleSize: number;
-}
-
-/** SpeedCubeDB F2L thumbnails store five exact 3x3 projections as U, F, R, B, L.
- *  Preserve those real colours, replace its hidden `l` stickers with VisualCube
- *  dark grey, and reorder to U R F D L B. The caller then rotates this fixed
- *  yellow-top/green-front state into the selected holding. */
-export function speedCubeDbF2lFaceletColors(fl: string): string | undefined {
-  if (!/^[lwyrobg]{45}$/i.test(fl)) return undefined;
-  const normalize = (face: string) => face.toLowerCase().replaceAll('l', 'd');
-  const faces = Array.from({ length: 5 }, (_, index) => fl.slice(index * 9, (index + 1) * 9));
-  return [faces[0], faces[2], faces[1], 'lllllllll', faces[4], faces[3]]
-    .map(normalize)
-    .join('');
 }
 
 /** Whether the optional recognition filter can remove information from this view. */
@@ -115,6 +104,9 @@ export function cubeThumbParams(
   }
   if (usesSvThumbStyle(puzzle, set)) {
     return { view: 'pll', mask: 'wv', hideGreySides: true, puzzleSize };
+  }
+  if (puzzle === '3x3' && set === 'adv-f2l') {
+    return { view: 'f2l', mask: 'af2l', renderLocally: true, puzzleSize };
   }
   if (puzzle === '3x3' && set === 'ollcp') {
     return { view: 'pll', mask: 'ollcp', hideGreySides: true, puzzleSize };
@@ -184,6 +176,10 @@ export function caseThumbPlan({
   viewAngle = 'default',
   orientation = DEFAULT_ALG_CUBE_ORIENTATION,
 }: CaseThumbPlanInput): CaseThumbPlan {
+  if (requires3x3AlgCaseSetup(puzzle, set) && !setup?.trim()) {
+    throw new Error(`Missing required setup for ${puzzle}/${set}`);
+  }
+
   if (puzzle === 'sq1') {
     const normalizedSet = set.toLowerCase();
     const isCubeshape = normalizedSet === 'cs' || normalizedSet === 'csp';
@@ -269,22 +265,13 @@ export function caseThumbPlan({
   const orientedScheme = supportsCubeOrientation(puzzle, params)
     ? visualCubeSchemeForOrientation(orientation, params.view === 'oll' && !params.mask)
     : params.scheme;
-  const f2lFaceletColors = puzzle === '3x3' && sticker.kind === 'f2l'
-    ? speedCubeDbF2lFaceletColors(sticker.fl)
-    : undefined;
   return {
     renderer: 'visualcube',
     algorithm: caseViewAlg(alg, angle),
-    setup: f2lFaceletColors ? undefined : setup === undefined ? undefined : caseViewSetup(setup, angle),
+    setup: setup === undefined ? undefined : caseViewSetup(setup, angle),
     params: {
       ...params,
-      ...(f2lFaceletColors ? {
-        view: 'iso' as const,
-        mask: undefined,
-        faceletColors: f2lFaceletColors,
-        faceletAlg: `z2 ${orientation}`.trim(),
-      } : {}),
-      ...(!f2lFaceletColors && orientedScheme ? { scheme: orientedScheme } : {}),
+      ...(orientedScheme ? { scheme: orientedScheme } : {}),
       ...(puzzle === '3x3' && simplifyRecognition && supportsRecognitionSimplification(params)
         ? {
             planSimplify: {

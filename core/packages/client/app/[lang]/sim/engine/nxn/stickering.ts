@@ -139,6 +139,9 @@ function rulesFor(order: number, name: string): Rule[] | null {
     case "VLS": return [dimF2L, [slotFR, "Regular"], ...setOLL];
     case "WVLS": return [dimF2L, [slotFR, "Regular"], [and(LL, EDGES), "Ignoriented"], [and(LL, CENTERS), "Dim"], [and(LL, CORNERS), "IgnoreNonPrimary"]];
     // —— CFOP ——
+    // Advanced F2L 只展示异常的另一组 pair;LL 和标准 FR pair 都按块身份忽略。
+    // 规则定义在 solved initial 上,所以 setup / 播放过程中两块会一起跟随而不会露色。
+    case "AF2L": return [[LL, "Ignored"], [slotFR, "Ignored"]];
     case "F2L": return [[LL, "Ignored"]];
     case "Daisy": return [[all, "Ignored"], [CENTERS, "Dim"], [and(D, CENTERS), "Regular"], [and(U, EDGES), "IgnoreNonPrimary"]];
     case "Cross": return [[all, "Ignored"], [CENTERS, "Dim"], [and(D, CENTERS), "Regular"], [and(D, EDGES), "Regular"]];

@@ -15,7 +15,7 @@ import ollMap from '@cuberoot/shared/data/oll.json';
 import { inverseScramble } from '@/lib/scramble-generator';
 import { OLL_SET, PLL_SET, ollCaseName, ollCaseNumber, recognizeSetFor } from '@/lib/recognize-sets';
 import { keysToCases } from '@/lib/pll-helpers';
-import { SQ1_SHAPE_SET, sq1TopLayerQuestions } from '@/lib/recognize-sq1-shapes';
+import { SQ1_SHAPE_SET, sq1ShapeAnswerChoices, sq1TopLayerQuestions } from '@/lib/recognize-sq1-shapes';
 import type { AlgCase } from '@cuberoot/shared';
 
 const typedOll = ollMap as Record<string, { alg: string }>;
@@ -196,18 +196,31 @@ describe('Square-1 单层形状命名', () => {
     algs: [[]],
   });
 
-  it('只取顶层名称,按 CS 顺序去重,忽略非法与空名称', () => {
+  it('给当前形状稳定生成包含正确项的六个候选', () => {
+    const all = Array.from({ length: 29 }, (_, index) => ({ value: `shape-${index}`, label: `Shape ${index}` }));
+    const first = sq1ShapeAnswerChoices(all, 'shape-17');
+    expect(first).toHaveLength(6);
+    expect(first.some((button) => button.value === 'shape-17')).toBe(true);
+    expect(new Set(first.map((button) => button.value)).size).toBe(6);
+    expect(sq1ShapeAnswerChoices(all, 'shape-17')).toEqual(first);
+  });
+
+  it('只取顶层名称,按 Squanmate 顺序去重并统一旧别名', () => {
     const questions = sq1TopLayerQuestions([
       algCase('Kite / Square'),
       algCase('Kite / Barrel'),
       algCase('Square / Kite'),
       algCase('Left paw / Right fist'),
       algCase('Right fist / Left paw'),
+      algCase('Muffin / Pair'),
+      algCase('Pair / Muffin'),
       algCase(' / Star'),
       algCase('broken'),
     ]);
-    expect(questions.map(({ name }) => name)).toEqual(['Kite', 'Square', 'L paw', 'R fist']);
-    expect(questions[0].source.name).toBe('Kite / Square');
+    expect(questions.map(({ name }) => name)).toEqual([
+      'Square', 'Kite', 'R fist', 'L pawn', 'Mushroom', 'Paired edges',
+    ]);
+    expect(questions.find(({ name }) => name === 'Kite')?.source.name).toBe('Kite / Square');
   });
 
   it('使用独立进度、无随机转层,空题库时安全', () => {

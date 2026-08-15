@@ -90,6 +90,7 @@ export enum TurnAbbreviation {
 export enum Masking {
   FL = 'fl',
   F2L = 'f2l',
+  AF2L = 'af2l',
   LL = 'll',
   CLL = 'cll',
   ELL = 'ell',

@@ -21,7 +21,7 @@ import {
   isGuideSetId,
   type GuideSetId,
 } from './guide-content';
-import './guide.css';
+import '@/components/recognition-guide.css';
 
 interface CaseGroup {
   name: string;

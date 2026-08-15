@@ -3,34 +3,82 @@
 // Ported from packages/client-vite/src/pages/TrainingPage.tsx
 //
 // 集合之间的差异(题库 / 题图 / 答题输入 / 摊牌文案)全在 lib/recognize-sets,这里只跑流程。
-import { useEffect, useCallback, useState, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useCallback, useState, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import OnScreenKeyboard from '@/components/OnScreenKeyboard';
 import Link from '@/components/AppLink';
+import BackHome from '@/components/BackHome';
+import Sq1ToolNav from '@/components/Sq1ToolNav';
 import { sessionStoreFor, useSessionHydrated } from '@/lib/session-store';
 import { isHelpKey } from '@/lib/pll-helpers';
 import { recognizeSetFor } from '@/lib/recognize-sets';
 import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
 import { tr } from '@/i18n/tr';
+import styles from './RecognizeTrainer.module.css';
 
-export default function RecognizeClient() {
-  const params = useParams<{ algSetId: string }>();
-  const algSetId = (Array.isArray(params?.algSetId) ? params.algSetId[0] : params?.algSetId) ?? '';
+type BilingualText = { zh: string; en: string };
+
+function TrainerShell({
+  title,
+  intro,
+  showSq1Tools,
+  children,
+}: {
+  title?: BilingualText;
+  intro?: BilingualText;
+  showSq1Tools?: boolean;
+  children: ReactNode;
+}) {
+  if (!title) return <>{children}</>;
+  return (
+    <main className={styles.page}>
+      <header className={styles.header}>
+        <div className="page-back-row"><BackHome /></div>
+        <h1 className={styles.title}>{tr(title)}</h1>
+        {intro && <p className={styles.intro}>{tr(intro)}</p>}
+      </header>
+      {showSq1Tools && (
+        <div className={styles.navRow}>
+          <Sq1ToolNav contained />
+        </div>
+      )}
+      <div className={styles.body}>{children}</div>
+    </main>
+  );
+}
+
+export default function RecognizeTrainer({
+  algSetId,
+  guideHref,
+  pageTitle,
+  pageIntro,
+  showSq1Tools = false,
+}: {
+  algSetId: string;
+  guideHref?: string;
+  pageTitle?: BilingualText;
+  pageIntro?: BilingualText;
+  showSq1Tools?: boolean;
+}) {
   const recog = recognizeSetFor(algSetId);
   const useStore = sessionStoreFor(recog.id);
   const { t } = useTranslation();
   const hydrated = useSessionHydrated(useStore);
   // DB 题库(COLL / ELL / ZBLL / 1LLL)现拉;PLL / OLL 没有 load,一上来就是就绪的。
   const [dataReady, setDataReady] = useState(!recog.load);
+  const [dataError, setDataError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   useEffect(() => {
     if (!recog.load) { setDataReady(true); return; }
     let cancelled = false;
     setDataReady(false);
-    recog.load().then(() => { if (!cancelled) setDataReady(true); });
+    setDataError(false);
+    recog.load()
+      .then(() => { if (!cancelled) setDataReady(true); })
+      .catch(() => { if (!cancelled) setDataError(true); });
     return () => { cancelled = true; };
-  }, [recog]);
+  }, [recog, reloadKey]);
 
   const gameState = useStore((s) => s.gameState);
   const trainMode = useStore((s) => s.trainMode);
@@ -62,7 +110,13 @@ export default function RecognizeClient() {
   const completed = results.length;
   const progressPercent = totalCases > 0 ? (completed / totalCases) * 100 : 0;
   const image = currentCase ? recog.image(currentCase, mistake !== '') : null;
-  const hasRecognitionGuide = algSetId === 'pll' || algSetId === 'oll' || algSetId === 'sq1-shape';
+  const imageAlt = currentCase && mistake
+    ? recog.label(currentCase.name)
+    : recog.id === 'sq1-shape'
+      ? tr({ zh: '待命名的 SQ1 单层形状', en: 'Square-1 layer shape to identify' })
+      : tr({ zh: '待识别的魔方题图', en: 'Puzzle case to identify' });
+  const recognitionGuideHref = guideHref
+    ?? (algSetId === 'pll' || algSetId === 'oll' ? `/recognize/${algSetId}/guide` : null);
 
   useEffect(() => {
     if (!hydrated || !dataReady) return;
@@ -86,6 +140,9 @@ export default function RecognizeClient() {
   const handleKeyPress = useCallback(
     (e: KeyboardEvent) => {
       if (typeof document !== 'undefined' && (document.querySelector('.modal.show') || document.querySelector('.noteInput:focus'))) {
+        return;
+      }
+      if (e.target instanceof Element && e.target.closest('button, a, input, textarea, select, [contenteditable="true"], [role="button"]')) {
         return;
       }
 
@@ -162,89 +219,100 @@ export default function RecognizeClient() {
     return '';
   };
 
-  if (!hydrated || !dataReady) {
-    return <div className="training-page" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-mute)' }} />;
+  if (!hydrated || (!dataReady && !dataError)) {
+    return (
+      <TrainerShell title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
+        <div className={`${styles.trainer} ${styles.status}`} role="status">
+          {tr({ zh: '正在加载训练题库…', en: 'Loading training cases…' })}
+        </div>
+      </TrainerShell>
+    );
+  }
+
+  if (dataError) {
+    return (
+      <TrainerShell title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
+        <div className={`${styles.trainer} ${styles.status}`} role="alert">
+          <p>{tr({ zh: '训练题库加载失败，请重试。', en: 'Training cases could not be loaded. Try again.' })}</p>
+          <button className="btn-secondary" type="button" onClick={() => setReloadKey((key) => key + 1)}>
+            {tr({ zh: '重新加载', en: 'Reload' })}
+          </button>
+        </div>
+      </TrainerShell>
+    );
   }
 
   if (gameState === 'evaluationDone') {
     const mistakeCount = results.filter((r) => r.mistake !== '').length;
     const correctCount = results.filter((r) => r.mistake === '').length;
     return (
-      <div className="training-page" style={{ padding: '2rem', textAlign: 'center' }}>
+      <TrainerShell title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
+      <div className={`${styles.done} training-page`}>
         <h2>{t('training.complete')}</h2>
-        <p style={{ fontSize: '1.2rem', margin: '1rem 0' }}>
+        <p className={styles.score}>
           {tr({ zh: '正确', en: 'Correct' })}{' '}
-          <strong style={{ color: '#198754' }}>{correctCount}</strong> /{' '}
+          <strong className={styles.correct}>{correctCount}</strong> /{' '}
           {tr({ zh: '总计', en: 'Total' })} <strong>{results.length}</strong>
         </p>
         {mistakeCount > 0 && (
-          <p style={{ color: '#dc3545' }}>
+          <p className={styles.mistakes}>
             {tr({
               zh: `错误 ${mistakeCount} 次`,
               en: `${mistakeCount} mistake${mistakeCount > 1 ? 's' : ''}`,
             })}
           </p>
         )}
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
-          <button className="btn-primary" onClick={startPersonalized}>
+        <div className={styles.doneActions}>
+          <button className="btn-primary" type="button" onClick={startPersonalized}>
             {tr({ zh: '个性化训练（弱项加强）', en: 'Personalized (focus weak cases)' })}
           </button>
-          <button className="btn-secondary" onClick={restartEvaluation}>
+          <button className="btn-secondary" type="button" onClick={restartEvaluation}>
             {tr({ zh: '重新评估', en: 'Restart evaluation' })}
           </button>
-          <Link className="btn-secondary" href="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+          <Link className={`btn-secondary ${styles.textLinkButton}`} href="/">
             {tr({ zh: '返回首页', en: 'Home' })}
           </Link>
         </div>
       </div>
+      </TrainerShell>
     );
   }
 
   return (
-    <div className="training-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem' }}>
-      {hasRecognitionGuide && (
-        <div style={{ width: '100%', maxWidth: '600px', display: 'flex', justifyContent: 'flex-start', marginBottom: '0.75rem' }}>
+    <TrainerShell title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
+    <div className={`${styles.trainer} training-page`}>
+      {recognitionGuideHref && (
+        <div className={styles.guideRow}>
           <Link
             className="btn-secondary"
-            href={`/recognize/${algSetId}/guide`}
+            href={recognitionGuideHref}
             prefetch={false}
-            style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
           >
             {tr({ zh: '识别指南', en: 'Recognition guide' })}
           </Link>
         </div>
       )}
-      <div style={{ width: '100%', maxWidth: '600px', marginBottom: '1rem' }}>
+      <div className={styles.progressWrap}>
         <div
-          style={{
-            height: '22px',
-            backgroundColor: 'rgba(255,255,255,0.1)',
-            borderRadius: '4px',
-            overflow: 'hidden',
-          }}
+          className={styles.progress}
+          role="progressbar"
+          aria-label={tr({ zh: '训练进度', en: 'Training progress' })}
+          aria-valuemin={0}
+          aria-valuemax={totalCases}
+          aria-valuenow={completed}
+          aria-valuetext={tr({ zh: `已完成 ${completed}，共 ${totalCases}`, en: `${completed} of ${totalCases} complete` })}
         >
           <div
-            style={{
-              width: `${progressPercent}%`,
-              height: '100%',
-              backgroundColor: '#0d6efd',
-              transition: 'width 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-            }}
-          >
-            {completed}/{totalCases}
-          </div>
+            className={styles.progressFill}
+            style={{ width: `${progressPercent}%` }}
+          />
+          <span className={styles.progressText}>{completed}/{totalCases}</span>
         </div>
       </div>
 
-      <div style={{ margin: '1rem 0' }}>
+      <div className={styles.image}>
         {image && (
-          <div style={{ filter: gameState === 'paused' ? 'brightness(0.15)' : 'none' }}>
+          <div className={gameState === 'paused' ? styles.imagePaused : undefined}>
             {image.renderer === 'sq1-top-layer' && image.sticker ? (
               <CaseThumb
                 puzzle="sq1"
@@ -255,6 +323,7 @@ export default function RecognizeClient() {
                 size={image.size}
                 local
                 sq1Layer="top"
+                alt={imageAlt}
               />
             ) : (
               <VisualCube
@@ -263,7 +332,7 @@ export default function RecognizeClient() {
                 mask={image.mask}
                 size={image.size}
                 hideGreySides={image.hideGreySides}
-                alt={currentCase ? recog.label(currentCase.name) : undefined}
+                alt={imageAlt}
               />
             )}
           </div>
@@ -271,18 +340,15 @@ export default function RecognizeClient() {
       </div>
 
       <div
-        style={{
-          color: 'var(--muted-foreground)',
-          textAlign: 'center',
-          margin: '0.75rem 0',
-          animation: shakeHint ? 'headShake 1s ease' : undefined,
-        }}
+        className={`${styles.hint}${shakeHint ? ` ${styles.shake}` : ''}`}
+        role="status"
+        aria-live="polite"
       >
         {getHint()}
       </div>
 
       {gameState === 'paused' && (
-        <button className="btn-primary" onClick={resumePlay} style={{ fontSize: '1.2rem', padding: '0.75rem 2rem' }}>
+        <button className={`btn-primary ${styles.primaryAction}`} type="button" onClick={resumePlay}>
           {results.length === 0
             ? tr({ zh: '▶ 开始', en: '▶ Start' })
             : tr({ zh: '▶ 继续', en: '▶ Continue' })} (Space)
@@ -291,19 +357,19 @@ export default function RecognizeClient() {
 
       {trainMode === 'recognition' && gameState === 'playing' && (
         <OnScreenKeyboard
-          buttons={recog.buttons()}
+          buttons={recog.buttons(currentCase ?? undefined)}
           onAnswer={submitAnswer}
           className={recog.id === 'sq1-shape' ? 'on-screen-keyboard--wide-labels' : undefined}
         />
       )}
 
       {gameState === 'playing' && (
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-          <button className="btn-secondary" onClick={pausePlay}>
+        <div className={styles.actions}>
+          <button className="btn-secondary" type="button" onClick={pausePlay}>
             {tr({ zh: '暂停 (Esc)', en: 'Pause (Esc)' })}
           </button>
           {!mistake && (
-            <button className="btn-secondary" onClick={giveUpOnCase} style={{ opacity: 0.7 }}>
+            <button className="btn-secondary" type="button" onClick={giveUpOnCase}>
               {tr({ zh: '放弃 (S/?)', en: 'Give up (S/?)' })}
             </button>
           )}
@@ -311,16 +377,16 @@ export default function RecognizeClient() {
       )}
 
       {gameState === 'playing' && mistake && currentCase && (
-        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-          <hr style={{ borderColor: 'color-mix(in srgb, var(--foreground) 15%, transparent)' }} />
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+        <div className={styles.answer}>
+          <div className={styles.answerName}>
             {recog.label(currentCase.name)}
           </div>
-          <div style={{ color: 'var(--muted-foreground)', fontSize: '0.9rem' }}>
+          <div className={styles.answerSolution}>
             {recog.solution(currentCase.name)}
           </div>
         </div>
       )}
     </div>
+    </TrainerShell>
   );
 }

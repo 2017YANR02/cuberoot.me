@@ -13,7 +13,7 @@ import {
   requireAuth, requireAdmin, checkRateLimit, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
 import { is3x3TopLayerSet } from '@cuberoot/shared';
-import { startsWithYRotation } from '@cuberoot/shared/alg-notation';
+import { canonicalize3x3WideMoves, startsWithYRotation } from '@cuberoot/shared/alg-notation';
 
 export const algRoutes = new Hono();
 
@@ -35,7 +35,7 @@ function rowToJson(row: AlgSubmissionRow) {
     puzzle: row.puzzle,
     setSlug: row.set_slug,
     caseName: row.case_name,
-    alg: row.alg,
+    alg: row.puzzle === '3x3' ? canonicalize3x3WideMoves(row.alg) : row.alg,
     notes: row.notes,
     authorId: row.author_id,
     authorName: row.author_name,
@@ -111,7 +111,8 @@ algRoutes.post('/alg/:puzzle/:set/:case/submit', async (c) => {
   const setSlug = c.req.param('set');
   const caseName = decodeURIComponent(c.req.param('case'));
   const body = await c.req.json<{ alg?: string; notes?: string }>();
-  const alg = (body.alg ?? '').trim();
+  const submittedAlg = (body.alg ?? '').trim();
+  const alg = puzzle === '3x3' ? canonicalize3x3WideMoves(submittedAlg) : submittedAlg;
   const notes = (body.notes ?? '').trim() || null;
 
   if (!alg) return c.json({ error: 'alg required' }, 400);
@@ -137,10 +138,10 @@ algRoutes.put('/alg/submissions/:id', async (c) => {
   if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
 
   const body = await c.req.json<{ alg?: string; notes?: string; caseName?: string }>();
-  const alg = (body.alg ?? '').trim();
+  const submittedAlg = (body.alg ?? '').trim();
   const notes = (body.notes ?? '').trim() || null;
-  if (!alg) return c.json({ error: 'alg required' }, 400);
-  if (Buffer.byteLength(alg, 'utf8') > ALG_MAX_BYTES) return c.json({ error: 'alg too long' }, 400);
+  if (!submittedAlg) return c.json({ error: 'alg required' }, 400);
+  if (Buffer.byteLength(submittedAlg, 'utf8') > ALG_MAX_BYTES) return c.json({ error: 'alg too long' }, 400);
   if (notes && Buffer.byteLength(notes, 'utf8') > NOTES_MAX_BYTES) return c.json({ error: 'notes too long' }, 400);
 
   const rows = await query<AlgSubmissionRow>('SELECT * FROM alg_submissions WHERE id = ?', [id]);
@@ -149,6 +150,7 @@ algRoutes.put('/alg/submissions/:id', async (c) => {
   if (!isAdmin && rows[0].author_id !== user.wcaId) {
     return c.json({ error: 'Cannot edit others alg' }, 403);
   }
+  const alg = rows[0].puzzle === '3x3' ? canonicalize3x3WideMoves(submittedAlg) : submittedAlg;
   const ruleError = leadingYError(rows[0].puzzle, rows[0].set_slug, alg);
   if (ruleError) return c.json({ error: ruleError }, 400);
 

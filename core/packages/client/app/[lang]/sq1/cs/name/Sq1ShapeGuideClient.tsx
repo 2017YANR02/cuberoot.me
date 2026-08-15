@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import { loadAlg } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
+import BackHome from '@/components/BackHome';
 import { CaseThumb } from '@/components/CaseThumb';
+import Sq1ToolNav from '@/components/Sq1ToolNav';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 import { sq1TopLayerQuestions } from '@/lib/recognize-sq1-shapes';
-import { SQ1_SHAPE_GUIDE } from './guide-content';
-import './guide.css';
+import { SQ1_SHAPE_GUIDE } from './content';
+import '@/components/recognition-guide.css';
 
 type ShapeQuestion = ReturnType<typeof sq1TopLayerQuestions>[number];
 
@@ -40,6 +42,10 @@ export default function Sq1ShapeGuideClient() {
 
   return (
     <main className="recognition-guide-page">
+      <div className="recognition-guide-top">
+        <div className="page-back-row"><BackHome /></div>
+        <Sq1ToolNav contained />
+      </div>
       <header className="recognition-guide-hero">
         <div className="recognition-guide-heading">
           <span className="recognition-guide-set-mark" aria-hidden>SQ1</span>
@@ -51,8 +57,8 @@ export default function Sq1ShapeGuideClient() {
         </div>
 
         <div className="recognition-guide-actions">
-          <Link href="/recognize/sq1-shape" className="recognition-guide-primary-link" prefetch={false}>
-            {tr({ zh: '开始形状训练', en: 'Start shape drill' })}
+          <Link href="/sq1/cs/name/train" className="recognition-guide-primary-link" prefetch={false}>
+            {tr({ zh: '开始命名训练', en: 'Start naming drill' })}
           </Link>
           <Link href="/alg/sq1/cs" className="recognition-guide-text-link" prefetch={false}>
             {tr({ zh: '查看 CS 公式库', en: 'Open the CS algorithm set' })}
@@ -95,6 +101,7 @@ export default function Sq1ShapeGuideClient() {
                     size={thumbSize}
                     local
                     sq1Layer="top"
+                    alt={name}
                     loading={index < (mobile ? 4 : 7) ? 'eager' : 'lazy'}
                   />
                 </span>

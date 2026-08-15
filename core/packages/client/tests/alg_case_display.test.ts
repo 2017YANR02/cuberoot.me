@@ -104,10 +104,11 @@ describe('displayAlgCaseName 按 set 路由', () => {
     expect(displayAlgCaseName('2x2', 'ls9', 'LS-9 PBL 6')).toBe('LS9 PBL 6');
     expect(displayAlgCaseName('2x2', 'cll', 'LS-2 Hammer 1')).toBe('LS-2 Hammer 1');
   });
-  it('SQ1 cs 把 Left / Right 缩写为 L / R', () => {
-    expect(displayAlgCaseName('sq1', 'cs', 'Left paw / Right fist')).toBe('L paw / R fist');
-    expect(displayAlgCaseName('sq1', 'cs', 'Parallel Edges / Left 4-2')).toBe('Parallel Edges / L 4-2');
-    expect(displayAlgCaseName('sq1', 'csp', 'Left 4-2 / Right fist (Odd)')).toBe('L 4-2 / R fist (Odd)');
+  it('SQ1 cs 使用 Squanmate 形状名并把 Left / Right 缩写为 L / R', () => {
+    expect(displayAlgCaseName('sq1', 'cs', 'Left paw / Right fist')).toBe('L pawn / R fist');
+    expect(displayAlgCaseName('sq1', 'cs', 'Muffin / Pair')).toBe('Mushroom / Paired edges');
+    expect(displayAlgCaseName('sq1', 'cs', 'Parallel Edges / Perpendicular Edges')).toBe('Parallel edges / Perpendicular edges');
+    expect(displayAlgCaseName('sq1', 'csp', 'Left 4-2 / Right Pawn (Odd)')).toBe('L 4-2 / R pawn (Odd)');
     expect(displayAlgCaseName('sq1', 'obl', 'Left Kite / Right Kite')).toBe('L Kite / R Kite');
     expect(displayAlgCaseName('sq1', 'eo', 'Left paw / Right fist')).toBe('Left paw / Right fist');
   });
