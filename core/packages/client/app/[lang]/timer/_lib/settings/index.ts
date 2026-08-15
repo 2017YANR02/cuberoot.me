@@ -24,7 +24,7 @@ export interface TimerSettings {
   /** 0..1 master volume. */
   volume: number;
 
-  /** Hide running time (show only "...") until the timer stops. */
+  /** Hide the running-time display until the timer stops. */
   hideTime: boolean;
 
   /** When the event changes, activate a session associated with that event. */
