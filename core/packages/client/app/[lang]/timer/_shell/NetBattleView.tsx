@@ -954,7 +954,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
       return remaining.toString();
     }
     if (timer.phase === 'running') {
-      return settings.hideTime ? '…' : formatMs(timer.displayMs, settings.runningPrecision);
+      return settings.hideTime ? '' : formatMs(timer.displayMs, settings.runningPrecision);
     }
     // 已交卷:以房间里的成绩(含罚时调整)为准
     if (myResult) {

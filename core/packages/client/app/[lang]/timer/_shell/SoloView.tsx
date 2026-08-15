@@ -2056,7 +2056,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       return remaining.toString();
     }
     if (timer.phase === 'running') {
-      return settings.hideTime ? '…' : formatMs(timer.displayMs, settings.runningPrecision);
+      return settings.hideTime ? '' : formatMs(timer.displayMs, settings.runningPrecision);
     }
     if (timer.phase === 'stopped' && lastPenalty === 'DNS') return 'DNS';
     if (timer.phase === 'stopped' && lastPenalty === 'DNF') return 'DNF';
