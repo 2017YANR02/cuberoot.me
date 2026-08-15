@@ -25,7 +25,6 @@ export interface TrainerSheetOptions {
   set: string;
   cases: AlgCase[];
   title: string;
-  subtitle?: string;
   filename: string;
   mode: TrainerMode;
   probMode: TrainerProbMode;
@@ -129,7 +128,6 @@ export async function trainerSheetFromCases(o: TrainerSheetOptions): Promise<Tra
 
   return {
     title: o.title,
-    subtitle: o.subtitle,
     cases: out,
     filename: o.filename,
   };

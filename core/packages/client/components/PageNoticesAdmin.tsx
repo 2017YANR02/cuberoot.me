@@ -12,7 +12,7 @@
  * 不给链接。
  */
 import { useCallback, useEffect, useState } from 'react';
-import { ChevronRight, Megaphone, RefreshCw } from 'lucide-react';
+import { ChevronRight, Megaphone } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { useIsAdmin } from '@/lib/auth-store';
 import { fetchAllPageNotices, type PageNotice } from '@/lib/page-notices-api';
@@ -31,10 +31,8 @@ export default function PageNoticesAdmin() {
   const isAdmin = useIsAdmin();
   const lang = useLang();
   const [items, setItems] = useState<PageNotice[] | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       const rows = await fetchAllPageNotices();
       // 启用的排前面(要盯的是这些),其次按路径 —— 同一分组内路径序读起来像站点结构。
@@ -42,8 +40,6 @@ export default function PageNoticesAdmin() {
       setItems(rows);
     } catch (e) {
       console.warn('[page-notices] 拉取失败', e);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -70,16 +66,6 @@ export default function PageNoticesAdmin() {
                 : tr({ zh: `${total} 条`, en: `${total} active` })}
           </span>
         )}
-        <button
-          type="button"
-          className="pna-refresh"
-          onClick={() => void load()}
-          disabled={loading}
-          title={tr({ zh: '刷新', en: 'Refresh' })}
-          aria-label={tr({ zh: '刷新', en: 'Refresh' })}
-        >
-          <RefreshCw size={13} className={loading ? 'pna-spin' : undefined} />
-        </button>
       </h2>
 
       {items !== null && total > 0 && (
@@ -115,14 +101,6 @@ export default function PageNoticesAdmin() {
         </ul>
       )}
 
-      {items !== null && total > 0 && (
-        <p className="pna-hint">
-          {tr({
-            zh: '改内容 / 停用 / 删除:点进去,在那页顶部的通知条上直接编辑。',
-            en: 'To edit, disable or delete: open the page and use the notice bar at its top.',
-          })}
-        </p>
-      )}
     </section>
   );
 }

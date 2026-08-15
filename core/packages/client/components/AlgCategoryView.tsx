@@ -503,7 +503,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   /**
    * 校验不过的**公式**:`${caseId}:${oriIdx}:${algIdx}` → 原因。卡片红框由它推出来。
    * 存到公式这一级,是因为「这张卡有问题」不够用 —— 一张卡挂四条公式,得指出是哪条。
-   * **只给 admin 跑**:每个访客的浏览器都跑一遍 cubing.js 纯属浪费,而红框是给能修的人看的。
+   * 当前 set 加载后自动校验,让所有访客在看到公式时就知道它是否匹配魔方状态。
    */
   const [invalidAlgs, setInvalidAlgs] = useState<Map<string, string>>(new Map());
   const invalidIds = useMemo(() => {
@@ -707,9 +707,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     }
   }, [data, loadPreferred, puzzleParam, set, validPuzzle]);
 
-  /** admin 才扫。case 改完(data 变 / validationRefreshKey)重扫,红标跟着消。 */
+  /** 当前 set 自动扫。case 改完(data 变 / validationRefreshKey)重扫,红标跟着消。 */
   useEffect(() => {
-    if (!isAdmin || !data || !validPuzzle) { setInvalidAlgs(new Map()); return; }
+    if (!data || !validPuzzle) { setInvalidAlgs(new Map()); return; }
     let cancelled = false;
     scanCases(puzzleParam, set, data.cases, { shouldCancel: () => cancelled })
       .then(fails => {
@@ -723,7 +723,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       })
       .catch(e => console.warn('[alg] validation scan failed', e));
     return () => { cancelled = true; };
-  }, [isAdmin, data, puzzleParam, set, validPuzzle, validationRefreshKey]);
+  }, [data, puzzleParam, set, validPuzzle, validationRefreshKey]);
 
   /**
    * `#<case 名>` 锚点:分享出去的链接、元数据弹窗的「在列表中打开」、个人页的校验汇总都落这儿
@@ -1131,6 +1131,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             value={sq1BlackTop}
             onChange={setSq1BlackTop}
             label={tr({ zh: '黑顶', en: 'Black top' })}
+            className="alg-sq1-black-top-toggle"
           />
         )}
         {/* 图 / 公式 视图开关(只在真列出 case 的页面;子组选择页没有卡片) */}

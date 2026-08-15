@@ -14,7 +14,7 @@ import type { TrainerSolve, TrainerPenalty, TrainerHistEntry } from '@/lib/train
 import type { ScrambleHist } from '@/lib/scramble-history';
 import {
   useTrainerMarks, markStatus, MARK_STATUS_LABEL,
-  type CaseMarks, type TrainerMarkBrush,
+  type CaseMarks, type TrainerMarkBrush, type CaseMarkStatus,
 } from '@/lib/trainer-marks';
 import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
 import { primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
@@ -433,14 +433,17 @@ export function CaseMarkBar({ k }: { k: string }) {
 }
 
 /** case 图上的学习标记角标:右上状态(✓ 已掌握 / ● 不熟)。 */
-export function CaseMarkBadges({ marks, k }: { marks: CaseMarks; k: string }) {
-  const st = markStatus(marks, k);
-  if (!st) return null;
+export function TrainerMarkBadge({ status, inline = false }: { status: CaseMarkStatus; inline?: boolean }) {
   return (
-    <span className={`trainer-mark-badge is-${st}`} aria-hidden>
-      {st === 'mastered' ? <Check size={11} strokeWidth={3.5} /> : null /* learning = 纯色圆点 */}
+    <span className={`trainer-mark-badge is-${status}${inline ? ' is-inline' : ''}`} aria-hidden>
+      {status === 'mastered' ? <Check size={11} strokeWidth={3.5} /> : null /* learning = 纯色圆点 */}
     </span>
   );
+}
+
+export function CaseMarkBadges({ marks, k }: { marks: CaseMarks; k: string }) {
+  const st = markStatus(marks, k);
+  return st ? <TrainerMarkBadge status={st} /> : null;
 }
 
 interface TopGroup {

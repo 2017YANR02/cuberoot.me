@@ -38,8 +38,11 @@ export interface ValidateAlgResult {
   auf?: string;
 }
 
-/** 收尾 AUF 的四种可能。`''` 排最前 —— 已经写全的公式不该被改。 */
-const AUF_CANDIDATES = ['', 'U', 'U2', "U'"] as const;
+/** `''` 排最前 —— 已经写全的公式不该被改；五魔方 U 是五阶，金字塔 U 是三阶。 */
+const AUF_CANDIDATES: Record<string, readonly string[]> = {
+  megaminx: ['', 'U', 'U2', "U2'", "U'"],
+  pyraminx: ['', 'U', "U'"],
+};
 
 const PUZZLE_TO_CUBINGJS_ID: Record<string, string> = {
   '2x2': '2x2x2',
@@ -96,6 +99,10 @@ export async function validateAlgCase(
   puzzle: string,
   set?: string,
 ): Promise<ValidateAlgResult> {
+  const goalKind = goalOf(puzzle, set, sticker.kind);
+  if (goalKind === 'unregistered') {
+    return { ok: false, reason: `未注册校验目标:${puzzle}/${set}` };
+  }
   if (puzzle === 'fto') {
     if (!alg.trim()) return { ok: true, auf: '' };
     const cleanAlg = parseFtoEifAlgorithm(alg);
@@ -111,7 +118,6 @@ export async function validateAlgCase(
   if (!loader) return { ok: true };
   if (!alg.trim()) return { ok: true };
 
-  const goalKind = goalOf(puzzle, set, sticker.kind);
   if (goalKind === 'skip') return { ok: true, auf: '' };
 
   let cleanAlg: string;
@@ -136,7 +142,7 @@ export async function validateAlgCase(
   };
 
   // 判据不看顶层的那几类(F2L 系):末尾的 U 永远是废动作,拦掉 —— 补 AUF 也无从谈起。
-  if (goalKind === 'f2l' || goalKind === 'f2l+co' || goalKind === 'f2l+eo') {
+  if (goalKind === 'f2l' || goalKind === 'f2l-3slots' || goalKind === 'f2l+co' || goalKind === 'f2l+eo') {
     const trailing = trailingUFamilyMove(leafMoves);
     if (trailing) return { ok: false, reason: `公式末尾的 ${trailing.toString()} 是多余的 AUF` };
     const p = run('');
@@ -146,7 +152,7 @@ export async function validateAlgCase(
 
   // 其余:允许差一个收尾 AUF。至多一个成立 —— U 转不是整体旋转,`setup+A` 和 `setup+A+U`
   // 不可能同时达标,所以「补哪个 U」没有歧义。
-  for (const auf of AUF_CANDIDATES) {
+  for (const auf of AUF_CANDIDATES[puzzle] ?? ['', 'U', 'U2', "U'"]) {
     const p = run(auf);
     if (p && goal(p)) return { ok: true, auf };
   }
@@ -155,8 +161,10 @@ export async function validateAlgCase(
 
 /** 没达标时给人看的话 —— 每个目标态一句,别再一律说「没有还原魔方」。 */
 const GOAL_MISS: Record<AlgGoal, string> = {
+  unregistered: '该公式集没有注册校验目标',
   solve: '执行 setup + alg 后没有还原魔方(补任何收尾 AUF 都不行)',
   f2l: 'F2L 没做完(setup + alg 后 D 层 / 中层未完成)',
+  'f2l-3slots': 'Advanced F2L 没做完(十字没保住,或完成的 F2L 槽少于三个)',
   'f2l+co': 'F2L 没做完,或顶层角没翻色',
   'f2l+eo': 'F2L 没做完,或顶层棱没翻色',
   oll: 'OLL 没做完(F2L 没保住,或顶层没翻齐色)',
@@ -166,6 +174,15 @@ const GOAL_MISS: Record<AlgGoal, string> = {
   'roux-blocks+eolr': 'EOLR 没做完(桥式两块、棱朝向或 UL/UR 目标位置不正确)',
   cmll: 'CMLL 没做完(Roux 两块没保住,或顶层角没做好)',
   co: '八个角没全部翻色',
+  'sq1-cs': 'SQ1 没有复成立方体形状',
+  'sq1-csp': 'SQ1 没有复成立方体形状,或角棱排列奇偶不一致',
+  'sq1-eo': 'SQ1 棱块朝向没完成,或 CO / 立方体形状没保住',
+  'sq1-cp': 'SQ1 角块排列没完成,或双层朝向 / 立方体形状没保住',
+  'sq1-ep': 'SQ1 棱块排列没完成,或角块排列 / 双层朝向 / 中层没保住',
+  'sq1-obl': 'SQ1 双层色向没完成,或立方体形状没保住',
+  'mega-eo': '五魔方最后一层棱块朝向没完成,或下面四层没保住',
+  'mega-co': '五魔方最后一层角块朝向没完成,或 EO / 下面四层没保住',
+  'mega-ep': '五魔方最后一层棱块排列没完成,或 CO / 下面四层没保住',
   'oll-4x4': '4x4 OLL 没做完(顶面没同色,或顶面以下没还原)',
   centers: '中心块没还原',
   skip: '',

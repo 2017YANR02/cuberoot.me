@@ -4,7 +4,7 @@
  * 个人页给**管理员**的公式校验汇总 —— 全库哪些公式过不了校验,点一下直接跳到那张 case 卡。
  *
  * 只有管理员看得见(别人看不到、也不跑)。扫描是纯客户端的(cubing.js),全库 ≈ 1.6 万条、
- * 数秒 —— 所以结果进 sessionStorage,同一次会话里再进这页不重扫;要最新的按「重扫」。
+ * 数秒 —— 所以进入页面只读取 sessionStorage 缓存,点击刷新按钮才开始扫描。
  *
  * 跳转走 `algCaseHref()` 的 `#case-<id>` 深链:AlgCategoryView 接住它,把折叠的组展开、
  * 滚过去、闪一下。真 `<a>`(AppLink),中键能新开。
@@ -71,10 +71,8 @@ export default function AlgValidationAlert() {
 
   useEffect(() => {
     if (!isAdmin) return;
-    const cached = readCache();
-    if (cached) { setItems(cached); return; }
-    void run();
-  }, [isAdmin, run]);
+    setItems(readCache());
+  }, [isAdmin]);
 
   /** 按 set 归堆 —— 一次坏一整个 set 是常态(抓取事故),平铺 500 行没法看 */
   const bySet = useMemo(() => {
@@ -113,6 +111,7 @@ export default function AlgValidationAlert() {
           onClick={() => void run()}
           disabled={running}
           title={tr({ zh: '重扫全库', en: 'Re-scan all sets' })}
+          aria-label={tr({ zh: '重扫全库', en: 'Re-scan all sets' })}
         >
           <RefreshCw size={13} className={running ? 'ava-spin' : undefined} />
         </button>

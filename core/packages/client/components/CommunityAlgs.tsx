@@ -46,6 +46,45 @@ interface Props {
   ) => void;
 }
 
+export type PreparedCommunityAlg =
+  | { ok: true; alg: string }
+  | { ok: false; kind: 'invalid' | 'unavailable'; reason: string };
+
+/**
+ * 投稿前的强制状态校验。失败或校验器异常都不返回可入库公式,调用方不得继续写 API。
+ */
+export async function prepareCommunityAlgForSubmission({
+  raw,
+  puzzle,
+  setSlug,
+  sticker,
+  setup,
+  firstAlg,
+}: Pick<Props, 'puzzle' | 'setSlug' | 'sticker' | 'setup' | 'firstAlg'> & { raw: string }): Promise<PreparedCommunityAlg> {
+  const bare = displayAlg(raw);
+  try {
+    // 空 setup 的集合(2x2 / 大魔方 parity / skewb)靠 case 的**首条**公式反推 —— 拿投稿者
+    // 自己那条反推等于让他自证,永远通过。
+    const result = await validateAlgCase(
+      setupForCase(puzzle, setup, firstAlg),
+      bare,
+      sticker,
+      puzzle,
+      setSlug,
+    );
+    if (!result.ok) {
+      return { ok: false, kind: 'invalid', reason: result.reason ?? '' };
+    }
+    return { ok: true, alg: result.auf ? `${bare} ${result.auf}` : bare };
+  } catch (error) {
+    return {
+      ok: false,
+      kind: 'unavailable',
+      reason: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 export default function CommunityAlgs({
   puzzle,
   setSlug,
@@ -66,24 +105,22 @@ export default function CommunityAlgs({
   // 所有权键(与服务端一致):非 WCA 账号也能认出自己提交的公式。
   const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';
 
-  /** 校验 + 补齐收尾 AUF。
-   *
-   *  魔友**不必自己写**结尾那个 U(他自己会转)—— 校验器算得出该补哪个,入库存补齐的完整式,
-   *  显示时 `displayAlg()` 再剥掉。校验没过就让他自己决定要不要照样提交。
-   *
-   *  @returns 入库用的公式;`null` = 用户放弃提交。 */
+  /** 校验 + 补齐收尾 AUF。校验失败或校验器异常时都严格拦截。 */
   const prepareAlg = async (raw: string): Promise<string | null> => {
-    const bare = displayAlg(raw);
-    try {
-      // 空 setup 的集合(2x2 / 大魔方 parity / skewb)靠 case 的**首条**公式反推 —— 拿投稿者
-      // 自己那条反推等于让他自证,永远通过。
-      const res = await validateAlgCase(setupForCase(puzzle, setup, firstAlg), bare, sticker, puzzle, setSlug);
-      if (res.ok) return res.auf ? `${bare} ${res.auf}` : bare;
-      const ok = confirm(`${tr({ zh: '公式校验未通过', en: 'Validation failed' })}: ${res.reason ?? ''}\n\n${tr({ zh: '仍然提交?', en: 'Submit anyway?' })}`);
-      return ok ? raw : null;
-    } catch {
-      return raw; // 校验设施自己炸了,不该拦人提交
-    }
+    const prepared = await prepareCommunityAlgForSubmission({
+      raw,
+      puzzle,
+      setSlug,
+      sticker,
+      setup,
+      firstAlg,
+    });
+    if (prepared.ok) return prepared.alg;
+    const heading = prepared.kind === 'invalid'
+      ? tr({ zh: '公式校验未通过,未提交', en: 'Validation failed; not submitted' })
+      : tr({ zh: '暂时无法校验公式,未提交', en: 'Could not validate; not submitted' });
+    alert(`${heading}${prepared.reason ? `: ${prepared.reason}` : ''}`);
+    return null;
   };
 
   const [adding, setAdding] = useState(false);
@@ -102,10 +139,10 @@ export default function CommunityAlgs({
 
   const handleSubmit = async () => {
     if (!draftAlg.trim()) return;
-    const alg = await prepareAlg(draftAlg.trim());
-    if (alg === null) return;
     setBusy(true);
     try {
+      const alg = await prepareAlg(draftAlg.trim());
+      if (alg === null) return;
       const created = await addSubmission(puzzle, setSlug, caseName, alg, draftNotes.trim() || undefined);
       onPatch({ type: 'add', submission: created });
       setDraftAlg('');
@@ -120,10 +157,10 @@ export default function CommunityAlgs({
 
   const handleSaveEdit = async (id: number) => {
     if (!editAlg.trim()) return;
-    const alg = await prepareAlg(editAlg.trim());
-    if (alg === null) return;
     setBusy(true);
     try {
+      const alg = await prepareAlg(editAlg.trim());
+      if (alg === null) return;
       const fields: { alg: string; notes?: string; caseName?: string } = {
         alg,
         notes: editNotes.trim() || undefined,
