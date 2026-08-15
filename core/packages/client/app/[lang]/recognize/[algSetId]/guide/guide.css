@@ -281,6 +281,22 @@
   color: var(--accent);
 }
 
+.recognition-guide-shape {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.recognition-guide-shape strong {
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .recognition-guide-case-art {
     transition: none;
