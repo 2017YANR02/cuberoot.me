@@ -6,18 +6,14 @@
  * cube. The engine is order-generic (world.order = spec.n), so the same painter
  * serves 3×3 (default) and 2×2 (`spec={CUBE2_PAINT}`):
  *
- *   - controller.paintMode + dragEmpty='orbit' → every drag orbits the view,
+ *   - controller.paintMode + dragEmpty='view' → every drag orbits the view,
  *     never twists a layer; a tap still fires controller.taps. Orbit is /sim's
- *    「自动转体」(`orbitSceneAutoRotate`): every 90° of yaw excess is folded into a
- *     real whole-cube y twist, so the cube turns under fixed lighting like a physical
- *     puzzle in hand instead of the camera flying around a cube whose shading never
- *     changes. Pitch stays clamped to ±90° (bird's-eye / worm's-eye, so U and D are
- *     still one tap away) — folding it isn't seamless, see viewControls `ViewTurns`.
+ *    「视角」(`orbitSceneFree`): yaw and pitch both accumulate without limits, so
+ *     vertical drags can keep flipping past the top / bottom instead of stopping at ±90°.
  *   - taps → (current slot, world face) → the cubelet living there → its HOME
  *     address (initial index, local face) → facelet index → paintSticker. That
- *     detour is what makes painting survive the whole-cube twists above: facelet
- *     ↔ engine addressing (`faceletMap`, `cube.stick`) is home-based, and after a
- *     y/x twist the slot the finger hit is no longer the cubelet's home slot.
+ *     keeps painting anchored to facelet ↔ engine home addressing even if the
+ *     cube body pose changes independently of the scene view.
  *   - facelet (React state, shared with the 2D net) is the source of truth; on
  *     every change we push all 6n² sticker labels into the cube via cube.stick.
  *     Cube.serialize()'s ordering is the standard Kociemba URFDLB facelet, so
@@ -53,9 +49,8 @@ import { onIdle } from '@/lib/on-idle';
 type PaintEngine = {
   mountSimWorld: typeof import('@/components/sim-embed/mountSimWorld').mountSimWorld;
   Toucher: typeof Toucher;
-  orbitSceneAutoRotate: typeof import('@/app/[lang]/sim/engine/viewControls').orbitSceneAutoRotate;
+  orbitSceneFree: typeof import('@/app/[lang]/sim/engine/viewControls').orbitSceneFree;
   resetSceneView: typeof import('@/app/[lang]/sim/engine/viewControls').resetSceneView;
-  TwistAction: typeof import('@/app/[lang]/sim/engine/nxn/twister').TwistAction;
   /** /sim 默认灵敏度那一档。 */
   orbitK: number;
 };
@@ -63,18 +58,16 @@ let enginePromise: Promise<PaintEngine> | null = null;
 
 export function preloadPaintEngine(): Promise<PaintEngine> {
   enginePromise ??= (async () => {
-    const [embed, toucher, view, twister] = await Promise.all([
+    const [embed, toucher, view] = await Promise.all([
       import('@/components/sim-embed/mountSimWorld'),
       import('@/app/[lang]/sim/Toucher'),
       import('@/app/[lang]/sim/engine/viewControls'),
-      import('@/app/[lang]/sim/engine/nxn/twister'),
     ]);
     return {
       mountSimWorld: embed.mountSimWorld,
       Toucher: toucher.default,
-      orbitSceneAutoRotate: view.orbitSceneAutoRotate,
+      orbitSceneFree: view.orbitSceneFree,
       resetSceneView: view.resetSceneView,
-      TwistAction: twister.TwistAction,
       orbitK: view.ORBIT_K,
     };
   })();
@@ -147,7 +140,7 @@ export default function Interactive3DCube({
 
   const mountEngine = async (host: HTMLElement): Promise<() => void> => {
     const {
-      mountSimWorld, Toucher: TouchClass, orbitSceneAutoRotate, resetSceneView, TwistAction, orbitK,
+      mountSimWorld, Toucher: TouchClass, orbitSceneFree, resetSceneView, orbitK,
     } = await preloadPaintEngine();
 
     // 画板一律满像素比(涂色要看清贴纸边界),所以不吃 mountSimWorld 默认的 2× 上限。
@@ -161,27 +154,17 @@ export default function Interactive3DCube({
     const world = mount.world;
     const cube = world.cube as Cube;
 
-    // 重置视角 = 视角回家 **且** 把自动转体累计的整体转体退回去(涂色板的姿态就是这两样),
-    // 否则按了「重置」魔方还歪着(白面朝右),用户会以为按钮坏了。cube.reset() 只动位置 /
-    // 朝向,贴纸颜色挂在 cubelet 上不受影响。
-    resetViewRef.current = () => { cube.reset(); resetSceneView(world); mount.invalidate(); };
+    resetViewRef.current = () => { resetSceneView(world); mount.invalidate(); };
 
     const toucher = new TouchClass();
     toucher.init(mount.renderer.domElement, world.controller.touch);
 
-    // Paint mode: drags orbit (never twist a layer), taps paint. 「自动转体」= 左右拖每积累
-    // 90° 就折成真正的整体 y 转体(与 /sim 同一份 foldViewIntoTurns);上下拖钳在 ±90°
-    // (那里正好正俯视 / 正仰视,U/D 照样点得到)—— 俯仰折叠在非象限偏航下会跳一帧,画板
-    // 不记步、没有非折不可的理由,就不折。理由与实测见 viewControls 的 `ViewTurns`。
-    world.controller.dragEmpty = 'orbit';
+    // Paint mode: drags orbit (never twist a layer), taps paint. 与 /sim 的「视角」同一条
+    // 无界路径:x/y 两轴都可持续累加,上下拖能连续翻过顶面与底面。
+    world.controller.dragEmpty = 'view';
     world.controller.paintMode = true;
     world.controller.onOrbit = (dx, dy) => {
-      orbitSceneAutoRotate(world, dx, dy, orbitK, {
-        y: {
-          quantum: Math.PI / 2,
-          commit: (positive) => cube.twister.twist(new TwistAction('y', positive, 1), true, true),
-        },
-      });
+      orbitSceneFree(world, dx, dy, orbitK);
     };
     world.controller.taps.push((slot, face, tapOpts) => {
       if (slot < 0 || face === null) return;
