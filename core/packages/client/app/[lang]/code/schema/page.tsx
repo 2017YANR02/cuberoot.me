@@ -256,6 +256,11 @@ const TABLES: Table[] = [
     { name: 'description_zh / description_en', note: { zh: '课程说明或口播提纲,允许留空', en: 'optional lesson notes or narration outlines' } },
     { name: 'minutes', note: { zh: '管理员可调的预计时长,范围 1–60 分钟', en: 'administrator-editable estimate from 1 to 60 minutes' } },
   ] },
+  { name: 'teaching_trial_lesson_overrides', domain: 'community', origin: '0133', purpose: { zh: '/courses 试听课的管理员中文覆盖层;英文继续使用前端默认稿', en: 'Administrator-maintained Chinese overrides for trial lessons on /courses; English continues to use the frontend defaults' }, cols: [
+    { name: 'lesson_id (PK)', note: { zh: '对应前端试听课稳定编号', en: 'stable identifier of the frontend trial lesson' } },
+    { name: 'title_zh, outcome_zh, minutes', note: { zh: '可直接修改的中文标题、目标与时长', en: 'editable Chinese title, goal, and duration' } },
+    { name: 'shots_zh JSONB, script_zh JSONB', note: { zh: '按顺序保存拍摄清单与完整口播段落', en: 'ordered shot-list items and complete narration paragraphs' } },
+  ] },
   { name: 'ops_commands', domain: 'community', origin: '0010', evolved: [11], purpose: { zh: '/code/ops runbook 命令 + 提示词模板', en: 'Commands + prompts behind the /code/ops runbook' } },
   { name: 'page_notices', domain: 'community', origin: '0073', purpose: { zh: '每页顶部管理员通知条(维护中/WIP/bug),按路径匹配', en: 'Per-page admin notice bars (maintenance/WIP/bug), matched by path' } },
   { name: 'pattern_examples', domain: 'community', origin: '0091', purpose: { zh: '/scramble/pattern/search 的示例预设:管理员在页面上摆好图案就能存一条,q 存的就是可分享的 ?q= 编码', en: 'Example presets for /scramble/pattern/search: an admin lays out a pattern and saves it; q holds the same shareable ?q= encoding the page uses' }, cols: [
@@ -403,6 +408,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 130, slug: 'teacher_directory_contacts', desc: { zh: '老师与机构资料增加按平台存储的多种公开联系方式，并保留原有联系方式。', en: 'Add platform-specific public contact methods to teacher and school profiles while preserving existing contact data.' } },
   { n: 131, slug: 'alg_preferred_algs', desc: { zh: '新增公式记忆主公式偏好表，登录用户可跨设备同步每个 case 的主公式。', en: 'Add primary algorithm preferences so signed-in users can sync one primary algorithm per case across devices.' } },
   { n: 132, slug: 'alg_top_layer_no_leading_y', desc: { zh: '修正顶层公式开头的 y 转体，并由数据库阻止标准公式与用户投稿再次写入此类数据。', en: 'Rewrite leading y rotations in last-layer algorithms and prevent canonical or community data from reintroducing them.' } },
+  { n: 133, slug: 'teaching_trial_lesson_overrides', desc: { zh: '新增试听课中文覆盖表，管理员可在课程页直接维护标题、目标、时长、拍摄清单与完整口播。', en: 'Add Chinese overrides for trial lessons so administrators can edit titles, goals, durations, shot lists, and full narration directly on the course page.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

@@ -25,6 +25,34 @@ export interface AdvancedCourseDraft {
   minutes: number;
 }
 
+export interface TrialLessonOverride {
+  lessonId: string;
+  titleZh: string;
+  outcomeZh: string;
+  minutes: number;
+  shotsZh: string[];
+  scriptZh: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type TrialLessonDraft = Omit<TrialLessonOverride, 'lessonId' | 'createdAt' | 'updatedAt'>;
+
+export async function fetchTrialLessonOverrides(): Promise<TrialLessonOverride[]> {
+  return handleApi(await fetch(apiUrl('/v1/teaching/trial'), { cache: 'no-store' }));
+}
+
+export async function updateTrialLessonOverride(
+  lessonId: string,
+  draft: TrialLessonDraft,
+): Promise<TrialLessonOverride> {
+  return handleApi(await fetch(apiUrl(`/v1/teaching/trial/${encodeURIComponent(lessonId)}`), {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(draft),
+  }));
+}
+
 export async function fetchAdvancedCourseLessons(): Promise<AdvancedCourseLesson[]> {
   return handleApi(await fetch(apiUrl('/v1/teaching/advanced'), { cache: 'no-store' }));
 }
