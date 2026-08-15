@@ -10,7 +10,7 @@ import { makeMasking, Masking } from '@cuberoot/visualcube';
 import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
 import { FM_REGULAR, FM_IGNORED, stickeringMaskFn } from '@/app/[lang]/sim/engine/nxn/stickering';
 import {
-  netIndexOf, visualcubeStageMaskFn, resolveStageMaskFn,
+  netIndexOf, visualcubeStageMaskFn, resolveStageMaskFn, visualcubeMaskForStickering,
   visualcubeStageGroups, VC_MASK_LABEL,
 } from '@/app/[lang]/sim/engine/nxn/vcStageMask';
 
@@ -217,6 +217,14 @@ describe('vcStageMask — 拿方朝向重定向', () => {
 });
 
 describe('vcStageMask — 下拉清单去重 + 标签', () => {
+  it('把 /sim 同义阶段转成 cold fallback 可直接消费的 visualcube mask', () => {
+    expect(visualcubeMaskForStickering(3, 'F2L')).toBe('f2l');
+    expect(visualcubeMaskForStickering(3, 'Cross')).toBe('cross');
+    expect(visualcubeMaskForStickering(3, 'dr')).toBe('dr');
+    expect(visualcubeMaskForStickering(3, 'PLL')).toBe('');
+    expect(visualcubeMaskForStickering(3, 'full')).toBe('');
+  });
+
   it('order 3:含 visualcube 独有(fl/dr/xcross),去掉与引擎重名(oll/ll/cross/f2l/2x2x2)', () => {
     const items = new Set(visualcubeStageGroups(3).flatMap((g) => g.items));
     for (const keep of ['fl', 'wv', 'vh', 'dr', 'xcross', 'mehta_belt2', 'roux_co', 'line', 'oell']) {

@@ -34,14 +34,16 @@ const UP_RULES: readonly PlanUpRule[] = ['all', 'bar', 'baroppbar'];
 const FC_RE = /^[URFDLBX]{54}$/;
 
 /**
- * Panel-mode fields the HOST (sim) owns: the studio drops its own 公式 / 六面配色
- * controls and instead mirrors the sim's current algorithm + colour scheme. Like
- * `puzzle`, these are injected on read and never written to the URL — so the image
- * has ONE source for state + colours (the sim), not a second copy under `img_*`.
+ * Panel-mode fields the HOST (sim) owns: the studio drops its own 公式 / 阶段 / 六面配色
+ * controls and instead mirrors the sim's current algorithm + stage + colour scheme.
+ * Like `puzzle`, these are injected on read and never written to the URL — so the
+ * image has ONE source for state + colours (the sim), not a second copy under `img_*`.
  */
 export interface InheritedFields {
   algType: 'alg' | 'case';
   algorithm: string;
+  stageMask: string;
+  maskAlg: string;
   faceU: string; faceR: string; faceF: string; faceD: string; faceL: string; faceB: string;
 }
 
@@ -52,7 +54,7 @@ export interface InheritedFields {
  * type in the URL), and this puzzle is injected before `view` / rotation parsing —
  * both of which depend on knowing the puzzle type up front.
  *
- * `inherit` = the sim's live alg + colour scheme (see InheritedFields). Same
+ * `inherit` = the sim's live alg + stage + colour scheme (see InheritedFields). Same
  * discipline: injected on read (overriding any stray `alg`/`case`/`sch`), never
  * emitted, so the studio's dropped controls have no orphan URL keys.
  */
@@ -68,8 +70,8 @@ export interface CodecOptions {
 const LEGACY_PZL_ALIAS = 'puzzle';
 
 /** Write keys the host owns in panel mode (never emitted): `pzl` when the host owns
- *  the puzzle, and `alg`/`case`/`sch` when it owns the alg + colour scheme. */
-const INHERITED_KEYS = ['alg', 'case', 'sch'] as const;
+ *  the puzzle, and `alg`/`case`/`stage`/`sch` when it owns the image state. */
+const INHERITED_KEYS = ['alg', 'case', 'stage', 'sch'] as const;
 function ownedWriteKeys(opts?: CodecOptions): readonly string[] {
   let keys: readonly string[] = WRITE_KEYS;
   if (opts?.puzzle) keys = keys.filter((k) => k !== 'pzl');
@@ -235,6 +237,8 @@ export function readSpecFromParams(params: ParamsInput, prefix: string, opts?: C
     const inh = opts.inherit;
     s.algType = inh.algType;
     s.algorithm = inh.algorithm;
+    s.stageMask = inh.stageMask;
+    s.maskAlg = inh.maskAlg;
     s.faceU = inh.faceU; s.faceR = inh.faceR; s.faceF = inh.faceF;
     s.faceD = inh.faceD; s.faceL = inh.faceL; s.faceB = inh.faceB;
   }
@@ -261,7 +265,7 @@ export function specToParams(s: ImageSpec, prefix: string, opts?: CodecOptions):
   } else if (s.puzzleVariant !== DEFAULTS.puzzleVariant) {
     set('view', s.puzzleVariant);
   }
-  if (s.stageMask) {
+  if (!opts?.inherit && s.stageMask) {
     set('stage', s.maskAlg ? `${s.stageMask}-${s.maskAlg}` : s.stageMask);
   }
   const schDifferent =

@@ -68,6 +68,15 @@ const VC_DUP: Record<string, string> = {
   '2x2x2': '2x2x2', '2x2x3': '2x2x3',
 };
 
+/** /sim 下拉值 → visualcube 的同义遮罩名。只返回 visualcube 在该阶数下真的
+ *  能画的遮罩；没有等价项时返回空串，由实时引擎镜像继续负责精确显示。 */
+export function visualcubeMaskForStickering(order: number, stickering: string): string {
+  if (!stickering || stickering === 'full' || stickering === 'custom') return '';
+  const duplicate = Object.entries(VC_DUP).find(([, engine]) => engine === stickering)?.[0];
+  const candidate = duplicate ?? stickering;
+  return visualcubeStageMaskFn(order, candidate) ? candidate : '';
+}
+
 /** 遮罩名 → 该阶数下 stickering 下拉真正列出的那个值。与引擎自带阶段同义的 vc 名
  *  (`oll` ↔ `OLL`)在下拉里只留引擎那个,直接传 vc 名画得对但选不中。 */
 export function stickeringValueForVcMask(order: number, mask: string): string {
