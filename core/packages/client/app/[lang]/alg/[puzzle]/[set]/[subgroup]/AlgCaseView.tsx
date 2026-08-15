@@ -506,7 +506,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                       {selectedEntry && (
                         <div className="alg-case-detail-ori-player">
                           <AlgPlayer
-                            alg={caseViewAlg(selectedEntry.alg, effectiveViewAngle)}
+                            alg={displayAlg(caseViewAlg(selectedEntry.alg, effectiveViewAngle))}
                             puzzle={puzzle}
                             set={set}
                             setup={caseViewSetup(selectedEntry.setup ?? orientedSetup, effectiveViewAngle)}

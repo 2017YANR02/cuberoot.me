@@ -29,7 +29,7 @@ describe('algorithm player placement', () => {
     const styles = read('app/[lang]/alg/alg.css');
 
     expect(detail).toMatch(/caseObj\.algs\.map\(\(oriAlgs, oi\) => \{[\s\S]*?const orientedSetup = oriAdjustSetup\(caseObj\.setup, oi\);/);
-    expect(detail).toMatch(/className="alg-case-detail-ori-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{caseViewAlg\(selectedEntry\.alg, effectiveViewAngle\)\}[\s\S]*?setup=\{caseViewSetup\(selectedEntry\.setup \?\? orientedSetup, effectiveViewAngle\)\}/);
+    expect(detail).toMatch(/className="alg-case-detail-ori-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{displayAlg\(caseViewAlg\(selectedEntry\.alg, effectiveViewAngle\)\)\}[\s\S]*?setup=\{caseViewSetup\(selectedEntry\.setup \?\? orientedSetup, effectiveViewAngle\)\}/);
     expect(detail).toContain('inlinePlayer={!multiOri}');
     expect(detail).toContain('autoPlay={playRequest > 0}');
     expect(detail).toContain('playRequest={playRequest}');
