@@ -11,13 +11,14 @@ import {
 } from '../app/[lang]/courses/_data';
 import { OLL_ORDER, PLL_LABELS, ZBLL_CASE_COUNTS } from '../app/[lang]/courses/_data/cfop-micro';
 import { ADVANCED_COURSE_FALLBACK } from '../app/[lang]/courses/_data/advanced-course-fallback';
+import { mergeTrialLessonOverrides } from '../app/[lang]/courses/_data/trial-overrides';
 import { SECTIONS, TEXTS } from '../lib/landing-sections';
 
 describe('teaching course plan', () => {
   it('keeps the three-course lesson structure and duration baseline', () => {
-    expect(TEACHING_COURSES.map((course) => courseLessons(course).length)).toEqual([5, 26, 588]);
-    expect(TEACHING_LESSON_COUNT).toBe(619);
-    expect(TEACHING_TOTAL_MINUTES).toBe(1724);
+    expect(TEACHING_COURSES.map((course) => courseLessons(course).length)).toEqual([9, 26, 588]);
+    expect(TEACHING_LESSON_COUNT).toBe(623);
+    expect(TEACHING_TOTAL_MINUTES).toBe(1734);
 
     const cfop = TEACHING_COURSES[2];
     expect(cfop.stages.map((stage) => stageLessons(stage).length)).toEqual([3, 15, 73, 483, 14]);
@@ -58,6 +59,40 @@ describe('teaching course plan', () => {
         }
       }
     }
+  });
+
+  it('starts the trial with the four introduction lessons and applies Chinese-only overrides', () => {
+    const trial = TEACHING_COURSES[0];
+    expect(courseLessons(trial).slice(0, 4).map((lesson) => lesson.id)).toEqual([
+      'trial-intro-speedcubing',
+      'trial-intro-ruimin',
+      'trial-intro-cuberoot',
+      'trial-intro-structure',
+    ]);
+
+    const original = courseLessons(trial)[0];
+    const merged = courseLessons(mergeTrialLessonOverrides(trial, [{
+      lessonId: original.id,
+      titleZh: '修改后的标题',
+      outcomeZh: '修改后的目标',
+      minutes: 4,
+      shotsZh: ['镜头一', '镜头二'],
+      scriptZh: ['第一段', '第二段'],
+    }]))[0];
+    expect(merged).toMatchObject({
+      title: { zh: '修改后的标题', en: original.title.en },
+      outcome: { zh: '修改后的目标', en: original.outcome.en },
+      minutes: 4,
+    });
+    expect(merged.shots.map((line) => line.zh)).toEqual(['镜头一', '镜头二']);
+    expect(merged.script.map((line) => line.zh)).toEqual(['第一段', '第二段']);
+  });
+
+  it('keeps trial writes administrator-only and stores JSON arrays without double encoding', () => {
+    const route = readFileSync(join(import.meta.dirname, '../../server/src/routes/teaching.ts'), 'utf8');
+    expect(route).toMatch(/put\('\/teaching\/trial\/:lessonId'[\s\S]*?requireAdminOrApiKey\(c\)/);
+    expect(route).toMatch(/shots_zh = EXCLUDED\.shots_zh/);
+    expect(route).toMatch(/\[lessonId,[\s\S]*lesson\.shotsZh, lesson\.scriptZh\]/);
   });
 
   it('keeps the complete reference-inspired CFOP case tree', () => {
