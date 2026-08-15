@@ -40,6 +40,9 @@ import { exportSimSvgSchematic, hasSchematicFacelets } from './sim_svg_export_sc
 import { renderCubeNetSvg } from '@/lib/cube-net-svg';
 import { exportSimPlanSvg } from './sim_plan_export';
 import type Cube from './engine/nxn/cube';
+import {
+  countPictureFaces, renderPictureCubeNetSvg,
+} from './engine/nxn/pictureCube';
 import { SIZE } from './engine/define';
 import { createBackView, type BackView } from './engine/backView';
 import Toucher from './Toucher';
@@ -488,6 +491,10 @@ export default function SimPage() {
     if (!query.anchor) return saved;
     return { ...saved, playbackMode: query.anchor === 'end' ? 'algorithm' : 'moves' };
   });
+  const pictureCubeActive = typeof puzzleParam === 'number'
+    && settings.pictureCube
+    && countPictureFaces(settings.pictureFaces) > 0;
+  const pictureImageStudioEngineOnly = imageStudioEngineOnly || pictureCubeActive;
   useEffect(() => {
     if (!query.anchor) return;
     const playbackMode = query.anchor === 'end' ? 'algorithm' : 'moves';
@@ -1326,7 +1333,12 @@ export default function SimPage() {
       // 方位字母完全由设置面板「字母」开关控制:开=该拼图的方位标签常驻,关=完全不显示
       // (拖视角 / 拖层时也不再浮现 —— 这个开关是字母的唯一开关,用户明确要求)。
       // SMPL-X 全身查看时字母无意义(拼图已藏),一并压掉。
-      const showLabels = settingsRef.current.faceLabels === true && !world.smplxBodyOn;
+      const pictureLabelsHidden = typeof world.puzzleKind === 'number'
+        && settingsRef.current.pictureCube
+        && countPictureFaces(settingsRef.current.pictureFaces) > 0;
+      const showLabels = settingsRef.current.faceLabels === true
+        && !world.smplxBodyOn
+        && !pictureLabelsHidden;
       if (showLabels) activeHints.show(); else activeHints.hide();
       activeHints.setCameraOverlay(true);
       for (const h of allHints) if (h !== activeHints) h.hide();
@@ -1694,7 +1706,7 @@ export default function SimPage() {
   useEffect(() => {
     // engine-only 拼图(fto / 枫叶…)不消费 spec(伴图直出 engineSvg),别把
     // 'cube' 默认映射 + 视角标定写进 URL 的 img_* 参数。
-    if (imageStudioEngineOnly || !staticFallbackExact) return;
+    if (pictureImageStudioEngineOnly || !staticFallbackExact) return;
     const patch: Partial<ImageSpec> = {};
     if (imgSpec.puzzleType !== imgPuzzle.puzzleType) patch.puzzleType = imgPuzzle.puzzleType;
     if (imgSpec.cubeSize !== imgPuzzle.cubeSize) patch.cubeSize = imgPuzzle.cubeSize;
@@ -1759,7 +1771,7 @@ export default function SimPage() {
       }
     }
     if (Object.keys(patch).length > 0) setImgSpec(patch);
-  }, [imageStudioEngineOnly, staticFallbackExact, imgPuzzle, imgInherit, imgSpec,
+  }, [pictureImageStudioEngineOnly, staticFallbackExact, imgPuzzle, imgInherit, imgSpec,
       settings.viewAngle, settings.viewGradient, settings.perspective, setImgSpec]);
 
   // ── 引擎 BSP 伴图镜像(sr / visualcube 伴图退役,Phase 3)────────────────
@@ -1783,12 +1795,12 @@ export default function SimPage() {
   const srCompanionForced = imgEngineMode === 'sr';
   const [engineSvg, setEngineSvg] = useState<string | null>(null);
   useEffect(() => {
-    const active = imageOpen && (!srCompanionForced || !staticFallbackExact);
+    const active = imageOpen && (!srCompanionForced || pictureCubeActive || !staticFallbackExact);
     if (!active) { setEngineSvg(null); return; }
     // 贴纸遮罩(mask 直映):有派生表的拼图把灰化烙进镜像;没有的整程置 null,
     // PuzzleImage 落回 spec 渲染器(sr/visualcube 认 mask)—— 哪条路都不丢遮罩。
     // engine-only 拼图没有遮罩编辑入口,忽略 URL 残值(免把伴图饿死在等待帧)。
-    const maskIds = imageStudioEngineOnly ? null : parseMask(imgSpec.stickerMask || '');
+    const maskIds = pictureImageStudioEngineOnly ? null : parseMask(imgSpec.stickerMask || '');
     const maskKeys = maskIds?.size ? toEngineMask(imgPuzzle.puzzleType, maskIds) : null;
     if (maskIds?.size && maskKeys === undefined) { setEngineSvg(null); return; }
     // 伴图复杂度上限:普通阶几何 ≈ 88 三角/块 + 204 三角/贴纸,6x6 ≈ 5.7 万已是
@@ -1853,6 +1865,31 @@ export default function SimPage() {
       if (++frame % 8 !== 0) return; // ~7.5Hz 采样
       const world = worldRef.current;
       if (world) {
+        if (pictureCubeActive && typeof world.puzzleKind === 'number') {
+          const nxn = world.cube as Cube;
+          // Export only after the instanced scene has settled. Besides avoiding an
+          // in-between orientation, this prevents rebuilding every sticker object
+          // at 7.5 Hz while the cube is idle (important for higher-order NxN).
+          world.scene.updateMatrixWorld(true);
+          const sig = `picture|${nxn.order}|${sigOf(world)}`;
+          if (sig !== lastSig) { lastSig = sig; stable = 0; return; }
+          if (stable < 1) { stable++; return; }
+          if (sig === exportedSig) return;
+          const facelets = nxn.serializePictureFacelets();
+          const maskFn = stickeringMaskFor(nxn);
+          const stickering = maskFn ? nxn.serializeStickering(maskFn) : null;
+          exportedSig = sig;
+          setEngineSvg(renderPictureCubeNetSvg({
+            order: nxn.order,
+            facelets,
+            faces: settings.pictureFaces,
+            faceColors: settings.faceColors,
+            bodyColor: renderSettings.coreColor,
+            stickerOpacity: renderSettings.stickerOpacity,
+            stickering: stickering ?? undefined,
+          }));
+          return;
+        }
         // 平面视图(net / wca / plan)——NxN 从 cube.serialize() 逻辑态直出,不走 3D
         // 投影的静止采样(逻辑态即时、无相机)。签名 = 视图 + 序列化串,复原帧作标的
         // 遮罩天然随打乱携带。视图/配色变由 effect 重跑(重置 exportedSig)。
@@ -1972,7 +2009,7 @@ export default function SimPage() {
       }
       // twisty 路径。通常由 spec 精确渲染;engine-only 或 spec 表达不了当前阶段
       // (例如 megaminx LS)时才走 vantage 镜像。
-      if (!imageStudioEngineOnly && staticFallbackExact) {
+      if (!pictureImageStudioEngineOnly && staticFallbackExact) {
         if (exportedSig) { exportedSig = ''; setEngineSvg(null); }
         return;
       }
@@ -2003,7 +2040,7 @@ export default function SimPage() {
     };
     raf = requestAnimationFrame(tick);
     return () => { disposed = true; cancelAnimationFrame(raf); };
-  }, [imageOpen, srCompanionForced, imageStudioEngineOnly,
+  }, [imageOpen, srCompanionForced, pictureCubeActive, pictureImageStudioEngineOnly,
       staticFallbackExact,
       imgSpec.stickerMask, imgSpec.maskColor, imgPuzzle.puzzleType,
       // 伴图外观跟 3D 走同一份设置(见上面 exportSimSvgSchematic 的注释);trans 预设
@@ -2020,7 +2057,7 @@ export default function SimPage() {
       imgSpec.hideGreySides, imgSpec.stageMask, imgSpec.maskAlg,
       imgSpec.planSideRule, imgSpec.planUpRule, imgSpec.planShowYellow,
       imgSpec.planForceShow, imgSpec.planForceHide,
-      settings.faceColors, stickeringMaskFor]);
+      settings.faceColors, settings.pictureFaces, stickeringMaskFor]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
   const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';
@@ -2085,6 +2122,9 @@ export default function SimPage() {
               order={order}
               userMoveRef={userMoveRef}
               faceColors={settings.faceColors}
+              pictureCube={settings.pictureCube}
+              pictureFaces={settings.pictureFaces}
+              getStickeringMask={stickeringMaskFor}
               pointerTurns={settings.pointerTurns !== false}
             />
           )}
@@ -2313,9 +2353,9 @@ export default function SimPage() {
             simBridge={simBridge}
             previewHost={imageHost}
             engineSvg={engineSvg}
-            engineOnly={imageStudioEngineOnly}
             staticFallbackExact={staticFallbackExact}
-            compare={imgEngineMode === 'both'}
+            engineOnly={pictureImageStudioEngineOnly}
+            compare={imgEngineMode === 'both' && !pictureCubeActive}
           />
           {/* 阶段速查整本都是 NxN,只对 cube 露出。 */}
           {imgPuzzle.puzzleType === 'cube' && (
