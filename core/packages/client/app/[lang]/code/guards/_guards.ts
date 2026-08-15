@@ -207,6 +207,12 @@ export const CI_GUARDS_UI: CiGuard[] = [
     zh: { title: '网页与 PDF 共用公式图渲染计划', desc: '公式库网页缩略图与 PDF 图统一先走 alg_thumb_plan:它一处决定拼图渲染器、视图、遮罩、SQ1 阶段与黑顶配色,CaseThumb 和 case_svg 只负责把同一个计划适配成 React 或 SVG。两个适配器里再次按 puzzle 分叉直接 CI 红;测试同时逐字比对 SQ1 各阶段的网页计划 SVG 与 PDF SVG。' },
     en: { title: 'Catalog and PDF share one case-image plan', desc: 'Catalog thumbnails and PDF images first go through alg_thumb_plan, the one place that chooses the puzzle renderer, view, mask, SQ1 stage and black-top scheme. CaseThumb and case_svg only adapt that same plan to React or SVG. Branching on puzzle again in either adapter turns CI red, while the test also byte-compares the planned and PDF SVG for every SQ1 stage.' },
   },
+  {
+    id: 'alg-case-detail-layout',
+    test: 'alg-player-placement.test.ts',
+    zh: { title: '公式 case 详情另造结构或漏掉静态主图', desc: '所有 /alg case 详情都由 AlgCaseView 承载：CaseThumb 是稳定的辨识主图，AlgPlayer 是交互动画；F2L 等多朝向详情也必须同时保留主图。写入 Hook 会拦回条件隐藏主图，CI 同时钉住共享路由、主图和响应式布局。' },
+    en: { title: 'Rebuilt alg-case detail or missing static identity image', desc: 'Every /alg case detail goes through AlgCaseView: CaseThumb is the stable identity image and AlgPlayer is the interactive animation. Multi-orientation details such as F2L keep both. The write hook blocks restoring a conditional thumbnail, while CI pins the shared route, identity image, and responsive layout.' },
+  },
 ];
 
 export const CI_GUARDS_DRIFT: CiGuard[] = [

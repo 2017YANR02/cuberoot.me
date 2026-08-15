@@ -1678,20 +1678,13 @@ a.alg-community-author:hover {
   overflow: visible;
 }
 
-/* 非 meta case(f2l / oll / coll / cmll / zbls …)的精简正文:槽位魔方图 + 可播放公式行。 */
+/* 非 meta case(f2l / oll / coll / cmll / zbls …)的精简正文:
+   左边保留静态辨识图和打乱，右边专注动画与公式。 */
 .alg-case-detail-lean {
   display: grid;
   grid-template-columns: 136px minmax(0, 1fr);
   align-items: start;
   gap: 24px;
-}
-.alg-case-detail-lean.is-multi-ori {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.alg-case-detail-lean.is-multi-ori .alg-case-detail-lean-aside {
-  width: 100%;
 }
 .alg-case-detail-lean-aside {
   display: flex;
@@ -1753,6 +1746,25 @@ a.alg-community-author:hover {
   margin-bottom: 6px;
 }
 
+/* 两个动画列至少各留出完整播放器宽度；中等宽度先把静态信息移到上方，
+   不牺牲动画可读性，也不提前把 FR / FL 拆成冗长单列。 */
+@media (max-width: 900px) {
+  .alg-case-detail-lean.is-multi-ori {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .alg-case-detail-lean.is-multi-ori .alg-case-detail-lean-aside {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 116px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 6px;
+  }
+  .alg-case-detail-lean.is-multi-ori .alg-case-detail-lean-thumb { grid-row: 1 / span 3; }
+  .alg-case-detail-lean.is-multi-ori .alg-case-detail-lean-aside > :not(.alg-case-detail-lean-thumb) { grid-column: 2; }
+}
+
 @media (max-width: 680px) {
   .alg-case-detail {
     padding: 12px;
@@ -1773,11 +1785,6 @@ a.alg-community-author:hover {
   }
   .alg-case-detail-lean-thumb { grid-row: 1 / span 3; }
   .alg-case-detail-lean-aside > :not(.alg-case-detail-lean-thumb) { grid-column: 2; }
-  .alg-case-detail-lean-aside.is-without-thumb {
-    display: flex;
-    flex-direction: column;
-  }
-  .alg-case-detail-lean-aside.is-without-thumb > * { grid-column: auto; }
   .alg-case-detail-lean-aside .alg-mirror-row {
     align-items: flex-start;
     flex-direction: column;
