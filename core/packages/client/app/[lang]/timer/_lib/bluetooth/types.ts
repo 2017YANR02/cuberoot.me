@@ -24,6 +24,8 @@ export interface BluetoothCubeStatus {
   battery: number | null;
   /** Pretty name like "GAN 356 i3 (XX:XX)" — for the UI. */
   deviceName: string;
+  /** Browser-provided, origin-scoped Web Bluetooth device identifier. */
+  deviceId?: string;
   /**
    * True when the connected driver can decode an orientation quaternion off
    * the wire, i.e. passing `onGyro` to the hook will actually produce

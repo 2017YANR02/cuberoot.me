@@ -695,6 +695,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         brand: driver.brand,
         battery: null,
         deviceName: prettyDeviceName(device),
+        deviceId: device.id,
         hasGyro: driver.hasGyro === true,
       });
 
@@ -938,6 +939,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         brand: driver!.brand,
         battery: null,
         deviceName: prettyDeviceName(device),
+        deviceId: device.id,
         hasGyro: driver!.hasGyro === true,
       });
       // Read battery in the background; failures fall back to null silently.

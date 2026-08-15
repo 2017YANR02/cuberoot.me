@@ -70,6 +70,7 @@ import { formatTargetTime, useSettings, getSettings, updateSettings } from '../_
 import { warmupSound } from '../_lib/sound';
 import { setMetronomeHold } from '@/lib/metronome';
 import { useBluetoothCube } from '../_lib/bluetooth';
+import type { TimerPresenceReport } from '../_lib/presence';
 import { mirrorForBrand, readDevQuatSource, sensorBasisForBrand, type Quat } from '../_lib/bluetooth/orientation';
 import { GyroRecorder, encodeGyroTrack } from '../_lib/bluetooth/gyro_track';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
@@ -239,7 +240,7 @@ interface SoloViewProps {
   /** The players (人数) select node, injected by the shell at the topbar left. */
   playersControl?: React.ReactNode;
   presenceControl?: React.ReactNode;
-  onPresenceChange?: (mix: { normal: number; smart: number }) => void;
+  onPresenceChange?: (report: TimerPresenceReport) => void;
 }
 
 export default function SoloView({ playersControl, presenceControl, onPresenceChange }: SoloViewProps) {
@@ -1113,9 +1114,32 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return () => { subs.delete(mirror); };
   }, []);
   const cubeConnected = bluetoothCube.status.connected;
+  const latestPresenceSolve = solves.at(-1);
   useEffect(() => {
-    onPresenceChange?.(cubeConnected ? { normal: 0, smart: 1 } : { normal: 1, smart: 0 });
-  }, [cubeConnected, onPresenceChange]);
+    onPresenceChange?.({
+      ...(cubeConnected ? { normal: 0, smart: 1 } : { normal: 1, smart: 0 }),
+      mode: 'solo',
+      results: latestPresenceSolve ? [{
+        event: latestPresenceSolve.event,
+        timeMs: latestPresenceSolve.timeMs,
+        penalty: latestPresenceSolve.penalty,
+        at: latestPresenceSolve.ts,
+      }] : [],
+      devices: cubeConnected ? [{
+        name: bluetoothCube.status.deviceName,
+        ...(bluetoothCube.status.deviceId ? { id: bluetoothCube.status.deviceId } : {}),
+      }] : [],
+    });
+  }, [
+    cubeConnected,
+    bluetoothCube.status.deviceId,
+    bluetoothCube.status.deviceName,
+    latestPresenceSolve?.event,
+    latestPresenceSolve?.penalty,
+    latestPresenceSolve?.timeMs,
+    latestPresenceSolve?.ts,
+    onPresenceChange,
+  ]);
   const cubeSolved = bluetoothCube.solved;
   useEffect(() => {
     if (!cubeConnected) { setLiveMoves([]); setAlgAnchored(false); return; }
