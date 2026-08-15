@@ -33,12 +33,6 @@
   --rp-popup-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
 }
 
-.records-rank {
-  color: var(--faint-foreground);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-
 /* 「详细成绩」attempts 网格的表头居中 + 整页按内容自适应居中,统一在 _wca_stats_extra.css 里按
    `.wse-page:has(.wse-attempts-col)` 处理(records / results 共用),这里不再单独写。 */
 
@@ -52,11 +46,4 @@
   font-size: 18px;
   margin: 16px 0 8px;
   color: var(--foreground);
-}
-
-/* 移动端 */
-@media (max-width: 720px) {
-  .records-table {
-    font-size: 12px;
-  }
 }

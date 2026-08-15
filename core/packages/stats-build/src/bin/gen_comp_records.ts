@@ -3,7 +3,7 @@
 //
 // 输出两个文件：
 //   stats/comp_records_summary.json — {compId: "WR"|"CR"|"NR"}  日历首屏用（~50KB）
-//   stats/comp_records_detail.json  — {compId: [{t,k,e,p,n,v},...]} modal 打开时 lazy fetch
+//   stats/comp_records_detail.json  — {compId: [{t,k,e,p,n,v,a},...]} modal 打开时 lazy fetch
 //
 // 字段缩写（为压缩 JSON）:
 //   t = level 原值 (WR/AfR/AsR/ER/NAR/OcR/SAR/NR)
@@ -12,6 +12,7 @@
 //   p = WCA person ID
 //   n = persons.name (含括号中文，如 "Yiheng Wang (王艺衡)")
 //   v = centiseconds (best / average)
+//   a = 该轮按 attempt_number 排序的成绩
 //
 // 用法: npx tsx src/bin/gen_comp_records.ts
 
@@ -49,11 +50,11 @@ interface Row extends RowDataPacket {
   c_id: string;
   p_id: string;
   e_id: string;
-  single_r: string | null;
-  avg_r: string | null;
-  best: number;
-  average: number;
+  kind: 's' | 'a';
+  record: string;
+  value: number;
   p_name: string;
+  attempts: string | null;
 }
 
 interface Entry {
@@ -63,6 +64,7 @@ interface Entry {
   p: string;
   n: string;
   v: number;
+  a: number[] | null;
 }
 
 async function main() {
@@ -73,15 +75,35 @@ async function main() {
       r.competition_id AS c_id,
       r.person_id AS p_id,
       r.event_id AS e_id,
-      r.regional_single_record AS single_r,
-      r.regional_average_record AS avg_r,
-      r.best,
-      r.average,
-      p.name AS p_name
+      's' AS kind,
+      r.regional_single_record AS record,
+      r.best AS value,
+      p.name AS p_name,
+      (
+        SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number)
+        FROM result_attempts ra
+        WHERE ra.result_id = r.id
+      ) AS attempts
     FROM results r
     JOIN persons p ON p.wca_id = r.person_id AND p.sub_id = 1
-    WHERE (r.regional_single_record IS NOT NULL AND r.regional_single_record != '')
-       OR (r.regional_average_record IS NOT NULL AND r.regional_average_record != '')
+    WHERE r.regional_single_record <> ''
+    UNION ALL
+    SELECT
+      r.competition_id AS c_id,
+      r.person_id AS p_id,
+      r.event_id AS e_id,
+      'a' AS kind,
+      r.regional_average_record AS record,
+      r.average AS value,
+      p.name AS p_name,
+      (
+        SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number)
+        FROM result_attempts ra
+        WHERE ra.result_id = r.id
+      ) AS attempts
+    FROM results r
+    JOIN persons p ON p.wca_id = r.person_id AND p.sub_id = 1
+    WHERE r.regional_average_record <> ''
   `;
 
   const rows = await query<Row[]>(sql);
@@ -90,14 +112,16 @@ async function main() {
 
   for (const r of rows) {
     const list = byComp.get(r.c_id) ?? [];
-
-    if (r.single_r) {
-      list.push({ t: r.single_r, k: 's', e: r.e_id, p: r.p_id, n: r.p_name, v: Number(r.best) });
-    }
-    if (r.avg_r) {
-      list.push({ t: r.avg_r, k: 'a', e: r.e_id, p: r.p_id, n: r.p_name, v: Number(r.average) });
-    }
-
+    const attempts = r.attempts === null ? null : r.attempts.split(',').map(Number);
+    list.push({
+      t: r.record,
+      k: r.kind,
+      e: r.e_id,
+      p: r.p_id,
+      n: r.p_name,
+      v: Number(r.value),
+      a: attempts,
+    });
     byComp.set(r.c_id, list);
   }
 

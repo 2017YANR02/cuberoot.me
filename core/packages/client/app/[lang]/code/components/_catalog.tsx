@@ -1532,6 +1532,13 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `画公式案例缩略图统一用它,别手拼 VisualCube / PuzzleSVG 选择逻辑。`, en: `Use this for alg-case thumbnails; don't hand-wire the VisualCube/PuzzleSVG selection logic yourself.` },
   },
   {
+    name: 'WcaRecordRowsTable',
+    import: "import { WcaRecordRowsTable } from '@/components/wca-records/WcaRecordRowsTable';",
+    category: 'more',
+    zh: 'WCA 纪录明细标准表，统一类型、项目、成绩、选手、老师、比赛、日期和每把成绩列。',
+    en: 'Canonical WCA record-detail table for type, event, result, person, teacher, competition, date, and attempts.',
+  },
+  {
     name: 'CompCell',
     import: "import { CompCell } from '@/components/CompCell/CompCell';",
     category: 'display',

@@ -21,6 +21,7 @@ import { formatDateRangeIso } from '@/lib/wca-date';
 import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { RecordPlaceRankings } from './RecordPlaceRankings';
+import '../../_wca_stats_extra.css';
 import './calendar_stats.css';
 import { tr } from '@/i18n/tr';
 

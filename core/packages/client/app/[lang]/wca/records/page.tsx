@@ -2,44 +2,32 @@
 
 // Ported from packages/client-vite/src/pages/wca_stats/RecordsPage.tsx.
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import Link from '@/components/AppLink';
-import PersonLink from '@/components/PersonLink';
 import HomeLink from '@/components/HomeLink';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { EventIcon } from '@/components/EventIcon';
-import { Flag } from '@/components/Flag';
 import { loadFlagData } from '@/lib/country-flags';
 import { statsUrl } from '@/lib/stats-base';
 import { countryName } from '@/lib/country-name';
-import { formatWcaResult } from '@/lib/wca-format-result';
 import { eventDisplayName } from '@/lib/wca-events';
-import { CompCell } from '@/components/CompCell/CompCell';
-import { compLinkProps } from '@/lib/comp-link';
-import { RecordBadge } from '@/components/RecordBadge';
 import { RegionPicker } from '@/components/RegionPicker';
 import { ListSelect } from '@/components/ListSelect';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
-import { AttemptHeaderCells, AttemptCells } from '@/components/wca-results/AttemptsGrid';
+import {
+  WcaRecordRowsTable,
+  type WcaRecordRowsTableRow,
+} from '@/components/wca-records/WcaRecordRowsTable';
 import '../_wca_stats_extra.css';
 import '../_records.css';
 import { tr } from '@/i18n/tr';
 import {
-  WcaTeacherCell,
-  WcaTeacherColumnHeader,
   WcaTeacherNote,
   useWcaTeachers,
-  type WcaTeacherDirectory,
 } from '@/components/WcaTeacherCell';
 
-interface Row {
-  e: string; t: 's' | 'a'; v: number; l: string;
-  p: string; pn: string; pc: string;
-  c: string; cn: string; cc: string;
-  d: string; a: number[] | null;
-}
+interface Row extends WcaRecordRowsTableRow { cc: string }
 
 interface Bundle { updated: string; rows: Row[] }
 
@@ -270,7 +258,7 @@ function RecordsPageInner() {
             )}
 
             {show === 'current' && currentRows.length > 0 && (
-              <RowsTable rows={currentRows} isZh={isZh} showEvent={!event} showRank={false} teacherDirectory={teacherDirectory} />
+              <WcaRecordRowsTable rows={currentRows} isZh={isZh} showEvent={!event} showRank={false} teacherDirectory={teacherDirectory} />
             )}
 
             {show === 'history' && grouped && grouped.map(g => (
@@ -281,100 +269,17 @@ function RecordsPageInner() {
                     <span>{eventDisplayName(g.event, isZh)}</span>
                   </h2>
                 )}
-                <RowsTable rows={g.rows} isZh={isZh} showEvent={false} teacherDirectory={teacherDirectory} />
+                <WcaRecordRowsTable rows={g.rows} isZh={isZh} showEvent={false} teacherDirectory={teacherDirectory} />
               </section>
             ))}
 
             {show === 'mixed' && visibleRows.length > 0 && (
-              <RowsTable rows={visibleRows} isZh={isZh} showEvent={!event} teacherDirectory={teacherDirectory} />
+              <WcaRecordRowsTable rows={visibleRows} isZh={isZh} showEvent={!event} teacherDirectory={teacherDirectory} />
             )}
           </>
         )}
       </div>
     </div>
-  );
-}
-
-interface RowsTableProps {
-  rows: Row[];
-  isZh: boolean;
-  showEvent: boolean;
-  showRank?: boolean;
-  teacherDirectory: WcaTeacherDirectory;
-}
-
-function RowsTable({ rows, isZh, showEvent, showRank = true, teacherDirectory }: RowsTableProps) {
-  const ranks = useMemo(() => {
-    const totals = new Map<string, number>();
-    for (const r of rows) {
-      const k = `${r.e}-${r.t}`;
-      totals.set(k, (totals.get(k) ?? 0) + 1);
-    }
-    const seen = new Map<string, number>();
-    const out: number[] = [];
-    for (const r of rows) {
-      const k = `${r.e}-${r.t}`;
-      const s = seen.get(k) ?? 0;
-      out.push((totals.get(k) ?? 0) - s);
-      seen.set(k, s + 1);
-    }
-    return out;
-  }, [rows]);
-  // 详细成绩列数字表头的列数 = 各行 attempts 最长(夹到 5);混合项目时取最宽的。
-  const attemptCols = useMemo(() => Math.min(5, rows.reduce((m, r) => Math.max(m, r.a?.length ?? 0), 0)), [rows]);
-
-  return (
-    <table className={`wse-table records-table sticky-thead${showEvent ? ' wse-multi-event' : ''}`}>
-      <thead>
-        <tr>
-          <th>{tr({ zh: '类型', en: 'Type'
-        })}</th>
-          {showEvent && <th>{tr({ zh: '项目', en: 'Event'
-        })}</th>}
-          <th className="wse-value-col">{tr({ zh: '单次', en: 'Single'
-        })}</th>
-          <th className="wse-value-col">{tr({ zh: '平均', en: 'Average' })}</th>
-          <th>{tr({ zh: '选手', en: 'Person'
-        })}</th>
-          <WcaTeacherColumnHeader />
-          <th>{tr({ zh: '比赛', en: 'Competition'
-        })}</th>
-          <th>{tr({ zh: '日期', en: 'Date' })}</th>
-          <AttemptHeaderCells count={attemptCols} />
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r, i) => (
-          <tr key={`${r.p}-${r.c}-${r.e}-${r.t}-${i}`}>
-            <td>
-              <RecordBadge record={r.l} />
-              {showRank && <>{' '}<span className="records-rank">#{ranks[i]}</span></>}
-            </td>
-            {showEvent && (
-              <td>
-                <EventIcon event={r.e} />
-                {' '}
-                <span>{eventDisplayName(r.e, isZh)}</span>
-              </td>
-            )}
-            <td className="wse-value-col">{r.t === 's' ? formatWcaResult(r.v, r.e, 'single') : ''}</td>
-            <td className="wse-value-col">{r.t === 'a' ? formatWcaResult(r.v, r.e, 'average') : ''}</td>
-            <td>
-              {r.pc && <Flag iso2={r.pc} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-              <PersonLink wcaId={r.p} name={r.pn} isZh={isZh} />
-            </td>
-            <td><WcaTeacherCell studentWcaId={r.p} eventIds={[r.e]} directory={teacherDirectory} isZh={isZh} /></td>
-            <td>
-              <Link {...compLinkProps(r.c)}>
-                <CompCell compId={r.c} compName={r.cn} isZh={isZh} date={r.d} />
-              </Link>
-            </td>
-            <td className="wse-detail-cell">{r.d}</td>
-            <AttemptCells attempts={r.a} eventId={r.e} count={attemptCols} />
-          </tr>
-        ))}
-      </tbody>
-    </table>
   );
 }
 

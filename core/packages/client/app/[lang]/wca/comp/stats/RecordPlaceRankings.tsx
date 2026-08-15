@@ -14,16 +14,18 @@ import {
 } from '@cuberoot/shared/record-places';
 import { Flag } from '@/components/Flag';
 import { ClearButton } from '@/components/ClearButton';
-import { EventIcon } from '@/components/EventIcon';
-import AppLink from '@/components/AppLink';
-import PersonLink from '@/components/PersonLink';
 import { RecordBadge } from '@/components/RecordBadge';
 import { SearchInput } from '@/components/SearchInput';
 import { SortArrow } from '@/components/SortArrow';
+import { useWcaTeachers } from '@/components/WcaTeacherCell';
+import {
+  WcaRecordRowsTable,
+  type WcaRecordRowsTableRow,
+} from '@/components/wca-records/WcaRecordRowsTable';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { tr } from '@/i18n/tr';
 import { countryName } from '@/lib/country-name';
-import { localizeCompName } from '@/lib/comp-localize';
+import { loadFlagData } from '@/lib/country-flags';
 import {
   cityRecordMatches,
   loadRecordPlaceDetails,
@@ -34,9 +36,6 @@ import {
   recordCityDisplayName,
   type RankedRecordRow,
 } from '@/lib/record-places';
-import { formatDateRangeIso } from '@/lib/wca-date';
-import { eventDisplayName } from '@/lib/wca-events';
-import { formatWcaResult } from '@/lib/wca-format-result';
 
 const TOP_LIMIT = 20;
 const SEARCH_LIMIT = 50;
@@ -84,6 +83,25 @@ function RecordDetailModal({ iso2, city, metric, isZh, placeName, onClose }: Rec
     () => shard ? recordPlaceDetailRows(shard, metric, city) : [],
     [shard, metric, city],
   );
+  const tableRows = useMemo<WcaRecordRowsTableRow[]>(
+    () => rows.slice(0, limit).map(({ compId, comp, entry }) => ({
+      e: entry.e,
+      t: entry.k,
+      v: entry.v,
+      l: entry.t,
+      p: entry.p,
+      pn: entry.n,
+      c: compId,
+      cn: comp.n,
+      d: comp.s,
+      de: comp.d,
+      a: entry.a,
+    })),
+    [rows, limit],
+  );
+  const teacherStudentIds = useMemo(() => tableRows.map((row) => row.p), [tableRows]);
+  const teacherEventIds = useMemo(() => tableRows.map((row) => row.e), [tableRows]);
+  const teacherDirectory = useWcaTeachers(teacherStudentIds, teacherEventIds);
 
   if (typeof document === 'undefined') return null;
 
@@ -123,41 +141,14 @@ function RecordDetailModal({ iso2, city, metric, isZh, placeName, onClose }: Rec
               <div className="cs-record-detail-summary">
                 {tr({ zh: `共 ${rows.length.toLocaleString()} 条`, en: `${rows.length.toLocaleString()} records` })}
               </div>
-              <div className="cs-record-detail-list">
-                {rows.slice(0, limit).map(({ id, compId, comp, entry }) => {
-                  const kind = entry.k === 's'
-                    ? tr({ zh: '单次', en: 'Single' })
-                    : tr({ zh: '平均', en: 'Average' });
-                  const resultKind = entry.k === 's' ? 'single' : 'average';
-                  return (
-                    <div className="cs-record-detail-item" key={id}>
-                      <div className="cs-record-detail-event">
-                        <EventIcon event={entry.e} />
-                        <span>{eventDisplayName(entry.e, isZh)}</span>
-                        <span className="cs-record-detail-kind">{kind}</span>
-                      </div>
-                      <div className="cs-record-detail-result">
-                        <span className="record-num-cell">
-                          {formatWcaResult(entry.v, entry.e, resultKind)}
-                          <RecordBadge record={entry.t} variant="inline" />
-                        </span>
-                      </div>
-                      <div className="cs-record-detail-context">
-                        <PersonLink wcaId={entry.p} name={entry.n} isZh={isZh} className="cs-record-detail-person" />
-                        <span className="cs-record-detail-comp-line">
-                          <AppLink
-                            href={`/wca/comp/${encodeURIComponent(compId)}?view=result&event=${encodeURIComponent(entry.e)}`}
-                            prefetch={false}
-                            className="cs-record-detail-comp"
-                          >
-                            {localizeCompName(compId, comp.n, isZh, { date: comp.s })}
-                          </AppLink>
-                          <span className="cs-record-detail-date">{formatDateRangeIso(comp.s, comp.d)}</span>
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="wse-table-wrapper cs-record-detail-table-wrap">
+                <WcaRecordRowsTable
+                  rows={tableRows}
+                  isZh={isZh}
+                  showEvent
+                  showRank={false}
+                  teacherDirectory={teacherDirectory}
+                />
               </div>
               {limit < rows.length && (
                 <button
@@ -245,55 +236,55 @@ function RankingTable<T extends CountryRecordCounts>({
             const placeKey = cityRow ? `${row.iso2}:${cityRow.city}` : row.iso2;
             return (
               <tr className="cs-record-row" key={placeKey}>
-                  <td className="cs-record-rank">{rank}</td>
-                  <td>
-                    <button
-                      type="button"
-                      className="cs-record-place-button"
-                      aria-haspopup="dialog"
-                      onClick={(event) => openDetails(event.currentTarget, {
-                        iso2: row.iso2,
-                        city: cityRow?.city ?? null,
-                        metric,
-                        placeName,
-                      })}
-                    >
-                      <span className="cs-record-place">
-                        <Flag iso2={row.iso2} />
-                        <span className="cs-record-place-text">
-                          <span className="cs-record-place-name">{placeName}</span>
-                          {cityRow && <span className="cs-record-country">{countryName(row.iso2, isZh)}</span>}
-                        </span>
+                <td className="cs-record-rank">{rank}</td>
+                <td>
+                  <button
+                    type="button"
+                    className="cs-record-place-button"
+                    aria-haspopup="dialog"
+                    onClick={(event) => openDetails(event.currentTarget, {
+                      iso2: row.iso2,
+                      city: cityRow?.city ?? null,
+                      metric,
+                      placeName,
+                    })}
+                  >
+                    <span className="cs-record-place">
+                      <Flag iso2={row.iso2} />
+                      <span className="cs-record-place-text">
+                        <span className="cs-record-place-name">{placeName}</span>
+                        {cityRow && <span className="cs-record-country">{countryName(row.iso2, isZh)}</span>}
                       </span>
-                      <ChevronRight className="cs-record-dialog-icon" size={14} aria-hidden="true" />
-                    </button>
-                  </td>
-                  {RECORD_METRICS.map((recordMetric) => {
-                    const active = recordMetric === metric;
-                    const code = recordMetric.toUpperCase();
-                    return (
-                      <td key={recordMetric} className={active ? 'cs-record-count cs-record-count-active' : 'cs-record-count'}>
-                        <button
-                          type="button"
-                          className="cs-record-count-button"
-                          disabled={row[recordMetric] === 0}
-                          aria-haspopup="dialog"
-                          aria-label={tr({ zh: `查看${placeName}的 ${code} 明细`, en: `Show ${code} details for ${placeName}` })}
-                          onClick={(event) => {
-                            onMetricChange(recordMetric);
-                            openDetails(event.currentTarget, {
-                              iso2: row.iso2,
-                              city: cityRow?.city ?? null,
-                              metric: recordMetric,
-                              placeName,
-                            });
-                          }}
-                        >
-                          {row[recordMetric].toLocaleString()}
-                        </button>
-                      </td>
-                    );
-                  })}
+                    </span>
+                    <ChevronRight className="cs-record-dialog-icon" size={14} aria-hidden="true" />
+                  </button>
+                </td>
+                {RECORD_METRICS.map((recordMetric) => {
+                  const active = recordMetric === metric;
+                  const code = recordMetric.toUpperCase();
+                  return (
+                    <td key={recordMetric} className={active ? 'cs-record-count cs-record-count-active' : 'cs-record-count'}>
+                      <button
+                        type="button"
+                        className="cs-record-count-button"
+                        disabled={row[recordMetric] === 0}
+                        aria-haspopup="dialog"
+                        aria-label={tr({ zh: `查看${placeName}的 ${code} 明细`, en: `Show ${code} details for ${placeName}` })}
+                        onClick={(event) => {
+                          onMetricChange(recordMetric);
+                          openDetails(event.currentTarget, {
+                            iso2: row.iso2,
+                            city: cityRow?.city ?? null,
+                            metric: recordMetric,
+                            placeName,
+                          });
+                        }}
+                      >
+                        {row[recordMetric].toLocaleString()}
+                      </button>
+                    </td>
+                  );
+                })}
               </tr>
             );
           })}
@@ -323,6 +314,10 @@ export function RecordPlaceRankings() {
     'recordCity',
     parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }),
   );
+
+  useEffect(() => {
+    void loadFlagData();
+  }, []);
 
   useEffect(() => {
     let current = true;

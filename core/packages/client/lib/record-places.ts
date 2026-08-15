@@ -37,7 +37,7 @@ export async function loadRecordPlaceDetails(iso2: string): Promise<RecordPlaceD
   if (!/^[A-Z]{2}$/.test(country)) throw new Error('invalid record place country');
   const existing = detailInflight.get(country);
   if (existing) return existing;
-  const request = fetch(statsUrl(`/stats/record_place_details_v1/${country}.json`)).then(async (response) => {
+  const request = fetch(statsUrl(`/stats/record_place_details_v2/${country}.json`)).then(async (response) => {
     if (!response.ok) throw new Error(`record place details unavailable (${response.status})`);
     const value: unknown = await response.json();
     if (!isRecordPlaceDetailShard(value) || value.iso2 !== country) {

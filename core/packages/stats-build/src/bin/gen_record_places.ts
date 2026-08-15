@@ -21,7 +21,7 @@ import { closePool, query } from '../core/database.js';
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_PATH = resolve(currentDir, '../../../../../stats/record_places_v2.json');
-const DETAIL_OUTPUT_DIR = resolve(currentDir, '../../../../../stats/record_place_details_v1');
+const DETAIL_OUTPUT_DIR = resolve(currentDir, '../../../../../stats/record_place_details_v2');
 const RECORDS_PATH = resolve(currentDir, '../../../../../stats/comp_records_detail.json');
 const FALLBACK_COMP_PATHS = [
   resolve(currentDir, '../../../../../stats/all_past_comps.json'),
@@ -79,7 +79,9 @@ function validRecordEntry(value: unknown): value is RecordPlaceDetailEntry {
     && typeof entry.e === 'string' && entry.e.length > 0
     && typeof entry.p === 'string' && entry.p.length > 0
     && typeof entry.n === 'string' && entry.n.trim().length > 0
-    && typeof entry.v === 'number' && Number.isSafeInteger(entry.v) && entry.v > 0;
+    && typeof entry.v === 'number' && Number.isSafeInteger(entry.v) && entry.v > 0
+    && (entry.a === null || (Array.isArray(entry.a)
+      && entry.a.every((attempt) => Number.isSafeInteger(attempt))));
 }
 
 function emptyDetailShard(iso2: string): RecordPlaceDetailShard {
