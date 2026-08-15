@@ -20,6 +20,12 @@ import { applyCoreOpacity } from './engine/coreOpacity';
 import { applyStickerThickness } from './engine/stickerThickness';
 import { applyHintFacelets } from './engine/hintFacelets';
 import { loadLogoTexture, SITE_LOGO_SRC } from './engine/nxn/logo';
+import {
+  countPictureFaces,
+  emptyPictureFaces,
+  normalizePictureFaces,
+  type PictureFaces,
+} from './engine/nxn/pictureCube';
 import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './setting-drawer.css';
 import { useT } from "@/hooks/useT";
@@ -130,6 +136,10 @@ export interface SimSettings {
   logo: 'none' | 'site' | 'custom';
   /** logo='custom' 时用户上传图的 data URL(已降采样压缩,空串=未上传)。 */
   customLogo: string;
+  /** NxN 图案魔方总开关。图片按 HOME 面切成贴纸碎片,转层后随物理块移动。 */
+  pictureCube: boolean;
+  /** 六面用户图片(data URL)。单独存储,避免每次拖滑条都重写大字符串。 */
+  pictureFaces: PictureFaces;
   /** 实时消步:手势 / 键盘转动追加到解法框时,自动 fold/抵消重复转动
    *  (做了 R 再做 R' → 框里 R 出现后又消失)。默认开。 */
   liveReduce: boolean;
@@ -214,6 +224,8 @@ export const DEFAULT_SETTINGS: SimSettings = {
   mirrorColor: MIRROR_DEFAULT_COLOR,
   logo: 'none',
   customLogo: '',
+  pictureCube: false,
+  pictureFaces: emptyPictureFaces(),
   liveReduce: true,
   hands: false,
   fullBody: false,
@@ -242,14 +254,35 @@ export function withTransCore(s: SimSettings, on: boolean): SimSettings {
 }
 
 const STORAGE_KEY = 'sim.settings';
+const PICTURE_STORAGE_KEY = 'sim.pictureFaces';
+let lastSavedPictureFaces: PictureFaces | null = null;
+
+/** Persist the large image payload before closing the editor, so quota/private-mode
+ * failures can be shown to the user instead of looking like a successful save. */
+export function persistPictureFaces(faces: PictureFaces): boolean {
+  const stored = persistItem(PICTURE_STORAGE_KEY, JSON.stringify(faces));
+  if (stored) lastSavedPictureFaces = faces;
+  return stored;
+}
+
+function loadPictureFaces(): PictureFaces {
+  try {
+    const raw = window.localStorage.getItem(PICTURE_STORAGE_KEY);
+    return raw ? normalizePictureFaces(JSON.parse(raw)) : emptyPictureFaces();
+  } catch {
+    return emptyPictureFaces();
+  }
+}
 
 export function loadSettings(): SimSettings {
   if (typeof window === 'undefined') return DEFAULT_SETTINGS;
   try {
+    const pictureFaces = loadPictureFaces();
+    lastSavedPictureFaces = pictureFaces;
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_SETTINGS;
+    if (!raw) return { ...DEFAULT_SETTINGS, pictureFaces };
     const parsed = JSON.parse(raw) as Partial<SimSettings> & { checkeredBg?: boolean };
-    const merged = { ...DEFAULT_SETTINGS, ...parsed };
+    const merged = { ...DEFAULT_SETTINGS, ...parsed, pictureFaces };
     // Migrate the old boolean checkeredBg → boardBg (true = the dark twizzle grid;
     // false stays the theme-following solid, i.e. 'auto').
     if (!('boardBg' in parsed) && parsed.checkeredBg) merged.boardBg = 'checkerDark';
@@ -264,6 +297,7 @@ export function loadSettings(): SimSettings {
     if (merged.coreStyle !== 'raw' && merged.coreStyle !== 'normal') merged.coreStyle = 'normal';
     if (merged.logo !== 'site' && merged.logo !== 'custom' && merged.logo !== 'none') merged.logo = 'none';
     if (typeof merged.customLogo !== 'string') merged.customLogo = '';
+    if (typeof merged.pictureCube !== 'boolean') merged.pictureCube = false;
     if (typeof merged.pointerTurns !== 'boolean') merged.pointerTurns = true;
     if (typeof merged.hands !== 'boolean') merged.hands = false;
     if (typeof merged.fullBody !== 'boolean') merged.fullBody = false;
@@ -292,7 +326,13 @@ export function loadSettings(): SimSettings {
 
 export function saveSettings(s: SimSettings): void {
   if (typeof window === 'undefined') return;
-  persistItem(STORAGE_KEY, JSON.stringify(s));
+  const { pictureFaces, ...compactSettings } = s;
+  persistItem(STORAGE_KEY, JSON.stringify(compactSettings));
+  // Image payloads are large. Slider / camera updates create a new settings object but
+  // preserve this nested reference, so only a real upload/remove rewrites the payload.
+  if (pictureFaces !== lastSavedPictureFaces) {
+    persistPictureFaces(pictureFaces);
+  }
   // 黑边的旧单独键已经被 loadSettings 迁进 stickerGap 了(见那边注释),这一刻新值刚落盘 → 收掉。
   try { window.localStorage.removeItem('sim.img.outline'); } catch { /* 无痕模式等,忽略 */ }
 }
@@ -376,7 +416,10 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   if (!ENGINE_BODY_PUZZLES.has(world.puzzleKind as string)) {
     // NxN: sticker thickness / hollow / hint / face colors live on the InstancedRenderer.
     const cube = world.cube as import('./engine/nxn/cube').default;
-    cube.arrow = s.arrow;
+    const pictureActive = typeof world.puzzleKind === 'number'
+      && s.pictureCube === true
+      && countPictureFaces(s.pictureFaces) > 0;
+    cube.arrow = s.arrow && !pictureActive;
     // 「动画」关 → 撤销/重做也瞬切(手动转/拖/单击各自路径已 fast)。
     cube.twister.instantTurns = !s.animatePlayback;
     cube.instancedRenderer.thickness = s.thickness;
@@ -416,7 +459,15 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     const rawCoreColor = mirrorRaw ? (s.mirrorColor ?? MIRROR_DEFAULT_COLOR) : s.coreColor;
     cube.instancedRenderer.setRawCore(rawOn, faces, rawCoreColor, rawBorder);
     // 顶面 U 中心 logo(仅 NxN 奇数阶有正中心块;偶数阶在 setLogo 内部隐藏)。
-    const logoTex = s.logo === 'site'
+    if (!prev
+      || prev.pictureCube !== s.pictureCube
+      || prev.pictureFaces !== s.pictureFaces) {
+      cube.instancedRenderer.setPictureFaces(
+        pictureActive ? s.pictureFaces : null,
+        () => { world.dirty = true; },
+      );
+    }
+    const logoTex = pictureActive ? null : s.logo === 'site'
       ? loadLogoTexture(SITE_LOGO_SRC, () => { world.dirty = true; })
       : (s.logo === 'custom' && s.customLogo)
         ? loadLogoTexture(s.customLogo, () => { world.dirty = true; })

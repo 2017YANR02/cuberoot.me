@@ -36,7 +36,7 @@ import {
   FlipHorizontal2, FlipVertical2, Eraser,
   Shuffle, Link2, Check,
   Search, Loader2, Pipette,
-  Keyboard, Grid3x3,
+  Keyboard, Grid3x3, ImagePlus, Upload, Trash2,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './engine/world';
@@ -111,7 +111,7 @@ import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-
 import SkewbNotationGuide from './SkewbNotationGuide';
 import {
   Slider, ValueField, OrbitPad, Toggle, KeymapModal, resetWorldView, mapFrames,
-  DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR,
+  DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR, persistPictureFaces,
   type SimSettings, type SimBoardBg, type SliderUnit,
 } from './SettingDrawer';
 import { KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
@@ -119,6 +119,14 @@ import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
 import ResetDefaultsButton from '@/components/ResetDefaultsButton';
 import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import { fileToLogoDataUrl } from './engine/nxn/logo';
+import {
+  PICTURE_FACE_ORDER,
+  countPictureFaces,
+  emptyPictureFaces,
+  fileToPictureFaceDataUrl,
+  type PictureFace,
+  type PictureFaces,
+} from './engine/nxn/pictureCube';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
 import StickeringSelect from './StickeringSelect';
@@ -2745,6 +2753,234 @@ const UNIT_YAW_TWISTY: SliderUnit = { to: (v) => (50 - v) * 3.6, from: (d) => 50
 const UNIT_PITCH: SliderUnit = { to: (v) => (50 - v) * 1.8, from: (d) => 50 - d / 1.8, min: -90, max: 90, step: 1, decimals: 0, suffix: '°' };
 const UNIT_TPS: SliderUnit = { to: simSpeedToTps, from: simTpsToSpeed, min: 0.5, max: 6, step: 0.1, decimals: 1 };
 
+const PICTURE_FACE_LABELS: Record<PictureFace, readonly [string, string]> = {
+  U: ['上面', 'Up'], R: ['右面', 'Right'], F: ['前面', 'Front'],
+  D: ['下面', 'Down'], L: ['左面', 'Left'], B: ['后面', 'Back'],
+};
+
+function PictureFaceMiniNet({ faces }: { faces: PictureFaces }) {
+  return (
+    <span className="sim-picture-mini" aria-hidden>
+      {PICTURE_FACE_ORDER.map((face) => (
+        <span key={face} data-face={face}>
+          {faces[face] ? <img src={faces[face]} alt="" /> : <span>{face}</span>}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function PictureCubeEditor({
+  open, initialFaces, onClose, onSave, t,
+}: {
+  open: boolean;
+  initialFaces: PictureFaces;
+  onClose: () => void;
+  onSave: (faces: PictureFaces) => boolean;
+  t: (zh: string, en: string) => string;
+}) {
+  const [draft, setDraft] = useState<PictureFaces>(() => ({ ...initialFaces }));
+  const [targetFace, setTargetFace] = useState<PictureFace>('U');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const faceInputRef = useRef<HTMLInputElement>(null);
+  const bulkInputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setDraft({ ...initialFaces });
+    setError('');
+    setBusy(false);
+    const oldOverflow = document.body.style.overflow;
+    const previouslyFocused = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )).filter((element) => element.offsetParent !== null);
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    requestAnimationFrame(() => dialogRef.current?.focus());
+    return () => {
+      document.body.style.overflow = oldOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+      previouslyFocused?.focus();
+    };
+  }, [initialFaces, onClose, open]);
+
+  if (!open || typeof document === 'undefined') return null;
+
+  const messageForError = (reason: unknown) => {
+    const code = reason instanceof Error ? reason.message : '';
+    if (code === 'too-large') return t('单张图片请小于 15 MB', 'Keep each image under 15 MB');
+    if (code === 'not-image') return t('请选择图片文件', 'Choose an image file');
+    return t('这张图片无法读取,请换一张再试', 'This image could not be read. Try another file');
+  };
+
+  const processFace = async (face: PictureFace, file: File) => {
+    const url = await fileToPictureFaceDataUrl(file);
+    setDraft((current) => ({ ...current, [face]: url }));
+  };
+
+  const handleFaceFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setBusy(true);
+    setError('');
+    try {
+      await processFace(targetFace, file);
+    } catch (reason) {
+      setError(messageForError(reason));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleBulkFiles = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []).slice(0, 6);
+    event.target.value = '';
+    if (files.length === 0) return;
+    setBusy(true);
+    setError('');
+    try {
+      const urls = await Promise.all(files.map((file) => fileToPictureFaceDataUrl(file)));
+      setDraft((current) => {
+        const next = { ...current };
+        urls.forEach((url, index) => { next[PICTURE_FACE_ORDER[index]] = url; });
+        return next;
+      });
+      if (files.length < 6) {
+        setError(t(`已按顺序填入前 ${files.length} 面,其余可逐面补充`, `Filled the first ${files.length} faces in order; add the rest individually`));
+      }
+    } catch (reason) {
+      setError(messageForError(reason));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const count = countPictureFaces(draft);
+  const dialog = (
+    <div
+      className="sim-picture-backdrop"
+      onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
+    >
+      <section
+        ref={dialogRef}
+        className="sim-picture-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sim-picture-title"
+        tabIndex={-1}
+      >
+        <header className="sim-picture-head">
+          <div>
+            <h2 id="sim-picture-title">{t('制作图案魔方', 'Create a picture cube')}</h2>
+            <p>{t('每张图会居中裁成正方形,再切到对应面的真实贴纸上', 'Each image is centre-cropped to a square, then sliced across the real stickers on that face')}</p>
+          </div>
+          <ClearButton variant="standalone" className="sim-picture-icon-btn" onClick={onClose} ariaLabel={t('关闭', 'Close')} />
+        </header>
+
+        <div className="sim-picture-toolbar">
+          <button type="button" className="sim-picture-bulk" disabled={busy} onClick={() => bulkInputRef.current?.click()}>
+            {busy ? <Loader2 size={16} className="sim-spin" /> : <Upload size={16} />}
+            {t('一次选择 6 张', 'Choose 6 at once')}
+          </button>
+          <span>{t('顺序:U R F D L B', 'Order: U R F D L B')}</span>
+          <input ref={bulkInputRef} type="file" accept="image/*" multiple hidden onChange={handleBulkFiles} />
+        </div>
+
+        <div className="sim-picture-net" aria-label={t('六面图片', 'Six face images')}>
+          {PICTURE_FACE_ORDER.map((face) => {
+            const [zh, en] = PICTURE_FACE_LABELS[face];
+            const hasImage = !!draft[face];
+            return (
+              <div className="sim-picture-face" data-face={face} key={face}>
+                <button
+                  type="button"
+                  className="sim-picture-face-main"
+                  onClick={() => { setTargetFace(face); faceInputRef.current?.click(); }}
+                  disabled={busy}
+                  aria-label={hasImage ? t(`替换${zh}图片`, `Replace ${en} image`) : t(`上传${zh}图片`, `Upload ${en} image`)}
+                >
+                  {hasImage
+                    ? <img src={draft[face]} alt="" />
+                    : <ImagePlus size={22} />}
+                  <span><strong>{face}</strong>{t(zh, en)}</span>
+                </button>
+                {hasImage && (
+                  <ClearButton
+                    variant="standalone"
+                    className="sim-picture-face-remove"
+                    onClick={() => setDraft((current) => ({ ...current, [face]: '' }))}
+                    ariaLabel={t(`移除${zh}图片`, `Remove ${en} image`)}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <input ref={faceInputRef} type="file" accept="image/*" hidden onChange={handleFaceFile} />
+
+        <div className="sim-picture-notes">
+          <span>{t(`已设置 ${count}/6 面`, `${count}/6 faces set`)}</span>
+          <span>{t('图片只保存在当前浏览器,不会上传到服务器', 'Images stay in this browser and are not uploaded to a server')}</span>
+        </div>
+        {error && <p className="sim-picture-error" role="status">{error}</p>}
+
+        <footer className="sim-picture-actions">
+          <button
+            type="button"
+            className="sim-picture-clear"
+            disabled={busy || count === 0}
+            onClick={() => setDraft(emptyPictureFaces())}
+          >
+            <Trash2 size={15} />{t('清空', 'Clear')}
+          </button>
+          <button type="button" onClick={onClose}>{t('取消', 'Cancel')}</button>
+          <button
+            type="button"
+            className="sim-picture-save"
+            disabled={busy}
+            onClick={() => {
+              if (!onSave(draft)) {
+                setError(t(
+                  '浏览器存储空间不足,图片尚未保存。请清理部分站点数据或减少图片后重试',
+                  'Browser storage is full, so the images were not saved. Free some site storage or use fewer images, then try again',
+                ));
+              }
+            }}
+          >
+            {count > 0 ? t('保存并使用', 'Save & use') : t('保存并关闭', 'Save & close')}
+          </button>
+        </footer>
+      </section>
+    </div>
+  );
+  return createPortal(dialog, document.body);
+}
+
 function PuzzleSettings({
   order, onOrderChange, puzzleKind, onPuzzleChange,
   renderer, onRendererChange,
@@ -2816,6 +3052,23 @@ function PuzzleSettings({
   const set = <K extends keyof SimSettings>(key: K, value: SimSettings[K]) => {
     onSettingsChange({ ...settings, [key]: value });
   };
+
+  const [pictureEditorOpen, setPictureEditorOpen] = useState(false);
+  const pictureFaceCount = countPictureFaces(settings.pictureFaces);
+  const pictureCubeActive = caps.supports.pictureCube
+    && settings.pictureCube
+    && pictureFaceCount > 0;
+  const closePictureEditor = useCallback(() => setPictureEditorOpen(false), []);
+  const savePictureFaces = useCallback((faces: PictureFaces) => {
+    if (!persistPictureFaces(faces)) return false;
+    onSettingsChange({
+      ...settings,
+      pictureFaces: faces,
+      pictureCube: countPictureFaces(faces) > 0,
+    });
+    setPictureEditorOpen(false);
+    return true;
+  }, [onSettingsChange, settings]);
 
   // 顶面 logo 自定义上传:选「自定义」即开文件选择器,选好降采样存进 customLogo 并切到 'custom'。
   const logoFileRef = useRef<HTMLInputElement>(null);
@@ -2986,7 +3239,15 @@ function PuzzleSettings({
             {/* 播放动画开关:关 → 「播放」时瞬切每一步(不逐格转动);单步前进/后退本就瞬切。 */}
             <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={(v) => set('animatePlayback', v)} />
             {/* 方位字母常显:U/D/L/R/F/B(角/棱/面转拼图显对应标签),等同拖视角时浮现的标签但常驻。 */}
-            <Toggle label={t('字母', 'Letters')} value={settings.faceLabels === true} onChange={(v) => set('faceLabels', v)} disabled={!caps.supports.faceLabels} title={hint(caps.supports.faceLabels)} />
+            <Toggle
+              label={t('字母', 'Letters')}
+              value={settings.faceLabels === true}
+              onChange={(v) => set('faceLabels', v)}
+              disabled={!caps.supports.faceLabels || pictureCubeActive}
+              title={pictureCubeActive
+                ? t('使用图案时暂时隐藏字母', 'Letters are hidden while artwork is active')
+                : hint(caps.supports.faceLabels)}
+            />
             {/* 背景(BG)选择器已移到画布左下角浮层(见本组件顶部 bgSelector + SimPage
                 的 .sim-bg-overlay),不再占开关行。 */}
             {/* 顶面 U 中心 logo:无 / 网站 / 自定义上传。仅 NxN 奇数阶有正中心块时实际显示
@@ -3191,6 +3452,48 @@ function PuzzleSettings({
               </span>
             ))}
           </ColorRow>
+          <div
+            className={'sim-picture-setting' + (caps.supports.pictureCube ? '' : ' sim-picture-setting--disabled')}
+            title={hint(caps.supports.pictureCube)}
+          >
+            <Toggle
+              label={t('图案魔方', 'Picture cube')}
+              value={settings.pictureCube && pictureFaceCount > 0}
+              disabled={!caps.supports.pictureCube}
+              title={hint(caps.supports.pictureCube)
+                ?? t('把六张图片切到魔方的真实贴纸上,打乱后图片会随块移动', 'Slice six images across the real stickers so the artwork moves with every turn')}
+              onChange={(enabled) => {
+                if (enabled && pictureFaceCount === 0) {
+                  setPictureEditorOpen(true);
+                  return;
+                }
+                set('pictureCube', enabled);
+              }}
+            />
+            <button
+              type="button"
+              className="sim-picture-open"
+              disabled={!caps.supports.pictureCube}
+              onClick={() => setPictureEditorOpen(true)}
+            >
+              <PictureFaceMiniNet faces={settings.pictureFaces} />
+              <span>{pictureFaceCount > 0
+                ? t(`编辑图片 ${pictureFaceCount}/6`, `Edit images ${pictureFaceCount}/6`)
+                : t('选择六面图片', 'Choose face images')}</span>
+            </button>
+            {pictureCubeActive && (
+              <span className="sim-picture-setting-note">
+                {t('使用图案时暂时隐藏 logo、字母和箭头', 'Logo, letters and arrows are hidden while pictures are in use')}
+              </span>
+            )}
+          </div>
+          <PictureCubeEditor
+            open={pictureEditorOpen}
+            initialFaces={settings.pictureFaces}
+            onClose={closePictureEditor}
+            onSave={savePictureFaces}
+            t={t}
+          />
           {/* 指甲配色(甲油):自然甲 special + 甲油底色;选了底色后追加「渐变」第二色
               (甲根→游离缘)与「深浅」滑杆(50 = 原色,低淡高深)。重涂手部立体甲片
               顶点色(engine/hands paintNailPolish);门控同全身人物(需手指开启)。 */}

@@ -18,9 +18,17 @@
  * against known cases (front-top drag-right = U', front-right-col drag-down = R').
  */
 
-import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import {
+  useCallback, useEffect, useRef, useState,
+  type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject,
+} from 'react';
 import type World from './engine/world';
 import type CubeType from './engine/nxn/cube';
+import type { PictureFaces } from './engine/nxn/pictureCube';
+import {
+  FM_OUTLINE, FM_REGULAR, faceletDisplayColor, type FaceletMask, type StickeringMaskFn,
+} from './engine/nxn/stickering';
+import { OUTLINE_DEFAULT } from './engine/nxn/stickerOutline';
 import { TwistAction } from './engine/nxn/twister';
 import { useT } from '@/hooks/useT';
 // 布局单一源:与静态导出器 lib/cube-net-svg 共用(退役对照表 §2b「视图 net」),平面图
@@ -87,6 +95,9 @@ interface Props {
   order: number;
   userMoveRef: RefObject<((action: TwistAction | string) => void) | null>;
   faceColors: Record<FaceLetter, string>;
+  pictureCube?: boolean;
+  pictureFaces?: PictureFaces;
+  getStickeringMask?: (cube: CubeType) => StickeringMaskFn | null;
   /** 手拧(设置面板):false = 拖贴纸不转层。平面图没有视角可转,所以直接不接手势。 */
   pointerTurns?: boolean;
 }
@@ -98,7 +109,10 @@ function nxnCube(world: World | null): CubeType | null {
   return world.cube as CubeType;
 }
 
-export default function SimCubeNet({ getWorld, worldTick, order, userMoveRef, faceColors, pointerTurns = true }: Props) {
+export default function SimCubeNet({
+  getWorld, worldTick, order, userMoveRef, faceColors,
+  pictureCube = false, pictureFaces, getStickeringMask, pointerTurns = true,
+}: Props) {
   const t = useT();
   const [, force] = useState(0);
   const rerender = useCallback(() => force((n) => (n + 1) & 0xffff), []);
@@ -177,6 +191,11 @@ export default function SimCubeNet({ getWorld, worldTick, order, userMoveRef, fa
   }
 
   const facelets = cube.serialize();
+  const pictureFacelets = pictureCube && pictureFaces
+    ? cube.serializePictureFacelets()
+    : null;
+  const maskFn = getStickeringMask?.(cube) ?? null;
+  const stickering = maskFn ? cube.serializeStickering(maskFn) : null;
   const offs = faceOffsets(N);
   const w = 4 * N + 5 * GAP;
   const h = 3 * N + 4 * GAP;
@@ -184,7 +203,7 @@ export default function SimCubeNet({ getWorld, worldTick, order, userMoveRef, fa
   const colorOf = (ch: string): string =>
     ch === 'U' || ch === 'R' || ch === 'F' || ch === 'D' || ch === 'L' || ch === 'B'
       ? faceColors[ch]
-      : '#444';
+      : 'var(--muted-foreground)';
 
   const rects: ReactNode[] = [];
   for (let fi = 0; fi < 6; fi++) {
@@ -194,26 +213,92 @@ export default function SimCubeNet({ getWorld, worldTick, order, userMoveRef, fa
     for (let r = 0; r < N; r++) {
       for (let c = 0; c < N; c++) {
         const ch = facelets[base + r * N + c];
+        const picture = pictureFacelets?.[base + r * N + c];
+        const pictureSrc = picture ? pictureFaces?.[picture.face] : '';
+        const pictureRow = picture ? Math.floor(picture.index / N) : 0;
+        const pictureCol = picture ? picture.index % N : 0;
+        const code = (stickering?.[base + r * N + c] ?? FM_REGULAR) as FaceletMask;
+        const showPicture = code === FM_REGULAR || code === FM_OUTLINE;
+        const displayColor = faceletDisplayColor(code, colorOf(ch));
+        const key = `${face}-${r}-${c}`;
+        const pointerProps = {
+          'data-face': face,
+          'data-r': r,
+          'data-c': c,
+          onPointerDown: (e: ReactPointerEvent<SVGRectElement>) => {
+            // 手拧关 → 根本不起手势(applyMove 是拖转层的唯一出口,它只由这里启动)。
+            if (!pointerTurns) return;
+            e.preventDefault();
+            dragRef.current = { face, r, c, x: e.clientX, y: e.clientY, done: false };
+          },
+        };
+        if (picture && pictureSrc && showPicture) {
+          const cx = ox + c + 0.5;
+          const cy = oy + r + 0.5;
+          rects.push(
+            <g key={key} transform={picture.rotation ? `rotate(${picture.rotation} ${cx} ${cy})` : undefined}>
+              <svg
+                x={ox + c}
+                y={oy + r}
+                width={1}
+                height={1}
+                viewBox={`${pictureCol} ${pictureRow} 1 1`}
+                preserveAspectRatio="none"
+                overflow="hidden"
+              >
+                <image href={pictureSrc} x={0} y={0} width={N} height={N} preserveAspectRatio="none" />
+              </svg>
+              {code === FM_OUTLINE && (
+                <rect
+                  x={ox + c + 0.1}
+                  y={oy + r + 0.1}
+                  width={0.8}
+                  height={0.8}
+                  fill="none"
+                  stroke={OUTLINE_DEFAULT}
+                  strokeWidth={0.08}
+                  pointerEvents="none"
+                />
+              )}
+              <rect
+                {...pointerProps}
+                x={ox + c}
+                y={oy + r}
+                width={1}
+                height={1}
+                fill="transparent"
+                stroke="var(--foreground)"
+                strokeWidth={STROKE_W}
+              />
+            </g>,
+          );
+          continue;
+        }
         rects.push(
-          <rect
-            key={`${face}-${r}-${c}`}
-            data-face={face}
-            data-r={r}
-            data-c={c}
-            x={ox + c}
-            y={oy + r}
-            width={1}
-            height={1}
-            fill={colorOf(ch)}
-            stroke="#000"
-            strokeWidth={STROKE_W}
-            onPointerDown={(e) => {
-              // 手拧关 → 根本不起手势(applyMove 是拖转层的唯一出口,它只由这里启动)。
-              if (!pointerTurns) return;
-              e.preventDefault();
-              dragRef.current = { face, r, c, x: e.clientX, y: e.clientY, done: false };
-            }}
-          />,
+          <g key={key}>
+            <rect
+              {...pointerProps}
+              x={ox + c}
+              y={oy + r}
+              width={1}
+              height={1}
+              fill={displayColor}
+              stroke="var(--foreground)"
+              strokeWidth={STROKE_W}
+            />
+            {code === FM_OUTLINE && (
+              <rect
+                x={ox + c + 0.1}
+                y={oy + r + 0.1}
+                width={0.8}
+                height={0.8}
+                fill="none"
+                stroke={OUTLINE_DEFAULT}
+                strokeWidth={0.08}
+                pointerEvents="none"
+              />
+            )}
+          </g>,
         );
       }
     }
