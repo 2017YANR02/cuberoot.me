@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildRecordPlaces,
+  isRecordPlaceDetailShard,
   isRecordPlacesData,
+  type RecordPlaceDetailShard,
   type RecordPlaceSourceRow,
 } from '@cuberoot/shared/record-places';
 import {
   cityRecordMatches,
   localizedCityCollisionKeys,
   rankRecordRows,
+  recordPlaceDetailRows,
   recordCityDisplayName,
 } from '@/lib/record-places';
 
@@ -96,6 +99,46 @@ describe('record place ranking', () => {
       ['c', 2],
       ['d', 4],
     ]);
+  });
+});
+
+describe('record place details', () => {
+  const shard: RecordPlaceDetailShard = {
+    version: 1,
+    iso2: 'CN',
+    comps: {
+      OlderOpen2024: { n: 'Older Open 2024', s: '2024-05-01', d: '2024-05-02', c: 'Hefei, Anhui' },
+      NewerOpen2025: { n: 'Newer Open 2025', s: '2025-06-01', d: '2025-06-01', c: 'Beijing' },
+    },
+    records: {
+      OlderOpen2024: [
+        { t: 'WR', k: 's', e: '333', p: '2020TEST01', n: 'Test Cuber', v: 500 },
+        { t: 'AsR', k: 'a', e: '333', p: '2020TEST01', n: 'Test Cuber', v: 600 },
+        { t: 'NR', k: 's', e: '222', p: '2020TEST01', n: 'Test Cuber', v: 100 },
+      ],
+      NewerOpen2025: [
+        { t: 'WR', k: 'a', e: '333', p: '2021TEST01', n: 'Other Cuber', v: 550 },
+      ],
+    },
+  };
+
+  it('validates generated shards and rejects dangling competition records', () => {
+    expect(isRecordPlaceDetailShard(shard)).toBe(true);
+    expect(isRecordPlaceDetailShard({
+      ...shard,
+      records: { ...shard.records, MissingOpen2025: shard.records.NewerOpen2025 },
+    })).toBe(false);
+  });
+
+  it('filters by metric and canonical city, newest competition first', () => {
+    expect(recordPlaceDetailRows(shard, 'wr', null).map((row) => row.compId)).toEqual([
+      'NewerOpen2025',
+      'OlderOpen2024',
+    ]);
+    expect(recordPlaceDetailRows(shard, 'wr', 'Hefei, Anhui').map((row) => row.id)).toEqual([
+      'OlderOpen2024:0',
+    ]);
+    expect(recordPlaceDetailRows(shard, 'cr', 'Hefei, Anhui')[0]?.entry.t).toBe('AsR');
   });
 });
 
