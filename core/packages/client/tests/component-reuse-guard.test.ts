@@ -175,7 +175,7 @@ describe('component reuse rule registry', () => {
     }, new Set())).toEqual([]);
   });
 
-  it('keeps the static CaseThumb in the canonical multi-orientation case detail', () => {
+  it('keeps the canonical multi-orientation case detail identity and row pairing', () => {
     const filePath = 'D:/cube/cuberoot.me/core/packages/client/app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx';
     expect(scanAlgCaseDetailLayout(filePath, `
       {!multiOri && (
@@ -185,6 +185,26 @@ describe('component reuse rule registry', () => {
     expect(scanAlgCaseDetailLayout(filePath, `
       <div className="alg-case-detail-lean-thumb"><CaseThumb /></div>
     `)).toEqual([]);
+    expect(scanAlgCaseDetailLayout(filePath, `
+      {multiOri && selectedEntry && (
+        <div className="alg-case-detail-ori-player"><AlgPlayer /></div>
+      )}
+      {dragAlgs ? withDnd(oi)(rows) : rows}
+    `).map((hit) => hit.ruleId)).toContain('alg-case-detail-layout');
+    expect(scanAlgCaseDetailLayout(filePath, `
+      <div className="alg-case-detail-ori-main">
+        <div className="alg-case-detail-ori-player"><AlgPlayer /></div>
+        <div className="alg-case-detail-ori-algs">{rows}</div>
+      </div>
+    `)).toEqual([]);
+
+    const cssPath = 'D:/cube/cuberoot.me/core/packages/client/app/[lang]/alg/alg.css';
+    expect(scanAlgCaseDetailLayout(cssPath, `
+      .alg-case-detail-lean-algs.is-multi-ori {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    `).map((hit) => hit.ruleId)).toContain('alg-case-detail-layout');
   });
 
   it('pins the alg puzzle BackHome above the title inside the shared-width header', () => {

@@ -26,6 +26,7 @@ const PAGE_ROOT_CLASS = /(?:^|[-_\s])(?:root|page|app)(?:$|[-_\s])/i;
 const SAFE_BACK_HOME_CONTAINER = /(?:^|[-_\s])(?:header|topbar|head|wrap|container|hero|sidebar|back-row)(?:$|[-_\s])/i;
 const OPEN_LAYOUT_CONTAINER = /<(?:div|main|section|header|nav|aside)\b[^>]*className\s*=\s*['"]([^'"]+)['"][^>]*>/gi;
 const ALG_CASE_VIEW_PATH = /\/app\/\[lang\]\/alg\/\[puzzle\]\/\[set\]\/\[subgroup\]\/AlgCaseView\.tsx$/i;
+const ALG_CSS_PATH = /\/app\/\[lang\]\/alg\/alg\.css$/i;
 
 export const COMPONENT_REUSE_RULES = [
   {
@@ -61,7 +62,7 @@ export const COMPONENT_REUSE_RULES = [
     importStatement: "import AlgCaseView from './AlgCaseView';",
     replacement: '<AlgCaseView puzzle={puzzle} set={set} caseObj={caseObj} data={data} />',
     reason:
-      '公式 case 详情统一复用 AlgCaseView：静态主图走 CaseThumb，动画走 AlgPlayer；多朝向也必须保留主图。',
+      '公式 case 详情统一复用 AlgCaseView：静态主图走 CaseThumb，动画走 AlgPlayer；多朝向必须保留主图，桌面一行一个朝向且动画左公式右，窄屏再上下堆叠。',
   },
 ];
 
@@ -106,16 +107,18 @@ export function scanNewBackHomePlacements(source) {
 
 export function scanAlgCaseDetailLayout(filePath, source) {
   const normalized = normalizePath(filePath);
-  if (!ALG_CASE_VIEW_PATH.test(normalized)) return [];
-  const conditionalThumb = /is-without-thumb/.exec(source)
+  if (!ALG_CASE_VIEW_PATH.test(normalized) && !ALG_CSS_PATH.test(normalized)) return [];
+  const violation = /is-without-thumb/.exec(source)
     ?? (/!\s*multiOri/.test(source) && /(?:<CaseThumb\b|alg-case-detail-lean-thumb)/.test(source)
       ? /!\s*multiOri/.exec(source)
-      : null);
-  if (!conditionalThumb || exemptionNear(source, conditionalThumb.index, conditionalThumb[0])) return [];
+      : null)
+    ?? (/multiOri\s*&&\s*selectedEntry\s*&&[\s\S]{0,1800}?alg-case-detail-ori-player[\s\S]{0,800}?(?:withDnd\(oi\)\(rows\)|:\s*rows)/.exec(source))
+    ?? (/\.alg-case-detail-lean-algs\.is-multi-ori\s*\{[^}]*grid-template-columns\s*:\s*repeat\(\s*2\b/i.exec(source));
+  if (!violation || exemptionNear(source, violation.index, violation[0])) return [];
   return [{
     ruleId: 'alg-case-detail-layout',
-    index: conditionalThumb.index,
-    snippet: conditionalThumb[0],
+    index: violation.index,
+    snippet: violation[0],
   }];
 }
 
@@ -285,7 +288,7 @@ function loadPathAllowlist() {
 
 function inScope(filePath) {
   const normalized = normalizePath(filePath);
-  return CLIENT_TSX.test(normalized) && !SKIP_PATH.test(normalized);
+  return (CLIENT_TSX.test(normalized) && !SKIP_PATH.test(normalized)) || ALG_CSS_PATH.test(normalized);
 }
 
 export function violationsFromHookPayload(payload, pathAllowlist = loadPathAllowlist()) {
