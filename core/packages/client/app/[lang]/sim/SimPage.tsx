@@ -1890,6 +1890,7 @@ export default function SimPage() {
             faces: settings.pictureFaces,
             faceColors: settings.faceColors,
             bodyColor: renderSettings.coreColor,
+            pictureBaseColors: settings.pictureBaseColors,
             stickerOpacity: renderSettings.stickerOpacity,
             stickering: stickering ?? undefined,
           }));
@@ -2062,7 +2063,7 @@ export default function SimPage() {
       imgSpec.hideGreySides, imgSpec.stageMask, imgSpec.maskAlg,
       imgSpec.planSideRule, imgSpec.planUpRule, imgSpec.planShowYellow,
       imgSpec.planForceShow, imgSpec.planForceHide,
-      settings.faceColors, settings.pictureFaces, stickeringMaskFor]);
+      settings.faceColors, settings.pictureBaseColors, settings.pictureFaces, stickeringMaskFor]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
   const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';
@@ -2128,6 +2129,7 @@ export default function SimPage() {
               userMoveRef={userMoveRef}
               faceColors={settings.faceColors}
               pictureCube={settings.pictureCube}
+              pictureBaseColors={settings.pictureBaseColors}
               pictureFaces={settings.pictureFaces}
               getStickeringMask={stickeringMaskFor}
               pointerTurns={settings.pointerTurns !== false}
