@@ -172,7 +172,9 @@ jobs:
       - name: Generate competition records JSON
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
-        run: npx tsx src/bin/gen_comp_records.ts
+        run: |
+          npx tsx src/bin/gen_comp_records.ts
+          npx tsx src/bin/gen_record_places.ts
 
       # Per-event scramble move-length distribution (/scramble/stats length tab).
       # Streams the `scrambles` table (added to REQUIRED_TABLES) — no extra download.

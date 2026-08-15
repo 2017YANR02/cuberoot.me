@@ -77,6 +77,7 @@
       "default": "./src/cubing_slug.ts"
     },
     "./comp-series": "./src/comp_series.ts",
+    "./record-places": "./src/record_places.ts",
     "./wca-round": {
       "node": "./dist/wca_round.js",
       "default": "./src/wca_round.ts"
