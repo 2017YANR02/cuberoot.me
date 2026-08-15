@@ -18,6 +18,7 @@ import { lookupZblsAlgs, lookupZblsAlgsBrute } from './zbls_lookup';
 import { F2L_SLOT_DEFS as _SLOTS_FOR_BRUTE } from './stage_detect';
 import { crossFamilyCancelInto } from './popup_suggest';
 import type { Alg3x3Set } from '@cuberoot/shared/alg';
+import { rewriteLeadingYRotationAsAuf } from '@cuberoot/shared/alg-notation';
 
 /** Invert a space-separated move sequence (reverse order + flip each move). */
 function invertSeq(seq: string): string {
@@ -199,6 +200,12 @@ export type SuggestResult =
   | { kind: 'ok'; suggestions: AlgSuggestion[] }
   | { kind: 'empty'; reasonKey: string };
 
+/** Compose a frame rotation and return a top-layer suggestion without leading y. */
+export function prepareTopLayerSuggestion(canonRot: string, alg: string): string {
+  const composed = canonRot ? simplifyAlg(`${canonRot} ${alg}`) : alg;
+  return rewriteLeadingYRotationAsAuf(composed);
+}
+
 export async function suggestAlg(
   scramble: string,
   value: string,
@@ -319,10 +326,14 @@ export async function suggestAlg(
     const robust = await lookupZbllAlgsRobust(startState, stageInfo.crossFaceHome);
     if (robust.length > 0) lookupHadEntries = true;
     for (const e of robust) {
-      if (!e.alg) continue;
-      if (!isAlgPrefix(lineMovesUpToCaret, e.alg)) continue;
+      const rawAlg = prepareTopLayerSuggestion('', e.alg);
+      if (!rawAlg) continue;
+      if (!isAlgPrefix(lineMovesUpToCaret, rawAlg)) continue;
       prefixFilteredOutAll = false;
-      scored.push({ text: e.alg, category, caseName: e.caseName, score: 100 - e.alg.length * 0.01 });
+      let post: KPattern;
+      try { post = startState.applyAlg(rawAlg); } catch { continue; }
+      if ((await detectStage(post)).stage !== 'solved') continue;
+      scored.push({ text: rawAlg, category, caseName: e.caseName, score: 100 - rawAlg.length * 0.01 });
     }
   } else {
     const entries = category === 'oll'
@@ -331,7 +342,7 @@ export async function suggestAlg(
     if (entries.length > 0) lookupHadEntries = true;
     const goalSolved = category === 'pll';
     for (const e of entries) {
-      const rawAlg = canonRot ? simplifyAlg(`${canonRot} ${e.alg}`) : e.alg;
+      const rawAlg = prepareTopLayerSuggestion(canonRot, e.alg);
       if (!rawAlg) continue;
       if (!isAlgPrefix(lineMovesUpToCaret, rawAlg)) continue;
       prefixFilteredOutAll = false;

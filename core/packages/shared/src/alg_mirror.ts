@@ -26,10 +26,10 @@
  * 那个错已经犯过两次。别在这儿重推一遍。
  */
 import {
-  ROTATE_Y,
   flattenAlg,
   mirrorFamily,
   mirrorKeepsAmount,
+  relabelYMoveString,
   renderMove,
   tokenizeMoves,
   type MirrorAxis,
@@ -38,6 +38,7 @@ import {
 import type { AlgEntry } from './alg';
 
 export type { AlgEntry };
+export { relabelYMoveString };
 
 /**
  * 吃镜像系统(issue #40 T5)的 set —— **`puzzle/set` 全名**,client 与 server 共用这一份。
@@ -114,26 +115,6 @@ export function mirrorMoveString(alg: string, axis: MirrorAxis): string {
     family: mirrorFamily(m.family, axis),
     amount: mirrorKeepsAmount(m.family, axis) ? m.amount : -m.amount,
   }));
-}
-
-/**
- * 按 `y^k` **重贴面标**:出来的公式与 `y^-k · A · y^k` 同态,但**不带任何 `y` 前缀** ——
- * 要的是「同一个动作换个朝向描述」,不是「先转体再做」。
- */
-export function relabelYMoveString(alg: string, k: number): string {
-  const n = ((Math.trunc(k) % 4) + 4) % 4;
-  return rewrite(alg, m => {
-    let family = m.family;
-    let amount = m.amount;
-    for (let i = 0; i < n; i++) {
-      const hit = ROTATE_Y[family];
-      // 表里没有 = 出现了没见过的族。悄悄放过会写出一条错公式,宁可抛。
-      if (!hit) throw new Error(`ROTATE_Y 里没有 ${family}`);
-      family = hit[0];
-      if (hit[1] === -1) amount = -amount;
-    }
-    return { family, amount };
-  });
 }
 
 /** 按 {@link MirrorGen} 重写一条公式。 */

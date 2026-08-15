@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
-import type { AlgSticker } from '@cuberoot/shared';
-import { toMoveString } from '@cuberoot/shared/alg-notation';
+import { ALG_3X3_TOP_LAYER_SET, is3x3TopLayerSet, type AlgSticker } from '@cuberoot/shared';
+import {
+  rewriteLeadingYRotationAsAuf, startsWithYRotation, toMoveString,
+} from '@cuberoot/shared/alg-notation';
 import { validateAlgCase, completeAlgAuf } from '@/lib/alg_validation';
 import { caseViewAlg, caseViewSetup, displayAlg } from '@/lib/alg_display';
 
@@ -11,6 +13,39 @@ const inv = (a: string) => new Alg(a).invert().toString();
 
 /** T-perm, standing in for "any last-layer alg" throughout. */
 const BODY = "R U R' U' R' F R2 U' R' U' R U R' F'";
+
+describe('top-layer leading-y rule', () => {
+  it.each([
+    [`y ${BODY}`, `U ${BODY} U'`],
+    [`y2 ${BODY}`, `U2 ${BODY} U2`],
+    [`y' ${BODY}`, `U' ${BODY} U`],
+    [`= [OH] y ${BODY}`, `U ${BODY} U'`],
+  ])('rewrites %s as AUF', (input, expected) => {
+    expect(startsWithYRotation(input)).toBe(true);
+    expect(rewriteLeadingYRotationAsAuf(input)).toBe(expected);
+  });
+
+  it('does not mistake U or an internal y for a leading rotation', () => {
+    expect(startsWithYRotation(`U ${BODY}`)).toBe(false);
+    expect(startsWithYRotation(`${BODY} y`)).toBe(false);
+    expect(rewriteLeadingYRotationAsAuf(`U ${BODY}`)).toBe(`U ${BODY}`);
+  });
+
+  it('relabels moves instead of using an invalid AUF wrapper when the body changes center orientation', () => {
+    expect(rewriteLeadingYRotationAsAuf("y' x R' U R' D2 R U' R' D2 R2"))
+      .toBe("z F' U F' D2 F U' F' D2 F2");
+  });
+
+  it('classifies every current 3x3 set and excludes last-slot sets', () => {
+    expect(Object.keys(ALG_3X3_TOP_LAYER_SET)).toHaveLength(25);
+    for (const set of ['oll', 'pll', 'coll', 'zbll', '1lll']) {
+      expect(is3x3TopLayerSet('3x3', set), set).toBe(true);
+    }
+    for (const set of ['f2l', 'wv', 'vls', 'zbls']) {
+      expect(is3x3TopLayerSet('3x3', set), set).toBe(false);
+    }
+  });
+});
 
 describe('the identity the leading-y rewrite rests on', () => {
   // y = U · Dw', and Dw commutes with any alg whose net element is a U-layer permutation
@@ -46,6 +81,14 @@ describe('the identity the leading-y rewrite rests on', () => {
     const ROTS: string[] = [];
     for (const a of ['', 'x', 'x2', "x'", 'z', "z'"]) for (const b of ['', 'y', 'y2', "y'"]) ROTS.push(`${a} ${b}`.trim());
     expect(ROTS.some(r => (r ? rewritten.applyAlg(r) : rewritten).isIdentical(orig))).toBe(false);
+  });
+
+  it('keeps that x/z case equivalent by relabeling the body', async () => {
+    const solved = (await cube3x3x3.kpuzzle()).defaultPattern();
+    const original = solved.applyAlg(new Alg("y' x R' U R' D2 R U' R' D2 R2"));
+    const rewrittenAlg = rewriteLeadingYRotationAsAuf("y' x R' U R' D2 R U' R' D2 R2");
+    const rewritten = solved.applyAlg(new Alg(rewrittenAlg)).applyAlg("y'");
+    expect(rewritten.isIdentical(original)).toBe(true);
   });
 });
 

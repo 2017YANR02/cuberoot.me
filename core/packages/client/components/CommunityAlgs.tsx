@@ -10,7 +10,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAlgTextField } from '@/hooks/useAlgTextField';
 import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
-import type { AlgSubmission, AlgSticker } from '@cuberoot/shared';
+import { is3x3TopLayerSet, type AlgSubmission, type AlgSticker } from '@cuberoot/shared';
+import { startsWithYRotation } from '@cuberoot/shared/alg-notation';
 import PersonLink from '@/components/PersonLink';
 import { addSubmission, updateSubmission, deleteSubmission } from '@/lib/alg_api';
 import { validateAlgCase, setupForCase } from '@/lib/alg_validation';
@@ -48,7 +49,7 @@ interface Props {
 
 export type PreparedCommunityAlg =
   | { ok: true; alg: string }
-  | { ok: false; kind: 'invalid' | 'unavailable'; reason: string };
+  | { ok: false; kind: 'invalid' | 'unavailable' | 'leading-y-rotation'; reason: string };
 
 /**
  * 投稿前的强制状态校验。失败或校验器异常都不返回可入库公式,调用方不得继续写 API。
@@ -62,6 +63,9 @@ export async function prepareCommunityAlgForSubmission({
   firstAlg,
 }: Pick<Props, 'puzzle' | 'setSlug' | 'sticker' | 'setup' | 'firstAlg'> & { raw: string }): Promise<PreparedCommunityAlg> {
   const bare = displayAlg(raw);
+  if (is3x3TopLayerSet(puzzle, setSlug) && startsWithYRotation(bare)) {
+    return { ok: false, kind: 'leading-y-rotation', reason: '' };
+  }
   try {
     // 空 setup 的集合(2x2 / 大魔方 parity / skewb)靠 case 的**首条**公式反推 —— 拿投稿者
     // 自己那条反推等于让他自证,永远通过。
@@ -116,9 +120,14 @@ export default function CommunityAlgs({
       firstAlg,
     });
     if (prepared.ok) return prepared.alg;
-    const heading = prepared.kind === 'invalid'
-      ? tr({ zh: '公式校验未通过,未提交', en: 'Validation failed; not submitted' })
-      : tr({ zh: '暂时无法校验公式,未提交', en: 'Could not validate; not submitted' });
+    const heading = prepared.kind === 'leading-y-rotation'
+      ? tr({
+        zh: '顶层公式不能以 y 转体开头,请改用对应的 U 层转动',
+        en: 'Top-layer algs cannot start with a y rotation; use the corresponding U turn',
+      })
+      : prepared.kind === 'invalid'
+        ? tr({ zh: '公式校验未通过,未提交', en: 'Validation failed; not submitted' })
+        : tr({ zh: '暂时无法校验公式,未提交', en: 'Could not validate; not submitted' });
     alert(`${heading}${prepared.reason ? `: ${prepared.reason}` : ''}`);
     return null;
   };

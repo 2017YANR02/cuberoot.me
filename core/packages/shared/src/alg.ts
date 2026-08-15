@@ -154,6 +154,44 @@ export type Alg3x3Set =
   | 'anti-pll' | 'sv' | 'ell' | 'fruf'
   | 'cls' | 'vls' | 'ollcp' | 'zbll' | '1lll' | 'zbls';
 
+/**
+ * Whether a 3x3 set solves only the last layer. This exhaustive map forces a
+ * deliberate classification whenever a new 3x3 set is added.
+ */
+export const ALG_3X3_TOP_LAYER_SET: Readonly<Record<Alg3x3Set, boolean>> = {
+  'f2l': false,
+  'adv-f2l': false,
+  'psf2l': false,
+  '2-look-oll': true,
+  'oll': true,
+  '2-look-pll': true,
+  'pll': true,
+  'coll': true,
+  'wv': false,
+  '2-look-cmll': true,
+  'cmll': true,
+  'oh-cmll': true,
+  'sbls': false,
+  'eo4a': false,
+  'lse-eolr': false,
+  'anti-pll': true,
+  'sv': false,
+  'ell': true,
+  'fruf': false,
+  'cls': false,
+  'vls': false,
+  'ollcp': true,
+  'zbll': true,
+  '1lll': true,
+  'zbls': false,
+};
+
+export function is3x3TopLayerSet(puzzle: string, setSlug: string): boolean {
+  return puzzle === '3x3'
+    && Object.prototype.hasOwnProperty.call(ALG_3X3_TOP_LAYER_SET, setSlug)
+    && ALG_3X3_TOP_LAYER_SET[setSlug as Alg3x3Set];
+}
+
 /** Catalogue of available sets per puzzle (display name + slug). Drives the index pages. */
 export interface AlgSetMeta {
   /** URL slug (matches data filename: alg_<puzzle>_<slug>.json) */

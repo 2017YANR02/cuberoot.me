@@ -312,6 +312,25 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
     </DndContext>
   );
 
+  const communityAlgs = (
+    <CommunityAlgs
+      puzzle={puzzle}
+      setSlug={set}
+      caseName={caseObj.name}
+      sticker={caseObj.sticker}
+      setup={caseObj.setup}
+      firstAlg={caseObj.algs[0]?.[0]?.alg}
+      submissions={submissions}
+      viewAngle={effectiveViewAngle}
+      onPatch={(action) => {
+        setSubmissions(prev => {
+          if (action.type === 'add') return [...prev, action.submission];
+          if (action.type === 'update') return prev.map(s => s.id === action.submission.id ? action.submission : s);
+          return prev.filter(s => s.id !== action.id);
+        });
+      }}
+    />
+  );
   if (deleted) {
     return (
       <div className="alg-case-detail">
@@ -421,6 +440,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             algRowWrap={dragAlgs
               ? (row, i) => <SortableAlgRow key={algDragId(0, i)} id={algDragId(0, i)} draggable>{row}</SortableAlgRow>
               : undefined}
+            algsAfter={communityAlgs}
           />
         </div>
       ) : (
@@ -505,27 +525,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                 </div>
               );
             })}
+            {communityAlgs}
           </div>
         </div>
       )}
-
-      <CommunityAlgs
-        puzzle={puzzle}
-        setSlug={set}
-        caseName={caseObj.name}
-        sticker={caseObj.sticker}
-        setup={caseObj.setup}
-        firstAlg={caseObj.algs[0]?.[0]?.alg}
-        submissions={submissions}
-        viewAngle={effectiveViewAngle}
-        onPatch={(action) => {
-          setSubmissions(prev => {
-            if (action.type === 'add') return [...prev, action.submission];
-            if (action.type === 'update') return prev.map(s => s.id === action.submission.id ? action.submission : s);
-            return prev.filter(s => s.id !== action.id);
-          });
-        }}
-      />
 
       {editorState && (
         <AdminCaseEditor
