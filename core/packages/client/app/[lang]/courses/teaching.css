@@ -418,11 +418,23 @@
   margin-top: 14px;
 }
 
+.teaching-trial-actions {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 24px;
+}
+
+.teaching-trial-actions > span {
+  font-size: 0.9rem;
+}
+
 .teaching-trial-edit {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 24px;
+  margin-top: 0;
   padding: 7px 0;
   border: 0;
   background: transparent;

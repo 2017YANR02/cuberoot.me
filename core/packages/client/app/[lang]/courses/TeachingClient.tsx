@@ -56,6 +56,7 @@ function formatDuration(minutes: number) {
 
 function TeachingPage({ isAdmin, lang }: { isAdmin: boolean; lang: string }) {
   const [courses, setCourses] = useState<MicroCourse[]>(() => [...TEACHING_COURSES]);
+  const [trialOverrides, setTrialOverrides] = useState<TrialLessonOverride[]>([]);
   const lessonCount = courses.reduce((total, course) => total + courseLessons(course).length, 0);
   const totalMinutes = courses.reduce((total, course) => total + courseMinutes(course), 0);
   const average = (totalMinutes / lessonCount).toFixed(1);
@@ -63,24 +64,28 @@ function TeachingPage({ isAdmin, lang }: { isAdmin: boolean; lang: string }) {
 
   useEffect(() => {
     let active = true;
-    if (!lang.startsWith('zh')) {
-      setCourses([...TEACHING_COURSES]);
-      return () => { active = false; };
-    }
     void fetchTrialLessonOverrides()
       .then((overrides) => {
         if (!active) return;
+        setTrialOverrides(overrides);
         setCourses(TEACHING_COURSES.map((course) => (
           course.id === 'trial' ? mergeTrialLessonOverrides(course, overrides) : course
         )));
       })
       .catch(() => {
-        if (active) setCourses([...TEACHING_COURSES]);
+        if (active) {
+          setTrialOverrides([]);
+          setCourses([...TEACHING_COURSES]);
+        }
       });
     return () => { active = false; };
   }, [lang]);
 
   function applyTrialOverride(override: TrialLessonOverride) {
+    setTrialOverrides((current) => [
+      ...current.filter((item) => item.lessonId !== override.lessonId),
+      override,
+    ]);
     setCourses((current) => current.map((course) => (
       course.id === 'trial' ? mergeTrialLessonOverrides(course, [override]) : course
     )));
@@ -240,7 +245,11 @@ function TeachingPage({ isAdmin, lang }: { isAdmin: boolean; lang: string }) {
                                         </p>
                                       ))}
                                       {canEditTrial && course.id === 'trial' && (
-                                        <TrialLessonEditor lesson={lesson} onSaved={applyTrialOverride} />
+                                        <TrialLessonEditor
+                                          lesson={lesson}
+                                          needsEnglishSync={trialOverrides.find((item) => item.lessonId === lesson.id)?.needsEnglishSync === true}
+                                          onSaved={applyTrialOverride}
+                                        />
                                       )}
                                     </article>
                                   </div>
