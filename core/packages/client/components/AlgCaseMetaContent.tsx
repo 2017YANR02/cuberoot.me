@@ -48,34 +48,32 @@ const METRIC_LABEL: Record<string, string> = { stm: 'STM', sqtm: 'SQTM', htm: 'H
 
 /** 一行「标签 + 可复制的公式」(`len` 给了就在右边挂步数徽章)。 */
 function AlgLine({
-  label, alg, len, playable = false, expanded = false, onToggle, preferred = false, onPreferredToggle,
+  label, alg, len, playable = false, selected = false, onPlay, preferred = false, onPreferredToggle,
 }: {
   label: string;
   alg: string;
   len?: number;
   playable?: boolean;
-  expanded?: boolean;
-  onToggle?: () => void;
+  selected?: boolean;
+  onPlay?: () => void;
   preferred?: boolean;
   onPreferredToggle?: () => void;
 }) {
   const { copied, copy } = useCopy();
   return (
     <div
-      className={`alg-meta-algline${playable ? ' is-playable' : ''}${expanded ? ' is-expanded' : ''}`}
+      className={`alg-meta-algline${playable ? ' is-playable' : ''}${selected ? ' is-expanded' : ''}`}
       role={playable ? 'button' : undefined}
       tabIndex={playable ? 0 : undefined}
-      aria-expanded={playable ? expanded : undefined}
-      onClick={playable ? onToggle : undefined}
+      aria-pressed={playable ? selected : undefined}
+      onClick={playable ? onPlay : undefined}
       onKeyDown={playable ? (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          onToggle?.();
+          onPlay?.();
         }
       } : undefined}
-      title={playable
-        ? (expanded ? tr({ zh: '收起动画', en: 'Collapse animation' }) : tr({ zh: '播放动画', en: 'Play animation' }))
-        : undefined}
+      title={playable ? tr({ zh: '播放动画', en: 'Play animation' }) : undefined}
     >
       {label && <span className="alg-meta-algline-label">{label}</span>}
       <code className="alg-meta-algline-code">{alg}</code>
@@ -167,7 +165,8 @@ export default function AlgCaseMetaContent({
    * 不能让 `caseObj.meta` 直接是 undefined —— `m.no` / `m.sym` 会当场抛。
    */
   const m = (caseObj.meta ?? {}) as AlgCaseMeta;
-  const [expandedAlgKey, setExpandedAlgKey] = useState<string | null>(null);
+  const [selectedAlgKey, setSelectedAlgKey] = useState<string | null>(null);
+  const [playRequest, setPlayRequest] = useState(0);
   const preferenceSet = caseObj.srcSet ?? set;
   const preferenceKey = `${puzzle}/${preferenceSet}`;
   const preferredSnapshot = usePreferredAlgs(state => state.snapshots[preferenceKey]);
@@ -200,6 +199,12 @@ export default function AlgCaseMetaContent({
     };
     });
   }, [caseObj.algs, preferredRef, preserveAlgOrder, puzzle, viewAngle]);
+  const selectedAlg = algs.find(a => `${a.key}:${a.originalIndex}` === selectedAlgKey) ?? algs[0];
+
+  useEffect(() => {
+    setSelectedAlgKey(null);
+    setPlayRequest(0);
+  }, [caseObj.id, caseObj.name]);
 
   /**
    * 这一族:镜像 / 逆 / 镜像逆 连起来的那一小撮 case(含当前这张),拆成三堆。
@@ -425,61 +430,72 @@ export default function AlgCaseMetaContent({
       )}
 
       <div className="alg-meta-case">
-        <div className="alg-meta-case-algs">
-          {algsWrap(algs.map((a) => {
-            const rowKey = `${a.key}:${a.originalIndex}`;
-            const expanded = playable && expandedAlgKey === rowKey;
-            const isPreferred = a.ref === preferredRef;
-            const label = [
-              isPreferred ? tr({ zh: '已置顶', en: 'Pinned' }) : '',
-              a.tags.map(t => ALG_TAG_LABEL[t]()).join(' '),
-            ].filter(Boolean).join(' ');
-            const togglePreferred = () => setPreferred(
-              puzzle,
-              preferenceSet,
-              preferredSlot,
-              isPreferred ? null : a.ref,
-            );
-            if (!playable) {
+        <div className={playable ? 'alg-meta-case-player-layout alg-case-detail-ori-main' : undefined}>
+          {playable && selectedAlg && (
+            <div className="alg-case-detail-ori-player">
+              <AlgPlayer
+                alg={selectedAlg.playbackAlg}
+                puzzle={puzzle}
+                set={set}
+                setup={selectedAlg.entry.setup === undefined && caseObj.setup === undefined
+                  ? undefined
+                  : caseViewSetup(selectedAlg.entry.setup ?? caseObj.setup ?? '', viewAngle)}
+                orientation={orientation}
+                size={260}
+                autoPlay={playRequest > 0}
+                playRequest={playRequest}
+              />
+            </div>
+          )}
+          <div className={playable ? 'alg-meta-case-algs alg-case-detail-ori-algs' : 'alg-meta-case-algs'}>
+            {algsWrap(algs.map((a) => {
+              const rowKey = `${a.key}:${a.originalIndex}`;
+              const selected = playable && selectedAlg === a;
+              const isPreferred = a.ref === preferredRef;
+              const label = [
+                isPreferred ? tr({ zh: '已置顶', en: 'Pinned' }) : '',
+                a.tags.map(t => ALG_TAG_LABEL[t]()).join(' '),
+              ].filter(Boolean).join(' ');
+              const togglePreferred = () => setPreferred(
+                puzzle,
+                preferenceSet,
+                preferredSlot,
+                isPreferred ? null : a.ref,
+              );
+              if (!playable) {
+                return algRowWrap(
+                  <AlgLine
+                    key={rowKey}
+                    label={label}
+                    alg={a.text}
+                    len={a.len}
+                    preferred={isPreferred}
+                    onPreferredToggle={togglePreferred}
+                  />,
+                  a.originalIndex,
+                );
+              }
               return algRowWrap(
-                <AlgLine
-                  key={rowKey}
-                  label={label}
-                  alg={a.text}
-                  len={a.len}
-                  preferred={isPreferred}
-                  onPreferredToggle={togglePreferred}
-                />,
+                <div key={rowKey} className="alg-meta-playable-row">
+                  <AlgLine
+                    label={label}
+                    alg={a.text}
+                    len={a.len}
+                    preferred={isPreferred}
+                    onPreferredToggle={togglePreferred}
+                    playable
+                    selected={selected}
+                    onPlay={() => {
+                      setSelectedAlgKey(rowKey);
+                      setPlayRequest(current => current + 1);
+                    }}
+                  />
+                </div>,
                 a.originalIndex,
               );
-            }
-            const playerSetup = a.entry.setup ?? caseObj.setup;
-            return algRowWrap(
-              <div key={rowKey} className="alg-meta-playable-row">
-                <AlgLine
-                  label={label}
-                  alg={a.text}
-                  len={a.len}
-                  preferred={isPreferred}
-                  onPreferredToggle={togglePreferred}
-                  playable
-                  expanded={expanded}
-                  onToggle={() => setExpandedAlgKey(current => current === rowKey ? null : rowKey)}
-                />
-                {expanded && (
-                  <AlgPlayer
-                    alg={a.playbackAlg}
-                    puzzle={puzzle}
-                    set={set}
-                    setup={playerSetup === undefined ? undefined : caseViewSetup(playerSetup, viewAngle)}
-                    orientation={orientation}
-                  />
-                )}
-              </div>,
-              a.originalIndex,
-            );
-          }))}
-          {algsAfter}
+            }))}
+            {algsAfter}
+          </div>
         </div>
       </div>
 

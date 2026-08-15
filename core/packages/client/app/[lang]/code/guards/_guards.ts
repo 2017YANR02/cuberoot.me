@@ -219,8 +219,8 @@ export const CI_GUARDS_UI: CiGuard[] = [
   {
     id: 'alg-case-detail-layout',
     test: 'alg-player-placement.test.ts',
-    zh: { title: '公式 case 详情另造结构或漏掉静态主图', desc: '所有 /alg case 详情都由 AlgCaseView 承载：CaseThumb 是稳定的辨识主图，AlgPlayer 是交互动画；F2L 等多朝向详情也必须保留主图，桌面端每行一个朝向并将公式放在对应动画右侧。写入 Hook 会拦回条件隐藏主图，CI 同时钉住共享路由、主图和响应式布局。' },
-    en: { title: 'Rebuilt alg-case detail or missing static identity image', desc: 'Every /alg case detail goes through AlgCaseView: CaseThumb is the stable identity image and AlgPlayer is the interactive animation. Multi-orientation details such as F2L keep the image and place one orientation per desktop row, with its formulas beside the matching animation. The write hook blocks restoring a conditional thumbnail, while CI pins the shared route, image, and responsive layout.' },
+    zh: { title: '公式库 case 详情另造结构或漏掉静态主图', desc: 'PG 公式库的标准 case 详情统一由 AlgCaseView 承载：CaseThumb 是稳定辨识图，AlgPlayer 固定在公式左侧；meta case 的关联图与打乱仍在播放器上方，训练弹窗保持紧凑。写入 Hook 会拦回行内播放器、条件隐藏主图和只给部分公式集启用的布局，CI 同时钉住共享路由与响应式结构。' },
+    en: { title: 'Rebuilt formula-library case detail or missing identity image', desc: 'Canonical PG formula-library case details go through AlgCaseView: CaseThumb remains the identity image and AlgPlayer stays fixed beside the alg list. Meta-case relations and scramble remain above it, while training modals stay compact. The write hook blocks inline players, conditional thumbnails, and set-specific layout gates; CI pins the shared route and responsive structure.' },
   },
 ];
 
