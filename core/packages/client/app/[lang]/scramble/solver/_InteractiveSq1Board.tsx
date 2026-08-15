@@ -120,6 +120,7 @@ export default function InteractiveSq1Board({
     const detach = gesture.attachOrbitTap({
       world,
       canvas: mount.renderer.domElement,
+      freeOrbit: true,
       // 起手就问引擎:抓到层了就我接管(拖着转),脱靶才交给 orbit。
       onDragBegin: (downX, downY, dx, dy) => {
         cube.twister.finish();

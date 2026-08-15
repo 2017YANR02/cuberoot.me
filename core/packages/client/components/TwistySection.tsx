@@ -5,6 +5,7 @@ import FaceOverlay, { type FaceTable } from './FaceOverlay';
 import ReconPlayOverlay from './recon/ReconPlayOverlay';
 import { applyTwistyCoreOpacity } from './twistyCoreOpacity';
 import { simSpeedToTps, uniformSimTimeline } from '@/lib/sim_timing';
+import { applyFreeOrbitDelta, ORBIT_K } from '@/app/[lang]/sim/engine/viewControls';
 import './TwistySection.css';
 
 // Pyraminx 4 vertex 方向。screenSlot mode:字母 (U/L/R/B) 不绑定具体 vertex,
@@ -185,6 +186,14 @@ export default function TwistySection({
   // 手拧锁 → addMove wrap 里吞掉指针产生的 move。用 ref 让开关一变不必重建 player。
   const pointerTurnsRef = useRef(true);
   useEffect(() => { pointerTurnsRef.current = settings?.pointerTurns !== false; }, [settings?.pointerTurns]);
+  const dragEmptyRef = useRef<'orbit' | 'rotate' | 'view'>('orbit');
+  useEffect(() => { dragEmptyRef.current = settings?.dragEmpty ?? 'orbit'; }, [settings?.dragEmpty]);
+  // cubing.js clamps requested camera latitude to +/-90 degrees. In pure-view mode
+  // we leave its camera fixed and accumulate the same drag deltas on the Three.js
+  // puzzle root instead, where both axes are genuinely unbounded.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const freeViewObjectRef = useRef<any>(null);
+  const freeViewOrientationRef = useRef<[number, number, number, number]>([1, 0, 0, 0]);
   const simTimingEnabled = settings != null;
 
   // NOTE: 自动加载 cubing 库——import 完成后 setCtor 触发重渲染
@@ -433,6 +442,12 @@ export default function TwistySection({
     const dist = scaleToDist(settings.scale);
     const tempo = simSpeedToTps(settings.speed);
     const isNewPlayer = prevNonceRef.current !== playerNonce;
+    if (!isNewPlayer && (
+      prevYawRef.current !== settings.viewAngle
+      || prevPitchRef.current !== settings.viewGradient
+    )) {
+      resetFreeViewRoot();
+    }
     if (isNewPlayer || prevYawRef.current !== settings.viewAngle) {
       try { player.cameraLongitude = yawDeg; } catch { /* */ }
     }
@@ -533,14 +548,195 @@ export default function TwistySection({
     }
     return orient;
   }
+  function combinedOverlayOrientation(algStr: string): [number, number, number, number] {
+    const cfg = ROTATE_CONFIG[puzzle] ?? { thresholdDeg: 0, axes: [] };
+    return quatMulRaw(freeViewOrientationRef.current, algToOrientation(algStr, cfg));
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function syncFreeViewObject(obj: any): void {
+    try {
+      obj.updateMatrix?.();
+      obj.updateMatrixWorld?.(true);
+      freeViewOrientationRef.current = [
+        obj.quaternion.w,
+        obj.quaternion.x,
+        obj.quaternion.y,
+        obj.quaternion.z,
+      ];
+      faceOverlayRef.current?.setCubeOrientation(combinedOverlayOrientation(currentAlgRef.current));
+      obj.scheduleRenderCallback?.();
+    } catch { /* cubing.js object was replaced while an async update was settling */ }
+  }
+  function resetFreeViewRoot(): void {
+    const obj = freeViewObjectRef.current;
+    freeViewOrientationRef.current = [1, 0, 0, 0];
+    if (obj) {
+      try {
+        obj.rotation.set?.(0, 0, 0);
+        if (typeof obj.rotation.set !== 'function') {
+          obj.rotation.x = 0; obj.rotation.y = 0; obj.rotation.z = 0;
+        }
+        syncFreeViewObject(obj);
+        return;
+      } catch { /* stale object */ }
+    }
+    try { faceOverlayRef.current?.setCubeOrientation(combinedOverlayOrientation(currentAlgRef.current)); } catch { /* */ }
+  }
   // 任何 alg 变化 → 重算 orient → 推 overlay。URL load / commit / 手输都过这条 path。
   useEffect(() => {
     const cfg = ROTATE_CONFIG[puzzle];
     if (!cfg) return;
-    const orient = algToOrientation(alg, cfg);
+    const orient = quatMulRaw(freeViewOrientationRef.current, algToOrientation(alg, cfg));
     try { faceOverlayRef.current?.setCubeOrientation(orient); } catch { /* */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [alg, puzzle, playerNonce]);
+
+  // cubing.js clamps OrbitCoordinatesRequest to latitude +/-90 degrees and wraps
+  // longitude. For the simulator's pure View mode (and Drag turn off), intercept
+  // only the orbit-control requests produced during a pointer gesture and apply
+  // their deltas to the puzzle Object3D. Camera settings, zoom, taps and raycasting
+  // keep using cubing.js normally.
+  useEffect(() => {
+    const host = containerRef.current;
+    const player = playerInstRef.current;
+    if (!host || !player) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sceneModel = (player as any).experimentalModel?.twistySceneModel;
+    const request = sceneModel?.orbitCoordinatesRequest;
+    if (!request || typeof request.set !== 'function' || !sceneModel?.orbitCoordinates) return;
+
+    let live = true;
+    let activePointer = -1;
+    let ownsOrbit = false;
+    let moved = false;
+    let releaseTimer: number | null = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let obj: any = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let originalClosest: ((...args: any[]) => any) | null = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let wrappedClosest: ((...args: any[]) => any) | null = null;
+    const originalSet = request.set.bind(request);
+    const freeEnabled = (): boolean => (
+      dragEmptyRef.current === 'view' || pointerTurnsRef.current === false
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const objectPromise: Promise<any> = player.experimentalCurrentThreeJSPuzzleObject()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then((nextObj: any) => {
+        if (!live || playerInstRef.current !== player) return null;
+        obj = nextObj;
+        freeViewObjectRef.current = nextObj;
+        nextObj.rotation.set?.(0, 0, 0);
+        syncFreeViewObject(nextObj);
+
+        // PG3D chooses a move by dotting the world-space ray hit with local puzzle
+        // axes. Once the root is rotated, convert that hit back to root-local space
+        // so click-to-turn still selects the visible face.
+        if (typeof nextObj.getClosestMoveToAxis === 'function' && typeof nextObj.worldToLocal === 'function') {
+          originalClosest = nextObj.getClosestMoveToAxis.bind(nextObj);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          wrappedClosest = (point: any, ...rest: any[]) => {
+            nextObj.updateMatrixWorld?.(true);
+            const localPoint = typeof point?.clone === 'function'
+              ? nextObj.worldToLocal(point.clone())
+              : point;
+            return originalClosest?.(localPoint, ...rest);
+          };
+          nextObj.getClosestMoveToAxis = wrappedClosest;
+        }
+        return nextObj;
+      })
+      .catch(() => null);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wrappedSet = (value: any): void => {
+      if (!freeEnabled() || !ownsOrbit) {
+        originalSet(value);
+        return;
+      }
+      // TwistyOrbitControls passes a Promise which resolves to the next partial
+      // lat/lon. Pinch zoom passes distance only and must continue to the native set.
+      void Promise.resolve(value).then(async (next) => {
+        if (!live || !freeEnabled()) {
+          originalSet(next);
+          return;
+        }
+        const hasOrbitDelta = typeof next?.latitude === 'number' || typeof next?.longitude === 'number';
+        if (!hasOrbitDelta) {
+          originalSet(next);
+          return;
+        }
+        moved = true;
+        if (pinchingRef.current) return;
+        const current = await sceneModel.orbitCoordinates.get();
+        if (!live) return;
+        const dLat = typeof next.latitude === 'number' ? next.latitude - current.latitude : 0;
+        const dLon = typeof next.longitude === 'number' ? next.longitude - current.longitude : 0;
+        const target = obj ?? await objectPromise;
+        if (!target || (!dLat && !dLon)) return;
+        const radiansPerDegree = Math.PI / 180;
+        applyFreeOrbitDelta(
+          target.rotation,
+          (-dLon * radiansPerDegree) / ORBIT_K,
+          (dLat * radiansPerDegree) / ORBIT_K,
+          ORBIT_K,
+        );
+        syncFreeViewObject(target);
+      }).catch(() => { /* player disposed during gesture */ });
+    };
+    request.set = wrappedSet;
+
+    const onDown = (e: PointerEvent): void => {
+      if (!freeEnabled() || pinchingRef.current || activePointer !== -1) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (releaseTimer != null) { window.clearTimeout(releaseTimer); releaseTimer = null; }
+      activePointer = e.pointerId;
+      ownsOrbit = true;
+      moved = false;
+    };
+    const onUp = (e: PointerEvent): void => {
+      if (e.pointerId !== activePointer) return;
+      activePointer = -1;
+      if (!moved) {
+        ownsOrbit = false;
+        return;
+      }
+      // cubing.js adds at most 500ms of post-release inertia. Keep intercepting it
+      // so inertia also remains unbounded and never nudges the fixed camera.
+      releaseTimer = window.setTimeout(() => {
+        releaseTimer = null;
+        ownsOrbit = false;
+      }, 600);
+    };
+    host.addEventListener('pointerdown', onDown, true);
+    host.addEventListener('pointerup', onUp, true);
+    host.addEventListener('pointercancel', onUp, true);
+
+    return () => {
+      live = false;
+      if (releaseTimer != null) window.clearTimeout(releaseTimer);
+      host.removeEventListener('pointerdown', onDown, true);
+      host.removeEventListener('pointerup', onUp, true);
+      host.removeEventListener('pointercancel', onUp, true);
+      if (request.set === wrappedSet) request.set = originalSet;
+      if (obj && wrappedClosest && obj.getClosestMoveToAxis === wrappedClosest && originalClosest) {
+        obj.getClosestMoveToAxis = originalClosest;
+      }
+      if (freeViewObjectRef.current === obj) freeViewObjectRef.current = null;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerNonce, puzzle, puzzleDescription]);
+
+  const freeViewEnabled = settings?.dragEmpty === 'view' || settings?.pointerTurns === false;
+  const previousFreeViewRef = useRef(false);
+  useEffect(() => {
+    if (previousFreeViewRef.current && !freeViewEnabled) resetFreeViewRoot();
+    previousFreeViewRef.current = freeViewEnabled;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [freeViewEnabled, playerNonce]);
+
   useEffect(() => {
     const player = playerInstRef.current;
     const cfg = ROTATE_CONFIG[puzzle];
@@ -615,6 +811,11 @@ export default function TwistySection({
     const thresholdRad = cfg.thresholdDeg * D2R;
 
     const onOrbit = (o: { latitude: number; longitude: number }) => {
+      if (dragEmptyRef.current !== 'orbit' || pointerTurnsRef.current === false) {
+        prevLat = o.latitude; prevLon = o.longitude;
+        for (let i = 0; i < accum.length; i++) accum[i] = 0;
+        return;
+      }
       const now = performance.now();
       // cooldown 期间:同步 prev,zero accum,不 commit。
       if (now < cooldownUntil) {
@@ -665,7 +866,7 @@ export default function TwistySection({
           player.cameraLatitude = targetLat;
           player.cameraLongitude = targetLon;
           // commit 当帧同步推 overlay orientation;prop alg round-trip 异步,不推这一次 label 跳 1 frame
-          const newOrient = algToOrientation(newAlg, cfg);
+          const newOrient = quatMulRaw(freeViewOrientationRef.current, algToOrientation(newAlg, cfg));
           faceOverlayRef.current?.setCubeOrientation(newOrient);
           onUserMoveRef.current?.(move);
         } catch { /* */ }
@@ -688,8 +889,6 @@ export default function TwistySection({
   //   skewb (立方体): 90°
   //   megaminx (十二面体): 72° (5 重对称 — 面轴)
   // cubing.js 自带 orbit 我们不拦截,只在松手后修正。
-  const dragEmptyRef = useRef<'orbit' | 'rotate' | 'view'>('orbit');
-  useEffect(() => { dragEmptyRef.current = settings?.dragEmpty ?? 'orbit'; }, [settings?.dragEmpty]);
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -730,7 +929,7 @@ export default function TwistySection({
       screenSlot: puzzle === 'pyraminx' || puzzle === 'skewb',
       visibleSlotCount: puzzle === 'skewb' ? 3 : undefined,
     });
-    overlay.setCubeOrientation(algToOrientation(currentAlgRef.current, ROTATE_CONFIG[puzzle] ?? { thresholdDeg: 0, axes: [] }));
+    overlay.setCubeOrientation(combinedOverlayOrientation(currentAlgRef.current));
     faceOverlayRef.current = overlay;
     // 字母可见性完全由「字母」(faceLabels) 开关控制 —— 对齐引擎路径(SimPage 渲染循环):
     // 这是字母的唯一开关,开=常驻,关=完全不显示(拖动不再浮现 / 不再 idle 隐藏)。
@@ -821,6 +1020,7 @@ export default function TwistySection({
     };
 
     const sectionDown = (e: PointerEvent) => {
+      if (dragEmptyRef.current !== 'orbit' || pointerTurnsRef.current === false) return;
       if (pinchingRef.current) return; // a pinch-zoom owns this gesture
       if (active) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
