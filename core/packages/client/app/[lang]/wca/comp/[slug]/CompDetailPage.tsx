@@ -54,6 +54,7 @@ import { AttemptPopover } from '@/components/persons/sections/results/AttemptPop
 import { listReconsByComp } from '@/lib/recon-api';
 import { buildReconPersonAttemptMap, findReconForPersonAttempt, buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
 import { roundLabel, ROUND_HINT_ZH, ROUND_HINT_EN } from '@/lib/wca-round-meta';
+import { roundHasAnyEnteredResult } from '@/lib/wca-round-results';
 import { useCompRowChangeMap } from '@/components/persons/logic/use-row-change-map';
 import { ResultChangeChain } from '@/components/persons/sections/results/ChangedResultValue';
 import type { ResultChangeTarget } from '@/components/persons/sections/results/ResultChangeEditor';
@@ -1184,6 +1185,18 @@ export default function CompDetailPage() {
   const applyPatch = useCallback((patch: LivePatch) => {
     setData(prev => {
       if (!prev) return prev;
+      if (patch.kind === 'result.all') {
+        const rows = patch.results as LiveResult[];
+        for (const r of rows) {
+          applyLiveRecordTags(r, prev.users[String(r.n)], prev.currentRecords);
+        }
+        const key = `${patch.eventId}:${patch.roundTypeId}`;
+        return {
+          ...prev,
+          resultsByRound: { ...prev.resultsByRound, [key]: rows },
+          fetchedAt: Date.now(),
+        };
+      }
       if (patch.kind === 'result.new' || patch.kind === 'result.update') {
         const r = patch.result as LiveResult;
         if (r.c !== prev.compId) return prev;
@@ -1224,7 +1237,24 @@ export default function CompDetailPage() {
   const isWcaLive = data?.source === 'wca_live';
   const isCubing = data?.source === 'cubing';
 
-  const cubingWsStatus = useLiveStream({ compId: isCubing ? (data?.compId ?? null) : null, applyPatch });
+  const cubingWsRounds = useMemo(() => {
+    if (!isCubing || !data) return [];
+    return data.events.flatMap(event => event.rs
+      .filter(round => round.rn !== 0 || round.s === 2)
+      .map(round => ({ eventId: event.i, roundTypeId: round.i })));
+  }, [isCubing, data?.events]);
+  const cubingFocusRound = useMemo(() => {
+    if (!isCubing || !data || !eventParam || !roundParam) return null;
+    const roundExists = data.events.some(event => event.i === eventParam
+      && event.rs.some(round => round.i === roundParam));
+    return roundExists ? { eventId: eventParam, roundTypeId: roundParam } : null;
+  }, [isCubing, data?.events, eventParam, roundParam]);
+  const cubingWsStatus = useLiveStream({
+    compId: isCubing ? (data?.compId ?? null) : null,
+    rounds: cubingWsRounds,
+    focusRound: cubingFocusRound,
+    applyPatch,
+  });
 
   // 只跟踪正在看的那一轮,不是全场。WCA Live 那边 subscription 走不通(check_origin
   // 403),useWcaLiveStream 改成轮询 GraphQL query 后,订阅范围直接等于流量:
@@ -1388,7 +1418,8 @@ export default function CompDetailPage() {
     return set;
   }, [data, currentRound, filteredResults]);
 
-  // 双轮赛制:当前项目的双轮对 (前两轮) + 当前轮是否属于双轮 + 合并开关 (默认开)。
+  // 双轮赛制:当前项目的双轮对 (前两轮) + 当前轮是否属于双轮 + 合并开关。
+  // 上游会为尚未开始的第二轮预建全 0 选手行,这些行不算已有成绩。
   // compYear / authoritativeDual 已在上方 (领奖台也用) 声明。
   const dualPair = useMemo(
     () => (data && currentRound
@@ -1399,8 +1430,11 @@ export default function CompDetailPage() {
   const currentIsDual = !!(dualPair && currentRound
     && (currentRound.rd.i === dualPair.r1.i || currentRound.rd.i === dualPair.r2.i));
   const [combinedPref, setCombinedPref] = useState<boolean | null>(null);
-  const showCombined = currentIsDual && (combinedPref ?? true);
-  // 切换项目时重置为默认 (默认开):避免在某项目关掉合并后,切到另一双轮项目仍是关的。
+  const secondRoundHasResults = !!(dualPair && data
+    && roundHasAnyEnteredResult(data.resultsByRound[roundKey(dualPair.r2.e, dualPair.r2.i)] || []));
+  const showCombined = currentIsDual && (combinedPref ?? secondRoundHasResults);
+  // 切换项目时重置为该项目默认值:第二轮有成绩才合并。
+  // 避免在某项目手动切换后,切到另一双轮项目仍沿用旧选择。
   // 同一项目内换轮次保留用户选择。
   useEffect(() => { setCombinedPref(null); }, [eventParam]);
   const filterMemberSet = useMemo(() => {
@@ -1852,8 +1886,8 @@ export default function CompDetailPage() {
               topBadges={isPsych ? {} : eventTopBadges}
               appendEvents={nonWcaEvents}
             />
-            {/* 双轮合并开关与所选项目图标同行(currentIsDual 仅成绩视图为真,预排名/赛程不显示) */}
-            {currentIsDual && (
+            {/* 双轮只控制成绩表合并;预排名 / 赛程没有对应语义。 */}
+            {viewParam === 'result' && currentIsDual && (
               <BoolToggle
                 value={showCombined}
                 onChange={setCombinedPref}

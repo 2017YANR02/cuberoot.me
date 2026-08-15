@@ -719,10 +719,6 @@
   white-space: nowrap;
   backdrop-filter: blur(5px);
 }
-.sim-picture-face-main > span strong {
-  font-size: 10px;
-  letter-spacing: 0.04em;
-}
 .sim-picture-face-main > em {
   position: absolute;
   top: 6px;
@@ -743,8 +739,15 @@
   position: absolute;
   top: 5px;
   right: 5px;
+  width: 24px;
+  height: 24px;
+  color: var(--foreground);
   background: color-mix(in srgb, var(--background) 86%, transparent);
   backdrop-filter: blur(5px);
+}
+.sim-picture-face-remove:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
 
 .sim-picture-crop-workspace { margin-top: 18px; }
@@ -824,35 +827,13 @@
   color: var(--muted-foreground);
 }
 .sim-picture-crop-load-error { font-size: 12px; }
-.sim-picture-crop-drag-hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  margin-top: 7px;
-  color: var(--muted-foreground);
-  font-size: 11px;
-}
 .sim-picture-crop-controls {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   min-width: 0;
 }
-.sim-picture-crop-control > span,
-.sim-picture-pan-control > span {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--muted-foreground);
-  font-size: 11px;
-  white-space: nowrap;
-}
-.sim-picture-rotation {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 5px;
-}
-.sim-picture-rotation button,
+.sim-picture-rotate-button,
 .sim-picture-crop-actions button {
   display: inline-flex;
   align-items: center;
@@ -867,28 +848,15 @@
   font: inherit;
   cursor: pointer;
 }
-.sim-picture-rotation button:hover,
+.sim-picture-rotate-button {
+  align-self: flex-start;
+  width: 34px;
+  padding: 6px;
+}
+.sim-picture-rotate-button:hover,
 .sim-picture-crop-actions button:hover {
   border-color: var(--border-strong);
   background: color-mix(in srgb, var(--foreground) 5%, transparent);
-}
-.sim-picture-rotation button[aria-pressed="true"] {
-  color: var(--accent);
-  background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border-default));
-}
-.sim-picture-pan-control { min-width: 0; }
-.sim-picture-pan-control input[type="range"] {
-  width: 100%;
-  min-width: 0;
-}
-.sim-picture-pan-control input[type="range"]:disabled { opacity: 0.34; }
-.sim-picture-crop-axis-note {
-  min-height: 2.8em;
-  margin: -4px 0 0;
-  color: var(--muted-foreground);
-  font-size: 11px;
-  line-height: 1.4;
 }
 .sim-picture-crop-actions {
   display: flex;
@@ -930,10 +898,6 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 18px;
-}
-.sim-picture-actions .sim-picture-clear {
-  color: var(--destructive);
-  border-color: color-mix(in srgb, var(--destructive) 35%, var(--border-default));
 }
 .sim-picture-actions .sim-picture-save {
   color: var(--accent-foreground);
@@ -984,8 +948,6 @@
     margin-top: 12px;
   }
   .sim-picture-crop-stage-wrap { width: min(100%, 320px); }
-  .sim-picture-crop-controls { gap: 11px; }
-  .sim-picture-crop-axis-note { min-height: 0; }
   .sim-picture-crop-actions button { min-height: 36px; }
   .sim-picture-actions { margin-top: 14px; }
 }

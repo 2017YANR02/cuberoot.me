@@ -36,7 +36,7 @@ import {
   FlipHorizontal2, FlipVertical2, Eraser,
   Shuffle, Link2, Check,
   Search, Loader2, Pipette,
-  Keyboard, Grid3x3, ImagePlus, Upload, Trash2, Crop, RotateCw, Move as MoveIcon,
+  Keyboard, Grid3x3, ImagePlus, Upload, Trash2, Crop, RotateCw,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './engine/world';
@@ -124,11 +124,12 @@ import {
   DEFAULT_PICTURE_CROP,
   countPictureFaces,
   drawPictureCrop,
-  emptyPictureFaces,
   fileToPictureEditSourceDataUrl,
   normalizePictureCrop,
+  panPictureCropBy,
   pictureCropGeometry,
   pictureEditSourceToFaceDataUrl,
+  zoomPictureCropAt,
   type PictureCrop,
   type PictureFace,
   type PictureFaces,
@@ -2785,14 +2786,13 @@ function defaultPictureCrops(): Record<PictureFace, PictureCrop> {
 }
 
 function PictureCropWorkspace({
-  face, source, initialCrop, order, busy, onCancel, onReplace, onApply, t,
+  face, source, initialCrop, order, busy, onReplace, onApply, t,
 }: {
   face: PictureFace;
   source: string;
   initialCrop: PictureCrop;
   order: number;
   busy: boolean;
-  onCancel: () => void;
   onReplace: () => void;
   onApply: (crop: PictureCrop) => void;
   t: (zh: string, en: string) => string;
@@ -2803,15 +2803,40 @@ function PictureCropWorkspace({
   const [dragging, setDragging] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
-  const dragRef = useRef<{
-    pointerId: number;
-    clientX: number;
-    clientY: number;
-    crop: PictureCrop;
-  } | null>(null);
+  const cropRef = useRef(crop);
+  const pointersRef = useRef(new Map<number, { clientX: number; clientY: number }>());
+  const gestureRef = useRef<
+    | {
+      kind: 'drag';
+      pointerId: number;
+      clientX: number;
+      clientY: number;
+      crop: PictureCrop;
+    }
+    | {
+      kind: 'pinch';
+      pointerIds: readonly [number, number];
+      distance: number;
+      centerX: number;
+      centerY: number;
+      crop: PictureCrop;
+    }
+    | null
+  >(null);
+
+  cropRef.current = crop;
+
+  const commitCrop = useCallback((next: PictureCrop) => {
+    const normalized = normalizePictureCrop(next);
+    cropRef.current = normalized;
+    setCrop(normalized);
+  }, []);
 
   useEffect(() => {
     setCrop(normalizePictureCrop(initialCrop));
+    pointersRef.current.clear();
+    gestureRef.current = null;
+    setDragging(false);
     setDimensions({ width: 0, height: 0 });
     setImageError(false);
     const image = new Image();
@@ -2855,21 +2880,75 @@ function PictureCropWorkspace({
     );
   }, [crop, dimensions]);
 
-  const setAxis = (axis: 'x' | 'y', value: number) => {
-    setCrop((current) => normalizePictureCrop({ ...current, [axis]: value }));
-  };
-  const panAvailableX = !!geometry && geometry.overflowX > 0.5;
-  const panAvailableY = !!geometry && geometry.overflowY > 0.5;
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const onWheel = (event: WheelEvent) => {
+      if (!dimensions.width || !dimensions.height) return;
+      event.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const delta = event.deltaMode === 1
+        ? event.deltaY * 16
+        : event.deltaMode === 2 ? event.deltaY * rect.height : event.deltaY;
+      const anchorX = ((event.clientX - rect.left) / rect.width - 0.5) * PICTURE_CROP_SIZE;
+      const anchorY = ((event.clientY - rect.top) / rect.height - 0.5) * PICTURE_CROP_SIZE;
+      commitCrop(zoomPictureCropAt(
+        dimensions.width,
+        dimensions.height,
+        PICTURE_CROP_SIZE,
+        cropRef.current,
+        cropRef.current.zoom * Math.exp(-delta * 0.002),
+        anchorX,
+        anchorY,
+      ));
+    };
+    canvas.addEventListener('wheel', onWheel, { passive: false });
+    return () => canvas.removeEventListener('wheel', onWheel);
+  }, [commitCrop, dimensions.height, dimensions.width]);
+
   const gridCount = order >= 2 && order <= 12 ? order : 0;
   const [zhFace, enFace] = PICTURE_FACE_LABELS[face];
 
-  const endDrag = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (dragRef.current?.pointerId !== event.pointerId) return;
-    dragRef.current = null;
-    setDragging(false);
+  const beginPinch = () => {
+    const pair = [...pointersRef.current.entries()].slice(0, 2);
+    if (pair.length < 2) return;
+    const [[firstId, first], [secondId, second]] = pair;
+    gestureRef.current = {
+      kind: 'pinch',
+      pointerIds: [firstId, secondId],
+      distance: Math.max(1, Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY)),
+      centerX: (first.clientX + second.clientX) / 2,
+      centerY: (first.clientY + second.clientY) / 2,
+      crop: cropRef.current,
+    };
+    setDragging(true);
+  };
+
+  const endPointer = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    pointersRef.current.delete(event.pointerId);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+    if (pointersRef.current.size >= 2) {
+      beginPinch();
+      return;
+    }
+    const remaining = [...pointersRef.current.entries()][0];
+    if (remaining) {
+      const [pointerId, point] = remaining;
+      gestureRef.current = {
+        kind: 'drag',
+        pointerId,
+        clientX: point.clientX,
+        clientY: point.clientY,
+        crop: cropRef.current,
+      };
+      setDragging(true);
+      return;
+    }
+    gestureRef.current = null;
+    setDragging(false);
   };
 
   return (
@@ -2878,7 +2957,7 @@ function PictureCropWorkspace({
         <span className="sim-picture-crop-icon"><Crop size={17} /></span>
         <div>
           <h3>{t(`调整 ${face} ${zhFace}`, `Adjust ${face} ${enFace}`)}</h3>
-          <p>{t('拖动画面调整取景,虚线就是贴纸切割位置', 'Drag the picture to frame it; the grid shows the sticker cuts')}</p>
+          <p>{t('拖动取景,双指或滚轮缩放,虚线就是贴纸切割位置', 'Drag to reframe, pinch or scroll to zoom; the grid shows the sticker cuts')}</p>
         </div>
       </div>
 
@@ -2890,40 +2969,118 @@ function PictureCropWorkspace({
               width={PICTURE_CROP_SIZE}
               height={PICTURE_CROP_SIZE}
               tabIndex={0}
-              aria-label={t('拖动图片调整裁切位置', 'Drag image to adjust crop position')}
+              aria-label={t('拖动图片调整取景,双指或滚轮缩放', 'Drag to reframe; pinch or scroll to zoom')}
               onPointerDown={(event) => {
-                if (!geometry || (!panAvailableX && !panAvailableY)) return;
-                event.currentTarget.setPointerCapture(event.pointerId);
-                dragRef.current = {
-                  pointerId: event.pointerId,
+                if (!geometry || (event.pointerType !== 'touch' && event.button !== 0)) return;
+                pointersRef.current.set(event.pointerId, {
                   clientX: event.clientX,
                   clientY: event.clientY,
-                  crop,
-                };
-                setDragging(true);
+                });
+                event.currentTarget.setPointerCapture(event.pointerId);
+                if (pointersRef.current.size >= 2) beginPinch();
+                else {
+                  gestureRef.current = {
+                    kind: 'drag',
+                    pointerId: event.pointerId,
+                    clientX: event.clientX,
+                    clientY: event.clientY,
+                    crop: cropRef.current,
+                  };
+                  setDragging(true);
+                }
               }}
               onPointerMove={(event) => {
-                const start = dragRef.current;
-                if (!start || start.pointerId !== event.pointerId || !geometry) return;
+                if (!pointersRef.current.has(event.pointerId) || !geometry) return;
+                pointersRef.current.set(event.pointerId, {
+                  clientX: event.clientX,
+                  clientY: event.clientY,
+                });
+                const gesture = gestureRef.current;
+                if (!gesture) return;
                 const rect = event.currentTarget.getBoundingClientRect();
-                const maxX = geometry.overflowX / PICTURE_CROP_SIZE * rect.width / 2;
-                const maxY = geometry.overflowY / PICTURE_CROP_SIZE * rect.height / 2;
-                setCrop(normalizePictureCrop({
-                  ...start.crop,
-                  x: maxX > 0 ? start.crop.x + (event.clientX - start.clientX) / maxX : 0,
-                  y: maxY > 0 ? start.crop.y + (event.clientY - start.clientY) / maxY : 0,
-                }));
+                if (!rect.width || !rect.height) return;
+                if (gesture.kind === 'pinch') {
+                  const first = pointersRef.current.get(gesture.pointerIds[0]);
+                  const second = pointersRef.current.get(gesture.pointerIds[1]);
+                  if (!first || !second) return;
+                  const distance = Math.max(1, Math.hypot(
+                    second.clientX - first.clientX,
+                    second.clientY - first.clientY,
+                  ));
+                  const centerX = (first.clientX + second.clientX) / 2;
+                  const centerY = (first.clientY + second.clientY) / 2;
+                  const toCanvasX = (clientX: number) => (
+                    (clientX - rect.left) / rect.width - 0.5
+                  ) * PICTURE_CROP_SIZE;
+                  const toCanvasY = (clientY: number) => (
+                    (clientY - rect.top) / rect.height - 0.5
+                  ) * PICTURE_CROP_SIZE;
+                  commitCrop(zoomPictureCropAt(
+                    dimensions.width,
+                    dimensions.height,
+                    PICTURE_CROP_SIZE,
+                    gesture.crop,
+                    gesture.crop.zoom * distance / gesture.distance,
+                    toCanvasX(gesture.centerX),
+                    toCanvasY(gesture.centerY),
+                    toCanvasX(centerX),
+                    toCanvasY(centerY),
+                  ));
+                  return;
+                }
+                if (gesture.pointerId !== event.pointerId) return;
+                commitCrop(panPictureCropBy(
+                  dimensions.width,
+                  dimensions.height,
+                  PICTURE_CROP_SIZE,
+                  gesture.crop,
+                  (event.clientX - gesture.clientX) / rect.width * PICTURE_CROP_SIZE,
+                  (event.clientY - gesture.clientY) / rect.height * PICTURE_CROP_SIZE,
+                ));
               }}
-              onPointerUp={endDrag}
-              onPointerCancel={endDrag}
+              onPointerUp={endPointer}
+              onPointerCancel={endPointer}
+              onLostPointerCapture={(event) => {
+                if (!pointersRef.current.has(event.pointerId)) return;
+                pointersRef.current.clear();
+                gestureRef.current = null;
+                setDragging(false);
+              }}
               onKeyDown={(event) => {
-                const step = event.shiftKey ? 0.2 : 0.05;
-                if (event.key === 'ArrowLeft' && panAvailableX) setAxis('x', crop.x - step);
-                else if (event.key === 'ArrowRight' && panAvailableX) setAxis('x', crop.x + step);
-                else if (event.key === 'ArrowUp' && panAvailableY) setAxis('y', crop.y - step);
-                else if (event.key === 'ArrowDown' && panAvailableY) setAxis('y', crop.y + step);
+                const nudge = event.shiftKey ? 40 : 12;
+                if (event.key === 'ArrowLeft') commitCrop(panPictureCropBy(
+                  dimensions.width, dimensions.height, PICTURE_CROP_SIZE, cropRef.current, -nudge, 0,
+                ));
+                else if (event.key === 'ArrowRight') commitCrop(panPictureCropBy(
+                  dimensions.width, dimensions.height, PICTURE_CROP_SIZE, cropRef.current, nudge, 0,
+                ));
+                else if (event.key === 'ArrowUp') commitCrop(panPictureCropBy(
+                  dimensions.width, dimensions.height, PICTURE_CROP_SIZE, cropRef.current, 0, -nudge,
+                ));
+                else if (event.key === 'ArrowDown') commitCrop(panPictureCropBy(
+                  dimensions.width, dimensions.height, PICTURE_CROP_SIZE, cropRef.current, 0, nudge,
+                ));
+                else if (event.key === '+' || event.key === '=') commitCrop(zoomPictureCropAt(
+                  dimensions.width,
+                  dimensions.height,
+                  PICTURE_CROP_SIZE,
+                  cropRef.current,
+                  cropRef.current.zoom * 1.15,
+                  0,
+                  0,
+                ));
+                else if (event.key === '-') commitCrop(zoomPictureCropAt(
+                  dimensions.width,
+                  dimensions.height,
+                  PICTURE_CROP_SIZE,
+                  cropRef.current,
+                  cropRef.current.zoom / 1.15,
+                  0,
+                  0,
+                ));
                 else return;
                 event.preventDefault();
+                event.stopPropagation();
               }}
             />
             {gridCount > 0 && (
@@ -2936,55 +3093,21 @@ function PictureCropWorkspace({
             {!dimensions.width && !imageError && <Loader2 size={24} className="sim-picture-crop-loading sim-spin" />}
             {imageError && <span className="sim-picture-crop-load-error">{t('无法预览', 'Preview unavailable')}</span>}
           </div>
-          <span className="sim-picture-crop-drag-hint"><MoveIcon size={14} />{t('直接拖动', 'Drag to position')}</span>
         </div>
 
         <div className="sim-picture-crop-controls">
-          <div className="sim-picture-crop-control">
-            <span>{t('旋转', 'Rotate')}</span>
-            <div className="sim-picture-rotation" role="group" aria-label={t('图片旋转角度', 'Image rotation')}>
-              {([0, 90, 180, 270] as const).map((rotation) => (
-                <button
-                  type="button"
-                  key={rotation}
-                  aria-pressed={crop.rotation === rotation}
-                  onClick={() => setCrop((current) => ({ ...current, rotation }))}
-                >
-                  {rotation === 90 && <RotateCw size={13} />}{rotation}°
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <label className="sim-picture-pan-control">
-            <span>{t('左右', 'Horizontal')}</span>
-            <input
-              type="range"
-              min={-100}
-              max={100}
-              value={Math.round(crop.x * 100)}
-              disabled={!panAvailableX}
-              aria-label={t('左右移动图片', 'Move image horizontally')}
-              onChange={(event) => setAxis('x', Number(event.target.value) / 100)}
-            />
-          </label>
-          <label className="sim-picture-pan-control">
-            <span>{t('上下', 'Vertical')}</span>
-            <input
-              type="range"
-              min={-100}
-              max={100}
-              value={Math.round(crop.y * 100)}
-              disabled={!panAvailableY}
-              aria-label={t('上下移动图片', 'Move image vertically')}
-              onChange={(event) => setAxis('y', Number(event.target.value) / 100)}
-            />
-          </label>
-          <p className="sim-picture-crop-axis-note">
-            {panAvailableX || panAvailableY
-              ? t('也可用方向键微调,按住 Shift 可快速移动', 'Use arrow keys for fine control; hold Shift to move faster')
-              : t('图片已完整填满正方形,无需移动', 'The image already fills the square with no movable overflow')}
-          </p>
+          <button
+            type="button"
+            className="sim-picture-rotate-button"
+            aria-label={t('顺时针旋转 90°', 'Rotate 90° clockwise')}
+            title={t('顺时针旋转 90°', 'Rotate 90° clockwise')}
+            onClick={() => setCrop((current) => normalizePictureCrop({
+              ...current,
+              rotation: current.rotation + 90,
+            }))}
+          >
+            <RotateCw size={17} aria-hidden="true" />
+          </button>
 
           <div className="sim-picture-crop-actions">
             <button
@@ -2992,12 +3115,11 @@ function PictureCropWorkspace({
               disabled={busy}
               onClick={() => setCrop({ ...DEFAULT_PICTURE_CROP, rotation: crop.rotation })}
             >
-              {t('重新居中', 'Recenter')}
+              {t('居中', 'Center')}
             </button>
             <button type="button" disabled={busy} onClick={onReplace}>
-              <Upload size={14} />{t('更换图片', 'Replace image')}
+              <Upload size={14} />{t('换图', 'Change image')}
             </button>
-            <button type="button" disabled={busy} onClick={onCancel}>{t('返回六面', 'Back to faces')}</button>
             <button
               type="button"
               className="sim-picture-crop-apply"
@@ -3005,7 +3127,7 @@ function PictureCropWorkspace({
               onClick={() => onApply(crop)}
             >
               {busy && <Loader2 size={14} className="sim-spin" />}
-              {t('应用裁切', 'Apply crop')}
+              {t('应用', 'Apply')}
             </button>
           </div>
         </div>
@@ -3206,7 +3328,15 @@ function PictureCubeEditor({
             <h2 id="sim-picture-title">{t('制作图案魔方', 'Create a picture cube')}</h2>
             <p>{t('每张图都可旋转并拖动取景,确认后再切到对应面的真实贴纸上', 'Rotate and reframe every image before it is sliced across the real stickers on that face')}</p>
           </div>
-          <ClearButton variant="standalone" className="sim-picture-icon-btn" onClick={onClose} ariaLabel={t('关闭', 'Close')} />
+          <ClearButton
+            variant="standalone"
+            className="sim-picture-icon-btn"
+            onClick={() => {
+              if (cropFace) setCropFace(null);
+              else onClose();
+            }}
+            ariaLabel={cropFace ? t('返回六面', 'Back to faces') : t('关闭', 'Close')}
+          />
         </header>
 
         {cropFace && editSources[cropFace] ? (
@@ -3217,7 +3347,6 @@ function PictureCubeEditor({
             initialCrop={faceCrops[cropFace]}
             order={order}
             busy={busy}
-            onCancel={() => setCropFace(null)}
             onReplace={() => {
               setTargetFace(cropFace);
               faceInputRef.current?.click();
@@ -3258,15 +3387,19 @@ function PictureCubeEditor({
                         ? <img src={draft[face]} alt="" />
                         : <ImagePlus size={22} />}
                       {hasImage && <em><Crop size={12} />{t('调整', 'Adjust')}</em>}
-                      <span><strong>{face}</strong>{t(zh, en)}</span>
+                      <span>{face}</span>
                     </button>
                     {hasImage && (
-                      <ClearButton
-                        variant="standalone"
-                        className="sim-picture-face-remove"
+                      <button
+                        type="button"
+                        className="clear-btn clear-btn--standalone sim-picture-face-remove"
+                        disabled={busy}
                         onClick={() => removeFace(face)}
-                        ariaLabel={t(`移除${zh}图片`, `Remove ${en} image`)}
-                      />
+                        aria-label={t(`删除${zh}图片`, `Remove ${en} image`)}
+                        title={t(`删除${zh}图片`, `Remove ${en} image`)}
+                      >
+                        <Trash2 size={13} aria-hidden="true" />
+                      </button>
                     )}
                   </div>
                 );
@@ -3279,18 +3412,6 @@ function PictureCubeEditor({
             </div>
 
             <footer className="sim-picture-actions">
-              <button
-                type="button"
-                className="sim-picture-clear"
-                disabled={busy || count === 0}
-                onClick={() => {
-                  setDraft(emptyPictureFaces());
-                  setEditSources(emptyPictureFaces());
-                  setFaceCrops(defaultPictureCrops());
-                }}
-              >
-                <Trash2 size={15} />{t('清空', 'Clear')}
-              </button>
               <button type="button" onClick={onClose}>{t('取消', 'Cancel')}</button>
               <button
                 type="button"

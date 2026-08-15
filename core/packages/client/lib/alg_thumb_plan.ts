@@ -140,7 +140,7 @@ export function cubeThumbParams(
 type AlgDriver = { alg: string; case?: never } | { case: string; alg?: never };
 
 export type CaseThumbPlan =
-  | { renderer: 'inline-svg'; svg: string; alt: string }
+  | { renderer: 'inline-svg'; svg: string; alt: string; layout?: 'stacked-layers' }
   | { renderer: 'asset'; src: string; alt: string; width: number; height: number }
   | { renderer: 'engine'; puzzle: 'pyraminx'; driver: AlgDriver }
   | { renderer: 'sr'; kind: 'megaminx-top'; driver: AlgDriver }
@@ -212,12 +212,14 @@ export function caseThumbPlan({
         renderer: 'inline-svg',
         svg: renderSq1ScrambleSvg(forward, colors, renderOptions, showMiddle),
         alt: 'Square-1 case',
+        layout: 'stacked-layers',
       };
     } catch {
       return {
         renderer: 'inline-svg',
         svg: renderSq1ScrambleSvg('', colors, renderOptions, showMiddle),
         alt: 'Square-1 case',
+        layout: 'stacked-layers',
       };
     }
   }

@@ -50,7 +50,10 @@ export function CaseThumb({
 
   // Square-1 flat SVGs stack two layers vertically. Render at 2x then crop the
   // upper half so a requested single layer keeps the same visual size as a full thumb.
-  const renderSize = puzzle === 'sq1' && sq1Layer === 'top' ? size * 2 : size;
+  const cropTopLayer = plan.renderer === 'inline-svg'
+    && plan.layout === 'stacked-layers'
+    && sq1Layer === 'top';
+  const renderSize = cropTopLayer ? size * 2 : size;
   let art: ReactNode;
   if (plan.renderer === 'inline-svg') {
     art = (
@@ -99,7 +102,7 @@ export function CaseThumb({
     );
   }
 
-  if (puzzle !== 'sq1' || sq1Layer !== 'top') return art;
+  if (!cropTopLayer) return art;
   return (
     <div style={{ width: size, height: size, overflow: 'hidden', lineHeight: 0 }}>
       <div style={{ width: renderSize, height: renderSize, transform: `translateX(-${size / 2}px)` }}>

@@ -55,9 +55,13 @@ interface Props {
 // Ported from packages/client-vite/src/components/VisualCube.tsx — minus the SW interception note
 // (Next.js bundles a fresh SW; for now this hits the api.cuberoot.me endpoint directly in prod).
 export function VisualCube({ algorithm = '', setup, view, mask, faceletColors, faceletAlg, scheme, showLastLayerColor, planSimplify, size = 88, puzzleSize = 3, alt = 'Cube state', loading, local, hideGreySides }: Props) {
+  // Exact facelet states are already available in the client bundle and may use
+  // query features that an older deployed API does not know yet. Render them
+  // locally so the page and its data stay atomic during rolling deployments.
+  const renderLocally = Boolean(local || faceletColors);
   // 同一组参数喂两条路:本地渲染直接调 server 端点用的那个函数,URL 版把它们拼成 query。
   const svg = useMemo(() => {
-    if (!local) return null;
+    if (!renderLocally) return null;
     return renderFromSimpleQuery({
       ...(faceletColors ? { fc: faceletColors, ...(faceletAlg ? { alg: faceletAlg } : {}) } : setup ? { setup } : { case: algorithm }),
       view, size, pzl: puzzleSize, ...(mask ? { mask } : {}),
@@ -71,10 +75,10 @@ export function VisualCube({ algorithm = '', setup, view, mask, faceletColors, f
       ...(planSimplify?.forceShow ? { pfs: planSimplify.forceShow } : {}),
       ...(planSimplify?.forceHide ? { pfh: planSimplify.forceHide } : {}),
     });
-  }, [local, algorithm, setup, view, mask, faceletColors, faceletAlg, scheme, showLastLayerColor, planSimplify, size, puzzleSize, hideGreySides]);
+  }, [renderLocally, algorithm, setup, view, mask, faceletColors, faceletAlg, scheme, showLastLayerColor, planSimplify, size, puzzleSize, hideGreySides]);
 
   const src = useMemo(() => {
-    if (local) return '';
+    if (renderLocally) return '';
     const params = new URLSearchParams({ view, size: String(size) });
     if (faceletColors) {
       params.set('fc', faceletColors);
@@ -93,7 +97,7 @@ export function VisualCube({ algorithm = '', setup, view, mask, faceletColors, f
     // 新 query key = 新缓存键,老链接的 24h CDN 缓存不受影响,无需 bump v=。
     if (hideGreySides) params.set('ngs', '1');
     return apiUrl(`/v1/visualcube.svg?${params}`);
-  }, [local, algorithm, setup, view, mask, faceletColors, faceletAlg, scheme, showLastLayerColor, planSimplify, size, puzzleSize, hideGreySides]);
+  }, [renderLocally, algorithm, setup, view, mask, faceletColors, faceletAlg, scheme, showLastLayerColor, planSimplify, size, puzzleSize, hideGreySides]);
 
   // puzzle-art:柔和度的统一钩子(见 globals.css),贴纸色不走 token,靠它跟。
   if (svg) {
