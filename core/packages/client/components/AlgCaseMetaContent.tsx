@@ -184,14 +184,16 @@ export default function AlgCaseMetaContent({
       ? (caseObj.algs[0] ?? []).map((entry, originalIndex) => ({ entry, originalIndex }))
       : sortPreferredAlgs(caseObj.algs[0] ?? [], preferredRef);
     return entries.map(({ entry: a, originalIndex }) => {
-    const playbackAlg = caseViewAlg(a.alg, viewAngle);
-    const shown = displayAlg(playbackAlg);
+    const shown = displayAlg(caseViewAlg(a.alg, viewAngle));
     return {
       key: a.altId ?? shown,
       entry: a,
       originalIndex,
       ref: preferredAlgRef(a),
-      playbackAlg,
+      // The case player must demonstrate exactly the alg shown to the user.
+      // DB rows may retain a solving-only trailing AUF for state matching, but
+      // a last-layer alg ends before that invisible U-layer adjustment.
+      playbackAlg: shown,
       text: formatScrambleForEvent(puzzle, shown),
       len: a.stm == null ? undefined : stm(shown),
       tags: a.tags ?? [],

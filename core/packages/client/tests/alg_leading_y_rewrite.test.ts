@@ -166,6 +166,7 @@ describe('displayAlg', () => {
     expect(displayAlg("U R U R' U' R' F R F' U'")).toBe("U R U R' U' R' F R F'");
     expect(displayAlg("R U R' U R U2 R' U2")).toBe("R U R' U R U2 R'");
     expect(displayAlg("F R U R' U' F' (U)")).toBe("F R U R' U' F'");
+    expect(displayAlg("U' M2 U' M U2 M' U' M2 U2 U2")).toBe("U' M2 U' M U2 M' U' M2");
   });
 
   it('hides every consecutive finishing AUF without touching the leading AUF', () => {
