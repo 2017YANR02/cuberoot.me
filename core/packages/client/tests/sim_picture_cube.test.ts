@@ -13,7 +13,9 @@ import {
   panPictureCropBy,
   pictureCropGeometry,
   pictureFacesKey,
+  pictureStickerShowsFaceColor,
   renderPictureCubeNetSvg,
+  rotatePictureCropTo,
   zoomPictureCropAt,
 } from '@/app/[lang]/sim/engine/nxn/pictureCube';
 
@@ -37,13 +39,21 @@ describe('picture cube face data', () => {
     expect(pictureFacesKey(faces)).toBe(PICTURE_FACE_ORDER.map((face) => faces[face]).join('\u0000'));
   });
 
+  it('neutralizes picture bases by default without overriding stage colours', () => {
+    expect(pictureStickerShowsFaceColor(false, 'data:image/webp;base64,U', 0)).toBe(false);
+    expect(pictureStickerShowsFaceColor(true, 'data:image/webp;base64,U', 0)).toBe(true);
+    expect(pictureStickerShowsFaceColor(false, '', 0)).toBe(true);
+    expect(pictureStickerShowsFaceColor(false, 'data:image/webp;base64,U', FM_IGNORED)).toBe(true);
+  });
+
   it('normalizes crop rotation, pan, and zoom bounds', () => {
     expect(normalizePictureCrop({ rotation: 89, x: -2, y: Number.NaN, zoom: 99 })).toEqual({
-      rotation: 90, x: -1, y: 0, zoom: 4,
+      rotation: 89, x: -1, y: 0, zoom: 4,
     });
     expect(normalizePictureCrop({ rotation: -90, x: 0.25, y: 2, zoom: 0.2 })).toEqual({
-      rotation: 270, x: 0.25, y: 1, zoom: 1,
+      rotation: -90, x: 0.25, y: 1, zoom: 1,
     });
+    expect(normalizePictureCrop({ rotation: 540 })).toMatchObject({ rotation: 180 });
   });
 
   it('maps wide-image pan to the exact cover overflow and swaps axes after rotation', () => {
@@ -79,6 +89,34 @@ describe('picture cube face data', () => {
       offsetX: 300,
       offsetY: -200,
     });
+  });
+
+  it('keeps every crop corner covered at an arbitrary angle', () => {
+    const geometry = pictureCropGeometry(800, 400, 400, {
+      rotation: 45, x: 0, y: 0, zoom: 1,
+    });
+    expect(geometry.scale).toBeCloseTo(Math.SQRT2);
+    expect(geometry.drawnWidth).toBeCloseTo(1200);
+    expect(geometry.drawnHeight).toBeCloseTo(1200);
+    expect(geometry.offsetX).toBe(0);
+    expect(geometry.offsetY).toBe(0);
+  });
+
+  it('preserves the selected focal point while rotating', () => {
+    const initial = panPictureCropBy(
+      800,
+      400,
+      400,
+      { rotation: 0, x: 0, y: 0, zoom: 1 },
+      80,
+      -30,
+    );
+    const before = pictureCropGeometry(800, 400, 400, initial);
+    const rotated = rotatePictureCropTo(800, 400, 400, initial, 37.5);
+    const after = pictureCropGeometry(800, 400, 400, rotated);
+    expect(rotated.rotation).toBe(37.5);
+    expect(after.offsetX).toBeCloseTo(before.offsetX);
+    expect(after.offsetY).toBeCloseTo(before.offsetY);
   });
 
   it('adds only the zoom needed when dragging an image with no crop overflow', () => {
@@ -207,6 +245,22 @@ describe('Cube.serializePictureFacelets', () => {
     expect(svg).toContain('viewBox="0 0 12 9"');
     expect(svg).toContain('opacity="0.8"');
     expect(svg).toContain('fill="#f00"');
+  });
+
+  it('adds face-colour picture edges only when requested', () => {
+    const cube = new Cube(1);
+    const faces = emptyPictureFaces();
+    faces.U = 'data:image/webp;base64,UP';
+    const common = {
+      order: 1,
+      facelets: cube.serializePictureFacelets(),
+      faces,
+      faceColors: { U: '#fff', R: '#f00', F: '#0f0', D: '#ff0', L: '#f80', B: '#00f' },
+      bodyColor: '#111',
+    };
+    expect(renderPictureCubeNetSvg(common)).toContain('stroke="#111" stroke-width="0.06"');
+    expect(renderPictureCubeNetSvg({ ...common, pictureBaseColors: true }))
+      .toContain('stroke="#fff" stroke-width="0.06"');
   });
 
   it('keeps every artwork tile attached to one physical sticker through turns', () => {

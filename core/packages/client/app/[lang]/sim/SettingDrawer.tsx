@@ -138,6 +138,8 @@ export interface SimSettings {
   customLogo: string;
   /** NxN 图案魔方总开关。图片按 HOME 面切成贴纸碎片,转层后随物理块移动。 */
   pictureCube: boolean;
+  /** 图案贴纸是否保留原本的六面色斜边。默认关,斜边跟随内核色。 */
+  pictureBaseColors: boolean;
   /** 六面用户图片(data URL)。单独存储,避免每次拖滑条都重写大字符串。 */
   pictureFaces: PictureFaces;
   /** 实时消步:手势 / 键盘转动追加到解法框时,自动 fold/抵消重复转动
@@ -225,6 +227,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   logo: 'none',
   customLogo: '',
   pictureCube: false,
+  pictureBaseColors: false,
   pictureFaces: emptyPictureFaces(),
   liveReduce: true,
   hands: false,
@@ -298,6 +301,7 @@ export function loadSettings(): SimSettings {
     if (merged.logo !== 'site' && merged.logo !== 'custom' && merged.logo !== 'none') merged.logo = 'none';
     if (typeof merged.customLogo !== 'string') merged.customLogo = '';
     if (typeof merged.pictureCube !== 'boolean') merged.pictureCube = false;
+    if (typeof merged.pictureBaseColors !== 'boolean') merged.pictureBaseColors = false;
     if (typeof merged.pointerTurns !== 'boolean') merged.pointerTurns = true;
     if (typeof merged.hands !== 'boolean') merged.hands = false;
     if (typeof merged.fullBody !== 'boolean') merged.fullBody = false;
@@ -458,6 +462,11 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     const rawBorder = cube.isMirror && s.coreStyle === 'normal';
     const rawCoreColor = mirrorRaw ? (s.mirrorColor ?? MIRROR_DEFAULT_COLOR) : s.coreColor;
     cube.instancedRenderer.setRawCore(rawOn, faces, rawCoreColor, rawBorder);
+    if (!prev
+      || prev.pictureBaseColors !== s.pictureBaseColors
+      || prev.coreColor !== s.coreColor) {
+      cube.instancedRenderer.setPictureBaseColors(s.pictureBaseColors, s.coreColor);
+    }
     // 顶面 U 中心 logo(仅 NxN 奇数阶有正中心块;偶数阶在 setLogo 内部隐藏)。
     if (!prev
       || prev.pictureCube !== s.pictureCube

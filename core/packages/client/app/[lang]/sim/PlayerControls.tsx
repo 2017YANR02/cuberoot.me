@@ -36,7 +36,7 @@ import {
   FlipHorizontal2, FlipVertical2, Eraser,
   Shuffle, Link2, Check,
   Search, Loader2, Pipette,
-  Keyboard, Grid3x3, ImagePlus, Upload, Trash2, Crop, RotateCw,
+  Keyboard, Grid3x3, ImagePlus, Upload, Trash2, Crop,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './engine/world';
@@ -124,11 +124,13 @@ import {
   DEFAULT_PICTURE_CROP,
   countPictureFaces,
   drawPictureCrop,
+  emptyPictureFaces,
   fileToPictureEditSourceDataUrl,
   normalizePictureCrop,
   panPictureCropBy,
   pictureCropGeometry,
   pictureEditSourceToFaceDataUrl,
+  rotatePictureCropTo,
   zoomPictureCropAt,
   type PictureCrop,
   type PictureFace,
@@ -147,6 +149,7 @@ import { eventDisplayName } from '@/lib/wca-events';
 import { simSpeedToTps, simTpsToSpeed } from '@/lib/sim_timing';
 import AlgInput from '@/components/AlgInput';
 import PlaybackBar from '@/components/PlaybackBar';
+import BoolToggle from '@/components/BoolToggle';
 import './player-controls.css';
 
 /**
@@ -2910,6 +2913,20 @@ function PictureCropWorkspace({
   const gridCount = order >= 2 && order <= 12 ? order : 0;
   const [zhFace, enFace] = PICTURE_FACE_LABELS[face];
 
+  const setRotation = (rotation: number) => {
+    if (!dimensions.width || !dimensions.height) {
+      commitCrop({ ...cropRef.current, rotation });
+      return;
+    }
+    commitCrop(rotatePictureCropTo(
+      dimensions.width,
+      dimensions.height,
+      PICTURE_CROP_SIZE,
+      cropRef.current,
+      rotation,
+    ));
+  };
+
   const beginPinch = () => {
     const pair = [...pointersRef.current.entries()].slice(0, 2);
     if (pair.length < 2) return;
@@ -2957,7 +2974,6 @@ function PictureCropWorkspace({
         <span className="sim-picture-crop-icon"><Crop size={17} /></span>
         <div>
           <h3>{t(`调整 ${face} ${zhFace}`, `Adjust ${face} ${enFace}`)}</h3>
-          <p>{t('拖动取景,双指或滚轮缩放,虚线就是贴纸切割位置', 'Drag to reframe, pinch or scroll to zoom; the grid shows the sticker cuts')}</p>
         </div>
       </div>
 
@@ -3096,18 +3112,30 @@ function PictureCropWorkspace({
         </div>
 
         <div className="sim-picture-crop-controls">
-          <button
-            type="button"
-            className="sim-picture-rotate-button"
-            aria-label={t('顺时针旋转 90°', 'Rotate 90° clockwise')}
-            title={t('顺时针旋转 90°', 'Rotate 90° clockwise')}
-            onClick={() => setCrop((current) => normalizePictureCrop({
-              ...current,
-              rotation: current.rotation + 90,
-            }))}
-          >
-            <RotateCw size={17} aria-hidden="true" />
-          </button>
+          <label className="sim-picture-rotation">
+            <span>{t('旋转', 'Rotate')}</span>
+            <ValueField
+              display={crop.rotation}
+              decimals={2}
+              min={-180}
+              max={180}
+              step={0.01}
+              suffix="°"
+              commit={(rotation) => {
+                setRotation(rotation);
+                return normalizePictureCrop({ ...cropRef.current, rotation }).rotation;
+              }}
+            />
+            <input
+              type="range"
+              min={-180}
+              max={180}
+              step={0.1}
+              value={crop.rotation}
+              aria-label={t('旋转角度', 'Rotation angle')}
+              onChange={(event) => setRotation(Number(event.target.value))}
+            />
+          </label>
 
           <div className="sim-picture-crop-actions">
             <button
@@ -3137,16 +3165,20 @@ function PictureCropWorkspace({
 }
 
 function PictureCubeEditor({
-  open, initialFaces, order, onClose, onSave, t,
+  open, initialFaces, initialBaseColors, order, onClose,
+  onFacesChange, onBaseColorsChange, t,
 }: {
   open: boolean;
   initialFaces: PictureFaces;
+  initialBaseColors: boolean;
   order: number;
   onClose: () => void;
-  onSave: (faces: PictureFaces) => boolean;
+  onFacesChange: (faces: PictureFaces) => boolean;
+  onBaseColorsChange: (baseColors: boolean) => void;
   t: (zh: string, en: string) => string;
 }) {
   const [draft, setDraft] = useState<PictureFaces>(() => ({ ...initialFaces }));
+  const [baseColors, setBaseColors] = useState(initialBaseColors);
   const [editSources, setEditSources] = useState<PictureFaces>(() => ({ ...initialFaces }));
   const [faceCrops, setFaceCrops] = useState<Record<PictureFace, PictureCrop>>(defaultPictureCrops);
   const [cropFace, setCropFace] = useState<PictureFace | null>(null);
@@ -3157,17 +3189,28 @@ function PictureCubeEditor({
   const bulkInputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const cropFaceRef = useRef<PictureFace | null>(null);
+  const openingStateRef = useRef({ faces: initialFaces, baseColors: initialBaseColors });
 
   cropFaceRef.current = cropFace;
 
   useEffect(() => {
+    if (!open) openingStateRef.current = { faces: initialFaces, baseColors: initialBaseColors };
+  }, [initialBaseColors, initialFaces, open]);
+
+  useEffect(() => {
     if (!open) return;
-    setDraft({ ...initialFaces });
-    setEditSources({ ...initialFaces });
+    const initial = openingStateRef.current;
+    setDraft({ ...initial.faces });
+    setBaseColors(initial.baseColors);
+    setEditSources({ ...initial.faces });
     setFaceCrops(defaultPictureCrops());
     setCropFace(null);
     setError('');
     setBusy(false);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     const oldOverflow = document.body.style.overflow;
     const previouslyFocused = document.activeElement instanceof HTMLElement
       ? document.activeElement
@@ -3206,7 +3249,7 @@ function PictureCubeEditor({
       window.removeEventListener('keydown', onKeyDown);
       previouslyFocused?.focus();
     };
-  }, [initialFaces, onClose, open]);
+  }, [onClose, open]);
 
   if (!open || typeof document === 'undefined') return null;
 
@@ -3217,13 +3260,27 @@ function PictureCubeEditor({
     return t('这张图片无法读取,请换一张再试', 'This image could not be read. Try another file');
   };
 
+  const autoSaveFaces = (faces: PictureFaces): boolean => {
+    if (onFacesChange(faces)) {
+      setError('');
+      return true;
+    }
+    setError(t(
+      '浏览器存储空间不足,图片尚未保存。请清理部分站点数据或减少图片后重试',
+      'Browser storage is full, so the images were not saved. Free some site storage or use fewer images, then try again',
+    ));
+    return false;
+  };
+
   const processFace = async (face: PictureFace, file: File) => {
     const source = await fileToPictureEditSourceDataUrl(file);
     const crop = { ...DEFAULT_PICTURE_CROP };
     const url = await pictureEditSourceToFaceDataUrl(source, crop);
+    const next = { ...draft, [face]: url };
+    if (!autoSaveFaces(next)) return;
     setEditSources((current) => ({ ...current, [face]: source }));
     setFaceCrops((current) => ({ ...current, [face]: crop }));
-    setDraft((current) => ({ ...current, [face]: url }));
+    setDraft(next);
     setCropFace(face);
   };
 
@@ -3258,11 +3315,10 @@ function PictureCubeEditor({
           url: await pictureEditSourceToFaceDataUrl(source, DEFAULT_PICTURE_CROP),
         });
       }
-      setDraft((current) => {
-        const next = { ...current };
-        imported.forEach(({ face, url }) => { next[face] = url; });
-        return next;
-      });
+      const next = { ...draft };
+      imported.forEach(({ face, url }) => { next[face] = url; });
+      if (!autoSaveFaces(next)) return;
+      setDraft(next);
       setEditSources((current) => {
         const next = { ...current };
         imported.forEach(({ face, source }) => { next[face] = source; });
@@ -3273,7 +3329,7 @@ function PictureCubeEditor({
         imported.forEach(({ face }) => { next[face] = { ...DEFAULT_PICTURE_CROP }; });
         return next;
       });
-      setCropFace(imported[0]?.face ?? null);
+      setCropFace(null);
       if (files.length < 6) {
         setError(t(`已按顺序填入前 ${files.length} 面,其余可逐面补充`, `Filled the first ${files.length} faces in order; add the rest individually`));
       }
@@ -3285,10 +3341,21 @@ function PictureCubeEditor({
   };
 
   const removeFace = (face: PictureFace) => {
-    setDraft((current) => ({ ...current, [face]: '' }));
+    const next = { ...draft, [face]: '' };
+    if (!autoSaveFaces(next)) return;
+    setDraft(next);
     setEditSources((current) => ({ ...current, [face]: '' }));
     setFaceCrops((current) => ({ ...current, [face]: { ...DEFAULT_PICTURE_CROP } }));
     if (cropFace === face) setCropFace(null);
+  };
+
+  const clearAllFaces = () => {
+    const next = emptyPictureFaces();
+    if (!autoSaveFaces(next)) return;
+    setDraft(next);
+    setEditSources({ ...next });
+    setFaceCrops(defaultPictureCrops());
+    setCropFace(null);
   };
 
   const applyCrop = async (face: PictureFace, crop: PictureCrop) => {
@@ -3299,8 +3366,10 @@ function PictureCubeEditor({
     try {
       const normalized = normalizePictureCrop(crop);
       const url = await pictureEditSourceToFaceDataUrl(source, normalized);
+      const next = { ...draft, [face]: url };
+      if (!autoSaveFaces(next)) return;
       setFaceCrops((current) => ({ ...current, [face]: normalized }));
-      setDraft((current) => ({ ...current, [face]: url }));
+      setDraft(next);
       setCropFace(null);
     } catch (reason) {
       setError(messageForError(reason));
@@ -3326,7 +3395,6 @@ function PictureCubeEditor({
         <header className="sim-picture-head">
           <div>
             <h2 id="sim-picture-title">{t('制作图案魔方', 'Create a picture cube')}</h2>
-            <p>{t('每张图都可旋转并拖动取景,确认后再切到对应面的真实贴纸上', 'Rotate and reframe every image before it is sliced across the real stickers on that face')}</p>
           </div>
           <ClearButton
             variant="standalone"
@@ -3362,6 +3430,26 @@ function PictureCubeEditor({
                 {t('一次选择 6 张', 'Choose 6 at once')}
               </button>
               <span>{t('顺序:U R F D L B', 'Order: U R F D L B')}</span>
+              <BoolToggle
+                value={baseColors}
+                disabled={busy}
+                onChange={(next) => {
+                  setBaseColors(next);
+                  onBaseColorsChange(next);
+                  setError('');
+                }}
+                label={t('保留原色', 'Keep face colors')}
+              />
+              <button
+                type="button"
+                className="sim-picture-clear-all"
+                disabled={busy || count === 0}
+                onClick={clearAllFaces}
+                aria-label={t('清空 6 张图片', 'Clear all 6 images')}
+                title={t('清空 6 张图片', 'Clear all 6 images')}
+              >
+                <Trash2 size={16} aria-hidden="true" />
+              </button>
             </div>
 
             <div className="sim-picture-net" aria-label={t('六面图片', 'Six face images')}>
@@ -3408,27 +3496,8 @@ function PictureCubeEditor({
 
             <div className="sim-picture-notes">
               <span>{t(`已设置 ${count}/6 面`, `${count}/6 faces set`)}</span>
-              <span>{t('图片只保存在当前浏览器,不会上传到服务器', 'Images stay in this browser and are not uploaded to a server')}</span>
+              <span>{t('更改会自动保存在当前浏览器,不会上传到服务器', 'Changes are saved automatically in this browser and are not uploaded to a server')}</span>
             </div>
-
-            <footer className="sim-picture-actions">
-              <button type="button" onClick={onClose}>{t('取消', 'Cancel')}</button>
-              <button
-                type="button"
-                className="sim-picture-save"
-                disabled={busy}
-                onClick={() => {
-                  if (!onSave(draft)) {
-                    setError(t(
-                      '浏览器存储空间不足,图片尚未保存。请清理部分站点数据或减少图片后重试',
-                      'Browser storage is full, so the images were not saved. Free some site storage or use fewer images, then try again',
-                    ));
-                  }
-                }}
-              >
-                {count > 0 ? t('保存并使用', 'Save & use') : t('保存并关闭', 'Save & close')}
-              </button>
-            </footer>
           </>
         )}
         <input ref={bulkInputRef} type="file" accept="image/*" multiple hidden onChange={handleBulkFiles} />
@@ -3518,15 +3587,17 @@ function PuzzleSettings({
     && settings.pictureCube
     && pictureFaceCount > 0;
   const closePictureEditor = useCallback(() => setPictureEditorOpen(false), []);
-  const savePictureFaces = useCallback((faces: PictureFaces) => {
+  const autoSavePictureFaces = useCallback((faces: PictureFaces) => {
     if (!persistPictureFaces(faces)) return false;
     onSettingsChange({
       ...settings,
       pictureFaces: faces,
       pictureCube: countPictureFaces(faces) > 0,
     });
-    setPictureEditorOpen(false);
     return true;
+  }, [onSettingsChange, settings]);
+  const autoSavePictureBaseColors = useCallback((pictureBaseColors: boolean) => {
+    onSettingsChange({ ...settings, pictureBaseColors });
   }, [onSettingsChange, settings]);
 
   // 顶面 logo 自定义上传:选「自定义」即开文件选择器,选好降采样存进 customLogo 并切到 'custom'。
@@ -3937,7 +4008,7 @@ function PuzzleSettings({
             >
               <PictureFaceMiniNet faces={settings.pictureFaces} />
               <span>{pictureFaceCount > 0
-                ? t(`编辑图片 ${pictureFaceCount}/6`, `Edit images ${pictureFaceCount}/6`)
+                ? t('编辑', 'Edit')
                 : t('选择六面图片', 'Choose face images')}</span>
             </button>
             {pictureCubeActive && (
@@ -3949,9 +4020,11 @@ function PuzzleSettings({
           <PictureCubeEditor
             open={pictureEditorOpen}
             initialFaces={settings.pictureFaces}
+            initialBaseColors={settings.pictureBaseColors}
             order={order}
             onClose={closePictureEditor}
-            onSave={savePictureFaces}
+            onFacesChange={autoSavePictureFaces}
+            onBaseColorsChange={autoSavePictureBaseColors}
             t={t}
           />
           {/* 指甲配色(甲油):自然甲 special + 甲油底色;选了底色后追加「渐变」第二色
