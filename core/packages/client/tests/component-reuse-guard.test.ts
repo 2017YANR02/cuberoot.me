@@ -122,6 +122,7 @@ describe('component reuse rule registry', () => {
       join(ROOT, 'app', '[lang]', 'timer', '_shell', 'SoloView.tsx'),
       join(ROOT, 'app', '[lang]', 'sim', 'PlayerControls.tsx'),
       join(ROOT, 'app', '[lang]', 'scramble', '_components', 'SolveTabs.tsx'),
+      join(ROOT, 'app', '[lang]', 'alg', 'time-attack', 'page.tsx'),
     ];
     for (const file of surfaces) {
       const source = readFileSync(file, 'utf8');

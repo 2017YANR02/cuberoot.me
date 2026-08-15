@@ -143,7 +143,6 @@ function DirectoryEntry({ entry, canEdit, onEdit }: {
         </div>
         {contacts.length > 0 && (
           <div className="directory-contacts">
-            <strong>{tr({ zh: '联系方式', en: 'Contact' })}</strong>
             <div className="directory-contact-list">
               {contacts.map(({ key, label, value, href }) => href ? (
                 <a key={key} className="directory-contact-item directory-link" href={href} target={URL_CONTACT_KEYS.has(key) ? '_blank' : undefined} rel={URL_CONTACT_KEYS.has(key) ? 'noreferrer' : undefined}>

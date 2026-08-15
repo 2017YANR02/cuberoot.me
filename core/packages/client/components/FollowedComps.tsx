@@ -140,12 +140,7 @@ export default function FollowedComps({ isZh, lang }: {
         })}
       </h2>
 
-      {follows.size === 0 ? (
-        <p className="fc-empty">
-          {tr({ zh: '还没有关注的比赛。去首页的比赛列表点 ☆ 盯一下。', en: 'No followed competitions yet. Tap ☆ on a competition on the home page to follow it.'
-        })}
-        </p>
-      ) : (
+      {follows.size > 0 && (
         <>
           {upcoming.length > 0 && (
             <div className="fc-group">

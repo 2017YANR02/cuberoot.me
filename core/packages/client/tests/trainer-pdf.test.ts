@@ -25,7 +25,6 @@ function options(overrides: Partial<TrainerSheetOptions> = {}): TrainerSheetOpti
     set: 'f2l',
     cases: CASES,
     title: '3x3 F2L Practice',
-    subtitle: '3 scrambles',
     filename: 'f2l-trainer',
     mode: 'recap',
     probMode: 'uniform',
@@ -50,6 +49,7 @@ describe('trainer PDF', () => {
     expect(sheet.cases.map(c => c.name)).toEqual(['', '', '']);
     expect(sheet.cases.map(c => c.algs)).toEqual([['1. R'], ['2. F'], ['3. L']]);
     expect(sheet.cases.every(c => c.setup === undefined && c.thumb === undefined)).toBe(true);
+    expect(sheet.subtitle).toBeUndefined();
     expect(JSON.stringify(sheet.cases)).not.toContain('solution-');
     expect(JSON.stringify(sheet.cases)).not.toContain('"A"');
   });

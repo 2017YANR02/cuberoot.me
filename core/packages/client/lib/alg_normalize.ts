@@ -61,7 +61,9 @@ export function normalizeAlg(puzzle: AlgPuzzle, alg: string): string {
   }
   // skewb 库里存的是 Sarah 记号(`R b' r' R'`)。缩略图一直在转,引擎这边以前没转 —— 448 条
   // 好公式因此被判成语法错 / 没还原。
-  if (puzzle === 'skewb') return toMoveString(skewbToWca(alg, 'sarah'));
+  // Sarah 的 R/L 会翻成 cubing.js 的双字母握法 UR/UL；再过 cube 专用 toMoveString
+  // 会把它们错误拆成 U R / U L，改变公式含义。
+  if (puzzle === 'skewb') return skewbToWca(alg, 'sarah');
   if (!CUBE_NOTATION.has(puzzle)) return alg;
   return toMoveString(alg);
 }

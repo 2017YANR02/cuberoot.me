@@ -178,8 +178,10 @@
 .net-identity-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex: none; }
 .net-identity-name { font-size: 14px; font-weight: 600; color: var(--foreground); }
 /* 玩家条 / 榜里的国旗 */
-.net-p-flag { width: 18px; height: 12px; flex: none; border-radius: 2px; }
-.net-st-flag { width: 18px; height: 12px; flex: none; border-radius: 2px; }
+.net-p-flag,
+.net-st-flag { width: 15px; height: 10px; flex: none; align-self: center; }
+/* flag-icons 的盒模型虽居中,旗面相对 CJK 字形仍偏上;玩家条做视觉基线校正。 */
+.net-player > .net-p-flag { transform: translateY(1px); }
 .net-input-code {
   width: 130px;
   font-family: var(--font-mono);
@@ -226,7 +228,8 @@
 .net-players {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 18px;
+  justify-content: center;
+  gap: 4px 12px;
   padding: 8px 16px 0;
 }
 .net-player {
@@ -234,6 +237,10 @@
   align-items: baseline;
   gap: 8px;
   min-width: 0;
+}
+.net-player + .net-player {
+  border-left: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  padding-left: 12px;
 }
 .net-player.is-offline { opacity: 0.45; }
 .net-p-name {
@@ -252,7 +259,7 @@
   background: none;
   border: 0;
   padding: 0;
-  font: inherit;
+  font-family: inherit;
   font-weight: 700;
   cursor: pointer;
   text-decoration: underline dotted color-mix(in srgb, var(--foreground) 35%, transparent);
@@ -279,8 +286,8 @@
 .net-p-status.is-live { color: var(--signal-info); }
 .net-p-status.is-ready { color: var(--toggle-on); }
 .net-p-status.is-off { color: var(--faint-foreground); }
-/* 房主小皇冠(玩家条 + 管理面板共用) */
-.net-p-crown { flex: none; color: var(--signal-warning); align-self: center; }
+/* 房主盾牌(玩家条 + 管理面板共用) */
+.net-p-host { flex: none; color: var(--signal-warning); align-self: center; }
 .net-p-time {
   font-size: 13px;
   font-weight: 600;
@@ -304,6 +311,10 @@
   text-align: center;
 }
 .net-round-result {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   font-size: 14px;
   font-weight: 600;
   color: var(--foreground);
@@ -388,12 +399,6 @@
   flex-direction: column;
   gap: 6px;
 }
-.net-admin-note {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--muted-foreground);
-}
 .net-admin-list {
   display: flex;
   flex-direction: column;
@@ -469,6 +474,11 @@
 }
 
 /* 每轮回放 */
+.net-rounds-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
 .net-rounds {
   display: flex;
   flex-direction: column;
@@ -560,7 +570,8 @@
   /* 顶栏右侧多了「智能魔方」按钮,窄屏一行要挤;房间码本身就够辨识,
      省掉前面「房间」二字正好把这一格补回来,不必让整条右组换行。 */
   .net-code-label { display: none; }
-  .net-players { gap: 2px 14px; padding-top: 6px; }
+  .net-players { gap: 2px 8px; padding-top: 6px; }
+  .net-player + .net-player { padding-left: 8px; }
   .net-p-name { max-width: 7em; }
   .net-lobby { margin-top: 24px; }
   .net-stats-overlay { padding: 3vh 10px; }

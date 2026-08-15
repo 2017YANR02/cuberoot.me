@@ -48,6 +48,19 @@ function getRoundWinners(entries: (SolveEntry | undefined)[]): number[] {
   return ts.flatMap((t, i) => (t === min ? [i] : []));
 }
 
+// NOTE: 相同打乱只展示一遍;不同项目 / 不同打乱保留对应玩家编号。
+function groupRoundScrambles(entries: (SolveEntry | undefined)[]): Array<[string, number[]]> {
+  const groups: Array<[string, number[]]> = [];
+  entries.forEach((entry, playerIndex) => {
+    const scramble = entry?.scramble;
+    if (!scramble) return;
+    const group = groups.find(([value]) => value === scramble);
+    if (group) group[1].push(playerIndex);
+    else groups.push([scramble, [playerIndex]]);
+  });
+  return groups;
+}
+
 export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
   const store = useBattleStore();
   const { i18n } = useTranslation();
@@ -141,36 +154,55 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
             const entries = histories.map(h => h[i]);
             const winners = getRoundWinners(entries);
             const dateStr = formatDateOnly(entries.find(e => e?.date)?.date || '');
+            const scrambleGroups = groupRoundScrambles(entries);
 
             return (
               <div
                 key={i}
                 className="history-item vs-round"
-                onClick={() => setDetailRound(i)}
               >
-                <span className="h-idx">{i + 1}.</span>
-                <span className="vs-times">
-                  {entries.map((e, pi) => (
-                    <Fragment key={pi}>
-                      {pi > 0 && <span className="vs-separator">vs</span>}
-                      <span className={`h-time vs-time${winners.includes(pi) ? ' h-best' : ''}`}>
-                        {puzzlesDiffer && isWcaEvent(puzzles[pi]) && <EventIcon event={puzzles[pi]} className="vs-event-mini" />}
-                        {formatEntry(e)}
-                        {winners.includes(pi) && <Trophy size={12} className="vs-trophy" />}
-                      </span>
-                    </Fragment>
-                  ))}
-                </span>
-                <span className="h-date">{dateStr}</span>
+                <button
+                  type="button"
+                  className="vs-round-open"
+                  onClick={() => setDetailRound(i)}
+                  aria-label={tr({
+                    zh: `第 ${i + 1} 轮：查看历史打乱和详情`,
+                    en: `Round ${i + 1}: view scramble history and details`,
+                  })}
+                >
+                  <span className="vs-round-summary">
+                    <span className="h-idx">{i + 1}.</span>
+                    <span className="vs-times">
+                      {entries.map((e, pi) => (
+                        <Fragment key={pi}>
+                          {pi > 0 && <span className="vs-separator">vs</span>}
+                          <span className={`h-time vs-time${winners.includes(pi) ? ' h-best' : ''}`}>
+                            {puzzlesDiffer && isWcaEvent(puzzles[pi]) && <EventIcon event={puzzles[pi]} className="vs-event-mini" />}
+                            {formatEntry(e)}
+                            {winners.includes(pi) && <Trophy size={12} className="vs-trophy" />}
+                          </span>
+                        </Fragment>
+                      ))}
+                    </span>
+                    <span className="h-date">{dateStr}</span>
+                  </span>
+                  {scrambleGroups.length > 0 && (
+                    <span className="vs-round-scrambles">
+                      {scrambleGroups.map(([scramble, playerIndexes]) => (
+                        <span className="h-scramble" key={scramble}>
+                          {scrambleGroups.length > 1 ? `${playerIndexes.map(pi => `P${pi + 1}`).join(' / ')} ` : ''}
+                          {tr({ zh: '打乱：', en: 'Scramble: ' })}{scramble}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </button>
                 <button
                   type="button"
                   className="h-delete"
                   title={tr({ zh: '删除此轮', en: 'Delete round'
                 })}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    store.deleteVsRound(i);
-                  }}
+                  onClick={() => store.deleteVsRound(i)}
                 ><Trash2 size={14} /></button>
               </div>
             );
@@ -232,15 +264,7 @@ function RoundDetailModal({
     return hit ? { hit, solves } : null;
   }, [entries, puzzles]);
 
-  // NOTE: 相同打乱合并展示(同 puzzle 共享打乱时只显示一条)
-  const scrambleGroups: Array<[string, number[]]> = [];
-  entries.forEach((e, pi) => {
-    const sc = e?.scramble;
-    if (!sc) return;
-    const g = scrambleGroups.find(([s]) => s === sc);
-    if (g) g[1].push(pi);
-    else scrambleGroups.push([sc, [pi]]);
-  });
+  const scrambleGroups = groupRoundScrambles(entries);
 
   const renderTime = (e: SolveEntry | undefined) => {
     if (!e) return '—';

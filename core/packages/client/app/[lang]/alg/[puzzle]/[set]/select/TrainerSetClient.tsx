@@ -6,22 +6,23 @@ import Link from '@/components/AppLink';
 import { useRouter, useParams } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eraser, MousePointer2 } from 'lucide-react';
 import { getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
 import { useTrainerStore, mixSessionId } from '@/lib/trainer-store';
 import {
   useTrainerMarks, markStatus, MARK_STATUS_LABEL,
-  type TrainerMarkBrush, type CaseMarkStatus,
+  type TrainerMarkBrush,
 } from '@/lib/trainer-marks';
 import { caseKey } from '@/lib/trainer-case-key';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { sortByCp } from '@/lib/alg_cp_order';
 import { displayZbllToken, primaryCaseName } from '@/lib/alg_case_display';
 import { sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
-import { CaseTreePicker } from '@/app/[lang]/alg/_trainer/trainer-components';
+import { CaseTreePicker, TrainerMarkBadge } from '@/app/[lang]/alg/_trainer/trainer-components';
 import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
 import SetProgressStrip from '@/app/[lang]/alg/_trainer/SetProgressStrip';
+import { ListSelect } from '@/components/ListSelect';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { useAlgSrs } from '@/lib/alg-srs-store';
 import '@/app/[lang]/alg/_trainer/trainer.css';
@@ -205,6 +206,39 @@ export default function TrainerSetClient() {
   const backHref = isMix
     ? `/alg/${puzzleParam}`
     : (scopeSlug ? `/alg/${puzzleParam}/${setSlug}/${scopeSlug}` : `/alg/${puzzleParam}/${setSlug}`);
+  const brushItems = [
+    {
+      value: 'off',
+      label: tr({ zh: '选情况', en: 'Pick cases' }),
+      icon: <MousePointer2 size={16} strokeWidth={2.5} />,
+    },
+    {
+      value: 'learning',
+      label: tr({ zh: '标记不熟', en: 'Mark shaky' }),
+      icon: <TrainerMarkBadge status="learning" inline />,
+    },
+    {
+      value: 'mastered',
+      label: tr({ zh: '标记已掌握', en: 'Mark mastered' }),
+      icon: <TrainerMarkBadge status="mastered" inline />,
+    },
+    {
+      value: 'clear',
+      label: tr({ zh: '清除标记', en: 'Clear marks' }),
+      icon: <Eraser size={16} strokeWidth={2.5} />,
+    },
+    {
+      value: 'select-unmastered',
+      label: tr({ zh: '选未掌握', en: 'Select not mastered' }),
+      icon: <MousePointer2 size={16} strokeWidth={2.5} />,
+      separatorBefore: true,
+    },
+    {
+      value: 'select-learning',
+      label: tr({ zh: '选不熟', en: 'Select shaky' }),
+      icon: <MousePointer2 size={16} strokeWidth={2.5} />,
+    },
+  ];
 
   return (
     <div className="trainer-root">
@@ -248,24 +282,9 @@ export default function TrainerSetClient() {
 
           <div className="trainer-marks-toolbar">
             <label className="trainer-marks-tool">
-              <span className="trainer-opts-label">{tr({ zh: '标记', en: 'Mark' })}</span>
-              <select
-                className="trainer-scramble-kind"
-                value={brush ?? 'off'}
-                onChange={e => setBrush(e.target.value === 'off' ? null : e.target.value as TrainerMarkBrush)}
-                aria-label={tr({ zh: '标记画笔', en: 'Mark brush' })}
-              >
-                <option value="off">{tr({ zh: '关(点选 case)', en: 'Off (pick cases)' })}</option>
-                {(['learning', 'mastered'] as CaseMarkStatus[]).map(s => (
-                  <option key={s} value={s}>{MARK_STATUS_LABEL[s]()}</option>
-                ))}
-                <option value="clear">{tr({ zh: '清除标记', en: 'Clear marks' })}</option>
-              </select>
-            </label>
-            <label className="trainer-marks-tool">
               <span className="trainer-opts-label">{tr({ zh: '只看', en: 'Show' })}</span>
               <select
-                className="trainer-scramble-kind"
+                className="trainer-scramble-kind trainer-filter-select"
                 value={markFilter}
                 onChange={e => setMarkFilter(e.target.value === 'all' ? null : e.target.value as MarkFilter)}
                 aria-label={tr({ zh: '按标记过滤', en: 'Filter by mark' })}
@@ -276,28 +295,27 @@ export default function TrainerSetClient() {
                 <option value="mastered">{MARK_STATUS_LABEL.mastered()}</option>
               </select>
             </label>
-            {/* 快选:一键把训练范围对准短板(替换选择) */}
-            <span className="trainer-marks-tool">
-              <span className="trainer-opts-label">{tr({ zh: '快选', en: 'Select' })}</span>
-              <button type="button" className="trainer-quick-btn"
-                onClick={() => quickSelect(k => markStatus(marks, k) !== 'mastered')}>
-                {tr({ zh: '未掌握', en: 'Not mastered' })}
-              </button>
-              <button type="button" className="trainer-quick-btn"
-                onClick={() => quickSelect(k => markStatus(marks, k) === 'learning')}>
-                {MARK_STATUS_LABEL.learning()}
-              </button>
-            </span>
-          </div>
-          {brush && (
-            <div className="trainer-opts-hint">
-              {tr({
-                zh: '画笔模式:点 case 或组头涂标记,再涂一次擦除;选下拉「关」回到点选',
-                en: 'Brush mode: click a case or group header to paint; paint again to erase. Switch to "Off" to pick cases',
-              })}
+            <div className="trainer-marks-tool">
+              <ListSelect
+                className="trainer-brush-select"
+                items={brushItems}
+                value={brush ?? 'off'}
+                onChange={next => {
+                  if (next === 'select-unmastered') {
+                    quickSelect(k => markStatus(marks, k) !== 'mastered');
+                    return;
+                  }
+                  if (next === 'select-learning') {
+                    quickSelect(k => markStatus(marks, k) === 'learning');
+                    return;
+                  }
+                  setBrush(next === 'off' ? null : next as TrainerMarkBrush);
+                }}
+                allLabel={tr({ zh: '选情况', en: 'Pick cases' })}
+                clearable={false}
+              />
             </div>
-          )}
-
+          </div>
           {/* 合练按成员集分块 —— 两套里都有叫「T」的组,混在一棵树里会并成一组、认不出谁是谁 */}
           {isMix ? mixSets.map(slug => {
             const own = visibleCases.filter(c => c.srcSet === slug);

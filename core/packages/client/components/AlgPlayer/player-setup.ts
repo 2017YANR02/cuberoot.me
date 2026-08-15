@@ -1,11 +1,23 @@
 import type { AlgPuzzle } from '@cuberoot/shared';
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import { invertFtoEifAlgorithm } from '@/lib/fto-eif-image';
+import { invertSq1Alg, parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
 
 /** 公式动画和记号教学共用 1 STM/s 的默认节奏。 */
 export const DEFAULT_ALG_MOVE_DURATION_MS = 1000;
 export const DEFAULT_PREVIEW_TIMING = { frames: 60, stepMs: DEFAULT_ALG_MOVE_DURATION_MS } as const;
 const SIM_FRAMES_PER_SECOND = 60;
+
+/** `/sim` 播放器的一步一项。SQ1 的 `(t, b)` 内含空格，不能按空白切。 */
+export function resolveSimPreviewMoves(puzzle: AlgPuzzle, alg: string): string[] {
+  const normalized = normalizeAlgForTwisty(puzzle, alg);
+  if (puzzle === 'sq1') {
+    return parseSq1Tokens(normalized).map(token =>
+      token.kind === 'slice' ? '/' : `(${token.top}, ${token.bot})`,
+    );
+  }
+  return normalized.split(/\s+/).filter(Boolean);
+}
 
 export function resolveSimMoveDurationScale(puzzle: AlgPuzzle, move: string): number {
   const token = move.trim();
@@ -58,5 +70,6 @@ export function resolvePlayerSetup(
   if (startSolved) return '';
   if (setup?.trim()) return normalizeAlgForTwisty(puzzle, setup);
   if (puzzle === 'fto') return invertFtoEifAlgorithm(alg);
+  if (puzzle === 'sq1') return invertSq1Alg(alg);
   return `(${normalizeAlgForTwisty(puzzle, alg)})'`;
 }

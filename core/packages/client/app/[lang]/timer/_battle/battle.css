@@ -1041,8 +1041,49 @@ body.solo .scramble-img {
 /* NOTE: 对战轮次行 — 各方成绩(2~4 人) vs 串联 + 日期 + 删除 */
 .vs-round {
     display: flex;
+    align-items: stretch;
+    gap: 6px;
+}
+
+.vs-round-open {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vs-round-summary {
+    width: 100%;
+    display: flex;
     align-items: center;
     gap: 6px;
+}
+
+.vs-round-scrambles {
+    width: 100%;
+    min-width: 0;
+    padding-left: 34px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.vs-round-scrambles .h-scramble {
+    flex: none;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.vs-round > .h-delete {
+    align-self: center;
 }
 
 .vs-times {

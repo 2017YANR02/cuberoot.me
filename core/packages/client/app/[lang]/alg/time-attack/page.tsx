@@ -40,6 +40,7 @@ import { sortByCp } from '@/lib/alg_cp_order';
 import { displayZbllToken, primaryCaseName } from '@/lib/alg_case_display';
 import { sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
 import { eventDisplayName } from '@/lib/wca-events';
+import { PUZZLE_EVENT } from '@/app/[lang]/alg/_trainer/events';
 import {
   caseMap,
   casesForTimeAttackScope,
@@ -82,7 +83,6 @@ function SortableCase({
   const alg = c.algs.flat()[0]?.alg ?? c.standard ?? '';
   return (
     <div ref={setNodeRef} style={style} className={`alg-time-attack-case${isDragging ? ' is-dragging' : ''}`}>
-      <span className="alg-time-attack-index" aria-hidden="true">{index + 1}</span>
       <div className="alg-time-attack-thumb">
         <CaseThumb
           puzzle={puzzle}
@@ -133,7 +133,7 @@ export default function AlgTimeAttackPage() {
     items: ALG_PUZZLES.map((item) => ({
       id: item,
       label: eventDisplayName(item, isZh),
-      textLabel: item,
+      iconClass: item === 'fto' ? 'unofficial-fto' : `event-${PUZZLE_EVENT[item]}`,
     })),
   }], [isZh]);
 
@@ -329,7 +329,6 @@ export default function AlgTimeAttackPage() {
 
       <div className="alg-time-attack-summary">
         <strong>{meta?.short ?? setSlug.toUpperCase()}</strong>
-        <span>{tr({ zh: `${orderedCases.length} 张图`, en: `${orderedCases.length} diagrams` })}</span>
         {!user && (
           <AppLink href={`/account${nextQuery(returnPath)}`} prefetch={false} className="alg-time-attack-login">
             {tr({ zh: '登录，保存并同步当前顺序', en: 'Sign in to save and sync this order' })}

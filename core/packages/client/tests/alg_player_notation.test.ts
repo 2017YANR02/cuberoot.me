@@ -17,6 +17,7 @@ import {
   resolvePlayerSetup,
   resolvePreviewTiming,
   resolveSimMoveDurationScale,
+  resolveSimPreviewMoves,
   resolveTwistyTempoScale,
 } from '@/components/AlgPlayer/player-setup';
 
@@ -88,6 +89,14 @@ describe('resolvePlayerSetup', () => {
     expect(resolvePlayerSetup('3x3', 'R U', 'F R', false)).toBe('F R');
     expect(resolvePlayerSetup('3x3', 'R U', undefined, false)).toBe("(R U)'");
     expect(resolvePlayerSetup('fto', "U Rw S'", undefined, false)).toBe("S Rw' U'");
+    expect(resolvePlayerSetup('sq1', '(1,0)/(3,-3)', undefined, false)).toBe('(-3,3)/(-1,0)');
+  });
+
+  it('SQ1 的成对转层和切层按真实 token 切步,不按括号内空格误拆', () => {
+    expect(resolveSimPreviewMoves('sq1', '(1,0) / (3, -3) /')).toEqual([
+      '(1, 0)', '/', '(3, -3)', '/',
+    ]);
+    expect(resolveSimPreviewMoves('3x3', "R U R'")).toEqual(['R', 'U', "R'"]);
   });
 });
 

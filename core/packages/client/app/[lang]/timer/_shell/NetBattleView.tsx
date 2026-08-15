@@ -30,7 +30,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
-import { Copy, Check, LogOut, Swords, Trophy, RotateCcw, BarChart3, X, Crown, UserMinus, Bluetooth, QrCode } from 'lucide-react';
+import { Copy, Check, LogOut, Swords, Trophy, History, X, ShieldCheck, UserMinus, Bluetooth, QrCode } from 'lucide-react';
 
 import TimingSurface from './TimingSurface';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
@@ -217,7 +217,6 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const roundSettled = !!room && (complete || waiting === 0);
   const canAdvance = !!room && !!pid && !!myResult;
   const canSolveRef = useRef(canSolve); canSolveRef.current = canSolve;
-  const canAdvanceRef = useRef(canAdvance && roundSettled); canAdvanceRef.current = canAdvance && roundSettled;
 
   // ── 房主 / 同时开始 ─────────────────────────────────────────
   const iAmAdmin = !!room && isNetAdmin(room, pid);
@@ -245,6 +244,13 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
       .catch((e: Error) => setErr(tr(netErrorMessage(e))))
       .finally(() => { advBusyRef.current = false; });
   }, [applyState]);
+
+  // 全员交卷(或当前已无人可等)后自动开下一轮。每个客户端都可能同时触发,
+  // 服务端用 round CAS 保证只推进一次;room 每次轮询变化也让失败请求自动重试。
+  useEffect(() => {
+    if (!canAdvance || !roundSettled) return;
+    advance();
+  }, [advance, canAdvance, room, roundSettled]);
 
   // 改自己的项目(仅本轮尚未交卷时可改)。生成新项目打乱一并提交,服务端 set-if-absent 回填。
   const changeEvent = useCallback((selId: string) => {
@@ -801,15 +807,14 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const pressDown = useCallback(() => {
     if (phaseRef.current === 'running') { timer.onPressDown(); return; }
     if (!canSolveRef.current) {
-      // 已交卷:全员完赛时按压 = 直接开下一轮(与连续计时的手感一致)
-      if (canAdvanceRef.current) advance();
+      // 已交卷:等自动推进,不让按压重复开轮。
       return;
     }
     // 房间要求同时起表且还没进倒计时:按压 = 切换「准备」,不直接起表
     if (gateRef.current) { toggleReady(); return; }
     timer.onPressDown();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [advance, toggleReady]);
+  }, [toggleReady]);
   const pressDownRef = useRef(pressDown); pressDownRef.current = pressDown;
   const pressUpRef = useRef(timer.onPressUp); pressUpRef.current = timer.onPressUp;
 
@@ -992,7 +997,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
         )}
         {room && (
           <span className="net-round-chip">
-            {tr({ zh: `第 ${room.round} 轮`, en: `Round ${room.round}` })}
+            {tr({ zh: `第 ${room.round} 把`, en: `Round ${room.round}` })}
           </span>
         )}
         {room?.syncStart && (
@@ -1022,10 +1027,10 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
               type="button"
               className="tb-btn"
               onClick={() => setShowStats(true)}
-              title={tr({ zh: '战绩', en: 'Results' })}
-              aria-label={tr({ zh: '战绩', en: 'Results' })}
+              title={tr({ zh: '历史打乱与战绩', en: 'Scramble history and results' })}
+              aria-label={tr({ zh: '历史打乱与战绩', en: 'Scramble history and results' })}
             >
-              <BarChart3 size={14} />
+              <History size={14} />
             </button>
             {iAmAdmin && (
               <button
@@ -1035,7 +1040,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                 title={tr({ zh: '房间管理', en: 'Room settings' })}
                 aria-label={tr({ zh: '房间管理', en: 'Room settings' })}
               >
-                <Crown size={14} />
+                <ShieldCheck size={14} />
               </button>
             )}
             <button
@@ -1126,13 +1131,24 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                   <span className="net-lobby-code">{inviteCode}</span>
                 </h2>
                 <div className="net-err">{err}</div>
-                <button
-                  type="button"
-                  className="net-btn net-btn-primary net-btn-lg"
-                  onClick={() => { setErr(null); void setRoomParam(null); }}
-                >
-                  {tr({ zh: '创建自己的房间', en: 'Create my own room' })}
-                </button>
+                <div className="net-lobby-row">
+                  <button
+                    type="button"
+                    className="net-btn net-btn-primary net-btn-lg"
+                    onClick={() => doJoin(inviteCode)}
+                    disabled={busy}
+                  >
+                    {tr({ zh: '重试', en: 'Retry' })}
+                  </button>
+                  <button
+                    type="button"
+                    className="net-btn net-btn-lg"
+                    onClick={() => { setErr(null); void setRoomParam(null); }}
+                    disabled={busy}
+                  >
+                    {tr({ zh: '创建自己的房间', en: 'Create my own room' })}
+                  </button>
+                </div>
                 <button
                   type="button"
                   className="net-btn is-ghost net-lobby-switch"
@@ -1232,7 +1248,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           } else if (p.ph === 'ready') {
             statusNode = <span className="net-p-status is-ready">{tr({ zh: '已准备', en: 'ready' })}</span>;
           } else {
-            statusNode = <span className="net-p-status">{tr({ zh: '等待', en: 'waiting' })}</span>;
+            statusNode = <span className="net-p-status">{tr({ zh: '待开始', en: 'waiting to start' })}</span>;
           }
           const pEvent = p.event || room.event;
           return (
@@ -1244,10 +1260,10 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                   title={eventDisplayName(netEventToSelectorId(pEvent), isZh)}
                 />
               )}
-              {p.iso2 && <Flag iso2={p.iso2} className="net-p-flag" />}
               {p.id === room.admin && (
-                <Crown size={12} className="net-p-crown" aria-label={tr({ zh: '房主', en: 'Host' })} />
+                <ShieldCheck size={13} className="net-p-host" aria-label={tr({ zh: '房主', en: 'Host' })} />
               )}
+              {p.iso2 && <Flag iso2={p.iso2} className="net-p-flag" />}
               {/* 自己的名字可点开改(登录用户除外:他们的名字就是账号 / WCA 名册上的名字)。 */}
               {mine && !authUser ? (
                 <button
@@ -1343,24 +1359,15 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                   </button>
                 ))}
               </div>
-              {/* 没人可等(complete,或房里暂时只有我)→ 直接给「下一轮」。
+              {/* 没人可等(complete,或房里暂时只有我)→ 自动进入下一轮。
                   isRoundComplete 在「在线不足 2 人」时恒 false(那是同时起表门控的
                   口径),照它渲染的话,一个人开好房等朋友时会看到「还差 0 人」。 */}
               {roundSettled ? (
-                <>
-                  <div className="net-round-result">
-                    {winners.length > 0
-                      ? tr({
-                          zh: `本轮最快:${winnerNames}`,
-                          en: `Round winner: ${winnerNames}`,
-                        })
-                      : tr({ zh: '本轮无有效成绩', en: 'No valid result this round' })}
-                  </div>
-                  <button type="button" className="net-btn net-btn-primary" onClick={advance}>
-                    <RotateCcw size={14} />
-                    {tr({ zh: '下一轮', en: 'Next round' })}
-                  </button>
-                </>
+                <div className="net-round-result">
+                  {winners.length > 0
+                    ? <><Trophy size={14} className="net-p-trophy" /><span>{winnerNames}</span></>
+                    : tr({ zh: '本轮无有效成绩', en: 'No valid result this round' })}
+                </div>
               ) : (
                 <>
                   <div className="net-substate-hint">
@@ -1512,7 +1519,7 @@ function NetAdminPanel({ room, pid, isZh, onSyncStart, onTransfer, onKick, onClo
       <div className="net-stats-panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <header className="net-stats-head">
           <h2 className="net-stats-title net-admin-title">
-            <Crown size={16} />
+            <ShieldCheck size={16} />
             {tr({ zh: '房间管理', en: 'Room settings' })}
           </h2>
           <button
@@ -1532,12 +1539,6 @@ function NetAdminPanel({ room, pid, isZh, onSyncStart, onTransfer, onKick, onClo
             onChange={onSyncStart}
             label={tr({ zh: '同时开始计时', en: 'Synchronized start' })}
           />
-          <p className="net-admin-note">
-            {tr({
-              zh: '开启后各自不能想开就开:本轮在场的人都点过「准备」,才会 3 秒倒计时,归零全房同时起表(倒计时即观察时间)。',
-              en: 'When on, nobody starts alone — once everyone still in this round taps “ready”, a 3-second countdown runs and all timers start together (the countdown doubles as inspection).',
-            })}
-          </p>
         </div>
 
         <div className="net-admin-list">
@@ -1546,8 +1547,8 @@ function NetAdminPanel({ room, pid, isZh, onSyncStart, onTransfer, onKick, onClo
             const mine = p.id === pid;
             return (
               <div key={p.id} className="net-admin-row">
+                {isAdminRow && <ShieldCheck size={13} className="net-p-host" aria-label={tr({ zh: '房主', en: 'Host' })} />}
                 {p.iso2 && <Flag iso2={p.iso2} className="net-st-flag" />}
-                {isAdminRow && <Crown size={12} className="net-p-crown" />}
                 <span className="net-admin-name" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>{netPlayerName(p, isZh)}</span>
                 {mine ? (
                   <span className="net-admin-metext">{tr({ zh: '(我)', en: '(me)' })}</span>
@@ -1614,7 +1615,7 @@ function NetStatsPanel({ room, pid, isZh, precision, onClose }: NetStatsPanelPro
         <header className="net-stats-head">
           <h2 className="net-stats-title">
             <Trophy size={16} />
-            {tr({ zh: '战绩', en: 'Results' })}
+            {tr({ zh: '历史打乱与战绩', en: 'Scramble history and results' })}
           </h2>
           <button
             type="button"
@@ -1669,6 +1670,8 @@ function NetStatsPanel({ room, pid, isZh, precision, onClose }: NetStatsPanelPro
           </table>
         </div>
 
+        <h3 className="net-rounds-title">{tr({ zh: '历史打乱', en: 'Scramble history' })}</h3>
+
         {/* 每轮回放:按项目分组显示打乱公式 + 打乱图 + 该项目各方成绩 */}
         <div className="net-rounds">
           {views.map((rv) => {
@@ -1682,7 +1685,7 @@ function NetStatsPanel({ room, pid, isZh, precision, onClose }: NetStatsPanelPro
             return (
               <div key={rv.round} className="net-round-card">
                 <div className="net-round-head">
-                  {tr({ zh: `第 ${rv.round} 轮`, en: `Round ${rv.round}` })}
+                  {tr({ zh: `第 ${rv.round} 把`, en: `Round ${rv.round}` })}
                   {rv.live && <span className="net-round-live">{tr({ zh: '进行中', en: 'live' })}</span>}
                 </div>
                 {[...groups.entries()].map(([ev, ids]) => {

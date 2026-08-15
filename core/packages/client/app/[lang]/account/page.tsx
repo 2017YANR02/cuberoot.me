@@ -88,15 +88,13 @@ export default function AccountPage() {
         key: 'recon',
         href: `/recon/person/${wcaId}`,
         icon: <Rewind size={22} className="account-card-icon" />,
-        title: tr({ zh: '我的复盘', en: 'My Reconstructions' }),
-        desc: tr({ zh: '逐步还原我的解法', en: 'Step-by-step reconstructions of my solves' }),
+        title: tr({ zh: '复盘', en: 'Reconstructions' }),
       },
       {
         key: 'wca',
         href: `/wca/persons/${wcaId}`,
         icon: <IdCard size={22} className="account-card-icon" />,
-        title: tr({ zh: '我的 WCA 档案', en: 'My WCA Profile' }),
-        desc: tr({ zh: '个人纪录 / 比赛历史 / 奖牌', en: 'Records, competition history, medals' }),
+        title: tr({ zh: 'WCA 档案', en: 'WCA Profile' }),
       },
     ] : [
       {
@@ -112,14 +110,12 @@ export default function AccountPage() {
       href: '/alg/progress',
       icon: <GraduationCap size={22} className="account-card-icon" />,
       title: tr({ zh: '学习进度', en: 'Learning Progress' }),
-      desc: tr({ zh: '跨公式集的掌握进度总览', en: 'Mastery progress across all sets' }),
     },
     ...(isAdmin ? [{
       key: 'submissions',
       href: '/account?view=submissions',
       icon: <Inbox size={22} className="account-card-icon" />,
       title: tr({ zh: '公式投稿', en: 'Algorithm submissions' }),
-      desc: tr({ zh: '查看最近提交的公式', en: 'Review recent algorithm submissions' }),
     }] : []),
   ];
 
@@ -199,7 +195,7 @@ export default function AccountPage() {
                     {icon}
                     <div className="account-card-body">
                       <div className="account-card-title">{title}</div>
-                      <div className="account-card-desc">{desc}</div>
+                      {desc && <div className="account-card-desc">{desc}</div>}
                     </div>
                     <ChevronRight size={18} className="account-card-chev" />
                   </AppLink>

@@ -20,7 +20,7 @@ import AlgPlaybackControls from './AlgPlaybackControls';
 import { DEFAULT_ALG_MOVE_DURATION_MS, resolvePlayerSetup, resolveTwistyTempoScale } from './player-setup';
 
 export interface AlgPlayerHandle {
-  /** 拿到底层 cubing.js TwistyPlayer 实例,给光标 sync 等高级用法用 */
+  /** 拿到底层播放器或兼容 seek adapter,给光标 sync 等高级用法用。 */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getPlayer(): any | null;
 }
@@ -70,7 +70,7 @@ interface Props {
   /** 撑满父容器(用 ResizeObserver 把像素尺寸直接写入 player),否则用 size 固定方形 */
   fillPane?: boolean;
   /**
-   * 用哪个引擎画。默认:NxN 走站内 `/sim` 引擎,其余(sq1 / 五魔 / 金字塔 / 斜转)走 TwistyPlayer。
+   * 用哪个引擎画。默认:NxN 和 SQ1 走站内 `/sim` 引擎,其余走 TwistyPlayer。
    *
    * 显式传 `'twisty'` 可钉死 cubing.js。FTO 例外:EIF 宏不是 cubing.js 文法,
    * 因此始终走自有播放器,并通过兼容 handle 支持 admin 光标同步。
@@ -78,8 +78,8 @@ interface Props {
   engine?: 'sim' | 'twisty';
 }
 
-/** 公式库默认只给 NxN 用 sim;教学页可显式启用文法一致的金字塔和斜转。 */
-const DEFAULT_SIM = new Set<AlgPuzzle>(['2x2', '3x3', '4x4', '5x5']);
+/** 公式库默认给 NxN 和 SQ1 用 sim;教学页可显式启用文法一致的金字塔和斜转。 */
+const DEFAULT_SIM = new Set<AlgPuzzle>(['2x2', '3x3', '4x4', '5x5', 'sq1']);
 const EXPLICIT_SIM = new Set<AlgPuzzle>([...DEFAULT_SIM, 'pyraminx', 'skewb']);
 
 const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, ref) {
@@ -106,6 +106,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
   if (useSim) {
     return (
       <AlgSimPlayer
+        ref={ref}
         alg={props.alg} puzzle={props.puzzle} set={props.set} setup={props.setup}
         orientation={props.orientation}
         startSolved={props.startSolved} autoPlay={props.autoPlay} loop={props.loop}

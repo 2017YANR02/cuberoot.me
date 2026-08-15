@@ -47,4 +47,16 @@ describe('algorithm player placement', () => {
     expect(player).toContain('world.controller.onOrbit = (dx, dy) => orbitSceneFree(world, dx, dy, ORBIT_K)');
     expect(player).toContain('toucher.destroy()');
   });
+
+  it('routes every SQ1 formula-set player through the shared /sim engine', () => {
+    const player = read('components/AlgPlayer/AlgPlayer.tsx');
+    const simPlayer = read('components/AlgPlayer/AlgSimPlayer.tsx');
+    const editor = read('components/AdminCaseEditor.tsx');
+
+    expect(player).toMatch(/DEFAULT_SIM[^\n]+\bsq1\b/);
+    expect(simPlayer).toContain("sq1: 'sq1'");
+    expect(simPlayer).toContain("if (puzzle === 'sq1')");
+    expect(simPlayer).toContain('(cube as Sq1Cube).setStickering(set)');
+    expect(editor).toContain("engine={puzzle === 'sq1' ? 'sim' : 'twisty'}");
+  });
 });
