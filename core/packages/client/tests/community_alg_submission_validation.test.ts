@@ -69,4 +69,25 @@ describe('community alg submission validation', () => {
       'pll',
     );
   });
+
+  it.each(['y', 'y2', "y'"])('rejects a %s-led top-layer alg before state validation', async (lead) => {
+    await expect(prepareCommunityAlgForSubmission({
+      ...input,
+      raw: `${lead} R U R'`,
+    })).resolves.toEqual({
+      ok: false,
+      kind: 'leading-y-rotation',
+      reason: '',
+    });
+    expect(validateAlgCaseMock).not.toHaveBeenCalled();
+  });
+
+  it('allows a leading y in a non-top-layer set', async () => {
+    validateAlgCaseMock.mockResolvedValue({ ok: true, auf: '' });
+    await expect(prepareCommunityAlgForSubmission({
+      ...input,
+      setSlug: 'f2l',
+      raw: "y R U R'",
+    })).resolves.toEqual({ ok: true, alg: "y R U R'" });
+  });
 });

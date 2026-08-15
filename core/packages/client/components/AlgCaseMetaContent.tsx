@@ -145,6 +145,8 @@ interface Props {
   playable?: boolean;
   /** 管理员拖拽时保持数据库原始顺序，避免个人置顶改变拖拽索引。 */
   preserveAlgOrder?: boolean;
+  /** 详情页的社区公式紧跟主公式列表；训练弹窗不传。 */
+  algsAfter?: React.ReactNode;
 }
 
 export default function AlgCaseMetaContent({
@@ -157,6 +159,7 @@ export default function AlgCaseMetaContent({
   orientation,
   playable = false,
   preserveAlgOrder = false,
+  algsAfter,
 }: Props) {
   /**
    * 没有 meta 的集(虚拟集 LSLL、库里还没补元数据的集)一样要能看:空对象兜底后
@@ -474,6 +477,7 @@ export default function AlgCaseMetaContent({
               a.originalIndex,
             );
           }))}
+          {algsAfter}
         </div>
       </div>
 
