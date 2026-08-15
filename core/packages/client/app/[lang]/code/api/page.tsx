@@ -59,7 +59,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live documents feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching
-//   scramble_marks sim_masks sms_receipt sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
+//   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wiki
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
@@ -434,6 +434,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'timer', m: 'GET', p: '/v1/timer/backup', g: 'login', zh: '取计时器云备份', en: 'Fetch timer backup' },
   { d: 'timer', m: 'POST', p: '/v1/timer/backup', g: 'login', zh: '上传计时器备份', en: 'Upload timer backup' },
   { d: 'timer', m: 'DELETE', p: '/v1/timer/backup', g: 'login', zh: '删除备份', en: 'Delete backup' },
+  { d: 'timer', m: 'GET', p: '/v1/timer/presence', g: 'public', c: 'no-store', zh: '当前计时人数（普通魔方 / 智能魔方）', en: 'Current timer users (regular / smart cube)' },
+  { d: 'timer', m: 'POST', p: '/v1/timer/presence', g: 'public', c: 'no-store', zh: '匿名计时页心跳（最多 4 人）', en: 'Anonymous timer-tab heartbeat (up to four people)' },
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms', g: 'public', zh: '建联机对战房间(多设备同打乱各自计时),返回房间码', en: 'Create an online battle room (multi-device, same scramble); returns a room code' },
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/join', g: 'public', zh: '加入对战房间', en: 'Join a battle room' },
   { d: 'timer', m: 'GET', p: '/v1/battle/rooms/:code', g: 'public', c: 'no-store', zh: '房间状态轮询(带 pid 刷心跳)', en: 'Poll room state (pid refreshes heartbeat)' },
