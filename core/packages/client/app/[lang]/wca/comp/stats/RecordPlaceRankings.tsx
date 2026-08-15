@@ -16,29 +16,17 @@ import { SearchInput } from '@/components/SearchInput';
 import { SortArrow } from '@/components/SortArrow';
 import { tr } from '@/i18n/tr';
 import { countryName } from '@/lib/country-name';
-import { localizeCity } from '@/lib/city-localize';
-import { loadRecordPlaces, rankRecordRows, type RankedRecordRow } from '@/lib/record-places';
+import {
+  cityRecordMatches,
+  loadRecordPlaces,
+  localizedCityCollisionKeys,
+  rankRecordRows,
+  recordCityDisplayName,
+  type RankedRecordRow,
+} from '@/lib/record-places';
 
 const TOP_LIMIT = 20;
 const SEARCH_LIMIT = 50;
-
-function normalizeSearch(value: string): string {
-  return value.normalize('NFKD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase().trim();
-}
-
-function cityMatches(row: CityRecordCounts, query: string): boolean {
-  const needle = normalizeSearch(query);
-  if (!needle) return true;
-  const haystack = [
-    row.city,
-    localizeCity(row.city, true, row.iso2),
-    localizeCity(row.city, false, row.iso2),
-    countryName(row.iso2, true),
-    countryName(row.iso2, false),
-    row.iso2,
-  ].map(normalizeSearch).join('\n');
-  return haystack.includes(needle);
-}
 
 interface RankingTableProps<T extends CountryRecordCounts> {
   label: string;
@@ -46,11 +34,12 @@ interface RankingTableProps<T extends CountryRecordCounts> {
   metric: RecordMetric;
   isZh: boolean;
   city: boolean;
+  cityCollisions?: ReadonlySet<string>;
   onMetricChange: (metric: RecordMetric) => void;
 }
 
 function RankingTable<T extends CountryRecordCounts>({
-  label, rows, metric, isZh, city, onMetricChange,
+  label, rows, metric, isZh, city, cityCollisions = new Set(), onMetricChange,
 }: RankingTableProps<T>) {
   return (
     <div className="cs-record-table-wrap">
@@ -83,7 +72,7 @@ function RankingTable<T extends CountryRecordCounts>({
           {rows.map(({ row, rank }) => {
             const cityRow = city ? row as T & CityRecordCounts : null;
             const placeName = cityRow
-              ? localizeCity(cityRow.city, isZh, row.iso2)
+              ? recordCityDisplayName(cityRow, isZh, cityCollisions)
               : countryName(row.iso2, isZh);
             return (
               <tr key={cityRow ? `${row.iso2}:${cityRow.city}` : row.iso2}>
@@ -149,10 +138,14 @@ export function RecordPlaceRankings() {
   );
   const matchingCities = useMemo(() => {
     const rows = cityQuery
-      ? rankedCities.filter(({ row }) => cityMatches(row, cityQuery))
+      ? rankedCities.filter(({ row }) => cityRecordMatches(row, cityQuery))
       : rankedCities.filter(({ row }) => row[metric] > 0);
     return rows;
   }, [rankedCities, cityQuery, metric]);
+  const cityCollisions = useMemo(
+    () => localizedCityCollisionKeys(data?.cities ?? [], isZh),
+    [data, isZh],
+  );
   const cityRows = matchingCities.slice(0, cityQuery ? SEARCH_LIMIT : TOP_LIMIT);
 
   return (
@@ -209,6 +202,7 @@ export function RecordPlaceRankings() {
                 metric={metric}
                 isZh={isZh}
                 city
+                cityCollisions={cityCollisions}
                 onMetricChange={(value) => { void setMetric(value); }}
               />
             ) : (
