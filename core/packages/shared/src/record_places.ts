@@ -1,6 +1,7 @@
 import { isMultiLocationCity } from './comp_city_identity';
 
 export const RECORD_PLACE_VERSION = 2 as const;
+export const RECORD_PLACE_DETAIL_VERSION = 1 as const;
 
 export const RECORD_METRICS = ['wr', 'cr', 'nr'] as const;
 export type RecordMetric = (typeof RECORD_METRICS)[number];
@@ -26,6 +27,41 @@ export interface RecordPlacesData {
   cities: CityRecordCounts[];
 }
 
+export type RecordResultKind = 's' | 'a';
+
+export interface RecordPlaceDetailEntry {
+  /** Exact WCA marker: WR, AfR, AsR, ER, NAR, OcR, SAR, or NR. */
+  t: string;
+  /** Single or average. */
+  k: RecordResultKind;
+  /** WCA event id. */
+  e: string;
+  /** WCA person id. */
+  p: string;
+  /** Raw WCA person name. */
+  n: string;
+  /** Raw WCA result value. */
+  v: number;
+}
+
+export interface RecordPlaceDetailCompetition {
+  /** Raw WCA competition name. */
+  n: string;
+  /** ISO start date. */
+  s: string;
+  /** ISO end date. */
+  d: string;
+  /** Resolved canonical city label; null for multi-location competitions. */
+  c: string | null;
+}
+
+export interface RecordPlaceDetailShard {
+  version: typeof RECORD_PLACE_DETAIL_VERSION;
+  iso2: string;
+  comps: Record<string, RecordPlaceDetailCompetition>;
+  records: Record<string, RecordPlaceDetailEntry[]>;
+}
+
 export interface RecordPlaceSourceRow {
   iso2: string | null;
   city: string | null;
@@ -39,7 +75,7 @@ export interface RecordPlaceSourceRow {
 const CONTINENTAL_RECORDS = new Set(['AfR', 'AsR', 'ER', 'NAR', 'OcR', 'SAR']);
 const MULTI_REGIONS = new Set(['XA', 'XE', 'XF', 'XM', 'XN', 'XO', 'XS', 'XW']);
 
-function metricForRecord(level: string | null): RecordMetric | null {
+export function recordMetricForLevel(level: string | null): RecordMetric | null {
   if (level === 'WR') return 'wr';
   if (level && CONTINENTAL_RECORDS.has(level)) return 'cr';
   if (level === 'NR') return 'nr';
@@ -51,7 +87,7 @@ function emptyCounts(): RecordCounts {
 }
 
 function addRecord(counts: RecordCounts, level: string | null): boolean {
-  const metric = metricForRecord(level);
+  const metric = recordMetricForLevel(level);
   if (!metric) return false;
   counts[metric]++;
   return true;
@@ -158,4 +194,47 @@ export function isRecordPlacesData(value: unknown): value is RecordPlacesData {
   const cityIds = new Set(cities.map((row) => `${row.iso2}\0${row.city.toLocaleLowerCase('en')}`));
   if (cityIds.size !== cities.length || cities.some((row) => !countryIds.has(row.iso2))) return false;
   return true;
+}
+
+function isIsoDate(value: unknown): value is string {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function isDetailCompetition(value: unknown): value is RecordPlaceDetailCompetition {
+  if (!value || typeof value !== 'object') return false;
+  const comp = value as Partial<RecordPlaceDetailCompetition>;
+  return typeof comp.n === 'string' && comp.n.trim().length > 0
+    && isIsoDate(comp.s) && isIsoDate(comp.d)
+    && (comp.c === null || (typeof comp.c === 'string' && comp.c.trim().length > 0));
+}
+
+function isDetailEntry(value: unknown): value is RecordPlaceDetailEntry {
+  if (!value || typeof value !== 'object') return false;
+  const entry = value as Partial<RecordPlaceDetailEntry>;
+  return recordMetricForLevel(entry.t ?? null) !== null
+    && (entry.k === 's' || entry.k === 'a')
+    && typeof entry.e === 'string' && entry.e.length > 0
+    && typeof entry.p === 'string' && entry.p.length > 0
+    && typeof entry.n === 'string' && entry.n.trim().length > 0
+    && typeof entry.v === 'number' && Number.isSafeInteger(entry.v) && entry.v > 0;
+}
+
+export function isRecordPlaceDetailShard(value: unknown): value is RecordPlaceDetailShard {
+  if (!value || typeof value !== 'object') return false;
+  const shard = value as Partial<RecordPlaceDetailShard>;
+  if (shard.version !== RECORD_PLACE_DETAIL_VERSION
+    || typeof shard.iso2 !== 'string' || !/^[A-Z]{2}$/.test(shard.iso2)
+    || !shard.comps || typeof shard.comps !== 'object' || Array.isArray(shard.comps)
+    || !shard.records || typeof shard.records !== 'object' || Array.isArray(shard.records)) return false;
+  const comps = shard.comps as Record<string, RecordPlaceDetailCompetition>;
+  const records = shard.records as Record<string, RecordPlaceDetailEntry[]>;
+  const compIds = Object.keys(comps);
+  const recordIds = Object.keys(records);
+  return compIds.length === recordIds.length
+    && compIds.every((id) => id.length > 0
+      && isDetailCompetition(comps[id])
+      && Array.isArray(records[id])
+      && records[id].length > 0
+      && records[id].every(isDetailEntry))
+    && recordIds.every((id) => Object.hasOwn(comps, id));
 }

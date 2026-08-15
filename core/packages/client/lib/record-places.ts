@@ -1,15 +1,21 @@
 import {
+  isRecordPlaceDetailShard,
   isRecordPlacesData,
   type CityRecordCounts,
   type RecordCounts,
   type RecordMetric,
+  type RecordPlaceDetailCompetition,
+  type RecordPlaceDetailEntry,
+  type RecordPlaceDetailShard,
   type RecordPlacesData,
+  recordMetricForLevel,
 } from '@cuberoot/shared/record-places';
 import { statsUrl } from './stats-base';
 import { countryName } from './country-name';
 import { localizeCity } from './city-localize';
 
 let inflight: Promise<RecordPlacesData> | null = null;
+const detailInflight = new Map<string, Promise<RecordPlaceDetailShard>>();
 
 export async function loadRecordPlaces(): Promise<RecordPlacesData> {
   if (!inflight) {
@@ -24,6 +30,55 @@ export async function loadRecordPlaces(): Promise<RecordPlacesData> {
     });
   }
   return inflight;
+}
+
+export async function loadRecordPlaceDetails(iso2: string): Promise<RecordPlaceDetailShard> {
+  const country = iso2.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(country)) throw new Error('invalid record place country');
+  const existing = detailInflight.get(country);
+  if (existing) return existing;
+  const request = fetch(statsUrl(`/stats/record_place_details_v1/${country}.json`)).then(async (response) => {
+    if (!response.ok) throw new Error(`record place details unavailable (${response.status})`);
+    const value: unknown = await response.json();
+    if (!isRecordPlaceDetailShard(value) || value.iso2 !== country) {
+      throw new Error('invalid record place detail data');
+    }
+    return value;
+  }).catch((error) => {
+    detailInflight.delete(country);
+    throw error;
+  });
+  detailInflight.set(country, request);
+  return request;
+}
+
+export interface RecordPlaceDetailRow {
+  id: string;
+  compId: string;
+  comp: RecordPlaceDetailCompetition;
+  entry: RecordPlaceDetailEntry;
+}
+
+export function recordPlaceDetailRows(
+  shard: RecordPlaceDetailShard,
+  metric: RecordMetric,
+  city: string | null,
+): RecordPlaceDetailRow[] {
+  const rows: RecordPlaceDetailRow[] = [];
+  for (const [compId, entries] of Object.entries(shard.records)) {
+    const comp = shard.comps[compId];
+    if (!comp || (city !== null && comp.c !== city)) continue;
+    entries.forEach((entry, index) => {
+      if (recordMetricForLevel(entry.t) === metric) {
+        rows.push({ id: `${compId}:${index}`, compId, comp, entry });
+      }
+    });
+  }
+  return rows.sort((a, b) =>
+    b.comp.s.localeCompare(a.comp.s, 'en')
+      || a.compId.localeCompare(b.compId, 'en')
+      || a.id.localeCompare(b.id, 'en')
+  );
 }
 
 export interface RankedRecordRow<T> {
