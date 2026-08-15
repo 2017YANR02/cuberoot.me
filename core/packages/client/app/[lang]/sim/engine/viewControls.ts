@@ -68,13 +68,26 @@ export function orbitScene(world: World, dx: number, dy: number, k: number): voi
 /**
  * 无界 orbit:两轴都一直累加,可以翻过顶/底继续转(涂色板要的 —— 钳在 ±90° 就看不到
  * D 面外沿、点不到背面的贴纸)。`yawSign` 抵消上下颠倒那半圈的左右反向。
- * 需要「永远正着看」的场合(看图播放器 / drag-empty 转视角)用上面的 `orbitScene`。
+ * 需要「永远正着看」的场合(普通播放器 / recon)用上面的 `orbitScene`；
+ * /sim 的纯「视角」档和 3D 求解器用这里，允许越过顶面/底面继续转。
  */
 export function orbitSceneFree(world: World, dx: number, dy: number, k: number): void {
-  world.scene.rotation.y += dx * k * yawSign(world.scene.rotation.x);
-  world.scene.rotation.x += dy * k;
+  applyFreeOrbitDelta(world.scene.rotation, dx, dy, k);
   world.scene.updateMatrix();
   world.dirty = true;
+}
+
+/** Apply the unbounded two-axis orbit math to any Euler-like rotation. cubing.js's
+ * Three.js puzzle root uses this too, so both renderers keep identical drag direction
+ * after the puzzle has crossed the top or bottom. */
+export function applyFreeOrbitDelta(
+  rotation: { x: number; y: number },
+  dx: number,
+  dy: number,
+  k: number,
+): void {
+  rotation.y += dx * k * yawSign(rotation.x);
+  rotation.x += dy * k;
 }
 
 /**

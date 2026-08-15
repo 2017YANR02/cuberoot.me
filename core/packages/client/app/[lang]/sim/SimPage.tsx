@@ -752,7 +752,12 @@ export default function SimPage() {
     };
     /** 所有 orbit 手势的唯一出口 —— 新增手势别再直接调 orbitScene,读数会漏同步。 */
     const orbitView = (dx: number, dy: number) => {
-      orbitScene(world, dx, dy, mapOrbitK(settingsRef.current.sensitivity));
+      const k = mapOrbitK(settingsRef.current.sensitivity);
+      if (settingsRef.current.dragEmpty === 'view' || settingsRef.current.pointerTurns === false) {
+        orbitSceneFree(world, dx, dy, k);
+      } else {
+        orbitScene(world, dx, dy, k);
+      }
       syncViewToSettings();
     };
 
@@ -945,7 +950,7 @@ export default function SimPage() {
       settings: () => settingsRef.current,
       pinching: () => pinching,
       emitMove: (token) => userMoveRef.current?.(token),
-      orbit: (dx, dy) => orbitScene(world, dx, dy, mapOrbitK(settingsRef.current.sensitivity)),
+      orbit: orbitView,
       clearPartialFreeze,
       setPartialSnapBack: (fn) => { partialSnapBackRef.current = fn; },
     };
