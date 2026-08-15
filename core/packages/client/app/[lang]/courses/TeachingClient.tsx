@@ -12,11 +12,12 @@ import {
   lessonMinutes,
   stageLessons,
   TEACHING_COURSES,
-  TEACHING_LESSON_COUNT,
-  TEACHING_TOTAL_MINUTES,
 } from './_data';
 import type { LessonKind, LocalizedText, MicroCourse, Module } from './_data/types';
+import { mergeTrialLessonOverrides } from './_data/trial-overrides';
+import { fetchTrialLessonOverrides, type TrialLessonOverride } from '@/lib/teaching-api';
 import AdvancedCourseSection from './AdvancedCourseSection';
+import TrialLessonEditor from './TrialLessonEditor';
 import './teaching.css';
 
 const KIND_LABELS: Record<LessonKind, LocalizedText> = {
@@ -53,8 +54,37 @@ function formatDuration(minutes: number) {
   return tr({ zh: `${hours} 小时 ${rest} 分钟`, en: `${hours} hr ${rest} min` });
 }
 
-function TeachingPage({ isAdmin }: { isAdmin: boolean }) {
-  const average = (TEACHING_TOTAL_MINUTES / TEACHING_LESSON_COUNT).toFixed(1);
+function TeachingPage({ isAdmin, lang }: { isAdmin: boolean; lang: string }) {
+  const [courses, setCourses] = useState<MicroCourse[]>(() => [...TEACHING_COURSES]);
+  const lessonCount = courses.reduce((total, course) => total + courseLessons(course).length, 0);
+  const totalMinutes = courses.reduce((total, course) => total + courseMinutes(course), 0);
+  const average = (totalMinutes / lessonCount).toFixed(1);
+  const canEditTrial = isAdmin && lang.startsWith('zh');
+
+  useEffect(() => {
+    let active = true;
+    if (!lang.startsWith('zh')) {
+      setCourses([...TEACHING_COURSES]);
+      return () => { active = false; };
+    }
+    void fetchTrialLessonOverrides()
+      .then((overrides) => {
+        if (!active) return;
+        setCourses(TEACHING_COURSES.map((course) => (
+          course.id === 'trial' ? mergeTrialLessonOverrides(course, overrides) : course
+        )));
+      })
+      .catch(() => {
+        if (active) setCourses([...TEACHING_COURSES]);
+      });
+    return () => { active = false; };
+  }, [lang]);
+
+  function applyTrialOverride(override: TrialLessonOverride) {
+    setCourses((current) => current.map((course) => (
+      course.id === 'trial' ? mergeTrialLessonOverrides(course, [override]) : course
+    )));
+  }
 
   return (
     <main className="teaching-page">
@@ -70,14 +100,14 @@ function TeachingPage({ isAdmin }: { isAdmin: boolean }) {
         </p>
 
         <div className="teaching-stats" aria-label={tr({ zh: '课程规模', en: 'Course scale' })}>
-          <span><strong>{TEACHING_LESSON_COUNT}</strong> <T zh="节课" en="lessons" /></span>
+          <span><strong>{lessonCount}</strong> <T zh="节课" en="lessons" /></span>
           <span><strong>1–5</strong> <T zh="分钟一节" en="minutes each" /></span>
           <span><strong>{average}</strong> <T zh="分钟平均" en="minutes average" /></span>
-          <span><strong>{formatDuration(TEACHING_TOTAL_MINUTES)}</strong> <T zh="总时长" en="total" /></span>
+          <span><strong>{formatDuration(totalMinutes)}</strong> <T zh="总时长" en="total" /></span>
         </div>
 
         <nav className="teaching-course-nav" aria-label={tr({ zh: '跳转到课程', en: 'Jump to course' })}>
-          {TEACHING_COURSES.map((course) => {
+          {courses.map((course) => {
             const lessons = courseLessons(course);
             return (
               <a key={course.id} href={`#${course.id}`}>
@@ -122,7 +152,7 @@ function TeachingPage({ isAdmin }: { isAdmin: boolean }) {
         </div>
       </section>
 
-      {TEACHING_COURSES.map((course, courseIndex) => {
+      {courses.map((course, courseIndex) => {
         const lessons = courseLessons(course);
         const moduleCount = course.stages.reduce((total, stage) => total + stage.modules.length, 0);
 
@@ -209,6 +239,9 @@ function TeachingPage({ isAdmin }: { isAdmin: boolean }) {
                                           {tr(line)}
                                         </p>
                                       ))}
+                                      {canEditTrial && course.id === 'trial' && (
+                                        <TrialLessonEditor lesson={lesson} onSaved={applyTrialOverride} />
+                                      )}
                                     </article>
                                   </div>
                                 </details>
@@ -234,7 +267,7 @@ function TeachingPage({ isAdmin }: { isAdmin: boolean }) {
           <h2 id="production-title"><T zh="按模块批量录，不按整门课硬撑" en="Record in module batches, not one huge course" /></h2>
         </div>
         <ol>
-          <li><strong><T zh="先录五节试听课。" en="Record the five trial lessons first. " /></strong><T zh="验证机位、手部特写、字幕字号和学员能否完成结尾挑战。" en="Validate camera angles, hand close-ups, subtitle size, and whether learners can pass each final challenge." /></li>
+          <li><strong><T zh="先录九节试听课。" en="Record the nine trial lessons first. " /></strong><T zh="验证机位、手部特写、字幕字号和学员能否完成结尾挑战。" en="Validate camera angles, hand close-ups, subtitle size, and whether learners can pass each final challenge." /></li>
           <li><strong><T zh="再录层先法前八节。" en="Then record the first eight beginner lessons. " /></strong><T zh="让 3–5 位目标学员试看，记录他们在哪个判断停住。" en="Test with three to five target learners and record where their decisions stop." /></li>
           <li><strong><T zh="模板稳定后按模块录。" en="Batch by module once the template is stable. " /></strong><T zh="同类案例统一起始角度、公式卡和过关提示。" en="Keep starting angles, algorithm cards, and pass prompts consistent across related cases." /></li>
           <li><strong><T zh="试听结尾明确引导购买。" en="End the trial with a clear purchase path. " /></strong><T zh="不会独立复原的学员选择 26 节层先法正式课；已经会复原并想提速的学员选择 CFOP 正式课；零基础且希望继续提速的学员先学层先法，再进入 CFOP。" en="Learners who cannot solve independently choose the 26-lesson beginner-method course; learners who can solve and want more speed choose CFOP; complete beginners who want to progress further take the beginner method first, then CFOP." /></li>
@@ -249,6 +282,8 @@ function TeachingPage({ isAdmin }: { isAdmin: boolean }) {
           <a href="https://app.cubing.gg/my/view/course?id=edhm7vue" target="_blank" rel="noreferrer">Tymon&apos;s CFOP Course</a>
           <T zh=" 与 " en=" and " />
           <a href="https://cubeskills.com/categories/3x3" target="_blank" rel="noreferrer">CubeSkills 3x3</a>
+          <T zh=" 及其 " en=" and its " />
+          <a href="https://cubeskills.com/tutorials/introduction-to-speedcubing/what-is-speedcubing" target="_blank" rel="noreferrer">Introduction to Speedcubing</a>
           <T zh="。案例编号采用通用魔方分类；中英文教学顺序、镜头清单和完整口播均为本站重新编写。正式录制前请与站内公式库逐项核对公式。" en=". Case numbers use standard cubing classifications. The bilingual sequence, shot lists, and complete narration are original to this site. Verify every algorithm against the site library before recording." />
         </p>
       </footer>
@@ -312,7 +347,7 @@ function TeachingAccessNotice({ onUnlock }: { onUnlock: () => void }) {
   );
 }
 
-export default function TeachingClient({ lang: _lang }: { lang: string }) {
+export default function TeachingClient({ lang }: { lang: string }) {
   const isAdmin = useIsAdmin();
   const [mounted, setMounted] = useState(false);
   const [previewAccess, setPreviewAccess] = useState(false);
@@ -323,5 +358,5 @@ export default function TeachingClient({ lang: _lang }: { lang: string }) {
 
   if (!mounted) return null;
   if (!isAdmin && !previewAccess) return <TeachingAccessNotice onUnlock={() => setPreviewAccess(true)} />;
-  return <TeachingPage isAdmin={isAdmin} />;
+  return <TeachingPage isAdmin={isAdmin} lang={lang} />;
 }

@@ -1,4 +1,4 @@
-/** CFOP 之后的课程池：公开读取，管理员维护。Schema: migration 0127。 */
+/** 课程可维护内容：公开读取，管理员维护。Schema: migrations 0127、0133。 */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
 import { getIp } from '../utils/analytics_helpers.js';
@@ -28,6 +28,25 @@ interface LessonInput {
   descriptionZh?: unknown;
   descriptionEn?: unknown;
   minutes?: unknown;
+}
+
+interface TrialLessonRow {
+  lesson_id: string;
+  title_zh: string;
+  outcome_zh: string;
+  minutes: number;
+  shots_zh: string[];
+  script_zh: string[];
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface TrialLessonInput {
+  titleZh?: unknown;
+  outcomeZh?: unknown;
+  minutes?: unknown;
+  shotsZh?: unknown;
+  scriptZh?: unknown;
 }
 
 const COLUMNS = `id, track, position, title_zh, title_en,
@@ -68,6 +87,73 @@ function normalizeLesson(body: LessonInput, requireTrack: boolean) {
   if (!Number.isInteger(minutes) || minutes < 1 || minutes > 60) return null;
   return { track, titleZh, titleEn, descriptionZh, descriptionEn, minutes };
 }
+
+function textList(value: unknown, maxItems: number, maxItemLength: number): string[] | null {
+  if (!Array.isArray(value) || value.length < 1 || value.length > maxItems) return null;
+  const items = value.map((item) => textField(item, maxItemLength));
+  if (items.some((item) => !item)) return null;
+  return items as string[];
+}
+
+function normalizeTrialLesson(body: TrialLessonInput) {
+  const titleZh = textField(body.titleZh, 200);
+  const outcomeZh = textField(body.outcomeZh, 1000);
+  const minutes = Number(body.minutes);
+  const shotsZh = textList(body.shotsZh, 30, 2000);
+  const scriptZh = textList(body.scriptZh, 100, 5000);
+  if (!titleZh || !outcomeZh || !shotsZh || !scriptZh) return null;
+  if (!Number.isInteger(minutes) || minutes < 1 || minutes > 60) return null;
+  return { titleZh, outcomeZh, minutes, shotsZh, scriptZh };
+}
+
+function trialRowToJson(row: TrialLessonRow) {
+  return {
+    lessonId: row.lesson_id,
+    titleZh: row.title_zh,
+    outcomeZh: row.outcome_zh,
+    minutes: Number(row.minutes),
+    shotsZh: row.shots_zh,
+    scriptZh: row.script_zh,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+teachingRoutes.get('/teaching/trial', async (c) => {
+  noStore(c);
+  const rows = await query<TrialLessonRow>(
+    `SELECT lesson_id, title_zh, outcome_zh, minutes, shots_zh, script_zh, created_at, updated_at
+     FROM teaching_trial_lesson_overrides ORDER BY lesson_id`,
+  );
+  return c.json(rows.map(trialRowToJson));
+});
+
+teachingRoutes.put('/teaching/trial/:lessonId', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+  const lessonId = c.req.param('lessonId');
+  if (lessonId.length > 80 || !/^trial-[a-z0-9-]+$/.test(lessonId)) {
+    return c.json({ error: 'Invalid trial lesson id' }, 400);
+  }
+  const lesson = normalizeTrialLesson(await c.req.json<TrialLessonInput>());
+  if (!lesson) return c.json({ error: 'Invalid trial lesson' }, 400);
+
+  const rows = await query<TrialLessonRow>(
+    `INSERT INTO teaching_trial_lesson_overrides
+       (lesson_id, title_zh, outcome_zh, minutes, shots_zh, script_zh)
+     VALUES (?, ?, ?, ?, ?::jsonb, ?::jsonb)
+     ON CONFLICT (lesson_id) DO UPDATE SET
+       title_zh = EXCLUDED.title_zh,
+       outcome_zh = EXCLUDED.outcome_zh,
+       minutes = EXCLUDED.minutes,
+       shots_zh = EXCLUDED.shots_zh,
+       script_zh = EXCLUDED.script_zh
+     RETURNING lesson_id, title_zh, outcome_zh, minutes, shots_zh, script_zh, created_at, updated_at`,
+    [lessonId, lesson.titleZh, lesson.outcomeZh, lesson.minutes, lesson.shotsZh, lesson.scriptZh],
+  );
+  return c.json(trialRowToJson(rows[0]));
+});
 
 teachingRoutes.get('/teaching/advanced', async (c) => {
   noStore(c);

@@ -65,6 +65,8 @@ const REF = {
   maguire2003: 'https://www.nature.com/articles/nn988',
   dresler2017: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC5439266/',
   meinz2023:   'https://pmc.ncbi.nlm.nih.gov/articles/PMC9866889/',
+  wcaAnnual2024: 'https://documents.worldcubeassociation.org/documents/minutes/2024-10-19%20WCA%20Annual%20Meeting.pdf',
+  ibProfile:   'https://www.ibo.org/en/benefits/learner-profile/',
   youCanDo:    'https://www.youcandothecube.com/',
   edutopia:    'https://www.edutopia.org/article/using-rubiks-cubes-teach-math/',
   who2019:     'https://www.who.int/publications/i/item/9789241550536',
@@ -664,6 +666,55 @@ export default function WhyCubePage() {
             <li>{t('二阶单次世界纪录(0.39 秒)同样出自中国选手之手。', 'The 2×2 single world record (0.39s) is held by a Chinese competitor too.')}</li>
             <li>{t('中国队还拿下了 2025 年 WCA 世界锦标赛的国家杯。国内有成熟的赛事与统计组织，比赛遍地开花。', 'China also won the Nations Cup at the 2025 WCA World Championship. The domestic scene has mature event and ranking organizations, with competitions held all over the country.')}</li>
           </ul>
+        </Sec>
+
+        {/* ── Long-term value and learning portfolio ────────── */}
+        <Sec
+          eyebrow={t('长期价值', 'Long-term value')}
+          title={t('把兴趣变成一段看得见的成长', 'Turn an interest into visible growth')}
+          lede={t(
+            '魔方真正有说服力的地方，不是“会背几个公式”，而是学员能留下过程、成果和自己的思考。',
+            'The cube becomes persuasive not through memorized algorithms, but through a learner’s visible process, results, and reflection.'
+          )}
+        >
+          <Callout
+            tone="info"
+            icon={<Users size={17} />}
+            label={t('从玩具走向成熟的全球智力运动', 'From toy to established global mind sport')}
+            src={<>{t('来源', 'Source')}: <Ref href={REF.wcaAnnual2024}>WCA 2024 Annual Meeting</Ref></>}
+          >
+            {t(
+              'WCA 在 2024 年度会议中披露：仅 2023 年就认证了 2135 场比赛，覆盖 97 个国家，共有 6.1 万名不同选手参赛，其中 3.7 万人是第一次参赛。越来越完整的赛事、社群和学习工具，让魔方可以从一次兴趣体验，继续发展为长期训练、交流、比赛或志愿服务。',
+              'At its 2024 annual meeting, the WCA reported 2,135 sanctioned competitions across 97 countries in 2023, with 61,000 unique competitors, including 37,000 first-time competitors. A growing ecosystem of events, communities, and learning tools lets a first encounter develop into long-term practice, exchange, competition, or volunteering.'
+            )}
+          </Callout>
+          <div className="wc-benefits">
+            <Benefit icon={<ListChecks size={26} />} title={t('留下真实的成长记录', 'Build an authentic record')}>
+              {t(
+                '从第一次独立复原、每周计时曲线，到比赛成绩、复盘笔记、社团分享或帮助同伴，都是可验证的过程。比起只写一句“爱好魔方”，持续记录自己怎样发现问题、调整方法并完成目标，更能让别人看见成长。',
+                'A first independent solve, weekly timing curve, competition result, reflection notes, club presentation, or helping a peer all provide verifiable evidence. A sustained record of finding problems, adjusting methods, and completing goals says more than simply listing cubing as a hobby.'
+              )}
+            </Benefit>
+            <Benefit icon={<GraduationCap size={26} />} title={t('为升学材料提供具体故事', 'Give applications a concrete story')}>
+              {t(
+                '国际课程重视探究、思考、沟通与反思。魔方经历可以成为申请国际学校时的一个真实项目素材：讲清楚为什么开始、遇到什么困难、怎样练习、如何分享。它不能替代成绩、语言和学校要求，也不保证录取，但能让个人特点不再停留在空话。',
+                'International programmes value inquiry, thinking, communication, and reflection. Cubing can become a genuine project story in an international-school application: why the learner began, what proved difficult, how practice changed, and how the learning was shared. It cannot replace grades, language proficiency, or school requirements, and it never guarantees admission, but it can make personal qualities concrete.'
+              )}
+            </Benefit>
+            <Benefit icon={<Sparkles size={26} />} title={t('获得“难题也能拆开”的底气', 'Build confidence that hard problems can be broken down')}>
+              {t(
+                '最重要的情绪价值，往往来自一次次亲手完成：原来混乱可以观察，错误可以定位，困难可以拆成下一步。家长与其只夸“真聪明”，不如肯定具体过程：“你卡住后重新检查，终于找到了原因。”这种成就感更容易沉淀为继续学习的动力。',
+                'The deepest emotional reward comes from doing it firsthand: disorder can be observed, mistakes can be located, and difficulty can be reduced to a next step. Instead of praising only talent, adults can name the process: “You checked again after getting stuck and found the reason.” That achievement is more likely to become motivation for continued learning.'
+              )}
+            </Benefit>
+          </div>
+          <p className="wc-prose">
+            {t(
+              'IB 的学习者培养目标也强调探究者、思考者、交流者和反思者等能力。魔方不是这些能力的证明书，却能提供一个低门槛、可反复练习、能把过程讲清楚的载体。',
+              'The IB learner profile likewise highlights inquiry, thinking, communication, and reflection. The cube is not a certificate for those capacities, but it is an accessible, repeatable setting in which a learner can practise and explain them.'
+            )}{' '}
+            <Ref href={REF.ibProfile}>{t('查看 IB 学习者培养目标', 'View the IB learner profile')}</Ref>
+          </p>
         </Sec>
 
         {/* ── Parent FAQ ────────────────────────────────────── */}

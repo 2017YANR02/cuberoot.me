@@ -363,6 +363,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'PUT', p: '/v1/teaching/advanced/reorder', g: 'admin', c: 'no-store', zh: '调整一条课程路线的顺序', en: 'Reorder one course track' },
   { d: 'content', m: 'PUT', p: '/v1/teaching/advanced/:id', g: 'admin', c: 'no-store', zh: '修改后续课程标题、说明和时长', en: 'Edit a further-course title, notes, and duration' },
   { d: 'content', m: 'DELETE', p: '/v1/teaching/advanced/:id', g: 'admin', c: 'no-store', zh: '删除一节后续课程', en: 'Delete a further-course lesson' },
+  { d: 'content', m: 'GET', p: '/v1/teaching/trial', g: 'public', c: 'no-store', zh: '试听课中文内容覆盖', en: 'Chinese content overrides for trial lessons' },
+  { d: 'content', m: 'PUT', p: '/v1/teaching/trial/:lessonId', g: 'admin', c: 'no-store', zh: '修改试听课中文标题、目标、时长、拍摄清单与完整口播', en: 'Edit a trial lesson’s Chinese title, goal, duration, shot list, and complete narration' },
   { d: 'content', m: 'GET', p: '/v1/wiki/terms', g: 'public', c: 'cdn', zh: '术语表', en: 'Wiki terms' },
   { d: 'content', m: 'POST', p: '/v1/wiki/terms', g: 'login', zh: '加术语', en: 'Add term' },
   { d: 'content', m: 'PATCH', p: '/v1/wiki/terms/:id', g: 'admin', zh: '改术语', en: 'Edit term' },
