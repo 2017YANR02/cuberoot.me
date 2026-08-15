@@ -60,19 +60,44 @@ import '@/app/[lang]/timer/_battle/battle.css';
 import './shell.css';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
-import { battlePresenceMix, type TimerPresenceMix } from '@/app/[lang]/timer/_lib/presence';
+import { battlePresenceMix, type TimerPresenceReport } from '@/app/[lang]/timer/_lib/presence';
 
 function BattlePresenceReporter({
   playerCount,
   onChange,
 }: {
   playerCount: number;
-  onChange?: (mix: TimerPresenceMix) => void;
+  onChange?: (report: TimerPresenceReport) => void;
 }) {
-  const { isLive } = useBattleCubesCtx();
+  const { isLive, handleFor } = useBattleCubesCtx();
   const cubeMode = useBattleStore(s => s.cubeMode);
-  const mix = battlePresenceMix(playerCount, cubeMode, [0, 1, 2, 3].map(isLive));
-  useEffect(() => { onChange?.(mix); }, [mix.normal, mix.smart, onChange]);
+  const players = useBattleStore(s => s.players);
+  const puzzleIds = useBattleStore(s => s.puzzleIds);
+  const connected = [0, 1, 2, 3].map(isLive);
+  const mix = battlePresenceMix(playerCount, cubeMode, connected);
+  const results = players.slice(0, playerCount).flatMap((player, index) => {
+    const solve = player.solveHistory.at(-1);
+    if (!solve) return [];
+    const at = Date.parse(solve.date);
+    return [{
+      label: `P${index + 1}`,
+      event: battleToTimerEvent(puzzleIds[index]),
+      timeMs: solve.time,
+      penalty: solve.penalty === 'dnf' ? 'dnf' as const : solve.penalty as 'ok' | '+2',
+      ...(Number.isFinite(at) ? { at } : {}),
+    }];
+  });
+  const devices = Array.from(new Map(
+    Array.from({ length: playerCount }, (_, index) => handleFor(index)?.status)
+      .filter(status => status?.connected)
+      .map(status => [status!.deviceId || status!.deviceName, {
+        name: status!.deviceName,
+        ...(status!.deviceId ? { id: status!.deviceId } : {}),
+      }]),
+  ).values());
+  const report: TimerPresenceReport = { ...mix, mode: 'local', results, devices };
+  const signature = JSON.stringify(report);
+  useEffect(() => { onChange?.(report); }, [signature, onChange]);
   return null;
 }
 
@@ -1158,7 +1183,7 @@ interface BattleViewProps {
   /** 人数下拉(TimerShell 构建),注入到 middle-bar */
   playersControl?: React.ReactNode;
   presenceControl?: React.ReactNode;
-  onPresenceChange?: (mix: TimerPresenceMix) => void;
+  onPresenceChange?: (report: TimerPresenceReport) => void;
 }
 
 export default function BattleView({ playerCount, playersControl, presenceControl, onPresenceChange }: BattleViewProps) {

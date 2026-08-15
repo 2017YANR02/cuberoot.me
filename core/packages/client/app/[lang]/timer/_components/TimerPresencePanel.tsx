@@ -1,16 +1,28 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { Bluetooth, Timer, Users } from 'lucide-react';
+import { Bluetooth, Globe2, Timer, UserRound, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { tr } from '@/i18n/tr';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
-import type { TimerPresenceSnapshot } from '../_lib/presence';
+import { eventDisplayName } from '@/lib/wca-events';
+import { formatMs } from '../_lib/stats';
+import type { TimerPresenceResult, TimerPresenceSnapshot } from '../_lib/presence';
+
+function resultText(result: TimerPresenceResult): string {
+  if (result.penalty === 'DNF' || result.penalty === 'dnf') return 'DNF';
+  if (result.penalty === 'DNS') return 'DNS';
+  if (result.penalty === '+2') return `${formatMs(result.timeMs + 2000)}+`;
+  return formatMs(result.timeMs);
+}
 
 export default function TimerPresencePanel({ snapshot }: { snapshot: TimerPresenceSnapshot | null }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
+  const { i18n } = useTranslation();
+  const isZh = i18n.language.startsWith('zh');
   usePanelClamp(open, panelRef);
 
   useEffect(() => {
@@ -29,8 +41,13 @@ export default function TimerPresencePanel({ snapshot }: { snapshot: TimerPresen
     };
   }, [open]);
 
-  const title = tr({ zh: '当前使用人数', en: 'People timing now' });
+  const title = tr({ zh: '当前计时会话', en: 'Live timer sessions' });
   const value = (n: number | undefined) => n === undefined ? '—' : String(n);
+  const modeLabel = (mode: 'solo' | 'local' | 'net') => ({
+    solo: tr({ zh: '单人', en: 'Solo' }),
+    local: tr({ zh: '本机对战', en: 'Local battle' }),
+    net: tr({ zh: '联机', en: 'Online' }),
+  })[mode];
 
   return (
     <div className="timer-presence" ref={wrapRef} data-no-timer>
@@ -55,17 +72,45 @@ export default function TimerPresencePanel({ snapshot }: { snapshot: TimerPresen
           role="dialog"
           aria-label={title}
         >
-          <div className="timer-presence-title">{tr({ zh: '当前使用', en: 'Timing now' })}</div>
-          <div className="timer-presence-row">
-            <Timer size={14} />
-            <span>{tr({ zh: '普通魔方', en: 'Regular cube' })}</span>
-            <strong>{value(snapshot?.normal)}</strong>
+          <div className="timer-presence-title">{title}</div>
+          <div className="timer-presence-summary">
+            <span><Timer size={14} />{tr({ zh: '普通', en: 'Regular' })} <strong>{value(snapshot?.normal)}</strong></span>
+            <span className="is-smart"><Bluetooth size={14} />{tr({ zh: '智能', en: 'Smart' })} <strong>{value(snapshot?.smart)}</strong></span>
           </div>
-          <div className="timer-presence-row is-smart">
-            <Bluetooth size={14} />
-            <span>{tr({ zh: '智能魔方', en: 'Smart cube' })}</span>
-            <strong>{value(snapshot?.smart)}</strong>
-          </div>
+          {snapshot?.sessions.length ? (
+            <div className="timer-presence-sessions">
+              {snapshot.sessions.map(session => (
+                <section className="timer-presence-session" key={session.sessionId}>
+                  <div className="timer-presence-session-head">
+                    <UserRound size={14} />
+                    <strong>{session.account?.name || tr({ zh: '未登录', en: 'Signed out' })}</strong>
+                    <span>{modeLabel(session.mode)}</span>
+                  </div>
+                  {session.account && (
+                    <div className="timer-presence-meta">
+                      {session.account.wcaId || session.account.ownerId}
+                    </div>
+                  )}
+                  <div className="timer-presence-meta"><Globe2 size={13} />{session.ip}</div>
+                  {session.devices.map(device => (
+                    <div className="timer-presence-meta" key={device.id || device.name}>
+                      <Bluetooth size={13} />
+                      <span>{device.name}</span>
+                      {device.id && <code>{device.id}</code>}
+                    </div>
+                  ))}
+                  {session.results.map((result, index) => (
+                    <div className="timer-presence-result" key={`${result.label || ''}-${result.event}-${result.at || index}`}>
+                      <span>{result.label ? `${result.label} ` : ''}{eventDisplayName(result.event, isZh)}</span>
+                      <strong>{resultText(result)}</strong>
+                    </div>
+                  ))}
+                </section>
+              ))}
+            </div>
+          ) : (
+            <div className="timer-presence-empty">{tr({ zh: '当前无人计时', en: 'No active timers' })}</div>
+          )}
         </div>
       )}
     </div>

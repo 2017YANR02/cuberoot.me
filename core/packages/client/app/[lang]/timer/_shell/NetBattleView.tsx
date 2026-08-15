@@ -36,6 +36,7 @@ import TimingSurface from './TimingSurface';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
 import BluetoothModal from '../_components/BluetoothModal';
 import { useBluetoothCube } from '../_lib/bluetooth';
+import type { TimerPresenceReport } from '../_lib/presence';
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
 import { installFakeCube } from '../_lib/bluetooth/fake_cube';
 import { useTimer, type SolveResult } from '../_shared/useTimer';
@@ -126,7 +127,7 @@ interface NetBattleViewProps {
   /** 人数下拉(TimerShell 构建),注入到顶栏 */
   playersControl?: ReactNode;
   presenceControl?: ReactNode;
-  onPresenceChange?: (mix: { normal: number; smart: number }) => void;
+  onPresenceChange?: (report: TimerPresenceReport) => void;
   /** 彻底退出联机模式(清 room + 人数回单人)。 */
   onExitNet?: () => void;
 }
@@ -683,10 +684,25 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     },
   });
   useEffect(() => {
-    onPresenceChange?.(bluetoothCube.status.connected
-      ? { normal: 0, smart: 1 }
-      : { normal: 1, smart: 0 });
-  }, [bluetoothCube.status.connected, onPresenceChange]);
+    const connected = bluetoothCube.status.connected;
+    onPresenceChange?.({
+      ...(connected ? { normal: 0, smart: 1 } : { normal: 1, smart: 0 }),
+      mode: 'net',
+      results: myResult ? [{ event: myEvent, timeMs: myResult.t, penalty: myResult.p }] : [],
+      devices: connected ? [{
+        name: bluetoothCube.status.deviceName,
+        ...(bluetoothCube.status.deviceId ? { id: bluetoothCube.status.deviceId } : {}),
+      }] : [],
+    });
+  }, [
+    bluetoothCube.status.connected,
+    bluetoothCube.status.deviceId,
+    bluetoothCube.status.deviceName,
+    myEvent,
+    myResult?.p,
+    myResult?.t,
+    onPresenceChange,
+  ]);
 
   /**
    * 自动预备:拧完打乱把魔方放稳 2 秒(或 U U' U U')= 替你按一下「预备」。
