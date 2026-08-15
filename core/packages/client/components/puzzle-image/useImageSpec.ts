@@ -51,6 +51,7 @@ export function useImageSpec(prefix: string, opts?: CodecOptions): [ImageSpec, I
     if (hasInherit) {
       o.inherit = {
         algType: 'alg', algorithm: '',
+        stageMask: '', maskAlg: '',
         faceU: '', faceR: '', faceF: '', faceD: '', faceL: '', faceB: '',
       };
     }
