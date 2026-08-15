@@ -10,6 +10,8 @@ import History from "./history";
 import tweener from "../tweener";
 import InstancedRenderer from "./instanced";
 import { FM_REGULAR, type StickeringMaskFn } from "./stickering";
+import { engineHomeSid } from './netIndex';
+import type { PictureFace } from './pictureCube';
 
 const ONE = new THREE.Vector3(1, 1, 1);
 const HALF = 32; // Cubelet.SIZE / 2
@@ -379,6 +381,44 @@ export default class Cube extends THREE.Group {
     const result: string[] = [];
     this.walkFacelets((cubelet, face) => result.push(cubelet?.getColor(face) ?? "?"));
     return result.join("");
+  }
+
+  /** Flat-net picture fragments in the same URFDLB order as serialize(). Each id is
+   * the HOME image tile carried by that physical sticker; rotation keeps artwork
+   * upright relative to the piece after face turns. */
+  serializePictureFacelets(): Array<{ face: PictureFace; index: number; rotation: 0 | 90 | 180 | 270 }> {
+    const result: Array<{ face: PictureFace; index: number; rotation: 0 | 90 | 180 | 270 }> = [];
+    const rightFor = (face: FACE): THREE.Vector3 => {
+      switch (face) {
+        case FACE.B: return new THREE.Vector3(-1, 0, 0);
+        case FACE.R: return new THREE.Vector3(0, 0, -1);
+        case FACE.L: return new THREE.Vector3(0, 0, 1);
+        default: return new THREE.Vector3(1, 0, 0);
+      }
+    };
+    const upFor = (face: FACE): THREE.Vector3 => {
+      switch (face) {
+        case FACE.U: return new THREE.Vector3(0, 0, -1);
+        case FACE.D: return new THREE.Vector3(0, 0, 1);
+        default: return new THREE.Vector3(0, 1, 0);
+      }
+    };
+    this.walkFacelets((cubelet, worldFace) => {
+      if (!cubelet) {
+        result.push({ face: 'U', index: 0, rotation: 0 });
+        return;
+      }
+      const homeFace = cubelet.getFace(worldFace);
+      const sid = engineHomeSid(cubelet.initial, homeFace, this.order);
+      const transformedRight = rightFor(homeFace).applyQuaternion(cubelet.quaternion);
+      const displayRight = rightFor(worldFace);
+      const displayUp = upFor(worldFace);
+      const x = Math.round(transformedRight.dot(displayRight));
+      const y = Math.round(transformedRight.dot(displayUp));
+      const rotation: 0 | 90 | 180 | 270 = x > 0 ? 0 : x < 0 ? 180 : y > 0 ? 270 : 90;
+      result.push({ face: sid[0] as PictureFace, index: Number(sid.slice(1)), rotation });
+    });
+    return result;
   }
 
   /**

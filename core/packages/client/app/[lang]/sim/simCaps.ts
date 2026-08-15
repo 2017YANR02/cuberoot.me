@@ -138,6 +138,8 @@ export interface ControlSupport {
   coreFinish: boolean;
   faceColors: boolean;
   logo: boolean;
+  /** 六面图案贴纸:仅标准数字阶 NxN,不含镜面。 */
+  pictureCube: boolean;
   carve: boolean;
   /** 隔离(只看某类块):inverse of carve. True iff the engine is active and the puzzle
    *  declares isolate kinds. The kinds themselves are in ResolvedCaps.isolate. */
@@ -231,6 +233,7 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
       // 引擎,走同一条 cube.setLogo() 路径)。偶数阶(含二阶镜面)没有 U 面正中心块,
       // setLogo 本就是空操作 → 直接灰掉。其它 engine-body 拼图无中心贴片不支持。
       logo: hasCentrePiece,
+      pictureCube: isNxN,
       carve: carve !== null,
       isolate: isolate.length > 0,
       // 手指(指法演示): rig 的握持/手势按 order-3 标定,且要求 NxN 引擎的

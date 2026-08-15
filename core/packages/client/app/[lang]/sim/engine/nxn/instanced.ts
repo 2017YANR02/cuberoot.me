@@ -27,6 +27,17 @@ import {
 import { injectStickerOutline, setStickerOutlineScale, type OutlineUniform } from "./stickerOutline";
 import { engineHomeSid } from "./netIndex";
 import { setPanelFanGap } from "./panelFan";
+import {
+  buildPictureAtlas,
+  buildPictureSlotAttributes,
+  countPictureFaces,
+  emptyPictureFaces,
+  injectPictureCube,
+  pictureFacesKey,
+  type PictureFaces,
+  type PictureSlotAttributes,
+  type PictureUniformController,
+} from './pictureCube';
 
 type CubeFaceLabel = "U" | "D" | "L" | "R" | "F" | "B";
 
@@ -144,6 +155,14 @@ export default class InstancedRenderer extends THREE.Group {
   /** 描边(FM_OUTLINE)的 per-instance 开关,static / moving 共享一份(同槽序)。 */
   private outlineFlags!: THREE.InstancedBufferAttribute;
   private outlineColor!: OutlineUniform;
+  /** 图案魔方:每个贴纸槽绑定 HOME 图片切片。static / moving 共用属性,所以转层时
+   *  图片碎片跟真实块走。纹理只是一张 3×2 atlas,不增加 mesh / draw call。 */
+  private pictureAttrs!: PictureSlotAttributes;
+  private pictureUniforms!: PictureUniformController;
+  private pictureFaces: PictureFaces = emptyPictureFaces();
+  private pictureKey = '';
+  private pictureAtlas: THREE.Texture | null = null;
+  private pictureLoadToken = 0;
   /** 贴纸几何的自用克隆:`aOutline` 是 per-instance 属性,而 Cubelet._STICKER / _ARROW
    *  是全站共享的静态几何,直接挂上去会串到同页别的 renderer(/sim 与嵌入板同时活着)。 */
   private stickerGeos = new Map<THREE.BufferGeometry, THREE.BufferGeometry>();
@@ -298,7 +317,9 @@ export default class InstancedRenderer extends THREE.Group {
     this.stickerMaterial = isSuperOrderForSticker ? new THREE.MeshBasicMaterial() : new THREE.MeshLambertMaterial();
     this.movingStickerMaterial = isSuperOrderForSticker ? new THREE.MeshBasicMaterial() : new THREE.MeshLambertMaterial();
     this.outlineColor = injectStickerOutline([this.stickerMaterial, this.movingStickerMaterial]);
+    this.pictureUniforms = injectPictureCube([this.stickerMaterial, this.movingStickerMaterial], this.cube.order);
     this.outlineFlags = new THREE.InstancedBufferAttribute(new Float32Array(this.stickerSlots.length), 1);
+    this.pictureAttrs = buildPictureSlotAttributes(this.stickerSlots, this.cube.order);
     this.staticSticker = this.makeStickerMesh(this.stickerSlots.length, false);
     this.movingSticker = this.makeStickerMesh(this.stickerSlots.length, true);
     this.movingSticker.count = 0;
@@ -455,6 +476,9 @@ export default class InstancedRenderer extends THREE.Group {
       geo = base.clone();
       if (this._stickerScale !== 1) geo.scale(this._stickerScale, this._stickerScale, 1);
       geo.setAttribute('aOutline', this.outlineFlags);
+      geo.setAttribute('aPictureCenter', this.pictureAttrs.centers);
+      geo.setAttribute('aPictureDirection', this.pictureAttrs.directions);
+      geo.setAttribute('aPictureOn', this.pictureAttrs.enabled);
       this.stickerGeos.set(base, geo);
     }
     return geo;
@@ -504,6 +528,7 @@ export default class InstancedRenderer extends THREE.Group {
     if (!Number.isFinite(k) || k <= 0 || Math.abs(k - this._stickerScale) < 1e-6) return;
     this._stickerScale = k;
     setStickerOutlineScale(k);
+    this.pictureUniforms.updateScale(k);
     setRawStickerScale(k);
     setPanelFanGap(gap);
     for (const g of this.stickerGeos.values()) g.dispose();
@@ -1203,7 +1228,54 @@ export default class InstancedRenderer extends THREE.Group {
       flags[i] = this.stickeringCodes?.[i] === FM_OUTLINE ? 1 : 0;
     }
     this.outlineFlags.needsUpdate = true;
+    this.refreshPictureFlags();
     this.refreshStickerColors();
+  }
+
+  private refreshPictureFlags(): void {
+    const flags = this.pictureAttrs.enabled.array as Float32Array;
+    for (let i = 0; i < flags.length; i++) {
+      const code = this.stickeringCodes?.[i] ?? 0;
+      // 固定遮罩色 / dim 应保持它们的教学语义;full 与 outline 才显示原图。
+      flags[i] = this.pictureFaces[this.pictureAttrs.faces[i]] && (code === 0 || code === FM_OUTLINE) ? 1 : 0;
+    }
+    this.pictureAttrs.enabled.needsUpdate = true;
+    this.cube.dirty = true;
+  }
+
+  /** Apply six HOME-face pictures. Async decode is race-safe: rapid replace / clear
+   * cannot let an older atlas overwrite the latest selection. */
+  setPictureFaces(faces: PictureFaces | null, onReady?: () => void): void {
+    const next = faces ? { ...faces } : emptyPictureFaces();
+    const key = pictureFacesKey(next);
+    if (key === this.pictureKey) return;
+    this.pictureKey = key;
+    this.pictureFaces = next;
+    const token = ++this.pictureLoadToken;
+    // Hide the previous picture while its replacement is decoding; never show a
+    // half-old, half-new cube.
+    (this.pictureAttrs.enabled.array as Float32Array).fill(0);
+    this.pictureAttrs.enabled.needsUpdate = true;
+    this.cube.dirty = true;
+    if (countPictureFaces(next) === 0) {
+      this.pictureAtlas?.dispose();
+      this.pictureAtlas = null;
+      onReady?.();
+      return;
+    }
+    void buildPictureAtlas(next).then((atlas) => {
+      if (token !== this.pictureLoadToken) {
+        atlas.dispose();
+        return;
+      }
+      this.pictureAtlas?.dispose();
+      this.pictureAtlas = atlas;
+      this.pictureUniforms.atlas.value = atlas;
+      this.refreshPictureFlags();
+      onReady?.();
+    }).catch((error) => {
+      if (token === this.pictureLoadToken) console.warn('[sim] picture cube atlas failed', error);
+    });
   }
 
   /** 描边色(FM_OUTLINE 那一档)。默认 define.COLORS.High。 */
@@ -1344,6 +1416,8 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingHintMaterial.dispose();
     this._rawFrameGeo?.dispose();
     this._rawInnerGeo?.dispose();
+    this.pictureLoadToken++;
+    this.pictureUniforms.atlas.value.dispose();
     // 贴纸几何是自用克隆(挂 aOutline),共享的那份不能碰,这份必须自己收。
     // hint 克隆只在改过黑边时才有,同理。
     for (const geo of this.stickerGeos.values()) geo.dispose();
