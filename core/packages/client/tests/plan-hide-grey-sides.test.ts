@@ -18,6 +18,7 @@ import { DEFAULTS } from '@/lib/puzzle-image/defaults';
 import type { ImageSpec } from '@/lib/puzzle-image/types';
 import { exportSimPlanSvg } from '@/app/[lang]/sim/sim_plan_export';
 import { NET_FACE_ORDER } from '@/lib/cube-net-svg';
+import { FM_IGNORED } from '@/app/[lang]/sim/engine/nxn/stickering';
 
 /** OLL 1(点组),侧面 8 黄 4 灰 —— 灰格删得掉又不会删光,正好当判据。 */
 const OLL_DOT = "f U R U' R' f' F U R U' R' F'";
@@ -285,15 +286,19 @@ describe('plan view — hide grey sides', () => {
       expect(withFill(beforeRim(hidden), '#444')).toHaveLength(1); // 且它在 U 面那一段里
     });
 
-    it('spec 自带的 stage 遮罩灰走 maskColor 那条路,同样能删', () => {
+    it('引擎当前局面的 stage 遮罩灰同样能删', () => {
       const solved = NET_FACE_ORDER.map((f) => f.repeat(N * N)).join('');
+      const stage = new Uint8Array(6 * N * N);
+      for (const fi of [1, 2, 4, 5]) {
+        for (let i = 0; i < N; i++) stage[fi * N * N + i] = FM_IGNORED;
+      }
       const staged = (hide: boolean) => exportSimPlanSvg({
         ...base, serialized: solved,
-        spec: spec({ cubeView: 'plan', stageMask: 'oll', hideGreySides: hide }),
+        stickering: stage,
+        spec: spec({ cubeView: 'plan', hideGreySides: hide }),
       });
-      // OLL stage:U 面全彩,其余全 #404040 → 侧环 12 格全灰。
-      expect(withFill(staged(false), '#404040')).toHaveLength(12);
-      expect(withFill(staged(true), '#404040')).toHaveLength(0);
+      expect(withFill(staged(false), '#666666')).toHaveLength(12);
+      expect(withFill(staged(true), '#666666')).toHaveLength(0);
       expect(beforeRim(staged(true))).toBe(beforeRim(staged(false)));
     });
   });
