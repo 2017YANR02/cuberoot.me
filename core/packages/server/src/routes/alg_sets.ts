@@ -14,7 +14,8 @@ import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 import { syncMirrorAndLog, syncMirrorForCase } from '../utils/alg_mirror.js';
 import { is3x3TopLayerSet } from '@cuberoot/shared';
-import { startsWithYRotation } from '@cuberoot/shared/alg-notation';
+import { canonicalize3x3WideMoves, startsWithYRotation } from '@cuberoot/shared/alg-notation';
+import { validateRequiredAlgCaseSetup } from '../utils/alg_case_setup.js';
 
 export const algSetsRoutes = new Hono();
 
@@ -45,20 +46,56 @@ interface AlgCaseRow {
   updated_at: string | Date;
 }
 
+interface AlgCaseInput {
+  caseName?: string;
+  subgroup?: string;
+  setup?: string;
+  standard?: string | null;
+  sticker?: unknown;
+  algs?: unknown;
+  oriNames?: unknown;
+  trainerKey?: string | null;
+}
+
+const FORMULA_JSON_FIELDS = new Set(['alg', 'algHtml', 'setup', 'scramble']);
+
+function canonicalize3x3FormulaJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize3x3FormulaJson);
+  if (!value || typeof value !== 'object') return value;
+  const normalized: Record<string, unknown> = {};
+  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    normalized[key] = FORMULA_JSON_FIELDS.has(key) && typeof child === 'string'
+      ? canonicalize3x3WideMoves(child)
+      : canonicalize3x3FormulaJson(child);
+  }
+  return normalized;
+}
+
+function canonicalize3x3CaseInput(puzzle: string, body: AlgCaseInput): AlgCaseInput {
+  if (puzzle !== '3x3') return body;
+  return {
+    ...body,
+    ...(typeof body.setup === 'string' ? { setup: canonicalize3x3WideMoves(body.setup) } : {}),
+    ...(typeof body.standard === 'string' ? { standard: canonicalize3x3WideMoves(body.standard) } : {}),
+    algs: canonicalize3x3FormulaJson(body.algs),
+  };
+}
+
 function caseRowToJson(c: AlgCaseRow): Record<string, unknown> {
+  const is3x3 = c.puzzle === '3x3';
   const out: Record<string, unknown> = {
     id: Number(c.id),
     name: c.name,
     subgroup: c.subgroup,
-    setup: c.setup,
+    setup: is3x3 ? canonicalize3x3WideMoves(c.setup) : c.setup,
     sticker: c.sticker,
-    algs: c.algs,
+    algs: is3x3 ? canonicalize3x3FormulaJson(c.algs) : c.algs,
   };
   if (c.number !== null) out.number = c.number;
-  if (c.standard !== null) out.standard = c.standard;
+  if (c.standard !== null) out.standard = is3x3 ? canonicalize3x3WideMoves(c.standard) : c.standard;
   if (c.ori_names) out.oriNames = c.ori_names;
   if (c.trainer_key) out.trainerKey = c.trainer_key;
-  if (c.meta) out.meta = c.meta;
+  if (c.meta) out.meta = is3x3 ? canonicalize3x3FormulaJson(c.meta) : c.meta;
   if (c.mirror_case_id != null) out.mirrorCaseId = Number(c.mirror_case_id);
   return out;
 }
@@ -75,10 +112,7 @@ function containsLeadingY(value: unknown): boolean {
     || (typeof entry.algHtml === 'string' && startsWithYRotation(entry.algHtml));
 }
 
-function validateCaseInput(puzzle: string, setSlug: string, body: {
-  caseName?: string; subgroup?: string; setup?: string; standard?: string | null;
-  sticker?: unknown; algs?: unknown; oriNames?: unknown; trainerKey?: string | null;
-}): { error?: string } {
+async function validateCaseInput(puzzle: string, setSlug: string, body: AlgCaseInput): Promise<{ error?: string }> {
   if (typeof body.caseName !== 'string' || !body.caseName.trim()) return { error: 'caseName required' };
   if (body.caseName.length > CASE_NAME_MAX) return { error: 'caseName too long' };
   if (body.subgroup !== undefined && typeof body.subgroup !== 'string') return { error: 'subgroup must be string' };
@@ -89,6 +123,8 @@ function validateCaseInput(puzzle: string, setSlug: string, body: {
   if (body.standard && body.standard.length > TEXT_MAX) return { error: 'standard too long' };
   if (!body.sticker || typeof body.sticker !== 'object') return { error: 'sticker required (object)' };
   if (!Array.isArray(body.algs)) return { error: 'algs must be array' };
+  const setupError = await validateRequiredAlgCaseSetup(puzzle, setSlug, body.setup);
+  if (setupError) return { error: setupError };
   if (is3x3TopLayerSet(puzzle, setSlug)
     && ((typeof body.standard === 'string' && startsWithYRotation(body.standard)) || containsLeadingY(body.algs))) {
     return { error: 'leading_y_rotation' };
@@ -154,11 +190,8 @@ algSetsRoutes.post('/alg/sets/:puzzle/:set/cases', async (c) => {
 
   const puzzle = c.req.param('puzzle');
   const set = c.req.param('set');
-  const body = await c.req.json<{
-    caseName?: string; subgroup?: string; setup?: string; standard?: string | null;
-    sticker?: unknown; algs?: unknown; oriNames?: unknown; trainerKey?: string | null;
-  }>();
-  const v = validateCaseInput(puzzle, set, body);
+  const body = canonicalize3x3CaseInput(puzzle, await c.req.json<AlgCaseInput>());
+  const v = await validateCaseInput(puzzle, set, body);
   if (v.error) return c.json({ error: v.error }, 400);
 
   const sets = await query<{ count: string }>(
@@ -207,11 +240,8 @@ algSetsRoutes.put('/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
 
-  const body = await c.req.json<{
-    caseName?: string; subgroup?: string; setup?: string; standard?: string | null;
-    sticker?: unknown; algs?: unknown; oriNames?: unknown; trainerKey?: string | null;
-  }>();
-  const v = validateCaseInput(puzzle, set, body);
+  const body = canonicalize3x3CaseInput(puzzle, await c.req.json<AlgCaseInput>());
+  const v = await validateCaseInput(puzzle, set, body);
   if (v.error) return c.json({ error: v.error }, 400);
 
   // 见 POST 注释:对象直接传给 ?::jsonb,driver 序列化一次就够了

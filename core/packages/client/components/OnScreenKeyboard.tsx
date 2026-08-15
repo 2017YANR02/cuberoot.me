@@ -45,29 +45,24 @@ export default function OnScreenKeyboard({ buttons, onAnswer, className }: OnScr
     [onAnswer]
   );
 
-  const getButtonStyle = (key: string): React.CSSProperties => {
-    if (feedback.key === key && feedback.type === 'correct') {
-      return { backgroundColor: '#198754', color: '#fff', borderColor: '#198754' };
-    }
-    if (feedback.key === key && feedback.type === 'wrong') {
-      return { backgroundColor: '#dc3545', color: '#fff', borderColor: '#dc3545' };
-    }
-    return {};
-  };
-
   return (
     <div className={`on-screen-keyboard${className ? ` ${className}` : ''}`}>
-      {buttons.map(({ value, label, sub }) => (
-        <button
-          key={value}
-          className="kbd-btn"
-          style={getButtonStyle(value)}
-          onClick={() => handleClick(value)}
-        >
-          {label}
-          {sub && <span className="kbd-btn-sub">{sub}</span>}
-        </button>
-      ))}
+      {buttons.map(({ value, label, sub }) => {
+        const feedbackClass = feedback.key === value && feedback.type
+          ? ` kbd-btn--${feedback.type}`
+          : '';
+        return (
+          <button
+            key={value}
+            type="button"
+            className={`kbd-btn${feedbackClass}`}
+            onClick={() => handleClick(value)}
+          >
+            {label}
+            {sub && <span className="kbd-btn-sub">{sub}</span>}
+          </button>
+        );
+      })}
     </div>
   );
 }

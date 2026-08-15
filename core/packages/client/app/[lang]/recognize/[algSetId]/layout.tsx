@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import { metadataFromEntry } from '@/lib/page-meta';
 
-// /recognize/pll already has its own entry in lib/page-meta (it predates this
-// route being dynamic and is listed in the sitemap), so this only has to cover
-// every prerendered set uniformly.
+// Dynamic recognition sets derive metadata from the set id so every
+// prerendered trainer gets a specific title and description.
 const SETS: Record<string, { zh: string; en: string; caseCount: number }> = {
   pll: { zh: 'PLL', en: 'PLL', caseCount: 21 },
   oll: { zh: 'OLL', en: 'OLL', caseCount: 57 },
@@ -11,7 +10,6 @@ const SETS: Record<string, { zh: string; en: string; caseCount: number }> = {
   ell: { zh: 'ELL', en: 'ELL', caseCount: 25 },
   zbll: { zh: 'ZBLL', en: 'ZBLL', caseCount: 472 },
   '1lll': { zh: '1LLL', en: '1LLL', caseCount: 3397 },
-  'sq1-shape': { zh: 'Square-1 形状命名', en: 'Square-1 Shape Names', caseCount: 29 },
 };
 
 export async function generateMetadata({ params }: {

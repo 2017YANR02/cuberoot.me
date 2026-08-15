@@ -55,6 +55,16 @@ const SLICES = 'MSEmse';
 const WIDE_LOWER = 'rludfb';
 
 /**
+ * 三阶宽层统一写成小写面字母:`Rw` → `r`,`Fw2'` → `f2'`。
+ *
+ * 这里只改记号拼写,不负责判断阶数；调用方必须已经确认公式属于 3x3。
+ * 直接替换 family 片段可同时覆盖纯文本、带层前缀和 algHtml 中的公式。
+ */
+export function canonicalize3x3WideMoves(alg: string): string {
+  return alg.replace(/([RLUDFB])w/g, (_, face: string) => face.toLowerCase());
+}
+
+/**
  * 层前缀 + 面字母 + 可选 w + 可选量 + 可选撇。**全站唯一的 move 文法。**
  *
  * 导出是为了让别的解析器(如 alg-build 的 sheet_notation)复用而不是各造一份 ——

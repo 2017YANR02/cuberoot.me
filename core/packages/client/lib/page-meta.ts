@@ -419,6 +419,27 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   },
   'scramble/sub-solver': { title: { zh: '子群求解器', en: 'Subsolver' } },
   'scramble/symmetry': { title: { zh: '对称型', en: 'Symmetry' } },
+  'alg/sq1/inspect': { title: { zh: 'SQ1 打乱检查', en: 'Square-1 Scramble Inspector' } },
+  'alg/sq1/visualize': { title: { zh: 'SQ1 形状过程', en: 'Square-1 Shape Visualizer' } },
+  'alg/sq1/import': { title: { zh: 'SQ1 复形公式导入', en: 'Square-1 Algorithm Importer' } },
+  'alg/sq1/count': { title: { zh: 'SQ1 奇偶数位', en: 'Square-1 Parity Count Positions' } },
+  'alg/sq1/parity-game': { title: { zh: 'SQ1 奇偶游戏', en: 'Square-1 Parity Game' } },
+  'alg/sq1/train': { title: { zh: 'SQ1 组合练习', en: 'Square-1 Shape Pair Drill' } },
+  'alg/sq1/algorithm-trainer': { title: { zh: 'SQ1 公式训练', en: 'Square-1 Algorithm Trainer' } },
+  'sq1/cs/name': {
+    title: { zh: 'Square-1 形状名称', en: 'Square-1 Shape Names' },
+    description: {
+      zh: '认识 Square-1 的 29 种单层形状，并通过单层图形练习形状命名。',
+      en: 'Learn the 29 single-layer Square-1 shapes, then practise naming them from their silhouettes.',
+    },
+  },
+  'sq1/cs/name/train': {
+    title: { zh: 'Square-1 形状命名训练', en: 'Square-1 Shape Naming Trainer' },
+    description: {
+      zh: '计时练习 Square-1 的 29 种单层形状名称，并统计每种形状的反应时间。',
+      en: 'A timed drill for naming all 29 single-layer Square-1 shapes, with per-shape reaction times.',
+    },
+  },
   'sim': {
     title: { zh: '魔方模拟器', en: 'Puzzle Simulator' },
     description: {

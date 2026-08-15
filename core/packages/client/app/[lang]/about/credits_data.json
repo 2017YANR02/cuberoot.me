@@ -21,6 +21,13 @@
     "long_en": "Will Callan's practical 2×2 solution finder provides the bidirectional face/layer search design, method filters, and measured three-move timing table. Its authorized Best 2x2 Algs spreadsheet is normalized and merged into CubeRoot's algorithm database; the port replaces the upstream sticker mapper and twisty-player with CubeRoot's existing pocket-state solver and /sim engine."
   },
   {
+    "name": "mikavilpas/squanmate",
+    "url": "https://github.com/mikavilpas/squanmate",
+    "zh": "Square-1 形状训练、奇偶分析、数位与学习工具的功能和算法参考；移植页面复用本站 SQ1 状态、公式库、SVG 与 /sim 绘图引擎（EPL-1.0）",
+    "en": "Feature and algorithm reference for the Square-1 shape trainer, parity analysis, count positions, and learning tools; the port reuses CubeRoot's SQ1 state, algorithm library, SVG, and /sim drawing engines (EPL-1.0)",
+    "long_en": "Squanmate by Mika Vilpas is the upstream functional reference for CubeRoot's Square-1 workspace: cubeshape and algorithm training, the 29 canonical single-layer shape names, scramble inspection, algorithm shape visualization and import, parity count positions, parity-sequence practice, and trainer controls. CubeRoot reuses its own notation/state implementation, algorithm database, SVG renderer, and /sim drawing system instead of carrying over Squanmate's ClojureScript UI stack."
+  },
+  {
     "name": "jonatanklosko/wca_statistics",
     "url": "https://github.com/jonatanklosko/wca_statistics",
     "zh": "WCA 统计管道原型(本站为 TS 重写版)",

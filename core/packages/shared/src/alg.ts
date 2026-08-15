@@ -9,6 +9,7 @@
 
 import { invert as invertSkewb } from './skewb_notation';
 import type { MirrorGen } from './alg_mirror';
+import { canonicalize3x3WideMoves } from './alg_notation';
 
 /** 公式标签。转写自站长 1LLL 表里的 `[oh]` / `[ft]` / `[fmc]` / `[big]` / `[key]`。 */
 export type AlgTag = 'oh' | 'ft' | 'fmc' | 'big' | 'key';
@@ -142,6 +143,38 @@ export interface AlgFile {
   cases: AlgCase[];
 }
 
+/**
+ * 三阶公式的展示边界兜底。数据库与 API 写入会做同一规范化，这里再处理一次，
+ * 避免旧缓存或外部导入数据把 `Rw` / `Fw` 带回任一公式库界面。
+ */
+export function canonicalize3x3AlgFile(file: AlgFile): AlgFile {
+  if (file.puzzle !== '3x3') return file;
+  for (const c of file.cases) {
+    c.setup = canonicalize3x3WideMoves(c.setup);
+    if (c.standard !== undefined) c.standard = canonicalize3x3WideMoves(c.standard);
+    for (const entry of c.algs.flat()) {
+      entry.alg = canonicalize3x3WideMoves(entry.alg);
+      if (entry.setup !== undefined) entry.setup = canonicalize3x3WideMoves(entry.setup);
+      if (entry.algHtml !== undefined) entry.algHtml = canonicalize3x3WideMoves(entry.algHtml);
+    }
+    if (c.meta) {
+      if (c.meta.scramble !== undefined) c.meta.scramble = canonicalize3x3WideMoves(c.meta.scramble);
+      if (c.meta.optimal) {
+        for (const solution of Object.values(c.meta.optimal)) {
+          if (solution?.scramble !== undefined) {
+            solution.scramble = canonicalize3x3WideMoves(solution.scramble);
+          }
+        }
+      }
+      if (c.meta.coep?.alg !== undefined) c.meta.coep.alg = canonicalize3x3WideMoves(c.meta.coep.alg);
+      if (c.meta.coep?.scramble !== undefined) {
+        c.meta.coep.scramble = canonicalize3x3WideMoves(c.meta.coep.scramble);
+      }
+    }
+  }
+  return file;
+}
+
 export type AlgPuzzle = '2x2' | '3x3' | '4x4' | '5x5' | 'sq1' | 'megaminx' | 'pyraminx' | 'skewb' | 'fto';
 
 // 两张镜像 set 名单的定义在 `./alg_mirror`(那儿是镜像域的家),这里转出去让 barrel 保持原样。
@@ -192,6 +225,14 @@ export function is3x3TopLayerSet(puzzle: string, setSlug: string): boolean {
     && ALG_3X3_TOP_LAYER_SET[setSlug as Alg3x3Set];
 }
 
+/** These case families need an explicit legal state; five-face sticker projections are insufficient. */
+export const ALG_3X3_SETUP_REQUIRED_SETS = ['f2l', 'adv-f2l'] as const;
+
+export function requires3x3AlgCaseSetup(puzzle: string, setSlug: string): boolean {
+  return puzzle === '3x3'
+    && (ALG_3X3_SETUP_REQUIRED_SETS as readonly string[]).includes(setSlug);
+}
+
 /** Catalogue of available sets per puzzle (display name + slug). Drives the index pages. */
 export interface AlgSetMeta {
   /** URL slug (matches data filename: alg_<puzzle>_<slug>.json) */
@@ -232,7 +273,7 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
   ],
   '3x3': [
     { slug: 'f2l',       scd: 'F2L',         en: 'F2L',                  zh: 'F2L' },
-    { slug: 'adv-f2l',   scd: 'AdvancedF2L', en: 'Advanced F2L',         zh: 'F2L 进阶' },
+    { slug: 'adv-f2l',   scd: 'AdvancedF2L', en: 'Advanced F2L',         zh: '非标F2L' },
     {
       slug: 'psf2l', scd: '', en: 'Pseudoslotting', zh: '伪槽',
       intro: {
@@ -411,7 +452,7 @@ export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: b
   if (!res.ok) {
     throw new Error(`Failed to load alg ${puzzle}/${set}: HTTP ${res.status}`);
   }
-  const file = (await res.json()) as AlgFile;
+  const file = canonicalize3x3AlgFile((await res.json()) as AlgFile);
   // Skewb algs are full solves with no AUF, so a case's scramble is exactly the
   // inverse of its (first) alg. The scraped `setup` strings are buggy WCA-ified
   // inverses (some even contain cancellations like `R' R`), which then feed the

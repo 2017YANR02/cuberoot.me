@@ -4,7 +4,7 @@ import { cube3x3x3 } from 'cubing/puzzles';
 import {
   tokenizeMoves, flattenAlg, expandGroups, cubeOnly, stripGripMarks, deleteAuf,
   stripUpstreamMarks, invertMoveString, toMoveString,
-  stm, sqtm, htm, qtm, etm, gen,
+  canonicalize3x3WideMoves, stm, sqtm, htm, qtm, etm, gen,
 } from '@cuberoot/shared/alg-notation';
 import { cleanForPlayer, countMovesExpanded } from '@/lib/recon-alg-utils';
 
@@ -12,6 +12,18 @@ const kpuzzle = await cube3x3x3.kpuzzle();
 const solved = kpuzzle.defaultPattern();
 const sameState = (a: string, b: string) =>
   solved.applyAlg(new Alg(a)).isIdentical(solved.applyAlg(new Alg(b)));
+
+describe('canonicalize3x3WideMoves', () => {
+  it('rewrites every uppercase wide family and keeps modifiers and markup', () => {
+    expect(canonicalize3x3WideMoves("Rw Lw2 Uw' Dw3 Fw2' Bw")).toBe("r l2 u' d3 f2' b");
+    expect(canonicalize3x3WideMoves("<u>Fw2'</u> 3Rw U r")).toBe("<u>f2'</u> 3r U r");
+  });
+
+  it('preserves the exact 3x3 state', () => {
+    const original = "Rw Lw2 Uw' Dw Fw2' Bw";
+    expect(sameState(original, canonicalize3x3WideMoves(original))).toBe(true);
+  });
+});
 
 describe('tokenizeMoves', () => {
   it('reads every shape the sheet and the site actually write', () => {

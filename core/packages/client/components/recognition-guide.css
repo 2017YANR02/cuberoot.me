@@ -5,6 +5,14 @@
   color: var(--foreground);
 }
 
+.recognition-guide-top {
+  margin-bottom: 22px;
+}
+
+.recognition-guide-top .page-back-row {
+  margin-bottom: 10px;
+}
+
 .recognition-guide-hero {
   display: grid;
   gap: 30px;

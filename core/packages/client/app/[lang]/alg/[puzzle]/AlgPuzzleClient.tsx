@@ -32,6 +32,7 @@ import { TOTAL_CASES as LSLL_TOTAL, categoryCardFacelets } from '@/lib/lsll/mode
 import '../alg.css';
 import { tr } from '@/i18n/tr';
 import { parseAsBoolean, useQueryState } from 'nuqs';
+import Sq1ToolNav from '@/components/Sq1ToolNav';
 
 /** Old single-segment 3x3 set slugs we used to live at /alg/<slug>. Redirect to /alg/3x3/<slug>. */
 const LEGACY_3X3_SLUGS = new Set(['f2l', 'adv-f2l', 'oll', 'pll']);
@@ -323,6 +324,8 @@ export default function AlgPuzzleClient() {
           label={tr({ zh: '校验全库', en: 'Validate all' })}
         />
       </div>
+
+      {puzzle === 'sq1' && <Sq1ToolNav />}
 
       {puzzle === 'fto' && (
         <div className="alg-puzzle-method-intro">

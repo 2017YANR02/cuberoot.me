@@ -413,6 +413,8 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 132, slug: 'alg_top_layer_no_leading_y', desc: { zh: '修正顶层公式开头的 y 转体，并由数据库阻止标准公式与用户投稿再次写入此类数据。', en: 'Rewrite leading y rotations in last-layer algorithms and prevent canonical or community data from reintroducing them.' } },
   { n: 133, slug: 'teaching_trial_lesson_overrides', desc: { zh: '新增试听课中文覆盖表，管理员可在课程页直接维护标题、目标、时长、拍摄清单与完整口播。', en: 'Add Chinese overrides for trial lessons so administrators can edit titles, goals, durations, shot lists, and full narration directly on the course page.' } },
   { n: 134, slug: 'teaching_trial_english_sync', desc: { zh: '为试听课覆盖表增加英文内容与待同步状态，支持 AI 在中文修改后按需翻译回写。', en: 'Add English content and a stale flag to trial lesson overrides so AI can translate and write back Chinese edits on demand.' } },
+  { n: 135, slug: 'alg_3x3_lowercase_wide', desc: { zh: '把三阶公式的 Rw 等宽层记号统一为 r 等小写写法，并在数据库写入时自动规范化。', en: 'Normalize 3×3 wide moves such as Rw to lowercase notation such as r, including automatic normalization on database writes.' } },
+  { n: 136, slug: 'alg_f2l_setup_required', desc: { zh: '要求 F2L 与非标 F2L case 保存非空且可解析的打乱，避免缩略图退回不完整的五面投影。', en: 'Require F2L and Advanced F2L cases to store a non-empty, parseable setup so thumbnails never fall back to incomplete five-face projections.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

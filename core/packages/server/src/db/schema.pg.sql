@@ -326,6 +326,11 @@ CREATE TABLE alg_cases (
   number      SMALLINT,
   subgroup    VARCHAR(64) NOT NULL DEFAULT '',
   setup       TEXT NOT NULL DEFAULT '',
+  CONSTRAINT alg_cases_f2l_setup_required CHECK (
+    puzzle <> '3x3'
+    OR set_slug NOT IN ('f2l', 'adv-f2l')
+    OR btrim(setup) <> ''
+  ),
   standard    TEXT,                             -- 1lll/zbll 没有 standard
   sticker     JSONB NOT NULL,                   -- polymorphic { kind: 'face'|'f2l'|'raw', ... }
   algs        JSONB NOT NULL,                   -- 2D AlgEntry[][]
@@ -344,6 +349,89 @@ CREATE INDEX idx_alg_cases_set ON alg_cases(puzzle, set_slug, position);
 CREATE INDEX idx_alg_cases_mirror ON alg_cases(mirror_case_id) WHERE mirror_case_id IS NOT NULL;
 CREATE TRIGGER alg_cases_updated_at BEFORE UPDATE ON alg_cases
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
+
+-- 三阶宽层公式统一用小写字母(0135)，标准 case 与用户投稿写入时自动规范化。
+CREATE OR REPLACE FUNCTION alg_canonicalize_3x3_wide_moves(p_alg TEXT)
+RETURNS TEXT LANGUAGE sql IMMUTABLE STRICT AS $$
+  SELECT replace(
+    replace(
+      replace(
+        replace(
+          replace(
+            replace(p_alg, 'Rw', 'r'),
+            'Lw', 'l'
+          ),
+          'Uw', 'u'
+        ),
+        'Dw', 'd'
+      ),
+      'Fw', 'f'
+    ),
+    'Bw', 'b'
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION alg_canonicalize_3x3_json_wide_moves(p_node JSONB)
+RETURNS JSONB LANGUAGE plpgsql IMMUTABLE AS $$
+DECLARE
+  field_name TEXT;
+  field_value JSONB;
+  result JSONB;
+BEGIN
+  IF jsonb_typeof(p_node) = 'array' THEN
+    SELECT COALESCE(jsonb_agg(alg_canonicalize_3x3_json_wide_moves(value) ORDER BY ord), '[]'::jsonb)
+      INTO result
+      FROM jsonb_array_elements(p_node) WITH ORDINALITY AS entries(value, ord);
+    RETURN result;
+  ELSIF jsonb_typeof(p_node) = 'object' THEN
+    result := p_node;
+    FOR field_name, field_value IN SELECT key, value FROM jsonb_each(p_node) LOOP
+      IF field_name IN ('alg', 'algHtml', 'setup', 'scramble')
+         AND jsonb_typeof(field_value) = 'string' THEN
+        result := jsonb_set(
+          result,
+          ARRAY[field_name],
+          to_jsonb(alg_canonicalize_3x3_wide_moves(field_value#>>'{}'))
+        );
+      ELSIF jsonb_typeof(field_value) IN ('array', 'object') THEN
+        result := jsonb_set(result, ARRAY[field_name], alg_canonicalize_3x3_json_wide_moves(field_value));
+      END IF;
+    END LOOP;
+    RETURN result;
+  END IF;
+  RETURN p_node;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION trg_alg_case_canonicalize_3x3_wide()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.puzzle = '3x3' THEN
+    NEW.setup := alg_canonicalize_3x3_wide_moves(NEW.setup);
+    NEW.standard := alg_canonicalize_3x3_wide_moves(NEW.standard);
+    NEW.algs := alg_canonicalize_3x3_json_wide_moves(NEW.algs);
+    NEW.meta := alg_canonicalize_3x3_json_wide_moves(NEW.meta);
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION trg_alg_submission_canonicalize_3x3_wide()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.puzzle = '3x3' THEN
+    NEW.alg := alg_canonicalize_3x3_wide_moves(NEW.alg);
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER alg_cases_canonicalize_3x3_wide
+  BEFORE INSERT OR UPDATE OF puzzle, setup, standard, algs, meta ON alg_cases
+  FOR EACH ROW EXECUTE FUNCTION trg_alg_case_canonicalize_3x3_wide();
+CREATE TRIGGER alg_submissions_canonicalize_3x3_wide
+  BEFORE INSERT OR UPDATE OF puzzle, alg ON alg_submissions
+  FOR EACH ROW EXECUTE FUNCTION trg_alg_submission_canonicalize_3x3_wide();
 
 -- 顶层公式统一用 U 层转动表达观察角度(0132)。共享分类的 SQL 边界副本由测试锁定。
 CREATE OR REPLACE FUNCTION alg_is_3x3_top_layer_set(p_puzzle TEXT, p_set_slug TEXT)
