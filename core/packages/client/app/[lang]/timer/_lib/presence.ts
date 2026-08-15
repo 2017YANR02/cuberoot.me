@@ -24,6 +24,8 @@ export interface TimerPresenceDevice {
 
 export interface TimerPresenceReport extends TimerPresenceMix {
   mode: 'solo' | 'local' | 'net';
+  players: number;
+  events: string[];
   results: TimerPresenceResult[];
   devices: TimerPresenceDevice[];
 }
@@ -46,7 +48,7 @@ export interface TimerPresenceSnapshot extends TimerPresenceMix {
   sessions: TimerPresenceSession[];
 }
 
-const ENDPOINT = '/v1/timer/presence?v=2';
+const ENDPOINT = '/v1/timer/presence?v=3';
 const HEARTBEAT_MS = 10_000;
 type PresenceFetch = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -106,6 +108,8 @@ export async function sendTimerPresenceHeartbeat(
       normal: report.normal,
       smart: report.smart,
       mode: report.mode,
+      players: report.players,
+      events: report.events,
       results: [],
       devices: [],
     });

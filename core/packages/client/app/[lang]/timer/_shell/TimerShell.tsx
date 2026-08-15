@@ -56,6 +56,8 @@ export default function TimerShell() {
     normal: 1,
     smart: 0,
     mode: 'solo',
+    players: 1,
+    events: ['333'],
     results: [],
     devices: [],
   });
