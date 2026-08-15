@@ -1,3 +1,5 @@
+import { resolveCompCityIdentities } from './comp_city_identity';
+
 // 「相似比赛」分组 —— 把「明显同一系列」的比赛归为一类,供比赛详情页展示。两条独立判据:
 //   1. 名字只差一个版本号(罗马数字 I/II/III/IV…、阿拉伯数字)或只差年份 —— seriesKey。
 //   2. WCA 官方 championship_type(world / _大洲 / greater_china / 国家 ISO2)—— 权威把
@@ -20,6 +22,8 @@ export interface SeriesComp {
   /** end_date (yyyy-mm-dd)。 */
   end: string;
   city?: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 /**
@@ -123,13 +127,13 @@ export function buildCompSeriesIndex(
 // 「同城市」不能塞进 comp_series.json:几乎每场比赛都属于某个城市组(17.7k 场里 15.7k 场
 // 所在城市 ≥2 场),全塞进去索引从 232KB gzip 涨到 ~490KB —— 而详情页一进就要整取它。
 // 故按国家分片成 stats/comp_city/<ISO2>.json,客户端只拉当前比赛所在国那一份
-// (最大 US ~65KB gzip,多数国家 <10KB)。城市名用 WCA cityName 原串精确比对
-// (含州/省后缀,如 "Melbourne, Victoria"),不做归一 —— 同城比赛的 cityName 本就同源同串。
+// (最大 US ~65KB gzip,多数国家 <10KB)。城市身份统一由 comp_city_identity 解析,
+// 与纪录城市榜共用同一套别名、地理消歧和异常坐标规则。
 
 /** 同城市索引里的一场比赛:[id, name, start, end];国家由文件名隐含,城市由键隐含。 */
 export type CityComp = [id: string, name: string, start: string, end: string];
 
-/** 一个国家的同城市索引:cityName 原串 → 该城市所有比赛(新→旧);只留 ≥2 场的城市。 */
+/** 一个国家的同城市索引:规范 cityName → 该城市所有比赛(新→旧);只留 ≥2 场的城市。 */
 export type CompCityIndex = Record<string, CityComp[]>;
 
 /**
@@ -139,11 +143,16 @@ export type CompCityIndex = Record<string, CityComp[]>;
  */
 export function buildCompCityIndexes(comps: SeriesComp[]): Record<string, CompCityIndex> {
   const seen = new Set<string>();
+  const uniqueComps: SeriesComp[] = [];
+  for (const comp of comps) {
+    if (!comp.id || seen.has(comp.id)) continue;
+    seen.add(comp.id);
+    uniqueComps.push(comp);
+  }
+  const resolved = resolveCompCityIdentities(uniqueComps);
   const byCountry = new Map<string, Map<string, CityComp[]>>();
-  for (const c of comps) {
-    if (!c.id || seen.has(c.id)) continue;
-    seen.add(c.id);
-    const city = (c.city ?? '').trim();
+  for (const c of uniqueComps) {
+    const city = resolved.byCompId.get(c.id)?.label ?? '';
     const country = (c.country ?? '').trim().toUpperCase();
     if (!city || !country) continue;
     let cities = byCountry.get(country);

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { seriesKey, buildCompSeriesIndex, buildCompCityIndexes, type SeriesComp } from '@cuberoot/shared/comp-series';
+import { resolveCompCityIdentities } from '@cuberoot/shared/comp-city-identity';
 
 describe('seriesKey', () => {
   it('strips trailing year + roman-numeral edition to a shared stem', () => {
@@ -193,5 +194,80 @@ describe('buildCompCityIndexes — same-city grouping (per-country shards)', () 
       mk('BeijingOpen2024', 'Beijing Open 2024', '2024-05-01', 'CN', 'Beijing'),
     ]);
     expect(idx.CN.Beijing.map(c => c[0])).toEqual(['BeijingOpen2025', 'BeijingOpen2024']);
+  });
+});
+
+describe('competition city identity', () => {
+  const cityComp = (
+    id: string,
+    country: string,
+    city: string,
+    latitude: number | null,
+    longitude: number | null,
+    start = '2020-01-01',
+  ) => ({ id, country, city, latitude, longitude, start });
+
+  it('merges Hefei variants despite one bad coordinate and picks the most frequent label', () => {
+    const comps = [
+      cityComp('hefei-1', 'CN', 'Hefei, Anhui', 31.86, 117.28),
+      cityComp('hefei-2', 'CN', 'Hefei, Anhui', 31.84, 117.25),
+      cityComp('hefei-3', 'CN', 'Hefei', 31.85, 117.27),
+      cityComp('hefei-4', 'CN', 'Hefei, Anhui Province', 31.8513, 117.2605),
+      cityComp('hefei-bad', 'CN', 'Hefei, Anhui Province', 31.2691, 121.4658),
+    ];
+    const resolved = resolveCompCityIdentities(comps);
+    const identities = new Set(comps.map((comp) => resolved.byCompId.get(comp.id)?.key));
+    expect(identities.size).toBe(1);
+    expect(resolved.byCompId.get('hefei-bad')).toMatchObject({
+      label: 'Hefei, Anhui',
+      aliases: ['Hefei', 'Hefei, Anhui Province'],
+    });
+  });
+
+  it('keeps nearby same-name cities with conflicting regions separate', () => {
+    const comps = [
+      cityComp('salem-ma-1', 'US', 'Salem, Massachusetts', 42.52, -70.90),
+      cityComp('salem-ma-2', 'US', 'Salem, Massachusetts', 42.53, -70.89),
+      cityComp('salem-nh-1', 'US', 'Salem, New Hampshire', 42.79, -71.20),
+      cityComp('salem-nh-2', 'US', 'Salem, New Hampshire', 42.78, -71.19),
+    ];
+    const resolved = resolveCompCityIdentities(comps);
+    expect(resolved.byCompId.get('salem-ma-1')?.key).not.toBe(resolved.byCompId.get('salem-nh-1')?.key);
+  });
+
+  it('splits an identical raw name when two regions independently corroborate it', () => {
+    const comps = [
+      cityComp('pampanga-specific', 'PH', 'City of San Fernando, Pampanga', 15.05, 120.70),
+      cityComp('pampanga-bare', 'PH', 'San Fernando City', 15.06, 120.69),
+      cityComp('la-union-specific', 'PH', 'City of San Fernando, La Union', 16.60, 120.32),
+      cityComp('la-union-bare', 'PH', 'San Fernando City', 16.61, 120.31),
+    ];
+    const resolved = resolveCompCityIdentities(comps);
+    expect(resolved.byCompId.get('pampanga-bare')?.key).not.toBe(resolved.byCompId.get('la-union-bare')?.key);
+    expect(resolved.byCompId.get('pampanga-bare')?.label).toContain('Pampanga');
+    expect(resolved.byCompId.get('la-union-bare')?.label).toContain('La Union');
+  });
+
+  it('merges accents, punctuation, spacing, City suffixes, and local-script translations', () => {
+    const comps = [
+      cityComp('bogota-1', 'CO', 'Bogotá', 4.711, -74.072),
+      cityComp('bogota-2', 'CO', 'Bogota City', 4.72, -74.08),
+      cityComp('seoul-1', 'KR', 'Seoul', 37.566, 126.978),
+      cityComp('seoul-2', 'KR', '서울특별시 (Seoul)', 37.57, 126.98),
+    ];
+    const resolved = resolveCompCityIdentities(comps);
+    expect(resolved.byCompId.get('bogota-1')?.key).toBe(resolved.byCompId.get('bogota-2')?.key);
+    expect(resolved.byCompId.get('seoul-1')?.key).toBe(resolved.byCompId.get('seoul-2')?.key);
+  });
+
+  it('is independent of input order', () => {
+    const comps = [
+      cityComp('kyiv-new', 'UA', 'Kyiv', 50.45, 30.52, '2024-01-01'),
+      cityComp('kyiv-old', 'UA', 'Kiev', 50.46, 30.51, '2010-01-01'),
+    ];
+    const forward = resolveCompCityIdentities(comps);
+    const reverse = resolveCompCityIdentities([...comps].reverse());
+    expect([...forward.byCompId].map(([id, city]) => [id, city.key, city.label]))
+      .toEqual([...reverse.byCompId].map(([id, city]) => [id, city.key, city.label]));
   });
 });
