@@ -4,6 +4,7 @@
  * existing thumbnail data instead of maintaining a second shape table.
  */
 import { loadAlg, type AlgCase } from '@cuberoot/shared';
+import { displaySq1CsName } from './alg_case_display';
 import type { KeyStep, RecognizeButton, RecognizeImage, RecognizeSet } from './recognize-sets';
 
 export const SQ1_SHAPE_RECOGNIZE_ID = 'sq1-shape' as const;
@@ -20,7 +21,7 @@ export function sq1TopLayerQuestions(cases: AlgCase[]): Sq1ShapeQuestion[] {
   for (const c of cases) {
     const separator = c.name.indexOf(' / ');
     if (separator < 1) continue;
-    const name = c.name.slice(0, separator).trim();
+    const name = displaySq1CsName(c.name.slice(0, separator).trim());
     if (name && !byName.has(name)) byName.set(name, c);
   }
   return [...byName].map(([name, source]) => ({ name, source }));
