@@ -36,7 +36,7 @@ import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format'
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import type { PenaltyType } from '@/app/[lang]/timer/_battle/engine/constants';
-import { BattleCubesProvider, BattleCubeSettingsGroup, BattleCubeDot } from '@/app/[lang]/timer/_battle/BattleCubes';
+import { BattleCubesProvider, BattleCubeSettingsGroup, BattleCubeDot, useBattleCubesCtx } from '@/app/[lang]/timer/_battle/BattleCubes';
 import HistoryPanel from '@/app/[lang]/timer/_battle/HistoryPanel';
 import VsHistoryPanel from '@/app/[lang]/timer/_battle/VsHistoryPanel';
 import { MilestoneToast } from '@/app/[lang]/timer/_battle/AdvancedFeatures';
@@ -60,6 +60,21 @@ import '@/app/[lang]/timer/_battle/battle.css';
 import './shell.css';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
+import { battlePresenceMix, type TimerPresenceMix } from '@/app/[lang]/timer/_lib/presence';
+
+function BattlePresenceReporter({
+  playerCount,
+  onChange,
+}: {
+  playerCount: number;
+  onChange?: (mix: TimerPresenceMix) => void;
+}) {
+  const { isLive } = useBattleCubesCtx();
+  const cubeMode = useBattleStore(s => s.cubeMode);
+  const mix = battlePresenceMix(playerCount, cubeMode, [0, 1, 2, 3].map(isLive));
+  useEffect(() => { onChange?.(mix); }, [mix.normal, mix.smart, onChange]);
+  return null;
+}
 
 // NOTE: 根据打乱字符串长度自动计算字号缩放因子
 // ≤100 字符（2x2~3x3）= 1.0，更长则 sqrt 曲线平滑缩小，最小 0.7
@@ -677,11 +692,13 @@ function MiddleBar({
   onSettingsClick,
   onHistoryClick,
   playersControl,
+  presenceControl,
   playerCount,
 }: {
   onSettingsClick: () => void;
   onHistoryClick?: () => void;
   playersControl?: React.ReactNode;
+  presenceControl?: React.ReactNode;
   playerCount: number;
 }) {
   const store = useBattleStore();
@@ -711,6 +728,7 @@ function MiddleBar({
       {/* 中间操作按钮 */}
       <div className="middle-actions">
         {playersControl}
+        {presenceControl}
         <CubeRootLogo className="middle-logo" />
         <button className="middle-btn" title={tr({ zh: '历史', en: 'History'
         })} onClick={onHistoryClick}>
@@ -1139,9 +1157,11 @@ interface BattleViewProps {
   playerCount: number;
   /** 人数下拉(TimerShell 构建),注入到 middle-bar */
   playersControl?: React.ReactNode;
+  presenceControl?: React.ReactNode;
+  onPresenceChange?: (mix: TimerPresenceMix) => void;
 }
 
-export default function BattleView({ playerCount, playersControl }: BattleViewProps) {
+export default function BattleView({ playerCount, playersControl, presenceControl, onPresenceChange }: BattleViewProps) {
   useKeyboardControls();
 
   const { i18n } = useTranslation();
@@ -1292,13 +1312,15 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
       onSettingsClick={handleSettingsClick}
       onHistoryClick={() => setVsHistoryOpen(true)}
       playersControl={playersControl}
+      presenceControl={presenceControl}
       playerCount={playerCount}
     />
   );
 
   return (
     <BattleCubesProvider>
-    <div className={`battle-container${mode === '1v1' && !isGrid && store.layout === 'side' ? ' side-layout' : ''}${mode === '1v1' && !isGrid && store.layout === 'side' && bottomSame ? ' side-shared' : ''}${isGrid ? ' grid-layout' : ''}`}>
+      <BattlePresenceReporter playerCount={playerCount} onChange={onPresenceChange} />
+      <div className={`battle-container${mode === '1v1' && !isGrid && store.layout === 'side' ? ' side-layout' : ''}${mode === '1v1' && !isGrid && store.layout === 'side' && bottomSame ? ' side-shared' : ''}${isGrid ? ' grid-layout' : ''}`}>
 
       {/* === 田字格布局：上排旋转 180° 面向对面;3 人时上排单区跨两列 ===
           同排一对玩家共用一条打乱时,由 .grid-scramble-row 统一渲染,各 TimerArea 传
@@ -1437,7 +1459,7 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
       {toastMsg && (
         <MilestoneToast message={toastMsg} onDone={() => setToastMsg(null)} />
       )}
-    </div>
+      </div>
     </BattleCubesProvider>
   );
 }
