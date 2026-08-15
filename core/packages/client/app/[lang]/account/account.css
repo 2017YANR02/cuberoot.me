@@ -96,10 +96,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* 入口卡片:整块可点,图标 + 标题 + 副标题 + 右侧箭头。 */
+/* 入口卡片:桌面双列,整块可点。 */
 .account-cards {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 .account-card {
@@ -143,5 +143,6 @@
 @media (max-width: 480px) {
   .account-page { padding: 18px 14px 48px; }
   .account-name { font-size: 1.4rem; }
+  .account-cards { grid-template-columns: 1fr; }
   .account-card { padding: 14px 14px; gap: 12px; }
 }

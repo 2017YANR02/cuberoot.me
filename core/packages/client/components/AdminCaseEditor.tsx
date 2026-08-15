@@ -374,7 +374,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
         <div className="alg-admin-modal-main">
           <aside className="alg-admin-modal-side">
             {previewSetup.trim() ? (
-              // getPlayer() 提供可 seek handle；FTO 的自有 EIF 播放器也实现同一契约。
+              // getPlayer() 提供可 seek handle；SQ1 的 /sim 播放器也实现同一契约。
               <AlgPlayer
                 ref={playerHandleRef}
                 alg={debouncedPreview.alg}
@@ -382,7 +382,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
                 set={setSlug}
                 setup={previewSetup}
                 fillPane
-                engine="twisty"
+                engine={puzzle === 'sq1' ? 'sim' : 'twisty'}
               />
             ) : (
               <div className="alg-admin-modal-side-empty">

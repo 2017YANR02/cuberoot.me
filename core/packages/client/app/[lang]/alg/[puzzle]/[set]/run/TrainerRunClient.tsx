@@ -28,7 +28,7 @@ import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { displayZbllToken } from '@/lib/alg_case_display';
 import {
-  availableKinds, F2L_SLOTS, purifyScramble, SCRAMBLE_KINDS, trainerSetScrambleFeatures,
+  availableKinds, purifyScramble, SCRAMBLE_KINDS, trainerSetScrambleFeatures,
   type F2LSlot, type ScrambleKind,
 } from '@/lib/trainer-scramble';
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
@@ -81,6 +81,8 @@ function useSplitScreenAvailable(): boolean {
   return useSyncExternalStore(subscribeSplitScreen, splitScreenSnapshot, splitScreenServerSnapshot);
 }
 
+const F2L_SLOT_GRID: readonly F2LSlot[] = ['BL', 'BR', 'FL', 'FR'];
+
 function F2LSlotPicker({
   slots,
   onChange,
@@ -92,11 +94,11 @@ function F2LSlotPicker({
     <div className="trainer-opts-row">
       <span className="trainer-opts-label">{tr({ zh: '槽位', en: 'Slots' })}</span>
       <div
-        className="trainer-ori-cells"
+        className="trainer-ori-cells trainer-slot-cells"
         role="group"
         aria-label={tr({ zh: 'F2L 槽位', en: 'F2L slots' })}
       >
-        {F2L_SLOTS.map(slot => {
+        {F2L_SLOT_GRID.map(slot => {
           const selected = slots.includes(slot);
           const lastSelected = selected && slots.length === 1;
           return (
@@ -1004,16 +1006,11 @@ export default function TrainerRunClient() {
   const printableKeys = new Set(isMemo ? memoPool : pool);
   const printableCases = cases.filter(c => printableKeys.has(caseKey(c)));
   const pdfScopeSlug = scopeSlug?.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
-  const pdfSourcePath = `/alg/${puzzleParam}/${setSlug}/run${scopeSlug ? `?scope=${encodeURIComponent(scopeSlug)}` : ''}`;
   const buildPdfSheet = () => trainerSheetFromCases({
     puzzle,
     set: setSlug,
     cases: printableCases,
-    title: `${puzzle} ${tr(meta)}${scopeSuffix ? `: ${scopeSuffix}` : ''} ${tr({ zh: '训练题', en: 'Practice' })}`,
-    subtitle: `${tr({
-      zh: `${printableCases.length} 道打乱`,
-      en: `${printableCases.length} scramble${printableCases.length === 1 ? '' : 's'}`,
-    })} — cuberoot.me${pdfSourcePath}`,
+    title: `${puzzle} ${tr(meta)}${scopeSuffix ? `: ${scopeSuffix}` : ''} ${tr({ zh: '训练', en: 'Practice' })}`,
     filename: `${puzzleParam}-${setSlug}${pdfScopeSlug ? `-${pdfScopeSlug}` : ''}-trainer`,
     mode,
     probMode,

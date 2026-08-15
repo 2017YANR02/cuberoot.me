@@ -8,6 +8,8 @@
  */
 import { describe, it, expect } from 'vitest';
 import { toWca, translate, invert } from '@cuberoot/shared/skewb-notation';
+import { normalizeAlg } from '@/lib/alg_normalize';
+import { puzzles } from 'cubing/puzzles';
 
 describe('skewb notation translator', () => {
   it('passes through WCA notation unchanged', () => {
@@ -88,6 +90,18 @@ describe('skewb notation translator', () => {
 });
 
 describe('skewb alg inverse', () => {
+  it('keeps cubing.js UR/UL grips intact and round-trips a real Sarah case', async () => {
+    const alg = "y x R b' r' R' r z B' r B";
+    expect(normalizeAlg('skewb', alg)).toContain('UR');
+    expect(normalizeAlg('skewb', alg)).not.toContain('U R');
+
+    const kpuzzle = await puzzles.skewb.kpuzzle();
+    const final = kpuzzle.defaultPattern().applyAlg(
+      `${normalizeAlg('skewb', invert(alg))} ${normalizeAlg('skewb', alg)}`,
+    );
+    expect(final.patternData).toEqual(kpuzzle.defaultPattern().patternData);
+  });
+
   it('reverses tokens and flips each prime', () => {
     // sarahs-advanced 30a first alg — the scramble is exactly this inverse.
     expect(invert("y2 x B' r' B r B R r' R'")).toBe("R r R' B' r' B' r B x' y2'");

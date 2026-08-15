@@ -175,16 +175,6 @@
   height: 100% !important;
 }
 
-.alg-time-attack-index {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  color: var(--faint-foreground);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 0.68rem;
-  font-variant-numeric: tabular-nums;
-}
-
 .alg-time-attack-handle {
   position: absolute;
   top: 3px;

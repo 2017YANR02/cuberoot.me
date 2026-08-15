@@ -558,6 +558,10 @@ html[data-theme=dark] .alg-root {
 .alg-view-toggle {
   align-self: center;
 }
+/* SQ1 黑顶开关与角度、图示开关按控件中心线对齐。 */
+.alg-sq1-black-top-toggle {
+  align-self: center;
+}
 /* ZBLL 全集开关与相邻的图/公式 PillToggle 同高，避免页头里一高一矮。 */
 .alg-show-all-toggle {
   align-self: center;

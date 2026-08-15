@@ -5,30 +5,12 @@ import { useT } from '@/hooks/useT';
 import { invertFtoEifAlgorithm, parseFtoEifAlgorithm, renderFtoEifSvg } from '@/lib/fto-eif-image';
 import type { AlgPlayerControlMode, AlgPlayerHandle } from './AlgPlayer';
 import AlgPlaybackControls from './AlgPlaybackControls';
+import { createStepSeekPlayer } from './step-seek-player';
 import './alg-sim-player.css';
 
 const LOOP_PAUSE_MS = 900;
 
-/** Minimal TwistyPlayer-shaped adapter consumed by syncPlayerToMoveCount(). */
-export function createFtoSeekPlayer(moveCount: number, onStep: (step: number) => void) {
-  let timestamp = 0;
-  return {
-    get timestamp() { return timestamp; },
-    set timestamp(value: number) {
-      timestamp = Number.isFinite(value) ? value : 0;
-      onStep(Math.min(moveCount, Math.max(0, Math.round(timestamp))));
-    },
-    experimentalModel: {
-      indexer: {
-        get: async () => ({
-          numAnimatedLeaves: () => moveCount,
-          algDuration: () => moveCount,
-          indexToMoveStartTimestamp: (index: number) => index,
-        }),
-      },
-    },
-  };
-}
+export const createFtoSeekPlayer = createStepSeekPlayer;
 
 const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
   alg: string;

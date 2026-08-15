@@ -83,7 +83,17 @@
 }
 img.list-select-flag { object-fit: cover; }
 
+.list-select-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .list-select-popup {
+  /* anchored-panel: clamped (usePanelClamp in ListSelect) */
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
@@ -116,6 +126,12 @@ img.list-select-flag { object-fit: cover; }
 .list-select-list {
   max-height: 320px;
   overflow-y: auto;
+}
+
+.list-select-separator {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border-default);
 }
 
 /* maxVisible 截断后的「还有 N 项」提示 */

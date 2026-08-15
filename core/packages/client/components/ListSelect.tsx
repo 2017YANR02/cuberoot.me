@@ -5,9 +5,10 @@
  * Ported from packages/client-vite/src/components/ListSelect/ListSelect.tsx.
  * caller 预格式化 label / hint / country / searchTerms,组件不做本地化。
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ChevronDown, X } from 'lucide-react';
 import { Flag } from '@/components/Flag';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { tr } from '@/i18n/tr';
 import './ListSelect.css';
 
@@ -22,6 +23,10 @@ export interface ListSelectItem {
   searchTerms?: string;
   /** ISO2 国家码;非空时 label 前渲染 <Flag> */
   country?: string;
+  /** label 前的自定义图标 */
+  icon?: ReactNode;
+  /** 此项前显示分隔线 */
+  separatorBefore?: boolean;
   /** 置灰 + 不可选 (如该项暂无条目) */
   disabled?: boolean;
 }
@@ -46,7 +51,9 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const ref = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  usePanelClamp(open, panelRef);
 
   useEffect(() => {
     if (!open) return;
@@ -96,6 +103,7 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
           {current ? (
             <>
               {current.country && <Flag iso2={current.country} className="list-select-flag" />}
+              {current.icon && <span className="list-select-icon" aria-hidden>{current.icon}</span>}
               <span className="list-select-label">{current.label}</span>
               {current.hint && <span className="list-select-hint">{current.hint}</span>}
             </>
@@ -116,7 +124,7 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
         <ChevronDown size={14} className="list-select-chevron" />
       </button>
       {open && (
-        <div className="list-select-popup">
+        <div ref={panelRef} className="list-select-popup">
           {searchable && (
             <input
               ref={inputRef}
@@ -130,17 +138,20 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
           )}
           <div className="list-select-list">
             {shown.map(i => (
-              <button
-                key={i.value}
-                type="button"
-                disabled={i.disabled}
-                className={`list-select-item${value === i.value ? ' list-select-item--active' : ''}${i.disabled ? ' list-select-item--disabled' : ''}`}
-                onClick={() => { if (!i.disabled) select(i.value); }}
-              >
-                {i.country && <Flag iso2={i.country} className="list-select-flag" />}
-                <span className="list-select-label">{i.label}</span>
-                {i.hint && <span className="list-select-hint">{i.hint}</span>}
-              </button>
+              <Fragment key={i.value}>
+                {i.separatorBefore && <div className="list-select-separator" aria-hidden />}
+                <button
+                  type="button"
+                  disabled={i.disabled}
+                  className={`list-select-item${value === i.value ? ' list-select-item--active' : ''}${i.disabled ? ' list-select-item--disabled' : ''}`}
+                  onClick={() => { if (!i.disabled) select(i.value); }}
+                >
+                  {i.country && <Flag iso2={i.country} className="list-select-flag" />}
+                  {i.icon && <span className="list-select-icon" aria-hidden>{i.icon}</span>}
+                  <span className="list-select-label">{i.label}</span>
+                  {i.hint && <span className="list-select-hint">{i.hint}</span>}
+                </button>
+              </Fragment>
             ))}
             {hidden > 0 && (
               <div className="list-select-more">

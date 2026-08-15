@@ -3,8 +3,8 @@
 /**
  * 公式动画 —— 跑站内 `/sim` 引擎,不是 cubing.js 的 TwistyPlayer。
  *
- * 公式库默认只接 NxN(2x2 / 3x3 / 4x4 / 5x5)。记号教学还会显式接入文法一致的
- * 金字塔和斜转;Square-1 与五魔官方打乱文法仍由 `AlgPlayer` 分流到 TwistyPlayer。
+ * 公式库默认接 NxN(2x2 / 3x3 / 4x4 / 5x5)和 Square-1。记号教学还会显式接入
+ * 文法一致的金字塔和斜转;五魔仍由 `AlgPlayer` 分流到 TwistyPlayer。
  *
  * ## 三件与 TwistyPlayer 不同、写的时候会绊一下的事
  *
@@ -21,19 +21,20 @@
  * 的 `experimentalStickering` 同名,所以 `pickStickering` 一份两用。
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type { AlgPuzzle } from '@cuberoot/shared';
 import SimStage from '@/components/sim-embed/SimStage';
-import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import { useT } from '@/hooks/useT';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
+import type Sq1Cube from '@/app/[lang]/sim/engine/sq1/Sq1Cube';
 import type { PuzzleKind } from '@/app/[lang]/sim/engine/world';
-import type { AlgPlayerControlMode } from './AlgPlayer';
+import type { AlgPlayerControlMode, AlgPlayerHandle } from './AlgPlayer';
 import { pickStickering } from './stickering';
-import { resolvePlayerSetup, resolvePreviewTiming, resolveSimMoveDurationScale } from './player-setup';
+import { resolvePlayerSetup, resolvePreviewTiming, resolveSimMoveDurationScale, resolveSimPreviewMoves } from './player-setup';
 import AlgPlaybackControls from './AlgPlaybackControls';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
+import { createStepSeekPlayer } from './step-seek-player';
 import './alg-sim-player.css';
 
 const LOOP_PAUSE_MS = 900;
@@ -44,6 +45,7 @@ export const NXN_ORDER: Partial<Record<AlgPuzzle, number>> = {
 
 const SIM_PUZZLE: Partial<Record<AlgPuzzle, PuzzleKind>> = {
   ...NXN_ORDER,
+  sq1: 'sq1',
   pyraminx: 'pyraminx',
   skewb: 'skewb',
 };
@@ -71,9 +73,7 @@ async function preloadEngine() {
   };
 }
 
-export default function AlgSimPlayer({
-  alg, puzzle, set, setup, orientation = '', startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false,
-}: {
+const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   alg: string;
   puzzle: AlgPuzzle;
   set: string;
@@ -88,18 +88,21 @@ export default function AlgSimPlayer({
   size?: number;
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
   fillPane?: boolean;
-}) {
+}>(function AlgSimPlayer({
+  alg, puzzle, set, setup, orientation = '', startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false,
+}, ref) {
   const t = useT();
   const puzzleKind = SIM_PUZZLE[puzzle] ?? 3;
 
   /**
    * 逐步切开。库里存的是**人写的**文本(换握记号、连写、分组括号都有),
-   * `normalizeAlgForTwisty` 是全站唯一那份清洗,清完就是空格分隔的转动串。
+   * `resolveSimPreviewMoves` 先走全站统一清洗；SQ1 再用自己的解析器切 token，
+   * 避免 `(1, 0)` 里的空格被误当成分步。
    *
    * 播的是**完整公式**(含收尾 AUF),动画才停在还原态 —— 别把 `displayAlg` 的结果传进来。
    */
   const moves = useMemo(
-    () => normalizeAlgForTwisty(puzzle, alg).split(/\s+/).filter(Boolean),
+    () => resolveSimPreviewMoves(puzzle, alg),
     [puzzle, alg],
   );
   const previewTiming = resolvePreviewTiming(
@@ -118,6 +121,11 @@ export default function AlgSimPlayer({
   const [playing, setPlaying] = useState(false);
   const [replayRequest, setReplayRequest] = useState(0);
   const [ready, setReady] = useState(false);
+  const seekPlayer = useMemo(
+    () => createStepSeekPlayer(moves.length, setStep),
+    [moves.length],
+  );
+  useImperativeHandle(ref, () => ({ getPlayer: () => seekPlayer }), [seekPlayer]);
   const mountRef = useRef<SimMount | null>(null);
   const orientationRef = useRef(orientation);
   orientationRef.current = orientation;
@@ -160,6 +168,9 @@ export default function AlgSimPlayer({
     }
     if (order && name) {
       (cube as Cube).instancedRenderer.setStickering(stickeringMaskFn(order, name) ?? null);
+    }
+    if (puzzle === 'sq1') {
+      (cube as Sq1Cube).setStickering(set);
     }
 
     const prevFrames = timing.frames;
@@ -243,4 +254,6 @@ export default function AlgSimPlayer({
       )}
     </div>
   );
-}
+});
+
+export default AlgSimPlayer;
