@@ -9,6 +9,13 @@
 import { DEFAULT_ROUND_CONFIG, type RoundConfig } from '../round';
 import { useSyncExternalStore } from 'react';
 import { persistItem } from '@/lib/safe-storage';
+import {
+  DEFAULT_ROLLING_STAT_COLUMNS,
+  MAX_ROLLING_STAT_COLUMNS,
+  rollingStatColumnsFromLegacy,
+  sanitizeRollingStatColumns,
+  type RollingStatKey,
+} from '../rolling_stats';
 
 const KEY = 'cuberoot-timer.settings.v1';
 
@@ -91,12 +98,8 @@ export interface TimerSettings {
   /** Speech-synthesis voice for inspection cues. 'none' = beeps as before. */
   voiceInspection: 'none' | 'en-male' | 'en-female' | 'zh-male' | 'zh-female';
 
-  /**
-   * Average windows shown in the cstimer-style current/best stats table
-   * (e.g. [5, 12]). User-editable inline on the Times panel — presets
-   * 5/12/25/50/100/200/1000/10000 plus a custom value. Sorted ascending.
-   */
-  statsAoWindows: number[];
+  /** Rolling statistics shown in the history and current/best tables. */
+  statsRollingColumns: RollingStatKey[];
 
   /** Scramble source: 'random' = locally generated, 'wca' = real past WCA competition
    *  scrambles, 'manual' = a user-typed queue (manualScrambles), walked one per solve. */
@@ -319,9 +322,6 @@ export interface TimerSettings {
   autoRecap?: boolean;
 }
 
-/** Max ao windows shown as stats/history columns (the ao5/ao12-style picker). */
-export const MAX_AO_WINDOWS = 2;
-
 export const DEFAULTS: TimerSettings = {
   inspection: 0,
   soundsEnabled: false,
@@ -345,7 +345,7 @@ export const DEFAULTS: TimerSettings = {
   preScrT: 'z2', // (DF) — LL cases are read yellow-up (csTimer's default)
   cnMode: 'none',
   voiceInspection: 'none',
-  statsAoWindows: [5, 12],
+  statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
   scrambleSource: 'wca',
   manualScrambles: '',
   timingEnabled: true,
@@ -460,7 +460,7 @@ function load(): TimerSettings {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...DEFAULTS };
-    const parsed = JSON.parse(raw) as Partial<TimerSettings>;
+    const parsed = JSON.parse(raw) as Partial<TimerSettings> & { statsAoWindows?: unknown };
     const merged = { ...DEFAULTS, ...parsed };
 
     // These two controls are entry defaults, not preferences to restore. A
@@ -488,9 +488,24 @@ function load(): TimerSettings {
       merged.recordGyroMigrated = true;
       dirty = true;
     }
-    // Cap legacy selections at MAX_AO_WINDOWS (the stats/history ao columns).
-    if (Array.isArray(merged.statsAoWindows) && merged.statsAoWindows.length > MAX_AO_WINDOWS) {
-      merged.statsAoWindows = merged.statsAoWindows.slice(0, MAX_AO_WINDOWS);
+    // ao-only columns predate mo3 support. Preserve the user's chosen windows,
+    // then store the new typed keys so both history and stats use one setting.
+    if (!Array.isArray(parsed.statsRollingColumns)) {
+      merged.statsRollingColumns = rollingStatColumnsFromLegacy(parsed.statsAoWindows);
+      dirty = true;
+    }
+    const sanitizedColumns = sanitizeRollingStatColumns(
+      merged.statsRollingColumns,
+      MAX_ROLLING_STAT_COLUMNS,
+    );
+    if (JSON.stringify(sanitizedColumns) !== JSON.stringify(merged.statsRollingColumns)) {
+      merged.statsRollingColumns = sanitizedColumns.length > 0
+        ? sanitizedColumns
+        : [...DEFAULT_ROLLING_STAT_COLUMNS];
+      dirty = true;
+    }
+    if ('statsAoWindows' in merged) {
+      delete (merged as TimerSettings & { statsAoWindows?: unknown }).statsAoWindows;
       dirty = true;
     }
     if (dirty) save(merged);

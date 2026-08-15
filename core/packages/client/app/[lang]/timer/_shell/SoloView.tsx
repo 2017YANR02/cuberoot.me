@@ -2166,7 +2166,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <HistoryPanel
             solves={solves}
             isZh={isZh}
-            aoWindows={settings.statsAoWindows}
+            rollingStatColumns={settings.statsRollingColumns}
             onRowClick={(s, idx) => setModalSolve({ s, idx })}
             onQuickPenalty={(id, p) => updateSolve(id, { penalty: p })}
             onQuickDelete={(id) => deleteSolve(id)}
@@ -2179,7 +2179,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       return (
         <>
           <div className="shell-panel-statgrid">
-            <StatsPanel solves={solves} isZh={isZh} event={event} />
+            <StatsPanel solves={solves} event={event} />
             <CaseStatsPanel event={event} solves={solves} isZh={isZh} />
           </div>
           <div className="shell-times-actions">
