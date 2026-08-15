@@ -23,6 +23,28 @@ const ATLAS_ROWS = 2;
 const ATLAS_TILE = 384;
 const ATLAS_GUTTER = 2;
 const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+const EDIT_SOURCE_MAX_SIDE = 2048;
+
+export type PictureRotation = 0 | 90 | 180 | 270;
+
+export interface PictureCrop {
+  rotation: PictureRotation;
+  /** Position of the image inside the square crop, normalized to [-1, 1]. */
+  x: number;
+  y: number;
+}
+
+export const DEFAULT_PICTURE_CROP: PictureCrop = { rotation: 0, x: 0, y: 0 };
+
+export interface PictureCropGeometry {
+  scale: number;
+  drawnWidth: number;
+  drawnHeight: number;
+  overflowX: number;
+  overflowY: number;
+  offsetX: number;
+  offsetY: number;
+}
 
 export function emptyPictureFaces(): PictureFaces {
   return { ...EMPTY_PICTURE_FACES };
@@ -83,26 +105,144 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-/** Upload image → centre-cropped square WebP data URL. The cap keeps six faces small
+function clampCropPosition(value: number): number {
+  return Math.max(-1, Math.min(1, Number.isFinite(value) ? value : 0));
+}
+
+export function normalizePictureCrop(
+  value: { rotation?: number; x?: number; y?: number } | null | undefined,
+): PictureCrop {
+  const rawRotation = Number.isFinite(value?.rotation) ? Number(value?.rotation) : 0;
+  const rotation = (((Math.round(rawRotation / 90) * 90) % 360) + 360) % 360 as PictureRotation;
+  return {
+    rotation,
+    x: clampCropPosition(value?.x ?? 0),
+    y: clampCropPosition(value?.y ?? 0),
+  };
+}
+
+/** Exact cover geometry shared by the crop preview and exported square. Positive
+ * offsets move the picture right/down, matching direct manipulation on the canvas. */
+export function pictureCropGeometry(
+  width: number,
+  height: number,
+  size: number,
+  crop: PictureCrop,
+): PictureCropGeometry {
+  const safeWidth = Math.max(1, width);
+  const safeHeight = Math.max(1, height);
+  const safeSize = Math.max(1, size);
+  const normalized = normalizePictureCrop(crop);
+  const sideways = normalized.rotation === 90 || normalized.rotation === 270;
+  const rotatedWidth = sideways ? safeHeight : safeWidth;
+  const rotatedHeight = sideways ? safeWidth : safeHeight;
+  const scale = Math.max(safeSize / rotatedWidth, safeSize / rotatedHeight);
+  const drawnWidth = rotatedWidth * scale;
+  const drawnHeight = rotatedHeight * scale;
+  const overflowX = Math.max(0, drawnWidth - safeSize);
+  const overflowY = Math.max(0, drawnHeight - safeSize);
+  return {
+    scale,
+    drawnWidth,
+    drawnHeight,
+    overflowX,
+    overflowY,
+    offsetX: normalized.x * overflowX / 2,
+    offsetY: normalized.y * overflowY / 2,
+  };
+}
+
+export function drawPictureCrop(
+  ctx: CanvasRenderingContext2D,
+  source: CanvasImageSource,
+  width: number,
+  height: number,
+  size: number,
+  crop: PictureCrop,
+): PictureCropGeometry {
+  const normalized = normalizePictureCrop(crop);
+  const geometry = pictureCropGeometry(width, height, size, normalized);
+  ctx.clearRect(0, 0, size, size);
+  ctx.save();
+  ctx.translate(size / 2 + geometry.offsetX, size / 2 + geometry.offsetY);
+  ctx.rotate(normalized.rotation * Math.PI / 180);
+  ctx.drawImage(
+    source,
+    -width * geometry.scale / 2,
+    -height * geometry.scale / 2,
+    width * geometry.scale,
+    height * geometry.scale,
+  );
+  ctx.restore();
+  return geometry;
+}
+
+function decodedToSquareDataUrl(
+  decoded: DecodedImage,
+  crop: PictureCrop,
+  maxSize: number,
+): string {
+  if (decoded.width < 1 || decoded.height < 1) throw new Error('decode-failed');
+  const side = Math.max(1, Math.min(maxSize, decoded.width, decoded.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = side;
+  canvas.height = side;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('canvas-unavailable');
+  drawPictureCrop(ctx, decoded.source, decoded.width, decoded.height, side, crop);
+  return canvas.toDataURL('image/webp', 0.84);
+}
+
+/** Upload image → adjustable square WebP data URL. The cap keeps six faces small
  * enough for mobile localStorage while retaining enough detail for high-order cubes. */
-export async function fileToPictureFaceDataUrl(file: File, maxSize = ATLAS_TILE): Promise<string> {
+export async function fileToPictureFaceDataUrl(
+  file: File,
+  maxSize = ATLAS_TILE,
+  crop: PictureCrop = DEFAULT_PICTURE_CROP,
+): Promise<string> {
   const decoded = await decodeFile(file);
   try {
-    if (decoded.width < 1 || decoded.height < 1) throw new Error('decode-failed');
-    const sourceSide = Math.min(decoded.width, decoded.height);
-    const sx = (decoded.width - sourceSide) / 2;
-    const sy = (decoded.height - sourceSide) / 2;
-    const side = Math.min(maxSize, sourceSide);
-    const canvas = document.createElement('canvas');
-    canvas.width = side;
-    canvas.height = side;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('canvas-unavailable');
-    ctx.drawImage(decoded.source, sx, sy, sourceSide, sourceSide, 0, 0, side, side);
-    return canvas.toDataURL('image/webp', 0.84);
+    return decodedToSquareDataUrl(decoded, crop, maxSize);
   } finally {
     decoded.close?.();
   }
+}
+
+/** Session-only full-frame source for crop adjustment. It is deliberately not
+ * persisted; only the final 384px square is stored in localStorage. */
+export async function fileToPictureEditSourceDataUrl(
+  file: File,
+  maxSide = EDIT_SOURCE_MAX_SIDE,
+): Promise<string> {
+  const decoded = await decodeFile(file);
+  try {
+    if (decoded.width < 1 || decoded.height < 1) throw new Error('decode-failed');
+    const scale = Math.min(1, maxSide / Math.max(decoded.width, decoded.height));
+    const width = Math.max(1, Math.round(decoded.width * scale));
+    const height = Math.max(1, Math.round(decoded.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('canvas-unavailable');
+    ctx.drawImage(decoded.source, 0, 0, decoded.width, decoded.height, 0, 0, width, height);
+    return canvas.toDataURL('image/webp', 0.88);
+  } finally {
+    decoded.close?.();
+  }
+}
+
+export async function pictureEditSourceToFaceDataUrl(
+  src: string,
+  crop: PictureCrop,
+  maxSize = ATLAS_TILE,
+): Promise<string> {
+  const image = await loadImage(src);
+  return decodedToSquareDataUrl(
+    { source: image, width: image.naturalWidth, height: image.naturalHeight },
+    crop,
+    maxSize,
+  );
 }
 
 async function drawAtlasFace(

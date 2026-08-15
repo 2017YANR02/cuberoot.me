@@ -36,7 +36,7 @@ import {
   FlipHorizontal2, FlipVertical2, Eraser,
   Shuffle, Link2, Check,
   Search, Loader2, Pipette,
-  Keyboard, Grid3x3, ImagePlus, Upload, Trash2,
+  Keyboard, Grid3x3, ImagePlus, Upload, Trash2, Crop, RotateCw, Move as MoveIcon,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './engine/world';
@@ -121,9 +121,15 @@ import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import { fileToLogoDataUrl } from './engine/nxn/logo';
 import {
   PICTURE_FACE_ORDER,
+  DEFAULT_PICTURE_CROP,
   countPictureFaces,
+  drawPictureCrop,
   emptyPictureFaces,
-  fileToPictureFaceDataUrl,
+  fileToPictureEditSourceDataUrl,
+  normalizePictureCrop,
+  pictureCropGeometry,
+  pictureEditSourceToFaceDataUrl,
+  type PictureCrop,
   type PictureFace,
   type PictureFaces,
 } from './engine/nxn/pictureCube';
@@ -2770,26 +2776,274 @@ function PictureFaceMiniNet({ faces }: { faces: PictureFaces }) {
   );
 }
 
+const PICTURE_CROP_SIZE = 384;
+
+function defaultPictureCrops(): Record<PictureFace, PictureCrop> {
+  return Object.fromEntries(
+    PICTURE_FACE_ORDER.map((face) => [face, { ...DEFAULT_PICTURE_CROP }]),
+  ) as Record<PictureFace, PictureCrop>;
+}
+
+function PictureCropWorkspace({
+  face, source, initialCrop, order, busy, onCancel, onReplace, onApply, t,
+}: {
+  face: PictureFace;
+  source: string;
+  initialCrop: PictureCrop;
+  order: number;
+  busy: boolean;
+  onCancel: () => void;
+  onReplace: () => void;
+  onApply: (crop: PictureCrop) => void;
+  t: (zh: string, en: string) => string;
+}) {
+  const [crop, setCrop] = useState<PictureCrop>(() => normalizePictureCrop(initialCrop));
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [imageError, setImageError] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+  const dragRef = useRef<{
+    pointerId: number;
+    clientX: number;
+    clientY: number;
+    crop: PictureCrop;
+  } | null>(null);
+
+  useEffect(() => {
+    setCrop(normalizePictureCrop(initialCrop));
+    setDimensions({ width: 0, height: 0 });
+    setImageError(false);
+    const image = new Image();
+    image.decoding = 'async';
+    image.onload = () => {
+      imageRef.current = image;
+      setDimensions({ width: image.naturalWidth, height: image.naturalHeight });
+    };
+    image.onerror = () => setImageError(true);
+    image.src = source;
+    return () => {
+      imageRef.current = null;
+      image.onload = null;
+      image.onerror = null;
+    };
+  }, [initialCrop, source]);
+
+  const geometry = useMemo(() => {
+    if (!dimensions.width || !dimensions.height) return null;
+    return pictureCropGeometry(
+      dimensions.width,
+      dimensions.height,
+      PICTURE_CROP_SIZE,
+      crop,
+    );
+  }, [crop, dimensions]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const image = imageRef.current;
+    if (!canvas || !image || !dimensions.width || !dimensions.height) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    drawPictureCrop(
+      ctx,
+      image,
+      dimensions.width,
+      dimensions.height,
+      PICTURE_CROP_SIZE,
+      crop,
+    );
+  }, [crop, dimensions]);
+
+  const setAxis = (axis: 'x' | 'y', value: number) => {
+    setCrop((current) => normalizePictureCrop({ ...current, [axis]: value }));
+  };
+  const panAvailableX = !!geometry && geometry.overflowX > 0.5;
+  const panAvailableY = !!geometry && geometry.overflowY > 0.5;
+  const gridCount = order >= 2 && order <= 12 ? order : 0;
+  const [zhFace, enFace] = PICTURE_FACE_LABELS[face];
+
+  const endDrag = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (dragRef.current?.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    setDragging(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  return (
+    <div className="sim-picture-crop-workspace">
+      <div className="sim-picture-crop-heading">
+        <span className="sim-picture-crop-icon"><Crop size={17} /></span>
+        <div>
+          <h3>{t(`调整 ${face} ${zhFace}`, `Adjust ${face} ${enFace}`)}</h3>
+          <p>{t('拖动画面调整取景,虚线就是贴纸切割位置', 'Drag the picture to frame it; the grid shows the sticker cuts')}</p>
+        </div>
+      </div>
+
+      <div className="sim-picture-crop-body">
+        <div className="sim-picture-crop-stage-wrap">
+          <div className={'sim-picture-crop-stage' + (dragging ? ' is-dragging' : '')}>
+            <canvas
+              ref={canvasRef}
+              width={PICTURE_CROP_SIZE}
+              height={PICTURE_CROP_SIZE}
+              tabIndex={0}
+              aria-label={t('拖动图片调整裁切位置', 'Drag image to adjust crop position')}
+              onPointerDown={(event) => {
+                if (!geometry || (!panAvailableX && !panAvailableY)) return;
+                event.currentTarget.setPointerCapture(event.pointerId);
+                dragRef.current = {
+                  pointerId: event.pointerId,
+                  clientX: event.clientX,
+                  clientY: event.clientY,
+                  crop,
+                };
+                setDragging(true);
+              }}
+              onPointerMove={(event) => {
+                const start = dragRef.current;
+                if (!start || start.pointerId !== event.pointerId || !geometry) return;
+                const rect = event.currentTarget.getBoundingClientRect();
+                const maxX = geometry.overflowX / PICTURE_CROP_SIZE * rect.width / 2;
+                const maxY = geometry.overflowY / PICTURE_CROP_SIZE * rect.height / 2;
+                setCrop(normalizePictureCrop({
+                  ...start.crop,
+                  x: maxX > 0 ? start.crop.x + (event.clientX - start.clientX) / maxX : 0,
+                  y: maxY > 0 ? start.crop.y + (event.clientY - start.clientY) / maxY : 0,
+                }));
+              }}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+              onKeyDown={(event) => {
+                const step = event.shiftKey ? 0.2 : 0.05;
+                if (event.key === 'ArrowLeft' && panAvailableX) setAxis('x', crop.x - step);
+                else if (event.key === 'ArrowRight' && panAvailableX) setAxis('x', crop.x + step);
+                else if (event.key === 'ArrowUp' && panAvailableY) setAxis('y', crop.y - step);
+                else if (event.key === 'ArrowDown' && panAvailableY) setAxis('y', crop.y + step);
+                else return;
+                event.preventDefault();
+              }}
+            />
+            {gridCount > 0 && (
+              <span
+                className="sim-picture-crop-grid"
+                style={{ backgroundSize: `${100 / gridCount}% ${100 / gridCount}%` }}
+                aria-hidden
+              />
+            )}
+            {!dimensions.width && !imageError && <Loader2 size={24} className="sim-picture-crop-loading sim-spin" />}
+            {imageError && <span className="sim-picture-crop-load-error">{t('无法预览', 'Preview unavailable')}</span>}
+          </div>
+          <span className="sim-picture-crop-drag-hint"><MoveIcon size={14} />{t('直接拖动', 'Drag to position')}</span>
+        </div>
+
+        <div className="sim-picture-crop-controls">
+          <div className="sim-picture-crop-control">
+            <span>{t('旋转', 'Rotate')}</span>
+            <div className="sim-picture-rotation" role="group" aria-label={t('图片旋转角度', 'Image rotation')}>
+              {([0, 90, 180, 270] as const).map((rotation) => (
+                <button
+                  type="button"
+                  key={rotation}
+                  aria-pressed={crop.rotation === rotation}
+                  onClick={() => setCrop((current) => ({ ...current, rotation }))}
+                >
+                  {rotation === 90 && <RotateCw size={13} />}{rotation}°
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="sim-picture-pan-control">
+            <span>{t('左右', 'Horizontal')}</span>
+            <input
+              type="range"
+              min={-100}
+              max={100}
+              value={Math.round(crop.x * 100)}
+              disabled={!panAvailableX}
+              aria-label={t('左右移动图片', 'Move image horizontally')}
+              onChange={(event) => setAxis('x', Number(event.target.value) / 100)}
+            />
+          </label>
+          <label className="sim-picture-pan-control">
+            <span>{t('上下', 'Vertical')}</span>
+            <input
+              type="range"
+              min={-100}
+              max={100}
+              value={Math.round(crop.y * 100)}
+              disabled={!panAvailableY}
+              aria-label={t('上下移动图片', 'Move image vertically')}
+              onChange={(event) => setAxis('y', Number(event.target.value) / 100)}
+            />
+          </label>
+          <p className="sim-picture-crop-axis-note">
+            {panAvailableX || panAvailableY
+              ? t('也可用方向键微调,按住 Shift 可快速移动', 'Use arrow keys for fine control; hold Shift to move faster')
+              : t('图片已完整填满正方形,无需移动', 'The image already fills the square with no movable overflow')}
+          </p>
+
+          <div className="sim-picture-crop-actions">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setCrop({ ...DEFAULT_PICTURE_CROP, rotation: crop.rotation })}
+            >
+              {t('重新居中', 'Recenter')}
+            </button>
+            <button type="button" disabled={busy} onClick={onReplace}>
+              <Upload size={14} />{t('更换图片', 'Replace image')}
+            </button>
+            <button type="button" disabled={busy} onClick={onCancel}>{t('返回六面', 'Back to faces')}</button>
+            <button
+              type="button"
+              className="sim-picture-crop-apply"
+              disabled={busy || !dimensions.width || imageError}
+              onClick={() => onApply(crop)}
+            >
+              {busy && <Loader2 size={14} className="sim-spin" />}
+              {t('应用裁切', 'Apply crop')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PictureCubeEditor({
-  open, initialFaces, onClose, onSave, t,
+  open, initialFaces, order, onClose, onSave, t,
 }: {
   open: boolean;
   initialFaces: PictureFaces;
+  order: number;
   onClose: () => void;
   onSave: (faces: PictureFaces) => boolean;
   t: (zh: string, en: string) => string;
 }) {
   const [draft, setDraft] = useState<PictureFaces>(() => ({ ...initialFaces }));
+  const [editSources, setEditSources] = useState<PictureFaces>(() => ({ ...initialFaces }));
+  const [faceCrops, setFaceCrops] = useState<Record<PictureFace, PictureCrop>>(defaultPictureCrops);
+  const [cropFace, setCropFace] = useState<PictureFace | null>(null);
   const [targetFace, setTargetFace] = useState<PictureFace>('U');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const faceInputRef = useRef<HTMLInputElement>(null);
   const bulkInputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
+  const cropFaceRef = useRef<PictureFace | null>(null);
+
+  cropFaceRef.current = cropFace;
 
   useEffect(() => {
     if (!open) return;
     setDraft({ ...initialFaces });
+    setEditSources({ ...initialFaces });
+    setFaceCrops(defaultPictureCrops());
+    setCropFace(null);
     setError('');
     setBusy(false);
     const oldOverflow = document.body.style.overflow;
@@ -2799,6 +3053,10 @@ function PictureCubeEditor({
     document.body.style.overflow = 'hidden';
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        if (cropFaceRef.current) {
+          setCropFace(null);
+          return;
+        }
         onClose();
         return;
       }
@@ -2838,8 +3096,13 @@ function PictureCubeEditor({
   };
 
   const processFace = async (face: PictureFace, file: File) => {
-    const url = await fileToPictureFaceDataUrl(file);
+    const source = await fileToPictureEditSourceDataUrl(file);
+    const crop = { ...DEFAULT_PICTURE_CROP };
+    const url = await pictureEditSourceToFaceDataUrl(source, crop);
+    setEditSources((current) => ({ ...current, [face]: source }));
+    setFaceCrops((current) => ({ ...current, [face]: crop }));
     setDraft((current) => ({ ...current, [face]: url }));
+    setCropFace(face);
   };
 
   const handleFaceFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -2864,15 +3127,59 @@ function PictureCubeEditor({
     setBusy(true);
     setError('');
     try {
-      const urls = await Promise.all(files.map((file) => fileToPictureFaceDataUrl(file)));
+      const imported: Array<{ face: PictureFace; source: string; url: string }> = [];
+      for (let index = 0; index < files.length; index++) {
+        const source = await fileToPictureEditSourceDataUrl(files[index]);
+        imported.push({
+          face: PICTURE_FACE_ORDER[index],
+          source,
+          url: await pictureEditSourceToFaceDataUrl(source, DEFAULT_PICTURE_CROP),
+        });
+      }
       setDraft((current) => {
         const next = { ...current };
-        urls.forEach((url, index) => { next[PICTURE_FACE_ORDER[index]] = url; });
+        imported.forEach(({ face, url }) => { next[face] = url; });
         return next;
       });
+      setEditSources((current) => {
+        const next = { ...current };
+        imported.forEach(({ face, source }) => { next[face] = source; });
+        return next;
+      });
+      setFaceCrops((current) => {
+        const next = { ...current };
+        imported.forEach(({ face }) => { next[face] = { ...DEFAULT_PICTURE_CROP }; });
+        return next;
+      });
+      setCropFace(imported[0]?.face ?? null);
       if (files.length < 6) {
         setError(t(`已按顺序填入前 ${files.length} 面,其余可逐面补充`, `Filled the first ${files.length} faces in order; add the rest individually`));
       }
+    } catch (reason) {
+      setError(messageForError(reason));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeFace = (face: PictureFace) => {
+    setDraft((current) => ({ ...current, [face]: '' }));
+    setEditSources((current) => ({ ...current, [face]: '' }));
+    setFaceCrops((current) => ({ ...current, [face]: { ...DEFAULT_PICTURE_CROP } }));
+    if (cropFace === face) setCropFace(null);
+  };
+
+  const applyCrop = async (face: PictureFace, crop: PictureCrop) => {
+    const source = editSources[face];
+    if (!source) return;
+    setBusy(true);
+    setError('');
+    try {
+      const normalized = normalizePictureCrop(crop);
+      const url = await pictureEditSourceToFaceDataUrl(source, normalized);
+      setFaceCrops((current) => ({ ...current, [face]: normalized }));
+      setDraft((current) => ({ ...current, [face]: url }));
+      setCropFace(null);
     } catch (reason) {
       setError(messageForError(reason));
     } finally {
@@ -2897,84 +3204,115 @@ function PictureCubeEditor({
         <header className="sim-picture-head">
           <div>
             <h2 id="sim-picture-title">{t('制作图案魔方', 'Create a picture cube')}</h2>
-            <p>{t('每张图会居中裁成正方形,再切到对应面的真实贴纸上', 'Each image is centre-cropped to a square, then sliced across the real stickers on that face')}</p>
+            <p>{t('每张图都可旋转并拖动取景,确认后再切到对应面的真实贴纸上', 'Rotate and reframe every image before it is sliced across the real stickers on that face')}</p>
           </div>
           <ClearButton variant="standalone" className="sim-picture-icon-btn" onClick={onClose} ariaLabel={t('关闭', 'Close')} />
         </header>
 
-        <div className="sim-picture-toolbar">
-          <button type="button" className="sim-picture-bulk" disabled={busy} onClick={() => bulkInputRef.current?.click()}>
-            {busy ? <Loader2 size={16} className="sim-spin" /> : <Upload size={16} />}
-            {t('一次选择 6 张', 'Choose 6 at once')}
-          </button>
-          <span>{t('顺序:U R F D L B', 'Order: U R F D L B')}</span>
-          <input ref={bulkInputRef} type="file" accept="image/*" multiple hidden onChange={handleBulkFiles} />
-        </div>
-
-        <div className="sim-picture-net" aria-label={t('六面图片', 'Six face images')}>
-          {PICTURE_FACE_ORDER.map((face) => {
-            const [zh, en] = PICTURE_FACE_LABELS[face];
-            const hasImage = !!draft[face];
-            return (
-              <div className="sim-picture-face" data-face={face} key={face}>
-                <button
-                  type="button"
-                  className="sim-picture-face-main"
-                  onClick={() => { setTargetFace(face); faceInputRef.current?.click(); }}
-                  disabled={busy}
-                  aria-label={hasImage ? t(`替换${zh}图片`, `Replace ${en} image`) : t(`上传${zh}图片`, `Upload ${en} image`)}
-                >
-                  {hasImage
-                    ? <img src={draft[face]} alt="" />
-                    : <ImagePlus size={22} />}
-                  <span><strong>{face}</strong>{t(zh, en)}</span>
-                </button>
-                {hasImage && (
-                  <ClearButton
-                    variant="standalone"
-                    className="sim-picture-face-remove"
-                    onClick={() => setDraft((current) => ({ ...current, [face]: '' }))}
-                    ariaLabel={t(`移除${zh}图片`, `Remove ${en} image`)}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
-        <input ref={faceInputRef} type="file" accept="image/*" hidden onChange={handleFaceFile} />
-
-        <div className="sim-picture-notes">
-          <span>{t(`已设置 ${count}/6 面`, `${count}/6 faces set`)}</span>
-          <span>{t('图片只保存在当前浏览器,不会上传到服务器', 'Images stay in this browser and are not uploaded to a server')}</span>
-        </div>
-        {error && <p className="sim-picture-error" role="status">{error}</p>}
-
-        <footer className="sim-picture-actions">
-          <button
-            type="button"
-            className="sim-picture-clear"
-            disabled={busy || count === 0}
-            onClick={() => setDraft(emptyPictureFaces())}
-          >
-            <Trash2 size={15} />{t('清空', 'Clear')}
-          </button>
-          <button type="button" onClick={onClose}>{t('取消', 'Cancel')}</button>
-          <button
-            type="button"
-            className="sim-picture-save"
-            disabled={busy}
-            onClick={() => {
-              if (!onSave(draft)) {
-                setError(t(
-                  '浏览器存储空间不足,图片尚未保存。请清理部分站点数据或减少图片后重试',
-                  'Browser storage is full, so the images were not saved. Free some site storage or use fewer images, then try again',
-                ));
-              }
+        {cropFace && editSources[cropFace] ? (
+          <PictureCropWorkspace
+            key={cropFace}
+            face={cropFace}
+            source={editSources[cropFace]}
+            initialCrop={faceCrops[cropFace]}
+            order={order}
+            busy={busy}
+            onCancel={() => setCropFace(null)}
+            onReplace={() => {
+              setTargetFace(cropFace);
+              faceInputRef.current?.click();
             }}
-          >
-            {count > 0 ? t('保存并使用', 'Save & use') : t('保存并关闭', 'Save & close')}
-          </button>
-        </footer>
+            onApply={(crop) => { void applyCrop(cropFace, crop); }}
+            t={t}
+          />
+        ) : (
+          <>
+            <div className="sim-picture-toolbar">
+              <button type="button" className="sim-picture-bulk" disabled={busy} onClick={() => bulkInputRef.current?.click()}>
+                {busy ? <Loader2 size={16} className="sim-spin" /> : <Upload size={16} />}
+                {t('一次选择 6 张', 'Choose 6 at once')}
+              </button>
+              <span>{t('顺序:U R F D L B', 'Order: U R F D L B')}</span>
+            </div>
+
+            <div className="sim-picture-net" aria-label={t('六面图片', 'Six face images')}>
+              {PICTURE_FACE_ORDER.map((face) => {
+                const [zh, en] = PICTURE_FACE_LABELS[face];
+                const hasImage = !!draft[face];
+                return (
+                  <div className="sim-picture-face" data-face={face} key={face}>
+                    <button
+                      type="button"
+                      className="sim-picture-face-main"
+                      onClick={() => {
+                        if (hasImage) setCropFace(face);
+                        else {
+                          setTargetFace(face);
+                          faceInputRef.current?.click();
+                        }
+                      }}
+                      disabled={busy}
+                      aria-label={hasImage ? t(`调整${zh}图片`, `Adjust ${en} image`) : t(`上传${zh}图片`, `Upload ${en} image`)}
+                    >
+                      {hasImage
+                        ? <img src={draft[face]} alt="" />
+                        : <ImagePlus size={22} />}
+                      {hasImage && <em><Crop size={12} />{t('调整', 'Adjust')}</em>}
+                      <span><strong>{face}</strong>{t(zh, en)}</span>
+                    </button>
+                    {hasImage && (
+                      <ClearButton
+                        variant="standalone"
+                        className="sim-picture-face-remove"
+                        onClick={() => removeFace(face)}
+                        ariaLabel={t(`移除${zh}图片`, `Remove ${en} image`)}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="sim-picture-notes">
+              <span>{t(`已设置 ${count}/6 面`, `${count}/6 faces set`)}</span>
+              <span>{t('图片只保存在当前浏览器,不会上传到服务器', 'Images stay in this browser and are not uploaded to a server')}</span>
+            </div>
+
+            <footer className="sim-picture-actions">
+              <button
+                type="button"
+                className="sim-picture-clear"
+                disabled={busy || count === 0}
+                onClick={() => {
+                  setDraft(emptyPictureFaces());
+                  setEditSources(emptyPictureFaces());
+                  setFaceCrops(defaultPictureCrops());
+                }}
+              >
+                <Trash2 size={15} />{t('清空', 'Clear')}
+              </button>
+              <button type="button" onClick={onClose}>{t('取消', 'Cancel')}</button>
+              <button
+                type="button"
+                className="sim-picture-save"
+                disabled={busy}
+                onClick={() => {
+                  if (!onSave(draft)) {
+                    setError(t(
+                      '浏览器存储空间不足,图片尚未保存。请清理部分站点数据或减少图片后重试',
+                      'Browser storage is full, so the images were not saved. Free some site storage or use fewer images, then try again',
+                    ));
+                  }
+                }}
+              >
+                {count > 0 ? t('保存并使用', 'Save & use') : t('保存并关闭', 'Save & close')}
+              </button>
+            </footer>
+          </>
+        )}
+        <input ref={bulkInputRef} type="file" accept="image/*" multiple hidden onChange={handleBulkFiles} />
+        <input ref={faceInputRef} type="file" accept="image/*" hidden onChange={handleFaceFile} />
+        {error && <p className="sim-picture-error" role="status">{error}</p>}
       </section>
     </div>
   );
@@ -3490,6 +3828,7 @@ function PuzzleSettings({
           <PictureCubeEditor
             open={pictureEditorOpen}
             initialFaces={settings.pictureFaces}
+            order={order}
             onClose={closePictureEditor}
             onSave={savePictureFaces}
             t={t}
