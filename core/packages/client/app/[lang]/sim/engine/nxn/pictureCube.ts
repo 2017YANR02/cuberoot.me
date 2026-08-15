@@ -25,13 +25,12 @@ const ATLAS_GUTTER = 2;
 const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 const EDIT_SOURCE_MAX_SIDE = 2048;
 
-export type PictureRotation = 0 | 90 | 180 | 270;
-
 export const PICTURE_CROP_MIN_ZOOM = 1;
 export const PICTURE_CROP_MAX_ZOOM = 4;
 
 export interface PictureCrop {
-  rotation: PictureRotation;
+  /** Clockwise rotation in degrees, normalized to [-180, 180]. */
+  rotation: number;
   /** Position of the image inside the square crop, normalized to [-1, 1]. */
   x: number;
   y: number;
@@ -45,6 +44,7 @@ export interface PictureCropGeometry {
   scale: number;
   drawnWidth: number;
   drawnHeight: number;
+  /** Full horizontal/vertical movement span that still covers the square crop. */
   overflowX: number;
   overflowY: number;
   offsetX: number;
@@ -67,6 +67,18 @@ export function normalizePictureFaces(value: unknown): PictureFaces {
 
 export function countPictureFaces(faces: PictureFaces): number {
   return PICTURE_FACE_ORDER.reduce((count, face) => count + (faces[face] ? 1 : 0), 0);
+}
+
+/** Whether a picture sticker should retain its original face-colour base. Stage
+ * masks keep their teaching colours even when picture bases are otherwise neutral. */
+export function pictureStickerShowsFaceColor(
+  showBaseColors: boolean,
+  source: string,
+  maskCode: number,
+): boolean {
+  return showBaseColors
+    || !source
+    || (maskCode !== FM_REGULAR && maskCode !== FM_OUTLINE);
 }
 
 export function pictureFacesKey(faces: PictureFaces): string {
@@ -123,13 +135,81 @@ export function normalizePictureCrop(
   value: { rotation?: number; x?: number; y?: number; zoom?: number } | null | undefined,
 ): PictureCrop {
   const rawRotation = Number.isFinite(value?.rotation) ? Number(value?.rotation) : 0;
-  const rotation = (((Math.round(rawRotation / 90) * 90) % 360) + 360) % 360 as PictureRotation;
+  let rotation = ((rawRotation % 360) + 360) % 360;
+  if (rotation > 180) rotation -= 360;
+  if (Object.is(rotation, -0)) rotation = 0;
   return {
     rotation,
     x: clampCropPosition(value?.x ?? 0),
     y: clampCropPosition(value?.y ?? 0),
     zoom: clampCropZoom(value?.zoom ?? PICTURE_CROP_MIN_ZOOM),
   };
+}
+
+interface PictureCropFrame {
+  cosine: number;
+  sine: number;
+  absCosine: number;
+  absSine: number;
+  cropProjection: number;
+  baseScale: number;
+  scale: number;
+  marginX: number;
+  marginY: number;
+  maxOffsetX: number;
+  maxOffsetY: number;
+}
+
+/** Geometry in the image's rotated coordinate system. The crop square projects
+ * to the same span on both image axes; using that projection as the cover floor
+ * keeps every corner filled at arbitrary angles, not only at quarter turns. */
+function pictureCropFrame(
+  width: number,
+  height: number,
+  size: number,
+  crop: PictureCrop,
+): PictureCropFrame {
+  const radians = crop.rotation * Math.PI / 180;
+  const rawCosine = Math.cos(radians);
+  const rawSine = Math.sin(radians);
+  const cosine = Math.abs(rawCosine) < 1e-12 ? 0 : rawCosine;
+  const sine = Math.abs(rawSine) < 1e-12 ? 0 : rawSine;
+  const absCosine = Math.abs(cosine);
+  const absSine = Math.abs(sine);
+  const cropProjection = size / 2 * (absCosine + absSine);
+  const baseScale = Math.max(
+    cropProjection * 2 / width,
+    cropProjection * 2 / height,
+  );
+  const scale = baseScale * crop.zoom;
+  const marginX = Math.max(0, width * scale / 2 - cropProjection);
+  const marginY = Math.max(0, height * scale / 2 - cropProjection);
+  return {
+    cosine,
+    sine,
+    absCosine,
+    absSine,
+    cropProjection,
+    baseScale,
+    scale,
+    marginX,
+    marginY,
+    maxOffsetX: absCosine * marginX + absSine * marginY,
+    maxOffsetY: absSine * marginX + absCosine * marginY,
+  };
+}
+
+function cropForScreenOffset(
+  crop: PictureCrop,
+  frame: PictureCropFrame,
+  offsetX: number,
+  offsetY: number,
+): PictureCrop {
+  return normalizePictureCrop({
+    ...crop,
+    x: frame.maxOffsetX > 0 ? offsetX / frame.maxOffsetX : 0,
+    y: frame.maxOffsetY > 0 ? offsetY / frame.maxOffsetY : 0,
+  });
 }
 
 /** Exact cover geometry shared by the crop preview and exported square. Positive
@@ -144,22 +224,25 @@ export function pictureCropGeometry(
   const safeHeight = Math.max(1, height);
   const safeSize = Math.max(1, size);
   const normalized = normalizePictureCrop(crop);
-  const sideways = normalized.rotation === 90 || normalized.rotation === 270;
-  const rotatedWidth = sideways ? safeHeight : safeWidth;
-  const rotatedHeight = sideways ? safeWidth : safeHeight;
-  const scale = Math.max(safeSize / rotatedWidth, safeSize / rotatedHeight) * normalized.zoom;
-  const drawnWidth = rotatedWidth * scale;
-  const drawnHeight = rotatedHeight * scale;
-  const overflowX = Math.max(0, drawnWidth - safeSize);
-  const overflowY = Math.max(0, drawnHeight - safeSize);
+  const frame = pictureCropFrame(safeWidth, safeHeight, safeSize, normalized);
+  const desiredOffsetX = normalized.x * frame.maxOffsetX;
+  const desiredOffsetY = normalized.y * frame.maxOffsetY;
+  const localOffsetX = Math.max(
+    -frame.marginX,
+    Math.min(frame.marginX, frame.cosine * desiredOffsetX + frame.sine * desiredOffsetY),
+  );
+  const localOffsetY = Math.max(
+    -frame.marginY,
+    Math.min(frame.marginY, -frame.sine * desiredOffsetX + frame.cosine * desiredOffsetY),
+  );
   return {
-    scale,
-    drawnWidth,
-    drawnHeight,
-    overflowX,
-    overflowY,
-    offsetX: normalized.x * overflowX / 2,
-    offsetY: normalized.y * overflowY / 2,
+    scale: frame.scale,
+    drawnWidth: (frame.absCosine * safeWidth + frame.absSine * safeHeight) * frame.scale,
+    drawnHeight: (frame.absSine * safeWidth + frame.absCosine * safeHeight) * frame.scale,
+    overflowX: frame.maxOffsetX * 2,
+    overflowY: frame.maxOffsetY * 2,
+    offsetX: frame.cosine * localOffsetX - frame.sine * localOffsetY,
+    offsetY: frame.sine * localOffsetX + frame.cosine * localOffsetY,
   };
 }
 
@@ -175,25 +258,25 @@ export function panPictureCropBy(
 ): PictureCrop {
   const current = normalizePictureCrop(crop);
   const currentGeometry = pictureCropGeometry(width, height, size, current);
-  const baseGeometry = pictureCropGeometry(width, height, size, {
-    ...current,
-    zoom: PICTURE_CROP_MIN_ZOOM,
-  });
+  const safeWidth = Math.max(1, width);
+  const safeHeight = Math.max(1, height);
   const safeSize = Math.max(1, size);
   const desiredOffsetX = currentGeometry.offsetX + (Number.isFinite(deltaX) ? deltaX : 0);
   const desiredOffsetY = currentGeometry.offsetY + (Number.isFinite(deltaY) ? deltaY : 0);
-  const neededZoomX = (safeSize + Math.abs(desiredOffsetX) * 2) / baseGeometry.drawnWidth;
-  const neededZoomY = (safeSize + Math.abs(desiredOffsetY) * 2) / baseGeometry.drawnHeight;
+  const baseFrame = pictureCropFrame(safeWidth, safeHeight, safeSize, {
+    ...current,
+    zoom: PICTURE_CROP_MIN_ZOOM,
+  });
+  const desiredLocalX = baseFrame.cosine * desiredOffsetX + baseFrame.sine * desiredOffsetY;
+  const desiredLocalY = -baseFrame.sine * desiredOffsetX + baseFrame.cosine * desiredOffsetY;
+  const neededScaleX = (baseFrame.cropProjection + Math.abs(desiredLocalX)) * 2 / safeWidth;
+  const neededScaleY = (baseFrame.cropProjection + Math.abs(desiredLocalY)) * 2 / safeHeight;
   const next = normalizePictureCrop({
     ...current,
-    zoom: Math.max(current.zoom, neededZoomX, neededZoomY),
+    zoom: Math.max(current.zoom, neededScaleX / baseFrame.baseScale, neededScaleY / baseFrame.baseScale),
   });
-  const nextGeometry = pictureCropGeometry(width, height, size, next);
-  return normalizePictureCrop({
-    ...next,
-    x: nextGeometry.overflowX > 0 ? desiredOffsetX * 2 / nextGeometry.overflowX : 0,
-    y: nextGeometry.overflowY > 0 ? desiredOffsetY * 2 / nextGeometry.overflowY : 0,
-  });
+  const nextFrame = pictureCropFrame(safeWidth, safeHeight, safeSize, next);
+  return cropForScreenOffset(next, nextFrame, desiredOffsetX, desiredOffsetY);
 }
 
 /** Zoom while keeping the image point beneath `anchor` under `target`. All
@@ -217,11 +300,35 @@ export function zoomPictureCropAt(
   const scaleRatio = nextGeometry.scale / currentGeometry.scale;
   const offsetX = targetX - (anchorX - currentGeometry.offsetX) * scaleRatio;
   const offsetY = targetY - (anchorY - currentGeometry.offsetY) * scaleRatio;
-  return normalizePictureCrop({
-    ...next,
-    x: nextGeometry.overflowX > 0 ? offsetX * 2 / nextGeometry.overflowX : 0,
-    y: nextGeometry.overflowY > 0 ? offsetY * 2 / nextGeometry.overflowY : 0,
-  });
+  const nextFrame = pictureCropFrame(
+    Math.max(1, width),
+    Math.max(1, height),
+    Math.max(1, size),
+    next,
+  );
+  return cropForScreenOffset(next, nextFrame, offsetX, offsetY);
+}
+
+/** Rotate without making a previously selected focal point jump. If the old
+ * offset no longer fits at the new angle, panPictureCropBy adds only the zoom
+ * required to preserve it while keeping the crop fully covered. */
+export function rotatePictureCropTo(
+  width: number,
+  height: number,
+  size: number,
+  crop: PictureCrop,
+  rotation: number,
+): PictureCrop {
+  const current = normalizePictureCrop(crop);
+  const currentGeometry = pictureCropGeometry(width, height, size, current);
+  return panPictureCropBy(
+    width,
+    height,
+    size,
+    normalizePictureCrop({ ...current, rotation, x: 0, y: 0 }),
+    currentGeometry.offsetX,
+    currentGeometry.offsetY,
+  );
 }
 
 export function drawPictureCrop(
@@ -509,11 +616,12 @@ export function renderPictureCubeNetSvg(options: {
   faces: PictureFaces;
   faceColors: Record<PictureFace, string>;
   bodyColor: string;
+  pictureBaseColors?: boolean;
   stickerOpacity?: number;
   stickering?: ArrayLike<number>;
 }): string {
   const {
-    order, facelets, faces, faceColors, bodyColor,
+    order, facelets, faces, faceColors, bodyColor, pictureBaseColors = false,
     stickerOpacity = 100, stickering,
   } = options;
   const opacity = Math.max(0, Math.min(100, stickerOpacity)) / 100;
@@ -551,7 +659,10 @@ export function renderPictureCubeNetSvg(options: {
       if (code === FM_OUTLINE) {
         cells.push(`<rect x="${x + 0.1}" y="${y + 0.1}" width="0.8" height="0.8" fill="none" stroke="${escapeSvgAttribute(OUTLINE_DEFAULT)}" stroke-width="0.08"/>`);
       }
-      cells.push(`<rect x="${x}" y="${y}" width="1" height="1" fill="none" stroke="${escapeSvgAttribute(bodyColor)}" stroke-width="0.06"/>`);
+      const edgeColor = source && showPicture && pictureBaseColors
+        ? faceColors[tile.face]
+        : bodyColor;
+      cells.push(`<rect x="${x}" y="${y}" width="1" height="1" fill="none" stroke="${escapeSvgAttribute(edgeColor)}" stroke-width="0.06"/>`);
     }
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${4 * order} ${3 * order}" role="img"><defs>${defs}</defs>${cells.join('')}</svg>`;

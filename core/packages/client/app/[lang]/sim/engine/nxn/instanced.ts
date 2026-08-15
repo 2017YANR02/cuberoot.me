@@ -22,7 +22,7 @@ import { FACE, COLORS, STICKER_GAP_DEFAULT } from "../define";
 import { rawMaterial, rawMaterialBasic, buildRawAttributes, attachRawAttributes, setRawCoreBorder, setRawStickerScale, type RawAttrs } from "./rawCore";
 import { mirrorTables } from "../mirror/mirrorGeometry";
 import {
-  FM_DIM, FM_DIM_WHITE, FM_FIXED_COLOR, FM_OUTLINE, type StickeringMaskFn,
+  FM_DIM, FM_DIM_WHITE, FM_FIXED_COLOR, FM_OUTLINE, FM_REGULAR, type StickeringMaskFn,
 } from "./stickering";
 import { injectStickerOutline, setStickerOutlineScale, type OutlineUniform } from "./stickerOutline";
 import { engineHomeSid } from "./netIndex";
@@ -33,6 +33,7 @@ import {
   countPictureFaces,
   emptyPictureFaces,
   injectPictureCube,
+  pictureStickerShowsFaceColor,
   pictureFacesKey,
   type PictureFaces,
   type PictureSlotAttributes,
@@ -160,6 +161,8 @@ export default class InstancedRenderer extends THREE.Group {
   private pictureAttrs!: PictureSlotAttributes;
   private pictureUniforms!: PictureUniformController;
   private pictureFaces: PictureFaces = emptyPictureFaces();
+  private pictureBaseColors = false;
+  private pictureFallbackColor = new THREE.Color(COLORS.Core);
   private pictureKey = '';
   private pictureAtlas: THREE.Texture | null = null;
   private pictureLoadToken = 0;
@@ -1192,6 +1195,11 @@ export default class InstancedRenderer extends THREE.Group {
       if (!cubelet) continue;
       const label = cubelet.colors[slot.face];
       this.resolveStickerColor(i, label);
+      const code = this.stickeringCodes?.[i] ?? FM_REGULAR;
+      const pictureSource = this.pictureFaces[this.pictureAttrs.faces[i]];
+      if (!pictureStickerShowsFaceColor(this.pictureBaseColors, pictureSource, code)) {
+        this.tmpColor.copy(this.pictureFallbackColor);
+      }
       this.staticSticker.setColorAt(i, this.tmpColor);
       this.movingSticker.setColorAt(i, this.tmpColor);
       if (updateHint) {
@@ -1251,6 +1259,7 @@ export default class InstancedRenderer extends THREE.Group {
     if (key === this.pictureKey) return;
     this.pictureKey = key;
     this.pictureFaces = next;
+    this.refreshStickerColors();
     const token = ++this.pictureLoadToken;
     // Hide the previous picture while its replacement is decoding; never show a
     // half-old, half-new cube.
@@ -1276,6 +1285,15 @@ export default class InstancedRenderer extends THREE.Group {
     }).catch((error) => {
       if (token === this.pictureLoadToken) console.warn('[sim] picture cube atlas failed', error);
     });
+  }
+
+  /** Keep or neutralize the original face-colour bevel under picture stickers. */
+  setPictureBaseColors(show: boolean, fallbackColor: string): void {
+    const nextColor = new THREE.Color(fallbackColor);
+    if (this.pictureBaseColors === show && this.pictureFallbackColor.equals(nextColor)) return;
+    this.pictureBaseColors = show;
+    this.pictureFallbackColor.copy(nextColor);
+    this.refreshStickerColors();
   }
 
   /** 描边色(FM_OUTLINE 那一档)。默认 define.COLORS.High。 */

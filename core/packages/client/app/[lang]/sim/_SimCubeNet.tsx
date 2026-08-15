@@ -96,6 +96,7 @@ interface Props {
   userMoveRef: RefObject<((action: TwistAction | string) => void) | null>;
   faceColors: Record<FaceLetter, string>;
   pictureCube?: boolean;
+  pictureBaseColors?: boolean;
   pictureFaces?: PictureFaces;
   getStickeringMask?: (cube: CubeType) => StickeringMaskFn | null;
   /** 手拧(设置面板):false = 拖贴纸不转层。平面图没有视角可转,所以直接不接手势。 */
@@ -111,7 +112,7 @@ function nxnCube(world: World | null): CubeType | null {
 
 export default function SimCubeNet({
   getWorld, worldTick, order, userMoveRef, faceColors,
-  pictureCube = false, pictureFaces, getStickeringMask, pointerTurns = true,
+  pictureCube = false, pictureBaseColors = false, pictureFaces, getStickeringMask, pointerTurns = true,
 }: Props) {
   const t = useT();
   const [, force] = useState(0);
@@ -267,7 +268,7 @@ export default function SimCubeNet({
                 width={1}
                 height={1}
                 fill="transparent"
-                stroke="var(--foreground)"
+                stroke={pictureBaseColors ? faceColors[picture.face] : 'var(--foreground)'}
                 strokeWidth={STROKE_W}
               />
             </g>,
