@@ -86,6 +86,182 @@
   flex-wrap: wrap;
 }
 
+/* 纪录诞生地排名 */
+.cs-record-section {
+  max-width: 1120px;
+}
+
+.cs-record-note {
+  max-width: 920px;
+  margin: -4px 0 16px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.cs-record-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.cs-record-heading {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.cs-record-city-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.cs-record-search {
+  width: min(240px, 100%);
+}
+
+.cs-record-search-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  color: var(--text);
+  padding: 6px 30px 6px 10px;
+  font: inherit;
+  font-size: 0.78rem;
+  outline: none;
+}
+
+.cs-record-search-input:focus {
+  border-color: var(--accent);
+}
+
+.cs-record-search-input::placeholder {
+  color: var(--muted);
+}
+
+.cs-record-search-summary {
+  min-height: 18px;
+  margin: -4px 0 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.cs-record-table-wrap {
+  overflow-x: auto;
+}
+
+.cs-record-heading + .cs-record-table-wrap {
+  margin-top: 8px;
+}
+
+.cs-record-table {
+  width: 100%;
+  min-width: 360px;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.78rem;
+}
+
+.cs-record-table th,
+.cs-record-table td {
+  padding: 7px 6px;
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.cs-record-table th {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.cs-record-table th:first-child,
+.cs-record-table td:first-child {
+  width: 28px;
+  padding-left: 0;
+}
+
+.cs-record-table th:nth-last-child(-n + 3),
+.cs-record-table td:nth-last-child(-n + 3) {
+  width: 44px;
+  text-align: right;
+}
+
+.cs-record-rank {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-record-sort {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.cs-record-sort:hover {
+  color: var(--text);
+}
+
+.cs-record-place {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+}
+
+.cs-record-place-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.cs-record-place-name {
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cs-record-country {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cs-record-count {
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-record-count-active {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.cs-record-empty {
+  padding: 24px 0;
+}
+
 .cs-scope-tag {
   font-size: 0.72rem;
   font-weight: 400;
@@ -459,6 +635,11 @@
 }
 
 @media (max-width: 720px) {
+  .cs-record-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
   .cs-geo-row {
     grid-template-columns: 82px 1fr auto;
     font-size: 0.78rem;
@@ -483,5 +664,11 @@
   .cs-page { padding: 12px; }
   .cs-title { font-size: 1.2rem; }
   .cs-section { margin-bottom: 24px; }
+  .cs-record-search { width: 100%; }
+  .cs-record-table { min-width: 340px; }
+  .cs-record-table th,
+  .cs-record-table td { padding: 7px 4px; }
+  .cs-record-table th:nth-last-child(-n + 3),
+  .cs-record-table td:nth-last-child(-n + 3) { width: 40px; }
   .cs-bar-row { grid-template-columns: 90px 1fr 40px; font-size: 0.72rem; gap: 6px; }
 }

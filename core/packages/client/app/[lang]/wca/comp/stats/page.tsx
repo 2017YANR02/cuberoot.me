@@ -20,6 +20,7 @@ import { compHref } from '@/lib/comp-link';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
+import { RecordPlaceRankings } from './RecordPlaceRankings';
 import './calendar_stats.css';
 import { tr } from '@/i18n/tr';
 
@@ -196,6 +197,8 @@ export default function CalendarStatsPage() {
         })}</h1>
         </div>
       </header>
+
+      <RecordPlaceRankings />
 
       <div className="cs-toolbar">
         <CountryInput
