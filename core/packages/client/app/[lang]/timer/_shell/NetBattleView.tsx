@@ -125,11 +125,13 @@ const NET_SELECTOR_EVENTS = NET_EVENTS.map(netEventToSelectorId);
 interface NetBattleViewProps {
   /** 人数下拉(TimerShell 构建),注入到顶栏 */
   playersControl?: ReactNode;
+  presenceControl?: ReactNode;
+  onPresenceChange?: (mix: { normal: number; smart: number }) => void;
   /** 彻底退出联机模式(清 room + 人数回单人)。 */
   onExitNet?: () => void;
 }
 
-export default function NetBattleView({ playersControl, onExitNet }: NetBattleViewProps) {
+export default function NetBattleView({ playersControl, presenceControl, onPresenceChange, onExitNet }: NetBattleViewProps) {
   useDocumentTitle('联机对战', 'Online Battle');
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
@@ -680,6 +682,11 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
       );
     },
   });
+  useEffect(() => {
+    onPresenceChange?.(bluetoothCube.status.connected
+      ? { normal: 0, smart: 1 }
+      : { normal: 1, smart: 0 });
+  }, [bluetoothCube.status.connected, onPresenceChange]);
 
   /**
    * 自动预备:拧完打乱把魔方放稳 2 秒(或 U U' U U')= 替你按一下「预备」。
@@ -1007,6 +1014,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
         )}
       </div>
       <div className="shell-topbar-right">
+        {presenceControl}
         {room && (
           <>
             <button

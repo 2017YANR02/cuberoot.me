@@ -238,9 +238,11 @@ type ChartKind = 'histogram' | 'trend' | 'scatter' | 'hour' | 'heatmap';
 interface SoloViewProps {
   /** The players (人数) select node, injected by the shell at the topbar left. */
   playersControl?: React.ReactNode;
+  presenceControl?: React.ReactNode;
+  onPresenceChange?: (mix: { normal: number; smart: number }) => void;
 }
 
-export default function SoloView({ playersControl }: SoloViewProps) {
+export default function SoloView({ playersControl, presenceControl, onPresenceChange }: SoloViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const settings = useSettings();
@@ -1111,6 +1113,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     return () => { subs.delete(mirror); };
   }, []);
   const cubeConnected = bluetoothCube.status.connected;
+  useEffect(() => {
+    onPresenceChange?.(cubeConnected ? { normal: 0, smart: 1 } : { normal: 1, smart: 0 });
+  }, [cubeConnected, onPresenceChange]);
   const cubeSolved = bluetoothCube.solved;
   useEffect(() => {
     if (!cubeConnected) { setLiveMoves([]); setAlgAnchored(false); return; }
@@ -2262,6 +2267,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           {!isDesktop && solverHintPanel}
         </div>
         <div className="shell-topbar-right">
+          {presenceControl}
           {stageTrainingAllowed && (
             <button
               type="button"

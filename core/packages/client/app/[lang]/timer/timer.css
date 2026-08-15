@@ -95,6 +95,80 @@
   text-overflow: ellipsis;
 }
 
+.timer-presence {
+  position: relative;
+  display: inline-flex;
+  align-self: center;
+}
+.timer-presence-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 34px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  cursor: pointer;
+}
+.timer-presence-trigger:hover,
+.timer-presence-trigger.is-open {
+  background: var(--shell-hover);
+  color: var(--foreground);
+}
+.timer-presence-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.timer-presence-total {
+  min-width: 8px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.timer-presence-panel {
+  /* anchored-panel: clamped (usePanelClamp in TimerPresencePanel) */
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  width: max-content;
+  min-width: 172px;
+  max-width: min(220px, calc(100vw - 16px));
+  padding: 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--popover);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--foreground) 40%, transparent);
+  color: var(--foreground);
+  z-index: 60;
+}
+.timer-presence-title {
+  padding: 2px 4px 6px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 600;
+}
+.timer-presence-row {
+  display: grid;
+  grid-template-columns: 16px max-content minmax(18px, auto);
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 2px 4px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.timer-presence-row svg { color: var(--muted-foreground); }
+.timer-presence-row.is-smart svg { color: var(--signal-success); }
+.timer-presence-row strong {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+}
+
 /* --- Scramble strip ----------------------------------------- */
 /* 内距 / 字体 / 字号 / 底色 / 下边框都由 shell.css 的 .timing-surface-scramble .scramble-strip
    接管(它把底色改成 transparent、边框去掉,让打乱区直接坐在壳背景上)。 */
