@@ -222,10 +222,6 @@
   background: color-mix(in srgb, var(--foreground) 2.5%, transparent);
 }
 
-.cs-record-row-expanded > td {
-  border-bottom-color: transparent;
-}
-
 .cs-record-place-button {
   display: inline-flex;
   max-width: 100%;
@@ -252,14 +248,9 @@
   outline-offset: 2px;
 }
 
-.cs-record-expand-icon {
+.cs-record-dialog-icon {
   flex: 0 0 auto;
   color: var(--muted);
-  transition: transform 0.15s ease;
-}
-
-.cs-record-place-button[aria-expanded="true"] .cs-record-expand-icon {
-  transform: rotate(180deg);
 }
 
 .cs-record-place {
@@ -317,28 +308,80 @@
   cursor: default;
 }
 
-.cs-record-detail-row > td {
-  width: auto !important;
-  padding: 0 6px 12px 34px !important;
-  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
-  text-align: left !important;
+.cs-record-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--foreground) 38%, transparent);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
 }
 
-.cs-record-detail-panel {
-  padding-left: 12px;
-  border-left: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+.cs-record-modal {
+  display: flex;
+  width: min(860px, 94vw);
+  max-height: min(780px, 88vh);
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: var(--popover);
+  box-shadow: 0 24px 80px color-mix(in srgb, var(--foreground) 22%, transparent);
+  color: var(--popover-foreground);
+}
+
+.cs-record-modal-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px 13px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.cs-record-modal-title-line {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.cs-record-modal-title {
+  overflow: hidden;
+  margin: 0;
+  color: var(--popover-foreground);
+  font-size: 1rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cs-record-modal-close {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.cs-record-modal-body {
+  min-height: 120px;
+  padding: 10px 18px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .cs-record-detail-state {
-  padding: 12px 0;
+  padding: 32px 0;
   color: var(--muted);
+  text-align: center;
 }
 
 .cs-record-detail-summary {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 3px 0 6px;
+  padding: 0 0 6px;
   color: var(--muted);
   font-size: 0.7rem;
 }
@@ -846,8 +889,17 @@
   .cs-record-table td { padding: 7px 4px; }
   .cs-record-table th:nth-last-child(-n + 3),
   .cs-record-table td:nth-last-child(-n + 3) { width: 40px; }
-  .cs-record-detail-row > td { padding: 0 4px 12px 28px !important; }
-  .cs-record-detail-panel { padding-left: 9px; }
+  .cs-record-modal-backdrop { align-items: flex-end; padding: 0; }
+  .cs-record-modal {
+    width: 100%;
+    max-height: 88dvh;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 14px 14px 0 0;
+  }
+  .cs-record-modal-header { padding: 14px 14px 12px; }
+  .cs-record-modal-body { padding: 9px 14px max(16px, env(safe-area-inset-bottom)); }
   .cs-record-detail-item {
     grid-template-columns: minmax(0, 1fr) 110px;
     row-gap: 4px;
