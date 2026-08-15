@@ -111,3 +111,35 @@ describe('计时器每次进入的打乱默认值', () => {
     expect(settings.getSettings().wcaDifficultyOn).toBe(false);
   });
 });
+
+describe('滚动统计列设置迁移', () => {
+  beforeEach(() => { vi.unstubAllGlobals(); });
+
+  it('把旧 ao 数字窗口迁成统一的统计 key，并清掉旧字段', async () => {
+    const mem = installStorage({
+      [KEY]: JSON.stringify({
+        statsAoWindows: [100, 5],
+        scrambleClickMigrated: true,
+        recordGyroMigrated: true,
+      }),
+    });
+    const { getSettings } = await freshSettings();
+    expect(getSettings().statsRollingColumns).toEqual(['ao5', 'ao100']);
+
+    const saved = JSON.parse(mem.get(KEY) as string);
+    expect(saved.statsRollingColumns).toEqual(['ao5', 'ao100']);
+    expect(saved).not.toHaveProperty('statsAoWindows');
+  });
+
+  it('保留用户已选择的 mo3 和自定义 ao', async () => {
+    installStorage({
+      [KEY]: JSON.stringify({
+        statsRollingColumns: ['ao100', 'mo3'],
+        scrambleClickMigrated: true,
+        recordGyroMigrated: true,
+      }),
+    });
+    const { getSettings } = await freshSettings();
+    expect(getSettings().statsRollingColumns).toEqual(['mo3', 'ao100']);
+  });
+});

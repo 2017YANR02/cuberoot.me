@@ -4,8 +4,16 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { X, GitCompare, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical, Check, Clipboard, MessageSquare } from 'lucide-react';
 import type { Solve, Penalty } from '../_lib/types';
 import { effectiveMs } from '../_lib/types';
-import { formatMs, formatEventMs, formatSolveResult, averageOfN } from '../_lib/stats';
+import { formatMs, formatEventMs, formatSolveResult } from '../_lib/stats';
+import {
+  DEFAULT_ROLLING_STAT_COLUMNS,
+  parseRollingStatKey,
+  rollingStatCurrent,
+  sanitizeRollingStatColumns,
+  type RollingStatKey,
+} from '../_lib/rolling_stats';
 import CompareSolvesModal from './CompareSolvesModal';
+import RollingStatsPicker from './RollingStatsPicker';
 import { computeAllTags, TAG_DEFS, ALL_TAG_IDS } from '../_lib/storage/auto_tag';
 import { dayKeyOf } from '../_lib/stats_buckets';
 import type { TagId } from '../_lib/storage/auto_tag';
@@ -30,9 +38,8 @@ interface Props {
    *  Tapping the row does the same thing — the solve page now opens with the
    *  reconstruction already on it, so there is no separate «复盘» action. */
   onQuickComment?: (solve: Solve, index: number) => void;
-  /** cstimer-style per-row rolling-average columns (e.g. [5, 12] → ao5/ao12
-   *  ending at each solve). Defaults to [5, 12]; pass [] to hide the columns. */
-  aoWindows?: number[];
+  /** Per-row rolling-stat columns ending at each solve. */
+  rollingStatColumns?: RollingStatKey[];
 }
 
 /** Parse a "5.0" / "1:23.45" / "12.3" string into ms. Returns null on failure. */
@@ -82,7 +89,7 @@ const MOBILE_TAG_CAP = 2;
 export default function HistoryPanel({
   solves, isZh, onRowClick, onBulkDelete,
   onQuickPenalty, onQuickDelete, onQuickComment,
-  aoWindows = [5, 12],
+  rollingStatColumns = DEFAULT_ROLLING_STAT_COLUMNS,
 }: Props) {
   const [query, setQuery] = useState('');
   const [compareMode, setCompareMode] = useState(false);
@@ -253,35 +260,37 @@ export default function HistoryPanel({
     return m;
   }, [solves]);
 
-  // cstimer-style rolling aoN columns: for each window n, aoCols[n][i] is the
-  // trimmed aoN ending at the (original-order) solve index i. O(N·n) per window.
-  // aoPb[n][i] flags the rows where that aoN set a new running best (PB) — used
-  // to drop a "PB" badge straight into the matching ao column.
+  // cstimer-style rolling columns: each value ends at the original-order solve
+  // index. statPb flags the rows where that statistic set a new running best.
   // The panel only ever shows one event's history, so per-event decisions can
   // be made from the first solve.
   const panelEvent = solves.length > 0 ? solves[0].event : null;
   // MBLD ranks on points, not time — a rolling mean of its attempt durations is
   // a garbage number, so the columns are dropped rather than filled with one.
-  const visibleAoWindows = (panelEvent === '333mbld' ? [] : aoWindows).filter(n => n >= 2);
-  const aoColKey = visibleAoWindows.join(',');
-  const { aoCols, aoPb } = useMemo(() => {
-    const cols: Record<number, (number | null)[]> = {};
-    const pb: Record<number, boolean[]> = {};
-    for (const n of visibleAoWindows) {
+  const visibleStatColumns = panelEvent === '333mbld'
+    ? []
+    : sanitizeRollingStatColumns(rollingStatColumns);
+  const statColumnKey = visibleStatColumns.join(',');
+  const { statCols, statPb } = useMemo(() => {
+    const cols: Partial<Record<RollingStatKey, (number | null)[]>> = {};
+    const pb: Partial<Record<RollingStatKey, boolean[]>> = {};
+    for (const key of visibleStatColumns) {
+      const definition = parseRollingStatKey(key);
+      if (!definition) continue;
       const arr: (number | null)[] = new Array(solves.length).fill(null);
       const pbArr: boolean[] = new Array(solves.length).fill(false);
       let best = Infinity;
-      for (let i = n - 1; i < solves.length; i++) {
-        const v = averageOfN(solves.slice(i - n + 1, i + 1), n);
+      for (let i = definition.size - 1; i < solves.length; i++) {
+        const v = rollingStatCurrent(solves.slice(i - definition.size + 1, i + 1), key);
         arr[i] = v;
         if (v != null && Number.isFinite(v) && v < best) { best = v; pbArr[i] = true; }
       }
-      cols[n] = arr;
-      pb[n] = pbArr;
+      cols[key] = arr;
+      pb[key] = pbArr;
     }
-    return { aoCols: cols, aoPb: pb };
+    return { statCols: cols, statPb: pb };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [solves, aoColKey]);
+  }, [solves, statColumnKey]);
 
   // Each history row is its own grid, so `auto` ao columns would size to that
   // row's own content and never line up across rows. Pin a FIXED ao width =
@@ -289,22 +298,29 @@ export default function HistoryPanel({
   // resolves identically (and adapts per event: 3x3 is narrow, big cubes wider).
   // The rolling-average columns are formatted per-event — FMC renders move
   // counts, not times.
-  const fmtAo = useCallback(
+  const fmtRollingStat = useCallback(
     (v: number | null) => (panelEvent === null ? formatMs(v) : formatEventMs(panelEvent, v)),
     [panelEvent],
   );
-  const aoMaxLen = useMemo(() => {
+  const statMaxLen = useMemo(() => {
     let max = 4; // "0.00"
-    for (const n of visibleAoWindows) {
-      max = Math.max(max, `ao${n}`.length);
-      for (const v of (aoCols[n] ?? [])) max = Math.max(max, (v == null ? '-' : fmtAo(v)).length);
+    for (const key of visibleStatColumns) {
+      max = Math.max(max, key.length);
+      for (const value of (statCols[key] ?? [])) {
+        max = Math.max(max, (value == null ? '-' : fmtRollingStat(value)).length);
+      }
     }
     return max;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aoCols, aoColKey, fmtAo]);
-  const aoColW = `calc(${aoMaxLen}ch + 28px)`;
-  const aoTmpl = visibleAoWindows.length ? ' ' + visibleAoWindows.map(() => aoColW).join(' ') : '';
-  const headTmpl = `32px minmax(0,1fr)${aoTmpl}`;
+  }, [statCols, statColumnKey, fmtRollingStat]);
+  const statColumnWidth = `calc(${statMaxLen}ch + 28px)`;
+  const statTemplate = visibleStatColumns.length
+    ? ' ' + visibleStatColumns.map(() => statColumnWidth).join(' ')
+    : '';
+  const headTmpl = `32px minmax(0,1fr)${statTemplate}`;
+  const visiblePbTagIds = new Set<TagId>();
+  if (visibleStatColumns.includes('ao5')) visiblePbTagIds.add('pb-ao5');
+  if (visibleStatColumns.includes('ao12')) visiblePbTagIds.add('pb-ao12');
 
   const trimmed = query.trim().toLowerCase();
 
@@ -571,6 +587,7 @@ export default function HistoryPanel({
         <span>{tr({ zh: '历史', en: 'History'
         })}</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {panelEvent !== '333mbld' && <RollingStatsPicker className="history-stat-picker" />}
           {!isMobile && (
             <button
               type="button"
@@ -1043,7 +1060,7 @@ export default function HistoryPanel({
             <span>{panelEvent === '333mbld'
               ? tr({ zh: '成绩', en: 'Result' })
               : tr({ zh: '时间', en: 'Time' })}</span>
-            {visibleAoWindows.map(n => <span key={n} className="hao-head">ao{n}</span>)}
+            {visibleStatColumns.map(key => <span key={key} className="hao-head">{key}</span>)}
           </div>
         )}
         {filteredReversed.map((s, listIdx) => {
@@ -1064,7 +1081,7 @@ export default function HistoryPanel({
             rowStyle = { background: 'rgba(153, 90, 77, 0.18)', boxShadow: 'inset 2px 0 0 #995a4d' };
           }
           const lead = (compareMode || selectMode) ? '14px ' : '';
-          rowStyle = { ...rowStyle, gridTemplateColumns: `${lead}32px minmax(0,1fr)${aoTmpl}` };
+          rowStyle = { ...rowStyle, gridTemplateColumns: `${lead}32px minmax(0,1fr)${statTemplate}` };
 
           const handleRowClick = () => {
             // A long-press just opened the quick-action sheet — swallow the
@@ -1142,11 +1159,13 @@ export default function HistoryPanel({
                     flag/tag (penalty also drops the 'dnf'/'dns'/'plus2' chips below). */}
                 {s.comment && <span className="comment-flag" title={s.comment}>·</span>}
                 {(() => {
-                  // pb-ao5 / pb-ao12 render as "PB" badges inside the ao5 / ao12
-                  // columns instead — keep only single-PB + the descriptive tags here.
+                  // Auto-tagged PBs move into their matching visible columns.
+                  // If the user replaces that column, keep the tag beside the time.
                   // 'dnf'/'dns'/'plus2' are conveyed by the time column + (+2) flag —
-                  // drop the redundant chips. pb-ao5/pb-ao12 render in their ao columns.
-                  const ts = (tagsByid.get(s.id) ?? []).filter(t => t !== 'pb-ao5' && t !== 'pb-ao12' && t !== 'dnf' && t !== 'dns' && t !== 'plus2');
+                  // drop the redundant chips.
+                  const ts = (tagsByid.get(s.id) ?? []).filter(t => (
+                    !visiblePbTagIds.has(t) && t !== 'dnf' && t !== 'dns' && t !== 'plus2'
+                  ));
                   if (ts.length === 0) return null;
                   const cap = isMobile ? MOBILE_TAG_CAP : ts.length;
                   const shown = ts.slice(0, cap);
@@ -1181,11 +1200,11 @@ export default function HistoryPanel({
                   );
                 })()}
               </div>
-              {visibleAoWindows.map(n => (
-                <div className="hao" key={n}>
+              {visibleStatColumns.map(key => (
+                <div className="hao" key={key}>
                   <span className="record-num-cell">
-                    {fmtAo(aoCols[n]?.[realIdx] ?? null)}
-                    {aoPb[n]?.[realIdx] && <RecordBadge record="PB" variant="inline" />}
+                    {fmtRollingStat(statCols[key]?.[realIdx] ?? null)}
+                    {statPb[key]?.[realIdx] && <RecordBadge record="PB" variant="inline" />}
                   </span>
                 </div>
               ))}

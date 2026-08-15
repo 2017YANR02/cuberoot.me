@@ -1,12 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { X, Plus } from 'lucide-react';
+import { X } from 'lucide-react';
 import type { Solve, EventId } from '../_lib/types';
 import {
   subXBreakdown,
-  averageOfN,
-  bestAverageOfN,
   bestSingle,
   bestMbldSolve,
   formatMbldResult,
@@ -25,30 +23,23 @@ import {
   formatEventMs,
   formatSolveResult,
 } from '../_lib/stats';
-import { useSettings, updateSettings, MAX_AO_WINDOWS } from '../_lib/settings';
+import { useSettings, updateSettings } from '../_lib/settings';
+import {
+  parseRollingStatKey,
+  rollingStatBest,
+  rollingStatCurrent,
+  sanitizeRollingStatColumns,
+  type RollingStatKey,
+} from '../_lib/rolling_stats';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { tr } from '@/i18n/tr';
+import RollingStatsPicker from './RollingStatsPicker';
 
 interface Props {
   solves: Solve[];
-  isZh: boolean;
   /** Optional — the table layout is event-agnostic, but the *values* are not:
    *  pass it and FMC renders move counts instead of times. */
   event?: EventId;
-}
-
-/** Preset average windows offered in the inline "+ window" picker. */
-const AO_PRESETS = [5, 12, 25, 50, 100, 200, 1000, 10000] as const;
-const MIN_AO = 3;
-const MAX_AO = 100000;
-
-function sanitizeWindows(list: number[]): number[] {
-  const out: number[] = [];
-  for (const raw of list) {
-    const n = Math.floor(Number(raw));
-    if (Number.isFinite(n) && n >= MIN_AO && n <= MAX_AO && !out.includes(n)) out.push(n);
-  }
-  return out.sort((a, b) => a - b);
 }
 
 /** A formatted value counts as "empty" when it's a dash placeholder. */
@@ -56,39 +47,25 @@ function isEmptyVal(v: string): boolean {
   return v === '-' || v === '—';
 }
 
-export default function StatsPanel({ solves, isZh, event }: Props) {
+export default function StatsPanel({ solves, event }: Props) {
   /** Event-aware value formatter — FMC values are move counts, not times. */
   const f = (ms: number | null) => (event ? formatEventMs(event, ms) : formatMs(ms));
   const settings = useSettings();
   const [expanded, setExpanded] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
-  const [customDraft, setCustomDraft] = useState('');
 
-  const windows = useMemo(
-    () => sanitizeWindows(settings.statsAoWindows ?? []),
-    [settings.statsAoWindows],
+  const columns = useMemo(
+    () => sanitizeRollingStatColumns(settings.statsRollingColumns),
+    [settings.statsRollingColumns],
   );
 
-  const atMax = windows.length >= MAX_AO_WINDOWS;
-
-  const setWindows = (next: number[]) =>
-    updateSettings({ statsAoWindows: sanitizeWindows(next).slice(0, MAX_AO_WINDOWS) });
-  const removeWindow = (n: number) => setWindows(windows.filter(w => w !== n));
-  const toggleWindow = (n: number) => {
-    if (windows.includes(n)) { setWindows(windows.filter(w => w !== n)); return; }
-    if (atMax) return; // cap reached — remove one first
-    setWindows([...windows, n]);
-  };
-  const addCustom = () => {
-    if (atMax) return;
-    const n = Math.floor(Number(customDraft.trim()));
-    if (Number.isFinite(n) && n >= MIN_AO && n <= MAX_AO) { setWindows([...windows, n]); setCustomDraft(''); }
+  const removeColumn = (key: RollingStatKey) => {
+    updateSettings({ statsRollingColumns: columns.filter(column => column !== key) });
   };
 
-  // ── cstimer-style current/best rows: time (single) + each ao window ──
+  // ── cstimer-style current/best rows: time (single) + configured rolling stats ──
   const table = useMemo(() => {
     const last = solves.length ? solves[solves.length - 1] : null;
-    const rows: { key: string; label: string; cur: string; best: string; n?: number }[] = [
+    const rows: { key: string; label: string; cur: string; best: string; stat?: RollingStatKey }[] = [
       {
         key: 'time',
         label: tr({ zh: '单次', en: 'time'
@@ -102,17 +79,17 @@ export default function StatsPanel({ solves, isZh, event }: Props) {
           : f(bestSingle(solves, event)),
       },
     ];
-    for (const n of windows) {
+    for (const key of columns) {
       rows.push({
-        key: `ao${n}`,
-        label: `ao${n}`,
-        cur: f(averageOfN(solves, n)),
-        best: f(bestAverageOfN(solves, n)),
-        n,
+        key,
+        label: key,
+        cur: f(rollingStatCurrent(solves, key)),
+        best: f(rollingStatBest(solves, key)),
+        stat: key,
       });
     }
     return rows;
-  }, [solves, windows, isZh, event]);
+  }, [solves, columns, event]);
 
   // ── footer + extras ──
   const count = solves.length;
@@ -130,15 +107,17 @@ export default function StatsPanel({ solves, isZh, event }: Props) {
       { lbl: tr({ zh: 'bo3 最佳', en: 'best bo3' }), val: f(bestBestOfN(solves, 3)) },
     ];
     // Live BPA/WPA for any window that is one solve away from completing.
-    for (const n of windows) {
-      if (solves.length === n - 1) {
-        rows.push({ lbl: `BPA/WPA(${n})`, val: `${f(bpa(solves, n))} / ${f(wpa(solves, n))}` });
+    for (const key of columns) {
+      const definition = parseRollingStatKey(key);
+      if (definition?.kind === 'average' && solves.length === definition.size - 1) {
+        rows.push({
+          lbl: `BPA/WPA(${definition.size})`,
+          val: `${f(bpa(solves, definition.size))} / ${f(wpa(solves, definition.size))}`,
+        });
       }
     }
     return rows;
-  }, [solves, windows, isZh, event]);
-
-  const presetActive = (n: number) => windows.includes(n);
+  }, [solves, columns, event]);
 
   return (
     <div className="stats-panel">
@@ -153,13 +132,13 @@ export default function StatsPanel({ solves, isZh, event }: Props) {
           <div className="stats-row" key={r.key}>
             <span className="st-label">
               {r.label}
-              {r.n !== undefined && (
+              {r.stat !== undefined && (
                 <button
                   type="button"
                   className="st-remove"
-                  onClick={() => removeWindow(r.n!)}
-                  title={isZh ? `移除 ao${r.n}` : `Remove ao${r.n}`}
-                  aria-label={isZh ? `移除 ao${r.n}` : `Remove ao${r.n}`}
+                  onClick={() => removeColumn(r.stat!)}
+                  title={tr({ zh: `移除 ${r.stat}`, en: `Remove ${r.stat}` })}
+                  aria-label={tr({ zh: `移除 ${r.stat}`, en: `Remove ${r.stat}` })}
                 >
                   <X size={11} />
                 </button>
@@ -175,59 +154,7 @@ export default function StatsPanel({ solves, isZh, event }: Props) {
         ))}
       </div>
 
-      {/* Inline "+ add window" picker */}
-      <div className="stats-ao-add">
-        <button type="button" className="stats-ao-add-btn" onClick={() => setAddOpen(o => !o)} aria-expanded={addOpen}>
-          <Plus size={13} /> {tr({ zh: '添加窗口', en: 'Add window'
-        })}
-        </button>
-        {addOpen && (
-          <>
-            <div className="stats-ao-backdrop" onClick={() => setAddOpen(false)} />
-            <div className="stats-ao-pop">
-              <div className="stats-ao-presets">
-                {AO_PRESETS.map(p => {
-                  const active = presetActive(p);
-                  return (
-                    <button
-                      type="button"
-                      key={p}
-                      className={`stats-ao-chip${active ? ' active' : ''}`}
-                      onClick={() => toggleWindow(p)}
-                      disabled={!active && atMax}
-                    >
-                      ao{p}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="stats-ao-custom">
-                <input
-                  className="stats-ao-custom-input"
-                  type="number"
-                  min={MIN_AO}
-                  max={MAX_AO}
-                  value={customDraft}
-                  placeholder={tr({ zh: '自定义 N', en: 'Custom N'
-                })}
-                  onChange={(e) => setCustomDraft(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') addCustom(); }}
-                  disabled={atMax}
-                />
-                <button type="button" className="stats-ao-custom-add" onClick={addCustom} disabled={atMax}>
-                  {tr({ zh: '添加', en: 'Add'
-                })}
-                </button>
-              </div>
-              {atMax && (
-                <div className="stats-ao-hint">
-                  {(isZh ? `最多 ${MAX_AO_WINDOWS} 个,先移除一个` : `Max ${MAX_AO_WINDOWS} — remove one first`)}
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+      <RollingStatsPicker />
 
       {/* Footer: σ / CV / count */}
       <div className="stats-foot">
