@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest';
-import { battlePresenceMix } from '@/app/[lang]/timer/_lib/presence';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  battlePresenceMix,
+  sendTimerPresenceHeartbeat,
+  type TimerPresenceReport,
+} from '@/app/[lang]/timer/_lib/presence';
 import { createTimerPresenceRoutes, TIMER_PRESENCE_TTL_MS } from '../../server/src/routes/timer_presence';
 
 const IDS = [
@@ -80,16 +84,57 @@ describe('timer presence API', () => {
     expect(await (await routes.request('/timer/presence')).json()).toMatchObject({ total: 0, sessions: [] });
   });
 
-  it('rejects invalid identifiers, counts, modes, results, and devices', async () => {
-    const routes = createTimerPresenceRoutes();
+  it('rejects invalid core fields but keeps counts when optional details are malformed', async () => {
+    const routes = createTimerPresenceRoutes({ authorizeAdmin: async () => {} });
     const post = (body: object) => routes.request('/timer/presence', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
     expect((await post({ id: 'x', normal: 1, smart: 0 })).status).toBe(400);
     expect((await post({ id: IDS[0], normal: 4, smart: 1 })).status).toBe(400);
     expect((await post({ id: IDS[0], normal: 1, smart: 0, mode: 'other' })).status).toBe(400);
-    expect((await post({ id: IDS[0], normal: 1, smart: 0, results: [{ event: '333', timeMs: -1, penalty: 'ok' }] })).status).toBe(400);
-    expect((await post({ id: IDS[0], normal: 0, smart: 1, devices: [{ name: '' }] })).status).toBe(400);
+    expect((await post({
+      id: IDS[0],
+      normal: 0,
+      smart: 1,
+      results: [{ event: '333', timeMs: -1, penalty: 'ok' }],
+      devices: [{ name: 'GAN'.repeat(100), id: 'opaque-'.repeat(100) }, { name: '' }],
+    })).status).toBe(204);
+    const snapshot = await (await routes.request('/timer/presence')).json() as {
+      smart: number;
+      sessions: Array<{ results: unknown[]; devices: Array<{ name: string; id?: string }> }>;
+    };
+    expect(snapshot.smart).toBe(1);
+    expect(snapshot.sessions[0].results).toEqual([]);
+    expect(snapshot.sessions[0].devices).toEqual([{
+      name: 'GAN'.repeat(100).slice(0, 128),
+      id: 'opaque-'.repeat(100).slice(0, 512),
+    }]);
+  });
+});
+
+describe('timer presence heartbeat', () => {
+  it('retries a rejected detailed heartbeat with the core count only', async () => {
+    const responses = [new Response(null, { status: 400 }), new Response(null, { status: 204 })];
+    const bodies: unknown[] = [];
+    const request = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      return responses.shift()!;
+    });
+    const report: TimerPresenceReport = {
+      normal: 0,
+      smart: 1,
+      mode: 'solo',
+      results: [],
+      devices: [{ name: 'Smart cube', id: 'opaque-id' }],
+    };
+
+    await sendTimerPresenceHeartbeat(IDS[0], report, false, request);
+
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(bodies[0]).toEqual({ id: IDS[0], ...report });
+    expect(bodies[1]).toEqual({
+      id: IDS[0], normal: 0, smart: 1, mode: 'solo', results: [], devices: [],
+    });
   });
 });
 
