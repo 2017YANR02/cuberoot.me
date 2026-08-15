@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, expect, it } from 'vitest';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -30,12 +31,22 @@ describe('algorithm player placement', () => {
     expect(detail).toMatch(/caseObj\.algs\.map\(\(oriAlgs, oi\) => \{[\s\S]*?const orientedSetup = oriAdjustSetup\(caseObj\.setup, oi\);/);
     expect(detail).toMatch(/className="alg-case-detail-ori-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{caseViewAlg\(selectedEntry\.alg, effectiveViewAngle\)\}[\s\S]*?setup=\{caseViewSetup\(selectedEntry\.setup \?\? orientedSetup, effectiveViewAngle\)\}/);
     expect(detail).toContain('inlinePlayer={!multiOri}');
-    expect(detail).toContain('{!multiOri && (');
     expect(detail).toContain('autoPlay={playRequest > 0}');
     expect(detail).toContain('playRequest={playRequest}');
     expect(detail).toContain("alg-case-detail-lean${multiOri ? ' is-multi-ori' : ''}");
-    expect(styles).toContain('.alg-case-detail-lean.is-multi-ori');
+    expect(detail).toMatch(/className="alg-case-detail-lean-thumb"[\s\S]*?<CaseThumb/);
+    expect(detail).not.toContain('{!multiOri && (');
+    expect(detail).not.toContain('is-without-thumb');
+    expect(styles).toContain('@media (max-width: 900px)');
+    expect(styles).toContain('.alg-case-detail-lean.is-multi-ori .alg-case-detail-lean-aside');
     expect(styles).toContain('.alg-case-detail-ori > .alg-alg-sortable:has(.alg-alg-row.is-expanded)');
+  });
+
+  it('routes every canonical case detail through the shared AlgCaseView', () => {
+    const route = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgSubOrCaseClient.tsx');
+
+    expect(route).toContain("import AlgCaseView from './AlgCaseView'");
+    expect(route).toContain('return <AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} />;');
   });
 
   it('binds the shared sim pointer bridge so dragging the cube changes only the view', () => {
