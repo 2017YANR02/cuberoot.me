@@ -8,7 +8,9 @@ import {
   buildPictureSlotAttributes,
   countPictureFaces,
   emptyPictureFaces,
+  normalizePictureCrop,
   normalizePictureFaces,
+  pictureCropGeometry,
   pictureFacesKey,
   renderPictureCubeNetSvg,
 } from '@/app/[lang]/sim/engine/nxn/pictureCube';
@@ -31,6 +33,36 @@ describe('picture cube face data', () => {
     faces.F = 'data:image/webp;base64,F';
     expect(countPictureFaces(faces)).toBe(2);
     expect(pictureFacesKey(faces)).toBe(PICTURE_FACE_ORDER.map((face) => faces[face]).join('\u0000'));
+  });
+
+  it('normalizes crop rotation and pan bounds', () => {
+    expect(normalizePictureCrop({ rotation: 89, x: -2, y: Number.NaN })).toEqual({
+      rotation: 90, x: -1, y: 0,
+    });
+    expect(normalizePictureCrop({ rotation: -90, x: 0.25, y: 2 })).toEqual({
+      rotation: 270, x: 0.25, y: 1,
+    });
+  });
+
+  it('maps wide-image pan to the exact cover overflow and swaps axes after rotation', () => {
+    expect(pictureCropGeometry(800, 400, 400, { rotation: 0, x: -1, y: 0 })).toEqual({
+      scale: 1,
+      drawnWidth: 800,
+      drawnHeight: 400,
+      overflowX: 400,
+      overflowY: 0,
+      offsetX: -200,
+      offsetY: 0,
+    });
+    expect(pictureCropGeometry(800, 400, 400, { rotation: 90, x: 0, y: 1 })).toEqual({
+      scale: 1,
+      drawnWidth: 400,
+      drawnHeight: 800,
+      overflowX: 0,
+      overflowY: 400,
+      offsetX: 0,
+      offsetY: 200,
+    });
   });
 });
 
