@@ -232,6 +232,12 @@ html:not([data-palette-scheme=dark]) .wse-page {
 .wse-table a { color: var(--accent); text-decoration: none; }
 .wse-table a:hover { text-decoration: underline; }
 
+.wca-record-rank {
+  color: var(--faint-foreground);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
 .wse-rank-col {
   text-align: right !important;
   width: 50px;
@@ -415,6 +421,7 @@ th.wse-sor-evcell { padding: 4px 2px !important; }
   .wse-filter { min-width: 0; flex: 1 0 calc(50% - 8px); }
   .wse-filter-q { flex: 1 0 100%; }
   .wse-table th, .wse-table td { padding: 6px 8px; font-size: 13px; }
+  .wca-record-rows-table { font-size: 12px; }
 }
 
 /* ── Sum-of-Ranks 名人堂 (.sor-census) ── 个人最优组合 (.sor-tool/.sor-pb) 已抽到 components/wca-stats/best-combos.css(排名页 + 选手页共用) ── */

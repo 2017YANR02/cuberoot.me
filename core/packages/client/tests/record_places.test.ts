@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   buildRecordPlaces,
   isRecordPlaceDetailShard,
@@ -104,7 +105,7 @@ describe('record place ranking', () => {
 
 describe('record place details', () => {
   const shard: RecordPlaceDetailShard = {
-    version: 1,
+    version: 2,
     iso2: 'CN',
     comps: {
       OlderOpen2024: { n: 'Older Open 2024', s: '2024-05-01', d: '2024-05-02', c: 'Hefei, Anhui' },
@@ -112,18 +113,25 @@ describe('record place details', () => {
     },
     records: {
       OlderOpen2024: [
-        { t: 'WR', k: 's', e: '333', p: '2020TEST01', n: 'Test Cuber', v: 500 },
-        { t: 'AsR', k: 'a', e: '333', p: '2020TEST01', n: 'Test Cuber', v: 600 },
-        { t: 'NR', k: 's', e: '222', p: '2020TEST01', n: 'Test Cuber', v: 100 },
+        { t: 'WR', k: 's', e: '333', p: '2020TEST01', n: 'Test Cuber', v: 500, a: [500, 520, 540, 560, 580] },
+        { t: 'AsR', k: 'a', e: '333', p: '2020TEST01', n: 'Test Cuber', v: 600, a: [550, 580, 600, 620, 650] },
+        { t: 'NR', k: 's', e: '222', p: '2020TEST01', n: 'Test Cuber', v: 100, a: [100, -1] },
       ],
       NewerOpen2025: [
-        { t: 'WR', k: 'a', e: '333', p: '2021TEST01', n: 'Other Cuber', v: 550 },
+        { t: 'WR', k: 'a', e: '333', p: '2021TEST01', n: 'Other Cuber', v: 550, a: [500, 525, 550, 575, 600] },
       ],
     },
   };
 
   it('validates generated shards and rejects dangling competition records', () => {
     expect(isRecordPlaceDetailShard(shard)).toBe(true);
+    expect(isRecordPlaceDetailShard({
+      ...shard,
+      records: {
+        ...shard.records,
+        OlderOpen2024: [{ ...shard.records.OlderOpen2024[0], a: Array.from({ length: 21 }, (_, i) => i + 1) }],
+      },
+    })).toBe(true);
     expect(isRecordPlaceDetailShard({
       ...shard,
       records: { ...shard.records, MissingOpen2025: shard.records.NewerOpen2025 },
@@ -139,6 +147,15 @@ describe('record place details', () => {
       'OlderOpen2024:0',
     ]);
     expect(recordPlaceDetailRows(shard, 'cr', 'Hefei, Anhui')[0]?.entry.t).toBe('AsR');
+  });
+
+  it('keeps both record pages on the shared row table', () => {
+    const recordsPage = readFileSync(new URL('../app/[lang]/wca/records/page.tsx', import.meta.url), 'utf8');
+    const placeRankings = readFileSync(new URL('../app/[lang]/wca/comp/stats/RecordPlaceRankings.tsx', import.meta.url), 'utf8');
+    expect(recordsPage).toContain("@/components/wca-records/WcaRecordRowsTable");
+    expect(placeRankings).toContain("@/components/wca-records/WcaRecordRowsTable");
+    expect(recordsPage).not.toContain('function RowsTable');
+    expect(placeRankings).not.toContain('cs-record-detail-list');
   });
 });
 

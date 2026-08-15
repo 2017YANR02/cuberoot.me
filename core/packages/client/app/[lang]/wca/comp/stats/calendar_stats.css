@@ -323,7 +323,7 @@
 
 .cs-record-modal {
   display: flex;
-  width: min(860px, 94vw);
+  width: min(1180px, 96vw);
   max-height: min(780px, 88vh);
   flex-direction: column;
   overflow: hidden;
@@ -386,80 +386,8 @@
   font-size: 0.7rem;
 }
 
-.cs-record-detail-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.cs-record-detail-item {
-  display: grid;
-  grid-template-columns: minmax(100px, auto) 120px minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-  padding: 8px 0;
-  border-top: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
-}
-
-.cs-record-detail-event {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 5px;
-  color: var(--text);
-  white-space: nowrap;
-}
-
-.cs-record-detail-event > .cubing-icon {
-  flex: 0 0 auto;
-  font-size: 1.15rem;
-}
-
-.cs-record-detail-kind,
-.cs-record-detail-date {
-  color: var(--muted);
-  font-size: 0.68rem;
-  white-space: nowrap;
-}
-
-.cs-record-detail-result {
-  color: var(--text);
-  font-family: ui-monospace, SFMono-Regular, monospace;
-  font-size: 0.76rem;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.cs-record-detail-context {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.cs-record-detail-person,
-.cs-record-detail-comp {
-  overflow: hidden;
-  color: var(--text);
-  text-decoration: none;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cs-record-detail-person:hover,
-.cs-record-detail-comp:hover {
-  color: var(--accent);
-  text-decoration: underline;
-}
-
-.cs-record-detail-comp-line {
-  display: flex;
-  min-width: 0;
-  align-items: baseline;
-  gap: 7px;
-}
-
-.cs-record-detail-comp {
-  color: var(--muted);
+.cs-record-detail-table-wrap {
+  max-width: 100%;
 }
 
 .cs-record-detail-more {
@@ -900,10 +828,5 @@
   }
   .cs-record-modal-header { padding: 14px 14px 12px; }
   .cs-record-modal-body { padding: 9px 14px max(16px, env(safe-area-inset-bottom)); }
-  .cs-record-detail-item {
-    grid-template-columns: minmax(0, 1fr) 110px;
-    row-gap: 4px;
-  }
-  .cs-record-detail-context { grid-column: 1 / -1; }
   .cs-bar-row { grid-template-columns: 90px 1fr 40px; font-size: 0.72rem; gap: 6px; }
 }
