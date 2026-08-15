@@ -1,4 +1,6 @@
-export const RECORD_PLACE_VERSION = 1 as const;
+import { isMultiLocationCity } from './comp_city_identity';
+
+export const RECORD_PLACE_VERSION = 2 as const;
 
 export const RECORD_METRICS = ['wr', 'cr', 'nr'] as const;
 export type RecordMetric = (typeof RECORD_METRICS)[number];
@@ -15,6 +17,7 @@ export interface CountryRecordCounts extends RecordCounts {
 
 export interface CityRecordCounts extends CountryRecordCounts {
   city: string;
+  aliases: string[];
 }
 
 export interface RecordPlacesData {
@@ -26,6 +29,9 @@ export interface RecordPlacesData {
 export interface RecordPlaceSourceRow {
   iso2: string | null;
   city: string | null;
+  /** Canonical resolver key. Falls back to country + raw city for simple callers. */
+  cityKey?: string | null;
+  cityAliases?: readonly string[];
   singleRecord: string | null;
   averageRecord: string | null;
 }
@@ -59,14 +65,18 @@ function normalizeIso2(raw: string | null): string | null {
 
 function usableCity(raw: string | null): string | null {
   const city = (raw ?? '').trim().replace(/\s+/g, ' ');
-  if (!city || /^multiple cities\b/i.test(city)) return null;
+  if (!city || isMultiLocationCity(city)) return null;
   return city;
+}
+
+interface MutableCityRecordCounts extends CityRecordCounts {
+  aliasSet: Set<string>;
 }
 
 /** Build venue-based record counts from WCA result markers. */
 export function buildRecordPlaces(rows: Iterable<RecordPlaceSourceRow>): RecordPlacesData {
   const countries = new Map<string, RecordCounts>();
-  const cities = new Map<string, CityRecordCounts>();
+  const cities = new Map<string, MutableCityRecordCounts>();
 
   for (const row of rows) {
     const iso2 = normalizeIso2(row.iso2);
@@ -75,10 +85,19 @@ export function buildRecordPlaces(rows: Iterable<RecordPlaceSourceRow>): RecordP
     const levels = [row.singleRecord, row.averageRecord];
     const countryCounts = countries.get(iso2) ?? emptyCounts();
     const city = usableCity(row.city);
-    const cityKey = city ? `${iso2}\0${city.toLocaleLowerCase('en')}` : null;
-    const cityCounts = city && cityKey
-      ? (cities.get(cityKey) ?? { iso2, city, ...emptyCounts() })
+    const cityKey = city
+      ? (row.cityKey?.trim() || `${iso2}\0${city.toLocaleLowerCase('en')}`)
       : null;
+    const cityCounts = city && cityKey
+      ? (cities.get(cityKey) ?? { iso2, city, aliases: [], aliasSet: new Set<string>(), ...emptyCounts() })
+      : null;
+
+    if (cityCounts) {
+      for (const alias of row.cityAliases ?? []) {
+        const cleaned = usableCity(alias);
+        if (cleaned && cleaned !== cityCounts.city) cityCounts.aliasSet.add(cleaned);
+      }
+    }
 
     let hasRecord = false;
     for (const level of levels) {
@@ -95,7 +114,10 @@ export function buildRecordPlaces(rows: Iterable<RecordPlaceSourceRow>): RecordP
     version: RECORD_PLACE_VERSION,
     countries: [...countries].map(([iso2, counts]) => ({ iso2, ...counts }))
       .sort((a, b) => a.iso2.localeCompare(b.iso2, 'en')),
-    cities: [...cities.values()].sort((a, b) =>
+    cities: [...cities.values()].map(({ aliasSet, ...city }) => ({
+      ...city,
+      aliases: [...aliasSet].sort((a, b) => a.localeCompare(b, 'en')),
+    })).sort((a, b) =>
       a.iso2.localeCompare(b.iso2, 'en') || a.city.localeCompare(b.city, 'en')
     ),
   };
@@ -114,14 +136,26 @@ function isCountryRow(value: unknown): value is CountryRecordCounts {
 
 function isCityRow(value: unknown): value is CityRecordCounts {
   if (!isCountryRow(value)) return false;
-  return typeof (value as Partial<CityRecordCounts>).city === 'string'
-    && (value as CityRecordCounts).city.trim().length > 0;
+  const row = value as Partial<CityRecordCounts>;
+  return typeof row.city === 'string'
+    && row.city.trim().length > 0
+    && Array.isArray(row.aliases)
+    && row.aliases.every((alias) => typeof alias === 'string' && alias.trim().length > 0)
+    && new Set(row.aliases).size === row.aliases.length
+    && !row.aliases.includes(row.city);
 }
 
 export function isRecordPlacesData(value: unknown): value is RecordPlacesData {
   if (!value || typeof value !== 'object') return false;
   const data = value as Partial<RecordPlacesData>;
-  return data.version === RECORD_PLACE_VERSION
-    && Array.isArray(data.countries) && data.countries.every(isCountryRow)
-    && Array.isArray(data.cities) && data.cities.every(isCityRow);
+  if (data.version !== RECORD_PLACE_VERSION
+    || !Array.isArray(data.countries) || !data.countries.every(isCountryRow)
+    || !Array.isArray(data.cities) || !data.cities.every(isCityRow)) return false;
+  const countries = data.countries as CountryRecordCounts[];
+  const cities = data.cities as CityRecordCounts[];
+  const countryIds = new Set(countries.map((row) => row.iso2));
+  if (countryIds.size !== countries.length) return false;
+  const cityIds = new Set(cities.map((row) => `${row.iso2}\0${row.city.toLocaleLowerCase('en')}`));
+  if (cityIds.size !== cities.length || cities.some((row) => !countryIds.has(row.iso2))) return false;
+  return true;
 }

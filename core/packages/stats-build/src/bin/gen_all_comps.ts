@@ -257,7 +257,16 @@ async function main() {
   // 两条判据:① 名字只差版本号/年份(seriesKey);② WCA 官方 championship_type(world / _大洲 /
   // greater_china / 国家 ISO2 —— 权威把历年改名的世锦赛/洲锦赛/国锦赛归为一类)。
   // upcoming 排在 past 前(同 id 取较新一份);buildCompSeriesIndex 只留 ≥2 场的组、去子集冗余。
-  interface RawComp { id: string; name: string; country: string; city?: string; start_date: string; end_date?: string }
+  interface RawComp {
+    id: string;
+    name: string;
+    country: string;
+    city?: string;
+    start_date: string;
+    end_date?: string;
+    latitude_degrees?: number | null;
+    longitude_degrees?: number | null;
+  }
   const toSeries = (c: RawComp): SeriesComp => ({
     id: c.id,
     name: c.name,
@@ -265,6 +274,8 @@ async function main() {
     start: c.start_date,
     end: c.end_date || c.start_date,
     ...(c.city ? { city: c.city } : {}),
+    latitude: c.latitude_degrees ?? null,
+    longitude: c.longitude_degrees ?? null,
   });
   let upcoming: RawComp[] = [];
   try { upcoming = JSON.parse(readFileSync(UPCOMING_INPUT_PATH, 'utf-8')) as RawComp[]; }
