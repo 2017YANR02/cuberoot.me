@@ -13,6 +13,7 @@ import type { CaseViewAngle } from '@/lib/alg_display';
 
 export function CaseThumb({
   puzzle, set, sticker, alg, setup, size = 88, mask: maskOverride, local, loading,
+  alt,
   sq1BlackTop = true,
   simplifyRecognition = false,
   viewAngle = 'default',
@@ -33,6 +34,8 @@ export function CaseThumb({
    * 首屏可见的图别传(懒加载会推迟它)。`local` 渲染时无意义(没有请求可省)。
    */
   loading?: 'lazy' | 'eager';
+  /** Override the renderer's generic accessible name when the caller knows the visible case name. */
+  alt?: string;
   /** Square-1 flat thumbnails default to the common black-top colour scheme. */
   sq1BlackTop?: boolean;
   /** Show only the strongest recognition features on supported 3x3 plan views. */
@@ -54,13 +57,14 @@ export function CaseThumb({
     && plan.layout === 'stacked-layers'
     && sq1Layer === 'top';
   const renderSize = cropTopLayer ? size * 2 : size;
+  const accessibleAlt = alt ?? ('alt' in plan ? plan.alt : `${puzzle} case`);
   let art: ReactNode;
   if (plan.renderer === 'inline-svg') {
     art = (
       <div
         className="puzzle-art"
         role="img"
-        aria-label={plan.alt}
+        aria-label={accessibleAlt}
         style={{ width: renderSize, height: renderSize, display: 'inline-block', lineHeight: 0 }}
         dangerouslySetInnerHTML={{ __html: plan.svg }}
       />
@@ -70,7 +74,7 @@ export function CaseThumb({
       <img
         className="puzzle-art"
         src={plan.src}
-        alt={plan.alt}
+        alt={accessibleAlt}
         width={plan.width}
         height={plan.height}
         loading={loading}
@@ -96,8 +100,9 @@ export function CaseThumb({
         planSimplify={p.planSimplify}
         size={renderSize}
         puzzleSize={p.puzzleSize}
-        local={local}
+        local={local || p.renderLocally}
         loading={loading}
+        alt={accessibleAlt}
       />
     );
   }

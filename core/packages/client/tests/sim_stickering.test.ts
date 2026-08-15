@@ -73,6 +73,19 @@ describe('stickeringMaskFn 3x3', () => {
     expect(m(P3.FR, FACE.F)).toBe(FM_IGNORED);
   });
 
+  it('AF2L:顶层与标准 FR 角棱整块忽略,其它 F2L 块保持原色', () => {
+    const m = stickeringMaskFn(3, 'AF2L')!;
+    expect(m(P3.UF, FACE.U)).toBe(FM_IGNORED);
+    expect(m(P3.UFR, FACE.R)).toBe(FM_IGNORED);
+    expect(m(P3.FR, FACE.F)).toBe(FM_IGNORED);
+    expect(m(P3.FR, FACE.R)).toBe(FM_IGNORED);
+    expect(m(P3.DFR, FACE.D)).toBe(FM_IGNORED);
+    expect(m(P3.DFR, FACE.F)).toBe(FM_IGNORED);
+    expect(m(P3.DFR, FACE.R)).toBe(FM_IGNORED);
+    expect(m(P3.FL, FACE.F)).toBe(FM_REGULAR);
+    expect(m(P3.Dc, FACE.D)).toBe(FM_REGULAR);
+  });
+
   it('EO:角全忽略,棱主贴纸青标 / 次贴纸忽略,中心原色', () => {
     const m = stickeringMaskFn(3, 'EO')!;
     expect(m(P3.UF, FACE.U)).toBe(FM_ORIENTED);  // U/D 层棱主贴纸 = U/D 面
@@ -172,6 +185,12 @@ describe('stickeringMaskFn 3x3', () => {
 describe('算法公式页顶层配色', () => {
   it.each(['pll', 'anti-pll', 'zbll', '1lll'])('%s 使用整层原色的 LL 遮罩', (set) => {
     expect(pickStickering('3x3', set)).toBe('LL');
+  });
+
+  it('AF2L 站内播放器隐藏标准 FR 对,cubing.js 回退到内置 F2L', () => {
+    expect(pickStickering('3x3', 'adv-f2l', 'sim')).toBe('AF2L');
+    expect(pickStickering('3x3', 'adv-f2l', 'twisty')).toBe('F2L');
+    expect(pickStickering('3x3', 'adv-f2l')).toBe('F2L');
   });
 });
 

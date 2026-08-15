@@ -773,6 +773,20 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'Sq1ToolsClient',
+    import: "import Sq1ToolsClient from '@/components/Sq1ToolsClient';",
+    category: 'more',
+    zh: 'Square-1 检查、过程、导入、数位、奇偶游戏和组合练习的共享页面壳。',
+    en: 'Shared page shell for Square-1 inspection, visualization, importing, count positions, parity game, and shape training.',
+  },
+  {
+    name: 'Sq1ToolNav',
+    import: "import Sq1ToolNav from '@/components/Sq1ToolNav';",
+    category: 'more',
+    zh: 'Square-1 公式、训练、分析、数位和现有绘图工具的共用真链接导航。',
+    en: 'Shared link navigation for Square-1 algorithms, training, analysis, count positions, and the existing drawing tool.',
+  },
+  {
     name: 'LazyVisible',
     import: "import LazyVisible from '@/components/LazyVisible';",
     category: 'more',
@@ -1524,12 +1538,26 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `懒加载 three + /sim cuber World;可选 playerRef 暴露光标同步句柄。`, en: `Lazy-loads three + the /sim cuber World; optional playerRef exposes a caret-sync handle.` },
   },
   {
+    name: 'Sq1StateSvg',
+    import: "import { Sq1StateSvg } from '@/components/Sq1StateSvg';",
+    category: 'display',
+    zh: `Square-1 状态静态图，复用站内 SQ1 SVG，可显示整颗或只裁上层。`,
+    en: `Static Square-1 state diagram using the shared SQ1 SVG renderer, with full-puzzle and top-layer modes.`,
+  },
+  {
     name: 'CaseThumb',
     import: "import { CaseThumb } from '@/components/CaseThumb';",
     category: 'display',
     zh: `任意 (puzzle, set, case) 的统一缩略图入口,按 puzzle 自动选渲染器(SQ1 走服务端 svg、金字塔 / 斜转 / 五魔走 PuzzleSVG、其余走 VisualCube)并按 set 选视图与遮罩。`,
     en: `Single entry for any (puzzle, set, case) thumbnail: auto-picks the renderer per puzzle (server SVG for SQ1, PuzzleSVG for pyraminx/skewb/megaminx, VisualCube otherwise) and chooses view/mask per set.`,
     note: { zh: `画公式案例缩略图统一用它,别手拼 VisualCube / PuzzleSVG 选择逻辑。`, en: `Use this for alg-case thumbnails; don't hand-wire the VisualCube/PuzzleSVG selection logic yourself.` },
+  },
+  {
+    name: 'RecognizeTrainer',
+    import: "import RecognizeTrainer from '@/components/RecognizeTrainer';",
+    category: 'more',
+    zh: `通用观察命名训练流程,由 algSetId 选择题库,可传 guideHref 接回对应介绍页。`,
+    en: `Shared recognition and naming drill flow selected by algSetId, with an optional guideHref back to its guide page.`,
   },
   {
     name: 'WcaRecordRowsTable',

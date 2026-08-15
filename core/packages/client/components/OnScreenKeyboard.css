@@ -5,11 +5,37 @@
 }
 
 .on-screen-keyboard--wide-labels .kbd-btn {
+  min-height: 44px;
   padding-inline: 0.3rem;
+}
+
+.kbd-btn--correct {
+  border-color: var(--signal-success);
+  background: color-mix(in srgb, var(--signal-success) 24%, var(--background));
+}
+
+.kbd-btn--wrong {
+  border-color: var(--signal-danger);
+  background: color-mix(in srgb, var(--signal-danger) 24%, var(--background));
+}
+
+.kbd-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 @media (max-width: 480px) {
   .on-screen-keyboard.on-screen-keyboard--wide-labels {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .on-screen-keyboard .kbd-btn {
+    transition: none;
+  }
+
+  .on-screen-keyboard .kbd-btn:active {
+    transform: none;
   }
 }

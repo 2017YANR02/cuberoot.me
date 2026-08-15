@@ -154,6 +154,17 @@ const maskingFunctions: MaskingFunctions = {
     [Face.F]: (row, col, cubeSize) => row > 0,
     [Face.B]: (row, col, cubeSize) => row > 0,
   },
+  // F2L stage without the solved FR pair. Because the mask is applied before
+  // the setup, these five hidden stickers follow the white-green-red corner
+  // and green-red edge wherever the case setup moves them.
+  [Masking.AF2L]: {
+    [Face.U]: (row, col, cubeSize) => false,
+    [Face.D]: (row, col, cubeSize) => !(row == 0 && col == cubeSize - 1),
+    [Face.R]: (row, col, cubeSize) => row > 0 && col > 0,
+    [Face.L]: (row, col, cubeSize) => row > 0,
+    [Face.F]: (row, col, cubeSize) => row > 0 && col < cubeSize - 1,
+    [Face.B]: (row, col, cubeSize) => row > 0,
+  },
   [Masking.LL]: {
     [Face.U]: (row, col, cubeSize) => true,
     [Face.D]: (row, col, cubeSize) => false,

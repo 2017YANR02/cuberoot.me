@@ -9,7 +9,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Save, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
-import { loadAlg, MIRROR_ALG_SYNC_SETS, type AlgCase, type AlgEntry, type AlgPuzzle, type AlgSticker } from '@cuberoot/shared';
+import { loadAlg, MIRROR_ALG_SYNC_SETS, requires3x3AlgCaseSetup, type AlgCase, type AlgEntry, type AlgPuzzle, type AlgSticker } from '@cuberoot/shared';
 import { mirrorCascadeOnDelete, VIEWS } from '@cuberoot/shared/alg-mirror';
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '@/lib/alg_sets_api';
 import { validateAlgCase, setupForCase } from '@/lib/alg_validation';
@@ -244,6 +244,14 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
       oriNames,
       trainerKey: trainerKey.trim() || null,
     };
+
+    if (requires3x3AlgCaseSetup(puzzle, setSlug) && !body.setup) {
+      setError(tr({
+        zh: 'F2L 和非标 F2L 必须填写可解析的 Setup 公式',
+        en: 'F2L and Advanced F2L require a valid setup algorithm',
+      }));
+      return;
+    }
 
     setBusy(true);
 

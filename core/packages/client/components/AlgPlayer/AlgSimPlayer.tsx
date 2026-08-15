@@ -162,7 +162,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     world.controller.onOrbit = (dx, dy) => orbitSceneFree(world, dx, dy, ORBIT_K);
 
     const order = NXN_ORDER[puzzle];
-    const name = pickStickering(puzzle, set);
+    const name = pickStickering(puzzle, set, 'sim');
     if (order) {
       (cube as Cube).instancedRenderer.setFaceColorOverride(orientedCubeFaceColors(orientationRef.current));
     }

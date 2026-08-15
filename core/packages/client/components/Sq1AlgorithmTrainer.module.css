@@ -1,0 +1,235 @@
+.trainer {
+  display: grid;
+  gap: 26px;
+}
+
+.toolbar,
+.selectionActions,
+.middleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px 12px;
+}
+
+.primary,
+.secondary,
+.secondaryLink,
+.selectionButton,
+.caseButton {
+  appearance: none;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  color: var(--foreground);
+  background: var(--background);
+  font: inherit;
+}
+
+.primary,
+.secondary,
+.secondaryLink,
+.selectionButton {
+  min-height: 40px;
+  padding: 8px 13px;
+}
+
+.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-weight: 650;
+}
+
+.secondary,
+.selectionButton,
+.caseButton {
+  cursor: pointer;
+}
+
+.secondaryLink {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.secondaryLink[aria-disabled='true'] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.primary:disabled,
+.secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.primary:focus-visible,
+.secondary:focus-visible,
+.secondaryLink:focus-visible,
+.selectionButton:focus-visible,
+.caseButton:focus-visible,
+.group summary:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.shortcut,
+.scrambleLabel,
+.selectionHeading span,
+.answer span,
+.empty {
+  color: var(--muted-foreground);
+}
+
+.shortcut {
+  font-size: 0.88rem;
+}
+
+.error {
+  margin: 0;
+  color: var(--destructive);
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: minmax(190px, 310px) minmax(260px, 1fr);
+  align-items: center;
+  gap: 28px;
+}
+
+.preview {
+  width: min(100%, 310px);
+  aspect-ratio: 1 / 2;
+  line-height: 0;
+}
+
+.prompt {
+  min-width: 0;
+}
+
+.scrambleLabel {
+  margin: 0 0 5px;
+  font-size: 0.9rem;
+}
+
+.scramble,
+.algorithm {
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+}
+
+.scramble {
+  margin: 0 0 18px;
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.6;
+}
+
+.answer {
+  margin-top: 14px;
+}
+
+.answer p {
+  margin: 4px 0;
+}
+
+.algorithm {
+  line-height: 1.5;
+}
+
+.settings,
+.caseSelection {
+  display: grid;
+  gap: 12px;
+}
+
+.settings h2,
+.caseSelection h2 {
+  margin: 0;
+  font-size: 1.12rem;
+}
+
+.middleRow > span {
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.selectionHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 7px 14px;
+}
+
+.groups {
+  display: grid;
+  gap: 7px;
+}
+
+.group {
+  border-bottom: 1px solid var(--border-default);
+  padding-bottom: 7px;
+}
+
+.group summary {
+  width: fit-content;
+  min-height: 40px;
+  padding-block: 9px;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.parityGroup {
+  margin: 8px 0 16px;
+}
+
+.parityGroup h3 {
+  margin: 0 0 8px;
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.caseButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.caseButton {
+  min-height: 38px;
+  padding: 7px 10px;
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+.caseButtons .selected {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+@media (max-width: 640px) {
+  .stage {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .preview {
+    width: min(76vw, 270px);
+    justify-self: center;
+  }
+
+  .primary,
+  .secondary,
+  .secondaryLink,
+  .selectionButton,
+  .caseButton,
+  .group summary {
+    min-height: 44px;
+  }
+
+  .shortcut {
+    flex-basis: 100%;
+  }
+}

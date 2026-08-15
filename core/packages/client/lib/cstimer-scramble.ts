@@ -227,6 +227,24 @@ export async function cstimerScramble(id: string): Promise<string> {
 }
 
 /**
+ * Generate one random full Square-1 state for cstimer's indexed cubeshape
+ * case. `sqrcsp` owns the 90 legal unordered shape pairs and randomizes piece
+ * permutation, layer orientation, layer order, and the middle layer before
+ * solving the state to a scramble.
+ */
+export async function cstimerSq1ShapeScramble(caseIndex: number): Promise<string> {
+  if (!Number.isInteger(caseIndex) || caseIndex < 0 || caseIndex >= 90) {
+    throw new Error('Square-1 shape case index must be an integer from 0 to 89');
+  }
+  const w = getWorker();
+  const reqId = nextId++;
+  return new Promise<string>((resolve, reject) => {
+    pending.set(reqId, { resolve, reject });
+    w.postMessage({ id: reqId, key: 'sqrcsp', length: 0, state: caseIndex });
+  });
+}
+
+/**
  * Drive cstimer's own solver for a random-state puzzle that ships one (mpyr).
  * Returns a near-optimal solution string for the given scramble. The worker
  * loads the cstimer engine once; the first call may build prune tables.

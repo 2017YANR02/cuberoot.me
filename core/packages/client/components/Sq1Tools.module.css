@@ -1,0 +1,596 @@
+.page {
+  min-height: 100vh;
+  color: var(--foreground);
+}
+
+.header,
+.navRow,
+.content {
+  width: min(100%, 1040px);
+  margin: 0 auto;
+  padding-inline: 24px;
+}
+
+.navRow {
+  padding-inline: 24px;
+}
+
+.header {
+  padding-top: 16px;
+}
+
+.title {
+  margin: 14px 0 4px;
+  font-size: clamp(1.55rem, 4vw, 2.25rem);
+  line-height: 1.15;
+}
+
+.intro {
+  max-width: 720px;
+  margin: 0;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.content {
+  padding-top: 18px;
+  padding-bottom: 56px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+  max-width: 760px;
+  margin-bottom: 16px;
+}
+
+.label {
+  font-weight: 650;
+}
+
+.textarea,
+.select {
+  color: var(--foreground);
+  background: var(--card);
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 94px;
+  padding: 10px 12px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.select {
+  width: max-content;
+  max-width: 100%;
+  padding: 7px 30px 7px 10px;
+}
+
+.actions,
+.toggles,
+.stats,
+.countRow,
+.trainerToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.button,
+.primary,
+.choice,
+.shapeButton {
+  appearance: none;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  color: var(--foreground);
+  background: var(--background);
+  font: inherit;
+  cursor: pointer;
+}
+
+.button,
+.primary,
+.choice {
+  padding: 8px 13px;
+}
+
+.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-weight: 650;
+}
+
+.button:disabled,
+.primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.button:hover:not(:disabled),
+.choice:hover,
+.shapeButton:hover {
+  border-color: var(--foreground);
+}
+
+.textarea:focus-visible,
+.select:focus-visible,
+.button:focus-visible,
+.primary:focus-visible,
+.choice:focus-visible,
+.shapeButton:focus-visible,
+.compactLink:focus-visible,
+.shapeFilter summary:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.error,
+.success,
+.hint {
+  margin: 14px 0;
+  line-height: 1.55;
+}
+
+.error { color: var(--destructive); }
+.success { color: var(--accent); font-weight: 650; }
+.hint { color: var(--muted-foreground); }
+
+.emptyTrainer {
+  margin: 18px 0;
+}
+
+.emptyTrainer p {
+  margin: 0 0 10px;
+  color: var(--muted-foreground);
+}
+
+.emptyActions,
+.trainerSetting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.trainerSetting {
+  white-space: nowrap;
+}
+
+.result {
+  display: grid;
+  grid-template-columns: minmax(180px, 300px) minmax(220px, 1fr);
+  align-items: start;
+  gap: 24px;
+  margin-top: 22px;
+}
+
+.preview {
+  width: min(100%, 300px);
+  aspect-ratio: 1 / 2;
+  line-height: 0;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 18px;
+  margin: 0;
+}
+
+.facts dt { color: var(--muted-foreground); }
+.facts dd { margin: 0; overflow-wrap: anywhere; }
+
+.inspectorDetails {
+  min-width: 0;
+}
+
+.alignmentSection {
+  margin-top: 22px;
+}
+
+.alignmentHeading {
+  margin: 0 0 8px;
+  font-weight: 650;
+}
+
+.alignmentControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.alignmentControl {
+  display: grid;
+  grid-template-columns: max-content 44px 44px;
+  align-items: center;
+  gap: 8px;
+}
+
+.alignmentLayer {
+  min-width: 2.5rem;
+  white-space: nowrap;
+}
+
+.alignmentButton {
+  appearance: none;
+  width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  color: var(--foreground);
+  background: var(--background);
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.alignmentButton:hover:not(:disabled) {
+  border-color: var(--foreground);
+}
+
+.alignmentButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.alignmentButton:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.alignmentWarning {
+  max-width: 640px;
+  margin: 18px 0 0;
+  color: var(--muted-foreground);
+  line-height: 1.55;
+}
+
+.parityAnalysis {
+  margin-top: 20px;
+}
+
+.paritySummary {
+  margin: 0 0 10px;
+  font-weight: 700;
+}
+
+.parityTableWrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.parityTable {
+  width: min(100%, 620px);
+  border-collapse: collapse;
+  font-size: 0.94rem;
+}
+
+.parityTable caption {
+  margin-bottom: 6px;
+  text-align: left;
+  font-weight: 650;
+}
+
+.parityTable th,
+.parityTable td {
+  padding: 8px 10px 8px 0;
+  border-bottom: 1px solid var(--border-default);
+  text-align: left;
+  vertical-align: top;
+}
+
+.parityTable thead th {
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+
+.parityTable tbody th {
+  font-weight: 500;
+}
+
+.parityTable td {
+  white-space: nowrap;
+}
+
+.paritySequence {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font: 0.82rem/1.35 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  gap: 22px 16px;
+  margin-top: 24px;
+}
+
+.step {
+  min-width: 0;
+}
+
+.stepSvg {
+  width: 100%;
+  max-width: 190px;
+  aspect-ratio: 1 / 2;
+  line-height: 0;
+}
+
+.stepMove {
+  margin: 6px 0 2px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.stepName {
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+
+.countGroups {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.countExplorer {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(220px, 1fr);
+  align-items: center;
+  gap: 28px 40px;
+  margin-top: 20px;
+}
+
+.countExplorer .countGroups {
+  margin-top: 0;
+}
+
+.countVisual {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+
+.countDiagram {
+  position: relative;
+  width: min(72vw, 240px);
+  aspect-ratio: 1;
+}
+
+.countShapeSvg {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.countMarker {
+  position: absolute;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid;
+  border-radius: 999px;
+  place-items: center;
+  translate: -50% -50%;
+  background: var(--background);
+  font-size: 0.76rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.countMarkerA,
+.countGroupA .countValue {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--background));
+}
+
+.countMarkerB,
+.countGroupB .countValue {
+  border-color: var(--foreground);
+  background: var(--muted);
+}
+
+.countMarkerCurrent,
+.countValueCurrent {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.countControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.countCurrent {
+  min-width: 7.4rem;
+  text-align: center;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.countGroup h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.countValue {
+  min-width: 2.4rem;
+  padding: 7px 9px;
+  border-radius: 6px;
+  background: var(--muted);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.gameSequence {
+  display: flex;
+  gap: 12px;
+  margin: 28px 0;
+}
+
+.colorTile {
+  display: grid;
+  width: clamp(64px, 18vw, 112px);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 2px solid var(--foreground);
+  border-radius: 9px;
+  color: white;
+  font-size: clamp(1.4rem, 5vw, 2.3rem);
+  font-weight: 800;
+  text-shadow: 0 1px 2px var(--foreground);
+}
+
+.darkTileText {
+  color: black;
+  text-shadow: none;
+}
+
+.choice {
+  min-width: 110px;
+  font-weight: 650;
+}
+
+.trainerStage {
+  display: grid;
+  grid-template-columns: minmax(190px, 320px) minmax(240px, 1fr);
+  align-items: center;
+  gap: 26px;
+  margin: 22px 0;
+}
+
+.trainerThumb {
+  display: grid;
+  min-height: 300px;
+  place-items: center;
+}
+
+.scramble {
+  margin: 8px 0 18px;
+  font: 650 1.05rem/1.6 ui-monospace, SFMono-Regular, Consolas, monospace;
+  overflow-wrap: anywhere;
+}
+
+.countdown {
+  margin: 0;
+  font: 750 clamp(2.5rem, 10vw, 4.5rem)/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.shapeFilters {
+  display: grid;
+  gap: 16px;
+  margin-top: 26px;
+}
+
+.shapeFilter summary {
+  width: fit-content;
+  margin-bottom: 10px;
+  color: var(--foreground);
+  cursor: pointer;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.shapeButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.shapeButton {
+  min-height: 38px;
+  padding: 7px 10px;
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.shapeSelected {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.compactLink {
+  color: var(--foreground);
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .header,
+  .navRow,
+  .content {
+    padding-inline: 16px;
+  }
+
+  .result,
+  .trainerStage,
+  .countExplorer {
+    grid-template-columns: 1fr;
+  }
+
+  .preview {
+    width: min(78vw, 280px);
+  }
+
+  .trainerThumb {
+    min-height: 230px;
+  }
+
+  .facts {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .facts dd {
+    margin-bottom: 8px;
+  }
+
+  .alignmentControls {
+    display: grid;
+    gap: 10px;
+  }
+
+  .alignmentControl {
+    width: fit-content;
+  }
+
+  .parityTable {
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .parityTable th:first-child {
+    width: 62%;
+    overflow-wrap: anywhere;
+  }
+
+  .parityTable th,
+  .parityTable td {
+    padding-right: 6px;
+  }
+
+  .button,
+  .primary,
+  .choice,
+  .shapeButton {
+    min-height: 44px;
+  }
+
+  .choice {
+    min-width: 124px;
+  }
+}

@@ -10,6 +10,8 @@
  * (`// OLL-S+` / `// PLL-Gd`)用。
  */
 import type { AlgCase } from '@cuberoot/shared';
+import { displaySq1ShapeName } from '@/lib/sq1-shapes';
+export { SQ1_SHAPE_NAMES } from '@/lib/sq1-shapes';
 
 /** OLL 编号(1..57) → 社区英文名。来源:用户提供的 OLL 命名表。 */
 export const OLL_NAME_BY_NUMBER: Record<number, string> = {
@@ -170,9 +172,9 @@ export function display2x2LsName(name: string): string {
   return name.replace(/^LS-([1-9])(?=\s|$)/, 'LS$1');
 }
 
-/** SQ1 cubeshape 名称展示：方向词用卡片上更紧凑的 L / R，DB 原名与 URL 不变。 */
+/** SQ1 cubeshape 名称展示：统一参考名称并把方向词压成 L / R。 */
 export function displaySq1CsName(name: string): string {
-  return name.replace(/\bLeft\b/g, 'L').replace(/\bRight\b/g, 'R');
+  return displaySq1ShapeName(name);
 }
 
 /** /alg 列表用:按 (puzzle, set) 决定是否套 OLL/PLL/ZBLL/COLL/LS 展示变换。 */

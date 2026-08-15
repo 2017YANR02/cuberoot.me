@@ -84,7 +84,7 @@ export interface RecognizeSet {
   /** 摊牌时给的公式。 */
   solution: (name: string) => string;
   /** 函数而非常量:DB 题库的按钮要等 {@link load} 拉完才知道。 */
-  buttons: () => RecognizeButton[];
+  buttons: (current?: PllCaseInstance) => RecognizeButton[];
   /** 题库要现拉的集合(DB 集)在这里拉;拉完才有 `allKeys` / `buttons`。 */
   load?: () => Promise<void>;
   prompt: { zh: string; en: string };
