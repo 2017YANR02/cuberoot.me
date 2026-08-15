@@ -62,7 +62,7 @@ export default function RecognizeClient() {
   const completed = results.length;
   const progressPercent = totalCases > 0 ? (completed / totalCases) * 100 : 0;
   const image = currentCase ? recog.image(currentCase, mistake !== '') : null;
-  const hasRecognitionGuide = algSetId === 'pll' || algSetId === 'oll';
+  const hasRecognitionGuide = algSetId === 'pll' || algSetId === 'oll' || algSetId === 'sq1-shape';
 
   useEffect(() => {
     if (!hydrated || !dataReady) return;

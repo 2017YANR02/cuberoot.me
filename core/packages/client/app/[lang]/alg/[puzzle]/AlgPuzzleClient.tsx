@@ -339,11 +339,11 @@ export default function AlgPuzzleClient() {
       {regularSets.length > 0 && (
         <div className="alg-bento">
           {regularSets.map(renderSetCard)}
-          {puzzle === 'sq1' && !picking && firstCases.cs && (
+          {puzzle === 'sq1' && !picking && (
             <AlgCard
-              href="/recognize/sq1-shape"
+              href="/recognize/sq1-shape/guide"
               prefetch={false}
-              thumb={(
+              thumb={firstCases.cs && (
                 <CaseThumb
                   puzzle="sq1"
                   set="cs"
