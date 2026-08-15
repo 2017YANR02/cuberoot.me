@@ -1,0 +1,15 @@
+/* Square-1 形状名最长到 Perpendicular Edges:宽标签专用轨道,桌面四列、手机两列。 */
+.on-screen-keyboard.on-screen-keyboard--wide-labels {
+  max-width: 680px;
+  grid-template-columns: repeat(auto-fit, minmax(min(9.5rem, 100%), 1fr));
+}
+
+.on-screen-keyboard--wide-labels .kbd-btn {
+  padding-inline: 0.3rem;
+}
+
+@media (max-width: 480px) {
+  .on-screen-keyboard.on-screen-keyboard--wide-labels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

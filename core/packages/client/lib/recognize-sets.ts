@@ -22,11 +22,17 @@ import {
 } from './pll-helpers';
 import { displayOllName, displayPllName, OLL_NAME_BY_NUMBER } from './alg_case_display';
 import { DB_RECOGNIZE_SETS, isDbRecognizeSetId, type DbRecognizeSetId } from './recognize-db-sets';
+import {
+  SQ1_SHAPE_RECOGNIZE_ID,
+  SQ1_SHAPE_SET,
+  type Sq1ShapeRecognizeId,
+} from './recognize-sq1-shapes';
+import type { AlgSticker } from '@cuberoot/shared';
 
 const typedOllMap = ollMap as Record<string, { name: string; alg: string }>;
 const typedPllMap = pllMap as Record<string, Record<string, string>>;
 
-export type RecognizeSetId = 'pll' | 'oll' | DbRecognizeSetId;
+export type RecognizeSetId = 'pll' | 'oll' | DbRecognizeSetId | Sq1ShapeRecognizeId;
 
 /** 敲一下键之后该干嘛。`pending` 是还没凑齐的前缀(`G_` / `1_`),显示在提示行上。 */
 export type KeyStep =
@@ -43,12 +49,16 @@ export interface RecognizeButton {
 }
 
 export interface RecognizeImage {
+  renderer?: 'visualcube' | 'sq1-top-layer';
   setup: string;
   view: 'iso' | 'plan' | 'pll-iso' | 'oll' | 'pll' | 'f2l';
   size: number;
   /** visualcube 遮罩(COLL 压灰棱块)。 */
   mask?: string;
   hideGreySides?: boolean;
+  /** Existing CS thumbnail inputs for the Square-1 single-layer renderer. */
+  sticker?: AlgSticker;
+  alg?: string;
 }
 
 export interface RecognizeSet {
@@ -184,10 +194,11 @@ export const RECOGNIZE_SETS: Record<RecognizeSetId, RecognizeSet> = {
   pll: PLL_SET,
   oll: OLL_SET,
   ...DB_RECOGNIZE_SETS,
+  [SQ1_SHAPE_RECOGNIZE_ID]: SQ1_SHAPE_SET,
 };
 
 export const isRecognizeSetId = (v: string): v is RecognizeSetId =>
-  v === 'pll' || v === 'oll' || isDbRecognizeSetId(v);
+  v === 'pll' || v === 'oll' || v === SQ1_SHAPE_RECOGNIZE_ID || isDbRecognizeSetId(v);
 
 /** 不认识的 set 一律当 PLL —— 路由只预渲染 RECOGNIZE_SETS 里那几个,兜底不该炸页面。 */
 export const recognizeSetFor = (id: string): RecognizeSet =>

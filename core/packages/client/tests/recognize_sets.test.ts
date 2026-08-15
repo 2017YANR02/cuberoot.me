@@ -15,6 +15,8 @@ import ollMap from '@cuberoot/shared/data/oll.json';
 import { inverseScramble } from '@/lib/scramble-generator';
 import { OLL_SET, PLL_SET, ollCaseName, ollCaseNumber, recognizeSetFor } from '@/lib/recognize-sets';
 import { keysToCases } from '@/lib/pll-helpers';
+import { SQ1_SHAPE_SET, sq1TopLayerQuestions } from '@/lib/recognize-sq1-shapes';
+import type { AlgCase } from '@cuberoot/shared';
 
 const typedOll = ollMap as Record<string, { alg: string }>;
 const setups = DB_SETUPS as Record<string, string>;
@@ -180,7 +182,38 @@ describe('两个集合互不干扰', () => {
     expect(recognizeSetFor('pll')).toBe(PLL_SET);
     expect(recognizeSetFor('oll')).toBe(OLL_SET);
     expect(recognizeSetFor('zbll')).toBe(DB_RECOGNIZE_SETS.zbll);
+    expect(recognizeSetFor('sq1-shape')).toBe(SQ1_SHAPE_SET);
     expect(recognizeSetFor('vls')).toBe(PLL_SET);
+  });
+});
+
+describe('Square-1 单层形状命名', () => {
+  const algCase = (name: string): AlgCase => ({
+    name,
+    subgroup: '',
+    setup: '',
+    sticker: { kind: 'raw', tag: 'sq1', attrs: {} },
+    algs: [[]],
+  });
+
+  it('只取顶层名称,按 CS 顺序去重,忽略非法与空名称', () => {
+    const questions = sq1TopLayerQuestions([
+      algCase('Kite / Square'),
+      algCase('Kite / Barrel'),
+      algCase('Square / Kite'),
+      algCase(' / Star'),
+      algCase('broken'),
+    ]);
+    expect(questions.map(({ name }) => name)).toEqual(['Kite', 'Square']);
+    expect(questions[0].source.name).toBe('Kite / Square');
+  });
+
+  it('使用独立进度、无随机转层,空题库时安全', () => {
+    expect(SQ1_SHAPE_SET.storageKey).toBe('cuberoot-session-store-sq1-shape');
+    expect(SQ1_SHAPE_SET.turnOptions).toEqual(['']);
+    expect(SQ1_SHAPE_SET.includeNoAuf).toBe(true);
+    expect(SQ1_SHAPE_SET.allKeys()).toEqual([]);
+    expect(SQ1_SHAPE_SET.buttons()).toEqual([]);
   });
 });
 
