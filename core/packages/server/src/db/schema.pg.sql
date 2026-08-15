@@ -345,6 +345,74 @@ CREATE INDEX idx_alg_cases_mirror ON alg_cases(mirror_case_id) WHERE mirror_case
 CREATE TRIGGER alg_cases_updated_at BEFORE UPDATE ON alg_cases
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
+-- 顶层公式统一用 U 层转动表达观察角度(0132)。共享分类的 SQL 边界副本由测试锁定。
+CREATE OR REPLACE FUNCTION alg_is_3x3_top_layer_set(p_puzzle TEXT, p_set_slug TEXT)
+RETURNS BOOLEAN LANGUAGE sql IMMUTABLE AS $$
+  SELECT p_puzzle = '3x3' AND p_set_slug IN (
+    '2-look-oll', 'oll', '2-look-pll', 'pll', 'coll',
+    '2-look-cmll', 'cmll', 'oh-cmll', 'anti-pll', 'ell',
+    'ollcp', 'zbll', '1lll'
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION alg_starts_with_y_rotation(p_alg TEXT)
+RETURNS BOOLEAN LANGUAGE sql IMMUTABLE AS $$
+  SELECT COALESCE(
+    p_alg ~ $re$^[[:space:]↑↓·=*]*(?:\[[^]]*\][[:space:]↑↓·=*]*)*y[0-9]*'?([[:space:]]|$)$re$,
+    FALSE
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION alg_json_has_leading_y(p_node JSONB)
+RETURNS BOOLEAN LANGUAGE plpgsql IMMUTABLE AS $$
+DECLARE
+  item JSONB;
+BEGIN
+  IF jsonb_typeof(p_node) = 'array' THEN
+    FOR item IN SELECT value FROM jsonb_array_elements(p_node) LOOP
+      IF alg_json_has_leading_y(item) THEN RETURN TRUE; END IF;
+    END LOOP;
+  ELSIF jsonb_typeof(p_node) = 'object' THEN
+    IF jsonb_typeof(p_node->'alg') = 'string' AND alg_starts_with_y_rotation(p_node->>'alg') THEN
+      RETURN TRUE;
+    END IF;
+    IF jsonb_typeof(p_node->'algHtml') = 'string' AND alg_starts_with_y_rotation(p_node->>'algHtml') THEN
+      RETURN TRUE;
+    END IF;
+  END IF;
+  RETURN FALSE;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION trg_alg_case_no_leading_y()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  IF alg_is_3x3_top_layer_set(NEW.puzzle, NEW.set_slug)
+     AND (alg_starts_with_y_rotation(NEW.standard) OR alg_json_has_leading_y(NEW.algs)) THEN
+    RAISE EXCEPTION 'top-layer alg cannot start with y rotation' USING ERRCODE = '23514';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION trg_alg_submission_no_leading_y()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  IF alg_is_3x3_top_layer_set(NEW.puzzle, NEW.set_slug)
+     AND alg_starts_with_y_rotation(NEW.alg) THEN
+    RAISE EXCEPTION 'top-layer alg cannot start with y rotation' USING ERRCODE = '23514';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER alg_cases_no_leading_y
+  BEFORE INSERT OR UPDATE OF puzzle, set_slug, standard, algs ON alg_cases
+  FOR EACH ROW EXECUTE FUNCTION trg_alg_case_no_leading_y();
+CREATE TRIGGER alg_submissions_no_leading_y
+  BEFORE INSERT OR UPDATE OF puzzle, set_slug, alg ON alg_submissions
+  FOR EACH ROW EXECUTE FUNCTION trg_alg_submission_no_leading_y();
+
 -- ── 14. colpi_words (盲拧字母对图像协作数据库 /memo/colpi) ──
 -- 初始 ~11.8k 词镜像自 bestsiteever.net/colpi (Roman Strakhov),submitter_wca_id=NULL 即上游来源。
 -- 本站登录用户提交的新词:submitter_wca_id 填本人 WCA ID。

@@ -330,6 +330,36 @@ export function mergeAdjacentMoves(s: string): string {
   return out.map(m => renderMove(m)).join(' ');
 }
 
+/** True when the first parsed move is a whole-cube y rotation. */
+export function startsWithYRotation(alg: string): boolean {
+  const { moves, junk } = tokenizeMoves(flattenAlg(alg));
+  return junk.length === 0 && moves[0]?.family === 'y';
+}
+
+/**
+ * Express a leading y rotation as an equivalent leading and finishing U AUF.
+ * This is intended for last-layer formulas, whose result is unchanged up to
+ * the same whole-cube rotation.
+ */
+export function rewriteLeadingYRotationAsAuf(alg: string): string {
+  const { moves, junk } = tokenizeMoves(flattenAlg(alg));
+  if (junk.length > 0 || moves[0]?.family !== 'y') return alg;
+
+  const leadAmount = moves[0].amount;
+  const turn = ((leadAmount % 4) + 4) % 4;
+  const bodyMoves = moves.slice(1);
+  const body = bodyMoves.map(renderMove);
+  // Wide, slice and x/z moves can carry center orientation, so the compact AUF
+  // identity is not generally valid. Relabel the body instead; this is always
+  // equivalent up to the removed whole-cube rotation.
+  if (bodyMoves.some(move => move.kind !== 'face')) {
+    return relabelYMoveString(body.join(' '), -leadAmount);
+  }
+  const before = turn === 1 ? 'U' : turn === 2 ? 'U2' : turn === 3 ? "U'" : '';
+  const after = turn === 1 ? "U'" : turn === 2 ? 'U2' : turn === 3 ? 'U' : '';
+  return mergeAdjacentMoves([before, ...body, after].filter(Boolean).join(' '));
+}
+
 /**
  * 剥掉起手 AUF。**token 感知**,不是正则 —— 表里的 `^U2'?|^U'|^U` 会把 `U3 …` 咬成 `3 …`,
  * 也会把 `Uw …` 咬成 `w …`。其余字符**一个不动**(换握记号周边的空格有语义)。
@@ -398,3 +428,22 @@ export const ROTATE_Y: Record<string, readonly [string, 1 | -1]> = {
   // 小写内层切跟着同一套轴规则 —— 缺了它,`ROTATE_Y['m']` 是 undefined,y 一转就静默丢步
   e: ['e', 1], m: ['s', -1], s: ['m', 1],
 };
+
+/** Relabel every move by y^k without emitting a whole-cube y prefix. */
+export function relabelYMoveString(alg: string, k: number): string {
+  const { moves, junk } = tokenizeMoves(flattenAlg(alg));
+  if (junk.length) throw new Error(`认不出来的记号:${junk.join(' ')}`);
+  const turns = ((Math.trunc(k) % 4) + 4) % 4;
+  return moves.map(move => {
+    let family = move.family;
+    let amount = move.amount;
+    for (let i = 0; i < turns; i++) {
+      const hit = ROTATE_Y[family];
+      if (!hit) throw new Error(`ROTATE_Y 里没有 ${family}`);
+      family = hit[0];
+      if (hit[1] === -1) amount = -amount;
+    }
+    if (amount === -2) amount = 2;
+    return renderMove({ family, amount, layer: move.layer });
+  }).join(' ');
+}

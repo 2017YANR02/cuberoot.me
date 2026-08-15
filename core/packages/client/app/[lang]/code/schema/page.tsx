@@ -402,6 +402,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 129, slug: 'alg_chain_orders', desc: { zh: '新增公式集连拧顺序表，登录用户可按公式集和子集跨设备保存自定义顺序。', en: 'Add per-set and per-subset time-attack orders so signed-in users can keep custom orders across devices.' } },
   { n: 130, slug: 'teacher_directory_contacts', desc: { zh: '老师与机构资料增加按平台存储的多种公开联系方式，并保留原有联系方式。', en: 'Add platform-specific public contact methods to teacher and school profiles while preserving existing contact data.' } },
   { n: 131, slug: 'alg_preferred_algs', desc: { zh: '新增公式记忆主公式偏好表，登录用户可跨设备同步每个 case 的主公式。', en: 'Add primary algorithm preferences so signed-in users can sync one primary algorithm per case across devices.' } },
+  { n: 132, slug: 'alg_top_layer_no_leading_y', desc: { zh: '修正顶层公式开头的 y 转体，并由数据库阻止标准公式与用户投稿再次写入此类数据。', en: 'Rewrite leading y rotations in last-layer algorithms and prevent canonical or community data from reintroducing them.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

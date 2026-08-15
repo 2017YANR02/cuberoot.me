@@ -13,6 +13,8 @@ import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 import { syncMirrorAndLog, syncMirrorForCase } from '../utils/alg_mirror.js';
+import { is3x3TopLayerSet } from '@cuberoot/shared';
+import { startsWithYRotation } from '@cuberoot/shared/alg-notation';
 
 export const algSetsRoutes = new Hono();
 
@@ -65,7 +67,15 @@ const CASE_NAME_MAX = 128;
 const SUBGROUP_MAX = 64;
 const TEXT_MAX = 4096;
 
-function validateCaseInput(body: {
+function containsLeadingY(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(containsLeadingY);
+  if (!value || typeof value !== 'object') return false;
+  const entry = value as Record<string, unknown>;
+  return (typeof entry.alg === 'string' && startsWithYRotation(entry.alg))
+    || (typeof entry.algHtml === 'string' && startsWithYRotation(entry.algHtml));
+}
+
+function validateCaseInput(puzzle: string, setSlug: string, body: {
   caseName?: string; subgroup?: string; setup?: string; standard?: string | null;
   sticker?: unknown; algs?: unknown; oriNames?: unknown; trainerKey?: string | null;
 }): { error?: string } {
@@ -79,6 +89,10 @@ function validateCaseInput(body: {
   if (body.standard && body.standard.length > TEXT_MAX) return { error: 'standard too long' };
   if (!body.sticker || typeof body.sticker !== 'object') return { error: 'sticker required (object)' };
   if (!Array.isArray(body.algs)) return { error: 'algs must be array' };
+  if (is3x3TopLayerSet(puzzle, setSlug)
+    && ((typeof body.standard === 'string' && startsWithYRotation(body.standard)) || containsLeadingY(body.algs))) {
+    return { error: 'leading_y_rotation' };
+  }
   return {};
 }
 
@@ -144,7 +158,7 @@ algSetsRoutes.post('/alg/sets/:puzzle/:set/cases', async (c) => {
     caseName?: string; subgroup?: string; setup?: string; standard?: string | null;
     sticker?: unknown; algs?: unknown; oriNames?: unknown; trainerKey?: string | null;
   }>();
-  const v = validateCaseInput(body);
+  const v = validateCaseInput(puzzle, set, body);
   if (v.error) return c.json({ error: v.error }, 400);
 
   const sets = await query<{ count: string }>(
@@ -197,7 +211,7 @@ algSetsRoutes.put('/alg/sets/:puzzle/:set/cases/:id', async (c) => {
     caseName?: string; subgroup?: string; setup?: string; standard?: string | null;
     sticker?: unknown; algs?: unknown; oriNames?: unknown; trainerKey?: string | null;
   }>();
-  const v = validateCaseInput(body);
+  const v = validateCaseInput(puzzle, set, body);
   if (v.error) return c.json({ error: v.error }, 400);
 
   // 见 POST 注释:对象直接传给 ?::jsonb,driver 序列化一次就够了

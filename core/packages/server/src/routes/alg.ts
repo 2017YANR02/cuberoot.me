@@ -12,6 +12,8 @@ import { query } from '../db/connection.js';
 import {
   requireAuth, requireAdmin, checkRateLimit, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
+import { is3x3TopLayerSet } from '@cuberoot/shared';
+import { startsWithYRotation } from '@cuberoot/shared/alg-notation';
 
 export const algRoutes = new Hono();
 
@@ -43,6 +45,12 @@ function rowToJson(row: AlgSubmissionRow) {
 
 const ALG_MAX_BYTES = 4096;
 const NOTES_MAX_BYTES = 1024;
+
+function leadingYError(puzzle: string, setSlug: string, alg: string): string | null {
+  return is3x3TopLayerSet(puzzle, setSlug) && startsWithYRotation(alg)
+    ? 'leading_y_rotation'
+    : null;
+}
 
 // GET /v1/alg/:puzzle/:set/submissions — 列出该 set 下全部用户提交
 algRoutes.get('/alg/:puzzle/:set/submissions', async (c) => {
@@ -109,6 +117,8 @@ algRoutes.post('/alg/:puzzle/:set/:case/submit', async (c) => {
   if (!alg) return c.json({ error: 'alg required' }, 400);
   if (Buffer.byteLength(alg, 'utf8') > ALG_MAX_BYTES) return c.json({ error: 'alg too long' }, 400);
   if (notes && Buffer.byteLength(notes, 'utf8') > NOTES_MAX_BYTES) return c.json({ error: 'notes too long' }, 400);
+  const ruleError = leadingYError(puzzle, setSlug, alg);
+  if (ruleError) return c.json({ error: ruleError }, 400);
 
   const inserted = await query<AlgSubmissionRow>(
     'INSERT INTO alg_submissions (puzzle, set_slug, case_name, alg, notes, author_id, author_name) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *',
@@ -139,6 +149,8 @@ algRoutes.put('/alg/submissions/:id', async (c) => {
   if (!isAdmin && rows[0].author_id !== user.wcaId) {
     return c.json({ error: 'Cannot edit others alg' }, 403);
   }
+  const ruleError = leadingYError(rows[0].puzzle, rows[0].set_slug, alg);
+  if (ruleError) return c.json({ error: ruleError }, 400);
 
   // caseName 是 case 归属变更,只有 admin 能改;非 admin 即使提交也忽略。
   const newCaseName = isAdmin && typeof body.caseName === 'string' ? body.caseName.trim() : null;
