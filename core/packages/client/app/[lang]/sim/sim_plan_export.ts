@@ -16,7 +16,7 @@
 import { renderCubeSVG, type ICubeOptions } from '@cuberoot/visualcube';
 import { specToCubeOptions } from '@/lib/puzzle-image/render';
 import type { ImageSpec } from '@/lib/puzzle-image/types';
-import type { NetFaceLetter } from '@/lib/cube-net-svg';
+import type { NetFaceLetter, SerializedStickerMask } from '@/lib/cube-net-svg';
 import {
   FM_IGNORED, FM_REGULAR, faceletDisplayColor, type FaceletMask,
 } from './engine/nxn/stickering';
@@ -29,6 +29,8 @@ export interface SimPlanExportOptions {
   /** 阶段遮罩码,下标同 `serialized`(Cube.serializeStickering)。省略 = 整颗原色。
    *  灰 / 暗 / 青那几档的色值走 faceletDisplayColor,与 3D 同一份。 */
   stickering?: ArrayLike<number>;
+  /** 图片面板的逐贴纸遮罩,已由 Cube.serializeStickering 变换到当前局面。 */
+  stickerMask?: SerializedStickerMask;
   /** studio 渲染旋钮的单一源:dist / opacity / 壳 / 背景 / 旋转全从这里取(经
    *  specToCubeOptions),保证与 VC 路(renderSpecSvg)逐字节同。省略 = 纯默认。 */
   spec?: ImageSpec;
@@ -70,7 +72,11 @@ export function exportSimPlanSvg(opts: SimPlanExportOptions): string {
     const isFace = FACE_LETTERS.includes(ch);
     const code = (opts.stickering?.[i] ?? FM_REGULAR) as FaceletMask;
     stickerColors.push(isFace
-      ? faceletDisplayColor(code, fc[ch as NetFaceLetter])
+      ? code !== FM_REGULAR
+        ? faceletDisplayColor(code, fc[ch as NetFaceLetter])
+        : opts.stickerMask?.selected[i]
+          ? opts.stickerMask.color
+          : fc[ch as NetFaceLetter]
       : IGNORED_STICKER_FILL);
     greyed.push(!isFace || code === FM_IGNORED);
   }
@@ -95,10 +101,13 @@ export function exportSimPlanSvg(opts: SimPlanExportOptions): string {
     cubeSize: N,
     view: 'plan',
     stickerColors,
-    // 实时态已在 stickerColors 里,清掉 alg 防二次置换(specToCubeOptions 会按
-    // spec.algorithm 填这两个)。
+    // 实时态、阶段与逐贴纸遮罩都已烙进 stickerColors。清掉 spec 的算法和遮罩,
+    // 防止再次置换/覆盖当前局面。
     algorithm: undefined,
     case: undefined,
+    mask: undefined,
+    maskAlg: undefined,
+    ...(opts.stickerMask ? { maskColor: opts.stickerMask.color } : {}),
     ...(opts.size ? { width: opts.size, height: opts.size } : {}),
     ...(opts.background ? { backgroundColor: opts.background } : {}),
   };

@@ -1174,7 +1174,7 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: '魔方图片生成控制台:预览 + 导出行(API 链接 / 复制图片 / SVG / PNG / <img> / Markdown)+ 属于「图」而不属于模拟器的控件(视图、图片尺寸、俯视简化、箭头、贴纸遮罩、背景色)。完全受控(spec + onSpecChange),内部不碰 URL —— URL 归页面宿主(useImageSpec)。',
     en: 'The puzzle-image console: preview + export row (API URL / copy image / SVG / PNG / <img> / Markdown) + the controls that belong to the IMAGE rather than the simulator (view, image size, plan simplification, arrows, sticker mask, background). Fully controlled (spec + onSpecChange) and owns no URL state — the page host does (useImageSpec).',
-    usage: '<PuzzleImageStudio spec={spec} onSpecChange={patch} />',
+    usage: '<PuzzleImageStudio spec={spec} onSpecChange={patch} staticFallbackExact={true} />',
     note: {
       zh: 'nuqs 只能在页级宿主里跑,所以本组件必须受控。唯一宿主 = /sim 图像面板(/visualcube 页已退役);sim 自己有入口的概念不在这里重复出控件。',
       en: 'nuqs only runs in a page-level host, hence the controlled contract. Its only host is the /sim image panel (the standalone /visualcube page is retired); anything the sim already owns is not duplicated here.',

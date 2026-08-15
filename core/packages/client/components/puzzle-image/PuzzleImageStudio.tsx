@@ -85,12 +85,15 @@ function ColorRow({
   );
 }
 
-function CopyButton({ getValue, label }: { getValue: () => string; label: string }) {
+function CopyButton({
+  getValue, label, disabled = false,
+}: { getValue: () => string; label: string; disabled?: boolean }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
       type="button"
       className="vc-btn"
+      disabled={disabled}
       onClick={() => {
         navigator.clipboard.writeText(getValue());
         setCopied(true);
@@ -108,7 +111,9 @@ function CopyButton({ getValue, label }: { getValue: () => string; label: string
  * `getPng()` 必须**同步**调用:Safari 只认手势那一刻就构造好的 ClipboardItem,
  * 先 await 拿到 Blob 再构造就已经过期了。所以这里把 Promise 原样交给剪贴板 API。
  */
-function CopyImageButton({ getPng, label }: { getPng: () => Promise<Blob>; label: string }) {
+function CopyImageButton({
+  getPng, label, disabled = false,
+}: { getPng: () => Promise<Blob>; label: string; disabled?: boolean }) {
   const [state, setState] = useState<'idle' | 'done' | 'fail'>('idle');
   // 能力探测只能在客户端做,但首帧必须与服务端 HTML 一致,否则 hydration 报不匹配。
   // 所以先当作支持,挂载后再按真实结果收起来。
@@ -118,11 +123,14 @@ function CopyImageButton({ getPng, label }: { getPng: () => Promise<Blob>; label
     <button
       type="button"
       className="vc-btn"
-      disabled={!supported}
-      title={supported ? undefined : tr({
-        zh: '此浏览器不支持复制图片,请用下载',
-        en: 'This browser cannot copy images — use download instead',
-      })}
+      disabled={disabled || !supported}
+      title={disabled ? tr({
+        zh: '正在等待精确图像',
+        en: 'Waiting for the exact image',
+      }) : supported ? undefined : tr({
+          zh: '此浏览器不支持复制图片,请用下载',
+          en: 'This browser cannot copy images — use download instead',
+        })}
       onClick={() => {
         copyPngToClipboard(getPng())
           .then(() => setState('done'))
@@ -161,6 +169,10 @@ export interface PuzzleImageStudioProps {
   previewHost?: HTMLElement | null;
   /** /sim 引擎 BSP 矢量镜像,透传 PuzzleImage(见其 engineSvg 注释)。 */
   engineSvg?: string | null;
+  /** 当前状态能否由 spec/static renderer 精确复现。每个宿主必须显式表态:
+   *  false 时 engineSvg 未就绪就只显示等待态并禁用导出,绝不静默退回一张内容不同的图;
+   *  服务端 API / img / Markdown 也隐藏,因为它们永远拿不到实时引擎状态。 */
+  staticFallbackExact: boolean;
   /** engine-only 拼图(fto / 枫叶 / 恐龙 / 齿轮… —— spec 渲染器不认识):预览直出
    *  engineSvg,隐藏所有 spec 控件与 API 链接(服务端渲染不了这些拼图),导出栏只剩
    *  截图组 + SVG/PNG(下载的就是预览这份引擎矢量)。 */
@@ -177,7 +189,7 @@ export interface PuzzleImageStudioProps {
 
 export default function PuzzleImageStudio({
   spec, onSpecChange, className, simBridge, previewHost, engineSvg,
-  engineOnly = false, compare = false, externalImage,
+  staticFallbackExact, engineOnly = false, compare = false, externalImage,
 }: PuzzleImageStudioProps) {
   const t = useT();
   const s = spec;
@@ -202,6 +214,7 @@ export default function PuzzleImageStudio({
       ? (s.cubeView === 'normal' || s.cubeView === 'net' || s.cubeView === 'wca'
         || s.cubeView === 'plan' || s.cubeView === 'trans')
       : s.puzzleVariant === 'iso'));
+  const exportReady = !!externalImage || engineShown || staticFallbackExact;
 
   // ── export ─────────────────────────────────────────────────────────────
   // Always ask the PURE renderer first — the old code scraped `.vc-preview > svg`
@@ -213,6 +226,9 @@ export default function PuzzleImageStudio({
     // 引擎镜像:所见即所得 —— 下载件也套图片尺寸(PX),否则导出的是导出器紧凑
     // 非方 viewBox 的原生像素尺寸,忽略了尺寸控件(退役对照表 §2b「图片尺寸」)。
     if (engineShown && engineSvg) return sizeEngineSvg(engineSvg, s.imageSize);
+    // 能力边界必须在 fallback 之前判断。否则引擎帧到达前/隐私窗口冷启动时会
+    // 瞬间导出一张“合法但语义不同”的完整魔方,而正常窗口又导出阶段图。
+    if (!staticFallbackExact) return '';
     try {
       const pure = renderSpecSvg(s);
       if (pure) return pure;
@@ -224,7 +240,7 @@ export default function PuzzleImageStudio({
     // layout, so a tnoodle-net fallback would export a picture unlike the preview.
     const node = previewRef.current?.querySelector('svg');
     return node ? new XMLSerializer().serializeToString(node) : '';
-  }, [s, engineShown, engineSvg, externalImage]);
+  }, [s, engineShown, engineSvg, externalImage, staticFallbackExact]);
 
   const exportWidth = externalImage?.width ?? s.imageSize;
   const exportHeight = externalImage?.height ?? s.imageSize;
@@ -396,16 +412,16 @@ export default function PuzzleImageStudio({
     <section className="vc-preview-wrap" ref={previewRef}>
       {/* 预览是被动镜像:朝向由 sim 自己的 左右 / 上下(cube 还有 透视)驱动。
           图上不能拖 —— 要转就拖左边那个真 3D。 */}
-      {engineOnly ? (
+      {engineOnly || (!staticFallbackExact && !engineShown) ? (
         // engine-only 拼图无 spec 渲染器可回退:有引擎矢量就显示(尺寸同 PuzzleImage
         // 的 engineMirrors 分支:钉成方形显示框,viewBox + meet 保比例),没有就等静止帧。
-        engineSvg ? (
+        engineShown && engineSvg ? (
           <div
             className="vc-preview"
             dangerouslySetInnerHTML={{ __html: sizeEngineSvg(engineSvg, s.imageSize) }}
           />
         ) : (
-          <div className="vc-preview vc-preview-pending">{t('等待静止帧…', 'Waiting for a still frame…')}</div>
+          <div className="vc-preview vc-preview-pending">{t('等待精确图像…', 'Waiting for the exact image…')}</div>
         )
       ) : compare ? (
         // 对照模式(/sim?img_engine=both):同一个 spec 渲染两遍 —— 左边喂 engineSvg
@@ -439,10 +455,13 @@ export default function PuzzleImageStudio({
         {/* 链接类按钮指向服务端 spec 渲染(/v1/visualcube.svg),engine-only 拼图服务端
             画不了 → 只留 SVG/PNG(下载预览那份引擎矢量)。没有单独的「分享链接」按钮:
             面板状态本来就写在地址栏的 img_* 里,复制地址栏即分享。 */}
-        {!engineOnly && !externalImage && <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />}
+        {!engineOnly && staticFallbackExact && !externalImage && (
+          <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />
+        )}
         {/* 复制图片本身,而不是链接 —— 贴进文档 / 聊天最短的一条路。 */}
         <CopyImageButton
           label={t('复制图片', 'Copy image')}
+          disabled={!exportReady}
           getPng={() => externalImage
             ? svgToRasterBlob(getCurrentSvg(), { width: exportWidth, height: exportHeight, format: 'png' })
             : svgToPngBlob(getCurrentSvg(), s.imageSize)}
@@ -450,25 +469,28 @@ export default function PuzzleImageStudio({
         <CopyButton
           label={t('复制 SVG', 'Copy SVG')}
           getValue={() => getCurrentSvg()}
+          disabled={!exportReady}
         />
-        <button type="button" className="vc-btn" onClick={downloadSvg}>
+        <button type="button" className="vc-btn" onClick={downloadSvg} disabled={!exportReady}>
           <Download size={14} /> SVG
         </button>
-        <button type="button" className="vc-btn" onClick={downloadPng}>
+        <button type="button" className="vc-btn" onClick={downloadPng} disabled={!exportReady}>
           <Download size={14} /> PNG
         </button>
         {externalImage && (
-          <button type="button" className="vc-btn" onClick={downloadJpeg}>
+          <button type="button" className="vc-btn" onClick={downloadJpeg} disabled={!exportReady}>
             <Download size={14} /> JPG
           </button>
         )}
-        {!engineOnly && !externalImage && (
+        {!engineOnly && staticFallbackExact && !externalImage && (
           <CopyButton
             label={t('<img> 标签', '<img> tag')}
             getValue={() => `<img src="${apiSvgUrl}" alt="cube" width="${s.imageSize}" height="${s.imageSize}" />`}
           />
         )}
-        {!engineOnly && !externalImage && <CopyButton label="Markdown" getValue={() => `![cube](${apiSvgUrl})`} />}
+        {!engineOnly && staticFallbackExact && !externalImage && (
+          <CopyButton label="Markdown" getValue={() => `![cube](${apiSvgUrl})`} />
+        )}
       </section>
 
       {!externalImage && <section className="vc-controls">
@@ -793,7 +815,7 @@ export default function PuzzleImageStudio({
         </>)}
       </section>}
 
-      {!engineOnly && !externalImage && (
+      {!engineOnly && staticFallbackExact && !externalImage && (
       <details className="vc-api-doc">
         <summary>{t('API 用法（外部嵌入）', 'API usage (embed elsewhere)')}</summary>
         <p>

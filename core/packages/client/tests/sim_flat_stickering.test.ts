@@ -140,4 +140,28 @@ describe('平面渲染器吃阶段遮罩', () => {
     expect(greys(svg)).toBe(0);
     expect((svg.match(new RegExp(`fill="${FACE_COLORS.U}"`, 'gi')) ?? []).length).toBe(9);
   });
+
+  it('net / plan 都保留图片面板逐贴纸遮罩,且阶段遮罩在重叠格优先', () => {
+    const color = '#123456';
+    const selected = new Uint8Array(54);
+    selected[0] = 1; // U0:OLL 原色
+    selected[9] = 1; // R0:OLL ignored,阶段必须覆盖图片遮罩
+    const stickerMask = { selected, color };
+    const count = (svg: string, fill: string) =>
+      (svg.match(new RegExp(`fill="${fill}"`, 'gi')) ?? []).length;
+
+    for (const render of [
+      (stickering?: Uint8Array) => renderCubeNetSvg({
+        serialized, order: 3, faceColors: FACE_COLORS, stickering, stickerMask,
+      }),
+      (stickering?: Uint8Array) => exportSimPlanSvg({
+        serialized, order: 3, faceColors: FACE_COLORS, stickering, stickerMask,
+      }),
+    ]) {
+      expect(count(render(), color)).toBe(2);
+      const staged = render(codes);
+      expect(count(staged, color)).toBe(1);
+      expect(count(staged, IGNORED_GREY)).toBe(12);
+    }
+  });
 });
