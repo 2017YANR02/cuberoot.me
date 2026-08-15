@@ -175,7 +175,7 @@ describe('component reuse rule registry', () => {
     }, new Set())).toEqual([]);
   });
 
-  it('keeps the canonical multi-orientation case detail identity and row pairing', () => {
+  it('keeps every canonical case detail on the fixed shared player-and-list layout', () => {
     const filePath = 'D:/cube/cuberoot.me/core/packages/client/app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx';
     expect(scanAlgCaseDetailLayout(filePath, `
       {!multiOri && (
@@ -186,12 +186,28 @@ describe('component reuse rule registry', () => {
       <div className="alg-case-detail-lean-thumb"><CaseThumb /></div>
     `)).toEqual([]);
     expect(scanAlgCaseDetailLayout(filePath, `
+      <PlayableAlgRow inlinePlayer={!multiOri} />
+    `).map((hit) => hit.ruleId)).toContain('alg-case-detail-layout');
+    expect(scanAlgCaseDetailLayout(filePath, `
       {multiOri && selectedEntry && (
         <div className="alg-case-detail-ori-player"><AlgPlayer /></div>
       )}
       {dragAlgs ? withDnd(oi)(rows) : rows}
     `).map((hit) => hit.ruleId)).toContain('alg-case-detail-layout');
     expect(scanAlgCaseDetailLayout(filePath, `
+      <div className="alg-case-detail-ori-main">
+        <div className="alg-case-detail-ori-player"><AlgPlayer /></div>
+        <div className="alg-case-detail-ori-algs">{rows}</div>
+      </div>
+    `)).toEqual([]);
+
+    const metaPath = 'D:/cube/cuberoot.me/core/packages/client/components/AlgCaseMetaContent.tsx';
+    expect(scanAlgCaseDetailLayout(metaPath, `
+      {expandedAlg && (
+        <AlgPlayer alg={alg} />
+      )}
+    `).map((hit) => hit.ruleId)).toContain('alg-case-detail-layout');
+    expect(scanAlgCaseDetailLayout(metaPath, `
       <div className="alg-case-detail-ori-main">
         <div className="alg-case-detail-ori-player"><AlgPlayer /></div>
         <div className="alg-case-detail-ori-algs">{rows}</div>

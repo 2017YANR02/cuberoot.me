@@ -793,7 +793,7 @@ html[data-theme=dark] .alg-root {
   background: var(--background);
   border: 1px solid var(--border-default);
   border-radius: 6px;
-  font-family: Consolas, monospace;
+  font-family: var(--font-mono, Consolas, monospace);
   font-size: 12px;
   color: var(--foreground);
   cursor: pointer;
@@ -1136,7 +1136,7 @@ a.alg-community-author:hover {
   background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 .alg-community-alg {
-  font-family: Consolas, monospace;
+  font-family: var(--font-mono, Consolas, monospace);
   font-size: 12px;
   color: var(--foreground);
   background: none;
@@ -1701,8 +1701,8 @@ a.alg-community-author:hover {
   gap: 10px;
   min-width: 0;
 }
-/* F2L 等多朝向详情一行只放一个槽位:动画与对应公式横向配对，避免视觉串组。 */
-.alg-case-detail-lean-algs.is-multi-ori {
+/* 所有 case 详情都把固定动画与对应公式横向配对；多朝向仍按朝向分组。 */
+.alg-case-detail-lean-algs.is-paired-player {
   gap: 24px;
 }
 .alg-case-detail-ori {
@@ -1765,20 +1765,20 @@ a.alg-community-author:hover {
 
 /* 中等宽度先把静态信息移到上方，把整行留给动画与公式。 */
 @media (max-width: 900px) {
-  .alg-case-detail-lean.is-multi-ori {
+  .alg-case-detail-lean.is-paired-player {
     display: flex;
     flex-direction: column;
     gap: 14px;
   }
-  .alg-case-detail-lean.is-multi-ori .alg-case-detail-lean-aside {
+  .alg-case-detail-lean.is-paired-player .alg-case-detail-lean-aside {
     width: 100%;
     display: grid;
     grid-template-columns: 116px minmax(0, 1fr);
     column-gap: 12px;
     row-gap: 6px;
   }
-  .alg-case-detail-lean.is-multi-ori .alg-case-detail-lean-thumb { grid-row: 1 / span 3; }
-  .alg-case-detail-lean.is-multi-ori .alg-case-detail-lean-aside > :not(.alg-case-detail-lean-thumb) { grid-column: 2; }
+  .alg-case-detail-lean.is-paired-player .alg-case-detail-lean-thumb { grid-row: 1 / span 3; }
+  .alg-case-detail-lean.is-paired-player .alg-case-detail-lean-aside > :not(.alg-case-detail-lean-thumb) { grid-column: 2; }
 }
 
 @media (max-width: 680px) {
@@ -1807,7 +1807,7 @@ a.alg-community-author:hover {
     gap: 4px;
     margin: 0;
   }
-  .alg-case-detail-lean-algs.is-multi-ori {
+  .alg-case-detail-lean-algs.is-paired-player {
     gap: 10px;
     width: 100%;
   }
@@ -1946,6 +1946,9 @@ a.alg-community-author:hover {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+.alg-meta-case-player-layout {
+  flex: 1;
 }
 .alg-meta-algline-len {
   flex: none;
