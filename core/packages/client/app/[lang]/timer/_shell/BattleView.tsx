@@ -75,6 +75,9 @@ function BattlePresenceReporter({
   const puzzleIds = useBattleStore(s => s.puzzleIds);
   const connected = [0, 1, 2, 3].map(isLive);
   const mix = battlePresenceMix(playerCount, cubeMode, connected);
+  const events = Array.from(new Set(
+    puzzleIds.slice(0, playerCount).map(battleToTimerEvent),
+  ));
   const results = players.slice(0, playerCount).flatMap((player, index) => {
     const solve = player.solveHistory.at(-1);
     if (!solve) return [];
@@ -95,7 +98,14 @@ function BattlePresenceReporter({
         ...(status!.deviceId ? { id: status!.deviceId } : {}),
       }]),
   ).values());
-  const report: TimerPresenceReport = { ...mix, mode: 'local', results, devices };
+  const report: TimerPresenceReport = {
+    ...mix,
+    mode: 'local',
+    players: playerCount,
+    events,
+    results,
+    devices,
+  };
   const signature = JSON.stringify(report);
   useEffect(() => { onChange?.(report); }, [signature, onChange]);
   return null;
