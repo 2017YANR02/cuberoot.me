@@ -210,6 +210,9 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   // ── 计时器(复用 Solo 的状态机;设置沿用用户 timer 设置)──────
   const myResult = room && pid ? room.results[String(room.round)]?.[pid] : undefined;
   const myEvent = room && pid ? playerEventOf(room, pid) : (room?.event ?? '333');
+  const onlinePlayerCount = room
+    ? Math.max(1, Object.values(room.players).filter(player => isNetOnline(player, room.now)).length)
+    : 1;
   const canSolve = !!room && !!pid && !myResult;
   const complete = room ? isRoundComplete(room) : false;
   /** 还没交本轮成绩的在线玩家数。 */
@@ -688,6 +691,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     onPresenceChange?.({
       ...(connected ? { normal: 0, smart: 1 } : { normal: 1, smart: 0 }),
       mode: 'net',
+      players: onlinePlayerCount,
+      events: [myEvent],
       results: myResult ? [{ event: myEvent, timeMs: myResult.t, penalty: myResult.p }] : [],
       devices: connected ? [{
         name: bluetoothCube.status.deviceName,
@@ -701,6 +706,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     myEvent,
     myResult?.p,
     myResult?.t,
+    onlinePlayerCount,
     onPresenceChange,
   ]);
 

@@ -29,6 +29,8 @@ describe('timer presence API', () => {
 
     const heartbeat = await post(IDS[0], 0, 1, {
       mode: 'solo',
+      players: 1,
+      events: ['333'],
       ip: 'forged',
       account: { name: 'forged' },
       results: [{ event: '333', timeMs: 8123, penalty: 'ok', at: 900 }],
@@ -49,6 +51,8 @@ describe('timer presence API', () => {
         normal: 0,
         smart: 1,
         mode: 'solo',
+        players: 1,
+        events: ['333'],
         ip: '203.0.113.10',
         account: { ownerId: 'u42', name: 'Timer User', wcaId: '2024TEST01' },
         results: [{ event: '333', timeMs: 8123, penalty: 'ok', at: 900 }],
@@ -77,9 +81,17 @@ describe('timer presence API', () => {
 
     expect((await post(2, 0)).status).toBe(204);
     expect((await post(1, 1)).status).toBe(204);
-    const active = await (await routes.request('/timer/presence')).json() as { sessions: Array<{ account: unknown; ip: string }>; total: number };
+    const active = await (await routes.request('/timer/presence')).json() as {
+      sessions: Array<{ account: unknown; ip: string; players: number; events: string[] }>;
+      total: number;
+    };
     expect(active.total).toBe(2);
-    expect(active.sessions[0]).toMatchObject({ account: null, ip: '198.51.100.4' });
+    expect(active.sessions[0]).toMatchObject({
+      account: null,
+      ip: '198.51.100.4',
+      players: 2,
+      events: [],
+    });
     expect((await post(0, 0)).status).toBe(204);
     expect(await (await routes.request('/timer/presence')).json()).toMatchObject({ total: 0, sessions: [] });
   });
@@ -96,14 +108,23 @@ describe('timer presence API', () => {
       id: IDS[0],
       normal: 0,
       smart: 1,
+      players: 99,
+      events: ['333', '333', 'x'.repeat(50), '', null],
       results: [{ event: '333', timeMs: -1, penalty: 'ok' }],
       devices: [{ name: 'GAN'.repeat(100), id: 'opaque-'.repeat(100) }, { name: '' }],
     })).status).toBe(204);
     const snapshot = await (await routes.request('/timer/presence')).json() as {
       smart: number;
-      sessions: Array<{ results: unknown[]; devices: Array<{ name: string; id?: string }> }>;
+      sessions: Array<{
+        players: number;
+        events: string[];
+        results: unknown[];
+        devices: Array<{ name: string; id?: string }>;
+      }>;
     };
     expect(snapshot.smart).toBe(1);
+    expect(snapshot.sessions[0].players).toBe(8);
+    expect(snapshot.sessions[0].events).toEqual(['333', 'x'.repeat(32)]);
     expect(snapshot.sessions[0].results).toEqual([]);
     expect(snapshot.sessions[0].devices).toEqual([{
       name: 'GAN'.repeat(100).slice(0, 128),
@@ -124,6 +145,8 @@ describe('timer presence heartbeat', () => {
       normal: 0,
       smart: 1,
       mode: 'solo',
+      players: 1,
+      events: ['333'],
       results: [],
       devices: [{ name: 'Smart cube', id: 'opaque-id' }],
     };
@@ -133,7 +156,7 @@ describe('timer presence heartbeat', () => {
     expect(request).toHaveBeenCalledTimes(2);
     expect(bodies[0]).toEqual({ id: IDS[0], ...report });
     expect(bodies[1]).toEqual({
-      id: IDS[0], normal: 0, smart: 1, mode: 'solo', results: [], devices: [],
+      id: IDS[0], normal: 0, smart: 1, mode: 'solo', players: 1, events: ['333'], results: [], devices: [],
     });
   });
 });

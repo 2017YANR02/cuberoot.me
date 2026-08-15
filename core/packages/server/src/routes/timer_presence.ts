@@ -8,6 +8,8 @@ export const TIMER_PRESENCE_TTL_MS = 30_000;
 const MAX_ENTRIES = 20_000;
 const MAX_RESULTS = 4;
 const MAX_DEVICES = 4;
+const MAX_EVENTS = 4;
+const MAX_PLAYERS = 8;
 const MAX_RESULT_MS = 24 * 60 * 60 * 1000;
 const ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -35,6 +37,8 @@ export interface TimerPresenceSession {
   normal: number;
   smart: number;
   mode: 'solo' | 'local' | 'net';
+  players: number;
+  events: string[];
   ip: string;
   account: TimerPresenceAccount | null;
   results: TimerPresenceResult[];
@@ -56,6 +60,8 @@ interface TimerPresenceBody {
   normal?: unknown;
   smart?: unknown;
   mode?: unknown;
+  players?: unknown;
+  events?: unknown;
   results?: unknown;
   devices?: unknown;
 }
@@ -112,6 +118,21 @@ function parseDevices(value: unknown): TimerPresenceDevice[] {
     devices.push({ name, ...(id ? { id } : {}) });
   }
   return devices;
+}
+
+function parseEvents(value: unknown, results: TimerPresenceResult[]): string[] {
+  const source = Array.isArray(value) ? value : results.map(result => result.event);
+  const events: string[] = [];
+  for (const raw of source.slice(0, MAX_EVENTS)) {
+    const event = boundedString(raw, 32);
+    if (event && !events.includes(event)) events.push(event);
+  }
+  return events;
+}
+
+function parsePlayers(value: unknown, fallback: number): number {
+  if (!Number.isInteger(value)) return fallback;
+  return Math.max(1, Math.min(MAX_PLAYERS, value as number));
 }
 
 function accountOf(user: WcaUser | null): TimerPresenceAccount | null {
@@ -204,6 +225,8 @@ export function createTimerPresenceRoutes(options: TimerPresenceRouteOptions = {
         return c.json({ error: 'invalid timer mode' }, 400);
       }
       const results = parseResults(body.results);
+      const players = parsePlayers(body.players, total);
+      const events = parseEvents(body.events, results);
       const devices = parseDevices(body.devices);
       if (!entries.has(body.id) && entries.size >= maxEntries) {
         return c.json({ error: 'presence capacity reached' }, 503);
@@ -214,6 +237,8 @@ export function createTimerPresenceRoutes(options: TimerPresenceRouteOptions = {
         normal,
         smart,
         mode: mode as TimerPresenceSession['mode'],
+        players,
+        events,
         ip: identifyIp(c),
         account: accountOf(user),
         results,

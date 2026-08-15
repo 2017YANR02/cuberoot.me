@@ -206,6 +206,7 @@
   font-size: 11px;
   overflow-wrap: anywhere;
 }
+.timer-presence-meta.is-events { flex-wrap: wrap; }
 .timer-presence-meta code {
   min-width: 0;
   overflow-wrap: anywhere;

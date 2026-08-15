@@ -1119,6 +1119,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     onPresenceChange?.({
       ...(cubeConnected ? { normal: 0, smart: 1 } : { normal: 1, smart: 0 }),
       mode: 'solo',
+      players: 1,
+      events: [event],
       results: latestPresenceSolve ? [{
         event: latestPresenceSolve.event,
         timeMs: latestPresenceSolve.timeMs,
@@ -1134,6 +1136,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     cubeConnected,
     bluetoothCube.status.deviceId,
     bluetoothCube.status.deviceName,
+    event,
     latestPresenceSolve?.event,
     latestPresenceSolve?.penalty,
     latestPresenceSolve?.timeMs,
