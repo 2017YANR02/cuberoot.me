@@ -153,6 +153,23 @@ describe('mini program account page', () => {
     expect(page.data.status).toBe('');
   });
 
+  it('keeps an emoji account initial intact', async () => {
+    const emojiSession = {
+      ...storedSession,
+      user: { ...storedSession.user, name: '🧩 CubeRoot' },
+    };
+    const page = await loadPage({
+      getStorageSync: () => emojiSession,
+      removeStorageSync: vi.fn(),
+      request: vi.fn(),
+    });
+
+    page.onShow();
+
+    expect(page.data.displayName).toBe('🧩 CubeRoot');
+    expect(page.data.initial).toBe('🧩');
+  });
+
   it('keeps a cached account but marks its state unconfirmed after a transient error', async () => {
     const page = await loadPage({
       getStorageSync: () => storedSession,
