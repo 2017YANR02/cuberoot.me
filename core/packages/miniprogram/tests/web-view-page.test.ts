@@ -20,10 +20,18 @@ function createContext(): WebViewPageContext {
 
 describe('shared web-view page state', () => {
   const setNavigationBarTitle = vi.fn();
+  const networkListeners = new Set<WechatMiniprogram.OnNetworkStatusChangeCallback>();
 
   beforeEach(() => {
+    networkListeners.clear();
     vi.stubGlobal('wx', {
       getStorageSync: () => null,
+      offNetworkStatusChange(listener: WechatMiniprogram.OnNetworkStatusChangeCallback) {
+        networkListeners.delete(listener);
+      },
+      onNetworkStatusChange(listener: WechatMiniprogram.OnNetworkStatusChangeCallback) {
+        networkListeners.add(listener);
+      },
       removeStorageSync: vi.fn(),
       nextTick(callback: () => void) {
         callback();
@@ -85,6 +93,80 @@ describe('shared web-view page state', () => {
 
     retryWebRoute(context);
     expect(context.data.src).toBe('https://cuberoot.me/zh/alg');
+    expect(context.data.errorTitle).toBe('');
+  });
+
+  it('reopens a failed route when the network reconnects', async () => {
+    const context = createContext();
+    const options = createWebViewPageOptions('timer') as unknown as {
+      onLoad(this: WebViewPageContext, options: Record<string, string>): void;
+    };
+
+    options.onLoad.call(context, {});
+    await Promise.resolve();
+    markWebRouteFailed(context);
+
+    expect(networkListeners.size).toBe(1);
+    networkListeners.forEach((listener) => listener({
+      isConnected: false,
+      networkType: 'none',
+    }));
+    expect(context.data.errorTitle).toBe('网页加载失败');
+
+    networkListeners.forEach((listener) => listener({
+      isConnected: true,
+      networkType: 'wifi',
+    }));
+    await Promise.resolve();
+
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.errorTitle).toBe('');
+    expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
+  });
+
+  it('removes network recovery when the page is unloaded', async () => {
+    const context = createContext();
+    const options = createWebViewPageOptions('timer') as unknown as {
+      onLoad(this: WebViewPageContext, options: Record<string, string>): void;
+      onUnload(this: WebViewPageContext): void;
+    };
+
+    options.onLoad.call(context, {});
+    await Promise.resolve();
+    markWebRouteFailed(context);
+    const [listener] = [...networkListeners];
+
+    options.onUnload.call(context);
+    expect(networkListeners.size).toBe(0);
+    listener({ isConnected: true, networkType: 'wifi' });
+    await Promise.resolve();
+
+    expect(context.data.src).toBe('');
+    expect(setNavigationBarTitle).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps manual retry available when network observation throws', async () => {
+    vi.stubGlobal('wx', {
+      getStorageSync: () => null,
+      onNetworkStatusChange() {
+        throw new Error('network observation unavailable');
+      },
+      removeStorageSync: vi.fn(),
+      nextTick(callback: () => void) { callback(); },
+      setNavigationBarTitle,
+    });
+    const context = createContext();
+    const options = createWebViewPageOptions('timer') as unknown as {
+      onLoad(this: WebViewPageContext, options: Record<string, string>): void;
+      retry(this: WebViewPageContext): void;
+    };
+
+    expect(() => options.onLoad.call(context, {})).not.toThrow();
+    await Promise.resolve();
+    markWebRouteFailed(context);
+    options.retry.call(context);
+
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
     expect(context.data.errorTitle).toBe('');
   });
 
