@@ -94,10 +94,13 @@ button::after {
 }
 
 .text-button {
+  align-items: center;
   color: var(--cr-accent);
+  display: inline-flex;
   font-size: 26rpx;
   font-weight: 620;
-  min-height: 56rpx;
+  justify-content: center;
+  min-height: 88rpx;
   padding: 0 8rpx;
 }
 
