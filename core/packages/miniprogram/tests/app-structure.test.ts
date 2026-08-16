@@ -128,6 +128,13 @@ describe('mini program app structure', () => {
     }
   });
 
+  it('opens internal web pages only through the shared navigation helper', () => {
+    for (const [path, source] of Object.entries(sourceFiles)) {
+      if (!path.endsWith('.ts') || path.endsWith('/lib/navigation.ts')) continue;
+      expect(source, path).not.toMatch(/wx\.navigateTo\s*\(/);
+    }
+  });
+
   it('uses one visible press state for every native button', () => {
     for (const [path, source] of Object.entries(sourceFiles)) {
       if (!path.endsWith('.wxml')) continue;

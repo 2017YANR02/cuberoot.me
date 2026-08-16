@@ -7,6 +7,7 @@ import {
   validateStoredSession,
   type SessionData,
 } from '../../lib/auth';
+import { openWebsitePageOnce } from '../../lib/navigation';
 
 const activePages = new WeakSet<object>();
 const validationAttempts = new WeakMap<object, number>();
@@ -121,21 +122,15 @@ Page({
   },
 
   openAccount() {
-    wx.navigateTo({
-      url: '/pages/web/index?key=account',
-      fail: () => {
-        wx.showToast({ icon: 'none', title: '账号页暂时无法打开' });
-      },
+    openWebsitePageOnce(this, 'account', {
+      failureMessage: '账号页暂时无法打开',
     });
   },
 
   openPrivacy() {
     const openWebsitePrivacy = () => {
-      wx.navigateTo({
-        url: '/pages/web/index?key=privacy',
-        fail: () => {
-          wx.showToast({ icon: 'none', title: '隐私说明暂时无法打开' });
-        },
+      openWebsitePageOnce(this, 'privacy', {
+        failureMessage: '隐私说明暂时无法打开',
       });
     };
 
@@ -155,16 +150,13 @@ Page({
       content: '将同时退出小程序和网站账号，本机计时记录不会被删除。',
       success: (result) => {
         if (!result.confirm) return;
-        wx.navigateTo({
-          url: '/pages/web/index?key=logout',
+        openWebsitePageOnce(this, 'logout', {
+          failureMessage: '退出失败，请重试',
           success: () => {
             clearStoredSession();
             this.showSession(null);
             this.showSyncState('');
             this.setData({ status: '', statusError: false });
-          },
-          fail: () => {
-            wx.showToast({ icon: 'none', title: '退出失败，请重试' });
           },
         });
       },
