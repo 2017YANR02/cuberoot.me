@@ -89,7 +89,7 @@ describe('mini program authentication', () => {
           statusCode: 200,
           data: {
             token: 't'.repeat(20),
-            user: { name: 'CubeRoot', wcaId: null },
+            user: { uid: 12, name: 'CubeRoot', wcaId: null },
             isNew: true,
           },
         });
@@ -102,8 +102,33 @@ describe('mini program authentication', () => {
     expect(session.isNew).toBe(true);
     expect(setStorageSync).toHaveBeenCalledWith('cuberoot:session', {
       token: 't'.repeat(20),
-      user: { name: 'CubeRoot', wcaId: null },
+      user: { uid: 12, name: 'CubeRoot', wcaId: null },
     });
+  });
+
+  it('rejects a new login response without the canonical account uid', async () => {
+    const setStorageSync = vi.fn();
+    vi.stubGlobal('wx', {
+      login(options: { success(result: { code: string }): void }) {
+        options.success({ code: 'login-code' });
+      },
+      request(options: { success(result: { statusCode: number; data: unknown }): void }) {
+        options.success({
+          statusCode: 200,
+          data: {
+            token: 't'.repeat(20),
+            user: { name: 'CubeRoot', wcaId: null },
+          },
+        });
+      },
+      setStorageSync,
+    });
+
+    await expect(loginWithWechat()).rejects.toMatchObject({
+      message: 'invalid session response',
+      status: 502,
+    });
+    expect(setStorageSync).not.toHaveBeenCalled();
   });
 
   it('normalizes persisted identity fields and drops transient login metadata', () => {
@@ -182,7 +207,7 @@ describe('mini program authentication', () => {
           statusCode: 200,
           data: {
             token: 't'.repeat(20),
-            user: { name: 'CubeRoot', wcaId: null },
+            user: { uid: 12, name: 'CubeRoot', wcaId: null },
           },
         });
       },
@@ -208,7 +233,7 @@ describe('mini program authentication', () => {
           statusCode: 200,
           data: {
             token: `${'t'.repeat(20)}\nInjected: true`,
-            user: { name: 'CubeRoot', wcaId: null },
+            user: { uid: 12, name: 'CubeRoot', wcaId: null },
           },
         });
       },
@@ -233,7 +258,7 @@ describe('mini program authentication', () => {
           statusCode: 200,
           data: {
             token: 't'.repeat(20),
-            user: { name: '\t', wcaId: null },
+            user: { uid: 12, name: '\t', wcaId: null },
           },
         });
       },
@@ -258,7 +283,7 @@ describe('mini program authentication', () => {
           statusCode: 200,
           data: {
             token: 't'.repeat(20),
-            user: { name: 'CubeRoot', wcaId: '2026\tROOT01' },
+            user: { uid: 12, name: 'CubeRoot', wcaId: '2026\tROOT01' },
           },
         });
       },
@@ -368,14 +393,70 @@ describe('mini program authentication', () => {
       }) {
         options.success({
           statusCode: 200,
-          data: { user: { name: 'New name', wcaId: '2026-ROOT01' } },
+          data: { user: { uid: 12, name: 'New name', wcaId: '2026-ROOT01' } },
         });
       },
       setStorageSync,
     });
 
     const validated = await validateStoredSession(session);
+    expect(validated.user.uid).toBe(12);
     expect(validated.user.name).toBe('New name');
+    expect(setStorageSync).not.toHaveBeenCalled();
+  });
+
+  it('upgrades a legacy stored identity with the canonical account uid', async () => {
+    const session = {
+      token: 't'.repeat(20),
+      user: { name: 'Old name', wcaId: null },
+    };
+    const setStorageSync = vi.fn();
+    vi.stubGlobal('wx', {
+      getStorageSync: () => session,
+      request(options: {
+        success(result: { statusCode: number; data: unknown }): void;
+      }) {
+        options.success({
+          statusCode: 200,
+          data: { user: { uid: 12, name: 'New name', wcaId: null } },
+        });
+      },
+      setStorageSync,
+    });
+
+    await expect(validateStoredSession(session)).resolves.toEqual({
+      token: session.token,
+      user: { uid: 12, name: 'New name', wcaId: null },
+    });
+    expect(setStorageSync).toHaveBeenCalledWith('cuberoot:session', {
+      token: session.token,
+      user: { uid: 12, name: 'New name', wcaId: null },
+    });
+  });
+
+  it('rejects validation when the server returns a different account uid', async () => {
+    const session = {
+      token: 't'.repeat(20),
+      user: { uid: 12, name: 'CubeRoot', wcaId: null },
+    };
+    const setStorageSync = vi.fn();
+    vi.stubGlobal('wx', {
+      getStorageSync: () => session,
+      request(options: {
+        success(result: { statusCode: number; data: unknown }): void;
+      }) {
+        options.success({
+          statusCode: 200,
+          data: { user: { uid: 13, name: 'Other account', wcaId: null } },
+        });
+      },
+      setStorageSync,
+    });
+
+    await expect(validateStoredSession(session)).rejects.toMatchObject({
+      message: 'session identity mismatch',
+      status: 401,
+    });
     expect(setStorageSync).not.toHaveBeenCalled();
   });
 
