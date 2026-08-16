@@ -132,10 +132,18 @@ export function retryWebRoute(context: WebViewPageContext): void {
   if (disposedPages.has(context)) return;
   const key = context.data.routeKey;
   context.setData({ canRetry: false, errorMessage: '', errorTitle: '', src: '' });
-  wx.nextTick(() => {
+
+  const reopen = () => {
     if (disposedPages.has(context)) return;
     void openWebRoute(context, key);
-  });
+  };
+
+  try {
+    wx.nextTick(reopen);
+  } catch {
+    // Retry immediately when the scheduling API is unavailable or broken.
+    reopen();
+  }
 }
 
 /**
