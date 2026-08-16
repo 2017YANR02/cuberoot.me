@@ -150,6 +150,20 @@ describe('mini program authentication', () => {
     expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
   });
 
+  it('rejects stored identity fields containing control characters', () => {
+    const removeStorageSync = vi.fn();
+    vi.stubGlobal('wx', {
+      getStorageSync: () => ({
+        token: 't'.repeat(20),
+        user: { name: 'Cube\nRoot', wcaId: '2026ROOT01' },
+      }),
+      removeStorageSync,
+    });
+
+    expect(getStoredSession()).toBeNull();
+    expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
+  });
+
   it('maps actionable login failures to user-facing messages', () => {
     expect(loginErrorMessage(new ApiError(409, 'unionid'))).toContain('开放平台');
     expect(loginErrorMessage(new ApiError(503, 'secret'))).toContain('服务端');
@@ -220,6 +234,31 @@ describe('mini program authentication', () => {
           data: {
             token: 't'.repeat(20),
             user: { name: '\t', wcaId: null },
+          },
+        });
+      },
+      setStorageSync,
+    });
+
+    await expect(loginWithWechat()).rejects.toMatchObject({
+      message: 'invalid session response',
+      status: 502,
+    });
+    expect(setStorageSync).not.toHaveBeenCalled();
+  });
+
+  it('rejects login identity fields containing control characters before storage', async () => {
+    const setStorageSync = vi.fn();
+    vi.stubGlobal('wx', {
+      login(options: { success(result: { code: string }): void }) {
+        options.success({ code: 'login-code' });
+      },
+      request(options: { success(result: { statusCode: number; data: unknown }): void }) {
+        options.success({
+          statusCode: 200,
+          data: {
+            token: 't'.repeat(20),
+            user: { name: 'CubeRoot', wcaId: '2026\tROOT01' },
           },
         });
       },
