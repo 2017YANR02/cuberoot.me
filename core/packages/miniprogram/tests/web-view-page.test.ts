@@ -22,6 +22,8 @@ describe('shared web-view page state', () => {
 
   beforeEach(() => {
     vi.stubGlobal('wx', {
+      getStorageSync: () => null,
+      removeStorageSync: vi.fn(),
       nextTick(callback: () => void) {
         callback();
       },
@@ -34,10 +36,10 @@ describe('shared web-view page state', () => {
     vi.unstubAllGlobals();
   });
 
-  it('opens an allowlisted route and updates its title', () => {
+  it('opens an allowlisted route and updates its title', async () => {
     const context = createContext();
 
-    expect(openWebRoute(context, 'timer')).toBe(true);
+    await expect(openWebRoute(context, 'timer')).resolves.toBe(true);
     expect(context.data).toEqual({
       canRetry: false,
       errorMessage: '',
@@ -48,18 +50,18 @@ describe('shared web-view page state', () => {
     expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '计时器' });
   });
 
-  it('blocks unknown routes without offering a retry', () => {
+  it('blocks unknown routes without offering a retry', async () => {
     const context = createContext();
 
-    expect(openWebRoute(context, 'https://example.com')).toBe(false);
+    await expect(openWebRoute(context, 'https://example.com')).resolves.toBe(false);
     expect(context.data.src).toBe('');
     expect(context.data.errorTitle).toBe('无法打开');
     expect(context.data.canRetry).toBe(false);
   });
 
-  it('shows a recoverable state after a web-view error', () => {
+  it('shows a recoverable state after a web-view error', async () => {
     const context = createContext();
-    openWebRoute(context, 'alg');
+    await openWebRoute(context, 'alg');
 
     markWebRouteFailed(context);
     expect(context.data.src).toBe('');
@@ -69,5 +71,82 @@ describe('shared web-view page state', () => {
     retryWebRoute(context);
     expect(context.data.src).toBe('https://cuberoot.me/zh/alg');
     expect(context.data.errorTitle).toBe('');
+  });
+
+  it('uses a one-time handoff ticket when a Mini Program session exists', async () => {
+    const token = 't'.repeat(20);
+    const ticket = 'A'.repeat(43);
+    vi.stubGlobal('wx', {
+      getStorageSync: () => ({ token, user: { name: 'CubeRoot', wcaId: null } }),
+      removeStorageSync: vi.fn(),
+      nextTick(callback: () => void) { callback(); },
+      setNavigationBarTitle,
+      request(options: {
+        header: Record<string, string>;
+        success(result: { statusCode: number; data: unknown }): void;
+      }) {
+        expect(options.header.Authorization).toBe(`Bearer ${token}`);
+        options.success({ statusCode: 200, data: { ticket, expiresIn: 90 } });
+      },
+    });
+    const context = createContext();
+
+    await openWebRoute(context, 'timer');
+
+    expect(context.data.src).toBe(
+      `https://cuberoot.me/auth/miniprogram#ticket=${ticket}&next=%2Fzh%2Ftimer`,
+    );
+  });
+
+  it('clears an expired Mini Program session and falls back to the public website route', async () => {
+    const token = 't'.repeat(20);
+    const removeStorageSync = vi.fn();
+    vi.stubGlobal('wx', {
+      getStorageSync: () => ({ token, user: { name: 'CubeRoot', wcaId: null } }),
+      removeStorageSync,
+      nextTick(callback: () => void) { callback(); },
+      setNavigationBarTitle,
+      request(options: {
+        success(result: { statusCode: number; data: unknown }): void;
+      }) {
+        options.success({ statusCode: 401, data: { error: 'Authentication required' } });
+      },
+    });
+    const context = createContext();
+
+    await openWebRoute(context, 'timer');
+
+    expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+  });
+
+  it('does not revive a web-view after a later load error cancelled the attempt', async () => {
+    let finishRequest: ((result: { statusCode: number; data: unknown }) => void) | undefined;
+    vi.stubGlobal('wx', {
+      getStorageSync: () => ({
+        token: 't'.repeat(20),
+        user: { name: 'CubeRoot', wcaId: null },
+      }),
+      removeStorageSync: vi.fn(),
+      nextTick(callback: () => void) { callback(); },
+      setNavigationBarTitle,
+      request(options: {
+        success(result: { statusCode: number; data: unknown }): void;
+      }) {
+        finishRequest = options.success;
+      },
+    });
+    const context = createContext();
+    const opening = openWebRoute(context, 'timer');
+
+    markWebRouteFailed(context);
+    finishRequest?.({
+      statusCode: 200,
+      data: { ticket: 'A'.repeat(43), expiresIn: 90 },
+    });
+    await opening;
+
+    expect(context.data.src).toBe('');
+    expect(context.data.errorTitle).toBe('网页加载失败');
   });
 });

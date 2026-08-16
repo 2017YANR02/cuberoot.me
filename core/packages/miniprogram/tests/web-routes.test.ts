@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { listWebTools, resolveWebRoute } from '../src/lib/web-routes';
+import { createWebSessionHandoffUrl, listWebTools, resolveWebRoute } from '../src/lib/web-routes';
+
+const TICKET = 'A'.repeat(43);
 
 describe('mini program web routes', () => {
   it('resolves the website timer route', () => {
     expect(resolveWebRoute('timer')).toEqual({
       title: '计时器',
+      path: '/zh/timer',
       url: 'https://cuberoot.me/zh/timer',
     });
   });
@@ -13,11 +16,20 @@ describe('mini program web routes', () => {
   it('resolves only allowlisted website destinations', () => {
     expect(resolveWebRoute('alg')).toEqual({
       title: '公式库',
+      path: '/zh/alg',
       url: 'https://cuberoot.me/zh/alg',
     });
     expect(resolveWebRoute('https://example.com')).toBeNull();
     expect(resolveWebRoute('__proto__')).toBeNull();
     expect(resolveWebRoute(null)).toBeNull();
+  });
+
+  it('keeps the one-time ticket in a fragment outside server logs and referrers', () => {
+    expect(createWebSessionHandoffUrl('/zh/timer', TICKET)).toBe(
+      `https://cuberoot.me/auth/miniprogram#ticket=${TICKET}&next=%2Fzh%2Ftimer`,
+    );
+    expect(() => createWebSessionHandoffUrl('//evil.example', TICKET)).toThrow();
+    expect(() => createWebSessionHandoffUrl('/zh/timer', 'short')).toThrow();
   });
 
   it('derives the discovery list from the route registry', () => {

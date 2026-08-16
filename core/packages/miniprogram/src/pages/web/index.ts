@@ -9,7 +9,7 @@ Page({
   data: createWebViewPageData(),
 
   onLoad(options: Record<string, string | undefined>) {
-    openWebRoute(this, options.key);
+    void openWebRoute(this, options.key);
   },
 
   handleWebViewError() {

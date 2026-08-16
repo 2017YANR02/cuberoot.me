@@ -34,6 +34,7 @@ import {
   WechatMiniProgramError,
   wechatMiniProgramConfigured,
 } from '../utils/wechat_miniprogram.js';
+import { consumeWebSessionTicket, issueWebSessionTicket } from '../utils/web_session_ticket.js';
 
 export const accountAuthRoutes = new Hono();
 
@@ -140,6 +141,30 @@ accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
   const { user, isNew } = await loginWithIdentity('wechat', wechatSession.unionid, { name: '' });
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   return c.json({ token, user: publicUser(user), isNew });
+});
+
+// ── 小程序原生会话 → web-view 网站会话 ──
+// 长期 JWT 只用于带 Authorization 申请 90 秒单次票据；票据经 URL fragment 交给网页，
+// 服务端原子核销后重签常规会话。网页最终仍走现有 applySession/localStorage 契约。
+accountAuthRoutes.post('/auth/web-session/ticket', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const uid = await requireUserId(c);
+  return c.json(await issueWebSessionTicket(uid));
+});
+
+accountAuthRoutes.post('/auth/web-session/exchange', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const body = await c.req.json<{ ticket?: unknown }>().catch(() => ({ ticket: undefined }));
+  const ticket = typeof body.ticket === 'string' ? body.ticket.trim() : '';
+  const uid = await consumeWebSessionTicket(ticket);
+  if (!uid) return c.json({ error: 'invalid web session ticket' }, 401);
+
+  const user = await getUserById(uid);
+  if (!user) return c.json({ error: 'invalid web session ticket' }, 401);
+  const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
+  return c.json({ token, user: publicUser(user) });
 });
 
 // ── 国内三方绑定(登录态,把该身份加到当前账号)──
