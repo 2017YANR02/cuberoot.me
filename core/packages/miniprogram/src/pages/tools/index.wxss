@@ -10,13 +10,13 @@
   align-items: center;
   border-bottom: 1rpx solid var(--cr-line);
   display: flex;
-  justify-content: space-between;
   min-height: 140rpx;
   text-align: left;
   width: 100%;
 }
 
 .tool-copy {
+  flex: 1;
   min-width: 0;
 }
 
