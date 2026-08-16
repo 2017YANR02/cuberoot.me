@@ -13,7 +13,7 @@ pnpm --filter @cuberoot/miniprogram check
 
 微信开发者工具导入本目录，工具会读取 `dist/`。开发监听会处理 TS、WXML、WXSS 和 JSON 的变化。
 
-首次构建可用 `WECHAT_MINI_APP_ID` 生成本机 `project.config.json`；后续构建会保留已有正式 AppID 和明确的数字基础库。没有配置时才使用游客 AppID。
+首次构建可用 `WECHAT_MINI_APP_ID` 生成本机 `project.config.json`；后续构建会保留已有正式 AppID 和明确的数字基础库。没有配置时才使用游客 AppID。开发时可以使用测试身份，但 `release:check` 只接受 CubeRoot 官方小程序 AppID，避免把正式包上传到其他账号。
 
 ## 单一来源
 
