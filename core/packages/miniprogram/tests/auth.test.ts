@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   ApiError,
+  clearStoredSession,
   createWebSessionTicket,
   getStoredSession,
   loginErrorMessage,
@@ -35,6 +36,26 @@ describe('mini program authentication', () => {
 
     expect(getStoredSession()).toBeNull();
     expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
+  });
+
+  it('treats an unreadable storage area as logged out', () => {
+    vi.stubGlobal('wx', {
+      getStorageSync() {
+        throw new Error('storage unavailable');
+      },
+    });
+
+    expect(getStoredSession()).toBeNull();
+  });
+
+  it('reports whether a local session was actually removed', () => {
+    vi.stubGlobal('wx', {
+      removeStorageSync() {
+        throw new Error('storage unavailable');
+      },
+    });
+
+    expect(clearStoredSession()).toBe(false);
   });
 
   it('exchanges a WeChat code through the canonical API endpoint', async () => {
@@ -105,7 +126,33 @@ describe('mini program authentication', () => {
     expect(loginErrorMessage(new ApiError(409, 'unionid'))).toContain('开放平台');
     expect(loginErrorMessage(new ApiError(503, 'secret'))).toContain('服务端');
     expect(loginErrorMessage(new ApiError(0, 'network'))).toContain('网络');
+    expect(loginErrorMessage(new ApiError(-1, 'storage'))).toContain('设备存储');
     expect(loginErrorMessage(new Error('unknown'))).toBe('登录失败，请稍后重试');
+  });
+
+  it('does not claim login succeeded when the session cannot be persisted', async () => {
+    vi.stubGlobal('wx', {
+      login(options: { success(result: { code: string }): void }) {
+        options.success({ code: 'login-code' });
+      },
+      request(options: { success(result: { statusCode: number; data: unknown }): void }) {
+        options.success({
+          statusCode: 200,
+          data: {
+            token: 't'.repeat(20),
+            user: { name: 'CubeRoot', wcaId: null },
+          },
+        });
+      },
+      setStorageSync() {
+        throw new Error('storage unavailable');
+      },
+    });
+
+    await expect(loginWithWechat()).rejects.toMatchObject({
+      message: 'session storage unavailable',
+      status: -1,
+    });
   });
 
   it('finishes login when wx.login never calls back', async () => {
