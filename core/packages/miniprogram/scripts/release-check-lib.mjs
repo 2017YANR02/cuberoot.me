@@ -68,6 +68,36 @@ export const PRODUCTION_APP_ID = 'wx1f92ba91b7e42015';
 export const MAX_UPLOAD_PACKAGE_BYTES = 512 * 1024;
 export const MAX_UPLOAD_FILE_BYTES = 128 * 1024;
 
+export const REQUIRED_RELEASE_CONFIRMATIONS = [
+  {
+    key: 'basicInfoApproved',
+    env: 'WECHAT_MINI_BASIC_INFO_APPROVED',
+    failure: '小程序基础信息审核尚未确认通过；后台显示通过后，上传时设置 WECHAT_MINI_BASIC_INFO_APPROVED=1。',
+  },
+  {
+    key: 'filingCompleted',
+    env: 'WECHAT_MINI_FILING_COMPLETED',
+    failure: '小程序备案尚未确认完成；备案状态完成后，上传时设置 WECHAT_MINI_FILING_COMPLETED=1。',
+  },
+  {
+    key: 'privacyReviewed',
+    env: 'WECHAT_MINI_PRIVACY_REVIEWED',
+    failure: '后台用户隐私保护指引尚未确认与实际能力一致；复核并提交后，上传时设置 WECHAT_MINI_PRIVACY_REVIEWED=1。',
+  },
+  {
+    key: 'realDeviceTested',
+    env: 'WECHAT_MINI_REAL_DEVICE_TESTED',
+    failure: '本次候选版本尚未确认完成 iOS 和 Android 真机回归；回归通过后，上传时设置 WECHAT_MINI_REAL_DEVICE_TESTED=1。',
+  },
+];
+
+export function releaseConfirmationsFromEnv(environment) {
+  return Object.fromEntries(REQUIRED_RELEASE_CONFIRMATIONS.map(({ key, env }) => [
+    key,
+    environment?.[env] === '1',
+  ]));
+}
+
 export function isReleaseAuditTextFile(path) {
   const normalizedPath = String(path).replaceAll('\\', '/').toLowerCase();
   const filename = normalizedPath.slice(normalizedPath.lastIndexOf('/') + 1);
@@ -100,6 +130,7 @@ export function collectReleaseFailures({
   sitemapConfig,
   confirmedStableVersion = '',
   confirmedSecretRotation = false,
+  releaseConfirmations = {},
   sourceFiles = [],
   uploadFiles = [],
   builtFiles = [],
@@ -114,6 +145,12 @@ export function collectReleaseFailures({
     failures.push(
       '已暴露的 AppSecret 尚未确认轮换；后台生成新密钥并更新服务端后，上传时设置 WECHAT_MINI_SECRET_ROTATED=1。',
     );
+  }
+
+  for (const confirmation of REQUIRED_RELEASE_CONFIRMATIONS) {
+    if (releaseConfirmations[confirmation.key] !== true) {
+      failures.push(confirmation.failure);
+    }
   }
 
   if (!hasExpectedSitemapPolicy(sitemapConfig)) {

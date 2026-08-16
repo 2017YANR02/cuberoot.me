@@ -8,8 +8,10 @@ import {
   MAX_UPLOAD_PACKAGE_BYTES,
   PUBLIC_INDEXED_PAGES,
   PRODUCTION_APP_ID,
+  REQUIRED_RELEASE_CONFIRMATIONS,
   collectReleaseFailures,
   isReleaseAuditTextFile,
+  releaseConfirmationsFromEnv,
 } from '../scripts/release-check-lib.mjs';
 
 function sizesFor(paths, bytes = 1) {
@@ -87,6 +89,9 @@ const validInput = {
   },
   confirmedStableVersion: '3.17.1',
   confirmedSecretRotation: true,
+  releaseConfirmations: Object.fromEntries(
+    REQUIRED_RELEASE_CONFIRMATIONS.map(({ key }) => [key, true]),
+  ),
   sourceFiles: [{ path: 'src/app.ts', source: 'App({})' }],
   builtFiles: validBuiltFiles,
   builtFileSizes: sizesFor(validBuiltFiles),
@@ -166,6 +171,32 @@ describe('mini program release check', () => {
     })).toContain(
       '已暴露的 AppSecret 尚未确认轮换；后台生成新密钥并更新服务端后，上传时设置 WECHAT_MINI_SECRET_ROTATED=1。',
     );
+  });
+
+  it('requires every human release gate to be explicitly confirmed', () => {
+    expect(releaseConfirmationsFromEnv({
+      WECHAT_MINI_BASIC_INFO_APPROVED: '1',
+      WECHAT_MINI_FILING_COMPLETED: '0',
+      WECHAT_MINI_PRIVACY_REVIEWED: '1',
+      WECHAT_MINI_REAL_DEVICE_TESTED: 'yes',
+    })).toEqual({
+      basicInfoApproved: true,
+      filingCompleted: false,
+      privacyReviewed: true,
+      realDeviceTested: false,
+    });
+
+    expect(collectReleaseFailures({
+      ...validInput,
+      releaseConfirmations: {
+        ...validInput.releaseConfirmations,
+        filingCompleted: false,
+        realDeviceTested: false,
+      },
+    })).toEqual(expect.arrayContaining([
+      '小程序备案尚未确认完成；备案状态完成后，上传时设置 WECHAT_MINI_FILING_COMPLETED=1。',
+      '本次候选版本尚未确认完成 iOS 和 Android 真机回归；回归通过后，上传时设置 WECHAT_MINI_REAL_DEVICE_TESTED=1。',
+    ]));
   });
 
   it('rejects incomplete build output', () => {

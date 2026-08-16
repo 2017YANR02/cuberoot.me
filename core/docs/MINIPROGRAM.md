@@ -97,11 +97,15 @@ pnpm --filter @cuberoot/miniprogram check
 ```powershell
 $env:WECHAT_MINI_LIB_VERSION='<开发者工具显示的稳定版本>'
 $env:WECHAT_MINI_SECRET_ROTATED='1' # 仅在后台轮换并更新服务端后设置
+$env:WECHAT_MINI_BASIC_INFO_APPROVED='1'
+$env:WECHAT_MINI_FILING_COMPLETED='1'
+$env:WECHAT_MINI_PRIVACY_REVIEWED='1'
+$env:WECHAT_MINI_REAL_DEVICE_TESTED='1' # 当前候选版本已完成 iOS 和 Android 回归
 pnpm --filter @cuberoot/miniprogram build
 pnpm --filter @cuberoot/miniprogram release:check
 ```
 
-`build` 会保留已有正式 AppID 和明确的数字基础库；不会把已选好的本地版本重置回 `trial`。构建成功后会在被忽略的 `.tmp/` 写入源码和产物指纹，不进入上传包。`release:check` 会先运行类型检查和全部小程序回归测试，再拒绝缺页、源码变化后的旧 `dist`、构建后被改动的 `dist`，并故意要求每次上传时重新确认稳定版本和已完成的密钥轮换。环境变量只是操作确认，不是轮换动作本身。
+`build` 会保留已有正式 AppID 和明确的数字基础库；不会把已选好的本地版本重置回 `trial`。构建成功后会在被忽略的 `.tmp/` 写入源码和产物指纹，不进入上传包。`release:check` 会先运行类型检查和全部小程序回归测试，再拒绝缺页、源码变化后的旧 `dist`、构建后被改动的 `dist`，并要求每次上传显式确认稳定版本、密钥轮换、基础信息审核、备案、后台隐私指引和双平台真机回归。环境变量只是防遗忘闸门，不能代替真实操作。
 
 微信开发者工具导入 `core/packages/miniprogram`，不是 `dist`。`project.config.json` 和 `project.private.config.json` 是本机配置，不提交 AppID 之外的任何凭据。
 
@@ -688,6 +692,12 @@ pnpm --filter @cuberoot/miniprogram release:check
 - 账号硬超时、平台交互锁和网页重试统一使用 `runtime-timers.ts`，不再各自包装 `setTimeout` 和 `clearTimeout`。
 - 定时器创建失败、清理失败和异常同步触发都由同一契约处理；调用方只决定失败后是终止交互还是立即降级。
 - 回归测试覆盖公共入口及三类调用方，后续页面不得自行增加“安全定时器”副本。
+
+### 2026-08-16：人工发布条件变为硬门槛
+
+- 基础信息审核、备案、后台隐私指引和 iOS、Android 真机回归不再只是检查结束后的提醒；任一项未显式确认都会让 `release:check` 失败。
+- 四项变量名、状态键和失败说明由 `REQUIRED_RELEASE_CONFIRMATIONS` 一张清单驱动，发布脚本和测试不各自复制条件。
+- 确认变量只记录本次发布判断，不代表平台操作本身；跟踪清单中的未完成项仍保持未完成，不能提前设置绕过。
 
 ### 首版工程
 
