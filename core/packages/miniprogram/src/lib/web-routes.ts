@@ -45,6 +45,7 @@ export const WEB_ROUTES = {
     description: '清除小程序与网站登录状态',
     path: '/auth/miniprogram#action=logout&next=%2Fzh%2Faccount',
     sessionHandoff: false,
+    loadFailureMessage: '小程序已退出，网站退出暂未完成。请检查网络后重试。',
   },
 } as const;
 
@@ -70,18 +71,23 @@ export function resolveWebRoute(key: unknown): {
   title: string;
   path: string;
   sessionHandoff: boolean;
+  loadFailureMessage?: string;
   url: string;
 } | null {
   if (typeof key !== 'string' || !Object.prototype.hasOwnProperty.call(WEB_ROUTES, key)) {
     return null;
   }
   const route = WEB_ROUTES[key as WebRouteKey];
-  return {
+  const resolved = {
     title: route.title,
     path: route.path,
     sessionHandoff: !('sessionHandoff' in route) || route.sessionHandoff !== false,
     url: `${SITE_ORIGIN}${route.path}`,
   };
+  if ('loadFailureMessage' in route) {
+    return { ...resolved, loadFailureMessage: route.loadFailureMessage };
+  }
+  return resolved;
 }
 
 export function createWebSessionHandoffUrl(path: string, ticket: string): string {

@@ -199,6 +199,18 @@ describe('shared web-view page state', () => {
     );
   });
 
+  it('explains the split logout state when the website route fails to load', async () => {
+    const context = createContext();
+
+    await openWebRoute(context, 'logout');
+    markWebRouteFailed(context);
+
+    expect(context.data.errorMessage).toBe(
+      '小程序已退出，网站退出暂未完成。请检查网络后重试。',
+    );
+    expect(context.data.canRetry).toBe(true);
+  });
+
   it('clears an expired Mini Program session and falls back to the public website route', async () => {
     const token = 't'.repeat(20);
     const removeStorageSync = vi.fn();

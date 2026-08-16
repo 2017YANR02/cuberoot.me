@@ -60,6 +60,7 @@ describe('mini program web routes', () => {
       title: '退出登录',
       path: '/auth/miniprogram#action=logout&next=%2Fzh%2Faccount',
       sessionHandoff: false,
+      loadFailureMessage: '小程序已退出，网站退出暂未完成。请检查网络后重试。',
       url: 'https://cuberoot.me/auth/miniprogram#action=logout&next=%2Fzh%2Faccount',
     });
   });
