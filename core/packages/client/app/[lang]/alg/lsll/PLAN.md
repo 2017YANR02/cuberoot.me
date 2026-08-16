@@ -32,7 +32,7 @@
 - [x] `lib/lsll/model.ts` canonical key(40bit,Z4×Z4 最小像)、42 大类、类内枚举
       (客户端组合生成,无后端)、打乱定位、公式自测验证。
 - [x] `lib/lsll/setup.ts` case → 打乱(cubing.js 两阶段取逆 + 本地回放失安全)。
-- [x] `components/FaceletsCube.tsx` fd 串本地渲染(已登记 /code catalog)。
+- [x] `components/FaceletsCube.tsx` fd 串本地渲染(已登记 /dev catalog)。
 - [x] 页面:`/alg/lsll`(42 大类 + 定位)、`/alg/lsll/[group]`(EO 筛选 + 分页)、
       `/alg/lsll/case?k=`(状态图/打乱/自测/占位区)。`/alg/3x3` 入口卡。
 - [x] `tests/lsll_model.test.ts`(计数锁定 + cubing.js 交叉校验 + facelets 字节比对)。

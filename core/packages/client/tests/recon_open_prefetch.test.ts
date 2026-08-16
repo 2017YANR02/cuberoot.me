@@ -28,7 +28,7 @@
  * 一并钉住那颗 3D 魔方的可见性门:页面刚打开时它在视口外,建 WebGL world 是主线程
  * 上 76ms 的活,不该抢在首屏前面。
  */
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

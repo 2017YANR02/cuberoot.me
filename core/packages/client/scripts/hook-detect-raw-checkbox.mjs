@@ -35,7 +35,7 @@ process.stdin.on('end', () => {
     deny(
       '裸 <input type="checkbox">(☑)被禁止:布尔开关一律用 <BoolToggle>(左滑钮 + 右文字,' +
         "import BoolToggle from '@/components/BoolToggle')。二选一用 PillToggle 的 onLabel/offLabel。" +
-        '确属多选网格/列表的特例:在该处加行内注释 allow-checkbox: <理由>。详见 /code/components。',
+        '确属多选网格/列表的特例:在该处加行内注释 allow-checkbox: <理由>。详见 /dev/components。',
     );
   }
   process.exit(0);

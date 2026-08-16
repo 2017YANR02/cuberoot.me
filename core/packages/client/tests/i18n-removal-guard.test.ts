@@ -7,7 +7,7 @@
 //
 // 用短语级(非逐字)检测:逐字会误伤简繁同形字(著名 / 显著 的「著」、什么的「么」),
 // 短语级 OpenCC 对纯简体文本是恒等变换,只有真繁体才被改写。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import * as OpenCC from 'opencc-js';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -28,7 +28,7 @@ const hasTrad = (run: string) => [...run].some((ch) => !DUAL_USE.has(ch) && t2s(
 // Intentional non-Simplified content (vendored multilingual / Japanese / regex).
 const EXCLUDE = [
   /scramble[\\/]gen[\\/]_tnoodle-i18n\.ts$/, // vendored tnoodle (zh-TW/ja/ko)
-  /code[\\/]language[\\/]ruby[\\/]page\.tsx$/, // 《…スクリプト言語 Ruby》 title
+  /dev[\\/]language[\\/]ruby[\\/]page\.tsx$/, // 《…スクリプト言語 Ruby》 title
   /[\\/]site[\\/]page\.tsx$/, // /[㐀-鿿豈-﫿]/ CJK-range regex
   /[\\/]site[\\/]data[\\/]wca-authors\.ts$/, // canonical WCA names may contain Traditional/Japanese characters
 ];

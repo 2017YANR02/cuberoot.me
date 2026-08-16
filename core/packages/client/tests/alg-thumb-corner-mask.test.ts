@@ -8,7 +8,7 @@
 // 一圈灰格。语义判据(灰格删没删干净)在 plan-hide-grey-sides.test.ts;这里只锁「别再手搓第二份」。
 //
 // 豁免:行内 allow-corner-mask: <理由>。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

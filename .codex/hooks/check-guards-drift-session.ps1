@@ -1,6 +1,6 @@
 # SessionStart check (local-only, informational):warns if the project PreToolUse
 # hooks registered in .codex/hooks.json have drifted from what
-# core/packages/client/app/[lang]/code/guards/_guards.ts documents on /code/guards.
+# core/packages/client/app/[lang]/dev/guards/_guards.ts documents on /dev/guards.
 # It never blocks;stdout becomes session-start context for the assistant.
 
 $ErrorActionPreference = 'SilentlyContinue'
@@ -29,7 +29,7 @@ foreach ($group in $settings.hooks.PreToolUse) {
     }
 }
 
-# Payload adapters are transport helpers,not guards shown on /code/guards.
+# Payload adapters are transport helpers,not guards shown on /dev/guards.
 [void]$registered.Remove('adapt-codex-write-payload.mjs')
 [void]$registered.Remove('adapt-codex-command-payload.mjs')
 
@@ -53,12 +53,12 @@ $undocumented = $registered | Where-Object { -not $documented.Contains($_) }
 
 if ($missing.Count -eq 0 -and $undocumented.Count -eq 0) { exit 0 }
 
-Write-Output '/code/guards drift check (local, vs .codex/hooks.json):'
+Write-Output '/dev/guards drift check (local, vs .codex/hooks.json):'
 if ($missing.Count -gt 0) {
     Write-Output "  documented on the page but not registered for Codex (renamed/removed?): $($missing -join ', ')"
 }
 if ($undocumented.Count -gt 0) {
     Write-Output "  registered for Codex but missing from the page (forgot to document?): $($undocumented -join ', ')"
 }
-Write-Output '  -> review core/packages/client/app/[lang]/code/guards/_guards.ts'
+Write-Output '  -> review core/packages/client/app/[lang]/dev/guards/_guards.ts'
 exit 0

@@ -4,8 +4,8 @@ import type { MetadataRoute } from 'next';
 import { ALG_CATALOG, ALG_PUZZLES } from '@cuberoot/shared/alg';
 import { TOC_SLUGS } from './[lang]/math/group/_data/toc';
 import { LISTED_CATEGORIES } from '@/lib/lsll/model';
-import { STACK_TOOLS_META } from './[lang]/code/stack/_lib/stack_meta';
-import { LLM_TOOLS_META } from './[lang]/code/llm/_lib/llm_meta';
+import { STACK_TOOLS_META } from './[lang]/dev/stack/_lib/stack_meta';
+import { LLM_TOOLS_META } from './[lang]/dev/llm/_lib/llm_meta';
 import { ABOUT_REGISTRY } from './[lang]/wca/about/[id]/_lib/registry';
 
 // Static-routes sitemap. The fs scan below runs during `next build` (where app/
@@ -57,8 +57,8 @@ const EXTRA = [
   ),
   ...LISTED_CATEGORIES.map((c) => `alg/lsll/${c.slug}`),
   ...TOC_SLUGS.map((slug) => `math/group/${slug}`),
-  ...STACK_TOOLS_META.map((t) => `code/stack/${t.slug}`),
-  ...LLM_TOOLS_META.map((t) => `code/llm/${t.slug}`),
+  ...STACK_TOOLS_META.map((t) => `dev/stack/${t.slug}`),
+  ...LLM_TOOLS_META.map((t) => `dev/llm/${t.slug}`),
   ...Object.keys(ABOUT_REGISTRY).map((id) => `wca/about/${id}`),
   'recognize/pll',
   'recognize/oll',

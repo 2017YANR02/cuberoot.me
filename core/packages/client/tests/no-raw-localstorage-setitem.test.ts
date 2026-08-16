@@ -8,7 +8,7 @@
 // CI 跑 vitest(不跑 eslint),故约定靠本测试当红灯:新代码想裸写 → CI 直接挂。
 // 真正需要裸写的(自带驱逐-重试循环的 legacy 兜底)在该行或上一行标
 // `allow-raw-localstorage: <理由>`;helper 本体走整文件 ALLOWLIST。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

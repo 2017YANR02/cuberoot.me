@@ -12,7 +12,7 @@
 //   - 写法层:<CompCell> 的 date 属性是**必填**(string | null),逼每个调用点表态;
 //   - 实现层:任何调用点都不许再手搓「尾部四位年」正则(本测试扫描);
 //   - 写入即拦:.codex/hooks/block-comp-name-year-regex.ps1 → hook-detect-comp-year-regex.mjs。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

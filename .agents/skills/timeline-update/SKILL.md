@@ -1,13 +1,13 @@
 ---
 name: timeline-update
-description: "Use when user wants to fill in /code/architecture 第 11 节的日历 + 列表 — 从 JSON 最后一条日期之后开始, 把每个有 commit 的日子补上中英 1 行总结 (日历); 每个新页面/路由上线都加进 TIMELINE 数组 (列表)。Triggers: \"/timeline-update\", \"更新 timeline\", \"补日历\", \"补 timeline\", \"update commit calendar\"."
+description: "Use when user wants to fill in /dev/architecture 第 11 节的日历 + 列表 — 从 JSON 最后一条日期之后开始, 把每个有 commit 的日子补上中英 1 行总结 (日历); 每个新页面/路由上线都加进 TIMELINE 数组 (列表)。Triggers: \"/timeline-update\", \"更新 timeline\", \"补日历\", \"补 timeline\", \"update commit calendar\"."
 ---
 
-# /timeline-update — 补 /code/architecture 日历 + 列表
+# /timeline-update — 补 /dev/architecture 日历 + 列表
 
 两个视图:
-- 日历 → `core/packages/client/app/[lang]/code/architecture/timeline_commits.json` (升序, 每天 1 行 `{date, zh, en}`)
-- 列表 → `app/[lang]/code/architecture/_lib/arch-data.tsx` 里 `TIMELINE` (降序 newest-first, 产品级 changelog)
+- 日历 → `core/packages/client/app/[lang]/dev/architecture/timeline_commits.json` (升序, 每天 1 行 `{date, zh, en}`)
+- 列表 → `app/[lang]/dev/architecture/_lib/arch-data.tsx` 里 `TIMELINE` (降序 newest-first, 产品级 changelog)
 
 ## 三条铁律
 
@@ -57,6 +57,6 @@ tag: `migration` 换栈/迁数据 · `dx` 开发流程 · `feature` 新页/新�
 
 ## 验收
 
-`/code/architecture` 第 11 节:
+`/dev/architecture` 第 11 节:
 - 日历: 新日期有日期数 + 文字
 - 列表: 新条目 tag 颜色对, expand 内容对, 头部 "List · N 件重大" 数字反映新长度

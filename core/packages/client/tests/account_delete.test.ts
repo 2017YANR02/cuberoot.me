@@ -4,7 +4,7 @@
 //                  (进清单 / 进豁免名单二选一)—— 新加一张带 wca_id 的表就会在这里红。
 //   墓碑键         deleted:<uid> 必须塞得进最窄的那列(VARCHAR(20)),否则注销时事务直接抛。
 //   跨包契约       路由路径 + 错误串 + 前端展示,任何一端改措辞另一端就静默失灵。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';

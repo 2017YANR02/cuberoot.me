@@ -57,7 +57,7 @@ slash 精确求解器(`Sq1Solver`)对深态(s=11/12)**很慢**(~秒级~分钟级
 - 示例「原始 / 最优」切换:slash 视图的「最优」= slash 最优等价打乱(`binsAlt` 第 3 元)。
 - 口径说明已改成「slash 最优:只数 /(twist 口径,God 13,可证最优)」。
 
-`/code/solvers`:加 SQ1 条目(WCA 12c4 最优 + slash 最优双引擎)。
+`/dev/solvers`:加 SQ1 条目(WCA 12c4 最优 + slash 最优双引擎)。
 
 ## 5. 复现 / 重跑
 

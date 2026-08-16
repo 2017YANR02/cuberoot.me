@@ -66,7 +66,7 @@
 - [x] **H2** analyzer bin `src/bin/htr_analyzer.rs`(suffix `_htr`)+ `tests/e2e_htr.rs`。门:e2e 绿 + smoke 5 条打乱 CSV 形状对。✅ 2026-06-11 e2e 1 绿 + H1 5 测试仍绿 + smoke 5+5 形状对。语义=条件式阶段:DR 视角出精确步数,非 DR 视角出 `-`(build.ts anyBad 守卫跳行)。
 - [x] **H3** WASM 类 + 重建仪式(`build_wasm.ps1` $names → copy pkg-web 产物到 `tools/solver/rust-cross/` → 手维护 worker 加 `need==='htr'` 分支 → `lib/rust-cross-client.ts` bump `V`+TABLE_BYTES/TABLE_SETS+接口 → `rust-cross-pool.ts` PoolNeed)。门:typecheck 干净。✅ 2026-06-11 typecheck tsgo+tsc 双绿(主 loop 复核);零盘表 `TABLE_SETS.htr=[]` 零下载,wasm 首查惰性 BFS ~335ms;非 DR 哨兵 `HTR_NOT_DR`(u32::MAX);node 冒烟 native↔wasm 逐格相等。
 - [x] **H4** `components/StageSolver.tsx` 集成(Method/METHODS/STAGE_LABELS/EAGER_MAX/kindOf/needOf/computeAll/fetchMoves 各加分支)。门:playwright analyzer 桌面+390px 过,native↔WASM 逐格相等,0 console error。✅ 2026-06-11 playwright 8/8 PASS,native↔WASM 12/12 格相等,0 error;哨兵 `-` 渲染 + min 统计排除验证;htr 故意不进 VARIANT_ORDER(原始打乱非 DR,gen/recent 下拉无意义,归 MANUAL)。
-- [x] **H5** `/code/solvers` 看板同步(TABLES/NATIVE/BROWSER/hero,调 `solvers-tables` skill)。门:typecheck + `tests/code-tokens-drift` 绿。✅ 2026-06-11 typecheck 双绿(主 loop 复核)+ tokens-drift/zh-hant-drift 38 测试绿;NATIVE rate 放宽 `number|null` 显示「未实测」不编数;顺手修 small 概览卡只列 222 的旧 drift。
+- [x] **H5** `/dev/solvers` 看板同步(TABLES/NATIVE/BROWSER/hero,调 `solvers-tables` skill)。门:typecheck + `tests/dev-tokens-drift` 绿。✅ 2026-06-11 typecheck 双绿(主 loop 复核)+ tokens-drift/zh-hant-drift 38 测试绿;NATIVE rate 放宽 `number|null` 显示「未实测」不编数;顺手修 small 概览卡只列 222 的旧 drift。
 - [x] **📦 MANUAL(HTR)** 统计管道注册 + 灌 master/xcross + stats/gen/recent UI 接入 + 发布 — 交接已写 §3(2026-06-11),**loop 跳过,继续 EPIC 2**。
 
 ### EPIC 2 — move-mask 引擎能力(档2)
@@ -83,7 +83,7 @@
 - [x] **M3b** analyzer bin `htr_phase2_analyzer.rs`(suffix `_htr2`)+ `tests/e2e_htr2.rs`。✅ 2026-06-11 `8e6496a83`。照 htr_analyzer 同构;e2e 绿 + htr/htr2 仍绿(lib 9)+ smoke 形状对。关键:G3 词全程 HTR,6 视角恒同值(异于 H1 DR 词只 UD 轴),baseline 据实测锁。
 - [x] **M3c** WASM 类 `HtrPhase2SolverWasm` + 重建仪式(照 H3 清单)。✅ 2026-06-11 `a8b9449f4`(8 文件)。`TABLE_SETS.htr2=[]` 零下载,哨兵 `HTR2_NOT_HTR`,V bump 20260611b;typecheck 主 loop 复核 EXIT=0(从 core/ 跑;注意别 cd 到仓库根否则 ERR_PNPM_NO_PKG_MANIFEST);cargo htr2 仍绿;node 冒烟 3 G3 词 native↔wasm 6 视角全等。
 - [x] **M3d** StageSolver UI 集成(照 H4 清单)。✅ 2026-06-11 `5626a0e9c`(3 文件)。htr↔htr2 各登记点对齐 + isSentinel 统一哨兵;typecheck 主 loop 复核 EXIT=0(我的文件干净);playwright 8/8 PASS、native↔WASM 12/12 格相等、0 相关 console error;htr2 不进 VARIANT_ORDER。文案 zh「HTR 收尾」/en「HTR-finish」,EAGER_MAX=0。
-- [x] **M3e** `/code/solvers` 看板同步 `4cd201d20` + **📦 MANUAL(htr2)** 交接见 §3。✅ 2026-06-11 typecheck EXIT=0(主 loop 复核)+ code-tokens-drift 35/35 + zh-hant-drift 4/4;htr2 登记 TABLES/NATIVE/BROWSER/hero/概览卡,rate 留 null「未实测」。**M3 全链路完成,EPIC 2 收尾。**
+- [x] **M3e** `/dev/solvers` 看板同步 `4cd201d20` + **📦 MANUAL(htr2)** 交接见 §3。✅ 2026-06-11 typecheck EXIT=0(主 loop 复核)+ dev-tokens-drift 35/35 + zh-hant-drift 4/4;htr2 登记 TABLES/NATIVE/BROWSER/hero/概览卡,rate 留 null「未实测」。**M3 全链路完成,EPIC 2 收尾。**
 
 ### EPIC 2.5 — 三阶 First Face + First Layer(2026-08-11 用户指定优先)
 > 共用一个求解器家族,但保留两个独立阶段。固定所选底色、HTM:First Face = 该色 4 角+4 棱都在该面且色贴纸朝该面,环上排列不限;First Layer = 同一组 8 块位置与朝向全部正确,侧色与中心对齐。6 底色沿用 `ROTS6`;同底色绕轴不产生额外目标。First Face 用无标号集合商空间争取整表精确分布;First Layer 用有标号件 + 可采纳 PDB/IDA*,禁止拿采样最大值冒充 God's number。任何 >1GB 落盘表先停到 soft-gate。
@@ -112,7 +112,7 @@
 - [x] **P2b** analyzer bin `pocket_analyzer.rs`(输出每打乱最优解长度)+ `tests/e2e_pocket.rs`。✅ 2026-06-11 `65affa381`。CSV `id,pocket` 两列;支持全 18 记号(2x2x2 无中心,D/L/B=对面+整体旋转,analyzer 24 旋转词归一后查表,绕开 coord_of 直投影对 D/L/B 不成立的坑);bin 4 单测含独立 IDDFS oracle 40 组全等 + e2e 绿 + 全量回归未塌(lib 99/0 + 13 e2e);smoke 5 条 WCA 222 → 9/9/10/9/9 全 ≤11。
 - [x] **P2c** 统计管线注册(非 3x3 新管线)。✅ 2026-06-11 `550f71c0d`。新 JSON `stats/scramble/puzzle_distribution.json`(`puzzles.<名>={event,label,label_zh,metric,sample_count,dist:HistEntry}`,前端 DiscreteHistogram/computeStats 直接复用);管道 `update_puzzle_stats.ps1`(-MaxNew/-BuildOnly,语料=Scrambles.tsv 按 event_id 过滤,id 差集增量)+ `build_puzzle_dist.ts` PUZZLES 注册表;client 数据契约 `lib/puzzle-distribution.ts`(UI 在 P2d);范式写入 VARIANT_PLAYBOOK §8。小样本 350 条端到端两跑绿(首跑+增量),峰值 9 吻合公开分布;typecheck EXIT=0。全量灌注+发布留 MANUAL。
 - [x] **P2d** WASM 类 + 重建仪式 + **在线最优求解器 UI**。✅ 2026-06-11 `8b92c6312`(9 文件)。路由 `/scramble/pocket` + hub 卡片;新范式组件 `scramble/_components/PuzzleOptimalSolver.tsx`(spec 驱动 event/title/need/solve/tokenRe,后三 puzzle 各写 spec 复用);nuqs `?scramble=`,2D 展开图,cubing-scramble 222 随机。Rust 关键决策:`new_lean()` 新入口(联合移动表 132MB 浏览器吃不消 → 只建 3.6MB 距离表现场转移)+ `solve_one_any`/`enumerate_any` 24 旋转归一(解带整体旋转前缀);零盘表零下载,V bump 20260611e。门:cargo pocket 6/6(lean↔full 全空间相等)+ node 冒烟 12 条 native↔wasm 相等 + cubing.js replay 12/12 + typecheck/zh 绿 + playwright 桌面+390px 全 PASS 0 error。
-- [x] **P2e** `/code/solvers` 看板登记 + **📦 MANUAL(2x2x2)** 灌注/发布交接写 §3。✅ 2026-06-11 `7059b70c1`(1 文件)。NATIVE 加 pocket(rate null「未实测」+ `puzzle:'2x2x2'` 字段如实标非 3x3)、回填进度区 pocket 单独「待灌注」行不掺 3x3 百分比、TABLES 零盘表条目、BROWSER PocketSolverWasm、small 概览卡;typecheck EXIT=0 + tokens-drift/zh-hant-drift 39 测试绿。**EPIC 3.1(2x2x2)代码侧全链路完成**,MANUAL 交接见 §3。
+- [x] **P2e** `/dev/solvers` 看板登记 + **📦 MANUAL(2x2x2)** 灌注/发布交接写 §3。✅ 2026-06-11 `7059b70c1`(1 文件)。NATIVE 加 pocket(rate null「未实测」+ `puzzle:'2x2x2'` 字段如实标非 3x3)、回填进度区 pocket 单独「待灌注」行不掺 3x3 百分比、TABLES 零盘表条目、BROWSER PocketSolverWasm、small 概览卡;typecheck EXIT=0 + tokens-drift/zh-hant-drift 39 测试绿。**EPIC 3.1(2x2x2)代码侧全链路完成**,MANUAL 交接见 §3。
 
 #### EPIC 3.2 — Pyraminx(核心 933,120 × 顶点 3^4=81 → 含 tips 75,582,720;solver 参考 cstimer `pyraminx.js`)
 > 照 2x2x2 范式。注意:顶点(tips)trivial 可分离,步数口径已在 P3a 锁定(总 HTM = 核心查表最优 + 错位 tip 数,有定理证明 + 75.6M 全空间验证);WCA 打乱含小写顶点记号 u/l/r/b,analyzer 必须能吃全记号。
@@ -138,7 +138,7 @@
 - [x] **⏸ soft-gate(P5d 设计)解除** ✅ 2026-06-12 用户拍板:**先上近最优上界,再想最优**。精确最优长尾爆炸不可行(500 态/6min 不收敛),改走 **cstimer 双阶段近最优**(`solver/src/sq1_twophase.rs`,忠实移植 ShapePrun+SquarePrun,node 跑 cstimer 真解器 81 条逐位等同验证)。**6.3ms/态**(原 200s 的 3 万倍),stats + 在线求解器双双可行。stats 已灌+发布(见下);P5d「秒级 loading 态」前提作废(ms 级)。gap:+0/52% +2/44% +4/4%,均 +1,真上界。「逼近最优」(双阶段迭代总长 / 更紧剪枝)= deferred「想最优」项。
 - [x] **P5c.5 SQ1 近最优 stats 灌注+发布** ✅ 2026-06-12(📦 MANUAL,用户在场)。`sq1_analyzer.exe` 默认两阶段 + **WCA 12c4 计步**((X,Y)=1+/=1,`solve_wca`;`SQ1_METRIC=slash`/`SQ1_EXACT=1` 切口径);全 125,605 条 ~50s,**WCA dist 11..30 峰 25**(slash 口径才 5..15 峰 12);`puzzle_distribution.json`+`puzzle_examples.json`(sq1 19 bin/333 样本)scp static + 公网 curl 验证上线;前端难度 tab 选 Square-1 即显示(`PUZZLE_EVENT_MAP` 加 sq1,口径行标「WCA 12c4 近最优」,**示例打乱用简写记号** `formatScrambleForEvent`,无求解器页故示例不可点);V bump 20260612c;exact ground-truth 存档 `sq1_exact_groundtruth.csv`;管道修空 master 丢表头边界。**未 commit(并行 session 脏树,等用户查)**。⚠ 用户核对 WCA 12c4 原文后纠正:原 slash-only 口径非官方,已切 WCA 12c4。
 - [ ] **P5d** WASM 类 + 重建仪式 + `/scramble/sq1`(近最优双阶段在线求解器;6.3ms 原生,WASM 估计仍亚秒;预览走现有 sq1 svg)。门:typecheck + node 冒烟相等 + playwright(replay 独立验证,注意 kpuzzle 等价口径)。建后把 stats 示例卡 sq1 改可点跳此页。
-- [ ] **P5e** 看板登记 + **📦 MANUAL(SQ1)** 交接写 §3。门:typecheck + code-tokens-drift 绿。
+- [ ] **P5e** 看板登记 + **📦 MANUAL(SQ1)** 交接写 §3。门:typecheck + dev-tokens-drift 绿。
 
 ---
 
@@ -149,7 +149,7 @@
 - 2026-06-11 — **H2** HTR analyzer bin + e2e,`9f61985bf`。7 列 CSV(_htr 后缀)与 dr_analyzer 同构;e2e 绿、H1 测试未塌、smoke 形状对。
 - 2026-06-11 — **H3** HTR WASM 类 + 重建仪式,`015e0ad58`。HtrSolverWasm + worker htr 分支 + client V bump(20260611a)+ PoolNeed;顺手补了 eodr 上次漏的 2 个 stale .d.ts;typecheck 主 loop 双工具复核绿。
 - 2026-06-11 — **H4** StageSolver 集成 HTR,`c753f09c5`。8 登记点对齐 eoline + scramble-variants 4 点 + TNoodleMode 类型 ripple;HTR_NOT_DR 哨兵 7 处接线(主 loop grep 复核);playwright 独立 agent 验收 8/8 PASS。
-- 2026-06-11 — **H5** /code/solvers 看板登记 HTR,`af97a2c0a`。EPIC 1 代码侧全部完成;MANUAL(HTR) 交接写入 §3。
+- 2026-06-11 — **H5** /dev/solvers 看板登记 HTR,`af97a2c0a`。EPIC 1 代码侧全部完成;MANUAL(HTR) 交接写入 §3。
 - 2026-06-11 — **M1** 引擎 move-mask 能力,`07e93483d`。u32 bitmask + `*_masked` 入口;全量 94/94 绿,mask=全集逐位相等锁死 + 限 G2 暴力对照。
 - 2026-06-11 — **M2 soft-gate 解除**:用户拍板做,key `roux_s2`,展开 M2a–M2e(下一个 = M2a)。
 - 2026-06-11 — **协议改版**:§0.7/§0.9 改为标准 Ralph"跑到底"——删除原 §0.9b"6-8 单元预防性停 + 让用户 /clear"的非标准摩擦;退出只认 backlog 空 / GATE / 红灯 / 空转 / ~15 单元安全网。依据:Ralph Wiggum 社区标准用法(状态在文件、跑到完成信号才停)。
@@ -209,24 +209,24 @@
   2. 产出:`stats/scramble/puzzle_distribution.json`(meta.generated_at + puzzles.pocket.dist)。
   3. 发布:deploy_mirror 已停 → 手动 scp 到 static.cuberoot.me 的 `/www/wwwroot/toolkit/stats/scramble/`(memory `reference_static_toolkit_deploy`);改响应 shape 须 bump `lib/puzzle-distribution.ts` 的 V。
   4. UI 待办:`/scramble/stats` 的 puzzle 分桶 tab **尚未接**——P2c 只落数据契约 `lib/puzzle-distribution.ts`(fetchPuzzleDistribution,dist 兼容 DiscreteHistogram/computeStats 直接复用)。
-  5. 看板回填:实测吞吐后回 `/code/solvers` page.tsx 把 pocket 的 `rate: null` 改实测值,「待灌注」行接真实覆盖数。
+  5. 看板回填:实测吞吐后回 `/dev/solvers` page.tsx 把 pocket 的 `rate: null` 改实测值,「待灌注」行接真实覆盖数。
 - **📦 MANUAL(Pyraminx) 交接**(2026-06-11,P3a–P3e 代码侧全绿落地,等用户在场手动):
   1. 灌注:`update_puzzle_stats.ps1`(默认 -Puzzles 空=全部注册含 pyraminx;语料=Scrambles.tsv event `pyram`,id 差集增量,-MaxNew 可分批)。
   2. 产出:`stats/scramble/puzzle_distribution.json` 的 `puzzles.pyraminx`(metric=htm 含 tips,预期峰值 11 全 ≤15)。
   3. 发布:scp 到 static.cuberoot.me `/stats/scramble/`(同 pocket,一次发布两 puzzle 一起带)。
   4. stats 页 tab:`/scramble/stats` 非 3x3 puzzle 分布 tab 与 pocket 共用待办(契约 `lib/puzzle-distribution.ts` 已就位)。
-  5. 看板 rate 回填:全量跑完实测后改 `/code/solvers` NATIVE pyraminx 的 `rate: null`。
+  5. 看板 rate 回填:全量跑完实测后改 `/dev/solvers` NATIVE pyraminx 的 `rate: null`。
 - **📦 MANUAL(Skewb) 交接**(2026-06-11,P4a–P4e 代码侧全绿落地,等用户在场手动):
   1. 灌注:`update_puzzle_stats.ps1`(默认 -Puzzles 空=全部注册含 skewb;语料=Scrambles.tsv event `skewb`,id 差集增量,-MaxNew 可分批)。
   2. 产出:`stats/scramble/puzzle_distribution.json` 的 `puzzles.skewb`(metric=htm,350 条样本峰值 9 全 ≤11)。
   3. 发布:scp 到 static.cuberoot.me `/stats/scramble/`(与 pocket/pyraminx 一次发布一起带)。
   4. stats 页 tab:`/scramble/stats` 非 3x3 puzzle 分布 tab 与 pocket/pyraminx 共用待办(契约 `lib/puzzle-distribution.ts` 已就位)。
-  5. 看板 rate 回填:全量跑完实测后改 `/code/solvers` NATIVE skewb 的 `rate: null`。
+  5. 看板 rate 回填:全量跑完实测后改 `/dev/solvers` NATIVE skewb 的 `rate: null`。
 - **📦 MANUAL(HTR) 交接**(2026-06-11,H1–H5 代码侧已全绿落地,等用户在场手动):
   1. **先拍板口径**:WCA master 随机打乱直灌 htr_analyzer 会得全 `-`(随机打乱不在 DR 态,H2 实证)。可选:(a) 不灌全量统计,htr 只做 analyzer 在线查询(现状即此,零额外工作);(b) 输入集改"先过 DR 阶段后的态"(需定义 DR 解的选取规则,管道要串 dr→htr);(c) 只灌天然 DR 态子集(~1/19万,样本太稀,不推荐)。
   2. 若选 (b):统计管道注册(update_cross_stats.ps1 / build 流程加 `_htr` 列)→ 灌 master/xcross → `stats/scramble/distribution.json` 进 htr 分桶。
   3. UI 接入:`VARIANT_ORDER` 加 htr(H4 故意未加,gen/recent 下拉才会出现)、RecentScrambles / stats 页 / SheetView / CompCrossAnalysis / useCompSteps / useVariantStepMap 各登记点(H4 摘要列过,grep `'eoline'` 对照)。
-  4. 看板回填:`/code/solvers` NATIVE htr 的 rate 从「未实测」改实测值(H5 已留 null 槽位)。
+  4. 看板回填:`/dev/solvers` NATIVE htr 的 rate 从「未实测」改实测值(H5 已留 null 槽位)。
   5. static 发布照常规仪式。
 - ~~⏸ soft-gate(M2) 待拍板~~ ✅ 2026-06-11 用户拍板:做,key `roux_s2`,已展开 M2a–M2e(见 §1)。S1+S2 联合 vs 只 S2 留给 M2b 推导后定。
 

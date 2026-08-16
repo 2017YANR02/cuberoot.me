@@ -1,5 +1,5 @@
 /**
- * /code/ops runbook 路由 — 命令 + 提示词模板,DB-backed.
+ * /dev/ops runbook 路由 — 命令 + 提示词模板,DB-backed.
  *   - GET    /v1/ops/commands              — 全表 (5min cache),前端一次拉完
  *   - POST   /v1/ops/commands              — admin 新增 (append 到该 category 末尾)
  *   - PUT    /v1/ops/commands/:id          — admin 编辑

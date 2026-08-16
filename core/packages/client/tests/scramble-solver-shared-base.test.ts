@@ -16,7 +16,7 @@
 // 新写的 _XxxSolver.tsx 若没 import PuzzleSolverPage,集合就变 → CI 红。两条出路:
 //   ① 它其实是单行族 → 照 _IvySolver.tsx 迁到 SolverSpec + 基座(集合不变,推荐);
 //   ② 它真是异形(自定义 UI)→ 把文件名加进 BESPOKE(改白名单当 review 信号)。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

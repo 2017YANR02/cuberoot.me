@@ -54,8 +54,8 @@
           },
           {
             "type": "command",
-            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/code-data-sync-reminder.ps1\"",
-            "commandWindows": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/code-data-sync-reminder.ps1\"",
+            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/dev-data-sync-reminder.ps1\"",
+            "commandWindows": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/dev-data-sync-reminder.ps1\"",
             "timeout": 15,
             "statusMessage": "Checking code documentation sync"
           }

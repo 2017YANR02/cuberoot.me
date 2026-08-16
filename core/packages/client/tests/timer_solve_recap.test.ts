@@ -18,7 +18,7 @@
  * 首屏 —— 手动计时的人一次也不会渲染它。但它又是「拧完必然出现」的东西,所以魔方
  * 一连上就预取整条链,而不是等停表那一下才开始下载。
  */
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

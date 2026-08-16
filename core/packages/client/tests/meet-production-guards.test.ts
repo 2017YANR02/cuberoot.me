@@ -1,7 +1,7 @@
 // /meet 第二轮上线审查的四条回归守卫。它们跨 server token、第三方组件和响应式 CSS,
 // 单靠 typecheck 看不见:代码照样能编译,但会留下可批量制造的空房、键盘下的聊天框、
 // 被侧栏挤烂的控制条或 /zh 里突然冒出的英文连接提示。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';

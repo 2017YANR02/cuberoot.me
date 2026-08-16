@@ -7,4 +7,4 @@ i18n/i18n-client.ts
 app/[lang]/wca/globe/GlobeMapClient.tsx
 app/[lang]/calc/_components/stores/calc_store.ts
 app/[lang]/recon/submit/ReconSubmitForm.tsx
-app/[lang]/code/stack/_tools/react-router.tsx
+app/[lang]/dev/stack/_tools/react-router.tsx

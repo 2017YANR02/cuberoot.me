@@ -10,7 +10,7 @@
 //
 // 全覆盖(含死宽/JS 定位/表 min-content 等所有机制)的经验式检查走 on-demand:
 //   pnpm -F @cuberoot/client audit:overflow  (scripts/mobile-overflow-audit.cjs,需 dev server)
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
