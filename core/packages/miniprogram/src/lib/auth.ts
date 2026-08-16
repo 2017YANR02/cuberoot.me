@@ -179,7 +179,9 @@ function wechatLoginCode(): Promise<string> {
 }
 
 export function getStoredSession(): SessionData | null {
-  const session = decodeSession(wx.getStorageSync(SESSION_STORAGE_KEY) as unknown);
+  const stored = wx.getStorageSync(SESSION_STORAGE_KEY) as unknown;
+  if (stored === '' || stored === null || stored === undefined) return null;
+  const session = decodeSession(stored);
   if (!session) wx.removeStorageSync(SESSION_STORAGE_KEY);
   return session;
 }
