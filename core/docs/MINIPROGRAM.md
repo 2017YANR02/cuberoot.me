@@ -101,7 +101,7 @@ pnpm --filter @cuberoot/miniprogram build
 pnpm --filter @cuberoot/miniprogram release:check
 ```
 
-`build` 会保留已有正式 AppID 和明确的数字基础库；不会把已选好的本地版本重置回 `trial`。构建成功后会在被忽略的 `.tmp/` 写入源码和产物指纹，不进入上传包。`release:check` 会拒绝缺页、源码变化后的旧 `dist`、构建后被改动的 `dist`，并故意要求每次上传时重新确认稳定版本和已完成的密钥轮换。环境变量只是操作确认，不是轮换动作本身。
+`build` 会保留已有正式 AppID 和明确的数字基础库；不会把已选好的本地版本重置回 `trial`。构建成功后会在被忽略的 `.tmp/` 写入源码和产物指纹，不进入上传包。`release:check` 会先运行类型检查和全部小程序回归测试，再拒绝缺页、源码变化后的旧 `dist`、构建后被改动的 `dist`，并故意要求每次上传时重新确认稳定版本和已完成的密钥轮换。环境变量只是操作确认，不是轮换动作本身。
 
 微信开发者工具导入 `core/packages/miniprogram`，不是 `dist`。`project.config.json` 和 `project.private.config.json` 是本机配置，不提交 AppID 之外的任何凭据。
 
@@ -433,6 +433,12 @@ pnpm --filter @cuberoot/miniprogram release:check
 - 上传前检查除 AppID、基础库、合法域名和包根目录外，也固定 `compileType=miniprogram`。
 - 配置若被其他开发者工具项目覆盖成插件或小游戏，即使 AppID 外形正确也不能进入上传流程。
 - 项目类型继续由 `project.config.template.json` 生成；正式检查负责发现生成后的人为漂移，不在页面代码复制配置判断。
+
+### 2026-08-16：发布命令自带质量验证
+
+- `verify` 是小程序类型检查与回归测试的唯一组合入口；日常 `check` 和正式 `release:check` 都复用它，不再各写一套质量命令。
+- 正式发布检查不能只看配置和构建指纹：类型错误或行为回归同样会阻断上传，操作员不需要记住额外补跑测试。
+- 结构测试固定这条命令关系；以后调整测试工具时只修改 `verify`，不得把发布命令退回为单独执行静态闸门。
 
 ### 首版工程
 
