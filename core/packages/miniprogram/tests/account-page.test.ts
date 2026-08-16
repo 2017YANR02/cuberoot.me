@@ -8,6 +8,7 @@ interface AccountPage {
   logout(): void;
   openAccount(): void;
   openPrivacy(): void;
+  retrySync(): void;
   setData(data: Record<string, unknown>): void;
 }
 
@@ -164,6 +165,33 @@ describe('mini program account page', () => {
     expect(page.data.loggedIn).toBe(true);
     expect(page.data.syncLabel).toBe('待确认');
     expect(page.data.statusError).toBe(true);
+  });
+
+  it('retries a transient account check through the same validation flow', async () => {
+    let requestCount = 0;
+    const request = vi.fn((options: { success(response: unknown): void }) => {
+      requestCount += 1;
+      options.success(requestCount === 1
+        ? { statusCode: 200, data: null }
+        : { statusCode: 200, data: { user: storedSession.user } });
+    });
+    const page = await loadPage({
+      getStorageSync: () => storedSession,
+      removeStorageSync: vi.fn(),
+      request,
+      setStorageSync: vi.fn(),
+    });
+
+    page.onShow();
+    await vi.waitFor(() => expect(page.data.syncState).toBe('error'));
+
+    page.retrySync();
+
+    await vi.waitFor(() => expect(page.data.syncState).toBe('ready'));
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(page.data.syncLabel).toBe('已就绪');
+    expect(page.data.status).toBe('');
+    expect(page.data.statusError).toBe(false);
   });
 
   it('ignores an older validation result after a newer check succeeds', async () => {
