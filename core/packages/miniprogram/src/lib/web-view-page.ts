@@ -139,13 +139,10 @@ export function markWebRouteFailed(
 ): void {
   if (disposedPages.has(context)) return;
 
-  const attempt = Number(reportedAttempt);
-  if (
-    reportedAttempt !== undefined
-    && Number.isInteger(attempt)
-    && attempt > 0
-    && !isCurrentAttempt(context, attempt)
-  ) return;
+  if (reportedAttempt !== undefined) {
+    const attempt = Number(reportedAttempt);
+    if (!Number.isInteger(attempt) || attempt <= 0 || !isCurrentAttempt(context, attempt)) return;
+  }
 
   beginRouteAttempt(context);
   const route = resolveWebRoute(context.data.routeKey);

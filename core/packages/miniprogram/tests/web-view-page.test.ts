@@ -445,6 +445,18 @@ describe('shared web-view page state', () => {
     expect(setNavigationBarTitle).toHaveBeenCalledTimes(1);
   });
 
+  it('ignores malformed web view attempt identifiers', async () => {
+    const context = createContext();
+    await openWebRoute(context, 'timer');
+    const currentData = { ...context.data };
+
+    markWebRouteFailed(context, 'not-a-number');
+    markWebRouteFailed(context, '');
+    markWebRouteFailed(context, 0);
+
+    expect(context.data).toEqual(currentData);
+  });
+
   it('does not reopen an old route after the same page instance is reused', async () => {
     let runOldNextTick: (() => void) | undefined;
     vi.stubGlobal('wx', {
