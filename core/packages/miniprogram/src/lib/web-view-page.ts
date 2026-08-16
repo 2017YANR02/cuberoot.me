@@ -62,6 +62,8 @@ export function createWebViewPageData(): WebViewPageData {
 }
 
 export async function openWebRoute(context: WebViewPageContext, key: unknown): Promise<boolean> {
+  if (disposedPages.has(context)) return false;
+
   const route = resolveWebRoute(key);
   if (!route) {
     beginRouteAttempt(context);
