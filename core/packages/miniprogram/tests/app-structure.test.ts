@@ -4,6 +4,11 @@ import packageConfig from '../package.json';
 import appConfig from '../src/app.json';
 import sitemapConfig from '../src/sitemap.json';
 import themeConfig from '../src/theme.json';
+import {
+  EXPECTED_APP_PAGES,
+  EXPECTED_TAB_BAR,
+  PUBLIC_INDEXED_PAGES,
+} from '../scripts/release-check-lib.mjs';
 
 declare global {
   interface ImportMeta {
@@ -34,7 +39,7 @@ describe('mini program app structure', () => {
   });
 
   it('keeps every declared page complete', () => {
-    expect(appConfig.pages.length).toBeGreaterThan(0);
+    expect(appConfig.pages).toEqual(EXPECTED_APP_PAGES);
     for (const pagePath of appConfig.pages) {
       for (const extension of ['.ts', '.json', '.wxml', '.wxss']) {
         expect(pageFilePaths.has(`../src/${pagePath}${extension}`)).toBe(true);
@@ -50,11 +55,7 @@ describe('mini program app structure', () => {
       expect(pagePaths.has(item.pagePath)).toBe(true);
     }
 
-    expect(appConfig.tabBar.list).toEqual([
-      { pagePath: 'pages/timer/index', text: '计时' },
-      { pagePath: 'pages/tools/index', text: '工具' },
-      { pagePath: 'pages/account/index', text: '我的' },
-    ]);
+    expect(appConfig.tabBar.list).toEqual(EXPECTED_TAB_BAR);
   });
 
   it('keeps native chrome synchronized with the system color scheme', () => {
@@ -97,17 +98,15 @@ describe('mini program app structure', () => {
   });
 
   it('only exposes public entry pages to WeChat search', () => {
-    const publicIndexedPages = ['pages/timer/index', 'pages/tools/index'];
-
     expect(sitemapConfig.rules).toEqual([
-      ...publicIndexedPages.map((page) => ({ action: 'allow', page })),
+      ...PUBLIC_INDEXED_PAGES.map((page) => ({ action: 'allow', page })),
       { action: 'disallow', page: '*' },
     ]);
-    expect(publicIndexedPages).toEqual(
+    expect(PUBLIC_INDEXED_PAGES).toEqual(
       expect.arrayContaining(appConfig.tabBar.list.slice(0, 2).map((item) => item.pagePath)),
     );
-    expect(publicIndexedPages).not.toContain('pages/account/index');
-    expect(publicIndexedPages).not.toContain('pages/web/index');
+    expect(PUBLIC_INDEXED_PAGES).not.toContain('pages/account/index');
+    expect(PUBLIC_INDEXED_PAGES).not.toContain('pages/web/index');
   });
 
   it('keeps web-backed pages on the shared controller', () => {
