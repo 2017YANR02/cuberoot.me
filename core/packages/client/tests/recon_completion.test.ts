@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   checkReconCompletion,
   cleanReconCubeStateMoves,
+  getReconScramble,
   normalizeReconScrambleSpacing,
 } from '@cuberoot/shared/recon-completion';
 import {
@@ -10,6 +11,17 @@ import {
 } from '../../server/src/utils/recon_completion';
 
 describe('reconstruction completion validation', () => {
+  it('uses optimal, then WCA real, then generic scramble as the reconstruction state', () => {
+    expect(getReconScramble({
+      optimalScramble: 'optimal',
+      wcaScramble: 'wca',
+      scramble: 'generic',
+    })).toBe('optimal');
+    expect(getReconScramble({ wcaScramble: 'wca', scramble: 'generic' })).toBe('wca');
+    expect(getReconScramble({ scramble: 'generic' })).toBe('generic');
+    expect(getReconScramble({})).toBe('');
+  });
+
   it('accepts a compact scramble followed by its solution', async () => {
     await expect(checkReconCompletion({
       event: '3x3',
@@ -90,14 +102,16 @@ describe('unsolved reason validation', () => {
     expect(hasUnsolvedReason({ unsolved_reason: '原视频缺少最后一步' })).toBe(true);
   });
 
-  it('normalizes both SQL scramble columns before persistence', () => {
+  it('normalizes all SQL scramble columns before persistence', () => {
     const row: Record<string, unknown> = {
       event: '3x3',
       wca_scramble: "RUR'",
       optimal_scramble: "F2LU'",
+      scramble: "B2DF'",
     };
     normalizeReconScrambleRow(row);
     expect(row.wca_scramble).toBe("R U R'");
     expect(row.optimal_scramble).toBe("F2 L U'");
+    expect(row.scramble).toBe("B2 D F'");
   });
 });

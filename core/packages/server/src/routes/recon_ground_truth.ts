@@ -47,6 +47,7 @@ interface SourceRow {
   reconer_id: string | null;
   optimal_scramble: string | null;
   wca_scramble: string | null;
+  scramble: string | null;
   solution: string | null;
 }
 
@@ -78,7 +79,7 @@ interface ExportRow extends DecisionRow {
 }
 
 function sourceScramble(row: SourceRow): string {
-  return (row.optimal_scramble?.trim() || row.wca_scramble?.trim() || '');
+  return (row.optimal_scramble?.trim() || row.wca_scramble?.trim() || row.scramble?.trim() || '');
 }
 
 function sourceQuery(select: string): string {
@@ -91,7 +92,7 @@ async function loadSource(reconId: number): Promise<SourceRow | null> {
     r.id, r.official, r.visibility, r.event, r.person, r.person_id,
     r.value, r.raw_time, r.comp, r.date, r.method,
     r.added_by, r.added_by_id, r.reconer, r.reconer_id,
-    r.optimal_scramble, r.wca_scramble, r.solution
+    r.optimal_scramble, r.wca_scramble, r.scramble, r.solution
   `), [reconId, CURRENT_EVENT, PUBLISHER_WCA_ID]);
   return rows[0] ?? null;
 }
@@ -156,7 +157,7 @@ async function assessSource(row: SourceRow): Promise<Assessment> {
 }
 
 const CANDIDATE_SCRAMBLE_SQL =
-  "COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), BTRIM(r.wca_scramble), '')";
+  "COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), NULLIF(BTRIM(r.wca_scramble), ''), BTRIM(r.scramble), '')";
 
 /**
  * 候选资格包含一次真实魔方状态校验，不能只靠 SQL 猜。结果持久化，并用全部来源字段
@@ -167,7 +168,7 @@ async function refreshCandidateChecks(): Promise<void> {
     `SELECT r.id, r.official, r.visibility, r.event, r.person, r.person_id,
             r.value, r.raw_time, r.comp, r.date, r.method,
             r.added_by, r.added_by_id, r.reconer, r.reconer_id,
-            r.optimal_scramble, r.wca_scramble, r.solution
+            r.optimal_scramble, r.wca_scramble, r.scramble, r.solution
      FROM recons r
      LEFT JOIN recon_ground_truth_candidate_checks k ON k.recon_id = r.id
      WHERE r.event = ? AND r.added_by_id = ? AND (
@@ -345,7 +346,7 @@ reconGroundTruthRoutes.get('/recon-ground-truth/export', async (c) => {
             r.added_by_id AS current_added_by_id,
             r.value AS current_value,
             r.raw_time AS current_raw_time,
-            COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), BTRIM(r.wca_scramble), '') AS current_scramble,
+            ${CANDIDATE_SCRAMBLE_SQL} AS current_scramble,
             COALESCE(r.solution, '') AS current_solution
      FROM recon_ground_truth_cases g
      LEFT JOIN recons r ON r.id = g.recon_id
@@ -437,12 +438,12 @@ reconGroundTruthRoutes.get('/recon-ground-truth/candidates', async (c) => {
       `SELECT r.id, r.official, r.visibility, r.event, r.person, r.person_id,
               r.value, r.raw_time, r.comp, r.date, r.method,
               r.added_by, r.added_by_id, r.reconer, r.reconer_id,
-              r.optimal_scramble, r.wca_scramble, NULL::text AS solution,
+              r.optimal_scramble, r.wca_scramble, r.scramble, NULL::text AS solution,
               g.status, g.note AS decision_note, g.updated_at AS decision_updated_at,
               (g.recon_id IS NOT NULL AND (
                 g.source_event IS DISTINCT FROM r.event OR
                 g.source_added_by_id IS DISTINCT FROM r.added_by_id OR
-                g.source_scramble IS DISTINCT FROM COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), BTRIM(r.wca_scramble), '') OR
+                g.source_scramble IS DISTINCT FROM ${CANDIDATE_SCRAMBLE_SQL} OR
                 g.source_solution IS DISTINCT FROM COALESCE(r.solution, '')
               )) AS source_changed
        FROM recons r ${CANDIDATE_CHECK_JOIN}

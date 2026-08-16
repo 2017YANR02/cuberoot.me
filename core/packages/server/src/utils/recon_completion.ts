@@ -4,13 +4,13 @@ import {
   type ReconCompletionResult,
 } from '@cuberoot/shared/recon-completion';
 
-/** Canonicalise both persisted scramble columns before validation and storage. */
+/** Canonicalise all persisted scramble columns before validation and storage. */
 export function normalizeReconScrambleRow(
   row: Record<string, unknown>,
   fallbackEvent?: unknown,
 ): void {
   const event = String(row.event ?? fallbackEvent ?? '');
-  for (const field of ['wca_scramble', 'optimal_scramble'] as const) {
+  for (const field of ['wca_scramble', 'optimal_scramble', 'scramble'] as const) {
     if (typeof row[field] === 'string') {
       row[field] = normalizeReconScrambleSpacing(event, row[field]);
     }
@@ -23,7 +23,7 @@ export async function checkReconRowCompletion(
 ): Promise<ReconCompletionResult> {
   return checkReconCompletion({
     event: String(row.event ?? ''),
-    scramble: String(row.wca_scramble || row.optimal_scramble || ''),
+    scramble: String(row.optimal_scramble || row.wca_scramble || row.scramble || ''),
     solution: String(row.solution ?? ''),
   });
 }

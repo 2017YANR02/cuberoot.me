@@ -3,7 +3,7 @@
  * Ported from packages/client-vite/src/utils/cubedb_url.ts.
  *
  * URL params (independent, all optional):
- *   ?scramble=<wcaScramble>&optimal=<optimalScramble>&alg=<solution>
+ *   ?scramble=<wcaScramble>&optimal=<optimalScramble>&generic=<scramble>&alg=<solution>
  *
  * Encode: spaces → `_`, `'` → `-` (so the URL is `+`/`%27`-free and readable).
  *

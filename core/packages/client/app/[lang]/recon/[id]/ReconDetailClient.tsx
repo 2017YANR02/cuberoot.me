@@ -18,6 +18,7 @@ import {
   Lock, Link2, LogIn,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
+import { getReconScramble } from '@cuberoot/shared/recon-completion';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 import {
   getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, getDouyinCover,
@@ -209,7 +210,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   if (!solve) return <div className="recon-page"><div className="recon-error">{t('recon.notFound')}</div></div>;
 
   const solutionText = solve.solution || solve.recon || '';
-  const scramble = solve.optimalScramble || solve.wcaScramble || '';
+  const scramble = getReconScramble(solve);
 
   // 主选手(成绩归属)+ 共同完成者,逐个带旗帜/链接渲染
   const cubers: { name: string; id?: string; country?: string }[] = [
@@ -914,8 +915,8 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
 }
 
 // 归一化打乱字符串作为关联键：去首尾空白 + 内部空白折叠为单空格（大小写敏感，r≠R）。
-function scrambleKey(solve: Pick<ReconSolve, 'optimalScramble' | 'wcaScramble'>): string {
-  return (solve.optimalScramble || solve.wcaScramble || '').trim().replace(/\s+/g, ' ');
+function scrambleKey(solve: Pick<ReconSolve, 'optimalScramble' | 'wcaScramble' | 'scramble'>): string {
+  return getReconScramble(solve).trim().replace(/\s+/g, ' ');
 }
 
 // 相同打乱的其它复盘（任意选手/项目，只要打乱字符串一致），方便跨复盘对比跳转。

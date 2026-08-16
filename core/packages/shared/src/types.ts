@@ -109,8 +109,10 @@ export interface ReconSolve {
   solution?: string;
   /** 优化打乱 */
   optimalScramble?: string;
-  /** WCA 官方打乱 */
+  /** WCA 真实打乱 */
   wcaScramble?: string;
+  /** 非 WCA、非最优的普通打乱 */
+  scramble?: string;
   /** 描述/标题 */
   caption?: string;
   /** 备注 */
