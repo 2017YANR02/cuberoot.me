@@ -14,6 +14,7 @@ export interface WebViewPageData {
   canRetry: boolean;
   errorMessage: string;
   errorTitle: string;
+  loadingTitle: string;
   routeKey: string;
   src: string;
 }
@@ -65,6 +66,7 @@ export function createWebViewPageData(): WebViewPageData {
     canRetry: false,
     errorMessage: '',
     errorTitle: '',
+    loadingTitle: '正在打开',
     routeKey: '',
     src: '',
   };
@@ -90,6 +92,7 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
     canRetry: false,
     errorMessage: '',
     errorTitle: '',
+    loadingTitle: `正在打开${route.title}`,
     routeKey: String(key),
     src: '',
   });

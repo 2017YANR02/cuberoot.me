@@ -1,6 +1,5 @@
-<web-view wx:if="{{src}}" src="{{src}}" binderror="handleWebViewError"></web-view>
-<view wx:else class="page web-error">
-  <text class="page-title">{{errorTitle || '正在打开计时器'}}</text>
-  <text class="page-intro" wx:if="{{errorMessage}}">{{errorMessage}}</text>
-  <button class="text-button retry-button" wx:if="{{canRetry}}" bindtap="retry">重新打开</button>
-</view>
+<import src="../../templates/web-route-view.wxml" />
+<template
+  is="web-route-view"
+  data="{{src: src, loadingTitle: loadingTitle, errorTitle: errorTitle, errorMessage: errorMessage, canRetry: canRetry}}"
+/>

@@ -45,6 +45,7 @@ describe('shared web-view page state', () => {
       canRetry: false,
       errorMessage: '',
       errorTitle: '',
+      loadingTitle: '正在打开计时器',
       routeKey: 'timer',
       src: 'https://cuberoot.me/zh/timer',
     });
