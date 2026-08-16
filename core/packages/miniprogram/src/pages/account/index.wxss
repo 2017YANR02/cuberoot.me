@@ -166,6 +166,10 @@
   margin-top: 34rpx;
 }
 
+.account-action-status--stacked {
+  margin-top: 10rpx;
+}
+
 .sync-retry-button {
   margin-top: 4rpx;
 }
