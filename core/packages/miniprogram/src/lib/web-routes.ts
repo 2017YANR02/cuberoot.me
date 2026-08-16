@@ -36,6 +36,12 @@ export const WEB_ROUTES = {
     description: '查看数据、登录与删除说明',
     path: '/zh/privacy',
   },
+  logout: {
+    title: '退出登录',
+    description: '清除小程序与网站登录状态',
+    path: '/auth/miniprogram#action=logout&next=%2Fzh%2Faccount',
+    sessionHandoff: false,
+  },
 } as const;
 
 export type WebRouteKey = keyof typeof WEB_ROUTES;
@@ -56,12 +62,22 @@ export function listWebTools(): WebToolLink[] {
   }));
 }
 
-export function resolveWebRoute(key: unknown): { title: string; path: string; url: string } | null {
+export function resolveWebRoute(key: unknown): {
+  title: string;
+  path: string;
+  sessionHandoff: boolean;
+  url: string;
+} | null {
   if (typeof key !== 'string' || !Object.prototype.hasOwnProperty.call(WEB_ROUTES, key)) {
     return null;
   }
   const route = WEB_ROUTES[key as WebRouteKey];
-  return { title: route.title, path: route.path, url: `${SITE_ORIGIN}${route.path}` };
+  return {
+    title: route.title,
+    path: route.path,
+    sessionHandoff: !('sessionHandoff' in route) || route.sessionHandoff !== false,
+    url: `${SITE_ORIGIN}${route.path}`,
+  };
 }
 
 export function createWebSessionHandoffUrl(path: string, ticket: string): string {

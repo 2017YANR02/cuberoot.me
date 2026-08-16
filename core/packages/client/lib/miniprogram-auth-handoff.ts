@@ -4,6 +4,7 @@ import { apiUrl } from './api-base';
 import { safeNext } from './safe-next';
 
 export const MINIPROGRAM_HANDOFF_FALLBACK = '/zh/timer';
+export const MINIPROGRAM_LOGOUT_FALLBACK = '/zh/account';
 
 const WEB_SESSION_TICKET_RE = /^[A-Za-z0-9_-]{43}$/;
 
@@ -19,6 +20,10 @@ export interface MiniProgramWebSession {
 
 interface MiniProgramHandoff {
   ticket: string;
+  next: string;
+}
+
+interface MiniProgramLogout {
   next: string;
 }
 
@@ -43,6 +48,14 @@ export function parseMiniProgramHandoff(hash: string): MiniProgramHandoff | null
   return {
     ticket,
     next: safeNext(params.get('next')) ?? MINIPROGRAM_HANDOFF_FALLBACK,
+  };
+}
+
+export function parseMiniProgramLogout(hash: string): MiniProgramLogout | null {
+  const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
+  if (params.get('action') !== 'logout') return null;
+  return {
+    next: safeNext(params.get('next')) ?? MINIPROGRAM_LOGOUT_FALLBACK,
   };
 }
 

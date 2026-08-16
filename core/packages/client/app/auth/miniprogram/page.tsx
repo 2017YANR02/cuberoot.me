@@ -2,20 +2,34 @@
 
 import { useEffect, useState } from 'react';
 import { tr } from '@/i18n/tr';
-import { applySession, getSessionToken } from '@/lib/auth-store';
+import { applySession, getSessionToken, useAuthStore } from '@/lib/auth-store';
 import {
   MINIPROGRAM_HANDOFF_FALLBACK,
   exchangeMiniProgramWebSession,
   parseMiniProgramHandoff,
+  parseMiniProgramLogout,
 } from '@/lib/miniprogram-auth-handoff';
 import { AuthCallbackStatus } from '../_components/AuthCallbackStatus';
 
 export default function MiniProgramAuthPage() {
   const [error, setError] = useState('');
   const [next, setNext] = useState(MINIPROGRAM_HANDOFF_FALLBACK);
+  const [pendingLabel, setPendingLabel] = useState(tr({
+    zh: '正在同步登录状态...',
+    en: 'Syncing your session...',
+  }));
 
   useEffect(() => {
     let active = true;
+    const logout = parseMiniProgramLogout(window.location.hash);
+    if (logout) {
+      setNext(logout.next);
+      setPendingLabel(tr({ zh: '正在退出账号...', en: 'Signing you out...' }));
+      useAuthStore.getState().logout();
+      window.location.replace(logout.next);
+      return () => { active = false; };
+    }
+
     const handoff = parseMiniProgramHandoff(window.location.hash);
     if (!handoff) {
       setError(tr({
@@ -48,7 +62,7 @@ export default function MiniProgramAuthPage() {
 
   return (
     <AuthCallbackStatus
-      pendingLabel={tr({ zh: '正在同步登录状态...', en: 'Syncing your session...' })}
+      pendingLabel={pendingLabel}
       error={error}
     >
       <a href={next}>
