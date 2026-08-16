@@ -142,6 +142,45 @@ describe('mini program app updates', () => {
     expect(showModal).toHaveBeenCalledTimes(2);
   });
 
+  it('ignores stale callbacks after a newer update prompt starts', async () => {
+    let ready: (() => void) | undefined;
+    const prompts: Array<{
+      fail(): void;
+      success(result: { confirm: boolean }): void;
+    }> = [];
+    const applyUpdate = vi.fn();
+    const showModal = vi.fn((options: (typeof prompts)[number]) => {
+      prompts.push(options);
+    });
+    const app = await loadApp({
+      getUpdateManager: () => ({
+        applyUpdate,
+        onUpdateFailed: vi.fn(),
+        onUpdateReady(callback: () => void) {
+          ready = callback;
+        },
+      }),
+      showModal,
+      showToast: vi.fn(),
+    });
+
+    app.onLaunch?.();
+    ready?.();
+    prompts[0]?.fail();
+    ready?.();
+
+    prompts[0]?.fail();
+    ready?.();
+    prompts[0]?.success({ confirm: true });
+
+    expect(showModal).toHaveBeenCalledTimes(2);
+    expect(applyUpdate).not.toHaveBeenCalled();
+
+    prompts[1]?.success({ confirm: true });
+
+    expect(applyUpdate).toHaveBeenCalledOnce();
+  });
+
   it('keeps the current version usable when the update prompt throws', async () => {
     let ready: (() => void) | undefined;
     const app = await loadApp({
