@@ -4,9 +4,12 @@ export function setupAppUpdate(): void {
   try {
     const updateManager = wx.getUpdateManager();
     let updatePromptHandled = false;
+    let updatePromptAttempt = 0;
     updateManager.onUpdateReady(() => {
       if (updatePromptHandled) return;
       updatePromptHandled = true;
+      const promptAttempt = ++updatePromptAttempt;
+      const promptIsCurrent = () => updatePromptAttempt === promptAttempt;
       let updateApplyStarted = false;
       try {
         wx.showModal({
@@ -15,7 +18,7 @@ export function setupAppUpdate(): void {
           confirmText: '立即重启',
           cancelText: '稍后',
           success(result) {
-            if (!result.confirm || updateApplyStarted) return;
+            if (!promptIsCurrent() || !result.confirm || updateApplyStarted) return;
             updateApplyStarted = true;
             try {
               updateManager.applyUpdate();
@@ -24,11 +27,12 @@ export function setupAppUpdate(): void {
             }
           },
           fail() {
+            if (!promptIsCurrent()) return;
             updatePromptHandled = false;
           },
         });
       } catch {
-        updatePromptHandled = false;
+        if (promptIsCurrent()) updatePromptHandled = false;
         // Update prompts must never block application launch or current work.
       }
     });
