@@ -1,0 +1,1324 @@
+{
+  "schemaVersion": 1,
+  "provenance": {
+    "sourceType": "binary-jar-reflection-export",
+    "sourceFileName": "Square-1 PBL Finder.jar",
+    "sourceUrl": "https://www.dropbox.com/scl/fi/b47zgzc2z8w8w818pzi1m/Square-1-PBL-Finder.jar?rlkey=rxnjgdf319zpq1ubr4bkrddab&e=2&dl=0",
+    "sourceSha256": "dec27e3b9879a64b39168a4152c6d39b78af41cd68d8abb41be5a96d3b032d11",
+    "application": "Square-1 PBL Finder v1.2",
+    "authors": [
+      "Anuar Onofre",
+      "Lucas Sousa"
+    ],
+    "ideaCredit": "Jayden McNeill",
+    "auxiliaryDataCredit": {
+      "name": "Charlie Stark",
+      "description": "Most algorithms are identified by the desktop app as coming from Charlie Stark's Sub 6 PBL list.",
+      "sourceUrl": "https://docs.google.com/spreadsheets/d/14ArIWNQCALYqTlWPiYqrO1qKVG09onkngAUYHcnIqfY/edit#gid=0"
+    },
+    "exportMethod": "Public runtime fields and methods were read by reflection; Finder output was captured by black-box execution. No decompiled source is included.",
+    "normalization": "ASCII spaces are removed from auxiliary names and sequences, matching the desktop app first-run file reload behavior. Differing raw values are retained as sourceName/sourceSequence."
+  },
+  "licenseStatus": {
+    "status": "no-license-found",
+    "redistributionPermission": "not-established",
+    "notice": "No source-code or data license was found in the audited JAR or its linked public pages. This provenance record is not an open-source or redistribution-permission claim."
+  },
+  "fixture": {
+    "name": "Ua/Ua",
+    "topPll": "Ua",
+    "bottomPll": "Ua",
+    "auxiliaryAlgorithmCount": 814,
+    "orderedCandidateCount": 662596,
+    "ordering": "Stable ascending legacy STM; equal-STM results retain Finder iteration order.",
+    "targetSetup": {
+      "top": "1,0/0,-3/-1,0/3,0/1,0/0,3/-1,0/-3,0/",
+      "bottom": "1,-1/-6,-6/1,0/0,-3/-1,0/3,0/1,0/0,3/-1,0/-3,0/1,-1/-6,-6/"
+    },
+    "expectedSolutionCount": 125,
+    "firstResults": [
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/-1,0",
+        "auxiliaryAlgorithms": [
+          "nothing",
+          "U+/U-7"
+        ],
+        "stm": 5,
+        "ftm": 14,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/-1,0   Algs: [nothing | U+/U-7 ]   ~{5/14}"
+      },
+      {
+        "sequence": "-3,-4/-3,0/-5,-5/0,-3/-1,5/0,1",
+        "auxiliaryAlgorithms": [
+          "J/L7",
+          "T/T1"
+        ],
+        "stm": 5,
+        "ftm": 14,
+        "legacyDisplay": "Ua/Ua: -3,-4/-3,0/-5,-5/0,-3/-1,5/0,1   Algs: [J/L7 | T/T1 ]   ~{5/14}"
+      },
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/-1,0/",
+        "auxiliaryAlgorithms": [
+          "U+/U-7",
+          "nothing"
+        ],
+        "stm": 6,
+        "ftm": 15,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/-1,0/   Algs: [U+/U-7 | nothing ]   ~{6/15}"
+      }
+    ],
+    "expectedResults": [
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/-1,0",
+        "auxiliaryAlgorithms": [
+          "nothing",
+          "U+/U-7"
+        ],
+        "stm": 5,
+        "ftm": 14,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/-1,0   Algs: [nothing | U+/U-7 ]   ~{5/14}"
+      },
+      {
+        "sequence": "-3,-4/-3,0/-5,-5/0,-3/-1,5/0,1",
+        "auxiliaryAlgorithms": [
+          "J/L7",
+          "T/T1"
+        ],
+        "stm": 5,
+        "ftm": 14,
+        "legacyDisplay": "Ua/Ua: -3,-4/-3,0/-5,-5/0,-3/-1,5/0,1   Algs: [J/L7 | T/T1 ]   ~{5/14}"
+      },
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/-1,0/",
+        "auxiliaryAlgorithms": [
+          "U+/U-7",
+          "nothing"
+        ],
+        "stm": 6,
+        "ftm": 15,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/-1,0/   Algs: [U+/U-7 | nothing ]   ~{6/15}"
+      },
+      {
+        "sequence": "1,0/3,0/-1,-1/1,-2/-1,-1/-2,4/-1,0",
+        "auxiliaryAlgorithms": [
+          "U-/U+1",
+          "H/H"
+        ],
+        "stm": 6,
+        "ftm": 17,
+        "legacyDisplay": "Ua/Ua: 1,0/3,0/-1,-1/1,-2/-1,-1/-2,4/-1,0   Algs: [U-/U+1 | H/H ]   ~{6/17}"
+      },
+      {
+        "sequence": "1,6/2,-4/0,3/1,1/0,-3/-3,3/-1,0",
+        "auxiliaryAlgorithms": [
+          "Y/Y4",
+          "Nb/Na"
+        ],
+        "stm": 6,
+        "ftm": 17,
+        "legacyDisplay": "Ua/Ua: 1,6/2,-4/0,3/1,1/0,-3/-3,3/-1,0   Algs: [Y/Y4 | Nb/Na ]   ~{6/17}"
+      },
+      {
+        "sequence": "1,0/2,-1/1,1/0,-3/-1,-1/-2,4/-1,0",
+        "auxiliaryAlgorithms": [
+          "Sb/Sa1",
+          "pN/pN1"
+        ],
+        "stm": 6,
+        "ftm": 17,
+        "legacyDisplay": "Ua/Ua: 1,0/2,-1/1,1/0,-3/-1,-1/-2,4/-1,0   Algs: [Sb/Sa1 | pN/pN1 ]   ~{6/17}"
+      },
+      {
+        "sequence": "4,3/5,-1/-5,1/0,6/3,0/-1,-1/-2,1/-1,0",
+        "auxiliaryAlgorithms": [
+          "opp/opp4",
+          "adj/adj4"
+        ],
+        "stm": 7,
+        "ftm": 20,
+        "legacyDisplay": "Ua/Ua: 4,3/5,-1/-5,1/0,6/3,0/-1,-1/-2,1/-1,0   Algs: [opp/opp4 | adj/adj4 ]   ~{7/20}"
+      },
+      {
+        "sequence": "1,0/3,0/-1,-1/-2,1/3,3/5,-1/-5,1/-1,0",
+        "auxiliaryAlgorithms": [
+          "adj/adj1",
+          "opp/opp4"
+        ],
+        "stm": 7,
+        "ftm": 20,
+        "legacyDisplay": "Ua/Ua: 1,0/3,0/-1,-1/-2,1/3,3/5,-1/-5,1/-1,0   Algs: [adj/adj1 | opp/opp4 ]   ~{7/20}"
+      },
+      {
+        "sequence": "3,2/-3,0/3,3/1,-5/2,2/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "J/L10",
+          "A+/A+1"
+        ],
+        "stm": 7,
+        "ftm": 21,
+        "legacyDisplay": "Ua/Ua: 3,2/-3,0/3,3/1,-5/2,2/1,-2/-4,2/0,1   Algs: [J/L10 | A+/A+1 ]   ~{7/21}"
+      },
+      {
+        "sequence": "1,6/2,-4/4,1/3,3/3,-3/2,2/1,-2/-1,0",
+        "auxiliaryAlgorithms": [
+          "Bb/Ba4",
+          "pJ/Pj1"
+        ],
+        "stm": 7,
+        "ftm": 22,
+        "legacyDisplay": "Ua/Ua: 1,6/2,-4/4,1/3,3/3,-3/2,2/1,-2/-1,0   Algs: [Bb/Ba4 | pJ/Pj1 ]   ~{7/22}"
+      },
+      {
+        "sequence": "0,-1/3,-3/-3,3/4,4/2,-4/0,3/1,1/-3,0/-1,0",
+        "auxiliaryAlgorithms": [
+          "Na/Nb",
+          "Y/Y6"
+        ],
+        "stm": 8,
+        "ftm": 22,
+        "legacyDisplay": "Ua/Ua: 0,-1/3,-3/-3,3/4,4/2,-4/0,3/1,1/-3,0/-1,0   Algs: [Na/Nb | Y/Y6 ]   ~{8/22}"
+      },
+      {
+        "sequence": "1,0/2,-4/-2,4/0,6/2,-1/1,1/0,-3/-3,3/-1,0",
+        "auxiliaryAlgorithms": [
+          "pN/pN1",
+          "Sb/Sa4"
+        ],
+        "stm": 8,
+        "ftm": 22,
+        "legacyDisplay": "Ua/Ua: 1,0/2,-4/-2,4/0,6/2,-1/1,1/0,-3/-3,3/-1,0   Algs: [pN/pN1 | Sb/Sa4 ]   ~{8/22}"
+      },
+      {
+        "sequence": "4,3/2,-4/-2,4/-1,5/0,-3/1,1/2,-1/-3,3/0,1",
+        "auxiliaryAlgorithms": [
+          "pN/pN4",
+          "Sa/Sb4"
+        ],
+        "stm": 8,
+        "ftm": 24,
+        "legacyDisplay": "Ua/Ua: 4,3/2,-4/-2,4/-1,5/0,-3/1,1/2,-1/-3,3/0,1   Algs: [pN/pN4 | Sa/Sb4 ]   ~{8/24}"
+      },
+      {
+        "sequence": "-2,-3/3,0/-1,-1/-2,1/3,3/3,0/-1,-1/-2,1/-1,0",
+        "auxiliaryAlgorithms": [
+          "adj/adj11",
+          "adj/adj6"
+        ],
+        "stm": 8,
+        "ftm": 23,
+        "legacyDisplay": "Ua/Ua: -2,-3/3,0/-1,-1/-2,1/3,3/3,0/-1,-1/-2,1/-1,0   Algs: [adj/adj11 | adj/adj6 ]   ~{8/23}"
+      },
+      {
+        "sequence": "6,5/-3,0/3,3/0,-3/1,1/-3,0/3,3/0,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "J/L16",
+          "L/J1"
+        ],
+        "stm": 8,
+        "ftm": 21,
+        "legacyDisplay": "Ua/Ua: 6,5/-3,0/3,3/0,-3/1,1/-3,0/3,3/0,-3/-1,0   Algs: [J/L16 | L/J1 ]   ~{8/21}"
+      },
+      {
+        "sequence": "3,2/1,-2/5,-1/4,-2/-4,-4/4,4/0,-3/-1,5/0,1",
+        "auxiliaryAlgorithms": [
+          "Ra/Rb7",
+          "T/T1"
+        ],
+        "stm": 8,
+        "ftm": 24,
+        "legacyDisplay": "Ua/Ua: 3,2/1,-2/5,-1/4,-2/-4,-4/4,4/0,-3/-1,5/0,1   Algs: [Ra/Rb7 | T/T1 ]   ~{8/24}"
+      },
+      {
+        "sequence": "-3,-4/1,-2/5,-1/4,-2/-3,3/2,2/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "Ra/Rb10",
+          "A+/A+1"
+        ],
+        "stm": 8,
+        "ftm": 25,
+        "legacyDisplay": "Ua/Ua: -3,-4/1,-2/5,-1/4,-2/-3,3/2,2/1,-2/-4,2/0,1   Algs: [Ra/Rb10 | A+/A+1 ]   ~{8/25}"
+      },
+      {
+        "sequence": "3,-1/1,-2/-1,2/1,-2/-1,-1/0,3/0,-3/0,3/0,1",
+        "auxiliaryAlgorithms": [
+          "F/V2",
+          "J/Nb1"
+        ],
+        "stm": 8,
+        "ftm": 22,
+        "legacyDisplay": "Ua/Ua: 3,-1/1,-2/-1,2/1,-2/-1,-1/0,3/0,-3/0,3/0,1   Algs: [F/V2 | J/Nb1 ]   ~{8/22}"
+      },
+      {
+        "sequence": "1,-3/3,0/-3,0/3,0/-1,-1/-2,1/2,-1/-2,1/-1,0",
+        "auxiliaryAlgorithms": [
+          "Nb/J3",
+          "V/F1"
+        ],
+        "stm": 8,
+        "ftm": 22,
+        "legacyDisplay": "Ua/Ua: 1,-3/3,0/-3,0/3,0/-1,-1/-2,1/2,-1/-2,1/-1,0   Algs: [Nb/J3 | V/F1 ]   ~{8/22}"
+      },
+      {
+        "sequence": "3,2/0,-3/1,1/2,-1/-3,3/1,1/2,-4/-2,4/-1,0",
+        "auxiliaryAlgorithms": [
+          "Sa/Sb7",
+          "pN/pN1"
+        ],
+        "stm": 8,
+        "ftm": 24,
+        "legacyDisplay": "Ua/Ua: 3,2/0,-3/1,1/2,-1/-3,3/1,1/2,-4/-2,4/-1,0   Algs: [Sa/Sb7 | pN/pN1 ]   ~{8/24}"
+      },
+      {
+        "sequence": "-5,0/2,-4/4,1/3,3/6,-6/2,2/1,-2/-3,3/-1,0",
+        "auxiliaryAlgorithms": [
+          "Bb/Ba13",
+          "Kb/Ka1"
+        ],
+        "stm": 8,
+        "ftm": 24,
+        "legacyDisplay": "Ua/Ua: -5,0/2,-4/4,1/3,3/6,-6/2,2/1,-2/-3,3/-1,0   Algs: [Bb/Ba13 | Kb/Ka1 ]   ~{8/24}"
+      },
+      {
+        "sequence": "3,0/-3,0/3,3/0,-3/0,-1/1,-2/2,2/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "J/J2",
+          "A+/A+1"
+        ],
+        "stm": 9,
+        "ftm": 24,
+        "legacyDisplay": "Ua/Ua: 3,0/-3,0/3,3/0,-3/0,-1/1,-2/2,2/1,-2/-4,2/0,1   Algs: [J/J2 | A+/A+1 ]   ~{9/24}"
+      },
+      {
+        "sequence": "6,3/-3,0/3,3/0,-3/1,-4/-3,-3/1,-2/-1,2/3,3/-1,1",
+        "auxiliaryAlgorithms": [
+          "J/J8",
+          "L/Rb2"
+        ],
+        "stm": 9,
+        "ftm": 27,
+        "legacyDisplay": "Ua/Ua: 6,3/-3,0/3,3/0,-3/1,-4/-3,-3/1,-2/-1,2/3,3/-1,1   Algs: [J/J8 | L/Rb2 ]   ~{9/27}"
+      },
+      {
+        "sequence": "1,0/-3,0/3,3/0,-3/-1,-1/1,-2/2,2/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "L/J1",
+          "A+/A+1"
+        ],
+        "stm": 9,
+        "ftm": 25,
+        "legacyDisplay": "Ua/Ua: 1,0/-3,0/3,3/0,-3/-1,-1/1,-2/2,2/1,-2/-4,2/0,1   Algs: [L/J1 | A+/A+1 ]   ~{9/25}"
+      },
+      {
+        "sequence": "4,3/-3,0/3,3/0,-3/-1,-1/1,-2/5,-1/4,-2/-4,5/0,1",
+        "auxiliaryAlgorithms": [
+          "L/J6",
+          "Ra/Rb1"
+        ],
+        "stm": 9,
+        "ftm": 26,
+        "legacyDisplay": "Ua/Ua: 4,3/-3,0/3,3/0,-3/-1,-1/1,-2/5,-1/4,-2/-4,5/0,1   Algs: [L/J6 | Ra/Rb1 ]   ~{9/26}"
+      },
+      {
+        "sequence": "1,2/-3,0/3,3/0,-3/-1,0/1,-2/2,2/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "L/L3",
+          "A+/A+1"
+        ],
+        "stm": 9,
+        "ftm": 25,
+        "legacyDisplay": "Ua/Ua: 1,2/-3,0/3,3/0,-3/-1,0/1,-2/2,2/1,-2/-4,2/0,1   Algs: [L/L3 | A+/A+1 ]   ~{9/25}"
+      },
+      {
+        "sequence": "4,5/-3,0/3,3/0,-3/-4,1/3,3/1,-2/-1,2/-3,-3/",
+        "auxiliaryAlgorithms": [
+          "L/L8",
+          "Ra/J9"
+        ],
+        "stm": 9,
+        "ftm": 25,
+        "legacyDisplay": "Ua/Ua: 4,5/-3,0/3,3/0,-3/-4,1/3,3/1,-2/-1,2/-3,-3/   Algs: [L/L8 | Ra/J9 ]   ~{9/25}"
+      },
+      {
+        "sequence": "4,3/-3,0/2,2/1,-2/-3,3/2,-4/4,1/3,3/6,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "pJ/pJ6",
+          "Bb/Ba10"
+        ],
+        "stm": 9,
+        "ftm": 27,
+        "legacyDisplay": "Ua/Ua: 4,3/-3,0/2,2/1,-2/-3,3/2,-4/4,1/3,3/6,-3/-1,0   Algs: [pJ/pJ6 | Bb/Ba10 ]   ~{9/27}"
+      },
+      {
+        "sequence": "-2,-3/-3,0/2,2/1,-2/-1,-1/0,-3/3,3/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "pJ/pJ11",
+          "Db/Da1"
+        ],
+        "stm": 9,
+        "ftm": 26,
+        "legacyDisplay": "Ua/Ua: -2,-3/-3,0/2,2/1,-2/-1,-1/0,-3/3,3/1,-2/-4,2/0,1   Algs: [pJ/pJ11 | Db/Da1 ]   ~{9/26}"
+      },
+      {
+        "sequence": "0,-1/1,-2/2,2/1,-2/-4,2/-3,3/-3,0/3,3/0,-3/0,1",
+        "auxiliaryAlgorithms": [
+          "A+/A+1",
+          "J/L11"
+        ],
+        "stm": 9,
+        "ftm": 25,
+        "legacyDisplay": "Ua/Ua: 0,-1/1,-2/2,2/1,-2/-4,2/-3,3/-3,0/3,3/0,-3/0,1   Algs: [A+/A+1 | J/L11 ]   ~{9/25}"
+      },
+      {
+        "sequence": "0,-4/1,-2/2,2/1,-2/-4,2/-3,4/-3,0/3,3/0,-3/",
+        "auxiliaryAlgorithms": [
+          "A+/A+2",
+          "J/J7"
+        ],
+        "stm": 9,
+        "ftm": 24,
+        "legacyDisplay": "Ua/Ua: 0,-4/1,-2/2,2/1,-2/-4,2/-3,4/-3,0/3,3/0,-3/   Algs: [A+/A+2 | J/J7 ]   ~{9/24}"
+      },
+      {
+        "sequence": "-3,-1/1,-2/2,2/1,-2/-4,2/-2,3/-3,0/3,3/0,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "A+/A+9",
+          "L/L11"
+        ],
+        "stm": 9,
+        "ftm": 27,
+        "legacyDisplay": "Ua/Ua: -3,-1/1,-2/2,2/1,-2/-4,2/-2,3/-3,0/3,3/0,-3/-1,1   Algs: [A+/A+9 | L/L11 ]   ~{9/27}"
+      },
+      {
+        "sequence": "-3,-4/1,-2/2,2/1,-2/-4,2/-2,4/-3,0/3,3/0,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "A+/A+10",
+          "L/J10"
+        ],
+        "stm": 9,
+        "ftm": 26,
+        "legacyDisplay": "Ua/Ua: -3,-4/1,-2/2,2/1,-2/-4,2/-2,4/-3,0/3,3/0,-3/-1,0   Algs: [A+/A+10 | L/J10 ]   ~{9/26}"
+      },
+      {
+        "sequence": "6,0/-3,-3/2,-1/-2,1/3,3/1,-4/-3,0/3,3/0,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "J/Ra13",
+          "L/L2"
+        ],
+        "stm": 9,
+        "ftm": 26,
+        "legacyDisplay": "Ua/Ua: 6,0/-3,-3/2,-1/-2,1/3,3/1,-4/-3,0/3,3/0,-3/-1,1   Algs: [J/Ra13 | L/L2 ]   ~{9/26}"
+      },
+      {
+        "sequence": "1,5/3,3/2,-1/-2,1/-3,-3/-4,1/-3,0/3,3/0,-3/",
+        "auxiliaryAlgorithms": [
+          "Rb/L4",
+          "J/J3"
+        ],
+        "stm": 9,
+        "ftm": 25,
+        "legacyDisplay": "Ua/Ua: 1,5/3,3/2,-1/-2,1/-3,-3/-4,1/-3,0/3,3/0,-3/   Algs: [Rb/L4 | J/J3 ]   ~{9/25}"
+      },
+      {
+        "sequence": "-2,-3/2,-1/1,-5/2,-4/-5,4/-1,-1/-3,0/3,3/0,-3/0,1",
+        "auxiliaryAlgorithms": [
+          "Rb/Ra11",
+          "J/L1"
+        ],
+        "stm": 9,
+        "ftm": 26,
+        "legacyDisplay": "Ua/Ua: -2,-3/2,-1/1,-5/2,-4/-5,4/-1,-1/-3,0/3,3/0,-3/0,1   Algs: [Rb/Ra11 | J/L1 ]   ~{9/26}"
+      },
+      {
+        "sequence": "3,2/0,3/4,4/0,-3/-1,5/-5,1/-3,0/3,3/0,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "T/T7",
+          "L/J13"
+        ],
+        "stm": 9,
+        "ftm": 24,
+        "legacyDisplay": "Ua/Ua: 3,2/0,3/4,4/0,-3/-1,5/-5,1/-3,0/3,3/0,-3/-1,0   Algs: [T/T7 | L/J13 ]   ~{9/24}"
+      },
+      {
+        "sequence": "-3,-4/0,-3/3,3/1,-2/-4,2/-2,4/-3,0/2,2/1,-2/-1,0",
+        "auxiliaryAlgorithms": [
+          "Db/Da10",
+          "pJ/pJ10"
+        ],
+        "stm": 9,
+        "ftm": 26,
+        "legacyDisplay": "Ua/Ua: -3,-4/0,-3/3,3/1,-2/-4,2/-2,4/-3,0/2,2/1,-2/-1,0   Algs: [Db/Da10 | pJ/pJ10 ]   ~{9/26}"
+      },
+      {
+        "sequence": "1,0/5,-1/-2,-2/-1,-1/-2,4/0,6/3,0/-1,-1/3,0/-5,1/-1,0",
+        "auxiliaryAlgorithms": [
+          "H/H",
+          "U-/U+4"
+        ],
+        "stm": 10,
+        "ftm": 27,
+        "legacyDisplay": "Ua/Ua: 1,0/5,-1/-2,-2/-1,-1/-2,4/0,6/3,0/-1,-1/3,0/-5,1/-1,0   Algs: [H/H | U-/U+4 ]   ~{10/27}"
+      },
+      {
+        "sequence": "1,6/5,-1/-3,0/1,1/-3,0/0,6/5,-1/-3,0/1,1/-3,0/-1,0",
+        "auxiliaryAlgorithms": [
+          "U+/U-4",
+          "U+/U-4"
+        ],
+        "stm": 10,
+        "ftm": 26,
+        "legacyDisplay": "Ua/Ua: 1,6/5,-1/-3,0/1,1/-3,0/0,6/5,-1/-3,0/1,1/-3,0/-1,0   Algs: [U+/U-4 | U+/U-4 ]   ~{10/26}"
+      },
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/2,-1/3,3/2,-1/-2,1/-3,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "U+/U-7",
+          "Rb/L5"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/2,-1/3,3/2,-1/-2,1/-3,-3/-1,1   Algs: [U+/U-7 | Rb/L5 ]   ~{10/30}"
+      },
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/2,-4/3,3/2,-1/-2,1/-3,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "U+/U-7",
+          "Rb/L6"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/2,-4/3,3/2,-1/-2,1/-3,-3/-1,1   Algs: [U+/U-7 | Rb/L6 ]   ~{10/30}"
+      },
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/2,2/3,3/2,-1/-2,1/-3,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "U+/U-7",
+          "Rb/L7"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/2,2/3,3/2,-1/-2,1/-3,-3/-1,1   Algs: [U+/U-7 | Rb/L7 ]   ~{10/30}"
+      },
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/2,5/3,3/2,-1/-2,1/-3,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "U+/U-7",
+          "Rb/L8"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/2,5/3,3/2,-1/-2,1/-3,-3/-1,1   Algs: [U+/U-7 | Rb/L8 ]   ~{10/30}"
+      },
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/-4,-1/3,3/2,-1/-2,1/-3,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "U+/U-7",
+          "Rb/L9"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/-4,-1/3,3/2,-1/-2,1/-3,-3/-1,1   Algs: [U+/U-7 | Rb/L9 ]   ~{10/30}"
+      },
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/-4,-4/3,3/2,-1/-2,1/-3,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "U+/U-7",
+          "Rb/L10"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/-4,-4/3,3/2,-1/-2,1/-3,-3/-1,1   Algs: [U+/U-7 | Rb/L10 ]   ~{10/30}"
+      },
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/-4,2/3,3/2,-1/-2,1/-3,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "U+/U-7",
+          "Rb/L11"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/-4,2/3,3/2,-1/-2,1/-3,-3/-1,1   Algs: [U+/U-7 | Rb/L11 ]   ~{10/30}"
+      },
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/-4,5/3,3/2,-1/-2,1/-3,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "U+/U-7",
+          "Rb/L12"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/-4,5/3,3/2,-1/-2,1/-3,-3/-1,1   Algs: [U+/U-7 | Rb/L12 ]   ~{10/30}"
+      },
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/5,-1/3,3/2,-1/-2,1/-3,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "U+/U-7",
+          "Rb/L13"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/5,-1/3,3/2,-1/-2,1/-3,-3/-1,1   Algs: [U+/U-7 | Rb/L13 ]   ~{10/30}"
+      },
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/5,-4/3,3/2,-1/-2,1/-3,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "U+/U-7",
+          "Rb/L14"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/5,-4/3,3/2,-1/-2,1/-3,-3/-1,1   Algs: [U+/U-7 | Rb/L14 ]   ~{10/30}"
+      },
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/5,2/3,3/2,-1/-2,1/-3,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "U+/U-7",
+          "Rb/L15"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/5,2/3,3/2,-1/-2,1/-3,-3/-1,1   Algs: [U+/U-7 | Rb/L15 ]   ~{10/30}"
+      },
+      {
+        "sequence": "4,-3/5,-1/-3,0/1,1/-3,0/5,5/3,3/2,-1/-2,1/-3,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "U+/U-7",
+          "Rb/L16"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 4,-3/5,-1/-3,0/1,1/-3,0/5,5/3,3/2,-1/-2,1/-3,-3/-1,1   Algs: [U+/U-7 | Rb/L16 ]   ~{10/30}"
+      },
+      {
+        "sequence": "-5,0/5,-1/-3,0/1,1/-3,0/3,3/3,0/-1,-1/3,0/-5,1/-1,0",
+        "auxiliaryAlgorithms": [
+          "U+/U-13",
+          "U-/U+6"
+        ],
+        "stm": 10,
+        "ftm": 26,
+        "legacyDisplay": "Ua/Ua: -5,0/5,-1/-3,0/1,1/-3,0/3,3/3,0/-1,-1/3,0/-5,1/-1,0   Algs: [U+/U-13 | U-/U+6 ]   ~{10/26}"
+      },
+      {
+        "sequence": "4,3/3,0/-1,-1/3,0/-5,1/3,3/5,-1/-3,0/1,1/-3,0/-1,0",
+        "auxiliaryAlgorithms": [
+          "U-/U+6",
+          "U+/U-6"
+        ],
+        "stm": 10,
+        "ftm": 27,
+        "legacyDisplay": "Ua/Ua: 4,3/3,0/-1,-1/3,0/-5,1/3,3/5,-1/-3,0/1,1/-3,0/-1,0   Algs: [U-/U+6 | U+/U-6 ]   ~{10/27}"
+      },
+      {
+        "sequence": "-2,-3/3,0/-1,-1/3,0/-5,1/-6,0/3,0/-1,-1/3,0/-5,1/-1,0",
+        "auxiliaryAlgorithms": [
+          "U-/U+11",
+          "U-/U+13"
+        ],
+        "stm": 10,
+        "ftm": 26,
+        "legacyDisplay": "Ua/Ua: -2,-3/3,0/-1,-1/3,0/-5,1/-6,0/3,0/-1,-1/3,0/-5,1/-1,0   Algs: [U-/U+11 | U-/U+13 ]   ~{10/26}"
+      },
+      {
+        "sequence": "0,2/1,-2/2,2/1,-2/-4,2/-3,-5/-3,-3/2,-1/-2,1/3,3/",
+        "auxiliaryAlgorithms": [
+          "A+/A+3",
+          "J/Ra12"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 0,2/1,-2/2,2/1,-2/-4,2/-3,-5/-3,-3/2,-1/-2,1/3,3/   Algs: [A+/A+3 | J/Ra12 ]   ~{10/29}"
+      },
+      {
+        "sequence": "0,5/1,-2/2,2/1,-2/-4,2/-3,0/-3,-3/1,-2/-1,2/3,3/0,1",
+        "auxiliaryAlgorithms": [
+          "A+/A+4",
+          "J/Rb9"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 0,5/1,-2/2,2/1,-2/-4,2/-3,0/-3,-3/1,-2/-1,2/3,3/0,1   Algs: [A+/A+4 | J/Rb9 ]   ~{10/29}"
+      },
+      {
+        "sequence": "3,-1/1,-2/2,2/1,-2/-4,2/1,3/3,3/2,-1/-2,1/-3,-3/-1,1",
+        "auxiliaryAlgorithms": [
+          "A+/A+5",
+          "Rb/L3"
+        ],
+        "stm": 10,
+        "ftm": 32,
+        "legacyDisplay": "Ua/Ua: 3,-1/1,-2/2,2/1,-2/-4,2/1,3/3,3/2,-1/-2,1/-3,-3/-1,1   Algs: [A+/A+5 | Rb/L3 ]   ~{10/32}"
+      },
+      {
+        "sequence": "3,-4/1,-2/2,2/1,-2/-4,2/1,4/3,3/2,-1/-2,1/-3,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "A+/A+6",
+          "Rb/J2"
+        ],
+        "stm": 10,
+        "ftm": 31,
+        "legacyDisplay": "Ua/Ua: 3,-4/1,-2/2,2/1,-2/-4,2/1,4/3,3/2,-1/-2,1/-3,-3/-1,0   Algs: [A+/A+6 | Rb/J2 ]   ~{10/31}"
+      },
+      {
+        "sequence": "3,2/1,-2/2,2/1,-2/-4,2/-2,4/2,-1/1,-5/2,-4/-5,4/-1,0",
+        "auxiliaryAlgorithms": [
+          "A+/A+7",
+          "Rb/Ra10"
+        ],
+        "stm": 10,
+        "ftm": 31,
+        "legacyDisplay": "Ua/Ua: 3,2/1,-2/2,2/1,-2/-4,2/-2,4/2,-1/1,-5/2,-4/-5,4/-1,0   Algs: [A+/A+7 | Rb/Ra10 ]   ~{10/31}"
+      },
+      {
+        "sequence": "-3,2/1,-2/2,2/1,-2/-4,2/-5,4/3,3/5,2/1,-2/-3,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "A+/A+11",
+          "L/Ra14"
+        ],
+        "stm": 10,
+        "ftm": 31,
+        "legacyDisplay": "Ua/Ua: -3,2/1,-2/2,2/1,-2/-4,2/-5,4/3,3/5,2/1,-2/-3,-3/-1,0   Algs: [A+/A+11 | L/Ra14 ]   ~{10/31}"
+      },
+      {
+        "sequence": "-3,5/1,-2/2,2/1,-2/-4,2/-2,0/-3,-3/1,-2/-1,2/3,3/-1,1",
+        "auxiliaryAlgorithms": [
+          "A+/A+12",
+          "L/Rb9"
+        ],
+        "stm": 10,
+        "ftm": 31,
+        "legacyDisplay": "Ua/Ua: -3,5/1,-2/2,2/1,-2/-4,2/-2,0/-3,-3/1,-2/-1,2/3,3/-1,1   Algs: [A+/A+12 | L/Rb9 ]   ~{10/31}"
+      },
+      {
+        "sequence": "6,-1/1,-2/2,2/1,-2/-4,2/6,3/3,3/1,-2/-1,2/-3,-3/0,1",
+        "auxiliaryAlgorithms": [
+          "A+/A+13",
+          "Ra/L15"
+        ],
+        "stm": 10,
+        "ftm": 31,
+        "legacyDisplay": "Ua/Ua: 6,-1/1,-2/2,2/1,-2/-4,2/6,3/3,3/1,-2/-1,2/-3,-3/0,1   Algs: [A+/A+13 | Ra/L15 ]   ~{10/31}"
+      },
+      {
+        "sequence": "6,-4/1,-2/2,2/1,-2/-4,2/6,4/3,3/1,-2/-1,2/-3,-3/",
+        "auxiliaryAlgorithms": [
+          "A+/A+14",
+          "Ra/J14"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 6,-4/1,-2/2,2/1,-2/-4,2/6,4/3,3/1,-2/-1,2/-3,-3/   Algs: [A+/A+14 | Ra/J14 ]   ~{10/30}"
+      },
+      {
+        "sequence": "6,5/1,-2/2,2/1,-2/-4,2/-3,3/1,-2/5,-1/4,-2/-4,5/0,1",
+        "auxiliaryAlgorithms": [
+          "A+/A+16",
+          "Ra/Rb11"
+        ],
+        "stm": 10,
+        "ftm": 31,
+        "legacyDisplay": "Ua/Ua: 6,5/1,-2/2,2/1,-2/-4,2/-3,3/1,-2/5,-1/4,-2/-4,5/0,1   Algs: [A+/A+16 | Ra/Rb11 ]   ~{10/31}"
+      },
+      {
+        "sequence": "3,-3/-3,-3/2,-1/-2,1/3,3/0,-4/1,-2/2,2/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "J/Ra7",
+          "A+/A+2"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 3,-3/-3,-3/2,-1/-2,1/3,3/0,-4/1,-2/2,2/1,-2/-4,2/0,1   Algs: [J/Ra7 | A+/A+2 ]   ~{10/30}"
+      },
+      {
+        "sequence": "3,5/-3,-3/1,-2/-1,2/3,3/0,3/1,-2/2,2/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "J/Rb8",
+          "A+/A+3"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 3,5/-3,-3/1,-2/-1,2/3,3/0,3/1,-2/2,2/1,-2/-4,2/0,1   Algs: [J/Rb8 | A+/A+3 ]   ~{10/30}"
+      },
+      {
+        "sequence": "-3,-1/-3,-3/1,-2/-1,2/3,3/0,3/0,3/4,4/0,-3/-1,5/0,1",
+        "auxiliaryAlgorithms": [
+          "J/Rb9",
+          "T/T3"
+        ],
+        "stm": 10,
+        "ftm": 28,
+        "legacyDisplay": "Ua/Ua: -3,-1/-3,-3/1,-2/-1,2/3,3/0,3/0,3/4,4/0,-3/-1,5/0,1   Algs: [J/Rb9 | T/T3 ]   ~{10/28}"
+      },
+      {
+        "sequence": "6,-4/-3,-3/1,-2/-1,2/3,3/-2,4/3,3/5,2/1,-2/-3,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "J/Rb14",
+          "L/Ra10"
+        ],
+        "stm": 10,
+        "ftm": 31,
+        "legacyDisplay": "Ua/Ua: 6,-4/-3,-3/1,-2/-1,2/3,3/-2,4/3,3/5,2/1,-2/-3,-3/-1,0   Algs: [J/Rb14 | L/Ra10 ]   ~{10/31}"
+      },
+      {
+        "sequence": "1,-3/3,3/5,2/1,-2/-3,-3/-4,-4/3,3/1,-2/-1,2/-3,-3/0,1",
+        "auxiliaryAlgorithms": [
+          "L/Ra3",
+          "Ra/L10"
+        ],
+        "stm": 10,
+        "ftm": 31,
+        "legacyDisplay": "Ua/Ua: 1,-3/3,3/5,2/1,-2/-3,-3/-4,-4/3,3/1,-2/-1,2/-3,-3/0,1   Algs: [L/Ra3 | Ra/L10 ]   ~{10/31}"
+      },
+      {
+        "sequence": "-2,6/3,3/5,2/1,-2/-3,-3/-1,-4/1,-2/2,2/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "L/Ra12",
+          "A+/A+2"
+        ],
+        "stm": 10,
+        "ftm": 31,
+        "legacyDisplay": "Ua/Ua: -2,6/3,3/5,2/1,-2/-3,-3/-1,-4/1,-2/2,2/1,-2/-4,2/0,1   Algs: [L/Ra12 | A+/A+2 ]   ~{10/31}"
+      },
+      {
+        "sequence": "1,5/-3,-3/1,-2/-1,2/3,3/-1,3/1,-2/2,2/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "L/Rb4",
+          "A+/A+3"
+        ],
+        "stm": 10,
+        "ftm": 31,
+        "legacyDisplay": "Ua/Ua: 1,5/-3,-3/1,-2/-1,2/3,3/-1,3/1,-2/2,2/1,-2/-4,2/0,1   Algs: [L/Rb4 | A+/A+3 ]   ~{10/31}"
+      },
+      {
+        "sequence": "4,0/0,-3/0,3/0,-3/0,3/-1,2/1,-2/-1,2/1,-2/-1,2/0,1",
+        "auxiliaryAlgorithms": [
+          "L/Na2",
+          "F/V9"
+        ],
+        "stm": 10,
+        "ftm": 26,
+        "legacyDisplay": "Ua/Ua: 4,0/0,-3/0,3/0,-3/0,3/-1,2/1,-2/-1,2/1,-2/-1,2/0,1   Algs: [L/Na2 | F/V9 ]   ~{10/26}"
+      },
+      {
+        "sequence": "6,0/3,3/1,-2/-1,2/-3,-3/3,-1/1,-2/2,2/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "Ra/J13",
+          "A+/A+5"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 6,0/3,3/1,-2/-1,2/-3,-3/3,-1/1,-2/2,2/1,-2/-4,2/0,1   Algs: [Ra/J13 | A+/A+5 ]   ~{10/30}"
+      },
+      {
+        "sequence": "0,-4/3,3/1,-2/-1,2/-3,-3/3,0/0,3/4,4/0,-3/-1,5/0,1",
+        "auxiliaryAlgorithms": [
+          "Ra/L2",
+          "T/T5"
+        ],
+        "stm": 10,
+        "ftm": 27,
+        "legacyDisplay": "Ua/Ua: 0,-4/3,3/1,-2/-1,2/-3,-3/3,0/0,3/4,4/0,-3/-1,5/0,1   Algs: [Ra/L2 | T/T5 ]   ~{10/27}"
+      },
+      {
+        "sequence": "-3,5/3,3/1,-2/-1,2/-3,-3/-5,1/3,3/2,-1/-2,1/-3,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "Ra/L12",
+          "Rb/J13"
+        ],
+        "stm": 10,
+        "ftm": 31,
+        "legacyDisplay": "Ua/Ua: -3,5/3,3/1,-2/-1,2/-3,-3/-5,1/3,3/2,-1/-2,1/-3,-3/-1,0   Algs: [Ra/L12 | Rb/J13 ]   ~{10/31}"
+      },
+      {
+        "sequence": "6,2/3,3/1,-2/-1,2/-3,-3/3,0/1,-2/2,2/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "Ra/L15",
+          "A+/A+5"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 6,2/3,3/1,-2/-1,2/-3,-3/3,0/1,-2/2,2/1,-2/-4,2/0,1   Algs: [Ra/L15 | A+/A+5 ]   ~{10/30}"
+      },
+      {
+        "sequence": "0,-1/1,-2/5,-1/4,-2/-4,5/1,1/2,-1/1,-5/2,-4/-5,4/-1,0",
+        "auxiliaryAlgorithms": [
+          "Ra/Rb1",
+          "Rb/Ra1"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 0,-1/1,-2/5,-1/4,-2/-4,5/1,1/2,-1/1,-5/2,-4/-5,4/-1,0   Algs: [Ra/Rb1 | Rb/Ra1 ]   ~{10/30}"
+      },
+      {
+        "sequence": "1,3/3,3/2,-1/-2,1/-3,-3/-4,-4/-3,-3/1,-2/-1,2/3,3/0,1",
+        "auxiliaryAlgorithms": [
+          "Rb/J2",
+          "J/Rb10"
+        ],
+        "stm": 10,
+        "ftm": 31,
+        "legacyDisplay": "Ua/Ua: 1,3/3,3/2,-1/-2,1/-3,-3/-4,-4/-3,-3/1,-2/-1,2/3,3/0,1   Algs: [Rb/J2 | J/Rb10 ]   ~{10/31}"
+      },
+      {
+        "sequence": "-2,0/3,3/2,-1/-2,1/-3,-3/-4,-1/1,-2/2,2/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "Rb/J9",
+          "A+/A+9"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: -2,0/3,3/2,-1/-2,1/-3,-3/-4,-1/1,-2/2,2/1,-2/-4,2/0,1   Algs: [Rb/J9 | A+/A+9 ]   ~{10/30}"
+      },
+      {
+        "sequence": "-5,6/2,-1/1,-5/2,-4/-5,4/-1,-1/1,-2/2,2/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "Rb/Ra16",
+          "A+/A+1"
+        ],
+        "stm": 10,
+        "ftm": 31,
+        "legacyDisplay": "Ua/Ua: -5,6/2,-1/1,-5/2,-4/-5,4/-1,-1/1,-2/2,2/1,-2/-4,2/0,1   Algs: [Rb/Ra16 | A+/A+1 ]   ~{10/31}"
+      },
+      {
+        "sequence": "3,-4/0,3/4,4/0,-3/-1,5/4,1/3,3/5,2/1,-2/-3,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "T/T6",
+          "L/Ra5"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 3,-4/0,3/4,4/0,-3/-1,5/4,1/3,3/5,2/1,-2/-3,-3/-1,0   Algs: [T/T6 | L/Ra5 ]   ~{10/29}"
+      },
+      {
+        "sequence": "-3,-4/0,3/4,4/0,-3/-1,5/-5,1/2,-1/1,-5/2,-4/-5,4/-1,0",
+        "auxiliaryAlgorithms": [
+          "T/T10",
+          "Rb/Ra13"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: -3,-4/0,3/4,4/0,-3/-1,5/-5,1/2,-1/1,-5/2,-4/-5,4/-1,0   Algs: [T/T10 | Rb/Ra13 ]   ~{10/29}"
+      },
+      {
+        "sequence": "-3,2/0,3/4,4/0,-3/-1,5/-2,1/3,3/2,-1/-2,1/-3,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "T/T11",
+          "Rb/J9"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: -3,2/0,3/4,4/0,-3/-1,5/-2,1/3,3/2,-1/-2,1/-3,-3/-1,0   Algs: [T/T11 | Rb/J9 ]   ~{10/29}"
+      },
+      {
+        "sequence": "4,-3/2,-1/-2,1/2,-1/-2,1/-1,-1/3,0/-3,0/3,0/-3,0/0,1",
+        "auxiliaryAlgorithms": [
+          "V/F8",
+          "Na/L1"
+        ],
+        "stm": 10,
+        "ftm": 27,
+        "legacyDisplay": "Ua/Ua: 4,-3/2,-1/-2,1/2,-1/-2,1/-1,-1/3,0/-3,0/3,0/-3,0/0,1   Algs: [V/F8 | Na/L1 ]   ~{10/27}"
+      },
+      {
+        "sequence": "4,-3/2,-4/0,3/1,1/-3,0/-3,3/2,-4/0,3/1,1/-3,0/-1,0",
+        "auxiliaryAlgorithms": [
+          "Y/Y7",
+          "Y/Y10"
+        ],
+        "stm": 10,
+        "ftm": 27,
+        "legacyDisplay": "Ua/Ua: 4,-3/2,-4/0,3/1,1/-3,0/-3,3/2,-4/0,3/1,1/-3,0/-1,0   Algs: [Y/Y7 | Y/Y10 ]   ~{10/27}"
+      },
+      {
+        "sequence": "0,-1/1,-2/2,2/0,-3/-3,3/6,6/4,-2/5,2/3,3/0,-3/0,1",
+        "auxiliaryAlgorithms": [
+          "Ka/Kb1",
+          "Ba/Bb16"
+        ],
+        "stm": 10,
+        "ftm": 28,
+        "legacyDisplay": "Ua/Ua: 0,-1/1,-2/2,2/0,-3/-3,3/6,6/4,-2/5,2/3,3/0,-3/0,1   Algs: [Ka/Kb1 | Ba/Bb16 ]   ~{10/28}"
+      },
+      {
+        "sequence": "3,2/1,-2/2,2/0,-3/-3,3/-3,3/0,-3/3,3/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "Ka/Kb7",
+          "Db/Da11"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 3,2/1,-2/2,2/0,-3/-3,3/-3,3/0,-3/3,3/1,-2/-4,2/0,1   Algs: [Ka/Kb7 | Db/Da11 ]   ~{10/29}"
+      },
+      {
+        "sequence": "-3,-4/1,-2/2,2/0,-3/-3,3/-5,-5/2,-4/4,1/3,3/6,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "Ka/Kb10",
+          "Bb/Ba16"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: -3,-4/1,-2/2,2/0,-3/-3,3/-5,-5/2,-4/4,1/3,3/6,-3/-1,0   Algs: [Ka/Kb10 | Bb/Ba16 ]   ~{10/30}"
+      },
+      {
+        "sequence": "6,5/1,-2/2,2/0,-3/-3,3/-2,4/0,-3/3,3/5,2/4,-2/-1,0",
+        "auxiliaryAlgorithms": [
+          "Ka/Kb16",
+          "Da/Db10"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 6,5/1,-2/2,2/0,-3/-3,3/-2,4/0,-3/3,3/5,2/4,-2/-1,0   Algs: [Ka/Kb16 | Da/Db10 ]   ~{10/29}"
+      },
+      {
+        "sequence": "3,2/0,3/3,6/1,-2/-1,2/1,4/0,-3/3,3/5,2/4,-2/-1,0",
+        "auxiliaryAlgorithms": [
+          "Ka/Pa5",
+          "Da/Db2"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 3,2/0,3/3,6/1,-2/-1,2/1,4/0,-3/3,3/5,2/4,-2/-1,0   Algs: [Ka/Pa5 | Da/Db2 ]   ~{10/29}"
+      },
+      {
+        "sequence": "-3,-4/1,-2/5,-4/0,3/3,6/-5,4/2,-4/4,1/3,3/6,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "Ka/Pb10",
+          "Bb/Ba14"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: -3,-4/1,-2/5,-4/0,3/3,6/-5,4/2,-4/4,1/3,3/6,-3/-1,0   Algs: [Ka/Pb10 | Bb/Ba14 ]   ~{10/30}"
+      },
+      {
+        "sequence": "1,3/2,-1/1,-2/0,-3/-3,6/-4,-4/3,0/0,-3/1,-2/-4,5/0,1",
+        "auxiliaryAlgorithms": [
+          "Kb/Pa2",
+          "Pb/Kb10"
+        ],
+        "stm": 10,
+        "ftm": 28,
+        "legacyDisplay": "Ua/Ua: 1,3/2,-1/1,-2/0,-3/-3,6/-4,-4/3,0/0,-3/1,-2/-4,5/0,1   Algs: [Kb/Pa2 | Pb/Kb10 ]   ~{10/28}"
+      },
+      {
+        "sequence": "-2,3/2,-1/1,-2/0,-3/-3,6/5,5/1,-2/2,-1/3,0/6,3/0,1",
+        "auxiliaryAlgorithms": [
+          "Kb/Pa10",
+          "Pa/Kb16"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: -2,3/2,-1/1,-2/0,-3/-3,6/5,5/1,-2/2,-1/3,0/6,3/0,1   Algs: [Kb/Pa10 | Pa/Kb16 ]   ~{10/29}"
+      },
+      {
+        "sequence": "-2,3/0,-3/3,0/2,-1/-5,4/5,5/3,0/0,-3/1,-2/-4,5/0,1",
+        "auxiliaryAlgorithms": [
+          "Kb/Pb10",
+          "Pb/Kb16"
+        ],
+        "stm": 10,
+        "ftm": 27,
+        "legacyDisplay": "Ua/Ua: -2,3/0,-3/3,0/2,-1/-5,4/5,5/3,0/0,-3/1,-2/-4,5/0,1   Algs: [Kb/Pb10 | Pb/Kb16 ]   ~{10/27}"
+      },
+      {
+        "sequence": "-5,3/0,-3/3,0/2,-1/-5,4/2,2/1,-2/2,-1/3,0/6,3/0,1",
+        "auxiliaryAlgorithms": [
+          "Kb/Pb14",
+          "Pa/Kb7"
+        ],
+        "stm": 10,
+        "ftm": 28,
+        "legacyDisplay": "Ua/Ua: -5,3/0,-3/3,0/2,-1/-5,4/2,2/1,-2/2,-1/3,0/6,3/0,1   Algs: [Kb/Pb14 | Pa/Kb7 ]   ~{10/28}"
+      },
+      {
+        "sequence": "0,-1/0,-3/1,1/2,-1/-3,3/6,0/0,-3/1,1/2,-1/-3,3/0,1",
+        "auxiliaryAlgorithms": [
+          "Sa/Sb1",
+          "Sa/Sb13"
+        ],
+        "stm": 10,
+        "ftm": 27,
+        "legacyDisplay": "Ua/Ua: 0,-1/0,-3/1,1/2,-1/-3,3/6,0/0,-3/1,1/2,-1/-3,3/0,1   Algs: [Sa/Sb1 | Sa/Sb13 ]   ~{10/27}"
+      },
+      {
+        "sequence": "6,5/0,-3/1,1/2,-1/-3,3/-2,4/2,-1/1,1/0,-3/-3,3/-1,0",
+        "auxiliaryAlgorithms": [
+          "Sa/Sb16",
+          "Sb/Sa10"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 6,5/0,-3/1,1/2,-1/-3,3/-2,4/2,-1/1,1/0,-3/-3,3/-1,0   Algs: [Sa/Sb16 | Sb/Sa10 ]   ~{10/29}"
+      },
+      {
+        "sequence": "0,2/1,-2/2,-1/0,-3/-3,6/6,6/1,-2/2,-1/0,-3/-3,6/0,1",
+        "auxiliaryAlgorithms": [
+          "Sa/Pb3",
+          "Sa/Pb16"
+        ],
+        "stm": 10,
+        "ftm": 28,
+        "legacyDisplay": "Ua/Ua: 0,2/1,-2/2,-1/0,-3/-3,6/6,6/1,-2/2,-1/0,-3/-3,6/0,1   Algs: [Sa/Pb3 | Sa/Pb16 ]   ~{10/28}"
+      },
+      {
+        "sequence": "6,2/1,-2/2,-1/0,-3/-3,6/1,1/3,0/3,6/5,-4/-5,4/-1,0",
+        "auxiliaryAlgorithms": [
+          "Sa/Pb15",
+          "Sb/Pb1"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 6,2/1,-2/2,-1/0,-3/-3,6/1,1/3,0/3,6/5,-4/-5,4/-1,0   Algs: [Sa/Pb15 | Sb/Pb1 ]   ~{10/29}"
+      },
+      {
+        "sequence": "4,3/2,-1/1,1/0,-3/-3,3/2,-4/0,-3/1,1/2,-1/-3,3/0,1",
+        "auxiliaryAlgorithms": [
+          "Sb/Sa6",
+          "Sa/Sb6"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 4,3/2,-1/1,1/0,-3/-3,3/2,-4/0,-3/1,1/2,-1/-3,3/0,1   Algs: [Sb/Sa6 | Sa/Sb6 ]   ~{10/29}"
+      },
+      {
+        "sequence": "-2,-3/2,-1/1,1/0,-3/-3,3/-6,0/2,-1/1,1/0,-3/-3,3/-1,0",
+        "auxiliaryAlgorithms": [
+          "Sb/Sa11",
+          "Sb/Sa13"
+        ],
+        "stm": 10,
+        "ftm": 28,
+        "legacyDisplay": "Ua/Ua: -2,-3/2,-1/1,1/0,-3/-3,3/-6,0/2,-1/1,1/0,-3/-3,3/-1,0   Algs: [Sb/Sa11 | Sb/Sa13 ]   ~{10/28}"
+      },
+      {
+        "sequence": "1,-3/3,0/3,6/5,-4/-5,4/-6,6/3,0/3,6/5,-4/-5,4/-1,0",
+        "auxiliaryAlgorithms": [
+          "Sb/Pb3",
+          "Sb/Pb16"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 1,-3/3,0/3,6/5,-4/-5,4/-6,6/3,0/3,6/5,-4/-5,4/-1,0   Algs: [Sb/Pb3 | Sb/Pb16 ]   ~{10/29}"
+      },
+      {
+        "sequence": "-5,-3/3,0/3,6/5,-4/-5,4/-1,-1/1,-2/2,-1/0,-3/-3,6/0,1",
+        "auxiliaryAlgorithms": [
+          "Sb/Pb15",
+          "Sa/Pb1"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: -5,-3/3,0/3,6/5,-4/-5,4/-1,-1/1,-2/2,-1/0,-3/-3,6/0,1   Algs: [Sb/Pb15 | Sa/Pb1 ]   ~{10/29}"
+      },
+      {
+        "sequence": "1,0/0,-3/3,3/5,2/4,-2/3,-3/0,-3/2,2/1,-2/-3,3/-1,0",
+        "auxiliaryAlgorithms": [
+          "Da/Db1",
+          "Kb/Ka7"
+        ],
+        "stm": 10,
+        "ftm": 28,
+        "legacyDisplay": "Ua/Ua: 1,0/0,-3/3,3/5,2/4,-2/3,-3/0,-3/2,2/1,-2/-3,3/-1,0   Algs: [Da/Db1 | Kb/Ka7 ]   ~{10/28}"
+      },
+      {
+        "sequence": "4,3/0,-3/3,3/5,2/4,-2/3,-3/0,-3/3,3/5,2/4,-2/-1,0",
+        "auxiliaryAlgorithms": [
+          "Da/Db6",
+          "Da/Db7"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 4,3/0,-3/3,3/5,2/4,-2/3,-3/0,-3/3,3/5,2/4,-2/-1,0   Algs: [Da/Db6 | Da/Db7 ]   ~{10/29}"
+      },
+      {
+        "sequence": "0,2/0,-3/3,3/1,-2/-4,2/-2,1/0,-3/0,3/2,-1/-2,1/-1,0",
+        "auxiliaryAlgorithms": [
+          "Db/Da3",
+          "Pa/Ka9"
+        ],
+        "stm": 10,
+        "ftm": 27,
+        "legacyDisplay": "Ua/Ua: 0,2/0,-3/3,3/1,-2/-4,2/-2,1/0,-3/0,3/2,-1/-2,1/-1,0   Algs: [Db/Da3 | Pa/Ka9 ]   ~{10/27}"
+      },
+      {
+        "sequence": "3,-1/0,-3/3,3/1,-2/-4,2/-5,4/0,-3/3,0/2,-1/-5,4/-1,0",
+        "auxiliaryAlgorithms": [
+          "Db/Da5",
+          "Kb/Pb14"
+        ],
+        "stm": 10,
+        "ftm": 28,
+        "legacyDisplay": "Ua/Ua: 3,-1/0,-3/3,3/1,-2/-4,2/-5,4/0,-3/3,0/2,-1/-5,4/-1,0   Algs: [Db/Da5 | Kb/Pb14 ]   ~{10/28}"
+      },
+      {
+        "sequence": "3,2/0,-3/3,3/1,-2/-4,2/-2,4/0,-3/2,2/1,-2/-3,3/-1,0",
+        "auxiliaryAlgorithms": [
+          "Db/Da7",
+          "Kb/Ka10"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 3,2/0,-3/3,3/1,-2/-4,2/-2,4/0,-3/2,2/1,-2/-3,3/-1,0   Algs: [Db/Da7 | Kb/Ka10 ]   ~{10/29}"
+      },
+      {
+        "sequence": "6,5/0,-3/3,3/1,-2/-4,2/-5,-5/2,-4/4,1/3,3/6,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "Db/Da16",
+          "Bb/Ba16"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: 6,5/0,-3/3,3/1,-2/-4,2/-5,-5/2,-4/4,1/3,3/6,-3/-1,0   Algs: [Db/Da16 | Bb/Ba16 ]   ~{10/30}"
+      },
+      {
+        "sequence": "0,-4/4,-2/5,2/3,3/0,-3/4,1/5,-4/1,-2/3,6/6,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "Ba/Bb2",
+          "Pb/Ka5"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 0,-4/4,-2/5,2/3,3/0,-3/4,1/5,-4/1,-2/3,6/6,-3/-1,0   Algs: [Ba/Bb2 | Pb/Ka5 ]   ~{10/29}"
+      },
+      {
+        "sequence": "3,-4/4,-2/5,2/3,3/0,-3/-5,-5/0,-3/2,2/1,-2/-3,3/-1,0",
+        "auxiliaryAlgorithms": [
+          "Ba/Bb6",
+          "Kb/Ka16"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 3,-4/4,-2/5,2/3,3/0,-3/-5,-5/0,-3/2,2/1,-2/-3,3/-1,0   Algs: [Ba/Bb6 | Kb/Ka16 ]   ~{10/29}"
+      },
+      {
+        "sequence": "3,5/4,-2/5,2/3,3/0,-3/-5,-2/2,-1/1,-2/0,-3/-3,6/-1,0",
+        "auxiliaryAlgorithms": [
+          "Ba/Bb8",
+          "Kb/Pa15"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 3,5/4,-2/5,2/3,3/0,-3/-5,-2/2,-1/1,-2/0,-3/-3,6/-1,0   Algs: [Ba/Bb8 | Kb/Pa15 ]   ~{10/29}"
+      },
+      {
+        "sequence": "6,-1/4,-2/5,2/3,3/0,-3/3,-3/4,-2/5,2/3,3/0,-3/0,1",
+        "auxiliaryAlgorithms": [
+          "Ba/Bb13",
+          "Ba/Bb6"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 6,-1/4,-2/5,2/3,3/0,-3/3,-3/4,-2/5,2/3,3/0,-3/0,1   Algs: [Ba/Bb13 | Ba/Bb6 ]   ~{10/29}"
+      },
+      {
+        "sequence": "-2,3/2,-4/4,1/3,3/6,-3/-1,-1/0,-3/3,3/1,-2/-4,2/0,1",
+        "auxiliaryAlgorithms": [
+          "Bb/Ba10",
+          "Db/Da1"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: -2,3/2,-4/4,1/3,3/6,-3/-1,-1/0,-3/3,3/1,-2/-4,2/0,1   Algs: [Bb/Ba10 | Db/Da1 ]   ~{10/30}"
+      },
+      {
+        "sequence": "4,-3/0,-3/0,3/2,-1/-2,1/5,5/0,3/3,6/1,-2/-1,2/0,1",
+        "auxiliaryAlgorithms": [
+          "Pa/Ka7",
+          "Ka/Pa14"
+        ],
+        "stm": 10,
+        "ftm": 28,
+        "legacyDisplay": "Ua/Ua: 4,-3/0,-3/0,3/2,-1/-2,1/5,5/0,3/3,6/1,-2/-1,2/0,1   Algs: [Pa/Ka7 | Ka/Pa14 ]   ~{10/28}"
+      },
+      {
+        "sequence": "4,6/0,-3/0,3/2,-1/-2,1/-4,-4/1,-2/5,-4/0,3/3,6/0,1",
+        "auxiliaryAlgorithms": [
+          "Pa/Ka8",
+          "Ka/Pb10"
+        ],
+        "stm": 10,
+        "ftm": 28,
+        "legacyDisplay": "Ua/Ua: 4,6/0,-3/0,3/2,-1/-2,1/-4,-4/1,-2/5,-4/0,3/3,6/0,1   Algs: [Pa/Ka8 | Ka/Pb10 ]   ~{10/28}"
+      },
+      {
+        "sequence": "-3,-4/1,-2/2,-1/3,0/6,3/4,-5/2,-4/4,1/3,3/6,-3/-1,0",
+        "auxiliaryAlgorithms": [
+          "Pa/Kb10",
+          "Bb/Ba8"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: -3,-4/1,-2/2,-1/3,0/6,3/4,-5/2,-4/4,1/3,3/6,-3/-1,0   Algs: [Pa/Kb10 | Bb/Ba8 ]   ~{10/30}"
+      },
+      {
+        "sequence": "4,0/0,3/0,-3/5,-4/-2,1/5,5/1,-2/5,-4/3,6/-3,6/0,1",
+        "auxiliaryAlgorithms": [
+          "Pa/Sa5",
+          "Pa/Sb16"
+        ],
+        "stm": 10,
+        "ftm": 28,
+        "legacyDisplay": "Ua/Ua: 4,0/0,3/0,-3/5,-4/-2,1/5,5/1,-2/5,-4/3,6/-3,6/0,1   Algs: [Pa/Sa5 | Pa/Sb16 ]   ~{10/28}"
+      },
+      {
+        "sequence": "4,6/0,3/0,-3/5,-4/-2,1/-6,6/0,3/0,-3/5,-4/-2,1/-1,0",
+        "auxiliaryAlgorithms": [
+          "Pa/Sa8",
+          "Pa/Sa16"
+        ],
+        "stm": 10,
+        "ftm": 27,
+        "legacyDisplay": "Ua/Ua: 4,6/0,3/0,-3/5,-4/-2,1/-6,6/0,3/0,-3/5,-4/-2,1/-1,0   Algs: [Pa/Sa8 | Pa/Sa16 ]   ~{10/27}"
+      },
+      {
+        "sequence": "3,-1/1,-2/5,-4/3,6/-3,6/6,6/1,-2/5,-4/3,6/-3,6/0,1",
+        "auxiliaryAlgorithms": [
+          "Pa/Sb5",
+          "Pa/Sb16"
+        ],
+        "stm": 10,
+        "ftm": 31,
+        "legacyDisplay": "Ua/Ua: 3,-1/1,-2/5,-4/3,6/-3,6/6,6/1,-2/5,-4/3,6/-3,6/0,1   Algs: [Pa/Sb5 | Pa/Sb16 ]   ~{10/31}"
+      },
+      {
+        "sequence": "3,5/1,-2/5,-4/3,6/-3,6/-5,-5/0,3/0,-3/5,-4/-2,1/-1,0",
+        "auxiliaryAlgorithms": [
+          "Pa/Sb8",
+          "Pa/Sa16"
+        ],
+        "stm": 10,
+        "ftm": 29,
+        "legacyDisplay": "Ua/Ua: 3,5/1,-2/5,-4/3,6/-3,6/-5,-5/0,3/0,-3/5,-4/-2,1/-1,0   Algs: [Pa/Sb8 | Pa/Sa16 ]   ~{10/29}"
+      },
+      {
+        "sequence": "-2,3/5,-4/1,-2/3,6/6,-3/-1,-1/1,-2/5,-4/0,3/3,6/0,1",
+        "auxiliaryAlgorithms": [
+          "Pb/Ka10",
+          "Ka/Pb1"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: -2,3/5,-4/1,-2/3,6/6,-3/-1,-1/1,-2/5,-4/0,3/3,6/0,1   Algs: [Pb/Ka10 | Ka/Pb1 ]   ~{10/30}"
+      },
+      {
+        "sequence": "-2,6/5,-4/1,-2/3,6/6,-3/-4,-4/0,3/3,6/1,-2/-1,2/0,1",
+        "auxiliaryAlgorithms": [
+          "Pb/Ka12",
+          "Ka/Pa12"
+        ],
+        "stm": 10,
+        "ftm": 30,
+        "legacyDisplay": "Ua/Ua: -2,6/5,-4/1,-2/3,6/6,-3/-4,-4/0,3/3,6/1,-2/-1,2/0,1   Algs: [Pb/Ka12 | Ka/Pa12 ]   ~{10/30}"
+      },
+      {
+        "sequence": "-3,-4/3,0/0,-3/1,-2/-4,5/-2,-5/0,-3/3,3/5,2/4,-2/-1,0",
+        "auxiliaryAlgorithms": [
+          "Pb/Kb10",
+          "Da/Db12"
+        ],
+        "stm": 10,
+        "ftm": 28,
+        "legacyDisplay": "Ua/Ua: -3,-4/3,0/0,-3/1,-2/-4,5/-2,-5/0,-3/3,3/5,2/4,-2/-1,0   Algs: [Pb/Kb10 | Da/Db12 ]   ~{10/28}"
+      }
+    ]
+  }
+}

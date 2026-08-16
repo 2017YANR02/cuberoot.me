@@ -1,0 +1,64 @@
+# 每周下载完整 XLSX；只提醒实质内容/格式漂移，不自动覆盖站内 PBL 数据。
+name: SQ1 PBL Spreadsheet Drift
+
+on:
+  schedule:
+    - cron: '45 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: sq1-pbl-drift
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: core
+          filter: blob:none
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Check spreadsheet drift
+        id: check
+        working-directory: core
+        run: |
+          set +e
+          node packages/client/scripts/sq1-pbl-check.mjs --report "$RUNNER_TEMP/sq1-pbl-drift-report.md"
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Fail on detector error
+        if: steps.check.outputs.code != '0' && steps.check.outputs.code != '3'
+        run: |
+          echo "::error::SQ1 PBL drift detector failed (exit ${{ steps.check.outputs.code }})"
+          exit 1
+
+      - name: Open or update drift issue
+        if: steps.check.outputs.code == '3'
+        working-directory: core
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create sq1-pbl-drift --color 8A63D2 --description "SQ1 PBL 表格出现实质更新" --force || true
+          existing=$(gh issue list --label sq1-pbl-drift --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file "$RUNNER_TEMP/sq1-pbl-drift-report.md"
+          else
+            gh issue create \
+              --label sq1-pbl-drift \
+              --assignee "${{ github.repository_owner }}" \
+              --title "SQ1 PBL 表格更新 ($(date -u +%Y-%m-%d))" \
+              --body-file "$RUNNER_TEMP/sq1-pbl-drift-report.md"
+          fi
