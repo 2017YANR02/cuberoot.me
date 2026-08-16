@@ -41,6 +41,15 @@ function accountInitial(name: string): string {
   return Array.from(name)[0]?.toUpperCase() || 'C';
 }
 
+function stopPullDownRefresh(): void {
+  if (typeof wx.stopPullDownRefresh !== 'function') return;
+  try {
+    wx.stopPullDownRefresh();
+  } catch {
+    // Refresh feedback is cosmetic; account state has already settled.
+  }
+}
+
 Page({
   data: {
     busy: false,
@@ -55,10 +64,10 @@ Page({
   },
 
   onShow() {
-    this.refreshAccount();
+    void this.refreshAccount();
   },
 
-  refreshAccount() {
+  async refreshAccount() {
     activePages.add(this);
     const validationAttempt = beginValidation(this);
     this.setData({
@@ -73,13 +82,14 @@ Page({
       return;
     }
     this.showSyncState('checking');
-    void validateStoredSession(session).then((next) => {
+    try {
+      const next = await validateStoredSession(session);
       if (!validationIsCurrent(this, validationAttempt)) return;
       if (getStoredSession()?.token !== session.token) return;
       this.showSession(next);
       this.showSyncState('ready');
       this.setData({ status: '', statusError: false });
-    }).catch((error: unknown) => {
+    } catch (error: unknown) {
       if (!validationIsCurrent(this, validationAttempt)) return;
       if (getStoredSession()?.token !== session.token) return;
       if (error instanceof ApiError && error.status === 401) {
@@ -98,7 +108,11 @@ Page({
       }
       this.showSyncState('error');
       this.setData({ status: '账号状态暂时无法更新，请稍后重试', statusError: true });
-    });
+    }
+  },
+
+  onPullDownRefresh() {
+    void this.refreshAccount().finally(stopPullDownRefresh);
   },
 
   onHide() {
@@ -131,7 +145,7 @@ Page({
 
   retrySync() {
     if (this.data.syncState !== 'error') return;
-    this.refreshAccount();
+    void this.refreshAccount();
   },
 
   async login() {
