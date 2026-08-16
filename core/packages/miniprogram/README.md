@@ -35,8 +35,9 @@ pnpm --filter @cuberoot/miniprogram check
 
 ```powershell
 $env:WECHAT_MINI_LIB_VERSION='<已确认的稳定版本>'
+$env:WECHAT_MINI_SECRET_ROTATED='1' # 仅在后台轮换并更新服务端后设置
 pnpm --filter @cuberoot/miniprogram build
 pnpm --filter @cuberoot/miniprogram release:check
 ```
 
-检查器发现新的隐私敏感 API 会直接失败。先同步网站唯一隐私政策和小程序后台指引，再经过复核放行。
+检查器会阻止未确认密钥轮换的发布，也会在发现新的隐私敏感 API 时直接失败。确认变量只是防遗忘闸门，不能代替真实轮换；先在后台生成新密钥、更新服务端，再执行发布检查。
