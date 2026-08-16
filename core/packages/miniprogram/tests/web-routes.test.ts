@@ -1,8 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
-import { createWebSessionHandoffUrl, listWebTools, resolveWebRoute } from '../src/lib/web-routes';
+import { WEB_ROUTES, createWebSessionHandoffUrl, listWebTools, resolveWebRoute } from '../src/lib/web-routes';
 
 const TICKET = 'A'.repeat(43);
+const websitePageFiles = import.meta.glob('../../client/app/**/page.tsx', {
+  eager: true,
+  import: 'default',
+  query: '?raw',
+});
+const websiteConfigFiles = import.meta.glob('../../client/next.config.ts', {
+  eager: true,
+  import: 'default',
+  query: '?raw',
+});
+const websiteConfigSource = websiteConfigFiles['../../client/next.config.ts'];
 
 describe('mini program web routes', () => {
   it('resolves the website timer route', () => {
@@ -54,5 +65,23 @@ describe('mini program web routes', () => {
       { key: 'wiki', title: '魔方百科', description: '教程、术语与方法资料' },
       { key: 'courses', title: '课程', description: '系统学习与试学内容' },
     ]);
+  });
+
+  it('only registers destinations backed by canonical website pages or redirects', () => {
+    for (const [key, route] of Object.entries(WEB_ROUTES)) {
+      expect(route.path, key).toMatch(/^\/zh\//);
+      const relativePagePath = route.path.replace(/^\/zh\//, '');
+      const unlocalizedPath = route.path.replace(/^\/zh/, '');
+      const hasPage = Object.hasOwn(
+        websitePageFiles,
+        `../../client/app/[lang]/${relativePagePath}/page.tsx`,
+      );
+      const hasRedirect = websiteConfigSource.includes(`source: "${unlocalizedPath}"`)
+        || websiteConfigSource.includes(`source: '${unlocalizedPath}'`);
+      expect(
+        hasPage || hasRedirect,
+        `${key}: ${route.path}`,
+      ).toBe(true);
+    }
   });
 });
