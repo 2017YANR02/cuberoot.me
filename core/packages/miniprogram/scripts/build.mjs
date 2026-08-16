@@ -5,6 +5,7 @@ import process from 'node:process';
 
 import { build } from 'esbuild';
 
+import { BUILD_ASSETS } from './build-assets.mjs';
 import {
   buildInputFingerprint,
   outputFingerprint,
@@ -37,6 +38,11 @@ async function prepareOutput(clean = true) {
       await mkdir(dirname(target), { recursive: true });
       await copyFile(file, target);
     }));
+  await Promise.all(BUILD_ASSETS.map(async (asset) => {
+    const target = join(outputRoot, asset.output);
+    await mkdir(dirname(target), { recursive: true });
+    await copyFile(asset.source, target);
+  }));
 
   const templatePath = join(packageRoot, 'project.config.template.json');
   const config = JSON.parse(await readFile(templatePath, 'utf8'));
@@ -101,6 +107,12 @@ if (!watch) {
   let rebuildQueued = false;
   let cleanBeforeRebuild = false;
 
+  function queueRebuild({ clean = false } = {}) {
+    if (clean) cleanBeforeRebuild = true;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => void rebuild(), 100);
+  }
+
   async function rebuild() {
     if (rebuilding) {
       rebuildQueued = true;
@@ -125,14 +137,23 @@ if (!watch) {
   }
 
   const sourceWatcher = watchSource(sourceRoot, { recursive: true }, (eventType) => {
-    if (eventType === 'rename') cleanBeforeRebuild = true;
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => void rebuild(), 100);
+    queueRebuild({ clean: eventType === 'rename' });
+  });
+  const assetDirectories = [...new Set(BUILD_ASSETS.map((asset) => dirname(asset.source)))];
+  const assetWatchers = assetDirectories.map((directory) => {
+    const filenames = new Set(BUILD_ASSETS
+      .filter((asset) => dirname(asset.source) === directory)
+      .map((asset) => basename(asset.source)));
+    return watchSource(directory, (_eventType, filename) => {
+      if (filename && !filenames.has(String(filename))) return;
+      queueRebuild();
+    });
   });
 
   const stopWatching = () => {
     clearTimeout(debounceTimer);
     sourceWatcher.close();
+    for (const assetWatcher of assetWatchers) assetWatcher.close();
     process.exit(0);
   };
   process.once('SIGINT', stopWatching);

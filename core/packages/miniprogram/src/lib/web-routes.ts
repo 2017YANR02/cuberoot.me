@@ -59,9 +59,12 @@ export interface WebToolLink {
 }
 
 export interface WebRouteShare {
+  imageUrl: string;
   title: string;
   path: string;
 }
+
+export const WEB_ROUTE_SHARE_IMAGE = '/assets/share-cover.png';
 
 export function listWebTools(): WebToolLink[] {
   const tools: WebToolLink[] = [];
@@ -85,6 +88,7 @@ export function resolveWebRouteShare(key: unknown): WebRouteShare | null {
   if (!isPublicEntry) return null;
 
   return {
+    imageUrl: WEB_ROUTE_SHARE_IMAGE,
     title: `CubeRoot 魔方根：${route.title}`,
     path: routeKey === 'timer'
       ? '/pages/timer/index'
