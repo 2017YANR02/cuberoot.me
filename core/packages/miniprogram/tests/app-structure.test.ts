@@ -150,4 +150,12 @@ describe('mini program app structure', () => {
     expect(appStyles).toMatch(/\.primary-button\s*\{[\s\S]*?min-height:\s*88rpx;/);
     expect(appStyles).toMatch(/\.text-button\s*\{[\s\S]*?min-height:\s*88rpx;/);
   });
+
+  it('lets long tool labels shrink without colliding with their arrow', () => {
+    const toolStyles = pageFiles['../src/pages/tools/index.wxss'];
+
+    expect(toolStyles).toMatch(/\.tool-copy\s*\{[\s\S]*?flex:\s*1;/);
+    expect(toolStyles).toMatch(/\.tool-copy\s*\{[\s\S]*?min-width:\s*0;/);
+    expect(toolStyles).not.toMatch(/\.tool-row\s*\{[\s\S]*?justify-content:\s*space-between;/);
+  });
 });
