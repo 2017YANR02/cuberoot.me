@@ -43,7 +43,7 @@
 
 - **A. web-view 套壳** — 约 2 周。241 个页面全保住，但体验≈给微信加了个书签；iOS 有链接中文字符白屏坑；审核对纯套壳有排斥（工具类通常能过，不保证）。
 - **B. 原生重写** — 2-3 个月。Taro/uni-app 都只到 React 18，接不住 React 19 + App Router，UI 全部重写，只能挑 5-10 页。
-- **C. 混合 ← 采用**。原生外壳承载高频功能（计时器 + 智能魔方蓝牙、打乱生成、公式库查询、比赛/成绩查询），长尾 200+ 页（`/math` `/regulation` `/code` `/wiki` 教程）用 web-view 兜住。内容型工具站的通行做法。
+- **C. 混合 ← 采用**。现有计时器、公式库、比赛、课程等成熟页面通过 web-view 直接复用网站；登录、导航以及后续 BLE 等微信专属能力使用原生实现。
 
 ## 4. 阶段一：注册 + 绑定 + unionid 打通 ← **认证已完成**
 
@@ -123,7 +123,7 @@ WECHAT_MINI_APP_SECRET=
 
 ## 5. 阶段二：技术准备（不依赖资质，可并行）
 
-首版工程已经放在 `packages/miniprogram/`，运行 `pnpm --filter @cuberoot/miniprogram build` 后，用微信开发者工具导入该目录。当前包含原生计时器、微信登录和网站入口。
+首版工程已经放在 `packages/miniprogram/`，运行 `pnpm --filter @cuberoot/miniprogram build` 后，用微信开发者工具导入该目录。当前包含网站计时器 web-view、微信登录和网站入口。
 
 1. **DOM 隔离**：把 `lib/` 里那 36 个碰 DOM/React 的文件挑出来做隔离，让纯逻辑层可被小程序直接 import。**对现有网站也是纯收益**（逻辑解耦、测试更好写），即使小程序不做也不浪费。
 2. 按 2MB 主包倒推分包切法：分析器 wasm 进独立分包；`cubeopt/` 9 个文件单独一包。
