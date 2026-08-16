@@ -20,7 +20,7 @@ const detailInflight = new Map<string, Promise<RecordPlaceDetailShard>>();
 
 export async function loadRecordPlaces(): Promise<RecordPlacesData> {
   if (!inflight) {
-    inflight = fetch(statsUrl('/stats/record_places_v2.json')).then(async (response) => {
+    inflight = fetch(statsUrl('/stats/record_places_v3.json')).then(async (response) => {
       if (!response.ok) throw new Error(`record places unavailable (${response.status})`);
       const value: unknown = await response.json();
       if (!isRecordPlacesData(value)) throw new Error('invalid record places data');
@@ -64,13 +64,15 @@ export function recordPlaceDetailRows(
   shard: RecordPlaceDetailShard,
   metric: RecordMetric | null,
   city: string | null,
+  eventIds: ReadonlySet<string> | null = null,
 ): RecordPlaceDetailRow[] {
   const rows: RecordPlaceDetailRow[] = [];
   for (const [compId, entries] of Object.entries(shard.records)) {
     const comp = shard.comps[compId];
     if (!comp || (city !== null && comp.c !== city)) continue;
     entries.forEach((entry, index) => {
-      if (metric === null || recordMetricForLevel(entry.t) === metric) {
+      if ((eventIds === null || eventIds.has(entry.e))
+        && (metric === null || recordMetricForLevel(entry.t) === metric)) {
         rows.push({ id: `${compId}:${index}`, compId, comp, entry });
       }
     });
@@ -85,6 +87,22 @@ export function recordPlaceDetailRows(
 export interface RankedRecordRow<T> {
   row: T;
   rank: number;
+}
+
+export function recordCountsForEvents<T extends CountryRecordCounts>(
+  row: T,
+  eventIds: ReadonlySet<string> | null,
+): T {
+  if (eventIds === null) return row;
+  const counts: RecordCounts = { wr: 0, cr: 0, nr: 0 };
+  for (const eventId of eventIds) {
+    const eventCounts = row.events[eventId];
+    if (!eventCounts) continue;
+    counts.wr += eventCounts.wr;
+    counts.cr += eventCounts.cr;
+    counts.nr += eventCounts.nr;
+  }
+  return { ...row, ...counts };
 }
 
 function normalizeRecordPlaceSearch(value: string): string {
