@@ -1,6 +1,6 @@
 # CubeRoot 微信小程序
 
-原生微信小程序外壳。计时状态机、打乱和统计复用 `@cuberoot/shared/timer`，长尾内容通过 `web-view` 打开网站。
+微信小程序外壳。计时器和内容页通过 `web-view` 直接复用现有网站，登录和后续微信专属能力保留原生实现。
 
 ```powershell
 $env:WECHAT_MINI_APP_ID='小程序 AppID'

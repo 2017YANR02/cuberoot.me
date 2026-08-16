@@ -1,6 +1,7 @@
 const SITE_ORIGIN = 'https://cuberoot.me';
 
 export const WEB_ROUTES = {
+  timer: { title: '计时器', path: '/zh/timer' },
   alg: { title: '公式库', path: '/zh/alg' },
   competitions: { title: 'WCA 比赛', path: '/zh/wca/comp' },
   courses: { title: '课程', path: '/zh/courses' },
