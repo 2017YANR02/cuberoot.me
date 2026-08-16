@@ -19,7 +19,13 @@
     <view class="account-sync">
       <view class="account-sync-heading">
         <text class="account-sync-title">跨端账号</text>
-        <view class="account-sync-state account-sync-state--{{syncState}}">
+        <view
+          class="account-sync-state account-sync-state--{{syncState}}"
+          aria-role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-busy="{{syncState === 'checking'}}"
+        >
           <view class="account-sync-dot" aria-hidden="true"></view>
           <text>{{syncLabel}}</text>
         </view>
@@ -45,16 +51,32 @@
 
   <block wx:else>
     <text class="page-intro account-intro">登录后使用与网站相同的 CubeRoot 账号。已在网站通过微信登录过时，会自动识别为同一账号。</text>
-    <button class="primary-button login-button" hover-class="press-feedback" disabled="{{busy}}" bindtap="login">
+    <button
+      class="primary-button login-button"
+      hover-class="press-feedback"
+      disabled="{{busy}}"
+      bindtap="login"
+      aria-busy="{{busy}}"
+      aria-label="{{busy ? '微信登录处理中' : '微信登录'}}"
+    >
       {{busy ? '登录中…' : '微信登录'}}
     </button>
     <text class="union-note">不会读取你的微信昵称或手机号。无法取得 UnionID 时会停止登录，避免创建重复账号。</text>
   </block>
 
-  <text class="status-text {{statusError ? 'status-text--error' : ''}}" wx:if="{{status}}">{{status}}</text>
+  <text
+    class="status-text {{statusError ? 'status-text--error' : ''}}"
+    wx:if="{{status}}"
+    aria-role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  >{{status}}</text>
   <text
     class="status-text status-text--error {{status ? 'account-action-status--stacked' : ''}}"
     wx:if="{{actionStatus}}"
+    aria-role="status"
+    aria-live="polite"
+    aria-atomic="true"
   >{{actionStatus}}</text>
   <button
     class="text-button sync-retry-button"
