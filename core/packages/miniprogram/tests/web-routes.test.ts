@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveWebRoute } from '../src/lib/web-routes';
+import { listWebTools, resolveWebRoute } from '../src/lib/web-routes';
 
 describe('mini program web routes', () => {
   it('resolves the website timer route', () => {
@@ -18,5 +18,14 @@ describe('mini program web routes', () => {
     expect(resolveWebRoute('https://example.com')).toBeNull();
     expect(resolveWebRoute('__proto__')).toBeNull();
     expect(resolveWebRoute(null)).toBeNull();
+  });
+
+  it('derives the discovery list from the route registry', () => {
+    expect(listWebTools()).toEqual([
+      { key: 'alg', title: '公式库', description: 'OLL、PLL、ZBLL 等公式查询与训练' },
+      { key: 'competitions', title: 'WCA 比赛', description: '查比赛、赛程与成绩' },
+      { key: 'wiki', title: '魔方百科', description: '教程、术语与方法资料' },
+      { key: 'courses', title: '课程', description: '系统学习与试学内容' },
+    ]);
   });
 });

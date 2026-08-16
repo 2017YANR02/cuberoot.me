@@ -24,8 +24,10 @@ Page({
     this.showSession(session);
     if (!session) return;
     void validateStoredSession(session).then((next) => {
+      if (getStoredSession()?.token !== session.token) return;
       this.showSession(next);
     }).catch((error: unknown) => {
+      if (getStoredSession()?.token !== session.token) return;
       if (error instanceof ApiError && error.status === 401) {
         clearStoredSession();
         this.showSession(null);
