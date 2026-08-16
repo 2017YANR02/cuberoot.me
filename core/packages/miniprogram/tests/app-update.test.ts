@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { PLATFORM_INTERACTION_LOCK_TIMEOUT_MS } from '../src/lib/platform-action-guard';
+
 interface MiniProgramApp {
   onLaunch?(): void;
 }
@@ -167,7 +169,42 @@ describe('mini program app updates', () => {
     vi.advanceTimersByTime(5_000);
     ready?.();
 
+    expect(showModal).toHaveBeenCalledOnce();
+
+    vi.advanceTimersByTime(PLATFORM_INTERACTION_LOCK_TIMEOUT_MS - 5_000);
+    ready?.();
+
     expect(showModal).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the original update prompt valid while the user is reading it', async () => {
+    vi.useFakeTimers();
+    let ready: (() => void) | undefined;
+    let prompt: { success(result: { confirm: boolean }): void } | undefined;
+    const applyUpdate = vi.fn();
+    const showModal = vi.fn((options: typeof prompt) => {
+      prompt = options;
+    });
+    const app = await loadApp({
+      getUpdateManager: () => ({
+        applyUpdate,
+        onUpdateFailed: vi.fn(),
+        onUpdateReady(callback: () => void) {
+          ready = callback;
+        },
+      }),
+      showModal,
+      showToast: vi.fn(),
+    });
+
+    app.onLaunch?.();
+    ready?.();
+    vi.advanceTimersByTime(30_000);
+    ready?.();
+    prompt?.success({ confirm: true });
+
+    expect(showModal).toHaveBeenCalledOnce();
+    expect(applyUpdate).toHaveBeenCalledOnce();
   });
 
   it('reports when the update prompt recovery guard is unavailable', async () => {

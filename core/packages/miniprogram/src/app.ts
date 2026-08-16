@@ -1,11 +1,16 @@
-import { createPlatformActionGuard } from './lib/platform-action-guard';
+import {
+  createPlatformActionGuard,
+  PLATFORM_INTERACTION_LOCK_TIMEOUT_MS,
+} from './lib/platform-action-guard';
 
 export function setupAppUpdate(): void {
   if (typeof wx.getUpdateManager !== 'function') return;
 
   try {
     const updateManager = wx.getUpdateManager();
-    const updatePrompts = createPlatformActionGuard();
+    const updatePrompts = createPlatformActionGuard(
+      PLATFORM_INTERACTION_LOCK_TIMEOUT_MS,
+    );
     const updatePromptOwner = {};
     let updatePromptResolved = false;
     let updateFailureShown = false;
