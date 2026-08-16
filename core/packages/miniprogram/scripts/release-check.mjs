@@ -26,6 +26,7 @@ async function readJson(path, fallback = null) {
 const projectConfig = await readJson(join(packageRoot, 'project.config.json'));
 const privateConfig = await readJson(join(packageRoot, 'project.private.config.json'), {});
 const appConfig = await readJson(join(sourceRoot, 'app.json'));
+const sitemapConfig = await readJson(join(sourceRoot, 'sitemap.json'));
 const buildState = await readBuildState(packageRoot);
 const sourceFiles = [];
 for (const file of await walkFiles(sourceRoot)) {
@@ -40,6 +41,7 @@ const failures = collectReleaseFailures({
   projectConfig,
   privateConfig,
   appConfig,
+  sitemapConfig,
   confirmedStableVersion: process.env.WECHAT_MINI_LIB_VERSION ?? '',
   sourceFiles,
   builtFiles: outputFiles.map((file) => normalizedRelativePath(outputRoot, file)),
