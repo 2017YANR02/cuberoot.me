@@ -269,7 +269,7 @@
 
 .cs-record-count {
   color: var(--muted);
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: inherit;
   font-variant-numeric: tabular-nums;
 }
 
@@ -398,7 +398,7 @@
   font-size: 0.72rem;
   font-weight: 400;
   color: var(--accent);
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: inherit;
 }
 
 .cs-sec-controls {
@@ -482,7 +482,7 @@
 }
 
 .cs-scrubber-label {
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: inherit;
   font-size: 0.72rem;
   color: var(--accent);
   min-width: 64px;
@@ -502,7 +502,7 @@
 .cs-axis {
   font-size: 0.7rem;
   fill: var(--muted);
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: inherit;
 }
 
 .cs-cell {
@@ -606,7 +606,7 @@
 .cs-line-axis {
   fill: var(--muted);
   font-size: 11px;
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: inherit;
 }
 
 .cs-line-grid {
@@ -695,7 +695,7 @@
 }
 
 .cs-bar-count {
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: inherit;
   font-size: 0.8rem;
   text-align: right;
   color: var(--muted);
@@ -759,7 +759,7 @@
 }
 
 .cs-geo-value {
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: inherit;
   font-size: 0.8rem;
   text-align: right;
   color: var(--accent);
