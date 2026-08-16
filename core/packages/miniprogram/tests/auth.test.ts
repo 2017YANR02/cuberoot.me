@@ -11,6 +11,7 @@ import {
 
 describe('mini program authentication', () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
@@ -94,6 +95,43 @@ describe('mini program authentication', () => {
     expect(loginErrorMessage(new ApiError(503, 'secret'))).toContain('服务端');
     expect(loginErrorMessage(new ApiError(0, 'network'))).toContain('网络');
     expect(loginErrorMessage(new Error('unknown'))).toBe('登录失败，请稍后重试');
+  });
+
+  it('finishes login when wx.login never calls back', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('wx', {
+      login: vi.fn(),
+    });
+
+    const login = expect(loginWithWechat()).rejects.toMatchObject({
+      message: 'wx.login timed out',
+      status: 0,
+    });
+    await vi.advanceTimersByTimeAsync(11_000);
+
+    await login;
+  });
+
+  it('aborts an API request when the platform timeout callback never arrives', async () => {
+    vi.useFakeTimers();
+    const abort = vi.fn();
+    vi.stubGlobal('wx', {
+      getStorageSync: () => null,
+      request: vi.fn(() => ({ abort })),
+    });
+    const session = {
+      token: 't'.repeat(20),
+      user: { name: 'CubeRoot', wcaId: null },
+    };
+
+    const validation = expect(validateStoredSession(session)).rejects.toMatchObject({
+      message: 'request timed out',
+      status: 0,
+    });
+    await vi.advanceTimersByTimeAsync(13_000);
+
+    await validation;
+    expect(abort).toHaveBeenCalledOnce();
   });
 
   it('requests a short-lived web session ticket with the Mini Program JWT', async () => {
