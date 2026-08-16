@@ -6,7 +6,7 @@ interface WebsitePageNavigationOptions {
 }
 
 const NAVIGATION_LOCK_TIMEOUT_MS = 5_000;
-const activeNavigations = new WeakSet<object>();
+const activeNavigations = new WeakMap<object, object>();
 
 function showNavigationMessage(title: string): void {
   try {
@@ -28,11 +28,12 @@ export function openWebsitePageOnce(
   }
   if (activeNavigations.has(owner)) return false;
 
-  activeNavigations.add(owner);
+  const attempt = {};
+  activeNavigations.set(owner, attempt);
   let releaseTimer: number | undefined;
   const release = () => {
     if (releaseTimer !== undefined) clearTimeout(releaseTimer);
-    activeNavigations.delete(owner);
+    if (activeNavigations.get(owner) === attempt) activeNavigations.delete(owner);
   };
   const fail = () => {
     release();
