@@ -148,9 +148,11 @@ export function markWebRouteFailed(
   ) return;
 
   beginRouteAttempt(context);
+  const route = resolveWebRoute(context.data.routeKey);
   context.setData({
-    canRetry: Boolean(resolveWebRoute(context.data.routeKey)),
-    errorMessage: '请检查网络后重试。网站内容和账号数据不会因此被删除。',
+    canRetry: Boolean(route),
+    errorMessage: route?.loadFailureMessage
+      ?? '请检查网络后重试。网站内容和账号数据不会因此被删除。',
     errorTitle: '网页加载失败',
     src: '',
   });
