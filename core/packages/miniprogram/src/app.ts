@@ -1,16 +1,18 @@
+import { createPlatformActionGuard } from './lib/platform-action-guard';
+
 export function setupAppUpdate(): void {
   if (typeof wx.getUpdateManager !== 'function') return;
 
   try {
     const updateManager = wx.getUpdateManager();
-    let updatePromptHandled = false;
-    let updatePromptAttempt = 0;
+    const updatePrompts = createPlatformActionGuard();
+    const updatePromptOwner = {};
+    let updatePromptResolved = false;
     let updateFailureShown = false;
     updateManager.onUpdateReady(() => {
-      if (updatePromptHandled) return;
-      updatePromptHandled = true;
-      const promptAttempt = ++updatePromptAttempt;
-      const promptIsCurrent = () => updatePromptAttempt === promptAttempt;
+      if (updatePromptResolved) return;
+      const promptAttempt = updatePrompts.begin(updatePromptOwner);
+      if (promptAttempt === null) return;
       let updateApplyStarted = false;
       try {
         wx.showModal({
@@ -19,7 +21,9 @@ export function setupAppUpdate(): void {
           confirmText: '立即重启',
           cancelText: '稍后',
           success(result) {
-            if (!promptIsCurrent() || !result.confirm || updateApplyStarted) return;
+            if (!updatePrompts.settle(updatePromptOwner, promptAttempt)) return;
+            updatePromptResolved = true;
+            if (!result.confirm || updateApplyStarted) return;
             updateApplyStarted = true;
             try {
               updateManager.applyUpdate();
@@ -28,12 +32,11 @@ export function setupAppUpdate(): void {
             }
           },
           fail() {
-            if (!promptIsCurrent()) return;
-            updatePromptHandled = false;
+            updatePrompts.settle(updatePromptOwner, promptAttempt);
           },
         });
       } catch {
-        if (promptIsCurrent()) updatePromptHandled = false;
+        updatePrompts.settle(updatePromptOwner, promptAttempt);
         // Update prompts must never block application launch or current work.
       }
     });
