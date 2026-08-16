@@ -1,0 +1,26 @@
+<view class="page account-page">
+  <text class="eyebrow">ACCOUNT</text>
+  <text class="page-title">我的</text>
+
+  <block wx:if="{{loggedIn}}">
+    <view class="identity">
+      <text class="identity-mark">{{initial}}</text>
+      <view>
+        <text class="identity-name">{{displayName}}</text>
+        <text class="identity-wca" wx:if="{{wcaId}}">{{wcaId}}</text>
+        <text class="identity-wca" wx:else>尚未绑定 WCA ID</text>
+      </view>
+    </view>
+    <button class="text-button logout-button" bindtap="logout">退出登录</button>
+  </block>
+
+  <block wx:else>
+    <text class="page-intro account-intro">登录后使用与网站相同的 CubeRoot 账号。不会读取你的微信昵称或手机号。</text>
+    <button class="primary-button login-button" disabled="{{busy}}" bindtap="login">
+      {{busy ? '登录中…' : '微信登录'}}
+    </button>
+    <text class="union-note">通过同一开放平台的 UnionID 识别账号；拿不到 UnionID 时不会创建重复账号。</text>
+  </block>
+
+  <text class="status-text {{statusError ? 'status-text--error' : ''}}" wx:if="{{status}}">{{status}}</text>
+</view>

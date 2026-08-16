@@ -10,6 +10,7 @@
     "seed:local-alg": "pwsh -NoProfile -File scripts/seed-local.ps1 alg_sets alg_cases",
     "build:bundle": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/server.bundle.js --sourcemap --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
     "start": "node dist/server.bundle.js",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "gen-title": "tsx src/tools/gen_title.ts",
     "gen-glossary": "tsx scripts/gen-glossary.ts",
@@ -47,6 +48,7 @@
     "@types/sanitize-html": "^2.16.1",
     "esbuild": "^0.27.4",
     "tsx": "^4.0.0",
-    "typescript": "~5.7.0"
+    "typescript": "~5.7.0",
+    "vitest": "4.1.6"
   }
 }

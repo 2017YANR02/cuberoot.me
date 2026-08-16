@@ -1,0 +1,61 @@
+.account-page {
+  padding-top: 56rpx;
+}
+
+.account-intro {
+  max-width: 620rpx;
+}
+
+.login-button {
+  margin-top: 58rpx;
+  width: 260rpx;
+}
+
+.union-note {
+  color: var(--cr-muted);
+  display: block;
+  font-size: 23rpx;
+  line-height: 1.65;
+  margin-top: 28rpx;
+  max-width: 620rpx;
+}
+
+.identity {
+  align-items: center;
+  display: flex;
+  gap: 28rpx;
+  margin-top: 64rpx;
+}
+
+.identity-mark {
+  align-items: center;
+  background: var(--cr-accent-soft);
+  border-radius: 50%;
+  color: var(--cr-accent);
+  display: flex;
+  font-size: 40rpx;
+  font-weight: 720;
+  height: 104rpx;
+  justify-content: center;
+  width: 104rpx;
+}
+
+.identity-name,
+.identity-wca {
+  display: block;
+}
+
+.identity-name {
+  font-size: 38rpx;
+  font-weight: 700;
+}
+
+.identity-wca {
+  color: var(--cr-muted);
+  font-size: 25rpx;
+  margin-top: 10rpx;
+}
+
+.logout-button {
+  margin-top: 44rpx;
+}

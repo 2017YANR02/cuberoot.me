@@ -1,0 +1,5 @@
+<web-view wx:if="{{src}}" src="{{src}}"></web-view>
+<view class="page web-error" wx:else>
+  <text class="page-title">无法打开</text>
+  <text class="page-intro">该页面地址不在允许列表中。</text>
+</view>

@@ -1,0 +1,135 @@
+.timer-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.timer-heading {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+}
+
+.timer-section-title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 720;
+  line-height: 1.2;
+  margin-top: 8rpx;
+}
+
+.scramble {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 31rpx;
+  font-weight: 540;
+  line-height: 1.7;
+  margin-top: 34rpx;
+  min-height: 108rpx;
+  overflow-wrap: anywhere;
+}
+
+.timer-pad {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 460rpx;
+  touch-action: none;
+}
+
+.timer-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 132rpx;
+  font-variant-numeric: tabular-nums;
+  font-weight: 720;
+  letter-spacing: -0.065em;
+  line-height: 1;
+  padding-right: 0.065em;
+  transition: color 120ms ease;
+}
+
+.timer-instruction {
+  color: var(--cr-muted);
+  font-size: 26rpx;
+  margin-top: 30rpx;
+}
+
+.timer-pad--holding .timer-value,
+.timer-pad--inspecting .timer-value {
+  color: var(--cr-accent);
+}
+
+.timer-pad--ready .timer-value {
+  color: var(--cr-ready);
+}
+
+.stats-row {
+  border-top: 1rpx solid var(--cr-line);
+  display: grid;
+  gap: 20rpx;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding-top: 28rpx;
+}
+
+.stat-item {
+  min-width: 0;
+}
+
+.stat-label,
+.stat-value {
+  display: block;
+  white-space: nowrap;
+}
+
+.stat-label {
+  color: var(--cr-muted);
+  font-size: 22rpx;
+}
+
+.stat-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 28rpx;
+  font-variant-numeric: tabular-nums;
+  font-weight: 660;
+  margin-top: 8rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent {
+  margin-top: 52rpx;
+}
+
+.recent-title {
+  display: block;
+  font-size: 27rpx;
+  font-weight: 680;
+  margin-bottom: 8rpx;
+}
+
+.recent-row {
+  align-items: center;
+  border-bottom: 1rpx solid var(--cr-line);
+  display: grid;
+  gap: 18rpx;
+  grid-template-columns: max-content 120rpx minmax(0, 1fr);
+  min-height: 76rpx;
+}
+
+.recent-index,
+.recent-scramble {
+  color: var(--cr-muted);
+  font-size: 23rpx;
+}
+
+.recent-time {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.recent-scramble {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
