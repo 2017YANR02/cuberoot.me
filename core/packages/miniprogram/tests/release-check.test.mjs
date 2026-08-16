@@ -41,6 +41,7 @@ const validInput = {
     pages: EXPECTED_APP_PAGES,
     darkmode: true,
     themeLocation: 'theme.json',
+    sitemapLocation: 'sitemap.json',
     window: {
       backgroundColor: '@backgroundColor',
       backgroundTextStyle: '@backgroundTextStyle',
@@ -228,6 +229,18 @@ describe('mini program release check', () => {
       },
     })).toContain(
       'sitemap 只能收录计时和工具页，账号页与通用网页壳必须保持禁止收录。',
+    );
+  });
+
+  it('rejects a valid sitemap that is detached from the published app config', () => {
+    expect(collectReleaseFailures({
+      ...validInput,
+      appConfig: {
+        ...validInput.appConfig,
+        sitemapLocation: 'debug-sitemap.json',
+      },
+    })).toContain(
+      'src/app.json 必须继续引用 sitemap.json，避免搜索收录边界与实际发布配置脱钩。',
     );
   });
 

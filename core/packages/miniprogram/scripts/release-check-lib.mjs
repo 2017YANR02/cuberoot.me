@@ -106,6 +106,10 @@ export function collectReleaseFailures({
     failures.push('sitemap 只能收录计时和工具页，账号页与通用网页壳必须保持禁止收录。');
   }
 
+  if (appConfig?.sitemapLocation !== 'sitemap.json') {
+    failures.push('src/app.json 必须继续引用 sitemap.json，避免搜索收录边界与实际发布配置脱钩。');
+  }
+
   if (!projectConfig) {
     failures.push('缺少 project.config.json，请先运行构建。');
   } else {
