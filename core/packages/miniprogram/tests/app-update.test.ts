@@ -89,6 +89,59 @@ describe('mini program app updates', () => {
     expect(applyUpdate).not.toHaveBeenCalled();
   });
 
+  it('shows one prompt when the platform repeats the same ready event', async () => {
+    let ready: (() => void) | undefined;
+    let modalOptions: { success(result: { confirm: boolean }): void } | undefined;
+    const applyUpdate = vi.fn();
+    const showModal = vi.fn((options: typeof modalOptions) => {
+      modalOptions = options;
+    });
+    const app = await loadApp({
+      getUpdateManager: () => ({
+        applyUpdate,
+        onUpdateFailed: vi.fn(),
+        onUpdateReady(callback: () => void) {
+          ready = callback;
+        },
+      }),
+      showModal,
+      showToast: vi.fn(),
+    });
+
+    app.onLaunch?.();
+    ready?.();
+    ready?.();
+
+    expect(showModal).toHaveBeenCalledOnce();
+
+    modalOptions?.success({ confirm: true });
+    modalOptions?.success({ confirm: true });
+
+    expect(applyUpdate).toHaveBeenCalledOnce();
+  });
+
+  it('allows a later ready event to retry after the update prompt fails', async () => {
+    let ready: (() => void) | undefined;
+    const showModal = vi.fn((options: { fail(): void }) => options.fail());
+    const app = await loadApp({
+      getUpdateManager: () => ({
+        applyUpdate: vi.fn(),
+        onUpdateFailed: vi.fn(),
+        onUpdateReady(callback: () => void) {
+          ready = callback;
+        },
+      }),
+      showModal,
+      showToast: vi.fn(),
+    });
+
+    app.onLaunch?.();
+    ready?.();
+    ready?.();
+
+    expect(showModal).toHaveBeenCalledTimes(2);
+  });
+
   it('keeps the current version usable when the update prompt throws', async () => {
     let ready: (() => void) | undefined;
     const app = await loadApp({
