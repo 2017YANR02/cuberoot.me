@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import packageConfig from '../package.json';
 import appConfig from '../src/app.json';
 import sitemapConfig from '../src/sitemap.json';
 import themeConfig from '../src/theme.json';
@@ -26,6 +27,12 @@ const sourceFiles = import.meta.glob('../src/**/*.{ts,wxml,wxss}', {
 });
 
 describe('mini program app structure', () => {
+  it('keeps release checks coupled to type and regression verification', () => {
+    expect(packageConfig.scripts.verify).toBe('tsc --noEmit && vitest run');
+    expect(packageConfig.scripts.check).toContain('pnpm verify');
+    expect(packageConfig.scripts['release:check']).toContain('pnpm verify');
+  });
+
   it('keeps every declared page complete', () => {
     expect(appConfig.pages.length).toBeGreaterThan(0);
     for (const pagePath of appConfig.pages) {
