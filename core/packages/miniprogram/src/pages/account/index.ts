@@ -11,7 +11,25 @@ import { openWebsitePageOnce } from '../../lib/navigation';
 
 const activePages = new WeakSet<object>();
 const activeLogins = new WeakSet<object>();
+const activeLogoutConfirmations = new WeakSet<object>();
+const logoutConfirmationTimers = new WeakMap<object, ReturnType<typeof setTimeout>>();
 const validationAttempts = new WeakMap<object, number>();
+
+function releaseLogoutConfirmation(page: object): void {
+  activeLogoutConfirmations.delete(page);
+  const timer = logoutConfirmationTimers.get(page);
+  if (timer !== undefined) clearTimeout(timer);
+  logoutConfirmationTimers.delete(page);
+}
+
+function beginLogoutConfirmation(page: object): boolean {
+  if (activeLogoutConfirmations.has(page)) return false;
+  activeLogoutConfirmations.add(page);
+  logoutConfirmationTimers.set(page, setTimeout(() => {
+    releaseLogoutConfirmation(page);
+  }, 5_000));
+  return true;
+}
 
 function beginValidation(page: object): number {
   const attempt = (validationAttempts.get(page) ?? 0) + 1;
@@ -172,11 +190,13 @@ Page({
   },
 
   logout() {
+    if (!beginLogoutConfirmation(this)) return;
     try {
       wx.showModal({
         title: '退出登录',
         content: '将退出小程序，并尝试同时退出网站账号。本机计时记录不会被删除。',
         success: (result) => {
+          releaseLogoutConfirmation(this);
           if (!result.confirm) return;
 
           if (!clearStoredSession()) {
@@ -194,8 +214,16 @@ Page({
             failureMessage: '已退出小程序，网站退出暂未完成',
           });
         },
+        fail: () => {
+          releaseLogoutConfirmation(this);
+          this.setData({ status: '退出确认暂时无法打开，请重试', statusError: true });
+        },
+        complete: () => {
+          releaseLogoutConfirmation(this);
+        },
       });
     } catch {
+      releaseLogoutConfirmation(this);
       this.setData({ status: '退出确认暂时无法打开，请重试', statusError: true });
     }
   },

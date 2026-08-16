@@ -182,6 +182,41 @@ describe('mini program account page', () => {
     expect(removeStorageSync).not.toHaveBeenCalled();
   });
 
+  it('opens only one logout confirmation until the current prompt settles', async () => {
+    let modalOptions: {
+      complete(): void;
+      success(result: { confirm: boolean }): void;
+    } | undefined;
+    const showModal = vi.fn((options: typeof modalOptions) => {
+      modalOptions = options;
+    });
+    const page = await loadPage({ showModal });
+
+    page.logout();
+    page.logout();
+
+    expect(showModal).toHaveBeenCalledOnce();
+
+    modalOptions?.success({ confirm: false });
+    modalOptions?.complete();
+    page.logout();
+
+    expect(showModal).toHaveBeenCalledTimes(2);
+  });
+
+  it('recovers when the logout confirmation fails asynchronously', async () => {
+    const showModal = vi.fn((options: { fail(): void }) => options.fail());
+    const page = await loadPage({ showModal });
+    page.setData({ loggedIn: true });
+
+    page.logout();
+    page.logout();
+
+    expect(page.data.loggedIn).toBe(true);
+    expect(page.data.status).toContain('退出确认暂时无法打开');
+    expect(showModal).toHaveBeenCalledTimes(2);
+  });
+
   it('shows cached identity as checking until the server confirms it', async () => {
     let completeRequest: ((response: unknown) => void) | undefined;
     const page = await loadPage({
