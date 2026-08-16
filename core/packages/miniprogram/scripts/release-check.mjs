@@ -37,6 +37,10 @@ for (const file of await walkFiles(sourceRoot)) {
   });
 }
 const outputFiles = await walkFiles(outputRoot, { missingOk: true });
+const uploadFiles = await Promise.all(outputFiles.map(async (file) => ({
+  path: normalizedRelativePath(outputRoot, file),
+  source: await readFile(file, 'utf8'),
+})));
 const builtFileSizes = await Promise.all(outputFiles.map(async (file) => ({
   path: normalizedRelativePath(outputRoot, file),
   bytes: (await stat(file)).size,
@@ -51,6 +55,7 @@ const failures = collectReleaseFailures({
   confirmedStableVersion: process.env.WECHAT_MINI_LIB_VERSION ?? '',
   confirmedSecretRotation: process.env.WECHAT_MINI_SECRET_ROTATED === '1',
   sourceFiles,
+  uploadFiles,
   builtFiles: outputFiles.map((file) => normalizedRelativePath(outputRoot, file)),
   builtFileSizes,
   buildState,
