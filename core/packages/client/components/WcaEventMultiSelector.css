@@ -1,0 +1,28 @@
+.wca-event-multi-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.wca-event-multi-toolbar .wca-event-category-btn {
+  height: auto;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+.wca-event-multi-toolbar .wca-event-category-btn.is-active {
+  color: var(--accent-foreground);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.wca-event-multi-toolbar .wca-event-category-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.wca-event-multi-toolbar .bool-toggle {
+  font-size: 12px;
+}

@@ -308,26 +308,6 @@ html:not([data-palette-scheme=dark]) .wse-page {
 .wse-pagination .paginator-input::-webkit-outer-spin-button,
 .wse-pagination .paginator-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-/* sum-of-ranks 项目选择器 */
-.wse-events-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;  /* clear / 全选 / 分类按钮 / pill 上下居中对齐 */
-  gap: 6px;
-  margin-bottom: 6px;
-}
-/* 只命中分类/全选小按钮的专属 class,不用裸 `button` 选择器:
-   否则塞进同容器的共享组件(ClearButton/PillToggle)会被 !important 误伤变形 */
-.wse-events-bar .wse-cat-btn {
-  font-size: 12px;
-  padding: 3px 8px !important;
-  height: auto !important;
-}
-.wse-events-bar .wse-cat-btn.wse-cat-on {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-foreground);
-}
 /* 过滤 / 废止项 pill:贴合文字(默认 110px 是给 on/off 文案不同的开关用的);
    flex-shrink:0 防止在 events-bar flex 里被压窄到文字钻进滑钮下面;
    align-self:flex-start 防止在 column flex 的 .wse-filter 里被 stretch 拉满整列宽(手机端半屏长) */
@@ -336,9 +316,8 @@ html:not([data-palette-scheme=dark]) .wse-page {
    → 与相邻控件上下居中对齐;events-bar 里的「废止项」不是 .wse-filter 直接子,仍 26px 不受影响 */
 .wse-filter > .pill-toggle.wse-pill { height: 34px; font-size: 13px; }
 
-/* 布尔开关(BoolToggle:左滑钮 + 右文字)。events-bar 里跟分类按钮同字号;
-   作 .wse-filter 直接子(无 label)时纵向居中,跟相邻「label+控件」filter 对齐。 */
-.wse-events-bar .bool-toggle { font-size: 12px; }
+/* 布尔开关(BoolToggle:左滑钮 + 右文字)。作 .wse-filter 直接子(无 label)时纵向居中,
+   跟相邻「label+控件」filter 对齐。 */
 .wse-filter:has(> .bool-toggle) { justify-content: center; }
 
 /* 数据细节列 */

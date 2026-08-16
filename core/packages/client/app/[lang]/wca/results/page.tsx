@@ -21,7 +21,7 @@ import Paginator from '@/components/wca-stats/Paginator';
 import NameStatsView, { type NameStatsData } from '@/components/wca-stats/NameStatsView';
 import { type NameMode, NAME_MODES, nameByMode, FormerNames } from '@/components/wca-stats/nameMode';
 import { statsUrl } from '@/lib/stats-base';
-import WcaEventSelector from '@/components/WcaEventSelector';
+import WcaEventMultiSelector from '@/components/WcaEventMultiSelector';
 import { Flag } from '@/components/Flag';
 import { loadFlagData } from '@/lib/country-flags';
 import { CompCell } from '@/components/CompCell/CompCell';
@@ -77,18 +77,7 @@ const ACTIVE_EVENTS = [
 const CANCELLED_EVENTS = ['333ft', 'magic', 'mmagic', '333mbo'];
 const RANK_EVENTS = [...ACTIVE_EVENTS, ...CANCELLED_EVENTS];
 const RANK_EVENT_SET = new Set(RANK_EVENTS);
-const ACTIVE_EVENT_SET = new Set(ACTIVE_EVENTS);
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
-
-// 项目快速分类(点一个 = 直接替换当前选中项,进入名次和)
-const EVENT_CATEGORIES: { key: string; zh: string; en: string; events: string[]; }[] = [
-  { key: 'speed', zh: '速拧', en: 'Speed', events: ['333','222','444','555','666','777','333oh','clock','minx','pyram','skewb','sq1'] },
-  { key: 'cubic', zh: '正阶', en: 'Cubic', events: ['333','222','444','555','666','777','333oh'] },
-  { key: 'sub25', zh: '二至五阶', en: '2-5', events: ['222','333','444','555'] },
-  { key: 'quiet', zh: '安静', en: 'Quiet', events: ['333bf','333fm','444bf','555bf','333mbf'] },
-  { key: 'blind', zh: '盲拧', en: 'Blind', events: ['333bf','444bf','555bf','333mbf'] },
-  { key: 'shape', zh: '异形', en: 'Other', events: ['clock','minx','pyram','skewb','sq1'] },
-];
 
 // ---- 单项视图行 ----
 interface ResultRow {
@@ -253,26 +242,7 @@ function AllResultsPageInner() {
     if (set.size === ACTIVE_EVENTS.length && ACTIVE_EVENTS.every(e => set.has(e))) return 'all'; // 全选折叠成短哨兵
     return RANK_EVENTS.filter(e => set.has(e)).join(',');
   };
-  const toggleEvent = (ev: string) => {
-    const cur = new Set(selectedSet);
-    if (cur.has(ev)) cur.delete(ev); else cur.add(ev);  // 可减到 0 → 空态(全灰),再点又选上
-    setQuery({ events: serializeEvents(cur), page: null });
-  };
-  const setEventsSet = (events: string[]) => setQuery({ events: serializeEvents(new Set(events)), page: null });
-  const selectAll = () => setEventsSet(ACTIVE_EVENTS);
-  const clearAll = () => setQuery({ events: '__none__', page: null });
-  const onToggleCancelled = (on: boolean) => {
-    const cur = new Set(selectedSet);
-    if (on) CANCELLED_EVENTS.forEach(e => cur.add(e)); else CANCELLED_EVENTS.forEach(e => cur.delete(e));
-    setEventsSet([...cur]);
-  };
-  const toggleCategory = (cat: typeof EVENT_CATEGORIES[0]) => {
-    const cur = new Set(selectedSet);
-    const allIn = cat.events.every(e => cur.has(e));
-    if (allIn) cat.events.forEach(e => cur.delete(e)); else cat.events.forEach(e => cur.add(e));
-    setQuery({ events: serializeEvents(cur), page: null });
-  };
-  const isCatActive = (cat: typeof EVENT_CATEGORIES[0]) => cat.events.every(e => selectedSet.has(e));
+  const setEventsSet = (events: Set<string>) => setQuery({ events: serializeEvents(events), page: null });
 
   // 单项控件。**写什么就是什么,不做 `v || null` 折叠** —— 下面「全参数常驻 URL」的 effect 覆盖的那批
   // 筛选参数(show/type/country/gender/basis/year/month/q)缺省时会被补成派生值,而派生值不一定等于
@@ -599,31 +569,11 @@ function AllResultsPageInner() {
       {/* 项目选择(共用):分类快选 + 多选事件条 */}
       <div className="wse-filters">
         <div className="wse-filter" style={{ minWidth: '100%' }}>
-          <div className="wse-events-bar">
-            <ClearButton variant="standalone" onClick={clearAll} isZh={isZh} />
-            <button type="button" className="wse-cat-btn" onClick={selectAll}>{tr({ zh: '全选', en: 'All' })}</button>
-            {EVENT_CATEGORIES.map(cat => (
-              <button
-                key={cat.key}
-                type="button"
-                onClick={() => toggleCategory(cat)}
-                className={isCatActive(cat) ? 'wse-cat-btn wse-cat-on' : 'wse-cat-btn'}
-              >
-                {tr(cat)}
-              </button>
-            ))}
-            <BoolToggle
-              value={includeCancelled}
-              onChange={onToggleCancelled}
-              label={tr({ zh: '废止项', en: 'Cancelled' })}
-            />
-          </div>
-          <WcaEventSelector
-            availableEvents={includeCancelled ? RANK_EVENT_SET : ACTIVE_EVENT_SET}
+          <WcaEventMultiSelector
+            availableEvents={RANK_EVENT_SET}
             selectedEvents={selectedSet}
-            onToggle={toggleEvent}
+            onChange={setEventsSet}
             isZh={isZh}
-            onlyAvailable
           />
         </div>
       </div>
