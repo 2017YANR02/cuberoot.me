@@ -44,6 +44,10 @@
       "node": "./dist/sq1_notation.js",
       "default": "./src/sq1_notation.ts"
     },
+    "./sq1-shapes": {
+      "node": "./dist/sq1_shapes.js",
+      "default": "./src/sq1_shapes.ts"
+    },
     "./sr-rotations": {
       "node": "./dist/sr_rotations.js",
       "default": "./src/sr_rotations.ts"

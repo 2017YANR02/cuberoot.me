@@ -47,6 +47,33 @@ function legacySlugifyCasePart(s: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+/** SQ1 CS 在本次 Squanmate 对齐前公开过的同义名称，仅用于旧链接落地。 */
+function legacySq1CsName(name: string): string {
+  return name
+    .replace(/\bLeft pawn\b/g, 'Left paw')
+    .replace(/\bRight pawn\b/g, 'Right paw')
+    .replace(/\bMushroom\b/g, 'Muffin')
+    .replace(/\bPaired edges\b/g, 'Pair');
+}
+
+function findSq1CsLegacyCase(
+  cases: AlgCase[],
+  raw: string,
+  puzzle: string,
+  set: string,
+): AlgCase | null {
+  if (puzzle.toLowerCase() !== 'sq1' || set.toLowerCase() !== 'cs') return null;
+  let decoded = raw.replace(/^#/, '');
+  try { decoded = decodeURIComponent(decoded); } catch { /* 半截转义:原样 */ }
+  const slug = slugifyCasePart(decoded);
+  const anchor = anchorKey(decoded);
+  return cases.find((c) => {
+    const legacyName = legacySq1CsName(c.name);
+    return legacyName !== c.name
+      && (slugifyCasePart(legacyName) === slug || anchorKey(legacyName) === anchor);
+  }) ?? null;
+}
+
 /** mark 的原始素材(剥 `SET-` 前缀);非 meta case 用 case 名。 */
 function caseSlugSource(set: string, c: AlgCase): string {
   const mark = c.meta?.ollcp;
@@ -134,7 +161,10 @@ export function resolveCaseSlug(
   try { key = decodeURIComponent(slug); } catch { /* 半截转义:原样 */ }
   key = key.trim().toLowerCase();
   const map = buildCaseSlugMap(cases, set);
-  return map.bySlug.get(key) ?? findCaseByHash(cases, slug, puzzle, set) ?? null;
+  return map.bySlug.get(key)
+    ?? findCaseByHash(cases, slug, puzzle, set)
+    ?? findSq1CsLegacyCase(cases, slug, puzzle, set)
+    ?? null;
 }
 
 /** case 名 → URL 片段。空格换 `-`(`#EG1-S-1` 比 `#EG1%20S%201` 好读),其余照常转义。 */
@@ -195,5 +225,6 @@ export function findCaseByHash(
   const key = anchorKey(raw);
   return cases.find(c => anchorKey(c.name) === key)
     ?? cases.find(c => anchorKey(primaryCaseName(puzzle, set, c)) === key)
+    ?? findSq1CsLegacyCase(cases, raw, puzzle, set)
     ?? null;
 }

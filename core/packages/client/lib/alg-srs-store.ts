@@ -17,6 +17,7 @@ import { getSessionToken } from './auth-store';
 import { persistItem } from './safe-storage';
 import { useTrainerMarks, markStatus } from './trainer-marks';
 import { splitCaseKey } from './trainer-case-key';
+import { isSq1CsTarget, normalizeStoredSq1CsRecord } from './sq1-cs-storage';
 import {
   scheduleNext, bumpDaily, mergeSrs, mergeDaily, summarizeSrs, dayKey, MASTER_DAYS,
   type SrsRecs, type SrsRec, type SrsGrade, type SrsDaily, type SrsPutItem, type SrsSetStat,
@@ -33,7 +34,19 @@ const loadLocalRecs = (p: string, s: string): SrsRecs => {
   if (typeof window === 'undefined') return {};
   try {
     const raw = localStorage.getItem(recsKey(p, s));
-    if (raw) return JSON.parse(raw) as SrsRecs;
+    if (raw) {
+      const parsed = JSON.parse(raw) as SrsRecs;
+      const normalized = normalizeStoredSq1CsRecord(
+        p,
+        s,
+        parsed,
+        (current, incoming) => current.t > incoming.t ? current : incoming,
+      );
+      if (isSq1CsTarget(p, s) && JSON.stringify(normalized) !== JSON.stringify(parsed)) {
+        persistItem(recsKey(p, s), JSON.stringify(normalized));
+      }
+      return normalized;
+    }
   } catch { /* 坏 JSON 当空 */ }
   return {};
 };
@@ -335,7 +348,19 @@ export function scanLocalSrsOverview(now: number): { overview: SrsOverview; recs
   for (const k of keys) {
     const ps = k.slice(prefix.length);
     try {
-      const recs = JSON.parse(localStorage.getItem(k) ?? '{}') as SrsRecs;
+      const parsed = JSON.parse(localStorage.getItem(k) ?? '{}') as SrsRecs;
+      const slash = ps.indexOf('/');
+      const puzzle = slash >= 0 ? ps.slice(0, slash) : '';
+      const setSlug = slash >= 0 ? ps.slice(slash + 1) : '';
+      const recs = normalizeStoredSq1CsRecord(
+        puzzle,
+        setSlug,
+        parsed,
+        (current, incoming) => current.t > incoming.t ? current : incoming,
+      );
+      if (isSq1CsTarget(puzzle, setSlug) && JSON.stringify(recs) !== JSON.stringify(parsed)) {
+        persistItem(k, JSON.stringify(recs));
+      }
       const stat = summarizeSrs(recs, now);
       if (stat.tracked > 0) { overview[ps] = stat; all[ps] = recs; }
     } catch { /* 坏 JSON 跳过 */ }
@@ -493,7 +518,13 @@ export async function loadSrsDashboard(now: number): Promise<SrsDashboardData> {
   const recs: Record<string, SrsRecs> = { ...local.recs };
   for (const s of data.sets ?? []) {
     const ps = `${s.puzzle}/${s.set}`;
-    recs[ps] = mergeSrs(local.recs[ps] ?? {}, s.recs ?? {}).merged;
+    const cloud = normalizeStoredSq1CsRecord(
+      s.puzzle,
+      s.set,
+      s.recs ?? {},
+      (current, incoming) => current.t > incoming.t ? current : incoming,
+    );
+    recs[ps] = mergeSrs(local.recs[ps] ?? {}, cloud).merged;
   }
   const overview: SrsOverview = {};
   for (const ps in recs) {

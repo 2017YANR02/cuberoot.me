@@ -14,6 +14,7 @@ import {
 } from '../utils/recon_helpers.js';
 import { is3x3TopLayerSet } from '@cuberoot/shared';
 import { canonicalize3x3WideMoves, startsWithYRotation } from '@cuberoot/shared/alg-notation';
+import { normalizeCaseNameForSet } from '../utils/sq1_cs.js';
 
 export const algRoutes = new Hono();
 
@@ -109,7 +110,7 @@ algRoutes.post('/alg/:puzzle/:set/:case/submit', async (c) => {
 
   const puzzle = c.req.param('puzzle');
   const setSlug = c.req.param('set');
-  const caseName = decodeURIComponent(c.req.param('case'));
+  const caseName = normalizeCaseNameForSet(puzzle, setSlug, decodeURIComponent(c.req.param('case')));
   const body = await c.req.json<{ alg?: string; notes?: string }>();
   const submittedAlg = (body.alg ?? '').trim();
   const alg = puzzle === '3x3' ? canonicalize3x3WideMoves(submittedAlg) : submittedAlg;
@@ -155,7 +156,10 @@ algRoutes.put('/alg/submissions/:id', async (c) => {
   if (ruleError) return c.json({ error: ruleError }, 400);
 
   // caseName 是 case 归属变更,只有 admin 能改;非 admin 即使提交也忽略。
-  const newCaseName = isAdmin && typeof body.caseName === 'string' ? body.caseName.trim() : null;
+  const requestedCaseName = isAdmin && typeof body.caseName === 'string' ? body.caseName.trim() : null;
+  const newCaseName = requestedCaseName === null
+    ? null
+    : normalizeCaseNameForSet(rows[0].puzzle, rows[0].set_slug, requestedCaseName);
   if (newCaseName !== null && !newCaseName) return c.json({ error: 'caseName cannot be empty' }, 400);
   if (newCaseName !== null && newCaseName.length > 128) return c.json({ error: 'caseName too long' }, 400);
 

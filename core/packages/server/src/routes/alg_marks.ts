@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
+import { normalizeCaseKeyForSet } from '../utils/sq1_cs.js';
 
 /**
  * /v1/alg/marks — 公式训练器 per-case 学习标记(不熟/已掌握)。
@@ -85,7 +86,9 @@ algMarksRoutes.get('/alg/marks/:puzzle/:set', async (c) => {
   );
   const marks: Record<string, { s: string; t: number }> = {};
   for (const r of rows) {
-    marks[r.case_key] = { s: r.status, t: Number(r.updated_at) };
+    const key = normalizeCaseKeyForSet(puzzle, setSlug, r.case_key);
+    const next = { s: r.status, t: Number(r.updated_at) };
+    if (!marks[key] || marks[key].t <= next.t) marks[key] = next;
   }
   return c.json({ marks });
 });
@@ -120,7 +123,7 @@ algMarksRoutes.put('/alg/marks/:puzzle/:set', async (c) => {
     // 时间戳只在 [0, now+5min] 内可信,其余按服务器时间(防客户端时钟漂移把 LWW 卡死)
     const tRaw = typeof it.t === 'number' ? it.t : now;
     const t = tRaw > 0 && tRaw <= now + 300_000 ? tRaw : now;
-    parsed.push({ k: it.k, s, t });
+    parsed.push({ k: normalizeCaseKeyForSet(puzzle, setSlug, it.k), s, t });
   }
 
   const clears = parsed.filter((p) => p.s === null);

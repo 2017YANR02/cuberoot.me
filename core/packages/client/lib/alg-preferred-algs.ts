@@ -7,6 +7,7 @@ import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import { getSessionToken } from './auth-store';
 import { persistItem } from './safe-storage';
+import { isSq1CsTarget, normalizeStoredSq1CsRecord } from './sq1-cs-storage';
 
 export interface PreferredAlgSnapshot {
   /** `${subgroup}|${name}::${orientation}` -> stable algorithm reference. */
@@ -76,7 +77,14 @@ function readLocal(puzzle: string, setSlug: string): PreferredAlgSnapshot | null
   if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem(storageKey(puzzle, setSlug));
-    return raw ? validSnapshot(JSON.parse(raw)) : null;
+    const snapshot = raw ? validSnapshot(JSON.parse(raw)) : null;
+    if (!snapshot) return null;
+    const items = normalizeStoredSq1CsRecord(puzzle, setSlug, snapshot.items);
+    const normalized = { ...snapshot, items };
+    if (isSq1CsTarget(puzzle, setSlug) && JSON.stringify(items) !== JSON.stringify(snapshot.items)) {
+      writeLocal(puzzle, setSlug, normalized);
+    }
+    return normalized;
   } catch {
     return null;
   }

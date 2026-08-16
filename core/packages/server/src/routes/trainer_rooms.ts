@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
+import { normalizeCaseKeysForSet } from '../utils/sq1_cs.js';
 import { checkRateLimit } from '../utils/recon_helpers.js';
 
 /**
@@ -107,8 +108,9 @@ trainerRoomsRoutes.post('/trainer/rooms', async (c) => {
   const setSlug = typeof body.set === 'string' ? body.set.trim() : '';
   if (!ID_RE.test(puzzle) || !ID_RE.test(setSlug)) return c.json({ error: 'invalid puzzle/set' }, 400);
   const order = body.order === 'seq' ? 'seq' : 'shuffle';
-  const keys = parseKeys(body.keys);
-  if (!keys) return c.json({ error: 'invalid keys' }, 400);
+  const parsedKeys = parseKeys(body.keys);
+  if (!parsedKeys) return c.json({ error: 'invalid keys' }, 400);
+  const keys = normalizeCaseKeysForSet(puzzle, setSlug, parsedKeys);
 
   const queue = order === 'seq' ? keys : shuffle(keys);
   // 起始游标:建房者若已单机复习到第 N 个,可带 start=N-1 让房间从第 N 个派发 —— 队列仍是全集

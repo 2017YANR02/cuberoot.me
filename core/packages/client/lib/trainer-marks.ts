@@ -9,6 +9,7 @@ import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import { getSessionToken } from './auth-store';
 import { persistItem } from './safe-storage';
+import { isSq1CsTarget, normalizeStoredSq1CsRecord } from './sq1-cs-storage';
 import { groupKeysBySet } from './trainer-case-key';
 import { tr } from '@/i18n/tr';
 
@@ -65,7 +66,19 @@ const loadLocal = (p: string, s: string): CaseMarks => {
   if (typeof window === 'undefined') return {};
   try {
     const raw = localStorage.getItem(marksKey(p, s));
-    if (raw) return JSON.parse(raw) as CaseMarks;
+    if (raw) {
+      const parsed = JSON.parse(raw) as CaseMarks;
+      const normalized = normalizeStoredSq1CsRecord(
+        p,
+        s,
+        parsed,
+        (current, incoming) => current.t > incoming.t ? current : incoming,
+      );
+      if (isSq1CsTarget(p, s) && JSON.stringify(normalized) !== JSON.stringify(parsed)) {
+        persistItem(marksKey(p, s), JSON.stringify(normalized));
+      }
+      return normalized;
+    }
   } catch { /* ignore */ }
   return {};
 };
@@ -409,7 +422,19 @@ export function scanLocalOverview(): MarkOverview {
   for (const k of raw) {
     const ps = k.slice(prefix.length); // `${puzzle}/${set}`
     try {
-      const marks = JSON.parse(localStorage.getItem(k) ?? '{}') as CaseMarks;
+      const parsed = JSON.parse(localStorage.getItem(k) ?? '{}') as CaseMarks;
+      const slash = ps.indexOf('/');
+      const puzzle = slash >= 0 ? ps.slice(0, slash) : '';
+      const setSlug = slash >= 0 ? ps.slice(slash + 1) : '';
+      const marks = normalizeStoredSq1CsRecord(
+        puzzle,
+        setSlug,
+        parsed,
+        (current, incoming) => current.t > incoming.t ? current : incoming,
+      );
+      if (isSq1CsTarget(puzzle, setSlug) && JSON.stringify(marks) !== JSON.stringify(parsed)) {
+        persistItem(k, JSON.stringify(marks));
+      }
       const sum = summarizeMarks(marks);
       if (sum.learning || sum.mastered) out[ps] = sum;
     } catch { /* 坏 JSON 跳过 */ }

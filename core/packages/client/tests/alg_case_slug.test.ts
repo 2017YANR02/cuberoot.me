@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import type { AlgCase } from '@cuberoot/shared';
 import {
-  buildCaseSlugMap, caseSlugBase, resolveCaseSlug, slugifyCasePart,
+  buildCaseSlugMap, caseSlugBase, findCaseByHash, resolveCaseSlug, slugifyCasePart,
 } from '@/lib/alg_case_link';
 import { OLL_NAME_BY_NUMBER } from '@/lib/alg_case_display';
 
@@ -93,5 +93,32 @@ describe('别的 set 没被改到', () => {
   it('有 mark 的仍优先用 mark(剥 SET- 前缀)', () => {
     const c = mk(1, 'ZBLL U 3', { meta: { ollcp: 'ZBLL-UR3' } } as Partial<AlgCase>);
     expect(caseSlugBase('zbll', c)).toBe('ur3');
+  });
+});
+
+describe('SQ1 CS 历史名称链接', () => {
+  const cases = [
+    mk(5788, 'Right pawn / Left pawn', { subgroup: '3 Slices' }),
+    mk(5789, 'Left pawn / Right pawn', { subgroup: '3 Slices' }),
+    mk(5790, 'Mushroom / Mushroom', { subgroup: '3 Slices' }),
+    mk(5819, 'Right 5-1 / Paired edges', { subgroup: '4 Slices' }),
+  ];
+
+  it('旧名、新名和稳定 ID 都落回原 case，不会串到对向 case', () => {
+    expect(resolveCaseSlug(cases, 'right-pawn---left-pawn', 'sq1', 'cs')?.id).toBe(5788);
+    expect(resolveCaseSlug(cases, 'right-paw---left-paw', 'sq1', 'cs')?.id).toBe(5788);
+    expect(resolveCaseSlug(cases, 'left-paw---right-paw', 'sq1', 'cs')?.id).toBe(5789);
+    expect(resolveCaseSlug(cases, 'case-5788', 'sq1', 'cs')?.id).toBe(5788);
+    expect(findCaseByHash(cases, '#Right-paw-%2F-Left-paw', 'sq1', 'cs')?.id).toBe(5788);
+  });
+
+  it('Muffin 与 Pair 的旧链接继续可用', () => {
+    expect(resolveCaseSlug(cases, 'muffin---muffin', 'sq1', 'cs')?.id).toBe(5790);
+    expect(resolveCaseSlug(cases, 'right-5-1---pair', 'sq1', 'cs')?.id).toBe(5819);
+  });
+
+  it('同名文本不会影响其他 puzzle 或 set', () => {
+    expect(resolveCaseSlug(cases, 'right-paw---left-paw', 'sq1', 'csp')).toBeNull();
+    expect(resolveCaseSlug(cases, 'right-paw---left-paw', '3x3', 'cs')).toBeNull();
   });
 });

@@ -3,6 +3,7 @@ import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import { persistItem } from './safe-storage';
 import { caseKey } from './trainer-case-key';
+import { isSq1CsTarget, normalizeStoredSq1CsKeys } from './sq1-cs-storage';
 
 export interface TimeAttackOrderSnapshot {
   keys: string[];
@@ -92,10 +93,16 @@ export function readLocalTimeAttackOrder(puzzle: string, setSlug: string, scope:
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<TimeAttackOrderSnapshot>;
     if (!Array.isArray(parsed.keys) || typeof parsed.updatedAt !== 'number') return null;
-    return {
-      keys: parsed.keys.filter((key): key is string => typeof key === 'string'),
+    const snapshot = {
+      keys: normalizeStoredSq1CsKeys(
+        puzzle,
+        setSlug,
+        parsed.keys.filter((key): key is string => typeof key === 'string'),
+      ),
       updatedAt: parsed.updatedAt,
     };
+    if (isSq1CsTarget(puzzle, setSlug)) writeLocalTimeAttackOrder(puzzle, setSlug, scope, snapshot);
+    return snapshot;
   } catch {
     return null;
   }
