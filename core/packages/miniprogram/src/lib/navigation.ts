@@ -1,12 +1,12 @@
 import { resolveWebRoute } from './web-routes';
+import { createPlatformActionGuard } from './platform-action-guard';
 
 interface WebsitePageNavigationOptions {
   failureMessage: string;
   invalidMessage?: string;
 }
 
-const NAVIGATION_LOCK_TIMEOUT_MS = 5_000;
-const activeNavigations = new WeakMap<object, object>();
+const websiteNavigationGuard = createPlatformActionGuard();
 
 function showNavigationMessage(title: string): void {
   try {
@@ -26,20 +26,14 @@ export function openWebsitePageOnce(
     if (options.invalidMessage) showNavigationMessage(options.invalidMessage);
     return false;
   }
-  if (activeNavigations.has(owner)) return false;
+  const attempt = websiteNavigationGuard.begin(owner);
+  if (attempt === null) return false;
 
-  const attempt = {};
-  activeNavigations.set(owner, attempt);
-  let releaseTimer: number | undefined;
-  const release = () => {
-    if (releaseTimer !== undefined) clearTimeout(releaseTimer);
-    if (activeNavigations.get(owner) === attempt) activeNavigations.delete(owner);
-  };
+  const release = () => websiteNavigationGuard.settle(owner, attempt);
   const fail = () => {
-    release();
+    if (!release()) return;
     showNavigationMessage(options.failureMessage);
   };
-  releaseTimer = setTimeout(release, NAVIGATION_LOCK_TIMEOUT_MS);
 
   try {
     wx.navigateTo({
