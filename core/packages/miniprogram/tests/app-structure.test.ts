@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import appConfig from '../src/app.json';
 import sitemapConfig from '../src/sitemap.json';
+import themeConfig from '../src/theme.json';
 
 declare global {
   interface ImportMeta {
@@ -41,6 +42,45 @@ describe('mini program app structure', () => {
       expect(item.text.trim()).not.toBe('');
       expect(pagePaths.has(item.pagePath)).toBe(true);
     }
+  });
+
+  it('keeps native chrome synchronized with the system color scheme', () => {
+    expect(appConfig.darkmode).toBe(true);
+    expect(appConfig.themeLocation).toBe('theme.json');
+    expect(themeConfig).toEqual({
+      light: {
+        backgroundColor: '#fafafa',
+        backgroundTextStyle: 'dark',
+        navigationBarBackgroundColor: '#fafafa',
+        navigationBarTextStyle: 'black',
+        tabBarColor: '#737373',
+        tabBarSelectedColor: '#c15f3c',
+        tabBarBackgroundColor: '#fafafa',
+        tabBarBorderStyle: 'white',
+      },
+      dark: {
+        backgroundColor: '#111111',
+        backgroundTextStyle: 'light',
+        navigationBarBackgroundColor: '#111111',
+        navigationBarTextStyle: 'white',
+        tabBarColor: '#a3a3a3',
+        tabBarSelectedColor: '#d47a58',
+        tabBarBackgroundColor: '#111111',
+        tabBarBorderStyle: 'black',
+      },
+    });
+    expect(appConfig.window).toMatchObject({
+      backgroundColor: '@backgroundColor',
+      backgroundTextStyle: '@backgroundTextStyle',
+      navigationBarBackgroundColor: '@navigationBarBackgroundColor',
+      navigationBarTextStyle: '@navigationBarTextStyle',
+    });
+    expect(appConfig.tabBar).toMatchObject({
+      color: '@tabBarColor',
+      selectedColor: '@tabBarSelectedColor',
+      backgroundColor: '@tabBarBackgroundColor',
+      borderStyle: '@tabBarBorderStyle',
+    });
   });
 
   it('only exposes public entry pages to WeChat search', () => {

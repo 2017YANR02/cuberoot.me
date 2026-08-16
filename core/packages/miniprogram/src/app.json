@@ -5,18 +5,20 @@
     "pages/account/index",
     "pages/web/index"
   ],
+  "darkmode": true,
+  "themeLocation": "theme.json",
   "window": {
-    "backgroundColor": "#fafafa",
-    "backgroundTextStyle": "dark",
-    "navigationBarBackgroundColor": "#fafafa",
-    "navigationBarTextStyle": "black",
+    "backgroundColor": "@backgroundColor",
+    "backgroundTextStyle": "@backgroundTextStyle",
+    "navigationBarBackgroundColor": "@navigationBarBackgroundColor",
+    "navigationBarTextStyle": "@navigationBarTextStyle",
     "navigationBarTitleText": "CubeRoot 魔方根"
   },
   "tabBar": {
-    "color": "#737373",
-    "selectedColor": "#c15f3c",
-    "backgroundColor": "#fafafa",
-    "borderStyle": "white",
+    "color": "@tabBarColor",
+    "selectedColor": "@tabBarSelectedColor",
+    "backgroundColor": "@tabBarBackgroundColor",
+    "borderStyle": "@tabBarBorderStyle",
     "list": [
       { "pagePath": "pages/timer/index", "text": "计时" },
       { "pagePath": "pages/tools/index", "text": "发现" },
