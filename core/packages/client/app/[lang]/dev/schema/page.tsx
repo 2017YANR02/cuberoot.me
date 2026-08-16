@@ -23,7 +23,7 @@ interface Table {
 
 type DomainKey =
   | 'mirror' | 'derived' | 'scramble' | 'recon' | 'alg'
-  | 'comp' | 'studio' | 'commerce' | 'community';
+  | 'comp' | 'account' | 'studio' | 'commerce' | 'community';
 
 const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
   { key: 'mirror', dot: '#5BA8FF', name: { zh: 'WCA 镜像', en: 'WCA mirror' }, sub: { zh: '每日开发者导出离线重建', en: 'rebuilt offline from the daily export' } },
@@ -32,6 +32,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
   { key: 'recon', dot: '#E879A6', name: { zh: '复盘 & 成绩变更', en: 'Recon & changes' }, sub: { zh: '还原 / 变更链 / 直播成绩', en: 'reconstructions & change log' } },
   { key: 'alg', dot: '#D97757', name: { zh: '公式库', en: 'Algorithms' }, sub: { zh: 'alg_sets / alg_cases 公式', en: 'alg sets & cases' } },
   { key: 'comp', dot: '#4A90D9', name: { zh: '比赛 & 缓存 & 状态机', en: 'Comp & caches' }, sub: { zh: '关注 / 直播缓存 / dump 增量', en: 'follows, live cache, dump state' } },
+  { key: 'account', dot: 'var(--accent)', name: { zh: '账号与登录', en: 'Accounts & auth' }, sub: { zh: '用户 / 身份 / 验证码 / 单次票据', en: 'users, identities, codes, single-use tickets' } },
   { key: 'studio', dot: '#67C18E', name: { zh: '用户产物', en: 'User artifacts' }, sub: { zh: '计时 / 训练 / 绘图', en: 'timer, trainer, paint' } },
   { key: 'commerce', dot: '#A78BFA', name: { zh: '会员 & 赞助 & 反馈', en: 'Commerce & feedback' }, sub: { zh: '订阅 / 致谢 / 反馈', en: 'membership, sponsors, feedback' } },
   { key: 'community', dot: '#4FC3DC', name: { zh: '社区内容 & 站务', en: 'Community & ops' }, sub: { zh: '长文 / wiki / 导航 / runbook', en: 'articles, wiki, nav, runbook' } },
@@ -138,6 +139,12 @@ const TABLES: Table[] = [
   { name: 'watched_pr_baseline', domain: 'comp', origin: '0024', purpose: { zh: '监控 PR 基线快照', en: 'PR baseline snapshot for monitoring' } },
   { name: 'cn_comp_zh', domain: 'comp', origin: '0012', evolved: [44], purpose: { zh: '中国比赛中文地点 + 报名时间缓存', en: 'Cached Chinese comp localisation + registration times' } },
   { name: 'wca_users', domain: 'comp', origin: 'snapshot', purpose: { zh: 'WCA OAuth 登录用户(身份 / 头像 / admin)', en: 'WCA OAuth users (identity, avatar, admin flag)' } },
+
+  // ── accounts & auth ────────────────────────────────────
+  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
+  { name: 'auth_identities', domain: 'account', origin: '0064', evolved: [78, 103], purpose: { zh: '账号与外部身份的唯一映射；微信小程序与网站扫码登录共用 UnionID', en: 'Unique account-to-provider identity mappings; Mini Program and website QR sign-in share the Weixin UnionID' } },
+  { name: 'auth_codes', domain: 'account', origin: '0064', purpose: { zh: '邮箱与手机登录、绑定使用的短时验证码及核销状态', en: 'Short-lived email and phone verification codes with consumption state' } },
+  { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', purpose: { zh: '小程序原生会话换取网页会话的 90 秒单次票据，只保存 SHA-256', en: '90-second single-use tickets that bridge Mini Program sessions into website sessions; only SHA-256 hashes are stored' } },
 
   // ── user artifacts ──────────────────────────────────────
   { name: 'timer_backups', domain: 'studio', origin: '0020', purpose: { zh: '计时器成绩云备份(单快照覆盖)', en: 'Cloud backup of timer sessions (single overwrite snapshot)' }, cols: [
@@ -417,6 +424,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 136, slug: 'alg_f2l_setup_required', desc: { zh: '要求 F2L 与非标 F2L case 保存非空且可解析的打乱，避免缩略图退回不完整的五面投影。', en: 'Require F2L and Advanced F2L cases to store a non-empty, parseable setup so thumbnails never fall back to incomplete five-face projections.' } },
   { n: 137, slug: 'sq1_cs_squanmate_alignment', desc: { zh: '把 SQ1 形状复原的 170 个 case 全量对齐 Squanmate，并迁移受影响的训练状态与公式偏好键。', en: 'Align all 170 SQ1 Cube Shape cases with Squanmate and migrate affected trainer-state and algorithm-preference keys.' } },
   { n: 138, slug: 'recon_generic_scramble', desc: { zh: '复盘增加普通打乱字段，用于既非 WCA 真实打乱也非最优打乱的输入。', en: 'Add a generic reconstruction scramble field for input that is neither a WCA real scramble nor an optimal scramble.' } },
+  { n: 139, slug: 'auth_web_session_tickets', desc: { zh: '新增短时单次票据表，让小程序原生登录态安全衔接网站登录态；只保存 SHA-256，并在核销时原子删除。', en: 'Add short-lived single-use tickets to bridge Mini Program and website sessions safely; store only SHA-256 hashes and delete atomically on exchange.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
@@ -655,7 +663,7 @@ export default function SchemaPage() {
           })}</p>
           <ol className="schema-mig-list">
             {MIGRATIONS.map((m) => {
-              const latest = m.n === MIGRATIONS.length;
+              const latest = m.n === MIGRATIONS[MIGRATIONS.length - 1]?.n;
               return (
                 <li key={m.n} className={`schema-mig${latest ? ' is-latest' : ''}`}>
                   <span className="schema-mig-num">{String(m.n).padStart(4, '0')}</span>

@@ -46,10 +46,18 @@ export function listWebTools(): WebToolLink[] {
   }));
 }
 
-export function resolveWebRoute(key: unknown): { title: string; url: string } | null {
+export function resolveWebRoute(key: unknown): { title: string; path: string; url: string } | null {
   if (typeof key !== 'string' || !Object.prototype.hasOwnProperty.call(WEB_ROUTES, key)) {
     return null;
   }
   const route = WEB_ROUTES[key as WebRouteKey];
-  return { title: route.title, url: `${SITE_ORIGIN}${route.path}` };
+  return { title: route.title, path: route.path, url: `${SITE_ORIGIN}${route.path}` };
+}
+
+export function createWebSessionHandoffUrl(path: string, ticket: string): string {
+  if (!path.startsWith('/') || path.startsWith('//') || !/^[A-Za-z0-9_-]{43}$/.test(ticket)) {
+    throw new Error('invalid Mini Program web session handoff');
+  }
+  const fragment = `ticket=${ticket}&next=${encodeURIComponent(path)}`;
+  return `${SITE_ORIGIN}/auth/miniprogram#${fragment}`;
 }

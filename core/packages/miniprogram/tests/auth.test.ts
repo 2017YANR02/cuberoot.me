@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   ApiError,
+  createWebSessionTicket,
   getStoredSession,
   loginErrorMessage,
   loginWithWechat,
@@ -58,6 +59,29 @@ describe('mini program authentication', () => {
     expect(loginErrorMessage(new ApiError(503, 'secret'))).toContain('服务端');
     expect(loginErrorMessage(new ApiError(0, 'network'))).toContain('网络');
     expect(loginErrorMessage(new Error('unknown'))).toBe('登录失败，请稍后重试');
+  });
+
+  it('requests a short-lived web session ticket with the Mini Program JWT', async () => {
+    const token = 't'.repeat(20);
+    vi.stubGlobal('wx', {
+      request(options: {
+        header: Record<string, string>;
+        success(result: { statusCode: number; data: unknown }): void;
+        url: string;
+      }) {
+        expect(options.url).toBe('https://api.cuberoot.me/v1/auth/web-session/ticket');
+        expect(options.header.Authorization).toBe(`Bearer ${token}`);
+        options.success({
+          statusCode: 200,
+          data: { ticket: 'A'.repeat(43), expiresIn: 90 },
+        });
+      },
+    });
+
+    await expect(createWebSessionTicket({
+      token,
+      user: { name: 'CubeRoot', wcaId: null },
+    })).resolves.toEqual({ ticket: 'A'.repeat(43), expiresIn: 90 });
   });
 
   it('does not restore a session that was cleared during validation', async () => {

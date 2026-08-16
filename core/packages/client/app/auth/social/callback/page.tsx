@@ -6,11 +6,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
 import { applySession, getSessionToken, markWcaLinkPrompt } from '@/lib/auth-store';
 import { loginSocial, linkSocial, SOCIAL_PROVIDERS, type SocialProvider } from '@/lib/account-api';
 import { SOCIAL_RETURN_KEY } from '@/lib/social-auth';
 import { tr } from '@/i18n/tr';
+import { AuthCallbackStatus } from '../../_components/AuthCallbackStatus';
 
 // StrictMode 下 useEffect 会双跑;单次闸门避免 code 被消费两次(授权码单次有效)。
 let processed = false;
@@ -18,13 +18,6 @@ let processed = false;
 export default function SocialCallbackPage() {
   const router = useRouter();
   const [errorMsg, setErrorMsg] = useState('');
-
-  useEffect(() => {
-    const html = document.documentElement;
-    const prev = html.style.overflow;
-    html.style.overflow = 'hidden';
-    return () => { html.style.overflow = prev; };
-  }, []);
 
   useEffect(() => {
     if (processed) return;
@@ -79,36 +72,10 @@ export default function SocialCallbackPage() {
     }
   }
 
-  const overlayStyle: React.CSSProperties = {
-    position: 'fixed', inset: 0, zIndex: 9999,
-    display: 'flex', justifyContent: 'center', alignItems: 'center',
-    background: 'rgba(0,0,0,0.45)',
-    backdropFilter: 'blur(3px)',
-    WebkitBackdropFilter: 'blur(3px)',
-    color: '#e0e0e0',
-    fontFamily: "'Inter', Arial, sans-serif",
-  };
-
   return (
-    <>
-      <div style={overlayStyle}>
-        {errorMsg ? (
-          <div style={{ color: '#f87171', fontSize: '1.1rem', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <X size={18} /> {errorMsg}
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              display: 'inline-block', width: 24, height: 24,
-              border: '3px solid rgba(255,255,255,0.2)',
-              borderTopColor: '#60a5fa', borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite', marginBottom: 12,
-            }} />
-            <div>{tr({ zh: '正在登录...', en: 'Signing in...' })}</div>
-          </div>
-        )}
-      </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </>
+    <AuthCallbackStatus
+      pendingLabel={tr({ zh: '正在登录...', en: 'Signing in...' })}
+      error={errorMsg}
+    />
   );
 }

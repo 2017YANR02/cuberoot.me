@@ -5,10 +5,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
 import { apiUrl } from '@/lib/api-base';
 import { persistAuthItem, useAuthStore, applySession } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
+import { AuthCallbackStatus } from '../_components/AuthCallbackStatus';
 
 const ME_URL = 'https://www.worldcubeassociation.org/api/v0/me';
 
@@ -18,15 +18,6 @@ let callbackProcessed = false;
 export default function AuthCallbackPage() {
   const router = useRouter();
   const [errorMsg, setErrorMsg] = useState('');
-
-  // This page is a full-screen overlay over a background iframe — the outer
-  // document must not scroll. Restore on unmount (client-nav back to return URL).
-  useEffect(() => {
-    const html = document.documentElement;
-    const prev = html.style.overflow;
-    html.style.overflow = 'hidden';
-    return () => { html.style.overflow = prev; };
-  }, []);
 
   useEffect(() => {
     if (callbackProcessed) return;
@@ -158,37 +149,10 @@ export default function AuthCallbackPage() {
     }
   }
 
-  const overlayStyle: React.CSSProperties = {
-    position: 'fixed', inset: 0, zIndex: 9999,
-    display: 'flex', justifyContent: 'center', alignItems: 'center',
-    background: 'rgba(0,0,0,0.45)',
-    backdropFilter: 'blur(3px)',
-    WebkitBackdropFilter: 'blur(3px)',
-    color: '#e0e0e0',
-    fontFamily: "'Inter', Arial, sans-serif",
-  };
-
   return (
-    <>
-      <div style={overlayStyle}>
-        {errorMsg ? (
-          <div style={{ color: '#f87171', fontSize: '1.1rem', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <X size={18} /> {errorMsg}
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              display: 'inline-block', width: 24, height: 24,
-              border: '3px solid rgba(255,255,255,0.2)',
-              borderTopColor: '#60a5fa', borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite', marginBottom: 12,
-            }} />
-            <div>{tr({ zh: '正在登录 WCA...', en: 'Signing in to WCA...'
-            })}</div>
-          </div>
-        )}
-      </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </>
+    <AuthCallbackStatus
+      pendingLabel={tr({ zh: '正在登录 WCA...', en: 'Signing in to WCA...' })}
+      error={errorMsg}
+    />
   );
 }

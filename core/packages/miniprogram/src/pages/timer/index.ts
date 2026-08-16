@@ -9,7 +9,7 @@ Page({
   data: createWebViewPageData(),
 
   onLoad() {
-    openWebRoute(this, 'timer');
+    void openWebRoute(this, 'timer');
   },
 
   handleWebViewError() {
