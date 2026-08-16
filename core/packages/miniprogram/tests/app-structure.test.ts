@@ -176,6 +176,10 @@ describe('mini program app structure', () => {
     expect(accountTemplate).toMatch(/class="account-sync-dot"\s+aria-hidden="true"/);
     expect(accountTemplate).toMatch(/class="account-link-arrow"\s+aria-hidden="true"/);
     expect(sharedTemplate).toMatch(/class="web-status-spinner"[^>]*aria-hidden="true"/);
+    expect(sharedTemplate).toContain('aria-role="status"');
+    expect(sharedTemplate).toContain('aria-live="polite"');
+    expect(sharedTemplate).toContain('aria-atomic="true"');
+    expect(sharedTemplate).toContain('aria-busy="{{!errorTitle}}"');
   });
 
   it('keeps shared native buttons large enough for touch', () => {

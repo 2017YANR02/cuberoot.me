@@ -1,9 +1,11 @@
 <template name="web-route-view">
   <web-view wx:if="{{src}}" src="{{src}}" data-attempt="{{viewAttempt}}" binderror="handleWebViewError"></web-view>
   <view wx:else class="page web-status">
-    <view class="web-status-spinner" wx:if="{{!errorTitle}}" aria-hidden="true"></view>
-    <text class="page-title">{{errorTitle || loadingTitle}}</text>
-    <text class="page-intro" wx:if="{{errorMessage}}">{{errorMessage}}</text>
+    <view aria-role="status" aria-live="polite" aria-atomic="true" aria-busy="{{!errorTitle}}">
+      <view class="web-status-spinner" wx:if="{{!errorTitle}}" aria-hidden="true"></view>
+      <text class="page-title">{{errorTitle || loadingTitle}}</text>
+      <text class="page-intro" wx:if="{{errorMessage}}">{{errorMessage}}</text>
+    </view>
     <button class="text-button retry-button" hover-class="press-feedback" wx:if="{{canRetry}}" bindtap="retry">重新打开</button>
   </view>
 </template>
