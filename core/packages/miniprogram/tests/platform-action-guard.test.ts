@@ -14,8 +14,10 @@ describe('platform action guard', () => {
     const attempt = guard.begin(owner);
 
     expect(attempt).toBe(1);
+    expect(guard.isActive(owner)).toBe(true);
     expect(guard.begin(owner)).toBeNull();
     expect(guard.settle(owner, attempt!)).toBe(true);
+    expect(guard.isActive(owner)).toBe(false);
     expect(guard.begin(owner)).toBe(2);
   });
 
@@ -61,6 +63,7 @@ describe('platform action guard', () => {
     const owner = {};
 
     expect(guard.begin(owner)).toBeNull();
+    expect(guard.isActive(owner)).toBe(false);
   });
 
   it('does not start an action when the recovery timer fires synchronously', () => {

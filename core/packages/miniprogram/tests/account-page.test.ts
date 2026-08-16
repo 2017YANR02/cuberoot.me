@@ -247,6 +247,23 @@ describe('mini program account page', () => {
     }));
   });
 
+  it('shows feedback when the privacy interaction cannot establish a recovery guard', async () => {
+    const openPrivacyContract = vi.fn();
+    const page = await loadPage({ openPrivacyContract });
+    const timer = vi.spyOn(globalThis, 'setTimeout').mockImplementation(() => {
+      throw new Error('timer unavailable');
+    });
+
+    try {
+      page.openPrivacy();
+      expect(openPrivacyContract).not.toHaveBeenCalled();
+      expect(page.data.statusError).toBe(true);
+      expect(page.data.status).toContain('隐私说明暂时无法打开');
+    } finally {
+      timer.mockRestore();
+    }
+  });
+
   it('clears the Mini Program session before opening the cross-platform logout route', async () => {
     const removeStorageSync = vi.fn();
     const navigateTo = vi.fn(() => {
@@ -326,6 +343,25 @@ describe('mini program account page', () => {
     expect(page.data.loggedIn).toBe(true);
     expect(page.data.status).toContain('退出确认暂时无法打开');
     expect(removeStorageSync).not.toHaveBeenCalled();
+  });
+
+  it('shows feedback when logout cannot establish a recovery guard', async () => {
+    const showModal = vi.fn();
+    const page = await loadPage({ showModal });
+    page.setData({ loggedIn: true });
+    const timer = vi.spyOn(globalThis, 'setTimeout').mockImplementation(() => {
+      throw new Error('timer unavailable');
+    });
+
+    try {
+      page.logout();
+      expect(showModal).not.toHaveBeenCalled();
+      expect(page.data.loggedIn).toBe(true);
+      expect(page.data.statusError).toBe(true);
+      expect(page.data.status).toContain('退出确认暂时无法打开');
+    } finally {
+      timer.mockRestore();
+    }
   });
 
   it('opens only one logout confirmation until the current prompt settles', async () => {

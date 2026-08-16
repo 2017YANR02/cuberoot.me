@@ -160,4 +160,22 @@ describe('mini program website navigation', () => {
     expect(() => openWebsitePageOnce({}, 'timer', { failureMessage: '打开失败' }))
       .not.toThrow();
   });
+
+  it('reports a runtime guard failure without mistaking duplicate taps for errors', () => {
+    const navigateTo = vi.fn();
+    const showToast = vi.fn();
+    vi.stubGlobal('wx', { navigateTo, showToast });
+    const owner = {};
+    const timer = vi.spyOn(globalThis, 'setTimeout').mockImplementation(() => {
+      throw new Error('timer unavailable');
+    });
+
+    try {
+      expect(openWebsitePageOnce(owner, 'timer', { failureMessage: '打开失败' })).toBe(false);
+      expect(navigateTo).not.toHaveBeenCalled();
+      expect(showToast).toHaveBeenCalledWith({ icon: 'none', title: '打开失败' });
+    } finally {
+      timer.mockRestore();
+    }
+  });
 });

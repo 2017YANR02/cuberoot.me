@@ -30,8 +30,12 @@ export function openWebsitePageOnce(
     if (options.invalidMessage) showNavigationMessage(options.invalidMessage);
     return false;
   }
+  if (websiteNavigationGuard.isActive(owner)) return false;
   const attempt = websiteNavigationGuard.begin(owner);
-  if (attempt === null) return false;
+  if (attempt === null) {
+    showNavigationMessage(options.failureMessage);
+    return false;
+  }
 
   const release = () => websiteNavigationGuard.settle(owner, attempt);
   const fail = () => {
