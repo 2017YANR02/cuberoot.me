@@ -5,6 +5,10 @@ const MAX_AVATAR_LENGTH = 2048;
 const MAX_DISPLAY_NAME_LENGTH = 200;
 const MAX_SESSION_TOKEN_LENGTH = 4096;
 const MAX_WCA_ID_LENGTH = 20;
+const REQUEST_TIMEOUT_MS = 12_000;
+const WEB_SESSION_REQUEST_TIMEOUT_MS = 5_000;
+const HARD_TIMEOUT_GRACE_MS = 1_000;
+const WECHAT_LOGIN_TIMEOUT_MS = 10_000;
 
 export interface SessionUser {
   uid?: number;
@@ -77,48 +81,100 @@ function decodeSession(value: unknown): SessionData | null {
 
 function requestJson<T>(
   path: string,
-  options: { method?: 'GET' | 'POST'; body?: WechatMiniprogram.IAnyObject; token?: string } = {},
+  options: {
+    method?: 'GET' | 'POST';
+    body?: WechatMiniprogram.IAnyObject;
+    timeoutMs?: number;
+    token?: string;
+  } = {},
 ): Promise<T> {
   return new Promise((resolve, reject) => {
+    let requestTask: WechatMiniprogram.RequestTask | undefined;
+    let settled = false;
+    const timeoutMs = options.timeoutMs ?? REQUEST_TIMEOUT_MS;
     const header: Record<string, string> = { 'Content-Type': 'application/json' };
     if (options.token) header.Authorization = `Bearer ${options.token}`;
-    wx.request({
-      url: `${API_ORIGIN}${path}`,
-      method: options.method ?? 'GET',
-      data: options.body,
-      header,
-      timeout: 12_000,
-      success(response) {
-        const body = response.data as Record<string, unknown> | undefined;
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-          resolve(response.data as T);
-          return;
-        }
-        reject(new ApiError(
-          response.statusCode,
-          typeof body?.error === 'string' ? body.error : `HTTP ${response.statusCode}`,
-        ));
-      },
-      fail(error) {
-        reject(new ApiError(0, error.errMsg || 'network error'));
-      },
-    });
+    const hardTimeout = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      requestTask?.abort();
+      reject(new ApiError(0, 'request timed out'));
+    }, timeoutMs + HARD_TIMEOUT_GRACE_MS);
+    const settle = (action: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(hardTimeout);
+      action();
+    };
+
+    try {
+      requestTask = wx.request({
+        url: `${API_ORIGIN}${path}`,
+        method: options.method ?? 'GET',
+        data: options.body,
+        header,
+        timeout: timeoutMs,
+        success(response) {
+          settle(() => {
+            const body = response.data as Record<string, unknown> | undefined;
+            if (response.statusCode >= 200 && response.statusCode < 300) {
+              resolve(response.data as T);
+              return;
+            }
+            reject(new ApiError(
+              response.statusCode,
+              typeof body?.error === 'string' ? body.error : `HTTP ${response.statusCode}`,
+            ));
+          });
+        },
+        fail(error) {
+          settle(() => reject(new ApiError(0, error.errMsg || 'network error')));
+        },
+      });
+    } catch (error) {
+      settle(() => reject(new ApiError(
+        0,
+        error instanceof Error ? error.message : 'request failed',
+      )));
+    }
   });
 }
 
 function wechatLoginCode(): Promise<string> {
   return new Promise((resolve, reject) => {
-    wx.login({
-      timeout: 10_000,
-      success(result) {
-        const code = result.code?.trim();
-        if (code) resolve(code);
-        else reject(new ApiError(0, 'wx.login returned no code'));
-      },
-      fail(error) {
-        reject(new ApiError(0, error.errMsg || 'wx.login failed'));
-      },
-    });
+    let settled = false;
+    const hardTimeout = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new ApiError(0, 'wx.login timed out'));
+    }, WECHAT_LOGIN_TIMEOUT_MS + HARD_TIMEOUT_GRACE_MS);
+    const settle = (action: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(hardTimeout);
+      action();
+    };
+
+    try {
+      wx.login({
+        timeout: WECHAT_LOGIN_TIMEOUT_MS,
+        success(result) {
+          settle(() => {
+            const code = result.code?.trim();
+            if (code) resolve(code);
+            else reject(new ApiError(0, 'wx.login returned no code'));
+          });
+        },
+        fail(error) {
+          settle(() => reject(new ApiError(0, error.errMsg || 'wx.login failed')));
+        },
+      });
+    } catch (error) {
+      settle(() => reject(new ApiError(
+        0,
+        error instanceof Error ? error.message : 'wx.login failed',
+      )));
+    }
   });
 }
 
@@ -167,6 +223,7 @@ export async function validateStoredSession(session: SessionData): Promise<Sessi
 export async function createWebSessionTicket(session: SessionData): Promise<WebSessionTicket> {
   const response = await requestJson<unknown>('/auth/web-session/ticket', {
     method: 'POST',
+    timeoutMs: WEB_SESSION_REQUEST_TIMEOUT_MS,
     token: session.token,
   });
   if (response === null || typeof response !== 'object') {
@@ -188,6 +245,7 @@ export function loginErrorMessage(error: unknown): string {
   if (error.status === 409) return '暂未获得 UnionID，请先完成开放平台绑定';
   if (error.status === 503) return '服务端还未配置小程序密钥';
   if (error.status === 401) return '微信登录码已失效，请重试';
+  if (error.status === 0 && error.message.includes('timed out')) return '网络连接超时，请重试';
   if (error.status === 0) return '网络连接失败，请检查网络';
   return '登录失败，请稍后重试';
 }
