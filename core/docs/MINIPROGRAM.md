@@ -21,6 +21,8 @@
 | 网站和 API 域名 | `packages/miniprogram/src/lib/runtime-config.ts` | 只使用已在小程序后台配置的 HTTPS 域名 |
 | `web-view` 加载、失败和重试 | `packages/miniprogram/src/lib/web-view-page.ts` | 计时页和通用网页共用，不各自补丁 |
 | 登录、会话和错误文案 | `packages/miniprogram/src/lib/auth.ts` | AppSecret 永远只在服务端 |
+| 移动端与小程序隐私政策 | `packages/client/app/[lang]/privacy/page.tsx` | App、小程序和网页共用一份真实声明 |
+| 上传前自动检查 | `packages/miniprogram/scripts/release-check.mjs` | 新增隐私敏感能力时先阻断上传 |
 | 跨端计时数据类型和纯逻辑 | `@cuberoot/shared/timer` | 不复制网站计时器 UI |
 | 全局视觉变量和通用按钮 | `packages/miniprogram/src/app.wxss` | 页面只写自身布局 |
 | 账号落库 | 服务端 `account_auth.ts` + `wechat_miniprogram.ts` | 网站和小程序都只用 UnionID |
@@ -39,6 +41,7 @@
 - [x] 基础信息已提交审核；最后一次后台截图显示为“审核中”，结果需在发布前复查。
 - [ ] 小程序备案尚未完成。
 - [ ] 上传前把基础库从 `trial` 选择为当时的稳定版本，并在真机复测。
+- [ ] 在后台按本文的实际数据清单完成“用户隐私保护指引”，不勾选未使用的权限。
 - [ ] AppSecret 曾在协作过程中暴露，正式联调前必须在后台重新生成，并同步更新服务端环境变量。
 
 ### 工程能力
@@ -55,6 +58,8 @@
 - [ ] 网站扫码登录和小程序登录落到同一个 `uid` 的线上验收尚未完成。
 - [x] 登录后的原生会话与 `web-view` 网站会话已通过短时单次换票打通；部署后的真机联调尚未完成。
 - [x] 换票 migration 已在本地 PostgreSQL 验证表结构、外键、过期索引和单次核销；生产部署尚未执行。
+- [x] “我的”页优先打开微信平台隐私协议，平台接口不可用时回退到网站唯一隐私政策。
+- [x] 上传前脚本会拦截游客 AppID、未明确确认的基础库、关闭合法域名校验和未经复核的敏感 API。
 
 ## 4. 账号方案
 
@@ -77,6 +82,16 @@ provider_uid = unionid
 pnpm --filter @cuberoot/miniprogram dev
 pnpm --filter @cuberoot/miniprogram check
 ```
+
+上传前先在微信开发者工具确认当时的稳定基础库，再显式传入同一版本执行闸门：
+
+```powershell
+$env:WECHAT_MINI_LIB_VERSION='<开发者工具显示的稳定版本>'
+pnpm --filter @cuberoot/miniprogram build
+pnpm --filter @cuberoot/miniprogram release:check
+```
+
+`build` 会保留已有正式 AppID 和明确的数字基础库；不会把已选好的本地版本重置回 `trial`。`release:check` 故意要求每次上传时重新确认稳定版本，防止长期沿用过期记录。
 
 微信开发者工具导入 `core/packages/miniprogram`，不是 `dist`。`project.config.json` 和 `project.private.config.json` 是本机配置，不提交 AppID 之外的任何凭据。
 
@@ -101,7 +116,7 @@ pnpm --filter @cuberoot/miniprogram check
 3. 重新生成 AppSecret，只写入服务端环境变量并部署；旧密钥立即失效。
 4. 真机执行一次“网站扫码登录 + 小程序微信登录”，确认两端为同一 `uid`。
 5. 按实际收集的信息填写用户隐私保护指引，不声明未使用的权限。
-6. 选择稳定基础库，上传体验版，管理员和体验成员完成回归。
+6. 选择稳定基础库，运行 `release:check`，上传体验版，管理员和体验成员完成回归。
 7. 上传正式版本，填写版本说明，提交微信审核。
 8. 审核通过后发布；发布后再次检查登录、`web-view`、返回路径和错误恢复。
 
@@ -113,7 +128,8 @@ pnpm --filter @cuberoot/miniprogram check
 
 - [ ] 完成备案、密钥轮换和同账号验收。
 - [ ] 完成模拟器与 iOS、Android 真机回归。
-- [ ] 补上传前的隐私与版本信息。
+- [x] 补齐代码侧隐私政策、隐私入口、基础库保留与上传闸门。
+- [ ] 在小程序后台填写隐私保护指引，并确认当时的稳定基础库。
 - [ ] 上传体验版并处理代码质量扫描中的真实问题。
 
 ### P1：减少登录割裂
@@ -139,7 +155,26 @@ pnpm --filter @cuberoot/miniprogram check
 - 小程序包体、基础库和审核规则会变化；涉及发布规则时以当时后台和官方文档为准。
 - 主体、类目、名称和隐私声明必须与实际产品一致，不能为了审核临时写一套与产品不符的描述。
 
+### 后台隐私指引的实际数据清单
+
+| 数据或能力 | 当前是否使用 | 用途 |
+|---|---|---|
+| 微信一次性登录凭证、UnionID | 用户主动登录时使用 | 识别与网站相同的 CubeRoot 账号 |
+| CubeRoot 会话凭证、显示名、WCA ID | 登录后使用 | 保持登录状态和显示账号信息 |
+| 短时单次网页换票 | 登录后打开网页时使用 | 让 `web-view` 复用同一账号，不在 URL 暴露长期会话 |
+| IP、浏览器或设备类型等标准请求信息 | 网络请求时可能处理 | 提供服务、安全防护和故障诊断 |
+| 微信昵称、头像、手机号 | 不使用 | 后台不应声明收集 |
+| 定位、摄像头、麦克风、相册、通讯录、蓝牙 | 当前版本不使用 | 后台不应勾选；以后接入前先改政策和平台指引 |
+
 ## 9. 迭代记录
+
+### 2026-08-16：隐私唯一来源与上传闸门
+
+- 原 Android/iOS 隐私页扩展为 App、小程序和网页共用的唯一政策，补齐微信登录、UnionID、本地会话、网页换票和账号删除边界。
+- “我的”页优先调用 `wx.openPrivacyContract`，不支持或调用失败时打开网站同一政策，没有新建第二份隐私文案。
+- 隐私页和账号页一样只进入隐藏网页路由，不混入“发现”工具列表。
+- 新增上传前检查：强制正式 AppID、显式确认稳定基础库、开启合法域名校验，并在定位、媒体、录音、通讯录、手机号或蓝牙 API 首次出现时拦截上传。
+- 构建脚本现在保留已有的正式 AppID 和明确基础库，避免每次构建都把开发者工具选择重置为 `trial`。
 
 ### 2026-08-16：“我的”页跨端账号入口
 

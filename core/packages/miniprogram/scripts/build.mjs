@@ -11,13 +11,11 @@ const outputRoot = join(packageRoot, 'dist');
 const projectConfigPath = join(packageRoot, 'project.config.json');
 const watch = process.argv.includes('--watch');
 
-async function existingAppId() {
+async function existingProjectConfig() {
   try {
-    const config = JSON.parse(await readFile(projectConfigPath, 'utf8'));
-    const appId = typeof config.appid === 'string' ? config.appid.trim() : '';
-    return appId && appId !== 'touristappid' ? appId : '';
+    return JSON.parse(await readFile(projectConfigPath, 'utf8'));
   } catch {
-    return '';
+    return {};
   }
 }
 
@@ -46,10 +44,21 @@ async function prepareOutput(clean = true) {
 
   const templatePath = join(packageRoot, 'project.config.template.json');
   const config = JSON.parse(await readFile(templatePath, 'utf8'));
+  const existingConfig = await existingProjectConfig();
+  const existingAppId = typeof existingConfig.appid === 'string'
+    ? existingConfig.appid.trim()
+    : '';
+  const existingLibVersion = typeof existingConfig.libVersion === 'string'
+    ? existingConfig.libVersion.trim()
+    : '';
   config.appid =
     process.env.WECHAT_MINI_APP_ID?.trim() ||
-    (await existingAppId()) ||
+    (existingAppId !== 'touristappid' ? existingAppId : '') ||
     'touristappid';
+  config.libVersion =
+    process.env.WECHAT_MINI_LIB_VERSION?.trim() ||
+    (/^\d+\.\d+\.\d+$/.test(existingLibVersion) ? existingLibVersion : '') ||
+    config.libVersion;
   await writeFile(
     projectConfigPath,
     `${JSON.stringify(config, null, 2)}\n`,
