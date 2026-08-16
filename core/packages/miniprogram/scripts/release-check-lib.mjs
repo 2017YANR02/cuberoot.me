@@ -1,3 +1,4 @@
+import { BUILD_ASSETS } from './build-assets.mjs';
 import { BUILD_STATE_VERSION } from './build-state.mjs';
 
 const sensitiveCapabilities = [
@@ -205,7 +206,13 @@ export function collectReleaseFailures({
       );
     }
 
-    const requiredFiles = new Set(['app.js', 'app.json', 'app.wxss', 'sitemap.json']);
+    const requiredFiles = new Set([
+      'app.js',
+      'app.json',
+      'app.wxss',
+      'sitemap.json',
+      ...BUILD_ASSETS.map(({ output }) => output),
+    ]);
     for (const page of appConfig.pages) {
       if (typeof page !== 'string' || page.length === 0) continue;
       for (const extension of ['js', 'json', 'wxml', 'wxss']) {
