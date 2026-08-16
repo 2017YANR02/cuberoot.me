@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Columns3 } from 'lucide-react';
+import { Check, Columns3, EyeOff } from 'lucide-react';
 import { ClearButton } from '@/components/ClearButton';
 import { tr } from '@/i18n/tr';
 import { updateSettings, useSettings } from '../_lib/settings';
@@ -11,6 +11,8 @@ import {
   MAX_ROLLING_STAT_COLUMNS,
   MIN_AO_WINDOW,
   ROLLING_STAT_PRESETS,
+  replaceRollingStatColumn,
+  rollingStatReplacementOptions,
   sanitizeRollingStatColumns,
   type RollingStatKey,
 } from '../_lib/rolling_stats';
@@ -25,14 +27,16 @@ export default function RollingStatsPicker({ className, triggerColumns }: Props)
   const columns = sanitizeRollingStatColumns(settings.statsRollingColumns);
   const columnsKey = columns.join(',');
   const [open, setOpen] = useState(false);
+  const [editingColumn, setEditingColumn] = useState<RollingStatKey | null>(null);
   const [customDraft, setCustomDraft] = useState('');
   const wrapRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLElement | null>(null);
 
   useLayoutEffect(() => {
     if (!open) return;
     const panel = panelRef.current;
-    const trigger = wrapRef.current;
+    const trigger = anchorRef.current ?? wrapRef.current;
     if (!panel || !trigger) return;
     const positionPanel = () => {
       const anchor = trigger.getBoundingClientRect();
@@ -55,16 +59,22 @@ export default function RollingStatsPicker({ className, triggerColumns }: Props)
       window.removeEventListener('resize', positionPanel);
       window.removeEventListener('scroll', positionPanel, true);
     };
-  }, [open, columnsKey]);
+  }, [open, columnsKey, editingColumn]);
 
   useEffect(() => {
     if (!open) return;
     const onMouseDown = (event: MouseEvent) => {
       const target = event.target as Node;
-      if (!wrapRef.current?.contains(target) && !panelRef.current?.contains(target)) setOpen(false);
+      if (!wrapRef.current?.contains(target) && !panelRef.current?.contains(target)) {
+        setOpen(false);
+        setEditingColumn(null);
+      }
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') {
+        setOpen(false);
+        setEditingColumn(null);
+      }
     };
     document.addEventListener('mousedown', onMouseDown);
     document.addEventListener('keydown', onKeyDown);
@@ -78,6 +88,20 @@ export default function RollingStatsPicker({ className, triggerColumns }: Props)
   const setColumns = (next: RollingStatKey[]) => {
     updateSettings({ statsRollingColumns: sanitizeRollingStatColumns(next) });
   };
+  const closePicker = () => {
+    setOpen(false);
+    setEditingColumn(null);
+  };
+  const openColumnPicker = (key: RollingStatKey, anchor: HTMLElement) => {
+    if (open && editingColumn === key) {
+      closePicker();
+      return;
+    }
+    anchorRef.current = anchor;
+    setEditingColumn(key);
+    setCustomDraft('');
+    setOpen(true);
+  };
   const toggleColumn = (key: RollingStatKey) => {
     if (columns.includes(key)) {
       setColumns(columns.filter(column => column !== key));
@@ -85,20 +109,41 @@ export default function RollingStatsPicker({ className, triggerColumns }: Props)
     }
     if (!atMax) setColumns([...columns, key]);
   };
+  const selectColumn = (key: RollingStatKey) => {
+    if (!editingColumn) {
+      toggleColumn(key);
+      return;
+    }
+    setColumns(replaceRollingStatColumn(columns, editingColumn, key));
+    closePicker();
+  };
+  const hideEditingColumn = () => {
+    if (!editingColumn) return;
+    setColumns(columns.filter(key => key !== editingColumn));
+    closePicker();
+  };
   const addCustom = () => {
-    if (atMax) return;
+    if (atMax && !editingColumn) return;
     const size = Math.floor(Number(customDraft.trim()));
     if (!Number.isFinite(size) || size < MIN_AO_WINDOW || size > MAX_AO_WINDOW) return;
-    setColumns([...columns, `ao${size}`]);
+    const key: RollingStatKey = `ao${size}`;
+    if (columns.includes(key)) return;
+    setColumns(editingColumn
+      ? replaceRollingStatColumn(columns, editingColumn, key)
+      : [...columns, key]);
     setCustomDraft('');
+    if (editingColumn) closePicker();
   };
 
   const label = tr({ zh: '统计列', en: 'Stats columns' });
   const isColumnTrigger = Boolean(triggerColumns?.length);
-  const menuOptions = [
-    ...ROLLING_STAT_PRESETS,
-    ...columns.filter(key => !ROLLING_STAT_PRESETS.includes(key)),
-  ];
+  const menuOptions = editingColumn
+    ? rollingStatReplacementOptions(columns)
+    : [
+      ...ROLLING_STAT_PRESETS,
+      ...columns.filter(key => !ROLLING_STAT_PRESETS.includes(key)),
+    ];
+  const customDisabled = atMax && !editingColumn;
 
   return (
     <div
@@ -118,8 +163,8 @@ export default function RollingStatsPicker({ className, triggerColumns }: Props)
           type="button"
           className="hao-head rolling-stats-column-trigger"
           key={key}
-          onClick={() => setOpen(value => !value)}
-          aria-expanded={open}
+          onClick={event => openColumnPicker(key, event.currentTarget)}
+          aria-expanded={open && editingColumn === key}
           aria-haspopup="dialog"
           aria-label={tr({
             zh: `更改统计列，当前 ${key}`,
@@ -132,7 +177,11 @@ export default function RollingStatsPicker({ className, triggerColumns }: Props)
         <button
           type="button"
           className="rolling-stats-trigger"
-          onClick={() => setOpen(value => !value)}
+          onClick={event => {
+            anchorRef.current = event.currentTarget;
+            setEditingColumn(null);
+            setOpen(value => !value);
+          }}
           aria-expanded={open}
           aria-haspopup="dialog"
         >
@@ -149,23 +198,35 @@ export default function RollingStatsPicker({ className, triggerColumns }: Props)
         >
           <div className="rolling-stats-options">
             {menuOptions.map(key => {
-              const active = columns.includes(key);
+              const active = !editingColumn && columns.includes(key);
               return (
                 <button
                   type="button"
                   key={key}
                   className={`rolling-stats-option${active ? ' active' : ''}`}
-                  onClick={() => toggleColumn(key)}
-                  disabled={!active && atMax}
-                  aria-pressed={active}
+                  onClick={() => selectColumn(key)}
+                  disabled={!editingColumn && !active && atMax}
+                  aria-pressed={editingColumn ? undefined : active}
                 >
-                  <span className="rolling-stats-option-mark">
-                    {active && <Check size={14} aria-hidden="true" />}
-                  </span>
+                  {!editingColumn && (
+                    <span className="rolling-stats-option-mark">
+                      {active && <Check size={14} aria-hidden="true" />}
+                    </span>
+                  )}
                   <span>{key}</span>
                 </button>
               );
             })}
+            {editingColumn && (
+              <button
+                type="button"
+                className="rolling-stats-option rolling-stats-hide"
+                onClick={hideEditingColumn}
+              >
+                <EyeOff size={14} aria-hidden="true" />
+                <span>{tr({ zh: '隐藏此列', en: 'Hide this column' })}</span>
+              </button>
+            )}
           </div>
           <div className="rolling-stats-custom">
             <label className="rolling-stats-custom-input-wrap">
@@ -180,15 +241,17 @@ export default function RollingStatsPicker({ className, triggerColumns }: Props)
                 placeholder={tr({ zh: '自定义 ao', en: 'Custom ao' })}
                 onChange={event => setCustomDraft(event.target.value)}
                 onKeyDown={event => { if (event.key === 'Enter') addCustom(); }}
-                disabled={atMax}
+                disabled={customDisabled}
               />
               {customDraft && <ClearButton onClick={() => setCustomDraft('')} preserveFocus />}
             </label>
-            <button type="button" className="rolling-stats-custom-add" onClick={addCustom} disabled={atMax}>
-              {tr({ zh: '添加', en: 'Add' })}
+            <button type="button" className="rolling-stats-custom-add" onClick={addCustom} disabled={customDisabled}>
+              {editingColumn
+                ? tr({ zh: '替换', en: 'Replace' })
+                : tr({ zh: '添加', en: 'Add' })}
             </button>
           </div>
-          {atMax && (
+          {atMax && !editingColumn && (
             <div className="rolling-stats-hint">
               {tr({
                 zh: `最多 ${MAX_ROLLING_STAT_COLUMNS} 列，先取消一列`,
