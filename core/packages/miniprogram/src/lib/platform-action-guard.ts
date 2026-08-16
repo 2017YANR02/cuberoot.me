@@ -5,6 +5,7 @@ import {
 } from './runtime-timers';
 
 export const PLATFORM_ACTION_LOCK_TIMEOUT_MS = 5_000;
+export const PLATFORM_INTERACTION_LOCK_TIMEOUT_MS = 10 * 60 * 1_000;
 
 export interface PlatformActionGuard {
   begin(owner: object): number | null;
