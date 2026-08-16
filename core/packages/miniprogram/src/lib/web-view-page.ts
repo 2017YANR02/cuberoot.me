@@ -42,6 +42,14 @@ function isCurrentAttempt(context: WebViewPageContext, attempt: number): boolean
   return routeAttempts.get(context) === attempt;
 }
 
+function updateNavigationTitle(title: string): void {
+  try {
+    wx.setNavigationBarTitle({ title });
+  } catch {
+    // The title is cosmetic; a platform API failure must not block web content.
+  }
+}
+
 export function createWebViewPageData(): WebViewPageData {
   return {
     canRetry: false,
@@ -68,7 +76,7 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
   }
 
   const attempt = beginRouteAttempt(context);
-  wx.setNavigationBarTitle({ title: route.title });
+  updateNavigationTitle(route.title);
   context.setData({
     canRetry: false,
     errorMessage: '',
