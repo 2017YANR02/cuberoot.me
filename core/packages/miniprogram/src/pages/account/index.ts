@@ -162,33 +162,41 @@ Page({
       return;
     }
 
-    wx.openPrivacyContract({
-      fail: openWebsitePrivacy,
-    });
+    try {
+      wx.openPrivacyContract({
+        fail: openWebsitePrivacy,
+      });
+    } catch {
+      openWebsitePrivacy();
+    }
   },
 
   logout() {
-    wx.showModal({
-      title: '退出登录',
-      content: '将退出小程序，并尝试同时退出网站账号。本机计时记录不会被删除。',
-      success: (result) => {
-        if (!result.confirm) return;
+    try {
+      wx.showModal({
+        title: '退出登录',
+        content: '将退出小程序，并尝试同时退出网站账号。本机计时记录不会被删除。',
+        success: (result) => {
+          if (!result.confirm) return;
 
-        if (!clearStoredSession()) {
-          this.setData({
-            status: '本地登录状态无法清除，请清理空间后重试',
-            statusError: true,
+          if (!clearStoredSession()) {
+            this.setData({
+              status: '本地登录状态无法清除，请清理空间后重试',
+              statusError: true,
+            });
+            return;
+          }
+          this.showSession(null);
+          this.showSyncState('');
+          this.setData({ status: '', statusError: false });
+
+          openWebsitePageOnce(this, 'logout', {
+            failureMessage: '已退出小程序，网站退出暂未完成',
           });
-          return;
-        }
-        this.showSession(null);
-        this.showSyncState('');
-        this.setData({ status: '', statusError: false });
-
-        openWebsitePageOnce(this, 'logout', {
-          failureMessage: '已退出小程序，网站退出暂未完成',
-        });
-      },
-    });
+        },
+      });
+    } catch {
+      this.setData({ status: '退出确认暂时无法打开，请重试', statusError: true });
+    }
   },
 });

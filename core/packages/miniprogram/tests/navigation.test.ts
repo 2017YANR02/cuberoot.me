@@ -65,4 +65,18 @@ describe('mini program website navigation', () => {
     expect(navigateTo).not.toHaveBeenCalled();
     expect(showToast).toHaveBeenCalledWith({ icon: 'none', title: '该功能暂不可用' });
   });
+
+  it('keeps navigation failures controlled when toast feedback is unavailable', () => {
+    vi.stubGlobal('wx', {
+      navigateTo() {
+        throw new Error('navigation unavailable');
+      },
+      showToast() {
+        throw new Error('toast unavailable');
+      },
+    });
+
+    expect(() => openWebsitePageOnce({}, 'timer', { failureMessage: '打开失败' }))
+      .not.toThrow();
+  });
 });
