@@ -182,6 +182,22 @@ describe('mini program account page', () => {
     expect(navigateTo).not.toHaveBeenCalled();
   });
 
+  it('clears a stale platform error without erasing account sync feedback', async () => {
+    const openPrivacyContract = vi.fn();
+    const page = await loadPage({ openPrivacyContract });
+    page.setData({
+      actionStatus: '上一次操作失败',
+      status: '账号状态暂时无法更新，请稍后重试',
+      statusError: true,
+    });
+
+    page.openPrivacy();
+
+    expect(page.data.actionStatus).toBe('');
+    expect(page.data.status).toBe('账号状态暂时无法更新，请稍后重试');
+    expect(page.data.statusError).toBe(true);
+  });
+
   it('opens only one privacy contract until the platform prompt settles', async () => {
     let contractOptions: { complete(): void } | undefined;
     const openPrivacyContract = vi.fn((options: typeof contractOptions) => {
@@ -285,8 +301,7 @@ describe('mini program account page', () => {
     try {
       page.openPrivacy();
       expect(openPrivacyContract).not.toHaveBeenCalled();
-      expect(page.data.statusError).toBe(true);
-      expect(page.data.status).toContain('隐私说明暂时无法打开');
+      expect(page.data.actionStatus).toContain('隐私说明暂时无法打开');
     } finally {
       timer.mockRestore();
     }
@@ -369,7 +384,7 @@ describe('mini program account page', () => {
 
     expect(() => page.logout()).not.toThrow();
     expect(page.data.loggedIn).toBe(true);
-    expect(page.data.status).toContain('退出确认暂时无法打开');
+    expect(page.data.actionStatus).toContain('退出确认暂时无法打开');
     expect(removeStorageSync).not.toHaveBeenCalled();
   });
 
@@ -385,8 +400,7 @@ describe('mini program account page', () => {
       page.logout();
       expect(showModal).not.toHaveBeenCalled();
       expect(page.data.loggedIn).toBe(true);
-      expect(page.data.statusError).toBe(true);
-      expect(page.data.status).toContain('退出确认暂时无法打开');
+      expect(page.data.actionStatus).toContain('退出确认暂时无法打开');
     } finally {
       timer.mockRestore();
     }
@@ -423,8 +437,35 @@ describe('mini program account page', () => {
     page.logout();
 
     expect(page.data.loggedIn).toBe(true);
-    expect(page.data.status).toContain('退出确认暂时无法打开');
+    expect(page.data.actionStatus).toContain('退出确认暂时无法打开');
     expect(showModal).toHaveBeenCalledTimes(2);
+  });
+
+  it('clears a stale logout prompt error when the next prompt is cancelled', async () => {
+    let invocation = 0;
+    const showModal = vi.fn((options: {
+      fail(): void;
+      success(result: { confirm: boolean }): void;
+    }) => {
+      invocation += 1;
+      if (invocation === 1) options.fail();
+      else options.success({ confirm: false });
+    });
+    const page = await loadPage({ showModal });
+    page.setData({
+      loggedIn: true,
+      status: '账号状态暂时无法更新，请稍后重试',
+      statusError: true,
+    });
+
+    page.logout();
+    expect(page.data.actionStatus).toContain('退出确认暂时无法打开');
+
+    page.logout();
+
+    expect(page.data.actionStatus).toBe('');
+    expect(page.data.status).toBe('账号状态暂时无法更新，请稍后重试');
+    expect(page.data.loggedIn).toBe(true);
   });
 
   it('ignores a logout confirmation after the account page has been unloaded', async () => {
