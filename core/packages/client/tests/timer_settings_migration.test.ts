@@ -142,4 +142,29 @@ describe('滚动统计列设置迁移', () => {
     const { getSettings } = await freshSettings();
     expect(getSettings().statsRollingColumns).toEqual(['mo3', 'ao100']);
   });
+
+  it('旧存档只剩一列时保留该列并自动补齐第二列', async () => {
+    const mem = installStorage({
+      [KEY]: JSON.stringify({
+        statsRollingColumns: ['ao100'],
+        scrambleClickMigrated: true,
+        recordGyroMigrated: true,
+      }),
+    });
+    const { getSettings } = await freshSettings();
+    expect(getSettings().statsRollingColumns).toEqual(['ao5', 'ao100']);
+    expect(JSON.parse(mem.get(KEY) as string).statsRollingColumns).toEqual(['ao5', 'ao100']);
+  });
+
+  it('运行期间也不允许把统计列清空或缩成一列', async () => {
+    const mem = installStorage();
+    const { getSettings, updateSettings } = await freshSettings();
+
+    updateSettings({ statsRollingColumns: [] });
+    expect(getSettings().statsRollingColumns).toEqual(['ao5', 'ao12']);
+
+    updateSettings({ statsRollingColumns: ['ao100'] });
+    expect(getSettings().statsRollingColumns).toEqual(['ao5', 'ao100']);
+    expect(JSON.parse(mem.get(KEY) as string).statsRollingColumns).toEqual(['ao5', 'ao100']);
+  });
 });

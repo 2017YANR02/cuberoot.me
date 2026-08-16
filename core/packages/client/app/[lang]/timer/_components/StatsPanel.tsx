@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { X } from 'lucide-react';
 import type { Solve, EventId } from '../_lib/types';
 import {
   subXBreakdown,
@@ -23,7 +22,7 @@ import {
   formatEventMs,
   formatSolveResult,
 } from '../_lib/stats';
-import { useSettings, updateSettings } from '../_lib/settings';
+import { useSettings } from '../_lib/settings';
 import {
   parseRollingStatKey,
   rollingStatBest,
@@ -57,10 +56,6 @@ export default function StatsPanel({ solves, event }: Props) {
     () => sanitizeRollingStatColumns(settings.statsRollingColumns),
     [settings.statsRollingColumns],
   );
-
-  const removeColumn = (key: RollingStatKey) => {
-    updateSettings({ statsRollingColumns: columns.filter(column => column !== key) });
-  };
 
   // ── cstimer-style current/best rows: time (single) + configured rolling stats ──
   const table = useMemo(() => {
@@ -130,20 +125,11 @@ export default function StatsPanel({ solves, event }: Props) {
         </div>
         {table.map(r => (
           <div className="stats-row" key={r.key}>
-            <span className="st-label">
-              {r.label}
-              {r.stat !== undefined && (
-                <button
-                  type="button"
-                  className="st-remove"
-                  onClick={() => removeColumn(r.stat!)}
-                  title={tr({ zh: `移除 ${r.stat}`, en: `Remove ${r.stat}` })}
-                  aria-label={tr({ zh: `移除 ${r.stat}`, en: `Remove ${r.stat}` })}
-                >
-                  <X size={11} />
-                </button>
-              )}
-            </span>
+            <div className="st-label">
+              {r.stat
+                ? <RollingStatsPicker triggerColumns={[r.stat]} variant="row" />
+                : r.label}
+            </div>
             <span className={`st-cur ${isEmptyVal(r.cur) ? 'muted' : ''}`}>{r.cur}</span>
             <span className={`st-best ${isEmptyVal(r.best) ? 'muted' : ''}`}>
               {r.best}
@@ -153,8 +139,6 @@ export default function StatsPanel({ solves, event }: Props) {
           </div>
         ))}
       </div>
-
-      <RollingStatsPicker />
 
       {/* Footer: σ / CV / count */}
       <div className="stats-foot">

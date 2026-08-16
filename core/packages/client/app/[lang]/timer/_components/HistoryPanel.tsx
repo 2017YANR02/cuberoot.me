@@ -587,9 +587,6 @@ export default function HistoryPanel({
         <span>{tr({ zh: '历史', en: 'History'
         })}</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {panelEvent !== '333mbld' && visibleStatColumns.length === 0 && (
-            <RollingStatsPicker className="history-stat-picker" />
-          )}
           {!isMobile && (
             <button
               type="button"

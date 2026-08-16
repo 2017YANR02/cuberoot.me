@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Solve } from '@/app/[lang]/timer/_lib/types';
 import {
   parseRollingStatKey,
+  normalizeRollingStatColumns,
   replaceRollingStatColumn,
   rollingStatBest,
   rollingStatColumnsFromLegacy,
@@ -43,6 +44,12 @@ describe('rolling statistic columns', () => {
 
   it('keeps mo3 before a custom ao3', () => {
     expect(sanitizeRollingStatColumns(['ao3', 'mo3'])).toEqual(['mo3', 'ao3']);
+  });
+
+  it('fills old empty or one-column states without replacing the saved column', () => {
+    expect(normalizeRollingStatColumns([])).toEqual(['ao5', 'ao12']);
+    expect(normalizeRollingStatColumns(['ao100'])).toEqual(['ao5', 'ao100']);
+    expect(normalizeRollingStatColumns(['ao5'])).toEqual(['ao5', 'ao12']);
   });
 
   it('migrates legacy ao windows without losing custom values', () => {

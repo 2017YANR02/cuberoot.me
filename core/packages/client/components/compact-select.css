@@ -1,0 +1,117 @@
+.compact-select {
+  position: relative;
+  display: inline-flex;
+  align-self: flex-start;
+  width: fit-content;
+}
+
+.compact-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 20px;
+  background: var(--popover);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.compact-select-trigger:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.compact-select-trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 65%, transparent);
+  outline-offset: 2px;
+}
+
+.compact-select-current {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact-select-arrow {
+  flex: 0 0 auto;
+  color: var(--muted-foreground);
+  transition: transform 0.2s;
+}
+
+.compact-select-arrow.open { transform: rotate(180deg); }
+
+.compact-select--plain,
+.compact-select--plain .compact-select-trigger {
+  width: 100%;
+}
+
+.compact-select--plain .compact-select-trigger {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-weight: inherit;
+}
+
+.compact-select--plain .compact-select-trigger:hover {
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.compact-select-popup {
+  /* anchored-panel: clamped (body portal + fixed viewport positioning in CompactSelect) */
+  position: fixed;
+  visibility: hidden;
+  z-index: 200;
+  width: max-content;
+  min-width: 160px;
+  max-width: min(86vw, 280px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--popover);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 20%, transparent);
+}
+
+.compact-select-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.compact-select-option {
+  display: block;
+  width: 100%;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.compact-select-option:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.compact-select-option.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+.compact-select-option:disabled {
+  background: transparent;
+  color: var(--faint-foreground);
+  cursor: not-allowed;
+}

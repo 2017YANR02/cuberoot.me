@@ -11,9 +11,8 @@ import { useSyncExternalStore } from 'react';
 import { persistItem } from '@/lib/safe-storage';
 import {
   DEFAULT_ROLLING_STAT_COLUMNS,
-  MAX_ROLLING_STAT_COLUMNS,
+  normalizeRollingStatColumns,
   rollingStatColumnsFromLegacy,
-  sanitizeRollingStatColumns,
   type RollingStatKey,
 } from '../rolling_stats';
 
@@ -494,14 +493,9 @@ function load(): TimerSettings {
       merged.statsRollingColumns = rollingStatColumnsFromLegacy(parsed.statsAoWindows);
       dirty = true;
     }
-    const sanitizedColumns = sanitizeRollingStatColumns(
-      merged.statsRollingColumns,
-      MAX_ROLLING_STAT_COLUMNS,
-    );
-    if (JSON.stringify(sanitizedColumns) !== JSON.stringify(merged.statsRollingColumns)) {
-      merged.statsRollingColumns = sanitizedColumns.length > 0
-        ? sanitizedColumns
-        : [...DEFAULT_ROLLING_STAT_COLUMNS];
+    const normalizedColumns = normalizeRollingStatColumns(merged.statsRollingColumns);
+    if (JSON.stringify(normalizedColumns) !== JSON.stringify(merged.statsRollingColumns)) {
+      merged.statsRollingColumns = normalizedColumns;
       dirty = true;
     }
     if ('statsAoWindows' in merged) {
@@ -524,7 +518,10 @@ export function getSettings(): TimerSettings {
 }
 
 export function updateSettings(patch: Partial<TimerSettings>): void {
-  _cache = { ...(_cache), ...patch };
+  const normalizedPatch: Partial<TimerSettings> = 'statsRollingColumns' in patch
+    ? { ...patch, statsRollingColumns: normalizeRollingStatColumns(patch.statsRollingColumns) }
+    : patch;
+  _cache = { ...(_cache), ...normalizedPatch };
   save(_cache);
   for (const fn of _listeners) fn();
 }
