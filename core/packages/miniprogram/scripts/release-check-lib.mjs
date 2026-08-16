@@ -90,7 +90,7 @@ export function collectReleaseFailures({
   }
 
   if (!hasExpectedSitemapPolicy(sitemapConfig)) {
-    failures.push('sitemap 只能收录计时和发现页，账号页与通用网页壳必须保持禁止收录。');
+    failures.push('sitemap 只能收录计时和工具页，账号页与通用网页壳必须保持禁止收录。');
   }
 
   if (!projectConfig) {
