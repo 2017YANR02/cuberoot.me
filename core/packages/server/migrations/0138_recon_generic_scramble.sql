@@ -1,0 +1,1 @@
+ALTER TABLE recons ADD COLUMN scramble TEXT;

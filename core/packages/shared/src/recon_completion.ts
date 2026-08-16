@@ -129,6 +129,17 @@ export function normalizeReconScrambleSpacing(event: string, text: string): stri
   return text.trim();
 }
 
+export interface ReconScrambleFields {
+  optimalScramble?: string | null;
+  wcaScramble?: string | null;
+  scramble?: string | null;
+}
+
+/** Pick the scramble that defines the reconstruction state. */
+export function getReconScramble(fields: ReconScrambleFields): string {
+  return fields.optimalScramble || fields.wcaScramble || fields.scramble || '';
+}
+
 export function cleanReconCubeStateMoves(text: string): string {
   const out: string[] = [];
   for (const chunk of cleanReconAlgForPlayer(text).split(/\s+/).filter(Boolean)) {

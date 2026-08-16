@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { Video, Link2, Lock } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
+import { getReconScramble } from '@cuberoot/shared/recon-completion';
 import { pickReconCover, coverSyncSrc, loadBiliCover, loadDouyinCover } from '@/lib/recon-video-cover';
 import { formatAvg, formatReconSingle } from '@/lib/recon-utils';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -63,7 +64,7 @@ function ReconCardMedia({ solve, isZh, scrambleThumb }: { solve: ReconSolve; isZ
 
   // 无封面：打乱图（自包含 SVG）→ 项目图标兜底
   const previewEvent = toWcaEventId(solve.event);
-  const scramble = solve.optimalScramble || solve.wcaScramble || '';
+  const scramble = getReconScramble(solve);
   const hasVideo = !!solve.videoUrl && solve.videoUrl.trim() !== '';
   return (
     <div className="recon-card-media">

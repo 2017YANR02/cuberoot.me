@@ -45,6 +45,17 @@ describe('buildDuplicateQuery (same player + same scramble)', () => {
     expect(dup!.params).toEqual(['2015X', SCR2]);
   });
 
+  it('falls back to generic scramble when neither typed scramble is usable', () => {
+    const dup = buildDuplicateQuery({
+      person_id: '2015X',
+      wca_scramble: '?',
+      optimal_scramble: '',
+      scramble: SCR2,
+    });
+    expect(dup!.sql).toContain('"scramble" = ?');
+    expect(dup!.params).toEqual(['2015X', SCR2]);
+  });
+
   it('prefers wca_scramble over optimal_scramble', () => {
     const dup = buildDuplicateQuery({ person_id: '2015X', wca_scramble: SCR, optimal_scramble: SCR2 });
     expect(dup!.sql).toContain('"wca_scramble" = ?');
@@ -90,5 +101,12 @@ describe('validateRow dup_reason', () => {
   });
   it('rejects an unknown reason', () => {
     expect(validateRow({ dup_reason: 'because' }).length).toBeGreaterThan(0);
+  });
+});
+
+describe('validateRow generic scramble', () => {
+  it('accepts WCA notation and rejects prose outside comments', () => {
+    expect(validateRow({ scramble: `${SCR} // 手录` })).toEqual([]);
+    expect(validateRow({ scramble: `${SCR} 手录` }).some(error => error.includes('non-ASCII'))).toBe(true);
   });
 });

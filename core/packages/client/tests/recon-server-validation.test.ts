@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
-  jsonToRow, validateRow, visibilityDiscoverFilter, visibilityOwnerFilter, ADMIN_WCA_IDS,
+  jsonToRow, rowToJson, validateRow, visibilityDiscoverFilter, visibilityOwnerFilter, ADMIN_WCA_IDS,
 } from '../../server/src/utils/recon_helpers';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -90,6 +90,13 @@ describe('reconstructor identity without a WCA ID', () => {
     const row = jsonToRow({ reconer: '孙卓远', reconerId: '' });
     expect(row).toEqual({ reconer: '孙卓远', reconer_id: null });
     expect(validateRow(row)).toEqual([]);
+  });
+});
+
+describe('generic reconstruction scramble persistence mapping', () => {
+  it('keeps the same scramble key across client JSON and the SQL row', () => {
+    expect(jsonToRow({ scramble: "R U R'" })).toEqual({ scramble: "R U R'" });
+    expect(rowToJson({ scramble: "R U R'" })).toEqual({ scramble: "R U R'" });
   });
 });
 

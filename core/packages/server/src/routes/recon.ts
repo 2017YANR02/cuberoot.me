@@ -65,10 +65,9 @@ const LIST_COLUMNS = [
   'value', 'raw_time', 'average', 'ao_type',
   'regional_single_record', 'regional_average_record', 'regional_aoxr_record',
   'stm', 'tps', 'visibility', 'completion_status',
-  // 多数解的打乱在 optimal_scramble；缺的（社区 Home 解等 ~234 条）落在 wca_scramble。
-  // COALESCE 回退到 wca_scramble（仍以 optimal_scramble 列名出，客户端 optimalScramble||wcaScramble 无感），
-  // 让卡片视图打乱图 + 搜索都拿得到打乱；只给缺 optimal 的行加数据，不对全表多带一列。
-  "COALESCE(NULLIF(optimal_scramble, ''), wca_scramble) AS optimal_scramble", 'oll', 'pll', 'note',
+  // 列表只带一份有效打乱：最优优先，其次 WCA 真实，最后回退普通打乱。
+  // 仍以 optimal_scramble 别名返回，兼容旧客户端，同时避免多带两列大文本。
+  "COALESCE(NULLIF(optimal_scramble, ''), NULLIF(wca_scramble, ''), scramble) AS optimal_scramble", 'oll', 'pll', 'note',
   // 卡片视图缩略图用：有视频 → 取 B 站/YouTube 封面（多为空串，几乎不增 gzip）。
   'video_url',
 ].join(', ');
@@ -122,14 +121,15 @@ reconRoutes.get('/recon/list', async (c) => {
 // 注:path depth 与 /recon/:id 不同,注册顺序无冲突。
 reconRoutes.get('/recon/:id/same-scramble', async (c) => {
   const id = c.req.param('id');
-  const norm = "regexp_replace(btrim(COALESCE(NULLIF(optimal_scramble, ''), wca_scramble)), '\\s+', ' ', 'g')";
+  const norm = "regexp_replace(btrim(COALESCE(NULLIF(optimal_scramble, ''), NULLIF(wca_scramble, ''), scramble)), '\\s+', ' ', 'g')";
+  const rowNorm = "regexp_replace(btrim(COALESCE(NULLIF(recons.optimal_scramble, ''), NULLIF(recons.wca_scramble, ''), recons.scramble)), '\\s+', ' ', 'g')";
   const rows = await query<Record<string, unknown>>(
     `WITH target AS (SELECT ${norm} AS k FROM recons WHERE id = ?)
      SELECT ${LIST_COLUMNS} FROM recons, target
      WHERE recons.id <> ?
        AND recons.visibility = 'public'
        AND target.k <> ''
-       AND ${norm.replace(/optimal_scramble/g, 'recons.optimal_scramble').replace(/wca_scramble/g, 'recons.wca_scramble')} = target.k
+       AND ${rowNorm} = target.k
      ORDER BY raw_time ASC NULLS LAST
      LIMIT 200`,
     [id, id],
@@ -232,6 +232,7 @@ reconRoutes.get('/recon/check-duplicate', async (c) => {
     person: c.req.query('person'),
     wca_scramble: c.req.query('wcaScramble'),
     optimal_scramble: c.req.query('optimalScramble'),
+    scramble: c.req.query('scramble'),
   }, excludeId ? Number(excludeId) : undefined);
 
   if (!dup) return c.json({ exists: false });
