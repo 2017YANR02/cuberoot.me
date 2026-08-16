@@ -128,8 +128,16 @@ accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
   try {
     wechatSession = await exchangeWechatMiniProgramCode(code);
   } catch (error) {
-    if (error instanceof WechatMiniProgramError && error.code === 'invalid-code') {
-      return c.json({ error: 'invalid wechat code' }, 401);
+    if (error instanceof WechatMiniProgramError) {
+      if (error.code === 'invalid-code') {
+        return c.json({ error: 'invalid wechat code' }, 401);
+      }
+      if (error.code === 'rate-limited') {
+        return c.json({ error: 'wechat login rate limited' }, 429);
+      }
+      if (error.code === 'blocked-user') {
+        return c.json({ error: 'wechat login blocked' }, 403);
+      }
     }
     console.error('[auth] wechat miniprogram exchange failed:', error instanceof Error ? error.message : error);
     return c.json({ error: 'wechat service unavailable' }, 502);
