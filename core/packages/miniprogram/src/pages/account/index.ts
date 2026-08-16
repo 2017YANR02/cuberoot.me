@@ -217,8 +217,12 @@ Page({
       return;
     }
 
+    if (privacyContracts.isActive(this)) return;
     const privacyAttempt = privacyContracts.begin(this);
-    if (privacyAttempt === null) return;
+    if (privacyAttempt === null) {
+      this.setData({ status: '隐私说明暂时无法打开，请重试', statusError: true });
+      return;
+    }
     const openWebsitePrivacy = () => {
       if (!privacyContracts.settle(this, privacyAttempt)) return;
       openWebsitePageOnce(this, 'privacy', {
@@ -242,8 +246,12 @@ Page({
   },
 
   logout() {
+    if (logoutConfirmations.isActive(this)) return;
     const confirmationAttempt = logoutConfirmations.begin(this);
-    if (confirmationAttempt === null) return;
+    if (confirmationAttempt === null) {
+      this.setData({ status: '退出确认暂时无法打开，请重试', statusError: true });
+      return;
+    }
     try {
       wx.showModal({
         title: '退出登录',

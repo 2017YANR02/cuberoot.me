@@ -9,6 +9,7 @@ export const PLATFORM_ACTION_LOCK_TIMEOUT_MS = 5_000;
 export interface PlatformActionGuard {
   begin(owner: object): number | null;
   cancel(owner: object): void;
+  isActive(owner: object): boolean;
   settle(owner: object, attempt: number): boolean;
 }
 
@@ -53,6 +54,10 @@ export function createPlatformActionGuard(
       if (attempt === undefined) return;
       release(owner, attempt);
       currentAttempts.delete(owner);
+    },
+
+    isActive(owner: object): boolean {
+      return activeOwners.has(owner);
     },
 
     settle(owner: object, attempt: number): boolean {
