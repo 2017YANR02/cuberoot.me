@@ -12,6 +12,7 @@ import { openWebsitePageOnce } from '../../lib/navigation';
 const activePages = new WeakSet<object>();
 const activeLogins = new WeakSet<object>();
 const validationAttempts = new WeakMap<object, number>();
+const PLATFORM_ACTION_LOCK_TIMEOUT_MS = 5_000;
 
 function createPageActionGuard(lockTimeoutMs?: number) {
   const activePages = new WeakSet<object>();
@@ -56,8 +57,8 @@ function createPageActionGuard(lockTimeoutMs?: number) {
   };
 }
 
-const logoutConfirmations = createPageActionGuard(5_000);
-const privacyContracts = createPageActionGuard();
+const logoutConfirmations = createPageActionGuard(PLATFORM_ACTION_LOCK_TIMEOUT_MS);
+const privacyContracts = createPageActionGuard(PLATFORM_ACTION_LOCK_TIMEOUT_MS);
 
 function beginValidation(page: object): number {
   const attempt = (validationAttempts.get(page) ?? 0) + 1;
