@@ -52,6 +52,10 @@
   </block>
 
   <text class="status-text {{statusError ? 'status-text--error' : ''}}" wx:if="{{status}}">{{status}}</text>
+  <text
+    class="status-text status-text--error {{status ? 'account-action-status--stacked' : ''}}"
+    wx:if="{{actionStatus}}"
+  >{{actionStatus}}</text>
   <button
     class="text-button sync-retry-button"
     hover-class="press-feedback"

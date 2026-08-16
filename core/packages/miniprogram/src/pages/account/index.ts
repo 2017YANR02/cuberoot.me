@@ -59,6 +59,7 @@ function stopPullDownRefresh(): void {
 
 Page({
   data: {
+    actionStatus: '',
     busy: false,
     displayName: '',
     initial: 'C',
@@ -79,6 +80,7 @@ Page({
     activePages.add(this);
     const validationAttempt = beginValidation(this);
     this.setData({
+      actionStatus: '',
       busy: activeLogins.has(this),
       status: '',
       statusError: false,
@@ -191,7 +193,12 @@ Page({
     if (activeLogins.has(this)) return;
     activeLogins.add(this);
     activePages.add(this);
-    this.setData({ busy: true, status: '', statusError: false });
+    this.setData({
+      actionStatus: '',
+      busy: true,
+      status: '',
+      statusError: false,
+    });
     try {
       const session = await loginWithWechat();
       if (!activePages.has(this)) return;
@@ -218,6 +225,7 @@ Page({
 
   openPrivacy() {
     if (typeof wx.openPrivacyContract !== 'function') {
+      this.setData({ actionStatus: '' });
       openWebsitePageOnce(this, 'privacy', {
         failureMessage: '隐私说明暂时无法打开',
       });
@@ -225,9 +233,10 @@ Page({
     }
 
     if (privacyContracts.isActive(this)) return;
+    this.setData({ actionStatus: '' });
     const privacyAttempt = privacyContracts.begin(this);
     if (privacyAttempt === null) {
-      this.setData({ status: '隐私说明暂时无法打开，请重试', statusError: true });
+      this.setData({ actionStatus: '隐私说明暂时无法打开，请重试' });
       return;
     }
     const openWebsitePrivacy = () => {
@@ -254,9 +263,10 @@ Page({
 
   logout() {
     if (logoutConfirmations.isActive(this)) return;
+    this.setData({ actionStatus: '' });
     const confirmationAttempt = logoutConfirmations.begin(this);
     if (confirmationAttempt === null) {
-      this.setData({ status: '退出确认暂时无法打开，请重试', statusError: true });
+      this.setData({ actionStatus: '退出确认暂时无法打开，请重试' });
       return;
     }
     try {
@@ -284,7 +294,7 @@ Page({
         },
         fail: () => {
           if (!logoutConfirmations.settle(this, confirmationAttempt)) return;
-          this.setData({ status: '退出确认暂时无法打开，请重试', statusError: true });
+          this.setData({ actionStatus: '退出确认暂时无法打开，请重试' });
         },
         complete: () => {
           logoutConfirmations.settle(this, confirmationAttempt);
@@ -292,7 +302,7 @@ Page({
       });
     } catch {
       if (logoutConfirmations.settle(this, confirmationAttempt)) {
-        this.setData({ status: '退出确认暂时无法打开，请重试', statusError: true });
+        this.setData({ actionStatus: '退出确认暂时无法打开，请重试' });
       }
     }
   },
