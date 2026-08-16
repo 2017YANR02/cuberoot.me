@@ -1,9 +1,20 @@
-import { openWebsitePageOnce } from '../../lib/navigation';
+import {
+  cancelWebsiteNavigation,
+  openWebsitePageOnce,
+} from '../../lib/navigation';
 import { listWebTools } from '../../lib/web-routes';
 
 Page({
   data: {
     tools: listWebTools(),
+  },
+
+  onHide() {
+    cancelWebsiteNavigation(this);
+  },
+
+  onUnload() {
+    cancelWebsiteNavigation(this);
   },
 
   openTool(event: WechatMiniprogram.TouchEvent) {

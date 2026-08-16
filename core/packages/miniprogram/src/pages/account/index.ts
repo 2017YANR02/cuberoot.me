@@ -7,7 +7,10 @@ import {
   validateStoredSession,
   type SessionData,
 } from '../../lib/auth';
-import { openWebsitePageOnce } from '../../lib/navigation';
+import {
+  cancelWebsiteNavigation,
+  openWebsitePageOnce,
+} from '../../lib/navigation';
 import { createPlatformActionGuard } from '../../lib/platform-action-guard';
 
 const activePages = new WeakSet<object>();
@@ -29,6 +32,7 @@ function validationIsCurrent(page: object, attempt: number): boolean {
 function pausePage(page: object): void {
   activePages.delete(page);
   beginValidation(page);
+  cancelWebsiteNavigation(page);
   logoutConfirmations.cancel(page);
   privacyContracts.cancel(page);
 }
