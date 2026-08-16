@@ -5,7 +5,7 @@
 // 反过来客户端少字符则只是白白丢熵,而熵是会议室**唯一**的防线(没有在册名单可查,
 // 拿到码就能进)。
 //
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

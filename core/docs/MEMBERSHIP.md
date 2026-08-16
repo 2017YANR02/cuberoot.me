@@ -75,7 +75,7 @@
 
 - `/membership` 页(`app/[lang]/membership/`):套餐卡 + 支付弹窗(选支付宝/微信 → 扫码 + 轮询) + 会员状态 + 续费联系方式 + admin 面板。
 - 入口:打赏弹窗 `DonateModal` 顶部链接、`/support` 头部链接。
-- `hooks/useMembership.ts`、`components/MembershipBadge.tsx`(已登记 /code 组件库)。
+- `hooks/useMembership.ts`、`components/MembershipBadge.tsx`(已登记 /dev 组件库)。
 
 ## 渠道择优 + 下单产物
 

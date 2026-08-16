@@ -68,7 +68,7 @@ export const TEXTS: Record<string, { en: string; zh: string
 },
   memo:            { en: 'Memo', zh: '记忆'
 },
-  code:            { en: 'Code', zh: '编程'
+  dev:             { en: 'Dev', zh: '开发'
 },
   timezone:        { en: 'Time Zones', zh: '时区'
 },
@@ -184,14 +184,14 @@ export const SECTIONS: Section[] = [
   {
     id: 'other',
     eyebrow: { en: 'OTHER', zh: '其他' },
-    title:   { en: 'Read, code, explore.', zh: '阅读、编程、探索。'
+    title:   { en: 'Read, build, explore.', zh: '阅读、开发、探索。'
     },
     sub:     { en: 'Forum, code notes, blog, link directory, unofficial world records.', zh: '论坛、代码笔记、博客、站点导航与非官方纪录。'
     },
     cards: [
       { id: 'forum', href: '/forum', internal: true, tier: 'medium', Icon: MessagesSquare, nameKey: 'forum' },
       { id: 'meet', href: '/meet',  internal: true,  tier: 'medium', Icon: Video,      nameKey: 'meet' },
-      { id: 'code', href: '/code',  internal: true,  tier: 'medium', Icon: CodeIcon, nameKey: 'code' },
+      { id: 'dev', href: '/dev', internal: true, tier: 'medium', Icon: CodeIcon, nameKey: 'dev' },
       { id: 'blog', href: '/blog/', internal: false, tier: 'medium', Icon: BookOpen, nameKey: 'blog' },
       { id: 'site', href: '/site',  internal: true,  tier: 'medium', Icon: Compass,  nameKey: 'sitesDirectory' },
       { id: 'wb',   href: '/wb',    internal: true,  tier: 'medium', Icon: Trophy,   nameKey: 'worldBests' },
@@ -226,7 +226,7 @@ export const SEARCH_CARDS: LandingSearchCard[] = [
         sectionTitleZh: sec.eyebrow.zh,
       })),
   ),
-  // /code 子页,不在落地页网格上,单列于此让全站搜索仍能找到
-  { id: 'code-llm', href: '/code/llm', internal: true, nameEn: 'Large Language Models', nameZh: '大模型', sectionTitleEn: 'Code', sectionTitleZh: '代码' },
-  { id: 'fable', href: '/code/llm/fable', internal: true, nameEn: 'Claude Fable 5', nameZh: 'Claude Fable 5', sectionTitleEn: 'Code', sectionTitleZh: '代码' },
+  // /dev 子页,不在落地页网格上,单列于此让全站搜索仍能找到
+  { id: 'dev-llm', href: '/dev/llm', internal: true, nameEn: 'Large Language Models', nameZh: '大模型', sectionTitleEn: 'Dev', sectionTitleZh: '开发' },
+  { id: 'fable', href: '/dev/llm/fable', internal: true, nameEn: 'Claude Fable 5', nameZh: 'Claude Fable 5', sectionTitleEn: 'Dev', sectionTitleZh: '开发' },
 ];

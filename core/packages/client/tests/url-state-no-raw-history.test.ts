@@ -6,7 +6,7 @@
 // 各文件内已带 `// eslint-disable-next-line no-restricted-syntax, no-restricted-globals` + 理由注释。
 //
 // CI 跑 vitest(不跑 eslint,且无 TS eslint parser),故约定靠本测试当红灯:新页面想退回旧写法 → CI 直接挂。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -21,7 +21,7 @@ const ALLOWLIST = new Set([
   'app/[lang]/wca/_globe/GlobeMapClient.tsx',         // 重型 maplibre:URL 同步 + history.back 返回件刻意手写
   'app/[lang]/calc/_components/stores/calc_store.ts', // zustand store(无法用 hook)+ t0/t1.. 动态键成绩序列化,data-blob 例外
   'app/[lang]/recon/submit/ReconSubmitForm.tsx',      // cubedb 自定义编码(encodeUrlAlg)+ 编辑/?from 模式门控,nuqs 声明式 hook 无法复刻
-  'app/[lang]/code/stack/_tools/react-router.tsx',    // 文档示例文本(<code> 里展示 API 名),非真实调用
+  'app/[lang]/dev/stack/_tools/react-router.tsx',    // 文档示例文本(<code> 里展示 API 名),非真实调用
   'lib/url_hash.ts',                                 // URL 片段(#case 名):nuqs 只管 query string,不碰 hash;全站唯一一处写 hash
 ]);
 

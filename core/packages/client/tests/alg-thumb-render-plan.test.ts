@@ -16,7 +16,7 @@ import {
 import { algCaseSvg } from '@/lib/alg_pdf/case_svg';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 
 const RAW = { kind: 'raw' as const, tag: '', attrs: {} };
 const FACE = {

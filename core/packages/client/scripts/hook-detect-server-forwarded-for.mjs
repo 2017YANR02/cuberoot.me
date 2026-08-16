@@ -44,7 +44,7 @@ process.stdin.on('end', () => {
       deny(
         '禁止读取可伪造的 X-Forwarded-For 作请求 IP 来源:XFF 由客户端自填,任何人都能伪造 → IP / visitor_id / 国家 spoofing、绕过限流、污染统计。' +
           "请用 getIp(c)(import { getIp } from '../utils/analytics_helpers.js';)——全站唯一的请求 IP 来源,只读 nginx 写入的可信 x-real-ip。" +
-          '确有正当用途(仅记录原始 XFF 链、绝不用于身份判定):在该行加行内注释 allow-forwarded-for。详见 tests/server-no-forwarded-for.test.ts / /code/guards。',
+          '确有正当用途(仅记录原始 XFF 链、绝不用于身份判定):在该行加行内注释 allow-forwarded-for。详见 tests/server-no-forwarded-for.test.ts / /dev/guards。',
       );
     }
   }

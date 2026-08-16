@@ -1,4 +1,4 @@
--- 0010_ops_commands.sql — /code/ops runbook 命令 + 提示词模板
+-- 0010_ops_commands.sql — /dev/ops runbook 命令 + 提示词模板
 -- 从硬编码 OpsPage.tsx COMMANDS 数组迁过来,DB 是 source of truth.
 -- admin 走 X-Admin-Key 端点编辑 (server/routes/ops.ts),public GET 5min cache.
 

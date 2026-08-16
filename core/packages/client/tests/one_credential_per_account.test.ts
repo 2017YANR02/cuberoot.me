@@ -7,7 +7,7 @@
 // 重点是**跨包字面量耦合**:服务端错误串和前端 includes() 匹配靠一模一样的英文句子对上。
 // 谁顺手改一边措辞,前端就会静默退化成把英文原文糊到用户脸上 —— 这类退化没人会在 review
 // 里看出来,所以钉在这儿。CI 跑 client vitest(server 包无测试集),故跨包扫源码。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';

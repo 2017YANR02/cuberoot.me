@@ -353,7 +353,7 @@ if (isMain) {
       const exceptionKind = rule.id === 'back-home-layout' || rule.id === 'alg-case-detail-layout' ? '不同布局' : '不同交互';
       deny(
         `${rule.reason}\n${rule.importStatement}\n替换为: ${rule.replacement}\n` +
-        `确属${exceptionKind}时，在对应 JSX 前注明 // ${EXEMPTION}: <具体理由>。详见 /code/components。`,
+        `确属${exceptionKind}时，在对应 JSX 前注明 // ${EXEMPTION}: <具体理由>。详见 /dev/components。`,
       );
     }
     process.exit(0);

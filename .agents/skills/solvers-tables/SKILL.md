@@ -1,13 +1,13 @@
 ---
 name: solvers-tables
-description: "改 solver/ 引擎的表(新增/删/改大小/改某分析器加载哪些表, 尤其优化 f2leo/pseudo_f2leo 加大表)后必须同步 /code/solvers 页的 TABLES 常量。该数据是硬编码快照(*.bin 在 solver/tables/ gitignored, repo/CI/线上都没有 → 无法 build/runtime 自动拉, 只能手维护)。Triggers: \"solvers 页\", \"求解器看板\", \"/code/solvers\", \"优化 f2leo\", \"f2leo 性能\", \"pseudo_f2leo\", \"加大表\", \"新增剪枝表/移动表\", \"改 solver 表\", \"table_generator\", \"analyzer 加载表\"."
+description: "改 solver/ 引擎的表(新增/删/改大小/改某分析器加载哪些表, 尤其优化 f2leo/pseudo_f2leo 加大表)后必须同步 /dev/solvers 页的 TABLES 常量。该数据是硬编码快照(*.bin 在 solver/tables/ gitignored, repo/CI/线上都没有 → 无法 build/runtime 自动拉, 只能手维护)。Triggers: \"solvers 页\", \"求解器看板\", \"/dev/solvers\", \"优化 f2leo\", \"f2leo 性能\", \"pseudo_f2leo\", \"加大表\", \"新增剪枝表/移动表\", \"改 solver 表\", \"table_generator\", \"analyzer 加载表\"."
 ---
 
 # Solvers 看板表数据同步
 
-`/code/solvers` 页按分析器列出实际 mmap 的移动表 / 剪枝表 + 大小。数据是**硬编码快照**(`*.bin` 在 `solver/tables/` gitignored, repo/CI/线上都没有 → 没法 build/runtime 自动拉, 只能手维护)。改了表就得同步。
+`/dev/solvers` 页按分析器列出实际 mmap 的移动表 / 剪枝表 + 大小。数据是**硬编码快照**(`*.bin` 在 `solver/tables/` gitignored, repo/CI/线上都没有 → 没法 build/runtime 自动拉, 只能手维护)。改了表就得同步。
 
-## 改表后要同步的常量(`core/packages/client/app/[lang]/code/solvers/page.tsx`)
+## 改表后要同步的常量(`core/packages/client/app/[lang]/dev/solvers/page.tsx`)
 
 - `TABLES`: 每分析器 `move`/`prune` 的表名 + 字节 `b`(+ `cnt` 同规格组, `cond:true` 对角表)。
 - `NATIVE`: 若某分析器 `tier`(huge/small)/`rate`/`stages` 变了, 一并改。

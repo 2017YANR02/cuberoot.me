@@ -36,7 +36,7 @@ export async function createFoo<T>(body: unknown): Promise<T> {
 
 - `lib/wiki-api.ts` — wiki terms / additions
 - `lib/sponsors-api.ts` — sponsors CRUD
-- `lib/ops-api.ts` — /code/ops runbook 命令
+- `lib/ops-api.ts` — /dev/ops runbook 命令
 
 ## isAdmin 检测 (page 端控制 UI 显隐)
 

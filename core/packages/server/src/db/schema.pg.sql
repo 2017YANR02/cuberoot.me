@@ -606,7 +606,7 @@ CREATE TABLE cn_comp_zh (
   fetched_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- ── 21. ops_commands (/code/ops runbook 命令 + 提示词) ──
+-- ── 21. ops_commands (/dev/ops runbook 命令 + 提示词) ──
 -- migration 0010_ops_commands.sql / 0011_seed_ops_commands.sql
 -- admin 编辑走 X-Admin-Key (server/routes/ops.ts),public GET 5min cache
 CREATE TABLE ops_commands (

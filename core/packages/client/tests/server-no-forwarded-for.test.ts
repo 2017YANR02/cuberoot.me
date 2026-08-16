@@ -8,7 +8,7 @@
 //(commit 6f58d59e);这条测试防止哪个新 route 又把 XFF 回退抄回来。
 //
 // CI 跑 vitest(server 包无测试集),故跨包扫源码当红灯。写入态配套 hook:.codex/hooks/block-server-forwarded-for.ps1。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

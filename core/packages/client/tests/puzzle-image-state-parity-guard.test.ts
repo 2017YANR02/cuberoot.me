@@ -1,6 +1,6 @@
 // Puzzle-image preview/export must never replace live state with a plausible static image.
 // Paired hook: .codex/hooks/block-puzzle-image-state-parity.ps1.
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';

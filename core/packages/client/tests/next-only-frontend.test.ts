@@ -9,7 +9,7 @@ const CLIENT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PACKAGES = join(CLIENT, '..');
 const SOURCE_DIRS = ['app', 'components', 'hooks', 'lib'];
 const HISTORICAL_SOURCE_ALLOWLIST = new Set([
-  'app/[lang]/code/stack/_tools/vite.tsx',
+  'app/[lang]/dev/stack/_tools/vite.tsx',
 ]);
 
 function walk(dir: string): string[] {

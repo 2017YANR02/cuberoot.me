@@ -147,8 +147,8 @@ Kogler 本人那份最早的证明程序**没有公开源码**,只有方法描�
 `it`(每段约 6 分钟)。
 
 待办:
-- [!] `/code/solvers` 看板登记 —— **卡在分类上,要用户拍板**。`_fleet.ts` 的 `NONWCA_TS` 被 CI
-      守卫 `code-solvers-fleet-sync` 锁死「event 集 == `CSTIMER_SOLVABLE_IDS`」,魔表是 **WCA 项目**、
+- [!] `/dev/solvers` 看板登记 —— **卡在分类上,要用户拍板**。`_fleet.ts` 的 `NONWCA_TS` 被 CI
+      守卫 `dev-solvers-fleet-sync` 锁死「event 集 == `CSTIMER_SOLVABLE_IDS`」,魔表是 **WCA 项目**、
       不在那个集合里,硬塞进去 CI 直接红。而现有四档 tier 也没有一档描述得准:魔表不是全 BFS(A)、
       不是离线表(B)、不是 IDA*(C)、更不是近最优(D),它是「代数拆分 + 两侧迭代加深」的可证最优。
       两条路选一条:①加一个 `WCA_TS` 分区(纯 TS 的 WCA 项目求解器,目前只有魔表);
@@ -169,7 +169,7 @@ Kogler 本人那份最早的证明程序**没有公开源码**,只有方法描�
 - [x] `page.tsx` dispatch + `SolveTabs` 的 `SolvePuzzle`/`EVENT_ID`/`PUZZLE_BY_EVENT` 加 `clock`。
 - [x] `clock_svg.ts` 的几何常量改为 **export**(不再各算一份),角位 ↔ 表盘的镜像关系统一从
       `lib/clock-solver` 的四张表取 → 画板与打乱图逐像素同格。
-- [x] `/code` 组件目录登记 `InteractiveClock`。
+- [x] `/dev` 组件目录登记 `InteractiveClock`。
 
 浏览器实证(非推断):
 
@@ -213,7 +213,7 @@ Kogler 本人那份最早的证明程序**没有公开源码**,只有方法描�
 
 ### P8 收尾
 - [ ] typecheck + 全量测试
-- [ ] `/code/solvers` 看板、`/code` catalog 登记
+- [ ] `/dev/solvers` 看板、`/dev` catalog 登记
 - [ ] 回写 skill `sim-add-puzzle`(魔表 = 首个非转层魔方)+ memory
 
 ---

@@ -111,8 +111,8 @@ Data flow: Rust crate → `wasm.rs` export → `build_wasm.ps1` (pkg-web) → **
    (49-52), `EAGER_MAX` (56-58; heavy=0), `Kind`+`kindOf` (62-68), `needOf` (71-77), `computeAll`
    ternary (238-250), `fetchMoves` ternary (304-318), + `isSentinel`/`faceDesc`/hint/empty-state if
    conditional. Labels resolve via `variantLabel`/`stageLabel` (no local METHODS map).
-8. **Board** `app/[lang]/code/solvers/page.tsx`: sync TABLES/NATIVE/BROWSER snapshot (skill
-   `solvers-tables`). CI guards: `tests/code-tokens-drift`, `tests/zh-hant-drift`.
+8. **Board** `app/[lang]/dev/solvers/page.tsx`: sync TABLES/NATIVE/BROWSER snapshot (skill
+   `solvers-tables`). CI guards: `tests/dev-tokens-drift`, `tests/zh-hant-drift`.
 9. **Verify**: playwright `127.0.0.1:3000/zh/scramble/analyzer`, switch method, desktop + 390px,
    0 console errors; native↔WASM 6 values bit-exact (node harness vs analyzer.exe). typecheck
    `pnpm --filter @cuberoot/client typecheck` **from core/** (repo root → ERR_PNPM_NO_PKG_MANIFEST).
@@ -251,16 +251,16 @@ parity on chain JSON. Commit.
   (reuse StageSolver pattern line 613 — do NOT spawn N WebGL contexts). Per-chain "Exclude this
   EO/DR/…" buttons append the step's move string to that stage's excluded set + re-run. Solution line:
   normal-only `moves // stage-variant (len/cumulative)`. Mobile: `AccordionSection` per stage <480px;
-  desktop inline rows. Register in `/code/components` catalog (`_catalog.tsx`) + a live Demo.
+  desktop inline rows. Register in `/dev/components` catalog (`_catalog.tsx`) + a live Demo.
 - `app/[lang]/scramble/analyzer/page.tsx`: mount between CFOP `</details>` (line 761) and
   `.analyze-page </div>` (line 762): `<section className="analyze-chain">` h2 (zh『FMC 多阶段还原链』/
   en 'Multi-stage FMC Reduction') wrapping `<ChainExplorer scramble={scramble} lang={lang} />`. Use
   the `.analyze-cfop` collapsible `<details open={...}>` pattern (chain solve is heaviest).
 - `analyze.css`: `.analyze-chain` (margin/gap only, NO card/border/background per AGENTS.md; mirror
   `.analyze-primary`). Colors via theme-tokens skill, no hardcoded greys.
-- `/code/solvers/page.tsx`: add FR row to BROWSER/NATIVE snapshot (skill `solvers-tables`).
+- `/dev/solvers/page.tsx`: add FR row to BROWSER/NATIVE snapshot (skill `solvers-tables`).
 
-**Verify gate**: typecheck (tsgo, from core/) + `vitest run tests/code-catalog-sync.test.ts` + 
+**Verify gate**: typecheck (tsgo, from core/) + `vitest run tests/dev-catalog-sync.test.ts` +
 playwright analyzer bottom: run a chain, toggle stages, change a step-length range, click "Exclude
 this DR" → different reduction returns, ONE WebGL context, desktop+390px, 0 console errors. Commit.
 

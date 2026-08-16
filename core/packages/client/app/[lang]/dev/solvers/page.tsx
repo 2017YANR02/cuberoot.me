@@ -1,0 +1,906 @@
+'use client';
+
+/**
+ * /dev/solvers — 求解器舰队看板 (矩阵版).
+ * 行 = 求解器, 列 = 回填 / 吞吐 / 内存 / 表 / 浏览器; 点单元格或列头弹窗看全文 (信息零丢失).
+ * 进度 (覆盖率) + 快照日期: 实时 fetch /stats/scramble/distribution.json 自动维护
+ *   (管道每次被手动跑时重发布该文件 → 看板自动刷新, 无定时调度). fetch 失败回退到 curated 常量.
+ * 吞吐 / 内存 / 浏览器端: curated 常量 (不在 distribution.json 里, 且为稳定特征).
+ */
+import { useEffect, useState, type ReactNode } from 'react';
+import Link from '@/components/AppLink';
+import { useTranslation } from 'react-i18next';
+import { Cpu, Database, Gauge, HardDrive, Globe, Layers, Boxes, CircleCheck, CircleDashed, CircleDot, X } from 'lucide-react';
+import { statsUrl } from '@/lib/stats-base';
+import { fetchPuzzleDistribution } from '@/lib/puzzle-distribution';
+// 纯 TS 非 WCA 求解器舰队数据 (CI 守卫 tests/dev-solvers-fleet-sync.test.ts 锁
+// NONWCA_TS 的 event 集 == CSTIMER_SOLVABLE_IDS). 数据核实自各 solver 头注 + NONWCA_PUZZLE_LOOP.md §1/§2.
+import { NONWCA_TS, NONWCA_TS_PLANNED, TS_TIER_LABEL, TS_QUALITY } from './_fleet';
+import './solvers.css';
+
+// fetch 失败时的回退 (last-known 2026-05-30).
+const FB_SNAPSHOT = '2026-05-30';
+const FB_TARGET = 1_289_663;
+
+type Status = 'complete' | 'partial' | 'seed';
+
+interface NativeSolver {
+  key: string;
+  stages: number;
+  fbRows: number; // 回退行数 (fetch 失败时用)
+  rate: number | null; // tasks/sec, native, 16 核 (curated, 2026-05-30 实测; f2leo 系 2026-05-31); null = 未实测 (统计回填未接)
+  tier: 'huge' | 'mid' | 'small';
+  puzzle?: string; // 非 3x3 独立 puzzle (整魔方, 非 3x3 子阶段); 统计走 puzzle_distribution.json 新管线
+  event?: string; // 非 3x3 puzzle 对应的 WCA event id (语料过滤用)
+  zhWhy: string; enWhy: string;
+}
+
+// 原生分析器 (solver/target/release/*_analyzer.exe). rate 实测 (pair 2026-06-03 暖表稳态, 余 2026-05-30).
+const NATIVE: NativeSolver[] = [
+  { key: 'std', stages: 5, fbRows: 1_289_663, rate: 115, tier: 'huge', zhWhy: '联合大表剪枝最强,覆盖 Cross 到 XXXXCross 的 5 个标准阶段', enWhy: 'strongest joint-table pruning across all five standard stages from Cross through XXXXCross' },
+  { key: 'daisy', stages: 1, fbRows: 1_323_255, rate: 45_000, tier: 'small', zhWhy: 'edge4 仅 190,080 态,24 个合法花瓣排列做多源 BFS;上帝之数 7,精确距离直查零搜索', enWhy: 'only 190,080 edge4 states, multi-source BFS from all 24 petal permutations; God\'s number 7, exact lookup with zero search' },
+  { key: 'first_layer', stages: 2, fbRows: 0, rate: 250, tier: 'small', zhWhy: '底面 44,906,400 态全图精确 BFS,上帝之数 10；底层 258.66 亿有标号态走 IDA* + 可采纳 max-PDB,逐态严格最优,直径目前只证明 11..20', enWhy: 'First Face uses an exact full BFS over 44,906,400 states (God\'s number 10); First Layer spans 25.866 billion labelled states and uses IDA* with an admissible max-PDB, proving every queried optimum while its diameter remains bounded only to 11..20' },
+  { key: 'eo', stages: 5, fbRows: 1_240_119, rate: 0.9, tier: 'huge', zhWhy: 'xxxxcross 全枚举 ~13M 节点每条, 唯一长极', enWhy: 'xxxxcross full enumeration ~13M nodes/case — the long pole' },
+  { key: 'pseudo', stages: 4, fbRows: 1_289_663, rate: 390, tier: 'huge', zhWhy: '槽解耦 + 强剪枝, 最快', enWhy: 'slot-decoupled + strong pruning, fastest' },
+  { key: 'pseudo_pair', stages: 4, fbRows: 1_289_663, rate: 47, tier: 'huge', zhWhy: '角槽棱槽耦合, 搜索较重', enWhy: 'corner/edge slot coupling, heavier search' },
+  { key: 'pair', stages: 4, fbRows: 1_293_570, rate: 200, tier: 'huge', zhWhy: '不在默认补缺 (opt-in), 暖表后 ~200/s 已全量回填', enWhy: 'opt-in (off the default run), ~200/s once tables warm — fully backfilled' },
+  { key: 'f2leo', stages: 4, fbRows: 252, rate: 31, tier: 'huge', zhWhy: '联合大表剪枝 (同 std huge 表) + 自由棱 EO 门控, 4 阶段无 xxxxcross', enWhy: 'joint big-table pruning (same huge tables as std) + free-edge EO gating, 4 stages no xxxxcross' },
+  { key: 'pseudo_f2leo', stages: 4, fbRows: 252, rate: 81, tier: 'huge', zhWhy: 'pseudo 大表电池 (C4E + corner2/3 + edge2/3) max + 自由棱 EO, 4 阶段无 xxxxcross', enWhy: 'pseudo big-table battery (C4E + corner2/3 + edge2/3) max + free-edge EO, 4 stages no xxxxcross' },
+  { key: '333', stages: 1, fbRows: 240, rate: 4.5, tier: 'huge', zhWhy: '整魔方最优解 (Tronto h48, God 数 HTM, 单一整解非分阶段): emscripten WASM 在 Node 批量解 (非 Rust 分析器), 15G 剪枝表驻留 RAM, in-proc 12 线程 ~4.5/s; 喂 distribution.json 的 333 整解方法 (分布峰 18 / 均值 17.7)', enWhy: 'whole-cube optimal (Tronto h48, God\'s-number HTM, one whole solve not staged): emscripten WASM batch-solved in Node (not a Rust analyzer), 15G prune table resident in RAM, in-proc 12 threads ~4.5/s; feeds the 333 whole-solve method in distribution.json (distribution peaks at 18 / mean 17.7)' },
+  { key: '222', stages: 1, fbRows: 1_297_444, rate: 1_250_000, tier: 'small', zhWhy: '2x2x2 块 (1 角 + 3 棱) 全空间仅 253,440 态, 精确距离表直查零搜索', enWhy: '2x2x2 block (corner + 3 edges) — 253,440 states total, exact distance table lookup, zero search' },
+  { key: '123', stages: 2, fbRows: 1_297_444, rate: 600_000, tier: 'small', zhWhy: 'Roux 左桥: 1x2x2 方块 (1角+2棱, 前/后双微表) + 1x2x3 (2角+3棱, 5,322,240 态全表), 精确距离表直查零搜索', enWhy: 'Roux first block: 1x2x2 square (corner + 2 edges, front/back micro-tables) + 1x2x3 (2 corners + 3 edges, 5,322,240-state full table) — exact lookups, zero search' },
+  { key: '223', stages: 1, fbRows: 1_297_444, rate: 19_000, tier: 'small', zhWhy: 'Petrus 2x2x3 (2角+5棱) 全空间 ~1.5G 态放不下全表, IDA* + max(1x2x3 全表, 角2+DB/DF 表) 可采纳下界', enWhy: 'Petrus 2x2x3 (2 corners + 5 edges) — 1.5G states, too big for a full table; IDA* with admissible h = max(1x2x3 full table, corners+DB/DF table)' },
+  { key: 'eoline', stages: 2, fbRows: 1_297_444, rate: 350_000, tier: 'small', zhWhy: 'EO (2,048 态) + EOLine (294,912 态) 全空间微表, 零外部表, 精确距离直查零搜索', enWhy: 'EO (2,048 states) + EOLine (294,912 states) full-space micro-tables, zero external tables — exact lookups, zero search' },
+  { key: 'dr', stages: 1, fbRows: 1_297_444, rate: 12_000, tier: 'small', zhWhy: 'DR (Kociemba phase-1) 全空间 ~2.2G 态, IDA* + max(eo×slice, co×slice) 双 ~1M 精确表, 全现场建零外部表', enWhy: 'DR (Kociemba phase 1) — ~2.2G states; IDA* with admissible h = max(eo×slice, co×slice), two ~1M exact tables built in RAM, zero external tables' },
+  { key: 'htr', stages: 1, fbRows: 0, rate: null, tier: 'small', zhWhy: 'DR→HTR 条件式阶段: 输入须处于该视角 DR 态, 非 DR 出哨兵;全空间 2,822,400 态精确表查表即最优;统计口径待定未接回填, 吞吐未实测', enWhy: 'conditional DR→HTR stage: input must already be in DR for the view, non-DR yields a sentinel; 2,822,400-state exact table — lookups are optimal; stats wiring pending, throughput not yet measured' },
+  { key: 'htr2', stages: 1, fbRows: 0, rate: null, tier: 'small', zhWhy: 'HTR→solved 收尾阶段 (G3→G4): 输入须处于 HTR 态, 非 HTR 出哨兵;全空间 663,552 态精确表查表即最优;统计口径待定未接回填, 吞吐未实测', enWhy: 'HTR→solved finish stage (G3→G4): input must already be in HTR, non-HTR yields a sentinel; 663,552-state exact table — lookups are optimal; stats wiring pending, throughput not yet measured' },
+  { key: 'fr', stages: 1, fbRows: 0, rate: null, tier: 'small', zhWhy: 'HTR→FR (Floppy 还原) 条件式阶段: 输入须处于 HTR 态, 非 HTR 出哨兵;FR 坐标 = G3 中 H=⟨L2,R2,F2,B2⟩ 的右陪集索引, 全空间仅 3,456 陪集精确表查表即最优, God 数实测 11;原生只作链式求解器内核 (无独立分析器 bin), 统计未接回填, 吞吐未实测', enWhy: 'conditional HTR→FR (Floppy Reduction) stage: input must already be in HTR, non-HTR yields a sentinel; FR coord = right-coset index of H=⟨L2,R2,F2,B2⟩ within G3 — a 3,456-coset exact table, lookups are optimal, measured God\'s number 11; native side is the chain-solver core only (no standalone analyzer bin), stats wiring pending, throughput not yet measured' },
+  { key: 'pocket', stages: 1, fbRows: 0, rate: null, tier: 'small', puzzle: '2x2x2', event: '222', zhWhy: '非 3x3 独立 puzzle: 2x2x2 整魔方全空间 3,674,160 态 (7!·3^6, 固定 DBL 角消整体朝向) 精确距离表查表即最优, God 数实测 11 HTM;统计走 puzzle_distribution.json 新管线, 已灌注, 吞吐未实测', enWhy: 'standalone non-3x3 puzzle: the whole 2x2x2 — full-space 3,674,160-state (7!·3^6, DBL corner fixed to kill whole-cube rotation) exact distance table, lookups are optimal, measured God\'s number 11 HTM; stats go through the new puzzle_distribution.json pipeline, poured, throughput not yet measured' },
+  { key: 'pyraminx', stages: 1, fbRows: 0, rate: null, tier: 'small', puzzle: 'Pyraminx', event: 'pyram', zhWhy: '非 3x3 独立 puzzle: Pyraminx 核心 933,120 态 (6 棱偶置换 360 × 翻转 32 × 4 轴心 3^4) 精确距离表查表即最优, 总步数 = 核心最优 + 错位顶点数 (75,582,720 含顶点全空间验证), God 数实测 核心 11 / 含顶点 15;统计走 puzzle_distribution.json 新管线 (event pyram), 已灌注, 吞吐未实测', enWhy: 'standalone non-3x3 puzzle: the Pyraminx core — 933,120 states (even edge perm 360 × flips 32 × axial 3^4) exact distance table, lookups are optimal; total HTM = core optimum + misplaced tips (verified across all 75,582,720 tip-inclusive states), measured God\'s number 11 core / 15 with tips; stats go through the puzzle_distribution.json pipeline (event pyram), poured, throughput not yet measured' },
+  { key: 'skewb', stages: 1, fbRows: 0, rate: null, tier: 'small', puzzle: 'Skewb', event: 'skewb', zhWhy: '非 3x3 独立 puzzle: Skewb (斜转) 整魔方全空间 3,149,280 态 (中心偶置换 360 × 双轨道角置换 12×3 × 扭转 3^5, 角 3 天然不动不扭作全局参照, 无需消整体朝向) 精确距离表查表即最优, God 数实测 11 (分布对公开数据逐项锁);统计走 puzzle_distribution.json 新管线 (event skewb), 已灌注, 吞吐未实测', enWhy: 'standalone non-3x3 puzzle: the whole Skewb — full-space 3,149,280-state (center even perms 360 × two-orbit corner perms 12×3 × twists 3^5; corner 3 never moves nor twists — a free global reference, no orientation reduction needed) exact distance table, lookups are optimal, measured God\'s number 11 (distribution locked term-by-term against published data); stats go through the puzzle_distribution.json pipeline (event skewb), poured, throughput not yet measured' },
+  { key: '123x2', stages: 1, fbRows: 0, rate: 220, tier: 'mid', zhWhy: '双 1x2x3 联合最优平均 ~11.5 步, 搜索深;5 张精确子目标表 max 剪枝, 其中 {块+2角} 表 2.68G 态落盘 mmap', enWhy: 'dual-1x2x3 joint optimum averages ~11.5 moves — deep search; pruned by max of 5 exact subgoal tables, incl. a 2.68G-state block+corners table mmapped from disk' },
+  { key: 'sq1', stages: 1, fbRows: 0, rate: null, tier: 'huge', puzzle: 'Square-1', event: 'sq1', zhWhy: '非 3x3 独立 puzzle: Square-1 整解, 双精确口径。WCA 12c4 最优 (Sq1WcaSolver, IDA* phase-1 + 限方形子群 phase-2 收尾, 13G jsq_full 精确 phase-2 距离查表 O(1); WCA 上帝之数 D_WCA ∈ [26,27]) + slash 最优 (Sq1Solver, twist 口径只数 /, 5 张全空间投影剪枝表零盘 ~43MB 现场建, God 数 13 = Masonjones)。统计走 puzzle_distribution.json 新管线 (event sq1): WCA 12c4 全 125,605 真题已灌; slash 最优全部可证最优 (0 残留): 95.7% 由 W=2s/2s+1 免搜索证明 t=s, 余 4.3% 歧义态 (W=2s-1) 精确判定 — 最深 s=12-13 怪物由 sq1_slash_mitm 双向 BFS + decide_t (半径 ⌊s/2⌋≤6) 完备兜底, 管道自动调用', enWhy: 'standalone non-3x3 puzzle: Square-1 whole solve, two exact metrics. WCA 12c4 optimal (Sq1WcaSolver, IDA* phase-1 + square-subgroup phase-2 finish, 13G jsq_full exact phase-2 distance table O(1); WCA God\'s number D_WCA ∈ [26,27]) + slash-optimal (Sq1Solver, twist metric counting only slashes, 5 full-space projection prune tables zero-disk ~43MB built in RAM, God\'s number 13 = Masonjones). Stats go through the puzzle_distribution.json pipeline (event sq1): WCA 12c4 fully poured for all 125,605 scrambles; slash-optimal is now provably optimal with zero residual: 95.7% proven t=s via W=2s/2s+1 (no search), the remaining 4.3% ambiguous (W=2s-1) decided exactly — the deepest s=12-13 monsters cracked by sq1_slash_mitm bidirectional BFS + decide_t (radius ⌊s/2⌋≤6), auto-invoked by the pipeline' },
+];
+
+interface BrowserSolver { key: string; zhEngine: string; enEngine: string; zhLatency: string; enLatency: string; }
+
+// 浏览器端 WASM (gen 页现算). 定性, 非精确遥测.
+const BROWSER: BrowserSolver[] = [
+  { key: 'std cross-step', zhEngine: '纯十字只下 pt_cross (gz 50KB);XCross+ 再补 pt_cross_C4E0 (gz 20MB);mt_* 现场生成', enEngine: 'cross-only downloads just pt_cross (50KB gz); XCross+ adds pt_cross_C4E0 (20MB gz); mt_* generated in-WASM', zhLatency: 'Cross 秒出;深阶段按需严格最优搜索', enLatency: 'Cross is instant; deep stages use on-demand exact search' },
+  { key: 'Daisy', zhEngine: 'DaisySolverWasm (零下载,mt_edge4 + 190,080 态距离表现场建)', enEngine: 'DaisySolverWasm (zero download; mt_edge4 + 190,080-state distance table built in-WASM)', zhLatency: '全 6 花瓣色即时', enLatency: 'all 6 petal colours instant' },
+  { key: 'First Layer', zhEngine: 'FirstLayerSolverWasm (下载预构建 opt_first_layer: gzip 26.3MiB / 解压 54.7MiB,移动表与 4-bit PDB 一次装载)', enEngine: 'FirstLayerSolverWasm (loads prebuilt opt_first_layer: 26.3MiB gzip / 54.7MiB raw, containing move tables and 4-bit PDBs)', zhLatency: '客户端零 BFS；装载后底面直查,底层严格最优搜索', enLatency: 'zero client-side BFS; after load, First Face is a lookup and First Layer an exact search' },
+  { key: 'pair', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '全 4 阶段 ~0.04s', enLatency: 'all 4 stages ~0.04s' },
+  { key: 'eo', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '深阶段 数十秒', enLatency: 'deep stages tens of seconds' },
+  { key: 'pseudo', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '~5s', enLatency: '~5s' },
+  { key: 'pseudo_pair', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '深阶段 数十秒', enLatency: 'deep stages tens of seconds' },
+  { key: 'f2leo / pseudo_f2leo', zhEngine: '只下 pt_cross (gz 50KB), mt_* 现场生成', enEngine: 'downloads only pt_cross (50KB gz), mt_* generated in-WASM', zhLatency: 'cross ~2.8s', enLatency: 'cross ~2.8s' },
+  { key: '333 整解最优 (h48)', zhEngine: 'cube48opt[1-9] WASM (/scramble/solver, .dat 表用户自备)', enEngine: 'cube48opt[1-9] WASM (/scramble/solver, user-supplied .dat)', zhLatency: '默认桌面 opt3 243M / 手机 opt1 30M; 表越大搜得越快; 整解 God 数最优', enLatency: 'default desktop opt3 243M / mobile opt1 30M; bigger table = faster search; whole-cube God\'s-number optimal' },
+  { key: '2x2x2 block', zhEngine: 'Block222SolverWasm (零下载, ~0.7MB 现场生成)', enEngine: 'Block222SolverWasm (zero download, ~0.7MB generated in-WASM)', zhLatency: '全 6 视角即时', enLatency: 'all 6 views instant' },
+  { key: '1x2x3 / 2x2x3', zhEngine: 'Roux223SolverWasm (零下载, ~0.8MB 现场生成)', enEngine: 'Roux223SolverWasm (zero download, ~0.8MB generated in-WASM)', zhLatency: '方块/2x2x2 即时; 1x2x3 与 2x2x3 首算建表 ~秒级', enLatency: 'square/2x2x2 instant; 1x2x3 & 2x2x3 build tables on first solve (~seconds)' },
+  { key: '1x2x3 ×2', zhEngine: 'Roux223SolverWasm 轻档 (免 2.68G 大表)', enEngine: 'Roux223SolverWasm light tier (no 2.68G table)', zhLatency: '单格 毫秒~秒级; 解法枚举 数秒~数十秒', enLatency: 'per-cell ms–seconds; solution enumeration seconds to tens of seconds' },
+  { key: 'EO / EOLine / DR', zhEngine: 'EoDrSolverWasm (零表下载, 微表现场建)', enEngine: 'EoDrSolverWasm (zero downloads, micro-tables built in-browser)', zhLatency: 'EO/EOLine 即时; DR 首算建表 ~1s 后毫秒级', enLatency: 'EO/EOLine instant; DR builds tables on first solve (~1s), then ms' },
+  { key: 'HTR (DR→HTR)', zhEngine: 'HtrSolverWasm (零表下载, 全空间精确表现场建)', enEngine: 'HtrSolverWasm (zero downloads, exact full-space table built in-browser)', zhLatency: '首算建表 ~335ms 后即时; 非 DR 出哨兵', enLatency: 'first solve builds the table (~335ms), then instant; non-DR yields a sentinel' },
+  { key: 'HTR finish (HTR→solved)', zhEngine: 'HtrPhase2SolverWasm (零表下载, 全空间精确表现场建)', enEngine: 'HtrPhase2SolverWasm (zero downloads, exact full-space table built in-browser)', zhLatency: '首算建表后即时; 非 HTR 出哨兵', enLatency: 'first solve builds the table, then instant; non-HTR yields a sentinel' },
+  { key: 'FR (HTR→FR)', zhEngine: 'FrSolverWasm (零表下载, 3,456 陪集距离表现场建)', enEngine: 'FrSolverWasm (zero downloads, 3,456-coset distance table built in-browser)', zhLatency: '首算建表 ~10s 后即时; 非 HTR 出哨兵', enLatency: 'first solve builds tables (~10s), then instant; non-HTR yields a sentinel' },
+  { key: '2x2x2', zhEngine: 'PocketSolverWasm (零表下载, 3.6MB 距离表现场建, 免 132MB 移动表)', enEngine: 'PocketSolverWasm (zero downloads, 3.6MB distance table built in-wasm, no 132MB move table)', zhLatency: '首算惰性建表后即时; /scramble/solver?event=222 在线出最优解', enLatency: 'lazy first-solve build, then instant; serves optimal solutions on /scramble/solver?event=222' },
+  { key: 'Pyraminx', zhEngine: 'PyraminxSolverWasm (零表下载, 0.9MB 核心距离表现场建, 免 29.9MB 移动表)', enEngine: 'PyraminxSolverWasm (zero downloads, 0.9MB core distance table built in-wasm, no 29.9MB move table)', zhLatency: '首算惰性建表 ~0.6s 后即时; /scramble/solver?event=pyram 在线出最优解', enLatency: 'lazy first-solve build (~0.6s), then instant; serves optimal solutions on /scramble/solver?event=pyram' },
+  { key: 'Skewb', zhEngine: 'SkewbSolverWasm (零表下载, 3.0MB 距离表现场建, 转移件级现算免 ~100.8MB 联合移动表)', enEngine: 'SkewbSolverWasm (zero downloads, 3.0MB distance table built in-wasm, piecewise transitions — no ~100.8MB joint move table)', zhLatency: '首算惰性建表 ~3.3s 后即时; /scramble/solver?event=skewb 在线出最优解', enLatency: 'lazy first-solve build (~3.3s), then instant; serves optimal solutions on /scramble/solver?event=skewb' },
+];
+
+// native key → 浏览器条目 key (一个浏览器引擎可覆盖多个 native 阶段;全条目均被至少一行命中,无遗漏)。
+const BROWSER_BY_KEY: Record<string, string> = {
+  std: 'std cross-step', daisy: 'Daisy', first_layer: 'First Layer', eo: 'eo', pseudo: 'pseudo', pseudo_pair: 'pseudo_pair', pair: 'pair',
+  f2leo: 'f2leo / pseudo_f2leo', pseudo_f2leo: 'f2leo / pseudo_f2leo',
+  '333': '333 整解最优 (h48)', '222': '2x2x2 block', '123': '1x2x3 / 2x2x3', '223': '1x2x3 / 2x2x3',
+  eoline: 'EO / EOLine / DR', dr: 'EO / EOLine / DR', htr: 'HTR (DR→HTR)', htr2: 'HTR finish (HTR→solved)',
+  fr: 'FR (HTR→FR)', pocket: '2x2x2', pyraminx: 'Pyraminx', skewb: 'Skewb', '123x2': '1x2x3 ×2',
+};
+const BROWSER_MAP: Record<string, BrowserSolver> = Object.fromEntries(BROWSER.map((b) => [b.key, b]));
+
+// 每个原生分析器实际 mmap 的磁盘表 (D:\cube\cuberoot.me\solver\tables\, 大小为真实文件字节).
+// 源码核实自 solver/ (std_analyzer.rs / eo_cross_solver.rs / pseudo_analyzer.rs /
+// pseudo_pair_solver.rs / pair_solver.rs / f2leo_solver.rs / pseudo_f2leo_solver.rs),
+// 口径 = 权威 full 全模式 (CUBE_ALLOW_HUGE_TABLES=1, 无 *_NO_DIAG / *_SKIP)。
+// cnt>1 = 同规格一组; cond = 对角剪枝表, 仅全模式载, 设 *_NO_DIAG 可跳过 (各省 ~10GB).
+interface Tbl { n: string; b: number; cnt?: number; cond?: boolean }
+interface SolverTbls { move: Tbl[]; prune: Tbl[]; builtZh?: string; builtEn?: string
+ }
+
+const TABLES: Record<string, SolverTbls> = {
+  daisy: {
+    move: [{ n: 'mt_edge4', b: 18247692 }],
+    prune: [],
+    builtZh: '不落盘剪枝:24 个合法花瓣排列做多源 BFS,现场建 190,080 字节精确距离表;全空间上帝之数 7,查长度 O(1)',
+    builtEn: 'no on-disk prune: multi-source BFS from all 24 valid petal permutations builds a 190,080-byte exact distance table in RAM; full-space God\'s number 7, O(1) lookups',
+  },
+  first_layer: {
+    move: [{ n: 'mt_edge4', b: 18247692 }],
+    prune: [],
+    builtZh: 'native 统计端现场建角4/棱4移动表与 u8 PDB（稳定工作集实测约 107MiB,建表峰值约 258MiB）；浏览器改拉 opt_first_layer（gzip 26.3MiB / 解压 54.7MiB,4-bit PDB）,不在客户端跑 BFS。底面 O(1) 直查,底层严格最优 IDA*；底面 God 数 10,底层直径只报已证 11..20',
+    builtEn: 'the native stats analyzer builds corner-4/edge-4 moves and u8 PDBs in RAM (measured ~107MiB steady / ~258MiB build peak); the browser instead loads opt_first_layer (26.3MiB gzip / 54.7MiB raw, 4-bit PDBs) and runs no client-side BFS. First Face is O(1); First Layer uses exact IDA*. Face God\'s number 10; Layer diameter is reported only as the proven 11..20 interval',
+  },
+  std: {
+    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }],
+    prune: [{ n: 'pt_cross', b: 139408 }, { n: 'pt_cross_C4E0', b: 54743056 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856 }],
+    builtZh: '标准 XCross 到 XXXXCross 的联合剪枝表；第一层已还原条件下的第二层分布另用 26,880 态离线枚举,不加载这组大表',
+    builtEn: 'joint prune tables for standard XCross through XXXXCross; the first-layer-solved conditional Second Layer distribution is a separate 26,880-state offline enumeration and does not load these big tables',
+  },
+  eo: {
+    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_eo12', b: 147468 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_ep4', b: 855372 }, { n: 'mt_eo12_alt', b: 147468 }],
+    prune: [{ n: 'pt_cross', b: 139408 }, { n: 'pt_ep4eo12', b: 12165136 }, { n: 'pt_cross_C4E0', b: 54743056 },
+      { n: 'pt_cross_C4E0E1', b: 1313832976 }, { n: 'pt_cross_C4E0E2', b: 1313832976 }, { n: 'pt_cross_C4E0E3', b: 1313832976 },
+      { n: 'pt_cross_C4C5E0', b: 1313832976 }, { n: 'pt_cross_C4C6E0', b: 1313832976 }, { n: 'pt_cross_C4C7E0', b: 1313832976 },
+      { n: 'pt_cross_C4C5C6', b: 1313832976 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 },
+      { n: 'pt_cross_C4C6E0E2', b: 10729635856, cond: true }],
+  },
+  pseudo: {
+    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_corn3', b: 653196 }],
+    prune: [{ n: 'pt_pscross', b: 139408 },
+      { n: 'pt_pscross_C4E0', b: 54743056 }, { n: 'pt_pscross_C4E1', b: 54743056 }, { n: 'pt_pscross_C4E2', b: 54743056 }, { n: 'pt_pscross_C4E3', b: 54743056 },
+      { n: 'pt_pscross_E0E1', b: 50181136 }, { n: 'pt_pscross_E0E2', b: 50181136 },
+      { n: 'pt_pscross_C4C5', b: 47900176 }, { n: 'pt_pscross_C4C6', b: 47900176 },
+      { n: 'pt_pscross_E0E1E2', b: 1003622416 }, { n: 'pt_pscross_C4C5C6', b: 862202896 }],
+  },
+  pseudo_pair: {
+    move: [{ n: 'mt_edge', b: 1740 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_edge2', b: 38028 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_corn3', b: 653196 }],
+    prune: [{ n: 'pt_pscross_C4‥C7', b: 2280976, cnt: 4 },
+      { n: 'pt_pscross_ins_C4‥C7_diff0‥3', b: 2280976, cnt: 16 },
+      { n: 'pt_pspair_C4‥C7_E0‥E3', b: 304, cnt: 16 },
+      { n: 'pt_pscross_C4E0‥C4E3', b: 54743056, cnt: 4 },
+      { n: 'pt_pscross_E0E1', b: 50181136 }, { n: 'pt_pscross_E0E2', b: 50181136 },
+      { n: 'pt_pscross_C4C5', b: 47900176 }, { n: 'pt_pscross_C4C6', b: 47900176 },
+      { n: 'pt_pscross_E0E1E2', b: 1003622416 }, { n: 'pt_pscross_C4C5C6', b: 862202896 }],
+  },
+  pair: {
+    move: [{ n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }],
+    prune: [{ n: 'pt_cross_ins_C4', b: 2280976 }, { n: 'pt_pair_C4E0', b: 304 }, { n: 'pt_cross_C4E0', b: 54743056 },
+      { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856, cond: true }],
+  },
+  f2leo: {
+    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }],
+    prune: [{ n: 'pt_cross', b: 139408 }, { n: 'pt_cross_C4E0', b: 54743056 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856 }],
+    builtZh: 'cross 阶段用 pt_cross;xcross 用 pt_cross_C4E0;xxcross/xxxcross 复用 std 的 pair huge 表 + 叶子门控自由 F2L 棱 EO',
+    builtEn: 'cross via pt_cross; xcross via pt_cross_C4E0; xxcross/xxxcross reuse std pair huge tables + leaf EO gating on free F2L edges'
+},
+  pseudo_f2leo: {
+    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_corn3', b: 653196 }],
+    prune: [{ n: 'pt_pscross_C4E0‥C4E3', b: 54743056, cnt: 4 },
+      { n: 'pt_pscross_E0E1', b: 50181136 }, { n: 'pt_pscross_E0E2', b: 50181136 },
+      { n: 'pt_pscross_C4C5', b: 47900176 }, { n: 'pt_pscross_C4C6', b: 47900176 },
+      { n: 'pt_pscross_E0E1E2', b: 1003622416 }, { n: 'pt_pscross_C4C5C6', b: 862202896 }],
+    builtZh: 'combo 启发式 = max(每对 C4E, 角组 corner2/3, 棱组 edge2/3) + 叶子门控自由棱 EO;另现场建 pscross 剪枝 (~272KB, 内存) 供 cross 阶段',
+    builtEn: 'combo heuristic = max(per-pair C4E, corner2/3 group, edge2/3 group) + leaf EO gating on free edges; plus pscross prune (~272KB) built in-RAM for the cross stage'
+},
+  '333': {
+    move: [],
+    prune: [{ n: 'h48prun31h9', b: 15565455360 }],
+    builtZh: 'Tronto cube48opt 最优解器 (h48 坐标, God 数 HTM 整解): 15G 剪枝表分 64MB 块拷入 emscripten 堆 (非 Rust mmap), in-proc 起 12 解线程; 同一 cube48opt[1-9] 引擎也服 /scramble/solver 在线最优 (浏览器选 30M~972M 小表)',
+    builtEn: 'Tronto cube48opt optimal solver (h48 coordinate, God\'s-number HTM whole solve): the 15G prune table is copied into the emscripten heap in 64MB chunks (not a Rust mmap), starting 12 solve threads in-proc; the same cube48opt[1-9] engine also powers /scramble/solver online optimal (browser picks 30M–972M smaller tables)'
+  },
+  '222': {
+    move: [{ n: 'mt_edge3', b: 760332 }, { n: 'mt_corn', b: 1740 }],
+    prune: [],
+    builtZh: '不落盘剪枝:全空间精确距离表 (253,440 态, ~248KB) 构造时内存现场 BFS;查长度 O(1) 直查无搜索',
+    builtEn: 'no on-disk prune: exact full-space distance table (253,440 states, ~248KB) BFS-built in RAM at startup; length queries are O(1) lookups, zero search'
+  },
+  '123': {
+    move: [{ n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge2', b: 38028 }],
+    prune: [],
+    builtZh: '不落盘剪枝:1x2x3 全空间精确距离表 (5,322,240 态, ~5MB) 与 FB 方块前/后双微表 (各 12,672 态) 构造时内存现场 BFS;查长度 O(1) 直查无搜索',
+    builtEn: 'no on-disk prune: exact full-space 1x2x3 distance table (5,322,240 states, ~5MB) + front/back FB-square micro-tables (12,672 states each) BFS-built in RAM at startup; length queries are O(1) lookups, zero search'
+  },
+  '223': {
+    move: [{ n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_edge2', b: 38028 }],
+    prune: [],
+    builtZh: '不落盘剪枝:内存现场 BFS 出 1x2x3 全表 (5,322,240 态) 与角2+DB/DF 表 (266,112 态) 作可采纳下界, IDA* 取两者 max;h=0 即块成',
+    builtEn: 'no on-disk prune: 1x2x3 full table (5,322,240 states) + corners+DB/DF table (266,112 states) BFS-built in RAM as admissible bounds; IDA* prunes on their max; h=0 means the block is done'
+  },
+  eoline: {
+    move: [],
+    prune: [],
+    builtZh: '零盘表:eo12/线棱微 move 表与全空间精确距离表 (2,048 + 294,912 态) 全部现场从内置运动学构建;查长度 O(1) 直查无搜索',
+    builtEn: 'no disk tables at all: eo12/line micro move tables + exact full-space distance tables (2,048 + 294,912 states) built in RAM from built-in kinematics; O(1) lookups, zero search',
+  },
+  dr: {
+    move: [],
+    prune: [],
+    builtZh: '零盘表:eo/co/slice 微 move 表与两张 ~1M 态精确距离表全部现场构建;IDA* 取两者 max, h=0 即达 DR',
+    builtEn: 'no disk tables at all: eo/co/slice micro move tables + two ~1M-state exact distance tables built in RAM; IDA* prunes on their max; h=0 means DR reached',
+  },
+  htr: {
+    move: [],
+    prune: [],
+    builtZh: '零盘表:DR→HTR 全空间精确距离表 (2,822,400 态 = 角置换 8! 40,320 × 轨道 4 棱位置组合 C(8,4)=70, ~2.8MB) 首查惰性内存 BFS (native ~5s);查长度 O(1), 枚举首达即最优, DR→HTR God 数实测 13;非 DR 输入出哨兵',
+    builtEn: 'no disk tables at all: exact full-space DR→HTR distance table (2,822,400 states = corner perm 8! 40,320 × C(8,4)=70 orbit-edge placements, ~2.8MB) lazily BFS-built in RAM on first query (~5s native); O(1) length lookups, first hit in enumeration is optimal — measured DR→HTR God\'s number 13; non-DR inputs yield a sentinel',
+  },
+  htr2: {
+    move: [],
+    prune: [],
+    builtZh: '零盘表:HTR→solved (G3→G4) 全空间精确距离表 (663,552 态 = 角 HTR 子群 Hc 96 × 棱 6,912, ~648KB) 首查惰性内存 BFS;查长度 O(1), 枚举首达即最优, HTR→solved God 数实测 15;非 HTR 输入出哨兵',
+    builtEn: 'no disk tables at all: exact full-space HTR→solved (G3→G4) distance table (663,552 states = HTR corner subgroup Hc 96 × 6,912 edges, ~648KB) lazily BFS-built in RAM on first query; O(1) length lookups, first hit in enumeration is optimal — measured HTR→solved God\'s number 15; non-HTR inputs yield a sentinel',
+  },
+  fr: {
+    move: [],
+    prune: [],
+    builtZh: '零盘表:HTR→FR 距离表 = G3 中 H=⟨L2,R2,F2,B2⟩ 右陪集索引 (3,456 陪集, ~3.4KB) 首查惰性内存 BFS (复用 htr2 的 G3 角 96 × 棱 6,912 微表);查长度 O(1), 枚举首达即最优, HTR→FR God 数实测 11;非 HTR 输入出哨兵',
+    builtEn: 'no disk tables at all: the HTR→FR distance table indexes right cosets of H=⟨L2,R2,F2,B2⟩ within G3 (3,456 cosets, ~3.4KB), lazily BFS-built in RAM on first query (reusing htr2\'s G3 corner-96 × edge-6,912 micro-tables); O(1) length lookups, first hit in enumeration is optimal — measured HTR→FR God\'s number 11; non-HTR inputs yield a sentinel',
+  },
+  pocket: {
+    move: [],
+    prune: [],
+    builtZh: '零盘表:独立 2x2x2 全空间精确距离表 (3,674,160 态 = 7!·3^6, 固定 DBL 角消整体朝向, ~3.6MB) + 联合移动表 (~132MB) 启动时内存现场 BFS (亚秒级);查长度 O(1) 直查无搜索, God 数实测 11 HTM;全 18 记号经 24 旋转归一 (2x2x2 无中心, D/L/B = 对面 + 整体旋转)',
+    builtEn: 'no disk tables at all: standalone 2x2x2 — exact full-space distance table (3,674,160 states = 7!·3^6, DBL corner fixed to kill whole-cube rotation, ~3.6MB) + joint move table (~132MB) BFS-built in RAM at startup (sub-second); O(1) length lookups, zero search — measured God\'s number 11 HTM; all 18 move tokens normalized through 24 rotations (no centers: D/L/B = opposite face + rotation)',
+  },
+  pyraminx: {
+    move: [],
+    prune: [],
+    builtZh: '零盘表:Pyraminx 核心全空间精确距离表 (933,120 态 = 6 棱偶置换 360 × 翻转 32 × 4 轴心 3^4, ~0.9MB) 内存现场 BFS;native 分析器走 full 路线另建 ~29.9MB 移动表 (启动 ~1s), 浏览器走 lean 路线只建距离表;查长度 O(1) 直查无搜索, 总步数 = 核心最优 + 错位顶点数 (75,582,720 含顶点全空间验证加法公式), God 数实测 核心 11 / 含顶点 15;吃全 WCA pyram 记号含小写顶点 u/l/r/b',
+    builtEn: 'no disk tables at all: exact full-space Pyraminx core distance table (933,120 states = even edge perm 360 × flips 32 × axial 3^4, ~0.9MB) BFS-built in RAM; the native analyzer takes the full route with an extra ~29.9MB move table (~1s at startup), the browser takes the lean distance-only route; O(1) length lookups, zero search — total HTM = core optimum + misplaced tips (additivity verified across all 75,582,720 tip-inclusive states), measured God\'s number 11 core / 15 with tips; accepts full WCA pyram notation incl. lowercase tips u/l/r/b',
+  },
+  skewb: {
+    move: [],
+    prune: [],
+    builtZh: '零盘表:Skewb 整魔方全空间精确距离表 (3,149,280 态 = 中心偶置换 360 × 双轨道角置换 12×3 × 扭转 3^5, 角 3 天然不动不扭作全局参照, ~3.0MB) 内存现场 BFS (~1.2s);native 与浏览器同走 lean 路线, 转移件级现算, 不建 ~100.8MB 联合移动表;查长度 O(1) 直查无搜索, God 数实测 11 (分布对公开数据逐项锁);吃全 WCA skewb 记号 U/L/R/B 及撇号 (角转)',
+    builtEn: 'no disk tables at all: exact full-space Skewb distance table (3,149,280 states = center even perms 360 × two-orbit corner perms 12×3 × twists 3^5; corner 3 never moves nor twists — a free global reference, ~3.0MB) BFS-built in RAM (~1.2s); native and browser share the same lean route — piecewise transitions computed on the fly, no ~100.8MB joint move table; O(1) length lookups, zero search — measured God\'s number 11 (distribution locked term-by-term against published data); accepts the full WCA skewb notation U/L/R/B with primes (vertex turns)',
+  },
+  sq1: {
+    move: [],
+    prune: [{ n: 'sq1_wca_jsqfull', b: 13005619200 }, { n: 'sq1_wca_cornp', b: 296593920 }, { n: 'sq1_wca_edgep', b: 296593920 }],
+    builtZh: 'SQ1 双口径多表源。WCA 12c4 最优 (Sq1WcaSolver) 用磁盘表:jsq_full ~13GB 精确 phase-2 距离查表 (补 shape 位 full_idx, O(1) 查使 phase-2 免搜索) + 角/棱置换投影各 ~283MB;WCA God 数 [26,27]。slash 最优 (Sq1Solver) 是零盘表:5 张全空间投影剪枝表 (comb / c4 / e4 / c4b / e4b, h-max 9) ~43MB 内存现场建;slash God 数 13。最深歧义态 (s=12-13) 由 sq1_slash_mitm 双向 BFS 兜底:节点 = 自由转旋转类 (规范键 mod 144), 边 = 一刀, decide_t 只判 ≤s-1 可行性 → 半径 ⌊s/2⌋≤6 完备无 OOM。三者共享 SQ1 状态/索引基建',
+    builtEn: 'SQ1 two metrics, multiple table sources. WCA 12c4 optimal (Sq1WcaSolver) uses disk tables: jsq_full ~13GB exact phase-2 distance lookup (shape bits packed into full_idx, O(1) lookups make phase-2 search-free) + corner/edge permutation projections ~283MB each; WCA God\'s number [26,27]. slash-optimal (Sq1Solver) is zero-disk: 5 full-space projection prune tables (comb / c4 / e4 / c4b / e4b, h-max 9) ~43MB built in RAM; slash God\'s number 13. The deepest ambiguous states (s=12-13) are settled by sq1_slash_mitm bidirectional BFS: node = free-turn rotation class (canonical key mod 144), edge = one slash, decide_t only tests ≤s-1 feasibility → radius ⌊s/2⌋≤6, complete and OOM-free. All three share the SQ1 state/index infrastructure',
+  },
+  '123x2': {
+    move: [{ n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }],
+    prune: [{ n: 'pt_f2b_be3c2', b: 1341204496 }],
+    builtZh: '内存现场 BFS 出 6 棱联合表 (111.5M 态) 与 4 角联合表;{整块+对侧2角} 表 (2.68G 态) 首跑 BFS 落盘 pt_f2b_be3c2.bin, 后续 mmap 秒开;IDA* 取 5 张精确子目标表 max',
+    builtEn: '6-edge joint table (111.5M states) + 4-corner table BFS-built in RAM; the block+far-corners table (2.68G states) is BFS-built once, cached to pt_f2b_be3c2.bin and mmapped after; IDA* prunes on the max of 5 exact subgoal tables',
+  },
+};
+
+// 内存档共享文案 (原「内存与剪枝表」三卡: huge / small / mid + 并行约束).
+const MEM_HUGE = {
+  zh: 'mmap GB 级联合/电池剪枝表 (CEE/CCE/C4C5C6 / pair huge / E0E1E2 等)。eo 工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap。f2leo 复用 std 的 pair huge 表 (各 ~10GB);pseudo_f2leo 用 pseudo 电池 (corner3 862MB + edge3 1GB 等), 各仅多叶子自由棱 EO 门控。333 整解最优是例外:Tronto h48 15G 表分块拷入 emscripten 堆 (非 mmap 共享), 与 Rust 表互不相干。sq1 用 13G jsq_full + 双 283MB 投影磁盘表 (slash 口径另零盘 ~43MB 现场建)。',
+  en: 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. eo peaks ~24GB working set but only ~0.1GB private — read-only shared mmap. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating. 333 whole-cube optimal is the exception: its Tronto h48 15G table is copied into the emscripten heap in chunks (not a shared mmap), independent of the Rust tables. sq1 uses a 13G jsq_full + two 283MB projection disk tables (the slash metric is a separate ~43MB zero-disk in-RAM build).',
+};
+const MEM_SMALL = {
+  zh: '333-daisy 与 333-first_layer 的 native 分析器复用 mt_edge4 (17.4MB)并现场建距离/PDB；first_layer 实测稳定约 107MiB、建表峰值约 258MiB。浏览器 first_layer 另拉 26.3MiB gzip 的预构建 bundle（54.7MiB 解压,4-bit PDB）,零现场 BFS。333-222/333-123/333-223 仅微移动表；其余 small 变体按各自微表现场建。无 GB 级依赖,可与任意 huge 变体并发。',
+  en: 'The native 333-daisy and 333-first_layer analyzers reuse mt_edge4 (17.4MB) and build their distance/PDB data in RAM; first_layer measures ~107MiB steady and ~258MiB at build peak. Browser first_layer instead downloads a prebuilt 26.3MiB gzip bundle (54.7MiB raw, 4-bit PDBs), with zero client-side BFS. The 333-222/333-123/333-223 family uses only micro move tables; the remaining small solvers build their own micro tables. No GB-scale dependency, so they can run alongside a huge variant.',
+};
+const MEM_MID = {
+  zh: '介于 small 与 huge 之间:333-123x2 现场 BFS 出 6 棱联合表 (111.5M 态) + 4 角联合表, 另把 {整块+对侧2角} 表 (2.68G 态) 落盘 pt_f2b_be3c2.bin 后 mmap 秒开;具体见「表」列。',
+  en: 'between small and huge: 333-123x2 BFS-builds a 6-edge joint table (111.5M states) + a 4-corner table in RAM, plus a block+far-corners table (2.68G states) cached to pt_f2b_be3c2.bin and mmapped; see the “tables” column for specifics.',
+};
+const MEM_PARALLEL = {
+  zh: '每个分析器对整块任务跑 rayon par_iter 铺满 16 核; 表只读 mmap 跨进程共享。跨变体并发会各装一套不同的 GB 表 → 撞爆 32GB, 故串行。',
+  en: 'Each analyzer runs rayon par_iter over a whole chunk across all 16 cores; tables shared read-only via mmap. Running variants concurrently loads distinct GB-scale tables → blows past 32GB, so they run serially.',
+};
+const MEM_LIST_HUGE = '333-std / 333-eo / 333-pseudo / 333-pseudo_pair / 333-pair / 333-f2leo / 333-pseudo_f2leo / 333 / sq1';
+const MEM_LIST_SMALL = '333-daisy / 333-first_layer / 333-222 / 333-123 / 333-223 / 333-eoline / 333-dr / 333-htr / 333-htr2 / 333-fr / 222 / pyraminx / skewb';
+
+function fmtBytes(b: number): string {
+  if (b >= 1_073_741_824) return (b / 1_073_741_824).toFixed(1) + ' GB';
+  if (b >= 1_048_576) return (b / 1_048_576).toFixed(b < 10_485_760 ? 1 : 0) + ' MB';
+  if (b >= 1024) return (b / 1024).toFixed(0) + ' KB';
+  return b + ' B';
+}
+function tblTotal(t: SolverTbls): number {
+  // cond 表(对角剪枝, 各 ~10GB)可选 / 可跳过, 不计入头部总和。
+  const sum = (arr: Tbl[]) => arr.reduce((a, x) => a + (x.cond ? 0 : x.b * (x.cnt ?? 1)), 0);
+  return sum(t.move) + sum(t.prune);
+}
+
+interface Coverage { generatedAt: string; target: number; counts: Record<string, number>; }
+
+function deriveStatus(rows: number, target: number): Status {
+  const pct = (rows / target) * 100;
+  if (pct >= 99.9) return 'complete';
+  if (pct < 1) return 'seed';
+  return 'partial';
+}
+
+function fmtInt(n: number): string {
+  return n.toLocaleString('en-US');
+}
+
+const STATUS_ICON = { complete: CircleCheck, partial: CircleDot, seed: CircleDashed } as const;
+
+type ModalState = { title: string; sub?: string; body: ReactNode } | null;
+
+export default function SolversPage() {
+  const { i18n } = useTranslation();
+  const zh = i18n.language.startsWith('zh');
+
+  const [cov, setCov] = useState<Coverage | null>(null);
+  // 非 3x3 puzzle 覆盖率走独立 puzzle_distribution.json(语料/目标都与 3x3 不同)。key 与 NATIVE.key 同名。
+  const [puz, setPuz] = useState<Record<string, number> | null>(null);
+  const [modal, setModal] = useState<ModalState>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPuzzleDistribution()
+      .then((j) => {
+        if (cancelled) return;
+        const counts: Record<string, number> = {};
+        for (const [k, v] of Object.entries(j.puzzles)) {
+          if (typeof v?.sample_count === 'number') counts[k] = v.sample_count;
+        }
+        setPuz(counts);
+      })
+      .catch(() => { /* 缺失则保留 pending 占位 */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(statsUrl('/stats/scramble/distribution.json'), { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((j) => {
+        const wca = j?.sets?.wca;
+        if (!wca?.variants) return;
+        const counts: Record<string, number> = {};
+        for (const [k, v] of Object.entries(wca.variants)) {
+          const c = (v as { sample_count?: number })?.sample_count;
+          if (typeof c === 'number') counts[k] = c;
+        }
+        if (!cancelled) {
+          setCov({
+            generatedAt: typeof j?.meta?.generated_at === 'string' ? j.meta.generated_at : FB_SNAPSHOT,
+            target: typeof wca.sample_count === 'number' ? wca.sample_count : FB_TARGET,
+            counts,
+          });
+        }
+      })
+      .catch(() => { /* 保留回退常量 */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Esc 关弹窗
+  useEffect(() => {
+    if (!modal) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setModal(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [modal]);
+
+  const target = cov?.target ?? FB_TARGET;
+  const snapshot = cov?.generatedAt ?? FB_SNAPSHOT;
+  const live = !!cov;
+  const rowsOf = (s: NativeSolver) => cov?.counts[s.key] ?? s.fbRows;
+
+  // puzzle_distribution.json 的键不一致: pyraminx/skewb/sq1 按 solver key, 但 pocket 按 event id '222'.
+  // key 落空回退 event, 否则 pocket 永远误显「待灌注」(数据其实在 '222' 下).
+  const puzCount = (s: NativeSolver) => puz?.[s.key] ?? (s.event ? puz?.[s.event] : undefined);
+  const puzzleDone = (s: NativeSolver) => (puzCount(s) ?? 0) > 0;
+  // 显示名: 3×3 子阶段加 333- 前缀 (与独立小魔方区分); 整解 333 保持裸名; 独立小魔方用真名 (pocket→222).
+  const displayName = (s: NativeSolver) =>
+    s.puzzle ? (s.key === 'pocket' ? '222' : s.key)
+             : s.key === '333' ? '333' : `333-${s.key}`;
+  const subName = (s: NativeSolver) =>
+    s.puzzle ? s.puzzle : s.key === '333' ? (zh ? '整解' : 'whole') : `${s.stages}${zh ? '阶' : 'st'}`;
+  const browserOf = (s: NativeSolver) => { const k = BROWSER_BY_KEY[s.key]; return k ? BROWSER_MAP[k] : undefined; };
+  const engineShort = (b: BrowserSolver) => (zh ? b.zhEngine : b.enEngine).split(' (')[0];
+  const completeN = NATIVE.filter((s) => (s.puzzle ? puzzleDone(s) : deriveStatus(rowsOf(s), target) === 'complete')).length;
+
+  // ── 弹窗内容构造 ──
+  const tblItem = (x: Tbl) => (
+    <div className={`solv-tbl-item${x.cond ? ' solv-tbl-item-cond' : ''}`} key={x.n}>
+      <span className="solv-tbl-name">{x.n}{x.cond ? <span className="solv-tbl-dag"> †</span> : null}</span>
+      <span className="solv-tbl-sz">{fmtBytes(x.b)}{x.cnt ? ` ×${x.cnt}` : ''}</span>
+    </div>
+  );
+
+  function covBody(s: NativeSolver): ReactNode {
+    if (s.puzzle) {
+      const n = puzCount(s);
+      const done = typeof n === 'number' && n > 0;
+      const foot = done
+        ? (s.key === 'sq1'
+          ? (zh ? `${fmtInt(n)} 条真题已灌 · WCA 12c4 + slash 最优均可证最优 (0 残留)` : `${fmtInt(n)} scrambles poured · WCA 12c4 + slash-optimal both provably optimal (0 residual)`)
+          : (zh ? `${fmtInt(n)} 条真题已灌 · 全空间精确距离表, 逐条最优` : `${fmtInt(n)} scrambles poured · full-space exact distance table, each optimal`))
+        : (zh
+          ? `非 3x3 独立 puzzle · 语料 = WCA ${s.event} 打乱, 走 puzzle_distribution.json 新管线, 不计入 3x3 目标`
+          : `standalone non-3x3 puzzle · corpus = WCA ${s.event} scrambles via the new puzzle_distribution.json pipeline`);
+      return (
+        <>
+          <span className={`solv-badge ${done ? 'solv-badge-complete' : 'solv-badge-seed'}`}>
+            {done ? <CircleCheck size={12} strokeWidth={2.2} /> : <CircleDashed size={12} strokeWidth={2.2} />}
+            {done ? (zh ? '已灌注' : 'poured') : (zh ? '待灌注' : 'pending')}
+          </span>
+          <p className="solv-modal-p">{foot}</p>
+        </>
+      );
+    }
+    const rows = rowsOf(s);
+    const status = deriveStatus(rows, target);
+    const pct = Math.min(100, (rows / target) * 100);
+    const SIcon = STATUS_ICON[status];
+    return (
+      <>
+        <span className={`solv-badge solv-badge-${status}`}>
+          <SIcon size={12} strokeWidth={2.2} />
+          {status === 'complete' ? (zh ? '已补齐' : 'complete') : status === 'partial' ? (zh ? '回填中' : 'partial') : (zh ? '仅种子' : 'seed')}
+        </span>
+        <div className="solv-bar solv-modal-bar">
+          <div className={`solv-bar-fill solv-fill-${status}`} style={{ width: `${Math.max(0.4, pct)}%` }} />
+        </div>
+        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '已回填 / 目标' : 'rows / target'}</span><span className="solv-tbl-sz">{fmtInt(rows)} / {fmtInt(target)}</span></div>
+        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '覆盖率' : 'coverage'}</span><span className="solv-tbl-sz">{pct >= 99.95 ? '100' : pct < 0.1 ? pct.toFixed(2) : pct.toFixed(1)}%</span></div>
+        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '阶段数' : 'stages'}</span><span className="solv-tbl-sz">{s.stages}</span></div>
+        <p className="solv-modal-p solv-dim">{zh ? '数据' : 'data'} {snapshot} · {live ? (zh ? '实时取自 distribution.json' : 'live from distribution.json') : (zh ? '回退内置快照' : 'fallback snapshot')}</p>
+      </>
+    );
+  }
+
+  function rateBody(s: NativeSolver): ReactNode {
+    return (
+      <>
+        <div className="solv-modal-big">
+          {s.rate == null ? (zh ? '未实测' : 'n/a') : <>{s.rate >= 10000 ? `${(s.rate / 1e6).toFixed(2)}M` : s.rate}<small> /s</small></>}
+        </div>
+        <p className="solv-modal-p">{zh ? s.zhWhy : s.enWhy}</p>
+      </>
+    );
+  }
+
+  function memBody(s: NativeSolver): ReactNode {
+    const tierProse = s.tier === 'huge' ? MEM_HUGE : s.tier === 'small' ? MEM_SMALL : MEM_MID;
+    return (
+      <>
+        <span className="solv-mem-tier"><Cpu size={13} strokeWidth={2} /> {s.tier}</span>
+        <p className="solv-modal-p">{zh ? tierProse.zh : tierProse.en}</p>
+        <p className="solv-modal-p solv-dim">{zh ? MEM_PARALLEL.zh : MEM_PARALLEL.en}</p>
+      </>
+    );
+  }
+
+  function tblBody(s: NativeSolver): ReactNode {
+    const t = TABLES[s.key];
+    if (!t) return null;
+    const hasCond = [...t.move, ...t.prune].some((x) => x.cond);
+    const total = tblTotal(t);
+    return (
+      <>
+        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '档位 / 计入总和' : 'tier / counted total'}</span><span className="solv-tbl-sz">{s.tier} · {total > 0 ? fmtBytes(total) : (zh ? '零盘 (现场建)' : 'in-RAM')}</span></div>
+        {t.move.length > 0 && (
+          <div className="solv-tbl-grp">
+            <div className="solv-tbl-grp-h">{zh ? '移动表 mt_*' : 'move tables mt_*'}</div>
+            {t.move.map(tblItem)}
+          </div>
+        )}
+        {t.prune.length > 0 && (
+          <div className="solv-tbl-grp">
+            <div className="solv-tbl-grp-h">{zh ? '剪枝表 pt_*' : 'prune tables pt_*'}</div>
+            {t.prune.map(tblItem)}
+          </div>
+        )}
+        {(zh ? t.builtZh : t.builtEn) && <p className="solv-tbl-built">{zh ? t.builtZh : t.builtEn}</p>}
+        {hasCond && <p className="solv-tbl-note">{zh
+          ? `† 对角剪枝表 (10.2GB) 可选, 未计入上方总和; 设 ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 跳过 (略损剪枝)。`
+          : `† diagonal prune table (10.2GB), optional, excluded from the total above; set ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 to skip (weaker pruning).`}</p>}
+      </>
+    );
+  }
+
+  function browBody(s: NativeSolver): ReactNode {
+    const b = browserOf(s);
+    if (!b) return <p className="solv-modal-p solv-dim">{zh ? '无对应浏览器端求解器。' : 'No browser-side solver.'}</p>;
+    return (
+      <>
+        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '浏览器条目' : 'browser entry'}</span><span className="solv-tbl-sz">{b.key}</span></div>
+        <div className="solv-tbl-grp">
+          <div className="solv-tbl-grp-h">{zh ? '引擎' : 'engine'}</div>
+          <p className="solv-modal-p">{zh ? b.zhEngine : b.enEngine}</p>
+        </div>
+        <div className="solv-tbl-grp">
+          <div className="solv-tbl-grp-h">{zh ? '时延' : 'latency'}</div>
+          <p className="solv-modal-p solv-accent">{zh ? b.zhLatency : b.enLatency}</p>
+        </div>
+      </>
+    );
+  }
+
+  // 列头 (维度) 说明弹窗 — 承载原各分区的 section note / 卡片散文.
+  const dimInfo: Record<string, () => ModalState> = {
+    cov: () => ({
+      title: zh ? '回填进度' : 'Backfill coverage',
+      body: <>
+        <p className="solv-modal-p">{zh
+          ? `目标 ${fmtInt(target)} 条 · ${live ? '实时取自 distribution.json (每次手动跑管道才刷新, 无定时)' : '回退内置快照'} (${snapshot})。`
+          : `Target ${fmtInt(target)} · ${live ? 'live from distribution.json (refreshes only when the pipeline is run by hand)' : 'fallback snapshot'} (${snapshot}).`}</p>
+        <p className="solv-modal-p">{zh
+          ? '3×3 子阶段按 3×3 池百分比; 独立小魔方 (222/pyraminx/skewb/sq1) 走 puzzle_distribution.json 新管线, 不计入 3×3 目标, 已灌注即标「已灌注」。点任一回填单元看该求解器明细。'
+          : '3×3 sub-stages show a percentage of the 3×3 pool; standalone puzzles (222/pyraminx/skewb/sq1) use the puzzle_distribution.json pipeline, excluded from the 3×3 target, marked “poured” once loaded. Tap any backfill cell for that solver’s detail.'}</p>
+      </>,
+    }),
+    rate: () => ({
+      title: zh ? '吞吐' : 'Throughput',
+      body: <p className="solv-modal-p">{zh
+        ? '本机 16 核, huge 表全模式 (log 缩放基准)。每个数字为 2026-05-30 实测稳态 (f2leo 系 2026-05-31, pair 2026-06-03 暖表)。点单元看该求解器为何快/慢。'
+        : '16-core host, full huge-table mode (log-scale baseline). Each number is a measured steady-state from 2026-05-30 (f2leo 2026-05-31, pair 2026-06-03 warm tables). Tap a cell for why it’s fast/slow.'}</p>,
+    }),
+    mem: () => ({
+      title: zh ? '内存与并行' : 'Memory & parallelism',
+      sub: zh ? '本机 31.8GB 物理内存' : '31.8GB physical RAM on the build host',
+      body: <>
+        <div className="solv-mem-tier"><Cpu size={13} strokeWidth={2} /> huge</div>
+        <div className="solv-mem-list">{MEM_LIST_HUGE}</div>
+        <p className="solv-modal-p">{zh ? MEM_HUGE.zh : MEM_HUGE.en}</p>
+        <div className="solv-mem-tier" style={{ marginTop: 16 }}><Cpu size={13} strokeWidth={2} /> small</div>
+        <div className="solv-mem-list">{MEM_LIST_SMALL}</div>
+        <p className="solv-modal-p">{zh ? MEM_SMALL.zh : MEM_SMALL.en}</p>
+        <div className="solv-mem-tier" style={{ marginTop: 16 }}><Cpu size={13} strokeWidth={2} /> mid</div>
+        <div className="solv-mem-list">333-123x2</div>
+        <p className="solv-modal-p">{zh ? MEM_MID.zh : MEM_MID.en}</p>
+        <p className="solv-modal-p solv-dim" style={{ marginTop: 16 }}>{zh ? MEM_PARALLEL.zh : MEM_PARALLEL.en}</p>
+      </>,
+    }),
+    tbl: () => ({
+      title: zh ? '每个求解器的表' : 'Tables per analyzer',
+      sub: zh ? '源码核实 · full 全模式 · mmap' : 'source-verified · full mode · mmap',
+      body: <p className="solv-modal-p">{zh
+        ? '每个原生分析器实际 mmap 的移动表 (mt_*, 状态转移) 与剪枝表 (pt_*, 启发式可采纳下界);大小为磁盘真实文件字节。零盘表的求解器启动或首查时内存现场 BFS, 不落盘。† 对角剪枝表 (各 ~10GB) 可选, 不计入总和。点任一「表」单元看该求解器完整表清单 + 构造说明。'
+        : 'The move tables (mt_*, state transitions) and prune tables (pt_*, admissible heuristics) each native analyzer actually mmaps; sizes are real on-disk file bytes. Zero-disk solvers BFS-build everything in RAM at startup or first query. † diagonal prune tables (~10GB each) are optional, excluded from the total. Tap any “tables” cell for the full per-solver list + build notes.'}</p>,
+    }),
+    brow: () => ({
+      title: zh ? '浏览器端 WASM' : 'Browser WASM',
+      sub: zh ? 'gen 页现算, 每 worker 自带小表 (手机 2 / 桌面 4)' : 'live on gen page, per-worker small tables (mobile 2 / desktop 4)',
+      body: <p className="solv-modal-p">{zh
+        ? '浏览器装不下 GB 级 huge 表, 故深阶段 (xxxxcross) 比原生慢几个量级; 无 SharedArrayBuffer, worker 之间不共享表。常见比赛已由 comp_steps 预计算秒出, 现算只在未收录比赛兜底。点任一「浏览器」单元看对应 WASM 引擎 + 时延。'
+        : 'Browsers cannot hold GB-scale huge tables, so deep stages (xxxxcross) are orders of magnitude slower than native; no SharedArrayBuffer means workers don’t share tables. Common comps are served instantly from comp_steps precompute — live solve is only a fallback for uncovered comps. Tap any “browser” cell for the matching WASM engine + latency.'}</p>,
+    }),
+  };
+
+  const openDim = (key: string) => setModal(dimInfo[key]());
+  const openCell = (s: NativeSolver, dim: 'cov' | 'rate' | 'mem' | 'tbl' | 'brow') => {
+    const titleMap = { cov: zh ? '回填' : 'backfill', rate: zh ? '吞吐' : 'throughput', mem: zh ? '内存' : 'memory', tbl: zh ? '表' : 'tables', brow: zh ? '浏览器' : 'browser' };
+    const bodyMap = { cov: covBody, rate: rateBody, mem: memBody, tbl: tblBody, brow: browBody };
+    setModal({ title: `${displayName(s)} · ${titleMap[dim]}`, body: bodyMap[dim](s) });
+  };
+
+  // 单元值渲染 (紧凑)
+  const covCell = (s: NativeSolver): { node: ReactNode; tone: string } => {
+    if (s.puzzle) {
+      const done = puzzleDone(s);
+      return { node: done ? (zh ? '已灌注' : 'poured') : (zh ? '待灌注' : 'pending'), tone: done ? 'solv-tone-ok' : 'solv-tone-dim' };
+    }
+    const rows = rowsOf(s);
+    const status = deriveStatus(rows, target);
+    const pct = Math.min(100, (rows / target) * 100);
+    const tone = status === 'complete' ? 'solv-tone-ok' : status === 'partial' ? 'solv-tone-warn' : 'solv-tone-dim';
+    return { node: pct >= 99.95 ? '100%' : pct < 0.1 ? `${pct.toFixed(2)}%` : `${pct.toFixed(1)}%`, tone };
+  };
+
+  return (
+    <div className="solv-page">
+      <div className="solv-bg" aria-hidden="true" />
+
+      <div className="solv-shell">
+        <div className="solv-topbar">
+          <Link href="/dev" className="solv-back">← /dev</Link>
+          <span className="solv-snapshot" title={live ? (zh ? '覆盖率实时取自 distribution.json' : 'coverage live from distribution.json') : (zh ? '回退到内置快照' : 'fallback to built-in snapshot')}>
+            {zh ? '数据' : 'data'} {snapshot}{live ? ' ↻' : ''}
+          </span>
+        </div>
+
+        <header className="solv-hero">
+          <h1 className="solv-title">solvers<span className="solv-cursor">_</span></h1>
+          <p className="solv-sub">
+            {zh
+              ? '魔方求解器舰队:本机原生分析器(喂打乱分布 + 比赛预计算)、浏览器端 WASM(gen 页现算),与一支纯 TypeScript 非 WCA 求解器(浏览器现算,无 Rust / 无表)。进度、吞吐、内存、覆盖 —— 点单元格或列头看详情。'
+              : 'The cube-solver fleet: native analyzers (feeding the scramble distribution + per-comp precompute), browser WASM (live solve on the gen page), and a pure-TypeScript non-WCA fleet (browser-side, no Rust, no tables) — coverage, throughput, memory. Tap a cell or column header for details.'}
+          </p>
+          <div className="solv-herostats">
+            <div className="solv-stat"><span className="solv-stat-num">{NATIVE.length}</span><span className="solv-stat-label">{zh ? '原生分析器' : 'native analyzers'}</span></div>
+            <div className="solv-stat"><span className="solv-stat-num">~51<small>GB</small></span><span className="solv-stat-label">{zh ? '剪枝表' : 'pruning tables'}</span></div>
+            <div className="solv-stat"><span className="solv-stat-num">{completeN}<small>/{NATIVE.length}</small></span><span className="solv-stat-label">{zh ? '已补齐' : 'fully covered'}</span></div>
+            <div className="solv-stat"><span className="solv-stat-num">0.9–1.25M<small>/s</small></span><span className="solv-stat-label">{zh ? '吞吐跨度' : 'throughput span'}</span></div>
+            <div className="solv-stat"><span className="solv-stat-num">{NONWCA_TS.length}</span><span className="solv-stat-label">{zh ? '纯 TS 非 WCA' : 'pure-TS non-WCA'}</span></div>
+          </div>
+        </header>
+
+        {/* 原生分析器矩阵 */}
+        <section className="solv-section">
+          <header className="solv-sec-head">
+            <Database size={15} strokeWidth={2} />
+            <h2>{zh ? '原生分析器' : 'Native analyzers'}</h2>
+            <span className="solv-sec-note">{zh ? '点单元格 / 列头看详情' : 'tap a cell / header'}</span>
+          </header>
+          <div className="solv-mx-wrap">
+            <table className="solv-mx">
+              <thead>
+                <tr>
+                  <th className="solv-mx-corner" scope="col">{zh ? '求解器' : 'solver'}</th>
+                  <th scope="col"><button type="button" className="solv-mx-hbtn" onClick={() => openDim('cov')}><Database size={12} strokeWidth={2} />{zh ? '回填' : 'backfill'}</button></th>
+                  <th scope="col"><button type="button" className="solv-mx-hbtn" onClick={() => openDim('rate')}><Gauge size={12} strokeWidth={2} />{zh ? '吞吐' : 'throughput'}</button></th>
+                  <th scope="col"><button type="button" className="solv-mx-hbtn" onClick={() => openDim('mem')}><HardDrive size={12} strokeWidth={2} />{zh ? '内存' : 'memory'}</button></th>
+                  <th scope="col"><button type="button" className="solv-mx-hbtn" onClick={() => openDim('tbl')}><Layers size={12} strokeWidth={2} />{zh ? '表' : 'tables'}</button></th>
+                  <th scope="col"><button type="button" className="solv-mx-hbtn" onClick={() => openDim('brow')}><Globe size={12} strokeWidth={2} />{zh ? '浏览器' : 'browser'}</button></th>
+                </tr>
+              </thead>
+              <tbody>
+                {NATIVE.map((s) => {
+                  const t = TABLES[s.key];
+                  const total = t ? tblTotal(t) : 0;
+                  const b = browserOf(s);
+                  const cc = covCell(s);
+                  return (
+                    <tr key={s.key}>
+                      <th scope="row" className="solv-mx-name">
+                        <span className="solv-mx-nm">{displayName(s)}</span>
+                        <span className="solv-mx-sub">{subName(s)}</span>
+                      </th>
+                      <td className="solv-mx-cell">
+                        <button type="button" className="solv-mx-btn" onClick={() => openCell(s, 'cov')}>
+                          <span className={`solv-mx-val ${cc.tone}`}>{cc.node}</span>
+                        </button>
+                      </td>
+                      <td className="solv-mx-cell">
+                        <button type="button" className="solv-mx-btn" onClick={() => openCell(s, 'rate')}>
+                          <span className={`solv-mx-val ${s.rate == null ? 'solv-tone-dim' : ''}`}>
+                            {s.rate == null ? (zh ? '未实测' : 'n/a') : <>{s.rate >= 10000 ? `${(s.rate / 1e6).toFixed(2)}M` : s.rate}<small>/s</small></>}
+                          </span>
+                        </button>
+                      </td>
+                      <td className="solv-mx-cell">
+                        <button type="button" className="solv-mx-btn" onClick={() => openCell(s, 'mem')}>
+                          <span className="solv-mx-val solv-tone-accent">{s.tier}</span>
+                        </button>
+                      </td>
+                      <td className="solv-mx-cell">
+                        <button type="button" className="solv-mx-btn" onClick={() => openCell(s, 'tbl')}>
+                          <span className={`solv-mx-val ${total > 0 ? '' : 'solv-tone-dim'}`}>{total > 0 ? fmtBytes(total) : (zh ? '零盘' : 'in-RAM')}</span>
+                        </button>
+                      </td>
+                      <td className="solv-mx-cell">
+                        {b ? (
+                          <button type="button" className="solv-mx-btn" onClick={() => openCell(s, 'brow')}>
+                            <span className="solv-mx-val solv-mx-eng">{engineShort(b)}</span>
+                          </button>
+                        ) : <span className="solv-mx-val solv-tone-dim solv-mx-pad">—</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* 纯 TS 非 WCA 求解器 */}
+        <section className="solv-section">
+          <header className="solv-sec-head">
+            <Boxes size={15} strokeWidth={2} />
+            <h2>{zh ? '纯 TS 非 WCA 求解器' : 'Pure-TS non-WCA solvers'}</h2>
+            <span className="solv-sec-note">{zh ? '浏览器现算 · 无 Rust · 无表' : 'browser-side · no Rust · no tables'}</span>
+          </header>
+          <p className="solv-tbl-intro">{zh
+            ? '给 /scramble/gen 的非 WCA 魔方依次造的浏览器端整解求解器 (lib/<x>-solver.ts):状态可整枚举的现场全 BFS 出可证最短 (TIER A);现场 BFS 太重 (>1.5s 或 >100MB) 时改离线预计算精确距离表 + 浏览器 fetch 查表 + 梯度下降, 仍可证最优 (TIER B);可证单实例最短的 IDA* (TIER C);状态空间天文级的两阶段约简则近最优 / 有效有界 (TIER D, 诚实标)。点行末「方法」看实现。'
+            : 'Browser-side whole-solve solvers built one-by-one for the non-WCA puzzles on /scramble/gen (lib/<x>-solver.ts): full BFS for provably shortest where the state space enumerates (TIER A); for closures where live BFS is too heavy (>1.5s or >100MB), an offline-precomputed exact-distance table fetched + looked up + gradient-descended in the browser — still provably optimal (TIER B); per-instance IDA* (TIER C); two-phase reduction for the astronomical ones — near-optimal or valid+bounded (TIER D, honestly labeled). Tap “method” at the row end for the implementation.'}</p>
+          <div className="solv-mx-wrap">
+            <table className="solv-mx">
+              <thead>
+                <tr>
+                  <th className="solv-mx-corner" scope="col">{zh ? '求解器' : 'solver'}</th>
+                  <th scope="col">{zh ? '档位' : 'tier'}</th>
+                  <th scope="col">{zh ? '质量' : 'quality'}</th>
+                  <th scope="col">{zh ? '态' : 'states'}</th>
+                  <th scope="col">God</th>
+                  <th scope="col">{zh ? '方法' : 'method'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {NONWCA_TS.map((s) => {
+                  const q = TS_QUALITY[s.quality];
+                  const stateNote = zh ? s.zhStates : s.enStates;
+                  return (
+                    <tr key={s.event}>
+                      <th scope="row" className="solv-mx-name">
+                        <Link className="solv-mx-nm solv-ts-link" href={`/scramble/solver?event=${s.event}`} prefetch={false}>{zh ? s.zhName : s.enName}</Link>
+                      </th>
+                      <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">{zh ? TS_TIER_LABEL[s.tier].zh : TS_TIER_LABEL[s.tier].en}</span></td>
+                      <td className="solv-mx-cell"><span className={`solv-badge ${q.cls} solv-mx-pad`}>{zh ? q.zh : q.en}</span></td>
+                      <td className="solv-mx-cell"><span className="solv-mx-val solv-mx-states" title={s.states}>{s.states}</span></td>
+                      <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">{s.gods ?? '—'}</span></td>
+                      <td className="solv-mx-cell">
+                        <button type="button" className="solv-mx-btn" onClick={() => setModal({
+                          title: `${zh ? s.zhName : s.enName} · ${zh ? '方法' : 'method'}`,
+                          body: <>
+                            <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '档位 / 质量' : 'tier / quality'}</span><span className="solv-tbl-sz">{zh ? TS_TIER_LABEL[s.tier].zh : TS_TIER_LABEL[s.tier].en} · {zh ? q.zh : q.en}</span></div>
+                            <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '态' : 'states'}</span><span className="solv-tbl-sz">{s.states}{stateNote ? ` ${stateNote}` : ''}</span></div>
+                            {s.gods && <div className="solv-tbl-item"><span className="solv-tbl-name">God</span><span className="solv-tbl-sz">{s.gods}</span></div>}
+                            <p className="solv-modal-p">{zh ? s.zhMethod : s.enMethod}</p>
+                          </>,
+                        })}>
+                          <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><span className="solv-mx-more">▸</span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="solv-ts-planned">
+            <span className="solv-ts-planned-h">{zh ? '规划中 (未建):' : 'Planned (not built):'}</span>{' '}
+            {NONWCA_TS_PLANNED.map((p, i) => (
+              <span key={p.event}>{i > 0 ? ' · ' : ''}{zh ? p.zh : p.en}</span>
+            ))}
+          </p>
+          <p className="solv-browser-note">
+            {zh
+              ? 'TIER A/C 分布是全空间精确直方图 (A) 或离线采样直方图 (C);TIER D 分布一律离线预计算 → 静态 dist_<event>.json, 分布页只 fetch+渲染, 不在浏览器现场求解采样。'
+              : 'TIER A/C distributions are exact full-space histograms (A) or offline-sampled (C); every TIER D distribution is precomputed offline into a static dist_<event>.json — the distribution page only fetches and renders, never solves live.'}
+          </p>
+        </section>
+
+        {/* 计时器「按步数」度量求解器 (纯 TS, /timer 生成+真题筛选 + /scramble 分布多口径共用) */}
+        <section className="solv-section">
+          <header className="solv-sec-head">
+            <Gauge size={15} strokeWidth={2} />
+            <h2>{zh ? '计时器按步数度量(纯 TS)' : 'Timer by-steps metrics (pure TS)'}</h2>
+            <span className="solv-sec-note">{zh ? '按步数生成 · 真题筛选 · 分布多口径 · 单一源' : 'by-move-count generation · real-scramble filter · multi-metric dist · single source'}</span>
+          </header>
+          <div className="solv-mx-wrap">
+            <table className="solv-mx">
+              <tbody>
+                <tr>
+                  <th scope="row" className="solv-mx-name">
+                    <span className="solv-mx-nm">{zh ? '2×2 四口径' : '2×2 four metrics'}</span>
+                    <span className="solv-mx-sub">{zh ? '底面 · 底层 · 魔方 · QTM' : 'face · layer · cube · QTM'}</span>
+                  </th>
+                  <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">{zh ? '查表 + IDA*' : 'tables + IDA*'}</span></td>
+                  <td className="solv-mx-cell"><span className="solv-badge solv-q-optimal solv-mx-pad">{zh ? '可证精确' : 'provably exact'}</span></td>
+                  <td className="solv-mx-cell"><span className="solv-mx-val">3,674,160</span></td>
+                  <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">0–5 · 0–7 · 0–11 · 0–14</span></td>
+                  <td className="solv-mx-cell">
+                    <button type="button" className="solv-mx-btn" onClick={() => setModal({
+                      title: zh ? '2×2 按步数度量 · 方法' : '2×2 by-steps metrics · method',
+                      body: <>
+                        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '态' : 'states'}</span><span className="solv-tbl-sz">3,674,160 = 7!·3⁶ {zh ? '(DBL 角固定 gauge, U/R/F 9 招 HTM)' : '(DBL corner fixed gauge, U/R/F 9 HTM moves)'}</span></div>
+                        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '口径' : 'metrics'}</span><span className="solv-tbl-sz">{zh ? '底面 0–5(任一面同色) · 底层 0–7(任一整层) · 魔方 HTM 0–11 · QTM 0–14, 全部色中立' : 'first face 0–5 (any solid face) · first layer 0–7 · cube HTM 0–11 · QTM 0–14, all color-neutral'}</span></div>
+                        <p className="solv-modal-p">{zh
+                          ? '浏览器(/timer 按步数生成):均匀随机态拒绝采样 + 子目标/整解 IDA*(双剪枝表惰性建, 零表下载), 接受态出 WCA 式最优等态打乱。离线(统计管道 build_puzzle_metrics.mts):create222MetricEvaluator 全空间 BFS 距离表 —— perm(5040)×ori(729) 坐标独立演化 → 两张 move 表, face/layer 多源 BFS + HTM BFS + QTM 四分转 BFS, 建表 ~2s 后每条 O(1);对 24 万条 IDA* 结果 0 mismatch。同一份预计算喂 /scramble 分布「度量」下拉 + /timer WCA 真题稀有区间(如底层=0)即时出题。lib/cube222-metric.ts。'
+                          : 'Browser (/timer by-move-count generation): uniform random-state rejection sampling + subgoal/full-solve IDA* (two pruning tables built lazily, zero downloads); accepted states emit a WCA-style optimal-equivalent scramble. Offline (stats pipeline build_puzzle_metrics.mts): create222MetricEvaluator full-space BFS distance tables — perm(5040)×ori(729) coordinates evolve independently → two move tables; multi-source BFS for face/layer, HTM BFS, quarter-turn BFS for QTM; ~2s build then O(1) per scramble; 0 mismatches against 240k IDA*-computed rows. The same precompute feeds the /scramble metric dropdown and instant rare-range real scrambles (e.g. layer=0) on /timer. lib/cube222-metric.ts.'}</p>
+                      </>,
+                    })}>
+                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><span className="solv-mx-more">▸</span>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row" className="solv-mx-name">
+                    <span className="solv-mx-nm">{zh ? '金字塔双口径' : 'Pyraminx two metrics'}</span>
+                    <span className="solv-mx-sub">{zh ? 'V · 魔方' : 'V · cube'}</span>
+                  </th>
+                  <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">{zh ? '面片态 IDA*' : 'facelet IDA*'}</span></td>
+                  <td className="solv-mx-cell"><span className="solv-badge solv-q-optimal solv-mx-pad">{zh ? '可证精确' : 'provably exact'}</span></td>
+                  <td className="solv-mx-cell"><span className="solv-mx-val">933,120</span></td>
+                  <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">V 0–7 · {zh ? '魔方' : 'cube'} 0–11</span></td>
+                  <td className="solv-mx-cell">
+                    <button type="button" className="solv-mx-btn" onClick={() => setModal({
+                      title: zh ? '金字塔 V/魔方度量 · 方法' : 'Pyraminx V/cube metrics · method',
+                      body: <>
+                        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '态' : 'states'}</span><span className="solv-tbl-sz">933,120 = 360·2⁵·3⁴ {zh ? '(body, tips 独立剥离)' : '(body; tips independent, stripped)'}</span></div>
+                        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '口径' : 'metrics'}</span><span className="solv-tbl-sz">{zh ? 'V 步 0–7(4 面框架最短 V-solve 取 min) · 魔方 0–11(去 tips 整解最优)' : 'V 0–7 (min V-solve across the 4 face frames) · cube 0–11 (tips-excluded optimal full solve)'}</span></div>
+                        <p className="solv-modal-p">{zh
+                          ? 'cstimer gsolver pyraCube 移植:24 字符面片态(F R L D ×6)+ R U L B 四角 120° 招, IDA* 精确最优(~1000–3000 条/s, 零表下载)。同一求解器喂 /timer「按步数」(V/魔方生成与筛选)与统计管道 pyraminx_metrics.csv(/scramble 分布「度量」下拉 + 真题稀有桶)。timer/_lib/solver/pyra.ts。'
+                          : 'Port of cstimer gsolver pyraCube: 24-char facelet state (F R L D ×6) + R U L B 120° corner moves, exact-optimal IDA* (~1000–3000 scrambles/s, zero downloads). The same solver powers /timer by-steps (V/cube generation + filtering) and the stats pipeline pyraminx_metrics.csv (the /scramble metric dropdown + rare real-scramble buckets). timer/_lib/solver/pyra.ts.'}</p>
+                      </>,
+                    })}>
+                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><span className="solv-mx-more">▸</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* 纯 TS 3×3 STM 最优(研究级,引擎就绪 / UI 待接) */}
+        <section className="solv-section">
+          <header className="solv-sec-head">
+            <Boxes size={15} strokeWidth={2} />
+            <h2>{zh ? '纯 TS 3×3 STM 最优(研究级)' : 'Pure-TS 3×3 STM optimal (research)'}</h2>
+            <span className="solv-sec-note">{zh ? '可证最优 · Node daemon · UI 待接' : 'provably optimal · Node daemon · UI pending'}</span>
+          </header>
+          <div className="solv-mx-wrap">
+            <table className="solv-mx">
+              <tbody>
+                <tr>
+                  <th scope="row" className="solv-mx-name">
+                    <span className="solv-mx-nm">{zh ? '3×3×3 STM 最优' : '3×3×3 STM optimal'}</span>
+                    <span className="solv-mx-sub">{zh ? '转层计步' : 'slice-turn'}</span>
+                  </th>
+                  <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">{zh ? '研究级 IDA*' : 'research IDA*'}</span></td>
+                  <td className="solv-mx-cell"><span className="solv-badge solv-q-optimal solv-mx-pad">{zh ? '可证最优' : 'provably optimal'}</span></td>
+                  <td className="solv-mx-cell"><span className="solv-mx-val">~4.3×10¹⁹</span></td>
+                  <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">{zh ? 'STM ∈ [18,20]' : 'STM ∈ [18,20]'}</span></td>
+                  <td className="solv-mx-cell">
+                    <button type="button" className="solv-mx-btn" onClick={() => setModal({
+                      title: zh ? '3×3×3 STM 最优 · 方法' : '3×3×3 STM optimal · method',
+                      body: <>
+                        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '态' : 'states'}</span><span className="solv-tbl-sz">~4.3×10¹⁹ {zh ? '(目标含 6 中心归位, 中心置换群 24 阶)' : '(goal includes 6 centers home; center-perm group 24)'}</span></div>
+                        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '上帝之数' : "God's number"}</span><span className="solv-tbl-sz">STM ∈ [18,20]</span></div>
+                        <p className="solv-modal-p">{zh
+                          ? '转层计步(Slice Turn Metric)可证最优:Korf 风 IDA* + Kociemba/Korf 模式数据库(角 8!×3⁷ + 双 6 棱 12P6×2⁶,h=max,绝不相加)。纯 TS,实用至 ~深度 12;superflip 等深态正确但慢(启发强度墙,非 bug)。173MB 表离线建,生产走 Node daemon(同 cube48opt);目前仅引擎 + 测试,UI 未接。lib/stm-solver.ts + stm-cube.ts。'
+                          : 'Provably-optimal Slice Turn Metric: Korf-style IDA* + Kociemba/Korf pattern DBs (corner 8!×3⁷ + two 6-edge 12P6×2⁶, h=max — never summed). Pure TS, practical to ~depth 12; superflip-class deep states are correct but slow (heuristic-strength wall, not a bug). 173MB tables built offline, production via a Node daemon (like cube48opt); engine + tests only for now, UI not yet wired. lib/stm-solver.ts + stm-cube.ts.'}</p>
+                      </>,
+                    })}>
+                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><span className="solv-mx-more">▸</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* 魔表不进 NONWCA_TS(那张表的 event 集被 CI 锁死 == CSTIMER_SOLVABLE_IDS,且 A/B/C/D
+            四档说的是非 WCA 小魔方的状态空间打法,套不上);它是**唯一一个**用纯 TS 在浏览器里
+            现算、可证最优的 WCA 项目,故单列一节。 */}
+        <section className="solv-section">
+          <header className="solv-sec-head">
+            <Boxes size={15} strokeWidth={2} />
+            <h2>{zh ? '纯 TS WCA 项目最优(魔表)' : 'Pure-TS WCA-event optimal (Clock)'}</h2>
+            <span className="solv-sec-note">{zh ? '可证最优 · 浏览器现算 · 零下载表' : 'provably optimal · in-browser · no downloaded tables'}</span>
+          </header>
+          <div className="solv-mx-wrap">
+            <table className="solv-mx">
+              <tbody>
+                <tr>
+                  <th scope="row" className="solv-mx-name">
+                    <span className="solv-mx-nm">{zh ? '魔表' : "Rubik's Clock"}</span>
+                    <span className="solv-mx-sub">{zh ? '一步 = 针脚组合 × 一次转动' : 'one move = pin pattern × one turn'}</span>
+                  </th>
+                  <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">{zh ? '双侧枚举 + 迭代加深' : 'two-side enumeration + IDA'}</span></td>
+                  <td className="solv-mx-cell"><span className="solv-badge solv-q-optimal solv-mx-pad">{zh ? '可证最优' : 'provably optimal'}</span></td>
+                  <td className="solv-mx-cell"><span className="solv-mx-val">1,283,918,464,548,864</span></td>
+                  <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">12</span></td>
+                  <td className="solv-mx-cell">
+                    <button type="button" className="solv-mx-btn" onClick={() => setModal({
+                      title: zh ? '魔表 · 方法' : "Rubik's Clock · method",
+                      body: <>
+                        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '态' : 'states'}</span><span className="solv-tbl-sz">12¹⁴ = 1,283,918,464,548,864 {zh ? '(阿贝尔群 (Z₁₂)¹⁴)' : '(abelian, (Z₁₂)¹⁴)'}</span></div>
+                        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '上帝之数' : "God's number"}</span><span className="solv-tbl-sz">12 {zh ? '(Kogler 2014;全空间分布已知)' : '(Kogler 2014; full distribution known)'}</span></div>
+                        <p className="solv-modal-p">{zh
+                          ? '魔表群是阿贝尔群,且正面招式碰不到背面自有盘、反之亦然,两侧只通过 4 个角盘耦合。于是每侧建一张 Z₁₂⁴ → 最少步数的表(20,736 项,现场建、无落盘),答案 = min_α (F[α] + B[α − 角目标]);两侧按步数上限迭代加深,收敛判据保证漏掉的解不可能更短 —— 可证最优,不是近似。约 10ms/态,纯 TS、零 worker、零下载表。全空间分布(Rokicki 陪集法)与全部 39,248 个 12 步状态用作精确对账集。lib/clock-solver.ts。'
+                          : 'The clock group is abelian, and front moves never touch the back-only dials (and vice versa) — the two sides couple only through the 4 corner dials. So each side gets a Z₁₂⁴ → fewest-moves table (20,736 entries, built on the fly, nothing downloaded) and the answer is min_α (F[α] + B[α − corner target]); both sides iterative-deepen with a convergence test proving no shorter solution was skipped — provably optimal, not approximate. ~10ms per state, pure TS, no worker, no tables. Rokicki\'s full-space distribution and all 39,248 distance-12 states serve as exact regression oracles. lib/clock-solver.ts.'}</p>
+                      </>,
+                    })}>
+                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><span className="solv-mx-more">▸</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <footer className="solv-foot">
+          <span>{zh
+            ? `进度与日期实时取自 distribution.json (每次手动跑管道才刷新, 无定时); 吞吐/内存为 2026-05-30 实测常量。`
+            : `Coverage & date are live from distribution.json (refreshes only when the pipeline is run by hand — no schedule); throughput/memory are measured constants from 2026-05-30.`}</span>
+          <Link href="/dev" className="solv-foot-link">/dev</Link>
+        </footer>
+      </div>
+
+      {modal && (
+        // allow-static-onclick: 弹窗遮罩点击关闭 (非按钮语义, Esc 亦可关, × 为真 button)
+        <div className="solv-modal-backdrop" onClick={() => setModal(null)}>
+          <div className="solv-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="solv-modal-head">
+              <div>
+                <h3 className="solv-modal-title">{modal.title}</h3>
+                {modal.sub && <p className="solv-modal-sub">{modal.sub}</p>}
+              </div>
+              <button type="button" className="solv-modal-x" onClick={() => setModal(null)} aria-label={zh ? '关闭' : 'Close'}>
+                <X size={18} strokeWidth={2} />
+              </button>
+            </div>
+            <div className="solv-modal-body">{modal.body}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -16,7 +16,7 @@
   z-index: 1;
 }
 
-/* NOTE: 旧名 --surface/--text/--border 优先(landing.css 把它们映射到真 token,/code 那批
+/* NOTE: 旧名 --surface/--text/--border 优先(landing.css 把它们映射到真 token,/dev 那批
    art-directed 暗色页自定义了值),没定义的页面回退站点 token —— 别写死暗色回退值,否则在
    浅色页面上会变成「白底 + 12% 白边框」的隐形输入框(/timer 跟站点主题后踩过)。 */
 .country-input-field {

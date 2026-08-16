@@ -14,7 +14,7 @@
 //
 // 覆盖不到的地方(已知,故意):动态键写入(`setQuery({ [k]: v })`)静态看不出键名。该页唯一的动态
 // 写入口是 `update()` 帮助函数,所以本文件额外锁死它不做 `|| null` 折叠(折叠 = 把用户选择丢回派生规则)。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

@@ -9,7 +9,7 @@
 //   - components/Discussion.tsx 的 AuthorName → WCA 官网外链(评论 / 另解 / 复盘贡献者)
 // 本测试锁两件事:(1) 两个入口确实还带着判定;(2) 没人再拿 ownerKey 形态的变量
 // 手搓 person 链接绕过它们。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

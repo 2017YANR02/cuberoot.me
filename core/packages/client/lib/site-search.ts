@@ -12,7 +12,7 @@ import { loadCachedSolves, saveCachedSolves } from '@/lib/recon-cache';
 import { compNameZh, loadFlagData } from '@/lib/country-flags';
 import { formatTime, formatAvg, expandContinentRecord } from '@/lib/recon-utils';
 import { API_ORIGIN } from '@/lib/api-base';
-import { STACK_TOOLS_META, type StackToolMeta } from '@/app/[lang]/code/stack/_lib/stack_meta';
+import { STACK_TOOLS_META, type StackToolMeta } from '@/app/[lang]/dev/stack/_lib/stack_meta';
 import GLOSSARY_DATA from '@/app/[lang]/wiki/glossary.json';
 import { WR_METRICS, resultsQueryForMetric } from '@/lib/wr-metrics';
 

@@ -2,7 +2,7 @@
 // runtime as a hydration error; tsgo stays green. This AST guard covers native
 // anchors plus the shared/framework components known to render anchors.
 // Paired hook: .codex/hooks/block-nested-links.ps1.
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';

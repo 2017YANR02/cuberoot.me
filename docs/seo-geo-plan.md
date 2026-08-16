@@ -439,7 +439,7 @@ tab 标题（puzzle 在 query 里，服务端看不见）。
 
 ## 7. 守卫（2026-07-27 加）
 
-第二轮之后补的一层：`tests/page-metadata-coverage.test.ts`（登记在 `/code/guards`）。
+第二轮之后补的一层：`tests/page-metadata-coverage.test.ts`（登记在 `/dev/guards`）。
 
 **为什么需要**：漏配标题是**静默失败** —— `app/sitemap.ts` 是扫目录生成的，新页面会自动
 进站点地图（等于主动请爬虫来看），标题却不会自动有。结果不是"没效果"，是"招来爬虫看一个

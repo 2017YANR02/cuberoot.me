@@ -82,7 +82,7 @@ def collect_heading_chars() -> str:
         print("WARN: lib/landing-sections.* not found")
     data_files += ls
     # 固定路径含 [lang] 字面量,用 os.path.exists(glob 会把方括号当字符类)
-    for f in ["app/[lang]/page.tsx", "app/[lang]/code/page.tsx"]:
+    for f in ["app/[lang]/page.tsx", "app/[lang]/dev/page.tsx"]:
         if os.path.exists(f):
             data_files.append(f)
         else:
