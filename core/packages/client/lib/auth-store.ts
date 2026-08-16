@@ -10,8 +10,10 @@ import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { apiUrl } from './api-base';
 import { persistItem } from './safe-storage';
+import { safeNext } from './safe-next';
 
 export { ADMIN_WCA_IDS };
+export { safeNext } from './safe-next';
 
 export interface WcaUser {
   /** 真实 WCA id;纯邮箱/手机账号为空串(用 uid 区分身份)。 */
@@ -92,14 +94,8 @@ export function loginHref(): string {
 }
 
 /**
- * 校验 ?next= 回跳目标:只收站内绝对路径。挡开放重定向 —— `//evil.com` 会被浏览器当
- * 协议相对 URL 跳到站外,`javascript:` 同理,两者都不以单个 `/` 开头之外的形式出现。
+ * 校验 ?next= 回跳目标的兼容导出；实现集中在 safe-next.ts，供不依赖账号状态的代码复用。
  */
-export function safeNext(raw: string | null | undefined): string | null {
-  if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return null;
-  return raw;
-}
-
 export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
   user: readUser(),
 

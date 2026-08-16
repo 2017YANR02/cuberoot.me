@@ -15,6 +15,11 @@ export interface SessionData {
   isNew?: boolean;
 }
 
+export interface WebSessionTicket {
+  ticket: string;
+  expiresIn: number;
+}
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
@@ -124,6 +129,25 @@ export async function validateStoredSession(session: SessionData): Promise<Sessi
     wx.setStorageSync(SESSION_STORAGE_KEY, next);
   }
   return next;
+}
+
+export async function createWebSessionTicket(session: SessionData): Promise<WebSessionTicket> {
+  const response = await requestJson<unknown>('/auth/web-session/ticket', {
+    method: 'POST',
+    token: session.token,
+  });
+  if (response === null || typeof response !== 'object') {
+    throw new ApiError(502, 'invalid web session ticket response');
+  }
+  const ticket = response as Record<string, unknown>;
+  if (typeof ticket.ticket !== 'string'
+    || !/^[A-Za-z0-9_-]{43}$/.test(ticket.ticket)
+    || typeof ticket.expiresIn !== 'number'
+    || !Number.isSafeInteger(ticket.expiresIn)
+    || ticket.expiresIn <= 0) {
+    throw new ApiError(502, 'invalid web session ticket response');
+  }
+  return { ticket: ticket.ticket, expiresIn: ticket.expiresIn };
 }
 
 export function loginErrorMessage(error: unknown): string {
