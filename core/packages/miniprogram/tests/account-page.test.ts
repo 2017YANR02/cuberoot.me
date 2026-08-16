@@ -86,6 +86,21 @@ describe('mini program account page', () => {
     }));
   });
 
+  it('falls back to the website policy when the privacy API throws', async () => {
+    const navigateTo = vi.fn();
+    const page = await loadPage({
+      navigateTo,
+      openPrivacyContract() {
+        throw new Error('privacy contract unavailable');
+      },
+    });
+
+    expect(() => page.openPrivacy()).not.toThrow();
+    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({
+      url: '/pages/web/index?key=privacy',
+    }));
+  });
+
   it('clears the Mini Program session before opening the cross-platform logout route', async () => {
     const removeStorageSync = vi.fn();
     const navigateTo = vi.fn(() => {
@@ -149,6 +164,22 @@ describe('mini program account page', () => {
     expect(page.data.statusError).toBe(true);
     expect(page.data.status).toContain('本地登录状态无法清除');
     expect(navigateTo).not.toHaveBeenCalled();
+  });
+
+  it('keeps the session intact when the logout confirmation cannot open', async () => {
+    const removeStorageSync = vi.fn();
+    const page = await loadPage({
+      removeStorageSync,
+      showModal() {
+        throw new Error('modal unavailable');
+      },
+    });
+    page.setData({ loggedIn: true });
+
+    expect(() => page.logout()).not.toThrow();
+    expect(page.data.loggedIn).toBe(true);
+    expect(page.data.status).toContain('退出确认暂时无法打开');
+    expect(removeStorageSync).not.toHaveBeenCalled();
   });
 
   it('shows cached identity as checking until the server confirms it', async () => {

@@ -8,6 +8,14 @@ interface WebsitePageNavigationOptions {
 
 const activeNavigations = new WeakSet<object>();
 
+function showNavigationMessage(title: string): void {
+  try {
+    wx.showToast({ icon: 'none', title });
+  } catch {
+    // Feedback is secondary; navigation state must still be released correctly.
+  }
+}
+
 export function openWebsitePageOnce(
   owner: object,
   key: unknown,
@@ -15,9 +23,7 @@ export function openWebsitePageOnce(
 ): boolean {
   const route = resolveWebRoute(key);
   if (!route) {
-    if (options.invalidMessage) {
-      wx.showToast({ icon: 'none', title: options.invalidMessage });
-    }
+    if (options.invalidMessage) showNavigationMessage(options.invalidMessage);
     return false;
   }
   if (activeNavigations.has(owner)) return false;
@@ -26,7 +32,7 @@ export function openWebsitePageOnce(
   const release = () => activeNavigations.delete(owner);
   const fail = () => {
     release();
-    wx.showToast({ icon: 'none', title: options.failureMessage });
+    showNavigationMessage(options.failureMessage);
   };
 
   try {

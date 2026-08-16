@@ -27,6 +27,16 @@ describe('mini program app updates', () => {
     expect(() => app.onLaunch?.()).not.toThrow();
   });
 
+  it('keeps launching when update-manager setup throws', async () => {
+    const app = await loadApp({
+      getUpdateManager() {
+        throw new Error('update manager unavailable');
+      },
+    });
+
+    expect(() => app.onLaunch?.()).not.toThrow();
+  });
+
   it('lets the user apply a downloaded release update', async () => {
     let ready: (() => void) | undefined;
     const applyUpdate = vi.fn();
@@ -77,6 +87,25 @@ describe('mini program app updates', () => {
     ready?.();
 
     expect(applyUpdate).not.toHaveBeenCalled();
+  });
+
+  it('keeps the current version usable when the update prompt throws', async () => {
+    let ready: (() => void) | undefined;
+    const app = await loadApp({
+      getUpdateManager: () => ({
+        applyUpdate: vi.fn(),
+        onUpdateFailed: vi.fn(),
+        onUpdateReady(callback: () => void) {
+          ready = callback;
+        },
+      }),
+      showModal() {
+        throw new Error('modal unavailable');
+      },
+    });
+    app.onLaunch?.();
+
+    expect(() => ready?.()).not.toThrow();
   });
 
   it('shows a non-blocking message when an update cannot be downloaded', async () => {
