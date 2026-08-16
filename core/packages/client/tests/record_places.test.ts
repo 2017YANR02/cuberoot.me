@@ -226,9 +226,11 @@ describe('record place details', () => {
 
   it('reuses the shared multi-event selector for place rankings', () => {
     const placeRankings = readFileSync(new URL('../app/[lang]/wca/comp/stats/RecordPlaceRankings.tsx', import.meta.url), 'utf8');
-    expect(placeRankings).toContain("@/components/WcaEventSelector");
+    const resultsPage = readFileSync(new URL('../app/[lang]/wca/results/page.tsx', import.meta.url), 'utf8');
+    expect(placeRankings).toContain("@/components/WcaEventMultiSelector");
+    expect(resultsPage).toContain("@/components/WcaEventMultiSelector");
     expect(placeRankings).toContain('selectedEvents={selectedEvents}');
-    expect(placeRankings).toContain('onToggle={toggleEvent}');
+    expect(placeRankings).toContain('onChange={changeEvents}');
   });
 
   it('opens place names with every metric and keeps the title concise', () => {

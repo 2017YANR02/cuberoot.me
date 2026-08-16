@@ -50,6 +50,7 @@ import { Flag } from '@/components/Flag';
 import { ContinentIcon } from '@/components/ContinentIcon';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import WcaEventSelector from '@/components/WcaEventSelector';
+import WcaEventMultiSelector from '@/components/WcaEventMultiSelector';
 import HeaderToggles from '@/components/HeaderToggles';
 import CubeShorthand from '@/components/CubeShorthand';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
@@ -403,6 +404,13 @@ function EventSelectorDemo() {
   const [ev, setEv] = useState('333');
   const avail = new Set(['333', '222', '444', '555', '333oh', 'pyram', 'skewb', 'sq1', 'clock', 'minx', '333bf']);
   return <WcaEventSelector availableEvents={avail} onlyAvailable isZh={isZh} selectedEvent={ev} onSelect={setEv} />;
+}
+
+function EventMultiSelectorDemo() {
+  const isZh = useIsZh();
+  const available = new Set(['333', '222', '444', '555', '666', '777', '333bf', '333fm', '333oh', 'minx', 'pyram', 'clock', 'skewb', 'sq1', '444bf', '555bf', '333mbf', '333ft']);
+  const [events, setEvents] = useState(new Set(['333', '222', '444']));
+  return <WcaEventMultiSelector availableEvents={available} selectedEvents={events} onChange={setEvents} isZh={isZh} />;
 }
 
 function CubeColorChipDemo() {
@@ -991,6 +999,16 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<WcaEventSelector availableEvents={set} isZh={isZh} selectedEvent={ev} onSelect={setEv} />',
     Demo: EventSelectorDemo,
     note: { zh: '项目选择器必须绿色 active,只走这个组件,禁 per-page 覆写。', en: 'Event pickers must be green-active — only this component, no per-page overrides.' },
+  },
+  {
+    name: 'WcaEventMultiSelector',
+    import: "import WcaEventMultiSelector from '@/components/WcaEventMultiSelector';",
+    category: 'input',
+    zh: 'WCA 项目多选器。在图标选择器上统一提供清空、全选、项目分类和废止项开关。',
+    en: 'WCA multi-event picker with shared clear, select-all, category, and cancelled-event controls above the icon row.',
+    usage: '<WcaEventMultiSelector availableEvents={set} selectedEvents={events} onChange={setEvents} isZh={isZh} />',
+    Demo: EventMultiSelectorDemo,
+    note: { zh: '需要项目多选和分类快选时直接用它，不要在页面里重写工具栏。', en: 'Use this whenever event multi-selection needs category shortcuts; do not rebuild the toolbar in a page.' },
   },
   {
     name: 'CubeColorChip',
