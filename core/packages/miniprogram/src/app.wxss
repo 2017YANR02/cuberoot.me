@@ -108,3 +108,11 @@ button::after {
 .status-text--error {
   color: var(--cr-danger);
 }
+
+.web-error {
+  padding-top: 96rpx;
+}
+
+.retry-button {
+  margin-top: 28rpx;
+}

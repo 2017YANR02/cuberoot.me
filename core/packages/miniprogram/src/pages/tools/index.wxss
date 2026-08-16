@@ -16,6 +16,14 @@
   width: 100%;
 }
 
+.tool-row--pressed {
+  opacity: 0.62;
+}
+
+.tool-copy {
+  min-width: 0;
+}
+
 .tool-name,
 .tool-description {
   display: block;
@@ -29,12 +37,13 @@
 .tool-description {
   color: var(--cr-muted);
   font-size: 24rpx;
+  line-height: 1.45;
   margin-top: 12rpx;
-  white-space: nowrap;
 }
 
 .tool-arrow {
   color: var(--cr-faint);
+  flex: none;
   font-size: 52rpx;
   font-weight: 300;
   margin-left: 28rpx;

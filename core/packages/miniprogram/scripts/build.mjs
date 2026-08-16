@@ -1,8 +1,9 @@
+import { watch as watchSource } from 'node:fs';
 import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { basename, dirname, extname, join, relative, resolve } from 'node:path';
 import process from 'node:process';
 
-import { build, context } from 'esbuild';
+import { build } from 'esbuild';
 
 const packageRoot = resolve(import.meta.dirname, '..');
 const sourceRoot = join(packageRoot, 'src');
@@ -31,8 +32,8 @@ async function walk(directory) {
   return files;
 }
 
-async function prepareOutput() {
-  await rm(outputRoot, { force: true, recursive: true });
+async function prepareOutput(clean = true) {
+  if (clean) await rm(outputRoot, { force: true, recursive: true });
   await mkdir(outputRoot, { recursive: true });
   const files = await walk(sourceRoot);
   await Promise.all(files
@@ -66,24 +67,66 @@ async function entryPoints() {
   });
 }
 
-await prepareOutput();
+async function buildProject(clean = true) {
+  await prepareOutput(clean);
+  await build({
+    bundle: true,
+    entryPoints: await entryPoints(),
+    format: 'iife',
+    logLevel: 'info',
+    outbase: sourceRoot,
+    outdir: outputRoot,
+    platform: 'browser',
+    sourcemap: true,
+    target: 'chrome91',
+  });
+}
 
-const options = {
-  bundle: true,
-  entryPoints: await entryPoints(),
-  format: 'iife',
-  logLevel: 'info',
-  outbase: sourceRoot,
-  outdir: outputRoot,
-  platform: 'browser',
-  sourcemap: true,
-  target: 'es2020',
-};
-
-if (watch) {
-  const buildContext = await context(options);
-  await buildContext.watch();
-  console.log('Watching mini program TypeScript. Restart after editing WXML, WXSS or JSON.');
+if (!watch) {
+  await buildProject();
 } else {
-  await build(options);
+  await buildProject();
+
+  let debounceTimer;
+  let rebuilding = false;
+  let rebuildQueued = false;
+  let cleanBeforeRebuild = false;
+
+  async function rebuild() {
+    if (rebuilding) {
+      rebuildQueued = true;
+      return;
+    }
+
+    rebuilding = true;
+    const clean = cleanBeforeRebuild;
+    cleanBeforeRebuild = false;
+    try {
+      await buildProject(clean);
+      console.log(`[${new Date().toLocaleTimeString()}] Mini program rebuilt.`);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      rebuilding = false;
+      if (rebuildQueued) {
+        rebuildQueued = false;
+        void rebuild();
+      }
+    }
+  }
+
+  const sourceWatcher = watchSource(sourceRoot, { recursive: true }, (eventType) => {
+    if (eventType === 'rename') cleanBeforeRebuild = true;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => void rebuild(), 100);
+  });
+
+  const stopWatching = () => {
+    clearTimeout(debounceTimer);
+    sourceWatcher.close();
+    process.exit(0);
+  };
+  process.once('SIGINT', stopWatching);
+  process.once('SIGTERM', stopWatching);
+  console.log('Watching all mini program source files.');
 }

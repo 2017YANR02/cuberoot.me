@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "check": "pnpm typecheck && pnpm test && node scripts/build.mjs",
     "dev": "node scripts/build.mjs --watch",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

@@ -1,148 +1,170 @@
-# 微信小程序（MINIPROGRAM.md）
+# CubeRoot 微信小程序跟踪
 
-> 2026-08-04 立项。可行性调研 + 上线路径。平台规则均**当日抓官方文档实证**，非记忆，链接见 §7。
-> 关联：账号体系 `migrations/0064_user_accounts.sql`、支付 `PAYMENT_SETUP.md`、短信 `SMS_PHONE_LOGIN.md`。
+> 最后更新：2026-08-16。本文是小程序的架构约定、当前状态、上线清单和迭代记录。后续开发先更新这里，不再另建互相冲突的计划。
 
-## 0. 结论
+## 1. 产品路线
 
-**卡点不在资质，在渲染层。**
+小程序采用“原生外壳 + 网站能力”的混合架构。
 
-多数人做小程序死在主体资质上，本站反而已过大半：营业执照 + `cuberoot.me` 已 ICP 备案 + 微信开放平台已完成 ¥300 认证 —— 这三样正好是小程序的全部准入门槛。
+- 网站继续负责计时器、公式库、比赛、百科和课程等成熟功能。
+- 小程序原生层只负责微信登录、一级导航、加载失败恢复，以及未来的蓝牙、订阅消息等微信专属能力。
+- 网站功能默认通过 `web-view` 复用；只有 `web-view` 做不到、体验明显不合格，或必须调用微信 API 时，才考虑原生实现。
+- 原生实现需要算法或数据逻辑时，先从网站提取到 `@cuberoot/shared`，再由两端共同引用；不复制页面组件和业务规则。
 
-真正的难点：小程序**无 DOM、无 window/document**，Next.js 16 / React 19 / nuqs / AppLink 全部作废，UI 层必须重写。
+这条路线的目标不是把网站再写一遍，而是让网站保持唯一业务来源，小程序提供微信入口和平台增量能力。
 
-**但**：`client/lib/` 共 360 个 `.ts`、7.9 万行，其中只有 36 个碰 DOM/React —— **约 90% 的核心逻辑（kociemba、ivy-solver、batch-solver、打乱生成、Speffz、公式查表）可原样搬进小程序**。这把"重做一遍网站"降级成"给现有引擎套一层新壳"。
+## 2. 维护边界
 
-**做小程序的第一理由不是流量，是 iOS 蓝牙。** 小程序有完整 BLE API（`wx.createBLEConnection`），而 iOS Safari 根本不支持 Web Bluetooth —— GAN 智能魔方在 iPhone 上现在是死的，小程序里能活。这是网页版永远做不到的能力。
-
-## 1. 资质现状
-
-| 项 | 状态 | 备注 |
+| 改动 | 唯一入口 | 约束 |
 |---|---|---|
-| 营业执照 | ✅ 上海魔方根教育科技工作室（个人独资企业） | 注册时主体类型选**企业**，不是「个体工商户」（阿里云那次同样的坑，见 `SMS_PHONE_LOGIN.md` §主体） |
-| ICP 备案 | ✅ `cuberoot.me` 已备案 | 小程序服务器域名的**硬前提**，已满足 |
-| 微信开放平台 | ✅ 已注册 + ¥300 认证（2026-07） | unionid 打通的前提，已满足 |
-| 公众号「魔方根」 | ⚠️ **个人主体订阅号** | 历史包袱，**不能复用**。小程序须用营业执照另起企业号 |
-| 对公账户 | ❌ 无 | 影响注册验证方式的选择，见 §4.1 |
-| 微信支付商户号 | ❌ 未开通（卡对公账户） | 与小程序注册无关；反而小程序 appid 可用来绑商户号，见 §4.5 |
-| 微信登录（网页扫码） | ⚠️ 代码就绪但 env 未配 | 线上 `/v1/auth/providers` 实测 `social.wechat: null` → **DB 里零条 wechat 身份行，无历史包袱** |
+| 网站入口、标题、说明、顺序 | `packages/miniprogram/src/lib/web-routes.ts` | 不在 WXML 里再写一份列表 |
+| 网站和 API 域名 | `packages/miniprogram/src/lib/runtime-config.ts` | 只使用已在小程序后台配置的 HTTPS 域名 |
+| `web-view` 加载、失败和重试 | `packages/miniprogram/src/lib/web-view-page.ts` | 计时页和通用网页共用，不各自补丁 |
+| 登录、会话和错误文案 | `packages/miniprogram/src/lib/auth.ts` | AppSecret 永远只在服务端 |
+| 跨端计时数据类型和纯逻辑 | `@cuberoot/shared/timer` | 不复制网站计时器 UI |
+| 全局视觉变量和通用按钮 | `packages/miniprogram/src/app.wxss` | 页面只写自身布局 |
+| 账号落库 | 服务端 `account_auth.ts` + `wechat_miniprogram.ts` | 网站和小程序都只用 UnionID |
 
-## 2. 平台硬约束（官方原文实证）
+新增一个网站工具入口时，只改路由表并补测试。新增原生功能前，先在本文件写清楚为什么不能继续复用网站。
 
-| 约束 | 官方数字 | 对本站的杀伤 |
-|---|---|---|
-| 包体积 | 单包 ≤ **2MB**，所有分包总和 ≤ **30MB**（服务商代开发 20MB） | `public/` 有 92MB；`ffmpeg-core.wasm` 单个 **32MB**，一个文件就超总限额 |
-| WXWebAssembly | 只接受**代码包内路径**（支持 `.wasm` / `.wasm.br`），**不能从网络加载** | 16 个 `.wasm` 必须打进包。分析器 5 个（272–332KB）没问题；`cubeopt/` 9 个共 2.8MB 须拆独立分包 |
-| Worker | **最大并发 1 个**；worker 目录**只打包 `.js`**，非 js 被忽略 | 项目有 15+ worker 且多个并行。wasm 必须放 worker 目录**外** |
-| 服务器域名 | 必须 HTTPS + **经过 ICP 备案**；不支持 IP/localhost；**不支持父域名通配** | ✅ 已备案。但 `api.` / `static.` 要**逐个**填白名单，不能填 `*.cuberoot.me` |
-| 渲染 | 无 DOM、无 `window`/`document` | Next.js / React 19 / nuqs / AppLink 全废 |
-| canvas | 支持 `type="webgl"`，但是**原生组件**（层级最高，同层渲染 iOS 有失败率）；Canvas 2D 上限 1365×1365 | Three.js 需换官方 `threejs-miniprogram` 适配层或 XR-FRAME |
-| web-view | **个人类型小程序不支持**；每页只能一个且铺满全屏；与小程序仅能通过 JSSDK 通信 | 用营业执照注册企业号即绕开 |
+## 3. 当前状态
 
-## 3. 路线选择
+### 平台配置
 
-- **A. web-view 套壳** — 约 2 周。241 个页面全保住，但体验≈给微信加了个书签；iOS 有链接中文字符白屏坑；审核对纯套壳有排斥（工具类通常能过，不保证）。
-- **B. 原生重写** — 2-3 个月。Taro/uni-app 都只到 React 18，接不住 React 19 + App Router，UI 全部重写，只能挑 5-10 页。
-- **C. 混合 ← 采用**。现有计时器、公式库、比赛、课程等成熟页面通过 web-view 直接复用网站；登录、导航以及后续 BLE 等微信专属能力使用原生实现。
+- [x] 企业主体小程序已注册并完成微信认证。
+- [x] 小程序已绑定到网站应用所在的同一微信开放平台账号。
+- [x] request 合法域名已配置为 `https://api.cuberoot.me`。
+- [x] 业务域名已配置为 `https://cuberoot.me`，校验文件已部署。
+- [x] 服务类目 `工具 > 信息查询` 已通过并设为主类目。
+- [x] 基础信息已提交审核；最后一次后台截图显示为“审核中”，结果需在发布前复查。
+- [ ] 小程序备案尚未完成。
+- [ ] 上传前把基础库从 `trial` 选择为当时的稳定版本，并在真机复测。
+- [ ] AppSecret 曾在协作过程中暴露，正式联调前必须在后台重新生成，并同步更新服务端环境变量。
 
-## 4. 阶段一：注册 + 绑定 + unionid 打通 ← **认证已完成**
+### 工程能力
 
-### 4.1 注册（mp.weixin.qq.com）
+- [x] 微信开发者工具可导入 `packages/miniprogram/`，产物目录为 `dist/`。
+- [x] 计时器通过 `web-view` 复用网站，并已在真机正常打开。
+- [x] 公式库、WCA 比赛、魔方百科和课程使用统一路由表打开网站。
+- [x] 原生微信登录已接入后端 `/v1/auth/wechat/miniprogram`。
+- [x] 登录只接受 UnionID；缺失时拒绝创建账号，避免同一用户产生两个账号。
+- [x] 微信开发者工具的旧 Chromium 兼容边界固定为 Chrome 91，并有网站回归测试保护。
+- [x] 小程序构建目标固定为 Chrome 91，避免产物使用模拟器不支持的语法。
+- [x] `web-view` 统一处理非法地址、加载失败和重试。
+- [x] 开发监听覆盖 TS、WXML、WXSS 和 JSON，不再要求手动重启构建。
+- [ ] 网站扫码登录和小程序登录落到同一个 `uid` 的线上验收尚未完成。
+- [ ] 登录后的原生会话与 `web-view` 网站会话尚未打通。
 
-1. [mp.weixin.qq.com](https://mp.weixin.qq.com) → 立即注册 → 选「小程序」。
-2. **邮箱**：必须是**从未注册过公众号/小程序、且未绑定过个人微信号**的邮箱。建议专用一个（如 `mp@cuberoot.me`），别用站长常用邮箱 —— 一旦占用不可解绑。
-3. 主体类型选 **企业** → 企业类型选 **企业**（个人独资企业归此类，**不要**选「个体工商户」）。
-4. 填营业执照信息：企业名称、统一社会信用代码、法人姓名 + 身份证号（须与执照逐字一致）。
-5. **主体验证方式**（关键决策，见下表）。
-6. 填小程序名称 / 简介 / 类目。名称建议「魔方根」或「CubeRoot 魔方根」；类目选**工具 → 效率**（或 教育 → 在线教育）。名称**注册后 1 年内只能改 2 次**，慎填。
+## 4. 账号方案
 
-| 验证方式 | 费用 | 需对公账户 | 结果 |
-|---|---|---|---|
-| 对公打款 | 免费 | ✅ 需要 | 注册成功但**未认证**；日后要认证仍须单独付 ¥300 |
-| 微信认证 + **法人扫脸** | ¥300/年 | ❌ **不需要** | 注册即「**已认证**」状态 |
+网站扫码登录和小程序登录都以同一开放平台返回的 UnionID 作为：
 
-**→ 本站选「微信认证 + 法人扫脸」**（无对公账户，且 web-view 本来就要求已认证，一步到位）。法人用**绑了本人银行卡的微信**扫码 + 人脸识别。
-
-> ⚠️ **主体性质注册后唯一且不可变更**，平台不支持个人主体升级为企业主体。这一步选错要重开账号。
-
-### 4.2 备案
-
-小程序备案自 2023-09 起强制（境内主体）。入口：小程序后台 → 设置 → 基本设置 → 备案。营业执照 + 法人信息齐备，网站已备案，走流程即可。**备案通过前小程序无法发布上线**，所以和注册连着做。
-
-### 4.3 绑定开放平台（unionid 的唯一开关）
-
-官方文档特意强调了方向，**反了会找不到入口**：
-
-> 登录微信开发者平台 → 控制台首页 → 「**我的业务 - 开放平台 - 绑定关系 - 小程序**」
-> 注意**不是**「我的业务 - 小程序 - 绑定关系 - 开放平台」
-
-绑定后，`wx.login` + `code2Session` 直接返回 unionid，**无须用户授权**。
-
-必须绑到**与网站应用同一个**开放平台账号（即 2026-07 已认证那个），否则 unionid 不一致，打通失败。
-
-### 4.4 unionid 打通方案
-
-现有 `auth_identities` 表：`(provider, provider_uid)` 全局唯一，一条身份一行，多条指向同一 `app_users`。网站扫码登录和小程序登录都只接受 UnionID，避免同一微信号被拆成两个账号。
-
-**方案：小程序登录复用 `provider='wechat'`，`provider_uid` 存 unionid。** 同一个人网页扫码登录和小程序登录落到同一行 → 账号天然打通，无需任何合并逻辑。
-
-因为 DB 里目前**零条 wechat 行**（§1 实测），不存在"老数据存 openid、新数据存 unionid"的分裂风险 —— 这是现在就把两边一起接上的最好时机。
-
-新增后端路由（`account_auth.ts`）：
-
-```
-POST /v1/auth/wechat/miniprogram   { code }   ← wx.login 拿到的 code
-  → GET https://api.weixin.qq.com/sns/jscode2session
-        ?appid={小程序APPID}&secret={小程序SECRET}&js_code={code}&grant_type=authorization_code
-  → { openid, unionid, session_key }
-  → loginWithIdentity('wechat', unionid, ...)             ← 复用现有函数，不新写
+```text
+provider = wechat
+provider_uid = unionid
 ```
 
-新增 env（与网站应用的 `WECHAT_LOGIN_APP_ID/SECRET`、支付的 `WECHAT_*` 三者**互不相同，别混**）：
+禁止在 UnionID 缺失时回退到 OpenID。两者命名空间不同，回退会把一个用户拆成两个账号。
 
+原生小程序的 JWT 存在小程序本地存储中，网站登录态存在网页环境中，两者不会自动共享。后续若要让 `web-view` 自动登录，必须增加服务端一次性换票流程：小程序用 JWT 申请短时单次 ticket，网页消费 ticket 后写入安全 Cookie。禁止把长期 JWT 放进 URL。
+
+## 5. 开发和验收
+
+在 `core/` 运行：
+
+```powershell
+pnpm --filter @cuberoot/miniprogram dev
+pnpm --filter @cuberoot/miniprogram check
 ```
-WECHAT_MINI_APP_ID=
-WECHAT_MINI_APP_SECRET=
-```
 
-> ⚠️ `api.weixin.qq.com` **不能配进小程序服务器域名白名单**（官方安全限制），AppSecret 只能留在后端 —— 上面的调用本来就在服务端，符合要求。
+微信开发者工具导入 `core/packages/miniprogram`，不是 `dist`。`project.config.json` 和 `project.private.config.json` 是本机配置，不提交 AppID 之外的任何凭据。
 
-### 4.5 顺带收益：微信支付 appid
+每轮完成定义：
 
-`PAYMENT_SETUP.md` §3.2 提过"注册一个小程序省钱"来拿绑定商户号的 appid —— 这个小程序 appid 正好能用。但**对公账户那关仍在**，与小程序无关。
+1. 先搜索网站和 `@cuberoot/shared` 是否已有逻辑、数据或组件契约。
+2. 修改唯一来源，不在页面层复制路由、状态或文案。
+3. `pnpm --filter @cuberoot/miniprogram check` 全绿。
+4. 微信开发者工具模拟器检查无持续 Loading、无脚本错误。
+5. 至少一台真机检查首页、返回、登录、失败重试和窄屏文字。
+6. 更新本文件的状态、风险和迭代记录。
+7. 检查提交内容，不包含 AppSecret、临时校验文件或其他 AI 的改动。
 
-### 4.6 阶段一验收
+## 6. 上线阻塞清单
 
-- [x] 小程序已注册，状态「已认证」
-- [ ] 备案通过，可发布
-- [ ] 开放平台绑定关系已建立（方向对：开放平台 → 绑定小程序）
-- [ ] request 合法域名填入 `https://api.cuberoot.me`
-- [ ] 业务域名填入 `https://cuberoot.me`（用于 `web-view`）
-- [ ] 后续需要静态资源直连时，再把 `https://static.cuberoot.me` 加入对应白名单
-- [ ] 实测：同一微信号，网页扫码登录 + 小程序登录 → `auth_identities` 只有一行，`app_users` 只有一个 uid
+按顺序处理：
 
-## 5. 阶段二：技术准备（不依赖资质，可并行）
+1. 等基础信息审核完成，确认最终名称、头像和简介。
+2. 完成小程序备案。
+3. 重新生成 AppSecret，只写入服务端环境变量并部署；旧密钥立即失效。
+4. 真机执行一次“网站扫码登录 + 小程序微信登录”，确认两端为同一 `uid`。
+5. 按实际收集的信息填写用户隐私保护指引，不声明未使用的权限。
+6. 选择稳定基础库，上传体验版，管理员和体验成员完成回归。
+7. 上传正式版本，填写版本说明，提交微信审核。
+8. 审核通过后发布；发布后再次检查登录、`web-view`、返回路径和错误恢复。
 
-首版工程已经放在 `packages/miniprogram/`，运行 `pnpm --filter @cuberoot/miniprogram build` 后，用微信开发者工具导入该目录。当前包含网站计时器 web-view、微信登录和网站入口。
+备案和平台审核可以与代码开发并行，但未完成前不能宣布已经上线。
 
-1. **DOM 隔离**：把 `lib/` 里那 36 个碰 DOM/React 的文件挑出来做隔离，让纯逻辑层可被小程序直接 import。**对现有网站也是纯收益**（逻辑解耦、测试更好写），即使小程序不做也不浪费。
-2. 按 2MB 主包倒推分包切法：分析器 wasm 进独立分包；`cubeopt/` 9 个文件单独一包。
-3. Three.js → `threejs-miniprogram` 适配层验证（先拿 `/sim` 最简单的一个魔方试）。
-4. Worker 并发 1 个的重构：现在多 worker 并行的地方要改成排队或合并。
+## 7. 近期迭代队列
 
-## 6. 明确不迁（别在这上面耗时间）
+### P0：首版上线
 
-- `/meet`、双人对战视频 —— LiveKit / 标准 WebRTC 小程序不支持，只有 RTMP 的 `live-pusher` 和 `voip-room`
-- ffmpeg.wasm 相关（`/frame-count` 等）—— 32MB 单文件超总限额
-- `/sim` 复杂 Three.js 场景、maplibre 地图、echarts 大图表 —— 留在 web-view 里
+- [ ] 完成备案、密钥轮换和同账号验收。
+- [ ] 完成模拟器与 iOS、Android 真机回归。
+- [ ] 补上传前的隐私与版本信息。
+- [ ] 上传体验版并处理代码质量扫描中的真实问题。
 
-## 7. 官方文档
+### P1：减少登录割裂
 
-- [UnionID 机制说明](https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/union-id.html)（绑定方向的坑）
-- [wx.login](https://developers.weixin.qq.com/miniprogram/dev/api/open-api/login/wx.login.html) / [code2Session](https://developers.weixin.qq.com/miniprogram/dev/api-backend/open-api/login/auth.code2Session.html)
-- [网络使用说明](https://developers.weixin.qq.com/miniprogram/dev/framework/ability/network.html)（域名备案、`api.weixin.qq.com` 禁配）
-- [分包加载](https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages.html)（2MB / 30MB）
-- [WXWebAssembly](https://developers.weixin.qq.com/miniprogram/dev/framework/performance/wasm.html)
-- [多线程 Worker](https://developers.weixin.qq.com/miniprogram/dev/framework/workers.html)（并发 1）
-- [web-view](https://developers.weixin.qq.com/miniprogram/dev/component/web-view.html)（个人主体不支持）
-- [canvas](https://developers.weixin.qq.com/miniprogram/dev/component/canvas.html)
+- [ ] 设计并实现原生登录到网站 Cookie 的一次性换票。
+- [ ] 在“我的”页显示网站账号关联状态和清晰的恢复入口。
+- [ ] 为换票接口补过期、重放、退出登录和跨账号测试。
+
+### P2：微信专属增量
+
+- [ ] 先做 BLE 技术验证，只复用网站已有智能魔方协议层，不复制设备解析代码。
+- [ ] 验证后台计时、息屏、断连重连和 iOS 真机限制后，再决定是否做原生智能计时器。
+- [ ] 仅在用户主动订阅后接入比赛或课程提醒。
+
+暂不原生迁移复杂 Three.js、地图、视频通话、ffmpeg.wasm 和大型分析器。它们继续由网站承载，除非出现明确的平台需求和收益。
+
+## 8. 已知风险
+
+- 纯 `web-view` 页面会受网站发布影响，因此网站的 Chrome 91 回归测试不能删除。
+- 模拟器正常不等于真机正常，尤其是登录、业务域名、Cookie 和蓝牙能力。
+- `web-view` 与原生层是两个存储环境，不能假设 localStorage、Cookie 或 JWT 自动互通。
+- 小程序包体、基础库和审核规则会变化；涉及发布规则时以当时后台和官方文档为准。
+- 主体、类目、名称和隐私声明必须与实际产品一致，不能为了审核临时写一套与产品不符的描述。
+
+## 9. 迭代记录
+
+### 2026-08-16：维护性收口
+
+- 发现页改为从统一路由表生成，去掉 WXML 中的重复入口和文案。
+- 计时页与通用网页共用 `web-view` 状态、失败提示和重试逻辑。
+- 网站域名和 API 域名集中到运行配置。
+- 构建目标固定为 Chrome 91；开发监听覆盖所有小程序源文件。
+- 新增路由、登录、运行配置和 `web-view` 状态回归测试。
+- 新增页面声明与页面文件完整性检查，避免新增导航后漏交 WXML、WXSS 或页面配置。
+- 会话校验只更新当前仍有效的同一 token，避免退出或重新登录后被旧请求恢复旧会话。
+- 在微信开发者工具 Stable v2.01.2510290 模拟器实测计时器完整渲染，未再出现持续 Loading。
+- 重写本文，记录平台现状、维护边界、密钥轮换和上线阻塞项。
+
+### 2026-08-16：开发者工具兼容修复
+
+- 网站浏览器目标加入 Chrome 91，解决真机正常但微信开发者工具持续显示 Loading 的问题。
+- 增加网站测试，防止以后升级构建目标时再次破坏微信开发者工具模拟器。
+
+### 首版工程
+
+- 建立原生外壳、计时器 `web-view`、工具入口和“我的”页。
+- 接入小程序登录后端并坚持 UnionID 单账号策略。
+- 配置 request 合法域名、业务域名、开放平台绑定和服务类目。
+
+## 10. 官方入口
+
+- [UnionID 机制](https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/union-id.html)
+- [小程序登录](https://developers.weixin.qq.com/miniprogram/dev/api/open-api/login/wx.login.html)
+- [服务端 code2Session](https://developers.weixin.qq.com/miniprogram/dev/api-backend/open-api/login/auth.code2Session.html)
+- [网络与服务器域名](https://developers.weixin.qq.com/miniprogram/dev/framework/ability/network.html)
+- [web-view](https://developers.weixin.qq.com/miniprogram/dev/component/web-view.html)
+- [小程序备案指引](https://developers.weixin.qq.com/miniprogram/product/record/guidelines.html)

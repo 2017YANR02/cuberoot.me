@@ -1,15 +1,22 @@
-import { resolveWebRoute } from '../../lib/web-routes';
+import {
+  createWebViewPageData,
+  markWebRouteFailed,
+  openWebRoute,
+  retryWebRoute,
+} from '../../lib/web-view-page';
 
 Page({
-  data: {
-    src: '',
-  },
+  data: createWebViewPageData(),
 
   onLoad() {
-    const route = resolveWebRoute('timer');
-    if (!route) return;
+    openWebRoute(this, 'timer');
+  },
 
-    wx.setNavigationBarTitle({ title: route.title });
-    this.setData({ src: route.url });
+  handleWebViewError() {
+    markWebRouteFailed(this);
+  },
+
+  retry() {
+    retryWebRoute(this);
   },
 });
