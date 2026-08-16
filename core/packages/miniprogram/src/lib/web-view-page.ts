@@ -17,6 +17,7 @@ export interface WebViewPageData {
   loadingTitle: string;
   routeKey: string;
   src: string;
+  viewAttempt: number;
 }
 
 export interface WebViewPageContext {
@@ -25,7 +26,7 @@ export interface WebViewPageContext {
 }
 
 interface WebViewPageMethods {
-  handleWebViewError(): void;
+  handleWebViewError(event: WechatMiniprogram.BaseEvent): void;
   retry(): void;
 }
 
@@ -73,6 +74,7 @@ export function createWebViewPageData(): WebViewPageData {
     loadingTitle: '正在打开',
     routeKey: '',
     src: '',
+    viewAttempt: 0,
   };
 }
 
@@ -81,13 +83,14 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
 
   const route = resolveWebRoute(key);
   if (!route) {
-    beginRouteAttempt(context);
+    const attempt = beginRouteAttempt(context);
     context.setData({
       canRetry: false,
       errorMessage: '该页面地址不在允许列表中。',
       errorTitle: '无法打开',
       routeKey: '',
       src: '',
+      viewAttempt: attempt,
     });
     return false;
   }
@@ -101,6 +104,7 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
     loadingTitle: `正在打开${route.title}`,
     routeKey: String(key),
     src: '',
+    viewAttempt: attempt,
   });
 
   const session = getStoredSession();
@@ -129,8 +133,20 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
   return true;
 }
 
-export function markWebRouteFailed(context: WebViewPageContext): void {
+export function markWebRouteFailed(
+  context: WebViewPageContext,
+  reportedAttempt?: unknown,
+): void {
   if (disposedPages.has(context)) return;
+
+  const attempt = Number(reportedAttempt);
+  if (
+    reportedAttempt !== undefined
+    && Number.isInteger(attempt)
+    && attempt > 0
+    && !isCurrentAttempt(context, attempt)
+  ) return;
+
   beginRouteAttempt(context);
   context.setData({
     canRetry: Boolean(resolveWebRoute(context.data.routeKey)),
@@ -193,8 +209,8 @@ export function createWebViewPageOptions(
       cancelWebRoute(this);
     },
 
-    handleWebViewError() {
-      markWebRouteFailed(this);
+    handleWebViewError(event) {
+      markWebRouteFailed(this, event.currentTarget.dataset.attempt);
     },
 
     retry() {

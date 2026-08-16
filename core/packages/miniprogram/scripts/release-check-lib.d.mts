@@ -4,4 +4,3 @@ export const EXPECTED_TAB_BAR: readonly Readonly<{
   text: string;
 }>[];
 export const PUBLIC_INDEXED_PAGES: readonly string[];
-

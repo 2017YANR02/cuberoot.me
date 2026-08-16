@@ -49,6 +49,7 @@ describe('shared web-view page state', () => {
       loadingTitle: '正在打开计时器',
       routeKey: 'timer',
       src: 'https://cuberoot.me/zh/timer',
+      viewAttempt: 1,
     });
     expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '计时器' });
   });
@@ -308,6 +309,37 @@ describe('shared web-view page state', () => {
     });
     await opening;
 
+    expect(context.data.src).toBe('');
+    expect(context.data.errorTitle).toBe('网页加载失败');
+  });
+
+  it('ignores a delayed error from an older web-view attempt', async () => {
+    const context = createContext();
+    const options = createWebViewPageOptions('timer') as unknown as {
+      handleWebViewError(
+        this: WebViewPageContext,
+        event: { currentTarget: { dataset: { attempt: number } } },
+      ): void;
+    };
+    await openWebRoute(context, 'timer');
+    const oldAttempt = context.data.viewAttempt;
+
+    options.handleWebViewError.call(context, {
+      currentTarget: { dataset: { attempt: oldAttempt } },
+    });
+    retryWebRoute(context);
+    const currentAttempt = context.data.viewAttempt;
+
+    expect(currentAttempt).toBeGreaterThan(oldAttempt);
+    options.handleWebViewError.call(context, {
+      currentTarget: { dataset: { attempt: oldAttempt } },
+    });
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.errorTitle).toBe('');
+
+    options.handleWebViewError.call(context, {
+      currentTarget: { dataset: { attempt: currentAttempt } },
+    });
     expect(context.data.src).toBe('');
     expect(context.data.errorTitle).toBe('网页加载失败');
   });
