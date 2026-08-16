@@ -9,6 +9,7 @@ const REQUEST_TIMEOUT_MS = 12_000;
 const WEB_SESSION_REQUEST_TIMEOUT_MS = 5_000;
 const HARD_TIMEOUT_GRACE_MS = 1_000;
 const WECHAT_LOGIN_TIMEOUT_MS = 10_000;
+const STORAGE_ERROR_STATUS = -1;
 
 export interface SessionUser {
   uid?: number;
@@ -77,6 +78,32 @@ function decodeSession(value: unknown): SessionData | null {
     token,
     user,
   };
+}
+
+function readStoredSessionValue(): unknown {
+  try {
+    return wx.getStorageSync(SESSION_STORAGE_KEY) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
+function removeStoredSessionValue(): boolean {
+  try {
+    wx.removeStorageSync(SESSION_STORAGE_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function writeStoredSessionValue(session: SessionData): boolean {
+  try {
+    wx.setStorageSync(SESSION_STORAGE_KEY, session);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function requestJson<T>(
@@ -179,15 +206,15 @@ function wechatLoginCode(): Promise<string> {
 }
 
 export function getStoredSession(): SessionData | null {
-  const stored = wx.getStorageSync(SESSION_STORAGE_KEY) as unknown;
+  const stored = readStoredSessionValue();
   if (stored === '' || stored === null || stored === undefined) return null;
   const session = decodeSession(stored);
-  if (!session) wx.removeStorageSync(SESSION_STORAGE_KEY);
+  if (!session) removeStoredSessionValue();
   return session;
 }
 
-export function clearStoredSession(): void {
-  wx.removeStorageSync(SESSION_STORAGE_KEY);
+export function clearStoredSession(): boolean {
+  return removeStoredSessionValue();
 }
 
 export async function loginWithWechat(): Promise<LoginResult> {
@@ -198,7 +225,9 @@ export async function loginWithWechat(): Promise<LoginResult> {
   });
   const session = decodeSession(response);
   if (!session) throw new ApiError(502, 'invalid session response');
-  wx.setStorageSync(SESSION_STORAGE_KEY, session);
+  if (!writeStoredSessionValue(session)) {
+    throw new ApiError(STORAGE_ERROR_STATUS, 'session storage unavailable');
+  }
   return {
     ...session,
     isNew: response !== null
@@ -215,9 +244,9 @@ export async function validateStoredSession(session: SessionData): Promise<Sessi
   const user = decodeSessionUser((response as Record<string, unknown>).user);
   if (!user) throw new ApiError(502, 'invalid user response');
   const next = { ...session, user: { ...session.user, ...user } };
-  const current = decodeSession(wx.getStorageSync(SESSION_STORAGE_KEY) as unknown);
+  const current = decodeSession(readStoredSessionValue());
   if (current?.token === session.token) {
-    wx.setStorageSync(SESSION_STORAGE_KEY, next);
+    writeStoredSessionValue(next);
   }
   return next;
 }
@@ -244,6 +273,7 @@ export async function createWebSessionTicket(session: SessionData): Promise<WebS
 
 export function loginErrorMessage(error: unknown): string {
   if (!(error instanceof ApiError)) return '登录失败，请稍后重试';
+  if (error.status === STORAGE_ERROR_STATUS) return '设备存储不可用，请清理空间后重试';
   if (error.status === 409) return '暂未获得 UnionID，请先完成开放平台绑定';
   if (error.status === 503) return '服务端还未配置小程序密钥';
   if (error.status === 401) return '微信登录码已失效，请重试';

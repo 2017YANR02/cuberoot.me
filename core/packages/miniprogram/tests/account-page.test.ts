@@ -130,6 +130,27 @@ describe('mini program account page', () => {
     });
   });
 
+  it('does not claim logout succeeded when local session removal fails', async () => {
+    const navigateTo = vi.fn();
+    const page = await loadPage({
+      navigateTo,
+      removeStorageSync() {
+        throw new Error('storage unavailable');
+      },
+      showModal: (options: { success(result: { confirm: boolean }): void }) => {
+        options.success({ confirm: true });
+      },
+    });
+    page.setData({ loggedIn: true });
+
+    page.logout();
+
+    expect(page.data.loggedIn).toBe(true);
+    expect(page.data.statusError).toBe(true);
+    expect(page.data.status).toContain('本地登录状态无法清除');
+    expect(navigateTo).not.toHaveBeenCalled();
+  });
+
   it('shows cached identity as checking until the server confirms it', async () => {
     let completeRequest: ((response: unknown) => void) | undefined;
     const page = await loadPage({

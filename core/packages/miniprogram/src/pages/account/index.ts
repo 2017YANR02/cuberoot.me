@@ -70,7 +70,14 @@ Page({
       if (!validationIsCurrent(this, validationAttempt)) return;
       if (getStoredSession()?.token !== session.token) return;
       if (error instanceof ApiError && error.status === 401) {
-        clearStoredSession();
+        if (!clearStoredSession()) {
+          this.showSyncState('error');
+          this.setData({
+            status: '登录已过期，但本地状态无法清除，请清理空间后重试',
+            statusError: true,
+          });
+          return;
+        }
         this.showSession(null);
         this.showSyncState('');
         this.setData({ status: '登录已过期，请重新登录', statusError: true });
@@ -167,7 +174,13 @@ Page({
       success: (result) => {
         if (!result.confirm) return;
 
-        clearStoredSession();
+        if (!clearStoredSession()) {
+          this.setData({
+            status: '本地登录状态无法清除，请清理空间后重试',
+            statusError: true,
+          });
+          return;
+        }
         this.showSession(null);
         this.showSyncState('');
         this.setData({ status: '', statusError: false });
