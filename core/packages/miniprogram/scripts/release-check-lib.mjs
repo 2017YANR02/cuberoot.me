@@ -119,6 +119,9 @@ export function collectReleaseFailures({
     if (effectiveUrlCheck !== true) {
       failures.push('上传前必须开启合法域名校验。');
     }
+    if (projectConfig.compileType !== 'miniprogram') {
+      failures.push('compileType 必须保持为 miniprogram，避免上传成其他微信项目类型。');
+    }
     if (projectConfig.miniprogramRoot !== 'dist/') {
       failures.push('miniprogramRoot 必须保持为 dist/。');
     }
