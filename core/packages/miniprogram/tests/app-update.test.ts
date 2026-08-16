@@ -170,6 +170,39 @@ describe('mini program app updates', () => {
     expect(showModal).toHaveBeenCalledTimes(2);
   });
 
+  it('reports when the update prompt recovery guard is unavailable', async () => {
+    let ready: (() => void) | undefined;
+    const showModal = vi.fn();
+    const showToast = vi.fn();
+    const app = await loadApp({
+      getUpdateManager: () => ({
+        applyUpdate: vi.fn(),
+        onUpdateFailed: vi.fn(),
+        onUpdateReady(callback: () => void) {
+          ready = callback;
+        },
+      }),
+      showModal,
+      showToast,
+    });
+    const timer = vi.spyOn(globalThis, 'setTimeout').mockImplementation(() => {
+      throw new Error('timer unavailable');
+    });
+
+    try {
+      app.onLaunch?.();
+      ready?.();
+
+      expect(showModal).not.toHaveBeenCalled();
+      expect(showToast).toHaveBeenCalledWith({
+        title: '重开小程序更新',
+        icon: 'none',
+      });
+    } finally {
+      timer.mockRestore();
+    }
+  });
+
   it('ignores stale callbacks after a newer update prompt starts', async () => {
     let ready: (() => void) | undefined;
     const prompts: Array<{

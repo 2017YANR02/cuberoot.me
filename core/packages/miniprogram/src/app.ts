@@ -10,9 +10,19 @@ export function setupAppUpdate(): void {
     let updatePromptResolved = false;
     let updateFailureShown = false;
     updateManager.onUpdateReady(() => {
-      if (updatePromptResolved) return;
+      if (updatePromptResolved || updatePrompts.isActive(updatePromptOwner)) return;
       const promptAttempt = updatePrompts.begin(updatePromptOwner);
-      if (promptAttempt === null) return;
+      if (promptAttempt === null) {
+        try {
+          wx.showToast({
+            title: '重开小程序更新',
+            icon: 'none',
+          });
+        } catch {
+          // The downloaded update remains available for the next cold launch.
+        }
+        return;
+      }
       let updateApplyStarted = false;
       try {
         wx.showModal({
