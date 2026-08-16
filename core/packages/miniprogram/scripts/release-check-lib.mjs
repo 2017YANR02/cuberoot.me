@@ -45,6 +45,8 @@ export const PUBLIC_INDEXED_PAGES = [
   'pages/tools/index',
 ];
 
+export const PRODUCTION_APP_ID = 'wx1f92ba91b7e42015';
+
 function hasExpectedSitemapPolicy(sitemapConfig) {
   const expectedRules = [
     ...PUBLIC_INDEXED_PAGES.map((page) => ({ action: 'allow', page })),
@@ -89,6 +91,8 @@ export function collectReleaseFailures({
     const appId = typeof projectConfig.appid === 'string' ? projectConfig.appid.trim() : '';
     if (!/^wx[0-9a-f]{16}$/i.test(appId)) {
       failures.push('AppID 不是正式小程序 AppID。');
+    } else if (appId !== PRODUCTION_APP_ID) {
+      failures.push(`AppID 与 CubeRoot 正式小程序不一致，当前为 ${appId}。`);
     }
 
     const effectiveLibVersion = typeof privateConfig?.libVersion === 'string'

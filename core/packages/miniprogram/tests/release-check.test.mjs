@@ -3,12 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { BUILD_STATE_VERSION } from '../scripts/build-state.mjs';
 import {
   PUBLIC_INDEXED_PAGES,
+  PRODUCTION_APP_ID,
   collectReleaseFailures,
 } from '../scripts/release-check-lib.mjs';
 
 const validInput = {
   projectConfig: {
-    appid: 'wx1f92ba91b7e42015',
+    appid: PRODUCTION_APP_ID,
     libVersion: '3.17.1',
     miniprogramRoot: 'dist/',
     setting: { urlCheck: true },
@@ -107,6 +108,16 @@ describe('mini program release check', () => {
       'miniprogramRoot 必须保持为 dist/。',
       'src/app.json 没有有效页面声明。',
     ]));
+  });
+
+  it('rejects a valid-shaped AppID belonging to another mini program', () => {
+    expect(collectReleaseFailures({
+      ...validInput,
+      projectConfig: {
+        ...validInput.projectConfig,
+        appid: 'wx0000000000000000',
+      },
+    })).toContain('AppID 与 CubeRoot 正式小程序不一致，当前为 wx0000000000000000。');
   });
 
   it('requires a freshly confirmed matching stable base library', () => {
