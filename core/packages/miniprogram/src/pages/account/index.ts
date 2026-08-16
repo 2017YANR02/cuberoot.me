@@ -100,6 +100,11 @@ Page({
     this.setData({ syncLabel: labels[state], syncState: state });
   },
 
+  retrySync() {
+    if (this.data.syncState !== 'error') return;
+    this.onShow();
+  },
+
   async login() {
     if (this.data.busy) return;
     activePages.add(this);
