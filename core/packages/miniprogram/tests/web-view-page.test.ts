@@ -32,6 +32,7 @@ describe('shared web-view page state', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     setNavigationBarTitle.mockReset();
     vi.unstubAllGlobals();
   });
@@ -117,6 +118,27 @@ describe('shared web-view page state', () => {
     await openWebRoute(context, 'timer');
 
     expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+  });
+
+  it('never leaves the shell loading forever when the handoff request does not finish', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('wx', {
+      getStorageSync: () => ({
+        token: 't'.repeat(20),
+        user: { name: 'CubeRoot', wcaId: null },
+      }),
+      removeStorageSync: vi.fn(),
+      nextTick(callback: () => void) { callback(); },
+      setNavigationBarTitle,
+      request() {},
+    });
+    const context = createContext();
+    const opening = openWebRoute(context, 'timer');
+
+    await vi.advanceTimersByTimeAsync(6_000);
+    await opening;
+
     expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
   });
 

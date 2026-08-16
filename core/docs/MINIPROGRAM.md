@@ -19,7 +19,7 @@
 |---|---|---|
 | 网站入口、标题、说明、顺序 | `packages/miniprogram/src/lib/web-routes.ts` | 不在 WXML 里再写一份列表 |
 | 网站和 API 域名 | `packages/miniprogram/src/lib/runtime-config.ts` | 只使用已在小程序后台配置的 HTTPS 域名 |
-| `web-view` 加载、失败和重试 | `packages/miniprogram/src/lib/web-view-page.ts` | 计时页和通用网页共用，不各自补丁 |
+| `web-view` 加载、换票超时、失败和重试 | `packages/miniprogram/src/lib/web-view-page.ts` | 计时页和通用网页共用，不各自补丁 |
 | 登录、会话和错误文案 | `packages/miniprogram/src/lib/auth.ts` | AppSecret 永远只在服务端 |
 | 移动端与小程序隐私政策 | `packages/client/app/[lang]/privacy/page.tsx` | App、小程序和网页共用一份真实声明 |
 | 上传前自动检查 | `packages/miniprogram/scripts/release-check.mjs` | 新增隐私敏感能力时先阻断上传 |
@@ -167,6 +167,12 @@ pnpm --filter @cuberoot/miniprogram release:check
 | 定位、摄像头、麦克风、相册、通讯录、蓝牙 | 当前版本不使用 | 后台不应勾选；以后接入前先改政策和平台指引 |
 
 ## 9. 迭代记录
+
+### 2026-08-16：模拟器永久加载根因保护
+
+- 已登录用户打开网页前会先申请一次性换票；开发者工具偶发不触发网络请求回调时，不能只依赖 `wx.request` 自带超时。
+- 共享网页层增加 6 秒硬截止；换票未完成就打开公开网页，不让计时器或“发现”中的任一功能永久停在加载态。
+- 迟到的换票结果不会再次覆盖当前页面；该边界由回归测试固定，后续 AI 不应在单个页面另加 loading 定时器。
 
 ### 2026-08-16：隐私唯一来源与上传闸门
 
