@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
+import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import {
   RECORD_METRICS,
@@ -18,6 +18,7 @@ import { RecordBadge } from '@/components/RecordBadge';
 import { SearchInput } from '@/components/SearchInput';
 import { SortArrow } from '@/components/SortArrow';
 import { useWcaTeachers } from '@/components/WcaTeacherCell';
+import Paginator from '@/components/wca-stats/Paginator';
 import {
   WcaRecordRowsTable,
   type WcaRecordRowsTableRow,
@@ -38,11 +39,12 @@ import {
   type RankedRecordRow,
 } from '@/lib/record-places';
 
-const TOP_LIMIT = 20;
-const SEARCH_LIMIT = 50;
+const RECORD_PAGE_SIZES = ['20', '50', '100'] as const;
+const DEFAULT_RECORD_PAGE_SIZE = RECORD_PAGE_SIZES[0];
 const DETAIL_BATCH_SIZE = 50;
 const RECORD_PLACE_VIEWS = ['country', 'city'] as const;
 type RecordPlaceView = typeof RECORD_PLACE_VIEWS[number];
+type RecordPageSize = typeof RECORD_PAGE_SIZES[number];
 
 interface RecordDetailModalProps {
   iso2: string;
@@ -324,6 +326,16 @@ export function RecordPlaceRankings() {
     'recordCity',
     parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }),
   );
+  const [page, setPage] = useQueryState(
+    'recordPage',
+    parseAsInteger.withDefault(1).withOptions({ history: 'replace', scroll: false }),
+  );
+  const [pageSizeValue, setPageSizeValue] = useQueryState(
+    'recordPageSize',
+    parseAsStringEnum<RecordPageSize>([...RECORD_PAGE_SIZES])
+      .withDefault(DEFAULT_RECORD_PAGE_SIZE)
+      .withOptions({ history: 'replace', scroll: false }),
+  );
 
   useEffect(() => {
     void loadFlagData();
@@ -364,15 +376,28 @@ export function RecordPlaceRankings() {
     () => localizedCityCollisionKeys(data?.cities ?? [], isZh),
     [data, isZh],
   );
-  const countryRows = matchingCountries.slice(0, hasCountryQuery ? SEARCH_LIMIT : TOP_LIMIT);
-  const cityRows = matchingCities.slice(0, hasCityQuery ? SEARCH_LIMIT : TOP_LIMIT);
+  const pageSize = Number(pageSizeValue);
   const activeQuery = view === 'country' ? countryQuery : cityQuery;
   const hasActiveQuery = view === 'country' ? hasCountryQuery : hasCityQuery;
   const activeMatchCount = view === 'country' ? matchingCountries.length : matchingCities.length;
+  const totalPages = Math.max(1, Math.ceil(activeMatchCount / pageSize));
+  const activePage = Math.max(1, Math.min(page, totalPages));
+  const pageStart = (activePage - 1) * pageSize;
+  const countryRows = matchingCountries.slice(pageStart, pageStart + pageSize);
+  const cityRows = matchingCities.slice(pageStart, pageStart + pageSize);
   const activeRows = view === 'country' ? countryRows : cityRows;
   const viewLabel = view === 'country'
     ? tr({ zh: '国家榜', en: 'Countries' })
     : tr({ zh: '城市榜', en: 'Cities' });
+
+  useEffect(() => {
+    if (data && page !== activePage) void setPage(activePage);
+  }, [activePage, data, page, setPage]);
+
+  const changeMetric = useCallback((value: RecordMetric) => {
+    void setMetric(value);
+    void setPage(1);
+  }, [setMetric, setPage]);
 
   return (
     <section className="cs-section cs-record-section">
@@ -400,7 +425,10 @@ export function RecordPlaceRankings() {
                   : tr({ zh: '城市榜', en: 'Cities' }),
               }))}
               value={view}
-              onChange={(value) => { void setView(value as RecordPlaceView); }}
+              onChange={(value) => {
+                void setView(value as RecordPlaceView);
+                void setPage(1);
+              }}
               allLabel={viewLabel}
               clearable={false}
               className="cs-record-view-select"
@@ -410,6 +438,7 @@ export function RecordPlaceRankings() {
               onChange={(value) => {
                 if (view === 'country') void setCountryQuery(value);
                 else void setCityQuery(value);
+                void setPage(1);
               }}
               placeholder={view === 'country'
                 ? tr({ zh: '搜索国家', en: 'Search countries' })
@@ -425,30 +454,45 @@ export function RecordPlaceRankings() {
           {hasActiveQuery && (
             <div className="cs-record-search-summary">
               {tr({ zh: `${activeMatchCount.toLocaleString()} 个匹配`, en: `${activeMatchCount.toLocaleString()} matches` })}
-              {activeMatchCount > SEARCH_LIMIT && tr({ zh: `，显示前 ${SEARCH_LIMIT} 个`, en: `, showing the first ${SEARCH_LIMIT}` })}
             </div>
           )}
           {activeRows.length > 0 ? (
-            view === 'country' ? (
-              <RankingTable
-                label={tr({ zh: '国家', en: 'Country' })}
-                rows={countryRows}
-                metric={metric}
-                isZh={isZh}
-                city={false}
-                onMetricChange={(value) => { void setMetric(value); }}
-              />
-            ) : (
-              <RankingTable
-                label={tr({ zh: '城市', en: 'City' })}
-                rows={cityRows}
-                metric={metric}
-                isZh={isZh}
-                city
-                cityCollisions={cityCollisions}
-                onMetricChange={(value) => { void setMetric(value); }}
-              />
-            )
+            <>
+              {view === 'country' ? (
+                <RankingTable
+                  label={tr({ zh: '国家', en: 'Country' })}
+                  rows={countryRows}
+                  metric={metric}
+                  isZh={isZh}
+                  city={false}
+                  onMetricChange={changeMetric}
+                />
+              ) : (
+                <RankingTable
+                  label={tr({ zh: '城市', en: 'City' })}
+                  rows={cityRows}
+                  metric={metric}
+                  isZh={isZh}
+                  city
+                  cityCollisions={cityCollisions}
+                  onMetricChange={changeMetric}
+                />
+              )}
+              {activeMatchCount > pageSize && (
+                <Paginator
+                  page={activePage}
+                  totalPages={totalPages}
+                  size={pageSize}
+                  pageSizeOptions={RECORD_PAGE_SIZES.map(Number)}
+                  isZh={isZh}
+                  onPageChange={(value) => { void setPage(value); }}
+                  onSizeChange={(value) => {
+                    void setPageSizeValue(String(value) as RecordPageSize);
+                    void setPage(1);
+                  }}
+                />
+              )}
+            </>
           ) : (
             <div className="cs-empty cs-record-empty">
               {view === 'country'
