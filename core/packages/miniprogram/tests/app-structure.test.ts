@@ -124,8 +124,11 @@ describe('mini program app structure', () => {
     expect(timerTemplate).toContain('templates/web-route-view.wxml');
     expect(genericWebTemplate).toContain('templates/web-route-view.wxml');
     expect(sharedTemplate).toContain('<web-view');
+    expect(sharedTemplate).toContain('data-attempt="{{viewAttempt}}"');
     expect(timerTemplate).not.toContain('<web-view');
     expect(genericWebTemplate).not.toContain('<web-view');
+    expect(timerTemplate).toContain('viewAttempt: viewAttempt');
+    expect(genericWebTemplate).toContain('viewAttempt: viewAttempt');
     expect(timerTemplate).toBe(genericWebTemplate);
     expect(timerStyles.trim()).toBe('');
     expect(genericWebStyles.trim()).toBe('');
