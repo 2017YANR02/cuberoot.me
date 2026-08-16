@@ -196,6 +196,37 @@ describe('shared web-view page state', () => {
     expect(context.data.errorTitle).toBe('网页加载失败');
   });
 
+  it('does not use a handoff ticket after the local session was cleared', async () => {
+    const token = 't'.repeat(20);
+    let storedSession: unknown = {
+      token,
+      user: { name: 'CubeRoot', wcaId: null },
+    };
+    let finishRequest: ((result: { statusCode: number; data: unknown }) => void) | undefined;
+    vi.stubGlobal('wx', {
+      getStorageSync: () => storedSession,
+      removeStorageSync: vi.fn(),
+      nextTick(callback: () => void) { callback(); },
+      setNavigationBarTitle,
+      request(options: {
+        success(result: { statusCode: number; data: unknown }): void;
+      }) {
+        finishRequest = options.success;
+      },
+    });
+    const context = createContext();
+    const opening = openWebRoute(context, 'timer');
+
+    storedSession = null;
+    finishRequest?.({
+      statusCode: 200,
+      data: { ticket: 'A'.repeat(43), expiresIn: 90 },
+    });
+    await opening;
+
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+  });
+
   it('ignores a handoff result after the page has been unloaded', async () => {
     let finishRequest: ((result: { statusCode: number; data: unknown }) => void) | undefined;
     vi.stubGlobal('wx', {
