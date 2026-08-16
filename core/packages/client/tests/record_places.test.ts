@@ -12,6 +12,7 @@ import {
   countryRecordMatches,
   localizedCityCollisionKeys,
   rankRecordRows,
+  recordCountsForEvents,
   recordPlaceDetailRows,
   recordCityDisplayName,
 } from '@/lib/record-places';
@@ -19,69 +20,107 @@ import {
 describe('record place aggregation', () => {
   it('counts venue records by country and distinct same-named cities', () => {
     const rows: RecordPlaceSourceRow[] = [
-      { iso2: 'US', city: 'Springfield', singleRecord: 'WR', averageRecord: 'NR' },
-      { iso2: 'US', city: ' Springfield ', singleRecord: 'NAR', averageRecord: null },
-      { iso2: 'CA', city: 'Springfield', singleRecord: 'NR', averageRecord: null },
-      { iso2: 'US', city: '', singleRecord: 'NR', averageRecord: null },
-      { iso2: 'US', city: 'Multiple cities', singleRecord: 'WR', averageRecord: null },
-      { iso2: 'FR', city: 'Lieux multiples / Multiple locations', singleRecord: 'ER', averageRecord: 'NR' },
-      { iso2: 'DK', city: 'Flere byer', singleRecord: 'NR', averageRecord: null },
-      { iso2: 'UA', city: 'Kyiv and Kharkiv', singleRecord: 'NR', averageRecord: null },
-      { iso2: 'XW', city: 'Multiple cities', singleRecord: 'WR', averageRecord: 'WR' },
-      { iso2: 'USA', city: 'Nowhere', singleRecord: 'WR', averageRecord: null },
-      { iso2: 'US', city: 'Nowhere', singleRecord: 'PR', averageRecord: null },
+      { iso2: 'US', city: 'Springfield', eventId: '333', singleRecord: 'WR', averageRecord: 'NR' },
+      { iso2: 'US', city: ' Springfield ', eventId: '222', singleRecord: 'NAR', averageRecord: null },
+      { iso2: 'CA', city: 'Springfield', eventId: '333', singleRecord: 'NR', averageRecord: null },
+      { iso2: 'US', city: '', eventId: '444', singleRecord: 'NR', averageRecord: null },
+      { iso2: 'US', city: 'Multiple cities', eventId: '555', singleRecord: 'WR', averageRecord: null },
+      { iso2: 'FR', city: 'Lieux multiples / Multiple locations', eventId: '333', singleRecord: 'ER', averageRecord: 'NR' },
+      { iso2: 'DK', city: 'Flere byer', eventId: '333', singleRecord: 'NR', averageRecord: null },
+      { iso2: 'UA', city: 'Kyiv and Kharkiv', eventId: '333', singleRecord: 'NR', averageRecord: null },
+      { iso2: 'XW', city: 'Multiple cities', eventId: '333', singleRecord: 'WR', averageRecord: 'WR' },
+      { iso2: 'USA', city: 'Nowhere', eventId: '333', singleRecord: 'WR', averageRecord: null },
+      { iso2: 'US', city: 'Nowhere', eventId: '333', singleRecord: 'PR', averageRecord: null },
     ];
 
     expect(buildRecordPlaces(rows)).toEqual({
-      version: 2,
+      version: 3,
+      events: ['222', '333', '444', '555'],
       countries: [
-        { iso2: 'CA', wr: 0, cr: 0, nr: 1 },
-        { iso2: 'DK', wr: 0, cr: 0, nr: 1 },
-        { iso2: 'FR', wr: 0, cr: 1, nr: 1 },
-        { iso2: 'UA', wr: 0, cr: 0, nr: 1 },
-        { iso2: 'US', wr: 2, cr: 1, nr: 2 },
+        { iso2: 'CA', events: { '333': { wr: 0, cr: 0, nr: 1 } }, wr: 0, cr: 0, nr: 1 },
+        { iso2: 'DK', events: { '333': { wr: 0, cr: 0, nr: 1 } }, wr: 0, cr: 0, nr: 1 },
+        { iso2: 'FR', events: { '333': { wr: 0, cr: 1, nr: 1 } }, wr: 0, cr: 1, nr: 1 },
+        { iso2: 'UA', events: { '333': { wr: 0, cr: 0, nr: 1 } }, wr: 0, cr: 0, nr: 1 },
+        {
+          iso2: 'US',
+          events: {
+            '222': { wr: 0, cr: 1, nr: 0 },
+            '333': { wr: 1, cr: 0, nr: 1 },
+            '444': { wr: 0, cr: 0, nr: 1 },
+            '555': { wr: 1, cr: 0, nr: 0 },
+          },
+          wr: 2,
+          cr: 1,
+          nr: 2,
+        },
       ],
       cities: [
-        { iso2: 'CA', city: 'Springfield', aliases: [], wr: 0, cr: 0, nr: 1 },
-        { iso2: 'US', city: 'Springfield', aliases: [], wr: 1, cr: 1, nr: 1 },
+        { iso2: 'CA', city: 'Springfield', aliases: [], events: { '333': { wr: 0, cr: 0, nr: 1 } }, wr: 0, cr: 0, nr: 1 },
+        {
+          iso2: 'US',
+          city: 'Springfield',
+          aliases: [],
+          events: {
+            '222': { wr: 0, cr: 1, nr: 0 },
+            '333': { wr: 1, cr: 0, nr: 1 },
+          },
+          wr: 1,
+          cr: 1,
+          nr: 1,
+        },
       ],
     });
   });
 
   it('aggregates canonical identities and keeps old names searchable', () => {
     const rows: RecordPlaceSourceRow[] = [
-      { iso2: 'CN', city: 'Hefei, Anhui', cityKey: 'CN\0hefei', cityAliases: ['Hefei', 'Hefei, Anhui Province'], singleRecord: 'WR', averageRecord: 'NR' },
-      { iso2: 'CN', city: 'Hefei, Anhui', cityKey: 'CN\0hefei', cityAliases: ['Hefei', 'Hefei, Anhui Province'], singleRecord: 'AsR', averageRecord: null },
+      { iso2: 'CN', city: 'Hefei, Anhui', cityKey: 'CN\0hefei', cityAliases: ['Hefei', 'Hefei, Anhui Province'], eventId: '333', singleRecord: 'WR', averageRecord: 'NR' },
+      { iso2: 'CN', city: 'Hefei, Anhui', cityKey: 'CN\0hefei', cityAliases: ['Hefei', 'Hefei, Anhui Province'], eventId: '222', singleRecord: 'AsR', averageRecord: null },
     ];
     const output = buildRecordPlaces(rows);
     expect(output.cities).toEqual([{
       iso2: 'CN',
       city: 'Hefei, Anhui',
       aliases: ['Hefei', 'Hefei, Anhui Province'],
+      events: {
+        '222': { wr: 0, cr: 1, nr: 0 },
+        '333': { wr: 1, cr: 0, nr: 1 },
+      },
       wr: 1,
       cr: 1,
       nr: 1,
     }]);
     expect(cityRecordMatches(output.cities[0], 'Anhui Province')).toBe(true);
     expect(cityRecordMatches(output.cities[0], '合肥')).toBe(true);
+    expect(recordCountsForEvents(output.cities[0], new Set(['222']))).toMatchObject({ wr: 0, cr: 1, nr: 0 });
+    expect(recordCountsForEvents(output.cities[0], new Set(['333']))).toMatchObject({ wr: 1, cr: 0, nr: 1 });
   });
 
   it('rejects malformed generated data', () => {
-    expect(isRecordPlacesData({ version: 2, countries: [], cities: [] })).toBe(true);
+    expect(isRecordPlacesData({ version: 3, events: [], countries: [], cities: [] })).toBe(true);
     expect(isRecordPlacesData({
-      version: 2,
-      countries: [{ iso2: 'US', wr: -1, cr: 0, nr: 0 }],
+      version: 3,
+      events: ['333'],
+      countries: [{ iso2: 'US', events: { '333': { wr: -1, cr: 0, nr: 0 } }, wr: -1, cr: 0, nr: 0 }],
       cities: [],
     })).toBe(false);
     expect(isRecordPlacesData({
-      version: 2,
+      version: 3,
+      events: ['333'],
       countries: [],
-      cities: [{ iso2: 'US', city: '', aliases: [], wr: 0, cr: 0, nr: 1 }],
+      cities: [{ iso2: 'US', city: '', aliases: [], events: { '333': { wr: 0, cr: 0, nr: 1 } }, wr: 0, cr: 0, nr: 1 }],
     })).toBe(false);
     expect(isRecordPlacesData({
-      version: 2,
-      countries: [{ iso2: 'US', wr: 0, cr: 0, nr: 1 }],
-      cities: [{ iso2: 'US', city: 'Portland', aliases: ['Portland'], wr: 0, cr: 0, nr: 1 }],
+      version: 3,
+      events: ['333'],
+      countries: [{ iso2: 'US', events: { '333': { wr: 0, cr: 0, nr: 1 } }, wr: 0, cr: 0, nr: 1 }],
+      cities: [{ iso2: 'US', city: 'Portland', aliases: ['Portland'], events: { '333': { wr: 0, cr: 0, nr: 1 } }, wr: 0, cr: 0, nr: 1 }],
+    })).toBe(false);
+    expect(isRecordPlacesData({
+      version: 3,
+      events: ['333'],
+      countries: [{ iso2: 'US', events: { '333': { wr: 1, cr: 0, nr: 0 } }, wr: 2, cr: 0, nr: 0 }],
+      cities: [],
     })).toBe(false);
   });
 });
@@ -104,7 +143,7 @@ describe('record place ranking', () => {
   });
 
   it('matches countries by Chinese name, English name, and ISO code', () => {
-    const row = { iso2: 'US', wr: 5, cr: 4, nr: 3 };
+    const row = { iso2: 'US', events: {}, wr: 5, cr: 4, nr: 3 };
     expect(countryRecordMatches(row, '美国')).toBe(true);
     expect(countryRecordMatches(row, 'usa')).toBe(true);
     expect(countryRecordMatches(row, 'us')).toBe(true);
@@ -156,6 +195,9 @@ describe('record place details', () => {
       'OlderOpen2024:0',
     ]);
     expect(recordPlaceDetailRows(shard, 'cr', 'Hefei, Anhui')[0]?.entry.t).toBe('AsR');
+    expect(recordPlaceDetailRows(shard, null, 'Hefei, Anhui', new Set(['222'])).map((row) => row.entry.t)).toEqual([
+      'NR',
+    ]);
   });
 
   it('combines every record metric when no metric filter is selected', () => {
@@ -182,6 +224,13 @@ describe('record place details', () => {
     expect(placeRankings).toContain("scrollIntoView({ behavior: 'auto', block: 'start' })");
   });
 
+  it('reuses the shared multi-event selector for place rankings', () => {
+    const placeRankings = readFileSync(new URL('../app/[lang]/wca/comp/stats/RecordPlaceRankings.tsx', import.meta.url), 'utf8');
+    expect(placeRankings).toContain("@/components/WcaEventSelector");
+    expect(placeRankings).toContain('selectedEvents={selectedEvents}');
+    expect(placeRankings).toContain('onToggle={toggleEvent}');
+  });
+
   it('opens place names with every metric and keeps the title concise', () => {
     const placeRankings = readFileSync(new URL('../app/[lang]/wca/comp/stats/RecordPlaceRankings.tsx', import.meta.url), 'utf8');
     expect(placeRankings).toContain('metric: null');
@@ -193,8 +242,8 @@ describe('record place details', () => {
 describe('record city display disambiguation', () => {
   it('shows the canonical raw city when localized labels collide', () => {
     const rows = [
-      { iso2: 'FR', city: 'Paris', aliases: [], wr: 1, cr: 0, nr: 0 },
-      { iso2: 'FR', city: 'Serris (Paris)', aliases: [], wr: 0, cr: 1, nr: 0 },
+      { iso2: 'FR', city: 'Paris', aliases: [], events: {}, wr: 1, cr: 0, nr: 0 },
+      { iso2: 'FR', city: 'Serris (Paris)', aliases: [], events: {}, wr: 0, cr: 1, nr: 0 },
     ];
     const collisions = localizedCityCollisionKeys(rows, false);
     expect(collisions.size).toBe(1);

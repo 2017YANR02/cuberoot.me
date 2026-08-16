@@ -17,6 +17,7 @@ import { ListSelect } from '@/components/ListSelect';
 import { RecordBadge } from '@/components/RecordBadge';
 import { SearchInput } from '@/components/SearchInput';
 import { SortArrow } from '@/components/SortArrow';
+import WcaEventSelector from '@/components/WcaEventSelector';
 import { useWcaTeachers } from '@/components/WcaTeacherCell';
 import Paginator from '@/components/wca-stats/Paginator';
 import {
@@ -27,6 +28,7 @@ import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { tr } from '@/i18n/tr';
 import { countryName } from '@/lib/country-name';
 import { loadFlagData } from '@/lib/country-flags';
+import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import {
   cityRecordMatches,
   countryRecordMatches,
@@ -34,6 +36,7 @@ import {
   loadRecordPlaces,
   localizedCityCollisionKeys,
   rankRecordRows,
+  recordCountsForEvents,
   recordPlaceDetailRows,
   recordCityDisplayName,
   type RankedRecordRow,
@@ -50,12 +53,13 @@ interface RecordDetailModalProps {
   iso2: string;
   city: string | null;
   metric: RecordMetric | null;
+  eventIds: ReadonlySet<string> | null;
   isZh: boolean;
   placeName: string;
   onClose: () => void;
 }
 
-function RecordDetailModal({ iso2, city, metric, isZh, placeName, onClose }: RecordDetailModalProps) {
+function RecordDetailModal({ iso2, city, metric, eventIds, isZh, placeName, onClose }: RecordDetailModalProps) {
   const [shard, setShard] = useState<Awaited<ReturnType<typeof loadRecordPlaceDetails>> | null>(null);
   const [failed, setFailed] = useState(false);
   const [limit, setLimit] = useState(DETAIL_BATCH_SIZE);
@@ -78,15 +82,15 @@ function RecordDetailModal({ iso2, city, metric, isZh, placeName, onClose }: Rec
 
   useEffect(() => {
     setLimit(DETAIL_BATCH_SIZE);
-  }, [city, metric]);
+  }, [city, metric, eventIds]);
 
   useEffect(() => {
     modalRef.current?.querySelector<HTMLButtonElement>('.cs-record-modal-close')?.focus();
   }, []);
 
   const rows = useMemo(
-    () => shard ? recordPlaceDetailRows(shard, metric, city) : [],
-    [shard, metric, city],
+    () => shard ? recordPlaceDetailRows(shard, metric, city, eventIds) : [],
+    [shard, metric, city, eventIds],
   );
   const tableRows = useMemo<WcaRecordRowsTableRow[]>(
     () => rows.slice(0, limit).map(({ compId, comp, entry }) => ({
@@ -188,11 +192,12 @@ interface RankingTableProps<T extends CountryRecordCounts> {
   isZh: boolean;
   city: boolean;
   cityCollisions?: ReadonlySet<string>;
+  eventIds: ReadonlySet<string> | null;
   onMetricChange: (metric: RecordMetric) => void;
 }
 
 function RankingTable<T extends CountryRecordCounts>({
-  label, rows, metric, isZh, city, cityCollisions = new Set(), onMetricChange,
+  label, rows, metric, isZh, city, cityCollisions = new Set(), eventIds, onMetricChange,
 }: RankingTableProps<T>) {
   const [selected, setSelected] = useState<SelectedRecordPlace | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -299,6 +304,7 @@ function RankingTable<T extends CountryRecordCounts>({
       {selected && (
         <RecordDetailModal
           {...selected}
+          eventIds={eventIds}
           isZh={isZh}
           onClose={closeDetails}
         />
@@ -329,6 +335,10 @@ export function RecordPlaceRankings() {
     'recordCity',
     parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }),
   );
+  const [eventQuery, setEventQuery] = useQueryState(
+    'recordEvents',
+    parseAsString.withOptions({ history: 'replace', scroll: false }),
+  );
   const [page, setPage] = useQueryState(
     'recordPage',
     parseAsInteger.withDefault(1).withOptions({ history: 'replace', scroll: false }),
@@ -354,13 +364,28 @@ export function RecordPlaceRankings() {
     return () => { current = false; };
   }, []);
 
+  const availableEvents = useMemo(() => new Set(data?.events ?? []), [data]);
+  const selectedEvents = useMemo(() => {
+    if (eventQuery === null) return new Set(availableEvents);
+    if (eventQuery === '__none__') return new Set<string>();
+    return new Set(eventQuery.split(',').filter((eventId) => availableEvents.has(eventId)));
+  }, [availableEvents, eventQuery]);
+  const eventFilter = eventQuery === null ? null : selectedEvents;
   const rankedCountries = useMemo(
-    () => data ? rankRecordRows(data.countries, metric, (row) => row.iso2) : [],
-    [data, metric],
+    () => data ? rankRecordRows(
+      data.countries.map((row) => recordCountsForEvents(row, eventFilter)),
+      metric,
+      (row) => row.iso2,
+    ) : [],
+    [data, eventFilter, metric],
   );
   const rankedCities = useMemo(
-    () => data ? rankRecordRows(data.cities, metric, (row) => `${row.iso2}\0${row.city}`) : [],
-    [data, metric],
+    () => data ? rankRecordRows(
+      data.cities.map((row) => recordCountsForEvents(row, eventFilter)),
+      metric,
+      (row) => `${row.iso2}\0${row.city}`,
+    ) : [],
+    [data, eventFilter, metric],
   );
   const hasCountryQuery = Boolean(countryQuery.trim());
   const hasCityQuery = Boolean(cityQuery.trim());
@@ -402,6 +427,22 @@ export function RecordPlaceRankings() {
     void setPage(1);
   }, [setMetric, setPage]);
 
+  const toggleEvent = useCallback((eventId: string) => {
+    const next = eventQuery === null ? new Set([eventId]) : new Set(selectedEvents);
+    if (eventQuery !== null) {
+      if (next.has(eventId)) next.delete(eventId);
+      else next.add(eventId);
+    }
+    const allSelected = next.size === availableEvents.size
+      && [...availableEvents].every((value) => next.has(value));
+    const ordered = [
+      ...ALL_EVENT_IDS.filter((value) => next.has(value)),
+      ...[...next].filter((value) => !ALL_EVENT_IDS.includes(value)).sort((a, b) => a.localeCompare(b, 'en')),
+    ];
+    void setEventQuery(allSelected ? null : ordered.length > 0 ? ordered.join(',') : '__none__');
+    void setPage(1);
+  }, [availableEvents, eventQuery, selectedEvents, setEventQuery, setPage]);
+
   const scrollToRankingStart = useCallback(() => {
     requestAnimationFrame(() => {
       rankingRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -430,6 +471,15 @@ export function RecordPlaceRankings() {
       ) : (
         <div ref={rankingRef} className="cs-record-ranking">
           <h3 className="sr-only">{viewLabel}</h3>
+          <div className="cs-record-events">
+            <WcaEventSelector
+              availableEvents={availableEvents}
+              selectedEvents={selectedEvents}
+              onToggle={toggleEvent}
+              isZh={isZh}
+              onlyAvailable
+            />
+          </div>
           <div className="cs-record-controls">
             <ListSelect
               items={RECORD_PLACE_VIEWS.map((value) => ({
@@ -470,7 +520,11 @@ export function RecordPlaceRankings() {
               {tr({ zh: `${activeMatchCount.toLocaleString()} 个匹配`, en: `${activeMatchCount.toLocaleString()} matches` })}
             </div>
           )}
-          {activeRows.length > 0 ? (
+          {selectedEvents.size === 0 ? (
+            <div className="cs-empty cs-record-empty">
+              {tr({ zh: '请至少选择一个项目。', en: 'Select at least one event.' })}
+            </div>
+          ) : activeRows.length > 0 ? (
             <>
               {view === 'country' ? (
                 <RankingTable
@@ -479,6 +533,7 @@ export function RecordPlaceRankings() {
                   metric={metric}
                   isZh={isZh}
                   city={false}
+                  eventIds={eventFilter}
                   onMetricChange={changeMetric}
                 />
               ) : (
@@ -489,6 +544,7 @@ export function RecordPlaceRankings() {
                   isZh={isZh}
                   city
                   cityCollisions={cityCollisions}
+                  eventIds={eventFilter}
                   onMetricChange={changeMetric}
                 />
               )}
