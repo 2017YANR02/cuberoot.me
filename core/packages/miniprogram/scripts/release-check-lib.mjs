@@ -1,3 +1,5 @@
+import { BUILD_STATE_VERSION } from './build-state.mjs';
+
 const sensitiveCapabilities = [
   ['微信用户资料', /\bwx\.getUserProfile\b/],
   ['定位', /\bwx\.(?:getLocation|chooseLocation|startLocationUpdate|startLocationUpdateBackground)\b/],
@@ -14,6 +16,10 @@ export function collectReleaseFailures({
   appConfig,
   confirmedStableVersion = '',
   sourceFiles = [],
+  builtFiles = [],
+  buildState = null,
+  currentSourceFingerprint = '',
+  currentOutputFingerprint = '',
 }) {
   const failures = [];
 
@@ -49,6 +55,42 @@ export function collectReleaseFailures({
 
   if (!appConfig || !Array.isArray(appConfig.pages) || appConfig.pages.length === 0) {
     failures.push('src/app.json 没有有效页面声明。');
+  } else {
+    const requiredFiles = new Set(['app.js', 'app.json', 'app.wxss', 'sitemap.json']);
+    for (const page of appConfig.pages) {
+      if (typeof page !== 'string' || page.length === 0) continue;
+      for (const extension of ['js', 'json', 'wxml', 'wxss']) {
+        requiredFiles.add(`${page}.${extension}`);
+      }
+    }
+    for (const { path } of sourceFiles) {
+      const normalizedPath = String(path).replaceAll('\\', '/');
+      if (!normalizedPath.startsWith('src/') || normalizedPath.endsWith('.ts')) continue;
+      requiredFiles.add(normalizedPath.slice('src/'.length));
+    }
+
+    const availableFiles = new Set(builtFiles.map((path) => String(path).replaceAll('\\', '/')));
+    const missingFiles = [...requiredFiles].filter((path) => !availableFiles.has(path)).sort();
+    if (missingFiles.length > 0) {
+      failures.push(`dist 缺少构建产物：${missingFiles.join('、')}。`);
+    }
+  }
+
+  if (!buildState || buildState.version !== BUILD_STATE_VERSION) {
+    failures.push('缺少有效的小程序构建状态，请重新运行 build。');
+  } else {
+    if (
+      typeof buildState.sourceFingerprint !== 'string'
+      || buildState.sourceFingerprint !== currentSourceFingerprint
+    ) {
+      failures.push('dist 不是由当前源码生成，请重新运行 build。');
+    }
+    if (
+      typeof buildState.outputFingerprint !== 'string'
+      || buildState.outputFingerprint !== currentOutputFingerprint
+    ) {
+      failures.push('dist 在构建后发生变化，请重新运行 build。');
+    }
   }
 
   for (const { path, source } of sourceFiles) {
