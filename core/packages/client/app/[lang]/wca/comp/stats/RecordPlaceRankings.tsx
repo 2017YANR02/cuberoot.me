@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight } from 'lucide-react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import {
@@ -14,6 +13,7 @@ import {
 } from '@cuberoot/shared/record-places';
 import { Flag } from '@/components/Flag';
 import { ClearButton } from '@/components/ClearButton';
+import { ListSelect } from '@/components/ListSelect';
 import { RecordBadge } from '@/components/RecordBadge';
 import { SearchInput } from '@/components/SearchInput';
 import { SortArrow } from '@/components/SortArrow';
@@ -28,6 +28,7 @@ import { countryName } from '@/lib/country-name';
 import { loadFlagData } from '@/lib/country-flags';
 import {
   cityRecordMatches,
+  countryRecordMatches,
   loadRecordPlaceDetails,
   loadRecordPlaces,
   localizedCityCollisionKeys,
@@ -40,6 +41,8 @@ import {
 const TOP_LIMIT = 20;
 const SEARCH_LIMIT = 50;
 const DETAIL_BATCH_SIZE = 50;
+const RECORD_PLACE_VIEWS = ['country', 'city'] as const;
+type RecordPlaceView = typeof RECORD_PLACE_VIEWS[number];
 
 interface RecordDetailModalProps {
   iso2: string;
@@ -256,7 +259,6 @@ function RankingTable<T extends CountryRecordCounts>({
                         {cityRow && <span className="cs-record-country">{countryName(row.iso2, isZh)}</span>}
                       </span>
                     </span>
-                    <ChevronRight className="cs-record-dialog-icon" size={14} aria-hidden="true" />
                   </button>
                 </td>
                 {RECORD_METRICS.map((recordMetric) => {
@@ -310,6 +312,14 @@ export function RecordPlaceRankings() {
     'recordBy',
     parseAsStringEnum<RecordMetric>([...RECORD_METRICS]).withDefault('wr').withOptions({ history: 'replace', scroll: false }),
   );
+  const [view, setView] = useQueryState(
+    'recordPlace',
+    parseAsStringEnum<RecordPlaceView>([...RECORD_PLACE_VIEWS]).withDefault('country').withOptions({ history: 'push', scroll: false }),
+  );
+  const [countryQuery, setCountryQuery] = useQueryState(
+    'recordCountry',
+    parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }),
+  );
   const [cityQuery, setCityQuery] = useQueryState(
     'recordCity',
     parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }),
@@ -337,21 +347,32 @@ export function RecordPlaceRankings() {
     () => data ? rankRecordRows(data.cities, metric, (row) => `${row.iso2}\0${row.city}`) : [],
     [data, metric],
   );
-  const countryRows = useMemo(
-    () => rankedCountries.filter(({ row }) => row[metric] > 0).slice(0, TOP_LIMIT),
-    [rankedCountries, metric],
-  );
+  const hasCountryQuery = Boolean(countryQuery.trim());
+  const hasCityQuery = Boolean(cityQuery.trim());
+  const matchingCountries = useMemo(() => (
+    hasCountryQuery
+      ? rankedCountries.filter(({ row }) => countryRecordMatches(row, countryQuery))
+      : rankedCountries.filter(({ row }) => row[metric] > 0)
+  ), [rankedCountries, countryQuery, hasCountryQuery, metric]);
   const matchingCities = useMemo(() => {
-    const rows = cityQuery
+    const rows = hasCityQuery
       ? rankedCities.filter(({ row }) => cityRecordMatches(row, cityQuery))
       : rankedCities.filter(({ row }) => row[metric] > 0);
     return rows;
-  }, [rankedCities, cityQuery, metric]);
+  }, [rankedCities, cityQuery, hasCityQuery, metric]);
   const cityCollisions = useMemo(
     () => localizedCityCollisionKeys(data?.cities ?? [], isZh),
     [data, isZh],
   );
-  const cityRows = matchingCities.slice(0, cityQuery ? SEARCH_LIMIT : TOP_LIMIT);
+  const countryRows = matchingCountries.slice(0, hasCountryQuery ? SEARCH_LIMIT : TOP_LIMIT);
+  const cityRows = matchingCities.slice(0, hasCityQuery ? SEARCH_LIMIT : TOP_LIMIT);
+  const activeQuery = view === 'country' ? countryQuery : cityQuery;
+  const hasActiveQuery = view === 'country' ? hasCountryQuery : hasCityQuery;
+  const activeMatchCount = view === 'country' ? matchingCountries.length : matchingCities.length;
+  const activeRows = view === 'country' ? countryRows : cityRows;
+  const viewLabel = view === 'country'
+    ? tr({ zh: '国家榜', en: 'Countries' })
+    : tr({ zh: '城市榜', en: 'Cities' });
 
   return (
     <section className="cs-section cs-record-section">
@@ -368,39 +389,56 @@ export function RecordPlaceRankings() {
       ) : !data ? (
         <div className="cs-loading">{t('common.loading')}</div>
       ) : (
-        <div className="cs-record-grid">
-          <div>
-            <h3 className="cs-record-heading">{tr({ zh: '国家榜', en: 'Countries' })}</h3>
-            <RankingTable
-              label={tr({ zh: '国家', en: 'Country' })}
-              rows={countryRows}
-              metric={metric}
-              isZh={isZh}
-              city={false}
-              onMetricChange={(value) => { void setMetric(value); }}
+        <div className="cs-record-ranking">
+          <h3 className="sr-only">{viewLabel}</h3>
+          <div className="cs-record-controls">
+            <ListSelect
+              items={RECORD_PLACE_VIEWS.map((value) => ({
+                value,
+                label: value === 'country'
+                  ? tr({ zh: '国家榜', en: 'Countries' })
+                  : tr({ zh: '城市榜', en: 'Cities' }),
+              }))}
+              value={view}
+              onChange={(value) => { void setView(value as RecordPlaceView); }}
+              allLabel={viewLabel}
+              clearable={false}
+              className="cs-record-view-select"
+            />
+            <SearchInput
+              value={activeQuery}
+              onChange={(value) => {
+                if (view === 'country') void setCountryQuery(value);
+                else void setCityQuery(value);
+              }}
+              placeholder={view === 'country'
+                ? tr({ zh: '搜索国家', en: 'Search countries' })
+                : tr({ zh: '搜索城市', en: 'Search cities' })}
+              ariaLabel={view === 'country'
+                ? tr({ zh: '搜索国家纪录', en: 'Search country records' })
+                : tr({ zh: '搜索城市纪录', en: 'Search city records' })}
+              className="cs-record-search"
+              inputClassName="cs-record-search-input"
+              type="search"
             />
           </div>
-
-          <div>
-            <div className="cs-record-city-heading">
-              <h3 className="cs-record-heading">{tr({ zh: '城市榜', en: 'Cities' })}</h3>
-              <SearchInput
-                value={cityQuery}
-                onChange={(value) => { void setCityQuery(value); }}
-                placeholder={tr({ zh: '搜索城市', en: 'Search cities' })}
-                ariaLabel={tr({ zh: '搜索城市纪录', en: 'Search city records' })}
-                className="cs-record-search"
-                inputClassName="cs-record-search-input"
-                type="search"
-              />
+          {hasActiveQuery && (
+            <div className="cs-record-search-summary">
+              {tr({ zh: `${activeMatchCount.toLocaleString()} 个匹配`, en: `${activeMatchCount.toLocaleString()} matches` })}
+              {activeMatchCount > SEARCH_LIMIT && tr({ zh: `，显示前 ${SEARCH_LIMIT} 个`, en: `, showing the first ${SEARCH_LIMIT}` })}
             </div>
-            {cityQuery && (
-              <div className="cs-record-search-summary">
-                {tr({ zh: `${matchingCities.length.toLocaleString()} 个匹配`, en: `${matchingCities.length.toLocaleString()} matches` })}
-                {matchingCities.length > SEARCH_LIMIT && tr({ zh: `，显示前 ${SEARCH_LIMIT} 个`, en: `, showing the first ${SEARCH_LIMIT}` })}
-              </div>
-            )}
-            {cityRows.length > 0 ? (
+          )}
+          {activeRows.length > 0 ? (
+            view === 'country' ? (
+              <RankingTable
+                label={tr({ zh: '国家', en: 'Country' })}
+                rows={countryRows}
+                metric={metric}
+                isZh={isZh}
+                city={false}
+                onMetricChange={(value) => { void setMetric(value); }}
+              />
+            ) : (
               <RankingTable
                 label={tr({ zh: '城市', en: 'City' })}
                 rows={cityRows}
@@ -410,10 +448,14 @@ export function RecordPlaceRankings() {
                 cityCollisions={cityCollisions}
                 onMetricChange={(value) => { void setMetric(value); }}
               />
-            ) : (
-              <div className="cs-empty cs-record-empty">{tr({ zh: '没有匹配的城市。', en: 'No matching cities.' })}</div>
-            )}
-          </div>
+            )
+          ) : (
+            <div className="cs-empty cs-record-empty">
+              {view === 'country'
+                ? tr({ zh: '没有匹配的国家。', en: 'No matching countries.' })
+                : tr({ zh: '没有匹配的城市。', en: 'No matching cities.' })}
+            </div>
+          )}
         </div>
       )}
     </section>
