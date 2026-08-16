@@ -1,9 +1,16 @@
 import { watch as watchSource } from 'node:fs';
-import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, dirname, extname, join, relative, resolve } from 'node:path';
 import process from 'node:process';
 
 import { build } from 'esbuild';
+
+import {
+  buildInputFingerprint,
+  outputFingerprint,
+  walkFiles,
+  writeBuildState,
+} from './build-state.mjs';
 
 const packageRoot = resolve(import.meta.dirname, '..');
 const sourceRoot = join(packageRoot, 'src');
@@ -19,23 +26,12 @@ async function existingProjectConfig() {
   }
 }
 
-async function walk(directory) {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const files = [];
-  for (const entry of entries) {
-    const absolute = join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...await walk(absolute));
-    else files.push(absolute);
-  }
-  return files;
-}
-
 async function prepareOutput(clean = true) {
   if (clean) await rm(outputRoot, { force: true, recursive: true });
   await mkdir(outputRoot, { recursive: true });
-  const files = await walk(sourceRoot);
+  const files = await walkFiles(sourceRoot);
   await Promise.all(files
-    .filter((file) => ['.json', '.wxml', '.wxss'].includes(extname(file)))
+    .filter((file) => extname(file) !== '.ts')
     .map(async (file) => {
       const target = join(outputRoot, relative(sourceRoot, file));
       await mkdir(dirname(target), { recursive: true });
@@ -67,7 +63,7 @@ async function prepareOutput(clean = true) {
 }
 
 async function entryPoints() {
-  const files = await walk(sourceRoot);
+  const files = await walkFiles(sourceRoot);
   return files.filter((file) => {
     if (extname(file) !== '.ts') return false;
     if (basename(file) === 'app.ts') return true;
@@ -88,6 +84,10 @@ async function buildProject(clean = true) {
     platform: 'browser',
     sourcemap: true,
     target: 'chrome91',
+  });
+  await writeBuildState(packageRoot, {
+    sourceFingerprint: await buildInputFingerprint(packageRoot),
+    outputFingerprint: await outputFingerprint(packageRoot, outputRoot),
   });
 }
 
