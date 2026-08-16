@@ -20,6 +20,7 @@ describe('mini program web routes', () => {
     expect(resolveWebRoute('timer')).toEqual({
       title: '计时器',
       path: '/zh/timer',
+      sessionHandoff: true,
       url: 'https://cuberoot.me/zh/timer',
     });
   });
@@ -28,26 +29,39 @@ describe('mini program web routes', () => {
     expect(resolveWebRoute('account')).toEqual({
       title: '账号管理',
       path: '/zh/account',
+      sessionHandoff: true,
       url: 'https://cuberoot.me/zh/account',
     });
     expect(resolveWebRoute('privacy')).toEqual({
       title: '隐私说明',
       path: '/zh/privacy',
+      sessionHandoff: true,
       url: 'https://cuberoot.me/zh/privacy',
     });
     expect(listWebTools().some((tool) => tool.key === 'account')).toBe(false);
     expect(listWebTools().some((tool) => tool.key === 'privacy')).toBe(false);
+    expect(listWebTools().some((tool) => tool.key === 'logout')).toBe(false);
   });
 
   it('resolves only allowlisted website destinations', () => {
     expect(resolveWebRoute('alg')).toEqual({
       title: '公式库',
       path: '/zh/alg',
+      sessionHandoff: true,
       url: 'https://cuberoot.me/zh/alg',
     });
     expect(resolveWebRoute('https://example.com')).toBeNull();
     expect(resolveWebRoute('__proto__')).toBeNull();
     expect(resolveWebRoute(null)).toBeNull();
+  });
+
+  it('keeps cross-platform logout in the allowlist without creating another login handoff', () => {
+    expect(resolveWebRoute('logout')).toEqual({
+      title: '退出登录',
+      path: '/auth/miniprogram#action=logout&next=%2Fzh%2Faccount',
+      sessionHandoff: false,
+      url: 'https://cuberoot.me/auth/miniprogram#action=logout&next=%2Fzh%2Faccount',
+    });
   });
 
   it('keeps the one-time ticket in a fragment outside server logs and referrers', () => {
@@ -69,6 +83,11 @@ describe('mini program web routes', () => {
 
   it('only registers destinations backed by canonical website pages or redirects', () => {
     for (const [key, route] of Object.entries(WEB_ROUTES)) {
+      if (key === 'logout') {
+        expect(route.path).toBe('/auth/miniprogram#action=logout&next=%2Fzh%2Faccount');
+        expect(websitePageFiles).toHaveProperty('../../client/app/auth/miniprogram/page.tsx');
+        continue;
+      }
       expect(route.path, key).toMatch(/^\/zh\//);
       const relativePagePath = route.path.replace(/^\/zh\//, '');
       const unlocalizedPath = route.path.replace(/^\/zh/, '');

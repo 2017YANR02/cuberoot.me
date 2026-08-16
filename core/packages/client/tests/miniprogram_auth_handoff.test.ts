@@ -28,6 +28,18 @@ describe('Mini Program web session handoff', () => {
     });
   });
 
+  it('parses a logout action and keeps its redirect on the website', async () => {
+    const { MINIPROGRAM_LOGOUT_FALLBACK, parseMiniProgramLogout } = await import('../lib/miniprogram-auth-handoff');
+
+    expect(parseMiniProgramLogout('#action=logout&next=%2Fzh%2Faccount')).toEqual({
+      next: '/zh/account',
+    });
+    expect(parseMiniProgramLogout('#action=login&next=%2Fzh%2Faccount')).toBeNull();
+    expect(parseMiniProgramLogout('#action=logout&next=https%3A%2F%2Fevil.example')).toEqual({
+      next: MINIPROGRAM_LOGOUT_FALLBACK,
+    });
+  });
+
   it('deduplicates a StrictMode-style exchange for the same one-time ticket', async () => {
     const session = { token: 't'.repeat(20), user: { uid: 7, wcaId: null, name: 'CubeRoot' } };
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => session });

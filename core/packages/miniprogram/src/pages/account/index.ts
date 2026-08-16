@@ -119,13 +119,21 @@ Page({
   logout() {
     wx.showModal({
       title: '退出登录',
-      content: '本机计时记录不会被删除。',
+      content: '将同时退出小程序和网站账号，本机计时记录不会被删除。',
       success: (result) => {
         if (!result.confirm) return;
-        clearStoredSession();
-        this.showSession(null);
-        this.showSyncState('');
-        this.setData({ status: '', statusError: false });
+        wx.navigateTo({
+          url: '/pages/web/index?key=logout',
+          success: () => {
+            clearStoredSession();
+            this.showSession(null);
+            this.showSyncState('');
+            this.setData({ status: '', statusError: false });
+          },
+          fail: () => {
+            wx.showToast({ icon: 'none', title: '退出失败，请重试' });
+          },
+        });
       },
     });
   },

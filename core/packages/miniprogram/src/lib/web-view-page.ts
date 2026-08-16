@@ -99,7 +99,7 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
   });
 
   const session = getStoredSession();
-  if (!session) {
+  if (!session || !route.sessionHandoff) {
     if (isCurrentAttempt(context, attempt)) context.setData({ src: route.url });
     return true;
   }

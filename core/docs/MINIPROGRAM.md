@@ -22,6 +22,7 @@
 | `web-view` 加载、换票超时、失败和重试 | `packages/miniprogram/src/lib/web-view-page.ts` | 计时页和通用网页共用，不各自补丁 |
 | `web-view` 加载与错误界面 | `packages/miniprogram/src/templates/web-route-view.wxml` + `app.wxss` | 页面只传状态，不复制 WXML 或页面级样式 |
 | 登录、会话和错误文案 | `packages/miniprogram/src/lib/auth.ts` | AppSecret 永远只在服务端 |
+| 跨端登录与退出落地 | 网站 `lib/auth-store.ts` + `app/auth/miniprogram/page.tsx` | 小程序只发起受控跳转，不复制网页存储键和清理规则 |
 | 移动端与小程序隐私政策 | `packages/client/app/[lang]/privacy/page.tsx` | App、小程序和网页共用一份真实声明 |
 | 构建与上传前自动检查 | `packages/miniprogram/scripts/build-state.mjs` + `release-check.mjs` + `release-check-lib.mjs` | 只允许上传当前源码生成且内容未变的完整 `dist`；新增隐私敏感能力时先阻断上传 |
 | 跨端计时数据类型和纯逻辑 | `@cuberoot/shared/timer` | 不复制网站计时器 UI |
@@ -66,6 +67,7 @@
 - [x] “我的”页优先打开微信平台隐私协议，平台接口不可用时回退到网站唯一隐私政策。
 - [x] 上传前脚本会拦截游客 AppID、未明确确认的基础库、关闭合法域名校验、旧或不完整的 `dist`，以及未经复核的敏感 API。
 - [x] 正式版下载到新版本后允许用户选择立即重启或稍后更新，下载失败不会阻断当前使用。
+- [x] “退出登录”会先打开不创建新票据的受控网页路由，同时清除小程序会话与网站现有登录存储。
 
 ## 4. 账号方案
 
@@ -143,6 +145,7 @@ pnpm --filter @cuberoot/miniprogram release:check
 - [x] 实现原生登录到网站现有登录态的一次性换票，不复制第二套网页会话机制。
 - [x] 在“我的”页显示跨端账号状态，并通过一次性换票进入网站账号管理，不复制绑定界面。
 - [x] 为换票接口补格式、过期条件、原子核销、重放、并发和退出竞态测试。
+- [x] 退出复用网站现有 `logout()`，不在小程序复制 `localStorage` 键或另建第二套登出协议。
 - [ ] 部署后补同账号、跨账号和 iOS、Android 真机端到端验收。
 
 ### P2：微信专属增量
@@ -173,6 +176,13 @@ pnpm --filter @cuberoot/miniprogram release:check
 | 定位、摄像头、麦克风、相册、通讯录、蓝牙 | 当前版本不使用 | 后台不应勾选；以后接入前先改政策和平台指引 |
 
 ## 9. 迭代记录
+
+### 2026-08-16：跨端退出一致性
+
+- 原生“退出登录”先进入路由表中的受控网页退出入口；该入口明确禁止创建一次性登录票据，避免退出动作反而重新登录。
+- 网站认证页复用现有账号 store 的 `logout()` 清理全部网页会话键，小程序不感知也不复制网站存储实现。
+- 若退出入口无法打开，原生会话保持不变并允许用户重试；加载后失败则继续复用统一网页错误页和重试流程。
+- 回归测试固定安全回跳、外部地址拦截、无换票退出、导航成功后再清原生会话，以及导航失败不产生半退出状态。
 
 ### 2026-08-16：网页重试退出竞态
 

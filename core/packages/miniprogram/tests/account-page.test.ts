@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 interface AccountPage {
   data: Record<string, unknown>;
   onShow(): void;
+  logout(): void;
   openAccount(): void;
   openPrivacy(): void;
   setData(data: Record<string, unknown>): void;
@@ -79,6 +80,47 @@ describe('mini program account page', () => {
     expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({
       url: '/pages/web/index?key=privacy',
     }));
+  });
+
+  it('opens the cross-platform logout route before clearing the Mini Program session', async () => {
+    const removeStorageSync = vi.fn();
+    const navigateTo = vi.fn((options: { success(): void }) => {
+      expect(removeStorageSync).not.toHaveBeenCalled();
+      options.success();
+    });
+    const page = await loadPage({
+      navigateTo,
+      removeStorageSync,
+      showModal: (options: { success(result: { confirm: boolean }): void }) => {
+        options.success({ confirm: true });
+      },
+    });
+
+    page.logout();
+
+    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({
+      url: '/pages/web/index?key=logout',
+    }));
+    expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
+    expect(page.data.loggedIn).toBe(false);
+  });
+
+  it('keeps the Mini Program session when the logout route cannot open', async () => {
+    const removeStorageSync = vi.fn();
+    const showToast = vi.fn();
+    const page = await loadPage({
+      navigateTo: (options: { fail(): void }) => options.fail(),
+      removeStorageSync,
+      showModal: (options: { success(result: { confirm: boolean }): void }) => {
+        options.success({ confirm: true });
+      },
+      showToast,
+    });
+
+    page.logout();
+
+    expect(removeStorageSync).not.toHaveBeenCalled();
+    expect(showToast).toHaveBeenCalledWith({ icon: 'none', title: '退出失败，请重试' });
   });
 
   it('shows cached identity as checking until the server confirms it', async () => {
