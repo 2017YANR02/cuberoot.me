@@ -12,23 +12,43 @@ import { openWebsitePageOnce } from '../../lib/navigation';
 const activePages = new WeakSet<object>();
 const activeLogins = new WeakSet<object>();
 const activeLogoutConfirmations = new WeakSet<object>();
+const logoutConfirmationSequences = new WeakMap<object, number>();
+const currentLogoutConfirmations = new WeakMap<object, number>();
 const logoutConfirmationTimers = new WeakMap<object, ReturnType<typeof setTimeout>>();
 const validationAttempts = new WeakMap<object, number>();
 
-function releaseLogoutConfirmation(page: object): void {
+function releaseLogoutConfirmationLock(page: object, attempt: number): void {
+  if (currentLogoutConfirmations.get(page) !== attempt) return;
   activeLogoutConfirmations.delete(page);
   const timer = logoutConfirmationTimers.get(page);
   if (timer !== undefined) clearTimeout(timer);
   logoutConfirmationTimers.delete(page);
 }
 
-function beginLogoutConfirmation(page: object): boolean {
-  if (activeLogoutConfirmations.has(page)) return false;
+function settleLogoutConfirmation(page: object, attempt: number): boolean {
+  if (currentLogoutConfirmations.get(page) !== attempt) return false;
+  releaseLogoutConfirmationLock(page, attempt);
+  currentLogoutConfirmations.delete(page);
+  return true;
+}
+
+function cancelLogoutConfirmation(page: object): void {
+  const attempt = currentLogoutConfirmations.get(page);
+  if (attempt === undefined) return;
+  releaseLogoutConfirmationLock(page, attempt);
+  currentLogoutConfirmations.delete(page);
+}
+
+function beginLogoutConfirmation(page: object): number | null {
+  if (activeLogoutConfirmations.has(page)) return null;
+  const attempt = (logoutConfirmationSequences.get(page) ?? 0) + 1;
+  logoutConfirmationSequences.set(page, attempt);
+  currentLogoutConfirmations.set(page, attempt);
   activeLogoutConfirmations.add(page);
   logoutConfirmationTimers.set(page, setTimeout(() => {
-    releaseLogoutConfirmation(page);
+    releaseLogoutConfirmationLock(page, attempt);
   }, 5_000));
-  return true;
+  return attempt;
 }
 
 function beginValidation(page: object): number {
@@ -44,6 +64,7 @@ function validationIsCurrent(page: object, attempt: number): boolean {
 function pausePage(page: object): void {
   activePages.delete(page);
   beginValidation(page);
+  cancelLogoutConfirmation(page);
 }
 
 function accountInitial(name: string): string {
@@ -190,13 +211,14 @@ Page({
   },
 
   logout() {
-    if (!beginLogoutConfirmation(this)) return;
+    const confirmationAttempt = beginLogoutConfirmation(this);
+    if (confirmationAttempt === null) return;
     try {
       wx.showModal({
         title: '退出登录',
         content: '将退出小程序，并尝试同时退出网站账号。本机计时记录不会被删除。',
         success: (result) => {
-          releaseLogoutConfirmation(this);
+          if (!settleLogoutConfirmation(this, confirmationAttempt)) return;
           if (!result.confirm) return;
 
           if (!clearStoredSession()) {
@@ -215,16 +237,17 @@ Page({
           });
         },
         fail: () => {
-          releaseLogoutConfirmation(this);
+          if (!settleLogoutConfirmation(this, confirmationAttempt)) return;
           this.setData({ status: '退出确认暂时无法打开，请重试', statusError: true });
         },
         complete: () => {
-          releaseLogoutConfirmation(this);
+          settleLogoutConfirmation(this, confirmationAttempt);
         },
       });
     } catch {
-      releaseLogoutConfirmation(this);
-      this.setData({ status: '退出确认暂时无法打开，请重试', statusError: true });
+      if (settleLogoutConfirmation(this, confirmationAttempt)) {
+        this.setData({ status: '退出确认暂时无法打开，请重试', statusError: true });
+      }
     }
   },
 });
