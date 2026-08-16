@@ -1,11 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import accountConfig from '../src/pages/account/index.json';
+
 interface AccountPage {
   data: Record<string, unknown>;
   login(): Promise<void>;
   onHide(): void;
+  onPullDownRefresh(): void;
   onShow(): void;
   onUnload(): void;
+  refreshAccount(): Promise<void>;
   logout(): void;
   openAccount(): void;
   openPrivacy(): void;
@@ -41,6 +45,62 @@ describe('mini program account page', () => {
     vi.useRealTimers();
     vi.resetModules();
     vi.unstubAllGlobals();
+  });
+
+  it('enables native pull-down refresh for account reconciliation', () => {
+    expect(accountConfig.enablePullDownRefresh).toBe(true);
+  });
+
+  it('reuses account validation and stops pull-down feedback after it settles', async () => {
+    const stopPullDownRefresh = vi.fn();
+    const request = vi.fn((options: { success(response: unknown): void }) => {
+      options.success({ statusCode: 200, data: { user: storedSession.user } });
+    });
+    const page = await loadPage({
+      getStorageSync: () => storedSession,
+      removeStorageSync: vi.fn(),
+      request,
+      setStorageSync: vi.fn(),
+      stopPullDownRefresh,
+    });
+
+    page.onPullDownRefresh();
+
+    await vi.waitFor(() => expect(page.data.syncState).toBe('ready'));
+    expect(request).toHaveBeenCalledOnce();
+    expect(stopPullDownRefresh).toHaveBeenCalledOnce();
+  });
+
+  it('stops pull-down feedback immediately when there is no local account', async () => {
+    const stopPullDownRefresh = vi.fn();
+    const page = await loadPage({
+      getStorageSync: () => null,
+      stopPullDownRefresh,
+    });
+
+    page.onPullDownRefresh();
+
+    await vi.waitFor(() => expect(stopPullDownRefresh).toHaveBeenCalledOnce());
+    expect(page.data.loggedIn).toBe(false);
+    expect(page.data.syncState).toBe('');
+  });
+
+  it('stops pull-down feedback after account validation fails', async () => {
+    const stopPullDownRefresh = vi.fn();
+    const page = await loadPage({
+      getStorageSync: () => storedSession,
+      removeStorageSync: vi.fn(),
+      request: vi.fn((options: { success(response: unknown): void }) => {
+        options.success({ statusCode: 200, data: null });
+      }),
+      setStorageSync: vi.fn(),
+      stopPullDownRefresh,
+    });
+
+    page.onPullDownRefresh();
+
+    await vi.waitFor(() => expect(page.data.syncState).toBe('error'));
+    expect(stopPullDownRefresh).toHaveBeenCalledOnce();
   });
 
   it('opens the allowlisted website account destination', async () => {
