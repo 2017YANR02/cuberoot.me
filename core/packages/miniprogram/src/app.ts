@@ -5,6 +5,7 @@ export function setupAppUpdate(): void {
     const updateManager = wx.getUpdateManager();
     let updatePromptHandled = false;
     let updatePromptAttempt = 0;
+    let updateFailureShown = false;
     updateManager.onUpdateReady(() => {
       if (updatePromptHandled) return;
       updatePromptHandled = true;
@@ -37,12 +38,15 @@ export function setupAppUpdate(): void {
       }
     });
     updateManager.onUpdateFailed(() => {
+      if (updateFailureShown) return;
+      updateFailureShown = true;
       try {
         wx.showToast({
           title: '更新失败，请稍后重试',
           icon: 'none',
         });
       } catch {
+        updateFailureShown = false;
         // This notification is informational; keep the current version usable.
       }
     });
