@@ -7,7 +7,7 @@
 // bury the ~10 pages that carry real long-form content among tool shells.
 //
 // Kept in sync by hand. If you add a substantial content page (a /math topic, a
-// regulation chapter, a long-form /code piece), add it here too.
+// regulation chapter, a long-form /dev piece), add it here too.
 //
 // force-static: pure string, no I/O — baked at build, served from CDN.
 export const dynamic = 'force-static';
@@ -101,7 +101,7 @@ Association. WCA competition data is derived from the WCA's public export.
 
 ## Engineering notes
 
-- [How this site is built](${BASE}/code): architecture, the solver stack, the
+- [How this site is built](${BASE}/dev): architecture, the solver stack, the
   algorithms behind the analyzers (Kociemba, min2phase, IDA*), and notes on the
   languages and tools used.
 

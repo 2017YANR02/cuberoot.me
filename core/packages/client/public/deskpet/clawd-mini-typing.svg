@@ -83,7 +83,7 @@
       }
     </style>
 
-    <!-- A small square to represent data/code -->
+    <!-- A small square to represent data/dev -->
     <g id="pixel-packet">
       <rect x="0" y="0" width="1.5" height="1.5" />
     </g>

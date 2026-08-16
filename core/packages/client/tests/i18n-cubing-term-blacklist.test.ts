@@ -8,7 +8,7 @@
 //   - 每条 = zh 错译 pattern → 正确译法。发现并修掉新错译后,把它加进 RULES 防回归。
 //   - 《…》书名号内为外部作品原标题(如 b23 视频名),原文照录不算错译,匹配前剥除。
 //   - 个别行确需豁免:行内注释 `allow-cubing-term: <理由>`。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

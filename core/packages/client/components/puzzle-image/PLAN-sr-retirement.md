@@ -84,7 +84,7 @@ sr 共 12 种 visualizer type、5 类拼图:
 服务端:
 - [x] `GET /v1/visualcube.svg` view=**iso** → engine_render(Phase 4 本地 ✅;top 留 sr;部署待知会)
 
-退役时要一并清的登记点:`client/server package.json` 依赖、`knip.json`、`about/credits_data.json`、`/code/stack` 的 `pnpm.tsx`/`monorepo.tsx` 文案、pnpm-lock。
+退役时要一并清的登记点:`client/server package.json` 依赖、`knip.json`、`about/credits_data.json`、`/dev/stack` 的 `pnpm.tsx`/`monorepo.tsx` 文案、pnpm-lock。
 
 ## 4. 方案分阶段
 
@@ -131,7 +131,7 @@ sr 共 12 种 visualizer type、5 类拼图:
 **观察期起点 = 2026-07-22(Phase 3+4 push 上线,commit 67e5526938);最早可执行 Phase 5 = 2026-08-05 之后。日历门控,本会话物理不可执行;届时按下列队列单独会话操刀:**
 - (队列)删 `packages/vendor-sr-puzzlegen` 整包 + client/server 依赖 + `PuzzleSVG.tsx` + `sr_render.ts` 旧路径 + 回退开关。
 - (队列)删 `SR_INDEX_MAP` 派生表与 derive 测试(mask 已直映引擎 id)。
-- (队列)清登记点:`knip.json`、`credits_data.json`、`/code/stack` 文案、pnpm-lock。
+- (队列)清登记点:`knip.json`、`credits_data.json`、`/dev/stack` 文案、pnpm-lock。
 - (队列)`TODO-sr-exact-match.md` 归档(历史价值并入本文件或 memory);§3 两条 Phase 5 队列项(standalone /visualcube spec 渲染收口、megaminx-top 去留)一并处理。
 - 净删量预估:−7,400(vendor)− 标定层/胶水若干,+ Phase 2 新增 ≈ 600-1,000。
 

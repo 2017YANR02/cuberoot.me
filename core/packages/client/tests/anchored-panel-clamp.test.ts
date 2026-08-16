@@ -12,7 +12,7 @@
 // 运行时全机制实测走 pnpm -F @cuberoot/client audit:overflow(popup pass 会点开每个
 // [aria-haspopup]/[aria-expanded] 触发器实测越界)。写入即拦的孪生 hook:
 // .codex/hooks/block-unclamped-anchored-panel.ps1(本测试为权威口径)。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

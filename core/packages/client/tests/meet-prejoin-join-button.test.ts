@@ -9,7 +9,7 @@
 // typecheck / eslint / vitest / knip 谁都看不见这种事故:它发生在我们的 CSS 和第三方
 // DOM 结构之间。所以判据必须同时读两边 —— 从库的产物里认出按钮的祖先链,再回来检查
 // 我们的 CSS 有没有把链上任何一环整个隐藏。库升级换了结构,这里会一起红。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

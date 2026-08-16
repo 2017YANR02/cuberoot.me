@@ -28,7 +28,7 @@
 //   (a) real SEO pages that server-render meaningful per-id content, then ISR-cache it.
 //   (b) BOUNDED id spaces (a small finite set) — even rendered on demand they top out at
 //       a few hundred invocations ever, which is noise, not a spike.
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

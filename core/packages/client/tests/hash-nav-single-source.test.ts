@@ -2,14 +2,14 @@
 //
 // 全站原本有六处各自手搓这套逻辑(/wiki 词条、person 两张成绩表、/alg 公式卡、
 // /wca/prediction 项目段、论坛帖子),ByCompList / ByEventView 更是逐字复制。已抽成
-// hooks/useHashHighlight.ts(见 /code/utils 登记表)。这条测试防回潮:除该 hook 外,
+// hooks/useHashHighlight.ts(见 /dev/utils 登记表)。这条测试防回潮:除该 hook 外,
 // 任何文件再自己挂 `hashchange` 监听(这套模式的标志动作)= CI 直接红,指回该 hook。
 //
 // 真属另一类用途的 hashchange(如 OAuth 回调、i18n infra)加进 ALLOWLIST 并写理由——
 // 目前一个都没有(全站仅 useHashHighlight 一处),所以是「闭集 = 0」而非棘轮。
 //
 // CI 跑 vitest,故约定靠本测试当红灯。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -71,7 +71,7 @@ describe('hash-nav convention — anchor scroll+highlight goes through useHashHi
     }
     expect(
       violations,
-      '「点某项→URL 片段→滚到它并高亮」请用 hooks/useHashHighlight（见 /code/utils）,勿再自己挂 hashchange 监听。\n' +
+      '「点某项→URL 片段→滚到它并高亮」请用 hooks/useHashHighlight（见 /dev/utils）,勿再自己挂 hashchange 监听。\n' +
         '差异点(解析元素 / 滚前预处理 / 持续 vs 闪一下 / 就绪信号)都是它的 options。\n' +
         '若确属另一类用途(OAuth 回调 / 全局 infra),把文件加进本测试的 ALLOWLIST 并写理由。\n' +
         '命中:\n' +

@@ -5,7 +5,7 @@
 //
 // 两种坏法都不会有人报 bug:isNew 丢了 → 新人再也不被问(功能没了);条件写成只看有没有绑
 // WCA → 老用户每次登录都被问一遍(更糟,用户只会默默烦)。所以把判定条件本身钉在这儿。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';

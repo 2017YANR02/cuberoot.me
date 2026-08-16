@@ -1,11 +1,11 @@
 ---
 name: ops-runbook
-description: "Use when adding / editing 运维命令 or AI 提示词模板 to /code/ops page (db/build/deploy/backup/prompt 5 类). DB-backed:走 X-Admin-Key 端点 (`api.cuberoot.me/v1/ops/commands`),非源码改动。Triggers: \"加运维命令\", \"ops command\", \"runbook 加一条\", \"/code/ops\", \"加到运维页\", \"OpsPage\", \"加提示词\", \"prompt 模板\", \"ops_commands\"."
+description: "Use when adding / editing 运维命令 or AI 提示词模板 to /dev/ops page (db/build/deploy/backup/prompt 5 类). DB-backed:走 X-Admin-Key 端点 (`api.cuberoot.me/v1/ops/commands`),非源码改动。Triggers: \"加运维命令\", \"ops command\", \"runbook 加一条\", \"/dev/ops\", \"加到运维页\", \"OpsPage\", \"加提示词\", \"prompt 模板\", \"ops_commands\"."
 ---
 
 # Ops Runbook (DB-backed)
 
-`/code/ops` 命令存在 PG `ops_commands` 表,**不是源码硬编码**。改一条 = 调 admin API,不需要 commit + deploy。
+`/dev/ops` 命令存在 PG `ops_commands` 表,**不是源码硬编码**。改一条 = 调 admin API,不需要 commit + deploy。
 
 ## 加一条
 

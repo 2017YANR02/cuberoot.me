@@ -125,7 +125,7 @@ COEP 注意:analyzer 页用 classic worker、**不发 COOP/COEP**;别把新页�
    → `pnpm --filter @cuberoot/scramble-stats-build build` → 核对 distribution.json 新变体的
    sample_count/直方图 → 发布走 `update_cross_stats.ps1 -PublishOnly`(git commit stats/scramble +
    push + tar+scp static 原子替换),或手动照它第 6 步。
-7. **看板** `/code/solvers`:调 `solvers-tables` skill(TABLES/NATIVE/BROWSER/hero 文案)。
+7. **看板** `/dev/solvers`:调 `solvers-tables` skill(TABLES/NATIVE/BROWSER/hero 文案)。
 
 **标准集成(2026-06-10 起新变体默认全做,别漏)**:
 - **命名规范:用户可见标签一律纯块尺寸**(1x2x2 / 1x2x3 / 2x2x2 / 2x2x3),禁「桥式 / Roux」
@@ -155,7 +155,7 @@ COEP 注意:analyzer 页用 classic worker、**不发 COOP/COEP**;别把新页�
 - [ ] distribution.json 含新变体(两 set),stats 页下拉可选、直方图/样例正常
 - [ ] `pnpm --filter @cuberoot/client typecheck` 干净
 - [ ] 发布后线上 stats 页验一遍(static 已替换)
-- [ ] /code/solvers 看板同步
+- [ ] /dev/solvers 看板同步
 
 ## 5. 已知数值(实测参照)
 

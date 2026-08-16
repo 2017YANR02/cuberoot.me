@@ -12,7 +12,7 @@
 // 不许就地写一个数字字面量(那样改常量根本不生效,是最容易犯的一种)。
 //
 // CI 跑 vitest(server 包无测试集),故跨包扫源码当红灯。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

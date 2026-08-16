@@ -22,7 +22,7 @@
 // Fix when red: 给该路由建 3 行 layout.tsx 调 pageMetadata('<route>'),并在
 // lib/page-meta.ts 加一条双语 title;参数化路由照 app/[lang]/math/group/[slug]/layout.tsx
 // 写 generateMetadata。
-// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

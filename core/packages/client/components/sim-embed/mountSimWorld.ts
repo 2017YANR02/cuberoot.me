@@ -11,7 +11,7 @@
  *
  * WHY A PLAIN FUNCTION, NOT A HOOK:
  *   - hooks/ is a closed directory — every export there must be registered in
- *     the /code catalog and is React-only. This has to stay callable from the
+ *     the /dev catalog and is React-only. This has to stay callable from the
  *     non-React path too (components/EnginePuzzleSVG.tsx builds a shared World
  *     at module scope, outside any component).
  *   - The lifecycle is imperative and effect-shaped anyway; a hook would only

@@ -218,7 +218,7 @@ export default function LandingSearch({ cards, lang }: Props) {
       return;
     }
     if (aboutMatches.length > 0) { pushInternal(langHref(`/wca/about/${aboutMatches[0].id}`)); return; }
-    if (stackMatches.length > 0) { pushInternal(langHref(`/code/stack/${stackMatches[0].slug}`)); return; }
+    if (stackMatches.length > 0) { pushInternal(langHref(`/dev/stack/${stackMatches[0].slug}`)); return; }
     if (glossaryMatches.length > 0) { pushInternal(`${langHref('/wiki')}#${glossaryMatches[0].slug}`); return; }
     if (algSetMatches.length > 0) { pushInternal(langHref(algSetMatches[0].path)); return; }
     if (compMatches.length > 0) {
@@ -573,7 +573,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {stackMatches.map(s => (
                   <Link
                     key={s.slug}
-                    href={langHref(`/code/stack/${s.slug}`)}
+                    href={langHref(`/dev/stack/${s.slug}`)}
                     prefetch={false}
                     className="landing-search-item"
                     onClick={closeAfter}
