@@ -526,104 +526,6 @@
 }
 .stats-row .st-cur.muted,
 .stats-row .st-best.muted { color: var(--faint-foreground); }
-.st-remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--faint-foreground);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 120ms, color 120ms, background 120ms;
-}
-.stats-row:hover .st-remove { opacity: 1; }
-.st-remove:hover { background: var(--shell-hover); color: var(--accent); }
-/* Touch devices never hover — keep the remove affordance visible. */
-@media (hover: none) {
-  .stats-row .st-remove { opacity: 0.6; }
-}
-
-/* Shared rolling-stat column picker for the stats table and history header. */
-.rolling-stats-picker {
-  position: relative;
-  align-self: flex-start;
-  width: fit-content;
-  margin-bottom: 10px;
-}
-.rolling-stats-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--muted-foreground);
-  background: transparent;
-  border: 1px dashed var(--shell-divider);
-  border-radius: 8px;
-  padding: 5px 10px;
-  cursor: pointer;
-  white-space: nowrap;
-  text-transform: none;
-  letter-spacing: normal;
-  transition: color 120ms, border-color 120ms, background 120ms;
-}
-.rolling-stats-trigger:hover {
-  color: var(--foreground);
-  border-color: var(--border-default);
-  background: var(--shell-hover);
-}
-.rolling-stats-pop {
-  position: fixed;
-  visibility: hidden;
-  z-index: 80;
-  width: max-content;
-  max-width: min(86vw, 280px);
-  max-height: calc(100dvh - 16px);
-  overflow-y: auto;
-  padding: 6px;
-  border-radius: 10px;
-  background: var(--popover);
-  border: 1px solid var(--border-default);
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 16%, transparent);
-  text-transform: none;
-  letter-spacing: normal;
-}
-.rolling-stats-options {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 6px;
-}
-.rolling-stats-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  padding: 7px 8px;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted-foreground);
-  border: 0;
-  cursor: pointer;
-  text-align: left;
-  transition: background 120ms, color 120ms;
-}
-.rolling-stats-option-mark {
-  display: inline-flex;
-  width: 14px;
-  flex: 0 0 14px;
-}
-.rolling-stats-option:hover { background: var(--shell-hover); color: var(--foreground); }
-.rolling-stats-option.active {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
 .rolling-stats-custom {
   display: flex;
   gap: 6px;
@@ -654,22 +556,11 @@
   cursor: pointer;
 }
 .rolling-stats-custom-add:hover { background: var(--shell-hover); }
-.rolling-stats-option:disabled,
-.rolling-stats-custom-input:disabled,
 .rolling-stats-custom-add:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.rolling-stats-option:disabled:hover {
-  background: transparent;
-  color: var(--muted-foreground);
-}
 .rolling-stats-custom-add:disabled:hover { background: var(--shell-chip); }
-.rolling-stats-hint {
-  margin-top: 8px;
-  font-size: 11px;
-  color: var(--muted-foreground);
-}
 
 /* σ / CV / count footer line under the table */
 .stats-foot {
@@ -787,8 +678,6 @@
   justify-content: space-between;
   align-items: center;
 }
-.history-header .history-stat-picker { margin-bottom: 0; }
-.history-header .rolling-stats-trigger { padding: 2px 6px; font-size: 11px; }
 .rolling-stats-column-pickers {
   display: grid;
   align-self: stretch;
@@ -796,15 +685,33 @@
   margin-bottom: 0;
   gap: 8px;
 }
-.rolling-stats-column-trigger {
+.rolling-stats-column-select {
   width: 100%;
   min-width: 0;
-  font: inherit;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
 }
-.rolling-stats-column-trigger:hover { text-decoration: underline; text-underline-offset: 2px; }
+.rolling-stats-column-pickers--header .compact-select-trigger {
+  justify-content: flex-end;
+  gap: 4px;
+  padding-right: 22px;
+  color: var(--signal-info);
+}
+.rolling-stats-column-pickers--header .compact-select-arrow {
+  color: currentColor;
+}
+.rolling-stats-column-pickers--row {
+  display: inline-grid;
+  width: fit-content;
+}
+.rolling-stats-column-pickers--row .compact-select-trigger {
+  justify-content: flex-start;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.rolling-stats-menu {
+  font-family: var(--font-mono);
+  text-transform: none;
+  letter-spacing: normal;
+}
 .history-list {
   flex: 1;
   overflow-y: auto;

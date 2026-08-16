@@ -89,83 +89,10 @@
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
-/* ==========================================================================
-   指标下拉药丸（MetricPanelsView — 对标 Legacy .metric-pill）
-   ========================================================================== */
-
-.wca-stats-metric-pill {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border: 1px solid var(--border-default);
-  border-radius: 20px;
-  background: var(--popover);
-  color: var(--foreground);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.2s;
+/* Metric selector uses the shared CompactSelect. */
+.wca-stats-metric-select {
   margin: 6px 12px 6px 0;
   vertical-align: middle;
-  white-space: nowrap;
-}
-
-.wca-stats-metric-pill:hover {
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
-}
-
-.wca-stats-metric-pill-arrow {
-  font-size: 10px;
-  color: var(--muted-foreground);
-  transition: transform 0.2s;
-}
-
-.wca-stats-metric-pill-arrow.open {
-  transform: rotate(180deg);
-}
-
-.wca-stats-metric-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  min-width: 160px;
-  background: var(--popover);
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-  z-index: 200;
-  overflow: hidden;
-}
-
-.wca-stats-metric-option {
-  padding: 9px 16px;
-  font-size: 13px;
-  color: var(--foreground);
-  cursor: pointer;
-  transition: background 0.15s;
-  border: none;
-  background: transparent;
-  width: 100%;
-  text-align: left;
-  display: block;
-}
-
-.wca-stats-metric-option:hover {
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
-}
-
-.wca-stats-metric-option.active {
-  color: var(--accent);
-  font-weight: 600;
-  background: var(--accent-soft);
-}
-
-.wca-stats-metric-option.disabled {
-  color: var(--faint-foreground);
-  cursor: not-allowed;
 }
 
 /* fit-content:窄表贴内容,不留右侧大空白。max-width:100% 只在容器自滚动(窄屏)时才需要,
@@ -789,11 +716,8 @@
   z-index: 10;
 }
 
-/* ==========================================================================
-   lucide 图标替换原 emoji/glyph（chevron / pill-arrow 复用旋转动画）
-   ========================================================================== */
-.wca-stats-chevron,
-.wca-stats-metric-pill-arrow {
+/* lucide chevron icon. */
+.wca-stats-chevron {
   flex-shrink: 0;
 }
 
