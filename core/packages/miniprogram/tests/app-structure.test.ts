@@ -127,4 +127,13 @@ describe('mini program app structure', () => {
       expect(source, path).not.toMatch(/https?:\/\/|cuberoot\.me|\/zh\//);
     }
   });
+
+  it('uses one visible press state for every native button', () => {
+    for (const [path, source] of Object.entries(sourceFiles)) {
+      if (!path.endsWith('.wxml')) continue;
+      for (const button of source.match(/<button\b[\s\S]*?>/g) ?? []) {
+        expect(button, path).toContain('hover-class="press-feedback"');
+      }
+    }
+  });
 });

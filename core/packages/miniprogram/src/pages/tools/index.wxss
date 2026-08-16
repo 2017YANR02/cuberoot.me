@@ -16,10 +16,6 @@
   width: 100%;
 }
 
-.tool-row--pressed {
-  opacity: 0.62;
-}
-
 .tool-copy {
   min-width: 0;
 }
