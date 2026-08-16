@@ -3,9 +3,9 @@ import { resolveWebRoute } from './web-routes';
 interface WebsitePageNavigationOptions {
   failureMessage: string;
   invalidMessage?: string;
-  success?: () => void;
 }
 
+const NAVIGATION_LOCK_TIMEOUT_MS = 5_000;
 const activeNavigations = new WeakSet<object>();
 
 function showNavigationMessage(title: string): void {
@@ -29,16 +29,20 @@ export function openWebsitePageOnce(
   if (activeNavigations.has(owner)) return false;
 
   activeNavigations.add(owner);
-  const release = () => activeNavigations.delete(owner);
+  let releaseTimer: number | undefined;
+  const release = () => {
+    if (releaseTimer !== undefined) clearTimeout(releaseTimer);
+    activeNavigations.delete(owner);
+  };
   const fail = () => {
     release();
     showNavigationMessage(options.failureMessage);
   };
+  releaseTimer = setTimeout(release, NAVIGATION_LOCK_TIMEOUT_MS);
 
   try {
     wx.navigateTo({
       url: `/pages/web/index?key=${encodeURIComponent(String(key))}`,
-      success: options.success,
       fail,
       complete: release,
     });

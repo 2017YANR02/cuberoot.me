@@ -4,6 +4,7 @@ import { openWebsitePageOnce } from '../src/lib/navigation';
 
 describe('mini program website navigation', () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
@@ -23,6 +24,21 @@ describe('mini program website navigation', () => {
     }));
 
     complete?.();
+    expect(openWebsitePageOnce(owner, 'alg', { failureMessage: '打开失败' })).toBe(true);
+    expect(navigateTo).toHaveBeenCalledTimes(2);
+  });
+
+  it('releases the lock when the runtime swallows navigation callbacks', () => {
+    vi.useFakeTimers();
+    const navigateTo = vi.fn();
+    vi.stubGlobal('wx', { navigateTo, showToast: vi.fn() });
+    const owner = {};
+
+    expect(openWebsitePageOnce(owner, 'alg', { failureMessage: '打开失败' })).toBe(true);
+    vi.advanceTimersByTime(4_999);
+    expect(openWebsitePageOnce(owner, 'alg', { failureMessage: '打开失败' })).toBe(false);
+
+    vi.advanceTimersByTime(1);
     expect(openWebsitePageOnce(owner, 'alg', { failureMessage: '打开失败' })).toBe(true);
     expect(navigateTo).toHaveBeenCalledTimes(2);
   });
