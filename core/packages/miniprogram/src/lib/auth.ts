@@ -237,7 +237,9 @@ export async function loginWithWechat(): Promise<LoginResult> {
     body: { code },
   });
   const session = decodeSession(response);
-  if (!session) throw new ApiError(502, 'invalid session response');
+  if (!session || session.user.uid === undefined) {
+    throw new ApiError(502, 'invalid session response');
+  }
   if (!writeStoredSessionValue(session)) {
     throw new ApiError(STORAGE_ERROR_STATUS, 'session storage unavailable');
   }
@@ -255,7 +257,10 @@ export async function validateStoredSession(session: SessionData): Promise<Sessi
     throw new ApiError(502, 'invalid user response');
   }
   const user = decodeSessionUser((response as Record<string, unknown>).user);
-  if (!user) throw new ApiError(502, 'invalid user response');
+  if (!user || user.uid === undefined) throw new ApiError(502, 'invalid user response');
+  if (session.user.uid !== undefined && session.user.uid !== user.uid) {
+    throw new ApiError(401, 'session identity mismatch');
+  }
   const next = { ...session, user: { ...session.user, ...user } };
   const current = decodeSession(readStoredSessionValue());
   if (current?.token === session.token) {
