@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 interface AccountPage {
   data: Record<string, unknown>;
+  login(): Promise<void>;
   onHide(): void;
   onShow(): void;
   onUnload(): void;
@@ -236,5 +237,37 @@ describe('mini program account page', () => {
     await Promise.resolve();
 
     expect(setData).not.toHaveBeenCalled();
+  });
+
+  it('keeps one login request across tab changes and restores the button after a hidden failure', async () => {
+    let failLoginRequest: ((error: { errMsg: string }) => void) | undefined;
+    const login = vi.fn((options: { success(result: { code: string }): void }) => {
+      options.success({ code: 'login-code' });
+    });
+    const page = await loadPage({
+      getStorageSync: () => null,
+      login,
+      removeStorageSync: vi.fn(),
+      request: vi.fn((options: { fail(error: { errMsg: string }): void }) => {
+        failLoginRequest = options.fail;
+      }),
+    });
+    page.onShow();
+
+    const firstLogin = page.login();
+    page.onHide();
+    page.onShow();
+    expect(page.data.busy).toBe(true);
+
+    await page.login();
+    expect(login).toHaveBeenCalledOnce();
+
+    page.onHide();
+    failLoginRequest?.({ errMsg: 'network error' });
+    await firstLogin;
+    page.onShow();
+
+    expect(page.data.busy).toBe(false);
+    expect(login).toHaveBeenCalledOnce();
   });
 });
