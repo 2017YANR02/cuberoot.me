@@ -3,7 +3,11 @@ export function setupAppUpdate(): void {
 
   try {
     const updateManager = wx.getUpdateManager();
+    let updatePromptHandled = false;
     updateManager.onUpdateReady(() => {
+      if (updatePromptHandled) return;
+      updatePromptHandled = true;
+      let updateApplyStarted = false;
       try {
         wx.showModal({
           title: '新版本已准备好',
@@ -11,15 +15,20 @@ export function setupAppUpdate(): void {
           confirmText: '立即重启',
           cancelText: '稍后',
           success(result) {
-            if (!result.confirm) return;
+            if (!result.confirm || updateApplyStarted) return;
+            updateApplyStarted = true;
             try {
               updateManager.applyUpdate();
             } catch {
               // The next cold launch will retry the update.
             }
           },
+          fail() {
+            updatePromptHandled = false;
+          },
         });
       } catch {
+        updatePromptHandled = false;
         // Update prompts must never block application launch or current work.
       }
     });
