@@ -584,7 +584,7 @@
   max-width: min(86vw, 280px);
   max-height: calc(100dvh - 16px);
   overflow-y: auto;
-  padding: 10px;
+  padding: 6px;
   border-radius: 10px;
   background: var(--popover);
   border: 1px solid var(--border-default);
@@ -592,25 +592,44 @@
   text-transform: none;
   letter-spacing: normal;
 }
-.rolling-stats-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-.rolling-stats-chip {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: var(--shell-chip);
-  color: var(--muted-foreground);
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: background 120ms, color 120ms, border-color 120ms;
+.rolling-stats-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
 }
-.rolling-stats-chip:hover { background: var(--shell-hover); color: var(--foreground); }
-.rolling-stats-chip.active {
+.rolling-stats-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms, color 120ms;
+}
+.rolling-stats-option-mark {
+  display: inline-flex;
+  width: 14px;
+  flex: 0 0 14px;
+}
+.rolling-stats-option:hover { background: var(--shell-hover); color: var(--foreground); }
+.rolling-stats-option.active {
   background: var(--accent-soft);
   color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
-.rolling-stats-custom { display: flex; gap: 6px; }
+.rolling-stats-custom {
+  display: flex;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-default);
+}
 .rolling-stats-custom-input-wrap {
   position: relative;
   flex: 1;
@@ -635,14 +654,14 @@
   cursor: pointer;
 }
 .rolling-stats-custom-add:hover { background: var(--shell-hover); }
-.rolling-stats-chip:disabled,
+.rolling-stats-option:disabled,
 .rolling-stats-custom-input:disabled,
 .rolling-stats-custom-add:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.rolling-stats-chip:disabled:hover {
-  background: var(--shell-chip);
+.rolling-stats-option:disabled:hover {
+  background: transparent;
   color: var(--muted-foreground);
 }
 .rolling-stats-custom-add:disabled:hover { background: var(--shell-chip); }

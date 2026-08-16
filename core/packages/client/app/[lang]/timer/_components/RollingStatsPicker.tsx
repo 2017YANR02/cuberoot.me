@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Columns3 } from 'lucide-react';
+import { Check, Columns3 } from 'lucide-react';
 import { ClearButton } from '@/components/ClearButton';
 import { tr } from '@/i18n/tr';
 import { updateSettings, useSettings } from '../_lib/settings';
@@ -95,6 +95,10 @@ export default function RollingStatsPicker({ className, triggerColumns }: Props)
 
   const label = tr({ zh: '统计列', en: 'Stats columns' });
   const isColumnTrigger = Boolean(triggerColumns?.length);
+  const menuOptions = [
+    ...ROLLING_STAT_PRESETS,
+    ...columns.filter(key => !ROLLING_STAT_PRESETS.includes(key)),
+  ];
 
   return (
     <div
@@ -143,19 +147,22 @@ export default function RollingStatsPicker({ className, triggerColumns }: Props)
           role="dialog"
           aria-label={label}
         >
-          <div className="rolling-stats-presets">
-            {ROLLING_STAT_PRESETS.map(key => {
+          <div className="rolling-stats-options">
+            {menuOptions.map(key => {
               const active = columns.includes(key);
               return (
                 <button
                   type="button"
                   key={key}
-                  className={`rolling-stats-chip${active ? ' active' : ''}`}
+                  className={`rolling-stats-option${active ? ' active' : ''}`}
                   onClick={() => toggleColumn(key)}
                   disabled={!active && atMax}
                   aria-pressed={active}
                 >
-                  {key}
+                  <span className="rolling-stats-option-mark">
+                    {active && <Check size={14} aria-hidden="true" />}
+                  </span>
+                  <span>{key}</span>
                 </button>
               );
             })}
