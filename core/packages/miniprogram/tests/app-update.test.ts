@@ -217,10 +217,39 @@ describe('mini program app updates', () => {
 
     app.onLaunch?.();
     failed?.();
+    failed?.();
 
     expect(showToast).toHaveBeenCalledWith({
       title: '更新失败，请稍后重试',
       icon: 'none',
     });
+    expect(showToast).toHaveBeenCalledOnce();
+  });
+
+  it('allows a later failure event to retry when the toast throws', async () => {
+    let failed: (() => void) | undefined;
+    const showToast = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error('toast unavailable');
+      })
+      .mockImplementationOnce(() => undefined);
+    const app = await loadApp({
+      getUpdateManager: () => ({
+        applyUpdate: vi.fn(),
+        onUpdateFailed(callback: () => void) {
+          failed = callback;
+        },
+        onUpdateReady: vi.fn(),
+      }),
+      showModal: vi.fn(),
+      showToast,
+    });
+
+    app.onLaunch?.();
+
+    expect(() => failed?.()).not.toThrow();
+    expect(() => failed?.()).not.toThrow();
+    expect(showToast).toHaveBeenCalledTimes(2);
   });
 });
