@@ -30,6 +30,7 @@ interface WebViewPageMethods {
 }
 
 const routeAttempts = new WeakMap<WebViewPageContext, number>();
+const disposedPages = new WeakSet<WebViewPageContext>();
 const WEB_SESSION_HANDOFF_TIMEOUT_MS = 6_000;
 
 function createWebSessionTicketWithTimeout(session: Parameters<typeof createWebSessionTicket>[0]) {
@@ -116,6 +117,7 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
 }
 
 export function markWebRouteFailed(context: WebViewPageContext): void {
+  if (disposedPages.has(context)) return;
   beginRouteAttempt(context);
   context.setData({
     canRetry: Boolean(resolveWebRoute(context.data.routeKey)),
@@ -126,13 +128,16 @@ export function markWebRouteFailed(context: WebViewPageContext): void {
 }
 
 export function cancelWebRoute(context: WebViewPageContext): void {
+  disposedPages.add(context);
   beginRouteAttempt(context);
 }
 
 export function retryWebRoute(context: WebViewPageContext): void {
+  if (disposedPages.has(context)) return;
   const key = context.data.routeKey;
   context.setData({ canRetry: false, errorMessage: '', errorTitle: '', src: '' });
   wx.nextTick(() => {
+    if (disposedPages.has(context)) return;
     void openWebRoute(context, key);
   });
 }
@@ -148,6 +153,7 @@ export function createWebViewPageOptions(
     data: createWebViewPageData(),
 
     onLoad(options) {
+      disposedPages.delete(this);
       void openWebRoute(this, fixedRouteKey ?? options.key);
     },
 
