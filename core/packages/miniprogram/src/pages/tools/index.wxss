@@ -28,6 +28,7 @@
 .tool-name {
   font-size: 33rpx;
   font-weight: 680;
+  overflow-wrap: anywhere;
 }
 
 .tool-description {
@@ -35,6 +36,7 @@
   font-size: 24rpx;
   line-height: 1.45;
   margin-top: 12rpx;
+  overflow-wrap: anywhere;
 }
 
 .tool-arrow {
