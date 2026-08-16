@@ -49,6 +49,12 @@ describe('mini program app structure', () => {
       expect(item.text.trim()).not.toBe('');
       expect(pagePaths.has(item.pagePath)).toBe(true);
     }
+
+    expect(appConfig.tabBar.list).toEqual([
+      { pagePath: 'pages/timer/index', text: '计时' },
+      { pagePath: 'pages/tools/index', text: '工具' },
+      { pagePath: 'pages/account/index', text: '我的' },
+    ]);
   });
 
   it('keeps native chrome synchronized with the system color scheme', () => {

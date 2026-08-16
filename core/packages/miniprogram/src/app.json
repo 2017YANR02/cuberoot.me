@@ -21,7 +21,7 @@
     "borderStyle": "@tabBarBorderStyle",
     "list": [
       { "pagePath": "pages/timer/index", "text": "计时" },
-      { "pagePath": "pages/tools/index", "text": "发现" },
+      { "pagePath": "pages/tools/index", "text": "工具" },
       { "pagePath": "pages/account/index", "text": "我的" }
     ]
   },
