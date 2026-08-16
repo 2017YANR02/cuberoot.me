@@ -750,6 +750,34 @@ CREATE TABLE alg_case_marks (
 );
 CREATE INDEX idx_alg_case_marks_user_set ON alg_case_marks(wca_id, puzzle, set_slug);
 
+-- ── 26c-1. alg_case_srs / alg_srs_daily (公式记忆排期与每日复习量) ──
+-- migration 0089_alg_case_srs.sql。排期按 reviewed_at 做多设备 last-write-wins；
+-- 每日复习量按设备所见最大值合并。
+CREATE TABLE alg_case_srs (
+  wca_id      VARCHAR(20)  NOT NULL,
+  puzzle      VARCHAR(16)  NOT NULL,
+  set_slug    VARCHAR(32)  NOT NULL,
+  case_key    VARCHAR(128) NOT NULL,
+  due         BIGINT       NOT NULL,
+  ivl         REAL         NOT NULL,
+  ease        REAL         NOT NULL,
+  reps        INTEGER      NOT NULL DEFAULT 0,
+  lapses      INTEGER      NOT NULL DEFAULT 0,
+  streak      INTEGER      NOT NULL DEFAULT 0,
+  hist        INTEGER      NOT NULL DEFAULT 0,
+  reviewed_at BIGINT       NOT NULL,
+  PRIMARY KEY (wca_id, puzzle, set_slug, case_key)
+);
+CREATE INDEX idx_alg_case_srs_user_set ON alg_case_srs(wca_id, puzzle, set_slug);
+
+CREATE TABLE alg_srs_daily (
+  wca_id   VARCHAR(20) NOT NULL,
+  day      DATE        NOT NULL,
+  reviews  INTEGER     NOT NULL DEFAULT 0,
+  again    INTEGER     NOT NULL DEFAULT 0,
+  PRIMARY KEY (wca_id, day)
+);
+
 -- ── 26c-2. alg_set_progress (「过遍」进度:哪些范围整轮过完了 + 停在哪) ──
 -- migration 0096_alg_set_progress.sql。每用户每 set 一行。
 -- 上面两张 per-case 表(标记 / 记忆)是一 case 一行:1LLL 3915 个怎么存都行,LSLL 149,188 个

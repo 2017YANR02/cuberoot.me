@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
+import { normalizeCaseKeyForSet } from '../utils/sq1_cs.js';
 
 /**
  * /v1/alg/srs — 公式记忆(间隔重复)的调度状态与每日复习日志,跨设备同步。
@@ -81,7 +82,12 @@ algSrsRoutes.get('/alg/srs', async (c) => {
     const gk = `${r.puzzle}/${r.set_slug}`;
     let g = bySet.get(gk);
     if (!g) { g = { puzzle: r.puzzle, set: r.set_slug, recs: {} }; bySet.set(gk, g); }
-    g.recs[r.case_key] = toWire(r);
+    const key = normalizeCaseKeyForSet(r.puzzle, r.set_slug, r.case_key);
+    const next = toWire(r);
+    const current = g.recs[key];
+    if (!current || current.t < next.t || (current.t === next.t && r.case_key === key)) {
+      g.recs[key] = next;
+    }
   }
   return c.json({ sets: [...bySet.values()], daily: await fetchDaily(authUser.wcaId) });
 });
@@ -100,7 +106,14 @@ algSrsRoutes.get('/alg/srs/:puzzle/:set', async (c) => {
     [authUser.wcaId, puzzle, setSlug],
   );
   const recs: Record<string, WireRec> = {};
-  for (const r of rows) recs[r.case_key] = toWire(r);
+  for (const r of rows) {
+    const key = normalizeCaseKeyForSet(puzzle, setSlug, r.case_key);
+    const next = toWire(r);
+    const current = recs[key];
+    if (!current || current.t < next.t || (current.t === next.t && r.case_key === key)) {
+      recs[key] = next;
+    }
+  }
   return c.json({ recs, daily: await fetchDaily(authUser.wcaId) });
 });
 
@@ -182,7 +195,17 @@ algSrsRoutes.put('/alg/srs/:puzzle/:set', async (c) => {
     // 时间戳只在 [0, now+5min] 内可信,其余按服务器时间(防客户端时钟漂移把 LWW 卡死)
     const tRaw = typeof it.t === 'number' && Number.isFinite(it.t) ? it.t : now;
     const t = tRaw > 0 && tRaw <= now + 300_000 ? tRaw : now;
-    parsed.push({ k: it.k, d, iv, ef, n: Math.round(n), l: Math.round(l), st: Math.round(st), t, h: Math.round(h) });
+    parsed.push({
+      k: normalizeCaseKeyForSet(puzzle, setSlug, it.k),
+      d,
+      iv,
+      ef,
+      n: Math.round(n),
+      l: Math.round(l),
+      st: Math.round(st),
+      t,
+      h: Math.round(h),
+    });
   }
 
   const cnt = await query<{ n: number }>(

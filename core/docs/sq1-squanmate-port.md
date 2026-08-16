@@ -55,11 +55,19 @@
 
 ## 29 种形状命名单一源
 
-- [x] `lib/sq1-shapes.ts` 保存上游 key、原名、本站 L/R 名、上游 pattern 和既有绘图 preset ID。
+- [x] `@cuberoot/shared/sq1-shapes` 保存上游 key、原名、本站 L/R 名、上游 pattern 和既有绘图 preset ID；客户端 `lib/sq1-shapes.ts` 只补状态识别，不复制命名表。
 - [x] 公式库/介绍/识别训练通过 `displaySq1ShapeName()` 与 `SQ1_SHAPE_NAMES` 共用名称。
 - [x] `/sim` 绘图预设从同一表生成，不再显示 `R Paw`、`Twins`、`71`、`51R`、`L`、`I` 等旧标签。
 - [x] 打乱检查、可视化、导入、数位和组合练习全部只引用此表。
 - [x] 回归测试锁住 29 个名称、顺序、pattern 的循环匹配和 solved = Square。
+
+## 170 个 Cube Shape case 对齐
+
+- [x] `sq1/cs` 的 170 个有向情况与 Squanmate 名称逐条一一对应，组成 90 个无序组合；数据库保存完整原名，展示层才把 Left / Right 缩为 L / R。
+- [x] 每个 case 的 setup 与全部公式逆状态都识别为名称标注的同一组上下层形状；首公式实际刀数与 subgroup 一致。
+- [x] 数据迁移先核对 170 条旧名称、分组、setup 与公式快照，发现任何漂移就整批中止；更新后再次核对 170 个不重复名称。
+- [x] 历史 paw / Pair / Muffin / Edges 大小写别名以及 6 个错误刀数分组，会一次性迁移本地与云端训练记录、标记、SRS、连拧顺序、协同房间、主公式偏好和社区投稿。
+- [x] 公式库数据请求带版本参数，避免部署后的新代码误读一小时旧缓存；截图所示 R pawn / L pawn 与 L pawn / R pawn 两条有独立回归。
 
 ## 复用清单
 
@@ -79,6 +87,7 @@
 
 - [x] 上游九个页面逐项对照；功能总表没有未解释的空项。
 - [x] 29 种形状名称、顺序和左右方向与 Squanmate `#/shapes` 一致，本站仅把 Left/Right 缩为 L/R。
+- [x] 170 个 Cube Shape case 的名称、setup、全部公式状态与刀数分组全量一致；不是只抽查卡片名称。
 - [x] 所有输入的 SQ1 算法都经共享 parser/state 执行；非法输入有明确提示，不渲染垃圾状态。
 - [x] 组合练习锁定 90 个无序合法组合；目标测试覆盖等概率抽取、随机层转、Repeat 新打乱、相对奇偶和中层三策略，空范围按来源恢复。
 - [x] 公式训练五组计数锁定为 `2 / 99 / 43 / 16 / 72 = 232`；全部非空公式可归一化，232 个逆 setup 合法，中层强制策略与 parity-aware setup 有目标测试覆盖。

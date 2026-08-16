@@ -446,8 +446,15 @@ export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: b
     : 'https://api.cuberoot.me/v1/alg/sets';  // prod: 跨域到 API 子域
   // NOTE: fresh=true 给 admin 用,绕开 1 小时 Cache-Control。
   // 通过 query 时间戳 cache-bust + cache:'no-cache' header,跨浏览器最稳。
+  const query = new URLSearchParams();
+  // The SQ1 CS data was realigned to Squanmate's canonical 170-case table.
+  // Keep this versioned query until every pre-migration one-hour cache has expired,
+  // otherwise a new client can briefly pair migrated user keys with stale case data.
+  if (puzzle === 'sq1' && set === 'cs') query.set('v', '2026-08-15-squanmate');
+  if (opts?.fresh) query.set('_', String(Date.now()));
+  const queryString = query.toString();
   const url = `${base}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}`
-    + (opts?.fresh ? `?_=${Date.now()}` : '');
+    + (queryString ? `?${queryString}` : '');
   const res = await fetch(url, opts?.fresh ? { cache: 'no-cache' } : undefined);
   if (!res.ok) {
     throw new Error(`Failed to load alg ${puzzle}/${set}: HTTP ${res.status}`);

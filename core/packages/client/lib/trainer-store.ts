@@ -9,6 +9,11 @@ import {
   type F2LSlot, type ScrambleKind,
 } from './trainer-scramble';
 import { caseKey, findCaseByKey } from './trainer-case-key';
+import {
+  isSq1CsTarget,
+  normalizeStoredSq1CsKeys,
+  normalizeStoredSq1CsName,
+} from './sq1-cs-storage';
 import { histBack, histForward, histPush, type ScrambleHist } from './scramble-history';
 import { caseOrbit } from './alg_probability';
 import { petReact } from './deskpet';
@@ -129,7 +134,14 @@ const loadPersisted = (p: string, s: string): PersistedSession => {
     if (raw) {
       const parsed = JSON.parse(raw) as PersistedSession;
       // Back-compat: older sessions predate per-solve penalties.
-      parsed.solves = (parsed.solves ?? []).map(sv => ({ ...sv, penalty: sv.penalty ?? 'ok' }));
+      parsed.selected = normalizeStoredSq1CsKeys(p, s, parsed.selected ?? []);
+      parsed.solves = (parsed.solves ?? []).map(sv => ({
+        ...sv,
+        caseKey: isSq1CsTarget(p, s) ? normalizeStoredSq1CsKeys(p, s, [sv.caseKey])[0] ?? sv.caseKey : sv.caseKey,
+        caseName: normalizeStoredSq1CsName(p, s, sv.caseName),
+        penalty: sv.penalty ?? 'ok',
+      }));
+      if (isSq1CsTarget(p, s)) persistItem(sessionKey(p, s), JSON.stringify(parsed));
       return parsed;
     }
   } catch { /* ignore */ }

@@ -621,6 +621,26 @@ html[data-theme=dark] .alg-root {
     width: max-content;
     max-width: 100%;
   }
+  .alg-cat-header .alg-back,
+  .alg-cat-header .alg-pdf-btn,
+  .alg-cat-header .alg-train-cta,
+  .alg-cat-header .alg-recog-cta {
+    display: inline-flex;
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    align-items: center;
+    justify-content: center;
+  }
+  .alg-cat-header .alg-header-select,
+  .alg-pdf-menu-item {
+    min-block-size: 44px;
+  }
+  .alg-case-setup-copy,
+  .alg-mirror-toggle,
+  .alg-alg-copy-btn {
+    min-inline-size: 44px;
+    min-block-size: 44px;
+  }
 }
 .alg-case {
   background: var(--card);

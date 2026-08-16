@@ -3,6 +3,7 @@ import { ALG_PUZZLES, getAlgSetMeta, type AlgPuzzle } from '@cuberoot/shared/alg
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
+import { normalizePreferredItemsForSet } from '../utils/sq1_cs.js';
 
 export const algPreferredAlgsRoutes = new Hono();
 
@@ -49,7 +50,10 @@ algPreferredAlgsRoutes.get('/alg/preferred-algs/:puzzle/:set', async (c) => {
   );
   const row = rows[0];
   if (!row) return c.json({ items: {}, updatedAt: 0 });
-  return c.json({ items: parseItems(row.items) ?? {}, updatedAt: Number(row.updated_at) });
+  return c.json({
+    items: normalizePreferredItemsForSet(target.puzzle, target.setSlug, parseItems(row.items) ?? {}),
+    updatedAt: Number(row.updated_at),
+  });
 });
 
 algPreferredAlgsRoutes.put('/alg/preferred-algs/:puzzle/:set', async (c) => {
@@ -65,8 +69,9 @@ algPreferredAlgsRoutes.put('/alg/preferred-algs/:puzzle/:set', async (c) => {
   } catch {
     return c.json({ error: 'invalid json' }, 400);
   }
-  const items = parseItems(body.items);
-  if (!items) return c.json({ error: 'invalid or too many preferred algorithms' }, 400);
+  const parsedItems = parseItems(body.items);
+  if (!parsedItems) return c.json({ error: 'invalid or too many preferred algorithms' }, 400);
+  const items = normalizePreferredItemsForSet(target.puzzle, target.setSlug, parsedItems);
 
   const now = Date.now();
   const updatedAt = typeof body.updatedAt === 'number'
