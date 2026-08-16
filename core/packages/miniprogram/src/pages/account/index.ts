@@ -11,45 +11,53 @@ import { openWebsitePageOnce } from '../../lib/navigation';
 
 const activePages = new WeakSet<object>();
 const activeLogins = new WeakSet<object>();
-const activeLogoutConfirmations = new WeakSet<object>();
-const logoutConfirmationSequences = new WeakMap<object, number>();
-const currentLogoutConfirmations = new WeakMap<object, number>();
-const logoutConfirmationTimers = new WeakMap<object, ReturnType<typeof setTimeout>>();
 const validationAttempts = new WeakMap<object, number>();
 
-function releaseLogoutConfirmationLock(page: object, attempt: number): void {
-  if (currentLogoutConfirmations.get(page) !== attempt) return;
-  activeLogoutConfirmations.delete(page);
-  const timer = logoutConfirmationTimers.get(page);
-  if (timer !== undefined) clearTimeout(timer);
-  logoutConfirmationTimers.delete(page);
+function createPageActionGuard(lockTimeoutMs?: number) {
+  const activePages = new WeakSet<object>();
+  const attemptSequences = new WeakMap<object, number>();
+  const currentAttempts = new WeakMap<object, number>();
+  const timers = new WeakMap<object, ReturnType<typeof setTimeout>>();
+
+  function release(page: object, attempt: number): void {
+    if (currentAttempts.get(page) !== attempt) return;
+    activePages.delete(page);
+    const timer = timers.get(page);
+    if (timer !== undefined) clearTimeout(timer);
+    timers.delete(page);
+  }
+
+  return {
+    begin(page: object): number | null {
+      if (activePages.has(page)) return null;
+      const attempt = (attemptSequences.get(page) ?? 0) + 1;
+      attemptSequences.set(page, attempt);
+      currentAttempts.set(page, attempt);
+      activePages.add(page);
+      if (lockTimeoutMs !== undefined) {
+        timers.set(page, setTimeout(() => release(page, attempt), lockTimeoutMs));
+      }
+      return attempt;
+    },
+
+    cancel(page: object): void {
+      const attempt = currentAttempts.get(page);
+      if (attempt === undefined) return;
+      release(page, attempt);
+      currentAttempts.delete(page);
+    },
+
+    settle(page: object, attempt: number): boolean {
+      if (currentAttempts.get(page) !== attempt) return false;
+      release(page, attempt);
+      currentAttempts.delete(page);
+      return true;
+    },
+  };
 }
 
-function settleLogoutConfirmation(page: object, attempt: number): boolean {
-  if (currentLogoutConfirmations.get(page) !== attempt) return false;
-  releaseLogoutConfirmationLock(page, attempt);
-  currentLogoutConfirmations.delete(page);
-  return true;
-}
-
-function cancelLogoutConfirmation(page: object): void {
-  const attempt = currentLogoutConfirmations.get(page);
-  if (attempt === undefined) return;
-  releaseLogoutConfirmationLock(page, attempt);
-  currentLogoutConfirmations.delete(page);
-}
-
-function beginLogoutConfirmation(page: object): number | null {
-  if (activeLogoutConfirmations.has(page)) return null;
-  const attempt = (logoutConfirmationSequences.get(page) ?? 0) + 1;
-  logoutConfirmationSequences.set(page, attempt);
-  currentLogoutConfirmations.set(page, attempt);
-  activeLogoutConfirmations.add(page);
-  logoutConfirmationTimers.set(page, setTimeout(() => {
-    releaseLogoutConfirmationLock(page, attempt);
-  }, 5_000));
-  return attempt;
-}
+const logoutConfirmations = createPageActionGuard(5_000);
+const privacyContracts = createPageActionGuard();
 
 function beginValidation(page: object): number {
   const attempt = (validationAttempts.get(page) ?? 0) + 1;
@@ -64,7 +72,8 @@ function validationIsCurrent(page: object, attempt: number): boolean {
 function pausePage(page: object): void {
   activePages.delete(page);
   beginValidation(page);
-  cancelLogoutConfirmation(page);
+  logoutConfirmations.cancel(page);
+  privacyContracts.cancel(page);
 }
 
 function accountInitial(name: string): string {
@@ -190,20 +199,31 @@ Page({
   },
 
   openPrivacy() {
+    if (typeof wx.openPrivacyContract !== 'function') {
+      openWebsitePageOnce(this, 'privacy', {
+        failureMessage: '隐私说明暂时无法打开',
+      });
+      return;
+    }
+
+    const privacyAttempt = privacyContracts.begin(this);
+    if (privacyAttempt === null) return;
     const openWebsitePrivacy = () => {
+      if (!privacyContracts.settle(this, privacyAttempt)) return;
       openWebsitePageOnce(this, 'privacy', {
         failureMessage: '隐私说明暂时无法打开',
       });
     };
 
-    if (typeof wx.openPrivacyContract !== 'function') {
-      openWebsitePrivacy();
-      return;
-    }
-
     try {
       wx.openPrivacyContract({
+        success: () => {
+          privacyContracts.settle(this, privacyAttempt);
+        },
         fail: openWebsitePrivacy,
+        complete: () => {
+          privacyContracts.settle(this, privacyAttempt);
+        },
       });
     } catch {
       openWebsitePrivacy();
@@ -211,14 +231,14 @@ Page({
   },
 
   logout() {
-    const confirmationAttempt = beginLogoutConfirmation(this);
+    const confirmationAttempt = logoutConfirmations.begin(this);
     if (confirmationAttempt === null) return;
     try {
       wx.showModal({
         title: '退出登录',
         content: '将退出小程序，并尝试同时退出网站账号。本机计时记录不会被删除。',
         success: (result) => {
-          if (!settleLogoutConfirmation(this, confirmationAttempt)) return;
+          if (!logoutConfirmations.settle(this, confirmationAttempt)) return;
           if (!result.confirm) return;
 
           if (!clearStoredSession()) {
@@ -237,15 +257,15 @@ Page({
           });
         },
         fail: () => {
-          if (!settleLogoutConfirmation(this, confirmationAttempt)) return;
+          if (!logoutConfirmations.settle(this, confirmationAttempt)) return;
           this.setData({ status: '退出确认暂时无法打开，请重试', statusError: true });
         },
         complete: () => {
-          settleLogoutConfirmation(this, confirmationAttempt);
+          logoutConfirmations.settle(this, confirmationAttempt);
         },
       });
     } catch {
-      if (settleLogoutConfirmation(this, confirmationAttempt)) {
+      if (logoutConfirmations.settle(this, confirmationAttempt)) {
         this.setData({ status: '退出确认暂时无法打开，请重试', statusError: true });
       }
     }
