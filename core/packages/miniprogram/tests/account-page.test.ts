@@ -64,6 +64,41 @@ describe('mini program account page', () => {
     expect(navigateTo).not.toHaveBeenCalled();
   });
 
+  it('opens only one privacy contract until the platform prompt settles', async () => {
+    let contractOptions: { complete(): void } | undefined;
+    const openPrivacyContract = vi.fn((options: typeof contractOptions) => {
+      contractOptions = options;
+    });
+    const page = await loadPage({ openPrivacyContract });
+
+    page.openPrivacy();
+    page.openPrivacy();
+
+    expect(openPrivacyContract).toHaveBeenCalledOnce();
+
+    contractOptions?.complete();
+    page.openPrivacy();
+
+    expect(openPrivacyContract).toHaveBeenCalledTimes(2);
+  });
+
+  it('ignores a privacy failure after the account page has been unloaded', async () => {
+    let contractOptions: { fail(): void } | undefined;
+    const navigateTo = vi.fn();
+    const page = await loadPage({
+      navigateTo,
+      openPrivacyContract(options: typeof contractOptions) {
+        contractOptions = options;
+      },
+    });
+
+    page.openPrivacy();
+    page.onUnload();
+    contractOptions?.fail();
+
+    expect(navigateTo).not.toHaveBeenCalled();
+  });
+
   it('falls back to the canonical website policy on unsupported base libraries', async () => {
     const navigateTo = vi.fn();
     const page = await loadPage({ navigateTo });
