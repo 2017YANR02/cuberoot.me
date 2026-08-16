@@ -1,0 +1,50 @@
+<view class="page timer-page">
+  <view class="timer-heading">
+    <view>
+      <text class="eyebrow">3×3×3</text>
+      <text class="timer-section-title">计时</text>
+    </view>
+    <button class="text-button" bindtap="newScramble">换打乱</button>
+  </view>
+
+  <text class="scramble" selectable>{{scramble}}</text>
+
+  <button
+    class="timer-pad timer-pad--{{phaseClass}}"
+    hover-class="none"
+    bindtouchstart="onTouchStart"
+    bindtouchend="onTouchEnd"
+    bindtouchcancel="onTouchCancel"
+  >
+    <text class="timer-value">{{timerText}}</text>
+    <text class="timer-instruction">{{instruction}}</text>
+  </button>
+
+  <view class="stats-row">
+    <view class="stat-item">
+      <text class="stat-label">次数</text>
+      <text class="stat-value">{{count}}</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-label">最佳</text>
+      <text class="stat-value">{{best}}</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-label">ao5</text>
+      <text class="stat-value">{{ao5}}</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-label">ao12</text>
+      <text class="stat-value">{{ao12}}</text>
+    </view>
+  </view>
+
+  <view class="recent" wx:if="{{recent.length}}">
+    <text class="recent-title">最近成绩</text>
+    <view class="recent-row" wx:for="{{recent}}" wx:key="id">
+      <text class="recent-index">#{{item.index}}</text>
+      <text class="recent-time">{{item.time}}</text>
+      <text class="recent-scramble">{{item.scramble}}</text>
+    </view>
+  </view>
+</view>

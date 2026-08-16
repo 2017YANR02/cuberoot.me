@@ -29,6 +29,11 @@ import {
   socialLoginConfigured, socialAppId, socialAuthorizeUrl, exchangeSocialCode, verifySocialState,
   isSocialProvider, SOCIAL_PROVIDERS, type SocialProvider, type SocialUser,
 } from '../utils/social_login.js';
+import {
+  exchangeWechatMiniProgramCode,
+  WechatMiniProgramError,
+  wechatMiniProgramConfigured,
+} from '../utils/wechat_miniprogram.js';
 
 export const accountAuthRoutes = new Hono();
 
@@ -102,6 +107,37 @@ accountAuthRoutes.post('/auth/social/:provider', async (c) => {
   const { user, isNew } = await loginWithIdentity(provider as SocialProvider, g.sub, {
     name: g.name || '', avatar: g.avatar ?? null,
   });
+  const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
+  return c.json({ token, user: publicUser(user), isNew });
+});
+
+// ── 微信小程序登录(wx.login code → code2Session → UnionID)──
+// UnionID 缺失时绝不退回 openid:两者命名空间不同,回退会给同一个人创建第二个账号。
+accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  if (!wechatMiniProgramConfigured()) {
+    return c.json({ error: 'wechat miniprogram not configured' }, 503);
+  }
+  const body = await c.req.json<{ code?: unknown }>().catch(() => ({ code: undefined }));
+  const code = typeof body.code === 'string' ? body.code.trim() : '';
+  if (!code || code.length > 512) return c.json({ error: 'invalid code' }, 400);
+
+  let wechatSession;
+  try {
+    wechatSession = await exchangeWechatMiniProgramCode(code);
+  } catch (error) {
+    if (error instanceof WechatMiniProgramError && error.code === 'invalid-code') {
+      return c.json({ error: 'invalid wechat code' }, 401);
+    }
+    console.error('[auth] wechat miniprogram exchange failed:', error instanceof Error ? error.message : error);
+    return c.json({ error: 'wechat service unavailable' }, 502);
+  }
+  if (!wechatSession.unionid) {
+    return c.json({ error: 'wechat unionid required' }, 409);
+  }
+
+  const { user, isNew } = await loginWithIdentity('wechat', wechatSession.unionid, { name: '' });
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   return c.json({ token, user: publicUser(user), isNew });
 });
