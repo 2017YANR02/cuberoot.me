@@ -20,6 +20,26 @@ export interface WebViewPageContext {
 }
 
 const routeAttempts = new WeakMap<WebViewPageContext, number>();
+const WEB_SESSION_HANDOFF_TIMEOUT_MS = 6_000;
+
+function createWebSessionTicketWithTimeout(session: Parameters<typeof createWebSessionTicket>[0]) {
+  return new Promise<Awaited<ReturnType<typeof createWebSessionTicket>>>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new ApiError(0, 'web session handoff timed out'));
+    }, WEB_SESSION_HANDOFF_TIMEOUT_MS);
+
+    void createWebSessionTicket(session).then(
+      (ticket) => {
+        clearTimeout(timeout);
+        resolve(ticket);
+      },
+      (error: unknown) => {
+        clearTimeout(timeout);
+        reject(error);
+      },
+    );
+  });
+}
 
 function beginRouteAttempt(context: WebViewPageContext): number {
   const attempt = (routeAttempts.get(context) ?? 0) + 1;
@@ -72,7 +92,7 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
   }
 
   try {
-    const { ticket } = await createWebSessionTicket(session);
+    const { ticket } = await createWebSessionTicketWithTimeout(session);
     if (isCurrentAttempt(context, attempt)) {
       context.setData({ src: createWebSessionHandoffUrl(route.path, ticket) });
     }
