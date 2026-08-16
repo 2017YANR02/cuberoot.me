@@ -87,6 +87,25 @@ describe('shared web-view page state', () => {
     expect(context.data.errorTitle).toBe('');
   });
 
+  it('retries immediately when nextTick throws', async () => {
+    vi.stubGlobal('wx', {
+      getStorageSync: () => null,
+      removeStorageSync: vi.fn(),
+      nextTick() {
+        throw new Error('scheduler unavailable');
+      },
+      setNavigationBarTitle,
+    });
+    const context = createContext();
+    await openWebRoute(context, 'timer');
+    markWebRouteFailed(context);
+
+    retryWebRoute(context);
+
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.errorTitle).toBe('');
+  });
+
   it('uses a one-time handoff ticket when a Mini Program session exists', async () => {
     const token = 't'.repeat(20);
     const ticket = 'A'.repeat(43);
