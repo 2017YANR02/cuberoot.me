@@ -160,6 +160,10 @@
   margin-top: 34rpx;
 }
 
+.sync-retry-button {
+  margin-top: 4rpx;
+}
+
 .privacy-button {
   margin-top: 28rpx;
 }

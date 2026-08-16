@@ -43,5 +43,11 @@
   </block>
 
   <text class="status-text {{statusError ? 'status-text--error' : ''}}" wx:if="{{status}}">{{status}}</text>
+  <button
+    class="text-button sync-retry-button"
+    hover-class="press-feedback"
+    wx:if="{{loggedIn && syncState === 'error'}}"
+    bindtap="retrySync"
+  >重新确认</button>
   <button class="text-button privacy-button" hover-class="press-feedback" bindtap="openPrivacy">隐私说明</button>
 </view>
