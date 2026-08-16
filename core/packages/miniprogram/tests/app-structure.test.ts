@@ -115,6 +115,8 @@ describe('mini program app structure', () => {
     const genericWebPage = pageFiles['../src/pages/web/index.ts'];
     const timerTemplate = pageFiles['../src/pages/timer/index.wxml'];
     const genericWebTemplate = pageFiles['../src/pages/web/index.wxml'];
+    const timerStyles = pageFiles['../src/pages/timer/index.wxss'];
+    const genericWebStyles = pageFiles['../src/pages/web/index.wxss'];
     const sharedTemplate = sourceFiles['../src/templates/web-route-view.wxml'];
 
     expect(timerPage).toContain("createWebViewPageOptions('timer')");
@@ -125,6 +127,9 @@ describe('mini program app structure', () => {
     expect(sharedTemplate).toContain('<web-view');
     expect(timerTemplate).not.toContain('<web-view');
     expect(genericWebTemplate).not.toContain('<web-view');
+    expect(timerTemplate).toBe(genericWebTemplate);
+    expect(timerStyles.trim()).toBe('');
+    expect(genericWebStyles.trim()).toBe('');
   });
 
   it('does not carry an abandoned native timer implementation', () => {
