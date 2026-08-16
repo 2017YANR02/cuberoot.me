@@ -21,7 +21,7 @@ pnpm --filter @cuberoot/miniprogram check
 - API 和网站域名：`src/lib/runtime-config.ts`
 - 网页加载状态：`src/lib/web-view-page.ts`
 - 登录与会话：`src/lib/auth.ts`
-- 跨端纯逻辑：`@cuberoot/shared`
+- 必须原生化的跨端纯逻辑：先提取到 `@cuberoot/shared`，确认有调用方后再添加依赖
 
 不要把网站页面再实现一遍。只有微信 API、离线能力或明确的性能需求无法通过 `web-view` 满足时，才新增原生页面。
 
