@@ -1,0 +1,4 @@
+interface:
+  display_name: "维护 SQ1 PBL 表格"
+  short_description: "检查并同步 SQ1 PBL Google 表格漂移"
+  default_prompt: "Use $maintain-sq1-pbl to check and maintain the SQ1 PBL spreadsheet."

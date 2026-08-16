@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import BackHome from '@/components/BackHome';
 import Sq1AlgorithmTrainer from '@/components/Sq1AlgorithmTrainer';
 import { Sq1Importer, Sq1Inspector, Sq1Visualizer } from '@/components/Sq1InputTools';
@@ -8,7 +9,9 @@ import Sq1ToolNav from '@/components/Sq1ToolNav';
 import { tr } from '@/i18n/tr';
 import styles from './Sq1Tools.module.css';
 
-export type Sq1Tool = 'inspect' | 'visualize' | 'import' | 'count' | 'parity-game' | 'train' | 'algorithm-trainer';
+const Sq1PblWorkspace = dynamic(() => import('@/components/Sq1PblWorkspace'));
+
+export type Sq1Tool = 'inspect' | 'visualize' | 'import' | 'count' | 'parity-game' | 'train' | 'algorithm-trainer' | 'pbl';
 
 const TOOL_TEXT = {
   inspect: {
@@ -39,6 +42,10 @@ const TOOL_TEXT = {
     title: { zh: 'SQ1 公式训练', en: 'Square-1 algorithm trainer' },
     intro: { zh: '从 Squanmate 的五组情况中练习公式，可按奇偶排列筛选并控制中层状态。', en: 'Practise Squanmate’s five case groups with parity filters and middle-layer control.' },
   },
+  pbl: {
+    title: { zh: 'SQ1 PBL 公式与查找器', en: 'Square-1 PBL algorithms and finder' },
+    intro: { zh: '浏览 Daniel 的 PBL 文档，并按上下层排列查找可用公式。', en: 'Browse Daniel’s PBL reference and find algorithms by top and bottom layer permutation.' },
+  },
 } as const;
 
 export default function Sq1ToolsClient({ tool }: { tool: Sq1Tool }) {
@@ -59,6 +66,7 @@ export default function Sq1ToolsClient({ tool }: { tool: Sq1Tool }) {
         {tool === 'parity-game' && <Sq1ParityGame />}
         {tool === 'train' && <Sq1ShapeTrainer />}
         {tool === 'algorithm-trainer' && <Sq1AlgorithmTrainer />}
+        {tool === 'pbl' && <Sq1PblWorkspace />}
       </div>
     </main>
   );

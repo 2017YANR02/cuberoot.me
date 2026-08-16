@@ -1,0 +1,2216 @@
+{
+  "digests": {
+    "content": "3c0f273f6029adc37ea0b15f83b366887a4f3b93b8d6d1a014b179690d6c03c1",
+    "editorial": "aa5462e58419d587b67c881543f16783cc692a61a8c90daf93d0cd140d9dc6d0",
+    "presentation": "fecc293db21d327a6e76a42aecf26dee1b1d6437ba186ad3b78aade4f5867c40"
+  },
+  "invariants": {
+    "cellRecords": 143902,
+    "conditionalFormatting": 17,
+    "formulas": 8061,
+    "frequencyTotal": 10368,
+    "hiddenSheetNames": [
+      "wtfP"
+    ],
+    "hyperlinks": 657,
+    "merges": 321,
+    "pictureAnchors": 15,
+    "rawCases": 968,
+    "recommendedCases": 963,
+    "recommendedFrequency": 10303,
+    "sheetCount": 64,
+    "sliceDistribution": {
+      "0": 1,
+      "3": 6,
+      "4": 6,
+      "5": 51,
+      "6": 178,
+      "7": 387,
+      "8": 283,
+      "9": 56
+    },
+    "slicerCounts": {
+      "3 and 4 slicers": 12,
+      "5 slicers": 51,
+      "6 slicers": 174,
+      "7 slicers": 387,
+      "8 Slicers": 283,
+      "9 slicers": 56
+    },
+    "uniqueMedia": 13,
+    "uniqueRawKeys": 968,
+    "unusedCases": {
+      "Ga/Gd": true,
+      "Ga/Jb": true,
+      "Gb/Gc": true,
+      "Gb/Jb": true
+    },
+    "validations": 10,
+    "valueOrFormula": 37835,
+    "visibleSheets": 63
+  },
+  "rawSha256": "5852c57da08972714bae80b0d6d321c6960304add462734da5bac804f7a793f1",
+  "schemaVersion": 1,
+  "sheets": [
+    {
+      "counts": {
+        "cellRecords": 940,
+        "columnDefinitions": 15,
+        "conditionalFormatting": 1,
+        "customRows": 3,
+        "formulaTypes": {},
+        "formulaValueOverlap": 0,
+        "formulas": 0,
+        "hyperlinks": 13,
+        "literalValues": 306,
+        "merges": 57,
+        "pictureAnchors": 2,
+        "referencedStyles": 173,
+        "stableComments": 7,
+        "styleOnly": 634,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 306
+      },
+      "digests": {
+        "content": "ab1ba836ffb627ad3ec6df4fd60df3fd9e0faf75d5c79f2cd91f53328c3bf6e9",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "e823ebac652a3ce9f15c62c8b01561731faac850fe374e8654f17a557515f779"
+      },
+      "dimension": "",
+      "index": 1,
+      "name": "Help",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 39,
+        "columnDefinitions": 3,
+        "conditionalFormatting": 0,
+        "customRows": 1,
+        "formulaTypes": {},
+        "formulaValueOverlap": 0,
+        "formulas": 0,
+        "hyperlinks": 0,
+        "literalValues": 24,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 9,
+        "stableComments": 0,
+        "styleOnly": 15,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 24
+      },
+      "digests": {
+        "content": "eaeaa3b7cd03b4c7519d2adfe71c3ca9f9490b6cd67f50d608e4ce23cd68b66d",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "ae5eeda2a2dbad595e5bf8dcb0a43722606fa5a3df1525aad619db5e893019c8"
+      },
+      "dimension": "",
+      "index": 2,
+      "name": "Agenda",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 116,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 0,
+        "formulaTypes": {
+          "normal": 1,
+          "shared": 10
+        },
+        "formulaValueOverlap": 11,
+        "formulas": 11,
+        "hyperlinks": 0,
+        "literalValues": 84,
+        "merges": 1,
+        "pictureAnchors": 0,
+        "referencedStyles": 22,
+        "stableComments": 0,
+        "styleOnly": 32,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 84
+      },
+      "digests": {
+        "content": "262771f19fc39114c1a118c56230613f623466f6a96a211542d0873c1e28b63e",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "914d7ed9ef0dae43ea106e078c3de088bc7e3920008107aa55984ebfc38efe30"
+      },
+      "dimension": "",
+      "index": 3,
+      "name": "Statistics",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 4680,
+        "columnDefinitions": 3,
+        "conditionalFormatting": 0,
+        "customRows": 0,
+        "formulaTypes": {
+          "normal": 1
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 1,
+        "hyperlinks": 0,
+        "literalValues": 59,
+        "merges": 0,
+        "pictureAnchors": 11,
+        "referencedStyles": 6,
+        "stableComments": 0,
+        "styleOnly": 4621,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 59
+      },
+      "digests": {
+        "content": "0f9e55c4c4b44c0a179c5d4b59df4a9624694337127ccce4b3f5fcd42e2bf89b",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "21af7624c7195190bfeb6b94b5865d954eaead218081f1fa07491d3b033d0e23"
+      },
+      "dimension": "",
+      "index": 4,
+      "name": "Connection Chart",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 166,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 4,
+        "customRows": 16,
+        "formulaTypes": {
+          "array": 25,
+          "normal": 12
+        },
+        "formulaValueOverlap": 29,
+        "formulas": 37,
+        "hyperlinks": 0,
+        "literalValues": 50,
+        "merges": 1,
+        "pictureAnchors": 0,
+        "referencedStyles": 26,
+        "stableComments": 0,
+        "styleOnly": 108,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 7,
+        "valueOrFormula": 58
+      },
+      "digests": {
+        "content": "8df4bb983c27d74322586fff5a0b4e495155b5843bf109214f848ad4b566e1ef",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "466ede8c1388d5add76b2d3a108bd869e3e9e87a3cdfe98159b9b0170362acde"
+      },
+      "dimension": "",
+      "index": 5,
+      "name": "Case Select",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 198,
+        "columnDefinitions": 10,
+        "conditionalFormatting": 0,
+        "customRows": 12,
+        "formulaTypes": {
+          "normal": 13,
+          "shared": 28
+        },
+        "formulaValueOverlap": 29,
+        "formulas": 41,
+        "hyperlinks": 0,
+        "literalValues": 96,
+        "merges": 13,
+        "pictureAnchors": 0,
+        "referencedStyles": 44,
+        "stableComments": 0,
+        "styleOnly": 90,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 108
+      },
+      "digests": {
+        "content": "59d3e2867189d98b503573a1f398005f51eb46f8cc2defb81e1b1bc1f0a4b7db",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "9720c59f75e9431fa5ef128ef0927126c7e7108f8563b7f3a6605ef0664e3768"
+      },
+      "dimension": "",
+      "index": 6,
+      "name": "3 and 4 slicers",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 605,
+        "columnDefinitions": 10,
+        "conditionalFormatting": 0,
+        "customRows": 53,
+        "formulaTypes": {
+          "normal": 52,
+          "shared": 104
+        },
+        "formulaValueOverlap": 105,
+        "formulas": 156,
+        "hyperlinks": 0,
+        "literalValues": 368,
+        "merges": 7,
+        "pictureAnchors": 0,
+        "referencedStyles": 44,
+        "stableComments": 0,
+        "styleOnly": 186,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 419
+      },
+      "digests": {
+        "content": "92980e043489c3d0191dabda947ce76dbb0352430558a5b10e5c2ed637e9c360",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "5bfe950038e434bee614a81ffa3ae1b091a0fa7c58ab56e7cb1147033d83a75c"
+      },
+      "dimension": "",
+      "index": 7,
+      "name": "5 slicers",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 1969,
+        "columnDefinitions": 10,
+        "conditionalFormatting": 0,
+        "customRows": 177,
+        "formulaTypes": {
+          "normal": 175,
+          "shared": 350
+        },
+        "formulaValueOverlap": 351,
+        "formulas": 525,
+        "hyperlinks": 0,
+        "literalValues": 1224,
+        "merges": 9,
+        "pictureAnchors": 0,
+        "referencedStyles": 48,
+        "stableComments": 1,
+        "styleOnly": 571,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 1398
+      },
+      "digests": {
+        "content": "a8ded2058ccdfa62ed8c7a02e6c1e6d687f4bca537e5658b0eb37309e13019f7",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "cd8ab2ebdf638dfd2076909da7b11864119ff83abd89149d03c639c55cc6546a"
+      },
+      "dimension": "",
+      "index": 8,
+      "name": "6 slicers",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 4312,
+        "columnDefinitions": 10,
+        "conditionalFormatting": 0,
+        "customRows": 387,
+        "formulaTypes": {
+          "normal": 388,
+          "shared": 776
+        },
+        "formulaValueOverlap": 777,
+        "formulas": 1164,
+        "hyperlinks": 0,
+        "literalValues": 2707,
+        "merges": 11,
+        "pictureAnchors": 0,
+        "referencedStyles": 69,
+        "stableComments": 5,
+        "styleOnly": 1218,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 3094
+      },
+      "digests": {
+        "content": "3f02182b69944b7ceebc84f96e460681ab31364e6c4fb562bf27d1440ceed144",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "d1b287dd1dfd206d206a28f2826ac8328f2447df0e8de4ff330912616c58b9da"
+      },
+      "dimension": "",
+      "index": 9,
+      "name": "7 slicers",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 3157,
+        "columnDefinitions": 10,
+        "conditionalFormatting": 0,
+        "customRows": 285,
+        "formulaTypes": {
+          "normal": 284,
+          "shared": 568
+        },
+        "formulaValueOverlap": 569,
+        "formulas": 852,
+        "hyperlinks": 0,
+        "literalValues": 1987,
+        "merges": 8,
+        "pictureAnchors": 0,
+        "referencedStyles": 63,
+        "stableComments": 0,
+        "styleOnly": 887,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 2270
+      },
+      "digests": {
+        "content": "7dea5f313180d59d64ad96b72eb87dd47c3f1192e8b472689512653d8914c245",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "cde064030d2505ecf5f7b57a709a7767a653f77ff6bfe95bc1cb8b6fb7fb0a71"
+      },
+      "dimension": "",
+      "index": 10,
+      "name": "8 Slicers",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 660,
+        "columnDefinitions": 11,
+        "conditionalFormatting": 0,
+        "customRows": 58,
+        "formulaTypes": {
+          "normal": 57,
+          "shared": 114
+        },
+        "formulaValueOverlap": 115,
+        "formulas": 171,
+        "hyperlinks": 0,
+        "literalValues": 403,
+        "merges": 9,
+        "pictureAnchors": 0,
+        "referencedStyles": 38,
+        "stableComments": 0,
+        "styleOnly": 201,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 459
+      },
+      "digests": {
+        "content": "ab2a322efaa327a97dd97412554343e0e874e10b693b3d7d10ee873063592ff2",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "d397c5769866979b00f1ffe212e2fb4deecd57853f03eb7af11cc1f147cdad8b"
+      },
+      "dimension": "",
+      "index": 11,
+      "name": "9 slicers",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 91,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 36,
+        "stableComments": 1,
+        "styleOnly": 62,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 113
+      },
+      "digests": {
+        "content": "fd2ef60843ff06f822c7d0cd798b47564f1dc7cf6b12ec9df6bad8ffe8e3ccc6",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "e68704b227d62ab2144e818762e9804b428b00b66736380a7fa7b60f04c70639"
+      },
+      "dimension": "",
+      "index": 12,
+      "name": "Solved",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 340,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 29,
+        "formulaTypes": {
+          "array": 4,
+          "normal": 46
+        },
+        "formulaValueOverlap": 5,
+        "formulas": 50,
+        "hyperlinks": 22,
+        "literalValues": 174,
+        "merges": 9,
+        "pictureAnchors": 0,
+        "referencedStyles": 42,
+        "stableComments": 0,
+        "styleOnly": 121,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 1,
+        "valueOrFormula": 219
+      },
+      "digests": {
+        "content": "f2057f890541fea2bbfb28518713e6b86dc3489a112847d66eaacf222b7f7773",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "ca725eecba4d15bb196879ca09add67bd2ec89995430ec15202ec3c5899b6883"
+      },
+      "dimension": "",
+      "index": 13,
+      "name": "A ",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 22,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 95,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 41,
+        "stableComments": 0,
+        "styleOnly": 58,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 117
+      },
+      "digests": {
+        "content": "064b664f0036ddd84ee5610ca23f0e978262ab521942af748ea66a47b0875c03",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "68f9ed15d705e41098e356a2b3ea5c8f3dff8481afa9e062b3616fc8e1e37299"
+      },
+      "dimension": "",
+      "index": 14,
+      "name": "Adj",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 275,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 45
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 45,
+        "hyperlinks": 22,
+        "literalValues": 164,
+        "merges": 5,
+        "pictureAnchors": 0,
+        "referencedStyles": 41,
+        "stableComments": 0,
+        "styleOnly": 67,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 208
+      },
+      "digests": {
+        "content": "9decf35361027668a1ea32a234d3397b39a334376c6179c0d670b38ce85768f3",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "a53c8da2f7ada2b734cdf85edd294cc5c9524b42dc2d67cf83bfcb85e62b1ba3"
+      },
+      "dimension": "",
+      "index": 15,
+      "name": "B ",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 275,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 45
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 45,
+        "hyperlinks": 22,
+        "literalValues": 164,
+        "merges": 5,
+        "pictureAnchors": 0,
+        "referencedStyles": 36,
+        "stableComments": 0,
+        "styleOnly": 67,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 208
+      },
+      "digests": {
+        "content": "59fe740df01e7bc3edaa42ab25b1e37bd75ddbd76208bb6411b2c9055c694fdc",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "70da67c2fb58a39c5f0027d3d5cbc4e525a53525d27e2bbf5e77bc3316ab597b"
+      },
+      "dimension": "",
+      "index": 16,
+      "name": "C ",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 275,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 45
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 45,
+        "hyperlinks": 22,
+        "literalValues": 164,
+        "merges": 5,
+        "pictureAnchors": 0,
+        "referencedStyles": 32,
+        "stableComments": 0,
+        "styleOnly": 67,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 208
+      },
+      "digests": {
+        "content": "5ea45bebc9d5a5913fa520472e72eb0a26783cd6d3badc1df521263be0afcae3",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "4dcaec60333a6d9784005381d6b6395b6135e7f505e0bffb8ea1e8a450198bef"
+      },
+      "dimension": "",
+      "index": 17,
+      "name": "D",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 23,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 95,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 34,
+        "stableComments": 0,
+        "styleOnly": 58,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 117
+      },
+      "digests": {
+        "content": "238a367860bcdcd3956f1c7502002904bb5bffddad8b04025b26585c16786d34",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "abe1d5c475dedf8141267b0658a260a84cac9e1af407ec8622005f9097f18aa5"
+      },
+      "dimension": "",
+      "index": 18,
+      "name": "E ",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 95,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 42,
+        "stableComments": 0,
+        "styleOnly": 58,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 117
+      },
+      "digests": {
+        "content": "2c45ff87fab8b7e6c260bd7196a144f90609eee8c38af7a5a271e2d3a2138e85",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "617937121c89d143427f552086be838dd4e97b4277eef52d7bd5cd970b103f57"
+      },
+      "dimension": "",
+      "index": 19,
+      "name": "F ",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 475,
+        "columnDefinitions": 15,
+        "conditionalFormatting": 0,
+        "customRows": 23,
+        "formulaTypes": {
+          "normal": 89
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 89,
+        "hyperlinks": 22,
+        "literalValues": 301,
+        "merges": 6,
+        "pictureAnchors": 0,
+        "referencedStyles": 34,
+        "stableComments": 0,
+        "styleOnly": 86,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 389
+      },
+      "digests": {
+        "content": "18c7f11a8b7aef7b0e5aca64c5ca46d7ffe810e7d427ce5609bfa15a2323c90d",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "b82e174c6fd13ae8312d9ed78b31f27701cc71a699a6e45b8f8c8ec43e37c1c9"
+      },
+      "dimension": "",
+      "index": 20,
+      "name": "G ",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 91,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 34,
+        "stableComments": 0,
+        "styleOnly": 62,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 113
+      },
+      "digests": {
+        "content": "9b628f7dc2ce1d1fdb26cf6805fa113548497cf4d0f9b255272029d6de884cff",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "f33a8b728ab8e893efc1cc9c081213c4175d52128ea148d19a0cf23d1946fa5f"
+      },
+      "dimension": "",
+      "index": 21,
+      "name": "H ",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 275,
+        "columnDefinitions": 10,
+        "conditionalFormatting": 0,
+        "customRows": 23,
+        "formulaTypes": {
+          "normal": 45
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 45,
+        "hyperlinks": 22,
+        "literalValues": 164,
+        "merges": 5,
+        "pictureAnchors": 0,
+        "referencedStyles": 29,
+        "stableComments": 0,
+        "styleOnly": 67,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 208
+      },
+      "digests": {
+        "content": "8168bc4585b652bfb0495878eec947658496b76315ea4427aa9b47b9bdfcfefb",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "1a7093be2732eeca2fbda1563ab0376fabd0f7ab77d60a7e268323aaf7ccebb8"
+      },
+      "dimension": "",
+      "index": 22,
+      "name": "J",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 275,
+        "columnDefinitions": 10,
+        "conditionalFormatting": 0,
+        "customRows": 23,
+        "formulaTypes": {
+          "normal": 45
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 45,
+        "hyperlinks": 23,
+        "literalValues": 164,
+        "merges": 5,
+        "pictureAnchors": 0,
+        "referencedStyles": 37,
+        "stableComments": 0,
+        "styleOnly": 67,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 208
+      },
+      "digests": {
+        "content": "dbb6a94691d40565d8ae19d383bd93f675bc0b989e053f5722ca23ff33cb1909",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "8ce4e9fc8ef4b2c9d7ca1e734fe12370a810a2f2162925223c506a7495911a89"
+      },
+      "dimension": "",
+      "index": 23,
+      "name": "K",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 95,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 34,
+        "stableComments": 0,
+        "styleOnly": 58,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 117
+      },
+      "digests": {
+        "content": "395a1b1415ede58bfb2455e19b97f4e23a3ba0078d522548adcb9678abe9bf54",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "62587858fb306b918bd023944219e5f9ef4f9fc98370000286c04e0547302bf0"
+      },
+      "dimension": "",
+      "index": 24,
+      "name": "M",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 275,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 45
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 45,
+        "hyperlinks": 22,
+        "literalValues": 156,
+        "merges": 5,
+        "pictureAnchors": 0,
+        "referencedStyles": 32,
+        "stableComments": 0,
+        "styleOnly": 75,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 200
+      },
+      "digests": {
+        "content": "3794fd03738e37d2aff820981978d51c10befbd1642f79844047d7b7e7a6cd85",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "1e3600c6d8160c9762227b0cd224425fbf192b1a984f3de0fdef8de47367bbe4"
+      },
+      "dimension": "",
+      "index": 25,
+      "name": "N",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 275,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 45
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 45,
+        "hyperlinks": 22,
+        "literalValues": 156,
+        "merges": 4,
+        "pictureAnchors": 0,
+        "referencedStyles": 31,
+        "stableComments": 0,
+        "styleOnly": 75,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 200
+      },
+      "digests": {
+        "content": "6fab158aba8bce5125ddab70169cee0cc6ce52046084940baf4d4853c95b0200",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "be7c8e417a8eec2da178379759f6ca43656e290570fb0e8143a90af5c334a89c"
+      },
+      "dimension": "",
+      "index": 26,
+      "name": "O",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 95,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 36,
+        "stableComments": 0,
+        "styleOnly": 58,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 117
+      },
+      "digests": {
+        "content": "ef3cb12c2856e1be19e18cf07bd98ac42fb7200ae48b1fd4cec0b31e729ad236",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "d9e1c68b03f145459d056a6ef5b7508c413982ac1be175af0ef1cb8bb5a860c1"
+      },
+      "dimension": "",
+      "index": 27,
+      "name": "Opp",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 275,
+        "columnDefinitions": 10,
+        "conditionalFormatting": 0,
+        "customRows": 23,
+        "formulaTypes": {
+          "normal": 41
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 41,
+        "hyperlinks": 22,
+        "literalValues": 164,
+        "merges": 5,
+        "pictureAnchors": 0,
+        "referencedStyles": 29,
+        "stableComments": 0,
+        "styleOnly": 71,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 204
+      },
+      "digests": {
+        "content": "5c5c43cb465fcdd2f534255b8f4fea45672e869d8a3262797fb0b4eab7480206",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "d1af4c8b44f95b96dbd9b374bb2abbdc77716e46dd1647cb907f7655844b5c87"
+      },
+      "dimension": "",
+      "index": 28,
+      "name": "P",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 22,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 95,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 33,
+        "stableComments": 0,
+        "styleOnly": 58,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 117
+      },
+      "digests": {
+        "content": "1a63bfab5735704de5d6bd2b2c0390048886457b4ef35353bb608b1a9482500b",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "90fca741acf1eff106c83d5c3d5397bc9ce0d1c014b63a9a74b534acf179b92e"
+      },
+      "dimension": "",
+      "index": 29,
+      "name": "pJ",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 275,
+        "columnDefinitions": 10,
+        "conditionalFormatting": 0,
+        "customRows": 23,
+        "formulaTypes": {
+          "normal": 45
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 45,
+        "hyperlinks": 0,
+        "literalValues": 164,
+        "merges": 5,
+        "pictureAnchors": 0,
+        "referencedStyles": 36,
+        "stableComments": 0,
+        "styleOnly": 67,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 208
+      },
+      "digests": {
+        "content": "439b3fcae9d4d732a426e8ddaea461c53ece81cb3aa2c5c3f7ccd4a84f87d622",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "bbdc1dd37c0f9d7cc394e7d933fc171851d2ffd186ff676767939659397ba6d8"
+      },
+      "dimension": "",
+      "index": 30,
+      "name": "wtfP",
+      "state": "hidden"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 21
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 21,
+        "hyperlinks": 22,
+        "literalValues": 95,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 33,
+        "stableComments": 0,
+        "styleOnly": 60,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 115
+      },
+      "digests": {
+        "content": "f514057ea0016fad75aa239abb58dad1ad9938c63c72744724c51dffe482ccc9",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "094afd0875e233918da54b46c3d69609f7c9891963ef3dfd0dd25b41e551d108"
+      },
+      "dimension": "",
+      "index": 31,
+      "name": "pN",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 92,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 30,
+        "stableComments": 0,
+        "styleOnly": 61,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 114
+      },
+      "digests": {
+        "content": "7b4c0982adc914ac7316362b68e43b3d0758797b78cb057374ea2995fca1ae42",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "4104b473f0f892d8e512439720c708fa593ee85752a3833a8b0d71cf457ff946"
+      },
+      "dimension": "",
+      "index": 32,
+      "name": "Q",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 275,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 45
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 45,
+        "hyperlinks": 22,
+        "literalValues": 164,
+        "merges": 5,
+        "pictureAnchors": 0,
+        "referencedStyles": 29,
+        "stableComments": 0,
+        "styleOnly": 67,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 208
+      },
+      "digests": {
+        "content": "e56858a7b0ea8cd9628c47b2bb4d6f1372bc978361ccf8cfe0adfd0c3fc31a87",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "e82dd9d0b06e78870453e17b8641583c67225404db039da9f21504bd3fd75518"
+      },
+      "dimension": "",
+      "index": 33,
+      "name": "R",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 275,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 45
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 45,
+        "hyperlinks": 22,
+        "literalValues": 164,
+        "merges": 5,
+        "pictureAnchors": 0,
+        "referencedStyles": 32,
+        "stableComments": 0,
+        "styleOnly": 67,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 208
+      },
+      "digests": {
+        "content": "c03c1296133a24fdba6b9a7c94970498c9687f146c85a3bfa0eafe4b6144f05b",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "4e6c2bfa4ab1dc71550db88e464bde351387097974d13820c674b36aa951c293"
+      },
+      "dimension": "",
+      "index": 34,
+      "name": "S",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 23,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 95,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 27,
+        "stableComments": 0,
+        "styleOnly": 58,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 117
+      },
+      "digests": {
+        "content": "3bd6667f2b213edba61f21983c8628065b8f42a2e54e09bdda6cf8d2534c5796",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "7450df7f4905972293059e3a7ac044415fb79616ca8c7dc3243d8c8cff666067"
+      },
+      "dimension": "",
+      "index": 35,
+      "name": "T",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 275,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 45
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 45,
+        "hyperlinks": 22,
+        "literalValues": 164,
+        "merges": 5,
+        "pictureAnchors": 0,
+        "referencedStyles": 34,
+        "stableComments": 0,
+        "styleOnly": 67,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 208
+      },
+      "digests": {
+        "content": "8ef1ed1e04a1e23cedbc9cbf7efa9760993787784603e491a0e360306a91fecf",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "b36d1c1dd4aa17509787b6f89593208c4716e14ea59e8c09ce6e61ab14cf3d0c"
+      },
+      "dimension": "",
+      "index": 36,
+      "name": "U",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 94,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 26,
+        "stableComments": 0,
+        "styleOnly": 59,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 116
+      },
+      "digests": {
+        "content": "de6ac80167d405673ba5c8af6711f48a369bfd4ac9e2a5a342781a98b09d6f0e",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "459b1231d30f476204382673419a0412cc471eefddf932bf3f51d815112828c1"
+      },
+      "dimension": "",
+      "index": 37,
+      "name": "V",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 95,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 24,
+        "stableComments": 0,
+        "styleOnly": 58,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 117
+      },
+      "digests": {
+        "content": "3138bddde0a792bb472eaf330fe8f424b3c688bc822b81859beb38d9bf4c68a7",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "137058a43cf1d7e47dc376b971ea9b3f8cf93c23d2ed415c0742215778e9ef8d"
+      },
+      "dimension": "",
+      "index": 38,
+      "name": "W",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 91,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 30,
+        "stableComments": 0,
+        "styleOnly": 62,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 113
+      },
+      "digests": {
+        "content": "d4e01ece8609f0ffbc5ebd7a485ba23eecdc562fa164fede689ca14ccf72e7d6",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "b574fc021d4cdf791430352421d494f4e7d722ad3e328d6c0a739c501bb45946"
+      },
+      "dimension": "",
+      "index": 39,
+      "name": "X",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 95,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 27,
+        "stableComments": 0,
+        "styleOnly": 58,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 117
+      },
+      "digests": {
+        "content": "7d19505707a1e06cc298219678914af9cec4c217bd96457ca780762406564f3a",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "684721f63c15b727ddb8daf72b16f39d8d0fbd7aa07ca4728d8cace8ad06e06b"
+      },
+      "dimension": "",
+      "index": 40,
+      "name": "Y",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 175,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 24,
+        "formulaTypes": {
+          "normal": 23
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 23,
+        "hyperlinks": 22,
+        "literalValues": 95,
+        "merges": 2,
+        "pictureAnchors": 0,
+        "referencedStyles": 29,
+        "stableComments": 0,
+        "styleOnly": 58,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 117
+      },
+      "digests": {
+        "content": "6888c76a4abc4a8ef868fe83494ff1e868a894efe502a383557a4b0cd47dbdf0",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "4d44523c1961b332a2b9c623ddd7ba6ec02cbb00060263c403ad9dc5666a5725"
+      },
+      "dimension": "",
+      "index": 41,
+      "name": "Z",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 108,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 10,
+        "formulaTypes": {
+          "normal": 3,
+          "shared": 6
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 9,
+        "hyperlinks": 0,
+        "literalValues": 46,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 38,
+        "stableComments": 1,
+        "styleOnly": 54,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 54
+      },
+      "digests": {
+        "content": "d40a61f277e54795d32c29525c2b676e0391a2cb2ed0b4a778c96dc63d27e187",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "38f4227a8ca1d6bf94cde584e5632d597c6d3594807422845f0dab3f0b535304"
+      },
+      "dimension": "",
+      "index": 42,
+      "name": "Frequency 1 (AnglelessRarest)",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 333,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 34,
+        "formulaTypes": {
+          "normal": 3,
+          "shared": 28
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 31,
+        "hyperlinks": 0,
+        "literalValues": 182,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 41,
+        "stableComments": 0,
+        "styleOnly": 121,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 212
+      },
+      "digests": {
+        "content": "f00031662e9697e1ab7fd146153bfce96dcb3d052dd665889527a0abee6ef614",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "531c3460b405afe6d1df1e7d20650fa6a511bdec297055a54a21016b44b4a46c"
+      },
+      "dimension": "",
+      "index": 43,
+      "name": "Frequency 2 (Ultra Rare)",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 549,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 58,
+        "formulaTypes": {
+          "normal": 1,
+          "shared": 56
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 57,
+        "hyperlinks": 0,
+        "literalValues": 340,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 50,
+        "stableComments": 0,
+        "styleOnly": 153,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 396
+      },
+      "digests": {
+        "content": "ce93a0bca7214e530bbb50e939031b609d0726f9658c92c6492d1239870f1de4",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "5e9018a87e52245effe025653fd28f83783cd7d144c9d18b851828f258957c2c"
+      },
+      "dimension": "",
+      "index": 44,
+      "name": "Frequency 4 (Rare)",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 1305,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 142,
+        "formulaTypes": {
+          "normal": 12,
+          "shared": 129
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 141,
+        "hyperlinks": 0,
+        "literalValues": 776,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 46,
+        "stableComments": 0,
+        "styleOnly": 389,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 916
+      },
+      "digests": {
+        "content": "1747428c1dd418a46e3681894454b16266da0ca5068f93bc3d7eec7e9cfe2204",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "ab8b88f2dbb0b92800d69cf6805e2712d97090fca58edb017028050f79e47fcf"
+      },
+      "dimension": "",
+      "index": 45,
+      "name": " Frequency 8 (Semi-Rare)",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 1836,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 201,
+        "formulaTypes": {
+          "normal": 23,
+          "shared": 177
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 200,
+        "hyperlinks": 0,
+        "literalValues": 1097,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 58,
+        "stableComments": 1,
+        "styleOnly": 540,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 1296
+      },
+      "digests": {
+        "content": "f230186388087a2757e5bf8ce56af6df0b1f54283ceb801ab602b24c86ebc857",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "c61110995dec4d1e8ef5edcf5ce88ce4799667d5ef48c7fd21d5f2c9a4c1f29b"
+      },
+      "dimension": "",
+      "index": 46,
+      "name": "Frequency 16 (Semi-Common)",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 1701,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 186,
+        "formulaTypes": {
+          "normal": 20,
+          "shared": 165
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 185,
+        "hyperlinks": 0,
+        "literalValues": 659,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 55,
+        "stableComments": 2,
+        "styleOnly": 858,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 843
+      },
+      "digests": {
+        "content": "a532a8f4d55b16e940100c3a7b46dcdb2f05244ce863e71c351e8d8ab31aab62",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "488142ff40fdf57ad109337ca70e2a84a71cdfbfc63ec6e16cdf5665db7c4a8e"
+      },
+      "dimension": "",
+      "index": 47,
+      "name": "Frequency 32 (Common)",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 2025,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 222,
+        "formulaTypes": {
+          "normal": 1,
+          "shared": 220
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 221,
+        "hyperlinks": 0,
+        "literalValues": 449,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 46,
+        "stableComments": 0,
+        "styleOnly": 1356,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 669
+      },
+      "digests": {
+        "content": "628dfa597c606a56c133babfdb9b033e1555a00c2eb91ba2c5f2c59c7488cdcf",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "93c63b99604bcc3701cd7e6473eeaf66c2f6a7b75618288127372e0b28a09220"
+      },
+      "dimension": "",
+      "index": 48,
+      "name": "Frequency 64 (Normal)",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 621,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 66,
+        "formulaTypes": {
+          "normal": 5,
+          "shared": 54
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 59,
+        "hyperlinks": 0,
+        "literalValues": 137,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 42,
+        "stableComments": 0,
+        "styleOnly": 426,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 195
+      },
+      "digests": {
+        "content": "e14b143792862f34a4d55da1cd337bc7ccc08810c4d0e2189111cff28df3dc6c",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "accd663f5d5946cf0283ad6498510d82a2e282b3f23e36a1a5823240b96cc889"
+      },
+      "dimension": "",
+      "index": 49,
+      "name": "Frequency 128 (Abundant)",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 189,
+        "columnDefinitions": 9,
+        "conditionalFormatting": 0,
+        "customRows": 18,
+        "formulaTypes": {
+          "normal": 1,
+          "shared": 16
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 17,
+        "hyperlinks": 0,
+        "literalValues": 41,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 33,
+        "stableComments": 0,
+        "styleOnly": 132,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 57
+      },
+      "digests": {
+        "content": "b8f247d671da048f8fd0d3435f491165e092a7139c83ea301c08f33420c806ca",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "57aef5b49b08067a7fd48a4e7c34be86e0f895cfc4070426e9f573f1ed1e7e06"
+      },
+      "dimension": "",
+      "index": 50,
+      "name": "Frequency 256 (Hyper CommonLike",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 336,
+        "columnDefinitions": 6,
+        "conditionalFormatting": 0,
+        "customRows": 56,
+        "formulaTypes": {
+          "shared": 22
+        },
+        "formulaValueOverlap": 0,
+        "formulas": 22,
+        "hyperlinks": 0,
+        "literalValues": 59,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 21,
+        "stableComments": 0,
+        "styleOnly": 255,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 81
+      },
+      "digests": {
+        "content": "edb75810264df2242155dec53d28fd8dbc5ff335309e60daec230de86b0864e0",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "e3b3e68b10b637ef77e013e52504012196e10600fa4ad099a7ba323f9ba27cf0"
+      },
+      "dimension": "",
+      "index": 51,
+      "name": "PBL+1 (5 slicers)",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 38061,
+        "columnDefinitions": 22,
+        "conditionalFormatting": 1,
+        "customRows": 23,
+        "formulaTypes": {
+          "array": 1
+        },
+        "formulaValueOverlap": 1,
+        "formulas": 1,
+        "hyperlinks": 0,
+        "literalValues": 5126,
+        "merges": 7,
+        "pictureAnchors": 0,
+        "referencedStyles": 54,
+        "stableComments": 0,
+        "styleOnly": 32935,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 5126
+      },
+      "digests": {
+        "content": "08edb8a7794942fffbeaf20ca0fa5a24c32feb4def3a92e7d1da3c8f494a0fc0",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "4d430f20a3cef5d45071f7897a1e46010a8189bea671ac8102b139cea027a7be"
+      },
+      "dimension": "",
+      "index": 52,
+      "name": "Standard Algs Data",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 35000,
+        "columnDefinitions": 14,
+        "conditionalFormatting": 3,
+        "customRows": 1000,
+        "formulaTypes": {
+          "normal": 2,
+          "shared": 10
+        },
+        "formulaValueOverlap": 0,
+        "formulas": 12,
+        "hyperlinks": 0,
+        "literalValues": 56,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 16,
+        "stableComments": 0,
+        "styleOnly": 34932,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 2,
+        "valueOrFormula": 68
+      },
+      "digests": {
+        "content": "e5412e0494aba68082380a455842872d7aa2779d3ed0126310e96837c64b91dd",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "8be3d63a182ba7d8fd3e8e440d1913ef5cd194a1483f0df4c2a87409e227e899"
+      },
+      "dimension": "",
+      "index": 53,
+      "name": "DropDownData",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 528,
+        "columnDefinitions": 16,
+        "conditionalFormatting": 0,
+        "customRows": 0,
+        "formulaTypes": {},
+        "formulaValueOverlap": 0,
+        "formulas": 0,
+        "hyperlinks": 0,
+        "literalValues": 93,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 34,
+        "stableComments": 0,
+        "styleOnly": 435,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 93
+      },
+      "digests": {
+        "content": "3386eb80a0b3c5f2d6777909ca81a476a09162d2fe33006e4def09cb1f7e7410",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "fe0f4c4835e1e3d35d38ebc21669354b58dfa101da170744dedda2d601be2d34"
+      },
+      "dimension": "",
+      "index": 54,
+      "name": "Parity stuff",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 168,
+        "columnDefinitions": 7,
+        "conditionalFormatting": 0,
+        "customRows": 22,
+        "formulaTypes": {
+          "shared": 20
+        },
+        "formulaValueOverlap": 0,
+        "formulas": 20,
+        "hyperlinks": 0,
+        "literalValues": 85,
+        "merges": 1,
+        "pictureAnchors": 0,
+        "referencedStyles": 14,
+        "stableComments": 0,
+        "styleOnly": 63,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 105
+      },
+      "digests": {
+        "content": "c9b2acffd4e0afad214caf5a729fda29016068ed861b11d76dda8c4a3bc3dede",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "19ad46771885f332a455d018288f57c0e0f60c2c710123a051b9d395dd1652d1"
+      },
+      "dimension": "",
+      "index": 55,
+      "name": "3P",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 150,
+        "columnDefinitions": 6,
+        "conditionalFormatting": 0,
+        "customRows": 23,
+        "formulaTypes": {
+          "shared": 13
+        },
+        "formulaValueOverlap": 0,
+        "formulas": 13,
+        "hyperlinks": 0,
+        "literalValues": 26,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 12,
+        "stableComments": 0,
+        "styleOnly": 111,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 39
+      },
+      "digests": {
+        "content": "8d2f526edfa0400a0a05882142f85fe446bca4c4ddf6a07655451877907a0d02",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "cb6014ba1d0754f1b23c669232e61625c4c4c0a8e515dddf00bbdd94a3f7437c"
+      },
+      "dimension": "",
+      "index": 56,
+      "name": "2e2c",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 469,
+        "columnDefinitions": 17,
+        "conditionalFormatting": 0,
+        "customRows": 28,
+        "formulaTypes": {
+          "shared": 134
+        },
+        "formulaValueOverlap": 0,
+        "formulas": 134,
+        "hyperlinks": 0,
+        "literalValues": 159,
+        "merges": 8,
+        "pictureAnchors": 0,
+        "referencedStyles": 8,
+        "stableComments": 0,
+        "styleOnly": 176,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 293
+      },
+      "digests": {
+        "content": "64ed67410673c311e2ddf458909be222f43c93122a49fc2a1f6a81ddb727ddb5",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "bf498c955b44120ce44cc3653d80d7204e5ff1413768a2b724ec27879449d6fb"
+      },
+      "dimension": "",
+      "index": 57,
+      "name": "2e2c wip",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 6776,
+        "columnDefinitions": 1,
+        "conditionalFormatting": 0,
+        "customRows": 0,
+        "formulaTypes": {
+          "shared": 967
+        },
+        "formulaValueOverlap": 967,
+        "formulas": 967,
+        "hyperlinks": 0,
+        "literalValues": 6775,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 8,
+        "stableComments": 0,
+        "styleOnly": 1,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 6775
+      },
+      "digests": {
+        "content": "56bce1626af441d9ce698df84fe6b5b9a3556d9d36131c1444e0bf954b3d623f",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "2fa5cb0441417c7fec83c79455ebc451e9b84c8e44416ac909a4b12ebb975b87"
+      },
+      "dimension": "",
+      "index": 58,
+      "name": "Raw Algs",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 967,
+        "columnDefinitions": 15,
+        "conditionalFormatting": 1,
+        "customRows": 0,
+        "formulaTypes": {},
+        "formulaValueOverlap": 0,
+        "formulas": 0,
+        "hyperlinks": 5,
+        "literalValues": 281,
+        "merges": 51,
+        "pictureAnchors": 2,
+        "referencedStyles": 125,
+        "stableComments": 7,
+        "styleOnly": 686,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 281
+      },
+      "digests": {
+        "content": "2a41e3416c815f810cef4b04254a35bef9944aded822796cde7a36364f695a3e",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "b95a98da89c356b7c27f2c3f5e0ecae99deeef83f578243ff769dbd730961a22"
+      },
+      "dimension": "",
+      "index": 59,
+      "name": "Help duplicate (for pasting)",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 8865,
+        "columnDefinitions": 1,
+        "conditionalFormatting": 0,
+        "customRows": 0,
+        "formulaTypes": {
+          "normal": 1,
+          "shared": 981
+        },
+        "formulaValueOverlap": 0,
+        "formulas": 982,
+        "hyperlinks": 0,
+        "literalValues": 989,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 7,
+        "stableComments": 0,
+        "styleOnly": 6894,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 1971
+      },
+      "digests": {
+        "content": "24d9a9e6f4db32155555423e6561bbc6b7e64fb259db53634d7e9f33ff6f4d07",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "028fe21006486fb59548667dd084580b95b1e59187622c515e47f58f94dbc45a"
+      },
+      "dimension": "",
+      "index": 60,
+      "name": "Perfect PBL Time List",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 2688,
+        "columnDefinitions": 3,
+        "conditionalFormatting": 1,
+        "customRows": 56,
+        "formulaTypes": {},
+        "formulaValueOverlap": 0,
+        "formulas": 0,
+        "hyperlinks": 0,
+        "literalValues": 458,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 41,
+        "stableComments": 0,
+        "styleOnly": 2230,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 458
+      },
+      "digests": {
+        "content": "26151115473be204a4d64b4bc218c7d3fc7bcfb5a6092466095ee27581eb4f5e",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "5f7f135a0c003c013afbd3a0c9dd6fb770d8c9a2ab376db46b11756111d07a7f"
+      },
+      "dimension": "",
+      "index": 61,
+      "name": "Perfect PBL Table",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 3002,
+        "columnDefinitions": 3,
+        "conditionalFormatting": 3,
+        "customRows": 64,
+        "formulaTypes": {},
+        "formulaValueOverlap": 0,
+        "formulas": 0,
+        "hyperlinks": 0,
+        "literalValues": 1404,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 84,
+        "stableComments": 0,
+        "styleOnly": 1598,
+        "tables": 1,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 1404
+      },
+      "digests": {
+        "content": "776e93b96586d909dcb0f3986589e5fc4c520139644e9a5eef204fdae118475f",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "3790cb8db18fbec302ee19000fc9614f02194010e5b0c50dd9beb734db7d4fb2"
+      },
+      "dimension": "",
+      "index": 62,
+      "name": "PBL of the Day (Discord)",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 1700,
+        "columnDefinitions": 46,
+        "conditionalFormatting": 0,
+        "customRows": 0,
+        "formulaTypes": {},
+        "formulaValueOverlap": 0,
+        "formulas": 0,
+        "hyperlinks": 0,
+        "literalValues": 1104,
+        "merges": 0,
+        "pictureAnchors": 0,
+        "referencedStyles": 54,
+        "stableComments": 768,
+        "styleOnly": 596,
+        "tables": 0,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 1104
+      },
+      "digests": {
+        "content": "280ad6b882e441cfc0895ea9809045a20803a53f2e814d3551d90775d82c7993",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "272b1d20a773bcee91340bfb42e4c7dcdc0822b941e60b9c96e92f1acff5f226"
+      },
+      "dimension": "",
+      "index": 63,
+      "name": "Blast from the past (What this ",
+      "state": "visible"
+    },
+    {
+      "counts": {
+        "cellRecords": 12768,
+        "columnDefinitions": 5,
+        "conditionalFormatting": 3,
+        "customRows": 256,
+        "formulaTypes": {
+          "normal": 23,
+          "shared": 968
+        },
+        "formulaValueOverlap": 991,
+        "formulas": 991,
+        "hyperlinks": 0,
+        "literalValues": 2182,
+        "merges": 32,
+        "pictureAnchors": 0,
+        "referencedStyles": 38,
+        "stableComments": 0,
+        "styleOnly": 10586,
+        "tables": 2,
+        "threadedComments": 0,
+        "validations": 0,
+        "valueOrFormula": 2182
+      },
+      "digests": {
+        "content": "6003f309f9bcfafcf2fd4971578a4ea95c03f693fb8dc6d68d848a2726b8c535",
+        "editorial": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "presentation": "e9e6c4ad702fc2f47ad41d9f20e18286b620e69686f400540964c5db9dae788b"
+      },
+      "dimension": "",
+      "index": 64,
+      "name": "PBL Probabilities",
+      "state": "visible"
+    }
+  ],
+  "source": "https://docs.google.com/spreadsheets/d/1VQNYNwdOLqqBkacHcfYtEBst22FOVhH9EAhTOYOZTgo/export?format=xlsx",
+  "totals": {
+    "cellRecords": 143902,
+    "columnDefinitions": 589,
+    "conditionalFormatting": 17,
+    "customRows": 4171,
+    "formulaTypes": {
+      "array": 30,
+      "normal": 2115,
+      "shared": 5916
+    },
+    "formulaValueOverlap": 3989,
+    "formulas": 8061,
+    "hiddenSheets": 1,
+    "hyperlinks": 657,
+    "literalValues": 33763,
+    "merges": 321,
+    "pictureAnchors": 15,
+    "referencedStyles": 843,
+    "sharedStrings": 8513,
+    "sheets": 64,
+    "stableComments": 793,
+    "styleOnly": 106067,
+    "styles": {
+      "borders": 48,
+      "cellXfs": 952,
+      "dxfs": 9,
+      "fills": 44,
+      "fonts": 81,
+      "numFmts": 3,
+      "semanticCellXfs": 844
+    },
+    "tables": 3,
+    "threadedComments": 0,
+    "uniqueMedia": 13,
+    "uniqueMediaBytes": 829855,
+    "validations": 10,
+    "valueOrFormula": 37835,
+    "visibleSheets": 63
+  },
+  "fetchedAt": "2026-08-16T18:10:48.522Z"
+}
