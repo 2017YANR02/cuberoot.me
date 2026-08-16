@@ -101,6 +101,28 @@ describe('shared web-view page state', () => {
     );
   });
 
+  it('never creates a new login handoff while opening the logout route', async () => {
+    const request = vi.fn();
+    vi.stubGlobal('wx', {
+      getStorageSync: () => ({
+        token: 't'.repeat(20),
+        user: { name: 'CubeRoot', wcaId: null },
+      }),
+      removeStorageSync: vi.fn(),
+      nextTick(callback: () => void) { callback(); },
+      request,
+      setNavigationBarTitle,
+    });
+    const context = createContext();
+
+    await openWebRoute(context, 'logout');
+
+    expect(request).not.toHaveBeenCalled();
+    expect(context.data.src).toBe(
+      'https://cuberoot.me/auth/miniprogram#action=logout&next=%2Fzh%2Faccount',
+    );
+  });
+
   it('clears an expired Mini Program session and falls back to the public website route', async () => {
     const token = 't'.repeat(20);
     const removeStorageSync = vi.fn();
