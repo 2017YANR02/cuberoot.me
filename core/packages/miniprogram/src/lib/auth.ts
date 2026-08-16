@@ -1,4 +1,5 @@
-const API_ORIGIN = 'https://api.cuberoot.me/v1';
+import { API_ORIGIN } from './runtime-config';
+
 const SESSION_STORAGE_KEY = 'cuberoot:session';
 
 export interface SessionUser {
@@ -118,7 +119,10 @@ export async function validateStoredSession(session: SessionData): Promise<Sessi
   const response = await requestJson<{ user: SessionUser }>('/auth/me', { token: session.token });
   if (!isSessionUser(response.user)) throw new ApiError(502, 'invalid user response');
   const next = { ...session, user: { ...session.user, ...response.user } };
-  wx.setStorageSync(SESSION_STORAGE_KEY, next);
+  const current = decodeSession(wx.getStorageSync(SESSION_STORAGE_KEY) as unknown);
+  if (current?.token === session.token) {
+    wx.setStorageSync(SESSION_STORAGE_KEY, next);
+  }
   return next;
 }
 

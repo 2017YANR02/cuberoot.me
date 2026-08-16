@@ -1,6 +1,10 @@
-import { resolveWebRoute } from '../../lib/web-routes';
+import { listWebTools, resolveWebRoute } from '../../lib/web-routes';
 
 Page({
+  data: {
+    tools: listWebTools(),
+  },
+
   openTool(event: WechatMiniprogram.TouchEvent) {
     const key = event.currentTarget.dataset.key;
     if (!resolveWebRoute(key)) {
