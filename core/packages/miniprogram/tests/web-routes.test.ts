@@ -7,6 +7,7 @@ import {
   listWebTools,
   resolveWebRoute,
   resolveWebRouteShare,
+  resolveToolsPageShare,
 } from '../src/lib/web-routes';
 
 const TICKET = 'A'.repeat(43);
@@ -93,6 +94,11 @@ describe('mini program web routes', () => {
   });
 
   it('derives share targets from public entries without exposing account routes', () => {
+    expect(resolveToolsPageShare()).toEqual({
+      imageUrl: WEB_ROUTE_SHARE_IMAGE,
+      title: 'CubeRoot 魔方根：魔方工具',
+      path: '/pages/tools/index',
+    });
     expect(resolveWebRouteShare('timer')).toEqual({
       imageUrl: WEB_ROUTE_SHARE_IMAGE,
       title: 'CubeRoot 魔方根：计时器',
