@@ -82,7 +82,7 @@ async function buildProject(clean = true) {
     outbase: sourceRoot,
     outdir: outputRoot,
     platform: 'browser',
-    sourcemap: true,
+    sourcemap: watch,
     target: 'chrome91',
   });
   await writeBuildState(packageRoot, {

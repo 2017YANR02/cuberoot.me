@@ -138,6 +138,19 @@ describe('mini program release check', () => {
     );
   });
 
+  it('rejects development source maps in the upload package', () => {
+    expect(collectReleaseFailures({
+      ...validInput,
+      builtFiles: [
+        ...validInput.builtFiles,
+        'app.js.map',
+        'pages/timer/index.js.map',
+      ],
+    })).toContain(
+      '正式上传包不能包含 source map：app.js.map、pages/timer/index.js.map。请重新运行非监听构建。',
+    );
+  });
+
   it('rejects search indexing of account and generic web routes', () => {
     expect(collectReleaseFailures({
       ...validInput,
