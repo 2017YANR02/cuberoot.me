@@ -45,6 +45,7 @@ const failures = collectReleaseFailures({
   themeConfig,
   sitemapConfig,
   confirmedStableVersion: process.env.WECHAT_MINI_LIB_VERSION ?? '',
+  confirmedSecretRotation: process.env.WECHAT_MINI_SECRET_ROTATED === '1',
   sourceFiles,
   builtFiles: outputFiles.map((file) => normalizedRelativePath(outputRoot, file)),
   buildState,
@@ -58,5 +59,5 @@ if (failures.length > 0) {
   process.exitCode = 1;
 } else {
   console.log('小程序自动上传前检查通过。');
-  console.log('仍需人工确认：备案、基础信息审核、AppSecret 已轮换，以及 iOS/Android 真机回归。');
+  console.log('仍需人工确认：备案、基础信息审核，以及 iOS/Android 真机回归。');
 }

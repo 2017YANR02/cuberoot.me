@@ -66,6 +66,7 @@
 - [x] 换票 migration 已在本地 PostgreSQL 验证表结构、外键、过期索引和单次核销；生产部署尚未执行。
 - [x] “我的”页优先打开微信平台隐私协议，平台接口不可用时回退到网站唯一隐私政策。
 - [x] 上传前脚本会拦截游客 AppID、未明确确认的基础库、关闭合法域名校验、旧或不完整的 `dist`，以及未经复核的敏感 API。
+- [x] 上传前脚本会阻止未显式确认 AppSecret 轮换的发布；确认变量不保存密钥，也不能替代后台真实轮换。
 - [x] 正式版下载到新版本后允许用户选择立即重启或稍后更新，下载失败不会阻断当前使用。
 - [x] “退出登录”会先打开不创建新票据的受控网页路由，同时清除小程序会话与网站现有登录存储。
 
@@ -95,11 +96,12 @@ pnpm --filter @cuberoot/miniprogram check
 
 ```powershell
 $env:WECHAT_MINI_LIB_VERSION='<开发者工具显示的稳定版本>'
+$env:WECHAT_MINI_SECRET_ROTATED='1' # 仅在后台轮换并更新服务端后设置
 pnpm --filter @cuberoot/miniprogram build
 pnpm --filter @cuberoot/miniprogram release:check
 ```
 
-`build` 会保留已有正式 AppID 和明确的数字基础库；不会把已选好的本地版本重置回 `trial`。构建成功后会在被忽略的 `.tmp/` 写入源码和产物指纹，不进入上传包。`release:check` 会拒绝缺页、源码变化后的旧 `dist`、构建后被改动的 `dist`，并故意要求每次上传时重新确认稳定版本。
+`build` 会保留已有正式 AppID 和明确的数字基础库；不会把已选好的本地版本重置回 `trial`。构建成功后会在被忽略的 `.tmp/` 写入源码和产物指纹，不进入上传包。`release:check` 会拒绝缺页、源码变化后的旧 `dist`、构建后被改动的 `dist`，并故意要求每次上传时重新确认稳定版本和已完成的密钥轮换。环境变量只是操作确认，不是轮换动作本身。
 
 微信开发者工具导入 `core/packages/miniprogram`，不是 `dist`。`project.config.json` 和 `project.private.config.json` 是本机配置，不提交 AppID 之外的任何凭据。
 
@@ -368,6 +370,12 @@ pnpm --filter @cuberoot/miniprogram release:check
 - 微信登录进行中切换底部页面时继续复用同一请求，返回“我的”页不会误发第二次登录。
 - 登录若在页面隐藏期间失败，外部进行中状态仍会完成清理；再次显示页面时按钮恢复可用，不会永久停在“登录中”。
 - 页面上的 `busy` 只负责显示，真实互斥边界由账号模块内的单一进行中集合控制；后续不要再用按钮文案状态判断网络任务是否存在。
+
+### 2026-08-16：已暴露密钥发布硬门槛
+
+- `release:check` 默认拒绝发布，直到操作者确认已在小程序后台重新生成 AppSecret 并更新服务端环境变量。
+- 每次上传必须显式设置 `WECHAT_MINI_SECRET_ROTATED=1`；该变量只表达人工确认，不包含密钥，也不替代真实轮换。
+- 密钥仍然只属于服务端；小程序源码、构建产物、URL 和跟踪文档都不得保存新密钥。
 
 ### 首版工程
 
