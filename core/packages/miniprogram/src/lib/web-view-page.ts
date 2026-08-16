@@ -125,6 +125,10 @@ export function markWebRouteFailed(context: WebViewPageContext): void {
   });
 }
 
+export function cancelWebRoute(context: WebViewPageContext): void {
+  beginRouteAttempt(context);
+}
+
 export function retryWebRoute(context: WebViewPageContext): void {
   const key = context.data.routeKey;
   context.setData({ canRetry: false, errorMessage: '', errorTitle: '', src: '' });
@@ -145,6 +149,10 @@ export function createWebViewPageOptions(
 
     onLoad(options) {
       void openWebRoute(this, fixedRouteKey ?? options.key);
+    },
+
+    onUnload() {
+      cancelWebRoute(this);
     },
 
     handleWebViewError() {
