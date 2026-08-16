@@ -624,10 +624,6 @@
   background: var(--accent-soft);
   color: var(--accent);
 }
-.rolling-stats-hide {
-  margin-top: 4px;
-  color: var(--muted-foreground);
-}
 .rolling-stats-custom {
   display: flex;
   gap: 6px;

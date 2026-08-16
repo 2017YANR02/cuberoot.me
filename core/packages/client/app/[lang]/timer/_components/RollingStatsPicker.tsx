@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Columns3, EyeOff } from 'lucide-react';
+import { Check, Columns3 } from 'lucide-react';
 import { ClearButton } from '@/components/ClearButton';
 import { tr } from '@/i18n/tr';
 import { updateSettings, useSettings } from '../_lib/settings';
@@ -117,11 +117,6 @@ export default function RollingStatsPicker({ className, triggerColumns }: Props)
     setColumns(replaceRollingStatColumn(columns, editingColumn, key));
     closePicker();
   };
-  const hideEditingColumn = () => {
-    if (!editingColumn) return;
-    setColumns(columns.filter(key => key !== editingColumn));
-    closePicker();
-  };
   const addCustom = () => {
     if (atMax && !editingColumn) return;
     const size = Math.floor(Number(customDraft.trim()));
@@ -217,16 +212,6 @@ export default function RollingStatsPicker({ className, triggerColumns }: Props)
                 </button>
               );
             })}
-            {editingColumn && (
-              <button
-                type="button"
-                className="rolling-stats-option rolling-stats-hide"
-                onClick={hideEditingColumn}
-              >
-                <EyeOff size={14} aria-hidden="true" />
-                <span>{tr({ zh: '隐藏此列', en: 'Hide this column' })}</span>
-              </button>
-            )}
           </div>
           <div className="rolling-stats-custom">
             <label className="rolling-stats-custom-input-wrap">
