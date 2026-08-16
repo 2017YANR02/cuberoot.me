@@ -66,10 +66,12 @@ describe('mini program web routes', () => {
   });
 
   it('keeps the one-time ticket in a fragment outside server logs and referrers', () => {
-    expect(createWebSessionHandoffUrl('/zh/timer', TICKET)).toBe(
-      `https://cuberoot.me/auth/miniprogram#ticket=${TICKET}&next=%2Fzh%2Ftimer`,
+    expect(createWebSessionHandoffUrl('/zh/timer?mode=333#history', TICKET)).toBe(
+      `https://cuberoot.me/auth/miniprogram#ticket=${TICKET}&next=%2Fzh%2Ftimer%3Fmode%3D333%23history`,
     );
     expect(() => createWebSessionHandoffUrl('//evil.example', TICKET)).toThrow();
+    expect(() => createWebSessionHandoffUrl('/\\evil.example', TICKET)).toThrow();
+    expect(() => createWebSessionHandoffUrl('/zh/\ntimer', TICKET)).toThrow();
     expect(() => createWebSessionHandoffUrl('/zh/timer', 'short')).toThrow();
   });
 
