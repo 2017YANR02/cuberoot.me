@@ -17,7 +17,7 @@ import { ListSelect } from '@/components/ListSelect';
 import { RecordBadge } from '@/components/RecordBadge';
 import { SearchInput } from '@/components/SearchInput';
 import { SortArrow } from '@/components/SortArrow';
-import WcaEventSelector from '@/components/WcaEventSelector';
+import WcaEventMultiSelector from '@/components/WcaEventMultiSelector';
 import { useWcaTeachers } from '@/components/WcaTeacherCell';
 import Paginator from '@/components/wca-stats/Paginator';
 import {
@@ -427,12 +427,7 @@ export function RecordPlaceRankings() {
     void setPage(1);
   }, [setMetric, setPage]);
 
-  const toggleEvent = useCallback((eventId: string) => {
-    const next = eventQuery === null ? new Set([eventId]) : new Set(selectedEvents);
-    if (eventQuery !== null) {
-      if (next.has(eventId)) next.delete(eventId);
-      else next.add(eventId);
-    }
+  const changeEvents = useCallback((next: Set<string>) => {
     const allSelected = next.size === availableEvents.size
       && [...availableEvents].every((value) => next.has(value));
     const ordered = [
@@ -441,7 +436,7 @@ export function RecordPlaceRankings() {
     ];
     void setEventQuery(allSelected ? null : ordered.length > 0 ? ordered.join(',') : '__none__');
     void setPage(1);
-  }, [availableEvents, eventQuery, selectedEvents, setEventQuery, setPage]);
+  }, [availableEvents, setEventQuery, setPage]);
 
   const scrollToRankingStart = useCallback(() => {
     requestAnimationFrame(() => {
@@ -472,12 +467,11 @@ export function RecordPlaceRankings() {
         <div ref={rankingRef} className="cs-record-ranking">
           <h3 className="sr-only">{viewLabel}</h3>
           <div className="cs-record-events">
-            <WcaEventSelector
+            <WcaEventMultiSelector
               availableEvents={availableEvents}
               selectedEvents={selectedEvents}
-              onToggle={toggleEvent}
+              onChange={changeEvents}
               isZh={isZh}
-              onlyAvailable
             />
           </div>
           <div className="cs-record-controls">
