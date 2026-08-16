@@ -260,6 +260,28 @@ describe('competition city identity', () => {
     expect(resolved.byCompId.get('seoul-1')?.key).toBe(resolved.byCompId.get('seoul-2')?.key);
   });
 
+  it.each([
+    ['AR', 'Buenos Aires, Buenos Aires', 'Ciudad Autónoma de Buenos Aires, Buenos Aires'],
+    ['AZ', 'Ganja', 'Gəncə'],
+    ['CH', 'Geneva', 'Genève'],
+    ['CO', 'Bogotá', 'Bogotá D.C.'],
+    ['DE', 'Cologne', 'Köln'],
+    ['DK', 'Copenhagen', 'København'],
+    ['GT', 'Guatemala City', 'Ciudad de Guatemala'],
+    ['IT', 'Florence', 'Firenze'],
+    ['MX', 'Ciudad de México', 'CDMX'],
+    ['PA', 'Panama City', 'Ciudad de Panamá'],
+    ['PL', 'Warsaw', 'Warszawa'],
+    ['RO', 'Bucharest', 'Bucuresti'],
+    ['UA', 'Dnipro', 'Dnipropetrovsk'],
+  ])('merges reviewed local or official names in %s: %s / %s', (country, first, second) => {
+    const resolved = resolveCompCityIdentities([
+      cityComp('first', country, first, 10, 20),
+      cityComp('second', country, second, 10.01, 20.01),
+    ]);
+    expect(resolved.byCompId.get('first')?.key).toBe(resolved.byCompId.get('second')?.key);
+  });
+
   it('is independent of input order', () => {
     const comps = [
       cityComp('kyiv-new', 'UA', 'Kyiv', 50.45, 30.52, '2024-01-01'),
