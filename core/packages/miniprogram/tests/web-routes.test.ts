@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   WEB_ROUTES,
+  WEB_ROUTE_SHARE_IMAGE,
   createWebSessionHandoffUrl,
   listWebTools,
   resolveWebRoute,
@@ -93,10 +94,12 @@ describe('mini program web routes', () => {
 
   it('derives share targets from public entries without exposing account routes', () => {
     expect(resolveWebRouteShare('timer')).toEqual({
+      imageUrl: WEB_ROUTE_SHARE_IMAGE,
       title: 'CubeRoot 魔方根：计时器',
       path: '/pages/timer/index',
     });
     expect(resolveWebRouteShare('alg')).toEqual({
+      imageUrl: WEB_ROUTE_SHARE_IMAGE,
       title: 'CubeRoot 魔方根：公式库',
       path: '/pages/web/index?key=alg',
     });

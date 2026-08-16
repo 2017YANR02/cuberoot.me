@@ -8,6 +8,7 @@ import {
   createWebSessionHandoffUrl,
   resolveWebRoute,
   resolveWebRouteShare,
+  WEB_ROUTE_SHARE_IMAGE,
   type WebRouteKey,
 } from './web-routes';
 import {
@@ -276,6 +277,7 @@ export function createWebViewPageOptions(
 
     onShareAppMessage() {
       return resolveWebRouteShare(this.data.routeKey) ?? {
+        imageUrl: WEB_ROUTE_SHARE_IMAGE,
         title: 'CubeRoot 魔方根',
         path: '/pages/timer/index',
       };

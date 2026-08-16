@@ -101,6 +101,7 @@ describe('shared web-view page state', () => {
     expect(showShareMenu).toHaveBeenCalledWith({ menus: ['shareAppMessage'] });
     expect(hideShareMenu).not.toHaveBeenCalled();
     expect(options.onShareAppMessage.call(context)).toEqual({
+      imageUrl: '/assets/share-cover.png',
       title: 'CubeRoot 魔方根：公式库',
       path: '/pages/web/index?key=alg',
     });
@@ -121,6 +122,7 @@ describe('shared web-view page state', () => {
     });
     expect(showShareMenu).not.toHaveBeenCalled();
     expect(options.onShareAppMessage.call(context)).toEqual({
+      imageUrl: '/assets/share-cover.png',
       title: 'CubeRoot 魔方根',
       path: '/pages/timer/index',
     });

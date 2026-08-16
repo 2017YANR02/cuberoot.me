@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 
+import { BUILD_ASSETS } from './build-assets.mjs';
+
 export const BUILD_STATE_VERSION = 1;
 
 export function buildStatePath(packageRoot) {
@@ -49,10 +51,12 @@ export async function collectBuildInputFiles(packageRoot) {
   const sourceFiles = await walkFiles(join(packageRoot, 'src'));
   return [
     ...sourceFiles,
+    ...BUILD_ASSETS.map((asset) => asset.source),
     join(packageRoot, 'package.json'),
     join(packageRoot, 'project.config.template.json'),
     join(packageRoot, 'tsconfig.json'),
     join(packageRoot, 'scripts', 'build.mjs'),
+    join(packageRoot, 'scripts', 'build-assets.mjs'),
     join(packageRoot, 'scripts', 'build-state.mjs'),
   ];
 }
