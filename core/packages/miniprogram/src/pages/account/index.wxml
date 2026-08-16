@@ -5,21 +5,41 @@
   <block wx:if="{{loggedIn}}">
     <view class="identity">
       <text class="identity-mark">{{initial}}</text>
-      <view>
+      <view class="identity-copy">
         <text class="identity-name">{{displayName}}</text>
         <text class="identity-wca" wx:if="{{wcaId}}">{{wcaId}}</text>
         <text class="identity-wca" wx:else>尚未绑定 WCA ID</text>
       </view>
     </view>
+
+    <view class="account-sync">
+      <view class="account-sync-heading">
+        <text class="account-sync-title">跨端账号</text>
+        <view class="account-sync-state">
+          <view class="account-sync-dot"></view>
+          <text>已就绪</text>
+        </view>
+      </view>
+      <text class="account-sync-copy">打开 CubeRoot 网站时，会用当前小程序账号安全登录。</text>
+    </view>
+
+    <button class="account-link" bindtap="openAccount">
+      <view class="account-link-copy">
+        <text class="account-link-title">管理账号与登录方式</text>
+        <text class="account-link-description">绑定 WCA 账号，查看其他登录方式</text>
+      </view>
+      <text class="account-link-arrow">›</text>
+    </button>
+
     <button class="text-button logout-button" bindtap="logout">退出登录</button>
   </block>
 
   <block wx:else>
-    <text class="page-intro account-intro">登录后使用与网站相同的 CubeRoot 账号。不会读取你的微信昵称或手机号。</text>
+    <text class="page-intro account-intro">登录后使用与网站相同的 CubeRoot 账号。已在网站通过微信登录过时，会自动识别为同一账号。</text>
     <button class="primary-button login-button" disabled="{{busy}}" bindtap="login">
       {{busy ? '登录中…' : '微信登录'}}
     </button>
-    <text class="union-note">通过同一开放平台的 UnionID 识别账号；拿不到 UnionID 时不会创建重复账号。</text>
+    <text class="union-note">不会读取你的微信昵称或手机号。无法取得 UnionID 时会停止登录，避免创建重复账号。</text>
   </block>
 
   <text class="status-text {{statusError ? 'status-text--error' : ''}}" wx:if="{{status}}">{{status}}</text>
