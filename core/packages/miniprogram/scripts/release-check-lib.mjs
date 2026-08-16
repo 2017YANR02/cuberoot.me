@@ -129,6 +129,14 @@ export function collectReleaseFailures({
     }
   }
 
+  const sourceMaps = builtFiles
+    .map((path) => String(path).replaceAll('\\', '/'))
+    .filter((path) => path.endsWith('.map'))
+    .sort();
+  if (sourceMaps.length > 0) {
+    failures.push(`正式上传包不能包含 source map：${sourceMaps.join('、')}。请重新运行非监听构建。`);
+  }
+
   if (appConfig?.darkmode !== true || appConfig?.themeLocation !== 'theme.json') {
     failures.push('src/app.json 必须开启 darkmode 并将 themeLocation 设为 theme.json。');
   }
