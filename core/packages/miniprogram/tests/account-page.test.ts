@@ -82,6 +82,21 @@ describe('mini program account page', () => {
     expect(openPrivacyContract).toHaveBeenCalledTimes(2);
   });
 
+  it('allows retrying the privacy contract when the platform drops every callback', async () => {
+    vi.useFakeTimers();
+    const openPrivacyContract = vi.fn();
+    const page = await loadPage({ openPrivacyContract });
+
+    page.openPrivacy();
+    page.openPrivacy();
+    expect(openPrivacyContract).toHaveBeenCalledOnce();
+
+    vi.advanceTimersByTime(5_000);
+    page.openPrivacy();
+
+    expect(openPrivacyContract).toHaveBeenCalledTimes(2);
+  });
+
   it('ignores a privacy failure after the account page has been unloaded', async () => {
     let contractOptions: { fail(): void } | undefined;
     const navigateTo = vi.fn();
