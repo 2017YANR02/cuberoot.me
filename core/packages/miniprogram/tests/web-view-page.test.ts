@@ -145,6 +145,47 @@ describe('shared web-view page state', () => {
     expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
   });
 
+  it('does not clear a newer session when an older handoff request is rejected', async () => {
+    const oldToken = 'o'.repeat(20);
+    const newToken = 'n'.repeat(20);
+    let storedSession: unknown = {
+      token: oldToken,
+      user: { name: 'Old account', wcaId: null },
+    };
+    let finishRequest: ((result: { statusCode: number; data: unknown }) => void) | undefined;
+    const removeStorageSync = vi.fn();
+    vi.stubGlobal('wx', {
+      getStorageSync: () => storedSession,
+      removeStorageSync,
+      nextTick(callback: () => void) { callback(); },
+      setNavigationBarTitle,
+      request(options: {
+        success(result: { statusCode: number; data: unknown }): void;
+      }) {
+        finishRequest = options.success;
+      },
+    });
+    const context = createContext();
+    const opening = openWebRoute(context, 'timer');
+
+    storedSession = {
+      token: newToken,
+      user: { name: 'New account', wcaId: null },
+    };
+    finishRequest?.({
+      statusCode: 401,
+      data: { error: 'Authentication required' },
+    });
+    await opening;
+
+    expect(removeStorageSync).not.toHaveBeenCalled();
+    expect(storedSession).toEqual({
+      token: newToken,
+      user: { name: 'New account', wcaId: null },
+    });
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+  });
+
   it('never leaves the shell loading forever when the handoff request does not finish', async () => {
     vi.useFakeTimers();
     vi.stubGlobal('wx', {

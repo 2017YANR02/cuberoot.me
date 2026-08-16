@@ -95,7 +95,10 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
       });
     }
   } catch (error) {
-    if (error instanceof ApiError && error.status === 401) clearStoredSession();
+    if (error instanceof ApiError && error.status === 401) {
+      const currentSession = getStoredSession();
+      if (currentSession?.token === session.token) clearStoredSession();
+    }
     if (isCurrentAttempt(context, attempt)) context.setData({ src: route.url });
   }
   return true;
