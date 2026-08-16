@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { BUILD_STATE_VERSION } from '../scripts/build-state.mjs';
-import { collectReleaseFailures } from '../scripts/release-check-lib.mjs';
+import {
+  PUBLIC_INDEXED_PAGES,
+  collectReleaseFailures,
+} from '../scripts/release-check-lib.mjs';
 
 const validInput = {
   projectConfig: {
@@ -12,6 +15,12 @@ const validInput = {
   },
   privateConfig: {},
   appConfig: { pages: ['pages/timer/index'] },
+  sitemapConfig: {
+    rules: [
+      ...PUBLIC_INDEXED_PAGES.map((page) => ({ action: 'allow', page })),
+      { action: 'disallow', page: '*' },
+    ],
+  },
   confirmedStableVersion: '3.17.1',
   sourceFiles: [{ path: 'src/app.ts', source: 'App({})' }],
   builtFiles: [
@@ -88,6 +97,17 @@ describe('mini program release check', () => {
 
     expect(failures).toContain(
       'dist 缺少构建产物：assets/logo.png、pages/timer/index.wxml、templates/web-route-view.wxml。',
+    );
+  });
+
+  it('rejects search indexing of account and generic web routes', () => {
+    expect(collectReleaseFailures({
+      ...validInput,
+      sitemapConfig: {
+        rules: [{ action: 'allow', page: '*' }],
+      },
+    })).toContain(
+      'sitemap 只能收录计时和发现页，账号页与通用网页壳必须保持禁止收录。',
     );
   });
 
