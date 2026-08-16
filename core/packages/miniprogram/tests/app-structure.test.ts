@@ -19,7 +19,7 @@ const pageFiles = import.meta.glob('../src/pages/**/*.{ts,json,wxml,wxss}', {
   query: '?raw',
 });
 const pageFilePaths = new Set(Object.keys(pageFiles));
-const sourceFiles = import.meta.glob('../src/**/*.{ts,wxml}', {
+const sourceFiles = import.meta.glob('../src/**/*.{ts,wxml,wxss}', {
   eager: true,
   import: 'default',
   query: '?raw',
@@ -135,5 +135,12 @@ describe('mini program app structure', () => {
         expect(button, path).toContain('hover-class="press-feedback"');
       }
     }
+  });
+
+  it('keeps shared native buttons large enough for touch', () => {
+    const appStyles = sourceFiles['../src/app.wxss'];
+
+    expect(appStyles).toMatch(/\.primary-button\s*\{[\s\S]*?min-height:\s*88rpx;/);
+    expect(appStyles).toMatch(/\.text-button\s*\{[\s\S]*?min-height:\s*88rpx;/);
   });
 });
