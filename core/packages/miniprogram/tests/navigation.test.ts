@@ -39,6 +39,20 @@ describe('mini program website navigation', () => {
     expect(showToast).toHaveBeenCalledTimes(2);
   });
 
+  it('reports a synchronous navigation rejection to the caller', () => {
+    const showToast = vi.fn();
+    const navigateTo = vi.fn(() => {
+      throw new Error('navigation unavailable');
+    });
+    vi.stubGlobal('wx', { navigateTo, showToast });
+    const owner = {};
+
+    expect(openWebsitePageOnce(owner, 'timer', { failureMessage: '打开失败' })).toBe(false);
+    expect(openWebsitePageOnce(owner, 'timer', { failureMessage: '打开失败' })).toBe(false);
+    expect(navigateTo).toHaveBeenCalledTimes(2);
+    expect(showToast).toHaveBeenCalledTimes(2);
+  });
+
   it('rejects a destination outside the shared route registry', () => {
     const navigateTo = vi.fn();
     const showToast = vi.fn();
