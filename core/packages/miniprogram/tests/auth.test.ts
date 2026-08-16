@@ -5,6 +5,7 @@ import {
   clearStoredSession,
   createWebSessionTicket,
   getStoredSession,
+  getStoredSessionSnapshot,
   loginErrorMessage,
   loginWithWechat,
   validateStoredSession,
@@ -60,6 +61,10 @@ describe('mini program authentication', () => {
     });
 
     expect(getStoredSession()).toBeNull();
+    expect(getStoredSessionSnapshot()).toEqual({
+      status: 'unavailable',
+      session: null,
+    });
   });
 
   it('reports whether a local session was actually removed', () => {
