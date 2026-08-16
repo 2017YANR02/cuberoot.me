@@ -132,6 +132,18 @@ describe('component reuse rule registry', () => {
     }
   });
 
+  it('keeps WCA metrics and timer rolling statistics on CompactSelect', () => {
+    const surfaces = [
+      join(ROOT, 'components', 'wca-stats', 'WcaStatView.views.tsx'),
+      join(ROOT, 'app', '[lang]', 'timer', '_components', 'RollingStatsPicker.tsx'),
+    ];
+    for (const file of surfaces) {
+      const source = readFileSync(file, 'utf8');
+      expect(source, relative(ROOT, file)).toContain("from '@/components/CompactSelect'");
+      expect(source, relative(ROOT, file)).toContain('<CompactSelect');
+    }
+  });
+
   it('allows status crosses, text buttons, the shared component, and reasoned exceptions', () => {
     expect(scanComponentReimplementations('<span><X size={13} /> Unsolved</span>')).toEqual([]);
     expect(scanComponentReimplementations('<button onClick={onClose}>Close</button>')).toEqual([]);

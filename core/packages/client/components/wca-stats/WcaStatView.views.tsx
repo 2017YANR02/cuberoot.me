@@ -4,15 +4,12 @@
 // Extracted verbatim from WcaStatView.tsx — each takes explicit props, no shared
 // closure state with the orchestrator. Composition among them (PanelsView →
 // Aox/SectionsView, MetricPanelsView → SourcePanelsView → PanelsView) is internal.
-// Two guard-forced, behavior-preserving adaptations vs the original inline code:
-//   1. the four `isZh ? '<literal>' : '<literal>'` text ternaries → tr({zh,en})
-//      (parent derives the isZh prop from the same global i18n.language);
-//   2. the metric-pill toggle <div> gained role="button"/tabIndex/onKeyDown (it
-//      can't be a real <button> — it wraps the nested option dropdown — and this
-//      is the iOS-tap / a11y fix the static-onclick guard asks for).
+// Guard-forced adaptation vs the original inline code: the four
+// `isZh ? '<literal>' : '<literal>'` text ternaries use tr({zh,en}).
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { BarChart3, Play, Pause, ChevronRight, ChevronDown } from 'lucide-react';
+import { BarChart3, Play, Pause, ChevronRight } from 'lucide-react';
 import BoolToggle from '@/components/BoolToggle';
+import { CompactSelect } from '@/components/CompactSelect';
 import { countryToIso2 } from '@/lib/country-flags';
 import { Flag } from '@/components/Flag';
 import { EVENT_NAME_TO_ID } from '@/lib/event-constants';
@@ -585,20 +582,6 @@ export function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh,
   activePanel: number;
   belowTabs?: React.ReactNode;
 }) {
-  const [pillOpen, setPillOpen] = useState(false);
-  const pillRef = React.useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!pillOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (pillRef.current && !pillRef.current.contains(e.target as Node)) {
-        setPillOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [pillOpen]);
-
   const metricHasData = useMemo(() => {
     const map = new Map<number, boolean>();
     metricPanels.forEach((mp, idx) => {
@@ -669,32 +652,18 @@ export function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh,
           ))}
         </div>
       ) : (
-        <div
-          ref={pillRef}
-          className="wca-stats-metric-pill"
-          role="button"
-          tabIndex={0}
-          onClick={() => setPillOpen(o => !o)}
-          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPillOpen(o => !o); } }}
-        >
-          <span>{currentLabel}</span>
-          <ChevronDown size={14} strokeWidth={2} className={`wca-stats-metric-pill-arrow${pillOpen ? ' open' : ''}`} />
-          {pillOpen && (
-            <div className="wca-stats-metric-dropdown" onClick={e => e.stopPropagation()}>
-              {allMetricItems.map(({ idx, label, disabled }) => (
-                <button
-                  key={idx}
-                  className={`wca-stats-metric-option${idx === activeMetric ? ' active' : ''}${disabled ? ' disabled' : ''}`}
-                  onClick={() => {
-                    if (!disabled) { onSetActiveMetric(idx); setPillOpen(false); }
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <CompactSelect
+          className="wca-stats-metric-select"
+          label={currentLabel}
+          items={allMetricItems.map(({ idx, label, disabled }) => ({
+            value: idx,
+            label,
+            disabled,
+          }))}
+          value={activeMetric}
+          onChange={onSetActiveMetric}
+          ariaLabel={tr({ zh: '统计指标', en: 'Statistic metric' })}
+        />
       ))}
 
       {metric && metric.sourcePanels ? (

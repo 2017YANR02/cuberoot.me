@@ -43,6 +43,16 @@ export function sanitizeRollingStatColumns(
     .map(definition => definition.key);
 }
 
+/** Keep both statistic slots populated, including for old saved 0/1-column states. */
+export function normalizeRollingStatColumns(raw: unknown): RollingStatKey[] {
+  const columns = sanitizeRollingStatColumns(raw);
+  for (const fallback of DEFAULT_ROLLING_STAT_COLUMNS) {
+    if (columns.length >= MAX_ROLLING_STAT_COLUMNS) break;
+    if (!columns.includes(fallback)) columns.push(fallback);
+  }
+  return sanitizeRollingStatColumns(columns);
+}
+
 export function rollingStatReplacementOptions(columns: readonly RollingStatKey[]): RollingStatKey[] {
   const selected = new Set(sanitizeRollingStatColumns(columns));
   return ROLLING_STAT_PRESETS.filter(key => !selected.has(key));

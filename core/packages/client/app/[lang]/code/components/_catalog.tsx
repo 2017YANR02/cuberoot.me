@@ -29,6 +29,7 @@ import { SortArrow } from '@/components/SortArrow';
 import { ClearButton } from '@/components/ClearButton';
 import { SearchInput } from '@/components/SearchInput';
 import { ListSelect } from '@/components/ListSelect';
+import { CompactSelect } from '@/components/CompactSelect';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import { ParamSliders, type ParamSliderSpec } from '@/components/ParamSliders';
@@ -370,6 +371,20 @@ function ListSelectDemo() {
     }), country: 'tw' },
   ];
   return <ListSelect items={items} value={v} onChange={setV} allLabel={isZh ? '全部' : 'All'} searchable />;
+}
+
+function CompactSelectDemo() {
+  const [value, setValue] = useState('ao5');
+  const items = ['mo3', 'ao5', 'ao12', 'ao100'].map(item => ({ value: item, label: item }));
+  return (
+    <CompactSelect
+      label={value}
+      items={items}
+      value={value}
+      onChange={setValue}
+      ariaLabel={tr({ zh: '统计指标', en: 'Statistic metric' })}
+    />
+  );
 }
 
 function VariantSelectDemo() {
@@ -868,6 +883,15 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Generic filter dropdown: button + popup with flags, search, × clear and an (empty) bucket. The caller pre-formats labels; the component does no i18n.',
     usage: '<ListSelect items={items} value={v} onChange={setV} allLabel="All" searchable />',
     Demo: ListSelectDemo,
+  },
+  {
+    name: 'CompactSelect',
+    import: "import { CompactSelect } from '@/components/CompactSelect';",
+    category: 'input',
+    zh: '紧凑单选菜单，支持药丸或无框触发器、禁用项、自定义页脚，并通过 body portal 自动避让视口。',
+    en: 'Compact single-choice menu with pill or plain triggers, disabled items, a custom footer, and viewport-aware body portal positioning.',
+    usage: '<CompactSelect label={label} items={items} value={value} onChange={setValue} ariaLabel="Metric" />',
+    Demo: CompactSelectDemo,
   },
   {
     name: 'VariantSelect',
