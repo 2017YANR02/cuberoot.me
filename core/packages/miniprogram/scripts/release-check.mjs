@@ -9,7 +9,10 @@ import {
   readBuildState,
   walkFiles,
 } from './build-state.mjs';
-import { collectReleaseFailures } from './release-check-lib.mjs';
+import {
+  collectReleaseFailures,
+  isReleaseAuditTextFile,
+} from './release-check-lib.mjs';
 
 const packageRoot = resolve(import.meta.dirname, '..');
 const sourceRoot = join(packageRoot, 'src');
@@ -31,16 +34,20 @@ const sitemapConfig = await readJson(join(sourceRoot, 'sitemap.json'));
 const buildState = await readBuildState(packageRoot);
 const sourceFiles = [];
 for (const file of await walkFiles(sourceRoot)) {
+  const path = normalizedRelativePath(packageRoot, file);
   sourceFiles.push({
-    path: normalizedRelativePath(packageRoot, file),
-    source: await readFile(file, 'utf8'),
+    path,
+    source: isReleaseAuditTextFile(path) ? await readFile(file, 'utf8') : null,
   });
 }
 const outputFiles = await walkFiles(outputRoot, { missingOk: true });
-const uploadFiles = await Promise.all(outputFiles.map(async (file) => ({
-  path: normalizedRelativePath(outputRoot, file),
-  source: await readFile(file, 'utf8'),
-})));
+const uploadFiles = await Promise.all(outputFiles.map(async (file) => {
+  const path = normalizedRelativePath(outputRoot, file);
+  return {
+    path,
+    source: isReleaseAuditTextFile(path) ? await readFile(file, 'utf8') : null,
+  };
+}));
 const builtFileSizes = await Promise.all(outputFiles.map(async (file) => ({
   path: normalizedRelativePath(outputRoot, file),
   bytes: (await stat(file)).size,

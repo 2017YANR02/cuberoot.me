@@ -9,6 +9,7 @@ import {
   PUBLIC_INDEXED_PAGES,
   PRODUCTION_APP_ID,
   collectReleaseFailures,
+  isReleaseAuditTextFile,
 } from '../scripts/release-check-lib.mjs';
 
 function sizesFor(paths, bytes = 1) {
@@ -99,6 +100,14 @@ const validInput = {
 };
 
 describe('mini program release check', () => {
+  it('scans code-like and unknown files without decoding known binary assets', () => {
+    expect(isReleaseAuditTextFile('src/app.ts')).toBe(true);
+    expect(isReleaseAuditTextFile('src/.env')).toBe(true);
+    expect(isReleaseAuditTextFile('dist/runtime.custom')).toBe(true);
+    expect(isReleaseAuditTextFile('src/assets/logo.PNG')).toBe(false);
+    expect(isReleaseAuditTextFile('dist/engine.wasm')).toBe(false);
+  });
+
   it('accepts a production-shaped configuration', () => {
     expect(collectReleaseFailures(validInput)).toEqual([]);
   });
@@ -352,6 +361,13 @@ describe('mini program release check', () => {
       'app.js 包含小程序 AppSecret；小程序源码和上传包禁止保存服务端凭据。',
       'pages/timer/index.js 使用了蓝牙能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
     ]);
+  });
+
+  it('ignores binary content placeholders while retaining their release metadata', () => {
+    expect(collectReleaseFailures({
+      ...validInput,
+      uploadFiles: [{ path: 'assets/logo.png', source: null }],
+    })).toEqual([]);
   });
 
   it('reports one finding when source and upload output contain the same sensitive content', () => {
