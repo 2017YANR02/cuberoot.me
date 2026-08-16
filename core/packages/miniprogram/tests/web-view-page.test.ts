@@ -20,6 +20,7 @@ function createContext(): WebViewPageContext {
 
 describe('shared web-view page state', () => {
   const hideShareMenu = vi.fn();
+  const getNetworkType = vi.fn();
   const setNavigationBarTitle = vi.fn();
   const showShareMenu = vi.fn();
   const networkListeners = new Set<WechatMiniprogram.OnNetworkStatusChangeCallback>();
@@ -27,6 +28,7 @@ describe('shared web-view page state', () => {
   beforeEach(() => {
     networkListeners.clear();
     vi.stubGlobal('wx', {
+      getNetworkType,
       getStorageSync: () => null,
       hideShareMenu,
       offNetworkStatusChange(listener: WechatMiniprogram.OnNetworkStatusChangeCallback) {
@@ -47,6 +49,7 @@ describe('shared web-view page state', () => {
   afterEach(() => {
     vi.useRealTimers();
     hideShareMenu.mockReset();
+    getNetworkType.mockReset();
     setNavigationBarTitle.mockReset();
     showShareMenu.mockReset();
     vi.unstubAllGlobals();
@@ -146,9 +149,11 @@ describe('shared web-view page state', () => {
     const context = createContext();
     const options = createWebViewPageOptions('timer') as unknown as {
       onLoad(this: WebViewPageContext, options: Record<string, string>): void;
+      onShow(this: WebViewPageContext): void;
     };
 
     options.onLoad.call(context, {});
+    options.onShow.call(context);
     await Promise.resolve();
     markWebRouteFailed(context);
 
@@ -174,10 +179,12 @@ describe('shared web-view page state', () => {
     const context = createContext();
     const options = createWebViewPageOptions('timer') as unknown as {
       onLoad(this: WebViewPageContext, options: Record<string, string>): void;
+      onShow(this: WebViewPageContext): void;
       onUnload(this: WebViewPageContext): void;
     };
 
     options.onLoad.call(context, {});
+    options.onShow.call(context);
     await Promise.resolve();
     markWebRouteFailed(context);
     const [listener] = [...networkListeners];
@@ -189,6 +196,39 @@ describe('shared web-view page state', () => {
 
     expect(context.data.src).toBe('');
     expect(setNavigationBarTitle).toHaveBeenCalledTimes(1);
+  });
+
+  it('pauses recovery while hidden and checks connectivity when shown again', async () => {
+    const context = createContext();
+    const options = createWebViewPageOptions('timer') as unknown as {
+      onHide(this: WebViewPageContext): void;
+      onLoad(this: WebViewPageContext, query: Record<string, string>): void;
+      onShow(this: WebViewPageContext): void;
+    };
+
+    options.onLoad.call(context, {});
+    options.onShow.call(context);
+    await Promise.resolve();
+    markWebRouteFailed(context);
+    const [hiddenListener] = [...networkListeners];
+
+    options.onHide.call(context);
+    expect(networkListeners.size).toBe(0);
+    hiddenListener({ isConnected: true, networkType: 'wifi' });
+    await Promise.resolve();
+    expect(context.data.errorTitle).toBe('网页加载失败');
+
+    getNetworkType.mockImplementationOnce(({ success }) => {
+      success?.({ networkType: 'wifi' });
+    });
+    options.onShow.call(context);
+    await Promise.resolve();
+
+    expect(getNetworkType).toHaveBeenCalledTimes(1);
+    expect(networkListeners.size).toBe(1);
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.errorTitle).toBe('');
+    expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
   });
 
   it('keeps manual retry available when network observation throws', async () => {
@@ -204,10 +244,12 @@ describe('shared web-view page state', () => {
     const context = createContext();
     const options = createWebViewPageOptions('timer') as unknown as {
       onLoad(this: WebViewPageContext, options: Record<string, string>): void;
+      onShow(this: WebViewPageContext): void;
       retry(this: WebViewPageContext): void;
     };
 
     expect(() => options.onLoad.call(context, {})).not.toThrow();
+    expect(() => options.onShow.call(context)).not.toThrow();
     await Promise.resolve();
     markWebRouteFailed(context);
     options.retry.call(context);
