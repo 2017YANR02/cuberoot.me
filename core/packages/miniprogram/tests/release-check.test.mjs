@@ -14,7 +14,45 @@ const validInput = {
     setting: { urlCheck: true },
   },
   privateConfig: {},
-  appConfig: { pages: ['pages/timer/index'] },
+  appConfig: {
+    pages: ['pages/timer/index'],
+    darkmode: true,
+    themeLocation: 'theme.json',
+    window: {
+      backgroundColor: '@backgroundColor',
+      backgroundTextStyle: '@backgroundTextStyle',
+      navigationBarBackgroundColor: '@navigationBarBackgroundColor',
+      navigationBarTextStyle: '@navigationBarTextStyle',
+    },
+    tabBar: {
+      color: '@tabBarColor',
+      selectedColor: '@tabBarSelectedColor',
+      backgroundColor: '@tabBarBackgroundColor',
+      borderStyle: '@tabBarBorderStyle',
+    },
+  },
+  themeConfig: {
+    light: {
+      backgroundColor: '#fafafa',
+      backgroundTextStyle: 'dark',
+      navigationBarBackgroundColor: '#fafafa',
+      navigationBarTextStyle: 'black',
+      tabBarColor: '#737373',
+      tabBarSelectedColor: '#c15f3c',
+      tabBarBackgroundColor: '#fafafa',
+      tabBarBorderStyle: 'white',
+    },
+    dark: {
+      backgroundColor: '#111111',
+      backgroundTextStyle: 'light',
+      navigationBarBackgroundColor: '#111111',
+      navigationBarTextStyle: 'white',
+      tabBarColor: '#a3a3a3',
+      tabBarSelectedColor: '#d47a58',
+      tabBarBackgroundColor: '#111111',
+      tabBarBorderStyle: 'black',
+    },
+  },
   sitemapConfig: {
     rules: [
       ...PUBLIC_INDEXED_PAGES.map((page) => ({ action: 'allow', page })),
@@ -141,5 +179,47 @@ describe('mini program release check', () => {
       'src/pages/device/index.ts 使用了蓝牙能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
       'src/pages/login/index.wxml 使用了手机号能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
     ]);
+  });
+
+  it('blocks incomplete native theme configuration', () => {
+    const failures = collectReleaseFailures({
+      ...validInput,
+      appConfig: {
+        ...validInput.appConfig,
+        darkmode: false,
+        tabBar: {
+          ...validInput.appConfig.tabBar,
+          selectedColor: '#c15f3c',
+        },
+      },
+      themeConfig: {
+        ...validInput.themeConfig,
+        dark: {
+          ...validInput.themeConfig.dark,
+          navigationBarTextStyle: '',
+        },
+      },
+    });
+
+    expect(failures).toEqual(expect.arrayContaining([
+      'src/app.json 必须开启 darkmode 并将 themeLocation 设为 theme.json。',
+      '原生窗口和 tabBar 必须完整引用 theme.json 变量：tabBar.selectedColor。',
+      'theme.json 必须完整定义浅色和深色原生主题：dark.navigationBarTextStyle。',
+    ]));
+  });
+
+  it('blocks credentials from entering the upload package', () => {
+    const failures = collectReleaseFailures({
+      ...validInput,
+      sourceFiles: [
+        { path: 'src/config.ts', source: "const appSecret = 'do-not-upload';" },
+        { path: 'src/key.pem', source: '-----BEGIN PRIVATE KEY-----' },
+      ],
+    });
+
+    expect(failures).toEqual(expect.arrayContaining([
+      'src/config.ts 包含小程序 AppSecret；小程序源码和上传包禁止保存服务端凭据。',
+      'src/key.pem 包含私钥；小程序源码和上传包禁止保存服务端凭据。',
+    ]));
   });
 });

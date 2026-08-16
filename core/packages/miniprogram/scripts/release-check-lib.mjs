@@ -10,6 +10,36 @@ const sensitiveCapabilities = [
   ['手机号', /open-type\s*=\s*["']getPhoneNumber["']/],
 ];
 
+const forbiddenCredentials = [
+  [
+    '小程序 AppSecret',
+    /\b(?:WECHAT_MINI_APP_SECRET|APP_SECRET|appSecret|app_secret)\b\s*(?::|=)\s*["'`][^"'`\r\n]+["'`]/i,
+  ],
+  ['私钥', /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/],
+];
+
+const nativeThemeReferences = [
+  ['window.backgroundColor', '@backgroundColor'],
+  ['window.backgroundTextStyle', '@backgroundTextStyle'],
+  ['window.navigationBarBackgroundColor', '@navigationBarBackgroundColor'],
+  ['window.navigationBarTextStyle', '@navigationBarTextStyle'],
+  ['tabBar.color', '@tabBarColor'],
+  ['tabBar.selectedColor', '@tabBarSelectedColor'],
+  ['tabBar.backgroundColor', '@tabBarBackgroundColor'],
+  ['tabBar.borderStyle', '@tabBarBorderStyle'],
+];
+
+const nativeThemeKeys = [
+  'backgroundColor',
+  'backgroundTextStyle',
+  'navigationBarBackgroundColor',
+  'navigationBarTextStyle',
+  'tabBarColor',
+  'tabBarSelectedColor',
+  'tabBarBackgroundColor',
+  'tabBarBorderStyle',
+];
+
 export const PUBLIC_INDEXED_PAGES = [
   'pages/timer/index',
   'pages/tools/index',
@@ -23,10 +53,15 @@ function hasExpectedSitemapPolicy(sitemapConfig) {
   return JSON.stringify(sitemapConfig?.rules) === JSON.stringify(expectedRules);
 }
 
+function valueAtPath(source, path) {
+  return path.split('.').reduce((value, key) => value?.[key], source);
+}
+
 export function collectReleaseFailures({
   projectConfig,
   privateConfig = {},
   appConfig,
+  themeConfig,
   sitemapConfig,
   confirmedStableVersion = '',
   sourceFiles = [],
@@ -94,6 +129,26 @@ export function collectReleaseFailures({
     }
   }
 
+  if (appConfig?.darkmode !== true || appConfig?.themeLocation !== 'theme.json') {
+    failures.push('src/app.json 必须开启 darkmode 并将 themeLocation 设为 theme.json。');
+  }
+
+  const invalidThemeReferences = nativeThemeReferences
+    .filter(([path, expected]) => valueAtPath(appConfig, path) !== expected)
+    .map(([path]) => path);
+  if (invalidThemeReferences.length > 0) {
+    failures.push(`原生窗口和 tabBar 必须完整引用 theme.json 变量：${invalidThemeReferences.join('、')}。`);
+  }
+
+  const invalidThemeValues = ['light', 'dark'].flatMap((mode) => (
+    nativeThemeKeys
+      .filter((key) => typeof themeConfig?.[mode]?.[key] !== 'string' || themeConfig[mode][key].length === 0)
+      .map((key) => `${mode}.${key}`)
+  ));
+  if (invalidThemeValues.length > 0) {
+    failures.push(`theme.json 必须完整定义浅色和深色原生主题：${invalidThemeValues.join('、')}。`);
+  }
+
   if (!buildState || buildState.version !== BUILD_STATE_VERSION) {
     failures.push('缺少有效的小程序构建状态，请重新运行 build。');
   } else {
@@ -112,6 +167,10 @@ export function collectReleaseFailures({
   }
 
   for (const { path, source } of sourceFiles) {
+    for (const [label, pattern] of forbiddenCredentials) {
+      if (!pattern.test(source)) continue;
+      failures.push(`${path} 包含${label}；小程序源码和上传包禁止保存服务端凭据。`);
+    }
     for (const [label, pattern] of sensitiveCapabilities) {
       if (!pattern.test(source)) continue;
       failures.push(
