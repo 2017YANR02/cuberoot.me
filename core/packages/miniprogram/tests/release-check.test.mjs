@@ -298,4 +298,31 @@ describe('mini program release check', () => {
       'src/key.pem 包含私钥；小程序源码和上传包禁止保存服务端凭据。',
     ]));
   });
+
+  it('audits the actual upload output for generated sensitive content', () => {
+    const failures = collectReleaseFailures({
+      ...validInput,
+      uploadFiles: [
+        { path: 'app.js', source: "const appSecret = 'generated-secret';" },
+        { path: 'pages/timer/index.js', source: 'wx.openBluetoothAdapter({})' },
+      ],
+    });
+
+    expect(failures).toEqual([
+      'app.js 包含小程序 AppSecret；小程序源码和上传包禁止保存服务端凭据。',
+      'pages/timer/index.js 使用了蓝牙能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+    ]);
+  });
+
+  it('reports one finding when source and upload output contain the same sensitive content', () => {
+    const failures = collectReleaseFailures({
+      ...validInput,
+      sourceFiles: [{ path: 'src/pages/device/index.ts', source: 'wx.openBluetoothAdapter({})' }],
+      uploadFiles: [{ path: 'pages/device/index.js', source: 'wx.openBluetoothAdapter({})' }],
+    });
+
+    expect(failures).toEqual([
+      'src/pages/device/index.ts、pages/device/index.js 使用了蓝牙能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+    ]);
+  });
 });

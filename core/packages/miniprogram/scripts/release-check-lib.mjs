@@ -74,6 +74,7 @@ export function collectReleaseFailures({
   confirmedStableVersion = '',
   confirmedSecretRotation = false,
   sourceFiles = [],
+  uploadFiles = [],
   builtFiles = [],
   builtFileSizes = [],
   buildState = null,
@@ -228,17 +229,22 @@ export function collectReleaseFailures({
     }
   }
 
-  for (const { path, source } of sourceFiles) {
-    for (const [label, pattern] of forbiddenCredentials) {
-      if (!pattern.test(source)) continue;
-      failures.push(`${path} 包含${label}；小程序源码和上传包禁止保存服务端凭据。`);
-    }
-    for (const [label, pattern] of sensitiveCapabilities) {
-      if (!pattern.test(source)) continue;
-      failures.push(
-        `${path} 使用了${label}能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。`,
-      );
-    }
+  const auditedFiles = [...sourceFiles, ...uploadFiles];
+  for (const [label, pattern] of forbiddenCredentials) {
+    const paths = auditedFiles
+      .filter(({ source }) => pattern.test(source))
+      .map(({ path }) => path);
+    if (paths.length === 0) continue;
+    failures.push(`${paths.join('、')} 包含${label}；小程序源码和上传包禁止保存服务端凭据。`);
+  }
+  for (const [label, pattern] of sensitiveCapabilities) {
+    const paths = auditedFiles
+      .filter(({ source }) => pattern.test(source))
+      .map(({ path }) => path);
+    if (paths.length === 0) continue;
+    failures.push(
+      `${paths.join('、')} 使用了${label}能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。`,
+    );
   }
 
   return failures;
