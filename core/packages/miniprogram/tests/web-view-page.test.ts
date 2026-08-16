@@ -127,6 +127,30 @@ describe('shared web-view page state', () => {
     expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
   });
 
+  it('coalesces repeated retry taps into one route reopen', async () => {
+    const nextTickCallbacks: Array<() => void> = [];
+    vi.stubGlobal('wx', {
+      getStorageSync: () => null,
+      removeStorageSync: vi.fn(),
+      nextTick(callback: () => void) {
+        nextTickCallbacks.push(callback);
+      },
+      setNavigationBarTitle,
+    });
+    const context = createContext();
+    await openWebRoute(context, 'timer');
+    markWebRouteFailed(context);
+
+    retryWebRoute(context);
+    retryWebRoute(context);
+
+    expect(nextTickCallbacks).toHaveLength(1);
+    nextTickCallbacks[0]();
+    await Promise.resolve();
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
+  });
+
   it('uses a one-time handoff ticket when a Mini Program session exists', async () => {
     const token = 't'.repeat(20);
     const ticket = 'A'.repeat(43);
@@ -375,6 +399,38 @@ describe('shared web-view page state', () => {
 
     expect(context.data.src).toBe('');
     expect(setNavigationBarTitle).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not reopen an old route after the same page instance is reused', async () => {
+    let runOldNextTick: (() => void) | undefined;
+    vi.stubGlobal('wx', {
+      getStorageSync: () => null,
+      removeStorageSync: vi.fn(),
+      nextTick(callback: () => void) {
+        runOldNextTick = callback;
+      },
+      setNavigationBarTitle,
+    });
+    const context = createContext();
+    const options = createWebViewPageOptions() as unknown as {
+      onLoad(this: WebViewPageContext, query: { key: string }): void;
+      onUnload(this: WebViewPageContext): void;
+      retry(this: WebViewPageContext): void;
+    };
+
+    options.onLoad.call(context, { key: 'alg' });
+    await Promise.resolve();
+    markWebRouteFailed(context);
+    options.retry.call(context);
+    options.onUnload.call(context);
+    options.onLoad.call(context, { key: 'timer' });
+    await Promise.resolve();
+
+    runOldNextTick?.();
+    await Promise.resolve();
+    expect(context.data.routeKey).toBe('timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
   });
 
   it('does not open a route after the page has been unloaded', async () => {
