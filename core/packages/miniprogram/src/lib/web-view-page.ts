@@ -37,6 +37,12 @@ interface WebViewPageMethods {
 
 const routeAttempts = new WeakMap<WebViewPageContext, number>();
 const disposedPages = new WeakSet<WebViewPageContext>();
+type NetworkStatusCallback = (
+  result: WechatMiniprogram.OnNetworkStatusChangeListenerResult
+    | WechatMiniprogram.GeneralCallbackResult
+) => void;
+
+const networkListeners = new WeakMap<WebViewPageContext, NetworkStatusCallback>();
 const RETRY_SCHEDULER_GRACE_MS = 100;
 
 interface RetrySchedule {
@@ -63,6 +69,37 @@ function cancelScheduledRetry(context: WebViewPageContext): void {
   if (schedule.timer === undefined) return;
 
   clearRuntimeTimeout(schedule.timer);
+}
+
+function stopNetworkRecovery(context: WebViewPageContext): void {
+  const listener = networkListeners.get(context);
+  if (!listener) return;
+
+  // Delete first so a listener the platform fails to remove becomes inert.
+  networkListeners.delete(context);
+  try {
+    wx.offNetworkStatusChange(listener);
+  } catch {
+    // Lifecycle state is already closed; optional platform cleanup may fail.
+  }
+}
+
+function startNetworkRecovery(context: WebViewPageContext): void {
+  stopNetworkRecovery(context);
+
+  const listener: NetworkStatusCallback = (result) => {
+    if (networkListeners.get(context) !== listener) return;
+    if (!('isConnected' in result)) return;
+    if (!result.isConnected || disposedPages.has(context) || !context.data.canRetry) return;
+    retryWebRoute(context);
+  };
+
+  try {
+    wx.onNetworkStatusChange(listener);
+    networkListeners.set(context, listener);
+  } catch {
+    // Manual retry remains available when network observation is unsupported.
+  }
 }
 
 function updateNavigationTitle(title: string): void {
@@ -164,6 +201,7 @@ export function markWebRouteFailed(
 
 export function cancelWebRoute(context: WebViewPageContext): void {
   cancelScheduledRetry(context);
+  stopNetworkRecovery(context);
   disposedPages.add(context);
   beginRouteAttempt(context);
 }
@@ -214,6 +252,7 @@ export function createWebViewPageOptions(
     onLoad(options) {
       cancelScheduledRetry(this);
       disposedPages.delete(this);
+      startNetworkRecovery(this);
       void openWebRoute(this, fixedRouteKey ?? options.key);
     },
 
