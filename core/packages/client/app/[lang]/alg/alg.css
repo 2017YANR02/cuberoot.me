@@ -635,6 +635,32 @@ html[data-theme=dark] .alg-root {
   .alg-pdf-menu-item {
     min-block-size: 44px;
   }
+  /* 保留紧凑滑轨视觉，同时让整块透明命中区达到 44px。 */
+  .alg-cat-header .alg-view-toggle {
+    margin-block: 8px;
+  }
+  .alg-cat-header .alg-view-toggle::after {
+    content: '';
+    position: absolute;
+    inset-block: -9px;
+    inset-inline: 0;
+    z-index: 1;
+  }
+  .alg-cat-header .alg-sq1-black-top-toggle,
+  .alg-cat-header .alg-sq1-black-top-toggle .bool-toggle-label {
+    min-block-size: 44px;
+  }
+  .alg-cat-header .alg-sq1-black-top-toggle .bool-toggle-label {
+    display: inline-flex;
+    align-items: center;
+  }
+  .alg-cat-header .alg-sq1-black-top-toggle .pill-toggle--switch::after {
+    content: '';
+    position: absolute;
+    inset-block: -12px;
+    inset-inline: -3px;
+    z-index: 1;
+  }
   .alg-case-setup-copy,
   .alg-mirror-toggle,
   .alg-alg-copy-btn {
