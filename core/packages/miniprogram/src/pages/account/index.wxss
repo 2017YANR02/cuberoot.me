@@ -81,7 +81,7 @@
 
 .account-sync-state {
   align-items: center;
-  color: var(--cr-ready);
+  color: var(--cr-muted);
   display: flex;
   font-size: 23rpx;
   font-weight: 620;
@@ -89,8 +89,16 @@
   white-space: nowrap;
 }
 
+.account-sync-state--ready {
+  color: var(--cr-ready);
+}
+
+.account-sync-state--error {
+  color: var(--cr-danger);
+}
+
 .account-sync-dot {
-  background: var(--cr-ready);
+  background: currentColor;
   border-radius: 50%;
   height: 10rpx;
   width: 10rpx;
