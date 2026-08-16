@@ -355,4 +355,44 @@ describe('shared web-view page state', () => {
     expect(context.data.src).toBe('');
     expect(setNavigationBarTitle).toHaveBeenCalledTimes(1);
   });
+
+  it('does not open a route after the page has been unloaded', async () => {
+    const request = vi.fn();
+    vi.stubGlobal('wx', {
+      getStorageSync: () => ({
+        token: 't'.repeat(20),
+        user: { name: 'CubeRoot', wcaId: null },
+      }),
+      nextTick(callback: () => void) { callback(); },
+      removeStorageSync: vi.fn(),
+      request,
+      setNavigationBarTitle,
+    });
+    const context = createContext();
+    const initialData = { ...context.data };
+    const options = createWebViewPageOptions('timer') as unknown as {
+      onUnload(this: WebViewPageContext): void;
+    };
+
+    options.onUnload.call(context);
+
+    await expect(openWebRoute(context, 'timer')).resolves.toBe(false);
+    expect(context.data).toEqual(initialData);
+    expect(request).not.toHaveBeenCalled();
+    expect(setNavigationBarTitle).not.toHaveBeenCalled();
+  });
+
+  it('allows a page instance to load again after a completed lifecycle', () => {
+    const context = createContext();
+    const options = createWebViewPageOptions('timer') as unknown as {
+      onLoad(this: WebViewPageContext, options: Record<string, string>): void;
+      onUnload(this: WebViewPageContext): void;
+    };
+
+    options.onUnload.call(context);
+    options.onLoad.call(context, {});
+
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '计时器' });
+  });
 });
