@@ -185,6 +185,22 @@ describe('mini program app structure', () => {
     expect(appStyles).toMatch(/\.text-button\s*\{[\s\S]*?min-height:\s*88rpx;/);
   });
 
+  it('keeps native copy readable when WeChat enlarges text', () => {
+    const appStyles = sourceFiles['../src/app.wxss'];
+    const accountStyles = pageFiles['../src/pages/account/index.wxss'];
+    const toolStyles = pageFiles['../src/pages/tools/index.wxss'];
+
+    expect(appStyles).toMatch(/page\s*\{[\s\S]*?text-size-adjust:\s*100%;/);
+    expect(appStyles).toMatch(/\.page-intro\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
+    expect(appStyles).toMatch(/\.status-text\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
+    expect(accountStyles).toMatch(/\.login-button\s*\{[\s\S]*?display:\s*inline-flex;/);
+    expect(accountStyles).toMatch(/\.login-button\s*\{[\s\S]*?min-width:\s*260rpx;/);
+    expect(accountStyles).not.toMatch(/\.login-button\s*\{[\s\S]*?\n\s*width:\s*260rpx;/);
+    expect(accountStyles).toMatch(/\.account-link-title\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
+    expect(toolStyles).toMatch(/\.tool-name\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
+    expect(toolStyles).toMatch(/\.tool-description\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
+  });
+
   it('lets long tool labels shrink without colliding with their arrow', () => {
     const toolStyles = pageFiles['../src/pages/tools/index.wxss'];
 
