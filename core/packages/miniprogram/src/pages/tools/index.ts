@@ -2,7 +2,7 @@ import {
   cancelWebsiteNavigation,
   openWebsitePageOnce,
 } from '../../lib/navigation';
-import { listWebTools } from '../../lib/web-routes';
+import { listWebTools, resolveToolsPageShare } from '../../lib/web-routes';
 
 Page({
   data: {
@@ -15,6 +15,10 @@ Page({
 
   onUnload() {
     cancelWebsiteNavigation(this);
+  },
+
+  onShareAppMessage() {
+    return resolveToolsPageShare();
   },
 
   openTool(event: WechatMiniprogram.TouchEvent) {
