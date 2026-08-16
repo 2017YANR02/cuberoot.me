@@ -87,7 +87,12 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
   try {
     const { ticket } = await createWebSessionTicket(session);
     if (isCurrentAttempt(context, attempt)) {
-      context.setData({ src: createWebSessionHandoffUrl(route.path, ticket) });
+      const currentSession = getStoredSession();
+      context.setData({
+        src: currentSession?.token === session.token
+          ? createWebSessionHandoffUrl(route.path, ticket)
+          : route.url,
+      });
     }
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) clearStoredSession();
