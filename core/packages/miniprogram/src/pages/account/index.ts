@@ -28,6 +28,10 @@ function pausePage(page: object): void {
   beginValidation(page);
 }
 
+function accountInitial(name: string): string {
+  return Array.from(name)[0]?.toUpperCase() || 'C';
+}
+
 Page({
   data: {
     busy: false,
@@ -89,7 +93,7 @@ Page({
     const name = session?.user.name.trim() || 'CubeRoot 用户';
     this.setData({
       displayName: name,
-      initial: name.slice(0, 1).toUpperCase(),
+      initial: accountInitial(name),
       loggedIn: session !== null,
       wcaId: session?.user.wcaId ?? '',
     });
