@@ -3,6 +3,7 @@ import { ALG_PUZZLES, getAlgSetMeta, type AlgPuzzle } from '@cuberoot/shared/alg
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
+import { normalizeCaseKeysForSet } from '../utils/sq1_cs.js';
 
 export const algTimeAttackOrderRoutes = new Hono();
 
@@ -50,7 +51,11 @@ algTimeAttackOrderRoutes.get('/alg/time-attack-order/:puzzle/:set', async (c) =>
   );
   const row = rows[0];
   if (!row) return c.json({ keys: [], updatedAt: 0 });
-  const keys = Array.isArray(row.case_keys) ? row.case_keys.filter(validCaseKey) : [];
+  const keys = normalizeCaseKeysForSet(
+    target.puzzle,
+    target.setSlug,
+    Array.isArray(row.case_keys) ? row.case_keys.filter(validCaseKey) : [],
+  );
   return c.json({ keys, updatedAt: Number(row.updated_at) });
 });
 
@@ -74,6 +79,7 @@ algTimeAttackOrderRoutes.put('/alg/time-attack-order/:puzzle/:set', async (c) =>
   if (!body.keys.every(validCaseKey) || new Set(body.keys).size !== body.keys.length) {
     return c.json({ error: 'invalid or duplicate case key' }, 400);
   }
+  const keys = normalizeCaseKeysForSet(target.puzzle, target.setSlug, body.keys);
   const now = Date.now();
   const rawUpdatedAt = body.updatedAt;
   const updatedAt = typeof rawUpdatedAt === 'number'
@@ -89,7 +95,7 @@ algTimeAttackOrderRoutes.put('/alg/time-attack-order/:puzzle/:set', async (c) =>
      ON CONFLICT (wca_id, puzzle, set_slug, scope) DO UPDATE
        SET case_keys = EXCLUDED.case_keys, updated_at = EXCLUDED.updated_at
      WHERE alg_chain_orders.updated_at <= EXCLUDED.updated_at`,
-    [authUser.wcaId, target.puzzle, target.setSlug, scope, body.keys, updatedAt],
+    [authUser.wcaId, target.puzzle, target.setSlug, scope, keys, updatedAt],
   );
   return c.json({ ok: true, updatedAt });
 });

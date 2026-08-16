@@ -162,7 +162,7 @@
 .recognition-guide-primary-link {
   display: inline-flex;
   align-items: center;
-  min-height: 42px;
+  min-height: 44px;
   padding: 0 18px;
   border-radius: 999px;
   background: var(--primary);
@@ -224,7 +224,7 @@
 }
 
 .recognition-guide-retry {
-  min-height: 38px;
+  min-height: 44px;
   margin-top: 8px;
   padding: 0 14px;
   border: 1px solid var(--border-default);
@@ -232,6 +232,17 @@
   background: transparent;
   color: var(--foreground);
   cursor: pointer;
+}
+
+.recognition-guide-page .back-home,
+.recognition-guide-text-link {
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+}
+
+.recognition-guide-text-link {
+  display: inline-flex;
 }
 
 .recognition-guide-group {
