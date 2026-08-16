@@ -40,6 +40,7 @@ interface WebViewPageMethods {
 const routeAttempts = new WeakMap<WebViewPageContext, number>();
 const disposedPages = new WeakSet<WebViewPageContext>();
 const visiblePages = new WeakSet<WebViewPageContext>();
+const pausedRouteResumes = new WeakSet<WebViewPageContext>();
 type NetworkStatusCallback = (
   result: WechatMiniprogram.OnNetworkStatusChangeListenerResult
     | WechatMiniprogram.GeneralCallbackResult
@@ -73,6 +74,18 @@ function cancelScheduledRetry(context: WebViewPageContext): boolean {
 
   clearRuntimeTimeout(schedule.timer);
   return true;
+}
+
+function pausePendingRoute(context: WebViewPageContext): void {
+  const hadScheduledRetry = cancelScheduledRetry(context);
+  const hasPendingRoute = context.data.src === ''
+    && context.data.errorTitle === ''
+    && Boolean(resolveWebRoute(context.data.routeKey));
+
+  if (!hadScheduledRetry && !hasPendingRoute) return;
+
+  pausedRouteResumes.add(context);
+  beginRouteAttempt(context);
 }
 
 function stopNetworkRecovery(context: WebViewPageContext): void {
@@ -247,6 +260,7 @@ export function markWebRouteFailed(
 
 export function cancelWebRoute(context: WebViewPageContext): void {
   visiblePages.delete(context);
+  pausedRouteResumes.delete(context);
   cancelScheduledRetry(context);
   stopNetworkRecovery(context);
   disposedPages.add(context);
@@ -298,6 +312,7 @@ export function createWebViewPageOptions(
 
     onLoad(options) {
       cancelScheduledRetry(this);
+      pausedRouteResumes.delete(this);
       disposedPages.delete(this);
       void openWebRoute(this, fixedRouteKey ?? options.key);
     },
@@ -306,12 +321,16 @@ export function createWebViewPageOptions(
       if (disposedPages.has(this)) return;
       visiblePages.add(this);
       startNetworkRecovery(this);
+      if (pausedRouteResumes.delete(this)) {
+        retryWebRoute(this);
+        return;
+      }
       recoverVisibleRouteIfConnected(this);
     },
 
     onHide() {
       visiblePages.delete(this);
-      if (cancelScheduledRetry(this)) markWebRouteFailed(this);
+      pausePendingRoute(this);
       stopNetworkRecovery(this);
     },
 
