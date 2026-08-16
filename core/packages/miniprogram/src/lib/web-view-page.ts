@@ -4,7 +4,11 @@ import {
   createWebSessionTicket,
   getStoredSession,
 } from './auth';
-import { createWebSessionHandoffUrl, resolveWebRoute } from './web-routes';
+import {
+  createWebSessionHandoffUrl,
+  resolveWebRoute,
+  type WebRouteKey,
+} from './web-routes';
 
 export interface WebViewPageData {
   canRetry: boolean;
@@ -17,6 +21,11 @@ export interface WebViewPageData {
 export interface WebViewPageContext {
   data: WebViewPageData;
   setData(data: Partial<WebViewPageData>): void;
+}
+
+interface WebViewPageMethods {
+  handleWebViewError(): void;
+  retry(): void;
 }
 
 const routeAttempts = new WeakMap<WebViewPageContext, number>();
@@ -119,4 +128,28 @@ export function retryWebRoute(context: WebViewPageContext): void {
   wx.nextTick(() => {
     void openWebRoute(context, key);
   });
+}
+
+/**
+ * Keep every web-backed page as a thin route adapter. Loading, session handoff,
+ * errors and retries must stay in this shared controller instead of page files.
+ */
+export function createWebViewPageOptions(
+  fixedRouteKey?: WebRouteKey,
+): WechatMiniprogram.Page.Options<WebViewPageData, WebViewPageMethods> {
+  return {
+    data: createWebViewPageData(),
+
+    onLoad(options) {
+      void openWebRoute(this, fixedRouteKey ?? options.key);
+    },
+
+    handleWebViewError() {
+      markWebRouteFailed(this);
+    },
+
+    retry() {
+      retryWebRoute(this);
+    },
+  };
 }
