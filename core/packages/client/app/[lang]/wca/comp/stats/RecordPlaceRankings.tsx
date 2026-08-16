@@ -49,7 +49,7 @@ type RecordPageSize = typeof RECORD_PAGE_SIZES[number];
 interface RecordDetailModalProps {
   iso2: string;
   city: string | null;
-  metric: RecordMetric;
+  metric: RecordMetric | null;
   isZh: boolean;
   placeName: string;
   onClose: () => void;
@@ -107,6 +107,7 @@ function RecordDetailModal({ iso2, city, metric, isZh, placeName, onClose }: Rec
   const teacherStudentIds = useMemo(() => tableRows.map((row) => row.p), [tableRows]);
   const teacherEventIds = useMemo(() => tableRows.map((row) => row.e), [tableRows]);
   const teacherDirectory = useWcaTeachers(teacherStudentIds, teacherEventIds);
+  const titleMetrics = metric === null ? RECORD_METRICS : [metric];
 
   if (typeof document === 'undefined') return null;
 
@@ -121,10 +122,10 @@ function RecordDetailModal({ iso2, city, metric, isZh, placeName, onClose }: Rec
       <div ref={modalRef} className="cs-record-modal">
         <header className="cs-record-modal-header">
           <div className="cs-record-modal-title-line">
-            <RecordBadge record={metric.toUpperCase()} />
-            <h2 id={titleId} className="cs-record-modal-title">
-              {tr({ zh: `${placeName}纪录明细`, en: `${placeName} record details` })}
-            </h2>
+            {titleMetrics.map((value) => (
+              <RecordBadge key={value} record={value.toUpperCase()} />
+            ))}
+            <h2 id={titleId} className="cs-record-modal-title">{placeName}</h2>
           </div>
           <ClearButton
             variant="standalone"
@@ -136,11 +137,11 @@ function RecordDetailModal({ iso2, city, metric, isZh, placeName, onClose }: Rec
 
         <div className="cs-record-modal-body">
           {failed ? (
-            <div className="cs-record-detail-state">{tr({ zh: '纪录明细暂不可用。', en: 'Record details are unavailable.' })}</div>
+            <div className="cs-record-detail-state">{tr({ zh: '纪录数据暂不可用。', en: 'Record data are unavailable.' })}</div>
           ) : !shard ? (
-            <div className="cs-record-detail-state">{tr({ zh: '正在加载纪录明细…', en: 'Loading record details…' })}</div>
+            <div className="cs-record-detail-state">{tr({ zh: '正在加载纪录…', en: 'Loading records…' })}</div>
           ) : rows.length === 0 ? (
-            <div className="cs-record-detail-state">{tr({ zh: '没有这类纪录明细。', en: 'No records of this type.' })}</div>
+            <div className="cs-record-detail-state">{tr({ zh: '没有这类纪录。', en: 'No records of this type.' })}</div>
           ) : (
             <>
               <div className="cs-record-detail-summary">
@@ -176,7 +177,7 @@ function RecordDetailModal({ iso2, city, metric, isZh, placeName, onClose }: Rec
 interface SelectedRecordPlace {
   iso2: string;
   city: string | null;
-  metric: RecordMetric;
+  metric: RecordMetric | null;
   placeName: string;
 }
 
@@ -247,10 +248,11 @@ function RankingTable<T extends CountryRecordCounts>({
                     type="button"
                     className="cs-record-place-button"
                     aria-haspopup="dialog"
+                    aria-label={tr({ zh: `查看${placeName}的全部纪录`, en: `Show all records for ${placeName}` })}
                     onClick={(event) => openDetails(event.currentTarget, {
                       iso2: row.iso2,
                       city: cityRow?.city ?? null,
-                      metric,
+                      metric: null,
                       placeName,
                     })}
                   >
