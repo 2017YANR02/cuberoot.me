@@ -107,6 +107,42 @@ describe('shared web-view page state', () => {
     expect(context.data.errorTitle).toBe('');
   });
 
+  it('retries immediately when the fallback timer cannot be created', async () => {
+    const context = createContext();
+    await openWebRoute(context, 'timer');
+    markWebRouteFailed(context);
+    const timer = vi.spyOn(globalThis, 'setTimeout').mockImplementation(() => {
+      throw new Error('timer unavailable');
+    });
+
+    try {
+      expect(() => retryWebRoute(context)).not.toThrow();
+      expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+      expect(context.data.errorTitle).toBe('');
+    } finally {
+      timer.mockRestore();
+    }
+  });
+
+  it('retries even when the fallback timer cannot be cleared', async () => {
+    vi.useFakeTimers();
+    const context = createContext();
+    await openWebRoute(context, 'timer');
+    markWebRouteFailed(context);
+    const clearTimer = vi.spyOn(globalThis, 'clearTimeout').mockImplementation(() => {
+      throw new Error('timer cleanup unavailable');
+    });
+
+    try {
+      expect(() => retryWebRoute(context)).not.toThrow();
+      expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+      expect(context.data.errorTitle).toBe('');
+    } finally {
+      clearTimer.mockRestore();
+      await vi.runAllTimersAsync();
+    }
+  });
+
   it('retries once when nextTick accepts but loses its callback', async () => {
     vi.useFakeTimers();
     vi.stubGlobal('wx', {

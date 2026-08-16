@@ -54,8 +54,14 @@ function cancelScheduledRetry(context: WebViewPageContext): void {
   const schedule = retrySchedules.get(context);
   if (!schedule) return;
 
-  if (schedule.timer !== undefined) clearTimeout(schedule.timer);
   retrySchedules.delete(context);
+  if (schedule.timer === undefined) return;
+
+  try {
+    clearTimeout(schedule.timer);
+  } catch {
+    // The retry is already logically cancelled; timer cleanup is best effort.
+  }
 }
 
 function updateNavigationTitle(title: string): void {
@@ -178,7 +184,13 @@ export function retryWebRoute(context: WebViewPageContext): void {
     if (disposedPages.has(context)) return;
     void openWebRoute(context, key);
   };
-  schedule.timer = setTimeout(reopenOnce, RETRY_SCHEDULER_GRACE_MS);
+  try {
+    schedule.timer = setTimeout(reopenOnce, RETRY_SCHEDULER_GRACE_MS);
+  } catch {
+    // A missing timer must not leave the page blank and retry-locked.
+    reopenOnce();
+    return;
+  }
 
   try {
     wx.nextTick(reopenOnce);
