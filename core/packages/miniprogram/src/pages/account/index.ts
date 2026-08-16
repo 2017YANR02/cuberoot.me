@@ -8,57 +8,13 @@ import {
   type SessionData,
 } from '../../lib/auth';
 import { openWebsitePageOnce } from '../../lib/navigation';
+import { createPlatformActionGuard } from '../../lib/platform-action-guard';
 
 const activePages = new WeakSet<object>();
 const activeLogins = new WeakSet<object>();
 const validationAttempts = new WeakMap<object, number>();
-const PLATFORM_ACTION_LOCK_TIMEOUT_MS = 5_000;
-
-function createPageActionGuard(lockTimeoutMs?: number) {
-  const activePages = new WeakSet<object>();
-  const attemptSequences = new WeakMap<object, number>();
-  const currentAttempts = new WeakMap<object, number>();
-  const timers = new WeakMap<object, ReturnType<typeof setTimeout>>();
-
-  function release(page: object, attempt: number): void {
-    if (currentAttempts.get(page) !== attempt) return;
-    activePages.delete(page);
-    const timer = timers.get(page);
-    if (timer !== undefined) clearTimeout(timer);
-    timers.delete(page);
-  }
-
-  return {
-    begin(page: object): number | null {
-      if (activePages.has(page)) return null;
-      const attempt = (attemptSequences.get(page) ?? 0) + 1;
-      attemptSequences.set(page, attempt);
-      currentAttempts.set(page, attempt);
-      activePages.add(page);
-      if (lockTimeoutMs !== undefined) {
-        timers.set(page, setTimeout(() => release(page, attempt), lockTimeoutMs));
-      }
-      return attempt;
-    },
-
-    cancel(page: object): void {
-      const attempt = currentAttempts.get(page);
-      if (attempt === undefined) return;
-      release(page, attempt);
-      currentAttempts.delete(page);
-    },
-
-    settle(page: object, attempt: number): boolean {
-      if (currentAttempts.get(page) !== attempt) return false;
-      release(page, attempt);
-      currentAttempts.delete(page);
-      return true;
-    },
-  };
-}
-
-const logoutConfirmations = createPageActionGuard(PLATFORM_ACTION_LOCK_TIMEOUT_MS);
-const privacyContracts = createPageActionGuard(PLATFORM_ACTION_LOCK_TIMEOUT_MS);
+const logoutConfirmations = createPlatformActionGuard();
+const privacyContracts = createPlatformActionGuard();
 
 function beginValidation(page: object): number {
   const attempt = (validationAttempts.get(page) ?? 0) + 1;

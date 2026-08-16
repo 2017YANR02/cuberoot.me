@@ -17,6 +17,7 @@ async function loadApp(wxApi: Record<string, unknown>): Promise<MiniProgramApp> 
 
 describe('mini program app updates', () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.resetModules();
     vi.unstubAllGlobals();
   });
@@ -137,6 +138,33 @@ describe('mini program app updates', () => {
 
     app.onLaunch?.();
     ready?.();
+    ready?.();
+
+    expect(showModal).toHaveBeenCalledTimes(2);
+  });
+
+  it('allows a later ready event to retry when the platform swallows the prompt callbacks', async () => {
+    vi.useFakeTimers();
+    let ready: (() => void) | undefined;
+    const showModal = vi.fn();
+    const app = await loadApp({
+      getUpdateManager: () => ({
+        applyUpdate: vi.fn(),
+        onUpdateFailed: vi.fn(),
+        onUpdateReady(callback: () => void) {
+          ready = callback;
+        },
+      }),
+      showModal,
+      showToast: vi.fn(),
+    });
+
+    app.onLaunch?.();
+    ready?.();
+    ready?.();
+    expect(showModal).toHaveBeenCalledOnce();
+
+    vi.advanceTimersByTime(5_000);
     ready?.();
 
     expect(showModal).toHaveBeenCalledTimes(2);
