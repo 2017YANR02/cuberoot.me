@@ -15,9 +15,9 @@
     <view class="account-sync">
       <view class="account-sync-heading">
         <text class="account-sync-title">跨端账号</text>
-        <view class="account-sync-state">
+        <view class="account-sync-state account-sync-state--{{syncState}}">
           <view class="account-sync-dot"></view>
-          <text>已就绪</text>
+          <text>{{syncLabel}}</text>
         </view>
       </view>
       <text class="account-sync-copy">打开 CubeRoot 网站时，会用当前小程序账号安全登录。</text>
