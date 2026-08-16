@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import process from 'node:process';
 
@@ -37,6 +37,10 @@ for (const file of await walkFiles(sourceRoot)) {
   });
 }
 const outputFiles = await walkFiles(outputRoot, { missingOk: true });
+const builtFileSizes = await Promise.all(outputFiles.map(async (file) => ({
+  path: normalizedRelativePath(outputRoot, file),
+  bytes: (await stat(file)).size,
+})));
 
 const failures = collectReleaseFailures({
   projectConfig,
@@ -48,6 +52,7 @@ const failures = collectReleaseFailures({
   confirmedSecretRotation: process.env.WECHAT_MINI_SECRET_ROTATED === '1',
   sourceFiles,
   builtFiles: outputFiles.map((file) => normalizedRelativePath(outputRoot, file)),
+  builtFileSizes,
   buildState,
   currentSourceFingerprint: await buildInputFingerprint(packageRoot),
   currentOutputFingerprint: await outputFingerprint(packageRoot, outputRoot),
