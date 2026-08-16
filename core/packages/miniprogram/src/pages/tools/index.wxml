@@ -10,7 +10,7 @@
       wx:key="key"
       data-key="{{item.key}}"
       bindtap="openTool"
-      hover-class="tool-row--pressed"
+      hover-class="press-feedback"
     >
       <view class="tool-copy">
         <text class="tool-name">{{item.title}}</text>
