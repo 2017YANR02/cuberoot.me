@@ -15,6 +15,17 @@ describe('mini program authentication', () => {
     vi.unstubAllGlobals();
   });
 
+  it('treats an absent session as logged out without mutating storage', () => {
+    const removeStorageSync = vi.fn();
+    vi.stubGlobal('wx', {
+      getStorageSync: () => '',
+      removeStorageSync,
+    });
+
+    expect(getStoredSession()).toBeNull();
+    expect(removeStorageSync).not.toHaveBeenCalled();
+  });
+
   it('rejects malformed persisted sessions', () => {
     const removeStorageSync = vi.fn();
     vi.stubGlobal('wx', {
