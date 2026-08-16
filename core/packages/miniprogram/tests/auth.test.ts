@@ -43,6 +43,7 @@ describe('mini program authentication', () => {
           data: {
             token: 't'.repeat(20),
             user: { name: 'CubeRoot', wcaId: null },
+            isNew: true,
           },
         });
       },
@@ -51,7 +52,41 @@ describe('mini program authentication', () => {
 
     const session = await loginWithWechat();
     expect(session.user.name).toBe('CubeRoot');
-    expect(setStorageSync).toHaveBeenCalledWith('cuberoot:session', session);
+    expect(session.isNew).toBe(true);
+    expect(setStorageSync).toHaveBeenCalledWith('cuberoot:session', {
+      token: 't'.repeat(20),
+      user: { name: 'CubeRoot', wcaId: null },
+    });
+  });
+
+  it('normalizes persisted identity fields and drops transient login metadata', () => {
+    vi.stubGlobal('wx', {
+      getStorageSync: () => ({
+        token: `  ${'t'.repeat(20)}  `,
+        user: { uid: 12, name: '  CubeRoot  ', wcaId: '  2026ROOT01  ' },
+        isNew: true,
+      }),
+      removeStorageSync: vi.fn(),
+    });
+
+    expect(getStoredSession()).toEqual({
+      token: 't'.repeat(20),
+      user: { uid: 12, name: 'CubeRoot', wcaId: '2026ROOT01' },
+    });
+  });
+
+  it('rejects impossible local identity values', () => {
+    const removeStorageSync = vi.fn();
+    vi.stubGlobal('wx', {
+      getStorageSync: () => ({
+        token: 't'.repeat(20),
+        user: { uid: 0, name: 'CubeRoot', wcaId: null },
+      }),
+      removeStorageSync,
+    });
+
+    expect(getStoredSession()).toBeNull();
+    expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
   });
 
   it('maps actionable login failures to user-facing messages', () => {
@@ -106,5 +141,24 @@ describe('mini program authentication', () => {
     const validated = await validateStoredSession(session);
     expect(validated.user.name).toBe('New name');
     expect(setStorageSync).not.toHaveBeenCalled();
+  });
+
+  it('turns malformed successful validation responses into a controlled API error', async () => {
+    const session = {
+      token: 't'.repeat(20),
+      user: { name: 'CubeRoot', wcaId: null },
+    };
+    vi.stubGlobal('wx', {
+      request(options: {
+        success(result: { statusCode: number; data: unknown }): void;
+      }) {
+        options.success({ statusCode: 200, data: null });
+      },
+    });
+
+    await expect(validateStoredSession(session)).rejects.toMatchObject({
+      name: 'ApiError',
+      status: 502,
+    });
   });
 });
