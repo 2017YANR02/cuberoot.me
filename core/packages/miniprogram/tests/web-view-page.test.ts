@@ -53,6 +53,17 @@ describe('shared web-view page state', () => {
     expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '计时器' });
   });
 
+  it('still opens the route when the cosmetic title API throws', async () => {
+    setNavigationBarTitle.mockImplementationOnce(() => {
+      throw new Error('title unavailable');
+    });
+    const context = createContext();
+
+    await expect(openWebRoute(context, 'timer')).resolves.toBe(true);
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.errorTitle).toBe('');
+  });
+
   it('blocks unknown routes without offering a retry', async () => {
     const context = createContext();
 
