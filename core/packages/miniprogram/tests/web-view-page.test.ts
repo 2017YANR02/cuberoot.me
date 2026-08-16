@@ -231,6 +231,44 @@ describe('shared web-view page state', () => {
     expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
   });
 
+  it('restores a retry paused by hiding and resumes it when shown', async () => {
+    const nextTicks: Array<() => void> = [];
+    vi.spyOn(wx, 'nextTick').mockImplementation((callback) => {
+      nextTicks.push(callback);
+    });
+    const context = createContext();
+    const options = createWebViewPageOptions('timer') as unknown as {
+      onHide(this: WebViewPageContext): void;
+      onLoad(this: WebViewPageContext, query: Record<string, string>): void;
+      onShow(this: WebViewPageContext): void;
+      retry(this: WebViewPageContext): void;
+    };
+
+    options.onLoad.call(context, {});
+    options.onShow.call(context);
+    await Promise.resolve();
+    markWebRouteFailed(context);
+    options.retry.call(context);
+    expect(context.data.canRetry).toBe(false);
+
+    options.onHide.call(context);
+    expect(context.data.canRetry).toBe(true);
+    expect(context.data.errorTitle).toBe('网页加载失败');
+    nextTicks[0]?.();
+    expect(context.data.src).toBe('');
+
+    getNetworkType.mockImplementationOnce(({ success }) => {
+      success?.({ networkType: 'wifi' });
+    });
+    options.onShow.call(context);
+    nextTicks[1]?.();
+    await Promise.resolve();
+
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.errorTitle).toBe('');
+    expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
+  });
+
   it('keeps manual retry available when network observation throws', async () => {
     vi.stubGlobal('wx', {
       getStorageSync: () => null,

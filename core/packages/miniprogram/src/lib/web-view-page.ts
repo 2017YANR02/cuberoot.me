@@ -64,14 +64,15 @@ function isCurrentAttempt(context: WebViewPageContext, attempt: number): boolean
   return routeAttempts.get(context) === attempt;
 }
 
-function cancelScheduledRetry(context: WebViewPageContext): void {
+function cancelScheduledRetry(context: WebViewPageContext): boolean {
   const schedule = retrySchedules.get(context);
-  if (!schedule) return;
+  if (!schedule) return false;
 
   retrySchedules.delete(context);
-  if (schedule.timer === undefined) return;
+  if (schedule.timer === undefined) return true;
 
   clearRuntimeTimeout(schedule.timer);
+  return true;
 }
 
 function stopNetworkRecovery(context: WebViewPageContext): void {
@@ -310,7 +311,7 @@ export function createWebViewPageOptions(
 
     onHide() {
       visiblePages.delete(this);
-      cancelScheduledRetry(this);
+      if (cancelScheduledRetry(this)) markWebRouteFailed(this);
       stopNetworkRecovery(this);
     },
 
