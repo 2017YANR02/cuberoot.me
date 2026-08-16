@@ -1,6 +1,13 @@
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
-import { BUILD_STATE_VERSION } from '../scripts/build-state.mjs';
+import { BUILD_ASSETS } from '../scripts/build-assets.mjs';
+import {
+  BUILD_STATE_VERSION,
+  collectBuildInputFiles,
+} from '../scripts/build-state.mjs';
 import {
   EXPECTED_APP_PAGES,
   EXPECTED_TAB_BAR,
@@ -105,6 +112,17 @@ const validInput = {
 };
 
 describe('mini program release check', () => {
+  it('builds the public share cover from the canonical website icon', async () => {
+    expect(BUILD_ASSETS).toHaveLength(1);
+    expect(BUILD_ASSETS[0].output).toBe('assets/share-cover.png');
+    const packageRoot = resolve(import.meta.dirname, '..');
+    expect(await collectBuildInputFiles(packageRoot)).toContain(BUILD_ASSETS[0].source);
+    const source = await readFile(BUILD_ASSETS[0].source);
+    expect(source.subarray(0, 8)).toEqual(Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]));
+  });
+
   it('scans code-like and unknown files without decoding known binary assets', () => {
     expect(isReleaseAuditTextFile('src/app.ts')).toBe(true);
     expect(isReleaseAuditTextFile('src/.env')).toBe(true);
