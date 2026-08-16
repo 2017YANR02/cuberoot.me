@@ -145,7 +145,7 @@ Page({
   },
 
   showSession(session: SessionData | null) {
-    const name = session?.user.name.trim() || 'CubeRoot 用户';
+    const name = session?.user.name ?? 'CubeRoot 用户';
     this.setData({
       displayName: name,
       initial: accountInitial(name),

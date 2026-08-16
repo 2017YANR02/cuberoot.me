@@ -30,7 +30,7 @@ async function loadPage(wxApi: Record<string, unknown>): Promise<AccountPage> {
 const storedSession = {
   token: 'valid-miniprogram-session-token',
   user: {
-    id: 42,
+    uid: 42,
     name: 'CubeRoot 用户',
     wcaId: null,
   },
