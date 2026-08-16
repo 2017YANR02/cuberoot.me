@@ -8,6 +8,10 @@ interface WebsitePageNavigationOptions {
 
 const websiteNavigationGuard = createPlatformActionGuard();
 
+export function cancelWebsiteNavigation(owner: object): void {
+  websiteNavigationGuard.cancel(owner);
+}
+
 function showNavigationMessage(title: string): void {
   try {
     wx.showToast({ icon: 'none', title });

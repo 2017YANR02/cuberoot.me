@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { openWebsitePageOnce } from '../src/lib/navigation';
+import {
+  cancelWebsiteNavigation,
+  openWebsitePageOnce,
+} from '../src/lib/navigation';
 
 describe('mini program website navigation', () => {
   afterEach(() => {
@@ -85,6 +88,24 @@ describe('mini program website navigation', () => {
     failures[1]?.();
     expect(showToast).toHaveBeenCalledOnce();
     expect(openWebsitePageOnce(owner, 'timer', { failureMessage: '打开失败' })).toBe(true);
+  });
+
+  it('cancels pending feedback when the owner leaves the page', () => {
+    let fail: (() => void) | undefined;
+    const showToast = vi.fn();
+    const navigateTo = vi.fn((options: { fail(): void }) => {
+      fail = options.fail;
+    });
+    vi.stubGlobal('wx', { navigateTo, showToast });
+    const owner = {};
+
+    expect(openWebsitePageOnce(owner, 'alg', { failureMessage: '打开失败' })).toBe(true);
+    cancelWebsiteNavigation(owner);
+    fail?.();
+
+    expect(showToast).not.toHaveBeenCalled();
+    expect(openWebsitePageOnce(owner, 'wiki', { failureMessage: '打开失败' })).toBe(true);
+    expect(navigateTo).toHaveBeenCalledTimes(2);
   });
 
   it('releases the lock and shows feedback when navigation fails', () => {
