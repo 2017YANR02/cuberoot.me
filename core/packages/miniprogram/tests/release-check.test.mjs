@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { BUILD_STATE_VERSION } from '../scripts/build-state.mjs';
 import {
+  EXPECTED_APP_PAGES,
+  EXPECTED_TAB_BAR,
   MAX_UPLOAD_FILE_BYTES,
   MAX_UPLOAD_PACKAGE_BYTES,
   PUBLIC_INDEXED_PAGES,
@@ -18,10 +20,12 @@ const validBuiltFiles = [
   'app.json',
   'app.wxss',
   'sitemap.json',
-  'pages/timer/index.js',
-  'pages/timer/index.json',
-  'pages/timer/index.wxml',
-  'pages/timer/index.wxss',
+  ...EXPECTED_APP_PAGES.flatMap((page) => [
+    `${page}.js`,
+    `${page}.json`,
+    `${page}.wxml`,
+    `${page}.wxss`,
+  ]),
 ];
 
 const validInput = {
@@ -34,7 +38,7 @@ const validInput = {
   },
   privateConfig: {},
   appConfig: {
-    pages: ['pages/timer/index'],
+    pages: EXPECTED_APP_PAGES,
     darkmode: true,
     themeLocation: 'theme.json',
     window: {
@@ -48,6 +52,7 @@ const validInput = {
       selectedColor: '@tabBarSelectedColor',
       backgroundColor: '@tabBarBackgroundColor',
       borderStyle: '@tabBarBorderStyle',
+      list: EXPECTED_TAB_BAR,
     },
   },
   themeConfig: {
@@ -195,13 +200,16 @@ describe('mini program release check', () => {
       path: validBuiltFiles[0],
       bytes: MAX_UPLOAD_FILE_BYTES + 1,
     };
+    const totalKibibytes = Math.ceil(
+      builtFileSizes.reduce((sum, { bytes }) => sum + bytes, 0) / 1024,
+    );
 
     expect(collectReleaseFailures({
       ...validInput,
       builtFileSizes,
     })).toEqual(expect.arrayContaining([
       'dist 单文件超过项目预算 128 KiB：app.js（129 KiB）。',
-      'dist 总体积 577 KiB 超过项目预算 512 KiB。',
+      `dist 总体积 ${totalKibibytes} KiB 超过项目预算 512 KiB。`,
     ]));
   });
 
@@ -221,6 +229,25 @@ describe('mini program release check', () => {
     })).toContain(
       'sitemap 只能收录计时和工具页，账号页与通用网页壳必须保持禁止收录。',
     );
+  });
+
+  it('rejects page and tab bar drift inside the release audit itself', () => {
+    const failures = collectReleaseFailures({
+      ...validInput,
+      appConfig: {
+        ...validInput.appConfig,
+        pages: [...EXPECTED_APP_PAGES, 'pages/debug/index'],
+        tabBar: {
+          ...validInput.appConfig.tabBar,
+          list: [...EXPECTED_TAB_BAR].reverse(),
+        },
+      },
+    });
+
+    expect(failures).toEqual(expect.arrayContaining([
+      `src/app.json 页面清单或顺序已漂移，应为：${EXPECTED_APP_PAGES.join('、')}。`,
+      '底部导航必须保持“计时、工具、我的”三个正式入口及既定顺序。',
+    ]));
   });
 
   it('rejects missing or stale build state', () => {

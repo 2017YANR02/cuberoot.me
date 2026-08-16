@@ -45,6 +45,19 @@ export const PUBLIC_INDEXED_PAGES = [
   'pages/tools/index',
 ];
 
+export const EXPECTED_APP_PAGES = [
+  'pages/timer/index',
+  'pages/tools/index',
+  'pages/account/index',
+  'pages/web/index',
+];
+
+export const EXPECTED_TAB_BAR = [
+  { pagePath: 'pages/timer/index', text: '计时' },
+  { pagePath: 'pages/tools/index', text: '工具' },
+  { pagePath: 'pages/account/index', text: '我的' },
+];
+
 export const PRODUCTION_APP_ID = 'wx1f92ba91b7e42015';
 export const MAX_UPLOAD_PACKAGE_BYTES = 512 * 1024;
 export const MAX_UPLOAD_FILE_BYTES = 128 * 1024;
@@ -131,6 +144,12 @@ export function collectReleaseFailures({
   if (!appConfig || !Array.isArray(appConfig.pages) || appConfig.pages.length === 0) {
     failures.push('src/app.json 没有有效页面声明。');
   } else {
+    if (JSON.stringify(appConfig.pages) !== JSON.stringify(EXPECTED_APP_PAGES)) {
+      failures.push(
+        `src/app.json 页面清单或顺序已漂移，应为：${EXPECTED_APP_PAGES.join('、')}。`,
+      );
+    }
+
     const requiredFiles = new Set(['app.js', 'app.json', 'app.wxss', 'sitemap.json']);
     for (const page of appConfig.pages) {
       if (typeof page !== 'string' || page.length === 0) continue;
@@ -149,6 +168,10 @@ export function collectReleaseFailures({
     if (missingFiles.length > 0) {
       failures.push(`dist 缺少构建产物：${missingFiles.join('、')}。`);
     }
+  }
+
+  if (JSON.stringify(appConfig?.tabBar?.list) !== JSON.stringify(EXPECTED_TAB_BAR)) {
+    failures.push('底部导航必须保持“计时、工具、我的”三个正式入口及既定顺序。');
   }
 
   const sourceMaps = builtFiles
