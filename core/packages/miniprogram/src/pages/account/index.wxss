@@ -156,10 +156,6 @@
   line-height: 1;
 }
 
-.account-link:active {
-  opacity: 0.72;
-}
-
 .logout-button {
   margin-top: 34rpx;
 }

@@ -23,7 +23,7 @@
       <text class="account-sync-copy">打开 CubeRoot 网站时，会用当前小程序账号安全登录。</text>
     </view>
 
-    <button class="account-link" bindtap="openAccount">
+    <button class="account-link" hover-class="press-feedback" bindtap="openAccount">
       <view class="account-link-copy">
         <text class="account-link-title">管理账号与登录方式</text>
         <text class="account-link-description">绑定 WCA 账号，查看其他登录方式</text>
@@ -31,17 +31,17 @@
       <text class="account-link-arrow">›</text>
     </button>
 
-    <button class="text-button logout-button" bindtap="logout">退出登录</button>
+    <button class="text-button logout-button" hover-class="press-feedback" bindtap="logout">退出登录</button>
   </block>
 
   <block wx:else>
     <text class="page-intro account-intro">登录后使用与网站相同的 CubeRoot 账号。已在网站通过微信登录过时，会自动识别为同一账号。</text>
-    <button class="primary-button login-button" disabled="{{busy}}" bindtap="login">
+    <button class="primary-button login-button" hover-class="press-feedback" disabled="{{busy}}" bindtap="login">
       {{busy ? '登录中…' : '微信登录'}}
     </button>
     <text class="union-note">不会读取你的微信昵称或手机号。无法取得 UnionID 时会停止登录，避免创建重复账号。</text>
   </block>
 
   <text class="status-text {{statusError ? 'status-text--error' : ''}}" wx:if="{{status}}">{{status}}</text>
-  <button class="text-button privacy-button" bindtap="openPrivacy">隐私说明</button>
+  <button class="text-button privacy-button" hover-class="press-feedback" bindtap="openPrivacy">隐私说明</button>
 </view>

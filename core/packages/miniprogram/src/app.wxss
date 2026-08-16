@@ -44,6 +44,10 @@ button::after {
   border: 0;
 }
 
+.press-feedback {
+  opacity: 0.62;
+}
+
 .page {
   box-sizing: border-box;
   min-height: 100vh;
