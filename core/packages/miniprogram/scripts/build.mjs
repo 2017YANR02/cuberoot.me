@@ -7,7 +7,18 @@ import { build, context } from 'esbuild';
 const packageRoot = resolve(import.meta.dirname, '..');
 const sourceRoot = join(packageRoot, 'src');
 const outputRoot = join(packageRoot, 'dist');
+const projectConfigPath = join(packageRoot, 'project.config.json');
 const watch = process.argv.includes('--watch');
+
+async function existingAppId() {
+  try {
+    const config = JSON.parse(await readFile(projectConfigPath, 'utf8'));
+    const appId = typeof config.appid === 'string' ? config.appid.trim() : '';
+    return appId && appId !== 'touristappid' ? appId : '';
+  } catch {
+    return '';
+  }
+}
 
 async function walk(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -34,9 +45,12 @@ async function prepareOutput() {
 
   const templatePath = join(packageRoot, 'project.config.template.json');
   const config = JSON.parse(await readFile(templatePath, 'utf8'));
-  config.appid = process.env.WECHAT_MINI_APP_ID?.trim() || 'touristappid';
+  config.appid =
+    process.env.WECHAT_MINI_APP_ID?.trim() ||
+    (await existingAppId()) ||
+    'touristappid';
   await writeFile(
-    join(packageRoot, 'project.config.json'),
+    projectConfigPath,
     `${JSON.stringify(config, null, 2)}\n`,
     'utf8',
   );
