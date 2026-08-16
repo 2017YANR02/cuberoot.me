@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * 「从已有打乱选择」弹窗 — 给 submit 表单的两个打乱框（WCA / 最优）做候选。
+ * 「从已有打乱选择」弹窗 — 给 submit 表单的三个打乱框（WCA / 最优 / 普通）做候选。
  * 数据走公开 GET listRecons()（整个复盘库），按归一化打乱字符串去重，
  * 每条带项目 / 选手 / 比赛 / 成绩上下文,点选回填字段。挑别人录过的同一打乱,
  * 新复盘就能和旧的在「相同打乱的复盘」里互相连上。
@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { X, Search } from 'lucide-react';
 import { Spinner } from '@/components/Spinner/Spinner';
 import type { ReconSolve } from '@cuberoot/shared';
+import { getReconScramble } from '@cuberoot/shared/recon-completion';
 import { listRecons } from '@/lib/recon-api';
 import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
@@ -58,7 +59,7 @@ export default function ScramblePicker({ isZh, event, onClose, onPick }: Props) 
     if (!all) return [];
     const map = new Map<string, ScrambleEntry>();
     for (const r of all) {
-      const sc = normScramble(r.optimalScramble);
+      const sc = normScramble(getReconScramble(r));
       if (!sc) continue;
       const cur = map.get(sc);
       if (cur) {

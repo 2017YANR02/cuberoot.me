@@ -43,6 +43,7 @@ CREATE TABLE recons (
   solution        TEXT,
   optimal_scramble TEXT,
   wca_scramble    TEXT,
+  scramble        TEXT,
   caption         TEXT,
   note            TEXT,
   stm             SMALLINT,

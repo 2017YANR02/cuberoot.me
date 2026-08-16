@@ -27,6 +27,7 @@ import { parseHumanResult } from '@/lib/result-watch-api';
 import { maxPenaltySteps, canPenalizeAttempt, PENALTY_STEP_CS } from '@cuberoot/shared/result-penalty';
 import { getRecon } from '@/lib/recon-api';
 import type { ReconSolve } from '@cuberoot/shared';
+import { getReconScramble } from '@cuberoot/shared/recon-completion';
 import { VideoCoverThumb } from '@/components/VideoCoverThumb';
 import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';
 import SolutionView from '@/components/SolutionView';
@@ -287,7 +288,7 @@ function AttemptPopoverBody({
   const pendingForMode = !isAdmin && !(mode === 'penalty' && isOwner);
 
   // 复盘内嵌:打乱 / 解法 / 项目(详情页同源取法),只在懒取到 reconSolve 后渲染播放器。
-  const reconScramble = reconSolve ? (reconSolve.optimalScramble || reconSolve.wcaScramble || '') : '';
+  const reconScramble = reconSolve ? getReconScramble(reconSolve) : '';
   const reconSolution = reconSolve ? (reconSolve.solution || reconSolve.recon || '') : '';
   const reconEvent = reconSolve?.event || eventId;
   const showReconSection = hasRecon && !!reconId;

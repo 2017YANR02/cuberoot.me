@@ -212,12 +212,13 @@ export async function deleteComment(commentId: number): Promise<{ ok: boolean }>
 interface DuplicateResult { exists: boolean; id?: number }
 
 // 判重口径 = 同选手 + 同打乱(与后端 buildDuplicateQuery 同源)。
-// 选手 = personId(优先)否则 person 名;打乱 = wcaScramble(优先)否则 optimalScramble。
+// 选手 = personId(优先)否则 person 名;打乱 = wcaScramble(优先),再回退 optimalScramble / scramble。
 export async function checkDuplicate(params: {
   person?: string;
   personId?: string;
   wcaScramble?: string;
   optimalScramble?: string;
+  scramble?: string;
   excludeId?: number;
 }): Promise<DuplicateResult> {
   const queryParams: Record<string, string> = {};
@@ -225,6 +226,7 @@ export async function checkDuplicate(params: {
   if (params.person) queryParams.person = params.person;
   if (params.wcaScramble) queryParams.wcaScramble = params.wcaScramble;
   if (params.optimalScramble) queryParams.optimalScramble = params.optimalScramble;
+  if (params.scramble) queryParams.scramble = params.scramble;
   if (params.excludeId) queryParams.excludeId = String(params.excludeId);
   return apiGet<DuplicateResult>('/check-duplicate', queryParams);
 }

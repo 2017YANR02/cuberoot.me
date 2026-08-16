@@ -66,7 +66,7 @@ const ALLOWED_COLUMNS = new Set([
   'solve_num', 'person', 'person_id', 'raw_time', 'exec_time', 'memo_time',
   'average', 'value', 'regional_single_record', 'regional_average_record',
   'ao_type', 'regional_aoxr_record', 'solution', 'optimal_scramble',
-  'wca_scramble', 'caption', 'note', 'stm', 'tps', 'oll', 'pll',
+  'wca_scramble', 'scramble', 'caption', 'note', 'stm', 'tps', 'oll', 'pll',
   'oll_short', 'pll_short', 'free_pair', 'y_rot', 'regrip', 'lockup',
   'cross_type', 'cross_stm', 'f2l', 'll', 's_move', 'cross_color',
   'cube', 'reconer', 'reconer_id', 'group_id', 'recon_date', 'created_at',
@@ -298,7 +298,7 @@ export function validateRow(row: Record<string, unknown>): string[] {
   }
 
   // TEXT 上限 64KB
-  for (const col of ['recon', 'solution', 'optimal_scramble', 'wca_scramble', 'caption', 'note', 'video_url']) {
+  for (const col of ['recon', 'solution', 'optimal_scramble', 'wca_scramble', 'scramble', 'caption', 'note', 'video_url']) {
     const v = row[col];
     if (v !== undefined && v !== null && Buffer.byteLength(String(v), 'utf8') > 65535) {
       errors.push(`${col} exceeds max size (64KB)`);
@@ -311,7 +311,7 @@ export function validateRow(row: Record<string, unknown>): string[] {
   // 例外:装饰性标注字符(`·↑↓⅓⅔` + 零宽)放行 —— 播放器(cleanForPlayer)喂播放器前会静默剥掉,
   // 不影响复盘。必须与客户端 lib/recon-alg-utils.ts 的 COSMETIC_ANNOTATION_CHARS 同步,否则带
   // regrip 箭头(↑↓)的解法过得了前端校验却被后端拒("Validation failed")。
-  for (const col of ['solution', 'wca_scramble', 'optimal_scramble']) {
+  for (const col of ['solution', 'wca_scramble', 'optimal_scramble', 'scramble']) {
     const v = row[col];
     if (v === undefined || v === null) continue;
     const lines = String(v).split(/\r?\n/);
@@ -550,7 +550,7 @@ export function isRealScramble(s: unknown): boolean {
  * 构建「同选手 + 同打乱」去重查询(命中即重复)。
  * 同一打乱所有选手共用,所以选手 + 打乱必须同时相同才算重复(光打乱相同是同组不同人)。
  *   选手 = person_id(优先 WCA ID)否则 person 名;
- *   打乱 = wca_scramble(优先官方打乱)否则 optimal_scramble。
+ *   打乱 = wca_scramble(优先 WCA 真实打乱)否则 optimal_scramble,最后回退普通 scramble。
  * 打乱为占位/空(isRealScramble=false)或选手为空 → 无法判重(返回 null,直接放行)。
  * @param excludeId 编辑模式排除自身
  * @returns {sql, params} 查到行即重复,null = 不判重
@@ -563,12 +563,14 @@ export function buildDuplicateQuery(
   const person = typeof row.person === 'string' ? row.person.trim() : '';
   const wcaScramble = typeof row.wca_scramble === 'string' ? row.wca_scramble : '';
   const optScramble = typeof row.optimal_scramble === 'string' ? row.optimal_scramble : '';
+  const scramble = typeof row.scramble === 'string' ? row.scramble : '';
 
-  // 打乱:优先官方打乱,占位/空则退回最优打乱;都不是真打乱 → 不判重
+  // 打乱:优先 WCA 真实打乱,占位/空则退回最优打乱和普通打乱;都不是真打乱 → 不判重
   let scrambleCol = '';
   let scrambleVal = '';
   if (isRealScramble(wcaScramble)) { scrambleCol = 'wca_scramble'; scrambleVal = wcaScramble; }
   else if (isRealScramble(optScramble)) { scrambleCol = 'optimal_scramble'; scrambleVal = optScramble; }
+  else if (isRealScramble(scramble)) { scrambleCol = 'scramble'; scrambleVal = scramble; }
   if (!scrambleCol || (!personId && !person)) return null;
 
   const params: unknown[] = [];

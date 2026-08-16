@@ -65,6 +65,7 @@ import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import {
   checkReconCompletion,
+  getReconScramble,
   normalizeReconScrambleSpacing,
 } from '@cuberoot/shared/recon-completion';
 import { loadComps, type Comp } from '@/lib/comp-search';
@@ -88,7 +89,7 @@ const SOLVE_NUM_CAP_BY_FORMAT: Record<RoundFormat, number> = {
 };
 
 // 复用以前的填写:从一条已有复盘里抽出的元数据字段。刻意排除每把都变的
-// 成绩(rawTime)/单次(value)/单次纪录/WCA 打乱/最优打乱/解法,以及「第几把」
+// 成绩(rawTime)/单次(value)/单次纪录/三类打乱/解法,以及「第几把」
 // —— 带上 # 会触发表单的自动获取,用那条数据回填那几项,违背保持空白的本意。
 const REUSE_KEYS: (keyof ReconSolve)[] = [
   'official', 'event', 'method',
@@ -209,6 +210,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     solution: '',
     wcaScramble: '',
     optimalScramble: '',
+    scramble: '',
     caption: '',
     note: '',
     videoUrl: '',
@@ -257,9 +259,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const optimalAutoFilledRef = useRef(false);
   const wcaScrambleRef = useRef<HTMLTextAreaElement>(null);
   const optimalScrambleRef = useRef<HTMLTextAreaElement>(null);
-  // 移动端虚拟键盘跟随焦点:WCA 打乱 / 最优打乱 / 解法 三框中当前激活的那个,
-  // 决定键盘的显示 + 输入目标;非三框之一(或都未聚焦)时不显示。
-  const [activeVkbField, setActiveVkbField] = useState<'wca' | 'optimal' | 'solution' | null>(null);
+  const scrambleRef = useRef<HTMLTextAreaElement>(null);
+  // 移动端虚拟键盘跟随焦点:三类打乱 / 解法中当前激活的输入框。
+  const [activeVkbField, setActiveVkbField] = useState<'wca' | 'optimal' | 'generic' | 'solution' | null>(null);
   const [compRounds, setCompRounds] = useState<Record<string, RoundFormat[]> | null>(null);
   // WCA scramble groups (A/B/C…) for the current comp/event/round.
   // null = 未解析(等加载 / 非 WCA 赛);[] = 无打乱数据;否则是分组列表。
@@ -282,7 +284,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [reuseOpen, setReuseOpen] = useState(false);
   const [reusedFields, setReusedFields] = useState<Set<string>>(() => new Set());
   // 「从已有打乱选择」弹窗:null 关闭,否则标记打开的是哪个框。
-  const [scramblePickerFor, setScramblePickerFor] = useState<null | 'wca' | 'optimal'>(null);
+  const [scramblePickerFor, setScramblePickerFor] = useState<null | 'wca' | 'optimal' | 'generic'>(null);
   // 「对照各组打乱」弹窗:拿不准分组时列出各组同把打乱比对认领。
   const [groupCompareOpen, setGroupCompareOpen] = useState(false);
 
@@ -323,6 +325,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         reconDate: toDateInput(solve.reconDate),
         wcaScramble: normalizeReconScrambleSpacing(solve.event, solve.wcaScramble || ''),
         optimalScramble: normalizeReconScrambleSpacing(solve.event, solve.optimalScramble || ''),
+        scramble: normalizeReconScrambleSpacing(solve.event, solve.scramble || ''),
       };
       setForm(normalized);
       setNeedsUnsolvedReason(!!solve.unsolvedReason);
@@ -399,13 +402,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     }).catch(() => setLoadingEdit(false));
   }, [fromId, fromSolveNum, isEditing, authUser, suggestTime, suggestScramble]);
 
-  // ── URL-driven scramble/optimal/alg decode (mount only, create mode) ──
+  // ── URL-driven WCA / optimal / generic scramble + alg decode (mount only, create mode) ──
   useEffect(() => {
     if (isEditing || fromId) return;
     const scramble = decodeUrlAlg(searchParams?.get('scramble') || '');
     const optimal = decodeUrlAlg(searchParams?.get('optimal') || '');
+    const generic = decodeUrlAlg(searchParams?.get('generic') || '');
     const solution = decodeUrlAlg(searchParams?.get('alg') || '');
-    if (!scramble && !optimal && !solution) return;
+    if (!scramble && !optimal && !generic && !solution) return;
     setForm(prev => ({
       ...prev,
       wcaScramble: scramble
@@ -414,6 +418,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       optimalScramble: optimal
         ? normalizeReconScrambleSpacing(prev.event || '3x3', optimal)
         : prev.optimalScramble || '',
+      scramble: generic
+        ? normalizeReconScrambleSpacing(prev.event || '3x3', generic)
+        : prev.scramble || '',
       solution: solution || prev.solution || '',
     }));
     if (solution) solutionFieldRef.current?.setText(solution);
@@ -494,16 +501,18 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     const timer = setTimeout(() => {
       const scr = encodeUrlAlg((form.wcaScramble || '').trim());
       const opt = encodeUrlAlg((form.optimalScramble || '').trim());
+      const generic = encodeUrlAlg((form.scramble || '').trim());
       const sol = encodeUrlAlg(form.solution || '');
-      // Manual history.replaceState — preserves order: existing params -> scramble -> optimal -> alg
+      // Manual history.replaceState — preserves order: existing params -> WCA -> optimal -> generic -> alg
       const url = new URL(window.location.href);
       const next = new URLSearchParams();
       for (const [k, v] of url.searchParams) {
-        if (k === 'scramble' || k === 'optimal' || k === 'alg') continue;
+        if (k === 'scramble' || k === 'optimal' || k === 'generic' || k === 'alg') continue;
         next.append(k, v);
       }
       if (scr) next.set('scramble', scr);
       if (opt) next.set('optimal', opt);
+      if (generic) next.set('generic', generic);
       if (sol) next.set('alg', sol);
       const qs = next.toString();
       const newHref = url.pathname + (qs ? '?' + qs : '') + url.hash;
@@ -520,7 +529,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [form.wcaScramble, form.optimalScramble, form.solution, isEditing, fromId]);
+  }, [form.wcaScramble, form.optimalScramble, form.scramble, form.solution, isEditing, fromId]);
 
   // ── Merged official+live WCA results for the current solver ──
   // Same official (fetchWcaPersonResults/fetchWcaPersonCompetitions) + live
@@ -1043,13 +1052,16 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return () => { cancelled = true; clearTimeout(timer); setScrambleLoading(false); };
   }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, groupOptions, scrambleUserTouched, optimalUserTouched, setField, isZh]);
 
-  // Resize the WCA / optimal scramble textareas when their values change programmatically.
+  // Resize all scramble textareas when their values change programmatically.
   useEffect(() => {
     if (wcaScrambleRef.current) autoResize(wcaScrambleRef.current);
   }, [form.wcaScramble, autoResize]);
   useEffect(() => {
     if (optimalScrambleRef.current) autoResize(optimalScrambleRef.current);
   }, [form.optimalScramble, autoResize]);
+  useEffect(() => {
+    if (scrambleRef.current) autoResize(scrambleRef.current);
+  }, [form.scramble, autoResize]);
 
   // ── Record marker auto-fetch (WCA only) ──
   useEffect(() => {
@@ -1172,7 +1184,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   // ── Duplicate detection(同选手 + 同打乱;与后端拒绝口径一致)──
   useEffect(() => {
-    const scramble = form.wcaScramble || form.optimalScramble;
+    const scramble = getReconScramble(form);
     const personKey = form.personId || form.person;
     if (!scramble || !personKey) {
       setDupId(null);
@@ -1185,13 +1197,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
           person: form.person,
           wcaScramble: form.wcaScramble,
           optimalScramble: form.optimalScramble,
+          scramble: form.scramble,
           excludeId: isEditing && editId ? Number(editId) : undefined,
         });
         setDupId(result.exists ? (result.id ?? null) : null);
       } catch { setDupId(null); }
     }, 500);
     return () => clearTimeout(timer);
-  }, [form.wcaScramble, form.optimalScramble, form.personId, form.person, isEditing, editId]);
+  }, [form.wcaScramble, form.optimalScramble, form.scramble, form.personId, form.person, isEditing, editId]);
 
   // ── Person picker handlers ──
   const handleSolverPick = useCallback((p: WcaPersonLite | null) => {
@@ -1296,7 +1309,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const renderReconPlayer = () => (
     <ReconPlayerPane
       event={form.event}
-      scramble={form.wcaScramble || form.optimalScramble || ''}
+      scramble={getReconScramble(form)}
       solution={displaySolution}
       playerRef={playerRef}
     />
@@ -1308,8 +1321,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const validateNotationFields = (): string | null => {
     const fields: { value: string; label: { zh: string; en: string } }[] = [
       { value: form.solution || '', label: { zh: '解法', en: 'Solution' } },
-      { value: form.wcaScramble || '', label: { zh: 'WCA 打乱', en: 'WCA scramble' } },
+      { value: form.wcaScramble || '', label: { zh: 'WCA 真实打乱', en: 'WCA real scramble' } },
       { value: form.optimalScramble || '', label: { zh: '最优打乱', en: 'Optimal scramble' } },
+      { value: form.scramble || '', label: { zh: '打乱', en: 'Scramble' } },
     ];
     const problems: string[] = [];
     for (const f of fields) {
@@ -1352,12 +1366,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     try {
       const wcaScramble = normalizeReconScrambleSpacing(form.event || '', form.wcaScramble || '');
       const optimalScramble = normalizeReconScrambleSpacing(form.event || '', form.optimalScramble || '');
-      if (wcaScramble !== (form.wcaScramble || '') || optimalScramble !== (form.optimalScramble || '')) {
-        setForm(previous => ({ ...previous, wcaScramble, optimalScramble }));
+      const scramble = normalizeReconScrambleSpacing(form.event || '', form.scramble || '');
+      if (wcaScramble !== (form.wcaScramble || '') || optimalScramble !== (form.optimalScramble || '') || scramble !== (form.scramble || '')) {
+        setForm(previous => ({ ...previous, wcaScramble, optimalScramble, scramble }));
       }
       const completion = await checkReconCompletion({
         event: form.event || '',
-        scramble: wcaScramble || optimalScramble,
+        scramble: getReconScramble({ optimalScramble, wcaScramble, scramble }),
         solution: form.solution || '',
       });
       if (completion.status === 'invalid') {
@@ -1383,6 +1398,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         reconerId: form.reconerId?.trim() ?? '',
         wcaScramble,
         optimalScramble,
+        scramble,
         // 非重复提交不落原因(选择器仅在 dupId 命中时出现,残留值在此清掉)
         dupReason: dupId != null ? form.dupReason : undefined,
         // 已复原时主动清掉旧理由；未复原时只保存去掉首尾空白后的说明。
@@ -1428,7 +1444,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // when the event has no sim equivalent (clock) — button then hidden.
   const simPuzzleParam = simPuzzleForReconEvent(form.event || '');
   const simHref = simPuzzleParam
-    ? `${langPrefix}/sim?${buildSimQuery(simPuzzleParam, form.wcaScramble || form.optimalScramble || '', form.solution || '')}`
+    ? `${langPrefix}/sim?${buildSimQuery(simPuzzleParam, getReconScramble(form), form.solution || '')}`
     : null;
 
   // Pre-mount: render a neutral loading shell on both SSR and the first client
@@ -1545,11 +1561,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     setScrambleAutoSource(null);
                     scrambleAutoFilledRef.current = false;
                     setField('wcaScramble', normalizedScramble);
-                  } else {
+                  } else if (scramblePickerFor === 'optimal') {
                     setOptimalUserTouched(true);
                     setOptimalAutoSource(null);
                     optimalAutoFilledRef.current = false;
                     setField('optimalScramble', normalizedScramble);
+                  } else {
+                    setField('scramble', normalizedScramble);
                   }
                   setScramblePickerFor(null);
                 }}
@@ -2023,6 +2041,50 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 : optimalAutoSource ? <span className="submit-hint">{optimalAutoSource}</span> : null}
             </div>
 
+            {/* Generic scramble: use when the state is neither a WCA real scramble nor an optimal scramble. */}
+            <div className="submit-field submit-block">
+              <span className="submit-label submit-label-row">
+                {t('recon.scramble')}
+                <button
+                  type="button"
+                  className="scramble-pick-btn"
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); setScramblePickerFor('generic'); }}
+                >
+                  <ListPlus size={13} /> {tr({ zh: '选已有', en: 'Pick existing' })}
+                </button>
+              </span>
+              <textarea
+                className="submit-field-textarea"
+                rows={1}
+                ref={el => { scrambleRef.current = el; if (el) autoResize(el); }}
+                value={form.scramble || ''}
+                inputMode={isMobile ? 'none' : undefined}
+                onChange={e => {
+                  setField('scramble', e.target.value);
+                  autoResize(e.target);
+                }}
+                onInput={e => autoResize(e.target as HTMLTextAreaElement)}
+                onFocus={() => setActiveVkbField('generic')}
+                onBlur={() => {
+                  setActiveVkbField(f => f === 'generic' ? null : f);
+                  setField('scramble', normalizeReconScrambleSpacing(form.event || '', form.scramble || ''));
+                }}
+                style={{ overflow: 'hidden', resize: 'none' }}
+              />
+              {isMobile && (
+                <CubeKeyboardSection
+                  target={scrambleRef}
+                  mobileVisible={activeVkbField === 'generic'}
+                  onInput={() => {
+                    if (scrambleRef.current) {
+                      setField('scramble', scrambleRef.current.value);
+                      autoResize(scrambleRef.current);
+                    }
+                  }}
+                />
+              )}
+            </div>
+
             {/* 同选手 + 同打乱:不硬拒,要求二选一说明原因(值入 dupReason)。占位打乱 '?' 已豁免不会触发。 */}
             {dupId != null && (
               <div className="submit-block submit-dup-reason">
@@ -2095,7 +2157,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   value={form.solution || ''}
                   onChange={(text) => setField('solution', text)}
                   onCaretSync={(textBefore) => syncReconPlayerCursorFromText(playerRef.current, textBefore)}
-                  scramble={form.wcaScramble || form.optimalScramble || ''}
+                  scramble={getReconScramble(form)}
                   isMobile={isMobile}
                   mobileKeyboardVisible={activeVkbField === 'solution'}
                   onFocusField={() => setActiveVkbField('solution')}

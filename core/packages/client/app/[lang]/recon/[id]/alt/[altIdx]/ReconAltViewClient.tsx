@@ -11,6 +11,7 @@ import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { TriangleAlert } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
+import { getReconScramble } from '@cuberoot/shared/recon-completion';
 import { getRecon } from '@/lib/recon-api';
 import { getPuzzleId } from '@/lib/recon-utils';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
@@ -52,7 +53,7 @@ export default function ReconAltViewClient() {
 
   const idx = altIdxStr ? Number(altIdxStr) : -1;
   const alt = parent?.alternatives?.[idx];
-  const scramble = parent?.optimalScramble || parent?.wcaScramble || '';
+  const scramble = parent ? getReconScramble(parent) : '';
   const displayScramble = parent?.event === 'sq1' ? formatScrambleForEvent('sq1', scramble) : scramble;
   const puzzle = parent ? getPuzzleId(parent.event) : '3x3x3';
 
