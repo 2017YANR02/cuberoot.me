@@ -36,4 +36,20 @@ describe('mini program app structure', () => {
       expect(pagePaths.has(item.pagePath)).toBe(true);
     }
   });
+
+  it('keeps web-backed pages on the shared controller', () => {
+    const timerPage = pageFiles['../src/pages/timer/index.ts'];
+    const genericWebPage = pageFiles['../src/pages/web/index.ts'];
+
+    expect(timerPage).toContain("createWebViewPageOptions('timer')");
+    expect(genericWebPage).toContain('createWebViewPageOptions()');
+    expect(timerPage).not.toMatch(/timer-store|setInterval|setTimeout/);
+  });
+
+  it('keeps website addresses out of page adapters and templates', () => {
+    for (const [path, source] of Object.entries(pageFiles)) {
+      if (!/\.(?:ts|wxml)$/.test(path)) continue;
+      expect(source, path).not.toMatch(/https?:\/\/|cuberoot\.me|\/zh\//);
+    }
+  });
 });
