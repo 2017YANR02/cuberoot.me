@@ -30,6 +30,10 @@ export interface SessionData {
   user: SessionUser;
 }
 
+export type StoredSessionSnapshot =
+  | { status: 'available'; session: SessionData | null }
+  | { status: 'unavailable'; session: null };
+
 export interface LoginResult extends SessionData {
   isNew: boolean;
 }
@@ -95,11 +99,18 @@ function decodeSession(value: unknown): SessionData | null {
   };
 }
 
-function readStoredSessionValue(): unknown {
+type StoredSessionRead =
+  | { available: true; value: unknown }
+  | { available: false };
+
+function readStoredSessionValue(): StoredSessionRead {
   try {
-    return wx.getStorageSync(SESSION_STORAGE_KEY) as unknown;
+    return {
+      available: true,
+      value: wx.getStorageSync(SESSION_STORAGE_KEY) as unknown,
+    };
   } catch {
-    return undefined;
+    return { available: false };
   }
 }
 
@@ -236,11 +247,19 @@ function wechatLoginCode(): Promise<string> {
 }
 
 export function getStoredSession(): SessionData | null {
+  return getStoredSessionSnapshot().session;
+}
+
+export function getStoredSessionSnapshot(): StoredSessionSnapshot {
   const stored = readStoredSessionValue();
-  if (stored === '' || stored === null || stored === undefined) return null;
-  const session = decodeSession(stored);
+  if (!stored.available) return { status: 'unavailable', session: null };
+  const { value } = stored;
+  if (value === '' || value === null || value === undefined) {
+    return { status: 'available', session: null };
+  }
+  const session = decodeSession(value);
   if (!session) removeStoredSessionValue();
-  return session;
+  return { status: 'available', session };
 }
 
 export function clearStoredSession(): boolean {
@@ -279,7 +298,8 @@ export async function validateStoredSession(session: SessionData): Promise<Sessi
     throw new ApiError(401, 'session identity mismatch');
   }
   const next = { ...session, user: { ...session.user, ...user } };
-  const current = decodeSession(readStoredSessionValue());
+  const stored = readStoredSessionValue();
+  const current = stored.available ? decodeSession(stored.value) : null;
   if (current?.token === session.token) {
     writeStoredSessionValue(next);
   }

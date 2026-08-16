@@ -2,7 +2,11 @@
   <text class="eyebrow">ACCOUNT</text>
   <text class="page-title">我的</text>
 
-  <block wx:if="{{loggedIn}}">
+  <block wx:if="{{storageUnavailable && !loggedIn}}">
+    <text class="page-intro account-intro">设备存储暂时不可用，当前无法确认登录状态。请重新读取后再继续。</text>
+  </block>
+
+  <block wx:elif="{{loggedIn}}">
     <view class="identity">
       <text class="identity-mark" aria-hidden="true">{{initial}}</text>
       <view class="identity-copy">
@@ -51,7 +55,7 @@
   <button
     class="text-button sync-retry-button"
     hover-class="press-feedback"
-    wx:if="{{loggedIn && syncState === 'error'}}"
+    wx:if="{{syncState === 'error'}}"
     bindtap="retrySync"
   >重新确认</button>
   <button class="text-button privacy-button" hover-class="press-feedback" bindtap="openPrivacy">隐私说明</button>

@@ -85,6 +85,24 @@ describe('mini program account page', () => {
     expect(page.data.syncState).toBe('');
   });
 
+  it('distinguishes unavailable storage from a signed-out account', async () => {
+    const request = vi.fn();
+    const page = await loadPage({
+      getStorageSync() {
+        throw new Error('storage unavailable');
+      },
+      request,
+    });
+
+    page.onShow();
+
+    expect(page.data.loggedIn).toBe(false);
+    expect(page.data.storageUnavailable).toBe(true);
+    expect(page.data.syncState).toBe('error');
+    expect(page.data.status).toContain('设备存储');
+    expect(request).not.toHaveBeenCalled();
+  });
+
   it('stops pull-down feedback after account validation fails', async () => {
     const stopPullDownRefresh = vi.fn();
     const page = await loadPage({
@@ -419,6 +437,29 @@ describe('mini program account page', () => {
     await vi.waitFor(() => expect(page.data.syncState).toBe('ready'));
     expect(page.data.syncLabel).toBe('已就绪');
     expect(page.data.status).toBe('');
+  });
+
+  it('settles account checking when storage becomes unreadable after validation', async () => {
+    let storageReads = 0;
+    const page = await loadPage({
+      getStorageSync() {
+        storageReads += 1;
+        if (storageReads >= 3) throw new Error('storage unavailable');
+        return storedSession;
+      },
+      removeStorageSync: vi.fn(),
+      request: vi.fn((options: { success(response: unknown): void }) => {
+        options.success({ statusCode: 200, data: { user: storedSession.user } });
+      }),
+      setStorageSync: vi.fn(),
+    });
+
+    page.onShow();
+
+    await vi.waitFor(() => expect(page.data.syncState).toBe('error'));
+    expect(page.data.loggedIn).toBe(true);
+    expect(page.data.storageUnavailable).toBe(true);
+    expect(page.data.status).toContain('设备存储');
   });
 
   it('keeps an emoji account initial intact', async () => {

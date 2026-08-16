@@ -1,7 +1,7 @@
 import {
   ApiError,
   clearStoredSession,
-  getStoredSession,
+  getStoredSessionSnapshot,
   loginErrorMessage,
   loginWithWechat,
   validateStoredSession,
@@ -60,6 +60,7 @@ Page({
     statusError: false,
     syncLabel: '',
     syncState: '',
+    storageUnavailable: false,
     wcaId: '',
   },
 
@@ -74,8 +75,19 @@ Page({
       busy: activeLogins.has(this),
       status: '',
       statusError: false,
+      storageUnavailable: false,
     });
-    const session = getStoredSession();
+    const stored = getStoredSessionSnapshot();
+    if (stored.status === 'unavailable') {
+      this.showSyncState('error');
+      this.setData({
+        status: '设备存储暂时无法读取，请稍后重试',
+        statusError: true,
+        storageUnavailable: true,
+      });
+      return;
+    }
+    const { session } = stored;
     this.showSession(session);
     if (!session) {
       this.showSyncState('');
@@ -85,13 +97,33 @@ Page({
     try {
       const next = await validateStoredSession(session);
       if (!validationIsCurrent(this, validationAttempt)) return;
-      if (getStoredSession()?.token !== session.token) return;
+      const current = getStoredSessionSnapshot();
+      if (current.status === 'unavailable') {
+        this.showSyncState('error');
+        this.setData({
+          status: '账号已确认，但设备存储暂时无法读取，请稍后重试',
+          statusError: true,
+          storageUnavailable: true,
+        });
+        return;
+      }
+      if (current.session?.token !== session.token) return;
       this.showSession(next);
       this.showSyncState('ready');
       this.setData({ status: '', statusError: false });
     } catch (error: unknown) {
       if (!validationIsCurrent(this, validationAttempt)) return;
-      if (getStoredSession()?.token !== session.token) return;
+      const current = getStoredSessionSnapshot();
+      if (current.status === 'unavailable') {
+        this.showSyncState('error');
+        this.setData({
+          status: '设备存储暂时无法读取，请稍后重试',
+          statusError: true,
+          storageUnavailable: true,
+        });
+        return;
+      }
+      if (current.session?.token !== session.token) return;
       if (error instanceof ApiError && error.status === 401) {
         if (!clearStoredSession()) {
           this.showSyncState('error');
