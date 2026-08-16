@@ -76,6 +76,14 @@ export function listWebTools(): WebToolLink[] {
   return tools;
 }
 
+export function resolveToolsPageShare(): WebRouteShare {
+  return {
+    imageUrl: WEB_ROUTE_SHARE_IMAGE,
+    title: 'CubeRoot 魔方根：魔方工具',
+    path: '/pages/tools/index',
+  };
+}
+
 export function resolveWebRouteShare(key: unknown): WebRouteShare | null {
   if (typeof key !== 'string' || !Object.prototype.hasOwnProperty.call(WEB_ROUTES, key)) {
     return null;

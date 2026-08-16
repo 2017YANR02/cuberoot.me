@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 interface ToolsPage {
   onHide(): void;
   onUnload(): void;
+  onShareAppMessage(): WechatMiniprogram.Page.ICustomShareContent;
   openTool(event: { currentTarget: { dataset: { key?: unknown } } }): void;
 }
 
@@ -36,6 +37,16 @@ describe('mini program tools page', () => {
     expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({
       url: '/pages/web/index?key=alg',
     }));
+  });
+
+  it('shares the public tools entry with the canonical brand image', async () => {
+    const page = await loadPage({});
+
+    expect(page.onShareAppMessage()).toEqual({
+      imageUrl: '/assets/share-cover.png',
+      title: 'CubeRoot 魔方根：魔方工具',
+      path: '/pages/tools/index',
+    });
   });
 
   it('rejects an unknown destination', async () => {
