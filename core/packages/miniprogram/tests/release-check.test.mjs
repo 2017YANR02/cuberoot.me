@@ -30,6 +30,7 @@ const validBuiltFiles = [
   'app.json',
   'app.wxss',
   'sitemap.json',
+  ...BUILD_ASSETS.map(({ output }) => output),
   ...EXPECTED_APP_PAGES.flatMap((page) => [
     `${page}.js`,
     `${page}.json`,
@@ -233,6 +234,18 @@ describe('mini program release check', () => {
     expect(failures).toContain(
       'dist 缺少构建产物：assets/logo.png、pages/timer/index.wxml、templates/web-route-view.wxml。',
     );
+  });
+
+  it('rejects a release missing an external build asset', () => {
+    const builtFiles = validInput.builtFiles.filter((path) => (
+      path !== 'assets/share-cover.png'
+    ));
+
+    expect(collectReleaseFailures({
+      ...validInput,
+      builtFiles,
+      builtFileSizes: sizesFor(builtFiles),
+    })).toContain('dist 缺少构建产物：assets/share-cover.png。');
   });
 
   it('rejects development source maps in the upload package', () => {
