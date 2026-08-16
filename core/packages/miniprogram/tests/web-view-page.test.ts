@@ -106,6 +106,27 @@ describe('shared web-view page state', () => {
     expect(context.data.errorTitle).toBe('');
   });
 
+  it('retries once when nextTick accepts but loses its callback', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('wx', {
+      getStorageSync: () => null,
+      removeStorageSync: vi.fn(),
+      nextTick: vi.fn(),
+      setNavigationBarTitle,
+    });
+    const context = createContext();
+    await openWebRoute(context, 'timer');
+    markWebRouteFailed(context);
+
+    retryWebRoute(context);
+    expect(context.data.src).toBe('');
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.errorTitle).toBe('');
+    expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
+  });
+
   it('uses a one-time handoff ticket when a Mini Program session exists', async () => {
     const token = 't'.repeat(20);
     const ticket = 'A'.repeat(43);
