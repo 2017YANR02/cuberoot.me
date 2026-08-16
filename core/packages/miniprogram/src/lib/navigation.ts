@@ -38,6 +38,7 @@ export function openWebsitePageOnce(
     });
   } catch {
     fail();
+    return false;
   }
   return true;
 }
