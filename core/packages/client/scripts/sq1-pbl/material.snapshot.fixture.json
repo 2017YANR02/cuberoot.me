@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "source": "repeatable synthetic material-drift fixture",
+  "fetchedAt": "2000-01-01T00:00:00.000Z",
+  "digests": {
+    "content": "fixture-content",
+    "presentation": "fixture-presentation",
+    "editorial": "fixture-editorial"
+  },
+  "totals": {
+    "sheets": 0
+  },
+  "invariants": {},
+  "sheets": []
+}

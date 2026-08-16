@@ -426,6 +426,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'alg/sq1/parity-game': { title: { zh: 'SQ1 奇偶游戏', en: 'Square-1 Parity Game' } },
   'alg/sq1/train': { title: { zh: 'SQ1 组合练习', en: 'Square-1 Shape Pair Drill' } },
   'alg/sq1/algorithm-trainer': { title: { zh: 'SQ1 公式训练', en: 'Square-1 Algorithm Trainer' } },
+  'alg/sq1/pbl': {
+    title: { zh: 'SQ1 PBL 公式与查找器', en: 'Square-1 PBL Algorithms and Finder' },
+    description: {
+      zh: '浏览 Square-1 PBL 文档，并按上下层排列查找公式。',
+      en: 'Browse the Square-1 PBL reference and find algorithms by top and bottom layer permutation.',
+    },
+  },
   'sq1/cs/name': {
     title: { zh: 'Square-1 形状名称', en: 'Square-1 Shape Names' },
     description: {

@@ -174,6 +174,12 @@ const nextConfig: NextConfig = {
         source: "/analyze-worker/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=86400" }],
       },
+      // Versioned in-repo SQ1 PBL snapshots. The stable URLs must refresh after
+      // a reviewed upstream sync, so browsers cache briefly and the CDN longer.
+      {
+        source: "/data/sq1-pbl/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=600, s-maxage=3600, stale-while-revalidate=86400" }],
+      },
       // /scramble/solver 现在是统一求解路由(?event= 分发):只有 3×3 cubeopt(event=333
       // 或缺省 event)要 SharedArrayBuffer → 只给它发 COOP/COEP。其余 event(222/pyram/skewb/
       // sq1)是普通文档,绝不能套 COEP(rust-cross worker + 跨域 27MB 表会被 require-corp 拦死)。

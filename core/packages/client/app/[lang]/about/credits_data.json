@@ -28,6 +28,20 @@
     "long_en": "Squanmate by Mika Vilpas is the upstream functional reference for CubeRoot's Square-1 workspace: cubeshape and algorithm training, the 29 canonical single-layer shape names, scramble inspection, algorithm shape visualization and import, parity count positions, parity-sequence practice, and trainer controls. CubeRoot reuses its own notation/state implementation, algorithm database, SVG renderer, and /sim drawing system instead of carrying over Squanmate's ClojureScript UI stack."
   },
   {
+    "name": "Daniel's Public PBL Doc",
+    "url": "https://docs.google.com/spreadsheets/d/1VQNYNwdOLqqBkacHcfYtEBst22FOVhH9EAhTOYOZTgo/",
+    "zh": "Square-1 PBL 文档与公式数据来源；公开访问不等于开源授权，许可证与复用条款尚未核实",
+    "en": "Square-1 PBL reference and algorithm-data source; public access does not establish an open-source license, and its license and reuse terms remain unverified",
+    "long_en": "Daniel's public Square-1 PBL workbook is the source reference for the PBL documentation and normalized algorithm data presented on CubeRoot. Public availability alone does not grant an open-source license; the workbook's license and reuse terms remain unverified."
+  },
+  {
+    "name": "Simple Square-1 PBL Finder v1.2 by Anuar and Lucas",
+    "url": "https://www.dropbox.com/scl/fi/b47zgzc2z8w8w818pzi1m/Square-1-PBL-Finder.jar?rlkey=rxnjgdf319zpq1ubr4bkrddab&e=2&dl=0",
+    "zh": "Square-1 PBL Finder 的行为参考；本站采用 clean-room 行为重实现，未复制源码，许可证尚未核实",
+    "en": "Behavioral reference for the Square-1 PBL Finder; CubeRoot uses a clean-room behavioral reimplementation, copies no source code, and has not verified the license",
+    "long_en": "The supplied Simple Square-1 PBL Finder v1.2 JAR by Anuar and Lucas is used only as a black-box behavioral reference. CubeRoot's finder is a clean-room reimplementation built on its own Square-1 state and UI infrastructure; no source code was copied, and the original JAR's license remains unverified."
+  },
+  {
     "name": "jonatanklosko/wca_statistics",
     "url": "https://github.com/jonatanklosko/wca_statistics",
     "zh": "WCA 统计管道原型(本站为 TS 重写版)",
