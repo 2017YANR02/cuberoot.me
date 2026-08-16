@@ -33,6 +33,12 @@ const routeAttempts = new WeakMap<WebViewPageContext, number>();
 const disposedPages = new WeakSet<WebViewPageContext>();
 const RETRY_SCHEDULER_GRACE_MS = 100;
 
+interface RetrySchedule {
+  timer?: ReturnType<typeof setTimeout>;
+}
+
+const retrySchedules = new WeakMap<WebViewPageContext, RetrySchedule>();
+
 function beginRouteAttempt(context: WebViewPageContext): number {
   const attempt = (routeAttempts.get(context) ?? 0) + 1;
   routeAttempts.set(context, attempt);
@@ -41,6 +47,14 @@ function beginRouteAttempt(context: WebViewPageContext): number {
 
 function isCurrentAttempt(context: WebViewPageContext, attempt: number): boolean {
   return routeAttempts.get(context) === attempt;
+}
+
+function cancelScheduledRetry(context: WebViewPageContext): void {
+  const schedule = retrySchedules.get(context);
+  if (!schedule) return;
+
+  if (schedule.timer !== undefined) clearTimeout(schedule.timer);
+  retrySchedules.delete(context);
 }
 
 function updateNavigationTitle(title: string): void {
@@ -127,25 +141,29 @@ export function markWebRouteFailed(context: WebViewPageContext): void {
 }
 
 export function cancelWebRoute(context: WebViewPageContext): void {
+  cancelScheduledRetry(context);
   disposedPages.add(context);
   beginRouteAttempt(context);
 }
 
 export function retryWebRoute(context: WebViewPageContext): void {
   if (disposedPages.has(context)) return;
+  if (retrySchedules.has(context)) return;
+
   const key = context.data.routeKey;
+  const schedule: RetrySchedule = {};
+  retrySchedules.set(context, schedule);
   context.setData({ canRetry: false, errorMessage: '', errorTitle: '', src: '' });
 
   let reopened = false;
-  let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
   const reopenOnce = () => {
-    if (reopened) return;
+    if (reopened || retrySchedules.get(context) !== schedule) return;
     reopened = true;
-    if (fallbackTimer !== undefined) clearTimeout(fallbackTimer);
+    cancelScheduledRetry(context);
     if (disposedPages.has(context)) return;
     void openWebRoute(context, key);
   };
-  fallbackTimer = setTimeout(reopenOnce, RETRY_SCHEDULER_GRACE_MS);
+  schedule.timer = setTimeout(reopenOnce, RETRY_SCHEDULER_GRACE_MS);
 
   try {
     wx.nextTick(reopenOnce);
@@ -166,6 +184,7 @@ export function createWebViewPageOptions(
     data: createWebViewPageData(),
 
     onLoad(options) {
+      cancelScheduledRetry(this);
       disposedPages.delete(this);
       void openWebRoute(this, fixedRouteKey ?? options.key);
     },
