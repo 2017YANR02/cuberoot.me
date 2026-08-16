@@ -38,6 +38,7 @@ const storedSession = {
 
 describe('mini program account page', () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.resetModules();
     vi.unstubAllGlobals();
   });
@@ -215,6 +216,59 @@ describe('mini program account page', () => {
     expect(page.data.loggedIn).toBe(true);
     expect(page.data.status).toContain('退出确认暂时无法打开');
     expect(showModal).toHaveBeenCalledTimes(2);
+  });
+
+  it('ignores a logout confirmation after the account page has been unloaded', async () => {
+    let modalOptions: {
+      complete(): void;
+      success(result: { confirm: boolean }): void;
+    } | undefined;
+    const navigateTo = vi.fn();
+    const removeStorageSync = vi.fn();
+    const page = await loadPage({
+      navigateTo,
+      removeStorageSync,
+      showModal(options: typeof modalOptions) {
+        modalOptions = options;
+      },
+    });
+    page.setData({ loggedIn: true });
+
+    page.logout();
+    page.onUnload();
+    modalOptions?.success({ confirm: true });
+    modalOptions?.complete();
+
+    expect(page.data.loggedIn).toBe(true);
+    expect(removeStorageSync).not.toHaveBeenCalled();
+    expect(navigateTo).not.toHaveBeenCalled();
+  });
+
+  it('does not let a stale confirmation release a newer confirmation lock', async () => {
+    vi.useFakeTimers();
+    const modals: Array<{
+      complete(): void;
+      success(result: { confirm: boolean }): void;
+    }> = [];
+    const page = await loadPage({
+      showModal(options: (typeof modals)[number]) {
+        modals.push(options);
+      },
+    });
+
+    page.logout();
+    vi.advanceTimersByTime(5_000);
+    page.logout();
+    expect(modals).toHaveLength(2);
+
+    modals[0]?.complete();
+    page.logout();
+    expect(modals).toHaveLength(2);
+
+    modals[1]?.success({ confirm: false });
+    modals[1]?.complete();
+    page.logout();
+    expect(modals).toHaveLength(3);
   });
 
   it('shows cached identity as checking until the server confirms it', async () => {
