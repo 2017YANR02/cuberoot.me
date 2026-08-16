@@ -43,6 +43,21 @@ export function sanitizeRollingStatColumns(
     .map(definition => definition.key);
 }
 
+export function rollingStatReplacementOptions(columns: readonly RollingStatKey[]): RollingStatKey[] {
+  const selected = new Set(sanitizeRollingStatColumns(columns));
+  return ROLLING_STAT_PRESETS.filter(key => !selected.has(key));
+}
+
+export function replaceRollingStatColumn(
+  columns: readonly RollingStatKey[],
+  current: RollingStatKey,
+  replacement: RollingStatKey,
+): RollingStatKey[] {
+  const selected = sanitizeRollingStatColumns(columns);
+  if (!selected.includes(current) || selected.includes(replacement)) return selected;
+  return sanitizeRollingStatColumns(selected.map(key => key === current ? replacement : key));
+}
+
 export function rollingStatColumnsFromLegacy(raw: unknown): RollingStatKey[] {
   if (!Array.isArray(raw)) return [...DEFAULT_ROLLING_STAT_COLUMNS];
   const keys = raw.map(value => `ao${Math.floor(Number(value))}`);

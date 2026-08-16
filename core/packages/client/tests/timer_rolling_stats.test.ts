@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { Solve } from '@/app/[lang]/timer/_lib/types';
 import {
   parseRollingStatKey,
+  replaceRollingStatColumn,
   rollingStatBest,
   rollingStatColumnsFromLegacy,
   rollingStatCurrent,
+  rollingStatReplacementOptions,
   sanitizeRollingStatColumns,
 } from '@/app/[lang]/timer/_lib/rolling_stats';
 
@@ -46,5 +48,20 @@ describe('rolling statistic columns', () => {
   it('migrates legacy ao windows without losing custom values', () => {
     expect(rollingStatColumnsFromLegacy([100, 5])).toEqual(['ao5', 'ao100']);
     expect(rollingStatColumnsFromLegacy([])).toEqual([]);
+  });
+
+  it('offers only values not already visible when replacing a header column', () => {
+    const options = rollingStatReplacementOptions(['ao5', 'ao12']);
+    expect(options).not.toContain('ao5');
+    expect(options).not.toContain('ao12');
+    expect(options).toContain('mo3');
+    expect(options).toContain('ao100');
+  });
+
+  it('replaces one visible column without allowing duplicate columns', () => {
+    expect(replaceRollingStatColumn(['ao5', 'ao12'], 'ao5', 'ao100'))
+      .toEqual(['ao12', 'ao100']);
+    expect(replaceRollingStatColumn(['ao5', 'ao12'], 'ao5', 'ao12'))
+      .toEqual(['ao5', 'ao12']);
   });
 });
