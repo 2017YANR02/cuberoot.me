@@ -31,6 +31,7 @@ interface WebViewPageMethods {
 
 const routeAttempts = new WeakMap<WebViewPageContext, number>();
 const disposedPages = new WeakSet<WebViewPageContext>();
+const RETRY_SCHEDULER_GRACE_MS = 100;
 
 function beginRouteAttempt(context: WebViewPageContext): number {
   const attempt = (routeAttempts.get(context) ?? 0) + 1;
@@ -135,16 +136,22 @@ export function retryWebRoute(context: WebViewPageContext): void {
   const key = context.data.routeKey;
   context.setData({ canRetry: false, errorMessage: '', errorTitle: '', src: '' });
 
-  const reopen = () => {
+  let reopened = false;
+  let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+  const reopenOnce = () => {
+    if (reopened) return;
+    reopened = true;
+    if (fallbackTimer !== undefined) clearTimeout(fallbackTimer);
     if (disposedPages.has(context)) return;
     void openWebRoute(context, key);
   };
+  fallbackTimer = setTimeout(reopenOnce, RETRY_SCHEDULER_GRACE_MS);
 
   try {
-    wx.nextTick(reopen);
+    wx.nextTick(reopenOnce);
   } catch {
     // Retry immediately when the scheduling API is unavailable or broken.
-    reopen();
+    reopenOnce();
   }
 }
 
