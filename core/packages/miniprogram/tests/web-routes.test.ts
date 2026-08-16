@@ -13,13 +13,19 @@ describe('mini program web routes', () => {
     });
   });
 
-  it('keeps account management in the registry without showing it as a discovery tool', () => {
+  it('keeps account and privacy destinations in the registry without showing them as discovery tools', () => {
     expect(resolveWebRoute('account')).toEqual({
       title: '账号管理',
       path: '/zh/account',
       url: 'https://cuberoot.me/zh/account',
     });
+    expect(resolveWebRoute('privacy')).toEqual({
+      title: '隐私说明',
+      path: '/zh/privacy',
+      url: 'https://cuberoot.me/zh/privacy',
+    });
     expect(listWebTools().some((tool) => tool.key === 'account')).toBe(false);
+    expect(listWebTools().some((tool) => tool.key === 'privacy')).toBe(false);
   });
 
   it('resolves only allowlisted website destinations', () => {

@@ -8,12 +8,12 @@ export default function PrivacyPage() {
 
   return (
     <main className="privacy-page">
-      <h1>{t('CubeRoot 移动端隐私政策', 'CubeRoot Mobile Privacy Policy')}</h1>
-      <p className="privacy-updated">{t('生效日期:2026-08-12', 'Effective date: August 12, 2026')}</p>
+      <h1>{t('CubeRoot 移动端与小程序隐私政策', 'CubeRoot Mobile and Mini Program Privacy Policy')}</h1>
+      <p className="privacy-updated">{t('生效日期:2026-08-16', 'Effective date: August 16, 2026')}</p>
       <p>
         {t(
-          '本政策适用于 CubeRoot 官方 Android 与 iOS App。App 的核心计时功能可离线使用,不要求注册账号。',
-          'This policy applies to the official CubeRoot Android and iOS apps. Core timer features work offline and do not require an account.',
+          '本政策适用于 CubeRoot 官方 Android、iOS App 与微信小程序。App 的核心计时功能可离线使用;小程序的公开内容可不登录浏览,只有在你主动选择微信登录时才会创建或识别 CubeRoot 账号。',
+          'This policy applies to the official CubeRoot Android and iOS apps and the WeChat Mini Program. Core app timer features work offline, and public Mini Program content can be viewed without signing in. A CubeRoot account is created or recognized only when you actively choose WeChat sign-in.',
         )}
       </p>
 
@@ -23,6 +23,36 @@ export default function PrivacyPage() {
         <li>{t('App 会读取网络连接状态,仅用于显示在线或离线状态。', 'The app reads network connection status only to show whether the device is online or offline.')}</li>
         <li>{t('App 不包含广告或分析 SDK,也不使用摄像头、麦克风或定位权限。', 'The app contains no advertising or analytics SDK and does not use camera, microphone, or location permissions.')}</li>
       </ul>
+
+      <h2>{t('小程序与账号数据', 'Mini Program and account data')}</h2>
+      <ul>
+        <li>
+          {t(
+            '只有在你点击“微信登录”后,小程序才会调用微信登录能力,并将一次性登录凭证发送到 CubeRoot 服务器。服务器与微信交换账号标识,用同一开放平台下的 UnionID 识别你在网站与小程序中的同一账号。',
+            'Only after you tap WeChat sign-in does the Mini Program request a one-time login code and send it to the CubeRoot server. The server exchanges it with WeChat and uses the UnionID under the same WeChat Open Platform account to recognize the same CubeRoot account across the website and Mini Program.',
+          )}
+        </li>
+        <li>
+          {t(
+            '小程序不请求你的微信昵称、头像或手机号。登录后会在小程序本地保存 CubeRoot 会话凭证、账号显示名与 WCA ID,用于保持登录状态和显示账号信息。',
+            'The Mini Program does not request your WeChat nickname, avatar, or phone number. After sign-in, it stores the CubeRoot session token, account display name, and WCA ID locally to maintain the session and show account information.',
+          )}
+        </li>
+        <li>
+          {t(
+            '小程序原生外壳不包含广告或分析 SDK,当前版本不调用定位、摄像头、麦克风、相册、通讯录或蓝牙权限。',
+            'The native Mini Program shell contains no advertising or analytics SDK. The current release does not access location, camera, microphone, photo library, contacts, or Bluetooth permissions.',
+          )}
+        </li>
+      </ul>
+
+      <h2>{t('网页内容与跨端登录', 'Web content and cross-platform sign-in')}</h2>
+      <p>
+        {t(
+          '小程序使用 web-view 打开 cuberoot.me 上的计时器、公式库、比赛、百科、课程和账号页。已登录时,小程序可申请一个短时、单次使用的换票交给网页,使网页识别同一账号。长期会话凭证不会放入网址。服务器可处理 IP 地址、浏览器或设备类型等标准请求信息,仅用于提供服务、安全防护与故障诊断。',
+          'The Mini Program uses web-view to open the timer, algorithm library, competitions, wiki, courses, and account pages on cuberoot.me. When signed in, it may issue a short-lived, single-use handoff ticket so the webpage can recognize the same account. Long-lived session tokens are never placed in the URL. The server may process standard request information such as IP address and browser or device type only to deliver the service, protect it, and diagnose failures.',
+        )}
+      </p>
 
       <h2>{t('备份与删除', 'Backups and deletion')}</h2>
       <p>
@@ -40,19 +70,19 @@ export default function PrivacyPage() {
         )}
       </p>
 
-      <h2>{t('安全处理', 'Security')}</h2>
+      <h2>{t('安全、退出与删除', 'Security, sign-out, and deletion')}</h2>
       <p>
         {t(
-          'App 使用操作系统提供的应用隔离存储,并在导入或保存前校验数据结构和大小。CubeRoot 无法控制设备本身、系统备份或你导出文件的安全性;请为设备设置锁屏并谨慎选择备份接收方。',
-          'The app uses operating-system app-isolated storage and validates data structure and size before importing or saving it. CubeRoot cannot control the security of your device, operating-system backups, or exported files; use a device lock and choose backup recipients carefully.',
+          'App 使用操作系统提供的应用隔离存储,并在导入或保存前校验数据结构和大小。你可以在小程序“我的”页退出登录并清除小程序本地会话;账号绑定与账号删除继续使用网站的统一账号管理页,不在小程序内复制第二套流程。CubeRoot 无法控制设备本身、系统备份或你导出文件的安全性;请为设备设置锁屏并谨慎选择备份接收方。',
+          'The app uses operating-system app-isolated storage and validates data structure and size before importing or saving it. You can sign out on the Mini Program Account page to clear its local session. Account links and account deletion continue to use the website’s single account management page rather than a duplicate Mini Program flow. CubeRoot cannot control the security of your device, operating-system backups, or exported files; use a device lock and choose backup recipients carefully.',
         )}
       </p>
 
-      <h2>{t('外部网站', 'External website')}</h2>
+      <h2>{t('网站与第三方链接', 'Website and third-party links')}</h2>
       <p>
         {t(
-          'App 中的“完整网站”和隐私政策链接会在系统浏览器中打开 cuberoot.me。浏览器中的网站功能、账号登录以及你主动访问的第三方链接,不属于 App 的本地离线计时数据。',
-          'The Full website and privacy links open cuberoot.me in the system browser. Website features, account sign-in, and third-party links you choose to visit are separate from the app’s local offline timer data.',
+          'App 中的“完整网站”会在系统浏览器中打开 cuberoot.me,小程序会在微信 web-view 中打开同一网站。你主动打开的第三方链接由对应的第三方负责,请同时查看它们的隐私说明。',
+          'The app opens cuberoot.me in the system browser, while the Mini Program opens the same website in WeChat web-view. Third-party links you actively open are operated by their respective providers; review their privacy information as well.',
         )}
       </p>
 

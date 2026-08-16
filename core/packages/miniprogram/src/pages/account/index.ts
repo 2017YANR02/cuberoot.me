@@ -72,6 +72,26 @@ Page({
     });
   },
 
+  openPrivacy() {
+    const openWebsitePrivacy = () => {
+      wx.navigateTo({
+        url: '/pages/web/index?key=privacy',
+        fail: () => {
+          wx.showToast({ icon: 'none', title: '隐私说明暂时无法打开' });
+        },
+      });
+    };
+
+    if (typeof wx.openPrivacyContract !== 'function') {
+      openWebsitePrivacy();
+      return;
+    }
+
+    wx.openPrivacyContract({
+      fail: openWebsitePrivacy,
+    });
+  },
+
   logout() {
     wx.showModal({
       title: '退出登录',

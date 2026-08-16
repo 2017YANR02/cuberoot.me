@@ -43,4 +43,5 @@
   </block>
 
   <text class="status-text {{statusError ? 'status-text--error' : ''}}" wx:if="{{status}}">{{status}}</text>
+  <button class="text-button privacy-button" bindtap="openPrivacy">隐私说明</button>
 </view>

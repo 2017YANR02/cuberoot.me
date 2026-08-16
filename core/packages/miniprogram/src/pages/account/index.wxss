@@ -155,3 +155,7 @@
 .logout-button {
   margin-top: 34rpx;
 }
+
+.privacy-button {
+  margin-top: 28rpx;
+}
