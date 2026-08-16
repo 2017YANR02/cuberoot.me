@@ -11,9 +11,6 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@cuberoot/shared": "workspace:*"
-  },
   "devDependencies": {
     "esbuild": "^0.27.4",
     "miniprogram-api-typings": "^5.2.3",
