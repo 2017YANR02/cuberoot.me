@@ -79,6 +79,7 @@ describe('mini program web routes', () => {
       { key: 'wiki', title: '魔方百科', description: '教程、术语与方法资料' },
       { key: 'courses', title: '课程', description: '系统学习与试学内容' },
     ]);
+    expect(Object.values(WEB_ROUTES).filter((route) => 'showInTools' in route)).toHaveLength(4);
   });
 
   it('only registers destinations backed by canonical website pages or redirects', () => {
