@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 interface AccountPage {
   data: Record<string, unknown>;
+  onHide(): void;
   onShow(): void;
+  onUnload(): void;
   logout(): void;
   openAccount(): void;
   openPrivacy(): void;
@@ -162,5 +164,49 @@ describe('mini program account page', () => {
     expect(page.data.loggedIn).toBe(true);
     expect(page.data.syncLabel).toBe('待确认');
     expect(page.data.statusError).toBe(true);
+  });
+
+  it('ignores an older validation result after a newer check succeeds', async () => {
+    const requests: Array<(response: unknown) => void> = [];
+    const page = await loadPage({
+      getStorageSync: () => storedSession,
+      removeStorageSync: vi.fn(),
+      request: vi.fn((options: { success(response: unknown): void }) => {
+        requests.push(options.success);
+      }),
+      setStorageSync: vi.fn(),
+    });
+
+    page.onShow();
+    page.onShow();
+    requests[1]?.({ statusCode: 200, data: { user: storedSession.user } });
+    await vi.waitFor(() => expect(page.data.syncState).toBe('ready'));
+
+    requests[0]?.({ statusCode: 200, data: null });
+    await Promise.resolve();
+
+    expect(page.data.syncState).toBe('ready');
+    expect(page.data.syncLabel).toBe('已就绪');
+    expect(page.data.statusError).toBe(false);
+  });
+
+  it('does not update a page after it has been unloaded', async () => {
+    let completeRequest: ((response: unknown) => void) | undefined;
+    const page = await loadPage({
+      getStorageSync: () => storedSession,
+      removeStorageSync: vi.fn(),
+      request: vi.fn((options: { success(response: unknown): void }) => {
+        completeRequest = options.success;
+      }),
+      setStorageSync: vi.fn(),
+    });
+
+    page.onShow();
+    page.onUnload();
+    const setData = vi.spyOn(page, 'setData');
+    completeRequest?.({ statusCode: 200, data: { user: storedSession.user } });
+    await Promise.resolve();
+
+    expect(setData).not.toHaveBeenCalled();
   });
 });

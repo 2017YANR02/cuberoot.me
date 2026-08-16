@@ -8,6 +8,24 @@ import {
   type SessionData,
 } from '../../lib/auth';
 
+const activePages = new WeakSet<object>();
+const validationAttempts = new WeakMap<object, number>();
+
+function beginValidation(page: object): number {
+  const attempt = (validationAttempts.get(page) ?? 0) + 1;
+  validationAttempts.set(page, attempt);
+  return attempt;
+}
+
+function validationIsCurrent(page: object, attempt: number): boolean {
+  return activePages.has(page) && validationAttempts.get(page) === attempt;
+}
+
+function pausePage(page: object): void {
+  activePages.delete(page);
+  beginValidation(page);
+}
+
 Page({
   data: {
     busy: false,
@@ -22,6 +40,8 @@ Page({
   },
 
   onShow() {
+    activePages.add(this);
+    const validationAttempt = beginValidation(this);
     this.setData({ status: '', statusError: false });
     const session = getStoredSession();
     this.showSession(session);
@@ -31,11 +51,13 @@ Page({
     }
     this.showSyncState('checking');
     void validateStoredSession(session).then((next) => {
+      if (!validationIsCurrent(this, validationAttempt)) return;
       if (getStoredSession()?.token !== session.token) return;
       this.showSession(next);
       this.showSyncState('ready');
       this.setData({ status: '', statusError: false });
     }).catch((error: unknown) => {
+      if (!validationIsCurrent(this, validationAttempt)) return;
       if (getStoredSession()?.token !== session.token) return;
       if (error instanceof ApiError && error.status === 401) {
         clearStoredSession();
@@ -47,6 +69,14 @@ Page({
       this.showSyncState('error');
       this.setData({ status: '账号状态暂时无法更新，请稍后重试', statusError: true });
     });
+  },
+
+  onHide() {
+    pausePage(this);
+  },
+
+  onUnload() {
+    pausePage(this);
   },
 
   showSession(session: SessionData | null) {
@@ -71,9 +101,11 @@ Page({
 
   async login() {
     if (this.data.busy) return;
+    activePages.add(this);
     this.setData({ busy: true, status: '', statusError: false });
     try {
       const session = await loginWithWechat();
+      if (!activePages.has(this)) return;
       this.showSession(session);
       this.showSyncState('ready');
       this.setData({
@@ -81,9 +113,10 @@ Page({
         statusError: false,
       });
     } catch (error) {
+      if (!activePages.has(this)) return;
       this.setData({ status: loginErrorMessage(error), statusError: true });
     } finally {
-      this.setData({ busy: false });
+      if (activePages.has(this)) this.setData({ busy: false });
     }
   },
 
