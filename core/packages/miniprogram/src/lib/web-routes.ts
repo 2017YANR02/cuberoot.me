@@ -10,21 +10,25 @@ export const WEB_ROUTES = {
     title: '公式库',
     description: 'OLL、PLL、ZBLL 等公式查询与训练',
     path: '/zh/alg',
+    showInTools: true,
   },
   competitions: {
     title: 'WCA 比赛',
     description: '查比赛、赛程与成绩',
     path: '/zh/wca/comp',
+    showInTools: true,
   },
   wiki: {
     title: '魔方百科',
     description: '教程、术语与方法资料',
     path: '/zh/wiki',
+    showInTools: true,
   },
   courses: {
     title: '课程',
     description: '系统学习与试学内容',
     path: '/zh/courses',
+    showInTools: true,
   },
   account: {
     title: '账号管理',
@@ -52,14 +56,14 @@ export interface WebToolLink {
   description: string;
 }
 
-const TOOL_ROUTE_KEYS = ['alg', 'competitions', 'wiki', 'courses'] as const;
-
 export function listWebTools(): WebToolLink[] {
-  return TOOL_ROUTE_KEYS.map((key) => ({
-    key,
-    title: WEB_ROUTES[key].title,
-    description: WEB_ROUTES[key].description,
-  }));
+  const tools: WebToolLink[] = [];
+  for (const key of Object.keys(WEB_ROUTES) as WebRouteKey[]) {
+    const route = WEB_ROUTES[key];
+    if (!('showInTools' in route) || route.showInTools !== true) continue;
+    tools.push({ key, title: route.title, description: route.description });
+  }
+  return tools;
 }
 
 export function resolveWebRoute(key: unknown): {
