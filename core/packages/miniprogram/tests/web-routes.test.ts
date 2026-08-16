@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { WEB_ROUTES, createWebSessionHandoffUrl, listWebTools, resolveWebRoute } from '../src/lib/web-routes';
+import {
+  WEB_ROUTES,
+  createWebSessionHandoffUrl,
+  listWebTools,
+  resolveWebRoute,
+  resolveWebRouteShare,
+} from '../src/lib/web-routes';
 
 const TICKET = 'A'.repeat(43);
 const websitePageFiles = import.meta.glob('../../client/app/**/page.tsx', {
@@ -83,6 +89,27 @@ describe('mini program web routes', () => {
       { key: 'courses', title: '课程', description: '系统学习与试学内容' },
     ]);
     expect(Object.values(WEB_ROUTES).filter((route) => 'showInTools' in route)).toHaveLength(4);
+  });
+
+  it('derives share targets from public entries without exposing account routes', () => {
+    expect(resolveWebRouteShare('timer')).toEqual({
+      title: 'CubeRoot 魔方根：计时器',
+      path: '/pages/timer/index',
+    });
+    expect(resolveWebRouteShare('alg')).toEqual({
+      title: 'CubeRoot 魔方根：公式库',
+      path: '/pages/web/index?key=alg',
+    });
+    expect(listWebTools().map(({ key }) => resolveWebRouteShare(key)?.path)).toEqual([
+      '/pages/web/index?key=alg',
+      '/pages/web/index?key=competitions',
+      '/pages/web/index?key=wiki',
+      '/pages/web/index?key=courses',
+    ]);
+    expect(resolveWebRouteShare('account')).toBeNull();
+    expect(resolveWebRouteShare('privacy')).toBeNull();
+    expect(resolveWebRouteShare('logout')).toBeNull();
+    expect(resolveWebRouteShare('unknown')).toBeNull();
   });
 
   it('only registers destinations backed by canonical website pages or redirects', () => {

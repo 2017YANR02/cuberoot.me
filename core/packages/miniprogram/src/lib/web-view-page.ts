@@ -7,6 +7,7 @@ import {
 import {
   createWebSessionHandoffUrl,
   resolveWebRoute,
+  resolveWebRouteShare,
   type WebRouteKey,
 } from './web-routes';
 import {
@@ -110,6 +111,18 @@ function updateNavigationTitle(title: string): void {
   }
 }
 
+function updateShareMenu(key: unknown): void {
+  try {
+    if (resolveWebRouteShare(key)) {
+      wx.showShareMenu({ menus: ['shareAppMessage'] });
+      return;
+    }
+    wx.hideShareMenu({ menus: ['shareAppMessage', 'shareTimeline'] });
+  } catch {
+    // Sharing is optional; route loading must survive unsupported menu APIs.
+  }
+}
+
 export function createWebViewPageData(): WebViewPageData {
   return {
     canRetry: false,
@@ -126,6 +139,7 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
   if (disposedPages.has(context)) return false;
 
   const route = resolveWebRoute(key);
+  updateShareMenu(key);
   if (!route) {
     const attempt = beginRouteAttempt(context);
     context.setData({
@@ -258,6 +272,13 @@ export function createWebViewPageOptions(
 
     onUnload() {
       cancelWebRoute(this);
+    },
+
+    onShareAppMessage() {
+      return resolveWebRouteShare(this.data.routeKey) ?? {
+        title: 'CubeRoot 魔方根',
+        path: '/pages/timer/index',
+      };
     },
 
     handleWebViewError(event) {

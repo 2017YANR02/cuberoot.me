@@ -58,6 +58,11 @@ export interface WebToolLink {
   description: string;
 }
 
+export interface WebRouteShare {
+  title: string;
+  path: string;
+}
+
 export function listWebTools(): WebToolLink[] {
   const tools: WebToolLink[] = [];
   for (const key of Object.keys(WEB_ROUTES) as WebRouteKey[]) {
@@ -66,6 +71,25 @@ export function listWebTools(): WebToolLink[] {
     tools.push({ key, title: route.title, description: route.description });
   }
   return tools;
+}
+
+export function resolveWebRouteShare(key: unknown): WebRouteShare | null {
+  if (typeof key !== 'string' || !Object.prototype.hasOwnProperty.call(WEB_ROUTES, key)) {
+    return null;
+  }
+
+  const routeKey = key as WebRouteKey;
+  const route = WEB_ROUTES[routeKey];
+  const isPublicEntry = routeKey === 'timer'
+    || ('showInTools' in route && route.showInTools === true);
+  if (!isPublicEntry) return null;
+
+  return {
+    title: `CubeRoot 魔方根：${route.title}`,
+    path: routeKey === 'timer'
+      ? '/pages/timer/index'
+      : `/pages/web/index?key=${encodeURIComponent(routeKey)}`,
+  };
 }
 
 export function resolveWebRoute(key: unknown): {
