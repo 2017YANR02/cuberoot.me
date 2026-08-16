@@ -13,6 +13,7 @@ import { countryName } from '@/lib/country-name';
 import { countPodiumByEvent } from '../logic/podium';
 import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
 import { UnofficialMark } from '@/components/UnofficialMark';
+import { WcaTeacherCell, WcaTeacherColumnHeader, useWcaTeachers } from '@/components/WcaTeacherCell';
 
 // WCA 大洲 id(continentId,带前缀 _)→ 本地化短名,供 SoCR 的 scope 标签用.
 const CONTINENT_NAME: Record<string, { zh: string; en: string; }> = {
@@ -115,6 +116,8 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, m
     }
     return ALL_EVENT_IDS.filter((eid) => set.has(eid));
   }, [profile, hist, mode]);
+  const teacherStudentIds = useMemo(() => [profile.person.wca_id], [profile.person.wca_id]);
+  const teacherDirectory = useWcaTeachers(teacherStudentIds, eventIds);
 
   if (eventIds.length === 0) {
     return (
@@ -136,8 +139,9 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, m
       <div className="wp-table-scroll">
         <table className="wp-pr-table">
           <thead>
-            {/* WCA 风格单行表头:项目 | NR CR WR | 单次 | 平均 | WR CR NR(围绕中线镜像对称) */}
+            {/* WCA 风格单行表头:老师 | 项目 | NR CR WR | 单次 | 平均 | WR CR NR(围绕中线镜像对称) */}
             <tr>
+              <WcaTeacherColumnHeader className="wp-th-teacher" />
               <th className="wp-th-event">{t('项目', 'Event')}</th>
               <th title={t('地区排名', 'National rank')}>NR</th>
               <th title={t('洲际排名', 'Continental rank')}>CR</th>
@@ -186,6 +190,17 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, m
                   onClick={selectable ? () => toggleEvent(eid) : undefined}
                   aria-selected={selectable ? selected : undefined}
                 >
+                  {/* allow-static-onclick: the cell only stops the row-selection event; editing remains on semantic buttons and links */}
+                  <td className="wp-cell-teacher" onClick={(event) => event.stopPropagation()}>
+                    <WcaTeacherCell
+                      studentWcaId={profile.person.wca_id}
+                      eventIds={[eid]}
+                      editableEventIds={eventIds}
+                      defaultEditEventId={eid}
+                      directory={teacherDirectory}
+                      isZh={isZh}
+                    />
+                  </td>
                   <th scope="row" className="wp-cell-event" title={selectable ? t('点击多选项目,自选组合的名次和落在下方「自选」行', 'Click rows to multi-select events; the combined sum of ranks appears in the Custom row below') : undefined}>
                     <span className="wp-event-inner">
                       <EventIcon event={eid} className="wp-event-icon" />
@@ -323,6 +338,7 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
         const a = pick(sor.average?.[m.key], sor.bestAverage?.[m.key]);
         return (
           <tr key={m.key} className="wp-sor-row">
+            <td className="wp-sor-blank" />
             <th scope="row" className="wp-cell-event wp-sor-rowlabel" title={m.label}>
               <span className="wp-sor-abbr">{m.abbr}</span>
             </th>
@@ -350,6 +366,7 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
           const a = toDisp(subset?.average?.[m.key]);
           return (
             <tr key={`sel-${m.key}`} className="wp-sor-row wp-sor-custom">
+              <td className="wp-sor-blank" />
               {mi === 0 && (
                 <th scope="row" rowSpan={3} className="wp-cell-event wp-sor-rowlabel wp-sor-custom-rowlabel" title={t(`自选组合(已选 ${selEvents.size} 项):按所选项目重算的 SoWR/SoCR/SoNR 三行,与上方同列对齐;点上方项目行增删`, `Custom combo (${selEvents.size} events): SoWR/SoCR/SoNR recomputed over the selected events, columns aligned with the rows above; click rows above to edit`)}>
                   <span className="wp-sor-abbr wp-sor-custom-label">

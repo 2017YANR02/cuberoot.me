@@ -193,38 +193,6 @@ html[data-theme=dark] .wp-page {
     flex-wrap: wrap; gap: 12px 28px;
 }
 
-.wp-teachers {
-    margin: 18px 0;
-}
-.wp-teachers h2 {
-    margin: 0 0 8px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--wp-text-sub);
-}
-.wp-teachers .wca-teacher-cell {
-    align-items: flex-start;
-    width: auto;
-    max-width: 100%;
-}
-.wp-teachers .wca-teacher-value {
-    min-width: 0;
-    max-width: 100%;
-}
-.wp-teachers .wca-teacher-value-multi {
-    gap: 6px;
-    min-width: 0;
-    max-width: 100%;
-}
-.wp-teachers .wca-teacher-relation {
-    max-width: 100%;
-    flex-wrap: wrap;
-    white-space: normal;
-}
-.wp-teachers .wca-teacher-event-name {
-    color: var(--wp-text-sub);
-    white-space: nowrap;
-}
 .wp-hero-avatar-wrap {
     display: flex; flex-direction: row; align-items: center;
     gap: 14px;
@@ -391,7 +359,8 @@ html[data-theme=dark] .wp-page {
     text-align: center;
     white-space: nowrap;
 }
-/* 项目列收缩到内容宽 (图标 / SoWR / 自选), 不吃 width:100% 的余量 — 否则 项目↔NR 间距过大 */
+/* 老师 / 项目列收缩到内容宽,不吃 width:100% 的余量 — 否则 项目↔NR 间距过大 */
+.wp-pr-table .wp-th-teacher { text-align: left; padding-left: 16px; width: 1px; white-space: nowrap; }
 .wp-pr-table .wp-th-event { text-align: left; padding-left: 16px; width: 1px; white-space: nowrap; }
 .wp-pr-table tbody th, .wp-pr-table tbody td {
     padding: 10px 12px;
@@ -400,7 +369,7 @@ html[data-theme=dark] .wp-page {
     vertical-align: middle;
     white-space: nowrap;
 }
-/* 单行表头: 列名右对齐压住下方数字列; 项目列由 .wp-th-event 覆盖成左对齐 */
+/* 单行表头: 列名右对齐压住下方数字列; 老师 / 项目列由各自 class 覆盖成左对齐 */
 .wp-pr-table thead th { text-align: right; }
 .wp-pr-table tbody tr:last-child th,
 .wp-pr-table tbody tr:last-child td { border-bottom: none; }
@@ -414,6 +383,11 @@ html[data-theme=dark] .wp-page {
     color: var(--wp-text);
     width: 1px;
     white-space: nowrap;
+}
+.wp-cell-teacher {
+    width: 1px;
+    padding-left: 16px !important;
+    text-align: left !important;
 }
 /* flex 放内层 span,th 保持 table-cell 才能跟整行做行高对齐(否则分隔线错位) */
 .wp-event-inner { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
