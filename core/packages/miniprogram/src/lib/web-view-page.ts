@@ -9,6 +9,11 @@ import {
   resolveWebRoute,
   type WebRouteKey,
 } from './web-routes';
+import {
+  clearRuntimeTimeout,
+  scheduleRuntimeTimeout,
+  type RuntimeTimer,
+} from './runtime-timers';
 
 export interface WebViewPageData {
   canRetry: boolean;
@@ -35,7 +40,7 @@ const disposedPages = new WeakSet<WebViewPageContext>();
 const RETRY_SCHEDULER_GRACE_MS = 100;
 
 interface RetrySchedule {
-  timer?: ReturnType<typeof setTimeout>;
+  timer?: RuntimeTimer;
 }
 
 const retrySchedules = new WeakMap<WebViewPageContext, RetrySchedule>();
@@ -57,11 +62,7 @@ function cancelScheduledRetry(context: WebViewPageContext): void {
   retrySchedules.delete(context);
   if (schedule.timer === undefined) return;
 
-  try {
-    clearTimeout(schedule.timer);
-  } catch {
-    // The retry is already logically cancelled; timer cleanup is best effort.
-  }
+  clearRuntimeTimeout(schedule.timer);
 }
 
 function updateNavigationTitle(title: string): void {
@@ -184,13 +185,13 @@ export function retryWebRoute(context: WebViewPageContext): void {
     if (disposedPages.has(context)) return;
     void openWebRoute(context, key);
   };
-  try {
-    schedule.timer = setTimeout(reopenOnce, RETRY_SCHEDULER_GRACE_MS);
-  } catch {
+  const timer = scheduleRuntimeTimeout(reopenOnce, RETRY_SCHEDULER_GRACE_MS);
+  if (timer === null) {
     // A missing timer must not leave the page blank and retry-locked.
     reopenOnce();
     return;
   }
+  schedule.timer = timer;
 
   try {
     wx.nextTick(reopenOnce);

@@ -62,4 +62,16 @@ describe('platform action guard', () => {
 
     expect(guard.begin(owner)).toBeNull();
   });
+
+  it('does not start an action when the recovery timer fires synchronously', () => {
+    vi.spyOn(globalThis, 'setTimeout').mockImplementation((callback) => {
+      if (typeof callback === 'function') callback();
+      return 1 as unknown as ReturnType<typeof setTimeout>;
+    });
+    const guard = createPlatformActionGuard();
+    const owner = {};
+
+    expect(guard.begin(owner)).toBeNull();
+    expect(guard.begin(owner)).toBeNull();
+  });
 });

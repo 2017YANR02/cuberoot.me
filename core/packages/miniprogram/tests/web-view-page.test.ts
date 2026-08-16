@@ -124,6 +124,24 @@ describe('shared web-view page state', () => {
     }
   });
 
+  it('retries once when the fallback timer fires synchronously', async () => {
+    const context = createContext();
+    await openWebRoute(context, 'timer');
+    markWebRouteFailed(context);
+    const timer = vi.spyOn(globalThis, 'setTimeout').mockImplementation((callback) => {
+      if (typeof callback === 'function') callback();
+      return 1 as unknown as ReturnType<typeof setTimeout>;
+    });
+
+    try {
+      expect(() => retryWebRoute(context)).not.toThrow();
+      expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+      expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
+    } finally {
+      timer.mockRestore();
+    }
+  });
+
   it('retries even when the fallback timer cannot be cleared', async () => {
     vi.useFakeTimers();
     const context = createContext();

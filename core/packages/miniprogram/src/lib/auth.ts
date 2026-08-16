@@ -1,4 +1,9 @@
 import { API_ORIGIN } from './runtime-config';
+import {
+  clearRuntimeTimeout,
+  scheduleRuntimeTimeout,
+  type RuntimeTimer,
+} from './runtime-timers';
 import { isWebSessionTicket } from './web-session-contract';
 
 const SESSION_STORAGE_KEY = 'cuberoot:session';
@@ -116,26 +121,6 @@ function writeStoredSessionValue(session: SessionData): boolean {
   }
 }
 
-function scheduleTimeoutSafely(
-  callback: () => void,
-  delayMs: number,
-): ReturnType<typeof setTimeout> | null {
-  try {
-    return setTimeout(callback, delayMs);
-  } catch {
-    return null;
-  }
-}
-
-function clearTimeoutSafely(timer: ReturnType<typeof setTimeout> | null): void {
-  if (timer === null) return;
-  try {
-    clearTimeout(timer);
-  } catch {
-    // Promise settlement must not depend on optional timer cleanup.
-  }
-}
-
 function requestJson<T>(
   path: string,
   options: {
@@ -148,17 +133,17 @@ function requestJson<T>(
   return new Promise((resolve, reject) => {
     let requestTask: WechatMiniprogram.RequestTask | undefined;
     let settled = false;
-    let hardTimeout: ReturnType<typeof setTimeout> | null = null;
+    let hardTimeout: RuntimeTimer | null = null;
     const timeoutMs = options.timeoutMs ?? REQUEST_TIMEOUT_MS;
     const header: Record<string, string> = { 'Content-Type': 'application/json' };
     if (options.token) header.Authorization = `Bearer ${options.token}`;
     const settle = (action: () => void) => {
       if (settled) return;
       settled = true;
-      clearTimeoutSafely(hardTimeout);
+      clearRuntimeTimeout(hardTimeout);
       action();
     };
-    hardTimeout = scheduleTimeoutSafely(() => {
+    hardTimeout = scheduleRuntimeTimeout(() => {
       settle(() => {
         try {
           requestTask?.abort();
@@ -210,14 +195,14 @@ function requestJson<T>(
 function wechatLoginCode(): Promise<string> {
   return new Promise((resolve, reject) => {
     let settled = false;
-    let hardTimeout: ReturnType<typeof setTimeout> | null = null;
+    let hardTimeout: RuntimeTimer | null = null;
     const settle = (action: () => void) => {
       if (settled) return;
       settled = true;
-      clearTimeoutSafely(hardTimeout);
+      clearRuntimeTimeout(hardTimeout);
       action();
     };
-    hardTimeout = scheduleTimeoutSafely(
+    hardTimeout = scheduleRuntimeTimeout(
       () => settle(() => reject(new ApiError(0, 'wx.login timed out'))),
       WECHAT_LOGIN_TIMEOUT_MS + HARD_TIMEOUT_GRACE_MS,
     );
