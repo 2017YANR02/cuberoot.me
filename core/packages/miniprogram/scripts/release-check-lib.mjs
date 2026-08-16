@@ -18,6 +18,12 @@ const forbiddenCredentials = [
   ['私钥', /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/],
 ];
 
+const binaryFileExtensions = new Set([
+  '.avif', '.bmp', '.br', '.eot', '.gif', '.gz', '.ico', '.jpeg', '.jpg', '.m4a',
+  '.mov', '.mp3', '.mp4', '.ogg', '.otf', '.pdf', '.png', '.ttf', '.wasm', '.wav',
+  '.webm', '.webp', '.woff', '.woff2', '.zip',
+]);
+
 const nativeThemeReferences = [
   ['window.backgroundColor', '@backgroundColor'],
   ['window.backgroundTextStyle', '@backgroundTextStyle'],
@@ -61,6 +67,14 @@ export const EXPECTED_TAB_BAR = [
 export const PRODUCTION_APP_ID = 'wx1f92ba91b7e42015';
 export const MAX_UPLOAD_PACKAGE_BYTES = 512 * 1024;
 export const MAX_UPLOAD_FILE_BYTES = 128 * 1024;
+
+export function isReleaseAuditTextFile(path) {
+  const normalizedPath = String(path).replaceAll('\\', '/').toLowerCase();
+  const filename = normalizedPath.slice(normalizedPath.lastIndexOf('/') + 1);
+  const extensionStart = filename.lastIndexOf('.');
+  const extension = extensionStart >= 0 ? filename.slice(extensionStart) : '';
+  return !binaryFileExtensions.has(extension);
+}
 
 function formatKibibytes(bytes) {
   return `${Math.ceil(bytes / 1024)} KiB`;
@@ -259,14 +273,14 @@ export function collectReleaseFailures({
   const auditedFiles = [...sourceFiles, ...uploadFiles];
   for (const [label, pattern] of forbiddenCredentials) {
     const paths = auditedFiles
-      .filter(({ source }) => pattern.test(source))
+      .filter(({ source }) => typeof source === 'string' && pattern.test(source))
       .map(({ path }) => path);
     if (paths.length === 0) continue;
     failures.push(`${paths.join('、')} 包含${label}；小程序源码和上传包禁止保存服务端凭据。`);
   }
   for (const [label, pattern] of sensitiveCapabilities) {
     const paths = auditedFiles
-      .filter(({ source }) => pattern.test(source))
+      .filter(({ source }) => typeof source === 'string' && pattern.test(source))
       .map(({ path }) => path);
     if (paths.length === 0) continue;
     failures.push(
