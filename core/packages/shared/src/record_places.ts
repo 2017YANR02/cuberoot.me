@@ -1,6 +1,6 @@
 import { isMultiLocationCity } from './comp_city_identity';
 
-export const RECORD_PLACE_VERSION = 2 as const;
+export const RECORD_PLACE_VERSION = 3 as const;
 export const RECORD_PLACE_DETAIL_VERSION = 2 as const;
 
 export const RECORD_METRICS = ['wr', 'cr', 'nr'] as const;
@@ -12,8 +12,13 @@ export interface RecordCounts {
   nr: number;
 }
 
+export interface RecordCountsByEvent {
+  [eventId: string]: RecordCounts;
+}
+
 export interface CountryRecordCounts extends RecordCounts {
   iso2: string;
+  events: RecordCountsByEvent;
 }
 
 export interface CityRecordCounts extends CountryRecordCounts {
@@ -23,6 +28,7 @@ export interface CityRecordCounts extends CountryRecordCounts {
 
 export interface RecordPlacesData {
   version: typeof RECORD_PLACE_VERSION;
+  events: string[];
   countries: CountryRecordCounts[];
   cities: CityRecordCounts[];
 }
@@ -70,6 +76,7 @@ export interface RecordPlaceSourceRow {
   /** Canonical resolver key. Falls back to country + raw city for simple callers. */
   cityKey?: string | null;
   cityAliases?: readonly string[];
+  eventId: string | null;
   singleRecord: string | null;
   averageRecord: string | null;
 }
@@ -88,13 +95,6 @@ function emptyCounts(): RecordCounts {
   return { wr: 0, cr: 0, nr: 0 };
 }
 
-function addRecord(counts: RecordCounts, level: string | null): boolean {
-  const metric = recordMetricForLevel(level);
-  if (!metric) return false;
-  counts[metric]++;
-  return true;
-}
-
 function normalizeIso2(raw: string | null): string | null {
   const iso2 = (raw ?? '').trim().toUpperCase();
   if (!/^[A-Z]{2}$/.test(iso2) || MULTI_REGIONS.has(iso2)) return null;
@@ -111,23 +111,57 @@ interface MutableCityRecordCounts extends CityRecordCounts {
   aliasSet: Set<string>;
 }
 
+function usableEventId(raw: string | null): string | null {
+  const eventId = (raw ?? '').trim();
+  return eventId || null;
+}
+
+function addEventRecord(
+  counts: RecordCounts & { events: RecordCountsByEvent },
+  eventId: string,
+  level: string | null,
+): boolean {
+  const metric = recordMetricForLevel(level);
+  if (!metric) return false;
+  counts[metric]++;
+  const eventCounts = counts.events[eventId] ?? emptyCounts();
+  eventCounts[metric]++;
+  counts.events[eventId] = eventCounts;
+  return true;
+}
+
+function stableEventCounts(events: RecordCountsByEvent): RecordCountsByEvent {
+  return Object.fromEntries(
+    Object.entries(events).sort(([a], [b]) => a.localeCompare(b, 'en')),
+  );
+}
+
 /** Build venue-based record counts from WCA result markers. */
 export function buildRecordPlaces(rows: Iterable<RecordPlaceSourceRow>): RecordPlacesData {
-  const countries = new Map<string, RecordCounts>();
+  const countries = new Map<string, RecordCounts & { events: RecordCountsByEvent }>();
   const cities = new Map<string, MutableCityRecordCounts>();
+  const eventIds = new Set<string>();
 
   for (const row of rows) {
     const iso2 = normalizeIso2(row.iso2);
-    if (!iso2) continue;
+    const eventId = usableEventId(row.eventId);
+    if (!iso2 || !eventId) continue;
 
     const levels = [row.singleRecord, row.averageRecord];
-    const countryCounts = countries.get(iso2) ?? emptyCounts();
+    const countryCounts = countries.get(iso2) ?? { ...emptyCounts(), events: {} };
     const city = usableCity(row.city);
     const cityKey = city
       ? (row.cityKey?.trim() || `${iso2}\0${city.toLocaleLowerCase('en')}`)
       : null;
     const cityCounts = city && cityKey
-      ? (cities.get(cityKey) ?? { iso2, city, aliases: [], aliasSet: new Set<string>(), ...emptyCounts() })
+      ? (cities.get(cityKey) ?? {
+          iso2,
+          city,
+          aliases: [],
+          aliasSet: new Set<string>(),
+          events: {},
+          ...emptyCounts(),
+        })
       : null;
 
     if (cityCounts) {
@@ -139,21 +173,28 @@ export function buildRecordPlaces(rows: Iterable<RecordPlaceSourceRow>): RecordP
 
     let hasRecord = false;
     for (const level of levels) {
-      hasRecord = addRecord(countryCounts, level) || hasRecord;
-      if (cityCounts) addRecord(cityCounts, level);
+      hasRecord = addEventRecord(countryCounts, eventId, level) || hasRecord;
+      if (cityCounts) addEventRecord(cityCounts, eventId, level);
     }
     if (!hasRecord) continue;
 
+    eventIds.add(eventId);
     countries.set(iso2, countryCounts);
     if (cityCounts && cityKey) cities.set(cityKey, cityCounts);
   }
 
   return {
     version: RECORD_PLACE_VERSION,
-    countries: [...countries].map(([iso2, counts]) => ({ iso2, ...counts }))
+    events: [...eventIds].sort((a, b) => a.localeCompare(b, 'en')),
+    countries: [...countries].map(([iso2, counts]) => ({
+      iso2,
+      ...counts,
+      events: stableEventCounts(counts.events),
+    }))
       .sort((a, b) => a.iso2.localeCompare(b.iso2, 'en')),
     cities: [...cities.values()].map(({ aliasSet, ...city }) => ({
       ...city,
+      events: stableEventCounts(city.events),
       aliases: [...aliasSet].sort((a, b) => a.localeCompare(b, 'en')),
     })).sort((a, b) =>
       a.iso2.localeCompare(b.iso2, 'en') || a.city.localeCompare(b.city, 'en')
@@ -165,11 +206,30 @@ function isCount(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 }
 
+function isRecordCounts(value: unknown): value is RecordCounts {
+  if (!value || typeof value !== 'object') return false;
+  const counts = value as Partial<RecordCounts>;
+  return isCount(counts.wr) && isCount(counts.cr) && isCount(counts.nr);
+}
+
+function isEventCounts(value: unknown, totals: RecordCounts): value is RecordCountsByEvent {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const entries = Object.entries(value);
+  if (entries.some(([eventId, counts]) => !eventId.trim() || !isRecordCounts(counts))) return false;
+  const sums = entries.reduce<RecordCounts>((result, [, counts]) => ({
+    wr: result.wr + (counts as RecordCounts).wr,
+    cr: result.cr + (counts as RecordCounts).cr,
+    nr: result.nr + (counts as RecordCounts).nr,
+  }), emptyCounts());
+  return sums.wr === totals.wr && sums.cr === totals.cr && sums.nr === totals.nr;
+}
+
 function isCountryRow(value: unknown): value is CountryRecordCounts {
   if (!value || typeof value !== 'object') return false;
   const row = value as Partial<CountryRecordCounts>;
   return typeof row.iso2 === 'string' && /^[A-Z]{2}$/.test(row.iso2)
-    && isCount(row.wr) && isCount(row.cr) && isCount(row.nr);
+    && isCount(row.wr) && isCount(row.cr) && isCount(row.nr)
+    && isEventCounts(row.events, row as RecordCounts);
 }
 
 function isCityRow(value: unknown): value is CityRecordCounts {
@@ -187,10 +247,18 @@ export function isRecordPlacesData(value: unknown): value is RecordPlacesData {
   if (!value || typeof value !== 'object') return false;
   const data = value as Partial<RecordPlacesData>;
   if (data.version !== RECORD_PLACE_VERSION
+    || !Array.isArray(data.events)
+    || data.events.some((eventId) => typeof eventId !== 'string' || !eventId.trim())
+    || new Set(data.events).size !== data.events.length
     || !Array.isArray(data.countries) || !data.countries.every(isCountryRow)
     || !Array.isArray(data.cities) || !data.cities.every(isCityRow)) return false;
   const countries = data.countries as CountryRecordCounts[];
   const cities = data.cities as CityRecordCounts[];
+  const eventIds = new Set(data.events as string[]);
+  if (countries.some((row) => Object.keys(row.events).some((eventId) => !eventIds.has(eventId)))
+    || cities.some((row) => Object.keys(row.events).some((eventId) => !eventIds.has(eventId)))) return false;
+  const usedEventIds = new Set(countries.flatMap((row) => Object.keys(row.events)));
+  if (usedEventIds.size !== eventIds.size || [...eventIds].some((eventId) => !usedEventIds.has(eventId))) return false;
   const countryIds = new Set(countries.map((row) => row.iso2));
   if (countryIds.size !== countries.length) return false;
   const cityIds = new Set(cities.map((row) => `${row.iso2}\0${row.city.toLocaleLowerCase('en')}`));

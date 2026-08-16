@@ -91,6 +91,10 @@
   max-width: 1120px;
 }
 
+.cs-record-events {
+  margin-bottom: 12px;
+}
+
 .cs-record-controls {
   display: flex;
   align-items: center;

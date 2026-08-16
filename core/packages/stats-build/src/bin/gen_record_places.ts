@@ -20,7 +20,7 @@ import { resolveCompCityIdentities } from '@cuberoot/shared/comp-city-identity';
 import { closePool, query } from '../core/database.js';
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
-const OUTPUT_PATH = resolve(currentDir, '../../../../../stats/record_places_v2.json');
+const OUTPUT_PATH = resolve(currentDir, '../../../../../stats/record_places_v3.json');
 const DETAIL_OUTPUT_DIR = resolve(currentDir, '../../../../../stats/record_place_details_v2');
 const RECORDS_PATH = resolve(currentDir, '../../../../../stats/comp_records_detail.json');
 const FALLBACK_COMP_PATHS = [
@@ -206,6 +206,7 @@ async function main() {
         city: identity?.label ?? comp.city,
         cityKey: identity?.key ?? null,
         cityAliases: identity?.aliases,
+        eventId: entry.e,
         singleRecord: entry.t,
         averageRecord: null,
       });
