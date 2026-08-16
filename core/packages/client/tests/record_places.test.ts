@@ -171,6 +171,7 @@ describe('record place details', () => {
     const placeRankings = readFileSync(new URL('../app/[lang]/wca/comp/stats/RecordPlaceRankings.tsx', import.meta.url), 'utf8');
     expect(placeRankings).toContain("@/components/wca-stats/Paginator");
     expect(placeRankings).not.toContain('function Paginator');
+    expect(placeRankings).toContain("scrollIntoView({ behavior: 'auto', block: 'start' })");
   });
 });
 
