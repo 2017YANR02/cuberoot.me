@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import appConfig from '../src/app.json';
+import sitemapConfig from '../src/sitemap.json';
 
 declare global {
   interface ImportMeta {
@@ -40,6 +41,20 @@ describe('mini program app structure', () => {
       expect(item.text.trim()).not.toBe('');
       expect(pagePaths.has(item.pagePath)).toBe(true);
     }
+  });
+
+  it('only exposes public entry pages to WeChat search', () => {
+    const publicIndexedPages = ['pages/timer/index', 'pages/tools/index'];
+
+    expect(sitemapConfig.rules).toEqual([
+      ...publicIndexedPages.map((page) => ({ action: 'allow', page })),
+      { action: 'disallow', page: '*' },
+    ]);
+    expect(publicIndexedPages).toEqual(
+      expect.arrayContaining(appConfig.tabBar.list.slice(0, 2).map((item) => item.pagePath)),
+    );
+    expect(publicIndexedPages).not.toContain('pages/account/index');
+    expect(publicIndexedPages).not.toContain('pages/web/index');
   });
 
   it('keeps web-backed pages on the shared controller', () => {

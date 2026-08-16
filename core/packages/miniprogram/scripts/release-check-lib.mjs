@@ -10,10 +10,24 @@ const sensitiveCapabilities = [
   ['手机号', /open-type\s*=\s*["']getPhoneNumber["']/],
 ];
 
+export const PUBLIC_INDEXED_PAGES = [
+  'pages/timer/index',
+  'pages/tools/index',
+];
+
+function hasExpectedSitemapPolicy(sitemapConfig) {
+  const expectedRules = [
+    ...PUBLIC_INDEXED_PAGES.map((page) => ({ action: 'allow', page })),
+    { action: 'disallow', page: '*' },
+  ];
+  return JSON.stringify(sitemapConfig?.rules) === JSON.stringify(expectedRules);
+}
+
 export function collectReleaseFailures({
   projectConfig,
   privateConfig = {},
   appConfig,
+  sitemapConfig,
   confirmedStableVersion = '',
   sourceFiles = [],
   builtFiles = [],
@@ -22,6 +36,10 @@ export function collectReleaseFailures({
   currentOutputFingerprint = '',
 }) {
   const failures = [];
+
+  if (!hasExpectedSitemapPolicy(sitemapConfig)) {
+    failures.push('sitemap 只能收录计时和发现页，账号页与通用网页壳必须保持禁止收录。');
+  }
 
   if (!projectConfig) {
     failures.push('缺少 project.config.json，请先运行构建。');
