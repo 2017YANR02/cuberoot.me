@@ -46,6 +46,12 @@ export const PUBLIC_INDEXED_PAGES = [
 ];
 
 export const PRODUCTION_APP_ID = 'wx1f92ba91b7e42015';
+export const MAX_UPLOAD_PACKAGE_BYTES = 512 * 1024;
+export const MAX_UPLOAD_FILE_BYTES = 128 * 1024;
+
+function formatKibibytes(bytes) {
+  return `${Math.ceil(bytes / 1024)} KiB`;
+}
 
 function hasExpectedSitemapPolicy(sitemapConfig) {
   const expectedRules = [
@@ -69,6 +75,7 @@ export function collectReleaseFailures({
   confirmedSecretRotation = false,
   sourceFiles = [],
   builtFiles = [],
+  builtFileSizes = [],
   buildState = null,
   currentSourceFingerprint = '',
   currentOutputFingerprint = '',
@@ -146,6 +153,39 @@ export function collectReleaseFailures({
     .sort();
   if (sourceMaps.length > 0) {
     failures.push(`正式上传包不能包含 source map：${sourceMaps.join('、')}。请重新运行非监听构建。`);
+  }
+
+  const sizeByPath = new Map(builtFileSizes.map(({ path, bytes }) => [
+    String(path).replaceAll('\\', '/'),
+    bytes,
+  ]));
+  const missingSizeMetadata = builtFiles
+    .map((path) => String(path).replaceAll('\\', '/'))
+    .filter((path) => !Number.isFinite(sizeByPath.get(path)) || sizeByPath.get(path) < 0)
+    .sort();
+  if (missingSizeMetadata.length > 0) {
+    failures.push(`dist 缺少体积信息：${missingSizeMetadata.join('、')}。`);
+  } else {
+    const measuredFiles = builtFiles.map((path) => {
+      const normalizedPath = String(path).replaceAll('\\', '/');
+      return [normalizedPath, sizeByPath.get(normalizedPath)];
+    });
+    const oversizedFiles = measuredFiles
+      .filter(([, bytes]) => bytes > MAX_UPLOAD_FILE_BYTES)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([path, bytes]) => `${path}（${formatKibibytes(bytes)}）`);
+    if (oversizedFiles.length > 0) {
+      failures.push(
+        `dist 单文件超过项目预算 ${formatKibibytes(MAX_UPLOAD_FILE_BYTES)}：${oversizedFiles.join('、')}。`,
+      );
+    }
+
+    const totalBytes = measuredFiles.reduce((sum, [, bytes]) => sum + bytes, 0);
+    if (totalBytes > MAX_UPLOAD_PACKAGE_BYTES) {
+      failures.push(
+        `dist 总体积 ${formatKibibytes(totalBytes)} 超过项目预算 ${formatKibibytes(MAX_UPLOAD_PACKAGE_BYTES)}。`,
+      );
+    }
   }
 
   if (appConfig?.darkmode !== true || appConfig?.themeLocation !== 'theme.json') {

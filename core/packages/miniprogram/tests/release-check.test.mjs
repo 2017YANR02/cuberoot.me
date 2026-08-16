@@ -2,10 +2,27 @@ import { describe, expect, it } from 'vitest';
 
 import { BUILD_STATE_VERSION } from '../scripts/build-state.mjs';
 import {
+  MAX_UPLOAD_FILE_BYTES,
+  MAX_UPLOAD_PACKAGE_BYTES,
   PUBLIC_INDEXED_PAGES,
   PRODUCTION_APP_ID,
   collectReleaseFailures,
 } from '../scripts/release-check-lib.mjs';
+
+function sizesFor(paths, bytes = 1) {
+  return paths.map((path) => ({ path, bytes }));
+}
+
+const validBuiltFiles = [
+  'app.js',
+  'app.json',
+  'app.wxss',
+  'sitemap.json',
+  'pages/timer/index.js',
+  'pages/timer/index.json',
+  'pages/timer/index.wxml',
+  'pages/timer/index.wxss',
+];
 
 const validInput = {
   projectConfig: {
@@ -63,16 +80,8 @@ const validInput = {
   confirmedStableVersion: '3.17.1',
   confirmedSecretRotation: true,
   sourceFiles: [{ path: 'src/app.ts', source: 'App({})' }],
-  builtFiles: [
-    'app.js',
-    'app.json',
-    'app.wxss',
-    'sitemap.json',
-    'pages/timer/index.js',
-    'pages/timer/index.json',
-    'pages/timer/index.wxml',
-    'pages/timer/index.wxss',
-  ],
+  builtFiles: validBuiltFiles,
+  builtFileSizes: sizesFor(validBuiltFiles),
   buildState: {
     version: BUILD_STATE_VERSION,
     sourceFingerprint: 'current-source',
@@ -160,16 +169,44 @@ describe('mini program release check', () => {
   });
 
   it('rejects development source maps in the upload package', () => {
+    const builtFiles = [
+      ...validInput.builtFiles,
+      'app.js.map',
+      'pages/timer/index.js.map',
+    ];
     expect(collectReleaseFailures({
       ...validInput,
-      builtFiles: [
-        ...validInput.builtFiles,
-        'app.js.map',
-        'pages/timer/index.js.map',
-      ],
+      builtFiles,
+      builtFileSizes: sizesFor(builtFiles),
     })).toContain(
       '正式上传包不能包含 source map：app.js.map、pages/timer/index.js.map。请重新运行非监听构建。',
     );
+  });
+
+  it('rejects unexpectedly large upload files and packages', () => {
+    const builtFileSizes = sizesFor(
+      validBuiltFiles,
+      Math.floor(MAX_UPLOAD_PACKAGE_BYTES / validBuiltFiles.length),
+    );
+    builtFileSizes[0] = {
+      path: validBuiltFiles[0],
+      bytes: MAX_UPLOAD_FILE_BYTES + 1,
+    };
+
+    expect(collectReleaseFailures({
+      ...validInput,
+      builtFileSizes,
+    })).toEqual(expect.arrayContaining([
+      'dist 单文件超过项目预算 128 KiB：app.js（129 KiB）。',
+      'dist 总体积 577 KiB 超过项目预算 512 KiB。',
+    ]));
+  });
+
+  it('rejects upload files without measurable size metadata', () => {
+    expect(collectReleaseFailures({
+      ...validInput,
+      builtFileSizes: validInput.builtFileSizes.slice(1),
+    })).toContain('dist 缺少体积信息：app.js。');
   });
 
   it('rejects search indexing of account and generic web routes', () => {
@@ -200,9 +237,11 @@ describe('mini program release check', () => {
   });
 
   it('blocks newly introduced privacy-sensitive capabilities', () => {
+    const builtFiles = [...validInput.builtFiles, 'pages/login/index.wxml'];
     const failures = collectReleaseFailures({
       ...validInput,
-      builtFiles: [...validInput.builtFiles, 'pages/login/index.wxml'],
+      builtFiles,
+      builtFileSizes: sizesFor(builtFiles),
       sourceFiles: [
         { path: 'src/pages/device/index.ts', source: 'wx.openBluetoothAdapter({})' },
         { path: 'src/pages/login/index.wxml', source: '<button open-type="getPhoneNumber">登录</button>' },
