@@ -22,12 +22,14 @@
 | `web-view` 加载、换票超时、失败和重试 | `packages/miniprogram/src/lib/web-view-page.ts` | 计时页和通用网页共用，不各自补丁 |
 | 登录、会话和错误文案 | `packages/miniprogram/src/lib/auth.ts` | AppSecret 永远只在服务端 |
 | 移动端与小程序隐私政策 | `packages/client/app/[lang]/privacy/page.tsx` | App、小程序和网页共用一份真实声明 |
-| 上传前自动检查 | `packages/miniprogram/scripts/release-check.mjs` | 新增隐私敏感能力时先阻断上传 |
+| 上传前自动检查 | `packages/miniprogram/scripts/release-check.mjs` + `release-check-lib.mjs` | 新增隐私敏感能力时先阻断上传；纯规则必须有回归测试 |
 | 跨端计时数据类型和纯逻辑 | `@cuberoot/shared/timer` | 不复制网站计时器 UI |
 | 全局视觉变量和通用按钮 | `packages/miniprogram/src/app.wxss` | 页面只写自身布局 |
 | 账号落库 | 服务端 `account_auth.ts` + `wechat_miniprogram.ts` | 网站和小程序都只用 UnionID |
 
 新增一个网站工具入口时，只改路由表并补测试。新增原生功能前，先在本文件写清楚为什么不能继续复用网站。
+
+路由测试会直接核对 `packages/client/app/[lang]` 中的真实页面或 `next.config.ts` 中的明确跳转。网站若移动入口，小程序测试必须同时失败，避免发布后才发现 `web-view` 指向失效地址。
 
 当前小程序没有原生计时数据层，也不依赖 `@cuberoot/shared`。如果未来经验证必须原生计时，应先让网站和小程序共同调用共享逻辑，再添加依赖；不能提前保留一套没有调用方的备用实现。
 
@@ -169,6 +171,13 @@ pnpm --filter @cuberoot/miniprogram release:check
 | 定位、摄像头、麦克风、相册、通讯录、蓝牙 | 当前版本不使用 | 后台不应勾选；以后接入前先改政策和平台指引 |
 
 ## 9. 迭代记录
+
+### 2026-08-16：发布闸门与网站路由防漂移
+
+- 上传规则从命令入口中提取为可单测的纯检查器；正式 AppID、稳定基础库、合法域名校验、产物目录、页面声明和敏感能力均有回归覆盖。
+- 小程序路由表会逐项核对网站真实 `page.tsx` 或明确跳转；网站路由变更后不能继续生成一个表面正常、实际打不开的入口。
+- “发现”页导航失败时给出明确提示，非法入口仍在导航前拒绝，不让点击静默无响应。
+- 发布检查和工具页分别有独立测试，后续 AI 修改规则或入口时应改唯一来源和对应预期，不能绕过闸门。
 
 ### 2026-08-16：网页页适配器收敛与复用守卫
 

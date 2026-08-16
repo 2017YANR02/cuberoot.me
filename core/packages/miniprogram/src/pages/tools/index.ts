@@ -11,6 +11,11 @@ Page({
       wx.showToast({ icon: 'none', title: '该功能暂不可用' });
       return;
     }
-    wx.navigateTo({ url: `/pages/web/index?key=${encodeURIComponent(String(key))}` });
+    wx.navigateTo({
+      url: `/pages/web/index?key=${encodeURIComponent(String(key))}`,
+      fail: () => {
+        wx.showToast({ icon: 'none', title: '页面暂时无法打开' });
+      },
+    });
   },
 });
