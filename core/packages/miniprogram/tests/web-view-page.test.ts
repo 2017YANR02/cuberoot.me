@@ -19,13 +19,16 @@ function createContext(): WebViewPageContext {
 }
 
 describe('shared web-view page state', () => {
+  const hideShareMenu = vi.fn();
   const setNavigationBarTitle = vi.fn();
+  const showShareMenu = vi.fn();
   const networkListeners = new Set<WechatMiniprogram.OnNetworkStatusChangeCallback>();
 
   beforeEach(() => {
     networkListeners.clear();
     vi.stubGlobal('wx', {
       getStorageSync: () => null,
+      hideShareMenu,
       offNetworkStatusChange(listener: WechatMiniprogram.OnNetworkStatusChangeCallback) {
         networkListeners.delete(listener);
       },
@@ -37,12 +40,15 @@ describe('shared web-view page state', () => {
         callback();
       },
       setNavigationBarTitle,
+      showShareMenu,
     });
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    hideShareMenu.mockReset();
     setNavigationBarTitle.mockReset();
+    showShareMenu.mockReset();
     vi.unstubAllGlobals();
   });
 
@@ -80,6 +86,44 @@ describe('shared web-view page state', () => {
     expect(context.data.src).toBe('');
     expect(context.data.errorTitle).toBe('无法打开');
     expect(context.data.canRetry).toBe(false);
+  });
+
+  it('shares each public web route through its canonical Mini Program entry', async () => {
+    const context = createContext();
+    const options = createWebViewPageOptions() as unknown as {
+      onLoad(this: WebViewPageContext, query: { key: string }): void;
+      onShareAppMessage(this: WebViewPageContext): WechatMiniprogram.Page.ICustomShareContent;
+    };
+
+    options.onLoad.call(context, { key: 'alg' });
+    await Promise.resolve();
+
+    expect(showShareMenu).toHaveBeenCalledWith({ menus: ['shareAppMessage'] });
+    expect(hideShareMenu).not.toHaveBeenCalled();
+    expect(options.onShareAppMessage.call(context)).toEqual({
+      title: 'CubeRoot 魔方根：公式库',
+      path: '/pages/web/index?key=alg',
+    });
+  });
+
+  it('hides private routes and never forwards their route key', async () => {
+    const context = createContext();
+    const options = createWebViewPageOptions() as unknown as {
+      onLoad(this: WebViewPageContext, query: { key: string }): void;
+      onShareAppMessage(this: WebViewPageContext): WechatMiniprogram.Page.ICustomShareContent;
+    };
+
+    options.onLoad.call(context, { key: 'account' });
+    await Promise.resolve();
+
+    expect(hideShareMenu).toHaveBeenCalledWith({
+      menus: ['shareAppMessage', 'shareTimeline'],
+    });
+    expect(showShareMenu).not.toHaveBeenCalled();
+    expect(options.onShareAppMessage.call(context)).toEqual({
+      title: 'CubeRoot 魔方根',
+      path: '/pages/timer/index',
+    });
   });
 
   it('shows a recoverable state after a web-view error', async () => {
