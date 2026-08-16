@@ -124,7 +124,9 @@ async function exchangeWechat(code: string): Promise<SocialUser> {
     `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${WECHAT_APP_ID}&secret=${WECHAT_APP_SECRET}&code=${encodeURIComponent(code)}&grant_type=authorization_code`,
   );
   if (!tk.access_token || !tk.openid) throw new Error('wechat token exchange failed');
-  const sub = tk.unionid || tk.openid; // 有 unionid(同主体多应用稳定)优先,否则 openid
+  // 网站应用与小程序共用 provider='wechat',必须统一存 UnionID。回退 openid 会把同一人拆成两个账号。
+  if (!tk.unionid) throw new Error('wechat unionid required');
+  const sub = tk.unionid;
   let name: string | undefined, avatar: string | undefined;
   try {
     const info = await getJson<{ nickname?: string; headimgurl?: string }>(

@@ -1,0 +1,41 @@
+.tools-page {
+  padding-top: 56rpx;
+}
+
+.tool-list {
+  margin-top: 58rpx;
+}
+
+.tool-row {
+  align-items: center;
+  border-bottom: 1rpx solid var(--cr-line);
+  display: flex;
+  justify-content: space-between;
+  min-height: 140rpx;
+  text-align: left;
+  width: 100%;
+}
+
+.tool-name,
+.tool-description {
+  display: block;
+}
+
+.tool-name {
+  font-size: 33rpx;
+  font-weight: 680;
+}
+
+.tool-description {
+  color: var(--cr-muted);
+  font-size: 24rpx;
+  margin-top: 12rpx;
+  white-space: nowrap;
+}
+
+.tool-arrow {
+  color: var(--cr-faint);
+  font-size: 52rpx;
+  font-weight: 300;
+  margin-left: 28rpx;
+}

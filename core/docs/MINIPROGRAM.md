@@ -45,7 +45,7 @@
 - **B. 原生重写** — 2-3 个月。Taro/uni-app 都只到 React 18，接不住 React 19 + App Router，UI 全部重写，只能挑 5-10 页。
 - **C. 混合 ← 采用**。原生外壳承载高频功能（计时器 + 智能魔方蓝牙、打乱生成、公式库查询、比赛/成绩查询），长尾 200+ 页（`/math` `/regulation` `/code` `/wiki` 教程）用 web-view 兜住。内容型工具站的通行做法。
 
-## 4. 阶段一：注册 + 绑定 + unionid 打通 ← **当前在这**
+## 4. 阶段一：注册 + 绑定 + unionid 打通 ← **认证已完成**
 
 ### 4.1 注册（mp.weixin.qq.com）
 
@@ -82,7 +82,7 @@
 
 ### 4.4 unionid 打通方案
 
-现有 `auth_identities` 表：`(provider, provider_uid)` 全局唯一，一条身份一行，多条指向同一 `app_users`。现有网站扫码登录 `social_login.ts:127` 已经是 `unionid || openid` 优先 unionid。
+现有 `auth_identities` 表：`(provider, provider_uid)` 全局唯一，一条身份一行，多条指向同一 `app_users`。网站扫码登录和小程序登录都只接受 UnionID，避免同一微信号被拆成两个账号。
 
 **方案：小程序登录复用 `provider='wechat'`，`provider_uid` 存 unionid。** 同一个人网页扫码登录和小程序登录落到同一行 → 账号天然打通，无需任何合并逻辑。
 
@@ -95,7 +95,7 @@ POST /v1/auth/wechat/miniprogram   { code }   ← wx.login 拿到的 code
   → GET https://api.weixin.qq.com/sns/jscode2session
         ?appid={小程序APPID}&secret={小程序SECRET}&js_code={code}&grant_type=authorization_code
   → { openid, unionid, session_key }
-  → loginWithIdentity('wechat', unionid || openid, ...)   ← 复用现有函数，不新写
+  → loginWithIdentity('wechat', unionid, ...)             ← 复用现有函数，不新写
 ```
 
 新增 env（与网站应用的 `WECHAT_LOGIN_APP_ID/SECRET`、支付的 `WECHAT_*` 三者**互不相同，别混**）：
@@ -113,13 +113,17 @@ WECHAT_MINI_APP_SECRET=
 
 ### 4.6 阶段一验收
 
-- [ ] 小程序已注册，状态「已认证」
+- [x] 小程序已注册，状态「已认证」
 - [ ] 备案通过，可发布
 - [ ] 开放平台绑定关系已建立（方向对：开放平台 → 绑定小程序）
-- [ ] 服务器域名白名单填入 `https://api.cuberoot.me` + `https://static.cuberoot.me`（逐个，不通配）
+- [ ] request 合法域名填入 `https://api.cuberoot.me`
+- [ ] 业务域名填入 `https://cuberoot.me`（用于 `web-view`）
+- [ ] 后续需要静态资源直连时，再把 `https://static.cuberoot.me` 加入对应白名单
 - [ ] 实测：同一微信号，网页扫码登录 + 小程序登录 → `auth_identities` 只有一行，`app_users` 只有一个 uid
 
 ## 5. 阶段二：技术准备（不依赖资质，可并行）
+
+首版工程已经放在 `packages/miniprogram/`，运行 `pnpm --filter @cuberoot/miniprogram build` 后，用微信开发者工具导入该目录。当前包含原生计时器、微信登录和网站入口。
 
 1. **DOM 隔离**：把 `lib/` 里那 36 个碰 DOM/React 的文件挑出来做隔离，让纯逻辑层可被小程序直接 import。**对现有网站也是纯收益**（逻辑解耦、测试更好写），即使小程序不做也不浪费。
 2. 按 2MB 主包倒推分包切法：分析器 wasm 进独立分包；`cubeopt/` 9 个文件单独一包。
