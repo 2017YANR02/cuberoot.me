@@ -31,6 +31,11 @@ export const WEB_ROUTES = {
     description: '管理 WCA 账号与登录方式',
     path: '/zh/account',
   },
+  privacy: {
+    title: '隐私说明',
+    description: '查看数据、登录与删除说明',
+    path: '/zh/privacy',
+  },
 } as const;
 
 export type WebRouteKey = keyof typeof WEB_ROUTES;

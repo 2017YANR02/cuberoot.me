@@ -67,10 +67,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   },
   'account': { title: { zh: '账号', en: 'Account' } },
   'privacy': {
-    title: { zh: '移动端隐私政策', en: 'Mobile Privacy Policy' },
+    title: { zh: '移动端与小程序隐私政策', en: 'Mobile and Mini Program Privacy Policy' },
     description: {
-      zh: 'CubeRoot Android 与 iOS App 的数据处理、备份、删除与联系说明。',
-      en: 'How the CubeRoot Android and iOS apps handle local timer data, backups, deletion, and support requests.',
+      zh: 'CubeRoot Android、iOS App 与微信小程序的数据处理、账号登录、备份、删除与联系说明。',
+      en: 'How the CubeRoot Android and iOS apps and WeChat Mini Program handle data, account sign-in, backups, deletion, and support requests.',
     },
   },
   // 'alg' 没有条目:/alg 不再是页面(next.config 直接 redirect 到 /alg/3x3),
