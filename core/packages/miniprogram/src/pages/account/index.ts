@@ -32,7 +32,9 @@ Page({
         clearStoredSession();
         this.showSession(null);
         this.setData({ status: '登录已过期，请重新登录', statusError: true });
+        return;
       }
+      this.setData({ status: '账号状态暂时无法更新，请稍后重试', statusError: true });
     });
   },
 

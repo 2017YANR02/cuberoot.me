@@ -1,6 +1,10 @@
 import { API_ORIGIN } from './runtime-config';
 
 const SESSION_STORAGE_KEY = 'cuberoot:session';
+const MAX_AVATAR_LENGTH = 2048;
+const MAX_DISPLAY_NAME_LENGTH = 200;
+const MAX_SESSION_TOKEN_LENGTH = 4096;
+const MAX_WCA_ID_LENGTH = 20;
 
 export interface SessionUser {
   uid?: number;
@@ -12,7 +16,10 @@ export interface SessionUser {
 export interface SessionData {
   token: string;
   user: SessionUser;
-  isNew?: boolean;
+}
+
+export interface LoginResult extends SessionData {
+  isNew: boolean;
 }
 
 export interface WebSessionTicket {
@@ -30,25 +37,41 @@ export class ApiError extends Error {
   }
 }
 
-function isSessionUser(value: unknown): value is SessionUser {
-  if (value === null || typeof value !== 'object') return false;
+function decodeSessionUser(value: unknown): SessionUser | null {
+  if (value === null || typeof value !== 'object') return null;
   const user = value as Record<string, unknown>;
-  return (user.uid === undefined || (typeof user.uid === 'number' && Number.isSafeInteger(user.uid)))
-    && (user.wcaId === null || typeof user.wcaId === 'string')
-    && typeof user.name === 'string'
-    && (user.avatar === undefined || typeof user.avatar === 'string');
+  if (user.uid !== undefined
+    && (typeof user.uid !== 'number' || !Number.isSafeInteger(user.uid) || user.uid <= 0)) {
+    return null;
+  }
+  if (user.wcaId !== null && typeof user.wcaId !== 'string') return null;
+  if (typeof user.name !== 'string' || user.name.length > MAX_DISPLAY_NAME_LENGTH) return null;
+  if (user.avatar !== undefined
+    && (typeof user.avatar !== 'string' || user.avatar.length > MAX_AVATAR_LENGTH)) {
+    return null;
+  }
+
+  const wcaId = user.wcaId?.trim() || null;
+  if (wcaId && wcaId.length > MAX_WCA_ID_LENGTH) return null;
+  return {
+    ...(user.uid === undefined ? {} : { uid: user.uid }),
+    wcaId,
+    name: user.name.trim(),
+    ...(user.avatar === undefined ? {} : { avatar: user.avatar }),
+  };
 }
 
 function decodeSession(value: unknown): SessionData | null {
   if (value === null || typeof value !== 'object') return null;
   const session = value as Record<string, unknown>;
-  if (typeof session.token !== 'string' || session.token.length < 20 || !isSessionUser(session.user)) {
+  const token = typeof session.token === 'string' ? session.token.trim() : '';
+  const user = decodeSessionUser(session.user);
+  if (token.length < 20 || token.length > MAX_SESSION_TOKEN_LENGTH || !user) {
     return null;
   }
   return {
-    token: session.token,
-    user: session.user,
-    isNew: session.isNew === true,
+    token,
+    user,
   };
 }
 
@@ -109,21 +132,31 @@ export function clearStoredSession(): void {
   wx.removeStorageSync(SESSION_STORAGE_KEY);
 }
 
-export async function loginWithWechat(): Promise<SessionData> {
+export async function loginWithWechat(): Promise<LoginResult> {
   const code = await wechatLoginCode();
-  const session = decodeSession(await requestJson<unknown>('/auth/wechat/miniprogram', {
+  const response = await requestJson<unknown>('/auth/wechat/miniprogram', {
     method: 'POST',
     body: { code },
-  }));
+  });
+  const session = decodeSession(response);
   if (!session) throw new ApiError(502, 'invalid session response');
   wx.setStorageSync(SESSION_STORAGE_KEY, session);
-  return session;
+  return {
+    ...session,
+    isNew: response !== null
+      && typeof response === 'object'
+      && (response as Record<string, unknown>).isNew === true,
+  };
 }
 
 export async function validateStoredSession(session: SessionData): Promise<SessionData> {
-  const response = await requestJson<{ user: SessionUser }>('/auth/me', { token: session.token });
-  if (!isSessionUser(response.user)) throw new ApiError(502, 'invalid user response');
-  const next = { ...session, user: { ...session.user, ...response.user } };
+  const response = await requestJson<unknown>('/auth/me', { token: session.token });
+  if (response === null || typeof response !== 'object') {
+    throw new ApiError(502, 'invalid user response');
+  }
+  const user = decodeSessionUser((response as Record<string, unknown>).user);
+  if (!user) throw new ApiError(502, 'invalid user response');
+  const next = { ...session, user: { ...session.user, ...user } };
   const current = decodeSession(wx.getStorageSync(SESSION_STORAGE_KEY) as unknown);
   if (current?.token === session.token) {
     wx.setStorageSync(SESSION_STORAGE_KEY, next);
