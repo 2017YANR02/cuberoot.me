@@ -58,11 +58,13 @@ function decodeSessionUser(value: unknown): SessionUser | null {
   }
 
   const wcaId = user.wcaId?.trim() || null;
+  const name = user.name.trim();
+  if (!name) return null;
   if (wcaId && wcaId.length > MAX_WCA_ID_LENGTH) return null;
   return {
     ...(user.uid === undefined ? {} : { uid: user.uid }),
     wcaId,
-    name: user.name.trim(),
+    name,
     ...(user.avatar === undefined ? {} : { avatar: user.avatar }),
   };
 }
