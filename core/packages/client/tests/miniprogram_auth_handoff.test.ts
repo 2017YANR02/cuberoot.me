@@ -65,6 +65,23 @@ describe('Mini Program web session handoff', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it('aborts a stalled exchange instead of leaving the callback page loading forever', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn((_url: string, options?: RequestInit) => new Promise((_resolve, reject) => {
+      options?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { exchangeMiniProgramWebSession } = await import('../lib/miniprogram-auth-handoff');
+
+    const exchange = exchangeMiniProgramWebSession(TICKET);
+    await vi.advanceTimersByTimeAsync(12_000);
+
+    await expect(exchange).rejects.toThrow('aborted');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[1]?.signal).toBeInstanceOf(AbortSignal);
+    vi.useRealTimers();
+  });
+
   it('does not reuse a successful exchange after its pending request settles', async () => {
     const session = { token: 't'.repeat(20), user: { uid: 7, wcaId: null, name: 'CubeRoot' } };
     const fetchMock = vi.fn()
