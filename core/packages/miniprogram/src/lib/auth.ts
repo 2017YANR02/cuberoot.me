@@ -1,4 +1,5 @@
 import { API_ORIGIN } from './runtime-config';
+import { isWebSessionTicket } from './web-session-contract';
 
 const SESSION_STORAGE_KEY = 'cuberoot:session';
 const MAX_AVATAR_LENGTH = 2048;
@@ -279,8 +280,7 @@ export async function createWebSessionTicket(session: SessionData): Promise<WebS
     throw new ApiError(502, 'invalid web session ticket response');
   }
   const ticket = response as Record<string, unknown>;
-  if (typeof ticket.ticket !== 'string'
-    || !/^[A-Za-z0-9_-]{43}$/.test(ticket.ticket)
+  if (!isWebSessionTicket(ticket.ticket)
     || typeof ticket.expiresIn !== 'number'
     || !Number.isSafeInteger(ticket.expiresIn)
     || ticket.expiresIn <= 0) {
