@@ -36,10 +36,14 @@ pnpm --filter @cuberoot/miniprogram check
 ```powershell
 $env:WECHAT_MINI_LIB_VERSION='<已确认的稳定版本>'
 $env:WECHAT_MINI_SECRET_ROTATED='1' # 仅在后台轮换并更新服务端后设置
+$env:WECHAT_MINI_BASIC_INFO_APPROVED='1'
+$env:WECHAT_MINI_FILING_COMPLETED='1'
+$env:WECHAT_MINI_PRIVACY_REVIEWED='1'
+$env:WECHAT_MINI_REAL_DEVICE_TESTED='1' # 当前候选版本已完成 iOS 和 Android 回归
 pnpm --filter @cuberoot/miniprogram build
 pnpm --filter @cuberoot/miniprogram release:check
 ```
 
-`release:check` 会自动运行类型检查和全部小程序回归测试，再检查正式身份、基础库、密钥轮换确认、源码与上传产物指纹等发布条件。
+`release:check` 会自动运行类型检查和全部小程序回归测试，再检查正式身份、基础库、密钥轮换确认、四项人工发布确认、源码与上传产物指纹等发布条件。
 
-检查器会阻止未确认密钥轮换的发布，也会在发现新的隐私敏感 API、错误发布身份或异常包体积时直接失败。当前项目预算为总包 512 KiB、单文件 128 KiB，用于尽早发现误打包网站资源，不代表平台极限。确认变量只是防遗忘闸门，不能代替真实轮换；先在后台生成新密钥、更新服务端，再执行发布检查。
+检查器会阻止未确认密钥轮换、基础信息、备案、后台隐私指引或双平台真机回归的发布，也会在发现新的隐私敏感 API、错误发布身份或异常包体积时直接失败。当前项目预算为总包 512 KiB、单文件 128 KiB，用于尽早发现误打包网站资源，不代表平台极限。确认变量只是防遗忘闸门，不能代替真实操作；每次只在对应事项真实完成后设置。

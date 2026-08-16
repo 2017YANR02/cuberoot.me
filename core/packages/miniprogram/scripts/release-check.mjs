@@ -12,6 +12,7 @@ import {
 import {
   collectReleaseFailures,
   isReleaseAuditTextFile,
+  releaseConfirmationsFromEnv,
 } from './release-check-lib.mjs';
 
 const packageRoot = resolve(import.meta.dirname, '..');
@@ -61,6 +62,7 @@ const failures = collectReleaseFailures({
   sitemapConfig,
   confirmedStableVersion: process.env.WECHAT_MINI_LIB_VERSION ?? '',
   confirmedSecretRotation: process.env.WECHAT_MINI_SECRET_ROTATED === '1',
+  releaseConfirmations: releaseConfirmationsFromEnv(process.env),
   sourceFiles,
   uploadFiles,
   builtFiles: outputFiles.map((file) => normalizedRelativePath(outputRoot, file)),
@@ -76,5 +78,5 @@ if (failures.length > 0) {
   process.exitCode = 1;
 } else {
   console.log('小程序自动上传前检查通过。');
-  console.log('仍需人工确认：备案、基础信息审核，以及 iOS/Android 真机回归。');
+  console.log('基础信息、备案、隐私指引和双平台真机回归均已显式确认。');
 }
