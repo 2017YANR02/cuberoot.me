@@ -95,6 +95,10 @@ Page({
   },
 
   onShow() {
+    this.refreshAccount();
+  },
+
+  refreshAccount() {
     activePages.add(this);
     const validationAttempt = beginValidation(this);
     this.setData({
@@ -167,7 +171,7 @@ Page({
 
   retrySync() {
     if (this.data.syncState !== 'error') return;
-    this.onShow();
+    this.refreshAccount();
   },
 
   async login() {
