@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  createWebViewPageOptions,
   createWebViewPageData,
   markWebRouteFailed,
   openWebRoute,
@@ -171,5 +172,37 @@ describe('shared web-view page state', () => {
 
     expect(context.data.src).toBe('');
     expect(context.data.errorTitle).toBe('网页加载失败');
+  });
+
+  it('ignores a handoff result after the page has been unloaded', async () => {
+    let finishRequest: ((result: { statusCode: number; data: unknown }) => void) | undefined;
+    vi.stubGlobal('wx', {
+      getStorageSync: () => ({
+        token: 't'.repeat(20),
+        user: { name: 'CubeRoot', wcaId: null },
+      }),
+      removeStorageSync: vi.fn(),
+      nextTick(callback: () => void) { callback(); },
+      setNavigationBarTitle,
+      request(options: {
+        success(result: { statusCode: number; data: unknown }): void;
+      }) {
+        finishRequest = options.success;
+      },
+    });
+    const context = createContext();
+    const options = createWebViewPageOptions('timer') as unknown as {
+      onUnload(this: WebViewPageContext): void;
+    };
+    const opening = openWebRoute(context, 'timer');
+
+    options.onUnload.call(context);
+    finishRequest?.({
+      statusCode: 200,
+      data: { ticket: 'A'.repeat(43), expiresIn: 90 },
+    });
+    await opening;
+
+    expect(context.data.src).toBe('');
   });
 });
