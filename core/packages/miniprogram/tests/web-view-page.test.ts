@@ -205,4 +205,30 @@ describe('shared web-view page state', () => {
 
     expect(context.data.src).toBe('');
   });
+
+  it('does not start a queued retry after the page has been unloaded', async () => {
+    let runNextTick: (() => void) | undefined;
+    vi.stubGlobal('wx', {
+      getStorageSync: () => null,
+      removeStorageSync: vi.fn(),
+      nextTick(callback: () => void) {
+        runNextTick = callback;
+      },
+      setNavigationBarTitle,
+    });
+    const context = createContext();
+    await openWebRoute(context, 'alg');
+    markWebRouteFailed(context);
+    const options = createWebViewPageOptions('alg') as unknown as {
+      onUnload(this: WebViewPageContext): void;
+      retry(this: WebViewPageContext): void;
+    };
+
+    options.retry.call(context);
+    options.onUnload.call(context);
+    runNextTick?.();
+
+    expect(context.data.src).toBe('');
+    expect(setNavigationBarTitle).toHaveBeenCalledTimes(1);
+  });
 });
