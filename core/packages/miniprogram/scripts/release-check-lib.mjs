@@ -64,6 +64,7 @@ export function collectReleaseFailures({
   themeConfig,
   sitemapConfig,
   confirmedStableVersion = '',
+  confirmedSecretRotation = false,
   sourceFiles = [],
   builtFiles = [],
   buildState = null,
@@ -71,6 +72,12 @@ export function collectReleaseFailures({
   currentOutputFingerprint = '',
 }) {
   const failures = [];
+
+  if (confirmedSecretRotation !== true) {
+    failures.push(
+      '已暴露的 AppSecret 尚未确认轮换；后台生成新密钥并更新服务端后，上传时设置 WECHAT_MINI_SECRET_ROTATED=1。',
+    );
+  }
 
   if (!hasExpectedSitemapPolicy(sitemapConfig)) {
     failures.push('sitemap 只能收录计时和发现页，账号页与通用网页壳必须保持禁止收录。');
