@@ -38,6 +38,20 @@ describe('mini program authentication', () => {
     expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
   });
 
+  it('rejects stored session tokens containing header control characters', () => {
+    const removeStorageSync = vi.fn();
+    vi.stubGlobal('wx', {
+      getStorageSync: () => ({
+        token: `${'t'.repeat(20)}\r\nInjected: true`,
+        user: { name: 'CubeRoot', wcaId: null },
+      }),
+      removeStorageSync,
+    });
+
+    expect(getStoredSession()).toBeNull();
+    expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
+  });
+
   it('treats an unreadable storage area as logged out', () => {
     vi.stubGlobal('wx', {
       getStorageSync() {
@@ -153,6 +167,31 @@ describe('mini program authentication', () => {
       message: 'session storage unavailable',
       status: -1,
     });
+  });
+
+  it('rejects login tokens containing header control characters before storage', async () => {
+    const setStorageSync = vi.fn();
+    vi.stubGlobal('wx', {
+      login(options: { success(result: { code: string }): void }) {
+        options.success({ code: 'login-code' });
+      },
+      request(options: { success(result: { statusCode: number; data: unknown }): void }) {
+        options.success({
+          statusCode: 200,
+          data: {
+            token: `${'t'.repeat(20)}\nInjected: true`,
+            user: { name: 'CubeRoot', wcaId: null },
+          },
+        });
+      },
+      setStorageSync,
+    });
+
+    await expect(loginWithWechat()).rejects.toMatchObject({
+      message: 'invalid session response',
+      status: 502,
+    });
+    expect(setStorageSync).not.toHaveBeenCalled();
   });
 
   it('finishes login when wx.login never calls back', async () => {

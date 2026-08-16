@@ -5,6 +5,7 @@ const MAX_AVATAR_LENGTH = 2048;
 const MAX_DISPLAY_NAME_LENGTH = 200;
 const MAX_SESSION_TOKEN_LENGTH = 4096;
 const MAX_WCA_ID_LENGTH = 20;
+const UNSAFE_HEADER_VALUE_PATTERN = /[\u0000-\u001F\u007F]/;
 const REQUEST_TIMEOUT_MS = 12_000;
 const WEB_SESSION_REQUEST_TIMEOUT_MS = 5_000;
 const HARD_TIMEOUT_GRACE_MS = 1_000;
@@ -71,7 +72,10 @@ function decodeSession(value: unknown): SessionData | null {
   const session = value as Record<string, unknown>;
   const token = typeof session.token === 'string' ? session.token.trim() : '';
   const user = decodeSessionUser(session.user);
-  if (token.length < 20 || token.length > MAX_SESSION_TOKEN_LENGTH || !user) {
+  if (token.length < 20
+    || token.length > MAX_SESSION_TOKEN_LENGTH
+    || UNSAFE_HEADER_VALUE_PATTERN.test(token)
+    || !user) {
     return null;
   }
   return {
