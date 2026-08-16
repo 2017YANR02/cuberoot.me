@@ -16,24 +16,35 @@ Page({
     loggedIn: false,
     status: '',
     statusError: false,
+    syncLabel: '',
+    syncState: '',
     wcaId: '',
   },
 
   onShow() {
+    this.setData({ status: '', statusError: false });
     const session = getStoredSession();
     this.showSession(session);
-    if (!session) return;
+    if (!session) {
+      this.showSyncState('');
+      return;
+    }
+    this.showSyncState('checking');
     void validateStoredSession(session).then((next) => {
       if (getStoredSession()?.token !== session.token) return;
       this.showSession(next);
+      this.showSyncState('ready');
+      this.setData({ status: '', statusError: false });
     }).catch((error: unknown) => {
       if (getStoredSession()?.token !== session.token) return;
       if (error instanceof ApiError && error.status === 401) {
         clearStoredSession();
         this.showSession(null);
+        this.showSyncState('');
         this.setData({ status: '登录已过期，请重新登录', statusError: true });
         return;
       }
+      this.showSyncState('error');
       this.setData({ status: '账号状态暂时无法更新，请稍后重试', statusError: true });
     });
   },
@@ -48,12 +59,23 @@ Page({
     });
   },
 
+  showSyncState(state: '' | 'checking' | 'ready' | 'error') {
+    const labels = {
+      '': '',
+      checking: '正在确认',
+      error: '待确认',
+      ready: '已就绪',
+    };
+    this.setData({ syncLabel: labels[state], syncState: state });
+  },
+
   async login() {
     if (this.data.busy) return;
     this.setData({ busy: true, status: '', statusError: false });
     try {
       const session = await loginWithWechat();
       this.showSession(session);
+      this.showSyncState('ready');
       this.setData({
         status: session.isNew ? '账号已创建并登录' : '登录成功',
         statusError: false,
@@ -102,6 +124,7 @@ Page({
         if (!result.confirm) return;
         clearStoredSession();
         this.showSession(null);
+        this.showSyncState('');
         this.setData({ status: '', statusError: false });
       },
     });

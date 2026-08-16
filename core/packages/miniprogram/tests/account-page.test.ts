@@ -1,8 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 interface AccountPage {
+  data: Record<string, unknown>;
+  onShow(): void;
   openAccount(): void;
   openPrivacy(): void;
+  setData(data: Record<string, unknown>): void;
 }
 
 async function loadPage(wxApi: Record<string, unknown>): Promise<AccountPage> {
@@ -13,8 +16,20 @@ async function loadPage(wxApi: Record<string, unknown>): Promise<AccountPage> {
   });
   await import('../src/pages/account/index');
   if (!page) throw new Error('account page was not registered');
+  page.setData = function setData(data) {
+    this.data = { ...this.data, ...data };
+  };
   return page;
 }
+
+const storedSession = {
+  token: 'valid-miniprogram-session-token',
+  user: {
+    id: 42,
+    name: 'CubeRoot 用户',
+    wcaId: null,
+  },
+};
 
 describe('mini program account page', () => {
   afterEach(() => {
@@ -64,5 +79,46 @@ describe('mini program account page', () => {
     expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({
       url: '/pages/web/index?key=privacy',
     }));
+  });
+
+  it('shows cached identity as checking until the server confirms it', async () => {
+    let completeRequest: ((response: unknown) => void) | undefined;
+    const page = await loadPage({
+      getStorageSync: () => storedSession,
+      removeStorageSync: vi.fn(),
+      request: vi.fn((options: { success(response: unknown): void }) => {
+        completeRequest = options.success;
+      }),
+      setStorageSync: vi.fn(),
+    });
+
+    page.onShow();
+
+    expect(page.data.loggedIn).toBe(true);
+    expect(page.data.syncLabel).toBe('正在确认');
+    expect(page.data.syncState).toBe('checking');
+
+    completeRequest?.({ statusCode: 200, data: { user: storedSession.user } });
+    await vi.waitFor(() => expect(page.data.syncState).toBe('ready'));
+    expect(page.data.syncLabel).toBe('已就绪');
+    expect(page.data.status).toBe('');
+  });
+
+  it('keeps a cached account but marks its state unconfirmed after a transient error', async () => {
+    const page = await loadPage({
+      getStorageSync: () => storedSession,
+      removeStorageSync: vi.fn(),
+      request: vi.fn((options: { success(response: unknown): void }) => {
+        options.success({ statusCode: 200, data: null });
+      }),
+      setStorageSync: vi.fn(),
+    });
+
+    page.onShow();
+
+    await vi.waitFor(() => expect(page.data.syncState).toBe('error'));
+    expect(page.data.loggedIn).toBe(true);
+    expect(page.data.syncLabel).toBe('待确认');
+    expect(page.data.statusError).toBe(true);
   });
 });
