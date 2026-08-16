@@ -45,10 +45,18 @@ describe('mini program app structure', () => {
   it('keeps web-backed pages on the shared controller', () => {
     const timerPage = pageFiles['../src/pages/timer/index.ts'];
     const genericWebPage = pageFiles['../src/pages/web/index.ts'];
+    const timerTemplate = pageFiles['../src/pages/timer/index.wxml'];
+    const genericWebTemplate = pageFiles['../src/pages/web/index.wxml'];
+    const sharedTemplate = sourceFiles['../src/templates/web-route-view.wxml'];
 
     expect(timerPage).toContain("createWebViewPageOptions('timer')");
     expect(genericWebPage).toContain('createWebViewPageOptions()');
     expect(timerPage).not.toMatch(/timer-store|setInterval|setTimeout/);
+    expect(timerTemplate).toContain('templates/web-route-view.wxml');
+    expect(genericWebTemplate).toContain('templates/web-route-view.wxml');
+    expect(sharedTemplate).toContain('<web-view');
+    expect(timerTemplate).not.toContain('<web-view');
+    expect(genericWebTemplate).not.toContain('<web-view');
   });
 
   it('does not carry an abandoned native timer implementation', () => {

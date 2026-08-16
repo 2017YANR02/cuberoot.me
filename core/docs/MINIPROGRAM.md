@@ -20,6 +20,7 @@
 | 网站入口、标题、说明、顺序 | `packages/miniprogram/src/lib/web-routes.ts` | 不在 WXML 里再写一份列表 |
 | 网站和 API 域名 | `packages/miniprogram/src/lib/runtime-config.ts` | 只使用已在小程序后台配置的 HTTPS 域名 |
 | `web-view` 加载、换票超时、失败和重试 | `packages/miniprogram/src/lib/web-view-page.ts` | 计时页和通用网页共用，不各自补丁 |
+| `web-view` 加载与错误界面 | `packages/miniprogram/src/templates/web-route-view.wxml` + `app.wxss` | 页面只传状态，不复制 WXML 或页面级样式 |
 | 登录、会话和错误文案 | `packages/miniprogram/src/lib/auth.ts` | AppSecret 永远只在服务端 |
 | 移动端与小程序隐私政策 | `packages/client/app/[lang]/privacy/page.tsx` | App、小程序和网页共用一份真实声明 |
 | 上传前自动检查 | `packages/miniprogram/scripts/release-check.mjs` + `release-check-lib.mjs` | 新增隐私敏感能力时先阻断上传；纯规则必须有回归测试 |
@@ -171,6 +172,12 @@ pnpm --filter @cuberoot/miniprogram release:check
 | 定位、摄像头、麦克风、相册、通讯录、蓝牙 | 当前版本不使用 | 后台不应勾选；以后接入前先改政策和平台指引 |
 
 ## 9. 迭代记录
+
+### 2026-08-16：网页状态界面唯一来源
+
+- 计时页和通用网页页不再各自保存一份 `web-view`、加载文案和重试按钮，统一渲染共享 WXML 模板。
+- 加载态使用轻量进度标识和当前路由标题；错误态仍保留明确原因与重试入口，减少空白页被误判为卡死。
+- 结构测试固定“页面只选路由、控制器只管状态、模板只管呈现”的三层边界，后续新增网页页不得复制这套界面。
 
 ### 2026-08-16：发布闸门与网站路由防漂移
 
