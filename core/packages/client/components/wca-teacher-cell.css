@@ -95,13 +95,27 @@
   box-shadow: 0 18px 60px color-mix(in srgb, var(--foreground) 28%, transparent);
 }
 
-.wca-teacher-dialog h2 {
-  margin: 0 0 16px;
-  font-size: 1.05rem;
+.wca-teacher-dialog-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.wca-teacher-dialog-event,
-.wca-teacher-dialog-current {
+.wca-teacher-dialog-heading h2 {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: 1.05rem;
+  white-space: nowrap;
+}
+
+.wca-teacher-dialog-heading .cuber-search {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.wca-teacher-dialog-event {
   margin: 0 0 12px;
   color: var(--muted-foreground);
   font-size: 0.86rem;
@@ -109,11 +123,6 @@
 
 .wca-teacher-dialog .wca-stats-event-selector {
   margin-bottom: 14px;
-}
-
-.wca-teacher-dialog .cuber-search {
-  width: 100%;
-  max-width: none;
 }
 
 .wca-teacher-dialog .cuber-search-popup {
