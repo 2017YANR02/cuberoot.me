@@ -17,6 +17,11 @@ const pageFiles = import.meta.glob('../src/pages/**/*.{ts,json,wxml,wxss}', {
   query: '?raw',
 });
 const pageFilePaths = new Set(Object.keys(pageFiles));
+const sourceFiles = import.meta.glob('../src/**/*.{ts,wxml}', {
+  eager: true,
+  import: 'default',
+  query: '?raw',
+});
 
 describe('mini program app structure', () => {
   it('keeps every declared page complete', () => {
@@ -44,6 +49,13 @@ describe('mini program app structure', () => {
     expect(timerPage).toContain("createWebViewPageOptions('timer')");
     expect(genericWebPage).toContain('createWebViewPageOptions()');
     expect(timerPage).not.toMatch(/timer-store|setInterval|setTimeout/);
+  });
+
+  it('does not carry an abandoned native timer implementation', () => {
+    expect(sourceFiles['../src/lib/timer-store.ts']).toBeUndefined();
+    for (const [path, source] of Object.entries(sourceFiles)) {
+      expect(source, path).not.toMatch(/@cuberoot\/shared\/timer/);
+    }
   });
 
   it('keeps website addresses out of page adapters and templates', () => {
