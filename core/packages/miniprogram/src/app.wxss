@@ -109,8 +109,31 @@ button::after {
   color: var(--cr-danger);
 }
 
-.web-error {
+.web-status {
   padding-top: 96rpx;
+}
+
+.web-status-spinner {
+  animation: web-status-spin 0.9s linear infinite;
+  border: 5rpx solid var(--cr-line);
+  border-radius: 50%;
+  border-top-color: var(--cr-accent);
+  box-sizing: border-box;
+  height: 54rpx;
+  margin-bottom: 28rpx;
+  width: 54rpx;
+}
+
+@keyframes web-status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .web-status-spinner {
+    animation: none;
+  }
 }
 
 .retry-button {
