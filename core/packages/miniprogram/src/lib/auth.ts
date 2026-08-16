@@ -116,6 +116,26 @@ function writeStoredSessionValue(session: SessionData): boolean {
   }
 }
 
+function scheduleTimeoutSafely(
+  callback: () => void,
+  delayMs: number,
+): ReturnType<typeof setTimeout> | null {
+  try {
+    return setTimeout(callback, delayMs);
+  } catch {
+    return null;
+  }
+}
+
+function clearTimeoutSafely(timer: ReturnType<typeof setTimeout> | null): void {
+  if (timer === null) return;
+  try {
+    clearTimeout(timer);
+  } catch {
+    // Promise settlement must not depend on optional timer cleanup.
+  }
+}
+
 function requestJson<T>(
   path: string,
   options: {
@@ -128,25 +148,31 @@ function requestJson<T>(
   return new Promise((resolve, reject) => {
     let requestTask: WechatMiniprogram.RequestTask | undefined;
     let settled = false;
+    let hardTimeout: ReturnType<typeof setTimeout> | null = null;
     const timeoutMs = options.timeoutMs ?? REQUEST_TIMEOUT_MS;
     const header: Record<string, string> = { 'Content-Type': 'application/json' };
     if (options.token) header.Authorization = `Bearer ${options.token}`;
-    const hardTimeout = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      try {
-        requestTask?.abort();
-      } catch {
-        // The request must still settle even if the platform cannot abort it.
-      }
-      reject(new ApiError(0, 'request timed out'));
-    }, timeoutMs + HARD_TIMEOUT_GRACE_MS);
     const settle = (action: () => void) => {
       if (settled) return;
       settled = true;
-      clearTimeout(hardTimeout);
+      clearTimeoutSafely(hardTimeout);
       action();
     };
+    hardTimeout = scheduleTimeoutSafely(() => {
+      settle(() => {
+        try {
+          requestTask?.abort();
+        } catch {
+          // The request must still settle even if the platform cannot abort it.
+        }
+        reject(new ApiError(0, 'request timed out'));
+      });
+    }, timeoutMs + HARD_TIMEOUT_GRACE_MS);
+    if (hardTimeout === null) {
+      settle(() => reject(new ApiError(0, 'request timeout unavailable')));
+      return;
+    }
+    if (settled) return;
 
     try {
       requestTask = wx.request({
@@ -184,17 +210,22 @@ function requestJson<T>(
 function wechatLoginCode(): Promise<string> {
   return new Promise((resolve, reject) => {
     let settled = false;
-    const hardTimeout = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      reject(new ApiError(0, 'wx.login timed out'));
-    }, WECHAT_LOGIN_TIMEOUT_MS + HARD_TIMEOUT_GRACE_MS);
+    let hardTimeout: ReturnType<typeof setTimeout> | null = null;
     const settle = (action: () => void) => {
       if (settled) return;
       settled = true;
-      clearTimeout(hardTimeout);
+      clearTimeoutSafely(hardTimeout);
       action();
     };
+    hardTimeout = scheduleTimeoutSafely(
+      () => settle(() => reject(new ApiError(0, 'wx.login timed out'))),
+      WECHAT_LOGIN_TIMEOUT_MS + HARD_TIMEOUT_GRACE_MS,
+    );
+    if (hardTimeout === null) {
+      settle(() => reject(new ApiError(0, 'wx.login timeout unavailable')));
+      return;
+    }
+    if (settled) return;
 
     try {
       wx.login({
