@@ -308,6 +308,7 @@ function RankingTable<T extends CountryRecordCounts>({
 export function RecordPlaceRankings() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  const rankingRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<RecordPlacesData | null>(null);
   const [failed, setFailed] = useState(false);
   const [metric, setMetric] = useQueryState(
@@ -399,6 +400,23 @@ export function RecordPlaceRankings() {
     void setPage(1);
   }, [setMetric, setPage]);
 
+  const scrollToRankingStart = useCallback(() => {
+    requestAnimationFrame(() => {
+      rankingRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
+    });
+  }, []);
+
+  const changePage = useCallback((value: number) => {
+    void setPage(value);
+    scrollToRankingStart();
+  }, [scrollToRankingStart, setPage]);
+
+  const changePageSize = useCallback((value: number) => {
+    void setPageSizeValue(String(value) as RecordPageSize);
+    void setPage(1);
+    scrollToRankingStart();
+  }, [scrollToRankingStart, setPage, setPageSizeValue]);
+
   return (
     <section className="cs-section cs-record-section">
       <h2 className="cs-section-title">{tr({ zh: '纪录诞生地', en: 'Record birthplaces' })}</h2>
@@ -414,7 +432,7 @@ export function RecordPlaceRankings() {
       ) : !data ? (
         <div className="cs-loading">{t('common.loading')}</div>
       ) : (
-        <div className="cs-record-ranking">
+        <div ref={rankingRef} className="cs-record-ranking">
           <h3 className="sr-only">{viewLabel}</h3>
           <div className="cs-record-controls">
             <ListSelect
@@ -485,11 +503,8 @@ export function RecordPlaceRankings() {
                   size={pageSize}
                   pageSizeOptions={RECORD_PAGE_SIZES.map(Number)}
                   isZh={isZh}
-                  onPageChange={(value) => { void setPage(value); }}
-                  onSizeChange={(value) => {
-                    void setPageSizeValue(String(value) as RecordPageSize);
-                    void setPage(1);
-                  }}
+                  onPageChange={changePage}
+                  onSizeChange={changePageSize}
                 />
               )}
             </>
