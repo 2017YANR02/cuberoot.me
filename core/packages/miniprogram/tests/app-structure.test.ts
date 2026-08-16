@@ -98,6 +98,7 @@ describe('mini program app structure', () => {
   });
 
   it('only exposes public entry pages to WeChat search', () => {
+    expect(appConfig.sitemapLocation).toBe('sitemap.json');
     expect(sitemapConfig.rules).toEqual([
       ...PUBLIC_INDEXED_PAGES.map((page) => ({ action: 'allow', page })),
       { action: 'disallow', page: '*' },
