@@ -10,6 +10,7 @@ import {
 import { openWebsitePageOnce } from '../../lib/navigation';
 
 const activePages = new WeakSet<object>();
+const activeLogins = new WeakSet<object>();
 const validationAttempts = new WeakMap<object, number>();
 
 function beginValidation(page: object): number {
@@ -43,7 +44,11 @@ Page({
   onShow() {
     activePages.add(this);
     const validationAttempt = beginValidation(this);
-    this.setData({ status: '', statusError: false });
+    this.setData({
+      busy: activeLogins.has(this),
+      status: '',
+      statusError: false,
+    });
     const session = getStoredSession();
     this.showSession(session);
     if (!session) {
@@ -106,7 +111,8 @@ Page({
   },
 
   async login() {
-    if (this.data.busy) return;
+    if (activeLogins.has(this)) return;
+    activeLogins.add(this);
     activePages.add(this);
     this.setData({ busy: true, status: '', statusError: false });
     try {
@@ -122,6 +128,7 @@ Page({
       if (!activePages.has(this)) return;
       this.setData({ status: loginErrorMessage(error), statusError: true });
     } finally {
+      activeLogins.delete(this);
       if (activePages.has(this)) this.setData({ busy: false });
     }
   },
