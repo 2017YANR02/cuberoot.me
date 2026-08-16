@@ -2,6 +2,7 @@ import {
   isRecordPlaceDetailShard,
   isRecordPlacesData,
   type CityRecordCounts,
+  type CountryRecordCounts,
   type RecordCounts,
   type RecordMetric,
   type RecordPlaceDetailCompetition,
@@ -100,6 +101,17 @@ export function cityRecordMatches(row: CityRecordCounts, query: string): boolean
       localizeCity(name, true, row.iso2),
       localizeCity(name, false, row.iso2),
     ]),
+    countryName(row.iso2, true),
+    countryName(row.iso2, false),
+    row.iso2,
+  ].map(normalizeRecordPlaceSearch).join('\n');
+  return haystack.includes(needle);
+}
+
+export function countryRecordMatches(row: CountryRecordCounts, query: string): boolean {
+  const needle = normalizeRecordPlaceSearch(query);
+  if (!needle) return true;
+  const haystack = [
     countryName(row.iso2, true),
     countryName(row.iso2, false),
     row.iso2,

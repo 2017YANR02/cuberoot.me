@@ -9,6 +9,7 @@ import {
 } from '@cuberoot/shared/record-places';
 import {
   cityRecordMatches,
+  countryRecordMatches,
   localizedCityCollisionKeys,
   rankRecordRows,
   recordPlaceDetailRows,
@@ -100,6 +101,14 @@ describe('record place ranking', () => {
       ['c', 2],
       ['d', 4],
     ]);
+  });
+
+  it('matches countries by Chinese name, English name, and ISO code', () => {
+    const row = { iso2: 'US', wr: 5, cr: 4, nr: 3 };
+    expect(countryRecordMatches(row, '美国')).toBe(true);
+    expect(countryRecordMatches(row, 'usa')).toBe(true);
+    expect(countryRecordMatches(row, 'us')).toBe(true);
+    expect(countryRecordMatches(row, 'China')).toBe(false);
   });
 });
 
