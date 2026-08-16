@@ -192,6 +192,29 @@ describe('mini program authentication', () => {
     expect(abort).toHaveBeenCalledOnce();
   });
 
+  it('still settles a timed-out request when abort throws', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('wx', {
+      request: vi.fn(() => ({
+        abort() {
+          throw new Error('abort unavailable');
+        },
+      })),
+    });
+    const session = {
+      token: 't'.repeat(20),
+      user: { name: 'CubeRoot', wcaId: null },
+    };
+
+    const validation = expect(validateStoredSession(session)).rejects.toMatchObject({
+      message: 'request timed out',
+      status: 0,
+    });
+    await vi.advanceTimersByTimeAsync(13_000);
+
+    await validation;
+  });
+
   it('requests a short-lived web session ticket with the Mini Program JWT', async () => {
     const token = 't'.repeat(20);
     vi.stubGlobal('wx', {

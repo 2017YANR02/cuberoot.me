@@ -124,7 +124,11 @@ function requestJson<T>(
     const hardTimeout = setTimeout(() => {
       if (settled) return;
       settled = true;
-      requestTask?.abort();
+      try {
+        requestTask?.abort();
+      } catch {
+        // The request must still settle even if the platform cannot abort it.
+      }
       reject(new ApiError(0, 'request timed out'));
     }, timeoutMs + HARD_TIMEOUT_GRACE_MS);
     const settle = (action: () => void) => {
