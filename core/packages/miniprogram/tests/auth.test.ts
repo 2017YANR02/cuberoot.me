@@ -39,6 +39,20 @@ describe('mini program authentication', () => {
     expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
   });
 
+  it('does not disguise a failed malformed-session cleanup as signed out', () => {
+    vi.stubGlobal('wx', {
+      getStorageSync: () => ({ token: 'short', user: { name: 'CubeRoot', wcaId: null } }),
+      removeStorageSync() {
+        throw new Error('storage unavailable');
+      },
+    });
+
+    expect(getStoredSessionSnapshot()).toEqual({
+      status: 'unavailable',
+      session: null,
+    });
+  });
+
   it('rejects stored session tokens containing header control characters', () => {
     const removeStorageSync = vi.fn();
     vi.stubGlobal('wx', {

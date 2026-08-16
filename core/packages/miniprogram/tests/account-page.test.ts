@@ -103,6 +103,28 @@ describe('mini program account page', () => {
     expect(request).not.toHaveBeenCalled();
   });
 
+  it('surfaces a malformed session that cannot be removed as unavailable storage', async () => {
+    const request = vi.fn();
+    const page = await loadPage({
+      getStorageSync: () => ({
+        token: 'short',
+        user: { name: 'CubeRoot', wcaId: null },
+      }),
+      removeStorageSync() {
+        throw new Error('storage unavailable');
+      },
+      request,
+    });
+
+    page.onShow();
+
+    expect(page.data.loggedIn).toBe(false);
+    expect(page.data.storageUnavailable).toBe(true);
+    expect(page.data.syncState).toBe('error');
+    expect(page.data.status).toContain('设备存储');
+    expect(request).not.toHaveBeenCalled();
+  });
+
   it('stops pull-down feedback after account validation fails', async () => {
     const stopPullDownRefresh = vi.fn();
     const page = await loadPage({

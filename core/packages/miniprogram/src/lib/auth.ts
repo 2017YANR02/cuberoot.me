@@ -258,7 +258,9 @@ export function getStoredSessionSnapshot(): StoredSessionSnapshot {
     return { status: 'available', session: null };
   }
   const session = decodeSession(value);
-  if (!session) removeStoredSessionValue();
+  if (!session && !removeStoredSessionValue()) {
+    return { status: 'unavailable', session: null };
+  }
   return { status: 'available', session };
 }
 
