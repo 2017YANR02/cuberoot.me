@@ -53,6 +53,23 @@ describe('mini program account page', () => {
     }));
   });
 
+  it('ignores a pending account navigation failure after the page is hidden', async () => {
+    let fail: (() => void) | undefined;
+    const showToast = vi.fn();
+    const navigateTo = vi.fn((options: { fail?(): void }) => {
+      fail = options.fail;
+    });
+    const page = await loadPage({ navigateTo, showToast });
+
+    page.openAccount();
+    page.onHide();
+    fail?.();
+
+    expect(showToast).not.toHaveBeenCalled();
+    page.openAccount();
+    expect(navigateTo).toHaveBeenCalledTimes(2);
+  });
+
   it('opens the platform privacy contract when it is available', async () => {
     const navigateTo = vi.fn();
     const openPrivacyContract = vi.fn();

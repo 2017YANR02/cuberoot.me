@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 interface ToolsPage {
+  onHide(): void;
+  onUnload(): void;
   openTool(event: { currentTarget: { dataset: { key?: unknown } } }): void;
 }
 
@@ -55,5 +57,22 @@ describe('mini program tools page', () => {
     page.openTool(toolEvent('wiki'));
 
     expect(showToast).toHaveBeenCalledWith({ icon: 'none', title: '页面暂时无法打开' });
+  });
+
+  it('ignores a pending navigation failure after the page is hidden', async () => {
+    let fail: (() => void) | undefined;
+    const showToast = vi.fn();
+    const navigateTo = vi.fn((options: { fail?(): void }) => {
+      fail = options.fail;
+    });
+    const page = await loadPage({ navigateTo, showToast });
+
+    page.openTool(toolEvent('wiki'));
+    page.onHide();
+    fail?.();
+
+    expect(showToast).not.toHaveBeenCalled();
+    page.openTool(toolEvent('alg'));
+    expect(navigateTo).toHaveBeenCalledTimes(2);
   });
 });
