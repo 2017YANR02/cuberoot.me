@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { PLATFORM_INTERACTION_LOCK_TIMEOUT_MS } from '../src/lib/platform-action-guard';
 import accountConfig from '../src/pages/account/index.json';
 
 interface AccountPage {
@@ -209,6 +210,11 @@ describe('mini program account page', () => {
     expect(openPrivacyContract).toHaveBeenCalledOnce();
 
     vi.advanceTimersByTime(5_000);
+    page.openPrivacy();
+
+    expect(openPrivacyContract).toHaveBeenCalledOnce();
+
+    vi.advanceTimersByTime(PLATFORM_INTERACTION_LOCK_TIMEOUT_MS - 5_000);
     page.openPrivacy();
 
     expect(openPrivacyContract).toHaveBeenCalledTimes(2);
@@ -461,6 +467,10 @@ describe('mini program account page', () => {
 
     page.logout();
     vi.advanceTimersByTime(5_000);
+    page.logout();
+    expect(modals).toHaveLength(1);
+
+    vi.advanceTimersByTime(PLATFORM_INTERACTION_LOCK_TIMEOUT_MS - 5_000);
     page.logout();
     expect(modals).toHaveLength(2);
 

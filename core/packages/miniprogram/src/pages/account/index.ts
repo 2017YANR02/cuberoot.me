@@ -11,13 +11,20 @@ import {
   cancelWebsiteNavigation,
   openWebsitePageOnce,
 } from '../../lib/navigation';
-import { createPlatformActionGuard } from '../../lib/platform-action-guard';
+import {
+  createPlatformActionGuard,
+  PLATFORM_INTERACTION_LOCK_TIMEOUT_MS,
+} from '../../lib/platform-action-guard';
 
 const activePages = new WeakSet<object>();
 const activeLogins = new WeakSet<object>();
 const validationAttempts = new WeakMap<object, number>();
-const logoutConfirmations = createPlatformActionGuard();
-const privacyContracts = createPlatformActionGuard();
+const logoutConfirmations = createPlatformActionGuard(
+  PLATFORM_INTERACTION_LOCK_TIMEOUT_MS,
+);
+const privacyContracts = createPlatformActionGuard(
+  PLATFORM_INTERACTION_LOCK_TIMEOUT_MS,
+);
 
 function beginValidation(page: object): number {
   const attempt = (validationAttempts.get(page) ?? 0) + 1;
