@@ -144,6 +144,19 @@ describe('mini program app structure', () => {
     }
   });
 
+  it('gives navigation rows a readable name without exposing decorative glyphs', () => {
+    const toolsTemplate = pageFiles['../src/pages/tools/index.wxml'];
+    const accountTemplate = pageFiles['../src/pages/account/index.wxml'];
+    const sharedTemplate = sourceFiles['../src/templates/web-route-view.wxml'];
+
+    expect(toolsTemplate).toContain('aria-label="{{item.title}}，{{item.description}}"');
+    expect(toolsTemplate).toMatch(/class="tool-arrow"\s+aria-hidden="true"/);
+    expect(accountTemplate).toMatch(/class="identity-mark"\s+aria-hidden="true"/);
+    expect(accountTemplate).toMatch(/class="account-sync-dot"\s+aria-hidden="true"/);
+    expect(accountTemplate).toMatch(/class="account-link-arrow"\s+aria-hidden="true"/);
+    expect(sharedTemplate).toMatch(/class="web-status-spinner"[^>]*aria-hidden="true"/);
+  });
+
   it('keeps shared native buttons large enough for touch', () => {
     const appStyles = sourceFiles['../src/app.wxss'];
 

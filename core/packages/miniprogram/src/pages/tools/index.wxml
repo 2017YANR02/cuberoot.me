@@ -11,12 +11,13 @@
       data-key="{{item.key}}"
       bindtap="openTool"
       hover-class="press-feedback"
+      aria-label="{{item.title}}，{{item.description}}"
     >
       <view class="tool-copy">
         <text class="tool-name">{{item.title}}</text>
         <text class="tool-description">{{item.description}}</text>
       </view>
-      <text class="tool-arrow">›</text>
+      <text class="tool-arrow" aria-hidden="true">›</text>
     </button>
   </view>
 </view>

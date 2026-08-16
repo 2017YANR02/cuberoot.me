@@ -4,7 +4,7 @@
 
   <block wx:if="{{loggedIn}}">
     <view class="identity">
-      <text class="identity-mark">{{initial}}</text>
+      <text class="identity-mark" aria-hidden="true">{{initial}}</text>
       <view class="identity-copy">
         <text class="identity-name">{{displayName}}</text>
         <text class="identity-wca" wx:if="{{wcaId}}">{{wcaId}}</text>
@@ -16,19 +16,24 @@
       <view class="account-sync-heading">
         <text class="account-sync-title">跨端账号</text>
         <view class="account-sync-state account-sync-state--{{syncState}}">
-          <view class="account-sync-dot"></view>
+          <view class="account-sync-dot" aria-hidden="true"></view>
           <text>{{syncLabel}}</text>
         </view>
       </view>
       <text class="account-sync-copy">打开 CubeRoot 网站时，会用当前小程序账号安全登录。</text>
     </view>
 
-    <button class="account-link" hover-class="press-feedback" bindtap="openAccount">
+    <button
+      class="account-link"
+      hover-class="press-feedback"
+      bindtap="openAccount"
+      aria-label="管理账号与登录方式，绑定 WCA 账号，查看其他登录方式"
+    >
       <view class="account-link-copy">
         <text class="account-link-title">管理账号与登录方式</text>
         <text class="account-link-description">绑定 WCA 账号，查看其他登录方式</text>
       </view>
-      <text class="account-link-arrow">›</text>
+      <text class="account-link-arrow" aria-hidden="true">›</text>
     </button>
 
     <button class="text-button logout-button" hover-class="press-feedback" bindtap="logout">退出登录</button>
