@@ -39,6 +39,7 @@ interface WebViewPageMethods {
 
 const routeAttempts = new WeakMap<WebViewPageContext, number>();
 const disposedPages = new WeakSet<WebViewPageContext>();
+const visiblePages = new WeakSet<WebViewPageContext>();
 type NetworkStatusCallback = (
   result: WechatMiniprogram.OnNetworkStatusChangeListenerResult
     | WechatMiniprogram.GeneralCallbackResult
@@ -92,7 +93,12 @@ function startNetworkRecovery(context: WebViewPageContext): void {
   const listener: NetworkStatusCallback = (result) => {
     if (networkListeners.get(context) !== listener) return;
     if (!('isConnected' in result)) return;
-    if (!result.isConnected || disposedPages.has(context) || !context.data.canRetry) return;
+    if (
+      !result.isConnected
+      || disposedPages.has(context)
+      || !visiblePages.has(context)
+      || !context.data.canRetry
+    ) return;
     retryWebRoute(context);
   };
 
@@ -101,6 +107,30 @@ function startNetworkRecovery(context: WebViewPageContext): void {
     networkListeners.set(context, listener);
   } catch {
     // Manual retry remains available when network observation is unsupported.
+  }
+}
+
+function recoverVisibleRouteIfConnected(context: WebViewPageContext): void {
+  if (
+    disposedPages.has(context)
+    || !visiblePages.has(context)
+    || !context.data.canRetry
+  ) return;
+
+  try {
+    wx.getNetworkType({
+      success(result) {
+        if (
+          result.networkType === 'none'
+          || disposedPages.has(context)
+          || !visiblePages.has(context)
+          || !context.data.canRetry
+        ) return;
+        retryWebRoute(context);
+      },
+    });
+  } catch {
+    // The retry button remains available when a network snapshot is unsupported.
   }
 }
 
@@ -215,6 +245,7 @@ export function markWebRouteFailed(
 }
 
 export function cancelWebRoute(context: WebViewPageContext): void {
+  visiblePages.delete(context);
   cancelScheduledRetry(context);
   stopNetworkRecovery(context);
   disposedPages.add(context);
@@ -267,8 +298,20 @@ export function createWebViewPageOptions(
     onLoad(options) {
       cancelScheduledRetry(this);
       disposedPages.delete(this);
-      startNetworkRecovery(this);
       void openWebRoute(this, fixedRouteKey ?? options.key);
+    },
+
+    onShow() {
+      if (disposedPages.has(this)) return;
+      visiblePages.add(this);
+      startNetworkRecovery(this);
+      recoverVisibleRouteIfConnected(this);
+    },
+
+    onHide() {
+      visiblePages.delete(this);
+      cancelScheduledRetry(this);
+      stopNetworkRecovery(this);
     },
 
     onUnload() {
