@@ -1,4 +1,5 @@
-import { listWebTools, resolveWebRoute } from '../../lib/web-routes';
+import { openWebsitePageOnce } from '../../lib/navigation';
+import { listWebTools } from '../../lib/web-routes';
 
 Page({
   data: {
@@ -7,15 +8,9 @@ Page({
 
   openTool(event: WechatMiniprogram.TouchEvent) {
     const key = event.currentTarget.dataset.key;
-    if (!resolveWebRoute(key)) {
-      wx.showToast({ icon: 'none', title: '该功能暂不可用' });
-      return;
-    }
-    wx.navigateTo({
-      url: `/pages/web/index?key=${encodeURIComponent(String(key))}`,
-      fail: () => {
-        wx.showToast({ icon: 'none', title: '页面暂时无法打开' });
-      },
+    openWebsitePageOnce(this, key, {
+      failureMessage: '页面暂时无法打开',
+      invalidMessage: '该功能暂不可用',
     });
   },
 });
