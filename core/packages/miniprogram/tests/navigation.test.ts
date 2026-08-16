@@ -43,6 +43,27 @@ describe('mini program website navigation', () => {
     expect(navigateTo).toHaveBeenCalledTimes(2);
   });
 
+  it('does not let a stale completion release a newer navigation lock', () => {
+    vi.useFakeTimers();
+    const completions: Array<() => void> = [];
+    const navigateTo = vi.fn((options: { complete(): void }) => {
+      completions.push(options.complete);
+    });
+    vi.stubGlobal('wx', { navigateTo, showToast: vi.fn() });
+    const owner = {};
+
+    expect(openWebsitePageOnce(owner, 'alg', { failureMessage: '打开失败' })).toBe(true);
+    vi.advanceTimersByTime(5_000);
+    expect(openWebsitePageOnce(owner, 'wiki', { failureMessage: '打开失败' })).toBe(true);
+
+    completions[0]?.();
+    expect(openWebsitePageOnce(owner, 'timer', { failureMessage: '打开失败' })).toBe(false);
+
+    completions[1]?.();
+    expect(openWebsitePageOnce(owner, 'timer', { failureMessage: '打开失败' })).toBe(true);
+    expect(navigateTo).toHaveBeenCalledTimes(3);
+  });
+
   it('releases the lock and shows feedback when navigation fails', () => {
     const showToast = vi.fn();
     const navigateTo = vi.fn((options: { fail(): void }) => options.fail());
