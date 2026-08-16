@@ -1,3 +1,9 @@
+import {
+  clearRuntimeTimeout,
+  scheduleRuntimeTimeout,
+  type RuntimeTimer,
+} from './runtime-timers';
+
 export const PLATFORM_ACTION_LOCK_TIMEOUT_MS = 5_000;
 
 export interface PlatformActionGuard {
@@ -12,20 +18,14 @@ export function createPlatformActionGuard(
   const activeOwners = new WeakSet<object>();
   const attemptSequences = new WeakMap<object, number>();
   const currentAttempts = new WeakMap<object, number>();
-  const timers = new WeakMap<object, ReturnType<typeof setTimeout>>();
+  const timers = new WeakMap<object, RuntimeTimer>();
 
   function release(owner: object, attempt: number): void {
     if (currentAttempts.get(owner) !== attempt) return;
     activeOwners.delete(owner);
     const timer = timers.get(owner);
     timers.delete(owner);
-    if (timer !== undefined) {
-      try {
-        clearTimeout(timer);
-      } catch {
-        // The action is already unlocked; timer cleanup is best effort.
-      }
-    }
+    clearRuntimeTimeout(timer);
   }
 
   return {
@@ -35,16 +35,16 @@ export function createPlatformActionGuard(
       attemptSequences.set(owner, attempt);
       currentAttempts.set(owner, attempt);
       activeOwners.add(owner);
-      try {
-        timers.set(
-          owner,
-          setTimeout(() => release(owner, attempt), lockTimeoutMs),
-        );
-      } catch {
+      const timer = scheduleRuntimeTimeout(
+        () => release(owner, attempt),
+        lockTimeoutMs,
+      );
+      if (timer === null) {
         activeOwners.delete(owner);
         currentAttempts.delete(owner);
         return null;
       }
+      timers.set(owner, timer);
       return attempt;
     },
 
