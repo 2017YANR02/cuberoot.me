@@ -63,6 +63,15 @@ Page({
     }
   },
 
+  openAccount() {
+    wx.navigateTo({
+      url: '/pages/web/index?key=account',
+      fail: () => {
+        wx.showToast({ icon: 'none', title: '账号页暂时无法打开' });
+      },
+    });
+  },
+
   logout() {
     wx.showModal({
       title: '退出登录',

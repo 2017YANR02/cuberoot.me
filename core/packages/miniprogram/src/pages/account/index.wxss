@@ -27,12 +27,17 @@
   margin-top: 64rpx;
 }
 
+.identity-copy {
+  min-width: 0;
+}
+
 .identity-mark {
   align-items: center;
   background: var(--cr-accent-soft);
   border-radius: 50%;
   color: var(--cr-accent);
   display: flex;
+  flex: none;
   font-size: 40rpx;
   font-weight: 720;
   height: 104rpx;
@@ -48,6 +53,7 @@
 .identity-name {
   font-size: 38rpx;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .identity-wca {
@@ -56,6 +62,96 @@
   margin-top: 10rpx;
 }
 
+.account-sync {
+  margin-top: 64rpx;
+}
+
+.account-sync-heading {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.account-sync-title {
+  font-size: 29rpx;
+  font-weight: 680;
+  white-space: nowrap;
+}
+
+.account-sync-state {
+  align-items: center;
+  color: var(--cr-ready);
+  display: flex;
+  font-size: 23rpx;
+  font-weight: 620;
+  gap: 10rpx;
+  white-space: nowrap;
+}
+
+.account-sync-dot {
+  background: var(--cr-ready);
+  border-radius: 50%;
+  height: 10rpx;
+  width: 10rpx;
+}
+
+.account-sync-copy {
+  color: var(--cr-muted);
+  display: block;
+  font-size: 25rpx;
+  line-height: 1.65;
+  margin-top: 14rpx;
+  max-width: 620rpx;
+}
+
+.account-link {
+  align-items: center;
+  border-bottom: 1rpx solid var(--cr-line);
+  border-top: 1rpx solid var(--cr-line);
+  display: flex;
+  gap: 24rpx;
+  margin-top: 42rpx;
+  min-height: 118rpx;
+  text-align: left;
+  width: 100%;
+}
+
+.account-link-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-link-title,
+.account-link-description {
+  display: block;
+}
+
+.account-link-title {
+  font-size: 28rpx;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.account-link-description {
+  color: var(--cr-muted);
+  font-size: 23rpx;
+  line-height: 1.45;
+  margin-top: 6rpx;
+}
+
+.account-link-arrow {
+  color: var(--cr-faint);
+  flex: none;
+  font-size: 44rpx;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.account-link:active {
+  opacity: 0.72;
+}
+
 .logout-button {
-  margin-top: 44rpx;
+  margin-top: 34rpx;
 }

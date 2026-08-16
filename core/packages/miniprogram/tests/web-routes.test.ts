@@ -13,6 +13,15 @@ describe('mini program web routes', () => {
     });
   });
 
+  it('keeps account management in the registry without showing it as a discovery tool', () => {
+    expect(resolveWebRoute('account')).toEqual({
+      title: '账号管理',
+      path: '/zh/account',
+      url: 'https://cuberoot.me/zh/account',
+    });
+    expect(listWebTools().some((tool) => tool.key === 'account')).toBe(false);
+  });
+
   it('resolves only allowlisted website destinations', () => {
     expect(resolveWebRoute('alg')).toEqual({
       title: '公式库',

@@ -26,6 +26,11 @@ export const WEB_ROUTES = {
     description: '系统学习与试学内容',
     path: '/zh/courses',
   },
+  account: {
+    title: '账号管理',
+    description: '管理 WCA 账号与登录方式',
+    path: '/zh/account',
+  },
 } as const;
 
 export type WebRouteKey = keyof typeof WEB_ROUTES;
