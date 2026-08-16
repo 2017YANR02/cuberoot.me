@@ -422,12 +422,6 @@ export function RecordPlaceRankings() {
   return (
     <section className="cs-section cs-record-section">
       <h2 className="cs-section-title">{tr({ zh: '纪录诞生地', en: 'Record birthplaces' })}</h2>
-      <p className="cs-record-note">
-        {tr({
-          zh: '按创造纪录时的比赛举办地统计，单次和平均各计一条；地球页的 WR 按选手所属国统计，因此数字不会相同。',
-          en: 'Counts use the competition venue where each record was set; singles and averages count separately. Globe WR counts use athlete nationality, so the totals differ.',
-        })}
-      </p>
 
       {failed ? (
         <div className="cs-empty">{tr({ zh: '纪录统计暂不可用。', en: 'Record statistics are unavailable.' })}</div>

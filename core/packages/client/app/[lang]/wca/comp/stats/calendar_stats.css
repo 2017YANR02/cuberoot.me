@@ -91,14 +91,6 @@
   max-width: 1120px;
 }
 
-.cs-record-note {
-  max-width: 920px;
-  margin: -4px 0 16px;
-  color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1.55;
-}
-
 .cs-record-controls {
   display: flex;
   align-items: center;
