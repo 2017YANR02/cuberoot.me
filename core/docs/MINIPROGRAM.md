@@ -23,7 +23,7 @@
 | `web-view` 加载与错误界面 | `packages/miniprogram/src/templates/web-route-view.wxml` + `app.wxss` | 页面只传状态，不复制 WXML 或页面级样式 |
 | 登录、会话和错误文案 | `packages/miniprogram/src/lib/auth.ts` | AppSecret 永远只在服务端 |
 | 移动端与小程序隐私政策 | `packages/client/app/[lang]/privacy/page.tsx` | App、小程序和网页共用一份真实声明 |
-| 上传前自动检查 | `packages/miniprogram/scripts/release-check.mjs` + `release-check-lib.mjs` | 新增隐私敏感能力时先阻断上传；纯规则必须有回归测试 |
+| 构建与上传前自动检查 | `packages/miniprogram/scripts/build-state.mjs` + `release-check.mjs` + `release-check-lib.mjs` | 只允许上传当前源码生成且内容未变的完整 `dist`；新增隐私敏感能力时先阻断上传 |
 | 跨端计时数据类型和纯逻辑 | `@cuberoot/shared/timer` | 不复制网站计时器 UI |
 | 全局视觉变量和通用按钮 | `packages/miniprogram/src/app.wxss` | 页面只写自身布局 |
 | 账号落库 | 服务端 `account_auth.ts` + `wechat_miniprogram.ts` | 网站和小程序都只用 UnionID |
@@ -64,7 +64,7 @@
 - [x] 登录后的原生会话与 `web-view` 网站会话已通过短时单次换票打通；部署后的真机联调尚未完成。
 - [x] 换票 migration 已在本地 PostgreSQL 验证表结构、外键、过期索引和单次核销；生产部署尚未执行。
 - [x] “我的”页优先打开微信平台隐私协议，平台接口不可用时回退到网站唯一隐私政策。
-- [x] 上传前脚本会拦截游客 AppID、未明确确认的基础库、关闭合法域名校验和未经复核的敏感 API。
+- [x] 上传前脚本会拦截游客 AppID、未明确确认的基础库、关闭合法域名校验、旧或不完整的 `dist`，以及未经复核的敏感 API。
 
 ## 4. 账号方案
 
@@ -96,7 +96,7 @@ pnpm --filter @cuberoot/miniprogram build
 pnpm --filter @cuberoot/miniprogram release:check
 ```
 
-`build` 会保留已有正式 AppID 和明确的数字基础库；不会把已选好的本地版本重置回 `trial`。`release:check` 故意要求每次上传时重新确认稳定版本，防止长期沿用过期记录。
+`build` 会保留已有正式 AppID 和明确的数字基础库；不会把已选好的本地版本重置回 `trial`。构建成功后会在被忽略的 `.tmp/` 写入源码和产物指纹，不进入上传包。`release:check` 会拒绝缺页、源码变化后的旧 `dist`、构建后被改动的 `dist`，并故意要求每次上传时重新确认稳定版本。
 
 微信开发者工具导入 `core/packages/miniprogram`，不是 `dist`。`project.config.json` 和 `project.private.config.json` 是本机配置，不提交 AppID 之外的任何凭据。
 
@@ -172,6 +172,13 @@ pnpm --filter @cuberoot/miniprogram release:check
 | 定位、摄像头、麦克风、相册、通讯录、蓝牙 | 当前版本不使用 | 后台不应勾选；以后接入前先改政策和平台指引 |
 
 ## 9. 迭代记录
+
+### 2026-08-16：上传产物新鲜度与完整性
+
+- 构建成功后记录源码输入和 `dist` 内容的确定性 SHA-256 指纹；状态只保存在包内被忽略的 `.tmp/`，不会进入上传包。
+- 构建器会复制除 TS 外的所有源码资产；上传前逐页检查 JS、JSON、WXML、WXSS，并核对全部源静态资源，新增图片或 WXS 不需要扩展名白名单。
+- 源码修改后未构建、构建后手改 `dist`、构建状态缺失都会阻断上传；规则由纯函数测试固定。
+- 构建与上传脚本共用文件遍历和指纹实现，不再各维护一套目录扫描逻辑。
 
 ### 2026-08-16：网页状态界面唯一来源
 
