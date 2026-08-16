@@ -1,6 +1,5 @@
 import { SITE_ORIGIN } from './runtime-config';
-
-const UNSAFE_INTERNAL_PATH_RE = /[\\\u0000-\u001F\u007F]/;
+import { isSafeWebSessionDestination, isWebSessionTicket } from './web-session-contract';
 
 export const WEB_ROUTES = {
   timer: {
@@ -93,10 +92,7 @@ export function resolveWebRoute(key: unknown): {
 }
 
 export function createWebSessionHandoffUrl(path: string, ticket: string): string {
-  const safeInternalPath = path.startsWith('/')
-    && !path.startsWith('//')
-    && !UNSAFE_INTERNAL_PATH_RE.test(path);
-  if (!safeInternalPath || !/^[A-Za-z0-9_-]{43}$/.test(ticket)) {
+  if (!isSafeWebSessionDestination(path) || !isWebSessionTicket(ticket)) {
     throw new Error('invalid Mini Program web session handoff');
   }
   const fragment = `ticket=${ticket}&next=${encodeURIComponent(path)}`;
