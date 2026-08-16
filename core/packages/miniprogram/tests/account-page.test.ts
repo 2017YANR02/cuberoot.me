@@ -86,11 +86,10 @@ describe('mini program account page', () => {
     }));
   });
 
-  it('opens the cross-platform logout route before clearing the Mini Program session', async () => {
+  it('clears the Mini Program session before opening the cross-platform logout route', async () => {
     const removeStorageSync = vi.fn();
-    const navigateTo = vi.fn((options: { success(): void }) => {
-      expect(removeStorageSync).not.toHaveBeenCalled();
-      options.success();
+    const navigateTo = vi.fn(() => {
+      expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
     });
     const page = await loadPage({
       navigateTo,
@@ -109,7 +108,7 @@ describe('mini program account page', () => {
     expect(page.data.loggedIn).toBe(false);
   });
 
-  it('keeps the Mini Program session when the logout route cannot open', async () => {
+  it('keeps the Mini Program logged out when the website logout route cannot open', async () => {
     const removeStorageSync = vi.fn();
     const showToast = vi.fn();
     const page = await loadPage({
@@ -123,8 +122,12 @@ describe('mini program account page', () => {
 
     page.logout();
 
-    expect(removeStorageSync).not.toHaveBeenCalled();
-    expect(showToast).toHaveBeenCalledWith({ icon: 'none', title: '退出失败，请重试' });
+    expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
+    expect(page.data.loggedIn).toBe(false);
+    expect(showToast).toHaveBeenCalledWith({
+      icon: 'none',
+      title: '已退出小程序，网站退出暂未完成',
+    });
   });
 
   it('shows cached identity as checking until the server confirms it', async () => {
