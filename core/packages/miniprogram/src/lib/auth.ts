@@ -332,6 +332,8 @@ export function loginErrorMessage(error: unknown): string {
   if (error.status === STORAGE_ERROR_STATUS) return '设备存储不可用，请清理空间后重试';
   if (error.status === 409) return '暂未获得 UnionID，请先完成开放平台绑定';
   if (error.status === 503) return '服务端还未配置小程序密钥';
+  if (error.status === 429) return '微信登录操作过于频繁，请稍后再试';
+  if (error.status === 403) return '微信暂时无法为此账号完成登录';
   if (error.status === 401) return '微信登录码已失效，请重试';
   if (error.status === 0 && error.message.includes('timed out')) return '网络连接超时，请重试';
   if (error.status === 0) return '网络连接失败，请检查网络';

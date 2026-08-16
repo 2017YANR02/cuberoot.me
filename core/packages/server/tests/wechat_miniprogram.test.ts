@@ -22,8 +22,21 @@ describe('parseWechatMiniProgramSession', () => {
   });
 
   it('rejects WeChat error responses', () => {
-    expect(() => parseWechatMiniProgramSession({ errcode: 40029, errmsg: 'invalid code' }))
-      .toThrow(WechatMiniProgramError);
+    for (const [errcode, code] of [
+      [40029, 'invalid-code'],
+      [45011, 'rate-limited'],
+      [40226, 'blocked-user'],
+      [-1, 'upstream-unavailable'],
+      [40163, 'upstream-unavailable'],
+    ] as const) {
+      try {
+        parseWechatMiniProgramSession({ errcode, errmsg: 'wechat error' });
+        throw new Error('expected WeChat response to be rejected');
+      } catch (error) {
+        expect(error).toBeInstanceOf(WechatMiniProgramError);
+        expect((error as WechatMiniProgramError).code).toBe(code);
+      }
+    }
   });
 
   it('rejects malformed successful responses', () => {

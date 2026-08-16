@@ -3,6 +3,8 @@ const WECHAT_MINI_APP_SECRET = process.env.WECHAT_MINI_APP_SECRET?.trim() ?? '';
 
 export type WechatMiniProgramErrorCode =
   | 'invalid-code'
+  | 'rate-limited'
+  | 'blocked-user'
   | 'invalid-response'
   | 'upstream-unavailable';
 
@@ -31,7 +33,13 @@ export function parseWechatMiniProgramSession(value: unknown): WechatMiniProgram
     throw new WechatMiniProgramError('invalid-response', 'wechat returned a non-object response');
   }
   if (typeof value.errcode === 'number' && value.errcode !== 0) {
-    const code = value.errcode === -1 ? 'upstream-unavailable' : 'invalid-code';
+    const code: WechatMiniProgramErrorCode = value.errcode === 40029
+      ? 'invalid-code'
+      : value.errcode === 45011
+        ? 'rate-limited'
+        : value.errcode === 40226
+          ? 'blocked-user'
+          : 'upstream-unavailable';
     throw new WechatMiniProgramError(code, `wechat code2Session failed: ${value.errcode}`);
   }
   if (typeof value.openid !== 'string' || !value.openid.trim()) {
