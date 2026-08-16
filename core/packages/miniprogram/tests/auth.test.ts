@@ -312,6 +312,100 @@ describe('mini program authentication', () => {
     await login;
   });
 
+  it('fails fast when the login timeout cannot be scheduled', async () => {
+    const login = vi.fn();
+    vi.stubGlobal('wx', { login });
+    const timer = vi.spyOn(globalThis, 'setTimeout').mockImplementation(() => {
+      throw new Error('timer unavailable');
+    });
+
+    try {
+      await expect(loginWithWechat()).rejects.toMatchObject({
+        message: 'wx.login timeout unavailable',
+        status: 0,
+      });
+      expect(login).not.toHaveBeenCalled();
+    } finally {
+      timer.mockRestore();
+    }
+  });
+
+  it('does not start login after a synchronous timeout callback', async () => {
+    const login = vi.fn();
+    vi.stubGlobal('wx', { login });
+    const timer = vi.spyOn(globalThis, 'setTimeout').mockImplementation((callback) => {
+      if (typeof callback === 'function') callback();
+      return 1 as ReturnType<typeof setTimeout>;
+    });
+
+    try {
+      await expect(loginWithWechat()).rejects.toMatchObject({
+        message: 'wx.login timed out',
+        status: 0,
+      });
+      expect(login).not.toHaveBeenCalled();
+    } finally {
+      timer.mockRestore();
+    }
+  });
+
+  it('fails fast when the request timeout cannot be scheduled', async () => {
+    const request = vi.fn();
+    vi.stubGlobal('wx', { request });
+    const timer = vi.spyOn(globalThis, 'setTimeout').mockImplementation(() => {
+      throw new Error('timer unavailable');
+    });
+    const session = {
+      token: 't'.repeat(20),
+      user: { name: 'CubeRoot', wcaId: null },
+    };
+
+    try {
+      await expect(validateStoredSession(session)).rejects.toMatchObject({
+        message: 'request timeout unavailable',
+        status: 0,
+      });
+      expect(request).not.toHaveBeenCalled();
+    } finally {
+      timer.mockRestore();
+    }
+  });
+
+  it('settles login when timer cleanup is unavailable', async () => {
+    vi.useFakeTimers();
+    const setStorageSync = vi.fn();
+    vi.stubGlobal('wx', {
+      login(options: { success(result: { code: string }): void }) {
+        options.success({ code: 'login-code' });
+      },
+      request(options: { success(result: { statusCode: number; data: unknown }): void }) {
+        options.success({
+          statusCode: 200,
+          data: {
+            token: 't'.repeat(20),
+            user: { uid: 12, name: 'CubeRoot', wcaId: null },
+            isNew: false,
+          },
+        });
+      },
+      setStorageSync,
+    });
+    const clearTimer = vi.spyOn(globalThis, 'clearTimeout').mockImplementation(() => {
+      throw new Error('timer cleanup unavailable');
+    });
+
+    try {
+      await expect(loginWithWechat()).resolves.toMatchObject({
+        token: 't'.repeat(20),
+        user: { uid: 12, name: 'CubeRoot' },
+      });
+      expect(setStorageSync).toHaveBeenCalledOnce();
+    } finally {
+      clearTimer.mockRestore();
+      await vi.runAllTimersAsync();
+    }
+  });
+
   it('aborts an API request when the platform timeout callback never arrives', async () => {
     vi.useFakeTimers();
     const abort = vi.fn();
