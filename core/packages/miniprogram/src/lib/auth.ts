@@ -5,7 +5,7 @@ const MAX_AVATAR_LENGTH = 2048;
 const MAX_DISPLAY_NAME_LENGTH = 200;
 const MAX_SESSION_TOKEN_LENGTH = 4096;
 const MAX_WCA_ID_LENGTH = 20;
-const UNSAFE_HEADER_VALUE_PATTERN = /[\u0000-\u001F\u007F]/;
+const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001F\u007F]/;
 const REQUEST_TIMEOUT_MS = 12_000;
 const WEB_SESSION_REQUEST_TIMEOUT_MS = 5_000;
 const HARD_TIMEOUT_GRACE_MS = 1_000;
@@ -60,7 +60,10 @@ function decodeSessionUser(value: unknown): SessionUser | null {
   const wcaId = user.wcaId?.trim() || null;
   const name = user.name.trim();
   if (!name) return null;
-  if (wcaId && wcaId.length > MAX_WCA_ID_LENGTH) return null;
+  if (CONTROL_CHARACTER_PATTERN.test(name)) return null;
+  if (wcaId && (wcaId.length > MAX_WCA_ID_LENGTH || CONTROL_CHARACTER_PATTERN.test(wcaId))) {
+    return null;
+  }
   return {
     ...(user.uid === undefined ? {} : { uid: user.uid }),
     wcaId,
@@ -76,7 +79,7 @@ function decodeSession(value: unknown): SessionData | null {
   const user = decodeSessionUser(session.user);
   if (token.length < 20
     || token.length > MAX_SESSION_TOKEN_LENGTH
-    || UNSAFE_HEADER_VALUE_PATTERN.test(token)
+    || CONTROL_CHARACTER_PATTERN.test(token)
     || !user) {
     return null;
   }
