@@ -211,6 +211,8 @@ describe('mini program authentication', () => {
   it('maps actionable login failures to user-facing messages', () => {
     expect(loginErrorMessage(new ApiError(409, 'unionid'))).toContain('开放平台');
     expect(loginErrorMessage(new ApiError(503, 'secret'))).toContain('服务端');
+    expect(loginErrorMessage(new ApiError(429, 'rate limited'))).toContain('过于频繁');
+    expect(loginErrorMessage(new ApiError(403, 'blocked'))).toContain('无法为此账号');
     expect(loginErrorMessage(new ApiError(0, 'network'))).toContain('网络');
     expect(loginErrorMessage(new ApiError(-1, 'storage'))).toContain('设备存储');
     expect(loginErrorMessage(new Error('unknown'))).toBe('登录失败，请稍后重试');
