@@ -166,6 +166,12 @@ describe('record place details', () => {
     expect(recordsPage).not.toContain('function RowsTable');
     expect(placeRankings).not.toContain('cs-record-detail-list');
   });
+
+  it('reuses the shared paginator for place rankings', () => {
+    const placeRankings = readFileSync(new URL('../app/[lang]/wca/comp/stats/RecordPlaceRankings.tsx', import.meta.url), 'utf8');
+    expect(placeRankings).toContain("@/components/wca-stats/Paginator");
+    expect(placeRankings).not.toContain('function Paginator');
+  });
 });
 
 describe('record city display disambiguation', () => {
