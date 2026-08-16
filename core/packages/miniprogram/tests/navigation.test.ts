@@ -64,6 +64,29 @@ describe('mini program website navigation', () => {
     expect(navigateTo).toHaveBeenCalledTimes(3);
   });
 
+  it('does not let a stale failure report against a newer navigation', () => {
+    vi.useFakeTimers();
+    const failures: Array<() => void> = [];
+    const showToast = vi.fn();
+    const navigateTo = vi.fn((options: { fail(): void }) => {
+      failures.push(options.fail);
+    });
+    vi.stubGlobal('wx', { navigateTo, showToast });
+    const owner = {};
+
+    expect(openWebsitePageOnce(owner, 'alg', { failureMessage: '打开失败' })).toBe(true);
+    vi.advanceTimersByTime(5_000);
+    expect(openWebsitePageOnce(owner, 'wiki', { failureMessage: '打开失败' })).toBe(true);
+
+    failures[0]?.();
+    expect(showToast).not.toHaveBeenCalled();
+    expect(openWebsitePageOnce(owner, 'timer', { failureMessage: '打开失败' })).toBe(false);
+
+    failures[1]?.();
+    expect(showToast).toHaveBeenCalledOnce();
+    expect(openWebsitePageOnce(owner, 'timer', { failureMessage: '打开失败' })).toBe(true);
+  });
+
   it('releases the lock and shows feedback when navigation fails', () => {
     const showToast = vi.fn();
     const navigateTo = vi.fn((options: { fail(): void }) => options.fail());
