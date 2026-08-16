@@ -7,6 +7,7 @@ export const MINIPROGRAM_HANDOFF_FALLBACK = '/zh/timer';
 export const MINIPROGRAM_LOGOUT_FALLBACK = '/zh/account';
 
 const WEB_SESSION_TICKET_RE = /^[A-Za-z0-9_-]{43}$/;
+const WEB_SESSION_EXCHANGE_TIMEOUT_MS = 12_000;
 
 export interface MiniProgramWebSession {
   token: string;
@@ -65,17 +66,22 @@ export function exchangeMiniProgramWebSession(ticket: string): Promise<MiniProgr
   }
   if (exchangeCache?.ticket === ticket) return exchangeCache.promise;
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), WEB_SESSION_EXCHANGE_TIMEOUT_MS);
   const promise = fetch(apiUrl('/v1/auth/web-session/exchange'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ticket }),
     cache: 'no-store',
-  }).then(async (response) => {
-    if (!response.ok) throw new Error('web session exchange failed');
-    const session: unknown = await response.json();
-    if (!isWebSession(session)) throw new Error('invalid web session response');
-    return session;
-  });
+    signal: controller.signal,
+  })
+    .then(async (response) => {
+      if (!response.ok) throw new Error('web session exchange failed');
+      const session: unknown = await response.json();
+      if (!isWebSession(session)) throw new Error('invalid web session response');
+      return session;
+    })
+    .finally(() => clearTimeout(timeout));
 
   exchangeCache = { ticket, promise };
   const clearPendingExchange = () => {
