@@ -62,7 +62,7 @@ export interface RecordPlaceDetailRow {
 
 export function recordPlaceDetailRows(
   shard: RecordPlaceDetailShard,
-  metric: RecordMetric,
+  metric: RecordMetric | null,
   city: string | null,
 ): RecordPlaceDetailRow[] {
   const rows: RecordPlaceDetailRow[] = [];
@@ -70,7 +70,7 @@ export function recordPlaceDetailRows(
     const comp = shard.comps[compId];
     if (!comp || (city !== null && comp.c !== city)) continue;
     entries.forEach((entry, index) => {
-      if (recordMetricForLevel(entry.t) === metric) {
+      if (metric === null || recordMetricForLevel(entry.t) === metric) {
         rows.push({ id: `${compId}:${index}`, compId, comp, entry });
       }
     });

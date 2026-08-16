@@ -158,6 +158,14 @@ describe('record place details', () => {
     expect(recordPlaceDetailRows(shard, 'cr', 'Hefei, Anhui')[0]?.entry.t).toBe('AsR');
   });
 
+  it('combines every record metric when no metric filter is selected', () => {
+    expect(recordPlaceDetailRows(shard, null, 'Hefei, Anhui').map((row) => row.entry.t)).toEqual([
+      'WR',
+      'AsR',
+      'NR',
+    ]);
+  });
+
   it('keeps both record pages on the shared row table', () => {
     const recordsPage = readFileSync(new URL('../app/[lang]/wca/records/page.tsx', import.meta.url), 'utf8');
     const placeRankings = readFileSync(new URL('../app/[lang]/wca/comp/stats/RecordPlaceRankings.tsx', import.meta.url), 'utf8');
@@ -172,6 +180,13 @@ describe('record place details', () => {
     expect(placeRankings).toContain("@/components/wca-stats/Paginator");
     expect(placeRankings).not.toContain('function Paginator');
     expect(placeRankings).toContain("scrollIntoView({ behavior: 'auto', block: 'start' })");
+  });
+
+  it('opens place names with every metric and keeps the title concise', () => {
+    const placeRankings = readFileSync(new URL('../app/[lang]/wca/comp/stats/RecordPlaceRankings.tsx', import.meta.url), 'utf8');
+    expect(placeRankings).toContain('metric: null');
+    expect(placeRankings).not.toContain('纪录明细');
+    expect(placeRankings).not.toContain('record details');
   });
 });
 
