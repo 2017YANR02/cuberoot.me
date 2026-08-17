@@ -13,6 +13,18 @@ function bundledApiAccess(methods) {
   );
 }
 
+function wxApiDestructure(methods) {
+  return new RegExp(
+    `\\b(?:const|let|var)\\s*\\{[^}]*\\b(?:${methods})\\b[^}]*\\}\\s*=\\s*wx\\b`,
+  );
+}
+
+function bundledApiDestructure(methods) {
+  return new RegExp(
+    `\\b(?:const|let|var)\\s*\\{[^}]*\\b(?:${methods})\\b[^}]*\\}\\s*=`,
+  );
+}
+
 function normalizeAuditPath(path) {
   return path.replaceAll('\\', '/').replace(/^\.\//, '');
 }
@@ -20,16 +32,22 @@ function normalizeAuditPath(path) {
 function sensitiveWxCapability(label, methods, markupPattern = null, allow = {}) {
   const sourceApiPattern = wxApiAccess(methods);
   const bundledApiPattern = bundledApiAccess(methods);
+  const sourceCodePattern = new RegExp(
+    `${sourceApiPattern.source}|${wxApiDestructure(methods).source}`,
+  );
+  const uploadCodePattern = new RegExp(
+    `${bundledApiPattern.source}|${bundledApiDestructure(methods).source}`,
+  );
   const allowedSourcePaths = new Set((allow.sourcePaths ?? []).map(normalizeAuditPath));
   const allowedUploadPaths = new Set((allow.uploadPaths ?? []).map(normalizeAuditPath));
   return {
     label,
     sourcePattern: markupPattern
-      ? new RegExp(`${sourceApiPattern.source}|${markupPattern.source}`)
-      : sourceApiPattern,
+      ? new RegExp(`${sourceCodePattern.source}|${markupPattern.source}`)
+      : sourceCodePattern,
     uploadPattern: markupPattern
-      ? new RegExp(`${bundledApiPattern.source}|${markupPattern.source}`)
-      : bundledApiPattern,
+      ? new RegExp(`${uploadCodePattern.source}|${markupPattern.source}`)
+      : uploadCodePattern,
     sourcePathAllowed: (path) => allowedSourcePaths.has(normalizeAuditPath(path)),
     uploadPathAllowed: (path) => allowedUploadPaths.has(normalizeAuditPath(path)),
   };
@@ -145,6 +163,11 @@ export const MAX_UPLOAD_FILE_BYTES = 128 * 1024;
 export const MIN_TEXT_CONTRAST_RATIO = 4.5;
 
 export const REQUIRED_RELEASE_CONFIRMATIONS = [
+  {
+    key: 'socketDomainConfigured',
+    env: 'WECHAT_MINI_SOCKET_DOMAIN_CONFIGURED',
+    failure: '小程序后台尚未确认配置 socket 合法域名 wss://api.cuberoot.me；配置生效后，上传时设置 WECHAT_MINI_SOCKET_DOMAIN_CONFIGURED=1。',
+  },
   {
     key: 'basicInfoApproved',
     env: 'WECHAT_MINI_BASIC_INFO_APPROVED',

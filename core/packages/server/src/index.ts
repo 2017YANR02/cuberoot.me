@@ -201,6 +201,9 @@ app.get('/v1/smart-cube/relay', upgradeWebSocket((c) => {
   return {
     onOpen(_event, ws) {
       connection = smartCubeRelay.connect({
+        get bufferedAmount() {
+          return ws.raw?.bufferedAmount ?? 0;
+        },
         send(data) {
           ws.send(data);
         },
