@@ -81,8 +81,8 @@ export type TeachingPermission = (typeof TEACHING_PERMISSIONS)[number];
 const ROLE_PERMISSIONS: Record<TeachingOrganizationRole, readonly TeachingPermission[]> = {
   owner: TEACHING_PERMISSIONS,
   admin: TEACHING_PERMISSIONS,
-  teacher: ['member:read', 'student:read', 'student:manage'],
-  assistant: ['member:read', 'student:read', 'student:manage'],
+  teacher: ['member:read', 'student:read'],
+  assistant: ['member:read', 'student:read'],
   finance: ['member:read', 'student:read', 'finance:read', 'finance:manage'],
   viewer: ['member:read', 'student:read', 'finance:read'],
 };
