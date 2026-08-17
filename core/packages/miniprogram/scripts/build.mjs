@@ -15,34 +15,31 @@ import {
   writeBuildState,
 } from './build-state.mjs';
 import { validateJsonObjectFiles } from './json-object-file.mjs';
+import { publishStagedDirectory } from './staged-output.mjs';
 
 const packageRoot = resolve(import.meta.dirname, '..');
 const sourceRoot = join(packageRoot, 'src');
 const outputRoot = join(packageRoot, 'dist');
+const stagingRoot = join(packageRoot, '.tmp', 'dist-next');
+const backupRoot = join(packageRoot, '.tmp', 'dist-previous');
 const projectConfigPath = join(packageRoot, 'project.config.json');
 const watch = process.argv.includes('--watch');
 
-async function prepareOutput(config, sourceFiles, clean = true) {
-  if (clean) await rm(outputRoot, { force: true, recursive: true });
-  await mkdir(outputRoot, { recursive: true });
+async function prepareOutput(sourceFiles) {
+  await rm(stagingRoot, { force: true, recursive: true });
+  await mkdir(stagingRoot, { recursive: true });
   await Promise.all(sourceFiles
     .filter((file) => extname(file) !== '.ts')
     .map(async (file) => {
-      const target = join(outputRoot, relative(sourceRoot, file));
+      const target = join(stagingRoot, relative(sourceRoot, file));
       await mkdir(dirname(target), { recursive: true });
       await copyFile(file, target);
     }));
   await Promise.all(BUILD_ASSETS.map(async (asset) => {
-    const target = join(outputRoot, asset.output);
+    const target = join(stagingRoot, asset.output);
     await mkdir(dirname(target), { recursive: true });
     await copyFile(asset.source, target);
   }));
-
-  await writeFile(
-    projectConfigPath,
-    `${JSON.stringify(config, null, 2)}\n`,
-    'utf8',
-  );
 }
 
 function entryPoints(sourceFiles) {
@@ -54,7 +51,7 @@ function entryPoints(sourceFiles) {
   });
 }
 
-async function buildProject(clean = true) {
+async function buildProject() {
   const config = await resolveProjectConfig({
     templatePath: join(packageRoot, 'project.config.template.json'),
     projectConfigPath,
@@ -70,17 +67,27 @@ async function buildProject(clean = true) {
   await validateJsonObjectFiles(sourceJsonFiles, {
     labelForPath: (file) => normalizedRelativePath(packageRoot, file),
   });
-  await prepareOutput(config, sourceFiles, clean);
+  await prepareOutput(sourceFiles);
   await build({
     bundle: true,
     entryPoints: entryPoints(sourceFiles),
     format: 'iife',
     logLevel: 'info',
     outbase: sourceRoot,
-    outdir: outputRoot,
+    outdir: stagingRoot,
     platform: 'browser',
     sourcemap: watch,
     target: 'chrome91',
+  });
+  await writeFile(
+    projectConfigPath,
+    `${JSON.stringify(config, null, 2)}\n`,
+    'utf8',
+  );
+  await publishStagedDirectory({
+    stagedPath: stagingRoot,
+    targetPath: outputRoot,
+    backupPath: backupRoot,
   });
   await writeBuildState(packageRoot, {
     sourceFingerprint: await buildInputFingerprint(packageRoot),
@@ -96,10 +103,8 @@ if (!watch) {
   let debounceTimer;
   let rebuilding = false;
   let rebuildQueued = false;
-  let cleanBeforeRebuild = false;
 
-  function queueRebuild({ clean = false } = {}) {
-    if (clean) cleanBeforeRebuild = true;
+  function queueRebuild() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => void rebuild(), 100);
   }
@@ -111,10 +116,8 @@ if (!watch) {
     }
 
     rebuilding = true;
-    const clean = cleanBeforeRebuild;
-    cleanBeforeRebuild = false;
     try {
-      await buildProject(clean);
+      await buildProject();
       console.log(`[${new Date().toLocaleTimeString()}] Mini program rebuilt.`);
     } catch (error) {
       console.error(error);
@@ -127,9 +130,7 @@ if (!watch) {
     }
   }
 
-  const sourceWatcher = watchSource(sourceRoot, { recursive: true }, (eventType) => {
-    queueRebuild({ clean: eventType === 'rename' });
-  });
+  const sourceWatcher = watchSource(sourceRoot, { recursive: true }, queueRebuild);
   const assetDirectories = [...new Set(BUILD_ASSETS.map((asset) => dirname(asset.source)))];
   const assetWatchers = assetDirectories.map((directory) => {
     const filenames = new Set(BUILD_ASSETS
