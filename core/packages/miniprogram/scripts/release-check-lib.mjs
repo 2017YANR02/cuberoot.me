@@ -224,6 +224,16 @@ export function collectReleaseFailures({
     if (effectiveUrlCheck !== true) {
       failures.push('上传前必须开启合法域名校验。');
     }
+    const disabledCompression = [
+      ['minified', 'JavaScript'],
+      ['minifyWXML', 'WXML'],
+      ['minifyWXSS', 'WXSS'],
+    ].filter(([key]) => (
+      (privateConfig?.setting?.[key] ?? projectConfig.setting?.[key]) !== true
+    )).map(([, label]) => label);
+    if (disabledCompression.length > 0) {
+      failures.push(`上传前必须开启代码压缩：${disabledCompression.join('、')}。`);
+    }
     if (projectConfig.compileType !== 'miniprogram') {
       failures.push('compileType 必须保持为 miniprogram，避免上传成其他微信项目类型。');
     }
