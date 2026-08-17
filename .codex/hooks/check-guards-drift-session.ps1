@@ -9,7 +9,7 @@ $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..') -ErrorA
 if (-not $repoRoot) { exit 0 }
 
 $hooksConfigPath = Join-Path $repoRoot '.codex\hooks.json'
-$guardsDataPath = Join-Path $repoRoot 'core\packages\client\app\[lang]\code\guards\_guards.ts'
+$guardsDataPath = Join-Path $repoRoot 'core\packages\client\app\[lang]\dev\guards\_guards.ts'
 
 if (-not (Test-Path -LiteralPath $hooksConfigPath) -or -not (Test-Path -LiteralPath $guardsDataPath)) { exit 0 }
 
