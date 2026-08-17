@@ -320,6 +320,122 @@ describe("teaching platform API bridge", () => {
     );
   });
 
+  it("strictly parses named campus and group lists", async () => {
+    const campus = {
+      id: "11111111-1111-4111-8111-111111111111",
+      code: null,
+      name: "城西校区",
+      timezone: null,
+      status: "active",
+      archivedAt: null,
+      createdAt: "2026-08-17T00:00:00.000Z",
+      updatedAt: "2026-08-17T00:00:00.000Z",
+    };
+    const group = {
+      id: "22222222-2222-4222-8222-222222222222",
+      campusId: campus.id,
+      code: "sat-a",
+      name: "周六进阶班",
+      status: "active",
+      archivedAt: null,
+      createdAt: "2026-08-17T00:00:00.000Z",
+      updatedAt: "2026-08-17T00:00:00.000Z",
+    };
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ campuses: [campus], total: 1, page: 1, pageSize: 100 }), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ groups: [group], total: 1, page: 1, pageSize: 30 }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    const { listTeachingCampuses, listTeachingGroups } = await import("@/lib/teaching-api");
+
+    await expect(listTeachingCampuses(user, "demo", { pageSize: 100 })).resolves.toMatchObject({ items: [{ name: "城西校区", timezone: null }] });
+    await expect(listTeachingGroups(user, "demo")).resolves.toMatchObject({ items: [{ name: "周六进阶班", campusId: campus.id }] });
+    expect(String(fetchMock.mock.calls[0][0])).toContain("/campuses?page=1&pageSize=100");
+    expect(String(fetchMock.mock.calls[1][0])).toContain("/groups?page=1&pageSize=30");
+  });
+
+  it("signs a group membership mutation with the canonical effective range", async () => {
+    const groupId = "22222222-2222-4222-8222-222222222222";
+    const studentId = "33333333-3333-4333-8333-333333333333";
+    const input = {
+      studentId,
+      effectiveFrom: "2026-08-18T00:00:00.000Z",
+      effectiveTo: "2026-12-01T00:00:00.000Z",
+    };
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
+      membership: {
+        id: "44444444-4444-4444-8444-444444444444",
+        groupId,
+        effectiveFrom: input.effectiveFrom,
+        effectiveTo: input.effectiveTo,
+        createdAt: "2026-08-17T00:00:00.000Z",
+        student: { id: studentId, displayName: "小明", externalRef: null, status: "active" },
+      },
+    }), { status: 201, headers: { "Content-Type": "application/json" } }));
+    const { createTeachingStudentGroupMembership } = await import("@/lib/teaching-api");
+    const operationKey = "55555555-5555-4555-8555-555555555555";
+
+    await expect(createTeachingStudentGroupMembership(user, "demo", groupId, input, operationKey)).resolves.toMatchObject({ groupId, student: { id: studentId } });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe(`https://api.example.test/v1/teaching/organizations/demo/groups/${groupId}/students`);
+    expect(init?.body).toBe(JSON.stringify(input));
+    expect(new Headers(init?.headers).get("Idempotency-Key")).toBe(operationKey);
+  });
+
+  it("parses assignment snapshots and rejects inconsistent live identities", async () => {
+    const groupId = "22222222-2222-4222-8222-222222222222";
+    const assignment = {
+      id: "66666666-6666-4666-8666-666666666666",
+      teacherUserId: 42,
+      teacherUserIdSnapshot: 42,
+      groupId,
+      studentId: null,
+      effectiveFrom: "2026-08-18T00:00:00.000Z",
+      effectiveTo: null,
+      createdAt: "2026-08-17T00:00:00.000Z",
+      teacher: { userId: 42, displayName: "负责人", role: "owner", status: "active" },
+    };
+    const cancelledFutureAssignment = {
+      ...assignment,
+      id: "99999999-9999-4999-8999-999999999999",
+      teacherUserId: null,
+      effectiveTo: assignment.effectiveFrom,
+      teacher: { ...assignment.teacher, userId: null, status: null },
+    };
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ assignments: [assignment], total: 1, page: 2, pageSize: 10 }), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ assignments: [cancelledFutureAssignment], total: 1, page: 1, pageSize: 30 }), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ assignments: [{ ...assignment, teacher: { ...assignment.teacher, userId: 43 } }], total: 1, page: 1, pageSize: 30 }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    const { listTeachingTeacherAssignments } = await import("@/lib/teaching-api");
+
+    await expect(listTeachingTeacherAssignments(user, "demo", { groupId }, { page: 2, pageSize: 10 })).resolves.toMatchObject({ items: [{ teacherUserIdSnapshot: 42, teacher: { role: "owner" } }] });
+    expect(String(fetchMock.mock.calls[0][0])).toBe(`https://api.example.test/v1/teaching/organizations/demo/teacher-assignments?groupId=${groupId}&page=2&pageSize=10`);
+    await expect(listTeachingTeacherAssignments(user, "demo", { groupId })).resolves.toMatchObject({ items: [{ teacherUserId: null, effectiveTo: assignment.effectiveFrom }] });
+    await expect(listTeachingTeacherAssignments(user, "demo", { groupId })).rejects.toMatchObject({ code: "BAD_RESPONSE" });
+  });
+
+  it("signs the exact direct-student assignment body", async () => {
+    const studentId = "33333333-3333-4333-8333-333333333333";
+    const input = { teacherUserId: 42, studentId, effectiveFrom: "2026-08-18T00:00:00.000Z" };
+    const response = {
+      id: "77777777-7777-4777-8777-777777777777",
+      teacherUserId: 42,
+      teacherUserIdSnapshot: 42,
+      groupId: null,
+      studentId,
+      effectiveFrom: input.effectiveFrom,
+      effectiveTo: null,
+      createdAt: "2026-08-17T00:00:00.000Z",
+      teacher: { userId: 42, displayName: "管理员", role: "admin", status: "active" },
+    };
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ assignment: response }), { status: 201, headers: { "Content-Type": "application/json" } }));
+    const { createTeachingTeacherAssignment } = await import("@/lib/teaching-api");
+    const operationKey = "88888888-8888-4888-8888-888888888888";
+
+    await expect(createTeachingTeacherAssignment(user, "demo", input, operationKey)).resolves.toMatchObject({ teacherUserIdSnapshot: 42, studentId });
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init?.body).toBe(JSON.stringify(input));
+    expect(new Headers(init?.headers).get("Idempotency-Key")).toBe(operationKey);
+  });
+
   it("fails closed before fetch when the shared secret is missing", async () => {
     delete process.env.TEACHING_PLATFORM_SECRET;
     const fetchMock = vi.spyOn(globalThis, "fetch");

@@ -57,6 +57,14 @@ export const studentCreditsParams = {
 export const loadStudentCreditsParams = createLoader(studentCreditsParams);
 export const serializeStudentCreditsParams = createSerializer(studentCreditsParams);
 
+/* ---------- 班级详情:分班历史 + 负责人历史 ---------- */
+export const groupDetailParams = {
+  membershipPage: parseAsInteger.withDefault(1),
+  assignmentPage: parseAsInteger.withDefault(1),
+};
+export const loadGroupDetailParams = createLoader(groupDetailParams);
+export const serializeGroupDetailParams = createSerializer(groupDetailParams);
+
 /* ---------- 讲师列表:按专长标签筛选(「全部」= 无 specialty 参数)---------- */
 // 专长是讲师自填的自由文案,不是固定枚举,用普通字符串 parser。
 export const instructorListParams = {

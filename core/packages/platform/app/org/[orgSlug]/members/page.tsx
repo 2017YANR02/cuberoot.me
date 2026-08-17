@@ -24,7 +24,7 @@ export default async function OrganizationMembersPage({
   return (
     <div className="max-w-5xl">
       <h2 className="text-[19px] font-semibold text-ink">成员与角色</h2>
-      <p className="mt-1 text-[13px] leading-5 text-ink-3">角色按机构独立授权。成员邀请将在下一阶段与老师、助教和班级关系一起接入。</p>
+      <p className="mt-1 text-[13px] leading-5 text-ink-3">角色按机构独立授权。班级和个别学员的负责范围在对应详情页管理。</p>
       <div className="mt-6 border-y border-line divide-y divide-line">
         {result.items.length ? result.items.map((member) => (
           <div key={member.userId} className="grid min-w-0 gap-1 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(7rem,auto)_auto] sm:items-center sm:gap-4">

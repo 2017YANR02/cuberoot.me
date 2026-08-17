@@ -50,7 +50,7 @@ export default async function OrganizationStudentsPage({
         {result.items.length ? result.items.map((student) => (
           <div key={student.id} className="grid min-w-0 gap-1 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(8rem,auto)_auto] sm:items-center sm:gap-4">
             <Link
-              href={`/org/${orgSlug}/students/${student.id}/credits`}
+              href={`/org/${orgSlug}/students/${student.id}/responsibilities`}
               prefetch={false}
               className="min-w-0 [overflow-wrap:anywhere] text-[14px] font-medium text-ink hover:text-brand-dark"
             >

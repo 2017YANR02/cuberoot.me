@@ -3,13 +3,21 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth-user";
 import {
+  archiveTeachingCampus,
+  archiveTeachingGroup,
   completeTeachingSession,
+  createTeachingCampus,
+  createTeachingGroup,
   createTeachingPackageProduct,
   createTeachingSession,
+  createTeachingStudentGroupMembership,
   createTeachingStudentPackage,
   createTeachingOrganization,
   createTeachingStudent,
+  createTeachingTeacherAssignment,
   listTeachingStudentPackages,
+  revokeTeachingStudentGroupMembership,
+  revokeTeachingTeacherAssignment,
   saveTeachingAttendanceBatch,
 } from "@/lib/teaching-api";
 import { teachingErrorMessage } from "@/lib/teaching-labels";
@@ -37,6 +45,10 @@ export type LoadStudentPackagesResult =
   | { ok: true; items: StudentPackageOption[]; truncated: boolean }
   | { ok: false; error: string };
 
+export type TeachingAssignmentTarget =
+  | { groupId: string; studentId?: never }
+  | { studentId: string; groupId?: never };
+
 const OPERATION_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ISO_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/;
@@ -49,6 +61,22 @@ function validOperationKey(formData: FormData): string | null {
 function validResourceId(formData: FormData, key: string): string | null {
   const value = String(formData.get(key) ?? "").trim().toLowerCase();
   return UUID_PATTERN.test(value) ? value : null;
+}
+
+function validAssignmentTarget(value: unknown): TeachingAssignmentTarget | null {
+  if (!value || typeof value !== "object") return null;
+  const target = value as Record<string, unknown>;
+  const hasGroupId = Object.hasOwn(target, "groupId");
+  const hasStudentId = Object.hasOwn(target, "studentId");
+  if (hasGroupId === hasStudentId) return null;
+  if (hasGroupId) {
+    return typeof target.groupId === "string" && UUID_PATTERN.test(target.groupId)
+      ? { groupId: target.groupId.toLowerCase() }
+      : null;
+  }
+  return typeof target.studentId === "string" && UUID_PATTERN.test(target.studentId)
+    ? { studentId: target.studentId.toLowerCase() }
+    : null;
 }
 
 function integerField(
@@ -67,6 +95,26 @@ function integerField(
 
 function validTimestamp(value: string): boolean {
   return ISO_TIMESTAMP_PATTERN.test(value) && Number.isFinite(Date.parse(value));
+}
+
+function validOptionalCode(formData: FormData): string | null | false {
+  const value = String(formData.get("code") ?? "").trim().toLowerCase();
+  if (!value) return null;
+  return /^[a-z0-9][a-z0-9_-]{0,63}$/.test(value) ? value : false;
+}
+
+function effectiveRange(formData: FormData):
+  | { effectiveFrom: string; effectiveTo?: string }
+  | null {
+  const effectiveFrom = String(formData.get("effectiveFrom") ?? "").trim();
+  const effectiveTo = String(formData.get("effectiveTo") ?? "").trim();
+  if (
+    !validTimestamp(effectiveFrom) ||
+    (effectiveTo && (!validTimestamp(effectiveTo) || Date.parse(effectiveTo) <= Date.parse(effectiveFrom)))
+  ) {
+    return null;
+  }
+  return effectiveTo ? { effectiveFrom, effectiveTo } : { effectiveFrom };
 }
 
 function validTimezone(value: string): boolean {
@@ -129,6 +177,253 @@ export async function createStudentAction(
     revalidatePath(`/org/${orgSlug}`);
     revalidatePath(`/org/${orgSlug}/students`);
     return { ok: true, studentId: student.id };
+  } catch (error) {
+    return { ok: false, error: teachingErrorMessage(error) };
+  }
+}
+
+export async function createCampusAction(
+  orgSlug: string,
+  formData: FormData,
+): Promise<TeachingMutationResult> {
+  const user = await requireUser(`/org/${orgSlug}/campuses`);
+  const name = String(formData.get("name") ?? "").trim();
+  const code = validOptionalCode(formData);
+  const timezone = String(formData.get("timezone") ?? "").trim();
+  const operationKey = validOperationKey(formData);
+  if (!name || name.length > 160) {
+    return { ok: false, error: "校区名称需为 1 至 160 个字符" };
+  }
+  if (code === false) {
+    return { ok: false, error: "校区代码需使用小写字母、数字、下划线或连字符" };
+  }
+  if (timezone && !validTimezone(timezone)) {
+    return { ok: false, error: "校区时区无效，或留空继承机构时区" };
+  }
+  if (!operationKey) {
+    return { ok: false, error: "操作标识已失效，请刷新页面后重试" };
+  }
+  try {
+    const campus = await createTeachingCampus(user, orgSlug, {
+      name,
+      code,
+      timezone: timezone || null,
+    }, operationKey);
+    revalidatePath(`/org/${orgSlug}/campuses`);
+    revalidatePath(`/org/${orgSlug}/classes`);
+    return { ok: true, entityId: campus.id, message: "校区已创建。" };
+  } catch (error) {
+    return { ok: false, error: teachingErrorMessage(error) };
+  }
+}
+
+export async function archiveCampusAction(
+  orgSlug: string,
+  campusId: string,
+  formData: FormData,
+): Promise<TeachingMutationResult> {
+  const user = await requireUser(`/org/${orgSlug}/campuses`);
+  if (!UUID_PATTERN.test(campusId)) {
+    return { ok: false, error: "校区标识无效" };
+  }
+  const operationKey = validOperationKey(formData);
+  if (!operationKey) {
+    return { ok: false, error: "操作标识已失效，请刷新页面后重试" };
+  }
+  try {
+    await archiveTeachingCampus(user, orgSlug, campusId, operationKey);
+    revalidatePath(`/org/${orgSlug}/campuses`);
+    revalidatePath(`/org/${orgSlug}/classes`);
+    return { ok: true, message: "校区已归档。" };
+  } catch (error) {
+    return { ok: false, error: teachingErrorMessage(error) };
+  }
+}
+
+export async function createGroupAction(
+  orgSlug: string,
+  formData: FormData,
+): Promise<TeachingMutationResult> {
+  const user = await requireUser(`/org/${orgSlug}/classes`);
+  const name = String(formData.get("name") ?? "").trim();
+  const code = validOptionalCode(formData);
+  const rawCampusId = String(formData.get("campusId") ?? "").trim().toLowerCase();
+  const campusId = rawCampusId ? validResourceId(formData, "campusId") : null;
+  const operationKey = validOperationKey(formData);
+  if (!name || name.length > 160) {
+    return { ok: false, error: "班级名称需为 1 至 160 个字符" };
+  }
+  if (code === false) {
+    return { ok: false, error: "班级代码需使用小写字母、数字、下划线或连字符" };
+  }
+  if (rawCampusId && !campusId) {
+    return { ok: false, error: "请选择有效的校区" };
+  }
+  if (!operationKey) {
+    return { ok: false, error: "操作标识已失效，请刷新页面后重试" };
+  }
+  try {
+    const group = await createTeachingGroup(user, orgSlug, { name, code, campusId }, operationKey);
+    revalidatePath(`/org/${orgSlug}/classes`);
+    return { ok: true, entityId: group.id, message: "班级已创建。" };
+  } catch (error) {
+    return { ok: false, error: teachingErrorMessage(error) };
+  }
+}
+
+export async function archiveGroupAction(
+  orgSlug: string,
+  groupId: string,
+  formData: FormData,
+): Promise<TeachingMutationResult> {
+  const user = await requireUser(`/org/${orgSlug}/classes/${groupId}`);
+  if (!UUID_PATTERN.test(groupId)) {
+    return { ok: false, error: "班级标识无效" };
+  }
+  const operationKey = validOperationKey(formData);
+  if (!operationKey) {
+    return { ok: false, error: "操作标识已失效，请刷新页面后重试" };
+  }
+  try {
+    await archiveTeachingGroup(user, orgSlug, groupId, operationKey);
+    revalidatePath(`/org/${orgSlug}/classes`);
+    revalidatePath(`/org/${orgSlug}/classes/${groupId}`);
+    revalidatePath(`/org/${orgSlug}/students`);
+    return { ok: true, message: "班级已归档，相关负责范围已立即停止生效。" };
+  } catch (error) {
+    return { ok: false, error: teachingErrorMessage(error) };
+  }
+}
+
+export async function createGroupMembershipAction(
+  orgSlug: string,
+  groupId: string,
+  formData: FormData,
+): Promise<TeachingMutationResult> {
+  const user = await requireUser(`/org/${orgSlug}/classes/${groupId}`);
+  if (!UUID_PATTERN.test(groupId)) {
+    return { ok: false, error: "班级标识无效" };
+  }
+  const studentId = validResourceId(formData, "studentId");
+  const range = effectiveRange(formData);
+  const operationKey = validOperationKey(formData);
+  if (!studentId) {
+    return { ok: false, error: "请选择有效的学员" };
+  }
+  if (!range) {
+    return { ok: false, error: "分班有效期无效，结束时间必须晚于开始时间" };
+  }
+  if (!operationKey) {
+    return { ok: false, error: "操作标识已失效，请刷新页面后重试" };
+  }
+  try {
+    const membership = await createTeachingStudentGroupMembership(
+      user,
+      orgSlug,
+      groupId,
+      { studentId, ...range },
+      operationKey,
+    );
+    revalidatePath(`/org/${orgSlug}/classes/${groupId}`);
+    revalidatePath(`/org/${orgSlug}/students`);
+    return { ok: true, entityId: membership.id, message: "学员已加入班级。" };
+  } catch (error) {
+    return { ok: false, error: teachingErrorMessage(error) };
+  }
+}
+
+export async function revokeGroupMembershipAction(
+  orgSlug: string,
+  groupId: string,
+  membershipId: string,
+  formData: FormData,
+): Promise<TeachingMutationResult> {
+  const user = await requireUser(`/org/${orgSlug}/classes/${groupId}`);
+  if (!UUID_PATTERN.test(groupId) || !UUID_PATTERN.test(membershipId)) {
+    return { ok: false, error: "分班关系标识无效" };
+  }
+  const operationKey = validOperationKey(formData);
+  if (!operationKey) {
+    return { ok: false, error: "操作标识已失效，请刷新页面后重试" };
+  }
+  try {
+    await revokeTeachingStudentGroupMembership(user, orgSlug, membershipId, operationKey);
+    revalidatePath(`/org/${orgSlug}/classes/${groupId}`);
+    revalidatePath(`/org/${orgSlug}/students`);
+    return { ok: true, message: "学员分班关系已撤销。" };
+  } catch (error) {
+    return { ok: false, error: teachingErrorMessage(error) };
+  }
+}
+
+export async function createTeacherAssignmentAction(
+  orgSlug: string,
+  target: TeachingAssignmentTarget,
+  formData: FormData,
+): Promise<TeachingMutationResult> {
+  const validatedTarget = validAssignmentTarget(target);
+  if (!validatedTarget) {
+    return { ok: false, error: "负责范围目标无效" };
+  }
+  const targetPath = "groupId" in validatedTarget
+    ? `/org/${orgSlug}/classes/${validatedTarget.groupId}`
+    : `/org/${orgSlug}/students/${validatedTarget.studentId}/responsibilities`;
+  const user = await requireUser(targetPath);
+  const teacherUserId = integerField(formData, "teacherUserId", 1, Number.MAX_SAFE_INTEGER);
+  const range = effectiveRange(formData);
+  const operationKey = validOperationKey(formData);
+  if (teacherUserId === null) {
+    return { ok: false, error: "请选择有效的负责人" };
+  }
+  if (!range) {
+    return { ok: false, error: "负责范围有效期无效，结束时间必须晚于开始时间" };
+  }
+  if (!operationKey) {
+    return { ok: false, error: "操作标识已失效，请刷新页面后重试" };
+  }
+  try {
+    const assignment = await createTeachingTeacherAssignment(
+      user,
+      orgSlug,
+      { teacherUserId, ...validatedTarget, ...range },
+      operationKey,
+    );
+    revalidatePath(targetPath);
+    revalidatePath(`/org/${orgSlug}/classes`);
+    revalidatePath(`/org/${orgSlug}/students`);
+    return { ok: true, entityId: assignment.id, message: "负责范围已分配。" };
+  } catch (error) {
+    return { ok: false, error: teachingErrorMessage(error) };
+  }
+}
+
+export async function revokeTeacherAssignmentAction(
+  orgSlug: string,
+  target: TeachingAssignmentTarget,
+  assignmentId: string,
+  formData: FormData,
+): Promise<TeachingMutationResult> {
+  const validatedTarget = validAssignmentTarget(target);
+  if (!validatedTarget) {
+    return { ok: false, error: "负责范围目标无效" };
+  }
+  const targetPath = "groupId" in validatedTarget
+    ? `/org/${orgSlug}/classes/${validatedTarget.groupId}`
+    : `/org/${orgSlug}/students/${validatedTarget.studentId}/responsibilities`;
+  const user = await requireUser(targetPath);
+  if (!UUID_PATTERN.test(assignmentId)) {
+    return { ok: false, error: "负责范围标识无效" };
+  }
+  const operationKey = validOperationKey(formData);
+  if (!operationKey) {
+    return { ok: false, error: "操作标识已失效，请刷新页面后重试" };
+  }
+  try {
+    await revokeTeachingTeacherAssignment(user, orgSlug, assignmentId, operationKey);
+    revalidatePath(targetPath);
+    revalidatePath(`/org/${orgSlug}/classes`);
+    revalidatePath(`/org/${orgSlug}/students`);
+    return { ok: true, message: "负责范围已撤销。" };
   } catch (error) {
     return { ok: false, error: teachingErrorMessage(error) };
   }
