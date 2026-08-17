@@ -83,6 +83,7 @@
     hover-class="press-feedback"
     wx:if="{{syncState === 'error'}}"
     bindtap="retrySync"
-  >重新确认</button>
+    aria-label="{{storageUnavailable ? '重新读取设备登录状态' : '重新确认账号状态'}}"
+  >{{storageUnavailable ? '重新读取' : '重新确认'}}</button>
   <button class="text-button privacy-button" hover-class="press-feedback" bindtap="openPrivacy">隐私说明</button>
 </view>
