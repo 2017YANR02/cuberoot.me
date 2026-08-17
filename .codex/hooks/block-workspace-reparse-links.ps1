@@ -4,6 +4,50 @@ $ErrorActionPreference = 'SilentlyContinue'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $workspaceReparseGuardRepoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 
+function Split-WorkspaceGuardCommandSegments {
+  param([Parameter(Mandatory = $true)][string]$Command)
+
+  $segments = [System.Collections.Generic.List[string]]::new()
+  $current = [System.Text.StringBuilder]::new()
+  $quote = [char]0
+  $escaped = $false
+
+  for ($i = 0; $i -lt $Command.Length; $i++) {
+    $char = $Command[$i]
+
+    if ($escaped) {
+      [void]$current.Append($char)
+      $escaped = $false
+      continue
+    }
+    if ($quote -ne [char]0) {
+      [void]$current.Append($char)
+      if ($quote -eq [char]34 -and $char -eq [char]96) { $escaped = $true; continue }
+      if ($char -eq $quote) { $quote = [char]0 }
+      continue
+    }
+    if ($char -eq [char]39 -or $char -eq [char]34) {
+      $quote = $char
+      [void]$current.Append($char)
+      continue
+    }
+
+    $doubleOperator = ($char -eq '|' -or $char -eq '&') -and
+      $i + 1 -lt $Command.Length -and $Command[$i + 1] -eq $char
+    if ($char -eq '|' -or $char -eq ';' -or $char -eq "`r" -or $char -eq "`n" -or $doubleOperator) {
+      $segments.Add($current.ToString())
+      [void]$current.Clear()
+      if ($doubleOperator) { $i++ }
+      continue
+    }
+
+    [void]$current.Append($char)
+  }
+
+  $segments.Add($current.ToString())
+  return $segments.ToArray()
+}
+
 function Invoke-WorkspaceReparseLinkGuard {
   param([Parameter(Mandatory = $true)][string]$Payload)
 
@@ -31,7 +75,7 @@ function Invoke-WorkspaceReparseLinkGuard {
   }
   if (-not $inRepo) { return $null }
 
-  $segments = $command -split '(?:&&|\|\||[;|\r\n])'
+  $segments = Split-WorkspaceGuardCommandSegments -Command $command
   foreach ($rawSegment in $segments) {
     $segment = $rawSegment.Trim()
     if (-not $segment) { continue }
