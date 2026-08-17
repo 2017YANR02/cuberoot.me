@@ -21,6 +21,24 @@ export type TeachingStudentStatus = (typeof TEACHING_STUDENT_STATUSES)[number];
 export const TEACHING_GUARDIAN_LINK_STATUSES = ['active', 'revoked'] as const;
 export type TeachingGuardianLinkStatus = (typeof TEACHING_GUARDIAN_LINK_STATUSES)[number];
 
+export const TEACHING_PACKAGE_PRODUCT_STATUSES = ['active', 'retired'] as const;
+export type TeachingPackageProductStatus = (typeof TEACHING_PACKAGE_PRODUCT_STATUSES)[number];
+
+export const TEACHING_STUDENT_PACKAGE_STATUSES = ['active', 'frozen', 'cancelled'] as const;
+export type TeachingStudentPackageStatus = (typeof TEACHING_STUDENT_PACKAGE_STATUSES)[number];
+
+export const TEACHING_CREDIT_UNITS = ['lesson', 'minute'] as const;
+export type TeachingCreditUnit = (typeof TEACHING_CREDIT_UNITS)[number];
+
+export const TEACHING_PACKAGE_ACQUISITION_TYPES = ['purchase', 'grant', 'migration'] as const;
+export type TeachingPackageAcquisitionType = (typeof TEACHING_PACKAGE_ACQUISITION_TYPES)[number];
+
+export const TEACHING_SESSION_STATUSES = ['scheduled', 'in_progress', 'completed', 'cancelled'] as const;
+export type TeachingSessionStatus = (typeof TEACHING_SESSION_STATUSES)[number];
+
+export const TEACHING_ATTENDANCE_STATUSES = ['expected', 'present', 'late', 'absent', 'excused'] as const;
+export type TeachingAttendanceStatus = (typeof TEACHING_ATTENDANCE_STATUSES)[number];
+
 const ORGANIZATION_STATUS_TRANSITIONS: Record<TeachingOrganizationStatus, readonly TeachingOrganizationStatus[]> = {
   active: ['suspended', 'archived'],
   suspended: ['active', 'archived'],
@@ -45,6 +63,24 @@ const GUARDIAN_STATUS_TRANSITIONS: Record<TeachingGuardianLinkStatus, readonly T
   revoked: [],
 };
 
+const PACKAGE_PRODUCT_STATUS_TRANSITIONS: Record<TeachingPackageProductStatus, readonly TeachingPackageProductStatus[]> = {
+  active: ['retired'],
+  retired: [],
+};
+
+const STUDENT_PACKAGE_STATUS_TRANSITIONS: Record<TeachingStudentPackageStatus, readonly TeachingStudentPackageStatus[]> = {
+  active: ['frozen', 'cancelled'],
+  frozen: ['active', 'cancelled'],
+  cancelled: [],
+};
+
+const SESSION_STATUS_TRANSITIONS: Record<TeachingSessionStatus, readonly TeachingSessionStatus[]> = {
+  scheduled: ['in_progress', 'completed', 'cancelled'],
+  in_progress: ['completed', 'cancelled'],
+  completed: [],
+  cancelled: [],
+};
+
 export const canTransitionTeachingOrganizationStatus = (
   from: TeachingOrganizationStatus,
   to: TeachingOrganizationStatus,
@@ -65,12 +101,31 @@ export const canTransitionTeachingGuardianLinkStatus = (
   to: TeachingGuardianLinkStatus,
 ): boolean => GUARDIAN_STATUS_TRANSITIONS[from].includes(to);
 
+export const canTransitionTeachingPackageProductStatus = (
+  from: TeachingPackageProductStatus,
+  to: TeachingPackageProductStatus,
+): boolean => PACKAGE_PRODUCT_STATUS_TRANSITIONS[from].includes(to);
+
+export const canTransitionTeachingStudentPackageStatus = (
+  from: TeachingStudentPackageStatus,
+  to: TeachingStudentPackageStatus,
+): boolean => STUDENT_PACKAGE_STATUS_TRANSITIONS[from].includes(to);
+
+export const canTransitionTeachingSessionStatus = (
+  from: TeachingSessionStatus,
+  to: TeachingSessionStatus,
+): boolean => SESSION_STATUS_TRANSITIONS[from].includes(to);
+
 export const TEACHING_PERMISSIONS = [
   'organization:manage',
   'member:read',
   'member:manage',
   'student:read',
   'student:manage',
+  'package:read',
+  'package:manage',
+  'session:read',
+  'session:manage',
   'finance:read',
   'finance:manage',
   'audit:read',
@@ -83,7 +138,7 @@ const ROLE_PERMISSIONS: Record<TeachingOrganizationRole, readonly TeachingPermis
   admin: TEACHING_PERMISSIONS,
   teacher: ['member:read'],
   assistant: ['member:read'],
-  finance: ['member:read', 'finance:read', 'finance:manage'],
+  finance: ['member:read', 'package:read', 'package:manage', 'finance:read', 'finance:manage'],
   viewer: ['member:read', 'finance:read'],
 };
 

@@ -4,7 +4,13 @@ import type postgres from 'postgres';
 import {
   hasTeachingPermission,
   isTeachingOrganizationRole,
+  TEACHING_ATTENDANCE_STATUSES,
+  TEACHING_CREDIT_UNITS,
+  TEACHING_PACKAGE_ACQUISITION_TYPES,
   type TeachingErrorCode,
+  type TeachingAttendanceStatus,
+  type TeachingCreditUnit,
+  type TeachingPackageAcquisitionType,
   type TeachingOrganizationRole,
   type TeachingPermission,
 } from '@cuberoot/shared/teaching';
@@ -51,6 +57,46 @@ interface CreateStudentInput {
   externalRef: string | null;
 }
 
+interface CreatePackageProductInput {
+  code: string;
+  name: string;
+  creditUnit: TeachingCreditUnit;
+  creditType: string;
+  totalCredits: number;
+  validityDays: number | null;
+  priceAmountMinor: number;
+  currency: string;
+}
+
+interface CreateStudentPackageInput {
+  productId: string;
+  acquisitionType: TeachingPackageAcquisitionType;
+  validFrom: string;
+  sourceSystem: string | null;
+  sourceRef: string | null;
+  sourceLineRef: string | null;
+}
+
+interface CreateSessionInput {
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  timezone: string | null;
+  teacherUserIds: number[];
+  attendees: Array<{
+    studentId: string;
+    studentPackageId: string;
+    creditCost: number;
+  }>;
+}
+
+interface AttendanceBatchInput {
+  records: Array<{
+    attendanceId: string;
+    status: Exclude<TeachingAttendanceStatus, 'expected'>;
+  }>;
+}
+
 interface PageInput {
   page: number;
   pageSize: number;
@@ -89,6 +135,65 @@ export interface TeachingSaasRepository {
     actor: TeachingActor,
     slug: string,
     input: CreateStudentInput,
+    idempotencyKey: string,
+    requestHash: string,
+    requestId: string,
+  ): Promise<MutationResult>;
+  listPackageProducts(actor: TeachingActor, slug: string, pagination: PageInput, requestId: string): Promise<PageResult>;
+  createPackageProduct(
+    actor: TeachingActor,
+    slug: string,
+    input: CreatePackageProductInput,
+    idempotencyKey: string,
+    requestHash: string,
+    requestId: string,
+  ): Promise<MutationResult>;
+  listStudentPackages(
+    actor: TeachingActor,
+    slug: string,
+    studentId: string,
+    pagination: PageInput,
+    requestId: string,
+  ): Promise<PageResult>;
+  createStudentPackage(
+    actor: TeachingActor,
+    slug: string,
+    studentId: string,
+    input: CreateStudentPackageInput,
+    idempotencyKey: string,
+    requestHash: string,
+    requestId: string,
+  ): Promise<MutationResult>;
+  listStudentPackageLedger(
+    actor: TeachingActor,
+    slug: string,
+    studentPackageId: string,
+    pagination: PageInput,
+    requestId: string,
+  ): Promise<PageResult>;
+  listSessions(actor: TeachingActor, slug: string, pagination: PageInput, requestId: string): Promise<PageResult>;
+  getSession(actor: TeachingActor, slug: string, sessionId: string, requestId: string): Promise<JsonObject>;
+  createSession(
+    actor: TeachingActor,
+    slug: string,
+    input: CreateSessionInput,
+    idempotencyKey: string,
+    requestHash: string,
+    requestId: string,
+  ): Promise<MutationResult>;
+  saveAttendanceBatch(
+    actor: TeachingActor,
+    slug: string,
+    sessionId: string,
+    input: AttendanceBatchInput,
+    idempotencyKey: string,
+    requestHash: string,
+    requestId: string,
+  ): Promise<MutationResult>;
+  completeSession(
+    actor: TeachingActor,
+    slug: string,
+    sessionId: string,
     idempotencyKey: string,
     requestHash: string,
     requestId: string,
@@ -166,6 +271,79 @@ function requiredString(body: JsonObject, key: string, maxLength: number): strin
   return trimmed;
 }
 
+function optionalString(body: JsonObject, key: string, maxLength: number): string | null {
+  const value = body[key];
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'string') {
+    throw new TeachingApiException('INVALID_INPUT', 400, `${key} must be a string or null`);
+  }
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > maxLength) {
+    throw new TeachingApiException('INVALID_INPUT', 400, `${key} must be 1 to ${maxLength} characters or null`);
+  }
+  return trimmed;
+}
+
+function requiredInteger(body: JsonObject, key: string, min: number, max: number): number {
+  const value = body[key];
+  if (!Number.isSafeInteger(value) || (value as number) < min || (value as number) > max) {
+    throw new TeachingApiException('INVALID_INPUT', 400, `${key} must be an integer from ${min} to ${max}`);
+  }
+  return value as number;
+}
+
+function requiredUuid(body: JsonObject, key: string): string {
+  const value = requiredString(body, key, 36).toLowerCase();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, `${key} must be a UUID`);
+  }
+  return value;
+}
+
+function uuidParam(value: string, key: string): string {
+  return requiredUuid({ [key]: value }, key);
+}
+
+function requiredTimestamp(body: JsonObject, key: string): string {
+  const value = requiredString(body, key, 40);
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,3})?(?:(Z)|([+-])(\d{2}):(\d{2}))$/.exec(value);
+  if (!match) {
+    throw new TeachingApiException('INVALID_INPUT', 400, `${key} must be an ISO 8601 timestamp with an offset`);
+  }
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText, zulu, , offsetHourText, offsetMinuteText] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  const second = Number(secondText);
+  const offsetHour = zulu ? 0 : Number(offsetHourText);
+  const offsetMinute = zulu ? 0 : Number(offsetMinuteText);
+  const daysInMonth = month >= 1 && month <= 12
+    ? new Date(Date.UTC(year, month, 0)).getUTCDate()
+    : 0;
+  if (
+    year < 1 || day < 1 || day > daysInMonth || hour > 23 || minute > 59 || second > 59 ||
+    offsetHour > 14 || offsetMinute > 59 || (offsetHour === 14 && offsetMinute !== 0)
+  ) {
+    throw new TeachingApiException('INVALID_INPUT', 400, `${key} must be a valid timestamp`);
+  }
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) {
+    throw new TeachingApiException('INVALID_INPUT', 400, `${key} must be a valid timestamp`);
+  }
+  return date.toISOString();
+}
+
+function validTimezone(value: string): string {
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: value }).format();
+  } catch {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'timezone must be a valid IANA time zone');
+  }
+  return value;
+}
+
 function parseOrganizationInput(body: JsonObject): CreateOrganizationInput {
   const slug = requiredString(body, 'slug', 64).toLowerCase();
   if (!/^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/.test(slug)) {
@@ -202,6 +380,127 @@ function parseStudentInput(body: JsonObject): CreateStudentInput {
     throw new TeachingApiException('INVALID_INPUT', 400, 'externalRef must be 1 to 100 characters or null');
   }
   return { displayName, externalRef };
+}
+
+function parsePackageProductInput(body: JsonObject): CreatePackageProductInput {
+  const code = requiredString(body, 'code', 64).toLowerCase();
+  if (!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(code)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'code must use lowercase letters, numbers, underscores, or hyphens');
+  }
+  if (!TEACHING_CREDIT_UNITS.includes(body.creditUnit as TeachingCreditUnit)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'creditUnit must be lesson or minute');
+  }
+  const creditType = requiredString(body, 'creditType', 64).toLowerCase();
+  if (!/^[a-z][a-z0-9_-]{0,63}$/.test(creditType)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'creditType must be a normalized identifier');
+  }
+  const validityDays = body.validityDays == null
+    ? null
+    : requiredInteger(body, 'validityDays', 1, 36_500);
+  const currency = requiredString(body, 'currency', 3).toUpperCase();
+  if (!/^[A-Z]{3}$/.test(currency)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'currency must be a three-letter ISO currency code');
+  }
+  return {
+    code,
+    name: requiredString(body, 'name', 160),
+    creditUnit: body.creditUnit as TeachingCreditUnit,
+    creditType,
+    totalCredits: requiredInteger(body, 'totalCredits', 1, 1_000_000),
+    validityDays,
+    priceAmountMinor: requiredInteger(body, 'priceAmountMinor', 0, Number.MAX_SAFE_INTEGER),
+    currency,
+  };
+}
+
+function parseStudentPackageInput(body: JsonObject): CreateStudentPackageInput {
+  if (!TEACHING_PACKAGE_ACQUISITION_TYPES.includes(body.acquisitionType as TeachingPackageAcquisitionType)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'acquisitionType must be purchase, grant, or migration');
+  }
+  const sourceSystem = optionalString(body, 'sourceSystem', 64);
+  const sourceRef = optionalString(body, 'sourceRef', 160);
+  const sourceLineRef = optionalString(body, 'sourceLineRef', 160);
+  if ((sourceSystem === null) !== (sourceRef === null) || (sourceLineRef !== null && sourceSystem === null)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'sourceSystem and sourceRef must be provided together');
+  }
+  return {
+    productId: requiredUuid(body, 'productId'),
+    acquisitionType: body.acquisitionType as TeachingPackageAcquisitionType,
+    validFrom: body.validFrom === undefined ? new Date().toISOString() : requiredTimestamp(body, 'validFrom'),
+    sourceSystem,
+    sourceRef,
+    sourceLineRef,
+  };
+}
+
+function parseSessionInput(body: JsonObject): CreateSessionInput {
+  const startsAt = requiredTimestamp(body, 'startsAt');
+  const endsAt = requiredTimestamp(body, 'endsAt');
+  if (new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'endsAt must be after startsAt');
+  }
+  const rawTeacherIds = body.teacherUserIds ?? [];
+  if (!Array.isArray(rawTeacherIds) || rawTeacherIds.length > 20) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'teacherUserIds must contain at most 20 user IDs');
+  }
+  const teacherUserIds = rawTeacherIds.map((value) => {
+    if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0) {
+      throw new TeachingApiException('INVALID_INPUT', 400, 'teacherUserIds must contain positive integers');
+    }
+    return value;
+  });
+  if (new Set(teacherUserIds).size !== teacherUserIds.length) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'teacherUserIds must not contain duplicates');
+  }
+  const rawAttendees = body.attendees ?? [];
+  if (!Array.isArray(rawAttendees) || rawAttendees.length > 500) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'attendees must contain at most 500 records');
+  }
+  const attendees = rawAttendees.map((raw, index) => {
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+      throw new TeachingApiException('INVALID_INPUT', 400, `attendees[${index}] must be an object`);
+    }
+    const item = raw as JsonObject;
+    return {
+      studentId: requiredUuid(item, 'studentId'),
+      studentPackageId: requiredUuid(item, 'studentPackageId'),
+      creditCost: requiredInteger(item, 'creditCost', 1, 1_000_000),
+    };
+  });
+  if (new Set(attendees.map((item) => item.studentId)).size !== attendees.length) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'attendees must not repeat a student');
+  }
+  return {
+    title: requiredString(body, 'title', 160),
+    startsAt,
+    endsAt,
+    timezone: body.timezone === undefined ? null : validTimezone(requiredString(body, 'timezone', 64)),
+    teacherUserIds,
+    attendees,
+  };
+}
+
+function parseAttendanceBatchInput(body: JsonObject): AttendanceBatchInput {
+  if (!Array.isArray(body.records) || body.records.length < 1 || body.records.length > 500) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'records must contain 1 to 500 attendance updates');
+  }
+  const records = body.records.map((raw, index) => {
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+      throw new TeachingApiException('INVALID_INPUT', 400, `records[${index}] must be an object`);
+    }
+    const item = raw as JsonObject;
+    if (!TEACHING_ATTENDANCE_STATUSES.includes(item.status as TeachingAttendanceStatus) || item.status === 'expected') {
+      throw new TeachingApiException('INVALID_INPUT', 400, `records[${index}].status must resolve attendance`);
+    }
+    return {
+      attendanceId: requiredUuid(item, 'attendanceId'),
+      status: item.status as Exclude<TeachingAttendanceStatus, 'expected'>,
+    };
+  });
+  if (new Set(records.map((item) => item.attendanceId)).size !== records.length) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'records must not repeat an attendanceId');
+  }
+  return { records };
 }
 
 function asAccess(row: Record<string, unknown>): OrganizationAccess {
@@ -323,6 +622,13 @@ async function beginIdempotency(
     SELECT pg_advisory_xact_lock(hashtextextended(${idempotencyLockKey}, 0))`;
   await tx`
     DELETE FROM teaching_idempotency_requests
+    WHERE actor_user_id = ${actorUserId}
+      AND scope_key = ${scopeKey}
+      AND operation = ${operation}
+      AND idempotency_key = ${key}
+      AND expires_at <= NOW()`;
+  await tx`
+    DELETE FROM teaching_idempotency_requests
     WHERE id IN (
       SELECT id
       FROM teaching_idempotency_requests
@@ -378,9 +684,9 @@ async function completeIdempotency(
 }
 
 /**
- * This intentionally uses the pool-level query helper while the business
- * transaction is open. Its committed counter must survive a later rollback.
- * Completed idempotent replays return before this function and are not charged.
+ * Call this before opening the business transaction. Every mutation attempt,
+ * including an idempotent replay, is charged in its own committed statement so
+ * a rollback cannot erase the counter and no transaction nests a pool checkout.
  */
 async function consumeMutationAttempt(
   actorUserId: number,
@@ -483,11 +789,11 @@ export const teachingSaasRepository: TeachingSaasRepository = {
   },
 
   async createOrganization(actor, input, idempotencyKey, requestHash, requestId) {
+    await consumeMutationAttempt(actor.userId, 'organization.create', 10, '1 hour');
     try {
       return await sql.begin(async (tx) => {
         const idem = await beginIdempotency(tx, actor.userId, null, 'organization.create', idempotencyKey, requestHash);
         if ('replay' in idem) return idem.replay;
-        await consumeMutationAttempt(actor.userId, 'organization.create', 10, '1 hour');
         const rows = await tx`
           INSERT INTO organizations (slug, name, timezone, created_by_user_id)
           VALUES (${input.slug}, ${input.name}, ${input.timezone}, ${actor.userId})
@@ -569,6 +875,7 @@ export const teachingSaasRepository: TeachingSaasRepository = {
 
   async createMember(actor, slug, input, idempotencyKey, requestHash, requestId) {
     return withDeniedAccessAudit(actor, slug, 'member.create', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'member.create', 60, '1 minute');
       try {
       return await sql.begin(async (tx) => {
         const access = await accessForWrite(tx, actor.userId, slug);
@@ -579,7 +886,6 @@ export const teachingSaasRepository: TeachingSaasRepository = {
         }
         const idem = await beginIdempotency(tx, actor.userId, access.id, 'member.create', idempotencyKey, requestHash);
         if ('replay' in idem) return idem.replay;
-        await consumeMutationAttempt(actor.userId, 'member.create', 60, '1 minute');
         const users = await tx`SELECT id, display_name FROM app_users WHERE id = ${input.userId}`;
         if (!users.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'User not found');
         await tx`
@@ -652,6 +958,7 @@ export const teachingSaasRepository: TeachingSaasRepository = {
 
   async createStudent(actor, slug, input, idempotencyKey, requestHash, requestId) {
     return withDeniedAccessAudit(actor, slug, 'student.create', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'student.create', 120, '1 minute');
       try {
       return await sql.begin(async (tx) => {
         const access = await accessForWrite(tx, actor.userId, slug);
@@ -659,7 +966,6 @@ export const teachingSaasRepository: TeachingSaasRepository = {
         requirePermission(access, 'student:manage');
         const idem = await beginIdempotency(tx, actor.userId, access.id, 'student.create', idempotencyKey, requestHash);
         if ('replay' in idem) return idem.replay;
-        await consumeMutationAttempt(actor.userId, 'student.create', 120, '1 minute');
         const rows = await tx`
           INSERT INTO student_profiles (
             organization_id, external_ref, display_name, created_by_user_id
@@ -695,6 +1001,665 @@ export const teachingSaasRepository: TeachingSaasRepository = {
         if (error instanceof TeachingApiException) throw error;
         return uniqueConflict(error, 'Student external reference already exists in this organization');
       }
+    });
+  },
+
+  async listPackageProducts(actor, slug, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'package_product.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'package:read');
+      const [countRows, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          'SELECT COUNT(*)::int AS count FROM lesson_package_products WHERE organization_id = ?',
+          [access.id],
+        ),
+        query<Record<string, unknown>>(
+          `SELECT id, code, name, status, credit_unit, credit_type, total_credits,
+                  validity_days, price_amount_minor, currency, created_at, updated_at
+           FROM lesson_package_products
+           WHERE organization_id = ?
+           ORDER BY CASE status WHEN 'active' THEN 0 ELSE 1 END, name, id
+           LIMIT ? OFFSET ?`,
+          [access.id, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map((row) => ({
+          id: String(row.id), code: String(row.code), name: String(row.name), status: String(row.status),
+          creditUnit: String(row.credit_unit), creditType: String(row.credit_type),
+          totalCredits: Number(row.total_credits),
+          validityDays: row.validity_days == null ? null : Number(row.validity_days),
+          priceAmountMinor: Number(row.price_amount_minor), currency: String(row.currency),
+          createdAt: new Date(String(row.created_at)).toISOString(),
+          updatedAt: new Date(String(row.updated_at)).toISOString(),
+        })),
+        total: Number(countRows[0]?.count ?? 0), page: pagination.page, pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async createPackageProduct(actor, slug, input, idempotencyKey, requestHash, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'package_product.create', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'package_product.create', 60, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'package:manage');
+          const idem = await beginIdempotency(tx, actor.userId, access.id, 'package_product.create', idempotencyKey, requestHash);
+          if ('replay' in idem) return idem.replay;
+          const rows = await tx`
+            INSERT INTO lesson_package_products (
+              organization_id, code, name, credit_unit, credit_type, total_credits,
+              validity_days, price_amount_minor, currency, created_by_user_id
+            ) VALUES (
+              ${access.id}, ${input.code}, ${input.name}, ${input.creditUnit}, ${input.creditType},
+              ${input.totalCredits}, ${input.validityDays}, ${input.priceAmountMinor}, ${input.currency}, ${actor.userId}
+            )
+            RETURNING id, code, name, status, credit_unit, credit_type, total_credits,
+                      validity_days, price_amount_minor, currency, created_at, updated_at`;
+          const row = rows[0] as Record<string, unknown>;
+          const productId = String(row.id);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'package_product.create', 'lesson_package_product', ${productId}, ${requestId},
+              ${sql.json({ code: input.code, totalCredits: input.totalCredits })}
+            )`;
+          const result: MutationResult = {
+            status: 201,
+            body: { packageProduct: {
+              id: productId, code: String(row.code), name: String(row.name), status: String(row.status),
+              creditUnit: String(row.credit_unit), creditType: String(row.credit_type),
+              totalCredits: Number(row.total_credits),
+              validityDays: row.validity_days == null ? null : Number(row.validity_days),
+              priceAmountMinor: Number(row.price_amount_minor), currency: String(row.currency),
+              createdAt: new Date(String(row.created_at)).toISOString(),
+              updatedAt: new Date(String(row.updated_at)).toISOString(),
+            } },
+          };
+          await completeIdempotency(tx, idem.id, result, 'lesson_package_product', productId);
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return uniqueConflict(error, 'Package product code already exists in this organization');
+      }
+    });
+  },
+
+  async listStudentPackages(actor, slug, studentId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'student_package.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'package:read');
+      const students = await query<Record<string, unknown>>(
+        'SELECT id FROM student_profiles WHERE organization_id = ? AND id = ?',
+        [access.id, studentId],
+      );
+      if (!students.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student not found');
+      const [countRows, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          'SELECT COUNT(*)::int AS count FROM student_packages WHERE organization_id = ? AND student_id = ?',
+          [access.id, studentId],
+        ),
+        query<Record<string, unknown>>(
+          `SELECT p.*,
+                  COALESCE((SELECT SUM(l.delta) FROM lesson_credit_ledger l
+                            WHERE l.organization_id = p.organization_id AND l.student_package_id = p.id), 0)::int
+                    AS remaining_credits
+           FROM student_packages p
+           WHERE p.organization_id = ? AND p.student_id = ?
+           ORDER BY p.created_at DESC, p.id
+           LIMIT ? OFFSET ?`,
+          [access.id, studentId, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map((row) => ({
+          id: String(row.id), studentId: String(row.student_id), productId: String(row.product_id),
+          productCode: String(row.product_code_snapshot), productName: String(row.product_name_snapshot),
+          creditUnit: String(row.credit_unit), creditType: String(row.credit_type),
+          entitledCredits: Number(row.entitled_credits), remainingCredits: Number(row.remaining_credits),
+          validityDays: row.validity_days_snapshot == null ? null : Number(row.validity_days_snapshot),
+          priceAmountMinor: Number(row.price_amount_minor), currency: String(row.currency),
+          status: String(row.lifecycle_status), acquisitionType: String(row.acquisition_type),
+          validFrom: new Date(String(row.valid_from)).toISOString(),
+          validUntil: row.valid_until == null ? null : new Date(String(row.valid_until)).toISOString(),
+          sourceSystem: row.source_system == null ? null : String(row.source_system),
+          sourceRef: row.source_ref == null ? null : String(row.source_ref),
+          sourceLineRef: row.source_line_ref == null ? null : String(row.source_line_ref),
+          createdAt: new Date(String(row.created_at)).toISOString(),
+        })),
+        total: Number(countRows[0]?.count ?? 0), page: pagination.page, pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async createStudentPackage(actor, slug, studentId, input, idempotencyKey, requestHash, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'student_package.create', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'student_package.create', 120, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'package:manage');
+          const idem = await beginIdempotency(tx, actor.userId, access.id, 'student_package.create', idempotencyKey, requestHash);
+          if ('replay' in idem) return idem.replay;
+          const students = await tx`
+            SELECT id FROM student_profiles WHERE organization_id = ${access.id} AND id = ${studentId}`;
+          if (!students.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student not found');
+          const products = await tx`
+            SELECT id, code, name, credit_unit, credit_type, total_credits, validity_days,
+                   price_amount_minor, currency
+            FROM lesson_package_products
+            WHERE organization_id = ${access.id} AND id = ${input.productId} AND status = 'active'`;
+          if (!products.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Active package product not found');
+          const product = products[0] as Record<string, unknown>;
+          const packages = await tx`
+            INSERT INTO student_packages (
+              organization_id, student_id, product_id, product_code_snapshot, product_name_snapshot,
+              credit_unit, credit_type, entitled_credits, validity_days_snapshot, price_amount_minor,
+              currency, acquisition_type, valid_from, valid_until, source_system, source_ref,
+              source_line_ref, created_by_user_id
+            ) VALUES (
+              ${access.id}, ${studentId}, ${input.productId}, ${String(product.code)}, ${String(product.name)},
+              ${String(product.credit_unit)}, ${String(product.credit_type)}, ${Number(product.total_credits)},
+              ${product.validity_days == null ? null : Number(product.validity_days)}, ${Number(product.price_amount_minor)},
+              ${String(product.currency)}, ${input.acquisitionType}, ${input.validFrom},
+              CASE WHEN ${product.validity_days == null ? null : Number(product.validity_days)}::int IS NULL THEN NULL
+                   ELSE ${input.validFrom}::timestamptz + (${product.validity_days == null ? null : Number(product.validity_days)}::int * INTERVAL '1 day') END,
+              ${input.sourceSystem}, ${input.sourceRef}, ${input.sourceLineRef}, ${actor.userId}
+            )
+            RETURNING *`;
+          const studentPackage = packages[0] as Record<string, unknown>;
+          const studentPackageId = String(studentPackage.id);
+          await tx`
+            SELECT id FROM student_packages
+            WHERE organization_id = ${access.id} AND id = ${studentPackageId}
+            FOR UPDATE`;
+          const entryType = input.acquisitionType === 'migration' ? 'adjustment' : input.acquisitionType;
+          await tx`
+            INSERT INTO lesson_credit_ledger (
+              organization_id, student_package_id, student_id, entry_type, delta, idempotency_key,
+              source_system, source_ref, source_line_ref, reason, actor_user_id, actor_role,
+              actor_display_name, metadata
+            ) VALUES (
+              ${access.id}, ${studentPackageId}, ${studentId}, ${entryType}, ${Number(product.total_credits)},
+              ${idempotencyKey}, ${input.sourceSystem}, ${input.sourceRef},
+              ${input.sourceLineRef}, 'Initial entitlement', ${actor.userId}, ${access.role},
+              ${actor.displayName}, ${sql.json({ productId: input.productId })}
+            )`;
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'student_package.create', 'student_package', ${studentPackageId}, ${requestId},
+              ${sql.json({ studentId, productId: input.productId, acquisitionType: input.acquisitionType })}
+            )`;
+          const result: MutationResult = {
+            status: 201,
+            body: { studentPackage: {
+              id: studentPackageId, studentId, productId: input.productId,
+              productCode: String(studentPackage.product_code_snapshot),
+              productName: String(studentPackage.product_name_snapshot),
+              creditUnit: String(studentPackage.credit_unit), creditType: String(studentPackage.credit_type),
+              entitledCredits: Number(studentPackage.entitled_credits),
+              remainingCredits: Number(studentPackage.entitled_credits),
+              validityDays: studentPackage.validity_days_snapshot == null ? null : Number(studentPackage.validity_days_snapshot),
+              priceAmountMinor: Number(studentPackage.price_amount_minor), currency: String(studentPackage.currency),
+              status: String(studentPackage.lifecycle_status), acquisitionType: String(studentPackage.acquisition_type),
+              validFrom: new Date(String(studentPackage.valid_from)).toISOString(),
+              validUntil: studentPackage.valid_until == null ? null : new Date(String(studentPackage.valid_until)).toISOString(),
+              sourceSystem: input.sourceSystem, sourceRef: input.sourceRef, sourceLineRef: input.sourceLineRef,
+              createdAt: new Date(String(studentPackage.created_at)).toISOString(),
+            } },
+          };
+          await completeIdempotency(tx, idem.id, result, 'student_package', studentPackageId);
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return uniqueConflict(error, 'Student package source reference already exists');
+      }
+    });
+  },
+
+  async listStudentPackageLedger(actor, slug, studentPackageId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'student_package.ledger', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'package:read');
+      const packages = await query<Record<string, unknown>>(
+        'SELECT id FROM student_packages WHERE organization_id = ? AND id = ?',
+        [access.id, studentPackageId],
+      );
+      if (!packages.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student package not found');
+      const [countRows, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          'SELECT COUNT(*)::int AS count FROM lesson_credit_ledger WHERE organization_id = ? AND student_package_id = ?',
+          [access.id, studentPackageId],
+        ),
+        query<Record<string, unknown>>(
+          `SELECT id, student_id, entry_type, delta, attendance_id, session_id,
+                  source_system, source_ref, source_line_ref, reversal_of_ledger_id,
+                  reason, actor_role, actor_display_name, metadata, created_at
+           FROM lesson_credit_ledger
+           WHERE organization_id = ? AND student_package_id = ?
+           ORDER BY created_at, id LIMIT ? OFFSET ?`,
+          [access.id, studentPackageId, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map((row) => ({
+          id: Number(row.id), studentId: String(row.student_id), entryType: String(row.entry_type),
+          delta: Number(row.delta), attendanceId: row.attendance_id == null ? null : String(row.attendance_id),
+          sessionId: row.session_id == null ? null : String(row.session_id),
+          sourceSystem: row.source_system == null ? null : String(row.source_system),
+          sourceRef: row.source_ref == null ? null : String(row.source_ref),
+          sourceLineRef: row.source_line_ref == null ? null : String(row.source_line_ref),
+          reversalOfLedgerId: row.reversal_of_ledger_id == null ? null : Number(row.reversal_of_ledger_id),
+          reason: String(row.reason), actorRole: String(row.actor_role),
+          actorDisplayName: String(row.actor_display_name), metadata: row.metadata as JsonValue,
+          createdAt: new Date(String(row.created_at)).toISOString(),
+        })),
+        total: Number(countRows[0]?.count ?? 0), page: pagination.page, pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async listSessions(actor, slug, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'session.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'session:read');
+      const [countRows, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          'SELECT COUNT(*)::int AS count FROM teaching_sessions WHERE organization_id = ?',
+          [access.id],
+        ),
+        query<Record<string, unknown>>(
+          `SELECT s.*,
+             COALESCE((
+               SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+                 'userId', st.teacher_user_id_snapshot,
+                 'displayName', st.teacher_display_name_snapshot,
+                 'role', st.role
+               ) ORDER BY CASE st.role WHEN 'lead' THEN 0 WHEN 'assistant' THEN 1 ELSE 2 END,
+                          st.teacher_display_name_snapshot, st.id)
+               FROM session_teachers st
+               WHERE st.organization_id = s.organization_id AND st.session_id = s.id
+             ), '[]'::jsonb) AS teachers,
+             (SELECT COUNT(*)::int FROM attendance_records a
+              WHERE a.organization_id = s.organization_id AND a.session_id = s.id) AS attendance_count
+           FROM teaching_sessions s
+           WHERE s.organization_id = ?
+           ORDER BY s.starts_at DESC, s.id
+           LIMIT ? OFFSET ?`,
+          [access.id, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map((row) => ({
+          id: String(row.id), title: String(row.title),
+          startsAt: new Date(String(row.starts_at)).toISOString(),
+          endsAt: new Date(String(row.ends_at)).toISOString(),
+          timezone: String(row.timezone), status: String(row.status), version: Number(row.version),
+          startedAt: row.started_at == null ? null : new Date(String(row.started_at)).toISOString(),
+          completedAt: row.completed_at == null ? null : new Date(String(row.completed_at)).toISOString(),
+          cancelledAt: row.cancelled_at == null ? null : new Date(String(row.cancelled_at)).toISOString(),
+          teachers: row.teachers as JsonValue, attendanceCount: Number(row.attendance_count),
+          createdAt: new Date(String(row.created_at)).toISOString(),
+          updatedAt: new Date(String(row.updated_at)).toISOString(),
+        })),
+        total: Number(countRows[0]?.count ?? 0), page: pagination.page, pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async getSession(actor, slug, sessionId, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'session.read', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'session:read');
+      const rows = await query<Record<string, unknown>>(
+        `SELECT s.*,
+           COALESCE((
+             SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+               'userId', st.teacher_user_id_snapshot,
+               'displayName', st.teacher_display_name_snapshot,
+               'role', st.role
+             ) ORDER BY CASE st.role WHEN 'lead' THEN 0 WHEN 'assistant' THEN 1 ELSE 2 END,
+                        st.teacher_display_name_snapshot, st.id)
+             FROM session_teachers st
+             WHERE st.organization_id = s.organization_id AND st.session_id = s.id
+           ), '[]'::jsonb) AS teachers
+         FROM teaching_sessions s
+         WHERE s.organization_id = ? AND s.id = ?`,
+        [access.id, sessionId],
+      );
+      if (!rows.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found');
+      const row = rows[0];
+      const attendance = await query<Record<string, unknown>>(
+        `SELECT a.id, a.student_id, p.display_name, a.student_package_id,
+                a.status, a.credit_cost, a.notes, a.updated_at
+         FROM attendance_records a
+         JOIN student_profiles p
+           ON p.organization_id = a.organization_id AND p.id = a.student_id
+         WHERE a.organization_id = ? AND a.session_id = ?
+         ORDER BY p.display_name, a.student_id`,
+        [access.id, sessionId],
+      );
+      return {
+        id: String(row.id), title: String(row.title),
+        startsAt: new Date(String(row.starts_at)).toISOString(),
+        endsAt: new Date(String(row.ends_at)).toISOString(),
+        timezone: String(row.timezone), status: String(row.status), version: Number(row.version),
+        startedAt: row.started_at == null ? null : new Date(String(row.started_at)).toISOString(),
+        completedAt: row.completed_at == null ? null : new Date(String(row.completed_at)).toISOString(),
+        cancelledAt: row.cancelled_at == null ? null : new Date(String(row.cancelled_at)).toISOString(),
+        teachers: row.teachers as JsonValue,
+        attendance: attendance.map((item) => ({
+          id: String(item.id), studentId: String(item.student_id), displayName: String(item.display_name),
+          studentPackageId: item.student_package_id == null ? null : String(item.student_package_id),
+          status: String(item.status), creditCost: Number(item.credit_cost), notes: String(item.notes),
+          updatedAt: new Date(String(item.updated_at)).toISOString(),
+        })),
+        createdAt: new Date(String(row.created_at)).toISOString(),
+        updatedAt: new Date(String(row.updated_at)).toISOString(),
+      };
+    });
+  },
+
+  async createSession(actor, slug, input, idempotencyKey, requestHash, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'session.create', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'session.create', 120, '1 minute');
+      return await sql.begin(async (tx) => {
+        const access = await accessForWrite(tx, actor.userId, slug);
+        requireWritable(access);
+        requirePermission(access, 'session:manage');
+        const idem = await beginIdempotency(tx, actor.userId, access.id, 'session.create', idempotencyKey, requestHash);
+        if ('replay' in idem) return idem.replay;
+        const rows = await tx`
+          INSERT INTO teaching_sessions (
+            organization_id, title, starts_at, ends_at, timezone, created_by_user_id
+          ) VALUES (
+            ${access.id}, ${input.title}, ${input.startsAt}, ${input.endsAt},
+            ${input.timezone ?? access.timezone}, ${actor.userId}
+          )
+          RETURNING id, title, starts_at, ends_at, timezone, status, version, created_at, updated_at`;
+        const session = rows[0] as Record<string, unknown>;
+        const sessionId = String(session.id);
+        const teachers: JsonObject[] = [];
+        for (let index = 0; index < input.teacherUserIds.length; index += 1) {
+          const teacherUserId = input.teacherUserIds[index];
+          const members = await tx`
+            SELECT m.user_id, m.role, u.display_name
+            FROM organization_members m
+            JOIN app_users u ON u.id = m.user_id
+            WHERE m.organization_id = ${access.id} AND m.user_id = ${teacherUserId}
+              AND m.status = 'active' AND m.role IN ('owner', 'admin', 'teacher', 'assistant')`;
+          if (!members.length) {
+            throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Assigned teacher is not an active teaching member');
+          }
+          const member = members[0] as Record<string, unknown>;
+          const role = index === 0 ? 'lead' : 'assistant';
+          await tx`
+            INSERT INTO session_teachers (
+              organization_id, session_id, teacher_user_id, teacher_user_id_snapshot,
+              teacher_display_name_snapshot, role
+            ) VALUES (
+              ${access.id}, ${sessionId}, ${teacherUserId}, ${teacherUserId},
+              ${String(member.display_name)}, ${role}
+            )`;
+          teachers.push({ userId: teacherUserId, displayName: String(member.display_name), role });
+        }
+        const attendance: JsonObject[] = [];
+        for (const attendee of input.attendees) {
+          const packages = await tx`
+            SELECT p.id, s.display_name
+            FROM student_packages p
+            JOIN student_profiles s
+              ON s.organization_id = p.organization_id AND s.id = p.student_id
+            WHERE p.organization_id = ${access.id} AND p.id = ${attendee.studentPackageId}
+              AND p.student_id = ${attendee.studentId} AND p.lifecycle_status = 'active'
+              AND p.valid_from <= ${input.startsAt}::timestamptz
+              AND (p.valid_until IS NULL OR p.valid_until > ${input.startsAt}::timestamptz)`;
+          if (!packages.length) {
+            throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Active student package not found for an attendee');
+          }
+          const rows = await tx`
+            INSERT INTO attendance_records (
+              organization_id, session_id, student_id, student_package_id,
+              status, credit_cost, notes, recorded_by_user_id
+            ) VALUES (
+              ${access.id}, ${sessionId}, ${attendee.studentId}, ${attendee.studentPackageId},
+              'expected', ${attendee.creditCost}, '', ${actor.userId}
+            )
+            RETURNING id, student_id, student_package_id, status, credit_cost, notes, updated_at`;
+          const row = rows[0] as Record<string, unknown>;
+          attendance.push({
+            id: String(row.id), studentId: String(row.student_id),
+            displayName: String(packages[0].display_name), studentPackageId: String(row.student_package_id),
+            status: String(row.status), creditCost: Number(row.credit_cost), notes: String(row.notes),
+            updatedAt: new Date(String(row.updated_at)).toISOString(),
+          });
+        }
+        await tx`
+          INSERT INTO session_events (
+            organization_id, session_id, event_type, actor_user_id, actor_role,
+            actor_display_name, request_id, metadata
+          ) VALUES (
+            ${access.id}, ${sessionId}, 'scheduled', ${actor.userId}, ${access.role},
+            ${actor.displayName}, ${requestId},
+            ${sql.json({ teacherUserIds: input.teacherUserIds, attendeeCount: attendance.length })}
+          )`;
+        await tx`
+          INSERT INTO teaching_audit_events (
+            organization_id, actor_user_id, actor_role, actor_display_name,
+            action, entity_type, entity_id, request_id, metadata
+          ) VALUES (
+            ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+            'session.create', 'teaching_session', ${sessionId}, ${requestId},
+            ${sql.json({ startsAt: input.startsAt, teacherCount: teachers.length, attendeeCount: attendance.length })}
+          )`;
+        const result: MutationResult = {
+          status: 201,
+          body: { session: {
+            id: sessionId, title: String(session.title),
+            startsAt: new Date(String(session.starts_at)).toISOString(),
+            endsAt: new Date(String(session.ends_at)).toISOString(),
+            timezone: String(session.timezone), status: String(session.status), version: Number(session.version),
+            teachers, attendance, attendanceCount: attendance.length,
+            startedAt: null, completedAt: null, cancelledAt: null,
+            createdAt: new Date(String(session.created_at)).toISOString(),
+            updatedAt: new Date(String(session.updated_at)).toISOString(),
+          } },
+        };
+        await completeIdempotency(tx, idem.id, result, 'teaching_session', sessionId);
+        return result;
+      }) as MutationResult;
+    });
+  },
+
+  async saveAttendanceBatch(actor, slug, sessionId, input, idempotencyKey, requestHash, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'session.attendance.batch', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'session.attendance.batch', 240, '1 minute');
+      return await sql.begin(async (tx) => {
+        const access = await accessForWrite(tx, actor.userId, slug);
+        requireWritable(access);
+        requirePermission(access, 'session:manage');
+        const idem = await beginIdempotency(
+          tx, actor.userId, access.id, `session.attendance.batch:${sessionId}`, idempotencyKey, requestHash,
+        );
+        if ('replay' in idem) return idem.replay;
+        const sessions = await tx`
+          SELECT id, status FROM teaching_sessions
+          WHERE organization_id = ${access.id} AND id = ${sessionId}
+          FOR UPDATE`;
+        if (!sessions.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found');
+        if (!['scheduled', 'in_progress'].includes(String(sessions[0].status))) {
+          throw new TeachingApiException('CONFLICT', 409, 'Attendance cannot change after the session is closed');
+        }
+        const saved: JsonObject[] = [];
+        for (const item of input.records) {
+          const rows = await tx`
+            UPDATE attendance_records
+            SET status = ${item.status}, recorded_by_user_id = ${actor.userId}
+            WHERE organization_id = ${access.id} AND session_id = ${sessionId} AND id = ${item.attendanceId}
+            RETURNING id, student_id, student_package_id, status, credit_cost, notes, updated_at`;
+          if (!rows.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Attendance record not found');
+          const row = rows[0] as Record<string, unknown>;
+          saved.push({
+            id: String(row.id), studentId: String(row.student_id),
+            studentPackageId: row.student_package_id == null ? null : String(row.student_package_id),
+            status: String(row.status), creditCost: Number(row.credit_cost), notes: String(row.notes),
+            updatedAt: new Date(String(row.updated_at)).toISOString(),
+          });
+        }
+        await tx`
+          INSERT INTO session_events (
+            organization_id, session_id, event_type, actor_user_id, actor_role,
+            actor_display_name, request_id, metadata
+          ) VALUES (
+            ${access.id}, ${sessionId}, 'attendance_updated', ${actor.userId}, ${access.role},
+            ${actor.displayName}, ${requestId}, ${sql.json({ count: saved.length })}
+          )`;
+        await tx`
+          INSERT INTO teaching_audit_events (
+            organization_id, actor_user_id, actor_role, actor_display_name,
+            action, entity_type, entity_id, request_id, metadata
+          ) VALUES (
+            ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+            'session.attendance.batch', 'teaching_session', ${sessionId}, ${requestId},
+            ${sql.json({ count: saved.length })}
+          )`;
+        const result: MutationResult = { status: 200, body: { attendance: saved } };
+        await completeIdempotency(tx, idem.id, result, 'teaching_session', sessionId);
+        return result;
+      }) as MutationResult;
+    });
+  },
+
+  async completeSession(actor, slug, sessionId, idempotencyKey, requestHash, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'session.complete', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'session.complete', 120, '1 minute');
+      return await sql.begin(async (tx) => {
+        const access = await accessForWrite(tx, actor.userId, slug);
+        requireWritable(access);
+        requirePermission(access, 'session:manage');
+        const idem = await beginIdempotency(
+          tx, actor.userId, access.id, `session.complete:${sessionId}`, idempotencyKey, requestHash,
+        );
+        if ('replay' in idem) return idem.replay;
+        const sessions = await tx`
+          SELECT id, status, starts_at, completed_at
+          FROM teaching_sessions
+          WHERE organization_id = ${access.id} AND id = ${sessionId}
+          FOR UPDATE`;
+        if (!sessions.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found');
+        const session = sessions[0] as Record<string, unknown>;
+        if (session.status === 'cancelled') {
+          throw new TeachingApiException('CONFLICT', 409, 'A cancelled session cannot be completed');
+        }
+        if (session.status === 'completed') {
+          const totals = await tx`
+            SELECT COUNT(*)::int AS attendance_count, COALESCE(-SUM(delta), 0)::int AS total_credits
+            FROM lesson_credit_ledger
+            WHERE organization_id = ${access.id} AND session_id = ${sessionId} AND entry_type = 'consume'`;
+          const result: MutationResult = {
+            status: 200,
+            body: { session: { id: sessionId, status: 'completed', completedAt: new Date(String(session.completed_at)).toISOString() },
+              consumption: { attendanceCount: Number(totals[0].attendance_count), totalCredits: Number(totals[0].total_credits) } },
+          };
+          await completeIdempotency(tx, idem.id, result, 'teaching_session', sessionId);
+          return result;
+        }
+        const attendanceRows = await tx`
+          SELECT id, student_id, student_package_id, status, credit_cost
+          FROM attendance_records
+          WHERE organization_id = ${access.id} AND session_id = ${sessionId}
+          ORDER BY student_package_id NULLS LAST, id
+          FOR UPDATE`;
+        if (!attendanceRows.length) {
+          throw new TeachingApiException('CONFLICT', 409, 'Session needs attendance before completion');
+        }
+        if (attendanceRows.some((row) => row.status === 'expected')) {
+          throw new TeachingApiException('CONFLICT', 409, 'Resolve all expected attendance before completion');
+        }
+        const billable = attendanceRows.filter((row) => row.status === 'present' || row.status === 'late');
+        let totalCredits = 0;
+        for (const attendance of billable) {
+          const packageId = String(attendance.student_package_id);
+          const packages = await tx`
+            SELECT id, lifecycle_status, valid_from, valid_until
+            FROM student_packages
+            WHERE organization_id = ${access.id} AND id = ${packageId}
+              AND student_id = ${String(attendance.student_id)}
+            FOR UPDATE`;
+          if (!packages.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student package not found');
+          const studentPackage = packages[0] as Record<string, unknown>;
+          const sessionStartsAt = new Date(String(session.starts_at)).getTime();
+          if (
+            studentPackage.lifecycle_status !== 'active' ||
+            new Date(String(studentPackage.valid_from)).getTime() > sessionStartsAt ||
+            (studentPackage.valid_until != null && new Date(String(studentPackage.valid_until)).getTime() <= sessionStartsAt)
+          ) {
+            throw new TeachingApiException('CONFLICT', 409, 'Student package is not active for the session time');
+          }
+          const balances = await tx`
+            SELECT COALESCE(SUM(delta), 0)::int AS balance
+            FROM lesson_credit_ledger
+            WHERE organization_id = ${access.id} AND student_package_id = ${packageId}`;
+          const creditCost = Number(attendance.credit_cost);
+          if (Number(balances[0].balance) < creditCost) {
+            throw new TeachingApiException('CONFLICT', 409, 'Student package has insufficient credits');
+          }
+          await tx`
+            INSERT INTO lesson_credit_ledger (
+              organization_id, student_package_id, student_id, entry_type, delta,
+              attendance_id, session_id, idempotency_key, reason, actor_user_id,
+              actor_role, actor_display_name, metadata
+            ) VALUES (
+              ${access.id}, ${packageId}, ${String(attendance.student_id)}, 'consume', ${-creditCost},
+              ${String(attendance.id)}, ${sessionId}, ${`attendance:${String(attendance.id)}`},
+              'Session attendance', ${actor.userId}, ${access.role}, ${actor.displayName},
+              ${sql.json({ attendanceStatus: String(attendance.status) })}
+            )`;
+          totalCredits += creditCost;
+        }
+        const completed = await tx`
+          UPDATE teaching_sessions
+          SET status = 'completed', completed_at = NOW(), version = version + 1
+          WHERE organization_id = ${access.id} AND id = ${sessionId}
+          RETURNING completed_at`;
+        await tx`
+          INSERT INTO session_events (
+            organization_id, session_id, event_type, actor_user_id, actor_role,
+            actor_display_name, request_id, metadata
+          ) VALUES (
+            ${access.id}, ${sessionId}, 'completed', ${actor.userId}, ${access.role},
+            ${actor.displayName}, ${requestId},
+            ${sql.json({ attendanceCount: billable.length, totalCredits })}
+          )`;
+        await tx`
+          INSERT INTO teaching_audit_events (
+            organization_id, actor_user_id, actor_role, actor_display_name,
+            action, entity_type, entity_id, request_id, metadata
+          ) VALUES (
+            ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+            'session.complete', 'teaching_session', ${sessionId}, ${requestId},
+            ${sql.json({ attendanceCount: billable.length, totalCredits })}
+          )`;
+        const result: MutationResult = {
+          status: 200,
+          body: { session: { id: sessionId, status: 'completed', completedAt: new Date(String(completed[0].completed_at)).toISOString() },
+            consumption: { attendanceCount: billable.length, totalCredits } },
+        };
+        await completeIdempotency(tx, idem.id, result, 'teaching_session', sessionId);
+        return result;
+      }) as MutationResult;
     });
   },
 };
@@ -815,6 +1780,159 @@ export function createTeachingSaasRoutes(deps: {
       const key = idempotencyKeyOf(c);
       const body = await jsonBody(c);
       const result = await repository.createStudent(actor, c.req.param('orgSlug'), parseStudentInput(body.value), key, sha256(body.raw), requestId);
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/package-products', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listPackageProducts(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
+      return c.json({ packageProducts: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/package-products', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      const result = await repository.createPackageProduct(
+        actor, c.req.param('orgSlug'), parsePackageProductInput(body.value), key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/students/:studentId/packages', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listStudentPackages(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('studentId'), 'studentId'), paginationOf(c), requestId,
+      );
+      return c.json({ studentPackages: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/students/:studentId/packages', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      const result = await repository.createStudentPackage(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('studentId'), 'studentId'),
+        parseStudentPackageInput(body.value), key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/student-packages/:studentPackageId/ledger', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listStudentPackageLedger(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('studentPackageId'), 'studentPackageId'),
+        paginationOf(c), requestId,
+      );
+      return c.json({ ledger: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/sessions', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listSessions(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
+      return c.json({ sessions: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/sessions', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      const result = await repository.createSession(
+        actor, c.req.param('orgSlug'), parseSessionInput(body.value), key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/sessions/:sessionId', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const session = await repository.getSession(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('sessionId'), 'sessionId'), requestId,
+      );
+      return c.json({ session });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/batch', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      const result = await repository.saveAttendanceBatch(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('sessionId'), 'sessionId'),
+        parseAttendanceBatchInput(body.value), key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/sessions/:sessionId/complete', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      if (Object.keys(body.value).length) {
+        throw new TeachingApiException('INVALID_INPUT', 400, 'Session completion body must be empty');
+      }
+      const result = await repository.completeSession(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('sessionId'), 'sessionId'),
+        key, sha256(body.raw), requestId,
+      );
       return c.json(result.body, result.status);
     } catch (error) {
       return errorResponse(c, error, requestId);
