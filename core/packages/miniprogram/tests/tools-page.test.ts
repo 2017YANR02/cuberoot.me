@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 interface ToolsPage {
+  data: Record<string, unknown>;
   onHide(): void;
   onUnload(): void;
   onShareAppMessage(): WechatMiniprogram.Page.ICustomShareContent;
   openTool(event: { currentTarget: { dataset: { key?: unknown } } }): void;
+  setData(data: Record<string, unknown>): void;
 }
 
 async function loadPage(wxApi: Record<string, unknown>): Promise<ToolsPage> {
@@ -15,6 +17,9 @@ async function loadPage(wxApi: Record<string, unknown>): Promise<ToolsPage> {
   });
   await import('../src/pages/tools/index');
   if (!page) throw new Error('tools page was not registered');
+  page.setData = function setData(data) {
+    this.data = { ...this.data, ...data };
+  };
   return page;
 }
 
@@ -68,6 +73,22 @@ describe('mini program tools page', () => {
     page.openTool(toolEvent('wiki'));
 
     expect(showToast).toHaveBeenCalledWith({ icon: 'none', title: '页面暂时无法打开' });
+    expect(page.data.status).toBe('页面暂时无法打开');
+  });
+
+  it('keeps navigation failure visible when toast feedback is unavailable', async () => {
+    const page = await loadPage({
+      navigateTo(options: { fail?(): void }) {
+        options.fail?.();
+      },
+      showToast() {
+        throw new Error('toast unavailable');
+      },
+    });
+
+    page.openTool(toolEvent('wiki'));
+
+    expect(page.data.status).toBe('页面暂时无法打开');
   });
 
   it('ignores a pending navigation failure after the page is hidden', async () => {
@@ -83,6 +104,7 @@ describe('mini program tools page', () => {
     fail?.();
 
     expect(showToast).not.toHaveBeenCalled();
+    expect(page.data.status).toBe('');
     page.openTool(toolEvent('alg'));
     expect(navigateTo).toHaveBeenCalledTimes(2);
   });

@@ -218,17 +218,20 @@ Page({
   },
 
   openAccount() {
-    openWebsitePageOnce(this, 'account', {
-      failureMessage: '账号页暂时无法打开',
+    this.openWebsiteAction('account', '账号页暂时无法打开');
+  },
+
+  openWebsiteAction(key: 'account' | 'logout' | 'privacy', failureMessage: string) {
+    this.setData({ actionStatus: '' });
+    openWebsitePageOnce(this, key, {
+      failureMessage,
+      onFailure: (actionStatus) => this.setData({ actionStatus }),
     });
   },
 
   openPrivacy() {
     if (typeof wx.openPrivacyContract !== 'function') {
-      this.setData({ actionStatus: '' });
-      openWebsitePageOnce(this, 'privacy', {
-        failureMessage: '隐私说明暂时无法打开',
-      });
+      this.openWebsiteAction('privacy', '隐私说明暂时无法打开');
       return;
     }
 
@@ -241,9 +244,7 @@ Page({
     }
     const openWebsitePrivacy = () => {
       if (!privacyContracts.settle(this, privacyAttempt)) return;
-      openWebsitePageOnce(this, 'privacy', {
-        failureMessage: '隐私说明暂时无法打开',
-      });
+      this.openWebsiteAction('privacy', '隐私说明暂时无法打开');
     };
 
     try {
@@ -288,9 +289,7 @@ Page({
           this.showSyncState('');
           this.setData({ status: '', statusError: false });
 
-          openWebsitePageOnce(this, 'logout', {
-            failureMessage: '已退出小程序，网站退出暂未完成',
-          });
+          this.openWebsiteAction('logout', '已退出小程序，网站退出暂未完成');
         },
         fail: () => {
           if (!logoutConfirmations.settle(this, confirmationAttempt)) return;

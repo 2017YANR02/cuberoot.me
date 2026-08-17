@@ -20,4 +20,12 @@
       <text class="tool-arrow" aria-hidden="true">›</text>
     </button>
   </view>
+
+  <text
+    class="status-text status-text--error tools-status"
+    wx:if="{{status}}"
+    aria-role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  >{{status}}</text>
 </view>
