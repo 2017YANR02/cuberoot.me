@@ -126,6 +126,7 @@ export const TEACHING_PERMISSIONS = [
   'package:manage',
   'session:read',
   'session:manage',
+  'session:create',
   'finance:read',
   'finance:manage',
   'audit:read',
@@ -136,10 +137,10 @@ export type TeachingPermission = (typeof TEACHING_PERMISSIONS)[number];
 const ROLE_PERMISSIONS: Record<TeachingOrganizationRole, readonly TeachingPermission[]> = {
   owner: TEACHING_PERMISSIONS,
   admin: TEACHING_PERMISSIONS,
-  teacher: ['member:read'],
-  assistant: ['member:read'],
+  teacher: ['member:read', 'session:read', 'session:manage'],
+  assistant: ['member:read', 'session:read', 'session:manage'],
   finance: ['member:read', 'package:read', 'package:manage', 'finance:read', 'finance:manage'],
-  viewer: ['member:read', 'finance:read'],
+  viewer: ['member:read'],
 };
 
 export function isTeachingOrganizationRole(value: unknown): value is TeachingOrganizationRole {

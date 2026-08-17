@@ -211,6 +211,15 @@ export class TeachingApiException extends Error {
   }
 }
 
+class ConcealedTeachingPermissionDeniedException extends TeachingApiException {
+  readonly auditReason = 'PERMISSION_DENIED';
+
+  constructor(message: string) {
+    super('RESOURCE_NOT_FOUND', 404, message);
+    this.name = 'ConcealedTeachingPermissionDeniedException';
+  }
+}
+
 function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex');
 }
@@ -524,6 +533,18 @@ function requirePermission(access: OrganizationAccess, permission: TeachingPermi
   }
 }
 
+type SessionAccessScope = 'organization' | 'assigned';
+
+function requireSessionScope(
+  access: OrganizationAccess,
+  permission: 'session:read' | 'session:manage',
+): SessionAccessScope {
+  requirePermission(access, permission);
+  if (access.role === 'owner' || access.role === 'admin') return 'organization';
+  if (access.role === 'teacher' || access.role === 'assistant') return 'assigned';
+  throw new TeachingApiException('PERMISSION_DENIED', 403, 'Organization role does not allow this action');
+}
+
 function requireWritable(access: OrganizationAccess): void {
   if (access.status !== 'active') {
     throw new TeachingApiException('ORGANIZATION_SUSPENDED', 409, 'Organization is not active');
@@ -558,8 +579,16 @@ async function accessForWrite(tx: Tx, actorUserId: number, slug: string): Promis
 }
 
 function isAccessDenial(error: unknown): error is TeachingApiException {
-  return error instanceof TeachingApiException &&
-    (error.code === 'ORGANIZATION_NOT_FOUND' || error.code === 'PERMISSION_DENIED');
+  return error instanceof ConcealedTeachingPermissionDeniedException || (
+    error instanceof TeachingApiException &&
+    (error.code === 'ORGANIZATION_NOT_FOUND' || error.code === 'PERMISSION_DENIED')
+  );
+}
+
+function accessDenialReason(error: TeachingApiException): string {
+  return error instanceof ConcealedTeachingPermissionDeniedException
+    ? error.auditReason
+    : error.code;
 }
 
 async function recordDeniedOrganizationAccess(
@@ -584,7 +613,7 @@ async function recordDeniedOrganizationAccess(
       actor.displayName,
       action,
       requestId,
-      JSON.stringify({ reason: error.code }),
+      JSON.stringify({ reason: accessDenialReason(error) }),
       actor.userId,
       slug,
     ],
@@ -1274,14 +1303,27 @@ export const teachingSaasRepository: TeachingSaasRepository = {
   async listSessions(actor, slug, pagination, requestId) {
     return withDeniedAccessAudit(actor, slug, 'session.list', requestId, async () => {
       const access = await accessForRead(actor.userId, slug);
-      requirePermission(access, 'session:read');
-      const [countRows, rows] = await Promise.all([
-        query<Record<string, unknown>>(
-          'SELECT COUNT(*)::int AS count FROM teaching_sessions WHERE organization_id = ?',
-          [access.id],
-        ),
-        query<Record<string, unknown>>(
-          `SELECT s.*,
+      const scope = requireSessionScope(access, 'session:read');
+      const countQuery = scope === 'organization'
+        ? query<Record<string, unknown>>(
+            'SELECT COUNT(*)::int AS count FROM teaching_sessions WHERE organization_id = ?',
+            [access.id],
+          )
+        : query<Record<string, unknown>>(
+            `SELECT COUNT(*)::int AS count
+             FROM teaching_sessions s
+             WHERE s.organization_id = ?
+               AND EXISTS (
+                 SELECT 1 FROM session_teachers assigned
+                 WHERE assigned.organization_id = s.organization_id
+                   AND assigned.session_id = s.id
+                   AND assigned.teacher_user_id = ?
+               )`,
+            [access.id, actor.userId],
+          );
+      const sessionsQuery = scope === 'organization'
+        ? query<Record<string, unknown>>(
+            `SELECT s.*,
              COALESCE((
                SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
                  'userId', st.teacher_user_id_snapshot,
@@ -1298,9 +1340,35 @@ export const teachingSaasRepository: TeachingSaasRepository = {
            WHERE s.organization_id = ?
            ORDER BY s.starts_at DESC, s.id
            LIMIT ? OFFSET ?`,
-          [access.id, pagination.pageSize, pagination.offset],
-        ),
-      ]);
+            [access.id, pagination.pageSize, pagination.offset],
+          )
+        : query<Record<string, unknown>>(
+            `SELECT s.*,
+             COALESCE((
+               SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+                 'userId', st.teacher_user_id_snapshot,
+                 'displayName', st.teacher_display_name_snapshot,
+                 'role', st.role
+               ) ORDER BY CASE st.role WHEN 'lead' THEN 0 WHEN 'assistant' THEN 1 ELSE 2 END,
+                          st.teacher_display_name_snapshot, st.id)
+               FROM session_teachers st
+               WHERE st.organization_id = s.organization_id AND st.session_id = s.id
+             ), '[]'::jsonb) AS teachers,
+             (SELECT COUNT(*)::int FROM attendance_records a
+              WHERE a.organization_id = s.organization_id AND a.session_id = s.id) AS attendance_count
+           FROM teaching_sessions s
+           WHERE s.organization_id = ?
+             AND EXISTS (
+               SELECT 1 FROM session_teachers assigned
+               WHERE assigned.organization_id = s.organization_id
+                 AND assigned.session_id = s.id
+                 AND assigned.teacher_user_id = ?
+             )
+           ORDER BY s.starts_at DESC, s.id
+           LIMIT ? OFFSET ?`,
+            [access.id, actor.userId, pagination.pageSize, pagination.offset],
+          );
+      const [countRows, rows] = await Promise.all([countQuery, sessionsQuery]);
       return {
         items: rows.map((row) => ({
           id: String(row.id), title: String(row.title),
@@ -1322,9 +1390,10 @@ export const teachingSaasRepository: TeachingSaasRepository = {
   async getSession(actor, slug, sessionId, requestId) {
     return withDeniedAccessAudit(actor, slug, 'session.read', requestId, async () => {
       const access = await accessForRead(actor.userId, slug);
-      requirePermission(access, 'session:read');
-      const rows = await query<Record<string, unknown>>(
-        `SELECT s.*,
+      const scope = requireSessionScope(access, 'session:read');
+      const rows = scope === 'organization'
+        ? await query<Record<string, unknown>>(
+            `SELECT s.*,
            COALESCE((
              SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
                'userId', st.teacher_user_id_snapshot,
@@ -1337,9 +1406,40 @@ export const teachingSaasRepository: TeachingSaasRepository = {
            ), '[]'::jsonb) AS teachers
          FROM teaching_sessions s
          WHERE s.organization_id = ? AND s.id = ?`,
-        [access.id, sessionId],
-      );
-      if (!rows.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found');
+            [access.id, sessionId],
+          )
+        : await query<Record<string, unknown>>(
+            `SELECT s.*,
+           COALESCE((
+             SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+               'userId', st.teacher_user_id_snapshot,
+               'displayName', st.teacher_display_name_snapshot,
+               'role', st.role
+             ) ORDER BY CASE st.role WHEN 'lead' THEN 0 WHEN 'assistant' THEN 1 ELSE 2 END,
+                        st.teacher_display_name_snapshot, st.id)
+             FROM session_teachers st
+             WHERE st.organization_id = s.organization_id AND st.session_id = s.id
+           ), '[]'::jsonb) AS teachers
+         FROM teaching_sessions s
+         WHERE s.organization_id = ? AND s.id = ?
+           AND EXISTS (
+             SELECT 1 FROM session_teachers assigned
+             WHERE assigned.organization_id = s.organization_id
+               AND assigned.session_id = s.id
+               AND assigned.teacher_user_id = ?
+           )`,
+            [access.id, sessionId, actor.userId],
+          );
+      if (!rows.length) {
+        if (scope === 'assigned') {
+          const existing = await query<Record<string, unknown>>(
+            'SELECT 1 FROM teaching_sessions WHERE organization_id = ? AND id = ?',
+            [access.id, sessionId],
+          );
+          if (existing.length) throw new ConcealedTeachingPermissionDeniedException('Session not found');
+        }
+        throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found');
+      }
       const row = rows[0];
       const attendance = await query<Record<string, unknown>>(
         `SELECT a.id, a.student_id, p.display_name, a.student_package_id,
@@ -1378,7 +1478,7 @@ export const teachingSaasRepository: TeachingSaasRepository = {
       return await sql.begin(async (tx) => {
         const access = await accessForWrite(tx, actor.userId, slug);
         requireWritable(access);
-        requirePermission(access, 'session:manage');
+        requirePermission(access, 'session:create');
         const idem = await beginIdempotency(tx, actor.userId, access.id, 'session.create', idempotencyKey, requestHash);
         if ('replay' in idem) return idem.replay;
         const rows = await tx`
@@ -1489,16 +1589,35 @@ export const teachingSaasRepository: TeachingSaasRepository = {
       return await sql.begin(async (tx) => {
         const access = await accessForWrite(tx, actor.userId, slug);
         requireWritable(access);
-        requirePermission(access, 'session:manage');
+        const scope = requireSessionScope(access, 'session:manage');
+        const sessions = scope === 'organization'
+          ? await tx`
+              SELECT s.id, s.status FROM teaching_sessions s
+              WHERE s.organization_id = ${access.id} AND s.id = ${sessionId}
+              FOR UPDATE OF s`
+          : await tx`
+              SELECT s.id, s.status FROM teaching_sessions s
+              WHERE s.organization_id = ${access.id} AND s.id = ${sessionId}
+                AND EXISTS (
+                  SELECT 1 FROM session_teachers assigned
+                  WHERE assigned.organization_id = s.organization_id
+                    AND assigned.session_id = s.id
+                    AND assigned.teacher_user_id = ${actor.userId}
+                )
+              FOR UPDATE OF s`;
+        if (!sessions.length) {
+          if (scope === 'assigned') {
+            const existing = await tx`
+              SELECT 1 FROM teaching_sessions
+              WHERE organization_id = ${access.id} AND id = ${sessionId}`;
+            if (existing.length) throw new ConcealedTeachingPermissionDeniedException('Session not found');
+          }
+          throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found');
+        }
         const idem = await beginIdempotency(
           tx, actor.userId, access.id, `session.attendance.batch:${sessionId}`, idempotencyKey, requestHash,
         );
         if ('replay' in idem) return idem.replay;
-        const sessions = await tx`
-          SELECT id, status FROM teaching_sessions
-          WHERE organization_id = ${access.id} AND id = ${sessionId}
-          FOR UPDATE`;
-        if (!sessions.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found');
         if (!['scheduled', 'in_progress'].includes(String(sessions[0].status))) {
           throw new TeachingApiException('CONFLICT', 409, 'Attendance cannot change after the session is closed');
         }
@@ -1548,17 +1667,37 @@ export const teachingSaasRepository: TeachingSaasRepository = {
       return await sql.begin(async (tx) => {
         const access = await accessForWrite(tx, actor.userId, slug);
         requireWritable(access);
-        requirePermission(access, 'session:manage');
+        const scope = requireSessionScope(access, 'session:manage');
+        const sessions = scope === 'organization'
+          ? await tx`
+              SELECT s.id, s.status, s.starts_at, s.completed_at
+              FROM teaching_sessions s
+              WHERE s.organization_id = ${access.id} AND s.id = ${sessionId}
+              FOR UPDATE OF s`
+          : await tx`
+              SELECT s.id, s.status, s.starts_at, s.completed_at
+              FROM teaching_sessions s
+              WHERE s.organization_id = ${access.id} AND s.id = ${sessionId}
+                AND EXISTS (
+                  SELECT 1 FROM session_teachers assigned
+                  WHERE assigned.organization_id = s.organization_id
+                    AND assigned.session_id = s.id
+                    AND assigned.teacher_user_id = ${actor.userId}
+                )
+              FOR UPDATE OF s`;
+        if (!sessions.length) {
+          if (scope === 'assigned') {
+            const existing = await tx`
+              SELECT 1 FROM teaching_sessions
+              WHERE organization_id = ${access.id} AND id = ${sessionId}`;
+            if (existing.length) throw new ConcealedTeachingPermissionDeniedException('Session not found');
+          }
+          throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found');
+        }
         const idem = await beginIdempotency(
           tx, actor.userId, access.id, `session.complete:${sessionId}`, idempotencyKey, requestHash,
         );
         if ('replay' in idem) return idem.replay;
-        const sessions = await tx`
-          SELECT id, status, starts_at, completed_at
-          FROM teaching_sessions
-          WHERE organization_id = ${access.id} AND id = ${sessionId}
-          FOR UPDATE`;
-        if (!sessions.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found');
         const session = sessions[0] as Record<string, unknown>;
         if (session.status === 'cancelled') {
           throw new TeachingApiException('CONFLICT', 409, 'A cancelled session cannot be completed');

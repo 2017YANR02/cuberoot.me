@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { hasTeachingPermission } from '@cuberoot/shared';
 
 const db = vi.hoisted(() => {
   const query = vi.fn();
@@ -287,8 +288,54 @@ describe('teaching SaaS repository tenant denial audit', () => {
     },
   );
 
-  it.each(['teacher', 'assistant', 'finance', 'viewer'] as const)(
-    'denies the organization-wide session roster to %s before assignments exist',
+  it('keeps organization-wide privileges out of operational and viewer roles', () => {
+    for (const role of ['owner', 'admin'] as const) {
+      expect(hasTeachingPermission(role, 'session:create')).toBe(true);
+      expect(hasTeachingPermission(role, 'session:manage')).toBe(true);
+      expect(hasTeachingPermission(role, 'package:manage')).toBe(true);
+    }
+    for (const role of ['teacher', 'assistant'] as const) {
+      expect(hasTeachingPermission(role, 'session:read')).toBe(true);
+      expect(hasTeachingPermission(role, 'session:manage')).toBe(true);
+      expect(hasTeachingPermission(role, 'session:create')).toBe(false);
+      expect(hasTeachingPermission(role, 'student:read')).toBe(false);
+      expect(hasTeachingPermission(role, 'package:read')).toBe(false);
+    }
+    expect(hasTeachingPermission('finance', 'package:read')).toBe(true);
+    expect(hasTeachingPermission('finance', 'package:manage')).toBe(true);
+    expect(hasTeachingPermission('finance', 'session:read')).toBe(false);
+    expect(hasTeachingPermission('finance', 'session:manage')).toBe(false);
+    expect(hasTeachingPermission('viewer', 'member:read')).toBe(true);
+    expect(hasTeachingPermission('viewer', 'finance:read')).toBe(false);
+    expect(hasTeachingPermission('viewer', 'session:read')).toBe(false);
+  });
+
+  it.each(['teacher', 'assistant'] as const)(
+    'lists only sessions assigned to %s',
+    async (role) => {
+      db.query
+        .mockResolvedValueOnce([{
+          id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
+          status: 'active', version: 1, role,
+        }])
+        .mockResolvedValueOnce([{ count: 0 }])
+        .mockResolvedValueOnce([]);
+      await expect(teachingSaasRepository.listSessions(
+        ACTOR, 'demo', { page: 1, pageSize: 30, offset: 0 }, 'request-sessions',
+      )).resolves.toMatchObject({ items: [], total: 0 });
+
+      for (const call of db.query.mock.calls.slice(1)) {
+        expect(call[0]).toContain('FROM session_teachers assigned');
+        expect(call[0]).toContain('assigned.organization_id = s.organization_id');
+        expect(call[0]).toContain('assigned.session_id = s.id');
+        expect(call[0]).toContain('assigned.teacher_user_id = ?');
+        expect(call[1]).toContain(ACTOR.userId);
+      }
+    },
+  );
+
+  it.each(['finance', 'viewer'] as const)(
+    'denies session roster access to %s and audits the refusal',
     async (role) => {
       db.query
         .mockResolvedValueOnce([{
@@ -298,25 +345,185 @@ describe('teaching SaaS repository tenant denial audit', () => {
         .mockResolvedValueOnce([]);
       await expect(teachingSaasRepository.listSessions(
         ACTOR, 'demo', { page: 1, pageSize: 30, offset: 0 }, 'request-sessions',
-      )).rejects.toEqual(expect.objectContaining<TeachingApiException>({ code: 'PERMISSION_DENIED' }));
+      )).rejects.toEqual(expect.objectContaining<TeachingApiException>({
+        code: 'PERMISSION_DENIED', status: 403,
+      }));
+      expect(db.query.mock.calls[1][0]).toContain('INSERT INTO teaching_audit_events');
+      expect(db.query.mock.calls[1][1]).toContain('session.list');
     },
   );
 
-  it('locks the student package before writing a consume ledger row and completes afterward', async () => {
+  it('returns only attendance-linked student display fields for an assigned assistant', async () => {
+    db.query
+      .mockResolvedValueOnce([{
+        id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
+        status: 'active', version: 1, role: 'assistant',
+      }])
+      .mockResolvedValueOnce([{
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', title: 'Assigned session',
+        starts_at: '2026-08-18T01:00:00.000Z', ends_at: '2026-08-18T02:00:00.000Z',
+        timezone: 'Asia/Shanghai', status: 'scheduled', version: 1,
+        started_at: null, completed_at: null, cancelled_at: null, teachers: [],
+        created_at: '2026-08-17T01:00:00.000Z', updated_at: '2026-08-17T01:00:00.000Z',
+      }])
+      .mockResolvedValueOnce([{
+        id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+        student_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', display_name: 'Student',
+        student_package_id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+        status: 'expected', credit_cost: 1, notes: '', updated_at: '2026-08-17T01:00:00.000Z',
+      }]);
+
+    const session = await teachingSaasRepository.getSession(
+      ACTOR, 'demo', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'request-assigned-session',
+    );
+
+    expect(db.query.mock.calls[1][0]).toContain('FROM session_teachers assigned');
+    expect(db.query.mock.calls[1][1]).toContain(ACTOR.userId);
+    expect(db.query.mock.calls[2][0]).toContain('JOIN student_profiles p');
+    expect(db.query.mock.calls[2][0]).toContain('a.organization_id = ? AND a.session_id = ?');
+    expect(session).toMatchObject({
+      attendance: [{ displayName: 'Student', status: 'expected', creditCost: 1 }],
+    });
+    expect(session.attendance[0]).not.toHaveProperty('balance');
+    expect(session.attendance[0]).not.toHaveProperty('priceAmountMinor');
+  });
+
+  it('returns and audits a concealed 404 for a same-organization unassigned session read', async () => {
+    db.query
+      .mockResolvedValueOnce([{
+        id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
+        status: 'active', version: 1, role: 'teacher',
+      }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ '?column?': 1 }])
+      .mockResolvedValueOnce([]);
+
+    await expect(teachingSaasRepository.getSession(
+      ACTOR, 'demo', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'request-session-read',
+    )).rejects.toEqual(expect.objectContaining<TeachingApiException>({
+      code: 'RESOURCE_NOT_FOUND', status: 404,
+    }));
+
+    expect(db.query.mock.calls[1][0]).toContain('FROM session_teachers assigned');
+    expect(db.query.mock.calls[1][1]).toEqual([
+      'organization-id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', ACTOR.userId,
+    ]);
+    expect(db.query.mock.calls[2][0]).toBe(
+      'SELECT 1 FROM teaching_sessions WHERE organization_id = ? AND id = ?',
+    );
+    expect(db.query.mock.calls[3][0]).toContain('INSERT INTO teaching_audit_events');
+    expect(db.query.mock.calls[3][1]).toContain('session.read');
+    expect(db.query.mock.calls[3][1]).toContain(JSON.stringify({ reason: 'PERMISSION_DENIED' }));
+    expect(db.query.mock.calls.some(([statement]) => String(statement).includes('FROM attendance_records'))).toBe(false);
+  });
+
+  it('does not write a denial audit for a genuinely missing assigned-session read', async () => {
+    db.query
+      .mockResolvedValueOnce([{
+        id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
+        status: 'active', version: 1, role: 'assistant',
+      }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+
+    await expect(teachingSaasRepository.getSession(
+      ACTOR, 'demo', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'request-missing-session',
+    )).rejects.toEqual(expect.objectContaining<TeachingApiException>({
+      code: 'RESOURCE_NOT_FOUND', status: 404,
+    }));
+    expect(db.query).toHaveBeenCalledTimes(3);
+    expect(db.query.mock.calls.some(([statement]) => String(statement).includes('teaching_audit_events'))).toBe(false);
+  });
+
+  it('audits a cross-organization session read without querying session rows', async () => {
+    db.query.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+
+    await expect(teachingSaasRepository.getSession(
+      ACTOR, 'outside', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'request-cross-session',
+    )).rejects.toEqual(expect.objectContaining<TeachingApiException>({
+      code: 'ORGANIZATION_NOT_FOUND', status: 404,
+    }));
+
+    expect(db.query).toHaveBeenCalledTimes(2);
+    expect(db.query.mock.calls[1][0]).toContain('INSERT INTO teaching_audit_events');
+    expect(db.query.mock.calls[1][1]).toContain('session.read');
+  });
+
+  it('denies session creation to a teacher before any idempotency or business write', async () => {
+    db.query.mockResolvedValueOnce([{ attempts: 1 }]).mockResolvedValueOnce([]);
+    db.tx.mockResolvedValueOnce([{
+      id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
+      status: 'active', version: 1, role: 'teacher',
+    }]);
+
+    await expect(teachingSaasRepository.createSession(
+      ACTOR,
+      'demo',
+      {
+        title: 'Unauthorized', startsAt: '2026-08-18T01:00:00.000Z',
+        endsAt: '2026-08-18T02:00:00.000Z', timezone: null,
+        teacherUserIds: [ACTOR.userId], attendees: [],
+      },
+      'teacher-create',
+      'request-hash',
+      'request-teacher-create',
+    )).rejects.toEqual(expect.objectContaining<TeachingApiException>({
+      code: 'PERMISSION_DENIED', status: 403,
+    }));
+
+    expect(db.tx).toHaveBeenCalledTimes(1);
+    expect(db.tx.mock.calls.some(([strings]) => Array.from(strings).join('?').includes('teaching_idempotency_requests'))).toBe(false);
+    expect(db.query.mock.calls[1][0]).toContain('INSERT INTO teaching_audit_events');
+  });
+
+  it('conceals and audits an unassigned teacher attendance write before attendance changes', async () => {
+    db.query.mockResolvedValueOnce([{ attempts: 1 }]).mockResolvedValueOnce([]);
+    db.tx
+      .mockResolvedValueOnce([{
+        id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
+        status: 'active', version: 1, role: 'teacher',
+      }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ '?column?': 1 }]);
+
+    await expect(teachingSaasRepository.saveAttendanceBatch(
+      ACTOR,
+      'demo',
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      { records: [{ attendanceId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', status: 'present' }] },
+      'attendance-denied',
+      'request-hash',
+      'request-attendance-denied',
+    )).rejects.toEqual(expect.objectContaining<TeachingApiException>({
+      code: 'RESOURCE_NOT_FOUND', status: 404,
+    }));
+
+    const statements = db.tx.mock.calls.map(([strings]) => Array.from(strings).join('?'));
+    expect(statements[1]).toContain('FROM session_teachers assigned');
+    expect(statements[1]).toContain('assigned.teacher_user_id = ?');
+    expect(db.tx.mock.calls[1].slice(1)).toContain(ACTOR.userId);
+    expect(statements[2]).toContain('SELECT 1 FROM teaching_sessions');
+    expect(statements.some((statement) => statement.includes('teaching_idempotency_requests'))).toBe(false);
+    expect(statements.some((statement) => statement.includes('UPDATE attendance_records'))).toBe(false);
+    expect(db.query.mock.calls[1][0]).toContain('INSERT INTO teaching_audit_events');
+    expect(db.query.mock.calls[1][1]).toContain(JSON.stringify({ reason: 'PERMISSION_DENIED' }));
+  });
+
+  it('lets an assigned teacher lock packages, consume credits, and complete the session in order', async () => {
     db.query.mockResolvedValueOnce([{ attempts: 1 }]);
     db.tx
       .mockResolvedValueOnce([{
         id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
-        status: 'active', version: 1, role: 'owner',
+        status: 'active', version: 1, role: 'teacher',
+      }])
+      .mockResolvedValueOnce([{
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', status: 'scheduled',
+        starts_at: '2026-08-18T01:00:00.000Z', completed_at: null,
       }])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ id: 9 }])
-      .mockResolvedValueOnce([{
-        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', status: 'scheduled',
-        starts_at: '2026-08-18T01:00:00.000Z', completed_at: null,
-      }])
       .mockResolvedValueOnce([{
         id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
         student_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
@@ -346,6 +553,12 @@ describe('teaching SaaS repository tenant denial audit', () => {
     });
 
     const statements = db.tx.mock.calls.map(([strings]) => Array.from(strings).join('?'));
+    expect(statements[1]).toContain('FROM session_teachers assigned');
+    expect(statements[1]).toContain('assigned.teacher_user_id = ?');
+    expect(db.tx.mock.calls[1].slice(1)).toContain(ACTOR.userId);
+    const idempotencyInsert = statements.findIndex((statement) =>
+      statement.includes('INSERT INTO teaching_idempotency_requests'));
+    expect(idempotencyInsert).toBeGreaterThan(1);
     const packageLock = statements.findIndex((statement) =>
       statement.includes('FROM student_packages') && statement.includes('FOR UPDATE'));
     const ledgerInsert = statements.findIndex((statement) => statement.includes('INSERT INTO lesson_credit_ledger'));
