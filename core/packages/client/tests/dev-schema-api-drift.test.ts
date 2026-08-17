@@ -105,4 +105,19 @@ describe('/dev/api endpoint catalog drift', () => {
     expect(undocumented, `route(s) mounted in index.ts but missing from /dev/api manifest`).toEqual([]);
     expect(orphan, `manifest entr(ies) for route(s) no longer mounted`).toEqual([]);
   });
+
+  it('lists every teaching SaaS route with the exact method and path', () => {
+    const routeSource = readFileSync(join(routesDir, 'teaching_saas.ts'), 'utf8');
+    const api = readFileSync(apiPage, 'utf8');
+    const fromRoute = [...routeSource.matchAll(/routes\.(get|post|put|patch|delete)\(\s*'([^']+)'/g)]
+      .map((match) => `${match[1].toUpperCase()} /v1${match[2]}`)
+      .filter((entry) => entry.includes(' /v1/teaching/'))
+      .sort();
+    const fromCatalog = [...api.matchAll(/\{ d: 'teaching-saas', m: '(GET|POST|PUT|PATCH|DELETE)', p: '([^']+)'/g)]
+      .map((match) => `${match[1]} ${match[2]}`)
+      .sort();
+
+    expect(fromRoute.length).toBeGreaterThan(0);
+    expect(fromCatalog).toEqual(fromRoute);
+  });
 });
