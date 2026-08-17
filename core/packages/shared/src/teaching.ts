@@ -39,6 +39,93 @@ export type TeachingSessionStatus = (typeof TEACHING_SESSION_STATUSES)[number];
 export const TEACHING_ATTENDANCE_STATUSES = ['expected', 'present', 'late', 'absent', 'excused'] as const;
 export type TeachingAttendanceStatus = (typeof TEACHING_ATTENDANCE_STATUSES)[number];
 
+export const TEACHING_CAMPUS_STATUSES = ['active', 'archived'] as const;
+export type TeachingCampusStatus = (typeof TEACHING_CAMPUS_STATUSES)[number];
+
+export const TEACHING_GROUP_STATUSES = ['active', 'archived'] as const;
+export type TeachingGroupStatus = (typeof TEACHING_GROUP_STATUSES)[number];
+
+export interface TeachingCampus {
+  id: string;
+  code: string | null;
+  name: string;
+  timezone: string | null;
+  status: TeachingCampusStatus;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeachingGroup {
+  id: string;
+  campusId: string | null;
+  code: string | null;
+  name: string;
+  status: TeachingGroupStatus;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeachingStudentSummary {
+  id: string;
+  externalRef: string | null;
+  displayName: string;
+  status: TeachingStudentStatus;
+}
+
+export interface TeachingStudentGroupMembership {
+  id: string;
+  groupId: string;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  createdAt: string;
+  student: TeachingStudentSummary;
+}
+
+export interface TeachingTeacherAssignment {
+  id: string;
+  teacherUserId: number | null;
+  teacherUserIdSnapshot: number;
+  groupId: string | null;
+  studentId: string | null;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  createdAt: string;
+  teacher: {
+    userId: number | null;
+    displayName: string;
+    role: 'owner' | 'admin' | 'teacher' | 'assistant';
+    status: TeachingMemberStatus | null;
+  };
+}
+
+export interface CreateTeachingCampusInput {
+  code: string | null;
+  name: string;
+  timezone: string | null;
+}
+
+export interface CreateTeachingGroupInput {
+  campusId: string | null;
+  code: string | null;
+  name: string;
+}
+
+export interface CreateTeachingStudentGroupMembershipInput {
+  studentId: string;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+}
+
+export interface CreateTeachingTeacherAssignmentInput {
+  teacherUserId: number;
+  groupId: string | null;
+  studentId: string | null;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+}
+
 const ORGANIZATION_STATUS_TRANSITIONS: Record<TeachingOrganizationStatus, readonly TeachingOrganizationStatus[]> = {
   active: ['suspended', 'archived'],
   suspended: ['active', 'archived'],
@@ -122,6 +209,11 @@ export const TEACHING_PERMISSIONS = [
   'member:manage',
   'student:read',
   'student:manage',
+  'campus:read',
+  'campus:manage',
+  'group:read',
+  'group:manage',
+  'assignment:manage',
   'package:read',
   'package:manage',
   'session:read',
@@ -137,8 +229,8 @@ export type TeachingPermission = (typeof TEACHING_PERMISSIONS)[number];
 const ROLE_PERMISSIONS: Record<TeachingOrganizationRole, readonly TeachingPermission[]> = {
   owner: TEACHING_PERMISSIONS,
   admin: TEACHING_PERMISSIONS,
-  teacher: ['member:read', 'session:read', 'session:manage'],
-  assistant: ['member:read', 'session:read', 'session:manage'],
+  teacher: ['member:read', 'student:read', 'campus:read', 'group:read', 'session:read', 'session:manage'],
+  assistant: ['member:read', 'student:read', 'campus:read', 'group:read', 'session:read', 'session:manage'],
   finance: ['member:read', 'package:read', 'package:manage', 'finance:read', 'finance:manage'],
   viewer: ['member:read'],
 };

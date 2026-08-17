@@ -146,8 +146,8 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(db.query).toHaveBeenCalledTimes(2);
   });
 
-  it.each(['teacher', 'assistant', 'finance', 'viewer'] as const)(
-    'denies the organization-wide student roster to %s before assignments exist',
+  it.each(['teacher', 'assistant'] as const)(
+    'filters the student roster in SQL for an active scoped %s before pagination',
     async (role) => {
       db.query
         .mockResolvedValueOnce([{
@@ -159,6 +159,7 @@ describe('teaching SaaS repository tenant denial audit', () => {
           version: 1,
           role,
         }])
+        .mockResolvedValueOnce([{ count: 0 }])
         .mockResolvedValueOnce([]);
 
       await expect(
@@ -168,18 +169,63 @@ describe('teaching SaaS repository tenant denial audit', () => {
           { page: 1, pageSize: 30, offset: 0 },
           'request-students',
         ),
-      ).rejects.toEqual(
-        expect.objectContaining<TeachingApiException>({
-          code: 'PERMISSION_DENIED',
-          status: 403,
-        }),
-      );
+      ).resolves.toMatchObject({ items: [], total: 0 });
 
-      expect(db.query).toHaveBeenCalledTimes(2);
+      expect(db.query).toHaveBeenCalledTimes(3);
+      for (const call of db.query.mock.calls.slice(1)) {
+        const statement = String(call[0]);
+        expect(statement).toContain('WITH active_scope_actor AS');
+        expect(statement).toContain("member.status = 'active'");
+        expect(statement).toContain("member.role IN ('teacher', 'assistant')");
+        expect(statement).toContain('FROM teacher_assignments ta');
+        expect(statement).toContain('JOIN student_group_memberships membership');
+        expect(call[1]).toContain(ACTOR.userId);
+      }
+      const itemsSql = String(db.query.mock.calls[2][0]);
+      expect(itemsSql.indexOf('JOIN scoped_student_ids scope')).toBeLessThan(itemsSql.indexOf('LIMIT ? OFFSET ?'));
+    },
+  );
+
+  it.each(['finance', 'viewer'] as const)(
+    'denies the organization-wide student roster to %s',
+    async (role) => {
+      db.query
+        .mockResolvedValueOnce([{
+          id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
+          status: 'active', version: 1, role,
+        }])
+        .mockResolvedValueOnce([]);
+
+      await expect(teachingSaasRepository.listStudents(
+        ACTOR, 'demo', { page: 1, pageSize: 30, offset: 0 }, 'request-students',
+      )).rejects.toEqual(expect.objectContaining<TeachingApiException>({
+        code: 'PERMISSION_DENIED', status: 403,
+      }));
       expect(db.query.mock.calls[1][0]).toContain('INSERT INTO teaching_audit_events');
       expect(db.query.mock.calls[1][1]).toContain('student.list');
     },
   );
+
+  it('conceals and audits a same-organization student outside the teacher scope', async () => {
+    db.query
+      .mockResolvedValueOnce([{
+        id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
+        status: 'active', version: 1, role: 'teacher',
+      }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ exists: 1 }])
+      .mockResolvedValueOnce([]);
+
+    await expect(teachingSaasRepository.getStudent(
+      ACTOR, 'demo', 'student-id', 'request-student-read',
+    )).rejects.toEqual(expect.objectContaining<TeachingApiException>({
+      code: 'RESOURCE_NOT_FOUND', status: 404,
+    }));
+    expect(db.query.mock.calls[1][0]).toContain('WITH active_scope_actor AS');
+    expect(db.query.mock.calls[3][0]).toContain('INSERT INTO teaching_audit_events');
+    expect(db.query.mock.calls[3][1]).toContain('student.read');
+    expect(db.query.mock.calls[3][1]).toContain(JSON.stringify({ reason: 'PERMISSION_DENIED' }));
+  });
 
   it('serializes idempotency and records the attempt outside the business transaction', async () => {
     db.tx
@@ -298,7 +344,12 @@ describe('teaching SaaS repository tenant denial audit', () => {
       expect(hasTeachingPermission(role, 'session:read')).toBe(true);
       expect(hasTeachingPermission(role, 'session:manage')).toBe(true);
       expect(hasTeachingPermission(role, 'session:create')).toBe(false);
-      expect(hasTeachingPermission(role, 'student:read')).toBe(false);
+      expect(hasTeachingPermission(role, 'student:read')).toBe(true);
+      expect(hasTeachingPermission(role, 'campus:read')).toBe(true);
+      expect(hasTeachingPermission(role, 'campus:manage')).toBe(false);
+      expect(hasTeachingPermission(role, 'group:read')).toBe(true);
+      expect(hasTeachingPermission(role, 'group:manage')).toBe(false);
+      expect(hasTeachingPermission(role, 'assignment:manage')).toBe(false);
       expect(hasTeachingPermission(role, 'package:read')).toBe(false);
     }
     expect(hasTeachingPermission('finance', 'package:read')).toBe(true);

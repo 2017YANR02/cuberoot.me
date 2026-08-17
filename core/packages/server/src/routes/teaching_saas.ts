@@ -57,6 +57,37 @@ interface CreateStudentInput {
   externalRef: string | null;
 }
 
+interface CreateCampusInput {
+  code: string | null;
+  name: string;
+  timezone: string | null;
+}
+
+interface CreateGroupInput {
+  campusId: string | null;
+  code: string | null;
+  name: string;
+}
+
+interface CreateStudentGroupMembershipInput {
+  studentId: string;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+}
+
+interface CreateTeacherAssignmentInput {
+  teacherUserId: number;
+  groupId: string | null;
+  studentId: string | null;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+}
+
+interface TeacherAssignmentTarget {
+  groupId: string | null;
+  studentId: string | null;
+}
+
 interface CreatePackageProductInput {
   code: string;
   name: string;
@@ -131,6 +162,7 @@ export interface TeachingSaasRepository {
     requestId: string,
   ): Promise<MutationResult>;
   listStudents(actor: TeachingActor, slug: string, pagination: PageInput, requestId: string): Promise<PageResult>;
+  getStudent(actor: TeachingActor, slug: string, studentId: string, requestId: string): Promise<JsonObject>;
   createStudent(
     actor: TeachingActor,
     slug: string,
@@ -138,6 +170,49 @@ export interface TeachingSaasRepository {
     idempotencyKey: string,
     requestHash: string,
     requestId: string,
+  ): Promise<MutationResult>;
+  listCampuses(actor: TeachingActor, slug: string, pagination: PageInput, requestId: string): Promise<PageResult>;
+  getCampus(actor: TeachingActor, slug: string, campusId: string, requestId: string): Promise<JsonObject>;
+  createCampus(
+    actor: TeachingActor, slug: string, input: CreateCampusInput, idempotencyKey: string,
+    requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  archiveCampus(
+    actor: TeachingActor, slug: string, campusId: string, idempotencyKey: string,
+    requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  listGroups(actor: TeachingActor, slug: string, pagination: PageInput, requestId: string): Promise<PageResult>;
+  getGroup(actor: TeachingActor, slug: string, groupId: string, requestId: string): Promise<JsonObject>;
+  createGroup(
+    actor: TeachingActor, slug: string, input: CreateGroupInput, idempotencyKey: string,
+    requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  archiveGroup(
+    actor: TeachingActor, slug: string, groupId: string, idempotencyKey: string,
+    requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  listGroupStudents(
+    actor: TeachingActor, slug: string, groupId: string, pagination: PageInput, requestId: string,
+  ): Promise<PageResult>;
+  createStudentGroupMembership(
+    actor: TeachingActor, slug: string, groupId: string, input: CreateStudentGroupMembershipInput,
+    idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  revokeStudentGroupMembership(
+    actor: TeachingActor, slug: string, membershipId: string, idempotencyKey: string,
+    requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  listTeacherAssignments(
+    actor: TeachingActor, slug: string, target: TeacherAssignmentTarget,
+    pagination: PageInput, requestId: string,
+  ): Promise<PageResult>;
+  createTeacherAssignment(
+    actor: TeachingActor, slug: string, input: CreateTeacherAssignmentInput,
+    idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  revokeTeacherAssignment(
+    actor: TeachingActor, slug: string, assignmentId: string, idempotencyKey: string,
+    requestHash: string, requestId: string,
   ): Promise<MutationResult>;
   listPackageProducts(actor: TeachingActor, slug: string, pagination: PageInput, requestId: string): Promise<PageResult>;
   createPackageProduct(
@@ -309,6 +384,11 @@ function requiredUuid(body: JsonObject, key: string): string {
   return value;
 }
 
+function optionalUuid(body: JsonObject, key: string): string | null {
+  if (body[key] === undefined || body[key] === null) return null;
+  return requiredUuid(body, key);
+}
+
 function uuidParam(value: string, key: string): string {
   return requiredUuid({ [key]: value }, key);
 }
@@ -389,6 +469,80 @@ function parseStudentInput(body: JsonObject): CreateStudentInput {
     throw new TeachingApiException('INVALID_INPUT', 400, 'externalRef must be 1 to 100 characters or null');
   }
   return { displayName, externalRef };
+}
+
+function optionalNormalizedCode(body: JsonObject): string | null {
+  const code = optionalString(body, 'code', 64)?.toLowerCase() ?? null;
+  if (code !== null && !/^[a-z0-9][a-z0-9_-]{0,63}$/.test(code)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'code must use lowercase letters, numbers, underscores, or hyphens');
+  }
+  return code;
+}
+
+function parseEffectiveRange(body: JsonObject): { effectiveFrom: string; effectiveTo: string | null } {
+  const effectiveFrom = body.effectiveFrom === undefined
+    ? new Date().toISOString()
+    : requiredTimestamp(body, 'effectiveFrom');
+  const effectiveTo = body.effectiveTo === undefined || body.effectiveTo === null
+    ? null
+    : requiredTimestamp(body, 'effectiveTo');
+  if (effectiveTo !== null && new Date(effectiveTo).getTime() <= new Date(effectiveFrom).getTime()) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'effectiveTo must be after effectiveFrom');
+  }
+  return { effectiveFrom, effectiveTo };
+}
+
+function parseCampusInput(body: JsonObject): CreateCampusInput {
+  const timezone = optionalString(body, 'timezone', 64);
+  return {
+    code: optionalNormalizedCode(body),
+    name: requiredString(body, 'name', 160),
+    timezone: timezone === null ? null : validTimezone(timezone),
+  };
+}
+
+function parseGroupInput(body: JsonObject): CreateGroupInput {
+  return {
+    campusId: optionalUuid(body, 'campusId'),
+    code: optionalNormalizedCode(body),
+    name: requiredString(body, 'name', 160),
+  };
+}
+
+function parseStudentGroupMembershipInput(body: JsonObject): CreateStudentGroupMembershipInput {
+  return {
+    studentId: requiredUuid(body, 'studentId'),
+    ...parseEffectiveRange(body),
+  };
+}
+
+function parseTeacherAssignmentInput(body: JsonObject): CreateTeacherAssignmentInput {
+  if (!Number.isSafeInteger(body.teacherUserId) || (body.teacherUserId as number) <= 0) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'teacherUserId must be a positive integer');
+  }
+  const groupId = optionalUuid(body, 'groupId');
+  const studentId = optionalUuid(body, 'studentId');
+  if ((groupId === null) === (studentId === null)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'exactly one of groupId or studentId is required');
+  }
+  return {
+    teacherUserId: body.teacherUserId as number,
+    groupId,
+    studentId,
+    ...parseEffectiveRange(body),
+  };
+}
+
+function teacherAssignmentTargetOf(c: Context): TeacherAssignmentTarget {
+  const rawGroupId = c.req.query('groupId');
+  const rawStudentId = c.req.query('studentId');
+  if ((rawGroupId === undefined) === (rawStudentId === undefined)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'exactly one of groupId or studentId is required');
+  }
+  return {
+    groupId: rawGroupId === undefined ? null : uuidParam(rawGroupId, 'groupId'),
+    studentId: rawStudentId === undefined ? null : uuidParam(rawStudentId, 'studentId'),
+  };
 }
 
 function parsePackageProductInput(body: JsonObject): CreatePackageProductInput {
@@ -769,6 +923,147 @@ function uniqueConflict(error: unknown, message: string): never {
   throw error;
 }
 
+function crmConflict(error: unknown, message: string): never {
+  const code = (error as { code?: string }).code;
+  if (code === '23505' || code === '23503' || code === '23514' || code === '23P01' || code === '55000') {
+    throw new TeachingApiException('CONFLICT', 409, message);
+  }
+  if (code === '40001' || code === '40P01') {
+    throw new TeachingApiException('CONFLICT', 409, 'Concurrent teaching update; retry the complete request');
+  }
+  throw error;
+}
+
+function hasOrganizationCrmScope(role: TeachingOrganizationRole): boolean {
+  return role === 'owner' || role === 'admin';
+}
+
+function iso(value: unknown): string {
+  return value instanceof Date ? value.toISOString() : new Date(String(value)).toISOString();
+}
+
+function studentToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    accountUserId: row.account_user_id == null ? null : Number(row.account_user_id),
+    externalRef: row.external_ref == null ? null : String(row.external_ref),
+    displayName: String(row.display_name),
+    status: String(row.status),
+    createdAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at),
+  };
+}
+
+function campusToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    code: row.code == null ? null : String(row.code),
+    name: String(row.name),
+    timezone: row.timezone == null ? null : String(row.timezone),
+    status: String(row.status),
+    archivedAt: row.archived_at == null ? null : iso(row.archived_at),
+    createdAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at),
+  };
+}
+
+function groupToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    campusId: row.campus_id == null ? null : String(row.campus_id),
+    code: row.code == null ? null : String(row.code),
+    name: String(row.name),
+    status: String(row.status),
+    archivedAt: row.archived_at == null ? null : iso(row.archived_at),
+    createdAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at),
+  };
+}
+
+function membershipToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    groupId: String(row.group_id),
+    effectiveFrom: iso(row.effective_from),
+    effectiveTo: row.effective_to == null ? null : iso(row.effective_to),
+    createdAt: iso(row.created_at),
+    student: {
+      id: String(row.student_id),
+      displayName: String(row.student_display_name),
+      externalRef: row.student_external_ref == null ? null : String(row.student_external_ref),
+      status: String(row.student_status),
+    },
+  };
+}
+
+function assignmentToJson(row: Record<string, unknown>): JsonObject {
+  const liveUserId = row.teacher_user_id == null ? null : Number(row.teacher_user_id);
+  return {
+    id: String(row.id),
+    teacherUserId: liveUserId,
+    teacherUserIdSnapshot: Number(row.teacher_user_id_snapshot),
+    groupId: row.group_id == null ? null : String(row.group_id),
+    studentId: row.student_id == null ? null : String(row.student_id),
+    effectiveFrom: iso(row.effective_from),
+    effectiveTo: row.effective_to == null ? null : iso(row.effective_to),
+    createdAt: iso(row.created_at),
+    teacher: {
+      userId: liveUserId,
+      displayName: String(row.teacher_display_name_snapshot),
+      role: String(row.teacher_role_snapshot),
+      status: row.teacher_member_status == null ? null : String(row.teacher_member_status),
+    },
+  };
+}
+
+const ACTIVE_STUDENT_SCOPE_CTE = `
+  WITH active_scope_actor AS (
+    SELECT member.organization_id, member.user_id
+    FROM organization_members member
+    WHERE member.organization_id = ?
+      AND member.user_id = ?
+      AND member.status = 'active'
+      AND member.role IN ('teacher', 'assistant')
+  ), scoped_student_ids AS (
+    SELECT ta.student_id AS id
+    FROM teacher_assignments ta
+    JOIN active_scope_actor actor
+      ON actor.organization_id = ta.organization_id AND actor.user_id = ta.teacher_user_id
+    JOIN student_profiles direct_student
+      ON direct_student.organization_id = ta.organization_id AND direct_student.id = ta.student_id
+    WHERE ta.organization_id = ?
+      AND ta.student_id IS NOT NULL
+      AND ta.effective_from <= NOW()
+      AND (ta.effective_to IS NULL OR ta.effective_to > NOW())
+      AND direct_student.status = 'active'
+    UNION
+    SELECT membership.student_id AS id
+    FROM teacher_assignments ta
+    JOIN active_scope_actor actor
+      ON actor.organization_id = ta.organization_id AND actor.user_id = ta.teacher_user_id
+    JOIN teaching_groups teaching_group
+      ON teaching_group.organization_id = ta.organization_id AND teaching_group.id = ta.group_id
+    LEFT JOIN teaching_campuses campus
+      ON campus.organization_id = teaching_group.organization_id AND campus.id = teaching_group.campus_id
+    JOIN student_group_memberships membership
+      ON membership.organization_id = teaching_group.organization_id AND membership.group_id = teaching_group.id
+    JOIN student_profiles group_student
+      ON group_student.organization_id = membership.organization_id AND group_student.id = membership.student_id
+    WHERE ta.organization_id = ?
+      AND ta.group_id IS NOT NULL
+      AND ta.effective_from <= NOW()
+      AND (ta.effective_to IS NULL OR ta.effective_to > NOW())
+      AND membership.effective_from <= NOW()
+      AND (membership.effective_to IS NULL OR membership.effective_to > NOW())
+      AND teaching_group.status = 'active'
+      AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+      AND group_student.status = 'active'
+  )`;
+
+function activeStudentScopeParams(access: OrganizationAccess, actor: TeachingActor): unknown[] {
+  return [access.id, actor.userId, access.id, access.id];
+}
+
 export const teachingSaasRepository: TeachingSaasRepository = {
   async listOrganizations(actor) {
     const rows = await query<Record<string, unknown>>(
@@ -799,10 +1094,16 @@ export const teachingSaasRepository: TeachingSaasRepository = {
             )
           : Promise.resolve([]),
         hasTeachingPermission(access.role, 'student:read')
-          ? query<Record<string, unknown>>(
-              'SELECT COUNT(*)::int AS count FROM student_profiles WHERE organization_id = ?',
-              [access.id],
-            )
+          ? hasOrganizationCrmScope(access.role)
+            ? query<Record<string, unknown>>(
+                'SELECT COUNT(*)::int AS count FROM student_profiles WHERE organization_id = ?',
+                [access.id],
+              )
+            : query<Record<string, unknown>>(
+                `${ACTIVE_STUDENT_SCOPE_CTE}
+                 SELECT COUNT(*)::int AS count FROM scoped_student_ids`,
+                activeStudentScopeParams(access, actor),
+              )
           : Promise.resolve([]),
       ]);
       return {
@@ -954,34 +1255,74 @@ export const teachingSaasRepository: TeachingSaasRepository = {
     return withDeniedAccessAudit(actor, slug, 'student.list', requestId, async () => {
       const access = await accessForRead(actor.userId, slug);
       requirePermission(access, 'student:read');
-      const [countRows, rows] = await Promise.all([
+      const organizationScope = hasOrganizationCrmScope(access.role);
+      const scopeParams = activeStudentScopeParams(access, actor);
+      const [countRows, rows] = await Promise.all(organizationScope ? [
         query<Record<string, unknown>>(
-          'SELECT COUNT(*)::int AS count FROM student_profiles WHERE organization_id = ?',
-          [access.id],
+          'SELECT COUNT(*)::int AS count FROM student_profiles WHERE organization_id = ?', [access.id],
         ),
         query<Record<string, unknown>>(
-      `SELECT id, account_user_id, external_ref, display_name, status, created_at, updated_at
-       FROM student_profiles
-       WHERE organization_id = ?
-       ORDER BY display_name, id
-       LIMIT ? OFFSET ?`,
+          `SELECT id, account_user_id, external_ref, display_name, status, created_at, updated_at
+           FROM student_profiles
+           WHERE organization_id = ?
+           ORDER BY display_name, id
+           LIMIT ? OFFSET ?`,
           [access.id, pagination.pageSize, pagination.offset],
+        ),
+      ] : [
+        query<Record<string, unknown>>(
+          `${ACTIVE_STUDENT_SCOPE_CTE} SELECT COUNT(*)::int AS count FROM scoped_student_ids`, scopeParams,
+        ),
+        query<Record<string, unknown>>(
+          `${ACTIVE_STUDENT_SCOPE_CTE}
+           SELECT student.id, student.account_user_id, student.external_ref, student.display_name,
+                  student.status, student.created_at, student.updated_at
+           FROM student_profiles student
+           JOIN scoped_student_ids scope ON scope.id = student.id
+           ORDER BY student.display_name, student.id
+           LIMIT ? OFFSET ?`,
+          [...scopeParams, pagination.pageSize, pagination.offset],
         ),
       ]);
       return {
-        items: rows.map((row) => ({
-          id: String(row.id),
-          accountUserId: row.account_user_id == null ? null : Number(row.account_user_id),
-          externalRef: row.external_ref == null ? null : String(row.external_ref),
-          displayName: String(row.display_name),
-          status: String(row.status),
-          createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
-          updatedAt: row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
-        })),
+        items: rows.map(studentToJson),
         total: Number(countRows[0]?.count ?? 0),
         page: pagination.page,
         pageSize: pagination.pageSize,
       };
+    });
+  },
+
+  async getStudent(actor, slug, studentId, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'student.read', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'student:read');
+      const organizationScope = hasOrganizationCrmScope(access.role);
+      const rows = organizationScope
+        ? await query<Record<string, unknown>>(
+            `SELECT id, account_user_id, external_ref, display_name, status, created_at, updated_at
+             FROM student_profiles WHERE organization_id = ? AND id = ?`,
+            [access.id, studentId],
+          )
+        : await query<Record<string, unknown>>(
+            `${ACTIVE_STUDENT_SCOPE_CTE}
+             SELECT student.id, student.account_user_id, student.external_ref, student.display_name,
+                    student.status, student.created_at, student.updated_at
+             FROM student_profiles student
+             JOIN scoped_student_ids scope ON scope.id = student.id
+             WHERE student.id = ?`,
+            [...activeStudentScopeParams(access, actor), studentId],
+          );
+      if (!rows.length) {
+        const exists = await query<Record<string, unknown>>(
+          'SELECT 1 FROM student_profiles WHERE organization_id = ? AND id = ?', [access.id, studentId],
+        );
+        if (exists.length && !organizationScope) {
+          throw new ConcealedTeachingPermissionDeniedException('Student not found');
+        }
+        throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student not found');
+      }
+      return studentToJson(rows[0]);
     });
   },
 
@@ -1029,6 +1370,678 @@ export const teachingSaasRepository: TeachingSaasRepository = {
       } catch (error) {
         if (error instanceof TeachingApiException) throw error;
         return uniqueConflict(error, 'Student external reference already exists in this organization');
+      }
+    });
+  },
+
+  async listCampuses(actor, slug, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'campus.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'campus:read');
+      const organizationScope = hasOrganizationCrmScope(access.role);
+      const scopeSql = organizationScope ? '' : `
+        AND campus.status = 'active'
+        AND EXISTS (
+          SELECT 1
+          FROM teacher_assignments assignment
+          JOIN teaching_groups teaching_group
+            ON teaching_group.organization_id = assignment.organization_id
+           AND teaching_group.id = assignment.group_id
+           WHERE assignment.organization_id = campus.organization_id
+             AND assignment.teacher_user_id = ?
+             AND EXISTS (
+               SELECT 1 FROM organization_members scoped_member
+               WHERE scoped_member.organization_id = assignment.organization_id
+                 AND scoped_member.user_id = assignment.teacher_user_id
+                 AND scoped_member.status = 'active'
+                 AND scoped_member.role IN ('teacher', 'assistant')
+             )
+             AND assignment.effective_from <= NOW()
+            AND (assignment.effective_to IS NULL OR assignment.effective_to > NOW())
+            AND teaching_group.status = 'active'
+            AND teaching_group.campus_id = campus.id
+        )`;
+      const baseParams: unknown[] = organizationScope ? [access.id] : [access.id, actor.userId];
+      const [countRows, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          `SELECT COUNT(*)::int AS count FROM teaching_campuses campus
+           WHERE campus.organization_id = ? ${scopeSql}`,
+          baseParams,
+        ),
+        query<Record<string, unknown>>(
+          `SELECT campus.id, campus.code, campus.name, campus.timezone, campus.status,
+                  campus.archived_at, campus.created_at, campus.updated_at
+           FROM teaching_campuses campus
+           WHERE campus.organization_id = ? ${scopeSql}
+           ORDER BY CASE campus.status WHEN 'active' THEN 0 ELSE 1 END, campus.name, campus.id
+           LIMIT ? OFFSET ?`,
+          [...baseParams, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map(campusToJson), total: Number(countRows[0]?.count ?? 0),
+        page: pagination.page, pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async getCampus(actor, slug, campusId, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'campus.read', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'campus:read');
+      const organizationScope = hasOrganizationCrmScope(access.role);
+      const rows = await query<Record<string, unknown>>(
+        `SELECT campus.id, campus.code, campus.name, campus.timezone, campus.status,
+                campus.archived_at, campus.created_at, campus.updated_at
+         FROM teaching_campuses campus
+         WHERE campus.organization_id = ? AND campus.id = ?
+           ${organizationScope ? '' : `AND campus.status = 'active' AND EXISTS (
+             SELECT 1 FROM teacher_assignments assignment
+             JOIN teaching_groups teaching_group
+               ON teaching_group.organization_id = assignment.organization_id
+              AND teaching_group.id = assignment.group_id
+             WHERE assignment.organization_id = campus.organization_id
+               AND assignment.teacher_user_id = ?
+               AND EXISTS (
+                 SELECT 1 FROM organization_members scoped_member
+                 WHERE scoped_member.organization_id = assignment.organization_id
+                   AND scoped_member.user_id = assignment.teacher_user_id
+                   AND scoped_member.status = 'active'
+                   AND scoped_member.role IN ('teacher', 'assistant')
+               )
+               AND assignment.effective_from <= NOW()
+               AND (assignment.effective_to IS NULL OR assignment.effective_to > NOW())
+               AND teaching_group.status = 'active'
+               AND teaching_group.campus_id = campus.id
+           )`}`,
+        organizationScope ? [access.id, campusId] : [access.id, campusId, actor.userId],
+      );
+      if (!rows.length) {
+        const exists = await query<Record<string, unknown>>(
+          'SELECT 1 FROM teaching_campuses WHERE organization_id = ? AND id = ?', [access.id, campusId],
+        );
+        if (exists.length && !organizationScope) throw new ConcealedTeachingPermissionDeniedException('Campus not found');
+        throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Campus not found');
+      }
+      return campusToJson(rows[0]);
+    });
+  },
+
+  async createCampus(actor, slug, input, idempotencyKey, requestHash, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'campus.create', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'campus.create', 120, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'campus:manage');
+          const idem = await beginIdempotency(tx, actor.userId, access.id, 'campus.create', idempotencyKey, requestHash);
+          if ('replay' in idem) return idem.replay;
+          const rows = await tx`
+            INSERT INTO teaching_campuses (organization_id, code, name, timezone, created_by_user_id)
+            VALUES (${access.id}, ${input.code}, ${input.name}, ${input.timezone}, ${actor.userId})
+            RETURNING id, code, name, timezone, status, archived_at, created_at, updated_at`;
+          const campus = campusToJson(rows[0] as Record<string, unknown>);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'campus.create', 'campus', ${String(rows[0].id)}, ${requestId}, ${sql.json({ code: input.code })}
+            )`;
+          const result: MutationResult = { status: 201, body: { campus } };
+          await completeIdempotency(tx, idem.id, result, 'campus', String(rows[0].id));
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Campus code already exists or the campus is invalid');
+      }
+    });
+  },
+
+  async archiveCampus(actor, slug, campusId, idempotencyKey, requestHash, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'campus.archive', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'campus.archive', 120, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'campus:manage');
+          const idem = await beginIdempotency(tx, actor.userId, access.id, 'campus.archive', idempotencyKey, requestHash);
+          if ('replay' in idem) return idem.replay;
+          const existing = await tx`
+            SELECT id, status FROM teaching_campuses
+            WHERE organization_id = ${access.id} AND id = ${campusId}
+            FOR UPDATE`;
+          if (!existing.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Campus not found');
+          if (existing[0].status !== 'active') throw new TeachingApiException('CONFLICT', 409, 'Campus is already archived');
+          const rows = await tx`
+            UPDATE teaching_campuses SET status = 'archived', archived_at = NOW()
+            WHERE organization_id = ${access.id} AND id = ${campusId}
+            RETURNING id, code, name, timezone, status, archived_at, created_at, updated_at`;
+          const campus = campusToJson(rows[0] as Record<string, unknown>);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'campus.archive', 'campus', ${campusId}, ${requestId}, ${sql.json({ reason: 'manual_archive' })}
+            )`;
+          const result: MutationResult = { status: 200, body: { campus } };
+          await completeIdempotency(tx, idem.id, result, 'campus', campusId);
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Campus cannot be archived while it has active groups');
+      }
+    });
+  },
+
+  async listGroups(actor, slug, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'group.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'group:read');
+      const organizationScope = hasOrganizationCrmScope(access.role);
+      const scopeSql = organizationScope ? '' : `
+        AND teaching_group.status = 'active'
+        AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+        AND EXISTS (
+          SELECT 1 FROM teacher_assignments assignment
+           WHERE assignment.organization_id = teaching_group.organization_id
+             AND assignment.group_id = teaching_group.id
+             AND assignment.teacher_user_id = ?
+             AND EXISTS (
+               SELECT 1 FROM organization_members scoped_member
+               WHERE scoped_member.organization_id = assignment.organization_id
+                 AND scoped_member.user_id = assignment.teacher_user_id
+                 AND scoped_member.status = 'active'
+                 AND scoped_member.role IN ('teacher', 'assistant')
+             )
+             AND assignment.effective_from <= NOW()
+            AND (assignment.effective_to IS NULL OR assignment.effective_to > NOW())
+        )`;
+      const baseParams: unknown[] = organizationScope ? [access.id] : [access.id, actor.userId];
+      const [countRows, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          `SELECT COUNT(*)::int AS count FROM teaching_groups teaching_group
+           LEFT JOIN teaching_campuses campus
+             ON campus.organization_id = teaching_group.organization_id AND campus.id = teaching_group.campus_id
+           WHERE teaching_group.organization_id = ? ${scopeSql}`,
+          baseParams,
+        ),
+        query<Record<string, unknown>>(
+          `SELECT teaching_group.id, teaching_group.campus_id, teaching_group.code, teaching_group.name,
+                  teaching_group.status, teaching_group.archived_at,
+                  teaching_group.created_at, teaching_group.updated_at
+           FROM teaching_groups teaching_group
+           LEFT JOIN teaching_campuses campus
+             ON campus.organization_id = teaching_group.organization_id AND campus.id = teaching_group.campus_id
+           WHERE teaching_group.organization_id = ? ${scopeSql}
+           ORDER BY CASE teaching_group.status WHEN 'active' THEN 0 ELSE 1 END,
+                    teaching_group.name, teaching_group.id
+           LIMIT ? OFFSET ?`,
+          [...baseParams, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map(groupToJson), total: Number(countRows[0]?.count ?? 0),
+        page: pagination.page, pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async getGroup(actor, slug, groupId, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'group.read', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'group:read');
+      const organizationScope = hasOrganizationCrmScope(access.role);
+      const rows = await query<Record<string, unknown>>(
+        `SELECT teaching_group.id, teaching_group.campus_id, teaching_group.code, teaching_group.name,
+                teaching_group.status, teaching_group.archived_at,
+                teaching_group.created_at, teaching_group.updated_at
+         FROM teaching_groups teaching_group
+         LEFT JOIN teaching_campuses campus
+           ON campus.organization_id = teaching_group.organization_id AND campus.id = teaching_group.campus_id
+         WHERE teaching_group.organization_id = ? AND teaching_group.id = ?
+           ${organizationScope ? '' : `AND teaching_group.status = 'active'
+             AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+             AND EXISTS (
+               SELECT 1 FROM teacher_assignments assignment
+                WHERE assignment.organization_id = teaching_group.organization_id
+                  AND assignment.group_id = teaching_group.id
+                  AND assignment.teacher_user_id = ?
+                  AND EXISTS (
+                    SELECT 1 FROM organization_members scoped_member
+                    WHERE scoped_member.organization_id = assignment.organization_id
+                      AND scoped_member.user_id = assignment.teacher_user_id
+                      AND scoped_member.status = 'active'
+                      AND scoped_member.role IN ('teacher', 'assistant')
+                  )
+                  AND assignment.effective_from <= NOW()
+                 AND (assignment.effective_to IS NULL OR assignment.effective_to > NOW())
+             )`}`,
+        organizationScope ? [access.id, groupId] : [access.id, groupId, actor.userId],
+      );
+      if (!rows.length) {
+        const exists = await query<Record<string, unknown>>(
+          'SELECT 1 FROM teaching_groups WHERE organization_id = ? AND id = ?', [access.id, groupId],
+        );
+        if (exists.length && !organizationScope) throw new ConcealedTeachingPermissionDeniedException('Group not found');
+        throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Group not found');
+      }
+      return groupToJson(rows[0]);
+    });
+  },
+
+  async createGroup(actor, slug, input, idempotencyKey, requestHash, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'group.create', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'group.create', 120, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'group:manage');
+          const idem = await beginIdempotency(tx, actor.userId, access.id, 'group.create', idempotencyKey, requestHash);
+          if ('replay' in idem) return idem.replay;
+          const rows = await tx`
+            INSERT INTO teaching_groups (organization_id, campus_id, code, name, created_by_user_id)
+            VALUES (${access.id}, ${input.campusId}, ${input.code}, ${input.name}, ${actor.userId})
+            RETURNING id, campus_id, code, name, status, archived_at, created_at, updated_at`;
+          const group = groupToJson(rows[0] as Record<string, unknown>);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'group.create', 'group', ${String(rows[0].id)}, ${requestId}, ${sql.json({ campusId: input.campusId, code: input.code })}
+            )`;
+          const result: MutationResult = { status: 201, body: { group } };
+          await completeIdempotency(tx, idem.id, result, 'group', String(rows[0].id));
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Group code already exists or its campus is unavailable');
+      }
+    });
+  },
+
+  async archiveGroup(actor, slug, groupId, idempotencyKey, requestHash, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'group.archive', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'group.archive', 120, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'group:manage');
+          const idem = await beginIdempotency(tx, actor.userId, access.id, 'group.archive', idempotencyKey, requestHash);
+          if ('replay' in idem) return idem.replay;
+          const existing = await tx`
+            SELECT id, status FROM teaching_groups
+            WHERE organization_id = ${access.id} AND id = ${groupId}
+            FOR UPDATE`;
+          if (!existing.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Group not found');
+          if (existing[0].status !== 'active') throw new TeachingApiException('CONFLICT', 409, 'Group is already archived');
+          const rows = await tx`
+            UPDATE teaching_groups SET status = 'archived', archived_at = NOW()
+            WHERE organization_id = ${access.id} AND id = ${groupId}
+            RETURNING id, campus_id, code, name, status, archived_at, created_at, updated_at`;
+          const group = groupToJson(rows[0] as Record<string, unknown>);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'group.archive', 'group', ${groupId}, ${requestId}, ${sql.json({ reason: 'manual_archive' })}
+            )`;
+          const result: MutationResult = { status: 200, body: { group } };
+          await completeIdempotency(tx, idem.id, result, 'group', groupId);
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Group cannot be archived');
+      }
+    });
+  },
+
+  async listGroupStudents(actor, slug, groupId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'group.student.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'group:read');
+      requirePermission(access, 'student:read');
+      const organizationScope = hasOrganizationCrmScope(access.role);
+      const groupRows = await query<Record<string, unknown>>(
+        `SELECT teaching_group.id
+         FROM teaching_groups teaching_group
+         LEFT JOIN teaching_campuses campus
+           ON campus.organization_id = teaching_group.organization_id AND campus.id = teaching_group.campus_id
+         WHERE teaching_group.organization_id = ? AND teaching_group.id = ?
+           ${organizationScope ? '' : `AND teaching_group.status = 'active'
+             AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+             AND EXISTS (
+               SELECT 1 FROM teacher_assignments assignment
+                WHERE assignment.organization_id = teaching_group.organization_id
+                  AND assignment.group_id = teaching_group.id
+                  AND assignment.teacher_user_id = ?
+                  AND EXISTS (
+                    SELECT 1 FROM organization_members scoped_member
+                    WHERE scoped_member.organization_id = assignment.organization_id
+                      AND scoped_member.user_id = assignment.teacher_user_id
+                      AND scoped_member.status = 'active'
+                      AND scoped_member.role IN ('teacher', 'assistant')
+                  )
+                  AND assignment.effective_from <= NOW()
+                 AND (assignment.effective_to IS NULL OR assignment.effective_to > NOW())
+             )`}`,
+        organizationScope ? [access.id, groupId] : [access.id, groupId, actor.userId],
+      );
+      if (!groupRows.length) {
+        const exists = await query<Record<string, unknown>>(
+          'SELECT 1 FROM teaching_groups WHERE organization_id = ? AND id = ?', [access.id, groupId],
+        );
+        if (exists.length && !organizationScope) throw new ConcealedTeachingPermissionDeniedException('Group not found');
+        throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Group not found');
+      }
+      const activeOnly = organizationScope ? '' : `
+        AND membership.effective_from <= NOW()
+        AND (membership.effective_to IS NULL OR membership.effective_to > NOW())
+        AND student.status = 'active'
+        AND EXISTS (
+          SELECT 1
+          FROM teacher_assignments assignment
+          JOIN organization_members scoped_member
+            ON scoped_member.organization_id = assignment.organization_id
+           AND scoped_member.user_id = assignment.teacher_user_id
+          WHERE assignment.organization_id = membership.organization_id
+            AND assignment.group_id = membership.group_id
+            AND assignment.teacher_user_id = ?
+            AND assignment.effective_from <= NOW()
+            AND (assignment.effective_to IS NULL OR assignment.effective_to > NOW())
+            AND scoped_member.status = 'active'
+            AND scoped_member.role IN ('teacher', 'assistant')
+        )`;
+      const relationParams: unknown[] = organizationScope
+        ? [access.id, groupId]
+        : [access.id, groupId, actor.userId];
+      const [countRows, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          `SELECT COUNT(*)::int AS count
+           FROM student_group_memberships membership
+           JOIN student_profiles student
+             ON student.organization_id = membership.organization_id AND student.id = membership.student_id
+           WHERE membership.organization_id = ? AND membership.group_id = ? ${activeOnly}`,
+          relationParams,
+        ),
+        query<Record<string, unknown>>(
+          `SELECT membership.id, membership.group_id, membership.effective_from, membership.effective_to,
+                  membership.created_at, student.id AS student_id,
+                  student.display_name AS student_display_name,
+                  student.external_ref AS student_external_ref, student.status AS student_status
+           FROM student_group_memberships membership
+           JOIN student_profiles student
+             ON student.organization_id = membership.organization_id AND student.id = membership.student_id
+           WHERE membership.organization_id = ? AND membership.group_id = ? ${activeOnly}
+           ORDER BY membership.effective_from DESC, membership.id
+           LIMIT ? OFFSET ?`,
+          [...relationParams, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map(membershipToJson), total: Number(countRows[0]?.count ?? 0),
+        page: pagination.page, pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async createStudentGroupMembership(actor, slug, groupId, input, idempotencyKey, requestHash, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'group.student.assign', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'group.student.assign', 180, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'group:manage');
+          const idem = await beginIdempotency(tx, actor.userId, access.id, 'group.student.assign', idempotencyKey, requestHash);
+          if ('replay' in idem) return idem.replay;
+          const rows = await tx`
+            WITH inserted AS (
+              INSERT INTO student_group_memberships (
+                organization_id, group_id, student_id, effective_from, effective_to, created_by_user_id
+              ) VALUES (
+                ${access.id}, ${groupId}, ${input.studentId}, ${input.effectiveFrom}, ${input.effectiveTo}, ${actor.userId}
+              )
+              RETURNING id, organization_id, group_id, student_id, effective_from, effective_to, created_at
+            )
+            SELECT inserted.*, student.display_name AS student_display_name,
+                   student.external_ref AS student_external_ref, student.status AS student_status
+            FROM inserted
+            JOIN student_profiles student
+              ON student.organization_id = inserted.organization_id AND student.id = inserted.student_id`;
+          const membership = membershipToJson(rows[0] as Record<string, unknown>);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'group.student.assign', 'student_group_membership', ${String(rows[0].id)}, ${requestId},
+              ${sql.json({ groupId, studentId: input.studentId, effectiveFrom: input.effectiveFrom, effectiveTo: input.effectiveTo })}
+            )`;
+          const result: MutationResult = { status: 201, body: { membership } };
+          await completeIdempotency(tx, idem.id, result, 'student_group_membership', String(rows[0].id));
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Student membership overlaps or targets an unavailable resource');
+      }
+    });
+  },
+
+  async revokeStudentGroupMembership(actor, slug, membershipId, idempotencyKey, requestHash, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'group.student.revoke', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'group.student.revoke', 180, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'group:manage');
+          const idem = await beginIdempotency(tx, actor.userId, access.id, 'group.student.revoke', idempotencyKey, requestHash);
+          if ('replay' in idem) return idem.replay;
+          const existing = await tx`
+            SELECT id, effective_from, effective_to
+            FROM student_group_memberships
+            WHERE organization_id = ${access.id} AND id = ${membershipId}
+            FOR UPDATE`;
+          if (!existing.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Membership not found');
+          if (existing[0].effective_to != null && new Date(String(existing[0].effective_to)).getTime() <= Date.now()) {
+            throw new TeachingApiException('CONFLICT', 409, 'Membership has already ended');
+          }
+          const rows = await tx`
+            WITH ended AS (
+              UPDATE student_group_memberships
+              SET effective_to = LEAST(
+                COALESCE(effective_to, GREATEST(NOW(), effective_from)),
+                GREATEST(NOW(), effective_from)
+              )
+              WHERE organization_id = ${access.id} AND id = ${membershipId}
+              RETURNING *, clock_timestamp() AS cancelled_at
+            )
+            SELECT ended.*, student.display_name AS student_display_name,
+                   student.external_ref AS student_external_ref, student.status AS student_status
+            FROM ended
+            JOIN student_profiles student
+              ON student.organization_id = ended.organization_id AND student.id = ended.student_id`;
+          const membership = membershipToJson(rows[0] as Record<string, unknown>);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'group.student.revoke', 'student_group_membership', ${membershipId}, ${requestId},
+              ${sql.json({ reason: 'manual_revocation', cancelledAt: iso(rows[0].cancelled_at), effectiveTo: membership.effectiveTo })}
+            )`;
+          const result: MutationResult = { status: 200, body: { membership } };
+          await completeIdempotency(tx, idem.id, result, 'student_group_membership', membershipId);
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Membership could not be ended');
+      }
+    });
+  },
+
+  async listTeacherAssignments(actor, slug, target, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'teacher_assignment.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'assignment:manage');
+      const targetSql = target.groupId !== null ? 'assignment.group_id = ?' : 'assignment.student_id = ?';
+      const targetId = (target.groupId ?? target.studentId) as string;
+      const [countRows, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          `SELECT COUNT(*)::int AS count FROM teacher_assignments assignment
+           WHERE assignment.organization_id = ? AND ${targetSql}`,
+          [access.id, targetId],
+        ),
+        query<Record<string, unknown>>(
+          `SELECT assignment.id, assignment.teacher_user_id, assignment.teacher_user_id_snapshot,
+                  assignment.teacher_display_name_snapshot, assignment.teacher_role_snapshot,
+                  assignment.group_id, assignment.student_id, assignment.effective_from,
+                  assignment.effective_to, assignment.created_at,
+                  member.status AS teacher_member_status
+           FROM teacher_assignments assignment
+           LEFT JOIN organization_members member
+             ON member.organization_id = assignment.organization_id
+            AND member.user_id = assignment.teacher_user_id
+           WHERE assignment.organization_id = ? AND ${targetSql}
+           ORDER BY assignment.effective_from DESC, assignment.id
+           LIMIT ? OFFSET ?`,
+          [access.id, targetId, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map(assignmentToJson), total: Number(countRows[0]?.count ?? 0),
+        page: pagination.page, pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async createTeacherAssignment(actor, slug, input, idempotencyKey, requestHash, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'teacher_assignment.create', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'teacher_assignment.create', 180, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'assignment:manage');
+          const idem = await beginIdempotency(tx, actor.userId, access.id, 'teacher_assignment.create', idempotencyKey, requestHash);
+          if ('replay' in idem) return idem.replay;
+          const rows = await tx`
+            WITH inserted AS (
+              INSERT INTO teacher_assignments (
+                organization_id, teacher_user_id, teacher_user_id_snapshot,
+                teacher_display_name_snapshot, teacher_role_snapshot,
+                group_id, student_id, effective_from, effective_to, created_by_user_id
+              )
+              SELECT ${access.id}, member.user_id, member.user_id, app_user.display_name, member.role,
+                     ${input.groupId}, ${input.studentId}, ${input.effectiveFrom}, ${input.effectiveTo}, ${actor.userId}
+              FROM organization_members member
+              JOIN app_users app_user ON app_user.id = member.user_id
+              WHERE member.organization_id = ${access.id}
+                AND member.user_id = ${input.teacherUserId}
+                AND member.status = 'active'
+                AND member.role IN ('owner', 'admin', 'teacher', 'assistant')
+              RETURNING *
+            )
+            SELECT inserted.*, member.status AS teacher_member_status
+            FROM inserted
+            LEFT JOIN organization_members member
+              ON member.organization_id = inserted.organization_id
+             AND member.user_id = inserted.teacher_user_id`;
+          if (!rows.length) {
+            throw new TeachingApiException('CONFLICT', 409, 'Teacher must be an active teaching member');
+          }
+          const assignment = assignmentToJson(rows[0] as Record<string, unknown>);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'teacher_assignment.create', 'teacher_assignment', ${String(rows[0].id)}, ${requestId},
+              ${sql.json({ teacherUserId: input.teacherUserId, groupId: input.groupId, studentId: input.studentId, effectiveFrom: input.effectiveFrom, effectiveTo: input.effectiveTo })}
+            )`;
+          const result: MutationResult = { status: 201, body: { assignment } };
+          await completeIdempotency(tx, idem.id, result, 'teacher_assignment', String(rows[0].id));
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Teacher assignment overlaps or targets an unavailable resource');
+      }
+    });
+  },
+
+  async revokeTeacherAssignment(actor, slug, assignmentId, idempotencyKey, requestHash, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'teacher_assignment.revoke', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'teacher_assignment.revoke', 180, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'assignment:manage');
+          const idem = await beginIdempotency(tx, actor.userId, access.id, 'teacher_assignment.revoke', idempotencyKey, requestHash);
+          if ('replay' in idem) return idem.replay;
+          const existing = await tx`
+            SELECT id, effective_from, effective_to
+            FROM teacher_assignments
+            WHERE organization_id = ${access.id} AND id = ${assignmentId}
+            FOR UPDATE`;
+          if (!existing.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Assignment not found');
+          if (existing[0].effective_to != null && new Date(String(existing[0].effective_to)).getTime() <= Date.now()) {
+            throw new TeachingApiException('CONFLICT', 409, 'Assignment has already ended');
+          }
+          const rows = await tx`
+            WITH ended AS (
+              UPDATE teacher_assignments
+              SET effective_to = LEAST(
+                COALESCE(effective_to, GREATEST(NOW(), effective_from)),
+                GREATEST(NOW(), effective_from)
+              )
+              WHERE organization_id = ${access.id} AND id = ${assignmentId}
+              RETURNING *, clock_timestamp() AS cancelled_at
+            )
+            SELECT ended.*, member.status AS teacher_member_status
+            FROM ended
+            LEFT JOIN organization_members member
+              ON member.organization_id = ended.organization_id
+             AND member.user_id = ended.teacher_user_id`;
+          const assignment = assignmentToJson(rows[0] as Record<string, unknown>);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'teacher_assignment.revoke', 'teacher_assignment', ${assignmentId}, ${requestId},
+              ${sql.json({ reason: 'manual_revocation', cancelledAt: iso(rows[0].cancelled_at), effectiveTo: assignment.effectiveTo })}
+            )`;
+          const result: MutationResult = { status: 200, body: { assignment } };
+          await completeIdempotency(tx, idem.id, result, 'teacher_assignment', assignmentId);
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Teacher assignment could not be ended');
       }
     });
   },
@@ -1919,6 +2932,245 @@ export function createTeachingSaasRoutes(deps: {
       const key = idempotencyKeyOf(c);
       const body = await jsonBody(c);
       const result = await repository.createStudent(actor, c.req.param('orgSlug'), parseStudentInput(body.value), key, sha256(body.raw), requestId);
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/students/:studentId', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const student = await repository.getStudent(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('studentId'), 'studentId'), requestId,
+      );
+      return c.json({ student });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/campuses', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listCampuses(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
+      return c.json({ campuses: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/campuses', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      const result = await repository.createCampus(
+        actor, c.req.param('orgSlug'), parseCampusInput(body.value), key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/campuses/:campusId', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const campus = await repository.getCampus(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('campusId'), 'campusId'), requestId,
+      );
+      return c.json({ campus });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/campuses/:campusId/archive', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      if (Object.keys(body.value).length) {
+        throw new TeachingApiException('INVALID_INPUT', 400, 'Campus archive body must be empty');
+      }
+      const result = await repository.archiveCampus(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('campusId'), 'campusId'),
+        key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/groups', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listGroups(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
+      return c.json({ groups: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/groups', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      const result = await repository.createGroup(
+        actor, c.req.param('orgSlug'), parseGroupInput(body.value), key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/groups/:groupId', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const group = await repository.getGroup(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('groupId'), 'groupId'), requestId,
+      );
+      return c.json({ group });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/groups/:groupId/archive', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      if (Object.keys(body.value).length) {
+        throw new TeachingApiException('INVALID_INPUT', 400, 'Group archive body must be empty');
+      }
+      const result = await repository.archiveGroup(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('groupId'), 'groupId'),
+        key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/groups/:groupId/students', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listGroupStudents(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('groupId'), 'groupId'), paginationOf(c), requestId,
+      );
+      return c.json({ memberships: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/groups/:groupId/students', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      const result = await repository.createStudentGroupMembership(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('groupId'), 'groupId'),
+        parseStudentGroupMembershipInput(body.value), key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/student-group-memberships/:membershipId/revoke', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      if (Object.keys(body.value).length) {
+        throw new TeachingApiException('INVALID_INPUT', 400, 'Membership revoke body must be empty');
+      }
+      const result = await repository.revokeStudentGroupMembership(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('membershipId'), 'membershipId'),
+        key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/teacher-assignments', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listTeacherAssignments(
+        actor, c.req.param('orgSlug'), teacherAssignmentTargetOf(c), paginationOf(c), requestId,
+      );
+      return c.json({ assignments: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/teacher-assignments', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      const result = await repository.createTeacherAssignment(
+        actor, c.req.param('orgSlug'), parseTeacherAssignmentInput(body.value), key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/teacher-assignments/:assignmentId/revoke', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      if (Object.keys(body.value).length) {
+        throw new TeachingApiException('INVALID_INPUT', 400, 'Assignment revoke body must be empty');
+      }
+      const result = await repository.revokeTeacherAssignment(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
+        key, sha256(body.raw), requestId,
+      );
       return c.json(result.body, result.status);
     } catch (error) {
       return errorResponse(c, error, requestId);

@@ -32,6 +32,8 @@ PostgreSQL schema 变更的 source of truth。`apply_migrations.sh` 会在部署
 
 部署只在已有 ledger 与历史基线的数据库上向前升级。新库或灾难恢复必须使用已验证的数据库备份；若以后要支持从零初始化，应另行提交带版本的 baseline、ledger 初始化规则和空库集成测试，不能改写历史 migration。
 
+当前教学 CRM 增量 `0149_teaching_campuses_groups_assignments.sql` 的升级基线是已应用至 `0148_fix_teaching_owner_guard.sql` 的现有数据库。它新增校区、班级、有效期关系和永久并发锁，并把 `session_teachers` 姓名快照扩到 200 字符；不能把 `0149` 当作空库初始化脚本单独执行。
+
 ## 已应用 migration 不能改
 
 `apply_migrations.sh` 会把每个文件的 SHA-256 写入 ledger。已应用文件的摘要发生变化时会终止执行。修正已上线结构只能新增 migration；需要恢复数据时使用已验证的备份。

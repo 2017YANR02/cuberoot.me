@@ -124,6 +124,11 @@ describe('清单 ↔ schema', () => {
       'teaching_mutation_rate_limits',
       'teaching_platform_identities',
       'teaching_platform_assertion_nonces',
+      'teaching_campuses',
+      'teaching_groups',
+      'teaching_relation_locks',
+      'student_group_memberships',
+      'teacher_assignments',
       'lesson_package_products',
       'student_packages',
       'teaching_sessions',
@@ -223,9 +228,14 @@ describe('删除动作本身', () => {
     expect(impl).toContain('throw new AccountOwnsOrganizationError()');
   });
 
-  it('删除账号前切断课堂教师活动引用,同时保留履约快照', () => {
+  it('删除账号前结束长期任教并切断活动引用，同时保留负责人快照', () => {
+    const endAssignment = impl.indexOf('UPDATE teacher_assignments');
     const unlink = impl.indexOf('UPDATE session_teachers SET teacher_user_id = NULL');
     const deleteUser = impl.indexOf('DELETE FROM app_users');
+    expect(endAssignment).toBeGreaterThan(-1);
+    expect(impl).toContain('SET teacher_user_id = NULL');
+    expect(impl).toContain('GREATEST(NOW(), effective_from)');
+    expect(unlink).toBeGreaterThan(endAssignment);
     expect(unlink).toBeGreaterThan(-1);
     expect(deleteUser).toBeGreaterThan(unlink);
   });

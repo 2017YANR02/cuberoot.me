@@ -30,7 +30,22 @@ function repository(): TeachingSaasRepository {
     listMembers: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
     createMember: vi.fn().mockResolvedValue({ status: 201, body: { member: { userId: 7 } } }),
     listStudents: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    getStudent: vi.fn().mockResolvedValue({ id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' }),
     createStudent: vi.fn().mockResolvedValue({ status: 201, body: { student: { id: 'student-1' } } }),
+    listCampuses: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    getCampus: vi.fn().mockResolvedValue({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' }),
+    createCampus: vi.fn().mockResolvedValue({ status: 201, body: { campus: { id: 'campus-1' } } }),
+    archiveCampus: vi.fn().mockResolvedValue({ status: 200, body: { campus: { status: 'archived' } } }),
+    listGroups: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    getGroup: vi.fn().mockResolvedValue({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' }),
+    createGroup: vi.fn().mockResolvedValue({ status: 201, body: { group: { id: 'group-1' } } }),
+    archiveGroup: vi.fn().mockResolvedValue({ status: 200, body: { group: { status: 'archived' } } }),
+    listGroupStudents: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    createStudentGroupMembership: vi.fn().mockResolvedValue({ status: 201, body: { membership: { id: 'membership-1' } } }),
+    revokeStudentGroupMembership: vi.fn().mockResolvedValue({ status: 200, body: { membership: { id: 'membership-1' } } }),
+    listTeacherAssignments: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    createTeacherAssignment: vi.fn().mockResolvedValue({ status: 201, body: { assignment: { id: 'assignment-1' } } }),
+    revokeTeacherAssignment: vi.fn().mockResolvedValue({ status: 200, body: { assignment: { id: 'assignment-1' } } }),
     listPackageProducts: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
     createPackageProduct: vi.fn().mockResolvedValue({ status: 201, body: { packageProduct: { id: 'product-1' } } }),
     listStudentPackages: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
@@ -165,6 +180,71 @@ describe('teaching SaaS routes', () => {
     expect(invalid.status).toBe(400);
     expect(await invalid.json()).toMatchObject({ error: { code: 'INVALID_INPUT' } });
     expect(repo.listStudents).not.toHaveBeenCalled();
+  });
+
+  it('normalizes Stage 1 CRM input and binds assignment reads to exactly one target', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const groupId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const studentId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+
+    const campusBody = JSON.stringify({ code: ' North_1 ', name: ' 北校区 ', timezone: 'Asia/Shanghai' });
+    const campus = await app.request('/teaching/organizations/demo/campuses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'campus-1' },
+      body: campusBody,
+    });
+    expect(campus.status).toBe(201);
+    expect(repo.createCampus).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      { code: 'north_1', name: '北校区', timezone: 'Asia/Shanghai' },
+      'campus-1',
+      createHash('sha256').update(campusBody).digest('hex'),
+      expect.any(String),
+    );
+
+    const assignmentBody = JSON.stringify({
+      teacherUserId: 7,
+      groupId,
+      effectiveFrom: '2026-08-18T09:00:00+08:00',
+      effectiveTo: '2026-12-18T09:00:00+08:00',
+    });
+    const assignment = await app.request('/teaching/organizations/demo/teacher-assignments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'assignment-1' },
+      body: assignmentBody,
+    });
+    expect(assignment.status).toBe(201);
+    expect(repo.createTeacherAssignment).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      {
+        teacherUserId: 7,
+        groupId,
+        studentId: null,
+        effectiveFrom: '2026-08-18T01:00:00.000Z',
+        effectiveTo: '2026-12-18T01:00:00.000Z',
+      },
+      'assignment-1',
+      createHash('sha256').update(assignmentBody).digest('hex'),
+      expect.any(String),
+    );
+
+    const list = await app.request(`/teaching/organizations/demo/teacher-assignments?studentId=${studentId}`);
+    expect(list.status).toBe(200);
+    expect(repo.listTeacherAssignments).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      { groupId: null, studentId },
+      { page: 1, pageSize: 30, offset: 0 },
+      expect.any(String),
+    );
+
+    const ambiguous = await app.request(
+      `/teaching/organizations/demo/teacher-assignments?groupId=${groupId}&studentId=${studentId}`,
+    );
+    expect(ambiguous.status).toBe(400);
+    expect(await ambiguous.json()).toMatchObject({ error: { code: 'INVALID_INPUT' } });
   });
 
   it('normalizes and bounds package product input', async () => {

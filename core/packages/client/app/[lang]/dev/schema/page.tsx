@@ -175,6 +175,21 @@ const TABLES: Table[] = [
   { name: 'teaching_platform_assertion_nonces', domain: 'teaching', origin: '0143', naturalKey: true, purpose: { zh: '教学平台短时登录断言的单次随机数，只保存 SHA-256 以阻止重放', en: 'Single-use nonces for short-lived teaching-platform assertions, stored only as SHA-256 hashes to prevent replay' }, cols: [
     { name: 'nonce_hash (PK), actor_user_id' }, { name: 'expires_at, created_at' },
   ] },
+  { name: 'teaching_campuses', domain: 'teaching', origin: '0149', purpose: { zh: '机构校区；编码可选，仅非空时在机构内唯一，归档不可逆', en: 'Tenant campuses with optional codes that are unique only when present and terminal archival' }, cols: [
+    { name: 'id UUID (PK), organization_id, code, name' }, { name: 'timezone, status, archived_at' }, { name: 'created_by_user_id, created_at, updated_at' },
+  ] },
+  { name: 'teaching_groups', domain: 'teaching', origin: '0149', purpose: { zh: '机构班级，可归属校区；复合外键阻止跨租户关联', en: 'Tenant groups optionally attached to a campus, with composite foreign keys blocking cross-tenant links' }, cols: [
+    { name: 'id UUID (PK), organization_id, campus_id' }, { name: 'code, name, status, archived_at' }, { name: 'created_by_user_id, created_at, updated_at' },
+  ] },
+  { name: 'teaching_relation_locks', domain: 'teaching', origin: '0149', naturalKey: true, purpose: { zh: '永久保留的教学关系并发锁行，串行化同一自然键的有效期重叠检查', en: 'Permanent teaching-relation lock rows that serialize effective-range overlap checks for each natural key' }, cols: [
+    { name: 'id UUID (PK), organization_id' }, { name: 'relation_kind, subject_key, target_key (tenant UNIQUE)' }, { name: 'revision, created_at, touched_at' },
+  ] },
+  { name: 'student_group_memberships', domain: 'teaching', origin: '0149', naturalKey: true, purpose: { zh: '学员与班级的只追加有效期关系；同一学员与班级的有效区间不可重叠', en: 'Append-only effective-dated student-to-group memberships with no overlap per student and group' }, cols: [
+    { name: 'id UUID (PK), organization_id, group_id, student_id' }, { name: 'effective_from, effective_to' }, { name: 'created_by_user_id, created_at' },
+  ] },
+  { name: 'teacher_assignments', domain: 'teaching', origin: '0149', naturalKey: true, purpose: { zh: '老师对班级或个别学员的长期可见范围；账号注销后保留稳定身份、姓名和角色快照', en: 'Long-term teacher scope over one group or student, retaining stable identity, name, and role snapshots after account deletion' }, cols: [
+    { name: 'id UUID (PK), organization_id, teacher_user_id' }, { name: 'teacher_user_id_snapshot, teacher_display_name_snapshot, teacher_role_snapshot' }, { name: 'group_id XOR student_id, effective_from, effective_to, created_by_user_id' },
+  ] },
   { name: 'lesson_package_products', domain: 'teaching', origin: '0147', naturalKey: true, purpose: { zh: '机构课包产品定义；学员领取后以快照保留历史合同', en: 'Tenant package-product definitions whose terms are snapshotted when issued to a student' }, cols: [
     { name: 'id UUID (PK), organization_id, code (tenant UNIQUE), name, status' }, { name: 'credit_unit, credit_type, total_credits, validity_days' }, { name: 'price_amount_minor, currency, created_by_user_id' },
   ] },
@@ -184,7 +199,7 @@ const TABLES: Table[] = [
   { name: 'teaching_sessions', domain: 'teaching', origin: '0147', purpose: { zh: '机构课堂时间、时区与履约状态', en: 'Tenant session schedule, timezone, and fulfilment state' }, cols: [
     { name: 'id UUID (PK), organization_id, title' }, { name: 'starts_at, ends_at, timezone, status, version' }, { name: 'started_at, completed_at, cancelled_at' },
   ] },
-  { name: 'session_teachers', domain: 'teaching', origin: '0147', naturalKey: true, purpose: { zh: '课堂教师分配；账号删除后仍保留教师 ID 与姓名快照', en: 'Session teacher assignments retaining ID and display-name snapshots after account deletion' }, cols: [
+  { name: 'session_teachers', domain: 'teaching', origin: '0147', evolved: [149], naturalKey: true, purpose: { zh: '课堂教师分配；账号删除后仍保留教师 ID 与姓名快照', en: 'Session teacher assignments retaining ID and display-name snapshots after account deletion' }, cols: [
     { name: 'id UUID (PK), organization_id, session_id' }, { name: 'teacher_user_id, teacher_user_id_snapshot, teacher_display_name_snapshot' }, { name: 'role, created_at' },
   ] },
   { name: 'attendance_records', domain: 'teaching', origin: '0147', naturalKey: true, purpose: { zh: '每位学员在每堂课的考勤与扣课规划，复合外键阻止跨租户引用', en: 'Per-student session attendance and planned credit consumption with composite tenant foreign keys' }, cols: [
@@ -486,6 +501,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 146, slug: 'teaching_student_pagination_index', desc: { zh: '新增机构学员按姓名分页的匹配索引。', en: 'Add an index matching organization-wide student pagination by display name.' } },
   { n: 147, slug: 'teaching_packages_and_sessions', desc: { zh: '新增课包产品、学员课包与只追加课时账本，并以课堂、教师快照、考勤和只追加事件完成履约闭环。', en: 'Add package products, student-package snapshots, and an append-only credit ledger, then close the fulfilment loop with sessions, teacher snapshots, attendance, and append-only events.' } },
   { n: 148, slug: 'fix_teaching_owner_guard', desc: { zh: '修复机构 owner 延迟约束 trigger：按触发表安全读取 NEW/OLD，并锁定机构行以串行校验并发 owner 变更。', en: 'Fix the deferred organization-owner guard by safely branching before reading NEW or OLD and locking organization rows to serialize concurrent owner changes.' } },
+  { n: 149, slug: 'teaching_campuses_groups_assignments', desc: { zh: '新增校区、班级、学员班级关系与老师负责范围；以复合租户外键、永久关系锁和有效期约束阻止跨租户引用与并发重叠。', en: 'Add campuses, groups, student memberships, and teacher scopes with composite tenant foreign keys, permanent relation locks, and effective-range guards against cross-tenant references and concurrent overlap.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

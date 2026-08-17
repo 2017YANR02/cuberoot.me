@@ -6,11 +6,17 @@ async function read(relativePath: string): Promise<string> {
 }
 
 describe('teaching Stage 2 schema', () => {
-  it('keeps the immutable migration synchronized into the canonical schema', async () => {
+  it('keeps the immutable migration represented in the evolved canonical schema', async () => {
     const migration = await read('../migrations/0147_teaching_packages_and_sessions.sql');
     const schema = await read('../src/db/schema.pg.sql');
     expect(migration).not.toMatch(/\b(?:BEGIN|COMMIT)\s*;/i);
-    expect(schema).toContain(migration.trim());
+    const evolvedFinalState = migration
+      .replace('teacher_display_name_snapshot VARCHAR(160)', 'teacher_display_name_snapshot VARCHAR(200)')
+      .replace(
+        'CHAR_LENGTH(teacher_display_name_snapshot) BETWEEN 1 AND 160',
+        'CHAR_LENGTH(teacher_display_name_snapshot) BETWEEN 1 AND 200',
+      );
+    expect(schema).toContain(evolvedFinalState.trim());
   });
 
   it('uses composite tenant foreign keys for every cross-tenant business relation', async () => {
