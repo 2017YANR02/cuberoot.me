@@ -15,6 +15,15 @@ export interface PairedGuard {
 
 export const PAIRED_GUARDS: PairedGuard[] = [
   {
+    id: 'workspace-reparse-links',
+    scope: 'project',
+    hook: 'block-workspace-reparse-links.ps1',
+    test: 'workspace-reparse-links-guard.test.ts',
+    baseline: '0',
+    zh: { title: '临时目录链接正式工作区', desc: '临时验证目录和 worktree 禁止通过 Junction 或 SymbolicLink 复用正式 node_modules / packages。每个验证树独立 pnpm install --offline --frozen-lockfile,由 pnpm store 安全去重;Codex 命令写入前拦截,CI 锁定危险命令与安全替代路径。' },
+    en: { title: 'Disposable trees linking into the live workspace', desc: 'Temporary verification trees and worktrees may not reuse live node_modules or packages through junctions or symlinks. Each tree runs its own pnpm install --offline --frozen-lockfile and relies on the pnpm store for safe deduplication; Codex blocks link creation before execution and CI pins both dangerous commands and the safe replacement.' },
+  },
+  {
     id: 'checkbox',
     scope: 'project',
     hook: 'block-raw-checkbox.ps1',
