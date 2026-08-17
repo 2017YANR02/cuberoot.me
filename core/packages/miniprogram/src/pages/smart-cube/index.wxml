@@ -30,6 +30,13 @@
       </view>
       <button class="driver-action" hover-class="press-feedback" disabled="{{busy}}" data-driver="gocube" bindtap="connectCube">搜索</button>
     </view>
+    <view class="driver-row">
+      <view class="driver-copy">
+        <text class="driver-name">Giiker 与米家智能魔方</text>
+        <text class="driver-models">Giiker、Mi Smart Magic Cube、Hi- 系列，代码兼容待真机验证</text>
+      </view>
+      <button class="driver-action" hover-class="press-feedback" disabled="{{busy}}" data-driver="giiker" bindtap="connectCube">搜索</button>
+    </view>
     <view wx:if="{{simulator}}" class="driver-row">
       <view class="driver-copy">
         <text class="driver-name">开发者工具仿真</text>
@@ -53,6 +60,6 @@
 
   <view class="support-note">
     <text class="section-title">兼容范围</text>
-    <text class="support-copy">网站计时器现有 GAN、魔域、奇艺、Giiker、GoCube 等协议继续保留。小程序原生驱动先覆盖 GAN 新款和 GoCube 系列，其余协议沿同一接口继续接入，不会重写计时器。</text>
+    <text class="support-copy">网站计时器现有协议继续保留。小程序原生驱动已覆盖 GAN、GoCube、Giiker 与米家系列，其他型号沿同一接口继续接入，不会重写计时器。</text>
   </view>
 </view>
