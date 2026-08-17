@@ -7,7 +7,7 @@ import {
   Compass, Grid2x2, Trophy, Timer as TimerIcon, Code as CodeIcon,
   Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School,
-  FileText, Table2,
+  FileText, Table2, Award,
   type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
@@ -88,6 +88,7 @@ export const TEXTS: Record<string, { en: string; zh: string
 },
   forum:           { en: 'Forum', zh: '论坛' },
   meet:            { en: 'Meeting', zh: '会议' },
+  achievements:    { en: 'Achievements', zh: '成就' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线'
 },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢'
@@ -195,6 +196,7 @@ export const SECTIONS: Section[] = [
       { id: 'blog', href: '/blog/', internal: false, tier: 'medium', Icon: BookOpen, nameKey: 'blog' },
       { id: 'site', href: '/site',  internal: true,  tier: 'medium', Icon: Compass,  nameKey: 'sitesDirectory' },
       { id: 'wb',   href: '/wb',    internal: true,  tier: 'medium', Icon: Trophy,   nameKey: 'worldBests' },
+      { id: 'achievements', href: '/achievements', internal: true, tier: 'utility', Icon: Award, nameKey: 'achievements' },
     ],
   },
 ];

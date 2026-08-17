@@ -1,0 +1,295 @@
+.achievements-page {
+  width: min(1120px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 2rem max(1.25rem, env(safe-area-inset-right)) 5rem max(1.25rem, env(safe-area-inset-left));
+}
+
+.achievements-topbar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: clamp(5rem, 12vw, 10rem);
+  color: var(--muted-foreground);
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+}
+
+.achievements-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: fit-content;
+  color: var(--foreground);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.achievements-home:hover {
+  color: var(--accent);
+}
+
+.achievements-hero {
+  max-width: 1000px;
+}
+
+.achievements-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 1.3rem;
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.achievements-hero h1 {
+  max-width: 940px;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(3rem, 7.8vw, 6.6rem);
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.achievements-intro {
+  max-width: 720px;
+  margin: 2rem 0 0;
+  color: var(--muted-foreground);
+  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  line-height: 1.75;
+}
+
+.achievements-proof-chain {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: clamp(3rem, 7vw, 5.5rem);
+  border-top: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.achievements-proof-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 0.65rem;
+  padding: 1.25rem 2.5rem 1.25rem 0;
+}
+
+.achievements-proof-step:not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  color: var(--accent);
+  transform: translateY(-50%);
+}
+
+.achievements-proof-index {
+  grid-row: span 2;
+  color: var(--accent);
+  font: 600 0.7rem/1.2 ui-monospace, 'Cascadia Code', monospace;
+}
+
+.achievements-proof-step strong {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.achievements-proof-step small {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.achievements-list {
+  margin-top: clamp(5rem, 12vw, 9rem);
+}
+
+.achievements-list-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+  color: var(--accent);
+}
+
+.achievements-list-heading h2 {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+}
+
+.achievement-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.72fr) minmax(0, 1.55fr);
+  gap: clamp(2rem, 6vw, 6rem);
+  padding: clamp(2.2rem, 5vw, 4rem) 0;
+  border-top: 1px solid var(--border-default);
+}
+
+.achievement-row-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  color: var(--accent);
+}
+
+.achievement-row-heading span {
+  padding-top: 0.25rem;
+  color: var(--muted-foreground);
+  font: 600 0.7rem/1.3 ui-monospace, 'Cascadia Code', monospace;
+  letter-spacing: 0.08em;
+}
+
+.achievement-row-content h3 {
+  max-width: 680px;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.65rem, 3.6vw, 2.55rem);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.achievement-row-content p {
+  max-width: 700px;
+  margin: 1.15rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.98rem;
+  line-height: 1.78;
+}
+
+.achievement-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin-top: 1.4rem;
+}
+
+.achievement-links a,
+.achievements-closing a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  color: var(--foreground);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 4px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.achievement-links a:hover,
+.achievements-closing a:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
+.achievement-links a svg,
+.achievements-closing a svg {
+  transition: transform 0.15s ease;
+}
+
+.achievement-links a:hover svg,
+.achievements-closing a:hover svg {
+  transform: translateX(3px);
+}
+
+.achievements-closing {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.72fr) minmax(0, 1.55fr);
+  gap: clamp(2rem, 6vw, 6rem);
+  margin-top: clamp(2rem, 5vw, 4rem);
+  padding-top: clamp(3rem, 7vw, 6rem);
+  border-top: 1px solid var(--border-default);
+}
+
+.achievements-closing > p {
+  margin: -0.2em 0 0;
+  color: var(--accent);
+  font-family: var(--font-serif);
+  font-size: clamp(4rem, 9vw, 7rem);
+  line-height: 1;
+}
+
+.achievements-closing h2 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
+
+.achievements-closing div > p {
+  max-width: 650px;
+  margin: 1rem 0 1.4rem;
+  color: var(--muted-foreground);
+  line-height: 1.75;
+}
+
+@media (max-width: 700px) {
+  .achievements-page {
+    padding-top: 1.25rem;
+    padding-bottom: 3.5rem;
+  }
+
+  .achievements-topbar {
+    margin-bottom: 4rem;
+  }
+
+  .achievements-topbar > span {
+    display: none;
+  }
+
+  .achievements-hero h1 {
+    font-size: clamp(2.55rem, 13vw, 4.2rem);
+  }
+
+  .achievements-proof-chain {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .achievements-proof-step:nth-child(2)::after {
+    content: none;
+  }
+
+  .achievements-proof-step:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--border-default);
+  }
+
+  .achievement-row,
+  .achievements-closing {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .achievement-row-heading {
+    align-items: center;
+  }
+
+  .achievement-row-heading span {
+    padding-top: 0;
+  }
+
+  .achievements-closing > p {
+    margin-bottom: -0.3em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .achievements-page *,
+  .achievements-page *::before,
+  .achievements-page *::after {
+    transition-duration: 0.01ms !important;
+  }
+}

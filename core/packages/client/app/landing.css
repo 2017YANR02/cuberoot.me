@@ -422,7 +422,7 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
 @media (max-width: 1024px) {
     .landing-page .card.tier-medium { grid-column: span 6; }
     .landing-page .card.tier-standard { grid-column: span 6; }
-    .landing-page .card.tier-utility { grid-column: span 6; }
+    .landing-page .card.tier-utility { grid-column: span 12; }
 }
 
 @media (max-width: 640px) {
@@ -436,7 +436,7 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     .landing-page .card.tier-medium,
     .landing-page .card.tier-standard,
     .landing-page .card.tier-utility {
-        grid-column: span 1;
+        grid-column: 1 / -1;
         grid-row: auto;
         min-height: 74px;
         flex-direction: row;
