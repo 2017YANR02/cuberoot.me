@@ -60,7 +60,7 @@ prod base `https://api.cuberoot.me`;本地 dev 需 vite proxy 改指 `127.0.0.1:
 ## 直查 PG (调试 / 批量改)
 
 ```bash
-ssh root@cuberoot 'PGPASSWORD=314159 psql -U cuberoot cuberoot_db -c "SELECT id, category, title_zh FROM ops_commands ORDER BY category, position"'
+ssh root@cuberoot 'set -a; . /root/core-api/.env; set +a; : "${DB_PASS:?database credentials unavailable}"; PGPASSWORD="$DB_PASS" psql -U cuberoot cuberoot_db -c "SELECT id, category, title_zh FROM ops_commands ORDER BY category, position"'
 ```
 
 本地 dev (5433 pwd dev):

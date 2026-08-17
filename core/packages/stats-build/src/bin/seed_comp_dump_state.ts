@@ -15,7 +15,7 @@
  */
 import mysql from 'mysql2/promise';
 import { writeFileSync, statSync, readFileSync } from 'node:fs';
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -88,8 +88,10 @@ COMMIT;
   execSync(`scp "${tsvLocal}" "${sqlLocal}" root@cuberoot:/tmp/`, { stdio: 'inherit' });
 
   console.log('[seed] applying on server PG');
-  execSync(
-    `ssh root@cuberoot "PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot_db -f /tmp/comp_dump_state_seed.sql && rm -f /tmp/comp_dump_state_seed.tsv /tmp/comp_dump_state_seed.sql"`,
+  const remoteDbEnv = 'if [ -z "${PGPASSWORD:-}" ]; then if [ -z "${DB_PASS:-}" ]; then DB_ENV_FILE="${CUBEROOT_DB_ENV_FILE:-/root/core-api/.env}"; [ -r "$DB_ENV_FILE" ] || { echo "database credentials unavailable" >&2; exit 1; }; set -a; . "$DB_ENV_FILE"; set +a; fi; : "${DB_PASS:?database credentials unavailable}"; export PGPASSWORD="$DB_PASS"; fi';
+  execFileSync(
+    'ssh',
+    ['root@cuberoot', `${remoteDbEnv}; psql -U recon_user -h 127.0.0.1 -d cuberoot_db -f /tmp/comp_dump_state_seed.sql && rm -f /tmp/comp_dump_state_seed.tsv /tmp/comp_dump_state_seed.sql`],
     { stdio: 'inherit' },
   );
   console.log(`\n[seed] DONE in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
