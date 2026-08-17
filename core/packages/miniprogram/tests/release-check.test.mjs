@@ -47,7 +47,12 @@ const validInput = {
     compileType: 'miniprogram',
     libVersion: '3.17.1',
     miniprogramRoot: 'dist/',
-    setting: { urlCheck: true },
+    setting: {
+      minified: true,
+      minifyWXML: true,
+      minifyWXSS: true,
+      urlCheck: true,
+    },
   },
   privateConfig: {},
   appConfig: {
@@ -146,7 +151,12 @@ describe('mini program release check', () => {
         compileType: 'plugin',
         libVersion: 'trial',
         miniprogramRoot: 'src/',
-        setting: { urlCheck: false },
+        setting: {
+          minified: false,
+          minifyWXML: false,
+          minifyWXSS: false,
+          urlCheck: false,
+        },
       },
       confirmedStableVersion: '3.17.1',
       appConfig: { pages: [] },
@@ -157,10 +167,25 @@ describe('mini program release check', () => {
       '基础库仍是 trial 或无效值，请在开发者工具中选择稳定版本。',
       '开发者工具当前基础库 trial 与确认版本 3.17.1 不一致。',
       '上传前必须开启合法域名校验。',
+      '上传前必须开启代码压缩：JavaScript、WXML、WXSS。',
       'compileType 必须保持为 miniprogram，避免上传成其他微信项目类型。',
       'miniprogramRoot 必须保持为 dist/。',
       'src/app.json 没有有效页面声明。',
     ]));
+  });
+
+  it('honors private developer-tool overrides for compression', () => {
+    expect(collectReleaseFailures({
+      ...validInput,
+      privateConfig: {
+        setting: {
+          minified: false,
+          minifyWXML: true,
+          minifyWXSS: true,
+          urlCheck: true,
+        },
+      },
+    })).toContain('上传前必须开启代码压缩：JavaScript。');
   });
 
   it('rejects a valid-shaped AppID belonging to another mini program', () => {

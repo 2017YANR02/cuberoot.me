@@ -8,6 +8,9 @@
     "coverView": true,
     "es6": true,
     "enhance": true,
+    "minified": true,
+    "minifyWXML": true,
+    "minifyWXSS": true,
     "postcss": true,
     "preloadBackgroundData": false,
     "urlCheck": true

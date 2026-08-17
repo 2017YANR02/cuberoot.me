@@ -1,6 +1,6 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -33,6 +33,19 @@ afterEach(async () => {
 });
 
 describe('project config resolution', () => {
+  it('keeps every upload compression switch enabled in the repository template', async () => {
+    const template = JSON.parse(await readFile(
+      resolve(import.meta.dirname, '..', 'project.config.template.json'),
+      'utf8',
+    ));
+
+    expect(template.setting).toMatchObject({
+      minified: true,
+      minifyWXML: true,
+      minifyWXSS: true,
+    });
+  });
+
   it('preserves an existing official AppID and stable base library', async () => {
     const paths = await fixture({
       existing: JSON.stringify({ appid: 'wx-official', libVersion: '3.17.1' }),
