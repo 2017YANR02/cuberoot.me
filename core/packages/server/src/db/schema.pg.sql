@@ -1362,6 +1362,13 @@ CREATE INDEX idx_teaching_audit_events_org_actor_created
 
 CREATE FUNCTION trg_reject_teaching_audit_mutation() RETURNS TRIGGER AS $$
 BEGIN
+  IF TG_OP = 'UPDATE'
+     AND OLD.actor_user_id IS NOT NULL
+     AND NEW.actor_user_id IS NULL
+     AND (to_jsonb(NEW) - 'actor_user_id') IS NOT DISTINCT FROM (to_jsonb(OLD) - 'actor_user_id') THEN
+    RETURN NEW;
+  END IF;
+
   RAISE EXCEPTION 'teaching audit events are append-only'
     USING ERRCODE = '55000';
 END;
@@ -1409,6 +1416,28 @@ CREATE INDEX idx_teaching_idempotency_requests_expiry
 CREATE INDEX idx_teaching_idempotency_requests_org_created
   ON teaching_idempotency_requests(organization_id, created_at DESC)
   WHERE organization_id IS NOT NULL;
+
+-- Verified identity bridge from the legacy teaching platform (0143).
+CREATE TABLE teaching_platform_identities (
+  platform_subject VARCHAR(128) PRIMARY KEY,
+  user_id          BIGINT       NOT NULL UNIQUE REFERENCES app_users(id) ON DELETE CASCADE,
+  created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  last_seen_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  CHECK (length(trim(platform_subject)) > 0)
+);
+CREATE INDEX idx_teaching_platform_identities_user
+  ON teaching_platform_identities(user_id);
+
+CREATE TABLE teaching_platform_assertion_nonces (
+  nonce_hash    CHAR(64)    PRIMARY KEY,
+  actor_user_id BIGINT      NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  expires_at    TIMESTAMPTZ NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (nonce_hash ~ '^[0-9a-f]{64}$'),
+  CHECK (expires_at > created_at)
+);
+CREATE INDEX idx_teaching_platform_assertion_nonces_expiry
+  ON teaching_platform_assertion_nonces(expires_at);
 
 -- Constraint triggers run at commit so organization creation and owner transfer can
 -- change multiple rows atomically while every committed organization retains an owner.
