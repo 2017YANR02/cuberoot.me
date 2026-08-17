@@ -32,6 +32,7 @@ describe('trainer-store 开关联动', () => {
     st().setRandomInitialD(true);
     st().setRandomFinalAuf(true);
     st().setF2LSlots(['FR', 'FL', 'BL', 'BR']);
+    st().setPsf2lSlotPairs(['FR+BR', 'BR+BL', 'BL+FL', 'FL+FR', 'FR+BL', 'FL+BR']);
     st().setShowRecapRoundEnd(true);
   });
 
@@ -75,11 +76,13 @@ describe('trainer-store 开关联动', () => {
     st().setRandomInitialD(false);
     st().setRandomFinalAuf(false);
     st().setF2LSlots(['FL', 'BR']);
+    st().setPsf2lSlotPairs(['FR+BR', 'FL+BR']);
 
     const saved = JSON.parse(g.localStorage!.getItem('trainer:prefs') ?? '{}');
     expect(saved.randomInitialD).toBe(false);
     expect(saved.randomFinalAuf).toBe(false);
     expect(saved.f2lSlots).toEqual(['FL', 'BR']);
+    expect(saved.psf2lSlotPairs).toEqual(['FR+BR', 'FL+BR']);
     expect(saved.randomFinalY).toBeUndefined();
   });
 
@@ -89,6 +92,8 @@ describe('trainer-store 开关联动', () => {
 
     expect(st().randomFinalAuf).toBe(true);
     expect(st().f2lSlots).toEqual(['FR', 'FL', 'BL', 'BR']);
+    expect(st().psf2lSlotPairs)
+      .toEqual(['FR+BR', 'BR+BL', 'BL+FL', 'FL+FR', 'FR+BL', 'FL+BR']);
     expect(st().showRecapRoundEnd).toBe(true);
   });
 
@@ -111,6 +116,8 @@ describe('trainer-store 开关联动', () => {
     expect(st().randomInitialD).toBe(true);
     expect(st().randomFinalAuf).toBe(true);
     expect(st().f2lSlots).toEqual(['FR', 'FL', 'BL', 'BR']);
+    expect(st().psf2lSlotPairs)
+      .toEqual(['FR+BR', 'BR+BL', 'BL+FL', 'FL+FR', 'FR+BL', 'FL+BR']);
     expect(st().showRecapRoundEnd).toBe(true);
   });
 
@@ -126,5 +133,12 @@ describe('trainer-store 开关联动', () => {
     st().setF2LSlots([]);
 
     expect(st().f2lSlots).toEqual(['BL']);
+  });
+
+  it('不允许把 PSF2L 双槽位清空', () => {
+    st().setPsf2lSlotPairs(['FR+BL']);
+    st().setPsf2lSlotPairs([]);
+
+    expect(st().psf2lSlotPairs).toEqual(['FR+BL']);
   });
 });

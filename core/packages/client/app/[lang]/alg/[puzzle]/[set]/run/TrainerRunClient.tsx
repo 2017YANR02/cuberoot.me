@@ -29,10 +29,13 @@ import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { displayZbllToken } from '@/lib/alg_case_display';
 import {
   availableKinds, purifyScramble, SCRAMBLE_KINDS, trainerSetScrambleFeatures,
-  replaceOuterDAdjustment,
-  type F2LSlot, type ScrambleKind,
+  replaceOuterDAdjustment, PSF2L_SLOT_PAIRS,
+  type F2LSlot, type Psf2lSlotPair, type ScrambleKind,
 } from '@/lib/trainer-scramble';
-import { preparePsf2lExtraScrambles } from '@/lib/psf2l-extra-scramble';
+import {
+  preparePsf2lExtraScrambles,
+  preparePsf2lSlotScrambles,
+} from '@/lib/psf2l-extra-scramble';
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
 import { virtualAlgSet } from '@/lib/alg-virtual-sets';
 import { useTrainerMarks, markStatus, type CaseMarkStatus } from '@/lib/trainer-marks';
@@ -85,6 +88,55 @@ function useSplitScreenAvailable(): boolean {
 
 const F2L_SLOT_GRID: readonly F2LSlot[] = ['BL', 'BR', 'FL', 'FR'];
 
+function SlotChoicePicker<T extends string>({
+  label,
+  ariaLabel,
+  choices,
+  selected,
+  keepOneTitle,
+  onChange,
+}: {
+  label: string;
+  ariaLabel: string;
+  choices: readonly T[];
+  selected: readonly T[];
+  keepOneTitle: string;
+  onChange: (choices: readonly T[]) => void;
+}) {
+  return (
+    <div className="trainer-opts-row">
+      <span className="trainer-opts-label">{label}</span>
+      <div
+        className="trainer-ori-cells trainer-slot-cells"
+        role="group"
+        aria-label={ariaLabel}
+      >
+        {choices.map(choice => {
+          const isSelected = selected.includes(choice);
+          const lastSelected = isSelected && selected.length === 1;
+          return (
+            <button
+              key={choice}
+              type="button"
+              className={`trainer-ori-cell trainer-slot-cell${isSelected ? ' is-on' : ''}`}
+              aria-pressed={isSelected}
+              disabled={lastSelected}
+              title={lastSelected ? keepOneTitle : undefined}
+              onClick={() => onChange(
+                isSelected
+                  ? selected.filter(value => value !== choice)
+                  : [...selected, choice],
+              )}
+            >
+              {choice}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function F2LSlotPicker({
   slots,
   onChange,
@@ -93,36 +145,33 @@ function F2LSlotPicker({
   onChange: (slots: readonly F2LSlot[]) => void;
 }) {
   return (
-    <div className="trainer-opts-row">
-      <span className="trainer-opts-label">{tr({ zh: '槽位', en: 'Slots' })}</span>
-      <div
-        className="trainer-ori-cells trainer-slot-cells"
-        role="group"
-        aria-label={tr({ zh: 'F2L 槽位', en: 'F2L slots' })}
-      >
-        {F2L_SLOT_GRID.map(slot => {
-          const selected = slots.includes(slot);
-          const lastSelected = selected && slots.length === 1;
-          return (
-            <button
-              key={slot}
-              type="button"
-              className={`trainer-ori-cell trainer-slot-cell${selected ? ' is-on' : ''}`}
-              aria-pressed={selected}
-              disabled={lastSelected}
-              title={lastSelected
-                ? tr({ zh: '至少保留一个槽位', en: 'Keep at least one slot' })
-                : undefined}
-              onClick={() => onChange(
-                selected ? slots.filter(value => value !== slot) : [...slots, slot],
-              )}
-            >
-              {slot}
-            </button>
-          );
-        })}
-      </div>
-    </div>
+    <SlotChoicePicker
+      label={tr({ zh: '槽位', en: 'Slots' })}
+      ariaLabel={tr({ zh: 'F2L 槽位', en: 'F2L slots' })}
+      choices={F2L_SLOT_GRID}
+      selected={slots}
+      keepOneTitle={tr({ zh: '至少保留一个槽位', en: 'Keep at least one slot' })}
+      onChange={onChange}
+    />
+  );
+}
+
+function Psf2lSlotPairPicker({
+  pairs,
+  onChange,
+}: {
+  pairs: readonly Psf2lSlotPair[];
+  onChange: (pairs: readonly Psf2lSlotPair[]) => void;
+}) {
+  return (
+    <SlotChoicePicker
+      label={tr({ zh: '双槽位', en: 'Slot pairs' })}
+      ariaLabel={tr({ zh: 'PSF2L 训练双槽位', en: 'PSF2L training slot pairs' })}
+      choices={PSF2L_SLOT_PAIRS}
+      selected={pairs}
+      keepOneTitle={tr({ zh: '至少保留一组训练双槽位', en: 'Keep at least one training pair' })}
+      onChange={onChange}
+    />
   );
 }
 
@@ -262,6 +311,8 @@ export default function TrainerRunClient() {
   const setRandomInitialD = useTrainerStore(s => s.setRandomInitialD);
   const psf2lExtraScramble = useTrainerStore(s => s.psf2lExtraScramble);
   const setPsf2lExtraScramble = useTrainerStore(s => s.setPsf2lExtraScramble);
+  const psf2lSlotPairs = useTrainerStore(s => s.psf2lSlotPairs);
+  const setPsf2lSlotPairs = useTrainerStore(s => s.setPsf2lSlotPairs);
   const refreshPsf2lExtraScrambles = useTrainerStore(s => s.refreshPsf2lExtraScrambles);
   const randomFinalAuf = useTrainerStore(s => s.randomFinalAuf);
   const setRandomFinalAuf = useTrainerStore(s => s.setRandomFinalAuf);
@@ -398,13 +449,18 @@ export default function TrainerRunClient() {
       return;
     }
     loadAlg(puzzle, setSlug)
-      .then(d => loadSession(puzzle, setSlug, d.cases))
+      .then(async d => {
+        if (puzzle === '3x3' && setSlug === 'psf2l') {
+          await preparePsf2lSlotScrambles(d.cases, replaceOuterDAdjustment);
+        }
+        loadSession(puzzle, setSlug, d.cases);
+      })
       .catch(e => console.error('[trainer] loadAlg failed', e));
   }, [puzzle, setSlug, sessionId, meta, isMix, mixKey, virtual, virtualScope,
       storePuzzle, storeSet, cases.length, loadSession, loadMixSession]);
 
-  // 增强 PSF2L 的候选要按真实魔方状态筛选,放到后台准备；准备完成前生成器继续使用
-  // 原有的安全打乱。候选到位后若开关已开启,立即重出当前题。
+  // 双槽位基态在 loadSession 前已准备；增强 PSF2L 的后缀还要按真实魔方状态筛选,
+  // 放到后台继续准备。候选到位后立即重出当前题。
   useEffect(() => {
     if (puzzle !== '3x3' || setSlug !== 'psf2l' || isMix) return;
     if (storePuzzle !== puzzle || storeSet !== setSlug || cases.length === 0) return;
@@ -493,12 +549,15 @@ export default function TrainerRunClient() {
       postAuf,
       randomInitialD: features.randomInitialD && randomInitialD,
       psf2lExtraScramble: features.psf2lExtraScramble && psf2lExtraScramble,
+      psf2lSlotPairs: features.psf2lSlotPairs ? psf2lSlotPairs : undefined,
+      psf2lFaceTurnsOnly: features.psf2lExtraScramble,
       randomFinalAuf: features.randomFinalAuf && randomFinalAuf,
       f2lSlots: features.f2lSlots ? f2lSlots : undefined,
       orientation: oriSel,
       orientationSet: isMix ? null : setSlug,
     };
   }, [puzzle, isMix, setSlug, preAuf, postAuf, randomInitialD, psf2lExtraScramble,
+      psf2lSlotPairs,
       randomFinalAuf, f2lSlots, oriSel]);
 
   // 改了选中的 case 之后,原先选的那种打乱可能一个 case 都不再支持 —— 此时 <select> 的
@@ -1039,7 +1098,11 @@ export default function TrainerRunClient() {
     recapOrder,
     scrambleKind,
     scrambleOpts: mode === 'memo'
-      ? { preAuf: false, postAuf: false, randomInitialD: false, randomFinalAuf: false, f2lSlots: ['FR'] }
+      ? {
+        preAuf: false, postAuf: false, randomInitialD: false,
+        psf2lFaceTurnsOnly: trainerSetScrambleFeatures(puzzle, isMix ? null : setSlug).psf2lExtraScramble,
+        randomFinalAuf: false, f2lSlots: ['FR'],
+      }
       : splitScrambleOpts,
     showThumb: showStageThumb,
     pureScramble,
@@ -1192,6 +1255,7 @@ export default function TrainerRunClient() {
   const setAdjustSupported = !isMemo && (
     setScrambleFeatures.randomInitialD
     || setScrambleFeatures.psf2lExtraScramble
+    || setScrambleFeatures.psf2lSlotPairs
     || setScrambleFeatures.randomFinalAuf
     || setScrambleFeatures.f2lSlots
   );
@@ -1660,6 +1724,9 @@ export default function TrainerRunClient() {
                   </div>
                   {setScrambleFeatures.f2lSlots && (
                     <F2LSlotPicker slots={f2lSlots} onChange={setF2LSlots} />
+                  )}
+                  {setScrambleFeatures.psf2lSlotPairs && (
+                    <Psf2lSlotPairPicker pairs={psf2lSlotPairs} onChange={setPsf2lSlotPairs} />
                   )}
                 </>
               )}
