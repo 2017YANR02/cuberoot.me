@@ -23,7 +23,7 @@ interface Table {
 
 type DomainKey =
   | 'mirror' | 'derived' | 'scramble' | 'recon' | 'alg'
-  | 'comp' | 'account' | 'studio' | 'commerce' | 'community';
+  | 'comp' | 'account' | 'teaching' | 'studio' | 'commerce' | 'community';
 
 const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
   { key: 'mirror', dot: '#5BA8FF', name: { zh: 'WCA 镜像', en: 'WCA mirror' }, sub: { zh: '每日开发者导出离线重建', en: 'rebuilt offline from the daily export' } },
@@ -33,6 +33,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
   { key: 'alg', dot: '#D97757', name: { zh: '公式库', en: 'Algorithms' }, sub: { zh: 'alg_sets / alg_cases 公式', en: 'alg sets & cases' } },
   { key: 'comp', dot: '#4A90D9', name: { zh: '比赛 & 缓存 & 状态机', en: 'Comp & caches' }, sub: { zh: '关注 / 直播缓存 / dump 增量', en: 'follows, live cache, dump state' } },
   { key: 'account', dot: 'var(--accent)', name: { zh: '账号与登录', en: 'Accounts & auth' }, sub: { zh: '用户 / 身份 / 验证码 / 单次票据', en: 'users, identities, codes, single-use tickets' } },
+  { key: 'teaching', dot: 'var(--signal-info)', name: { zh: '教学 SaaS', en: 'Teaching SaaS' }, sub: { zh: '机构 / 成员 / 学员 / 监护 / 审计', en: 'organizations, members, students, guardians, audit' } },
   { key: 'studio', dot: '#67C18E', name: { zh: '用户产物', en: 'User artifacts' }, sub: { zh: '计时 / 训练 / 绘图', en: 'timer, trainer, paint' } },
   { key: 'commerce', dot: '#A78BFA', name: { zh: '会员 & 赞助 & 反馈', en: 'Commerce & feedback' }, sub: { zh: '订阅 / 致谢 / 反馈', en: 'membership, sponsors, feedback' } },
   { key: 'community', dot: '#4FC3DC', name: { zh: '社区内容 & 站务', en: 'Community & ops' }, sub: { zh: '长文 / wiki / 导航 / runbook', en: 'articles, wiki, nav, runbook' } },
@@ -145,6 +146,26 @@ const TABLES: Table[] = [
   { name: 'auth_identities', domain: 'account', origin: '0064', evolved: [78, 103], purpose: { zh: '账号与外部身份的唯一映射；微信小程序与网站扫码登录共用 UnionID', en: 'Unique account-to-provider identity mappings; Mini Program and website QR sign-in share the Weixin UnionID' } },
   { name: 'auth_codes', domain: 'account', origin: '0064', purpose: { zh: '邮箱与手机登录、绑定使用的短时验证码及核销状态', en: 'Short-lived email and phone verification codes with consumption state' } },
   { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', purpose: { zh: '小程序原生会话换取网页会话的 90 秒单次票据，只保存 SHA-256', en: '90-second single-use tickets that bridge Mini Program sessions into website sessions; only SHA-256 hashes are stored' } },
+
+  // ── teaching SaaS ──────────────────────────────────────
+  { name: 'organizations', domain: 'teaching', origin: '0142', purpose: { zh: '机构租户根节点，保存唯一 slug、状态、时区与版本', en: 'Tenant root with a unique slug, lifecycle status, timezone, and version' }, cols: [
+    { name: 'id UUID (PK), slug (UNIQUE), name' }, { name: 'timezone, status, settings, version' }, { name: 'created_by_user_id, created_at, updated_at' },
+  ] },
+  { name: 'organization_members', domain: 'teaching', origin: '0142', naturalKey: true, purpose: { zh: '账号在每个机构内的角色与有效状态；每个已提交机构至少保留一位有效 owner', en: 'Per-organization account roles and status; every committed organization retains an active owner' }, cols: [
+    { name: 'organization_id, user_id (PK)' }, { name: 'role, status, invited_by_user_id, joined_at' },
+  ] },
+  { name: 'student_profiles', domain: 'teaching', origin: '0142', purpose: { zh: '机构内学员档案；外部编号与关联站内账号都只在本租户内唯一', en: 'Tenant-scoped student profiles; external references and linked accounts are unique within an organization' }, cols: [
+    { name: 'id UUID (PK), organization_id' }, { name: 'account_user_id, external_ref, display_name, status' }, { name: 'profile JSONB, created_by_user_id' },
+  ] },
+  { name: 'guardian_links', domain: 'teaching', origin: '0142', purpose: { zh: '机构内学员与监护账号关系，复合外键阻止跨租户关联', en: 'Tenant-scoped student-to-guardian relationships with composite foreign keys blocking cross-tenant links' }, cols: [
+    { name: 'id UUID (PK), organization_id, student_id' }, { name: 'guardian_user_id, relationship, status, visibility' },
+  ] },
+  { name: 'teaching_audit_events', domain: 'teaching', origin: '0142', purpose: { zh: '教学业务追加式审计日志；账号删除后保留操作者快照', en: 'Append-only teaching audit log retaining actor snapshots after account deletion' }, cols: [
+    { name: 'id BIGINT (PK), organization_id, actor_user_id' }, { name: 'actor_role, actor_display_name, action, entity_type, entity_id' }, { name: 'outcome, request_id, metadata, created_at' },
+  ] },
+  { name: 'teaching_idempotency_requests', domain: 'teaching', origin: '0142', naturalKey: true, purpose: { zh: '按操作者、租户、操作与幂等键防止重复写入并保存原响应', en: 'Mutation deduplication by actor, tenant, operation, and idempotency key with stored responses' }, cols: [
+    { name: 'actor_user_id, scope_key, operation, idempotency_key (UNIQUE)' }, { name: 'request_hash, state, response_status, response_body' }, { name: 'resource_type, resource_id, expires_at' },
+  ] },
 
   // ── user artifacts ──────────────────────────────────────
   { name: 'timer_backups', domain: 'studio', origin: '0020', purpose: { zh: '计时器成绩云备份(单快照覆盖)', en: 'Cloud backup of timer sessions (single overwrite snapshot)' }, cols: [
@@ -426,6 +447,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 138, slug: 'recon_generic_scramble', desc: { zh: '复盘增加普通打乱字段，用于既非 WCA 真实打乱也非最优打乱的输入。', en: 'Add a generic reconstruction scramble field for input that is neither a WCA real scramble nor an optimal scramble.' } },
   { n: 139, slug: 'auth_web_session_tickets', desc: { zh: '新增短时单次票据表，让小程序原生登录态安全衔接网站登录态；只保存 SHA-256，并在核销时原子删除。', en: 'Add short-lived single-use tickets to bridge Mini Program and website sessions safely; store only SHA-256 hashes and delete atomically on exchange.' } },
   { n: 141, slug: 'teacher_directory_images', desc: { zh: '老师与机构资料支持按顺序保存多张个人、机构与教学照片。', en: 'Let teacher and school profiles keep an ordered set of portrait, organization, and teaching photos.' } },
+  { n: 142, slug: 'teaching_foundation', desc: { zh: '新增多租户教学底座：机构成员、学员、监护关系、追加式审计与幂等写入。', en: 'Add the multi-tenant teaching foundation: organization members, students, guardian links, append-only audit, and idempotent writes.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
