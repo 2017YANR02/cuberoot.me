@@ -61,6 +61,105 @@ describe('shared WeChat JS-SDK loader', () => {
     expect(scripts[0].remove).toHaveBeenCalledOnce();
   });
 
+  it('uses the jWeixin alias injected by the DevTools web-view', async () => {
+    const scripts: FakeScript[] = [];
+    const appendChild = stubSdkDom(scripts);
+    const { loadWeChatJsSdk, supportsWeChatMiniProgramNavigation } = await import(
+      '@/lib/wechat-js-sdk'
+    );
+    const sdk = {
+      config: vi.fn(),
+      ready: vi.fn(),
+      error: vi.fn(),
+      updateAppMessageShareData: vi.fn(),
+      updateTimelineShareData: vi.fn(),
+      miniProgram: { navigateTo: vi.fn() },
+    };
+    window.jWeixin = sdk;
+
+    await expect(loadWeChatJsSdk(supportsWeChatMiniProgramNavigation)).resolves.toBe(sdk);
+    expect(window.wx).toBeUndefined();
+    expect(appendChild).not.toHaveBeenCalled();
+  });
+
+  it('preserves split aliases with different capabilities', async () => {
+    const scripts: FakeScript[] = [];
+    const appendChild = stubSdkDom(scripts);
+    const {
+      loadWeChatJsSdk,
+      supportsWeChatMiniProgramNavigation,
+    } = await import('@/lib/wechat-js-sdk');
+    const sharingSdk = {
+      config: vi.fn(),
+      ready: vi.fn(),
+      error: vi.fn(),
+      updateAppMessageShareData: vi.fn(),
+      updateTimelineShareData: vi.fn(),
+    };
+    const bridgeSdk = {
+      ...sharingSdk,
+      miniProgram: { navigateTo: vi.fn() },
+    };
+    window.wx = sharingSdk;
+    window.jWeixin = bridgeSdk;
+
+    await expect(loadWeChatJsSdk(supportsWeChatMiniProgramNavigation)).resolves.toBe(bridgeSdk);
+    expect(window.wx).toBe(sharingSdk);
+    expect(window.jWeixin).toBe(bridgeSdk);
+    expect(appendChild).not.toHaveBeenCalled();
+  });
+
+  it('recovers when the loaded script populates only jWeixin', async () => {
+    const scripts: FakeScript[] = [];
+    stubSdkDom(scripts);
+    const { loadWeChatJsSdk, supportsWeChatMiniProgramNavigation } = await import(
+      '@/lib/wechat-js-sdk'
+    );
+    const sdk = {
+      config: vi.fn(),
+      ready: vi.fn(),
+      error: vi.fn(),
+      updateAppMessageShareData: vi.fn(),
+      updateTimelineShareData: vi.fn(),
+      miniProgram: { navigateTo: vi.fn() },
+    };
+
+    const pending = loadWeChatJsSdk(supportsWeChatMiniProgramNavigation);
+    window.jWeixin = sdk;
+    scripts[0].onload?.(new Event('load'));
+
+    await expect(pending).resolves.toBe(sdk);
+    expect(window.wx).toBeUndefined();
+  });
+
+  it('loads past an unsupported jWeixin alias', async () => {
+    const scripts: FakeScript[] = [];
+    stubSdkDom(scripts);
+    const { loadWeChatJsSdk, supportsWeChatMiniProgramNavigation } = await import(
+      '@/lib/wechat-js-sdk'
+    );
+    const incompleteSdk = {
+      config: vi.fn(),
+      ready: vi.fn(),
+      error: vi.fn(),
+      updateAppMessageShareData: vi.fn(),
+      updateTimelineShareData: vi.fn(),
+    };
+    const completeSdk = {
+      ...incompleteSdk,
+      miniProgram: { navigateTo: vi.fn() },
+    };
+    window.jWeixin = incompleteSdk;
+
+    const pending = loadWeChatJsSdk(supportsWeChatMiniProgramNavigation);
+    expect(window.jWeixin).toBeUndefined();
+    window.wx = completeSdk;
+    window.jWeixin = completeSdk;
+    scripts[0].onload?.(new Event('load'));
+
+    await expect(pending).resolves.toBe(completeSdk);
+  });
+
   it('cleans up a timed-out script and permits a later retry', async () => {
     vi.useFakeTimers();
     const scripts: FakeScript[] = [];
