@@ -619,12 +619,21 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   }) => {
     const features = trainerSetScrambleFeatures(st.puzzle, st.set);
     return st.mode === 'memo'
-      ? { preAuf: false, postAuf: false, randomInitialD: false, psf2lExtraScramble: false, randomFinalAuf: false, f2lSlots: ['FR'] as F2LSlot[] }
+      ? {
+          preAuf: false,
+          postAuf: false,
+          randomInitialD: false,
+          psf2lExtraScramble: false,
+          psf2lFaceTurnsOnly: features.psf2lExtraScramble,
+          randomFinalAuf: false,
+          f2lSlots: ['FR'] as F2LSlot[],
+        }
       : {
           preAuf: st.preAuf,
           postAuf: st.postAuf,
           randomInitialD: features.randomInitialD && st.randomInitialD,
           psf2lExtraScramble: features.psf2lExtraScramble && st.psf2lExtraScramble,
+          psf2lFaceTurnsOnly: features.psf2lExtraScramble,
           randomFinalAuf: features.randomFinalAuf && st.randomFinalAuf,
           f2lSlots: features.f2lSlots ? st.f2lSlots : undefined,
           orientation: st.oriSel,

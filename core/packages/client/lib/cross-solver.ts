@@ -11,6 +11,8 @@
 // 8=FR 9=FL 10=BR 11=BL. Default scheme U=White D=Yellow F=Green B=Blue R=Red
 // L=Orange — so each face's 4 edges are a fixed piece set (no rotation needed).
 
+import { flattenAlg, tokenizeMoves } from '@cuberoot/shared/alg-notation';
+
 export type CrossColor = 'White' | 'Yellow' | 'Red' | 'Orange' | 'Blue' | 'Green';
 
 const MOVE_NAMES = ["U", "U'", "U2", "D", "D'", "D2", "F", "F'", "F2", "B", "B'", "B2", "R", "R'", "R2", "L", "L'", "L2"];
@@ -128,6 +130,12 @@ const WIDE_DECOMP: Record<string, [string, string]> = {
   Bw: ['F', "z'"], Bw2: ['F2', 'z2'], "Bw'": ["F'", 'z'],
   Rw: ['L', 'x'], Rw2: ['L2', 'x2'], "Rw'": ["L'", "x'"],
   Lw: ['R', "x'"], Lw2: ['R2', 'x2'], "Lw'": ["R'", 'x'],
+  u: ['D', 'y'], u2: ['D2', 'y2'], "u'": ["D'", "y'"],
+  d: ['U', "y'"], d2: ['U2', 'y2'], "d'": ["U'", 'y'],
+  f: ['B', 'z'], f2: ['B2', 'z2'], "f'": ["B'", "z'"],
+  b: ['F', "z'"], b2: ['F2', 'z2'], "b'": ["F'", 'z'],
+  r: ['L', 'x'], r2: ['L2', 'x2'], "r'": ["L'", "x'"],
+  l: ['R', "x'"], l2: ['R2', 'x2'], "l'": ["R'", 'x'],
 };
 const FACES: Face[] = ['U', 'D', 'F', 'B', 'R', 'L'];
 
@@ -156,8 +164,14 @@ function parseScramble(scramble: string): number[] | null {
     out.push(i);
     return true;
   };
-  for (const tok of scramble.trim().split(/\s+/)) {
-    if (!tok) continue;
+  const { moves, junk } = tokenizeMoves(flattenAlg(scramble));
+  if (junk.length > 0) return null;
+  for (const move of moves) {
+    if (move.layer) return null;
+    const quarter = ((move.amount % 4) + 4) % 4;
+    if (quarter === 0) continue;
+    const suffix = quarter === 2 ? '2' : quarter === 3 ? "'" : '';
+    const tok = `${move.family}${suffix}`;
     if (ROT_FACE_PERM[tok]) { cur = rotateOrientation(cur, tok); continue; }   // x / y / z (±)
     const wide = WIDE_DECOMP[tok];
     if (wide) {
@@ -165,6 +179,7 @@ function parseScramble(scramble: string): number[] | null {
       cur = rotateOrientation(cur, wide[1]);
       continue;
     }
+    if (move.kind !== 'face') return null;
     if (!emit(tok)) return null;                                               // plain face move
   }
   return out;
@@ -190,12 +205,19 @@ const PHYS_FACE_TO_COLOR: Record<Face, number> = { U: 0, R: 1, F: 2, L: 3, B: 4,
  */
 export function bottomColorIdx(scramble: string): number {
   let cur: Record<Face, Face> = { U: 'U', D: 'D', F: 'F', B: 'B', R: 'R', L: 'L' };
-  for (const tok of scramble.trim().split(/\s+/)) {
-    if (!tok) continue;
+  const { moves, junk } = tokenizeMoves(flattenAlg(scramble));
+  if (junk.length > 0) return -1;
+  for (const move of moves) {
+    if (move.layer) return -1;
+    const quarter = ((move.amount % 4) + 4) % 4;
+    if (quarter === 0) continue;
+    const suffix = quarter === 2 ? '2' : quarter === 3 ? "'" : '';
+    const tok = `${move.family}${suffix}`;
     if (ROT_FACE_PERM[tok]) { cur = rotateOrientation(cur, tok); continue; }   // x / y / z (±)
     const wide = WIDE_DECOMP[tok];
     if (wide) { cur = rotateOrientation(cur, wide[1]); continue; }              // wide move's rotation part
-    // plain face move: centres unchanged (unparseable tokens ignored; gate with isAnalysableScramble).
+    if (move.kind !== 'face') return -1;
+    // Plain face move: centres unchanged.
   }
   return PHYS_FACE_TO_COLOR[cur.D] ?? -1;
 }

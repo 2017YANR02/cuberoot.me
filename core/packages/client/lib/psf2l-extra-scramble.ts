@@ -1,5 +1,6 @@
 import type { AlgCase } from '@cuberoot/shared';
 import type { KPattern, KPuzzle, KTransformation } from 'cubing/kpuzzle';
+import { normalizeScramble } from './cross-solver';
 
 const AUFS = ['', 'U', 'U2', "U'"] as const;
 const Y = ['', 'y', 'y2', "y'"] as const;
@@ -207,6 +208,10 @@ export async function buildPsf2lExtraSuffixPool(
       if (!canonical) continue;
       const outcome = validOutcome(canonical, invariant);
       if (!outcome) continue;
+      // The trainer displays PSF2L in a fixed frame. Some canonical F2L setups
+      // use slice moves, which cannot be rewritten by the face-turn normalizer;
+      // exclude those candidates before they can be selected at runtime.
+      if (normalizeScramble(`${normalizedBase} ${suffix.alg}`) === null) continue;
       const key = patternKey(canonical);
       if (seen.has(key)) continue;
       seen.add(key);
