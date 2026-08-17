@@ -1,0 +1,17 @@
+**
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!patches/
+!patches/**
+!packages/
+!packages/platform/
+!packages/platform/**
+packages/platform/node_modules
+packages/platform/.next
+packages/platform/.env
+packages/platform/.env.*
+packages/platform/data.db*
+packages/platform/.tmp
+packages/platform/.playwright-mcp
+packages/platform/*.log

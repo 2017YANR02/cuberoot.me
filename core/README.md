@@ -6,11 +6,12 @@ pnpm + Turbo monorepo,所有新开发都在这里。
 
 ```
 core/packages/
-├── client/         # React 19 + Vite 8 SPA(主体)
+├── client/         # React 19 + Next.js 16 主站训练 / 工具前端
+├── platform/       # Next.js 16 + SQLite 机构 / 教师 / 课程交易平台
 ├── server/         # Hono + PostgreSQL 13(WCA OAuth + recon + alg + 训练数据)
-├── shared/         # 共享类型 + 公式数据(alg/PLL/ZBLL/ZBLS)
-├── stats-build/    # WCA 统计生成管道(88 个统计,周更 CI)
-└── stats-ui/       # 统计页 UI
+├── shared/         # 共享类型与通用数据
+├── visualcube/     # 自有 NxN SVG 渲染器
+└── stats-build/    # WCA 统计生成管道
 ```
 
 每个源文件头部 TSDoc `@module` 注释说明职责。
@@ -33,6 +34,9 @@ pnpm install
 pnpm --filter @cuberoot/client dev          # 前端 dev,127.0.0.1:3000
 pnpm --filter @cuberoot/client typecheck     # tsgo
 pnpm --filter @cuberoot/client build
+pnpm --filter @cuberoot/platform dev       # 平台 dev,127.0.0.1:3100
+pnpm --filter @cuberoot/platform typecheck
+pnpm --filter @cuberoot/platform test
 pnpm --filter @cuberoot/server typecheck
 ```
 
