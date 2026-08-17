@@ -16,7 +16,7 @@ const ENABLED = Boolean(SECRET) && Boolean(WEBHOOK_SECRET);
 let _client: Stripe | null = null;
 function client(): Stripe {
   if (!_client) {
-    _client = new Stripe(SECRET, { apiVersion: "2026-04-22.dahlia" });
+    _client = new Stripe(SECRET, { apiVersion: "2026-07-29.dahlia" });
   }
   return _client;
 }

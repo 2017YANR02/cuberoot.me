@@ -2,7 +2,7 @@
 
 ## 项目
 
-参考 `D:\cube\cube-platform\.tmp\魔方开放社群商业计划书.pdf` 搭的魔方门户站。技术栈对齐 `D:\cube\cuberoot.me\core\packages\client-next`,但改用 Next.js(不用 Vite)。
+CubeRoot monorepo 的教学与机构平台工作区。迁移与边界记录见根目录 `docs/platform-migration.md`。
 
 ## 技术栈
 
@@ -11,14 +11,17 @@ Next 16 App Router + React 19 + TS5 + Tailwind v4(`@tailwindcss/postcss`)+ lucid
 ## 开发
 
 ```
+cd core
 pnpm install
-pnpm dev          # 127.0.0.1:3100 (固定端口,别改)
-pnpm build
-pnpm typecheck    # tsgo --noEmit(@typescript/native-preview),改 .ts/.tsx 必跑
-pnpm db:generate / db:migrate / db:seed
+pnpm --filter @cuberoot/platform dev          # 127.0.0.1:3100
+pnpm --filter @cuberoot/platform build
+pnpm --filter @cuberoot/platform typecheck
+pnpm --filter @cuberoot/platform db:generate
+pnpm --filter @cuberoot/platform db:migrate
+pnpm --filter @cuberoot/platform db:seed
 ```
 
-端口被占 `taskkill /F /IM node.exe` 杀旧 dev,**别换端口**。turbopack HMR 死循环闪屏:`rm -rf .next` 重启。
+端口被占时先定位监听 3100 的 PID,只停止对应旧 dev,**别换端口**。Turbopack HMR 死循环闪屏时用 PowerShell 清理 `.next` 后重启。
 
 ## 目录
 
@@ -56,7 +59,7 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 
 ## 鉴权
 
-- admin: cookie `cube_admin`(HMAC-SHA256,env `SESSION_SECRET`),`/admin/login` 单密码 `ADMIN_PASSWORD`(默 `admin123`)
+- admin: cookie `cube_admin`(HMAC-SHA256,env `SESSION_SECRET`),`/admin/login` 单密码 `ADMIN_PASSWORD`;仅开发环境有 fallback,生产缺值直接报错
 - 用户: cookie `cube_user`,手机号 + OTP 登录
 - 路由保护用 `proxy.ts`(Next 16 把 `middleware.ts` 改名 `proxy.ts`,exported function 也叫 `proxy`),covers `/admin/**` + `/instructor/**`
 - server-side 用 `requireUser()` / `requireAdmin()` / `requireInstructor()`(`lib/auth/*`)
@@ -179,15 +182,15 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 
 ## 部署
 
-- 线上 https://platform.cuberoot.me(2026-05-28);push main → `.github/workflows/deploy.yml`(CI build + scp,学 mira)。
-- systemd `platform-next` 反代 :3004,unit 在 `ops/platform-next.service`(start.sh 定位 nvm node)。
+- 线上 https://platform.cuberoot.me;push main → 根目录 `.github/workflows/deploy_platform.yml`。
+- systemd `platform-next` 反代 :3004,unit 在根目录 `ops/systemd/platform-next.service`。
 - nginx vhost 不在本 repo,在 cuberoot.me repo `ops/nginx/platform.cuberoot.me.conf`。
 - CI 两坑:node-version 必须 24(better-sqlite3 ABI);`db:migrate+seed` 排在 `next build` 前(`app/sitemap.ts` 构建期查 DB)。build 时设 `NEXT_PUBLIC_SITE_URL=https://platform.cuberoot.me`。
 - 持久库 `/var/lib/cube-platform/data.db`(`DB_PATH` env,部署目录外),重新部署不覆盖;首次从 bundle seed。
 - 上传文件真身 `/var/lib/cube-platform/uploads`,部署时软链进 `LIVE/public/uploads`,换目录不丢图。
 - 持久库已存在时,部署 restart 前跑 `ops/migrate.cjs`(随包发,自包含、drizzle `__drizzle_migrations` 兼容)补未应用迁移;失败回滚。加表加列正常写 drizzle migration 即可,不用手 ALTER。
-- secrets:`DEPLOY_HOST/USER/SSH_KEY` 在 cube-platform repo,key 是专用 `platform-deploy-ci`(跟 mira / 主站分开)。
-- `ADMIN_PASSWORD` / `SESSION_SECRET` 线上仍是代码默认值(`admin123` / `dev-cube-secret-change-me`),要硬化在 systemd unit 加 `Environment=`(别 commit 真值)。
+- GitHub Actions secrets:`PLATFORM_DEPLOY_HOST`、`PLATFORM_DEPLOY_USER`、`PLATFORM_DEPLOY_SSH_KEY`;真实值不进仓库。
+- 生产 `ADMIN_PASSWORD` / `SESSION_SECRET` 放 `/etc/cube-platform.env`;workflow 在替换线上目录前校验。
 - `next.config.ts` 设 `output: "standalone"` + `serverExternalPackages: ["wechatpay-node-v3","alipay-sdk"]`。
 - 备选:`Dockerfile` + `docker-compose.yml`(named volume `/data/data.db`)仍在,本地容器跑用;线上走上面的 systemd。
 
@@ -196,10 +199,10 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 - 日期显示禁用 `new Date("YYYY-MM-DD")`(SSR 时区偏一天),用字符串 split
 - 详情页 `params` / `searchParams` 是 Promise,要 `await`
 - 动态路由必须导出 `generateStaticParams`,要 `async` 从 db 拉 id 列表
-- better-sqlite3 native 模块,首次装包要 `pnpm install` 触发 build(pnpm-workspace.yaml 已 allowBuilds)
-- turbopack 在 Windows 偶发 panic + HMR 死循环闪屏:`rm -rf .next` 重启 dev
-- dev OOM 防踩(`scavenge might not succeed`=物理内存耗尽,非代码 bug):用户常并跑第二个 Next dev(`cuberoot.me`),内存本就紧。**别**习惯性 `rm -rf .next`(触发冷全量编译,只在 HMR 死循环时才删);**别**和 Playwright chromium 同开验 admin 页(chromium 吃几 GB 一起 OOM)。验证改用 `curl` 压路由(返 307/200 即编译成功);真崩了先 `browser_close` 关 chromium、关掉多余 dev 腾内存再 `pnpm dev`。设 `--max-old-space-size` 低封反而死更快,别用
+- better-sqlite3 native 模块,首次装包要在 `core/` 跑 `pnpm install`(根 `pnpm-workspace.yaml` 已 allowBuilds)
+- Turbopack 在 Windows 偶发 panic + HMR 死循环闪屏:用 PowerShell 清理 `.next` 后重启 dev
+- dev OOM 防踩(`scavenge might not succeed`=物理内存耗尽,非代码 bug):用户常并跑第二个 Next dev(`cuberoot.me`),内存本就紧。**别**习惯性清理 `.next`(触发冷全量编译,只在 HMR 死循环时才删);**别**和 Playwright chromium 同开验 admin 页(chromium 吃几 GB 一起 OOM)。验证改用 `curl` 压路由(返 307/200 即编译成功);真崩了先 `browser_close` 关 chromium、关掉多余 dev 腾内存再跑 `pnpm --filter @cuberoot/platform dev`。设 `--max-old-space-size` 低封反而死更快,别用
 - FTS5 触发器只覆盖 insert/update/delete,migration 里有一次性 backfill;新装环境跑完 migration 就好,不用手动同步
 - `@font-face` 禁写在 globals.css(Tailwind v4 入口会吃掉顶层 @font-face),放独立 `app/fonts.css` 由 layout 单独 import(同主站)
 - 自定义字体验收:① CSSOM 有该 @font-face ② `document.fonts` 有该 family ③ canvas 测宽同时 ≠ serif 且 ≠ monospace;别用 innerHTML 注入 SVG 截图当证据(不加载内嵌字体);印刷母版关键记法转矢量轮廓
-- 动字体 / CSS / 构建前先看主站 `D:\cube\cuberoot.me` 同款做法,抄结构不只抄片段
+- 动字体 / CSS / 构建前先看 `packages/client` 同款做法,复用结构和 token

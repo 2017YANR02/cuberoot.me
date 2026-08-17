@@ -4,8 +4,12 @@
   "packageManager": "pnpm@11.1.2",
   "scripts": {
     "dev:next": "turbo dev --filter=@cuberoot/client",
+    "dev:platform": "turbo dev --filter=@cuberoot/platform",
     "dev:server": "turbo dev --filter=@cuberoot/server",
+    "build:platform": "pnpm --filter @cuberoot/platform build",
     "build": "turbo build",
+    "test:platform": "pnpm --filter @cuberoot/platform test",
+    "typecheck:platform": "pnpm --filter @cuberoot/platform typecheck",
     "typecheck": "turbo typecheck",
     "lint": "turbo lint"
   },

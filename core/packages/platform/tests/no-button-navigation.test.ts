@@ -1,6 +1,6 @@
 // 链接导航约定守卫(CI 兜底层):站内"可点即跳 URL"的元素必须是真 <a> / next <Link>(带 href),
 // 禁在 onClick 里直接 router.push / router.replace 当导航 —— 否则鼠标中键 / Ctrl 点开新标签页
-// 失效,复制链接 / SEO / 爬虫可达全丢。约定见 CLAUDE.md「链接支持中键新开」。
+// 失效,复制链接 / SEO / 爬虫可达全丢。约定见 AGENTS.md「链接支持中键新开」。
 //
 // 分层:写入即拦由全局 hook(~/.claude/hooks/block-button-navigation.ps1)负责;本测试是任何
 // 来源(其他 AI / 手改 / web 改的代码)绕过 hook 时的最终红灯。两层共用同一条正则。
