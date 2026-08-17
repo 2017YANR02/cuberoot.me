@@ -2,14 +2,28 @@ import { BUILD_ASSETS } from './build-assets.mjs';
 import { BUILD_STATE_VERSION } from './build-state.mjs';
 
 const sensitiveCapabilities = [
-  ['微信用户资料', /\bwx\.getUserProfile\b/],
-  ['定位', /\bwx\.(?:getLocation|chooseLocation|startLocationUpdate|startLocationUpdateBackground)\b/],
-  ['图片或媒体', /\bwx\.(?:chooseImage|chooseMedia|saveImageToPhotosAlbum|saveVideoToPhotosAlbum)\b/],
+  [
+    '微信用户资料',
+    /\bwx\.(?:getUserProfile|getUserInfo)\b|open-type\s*=\s*["'](?:chooseAvatar|getUserInfo)["']/,
+  ],
+  [
+    '定位',
+    /\bwx\.(?:getLocation|getFuzzyLocation|chooseLocation|startLocationUpdate|startLocationUpdateBackground|onLocationChange)\b/,
+  ],
+  [
+    '文件、图片或媒体',
+    /\bwx\.(?:chooseImage|chooseMedia|chooseVideo|chooseMessageFile|saveImageToPhotosAlbum|saveVideoToPhotosAlbum)\b/,
+  ],
   ['录音', /\bwx\.(?:startRecord|getRecorderManager)\b/],
-  ['通讯录或地址', /\bwx\.(?:addPhoneContact|chooseAddress|chooseInvoiceTitle)\b/],
+  ['通讯录、地址或发票', /\bwx\.(?:addPhoneContact|chooseAddress|chooseInvoice|chooseInvoiceTitle)\b/],
+  ['运动数据', /\bwx\.getWeRunData\b/],
+  ['剪贴板内容', /\bwx\.getClipboardData\b/],
+  ['相机或直播画面', /<(?:camera|live-pusher)\b/],
   ['蓝牙', /\bwx\.(?:openBluetoothAdapter|getBluetoothAdapterState|createBLEConnection|readBLECharacteristicValue|writeBLECharacteristicValue)\b/],
   ['手机号', /open-type\s*=\s*["']getPhoneNumber["']/],
 ];
+
+const sensitiveManifestKeys = ['requiredPrivateInfos', 'permission'];
 
 const forbiddenCredentials = [
   [
@@ -68,6 +82,7 @@ export const EXPECTED_TAB_BAR = [
 export const PRODUCTION_APP_ID = 'wx1f92ba91b7e42015';
 export const MAX_UPLOAD_PACKAGE_BYTES = 512 * 1024;
 export const MAX_UPLOAD_FILE_BYTES = 128 * 1024;
+export const MIN_TEXT_CONTRAST_RATIO = 4.5;
 
 export const REQUIRED_RELEASE_CONFIRMATIONS = [
   {
@@ -121,6 +136,26 @@ function hasExpectedSitemapPolicy(sitemapConfig) {
 
 function valueAtPath(source, path) {
   return path.split('.').reduce((value, key) => value?.[key], source);
+}
+
+function relativeLuminance(hexColor) {
+  if (typeof hexColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(hexColor)) return null;
+  const channels = hexColor.slice(1).match(/../g).map((channel) => parseInt(channel, 16) / 255);
+  const linearChannels = channels.map((channel) => (
+    channel <= 0.04045
+      ? channel / 12.92
+      : ((channel + 0.055) / 1.055) ** 2.4
+  ));
+  return (0.2126 * linearChannels[0]) + (0.7152 * linearChannels[1]) + (0.0722 * linearChannels[2]);
+}
+
+export function colorContrastRatio(foreground, background) {
+  const foregroundLuminance = relativeLuminance(foreground);
+  const backgroundLuminance = relativeLuminance(background);
+  if (foregroundLuminance === null || backgroundLuminance === null) return null;
+  const lighter = Math.max(foregroundLuminance, backgroundLuminance);
+  const darker = Math.min(foregroundLuminance, backgroundLuminance);
+  return (lighter + 0.05) / (darker + 0.05);
 }
 
 export function collectReleaseFailures({
@@ -232,6 +267,14 @@ export function collectReleaseFailures({
     }
   }
 
+  const sensitiveManifestDeclarations = sensitiveManifestKeys
+    .filter((key) => Object.hasOwn(appConfig ?? {}, key));
+  if (sensitiveManifestDeclarations.length > 0) {
+    failures.push(
+      `当前版本未批准原生隐私能力，src/app.json 不得声明：${sensitiveManifestDeclarations.join('、')}。先完成代码、隐私政策和后台指引的联合复核。`,
+    );
+  }
+
   if (JSON.stringify(appConfig?.tabBar?.list) !== JSON.stringify(EXPECTED_TAB_BAR)) {
     failures.push('底部导航必须保持“计时、工具、我的”三个正式入口及既定顺序。');
   }
@@ -295,6 +338,26 @@ export function collectReleaseFailures({
   ));
   if (invalidThemeValues.length > 0) {
     failures.push(`theme.json 必须完整定义浅色和深色原生主题：${invalidThemeValues.join('、')}。`);
+  }
+
+  const invalidThemeContrasts = ['light', 'dark'].flatMap((mode) => (
+    [
+      ['tabBarColor', 'tabBarBackgroundColor'],
+      ['tabBarSelectedColor', 'tabBarBackgroundColor'],
+    ].flatMap(([foregroundKey, backgroundKey]) => {
+      const ratio = colorContrastRatio(
+        themeConfig?.[mode]?.[foregroundKey],
+        themeConfig?.[mode]?.[backgroundKey],
+      );
+      if (ratio !== null && ratio >= MIN_TEXT_CONTRAST_RATIO) return [];
+      const result = ratio === null ? '颜色格式无效' : `${ratio.toFixed(2)}:1`;
+      return [`${mode}.${foregroundKey}/${backgroundKey}（${result}）`];
+    })
+  ));
+  if (invalidThemeContrasts.length > 0) {
+    failures.push(
+      `theme.json 的 tabBar 文字对比度不得低于 ${MIN_TEXT_CONTRAST_RATIO}:1：${invalidThemeContrasts.join('、')}。`,
+    );
   }
 
   if (!buildState || buildState.version !== BUILD_STATE_VERSION) {

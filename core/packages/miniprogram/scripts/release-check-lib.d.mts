@@ -4,6 +4,8 @@ export const EXPECTED_TAB_BAR: readonly Readonly<{
   text: string;
 }>[];
 export const PUBLIC_INDEXED_PAGES: readonly string[];
+export const MIN_TEXT_CONTRAST_RATIO: number;
+export function colorContrastRatio(foreground: string, background: string): number | null;
 export const REQUIRED_RELEASE_CONFIRMATIONS: readonly Readonly<{
   key: string;
   env: string;
