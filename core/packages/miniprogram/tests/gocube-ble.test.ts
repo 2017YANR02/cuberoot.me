@@ -12,6 +12,7 @@ import {
   connectGoCube,
   type GoCubeBleApi,
 } from '../src/lib/smart-cube/gocube-ble';
+import { BLE_OPERATION_TIMEOUT_MS } from '../src/lib/smart-cube/ble-api';
 
 type DeviceListener = Parameters<GoCubeBleApi['onBluetoothDeviceFound']>[0];
 type ValueListener = Parameters<GoCubeBleApi['onBLECharacteristicValueChange']>[0];
@@ -47,6 +48,10 @@ function createBleRig(options: {
   const discoveryServices: Array<string[] | undefined> = [];
   const writes: number[] = [];
   const events: string[] = [];
+  const pendingWriteCompletions: Array<() => void> = [];
+  let holdWrites = false;
+  let activeWrites = 0;
+  let maxConcurrentWrites = 0;
   const characteristics = options.characteristics ?? [
     { uuid: GOCUBE_WRITE_CHARACTERISTIC_UUID.toUpperCase(), properties: { write: true } },
     { uuid: GOCUBE_NOTIFY_CHARACTERISTIC_UUID.toUpperCase(), properties: { notify: true } },
@@ -115,7 +120,14 @@ function createBleRig(options: {
     },
     writeBLECharacteristicValue(callbacks) {
       writes.push(new Uint8Array(callbacks.value)[0] ?? -1);
-      callbacks.success?.({});
+      activeWrites++;
+      maxConcurrentWrites = Math.max(maxConcurrentWrites, activeWrites);
+      const complete = (): void => {
+        activeWrites--;
+        callbacks.success?.({});
+      };
+      if (holdWrites) pendingWriteCompletions.push(complete);
+      else complete();
     },
   };
 
@@ -124,6 +136,20 @@ function createBleRig(options: {
     discoveryServices,
     events,
     writes,
+    holdWrites() {
+      holdWrites = true;
+    },
+    maxConcurrentWrites() {
+      return maxConcurrentWrites;
+    },
+    pendingWriteCount() {
+      return pendingWriteCompletions.length;
+    },
+    releaseNextWrite() {
+      const complete = pendingWriteCompletions.shift();
+      if (!complete) throw new Error('No pending GoCube write to release.');
+      complete();
+    },
     emit(value: ArrayBuffer) {
       valueListener?.({
         characteristicId: GOCUBE_NOTIFY_CHARACTERISTIC_UUID.toUpperCase(),
@@ -182,9 +208,9 @@ describe('WeChat GoCube BLE transport', () => {
     const payload = Array.from({ length: 42 }, (_, index) => index % 2 === 0 ? 0 : 1);
 
     rig.emit(frame(0x01, payload));
-    await Promise.resolve();
-
-    expect(rig.writes).toEqual([GOCUBE_COMMAND_STATE, GOCUBE_COMMAND_STATE]);
+    await vi.waitFor(() => {
+      expect(rig.writes).toEqual([GOCUBE_COMMAND_STATE, GOCUBE_COMMAND_STATE]);
+    });
     await connection.disconnect();
   });
 
@@ -253,6 +279,61 @@ describe('WeChat GoCube BLE transport', () => {
     });
     await connection.disconnect();
     expect(onDisconnect).toHaveBeenCalledWith('智能魔方连接已断开');
+  });
+
+  it('serializes native writes and waits for an in-flight write before closing BLE', async () => {
+    const rig = createBleRig();
+    const connection = await connectGoCube({ api: rig.api });
+    rig.holdWrites();
+
+    const firstBattery = connection.requestBattery();
+    const secondBattery = connection.requestBattery();
+    await vi.waitFor(() => expect(rig.pendingWriteCount()).toBe(1));
+    expect(rig.maxConcurrentWrites()).toBe(1);
+
+    rig.releaseNextWrite();
+    await vi.waitFor(() => expect(rig.pendingWriteCount()).toBe(1));
+    expect(rig.maxConcurrentWrites()).toBe(1);
+
+    const disconnecting = connection.disconnect();
+    await Promise.resolve();
+    expect(rig.events).not.toContain('notify:off');
+    expect(rig.events).not.toContain('connection:close');
+    expect(rig.events).not.toContain('adapter:close');
+
+    rig.releaseNextWrite();
+    await disconnecting;
+    await expect(firstBattery).resolves.toBeNull();
+    await expect(secondBattery).resolves.toBeNull();
+    expect(rig.events).toContain('notify:off');
+    expect(rig.events).toContain('connection:close');
+    expect(rig.events).toContain('adapter:close');
+  });
+
+  it('defers cleanup when a native write remains pending after its public timeout', async () => {
+    vi.useFakeTimers();
+    const rig = createBleRig();
+    const connection = await connectGoCube({ api: rig.api });
+    rig.holdWrites();
+
+    const batteryRequest = connection.requestBattery();
+    const rejection = expect(batteryRequest).rejects.toBeInstanceOf(Error);
+    await vi.waitFor(() => expect(rig.pendingWriteCount()).toBe(1));
+    const disconnecting = connection.disconnect();
+
+    await vi.advanceTimersByTimeAsync(BLE_OPERATION_TIMEOUT_MS);
+    await rejection;
+    await disconnecting;
+    expect(rig.events).not.toContain('notify:off');
+    expect(rig.events).not.toContain('connection:close');
+    expect(rig.events).not.toContain('adapter:close');
+
+    rig.releaseNextWrite();
+    await vi.waitFor(() => {
+      expect(rig.events).toContain('notify:off');
+      expect(rig.events).toContain('connection:close');
+      expect(rig.events).toContain('adapter:close');
+    });
   });
 
   it('times out discovery and closes the adapter', async () => {
