@@ -13,9 +13,15 @@ function bundledApiAccess(methods) {
   );
 }
 
-function sensitiveWxCapability(label, methods, markupPattern = null) {
+function normalizeAuditPath(path) {
+  return path.replaceAll('\\', '/').replace(/^\.\//, '');
+}
+
+function sensitiveWxCapability(label, methods, markupPattern = null, allow = {}) {
   const sourceApiPattern = wxApiAccess(methods);
   const bundledApiPattern = bundledApiAccess(methods);
+  const allowedSourcePaths = new Set((allow.sourcePaths ?? []).map(normalizeAuditPath));
+  const allowedUploadPaths = new Set((allow.uploadPaths ?? []).map(normalizeAuditPath));
   return {
     label,
     sourcePattern: markupPattern
@@ -24,6 +30,8 @@ function sensitiveWxCapability(label, methods, markupPattern = null) {
     uploadPattern: markupPattern
       ? new RegExp(`${bundledApiPattern.source}|${markupPattern.source}`)
       : bundledApiPattern,
+    sourcePathAllowed: (path) => allowedSourcePaths.has(normalizeAuditPath(path)),
+    uploadPathAllowed: (path) => allowedUploadPaths.has(normalizeAuditPath(path)),
   };
 }
 
@@ -55,7 +63,15 @@ const sensitiveCapabilities = [
   },
   sensitiveWxCapability(
     '蓝牙',
-    'openBluetoothAdapter|getBluetoothAdapterState|createBLEConnection|readBLECharacteristicValue|writeBLECharacteristicValue',
+    'openBluetoothAdapter|closeBluetoothAdapter|getBluetoothAdapterState|startBluetoothDevicesDiscovery|stopBluetoothDevicesDiscovery|onBluetoothDeviceFound|offBluetoothDeviceFound|createBLEConnection|closeBLEConnection|getBLEDeviceServices|getBLEDeviceCharacteristics|notifyBLECharacteristicValueChange|readBLECharacteristicValue|writeBLECharacteristicValue|onBLECharacteristicValueChange|offBLECharacteristicValueChange|onBLEConnectionStateChange|offBLEConnectionStateChange',
+    null,
+    {
+      sourcePaths: [
+        'src/lib/smart-cube/gan-v4-ble.ts',
+        'src/lib/smart-cube/gocube-ble.ts',
+      ],
+      uploadPaths: ['pages/smart-cube/index.js'],
+    },
   ),
   {
     label: '手机号',
@@ -109,6 +125,7 @@ export const PUBLIC_INDEXED_PAGES = [
 
 export const EXPECTED_APP_PAGES = [
   'pages/timer/index',
+  'pages/smart-cube/index',
   'pages/tools/index',
   'pages/account/index',
   'pages/web/index',
@@ -142,9 +159,24 @@ export const REQUIRED_RELEASE_CONFIRMATIONS = [
     failure: '后台用户隐私保护指引尚未确认与实际能力一致；复核并提交后，上传时设置 WECHAT_MINI_PRIVACY_REVIEWED=1。',
   },
   {
-    key: 'realDeviceTested',
-    env: 'WECHAT_MINI_REAL_DEVICE_TESTED',
-    failure: '本次候选版本尚未确认完成 iOS 和 Android 真机回归；回归通过后，上传时设置 WECHAT_MINI_REAL_DEVICE_TESTED=1。',
+    key: 'iosRealDeviceTested',
+    env: 'WECHAT_MINI_IOS_REAL_DEVICE_TESTED',
+    failure: '本次候选版本尚未确认完成 iOS 真机回归；回归通过后，上传时设置 WECHAT_MINI_IOS_REAL_DEVICE_TESTED=1。',
+  },
+  {
+    key: 'androidRealDeviceTested',
+    env: 'WECHAT_MINI_ANDROID_REAL_DEVICE_TESTED',
+    failure: '本次候选版本尚未确认完成 Android 真机回归；回归通过后，上传时设置 WECHAT_MINI_ANDROID_REAL_DEVICE_TESTED=1。',
+  },
+  {
+    key: 'gan16UiTested',
+    env: 'WECHAT_MINI_GAN16UI_TESTED',
+    failure: 'GAN 16 ui 尚未完成 Android 真机连接、转动同步、电量和断线重连回归；通过后，上传时设置 WECHAT_MINI_GAN16UI_TESTED=1。',
+  },
+  {
+    key: 'goCubeTested',
+    env: 'WECHAT_MINI_GOCUBE_TESTED',
+    failure: 'GoCube 尚未完成真机连接、转动同步、电量和断线重连回归；通过后，上传时设置 WECHAT_MINI_GOCUBE_TESTED=1。',
   },
 ];
 
@@ -436,13 +468,27 @@ export function collectReleaseFailures({
     if (paths.length === 0) continue;
     failures.push(`${paths.join('、')} 包含${label}；小程序源码和上传包禁止保存服务端凭据。`);
   }
-  for (const { label, sourcePattern, uploadPattern } of sensitiveCapabilities) {
+  for (const {
+    label,
+    sourcePattern,
+    uploadPattern,
+    sourcePathAllowed = () => false,
+    uploadPathAllowed = () => false,
+  } of sensitiveCapabilities) {
     const paths = [
       ...sourceFiles
-        .filter(({ source }) => typeof source === 'string' && sourcePattern.test(source))
+        .filter(({ path, source }) => (
+          typeof source === 'string'
+          && sourcePattern.test(source)
+          && !sourcePathAllowed(path)
+        ))
         .map(({ path }) => path),
       ...uploadFiles
-        .filter(({ source }) => typeof source === 'string' && uploadPattern.test(source))
+        .filter(({ path, source }) => (
+          typeof source === 'string'
+          && uploadPattern.test(source)
+          && !uploadPathAllowed(path)
+        ))
         .map(({ path }) => path),
     ];
     if (paths.length === 0) continue;

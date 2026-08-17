@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/timer/index",
+    "pages/smart-cube/index",
     "pages/tools/index",
     "pages/account/index",
     "pages/web/index"

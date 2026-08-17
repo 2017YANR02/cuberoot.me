@@ -62,6 +62,10 @@ import { stepSolved, type CubeStep } from '../cube/steps';
 import { watchAdvertisementsMac, savedMac, saveMac, clearMac, parseMacFromName, normalizeMac } from './mac';
 import { BluetoothConnectError, atStage, isNoDeviceSelected } from './connect_error';
 import type { BluetoothCubeStatus } from './types';
+import {
+  connectMiniProgramCubeBridge,
+  isMiniProgramWebView,
+} from './miniprogram_bridge';
 
 export type { BluetoothCubeStatus, CubeBrand } from './types';
 export type { CubeDriver, CubeDriverStartResult, GyroSink, GyroQuaternion, GyroVelocity } from './driver';
@@ -1001,6 +1005,52 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       return;
     }
 
+    if (isMiniProgramWebView()) {
+      intentionalDisconnectRef.current = false;
+      cancelPendingReconnect();
+      cleanupRef.current?.();
+      cleanupRef.current = null;
+
+      const bridge = await connectMiniProgramCubeBridge({
+        onMove: handleMove,
+        onState: handleCubeState,
+        onBattery: (level) => setStatus((current) => ({ ...current, battery: level })),
+        onGyro: gyroSink,
+        onStatus: (next) => {
+          if ((next.phase === 'disconnected' || next.phase === 'error')
+            && cleanupRef.current) {
+            internalDisconnect('gatt-lost');
+          }
+        },
+      });
+
+      trackerRef.current.reset();
+      hijackRef.current = null;
+      hijackStepRef.current = null;
+      setHijacked(false);
+      wasSolvedRef.current = true;
+      setSolved(true);
+      publishState(toFaceletString(trackerRef.current.getFaces()));
+      setLastMove(null);
+      moveClockRef.current.reset();
+      cleanupRef.current = bridge.disconnect;
+      setStatus({
+        connected: true,
+        brand: bridge.brand === 'gan-v4' || bridge.brand === 'gocube'
+          ? bridge.brand
+          : 'unknown',
+        battery: null,
+        deviceName: bridge.deviceName,
+        deviceId: `miniprogram:${bridge.brand}`,
+        hasGyro: bridge.hasGyro,
+      });
+      // Initial state can arrive while the native page is still connecting.
+      // Replay it only after this tracker reset, otherwise a real scrambled
+      // cube is overwritten by the temporary solved state above.
+      bridge.activate();
+      return;
+    }
+
     if (typeof navigator === 'undefined' || !navigator.bluetooth) {
       // Tagged error: TimerPage swaps in env-specific advice modal.
       const err = new Error('NO_WEB_BLUETOOTH') as Error & { kind?: string };
@@ -1058,7 +1108,15 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         .catch((err: unknown) => { throw atStage('advertisement', err); })
       : null;
     await attachToDevice(device, advMac);
-  }, [attachToDevice, cancelPendingReconnect]);
+  }, [
+    attachToDevice,
+    cancelPendingReconnect,
+    gyroSink,
+    handleCubeState,
+    handleMove,
+    internalDisconnect,
+    publishState,
+  ]);
 
   // Tear down on unmount so we don't leak GATT subscriptions.
   useEffect(() => {

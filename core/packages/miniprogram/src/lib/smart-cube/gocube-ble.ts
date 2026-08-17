@@ -10,82 +10,26 @@ import {
   parseGoCubeNotification,
   type GoCubeQuaternion,
 } from '@cuberoot/shared/smart-cube/gocube';
+import {
+  claimBleResourceLease,
+  ignoreBleFailure,
+  invokeBleCleanupForLease,
+  invokeBleForLease,
+  invokeBleWithLateCleanupForLease,
+  normalizeBleUuid,
+  raceBleAbort,
+  raceBleAbortWithLateCleanup,
+  safeBleCallback,
+  BleOperationAbortedError,
+  type BleAbortSignal,
+  type CharacteristicValueChange,
+  type BleConnectionStateChange,
+  type DiscoveredDevice,
+  type MiniProgramBleApi,
+  type BleResourceLease,
+} from './ble-api';
 
-interface BleFailure {
-  errCode?: number;
-  errMsg?: string;
-}
-
-interface BleCallbacks<T> {
-  success?(result: T): void;
-  fail?(error: BleFailure): void;
-}
-
-interface DiscoveredDevice {
-  deviceId: string;
-  localName?: string;
-  name?: string;
-}
-
-interface BleService {
-  isPrimary?: boolean;
-  uuid: string;
-}
-
-interface BleCharacteristic {
-  properties?: {
-    indicate?: boolean;
-    notify?: boolean;
-    write?: boolean;
-    writeNoResponse?: boolean;
-  };
-  uuid: string;
-}
-
-interface CharacteristicValueChange {
-  characteristicId: string;
-  deviceId: string;
-  serviceId: string;
-  value: ArrayBuffer;
-}
-
-export interface GoCubeBleApi {
-  closeBLEConnection(options: { deviceId: string } & BleCallbacks<BleFailure>): void;
-  closeBluetoothAdapter(options: BleCallbacks<BleFailure>): void;
-  createBLEConnection(options: {
-    deviceId: string;
-    timeout?: number;
-  } & BleCallbacks<BleFailure>): void;
-  getBLEDeviceCharacteristics(options: {
-    deviceId: string;
-    serviceId: string;
-  } & BleCallbacks<{ characteristics: BleCharacteristic[] }>): void;
-  getBLEDeviceServices(options: {
-    deviceId: string;
-  } & BleCallbacks<{ services: BleService[] }>): void;
-  notifyBLECharacteristicValueChange(options: {
-    characteristicId: string;
-    deviceId: string;
-    serviceId: string;
-    state: boolean;
-  } & BleCallbacks<BleFailure>): void;
-  offBLECharacteristicValueChange(listener: (result: CharacteristicValueChange) => void): void;
-  offBluetoothDeviceFound(listener: (result: { devices: DiscoveredDevice[] }) => void): void;
-  onBLECharacteristicValueChange(listener: (result: CharacteristicValueChange) => void): void;
-  onBluetoothDeviceFound(listener: (result: { devices: DiscoveredDevice[] }) => void): void;
-  openBluetoothAdapter(options: BleCallbacks<BleFailure>): void;
-  startBluetoothDevicesDiscovery(options: {
-    allowDuplicatesKey: boolean;
-    services: string[];
-  } & BleCallbacks<BleFailure>): void;
-  stopBluetoothDevicesDiscovery(options: BleCallbacks<BleFailure>): void;
-  writeBLECharacteristicValue(options: {
-    characteristicId: string;
-    deviceId: string;
-    serviceId: string;
-    value: ArrayBuffer;
-  } & BleCallbacks<BleFailure>): void;
-}
+export type GoCubeBleApi = MiniProgramBleApi;
 
 export interface GoCubeBleConnection {
   readonly deviceId: string;
@@ -95,7 +39,9 @@ export interface GoCubeBleConnection {
 
 export interface ConnectGoCubeOptions {
   api?: GoCubeBleApi;
+  signal?: BleAbortSignal;
   onBattery?(level: number): void;
+  onDisconnect?(message: string): void;
   onGyro?(quaternion: GoCubeQuaternion): void;
   onMove?(move: string): void;
   onState?(facelets: string): void;
@@ -117,50 +63,28 @@ export class GoCubeBleError extends Error {
   }
 }
 
-function invoke<T>(start: (callbacks: BleCallbacks<T>) => void): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    try {
-      start({
-        success: resolve,
-        fail: (error) => reject(new Error(error.errMsg ?? '微信蓝牙接口调用失败')),
-      });
-    } catch (error) {
-      reject(error);
-    }
-  });
-}
-
-function normalizeUuid(uuid: string): string {
-  return uuid.toLowerCase();
-}
-
-function safeCallback(callback: (() => void) | undefined): void {
-  try {
-    callback?.();
-  } catch {
-    // Consumer callbacks must not break the BLE transport loop.
-  }
-}
-
-async function ignoreFailure(operation: () => Promise<unknown>): Promise<void> {
-  try {
-    await operation();
-  } catch {
-    // Cleanup is best-effort and idempotent.
-  }
-}
-
-async function findGoCube(api: GoCubeBleApi, timeoutMs: number): Promise<DiscoveredDevice> {
+async function findGoCube(
+  api: GoCubeBleApi,
+  lease: BleResourceLease,
+  timeoutMs: number,
+  signal: BleAbortSignal | undefined,
+): Promise<DiscoveredDevice> {
   return new Promise<DiscoveredDevice>((resolve, reject) => {
     let settled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let offAbort = (): void => {};
 
     const finish = (result: DiscoveredDevice | Error): void => {
       if (settled) return;
       settled = true;
       if (timer !== undefined) clearTimeout(timer);
+      offAbort();
       api.offBluetoothDeviceFound(onFound);
-      void ignoreFailure(() => invoke((callbacks) => api.stopBluetoothDevicesDiscovery(callbacks)));
+      void ignoreBleFailure(
+        () => invokeBleCleanupForLease(lease, (callbacks) => {
+          api.stopBluetoothDevicesDiscovery(callbacks);
+        }),
+      );
       if (result instanceof Error) reject(result);
       else resolve(result);
     };
@@ -168,30 +92,44 @@ async function findGoCube(api: GoCubeBleApi, timeoutMs: number): Promise<Discove
     const onFound = (result: { devices: DiscoveredDevice[] }): void => {
       const device = result.devices.find((candidate) =>
         Boolean(candidate.deviceId)
-        && matchesGoCubeName(candidate.name ?? candidate.localName));
+        && (matchesGoCubeName(candidate.name) || matchesGoCubeName(candidate.localName)));
       if (device) finish(device);
     };
 
     api.onBluetoothDeviceFound(onFound);
+    offAbort = signal?.onAbort(() => finish(new BleOperationAbortedError())) ?? offAbort;
+    if (settled) return;
     timer = setTimeout(() => {
       finish(new GoCubeBleError('device-not-found', '未发现 GoCube 或 Rubik’s Connected'));
     }, timeoutMs);
 
-    try {
-      api.startBluetoothDevicesDiscovery({
+    const stopDiscovery = (): Promise<unknown> => invokeBleCleanupForLease(
+      lease,
+      (callbacks) => api.stopBluetoothDevicesDiscovery(callbacks),
+    );
+    const startDiscovery = invokeBleWithLateCleanupForLease(
+      lease,
+      (callbacks) => api.startBluetoothDevicesDiscovery({
+        ...callbacks,
         allowDuplicatesKey: false,
-        services: [GOCUBE_SERVICE_UUID],
-        success: () => {},
-        fail: (error) => finish(new GoCubeBleError(
-          'adapter-unavailable',
-          error.errMsg ?? '无法开始搜索智能魔方',
-        )),
-      });
-    } catch (error) {
-      finish(new GoCubeBleError('adapter-unavailable', '无法开始搜索智能魔方', {
-        cause: error,
-      }));
-    }
+      }),
+      stopDiscovery,
+    );
+    void raceBleAbortWithLateCleanup(
+      startDiscovery,
+      signal,
+      stopDiscovery,
+    ).catch((error: unknown) => {
+      if (error instanceof BleOperationAbortedError) {
+        finish(error);
+        return;
+      }
+      finish(new GoCubeBleError(
+        'adapter-unavailable',
+        error instanceof Error ? error.message : '无法开始搜索智能魔方',
+        { cause: error },
+      ));
+    });
   });
 }
 
@@ -203,6 +141,7 @@ export async function connectGoCube(
   if (!Number.isFinite(scanTimeoutMs) || scanTimeoutMs < 1_000 || scanTimeoutMs > 30_000) {
     throw new RangeError('scanTimeoutMs must be between 1000 and 30000.');
   }
+  const lease = claimBleResourceLease(api);
 
   let adapterOpen = false;
   let connectedDeviceId: string | null = null;
@@ -210,32 +149,40 @@ export async function connectGoCube(
   let writeCharacteristicId: string | null = null;
   let notifyCharacteristicId: string | null = null;
   let notificationListener: ((result: CharacteristicValueChange) => void) | null = null;
+  let connectionStateListener: ((result: BleConnectionStateChange) => void) | null = null;
   let notificationsEnabled = false;
   let active = false;
   let lastBattery: number | null = null;
   let movesSinceAck = 0;
   let disconnectPromise: Promise<void> | null = null;
+  let closing = false;
+  let writeQueue: Promise<void> = Promise.resolve();
   const batteryWaiters = new Set<(level: number | null) => void>();
 
-  const writeCommand = async (command: number): Promise<void> => {
-    if (!active || !connectedDeviceId || !serviceId || !writeCharacteristicId) {
-      throw new GoCubeBleError('connection-failed', '智能魔方连接已断开');
-    }
-    const deviceId = connectedDeviceId;
-    const currentServiceId = serviceId;
-    const characteristicId = writeCharacteristicId;
-    await invoke((callbacks) => api.writeBLECharacteristicValue({
-      ...callbacks,
-      characteristicId,
-      deviceId,
-      serviceId: currentServiceId,
-      value: createGoCubeCommand(command),
-    }));
+  const writeCommand = (command: number): Promise<void> => {
+    const operation = writeQueue.then(async () => {
+      if (closing || !active || !connectedDeviceId || !serviceId || !writeCharacteristicId) {
+        throw new GoCubeBleError('connection-failed', '智能魔方连接已断开');
+      }
+      const deviceId = connectedDeviceId;
+      const currentServiceId = serviceId;
+      const characteristicId = writeCharacteristicId;
+      await raceBleAbort(invokeBleForLease(lease, (callbacks) => api.writeBLECharacteristicValue({
+        ...callbacks,
+        characteristicId,
+        deviceId,
+        serviceId: currentServiceId,
+        value: createGoCubeCommand(command),
+      })), options.signal);
+    });
+    writeQueue = operation.catch(() => {});
+    return operation;
   };
 
   const disconnect = (): Promise<void> => {
     if (disconnectPromise) return disconnectPromise;
     disconnectPromise = (async () => {
+      closing = true;
       active = false;
       for (const resolve of batteryWaiters) resolve(lastBattery);
       batteryWaiters.clear();
@@ -244,86 +191,140 @@ export async function connectGoCube(
         api.offBLECharacteristicValueChange(notificationListener);
         notificationListener = null;
       }
+      if (connectionStateListener) {
+        api.offBLEConnectionStateChange?.(connectionStateListener);
+        connectionStateListener = null;
+      }
       if (notificationsEnabled && connectedDeviceId && serviceId && notifyCharacteristicId) {
-        await ignoreFailure(() => invoke((callbacks) => api.notifyBLECharacteristicValueChange({
-          ...callbacks,
-          characteristicId: notifyCharacteristicId as string,
-          deviceId: connectedDeviceId as string,
-          serviceId: serviceId as string,
-          state: false,
-        })));
+        await ignoreBleFailure(
+          () => invokeBleCleanupForLease(lease, (callbacks) => api.notifyBLECharacteristicValueChange({
+            ...callbacks,
+            characteristicId: notifyCharacteristicId as string,
+            deviceId: connectedDeviceId as string,
+            serviceId: serviceId as string,
+            state: false,
+          })),
+        );
         notificationsEnabled = false;
       }
       if (connectedDeviceId) {
-        await ignoreFailure(() => invoke((callbacks) => api.closeBLEConnection({
+        await ignoreBleFailure(() => invokeBleCleanupForLease(lease, (callbacks) => api.closeBLEConnection({
           ...callbacks,
           deviceId: connectedDeviceId as string,
         })));
         connectedDeviceId = null;
       }
       if (adapterOpen) {
-        await ignoreFailure(() => invoke((callbacks) => api.closeBluetoothAdapter(callbacks)));
+        await ignoreBleFailure(
+          () => invokeBleCleanupForLease(lease, (callbacks) => api.closeBluetoothAdapter(callbacks)),
+        );
         adapterOpen = false;
       }
     })();
     return disconnectPromise;
   };
 
+  const reportUnexpectedDisconnect = (message: string): void => {
+    if (!active || closing) return;
+    safeBleCallback(options.onDisconnect ? () => options.onDisconnect?.(message) : undefined);
+    void disconnect();
+  };
+
   try {
     try {
-      await invoke((callbacks) => api.openBluetoothAdapter(callbacks));
+      const closeAdapter = (): Promise<unknown> => invokeBleCleanupForLease(
+        lease,
+        (callbacks) => api.closeBluetoothAdapter(callbacks),
+      );
+      await raceBleAbortWithLateCleanup(
+        invokeBleWithLateCleanupForLease(
+          lease,
+          (callbacks) => api.openBluetoothAdapter(callbacks),
+          closeAdapter,
+        ),
+        options.signal,
+        closeAdapter,
+      );
       adapterOpen = true;
     } catch (error) {
+      if (error instanceof BleOperationAbortedError) throw error;
       throw new GoCubeBleError('adapter-unavailable', '蓝牙不可用，请开启系统蓝牙后重试', {
         cause: error,
       });
     }
 
-    const device = await findGoCube(api, scanTimeoutMs);
+    const device = await findGoCube(api, lease, scanTimeoutMs, options.signal);
     connectedDeviceId = device.deviceId;
     try {
-      await invoke((callbacks) => api.createBLEConnection({
-        ...callbacks,
-        deviceId: device.deviceId,
-        timeout: 10_000,
-      }));
+      const closeConnection = (): Promise<unknown> => invokeBleCleanupForLease(
+        lease,
+        (callbacks) => api.closeBLEConnection({
+          ...callbacks,
+          deviceId: device.deviceId,
+        }),
+      );
+      await raceBleAbortWithLateCleanup(
+        invokeBleWithLateCleanupForLease(
+          lease,
+          (callbacks) => api.createBLEConnection({
+            ...callbacks,
+            deviceId: device.deviceId,
+            timeout: 10_000,
+          }),
+          closeConnection,
+        ),
+        options.signal,
+        closeConnection,
+      );
     } catch (error) {
+      if (error instanceof BleOperationAbortedError) throw error;
       throw new GoCubeBleError('connection-failed', '智能魔方连接失败', { cause: error });
     }
+    active = true;
+    connectionStateListener = (result): void => {
+      if (result.deviceId === connectedDeviceId && !result.connected) {
+        reportUnexpectedDisconnect('智能魔方连接已断开');
+      }
+    };
+    api.onBLEConnectionStateChange?.(connectionStateListener);
 
-    const services = await invoke<{ services: BleService[] }>((callbacks) =>
-      api.getBLEDeviceServices({ ...callbacks, deviceId: device.deviceId }));
+    const services = await raceBleAbort(
+      invokeBleForLease<{ services: import('./ble-api').BleService[] }>(lease, (callbacks) =>
+        api.getBLEDeviceServices({ ...callbacks, deviceId: device.deviceId })),
+      options.signal,
+    );
     const service = services.services.find((candidate) =>
-      normalizeUuid(candidate.uuid) === GOCUBE_SERVICE_UUID);
+      normalizeBleUuid(candidate.uuid) === GOCUBE_SERVICE_UUID);
     if (!service) {
       throw new GoCubeBleError('gatt-unavailable', '智能魔方通信服务不可用');
     }
     serviceId = service.uuid;
 
-    const characteristics = await invoke<{ characteristics: BleCharacteristic[] }>((callbacks) =>
-      api.getBLEDeviceCharacteristics({
-        ...callbacks,
-        deviceId: device.deviceId,
-        serviceId: service.uuid,
-      }));
+    const characteristics = await raceBleAbort(
+      invokeBleForLease<{ characteristics: import('./ble-api').BleCharacteristic[] }>(lease, (callbacks) =>
+        api.getBLEDeviceCharacteristics({
+          ...callbacks,
+          deviceId: device.deviceId,
+          serviceId: service.uuid,
+        })),
+      options.signal,
+    );
     const writeCharacteristic = characteristics.characteristics.find((candidate) =>
-      normalizeUuid(candidate.uuid) === GOCUBE_WRITE_CHARACTERISTIC_UUID
+      normalizeBleUuid(candidate.uuid) === GOCUBE_WRITE_CHARACTERISTIC_UUID
       && Boolean(candidate.properties?.write || candidate.properties?.writeNoResponse));
     const notifyCharacteristic = characteristics.characteristics.find((candidate) =>
-      normalizeUuid(candidate.uuid) === GOCUBE_NOTIFY_CHARACTERISTIC_UUID
+      normalizeBleUuid(candidate.uuid) === GOCUBE_NOTIFY_CHARACTERISTIC_UUID
       && Boolean(candidate.properties?.notify || candidate.properties?.indicate));
     if (!writeCharacteristic || !notifyCharacteristic) {
       throw new GoCubeBleError('gatt-unavailable', '智能魔方通信特征不可用');
     }
     writeCharacteristicId = writeCharacteristic.uuid;
     notifyCharacteristicId = notifyCharacteristic.uuid;
-    active = true;
-
     notificationListener = (result): void => {
       if (!active
         || result.deviceId !== connectedDeviceId
-        || normalizeUuid(result.serviceId) !== normalizeUuid(serviceId as string)
-        || normalizeUuid(result.characteristicId) !== normalizeUuid(notifyCharacteristicId as string)) {
+        || normalizeBleUuid(result.serviceId) !== normalizeBleUuid(serviceId as string)
+        || normalizeBleUuid(result.characteristicId) !== normalizeBleUuid(notifyCharacteristicId as string)) {
         return;
       }
 
@@ -331,7 +332,7 @@ export async function connectGoCube(
       if (!notification) return;
       if (notification.type === 'moves') {
         for (const move of notification.moves) {
-          safeCallback(options.onMove ? () => options.onMove?.(move) : undefined);
+          safeBleCallback(options.onMove ? () => options.onMove?.(move) : undefined);
           movesSinceAck++;
         }
         if (movesSinceAck > GOCUBE_STATE_REACK_AFTER_MOVES) {
@@ -339,24 +340,24 @@ export async function connectGoCube(
           void writeCommand(GOCUBE_COMMAND_STATE).catch(() => {});
         }
       } else if (notification.type === 'state') {
-        safeCallback(options.onState ? () => options.onState?.(notification.facelets) : undefined);
+        safeBleCallback(options.onState ? () => options.onState?.(notification.facelets) : undefined);
       } else if (notification.type === 'orientation') {
-        safeCallback(options.onGyro ? () => options.onGyro?.(notification.quaternion) : undefined);
+        safeBleCallback(options.onGyro ? () => options.onGyro?.(notification.quaternion) : undefined);
       } else if (notification.type === 'battery') {
         lastBattery = notification.level;
-        safeCallback(options.onBattery ? () => options.onBattery?.(notification.level) : undefined);
+        safeBleCallback(options.onBattery ? () => options.onBattery?.(notification.level) : undefined);
         for (const resolve of batteryWaiters) resolve(notification.level);
         batteryWaiters.clear();
       }
     };
     api.onBLECharacteristicValueChange(notificationListener);
-    await invoke((callbacks) => api.notifyBLECharacteristicValueChange({
+    await raceBleAbort(invokeBleForLease(lease, (callbacks) => api.notifyBLECharacteristicValueChange({
       ...callbacks,
       characteristicId: notifyCharacteristic.uuid,
       deviceId: device.deviceId,
       serviceId: service.uuid,
       state: true,
-    }));
+    })), options.signal);
     notificationsEnabled = true;
     await writeCommand(GOCUBE_COMMAND_STATE);
 

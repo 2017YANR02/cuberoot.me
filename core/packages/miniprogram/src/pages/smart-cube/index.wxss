@@ -1,0 +1,120 @@
+.smart-cube-page {
+  padding-top: 52rpx;
+}
+
+.connection-status {
+  border-bottom: 1rpx solid var(--cr-line);
+  margin-top: 56rpx;
+  padding-bottom: 36rpx;
+}
+
+.connection-label,
+.connection-detail {
+  color: var(--cr-muted);
+  display: block;
+  font-size: 24rpx;
+}
+
+.connection-value {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 650;
+  line-height: 1.4;
+  margin-top: 10rpx;
+  overflow-wrap: anywhere;
+}
+
+.connection-value--ready {
+  color: var(--cr-ready);
+}
+
+.connection-value--error {
+  color: var(--cr-danger);
+}
+
+.connection-detail {
+  margin-top: 12rpx;
+}
+
+.driver-list {
+  margin-top: 20rpx;
+}
+
+.driver-row {
+  align-items: center;
+  border-bottom: 1rpx solid var(--cr-line);
+  display: flex;
+  gap: 24rpx;
+  padding: 30rpx 0;
+}
+
+.driver-copy {
+  min-width: 0;
+}
+
+.driver-name,
+.driver-models,
+.section-title,
+.support-copy {
+  display: block;
+}
+
+.driver-name,
+.section-title {
+  font-weight: 650;
+}
+
+.driver-models,
+.support-copy {
+  color: var(--cr-muted);
+  font-size: 25rpx;
+  line-height: 1.55;
+  margin-top: 8rpx;
+  overflow-wrap: anywhere;
+}
+
+.driver-action {
+  border: 1rpx solid var(--cr-line);
+  border-radius: 999rpx;
+  flex: 0 0 auto;
+  font-size: 26rpx;
+  min-height: 68rpx;
+  padding: 0 26rpx;
+  white-space: nowrap;
+}
+
+.driver-action[disabled] {
+  opacity: 0.45;
+}
+
+.simulator-panel,
+.connected-actions,
+.support-note {
+  margin-top: 44rpx;
+}
+
+.move-grid {
+  display: grid;
+  gap: 14rpx;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 20rpx;
+}
+
+.move-button {
+  border: 1rpx solid var(--cr-line);
+  border-radius: 18rpx;
+  font-family: ui-monospace, "SFMono-Regular", monospace;
+  min-height: 72rpx;
+}
+
+.connected-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx 28rpx;
+}
+
+.support-note {
+  border-top: 1rpx solid var(--cr-line);
+  padding-top: 34rpx;
+}
