@@ -88,6 +88,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   guardian_links: '监护关系属于机构,关联站内账号随账号删除置空',
   teaching_audit_events: '教学审计必须保留,操作者账号随删除置空且保留姓名快照',
   teaching_idempotency_requests: '短期防重记录随操作者账号删除级联',
+  teaching_mutation_rate_limits: '教学写入尝试限流状态随账号删除级联',
   teaching_platform_identities: '旧教学平台账号映射随站内账号删除级联',
   teaching_platform_assertion_nonces: '短期登录断言防重记录随站内账号删除级联',
   memberships: '会员权益状态:留着,同一个人重新绑 WCA 回来还认',

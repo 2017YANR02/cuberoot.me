@@ -1307,6 +1307,8 @@ CREATE UNIQUE INDEX uq_student_profiles_org_account
   ON student_profiles(organization_id, account_user_id) WHERE account_user_id IS NOT NULL;
 CREATE INDEX idx_student_profiles_org_status_name
   ON student_profiles(organization_id, status, display_name, id);
+CREATE INDEX idx_student_profiles_org_display_name
+  ON student_profiles(organization_id, display_name, id);
 CREATE TRIGGER student_profiles_updated_at BEFORE UPDATE ON student_profiles
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
@@ -1413,9 +1415,23 @@ CREATE TABLE teaching_idempotency_requests (
 );
 CREATE INDEX idx_teaching_idempotency_requests_expiry
   ON teaching_idempotency_requests(expires_at);
+CREATE INDEX idx_teaching_idempotency_requests_actor_operation_created
+  ON teaching_idempotency_requests(actor_user_id, operation, created_at DESC);
 CREATE INDEX idx_teaching_idempotency_requests_org_created
   ON teaching_idempotency_requests(organization_id, created_at DESC)
   WHERE organization_id IS NOT NULL;
+
+CREATE TABLE teaching_mutation_rate_limits (
+  actor_user_id     BIGINT       NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  operation         VARCHAR(100) NOT NULL,
+  window_started_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  attempts          INTEGER      NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+  updated_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (actor_user_id, operation),
+  CHECK (length(trim(operation)) > 0)
+);
+CREATE INDEX idx_teaching_mutation_rate_limits_updated
+  ON teaching_mutation_rate_limits(updated_at);
 
 -- Verified identity bridge from the legacy teaching platform (0143).
 CREATE TABLE teaching_platform_identities (

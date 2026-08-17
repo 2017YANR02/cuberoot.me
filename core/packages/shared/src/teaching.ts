@@ -81,10 +81,10 @@ export type TeachingPermission = (typeof TEACHING_PERMISSIONS)[number];
 const ROLE_PERMISSIONS: Record<TeachingOrganizationRole, readonly TeachingPermission[]> = {
   owner: TEACHING_PERMISSIONS,
   admin: TEACHING_PERMISSIONS,
-  teacher: ['member:read', 'student:read'],
-  assistant: ['member:read', 'student:read'],
-  finance: ['member:read', 'student:read', 'finance:read', 'finance:manage'],
-  viewer: ['member:read', 'student:read', 'finance:read'],
+  teacher: ['member:read'],
+  assistant: ['member:read'],
+  finance: ['member:read', 'finance:read', 'finance:manage'],
+  viewer: ['member:read', 'finance:read'],
 };
 
 export function isTeachingOrganizationRole(value: unknown): value is TeachingOrganizationRole {
@@ -218,6 +218,7 @@ export const TEACHING_ERROR_CODES = [
   'RESOURCE_NOT_FOUND',
   'RESOURCE_ORGANIZATION_MISMATCH',
   'INVALID_INPUT',
+  'RATE_LIMITED',
   'CONFLICT',
   'IDEMPOTENCY_KEY_REQUIRED',
   'IDEMPOTENCY_CONFLICT',
@@ -253,6 +254,7 @@ export interface TeachingPlatformAssertionV1 {
   method: string;
   path: string;
   bodySha256: string;
+  idempotencyKey: string | null;
   iat: number;
   exp: number;
   jti: string;

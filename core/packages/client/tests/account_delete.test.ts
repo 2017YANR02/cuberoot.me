@@ -121,6 +121,7 @@ describe('清单 ↔ schema', () => {
       'guardian_links',
       'teaching_audit_events',
       'teaching_idempotency_requests',
+      'teaching_mutation_rate_limits',
       'teaching_platform_identities',
       'teaching_platform_assertion_nonces',
     ]));

@@ -275,9 +275,10 @@ const ENDPOINTS: Ep[] = [
   { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations', g: 'login', c: 'no-store', zh: '列出当前账号加入的机构', en: 'List organizations joined by the current account' },
   { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations', g: 'login', c: 'no-store', zh: '创建机构并成为首位所有者，要求幂等键', en: 'Create an organization as its first owner; requires an idempotency key' },
   { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug', g: 'login', c: 'no-store', zh: '读取有成员权限的机构', en: 'Read an organization where the account is a member' },
-  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/members', g: 'login', c: 'no-store', zh: '按机构角色读取成员', en: 'List members under organization-role authorization' },
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/summary', g: 'login', c: 'no-store', zh: '读取按角色裁剪的机构聚合统计', en: 'Read role-filtered organization summary counts' },
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/members', g: 'login', c: 'no-store', zh: '按机构角色分页读取成员', en: 'List paginated members under organization-role authorization' },
   { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/members', g: 'login', c: 'no-store', zh: '按机构角色添加成员，要求幂等键', en: 'Add a member under organization-role authorization; requires an idempotency key' },
-  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/students', g: 'login', c: 'no-store', zh: '按机构范围读取学员', en: 'List students scoped to an organization' },
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/students', g: 'login', c: 'no-store', zh: '按机构范围分页读取学员', en: 'List paginated students scoped to an organization' },
   { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/students', g: 'login', c: 'no-store', zh: '按机构权限创建学员，要求幂等键', en: 'Create a student under organization authorization; requires an idempotency key' },
 
   // ---- membership ----
