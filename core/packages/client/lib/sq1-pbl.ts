@@ -4,6 +4,7 @@ import {
   parseSq1Tokens,
   simplifySq1Alg,
   type Sq1State,
+  type Sq1Token,
 } from '@cuberoot/shared/sq1-notation';
 import { traceSq1Algorithm } from '@/lib/sq1-tools';
 
@@ -90,48 +91,67 @@ function isLegacySliceable(pieces: readonly number[]): boolean {
  * sliced. Keep that historical quirk inside legacy Finder mode; the site's
  * normal Square-1 state helpers intentionally assume legal WCA sequences.
  */
-function applyLegacySq1PblSequence(sequence: string): Sq1State {
-  let pieces = SOLVED.pieces.slice();
-  let sliceSolved = true;
+function applySq1PblTokens(
+  initial: Sq1State,
+  tokens: readonly Sq1Token[],
+  mode: Sq1PblSearchMode,
+): Sq1State {
+  let pieces = initial.pieces.slice();
+  let scratch = initial.pieces.slice();
+  let sliceSolved = initial.sliceSolved;
 
-  for (const token of parseSq1Tokens(sequence)) {
+  for (const token of tokens) {
     if (token.kind === 'slice') {
-      if (!isLegacySliceable(pieces)) continue;
-      const next = pieces.slice();
+      if (mode === 'legacy' && !isLegacySliceable(pieces)) continue;
       for (let index = 0; index < 6; index += 1) {
-        next[index + 6] = pieces[index + 12];
-        next[index + 12] = pieces[index + 6];
+        const swapped = pieces[index + 6];
+        pieces[index + 6] = pieces[index + 12];
+        pieces[index + 12] = swapped;
       }
-      pieces = next;
       sliceSolved = !sliceSolved;
       continue;
     }
 
     const topOffset = ((-token.top % 12) + 12) % 12;
     const bottomOffset = ((-token.bot % 12) + 12) % 12;
-    const next = pieces.slice();
     for (let index = 0; index < 12; index += 1) {
-      next[index] = pieces[(topOffset + index) % 12];
-      next[index + 12] = pieces[12 + ((bottomOffset + index) % 12)];
+      scratch[index] = pieces[(topOffset + index) % 12];
+      scratch[index + 12] = pieces[12 + ((bottomOffset + index) % 12)];
     }
-    pieces = next;
+    [pieces, scratch] = [scratch, pieces];
   }
 
   return { pieces, sliceSolved };
 }
 
-function cyclicallyMatches(actual: readonly number[], expected: readonly number[]): boolean {
-  if (actual.length !== expected.length || actual.length === 0) return false;
-  return actual.some((_, offset) =>
-    actual.every((piece, index) => piece === expected[(index + offset) % expected.length]),
-  );
+function layerCyclicallyMatches(
+  actual: readonly number[],
+  actualStart: number,
+  expected: readonly number[],
+  expectedStart: number,
+): boolean {
+  for (let offset = 0; offset < 12; offset += 1) {
+    let matches = true;
+    for (let index = 0; index < 12; index += 1) {
+      if (actual[actualStart + index] !== expected[expectedStart + ((index + offset) % 12)]) {
+        matches = false;
+        break;
+      }
+    }
+    if (matches) return true;
+  }
+  return false;
 }
 
 /** PBL is solved when each layer matches solved up to AUF. Strict mode also checks the middle layer. */
 export function isSq1PblSolved(state: Sq1State, mode: Sq1PblSearchMode = 'legacy'): boolean {
-  const topSolved = cyclicallyMatches(state.pieces.slice(0, 12), SOLVED.pieces.slice(0, 12));
-  const bottomSolved = cyclicallyMatches(state.pieces.slice(12, 24), SOLVED.pieces.slice(12, 24));
+  const topSolved = layerCyclicallyMatches(state.pieces, 0, SOLVED.pieces, 0);
+  const bottomSolved = layerCyclicallyMatches(state.pieces, 12, SOLVED.pieces, 12);
   return topSolved && bottomSolved && (mode === 'legacy' || state.sliceSolved);
+}
+
+function parsedConcatenationIsComposable(first: string, second: string): boolean {
+  return first.trimEnd().endsWith('/') || second.trimStart().startsWith('/');
 }
 
 function strictSequence(sequence: string): { ok: true; canonical: string } | { ok: false; reason: 'invalid-notation' | 'unsliceable'; step?: number } {
@@ -281,17 +301,22 @@ export function findSq1PblSolutions(
   const total = input.auxiliary.length ** 2;
   const solutions: Array<Sq1PblSolution & { order: number }> = [];
   const strictSeen = new Set<string>();
+  const setupState = applySq1PblTokens(SOLVED, parseSq1Tokens(setup), mode);
+  const prepared = input.auxiliary.map(item => ({
+    item,
+    tokens: parseSq1Tokens(item.sequence),
+  }));
   let completed = 0;
 
-  for (const first of input.auxiliary) {
-    for (const second of input.auxiliary) {
+  for (const first of prepared) {
+    const firstState = applySq1PblTokens(setupState, first.tokens, mode);
+    for (const second of prepared) {
       // The desktop finder concatenates the two stored strings exactly. Apply
       // that raw candidate for behavioral parity, then normalize only display.
-      const raw = `${first.sequence}${second.sequence}`;
-      const sequence = `${setup} ${raw}`;
-      const state = mode === 'legacy'
-        ? applyLegacySq1PblSequence(sequence)
-        : applySq1Scramble(sequence);
+      const raw = `${first.item.sequence}${second.item.sequence}`;
+      const state = parsedConcatenationIsComposable(first.item.sequence, second.item.sequence)
+        ? applySq1PblTokens(firstState, second.tokens, mode)
+        : applySq1PblTokens(setupState, parseSq1Tokens(raw), mode);
       if (isSq1PblSolved(state, mode)) {
         const algorithm = mode === 'legacy'
           ? legacyOptimizeSq1PblSequence(raw)
@@ -302,7 +327,7 @@ export function findSq1PblSolutions(
           solutions.push({
             algorithm,
             compactAlgorithm: mode === 'legacy' ? algorithm : compactForFinder(algorithm),
-            auxiliary: [first.name, second.name],
+            auxiliary: [first.item.name, second.item.name],
             ...metrics,
             order: completed,
           });

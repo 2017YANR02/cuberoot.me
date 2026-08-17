@@ -101,9 +101,11 @@ export default function Sq1PblFinder() {
   const [runError, setRunError] = useState(false);
   const [result, setResult] = useState<Sq1PblSearchResult | null>(null);
   const [selectedSolution, setSelectedSolution] = useState<Sq1PblSolution | null>(null);
+  const [searchDurationMs, setSearchDurationMs] = useState(0);
   const [cancelled, setCancelled] = useState(false);
   const workerRef = useRef<Worker | null>(null);
   const requestRef = useRef(0);
+  const searchStartedAtRef = useRef(0);
   const { copied: solutionCopied, copy: copySolution } = useCopy();
 
   useEffect(() => {
@@ -169,6 +171,7 @@ export default function Sq1PblFinder() {
     setProgress({ completed: 0, total: 0 });
     setResult(null);
     setSelectedSolution(null);
+    setSearchDurationMs(0);
     setRunError(false);
     setCancelled(false);
   };
@@ -262,6 +265,7 @@ export default function Sq1PblFinder() {
     }
     setInputError('');
     setRunning(true);
+    searchStartedAtRef.current = performance.now();
     const id = requestRef.current + 1;
     requestRef.current = id;
     let worker: Worker;
@@ -288,6 +292,7 @@ export default function Sq1PblFinder() {
       if (message.type === 'result') {
         setResult(message.result);
         setSelectedSolution(message.result.solutions[0] ?? null);
+        setSearchDurationMs(Math.max(1, Math.round(performance.now() - searchStartedAtRef.current)));
       } else {
         setRunError(true);
       }
@@ -325,33 +330,13 @@ export default function Sq1PblFinder() {
       ? tr({ zh: `${item.name}（奇偶）`, en: `${item.name} (parity)` })
       : item.name,
   }));
+  const searchDuration = searchDurationMs < 1000
+    ? `${searchDurationMs} ms`
+    : `${(searchDurationMs / 1000).toFixed(1)} s`;
 
   return (
-    <section className={styles.finderSection} aria-labelledby="sq1-pbl-finder-heading">
-      <div className={styles.sectionHeadingRow}>
-        <div>
-          <h2 id="sq1-pbl-finder-heading">{tr({ zh: 'PBL 公式查找器', en: 'PBL algorithm finder' })}</h2>
-          <p className={styles.sourceLine}>
-            {tr({ zh: '按原工具行为进行 clean-room 重写；默认使用旧版兼容搜索，严格模式会额外检查中层状态。', en: 'A clean-room behavioral reimplementation of the original tool; legacy-compatible search is the default, while strict mode also checks the middle layer.' })}
-            {' '}<AppLink href="/about" prefetch={false}>{tr({ zh: '来源与致谢', en: 'Sources and credits' })}</AppLink>
-          </p>
-        </div>
-        <label className={styles.modeControl}>
-          <span>{tr({ zh: '搜索口径', en: 'Search mode' })}</span>
-          <PillToggle
-            value={mode === 'legacy'}
-            offLabel={tr({ zh: '严格', en: 'Strict' })}
-            onLabel={tr({ zh: '旧版兼容', en: 'Legacy' })}
-            ariaLabel={tr({ zh: '切换严格或旧版兼容搜索', en: 'Toggle strict or legacy-compatible search' })}
-            onChange={legacy => {
-              setMode(legacy ? 'legacy' : 'strict');
-              clearResult();
-            }}
-          />
-        </label>
-      </div>
-
-      <div className={styles.pllSelectors}>
+    <section className={styles.finderSection} aria-label={tr({ zh: 'PBL 公式查找器', en: 'PBL algorithm finder' })}>
+      <div className={styles.searchControls}>
         <div className={styles.pickerField}>
           <span>{tr({ zh: '上层 PLL', en: 'Top PLL' })}</span>
           <CompactSelect
@@ -374,82 +359,6 @@ export default function Sq1PblFinder() {
             ariaLabel={tr({ zh: '选择下层 PLL', en: 'Choose the bottom PLL' })}
           />
         </div>
-      </div>
-
-      <div className={styles.auxiliarySection}>
-        <div className={styles.auxiliaryHeading}>
-          <h3>{tr({ zh: '辅助公式', en: 'Auxiliary algorithms' })}</h3>
-          <span>{tr({ zh: `${auxiliary.length} 条`, en: `${auxiliary.length} algorithms` })}</span>
-        </div>
-        <label className={styles.searchField}>
-          <span>{tr({ zh: '筛选辅助公式', en: 'Filter auxiliary algorithms' })}</span>
-          <SearchInput
-            type="search"
-            value={auxiliarySearch}
-            onChange={value => void setAuxiliarySearch(value)}
-            className={styles.inputWithClear}
-            placeholder={tr({ zh: '名称或记号', en: 'Name or notation' })}
-            ariaLabel={tr({ zh: '筛选辅助公式', en: 'Filter auxiliary algorithms' })}
-          />
-        </label>
-        <label className={styles.auxiliaryListLabel}>
-          <span className={styles.srOnly}>{tr({ zh: '辅助公式列表', en: 'Auxiliary algorithm list' })}</span>
-          <select
-            className={styles.auxiliaryList}
-            size={8}
-            value={selectedAuxiliary}
-            onChange={event => setSelectedAuxiliary(event.target.value)}
-          >
-            {filteredAuxiliary.map(item => (
-              <option value={item.name} key={item.name}>{item.name}: {item.sequence}</option>
-            ))}
-          </select>
-        </label>
-        <div className={styles.auxiliaryEdit}>
-          <label>
-            <span>{tr({ zh: '新增辅助公式', en: 'New auxiliary algorithm' })}</span>
-            <input
-              value={newAuxiliary}
-              onChange={event => setNewAuxiliary(event.target.value)}
-              onKeyDown={event => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  addAuxiliary();
-                }
-              }}
-              placeholder={tr({ zh: '名称@公式', en: 'name@algorithm' })}
-            />
-          </label>
-          <div className={styles.editButtons}>
-            <button type="button" className={styles.button} onClick={addAuxiliary} disabled={!newAuxiliary.trim()}>{tr({ zh: '添加', en: 'Add' })}</button>
-            <button type="button" className={styles.button} onClick={removeAuxiliary} disabled={!selectedAuxiliary}>{tr({ zh: '移除所选', en: 'Remove selected' })}</button>
-          </div>
-        </div>
-        <div className={styles.finderDataActions}>
-          <button type="button" className={styles.button} onClick={restoreAuxiliary}>{tr({ zh: '还原默认', en: 'Restore defaults' })}</button>
-          <label className={`${styles.button} ${styles.fileButton}`}>
-            {tr({ zh: '导入 JSON', en: 'Import JSON' })}
-            <input type="file" accept="application/json,.json" onChange={importAuxiliary} />
-          </label>
-          <a
-            className={styles.button}
-            href={auxiliaryExportHref}
-            download="sq1-pbl-auxiliary.json"
-          >
-            {tr({ zh: '导出 JSON', en: 'Export JSON' })}
-          </a>
-        </div>
-        {manageStatus && (
-          <p className={styles.manageStatus} role="status">
-            {manageStatus === 'imported'
-              ? tr({ zh: '辅助公式已导入并保存在此浏览器。', en: 'Auxiliary algorithms imported and saved in this browser.' })
-              : tr({ zh: '已还原默认辅助公式。', en: 'Default auxiliary algorithms restored.' })}
-          </p>
-        )}
-        {inputError && <p className={styles.error} role="alert">{inputError}</p>}
-      </div>
-
-      <div className={styles.findAction}>
         <button
           type="button"
           className={styles.primaryButton}
@@ -459,14 +368,119 @@ export default function Sq1PblFinder() {
           {running ? tr({ zh: '正在查找…', en: 'Finding…' }) : tr({ zh: '查找公式', en: 'Find algorithms' })}
         </button>
         {running && <button type="button" className={styles.button} onClick={cancelFinder}>{tr({ zh: '取消', en: 'Cancel' })}</button>}
-        {running && (
-          <label className={styles.progressLabel}>
-            <span>{tr({ zh: '搜索进度', en: 'Search progress' })}</span>
-            <progress value={progress.completed} max={progress.total || 1} />
-            <span>{progress.total ? `${Math.floor(progress.completed / progress.total * 100)}%` : '0%'}</span>
-          </label>
-        )}
       </div>
+
+      {running && (
+        <label className={styles.progressLabel}>
+          <span>{tr({ zh: '搜索进度', en: 'Search progress' })}</span>
+          <progress value={progress.completed} max={progress.total || 1} />
+          <span>{progress.total ? `${Math.floor(progress.completed / progress.total * 100)}%` : '0%'}</span>
+        </label>
+      )}
+
+      {!top || !bottom ? (
+        <p className={styles.selectorHint}>{tr({ zh: '选择上层和下层 PLL 后即可查找。', en: 'Choose the top and bottom PLL to search.' })}</p>
+      ) : null}
+
+      <details className={styles.advancedSettings}>
+        <summary>
+          <span>{tr({ zh: '高级设置', en: 'Advanced settings' })}</span>
+          <span>{mode === 'legacy'
+            ? tr({ zh: '旧版兼容', en: 'Legacy' })
+            : tr({ zh: '严格', en: 'Strict' })}</span>
+        </summary>
+        <div className={styles.advancedContent}>
+          <label className={styles.modeControl}>
+            <span>{tr({ zh: '搜索口径', en: 'Search mode' })}</span>
+            <PillToggle
+              value={mode === 'legacy'}
+              offLabel={tr({ zh: '严格', en: 'Strict' })}
+              onLabel={tr({ zh: '旧版兼容', en: 'Legacy' })}
+              ariaLabel={tr({ zh: '切换严格或旧版兼容搜索', en: 'Toggle strict or legacy-compatible search' })}
+              onChange={legacy => {
+                setMode(legacy ? 'legacy' : 'strict');
+                clearResult();
+              }}
+            />
+          </label>
+          <p className={styles.sourceLine}>
+            {tr({ zh: '旧版兼容模式复现原工具行为；严格模式额外检查中层状态。', en: 'Legacy mode reproduces the original tool; strict mode also checks the middle layer.' })}
+            {' '}<AppLink href="/about" prefetch={false}>{tr({ zh: '来源与致谢', en: 'Sources and credits' })}</AppLink>
+          </p>
+          <div className={styles.auxiliarySection}>
+            <div className={styles.auxiliaryHeading}>
+              <h3>{tr({ zh: '辅助公式', en: 'Auxiliary algorithms' })}</h3>
+              <span>{tr({ zh: `${auxiliary.length} 条`, en: `${auxiliary.length} algorithms` })}</span>
+            </div>
+            <label className={styles.searchField}>
+              <span>{tr({ zh: '筛选辅助公式', en: 'Filter auxiliary algorithms' })}</span>
+              <SearchInput
+                type="search"
+                value={auxiliarySearch}
+                onChange={value => void setAuxiliarySearch(value)}
+                className={styles.inputWithClear}
+                placeholder={tr({ zh: '名称或记号', en: 'Name or notation' })}
+                ariaLabel={tr({ zh: '筛选辅助公式', en: 'Filter auxiliary algorithms' })}
+              />
+            </label>
+            <label className={styles.auxiliaryListLabel}>
+              <span className={styles.srOnly}>{tr({ zh: '辅助公式列表', en: 'Auxiliary algorithm list' })}</span>
+              <select
+                className={styles.auxiliaryList}
+                size={8}
+                value={selectedAuxiliary}
+                onChange={event => setSelectedAuxiliary(event.target.value)}
+              >
+                {filteredAuxiliary.map(item => (
+                  <option value={item.name} key={item.name}>{item.name}: {item.sequence}</option>
+                ))}
+              </select>
+            </label>
+            <div className={styles.auxiliaryEdit}>
+              <label>
+                <span>{tr({ zh: '新增辅助公式', en: 'New auxiliary algorithm' })}</span>
+                <input
+                  value={newAuxiliary}
+                  onChange={event => setNewAuxiliary(event.target.value)}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      addAuxiliary();
+                    }
+                  }}
+                  placeholder={tr({ zh: '名称@公式', en: 'name@algorithm' })}
+                />
+              </label>
+              <div className={styles.editButtons}>
+                <button type="button" className={styles.button} onClick={addAuxiliary} disabled={!newAuxiliary.trim()}>{tr({ zh: '添加', en: 'Add' })}</button>
+                <button type="button" className={styles.button} onClick={removeAuxiliary} disabled={!selectedAuxiliary}>{tr({ zh: '移除所选', en: 'Remove selected' })}</button>
+              </div>
+            </div>
+            <div className={styles.finderDataActions}>
+              <button type="button" className={styles.button} onClick={restoreAuxiliary}>{tr({ zh: '还原默认', en: 'Restore defaults' })}</button>
+              <label className={`${styles.button} ${styles.fileButton}`}>
+                {tr({ zh: '导入 JSON', en: 'Import JSON' })}
+                <input type="file" accept="application/json,.json" onChange={importAuxiliary} />
+              </label>
+              <a
+                className={styles.button}
+                href={auxiliaryExportHref}
+                download="sq1-pbl-auxiliary.json"
+              >
+                {tr({ zh: '导出 JSON', en: 'Export JSON' })}
+              </a>
+            </div>
+            {manageStatus && (
+              <p className={styles.manageStatus} role="status">
+                {manageStatus === 'imported'
+                  ? tr({ zh: '辅助公式已导入并保存在此浏览器。', en: 'Auxiliary algorithms imported and saved in this browser.' })
+                  : tr({ zh: '已还原默认辅助公式。', en: 'Default auxiliary algorithms restored.' })}
+              </p>
+            )}
+            {inputError && <p className={styles.error} role="alert">{inputError}</p>}
+          </div>
+        </div>
+      </details>
 
       {cancelled && <p className={styles.status} role="status">{tr({ zh: '搜索已取消。', en: 'Search cancelled.' })}</p>}
 
@@ -475,28 +489,15 @@ export default function Sq1PblFinder() {
         <section className={styles.outputSection} aria-labelledby="sq1-pbl-output-heading">
           <div className={styles.outputHeading}>
             <h3 id="sq1-pbl-output-heading">{result.target}</h3>
-            <span>{tr({ zh: `${result.solutions.length} 条结果`, en: `${result.solutions.length} results` })}</span>
+            <span>{tr({
+              zh: `${result.solutions.length} 条结果，耗时 ${searchDuration}`,
+              en: `${result.solutions.length} results in ${searchDuration}`,
+            })}</span>
           </div>
           {result.solutions.length === 0 ? (
             <p className={styles.status}>{tr({ zh: '当前辅助公式表中没有找到解。', en: 'No solution was found with the current auxiliary list.' })}</p>
           ) : (
-            <div className={styles.resultList}>
-              {result.solutions.map((solution, index) => (
-                <button
-                  type="button"
-                  className={`${styles.resultRow}${selectedSolution === solution ? ` ${styles.resultRowActive}` : ''}`}
-                  onClick={() => setSelectedSolution(solution)}
-                  aria-pressed={selectedSolution === solution}
-                  key={`${solution.algorithm}-${solution.auxiliary.join('-')}-${index}`}
-                >
-                  <span className={styles.resultOrdinal}>{index + 1}</span>
-                  <code>{solution.algorithm}</code>
-                  <span>{solution.stm} STM</span>
-                  <span>{solution.ftm} FTM</span>
-                  <span>{solution.auxiliary.join(' + ')}</span>
-                </button>
-              ))}
-            </div>
+            null
           )}
           {selectedSolution && (
             <div className={styles.selectedPreview}>
@@ -521,7 +522,7 @@ export default function Sq1PblFinder() {
                 />
               </div>
               <div className={styles.selectedDetails}>
-                <h4>{tr({ zh: '所选公式', en: 'Selected algorithm' })}</h4>
+                <h4>{tr({ zh: '当前公式', en: 'Current algorithm' })}</h4>
                 <div className={styles.selectedAlgorithmRow}>
                   <code>{selectedSolution.algorithm}</code>
                   <button
@@ -541,7 +542,29 @@ export default function Sq1PblFinder() {
                     {solutionCopied ? tr({ zh: '公式已复制', en: 'Algorithm copied' }) : ''}
                   </span>
                 </div>
+                <p>{selectedSolution.stm} STM / {selectedSolution.ftm} FTM</p>
                 <p>{tr({ zh: `辅助公式：${selectedSolution.auxiliary.join(' + ')}`, en: `Auxiliary algorithms: ${selectedSolution.auxiliary.join(' + ')}` })}</p>
+              </div>
+            </div>
+          )}
+          {result.solutions.length > 0 && (
+            <div className={styles.resultGroup}>
+              <h4>{tr({ zh: '全部结果', en: 'All results' })}</h4>
+              <div className={styles.resultList}>
+                {result.solutions.map((solution, index) => (
+                  <button
+                    type="button"
+                    className={`${styles.resultRow}${selectedSolution === solution ? ` ${styles.resultRowActive}` : ''}`}
+                    onClick={() => setSelectedSolution(solution)}
+                    aria-pressed={selectedSolution === solution}
+                    key={`${solution.algorithm}-${solution.auxiliary.join('-')}-${index}`}
+                  >
+                    <span className={styles.resultOrdinal}>{index + 1}</span>
+                    <code>{solution.algorithm}</code>
+                    <span>{solution.stm} STM / {solution.ftm} FTM</span>
+                    <span>{solution.auxiliary.join(' + ')}</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}
