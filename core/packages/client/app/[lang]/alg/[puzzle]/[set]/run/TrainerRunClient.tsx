@@ -29,8 +29,10 @@ import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { displayZbllToken } from '@/lib/alg_case_display';
 import {
   availableKinds, purifyScramble, SCRAMBLE_KINDS, trainerSetScrambleFeatures,
+  replaceOuterDAdjustment,
   type F2LSlot, type ScrambleKind,
 } from '@/lib/trainer-scramble';
+import { preparePsf2lExtraScrambles } from '@/lib/psf2l-extra-scramble';
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
 import { virtualAlgSet } from '@/lib/alg-virtual-sets';
 import { useTrainerMarks, markStatus, type CaseMarkStatus } from '@/lib/trainer-marks';
@@ -258,6 +260,9 @@ export default function TrainerRunClient() {
   const setPostAuf = useTrainerStore(s => s.setPostAuf);
   const randomInitialD = useTrainerStore(s => s.randomInitialD);
   const setRandomInitialD = useTrainerStore(s => s.setRandomInitialD);
+  const psf2lExtraScramble = useTrainerStore(s => s.psf2lExtraScramble);
+  const setPsf2lExtraScramble = useTrainerStore(s => s.setPsf2lExtraScramble);
+  const refreshPsf2lExtraScrambles = useTrainerStore(s => s.refreshPsf2lExtraScrambles);
   const randomFinalAuf = useTrainerStore(s => s.randomFinalAuf);
   const setRandomFinalAuf = useTrainerStore(s => s.setRandomFinalAuf);
   const f2lSlots = useTrainerStore(s => s.f2lSlots);
@@ -398,6 +403,21 @@ export default function TrainerRunClient() {
   }, [puzzle, setSlug, sessionId, meta, isMix, mixKey, virtual, virtualScope,
       storePuzzle, storeSet, cases.length, loadSession, loadMixSession]);
 
+  // 增强 PSF2L 的候选要按真实魔方状态筛选,放到后台准备；准备完成前生成器继续使用
+  // 原有的安全打乱。候选到位后若开关已开启,立即重出当前题。
+  useEffect(() => {
+    if (puzzle !== '3x3' || setSlug !== 'psf2l' || isMix) return;
+    if (storePuzzle !== puzzle || storeSet !== setSlug || cases.length === 0) return;
+    let cancelled = false;
+    loadAlg('3x3', 'f2l')
+      .then(f2l => preparePsf2lExtraScrambles(cases, f2l.cases, replaceOuterDAdjustment))
+      .then(() => {
+        if (!cancelled) refreshPsf2lExtraScrambles();
+      })
+      .catch(e => console.error('[trainer] prepare PSF2L extra scrambles failed', e));
+    return () => { cancelled = true; };
+  }, [puzzle, setSlug, isMix, storePuzzle, storeSet, cases, refreshPsf2lExtraScrambles]);
+
   // 分享链接 ?room=CODE:本集 session 载好后自动加入该房间(仅一次;已在房间/正忙/无码则跳过)。
   // joinRoom 要求 store 已 loadSession 到对应 puzzle/set,故等 cases 到位再试;失败(房间不存在/
   // 过期/集不匹配)则清掉 URL 里的码并由 roomError 提示。
@@ -472,12 +492,14 @@ export default function TrainerRunClient() {
       preAuf,
       postAuf,
       randomInitialD: features.randomInitialD && randomInitialD,
+      psf2lExtraScramble: features.psf2lExtraScramble && psf2lExtraScramble,
       randomFinalAuf: features.randomFinalAuf && randomFinalAuf,
       f2lSlots: features.f2lSlots ? f2lSlots : undefined,
       orientation: oriSel,
       orientationSet: isMix ? null : setSlug,
     };
-  }, [puzzle, isMix, setSlug, preAuf, postAuf, randomInitialD, randomFinalAuf, f2lSlots, oriSel]);
+  }, [puzzle, isMix, setSlug, preAuf, postAuf, randomInitialD, psf2lExtraScramble,
+      randomFinalAuf, f2lSlots, oriSel]);
 
   // 改了选中的 case 之后,原先选的那种打乱可能一个 case 都不再支持 —— 此时 <select> 的
   // value 落空、显示成一片空白。退回 `inv`(它永远支持)。
@@ -1169,6 +1191,7 @@ export default function TrainerRunClient() {
   const setScrambleFeatures = trainerSetScrambleFeatures(puzzle, isMix ? null : setSlug);
   const setAdjustSupported = !isMemo && (
     setScrambleFeatures.randomInitialD
+    || setScrambleFeatures.psf2lExtraScramble
     || setScrambleFeatures.randomFinalAuf
     || setScrambleFeatures.f2lSlots
   );
@@ -1618,6 +1641,13 @@ export default function TrainerRunClient() {
                         value={randomInitialD}
                         onChange={setRandomInitialD}
                         label={tr({ zh: '随机 D 调整', en: 'Random D setup' })}
+                      />
+                    )}
+                    {setScrambleFeatures.psf2lExtraScramble && (
+                      <BoolToggle
+                        value={psf2lExtraScramble}
+                        onChange={setPsf2lExtraScramble}
+                        label={tr({ zh: '打散剩余 F2L', en: 'Scramble remaining F2L' })}
                       />
                     )}
                     {setScrambleFeatures.randomFinalAuf && (

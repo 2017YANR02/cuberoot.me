@@ -5,6 +5,7 @@ import { equivalentPyraScramble } from './pyraminx-solver';
 import { allowedPostAuf, oriCornersOnly, type OrientationSel } from './alg_ll_orientation';
 import { tr } from '@/i18n/tr';
 import { invertFtoEifAlgorithm, parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
+import { pickPreparedPsf2lExtraScramble } from './psf2l-extra-scramble';
 
 const AUF = ['', 'U', 'U2', "U'"] as const;
 const Y = ['', 'y', 'y2', "y'"] as const;
@@ -165,6 +166,7 @@ export function caseBaseAlg(c: AlgCase): string {
 
 export interface TrainerSetScrambleFeatures {
   randomInitialD: boolean;
+  psf2lExtraScramble: boolean;
   randomFinalAuf: boolean;
   f2lSlots: boolean;
 }
@@ -208,6 +210,7 @@ export function f2lFinalAdjustmentVariants(
 
 const NO_SET_SCRAMBLE_FEATURES: TrainerSetScrambleFeatures = {
   randomInitialD: false,
+  psf2lExtraScramble: false,
   randomFinalAuf: false,
   f2lSlots: false,
 };
@@ -221,10 +224,10 @@ export function trainerSetScrambleFeatures(
   set: string | null | undefined,
 ): TrainerSetScrambleFeatures {
   if (puzzle === '3x3' && (set === 'f2l' || set === 'adv-f2l')) {
-    return { randomInitialD: false, randomFinalAuf: true, f2lSlots: true };
+    return { randomInitialD: false, psf2lExtraScramble: false, randomFinalAuf: true, f2lSlots: true };
   }
   if (puzzle === '3x3' && set === 'psf2l') {
-    return { randomInitialD: true, randomFinalAuf: false, f2lSlots: false };
+    return { randomInitialD: true, psf2lExtraScramble: true, randomFinalAuf: false, f2lSlots: false };
   }
   return NO_SET_SCRAMBLE_FEATURES;
 }
@@ -282,6 +285,8 @@ export interface TrainerScrambleOpts {
   postAuf?: boolean;
   /** PSF2L 特化:把打乱首尾的 D ... D' 随机换成 D / D2 / D' 的互逆夹心。 */
   randomInitialD?: boolean;
+  /** PSF2L 特化:保留 XXCross 与目标对子,再打散另一组剩余 F2L。 */
+  psf2lExtraScramble?: boolean;
   /** F2L 系特化:打乱末尾随机补 U / U2 / U' / 无。 */
   randomFinalAuf?: boolean;
   /** F2L / 进阶 F2L:只把标准 FR case 转到这些槽位;省略 = 保持 FR。 */
@@ -320,6 +325,10 @@ export function generateScramble(
       const adjustedBase = opts?.randomInitialD
         ? replaceOuterDAdjustment(base, pick(D_ADJUSTMENTS))
         : base;
+      if (opts?.psf2lExtraScramble) {
+        const enhanced = pickPreparedPsf2lExtraScramble(adjustedBase);
+        if (enhanced) return enhanced;
+      }
       const finalAuf = opts?.f2lFinalAdjustment?.auf ?? (opts?.randomFinalAuf ? pick(AUF) : '');
       const finalY = opts?.f2lFinalAdjustment?.y ?? pickF2LSlotY(opts?.f2lSlots);
       const withAuf = joinWithAufMerge('', adjustedBase.split(/\s+/).filter(Boolean), finalAuf);

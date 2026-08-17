@@ -173,6 +173,8 @@ interface TrainerPrefs {
   postAuf: boolean;
   /** PSF2L:打乱首尾的互逆 D 调整在 D / D2 / D' 之间随机。 */
   randomInitialD: boolean;
+  /** PSF2L:保留 XXCross 与目标对子,打散另一组剩余 F2L。 */
+  psf2lExtraScramble: boolean;
   /** F2L / 进阶 F2L:打乱末尾随机补 AUF。 */
   randomFinalAuf: boolean;
   /** F2L / 进阶 F2L:允许出题的槽位,至少一个。 */
@@ -219,7 +221,8 @@ interface TrainerPrefs {
   smartCube: boolean;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
-  preAuf: true, postAuf: true, randomInitialD: true, randomFinalAuf: true, f2lSlots: [...F2L_SLOTS],
+  preAuf: true, postAuf: true, randomInitialD: true, psf2lExtraScramble: false,
+  randomFinalAuf: true, f2lSlots: [...F2L_SLOTS],
   oriSel: {}, timing: false, mode: 'recap', probMode: 'uniform',
   recapOrder: 'shuffle', showRecapRoundEnd: true, timerFont: 'lcd', scrambleFont: 'sans',
   showPrevCard: true, showStats: true, showStageThumb: true,
@@ -257,6 +260,7 @@ const persistPrefs = (p: TrainerPrefs) => {
 const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   preAuf: st.preAuf, postAuf: st.postAuf,
   randomInitialD: st.randomInitialD,
+  psf2lExtraScramble: st.psf2lExtraScramble,
   randomFinalAuf: st.randomFinalAuf, f2lSlots: st.f2lSlots,
   oriSel: st.oriSel, timing: st.timing, mode: st.mode,
   probMode: st.probMode, recapOrder: st.recapOrder, showRecapRoundEnd: st.showRecapRoundEnd,
@@ -369,6 +373,7 @@ interface TrainerState {
   preAuf: boolean;
   postAuf: boolean;
   randomInitialD: boolean;
+  psf2lExtraScramble: boolean;
   randomFinalAuf: boolean;
   f2lSlots: F2LSlot[];
   oriSel: Record<string, number[]>;
@@ -426,6 +431,9 @@ interface TrainerState {
   setPreAuf: (v: boolean) => void;
   setPostAuf: (v: boolean) => void;
   setRandomInitialD: (v: boolean) => void;
+  setPsf2lExtraScramble: (v: boolean) => void;
+  /** 后台候选池到位后,让已打开增强模式的当前打乱立即改用合法候选。 */
+  refreshPsf2lExtraScrambles: () => void;
   setRandomFinalAuf: (v: boolean) => void;
   setF2LSlots: (slots: readonly F2LSlot[]) => void;
   /** 改某个朝向组的相位偏好。`offs` 为空 / 覆盖全部 = 该组不限制(存成空数组)。 */
@@ -605,16 +613,18 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   const aufOpts = (st: {
     mode: TrainerMode; puzzle: AlgPuzzle | null; set: string | null;
     preAuf: boolean; postAuf: boolean; randomInitialD: boolean;
+    psf2lExtraScramble: boolean;
     randomFinalAuf: boolean; f2lSlots: F2LSlot[];
     oriSel: Record<string, number[]>;
   }) => {
     const features = trainerSetScrambleFeatures(st.puzzle, st.set);
     return st.mode === 'memo'
-      ? { preAuf: false, postAuf: false, randomInitialD: false, randomFinalAuf: false, f2lSlots: ['FR'] as F2LSlot[] }
+      ? { preAuf: false, postAuf: false, randomInitialD: false, psf2lExtraScramble: false, randomFinalAuf: false, f2lSlots: ['FR'] as F2LSlot[] }
       : {
           preAuf: st.preAuf,
           postAuf: st.postAuf,
           randomInitialD: features.randomInitialD && st.randomInitialD,
+          psf2lExtraScramble: features.psf2lExtraScramble && st.psf2lExtraScramble,
           randomFinalAuf: features.randomFinalAuf && st.randomFinalAuf,
           f2lSlots: features.f2lSlots ? st.f2lSlots : undefined,
           orientation: st.oriSel,
@@ -1168,6 +1178,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       preAuf: opts?.noAufDefault ? false : prefs.preAuf,
       postAuf: opts?.noAufDefault ? false : prefs.postAuf,
       randomInitialD: prefs.randomInitialD,
+      psf2lExtraScramble: prefs.psf2lExtraScramble,
       randomFinalAuf: prefs.randomFinalAuf,
       f2lSlots: prefs.f2lSlots,
       // 朝向偏好按形状分组、跨 set 通用,没有「本场默认关」这回事 —— 直接取落盘的。
@@ -1282,6 +1293,15 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       set({ randomInitialD: v });
       persistPrefs(prefsOf(get()));
       regenCurrent();
+    },
+    setPsf2lExtraScramble: (v) => {
+      set({ psf2lExtraScramble: v });
+      persistPrefs(prefsOf(get()));
+      regenCurrent();
+    },
+    refreshPsf2lExtraScrambles: () => {
+      const st = get();
+      if (st.puzzle === '3x3' && st.set === 'psf2l' && st.psf2lExtraScramble) regenCurrent();
     },
     setRandomFinalAuf: (v) => {
       resetF2LAdjustmentBag();
