@@ -458,7 +458,10 @@ function validateExport(exported, jarDigest) {
   assertEqual(exported.golden.solutionCount, EXPECTED_GOLDEN.solutionCount, 'Ua/Ua solution count');
   assertEqual(exported.golden.setup, EXPECTED_GOLDEN.setup, 'Ua/Ua setup');
   assertEqual(
-    exported.golden.firstResults.slice(0, 3).map(({ legacyDisplay: _legacyDisplay, ...result }) => result),
+    exported.golden.firstResults.slice(0, 3).map(({ legacyDisplay, ...result }) => {
+      void legacyDisplay;
+      return result;
+    }),
     EXPECTED_GOLDEN.firstResults,
     'Ua/Ua first results',
   );

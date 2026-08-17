@@ -10,7 +10,7 @@
  *     iff it is the best (non-DNF / window-eligible) up to and including
  *     itself. That way an old PB still wears its tag even after later
  *     solves beat it.
- *   - DNF / +2 / skip / slow-cross rules don't need history at all.
+ *   - DNF / +2 / skip rules don't need history at all.
  */
 
 import type { Solve } from '../types';
@@ -18,7 +18,6 @@ import { effectiveMs } from '../types';
 import { compareMbld } from '../stats';
 
 export type TagId =
-  | 'slow-cross'
   | 'oll-skip'
   | 'pll-skip'
   | 'pb-single'
@@ -43,7 +42,6 @@ export const TAG_DEFS: Record<TagId, TagDef> = {
   // 中文按圈里的叫法:「跳O」/「跳P」,不是「OLL 跳」的直译(2026-08-04 用户提的)。
   'oll-skip':  { id: 'oll-skip',  tone: 'gold',  labelEn: 'OLL skip',    labelZh: '跳O' },
   'pll-skip':  { id: 'pll-skip',  tone: 'gold',  labelEn: 'PLL skip',    labelZh: '跳P' },
-  'slow-cross':{ id: 'slow-cross',tone: 'red',   labelEn: 'slow cross',  labelZh: '十字慢' },
   'dnf':       { id: 'dnf',       tone: 'muted', labelEn: 'DNF',         labelZh: 'DNF' },
   'dns':       { id: 'dns',       tone: 'muted', labelEn: 'DNS',         labelZh: 'DNS' },
   'plus2':     { id: 'plus2',     tone: 'muted', labelEn: '+2',          labelZh: '+2' },
@@ -52,11 +50,8 @@ export const TAG_DEFS: Record<TagId, TagDef> = {
 export const ALL_TAG_IDS: TagId[] = [
   'pb-single', 'pb-ao5', 'pb-ao12',
   'oll-skip', 'pll-skip',
-  'slow-cross',
   'dnf', 'dns', 'plus2',
 ];
-
-const SLOW_CROSS_MS = 4000;
 
 /**
  * Trimmed-mean ao{n} of the last n entries of `prefix`, matching the rules
@@ -102,10 +97,9 @@ export function computeAllTags(history: Solve[]): Map<string, TagId[]> {
     else if (s.penalty === 'DNS') tags.push('dns');
     else if (s.penalty === '+2') tags.push('plus2');
 
-    // Cross / skip from stage segments.
+    // Skips from stage segments.
     const seg = s.stageSegments;
     if (seg) {
-      if (seg.crossMs !== null && seg.crossMs > SLOW_CROSS_MS) tags.push('slow-cross');
       if (seg.ollCase === 'OLL skip') tags.push('oll-skip');
       if (seg.pllCase === 'PLL skip') tags.push('pll-skip');
     }

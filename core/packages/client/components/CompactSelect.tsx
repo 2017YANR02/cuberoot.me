@@ -28,6 +28,7 @@ interface CompactSelectProps<T extends string | number> {
   popupClassName?: string;
   variant?: 'pill' | 'plain';
   footer?: (close: () => void) => ReactNode;
+  dataNoTimer?: boolean;
 }
 
 /** Compact single-choice menu shared by metric and rolling-stat selectors. */
@@ -42,6 +43,7 @@ export function CompactSelect<T extends string | number>({
   popupClassName,
   variant = 'pill',
   footer,
+  dataNoTimer = false,
 }: CompactSelectProps<T>) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -86,6 +88,7 @@ export function CompactSelect<T extends string | number>({
         `compact-select--${variant}`,
         className,
       ].filter(Boolean).join(' ')}
+      data-no-timer={dataNoTimer ? '' : undefined}
     >
       <button
         ref={triggerRef}
@@ -111,6 +114,7 @@ export function CompactSelect<T extends string | number>({
           className={['compact-select-popup', popupClassName].filter(Boolean).join(' ')}
           role="listbox"
           aria-label={ariaLabel}
+          data-no-timer={dataNoTimer ? '' : undefined}
         >
           <div className="compact-select-options">
             {items.map(item => {
