@@ -60,6 +60,7 @@ import { wechatJssdkRoutes } from './routes/wechat_jssdk.js';
 import { quizRoutes } from './routes/quiz.js';
 import { teacherDirectoryRoutes } from './routes/teacher_directory.js';
 import { teachingRoutes } from './routes/teaching.js';
+import { teachingSaasRoutes } from './routes/teaching_saas.js';
 import { smsReceiptRoutes } from './routes/sms_receipt.js';
 import { documentRoutes } from './routes/documents.js';
 import { collaborativeDocuments } from './documents/realtime.js';
@@ -176,6 +177,7 @@ app.route('/v1', wechatJssdkRoutes);
 app.route('/v1', quizRoutes);
 app.route('/v1', teacherDirectoryRoutes);
 app.route('/v1', teachingRoutes);
+app.route('/v1', teachingSaasRoutes);
 app.get('/v1/documents/realtime', upgradeWebSocket((c) => {
   let connection: ReturnType<typeof collaborativeDocuments.handleConnection> | undefined;
   return {
