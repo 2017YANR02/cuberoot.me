@@ -30,25 +30,39 @@ const apiPage = join(ROOT, 'app', '[lang]', 'dev', 'api', 'page.tsx');
 
 describe('/dev/schema migration ledger drift', () => {
   it('MIGRATIONS lists exactly the migration files on disk', () => {
-    const fileNums = readdirSync(migDir)
-      .map((f) => /^(\d{4})_.+\.sql$/.exec(f))
+    const fileEntries = readdirSync(migDir)
+      .map((f) => /^(\d{4})_(.+)\.sql$/.exec(f))
       .filter((m): m is RegExpExecArray => m !== null)
-      .map((m) => parseInt(m[1], 10));
-    expect(fileNums.length).toBeGreaterThan(0);
+      .map((m) => ({ number: m[1], slug: m[2] }));
+    expect(fileEntries.length).toBeGreaterThan(0);
 
     const src = readFileSync(schemaPage, 'utf8');
     const start = src.indexOf('const MIGRATIONS');
     expect(start, 'const MIGRATIONS array not found in schema page').toBeGreaterThan(-1);
     const block = src.slice(start, src.indexOf('\n];', start));
-    const pageNums = [...block.matchAll(/\bn:\s*(\d+)/g)].map((m) => parseInt(m[1], 10));
+    const pageEntries = [...block.matchAll(/\bn:\s*(\d+),\s*slug:\s*'([^']+)'/g)]
+      .map((m) => ({ number: m[1].padStart(4, '0'), slug: m[2] }));
 
-    const fileSet = new Set(fileNums);
-    const pageSet = new Set(pageNums);
-    const missing = [...fileSet].filter((n) => !pageSet.has(n)).sort((a, b) => a - b);
-    const stale = [...pageSet].filter((n) => !fileSet.has(n)).sort((a, b) => a - b);
+    const entryKey = (entry: { number: string; slug: string }) => `${entry.number}_${entry.slug}`;
+    expect(pageEntries.map(entryKey).sort()).toEqual(fileEntries.map(entryKey).sort());
 
-    expect(missing, `migration(s) on disk but absent from the /dev/schema ledger`).toEqual([]);
-    expect(stale, `ledger row(s) for migration(s) that no longer exist`).toEqual([]);
+    const legacyDuplicateNumbers = new Map<string, string[]>([
+      ['0062', ['wca_persons_gender', 'wss_covering_and_rare']],
+      ['0087', ['page_notice_icon', 'page_notice_icon_color']],
+    ]);
+    const slugsByNumber = new Map<string, string[]>();
+    for (const entry of fileEntries) {
+      slugsByNumber.set(entry.number, [...(slugsByNumber.get(entry.number) ?? []), entry.slug]);
+    }
+    const duplicateNumbers = [...slugsByNumber.entries()]
+      .filter(([, slugs]) => slugs.length > 1)
+      .map(([number, slugs]) => [number, slugs.sort()] as const);
+
+    expect(duplicateNumbers.sort(([a], [b]) => a.localeCompare(b))).toEqual(
+      [...legacyDuplicateNumbers.entries()]
+        .map(([number, slugs]) => [number, slugs.sort()] as const)
+        .sort(([a], [b]) => a.localeCompare(b)),
+    );
   });
 });
 

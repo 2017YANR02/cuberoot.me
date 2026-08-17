@@ -49,10 +49,10 @@ function sha256(value: Uint8Array | string): string {
 export function verifyTeachingPlatformAssertion(
   token: string,
   secret: string,
-  request: { method: string; path: string; body: Uint8Array },
+  request: { method: string; path: string; body: Uint8Array; idempotencyKey: string | null },
   nowSeconds = Math.floor(Date.now() / 1000),
 ): TeachingPlatformAssertionV1 {
-  if (secret.length < 32 || token.length > 4096) invalid();
+  if (Buffer.byteLength(secret, 'utf8') < 32 || token.length > 4096) invalid();
   const parts = token.split('.');
   if (parts.length !== 2 || !parts[0] || !/^[A-Za-z0-9_-]{43}$/.test(parts[1])) invalid();
 
@@ -80,6 +80,7 @@ export function verifyTeachingPlatformAssertion(
     || !validString(value.path, 500)
     || typeof value.bodySha256 !== 'string'
     || !/^[0-9a-f]{64}$/.test(value.bodySha256)
+    || (value.idempotencyKey !== null && !validString(value.idempotencyKey, 200))
     || !Number.isSafeInteger(value.iat)
     || !Number.isSafeInteger(value.exp)
     || !validString(value.jti, 200)
@@ -95,6 +96,7 @@ export function verifyTeachingPlatformAssertion(
     || payload.method !== request.method.toUpperCase()
     || payload.path !== request.path
     || payload.bodySha256 !== sha256(request.body)
+    || payload.idempotencyKey !== request.idempotencyKey
   ) invalid();
 
   const normalizedPhone = normalizePhone(payload.phone);
@@ -193,8 +195,9 @@ export async function authenticateTeachingActor(c: Context): Promise<TeachingAct
     const body = new Uint8Array(await c.req.raw.clone().arrayBuffer());
     const payload = verifyTeachingPlatformAssertion(assertion, secret, {
       method: c.req.method,
-      path: c.req.path,
+      path: `${new URL(c.req.url).pathname}${new URL(c.req.url).search}`,
       body,
+      idempotencyKey: c.req.header('Idempotency-Key') ?? null,
     });
     return resolvePlatformActor(payload);
   }

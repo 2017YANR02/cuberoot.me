@@ -18,13 +18,18 @@ function repository(): TeachingSaasRepository {
   return {
     listOrganizations: vi.fn().mockResolvedValue([]),
     getOrganization: vi.fn().mockResolvedValue({ id: 'org-1', slug: 'demo' }),
+    getOrganizationSummary: vi.fn().mockResolvedValue({
+      organization: { id: 'org-1', slug: 'demo' },
+      memberCount: 1,
+      studentCount: 0,
+    }),
     createOrganization: vi.fn().mockResolvedValue({
       status: 201,
       body: { organization: { id: 'org-1', slug: 'demo' } },
     }),
-    listMembers: vi.fn().mockResolvedValue([]),
+    listMembers: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
     createMember: vi.fn().mockResolvedValue({ status: 201, body: { member: { userId: 7 } } }),
-    listStudents: vi.fn().mockResolvedValue([]),
+    listStudents: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
     createStudent: vi.fn().mockResolvedValue({ status: 201, body: { student: { id: 'student-1' } } }),
   };
 }
@@ -100,9 +105,39 @@ describe('teaching SaaS routes', () => {
   it('routes member and student reads through the tenant slug', async () => {
     const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
 
+    await expect(app.request('/teaching/organizations/demo/summary')).resolves.toMatchObject({ status: 200 });
     await expect(app.request('/teaching/organizations/demo/members')).resolves.toMatchObject({ status: 200 });
     await expect(app.request('/teaching/organizations/demo/students')).resolves.toMatchObject({ status: 200 });
-    expect(repo.listMembers).toHaveBeenCalledWith(ACTOR, 'demo');
-    expect(repo.listStudents).toHaveBeenCalledWith(ACTOR, 'demo');
+    expect(repo.getOrganizationSummary).toHaveBeenCalledWith(ACTOR, 'demo', expect.any(String));
+    expect(repo.listMembers).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      { page: 1, pageSize: 30, offset: 0 },
+      expect.any(String),
+    );
+    expect(repo.listStudents).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      { page: 1, pageSize: 30, offset: 0 },
+      expect.any(String),
+    );
+  });
+
+  it('validates and forwards bounded pagination', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+
+    const response = await app.request('/teaching/organizations/demo/members?page=3&pageSize=20');
+    expect(response.status).toBe(200);
+    expect(repo.listMembers).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      { page: 3, pageSize: 20, offset: 40 },
+      expect.any(String),
+    );
+
+    const invalid = await app.request('/teaching/organizations/demo/students?page=0&pageSize=101');
+    expect(invalid.status).toBe(400);
+    expect(await invalid.json()).toMatchObject({ error: { code: 'INVALID_INPUT' } });
+    expect(repo.listStudents).not.toHaveBeenCalled();
   });
 });
