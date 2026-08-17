@@ -1,0 +1,1 @@
+ALTER TABLE `qr_codes` ADD `disabled` integer DEFAULT false NOT NULL;

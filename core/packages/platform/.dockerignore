@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+dist
+.tmp
+.git
+.gitignore
+.env
+.env.*
+*.local
+data.db
+data.db-*
+.playwright-mcp
+README.md
+DEPLOY.md
+*.tsbuildinfo

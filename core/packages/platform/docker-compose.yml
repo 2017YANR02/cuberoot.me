@@ -1,0 +1,18 @@
+services:
+  next-app:
+    build: .
+    image: cube-platform:latest
+    container_name: cube-platform
+    restart: unless-stopped
+    ports:
+      - "3100:3000"
+    environment:
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      SESSION_SECRET: ${SESSION_SECRET:-change-me}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://127.0.0.1:3100}
+      DB_PATH: /data/data.db
+    volumes:
+      - cube-data:/data
+
+volumes:
+  cube-data:
