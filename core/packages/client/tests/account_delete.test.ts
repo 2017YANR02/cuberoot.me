@@ -9,7 +9,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  PURGE_TABLES, ANONYMIZE_TABLES, NOT_USER_OWNED,
+  PURGE_TABLES, ANONYMIZE_TABLES, NOT_USER_OWNED, AccountOwnsOrganizationError,
 } from '../../server/src/utils/account_delete';
 import {
   deletedOwnerKey, isDeletedOwner, primaryHandle, ownerKey,
@@ -112,6 +112,17 @@ describe('清单 ↔ schema', () => {
       expect(why.length, `${table} 的豁免理由太短`).toBeGreaterThan(4);
     }
   });
+
+  it('教学租户表逐张登记账号删除策略', () => {
+    expect(Object.keys(NOT_USER_OWNED)).toEqual(expect.arrayContaining([
+      'organizations',
+      'organization_members',
+      'student_profiles',
+      'guardian_links',
+      'teaching_audit_events',
+      'teaching_idempotency_requests',
+    ]));
+  });
 });
 
 describe('墓碑键', () => {
@@ -179,6 +190,12 @@ describe('服务端两道闸', () => {
   it('业务表按归属键存,所以两个键都要传给 deleteAccount', () => {
     expect(seg).toMatch(/deleteAccount\(uid,\s*ownerKey\(uid,\s*user\.wca_id\)\)/);
   });
+
+  it('最后一位机构 owner 注销返回 409', () => {
+    expect(AccountOwnsOrganizationError.prototype).toBeInstanceOf(Error);
+    expect(seg).toContain('AccountOwnsOrganizationError');
+    expect(seg).toContain('409');
+  });
 });
 
 describe('删除动作本身', () => {
@@ -188,6 +205,12 @@ describe('删除动作本身', () => {
     expect(impl).toContain('sql.begin');
     // app_users 那一行必须在事务里,且排在最后(前面的清理都按归属键找行)。
     expect(impl.indexOf('DELETE FROM app_users')).toBeGreaterThan(impl.indexOf('ANONYMIZE_TABLES'));
+  });
+
+  it('先锁机构并拒绝删除最后一位有效 owner', () => {
+    expect(impl).toContain('FOR UPDATE OF o, own');
+    expect(impl).toContain("other_owner.role = 'owner'");
+    expect(impl).toContain('throw new AccountOwnsOrganizationError()');
   });
 
   it('复盘按可见性分流:公开的匿名保留,私享 / 不公开列出的删掉', () => {

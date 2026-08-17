@@ -21,7 +21,7 @@ import {
   ownerKey, primaryHandle,
   type Provider,
 } from '../utils/account.js';
-import { deleteAccount } from '../utils/account_delete.js';
+import { AccountOwnsOrganizationError, deleteAccount } from '../utils/account_delete.js';
 import { emailConfigured, sendEmailCode } from '../utils/email.js';
 import { smsConfigured, sendSmsCode } from '../utils/sms.js';
 import { googleConfigured, googleClientId, googleRelayUrl, verifyGoogleAssertion } from '../utils/google.js';
@@ -545,7 +545,14 @@ accountAuthRoutes.post('/auth/account/delete', async (c) => {
   }
 
   // 业务表按归属键存(不是 uid),两个键都要传进去。
-  await deleteAccount(uid, ownerKey(uid, user.wca_id));
+  try {
+    await deleteAccount(uid, ownerKey(uid, user.wca_id));
+  } catch (error) {
+    if (error instanceof AccountOwnsOrganizationError) {
+      return c.json({ error: error.message }, 409);
+    }
+    throw error;
+  }
   return c.json({ ok: true });
 });
 

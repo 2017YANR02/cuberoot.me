@@ -82,6 +82,12 @@ export const ANONYMIZE_TABLES: readonly { table: string; idCol: string; nameCol?
 export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   app_users: '账号本体,最后整行删',
   auth_identities: '身份行,随 app_users 级联删',
+  organizations: '机构主体独立保留,创建者外键随账号删除置空',
+  organization_members: '机构成员关系随账号删除级联,但最后一位有效 owner 会被事务拒绝',
+  student_profiles: '学员档案属于机构,关联站内账号随账号删除置空',
+  guardian_links: '监护关系属于机构,关联站内账号随账号删除置空',
+  teaching_audit_events: '教学审计必须保留,操作者账号随删除置空且保留姓名快照',
+  teaching_idempotency_requests: '短期防重记录随操作者账号删除级联',
   memberships: '会员权益状态:留着,同一个人重新绑 WCA 回来还认',
   membership_orders: '交易凭证,财务对账要;只有归属键,没有姓名邮箱',
   contributors: '站方手录的致谢名单,单独处理(只把 wca_id 置 NULL,名字留着)',
@@ -104,6 +110,13 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   wca_kinch: 'WCA 官方成绩派生的 Kinch 综合排名,不属于站内账号数据',
 };
 
+export class AccountOwnsOrganizationError extends Error {
+  constructor() {
+    super('transfer organization ownership before deleting account');
+    this.name = 'AccountOwnsOrganizationError';
+  }
+}
+
 /**
  * 抹掉账号。单事务:要么整套删干净,要么一行不动 —— 中途失败留下「账号没了但数据还在」
  * 的半成品,既没删成也再没人能删(登录方式已经没了)。
@@ -114,6 +127,27 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
 export async function deleteAccount(userId: number, key: string): Promise<void> {
   const tomb = deletedOwnerKey(userId);
   await sql.begin(async (tx) => {
+    // 锁住机构与本人 owner 行,和成员角色变更使用同一把机构锁。DB 的 deferred
+    // constraint trigger 是最终兜底;这里先给账号注销接口一个稳定、可解释的 409。
+    const soleOwnerships = await tx`
+      SELECT o.id
+      FROM organizations o
+      JOIN organization_members own
+        ON own.organization_id = o.id
+       AND own.user_id = ${userId}
+       AND own.role = 'owner'
+       AND own.status = 'active'
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM organization_members other_owner
+        WHERE other_owner.organization_id = o.id
+          AND other_owner.user_id <> ${userId}
+          AND other_owner.role = 'owner'
+          AND other_owner.status = 'active'
+      )
+      FOR UPDATE OF o, own`;
+    if (soleOwnerships.length > 0) throw new AccountOwnsOrganizationError();
+
     // 表名 / 列名走字符串插值、值一律走 $n 占位符。标识符全部来自本文件顶上那两张常量清单
     // (且有测试把它们钉在 schema 上),不接受任何外部输入 —— 注入面为零。
     // 不用 postgres.js 的 ${tx(name)} 标识符 helper:同一个写法在不同上下文会被猜成标识符
