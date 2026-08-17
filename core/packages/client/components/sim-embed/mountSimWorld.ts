@@ -98,6 +98,23 @@ export function resolveRenderPixelRatio(devicePixelRatio: number, cap: number): 
   return Math.min(safeCap, Math.max(safeDpr, 2));
 }
 
+type HintBackdropRenderer = { setHintBackdrop(color: string): void };
+
+/** Inject the resolved page background into an NxN hint renderer. Non-NxN
+ *  puzzles and hosts without a resolved token intentionally do nothing. */
+export function syncSimHintBackdrop(
+  puzzleKind: PuzzleKind,
+  cube: unknown,
+  backdrop: string,
+): HintBackdropRenderer | null {
+  const color = backdrop.trim();
+  if (typeof puzzleKind !== 'number' || !color) return null;
+  const current = (cube as { instancedRenderer?: HintBackdropRenderer } | null)?.instancedRenderer;
+  if (!current) return null;
+  current.setHintBackdrop(color);
+  return current;
+}
+
 export function mountSimWorld(opts: SimMountOpts): SimMount {
   const {
     host,
@@ -158,6 +175,37 @@ export function mountSimWorld(opts: SimMountOpts): SimMount {
   const ro = new ResizeObserver(resize);
   ro.observe(host);
 
+  // NxN's floating back-sticker hints are opaque planes whose colors are
+  // pre-mixed with the page backdrop. /sim injects --background through its
+  // settings lifecycle; embeds have no settings drawer, so do the same here at
+  // the shared render boundary. Track the renderer as well as the color because
+  // setPuzzle() can replace an NxN renderer without changing the theme.
+  let hintRenderer: HintBackdropRenderer | null = null;
+  let hintBackdrop = '';
+  const syncHintBackdrop = (): void => {
+    const backdrop = getComputedStyle(host).getPropertyValue('--background').trim();
+    const current = typeof world.puzzleKind === 'number'
+      ? (world.cube as { instancedRenderer?: HintBackdropRenderer }).instancedRenderer ?? null
+      : null;
+    if (current === hintRenderer && backdrop === hintBackdrop) return;
+    const synced = syncSimHintBackdrop(world.puzzleKind, world.cube, backdrop);
+    if (!synced) return;
+    hintRenderer = synced;
+    hintBackdrop = backdrop;
+  };
+
+  const invalidateHintBackdrop = (): void => {
+    hintRenderer = null;
+    world.dirty = true;
+  };
+  const themeObserver = new MutationObserver(invalidateHintBackdrop);
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme', 'data-palette', 'data-contrast'],
+  });
+  const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  darkQuery.addEventListener('change', invalidateHintBackdrop);
+
   let raf = 0;
   let disposed = false;
   let lastFrameAt = performance.now();
@@ -172,6 +220,7 @@ export function mountSimWorld(opts: SimMountOpts): SimMount {
     // world.dirty proxies cube.dirty (world.ts) — both are read for parity with
     // the hand-rolled loops this replaces.
     if (world.dirty || world.cube.dirty) {
+      syncHintBackdrop();
       renderer.clear();
       renderer.render(world.scene, world.camera);
       onRendered?.(world);
@@ -193,6 +242,8 @@ export function mountSimWorld(opts: SimMountOpts): SimMount {
       disposed = true;
       cancelAnimationFrame(raf);
       ro.disconnect();
+      themeObserver.disconnect();
+      darkQuery.removeEventListener('change', invalidateHintBackdrop);
       // Controller owns document-level pointer listeners; stop it before the
       // canvas goes away or they outlive the mount.
       if (interactive) world.controller?.stop();

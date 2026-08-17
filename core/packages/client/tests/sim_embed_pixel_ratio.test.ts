@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
-import { resolveRenderPixelRatio } from '@/components/sim-embed/mountSimWorld';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  resolveRenderPixelRatio,
+  syncSimHintBackdrop,
+} from '@/components/sim-embed/mountSimWorld';
 
 describe('sim embed render pixel ratio', () => {
   it('supersamples a 1x desktop display at 2x', () => {
@@ -18,5 +21,27 @@ describe('sim embed render pixel ratio', () => {
   it('falls back safely for invalid browser values', () => {
     expect(resolveRenderPixelRatio(0, 2)).toBe(2);
     expect(resolveRenderPixelRatio(Number.NaN, Number.NaN)).toBe(2);
+  });
+});
+
+describe('sim embed hint backdrop', () => {
+  it('injects the resolved page token into an NxN renderer', () => {
+    const setHintBackdrop = vi.fn();
+    const renderer = { setHintBackdrop };
+
+    expect(syncSimHintBackdrop(3, { instancedRenderer: renderer }, '  rgb(23, 23, 23)  '))
+      .toBe(renderer);
+    expect(setHintBackdrop).toHaveBeenCalledWith('rgb(23, 23, 23)');
+  });
+
+  it('ignores non-NxN puzzles, missing renderers, and unresolved tokens', () => {
+    const setHintBackdrop = vi.fn();
+
+    expect(syncSimHintBackdrop('sq1', { instancedRenderer: { setHintBackdrop } }, '#171717'))
+      .toBeNull();
+    expect(syncSimHintBackdrop(3, {}, '#171717')).toBeNull();
+    expect(syncSimHintBackdrop(3, { instancedRenderer: { setHintBackdrop } }, '   '))
+      .toBeNull();
+    expect(setHintBackdrop).not.toHaveBeenCalled();
   });
 });
