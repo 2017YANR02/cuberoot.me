@@ -609,6 +609,28 @@ describe('shared web-view page state', () => {
     });
   });
 
+  it('keeps a handoff route closed when local session storage cannot be read', async () => {
+    const request = vi.fn();
+    vi.stubGlobal('wx', {
+      getStorageSync() {
+        throw new Error('storage unavailable');
+      },
+      nextTick(callback: () => void) { callback(); },
+      request,
+      setNavigationBarTitle,
+    });
+    const context = createContext();
+
+    await openWebRoute(context, 'timer');
+
+    expect(request).not.toHaveBeenCalled();
+    expect(context.data).toMatchObject({
+      canRetry: true,
+      errorTitle: '账号同步失败',
+      src: '',
+    });
+  });
+
   it('keeps a server-side handoff failure retryable instead of opening as a guest', async () => {
     vi.stubGlobal('wx', {
       getStorageSync: () => ({

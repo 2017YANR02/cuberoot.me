@@ -2,7 +2,6 @@ import {
   ApiError,
   clearStoredSession,
   createWebSessionTicket,
-  getStoredSession,
   getStoredSessionSnapshot,
 } from './auth';
 import {
@@ -220,7 +219,12 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
     viewAttempt: attempt,
   });
 
-  const session = getStoredSession();
+  const stored = getStoredSessionSnapshot();
+  if (route.sessionHandoff && stored.status === 'unavailable') {
+    if (isCurrentAttempt(context, attempt)) showWebSessionHandoffFailure(context);
+    return true;
+  }
+  const session = stored.session;
   if (!session || !route.sessionHandoff) {
     if (isCurrentAttempt(context, attempt)) context.setData({ src: route.url });
     return true;

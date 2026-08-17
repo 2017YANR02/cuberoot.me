@@ -10,7 +10,7 @@ const catalogKeys = Object.entries(ALG_CATALOG).flatMap(([puzzle, sets]) =>
 
 describe('alg set goal coverage', () => {
   it('requires every catalog set to register one explicit validation goal', () => {
-    expect(catalogKeys).toHaveLength(68);
+    expect(catalogKeys).toHaveLength(69);
     expect(catalogKeys.filter(key => SET_GOAL[key] === undefined)).toEqual([]);
   });
 

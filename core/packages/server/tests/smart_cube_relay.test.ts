@@ -4,6 +4,7 @@ import {
   SMART_CUBE_RELAY_CHANNEL_IDLE_MS,
   SMART_CUBE_RELAY_HELLO_TIMEOUT_MS,
   SMART_CUBE_RELAY_MAX_CHANNEL_CREATIONS_PER_WINDOW,
+  SMART_CUBE_RELAY_MAX_BUFFERED_BYTES,
   SMART_CUBE_RELAY_MAX_CHANNELS_PER_CLIENT,
   SMART_CUBE_RELAY_MAX_MESSAGES_PER_WINDOW,
   SMART_CUBE_RELAY_MAX_PENDING_PER_CLIENT,
@@ -17,10 +18,11 @@ const TOKEN = 'abcdefghijklmnopqrstuvwxyzABCDEF';
 const OTHER_TOKEN = '0123456789abcdefghijklmnopqrstuv';
 
 function fakeSocket(send = vi.fn()): SmartCubeRelaySocket & {
+  bufferedAmount: number;
   send: ReturnType<typeof vi.fn>;
   close: ReturnType<typeof vi.fn>;
 } {
-  return { send, close: vi.fn() };
+  return { bufferedAmount: 0, send, close: vi.fn() };
 }
 
 function hello(
@@ -168,6 +170,31 @@ describe('SmartCubeRelay', () => {
       { type: 'move', move: 'F2', relaySeq: 3 },
       { type: 'ready', role: 'sink', lastMoveSeq: 3 },
     ]);
+  });
+
+  it('canonicalizes replayed moves instead of retaining unknown source fields', () => {
+    const relay = new SmartCubeRelay();
+    const firstSink = hello(relay, fakeSocket(), 'sink');
+    const source = hello(relay, fakeSocket(), 'source');
+    firstSink.handleClose();
+
+    for (let index = 0; index < 512; index++) {
+      source.handleMessage(JSON.stringify({
+        type: 'move',
+        move: 'R',
+        padding: 'x'.repeat(3_000),
+      }));
+    }
+
+    const resumedSinkSocket = fakeSocket();
+    hello(relay, resumedSinkSocket, 'sink', TOKEN, '127.0.0.1', 0);
+    const replayed = resumedSinkSocket.send.mock.calls.map(([payload]) => JSON.parse(payload));
+
+    expect(replayed).toHaveLength(513);
+    expect(replayed[0]).toEqual({ type: 'move', move: 'R', relaySeq: 1 });
+    expect(replayed[511]).toEqual({ type: 'move', move: 'R', relaySeq: 512 });
+    expect(replayed[512]).toEqual({ type: 'ready', role: 'sink', lastMoveSeq: 512 });
+    expect(replayed.some((payload) => 'padding' in payload)).toBe(false);
   });
 
   it('closes the hardware source after the timer reconnect grace expires', () => {
@@ -355,6 +382,28 @@ describe('SmartCubeRelay', () => {
     broken.handleMessage(JSON.stringify({ type: 'command', command: 'disconnect' }));
     expect(brokenSocket.close).toHaveBeenCalledWith(1008, 'peer detached');
     expect(sourceSocket.send).not.toHaveBeenCalled();
+  });
+
+  it('drops a backpressured sink without interrupting healthy peers', () => {
+    const relay = new SmartCubeRelay();
+    const slowSocket = fakeSocket();
+    hello(relay, slowSocket, 'sink');
+    const healthySocket = fakeSocket();
+    hello(relay, healthySocket, 'sink');
+    const sourceSocket = fakeSocket();
+    const source = hello(relay, sourceSocket, 'source');
+    slowSocket.send.mockClear();
+    healthySocket.send.mockClear();
+    sourceSocket.send.mockClear();
+    slowSocket.bufferedAmount = SMART_CUBE_RELAY_MAX_BUFFERED_BYTES;
+
+    source.handleMessage(JSON.stringify({ type: 'move', move: 'R' }));
+
+    expect(slowSocket.close).toHaveBeenCalledWith(1013, 'relay backpressure');
+    expect(healthySocket.send).toHaveBeenCalledWith(JSON.stringify({
+      type: 'move', move: 'R', relaySeq: 1,
+    }));
+    expect(sourceSocket.close).not.toHaveBeenCalled();
   });
 
   it('expires idle and never-paired channels without another client hello', () => {
