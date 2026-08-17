@@ -6,6 +6,7 @@ import { allowedPostAuf, oriCornersOnly, type OrientationSel } from './alg_ll_or
 import { tr } from '@/i18n/tr';
 import { invertFtoEifAlgorithm, parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
 import { pickPreparedPsf2lExtraScramble } from './psf2l-extra-scramble';
+import { normalizeScramble } from './cross-solver';
 
 const AUF = ['', 'U', 'U2', "U'"] as const;
 const Y = ['', 'y', 'y2', "y'"] as const;
@@ -287,6 +288,8 @@ export interface TrainerScrambleOpts {
   randomInitialD?: boolean;
   /** PSF2L 特化:保留 XXCross 与目标对子,再打散另一组剩余 F2L。 */
   psf2lExtraScramble?: boolean;
+  /** PSF2L 特化:把宽层和整体转体等价改写成固定视角的纯外层转动。 */
+  psf2lFaceTurnsOnly?: boolean;
   /** F2L 系特化:打乱末尾随机补 U / U2 / U' / 无。 */
   randomFinalAuf?: boolean;
   /** F2L / 进阶 F2L:只把标准 FR case 转到这些槽位;省略 = 保持 FR。 */
@@ -322,17 +325,23 @@ export function generateScramble(
 
   if (puzzle === '3x3') {
     if (c.sticker.kind === 'f2l') {
+      const finish = (scramble: string): string => {
+        if (!opts?.psf2lFaceTurnsOnly) return scramble;
+        const normalized = normalizeScramble(scramble);
+        if (normalized === null) throw new Error('PSF2L scramble cannot be rewritten as face turns');
+        return mergeAdjacentMoves(normalized);
+      };
       const adjustedBase = opts?.randomInitialD
         ? replaceOuterDAdjustment(base, pick(D_ADJUSTMENTS))
         : base;
       if (opts?.psf2lExtraScramble) {
         const enhanced = pickPreparedPsf2lExtraScramble(adjustedBase);
-        if (enhanced) return enhanced;
+        if (enhanced) return finish(enhanced);
       }
       const finalAuf = opts?.f2lFinalAdjustment?.auf ?? (opts?.randomFinalAuf ? pick(AUF) : '');
       const finalY = opts?.f2lFinalAdjustment?.y ?? pickF2LSlotY(opts?.f2lSlots);
       const withAuf = joinWithAufMerge('', adjustedBase.split(/\s+/).filter(Boolean), finalAuf);
-      return appendYMerge(withAuf, finalY);
+      return finish(appendYMerge(withAuf, finalY));
     }
     // 收尾随机 AUF(post-AUF,默认开):同一个 case 每次呈现的朝向不同,练的是识别不是背图。
     // 对最优打乱也一样加 —— 多一步 U 不影响「它是最短打乱」这件事(长度在元数据弹窗里看),

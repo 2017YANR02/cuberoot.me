@@ -8,6 +8,7 @@ import {
   replaceOuterDAdjustment,
   trainerSetScrambleFeatures,
 } from '@/lib/trainer-scramble';
+import { normalizeScramble } from '@/lib/cross-solver';
 import {
   buildPsf2lExtraSuffixPool,
   preparePsf2lExtraScrambles,
@@ -118,6 +119,15 @@ describe('PSF2L trainer D adjustment', () => {
       .toBe(PSF2L_CASE.setup);
   });
 
+  it('rewrites lowercase wide turns and rotations to fixed-frame face turns', () => {
+    expect(normalizeScramble(ROTATED_PSF2L_CASE.setup))
+      .toBe("D L' U' L U D'");
+    expect(generateScramble(ROTATED_PSF2L_CASE, '3x3', 'inv', {
+      randomInitialD: false,
+      psf2lFaceTurnsOnly: true,
+    })).toBe("D L' U' L U D'");
+  });
+
   it('keeps the exact XXCross and target pair in every generated suffix', async () => {
     const kpuzzle = await cube3x3x3.kpuzzle();
     const orientationAlgs = [
@@ -200,6 +210,7 @@ describe('PSF2L trainer D adjustment', () => {
     expect(generateScramble(REAL_PSF2L_CASE, '3x3', 'inv', {
       randomInitialD: false,
       psf2lExtraScramble: true,
-    })).not.toBe(REAL_PSF2L_CASE.setup);
+      psf2lFaceTurnsOnly: true,
+    })).toMatch(/^(?:[URFDLB](?:2|')?)(?: [URFDLB](?:2|')?)*$/);
   });
 });
