@@ -41,7 +41,7 @@ export function teachingErrorMessage(error: unknown): string {
   if (!(error instanceof TeachingApiError)) return "教学服务暂时不可用，请稍后重试";
   switch (error.code) {
     case "CONFLICT":
-      return "该标识已被使用，请换一个再试";
+      return "当前数据状态不允许这项操作，请检查后重试";
     case "INVALID_INPUT":
       return "提交内容不符合要求，请检查后重试";
     case "ORGANIZATION_NOT_FOUND":

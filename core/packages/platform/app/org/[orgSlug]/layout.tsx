@@ -31,6 +31,22 @@ export default async function OrganizationLayout({
     }
     throw error;
   }
+  const base = `/org/${organization.slug}`;
+  const navLinks: Array<{ href: string; label: string; exact?: boolean }> = [
+    { href: base, label: "概览", exact: true },
+    ...(hasTeachingPermission(organization.role, "student:read")
+      ? [{ href: `${base}/students`, label: "学员" }]
+      : []),
+    ...(hasTeachingPermission(organization.role, "package:read")
+      ? [{ href: `${base}/packages`, label: "课包" }]
+      : []),
+    ...(hasTeachingPermission(organization.role, "session:read")
+      ? [{ href: `${base}/schedule`, label: "课堂" }]
+      : []),
+    ...(hasTeachingPermission(organization.role, "member:read")
+      ? [{ href: `${base}/members`, label: "成员与角色" }]
+      : []),
+  ];
 
   return (
     <div className="min-h-[75vh] bg-white">
@@ -43,10 +59,7 @@ export default async function OrganizationLayout({
           </span>
         </div>
         <div className="mt-4 border-b border-line">
-          <OrgNav
-            orgSlug={organization.slug}
-            canReadStudents={hasTeachingPermission(organization.role, "student:read")}
-          />
+          <OrgNav links={navLinks} />
         </div>
       </div>
       <div className="container-page py-7 md:py-9">{children}</div>

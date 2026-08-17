@@ -6,6 +6,7 @@ type Props = {
   totalPages: number;
   basePath: string;
   prefetch?: boolean;
+  pageParam?: string;
   // Extra query string params to preserve (encoded). E.g. { q: "abc" }
   params?: Record<string, string | undefined>;
 };
@@ -14,12 +15,13 @@ function buildHref(
   basePath: string,
   page: number,
   params: Record<string, string | undefined>,
+  pageParam: string,
 ): string {
   const usp = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== "") usp.set(k, v);
   }
-  if (page > 1) usp.set("page", String(page));
+  if (page > 1) usp.set(pageParam, String(page));
   const qs = usp.toString();
   return qs ? `${basePath}?${qs}` : basePath;
 }
@@ -38,7 +40,7 @@ function buildPageList(page: number, totalPages: number): (number | "...")[] {
   return list;
 }
 
-export function Pagination({ page, totalPages, basePath, prefetch, params = {} }: Props) {
+export function Pagination({ page, totalPages, basePath, prefetch, pageParam = "page", params = {} }: Props) {
   if (totalPages <= 1) return null;
   const pages = buildPageList(page, totalPages);
   const prev = Math.max(1, page - 1);
@@ -61,7 +63,7 @@ export function Pagination({ page, totalPages, basePath, prefetch, params = {} }
         </span>
       ) : (
         <Link
-          href={buildHref(basePath, prev, params)}
+          href={buildHref(basePath, prev, params, pageParam)}
           prefetch={prefetch}
           aria-label="上一页"
           className={`${baseClass} ${inactive}`}
@@ -80,7 +82,7 @@ export function Pagination({ page, totalPages, basePath, prefetch, params = {} }
         ) : (
           <Link
             key={p}
-            href={buildHref(basePath, p, params)}
+            href={buildHref(basePath, p, params, pageParam)}
             prefetch={prefetch}
             aria-current={p === page ? "page" : undefined}
             className={`${baseClass} ${p === page ? active : inactive}`}
@@ -95,7 +97,7 @@ export function Pagination({ page, totalPages, basePath, prefetch, params = {} }
         </span>
       ) : (
         <Link
-          href={buildHref(basePath, next, params)}
+          href={buildHref(basePath, next, params, pageParam)}
           prefetch={prefetch}
           aria-label="下一页"
           className={`${baseClass} ${inactive}`}
