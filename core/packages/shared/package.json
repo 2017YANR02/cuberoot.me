@@ -99,6 +99,10 @@
       "node": "./dist/payment.js",
       "default": "./src/payment.ts"
     },
+    "./teaching": {
+      "node": "./dist/teaching.js",
+      "default": "./src/teaching.ts"
+    },
     "./quiz": {
       "node": "./dist/quiz.js",
       "default": "./src/quiz.ts"

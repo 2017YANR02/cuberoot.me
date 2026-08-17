@@ -30,3 +30,4 @@ export * from './wca_events';
 export * from './wca_round';
 export * from './kinch';
 export * from './pr_streak';
+export * from './teaching';
