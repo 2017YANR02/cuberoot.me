@@ -1,8 +1,8 @@
-# 交接清单
+# 交接清单（归档快照）
 
 最后更新:2026-05-26。覆盖到 Phase 4 + 支付 P1/P2/P3。
 
-> 这是独立仓库时期的能力快照。当前命令、部署和迁移门槛以 [README.md](./README.md)、[DEPLOY.md](./DEPLOY.md) 与主仓 `docs/platform-migration.md` 为准。
+> 本文仅供追溯独立仓库时期的能力,不是当前部署或上线清单。当前命令、部署和迁移门槛以 [README.md](./README.md)、[DEPLOY.md](./DEPLOY.md) 与主仓 `docs/platform-migration.md` 为准。
 
 ## TL;DR
 
@@ -74,9 +74,9 @@ Stripe 控制台填 webhook 时勾选事件 `checkout.session.completed`(可选�
 - **部分退款 UI 未做** — `app/actions/refund.ts` 已预留 `amount?` 参数,但 admin 页面只暴露全额退款按钮。
 - **Stripe currency 写死 USD** — `lib/payments/providers/stripe.ts:37`。国内业务建议改 CNY(需 Stripe 账号支持 CNY)。
 
-### 用户系统
+### 用户系统（历史状态）
 
-- **OTP 短信通道未对接** — `lib/db/otp.ts` 生成验证码,但发送只 `console.log`。生产要接阿里云短信 / 腾讯云短信 / Twilio。
+- **当时 OTP 短信通道未对接** — 这是归档时点状态,当前实现与生产门槛见 [DEPLOY.md](./DEPLOY.md)。
 - **没密码 / 邮箱字段** — users 表只有 phone,纯 OTP 登录。要加密码登录的话需要 schema 改动 + 加密(bcrypt / argon2)。
 - **没邮件通知** — 订单完成、退款、申请通过等场景都没邮件。要接 SendGrid / Resend / 自建 SMTP。
 

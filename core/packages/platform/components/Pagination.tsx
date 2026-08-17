@@ -5,6 +5,7 @@ type Props = {
   page: number;
   totalPages: number;
   basePath: string;
+  prefetch?: boolean;
   // Extra query string params to preserve (encoded). E.g. { q: "abc" }
   params?: Record<string, string | undefined>;
 };
@@ -37,7 +38,7 @@ function buildPageList(page: number, totalPages: number): (number | "...")[] {
   return list;
 }
 
-export function Pagination({ page, totalPages, basePath, params = {} }: Props) {
+export function Pagination({ page, totalPages, basePath, prefetch, params = {} }: Props) {
   if (totalPages <= 1) return null;
   const pages = buildPageList(page, totalPages);
   const prev = Math.max(1, page - 1);
@@ -47,20 +48,27 @@ export function Pagination({ page, totalPages, basePath, params = {} }: Props) {
     "inline-flex h-9 min-w-9 items-center justify-center rounded-md px-2.5 text-[13px] transition";
   const inactive = "text-ink-2 hover:bg-bg-soft hover:text-ink";
   const active = "bg-brand text-white";
-  const disabled = "text-ink-3 opacity-50 pointer-events-none";
+  const disabled = "text-ink-3 opacity-50";
 
   return (
     <nav
       aria-label="分页"
       className="mt-10 flex flex-wrap items-center justify-center gap-1"
     >
-      <Link
-        href={buildHref(basePath, prev, params)}
-        aria-label="上一页"
-        className={`${baseClass} ${page <= 1 ? disabled : inactive}`}
-      >
-        <ChevronLeft size={15} />
-      </Link>
+      {page <= 1 ? (
+        <span aria-label="上一页" aria-disabled="true" className={`${baseClass} ${disabled}`}>
+          <ChevronLeft size={15} />
+        </span>
+      ) : (
+        <Link
+          href={buildHref(basePath, prev, params)}
+          prefetch={prefetch}
+          aria-label="上一页"
+          className={`${baseClass} ${inactive}`}
+        >
+          <ChevronLeft size={15} />
+        </Link>
+      )}
       {pages.map((p, i) =>
         p === "..." ? (
           <span
@@ -73,6 +81,7 @@ export function Pagination({ page, totalPages, basePath, params = {} }: Props) {
           <Link
             key={p}
             href={buildHref(basePath, p, params)}
+            prefetch={prefetch}
             aria-current={p === page ? "page" : undefined}
             className={`${baseClass} ${p === page ? active : inactive}`}
           >
@@ -80,13 +89,20 @@ export function Pagination({ page, totalPages, basePath, params = {} }: Props) {
           </Link>
         ),
       )}
-      <Link
-        href={buildHref(basePath, next, params)}
-        aria-label="下一页"
-        className={`${baseClass} ${page >= totalPages ? disabled : inactive}`}
-      >
-        <ChevronRight size={15} />
-      </Link>
+      {page >= totalPages ? (
+        <span aria-label="下一页" aria-disabled="true" className={`${baseClass} ${disabled}`}>
+          <ChevronRight size={15} />
+        </span>
+      ) : (
+        <Link
+          href={buildHref(basePath, next, params)}
+          prefetch={prefetch}
+          aria-label="下一页"
+          className={`${baseClass} ${inactive}`}
+        >
+          <ChevronRight size={15} />
+        </Link>
+      )}
     </nav>
   );
 }

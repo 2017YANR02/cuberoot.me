@@ -7,6 +7,8 @@
 !packages/
 !packages/platform/
 !packages/platform/**
+!packages/shared/
+!packages/shared/**
 packages/platform/node_modules
 packages/platform/.next
 packages/platform/.env
@@ -15,3 +17,5 @@ packages/platform/data.db*
 packages/platform/.tmp
 packages/platform/.playwright-mcp
 packages/platform/*.log
+packages/shared/node_modules
+packages/shared/dist

@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
-import { consume, findActive } from "@/lib/db/otp";
+import {
+  consumeActiveCode,
+  resetOtpRateLimit,
+  takeOtpAttempt,
+} from "@/lib/db/otp";
 import { findByPhone, upsertByPhone } from "@/lib/db/users";
 import { applyInviteOnSignup } from "@/lib/db/invites";
 import {
@@ -8,6 +12,7 @@ import {
   USER_SESSION_MAX_AGE,
   signUserToken,
 } from "@/lib/auth-user";
+import { getClientIp } from "@/lib/request-ip";
 
 export const runtime = "nodejs";
 
@@ -30,11 +35,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_input" }, { status: 400 });
   }
 
-  const otp = await findActive(phone, code);
+
+  const phoneLimit = await takeOtpAttempt("verify-phone", phone);
+  const ipLimit = await takeOtpAttempt("verify-ip", getClientIp(req));
+  if (!phoneLimit.allowed || !ipLimit.allowed) {
+    const retryAfter = Math.max(
+      phoneLimit.allowed ? 0 : phoneLimit.retryAfter,
+      ipLimit.allowed ? 0 : ipLimit.retryAfter,
+    );
+    return NextResponse.json(
+      { error: "too_many_attempts", retryAfter },
+      { status: 429 },
+    );
+  }
+
+  const otp = await consumeActiveCode(phone, code);
   if (!otp) {
     return NextResponse.json({ error: "invalid_or_expired" }, { status: 401 });
   }
-  await consume(otp.id);
+  await resetOtpRateLimit("verify-phone", phone);
 
   const wasNew = !(await findByPhone(phone));
   const user = await upsertByPhone(phone);

@@ -12,6 +12,7 @@ on:
     branches: [main]
     paths:
       - 'core/packages/platform/**'
+      - 'core/packages/shared/**'
       - 'core/package.json'
       - 'core/pnpm-lock.yaml'
       - 'core/pnpm-workspace.yaml'
@@ -49,6 +50,10 @@ jobs:
       - name: Install dependencies
         working-directory: core
         run: pnpm install --frozen-lockfile
+
+      - name: Build shared contract
+        working-directory: core
+        run: pnpm --filter @cuberoot/shared build
 
       # 约定守卫兜底层 (vitest):站内导航禁 onClick 里 router.push/replace,必须真 <a>/<Link>。
       # 写入即拦由本地 hook 负责,此处拦绕过 hook 的来源(其他 AI / 手改 / web)。早跑早挂,省构建。
@@ -149,8 +154,39 @@ jobs:
 
           # 新版本不允许生产默认口令。缺配置时在替换线上目录前失败。
           test -s /etc/cube-platform.env || { echo "ERROR: /etc/cube-platform.env missing"; exit 1; }
-          grep -q '^ADMIN_PASSWORD=.' /etc/cube-platform.env || { echo "ERROR: ADMIN_PASSWORD missing"; exit 1; }
-          grep -q '^SESSION_SECRET=.' /etc/cube-platform.env || { echo "ERROR: SESSION_SECRET missing"; exit 1; }
+          test -s /root/core-api/.env || { echo "ERROR: core runtime env missing"; exit 1; }
+          require_nonblank_env() {
+            NAME="$1"
+            ENV_FILE="$2"
+            RAW_VALUE="$(sed -n "s/^${NAME}=//p" "$ENV_FILE" | tail -1)"
+            COMPACT_VALUE="$(printf '%s' "$RAW_VALUE" | tr -d "[:space:]'\"")"
+            test -n "$COMPACT_VALUE" || { echo "ERROR: ${NAME} missing or blank"; exit 1; }
+          }
+          require_nonblank_env ADMIN_PASSWORD /etc/cube-platform.env
+          require_nonblank_env SESSION_SECRET /etc/cube-platform.env
+          TEACHING_API_BASE_URL="$(sed -n 's/^TEACHING_API_BASE_URL=//p' /etc/cube-platform.env | tail -1)"
+          case "$TEACHING_API_BASE_URL" in https://*) ;; *) echo "ERROR: TEACHING_API_BASE_URL must be an unquoted HTTPS URL"; exit 1;; esac
+          TEACHING_SECRET="$(sed -n 's/^TEACHING_PLATFORM_SECRET=//p' /etc/cube-platform.env | tail -1)"
+          test "${#TEACHING_SECRET}" -eq 64 || { echo "ERROR: TEACHING_PLATFORM_SECRET must be exactly 64 hex characters"; exit 1; }
+          case "$TEACHING_SECRET" in *[!0-9A-Fa-f]*) echo "ERROR: TEACHING_PLATFORM_SECRET must be unquoted hexadecimal"; exit 1;; esac
+          CORE_TEACHING_SECRET="$(sed -n 's/^TEACHING_PLATFORM_SECRET=//p' /root/core-api/.env | tail -1)"
+          test "${#CORE_TEACHING_SECRET}" -eq 64 || { echo "ERROR: core TEACHING_PLATFORM_SECRET must be exactly 64 hex characters"; exit 1; }
+          case "$CORE_TEACHING_SECRET" in *[!0-9A-Fa-f]*) echo "ERROR: core TEACHING_PLATFORM_SECRET must be unquoted hexadecimal"; exit 1;; esac
+          test "$TEACHING_SECRET" = "$CORE_TEACHING_SECRET" || { echo "ERROR: teaching bridge secrets do not match"; exit 1; }
+          SMS_PROVIDER="$(sed -n 's/^SMS_PROVIDER=//p' /etc/cube-platform.env | tail -1)"
+          case "$SMS_PROVIDER" in
+            aliyun)
+              for NAME in SMS_ALIYUN_ACCESS_KEY_ID SMS_ALIYUN_ACCESS_KEY_SECRET SMS_ALIYUN_SIGN_NAME SMS_ALIYUN_TEMPLATE_CODE; do
+                require_nonblank_env "$NAME" /etc/cube-platform.env
+              done
+              ;;
+            tencent)
+              for NAME in SMS_TENCENT_SECRET_ID SMS_TENCENT_SECRET_KEY SMS_TENCENT_SDK_APP_ID SMS_TENCENT_SIGN_NAME SMS_TENCENT_TEMPLATE_ID; do
+                require_nonblank_env "$NAME" /etc/cube-platform.env
+              done
+              ;;
+            *) echo "ERROR: production SMS_PROVIDER must be aliyun or tencent"; exit 1;;
+          esac
 
           rm -rf "$STAGE"; mkdir -p "$STAGE"
           tar -xzf /tmp/cube-platform.tar.gz -C "$STAGE"
