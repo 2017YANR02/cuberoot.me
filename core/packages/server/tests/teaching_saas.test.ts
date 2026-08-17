@@ -112,6 +112,22 @@ describe('teaching SaaS routes', () => {
     expect(await response.json()).toMatchObject({ error: { code: 'ORGANIZATION_NOT_FOUND' } });
   });
 
+  it('keeps an unassigned session indistinguishable from a missing session at the route boundary', async () => {
+    repo.getSession = vi.fn().mockRejectedValue(
+      new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found'),
+    );
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+
+    const response = await app.request(
+      '/teaching/organizations/demo/sessions/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    );
+    expect(response.status).toBe(404);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(await response.json()).toMatchObject({
+      error: { code: 'RESOURCE_NOT_FOUND', message: 'Session not found' },
+    });
+  });
+
   it('routes member and student reads through the tenant slug', async () => {
     const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
 
