@@ -65,6 +65,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'About CubeRoot — what this site is, who maintains it, and where the data comes from.',
     },
   },
+  'achievements': {
+    title: { zh: '成就', en: 'Achievements' },
+    description: {
+      zh: 'CubeRoot 从 0 到 1 的代表性原创工作：魔方求解器、LSLL 状态空间、打乱统计、复盘系统、3D 模拟与 WCA 数据产品。',
+      en: 'Selected original work built for CubeRoot from zero: puzzle solvers, the LSLL state space, scramble statistics, reconstructions, 3D simulation and WCA data products.',
+    },
+  },
   'account': { title: { zh: '账号', en: 'Account' } },
   'privacy': {
     title: { zh: '移动端与小程序隐私政策', en: 'Mobile and Mini Program Privacy Policy' },
