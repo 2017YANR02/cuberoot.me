@@ -15,7 +15,7 @@ PostgreSQL schema 变更的 source of truth。`apply_migrations.sh` 会在部署
 
    - 不要写 `BEGIN;` 或 `COMMIT;`，runner 会为每个文件单独开启事务。
    - 数字前缀必须严格单调递增；历史重复编号 `0062`、`0087` 不得改名或改写。
-   - `0000_bootstrap_updated_at_function.sql` 是唯一 grandfathered bootstrap 例外：它修复 `0001` 早于 `0010` 引用共用 trigger 函数的历史 fresh-replay 缺口，不得改名、删除或复制这种倒序补号模式。
+   - `0000_bootstrap_updated_at_function.sql` 是唯一 grandfathered bootstrap 例外：它只修复具备 pre-ledger baseline 表时重放 `0001` / `0010` 的函数顺序，不代表支持绝对空库重放；不得改名、删除或复制这种倒序补号模式。
    - 多人协作时，创建文件前重新确认当前最大编号。
 
 2. 同步更新 `../src/db/schema.pg.sql`，将新结构写入对应的最终态 `CREATE TABLE`。
@@ -25,6 +25,12 @@ PostgreSQL schema 变更的 source of truth。`apply_migrations.sh` 会在部署
 3. 同步业务代码、共享类型、`/dev/schema`、`/dev/api`、账号删除策略和回归测试。
 
 4. 推送后，部署流水线会先应用 migration，再重载服务。
+
+## 历史基线与新库恢复
+
+当前 migration 链记录的是旧生产 schema 之后的增量变化，不是可从绝对空库独立重放的 bootstrap。早期文件会 `ALTER` 基线中已有的表；`schema.pg.sql` 是当前最终态审阅快照，也不能先执行后再重放全部 migration。
+
+部署只在已有 ledger 与历史基线的数据库上向前升级。新库或灾难恢复必须使用已验证的数据库备份；若以后要支持从零初始化，应另行提交带版本的 baseline、ledger 初始化规则和空库集成测试，不能改写历史 migration。
 
 ## 已应用 migration 不能改
 
