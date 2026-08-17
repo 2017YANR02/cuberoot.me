@@ -59,7 +59,7 @@ curl -X PUT -H "X-Admin-Key: $KEY" -H 'Content-Type: application/json' \
 
 ## 常见数据治理操作(直查 PG)
 
-走 server-deploy skill 的 SSH + `PGPASSWORD=314159 psql` 模式。
+走 server-deploy skill 的远端 `.env` 加载 + `PGPASSWORD="$DB_PASS" psql` 模式，凭据字面值只从 gitignored `.password.md` 获取。
 
 ### 列同 (puzzle, set_slug, subgroup, name) 的 dup case
 

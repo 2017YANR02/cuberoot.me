@@ -200,7 +200,7 @@ Phase F 之前(panel 路径下)的历史 `.bak` 已归档至 `/root/archive/ngin
 
 **手动恢复 cuberoot_db:**
 ```bash
-ssh root@cuberoot 'gunzip -c /root/archive/pg-recon-<DATE>.sql.gz | PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot_db'
+ssh root@cuberoot 'set -a; . /root/core-api/.env; set +a; : "${DB_PASS:?database credentials unavailable}"; gunzip -c /root/archive/pg-recon-<DATE>.sql.gz | PGPASSWORD="$DB_PASS" psql -U recon_user -h 127.0.0.1 -d cuberoot_db'
 ```
 
 ## SSH 登录方式

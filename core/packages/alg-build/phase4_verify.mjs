@@ -21,12 +21,13 @@ import { stm, sqtm, toMoveString } from '@cuberoot/shared/alg-notation';
 
 const DB = process.argv[2] ?? 'alg_dry';
 const SETS = { pll: 21, zbll: 472, ell: 25, '1lll': 3397 };
+const REMOTE_DB_ENV = 'if [ -z "${PGPASSWORD:-}" ]; then if [ -z "${DB_PASS:-}" ]; then DB_ENV_FILE="${CUBEROOT_DB_ENV_FILE:-/root/core-api/.env}"; [ -r "$DB_ENV_FILE" ] || { echo "database credentials unavailable" >&2; exit 1; }; set -a; . "$DB_ENV_FILE"; set +a; fi; : "${DB_PASS:?database credentials unavailable}"; export PGPASSWORD="$DB_PASS"; fi';
 
 /** `node phase4_verify.mjs prod` → 直接读生产库(灌完之后必跑,dry run 绿不代表生产绿)。 */
 const psql = DB === 'prod'
   ? (sql) => execFileSync('ssh', ['root@cuberoot',
       // 压成一行:JSON.stringify 会把换行转义成字面 `\n`,远端 shell 原样传给 psql → 语法错
-      `PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot_db -t -A -c ${JSON.stringify(sql.replace(/\s+/g, ' '))}`],
+      `${REMOTE_DB_ENV}; psql -U recon_user -h 127.0.0.1 -d cuberoot_db -t -A -c ${JSON.stringify(sql.replace(/\s+/g, ' '))}`],
     { encoding: 'utf8', maxBuffer: 1 << 28 })
   : (sql) => execFileSync('docker', ['exec', '-e', 'PGPASSWORD=dev', 'pg13', 'psql', '-U', 'postgres', '-d', DB, '-t', '-A', '-c', sql],
     { encoding: 'utf8', maxBuffer: 1 << 28 });

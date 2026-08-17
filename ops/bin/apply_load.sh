@@ -12,6 +12,27 @@ fi
 IMPORT_DIR="$1"
 LOG_TAG="$2"
 
+load_db_password() {
+  if [ -n "${PGPASSWORD:-}" ]; then
+    return
+  fi
+  if [ -z "${DB_PASS:-}" ]; then
+    DB_ENV_FILE="${CUBEROOT_DB_ENV_FILE:-/root/core-api/.env}"
+    [ -r "$DB_ENV_FILE" ] || {
+      echo "database credentials unavailable: set PGPASSWORD or DB_PASS, or provide readable CUBEROOT_DB_ENV_FILE" >&2
+      exit 1
+    }
+    set -a
+    # shellcheck disable=SC1090
+    . "$DB_ENV_FILE"
+    set +a
+  fi
+  [ -n "${DB_PASS:-}" ] || { echo "database credentials unavailable: DB_PASS is empty" >&2; exit 1; }
+  export PGPASSWORD="$DB_PASS"
+}
+
+load_db_password
+
 if [ ! -f "$IMPORT_DIR/load.sql" ]; then
   echo "[$LOG_TAG] load.sql missing in $IMPORT_DIR; abort" >&2
   logger -t "$LOG_TAG" "load.sql missing in $IMPORT_DIR; abort"
@@ -44,7 +65,7 @@ cd "$IMPORT_DIR"
 echo "::group::[$LOG_TAG] psql -e -f load.sql"
 # psql -e 回显 server 收到的每条 SQL(\copy / TRUNCATE / CREATE INDEX 等)
 # tee >(logger) 让 stdout 走 ssh client (Actions 实时日志) 同时 syslog 留备份
-PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot_db \
+psql -U recon_user -h 127.0.0.1 -d cuberoot_db \
   -e -v ON_ERROR_STOP=1 -f load.sql 2>&1 \
   | tee >(logger -t "$LOG_TAG")
 echo "::endgroup::"

@@ -13,9 +13,11 @@ import { execFileSync } from 'node:child_process';
 import { ident } from './ll_ident.mjs';
 import { toMoveString } from '@cuberoot/shared/alg-notation';
 
+const REMOTE_DB_ENV = 'if [ -z "${PGPASSWORD:-}" ]; then if [ -z "${DB_PASS:-}" ]; then DB_ENV_FILE="${CUBEROOT_DB_ENV_FILE:-/root/core-api/.env}"; [ -r "$DB_ENV_FILE" ] || { echo "database credentials unavailable" >&2; exit 1; }; set -a; . "$DB_ENV_FILE"; set +a; fi; : "${DB_PASS:?database credentials unavailable}"; export PGPASSWORD="$DB_PASS"; fi';
+
 const psql = (sql) =>
   execFileSync('ssh', ['root@cuberoot',
-    `PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot_db -t -A -c ${JSON.stringify(sql.replace(/\s+/g, ' '))}`],
+    `${REMOTE_DB_ENV}; psql -U recon_user -h 127.0.0.1 -d cuberoot_db -t -A -c ${JSON.stringify(sql.replace(/\s+/g, ' '))}`],
   { encoding: 'utf8', maxBuffer: 1 << 28 });
 
 const rows = JSON.parse(psql(`
