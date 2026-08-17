@@ -962,6 +962,12 @@ pnpm --filter @cuberoot/miniprogram release:check
 - 小程序读取登录存储失败时保持失败页，不再以访客身份继续打开网站；敏感能力扫描同时覆盖 `wx` 方法解构和别名解构。
 - CI 与服务端部署流水线都执行服务端回归和小程序完整检查。`wss://api.cuberoot.me` 仍须在小程序后台配置为 socket 合法域名，发布闸门不会替操作者伪造该确认。
 
+### 2026-08-17：web-view 主动加载微信 JS-SDK
+
+- `__wxjs_environment` 或 UA 能确认当前处于小程序 web-view，但不保证页面已经存在 `window.wx`；智能魔方桥接不再把两件事混为一谈。
+- 微信分享与小程序桥接共用自托管的 `/vendor/jweixin-1.6.0.js` 加载入口；桥接等待 SDK 后再读取 `wx.miniProgram`，加载失败、超时或能力缺失仍明确失败。
+- 回归测试固定“已进入小程序但未注入 `wx`”场景，防止以后重构分享逻辑时再次让模拟器报 `MINIPROGRAM_BRIDGE_UNAVAILABLE`。
+
 ### 首版工程
 
 - 建立原生外壳、计时器 `web-view`、工具入口和“我的”页。

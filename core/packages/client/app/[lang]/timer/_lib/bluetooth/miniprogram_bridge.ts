@@ -6,13 +6,11 @@ import {
   type SmartCubeRelayHello,
 } from '@cuberoot/shared/smart-cube/relay';
 import { websocketApiUrl } from '@/lib/api-base';
-
-interface MiniProgramBridgeApi {
-  navigateTo(options: {
-    url: string;
-    fail?(error: { errMsg?: string }): void;
-  }): void;
-}
+import {
+  loadWeChatJsSdk,
+  supportsWeChatMiniProgramNavigation,
+  type WeChatMiniProgramApi,
+} from '@/lib/wechat-js-sdk';
 
 declare global {
   interface Window {
@@ -59,9 +57,16 @@ export async function connectMiniProgramCubeBridge(
   callbacks: MiniProgramCubeBridgeCallbacks,
 ): Promise<MiniProgramCubeBridgeConnection> {
   if (!isMiniProgramWebView()) throw new Error('NOT_MINIPROGRAM_WEBVIEW');
-  const miniProgram = window.wx?.miniProgram;
+  let miniProgram = window.wx && supportsWeChatMiniProgramNavigation(window.wx)
+    ? window.wx.miniProgram
+    : undefined;
+  if (!miniProgram) {
+    miniProgram = (
+      await loadWeChatJsSdk(supportsWeChatMiniProgramNavigation)
+    )?.miniProgram;
+  }
   if (!miniProgram) throw new Error('MINIPROGRAM_BRIDGE_UNAVAILABLE');
-  const miniProgramApi: MiniProgramBridgeApi = miniProgram;
+  const miniProgramApi: WeChatMiniProgramApi = miniProgram;
 
   const token = randomRelayToken();
   let socket: WebSocket | null = null;
