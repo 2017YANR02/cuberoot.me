@@ -77,6 +77,13 @@
           "4.80 5.23 4.79 4.59 3.32"
         ],
         [
+          "[Aaron Jake Wong](https://www.worldcubeassociation.org/persons/2021WONG02)",
+          "**3.34**",
+          "United States",
+          "[Mid-Atlantic Warm-Up 2026](https://www.worldcubeassociation.org/competitions/MidAtlanticWarmUp2026)",
+          "3.34 6.23 8.24 6.14 6.36"
+        ],
+        [
           "[Yufang Du (杜昱方)](https://www.worldcubeassociation.org/persons/2023DUYU01)",
           "**3.34**",
           "China",
@@ -103,13 +110,6 @@
           "China",
           "[Chengdu Welcoming Summer 2026](https://www.worldcubeassociation.org/competitions/ChengduWelcomingSummer2026)",
           "6.90 4.56 5.77 3.50 5.51"
-        ],
-        [
-          "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-          "**3.56**",
-          "Poland",
-          "[Głuszyca Open 2026](https://www.worldcubeassociation.org/competitions/GluszycaOpen2026)",
-          "3.56 5.86 4.52 5.61 3.99"
         ]
       ]
     },
@@ -298,6 +298,13 @@
           "1.11 0.78 0.89 0.83 1.65"
         ],
         [
+          "[Seth Nasol](https://www.worldcubeassociation.org/persons/2023NASO01)",
+          "**0.98**",
+          "New Zealand",
+          "[Christchurch Winter 2026](https://www.worldcubeassociation.org/competitions/ChristchurchWinter2026)",
+          "0.93 0.83 1.17 0.73 1.25"
+        ],
+        [
           "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
           "**0.99**",
           "United States",
@@ -331,13 +338,6 @@
           "China",
           "[Xuzhou Zenith 2026](https://www.worldcubeassociation.org/competitions/XuzhouZenith2026)",
           "0.86 1.47 1.06 0.87 1.19"
-        ],
-        [
-          "[Aitor Ibañez Larrea](https://www.worldcubeassociation.org/persons/2023LARR09)",
-          "**1.05**",
-          "Spain",
-          "[GAN CubingVic 2026](https://www.worldcubeassociation.org/competitions/GANCubingVic2026)",
-          "1.15 1.11 0.89 1.59 0.65"
         ]
       ]
     },
@@ -1370,10 +1370,10 @@
         ],
         [
           "[Dwyane Ramos](https://www.worldcubeassociation.org/persons/2019RAMO05)",
-          "**8.36**",
+          "**8.31**",
           "New Zealand",
-          "[NZ North Island Champs 2026](https://www.worldcubeassociation.org/competitions/NZNorthIslandChampionship2026)",
-          "8.80 7.45 8.65 8.25 8.17"
+          "[Christchurch Winter 2026](https://www.worldcubeassociation.org/competitions/ChristchurchWinter2026)",
+          "6.76 8.08 8.51 8.35 8.85"
         ],
         [
           "[Juliette Sébastien](https://www.worldcubeassociation.org/persons/2014SEBA01)",
@@ -2474,6 +2474,13 @@
       "titleZh": "3x3x3 Multi-Blind - Single",
       "rows": [
         [
+          "[Ezra Hirschi](https://www.worldcubeassociation.org/persons/2019HIRS01)",
+          "**62/64 59:56**",
+          "Switzerland",
+          "[Kewbz UK BLD Championship 2026](https://www.worldcubeassociation.org/competitions/KewbzUKBLDChampionship2026)",
+          "49/58 53:51 49/60 58:21 62/64 59:56"
+        ],
+        [
           "[Andrew Tao](https://www.worldcubeassociation.org/persons/2022TAOA01)",
           "**60/63 58:36**",
           "United States",
@@ -2535,13 +2542,6 @@
           "Poland",
           "[Brizzon Side Open III 2026](https://www.worldcubeassociation.org/competitions/BrizzonSideOpenIII2026)",
           "41/51 1:00:00 46/51 57:22 49/53 58:12"
-        ],
-        [
-          "[Yucheng Chen (陈裕铖)](https://www.worldcubeassociation.org/persons/2015CHEN49)",
-          "**51/59 59:49**",
-          "China",
-          "[More Than One Cube Shanghai 2026](https://www.worldcubeassociation.org/competitions/MoreThanOneCubeShanghai2026)",
-          "46/59 59:50 51/59 59:49 45/59 59:52"
         ]
       ]
     }
