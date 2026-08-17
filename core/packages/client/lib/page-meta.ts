@@ -501,6 +501,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Find cube teachers and training schools by specialty, teaching mode and location, or sign in to publish and maintain your own profile.',
     },
   },
+  'teachers-edit': {
+    title: { zh: '编辑教学资料', en: 'Edit Teaching Profile' },
+    description: {
+      zh: '创建或修改魔方老师与培训机构资料，包括教学履历、照片、擅长方向和联系方式。',
+      en: 'Create or update a cube teacher or training school profile with experience, photos, specialties, and contact details.',
+    },
+  },
   'tutorial': {
     title: { zh: '魔方教程', en: 'Cubing Tutorials' },
     description: {

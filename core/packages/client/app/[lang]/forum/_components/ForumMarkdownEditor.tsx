@@ -11,7 +11,7 @@
  * CodeMirror loads via next/dynamic({ ssr:false }) so its chunk never enters the SSG / server
  * bundle. The live EditorView is captured through onCreateEditor; toolbar edits dispatch on it.
  * Toolbar inserts the directive syntax (:red / :blue / :::figrow / :alg / :cube). Images go through
- * uploadForumImage (base64 channel) via button / drag-drop / paste; the returned markdown image is
+ * uploadImageBlob (base64 channel) via button / drag-drop / paste; the returned markdown image is
  * inserted at the cursor.
  *
  * Controlled value/onChange only — title, forum picker and submit stay in the page (/forum/new).
@@ -24,7 +24,7 @@ import {
 import type { EditorView } from '@codemirror/view';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
-import { uploadForumImage } from '@/lib/forum-api';
+import { uploadImageBlob } from '@/lib/image-upload';
 import { useT } from '@/hooks/useT';
 import './forum_editor.css';
 
@@ -190,7 +190,7 @@ export const ForumMarkdownEditor = forwardRef<ForumEditorHandle, {
       try {
         for (const file of list) {
           const { dataB64, mime } = await fileToBase64(file);
-          const img = await uploadForumImage(dataB64, mime);
+          const img = await uploadImageBlob(dataB64, mime);
           const alt = file.name.replace(/\.[^.]+$/, '');
           insertImageMarkdown(img?.url ?? '', alt);
         }
