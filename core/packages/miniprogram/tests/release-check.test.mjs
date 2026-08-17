@@ -247,6 +247,7 @@ describe('mini program release check', () => {
       WECHAT_MINI_GAN16UI_TESTED: '0',
       WECHAT_MINI_GOCUBE_TESTED: '1',
       WECHAT_MINI_GIIKER_TESTED: '1',
+      WECHAT_MINI_MOYU_TESTED: '1',
     })).toEqual({
       basicInfoApproved: true,
       filingCompleted: false,
@@ -256,6 +257,7 @@ describe('mini program release check', () => {
       gan16UiTested: false,
       goCubeTested: true,
       giikerTested: true,
+      moyuTested: true,
     });
 
     expect(collectReleaseFailures({

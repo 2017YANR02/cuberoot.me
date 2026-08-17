@@ -29,6 +29,7 @@
 | GAN v2/v3/v4 协议、解密与魔方状态解码 | `@cuberoot/shared/smart-cube/gan-v2` + `gan-v3` + `gan-v4` + `gan-crypto` + `gan-move-sync` + `cubie` | 网站 Web Bluetooth 和小程序微信 BLE 共用同一解析与状态逻辑 |
 | GoCube/Rubik's Connected 协议字节解析 | `@cuberoot/shared/smart-cube/gocube` | 两端只维护各自传输适配器，不复制帧解析、转动映射或命令常量 |
 | Giiker/米家协议状态与转动解析 | `@cuberoot/shared/smart-cube/giiker` | 网站与小程序复用同一解析器，传输层分别使用 Web Bluetooth 与微信 BLE |
+| MoYu AI MHC 旧协议转动解析 | `@cuberoot/shared/smart-cube/moyu` | 网站与小程序复用同一 UUID、设备名匹配和转动累积解析，传输层各自维护平台生命周期 |
 | 智能魔方短时中继协议 | `@cuberoot/shared/smart-cube/relay` | 原生 BLE 只作为数据源，网站计时器只作为数据接收方；不把会话数据写入数据库 |
 | 小程序智能魔方连接生命周期 | `packages/miniprogram/src/lib/smart-cube/session.ts` | 页面只展示状态和发起操作，不直接管理 socket、BLE 连接或竞态 |
 | 全局视觉变量和通用按钮 | `packages/miniprogram/src/app.wxss` | 页面只写自身布局 |
@@ -76,7 +77,7 @@
 - [x] 正式版下载到新版本后允许用户选择立即重启或稍后更新，下载失败不会阻断当前使用。
 - [x] 确认退出后立即清除小程序会话，再尝试打开不创建新票据的受控网页退出路由；网站不可达不会阻止本地退出。
 - [x] 智能魔方采用“原生 BLE 数据源 + 网站计时器接收方”，没有复制计时器 UI、成绩或统计逻辑。
-- [x] GAN v2/v3/v4、GoCube 与 Giiker/米家协议已接入原生连接页；开发者工具使用同一中继的模拟数据，不再无限显示连接中。
+- [x] GAN v2/v3/v4、GoCube、Giiker/米家与 MoYu AI MHC 旧协议已接入原生连接页；开发者工具使用同一中继的模拟数据，不再无限显示连接中。
 - [x] 中继只保存在服务端内存，限制帧大小、频率和通道数量，不记录会话令牌或魔方实时数据。
 - [x] 初始魔方状态、连接中取消、旧连接迟到回调和计时页恢复均有竞态回归测试。
 - [ ] GAN 16 ui 的真实硬件连接、转动、状态、电量、断开和重连尚待 Android 设备验收。
@@ -116,6 +117,7 @@ $env:WECHAT_MINI_ANDROID_REAL_DEVICE_TESTED='1'
 $env:WECHAT_MINI_GAN16UI_TESTED='1' # Android 真机完成 GAN 16 ui 全链路回归后设置
 $env:WECHAT_MINI_GOCUBE_TESTED='1'
 $env:WECHAT_MINI_GIIKER_TESTED='1'
+$env:WECHAT_MINI_MOYU_TESTED='1'
 pnpm --filter @cuberoot/miniprogram build
 pnpm --filter @cuberoot/miniprogram release:check
 ```
@@ -173,13 +175,14 @@ pnpm --filter @cuberoot/miniprogram release:check
 
 ### P2：微信专属增量
 
-- [x] 完成 GAN v2/v3/v4、GoCube/Rubik's Connected 与 Giiker/米家的代码级 BLE 接入：共享协议解析、微信 BLE 传输、短时中继、网站桥接和开发者工具模拟器均有回归测试。
+- [x] 完成 GAN v2/v3/v4、GoCube/Rubik's Connected、Giiker/米家与 MoYu AI MHC 旧协议的代码级 BLE 接入：共享协议解析、微信 BLE 传输、短时中继、网站桥接和开发者工具模拟器均有回归测试。
 - [x] GAN v2/v3/v4 设备统一走协议能力识别，不按型号复制驱动；GAN 16 ui 是首要真机验收型号，其他型号在实测前只视为协议兼容尝试。
 - [x] 网站既有 GAN v2/v3 纯协议已提取到共享包；小程序按实际 GATT 服务选择 v2、v3 或 v4，继续复用同一连接生命周期和计时器中继。
 - [ ] 用真实 GAN 16 ui 完成 Android 连接、转动、完整状态、电量、断开和重连验证；通过前只声明“代码兼容”，不宣称“硬件验证通过”。
 - [ ] 用真实 GoCube/Rubik's Connected 完成至少一台支持微信 BLE 的手机验收。
 - [ ] 用真实 Giiker/米家设备完成至少一台支持微信 BLE 的手机验收。
-- [ ] 继续复用网站现有协议驱动覆盖 Moyu、QiYi 等型号；每一族先共享纯协议，再写微信 BLE 传输适配器。
+- [ ] 用真实 MoYu AI MHC 旧协议设备完成至少一台支持微信 BLE 的手机验收。
+- [ ] 继续复用网站现有协议驱动覆盖 MoYu32、QiYi 等协议族；每一族先共享纯协议，再写微信 BLE 传输适配器。
 - [ ] 验证后台计时、息屏、断连重连和 iOS 平台限制；不为此原生重写计时器。
 - [ ] 仅在用户主动订阅后接入比赛或课程提醒。
 
@@ -211,7 +214,7 @@ pnpm --filter @cuberoot/miniprogram release:check
 
 - 计时器继续完整复用网站；小程序原生页只负责微信 BLE，双方通过 `wss://api.cuberoot.me/v1/smart-cube/relay` 的随机短时会话连接，不复制计时 UI、成绩、统计或设置。
 - GAN v2/v3/v4 的解密、转动同步和完整魔方状态解码已移到 `@cuberoot/shared`，网站与小程序共同调用；GAN 16 ui 作为首要验收型号，同协议新型号不另造驱动。
-- 原生连接页已接入 GAN v2/v3/v4、GoCube/Rubik's Connected 和开发者工具模拟器；中继仅在内存保留最新状态和最近 512 步，按 `lastMoveSeq` 严格补发计时页断线期间遗漏的转动，超出窗口时拒绝续接并要求重连，不写数据库。
+- 原生连接页已接入 GAN v2/v3/v4、GoCube/Rubik's Connected、Giiker/米家、MoYu MHC 旧协议和开发者工具模拟器；中继仅在内存保留最新状态和最近 512 步，按 `lastMoveSeq` 严格补发计时页断线期间遗漏的转动，超出窗口时拒绝续接并要求重连，不写数据库。
 - 连接中取消会立即清理后来才成功的 BLE 连接；网站桥接在自身初始化完成前缓存原生初始状态和早到转动，避免把真实乱序状态覆盖回已还原。
 - 代码测试只证明协议与生命周期边界，不能替代 GAN 16 ui 的真实硬件验收。上线前仍需配置 socket 合法域名、部署中继、更新后台隐私指引，并在可用 Android 设备上验证。
 
@@ -850,7 +853,7 @@ pnpm --filter @cuberoot/miniprogram release:check
 
 ### 2026-08-16：隐私声明与文字对比度进入发布闸门
 
-- 当前原生壳只在智能魔方连接模块使用蓝牙，不申请用户资料、定位、文件媒体、录音、地址发票、运动数据、剪贴板、相机直播或手机号能力；发布检查同时扫描源码和产物，蓝牙调用只允许出现在已复核的三份传输适配器和连接页产物中。
+- 当前原生壳只在智能魔方连接模块使用蓝牙，不申请用户资料、定位、文件媒体、录音、地址发票、运动数据、剪贴板、相机直播或手机号能力；发布检查同时扫描源码和产物，蓝牙调用只允许出现在已复核的四份传输适配器和连接页产物中。
 - `app.json` 暂不允许出现 `requiredPrivateInfos` 或 `permission`，即使内容为空也会阻止发布，避免后台误报采集范围；以后确需新增原生能力，必须从这条明确边界修改，不得只改配置绕过检查。
 - 原生导航与共享 CSS 的文字颜色统一校验不低于 4.5:1；浅色主色改为更深的同色系，并由结构测试锁定 CSS 与 `theme.json` 同源，后续换色不会让网页壳和微信原生栏逐渐分叉。
 
@@ -922,13 +925,13 @@ pnpm --filter @cuberoot/miniprogram release:check
 
 - 共享包构建、客户端类型检查、服务端类型检查和小程序类型检查、构建均通过。
 - 客户端智能魔方相关 580 项、小程序全量 264 项、服务端中继 17 项回归通过；源码与构建产物敏感能力扫描通过。
-- 发布检查只保留 9 项不能由代码替代的人工门禁：稳定基础库确认、AppSecret 轮换、基础信息审核、备案、隐私复核、iOS 真机、Android 真机、GAN 16 ui 真机和 GoCube 真机；未用环境变量伪造通过。
+- 发布检查只保留 11 项不能由代码替代的人工门禁：稳定基础库确认、AppSecret 轮换、基础信息审核、备案、隐私复核、iOS 真机、Android 真机，以及 GAN 16 ui、GoCube、Giiker/米家和 MoYu MHC 真机；未用环境变量伪造通过。
 
 ### 2026-08-17：BLE 写入与断连统一隔离
 
-- GAN、GoCube 与 Giiker 共用 `ble-api.ts` 的原生操作队列与清理等待窗口，不再分别维护易漂移的写入队列。
+- GAN、GoCube、Giiker 与 MoYu 共用 `ble-api.ts` 的资源租约、取消和清理等待窗口；需要主机写入的前三种协议继续共用同一操作队列。
 - 微信写入包装超时后，队列仍等待真实原生回调；主动断开先停止业务回调，再延迟关闭通知、连接和适配器，避免原生写入与清理并发。
-- 回归覆盖三种协议的写入串行、写入期间断开和超时后的延迟清理；这些测试只证明代码边界，不能替代 GAN 16 ui、GoCube 与 Giiker/米家真机验收。
+- 回归覆盖三种写入协议的串行、写入期间断开和超时后的延迟清理，并覆盖 MoYu 通知订阅与幂等清理；这些测试只证明代码边界，不能替代各型号真机验收。
 
 ### 2026-08-17：Giiker 与米家原生 BLE 接入
 
@@ -936,6 +939,14 @@ pnpm --filter @cuberoot/miniprogram release:check
 - 小程序原生层已覆盖设备名发现、初始状态读取、转动与状态中继、电量查询、物理断开和幂等清理；该协议不声明陀螺仪能力。
 - 自动回归验证代码边界；真实 Giiker/米家设备连接、转动、电量和重连仍是独立发布闸门，未验收前只声明代码兼容。
 - 本轮验证：客户端智能魔方相关 90 项、小程序全量 267 项通过；共享包与小程序构建、客户端与小程序类型检查全部通过。
+
+### 2026-08-17：MoYu AI MHC 旧协议原生 BLE 接入
+
+- MoYu MHC 旧协议的服务与特征 UUID、设备名匹配和转动累积解析已移到 `@cuberoot/shared/smart-cube/moyu`；网站 Web Bluetooth 与小程序微信 BLE 不再各自维护解析器。
+- 小程序原生层已覆盖 MHC、MoYu、MY- 设备名发现、必需转动通知、可选读取与姿态通知、物理断开和幂等清理；协议没有可靠电量结果，因此不伪造电量或姿态能力。
+- 发布检查新增独立 MoYu 真机闸门。自动回归只证明代码和模拟传输边界，真实设备连接、转动和重连仍需在支持微信 BLE 的手机上验收。
+- 本轮严格收口在 MHC 旧协议；MoYu32 加密协议和 QiYi 协议族留给后续独立迭代，不与本轮混做。
+- 本轮验证：小程序全量 271 项、客户端智能魔方相关 152 项通过；共享包、客户端和小程序类型检查以及小程序正式构建全部通过。
 
 ### 首版工程
 
