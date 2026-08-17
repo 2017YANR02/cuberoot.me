@@ -497,6 +497,48 @@ describe('mini program release check', () => {
     ]);
   });
 
+  it('detects privacy-sensitive APIs after the upload bundle aliases wx', () => {
+    const failures = collectReleaseFailures({
+      ...validInput,
+      uploadFiles: [
+        {
+          path: 'pages/device/index.js',
+          source: 'const api=wx;const open=api.openBluetoothAdapter;const profile=api["getUserProfile"]',
+        },
+      ],
+    });
+
+    expect(failures).toEqual([
+      'pages/device/index.js 使用了微信用户资料能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+      'pages/device/index.js 使用了蓝牙能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+    ]);
+  });
+
+  it('keeps unbundled transport abstractions outside the release privacy boundary', () => {
+    expect(collectReleaseFailures({
+      ...validInput,
+      sourceFiles: [
+        {
+          path: 'src/lib/smart-cube/transport.ts',
+          source: 'export const open = (api) => api.openBluetoothAdapter({})',
+        },
+      ],
+    })).toEqual([]);
+  });
+
+  it('detects bracket-form wx calls in source before bundling', () => {
+    const failures = collectReleaseFailures({
+      ...validInput,
+      sourceFiles: [
+        { path: 'src/pages/device/index.ts', source: 'const open = wx["openBluetoothAdapter"]' },
+      ],
+    });
+
+    expect(failures).toEqual([
+      'src/pages/device/index.ts 使用了蓝牙能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+    ]);
+  });
+
   it('ignores binary content placeholders while retaining their release metadata', () => {
     expect(collectReleaseFailures({
       ...validInput,
