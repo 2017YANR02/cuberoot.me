@@ -37,6 +37,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'nemesizer', zh: '宿敌分析', en: 'Nemesizer' },
   { key: 'live', zh: '实时成绩', en: 'Live results' },
   { key: 'alg', zh: '公式库与训练', en: 'Algs & training' },
+  { key: 'teaching-saas', zh: '教学机构', en: 'Teaching organizations' },
   { key: 'membership', zh: '会员', en: 'Membership' },
   { key: 'feedback', zh: '反馈', en: 'Feedback' },
   { key: 'notification', zh: '通知', en: 'Notifications' },
@@ -58,7 +59,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live documents feedback forum health historical_ranks
-//   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching
+//   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wiki
 // ─ covers-routes-end ─
@@ -269,6 +270,15 @@ const ENDPOINTS: Ep[] = [
   { d: 'alg', m: 'GET', p: '/v1/trainer/rooms/:code', g: 'public', zh: '房间状态(合并进度 / 当前轮)', en: 'Room status (combined progress / current round)' },
   { d: 'alg', m: 'POST', p: '/v1/trainer/rooms/:code/claim', g: 'public', zh: '原子领取下一题(不重不漏)', en: 'Atomically claim the next case (no overlap/gaps)' },
   { d: 'alg', m: 'POST', p: '/v1/trainer/rooms/:code/next-round', g: 'public', zh: '开下一轮(CAS,只第一个推进)', en: 'Start the next round (CAS; only the first advances)' },
+
+  // ---- teaching-saas ----
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations', g: 'login', c: 'no-store', zh: '列出当前账号加入的机构', en: 'List organizations joined by the current account' },
+  { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations', g: 'login', c: 'no-store', zh: '创建机构并成为首位所有者，要求幂等键', en: 'Create an organization as its first owner; requires an idempotency key' },
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug', g: 'login', c: 'no-store', zh: '读取有成员权限的机构', en: 'Read an organization where the account is a member' },
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/members', g: 'login', c: 'no-store', zh: '按机构角色读取成员', en: 'List members under organization-role authorization' },
+  { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/members', g: 'login', c: 'no-store', zh: '按机构角色添加成员，要求幂等键', en: 'Add a member under organization-role authorization; requires an idempotency key' },
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/students', g: 'login', c: 'no-store', zh: '按机构范围读取学员', en: 'List students scoped to an organization' },
+  { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/students', g: 'login', c: 'no-store', zh: '按机构权限创建学员，要求幂等键', en: 'Create a student under organization authorization; requires an idempotency key' },
 
   // ---- membership ----
   { d: 'membership', m: 'GET', p: '/v1/membership/plans', g: 'public', zh: '会员套餐', en: 'Membership plans' },
@@ -492,7 +502,7 @@ const GATE_LABEL: Record<Gate, { zh: string; en: string }> = {
 
 const GATE_NOTE: Record<Gate, { zh: string; en: string }> = {
   public: { zh: '无需鉴权,任何人可调。', en: 'No auth — open to anyone.' },
-  login: { zh: '需带 WCA 登录后的 Bearer JWT。', en: 'Requires a Bearer JWT from WCA login.' },
+  login: { zh: '需带 CubeRoot 登录后的 Bearer JWT；教学平台也可由受信服务端桥接。', en: 'Requires a CubeRoot Bearer JWT; the teaching platform may also use its trusted server bridge.' },
   admin: { zh: '需 admin 凭据(X-Admin-Key 或管理员账号)。', en: 'Requires admin credentials (X-Admin-Key or an admin account).' },
   webhook: { zh: '仅供支付服务商服务端回调,带网关签名,前端不调。', en: 'Server-to-server payment callback, gateway-signed — not called by the client.' },
 };
