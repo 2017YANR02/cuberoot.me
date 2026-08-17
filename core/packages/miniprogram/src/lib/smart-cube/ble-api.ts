@@ -55,6 +55,8 @@ export interface BleResourceLease {
 }
 
 interface BleResourceState {
+  cleanupPending: boolean;
+  nativeDrainWaiters: Set<() => void>;
   owner?: symbol;
   pendingNativeOperations: number;
 }
@@ -71,10 +73,14 @@ export class BleResourceBusyError extends Error {
 
 export function claimBleResourceLease(api: object): BleResourceLease {
   const state = BLE_RESOURCE_STATES.get(api) ?? {
+    cleanupPending: false,
+    nativeDrainWaiters: new Set<() => void>(),
     pendingNativeOperations: 0,
   };
   BLE_RESOURCE_STATES.set(api, state);
-  if (state.pendingNativeOperations > 0) throw new BleResourceBusyError();
+  if (state.cleanupPending || state.pendingNativeOperations > 0) {
+    throw new BleResourceBusyError();
+  }
 
   const owner = Symbol('ble-resource-owner');
   state.owner = owner;
@@ -83,6 +89,33 @@ export function claimBleResourceLease(api: object): BleResourceLease {
   };
   BLE_RESOURCE_LEASE_STATES.set(lease, state);
   return lease;
+}
+
+export function beginBleResourceCleanup(lease: BleResourceLease): () => void {
+  const state = BLE_RESOURCE_LEASE_STATES.get(lease);
+  if (!state || !lease.isCurrent()) return () => {};
+
+  state.cleanupPending = true;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    if (lease.isCurrent()) state.cleanupPending = false;
+  };
+}
+
+export function waitForBleNativeOperations(lease: BleResourceLease): Promise<void> {
+  const state = BLE_RESOURCE_LEASE_STATES.get(lease);
+  if (!state || state.pendingNativeOperations === 0) return Promise.resolve();
+  return new Promise<void>((resolve) => state.nativeDrainWaiters.add(resolve));
+}
+
+function settleBleNativeOperation(state: BleResourceState): void {
+  state.pendingNativeOperations = Math.max(0, state.pendingNativeOperations - 1);
+  if (state.pendingNativeOperations !== 0) return;
+  const waiters = [...state.nativeDrainWaiters];
+  state.nativeDrainWaiters.clear();
+  for (const resolve of waiters) resolve();
 }
 
 export interface MiniProgramBleApi {
@@ -225,7 +258,7 @@ export function invokeBleForLease<T>(
 
   state.pendingNativeOperations++;
   return invokeBleInternal(start, timeoutMs, onLateSuccess, () => {
-    state.pendingNativeOperations = Math.max(0, state.pendingNativeOperations - 1);
+    settleBleNativeOperation(state);
   });
 }
 

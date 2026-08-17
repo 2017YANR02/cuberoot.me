@@ -9,9 +9,22 @@ import {
   matchesGanV4Name,
 } from '@cuberoot/shared/smart-cube/gan-v4';
 import {
+  GAN_V2_NOTIFY_CHARACTERISTIC_UUID,
+  GAN_V2_SERVICE_UUID,
+  GAN_V2_WRITE_CHARACTERISTIC_UUID,
+  createGanV2Cipher,
+} from '@cuberoot/shared/smart-cube/gan-v2';
+import {
+  GAN_V3_NOTIFY_CHARACTERISTIC_UUID,
+  GAN_V3_SERVICE_UUID,
+  GAN_V3_WRITE_CHARACTERISTIC_UUID,
+  createGanV3Cipher,
+} from '@cuberoot/shared/smart-cube/gan-v3';
+import {
   GanV4BleError,
   connectGanV4,
 } from '../src/lib/smart-cube/gan-v4-ble';
+import { BLE_OPERATION_TIMEOUT_MS } from '../src/lib/smart-cube/ble-api';
 import type {
   BleConnectionStateChange,
   CharacteristicValueChange,
@@ -25,6 +38,32 @@ type StateListener = (result: BleConnectionStateChange) => void;
 const GAN_MAC = Uint8Array.from([1, 2, 3, 4, 5, 6]);
 const GAN_ADVERTISEMENT = Uint8Array.from([6, 5, 4, 3, 2, 1]).buffer;
 const SOLVED_FACELETS = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB';
+
+type GanProtocolFamily = 'v2' | 'v3' | 'v4';
+
+const GAN_PROTOCOLS = {
+  v2: {
+    notifyCharacteristicUuid: GAN_V2_NOTIFY_CHARACTERISTIC_UUID,
+    serviceUuid: GAN_V2_SERVICE_UUID,
+    writeCharacteristicUuid: GAN_V2_WRITE_CHARACTERISTIC_UUID,
+    createCipher: (deviceName: string) => createGanV2Cipher(GAN_MAC, deviceName),
+    deviceName: 'GAN356 i',
+  },
+  v3: {
+    notifyCharacteristicUuid: GAN_V3_NOTIFY_CHARACTERISTIC_UUID,
+    serviceUuid: GAN_V3_SERVICE_UUID,
+    writeCharacteristicUuid: GAN_V3_WRITE_CHARACTERISTIC_UUID,
+    createCipher: () => createGanV3Cipher(GAN_MAC),
+    deviceName: 'GAN356 i3',
+  },
+  v4: {
+    notifyCharacteristicUuid: GAN_V4_NOTIFY_CHARACTERISTIC_UUID,
+    serviceUuid: GAN_V4_SERVICE_UUID,
+    writeCharacteristicUuid: GAN_V4_WRITE_CHARACTERISTIC_UUID,
+    createCipher: () => createGanV4Cipher(GAN_MAC),
+    deviceName: 'GAN16ui',
+  },
+} as const;
 
 function ganFrame(mode: number): Uint8Array {
   const value = new Uint8Array(20);
@@ -60,18 +99,26 @@ function createBleRig(options: {
   }>;
   deviceId?: string;
   deviceName?: string;
+  protocol?: GanProtocolFamily;
 } = {}) {
-  const cipher = createGanV4Cipher(GAN_MAC);
+  const protocol = GAN_PROTOCOLS[options.protocol ?? 'v4'];
+  const deviceName = options.deviceName ?? protocol.deviceName;
+  const cipher = protocol.createCipher(deviceName);
+  const commandHeaders: Array<[number, number]> = [];
   const commandOpcodes: number[] = [];
   const discoveryServices: Array<string[] | undefined> = [];
   const events: string[] = [];
+  const pendingWriteCompletions: Array<() => void> = [];
+  let holdWrites = false;
+  let activeWrites = 0;
+  let maxConcurrentWrites = 0;
   let deviceListener: DeviceListener | undefined;
   let stateListener: StateListener | undefined;
   let valueListener: ValueListener | undefined;
   const deviceId = options.deviceId ?? 'ios-device-uuid';
   const characteristics = options.characteristics ?? [
-    { uuid: GAN_V4_WRITE_CHARACTERISTIC_UUID.toUpperCase(), properties: { write: true } },
-    { uuid: GAN_V4_NOTIFY_CHARACTERISTIC_UUID.toUpperCase(), properties: { notify: true } },
+    { uuid: protocol.writeCharacteristicUuid.toUpperCase(), properties: { write: true } },
+    { uuid: protocol.notifyCharacteristicUuid.toUpperCase(), properties: { notify: true } },
   ];
 
   const api: MiniProgramBleApi = {
@@ -91,7 +138,7 @@ function createBleRig(options: {
         devices: [{
           advertisData: options.advertisement ?? GAN_ADVERTISEMENT,
           deviceId,
-          name: options.deviceName ?? 'GAN16ui',
+          name: deviceName,
         }],
       }));
     },
@@ -121,7 +168,7 @@ function createBleRig(options: {
     },
     getBLEDeviceServices(callbacks) {
       callbacks.success?.({
-        services: [{ uuid: GAN_V4_SERVICE_UUID.toUpperCase(), isPrimary: true }],
+        services: [{ uuid: protocol.serviceUuid.toUpperCase(), isPrimary: true }],
       });
     },
     getBLEDeviceCharacteristics(callbacks) {
@@ -138,22 +185,46 @@ function createBleRig(options: {
       if (valueListener === listener) valueListener = undefined;
     },
     writeBLECharacteristicValue(callbacks) {
-      commandOpcodes.push(cipher.decrypt(new Uint8Array(callbacks.value))[0]);
-      callbacks.success?.({});
+      const plain = cipher.decrypt(new Uint8Array(callbacks.value));
+      commandOpcodes.push(plain[0]);
+      commandHeaders.push([plain[0], plain[1]]);
+      activeWrites++;
+      maxConcurrentWrites = Math.max(maxConcurrentWrites, activeWrites);
+      const complete = (): void => {
+        activeWrites--;
+        callbacks.success?.({});
+      };
+      if (holdWrites) pendingWriteCompletions.push(complete);
+      else complete();
     },
   };
 
   return {
     api,
+    commandHeaders,
     commandOpcodes,
     discoveryServices,
     events,
+    holdWrites() {
+      holdWrites = true;
+    },
+    maxConcurrentWrites() {
+      return maxConcurrentWrites;
+    },
+    pendingWriteCount() {
+      return pendingWriteCompletions.length;
+    },
+    releaseNextWrite() {
+      const complete = pendingWriteCompletions.shift();
+      if (!complete) throw new Error('No pending GAN write to release.');
+      complete();
+    },
     emit(plain: Uint8Array) {
       const encrypted = cipher.encrypt(plain);
       const event: CharacteristicValueChange = {
-        characteristicId: GAN_V4_NOTIFY_CHARACTERISTIC_UUID.toUpperCase(),
+        characteristicId: protocol.notifyCharacteristicUuid.toUpperCase(),
         deviceId,
-        serviceId: GAN_V4_SERVICE_UUID.toUpperCase(),
+        serviceId: protocol.serviceUuid.toUpperCase(),
         value: new Uint8Array(encrypted).buffer,
       };
       valueListener?.(event);
@@ -164,7 +235,7 @@ function createBleRig(options: {
   };
 }
 
-describe('WeChat GAN v4 BLE transport', () => {
+describe('WeChat GAN BLE transport', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
@@ -227,6 +298,34 @@ describe('WeChat GAN v4 BLE transport', () => {
     expect(rig.events.filter((event) => event === 'adapter:close')).toHaveLength(1);
   });
 
+  it('selects GAN v3 GATT and sends the v3 setup sequence', async () => {
+    const rig = createBleRig({ protocol: 'v3' });
+    const connection = await connectGanV4({ api: rig.api });
+
+    expect(connection.deviceName).toBe('GAN356 i3');
+    expect(rig.commandHeaders).toEqual([
+      [0x68, 4],
+      [0x68, 1],
+      [0x68, 7],
+    ]);
+
+    await connection.disconnect();
+  });
+
+  it('selects GAN v2 GATT and sends the v2 setup sequence', async () => {
+    const rig = createBleRig({ protocol: 'v2' });
+    const connection = await connectGanV4({ api: rig.api });
+
+    expect(connection.deviceName).toBe('GAN356 i');
+    expect(rig.commandHeaders).toEqual([
+      [5, 0],
+      [4, 0],
+      [9, 0],
+    ]);
+
+    await connection.disconnect();
+  });
+
   it('reports a discovered GAN without a usable MAC', async () => {
     vi.useFakeTimers();
     const rig = createBleRig({ advertisement: new Uint8Array(6).buffer });
@@ -268,6 +367,61 @@ describe('WeChat GAN v4 BLE transport', () => {
     });
     await connection.disconnect();
     expect(onDisconnect).toHaveBeenCalledWith('GAN 智能魔方连接已断开');
+  });
+
+  it('serializes native writes and waits for an in-flight write before closing BLE', async () => {
+    const rig = createBleRig();
+    const connection = await connectGanV4({ api: rig.api });
+    rig.holdWrites();
+
+    const firstBattery = connection.requestBattery();
+    const secondBattery = connection.requestBattery();
+    await vi.waitFor(() => expect(rig.pendingWriteCount()).toBe(1));
+    expect(rig.maxConcurrentWrites()).toBe(1);
+
+    rig.releaseNextWrite();
+    await vi.waitFor(() => expect(rig.pendingWriteCount()).toBe(1));
+    expect(rig.maxConcurrentWrites()).toBe(1);
+
+    const disconnecting = connection.disconnect();
+    await Promise.resolve();
+    expect(rig.events).not.toContain('notify:off');
+    expect(rig.events).not.toContain('connection:close');
+    expect(rig.events).not.toContain('adapter:close');
+
+    rig.releaseNextWrite();
+    await disconnecting;
+    await expect(firstBattery).resolves.toBeNull();
+    await expect(secondBattery).resolves.toBeNull();
+    expect(rig.events).toContain('notify:off');
+    expect(rig.events).toContain('connection:close');
+    expect(rig.events).toContain('adapter:close');
+  });
+
+  it('defers cleanup when a native write remains pending after its public timeout', async () => {
+    vi.useFakeTimers();
+    const rig = createBleRig();
+    const connection = await connectGanV4({ api: rig.api });
+    rig.holdWrites();
+
+    const batteryRequest = connection.requestBattery();
+    const rejection = expect(batteryRequest).rejects.toBeInstanceOf(Error);
+    await vi.waitFor(() => expect(rig.pendingWriteCount()).toBe(1));
+    const disconnecting = connection.disconnect();
+
+    await vi.advanceTimersByTimeAsync(BLE_OPERATION_TIMEOUT_MS);
+    await rejection;
+    await disconnecting;
+    expect(rig.events).not.toContain('notify:off');
+    expect(rig.events).not.toContain('connection:close');
+    expect(rig.events).not.toContain('adapter:close');
+
+    rig.releaseNextWrite();
+    await vi.waitFor(() => {
+      expect(rig.events).toContain('notify:off');
+      expect(rig.events).toContain('connection:close');
+      expect(rig.events).toContain('adapter:close');
+    });
   });
 
   it('cleans up when GAN GATT characteristics are unavailable', async () => {

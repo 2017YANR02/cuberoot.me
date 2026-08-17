@@ -13,6 +13,32 @@ import {
   matchesGanV4Name,
 } from '@cuberoot/shared/smart-cube/gan-v4';
 import {
+  GAN_V2_NOTIFY_CHARACTERISTIC_UUID,
+  GAN_V2_SERVICE_UUID,
+  GAN_V2_WRITE_CHARACTERISTIC_UUID,
+  createGanV2BatteryCommand,
+  createGanV2Cipher,
+  createGanV2DecodeState,
+  createGanV2FaceletsCommand,
+  createGanV2HardwareInfoCommand,
+  decodeGanV2Frame,
+  matchesGanV2Name,
+} from '@cuberoot/shared/smart-cube/gan-v2';
+import {
+  GAN_V3_NOTIFY_CHARACTERISTIC_UUID,
+  GAN_V3_SERVICE_UUID,
+  GAN_V3_WRITE_CHARACTERISTIC_UUID,
+  createGanV3BatteryCommand,
+  createGanV3Cipher,
+  createGanV3DecodeState,
+  createGanV3FaceletsCommand,
+  createGanV3HardwareInfoCommand,
+  createGanV3HistoryCommand,
+  decodeGanV3Frame,
+  matchesGanV3Name,
+} from '@cuberoot/shared/smart-cube/gan-v3';
+import {
+  beginBleResourceCleanup,
   claimBleResourceLease,
   ignoreBleFailure,
   invokeBleCleanupForLease,
@@ -22,6 +48,8 @@ import {
   raceBleAbort,
   raceBleAbortWithLateCleanup,
   safeBleCallback,
+  waitForBleNativeOperations,
+  BLE_CLEANUP_TIMEOUT_MS,
   BleOperationAbortedError,
   type BleAbortSignal,
   type CharacteristicValueChange,
@@ -33,6 +61,8 @@ import {
   type BleResourceLease,
 } from './ble-api';
 
+// Keep the historical v4 file/API name stable for session callers; this adapter
+// now selects the compatible GAN v2, v3, or v4 protocol from the discovered GATT service.
 export interface GanV4BleConnection {
   readonly deviceId: string;
   readonly deviceName: string;
@@ -76,6 +106,42 @@ interface GanDiscovery {
   mac: Uint8Array;
 }
 
+type GanProtocolFamily = 'v2' | 'v3' | 'v4';
+
+interface GanProtocolGatt {
+  family: GanProtocolFamily;
+  notifyCharacteristicUuid: string;
+  serviceUuid: string;
+  writeCharacteristicUuid: string;
+}
+
+const GAN_PROTOCOLS: readonly GanProtocolGatt[] = [
+  {
+    family: 'v4',
+    notifyCharacteristicUuid: GAN_V4_NOTIFY_CHARACTERISTIC_UUID,
+    serviceUuid: GAN_V4_SERVICE_UUID,
+    writeCharacteristicUuid: GAN_V4_WRITE_CHARACTERISTIC_UUID,
+  },
+  {
+    family: 'v3',
+    notifyCharacteristicUuid: GAN_V3_NOTIFY_CHARACTERISTIC_UUID,
+    serviceUuid: GAN_V3_SERVICE_UUID,
+    writeCharacteristicUuid: GAN_V3_WRITE_CHARACTERISTIC_UUID,
+  },
+  {
+    family: 'v2',
+    notifyCharacteristicUuid: GAN_V2_NOTIFY_CHARACTERISTIC_UUID,
+    serviceUuid: GAN_V2_SERVICE_UUID,
+    writeCharacteristicUuid: GAN_V2_WRITE_CHARACTERISTIC_UUID,
+  },
+] as const;
+
+const GAN_V3_IDLE_STATE_CHECK_MS = [650, 1600, 3200] as const;
+
+function matchesGanName(name: string | undefined): boolean {
+  return matchesGanV4Name(name) || matchesGanV3Name(name) || matchesGanV2Name(name);
+}
+
 function macFromText(value: string | undefined): Uint8Array | null {
   if (value && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value)) return null;
   const match = value?.match(/(?:^|[-_:])([0-9a-f]{2})[-_:]?([0-9a-f]{2})[-_:]?([0-9a-f]{2})[-_:]?([0-9a-f]{2})[-_:]?([0-9a-f]{2})[-_:]?([0-9a-f]{2})$/i);
@@ -90,7 +156,7 @@ function ganMac(device: DiscoveredDevice): Uint8Array | null {
     ?? macFromText(device.localName);
 }
 
-async function findGanV4(
+async function findGan(
   api: MiniProgramBleApi,
   lease: BleResourceLease,
   timeoutMs: number,
@@ -120,7 +186,7 @@ async function findGanV4(
     const onFound = (result: { devices: DiscoveredDevice[] }): void => {
       for (const device of result.devices) {
         if (!device.deviceId
-          || !(matchesGanV4Name(device.name) || matchesGanV4Name(device.localName))) continue;
+          || !(matchesGanName(device.name) || matchesGanName(device.localName))) continue;
         sawGan = true;
         const mac = ganMac(device);
         if (mac) {
@@ -137,7 +203,7 @@ async function findGanV4(
       sawGan ? 'mac-unavailable' : 'device-not-found',
       sawGan
         ? '已发现 GAN，但未读取到设备地址。请让魔方保持唤醒并重新搜索'
-        : '未发现 GAN 12 至 16、GAN Mini、MG 或 AiCube',
+        : '未发现 GAN 智能魔方，请唤醒魔方后重试',
     )), timeoutMs);
 
     const stopDiscovery = (): Promise<unknown> => invokeBleCleanupForLease(
@@ -194,13 +260,29 @@ export async function connectGanV4(
   let closing = false;
   let writeQueue: Promise<void> = Promise.resolve();
   let lastBattery: number | null = null;
+  let protocolCleanup = (): void => {};
   const batteryWaiters = new Set<(level: number | null) => void>();
+
+  const waitForDrainWindow = (operation: Promise<void>): Promise<boolean> => new Promise((resolve) => {
+    let settled = false;
+    const finish = (drained: boolean): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(drained);
+    };
+    const timer = setTimeout(() => finish(false), BLE_CLEANUP_TIMEOUT_MS);
+    void operation.then(() => finish(true), () => finish(true));
+  });
 
   const disconnect = (): Promise<void> => {
     if (disconnectPromise) return disconnectPromise;
     disconnectPromise = (async () => {
+      const releaseCleanupBarrier = beginBleResourceCleanup(lease);
       closing = true;
       active = false;
+      const pendingWrites = writeQueue;
+      protocolCleanup();
       for (const resolve of batteryWaiters) resolve(lastBattery);
       batteryWaiters.clear();
       if (notificationListener) {
@@ -211,29 +293,42 @@ export async function connectGanV4(
         api.offBLEConnectionStateChange?.(connectionStateListener);
         connectionStateListener = null;
       }
-      if (notificationsEnabled && connectedDeviceId && serviceId && notifyCharacteristicId) {
-        await ignoreBleFailure(
-          () => invokeBleCleanupForLease(lease, (callbacks) => api.notifyBLECharacteristicValueChange({
-            ...callbacks,
-            characteristicId: notifyCharacteristicId as string,
-            deviceId: connectedDeviceId as string,
-            serviceId: serviceId as string,
-            state: false,
-          })),
-        );
-        notificationsEnabled = false;
-      }
-      if (connectedDeviceId) {
-        await ignoreBleFailure(() => invokeBleCleanupForLease(lease, (callbacks) => api.closeBLEConnection({
-          ...callbacks,
-          deviceId: connectedDeviceId as string,
-        })));
-      }
-      if (adapterOpen) {
-        await ignoreBleFailure(
-          () => invokeBleCleanupForLease(lease, (callbacks) => api.closeBluetoothAdapter(callbacks)),
-        );
-      }
+      const finishCleanup = async (): Promise<void> => {
+        try {
+          // WeChat cannot cancel a write already handed to native code. Keep the
+          // transport quarantined until its real callback arrives, even if the
+          // public write promise has already timed out.
+          await pendingWrites;
+          if (notificationsEnabled && connectedDeviceId && serviceId && notifyCharacteristicId) {
+            await ignoreBleFailure(
+              () => invokeBleCleanupForLease(lease, (callbacks) => api.notifyBLECharacteristicValueChange({
+                ...callbacks,
+                characteristicId: notifyCharacteristicId as string,
+                deviceId: connectedDeviceId as string,
+                serviceId: serviceId as string,
+                state: false,
+              })),
+            );
+            notificationsEnabled = false;
+          }
+          if (connectedDeviceId) {
+            await ignoreBleFailure(() => invokeBleCleanupForLease(lease, (callbacks) => api.closeBLEConnection({
+              ...callbacks,
+              deviceId: connectedDeviceId as string,
+            })));
+          }
+          if (adapterOpen) {
+            await ignoreBleFailure(
+              () => invokeBleCleanupForLease(lease, (callbacks) => api.closeBluetoothAdapter(callbacks)),
+            );
+          }
+        } finally {
+          releaseCleanupBarrier();
+        }
+      };
+      const cleanup = finishCleanup();
+      if (await waitForDrainWindow(pendingWrites)) await cleanup;
+      else void cleanup.catch(() => {});
     })();
     return disconnectPromise;
   };
@@ -267,7 +362,7 @@ export async function connectGanV4(
       });
     }
 
-    const discovery = await findGanV4(api, lease, scanTimeoutMs, options.signal);
+    const discovery = await findGan(api, lease, scanTimeoutMs, options.signal);
     connectedDeviceId = discovery.device.deviceId;
     deviceName = discovery.device.name ?? discovery.device.localName ?? deviceName;
     try {
@@ -307,9 +402,14 @@ export async function connectGanV4(
       ...callbacks,
       deviceId: discovery.device.deviceId,
     })), options.signal);
-    const service = services.services.find((candidate) =>
-      normalizeBleUuid(candidate.uuid) === GAN_V4_SERVICE_UUID);
+    const protocol = GAN_PROTOCOLS.find((candidate) => services.services.some((serviceCandidate) =>
+      normalizeBleUuid(serviceCandidate.uuid) === candidate.serviceUuid));
+    const service = protocol
+      ? services.services.find((candidate) =>
+        normalizeBleUuid(candidate.uuid) === protocol.serviceUuid)
+      : undefined;
     if (!service) throw new GanV4BleError('gatt-unavailable', 'GAN 通信服务不可用');
+    if (!protocol) throw new GanV4BleError('gatt-unavailable', 'GAN 协议不可识别');
     serviceId = service.uuid;
 
     const characteristics = await raceBleAbort(invokeBleForLease<{ characteristics: BleCharacteristic[] }>(lease, (callbacks) => api.getBLEDeviceCharacteristics({
@@ -318,10 +418,10 @@ export async function connectGanV4(
       serviceId: service.uuid,
     })), options.signal);
     const writeCharacteristic = characteristics.characteristics.find((candidate) =>
-      normalizeBleUuid(candidate.uuid) === GAN_V4_WRITE_CHARACTERISTIC_UUID
+      normalizeBleUuid(candidate.uuid) === protocol.writeCharacteristicUuid
       && Boolean(candidate.properties?.write || candidate.properties?.writeNoResponse));
     const notifyCharacteristic = characteristics.characteristics.find((candidate) =>
-      normalizeBleUuid(candidate.uuid) === GAN_V4_NOTIFY_CHARACTERISTIC_UUID
+      normalizeBleUuid(candidate.uuid) === protocol.notifyCharacteristicUuid
       && Boolean(candidate.properties?.notify || candidate.properties?.indicate));
     if (!writeCharacteristic || !notifyCharacteristic) {
       throw new GanV4BleError('gatt-unavailable', 'GAN 通信特征不可用');
@@ -329,36 +429,138 @@ export async function connectGanV4(
     writeCharacteristicId = writeCharacteristic.uuid;
     notifyCharacteristicId = notifyCharacteristic.uuid;
 
-    const cipher = createGanV4Cipher(discovery.mac);
+    const cipher = protocol.family === 'v4'
+      ? createGanV4Cipher(discovery.mac)
+      : protocol.family === 'v3'
+        ? createGanV3Cipher(discovery.mac)
+        : createGanV2Cipher(discovery.mac, deviceName);
     const sendCommand = (command: Uint8Array): Promise<void> => {
-      const operation = writeQueue.then(async () => {
+      const scheduled = writeQueue.then(() => {
         if (closing || !connectedDeviceId || !serviceId || !writeCharacteristicId) {
           throw new GanV4BleError('connection-failed', 'GAN 智能魔方连接已断开');
         }
         const encrypted = cipher.encrypt(command);
-        await raceBleAbort(invokeBleForLease(lease, (callbacks) => api.writeBLECharacteristicValue({
+        const operation = invokeBleForLease(lease, (callbacks) => api.writeBLECharacteristicValue({
           ...callbacks,
           characteristicId: writeCharacteristicId as string,
           deviceId: connectedDeviceId as string,
           serviceId: serviceId as string,
           value: new Uint8Array(encrypted).buffer,
-        })), options.signal);
+        })).then(() => undefined);
+        return {
+          nativeSettled: waitForBleNativeOperations(lease),
+          operation,
+        };
       });
-      writeQueue = operation.catch(() => {});
-      return operation;
+      const operation = scheduled.then(({ operation: pendingOperation }) => pendingOperation);
+      writeQueue = scheduled.then(async ({ nativeSettled, operation: pendingOperation }) => {
+        await pendingOperation.catch(() => {});
+        await nativeSettled;
+      }).catch(() => {});
+      return raceBleAbort(operation, options.signal);
     };
 
-    const decodeState = createGanV4DecodeState({
-      requestHistory: (startMoveCounter, numberOfMoves) => {
-        void sendCommand(createGanV4HistoryCommand(startMoveCounter, numberOfMoves)).catch(() => {});
-      },
-      onWedged: () => {
-        void sendCommand(createGanV4FaceletsCommand()).catch(() => {});
-      },
-      onState: (facelets) => safeBleCallback(
-        options.onState ? () => options.onState?.(facelets) : undefined,
-      ),
-    });
+    const publishState = (facelets: string): void => safeBleCallback(
+      options.onState ? () => options.onState?.(facelets) : undefined,
+    );
+    const publishMove = (move: string, deviceTs?: number): void => safeBleCallback(
+      options.onMove ? () => options.onMove?.(move, deviceTs) : undefined,
+    );
+    const publishGyro = (
+      quaternion: { w: number; x: number; y: number; z: number },
+      velocity?: { x: number; y: number; z: number },
+    ): void => safeBleCallback(options.onGyro
+      ? () => options.onGyro?.(quaternion, velocity ?? { x: 0, y: 0, z: 0 })
+      : undefined);
+
+    let badFrameCount = (): number => 0;
+    let recordDecodeFailure = (): void => {};
+    let readProtocolBattery = (): number | null => null;
+    let decodeNotification: (frame: Uint8Array) => void;
+    let batteryCommand: () => Uint8Array;
+    let initialCommands: readonly Uint8Array[];
+
+    if (protocol.family === 'v4') {
+      const decodeState = createGanV4DecodeState({
+        requestHistory: (startMoveCounter, numberOfMoves) => {
+          void sendCommand(createGanV4HistoryCommand(startMoveCounter, numberOfMoves)).catch(() => {});
+        },
+        onWedged: () => {
+          void sendCommand(createGanV4FaceletsCommand()).catch(() => {});
+        },
+        onState: publishState,
+      });
+      decodeNotification = (frame): void => {
+        for (const move of decodeGanV4Frame(frame, decodeState, publishGyro)) {
+          publishMove(move.mv, move.ts);
+        }
+      };
+      badFrameCount = () => decodeState.badFrames;
+      recordDecodeFailure = () => { decodeState.badFrames++; };
+      readProtocolBattery = () => decodeState.battery;
+      batteryCommand = createGanV4BatteryCommand;
+      initialCommands = [
+        createGanV4HardwareInfoCommand(),
+        createGanV4FaceletsCommand(),
+        createGanV4BatteryCommand(),
+      ];
+    } else if (protocol.family === 'v3') {
+      const idleStateChecks = new Set<ReturnType<typeof setTimeout>>();
+      const clearIdleStateChecks = (): void => {
+        for (const timer of idleStateChecks) clearTimeout(timer);
+        idleStateChecks.clear();
+      };
+      const scheduleIdleStateChecks = (): void => {
+        clearIdleStateChecks();
+        for (const delay of GAN_V3_IDLE_STATE_CHECK_MS) {
+          const timer = setTimeout(() => {
+            idleStateChecks.delete(timer);
+            if (!closing) void sendCommand(createGanV3FaceletsCommand()).catch(() => {});
+          }, delay);
+          idleStateChecks.add(timer);
+        }
+      };
+      let decodeState!: ReturnType<typeof createGanV3DecodeState>;
+      decodeState = createGanV3DecodeState({
+        requestHistory: (startMoveCounter, numberOfMoves) => {
+          void sendCommand(createGanV3HistoryCommand(startMoveCounter, numberOfMoves)).catch(() => {});
+        },
+        onWedged: () => {
+          decodeState.sync.reset();
+          void sendCommand(createGanV3FaceletsCommand()).catch(() => {});
+        },
+        onState: publishState,
+      });
+      decodeNotification = (frame): void => {
+        const moves = decodeGanV3Frame(frame, decodeState);
+        for (const move of moves) publishMove(move.mv, move.ts);
+        if (moves.length > 0) scheduleIdleStateChecks();
+      };
+      badFrameCount = () => decodeState.badFrames;
+      recordDecodeFailure = () => { decodeState.badFrames++; };
+      readProtocolBattery = () => decodeState.battery;
+      batteryCommand = createGanV3BatteryCommand;
+      initialCommands = [
+        createGanV3HardwareInfoCommand(),
+        createGanV3FaceletsCommand(),
+        createGanV3BatteryCommand(),
+      ];
+      protocolCleanup = clearIdleStateChecks;
+    } else {
+      const decodeState = createGanV2DecodeState();
+      decodeNotification = (frame): void => {
+        for (const move of decodeGanV2Frame(frame, decodeState, publishGyro)) publishMove(move);
+      };
+      badFrameCount = () => decodeState.badFrames;
+      recordDecodeFailure = () => { decodeState.badFrames++; };
+      readProtocolBattery = () => decodeState.battery;
+      batteryCommand = createGanV2BatteryCommand;
+      initialCommands = [
+        createGanV2HardwareInfoCommand(),
+        createGanV2FaceletsCommand(),
+        createGanV2BatteryCommand(),
+      ];
+    }
 
     notificationListener = (result): void => {
       if (!active
@@ -369,23 +571,18 @@ export async function connectGanV4(
       }
       try {
         const decoded = cipher.decrypt(new Uint8Array(result.value));
-        for (const move of decodeGanV4Frame(decoded, decodeState, (quaternion, velocity) => {
-          safeBleCallback(options.onGyro
-            ? () => options.onGyro?.(quaternion, velocity ?? { x: 0, y: 0, z: 0 })
-            : undefined);
-        })) {
-          safeBleCallback(options.onMove ? () => options.onMove?.(move.mv, move.ts) : undefined);
-        }
-        if (decodeState.battery !== null && decodeState.battery !== lastBattery) {
-          lastBattery = decodeState.battery;
+        decodeNotification(decoded);
+        const protocolBattery = readProtocolBattery();
+        if (protocolBattery !== null && protocolBattery !== lastBattery) {
+          lastBattery = protocolBattery;
           safeBleCallback(options.onBattery ? () => options.onBattery?.(lastBattery as number) : undefined);
           for (const resolve of batteryWaiters) resolve(lastBattery);
           batteryWaiters.clear();
         }
       } catch {
-        decodeState.badFrames++;
+        recordDecodeFailure();
       }
-      if (decodeState.badFrames >= 5) {
+      if (badFrameCount() >= 5) {
         reportUnexpectedDisconnect('GAN 通信数据连续异常，请重新连接');
       }
     };
@@ -398,9 +595,7 @@ export async function connectGanV4(
       state: true,
     })), options.signal);
     notificationsEnabled = true;
-    await sendCommand(createGanV4HardwareInfoCommand());
-    await sendCommand(createGanV4FaceletsCommand());
-    await sendCommand(createGanV4BatteryCommand());
+    for (const command of initialCommands) await sendCommand(command);
 
     return {
       deviceId: discovery.device.deviceId,
@@ -420,7 +615,7 @@ export async function connectGanV4(
           setTimeout(() => finish(lastBattery), 1_500);
         });
         try {
-          await sendCommand(createGanV4BatteryCommand());
+          await sendCommand(batteryCommand());
         } catch (error) {
           finish(lastBattery);
           throw error;

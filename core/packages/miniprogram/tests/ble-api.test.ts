@@ -4,6 +4,7 @@ import {
   BleOperationAbortedError,
   BleOperationTimeoutError,
   BleResourceBusyError,
+  beginBleResourceCleanup,
   claimBleResourceLease,
   invokeBle,
   invokeBleCleanupForLease,
@@ -12,6 +13,7 @@ import {
   invokeBleWithLateCleanupForLease,
   raceBleAbort,
   raceBleAbortWithLateCleanup,
+  waitForBleNativeOperations,
   type BleAbortSignal,
 } from '../src/lib/smart-cube/ble-api';
 
@@ -182,6 +184,38 @@ describe('invokeBle', () => {
 
       cleanupSuccess?.('closed');
       await Promise.resolve();
+      expect(() => claimBleResourceLease(api)).not.toThrow();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('waits for native settlement and keeps a cleanup barrier across wrapper timeout', async () => {
+    vi.useFakeTimers();
+    try {
+      const api = {};
+      const lease = claimBleResourceLease(api);
+      const releaseCleanup = beginBleResourceCleanup(lease);
+      let nativeSuccess: ((value: string) => void) | undefined;
+      const operation = invokeBleForLease<string>(lease, (callbacks) => {
+        nativeSuccess = callbacks.success;
+      }, 50);
+      const nativeDrain = waitForBleNativeOperations(lease);
+      const drained = vi.fn();
+      void nativeDrain.then(drained);
+      const rejection = expect(operation).rejects.toBeInstanceOf(BleOperationTimeoutError);
+
+      await vi.advanceTimersByTimeAsync(50);
+      await rejection;
+      expect(drained).not.toHaveBeenCalled();
+      expect(() => claimBleResourceLease(api)).toThrow(BleResourceBusyError);
+
+      nativeSuccess?.('late');
+      await nativeDrain;
+      expect(drained).toHaveBeenCalledOnce();
+      expect(() => claimBleResourceLease(api)).toThrow(BleResourceBusyError);
+
+      releaseCleanup();
       expect(() => claimBleResourceLease(api)).not.toThrow();
     } finally {
       vi.useRealTimers();

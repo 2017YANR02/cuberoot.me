@@ -253,7 +253,7 @@ export class SmartCubeSession {
     if (!this.socketOpen) throw new Error('请先从计时器打开连接页');
     if (this.snapshot.phase === 'scanning' || this.snapshot.phase === 'connecting') return;
     const deviceName = kind === 'gan-v4'
-      ? 'GAN 12 至 16、Mini、MG、AiCube'
+      ? 'GAN v2、v3、v4 协议设备'
       : kind === 'gocube'
         ? 'GoCube、Rubik’s Connected'
         : '开发者工具仿真魔方';
