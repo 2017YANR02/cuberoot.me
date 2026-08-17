@@ -166,6 +166,12 @@ const TABLES: Table[] = [
   { name: 'teaching_idempotency_requests', domain: 'teaching', origin: '0142', naturalKey: true, purpose: { zh: '按操作者、租户、操作与幂等键防止重复写入并保存原响应', en: 'Mutation deduplication by actor, tenant, operation, and idempotency key with stored responses' }, cols: [
     { name: 'actor_user_id, scope_key, operation, idempotency_key (UNIQUE)' }, { name: 'request_hash, state, response_status, response_body' }, { name: 'resource_type, resource_id, expires_at' },
   ] },
+  { name: 'teaching_platform_identities', domain: 'teaching', origin: '0143', naturalKey: true, purpose: { zh: '旧教学平台已验证手机号账号与站内统一账号的一对一映射', en: 'One-to-one mapping from verified legacy teaching-platform accounts to canonical site accounts' }, cols: [
+    { name: 'platform_subject (PK), user_id (UNIQUE)' }, { name: 'created_at, last_seen_at' },
+  ] },
+  { name: 'teaching_platform_assertion_nonces', domain: 'teaching', origin: '0143', naturalKey: true, purpose: { zh: '教学平台短时登录断言的单次随机数，只保存 SHA-256 以阻止重放', en: 'Single-use nonces for short-lived teaching-platform assertions, stored only as SHA-256 hashes to prevent replay' }, cols: [
+    { name: 'nonce_hash (PK), actor_user_id' }, { name: 'expires_at, created_at' },
+  ] },
 
   // ── user artifacts ──────────────────────────────────────
   { name: 'timer_backups', domain: 'studio', origin: '0020', purpose: { zh: '计时器成绩云备份(单快照覆盖)', en: 'Cloud backup of timer sessions (single overwrite snapshot)' }, cols: [
@@ -448,6 +454,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 139, slug: 'auth_web_session_tickets', desc: { zh: '新增短时单次票据表，让小程序原生登录态安全衔接网站登录态；只保存 SHA-256，并在核销时原子删除。', en: 'Add short-lived single-use tickets to bridge Mini Program and website sessions safely; store only SHA-256 hashes and delete atomically on exchange.' } },
   { n: 141, slug: 'teacher_directory_images', desc: { zh: '老师与机构资料支持按顺序保存多张个人、机构与教学照片。', en: 'Let teacher and school profiles keep an ordered set of portrait, organization, and teaching photos.' } },
   { n: 142, slug: 'teaching_foundation', desc: { zh: '新增多租户教学底座：机构成员、学员、监护关系、追加式审计与幂等写入。', en: 'Add the multi-tenant teaching foundation: organization members, students, guardian links, append-only audit, and idempotent writes.' } },
+  { n: 143, slug: 'teaching_platform_bridge', desc: { zh: '新增旧教学平台账号桥接与登录断言防重表，并允许账号注销时仅匿名化审计操作者。', en: 'Add the legacy teaching-platform account bridge and assertion replay guard, and allow only actor anonymization during account deletion.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
