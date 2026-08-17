@@ -2309,7 +2309,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               </span>
             </button>
           )}
-          <MoreMenu items={moreItems} />
           <button
             type="button"
             className={`tb-btn${bluetoothCube.status.connected ? ' connected' : ''}`}
@@ -2321,6 +2320,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           >
             <Bluetooth size={14} />
           </button>
+          <MoreMenu items={moreItems} />
           <button type="button" className="tb-btn" onClick={() => setSettingsOpen(true)} title={tr({ zh: '设置', en: 'Settings'
         })}>
             <SettingsIcon size={14} />
