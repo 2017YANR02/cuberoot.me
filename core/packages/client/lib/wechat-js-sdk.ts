@@ -36,11 +36,20 @@ export function supportsWeChatShare(sdk: WeChatJsSdk): boolean {
 
 declare global {
   interface Window {
+    jWeixin?: WeChatJsSdk;
     wx?: WeChatJsSdk;
   }
 }
 
 let sdkPromise: Promise<WeChatJsSdk | null> | null = null;
+
+function installedSdk(
+  supports: (sdk: WeChatJsSdk) => boolean,
+): WeChatJsSdk | null {
+  return [window.wx, window.jWeixin].find(
+    (candidate): candidate is WeChatJsSdk => Boolean(candidate && supports(candidate)),
+  ) ?? null;
+}
 
 /** Load the shared WeChat JS-SDK once, optionally requiring a caller-specific capability. */
 export function loadWeChatJsSdk(
@@ -49,9 +58,24 @@ export function loadWeChatJsSdk(
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return Promise.resolve(null);
   }
-  if (window.wx && supports(window.wx)) return Promise.resolve(window.wx);
+  const installed = installedSdk(supports);
+  if (installed) return Promise.resolve(installed);
   if (sdkPromise) {
-    return sdkPromise.then((sdk) => (sdk && supports(sdk) ? sdk : null));
+    return sdkPromise.then(() => installedSdk(supports));
+  }
+
+  // The official SDK exits early whenever jWeixin already exists. DevTools can
+  // inject an older partial object, so detach only that unsupported alias while
+  // loading the complete self-hosted SDK. Preserve it if loading fails.
+  const previousJWeixin = window.jWeixin;
+  let detachedJWeixin = false;
+  if (previousJWeixin) {
+    try {
+      window.jWeixin = undefined;
+      detachedJWeixin = window.jWeixin === undefined;
+    } catch {
+      // A non-writable host alias will simply cause capability detection to fail.
+    }
   }
 
   sdkPromise = new Promise((resolve) => {
@@ -68,12 +92,19 @@ export function loadWeChatJsSdk(
       } catch {
         // The SDK has already loaded or failed; a hostile DOM shim must not strand callers.
       }
+      if (!sdk && detachedJWeixin && !window.jWeixin) {
+        try {
+          window.jWeixin = previousJWeixin;
+        } catch {
+          // Loading has already failed; a changed host property must not strand callers.
+        }
+      }
       resolve(sdk);
     };
     const timeout = window.setTimeout(() => finish(null), LOAD_TIMEOUT_MS);
     script.src = JWEIXIN_SRC;
     script.async = true;
-    script.onload = () => finish(window.wx ?? null);
+    script.onload = () => finish(installedSdk(supports));
     script.onerror = () => finish(null);
     try {
       document.head.appendChild(script);
@@ -85,5 +116,5 @@ export function loadWeChatJsSdk(
   void pending.then(() => {
     if (sdkPromise === pending) sdkPromise = null;
   });
-  return pending.then((sdk) => (sdk && supports(sdk) ? sdk : null));
+  return pending.then(() => installedSdk(supports));
 }
