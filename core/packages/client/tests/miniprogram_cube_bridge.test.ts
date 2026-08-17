@@ -271,4 +271,100 @@ describe('mini-program smart-cube bridge', () => {
 
     await expect(pending).rejects.toThrow('MINIPROGRAM_SMART_CUBE_PAGE_UNAVAILABLE');
   });
+
+  it('loads the self-hosted WeChat SDK when the web-view does not inject wx', async () => {
+    const navigateTo = vi.fn();
+    const script = {} as HTMLScriptElement;
+    const appendChild = vi.fn((node: HTMLScriptElement) => {
+      expect(node).toBe(script);
+      expect(node.src).toBe('/vendor/jweixin-1.6.0.js');
+      window.wx = {
+        config: vi.fn(),
+        ready: vi.fn(),
+        error: vi.fn(),
+        updateAppMessageShareData: vi.fn(),
+        updateTimelineShareData: vi.fn(),
+        miniProgram: { navigateTo },
+      };
+      node.onload?.(new Event('load'));
+      return node;
+    });
+    vi.stubGlobal('window', {
+      __wxjs_environment: 'miniprogram',
+      clearTimeout,
+      navigator: { userAgent: 'MicroMessenger miniProgram' },
+      setTimeout,
+    });
+    vi.stubGlobal('document', {
+      createElement: vi.fn(() => script),
+      head: { appendChild },
+    });
+    vi.stubGlobal('WebSocket', FakeWebSocket);
+
+    const pending = connectMiniProgramCubeBridge({
+      onBattery: vi.fn(),
+      onGyro: vi.fn(),
+      onMove: vi.fn(),
+      onState: vi.fn(),
+      onStatus: vi.fn(),
+    });
+    await vi.waitFor(() => expect(FakeWebSocket.instance).not.toBeNull());
+    const socket = FakeWebSocket.instance!;
+    socket.emitOpen();
+    socket.emitMessage({ type: 'ready', role: 'sink', lastMoveSeq: 0 });
+    expect(navigateTo).toHaveBeenCalledOnce();
+    socket.emitMessage({ type: 'status', phase: 'connected', brand: 'gan-v4' });
+    const connection = await pending;
+    connection.disconnect();
+
+    expect(appendChild).toHaveBeenCalledOnce();
+  });
+
+  it('replaces an incomplete wx object before opening the native bridge page', async () => {
+    const navigateTo = vi.fn();
+    const script = {} as HTMLScriptElement;
+    const incompleteWx = {
+      config: vi.fn(),
+      ready: vi.fn(),
+      error: vi.fn(),
+      updateAppMessageShareData: vi.fn(),
+      updateTimelineShareData: vi.fn(),
+      miniProgram: {},
+    };
+    const appendChild = vi.fn((node: HTMLScriptElement) => {
+      window.wx = { ...incompleteWx, miniProgram: { navigateTo } };
+      node.onload?.(new Event('load'));
+      return node;
+    });
+    vi.stubGlobal('window', {
+      __wxjs_environment: 'miniprogram',
+      clearTimeout,
+      navigator: { userAgent: 'MicroMessenger miniProgram' },
+      setTimeout,
+      wx: incompleteWx,
+    });
+    vi.stubGlobal('document', {
+      createElement: vi.fn(() => script),
+      head: { appendChild },
+    });
+    vi.stubGlobal('WebSocket', FakeWebSocket);
+
+    const pending = connectMiniProgramCubeBridge({
+      onBattery: vi.fn(),
+      onGyro: vi.fn(),
+      onMove: vi.fn(),
+      onState: vi.fn(),
+      onStatus: vi.fn(),
+    });
+    await vi.waitFor(() => expect(FakeWebSocket.instance).not.toBeNull());
+    const socket = FakeWebSocket.instance!;
+    socket.emitOpen();
+    socket.emitMessage({ type: 'ready', role: 'sink', lastMoveSeq: 0 });
+    socket.emitMessage({ type: 'status', phase: 'connected', brand: 'gan-v4' });
+    const connection = await pending;
+    connection.disconnect();
+
+    expect(appendChild).toHaveBeenCalledOnce();
+    expect(navigateTo).toHaveBeenCalledOnce();
+  });
 });
