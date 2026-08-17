@@ -9,10 +9,12 @@ import { BUILD_ASSETS } from './build-assets.mjs';
 import { resolveProjectConfig } from './build-config.mjs';
 import {
   buildInputFingerprint,
+  normalizedRelativePath,
   outputFingerprint,
   walkFiles,
   writeBuildState,
 } from './build-state.mjs';
+import { validateJsonObjectFiles } from './json-object-file.mjs';
 
 const packageRoot = resolve(import.meta.dirname, '..');
 const sourceRoot = join(packageRoot, 'src');
@@ -20,11 +22,10 @@ const outputRoot = join(packageRoot, 'dist');
 const projectConfigPath = join(packageRoot, 'project.config.json');
 const watch = process.argv.includes('--watch');
 
-async function prepareOutput(config, clean = true) {
+async function prepareOutput(config, sourceFiles, clean = true) {
   if (clean) await rm(outputRoot, { force: true, recursive: true });
   await mkdir(outputRoot, { recursive: true });
-  const files = await walkFiles(sourceRoot);
-  await Promise.all(files
+  await Promise.all(sourceFiles
     .filter((file) => extname(file) !== '.ts')
     .map(async (file) => {
       const target = join(outputRoot, relative(sourceRoot, file));
@@ -44,9 +45,8 @@ async function prepareOutput(config, clean = true) {
   );
 }
 
-async function entryPoints() {
-  const files = await walkFiles(sourceRoot);
-  return files.filter((file) => {
+function entryPoints(sourceFiles) {
+  return sourceFiles.filter((file) => {
     if (extname(file) !== '.ts') return false;
     if (basename(file) === 'app.ts') return true;
     const sourcePath = relative(sourceRoot, file).replaceAll('\\', '/');
@@ -59,10 +59,21 @@ async function buildProject(clean = true) {
     templatePath: join(packageRoot, 'project.config.template.json'),
     projectConfigPath,
   });
-  await prepareOutput(config, clean);
+  const sourceFiles = await walkFiles(sourceRoot);
+  const appConfigPath = join(sourceRoot, 'app.json');
+  const sourceJsonFiles = [
+    appConfigPath,
+    ...sourceFiles
+      .filter((file) => extname(file) === '.json' && file !== appConfigPath)
+      .sort(),
+  ];
+  await validateJsonObjectFiles(sourceJsonFiles, {
+    labelForPath: (file) => normalizedRelativePath(packageRoot, file),
+  });
+  await prepareOutput(config, sourceFiles, clean);
   await build({
     bundle: true,
-    entryPoints: await entryPoints(),
+    entryPoints: entryPoints(sourceFiles),
     format: 'iife',
     logLevel: 'info',
     outbase: sourceRoot,

@@ -1,11 +1,14 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { resolveProjectConfig } from '../scripts/build-config.mjs';
-import { readJsonObjectFile } from '../scripts/json-object-file.mjs';
+import {
+  readJsonObjectFile,
+  validateJsonObjectFiles,
+} from '../scripts/json-object-file.mjs';
 
 const temporaryDirectories = [];
 
@@ -87,5 +90,26 @@ describe('project config resolution', () => {
     await expect(readJsonObjectFile(paths.templatePath, {
       label: 'project.config.template.json',
     })).rejects.toThrow('project.config.template.json 的顶层必须是 JSON 对象。');
+  });
+
+  it('validates every source JSON object before a build', async () => {
+    const paths = await fixture();
+    const pageConfigPath = join(dirname(paths.projectConfigPath), 'page.json');
+    await writeFile(pageConfigPath, '{ invalid', 'utf8');
+
+    await expect(validateJsonObjectFiles(
+      [paths.templatePath, pageConfigPath],
+      { labelForPath: (path) => path === pageConfigPath ? 'src/pages/example/index.json' : path },
+    )).rejects.toThrow('src/pages/example/index.json 不是有效的 JSON。');
+  });
+
+  it('requires the application config during source preflight', async () => {
+    const paths = await fixture();
+    const missingAppConfig = join(dirname(paths.projectConfigPath), 'src', 'app.json');
+
+    await expect(validateJsonObjectFiles(
+      [missingAppConfig],
+      { labelForPath: () => 'src/app.json' },
+    )).rejects.toThrow('src/app.json 无法读取。');
   });
 });

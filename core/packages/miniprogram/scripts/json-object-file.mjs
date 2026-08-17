@@ -33,3 +33,10 @@ export async function readJsonObjectFile(path, options = {}) {
 
   return value;
 }
+
+export async function validateJsonObjectFiles(paths, options = {}) {
+  const labelForPath = options.labelForPath ?? ((path) => path);
+  for (const path of paths) {
+    await readJsonObjectFile(path, { label: labelForPath(path) });
+  }
+}
