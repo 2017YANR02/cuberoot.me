@@ -1,26 +1,67 @@
 import { BUILD_ASSETS } from './build-assets.mjs';
 import { BUILD_STATE_VERSION } from './build-state.mjs';
 
+function wxApiAccess(methods) {
+  return new RegExp(
+    `\\bwx\\s*(?:\\.\\s*(?:${methods})\\b|\\[\\s*["'](?:${methods})["']\\s*\\])`,
+  );
+}
+
+function bundledApiAccess(methods) {
+  return new RegExp(
+    `(?:\\.\\s*(?:${methods})\\b|\\[\\s*["'](?:${methods})["']\\s*\\])`,
+  );
+}
+
+function sensitiveWxCapability(label, methods, markupPattern = null) {
+  const sourceApiPattern = wxApiAccess(methods);
+  const bundledApiPattern = bundledApiAccess(methods);
+  return {
+    label,
+    sourcePattern: markupPattern
+      ? new RegExp(`${sourceApiPattern.source}|${markupPattern.source}`)
+      : sourceApiPattern,
+    uploadPattern: markupPattern
+      ? new RegExp(`${bundledApiPattern.source}|${markupPattern.source}`)
+      : bundledApiPattern,
+  };
+}
+
 const sensitiveCapabilities = [
-  [
+  sensitiveWxCapability(
     '微信用户资料',
-    /\bwx\.(?:getUserProfile|getUserInfo)\b|open-type\s*=\s*["'](?:chooseAvatar|getUserInfo)["']/,
-  ],
-  [
+    'getUserProfile|getUserInfo',
+    /open-type\s*=\s*["'](?:chooseAvatar|getUserInfo)["']/,
+  ),
+  sensitiveWxCapability(
     '定位',
-    /\bwx\.(?:getLocation|getFuzzyLocation|chooseLocation|startLocationUpdate|startLocationUpdateBackground|onLocationChange)\b/,
-  ],
-  [
+    'getLocation|getFuzzyLocation|chooseLocation|startLocationUpdate|startLocationUpdateBackground|onLocationChange',
+  ),
+  sensitiveWxCapability(
     '文件、图片或媒体',
-    /\bwx\.(?:chooseImage|chooseMedia|chooseVideo|chooseMessageFile|saveImageToPhotosAlbum|saveVideoToPhotosAlbum)\b/,
-  ],
-  ['录音', /\bwx\.(?:startRecord|getRecorderManager)\b/],
-  ['通讯录、地址或发票', /\bwx\.(?:addPhoneContact|chooseAddress|chooseInvoice|chooseInvoiceTitle)\b/],
-  ['运动数据', /\bwx\.getWeRunData\b/],
-  ['剪贴板内容', /\bwx\.getClipboardData\b/],
-  ['相机或直播画面', /<(?:camera|live-pusher)\b/],
-  ['蓝牙', /\bwx\.(?:openBluetoothAdapter|getBluetoothAdapterState|createBLEConnection|readBLECharacteristicValue|writeBLECharacteristicValue)\b/],
-  ['手机号', /open-type\s*=\s*["']getPhoneNumber["']/],
+    'chooseImage|chooseMedia|chooseVideo|chooseMessageFile|saveImageToPhotosAlbum|saveVideoToPhotosAlbum',
+  ),
+  sensitiveWxCapability('录音', 'startRecord|getRecorderManager'),
+  sensitiveWxCapability(
+    '通讯录、地址或发票',
+    'addPhoneContact|chooseAddress|chooseInvoice|chooseInvoiceTitle',
+  ),
+  sensitiveWxCapability('运动数据', 'getWeRunData'),
+  sensitiveWxCapability('剪贴板内容', 'getClipboardData'),
+  {
+    label: '相机或直播画面',
+    sourcePattern: /<(?:camera|live-pusher)\b/,
+    uploadPattern: /<(?:camera|live-pusher)\b/,
+  },
+  sensitiveWxCapability(
+    '蓝牙',
+    'openBluetoothAdapter|getBluetoothAdapterState|createBLEConnection|readBLECharacteristicValue|writeBLECharacteristicValue',
+  ),
+  {
+    label: '手机号',
+    sourcePattern: /open-type\s*=\s*["']getPhoneNumber["']/,
+    uploadPattern: /open-type\s*=\s*["']getPhoneNumber["']/,
+  },
 ];
 
 const sensitiveManifestKeys = ['requiredPrivateInfos', 'permission'];
@@ -395,10 +436,15 @@ export function collectReleaseFailures({
     if (paths.length === 0) continue;
     failures.push(`${paths.join('、')} 包含${label}；小程序源码和上传包禁止保存服务端凭据。`);
   }
-  for (const [label, pattern] of sensitiveCapabilities) {
-    const paths = auditedFiles
-      .filter(({ source }) => typeof source === 'string' && pattern.test(source))
-      .map(({ path }) => path);
+  for (const { label, sourcePattern, uploadPattern } of sensitiveCapabilities) {
+    const paths = [
+      ...sourceFiles
+        .filter(({ source }) => typeof source === 'string' && sourcePattern.test(source))
+        .map(({ path }) => path),
+      ...uploadFiles
+        .filter(({ source }) => typeof source === 'string' && uploadPattern.test(source))
+        .map(({ path }) => path),
+    ];
     if (paths.length === 0) continue;
     failures.push(
       `${paths.join('、')} 使用了${label}能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。`,
