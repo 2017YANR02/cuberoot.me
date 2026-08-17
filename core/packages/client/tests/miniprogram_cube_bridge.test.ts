@@ -272,6 +272,46 @@ describe('mini-program smart-cube bridge', () => {
     await expect(pending).rejects.toThrow('MINIPROGRAM_SMART_CUBE_PAGE_UNAVAILABLE');
   });
 
+  it('uses the jWeixin alias injected by the DevTools web-view', async () => {
+    const navigateTo = vi.fn();
+    const sdk = {
+      config: vi.fn(),
+      ready: vi.fn(),
+      error: vi.fn(),
+      updateAppMessageShareData: vi.fn(),
+      updateTimelineShareData: vi.fn(),
+      miniProgram: { navigateTo },
+    };
+    vi.stubGlobal('window', {
+      __wxjs_environment: 'miniprogram',
+      clearTimeout,
+      jWeixin: sdk,
+      navigator: { userAgent: 'MicroMessenger miniProgram' },
+      setTimeout,
+    });
+    vi.stubGlobal('document', {});
+    vi.stubGlobal('WebSocket', FakeWebSocket);
+
+    const pending = connectMiniProgramCubeBridge({
+      onBattery: vi.fn(),
+      onGyro: vi.fn(),
+      onMove: vi.fn(),
+      onState: vi.fn(),
+      onStatus: vi.fn(),
+    });
+    await vi.waitFor(() => expect(FakeWebSocket.instance).not.toBeNull());
+    const socket = FakeWebSocket.instance!;
+    socket.emitOpen();
+    socket.emitMessage({ type: 'ready', role: 'sink', lastMoveSeq: 0 });
+    socket.emitMessage({ type: 'status', phase: 'connected', brand: 'gan-v4' });
+    const connection = await pending;
+    connection.disconnect();
+
+    expect(window.wx).toBeUndefined();
+    expect(window.jWeixin).toBe(sdk);
+    expect(navigateTo).toHaveBeenCalledOnce();
+  });
+
   it('loads the self-hosted WeChat SDK when the web-view does not inject wx', async () => {
     const navigateTo = vi.fn();
     const script = {} as HTMLScriptElement;
