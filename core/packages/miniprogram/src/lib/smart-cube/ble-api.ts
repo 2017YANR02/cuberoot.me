@@ -168,6 +168,11 @@ export interface MiniProgramBleApi {
     serviceId: string;
     state: boolean;
   } & BleCallbacks<BleFailure>): void;
+  readBLECharacteristicValue?(options: {
+    characteristicId: string;
+    deviceId: string;
+    serviceId: string;
+  } & BleCallbacks<BleFailure>): void;
   offBLEConnectionStateChange?(listener: (result: BleConnectionStateChange) => void): void;
   offBLECharacteristicValueChange(listener: (result: CharacteristicValueChange) => void): void;
   offBluetoothDeviceFound(listener: (result: { devices: DiscoveredDevice[] }) => void): void;

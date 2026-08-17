@@ -246,6 +246,7 @@ describe('mini program release check', () => {
       WECHAT_MINI_ANDROID_REAL_DEVICE_TESTED: 'yes',
       WECHAT_MINI_GAN16UI_TESTED: '0',
       WECHAT_MINI_GOCUBE_TESTED: '1',
+      WECHAT_MINI_GIIKER_TESTED: '1',
     })).toEqual({
       basicInfoApproved: true,
       filingCompleted: false,
@@ -254,6 +255,7 @@ describe('mini program release check', () => {
       androidRealDeviceTested: false,
       gan16UiTested: false,
       goCubeTested: true,
+      giikerTested: true,
     });
 
     expect(collectReleaseFailures({
