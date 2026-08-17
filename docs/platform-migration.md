@@ -16,6 +16,8 @@
 | 旧仓本地 `main` | `1a333326c304d5bc2dca90a31d5eedf0c5f4a778` |
 | 旧仓当时 `origin/main` | `f555dca25ed54881a79434d87cd28fed0153d0ff` |
 | 历史导入提交 | `6599c7af027b62e0d85e38d150c1279cc9d06391` |
+| Monorepo 适配提交 | `3e8414f41f4cdf7c51d8747144cf3ba21a4fd26e` |
+| 合入当前 `main` | `6b7092edef5450c36971e82b69220429d7734bf6` |
 | 导入方式 | two-parent `git subtree add --prefix=core/packages/platform` |
 
 旧仓本地 `main` 比其远端多 1 个提交,所以导入明确取本地 SHA,没有只复制远端或 squash。导入提交的第二父提交就是旧仓本地 `main`,旧仓 92 个提交因此仍可从主仓追溯。
