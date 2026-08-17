@@ -64,7 +64,7 @@ import { BluetoothConnectError, atStage, isNoDeviceSelected } from './connect_er
 import type { BluetoothCubeStatus } from './types';
 import {
   connectMiniProgramCubeBridge,
-  isMiniProgramWebView,
+  mayUseMiniProgramBridge,
 } from './miniprogram_bridge';
 
 export type { BluetoothCubeStatus, CubeBrand } from './types';
@@ -74,6 +74,7 @@ export { detectBluetoothEnv, envAdvice, isBluefy } from './env';
 export type { BluetoothEnv, EnvAdvice } from './env';
 export { BluetoothConnectError, CONNECT_STAGE_LABEL, describeError } from './connect_error';
 export type { ConnectStage } from './connect_error';
+export { mayUseMiniProgramBridge } from './miniprogram_bridge';
 
 /* ------------------------------------------------------------------ */
 /*  Connection-state event surface                                    */
@@ -1005,7 +1006,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       return;
     }
 
-    if (isMiniProgramWebView()) {
+    if (mayUseMiniProgramBridge()) {
       intentionalDisconnectRef.current = false;
       cancelPendingReconnect();
       cleanupRef.current?.();

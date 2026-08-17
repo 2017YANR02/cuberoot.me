@@ -968,6 +968,12 @@ pnpm --filter @cuberoot/miniprogram release:check
 - 微信分享与小程序桥接共用自托管的 `/vendor/jweixin-1.6.0.js` 加载入口；桥接等待 SDK 后再读取 `wx.miniProgram`，加载失败、超时或能力缺失仍明确失败。
 - 回归测试固定“已进入小程序但未注入 `wx`”场景，防止以后重构分享逻辑时再次让模拟器报 `MINIPROGRAM_BRIDGE_UNAVAILABLE`。
 
+### 2026-08-17：iOS web-view 环境确认
+
+- iOS 微信 web-view 的 UA 可能只有 `MicroMessenger`，不一定包含 `miniProgram`；计时器先把微信容器视为原生桥候选，再通过 `wx.miniProgram.getEnv` 确认，避免误提示安装 Bluefy。
+- 普通微信内网页在 `getEnv` 返回非小程序或两秒内无结果时拒绝打开中继；已有明确小程序标记的路径保持原同步启动顺序。
+- 本轮回归覆盖 iOS 缺失 UA 标记、普通微信内网页反向分流和弹窗提示；客户端类型检查、14 项针对性测试与 5874 项客户端测试通过，29 项按项目配置跳过。
+
 ### 首版工程
 
 - 建立原生外壳、计时器 `web-view`、工具入口和“我的”页。
