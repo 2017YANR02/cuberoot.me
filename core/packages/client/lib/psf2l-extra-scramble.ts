@@ -6,6 +6,10 @@ const AUFS = ['', 'U', 'U2', "U'"] as const;
 const Y = ['', 'y', 'y2', "y'"] as const;
 const Y_INV = ['', "y'", 'y2', 'y'] as const;
 const D_ADJUSTMENTS = ['D', 'D2', "D'"] as const;
+export const PSF2L_SLOT_PAIRS = [
+  'FR+BR', 'BR+BL', 'BL+FL', 'FL+FR', 'FR+BL', 'FL+BR',
+] as const;
+export type Psf2lSlotPair = (typeof PSF2L_SLOT_PAIRS)[number];
 
 const F2L_SLOTS = [
   { id: 'FR', corner: 4, edge: 8 },
@@ -29,11 +33,14 @@ interface SuffixTemplate {
   transformation: KTransformation;
 }
 
-interface Engine {
+interface PatternEngine {
   kpuzzle: KPuzzle;
   orientationTransforms: KTransformation[];
-  suffixes: SuffixTemplate[];
   centersHome: Map<string, KTransformation | null>;
+}
+
+interface Engine extends PatternEngine {
+  suffixes: SuffixTemplate[];
 }
 
 interface BaseInvariant {
@@ -44,8 +51,11 @@ interface BaseInvariant {
 }
 
 const readyPools = new Map<string, Psf2lExtraSuffixPool>();
+const readySlotBases = new Map<string, Map<Psf2lSlotPair, string>>();
 const poolPromises = new Map<string, Promise<Psf2lExtraSuffixPool>>();
+const slotBasePromises = new Map<string, Promise<Map<Psf2lSlotPair, string>>>();
 const enginePromises = new Map<string, Promise<Engine>>();
+let patternEnginePromise: Promise<PatternEngine> | null = null;
 
 const clean = (alg: string): string => alg.trim().replace(/\s+/g, ' ');
 const home = (orbit: Orbit, piece: number): boolean => (
@@ -60,7 +70,7 @@ const pieceFingerprint = (orbit: Orbit, piece: number): string => {
 
 const centersKey = (pattern: KPattern): string => pattern.patternData.CENTERS.pieces.join(',');
 
-function normalizeCenters(pattern: KPattern, engine: Engine): KPattern | null {
+function normalizeCenters(pattern: KPattern, engine: PatternEngine): KPattern | null {
   const key = centersKey(pattern);
   let transform = engine.centersHome.get(key);
   if (transform === undefined) {
@@ -132,17 +142,27 @@ function validOutcome(pattern: KPattern, invariant: BaseInvariant): ExtraOutcome
 
 const patternKey = (pattern: KPattern): string => JSON.stringify(pattern.patternData);
 
+async function buildPatternEngine(): Promise<PatternEngine> {
+  if (patternEnginePromise) return patternEnginePromise;
+  patternEnginePromise = (async () => {
+    const { cube3x3x3 } = await import('cubing/puzzles');
+    const kpuzzle = await cube3x3x3.kpuzzle();
+    const orientationTransforms = ORIENTATION_ALGS.map(alg => (
+      alg ? kpuzzle.algToTransformation(alg) : kpuzzle.identityTransformation()
+    ));
+    return { kpuzzle, orientationTransforms, centersHome: new Map() };
+  })();
+  return patternEnginePromise;
+}
+
 async function buildEngine(f2lCases: readonly AlgCase[]): Promise<Engine> {
   const signature = f2lCases.map(c => clean(c.setup)).filter(Boolean).join('\n');
   const existing = enginePromises.get(signature);
   if (existing) return existing;
 
   const promise = (async () => {
-    const { cube3x3x3 } = await import('cubing/puzzles');
-    const kpuzzle = await cube3x3x3.kpuzzle();
-    const orientationTransforms = ORIENTATION_ALGS.map(alg => (
-      alg ? kpuzzle.algToTransformation(alg) : kpuzzle.identityTransformation()
-    ));
+    const patternEngine = await buildPatternEngine();
+    const { kpuzzle } = patternEngine;
     const suffixes: SuffixTemplate[] = [];
     const seen = new Set<string>();
 
@@ -166,10 +186,81 @@ async function buildEngine(f2lCases: readonly AlgCase[]): Promise<Engine> {
       }
     }
 
-    return { kpuzzle, orientationTransforms, suffixes, centersHome: new Map() };
+    return { ...patternEngine, suffixes };
   })();
   enginePromises.set(signature, promise);
   return promise;
+}
+
+const trainingPairForInvariant = (invariant: BaseInvariant): Psf2lSlotPair | null => (
+  PSF2L_SLOT_PAIRS.find(pair => (
+    pair.split('+').every(slot => !invariant.fullSlotIds.has(slot))
+  )) ?? null
+);
+
+async function buildPsf2lSlotBases(
+  base: string,
+  replaceOuterD: (base: string, adjustment: string) => string,
+): Promise<Map<Psf2lSlotPair, string>> {
+  const normalizedBase = clean(base);
+  if (!normalizedBase) return new Map();
+  const existing = slotBasePromises.get(normalizedBase);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    const engine = await buildPatternEngine();
+    const variants = new Map<Psf2lSlotPair, string>();
+    for (const adjustment of D_ADJUSTMENTS) {
+      const adjusted = clean(replaceOuterD(normalizedBase, adjustment));
+      for (let ori = 0; ori < Y.length; ori++) {
+        const candidate = [Y_INV[ori], adjusted, Y[ori]].filter(Boolean).join(' ');
+        let raw: KPattern;
+        try { raw = engine.kpuzzle.defaultPattern().applyAlg(candidate); }
+        catch { continue; }
+        const canonical = normalizeCenters(raw, engine);
+        if (!canonical) continue;
+        const invariant = baseInvariant(canonical);
+        if (!invariant) continue;
+        const pair = trainingPairForInvariant(invariant);
+        if (pair && !variants.has(pair)) variants.set(pair, candidate);
+      }
+    }
+    return variants;
+  })();
+  slotBasePromises.set(normalizedBase, promise);
+  return promise;
+}
+
+/** Prepare all six training-pair orientations while keeping the complementary XXCross solved. */
+export async function preparePsf2lSlotScrambles(
+  psf2lCases: readonly AlgCase[],
+  replaceOuterD: (base: string, adjustment: string) => string,
+): Promise<void> {
+  for (const c of psf2lCases) {
+    const base = clean(c.setup);
+    if (!base || readySlotBases.has(base)) continue;
+    const variants = await buildPsf2lSlotBases(base, replaceOuterD);
+    if (variants.size !== PSF2L_SLOT_PAIRS.length) {
+      throw new Error(`PSF2L case has ${variants.size}/${PSF2L_SLOT_PAIRS.length} slot-pair variants: ${base}`);
+    }
+    readySlotBases.set(base, variants);
+  }
+}
+
+/** Pick a prepared base whose two unsolved F2L slots match the selected training pair. */
+export function pickPreparedPsf2lSlotScramble(
+  base: string,
+  slotPairs: readonly Psf2lSlotPair[],
+  random: () => number = Math.random,
+): string | null {
+  const variants = readySlotBases.get(clean(base));
+  if (!variants) return null;
+  const candidates = PSF2L_SLOT_PAIRS
+    .filter(pair => slotPairs.includes(pair))
+    .map(pair => variants.get(pair))
+    .filter((candidate): candidate is string => !!candidate);
+  if (candidates.length === 0) return null;
+  return candidates[Math.floor(random() * candidates.length)];
 }
 
 /**
@@ -177,7 +268,7 @@ async function buildEngine(f2lCases: readonly AlgCase[]): Promise<Engine> {
  *
  * Every candidate is `AUF + a canonical base-F2L setup in any slot + AUF`.
  * The state filter is the authority: it keeps the original XXCross and target
- * PSF2L pair exact, while changing the other two slots from `partial+partial`
+ * PSF2L cubies exact, while changing the two training slots from `partial+partial`
  * to `partial+empty`.
  */
 export async function buildPsf2lExtraSuffixPool(
@@ -229,12 +320,14 @@ export async function preparePsf2lExtraScrambles(
   f2lCases: readonly AlgCase[],
   replaceOuterD: (base: string, adjustment: string) => string,
 ): Promise<void> {
+  await preparePsf2lSlotScrambles(psf2lCases, replaceOuterD);
   const bases = new Set<string>();
   for (const c of psf2lCases) {
     const base = clean(c.setup);
     if (!base) continue;
     bases.add(base);
     for (const adjustment of D_ADJUSTMENTS) bases.add(clean(replaceOuterD(base, adjustment)));
+    for (const variant of readySlotBases.get(base)?.values() ?? []) bases.add(variant);
   }
 
   let index = 0;

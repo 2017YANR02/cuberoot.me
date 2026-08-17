@@ -5,13 +5,20 @@ import { equivalentPyraScramble } from './pyraminx-solver';
 import { allowedPostAuf, oriCornersOnly, type OrientationSel } from './alg_ll_orientation';
 import { tr } from '@/i18n/tr';
 import { invertFtoEifAlgorithm, parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
-import { pickPreparedPsf2lExtraScramble } from './psf2l-extra-scramble';
+import {
+  pickPreparedPsf2lExtraScramble,
+  pickPreparedPsf2lSlotScramble,
+  PSF2L_SLOT_PAIRS,
+  type Psf2lSlotPair,
+} from './psf2l-extra-scramble';
 import { normalizeScramble } from './cross-solver';
 
 const AUF = ['', 'U', 'U2', "U'"] as const;
 const Y = ['', 'y', 'y2', "y'"] as const;
 export const F2L_SLOTS = ['FR', 'FL', 'BL', 'BR'] as const;
 export type F2LSlot = (typeof F2L_SLOTS)[number];
+export { PSF2L_SLOT_PAIRS };
+export type { Psf2lSlotPair };
 // cubing.js / WCA 的 y 方向:标准 FR 槽依次移到 FL、BL、BR。
 const F2L_SLOT_Y: Record<F2LSlot, (typeof Y)[number]> = {
   FR: '',
@@ -168,6 +175,7 @@ export function caseBaseAlg(c: AlgCase): string {
 export interface TrainerSetScrambleFeatures {
   randomInitialD: boolean;
   psf2lExtraScramble: boolean;
+  psf2lSlotPairs: boolean;
   randomFinalAuf: boolean;
   f2lSlots: boolean;
 }
@@ -187,6 +195,19 @@ export function normalizeF2LSlots(
     typeof slot === 'string' && F2L_SLOTS.includes(slot as F2LSlot)
   )));
   const normalized = F2L_SLOTS.filter(slot => selected.has(slot));
+  return normalized.length > 0 ? normalized : [...fallback];
+}
+
+/** 外部数据只接受六种无序双槽位,去重并固定为设置里的显示顺序。 */
+export function normalizePsf2lSlotPairs(
+  value: unknown,
+  fallback: readonly Psf2lSlotPair[] = PSF2L_SLOT_PAIRS,
+): Psf2lSlotPair[] {
+  if (!Array.isArray(value)) return [...fallback];
+  const selected = new Set(value.filter((pair): pair is Psf2lSlotPair => (
+    typeof pair === 'string' && PSF2L_SLOT_PAIRS.includes(pair as Psf2lSlotPair)
+  )));
+  const normalized = PSF2L_SLOT_PAIRS.filter(pair => selected.has(pair));
   return normalized.length > 0 ? normalized : [...fallback];
 }
 
@@ -212,6 +233,7 @@ export function f2lFinalAdjustmentVariants(
 const NO_SET_SCRAMBLE_FEATURES: TrainerSetScrambleFeatures = {
   randomInitialD: false,
   psf2lExtraScramble: false,
+  psf2lSlotPairs: false,
   randomFinalAuf: false,
   f2lSlots: false,
 };
@@ -225,10 +247,16 @@ export function trainerSetScrambleFeatures(
   set: string | null | undefined,
 ): TrainerSetScrambleFeatures {
   if (puzzle === '3x3' && (set === 'f2l' || set === 'adv-f2l')) {
-    return { randomInitialD: false, psf2lExtraScramble: false, randomFinalAuf: true, f2lSlots: true };
+    return {
+      randomInitialD: false, psf2lExtraScramble: false, psf2lSlotPairs: false,
+      randomFinalAuf: true, f2lSlots: true,
+    };
   }
   if (puzzle === '3x3' && set === 'psf2l') {
-    return { randomInitialD: true, psf2lExtraScramble: true, randomFinalAuf: false, f2lSlots: false };
+    return {
+      randomInitialD: false, psf2lExtraScramble: true, psf2lSlotPairs: true,
+      randomFinalAuf: false, f2lSlots: false,
+    };
   }
   return NO_SET_SCRAMBLE_FEATURES;
 }
@@ -288,6 +316,8 @@ export interface TrainerScrambleOpts {
   randomInitialD?: boolean;
   /** PSF2L 特化:保留 XXCross 与目标对子,再打散另一组剩余 F2L。 */
   psf2lExtraScramble?: boolean;
+  /** PSF2L 特化:允许出题的未还原双槽位,至少一组。 */
+  psf2lSlotPairs?: readonly Psf2lSlotPair[];
   /** PSF2L 特化:把宽层和整体转体等价改写成固定视角的纯外层转动。 */
   psf2lFaceTurnsOnly?: boolean;
   /** F2L 系特化:打乱末尾随机补 U / U2 / U' / 无。 */
@@ -331,9 +361,12 @@ export function generateScramble(
         if (normalized === null) throw new Error('PSF2L scramble cannot be rewritten as face turns');
         return mergeAdjacentMoves(normalized);
       };
-      const adjustedBase = opts?.randomInitialD
+      const pairAdjustedBase = opts?.psf2lSlotPairs
+        ? pickPreparedPsf2lSlotScramble(base, opts.psf2lSlotPairs)
+        : null;
+      const adjustedBase = pairAdjustedBase ?? (opts?.randomInitialD
         ? replaceOuterDAdjustment(base, pick(D_ADJUSTMENTS))
-        : base;
+        : base);
       if (opts?.psf2lExtraScramble) {
         const enhanced = pickPreparedPsf2lExtraScramble(adjustedBase);
         if (enhanced) return finish(enhanced);

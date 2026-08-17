@@ -5,13 +5,17 @@ import { cube3x3x3 } from 'cubing/puzzles';
 
 import {
   generateScramble,
+  normalizePsf2lSlotPairs,
+  PSF2L_SLOT_PAIRS,
   replaceOuterDAdjustment,
   trainerSetScrambleFeatures,
 } from '@/lib/trainer-scramble';
 import { normalizeScramble } from '@/lib/cross-solver';
 import {
   buildPsf2lExtraSuffixPool,
+  pickPreparedPsf2lSlotScramble,
   preparePsf2lExtraScrambles,
+  preparePsf2lSlotScrambles,
 } from '@/lib/psf2l-extra-scramble';
 
 const PSF2L_CASE: AlgCase = {
@@ -76,8 +80,9 @@ afterEach(() => { vi.restoreAllMocks(); });
 describe('PSF2L trainer D adjustment', () => {
   it('is declared only by the PSF2L set', () => {
     expect(trainerSetScrambleFeatures('3x3', 'psf2l')).toEqual({
-      randomInitialD: true,
+      randomInitialD: false,
       psf2lExtraScramble: true,
+      psf2lSlotPairs: true,
       randomFinalAuf: false,
       f2lSlots: false,
     });
@@ -117,6 +122,44 @@ describe('PSF2L trainer D adjustment', () => {
   it('keeps the document setup exact when the switch is off', () => {
     expect(generateScramble(PSF2L_CASE, '3x3', 'inv', { randomInitialD: false }))
       .toBe(PSF2L_CASE.setup);
+  });
+
+  it('normalizes persisted pair values and rejects an empty result via its fallback', () => {
+    expect(normalizePsf2lSlotPairs(['FL+BR', 'bad', 'FR+BR', 'FL+BR']))
+      .toEqual(['FR+BR', 'FL+BR']);
+    expect(normalizePsf2lSlotPairs([], ['FR+BL'])).toEqual(['FR+BL']);
+  });
+
+  it('prepares every selectable training pair with the complementary XXCross solved', async () => {
+    await preparePsf2lSlotScrambles([REAL_PSF2L_CASE], replaceOuterDAdjustment);
+    const kpuzzle = await cube3x3x3.kpuzzle();
+
+    for (const pair of PSF2L_SLOT_PAIRS) {
+      expect(pickPreparedPsf2lSlotScramble(REAL_PSF2L_CASE.setup, [pair], () => 0))
+        .not.toBeNull();
+      const scramble = generateScramble(REAL_PSF2L_CASE, '3x3', 'inv', {
+        psf2lSlotPairs: [pair],
+        psf2lFaceTurnsOnly: true,
+      });
+      expect(scramble).toMatch(/^(?:[URFDLB](?:2|')?)(?: [URFDLB](?:2|')?)*$/);
+
+      const pattern = kpuzzle.defaultPattern().applyAlg(scramble);
+      const edges = pattern.patternData.EDGES as Orbit;
+      expect(CROSS_EDGES.every(piece => home(edges, piece))).toBe(true);
+      const fullSlots = f2lStatus(pattern)
+        .filter(slot => slot.cornerHome && slot.edgeHome)
+        .map(slot => slot.id)
+        .sort();
+      const trainingSlots = new Set(pair.split('+'));
+      const solvedComplement = F2L_SLOTS
+        .map(slot => slot.id)
+        .filter(slot => !trainingSlots.has(slot))
+        .sort();
+      expect(fullSlots).toEqual(solvedComplement);
+      expect(f2lStatus(pattern)
+        .filter(slot => trainingSlots.has(slot.id))
+        .every(slot => !(slot.cornerHome && slot.edgeHome))).toBe(true);
+    }
   });
 
   it('rewrites lowercase wide turns and rotations to fixed-frame face turns', () => {
@@ -195,7 +238,7 @@ describe('PSF2L trainer D adjustment', () => {
     }
   });
 
-  it('uses a prepared legal candidate only when the enhanced switch is on', async () => {
+  it('keeps the complementary XXCross solved in enhanced mode', async () => {
     await preparePsf2lExtraScrambles(
       [REAL_PSF2L_CASE],
       [BASE_F2L_CASE],
@@ -207,10 +250,31 @@ describe('PSF2L trainer D adjustment', () => {
       randomInitialD: false,
       psf2lExtraScramble: false,
     })).toBe(REAL_PSF2L_CASE.setup);
-    expect(generateScramble(REAL_PSF2L_CASE, '3x3', 'inv', {
-      randomInitialD: false,
-      psf2lExtraScramble: true,
-      psf2lFaceTurnsOnly: true,
-    })).toMatch(/^(?:[URFDLB](?:2|')?)(?: [URFDLB](?:2|')?)*$/);
+
+    const kpuzzle = await cube3x3x3.kpuzzle();
+    for (const pair of PSF2L_SLOT_PAIRS) {
+      const scramble = generateScramble(REAL_PSF2L_CASE, '3x3', 'inv', {
+        randomInitialD: false,
+        psf2lExtraScramble: true,
+        psf2lSlotPairs: [pair],
+        psf2lFaceTurnsOnly: true,
+      });
+      expect(scramble).toMatch(/^(?:[URFDLB](?:2|')?)(?: [URFDLB](?:2|')?)*$/);
+
+      const pattern = kpuzzle.defaultPattern().applyAlg(scramble);
+      const status = f2lStatus(pattern);
+      const trainingSlots = new Set(pair.split('+'));
+      expect(status
+        .filter(slot => slot.cornerHome && slot.edgeHome)
+        .map(slot => slot.id)
+        .sort())
+        .toEqual(F2L_SLOTS
+          .map(slot => slot.id)
+          .filter(slot => !trainingSlots.has(slot))
+          .sort());
+      const remaining = status.filter(slot => trainingSlots.has(slot.id));
+      expect(remaining.filter(slot => slot.cornerHome !== slot.edgeHome)).toHaveLength(1);
+      expect(remaining.filter(slot => !slot.cornerHome && !slot.edgeHome)).toHaveLength(1);
+    }
   });
 });
