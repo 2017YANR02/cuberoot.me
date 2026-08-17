@@ -57,7 +57,9 @@ export async function collectBuildInputFiles(packageRoot) {
     join(packageRoot, 'tsconfig.json'),
     join(packageRoot, 'scripts', 'build.mjs'),
     join(packageRoot, 'scripts', 'build-assets.mjs'),
+    join(packageRoot, 'scripts', 'build-config.mjs'),
     join(packageRoot, 'scripts', 'build-state.mjs'),
+    join(packageRoot, 'scripts', 'json-object-file.mjs'),
   ];
 }
 

@@ -6,6 +6,7 @@ import process from 'node:process';
 import { build } from 'esbuild';
 
 import { BUILD_ASSETS } from './build-assets.mjs';
+import { resolveProjectConfig } from './build-config.mjs';
 import {
   buildInputFingerprint,
   outputFingerprint,
@@ -19,15 +20,7 @@ const outputRoot = join(packageRoot, 'dist');
 const projectConfigPath = join(packageRoot, 'project.config.json');
 const watch = process.argv.includes('--watch');
 
-async function existingProjectConfig() {
-  try {
-    return JSON.parse(await readFile(projectConfigPath, 'utf8'));
-  } catch {
-    return {};
-  }
-}
-
-async function prepareOutput(clean = true) {
+async function prepareOutput(config, clean = true) {
   if (clean) await rm(outputRoot, { force: true, recursive: true });
   await mkdir(outputRoot, { recursive: true });
   const files = await walkFiles(sourceRoot);
@@ -44,23 +37,6 @@ async function prepareOutput(clean = true) {
     await copyFile(asset.source, target);
   }));
 
-  const templatePath = join(packageRoot, 'project.config.template.json');
-  const config = JSON.parse(await readFile(templatePath, 'utf8'));
-  const existingConfig = await existingProjectConfig();
-  const existingAppId = typeof existingConfig.appid === 'string'
-    ? existingConfig.appid.trim()
-    : '';
-  const existingLibVersion = typeof existingConfig.libVersion === 'string'
-    ? existingConfig.libVersion.trim()
-    : '';
-  config.appid =
-    process.env.WECHAT_MINI_APP_ID?.trim() ||
-    (existingAppId !== 'touristappid' ? existingAppId : '') ||
-    'touristappid';
-  config.libVersion =
-    process.env.WECHAT_MINI_LIB_VERSION?.trim() ||
-    (/^\d+\.\d+\.\d+$/.test(existingLibVersion) ? existingLibVersion : '') ||
-    config.libVersion;
   await writeFile(
     projectConfigPath,
     `${JSON.stringify(config, null, 2)}\n`,
@@ -79,7 +55,11 @@ async function entryPoints() {
 }
 
 async function buildProject(clean = true) {
-  await prepareOutput(clean);
+  const config = await resolveProjectConfig({
+    templatePath: join(packageRoot, 'project.config.template.json'),
+    projectConfigPath,
+  });
+  await prepareOutput(config, clean);
   await build({
     bundle: true,
     entryPoints: await entryPoints(),
