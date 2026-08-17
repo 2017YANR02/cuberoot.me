@@ -74,7 +74,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   /* 允许折行:手机上这一组是 人数 + 项目 + 打乱来源 + 解法提示 四件,窄机身放不下一行。
      宽屏永远折不了(auto 列先按 max-content 要位置),所以这只是窄屏的安全阀。 */
   flex-wrap: wrap;
-  gap: 6px 10px;
+  gap: 6px 0;
   min-width: 0;
 }
 .shell-topbar-right {
@@ -92,6 +92,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .shell-topbar-diff .settings-row-tight-group { font-size: 13px; }
 /* 人数、项目、打乱来源在顶栏普通态只显示内容；键盘 focus ring 仍保留。 */
 .shell-topbar-left :is(.pp-trigger, .shell-players-select) {
+  padding-inline: 4px;
   border-color: transparent;
   background: transparent;
 }
@@ -1507,7 +1508,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   .shell-topbar { gap: 6px; padding: 6px 10px; min-height: 44px; }
   /* 左组继续收缩和折行,右组保留操作按钮的固有宽度。 */
   .shell-topbar { grid-template-columns: minmax(0, 1fr) auto; }
-  .shell-topbar-left { gap: 4px 6px; }
+  .shell-topbar-left { gap: 4px 0; }
   .shell-players-select { padding: 0 4px; font-size: 12px; }
   /* 顶栏这组控件在手机上要挤下五件(多了「难度」),解法入口与难度开关跟着同档收窄。 */
   .shell-topbar-left .solver-panel-head { height: 30px; padding: 0 3px; font-size: 12px; gap: 4px; }
