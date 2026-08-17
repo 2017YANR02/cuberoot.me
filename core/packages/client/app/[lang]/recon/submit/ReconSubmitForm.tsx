@@ -70,7 +70,7 @@ import {
 } from '@cuberoot/shared/recon-completion';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowLeft, ArrowRightLeft, History, Home, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3, Globe, Link2, Lock } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, History, Home, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3 } from 'lucide-react';
 import { Spinner } from '@/components/Spinner/Spinner';
 import '../recon.css';
 import './recon_submit.css';
@@ -102,11 +102,11 @@ const REUSE_KEYS: (keyof ReconSolve)[] = [
   'reconer', 'reconerId', 'reconDate',
   'visibility',
 ];
-// 可见性选项(YouTube 风格):公开列出 / 不公开列出(仅直链)/ 私享(仅本人)。值入 recons.visibility。
+// 可见性选项:公开列出 / 不公开列出(仅直链)/ 私享(仅本人)。值入 recons.visibility。
 const VISIBILITY_OPTIONS = [
-  { value: 'public', Icon: Globe, title: { zh: '公开', en: 'Public' }, desc: { zh: '所有人都能在复盘列表里发现', en: 'Anyone can find it in the reconstruction list' } },
-  { value: 'unlisted', Icon: Link2, title: { zh: '不公开列出', en: 'Unlisted' }, desc: { zh: '不进列表,但有链接的人都能看', en: 'Not listed, but anyone with the link can view' } },
-  { value: 'private', Icon: Lock, title: { zh: '私享', en: 'Private' }, desc: { zh: '只有你自己能看', en: 'Only you can view' } },
+  { value: 'public', title: { zh: '公开', en: 'Public' }, desc: { zh: '所有人都能在复盘列表里发现', en: 'Anyone can find it in the reconstruction list' } },
+  { value: 'unlisted', title: { zh: '不公开列出', en: 'Unlisted' }, desc: { zh: '不进列表,但有链接的人都能看', en: 'Not listed, but anyone with the link can view' } },
+  { value: 'private', title: { zh: '私享', en: 'Private' }, desc: { zh: '只有你自己能看', en: 'Only you can view' } },
 ] as const;
 
 // 同选手 + 同打乱重复提交时,必须二选一说明原因(值入 recons.dup_reason);占位打乱 '?' 已豁免不判重。
@@ -309,6 +309,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     : scrambleField === 'optimal'
       ? form.optimalScramble || ''
       : form.scramble || '';
+  const activeVisibility = VISIBILITY_OPTIONS.find(
+    option => option.value === (form.visibility ?? 'public'),
+  ) ?? VISIBILITY_OPTIONS[0];
 
   const setActiveScrambleValue = useCallback((value: string) => {
     if (scrambleField === 'wca') setField('wcaScramble', value);
@@ -2235,31 +2238,20 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </label>
               </div>
 
-            {/* 可见性(YouTube 风格三选一):公开列出 / 不公开列出 / 私享 */}
-            <div className="submit-block submit-visibility">
+            {/* 可见性:下拉选择,只展示当前选项的说明。 */}
+            <label className="submit-field submit-block submit-visibility">
               <span className="submit-label">{tr({ zh: '可见性', en: 'Visibility' })}</span>
-              <div className="visibility-options" role="radiogroup" aria-label={tr({ zh: '可见性', en: 'Visibility' })}>
-                {VISIBILITY_OPTIONS.map(opt => {
-                  const active = (form.visibility ?? 'public') === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={active}
-                      className={`visibility-option${active ? ' active' : ''}`}
-                      onClick={() => setField('visibility', opt.value)}
-                    >
-                      <span className="visibility-option-icon"><opt.Icon size={18} /></span>
-                      <span className="visibility-option-text">
-                        <span className="visibility-option-title">{tr(opt.title)}</span>
-                        <span className="visibility-option-desc">{tr(opt.desc)}</span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+              <select
+                className="submit-field-select submit-visibility-select"
+                value={form.visibility ?? 'public'}
+                onChange={e => setField('visibility', e.target.value as ReconSolve['visibility'])}
+              >
+                {VISIBILITY_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{tr(opt.title)}</option>
+                ))}
+              </select>
+              <span className="submit-hint">{tr(activeVisibility.desc)}</span>
+            </label>
 
             {/* Submit buttons */}
             <div className="submit-actions">
