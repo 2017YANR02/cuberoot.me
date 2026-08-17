@@ -44,10 +44,11 @@ $env:WECHAT_MINI_IOS_REAL_DEVICE_TESTED='1'
 $env:WECHAT_MINI_ANDROID_REAL_DEVICE_TESTED='1'
 $env:WECHAT_MINI_GAN16UI_TESTED='1' # Android 真机完成 GAN 16 ui 全链路回归后设置
 $env:WECHAT_MINI_GOCUBE_TESTED='1'
+$env:WECHAT_MINI_GIIKER_TESTED='1'
 pnpm --filter @cuberoot/miniprogram build
 pnpm --filter @cuberoot/miniprogram release:check
 ```
 
-`release:check` 会自动运行类型检查和全部小程序回归测试，再检查正式身份、基础库、密钥轮换确认、四项人工发布确认、源码与上传产物指纹等发布条件。
+`release:check` 会自动运行类型检查和全部小程序回归测试，再检查正式身份、基础库、密钥轮换确认、人工发布确认、源码与上传产物指纹等发布条件。
 
 检查器会阻止未确认密钥轮换、基础信息、备案、后台隐私指引或双平台真机回归的发布，也会在发现新的隐私敏感 API、错误发布身份或异常包体积时直接失败。当前项目预算为总包 512 KiB、单文件 128 KiB，用于尽早发现误打包网站资源，不代表平台极限。确认变量只是防遗忘闸门，不能代替真实操作；每次只在对应事项真实完成后设置。

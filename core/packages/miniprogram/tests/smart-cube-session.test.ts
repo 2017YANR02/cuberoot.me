@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const driverMocks = vi.hoisted(() => ({
   connectGanV4: vi.fn(),
+  connectGiiker: vi.fn(),
   connectGoCube: vi.fn(),
 }));
 
@@ -11,6 +12,10 @@ vi.mock('../src/lib/smart-cube/gan-v4-ble', () => ({
 
 vi.mock('../src/lib/smart-cube/gocube-ble', () => ({
   connectGoCube: driverMocks.connectGoCube,
+}));
+
+vi.mock('../src/lib/smart-cube/giiker-ble', () => ({
+  connectGiiker: driverMocks.connectGiiker,
 }));
 
 import { SmartCubeSession } from '../src/lib/smart-cube/session';
@@ -84,6 +89,7 @@ describe('SmartCubeSession', () => {
 
   beforeEach(() => {
     driverMocks.connectGanV4.mockReset();
+    driverMocks.connectGiiker.mockReset();
     driverMocks.connectGoCube.mockReset();
     socket = new FakeSocketTask();
     vi.stubGlobal('wx', {
@@ -114,6 +120,41 @@ describe('SmartCubeSession', () => {
     socket.ready();
     await startPromise;
     expect(started).toBe(true);
+  });
+
+  it('relays Giiker moves, state and battery without claiming gyro support', async () => {
+    const session = new SmartCubeSession();
+    await startSession(session, 'i'.repeat(32));
+    driverMocks.connectGiiker.mockImplementation(async (options: {
+      onBattery(level: number): void;
+      onMove(move: string): void;
+      onState(facelets: string): void;
+    }) => {
+      options.onMove('R');
+      options.onState('U'.repeat(54));
+      options.onBattery(72);
+      return {
+        deviceName: 'Gi123456',
+        disconnect: async () => {},
+        requestBattery: async () => 72,
+      };
+    });
+
+    await session.connect('giiker');
+
+    expect(driverMocks.connectGiiker).toHaveBeenCalledOnce();
+    const payloads = socket.sent.map((data) => JSON.parse(data) as {
+      hasGyro?: boolean;
+      level?: number;
+      move?: string;
+      phase?: string;
+      type?: string;
+    });
+    expect(payloads).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: 'move', move: 'R' }),
+      expect.objectContaining({ type: 'battery', level: 72 }),
+      expect.objectContaining({ type: 'status', phase: 'connected', hasGyro: false }),
+    ]));
   });
 
   it('rejects immediately when the relay hello cannot be sent', async () => {

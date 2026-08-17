@@ -8,10 +8,11 @@ import {
 } from '@cuberoot/shared/smart-cube/relay';
 import { API_ORIGIN } from '../runtime-config';
 import { connectGanV4 } from './gan-v4-ble';
+import { connectGiiker } from './giiker-ble';
 import { connectGoCube } from './gocube-ble';
 import type { BleAbortSignal } from './ble-api';
 
-export type SmartCubeDriverKind = 'gan-v4' | 'gocube' | 'simulator';
+export type SmartCubeDriverKind = 'gan-v4' | 'gocube' | 'giiker' | 'simulator';
 export type SmartCubeSessionPhase =
   | 'idle'
   | 'scanning'
@@ -57,6 +58,10 @@ const INITIAL_SNAPSHOT: SmartCubeSessionSnapshot = {
   lastMove: '',
 };
 const RELAY_HANDSHAKE_TIMEOUT_MS = 10_000;
+
+function supportsGyro(kind: SmartCubeDriverKind): boolean {
+  return kind === 'gan-v4' || kind === 'gocube';
+}
 
 function relayUrl(): string {
   const origin = API_ORIGIN.replace(/^https:/, 'wss:').replace(/^http:/, 'ws:');
@@ -256,13 +261,15 @@ export class SmartCubeSession {
       ? 'GAN v2、v3、v4 协议设备'
       : kind === 'gocube'
         ? 'GoCube、Rubik’s Connected'
-        : '开发者工具仿真魔方';
+        : kind === 'giiker'
+          ? 'Giiker、米家智能魔方'
+          : '开发者工具仿真魔方';
     this.publishStatus({
       type: 'status',
       phase: kind === 'simulator' ? 'connecting' : 'scanning',
       brand: kind,
       deviceName,
-      hasGyro: kind !== 'simulator',
+      hasGyro: supportsGyro(kind),
     });
 
     const generation = ++this.connectionGeneration;
@@ -292,7 +299,7 @@ export class SmartCubeSession {
         });
         cancellation.track(operation);
         connection = await operation;
-      } else {
+      } else if (kind === 'gocube') {
         const operation = connectGoCube({
           signal: cancellation.signal,
           onDisconnect: (message) => this.handleHardwareDisconnect(generation, kind, message),
@@ -300,6 +307,16 @@ export class SmartCubeSession {
           onState: (facelets) => this.publishFor(generation, { type: 'state', facelets }),
           onBattery: (level) => this.publishBattery(generation, level),
           onGyro: (quaternion) => this.publishFor(generation, { type: 'gyro', quaternion }),
+        });
+        cancellation.track(operation);
+        connection = await operation;
+      } else {
+        const operation = connectGiiker({
+          signal: cancellation.signal,
+          onDisconnect: (message) => this.handleHardwareDisconnect(generation, kind, message),
+          onMove: (move) => this.publishMove(generation, move),
+          onState: (facelets) => this.publishFor(generation, { type: 'state', facelets }),
+          onBattery: (level) => this.publishBattery(generation, level),
         });
         cancellation.track(operation);
         connection = await operation;
@@ -318,7 +335,7 @@ export class SmartCubeSession {
         phase: 'connected',
         brand: kind,
         deviceName: connectedName,
-        hasGyro: kind !== 'simulator',
+        hasGyro: supportsGyro(kind),
       });
       void connection.requestBattery()
         .then((level) => {
