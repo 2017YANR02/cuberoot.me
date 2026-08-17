@@ -18,6 +18,13 @@ export const teacherDirectoryRoutes = new Hono();
 
 type EntryKind = 'teacher' | 'organization';
 type TeachingMode = 'online' | 'in_person' | 'both';
+type ImageKind = 'portrait' | 'organization' | 'teaching' | 'other';
+interface DirectoryImage {
+  id: number;
+  kind: ImageKind;
+  captionZh: string;
+  captionEn: string;
+}
 const CONTACT_KEYS = [
   'wechat', 'qq', 'email', 'phone', 'youtube', 'bilibili', 'douyin', 'kuaishou',
   'xiaohongshu', 'wechatChannels', 'facebook', 'other',
@@ -40,6 +47,7 @@ interface DirectoryDraft {
   specialtiesEn: string[];
   teachingMode: TeachingMode;
   contacts: DirectoryContacts;
+  images: DirectoryImage[];
   contact: string;
   website: string;
   wcaId: string;
@@ -60,6 +68,7 @@ interface DirectoryRow {
   specialties_en: string[] | null;
   teaching_mode: TeachingMode;
   contacts: DirectoryContacts | null;
+  images: DirectoryImage[] | null;
   contact: string;
   website: string;
   wca_id: string | null;
@@ -73,9 +82,10 @@ interface DirectoryRow {
 
 const COLUMNS = `id, kind, name_zh, name_en, location_zh, location_en,
   description_zh, description_en, specialties_zh, specialties_en, teaching_mode,
-  contacts, contact, website, wca_id, is_curated, is_visible, owner_key, owner_name, created_at, updated_at`;
+  contacts, images, contact, website, wca_id, is_curated, is_visible, owner_key, owner_name, created_at, updated_at`;
 const KINDS: readonly EntryKind[] = ['teacher', 'organization'];
 const MODES: readonly TeachingMode[] = ['online', 'in_person', 'both'];
+const IMAGE_KINDS: readonly ImageKind[] = ['portrait', 'organization', 'teaching', 'other'];
 
 function noStore(c: { header: (key: string, value: string) => void }): void {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -115,6 +125,27 @@ function cleanContacts(value: unknown, legacyContact = ''): DirectoryContacts {
   return contacts;
 }
 
+function cleanImages(value: unknown): DirectoryImage[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<number>();
+  const result: DirectoryImage[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== 'object') continue;
+    const source = item as Record<string, unknown>;
+    const id = Number(source.id);
+    if (!Number.isSafeInteger(id) || id <= 0 || seen.has(id)) continue;
+    seen.add(id);
+    result.push({
+      id,
+      kind: IMAGE_KINDS.includes(source.kind as ImageKind) ? source.kind as ImageKind : 'other',
+      captionZh: cleanText(source.captionZh, 160),
+      captionEn: cleanText(source.captionEn, 160),
+    });
+    if (result.length === 8) break;
+  }
+  return result;
+}
+
 function isHttpUrl(value: string): boolean {
   try {
     const url = new URL(value);
@@ -126,7 +157,7 @@ function isHttpUrl(value: string): boolean {
 
 function readDraft(
   body: Partial<DirectoryDraft>,
-  defaults?: { isVisible: boolean; contacts: DirectoryContacts; contact: string },
+  defaults?: { isVisible: boolean; contacts: DirectoryContacts; images: DirectoryImage[]; contact: string },
 ): DirectoryDraft {
   const wcaId = cleanText(body.wcaId, 20).toUpperCase();
   const rawContact = cleanText(body.contact, 300);
@@ -147,12 +178,29 @@ function readDraft(
       ? body.teachingMode as TeachingMode
       : 'both',
     contacts,
+    images: body.images === undefined && defaults ? cleanImages(defaults.images) : cleanImages(body.images),
     contact: rawContact || cleanText(Object.values(contacts)[0], 300),
     website: cleanText(body.website, 2000),
     wcaId,
     isCurated: body.isCurated === true,
     isVisible: typeof body.isVisible === 'boolean' ? body.isVisible : defaults?.isVisible ?? true,
   };
+}
+
+async function validateImageOwnership(
+  images: DirectoryImage[],
+  user: WcaUser,
+  admin: boolean,
+): Promise<string | null> {
+  if (images.length === 0) return null;
+  const placeholders = images.map(() => '?').join(', ');
+  const rows = await query<{ id: number | string; owner_wca_id: string }>(
+    `SELECT id, owner_wca_id FROM article_image WHERE id IN (${placeholders})`,
+    images.map((image) => image.id),
+  );
+  if (rows.length !== images.length) return 'image_not_found';
+  if (!admin && rows.some((row) => row.owner_wca_id !== user.wcaId)) return 'image_not_owned';
+  return null;
 }
 
 function validateDraft(draft: DirectoryDraft): string | null {
@@ -184,6 +232,7 @@ function toJson(row: DirectoryRow, withOwner = false) {
     specialtiesEn: row.specialties_en ?? [],
     teachingMode: row.teaching_mode,
     contacts: cleanContacts(row.contacts, row.contact),
+    images: cleanImages(row.images),
     contact: row.contact,
     website: row.website,
     wcaId: row.wca_id ?? '',
@@ -230,20 +279,20 @@ teacherDirectoryRoutes.post('/teachers', async (c) => {
   checkRateLimit(getIp(c));
   const { user, admin } = await requireDirectoryEditor(c);
   const draft = readDraft(await c.req.json<Partial<DirectoryDraft>>());
-  const error = validateDraft(draft);
+  const error = validateDraft(draft) ?? await validateImageOwnership(draft.images, user, admin);
   if (error) return c.json({ error: 'Invalid directory entry', code: error }, 400);
 
   const rows = await query<DirectoryRow>(
     `INSERT INTO teacher_directory_entries
        (kind, name_zh, name_en, location_zh, location_en, description_zh, description_en,
-        specialties_zh, specialties_en, teaching_mode, contacts, contact, website, wca_id,
+        specialties_zh, specialties_en, teaching_mode, contacts, images, contact, website, wca_id,
         is_curated, is_visible, owner_key, owner_name)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?, ?, ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, ?::jsonb, ?, ?, ?, ?, ?, ?, ?)
      RETURNING ${COLUMNS}`,
     [
       draft.kind, draft.nameZh, draft.nameEn, draft.locationZh, draft.locationEn,
       draft.descriptionZh, draft.descriptionEn, draft.specialtiesZh, draft.specialtiesEn,
-      draft.teachingMode, draft.contacts, draft.contact, draft.website, draft.wcaId || null,
+      draft.teachingMode, draft.contacts, draft.images, draft.contact, draft.website, draft.wcaId || null,
       admin ? draft.isCurated : false, draft.isVisible, user.wcaId, user.name,
     ],
   );
@@ -269,21 +318,22 @@ teacherDirectoryRoutes.put('/teachers/:id', async (c) => {
   const draft = readDraft(await c.req.json<Partial<DirectoryDraft>>(), {
     isVisible: existing[0].is_visible,
     contacts: existing[0].contacts ?? {},
+    images: existing[0].images ?? [],
     contact: existing[0].contact,
   });
-  const error = validateDraft(draft);
+  const error = validateDraft(draft) ?? await validateImageOwnership(draft.images, user, admin);
   if (error) return c.json({ error: 'Invalid directory entry', code: error }, 400);
   const rows = await query<DirectoryRow>(
     `UPDATE teacher_directory_entries SET
        kind = ?, name_zh = ?, name_en = ?, location_zh = ?, location_en = ?,
        description_zh = ?, description_en = ?, specialties_zh = ?::jsonb,
-       specialties_en = ?::jsonb, teaching_mode = ?, contacts = ?::jsonb, contact = ?, website = ?,
+       specialties_en = ?::jsonb, teaching_mode = ?, contacts = ?::jsonb, images = ?::jsonb, contact = ?, website = ?,
        wca_id = ?, is_curated = ?, is_visible = ?
      WHERE id = ? RETURNING ${COLUMNS}`,
     [
       draft.kind, draft.nameZh, draft.nameEn, draft.locationZh, draft.locationEn,
       draft.descriptionZh, draft.descriptionEn, draft.specialtiesZh, draft.specialtiesEn,
-      draft.teachingMode, draft.contacts, draft.contact, draft.website, draft.wcaId || null,
+      draft.teachingMode, draft.contacts, draft.images, draft.contact, draft.website, draft.wcaId || null,
       admin ? draft.isCurated : existing[0].is_curated, draft.isVisible, id,
     ],
   );

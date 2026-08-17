@@ -1126,6 +1126,7 @@ CREATE TABLE teacher_directory_entries (
   teaching_mode    VARCHAR(16)  NOT NULL DEFAULT 'both'
                                 CHECK (teaching_mode IN ('online', 'in_person', 'both')),
   contacts         JSONB        NOT NULL DEFAULT '{}'::jsonb,
+  images           JSONB        NOT NULL DEFAULT '[]'::jsonb,
   contact          VARCHAR(300) NOT NULL DEFAULT '',
   website          TEXT         NOT NULL DEFAULT '',
   wca_id           VARCHAR(20),
@@ -1139,6 +1140,7 @@ CREATE TABLE teacher_directory_entries (
   CHECK (description_zh <> '' OR description_en <> ''),
   CHECK (contact <> '' OR website <> ''),
   CHECK (jsonb_typeof(contacts) = 'object'),
+  CHECK (jsonb_typeof(images) = 'array'),
   CHECK (jsonb_typeof(specialties_zh) = 'array'),
   CHECK (jsonb_typeof(specialties_en) = 'array'),
   CHECK (wca_id IS NULL OR wca_id ~ '^[0-9]{4}[A-Z]{4}[0-9]{2}$')

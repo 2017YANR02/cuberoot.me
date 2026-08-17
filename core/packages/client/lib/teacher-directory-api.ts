@@ -3,6 +3,14 @@ import { authHeaders, handleApi } from './admin-api';
 
 export type DirectoryEntryKind = 'teacher' | 'organization';
 export type DirectoryTeachingMode = 'online' | 'in_person' | 'both';
+export type DirectoryImageKind = 'portrait' | 'organization' | 'teaching' | 'other';
+export interface DirectoryImage {
+  id: number;
+  url: string;
+  kind: DirectoryImageKind;
+  captionZh: string;
+  captionEn: string;
+}
 export const DIRECTORY_CONTACT_KEYS = [
   'wechat',
   'qq',
@@ -37,6 +45,7 @@ export interface TeacherDirectoryEntry {
   wcaId: string;
   isCurated: boolean;
   isVisible: boolean;
+  images: DirectoryImage[];
   ownerKey?: string;
   createdAt: string;
   updatedAt: string;
@@ -58,13 +67,42 @@ export interface TeacherDirectoryDraft {
   wcaId: string;
   isCurated: boolean;
   isVisible: boolean;
+  images: DirectoryImage[];
 }
 
-type TeacherDirectoryEntryWire = Omit<TeacherDirectoryEntry, 'isVisible' | 'contacts'> & {
+type TeacherDirectoryImageWire = Omit<DirectoryImage, 'url'> & { url?: string };
+type TeacherDirectoryEntryWire = Omit<TeacherDirectoryEntry, 'isVisible' | 'contacts' | 'images'> & {
   isVisible?: boolean;
   contacts?: unknown;
   contact?: string;
+  images?: unknown;
 };
+
+const DIRECTORY_IMAGE_KINDS = new Set<DirectoryImageKind>(['portrait', 'organization', 'teaching', 'other']);
+
+export function normalizeDirectoryImages(value: unknown): DirectoryImage[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<number>();
+  const images: DirectoryImage[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== 'object') continue;
+    const source = item as Partial<TeacherDirectoryImageWire>;
+    const id = Number(source.id);
+    if (!Number.isInteger(id) || id <= 0 || seen.has(id)) continue;
+    seen.add(id);
+    images.push({
+      id,
+      url: apiUrl(`/v1/article/img/${id}`),
+      kind: DIRECTORY_IMAGE_KINDS.has(source.kind as DirectoryImageKind)
+        ? source.kind as DirectoryImageKind
+        : 'other',
+      captionZh: typeof source.captionZh === 'string' ? source.captionZh : '',
+      captionEn: typeof source.captionEn === 'string' ? source.captionEn : '',
+    });
+    if (images.length === 8) break;
+  }
+  return images;
+}
 
 export function normalizeDirectoryContacts(value: unknown, legacyContact = ''): DirectoryContacts {
   const contacts: DirectoryContacts = {};
@@ -87,6 +125,7 @@ function normalizeTeacherDirectoryEntry(entry: TeacherDirectoryEntryWire): Teach
     ...rest,
     contacts: normalizeDirectoryContacts(entry.contacts, contact),
     isVisible: entry.isVisible !== false,
+    images: normalizeDirectoryImages(entry.images),
   };
 }
 
@@ -104,7 +143,7 @@ export function mergeTeacherDirectoryEntries(
 
 export async function fetchTeacherDirectory(): Promise<TeacherDirectoryEntry[]> {
   const data = await handleApi<{ entries: TeacherDirectoryEntryWire[] }>(
-    await fetch(apiUrl('/v1/teachers?v=3')),
+    await fetch(apiUrl('/v1/teachers?v=4')),
   );
   return data.entries.map(normalizeTeacherDirectoryEntry);
 }
