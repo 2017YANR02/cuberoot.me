@@ -104,6 +104,34 @@ describe('mini program account page', () => {
     expect(request).not.toHaveBeenCalled();
   });
 
+  it('retries unavailable storage through the same account refresh flow', async () => {
+    let storageReadable = false;
+    const request = vi.fn((options: { success(response: unknown): void }) => {
+      options.success({ statusCode: 200, data: { user: storedSession.user } });
+    });
+    const page = await loadPage({
+      getStorageSync() {
+        if (!storageReadable) throw new Error('storage unavailable');
+        return storedSession;
+      },
+      removeStorageSync: vi.fn(),
+      request,
+      setStorageSync: vi.fn(),
+    });
+
+    page.onShow();
+    expect(page.data.storageUnavailable).toBe(true);
+
+    storageReadable = true;
+    page.retrySync();
+
+    await vi.waitFor(() => expect(page.data.syncState).toBe('ready'));
+    expect(page.data.loggedIn).toBe(true);
+    expect(page.data.storageUnavailable).toBe(false);
+    expect(page.data.status).toBe('');
+    expect(request).toHaveBeenCalledOnce();
+  });
+
   it('surfaces a malformed session that cannot be removed as unavailable storage', async () => {
     const request = vi.fn();
     const page = await loadPage({

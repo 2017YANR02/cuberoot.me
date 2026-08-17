@@ -88,12 +88,7 @@ Page({
     });
     const stored = getStoredSessionSnapshot();
     if (stored.status === 'unavailable') {
-      this.showSyncState('error');
-      this.setData({
-        status: '设备存储暂时无法读取，请稍后重试',
-        statusError: true,
-        storageUnavailable: true,
-      });
+      this.showStorageUnavailable();
       return;
     }
     const { session } = stored;
@@ -108,12 +103,7 @@ Page({
       if (!validationIsCurrent(this, validationAttempt)) return;
       const current = getStoredSessionSnapshot();
       if (current.status === 'unavailable') {
-        this.showSyncState('error');
-        this.setData({
-          status: '账号已确认，但设备存储暂时无法读取，请稍后重试',
-          statusError: true,
-          storageUnavailable: true,
-        });
+        this.showStorageUnavailable('账号已确认，但设备存储暂时无法读取，请稍后重试');
         return;
       }
       if (current.session?.token !== session.token) return;
@@ -124,12 +114,7 @@ Page({
       if (!validationIsCurrent(this, validationAttempt)) return;
       const current = getStoredSessionSnapshot();
       if (current.status === 'unavailable') {
-        this.showSyncState('error');
-        this.setData({
-          status: '设备存储暂时无法读取，请稍后重试',
-          statusError: true,
-          storageUnavailable: true,
-        });
+        this.showStorageUnavailable();
         return;
       }
       if (current.session?.token !== session.token) return;
@@ -182,6 +167,11 @@ Page({
       ready: '已就绪',
     };
     this.setData({ syncLabel: labels[state], syncState: state });
+  },
+
+  showStorageUnavailable(status = '设备存储暂时无法读取，请稍后重试') {
+    this.showSyncState('error');
+    this.setData({ status, statusError: true, storageUnavailable: true });
   },
 
   retrySync() {

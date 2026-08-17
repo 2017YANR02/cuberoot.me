@@ -222,6 +222,9 @@ describe('mini program app structure', () => {
     expect(accountTemplate).toMatch(
       /class="primary-button login-button"[^>]*aria-busy="{{busy}}"[^>]*aria-label="{{busy \? '微信登录处理中' : '微信登录'}}"/,
     );
+    expect(accountTemplate).toContain(
+      "aria-label=\"{{storageUnavailable ? '重新读取设备登录状态' : '重新确认账号状态'}}\"",
+    );
     expect(accountTemplate.match(/aria-role="status"/g)).toHaveLength(3);
     expect(accountTemplate.match(/aria-live="polite"/g)).toHaveLength(3);
     expect(accountTemplate.match(/aria-atomic="true"/g)).toHaveLength(3);
