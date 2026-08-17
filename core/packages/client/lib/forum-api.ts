@@ -308,22 +308,3 @@ export async function moderateReview(
 ): Promise<{ ok: boolean }> {
   return apiSend('POST', `/review/${type}/${id}/${action}`, action === 'reject' ? { reason } : undefined);
 }
-
-// ── 图片上传 ────────────────────────────────────────────────────────────────
-export interface UploadedImage {
-  id: number;
-  url: string;
-}
-
-/**
- * 上传一张图(JSON base64 通道),返回 { id, url }(url 绝对地址,直接写进 markdown)。
- * 复用共享图库端点 /v1/article/img/:id(不可变 + nginx 缓存)——/article 并入论坛后,
- * 该路径只是底层 blob store,与文章无关。客户端先 canvas 缩放再传(服务端不 resize)。
- */
-export async function uploadForumImage(dataB64: string, mime: string): Promise<UploadedImage> {
-  return handleApi<UploadedImage>(await fetch(`${API_ORIGIN}/v1/article/img`, {
-    method: 'POST',
-    headers: authHeaders(true),
-    body: JSON.stringify({ dataB64, mime }),
-  }));
-}

@@ -253,7 +253,7 @@ const TABLES: Table[] = [
   { name: 'teacher_directory_entries', domain: 'community', origin: '0126', purpose: { zh: '/teachers 魔方老师与培训机构目录;登录用户维护自己的资料,管理员维护全部资料', en: 'The /teachers cube teacher and training-school directory; signed-in users maintain their own profiles and admins maintain all profiles' }, cols: [
     { name: 'kind', note: { zh: 'teacher / organization', en: 'teacher / organization' } },
     { name: 'name_zh / name_en, location_zh / location_en, description_zh / description_en' },
-    { name: 'specialties_zh / specialties_en JSONB, teaching_mode, contacts JSONB, contact (legacy), website, wca_id' },
+    { name: 'specialties_zh / specialties_en JSONB, teaching_mode, contacts JSONB, images JSONB, contact (legacy), website, wca_id' },
     { name: 'is_curated, is_visible', note: { zh: '管理员认证与作者控制的公开状态', en: 'admin curation and owner-controlled public visibility' } },
     { name: 'owner_key, owner_name', note: { zh: '作者身份与显示名;公开列表不返回 owner_key', en: 'author identity and display name; the public list omits owner_key' } },
   ] },
@@ -425,6 +425,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 137, slug: 'sq1_cs_squanmate_alignment', desc: { zh: '把 SQ1 形状复原的 170 个 case 全量对齐 Squanmate，并迁移受影响的训练状态与公式偏好键。', en: 'Align all 170 SQ1 Cube Shape cases with Squanmate and migrate affected trainer-state and algorithm-preference keys.' } },
   { n: 138, slug: 'recon_generic_scramble', desc: { zh: '复盘增加普通打乱字段，用于既非 WCA 真实打乱也非最优打乱的输入。', en: 'Add a generic reconstruction scramble field for input that is neither a WCA real scramble nor an optimal scramble.' } },
   { n: 139, slug: 'auth_web_session_tickets', desc: { zh: '新增短时单次票据表，让小程序原生登录态安全衔接网站登录态；只保存 SHA-256，并在核销时原子删除。', en: 'Add short-lived single-use tickets to bridge Mini Program and website sessions safely; store only SHA-256 hashes and delete atomically on exchange.' } },
+  { n: 141, slug: 'teacher_directory_images', desc: { zh: '老师与机构资料支持按顺序保存多张个人、机构与教学照片。', en: 'Let teacher and school profiles keep an ordered set of portrait, organization, and teaching photos.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

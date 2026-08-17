@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import {
   mergeTeacherDirectoryEntries,
   normalizeDirectoryContacts,
+  normalizeDirectoryImages,
   type TeacherDirectoryEntry,
 } from '@/lib/teacher-directory-api';
 
@@ -29,6 +30,7 @@ function entry(id: number, isVisible: boolean, nameZh: string): TeacherDirectory
     wcaId: '',
     isCurated: false,
     isVisible,
+    images: [],
     createdAt: '',
     updatedAt: '',
   };
@@ -68,5 +70,26 @@ describe('teacher directory visibility', () => {
     expect(normalizeDirectoryContacts(undefined, 'legacy contact')).toEqual({
       other: 'legacy contact',
     });
+  });
+
+  it('normalizes, deduplicates, and caps profile photos', () => {
+    const images = normalizeDirectoryImages([
+      { id: 7, kind: 'portrait', captionZh: '形象照', captionEn: 'Portrait' },
+      { id: 7, kind: 'teaching' },
+      { id: -1, kind: 'other' },
+      ...Array.from({ length: 10 }, (_, index) => ({ id: index + 10, kind: 'unknown' })),
+    ]);
+    expect(images).toHaveLength(8);
+    expect(images[0]).toMatchObject({ id: 7, kind: 'portrait', captionZh: '形象照', captionEn: 'Portrait' });
+    expect(images[1]).toMatchObject({ id: 10, kind: 'other' });
+    expect(images[0].url).toContain('/v1/article/img/7');
+  });
+
+  it('selects photos in the public query and checks uploaded-image ownership before writes', () => {
+    const source = readFileSync(join(SERVER_ROOT, 'src', 'routes', 'teacher_directory.ts'), 'utf8');
+    expect(source).toContain('contacts, images, contact');
+    expect(source).toContain('validateImageOwnership(draft.images, user, admin)');
+    expect(source).toContain("SELECT id, owner_wca_id FROM article_image");
+    expect(source).toContain("return 'image_not_owned'");
   });
 });

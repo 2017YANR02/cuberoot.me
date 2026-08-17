@@ -11,6 +11,7 @@ import { Spinner } from '@/components/Spinner/Spinner';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import AppLink from '@/components/AppLink';
 import { submitFeedback, uploadFeedbackImage, uploadFeedbackVideo } from '@/lib/feedback-api';
+import { prepareImageUpload } from '@/lib/image-upload';
 import './feedback-modal.css';
 
 interface Props {
@@ -20,7 +21,6 @@ interface Props {
 
 const ICON = 15;
 const MAX_IMAGES = 6;
-const IMG_MAX_DIM = 1920;
 const VIDEO_MAX_BYTES = 20 * 1024 * 1024;
 const VIDEO_MAX_SEC = 15;
 const BODY_MAX = 8000;
@@ -28,30 +28,6 @@ const PAGE_URL_MAX = 500;
 
 interface PendingImage { dataB64: string; mime: string; previewUrl: string; }
 interface PendingVideo { file: File; durationMs: number; previewUrl: string; }
-
-/** 缩放到 ≤IMG_MAX_DIM 并转 webp(不支持则 jpeg)。返回 base64 + 预览 dataURL。 */
-async function fileToWebp(file: File): Promise<PendingImage | null> {
-  try {
-    const bmp = await createImageBitmap(file);
-    const scale = Math.min(1, IMG_MAX_DIM / Math.max(bmp.width, bmp.height));
-    const w = Math.max(1, Math.round(bmp.width * scale));
-    const h = Math.max(1, Math.round(bmp.height * scale));
-    const canvas = document.createElement('canvas');
-    canvas.width = w; canvas.height = h;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) { bmp.close?.(); return null; }
-    ctx.drawImage(bmp, 0, 0, w, h);
-    bmp.close?.();
-    let mime = 'image/webp';
-    let url = canvas.toDataURL(mime, 0.85);
-    if (!url.startsWith('data:image/webp')) { mime = 'image/jpeg'; url = canvas.toDataURL(mime, 0.85); }
-    const dataB64 = url.split(',')[1] ?? '';
-    if (!dataB64) return null;
-    return { dataB64, mime, previewUrl: url };
-  } catch {
-    return null;
-  }
-}
 
 /** 读取视频时长(秒);失败返 0。 */
 function probeDuration(url: string): Promise<number> {
@@ -91,7 +67,7 @@ export default function FeedbackModal({ lang, onClose }: Props) {
     try {
       const processed: PendingImage[] = [];
       for (const f of files) {
-        const p = await fileToWebp(f);
+        const p = await prepareImageUpload(f).catch(() => null);
         if (p) processed.push(p);
       }
       setImages((prev) => [...prev, ...processed].slice(0, MAX_IMAGES));
