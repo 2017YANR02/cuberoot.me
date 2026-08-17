@@ -132,6 +132,8 @@
     "./smart-cube/cubie": "./src/smart_cube/cubie.ts",
     "./smart-cube/gan-crypto": "./src/smart_cube/gan_crypto.ts",
     "./smart-cube/gan-move-sync": "./src/smart_cube/gan_move_sync.ts",
+    "./smart-cube/gan-v2": "./src/smart_cube/gan_v2.ts",
+    "./smart-cube/gan-v3": "./src/smart_cube/gan_v3.ts",
     "./smart-cube/gan-v4": "./src/smart_cube/gan_v4.ts",
     "./smart-cube/relay": "./src/smart_cube/relay.ts",
     "./data/*.json": "./data/*.json"

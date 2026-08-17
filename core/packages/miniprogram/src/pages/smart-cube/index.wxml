@@ -18,8 +18,8 @@
   <view wx:if="{{phase !== 'connected'}}" class="driver-list">
     <view class="driver-row">
       <view class="driver-copy">
-        <text class="driver-name">GAN 新款系列</text>
-        <text class="driver-models">GAN 12–16、Mini、MG、AiCube；同协议新型号会尝试连接</text>
+        <text class="driver-name">GAN 智能魔方</text>
+        <text class="driver-models">按 GAN v2、v3、v4 协议尝试连接，尚未逐型号真机验证</text>
       </view>
       <button class="driver-action" hover-class="press-feedback" disabled="{{busy}}" data-driver="gan-v4" bindtap="connectCube">搜索</button>
     </view>
