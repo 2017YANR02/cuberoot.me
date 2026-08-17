@@ -42,7 +42,7 @@ import { timing } from '@/app/[lang]/sim/engine/tweenTiming';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 import { engineHomeSid } from '@/app/[lang]/sim/engine/nxn/netIndex';
-import { applyCoreOpacity } from '@/app/[lang]/sim/engine/coreOpacity';
+import { applyPuzzleTransparency } from '@/app/[lang]/sim/engine/coreOpacity';
 import { FM_OUTLINE, FM_DIM, FM_IGNORED, FM_FIXED_COLOR, dimFaceletColor } from '@/app/[lang]/sim/engine/nxn/stickering';
 import { PREDICT_FILL, type PredictColor } from '../_lib/colors';
 import type { PredictPuzzle } from '../_lib/puzzles';
@@ -211,11 +211,10 @@ export default function PredictBoard({
       painterRef.current = order > 0
         ? await mountNxnPainter(world, order, mount, onStickerRef, disposers)
         : await mountSolidPainter(puzzle, world, mount, onStickerRef, disposers, frameTicks);
-      applyCoreOpacity(world.cube, transparent ? 0 : 100);
-      if (order > 0) (world.cube as Cube).instancedRenderer.hint = !transparent;
+      applyPuzzleTransparency(world.cube, transparent);
       // NxN 的 frame 材质是模块级共享;离开题板前还原,避免同一页稍后挂的引擎
       // 在自己的设置 effect 落地前闪过透明首帧。
-      disposers.push(() => applyCoreOpacity(world.cube, 100));
+      disposers.push(() => applyPuzzleTransparency(world.cube, false));
 
       const onContextMenu = (e: MouseEvent) => e.preventDefault();
       mount.renderer.domElement.addEventListener('contextmenu', onContextMenu);
@@ -280,10 +279,9 @@ export default function PredictBoard({
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount || !ready) return;
-    applyCoreOpacity(mount.world.cube, transparent ? 0 : 100);
+    applyPuzzleTransparency(mount.world.cube, transparent);
     if (order > 0) {
       const cube = mount.world.cube as Cube;
-      cube.instancedRenderer.hint = !transparent;
       if (!transparent) cube.instancedRenderer.setHintBackdrop(pageBackdrop());
     }
     mount.invalidate();
