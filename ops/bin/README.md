@@ -4,6 +4,8 @@
 
 ## 当前脚本
 
+所有 PG 脚本使用同一凭据契约:优先读取已设置的 `PGPASSWORD`，其次读取 `DB_PASS`，最后从 `${CUBEROOT_DB_ENV_FILE:-/root/core-api/.env}` 加载 `DB_PASS`；缺失或为空时立即失败，绝不内置生产凭据。
+
 - `apply_load.sh` — 通用 PG 加载器,接受 `<import_dir> <log_tag>` 两参数。
   - `stats.yml` build job 用它灌两条管道:`historical_ranks_apply` 和 `wca_stats_extra_apply`
   - 脚本本身跟具体表无关:扫 `$IMPORT_DIR/*.copy.tsv` 全部非空 + 跑 `psql -e -v ON_ERROR_STOP=1 -f load.sql`
@@ -28,7 +30,7 @@
 3. 现网无变化 → no-op 跳过
 4. 否则备份现网 `${target}.bak-<unix-ts>` + cp + `chmod +x`
 
-case 列表写死(`apply_load.sh|apply_migrations.sh`),防误传别的 .sh。新增脚本要先在 deploy_ops_bin.yml 的 case 加上,否则 deploy 会 `::warning::SKIP unknown`。
+case 列表写死，防误传别的 `.sh`。新增脚本要先在 `deploy_ops_bin.yml` 的 case 加上,否则 deploy 会 `::warning::SKIP unknown`。
 
 ## 设计注记
 

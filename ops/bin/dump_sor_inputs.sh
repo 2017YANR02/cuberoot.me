@@ -10,8 +10,29 @@
 # 任何 SQL 失败必须非零退出 (CI fail-fast),不像 dump_fingerprints.sh 那样吞错。
 set -euo pipefail
 
+load_db_password() {
+  if [ -n "${PGPASSWORD:-}" ]; then
+    return
+  fi
+  if [ -z "${DB_PASS:-}" ]; then
+    DB_ENV_FILE="${CUBEROOT_DB_ENV_FILE:-/root/core-api/.env}"
+    [ -r "$DB_ENV_FILE" ] || {
+      echo "database credentials unavailable: set PGPASSWORD or DB_PASS, or provide readable CUBEROOT_DB_ENV_FILE" >&2
+      exit 1
+    }
+    set -a
+    # shellcheck disable=SC1090
+    . "$DB_ENV_FILE"
+    set +a
+  fi
+  [ -n "${DB_PASS:-}" ] || { echo "database credentials unavailable: DB_PASS is empty" >&2; exit 1; }
+  export PGPASSWORD="$DB_PASS"
+}
+
+load_db_password
+
 run_psql() {
-  PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot_db \
+  psql -U recon_user -h 127.0.0.1 -d cuberoot_db \
     -tA -F $'\t' -v ON_ERROR_STOP=1 -c "$1"
 }
 

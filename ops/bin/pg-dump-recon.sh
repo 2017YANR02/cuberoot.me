@@ -20,7 +20,27 @@ ARCHIVE=/root/archive
 DATE=$(date -u +%Y-%m-%d)
 mkdir -p "$ARCHIVE"
 
-PGPASSWORD=314159 pg_dump -U recon_user -h 127.0.0.1 -d cuberoot_db \
+load_db_password() {
+  if [ -n "${PGPASSWORD:-}" ]; then
+    return
+  fi
+  if [ -z "${DB_PASS:-}" ]; then
+    DB_ENV_FILE="${CUBEROOT_DB_ENV_FILE:-/root/core-api/.env}"
+    [ -r "$DB_ENV_FILE" ] || {
+      echo "database credentials unavailable: set PGPASSWORD or DB_PASS, or provide readable CUBEROOT_DB_ENV_FILE" >&2
+      exit 1
+    }
+    set -a
+    # shellcheck disable=SC1090
+    . "$DB_ENV_FILE"
+    set +a
+  fi
+  [ -n "${DB_PASS:-}" ] || { echo "database credentials unavailable: DB_PASS is empty" >&2; exit 1; }
+  export PGPASSWORD="$DB_PASS"
+}
+
+load_db_password
+pg_dump -U recon_user -h 127.0.0.1 -d cuberoot_db \
   --exclude-table-data='wca_results_flat' \
   --exclude-table-data='wca_results_cache' \
   --exclude-table-data='wca_scrambles' \
