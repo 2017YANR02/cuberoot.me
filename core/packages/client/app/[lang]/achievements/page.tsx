@@ -28,6 +28,32 @@ interface Achievement {
   links: { href: string; label: Bi }[];
 }
 
+interface WorkLink {
+  href: string;
+  label: Bi;
+}
+
+interface WorkGroup {
+  title: Bi;
+  detail: Bi;
+  items: WorkLink[];
+}
+
+interface EngineStep {
+  label: Bi;
+  detail: Bi;
+}
+
+const solverLink = (event: string, zh: string, en: string): WorkLink => ({
+  href: `/scramble/solver?event=${event}`,
+  label: { zh, en },
+});
+
+const simLink = (puzzle: string, zh: string, en: string): WorkLink => ({
+  href: `/sim?puzzle=${puzzle}`,
+  label: { zh, en },
+});
+
 const PROOF_CHAIN: { label: Bi; detail: Bi }[] = [
   { label: { zh: '状态', en: 'State' }, detail: { zh: '描述魔方', en: 'Model it' } },
   { label: { zh: '搜索', en: 'Search' }, detail: { zh: '穿过空间', en: 'Explore it' } },
@@ -35,20 +61,212 @@ const PROOF_CHAIN: { label: Bi; detail: Bi }[] = [
   { label: { zh: '交互', en: 'Interact' }, detail: { zh: '交到手上', en: 'Put it in hand' } },
 ];
 
-const ACHIEVEMENTS: Achievement[] = [
+const SOLVER_STEPS: EngineStep[] = [
   {
-    Icon: Binary,
-    eyebrow: { zh: '求解引擎', en: 'SOLVING ENGINES' },
-    title: { zh: '让 28 类魔方和异形在网页里直接求解', en: 'Solving 28 puzzles and shape mods directly in the browser' },
-    body: {
-      zh: '从二阶、斜转、金字塔、SQ1、魔表到长方体与异形，统一支持输入打乱或照着实物涂状态。能证明最短的就给可证最优解；空间过大的项目明确标注近最优或有界解，不把启发式结果冒充最优。',
-      en: 'From 2×2, Skewb, Pyraminx, Square-1 and Clock to cuboids and shape mods, one interface accepts a scramble or a painted physical state. Results are labelled honestly: provably optimal where possible, and near-optimal or bounded where the space is larger.',
-    },
-    links: [
-      { href: '/scramble/solver', label: { zh: '打开魔方求解器', en: 'Open the puzzle solver' } },
-      { href: '/dev/solvers', label: { zh: '查看求解器舰队', en: 'Inspect the solver fleet' } },
+    label: { zh: '状态建模', en: 'State model' },
+    detail: { zh: '排列、朝向、形状、轨道、奇偶与合法转动分别编码', en: 'Encode permutation, orientation, shape, orbits, parity and legal moves' },
+  },
+  {
+    label: { zh: '搜索设计', en: 'Search design' },
+    detail: { zh: '按空间规模选择 BFS、IDA*、PDB、两阶段或构造法', en: 'Choose BFS, IDA*, PDBs, two-phase search or constructive reduction by scale' },
+  },
+  {
+    label: { zh: '质量证明', en: 'Quality proof' },
+    detail: { zh: '严格区分可证最优、近最优与有界解', en: 'Distinguish provably optimal, near-optimal and bounded solutions' },
+  },
+  {
+    label: { zh: '产品交付', en: 'Product delivery' },
+    detail: { zh: '打乱输入、涂色输入、二维预览、进度与中止全部接通', en: 'Ship scramble input, state painting, 2D previews, progress and cancellation' },
+  },
+];
+
+const SOLVER_GROUPS: WorkGroup[] = [
+  {
+    title: { zh: 'WCA 与经典项目', en: 'WCA and classic puzzles' },
+    detail: { zh: '把常见项目统一进同一入口，同时保留各自的状态规则与求解保证。', en: 'A single entry point that preserves each puzzle’s state rules and solution guarantees.' },
+    items: [
+      solverLink('333', '三阶', '3×3'),
+      solverLink('222', '二阶', '2×2'),
+      solverLink('sq1', 'Square-1', 'Square-1'),
+      solverLink('clock', '魔表', 'Clock'),
+      solverLink('skewb', '斜转', 'Skewb'),
+      solverLink('pyram', '金字塔', 'Pyraminx'),
     ],
   },
+  {
+    title: { zh: '全枚举与精确表', en: 'Full enumeration and exact tables' },
+    detail: { zh: '从 192 态到数百万态，完整遍历或离线精确表直接给出最短解。', en: 'From 192 states to millions, exhaustive traversal or offline exact tables return shortest solutions.' },
+    items: [
+      solverLink('ivy', '枫叶', 'Ivy'),
+      solverLink('133', '1×3×3 Floppy', '1×3×3 Floppy'),
+      solverLink('sfl', 'Super Floppy', 'Super Floppy'),
+      solverLink('ufo', 'UFO', 'UFO'),
+      solverLink('cm2', 'Cmetrick Mini', 'Cmetrick Mini'),
+      solverLink('dmd', 'Skewb Diamond', 'Skewb Diamond'),
+      solverLink('gear', '齿轮魔方', 'Gear Cube'),
+      solverLink('8p', '八数码', '8-puzzle'),
+      solverLink('15p', '十五数码', '15-puzzle'),
+      solverLink('bic', 'Bicube', 'Bicube'),
+      solverLink('sia222', '连体二阶', 'Siamese 2×2×2'),
+    ],
+  },
+  {
+    title: { zh: '长方体与耦合结构', en: 'Cuboids and coupled structures' },
+    detail: { zh: '单独处理转动集合、形变阶段、轨道限制与连体块耦合。', en: 'Handle restricted move sets, shape-changing phases, piece orbits and coupled blocks explicitly.' },
+    items: [
+      solverLink('223', '2×2×3', '2×2×3'),
+      solverLink('233', '2×3×3', '2×3×3'),
+      solverLink('334', '3×3×4', '3×3×4'),
+      solverLink('335', '3×3×5', '3×3×5'),
+      solverLink('336', '3×3×6', '3×3×6'),
+      solverLink('337', '3×3×7', '3×3×7'),
+      solverLink('sia123', '连体 1×2×3', 'Siamese 1×2×3'),
+    ],
+  },
+  {
+    title: { zh: '异形与超大状态空间', en: 'Shape mods and vast state spaces' },
+    detail: { zh: '无法整表装下的空间改用分阶段、启发式数据库与构造归约，并公开解的边界。', en: 'Spaces too large for full tables use staged search, pattern databases and constructive reduction with explicit bounds.' },
+    items: [
+      solverLink('sq2', 'Square-2', 'Square-2'),
+      solverLink('ssq1', 'Super Square-1', 'Super Square-1'),
+      solverLink('bsq', 'Bandaged Square-1', 'Bandaged Square-1'),
+      solverLink('cm3', 'Cmetrick', 'Cmetrick'),
+      solverLink('heli', '直升机魔方', 'Helicopter Cube'),
+      solverLink('helicv', '曲面直升机', 'Curvy Copter'),
+      solverLink('ctico', 'Icosamate', 'Icosamate'),
+      solverLink('mpyrso', '大金字塔', 'Master Pyraminx'),
+      solverLink('dino', '恐龙魔方', 'Dino Cube'),
+      solverLink('crz3a', 'Crazy 3×3', 'Crazy 3×3'),
+    ],
+  },
+];
+
+const SIMULATOR_STEPS: EngineStep[] = [
+  {
+    label: { zh: '几何生成', en: 'Geometry' },
+    detail: { zh: '立方体、正多面体、曲面与任意多重切割从参数生成', en: 'Generate cubes, polyhedra, curved cuts and combined cuts from parameters' },
+  },
+  {
+    label: { zh: '状态与动画', en: 'State and motion' },
+    detail: { zh: '状态推进和转层动画使用同一套合法转动语义', en: 'State transitions and layer animation share the same legal-move semantics' },
+  },
+  {
+    label: { zh: '真实交互', en: 'Interaction' },
+    detail: { zh: '鼠标拖拽、触控、键盘、公式播放与视角控制全部可用', en: 'Support drag, touch, keyboard, algorithm playback and camera control' },
+  },
+  {
+    label: { zh: '渲染工具链', en: 'Rendering tools' },
+    detail: { zh: '贴片、内部结构、透明度、阶段遮罩、截图和矢量导出接入同一模型', en: 'Connect stickers, internals, opacity, stage masks, screenshots and vector export to one model' },
+  },
+];
+
+const SIMULATOR_GROUPS: WorkGroup[] = [
+  {
+    title: { zh: '16 类主引擎入口', en: '16 first-class engine entries' },
+    detail: { zh: '自研 Three.js、专用二维引擎与通用多面体渲染在一个模拟器中协作。', en: 'Custom Three.js, dedicated 2D and general polyhedral renderers work together in one simulator.' },
+    items: [
+      simLink('3', 'NxN 魔方', 'NxN Cube'),
+      simLink('custom', '自定义切割', 'Puzzle Cuts'),
+      simLink('sq1', 'Square-1', 'Square-1'),
+      simLink('ivy', '枫叶', 'Ivy'),
+      simLink('pyraminx', '金字塔', 'Pyraminx'),
+      simLink('skewb', '斜转', 'Skewb'),
+      simLink('megaminx', '五魔方', 'Megaminx'),
+      simLink('clock', '魔表', 'Clock'),
+      simLink('fto', 'FTO', 'FTO'),
+      simLink('dino', '恐龙魔方', 'Dino Cube'),
+      simLink('redi', 'Redi Cube', 'Redi Cube'),
+      simLink('rex', 'Rex Cube', 'Rex Cube'),
+      simLink('heli', '直升机魔方', 'Helicopter Cube'),
+      simLink('gear', '齿轮魔方', 'Gear Cube'),
+      simLink('mirror', '三阶镜面', 'Mirror 3×3'),
+      simLink('mirror2', '二阶镜面', 'Mirror 2×2'),
+    ],
+  },
+  {
+    title: { zh: '立方体切割预设', en: 'Cubic cut presets' },
+    detail: { zh: '棱切、角切和多层角切由同一个几何描述系统生成。', en: 'Edge cuts, vertex cuts and layered vertex cuts come from one geometry description system.' },
+    items: [
+      simLink('littlechop', '小切', 'Little Chop'),
+      simLink('curvycopter', '曲面直升机', 'Curvy Copter'),
+      simLink('compycube', 'Compy Cube', 'Compy Cube'),
+      simLink('masterskewb', '大斜转', 'Master Skewb'),
+      simLink('professorskewb', '教授斜转', 'Professor Skewb'),
+    ],
+  },
+  {
+    title: { zh: '四面体与八面体系列', en: 'Tetrahedral and octahedral families' },
+    detail: { zh: '从魔金到帝王金字塔，从 Master FTO 到 Octastar，切割层级可持续扩展。', en: 'From Pyramorphix to Emperor Pyraminx, and Master FTO to Octastar, cut layers scale continuously.' },
+    items: [
+      simLink('pyramorphix', '魔金', 'Pyramorphix'),
+      simLink('mastermorphix', '大魔金', 'Mastermorphix'),
+      simLink('masterpyramorphix', 'Master Pyramorphix', 'Master Pyramorphix'),
+      simLink('tetraminx', 'Tetraminx', 'Tetraminx'),
+      simLink('masterpyraminx', '大金字塔', 'Master Pyraminx'),
+      simLink('mastertetraminx', 'Master Tetraminx', 'Master Tetraminx'),
+      simLink('professorpyraminx', '教授金字塔', 'Professor Pyraminx'),
+      simLink('professortetraminx', 'Professor Tetraminx', 'Professor Tetraminx'),
+      simLink('royalpyraminx', '皇家金字塔', 'Royal Pyraminx'),
+      simLink('royaltetraminx', 'Royal Tetraminx', 'Royal Tetraminx'),
+      simLink('emperorpyraminx', '帝王金字塔', 'Emperor Pyraminx'),
+      simLink('emperortetraminx', 'Emperor Tetraminx', 'Emperor Tetraminx'),
+      simLink('jingpyraminx', 'Jing Pyraminx', 'Jing Pyraminx'),
+      simLink('masterfto', 'Master FTO', 'Master FTO'),
+      simLink('skewbdiamond', 'Skewb Diamond', 'Skewb Diamond'),
+      simLink('christophersjewel', "Christopher's Jewel", "Christopher's Jewel"),
+      simLink('octastar', 'Octastar', 'Octastar'),
+      simLink('trajbersoctahedron', 'Trajber 八面体', "Trajber's Octahedron"),
+    ],
+  },
+  {
+    title: { zh: '十二面体系列', en: 'Dodecahedral family' },
+    detail: { zh: '从 Gigaminx 一直生成到 Yottaminx，并覆盖 Pentultimate、Starminx 与复合切割。', en: 'Generate the family from Gigaminx through Yottaminx, plus Pentultimate, Starminx and related cuts.' },
+    items: [
+      simLink('gigaminx', 'Gigaminx', 'Gigaminx'),
+      simLink('teraminx', 'Teraminx', 'Teraminx'),
+      simLink('petaminx', 'Petaminx', 'Petaminx'),
+      simLink('examinx', 'Examinx', 'Examinx'),
+      simLink('zetaminx', 'Zetaminx', 'Zetaminx'),
+      simLink('yottaminx', 'Yottaminx', 'Yottaminx'),
+      simLink('pentultimate', 'Pentultimate', 'Pentultimate'),
+      simLink('masterpentultimate', 'Master Pentultimate', 'Master Pentultimate'),
+      simLink('elitepentultimate', 'Elite Pentultimate', 'Elite Pentultimate'),
+      simLink('starminx', 'Starminx', 'Starminx'),
+      simLink('starminx2', 'Starminx 2', 'Starminx 2'),
+      simLink('pyraminxcrystal', 'Pyraminx Crystal', 'Pyraminx Crystal'),
+      simLink('chopasaurus', 'Chopasaurus', 'Chopasaurus'),
+      simLink('bigchop', '大切', 'Big Chop'),
+    ],
+  },
+  {
+    title: { zh: '二十面体系列', en: 'Icosahedral family' },
+    detail: { zh: '把二十面体的面切、角切与组合切割做成可拖动、可播放的模型。', en: 'Turn face, vertex and combined icosahedral cuts into draggable, playable models.' },
+    items: [
+      simLink('radiochop', 'Radio Chop', 'Radio Chop'),
+      simLink('icosamate', 'Icosamate', 'Icosamate'),
+      simLink('astrominx', 'Astrominx', 'Astrominx'),
+      simLink('astrominxbigchop', 'Astrominx + Big Chop', 'Astrominx + Big Chop'),
+      simLink('redicosahedron', 'Redicosahedron', 'Redicosahedron'),
+      simLink('redicosahedroncenters', 'Redicosahedron + 中心', 'Redicosahedron + Centers'),
+      simLink('icosaminx', 'Icosaminx', 'Icosaminx'),
+      simLink('eitansstar', "Eitan's Star", "Eitan's Star"),
+    ],
+  },
+  {
+    title: { zh: '多切割组合', en: 'Combined cut systems' },
+    detail: { zh: '不同切割规则可以叠加，不必为每个新异形重写整套渲染器。', en: 'Different cut systems compose without rebuilding an entire renderer for every new shape mod.' },
+    items: [
+      simLink('cube2dino', '2×2 + Dino', '2×2 + Dino'),
+      simLink('cube2littlechop', '2×2 + 小切', '2×2 + Little Chop'),
+      simLink('dinolittlechop', 'Dino + 小切', 'Dino + Little Chop'),
+      simLink('cube2dinolittlechop', '2×2 + Dino + 小切', '2×2 + Dino + Little Chop'),
+      simLink('megaminxchopasaurus', 'Megaminx + Chopasaurus', 'Megaminx + Chopasaurus'),
+      simLink('starminxcombo', 'Starminx Combo', 'Starminx Combo'),
+    ],
+  },
+];
+
+const ACHIEVEMENTS: Achievement[] = [
   {
     Icon: GitBranch,
     eyebrow: { zh: '状态空间', en: 'STATE SPACES' },
@@ -89,19 +307,6 @@ const ACHIEVEMENTS: Achievement[] = [
     ],
   },
   {
-    Icon: Box,
-    eyebrow: { zh: '交互工具', en: 'INTERACTIVE TOOLS' },
-    title: { zh: '同一套魔方模型，从 3D 模拟走到真实计时', en: 'One puzzle model, from 3D simulation to real solves' },
-    body: {
-      zh: '28 类可拖拽 3D 模拟器共享状态与公式语义，并延伸到逐步动画、键盘输入、触控操作、计时器和智能魔方连接。工具之间不是孤岛，同一种状态能被展示、操控、分析和训练。',
-      en: 'Twenty-eight draggable 3D simulators share state and algorithm semantics, extending into step playback, keyboard input, touch interaction, the timer and smart-cube connections. The same state can be shown, manipulated, analysed and trained across tools.',
-    },
-    links: [
-      { href: '/sim', label: { zh: '打开 3D 模拟器', en: 'Open the 3D simulator' } },
-      { href: '/timer', label: { zh: '进入计时器', en: 'Open the timer' } },
-    ],
-  },
-  {
     Icon: Database,
     eyebrow: { zh: '数据产品', en: 'DATA PRODUCTS' },
     title: { zh: '把 WCA 数据做成可以探索和判断的产品', en: 'Turning WCA data into products for exploration and decisions' },
@@ -115,6 +320,84 @@ const ACHIEVEMENTS: Achievement[] = [
     ],
   },
 ];
+
+function FeaturedSystem({
+  id,
+  Icon,
+  number,
+  eyebrow,
+  metric,
+  metricLabel,
+  title,
+  intro,
+  steps,
+  groups,
+  actions,
+}: {
+  id: string;
+  Icon: LucideIcon;
+  number: string;
+  eyebrow: Bi;
+  metric: string;
+  metricLabel: Bi;
+  title: Bi;
+  intro: Bi;
+  steps: EngineStep[];
+  groups: WorkGroup[];
+  actions: WorkLink[];
+}) {
+  return (
+    <section className="featured-system" aria-labelledby={id}>
+      <div className="featured-system-heading">
+        <div className="featured-system-label">
+          <Icon size={23} strokeWidth={1.7} aria-hidden />
+          <span>{number} / {tr(eyebrow)}</span>
+        </div>
+        <div className="featured-system-summary">
+          <p className="featured-system-metric"><strong>{metric}</strong><span>{tr(metricLabel)}</span></p>
+          <div>
+            <h2 id={id}>{tr(title)}</h2>
+            <p>{tr(intro)}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="featured-engine-map">
+        {steps.map((step, index) => (
+          <div className="featured-engine-step" key={step.label.en}>
+            <span>0{index + 1}</span>
+            <strong>{tr(step.label)}</strong>
+            <p>{tr(step.detail)}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="featured-work-groups">
+        {groups.map((group) => (
+          <section className="featured-work-group" key={group.title.en}>
+            <div>
+              <h3>{tr(group.title)}</h3>
+              <p>{tr(group.detail)}</p>
+            </div>
+            <div className="featured-project-links">
+              {group.items.map((item) => (
+                <Link href={item.href} prefetch={false} key={item.href}>{tr(item.label)}</Link>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <div className="achievement-links featured-system-actions">
+        {actions.map((action) => (
+          <Link href={action.href} prefetch={false} key={action.href}>
+            {tr(action.label)}<ArrowRight size={15} aria-hidden />
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export default function AchievementsPage() {
   return (
@@ -146,16 +429,64 @@ export default function AchievementsPage() {
         </div>
       </section>
 
+      <div className="featured-systems">
+        <FeaturedSystem
+          id="solver-achievements"
+          Icon={Binary}
+          number="01"
+          eyebrow={{ zh: '求解器系统', en: 'SOLVER SYSTEMS' }}
+          metric="34"
+          metricLabel={{ zh: '个在线求解入口', en: 'live solver entries' }}
+          title={{
+            zh: '从 192 态到 10³³ 量级：为不同魔方造不同求解器',
+            en: 'From 192 states to 10³³-scale spaces: a solver built for each puzzle',
+          }}
+          intro={{
+            zh: '统一入口已经覆盖 34 个项目。这不是给 34 个页面套同一个外壳：每个项目都有自己的状态编码、合法性检查、搜索策略、质量标注与二维预览。能证明最短的写“最优”；做不到全局证明的，明确写“近最优”或“有界”。',
+            en: 'The unified solver now covers 34 puzzles. These are not 34 skins around one routine: each has its own state encoding, legality checks, search strategy, quality label and 2D preview. A result is called optimal only when it can be proved; otherwise it is explicitly marked near-optimal or bounded.',
+          }}
+          steps={SOLVER_STEPS}
+          groups={SOLVER_GROUPS}
+          actions={[
+            { href: '/scramble/solver', label: { zh: '打开统一求解器', en: 'Open the unified solver' } },
+            { href: '/dev/solvers', label: { zh: '查看算法与状态空间看板', en: 'Inspect algorithms and state spaces' } },
+          ]}
+        />
+
+        <FeaturedSystem
+          id="simulator-achievements"
+          Icon={Box}
+          number="02"
+          eyebrow={{ zh: '模拟器系统', en: 'SIMULATOR SYSTEMS' }}
+          metric="67"
+          metricLabel={{ zh: '个可直接打开的模型', en: 'directly playable models' }}
+          title={{
+            zh: '从一颗贴片到 67 个模型：自研可交互模拟引擎',
+            en: 'From one sticker to 67 models: an interactive simulation system built in-house',
+          }}
+          intro={{
+            zh: '模拟器选择器现有 16 类主入口和 51 个多面体切割预设。背后不只是“显示一个 3D 魔方”，而是几何生成、状态推进、转层动画、拖拽判定、公式回放、触控适配与图像导出的一整套引擎。',
+            en: 'The simulator picker contains 16 first-class entries and 51 polyhedral cut presets. Behind them is more than a 3D display: geometry generation, state transitions, layer animation, drag recognition, algorithm playback, touch support and image export form one integrated engine.',
+          }}
+          steps={SIMULATOR_STEPS}
+          groups={SIMULATOR_GROUPS}
+          actions={[
+            { href: '/sim', label: { zh: '打开交互模拟器', en: 'Open the interactive simulator' } },
+            { href: '/sim/stages', label: { zh: '查看阶段与遮罩演示', en: 'Explore stages and masks' } },
+          ]}
+        />
+      </div>
+
       <section className="achievements-list" aria-labelledby="achievements-list-title">
         <div className="achievements-list-heading">
           <Timer size={16} aria-hidden />
-          <h2 id="achievements-list-title">{tr({ zh: '代表成果', en: 'SELECTED WORK' })}</h2>
+          <h2 id="achievements-list-title">{tr({ zh: '更多成果', en: 'MORE WORK' })}</h2>
         </div>
         {ACHIEVEMENTS.map(({ Icon, eyebrow, title, body, links }, index) => (
           <article className="achievement-row" key={title.en}>
             <div className="achievement-row-heading">
               <Icon size={22} strokeWidth={1.7} aria-hidden />
-              <span>0{index + 1} / {tr(eyebrow)}</span>
+              <span>0{index + 3} / {tr(eyebrow)}</span>
             </div>
             <div className="achievement-row-content">
               <h3>{tr(title)}</h3>

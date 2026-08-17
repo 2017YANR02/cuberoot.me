@@ -106,6 +106,181 @@
   font-size: 0.75rem;
 }
 
+.featured-systems {
+  margin-top: clamp(5rem, 12vw, 9rem);
+}
+
+.featured-system {
+  padding: clamp(2.5rem, 6vw, 5rem) 0;
+  border-top: 1px solid var(--border-default);
+}
+
+.featured-system-heading {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.72fr) minmax(0, 1.55fr);
+  gap: clamp(2rem, 6vw, 6rem);
+}
+
+.featured-system-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  color: var(--accent);
+}
+
+.featured-system-label span {
+  padding-top: 0.25rem;
+  color: var(--muted-foreground);
+  font: 600 0.7rem/1.3 ui-monospace, 'Cascadia Code', monospace;
+  letter-spacing: 0.08em;
+}
+
+.featured-system-summary {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.28fr) minmax(0, 1fr);
+  gap: clamp(1.25rem, 4vw, 3.5rem);
+}
+
+.featured-system-metric {
+  margin: 0;
+}
+
+.featured-system-metric strong,
+.featured-system-metric span {
+  display: block;
+}
+
+.featured-system-metric strong {
+  color: var(--accent);
+  font-family: var(--font-serif);
+  font-size: clamp(3.4rem, 7vw, 5.8rem);
+  font-weight: 400;
+  letter-spacing: -0.05em;
+  line-height: 0.82;
+}
+
+.featured-system-metric span {
+  max-width: 7rem;
+  margin-top: 0.8rem;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.featured-system-summary h2 {
+  max-width: 720px;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4.4vw, 3.5rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1.04;
+  text-wrap: balance;
+}
+
+.featured-system-summary div > p {
+  max-width: 720px;
+  margin: 1.25rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.98rem;
+  line-height: 1.78;
+}
+
+.featured-engine-map {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: clamp(2.5rem, 5vw, 4rem);
+  border-top: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.featured-engine-step {
+  padding: 1.35rem clamp(1rem, 2.5vw, 2rem);
+}
+
+.featured-engine-step:first-child {
+  padding-left: 0;
+}
+
+.featured-engine-step + .featured-engine-step {
+  border-left: 1px solid var(--border-default);
+}
+
+.featured-engine-step > span {
+  display: block;
+  margin-bottom: 0.8rem;
+  color: var(--accent);
+  font: 600 0.68rem/1 ui-monospace, 'Cascadia Code', monospace;
+}
+
+.featured-engine-step strong {
+  font-family: var(--font-serif);
+  font-size: 1.08rem;
+  font-weight: 500;
+}
+
+.featured-engine-step p {
+  margin: 0.55rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.76rem;
+  line-height: 1.6;
+}
+
+.featured-work-groups {
+  margin-top: 1.2rem;
+}
+
+.featured-work-group {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.72fr) minmax(0, 1.55fr);
+  gap: clamp(2rem, 6vw, 6rem);
+  padding: 1.65rem 0;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.featured-work-group h3 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.12rem;
+  font-weight: 500;
+}
+
+.featured-work-group > div > p {
+  max-width: 320px;
+  margin: 0.55rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.76rem;
+  line-height: 1.58;
+}
+
+.featured-project-links {
+  display: flex;
+  align-content: flex-start;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.15rem;
+}
+
+.featured-project-links a {
+  width: fit-content;
+  color: var(--foreground);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 4px;
+  white-space: nowrap;
+}
+
+.featured-project-links a:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
+.featured-system-actions {
+  margin-top: 1.6rem;
+}
+
 .achievements-list {
   margin-top: clamp(5rem, 12vw, 9rem);
 }
@@ -268,9 +443,39 @@
   }
 
   .achievement-row,
+  .featured-system-heading,
+  .featured-work-group,
   .achievements-closing {
     grid-template-columns: 1fr;
     gap: 1.25rem;
+  }
+
+  .featured-system-summary {
+    grid-template-columns: minmax(70px, auto) minmax(0, 1fr);
+  }
+
+  .featured-engine-map {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .featured-engine-step:nth-child(3) {
+    border-left: 0;
+  }
+
+  .featured-engine-step:nth-child(n + 3) {
+    border-top: 1px solid var(--border-default);
+  }
+
+  .featured-engine-step:nth-child(odd) {
+    padding-left: 0;
+  }
+
+  .featured-work-group {
+    gap: 1rem;
+  }
+
+  .featured-work-group > div > p {
+    max-width: 620px;
   }
 
   .achievement-row-heading {
@@ -283,6 +488,38 @@
 
   .achievements-closing > p {
     margin-bottom: -0.3em;
+  }
+}
+
+@media (max-width: 460px) {
+  .featured-system-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .featured-system-metric {
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+  }
+
+  .featured-system-metric span {
+    max-width: none;
+    margin-top: 0;
+  }
+
+  .featured-engine-map {
+    grid-template-columns: 1fr;
+  }
+
+  .featured-engine-step,
+  .featured-engine-step:first-child,
+  .featured-engine-step:nth-child(odd) {
+    padding: 1.15rem 0;
+  }
+
+  .featured-engine-step + .featured-engine-step {
+    border-top: 1px solid var(--border-default);
+    border-left: 0;
   }
 }
 
