@@ -1,0 +1,17 @@
+[Unit]
+Description=Cube Platform (Next standalone)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/www/wwwroot/cube-platform
+Environment=NODE_ENV=production
+Environment=PORT=3004
+Environment=HOSTNAME=127.0.0.1
+Environment=DB_PATH=/var/lib/cube-platform/data.db
+ExecStart=/www/wwwroot/cube-platform/start.sh
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

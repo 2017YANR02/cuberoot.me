@@ -1,0 +1,851 @@
+import { sqliteTable, text, integer, real, index, uniqueIndex, primaryKey } from "drizzle-orm/sqlite-core";
+
+export type CourseLevel = "入门" | "进阶" | "高阶" | "竞速";
+export type CourseFormat = "录播系统课" | "线上直播" | "一对一私教" | "线下家教";
+export type ProductCategory = "竞速魔方" | "配件" | "周边" | "异形";
+export type EventType = "WCA 官方赛" | "城市开放赛" | "线上挑战赛" | "社群交流赛";
+export type EventStatus = "报名中" | "即将开放" | "已结束";
+export type NewsCategory = "公告" | "赛事" | "教学" | "行业";
+export type UserRole = "user" | "instructor" | "admin";
+export type OrderType = "course" | "product" | "event" | "membership";
+export type OrderStatus = "pending" | "paid" | "cancelled" | "refunded";
+export type MembershipStatus = "active" | "expired" | "cancelled";
+export type PayoutStatus = "pending" | "paid";
+export type PaymentLogKind =
+  | "callback"
+  | "refund"
+  | "manual_paid"
+  | "manual_cancel";
+export type PaymentMethod =
+  | "mock_wechat"
+  | "mock_alipay"
+  | "stripe"
+  | "wechat"
+  | "alipay";
+export type ApplicationStatus = "pending" | "approved" | "rejected";
+export type CircleId = "newbie" | "speed" | "blind" | "campus";
+export type CouponDiscountType = "fixed" | "percent";
+export type CouponAppliesTo = "course" | "product" | "event" | "any";
+
+export const courses = sqliteTable(
+  "courses",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    subtitle: text("subtitle").notNull(),
+    level: text("level").$type<CourseLevel>().notNull(),
+    format: text("format").$type<CourseFormat>().notNull(),
+    instructor: text("instructor").notNull(),
+    instructorId: text("instructor_id"),
+    durationHours: integer("duration_hours").notNull(),
+    lessons: integer("lessons").notNull(),
+    price: integer("price").notNull(),
+    studentsEnrolled: integer("students_enrolled").notNull(),
+    rating: real("rating").notNull(),
+    highlights: text("highlights", { mode: "json" }).$type<string[]>().notNull(),
+    outline: text("outline", { mode: "json" })
+      .$type<{ week: string; topic: string }[]>()
+      .notNull(),
+    tags: text("tags", { mode: "json" }).$type<string[]>().notNull(),
+    videoUrl: text("video_url"),
+    coverUrl: text("cover_url"),
+    nextLiveAt: integer("next_live_at"),
+  },
+  (t) => [index("courses_instructor_idx").on(t.instructorId)],
+);
+
+export const products = sqliteTable("products", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  category: text("category").$type<ProductCategory>().notNull(),
+  brand: text("brand").notNull(),
+  price: integer("price").notNull(),
+  originalPrice: integer("original_price"),
+  rating: real("rating").notNull(),
+  reviews: integer("reviews").notNull(),
+  description: text("description").notNull(),
+  features: text("features", { mode: "json" }).$type<string[]>().notNull(),
+  inStock: integer("in_stock", { mode: "boolean" }).notNull(),
+  // 会员专享:memberOnly=仅会员可购;memberPrice=会员价(元,空则会员无折扣)
+  memberOnly: integer("member_only", { mode: "boolean" }).notNull().default(false),
+  memberPrice: integer("member_price"),
+});
+
+export const events = sqliteTable("events", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  type: text("type").$type<EventType>().notNull(),
+  status: text("status").$type<EventStatus>().notNull(),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date"),
+  city: text("city").notNull(),
+  venue: text("venue").notNull(),
+  capacity: integer("capacity").notNull(),
+  registered: integer("registered").notNull(),
+  fee: integer("fee").notNull(),
+  events: text("events", { mode: "json" }).$type<string[]>().notNull(),
+  description: text("description").notNull(),
+});
+
+export const news = sqliteTable("news", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  date: text("date").notNull(),
+  category: text("category").$type<NewsCategory>().notNull(),
+  excerpt: text("excerpt").notNull(),
+  body: text("body"),
+});
+
+export const instructors = sqliteTable(
+  "instructors",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    title: text("title").notNull(),
+    city: text("city").notNull(),
+    specialty: text("specialty", { mode: "json" }).$type<string[]>().notNull(),
+    studentsTaught: integer("students_taught").notNull(),
+    yearsTeaching: integer("years_teaching").notNull(),
+    bestRecord: text("best_record").notNull(),
+    bio: text("bio").notNull(),
+    userId: text("user_id"),
+  },
+  (t) => [index("instructors_user_idx").on(t.userId)],
+);
+
+export const users = sqliteTable(
+  "users",
+  {
+    id: text("id").primaryKey(),
+    phone: text("phone").notNull().unique(),
+    nickname: text("nickname").notNull(),
+    avatar: text("avatar"),
+    role: text("role").$type<UserRole>().notNull().default("user"),
+    instructorId: text("instructor_id"),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [
+    index("users_phone_idx").on(t.phone),
+    index("users_instructor_idx").on(t.instructorId),
+  ],
+);
+
+export const otpCodes = sqliteTable(
+  "otp_codes",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    phone: text("phone").notNull(),
+    code: text("code").notNull(),
+    expiresAt: integer("expires_at").notNull(),
+    consumedAt: integer("consumed_at"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("otp_codes_phone_idx").on(t.phone)],
+);
+
+export const orders = sqliteTable(
+  "orders",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    type: text("type").$type<OrderType>().notNull(),
+    refId: text("ref_id").notNull(),
+    refTitle: text("ref_title").notNull(),
+    qty: integer("qty").notNull().default(1),
+    amount: integer("amount").notNull(),
+    discount: integer("discount").notNull().default(0),
+    couponCode: text("coupon_code"),
+    status: text("status").$type<OrderStatus>().notNull().default("pending"),
+    paymentMethod: text("payment_method").$type<PaymentMethod>(),
+    providerId: text("provider_id"),
+    paymentRaw: text("payment_raw", { mode: "json" }).$type<unknown>(),
+    createdAt: integer("created_at").notNull(),
+    paidAt: integer("paid_at"),
+    refundedAt: integer("refunded_at"),
+    refundAmount: integer("refund_amount"),
+  },
+  (t) => [
+    index("orders_user_idx").on(t.userId),
+    index("orders_status_idx").on(t.status),
+  ],
+);
+
+export const paymentLogs = sqliteTable(
+  "payment_logs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    orderId: text("order_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    kind: text("kind").$type<PaymentLogKind>().notNull(),
+    payload: text("payload", { mode: "json" }).$type<unknown>(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("payment_logs_order_created_idx").on(t.orderId, t.createdAt),
+  ],
+);
+
+export const instructorApplications = sqliteTable(
+  "instructor_applications",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id"),
+    name: text("name").notNull(),
+    phone: text("phone").notNull(),
+    city: text("city").notNull(),
+    wcaId: text("wca_id"),
+    direction: text("direction", { mode: "json" }).$type<string[]>().notNull(),
+    formats: text("formats", { mode: "json" }).$type<string[]>().notNull(),
+    bio: text("bio").notNull(),
+    status: text("status").$type<ApplicationStatus>().notNull().default("pending"),
+    reviewNote: text("review_note"),
+    createdAt: integer("created_at").notNull(),
+    reviewedAt: integer("reviewed_at"),
+  },
+  (t) => [
+    index("applications_status_idx").on(t.status),
+    index("applications_phone_idx").on(t.phone),
+  ],
+);
+
+export const posts = sqliteTable(
+  "posts",
+  {
+    id: text("id").primaryKey(),
+    authorId: text("author_id").notNull(),
+    circleId: text("circle_id").$type<CircleId>().notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    likes: integer("likes").notNull().default(0),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("posts_circle_idx").on(t.circleId),
+    index("posts_author_idx").on(t.authorId),
+    index("posts_created_idx").on(t.createdAt),
+  ],
+);
+
+export const comments = sqliteTable(
+  "comments",
+  {
+    id: text("id").primaryKey(),
+    postId: text("post_id").notNull(),
+    authorId: text("author_id").notNull(),
+    body: text("body").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("comments_post_idx").on(t.postId)],
+);
+
+export const postLikes = sqliteTable(
+  "post_likes",
+  {
+    postId: text("post_id").notNull(),
+    userId: text("user_id").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.postId, t.userId] })],
+);
+
+export type Course = typeof courses.$inferSelect;
+export type CourseInsert = typeof courses.$inferInsert;
+export type Product = typeof products.$inferSelect;
+export type ProductInsert = typeof products.$inferInsert;
+export type CubeEvent = typeof events.$inferSelect;
+export type CubeEventInsert = typeof events.$inferInsert;
+export type NewsItem = typeof news.$inferSelect;
+export type NewsItemInsert = typeof news.$inferInsert;
+export type Instructor = typeof instructors.$inferSelect;
+export type InstructorInsert = typeof instructors.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type UserInsert = typeof users.$inferInsert;
+export type OtpCode = typeof otpCodes.$inferSelect;
+export type OtpCodeInsert = typeof otpCodes.$inferInsert;
+export type Order = typeof orders.$inferSelect;
+export type OrderInsert = typeof orders.$inferInsert;
+export type InstructorApplication = typeof instructorApplications.$inferSelect;
+export type InstructorApplicationInsert = typeof instructorApplications.$inferInsert;
+export type Post = typeof posts.$inferSelect;
+export type PostInsert = typeof posts.$inferInsert;
+export type Comment = typeof comments.$inferSelect;
+export type CommentInsert = typeof comments.$inferInsert;
+export type PostLike = typeof postLikes.$inferSelect;
+export type PostLikeInsert = typeof postLikes.$inferInsert;
+
+export const eventsTrack = sqliteTable(
+  "events_track",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull(),
+    payload: text("payload", { mode: "json" }).$type<Record<string, unknown> | null>(),
+    userId: text("user_id"),
+    anonId: text("anon_id"),
+    url: text("url"),
+    referer: text("referer"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("events_track_name_created_idx").on(t.name, t.createdAt)],
+);
+
+export const coupons = sqliteTable("coupons", {
+  code: text("code").primaryKey(),
+  discountType: text("discount_type").$type<CouponDiscountType>().notNull(),
+  discountValue: integer("discount_value").notNull(),
+  appliesTo: text("applies_to").$type<CouponAppliesTo>().notNull().default("any"),
+  minAmount: integer("min_amount").notNull().default(0),
+  maxUses: integer("max_uses").notNull().default(0),
+  uses: integer("uses").notNull().default(0),
+  expiresAt: integer("expires_at"),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("created_at").notNull(),
+});
+
+export const inviteCodes = sqliteTable(
+  "invite_codes",
+  {
+    code: text("code").primaryKey(),
+    ownerId: text("owner_id").notNull(),
+    uses: integer("uses").notNull().default(0),
+    rewardCoupon: text("reward_coupon"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("invite_codes_owner_idx").on(t.ownerId)],
+);
+
+// 会员订阅:一条 active 行代表当前会员资格,续费时延长 expiresAt;退款按 orderId 撤销
+export const memberships = sqliteTable(
+  "memberships",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    plan: text("plan").notNull(), // 计划 id:monthly / quarterly / yearly
+    status: text("status").$type<MembershipStatus>().notNull().default("active"),
+    startedAt: integer("started_at").notNull(),
+    expiresAt: integer("expires_at").notNull(),
+    orderId: text("order_id"), // 最近一次开通/续费的订单
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [
+    index("memberships_user_idx").on(t.userId),
+    index("memberships_expires_idx").on(t.expiresAt),
+  ],
+);
+
+// 讲师结算分账:每讲师每月一张结算单(net 实收 + 固定分成),pending → paid 留打款凭证
+export const instructorPayouts = sqliteTable(
+  "instructor_payouts",
+  {
+    id: text("id").primaryKey(),
+    instructorId: text("instructor_id").notNull(),
+    period: text("period").notNull(), // 结算月份 "YYYY-MM"
+    orderCount: integer("order_count").notNull().default(0),
+    grossAmount: integer("gross_amount").notNull().default(0), // 当月实收(net,已扣优惠)
+    shareRate: real("share_rate").notNull(), // 分成比例,如 0.7
+    shareAmount: integer("share_amount").notNull(), // 应打款金额 = grossAmount × shareRate
+    status: text("status").$type<PayoutStatus>().notNull().default("pending"),
+    method: text("method"), // 打款方式:bank / wechat / alipay / manual
+    reference: text("reference"), // 打款凭证号 / 流水
+    note: text("note"),
+    createdAt: integer("created_at").notNull(),
+    paidAt: integer("paid_at"),
+  },
+  (t) => [
+    uniqueIndex("instructor_payouts_inst_period_unique").on(
+      t.instructorId,
+      t.period,
+    ),
+    index("instructor_payouts_status_idx").on(t.status),
+  ],
+);
+
+export type Membership = typeof memberships.$inferSelect;
+export type MembershipInsert = typeof memberships.$inferInsert;
+export type InstructorPayout = typeof instructorPayouts.$inferSelect;
+export type InstructorPayoutInsert = typeof instructorPayouts.$inferInsert;
+
+export type QrType = "redirect" | "landing";
+export type QrLink = { label: string; href: string; note?: string };
+// 卡片背面精选解法公式:名称(如 OLL 33)+ 记法 + 来源链接(主站 alg 工具)
+export type QrAlg = { name?: string; moves: string; url?: string };
+// 卡面可移动元素:正面语录 / 品牌名,背面文案 / 角标 / 二维码 / 公式区 / 正面图 / 背面图(平移+缩放)
+export type CardEl = "quote" | "brand" | "backText" | "term" | "qr" | "alg" | "front" | "back";
+// 各元素相对默认位的偏移(mm),编辑器拖动写入;DOM 卡与矢量母版共用。
+// s = 缩放倍率(仅 front / back 背景图用,默认 1;>1 放大 <1 缩小)
+// fit(仅 front / back):默认(不填)= 完整显示整图不裁切(留 1mm 安全边),空余露底色;
+//                "cover" = 铺满整面、超出裁掉
+export type CardLayout = Partial<
+  Record<CardEl, { x: number; y: number; s?: number; fit?: "contain" | "cover" }>
+>;
+// 文字样式覆盖:font = 字体注册表 key(lib/qr/cardText CARD_FONTS),color = #hex,size = 字号倍率(1=默认)
+// stroke = 描边色 #hex,strokeW = 描边宽 mm(0/省略 = 不描边)
+export type TextStyle = {
+  font?: string;
+  color?: string;
+  size?: number;
+  stroke?: string;
+  strokeW?: number;
+};
+// 各文字元素(quote/brand/backText/term/alg)的样式覆盖 + hidden(删除/隐藏该文字,仅影响卡面)
+export type CardTextStyles = Partial<Record<CardEl, TextStyle & { hidden?: boolean }>>;
+// 用户自建文本框:自由文字 + 所在面 + 位置(mm,相对面板中心)+ 样式
+export type CardCustomText = {
+  id: string;
+  side: "front" | "back";
+  text: string;
+  x: number;
+  y: number;
+  style?: TextStyle;
+};
+
+export const qrCodes = sqliteTable("qr_codes", {
+  code: text("code").primaryKey(),
+  label: text("label").notNull(),
+  type: text("type").$type<QrType>().notNull().default("redirect"),
+  target: text("target").notNull().default("/"),
+  title: text("title"),
+  intro: text("intro"),
+  links: text("links", { mode: "json" }).$type<QrLink[]>(),
+  term: text("term"),
+  quote: text("quote"),
+  // 正面品牌名;无值时卡片用默认社群名(见 lib/qr/cardText DEFAULT_BRAND)
+  brand: text("brand"),
+  frontArt: text("front_art"),
+  // 背面背景图(可选);无值时背面走默认浅色底纹(公式 / 色块散点)
+  backArt: text("back_art"),
+  // 记录当前正面图是用哪条生图提示词产出的(自定义 / 模板),方便日后复刻、微调同款
+  frontArtPrompt: text("front_art_prompt"),
+  alg: text("alg", { mode: "json" }).$type<QrAlg>(),
+  layout: text("layout", { mode: "json" }).$type<CardLayout>(),
+  // 各文字元素的字体 / 颜色 / 字号 / 描边覆盖 + 删除(hidden)
+  textStyles: text("text_styles", { mode: "json" }).$type<CardTextStyles>(),
+  // 用户自建文本框列表
+  customTexts: text("custom_texts", { mode: "json" }).$type<CardCustomText[]>(),
+  scans: integer("scans").notNull().default(0),
+  disabled: integer("disabled", { mode: "boolean" }).notNull().default(false),
+  createdAt: integer("created_at").notNull(),
+});
+
+// 卡片正面背景图的「生图提示词」模板:后台可增删改,卡片编辑页一键复制喂给外部图像 AI。
+// body = 风格描述正文(通用头由代码自动拼在前);sortOrder 升序排列。
+export const promptTemplates = sqliteTable(
+  "prompt_templates",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull(),
+    category: text("category"),
+    body: text("body").notNull(),
+    // 组合积木维度(风格/主体/主题/构图/光影);null = 整套预设模板(preset)
+    dimension: text("dimension"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    // 软删除:null = 在用;有秒级时间戳 = 在回收站,可恢复或彻底删
+    deletedAt: integer("deleted_at"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("prompt_templates_sort_idx").on(t.sortOrder)],
+);
+
+export type EventsTrack = typeof eventsTrack.$inferSelect;
+export type EventsTrackInsert = typeof eventsTrack.$inferInsert;
+export type Coupon = typeof coupons.$inferSelect;
+export type CouponInsert = typeof coupons.$inferInsert;
+export type InviteCode = typeof inviteCodes.$inferSelect;
+export type InviteCodeInsert = typeof inviteCodes.$inferInsert;
+export type QrCode = typeof qrCodes.$inferSelect;
+export type QrCodeInsert = typeof qrCodes.$inferInsert;
+export type PromptTemplate = typeof promptTemplates.$inferSelect;
+export type PromptTemplateInsert = typeof promptTemplates.$inferInsert;
+export type PaymentLog = typeof paymentLogs.$inferSelect;
+export type PaymentLogInsert = typeof paymentLogs.$inferInsert;
+
+export const lessons = sqliteTable(
+  "lessons",
+  {
+    id: text("id").primaryKey(),
+    courseId: text("course_id").notNull(),
+    idx: integer("idx").notNull(),
+    title: text("title").notNull(),
+    durationSec: integer("duration_sec"),
+    videoKey: text("video_key"),
+    videoUrl: text("video_url"),
+    free: integer("free", { mode: "boolean" }).notNull().default(false),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("lessons_course_idx").on(t.courseId, t.idx)],
+);
+
+export const learningProgress = sqliteTable(
+  "learning_progress",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    lessonId: text("lesson_id").notNull(),
+    courseId: text("course_id").notNull(),
+    positionSec: integer("position_sec").notNull().default(0),
+    completed: integer("completed", { mode: "boolean" }).notNull().default(false),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("learning_progress_user_lesson_unique").on(t.userId, t.lessonId),
+    index("learning_progress_user_course_idx").on(t.userId, t.courseId),
+  ],
+);
+
+export type Lesson = typeof lessons.$inferSelect;
+export type LessonInsert = typeof lessons.$inferInsert;
+export type LearningProgress = typeof learningProgress.$inferSelect;
+export type LearningProgressInsert = typeof learningProgress.$inferInsert;
+
+export type LogLevel = "error" | "warn";
+
+export const errorLogs = sqliteTable(
+  "error_logs",
+  {
+    id: text("id").primaryKey(),
+    ts: integer("ts").notNull(),
+    level: text("level").$type<LogLevel>().notNull().default("error"),
+    message: text("message").notNull(),
+    stack: text("stack"),
+    path: text("path"),
+    userId: text("user_id"),
+  },
+  (t) => [index("error_logs_ts_idx").on(t.ts)],
+);
+
+export const requestLogs = sqliteTable(
+  "request_logs",
+  {
+    id: text("id").primaryKey(),
+    ts: integer("ts").notNull(),
+    method: text("method").notNull(),
+    path: text("path").notNull(),
+    status: integer("status").notNull(),
+    durationMs: integer("duration_ms").notNull(),
+    userId: text("user_id"),
+  },
+  (t) => [index("request_logs_ts_idx").on(t.ts)],
+);
+
+export type ErrorLog = typeof errorLogs.$inferSelect;
+export type ErrorLogInsert = typeof errorLogs.$inferInsert;
+export type RequestLog = typeof requestLogs.$inferSelect;
+export type RequestLogInsert = typeof requestLogs.$inferInsert;
+
+// ───────────────────────── Round 2: 游戏化与魔方垂直底座 ─────────────────────────
+
+// 通用收藏夹:一行 = 一个用户收藏的一个对象(课程/商品/赛事/资讯/帖子)
+export type FavoriteTarget = "course" | "product" | "event" | "news" | "post";
+
+export const favorites = sqliteTable(
+  "favorites",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    targetType: text("target_type").$type<FavoriteTarget>().notNull(),
+    targetId: text("target_id").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("favorites_user_target_unique").on(
+      t.userId,
+      t.targetType,
+      t.targetId,
+    ),
+    index("favorites_user_created_idx").on(t.userId, t.createdAt),
+  ],
+);
+
+// 魔方计时器成绩:每次还原一条,penalty 影响有效成绩(+2 加两秒 / DNF 不计)
+export type CubeEventId =
+  | "333"
+  | "222"
+  | "444"
+  | "555"
+  | "333oh"
+  | "333bf"
+  | "pyram"
+  | "skewb"
+  | "clock"
+  | "minx";
+export type SolvePenalty = "none" | "plus2" | "dnf";
+
+export const timerSolves = sqliteTable(
+  "timer_solves",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    event: text("event").$type<CubeEventId>().notNull().default("333"),
+    timeMs: integer("time_ms").notNull(), // 原始计时(毫秒,不含 +2)
+    scramble: text("scramble").notNull(),
+    penalty: text("penalty").$type<SolvePenalty>().notNull().default("none"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("timer_solves_user_event_idx").on(t.userId, t.event, t.createdAt),
+    index("timer_solves_event_idx").on(t.event),
+  ],
+);
+
+// 学习连续打卡:每个用户每个自然日(本地 YYYY-MM-DD)至多一条,source 记触发来源
+export const studyCheckins = sqliteTable(
+  "study_checkins",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    date: text("date").notNull(), // 本地日 YYYY-MM-DD
+    source: text("source"), // study / timer / manual
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("study_checkins_user_date_unique").on(t.userId, t.date),
+    index("study_checkins_user_idx").on(t.userId),
+  ],
+);
+
+// 积分流水账:正负 delta 记账,reason 标来源,统一 awardPoints() 写入;余额 = SUM(delta)
+export const pointLedger = sqliteTable(
+  "point_ledger",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    delta: integer("delta").notNull(),
+    reason: text("reason").notNull(), // purchase / lesson_complete / post / checkin / review / streak / membership
+    refId: text("ref_id"),
+    note: text("note"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("point_ledger_user_created_idx").on(t.userId, t.createdAt)],
+);
+
+// 课程评价:每个用户每门课至多一条(可改),rating 1..5;courses.rating 由此聚合回写
+export const courseReviews = sqliteTable(
+  "course_reviews",
+  {
+    id: text("id").primaryKey(),
+    courseId: text("course_id").notNull(),
+    userId: text("user_id").notNull(),
+    rating: integer("rating").notNull(), // 1..5
+    body: text("body").notNull().default(""),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("course_reviews_course_user_unique").on(t.courseId, t.userId),
+    index("course_reviews_course_created_idx").on(t.courseId, t.createdAt),
+  ],
+);
+
+export type Favorite = typeof favorites.$inferSelect;
+export type FavoriteInsert = typeof favorites.$inferInsert;
+export type TimerSolve = typeof timerSolves.$inferSelect;
+export type TimerSolveInsert = typeof timerSolves.$inferInsert;
+export type StudyCheckin = typeof studyCheckins.$inferSelect;
+export type StudyCheckinInsert = typeof studyCheckins.$inferInsert;
+export type PointLedgerRow = typeof pointLedger.$inferSelect;
+export type PointLedgerInsert = typeof pointLedger.$inferInsert;
+export type CourseReview = typeof courseReviews.$inferSelect;
+export type CourseReviewInsert = typeof courseReviews.$inferInsert;
+
+// ───────────────────────── Round 3: 游戏化闭环 + 社群 + 学习 ─────────────────────────
+
+// 成就解锁记录:成就目录(规则)在代码里定义(lib/db/achievements.ts),这里只存"某用户已解锁某成就"
+export const userAchievements = sqliteTable(
+  "user_achievements",
+  {
+    userId: text("user_id").notNull(),
+    achievementKey: text("achievement_key").notNull(),
+    unlockedAt: integer("unlocked_at").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.achievementKey] }),
+    index("user_achievements_user_idx").on(t.userId),
+  ],
+);
+
+// 圈子成员:加入圈子持久化(一个用户一个圈子至多一条)
+export const circleMembers = sqliteTable(
+  "circle_members",
+  {
+    userId: text("user_id").notNull(),
+    circleId: text("circle_id").$type<CircleId>().notNull(),
+    joinedAt: integer("joined_at").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.circleId] }),
+    index("circle_members_circle_idx").on(t.circleId),
+  ],
+);
+
+// 站内通知:收件人 userId,type 区分被赞/被评/被回复/@提及/成就/系统,href 点击跳转
+export type NotificationType =
+  | "comment"
+  | "reply"
+  | "like"
+  | "mention"
+  | "achievement"
+  | "system";
+export const notifications = sqliteTable(
+  "notifications",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(), // 收件人
+    type: text("type").$type<NotificationType>().notNull(),
+    actorId: text("actor_id"), // 触发者(系统通知为空)
+    title: text("title").notNull(),
+    body: text("body"),
+    href: text("href"), // 点击跳转目标
+    refType: text("ref_type"),
+    refId: text("ref_id"),
+    readAt: integer("read_at"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("notifications_user_created_idx").on(t.userId, t.createdAt),
+    index("notifications_user_read_idx").on(t.userId, t.readAt),
+  ],
+);
+
+// 课程时间戳笔记:在某 lesson 的 positionSec 处记一笔(markdown body)
+export const lessonNotes = sqliteTable(
+  "lesson_notes",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    lessonId: text("lesson_id").notNull(),
+    courseId: text("course_id").notNull(),
+    positionSec: integer("position_sec").notNull().default(0),
+    body: text("body").notNull(),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [
+    index("lesson_notes_user_lesson_idx").on(
+      t.userId,
+      t.lessonId,
+      t.positionSec,
+    ),
+    index("lesson_notes_user_created_idx").on(t.userId, t.createdAt),
+  ],
+);
+
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type UserAchievementInsert = typeof userAchievements.$inferInsert;
+export type CircleMember = typeof circleMembers.$inferSelect;
+export type CircleMemberInsert = typeof circleMembers.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type NotificationInsert = typeof notifications.$inferInsert;
+export type LessonNote = typeof lessonNotes.$inferSelect;
+export type LessonNoteInsert = typeof lessonNotes.$inferInsert;
+
+// ───────────────────────── Round 5: 算法字典 / 测验 / 证书 / 学习路径 ─────────────────────────
+
+// 还原算法字典:category(OLL/PLL/F2L/CMLL/盲拧...) + 公式记法 + 自绘棋盘(前端按 notation/case 渲染)
+export const algorithms = sqliteTable(
+  "algorithms",
+  {
+    id: text("id").primaryKey(),
+    category: text("category").notNull(), // OLL / PLL / F2L / CMLL / 盲拧 ...
+    name: text("name").notNull(), // 如 "OLL 33" / "T Perm"
+    notation: text("notation").notNull(), // 公式记法 R U R' U' ...
+    puzzle: text("puzzle").notNull().default("333"), // 适用魔方
+    caseGroup: text("case_group"), // 形态大类(如 OLL 十字 / 小 L)
+    description: text("description"),
+    hint: text("hint"), // 记忆提示 / 手法
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("algorithms_category_idx").on(t.category, t.sortOrder),
+    index("algorithms_puzzle_idx").on(t.puzzle),
+  ],
+);
+
+// 章节小测验:options 为选项数组,answerIdx 为正确项下标
+export const quizzes = sqliteTable(
+  "quizzes",
+  {
+    id: text("id").primaryKey(),
+    lessonId: text("lesson_id").notNull(),
+    courseId: text("course_id").notNull(),
+    question: text("question").notNull(),
+    options: text("options", { mode: "json" }).$type<string[]>().notNull(),
+    answerIdx: integer("answer_idx").notNull(),
+    explain: text("explain"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("quizzes_lesson_idx").on(t.lessonId, t.sortOrder)],
+);
+
+// 测验作答记录
+export const quizAttempts = sqliteTable(
+  "quiz_attempts",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    quizId: text("quiz_id").notNull(),
+    lessonId: text("lesson_id").notNull(),
+    selectedIdx: integer("selected_idx").notNull(),
+    correct: integer("correct", { mode: "boolean" }).notNull().default(false),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("quiz_attempts_user_lesson_idx").on(t.userId, t.lessonId)],
+);
+
+// 结课证书:code 唯一(用于 /cert/[code] 验证),颁发时快照姓名/课程标题
+export const certificates = sqliteTable(
+  "certificates",
+  {
+    id: text("id").primaryKey(),
+    code: text("code").notNull().unique(),
+    userId: text("user_id").notNull(),
+    courseId: text("course_id").notNull(),
+    userName: text("user_name").notNull(), // 颁发时快照
+    courseTitle: text("course_title").notNull(),
+    issuedAt: integer("issued_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("certificates_user_course_unique").on(t.userId, t.courseId),
+    index("certificates_code_idx").on(t.code),
+  ],
+);
+
+// 系列合集 / 学习路径:把零散课打包成进阶路线
+export const collections = sqliteTable("collections", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  description: text("description"),
+  coverUrl: text("cover_url"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: integer("created_at").notNull(),
+});
+
+export const collectionItems = sqliteTable(
+  "collection_items",
+  {
+    id: text("id").primaryKey(),
+    collectionId: text("collection_id").notNull(),
+    courseId: text("course_id").notNull(),
+    idx: integer("idx").notNull().default(0),
+  },
+  (t) => [
+    index("collection_items_collection_idx").on(t.collectionId, t.idx),
+    uniqueIndex("collection_items_unique").on(t.collectionId, t.courseId),
+  ],
+);
+
+export type Algorithm = typeof algorithms.$inferSelect;
+export type AlgorithmInsert = typeof algorithms.$inferInsert;
+export type Quiz = typeof quizzes.$inferSelect;
+export type QuizInsert = typeof quizzes.$inferInsert;
+export type QuizAttempt = typeof quizAttempts.$inferSelect;
+export type QuizAttemptInsert = typeof quizAttempts.$inferInsert;
+export type Certificate = typeof certificates.$inferSelect;
+export type CertificateInsert = typeof certificates.$inferInsert;
+export type Collection = typeof collections.$inferSelect;
+export type CollectionInsert = typeof collections.$inferInsert;
+export type CollectionItem = typeof collectionItems.$inferSelect;
+export type CollectionItemInsert = typeof collectionItems.$inferInsert;
