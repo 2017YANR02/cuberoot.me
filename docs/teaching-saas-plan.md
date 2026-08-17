@@ -213,9 +213,9 @@
 
 阶段 0 后再落课包账本。不要先做漂亮的老师看板再回头补租户和账本,否则后续每张表和每个查询都要重写。
 
-## Stage 0 至 Stage 2 实施状态
+## Stage 0、Stage 1 CRM 基础与 Stage 2 实施状态
 
-截至 2026-08-17,Stage 0 底座与 Stage 2 的管理端授予、排课、出勤、正常消课 MVP 已完成本地实现:
+截至 2026-08-17,Stage 0 底座、Stage 1 的校区 / 班级 / 长期负责关系和 Stage 2 的管理端授予、排课、出勤、正常消课 MVP 已完成本地实现:
 
 - `@cuberoot/shared` 提供角色 / 权限 / 状态、`TrainingEvidenceV1`、平台身份断言和统一错误码。
 - PostgreSQL `0142` 至 `0146` 建立租户、成员、学员 / 监护人、审计、幂等、平台账号映射、独立写入尝试限流和学员分页索引;最终态同步进 `schema.pg.sql` 与 `/dev/schema`。
@@ -225,24 +225,28 @@
 - PostgreSQL `0147` 建立课包商品、学员课包、课堂、授课成员、出勤、课时账本和课堂事件；`0148` 加固机构最后一名 active owner 的数据库约束。课时账本与课堂事件只追加,重复完课不会重复扣课。
 - Core 已提供课包创建 / 发放 / 查询、余额流水、排课、出勤批量保存、完课消课和课堂历史 API。teacher/assistant 只可读写分配给自己的课堂,未分配资源对外返回 404 并记录内部拒绝审计。
 - Platform 已提供课包创建与发放、学员剩余课时 / 流水、课堂创建、出勤、完课和历史分页页面；所有动态链接禁预取,写操作在歧义重试时复用同一 operation key。
-- Stage 1 的校区、班级和长期老师负责关系尚未实现,因此学员完整名册仍仅 owner/admin 可读；teacher/assistant 当前仅按 `session_teachers` 查看分配课堂。
+- PostgreSQL `0149` 建立校区、班级、学员分班、长期老师负责关系和永久关系并发锁；关系采用半开有效期,所有跨表关系使用机构复合外键,归档与新增关系的并发竞争由数据库串行化。
+- Core 已提供校区 / 班级分页与归档、学员分班、班级或个人学员负责人指派和结束关系 API。teacher/assistant 的校区、班级和学员查询都在 SQL 内按当前 active 长期指派收窄,无权资源对外返回 404 并记录内部拒绝审计；`session_teachers` 继续保留每堂课的事实快照。
+- Platform 已提供校区、班级、班级学员和负责人管理页面,以及学员个人负责关系页面。owner/admin 可管理关系,teacher/assistant 只读取 Core 已裁剪的负责范围,不预载全机构学员选择器或同事历史。
+- Stage 1 当前完成的是 CRM 基础闭环；监护人管理工作台、批量导入、远程搜索选择器和完整权限工作台尚未实现,不能把阶段 1 的完整验收标记为通过。
 - Stage 2 当前覆盖管理端授予课包与正常消课闭环,尚未接通订单 / 支付；退款 / 撤销反向流水、请假补课规则和异常流水报表也未完成,不能把阶段 2 的完整验收标记为通过。
 - 手机验证码使用加密随机数和 SQLite 持久限流;生产环境没有真实短信 provider 时拒绝启动部署,不再回退到控制台输出验证码。
 
 仍未把教学系统标记为生产验收通过:
 
 - 真实 PostgreSQL 18 已验证从 Stage 0 parent snapshot 顺序应用 `0147`、`0148`,得到 7 张 Stage 2 表和 4 个 owner triggers;审计 actor 随账号删除匿名化成功。两事务并发删除仅剩两名 owner 时,READ COMMITTED 下第二笔以 `23514` 拒绝,REPEATABLE READ 下第二笔以 `40001` 拒绝,最终均保留 1 名 owner。
+- 真实 PostgreSQL 18 已分别验证从 Stage 2 最终结构升级 `0149` 与直接加载最终 `schema.pg.sql`。两套隔离 schema 均通过跨机构复合外键、关系 XOR 与半开区间、READ COMMITTED 重叠拒绝、REPEATABLE READ 序列化失败后重试、归档与新增的双向竞争、账号删除匿名化、200 字符教师快照和永久关系锁身份保护。
 - 历史 migration 链依赖 ledger 出现前的旧生产基线,从绝对空库按文件名重放会在 `0003_add_note_to_colpi_words.sql` 因缺少基线表停止。已验证的 Stage 0 最终结构向 `0147`、`0148` 升级不受这个历史缺口影响,但新库初始化 / 灾难恢复只能依赖已验证备份,不能宣称全历史空库重放已通过。
-- 除双 owner 外,真实 PG 尚未覆盖 20 路幂等 / 限流并发、完整双机构 API 夹具、课包并发透支、重复完课和整套 runtime 角色权限。线上 `0142` 至 `0148` 也尚未执行。
+- 真实 PG 尚未覆盖 20 路幂等 / 限流并发、完整双机构 HTTP API 夹具、课包并发透支、重复完课和整套 runtime 角色权限。线上 `0142` 至 `0149` 也尚未执行。
 - 本机 Docker daemon 未运行,尚未完成从干净构建上下文生成平台镜像的实测。
 - 本地分支尚未与远端最新 `main` 安全整合,也没有 push;线上尚未配置双端同一新密钥或完成登录态 smoke。
 
 本轮本地验证:
 
 - `pnpm install --frozen-lockfile` 与 `@cuberoot/shared build` 通过。
-- Platform typecheck 通过;全量 Vitest 5 个文件、22 个测试通过。
-- Shared build、Server typecheck 通过;教学权限、repository、owner guard、幂等 / 限流边界 Vitest 4 个文件、47 个测试通过。
-- Client typecheck 通过;schema/API drift 与账号删除契约 Vitest 2 个文件、33 个测试通过。
+- Platform typecheck 通过;全量 Vitest 6 个文件、29 个测试通过。
+- Shared build、Server typecheck 通过;教学权限、repository、Stage 1 / Stage 2 schema、owner guard 与幂等 / 限流边界 Vitest 5 个文件、49 个测试通过。
+- Client typecheck 通过;schema/API drift 与账号删除契约 Vitest 2 个文件、34 个测试通过。
 - 两个 deploy workflow 和一个 platform test workflow 通过 YAML 1.2 解析,所有 workflow `run` 脚本通过 Bash 语法检查;`docker compose config --quiet` 与 `git diff --check` 通过。
 
 以上项目必须按 `docs/platform-migration.md` 的删除门槛完成后,旧本地目录和旧 GitHub 仓库才可由仓库所有者删除。
