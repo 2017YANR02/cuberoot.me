@@ -128,6 +128,7 @@
       "default": "./src/calendar.ts"
     },
     "./timer": "./src/timer/index.ts",
+    "./smart-cube/gocube": "./src/smart_cube/gocube.ts",
     "./data/*.json": "./data/*.json"
   },
   "scripts": {
