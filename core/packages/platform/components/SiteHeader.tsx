@@ -177,18 +177,28 @@ export function SiteHeader({
               )}
             </div>
             {user ? (
-              <Link
-                href="/notifications"
-                onClick={() => setOpen(false)}
-                className="mt-2 flex items-center justify-between rounded-md border border-line px-3 py-2 text-[14px] text-ink-2"
-              >
-                <span>通知</span>
-                {notifCount > 0 ? (
-                  <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[11px] font-semibold leading-[18px] text-white">
-                    {notifCount > 99 ? "99+" : notifCount}
-                  </span>
-                ) : null}
-              </Link>
+              <>
+                <Link
+                  href="/org"
+                  prefetch={false}
+                  onClick={() => setOpen(false)}
+                  className="mt-2 rounded-md border border-line px-3 py-2 text-[14px] text-ink-2"
+                >
+                  机构工作台
+                </Link>
+                <Link
+                  href="/notifications"
+                  onClick={() => setOpen(false)}
+                  className="mt-2 flex items-center justify-between rounded-md border border-line px-3 py-2 text-[14px] text-ink-2"
+                >
+                  <span>通知</span>
+                  {notifCount > 0 ? (
+                    <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[11px] font-semibold leading-[18px] text-white">
+                      {notifCount > 99 ? "99+" : notifCount}
+                    </span>
+                  ) : null}
+                </Link>
+              </>
             ) : null}
             {user ? (
               <div className="mt-2 flex items-center justify-between rounded-md border border-line px-3 py-2 text-[13px] text-ink-2">
@@ -298,6 +308,14 @@ function UserMenu({ user }: { user: HeaderUser }) {
             className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
           >
             个人中心
+          </Link>
+          <Link
+            href="/org"
+            prefetch={false}
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-[13px] text-brand-dark hover:bg-bg-soft"
+          >
+            机构工作台
           </Link>
           <Link
             href="/notifications"

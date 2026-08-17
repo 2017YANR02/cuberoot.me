@@ -212,3 +212,31 @@
 5. 跨租户 API 测试和审计测试。
 
 阶段 0 通过后再落课包账本。不要先做漂亮的老师看板再回头补租户和账本,否则后续每张表和每个查询都要重写。
+
+## Stage 0 实施状态
+
+截至 2026-08-17,第一批代码已完成:
+
+- `@cuberoot/shared` 提供角色 / 权限 / 状态、`TrainingEvidenceV1`、平台身份断言和统一错误码。
+- PostgreSQL `0142` 至 `0146` 建立租户、成员、学员 / 监护人、审计、幂等、平台账号映射、独立写入尝试限流和学员分页索引;最终态同步进 `schema.pg.sql` 与 `/dev/schema`。
+- Core 教学 API 使用内部 `app_users.id` 授权,短时签名同时绑定 method、path + query、body hash 和 Idempotency-Key,并有 nonce 重放保护。
+- 机构创建、成员 / 学员读取与学员创建都在服务端重验 active membership、机构状态和角色;跨机构拒绝写入 `teaching_audit_events`,写端点按 actor 独立持久限流,业务事务回滚后的失败尝试仍会计数。
+- Platform `/org` 提供机构选择、机构工作台、成员查看和学员建档;概览直接读取数据库聚合,成员 / 学员列表服务端分页;歧义重试复用同一个幂等键,成功或表单内容变化后才更换。
+- Stage 0 尚未落老师负责关系,因此学员完整名册仅 owner/admin 可读;teacher/assistant 不显示入口,后续由 `teacher_assignments` 按负责范围开放。
+- 手机验证码使用加密随机数和 SQLite 持久限流;生产环境没有真实短信 provider 时拒绝启动部署,不再回退到控制台输出验证码。
+
+仍未把 Stage 0 标记为生产验收通过:
+
+- 本机 PostgreSQL 服务未运行,尚未在真实 PG 上执行 `0142` 至 `0146`、双机构夹具、幂等并发、限流并发和审计持久化集成测试。
+- 本机 Docker daemon 未运行,尚未完成从干净构建上下文生成平台镜像的实测。
+- 本地分支尚未与远端最新 `main` 安全整合,也没有 push;线上尚未配置双端同一新密钥或完成登录态 smoke。
+
+本轮本地验证:
+
+- `pnpm install --frozen-lockfile` 与 `@cuberoot/shared build` 通过。
+- Platform typecheck 通过;全量 Vitest 4 个文件、15 个测试通过。
+- Server typecheck 通过;平台断言、教学 API、repository 方法与 mock DB 的拒绝审计 / 幂等及限流边界 Vitest 3 个文件、24 个测试通过。真实 PG 持久化仍未验证。
+- Client typecheck 通过;schema/API drift 与账号删除契约 Vitest 2 个文件、32 个测试通过。
+- 两个 deploy workflow 和一个 platform test workflow 通过 YAML 1.2 解析,所有 workflow `run` 脚本通过 Bash 语法检查;`docker compose config --quiet` 与 `git diff --check` 通过。
+
+以上项目必须按 `docs/platform-migration.md` 的删除门槛完成后,旧本地目录和旧 GitHub 仓库才可由仓库所有者删除。

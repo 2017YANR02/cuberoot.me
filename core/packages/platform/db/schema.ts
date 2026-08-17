@@ -144,6 +144,19 @@ export const otpCodes = sqliteTable(
   (t) => [index("otp_codes_phone_idx").on(t.phone)],
 );
 
+export const otpRateLimits = sqliteTable(
+  "otp_rate_limits",
+  {
+    keyHash: text("key_hash").primaryKey(),
+    scope: text("scope").notNull(),
+    windowStartedAt: integer("window_started_at").notNull(),
+    attempts: integer("attempts").notNull(),
+    blockedUntil: integer("blocked_until"),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [index("otp_rate_limits_scope_updated_idx").on(t.scope, t.updatedAt)],
+);
+
 export const orders = sqliteTable(
   "orders",
   {
@@ -263,6 +276,7 @@ export type User = typeof users.$inferSelect;
 export type UserInsert = typeof users.$inferInsert;
 export type OtpCode = typeof otpCodes.$inferSelect;
 export type OtpCodeInsert = typeof otpCodes.$inferInsert;
+export type OtpRateLimit = typeof otpRateLimits.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type OrderInsert = typeof orders.$inferInsert;
 export type InstructorApplication = typeof instructorApplications.$inferSelect;

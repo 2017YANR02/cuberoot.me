@@ -12,11 +12,15 @@ const PROVIDERS: Record<string, SmsProvider> = {
 
 export function getActive(): SmsProvider {
   const id = (process.env.SMS_PROVIDER ?? "").trim().toLowerCase();
-  if (!id) return consoleProvider;
-  return PROVIDERS[id] ?? consoleProvider;
+  const provider = PROVIDERS[id];
+  if (process.env.NODE_ENV === "production" && (!provider || id === "console")) {
+    throw new Error("Production SMS_PROVIDER must be configured as aliyun or tencent");
+  }
+  return provider ?? consoleProvider;
 }
 
 export function isConsoleFallback(): boolean {
   const id = (process.env.SMS_PROVIDER ?? "").trim().toLowerCase();
-  return !id || !(id in PROVIDERS) || id === "console";
+  return process.env.NODE_ENV !== "production" &&
+    (!id || !(id in PROVIDERS) || id === "console");
 }

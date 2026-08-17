@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - 'core/packages/platform/**'
+      - 'core/packages/shared/**'
       - 'core/package.json'
       - 'core/pnpm-lock.yaml'
       - 'core/pnpm-workspace.yaml'
@@ -13,6 +14,7 @@ on:
     branches: [main]
     paths:
       - 'core/packages/platform/**'
+      - 'core/packages/shared/**'
       - 'core/package.json'
       - 'core/pnpm-lock.yaml'
       - 'core/pnpm-workspace.yaml'
@@ -45,6 +47,10 @@ jobs:
       - name: Install dependencies
         working-directory: core
         run: pnpm install --frozen-lockfile
+
+      - name: Build shared contract
+        working-directory: core
+        run: pnpm --filter @cuberoot/shared build
 
       - name: Typecheck and test
         working-directory: core

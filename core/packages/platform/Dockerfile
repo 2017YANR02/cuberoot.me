@@ -10,6 +10,7 @@ RUN corepack enable && corepack prepare pnpm@11.1.2 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY patches ./patches
 COPY packages/platform/package.json ./packages/platform/package.json
+COPY packages/shared/package.json ./packages/shared/package.json
 RUN pnpm install --filter @cuberoot/platform... --frozen-lockfile
 
 FROM node:24-bookworm-slim AS builder
@@ -17,12 +18,14 @@ WORKDIR /workspace
 RUN corepack enable && corepack prepare pnpm@11.1.2 --activate
 COPY --from=deps /workspace /workspace
 COPY packages/platform ./packages/platform
+COPY packages/shared ./packages/shared
 ARG NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3100
 ENV NEXT_TELEMETRY_DISABLED=1 \
     NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
     ADMIN_PASSWORD=container-build-only \
     SESSION_SECRET=container-build-only-session-secret
-RUN pnpm --filter @cuberoot/platform db:migrate \
+RUN pnpm --filter @cuberoot/shared build \
+ && pnpm --filter @cuberoot/platform db:migrate \
  && pnpm --filter @cuberoot/platform db:seed \
  && pnpm --filter @cuberoot/platform build
 RUN STANDALONE=packages/platform/.next/standalone \

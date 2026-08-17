@@ -61,7 +61,7 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 
 - admin: cookie `cube_admin`(HMAC-SHA256,env `SESSION_SECRET`),`/admin/login` 单密码 `ADMIN_PASSWORD`;仅开发环境有 fallback,生产缺值直接报错
 - 用户: cookie `cube_user`,手机号 + OTP 登录
-- 路由保护用 `proxy.ts`(Next 16 把 `middleware.ts` 改名 `proxy.ts`,exported function 也叫 `proxy`),covers `/admin/**` + `/instructor/**`
+- 路由保护用 `proxy.ts`(Next 16 把 `middleware.ts` 改名 `proxy.ts`,exported function 也叫 `proxy`),covers `/admin/**`、`/instructor/**`、`/org/**`;机构权限仍由 Core 每次服务端重验
 - server-side 用 `requireUser()` / `requireAdmin()` / `requireInstructor()`(`lib/auth/*`)
 
 ## 内容 / 社群
@@ -106,7 +106,7 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 
 ## 短信 / 存储 / 上传
 
-- SMS provider 抽象 `lib/sms/`:`console`(默认 fallback,只 log)/ `aliyun` / `tencent`,手写 V3 签名无 SDK 依赖。`SMS_PROVIDER` 空降级 console
+- SMS provider 抽象 `lib/sms/`:`console`(仅开发 fallback,只 log)/ `aliyun` / `tencent`,手写 V3 签名无 SDK 依赖;生产必须配置真实 provider 与完整变量
 - Storage provider 抽象 `lib/storage/`:`local`(默认,落 `public/uploads/<yyyy-mm>/<uuid>.<ext>`)/ `r2` / `s3` / `oss` / `cos`,手写 sigv4 / OSS / COS 签名。`STORAGE_PROVIDER` 空走 local
 - 上传 `POST /api/upload`(admin 鉴权,200MiB 上限,multipart),返 `{url, key}`;client 走 `components/FileUpload.tsx` 真实进度,`UploadField` 拼输入框 + 上传
 
@@ -190,7 +190,7 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 - 上传文件真身 `/var/lib/cube-platform/uploads`,部署时软链进 `LIVE/public/uploads`,换目录不丢图。
 - 持久库已存在时,部署 restart 前跑 `ops/migrate.cjs`(随包发,自包含、drizzle `__drizzle_migrations` 兼容)补未应用迁移;失败回滚。加表加列正常写 drizzle migration 即可,不用手 ALTER。
 - GitHub Actions secrets:`PLATFORM_DEPLOY_HOST`、`PLATFORM_DEPLOY_USER`、`PLATFORM_DEPLOY_SSH_KEY`;真实值不进仓库。
-- 生产 `ADMIN_PASSWORD` / `SESSION_SECRET` 放 `/etc/cube-platform.env`;workflow 在替换线上目录前校验。
+- 生产鉴权、教学桥接和短信变量放 `/etc/cube-platform.env`;workflow 在替换 live 文件前校验两端教学密钥相同与短信配置完整。
 - `next.config.ts` 设 `output: "standalone"` + `serverExternalPackages: ["wechatpay-node-v3","alipay-sdk"]`。
 - 备选:`Dockerfile` + `docker-compose.yml`(named volume `/data/data.db`)仍在,本地容器跑用;线上走上面的 systemd。
 

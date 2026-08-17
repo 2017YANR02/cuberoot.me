@@ -16,7 +16,7 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (pathname.startsWith("/instructor")) {
+  if (pathname.startsWith("/instructor") || pathname === "/org" || pathname.startsWith("/org/")) {
     const token = req.cookies.get(USER_COOKIE)?.value;
     const userId = await verifyUserTokenEdge(token);
     if (userId) return NextResponse.next();
@@ -30,5 +30,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/instructor/:path*"],
+  matcher: ["/admin/:path*", "/instructor/:path*", "/org/:path*"],
 };
