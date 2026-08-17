@@ -13,10 +13,12 @@ import {
   EXPECTED_TAB_BAR,
   MAX_UPLOAD_FILE_BYTES,
   MAX_UPLOAD_PACKAGE_BYTES,
+  MIN_TEXT_CONTRAST_RATIO,
   PUBLIC_INDEXED_PAGES,
   PRODUCTION_APP_ID,
   REQUIRED_RELEASE_CONFIRMATIONS,
   collectReleaseFailures,
+  colorContrastRatio,
   isReleaseAuditTextFile,
   releaseConfirmationsFromEnv,
 } from '../scripts/release-check-lib.mjs';
@@ -74,7 +76,7 @@ const validInput = {
       navigationBarBackgroundColor: '#fafafa',
       navigationBarTextStyle: 'black',
       tabBarColor: '#737373',
-      tabBarSelectedColor: '#c15f3c',
+      tabBarSelectedColor: '#a94f31',
       tabBarBackgroundColor: '#fafafa',
       tabBarBorderStyle: 'white',
     },
@@ -351,7 +353,11 @@ describe('mini program release check', () => {
   });
 
   it('blocks newly introduced privacy-sensitive capabilities', () => {
-    const builtFiles = [...validInput.builtFiles, 'pages/login/index.wxml'];
+    const builtFiles = [
+      ...validInput.builtFiles,
+      'pages/login/index.wxml',
+      'pages/profile/index.wxml',
+    ];
     const failures = collectReleaseFailures({
       ...validInput,
       builtFiles,
@@ -359,13 +365,54 @@ describe('mini program release check', () => {
       sourceFiles: [
         { path: 'src/pages/device/index.ts', source: 'wx.openBluetoothAdapter({})' },
         { path: 'src/pages/login/index.wxml', source: '<button open-type="getPhoneNumber">登录</button>' },
+        { path: 'src/pages/profile/index.wxml', source: '<button open-type="chooseAvatar">头像</button>' },
+        { path: 'src/pages/import/index.ts', source: 'wx.chooseMessageFile({ count: 1 })' },
       ],
     });
 
     expect(failures).toEqual([
+      'src/pages/profile/index.wxml 使用了微信用户资料能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+      'src/pages/import/index.ts 使用了文件、图片或媒体能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
       'src/pages/device/index.ts 使用了蓝牙能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
       'src/pages/login/index.wxml 使用了手机号能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
     ]);
+  });
+
+  it('blocks privacy declarations that are outside the current review boundary', () => {
+    const failures = collectReleaseFailures({
+      ...validInput,
+      appConfig: {
+        ...validInput.appConfig,
+        requiredPrivateInfos: [],
+        permission: {},
+      },
+    });
+
+    expect(failures).toContain(
+      '当前版本未批准原生隐私能力，src/app.json 不得声明：requiredPrivateInfos、permission。先完成代码、隐私政策和后台指引的联合复核。',
+    );
+  });
+
+  it('enforces readable native tab bar colors', () => {
+    expect(colorContrastRatio('#a94f31', '#fafafa')).toBeGreaterThanOrEqual(
+      MIN_TEXT_CONTRAST_RATIO,
+    );
+    expect(colorContrastRatio('not-a-color', '#fafafa')).toBeNull();
+
+    const failures = collectReleaseFailures({
+      ...validInput,
+      themeConfig: {
+        ...validInput.themeConfig,
+        light: {
+          ...validInput.themeConfig.light,
+          tabBarSelectedColor: '#c15f3c',
+        },
+      },
+    });
+
+    expect(failures).toContain(
+      'theme.json 的 tabBar 文字对比度不得低于 4.5:1：light.tabBarSelectedColor/tabBarBackgroundColor（4.05:1）。',
+    );
   });
 
   it('blocks incomplete native theme configuration', () => {

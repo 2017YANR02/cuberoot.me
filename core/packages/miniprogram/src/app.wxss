@@ -5,7 +5,7 @@ page {
   --cr-muted: #737373;
   --cr-faint: #a3a3a3;
   --cr-line: #e5e5e5;
-  --cr-accent: #c15f3c;
+  --cr-accent: #a94f31;
   --cr-accent-soft: #f4e7e1;
   --cr-ready: #2f7d4a;
   --cr-danger: #b33a3a;
