@@ -184,6 +184,9 @@ describe('mini program app structure', () => {
     expect(accountTemplate.match(/aria-role="status"/g)).toHaveLength(3);
     expect(accountTemplate.match(/aria-live="polite"/g)).toHaveLength(3);
     expect(accountTemplate.match(/aria-atomic="true"/g)).toHaveLength(3);
+    expect(toolsTemplate).toMatch(
+      /class="status-text status-text--error tools-status"[^>]*aria-role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/,
+    );
     expect(sharedTemplate).toMatch(/class="web-status-spinner"[^>]*aria-hidden="true"/);
     expect(sharedTemplate).toContain('aria-role="status"');
     expect(sharedTemplate).toContain('aria-live="polite"');

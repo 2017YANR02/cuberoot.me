@@ -154,6 +154,21 @@ describe('mini program account page', () => {
     }));
   });
 
+  it('keeps account navigation failure visible when toast feedback is unavailable', async () => {
+    const page = await loadPage({
+      navigateTo(options: { fail?(): void }) {
+        options.fail?.();
+      },
+      showToast() {
+        throw new Error('toast unavailable');
+      },
+    });
+
+    page.openAccount();
+
+    expect(page.data.actionStatus).toBe('账号页暂时无法打开');
+  });
+
   it('ignores a pending account navigation failure after the page is hidden', async () => {
     let fail: (() => void) | undefined;
     const showToast = vi.fn();
@@ -167,6 +182,7 @@ describe('mini program account page', () => {
     fail?.();
 
     expect(showToast).not.toHaveBeenCalled();
+    expect(page.data.actionStatus).toBe('');
     page.openAccount();
     expect(navigateTo).toHaveBeenCalledTimes(2);
   });

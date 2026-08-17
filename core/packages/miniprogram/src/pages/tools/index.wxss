@@ -46,3 +46,7 @@
   font-weight: 300;
   margin-left: 28rpx;
 }
+
+.tools-status {
+  margin-top: 28rpx;
+}
