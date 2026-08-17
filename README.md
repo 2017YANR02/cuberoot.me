@@ -19,6 +19,7 @@ cuberoot.me/
 ├── core/                  pnpm + Turbo monorepo — all application code
 │   └── packages/
 │       ├── client/        React 19 + Next.js 16 (App Router) — the site itself
+│       ├── platform/      Next.js 16 + SQLite — teachers, courses, orders, and operations
 │       ├── server/        Hono + PostgreSQL 13 — WCA OAuth, reconstructions, algorithm library
 │       ├── shared/        Types shared between client and server
 │       ├── visualcube/    In-house NxN cube SVG renderer
@@ -51,6 +52,9 @@ pnpm --filter @cuberoot/client dev         # http://127.0.0.1:3000/
 pnpm --filter @cuberoot/client typecheck   # tsgo, the fast daily check
 pnpm --filter @cuberoot/client test
 pnpm --filter @cuberoot/client build
+pnpm --filter @cuberoot/platform dev      # http://127.0.0.1:3100/
+pnpm --filter @cuberoot/platform typecheck
+pnpm --filter @cuberoot/platform test
 ```
 
 API calls are proxied to production through Next.js rewrites, so the full site
