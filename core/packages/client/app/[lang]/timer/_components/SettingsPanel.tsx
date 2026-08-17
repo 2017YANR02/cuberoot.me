@@ -675,28 +675,19 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
         <SettingsSection
           category="timer"
           activeCategory={activeCategory}
-          title={tr({ zh: '基础计时', en: 'Basic timing' })}
           headerControl={
-            <PillToggle
+            <SharedBoolToggle
               value={s.timingEnabled}
               onChange={(v) => updateSettings({ timingEnabled: v })}
-              onLabel={tr({ zh: '计时', en: 'Timer' })}
-              offLabel={tr({ zh: '只练习', en: 'Practice only' })}
-              ariaLabel={tr({ zh: '计时模式', en: 'Timing mode' })}
+              label={tr({ zh: '计时', en: 'Timing' })}
             />
           }
         >
-          <Row label={tr({ zh: '观察时间（秒）', en: 'Inspection (sec)'
-        })}>
-            <input
-              className="settings-row-control-input"
-              type="number" min={0} max={60}
-              value={s.inspection}
-              onChange={(e) => updateSettings({ inspection: Math.max(0, Math.min(60, Number(e.target.value) || 0)) })}
-            />
-            <span className="hint">{s.inspection === 0 ? tr({ zh: '关闭', en: 'off'
-                                  }) : tr({ zh: `${s.inspection} 秒（>${s.inspection}s = +2，>${s.inspection + 2}s = DNF）`, en: `${s.inspection}s (>${s.inspection}s = +2, >${s.inspection + 2}s = DNF)` })}</span>
-          </Row>
+          <BooleanRow
+            label={tr({ zh: 'WCA 观察', en: 'WCA inspection' })}
+            value={s.inspection > 0}
+            onChange={(value) => updateSettings({ inspection: value ? 15 : 0 })}
+          />
           <Row label={tr({ zh: '按住阈值（毫秒）', en: 'Hold threshold (ms)'
         })}>
             <input
@@ -705,20 +696,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
               value={s.holdMs}
               onChange={(e) => updateSettings({ holdMs: Math.max(100, Math.min(2000, Number(e.target.value) || 550)) })}
             />
-          </Row>
-          <Row label={tr({ zh: '观察启动方式', en: 'Inspection trigger'
-        })}>
-            <select
-              className="settings-row-control-select"
-              value={s.inspectionTrigger}
-              onChange={(e) => updateSettings({ inspectionTrigger: e.target.value as 'down' | 'up' })}
-            >
-              <option value="down">{tr({ zh: '按下空格时', en: 'When Space is pressed' })}</option>
-              <option value="up">{tr({ zh: '松开空格时', en: 'When Space is released'
-            })}</option>
-            </select>
-            <span className="hint">{tr({ zh: '按下：立即进入观察；松开：松开空格后才进入（Stackmat 习惯）', en: 'down: enter on press; up: enter on release (stackmat-style)'
-            })}</span>
           </Row>
         </SettingsSection>
 

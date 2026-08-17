@@ -282,13 +282,6 @@ export interface TimerSettings {
   round: RoundConfig;
 
   /**
-   * When the inspection countdown begins.
-   *   'down' — first space-down (current cstimer behaviour)
-   *   'up'   — only on key release; matches stackmat habit
-   */
-  inspectionTrigger: 'down' | 'up';
-
-  /**
    * Per-event target time (time-attack mode). Map keyed by EventId; missing or
    * null entries disable the indicator for that event. Positive integer ms only.
    */
@@ -387,7 +380,6 @@ export const DEFAULTS: TimerSettings = {
   recordGyro: true,
   keymap: {},
   round: DEFAULT_ROUND_CONFIG,
-  inspectionTrigger: 'down',
   targetMsByEvent: {},
   dailySolveGoal: null,
   showRankBadge: true,
@@ -459,7 +451,10 @@ function load(): TimerSettings {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...DEFAULTS };
-    const parsed = JSON.parse(raw) as Partial<TimerSettings> & { statsAoWindows?: unknown };
+    const parsed = JSON.parse(raw) as Partial<TimerSettings> & {
+      statsAoWindows?: unknown;
+      inspectionTrigger?: unknown;
+    };
     const merged = { ...DEFAULTS, ...parsed };
 
     // These two controls are entry defaults, not preferences to restore. A
@@ -500,6 +495,10 @@ function load(): TimerSettings {
     }
     if ('statsAoWindows' in merged) {
       delete (merged as TimerSettings & { statsAoWindows?: unknown }).statsAoWindows;
+      dirty = true;
+    }
+    if ('inspectionTrigger' in merged) {
+      delete (merged as TimerSettings & { inspectionTrigger?: unknown }).inspectionTrigger;
       dirty = true;
     }
     if (dirty) save(merged);

@@ -24,7 +24,7 @@ export default function AboutPage() {
         <h1 className="about-title">{tr({ zh: '关于', en: 'About'
         })}</h1>
         <p className="about-lead">
-          {tr({ zh: 'CubeRoot 是一个魔方工具站,由若干开源项目启发并整合而成。下面是它们的清单。', en: 'CubeRoot is a cubing toolkit, built on top of and inspired by the open-source projects below.'
+          {tr({ zh: 'CubeRoot 是一个魔方工具站，由下面列出的开源项目、公开资料与相关工作启发并整合而成。', en: 'CubeRoot is a cubing toolkit built from and inspired by the open-source projects, public references, and related work listed below.'
         })}
         </p>
 

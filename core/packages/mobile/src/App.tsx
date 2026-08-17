@@ -4,6 +4,7 @@ import { Network } from '@capacitor/network';
 import {
   MAX_TIMER_BACKUP_BYTES,
   activeTimerSolves,
+  formatInspectionDisplay,
   formatMs,
   formatSolveResult,
   scramble333,
@@ -231,8 +232,7 @@ export function App() {
   if (timer.machine.phase === 'ready') timerInstruction = copy.releaseToStart;
   if (timer.machine.phase === 'inspecting') {
     const elapsed = Math.max(0, timer.nowMs - (timer.machine.inspectionStartedAtMs ?? timer.nowMs));
-    const remaining = (timer.machine.inspectionSec ?? 0) * 1000 - elapsed;
-    timerText = remaining >= 0 ? String(Math.ceil(remaining / 1000)) : remaining >= -2000 ? '+2' : 'DNF';
+    timerText = formatInspectionDisplay(elapsed, timer.machine.inspectionSec ?? 0);
     timerInstruction = copy.holdToArm;
   }
 

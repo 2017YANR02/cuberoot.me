@@ -13,6 +13,7 @@ import {
   solverFacesForColors,
   stageSlotCombos,
   stageTrainingMask,
+  stageTrainingMasks,
   type StageTrainingConfig,
 } from '@/app/[lang]/timer/_lib/stage-training';
 
@@ -63,6 +64,19 @@ describe('stage training /sim mask', () => {
     expect(stageTrainingMask({ face: 0, combo: 'FR FL' }, 'xxcross')).toEqual({ name: 'xxcross', orientation: '' });
     expect(stageTrainingMask({ face: 0, combo: 'FR BL' }, 'xxcross')).toEqual({ name: 'xxcross_diag', orientation: '' });
     expect(stageTrainingMask({ face: 3, combo: 'BL FR' }, 'xxcross').name).toBe('xxcross_diag');
+  });
+
+  it('keeps every selected cross colour visible without revealing the winning face', () => {
+    const masks = stageTrainingMasks({ face: 0, combo: '' }, 'cross', 'WY');
+    expect(masks).toHaveLength(2);
+    expect(masks.map((mask) => mask.name)).toEqual(['Cross', 'Cross']);
+    expect(new Set(masks.map((mask) => mask.orientation)).size).toBe(2);
+  });
+
+  it('shows every eligible slot for multi-colour XCross-family questions', () => {
+    expect(stageTrainingMasks({ face: 0, combo: 'FR' }, 'xcross', 'WY')).toHaveLength(8);
+    expect(stageTrainingMasks({ face: 0, combo: 'FR FL' }, 'xxcross', 'WY')).toHaveLength(12);
+    expect(stageTrainingMasks({ face: 0, combo: 'BL BR FL' }, 'xxxcross', 'WY')).toHaveLength(8);
   });
 });
 

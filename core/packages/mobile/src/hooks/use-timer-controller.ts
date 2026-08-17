@@ -46,11 +46,10 @@ export function useTimerController({
   const onCompleteRef = useRef(onComplete);
   const configRef = useRef<TimerMachineConfig>({
     inspectionSec,
-    inspectionTrigger: 'down',
   });
 
   onCompleteRef.current = onComplete;
-  configRef.current = { inspectionSec, inspectionTrigger: 'down' };
+  configRef.current = { inspectionSec };
 
   const clearHoldTimeout = useCallback(() => {
     if (holdTimeoutRef.current !== undefined) {
