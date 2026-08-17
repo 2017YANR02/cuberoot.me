@@ -9,8 +9,11 @@
  * the --rs-lo / --rs-hi custom props.
  *
  * Discrete by default (step=1). `value` is always [lo, hi] with lo <= hi; the
- * setters clamp so the handles can't cross. Style follows theme tokens
- * (--accent fill/thumb), so it adapts to light/dark and palette themes.
+ * keyboard setters clamp so the handles can't cross. A continuous pointer drag
+ * may cross the other handle; after the handles meet, the dragged endpoint
+ * changes sides without making the user release and grab again. Style follows
+ * theme tokens (--accent fill/thumb), so it adapts to light/dark and palette
+ * themes.
  *
  * Overlap handling: with two stacked inputs only the topmost thumb under the
  * cursor is grabbable, and a thumb on top can move only one way (hi is clamped
@@ -21,6 +24,9 @@
  */
 import { useRef } from 'react';
 import './RangeSlider.css';
+
+export const orderedDragRange = (anchor: number, moving: number): [number, number] =>
+  moving <= anchor ? [moving, anchor] : [anchor, moving];
 
 export interface RangeSliderProps {
   min: number;
@@ -76,22 +82,67 @@ export function RangeSlider({
   const wrapRef = useRef<HTMLDivElement>(null);
   const loRef = useRef<HTMLInputElement>(null);
   const hiRef = useRef<HTMLInputElement>(null);
+  const dragRef = useRef<{ pointerId: number; anchor: number; moving: number } | null>(null);
 
   // Put the thumb the cursor is nearest to on top so it (not its buried twin)
   // receives the grab. When the thumbs overlap their pixel positions are equal,
   // so the tie-break by cursor side decides direction: cursor left of the thumb
   // → lo on top (drags left); right → hi on top (drags right). Set imperatively
   // (not via React state) so it lands before the pending pointerdown grabs.
-  const floatNearestThumb = (clientX: number) => {
+  const nearestThumb = (clientX: number): 'lo' | 'hi' | null => {
     const loEl = loRef.current, hiEl = hiRef.current, wrap = wrapRef.current;
-    if (!loEl || !hiEl || !wrap) return;
+    if (!loEl || !hiEl || !wrap) return null;
     const rect = wrap.getBoundingClientRect();
     const xOf = (n: number) => rect.left + ((n - min) / span) * rect.width;
     const dLo = Math.abs(clientX - xOf(lo));
     const dHi = Math.abs(clientX - xOf(hi));
-    const loOnTop = dLo < dHi || (dLo === dHi && clientX <= xOf(lo));
+    return dLo < dHi || (dLo === dHi && clientX <= xOf(lo)) ? 'lo' : 'hi';
+  };
+
+  const floatNearestThumb = (clientX: number) => {
+    const loEl = loRef.current, hiEl = hiRef.current;
+    if (!loEl || !hiEl) return;
+    const loOnTop = nearestThumb(clientX) === 'lo';
     loEl.style.zIndex = loOnTop ? '4' : '2';
     hiEl.style.zIndex = loOnTop ? '3' : '5';
+  };
+
+  const valueAt = (clientX: number): number => {
+    const rect = wrapRef.current?.getBoundingClientRect();
+    if (!rect || rect.width <= 0) return min;
+    const raw = min + ((clientX - rect.left) / rect.width) * span;
+    const stepped = min + Math.round((raw - min) / step) * step;
+    return Math.min(Math.max(Number(stepped.toFixed(12)), min), max);
+  };
+
+  const startDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (disabled || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    if (e.target !== loRef.current && e.target !== hiRef.current) return;
+    const thumb = nearestThumb(e.clientX);
+    if (!thumb) return;
+    const moving = thumb === 'lo' ? lo : hi;
+    dragRef.current = { pointerId: e.pointerId, anchor: thumb === 'lo' ? hi : lo, moving };
+    (thumb === 'lo' ? loRef.current : hiRef.current)?.focus();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  };
+
+  const moveDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== e.pointerId) {
+      floatNearestThumb(e.clientX);
+      return;
+    }
+    const moving = snap(valueAt(e.clientX), drag.moving);
+    drag.moving = moving;
+    onChange(orderedDragRange(drag.anchor, moving));
+  };
+
+  const stopDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (dragRef.current?.pointerId !== e.pointerId) return;
+    dragRef.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+    floatNearestThumb(e.clientX);
   };
 
   return (
@@ -99,8 +150,11 @@ export function RangeSlider({
       ref={wrapRef}
       className={`range-slider${disabled ? ' is-disabled' : ''}`}
       style={{ ['--rs-lo' as string]: pct(lo), ['--rs-hi' as string]: pct(hi) }}
-      onPointerMove={(e) => floatNearestThumb(e.clientX)}
-      onPointerDown={(e) => floatNearestThumb(e.clientX)}
+      onPointerMove={moveDrag}
+      onPointerDown={startDrag}
+      onPointerUp={stopDrag}
+      onPointerCancel={stopDrag}
+      onLostPointerCapture={() => { dragRef.current = null; }}
     >
       <div className="range-slider-rail">
         <div className="range-slider-fill" />
