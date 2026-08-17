@@ -1,6 +1,6 @@
 # Square-1 PBL 公式集与 Finder 移植跟踪
 
-最后更新：2026-08-16
+最后更新：2026-08-17
 
 ## 最终产品边界
 
@@ -42,6 +42,14 @@
 - 结果方向固定为 `setup=result.setup`、`alg=result.algorithm`，复用一个 `CaseThumb` 和一个 `AlgPlayer`，并支持复制。
 - Daniel 文档与 JAR 的 PLL 命名/朝向约定不同，禁止按同名 case 自动互链或用 Finder setup 翻转文档公式。
 
+## Finder 性能与界面收口
+
+- 搜索前只解析并应用一次目标 setup；814 条辅助公式预先解析为 token，每个第一段辅助公式只计算一次中间状态，第二段从缓存状态继续，避免 662,596 个候选反复复制和重放完整序列。
+- legacy 的循环层判定改为定长索引比较；只有两段原始字符串在 `/` 边界不可安全拼接时才回退到逐候选精确解析，因此首尾 `/`、连续 `/`、非法切层 no-op 和稳定排序仍与 JAR golden 一致。
+- 同一条完整 Finder 测试的墙钟时间从 17.271 秒降至 3.346 秒，约快 5.16 倍；最终 52/52 测试通过，其中 `Ua/Ua` 完整锁定 125 条结果的公式、辅助公式、STM、FTM 与顺序。
+- 页面首屏只保留 Top PLL、Bottom PLL 和“查找公式”；legacy/strict、814 条辅助公式及导入导出收进默认折叠的“高级设置”。命中后先显示所选公式的图示、单个播放器、复制与步数，再显示完整结果列表。
+- 浏览器实测 `Ua/Ua` 搜索为 884 ms。1280×720 桌面和 390×844 窄屏均无整页横向溢出，窄屏选择器、主按钮、预览和结果行会纵向排列。
+
 ## 维护工作流
 
 1. 在 `core/` 运行 `node packages/client/scripts/sq1-pbl-check.mjs`；退出码 0/3/2/1 分别表示同步、实质漂移、无基线和解析失败。
@@ -64,6 +72,7 @@
 | 6 | 路由与复用 | PBL 卡片进入 `/alg/sq1`；主路由由标准动态公式页接管；Finder 独立；旧 Excel Workspace 与公开资产退出 |
 | 7 | 维护与发布安全 | 漂移 Issue、Skill、确定性快照和不可变迁移规则分层；本地 PG/API、类型检查、桌面与 `<480px` 验收作为提交门槛 |
 | 8 | 助记记号保真 | 独立说明页锁定 103 个定义、31 个未定义形式、4 条替代展开式与原表注释；助记只作 note，永不进入 parser/player |
+| 9 | Finder 性能与 UI | 复用预解析 token 和第一段中间状态，在完整 JAR golden 不变的前提下提速约 5.16 倍；主流程精简，高级项折叠，桌面与 390px 窄屏通过 |
 
 ## 当前验收清单
 
@@ -73,6 +82,7 @@
 - [x] 公式库定向测试逐条验证 parser、setup/alg 闭环、标准播放器校验和助记文本隔离。
 - [x] PBL 已加入 SQ1 公式库 catalog，旧精确 PBL 页面退出，新增 Finder metadata 与真链接。
 - [x] Finder 核心 52 条测试覆盖完整 `Ua/Ua` 输出、legacy 边界、输入规范化和 Worker 生命周期。
+- [x] Finder 全量搜索缓存与 UI 收口：52/52 golden 通过，测试墙钟 17.271s → 3.346s，浏览器 `Ua/Ua` 125 条结果为 884ms。
 - [x] `--public-write`、sheet/media/formula-media 网页导出路径退役；维护命令只更新公式源、Finder 默认值和基线。
 - [x] client/server typecheck、10 个定向测试文件共 95 项测试、Skill 校验和最终 `git diff --check`。
 - [x] 桌面与 390px 临时视口（页面可用宽 312px）浏览器验证：PBL 卡片、44 分组、`M/Db` 图示/动画、Finder 入口均可用，公式库、22-case 分组页、case 页和 Finder 均无整页横向溢出。

@@ -1,32 +1,21 @@
 .finderSection {
   display: grid;
-  gap: 18px;
+  gap: 16px;
   min-width: 0;
 }
 
-.sectionHeadingRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 16px 28px;
-}
-
-.sectionHeadingRow h2,
 .auxiliaryHeading h3,
 .outputHeading h3,
+.resultGroup h4,
 .selectedDetails h4 {
   margin: 0;
 }
 
-.sectionHeadingRow h2 {
-  font-size: 1.25rem;
-  line-height: 1.3;
-}
-
 .sourceLine,
 .status,
-.error {
-  margin: 5px 0 0;
+.error,
+.selectorHint {
+  margin: 0;
   line-height: 1.55;
 }
 
@@ -38,7 +27,9 @@
 .pickerField > span,
 .progressLabel > span,
 .selectedDetails p,
-.manageStatus {
+.manageStatus,
+.selectorHint,
+.advancedSettings summary > span:last-child {
   color: var(--muted-foreground);
 }
 
@@ -51,12 +42,10 @@
   color: var(--destructive);
 }
 
-.pllSelectors,
+.searchControls,
 .auxiliaryEdit,
 .finderDataActions,
-.findAction,
 .modeControl,
-.pickerField,
 .progressLabel {
   display: flex;
   flex-wrap: wrap;
@@ -68,13 +57,14 @@
   white-space: nowrap;
 }
 
-.pllSelectors {
+.searchControls {
   align-items: end;
-  gap: 14px 24px;
+  gap: 12px 18px;
 }
 
 .pickerField {
-  align-items: center;
+  display: grid;
+  gap: 6px;
 }
 
 .searchField,
@@ -133,17 +123,64 @@
 .button:focus-visible,
 .primaryButton:focus-visible,
 .resultRow:focus-visible,
-.copyButton:focus-visible {
+.copyButton:focus-visible,
+.advancedSettings summary:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
+}
+
+.advancedSettings {
+  min-width: 0;
+  border-top: 1px solid var(--border-default);
+}
+
+.advancedSettings summary {
+  display: flex;
+  align-items: center;
+  gap: 8px 12px;
+  width: fit-content;
+  min-height: 44px;
+  color: var(--foreground);
+  cursor: pointer;
+  list-style: none;
+}
+
+.advancedSettings summary::-webkit-details-marker {
+  display: none;
+}
+
+.advancedSettings summary::before {
+  content: '›';
+  color: var(--muted-foreground);
+  font-size: 1.15rem;
+  line-height: 1;
+  transform: rotate(0deg);
+  transition: transform 150ms ease;
+}
+
+.advancedSettings[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.advancedSettings summary > span:first-child {
+  font-weight: 650;
+}
+
+.advancedSettings summary > span:last-child {
+  font-size: 0.84rem;
+}
+
+.advancedContent {
+  display: grid;
+  gap: 12px;
+  padding: 4px 0 16px;
 }
 
 .auxiliarySection {
   display: grid;
   gap: 12px;
   min-width: 0;
-  padding-block: 16px;
-  border-block: 1px solid var(--border-default);
+  padding-top: 4px;
 }
 
 .auxiliaryHeading,
@@ -260,10 +297,6 @@
   opacity: 0.5;
 }
 
-.findAction {
-  min-height: 40px;
-}
-
 .progressLabel progress {
   width: min(240px, 48vw);
   accent-color: var(--accent);
@@ -276,6 +309,16 @@
   padding-top: 4px;
 }
 
+.resultGroup {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.resultGroup h4 {
+  font-size: 0.95rem;
+}
+
 .resultList {
   max-height: 430px;
   overflow: auto;
@@ -284,7 +327,7 @@
 
 .resultRow {
   display: grid;
-  grid-template-columns: 3ch minmax(220px, 1fr) max-content max-content minmax(130px, 0.5fr);
+  grid-template-columns: 3ch minmax(220px, 1fr) max-content minmax(130px, 0.5fr);
   align-items: baseline;
   gap: 8px 14px;
   width: 100%;
@@ -400,7 +443,7 @@
   }
 
   .resultRow {
-    grid-template-columns: 3ch minmax(190px, 1fr) max-content max-content;
+    grid-template-columns: 3ch minmax(190px, 1fr) max-content;
   }
 
   .resultRow > span:last-child {
@@ -409,13 +452,10 @@
 }
 
 @media (max-width: 479px) {
-  .sectionHeadingRow,
-  .pllSelectors,
+  .searchControls,
   .auxiliaryEdit,
   .finderDataActions,
-  .findAction,
   .modeControl,
-  .pickerField,
   .progressLabel {
     align-items: stretch;
     flex-direction: column;
@@ -431,6 +471,7 @@
 
   .pickerField {
     align-self: stretch;
+    width: 100%;
   }
 
   .auxiliaryList {
@@ -456,7 +497,6 @@
 
   .resultRow code,
   .resultRow > span:nth-of-type(2),
-  .resultRow > span:nth-of-type(3),
   .resultRow > span:last-child {
     grid-column: 2 / -1;
   }
