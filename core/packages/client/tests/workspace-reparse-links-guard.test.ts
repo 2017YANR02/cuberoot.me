@@ -38,6 +38,7 @@ describe('workspace reparse-link guard', () => {
   it.each([
     'pnpm install --offline --frozen-lockfile',
     "rg -n 'New-Item -ItemType Junction' .codex",
+    "rg -n 'trash\\.ps1|block-rm-use-trash|Remove-Item|fs\\.rm|git clean|reparse|Junction' C:/Users/CubeRoot/.codex/memories/MEMORY.md",
   ])('allows safe independent verification commands: %s', (command) => {
     const result = runGuard(command);
 
