@@ -15,6 +15,7 @@ import {
 
 type DeviceListener = Parameters<GoCubeBleApi['onBluetoothDeviceFound']>[0];
 type ValueListener = Parameters<GoCubeBleApi['onBLECharacteristicValueChange']>[0];
+type StateListener = NonNullable<Parameters<NonNullable<GoCubeBleApi['onBLEConnectionStateChange']>>[0]>;
 
 function frame(opcode: number, payload: number[] | string): ArrayBuffer {
   const body = typeof payload === 'string'
@@ -41,7 +42,9 @@ function createBleRig(options: {
   services?: Array<{ isPrimary?: boolean; uuid: string }>;
 } = {}) {
   let deviceListener: DeviceListener | undefined;
+  let stateListener: StateListener | undefined;
   let valueListener: ValueListener | undefined;
+  const discoveryServices: Array<string[] | undefined> = [];
   const writes: number[] = [];
   const events: string[] = [];
   const characteristics = options.characteristics ?? [
@@ -64,6 +67,7 @@ function createBleRig(options: {
     },
     startBluetoothDevicesDiscovery(callbacks) {
       events.push('scan:start');
+      discoveryServices.push(callbacks.services);
       callbacks.success?.({});
       void Promise.resolve().then(() => deviceListener?.({
         devices: [{ deviceId: 'cube-1', name: options.deviceName ?? 'GoCube Edge' }],
@@ -103,6 +107,12 @@ function createBleRig(options: {
     offBLECharacteristicValueChange(listener) {
       if (valueListener === listener) valueListener = undefined;
     },
+    onBLEConnectionStateChange(listener) {
+      stateListener = listener;
+    },
+    offBLEConnectionStateChange(listener) {
+      if (stateListener === listener) stateListener = undefined;
+    },
     writeBLECharacteristicValue(callbacks) {
       writes.push(new Uint8Array(callbacks.value)[0] ?? -1);
       callbacks.success?.({});
@@ -111,6 +121,7 @@ function createBleRig(options: {
 
   return {
     api,
+    discoveryServices,
     events,
     writes,
     emit(value: ArrayBuffer) {
@@ -120,6 +131,9 @@ function createBleRig(options: {
         serviceId: GOCUBE_SERVICE_UUID.toUpperCase(),
         value,
       });
+    },
+    emitDisconnect() {
+      stateListener?.({ connected: false, deviceId: 'cube-1' });
     },
   };
 }
@@ -141,12 +155,15 @@ describe('WeChat GoCube BLE transport', () => {
     });
 
     expect(connection.deviceId).toBe('cube-1');
+    expect(rig.discoveryServices).toEqual([undefined]);
     expect(rig.writes).toEqual([GOCUBE_COMMAND_STATE]);
     rig.emit(frame(0x01, [0, 1, 3, 2]));
     expect(moves).toEqual(['B', "F'"]);
 
     const battery = connection.requestBattery();
-    expect(rig.writes).toEqual([GOCUBE_COMMAND_STATE, GOCUBE_COMMAND_BATTERY]);
+    await vi.waitFor(() => {
+      expect(rig.writes).toEqual([GOCUBE_COMMAND_STATE, GOCUBE_COMMAND_BATTERY]);
+    });
     rig.emit(frame(0x05, [83]));
     await expect(battery).resolves.toBe(83);
     expect(batteryLevels).toEqual([83]);
@@ -219,6 +236,23 @@ describe('WeChat GoCube BLE transport', () => {
     });
     expect(rig.events).toContain('connection:close');
     expect(rig.events).toContain('adapter:close');
+  });
+
+  it('reports a physical disconnect once and performs cleanup', async () => {
+    const rig = createBleRig();
+    const onDisconnect = vi.fn();
+    const connection = await connectGoCube({ api: rig.api, onDisconnect });
+
+    rig.emitDisconnect();
+    rig.emitDisconnect();
+
+    await vi.waitFor(() => expect(onDisconnect).toHaveBeenCalledOnce());
+    await vi.waitFor(() => {
+      expect(rig.events.filter((event) => event === 'connection:close')).toHaveLength(1);
+      expect(rig.events.filter((event) => event === 'adapter:close')).toHaveLength(1);
+    });
+    await connection.disconnect();
+    expect(onDisconnect).toHaveBeenCalledWith('智能魔方连接已断开');
   });
 
   it('times out discovery and closes the adapter', async () => {

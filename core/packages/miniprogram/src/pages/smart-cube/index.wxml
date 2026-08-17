@@ -1,0 +1,58 @@
+<view class="page smart-cube-page">
+  <text class="eyebrow">智能魔方</text>
+  <text class="page-title">连接后继续计时</text>
+  <text class="page-intro">蓝牙由小程序原生连接，动作、状态和姿态会实时送回网站计时器。</text>
+
+  <view class="connection-status">
+    <text class="connection-label">当前状态</text>
+    <text wx:if="{{phase === 'idle'}}" class="connection-value">等待选择设备</text>
+    <text wx:elif="{{phase === 'scanning'}}" class="connection-value">正在搜索附近魔方…</text>
+    <text wx:elif="{{phase === 'connecting'}}" class="connection-value">正在建立连接…</text>
+    <text wx:elif="{{phase === 'connected'}}" class="connection-value connection-value--ready">已连接 {{deviceName}}</text>
+    <text wx:elif="{{phase === 'disconnected'}}" class="connection-value">{{deviceName || '已断开'}}</text>
+    <text wx:else class="connection-value connection-value--error">{{error || '连接失败，请重试'}}</text>
+    <text wx:if="{{battery !== null}}" class="connection-detail">电量 {{battery}}%</text>
+    <text wx:if="{{lastMove}}" class="connection-detail">最近动作 {{lastMove}}</text>
+  </view>
+
+  <view wx:if="{{phase !== 'connected'}}" class="driver-list">
+    <view class="driver-row">
+      <view class="driver-copy">
+        <text class="driver-name">GAN 新款系列</text>
+        <text class="driver-models">GAN 12–16、Mini、MG、AiCube；同协议新型号会尝试连接</text>
+      </view>
+      <button class="driver-action" hover-class="press-feedback" disabled="{{busy}}" data-driver="gan-v4" bindtap="connectCube">搜索</button>
+    </view>
+    <view class="driver-row">
+      <view class="driver-copy">
+        <text class="driver-name">GoCube 系列</text>
+        <text class="driver-models">GoCube、GoCube Edge、Rubik’s Connected</text>
+      </view>
+      <button class="driver-action" hover-class="press-feedback" disabled="{{busy}}" data-driver="gocube" bindtap="connectCube">搜索</button>
+    </view>
+    <view wx:if="{{simulator}}" class="driver-row">
+      <view class="driver-copy">
+        <text class="driver-name">开发者工具仿真</text>
+        <text class="driver-models">无需蓝牙硬件，验证计时器动作链路</text>
+      </view>
+      <button class="driver-action" hover-class="press-feedback" disabled="{{busy}}" data-driver="simulator" bindtap="connectCube">连接</button>
+    </view>
+  </view>
+
+  <view wx:if="{{phase === 'connected' && brand === 'simulator'}}" class="simulator-panel">
+    <text class="section-title">发送仿真动作</text>
+    <view class="move-grid">
+      <button wx:for="{{simulatorMoves}}" wx:key="*this" class="move-button" hover-class="press-feedback" data-move="{{item}}" bindtap="simulateMove">{{item}}</button>
+    </view>
+  </view>
+
+  <view wx:if="{{phase === 'connected'}}" class="connected-actions">
+    <button class="primary-button" hover-class="press-feedback" bindtap="returnToTimer">返回计时器</button>
+    <button class="text-button" hover-class="press-feedback" bindtap="disconnectCube">断开连接</button>
+  </view>
+
+  <view class="support-note">
+    <text class="section-title">兼容范围</text>
+    <text class="support-copy">网站计时器现有 GAN、魔域、奇艺、Giiker、GoCube 等协议继续保留。小程序原生驱动先覆盖 GAN 新款和 GoCube 系列，其余协议沿同一接口继续接入，不会重写计时器。</text>
+  </view>
+</view>
