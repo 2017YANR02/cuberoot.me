@@ -1,0 +1,2 @@
+CREATE INDEX idx_teaching_idempotency_requests_actor_operation_created
+  ON teaching_idempotency_requests(actor_user_id, operation, created_at DESC);

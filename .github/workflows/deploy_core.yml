@@ -82,6 +82,23 @@ jobs:
             sudo apt-get install -y rsync
           fi
 
+      # 配置门槛必须早于 rsync:失败时不能把未就绪的新 bundle/migrations 覆盖到 live 目录。
+      - name: Validate teaching bridge runtime configuration
+        run: |
+          ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+            -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "root@${{ secrets.DEPLOY_HOST }}" \
+            'set -e
+             test -s /root/core-api/.env || { echo "ERROR: core runtime env missing"; exit 1; }
+             test -s /etc/cube-platform.env || { echo "ERROR: platform runtime env missing"; exit 1; }
+             CORE_SECRET="$(sed -n "s/^TEACHING_PLATFORM_SECRET=//p" /root/core-api/.env | tail -1)"
+             PLATFORM_SECRET="$(sed -n "s/^TEACHING_PLATFORM_SECRET=//p" /etc/cube-platform.env | tail -1)"
+             test "${#CORE_SECRET}" -eq 64 || { echo "ERROR: core TEACHING_PLATFORM_SECRET must be exactly 64 hex characters"; exit 1; }
+             case "$CORE_SECRET" in *[!0-9A-Fa-f]*) echo "ERROR: core TEACHING_PLATFORM_SECRET must be unquoted hexadecimal"; exit 1;; esac
+             test "${#PLATFORM_SECRET}" -eq 64 || { echo "ERROR: platform TEACHING_PLATFORM_SECRET must be exactly 64 hex characters"; exit 1; }
+             case "$PLATFORM_SECRET" in *[!0-9A-Fa-f]*) echo "ERROR: platform TEACHING_PLATFORM_SECRET must be unquoted hexadecimal"; exit 1;; esac
+             test "$CORE_SECRET" = "$PLATFORM_SECRET" || { echo "ERROR: teaching bridge secrets do not match"; exit 1; }'
+
       - name: Deploy server
         run: |
           # bundle 自包含 → 只需要 scp 单文件 + sourcemap + migrations。

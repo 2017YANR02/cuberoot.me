@@ -25,6 +25,7 @@ function payload(overrides: Partial<TeachingPlatformAssertionV1> = {}): Teaching
     method: 'POST',
     path: '/teaching/organizations',
     bodySha256: createHash('sha256').update(BODY).digest('hex'),
+    idempotencyKey: '11111111-1111-4111-8111-111111111111',
     iat: NOW - 5,
     exp: NOW + 60,
     jti: 'assertion_nonce_1234567890',
@@ -37,11 +38,17 @@ function sign(value: TeachingPlatformAssertionV1, secret = SECRET): string {
   return `${encoded}.${createHmac('sha256', secret).update(encoded).digest('base64url')}`;
 }
 
-function verify(token: string, overrides: Partial<{ method: string; path: string; body: Uint8Array }> = {}) {
+function verify(token: string, overrides: Partial<{
+  method: string;
+  path: string;
+  body: Uint8Array;
+  idempotencyKey: string | null;
+}> = {}) {
   return verifyTeachingPlatformAssertion(token, SECRET, {
     method: 'POST',
     path: '/teaching/organizations',
     body: BODY,
+    idempotencyKey: '11111111-1111-4111-8111-111111111111',
     ...overrides,
   }, NOW);
 }
@@ -61,13 +68,16 @@ describe('teaching platform assertions', () => {
     expect(() => verify(tampered)).toThrow(InvalidTeachingPlatformAssertionError);
     expect(() => verifyTeachingPlatformAssertion(token, 'too-short', {
       method: 'POST', path: '/teaching/organizations', body: BODY,
+      idempotencyKey: '11111111-1111-4111-8111-111111111111',
     }, NOW)).toThrow(InvalidTeachingPlatformAssertionError);
   });
 
   it.each([
     ['method', { method: 'GET' }],
     ['path', { path: '/teaching/organizations/other' }],
+    ['query', { path: '/teaching/organizations?include=members' }],
     ['body', { body: new TextEncoder().encode('{}') }],
+    ['idempotency key', { idempotencyKey: '22222222-2222-4222-8222-222222222222' }],
   ])('rejects a mismatched %s binding', (_label, request) => {
     expect(() => verify(sign(payload()), request)).toThrow(InvalidTeachingPlatformAssertionError);
   });

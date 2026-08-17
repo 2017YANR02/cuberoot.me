@@ -51,9 +51,23 @@ interface CreateStudentInput {
   externalRef: string | null;
 }
 
+interface PageInput {
+  page: number;
+  pageSize: number;
+  offset: number;
+}
+
+interface PageResult {
+  items: JsonObject[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface TeachingSaasRepository {
   listOrganizations(actor: TeachingActor): Promise<JsonObject[]>;
-  getOrganization(actor: TeachingActor, slug: string): Promise<JsonObject>;
+  getOrganization(actor: TeachingActor, slug: string, requestId: string): Promise<JsonObject>;
+  getOrganizationSummary(actor: TeachingActor, slug: string, requestId: string): Promise<JsonObject>;
   createOrganization(
     actor: TeachingActor,
     input: CreateOrganizationInput,
@@ -61,7 +75,7 @@ export interface TeachingSaasRepository {
     requestHash: string,
     requestId: string,
   ): Promise<MutationResult>;
-  listMembers(actor: TeachingActor, slug: string): Promise<JsonObject[]>;
+  listMembers(actor: TeachingActor, slug: string, pagination: PageInput, requestId: string): Promise<PageResult>;
   createMember(
     actor: TeachingActor,
     slug: string,
@@ -70,7 +84,7 @@ export interface TeachingSaasRepository {
     requestHash: string,
     requestId: string,
   ): Promise<MutationResult>;
-  listStudents(actor: TeachingActor, slug: string): Promise<JsonObject[]>;
+  listStudents(actor: TeachingActor, slug: string, pagination: PageInput, requestId: string): Promise<PageResult>;
   createStudent(
     actor: TeachingActor,
     slug: string,
@@ -84,7 +98,7 @@ export interface TeachingSaasRepository {
 export class TeachingApiException extends Error {
   constructor(
     readonly code: TeachingErrorCode,
-    readonly status: 400 | 401 | 403 | 404 | 409,
+    readonly status: 400 | 401 | 403 | 404 | 409 | 429,
     message: string,
   ) {
     super(message);
@@ -110,6 +124,20 @@ function idempotencyKeyOf(c: Context): string {
     throw new TeachingApiException('INVALID_INPUT', 400, 'Idempotency-Key must be 1 to 200 visible ASCII characters');
   }
   return key;
+}
+
+function paginationOf(c: Context): PageInput {
+  const pageRaw = c.req.query('page');
+  const pageSizeRaw = c.req.query('pageSize');
+  const page = pageRaw === undefined ? 1 : Number(pageRaw);
+  const pageSize = pageSizeRaw === undefined ? 30 : Number(pageSizeRaw);
+  if (
+    !Number.isSafeInteger(page) || page < 1 || page > 1_000_000 ||
+    !Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100
+  ) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'page must be positive and pageSize must be 1 to 100');
+  }
+  return { page, pageSize, offset: (page - 1) * pageSize };
 }
 
 async function jsonBody(c: Context): Promise<{ value: JsonObject; raw: string }> {
@@ -230,6 +258,57 @@ async function accessForWrite(tx: Tx, actorUserId: number, slug: string): Promis
   return asAccess(rows[0] as Record<string, unknown>);
 }
 
+function isAccessDenial(error: unknown): error is TeachingApiException {
+  return error instanceof TeachingApiException &&
+    (error.code === 'ORGANIZATION_NOT_FOUND' || error.code === 'PERMISSION_DENIED');
+}
+
+async function recordDeniedOrganizationAccess(
+  actor: TeachingActor,
+  slug: string,
+  action: string,
+  requestId: string,
+  error: TeachingApiException,
+): Promise<void> {
+  await query(
+    `INSERT INTO teaching_audit_events (
+       organization_id, actor_user_id, actor_role, actor_display_name,
+       action, entity_type, entity_id, outcome, request_id, metadata
+     )
+     SELECT o.id, ?, m.role, ?, ?, 'organization', o.id::text, 'denied', ?, ?::jsonb
+     FROM organizations o
+     LEFT JOIN organization_members m
+       ON m.organization_id = o.id AND m.user_id = ?
+     WHERE o.slug = ?`,
+    [
+      actor.userId,
+      actor.displayName,
+      action,
+      requestId,
+      JSON.stringify({ reason: error.code }),
+      actor.userId,
+      slug,
+    ],
+  );
+}
+
+async function withDeniedAccessAudit<T>(
+  actor: TeachingActor,
+  slug: string,
+  action: string,
+  requestId: string,
+  operation: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (isAccessDenial(error)) {
+      await recordDeniedOrganizationAccess(actor, slug, action, requestId, error);
+    }
+    throw error;
+  }
+}
+
 async function beginIdempotency(
   tx: Tx,
   actorUserId: number,
@@ -239,13 +318,19 @@ async function beginIdempotency(
   requestHash: string,
 ): Promise<{ id: number } | { replay: MutationResult }> {
   const scopeKey = organizationId ? `org:${organizationId}` : 'global';
+  const idempotencyLockKey = `teaching-mutation:${actorUserId}:${operation}`;
+  await tx`
+    SELECT pg_advisory_xact_lock(hashtextextended(${idempotencyLockKey}, 0))`;
   await tx`
     DELETE FROM teaching_idempotency_requests
-    WHERE actor_user_id = ${actorUserId}
-      AND scope_key = ${scopeKey}
-      AND operation = ${operation}
-      AND idempotency_key = ${key}
-      AND expires_at <= NOW()`;
+    WHERE id IN (
+      SELECT id
+      FROM teaching_idempotency_requests
+      WHERE expires_at <= NOW()
+      ORDER BY expires_at
+      LIMIT 500
+      FOR UPDATE SKIP LOCKED
+    )`;
   const inserted = await tx`
     INSERT INTO teaching_idempotency_requests (
       organization_id, actor_user_id, scope_key, operation, idempotency_key,
@@ -292,6 +377,57 @@ async function completeIdempotency(
     WHERE id = ${id}`;
 }
 
+/**
+ * This intentionally uses the pool-level query helper while the business
+ * transaction is open. Its committed counter must survive a later rollback.
+ * Completed idempotent replays return before this function and are not charged.
+ */
+async function consumeMutationAttempt(
+  actorUserId: number,
+  operation: string,
+  maxRequests: number,
+  window: '1 minute' | '1 hour',
+): Promise<void> {
+  const rows = window === '1 minute'
+    ? await query<Record<string, unknown>>(
+        `INSERT INTO teaching_mutation_rate_limits (
+           actor_user_id, operation, window_started_at, attempts, updated_at
+         ) VALUES (?, ?, NOW(), 1, NOW())
+         ON CONFLICT (actor_user_id, operation) DO UPDATE SET
+           attempts = CASE
+             WHEN teaching_mutation_rate_limits.window_started_at <= NOW() - INTERVAL '1 minute' THEN 1
+             ELSE teaching_mutation_rate_limits.attempts + 1
+           END,
+           window_started_at = CASE
+             WHEN teaching_mutation_rate_limits.window_started_at <= NOW() - INTERVAL '1 minute' THEN NOW()
+             ELSE teaching_mutation_rate_limits.window_started_at
+           END,
+           updated_at = NOW()
+         RETURNING attempts`,
+        [actorUserId, operation],
+      )
+    : await query<Record<string, unknown>>(
+        `INSERT INTO teaching_mutation_rate_limits (
+           actor_user_id, operation, window_started_at, attempts, updated_at
+         ) VALUES (?, ?, NOW(), 1, NOW())
+         ON CONFLICT (actor_user_id, operation) DO UPDATE SET
+           attempts = CASE
+             WHEN teaching_mutation_rate_limits.window_started_at <= NOW() - INTERVAL '1 hour' THEN 1
+             ELSE teaching_mutation_rate_limits.attempts + 1
+           END,
+           window_started_at = CASE
+             WHEN teaching_mutation_rate_limits.window_started_at <= NOW() - INTERVAL '1 hour' THEN NOW()
+             ELSE teaching_mutation_rate_limits.window_started_at
+           END,
+           updated_at = NOW()
+         RETURNING attempts`,
+        [actorUserId, operation],
+      );
+  if (Number(rows[0]?.attempts ?? 0) > maxRequests) {
+    throw new TeachingApiException('RATE_LIMITED', 429, 'Too many teaching mutations; retry later');
+  }
+}
+
 function uniqueConflict(error: unknown, message: string): never {
   const code = (error as { code?: string }).code;
   if (code === '23505') throw new TeachingApiException('CONFLICT', 409, message);
@@ -311,8 +447,39 @@ export const teachingSaasRepository: TeachingSaasRepository = {
     return rows.map((row) => ({ ...asAccess(row) }));
   },
 
-  async getOrganization(actor, slug) {
-    return { ...await accessForRead(actor.userId, slug) };
+  async getOrganization(actor, slug, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'organization.read', requestId, async () => ({
+      ...await accessForRead(actor.userId, slug),
+    }));
+  },
+
+  async getOrganizationSummary(actor, slug, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'organization.summary', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      const [memberRows, studentRows] = await Promise.all([
+        hasTeachingPermission(access.role, 'member:read')
+          ? query<Record<string, unknown>>(
+              'SELECT COUNT(*)::int AS count FROM organization_members WHERE organization_id = ?',
+              [access.id],
+            )
+          : Promise.resolve([]),
+        hasTeachingPermission(access.role, 'student:read')
+          ? query<Record<string, unknown>>(
+              'SELECT COUNT(*)::int AS count FROM student_profiles WHERE organization_id = ?',
+              [access.id],
+            )
+          : Promise.resolve([]),
+      ]);
+      return {
+        organization: { ...access },
+        memberCount: hasTeachingPermission(access.role, 'member:read')
+          ? Number(memberRows[0]?.count ?? 0)
+          : null,
+        studentCount: hasTeachingPermission(access.role, 'student:read')
+          ? Number(studentRows[0]?.count ?? 0)
+          : null,
+      };
+    });
   },
 
   async createOrganization(actor, input, idempotencyKey, requestHash, requestId) {
@@ -320,6 +487,7 @@ export const teachingSaasRepository: TeachingSaasRepository = {
       return await sql.begin(async (tx) => {
         const idem = await beginIdempotency(tx, actor.userId, null, 'organization.create', idempotencyKey, requestHash);
         if ('replay' in idem) return idem.replay;
+        await consumeMutationAttempt(actor.userId, 'organization.create', 10, '1 hour');
         const rows = await tx`
           INSERT INTO organizations (slug, name, timezone, created_by_user_id)
           VALUES (${input.slug}, ${input.name}, ${input.timezone}, ${actor.userId})
@@ -360,10 +528,16 @@ export const teachingSaasRepository: TeachingSaasRepository = {
     }
   },
 
-  async listMembers(actor, slug) {
-    const access = await accessForRead(actor.userId, slug);
-    requirePermission(access, 'member:read');
-    const rows = await query<Record<string, unknown>>(
+  async listMembers(actor, slug, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'member.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'member:read');
+      const [countRows, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          'SELECT COUNT(*)::int AS count FROM organization_members WHERE organization_id = ?',
+          [access.id],
+        ),
+        query<Record<string, unknown>>(
       `SELECT m.user_id, u.display_name, u.avatar_url, m.role, m.status, m.joined_at, m.created_at
        FROM organization_members m
        JOIN app_users u ON u.id = m.user_id
@@ -371,22 +545,31 @@ export const teachingSaasRepository: TeachingSaasRepository = {
        ORDER BY CASE m.role
          WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 WHEN 'teacher' THEN 2
          WHEN 'assistant' THEN 3 WHEN 'finance' THEN 4 ELSE 5 END,
-         u.display_name, m.user_id`,
-      [access.id],
-    );
-    return rows.map((row) => ({
-      userId: Number(row.user_id),
-      displayName: String(row.display_name ?? ''),
-      avatarUrl: row.avatar_url == null ? null : String(row.avatar_url),
-      role: String(row.role),
-      status: String(row.status),
-      joinedAt: row.joined_at instanceof Date ? row.joined_at.toISOString() : String(row.joined_at),
-      createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
-    }));
+         u.display_name, m.user_id
+       LIMIT ? OFFSET ?`,
+          [access.id, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map((row) => ({
+          userId: Number(row.user_id),
+          displayName: String(row.display_name ?? ''),
+          avatarUrl: row.avatar_url == null ? null : String(row.avatar_url),
+          role: String(row.role),
+          status: String(row.status),
+          joinedAt: row.joined_at instanceof Date ? row.joined_at.toISOString() : String(row.joined_at),
+          createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+        })),
+        total: Number(countRows[0]?.count ?? 0),
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+      };
+    });
   },
 
   async createMember(actor, slug, input, idempotencyKey, requestHash, requestId) {
-    try {
+    return withDeniedAccessAudit(actor, slug, 'member.create', requestId, async () => {
+      try {
       return await sql.begin(async (tx) => {
         const access = await accessForWrite(tx, actor.userId, slug);
         requireWritable(access);
@@ -396,6 +579,7 @@ export const teachingSaasRepository: TeachingSaasRepository = {
         }
         const idem = await beginIdempotency(tx, actor.userId, access.id, 'member.create', idempotencyKey, requestHash);
         if ('replay' in idem) return idem.replay;
+        await consumeMutationAttempt(actor.userId, 'member.create', 60, '1 minute');
         const users = await tx`SELECT id, display_name FROM app_users WHERE id = ${input.userId}`;
         if (!users.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'User not found');
         await tx`
@@ -424,41 +608,58 @@ export const teachingSaasRepository: TeachingSaasRepository = {
         await completeIdempotency(tx, idem.id, result, 'organization_member', String(input.userId));
         return result;
       }) as MutationResult;
-    } catch (error) {
-      if (error instanceof TeachingApiException) throw error;
-      return uniqueConflict(error, 'User is already a member of this organization');
-    }
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return uniqueConflict(error, 'User is already a member of this organization');
+      }
+    });
   },
 
-  async listStudents(actor, slug) {
-    const access = await accessForRead(actor.userId, slug);
-    requirePermission(access, 'student:read');
-    const rows = await query<Record<string, unknown>>(
+  async listStudents(actor, slug, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'student.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'student:read');
+      const [countRows, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          'SELECT COUNT(*)::int AS count FROM student_profiles WHERE organization_id = ?',
+          [access.id],
+        ),
+        query<Record<string, unknown>>(
       `SELECT id, account_user_id, external_ref, display_name, status, created_at, updated_at
        FROM student_profiles
        WHERE organization_id = ?
-       ORDER BY display_name, id`,
-      [access.id],
-    );
-    return rows.map((row) => ({
-      id: String(row.id),
-      accountUserId: row.account_user_id == null ? null : Number(row.account_user_id),
-      externalRef: row.external_ref == null ? null : String(row.external_ref),
-      displayName: String(row.display_name),
-      status: String(row.status),
-      createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
-      updatedAt: row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
-    }));
+       ORDER BY display_name, id
+       LIMIT ? OFFSET ?`,
+          [access.id, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map((row) => ({
+          id: String(row.id),
+          accountUserId: row.account_user_id == null ? null : Number(row.account_user_id),
+          externalRef: row.external_ref == null ? null : String(row.external_ref),
+          displayName: String(row.display_name),
+          status: String(row.status),
+          createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+          updatedAt: row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
+        })),
+        total: Number(countRows[0]?.count ?? 0),
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+      };
+    });
   },
 
   async createStudent(actor, slug, input, idempotencyKey, requestHash, requestId) {
-    try {
+    return withDeniedAccessAudit(actor, slug, 'student.create', requestId, async () => {
+      try {
       return await sql.begin(async (tx) => {
         const access = await accessForWrite(tx, actor.userId, slug);
         requireWritable(access);
         requirePermission(access, 'student:manage');
         const idem = await beginIdempotency(tx, actor.userId, access.id, 'student.create', idempotencyKey, requestHash);
         if ('replay' in idem) return idem.replay;
+        await consumeMutationAttempt(actor.userId, 'student.create', 120, '1 minute');
         const rows = await tx`
           INSERT INTO student_profiles (
             organization_id, external_ref, display_name, created_by_user_id
@@ -478,6 +679,7 @@ export const teachingSaasRepository: TeachingSaasRepository = {
           body: {
             student: {
               id: String(student.id),
+              accountUserId: null,
               externalRef: student.external_ref == null ? null : String(student.external_ref),
               displayName: String(student.display_name),
               status: String(student.status),
@@ -489,10 +691,11 @@ export const teachingSaasRepository: TeachingSaasRepository = {
         await completeIdempotency(tx, idem.id, result, 'student', String(student.id));
         return result;
       }) as MutationResult;
-    } catch (error) {
-      if (error instanceof TeachingApiException) throw error;
-      return uniqueConflict(error, 'Student external reference already exists in this organization');
-    }
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return uniqueConflict(error, 'Student external reference already exists in this organization');
+      }
+    });
   },
 };
 
@@ -549,7 +752,18 @@ export function createTeachingSaasRoutes(deps: {
     c.header('Cache-Control', 'no-store');
     try {
       const actor = await authenticate(c);
-      return c.json({ organization: await repository.getOrganization(actor, c.req.param('orgSlug')) });
+      return c.json({ organization: await repository.getOrganization(actor, c.req.param('orgSlug'), requestId) });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/summary', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      return c.json({ summary: await repository.getOrganizationSummary(actor, c.req.param('orgSlug'), requestId) });
     } catch (error) {
       return errorResponse(c, error, requestId);
     }
@@ -560,7 +774,8 @@ export function createTeachingSaasRoutes(deps: {
     c.header('Cache-Control', 'no-store');
     try {
       const actor = await authenticate(c);
-      return c.json({ members: await repository.listMembers(actor, c.req.param('orgSlug')) });
+      const page = await repository.listMembers(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
+      return c.json({ members: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
     } catch (error) {
       return errorResponse(c, error, requestId);
     }
@@ -585,7 +800,8 @@ export function createTeachingSaasRoutes(deps: {
     c.header('Cache-Control', 'no-store');
     try {
       const actor = await authenticate(c);
-      return c.json({ students: await repository.listStudents(actor, c.req.param('orgSlug')) });
+      const page = await repository.listStudents(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
+      return c.json({ students: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
     } catch (error) {
       return errorResponse(c, error, requestId);
     }
