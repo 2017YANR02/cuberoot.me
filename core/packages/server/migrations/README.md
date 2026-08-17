@@ -1,50 +1,46 @@
 # DB Migrations
 
-PostgreSQL schema 变更的 source-of-truth。`apply_migrations.sh` 在 deploy 时自动跑没跑过的。
+PostgreSQL schema 变更的 source of truth。`apply_migrations.sh` 会在部署时自动执行尚未应用的文件。
 
 ## 流程
 
-加新列 / 新表 / 改索引:
+增加列、表或索引时：
 
-1. **写 migration 文件**,文件名格式 `NNNN_short_description.sql`(必须 `^[0-9a-z_]+\.sql$`):
+1. 写 migration 文件，文件名格式为 `NNNN_short_description.sql`，且必须匹配 `^[0-9a-z_]+\.sql$`。
+
    ```sql
    -- 0042_add_pinned_to_comments.sql
    ALTER TABLE comments ADD COLUMN pinned SMALLINT NOT NULL DEFAULT 0;
    ```
-   - **不要写 `BEGIN;` / `COMMIT;`** — runner 会自己包(每个 migration 一个事务)
-   - **数字前缀必须严格单调递增**(否则排序 = 应用顺序乱)
-   - 多人协作合并冲突:用 `git pull` 后看 `0042` 还是 `0043`,改自己那个
 
-2. **同步更新 `../src/db/schema.pg.sql`**:把新列加进对应 CREATE TABLE
-   - schema.pg.sql 是"当前 schema 全貌"的人读快照;migrations/ 是 CI 实际跑的权威
-   - 两者靠纪律同步;偏离了用 `pg_dump --schema-only` 重生成 schema.pg.sql
+   - 不要写 `BEGIN;` 或 `COMMIT;`，runner 会为每个文件单独开启事务。
+   - 数字前缀必须严格单调递增；历史重复编号 `0062`、`0087` 不得改名或改写。
+   - 多人协作时，创建文件前重新确认当前最大编号。
 
-3. **改业务代码**(server 路由 / 类型),引用新列
+2. 同步更新 `../src/db/schema.pg.sql`，将新结构写入对应的最终态 `CREATE TABLE`。
+   - `schema.pg.sql` 是便于审阅的当前结构快照。
+   - `migrations/` 是部署实际执行的权威来源。
 
-4. **`git push`** → CI 自动:
-   - rsync `migrations/` 到云服务器 `/root/core-api/migrations/`
-   - ssh 跑 `apply_migrations.sh /root/core-api/migrations`
-   - 之后才 `pm2 restart core-api`(不会出现"新代码部上去查不到列"的窗口)
+3. 同步业务代码、共享类型、`/dev/schema`、`/dev/api`、账号删除策略和回归测试。
 
-## 已应用 migration **不能改**
+4. 推送后，部署流水线会先应用 migration，再重载服务。
 
-`apply_migrations.sh` 计算每个文件的 sha256 存在 ledger 里;下次跑发现已应用 + sha256 不一致 = abort 报错。要回滚或修正:
-- **写新 migration 反向**(简单情况:`DROP COLUMN` / `DROP INDEX`)
-- 或 `pg_dump` restore(每天 03:00 UTC 自动 dump,见 memory `reference_pg_dump_backup.md`)
+## 已应用 migration 不能改
 
-## 失败 = 立即 abort,不会半灌
+`apply_migrations.sh` 会把每个文件的 SHA-256 写入 ledger。已应用文件的摘要发生变化时会终止执行。修正已上线结构只能新增 migration；需要恢复数据时使用已验证的备份。
 
-`ON_ERROR_STOP=1` + 每个 migration 包 `BEGIN; ... COMMIT;`:任一 SQL 错误 → 当前 migration 事务回滚 + 后续 migration 不跑。前面已 COMMIT 的保留(每个 migration 独立事务)。下次重跑从失败点继续。
+## 失败会立即终止
+
+`ON_ERROR_STOP=1`，且每个 migration 各自处于一个事务内。任一 SQL 失败时，当前文件回滚，后续文件不执行；此前已经提交的 migration 保留，下次从失败点继续。
 
 ## 没有 down migration
 
-YAGNI。要回滚:
-- 简单情况(加列/加索引):写新 migration `DROP COLUMN` / `DROP INDEX`
-- 复杂情况:`pg_dump` restore(每天 03:00 UTC 自动 dump,见 memory `reference_pg_dump_backup.md`)
+简单回滚通过新的反向 migration 完成；复杂恢复使用经过验证的数据库备份。不要改写已经应用的文件。
 
-## 看哪些 migration 已应用
+## 查看已应用 migration
+
+使用运行环境已经配置的数据库连接，不要把密码或连接串写入命令、文档、仓库或日志：
 
 ```bash
-ssh root@cuberoot "PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot_db \
-  -c 'SELECT filename, applied_at FROM _schema_migrations ORDER BY filename;'"
+psql "$DATABASE_URL" -c 'SELECT filename, applied_at FROM _schema_migrations ORDER BY filename;'
 ```
