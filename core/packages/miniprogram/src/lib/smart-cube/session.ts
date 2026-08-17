@@ -10,9 +10,10 @@ import { API_ORIGIN } from '../runtime-config';
 import { connectGanV4 } from './gan-v4-ble';
 import { connectGiiker } from './giiker-ble';
 import { connectGoCube } from './gocube-ble';
+import { connectMoyu } from './moyu-ble';
 import type { BleAbortSignal } from './ble-api';
 
-export type SmartCubeDriverKind = 'gan-v4' | 'gocube' | 'giiker' | 'simulator';
+export type SmartCubeDriverKind = 'gan-v4' | 'gocube' | 'giiker' | 'moyu' | 'simulator';
 export type SmartCubeSessionPhase =
   | 'idle'
   | 'scanning'
@@ -263,7 +264,9 @@ export class SmartCubeSession {
         ? 'GoCube、Rubik’s Connected'
         : kind === 'giiker'
           ? 'Giiker、米家智能魔方'
-          : '开发者工具仿真魔方';
+          : kind === 'moyu'
+            ? 'MoYu AI（MHC 旧协议）'
+            : '开发者工具仿真魔方';
     this.publishStatus({
       type: 'status',
       phase: kind === 'simulator' ? 'connecting' : 'scanning',
@@ -310,13 +313,21 @@ export class SmartCubeSession {
         });
         cancellation.track(operation);
         connection = await operation;
-      } else {
+      } else if (kind === 'giiker') {
         const operation = connectGiiker({
           signal: cancellation.signal,
           onDisconnect: (message) => this.handleHardwareDisconnect(generation, kind, message),
           onMove: (move) => this.publishMove(generation, move),
           onState: (facelets) => this.publishFor(generation, { type: 'state', facelets }),
           onBattery: (level) => this.publishBattery(generation, level),
+        });
+        cancellation.track(operation);
+        connection = await operation;
+      } else {
+        const operation = connectMoyu({
+          signal: cancellation.signal,
+          onDisconnect: (message) => this.handleHardwareDisconnect(generation, kind, message),
+          onMove: (move) => this.publishMove(generation, move),
         });
         cancellation.track(operation);
         connection = await operation;
