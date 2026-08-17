@@ -40,6 +40,7 @@ import {
 import {
   beginBleResourceCleanup,
   claimBleResourceLease,
+  createBleNativeOperationQueue,
   ignoreBleFailure,
   invokeBleCleanupForLease,
   invokeBleForLease,
@@ -48,8 +49,7 @@ import {
   raceBleAbort,
   raceBleAbortWithLateCleanup,
   safeBleCallback,
-  waitForBleNativeOperations,
-  BLE_CLEANUP_TIMEOUT_MS,
+  waitForBleCleanupDrain,
   BleOperationAbortedError,
   type BleAbortSignal,
   type CharacteristicValueChange,
@@ -258,22 +258,10 @@ export async function connectGanV4(
   let connectionStateListener: ((result: BleConnectionStateChange) => void) | null = null;
   let disconnectPromise: Promise<void> | null = null;
   let closing = false;
-  let writeQueue: Promise<void> = Promise.resolve();
+  const writeQueue = createBleNativeOperationQueue(lease);
   let lastBattery: number | null = null;
   let protocolCleanup = (): void => {};
   const batteryWaiters = new Set<(level: number | null) => void>();
-
-  const waitForDrainWindow = (operation: Promise<void>): Promise<boolean> => new Promise((resolve) => {
-    let settled = false;
-    const finish = (drained: boolean): void => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve(drained);
-    };
-    const timer = setTimeout(() => finish(false), BLE_CLEANUP_TIMEOUT_MS);
-    void operation.then(() => finish(true), () => finish(true));
-  });
 
   const disconnect = (): Promise<void> => {
     if (disconnectPromise) return disconnectPromise;
@@ -281,7 +269,7 @@ export async function connectGanV4(
       const releaseCleanupBarrier = beginBleResourceCleanup(lease);
       closing = true;
       active = false;
-      const pendingWrites = writeQueue;
+      const pendingWrites = writeQueue.drain();
       protocolCleanup();
       for (const resolve of batteryWaiters) resolve(lastBattery);
       batteryWaiters.clear();
@@ -327,7 +315,7 @@ export async function connectGanV4(
         }
       };
       const cleanup = finishCleanup();
-      if (await waitForDrainWindow(pendingWrites)) await cleanup;
+      if (await waitForBleCleanupDrain(pendingWrites)) await cleanup;
       else void cleanup.catch(() => {});
     })();
     return disconnectPromise;
@@ -435,29 +423,19 @@ export async function connectGanV4(
         ? createGanV3Cipher(discovery.mac)
         : createGanV2Cipher(discovery.mac, deviceName);
     const sendCommand = (command: Uint8Array): Promise<void> => {
-      const scheduled = writeQueue.then(() => {
+      return writeQueue.enqueue(() => {
         if (closing || !connectedDeviceId || !serviceId || !writeCharacteristicId) {
           throw new GanV4BleError('connection-failed', 'GAN 智能魔方连接已断开');
         }
         const encrypted = cipher.encrypt(command);
-        const operation = invokeBleForLease(lease, (callbacks) => api.writeBLECharacteristicValue({
+        return invokeBleForLease(lease, (callbacks) => api.writeBLECharacteristicValue({
           ...callbacks,
           characteristicId: writeCharacteristicId as string,
           deviceId: connectedDeviceId as string,
           serviceId: serviceId as string,
           value: new Uint8Array(encrypted).buffer,
         })).then(() => undefined);
-        return {
-          nativeSettled: waitForBleNativeOperations(lease),
-          operation,
-        };
-      });
-      const operation = scheduled.then(({ operation: pendingOperation }) => pendingOperation);
-      writeQueue = scheduled.then(async ({ nativeSettled, operation: pendingOperation }) => {
-        await pendingOperation.catch(() => {});
-        await nativeSettled;
-      }).catch(() => {});
-      return raceBleAbort(operation, options.signal);
+      }, options.signal);
     };
 
     const publishState = (facelets: string): void => safeBleCallback(
