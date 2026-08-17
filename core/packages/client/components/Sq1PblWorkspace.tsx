@@ -15,9 +15,9 @@ import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import AlgPlayer from '@/components/AlgPlayer';
 import AppLink from '@/components/AppLink';
 import { CaseThumb } from '@/components/CaseThumb';
-import { ClearButton } from '@/components/ClearButton';
 import { CompactSelect } from '@/components/CompactSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import { SearchInput } from '@/components/SearchInput';
 import '@/components/sticky-table.css';
 import { tr } from '@/i18n/tr';
 import { useCopy } from '@/hooks/useCopy';
@@ -1119,15 +1119,14 @@ function DocumentExplorer() {
       <div className={styles.documentToolbar}>
         <label className={styles.searchField}>
           <span>{tr({ zh: '搜索工作表', en: 'Search sheets' })}</span>
-          <span className={styles.inputWithClear}>
-            <input
-              type="search"
-              value={sheetSearch}
-              onChange={event => void setSheetSearch(event.target.value)}
-              placeholder={tr({ zh: '名称', en: 'Name' })}
-            />
-            {sheetSearch && <ClearButton onClick={() => void setSheetSearch('')} preserveFocus />}
-          </span>
+          <SearchInput
+            type="search"
+            value={sheetSearch}
+            onChange={value => void setSheetSearch(value)}
+            placeholder={tr({ zh: '名称', en: 'Name' })}
+            className={styles.inputWithClear}
+            inputClassName={styles.searchInput}
+          />
         </label>
         <div className={styles.sheetPicker}>
           <span className={styles.controlLabel}>{tr({ zh: '工作表', en: 'Sheet' })}</span>
@@ -1491,15 +1490,14 @@ function FinderWorkspace() {
         </div>
         <label className={styles.searchField}>
           <span>{tr({ zh: '筛选辅助公式', en: 'Filter auxiliary algorithms' })}</span>
-          <span className={styles.inputWithClear}>
-            <input
-              type="search"
-              value={auxiliarySearch}
-              onChange={event => void setAuxiliarySearch(event.target.value)}
-              placeholder={tr({ zh: '名称或记号', en: 'Name or notation' })}
-            />
-            {auxiliarySearch && <ClearButton onClick={() => void setAuxiliarySearch('')} preserveFocus />}
-          </span>
+          <SearchInput
+            type="search"
+            value={auxiliarySearch}
+            onChange={value => void setAuxiliarySearch(value)}
+            placeholder={tr({ zh: '名称或记号', en: 'Name or notation' })}
+            className={styles.inputWithClear}
+            inputClassName={styles.searchInput}
+          />
         </label>
         <label className={styles.auxiliaryListLabel}>
           <span className={styles.srOnly}>{tr({ zh: '辅助公式列表', en: 'Auxiliary algorithm list' })}</span>
@@ -1518,6 +1516,7 @@ function FinderWorkspace() {
           <label>
             <span>{tr({ zh: '新增辅助公式', en: 'New auxiliary algorithm' })}</span>
             <input
+              className={styles.auxiliaryInput}
               value={newAuxiliary}
               onChange={event => setNewAuxiliary(event.target.value)}
               onKeyDown={event => {
@@ -1538,7 +1537,7 @@ function FinderWorkspace() {
           <button type="button" className={styles.button} onClick={restoreAuxiliary}>{tr({ zh: '还原默认', en: 'Restore defaults' })}</button>
           <label className={`${styles.button} ${styles.fileButton}`}>
             {tr({ zh: '导入 JSON', en: 'Import JSON' })}
-            <input type="file" accept="application/json,.json" onChange={importAuxiliary} />
+            <input className={styles.fileInput} type="file" accept="application/json,.json" onChange={importAuxiliary} />
           </label>
           <a
             className={styles.button}

@@ -15,7 +15,10 @@
 
 import { type ReactNode, type RefObject } from 'react';
 import type World from '@/app/[lang]/sim/engine/world';
+import { applyPuzzleTransparency } from '@/app/[lang]/sim/engine/coreOpacity';
 import type NxnCube from '@/app/[lang]/sim/engine/nxn/cube';
+import { mergeStickeringMaskFns, stickeringMaskFn } from '@/app/[lang]/sim/engine/nxn/stickering';
+import { resolveStageMaskFn } from '@/app/[lang]/sim/engine/nxn/vcStageMask';
 import ReconPlayerBase, { type ReconPlayerAdapter } from '@/components/recon/ReconPlayerBase';
 import { invertAlg } from '@/lib/cube3';
 
@@ -27,7 +30,8 @@ function tokenize(alg: string): string[] {
 
 export default function CuberReconPlayer({
   scramble, alg, order, fillPane = false, playerRef, hideControls = false, fullscreenButton,
-  backView = true, anchorAtEnd = false,
+  backView = true, anchorAtEnd = false, stickering = '', stickeringOrientation = '',
+  stickeringMasks, transparent = false, ariaLabel,
 }: {
   scramble: string;
   alg: string;
@@ -41,6 +45,14 @@ export default function CuberReconPlayer({
   fillPane?: boolean;
   /** 隐藏底部完整控制条,改用画面内居中播放/暂停浮层(嵌成绩弹窗预览时用)。 */
   hideControls?: boolean;
+  /** 与 /sim 同一套阶段遮罩；空值恢复完整配色。 */
+  stickering?: string;
+  stickeringOrientation?: string;
+  /** Several stage masks displayed as a union, e.g. every selected cross colour. */
+  stickeringMasks?: readonly { name: string; orientation?: string }[];
+  /** 与 /predict 相同的透明核心视图。 */
+  transparent?: boolean;
+  ariaLabel?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: RefObject<any>;
   fullscreenButton?: ReactNode;
@@ -49,10 +61,29 @@ export default function CuberReconPlayer({
     kind: 'nxn-cuber',
     backView,
     faceHints: true,
-    deps: [order, anchorAtEnd],
+    deps: [
+      order, anchorAtEnd, stickering, stickeringOrientation,
+      stickeringMasks?.map(({ name, orientation }) => `${name}:${orientation ?? ''}`).join('|') ?? '',
+      transparent,
+    ],
     parseMoves: tokenize,
     setupPuzzle: (world: World) => {
       if (world.puzzleKind !== order) world.setPuzzle(order);
+      if (world.puzzleKind === 'sq1') return;
+      const descriptors = stickeringMasks?.length
+        ? stickeringMasks
+        : [{ name: stickering, orientation: stickeringOrientation }];
+      const mask = mergeStickeringMaskFns(descriptors.map(({ name, orientation }) => (
+        stickeringMaskFn(order, name, orientation)
+          ?? resolveStageMaskFn(order, name, orientation)
+      )));
+      const cube = world.cube as NxnCube;
+      cube.instancedRenderer.setStickering(mask);
+      applyPuzzleTransparency(cube, transparent);
+      world.dirty = true;
+    },
+    cleanupPuzzle: (world) => {
+      applyPuzzleTransparency(world.cube, false);
     },
     applyPrefix: (world, sc, moves, n) => {
       if (world.puzzleKind === 'sq1') return;
@@ -82,6 +113,7 @@ export default function CuberReconPlayer({
       hideControls={hideControls}
       playerRef={playerRef}
       fullscreenButton={fullscreenButton}
+      ariaLabel={ariaLabel}
     />
   );
 }
