@@ -60,6 +60,7 @@ export async function collectBuildInputFiles(packageRoot) {
     join(packageRoot, 'scripts', 'build-config.mjs'),
     join(packageRoot, 'scripts', 'build-state.mjs'),
     join(packageRoot, 'scripts', 'json-object-file.mjs'),
+    join(packageRoot, 'scripts', 'staged-output.mjs'),
   ];
 }
 
