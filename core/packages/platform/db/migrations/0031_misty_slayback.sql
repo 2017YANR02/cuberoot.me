@@ -1,0 +1,1 @@
+ALTER TABLE `qr_codes` ADD `custom_texts` text;

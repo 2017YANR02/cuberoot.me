@@ -1,6 +1,7 @@
 packages:
   - 'packages/*'
 allowBuilds:
+  better-sqlite3: true
   core-js: true
   esbuild: true
   sharp: false # next/image native build,POC 不用图片优化跳过
