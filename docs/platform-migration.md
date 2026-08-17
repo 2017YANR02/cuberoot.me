@@ -61,7 +61,7 @@
 4. 训练模板、个人任务、`/timer` / `/predict` 等训练证据、每日打卡和作业批改。
 5. 每周课堂反馈、阶段报告、站内通知和有审计记录的家校沟通。
 
-`packages/client` 继续负责主站公开训练工具;平台通过稳定契约复用训练结果,不要复制 timer/predict 引擎。多租户业务成熟前保留独立 SQLite 应用边界;是否合并到 Hono/PostgreSQL 必须另做 schema、迁移、权限和回滚设计。
+`packages/client` 继续负责主站公开训练工具;平台通过稳定契约复用训练结果,不要复制 timer/predict 引擎。现有内容/商城在切换前继续使用独立 SQLite;新多租户教学交易域不再堆入 SQLite,按[多机构教学 SaaS 设计](./teaching-saas-plan.md)在 Hono/PostgreSQL 落新 schema 与权限边界,旧域是否迁移另开项目。
 
 ## 验证记录
 
