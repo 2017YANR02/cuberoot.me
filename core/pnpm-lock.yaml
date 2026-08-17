@@ -479,6 +479,9 @@ importers:
 
   packages/platform:
     dependencies:
+      '@cuberoot/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@types/mdx':
         specifier: ^2.0.13
         version: 2.0.14

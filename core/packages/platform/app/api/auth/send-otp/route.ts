@@ -1,7 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { OTP_CONFIG, createCode, lastSentWithin } from "@/lib/db/otp";
+import {
+  OTP_CONFIG,
+  createCode,
+  lastSentWithin,
+  takeOtpAttempt,
+} from "@/lib/db/otp";
 import { getActive, isConsoleFallback } from "@/lib/sms/registry";
 import { logError } from "@/lib/db/logs";
+import { getClientIp } from "@/lib/request-ip";
 
 export const runtime = "nodejs";
 
@@ -28,9 +34,35 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { code, expiresAt } = await createCode(phone);
+  const phoneLimit = await takeOtpAttempt("send-phone", phone);
+  const ipLimit = await takeOtpAttempt("send-ip", getClientIp(req));
+  if (!phoneLimit.allowed || !ipLimit.allowed) {
+    const retryAfter = Math.max(
+      phoneLimit.allowed ? 0 : phoneLimit.retryAfter,
+      ipLimit.allowed ? 0 : ipLimit.retryAfter,
+    );
+    return NextResponse.json(
+      { error: "too_many_attempts", retryAfter },
+      { status: 429 },
+    );
+  }
 
-  const provider = getActive();
+  let provider;
+  try {
+    provider = getActive();
+  } catch {
+    await logError({
+      level: "error",
+      message: "sms_provider_not_configured",
+      path: "/api/auth/send-otp",
+    });
+    return NextResponse.json(
+      { ok: false, error: "短信服务暂不可用" },
+      { status: 503 },
+    );
+  }
+
+  const { code, expiresAt } = await createCode(phone);
   let sent: { ok: true } | { ok: false; error: string };
   try {
     sent = await provider.sendOtp(phone, code);
@@ -39,7 +71,7 @@ export async function POST(req: NextRequest) {
     sent = { ok: false, error: err.message };
   }
 
-  // Always echo to server log in console fallback so devs can complete the flow.
+  // Local development only: production rejects the console provider above.
   if (isConsoleFallback()) {
     // eslint-disable-next-line no-console
     console.log(`[otp] phone=${phone} code=${code} expiresAt=${expiresAt}`);
