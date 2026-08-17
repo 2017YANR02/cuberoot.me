@@ -336,6 +336,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 0, slug: 'bootstrap_updated_at_function', desc: { zh: '为全新数据库预先创建共用 updated_at trigger 函数，修复历史迁移 0001 早于 0010 引用它的重放缺口。', en: 'Bootstrap the shared updated_at trigger function so fresh replays can run historical migration 0001 before 0010.' } },
   { n: 1, slug: 'nav_sites', desc: { zh: '/site 导航站表初建', en: 'Create nav_sites for the /site directory' } },
   { n: 2, slug: 'seed_nav_sites', desc: { zh: '从旧静态数组一次性导入导航数据', en: 'One-off seed of nav sites' } },
   { n: 3, slug: 'add_note_to_colpi_words', desc: { zh: 'colpi_words 加 note 列', en: 'Add note column to colpi_words' } },
@@ -484,6 +485,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 145, slug: 'teaching_mutation_rate_limits', desc: { zh: '新增教学写入尝试限流表，使失败和回滚请求也进入原子计数窗口。', en: 'Add durable teaching mutation-attempt windows so rejected and rolled-back writes are still counted atomically.' } },
   { n: 146, slug: 'teaching_student_pagination_index', desc: { zh: '新增机构学员按姓名分页的匹配索引。', en: 'Add an index matching organization-wide student pagination by display name.' } },
   { n: 147, slug: 'teaching_packages_and_sessions', desc: { zh: '新增课包产品、学员课包与只追加课时账本，并以课堂、教师快照、考勤和只追加事件完成履约闭环。', en: 'Add package products, student-package snapshots, and an append-only credit ledger, then close the fulfilment loop with sessions, teacher snapshots, attendance, and append-only events.' } },
+  { n: 148, slug: 'fix_teaching_owner_guard', desc: { zh: '修复机构 owner 延迟约束 trigger：按触发表安全读取 NEW/OLD，并锁定机构行以串行校验并发 owner 变更。', en: 'Fix the deferred organization-owner guard by safely branching before reading NEW or OLD and locking organization rows to serialize concurrent owner changes.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

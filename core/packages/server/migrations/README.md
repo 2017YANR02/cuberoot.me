@@ -15,6 +15,7 @@ PostgreSQL schema 变更的 source of truth。`apply_migrations.sh` 会在部署
 
    - 不要写 `BEGIN;` 或 `COMMIT;`，runner 会为每个文件单独开启事务。
    - 数字前缀必须严格单调递增；历史重复编号 `0062`、`0087` 不得改名或改写。
+   - `0000_bootstrap_updated_at_function.sql` 是唯一 grandfathered bootstrap 例外：它修复 `0001` 早于 `0010` 引用共用 trigger 函数的历史 fresh-replay 缺口，不得改名、删除或复制这种倒序补号模式。
    - 多人协作时，创建文件前重新确认当前最大编号。
 
 2. 同步更新 `../src/db/schema.pg.sql`，将新结构写入对应的最终态 `CREATE TABLE`。
