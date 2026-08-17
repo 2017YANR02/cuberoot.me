@@ -31,6 +31,16 @@ function repository(): TeachingSaasRepository {
     createMember: vi.fn().mockResolvedValue({ status: 201, body: { member: { userId: 7 } } }),
     listStudents: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
     createStudent: vi.fn().mockResolvedValue({ status: 201, body: { student: { id: 'student-1' } } }),
+    listPackageProducts: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    createPackageProduct: vi.fn().mockResolvedValue({ status: 201, body: { packageProduct: { id: 'product-1' } } }),
+    listStudentPackages: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    createStudentPackage: vi.fn().mockResolvedValue({ status: 201, body: { studentPackage: { id: 'package-1' } } }),
+    listStudentPackageLedger: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    listSessions: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    getSession: vi.fn().mockResolvedValue({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' }),
+    createSession: vi.fn().mockResolvedValue({ status: 201, body: { session: { id: 'session-1' } } }),
+    saveAttendanceBatch: vi.fn().mockResolvedValue({ status: 200, body: { attendance: [] } }),
+    completeSession: vi.fn().mockResolvedValue({ status: 200, body: { session: { status: 'completed' } } }),
   };
 }
 
@@ -139,5 +149,108 @@ describe('teaching SaaS routes', () => {
     expect(invalid.status).toBe(400);
     expect(await invalid.json()).toMatchObject({ error: { code: 'INVALID_INPUT' } });
     expect(repo.listStudents).not.toHaveBeenCalled();
+  });
+
+  it('normalizes and bounds package product input', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const raw = JSON.stringify({
+      code: ' BEGINNER_10 ', name: '入门十课时', creditUnit: 'lesson', creditType: 'group',
+      totalCredits: 10, validityDays: 180, priceAmountMinor: 120000, currency: 'cny',
+    });
+    const response = await app.request('/teaching/organizations/demo/package-products', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'product-1' }, body: raw,
+    });
+    expect(response.status).toBe(201);
+    expect(repo.createPackageProduct).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      {
+        code: 'beginner_10', name: '入门十课时', creditUnit: 'lesson', creditType: 'group',
+        totalCredits: 10, validityDays: 180, priceAmountMinor: 120000, currency: 'CNY',
+      },
+      'product-1',
+      createHash('sha256').update(raw).digest('hex'),
+      expect.any(String),
+    );
+  });
+
+  it('creates a session with immutable attendee ownership and updates attendance by id', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const sessionId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const studentId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const packageId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    const attendanceId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+    const create = await app.request('/teaching/organizations/demo/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'session-1' },
+      body: JSON.stringify({
+        title: '周一训练', startsAt: '2026-08-18T09:00:00+08:00', endsAt: '2026-08-18T10:00:00+08:00',
+        teacherUserIds: [7], attendees: [{ studentId, studentPackageId: packageId, creditCost: 1 }],
+      }),
+    });
+    expect(create.status).toBe(201);
+    expect(repo.createSession).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      expect.objectContaining({
+        startsAt: '2026-08-18T01:00:00.000Z', endsAt: '2026-08-18T02:00:00.000Z',
+        timezone: null, teacherUserIds: [7], attendees: [{ studentId, studentPackageId: packageId, creditCost: 1 }],
+      }),
+      'session-1', expect.any(String), expect.any(String),
+    );
+
+    const batch = await app.request(`/teaching/organizations/demo/sessions/${sessionId}/attendance/batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'attendance-1' },
+      body: JSON.stringify({ records: [{ attendanceId, status: 'present' }] }),
+    });
+    expect(batch.status).toBe(200);
+    expect(repo.saveAttendanceBatch).toHaveBeenCalledWith(
+      ACTOR, 'demo', sessionId, { records: [{ attendanceId, status: 'present' }] },
+      'attendance-1', expect.any(String), expect.any(String),
+    );
+  });
+
+  it('rejects calendar dates that JavaScript would otherwise normalize', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const response = await app.request('/teaching/organizations/demo/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'invalid-calendar-date' },
+      body: JSON.stringify({
+        title: '非法日期', startsAt: '2026-02-30T09:00:00+08:00', endsAt: '2026-03-01T10:00:00+08:00',
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: { code: 'INVALID_INPUT' } });
+    expect(repo.createSession).not.toHaveBeenCalled();
+  });
+
+  it('discards caller-supplied attendance ownership and exposes session detail by UUID', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const sessionId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const attendanceId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+    const sanitized = await app.request(`/teaching/organizations/demo/sessions/${sessionId}/attendance/batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'attendance-invalid' },
+      body: JSON.stringify({
+        records: [{
+          attendanceId,
+          status: 'present',
+          studentId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+          studentPackageId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+          creditCost: 999,
+        }],
+      }),
+    });
+    expect(sanitized.status).toBe(200);
+    expect(repo.saveAttendanceBatch).toHaveBeenCalledWith(
+      ACTOR, 'demo', sessionId, { records: [{ attendanceId, status: 'present' }] },
+      'attendance-invalid', expect.any(String), expect.any(String),
+    );
+
+    const detail = await app.request(`/teaching/organizations/demo/sessions/${sessionId}`);
+    expect(detail.status).toBe(200);
+    expect(repo.getSession).toHaveBeenCalledWith(ACTOR, 'demo', sessionId, expect.any(String));
   });
 });

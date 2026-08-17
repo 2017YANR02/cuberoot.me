@@ -88,9 +88,10 @@ describe('teaching SaaS repository tenant denial audit', () => {
 
     expect(db.begin).toHaveBeenCalledTimes(1);
     expect(db.tx).toHaveBeenCalledTimes(1);
-    expect(db.query).toHaveBeenCalledTimes(1);
-    expect(db.query.mock.calls[0][0]).toContain('INSERT INTO teaching_audit_events');
-    expect(db.query.mock.calls[0][1]).toEqual([
+    expect(db.query).toHaveBeenCalledTimes(2);
+    expect(db.query.mock.calls[0][0]).toContain('INSERT INTO teaching_mutation_rate_limits');
+    expect(db.query.mock.calls[1][0]).toContain('INSERT INTO teaching_audit_events');
+    expect(db.query.mock.calls[1][1]).toEqual([
       ACTOR.userId,
       ACTOR.displayName,
       'student.create',
@@ -183,6 +184,7 @@ describe('teaching SaaS repository tenant denial audit', () => {
     db.tx
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ id: 7 }])
       .mockResolvedValueOnce([{
         id: 'organization-id',
@@ -205,23 +207,21 @@ describe('teaching SaaS repository tenant denial audit', () => {
       'request-create',
     )).resolves.toMatchObject({ status: 201 });
 
-    const statements = db.tx.mock.calls.map(([strings]) => String(strings[0]));
+    const statements = db.tx.mock.calls.map(([strings]) => Array.from(strings).join('?'));
     expect(statements[0]).toContain('pg_advisory_xact_lock');
     expect(statements[1]).toContain('DELETE FROM teaching_idempotency_requests');
-    expect(statements[1]).toContain('WHERE expires_at <= NOW()');
-    expect(statements[1]).toContain('LIMIT 500');
-    expect(statements[1]).toContain('FOR UPDATE SKIP LOCKED');
-    expect(statements[2]).toContain('INSERT INTO teaching_idempotency_requests');
+    expect(statements[1]).toContain('idempotency_key =');
+    expect(statements[1]).toContain('expires_at <= NOW()');
+    expect(statements[2]).toContain('DELETE FROM teaching_idempotency_requests');
+    expect(statements[2]).toContain('LIMIT 500');
+    expect(statements[2]).toContain('FOR UPDATE SKIP LOCKED');
+    expect(statements[3]).toContain('INSERT INTO teaching_idempotency_requests');
     expect(db.query).toHaveBeenCalledTimes(1);
     expect(db.query.mock.calls[0][0]).toContain('INSERT INTO teaching_mutation_rate_limits');
     expect(db.query.mock.calls[0][1]).toEqual([ACTOR.userId, 'organization.create']);
   });
 
   it('rejects an over-limit attempt before the business row is written', async () => {
-    db.tx
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ id: 8 }]);
     db.query.mockResolvedValueOnce([{ attempts: 11 }]);
 
     await expect(teachingSaasRepository.createOrganization(
@@ -234,7 +234,124 @@ describe('teaching SaaS repository tenant denial audit', () => {
       expect.objectContaining<TeachingApiException>({ code: 'RATE_LIMITED', status: 429 }),
     );
 
-    const statements = db.tx.mock.calls.map(([strings]) => String(strings[0]));
-    expect(statements.some((statement) => statement.includes('INSERT INTO organizations'))).toBe(false);
+    expect(db.begin).not.toHaveBeenCalled();
+    expect(db.tx).not.toHaveBeenCalled();
+  });
+
+  it('charges at least ten concurrent attempts before their transactions do any work', async () => {
+    let releaseTransactions!: () => void;
+    const gate = new Promise<void>((resolve) => { releaseTransactions = resolve; });
+    db.query.mockResolvedValue([{ attempts: 1 }]);
+    db.tx.mockImplementation(async (strings) => {
+      const statement = String(strings[0]);
+      if (statement.includes('INSERT INTO teaching_idempotency_requests')) return [{ id: 7 }];
+      if (statement.includes('INSERT INTO organizations')) {
+        return [{
+          id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai', status: 'active', version: 1,
+        }];
+      }
+      return [];
+    });
+    db.begin.mockImplementation(async (operation) => {
+      await gate;
+      return operation(db.tx);
+    });
+
+    const attempts = Array.from({ length: 10 }, (_, index) => teachingSaasRepository.createOrganization(
+      ACTOR,
+      { slug: `demo-${index}`, name: 'Demo', timezone: 'Asia/Shanghai' },
+      `idempotency-${index}`,
+      `request-hash-${index}`,
+      `request-${index}`,
+    ));
+    await vi.waitFor(() => expect(db.begin).toHaveBeenCalledTimes(10));
+    expect(db.query).toHaveBeenCalledTimes(10);
+    expect(db.tx).not.toHaveBeenCalled();
+    releaseTransactions();
+    await expect(Promise.all(attempts)).resolves.toHaveLength(10);
+    expect(db.query).toHaveBeenCalledTimes(10);
+  });
+
+  it.each(['teacher', 'assistant', 'viewer'] as const)(
+    'denies package roster reads to %s while finance remains explicitly scoped',
+    async (role) => {
+      db.query
+        .mockResolvedValueOnce([{
+          id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
+          status: 'active', version: 1, role,
+        }])
+        .mockResolvedValueOnce([]);
+      await expect(teachingSaasRepository.listPackageProducts(
+        ACTOR, 'demo', { page: 1, pageSize: 30, offset: 0 }, 'request-packages',
+      )).rejects.toEqual(expect.objectContaining<TeachingApiException>({ code: 'PERMISSION_DENIED' }));
+    },
+  );
+
+  it.each(['teacher', 'assistant', 'finance', 'viewer'] as const)(
+    'denies the organization-wide session roster to %s before assignments exist',
+    async (role) => {
+      db.query
+        .mockResolvedValueOnce([{
+          id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
+          status: 'active', version: 1, role,
+        }])
+        .mockResolvedValueOnce([]);
+      await expect(teachingSaasRepository.listSessions(
+        ACTOR, 'demo', { page: 1, pageSize: 30, offset: 0 }, 'request-sessions',
+      )).rejects.toEqual(expect.objectContaining<TeachingApiException>({ code: 'PERMISSION_DENIED' }));
+    },
+  );
+
+  it('locks the student package before writing a consume ledger row and completes afterward', async () => {
+    db.query.mockResolvedValueOnce([{ attempts: 1 }]);
+    db.tx
+      .mockResolvedValueOnce([{
+        id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
+        status: 'active', version: 1, role: 'owner',
+      }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 9 }])
+      .mockResolvedValueOnce([{
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', status: 'scheduled',
+        starts_at: '2026-08-18T01:00:00.000Z', completed_at: null,
+      }])
+      .mockResolvedValueOnce([{
+        id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+        student_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+        student_package_id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+        status: 'present', credit_cost: 1,
+      }])
+      .mockResolvedValueOnce([{
+        id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', lifecycle_status: 'active',
+        valid_from: '2026-01-01T00:00:00.000Z', valid_until: null,
+      }])
+      .mockResolvedValueOnce([{ balance: 10 }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ completed_at: '2026-08-18T02:00:00.000Z' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+
+    await expect(teachingSaasRepository.completeSession(
+      ACTOR,
+      'demo',
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      'complete-1',
+      'request-hash',
+      'request-complete',
+    )).resolves.toMatchObject({
+      body: { consumption: { attendanceCount: 1, totalCredits: 1 } },
+    });
+
+    const statements = db.tx.mock.calls.map(([strings]) => Array.from(strings).join('?'));
+    const packageLock = statements.findIndex((statement) =>
+      statement.includes('FROM student_packages') && statement.includes('FOR UPDATE'));
+    const ledgerInsert = statements.findIndex((statement) => statement.includes('INSERT INTO lesson_credit_ledger'));
+    const completion = statements.findIndex((statement) => statement.includes('UPDATE teaching_sessions'));
+    expect(packageLock).toBeGreaterThan(-1);
+    expect(ledgerInsert).toBeGreaterThan(packageLock);
+    expect(completion).toBeGreaterThan(ledgerInsert);
   });
 });
