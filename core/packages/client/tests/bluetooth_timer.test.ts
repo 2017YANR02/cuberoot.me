@@ -48,6 +48,7 @@ import {
   QIYI_MAC_ADV,
   extractMacFromManufacturerData,
   normalizeMac,
+  watchAdvertisementsMac,
 } from '@/app/[lang]/timer/_lib/bluetooth/mac';
 import {
   QIYI_TIMER_READ_CHAR,
@@ -483,6 +484,40 @@ describe('QiYi timer payload decoding', () => {
 });
 
 describe('QiYi timer MAC discovery', () => {
+  it('ignores an incomplete first advertisement and accepts a later MAC', async () => {
+    const device = new EventTarget() as BluetoothDevice;
+    Object.defineProperties(device, {
+      name: { value: 'QY-Timer-test' },
+      watchAdvertisements: { value: () => Promise.resolve() },
+    });
+
+    let settled = false;
+    const pending = watchAdvertisementsMac(device, {
+      specs: [QIYI_MAC_ADV],
+      timeoutMs: 1000,
+    }).then((mac) => {
+      settled = true;
+      return mac;
+    });
+
+    const incomplete = new Event('advertisementreceived') as BluetoothAdvertisingEvent;
+    Object.defineProperty(incomplete, 'manufacturerData', {
+      value: new Map<number, DataView>(),
+    });
+    device.dispatchEvent(incomplete);
+    await Promise.resolve();
+    expect(settled).toBe(false);
+
+    const raw = Uint8Array.from([0x04, 0x05, 0x2a, 0x8f, 0x00, 0x00, 0xa1, 0xcc]);
+    const complete = new Event('advertisementreceived') as BluetoothAdvertisingEvent;
+    Object.defineProperty(complete, 'manufacturerData', {
+      value: new DataView(raw.buffer),
+    });
+    device.dispatchEvent(complete);
+
+    expect(await pending).toBe('CC:A1:00:00:8F:2A');
+  });
+
   it('derives the fallback MAC from the device name', () => {
     expect(qiyiTimerMacFromName('QY-Timer-x-8F2A')).toBe('CC:A1:00:00:8F:2A');
     expect(qiyiTimerMacFromName('QY-Adapter-y-01AB')).toBe('CC:A8:00:00:01:AB');

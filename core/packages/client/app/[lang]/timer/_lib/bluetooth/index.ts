@@ -1046,13 +1046,17 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       throw atStage('picker', err);
     }
 
-    // Recover the MAC from a BLE advertisement BEFORE connecting (matches
-    // cstimer's order; GAN / MoYu / QiYi need it for AES key derivation).
-    // Best-effort: resolves null when unsupported or no manufacturer data.
-    // It is documented never to reject; the tag is here so a broken contract
-    // still names the step it broke in rather than arriving unlabelled.
-    const advMac = await watchAdvertisementsMac(device)
-      .catch((err: unknown) => { throw atStage('advertisement', err); });
+    // Recover the MAC from BLE advertisements BEFORE connecting. Known
+    // non-MAC drivers skip this entirely; MAC-keyed and name-unknown devices
+    // keep listening until a usable payload arrives or the bounded watch
+    // times out. This avoids both Bluefy's incomplete-first-event race and a
+    // needless delay for GoCube / Giiker / legacy MoYu.
+    const nameDriver = pickDriver(device);
+    const shouldWatchMac = nameDriver === null || nameDriver.needsMac === true;
+    const advMac = shouldWatchMac
+      ? await watchAdvertisementsMac(device)
+        .catch((err: unknown) => { throw atStage('advertisement', err); })
+      : null;
     await attachToDevice(device, advMac);
   }, [attachToDevice, cancelPendingReconnect]);
 
