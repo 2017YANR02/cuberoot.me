@@ -45,6 +45,7 @@ const WCA_AUTHORIZE_URL = 'https://www.worldcubeassociation.org/oauth/authorize'
 
 const SESSION_KEY = 'wca_user';
 const TOKEN_KEY = 'wca_access_token';
+const JWT_KEY = 'cuberoot_jwt';
 const STATE_KEY = 'wca_oauth_state';
 const RETURN_URL_KEY = 'wca_return_url';
 
@@ -138,15 +139,24 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
 }));
 
 /**
- * 把「邮箱/手机验证码」或「绑定后重签」返回的 { token, user } 落地为登录态:
- * 写 cuberoot_jwt + wca_user(复用同一 key,全站据此判定已登录),再刷新内存 store。
+ * 把 { token, user } 作为一个完整登录态落地。任一项写入或回读失败时恢复
+ * 旧会话，避免出现「有 token 没用户」或「有用户没 token」的半登录状态。
  */
 export function applySession(
   token: string,
   user: { uid?: number; wcaId: string | null; name: string; avatar?: string },
-): void {
-  if (typeof window === 'undefined') return;
-  persistAuthItem('cuberoot_jwt', token);
+): boolean {
+  if (typeof window === 'undefined') return false;
+
+  let previousToken: string | null;
+  let previousUser: string | null;
+  try {
+    previousToken = localStorage.getItem(JWT_KEY);
+    previousUser = localStorage.getItem(SESSION_KEY);
+  } catch {
+    return false;
+  }
+
   const wu: WcaUser = {
     wcaId: user.wcaId ?? '',
     name: user.name,
@@ -154,8 +164,43 @@ export function applySession(
     country: '',
     uid: user.uid,
   };
-  persistAuthItem(SESSION_KEY, JSON.stringify(wu));
+  const serializedUser = JSON.stringify(wu);
+
+  const restoreItem = (key: string, value: string | null) => {
+    if (value === null) {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // Best effort: the false return still prevents navigation as logged in.
+      }
+      return;
+    }
+    persistAuthItem(key, value);
+  };
+
+  const persisted =
+    persistAuthItem(SESSION_KEY, serializedUser) &&
+    persistAuthItem(JWT_KEY, token);
+  let verified = false;
+  if (persisted) {
+    try {
+      verified =
+        localStorage.getItem(SESSION_KEY) === serializedUser &&
+        localStorage.getItem(JWT_KEY) === token;
+    } catch {
+      verified = false;
+    }
+  }
+
+  if (!verified) {
+    restoreItem(SESSION_KEY, previousUser);
+    restoreItem(JWT_KEY, previousToken);
+    useAuthStore.getState().refresh();
+    return false;
+  }
+
   useAuthStore.getState().refresh();
+  return true;
 }
 
 // ── 新人「绑定 WCA」引导的待办标记 ──
@@ -247,7 +292,6 @@ export function useOwnerKey(): string {
 // ── 长效 JWT 滑动续签 ──
 // callback 用 WCA token 换的 cuberoot_jwt 有效期 365 天。临近过期时静默用旧 jwt 换新 jwt
 // (POST /v1/auth/refresh),只要一年内活跃过就不掉线;整年不开站才需重新 WCA 登录。
-const JWT_KEY = 'cuberoot_jwt';
 const REFRESH_BEFORE_MS = 30 * 24 * 3600 * 1000; // 剩余 < 30 天才续,避免每次启动都打后端
 
 /** 解析 JWT payload 的 exp(毫秒),不验签;非法/无 exp 返 null。 */
