@@ -110,6 +110,36 @@ export function waitForBleNativeOperations(lease: BleResourceLease): Promise<voi
   return new Promise<void>((resolve) => state.nativeDrainWaiters.add(resolve));
 }
 
+export interface BleNativeOperationQueue {
+  drain(): Promise<void>;
+  enqueue<T>(start: () => Promise<T>, signal?: BleAbortSignal): Promise<T>;
+}
+
+export function createBleNativeOperationQueue(
+  lease: BleResourceLease,
+): BleNativeOperationQueue {
+  let queue: Promise<void> = Promise.resolve();
+  return {
+    drain: () => queue,
+    enqueue<T>(start: () => Promise<T>, signal?: BleAbortSignal): Promise<T> {
+      const scheduled = queue.then(() => {
+        if (signal?.aborted) throw new BleOperationAbortedError();
+        const operation = start();
+        return {
+          nativeSettled: waitForBleNativeOperations(lease),
+          operation,
+        };
+      });
+      const operation = scheduled.then(({ operation: pendingOperation }) => pendingOperation);
+      queue = scheduled.then(async ({ nativeSettled, operation: pendingOperation }) => {
+        await pendingOperation.catch(() => {});
+        await nativeSettled;
+      }).catch(() => {});
+      return raceBleAbort(operation, signal);
+    },
+  };
+}
+
 function settleBleNativeOperation(state: BleResourceState): void {
   state.pendingNativeOperations = Math.max(0, state.pendingNativeOperations - 1);
   if (state.pendingNativeOperations !== 0) return;
@@ -167,6 +197,22 @@ export class BleOperationAbortedError extends Error {
 
 export const BLE_OPERATION_TIMEOUT_MS = 12_000;
 export const BLE_CLEANUP_TIMEOUT_MS = 2_000;
+
+export function waitForBleCleanupDrain(
+  operation: Promise<void>,
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (drained: boolean): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(drained);
+    };
+    const timer = setTimeout(() => finish(false), BLE_CLEANUP_TIMEOUT_MS);
+    void operation.then(() => finish(true), () => finish(true));
+  });
+}
 
 export class BleOperationTimeoutError extends Error {
   constructor() {
