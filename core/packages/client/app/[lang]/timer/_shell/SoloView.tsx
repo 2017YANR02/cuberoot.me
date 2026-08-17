@@ -2332,7 +2332,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             onClick={openBluetooth}
             title={bluetoothCube.status.connected
               ? ((isZh ? `已连接 ${bluetoothCube.status.deviceName}` : `Connected: ${bluetoothCube.status.deviceName}`))
-              : tr({ zh: '智能魔方（iOS 用 Bluefy）', en: 'Smart cube (use Bluefy on iOS)'
+              : tr({ zh: '智能魔方', en: 'Smart cube'
                             })}
           >
             <Bluetooth size={14} />

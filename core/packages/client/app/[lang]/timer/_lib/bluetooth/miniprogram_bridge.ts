@@ -38,13 +38,52 @@ export interface MiniProgramCubeBridgeConnection {
 }
 
 const CONNECT_TIMEOUT_MS = 45_000;
+const ENVIRONMENT_TIMEOUT_MS = 2_000;
 const RECONNECT_DELAYS_MS = [250, 500, 1_000, 2_000, 4_000] as const;
 const REPLAY_TIMEOUT_MS = 5_000;
 
 export function isMiniProgramWebView(): boolean {
   if (typeof window === 'undefined') return false;
   return window.__wxjs_environment === 'miniprogram'
-    || /miniProgram/i.test(window.navigator.userAgent);
+    || /miniProgram/i.test(window.navigator?.userAgent ?? '');
+}
+
+/**
+ * The iOS WeChat web-view does not consistently append `miniProgram` to its
+ * user agent. Treat WeChat as bridge-capable for the synchronous UI decision,
+ * then verify the exact container with `miniProgram.getEnv()` before opening
+ * the relay. Ordinary Safari still falls through to the Bluefy guidance.
+ */
+export function mayUseMiniProgramBridge(): boolean {
+  if (typeof window === 'undefined') return false;
+  return isMiniProgramWebView()
+    || /MicroMessenger/i.test(window.navigator?.userAgent ?? '')
+    || Boolean(window.wx && supportsWeChatMiniProgramNavigation(window.wx))
+    || Boolean(window.jWeixin && supportsWeChatMiniProgramNavigation(window.jWeixin));
+}
+
+async function confirmMiniProgramEnvironment(
+  miniProgram: WeChatMiniProgramApi,
+): Promise<boolean> {
+  if (isMiniProgramWebView()) return true;
+  const getEnv = miniProgram.getEnv;
+  if (typeof getEnv !== 'function') return false;
+
+  return new Promise<boolean>((resolve) => {
+    let settled = false;
+    const finish = (inMiniProgram: boolean): void => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      resolve(inMiniProgram);
+    };
+    const timeout = window.setTimeout(() => finish(false), ENVIRONMENT_TIMEOUT_MS);
+    try {
+      getEnv.call(miniProgram, (result) => finish(result.miniprogram === true));
+    } catch {
+      finish(false);
+    }
+  });
 }
 
 function randomRelayToken(): string {
@@ -56,7 +95,7 @@ function randomRelayToken(): string {
 export async function connectMiniProgramCubeBridge(
   callbacks: MiniProgramCubeBridgeCallbacks,
 ): Promise<MiniProgramCubeBridgeConnection> {
-  if (!isMiniProgramWebView()) throw new Error('NOT_MINIPROGRAM_WEBVIEW');
+  if (!mayUseMiniProgramBridge()) throw new Error('NOT_MINIPROGRAM_WEBVIEW');
   let miniProgram = window.wx && supportsWeChatMiniProgramNavigation(window.wx)
     ? window.wx.miniProgram
     : undefined;
@@ -67,6 +106,9 @@ export async function connectMiniProgramCubeBridge(
   }
   if (!miniProgram) throw new Error('MINIPROGRAM_BRIDGE_UNAVAILABLE');
   const miniProgramApi: WeChatMiniProgramApi = miniProgram;
+  if (!isMiniProgramWebView() && !(await confirmMiniProgramEnvironment(miniProgramApi))) {
+    throw new Error('NOT_MINIPROGRAM_WEBVIEW');
+  }
 
   const token = randomRelayToken();
   let socket: WebSocket | null = null;

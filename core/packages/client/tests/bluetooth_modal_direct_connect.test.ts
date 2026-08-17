@@ -19,6 +19,8 @@ const disconnectedCube = {
   facelets: null,
 } as BluetoothCubeHandle;
 
+const originalUserAgent = navigator.userAgent;
+
 describe('BluetoothModal direct connection attempt', () => {
   let host: HTMLDivElement;
   let root: Root;
@@ -47,7 +49,37 @@ describe('BluetoothModal direct connection attempt', () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     host.remove();
+    Object.defineProperty(navigator, 'userAgent', {
+      configurable: true,
+      value: originalUserAgent,
+    });
+    window.__wxjs_environment = undefined;
+    window.wx = undefined;
+    window.jWeixin = undefined;
     vi.restoreAllMocks();
+  });
+
+  it('offers the native bridge on iOS WeChat instead of sending the user to Bluefy', async () => {
+    Object.defineProperty(navigator, 'bluetooth', {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(navigator, 'userAgent', {
+      configurable: true,
+      value: 'Mozilla/5.0 (iPhone) MicroMessenger/8.0',
+    });
+
+    await act(async () => {
+      root.render(createElement(BluetoothModal, {
+        isZh: true,
+        cube: disconnectedCube,
+        onClose: vi.fn(),
+        onConnect: vi.fn(() => Promise.resolve()),
+      }));
+    });
+
+    expect(host.textContent).toContain('Search & connect');
+    expect(host.textContent).not.toContain('Bluefy');
   });
 
   it('shows progress and owns errors from a connection started by the icon click', async () => {
