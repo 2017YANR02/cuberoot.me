@@ -224,6 +224,7 @@ export const TEACHING_ERROR_CODES = [
   'EVIDENCE_DUPLICATE',
   'EVIDENCE_INVALID',
   'ASSIGNMENT_CLOSED',
+  'INTERNAL_ERROR',
 ] as const;
 
 export type TeachingErrorCode = (typeof TEACHING_ERROR_CODES)[number];
@@ -234,4 +235,25 @@ export interface TeachingApiErrorBody {
     message: string;
     requestId?: string;
   };
+}
+
+export const TEACHING_PLATFORM_ASSERTION_HEADER = 'X-CubeRoot-Platform-Assertion';
+export const TEACHING_PLATFORM_ASSERTION_ISSUER = 'cuberoot-platform';
+export const TEACHING_PLATFORM_ASSERTION_AUDIENCE = 'cuberoot-teaching-api';
+export const TEACHING_PLATFORM_ASSERTION_MAX_AGE_SECONDS = 90;
+
+/** Server-to-server proof emitted by the migrated teaching platform. */
+export interface TeachingPlatformAssertionV1 {
+  v: 1;
+  iss: typeof TEACHING_PLATFORM_ASSERTION_ISSUER;
+  aud: typeof TEACHING_PLATFORM_ASSERTION_AUDIENCE;
+  sub: string;
+  phone: string;
+  name: string;
+  method: string;
+  path: string;
+  bodySha256: string;
+  iat: number;
+  exp: number;
+  jti: string;
 }

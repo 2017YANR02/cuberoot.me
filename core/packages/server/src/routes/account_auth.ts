@@ -11,11 +11,11 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
-import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
+import { checkRateLimit } from '../utils/recon_helpers.js';
 import { signSession, hasFreshEmailGrant } from '../utils/session.js';
 import {
   issueCode, verifyCode, loginWithIdentity, addIdentity, removeIdentity, replaceCredentialIdentity,
-  getIdentities, getUserById, findUserByWcaId, publicUser,
+  getIdentities, getUserById, publicUser,
   normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   loginWithPassword, setPassword, clearPassword, getPasswordHash, verifyPassword,
   ownerKey, primaryHandle,
@@ -35,6 +35,7 @@ import {
   wechatMiniProgramConfigured,
 } from '../utils/wechat_miniprogram.js';
 import { consumeWebSessionTicket, issueWebSessionTicket } from '../utils/web_session_ticket.js';
+import { requireAppUserId } from '../utils/app_user_auth.js';
 
 export const accountAuthRoutes = new Hono();
 
@@ -50,17 +51,6 @@ function langOf(c: Context): 'zh' | 'en' {
 function emailGrant(c: Context): boolean {
   const h = c.req.header('Authorization');
   return h?.startsWith('Bearer ') ? hasFreshEmailGrant(h.slice(7)) : false;
-}
-
-/** 解析当前登录用户的内部 uid(uid token 直接用;老 wca-only token 按真实 wcaId 查)。 */
-async function requireUserId(c: Context): Promise<number> {
-  const u = await requireAuth(c);
-  if (u.uid != null) return u.uid;
-  if (u.realWcaId) {
-    const row = await findUserByWcaId(u.realWcaId);
-    if (row) return row.id;
-  }
-  throw new Error('Authentication required'); // → 401
 }
 
 // ── 可用登录方式(供前端隐藏未配置的 tab;env 未配 email/sms 时对应值 false)──
@@ -157,7 +147,7 @@ accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
 accountAuthRoutes.post('/auth/web-session/ticket', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const uid = await requireUserId(c);
+  const uid = await requireAppUserId(c);
   return c.json(await issueWebSessionTicket(uid));
 });
 
@@ -179,7 +169,7 @@ accountAuthRoutes.post('/auth/web-session/exchange', async (c) => {
 accountAuthRoutes.post('/auth/link/social/:provider', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const uid = await requireUserId(c);
+  const uid = await requireAppUserId(c);
   const provider = c.req.param('provider');
   if (!isSocialProvider(provider)) return c.json({ error: 'invalid provider' }, 400);
   if (!socialLoginConfigured(provider)) return c.json({ error: `${provider} not configured` }, 503);
@@ -287,7 +277,7 @@ accountAuthRoutes.post('/auth/email/password', async (c) => {
 accountAuthRoutes.post('/auth/password/set', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const uid = await requireUserId(c);
+  const uid = await requireAppUserId(c);
   const { password, currentPassword } = await c.req.json<{ password?: string; currentPassword?: string }>().catch(() => ({ password: undefined, currentPassword: undefined }));
   if (!isValidPassword(password)) return c.json({ error: 'invalid password' }, 400);
   const existing = await getPasswordHash(uid);
@@ -302,7 +292,7 @@ accountAuthRoutes.post('/auth/password/set', async (c) => {
 accountAuthRoutes.post('/auth/password/remove', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const uid = await requireUserId(c);
+  const uid = await requireAppUserId(c);
   const { currentPassword } = await c.req.json<{ currentPassword?: string }>().catch(() => ({ currentPassword: undefined }));
   const existing = await getPasswordHash(uid);
   if (!existing) return c.json({ ok: true, hasPassword: false }); // 幂等
@@ -317,7 +307,7 @@ accountAuthRoutes.post('/auth/password/remove', async (c) => {
 accountAuthRoutes.post('/auth/link/email/send', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  await requireUserId(c); // 必须登录
+  await requireAppUserId(c); // 必须登录
   if (!emailConfigured()) return c.json({ error: 'email not configured' }, 503);
   const { email } = await c.req.json<{ email?: string }>().catch(() => ({ email: undefined }));
   const norm = normalizeEmail(email ?? '');
@@ -336,7 +326,7 @@ accountAuthRoutes.post('/auth/link/email/send', async (c) => {
 accountAuthRoutes.post('/auth/link/email/verify', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const uid = await requireUserId(c);
+  const uid = await requireAppUserId(c);
   const { email, code } = await c.req.json<{ email?: string; code?: string }>().catch(() => ({ email: undefined, code: undefined }));
   const norm = normalizeEmail(email ?? '');
   if (!isValidEmail(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
@@ -356,7 +346,7 @@ accountAuthRoutes.post('/auth/link/email/verify', async (c) => {
 accountAuthRoutes.post('/auth/email/replace', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const uid = await requireUserId(c);
+  const uid = await requireAppUserId(c);
   const { email, code } = await c.req.json<{ email?: string; code?: string }>().catch(() => ({ email: undefined, code: undefined }));
   const norm = normalizeEmail(email ?? '');
   if (!isValidEmail(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
@@ -372,7 +362,7 @@ accountAuthRoutes.post('/auth/email/replace', async (c) => {
 accountAuthRoutes.post('/auth/phone/replace', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const uid = await requireUserId(c);
+  const uid = await requireAppUserId(c);
   const { phone, code } = await c.req.json<{ phone?: string; code?: string }>().catch(() => ({ phone: undefined, code: undefined }));
   const norm = normalizePhone(phone ?? '');
   if (!isValidPhone(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
@@ -387,7 +377,7 @@ accountAuthRoutes.post('/auth/phone/replace', async (c) => {
 accountAuthRoutes.post('/auth/link/phone/send', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  await requireUserId(c);
+  await requireAppUserId(c);
   if (!smsConfigured()) return c.json({ error: 'sms not configured' }, 503);
   const { phone } = await c.req.json<{ phone?: string }>().catch(() => ({ phone: undefined }));
   const norm = normalizePhone(phone ?? '');
@@ -408,7 +398,7 @@ accountAuthRoutes.post('/auth/link/phone/send', async (c) => {
 accountAuthRoutes.post('/auth/link/phone/verify', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const uid = await requireUserId(c);
+  const uid = await requireAppUserId(c);
   const { phone, code } = await c.req.json<{ phone?: string; code?: string }>().catch(() => ({ phone: undefined, code: undefined }));
   const norm = normalizePhone(phone ?? '');
   if (!isValidPhone(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
@@ -424,7 +414,7 @@ accountAuthRoutes.post('/auth/link/phone/verify', async (c) => {
 accountAuthRoutes.post('/auth/link/wca', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const uid = await requireUserId(c);
+  const uid = await requireAppUserId(c);
   const { accessToken } = await c.req.json<{ accessToken?: string }>().catch(() => ({ accessToken: undefined }));
   if (!accessToken) return c.json({ error: 'accessToken required' }, 400);
   let me: { wca_id?: string; name?: string; avatar?: { url?: string } };
@@ -483,7 +473,7 @@ accountAuthRoutes.post('/auth/google', async (c) => {
 accountAuthRoutes.post('/auth/link/google', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const uid = await requireUserId(c);
+  const uid = await requireAppUserId(c);
   if (!googleConfigured()) return c.json({ error: 'google not configured' }, 503);
   const { assertion } = await c.req.json<{ assertion?: string }>().catch(() => ({ assertion: undefined }));
   if (!assertion) return c.json({ error: 'assertion required' }, 400);
@@ -502,7 +492,7 @@ accountAuthRoutes.post('/auth/link/google', async (c) => {
 accountAuthRoutes.post('/auth/unlink', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const uid = await requireUserId(c);
+  const uid = await requireAppUserId(c);
   const { provider, providerUid } = await c.req.json<{ provider?: string; providerUid?: string }>().catch(() => ({ provider: undefined, providerUid: undefined }));
   const allowed: Provider[] = ['email', 'phone', 'wca', 'apple', 'google', 'wechat', 'alipay', 'qq'];
   if (!allowed.includes(provider as Provider)) return c.json({ error: 'invalid provider' }, 400);
@@ -528,7 +518,7 @@ accountAuthRoutes.post('/auth/unlink', async (c) => {
 accountAuthRoutes.post('/auth/account/delete', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
-  const uid = await requireUserId(c);
+  const uid = await requireAppUserId(c);
   const { confirm, password } = await c.req.json<{ confirm?: string; password?: string }>().catch(() => ({ confirm: undefined, password: undefined }));
   const user = await getUserById(uid);
   if (!user) return c.json({ error: 'account not found' }, 404);
@@ -560,7 +550,7 @@ accountAuthRoutes.post('/auth/account/delete', async (c) => {
 // canResetPassword:本次会话刚验过邮箱 → 改密码时前端不必再要当前密码(后端同样放行)。
 accountAuthRoutes.get('/auth/identities', async (c) => {
   c.header('Cache-Control', 'no-store');
-  const uid = await requireUserId(c);
+  const uid = await requireAppUserId(c);
   const [identities, pwHash] = await Promise.all([getIdentities(uid), getPasswordHash(uid)]);
   return c.json({ identities, hasPassword: pwHash != null, canResetPassword: emailGrant(c) });
 });
