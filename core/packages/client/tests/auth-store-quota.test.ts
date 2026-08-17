@@ -32,12 +32,15 @@ const g = globalThis as unknown as { window?: unknown; localStorage?: FakeLS };
 g.window = { addEventListener() {} };
 g.localStorage = makeLocalStorage(1_000_000);
 
-const { persistAuthItem } = await import('@/lib/auth-store');
+const { applySession, persistAuthItem, useAuthStore } = await import('@/lib/auth-store');
 
 function setLS(ls: FakeLS) { g.localStorage = ls; }
 
 describe('persistAuthItem quota resilience', () => {
-  beforeEach(() => { setLS(makeLocalStorage(1_000_000)); });
+  beforeEach(() => {
+    setLS(makeLocalStorage(1_000_000));
+    useAuthStore.getState().refresh();
+  });
 
   it('stores normally when there is room', () => {
     const ls = makeLocalStorage(1_000_000);
@@ -69,5 +72,46 @@ describe('persistAuthItem quota resilience', () => {
     expect(persistAuthItem('wca_user', 'v'.repeat(60))).toBe(false);
     expect(ls.getItem('wca_user')).toBeNull();
     expect(ls.getItem('cuberoot-timer.v3')).toBe('d'.repeat(180));
+  });
+});
+
+describe('applySession', () => {
+  beforeEach(() => {
+    setLS(makeLocalStorage(250));
+    useAuthStore.getState().refresh();
+  });
+
+  it('persists the matching user and token together', () => {
+    const user = { uid: 7, wcaId: null, name: 'Mini User', avatar: 'mini.png' };
+
+    expect(applySession('mini-token', user)).toBe(true);
+    expect(localStorage.getItem('cuberoot_jwt')).toBe('mini-token');
+    expect(JSON.parse(localStorage.getItem('wca_user') ?? 'null')).toEqual({
+      uid: 7,
+      wcaId: '',
+      name: 'Mini User',
+      avatar: 'mini.png',
+      country: '',
+    });
+    expect(useAuthStore.getState().user?.name).toBe('Mini User');
+  });
+
+  it('restores the previous session when the new token cannot be stored', () => {
+    const previousUser = {
+      uid: 3,
+      wcaId: '',
+      name: 'Previous User',
+      avatar: '',
+      country: '',
+    };
+    expect(persistAuthItem('wca_user', JSON.stringify(previousUser))).toBe(true);
+    expect(persistAuthItem('cuberoot_jwt', 'old-token')).toBe(true);
+    useAuthStore.getState().refresh();
+
+    const nextUser = { uid: 8, wcaId: null, name: 'Next User' };
+    expect(applySession('n'.repeat(220), nextUser)).toBe(false);
+    expect(localStorage.getItem('cuberoot_jwt')).toBe('old-token');
+    expect(JSON.parse(localStorage.getItem('wca_user') ?? 'null')).toEqual(previousUser);
+    expect(useAuthStore.getState().user).toEqual(previousUser);
   });
 });
