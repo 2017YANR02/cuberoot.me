@@ -5,13 +5,10 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { User } from "@/db/schema";
+import { getSessionSecret } from "@/lib/auth-config";
 
 export const USER_COOKIE = "cube_user";
 export const USER_SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
-
-function getSecret(): string {
-  return process.env.SESSION_SECRET ?? "dev-cube-secret-change-me";
-}
 
 function b64url(input: Buffer): string {
   return input
@@ -32,7 +29,7 @@ export function signUserToken(userId: string): string {
   const payloadObj = { sub: userId, iat: issuedAt };
   const payload = b64url(Buffer.from(JSON.stringify(payloadObj), "utf8"));
   const sig = b64url(
-    createHmac("sha256", getSecret()).update(payload).digest(),
+    createHmac("sha256", getSessionSecret()).update(payload).digest(),
   );
   return `${payload}.${sig}`;
 }
@@ -43,7 +40,7 @@ export function verifyUserToken(token: string | undefined): string | null {
   if (parts.length !== 2) return null;
   const [payload, sig] = parts;
   const expected = b64url(
-    createHmac("sha256", getSecret()).update(payload).digest(),
+    createHmac("sha256", getSessionSecret()).update(payload).digest(),
   );
   const a = Buffer.from(sig);
   const b = Buffer.from(expected);

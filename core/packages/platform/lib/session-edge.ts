@@ -1,12 +1,10 @@
 // Edge-safe verification (uses Web Crypto only).
 // Server-side signing lives in lib/auth.ts (uses node:crypto).
 
+import { getSessionSecret } from "@/lib/auth-config";
+
 export const SESSION_COOKIE = "cube_admin";
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
-
-function getSecret(): string {
-  return process.env.SESSION_SECRET ?? "dev-cube-secret-change-me";
-}
 
 async function hmac(secret: string, payload: string): Promise<string> {
   const enc = new TextEncoder();
@@ -37,7 +35,7 @@ export async function verifySessionEdge(token: string | undefined): Promise<bool
   if (parts.length !== 3) return false;
   const [ver, issuedAtStr, sig] = parts;
   const payload = `${ver}.${issuedAtStr}`;
-  const expected = await hmac(getSecret(), payload);
+  const expected = await hmac(getSessionSecret(), payload);
   if (!timingSafeEqHex(sig, expected)) return false;
   const issuedAt = Number(issuedAtStr);
   if (!Number.isFinite(issuedAt)) return false;

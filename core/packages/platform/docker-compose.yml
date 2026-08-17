@@ -1,14 +1,18 @@
 services:
   next-app:
-    build: .
+    build:
+      context: ../..
+      dockerfile: packages/platform/Dockerfile
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://127.0.0.1:3100}
     image: cube-platform:latest
     container_name: cube-platform
     restart: unless-stopped
     ports:
       - "3100:3000"
     environment:
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
-      SESSION_SECRET: ${SESSION_SECRET:-change-me}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://127.0.0.1:3100}
       DB_PATH: /data/data.db
     volumes:

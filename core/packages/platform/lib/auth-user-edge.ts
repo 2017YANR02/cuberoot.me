@@ -1,12 +1,10 @@
 // Edge-safe user-cookie verification (Web Crypto only).
 // Server-side signing/verification lives in lib/auth-user.ts.
 
+import { getSessionSecret } from "@/lib/auth-config";
+
 export const USER_COOKIE = "cube_user";
 export const USER_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
-
-function getSecret(): string {
-  return process.env.SESSION_SECRET ?? "dev-cube-secret-change-me";
-}
 
 function b64urlDecode(input: string): Uint8Array {
   const pad = input.length % 4 === 0 ? "" : "=".repeat(4 - (input.length % 4));
@@ -50,7 +48,7 @@ export async function verifyUserTokenEdge(
   const parts = token.split(".");
   if (parts.length !== 2) return null;
   const [payload, sig] = parts;
-  const expected = await hmac(getSecret(), payload);
+  const expected = await hmac(getSessionSecret(), payload);
   if (!timingSafeEq(sig, expected)) return null;
   try {
     const decoded = b64urlDecode(payload);

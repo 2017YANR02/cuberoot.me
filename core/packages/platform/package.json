@@ -1,12 +1,11 @@
 {
-  "name": "cube-platform",
+  "name": "@cuberoot/platform",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev -H 127.0.0.1 -p 3100",
-    "build": "next build",
+    "build": "pnpm db:migrate && next build",
     "start": "next start -H 127.0.0.1 -p 3100",
-    "lint": "next lint",
     "typecheck": "tsgo --noEmit",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
@@ -26,6 +25,7 @@
     "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "server-only": "^0.0.1",
     "stripe": "^22.1.1",
     "wechatpay-node-v3": "^2.2.1"
   },
