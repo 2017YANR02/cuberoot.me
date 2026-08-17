@@ -10,7 +10,6 @@ import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { apiUrl } from './api-base';
 import { persistItem } from './safe-storage';
-import { safeNext } from './safe-next';
 
 export { ADMIN_WCA_IDS };
 export { safeNext } from './safe-next';

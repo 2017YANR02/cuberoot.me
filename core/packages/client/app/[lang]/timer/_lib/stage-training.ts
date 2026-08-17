@@ -293,6 +293,25 @@ export function stageTrainingMask(question: Pick<StageQuestion, 'face' | 'combo'
   return { name, orientation: orientation ?? faceOnly };
 }
 
+/** Stage masks for every candidate the current colour selection allows.
+ *  Multi-colour auto-slot questions must not hide the losing colours or reveal
+ *  the winning colour/slot before the answer is shown. */
+export function stageTrainingMasks(
+  question: Pick<StageQuestion, 'face' | 'combo'>,
+  stage: StageTrainingStage,
+  colors: string,
+): StageTrainingMask[] {
+  const faces = solverFacesForColors(colors);
+  if (faces.length <= 1) return [stageTrainingMask(question, stage)];
+  if (stage === 'cross') {
+    return faces.map((face) => stageTrainingMask({ face, combo: '' }, stage));
+  }
+  return faces.flatMap((face) => COMBOS[stage].map((combo) => stageTrainingMask({
+    face,
+    combo: combo.map((slot) => STAGE_SLOT_LABELS[slot]).join(' '),
+  }, stage)));
+}
+
 const solvedEdge = (cube: CubieCube, edge: number) => cube.ep[edge] === edge && cube.eo[edge] === 0;
 const solvedCorner = (cube: CubieCube, corner: number) => cube.cp[corner] === corner && cube.co[corner] === 0;
 
