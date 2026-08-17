@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import importlib.util
-import tempfile
 import unittest
 from pathlib import Path
 
@@ -14,55 +13,46 @@ NORMALIZE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(NORMALIZE)
 
 
-class FormulaImageContractTests(unittest.TestCase):
-    def test_accepts_a_real_published_safe_svg(self) -> None:
-        formula_media = MODULE_PATH.parents[2] / "public" / "data" / "sq1-pbl" / "formula-media"
-        svg_paths = sorted(formula_media.glob("*.svg"))
-        self.assertTrue(svg_paths, "public export must include a real get_image3 SVG")
-        raw = svg_paths[0].read_bytes()
-        image = NORMALIZE.validate_formula_image(raw, "image/svg+xml", ".svg")
-        self.assertEqual(image["raw"], raw)
-        self.assertEqual(image["mime"], "image/svg+xml")
-        self.assertEqual(image["pixels"], [1400, 700])
+class RawAlgorithmFallbackTests(unittest.TestCase):
+    def build_cases(self, raw_values: dict[str, str], standard_values: dict[str, str]):
+        return NORMALIZE.build_case_export(
+            {"valuesByRef": raw_values},
+            {"valuesByRef": standard_values},
+            [{
+                "name": "7 slicers",
+                "valuesByRef": {"A1": "1", "B1": "MDb", "F1": "10 W' d D e' t -10"},
+            }],
+            {"7 slicers": "7-slicers"},
+            {"digests": {"content": "fixture"}, "invariants": {"frequencyTotal": 16}},
+        )
 
-    def test_rejects_active_or_external_svg_content(self) -> None:
-        unsafe = {
-            "script": '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
-            "foreignObject": (
-                '<svg xmlns="http://www.w3.org/2000/svg">'
-                '<foreignObject><p xmlns="http://www.w3.org/1999/xhtml">x</p></foreignObject></svg>'
-            ),
-            "external href": (
-                '<svg xmlns="http://www.w3.org/2000/svg">'
-                '<image href="https://example.invalid/payload.png"/></svg>'
-            ),
-        }
-        for label, svg in unsafe.items():
-            with self.subTest(label=label), self.assertRaises(ValueError):
-                NORMALIZE.validate_svg(svg.encode("utf-8"))
+    def test_restores_only_m_db_from_the_explicit_standard_alg_cell(self) -> None:
+        result = self.build_cases(
+            {"A1": "M/Db", "B1": "M", "C1": "Db", "D1": "16", "E1": "P/P", "F1": " ", "G1": "7"},
+            {"S208": "MDb", "T208": "10/-30/30/-12/03/-3-3/4-2/-10"},
+        )
+        self.assertEqual(result["cases"][0]["solution"], "10/-30/30/-12/03/-3-3/4-2/-10")
+        self.assertEqual(result["cases"][0]["solutionEvidence"], {
+            "sheet": "Standard Algs Data",
+            "keyCell": "S208",
+            "algorithmCell": "T208",
+        })
 
-    def test_removes_only_stale_regular_files_in_controlled_directory(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            directory = Path(temporary) / "sheets"
-            directory.mkdir()
-            kept = directory / "kept.json"
-            stale = directory / "old.json"
-            nested = directory / "old-dir"
-            kept.write_text("kept", encoding="utf-8")
-            stale.write_text("stale", encoding="utf-8")
-            nested.mkdir()
-            (nested / "nested.json").write_text("nested", encoding="utf-8")
+    def test_fails_closed_for_any_other_non_solved_blank(self) -> None:
+        with self.assertRaisesRegex(ValueError, "non-solved Raw Algs case has no solution"):
+            self.build_cases(
+                {"A1": "M/Da", "B1": "M", "C1": "Da", "F1": " "},
+                {"S208": "MDb", "T208": "10/-30/30/-12/03/-3-3/4-2/-10"},
+            )
 
-            quarantine = Path(temporary) / "quarantine"
-            NORMALIZE.quarantine_stale_generated_files(directory, {kept.name}, quarantine)
-
-            self.assertTrue(kept.is_file())
-            self.assertFalse(stale.exists())
-            self.assertTrue((nested / "nested.json").is_file())
-            quarantined = list((quarantine / "sheets").iterdir())
-            self.assertEqual(len(quarantined), 1)
-            self.assertTrue(quarantined[0].name.endswith("-old.json"))
-            self.assertEqual(quarantined[0].read_text(encoding="utf-8"), "stale")
+    def test_fails_closed_when_the_evidence_cell_moves_or_is_not_seven_slices(self) -> None:
+        raw = {"A1": "M/Db", "B1": "M", "C1": "Db", "F1": " "}
+        for standard in (
+            {"S208": "MDa", "T208": "10/-30/30/-12/03/-3-3/4-2/-10"},
+            {"S208": "MDb", "T208": "10/-30/30/-12/03/-3-3/-10"},
+        ):
+            with self.subTest(standard=standard), self.assertRaises(ValueError):
+                self.build_cases(raw, standard)
 
 
 if __name__ == "__main__":

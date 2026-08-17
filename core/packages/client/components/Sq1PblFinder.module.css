@@ -1,0 +1,479 @@
+.finderSection {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.sectionHeadingRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px 28px;
+}
+
+.sectionHeadingRow h2,
+.auxiliaryHeading h3,
+.outputHeading h3,
+.selectedDetails h4 {
+  margin: 0;
+}
+
+.sectionHeadingRow h2 {
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.sourceLine,
+.status,
+.error {
+  margin: 5px 0 0;
+  line-height: 1.55;
+}
+
+.sourceLine,
+.status,
+.auxiliaryHeading span,
+.outputHeading span,
+.modeControl > span,
+.pickerField > span,
+.progressLabel > span,
+.selectedDetails p,
+.manageStatus {
+  color: var(--muted-foreground);
+}
+
+.sourceLine a {
+  color: var(--accent);
+  text-underline-offset: 0.16em;
+}
+
+.error {
+  color: var(--destructive);
+}
+
+.pllSelectors,
+.auxiliaryEdit,
+.finderDataActions,
+.findAction,
+.modeControl,
+.pickerField,
+.progressLabel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px 12px;
+}
+
+.modeControl {
+  white-space: nowrap;
+}
+
+.pllSelectors {
+  align-items: end;
+  gap: 14px 24px;
+}
+
+.pickerField {
+  align-items: center;
+}
+
+.searchField,
+.auxiliaryEdit label {
+  display: grid;
+  gap: 6px;
+}
+
+.searchField > span:first-child,
+.auxiliaryEdit label > span:first-child,
+.pickerField > span,
+.modeControl > span {
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.inputWithClear {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: min(100%, 320px);
+}
+
+.inputWithClear input,
+.auxiliaryEdit input,
+.auxiliaryList {
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 7px;
+  font: inherit;
+}
+
+.inputWithClear input,
+.auxiliaryEdit input {
+  min-height: 38px;
+  padding: 7px 34px 7px 10px;
+}
+
+.inputWithClear input {
+  width: 100%;
+}
+
+.auxiliaryEdit input {
+  width: min(100%, 480px);
+}
+
+.inputWithClear :global(.clear-btn) {
+  position: absolute;
+  right: 5px;
+}
+
+.inputWithClear input:focus-visible,
+.auxiliaryEdit input:focus-visible,
+.auxiliaryList:focus-visible,
+.button:focus-visible,
+.primaryButton:focus-visible,
+.resultRow:focus-visible,
+.copyButton:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.auxiliarySection {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding-block: 16px;
+  border-block: 1px solid var(--border-default);
+}
+
+.auxiliaryHeading,
+.outputHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 7px 14px;
+  padding-top: 2px;
+}
+
+.auxiliaryHeading h3,
+.outputHeading h3 {
+  font-size: 1.02rem;
+}
+
+.auxiliaryListLabel {
+  display: block;
+  min-width: 0;
+}
+
+.auxiliaryList {
+  width: min(100%, 760px);
+  min-height: 190px;
+  padding: 5px;
+  font: 0.84rem/1.4 var(--font-mono);
+}
+
+.auxiliaryList option {
+  padding: 4px 6px;
+}
+
+.auxiliaryEdit {
+  align-items: end;
+}
+
+.auxiliaryEdit label {
+  flex: 0 1 480px;
+  min-width: min(100%, 280px);
+}
+
+.editButtons,
+.finderDataActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.finderDataActions {
+  align-items: center;
+}
+
+.button,
+.primaryButton,
+.resultRow {
+  appearance: none;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--border-default);
+  font: inherit;
+  cursor: pointer;
+}
+
+.button,
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 7px 12px;
+  border-radius: 7px;
+  text-decoration: none;
+}
+
+.fileButton {
+  position: relative;
+  overflow: hidden;
+}
+
+.fileButton input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.fileButton:focus-within {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.manageStatus {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.primaryButton {
+  color: var(--accent-foreground);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 650;
+}
+
+.button:hover:not(:disabled),
+.resultRow:hover {
+  border-color: var(--foreground);
+}
+
+.button:disabled,
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.findAction {
+  min-height: 40px;
+}
+
+.progressLabel progress {
+  width: min(240px, 48vw);
+  accent-color: var(--accent);
+}
+
+.outputSection {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.resultList {
+  max-height: 430px;
+  overflow: auto;
+  border-block: 1px solid var(--border-default);
+}
+
+.resultRow {
+  display: grid;
+  grid-template-columns: 3ch minmax(220px, 1fr) max-content max-content minmax(130px, 0.5fr);
+  align-items: baseline;
+  gap: 8px 14px;
+  width: 100%;
+  padding: 9px 8px;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  text-align: left;
+}
+
+.resultRowActive {
+  background: var(--accent-soft);
+}
+
+.resultRow code,
+.selectedDetails code {
+  font: 0.88rem/1.45 var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.resultRow > span:not(.resultOrdinal) {
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+}
+
+.resultOrdinal {
+  color: var(--muted-foreground);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.selectedPreview {
+  display: grid;
+  grid-template-columns: 150px 270px minmax(180px, 1fr);
+  align-items: start;
+  gap: 18px 24px;
+  padding-top: 12px;
+}
+
+.caseThumb,
+.playerPane {
+  line-height: 0;
+}
+
+.selectedDetails {
+  min-width: 0;
+}
+
+.selectedDetails h4 {
+  margin-bottom: 8px;
+}
+
+.selectedDetails p {
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+
+.selectedAlgorithmRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  min-width: 0;
+}
+
+.selectedAlgorithmRow code {
+  min-width: 0;
+}
+
+.copyButton {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.copyButton:hover {
+  color: var(--foreground);
+  background: var(--accent-soft);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 760px) {
+  .selectedPreview {
+    grid-template-columns: 150px minmax(0, 1fr);
+  }
+
+  .playerPane {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .selectedDetails {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .resultRow {
+    grid-template-columns: 3ch minmax(190px, 1fr) max-content max-content;
+  }
+
+  .resultRow > span:last-child {
+    grid-column: 2 / -1;
+  }
+}
+
+@media (max-width: 479px) {
+  .sectionHeadingRow,
+  .pllSelectors,
+  .auxiliaryEdit,
+  .finderDataActions,
+  .findAction,
+  .modeControl,
+  .pickerField,
+  .progressLabel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .inputWithClear,
+  .auxiliaryEdit input,
+  .auxiliaryEdit label,
+  .pickerField {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pickerField {
+    align-self: stretch;
+  }
+
+  .auxiliaryList {
+    min-height: 210px;
+  }
+
+  .editButtons,
+  .editButtons .button,
+  .finderDataActions,
+  .finderDataActions .button,
+  .primaryButton {
+    width: 100%;
+  }
+
+  .progressLabel progress {
+    width: 100%;
+  }
+
+  .resultRow {
+    grid-template-columns: 3ch minmax(0, 1fr) max-content;
+    gap: 5px 9px;
+  }
+
+  .resultRow code,
+  .resultRow > span:nth-of-type(2),
+  .resultRow > span:nth-of-type(3),
+  .resultRow > span:last-child {
+    grid-column: 2 / -1;
+  }
+
+  .selectedPreview {
+    grid-template-columns: 1fr;
+  }
+
+  .caseThumb,
+  .playerPane,
+  .selectedDetails {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .playerPane {
+    max-width: 100%;
+    overflow: auto;
+  }
+}
