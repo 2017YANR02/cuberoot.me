@@ -51,19 +51,20 @@
 
 ## 现有能力与教学系统边界
 
-迁入代码已经有用户登录、课程 / 章节、学习进度、订单、会员、讲师入驻与后台、支付、内容、社群、上传和运营日志。多机构教学 SaaS 的 Stage 0 底座与 Stage 2 履约 MVP 也已进入主仓本地提交:
+迁入代码已经有用户登录、课程 / 章节、学习进度、订单、会员、讲师入驻与后台、支付、内容、社群、上传和运营日志。多机构教学 SaaS 的 Stage 0 底座、Stage 1 CRM 基础与 Stage 2 履约 MVP 也已进入主仓本地实现:
 
 - `shared` 已定义机构角色、权限、状态、训练证据和错误契约。
 - PostgreSQL `0142` 至 `0146` 已建立机构、成员、学员、监护人、审计、幂等、平台账号桥接、独立写入尝试限流与学员分页索引。
 - Core 已有短时 HMAC 身份断言、重放保护、机构 API、角色校验、失败尝试也计数的写入限流和跨机构拒绝审计。
 - Platform 已有受登录保护的 `/org` 机构选择、机构工作台、按权限裁剪的概览、成员 / 学员分页与学员建档。
 - PostgreSQL `0147`、`0148` 已加入课包商品、学员课包、排课、授课成员、出勤、只追加课时账本 / 课堂事件和最后 owner 并发保护；Core 与 Platform 已接通课包发放、余额流水、排课、出勤、完课消课和课堂历史。
-- teacher/assistant 目前只可操作分配给自己的课堂；完整的校区、班级与长期老师负责关系仍属于 Stage 1。
+- PostgreSQL `0149` 与 Core / Platform 已加入校区、班级、多班分组、班级或个人学员负责人和半开有效期；teacher/assistant 的校区、班级与学员读取按 active 长期指派收窄,课堂事实仍由 `session_teachers` 独立记录。
+- Stage 1 尚缺监护人管理工作台、批量导入、远程搜索选择器和完整权限工作台；当前不能视为完整 CRM 验收通过。
 - OTP 已改为持久限流、加密随机码和生产短信 fail-closed。
 
 这仍是完整系统的基础阶段,后续继续在同一 `@cuberoot/platform` 产品边界内补齐:
 
-1. 机构、校区、教师、学员、监护人与角色权限的多租户模型。
+1. 补齐监护人管理、批量导入、远程搜索和完整角色权限工作台。
 2. 补齐课包支付接单、退款 / 撤销反向流水、到期执行与异常对账。
 3. 补齐请假、补课、调课规则和更完整的课堂状态流转。
 4. 训练模板、个人任务、`/timer` / `/predict` 等训练证据、每日打卡和作业批改。
@@ -89,7 +90,7 @@
 - [ ] 迁移提交推送到主仓远端。
 - [ ] 新仓 GitHub Actions 首次成功部署并完成线上 smoke test。
 
-Stage 0 至 Stage 2 的最新定向测试、类型检查、真实 PostgreSQL 18 证据和 YAML 解析记录在[多机构教学 SaaS 设计](./teaching-saas-plan.md)。从 Stage 0 parent snapshot 顺序应用 `0147`、`0148` 已得到 7 张 Stage 2 表和 4 个 owner triggers,双 owner 并发与审计匿名化也已实测；其余业务并发夹具、Docker image build、线上 migration 与登录态 smoke 仍是上线前未验证项,不能用 mock 单测替代。历史 migration 链依赖旧生产基线,不具备绝对空库全量重放能力,恢复仍以已验证备份为准。
+Stage 0、Stage 1 CRM 基础与 Stage 2 的最新定向测试、类型检查、真实 PostgreSQL 18 证据和 YAML 解析记录在[多机构教学 SaaS 设计](./teaching-saas-plan.md)。从 Stage 0 parent snapshot 顺序应用 `0147`、`0148` 已得到 7 张 Stage 2 表和 4 个 owner triggers,双 owner 并发与审计匿名化也已实测；从 Stage 2 最终结构升级 `0149` 与直接加载最终 schema 的两套隔离 PG18 验证均通过。其余 HTTP / 课包业务并发夹具、Docker image build、线上 migration 与登录态 smoke 仍是上线前未验证项,不能用 mock 单测替代。历史 migration 链依赖旧生产基线,不具备绝对空库全量重放能力,恢复仍以已验证备份为准。
 
 ## 删除旧本地目录与旧 GitHub 仓库前的门槛
 
@@ -99,11 +100,11 @@ Stage 0 至 Stage 2 的最新定向测试、类型检查、真实 PostgreSQL 18 
 2. 主仓已配置 `PLATFORM_DEPLOY_HOST`、`PLATFORM_DEPLOY_USER`、`PLATFORM_DEPLOY_SSH_KEY`。GitHub 不允许导出旧 secrets,必须重新配置。
 3. 按当前 workflow 权限模型,`PLATFORM_DEPLOY_USER` 必须是 root;其 NVM 下必须安装 Node 24。workflow 固定选择 `/root/.nvm/versions/node/v24.*`,与 CI 编译 `better-sqlite3` 的 ABI 保持一致。未来若改普通部署账号,需同时重写目录权限、systemd 管理方式与 Node 路径。
 4. 服务器 `/etc/cube-platform.env` 已配置新的强随机 `ADMIN_PASSWORD`、`SESSION_SECRET`,旧默认凭据已失效;生产 `SMS_PROVIDER` 是真实短信通道且所需变量齐全。
-5. Core 与 Platform 运行环境已配置同一个新生成的 64 位十六进制 `TEACHING_PLATFORM_SECRET`;先部署 Core 的 `0142` 至 `0148` 和教学 API,确认后再部署 Platform。独立 workflow 没有可靠的跨 workflow 顺序保证,首次发布必须分两次受控触发;双端都不得输出密钥。
+5. Core 与 Platform 运行环境已配置同一个新生成的 64 位十六进制 `TEACHING_PLATFORM_SECRET`;先部署 Core 的 `0142` 至 `0149` 和教学 API,确认后再部署 Platform。独立 workflow 没有可靠的跨 workflow 顺序保证,首次发布必须分两次受控触发;双端都不得输出密钥。
 6. 对生产 SQLite、uploads 与教学 PostgreSQL 做一致性备份,并实际验证备份可读。workflow 失败时会自动回滚代码包;迁移器用单个 SQLite transaction 防止半迁移,但已成功提交的 schema 不会随代码包反向回滚,数据库恢复必须使用已验证备份并评估期间新增写入。
 7. 逐项处理旧本地目录中的非 Git 状态:`data.db`、`data.db-wal`、`data.db-shm`、`qr-layout.png`、`.tmp` 内商业文档 / 调试产物与 `.password.md`。每项必须先外部备份或明确确认放弃;凭据要迁入安全存储并轮换,不能复制进主仓。
 8. 首次推送产生的平台、主站和后端 workflow 都成功;平台首页、登录、管理员、讲师、课程、订单、上传、数据库 migration 和教学 API 完成 smoke test。
-9. 用登录账号实际完成机构创建 / 列表、成员查看、学员建档、课包发放、排课、出勤与完课消课;再用两个机构夹具验证跨机构读取与写入均被拒绝且 `teaching_audit_events` 留下 `denied` 记录。
+9. 用登录账号实际完成机构创建 / 列表、成员查看、学员建档、校区 / 班级创建、分班、负责人指派、课包发放、排课、出勤与完课消课;再用两个机构夹具验证跨机构读取与写入均被拒绝且 `teaching_audit_events` 留下 `denied` 记录。
 10. 已确认代码包与数据库各自的失败恢复步骤,上一版本包和数据库备份都可用。
 11. 在主仓 tracked 文件中搜索旧本地路径、旧 workflow / unit 路径和旧仓唯一依赖,结果为 0。
 12. 已轮换曾进入 Git 历史的数据库凭据和教程外部账号凭据；删除旧仓库不能替代凭据轮换。
