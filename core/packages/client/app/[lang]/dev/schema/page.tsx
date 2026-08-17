@@ -33,7 +33,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
   { key: 'alg', dot: '#D97757', name: { zh: '公式库', en: 'Algorithms' }, sub: { zh: 'alg_sets / alg_cases 公式', en: 'alg sets & cases' } },
   { key: 'comp', dot: '#4A90D9', name: { zh: '比赛 & 缓存 & 状态机', en: 'Comp & caches' }, sub: { zh: '关注 / 直播缓存 / dump 增量', en: 'follows, live cache, dump state' } },
   { key: 'account', dot: 'var(--accent)', name: { zh: '账号与登录', en: 'Accounts & auth' }, sub: { zh: '用户 / 身份 / 验证码 / 单次票据', en: 'users, identities, codes, single-use tickets' } },
-  { key: 'teaching', dot: 'var(--signal-info)', name: { zh: '教学 SaaS', en: 'Teaching SaaS' }, sub: { zh: '机构 / 成员 / 学员 / 监护 / 审计', en: 'organizations, members, students, guardians, audit' } },
+  { key: 'teaching', dot: 'var(--signal-info)', name: { zh: '教学 SaaS', en: 'Teaching SaaS' }, sub: { zh: '机构 / 学员 / 课包 / 课堂 / 审计', en: 'organizations, students, packages, sessions, audit' } },
   { key: 'studio', dot: '#67C18E', name: { zh: '用户产物', en: 'User artifacts' }, sub: { zh: '计时 / 训练 / 绘图', en: 'timer, trainer, paint' } },
   { key: 'commerce', dot: '#A78BFA', name: { zh: '会员 & 赞助 & 反馈', en: 'Commerce & feedback' }, sub: { zh: '订阅 / 致谢 / 反馈', en: 'membership, sponsors, feedback' } },
   { key: 'community', dot: '#4FC3DC', name: { zh: '社区内容 & 站务', en: 'Community & ops' }, sub: { zh: '长文 / wiki / 导航 / runbook', en: 'articles, wiki, nav, runbook' } },
@@ -174,6 +174,27 @@ const TABLES: Table[] = [
   ] },
   { name: 'teaching_platform_assertion_nonces', domain: 'teaching', origin: '0143', naturalKey: true, purpose: { zh: '教学平台短时登录断言的单次随机数，只保存 SHA-256 以阻止重放', en: 'Single-use nonces for short-lived teaching-platform assertions, stored only as SHA-256 hashes to prevent replay' }, cols: [
     { name: 'nonce_hash (PK), actor_user_id' }, { name: 'expires_at, created_at' },
+  ] },
+  { name: 'lesson_package_products', domain: 'teaching', origin: '0147', naturalKey: true, purpose: { zh: '机构课包产品定义；学员领取后以快照保留历史合同', en: 'Tenant package-product definitions whose terms are snapshotted when issued to a student' }, cols: [
+    { name: 'id UUID (PK), organization_id, code (tenant UNIQUE), name, status' }, { name: 'credit_unit, credit_type, total_credits, validity_days' }, { name: 'price_amount_minor, currency, created_by_user_id' },
+  ] },
+  { name: 'student_packages', domain: 'teaching', origin: '0147', purpose: { zh: '学员课包合同快照；余额始终由课时流水求和', en: 'Student package contract snapshots whose balances are always derived from the credit ledger' }, cols: [
+    { name: 'id UUID (PK), organization_id, student_id, product_id' }, { name: 'product / credit / price snapshots, lifecycle_status, acquisition_type' }, { name: 'valid_from, valid_until, external source tuple' },
+  ] },
+  { name: 'teaching_sessions', domain: 'teaching', origin: '0147', purpose: { zh: '机构课堂时间、时区与履约状态', en: 'Tenant session schedule, timezone, and fulfilment state' }, cols: [
+    { name: 'id UUID (PK), organization_id, title' }, { name: 'starts_at, ends_at, timezone, status, version' }, { name: 'started_at, completed_at, cancelled_at' },
+  ] },
+  { name: 'session_teachers', domain: 'teaching', origin: '0147', naturalKey: true, purpose: { zh: '课堂教师分配；账号删除后仍保留教师 ID 与姓名快照', en: 'Session teacher assignments retaining ID and display-name snapshots after account deletion' }, cols: [
+    { name: 'id UUID (PK), organization_id, session_id' }, { name: 'teacher_user_id, teacher_user_id_snapshot, teacher_display_name_snapshot' }, { name: 'role, created_at' },
+  ] },
+  { name: 'attendance_records', domain: 'teaching', origin: '0147', naturalKey: true, purpose: { zh: '每位学员在每堂课的考勤与扣课规划，复合外键阻止跨租户引用', en: 'Per-student session attendance and planned credit consumption with composite tenant foreign keys' }, cols: [
+    { name: 'id UUID (PK), organization_id, session_id, student_id' }, { name: 'student_package_id, status, credit_cost, notes' }, { name: 'recorded_by_user_id, created_at, updated_at' },
+  ] },
+  { name: 'lesson_credit_ledger', domain: 'teaching', origin: '0147', naturalKey: true, purpose: { zh: '只追加的课时账本；每条考勤永久最多一笔扣课', en: 'Append-only credit ledger with permanently at most one consumption entry per attendance record' }, cols: [
+    { name: 'id BIGINT (PK), organization_id, student_package_id, student_id' }, { name: 'entry_type, delta, attendance_id, session_id, idempotency_key' }, { name: 'source / reversal references, actor snapshot, metadata, created_at' },
+  ] },
+  { name: 'session_events', domain: 'teaching', origin: '0147', purpose: { zh: '只追加的课堂状态与考勤变更事件', en: 'Append-only session lifecycle and attendance-change events' }, cols: [
+    { name: 'id BIGINT (PK), organization_id, session_id, event_type' }, { name: 'actor snapshot, request_id, metadata, created_at' },
   ] },
 
   // ── user artifacts ──────────────────────────────────────
@@ -462,6 +483,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 144, slug: 'teaching_idempotency_rate_limit_index', desc: { zh: '为教学写入限流增加操作者、操作与创建时间的复合索引；过期清理由既有到期时间索引支持。', en: 'Add a composite actor, operation, and creation-time index for teaching mutation limits; expiry cleanup uses the existing expiration index.' } },
   { n: 145, slug: 'teaching_mutation_rate_limits', desc: { zh: '新增教学写入尝试限流表，使失败和回滚请求也进入原子计数窗口。', en: 'Add durable teaching mutation-attempt windows so rejected and rolled-back writes are still counted atomically.' } },
   { n: 146, slug: 'teaching_student_pagination_index', desc: { zh: '新增机构学员按姓名分页的匹配索引。', en: 'Add an index matching organization-wide student pagination by display name.' } },
+  { n: 147, slug: 'teaching_packages_and_sessions', desc: { zh: '新增课包产品、学员课包与只追加课时账本，并以课堂、教师快照、考勤和只追加事件完成履约闭环。', en: 'Add package products, student-package snapshots, and an append-only credit ledger, then close the fulfilment loop with sessions, teacher snapshots, attendance, and append-only events.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

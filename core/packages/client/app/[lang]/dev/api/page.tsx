@@ -280,6 +280,16 @@ const ENDPOINTS: Ep[] = [
   { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/members', g: 'login', c: 'no-store', zh: '按机构角色添加成员，要求幂等键', en: 'Add a member under organization-role authorization; requires an idempotency key' },
   { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/students', g: 'login', c: 'no-store', zh: '按机构范围分页读取学员', en: 'List paginated students scoped to an organization' },
   { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/students', g: 'login', c: 'no-store', zh: '按机构权限创建学员，要求幂等键', en: 'Create a student under organization authorization; requires an idempotency key' },
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/package-products', g: 'login', c: 'no-store', zh: '分页读取机构课包产品', en: 'List organization package products with pagination' },
+  { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/package-products', g: 'login', c: 'no-store', zh: '创建课包产品，要求幂等键', en: 'Create a package product; requires an idempotency key' },
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/students/:studentId/packages', g: 'login', c: 'no-store', zh: '分页读取学员课包和流水汇总余额', en: 'List a student\'s packages with ledger-derived balances' },
+  { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/students/:studentId/packages', g: 'login', c: 'no-store', zh: '发放学员课包并记录初始课时流水，要求幂等键', en: 'Issue a student package and its opening credit entry; requires an idempotency key' },
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/student-packages/:studentPackageId/ledger', g: 'login', c: 'no-store', zh: '分页读取学员课包的不可变课时流水', en: 'List an immutable student-package credit ledger with pagination' },
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/sessions', g: 'login', c: 'no-store', zh: '分页读取机构课堂', en: 'List organization sessions with pagination' },
+  { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/sessions', g: 'login', c: 'no-store', zh: '排课并可同时建立预期考勤，要求幂等键', en: 'Schedule a session and optionally create expected attendance; requires an idempotency key' },
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/sessions/:sessionId', g: 'login', c: 'no-store', zh: '读取课堂、教师快照与考勤明细', en: 'Read a session with teacher snapshots and attendance details' },
+  { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/batch', g: 'login', c: 'no-store', zh: '按考勤记录 ID 批量更新到课状态，要求幂等键', en: 'Batch-update attendance statuses by attendance-record ID; requires an idempotency key' },
+  { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/sessions/:sessionId/complete', g: 'login', c: 'no-store', zh: '同一事务完成课堂并扣减到课课时，要求幂等键', en: 'Complete a session and consume attended credits atomically; requires an idempotency key' },
 
   // ---- membership ----
   { d: 'membership', m: 'GET', p: '/v1/membership/plans', g: 'public', zh: '会员套餐', en: 'Membership plans' },

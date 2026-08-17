@@ -91,6 +91,13 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   teaching_mutation_rate_limits: '教学写入尝试限流状态随账号删除级联',
   teaching_platform_identities: '旧教学平台账号映射随站内账号删除级联',
   teaching_platform_assertion_nonces: '短期登录断言防重记录随站内账号删除级联',
+  lesson_package_products: '机构课包产品独立保留,创建者账号随删除置空',
+  student_packages: '学员购买课包与产品快照属于机构履约凭证,创建者账号随删除置空',
+  teaching_sessions: '课堂履约历史属于机构,创建者账号随删除置空',
+  session_teachers: '课堂教师保留姓名与账号 ID 快照,活动账号引用在删除前显式置空',
+  attendance_records: '课堂考勤属于机构履约历史,记录者账号随删除置空',
+  lesson_credit_ledger: '课时余额流水不可变保留,操作者账号随删除置空且保留姓名快照',
+  session_events: '课堂事件不可变保留,操作者账号随删除置空且保留姓名快照',
   memberships: '会员权益状态:留着,同一个人重新绑 WCA 回来还认',
   membership_orders: '交易凭证,财务对账要;只有归属键,没有姓名邮箱',
   contributors: '站方手录的致谢名单,单独处理(只把 wca_id 置 NULL,名字留着)',
@@ -180,6 +187,10 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
 
     // 贡献者致谢名单是站方手录的,名字留着,只切断与账号的关联。
     await tx`UPDATE contributors SET wca_id = NULL WHERE wca_id = ${key}`;
+
+    // 课堂教师归属必须保留历史快照,但它的复合成员外键是 RESTRICT。先只切断
+    // 活动账号引用,再让 app_users 删除级联清理 organization_members。
+    await tx`UPDATE session_teachers SET teacher_user_id = NULL WHERE teacher_user_id = ${userId}`;
 
     // 最后删账号本体。auth_identities 有 ON DELETE CASCADE(0064),身份跟着走。
     await tx`DELETE FROM app_users WHERE id = ${userId}`;

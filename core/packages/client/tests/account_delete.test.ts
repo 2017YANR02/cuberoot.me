@@ -124,6 +124,13 @@ describe('清单 ↔ schema', () => {
       'teaching_mutation_rate_limits',
       'teaching_platform_identities',
       'teaching_platform_assertion_nonces',
+      'lesson_package_products',
+      'student_packages',
+      'teaching_sessions',
+      'session_teachers',
+      'attendance_records',
+      'lesson_credit_ledger',
+      'session_events',
     ]));
   });
 });
@@ -214,6 +221,13 @@ describe('删除动作本身', () => {
     expect(impl).toContain('FOR UPDATE OF o, own');
     expect(impl).toContain("other_owner.role = 'owner'");
     expect(impl).toContain('throw new AccountOwnsOrganizationError()');
+  });
+
+  it('删除账号前切断课堂教师活动引用,同时保留履约快照', () => {
+    const unlink = impl.indexOf('UPDATE session_teachers SET teacher_user_id = NULL');
+    const deleteUser = impl.indexOf('DELETE FROM app_users');
+    expect(unlink).toBeGreaterThan(-1);
+    expect(deleteUser).toBeGreaterThan(unlink);
   });
 
   it('复盘按可见性分流:公开的匿名保留,私享 / 不公开列出的删掉', () => {
