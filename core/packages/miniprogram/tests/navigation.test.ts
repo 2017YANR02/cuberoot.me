@@ -70,6 +70,7 @@ describe('mini program website navigation', () => {
   it('does not let a stale failure report against a newer navigation', () => {
     vi.useFakeTimers();
     const failures: Array<() => void> = [];
+    const onFailure = vi.fn();
     const showToast = vi.fn();
     const navigateTo = vi.fn((options: { fail(): void }) => {
       failures.push(options.fail);
@@ -77,15 +78,17 @@ describe('mini program website navigation', () => {
     vi.stubGlobal('wx', { navigateTo, showToast });
     const owner = {};
 
-    expect(openWebsitePageOnce(owner, 'alg', { failureMessage: '打开失败' })).toBe(true);
+    expect(openWebsitePageOnce(owner, 'alg', { failureMessage: '打开失败', onFailure })).toBe(true);
     vi.advanceTimersByTime(5_000);
-    expect(openWebsitePageOnce(owner, 'wiki', { failureMessage: '打开失败' })).toBe(true);
+    expect(openWebsitePageOnce(owner, 'wiki', { failureMessage: '打开失败', onFailure })).toBe(true);
 
     failures[0]?.();
+    expect(onFailure).not.toHaveBeenCalled();
     expect(showToast).not.toHaveBeenCalled();
     expect(openWebsitePageOnce(owner, 'timer', { failureMessage: '打开失败' })).toBe(false);
 
     failures[1]?.();
+    expect(onFailure).toHaveBeenCalledOnce();
     expect(showToast).toHaveBeenCalledOnce();
     expect(openWebsitePageOnce(owner, 'timer', { failureMessage: '打开失败' })).toBe(true);
   });
@@ -159,6 +162,41 @@ describe('mini program website navigation', () => {
 
     expect(() => openWebsitePageOnce({}, 'timer', { failureMessage: '打开失败' }))
       .not.toThrow();
+  });
+
+  it('reports a current failure to persistent page feedback even when toast is unavailable', () => {
+    const onFailure = vi.fn();
+    vi.stubGlobal('wx', {
+      navigateTo(options: { fail(): void }) {
+        options.fail();
+      },
+      showToast() {
+        throw new Error('toast unavailable');
+      },
+    });
+
+    expect(openWebsitePageOnce({}, 'timer', {
+      failureMessage: '打开失败',
+      onFailure,
+    })).toBe(true);
+    expect(onFailure).toHaveBeenCalledOnce();
+    expect(onFailure).toHaveBeenCalledWith('打开失败');
+  });
+
+  it('keeps navigation usable when optional persistent feedback throws', () => {
+    vi.stubGlobal('wx', {
+      navigateTo(options: { fail(): void }) {
+        options.fail();
+      },
+      showToast: vi.fn(),
+    });
+
+    expect(() => openWebsitePageOnce({}, 'timer', {
+      failureMessage: '打开失败',
+      onFailure() {
+        throw new Error('page unavailable');
+      },
+    })).not.toThrow();
   });
 
   it('reports a runtime guard failure without mistaking duplicate taps for errors', () => {
