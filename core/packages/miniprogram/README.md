@@ -45,6 +45,7 @@ $env:WECHAT_MINI_ANDROID_REAL_DEVICE_TESTED='1'
 $env:WECHAT_MINI_GAN16UI_TESTED='1' # Android 真机完成 GAN 16 ui 全链路回归后设置
 $env:WECHAT_MINI_GOCUBE_TESTED='1'
 $env:WECHAT_MINI_GIIKER_TESTED='1'
+$env:WECHAT_MINI_MOYU_TESTED='1'
 pnpm --filter @cuberoot/miniprogram build
 pnpm --filter @cuberoot/miniprogram release:check
 ```

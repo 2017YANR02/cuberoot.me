@@ -70,6 +70,7 @@ const sensitiveCapabilities = [
         'src/lib/smart-cube/gan-v4-ble.ts',
         'src/lib/smart-cube/giiker-ble.ts',
         'src/lib/smart-cube/gocube-ble.ts',
+        'src/lib/smart-cube/moyu-ble.ts',
       ],
       uploadPaths: ['pages/smart-cube/index.js'],
     },
@@ -183,6 +184,11 @@ export const REQUIRED_RELEASE_CONFIRMATIONS = [
     key: 'giikerTested',
     env: 'WECHAT_MINI_GIIKER_TESTED',
     failure: 'Giiker 与米家智能魔方尚未完成真机连接、转动同步、电量和断线重连回归；通过后，上传时设置 WECHAT_MINI_GIIKER_TESTED=1。',
+  },
+  {
+    key: 'moyuTested',
+    env: 'WECHAT_MINI_MOYU_TESTED',
+    failure: 'MoYu AI（MHC 旧协议）尚未完成真机连接、转动同步和断线重连回归；通过后，上传时设置 WECHAT_MINI_MOYU_TESTED=1。',
   },
 ];
 
