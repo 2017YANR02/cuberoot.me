@@ -228,11 +228,12 @@ export function watchAdvertisementsMac(
       resolve(mac);
     };
     const onAdv = (ev: BluetoothAdvertisingEvent): void => {
-      // Resolve on the FIRST advertisement, match or not — cstimer's
-      // `waitForAdvs` does the same. Waiting for a match instead would stall
-      // every connect by the full timeout for the brands that carry no
-      // manufacturer data at all (GoCube, Giiker, MoYu MHC).
-      finish(extractMacFromManufacturerData(ev.manufacturerData, specs));
+      // Bluefy can deliver an initial advertisement without the selected
+      // cube's manufacturer payload, followed shortly by a complete one. An
+      // empty first event is not evidence that this device has no MAC: keep
+      // listening until a recognizable payload arrives or the timeout fires.
+      const mac = extractMacFromManufacturerData(ev.manufacturerData, specs);
+      if (mac) finish(mac);
     };
     const timer = setTimeout(() => finish(null), timeoutMs);
     device.addEventListener('advertisementreceived', onAdv);
