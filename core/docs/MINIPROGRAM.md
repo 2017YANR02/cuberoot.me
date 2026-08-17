@@ -26,6 +26,7 @@
 | 移动端与小程序隐私政策 | `packages/client/app/[lang]/privacy/page.tsx` | App、小程序和网页共用一份真实声明 |
 | 构建与上传前自动检查 | `packages/miniprogram/scripts/build-state.mjs` + `release-check.mjs` + `release-check-lib.mjs` | 只允许上传当前源码生成且内容未变的完整 `dist`；新增隐私敏感能力时先阻断上传 |
 | 跨端计时数据类型和纯逻辑 | `@cuberoot/shared/timer` | 不复制网站计时器 UI |
+| GoCube/Rubik's Connected 协议字节解析 | `@cuberoot/shared/smart-cube/gocube` | 网站 Web Bluetooth 和小程序微信 BLE 只维护各自传输适配器，不复制帧解析、转动映射或命令常量 |
 | 全局视觉变量和通用按钮 | `packages/miniprogram/src/app.wxss` | 页面只写自身布局 |
 | 账号落库 | 服务端 `account_auth.ts` + `wechat_miniprogram.ts` | 网站和小程序都只用 UnionID |
 
@@ -33,7 +34,7 @@
 
 路由测试会直接核对 `packages/client/app/[lang]` 中的真实页面或 `next.config.ts` 中的明确跳转。网站若移动入口，小程序测试必须同时失败，避免发布后才发现 `web-view` 指向失效地址。
 
-当前小程序没有原生计时数据层，也不依赖 `@cuberoot/shared`。如果未来经验证必须原生计时，应先让网站和小程序共同调用共享逻辑，再添加依赖；不能提前保留一套没有调用方的备用实现。
+当前小程序没有原生计时数据层。它只为 BLE 技术验证依赖 `@cuberoot/shared` 中的纯协议解析；如果未来经真机验证必须原生计时，仍应先提取网站现有计时逻辑并由两端共同调用，不能复制网站计时器 UI 或另建备用实现。
 
 ## 3. 当前状态
 
@@ -157,7 +158,8 @@ pnpm --filter @cuberoot/miniprogram release:check
 
 ### P2：微信专属增量
 
-- [ ] 先做 BLE 技术验证，只复用网站已有智能魔方协议层，不复制设备解析代码。
+- [x] 完成 GoCube/Rubik's Connected 的代码级 BLE 技术验证：协议解析已提取到共享层，网站和小程序适配器共同调用，并覆盖连接、命令、通知、超时、断开和竞态回归。
+- [ ] 用真实 GoCube/Rubik's Connected 分别完成 iOS、Android 连接、转动、电量、断开和重连验证；通过前不得在产品中宣称原生智能魔方已受支持。
 - [ ] 验证后台计时、息屏、断连重连和 iOS 真机限制后，再决定是否做原生智能计时器。
 - [ ] 仅在用户主动订阅后接入比赛或课程提醒。
 
@@ -858,6 +860,13 @@ pnpm --filter @cuberoot/miniprogram release:check
 - 小程序已有登录态时，换票超时、断网、服务端临时故障或响应异常统一停留在共享错误页，保留手动和联网自动重试，不再静默打开未登录网页。
 - 只有服务端明确返回会话失效，或请求期间本地账号已被退出、替换时，才允许进入公开页面；存储状态无法复核时按可重试故障处理，避免账号错位。
 - 计时器和所有网站工具继续共用 `web-view-page.ts`，回归测试覆盖超时、网络错误、服务端 5xx、401 失效和换号竞态。
+
+### 2026-08-16：BLE 协议单源与微信适配器技术验证
+
+- GoCube/Rubik's Connected 的设备名、服务与特征 UUID、命令、转动映射、状态、方向和电量解析统一放在 `packages/shared/src/smart_cube/gocube.ts`；以后增加同族协议能力只能扩展这里并补共享回归，禁止在网站或小程序复制解析器。
+- 网站 `Web Bluetooth` 驱动只负责浏览器设备发现和 GATT 传输，小程序 `gocube-ble.ts` 只负责微信蓝牙适配器、扫描、连接、特征发现、通知和清理；两端都把收到的字节交给同一个纯解析器。
+- 小程序适配器用可注入的窄微信 API 接口测试，已覆盖同步电量响应、扫描超时、缺失特征、回调异常、重复断开、迟到通知和转动重确认，避免依赖开发者工具或真实硬件才能回归协议边界。
+- 这一阶段只证明代码结构和模拟传输链路成立，不证明具体手机、固件、后台、息屏或重连体验。完成双平台真机验收前不接入用户可见入口，也不原生重写计时器。
 
 ### 首版工程
 

@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "@cuberoot/shared": "workspace:*"
+  },
   "scripts": {
     "build": "node scripts/build.mjs",
     "check": "pnpm verify && node scripts/build.mjs",

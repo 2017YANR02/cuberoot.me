@@ -47,34 +47,20 @@
  *   0x32 command and wait briefly for the 0x05 reply, just like cstimer.
  */
 
+import {
+  GOCUBE_COMMAND_BATTERY,
+  GOCUBE_COMMAND_STATE,
+  GOCUBE_NOTIFY_CHARACTERISTIC_UUID,
+  GOCUBE_SERVICE_UUID,
+  GOCUBE_STATE_REACK_AFTER_MOVES,
+  GOCUBE_WRITE_CHARACTERISTIC_UUID,
+  createGoCubeCommand,
+  matchesGoCubeName,
+  parseGoCubeNotification,
+} from '@cuberoot/shared/smart-cube/gocube';
+import { fromFaceletString } from '../cube/state';
 import type { CubeDriver, CubeDriverStartResult, GyroQuaternion } from './driver';
 import type { CubeBrand } from './types';
-import { fromFaceletString } from '../cube/state';
-
-const UUID_SUFFIX = '-b5a3-f393-e0a9-e50e24dcca9e';
-const GOCUBE_SERVICE = '6e400001' + UUID_SUFFIX;
-const GOCUBE_WRITE_CHAR = '6e400002' + UUID_SUFFIX;
-const GOCUBE_NOTIFY_CHAR = '6e400003' + UUID_SUFFIX;
-
-const CMD_BATTERY = 0x32; // 50
-const CMD_STATE = 0x33; // 51
-
-// cstimer's axisPerm: native axis index (b >> 1) -> URFDLB index.
-// The cube emits axes in BUFDRL order; we want URFDLB.
-const AXIS_PERM = [5, 2, 0, 3, 1, 4] as const;
-const URFDLB = 'URFDLB';
-
-/**
- * Ring order of the 8 non-centre stickers within a face, and each face's
- * starting offset into that ring — cstimer's `facePerm` / `faceOffset`
- * (`gocube.js:53-54`). The cube walks its own face clockwise from its own
- * corner; these two tables are what turn that walk into Kociemba indices.
- */
-const FACE_PERM = [0, 1, 2, 5, 8, 7, 6, 3] as const;
-const FACE_OFFSET = [0, 0, 6, 2, 0, 0] as const;
-
-/** Colour alphabet of the state payload — NOT the same order as the axes. */
-const GOCUBE_COLOURS = 'BFUDRL';
 
 /**
  * Decode an opcode-0x02 state dump (6 faces x 9 bytes) into the 54-character
@@ -88,30 +74,11 @@ const GOCUBE_COLOURS = 'BFUDRL';
  * each — a partial notification must not be adopted as the cube's state.
  */
 export function parseGoCubeFacelets(dv: DataView, payloadLen: number): string | null {
-  if (payloadLen < 54) return null;
-  const facelet = new Array<string>(54);
-  for (let a = 0; a < 6; a++) {
-    const axis = AXIS_PERM[a] * 9;
-    const aoff = FACE_OFFSET[a];
-    const centre = dv.getUint8(3 + a * 9);
-    if (centre > 5) return null;
-    facelet[axis + 4] = GOCUBE_COLOURS.charAt(centre);
-    for (let i = 0; i < 8; i++) {
-      const colour = dv.getUint8(3 + a * 9 + i + 1);
-      if (colour > 5) return null;
-      facelet[axis + FACE_PERM[(i + aoff) % 8]] = GOCUBE_COLOURS.charAt(colour);
-    }
-  }
-  const out = facelet.join('');
-  return out.length === 54 && fromFaceletString(out) ? out : null;
+  if (payloadLen !== dv.byteLength - 6) return null;
+  const notification = parseGoCubeNotification(dv);
+  if (notification?.type !== 'state') return null;
+  return fromFaceletString(notification.facelets) ? notification.facelets : null;
 }
-
-// Re-ack interval: every 20 moves cstimer issues another CMD_STATE so the
-// firmware does not stop pushing notifications.
-const REACK_EVERY = 20;
-
-/** 2^14 — GoCube's fixed-point divisor for the quaternion components. */
-const QUAT_SCALE = 16384;
 
 /**
  * Decode an opcode-0x03 orientation payload.
@@ -144,20 +111,14 @@ const QUAT_SCALE = 16384;
  * firmware that words it differently must not surface as a NaN quaternion.
  */
 export function parseGoCubeQuaternion(dv: DataView, payloadLen: number): GyroQuaternion | null {
-  if (payloadLen < 7) return null; // shortest plausible "0#0#0#0"
-  let text = '';
-  for (let i = 0; i < payloadLen; i++) text += String.fromCharCode(dv.getUint8(3 + i));
-  const parts = text.split('#');
-  if (parts.length !== 4) return null;
-  const nums = parts.map((s) => parseInt(s, 10));
-  if (nums.some((n) => !Number.isFinite(n))) return null;
-  const [x, y, z, w] = nums;
-  return { w: w / QUAT_SCALE, x: x / QUAT_SCALE, y: y / QUAT_SCALE, z: z / QUAT_SCALE };
+  if (payloadLen !== dv.byteLength - 6) return null;
+  const notification = parseGoCubeNotification(dv);
+  return notification?.type === 'orientation' ? notification.quaternion : null;
 }
 
 export const gocubeDriver: CubeDriver = {
   brand: 'gocube' satisfies CubeBrand,
-  service: GOCUBE_SERVICE,
+  service: GOCUBE_SERVICE_UUID,
   // `Rubik` and not cstimer's `Rubiks`: Rubik's Connected ships firmwares
   // advertising both `Rubiks Connected` and `Rubik's Connected`.
   namePrefixes: ['GoCube', 'Rubik'],
@@ -166,14 +127,13 @@ export const gocubeDriver: CubeDriver = {
   hasGyro: true,
 
   matches(device: BluetoothDevice): boolean {
-    const n = device.name ?? '';
-    return /^(GoCube|Rubiks?)/i.test(n);
+    return matchesGoCubeName(device.name);
   },
 
   async start(server, onMove, ctx): Promise<CubeDriverStartResult> {
-    const service = await server.getPrimaryService(GOCUBE_SERVICE);
-    const writeChar = await service.getCharacteristic(GOCUBE_WRITE_CHAR);
-    const notifyChar = await service.getCharacteristic(GOCUBE_NOTIFY_CHAR);
+    const service = await server.getPrimaryService(GOCUBE_SERVICE_UUID);
+    const writeChar = await service.getCharacteristic(GOCUBE_WRITE_CHARACTERISTIC_UUID);
+    const notifyChar = await service.getCharacteristic(GOCUBE_NOTIFY_CHARACTERISTIC_UUID);
 
     let lastBattery: number | null = null;
     let batteryWaiters: Array<(v: number | null) => void> = [];
@@ -183,62 +143,44 @@ export const gocubeDriver: CubeDriver = {
       // The Web Bluetooth typings accept BufferSource — pass the underlying
       // ArrayBuffer to keep the call portable (some platforms reject the
       // Uint8Array view directly).
-      const buf = new Uint8Array([cmd]).buffer;
-      return writeChar.writeValue(buf);
+      return writeChar.writeValue(createGoCubeCommand(cmd));
     };
 
     const onChar = (ev: Event): void => {
       const target = ev.target as BluetoothRemoteGATTCharacteristic;
       const dv = target.value;
       if (!dv) return;
-      const len = dv.byteLength;
-      // Frame validation: head 0x2A, trailer 0x0D 0x0A. cstimer drops bad frames.
-      if (len < 6) return;
-      if (dv.getUint8(0) !== 0x2a) return;
-      if (dv.getUint8(len - 2) !== 0x0d) return;
-      if (dv.getUint8(len - 1) !== 0x0a) return;
+      const notification = parseGoCubeNotification(dv);
+      if (!notification) return;
 
-      const opcode = dv.getUint8(2);
-      const payloadLen = len - 6; // 3 header + 1 crc + 2 trailer
-
-      if (opcode === 0x01) {
-        // Move stream: 2 bytes per move, axis|dir in byte 0 of each pair.
-        for (let i = 0; i + 1 < payloadLen; i += 2) {
-          const b = dv.getUint8(3 + i);
-          const axis = AXIS_PERM[(b >> 1) & 0x07];
-          if (axis === undefined) continue;
-          const ccw = (b & 1) === 1;
-          onMove(ccw ? `${URFDLB.charAt(axis)}'` : URFDLB.charAt(axis));
+      if (notification.type === 'moves') {
+        for (const move of notification.moves) {
+          onMove(move);
           movesSinceAck++;
         }
-        if (movesSinceAck > REACK_EVERY) {
+        if (movesSinceAck > GOCUBE_STATE_REACK_AFTER_MOVES) {
           movesSinceAck = 0;
-          void writeCmd(CMD_STATE).catch(() => {});
+          void writeCmd(GOCUBE_COMMAND_STATE).catch(() => {});
         }
-      } else if (opcode === 0x02) {
+      } else if (notification.type === 'state') {
         // Full state dump. The cube sends one on connect (we ask for it) and
         // one after every re-ack, so this is both the initial truth and a
         // periodic correction for anything the move stream lost.
-        if (ctx?.onState) {
-          const facelets = parseGoCubeFacelets(dv, payloadLen);
-          if (facelets) ctx.onState(facelets);
+        if (ctx?.onState && fromFaceletString(notification.facelets)) {
+          ctx.onState(notification.facelets);
         }
-      } else if (opcode === 0x03) {
+      } else if (notification.type === 'orientation') {
         // Orientation. GoCube pushes these ~15x/s once connected, so only
         // pay the ASCII parse when someone is listening.
-        if (ctx?.onGyro) {
-          const q = parseGoCubeQuaternion(dv, payloadLen);
-          // No angular velocity in this protocol — the second arg stays
-          // undefined rather than being faked from finite differences.
-          if (q) ctx.onGyro(q);
-        }
-      } else if (opcode === 0x05 && payloadLen >= 1) {
-        lastBattery = dv.getUint8(3);
+        // No angular velocity in this protocol — the second arg stays
+        // undefined rather than being faked from finite differences.
+        ctx?.onGyro?.(notification.quaternion);
+      } else if (notification.type === 'battery') {
+        lastBattery = notification.level;
         const waiters = batteryWaiters;
         batteryWaiters = [];
         for (const w of waiters) w(lastBattery);
       }
-      // 0x02 (state), 0x07 (offline), 0x08 (cube type): ignored.
     };
 
     notifyChar.addEventListener('characteristicvaluechanged', onChar);
@@ -246,7 +188,7 @@ export const gocubeDriver: CubeDriver = {
 
     // Kick the cube: requesting a state dump arms the move stream, matching
     // cstimer's init().
-    try { await writeCmd(CMD_STATE); } catch { /* ignore */ }
+    try { await writeCmd(GOCUBE_COMMAND_STATE); } catch { /* ignore */ }
 
     let cleaned = false;
     const cleanup = (): void => {
@@ -262,17 +204,20 @@ export const gocubeDriver: CubeDriver = {
 
     const battery = async (): Promise<number | null> => {
       // Issue the battery command and wait up to 1s for the 0x05 reply.
-      try { await writeCmd(CMD_BATTERY); } catch { return lastBattery; }
-      return new Promise<number | null>(resolve => {
+      let finish: (value: number | null) => void = () => {};
+      const response = new Promise<number | null>(resolve => {
         let done = false;
-        const finish = (v: number | null): void => {
+        finish = (value: number | null): void => {
           if (done) return;
           done = true;
-          resolve(v);
+          batteryWaiters = batteryWaiters.filter((waiter) => waiter !== finish);
+          resolve(value);
         };
         batteryWaiters.push(finish);
         setTimeout(() => finish(lastBattery), 1000);
       });
+      try { await writeCmd(GOCUBE_COMMAND_BATTERY); } catch { finish(lastBattery); }
+      return response;
     };
 
     return { battery, cleanup };
