@@ -84,6 +84,73 @@ export interface TeachingOrganizationSummary {
   studentCount: number | null;
 }
 
+export type TeachingStructureStatus = "active" | "archived";
+
+export interface TeachingCampus {
+  id: string;
+  code: string | null;
+  name: string;
+  timezone: string | null;
+  status: TeachingStructureStatus;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeachingGroup {
+  id: string;
+  campusId: string | null;
+  code: string | null;
+  name: string;
+  status: TeachingStructureStatus;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeachingStudentGroupMembership {
+  id: string;
+  groupId: string;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  createdAt: string;
+  student: Pick<TeachingStudent, "id" | "displayName" | "externalRef" | "status">;
+}
+
+export interface TeachingTeacherAssignment {
+  id: string;
+  teacherUserId: number | null;
+  teacherUserIdSnapshot: number;
+  groupId: string | null;
+  studentId: string | null;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  createdAt: string;
+  teacher: {
+    userId: number | null;
+    displayName: string;
+    role: Extract<TeachingOrganizationRole, "owner" | "admin" | "teacher" | "assistant">;
+    status: TeachingMemberStatus | null;
+  };
+}
+
+export interface CreateTeachingCampusInput {
+  code: string | null;
+  name: string;
+  timezone: string | null;
+}
+
+export interface CreateTeachingGroupInput {
+  campusId: string | null;
+  code: string | null;
+  name: string;
+}
+
+export interface TeachingEffectiveRangeInput {
+  effectiveFrom: string;
+  effectiveTo?: string;
+}
+
 export interface TeachingPackageProduct {
   id: string;
   code: string;
@@ -367,6 +434,139 @@ function parseStudent(value: unknown): TeachingStudent {
     status: value.status as TeachingStudentStatus,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
+  };
+}
+
+function parseStructureStatus(value: unknown, label: string): TeachingStructureStatus {
+  if (value !== "active" && value !== "archived") {
+    throw new TeachingApiError("BAD_RESPONSE", `教学服务返回了无效的${label}状态`);
+  }
+  return value;
+}
+
+function parseNullableString(value: unknown, label: string): string | null {
+  return value === null ? null : parseRequiredString(value, label);
+}
+
+function parseCampus(value: unknown): TeachingCampus {
+  if (!isRecord(value)) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的校区数据");
+  }
+  return {
+    id: parseResourceId(value.id, "校区标识"),
+    code: parseNullableString(value.code, "校区代码"),
+    name: parseRequiredString(value.name, "校区名称"),
+    timezone: parseNullableString(value.timezone, "校区时区"),
+    status: parseStructureStatus(value.status, "校区"),
+    archivedAt: parseNullableTimestamp(value.archivedAt, "校区归档时间"),
+    createdAt: parseTimestamp(value.createdAt, "校区创建时间"),
+    updatedAt: parseTimestamp(value.updatedAt, "校区更新时间"),
+  };
+}
+
+function parseGroup(value: unknown): TeachingGroup {
+  if (!isRecord(value)) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的班级数据");
+  }
+  return {
+    id: parseResourceId(value.id, "班级标识"),
+    campusId: value.campusId === null
+      ? null
+      : parseResourceId(value.campusId, "校区标识"),
+    code: parseNullableString(value.code, "班级代码"),
+    name: parseRequiredString(value.name, "班级名称"),
+    status: parseStructureStatus(value.status, "班级"),
+    archivedAt: parseNullableTimestamp(value.archivedAt, "班级归档时间"),
+    createdAt: parseTimestamp(value.createdAt, "班级创建时间"),
+    updatedAt: parseTimestamp(value.updatedAt, "班级更新时间"),
+  };
+}
+
+function parseEffectiveRange(value: Record<string, unknown>, label: string) {
+  const effectiveFrom = parseTimestamp(value.effectiveFrom, `${label}生效时间`);
+  const effectiveTo = parseNullableTimestamp(value.effectiveTo, `${label}失效时间`);
+  if (effectiveTo !== null && Date.parse(effectiveTo) < Date.parse(effectiveFrom)) {
+    throw new TeachingApiError("BAD_RESPONSE", `教学服务返回了无效的${label}有效期`);
+  }
+  return {
+    effectiveFrom,
+    effectiveTo,
+    createdAt: parseTimestamp(value.createdAt, `${label}创建时间`),
+  };
+}
+
+function parseMembershipStudent(value: unknown): TeachingStudentGroupMembership["student"] {
+  if (!isRecord(value) || !TEACHING_STUDENT_STATUSES.includes(value.status as TeachingStudentStatus)) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的班级学员数据");
+  }
+  return {
+    id: parseResourceId(value.id, "学员标识"),
+    displayName: parseRequiredString(value.displayName, "学员姓名"),
+    externalRef: value.externalRef === null
+      ? null
+      : parseRequiredString(value.externalRef, "学员编号"),
+    status: value.status as TeachingStudentStatus,
+  };
+}
+
+function parseStudentGroupMembership(value: unknown): TeachingStudentGroupMembership {
+  if (!isRecord(value)) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的分班数据");
+  }
+  return {
+    id: parseResourceId(value.id, "分班关系标识"),
+    groupId: parseResourceId(value.groupId, "班级标识"),
+    ...parseEffectiveRange(value, "分班关系"),
+    student: parseProperty(value, "student", parseMembershipStudent),
+  };
+}
+
+function parseAssignmentTeacher(value: unknown): TeachingTeacherAssignment["teacher"] {
+  if (
+    !isRecord(value) ||
+    (value.userId !== null && !Number.isSafeInteger(value.userId)) ||
+    typeof value.displayName !== "string" || !value.displayName.trim() ||
+    !["owner", "admin", "teacher", "assistant"].includes(String(value.role)) ||
+    (value.status !== null && !TEACHING_MEMBER_STATUSES.includes(value.status as TeachingMemberStatus))
+  ) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的负责老师数据");
+  }
+  return {
+    userId: Number.isSafeInteger(value.userId) ? value.userId as number : null,
+    displayName: value.displayName,
+    role: value.role as TeachingTeacherAssignment["teacher"]["role"],
+    status: value.status === null ? null : value.status as TeachingMemberStatus,
+  };
+}
+
+function parseTeacherAssignment(value: unknown): TeachingTeacherAssignment {
+  if (!isRecord(value)) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的负责范围数据");
+  }
+  const groupId = value.groupId === null ? null : parseResourceId(value.groupId, "班级标识");
+  const studentId = value.studentId === null ? null : parseResourceId(value.studentId, "学员标识");
+  if ((groupId === null) === (studentId === null)) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的负责范围目标");
+  }
+  const teacherUserId = value.teacherUserId === null
+    ? null
+    : parsePositiveInteger(value.teacherUserId, "老师账号标识");
+  const teacherUserIdSnapshot = parsePositiveInteger(value.teacherUserIdSnapshot, "老师账号快照标识");
+  const teacher = parseProperty(value, "teacher", parseAssignmentTeacher);
+  if (
+    (teacherUserId !== null && teacherUserId !== teacherUserIdSnapshot) ||
+    teacher.userId !== teacherUserId
+  ) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了不一致的负责老师数据");
+  }
+  return {
+    id: parseResourceId(value.id, "负责范围标识"),
+    teacherUserId,
+    teacherUserIdSnapshot,
+    groupId,
+    studentId,
+    ...parseEffectiveRange(value, "负责范围"),
+    teacher,
   };
 }
 
@@ -803,6 +1003,126 @@ export async function createTeachingOrganization(
   return value.organization;
 }
 
+export async function listTeachingCampuses(
+  user: User,
+  slug: string,
+  options: { page?: number; pageSize?: number } = {},
+): Promise<TeachingPagedResult<TeachingCampus>> {
+  const page = boundedPositiveInteger(options.page, 1, 1_000_000);
+  const pageSize = boundedPositiveInteger(options.pageSize, 30, 100);
+  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return requestJson<TeachingPagedResult<TeachingCampus>>(
+    user,
+    orgPath(slug, `/campuses?${query}`),
+    {},
+    (body) => parsePage(body, "campuses", parseCampus),
+  );
+}
+
+export async function getTeachingCampus(
+  user: User,
+  slug: string,
+  campusId: string,
+): Promise<TeachingCampus> {
+  const value = await requestJson<{ campus: TeachingCampus }>(
+    user,
+    orgPath(slug, `/campuses/${resourceId(campusId, "校区标识")}`),
+    {},
+    (body) => ({ campus: parseProperty(body, "campus", parseCampus) }),
+  );
+  return value.campus;
+}
+
+export async function createTeachingCampus(
+  user: User,
+  slug: string,
+  input: CreateTeachingCampusInput,
+  idempotencyKey: string,
+): Promise<TeachingCampus> {
+  const value = await requestJson<{ campus: TeachingCampus }>(
+    user,
+    orgPath(slug, "/campuses"),
+    { method: "POST", body: { ...input }, idempotencyKey },
+    (body) => ({ campus: parseProperty(body, "campus", parseCampus) }),
+  );
+  return value.campus;
+}
+
+export async function archiveTeachingCampus(
+  user: User,
+  slug: string,
+  campusId: string,
+  idempotencyKey: string,
+): Promise<TeachingCampus> {
+  const value = await requestJson<{ campus: TeachingCampus }>(
+    user,
+    orgPath(slug, `/campuses/${resourceId(campusId, "校区标识")}/archive`),
+    { method: "POST", body: {}, idempotencyKey },
+    (body) => ({ campus: parseProperty(body, "campus", parseCampus) }),
+  );
+  return value.campus;
+}
+
+export async function listTeachingGroups(
+  user: User,
+  slug: string,
+  options: { page?: number; pageSize?: number } = {},
+): Promise<TeachingPagedResult<TeachingGroup>> {
+  const page = boundedPositiveInteger(options.page, 1, 1_000_000);
+  const pageSize = boundedPositiveInteger(options.pageSize, 30, 100);
+  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return requestJson<TeachingPagedResult<TeachingGroup>>(
+    user,
+    orgPath(slug, `/groups?${query}`),
+    {},
+    (body) => parsePage(body, "groups", parseGroup),
+  );
+}
+
+export async function getTeachingGroup(
+  user: User,
+  slug: string,
+  groupId: string,
+): Promise<TeachingGroup> {
+  const value = await requestJson<{ group: TeachingGroup }>(
+    user,
+    orgPath(slug, `/groups/${resourceId(groupId, "班级标识")}`),
+    {},
+    (body) => ({ group: parseProperty(body, "group", parseGroup) }),
+  );
+  return value.group;
+}
+
+export async function createTeachingGroup(
+  user: User,
+  slug: string,
+  input: CreateTeachingGroupInput,
+  idempotencyKey: string,
+): Promise<TeachingGroup> {
+  const value = await requestJson<{ group: TeachingGroup }>(
+    user,
+    orgPath(slug, "/groups"),
+    { method: "POST", body: { ...input }, idempotencyKey },
+    (body) => ({ group: parseProperty(body, "group", parseGroup) }),
+  );
+  return value.group;
+}
+
+export async function archiveTeachingGroup(
+  user: User,
+  slug: string,
+  groupId: string,
+  idempotencyKey: string,
+): Promise<TeachingGroup> {
+  const value = await requestJson<{ group: TeachingGroup }>(
+    user,
+    orgPath(slug, `/groups/${resourceId(groupId, "班级标识")}/archive`),
+    { method: "POST", body: {}, idempotencyKey },
+    (body) => ({ group: parseProperty(body, "group", parseGroup) }),
+  );
+  return value.group;
+}
+
 export async function listTeachingMembers(
   user: User,
   slug: string,
@@ -833,6 +1153,128 @@ export async function listTeachingStudents(
     {},
     (body) => parsePage(body, "students", parseStudent),
   );
+}
+
+export async function getTeachingStudent(
+  user: User,
+  slug: string,
+  studentId: string,
+): Promise<TeachingStudent> {
+  const value = await requestJson<{ student: TeachingStudent }>(
+    user,
+    orgPath(slug, `/students/${resourceId(studentId, "学员标识")}`),
+    {},
+    (body) => ({ student: parseProperty(body, "student", parseStudent) }),
+  );
+  return value.student;
+}
+
+export async function listTeachingGroupStudents(
+  user: User,
+  slug: string,
+  groupId: string,
+  options: { page?: number; pageSize?: number } = {},
+): Promise<TeachingPagedResult<TeachingStudentGroupMembership>> {
+  const page = boundedPositiveInteger(options.page, 1, 1_000_000);
+  const pageSize = boundedPositiveInteger(options.pageSize, 30, 100);
+  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return requestJson<TeachingPagedResult<TeachingStudentGroupMembership>>(
+    user,
+    orgPath(slug, `/groups/${resourceId(groupId, "班级标识")}/students?${query}`),
+    {},
+    (body) => parsePage(body, "memberships", parseStudentGroupMembership),
+  );
+}
+
+export async function createTeachingStudentGroupMembership(
+  user: User,
+  slug: string,
+  groupId: string,
+  input: { studentId: string } & TeachingEffectiveRangeInput,
+  idempotencyKey: string,
+): Promise<TeachingStudentGroupMembership> {
+  const value = await requestJson<{ membership: TeachingStudentGroupMembership }>(
+    user,
+    orgPath(slug, `/groups/${resourceId(groupId, "班级标识")}/students`),
+    { method: "POST", body: { ...input }, idempotencyKey },
+    (body) => ({
+      membership: parseProperty(body, "membership", parseStudentGroupMembership),
+    }),
+  );
+  return value.membership;
+}
+
+export async function revokeTeachingStudentGroupMembership(
+  user: User,
+  slug: string,
+  membershipId: string,
+  idempotencyKey: string,
+): Promise<TeachingStudentGroupMembership> {
+  const value = await requestJson<{ membership: TeachingStudentGroupMembership }>(
+    user,
+    orgPath(slug, `/student-group-memberships/${resourceId(membershipId, "分班关系标识")}/revoke`),
+    { method: "POST", body: {}, idempotencyKey },
+    (body) => ({
+      membership: parseProperty(body, "membership", parseStudentGroupMembership),
+    }),
+  );
+  return value.membership;
+}
+
+export async function listTeachingTeacherAssignments(
+  user: User,
+  slug: string,
+  target: { groupId: string } | { studentId: string },
+  options: { page?: number; pageSize?: number } = {},
+): Promise<TeachingPagedResult<TeachingTeacherAssignment>> {
+  const page = boundedPositiveInteger(options.page, 1, 1_000_000);
+  const pageSize = boundedPositiveInteger(options.pageSize, 30, 100);
+  const query = new URLSearchParams({
+    ...("groupId" in target
+      ? { groupId: resourceId(target.groupId, "班级标识") }
+      : { studentId: resourceId(target.studentId, "学员标识") }),
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  return requestJson<TeachingPagedResult<TeachingTeacherAssignment>>(
+    user,
+    orgPath(slug, `/teacher-assignments?${query}`),
+    {},
+    (body) => parsePage(body, "assignments", parseTeacherAssignment),
+  );
+}
+
+export async function createTeachingTeacherAssignment(
+  user: User,
+  slug: string,
+  input: TeachingEffectiveRangeInput & (
+    | { groupId: string; studentId?: never }
+    | { studentId: string; groupId?: never }
+  ) & { teacherUserId: number },
+  idempotencyKey: string,
+): Promise<TeachingTeacherAssignment> {
+  const value = await requestJson<{ assignment: TeachingTeacherAssignment }>(
+    user,
+    orgPath(slug, "/teacher-assignments"),
+    { method: "POST", body: { ...input }, idempotencyKey },
+    (body) => ({ assignment: parseProperty(body, "assignment", parseTeacherAssignment) }),
+  );
+  return value.assignment;
+}
+
+export async function revokeTeachingTeacherAssignment(
+  user: User,
+  slug: string,
+  assignmentId: string,
+  idempotencyKey: string,
+): Promise<TeachingTeacherAssignment> {
+  const value = await requestJson<{ assignment: TeachingTeacherAssignment }>(
+    user,
+    orgPath(slug, `/teacher-assignments/${resourceId(assignmentId, "负责范围标识")}/revoke`),
+    { method: "POST", body: {}, idempotencyKey },
+    (body) => ({ assignment: parseProperty(body, "assignment", parseTeacherAssignment) }),
+  );
+  return value.assignment;
 }
 
 export async function createTeachingStudent(

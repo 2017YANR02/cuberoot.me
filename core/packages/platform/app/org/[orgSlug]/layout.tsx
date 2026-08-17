@@ -34,6 +34,12 @@ export default async function OrganizationLayout({
   const base = `/org/${organization.slug}`;
   const navLinks: Array<{ href: string; label: string; exact?: boolean }> = [
     { href: base, label: "概览", exact: true },
+    ...(hasTeachingPermission(organization.role, "campus:read")
+      ? [{ href: `${base}/campuses`, label: "校区" }]
+      : []),
+    ...(hasTeachingPermission(organization.role, "group:read")
+      ? [{ href: `${base}/classes`, label: "班级" }]
+      : []),
     ...(hasTeachingPermission(organization.role, "student:read")
       ? [{ href: `${base}/students`, label: "学员" }]
       : []),

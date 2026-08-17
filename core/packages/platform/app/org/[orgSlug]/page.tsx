@@ -36,7 +36,7 @@ export default async function OrganizationOverviewPage({
       <div className="mt-8 grid gap-6 md:grid-cols-2">
         <section aria-labelledby="people-heading">
           <h3 id="people-heading" className="text-[16px] font-semibold text-ink">人员管理</h3>
-          <p className="mt-1 text-[13px] leading-5 text-ink-3">当前已接通真实机构隔离、成员角色和学员档案。</p>
+          <p className="mt-1 text-[13px] leading-5 text-ink-3">当前已接通真实机构隔离、成员角色、校区班级和学员档案。</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {summary.studentCount !== null ? (
               <Link href={`/org/${organization.slug}/students`} prefetch={false} className="rounded-md bg-brand px-3 py-2 text-[13px] text-white hover:bg-brand-dark">管理学员</Link>
@@ -46,7 +46,7 @@ export default async function OrganizationOverviewPage({
         </section>
         <section aria-labelledby="next-heading">
           <h3 id="next-heading" className="text-[16px] font-semibold text-ink">完整教学闭环</h3>
-          <p className="mt-1 text-[13px] leading-5 text-ink-3">接下来按同一租户模型接入校区与班级、课包和剩余课时、排课与上课历史、训练作业、周报及家校沟通。</p>
+          <p className="mt-1 text-[13px] leading-5 text-ink-3">校区班级、课包与剩余课时、排课和上课历史已进入同一租户模型；训练作业、周报及家校沟通将继续沿此权限边界接入。</p>
         </section>
       </div>
     </div>
