@@ -239,6 +239,7 @@ describe('mini program release check', () => {
 
   it('requires every human release gate to be explicitly confirmed', () => {
     expect(releaseConfirmationsFromEnv({
+      WECHAT_MINI_SOCKET_DOMAIN_CONFIGURED: '1',
       WECHAT_MINI_BASIC_INFO_APPROVED: '1',
       WECHAT_MINI_FILING_COMPLETED: '0',
       WECHAT_MINI_PRIVACY_REVIEWED: '1',
@@ -249,6 +250,7 @@ describe('mini program release check', () => {
       WECHAT_MINI_GIIKER_TESTED: '1',
       WECHAT_MINI_MOYU_TESTED: '1',
     })).toEqual({
+      socketDomainConfigured: true,
       basicInfoApproved: true,
       filingCompleted: false,
       privacyReviewed: true,
@@ -541,6 +543,29 @@ describe('mini program release check', () => {
     expect(failures).toEqual([
       'pages/device/index.js 使用了微信用户资料能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
       'pages/device/index.js 使用了蓝牙能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+    ]);
+  });
+
+  it('detects destructured privacy-sensitive APIs in source and upload output', () => {
+    const failures = collectReleaseFailures({
+      ...validInput,
+      sourceFiles: [
+        {
+          path: 'src/pages/location/index.ts',
+          source: 'const { getLocation: locate } = wx;locate({})',
+        },
+      ],
+      uploadFiles: [
+        {
+          path: 'pages/import/index.js',
+          source: 'const api=wx;const {chooseImage:pick}=api;pick({})',
+        },
+      ],
+    });
+
+    expect(failures).toEqual([
+      'src/pages/location/index.ts 使用了定位能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+      'pages/import/index.js 使用了文件、图片或媒体能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
     ]);
   });
 

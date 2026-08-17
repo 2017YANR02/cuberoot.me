@@ -74,6 +74,8 @@ async function buildProject() {
     entryPoints: entryPoints(sourceFiles),
     format: 'iife',
     logLevel: 'info',
+    minifySyntax: !watch,
+    minifyWhitespace: !watch,
     outbase: sourceRoot,
     outdir: stagingRoot,
     platform: 'browser',

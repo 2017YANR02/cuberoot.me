@@ -3,9 +3,11 @@ import {
   isSmartCubeRelayHello,
   isSmartCubeRelayPayload,
   type SmartCubeRelayHello,
+  type SmartCubeRelayPayload,
 } from '@cuberoot/shared/smart-cube/relay';
 
 export interface SmartCubeRelaySocket {
+  readonly bufferedAmount?: number;
   send(data: string): void;
   close(code?: number, reason?: string): void;
 }
@@ -20,8 +22,9 @@ interface RelayPeer {
 interface RelayChannel {
   createdAt: number;
   lastMoveSeq: number;
-  moves: Array<{ encoded: string; seq: number }>;
+  moves: Array<{ bytes: number; encoded: string; seq: number }>;
   ownerKey: string;
+  replayedMoveBytes: number;
   source: RelayPeer | null;
   sourceSeen: boolean;
   sinks: Set<RelayPeer>;
@@ -33,6 +36,7 @@ interface RelayChannel {
 const MAX_CHANNELS = 512;
 const MAX_SINKS_PER_CHANNEL = 2;
 const MAX_REPLAYED_MOVES = 512;
+const textEncoder = new TextEncoder();
 const CHANNEL_PRUNE_INTERVAL_MS = 60_000;
 const MESSAGE_WINDOW_MS = 10_000;
 const CHANNEL_CREATION_WINDOW_MS = 60_000;
@@ -45,15 +49,83 @@ export const SMART_CUBE_RELAY_MAX_MESSAGES_PER_WINDOW = 1_200;
 export const SMART_CUBE_RELAY_HELLO_TIMEOUT_MS = 5_000;
 export const SMART_CUBE_RELAY_MAX_PENDING_PER_CLIENT = 8;
 export const SMART_CUBE_RELAY_SINK_GRACE_MS = 15_000;
+export const SMART_CUBE_RELAY_MAX_BUFFERED_BYTES = 256 * 1024;
+export const SMART_CUBE_RELAY_MAX_REPLAY_BYTES = 64 * 1024;
 
 function parseMessage(data: unknown): unknown {
   if (typeof data !== 'string') return null;
-  if (new TextEncoder().encode(data).byteLength > SMART_CUBE_RELAY_MAX_MESSAGE_BYTES) return null;
+  if (encodedBytes(data) > SMART_CUBE_RELAY_MAX_MESSAGE_BYTES) return null;
   try {
     return JSON.parse(data) as unknown;
   } catch {
     return null;
   }
+}
+
+function encodedBytes(data: string): number {
+  return textEncoder.encode(data).byteLength;
+}
+
+function canonicalizeRelayPayload(message: SmartCubeRelayPayload): SmartCubeRelayPayload {
+  if (message.type === 'status') {
+    const canonical: Extract<SmartCubeRelayPayload, { type: 'status' }> = {
+      type: 'status',
+      phase: message.phase,
+    };
+    if (message.brand !== undefined) canonical.brand = message.brand;
+    if (message.deviceName !== undefined) canonical.deviceName = message.deviceName;
+    if (message.hasGyro !== undefined) canonical.hasGyro = message.hasGyro;
+    if (message.error !== undefined) canonical.error = message.error;
+    return canonical;
+  }
+  if (message.type === 'move') {
+    const canonical: Extract<SmartCubeRelayPayload, { type: 'move' }> = {
+      type: 'move',
+      move: message.move,
+    };
+    if (message.deviceTs !== undefined) canonical.deviceTs = message.deviceTs;
+    if (message.relaySeq !== undefined) canonical.relaySeq = message.relaySeq;
+    return canonical;
+  }
+  if (message.type === 'state') return { type: 'state', facelets: message.facelets };
+  if (message.type === 'battery') return { type: 'battery', level: message.level };
+  if (message.type === 'command') return { type: 'command', command: message.command };
+  const canonical: Extract<SmartCubeRelayPayload, { type: 'gyro' }> = {
+    type: 'gyro',
+    quaternion: {
+      w: message.quaternion.w,
+      x: message.quaternion.x,
+      y: message.quaternion.y,
+      z: message.quaternion.z,
+    },
+  };
+  if (message.velocity !== undefined) {
+    canonical.velocity = {
+      x: message.velocity.x,
+      y: message.velocity.y,
+      z: message.velocity.z,
+    };
+  }
+  return canonical;
+}
+
+type SendFailure = 'backpressure' | 'send-failed' | null;
+
+function sendRelayMessage(socket: SmartCubeRelaySocket, data: string): SendFailure {
+  if ((socket.bufferedAmount ?? 0) + encodedBytes(data) > SMART_CUBE_RELAY_MAX_BUFFERED_BYTES) {
+    return 'backpressure';
+  }
+  try {
+    socket.send(data);
+    return null;
+  } catch {
+    return 'send-failed';
+  }
+}
+
+function closeForSendFailure(socket: SmartCubeRelaySocket, failure: Exclude<SendFailure, null>): void {
+  if (failure === 'backpressure') closeSafely(socket, 1013, 'relay backpressure');
+  else closeSafely(socket, 1011, 'relay send failed');
 }
 
 function closeSafely(socket: SmartCubeRelaySocket, code: number, reason: string): void {
@@ -159,6 +231,7 @@ export class SmartCubeRelay {
               lastMoveSeq: 0,
               moves: [],
               ownerKey: clientKey,
+              replayedMoveBytes: 0,
               source: null,
               sourceSeen: false,
               sinks: new Set(),
@@ -197,20 +270,21 @@ export class SmartCubeRelay {
               reject('relay replay unavailable');
               return;
             }
-            try {
-              for (const snapshot of channel.snapshots.values()) {
-                if (snapshot.includes('"type":"state"')
-                  && requestedMoveSeq < channel.lastMoveSeq) continue;
-                socket.send(snapshot);
-              }
-              for (const move of channel.moves) {
-                if (move.seq > requestedMoveSeq) socket.send(move.encoded);
-              }
-            } catch {
+            const replayMessages = [
+              ...[...channel.snapshots.values()].filter((snapshot) =>
+                !(snapshot.includes('"type":"state"')
+                  && requestedMoveSeq < channel.lastMoveSeq)),
+              ...channel.moves
+                .filter((move) => move.seq > requestedMoveSeq)
+                .map((move) => move.encoded),
+            ];
+            for (const replayMessage of replayMessages) {
+              const failure = sendRelayMessage(socket, replayMessage);
+              if (!failure) continue;
               closed = true;
               clearHelloTimer();
               releasePending();
-              closeSafely(socket, 1011, 'relay send failed');
+              closeForSendFailure(socket, failure);
               return;
             }
             this.cancelSinklessTimer(channel);
@@ -220,16 +294,15 @@ export class SmartCubeRelay {
           peer = nextPeer;
           clearHelloTimer();
           releasePending();
-          try {
-            socket.send(JSON.stringify({
-              type: 'ready',
-              role: message.role,
-              lastMoveSeq: channel.lastMoveSeq,
-            }));
-          } catch {
+          const readyFailure = sendRelayMessage(socket, JSON.stringify({
+            type: 'ready',
+            role: message.role,
+            lastMoveSeq: channel.lastMoveSeq,
+          }));
+          if (readyFailure) {
             closed = true;
             detach();
-            closeSafely(socket, 1011, 'relay send failed');
+            closeForSendFailure(socket, readyFailure);
           }
           return;
         }
@@ -270,13 +343,20 @@ export class SmartCubeRelay {
             reject('source cannot set relay sequence');
             return;
           }
-          const outboundMessage = message.type === 'move'
-            ? { ...message, relaySeq: ++channel.lastMoveSeq }
-            : message;
+          const canonicalMessage = canonicalizeRelayPayload(message);
+          const outboundMessage = canonicalMessage.type === 'move'
+            ? { ...canonicalMessage, relaySeq: ++channel.lastMoveSeq }
+            : canonicalMessage;
           const encoded = JSON.stringify(outboundMessage);
           if (outboundMessage.type === 'move') {
-            channel.moves.push({ encoded, seq: outboundMessage.relaySeq });
-            if (channel.moves.length > MAX_REPLAYED_MOVES) channel.moves.shift();
+            const bytes = encodedBytes(encoded);
+            channel.moves.push({ bytes, encoded, seq: outboundMessage.relaySeq });
+            channel.replayedMoveBytes += bytes;
+            while (channel.moves.length > MAX_REPLAYED_MOVES
+              || channel.replayedMoveBytes > SMART_CUBE_RELAY_MAX_REPLAY_BYTES) {
+              const removed = channel.moves.shift();
+              if (removed) channel.replayedMoveBytes -= removed.bytes;
+            }
           }
           if (message.type === 'status' || message.type === 'state' || message.type === 'battery') {
             channel.snapshots.set(message.type, encoded);
@@ -288,12 +368,11 @@ export class SmartCubeRelay {
           reject('sink can only send commands');
           return;
         }
-        const encoded = JSON.stringify(message);
+        const encoded = JSON.stringify(canonicalizeRelayPayload(message));
         if (!channel.source) return;
-        try {
-          channel.source.socket.send(encoded);
-        } catch {
-          closeSafely(channel.source.socket, 1011, 'relay send failed');
+        const failure = sendRelayMessage(channel.source.socket, encoded);
+        if (failure) {
+          closeForSendFailure(channel.source.socket, failure);
           this.markSourceDisconnected(peer.hello.token, channel);
         }
       },
@@ -332,12 +411,10 @@ export class SmartCubeRelay {
 
   private broadcastToSinks(token: string, channel: RelayChannel, encoded: string): void {
     for (const sink of [...channel.sinks]) {
-      try {
-        sink.socket.send(encoded);
-      } catch {
-        channel.sinks.delete(sink);
-        closeSafely(sink.socket, 1011, 'relay send failed');
-      }
+      const failure = sendRelayMessage(sink.socket, encoded);
+      if (!failure) continue;
+      channel.sinks.delete(sink);
+      closeForSendFailure(sink.socket, failure);
     }
     this.scheduleSourceCloseIfSinkless(token, channel);
     this.deleteIfEmpty(token, channel);

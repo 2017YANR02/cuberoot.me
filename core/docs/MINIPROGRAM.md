@@ -1,6 +1,6 @@
 # CubeRoot 微信小程序跟踪
 
-> 最后更新：2026-08-16。本文是小程序的架构约定、当前状态、上线清单和迭代记录。后续开发先更新这里，不再另建互相冲突的计划。
+> 最后更新：2026-08-17。本文是小程序的架构约定、当前状态、上线清单和迭代记录。后续开发先更新这里，不再另建互相冲突的计划。
 
 ## 1. 产品路线
 
@@ -109,6 +109,7 @@ pnpm --filter @cuberoot/miniprogram check
 ```powershell
 $env:WECHAT_MINI_LIB_VERSION='<开发者工具显示的稳定版本>'
 $env:WECHAT_MINI_SECRET_ROTATED='1' # 仅在后台轮换并更新服务端后设置
+$env:WECHAT_MINI_SOCKET_DOMAIN_CONFIGURED='1' # 仅在后台配置 wss://api.cuberoot.me 后设置
 $env:WECHAT_MINI_BASIC_INFO_APPROVED='1'
 $env:WECHAT_MINI_FILING_COMPLETED='1'
 $env:WECHAT_MINI_PRIVACY_REVIEWED='1'
@@ -122,7 +123,7 @@ pnpm --filter @cuberoot/miniprogram build
 pnpm --filter @cuberoot/miniprogram release:check
 ```
 
-`build` 会保留已有正式 AppID 和明确的数字基础库；不会把已选好的本地版本重置回 `trial`。构建成功后会在被忽略的 `.tmp/` 写入源码和产物指纹，不进入上传包。`release:check` 会先运行类型检查和全部小程序回归测试，再拒绝缺页、源码变化后的旧 `dist`、构建后被改动的 `dist`，并要求每次上传显式确认稳定版本、密钥轮换、基础信息审核、备案、后台隐私指引、双平台真机和已支持设备的全链路回归。环境变量只是防遗忘闸门，不能代替真实操作。
+`build` 会保留已有正式 AppID 和明确的数字基础库；不会把已选好的本地版本重置回 `trial`。构建成功后会在被忽略的 `.tmp/` 写入源码和产物指纹，不进入上传包。`release:check` 会先运行类型检查和全部小程序回归测试，再拒绝缺页、源码变化后的旧 `dist`、构建后被改动的 `dist`，并要求每次上传显式确认稳定版本、密钥轮换、socket 合法域名、基础信息审核、备案、后台隐私指引、双平台真机和已支持设备的全链路回归。环境变量只是防遗忘闸门，不能代替真实操作。
 
 微信开发者工具导入 `core/packages/miniprogram`，不是 `dist`。`project.config.json` 和 `project.private.config.json` 是本机配置，不提交 AppID 之外的任何凭据。
 
@@ -925,7 +926,7 @@ pnpm --filter @cuberoot/miniprogram release:check
 
 - 共享包构建、客户端类型检查、服务端类型检查和小程序类型检查、构建均通过。
 - 客户端智能魔方相关 580 项、小程序全量 264 项、服务端中继 17 项回归通过；源码与构建产物敏感能力扫描通过。
-- 发布检查只保留 11 项不能由代码替代的人工门禁：稳定基础库确认、AppSecret 轮换、基础信息审核、备案、隐私复核、iOS 真机、Android 真机，以及 GAN 16 ui、GoCube、Giiker/米家和 MoYu MHC 真机；未用环境变量伪造通过。
+- 发布检查只保留 12 项不能由代码替代的人工门禁：稳定基础库确认、AppSecret 轮换、socket 合法域名、基础信息审核、备案、隐私复核、iOS 真机、Android 真机，以及 GAN 16 ui、GoCube、Giiker/米家和 MoYu MHC 真机；未用环境变量伪造通过。
 
 ### 2026-08-17：BLE 写入与断连统一隔离
 
@@ -947,6 +948,19 @@ pnpm --filter @cuberoot/miniprogram release:check
 - 发布检查新增独立 MoYu 真机闸门。自动回归只证明代码和模拟传输边界，真实设备连接、转动和重连仍需在支持微信 BLE 的手机上验收。
 - 本轮严格收口在 MHC 旧协议；MoYu32 加密协议和 QiYi 协议族留给后续独立迭代，不与本轮混做。
 - 本轮验证：小程序全量 271 项、客户端智能魔方相关 152 项通过；共享包、客户端和小程序类型检查以及小程序正式构建全部通过。
+
+### 2026-08-17：正式包体积收口
+
+- 非监听构建只压缩语法与空白，不改源码，也不压缩标识符；开发监听构建继续保留可读代码和 source map。
+- 智能魔方页面产物从 131,470 B 降到 86,767 B，重新进入单文件 128 KiB 发布预算。
+- `release:check` 的自动回归、类型检查、构建指纹、敏感能力扫描和包体检查全部通过；当前失败项只剩正式 AppID、稳定基础库和后台、真机人工门禁，未伪造确认值。
+
+### 2026-08-17：中继发布链路与资源边界
+
+- 正式反向代理为 `/v1/smart-cube/relay` 单独启用 WebSocket 升级、长连接超时和禁缓冲，避免 HTTP 代理默认行为让模拟器或真机一直停在“连接中”。
+- 服务端只转发协议白名单字段；每个频道最多保留 64 KiB 的重放数据，单个慢连接待发送量达到 256 KiB 时主动断开，不再让未知字段或慢客户端无限占用内存。
+- 小程序读取登录存储失败时保持失败页，不再以访客身份继续打开网站；敏感能力扫描同时覆盖 `wx` 方法解构和别名解构。
+- CI 与服务端部署流水线都执行服务端回归和小程序完整检查。`wss://api.cuberoot.me` 仍须在小程序后台配置为 socket 合法域名，发布闸门不会替操作者伪造该确认。
 
 ### 首版工程
 

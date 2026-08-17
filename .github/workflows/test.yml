@@ -97,6 +97,14 @@ jobs:
         working-directory: core
         run: pnpm --filter @cuberoot/server typecheck
 
+      - name: Test server
+        working-directory: core
+        run: pnpm --filter @cuberoot/server test
+
+      - name: Verify Mini Program
+        working-directory: core
+        run: pnpm --filter @cuberoot/miniprogram check
+
       # 常规全集不和 analyzer_worker 慢测争 CPU；后者由独立 job 并行覆盖。
       - name: Test fast suite
         working-directory: core

@@ -462,7 +462,7 @@
   }
 
   .inputWithClear,
-  .auxiliaryEdit input,
+  .auxiliaryInput,
   .auxiliaryEdit label,
   .pickerField {
     width: 100%;

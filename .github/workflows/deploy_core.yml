@@ -53,6 +53,14 @@ jobs:
           pnpm --filter @cuberoot/visualcube build
           pnpm --filter @cuberoot/vendor-sr-puzzlegen build
 
+      - name: Test server
+        working-directory: core
+        run: pnpm --filter @cuberoot/server test
+
+      - name: Verify Mini Program
+        working-directory: core
+        run: pnpm --filter @cuberoot/miniprogram check
+
       # esbuild --bundle 把 server src + 全部 deps (含写得烂的 sr-puzzlegen,
       # 无扩展名 ESM)打成单个 dist/server.bundle.js,Node 严格模式直接跑。
       # 旧的 tsc -b + `pnpm deploy --prod --legacy` self-contained 树已退役。
