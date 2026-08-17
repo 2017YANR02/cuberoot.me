@@ -30,6 +30,12 @@ interface WxSdk {
   error(cb: (e: unknown) => void): void;
   updateAppMessageShareData(o: Record<string, unknown>): void;
   updateTimelineShareData(o: Record<string, unknown>): void;
+  miniProgram?: {
+    navigateTo(options: {
+      url: string;
+      fail?(error: { errMsg?: string }): void;
+    }): void;
+  };
 }
 declare global {
   interface Window { wx?: WxSdk }

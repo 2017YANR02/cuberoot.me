@@ -11,6 +11,7 @@ import {
   buildInputFingerprint,
   normalizedRelativePath,
   outputFingerprint,
+  sharedSmartCubeSourceRoot,
   walkFiles,
   writeBuildState,
 } from './build-state.mjs';
@@ -131,6 +132,15 @@ if (!watch) {
   }
 
   const sourceWatcher = watchSource(sourceRoot, { recursive: true }, queueRebuild);
+  const sharedSourceWatcher = watchSource(
+    sharedSmartCubeSourceRoot(packageRoot),
+    { recursive: true },
+    queueRebuild,
+  );
+  const sharedPackageWatcher = watchSource(
+    resolve(packageRoot, '..', 'shared', 'package.json'),
+    queueRebuild,
+  );
   const assetDirectories = [...new Set(BUILD_ASSETS.map((asset) => dirname(asset.source)))];
   const assetWatchers = assetDirectories.map((directory) => {
     const filenames = new Set(BUILD_ASSETS
@@ -145,10 +155,12 @@ if (!watch) {
   const stopWatching = () => {
     clearTimeout(debounceTimer);
     sourceWatcher.close();
+    sharedSourceWatcher.close();
+    sharedPackageWatcher.close();
     for (const assetWatcher of assetWatchers) assetWatcher.close();
     process.exit(0);
   };
   process.once('SIGINT', stopWatching);
   process.once('SIGTERM', stopWatching);
-  console.log('Watching all mini program source files.');
+  console.log('Watching mini program and shared smart-cube source files.');
 }
