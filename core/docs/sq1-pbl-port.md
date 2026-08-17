@@ -1,119 +1,84 @@
-# Square-1 PBL 文档与 Finder 移植跟踪
+# Square-1 PBL 公式集与 Finder 移植跟踪
 
 最后更新：2026-08-16
 
-## 目标与边界
+## 最终产品边界
 
-- 主入口：`/[lang]/alg/sq1/pbl`，并从现有 `/alg/sq1` 与 SQ1 工具导航进入。
-- 文档源：Daniel's Public PBL Doc Google Sheet；完整保留用户内容、公式、案例、说明、链接和有语义的视觉分组，忽略表格调试痕迹与无语义元数据。
-- Finder 源：`Square-1 PBL Finder.jar`；以行为兼容方式在站内重写，不在浏览器分发或执行 JAR。
-- SQ1 记号、状态、形状名、图示和链接必须复用站内共享实现，不另造解析器、播放器或第二套形状数据。
-- 中英文 UI 走站内 i18n；来源文档正文保留作者原文，并明确标注来源与更新时间。
-- 上游表格发生实质变化时，GitHub Actions 创建或更新单一漂移 Issue；不自动把未经校验的数据上线。
+- 主入口是 `/{lang}/alg/sq1/pbl`，由站内标准公式库的 `AlgCategoryView`、`AlgCaseView`、`CaseThumb` 和 `AlgPlayer` 接管。
+- `/alg/sq1` 增加 PBL 卡片；PBL 不再作为 SQ1 工具导航中的独立“表格”页。
+- JAR 的高级组合查找能力保留在 `/{lang}/alg/sq1/pbl-finder`，主公式集页提供真链接入口。
+- Daniel's Public PBL Doc 只作为公式数据与维护源；网页不分发 Excel 工作簿查看器、sheet JSON、公式图片或其媒体镜像。
+- 工作簿漂移仍由定时 GitHub Actions 与 `maintain-sq1-pbl` Skill 跟踪，变化须人工复核后再用新迁移上线。
 
-## 来源基线
+## 来源与许可边界
 
-| 来源 | 本地基线 | SHA-256 | 许可状态 |
+| 来源 | 本地基线 | 用途 | 许可状态 |
 |---|---|---|---|
-| Square-1 PBL Finder | `.tmp/jar/Square-1 PBL Finder.jar` | `dec27e3b9879a64b39168a4152c6d39b78af41cd68d8abb41be5a96d3b032d11` | 未发现源码或许可证，不能称为开源；仅作 clean-room 行为重写并保留来源致谢 |
-| Daniel's Public PBL Doc | `.tmp/xlsx/Daniel's Public PBL Doc.xlsx` | `1549ed904a32cf5160b3646b79a3d65d1891354c0fe3164ce0472f4065ec67c6` | 公开可读，未发现明确再许可文本；保留原作者、来源链接和内容层归属 |
+| Daniel's Public PBL Doc | `.tmp/xlsx/Daniel's Public PBL Doc.xlsx` | 967 个非还原 PBL case 的公式、分类与维护证据 | 公开可读，但未发现明确开源或再许可条款；保留作者与来源致谢 |
+| Simple Square-1 PBL Finder v1.2 | `.tmp/jar/Square-1 PBL Finder.jar` | 高级查找器的黑盒行为基线 | JAR 内没有源码、LICENSE、COPYING 或 NOTICE；未证实开源，只做 clean-room 行为重写 |
 
-### Finder 基线清单
+本站不分发或执行原 JAR，也不把“公开下载”表述为“开源”。Finder 复用站内 Square-1 状态机、记号、图示、播放器和 UI。
 
-- Java 8 JAR，74,717 bytes，22 个 class；没有源码、LICENSE、COPYING、NOTICE 或其他资源文件。
-- 作者署名为 Anuar Onofre 和 Lucas Sousa；About 说明思路来自 Jayden McNeill，多数辅助公式来自 Charlie Stark 的 Sub 6 PBL list。
-- 43 个上下层选项，其中 21 个普通 PLL、22 个 parity PLL；GUI 搜索空间是完整的 `43 × 43 = 1,849` 种组合。
-- 默认辅助公式 814 条，规范化后名称和序列各自均唯一；原程序枚举 `814² = 662,596` 个有序二元组。
-- 结果先保留生成顺序，再按 `/` 数量稳定升序；原程序不校验中层状态，网页同时保留 legacy 兼容夹具和 strict 修正版口径。
-- 原程序在当前形状不可切时会静默忽略 `/`；该历史行为解释了 `U+/U-7` 接 `Rb/L5` 至 `Rb/L16` 的 12 条结果，只保留在 legacy Finder，strict 模式继续使用站内合法切层语义。
-- `Ua/Ua` 完整默认表的 legacy 基线是 125 个结果，前 3 条结果另存为 golden fixture。
+## 公式数据契约
 
-### 工作簿基线清单
+- 工作簿 `Raw Algs` 有 968 行：1 个 `-/-` 还原参考和 967 个非还原 case；公式库只导入后 967 个。
+- 967 个 case 的名称、公式和数据库 position 均唯一，公式全部通过站内 Square-1 parser、逆序 setup 与 `validateAlgCase` 契约。
+- 公式库运行时唯一数据源是 PostgreSQL `alg_sets/alg_cases`；`data/sq1-pbl/cases.json` 只是可审查的维护输入与 fixture。
+- 每个 case 的可执行 `AlgEntry.alg` 来自规范化 `solution`；原表的 `recommendation.algorithm` 是宏/助记文本，只进入 note，绝不交给播放器。
+- 助记说明独立放在 `/{lang}/alg/sq1/pbl-notation`：103 个 Help 页定义逐项保真，31 个出现但未定义的形式明确列出且不猜解；公式集首页与 case 详情都提供真链接。
+- `M/Db` 的 `Raw Algs` 公式为空，已从 `Standard Algs Data!T208` 恢复为：
+  `(1, 0) / (-3, 0) / (3, 0) / (-1, 2) / (0, 3) / (-3, -3) / (4, -2) / (-1, 0)`。
+- 原表刻意排除在推荐切片器外的 `Ga/Gd`、`Ga/Jb`、`Gb/Gc`、`Gb/Jb` 仍完整导入，并保留 `used:false` 来源属性。
+- 两级分类为 `nP/<top>` 或 `P/<top>`，共 44 个叶分组；公式 setup 留空，由标准 SQ1 公式组件按公式逆序生成目标态。
+- 初次导入使用 `0140_sq1_pbl.sql`。该迁移一旦应用即不可修改；后续表格维护必须新增编号更大的迁移，保留用户收藏、熟练度和社区数据。
 
-- 64 个 sheet：63 个可见，隐藏 `wtfP` 1 个；表内记录 143,902 个单元格。
-- 33,763 个单元格有字面值或缓存值，8,061 个公式单元格；内容并集 37,835，纯样式单元格 106,067。
-- 321 个合并区域、10 个数据校验、17 条条件格式、657 个链接、793 条公开稳定批注。
-- 13 张唯一 PNG、15 个图片锚点、3 个 table；所有内容和媒体均纳入规范化清单。
-- 公式类型为 shared 5,916、normal 2,115、array 30；4,072 个公式缓存为空。shared 公式保留 master/range，5,768 个从属格只标记 master 模板，不伪造平移后的公式。
-- 空缓存公式中 3,089 格是原表可见图片：3,082 个直接 IMAGE 和 7 个动态选择结果；已物化为 1,116 个 content-hash 静态资产（1,102 PNG、14 SVG，共 24,694,158 bytes），其余 983 格是原表空值守卫。
-- `Raw Algs` 共 968 个状态：solved 1 个、非 solved 967 个，frequency 合计 10,368。
-- 推荐表公开 963 个状态；`Ga/Gd`、`Ga/Jb`、`Gb/Gc`、`Gb/Jb` 4 个 double-misalign 状态刻意标为 unused，迁移时保留并写成 `used:false`。
-- 本地文件比线上公开 export 多 376 条 Google threaded-comment 的 Excel 降级副本；它们归入 editorial 噪声，不参与内容漂移哈希。
+## Finder 行为契约
 
-## 工作流
+- Top 与 Bottom 各 43 个选项，顺序固定为 21 个普通 PLL 后接 22 个 parity PLL；初始均不选择。
+- 814 条默认辅助公式完整且名称、序列各自唯一；legacy 搜索枚举 `814² = 662,596` 个有序组合。
+- 默认兼容原 JAR 的 legacy 语义与稳定排序；strict 是站内显式增强模式。
+- legacy 中不可切的 `/` 会静默 no-op；该差异只属于 Finder，不能污染标准公式库的 SQ1 合法状态语义。
+- JSON 导入、旧 localStorage、括号记号和首尾 `/` 均先规范化；取消、清空与卸载会终止 Worker 并拒绝过期消息。
+- 结果方向固定为 `setup=result.setup`、`alg=result.algorithm`，复用一个 `CaseThumb` 和一个 `AlgPlayer`，并支持复制。
+- Daniel 文档与 JAR 的 PLL 命名/朝向约定不同，禁止按同名 case 自动互链或用 Finder setup 翻转文档公式。
 
-1. 反编译并黑盒核对 Finder 的默认数据、输入边界、搜索语义、排序和输出格式。
-2. 枚举工作簿全部工作表、范围、公式、图片、链接、批注、隐藏内容和格式语义，建立完整性清单。
-3. 把上游内容规范化为可审查的仓库快照；生成页面数据时保持确定性。
-4. 在共享 SQ1 组件之上实现文档浏览和 Finder，覆盖桌面与 `<480px`。
-5. 建立定时漂移检测、去重 Issue 和项目 Skill；维护时先对比、再校验、后更新基线。
-6. 完成数据、算法、UI、移动端、可访问性、i18n、许可和回归测试多轮审查。
+## 维护工作流
 
-## 功能清单
+1. 在 `core/` 运行 `node packages/client/scripts/sq1-pbl-check.mjs`；退出码 0/3/2/1 分别表示同步、实质漂移、无基线和解析失败。
+2. 有漂移时逐项审查工作簿语义、968 行完整性、967 个可执行公式、963 个推荐 case、4 个 unused case 和 `M/Db` 恢复证据。
+3. 审核通过后运行 `node packages/client/scripts/sq1-pbl-check.mjs --write`，只同步 `cases.json`、Finder 默认值和漂移基线。
+4. 运行公式生成器的 `--check`、Python 规范化测试、漂移测试、公式库测试和 Finder golden 测试。
+5. 若公式内容变化，新建下一号 PG 迁移并在本地 PostgreSQL、API、桌面与窄屏页面完整验证；禁止重写 `0140_sq1_pbl.sql`。
 
-### PBL Finder
-
-- [x] Top PLL 与 Bottom PLL 各有 43 项，按 21 个普通 PLL 后接 22 个 parity PLL；初始均不选择，与 JAR 一致。
-- [x] Auxiliary Algorithms 默认表完整，支持新增、删除、JSON 导入导出和输入校验；导入与持久化数据统一规范为 Finder compact 记号并保留首尾 `/`。
-- [x] Finder 默认使用 legacy 搜索语义和稳定排序；strict 作为显式增强项额外校验中层并规范化、去重输出。
-- [x] 空选择、非法公式、重复名称、无解、括号记号、首尾 `/`、上下层对称与奇偶边界有明确处理。
-- [x] 选中结果公式可复制，并复用单个 `AlgPlayer` 动画与 `CaseThumb` 主图。
-
-### PBL 文档
-
-- [x] 64 个工作表（含 hidden 标识）均由清单选择并按需载入完整单元格数据。
-- [x] 公式、案例名、注释、图示、链接、作者说明及共享公式模板已完整保留并完成计数对账。
-- [x] 合并、样式范围、行列尺寸与隐藏、冻结窗格、链接和图片锚点均进入响应式工作表视图。
-- [x] 数字格式覆盖百分比、日期、整数与定点小数；富文本逐 run 保留颜色、粗斜体和删除线；现有条件格式实际应用色阶及 differential fill/font。
-- [x] 空缓存 IMAGE/派生公式通过严格 `computedImage` 契约显示本地 content-hash 图片，公式文本仍可查看；图片带可访问名称、尺寸、懒加载且受单元格宽度约束。
-- [x] 原文、站内双语辅助文案和来源信息职责分离。
-- [x] 宽表使用局部横向滚动；桌面、平板和 `<480px` 的布局规则已实现，实机浏览器验收留在第 7 轮。
-
-### 上游维护
-
-- [x] 统一抓取层可下载 Google Sheet 当前公开导出。
-- [x] 规范化快照忽略无语义元数据，保留内容、公式、链接和结构变化。
-- [x] 检测器退出码区分一致、漂移、无基线和抓取/解析失败。
-- [x] GitHub Actions 定时检查，漂移时创建或更新单一标签 Issue。
-- [x] `.agents/skills/maintain-sq1-pbl` 覆盖 PBL 上下文中的“维护表格”等触发词和完整更新流程。
+定时工作流 `.github/workflows/sq1_pbl_drift.yml` 只创建或更新一个带 `sq1-pbl-drift` 标签的开放 Issue，不自动上线上游变化。
 
 ## 审查轮次
 
-| 轮次 | 范围 | 状态 | 证据 |
-|---|---|---|---|
-| 1 | 来源、许可与版权边界 | 完成 | JAR 无许可证文件，公开检索未找到源码或许可证；credits 按未核实许可登记 |
-| 2 | JAR 行为与算法等价性 | 完成（独立验证） | `export-finder-jar.mjs --check` 已验证 21+22 PLL、814 unique auxiliary、Ua/Ua=125；独立反汇编定位并复现不可切 `/` 静默跳过语义。52 项测试锁定精确选项顺序、42 个 legacy optimizer 行为、不可切 `/` 定向回归、括号与边界 `/` 导入、完整 125 条 Ua/Ua 结果及顺序，以及 Worker 启动失败和 stale message 守卫 |
-| 3 | XLSX 内容与结构完整性 | 完成 | 64 sheets、37,835 content cells、8,061 formulas、657 links、793 stable notes、13 workbook PNG；另锁 3,089 个公式图片格、1,116 个本地公式资产及 shared/normal/array/empty-cache 全量计数 |
-| 4 | 数据模型与站内复用边界 | 完成 | 路由定为 `/alg/sq1/pbl`；CaseThumb、单个 AlgPlayer、SQ1 shared parser/state、按需快照为唯一实现边界 |
-| 5 | 页面、移动端与可访问性 | 完成（代码与契约） | 64 表按需浏览、完整单元格细节、数字格式、逐 run 富文本、17 条条件格式、冻结/隐藏、含 fragment 的真链接、公式计算图片、复制反馈及窄屏局部滚动已实现；浏览器实测因本地 dev 无法启动单列在第 7 轮 |
-| 6 | 漂移检测与 Skill 前向测试 | 完成 | CLI 0/1/2/3 真运行；Skill validator 通过；workflow 3 段 shell 均通过 `bash -n`，Issue 按标签只取首个 open 项并在 comment/create 间二选一 |
-| 7 | 测试、typecheck 与浏览器验收 | 部分完成 | 隔离完整工作树中 Finder、数据、漂移和 loader 共 4 files/75 tests 通过，client typecheck 通过；Python 3 tests、JAR exporter、Skill validator、esbuild、metadata/URL/catalog 守卫均已执行。隔离 Next dev 已编译目标路由，页面、manifest、sheet JSON 和公式 SVG 均返回 200；当前浏览器控制会话不可用，未把 HTTP 取证冒充桌面与窄屏视觉验收 |
+| 轮次 | 范围 | 结论或证据 |
+|---|---|---|
+| 1 | 来源、许可与边界 | JAR 内无许可证和源码，公开检索未找到可核实开源仓库；按未核实许可登记 credits |
+| 2 | 工作簿完整性 | 64 sheets、968 Raw Algs 行、963 recommended、4 unused、频次总和 10,368；threaded comments 作为 editorial 噪声 |
+| 3 | 数据恢复与规范化 | `M/Db` 只允许从指定标准公式格恢复；任何其他非还原空公式 fail closed |
+| 4 | 标准公式库映射 | 967/967 case、44 叶分组、唯一名称/公式/position、parser 与 inverse 闭环全量断言 |
+| 5 | JAR 黑盒兼容 | 21+22 选项、814 默认辅助公式、`Ua/Ua` 125 条完整结果和顺序、非法切层 no-op 均由 golden fixture 锁定 |
+| 6 | 路由与复用 | PBL 卡片进入 `/alg/sq1`；主路由由标准动态公式页接管；Finder 独立；旧 Excel Workspace 与公开资产退出 |
+| 7 | 维护与发布安全 | 漂移 Issue、Skill、确定性快照和不可变迁移规则分层；本地 PG/API、类型检查、桌面与 `<480px` 验收作为提交门槛 |
+| 8 | 助记记号保真 | 独立说明页锁定 103 个定义、31 个未定义形式、4 条替代展开式与原表注释；助记只作 note，永不进入 parser/player |
 
-## 验证清单
+## 当前验收清单
 
-- [x] JAR 固定输入夹具与站内 Finder 输出已写入逐条断言；替代配置直接载入 HEAD 共享 SQ1 模块后，Finder 52 tests 全部通过，含不可切 `/` 定向回归、`814²` 候选与 125 条结果逐条顺序对照；最终 exporter `--check` 再次通过。
-- [x] 上游工作簿完整性计数由测试锁定，不以抽样代替全量核对。
-- [x] 同一 XLSX 连续两次 public export 逐文件 SHA-256 完全一致：public 1,195 files 加 `cases.json`，before=1,196、after=1,196、changed=0；第二次从本地 content-hash 缓存完成。
-- [x] 漂移检测器在未变化、人工变化、缺基线和抓取失败四种情况下分别返回 0、3、2、1。
-- [x] 页面 metadata（6 tests）、URL state（2 tests）与组件复用守卫（13 tests）通过；i18n 和 catalog 测试在收集期分别因并行缺失 `opencc-js`、`lucide-react` 被阻断，未误记为通过。
-- [x] Workspace 与数据 loader 的 esbuild、完整 computedImage 正反契约、目标文件 whitespace 检查、隔离完整工作树中的 4 files/75 tests 与 client typecheck 均通过。
-- [ ] Playwright 实测桌面与 390px：无整页横向溢出，关键交互可键盘和触摸完成。
+- [x] 公式集迁移生成器对 967 个 case fail closed，并与 `0140_sq1_pbl.sql` 完全一致。
+- [x] 本地 PostgreSQL 应用迁移后得到 967 行、967 个唯一名称、967 个非空公式、44 个叶分组。
+- [x] 本地 API `/v1/alg/sets/sq1/pbl` 返回完整 967 个 case；`M/Db` 与四个 unused 属性对账。
+- [x] 公式库定向测试逐条验证 parser、setup/alg 闭环、标准播放器校验和助记文本隔离。
+- [x] PBL 已加入 SQ1 公式库 catalog，旧精确 PBL 页面退出，新增 Finder metadata 与真链接。
+- [x] Finder 核心 52 条测试覆盖完整 `Ua/Ua` 输出、legacy 边界、输入规范化和 Worker 生命周期。
+- [x] `--public-write`、sheet/media/formula-media 网页导出路径退役；维护命令只更新公式源、Finder 默认值和基线。
+- [x] client/server typecheck、10 个定向测试文件共 95 项测试、Skill 校验和最终 `git diff --check`。
+- [x] 桌面与 390px 临时视口（页面可用宽 312px）浏览器验证：PBL 卡片、44 分组、`M/Db` 图示/动画、Finder 入口均可用，公式库、22-case 分组页、case 页和 Finder 均无整页横向溢出。
+- [x] 桌面与 390px 窄屏验证助记说明页、公式集入口、case 详情入口和 103 项表格；回归测试锁定来源定义与未定义边界。
 
-### 维护链验证记录（2026-08-16）
+## 交付规则
 
-- 完整生成：`node packages/client/scripts/sq1-pbl-check.mjs --write`。
-- 公式图片首次生成：`node packages/client/scripts/sq1-pbl-check.mjs --source "..\.tmp\xlsx\Daniel's Public PBL Doc.xlsx" --public-write`；64 sheets、3,089 computedImage cells、1,116 assets、24,694,158 bytes。
-- 公式图片安全契约：`uv run python packages/client/scripts/sq1-pbl/test_normalize.py`；真实 get_image3 SVG 接受，script/foreignObject/外链 href 拒绝，stale 常规文件只移动到 `.tmp/sq1-pbl-stale/`，3 tests 通过。
-- 无漂移 0：`node packages/client/scripts/sq1-pbl-check.mjs --source "..\.tmp\xlsx\Daniel's Public PBL Doc.xlsx"`；仅 editorial 差异，退出 0。
-- 抓取失败 1：`node packages/client/scripts/sq1-pbl-check.mjs --source "..\.tmp\scratchpad\sq1-pbl-does-not-exist.xlsx"`；退出 1。
-- 无基线 2：`node packages/client/scripts/sq1-pbl-check.mjs --source "..\.tmp\xlsx\Daniel's Public PBL Doc.xlsx" --baseline "..\.tmp\scratchpad\sq1-pbl-missing-baseline.json"`；退出 2。
-- 实质漂移 3：`node packages/client/scripts/sq1-pbl-check.mjs --source "..\.tmp\xlsx\Daniel's Public PBL Doc.xlsx" --baseline "packages\client\scripts\sq1-pbl\material.snapshot.fixture.json"`；最小 schema v1 空基线触发内容、表页和不变量漂移，退出 3。
-- Skill：`$env:PYTHONUTF8='1'; uv run --with pyyaml python "C:\Users\CubeRoot\.codex\skills\.system\skill-creator\scripts\quick_validate.py" ".agents\skills\maintain-sq1-pbl"`；`Skill is valid!`。
-- 数据测试：在 `core/packages/client` 运行 `pnpm dlx vitest@4.0.17 run tests/sq1_pbl_public_export.test.ts tests/sq1_pbl_drift.test.ts tests/sq1_pbl_data.test.ts`；3 files、19 tests 全部通过。
-- Finder 全量回归：使用 `.tmp/scratchpad/sq1-pbl-vitest.config.mjs` 将缺失的 workspace shared 包显式映射到 HEAD 源文件，运行 `pnpm dlx vitest@3.2.4 run packages/client/tests/sq1_pbl_finder.test.ts`；1 file、52 tests 全部通过，含不可切 `/` 定向回归，Ua/Ua 662,596 个有序候选与 JAR 的 125 条结果逐条一致。
-- public export 定向复验：共享 workspace 暂缺包链接时直接使用现有 Vitest 4.1.10 和 `.tmp/sq1-vitest.config.mjs` 运行 `tests/sq1_pbl_public_export.test.ts`；1 file、7 tests 全部通过。
-
-## 交付状态
-
-- 本文档是逐项验收清单；任何相似功能、抽样通过或静态代码存在都不能替代对应勾选项的直接证据。
-- 默认只提交本任务文件，不 push；线上状态只有在用户后续明确授权 push 后才能声称。
+- 只提交本任务路径，不覆盖并行工作；删除旧查看器及资产走回收站。
+- 默认 commit 但不 push。未 push 前不得声称线上页面已更新。

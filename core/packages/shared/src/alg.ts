@@ -363,6 +363,13 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
         zh: '在保持复形的同时完成上下两层色向。',
       },
     },
+    {
+      slug: 'pbl', scd: '', short: 'PBL', en: 'Permutation of Both Layers', zh: '双层排列', umbrella: true,
+      intro: {
+        en: 'Solve the permutation of both layers after restoring cubeshape and orientation.',
+        zh: '在完成复形与双层色向后，排列上下两层的块。',
+      },
+    },
     { slug: 'parity', scd: 'SQ1Parity', short: 'Parity', en: 'Parity',             zh: 'Parity' },
   ],
   'megaminx': [

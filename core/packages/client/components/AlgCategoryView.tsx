@@ -1143,6 +1143,16 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             {tr({ zh: '命名', en: 'Shape names' })}
           </Link>
         )}
+        {!collection && !subgroupParam && puzzleParam === 'sq1' && set === 'pbl' && (
+          <>
+            <Link href="/alg/sq1/pbl-notation" className="alg-recog-cta" prefetch={false}>
+              {tr({ zh: '助记说明', en: 'Mnemonic guide' })}
+            </Link>
+            <Link href="/alg/sq1/pbl-finder" className="alg-recog-cta" prefetch={false}>
+              {tr({ zh: '高级查找', en: 'Advanced finder' })}
+            </Link>
+          </>
+        )}
         {isZh && data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && puzzleParam === '3x3' && (
           <>
             <select

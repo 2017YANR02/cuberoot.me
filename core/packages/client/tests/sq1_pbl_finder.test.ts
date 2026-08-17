@@ -15,7 +15,7 @@ import {
 
 const defaults = defaultsJson as Sq1PblFinderDefaults;
 const golden = goldenJson.fixture;
-const workspaceSource = readFileSync(new URL('../components/Sq1PblWorkspace.tsx', import.meta.url), 'utf8');
+const finderSource = readFileSync(new URL('../components/Sq1PblFinder.tsx', import.meta.url), 'utf8');
 
 describe('Square-1 PBL Finder clean-room port', () => {
   test('locks the reflected desktop data invariants', () => {
@@ -57,13 +57,13 @@ describe('Square-1 PBL Finder clean-room port', () => {
   });
 
   test('keeps worker startup and stale-message recovery guards in the Finder boundary', () => {
-    expect(workspaceSource).toMatch(/try \{\s*worker = new Worker/u);
-    expect(workspaceSource).toContain('message.id !== id || requestRef.current !== id');
-    expect(workspaceSource).toContain('worker.onerror = () => {\n      if (requestRef.current !== id) return;');
-    expect(workspaceSource).toMatch(/try \{\s*worker\.postMessage\(\{ id, input \}\);/u);
-    expect(workspaceSource).toContain('useEffect(() => () => {\n    requestRef.current += 1;');
-    expect(workspaceSource).toContain('const clearResult = () => {\n    requestRef.current += 1;');
-    expect(workspaceSource).toContain('const cancelFinder = () => {\n    requestRef.current += 1;');
+    expect(finderSource).toMatch(/try \{\s*worker = new Worker/u);
+    expect(finderSource).toContain('message.id !== id || requestRef.current !== id');
+    expect(finderSource).toContain('worker.onerror = () => {\n      if (requestRef.current !== id) return;');
+    expect(finderSource).toMatch(/try \{\s*worker\.postMessage\(\{ id, input \}\);/u);
+    expect(finderSource).toContain('useEffect(() => () => {\n    requestRef.current += 1;');
+    expect(finderSource).toContain('const clearResult = () => {\n    requestRef.current += 1;');
+    expect(finderSource).toContain('const cancelFinder = () => {\n    requestRef.current += 1;');
   });
 
   test('uses the desktop STM and FTM display metrics', () => {

@@ -30,9 +30,9 @@
   {
     "name": "Daniel's Public PBL Doc",
     "url": "https://docs.google.com/spreadsheets/d/1VQNYNwdOLqqBkacHcfYtEBst22FOVhH9EAhTOYOZTgo/",
-    "zh": "Square-1 PBL 文档与公式数据来源；公开访问不等于开源授权，许可证与复用条款尚未核实",
-    "en": "Square-1 PBL reference and algorithm-data source; public access does not establish an open-source license, and its license and reuse terms remain unverified",
-    "long_en": "Daniel's public Square-1 PBL workbook is the source reference for the PBL documentation and normalized algorithm data presented on CubeRoot. Public availability alone does not grant an open-source license; the workbook's license and reuse terms remain unverified."
+    "zh": "Square-1 PBL 公式数据与维护来源；公开访问不等于开源授权，许可证与复用条款尚未核实",
+    "en": "Square-1 PBL algorithm-data and maintenance source; public access does not establish an open-source license, and its license and reuse terms remain unverified",
+    "long_en": "Daniel's public Square-1 PBL workbook is the source reference for the normalized PBL algorithm library presented on CubeRoot. Public availability alone does not grant an open-source license; the workbook's license and reuse terms remain unverified."
   },
   {
     "name": "Simple Square-1 PBL Finder v1.2 by Anuar and Lucas",

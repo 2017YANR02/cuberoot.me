@@ -353,6 +353,11 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             label={tr({ zh: '黑顶', en: 'Black top' })}
           />
         )}
+        {puzzle === 'sq1' && set === 'pbl' && (
+          <Link href="/alg/sq1/pbl-notation" className="alg-recog-cta" prefetch={false}>
+            {tr({ zh: '助记说明', en: 'Mnemonic guide' })}
+          </Link>
+        )}
         {canChooseViewAngle && (
           <label className="alg-view-angle">
             <span>{tr({ zh: '角度', en: 'Angle' })}</span>

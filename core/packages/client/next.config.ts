@@ -174,10 +174,9 @@ const nextConfig: NextConfig = {
         source: "/analyze-worker/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=86400" }],
       },
-      // Versioned in-repo SQ1 PBL snapshots. The stable URLs must refresh after
-      // a reviewed upstream sync, so browsers cache briefly and the CDN longer.
+      // The reviewed Finder defaults keep a stable URL across upstream syncs.
       {
-        source: "/data/sq1-pbl/:path*",
+        source: "/data/sq1-pbl/finder-defaults.json",
         headers: [{ key: "Cache-Control", value: "public, max-age=600, s-maxage=3600, stale-while-revalidate=86400" }],
       },
       // /scramble/solver 现在是统一求解路由(?event= 分发):只有 3×3 cubeopt(event=333
