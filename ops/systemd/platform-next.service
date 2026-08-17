@@ -9,6 +9,7 @@ Environment=NODE_ENV=production
 Environment=PORT=3004
 Environment=HOSTNAME=127.0.0.1
 Environment=DB_PATH=/var/lib/cube-platform/data.db
+EnvironmentFile=/etc/cube-platform.env
 ExecStart=/www/wwwroot/cube-platform/start.sh
 Restart=on-failure
 RestartSec=2

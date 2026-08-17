@@ -1,14 +1,13 @@
-# 魔方开放社群 · cube-platform
+# CubeRoot 教学与机构平台
 
-参考商业计划书《一站式魔方垂直综合服务平台》搭建的前端门户站。
-技术栈对齐 `D:\cube\cuberoot.me\core\packages\client-next`,改用 Next.js(不用 Vite)。
+从原独立平台仓库迁入的 Next.js 应用,现在是 CubeRoot monorepo 的 `@cuberoot/platform` 工作区。
 
 ## 技术栈
 
 - **Next 16 App Router** + React 19 + TS5
 - **Tailwind v4**(`@tailwindcss/postcss`,token 在 `app/globals.css`)
 - lucide-react 图标
-- 全静态(SSG),`next build` 全部页面预渲染
+- RSC + Server Actions;公开内容页在 `next build` 时从 SQLite 预渲染
 
 ## 目录
 
@@ -30,10 +29,12 @@ data/               全部 mock(courses / products / events / news / instructors
 ## 开发
 
 ```bash
+cd core
 pnpm install
-pnpm dev          # http://127.0.0.1:3100
-pnpm build
-pnpm typecheck
+pnpm --filter @cuberoot/platform dev        # http://127.0.0.1:3100
+pnpm --filter @cuberoot/platform build
+pnpm --filter @cuberoot/platform typecheck
+pnpm --filter @cuberoot/platform test
 ```
 
 ## 设计 token(`app/globals.css`)
@@ -43,9 +44,8 @@ pnpm typecheck
 - 分割 `--color-line / line-soft`
 - 背景 `--color-bg-soft`
 
-## 后续
+## 产品边界
 
-- 数据落 API / 数据库(可接 Hono + PG,对齐 cuberoot 服务端)
-- 商城支付 / 赛事报名 / 讲师入驻表单接入
-- 用户登录态(SSO / WCA OAuth 等)
-- 搜索 / 筛选 / 分页
+- 现有:课程、章节、学习进度、订单、会员、讲师 / 管理后台、支付和内容运营。
+- 下一阶段:机构多租户、课包 / 剩余课时、排课 / 上课历史、训练任务、学员打卡作业、教师周反馈与家校沟通。
+- 迁移记录、外部状态和旧仓库删除门槛见 [`docs/platform-migration.md`](../../../docs/platform-migration.md)。

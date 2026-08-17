@@ -2,11 +2,13 @@
 
 最后更新:2026-05-26。覆盖到 Phase 4 + 支付 P1/P2/P3。
 
+> 这是独立仓库时期的能力快照。当前命令、部署和迁移门槛以 [README.md](./README.md)、[DEPLOY.md](./DEPLOY.md) 与主仓 `docs/platform-migration.md` 为准。
+
 ## TL;DR
 
-- 站点骨架完整,可以本地跑通(`pnpm install && pnpm db:migrate && pnpm db:seed && pnpm dev`)
+- 站点骨架完整,可从 `core/` 用 `pnpm --filter @cuberoot/platform ...` 运行
 - 支付 Provider 抽象层就位,Stripe / 微信 V3 / 支付宝代码骨架完整,**未配置 env 时自动禁用**,只走 mock
-- 部署文档见 [DEPLOY.md](./DEPLOY.md);项目约定见 [CLAUDE.md](./CLAUDE.md)
+- 部署文档见 [DEPLOY.md](./DEPLOY.md);项目约定见 [AGENTS.md](./AGENTS.md)
 - 真要上线 / 接真支付,请先看下面"上线前必做"
 
 ## 上线前必做(blocker)
@@ -23,12 +25,12 @@
 
 ### 2. 数据库初始化
 
-```
-pnpm db:migrate     # 跑全部 migration(0000 → 0005)
-# 不要跑 pnpm db:seed,seed 是 mock 数据
+```powershell
+pnpm --filter @cuberoot/platform db:migrate
+# 不要对生产库跑 db:seed,seed 是 mock 数据
 ```
 
-迁移用 SQLite (`data.db`)。换 PG 见 DEPLOY.md。
+迁移用 SQLite (`data.db`)。既有 migration 不得改写;转 PostgreSQL 需要另做方案。
 
 ### 3. Admin 路径加固
 
@@ -129,19 +131,19 @@ Stripe 控制台填 webhook 时勾选事件 `checkout.session.completed`(可选�
 - **SQLite 单机**:并发上限 100 写/s 左右,够初期但量上来要切 PG(见 DEPLOY.md)
 - **没接 CDN / 静态资源走源站**:图片直接走 Next 服务器,要加 CDN 见 Next 文档 `images.loader`
 - **无监控 / 告警**:没接 Sentry / Posthog / Datadog。崩了不会自动通知,要靠日志 + 手动看
-- **没接备份自动化**:DEPLOY.md 给了 cron 备份命令,要自己起
+- **没接备份自动化**:切换前必须按迁移跟踪文档备份并验证数据库与 uploads
 - **数据导出工具未做**:要导用户 / 订单批量数据要手写 SQL
 
 ## 想加新功能时
 
-1. 看 [CLAUDE.md](./CLAUDE.md) 项目约定(品牌色 token / 不要 emoji / mobile 适配)
+1. 看 [AGENTS.md](./AGENTS.md) 项目约定(品牌色 token / 不要 emoji / mobile 适配)
 2. 新组件前 `Glob` 搜同名,避免重复造轮子
-3. 改 schema 后:`pnpm db:generate` → 检查 `db/migrations/00xx_*.sql` → `pnpm db:migrate`
+3. 改 schema 后:`pnpm --filter @cuberoot/platform db:generate` → 检查新 migration → `pnpm --filter @cuberoot/platform db:migrate`
 4. server-only 模块加 `import "server-only"`,client 模块加 `"use client"`
-5. server action 改完跑 `pnpm typecheck`,改 UI 跑 `pnpm dev` 浏览器对一下
+5. server action 改完跑 `pnpm --filter @cuberoot/platform typecheck`,改 UI 跑平台 dev 复核
 
 ## 联系
 
-- 仓库:GitHub `RuiminYan/cube-platform`(private)
+- 仓库:`2017YANR02/cuberoot.me`,工作区 `core/packages/platform`
 - 部署文档:[DEPLOY.md](./DEPLOY.md)
-- 项目约定:[CLAUDE.md](./CLAUDE.md)
+- 项目约定:[AGENTS.md](./AGENTS.md)

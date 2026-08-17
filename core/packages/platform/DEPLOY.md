@@ -1,92 +1,53 @@
 # 部署
 
-## 本地一键起
+平台是 `core/` pnpm workspace 的独立 Next.js 应用。源码、锁文件、CI 和 systemd unit 都以主仓库为单一来源。
 
-```
+## 本地运行
+
+```powershell
+Set-Location core
 pnpm install
-pnpm db:migrate
-pnpm db:seed
-pnpm dev   # 127.0.0.1:3100
+pnpm --filter @cuberoot/platform db:migrate
+pnpm --filter @cuberoot/platform db:seed
+pnpm --filter @cuberoot/platform dev
 ```
 
-`pnpm db:seed` 从 `data/*.ts` 灌入示例数据。无后端依赖,SQLite 文件落在仓库根 `./data.db`。
+本地默认监听 `127.0.0.1:3100`;SQLite 默认写入 `packages/platform/data.db`。`build` 会先幂等执行 migration,所以全新 checkout 也能构建。
 
-生产构建:
+## 生产环境变量
 
-```
-pnpm build
-pnpm start
-```
-
-## 环境变量
-
-| 变量 | 默认 | 用途 |
+| 变量 | 生产要求 | 用途 |
 | --- | --- | --- |
-| `ADMIN_PASSWORD` | `admin123` | `/admin` 登录密码 |
-| `SESSION_SECRET` | dev fallback | 用户 / 管理员 cookie HMAC 签名,生产必设 |
-| `NEXT_PUBLIC_SITE_URL` | `http://127.0.0.1:3100` | sitemap / OG image / 邀请链接绝对地址 |
-| `DB_PATH` | `./data.db` | SQLite 文件位置,docker 内 `/data/data.db` |
+| `ADMIN_PASSWORD` | 必填 | `/admin` 登录密码 |
+| `SESSION_SECRET` | 必填 | 用户与管理员 cookie HMAC 签名 |
+| `NEXT_PUBLIC_SITE_URL` | 必填 | sitemap、OG 和邀请链接绝对地址 |
+| `DB_PATH` | 必填 | 持久 SQLite 文件路径 |
 
-参考 `.env.example`,生产复制为 `.env` 后改值。
+其他支付、短信、对象存储和二维码变量见 `.env.example`。生产缺少 `ADMIN_PASSWORD` 或 `SESSION_SECRET` 会直接报错,不会退回开发默认值。真实值不得写进 Git。
 
-## Docker 部署(推荐)
+## GitHub Actions + systemd
 
-```
-docker compose up -d
-```
+- workflow:`/.github/workflows/deploy_platform.yml`
+- unit:`/ops/systemd/platform-next.service`
+- GitHub secrets:`PLATFORM_DEPLOY_HOST`、`PLATFORM_DEPLOY_USER`、`PLATFORM_DEPLOY_SSH_KEY`
+- 服务器运行时环境文件:`/etc/cube-platform.env`
+- 持久状态:`/var/lib/cube-platform/data.db` 与 `/var/lib/cube-platform/uploads`
 
-镜像走 `Dockerfile` 多阶段构建:`pnpm install` -> `pnpm build` -> Next standalone 运行。SQLite 文件挂在 `cube-data` named volume 的 `/data/data.db`,容器内端口 `3000` 映射宿主 `3100`。
+CI 使用 pnpm 11 和 Node 24,先测试、migrate、seed、build,再按实际 monorepo standalone 入口组包。按当前权限模型,`PLATFORM_DEPLOY_USER` 必须是 root,且 `/root/.nvm/versions/node/v24.*` 中必须有 Node 24;workflow 固定选择该 major,保证 `better-sqlite3` ABI 一致。未来若改普通账号,需同时重写目录权限、systemd 管理方式与 Node 路径。远端在替换运行目录前检查权限、Node 和环境文件;失败时自动回滚代码包。SQLite migrations 在单个 transaction 内执行,不会留下半迁移,但成功提交的 schema 不随代码回滚,首次切换前必须准备并验证数据库备份。
 
-首次起容器后,如果是空 DB,需要进容器跑一次 migration + seed:
+首次切换前必须备份数据库和 uploads,配置新的仓库 secrets 与服务器环境文件,再手动触发 workflow。完整门槛见根目录 `docs/platform-migration.md`。
 
-```
-docker compose exec next-app sh -c "node -e \"require('better-sqlite3')('/data/data.db').close()\""
-docker compose exec next-app sh -c "node -e \"const { migrate } = require('drizzle-orm/better-sqlite3/migrator'); const Db = require('better-sqlite3'); const { drizzle } = require('drizzle-orm/better-sqlite3'); const s = new Db('/data/data.db'); migrate(drizzle(s), { migrationsFolder: '/app/db/migrations' }); console.log('ok');\""
-```
+## Docker
 
-实际项目里可以把上面打包成一个一次性 `init` service 或本地直接 `pnpm db:migrate DB_PATH=...` 后 `docker cp data.db` 进 volume。
+Docker 是本地或备用运行方式。Compose 从 `core/` 构建上下文读取根 lockfile,并把 `/data` 放进 named volume;入口会在首次运行时复制 seed DB,以后仅执行增量 migration。
 
-## HTTPS / nginx 反代
-
-```
-server {
-  listen 443 ssl http2;
-  server_name your-domain.com;
-  ssl_certificate     /etc/ssl/certs/your.crt;
-  ssl_certificate_key /etc/ssl/private/your.key;
-
-  client_max_body_size 8m;
-
-  location / {
-    proxy_pass http://127.0.0.1:3100;
-    proxy_http_version 1.1;
-    proxy_set_header Host              $host;
-    proxy_set_header X-Real-IP         $remote_addr;
-    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header Upgrade           $http_upgrade;
-    proxy_set_header Connection        "upgrade";
-  }
-}
-
-server {
-  listen 80;
-  server_name your-domain.com;
-  return 301 https://$host$request_uri;
-}
+```powershell
+Set-Location core/packages/platform
+Copy-Item .env.example .env
+# 编辑 .env,至少设置强随机 ADMIN_PASSWORD 与 SESSION_SECRET
+docker compose up -d --build
 ```
 
-## 备份
+## 数据库演进
 
-SQLite 文件就一份。最简备份:
-
-```
-cp /var/lib/docker/volumes/cube-platform_cube-data/_data/data.db \
-   /backup/cube-data.db.bak.$(date +%F)
-```
-
-放 cron 每天跑一次。需要带 WAL 一致性的话用 `sqlite3 data.db ".backup '/backup/cube-data.db.bak'"`。
-
-## 切换到 PostgreSQL
-
-如果以后想换 PG:改 `drizzle.config.ts` `dialect: "postgresql"`,装 `pnpm add pg @types/pg`,改 `db/index.ts` 用 `drizzle-orm/node-postgres` + `pg.Pool`,重跑一次 `pnpm db:generate` 让 drizzle 生成 PG migration。`.boolean / .json` 类型在两边语义一致,业务代码大多不动。
+现有 33 个 SQLite migration 与 journal 是既有生产历史,保持原字节和顺序。不要把它们并入 `packages/server` 的 PostgreSQL migration。未来若转 PostgreSQL,应另做数据模型、迁移与回滚方案,不能直接改 dialect 后覆盖现有历史。

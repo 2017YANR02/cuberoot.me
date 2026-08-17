@@ -18,6 +18,15 @@
       ],
       "ignoreDependencies": ["playwright"]
     },
+    "packages/platform": {
+      "entry": [
+        "db/seed-demo-course.ts",
+        "ops/**/*.cjs",
+        "tests/**/*.test.ts"
+      ],
+      "ignore": ["public/**"],
+      "ignoreDependencies": ["@types/mdx"]
+    },
     "packages/vendor-sr-puzzlegen": {
       "entry": ["src/index.ts"]
     },
