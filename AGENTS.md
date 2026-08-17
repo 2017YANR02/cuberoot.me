@@ -66,6 +66,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 pnpm 11,pwsh。CWD 已在 `core/`;`pnpm install` 报 `ERR_PNPM_NO_PKG_MANIFEST` = 在仓库根,`Set-Location core`。
 
 - shell 路径相对 `core/` 写(`packages/...`),禁加 `core/` 前缀(会变 `core/core/`)。含 `[lang]` 等方括号的路径一律单引号,必要时 `git add ':(literal)packages/.../[lang]/x.tsx'`。
+- 临时验证目录 / worktree 禁用 Junction / SymbolicLink 复用正式 `node_modules` 或 `packages`;各自运行 `pnpm install --offline --frozen-lockfile`。
 
 ```bash
 pnpm --filter @cuberoot/client dev            # http://127.0.0.1:3000/

@@ -21,8 +21,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/adapt-codex-command-payload.mjs\" \"$(git rev-parse --show-toplevel)/.codex/hooks/recon-ground-truth-gate.ps1\"",
-            "commandWindows": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/adapt-codex-command-payload.mjs\" \"$(git rev-parse --show-toplevel)/.codex/hooks/recon-ground-truth-gate.ps1\"",
+            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/adapt-codex-command-payload.mjs\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-workspace-reparse-links.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/recon-ground-truth-gate.ps1\"",
+            "commandWindows": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/adapt-codex-command-payload.mjs\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-workspace-reparse-links.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/recon-ground-truth-gate.ps1\"",
             "timeout": 30,
             "statusMessage": "Checking Codex command guards"
           }
