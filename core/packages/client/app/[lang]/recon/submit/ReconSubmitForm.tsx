@@ -81,6 +81,7 @@ import { tr } from '@/i18n/tr';
 const EVENTS = ['3x3', '2x2', '4x4', '5x5', '6x6', '7x7', '3bld', '4bld', '5bld', 'oh', 'sq1', 'pyra', 'mega', 'clock', 'skewb', 'fmc', 'mbld'];
 const METHODS = ['CFOP', 'Roux', 'ZZ', 'Petrus', 'LBL', 'Mehta', 'ZB', 'Other'];
 const ROUNDS_FALLBACK = ['1', '2', '3', 'f'];
+type ScrambleField = 'wca' | 'optimal' | 'generic';
 // 打乱未公示(拿不到真实分组)时的兜底分组选项:A~Z。
 const ALPHA_GROUPS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 
@@ -257,9 +258,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [optimalUserTouched, setOptimalUserTouched] = useState(false);
   const [optimalAutoSource, setOptimalAutoSource] = useState<string | null>(null);
   const optimalAutoFilledRef = useRef(false);
-  const wcaScrambleRef = useRef<HTMLTextAreaElement>(null);
-  const optimalScrambleRef = useRef<HTMLTextAreaElement>(null);
-  const scrambleRef = useRef<HTMLTextAreaElement>(null);
+  const [scrambleField, setScrambleField] = useState<ScrambleField>('wca');
+  const scrambleInputRef = useRef<HTMLTextAreaElement>(null);
   // 移动端虚拟键盘跟随焦点:三类打乱 / 解法中当前激活的输入框。
   const [activeVkbField, setActiveVkbField] = useState<'wca' | 'optimal' | 'generic' | 'solution' | null>(null);
   const [compRounds, setCompRounds] = useState<Record<string, RoundFormat[]> | null>(null);
@@ -304,6 +304,31 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     pruneReused(key as string);
   }, [pruneReused]);
 
+  const activeScrambleValue = scrambleField === 'wca'
+    ? form.wcaScramble || ''
+    : scrambleField === 'optimal'
+      ? form.optimalScramble || ''
+      : form.scramble || '';
+
+  const setActiveScrambleValue = useCallback((value: string) => {
+    if (scrambleField === 'wca') setField('wcaScramble', value);
+    else if (scrambleField === 'optimal') setField('optimalScramble', value);
+    else setField('scramble', value);
+  }, [scrambleField, setField]);
+
+  const updateActiveScramble = useCallback((value: string) => {
+    if (scrambleField === 'wca') {
+      setScrambleUserTouched(true);
+      setScrambleAutoSource(null);
+      scrambleAutoFilledRef.current = false;
+    } else if (scrambleField === 'optimal') {
+      setOptimalUserTouched(true);
+      setOptimalAutoSource(null);
+      optimalAutoFilledRef.current = false;
+    }
+    setActiveScrambleValue(value);
+  }, [scrambleField, setActiveScrambleValue]);
+
   const reusedCls = (key: string) => (reusedFields.has(key) ? ' submit-field--reused' : '');
 
   /** textarea 自适应高度 */
@@ -328,6 +353,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         scramble: normalizeReconScrambleSpacing(solve.event, solve.scramble || ''),
       };
       setForm(normalized);
+      setScrambleField(solve.optimalScramble?.trim()
+        ? 'optimal'
+        : solve.wcaScramble?.trim()
+          ? 'wca'
+          : solve.scramble?.trim()
+            ? 'generic'
+            : 'wca');
       setNeedsUnsolvedReason(!!solve.unsolvedReason);
       const baseKey = `${solve.personId ?? ''}|${solve.event ?? ''}|${solve.comp ?? ''}|${solve.compWcaId ?? ''}|${solve.round ?? ''}`;
       loadedAvgKeySnapshot.current = baseKey;
@@ -410,6 +442,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     const generic = decodeUrlAlg(searchParams?.get('generic') || '');
     const solution = decodeUrlAlg(searchParams?.get('alg') || '');
     if (!scramble && !optimal && !generic && !solution) return;
+    if (optimal) setScrambleField('optimal');
+    else if (scramble) setScrambleField('wca');
+    else if (generic) setScrambleField('generic');
     setForm(prev => ({
       ...prev,
       wcaScramble: scramble
@@ -1052,16 +1087,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return () => { cancelled = true; clearTimeout(timer); setScrambleLoading(false); };
   }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, groupOptions, scrambleUserTouched, optimalUserTouched, setField, isZh]);
 
-  // Resize all scramble textareas when their values change programmatically.
+  // Resize the visible scramble textarea when its source or value changes programmatically.
   useEffect(() => {
-    if (wcaScrambleRef.current) autoResize(wcaScrambleRef.current);
-  }, [form.wcaScramble, autoResize]);
-  useEffect(() => {
-    if (optimalScrambleRef.current) autoResize(optimalScrambleRef.current);
-  }, [form.optimalScramble, autoResize]);
-  useEffect(() => {
-    if (scrambleRef.current) autoResize(scrambleRef.current);
-  }, [form.scramble, autoResize]);
+    if (scrambleInputRef.current) autoResize(scrambleInputRef.current);
+  }, [activeScrambleValue, scrambleField, autoResize]);
 
   // ── Record marker auto-fetch (WCA only) ──
   useEffect(() => {
@@ -1919,170 +1948,85 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </label>
               </div>
 
-            {/* WCA scramble (用 div 而非 label:label 会把空白处点击转发给首个可聚焦后代「选已有」按钮) */}
+            {/* 三类打乱共享一个输入区;下拉只切换视图,不清空其他类型已有的值。 */}
             <div className="submit-field submit-block">
               <span className="submit-label submit-label-row">
-                {t('recon.wcaScramble')}
+                <select
+                  className="submit-field-select submit-scramble-type-select"
+                  aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
+                  value={scrambleField}
+                  onChange={e => {
+                    setActiveVkbField(null);
+                    setScrambleField(e.target.value as ScrambleField);
+                  }}
+                >
+                  <option value="wca">{t('recon.wcaScramble')}</option>
+                  <option value="optimal">{t('recon.optimalScramble')}</option>
+                  <option value="generic">{t('recon.scramble')}</option>
+                </select>
                 <button
                   type="button"
                   className="scramble-pick-btn"
-                  onClick={e => { e.preventDefault(); e.stopPropagation(); setScramblePickerFor('wca'); }}
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); setScramblePickerFor(scrambleField); }}
                 >
                   <ListPlus size={13} /> {tr({ zh: '选已有', en: 'Pick existing' })}
                 </button>
               </span>
               <textarea
+                key={scrambleField}
                 rows={1}
-                ref={wcaScrambleRef}
-                value={form.wcaScramble || ''}
-                readOnly={!!scrambleAutoSource}
+                ref={el => { scrambleInputRef.current = el; if (el) autoResize(el); }}
+                value={activeScrambleValue}
+                readOnly={scrambleField === 'wca' && !!scrambleAutoSource}
                 inputMode={isMobile ? 'none' : undefined}
-                className={`submit-field-textarea${scrambleAutoSource ? ' submit-input-locked' : ''}`}
-                title={scrambleAutoSource
+                className={`submit-field-textarea${scrambleField === 'wca' && scrambleAutoSource ? ' submit-input-locked' : ''}`}
+                title={scrambleField === 'wca' && scrambleAutoSource
                   ? tr({ zh: '自动填充值不可编辑;改 比赛/项目/轮次/分组/第几把 以重新获取', en: 'auto-filled, read-only; change comp/event/round/group/# to refetch'
                                     })
                   : undefined}
                 onChange={e => {
-                  setScrambleUserTouched(true);
-                  setScrambleAutoSource(null);
-                  scrambleAutoFilledRef.current = false;
-                  setField('wcaScramble', e.target.value);
+                  updateActiveScramble(e.target.value);
                   autoResize(e.target);
                 }}
                 onInput={e => autoResize(e.target as HTMLTextAreaElement)}
                 onFocus={() => {
-                  if (scrambleAutoSource) return;
-                  setScrambleUserTouched(true);
-                  scrambleAutoFilledRef.current = false;
-                  setActiveVkbField('wca');
+                  if (scrambleField === 'wca') {
+                    if (scrambleAutoSource) return;
+                    setScrambleUserTouched(true);
+                    scrambleAutoFilledRef.current = false;
+                  } else if (scrambleField === 'optimal') {
+                    setOptimalUserTouched(true);
+                    setOptimalAutoSource(null);
+                    optimalAutoFilledRef.current = false;
+                  }
+                  setActiveVkbField(scrambleField);
                 }}
                 onBlur={() => {
-                  setActiveVkbField(f => f === 'wca' ? null : f);
-                  setField('wcaScramble', normalizeReconScrambleSpacing(form.event || '', form.wcaScramble || ''));
+                  setActiveVkbField(f => f === scrambleField ? null : f);
+                  setActiveScrambleValue(normalizeReconScrambleSpacing(form.event || '', activeScrambleValue));
                 }}
                 style={{ overflow: 'hidden', resize: 'none' }}
               />
               {isMobile && (
                 <CubeKeyboardSection
-                  target={wcaScrambleRef}
-                  mobileVisible={activeVkbField === 'wca'}
+                  target={scrambleInputRef}
+                  mobileVisible={activeVkbField === scrambleField}
                   onInput={() => {
-                    if (wcaScrambleRef.current) {
-                      setScrambleUserTouched(true);
-                      setScrambleAutoSource(null);
-                      scrambleAutoFilledRef.current = false;
-                      setField('wcaScramble', wcaScrambleRef.current.value);
-                      autoResize(wcaScrambleRef.current);
+                    if (scrambleInputRef.current) {
+                      updateActiveScramble(scrambleInputRef.current.value);
+                      autoResize(scrambleInputRef.current);
                     }
                   }}
                 />
               )}
-              {scrambleLoading
+              {scrambleField !== 'generic' && scrambleLoading
                 ? <span className="submit-hint submit-hint-loading"><Spinner size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
                 })}</span>
-                : scrambleAutoSource ? <span className="submit-hint">{scrambleAutoSource}</span> : null}
-            </div>
-
-            {/* Optimal scramble (同上:用 div 避免空白点击转发到「选已有」) */}
-            <div className="submit-field submit-block">
-              <span className="submit-label submit-label-row">
-                {t('recon.optimalScramble')}
-                <button
-                  type="button"
-                  className="scramble-pick-btn"
-                  onClick={e => { e.preventDefault(); e.stopPropagation(); setScramblePickerFor('optimal'); }}
-                >
-                  <ListPlus size={13} /> {tr({ zh: '选已有', en: 'Pick existing' })}
-                </button>
-              </span>
-              <textarea
-                className="submit-field-textarea"
-                rows={1}
-                value={form.optimalScramble || ''}
-                inputMode={isMobile ? 'none' : undefined}
-                onChange={e => {
-                  setOptimalUserTouched(true);
-                  setOptimalAutoSource(null);
-                  optimalAutoFilledRef.current = false;
-                  setField('optimalScramble', e.target.value);
-                  autoResize(e.target);
-                }}
-                onInput={e => autoResize(e.target as HTMLTextAreaElement)}
-                onFocus={() => {
-                  setOptimalUserTouched(true);
-                  setOptimalAutoSource(null);
-                  optimalAutoFilledRef.current = false;
-                  setActiveVkbField('optimal');
-                }}
-                onBlur={() => {
-                  setActiveVkbField(f => f === 'optimal' ? null : f);
-                  setField('optimalScramble', normalizeReconScrambleSpacing(form.event || '', form.optimalScramble || ''));
-                }}
-                ref={el => { optimalScrambleRef.current = el; if (el) autoResize(el); }}
-                style={{ overflow: 'hidden', resize: 'none' }}
-              />
-              {isMobile && (
-                <CubeKeyboardSection
-                  target={optimalScrambleRef}
-                  mobileVisible={activeVkbField === 'optimal'}
-                  onInput={() => {
-                    if (optimalScrambleRef.current) {
-                      setOptimalUserTouched(true);
-                      setOptimalAutoSource(null);
-                      optimalAutoFilledRef.current = false;
-                      setField('optimalScramble', optimalScrambleRef.current.value);
-                      autoResize(optimalScrambleRef.current);
-                    }
-                  }}
-                />
-              )}
-              {scrambleLoading
-                ? <span className="submit-hint submit-hint-loading"><Spinner size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…' })}</span>
-                : optimalAutoSource ? <span className="submit-hint">{optimalAutoSource}</span> : null}
-            </div>
-
-            {/* Generic scramble: use when the state is neither a WCA real scramble nor an optimal scramble. */}
-            <div className="submit-field submit-block">
-              <span className="submit-label submit-label-row">
-                {t('recon.scramble')}
-                <button
-                  type="button"
-                  className="scramble-pick-btn"
-                  onClick={e => { e.preventDefault(); e.stopPropagation(); setScramblePickerFor('generic'); }}
-                >
-                  <ListPlus size={13} /> {tr({ zh: '选已有', en: 'Pick existing' })}
-                </button>
-              </span>
-              <textarea
-                className="submit-field-textarea"
-                rows={1}
-                ref={el => { scrambleRef.current = el; if (el) autoResize(el); }}
-                value={form.scramble || ''}
-                inputMode={isMobile ? 'none' : undefined}
-                onChange={e => {
-                  setField('scramble', e.target.value);
-                  autoResize(e.target);
-                }}
-                onInput={e => autoResize(e.target as HTMLTextAreaElement)}
-                onFocus={() => setActiveVkbField('generic')}
-                onBlur={() => {
-                  setActiveVkbField(f => f === 'generic' ? null : f);
-                  setField('scramble', normalizeReconScrambleSpacing(form.event || '', form.scramble || ''));
-                }}
-                style={{ overflow: 'hidden', resize: 'none' }}
-              />
-              {isMobile && (
-                <CubeKeyboardSection
-                  target={scrambleRef}
-                  mobileVisible={activeVkbField === 'generic'}
-                  onInput={() => {
-                    if (scrambleRef.current) {
-                      setField('scramble', scrambleRef.current.value);
-                      autoResize(scrambleRef.current);
-                    }
-                  }}
-                />
-              )}
+                : scrambleField === 'wca' && scrambleAutoSource
+                  ? <span className="submit-hint">{scrambleAutoSource}</span>
+                  : scrambleField === 'optimal' && optimalAutoSource
+                    ? <span className="submit-hint">{optimalAutoSource}</span>
+                    : null}
             </div>
 
             {/* 同选手 + 同打乱:不硬拒,要求二选一说明原因(值入 dupReason)。占位打乱 '?' 已豁免不会触发。 */}
