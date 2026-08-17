@@ -7,7 +7,9 @@ import themeConfig from '../src/theme.json';
 import {
   EXPECTED_APP_PAGES,
   EXPECTED_TAB_BAR,
+  MIN_TEXT_CONTRAST_RATIO,
   PUBLIC_INDEXED_PAGES,
+  colorContrastRatio,
 } from '../scripts/release-check-lib.mjs';
 
 declare global {
@@ -68,7 +70,7 @@ describe('mini program app structure', () => {
         navigationBarBackgroundColor: '#fafafa',
         navigationBarTextStyle: 'black',
         tabBarColor: '#737373',
-        tabBarSelectedColor: '#c15f3c',
+        tabBarSelectedColor: '#a94f31',
         tabBarBackgroundColor: '#fafafa',
         tabBarBorderStyle: 'white',
       },
@@ -95,6 +97,45 @@ describe('mini program app structure', () => {
       backgroundColor: '@tabBarBackgroundColor',
       borderStyle: '@tabBarBorderStyle',
     });
+  });
+
+  it('keeps shared text colors readable and native chrome visually aligned', () => {
+    const appStyles = sourceFiles['../src/app.wxss'];
+    const pageBlocks = [...appStyles.matchAll(/^\s*page\s*\{([^}]+)\}/gm)]
+      .map((match) => match[1]);
+    expect(pageBlocks).toHaveLength(2);
+
+    const readToken = (block: string, token: string) => {
+      const match = block.match(new RegExp(`--cr-${token}:\\s*(#[0-9a-f]{6})`, 'i'));
+      expect(match, `missing --cr-${token}`).not.toBeNull();
+      return match?.[1].toLowerCase() ?? '';
+    };
+    const light = Object.fromEntries(
+      ['bg', 'text', 'muted', 'accent', 'accent-soft', 'ready', 'danger']
+        .map((token) => [token, readToken(pageBlocks[0], token)]),
+    );
+    const dark = Object.fromEntries(
+      ['bg', 'text', 'muted', 'accent', 'accent-soft', 'ready', 'danger']
+        .map((token) => [token, readToken(pageBlocks[1], token)]),
+    );
+
+    expect(light.accent).toBe(themeConfig.light.tabBarSelectedColor);
+    expect(dark.accent).toBe(themeConfig.dark.tabBarSelectedColor);
+    for (const palette of [light, dark]) {
+      for (const [foreground, background] of [
+        ['text', 'bg'],
+        ['muted', 'bg'],
+        ['accent', 'bg'],
+        ['accent', 'accent-soft'],
+        ['ready', 'bg'],
+        ['danger', 'bg'],
+      ]) {
+        expect(
+          colorContrastRatio(palette[foreground], palette[background]),
+          `${foreground}/${background}`,
+        ).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST_RATIO);
+      }
+    }
   });
 
   it('only exposes public entry pages to WeChat search', () => {
