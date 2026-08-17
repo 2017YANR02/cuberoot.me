@@ -77,6 +77,60 @@ describe('mini-program smart-cube bridge', () => {
     vi.unstubAllGlobals();
   });
 
+  it('confirms the iOS WeChat container when its user agent omits miniProgram', async () => {
+    const getEnv = vi.fn((callback: (result: { miniprogram: boolean }) => void) => {
+      callback({ miniprogram: true });
+    });
+    const navigateTo = vi.fn();
+    vi.stubGlobal('window', {
+      clearTimeout,
+      navigator: { userAgent: 'Mozilla/5.0 (iPhone) MicroMessenger/8.0' },
+      setTimeout,
+      wx: { miniProgram: { getEnv, navigateTo } },
+    });
+    vi.stubGlobal('WebSocket', FakeWebSocket);
+
+    const pending = connectMiniProgramCubeBridge({
+      onBattery: vi.fn(),
+      onGyro: vi.fn(),
+      onMove: vi.fn(),
+      onState: vi.fn(),
+      onStatus: vi.fn(),
+    });
+    await vi.waitFor(() => expect(FakeWebSocket.instance).not.toBeNull());
+    const socket = FakeWebSocket.instance!;
+    socket.emitOpen();
+    socket.emitMessage({ type: 'ready', role: 'sink', lastMoveSeq: 0 });
+    socket.emitMessage({ type: 'status', phase: 'connected', brand: 'gan-v4' });
+    const connection = await pending;
+    connection.disconnect();
+
+    expect(getEnv).toHaveBeenCalledOnce();
+    expect(navigateTo).toHaveBeenCalledOnce();
+  });
+
+  it('does not open the relay from an ordinary WeChat browser', async () => {
+    const getEnv = vi.fn((callback: (result: { miniprogram: boolean }) => void) => {
+      callback({ miniprogram: false });
+    });
+    vi.stubGlobal('window', {
+      clearTimeout,
+      navigator: { userAgent: 'Mozilla/5.0 (iPhone) MicroMessenger/8.0' },
+      setTimeout,
+      wx: { miniProgram: { getEnv, navigateTo: vi.fn() } },
+    });
+    vi.stubGlobal('WebSocket', FakeWebSocket);
+
+    await expect(connectMiniProgramCubeBridge({
+      onBattery: vi.fn(),
+      onGyro: vi.fn(),
+      onMove: vi.fn(),
+      onState: vi.fn(),
+      onStatus: vi.fn(),
+    })).rejects.toThrow('NOT_MINIPROGRAM_WEBVIEW');
+    expect(FakeWebSocket.instances).toHaveLength(0);
+  });
+
   it('waits for relay acknowledgement and replays early events only after timer setup', async () => {
     const navigations: string[] = [];
     stubMiniProgram(({ url }) => {

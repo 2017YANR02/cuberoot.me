@@ -4,14 +4,14 @@
  * Bluetooth status / env-advice modal.
  *
  * Two roles:
- *  - When Web Bluetooth is unavailable (env != 'available'), show the
- *    advice from `envAdvice()` — particularly recommending Bluefy on iOS.
+ *  - When neither Web Bluetooth nor the Mini Program native bridge is
+ *    available, show the platform advice from `envAdvice()`.
  *  - When connected, show the live status (brand / battery / last move /
  *    solved indicator) and a "reset state" + "disconnect" button.
  */
 
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
-import { detectBluetoothEnv, envAdvice, BluetoothConnectError, CONNECT_STAGE_LABEL, describeError } from '../_lib/bluetooth';
+import { detectBluetoothEnv, envAdvice, mayUseMiniProgramBridge, BluetoothConnectError, CONNECT_STAGE_LABEL, describeError } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '../_lib/bluetooth';
 import { normalizeMac } from '../_lib/bluetooth/mac';
 import { Bluetooth, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
@@ -242,7 +242,8 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
 
   const env = detectBluetoothEnv();
   const advice = envAdvice(env);
-  const supported = env === 'available' || env === 'available-bluefy';
+  const miniProgramBridge = mayUseMiniProgramBridge();
+  const supported = miniProgramBridge || env === 'available' || env === 'available-bluefy';
   const inBluefy = env === 'available-bluefy';
   const connected = cube.status.connected;
 
@@ -374,7 +375,7 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
 
         {supported && !connected && !macPrompt && (
           <div className="modal-section">
-            <p>{tr({ zh: '点击下方按钮，从浏览器选择你的智能魔方。', en: 'Click below to pick your smart cube from the browser picker.'
+            <p>{tr({ zh: '点击下方按钮，选择并连接你的智能魔方。', en: 'Click below to choose and connect your smart cube.'
             })}</p>
             <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 6 }}>
               <div style={{ marginBottom: 4 }}>{tr({ zh: '支持的三阶智能魔方（按协议）：', en: 'Supported 3x3 smart cubes (by protocol):'
