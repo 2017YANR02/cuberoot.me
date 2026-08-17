@@ -11,7 +11,17 @@ describe('SQ1 algorithm set names', () => {
       { slug: 'cp', short: 'CP', zh: '角块排列' },
       { slug: 'ep', short: 'EP', zh: '棱块排列' },
       { slug: 'obl', short: 'OBL', zh: '双层色向' },
+      { slug: 'pbl', short: 'PBL', zh: '双层排列' },
       { slug: 'parity', short: 'Parity', zh: 'Parity' },
     ]);
+  });
+
+  it('keeps PBL in the standard umbrella-set flow', () => {
+    expect(ALG_CATALOG.sq1.find(({ slug }) => slug === 'pbl')).toMatchObject({
+      short: 'PBL',
+      en: 'Permutation of Both Layers',
+      zh: '双层排列',
+      umbrella: true,
+    });
   });
 });

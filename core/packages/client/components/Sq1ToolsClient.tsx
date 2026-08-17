@@ -9,9 +9,9 @@ import Sq1ToolNav from '@/components/Sq1ToolNav';
 import { tr } from '@/i18n/tr';
 import styles from './Sq1Tools.module.css';
 
-const Sq1PblWorkspace = dynamic(() => import('@/components/Sq1PblWorkspace'));
+const Sq1PblFinder = dynamic(() => import('@/components/Sq1PblFinder'));
 
-export type Sq1Tool = 'inspect' | 'visualize' | 'import' | 'count' | 'parity-game' | 'train' | 'algorithm-trainer' | 'pbl';
+export type Sq1Tool = 'inspect' | 'visualize' | 'import' | 'count' | 'parity-game' | 'train' | 'algorithm-trainer' | 'pbl-finder';
 
 const TOOL_TEXT = {
   inspect: {
@@ -42,9 +42,9 @@ const TOOL_TEXT = {
     title: { zh: 'SQ1 公式训练', en: 'Square-1 algorithm trainer' },
     intro: { zh: '从 Squanmate 的五组情况中练习公式，可按奇偶排列筛选并控制中层状态。', en: 'Practise Squanmate’s five case groups with parity filters and middle-layer control.' },
   },
-  pbl: {
-    title: { zh: 'SQ1 PBL 公式与查找器', en: 'Square-1 PBL algorithms and finder' },
-    intro: { zh: '浏览 Daniel 的 PBL 文档，并按上下层排列查找可用公式。', en: 'Browse Daniel’s PBL reference and find algorithms by top and bottom layer permutation.' },
+  'pbl-finder': {
+    title: { zh: 'SQ1 PBL 高级查找', en: 'Square-1 PBL advanced finder' },
+    intro: { zh: '选择上下层排列，用辅助公式组合查找可执行的 PBL 公式。', en: 'Choose the top and bottom permutations and combine auxiliary algorithms to find executable PBL solutions.' },
   },
 } as const;
 
@@ -66,7 +66,7 @@ export default function Sq1ToolsClient({ tool }: { tool: Sq1Tool }) {
         {tool === 'parity-game' && <Sq1ParityGame />}
         {tool === 'train' && <Sq1ShapeTrainer />}
         {tool === 'algorithm-trainer' && <Sq1AlgorithmTrainer />}
-        {tool === 'pbl' && <Sq1PblWorkspace />}
+        {tool === 'pbl-finder' && <Sq1PblFinder />}
       </div>
     </main>
   );

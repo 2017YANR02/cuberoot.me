@@ -28,6 +28,15 @@ LIVE_URL = f"https://docs.google.com/spreadsheets/d/{DOC_ID}/export?format=xlsx"
 MAIN = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 UNUSED_CASES = ("Ga/Gd", "Ga/Jb", "Gb/Gc", "Gb/Jb")
+RAW_ALG_EVIDENCE_FALLBACKS = {
+    "M/Db": {
+        "sheet": "Standard Algs Data",
+        "keyRef": "S208",
+        "key": "MDb",
+        "algorithmRef": "T208",
+        "slices": 7,
+    },
+}
 SLICER_SHEETS = (
     "3 and 4 slicers",
     "5 slicers",
@@ -1005,11 +1014,13 @@ def raw_invariants(sheet: dict[str, Any], slicers: list[dict[str, Any]]) -> dict
 
 def build_case_export(
     raw_sheet: dict[str, Any],
+    standard_algs_sheet: dict[str, Any],
     slicers: list[dict[str, Any]],
     slugs: dict[str, str],
     snapshot: dict[str, Any],
 ) -> dict[str, Any]:
     raw_values = raw_sheet["valuesByRef"]
+    standard_algs_values = standard_algs_sheet["valuesByRef"]
     raw_rows: list[dict[str, Any]] = []
     compact_keys: dict[str, str] = {}
     for row in range(1, 2000):
@@ -1020,13 +1031,39 @@ def build_case_export(
         if compact in compact_keys:
             raise ValueError(f"ambiguous Raw Algs compact key: {compact}")
         compact_keys[compact] = key
+        raw_solution = raw_values.get(f"F{row}")
+        solution = raw_solution.strip() if raw_solution is not None else ""
+        solution_evidence = None
+        if not solution and key != "-/-":
+            fallback = RAW_ALG_EVIDENCE_FALLBACKS.get(key)
+            if fallback is None:
+                raise ValueError(f"non-solved Raw Algs case has no solution: {key} (F{row})")
+            evidence_key = standard_algs_values.get(fallback["keyRef"])
+            evidence_algorithm = standard_algs_values.get(fallback["algorithmRef"], "").strip()
+            if evidence_key != fallback["key"]:
+                raise ValueError(
+                    f"Raw Algs fallback key mismatch for {key}: "
+                    f"{fallback['sheet']}!{fallback['keyRef']}={evidence_key!r}"
+                )
+            if not evidence_algorithm or evidence_algorithm.count("/") != fallback["slices"]:
+                raise ValueError(
+                    f"invalid Raw Algs fallback for {key}: "
+                    f"{fallback['sheet']}!{fallback['algorithmRef']}={evidence_algorithm!r}"
+                )
+            solution = evidence_algorithm
+            solution_evidence = {
+                "sheet": fallback["sheet"],
+                "keyCell": fallback["keyRef"],
+                "algorithmCell": fallback["algorithmRef"],
+            }
         raw_rows.append({
             "key": key,
             "top": raw_values.get(f"B{row}", ""),
             "bottom": raw_values.get(f"C{row}", ""),
             "frequency": number_value(raw_values.get(f"D{row}")),
             "shapePair": raw_values.get(f"E{row}", ""),
-            "solution": raw_values.get(f"F{row}") or None,
+            "solution": solution or None,
+            **({"solutionEvidence": solution_evidence} if solution_evidence else {}),
             "slices": number_value(raw_values.get(f"G{row}")),
         })
 
@@ -1468,14 +1505,10 @@ def materialize_formula_images(
 
 def write_public_export(
     public_dir: Path,
-    cases_output: Path,
     snapshot: dict[str, Any],
     public_sheets: list[dict[str, Any]],
     media: dict[str, dict[str, Any]],
     defined_names: list[Any],
-    raw_sheet: dict[str, Any],
-    slicers: list[dict[str, Any]],
-    slugs: dict[str, str],
     finder_defaults: Path | None,
 ) -> None:
     media_manifest: list[dict[str, Any]] = []
@@ -1552,8 +1585,6 @@ def write_public_export(
         "formulaImages": formula_images,
         "sheets": sheet_manifest,
     }
-    cases = build_case_export(raw_sheet, slicers, slugs, snapshot)
-    atomic_json(cases_output, cases)
     # These are the only exporter-owned directories. Keep unrelated files and
     # nested directories under public_dir untouched.
     repository_root = next(
@@ -1696,6 +1727,8 @@ def normalize(
         by_name = {item["name"]: item for item in sheets}
         if "Raw Algs" not in by_name:
             raise ValueError("required sheet missing: Raw Algs")
+        if "Standard Algs Data" not in by_name:
+            raise ValueError("required sheet missing: Standard Algs Data")
         slicers = [by_name[name] for name in SLICER_SHEETS if name in by_name]
         invariants = {
             "sheetCount": len(sheets),
@@ -1726,19 +1759,22 @@ def normalize(
             "invariants": invariants,
             "sheets": sheets,
         }
+        if cases_output is not None:
+            cases = build_case_export(
+                by_name["Raw Algs"],
+                by_name["Standard Algs Data"],
+                slicers,
+                slugs,
+                snapshot,
+            )
+            atomic_json(cases_output, cases)
         if public_dir is not None:
-            if cases_output is None:
-                raise ValueError("cases output is required with public export")
             write_public_export(
                 public_dir,
-                cases_output,
                 snapshot,
                 public_sheets,
                 all_media,
                 defined_names,
-                by_name["Raw Algs"],
-                slicers,
-                slugs,
                 finder_defaults,
             )
         for item in sheets:

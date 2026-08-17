@@ -859,6 +859,7 @@ html[data-theme=dark] .alg-root {
   margin-inline-start: 8px;
   font-size: 11px;
   font-style: italic;
+  white-space: pre-line;
 }
 .alg-alg-text u {
   text-decoration: underline;
@@ -1833,6 +1834,13 @@ a.alg-community-author:hover {
     gap: 10px;
   }
   .alg-case-detail-head { gap: 10px; }
+  .alg-case-detail-head .alg-recog-cta {
+    display: inline-flex;
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    align-items: center;
+    justify-content: center;
+  }
   .alg-case-detail-lean {
     display: flex;
     flex-direction: column;

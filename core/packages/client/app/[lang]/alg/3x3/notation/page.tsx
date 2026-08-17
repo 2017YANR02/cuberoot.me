@@ -5,7 +5,7 @@ import MoveNotationDemo, { type MoveNotationOption } from '@/components/MoveNota
 import { useT } from '@/hooks/useT';
 import { formatAlgNotation } from '@/lib/alg-notation-display';
 import '../../alg.css';
-import './notation.css';
+import '../../notation-guide.css';
 
 interface DemoMove {
   move: string;

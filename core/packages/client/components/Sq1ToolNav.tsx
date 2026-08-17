@@ -8,7 +8,6 @@ import styles from './Sq1ToolNav.module.css';
 
 const TOOLS = [
   { href: '/alg/sq1', zh: '公式库', en: 'Algorithms', exact: true },
-  { href: '/alg/sq1/pbl', zh: 'PBL', en: 'PBL' },
   { href: '/alg/sq1/algorithm-trainer', zh: '公式训练', en: 'Algorithm trainer' },
   { href: '/alg/sq1/train', zh: '组合练习', en: 'Pair drill' },
   { href: '/sq1/cs/name', zh: '形状命名', en: 'Shape names' },
