@@ -131,6 +131,142 @@ describe("teaching platform API bridge", () => {
     expect(payload.idempotencyKey).toBe(operationKey);
   });
 
+  it("strictly parses package products and rejects invalid credit totals", async () => {
+    const validProduct = {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      code: "private_10",
+      name: "十节一对一",
+      status: "active",
+      creditUnit: "lesson",
+      creditType: "general",
+      totalCredits: 10,
+      validityDays: 365,
+      priceAmountMinor: 12_800,
+      currency: "CNY",
+      createdAt: "2026-08-17T00:00:00.000Z",
+      updatedAt: "2026-08-17T00:00:00.000Z",
+    };
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        packageProducts: [validProduct], total: 1, page: 1, pageSize: 30,
+      }), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        packageProducts: [{ ...validProduct, totalCredits: 0 }], total: 1, page: 1, pageSize: 30,
+      }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    const { listTeachingPackageProducts } = await import("@/lib/teaching-api");
+
+    await expect(listTeachingPackageProducts(user, "demo")).resolves.toMatchObject({
+      items: [{ code: "private_10", totalCredits: 10 }],
+      total: 1,
+    });
+    expect(String(fetchMock.mock.calls[0][0])).toBe(
+      "https://api.example.test/v1/teaching/organizations/demo/package-products?page=1&pageSize=30",
+    );
+    await expect(listTeachingPackageProducts(user, "demo")).rejects.toMatchObject({
+      code: "BAD_RESPONSE",
+    });
+  });
+
+  it("signs the final session-create shape and normalizes attendance", async () => {
+    const operationKey = "33333333-3333-4333-8333-333333333333";
+    const input = {
+      title: "周六训练",
+      startsAt: "2026-08-22T01:00:00.000Z",
+      endsAt: "2026-08-22T02:00:00.000Z",
+      timezone: "Asia/Shanghai",
+      teacherUserIds: [],
+      attendees: [{
+        studentId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        studentPackageId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        creditCost: 1,
+      }],
+    };
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
+      session: {
+        id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+        title: input.title,
+        startsAt: input.startsAt,
+        endsAt: input.endsAt,
+        timezone: input.timezone,
+        status: "scheduled",
+        attendance: [{
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          studentId: input.attendees[0].studentId,
+          displayName: "小明",
+          studentPackageId: input.attendees[0].studentPackageId,
+          status: "expected",
+          creditCost: 1,
+        }],
+        createdAt: "2026-08-17T00:00:00.000Z",
+        updatedAt: "2026-08-17T00:00:00.000Z",
+      },
+    }), { status: 201, headers: { "Content-Type": "application/json" } }));
+    const { createTeachingSession } = await import("@/lib/teaching-api");
+
+    await expect(createTeachingSession(user, "demo", input, operationKey)).resolves.toMatchObject({
+      attendeeCount: 1,
+      attendees: [{ studentName: "小明", attendanceStatus: "expected" }],
+    });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe("https://api.example.test/v1/teaching/organizations/demo/sessions");
+    expect(init?.body).toBe(JSON.stringify(input));
+    const headers = new Headers(init?.headers);
+    expect(headers.get("Idempotency-Key")).toBe(operationKey);
+    const payload = JSON.parse(Buffer.from(headers.get("X-CubeRoot-Platform-Assertion")!.split(".")[0], "base64url").toString("utf8"));
+    expect(payload.path).toBe("/v1/teaching/organizations/demo/sessions");
+    expect(payload.bodySha256).toBe(createHash("sha256").update(JSON.stringify(input)).digest("hex"));
+    expect(payload.idempotencyKey).toBe(operationKey);
+  });
+
+  it("uses record-only attendance batches with the same signed idempotency key", async () => {
+    const operationKey = "44444444-4444-4444-8444-444444444444";
+    const sessionId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    const records = [{
+      attendanceId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+      status: "present" as const,
+    }];
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
+      attendance: [{
+        id: records[0].attendanceId,
+        studentId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        studentPackageId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        status: "present",
+        creditCost: 1,
+      }],
+    }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    const { saveTeachingAttendanceBatch } = await import("@/lib/teaching-api");
+
+    await expect(saveTeachingAttendanceBatch(user, "demo", sessionId, records, operationKey)).resolves.toMatchObject([
+      { attendanceStatus: "present", creditCost: 1 },
+    ]);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe(`https://api.example.test/v1/teaching/organizations/demo/sessions/${sessionId}/attendance/batch`);
+    expect(init?.body).toBe(JSON.stringify({ records }));
+    expect(new Headers(init?.headers).get("Idempotency-Key")).toBe(operationKey);
+  });
+
+  it("signs completion with an explicit empty JSON body and parses consumption", async () => {
+    const operationKey = "55555555-5555-4555-8555-555555555555";
+    const sessionId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
+      session: { id: sessionId, status: "completed", completedAt: "2026-08-22T02:00:00.000Z" },
+      consumption: { attendanceCount: 1, totalCredits: 1 },
+    }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    const { completeTeachingSession } = await import("@/lib/teaching-api");
+
+    await expect(completeTeachingSession(user, "demo", sessionId, operationKey)).resolves.toEqual({
+      attendanceCount: 1,
+      totalCredits: 1,
+    });
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init?.body).toBe("{}");
+    const headers = new Headers(init?.headers);
+    expect(headers.get("Idempotency-Key")).toBe(operationKey);
+    const payload = JSON.parse(Buffer.from(headers.get("X-CubeRoot-Platform-Assertion")!.split(".")[0], "base64url").toString("utf8"));
+    expect(payload.bodySha256).toBe(createHash("sha256").update("{}").digest("hex"));
+    expect(payload.idempotencyKey).toBe(operationKey);
+  });
+
   it("binds pagination to the signed query and validates page metadata", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(

@@ -1,5 +1,6 @@
 import { hasTeachingPermission } from "@cuberoot/shared/teaching";
 import type { SearchParams } from "nuqs/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Pagination } from "@/components/Pagination";
 import { requireUser } from "@/lib/auth-user";
@@ -48,7 +49,13 @@ export default async function OrganizationStudentsPage({
       <div className="mt-7 border-y border-line divide-y divide-line">
         {result.items.length ? result.items.map((student) => (
           <div key={student.id} className="grid min-w-0 gap-1 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(8rem,auto)_auto] sm:items-center sm:gap-4">
-            <span className="min-w-0 [overflow-wrap:anywhere] text-[14px] font-medium text-ink">{student.displayName}</span>
+            <Link
+              href={`/org/${orgSlug}/students/${student.id}/credits`}
+              prefetch={false}
+              className="min-w-0 [overflow-wrap:anywhere] text-[14px] font-medium text-ink hover:text-brand-dark"
+            >
+              {student.displayName}
+            </Link>
             <span className="min-w-0 break-all font-mono text-[12px] text-ink-3">{student.externalRef || "未设置编号"}</span>
             <span className="text-[12px] text-ink-3">{teachingStatusLabel(student.status)}</span>
           </div>
