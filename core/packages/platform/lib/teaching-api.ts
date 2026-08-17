@@ -3,19 +3,31 @@ import "server-only";
 import { createHash, createHmac, randomBytes, randomUUID } from "node:crypto";
 import {
   TEACHING_MEMBER_STATUSES,
+  TEACHING_ATTENDANCE_STATUSES,
+  TEACHING_CREDIT_UNITS,
   TEACHING_ORGANIZATION_STATUSES,
+  TEACHING_PACKAGE_ACQUISITION_TYPES,
+  TEACHING_PACKAGE_PRODUCT_STATUSES,
   TEACHING_PLATFORM_ASSERTION_AUDIENCE,
   TEACHING_PLATFORM_ASSERTION_HEADER,
   TEACHING_PLATFORM_ASSERTION_ISSUER,
   TEACHING_PLATFORM_ASSERTION_MAX_AGE_SECONDS,
+  TEACHING_SESSION_STATUSES,
+  TEACHING_STUDENT_PACKAGE_STATUSES,
   TEACHING_STUDENT_STATUSES,
   isTeachingOrganizationRole,
+  type TeachingAttendanceStatus,
+  type TeachingCreditUnit,
   type TeachingApiErrorBody,
   type TeachingErrorCode,
   type TeachingMemberStatus,
   type TeachingOrganizationRole,
   type TeachingOrganizationStatus,
   type TeachingPlatformAssertionV1,
+  type TeachingPackageAcquisitionType,
+  type TeachingPackageProductStatus,
+  type TeachingSessionStatus,
+  type TeachingStudentPackageStatus,
   type TeachingStudentStatus,
 } from "@cuberoot/shared/teaching";
 import type { User } from "@/db/schema";
@@ -70,6 +82,103 @@ export interface TeachingOrganizationSummary {
   organization: TeachingOrganization;
   memberCount: number | null;
   studentCount: number | null;
+}
+
+export interface TeachingPackageProduct {
+  id: string;
+  code: string;
+  name: string;
+  status: TeachingPackageProductStatus;
+  creditUnit: TeachingCreditUnit;
+  creditType: string;
+  totalCredits: number;
+  validityDays: number | null;
+  priceAmountMinor: number;
+  currency: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeachingStudentPackage {
+  id: string;
+  studentId: string;
+  productId: string;
+  productNameSnapshot: string;
+  status: TeachingStudentPackageStatus;
+  creditUnit: TeachingCreditUnit;
+  creditType: string;
+  totalCredits: number;
+  remainingCredits: number;
+  acquisitionType: TeachingPackageAcquisitionType;
+  validFrom: string;
+  validUntil: string | null;
+  createdAt: string;
+}
+
+export interface TeachingCreditLedgerEntry {
+  id: number;
+  entryType: string;
+  delta: number;
+  balanceAfter: number | null;
+  reason: string;
+  sessionId: string | null;
+  createdAt: string;
+}
+
+export interface TeachingSessionAttendee {
+  id: string;
+  studentId: string;
+  studentName: string;
+  studentPackageId: string | null;
+  attendanceStatus: TeachingAttendanceStatus;
+  creditCost: number;
+}
+
+export type TeachingSavedAttendance = Omit<TeachingSessionAttendee, "studentName">;
+
+export interface TeachingSessionSummary {
+  id: string;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  timezone: string;
+  status: TeachingSessionStatus;
+  attendeeCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeachingSession extends TeachingSessionSummary {
+  attendees: TeachingSessionAttendee[];
+}
+
+export interface TeachingSessionConsumption {
+  attendanceCount: number;
+  totalCredits: number;
+}
+
+export interface CreateTeachingPackageProductInput {
+  code: string;
+  name: string;
+  creditUnit: TeachingCreditUnit;
+  creditType: string;
+  totalCredits: number;
+  validityDays: number | null;
+  priceAmountMinor: number;
+  currency: string;
+}
+
+export interface CreateTeachingSessionInput {
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  timezone?: string;
+  teacherUserIds?: number[];
+  attendees?: Array<{
+    studentId: string;
+    studentPackageId: string;
+    creditCost: number;
+  }>;
 }
 
 export class TeachingApiError extends Error {
@@ -261,6 +370,204 @@ function parseStudent(value: unknown): TeachingStudent {
   };
 }
 
+function parseTimestamp(value: unknown, label: string): string {
+  if (typeof value !== "string" || !Number.isFinite(Date.parse(value))) {
+    throw new TeachingApiError("BAD_RESPONSE", `教学服务返回了无效的${label}`);
+  }
+  return value;
+}
+
+function parseNullableTimestamp(value: unknown, label: string): string | null {
+  return value === null ? null : parseTimestamp(value, label);
+}
+
+function parseRequiredString(value: unknown, label: string): string {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new TeachingApiError("BAD_RESPONSE", `教学服务返回了无效的${label}`);
+  }
+  return value;
+}
+
+const RESOURCE_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function parseResourceId(value: unknown, label: string): string {
+  const parsed = parseRequiredString(value, label);
+  if (!RESOURCE_ID_PATTERN.test(parsed)) {
+    throw new TeachingApiError("BAD_RESPONSE", `教学服务返回了无效的${label}`);
+  }
+  return parsed.toLowerCase();
+}
+
+function parseSafeInteger(value: unknown, label: string): number {
+  if (!Number.isSafeInteger(value)) {
+    throw new TeachingApiError("BAD_RESPONSE", `教学服务返回了无效的${label}`);
+  }
+  return value as number;
+}
+
+function parsePositiveInteger(value: unknown, label: string): number {
+  const parsed = parseSafeInteger(value, label);
+  if (parsed < 1) {
+    throw new TeachingApiError("BAD_RESPONSE", `教学服务返回了无效的${label}`);
+  }
+  return parsed;
+}
+
+function parsePackageProduct(value: unknown): TeachingPackageProduct {
+  if (
+    !isRecord(value) ||
+    !TEACHING_PACKAGE_PRODUCT_STATUSES.includes(value.status as TeachingPackageProductStatus) ||
+    !TEACHING_CREDIT_UNITS.includes(value.creditUnit as TeachingCreditUnit)
+  ) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的课包产品数据");
+  }
+  const validityDays = value.validityDays === null
+    ? null
+    : parsePositiveInteger(value.validityDays, "有效天数");
+  return {
+    id: parseResourceId(value.id, "课包产品标识"),
+    code: parseRequiredString(value.code, "课包代码"),
+    name: parseRequiredString(value.name, "课包名称"),
+    status: value.status as TeachingPackageProductStatus,
+    creditUnit: value.creditUnit as TeachingCreditUnit,
+    creditType: parseRequiredString(value.creditType, "课时类型"),
+    totalCredits: parsePositiveInteger(value.totalCredits, "总课时"),
+    validityDays,
+    priceAmountMinor: parseNonNegativeInteger(value.priceAmountMinor, "课包价格"),
+    currency: parseRequiredString(value.currency, "币种"),
+    createdAt: parseTimestamp(value.createdAt, "创建时间"),
+    updatedAt: parseTimestamp(value.updatedAt, "更新时间"),
+  };
+}
+
+function parseStudentPackage(value: unknown): TeachingStudentPackage {
+  if (
+    !isRecord(value) ||
+    !TEACHING_STUDENT_PACKAGE_STATUSES.includes(value.status as TeachingStudentPackageStatus) ||
+    !TEACHING_CREDIT_UNITS.includes(value.creditUnit as TeachingCreditUnit) ||
+    !TEACHING_PACKAGE_ACQUISITION_TYPES.includes(value.acquisitionType as TeachingPackageAcquisitionType)
+  ) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的学员课包数据");
+  }
+  const productName = value.productNameSnapshot ?? value.productName;
+  const totalCredits = value.totalCredits ?? value.entitledCredits;
+  return {
+    id: parseResourceId(value.id, "学员课包标识"),
+    studentId: parseResourceId(value.studentId, "学员标识"),
+    productId: parseResourceId(value.productId, "课包产品标识"),
+    productNameSnapshot: parseRequiredString(productName, "课包名称"),
+    status: value.status as TeachingStudentPackageStatus,
+    creditUnit: value.creditUnit as TeachingCreditUnit,
+    creditType: parseRequiredString(value.creditType, "课时类型"),
+    totalCredits: parsePositiveInteger(totalCredits, "总课时"),
+    remainingCredits: parseNonNegativeInteger(value.remainingCredits, "剩余课时"),
+    acquisitionType: value.acquisitionType as TeachingPackageAcquisitionType,
+    validFrom: parseTimestamp(value.validFrom, "生效时间"),
+    validUntil: parseNullableTimestamp(value.validUntil, "失效时间"),
+    createdAt: parseTimestamp(value.createdAt, "创建时间"),
+  };
+}
+
+function parseLedgerEntry(value: unknown): TeachingCreditLedgerEntry {
+  if (!isRecord(value)) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的课时流水");
+  }
+  return {
+    id: parsePositiveInteger(value.id, "流水标识"),
+    entryType: parseRequiredString(value.entryType, "流水类型"),
+    delta: parseSafeInteger(value.delta, "课时变动"),
+    balanceAfter: value.balanceAfter === undefined || value.balanceAfter === null
+      ? null
+      : parseSafeInteger(value.balanceAfter, "变动后余额"),
+    reason: parseRequiredString(value.reason, "流水原因"),
+    sessionId: value.sessionId === null
+      ? null
+      : parseResourceId(value.sessionId, "课堂标识"),
+    createdAt: parseTimestamp(value.createdAt, "流水时间"),
+  };
+}
+
+function parseSessionStatus(value: unknown): TeachingSessionStatus {
+  if (!TEACHING_SESSION_STATUSES.includes(value as TeachingSessionStatus)) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的课堂状态");
+  }
+  return value as TeachingSessionStatus;
+}
+
+function parseAttendanceStatus(value: unknown): TeachingAttendanceStatus {
+  if (!TEACHING_ATTENDANCE_STATUSES.includes(value as TeachingAttendanceStatus)) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的出勤状态");
+  }
+  return value as TeachingAttendanceStatus;
+}
+
+function parseSessionBase(value: unknown): TeachingSessionSummary {
+  if (!isRecord(value)) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的课堂数据");
+  }
+  const rawCount = value.attendeeCount ?? value.attendanceCount ?? 0;
+  return {
+    id: parseResourceId(value.id, "课堂标识"),
+    title: parseRequiredString(value.title, "课堂标题"),
+    startsAt: parseTimestamp(value.startsAt, "上课时间"),
+    endsAt: parseTimestamp(value.endsAt, "下课时间"),
+    timezone: parseRequiredString(value.timezone, "课堂时区"),
+    status: parseSessionStatus(value.status),
+    attendeeCount: parseNonNegativeInteger(rawCount, "出勤人数"),
+    createdAt: parseTimestamp(value.createdAt, "创建时间"),
+    updatedAt: parseTimestamp(value.updatedAt, "更新时间"),
+  };
+}
+
+function parseSessionAttendee(value: unknown): TeachingSessionAttendee {
+  if (!isRecord(value)) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的出勤记录");
+  }
+  const studentName = value.studentName ?? value.displayName;
+  const attendanceStatus = value.attendanceStatus ?? value.status;
+  return {
+    id: parseResourceId(value.id, "出勤标识"),
+    studentId: parseResourceId(value.studentId, "学员标识"),
+    studentName: parseRequiredString(studentName, "学员姓名"),
+    studentPackageId: value.studentPackageId === null
+      ? null
+      : parseResourceId(value.studentPackageId, "学员课包标识"),
+    attendanceStatus: parseAttendanceStatus(attendanceStatus),
+    creditCost: parsePositiveInteger(value.creditCost, "扣课数量"),
+  };
+}
+
+function parseSavedAttendance(value: unknown): TeachingSavedAttendance {
+  if (!isRecord(value)) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的出勤记录");
+  }
+  return {
+    id: parseResourceId(value.id, "出勤标识"),
+    studentId: parseResourceId(value.studentId, "学员标识"),
+    studentPackageId: value.studentPackageId === null
+      ? null
+      : parseResourceId(value.studentPackageId, "学员课包标识"),
+    attendanceStatus: parseAttendanceStatus(value.attendanceStatus ?? value.status),
+    creditCost: parsePositiveInteger(value.creditCost, "扣课数量"),
+  };
+}
+
+function parseSession(value: unknown): TeachingSession {
+  const summary = parseSessionBase(value);
+  if (!isRecord(value)) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的课堂数据");
+  }
+  const rawAttendance = value.attendees ?? value.attendance;
+  if (!Array.isArray(rawAttendance)) {
+    throw new TeachingApiError("BAD_RESPONSE", "教学服务响应缺少出勤列表");
+  }
+  return {
+    ...summary,
+    attendeeCount: rawAttendance.length,
+    attendees: rawAttendance.map(parseSessionAttendee),
+  };
+}
+
 function parseProperty<T>(
   value: unknown,
   key: string,
@@ -411,6 +718,14 @@ function orgPath(slug: string, suffix = ""): string {
   return `teaching/organizations/${encodeURIComponent(slug)}${suffix}`;
 }
 
+function resourceId(value: string, label: string): string {
+  const normalized = value.trim().toLowerCase();
+  if (!RESOURCE_ID_PATTERN.test(normalized)) {
+    throw new TeachingApiError("INVALID_INPUT", `${label}无效`);
+  }
+  return encodeURIComponent(normalized);
+}
+
 export async function listTeachingOrganizations(
   user: User,
 ): Promise<TeachingOrganization[]> {
@@ -533,4 +848,204 @@ export async function createTeachingStudent(
     (body) => ({ student: parseProperty(body, "student", parseStudent) }),
   );
   return value.student;
+}
+
+export async function listTeachingPackageProducts(
+  user: User,
+  slug: string,
+  options: { page?: number; pageSize?: number } = {},
+): Promise<TeachingPagedResult<TeachingPackageProduct>> {
+  const page = boundedPositiveInteger(options.page, 1, 1_000_000);
+  const pageSize = boundedPositiveInteger(options.pageSize, 30, 100);
+  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return requestJson<TeachingPagedResult<TeachingPackageProduct>>(
+    user,
+    orgPath(slug, `/package-products?${query}`),
+    {},
+    (body) => parsePage(body, "packageProducts", parsePackageProduct),
+  );
+}
+
+export async function createTeachingPackageProduct(
+  user: User,
+  slug: string,
+  input: CreateTeachingPackageProductInput,
+  idempotencyKey: string,
+): Promise<TeachingPackageProduct> {
+  const value = await requestJson<{ packageProduct: TeachingPackageProduct }>(
+    user,
+    orgPath(slug, "/package-products"),
+    { method: "POST", body: { ...input }, idempotencyKey },
+    (body) => ({
+      packageProduct: parseProperty(body, "packageProduct", parsePackageProduct),
+    }),
+  );
+  return value.packageProduct;
+}
+
+export async function listTeachingStudentPackages(
+  user: User,
+  slug: string,
+  studentId: string,
+  options: { page?: number; pageSize?: number } = {},
+): Promise<TeachingPagedResult<TeachingStudentPackage>> {
+  const page = boundedPositiveInteger(options.page, 1, 1_000_000);
+  const pageSize = boundedPositiveInteger(options.pageSize, 30, 100);
+  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return requestJson<TeachingPagedResult<TeachingStudentPackage>>(
+    user,
+    orgPath(slug, `/students/${resourceId(studentId, "学员标识")}/packages?${query}`),
+    {},
+    (body) => parsePage(body, "studentPackages", parseStudentPackage),
+  );
+}
+
+export async function createTeachingStudentPackage(
+  user: User,
+  slug: string,
+  studentId: string,
+  input: {
+    productId: string;
+    acquisitionType: TeachingPackageAcquisitionType;
+    validFrom: string;
+    sourceSystem: string | null;
+    sourceRef: string | null;
+    sourceLineRef: string | null;
+  },
+  idempotencyKey: string,
+): Promise<TeachingStudentPackage> {
+  const value = await requestJson<{ studentPackage: TeachingStudentPackage }>(
+    user,
+    orgPath(slug, `/students/${resourceId(studentId, "学员标识")}/packages`),
+    { method: "POST", body: { ...input }, idempotencyKey },
+    (body) => ({
+      studentPackage: parseProperty(body, "studentPackage", parseStudentPackage),
+    }),
+  );
+  return value.studentPackage;
+}
+
+export async function listTeachingStudentPackageLedger(
+  user: User,
+  slug: string,
+  studentPackageId: string,
+  options: { page?: number; pageSize?: number } = {},
+): Promise<TeachingPagedResult<TeachingCreditLedgerEntry>> {
+  const page = boundedPositiveInteger(options.page, 1, 1_000_000);
+  const pageSize = boundedPositiveInteger(options.pageSize, 30, 100);
+  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return requestJson<TeachingPagedResult<TeachingCreditLedgerEntry>>(
+    user,
+    orgPath(slug, `/student-packages/${resourceId(studentPackageId, "学员课包标识")}/ledger?${query}`),
+    {},
+    (body) => parsePage(body, "ledger", parseLedgerEntry),
+  );
+}
+
+export async function listTeachingSessions(
+  user: User,
+  slug: string,
+  options: { page?: number; pageSize?: number } = {},
+): Promise<TeachingPagedResult<TeachingSessionSummary>> {
+  const page = boundedPositiveInteger(options.page, 1, 1_000_000);
+  const pageSize = boundedPositiveInteger(options.pageSize, 30, 100);
+  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return requestJson<TeachingPagedResult<TeachingSessionSummary>>(
+    user,
+    orgPath(slug, `/sessions?${query}`),
+    {},
+    (body) => parsePage(body, "sessions", parseSessionBase),
+  );
+}
+
+export async function getTeachingSession(
+  user: User,
+  slug: string,
+  sessionId: string,
+): Promise<TeachingSession> {
+  const value = await requestJson<{ session: TeachingSession }>(
+    user,
+    orgPath(slug, `/sessions/${resourceId(sessionId, "课堂标识")}`),
+    {},
+    (body) => ({ session: parseProperty(body, "session", parseSession) }),
+  );
+  return value.session;
+}
+
+export async function createTeachingSession(
+  user: User,
+  slug: string,
+  input: CreateTeachingSessionInput,
+  idempotencyKey: string,
+): Promise<TeachingSession> {
+  const value = await requestJson<{ session: TeachingSession }>(
+    user,
+    orgPath(slug, "/sessions"),
+    { method: "POST", body: { ...input }, idempotencyKey },
+    (body) => ({ session: parseProperty(body, "session", parseSession) }),
+  );
+  return value.session;
+}
+
+export async function saveTeachingAttendanceBatch(
+  user: User,
+  slug: string,
+  sessionId: string,
+  records: Array<{
+    attendanceId: string;
+    status: Exclude<TeachingAttendanceStatus, "expected">;
+  }>,
+  idempotencyKey: string,
+): Promise<TeachingSavedAttendance[]> {
+  const value = await requestJson<{ attendance: TeachingSavedAttendance[] }>(
+    user,
+    orgPath(slug, `/sessions/${resourceId(sessionId, "课堂标识")}/attendance/batch`),
+    { method: "POST", body: { records }, idempotencyKey },
+    (body) => ({
+      attendance: parseArrayProperty(body, "attendance", parseSavedAttendance),
+    }),
+  );
+  return value.attendance;
+}
+
+export async function completeTeachingSession(
+  user: User,
+  slug: string,
+  sessionId: string,
+  idempotencyKey: string,
+): Promise<TeachingSessionConsumption> {
+  const value = await requestJson<{
+    session: { id: string; status: "completed"; completedAt: string };
+    consumption: TeachingSessionConsumption;
+  }>(
+    user,
+    orgPath(slug, `/sessions/${resourceId(sessionId, "课堂标识")}/complete`),
+    { method: "POST", body: {}, idempotencyKey },
+    (body) => ({
+      session: parseProperty(body, "session", (raw) => {
+        if (!isRecord(raw)) {
+          throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的完课结果");
+        }
+        const status = parseSessionStatus(raw.status);
+        if (status !== "completed") {
+          throw new TeachingApiError("BAD_RESPONSE", "教学服务未确认课堂已完课");
+        }
+        return {
+          id: parseResourceId(raw.id, "课堂标识"),
+          status,
+          completedAt: parseTimestamp(raw.completedAt, "完课时间"),
+        };
+      }),
+      consumption: parseProperty(body, "consumption", (raw) => {
+        if (!isRecord(raw)) {
+          throw new TeachingApiError("BAD_RESPONSE", "教学服务返回了无效的扣课结果");
+        }
+        return {
+          attendanceCount: parseNonNegativeInteger(raw.attendanceCount, "扣课人数"),
+          totalCredits: parseNonNegativeInteger(raw.totalCredits, "扣课总数"),
+        };
+      }),
+    }),
+  );
+  return value.consumption;
 }

@@ -4,22 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export function OrgNav({
-  orgSlug,
-  canReadStudents,
+  links,
 }: {
-  orgSlug: string;
-  canReadStudents: boolean;
+  links: Array<{ href: string; label: string; exact?: boolean }>;
 }) {
   const pathname = usePathname();
-  const base = `/org/${orgSlug}`;
-  const items = [
-    { href: base, label: "概览", exact: true },
-    ...(canReadStudents ? [{ href: `${base}/students`, label: "学员" }] : []),
-    { href: `${base}/members`, label: "成员与角色" },
-  ];
   return (
     <nav aria-label="机构工作台" className="flex gap-1 overflow-x-auto pb-1">
-      {items.map((item) => {
+      {links.map((item) => {
         const active = item.exact
           ? pathname === item.href
           : pathname === item.href || pathname.startsWith(`${item.href}/`);
