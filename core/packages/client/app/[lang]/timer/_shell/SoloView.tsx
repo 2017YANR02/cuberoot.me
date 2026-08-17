@@ -26,6 +26,7 @@ import {
   Brain, X, Check, CheckCircle2, Footprints, Repeat,
 } from 'lucide-react';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
+import { CompactSelect } from '@/components/CompactSelect';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { petReact } from '@/lib/deskpet';
@@ -55,6 +56,7 @@ import { fetchMarks, addMark, markKey, type ScrambleMark } from '../_lib/marks';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
 import { warmup333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';
 import { useTimer, type TimerPhase } from '../_shared/useTimer';
+import { formatInspectionDisplay, inspectionPenalty } from '../_shared/inspection';
 import { formatMs, bestSingle, bestAverageOfN, bestMbldSolve, compareMbld, summarize } from '../_lib/stats';
 import type { EventId, Penalty, Solve } from '../_lib/types';
 import { EVENTS, isBldEvent, toWcaSpelling, fromWcaSpelling } from '../_lib/types';
@@ -1907,6 +1909,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (e.code === 'Space') {
         e.preventDefault();
         if (e.repeat) return;
+        // Settings restores focus to its trigger for keyboard accessibility.
+        // Once Space is claimed by the timer, release that old button focus so
+        // the top-bar control does not retain a keyboard focus ring while timing.
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
         // 计时关(练习模式):空格 = 下一个打乱,不预备/不计时。
         if (!getSettings().timingEnabled) { nextScramble(); return; }
         warmupSound(); onPressDown(); return;
@@ -2067,9 +2073,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (timer.phase === 'ready') return 'ready';
     if (timer.phase === 'running') return 'running';
     if (timer.phase === 'inspecting') {
+      const penalty = inspectionPenalty(timer.inspectionDisplayMs, inspectionLimit);
+      if (penalty === 'DNF') return 'inspection-dnf';
+      if (penalty === '+2') return 'inspection-plus2';
       const sec = Math.floor(timer.inspectionDisplayMs / 1000);
-      if (sec >= inspectionLimit + 2) return 'inspection-dnf';
-      if (sec >= inspectionLimit) return 'inspection-plus2';
       if (sec >= 12) return 'inspection-warn-12';
       if (sec >= 8) return 'inspection-warn-8';
       return 'inspection';
@@ -2082,11 +2089,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // 练习模式(计时关):不显示任何读数 —— 按压只换打乱,没有时间可言。
     if (!settings.timingEnabled) return '';
     if (timer.phase === 'inspecting') {
-      const remaining = Math.max(0, Math.ceil((inspectionLimit * 1000 - timer.inspectionDisplayMs) / 1000));
-      if (timer.inspectionDisplayMs > inspectionLimit * 1000 + 2000) return 'DNF';
-      if (timer.inspectionDisplayMs > inspectionLimit * 1000) return '+2';
-      return remaining.toString();
+      return formatInspectionDisplay(timer.inspectionDisplayMs, inspectionLimit);
     }
+    // 按住变绿代表已经可以起表；此时清掉上一把读数，让松手前的状态明确显示为零。
+    if (timer.phase === 'ready') return formatMs(0, settings.precision);
     if (timer.phase === 'running') {
       return settings.hideTime ? '' : formatMs(timer.displayMs, settings.runningPrecision);
     }
@@ -2098,15 +2104,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   const fontSize = `calc(clamp(48px, 10vw, 132px) * ${settings.timerFontScale})`;
 
+  // 短按进入 holding 时屏幕仍显示上一把成绩,排名徽章也应保持不动；长按到 ready
+  // 后读数已清零,再隐藏徽章。inspectionDisplayMs 用来排除观察阶段里的 holding。
+  const rankBadgePhase = timer.phase === 'stopped'
+    || (timer.phase === 'holding' && timer.lastMs !== null && timer.inspectionDisplayMs === 0);
   // Rank badge centis from the last effective time (DNF -> null). 练习模式(计时关)下
-  // timer.phase/displayMs 可能还残留关闭前最后一次真实成绩 —— 没有新成绩产生,徽章不该显示。
-  const stoppedCentis = useMemo<number | null>(() => {
+  // timer.lastMs 可能还残留关闭前最后一次真实成绩 —— 没有新成绩产生,徽章不该显示。
+  const rankCentis = useMemo<number | null>(() => {
     if (!settings.timingEnabled) return null;
-    if (timer.phase !== 'stopped') return null;
-    if (lastPenalty === 'DNF' || lastPenalty === 'DNS' || !Number.isFinite(timer.displayMs)) return null;
-    const ms = lastPenalty === '+2' ? timer.displayMs + 2000 : timer.displayMs;
+    if (!rankBadgePhase || timer.lastMs === null || !Number.isFinite(timer.lastMs)) return null;
+    if (lastPenalty === 'DNF' || lastPenalty === 'DNS') return null;
+    const ms = lastPenalty === '+2' ? timer.lastMs + 2000 : timer.lastMs;
     return Math.round(ms / 10);
-  }, [timer.phase, timer.displayMs, lastPenalty, settings.timingEnabled]);
+  }, [rankBadgePhase, timer.lastMs, lastPenalty, settings.timingEnabled]);
 
   const eventInfoCurrent = EVENTS.find(e => e.id === event);
   const printEventName = eventInfoCurrent
@@ -2269,22 +2279,29 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             selectedEvent={selectorActiveId}
             groups={eventPickerGroups}
             onSelect={(id) => selectEvent(selectorIdToEvent(id))}
+            iconOnlyTrigger
             dataNoTimer
           />
-          {/* 打乱来源:随机 / WCA 真题 / 手动输入。放在项目选择器右侧,和「人数」下拉同一组。
-              data-no-timer:聚焦此下拉时空格不触发计时(见 lib/timer-ignore-target / 键盘处理)。 */}
-          <select
-            className="shell-players-select"
-            data-no-timer
+          {/* 收起态用短名称,菜单保留完整名称。放在项目选择器右侧,和「人数」下拉同一组。 */}
+          <CompactSelect
+            className="shell-scramble-source-select"
+            triggerClassName="shell-players-select"
+            popupClassName="shell-scramble-source-popup"
+            label={{
+              wca: tr({ zh: '真题', en: 'Real' }),
+              random: tr({ zh: '随机', en: 'Random' }),
+              manual: tr({ zh: '手动', en: 'Manual' }),
+            }[settings.scrambleSource]}
+            items={[
+              { value: 'wca', label: tr({ zh: 'WCA 真题', en: 'WCA real' }) },
+              { value: 'random', label: tr({ zh: '随机状态', en: 'Random state' }) },
+              { value: 'manual', label: tr({ zh: '手动输入', en: 'Manual input' }) },
+            ]}
             value={settings.scrambleSource}
-            onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' | 'manual' })}
-            aria-label={tr({ zh: '打乱来源', en: 'Scramble source' })}
-            title={tr({ zh: '打乱来源', en: 'Scramble source' })}
-          >
-            <option value="wca">{tr({ zh: 'WCA 真题', en: 'WCA real' })}</option>
-            <option value="random">{tr({ zh: '随机状态', en: 'Random' })}</option>
-            <option value="manual">{tr({ zh: '手动输入', en: 'Manual' })}</option>
-          </select>
+            onChange={(scrambleSource) => updateSettings({ scrambleSource })}
+            ariaLabel={tr({ zh: '打乱来源', en: 'Scramble source' })}
+            dataNoTimer
+          />
           {/* 「难度」开关的落点(内容由 ScrambleSourceBar 里的两个配置组件 portal 过来)。
               摆在「解法」左边,和来源下拉同一组:难度讲的就是这条打乱怎么来的。
               data-no-timer 得挂在这儿 —— 开关已经不在打乱来源条里,借不到那块的豁免。 */}
@@ -2303,7 +2320,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               title={tr({ zh: '阶段最优训练', en: 'Optimal stage training' })}
               aria-label={tr({ zh: '阶段最优训练', en: 'Optimal stage training' })}
             >
-              <Target size={14} />
               <span className="shell-stage-training-label">
                 {tr({ zh: '最优训练', en: 'Optimal stages' })}
               </span>
@@ -2554,8 +2570,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             </div>
           }
           cornerSlot={centerCubeSlot}
-          digitsCorner={settings.showRankBadge !== false && timer.phase === 'stopped' && solves.length > 0 ? (
-            <RankBadge eventId={event} centis={stoppedCentis} type="single" country={rankCountry} isZh={isZh} />
+          digitsCorner={settings.showRankBadge !== false && rankBadgePhase && solves.length > 0 ? (
+            <RankBadge eventId={event} centis={rankCentis} type="single" country={rankCountry} isZh={isZh} />
           ) : undefined}
         >
           {/* sub-content under the digits */}
@@ -2573,18 +2589,15 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               </span>
             </div>
           )}
-          {timer.phase === 'inspecting' && (
-            <>
-              <div className="timer-hint">{tr({ zh: '观察中… 再按空格开始上手', en: 'Inspecting… press space again to grip'
-            })}</div>
-              {inspectionIllegalCount > 0 && (
-                <div className="inspection-illegal-warn" title={tr({ zh: 'WCA 4d: 观察期间只允许整体旋转 (x/y/z)，转面会判 DNF', en: 'WCA 4d: only rotations (x/y/z) are legal during inspection — face turns are DNF'
-                })}>
-                  <AlertTriangle size={14} />
-                  <span>{(isZh ? `检测到 ${inspectionIllegalCount} 次违规转面（WCA 应判 DNF）` : `${inspectionIllegalCount} illegal face turn${inspectionIllegalCount === 1 ? '' : 's'} detected (WCA: DNF)`)}</span>
-                </div>
-              )}
-            </>
+          {timer.phase === 'inspecting' && inspectionIllegalCount > 0 && (
+            <div className="inspection-illegal-warn" title={tr({ zh: 'WCA 4d: 观察期间只允许整体旋转 (x/y/z)，转面会判 DNF', en: 'WCA 4d: only rotations (x/y/z) are legal during inspection — face turns are DNF'
+            })}>
+              <AlertTriangle size={14} />
+              <span>{tr({
+                zh: `检测到 ${inspectionIllegalCount} 次违规转面（WCA 应判 DNF）`,
+                en: `${inspectionIllegalCount} illegal face turn${inspectionIllegalCount === 1 ? '' : 's'} detected (WCA: DNF)`,
+              })}</span>
+            </div>
           )}
           {timer.phase === 'running' && liveTps && (
             <div className="timer-live-tps">

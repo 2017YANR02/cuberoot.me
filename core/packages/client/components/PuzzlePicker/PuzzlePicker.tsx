@@ -62,6 +62,8 @@ interface Props {
   groups?: readonly PuzzlePickerGroup[];
   /** 计时表面用:让整个弹层都跳过空格/指针计时手势。 */
   dataNoTimer?: boolean;
+  /** 只隐藏收起触发器的名称;菜单内仍显示完整项目名。 */
+  iconOnlyTrigger?: boolean;
 }
 
 // 取本地化名:按 isZh 索引 [en, zh],避开 isZh 文案三元(param-isZh 仅作函数参数)。
@@ -69,7 +71,7 @@ const nameOf = (e: CstimerEvent, isZh: boolean): string => [e.en, e.zh][Number(i
 
 export default function PuzzlePicker({
   isZh = false, selectedEvent, wcaEvents, availableEvents, onSelect, linkFor,
-  groups: suppliedGroups, dataNoTimer,
+  groups: suppliedGroups, dataNoTimer, iconOnlyTrigger = false,
 }: Props) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -185,13 +187,14 @@ export default function PuzzlePicker({
         ref={triggerRef}
         type="button"
         className={`pp-trigger${selectedItem ? ' pp-trigger--active' : ''}`}
+        aria-label={iconOnlyTrigger ? triggerLabel : undefined}
         aria-expanded={open}
         aria-haspopup="menu"
         aria-controls={open ? popupId : undefined}
         onClick={() => setOpen((o) => !o)}
       >
         {selectedItem ? iconFor(selectedItem, true) : <Boxes size={15} className="pp-trigger-icon" />}
-        <span className="pp-trigger-label">{triggerLabel}</span>
+        {!iconOnlyTrigger && <span className="pp-trigger-label">{triggerLabel}</span>}
         <ChevronDown size={14} className="pp-trigger-chevron" />
       </button>
       {open && (

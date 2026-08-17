@@ -9,12 +9,10 @@ import {
 
 const noInspection: TimerMachineConfig = {
   inspectionSec: 0,
-  inspectionTrigger: 'down',
 };
 
 const inspection: TimerMachineConfig = {
   inspectionSec: 15,
-  inspectionTrigger: 'down',
 };
 
 function apply(
@@ -78,23 +76,11 @@ describe('shared timer machine', () => {
     expect(inspectionCancelled.state.inspectionStartedAtMs).toBe(0);
   });
 
-  it('supports inspection starting on release', () => {
-    const config = { ...inspection, inspectionTrigger: 'up' as const };
-    const pressed = apply(initialTimerMachineState(), { type: 'press-down', nowMs: 10 }, config);
-    expect(pressed.state.phase).toBe('idle');
-    expect(pressed.state.pendingInspectionStart).toBe(true);
-
-    const released = apply(pressed.state, { type: 'press-up', nowMs: 20 }, config);
-    expect(released.state.phase).toBe('inspecting');
-    expect(released.state.inspectionStartedAtMs).toBe(20);
-  });
-
-  it('clears a pending release-triggered inspection when the press is cancelled', () => {
-    const config = { ...inspection, inspectionTrigger: 'up' as const };
-    const pending = apply(initialTimerMachineState(), { type: 'press-down', nowMs: 10 }, config).state;
-    const cancelled = apply(pending, { type: 'cancel-press' }, config);
-    expect(cancelled.state).toEqual(initialTimerMachineState());
-    expect(cancelled.effects).toEqual(['hold-cancelled']);
+  it('starts inspection immediately on press-down', () => {
+    const pressed = apply(initialTimerMachineState(), { type: 'press-down', nowMs: 10 }, inspection);
+    expect(pressed.state.phase).toBe('inspecting');
+    expect(pressed.state.inspectionStartedAtMs).toBe(10);
+    expect(pressed.effects).toEqual(['inspection-started']);
   });
 
   it('locks inspection penalties to the start instant boundaries', () => {
@@ -189,10 +175,9 @@ describe('shared timer machine', () => {
     expect(stopped.solve?.timeMs).toBe(9876);
   });
 
-  it('reset and cancel clear pending inspection state', () => {
-    const config = { ...inspection, inspectionTrigger: 'up' as const };
-    const pending = apply(initialTimerMachineState(), { type: 'press-down', nowMs: 0 }, config).state;
-    expect(apply(pending, { type: 'cancel-arm' }, config).state).toEqual(initialTimerMachineState());
-    expect(apply(pending, { type: 'reset' }, config).state).toEqual(initialTimerMachineState());
+  it('reset and cancel clear active inspection state', () => {
+    const inspecting = apply(initialTimerMachineState(), { type: 'press-down', nowMs: 0 }, inspection).state;
+    expect(apply(inspecting, { type: 'cancel-arm' }, inspection).state).toEqual(initialTimerMachineState());
+    expect(apply(inspecting, { type: 'reset' }, inspection).state).toEqual(initialTimerMachineState());
   });
 });

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import SimCubeView from '@/components/sim-embed/SimCubeView';
+import BoolToggle from '@/components/BoolToggle';
+import CuberReconPlayer from '@/components/CuberReconPlayer';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { SubsetColorPicker, COLOR_NAME, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { tr } from '@/i18n/tr';
@@ -16,7 +17,7 @@ import {
   STAGE_ORDER,
   effectiveStageSlot,
   isStageTrainingSolved,
-  stageTrainingMask,
+  stageTrainingMasks,
   stageSlotCombos,
   stageSlotLabel,
   type SmartTrainingMode,
@@ -62,9 +63,9 @@ const stageName = (stage: StageTrainingStage) => ({
 })[stage];
 
 const modeLabel = (mode: StageTrainingMode) => ({
-  plan: tr({ zh: '规划最优解', en: 'Plan an optimal solution' }),
-  guess: tr({ zh: '猜最优步数', en: 'Guess optimal length' }),
-  smart: tr({ zh: '智能魔方实拧', en: 'Smart cube execution' }),
+  plan: tr({ zh: '最优解', en: 'Optimal solution' }),
+  guess: tr({ zh: '最优步数', en: 'Optimal move count' }),
+  smart: tr({ zh: '智能魔方', en: 'Smart cube' }),
 })[mode];
 
 const styleLabel = (style: StageScrambleStyle, stage: StageTrainingStage) => ({
@@ -104,6 +105,7 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [revealed, setRevealed] = useState(false);
+  const [transparent, setTransparent] = useState(true);
   const [result, setResult] = useState<TrainingResult | null>(null);
   const [stats, setStats] = useState<StatsStore>(loadStats);
   const [smartPhase, setSmartPhase] = useState<SmartPhase>('disconnected');
@@ -294,7 +296,12 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
     tr(COLOR_NAME[SOLVER_FACE_COLOR[question.face] ?? 'Y']),
     question.combo.replace(/\s+/g, '+'),
   ].filter(Boolean).join(' ') : '';
-  const simMask = question ? stageTrainingMask(question, stage) : null;
+  const simMasks = useMemo(() => (
+    question ? stageTrainingMasks(question, stage, colors.subsetKey) : []
+  ), [colors.subsetKey, question, stage]);
+  const playerAlg = question && (
+    (mode === 'plan' && revealed) || (mode === 'guess' && result)
+  ) ? question.solution : '';
   const accuracy = currentStats.total ? Math.round(currentStats.correct / currentStats.total * 100) : 0;
 
   return (
@@ -353,6 +360,11 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
               </select>
             </label>
           )}
+          <BoolToggle
+            value={transparent}
+            onChange={setTransparent}
+            label={tr({ zh: '透明', en: 'Transparent' })}
+          />
         </div>
 
         {mode === 'guess' && (
@@ -385,14 +397,18 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
         {!loading && question && (
           <>
             <div className="stage-training-question">
-              <SimCubeView
-                moves={simMoves}
-                animate={mode === 'smart' && smartPhase === 'solving'}
-                stickering={simMask?.name}
-                stickeringOrientation={simMask?.orientation}
-                className="stage-training-cube-3d"
-                ariaLabel={tr({ zh: `${stageName(stage)} 训练打乱`, en: `${stageName(stage)} training scramble` })}
-              />
+              <div className="stage-training-player">
+                <CuberReconPlayer
+                  order={3}
+                  scramble={simMoves.join(' ')}
+                  alg={playerAlg}
+                  backView={false}
+                  hideControls={!playerAlg}
+                  transparent={transparent}
+                  stickeringMasks={simMasks}
+                  ariaLabel={tr({ zh: `${stageName(stage)} 训练打乱`, en: `${stageName(stage)} training scramble` })}
+                />
+              </div>
               <div className="stage-training-prompt">
                 <div className="stage-training-scramble">{question.scramble}</div>
                 <div className="stage-training-meta">
@@ -407,7 +423,7 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
                   <button type="button" className="stage-training-primary" onClick={() => setRevealed(true)}>{tr({ zh: '显示最优答案', en: 'Reveal optimal answer' })}</button>
                 ) : (
                   <div className="stage-training-answer">
-                    <strong>{question.optimal} HTM</strong>
+                    <strong>{tr({ zh: `最优步数：${question.optimal} HTM`, en: `Optimal: ${question.optimal} HTM` })}</strong>
                     <span>{frameText}</span>
                     <code>{question.solution || tr({ zh: '已完成', en: 'Already solved' })}</code>
                   </div>

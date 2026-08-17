@@ -3,8 +3,8 @@
 // 主/次贴纸展开),锁数值防阶段定义漂移。
 import { describe, it, expect } from 'vitest';
 import {
-  stickeringMaskFn, stickeringGroupsFor,
-  FM_REGULAR, FM_DIM, FM_IGNORED, FM_ORIENTED, FM_ORIENTED2,
+  mergeStickeringMaskFns, stickeringMaskFn, stickeringGroupsFor,
+  FM_REGULAR, FM_DIM, FM_IGNORED, FM_ORIENTED, FM_ORIENTED2, FM_OUTLINE,
 } from '@/app/[lang]/sim/engine/nxn/stickering';
 import { pickStickering } from '@/components/AlgPlayer/stickering';
 import { FACE } from '@/app/[lang]/sim/engine/define';
@@ -22,6 +22,17 @@ const P3 = {
   Uc: idx(N3, 1, 2, 1), Dc: idx(N3, 1, 0, 1), Fc: idx(N3, 1, 1, 2),
   Bc: idx(N3, 1, 1, 0), Lc: idx(N3, 0, 1, 1), Rc: idx(N3, 2, 1, 1),
 };
+
+describe('mergeStickeringMaskFns', () => {
+  it('keeps the most visible variant from every candidate mask', () => {
+    const constant = (value: typeof FM_REGULAR | typeof FM_DIM | typeof FM_IGNORED
+      | typeof FM_ORIENTED | typeof FM_ORIENTED2 | typeof FM_OUTLINE) => () => value;
+    expect(mergeStickeringMaskFns([])).toBeNull();
+    expect(mergeStickeringMaskFns([constant(FM_IGNORED), constant(FM_DIM)])!(0, 0)).toBe(FM_DIM);
+    expect(mergeStickeringMaskFns([constant(FM_IGNORED), constant(FM_ORIENTED)])!(0, 0)).toBe(FM_ORIENTED);
+    expect(mergeStickeringMaskFns([constant(FM_OUTLINE), constant(FM_REGULAR)])!(0, 0)).toBe(FM_REGULAR);
+  });
+});
 
 describe('stickeringMaskFn 3x3', () => {
   it('full / 未知阶段 → null(全原色)', () => {

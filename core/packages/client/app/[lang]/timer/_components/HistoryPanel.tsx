@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { X, GitCompare, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical, Check, Clipboard, MessageSquare } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical, Check, Clipboard, MessageSquare } from 'lucide-react';
 import type { Solve, Penalty } from '../_lib/types';
 import { effectiveMs } from '../_lib/types';
 import { formatMs, formatEventMs, formatSolveResult } from '../_lib/stats';
@@ -313,11 +313,12 @@ export default function HistoryPanel({
     return max;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statCols, statColumnKey, fmtRollingStat]);
-  const statColumnWidth = `calc(${statMaxLen}ch + 28px)`;
+  const statColumnWidth = `calc(${statMaxLen}ch + 36px)`;
   const statTemplate = visibleStatColumns.length
     ? ' ' + visibleStatColumns.map(() => statColumnWidth).join(' ')
     : '';
-  const headTmpl = `32px minmax(0,1fr)${statTemplate}`;
+  const timeColumnTrack = 'minmax(12ch, 1fr)';
+  const headTmpl = `32px ${timeColumnTrack}${statTemplate}`;
   const visiblePbTagIds = new Set<TagId>();
   if (visibleStatColumns.includes('ao5')) visiblePbTagIds.add('pb-ao5');
   if (visibleStatColumns.includes('ao12')) visiblePbTagIds.add('pb-ao12');
@@ -608,7 +609,6 @@ export default function HistoryPanel({
                 fontSize: 11,
               }}
             >
-              <GitCompare size={12} />
               {tr({ zh: '对比', en: 'Compare'
             })}
             </button>
@@ -702,7 +702,6 @@ export default function HistoryPanel({
                       textAlign: 'left',
                     }}
                   >
-                    <GitCompare size={14} />
                     {tr({ zh: '对比', en: 'Compare'
                     })}
                   </button>
@@ -738,7 +737,6 @@ export default function HistoryPanel({
               )}
             </div>
           )}
-          <span>{solves.length}</span>
         </span>
       </div>
       <div className="history-search">
@@ -1082,7 +1080,10 @@ export default function HistoryPanel({
             rowStyle = { background: 'rgba(153, 90, 77, 0.18)', boxShadow: 'inset 2px 0 0 #995a4d' };
           }
           const lead = (compareMode || selectMode) ? '14px ' : '';
-          rowStyle = { ...rowStyle, gridTemplateColumns: `${lead}32px minmax(0,1fr)${statTemplate}` };
+          rowStyle = {
+            ...rowStyle,
+            gridTemplateColumns: `${lead}32px ${timeColumnTrack}${statTemplate}`,
+          };
 
           const handleRowClick = () => {
             // A long-press just opened the quick-action sheet — swallow the
@@ -1257,7 +1258,6 @@ export default function HistoryPanel({
               gap: 4,
             }}
           >
-            <GitCompare size={12} />
             {tr({ zh: '对比这 2 个', en: 'Compare these 2'
             })}
           </button>

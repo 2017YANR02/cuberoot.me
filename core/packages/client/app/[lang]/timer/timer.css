@@ -545,6 +545,13 @@
   border: 1px solid var(--input);
   background: transparent;
   color: var(--foreground);
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.rolling-stats-custom-input::-webkit-inner-spin-button,
+.rolling-stats-custom-input::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
 }
 .rolling-stats-custom-add {
   font-size: 12px;
@@ -695,8 +702,8 @@
   padding-right: 22px;
   color: var(--signal-info);
 }
-.rolling-stats-column-pickers--header .compact-select-arrow {
-  color: currentColor;
+.rolling-stats-column-pickers .compact-select-arrow {
+  display: none;
 }
 .rolling-stats-column-pickers--row {
   display: inline-grid;
@@ -1313,12 +1320,14 @@
   margin: 0;
   padding: 8px 0;
 }
+.settings-modal .settings-row-boolean { align-items: center; }
 .settings-modal .settings-row-label {
   padding-top: 5px;
   color: var(--muted-foreground);
   line-height: 1.35;
   white-space: normal;
 }
+.settings-modal .settings-row-boolean .settings-row-label { padding-top: 0; }
 .settings-modal .settings-row-control {
   min-width: 0;
   line-height: 1.35;
