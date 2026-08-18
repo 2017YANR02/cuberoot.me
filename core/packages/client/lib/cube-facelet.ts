@@ -25,33 +25,9 @@ export interface CubieCube {
   eo: number[];
 }
 
-// 8 个角块,每个对应 [U/D 面 sticker idx, side1, side2] (cstimer 顺序)
-export const CORNER_FACELET: ReadonlyArray<readonly [number, number, number]> = [
-  [8, 9, 20],   // URF
-  [6, 18, 38],  // UFL
-  [0, 36, 47],  // ULB
-  [2, 45, 11],  // UBR
-  [29, 26, 15], // DFR
-  [27, 44, 24], // DLF
-  [33, 53, 42], // DBL
-  [35, 17, 51], // DRB
-];
-
-// 12 个棱块,每个对应 [primary, secondary] sticker idx
-export const EDGE_FACELET: ReadonlyArray<readonly [number, number]> = [
-  [5, 10],   // UR
-  [7, 19],   // UF
-  [3, 37],   // UL
-  [1, 46],   // UB
-  [32, 16],  // DR
-  [28, 25],  // DF
-  [30, 43],  // DL
-  [34, 52],  // DB
-  [23, 12],  // FR
-  [21, 41],  // FL
-  [50, 39],  // BL
-  [48, 14],  // BR
-];
+// 智能魔方协议和网站状态模型共用同一套 Kociemba/csTimer 贴纸编号。
+export { CORNER_FACELET, EDGE_FACELET } from '@cuberoot/shared/smart-cube/cubie';
+import { CORNER_FACELET, EDGE_FACELET } from '@cuberoot/shared/smart-cube/cubie';
 
 const FACES = 'URFDLB';
 

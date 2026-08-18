@@ -4,9 +4,11 @@
 
 ## 目标
 
-把原独立平台完整纳入 `cuberoot.me` 主仓库,以 `core/packages/platform` 作为唯一源码。旧本地目录和旧 GitHub 仓库最终可由仓库所有者删除,但删除前必须满足本文的切换门槛。
+把原独立平台完整纳入 `cuberoot.me` 主仓库,先以 `core/packages/platform` 完整保存源码与历史,再把仍需要的教学管理能力迁入主站。旧本地目录和旧 GitHub 仓库最终可由仓库所有者删除,但删除前必须满足本文的切换门槛。
 
 这次迁移解决代码、Git 历史、workspace、CI、构建和部署归属。生产数据库、上传文件、运行时环境变量与 GitHub secrets 都是仓库外状态,不会因为代码迁移自动搬家。
+
+2026-08-18 已确认最终前端架构:不保留独立 Platform 前端,`core/packages/client` 的 `/org/*` 将成为唯一教学管理界面,`packages/platform` 仅作为迁移期来源。详细顺序和验收门槛见[教学平台前端统一计划](./platform-unification-plan.md)。
 
 ## Git 证据
 
@@ -67,15 +69,15 @@
 - Stage 1 尚缺监护人管理工作台、批量导入、远程搜索选择器和完整权限工作台；当前不能视为完整 CRM 验收通过。
 - OTP 已改为持久限流、加密随机码和生产短信 fail-closed。
 
-这仍是完整系统的基础阶段,后续继续在同一 `@cuberoot/platform` 产品边界内补齐:
+这仍是完整系统的基础阶段,后续能力统一在主站 `/org/*` 产品边界内补齐:
 
 1. 补齐监护人管理、批量导入、远程搜索和完整角色权限工作台。
 2. 补齐课包支付接单、退款 / 撤销反向流水、到期执行与异常对账。
 3. 补齐请假、补课、调课规则和更完整的课堂状态流转。
-4. 基于已完成的 Stage 3 Core API 与主站生产者,补 Platform 账号绑定、任务发布、训练日历、证据和批改页面,再完成多角色端到端验收。
+4. 基于已完成的 Stage 3 Core API 与主站生产者,在主站补账号绑定、任务发布、训练日历、证据和批改页面,再完成多角色端到端验收。
 5. 每周课堂反馈、阶段报告、站内通知和有审计记录的家校沟通。
 
-`packages/client` 继续负责主站公开训练工具;Platform 只消费 shared/Core 契约并链接主站,不复制 timer、predict、alg 或 sim 引擎。现有内容/商城在切换前继续使用独立 SQLite;新多租户教学交易域不再堆入 SQLite,按[多机构教学 SaaS 设计](./teaching-saas-plan.md)在 Hono/PostgreSQL 落新 schema 与权限边界,旧域是否迁移另开项目。
+`packages/client` 同时负责公开训练工具与最终教学管理界面,只消费 shared/Core 契约,不复制 timer、predict、alg 或 sim 引擎。现有 Platform 内容/商城在切换前继续使用独立 SQLite;新多租户教学交易域不再堆入 SQLite,按[多机构教学 SaaS 设计](./teaching-saas-plan.md)在 Hono/PostgreSQL 落新 schema 与权限边界,旧域逐项决定复用、迁移或归档。
 
 ## 最新本地实施提交
 
@@ -109,11 +111,11 @@
 - [x] Stage 3B / 3C Core routes 通过类型检查、定向测试与关键 PostgreSQL 18 并发夹具;账号绑定、自然幂等、跨租户拒绝审计、发布快照和批改 revision 均有实证。
 - [x] 主站训练证据适配器通过客户端类型检查与定向测试;普通访问不创建训练事件,任务访问复用稳定事件 ID 和本地重试队列。
 - [x] Platform 训练入口改为主站真链接,重复 timer / alg 公开功能与旧计时历史展示已退役;Platform 类型检查和定向测试通过。
-- [ ] Platform 训练管理页面与登录态端到端 smoke:账号绑定、任务发布、训练日历、证据查看和批改尚未实现。
+- [ ] 主站训练管理页面与登录态端到端 smoke:账号绑定、任务发布、训练日历、证据查看和批改尚未实现。
 - [ ] 迁移提交推送到主仓远端。
 - [ ] 新仓 GitHub Actions 首次成功部署并完成线上 smoke test。
 
-Stage 0、Stage 1 CRM 基础、Stage 2 与 Stage 3 的详细设计和验证边界记录在[多机构教学 SaaS 设计](./teaching-saas-plan.md)。从 Stage 0 parent snapshot 顺序应用 `0147`、`0148` 已得到 7 张 Stage 2 表和 4 个 owner triggers,双 owner 并发与审计匿名化也已实测；从 Stage 2 最终结构升级 `0149` 与直接加载最终 schema 的两套隔离 PG18 验证均通过。`0150` 也已在全新的升级库与最终 schema 库中加载并取得一致语义目录,真实并发夹具覆盖发布与分班变更双向竞争、班级展开目标的缺失 / 多余拒绝、直接学员与多班重复命中的正确发布、证据 / 账号删除锁序、自然幂等、批改 revision 和日聚合。Stage 3 HTTP routes 与主站生产者已经存在,但 Platform 训练 UI、完整账号绑定 UX、真实多角色浏览器流程和线上 smoke 尚未完成,不能把后端与适配器测试写成训练产品已经上线。其余课包业务并发夹具、Docker image build、线上 migration 与登录态 smoke 仍是上线前未验证项,不能用 mock 单测替代。历史 migration 链依赖旧生产基线,不具备绝对空库全量重放能力,恢复仍以已验证备份为准。
+Stage 0、Stage 1 CRM 基础、Stage 2 与 Stage 3 的详细设计和验证边界记录在[多机构教学 SaaS 设计](./teaching-saas-plan.md)。从 Stage 0 parent snapshot 顺序应用 `0147`、`0148` 已得到 7 张 Stage 2 表和 4 个 owner triggers,双 owner 并发与审计匿名化也已实测；从 Stage 2 最终结构升级 `0149` 与直接加载最终 schema 的两套隔离 PG18 验证均通过。`0150` 也已在全新的升级库与最终 schema 库中加载并取得一致语义目录,真实并发夹具覆盖发布与分班变更双向竞争、班级展开目标的缺失 / 多余拒绝、直接学员与多班重复命中的正确发布、证据 / 账号删除锁序、自然幂等、批改 revision 和日聚合。Stage 3 HTTP routes 与主站生产者已经存在,但主站教学管理 UI、完整账号绑定 UX、真实多角色浏览器流程和线上 smoke 尚未完成,不能把后端与适配器测试写成训练产品已经上线。其余课包业务并发夹具、Docker image build、线上 migration 与登录态 smoke 仍是上线前未验证项,不能用 mock 单测替代。历史 migration 链依赖旧生产基线,不具备绝对空库全量重放能力,恢复仍以已验证备份为准。
 
 ## 删除旧本地目录与旧 GitHub 仓库前的门槛
 
@@ -127,7 +129,7 @@ Stage 0、Stage 1 CRM 基础、Stage 2 与 Stage 3 的详细设计和验证边�
 6. 对生产 SQLite、uploads 与教学 PostgreSQL 做一致性备份,并实际验证备份可读。workflow 失败时会自动回滚代码包;迁移器用单个 SQLite transaction 防止半迁移,但已成功提交的 schema 不会随代码包反向回滚,数据库恢复必须使用已验证备份并评估期间新增写入。
 7. 逐项处理旧本地目录中的非 Git 状态:`data.db`、`data.db-wal`、`data.db-shm`、`qr-layout.png`、`.tmp` 内商业文档 / 调试产物与 `.password.md`。每项必须先外部备份或明确确认放弃;凭据要迁入安全存储并轮换,不能复制进主仓。
 8. 首次推送产生的平台、主站和后端 workflow 都成功;平台首页、登录、管理员、讲师、课程、订单、上传、数据库 migration 和教学 API 完成 smoke test。
-9. 用登录账号实际完成机构创建 / 列表、成员查看、学员建档、校区 / 班级创建、分班、负责人指派、课包发放、排课、出勤与完课消课;再用两个机构夹具验证跨机构读取与写入均被拒绝且 `teaching_audit_events` 留下 `denied` 记录。Stage 3 routes 与主站 adapters 已落地,但仍须等 Platform 训练 UI 完成后实测账号绑定、任务发布、工具上报、证据查看和批改全流程。
+9. 用主站登录账号实际完成机构创建 / 列表、成员查看、学员建档、校区 / 班级创建、分班、负责人指派、课包发放、排课、出勤与完课消课;再用两个机构夹具验证跨机构读取与写入均被拒绝且 `teaching_audit_events` 留下 `denied` 记录。Stage 3 routes 与主站 adapters 已落地,但仍须等主站训练 UI 完成后实测账号绑定、任务发布、工具上报、证据查看和批改全流程。
 10. 已确认代码包与数据库各自的失败恢复步骤,上一版本包和数据库备份都可用。
 11. 在主仓 tracked 文件中搜索旧本地路径、旧 workflow / unit 路径和旧仓唯一依赖,结果为 0。
 12. 已轮换曾进入 Git 历史的数据库凭据和教程外部账号凭据；删除旧仓库不能替代凭据轮换。

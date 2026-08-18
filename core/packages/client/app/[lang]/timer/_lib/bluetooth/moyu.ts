@@ -59,62 +59,22 @@
  * — i.e. it doesn't actually report). We expose `null` so the UI shows "—".
  */
 
+import {
+  MOYU_GYRO_CHARACTERISTIC_UUID,
+  MOYU_READ_CHARACTERISTIC_UUID,
+  MOYU_SERVICE_UUID,
+  MOYU_TURN_CHARACTERISTIC_UUID,
+  MOYU_WRITE_CHARACTERISTIC_UUID,
+  createMoyuDecodeState,
+  matchesMoyuName,
+  parseMoyuTurnFrame,
+} from '@cuberoot/shared/smart-cube/moyu';
 import type { CubeDriver, CubeDriverStartResult } from './driver';
 import type { CubeBrand } from './types';
 
-const UUID_SUFFIX = '-0000-1000-8000-00805f9b34fb';
-const MOYU_SERVICE = '00001000' + UUID_SUFFIX;
-const MOYU_CHAR_WRITE = '00001001' + UUID_SUFFIX;
-const MOYU_CHAR_READ = '00001002' + UUID_SUFFIX;
-const MOYU_CHAR_TURN = '00001003' + UUID_SUFFIX;
-const MOYU_CHAR_GYRO = '00001004' + UUID_SUFFIX;
-
-/** native face index → URFDLB axis index (cstimer: `[3,4,5,1,2,0][face]`). */
-const MOYU_AXIS_LUT: ReadonlyArray<number> = [3, 4, 5, 1, 2, 0];
-const URFDLB = ['U', 'R', 'F', 'D', 'L', 'B'] as const;
-
-/**
- * Parse one turn-characteristic notification. `dv` is the raw notification
- * value; `faceStatus` is mutated in place to track per-face accumulated
- * rotation between frames. Returns the moves to emit, oldest first.
- */
-function parseTurn(dv: DataView, faceStatus: Int8Array): string[] {
-  const out: string[] = [];
-  if (dv.byteLength < 1) return out;
-  const nMoves = dv.getUint8(0);
-  if (dv.byteLength < 1 + nMoves * 6) return out;
-  for (let i = 0; i < nMoves; i++) {
-    const offset = 1 + i * 6;
-    const face = dv.getUint8(offset + 4);
-    if (face > 5) continue;
-    // Cstimer rounds dir to nearest /36 on the UNSIGNED byte. A small decay
-    // tick (dir < 18 → rounds to 0) contributes nothing, so skip it.
-    const dir = Math.round(dv.getUint8(offset + 5) / 36);
-    if (dir === 0) continue;
-
-    const prevRot = faceStatus[face];
-    const curRotRaw = prevRot + dir;
-    // cstimer compares against the UN-wrapped raw value so that a quarter-tick
-    // wrap across 9->0 doesn't synthesise a phantom inverse move. We then
-    // store the wrapped value for the next frame.
-    faceStatus[face] = (curRotRaw + 9) % 9;
-
-    let pow: 0 | 2 | -1 = -1;
-    if (prevRot >= 5 && curRotRaw <= 4) pow = 2;       // CCW (see header note)
-    else if (prevRot <= 4 && curRotRaw >= 5) pow = 0;  // CW
-    if (pow === -1) continue;
-
-    const axis = MOYU_AXIS_LUT[face];
-    if (axis === undefined) continue;
-    const f = URFDLB[axis];
-    out.push(pow === 0 ? f : `${f}'`);
-  }
-  return out;
-}
-
 export const moyuDriver: CubeDriver = {
   brand: 'moyu' satisfies CubeBrand,
-  service: MOYU_SERVICE,
+  service: MOYU_SERVICE_UUID,
   namePrefixes: ['MHC', 'MoYu', 'MY-'],
   optionalServices: [],
 
@@ -122,44 +82,44 @@ export const moyuDriver: CubeDriver = {
     const n = (device.name ?? '').trim();
     // cstimer's `prefix: 'MHC'`. Some firmwares advertise MoYu prefix on
     // older units; keep the regex permissive but anchored.
-    return /^(MHC|MoYu|MY-)/i.test(n);
+    return matchesMoyuName(n);
   },
 
   async start(server, onMove): Promise<CubeDriverStartResult> {
-    const service = await server.getPrimaryService(MOYU_SERVICE);
+    const service = await server.getPrimaryService(MOYU_SERVICE_UUID);
 
     // The four characteristics. Read/gyro are subscribed to but their
     // payloads are intentionally ignored — cstimer logs them but never
     // surfaces moves from them. Turn is the move stream.
-    const turnChar = await service.getCharacteristic(MOYU_CHAR_TURN);
+    const turnChar = await service.getCharacteristic(MOYU_TURN_CHARACTERISTIC_UUID);
     let readChar: BluetoothRemoteGATTCharacteristic | null = null;
     let gyroChar: BluetoothRemoteGATTCharacteristic | null = null;
     try {
-      readChar = await service.getCharacteristic(MOYU_CHAR_READ);
+      readChar = await service.getCharacteristic(MOYU_READ_CHARACTERISTIC_UUID);
     } catch {
       // older firmware may omit the read char; non-fatal.
     }
     try {
-      gyroChar = await service.getCharacteristic(MOYU_CHAR_GYRO);
+      gyroChar = await service.getCharacteristic(MOYU_GYRO_CHARACTERISTIC_UUID);
     } catch {
       // gyro is optional; non-fatal.
     }
     // Touch the write char so future host->cube commands are possible if
     // we ever need them; failure is non-fatal.
     try {
-      await service.getCharacteristic(MOYU_CHAR_WRITE);
+      await service.getCharacteristic(MOYU_WRITE_CHARACTERISTIC_UUID);
     } catch {
       // ignore
     }
 
-    const faceStatus = new Int8Array(6);
+    const faceStatus = createMoyuDecodeState();
 
     const onTurn = (ev: Event): void => {
       const target = ev.target as BluetoothRemoteGATTCharacteristic;
       const dv = target.value;
       if (!dv) return;
       try {
-        const moves = parseTurn(dv, faceStatus);
+        const moves = parseMoyuTurnFrame(dv, faceStatus);
         for (const mv of moves) onMove(mv);
       } catch {
         // Defensive — never let a malformed frame crash the host.
