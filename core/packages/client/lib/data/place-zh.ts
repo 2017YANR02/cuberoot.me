@@ -15,6 +15,7 @@ export const PLACE_CITY_ZH: Record<string, string> = {
   "SE:helsingborg": "赫尔辛堡",
   "PH:cityofsanjosedelmonte": "圣何塞德尔蒙特市",
   "FR:meaux": "莫城",
+  "FR:saintsaturnin": "圣萨蒂尔南",
   "BG:vratsa": "弗拉察",
   "SK:zilina": "日利纳",
   "LT:klaipeda": "克莱佩达",

@@ -1047,7 +1047,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
                     zh: `已连接 ${bluetoothCube.status.deviceName}（还原即停表）`,
                     en: `Connected: ${bluetoothCube.status.deviceName} (solving the cube stops the timer)`,
                   })
-                : tr({ zh: '智能魔方（iOS 用 Bluefy）', en: 'Smart cube (use Bluefy on iOS)' })}
+                : tr({ zh: '智能魔方', en: 'Smart cube' })}
               aria-label={tr({ zh: '智能魔方', en: 'Smart cube' })}
             >
               <Bluetooth size={14} />

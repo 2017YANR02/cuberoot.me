@@ -35,7 +35,7 @@
 .directory-delete-button,
 .directory-edit-button,
 .directory-upload-button,
-.directory-photo-actions button { border: 0; font: inherit; cursor: pointer; }
+.directory-photo-action-button { border: 0; font: inherit; cursor: pointer; }
 .directory-primary-button {
   display: inline-flex;
   align-items: center;
@@ -54,7 +54,7 @@
 .directory-secondary-button:disabled,
 .directory-delete-button:disabled,
 .directory-upload-button:disabled,
-.directory-photo-actions button:disabled { cursor: not-allowed; opacity: 0.5; }
+.directory-photo-action-button:disabled { cursor: not-allowed; opacity: 0.5; }
 .teachers-add-button { margin-top: 24px; }
 
 .directory-toolbar {
@@ -196,9 +196,9 @@
 .directory-photo-fields { display: grid; grid-template-columns: 0.7fr 1fr; gap: 10px; min-width: 0; }
 .directory-photo-fields label:first-child { grid-row: span 2; }
 .directory-photo-actions { display: flex; flex-direction: column; gap: 5px; }
-.directory-photo-actions button { display: grid; place-items: center; width: 31px; height: 31px; border-radius: 50%; background: transparent; color: var(--muted-foreground); }
-.directory-photo-actions button:hover { background: var(--muted); color: var(--foreground); }
-.directory-photo-actions button:last-child:hover { color: var(--destructive); }
+.directory-photo-action-button { display: grid; place-items: center; width: 31px; height: 31px; border-radius: 50%; background: transparent; color: var(--muted-foreground); }
+.directory-photo-action-button:hover { background: var(--muted); color: var(--foreground); }
+.directory-photo-remove-button:hover { color: var(--destructive); }
 .directory-form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .directory-secondary-button,
 .directory-delete-button { border-radius: 999px; background: var(--muted); color: var(--foreground); padding: 10px 17px; text-decoration: none; white-space: nowrap; }

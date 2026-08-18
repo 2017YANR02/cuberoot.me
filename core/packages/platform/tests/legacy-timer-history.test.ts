@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -27,19 +27,14 @@ describe("Platform training-tool reuse boundary", () => {
   it("keeps the legacy timer entry free of history reads, exports, and writes", () => {
     const component = source("components/CubeTimer.tsx");
     const page = source("app/timer/page.tsx");
-    const actions = source("app/actions/timer.ts");
-    const database = source("lib/db/timer.ts");
 
     expect(component).toContain("MAIN_SITE_TOOLS.timer");
     expect(component).not.toContain("localStorage");
     expect(page).not.toContain("listRecent");
     expect(page).not.toContain("listLegacyTimerHistory");
     expect(page).not.toMatch(/导出|迁移旧计时/);
-    expect(actions).toContain("legacy_timer_read_only");
-    expect(actions).not.toMatch(/\b(?:insertSolve|updatePenalty|deleteSolve)\s*\(/);
-    expect(database).not.toMatch(
-      /export async function (?:insertSolve|updatePenalty|deleteSolve|listLegacyTimerHistory)\b/,
-    );
+    expect(existsSync(join(ROOT, "app/actions/timer.ts"))).toBe(false);
+    expect(existsSync(join(ROOT, "lib/db/timer.ts"))).toBe(false);
   });
 
   it("does not expose legacy timer history through leaderboards or badges", () => {
@@ -82,9 +77,13 @@ describe("Platform training-tool reuse boundary", () => {
       expect(file, relativePath).not.toContain("已迁移到主站");
     }
 
-    const actions = source("app/admin/(authed)/algorithms/actions.ts");
-    expect(actions).toContain("main_site_algorithms_only");
-    expect(actions).not.toContain("@/lib/db/algorithms");
+    for (const relativePath of [
+      "app/admin/(authed)/algorithms/_Form.tsx",
+      "app/admin/(authed)/algorithms/actions.ts",
+      "lib/db/algorithms.ts",
+    ]) {
+      expect(existsSync(join(ROOT, relativePath)), relativePath).toBe(false);
+    }
     expect(source("app/admin/_components/AdminNav.tsx")).not.toContain(
       'href: "/admin/algorithms"',
     );

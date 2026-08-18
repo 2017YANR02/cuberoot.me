@@ -13,9 +13,7 @@
 // 非微信环境 / 后端 {disabled:true} / 签名 / SDK 加载失败 —— 一律静默 no-op,页面照常。
 
 import { apiUrl } from './api-base';
-
-// 自托管(遵守「自成一体」);见 public/vendor/jweixin-1.6.0.js。
-const JWEIXIN_SRC = '/vendor/jweixin-1.6.0.js';
+import { loadWeChatJsSdk, supportsWeChatShare } from './wechat-js-sdk';
 
 export interface WeChatShareData {
   title: string;
@@ -24,36 +22,9 @@ export interface WeChatShareData {
   imgUrl?: string; // 默认 = 站点 logo(同源绝对地址)
 }
 
-interface WxSdk {
-  config(o: Record<string, unknown>): void;
-  ready(cb: () => void): void;
-  error(cb: (e: unknown) => void): void;
-  updateAppMessageShareData(o: Record<string, unknown>): void;
-  updateTimelineShareData(o: Record<string, unknown>): void;
-}
-declare global {
-  interface Window { wx?: WxSdk }
-}
-
 export function isInWeChat(): boolean {
   if (typeof navigator === 'undefined') return false;
   return /MicroMessenger/i.test(navigator.userAgent || '');
-}
-
-let sdkPromise: Promise<WxSdk | null> | null = null;
-function loadSdk(): Promise<WxSdk | null> {
-  if (typeof window === 'undefined') return Promise.resolve(null);
-  if (window.wx) return Promise.resolve(window.wx);
-  if (sdkPromise) return sdkPromise;
-  sdkPromise = new Promise((resolve) => {
-    const s = document.createElement('script');
-    s.src = JWEIXIN_SRC;
-    s.async = true;
-    s.onload = () => resolve(window.wx ?? null);
-    s.onerror = () => { sdkPromise = null; resolve(null); }; // 允许后续重试
-    document.head.appendChild(s);
-  });
-  return sdkPromise;
 }
 
 interface SigResp {
@@ -89,7 +60,7 @@ export async function configureWeChatShare(data: WeChatShareData): Promise<void>
   if (sig?.disabled) { sessionDisabled = true; return; } // 未配公众号 → 本会话不再试
   if (!sig || !sig.signature || !sig.appId) return;
 
-  const wx = await loadSdk();
+  const wx = await loadWeChatJsSdk(supportsWeChatShare);
   if (!wx) return;
 
   const share = { title: data.title, desc: data.desc || '', link, imgUrl };
