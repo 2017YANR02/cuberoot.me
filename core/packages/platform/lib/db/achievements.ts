@@ -7,10 +7,9 @@ import { getStreakInfo } from "@/lib/db/checkins";
 
 export type { UserAchievement };
 
-// 成就分类:学习 / 计时 / 社群 / 交易。
+// 成就分类:学习 / 社群 / 交易。
 export type AchievementCategory =
   | "learning"
-  | "timer"
   | "community"
   | "commerce";
 
@@ -112,33 +111,6 @@ export const ACHIEVEMENTS: Achievement[] = [
     // check: 累计实付(amount-discount, 单位元) >= 1000
   },
   {
-    key: "first_solve",
-    name: "第一次还原",
-    description: "用计时器记录第一次还原成绩",
-    icon: "Timer",
-    category: "timer",
-    points: 20,
-    // check: solves >= 1
-  },
-  {
-    key: "solves_100",
-    name: "百次磨练",
-    description: "累计计时还原满 100 次",
-    icon: "Repeat",
-    category: "timer",
-    points: 80,
-    // check: solves >= 100
-  },
-  {
-    key: "sub_10s",
-    name: "破十达人",
-    description: "三阶有效成绩突破 10 秒",
-    icon: "Zap",
-    category: "timer",
-    points: 150,
-    // check: best333Ms 有值且 < 10000
-  },
-  {
     key: "points_1000",
     name: "积分达人",
     description: "积分余额达到 1000",
@@ -172,8 +144,6 @@ type UserStats = {
   reviews: number;
   paidOrders: number;
   totalSpentCents: number; // 已付订单实付金额合计(分)
-  solves: number;
-  best333Ms: number | null; // 三阶最好有效成绩(ms),全 DNF / 无成绩为 null
   longestStreak: number;
   pointsBalance: number; // 当前积分余额(本次解锁奖励之前)
 };
@@ -223,35 +193,6 @@ async function collectStats(userId: string): Promise<UserStats> {
   const paidOrders = paidAgg.n ?? 0;
   const totalSpentCents = Math.max(0, paidAgg.spent ?? 0);
 
-  const solves =
-    db
-      .select({ n: sql<number>`COUNT(*)` })
-      .from(schema.timerSolves)
-      .where(eq(schema.timerSolves.userId, userId))
-      .all()[0]?.n ?? 0;
-
-  // 三阶最好有效成绩:排除 DNF;+2 加 2000ms 后取最小。
-  const best333Row = db
-    .select({
-      best: sql<number | null>`MIN(
-        CASE
-          WHEN ${schema.timerSolves.penalty} = 'plus2' THEN ${schema.timerSolves.timeMs} + 2000
-          ELSE ${schema.timerSolves.timeMs}
-        END
-      )`,
-    })
-    .from(schema.timerSolves)
-    .where(
-      and(
-        eq(schema.timerSolves.userId, userId),
-        eq(schema.timerSolves.event, "333"),
-        sql`${schema.timerSolves.penalty} != 'dnf'`,
-      ),
-    )
-    .all()[0];
-  const best333Ms =
-    best333Row && best333Row.best != null ? Number(best333Row.best) : null;
-
   const pointsBalance =
     db
       .select({
@@ -269,8 +210,6 @@ async function collectStats(userId: string): Promise<UserStats> {
     reviews,
     paidOrders,
     totalSpentCents,
-    solves,
-    best333Ms,
     longestStreak: streak.longest,
     pointsBalance,
   };
@@ -298,12 +237,6 @@ function isUnlocked(key: string, s: UserStats): boolean {
     case "spend_1000":
       // orders.amount 单位是【元】(全站 ¥{amount} 直接显示),阈值 = 1000 元
       return s.totalSpentCents >= 1000;
-    case "first_solve":
-      return s.solves >= 1;
-    case "solves_100":
-      return s.solves >= 100;
-    case "sub_10s":
-      return s.best333Ms != null && s.best333Ms < 10_000;
     case "points_1000":
       return s.pointsBalance >= 1000;
     default:
@@ -318,7 +251,7 @@ function unlockedKeys(userId: string): Set<string> {
     .from(schema.userAchievements)
     .where(eq(schema.userAchievements.userId, userId))
     .all();
-  return new Set(rows.map((r) => r.key));
+  return new Set(rows.map((r) => r.key).filter((key) => BY_KEY.has(key)));
 }
 
 // 重新计算并补发用户成就:对每条目录项判定,新满足且未解锁的写入 user_achievements,

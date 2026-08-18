@@ -8,9 +8,6 @@ import {
   CalendarHeart,
   ShoppingBag,
   Wallet,
-  Timer,
-  Repeat,
-  Zap,
   Trophy,
   Lock,
   type LucideIcon,
@@ -28,15 +25,11 @@ const ICONS: Record<string, LucideIcon> = {
   CalendarHeart,
   ShoppingBag,
   Wallet,
-  Timer,
-  Repeat,
-  Zap,
   Trophy,
 };
 
 const CATEGORY_LABEL: Record<UserAchievementView["category"], string> = {
   learning: "学习",
-  timer: "计时",
   community: "社群",
   commerce: "成长",
 };
