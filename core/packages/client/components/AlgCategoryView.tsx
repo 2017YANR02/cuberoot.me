@@ -80,6 +80,8 @@ import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
+import PillToggle from '@/components/PillToggle/PillToggle';
+import { hasOhAlgsForHand, OH_HANDS, ohAlgsForCase, type OhHand } from '@/lib/alg_oh_hand';
 import {
   OPTIMAL_METRICS,
   availableOptimalMetrics,
@@ -530,6 +532,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   }, []);
   // 筛选 → replace(不往历史里塞;AGENTS.md「URL 状态」)
   const [tagFilter, setTagFilter] = useQueryState('tag', parseAsStringEnum<AlgTag | 'all'>(['all', ...ALG_TAGS]).withDefault('all'));
+  const [ohHand, setOhHand] = useQueryState(
+    'hand',
+    parseAsStringEnum<OhHand>([...OH_HANDS]).withDefault('left'),
+  );
   const [notationStyle, setNotationStyle] = useQueryState(
     'notation',
     parseAsStringEnum<AlgNotationStyle>([...ALG_NOTATION_STYLES]).withDefault('standard'),
@@ -600,9 +606,17 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   /** 标签筛选真的在生效吗(选了 `oh`、且这个 set 确实有 `oh`)—— 生效时公式列表是个子集 */
   const filtering = tagFilter !== 'all' && availableTags.includes(tagFilter);
 
+  const canChooseOhHand = puzzleParam === '3x3' && set === 'pll';
+  const rightHandOh = canChooseOhHand && filtering && tagFilter === 'oh' && ohHand === 'right';
+
   /** 一个 case 在当前筛选下要显示的公式(标签筛选作用在**公式**上,不是 case 上) */
-  const algsUnderFilter = (algs: AlgEntry[]) =>
-    filtering ? algs.filter(a => a.tags?.includes(tagFilter)) : algs;
+  const algsUnderFilter = (c: AlgCase, orientation: number, algs: AlgEntry[]) => {
+    if (!filtering) return algs;
+    if (canChooseOhHand && tagFilter === 'oh') {
+      return ohAlgsForCase(c, data?.cases ?? [], orientation, ohHand);
+    }
+    return algs.filter(a => a.tags?.includes(tagFilter));
+  };
 
   // dnd-kit sensors:鼠标按住超过 5px 才认作 drag,避免误触发(普通点击不被吞)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -877,8 +891,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     // ⚠ 这个 set 压根没有该标签(书签 / 后退带过来的 `?tag=oh` 落到 f2l 上)⟹ 当没筛 ——
     //    否则页面空空如也,而下拉根本不渲染,用户没有任何控件能把它改回来。
     if (effectiveView === 'cards' || tagFilter === 'all' || !availableTags.includes(tagFilter)) return optimallyFiltered;
+    if (canChooseOhHand && tagFilter === 'oh') {
+      return optimallyFiltered.filter(c => hasOhAlgsForHand(c, data.cases, ohHand));
+    }
     return optimallyFiltered.filter(c => c.algs.some(ori => ori.some(a => a.tags?.includes(tagFilter))));
-  }, [data, scopedCases, optimalFilterActive, resolvedOptimalMetric, optimalComparison, optimalMoves, effectiveView, tagFilter, availableTags]);
+  }, [data, scopedCases, optimalFilterActive, resolvedOptimalMetric, optimalComparison, optimalMoves, effectiveView, tagFilter, availableTags, canChooseOhHand, ohHand]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, typeof visibleCases>();
@@ -981,7 +998,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       sourcePath: collection?.sourcePath ?? `/alg/${puzzleParam}/${set}${subgroupSlug ? `/${subgroupSlug}` : ''}`,
       filename: collection?.filename ?? `${puzzleParam}-${set}${subgroupSlug ? `-${subgroupSlug}` : ''}`,
       oriOf: listing ? (c => caseOri[c.name] ?? activeOri) : undefined,
-      algFilter: listing && filtering ? (a => !!a.tags?.includes(tagFilter)) : undefined,
+      algFilter: listing && filtering && !rightHandOh ? (a => !!a.tags?.includes(tagFilter)) : undefined,
+      algsFor: listing && rightHandOh
+        ? ((c, orientation) => ohAlgsForCase(c, data?.cases ?? [], orientation, 'right'))
+        : undefined,
       // 组标题印展示名:库里的 `AS/ASD` 在页面上叫 `S-D`,打印表不该露出 DB 里那一串
       groupLabel: (sub) => ollByGroup.get(sub)
         ?? (set === 'zbll' ? displayZbllToken(sub.split('/').pop() ?? sub) : sub),
@@ -1175,15 +1195,27 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         )}
         {/* 标签筛选只在公式内联时有意义(只看图时没公式可筛) */}
         {data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && availableTags.length > 0 && (
-          <select
-            className="alg-header-select"
-            value={tagFilter}
-            onChange={e => setTagFilter(e.target.value as AlgTag | 'all')}
-            aria-label={tr({ zh: '按标签筛选公式', en: 'Filter algs by tag' })}
-          >
-            <option value="all">{tr({ zh: '全部公式', en: 'All algs' })}</option>
-            {availableTags.map(t => <option key={t} value={t}>{ALG_TAG_LABEL[t]()}</option>)}
-          </select>
+          <>
+            <select
+              className="alg-header-select"
+              value={tagFilter}
+              onChange={e => setTagFilter(e.target.value as AlgTag | 'all')}
+              aria-label={tr({ zh: '按标签筛选公式', en: 'Filter algs by tag' })}
+            >
+              <option value="all">{tr({ zh: '全部公式', en: 'All algs' })}</option>
+              {availableTags.map(t => <option key={t} value={t}>{ALG_TAG_LABEL[t]()}</option>)}
+            </select>
+            {canChooseOhHand && tagFilter === 'oh' && (
+              <PillToggle
+                value={ohHand === 'right'}
+                onChange={right => setOhHand(right ? 'right' : 'left')}
+                offLabel={tr({ zh: '左手', en: 'Left hand' })}
+                onLabel={tr({ zh: '右手', en: 'Right hand' })}
+                ariaLabel={tr({ zh: '单手公式惯用手', en: 'One-handed algorithm hand' })}
+                className="alg-oh-hand-toggle"
+              />
+            )}
+          </>
         )}
         {/* 打印表:子组选择页(没列 case)也给 —— 那一层下载的是**整套**,
             正是「把这套公式印出来」最自然的落点 */}
@@ -1333,8 +1365,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   const preferenceSet = c.srcSet ?? set;
                   const preferenceSlot = preferredAlgSlot(c, oriIdx);
                   const preferredRef = preferredSnapshots[`${puzzleParam}/${preferenceSet}`]?.items[preferenceSlot];
-                  const sortedAlgsForOri = sortPreferredAlgs(allAlgsForOri, preferredRef).map(row => row.entry);
-                  const algsForOri = algsUnderFilter(sortedAlgsForOri);
+                  const displayAlgsForOri = algsUnderFilter(c, oriIdx, allAlgsForOri);
+                  // 右手条目来自镜像 partner，沿用 partner 的原始优先级；当前 case 的左手置顶记录不适用。
+                  const algsForOri = rightHandOh
+                    ? displayAlgsForOri
+                    : sortPreferredAlgs(displayAlgsForOri, preferredRef).map(row => row.entry);
                   const oriCount = c.algs.length;
                   // 缩略图始终用**未筛选**的首条 —— 筛选只该影响公式列表,不该换掉 case 的图
                   const firstAlg = allAlgsForOri[0]?.alg ?? c.standard ?? '';
@@ -1473,7 +1508,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         {(() => {
                           // 筛了标签就别拖:看到的是子集,拖出来的顺序对不上真实数组
                           const dragAlgs = isAdmin && c.id != null && !filtering;
-                          const rows = algsForOri.map((entry) => {
+                          const rows = algsForOri.map((entry, displayIdx) => {
                             // 校验结果 / 拖动 id 都按**未筛选**的下标走(标签筛选只是个视图)——
                             // 拿对象身份换回真下标
                             const trueIdx = allAlgsForOri.indexOf(entry);
@@ -1481,13 +1516,13 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               <AlgRow
                                 entry={entry}
                                 puzzle={puzzleParam as AlgPuzzle}
-                                invalid={c.id != null ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
+                                invalid={c.id != null && trueIdx >= 0 ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
                                 ori={oriIdx}
                                 mirror={mirrorFor(c)}
                                 notationStyle={displayedNotationStyle}
                                 viewAngle={effectiveViewAngle}
-                                preferred={preferredAlgRef(entry) === preferredRef}
-                                onPreferredToggle={() => setPreferred(
+                                preferred={!rightHandOh && preferredAlgRef(entry) === preferredRef}
+                                onPreferredToggle={rightHandOh ? undefined : () => setPreferred(
                                   puzzleParam as AlgPuzzle,
                                   preferenceSet,
                                   preferenceSlot,
@@ -1495,7 +1530,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                 )}
                               />
                             );
-                            const key = `${entry.altId ?? ''}::${trueIdx}`;
+                            const key = `${entry.altId ?? entry.alg}::${trueIdx >= 0 ? trueIdx : displayIdx}`;
                             // 不拖的时候一层壳都不加 —— AlgRow 还可能带镜像公式面板,
                             // 套个 div 会把它和列表的 gap 关系改掉
                             return dragAlgs

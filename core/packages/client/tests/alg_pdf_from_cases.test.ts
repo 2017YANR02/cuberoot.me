@@ -79,6 +79,20 @@ describe('algSheetFromCases', () => {
     expect(sheet.cases[0].thumb?.alg).toBe("R U R'");
   });
 
+  it('公式行可由页面覆盖，PDF 缩略图仍使用原 case', () => {
+    const c = mkCase({
+      name: 'Aa',
+      algs: [[{ alg: "R U R'", tags: ['oh'] }]],
+    });
+    const sheet = algSheetFromCases({
+      ...base,
+      cases: [c],
+      algsFor: () => [{ alg: "L' U' L", tags: ['oh'] }],
+    });
+    expect(sheet.cases[0].algs).toEqual(["L' U' L"]);
+    expect(sheet.cases[0].thumb?.alg).toBe("R U R'");
+  });
+
   it('Square-1 PDF 缩略图跟随网页的黑顶开关', () => {
     const c = mkCase({ name: 'Kite', algs: [[{ alg: '(1,0) / (-1,0)' }]] });
     const black = algSheetFromCases({
