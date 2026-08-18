@@ -587,10 +587,59 @@ export interface TeachingStudentAccountBindingInviteCreated {
   token: string;
 }
 
+export interface TeachingStudentAccountBindingInviteCurrent {
+  invite: TeachingStudentAccountBindingInvite | null;
+}
+
+export interface TeachingStudentAccountBindingInviteRevoked {
+  invite: TeachingStudentAccountBindingInvite;
+}
+
+export interface TeachingStudentAccountBindingConsumed {
+  invite: Pick<
+    TeachingStudentAccountBindingInvite,
+    'id' | 'status' | 'expiresAt' | 'consumedAt' | 'createdAt'
+  >;
+  student: {
+    id: string;
+    organizationName: string;
+    displayName: string;
+    accountLinkedAt: string;
+  };
+}
+
 export interface TeachingStudentAccountBindingPreview {
   organizationName: string;
   studentDisplayName: string;
   expiresAt: string;
+}
+
+export interface TeachingSelfTrainingAssignment {
+  assignment: TeachingTrainingAssignment;
+  target: Extract<TeachingTrainingAssignmentTarget, { targetKind: 'student' }>;
+  template: Pick<TeachingTrainingTemplate, 'id' | 'name'>;
+  templateVersion: TeachingTrainingTemplateVersion;
+  goals: TeachingTrainingAssignmentGoalMetric[];
+}
+
+export type TeachingSelfTrainingEvidenceReceipt = Pick<
+  TeachingTrainingEvidence,
+  | 'id'
+  | 'source'
+  | 'sourceEventId'
+  | 'trustLevel'
+  | 'occurredAt'
+  | 'localDate'
+  | 'durationMs'
+  | 'resultMs'
+  | 'success'
+  | 'createdAt'
+>;
+
+export interface TeachingSelfTrainingEvidenceResult {
+  evidence: TeachingSelfTrainingEvidenceReceipt;
+  assignmentIds: string[];
+  replayed: boolean;
 }
 
 export class TrainingEvidenceValidationError extends Error {
@@ -666,9 +715,8 @@ function parseStrictOffsetDateTime(value: string): number {
 
   const offsetMinutes = zone === 'Z' ? 0 : (offsetHour * 60 + offsetMinute) * (sign === '+' ? 1 : -1);
   const epoch = localEpoch - offsetMinutes * 60_000;
-  if (!Number.isFinite(epoch) || epoch < Date.UTC(1970, 0, 1)
-      || epoch > Date.now() + TRAINING_EVIDENCE_FUTURE_TOLERANCE_MS) {
-    throw new TrainingEvidenceValidationError('occurredAt must be from 1970 onward and not more than 5 minutes in the future');
+  if (!Number.isFinite(epoch) || epoch < Date.UTC(1970, 0, 1)) {
+    throw new TrainingEvidenceValidationError('occurredAt must resolve to an instant from 1970 onward');
   }
   return epoch;
 }

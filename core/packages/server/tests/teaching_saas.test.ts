@@ -54,6 +54,29 @@ function repository(): TeachingSaasRepository {
     listSessions: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
     getSession: vi.fn().mockResolvedValue({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' }),
     createSession: vi.fn().mockResolvedValue({ status: 201, body: { session: { id: 'session-1' } } }),
+    createStudentAccountBindingInvite: vi.fn().mockResolvedValue({
+      status: 201,
+      body: { invite: { id: 'invite-1', status: 'pending' }, token: 'a'.repeat(43) },
+    }),
+    getCurrentStudentAccountBindingInvite: vi.fn().mockResolvedValue({
+      invite: { id: 'invite-1', status: 'pending' },
+    }),
+    revokeStudentAccountBindingInvite: vi.fn().mockResolvedValue({
+      status: 200,
+      body: { invite: { id: 'invite-1', status: 'revoked' } },
+    }),
+    previewStudentAccountBindingInvite: vi.fn().mockResolvedValue({
+      organizationName: 'Demo', studentDisplayName: 'Student', expiresAt: '2026-08-18T02:00:00.000Z',
+    }),
+    consumeStudentAccountBindingInvite: vi.fn().mockResolvedValue({
+      status: 200,
+      body: { invite: { id: 'invite-1', status: 'consumed' }, student: { id: 'student-1' } },
+    }),
+    listSelfTrainingAssignments: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    createSelfTrainingEvidence: vi.fn().mockResolvedValue({
+      status: 201,
+      body: { evidence: { id: 'evidence-1' }, assignmentIds: [], replayed: false },
+    }),
     saveAttendanceBatch: vi.fn().mockResolvedValue({ status: 200, body: { attendance: [] } }),
     completeSession: vi.fn().mockResolvedValue({ status: 200, body: { session: { status: 'completed' } } }),
   };
@@ -348,5 +371,252 @@ describe('teaching SaaS routes', () => {
     const detail = await app.request(`/teaching/organizations/demo/sessions/${sessionId}`);
     expect(detail.status).toBe(200);
     expect(repo.getSession).toHaveBeenCalledWith(ACTOR, 'demo', sessionId, expect.any(String));
+  });
+
+  it('creates a one-time binding invite without requiring or forwarding generic idempotency', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const studentId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const response = await app.request(
+      `/teaching/organizations/demo/students/${studentId}/account-binding-invites`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'must-not-cache-token' },
+        body: JSON.stringify({ expiresInMinutes: 90 }),
+      },
+    );
+
+    expect(response.status).toBe(201);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(repo.createStudentAccountBindingInvite).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      studentId,
+      { expiresInMinutes: 90 },
+      expect.any(String),
+    );
+    expect(vi.mocked(repo.createStudentAccountBindingInvite).mock.calls[0]).not.toContain('must-not-cache-token');
+  });
+
+  it('hashes an account-binding token before passing it to the repository', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const token = 'A'.repeat(43);
+    const response = await app.request('/teaching/me/student-account-binding/consume', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(repo.consumeStudentAccountBindingInvite).toHaveBeenCalledWith(
+      ACTOR,
+      { tokenHash: createHash('sha256').update(token).digest('hex') },
+      expect.any(String),
+    );
+    expect(JSON.stringify(vi.mocked(repo.consumeStudentAccountBindingInvite).mock.calls)).not.toContain(token);
+  });
+
+  it('reads and idempotently revokes the current staff-managed binding invite', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const studentId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const inviteId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+
+    const current = await app.request(
+      `/teaching/organizations/demo/students/${studentId}/account-binding-invite`,
+    );
+    expect(current.status).toBe(200);
+    expect(current.headers.get('cache-control')).toBe('no-store');
+    expect(repo.getCurrentStudentAccountBindingInvite).toHaveBeenCalledWith(
+      ACTOR, 'demo', studentId, expect.any(String),
+    );
+
+    const raw = '{}';
+    const revoked = await app.request(
+      `/teaching/organizations/demo/students/${studentId}/account-binding-invites/${inviteId}/revoke`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'revoke-invite-1' },
+        body: raw,
+      },
+    );
+    expect(revoked.status).toBe(200);
+    expect(revoked.headers.get('cache-control')).toBe('no-store');
+    expect(repo.revokeStudentAccountBindingInvite).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      studentId,
+      inviteId,
+      'revoke-invite-1',
+      createHash('sha256').update(raw).digest('hex'),
+      expect.any(String),
+    );
+  });
+
+  it('previews an invite by hash only and keeps unavailable tokens indistinguishable', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const token = 'P'.repeat(43);
+    const preview = await app.request('/teaching/me/student-account-binding/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    expect(preview.status).toBe(200);
+    expect(preview.headers.get('cache-control')).toBe('no-store');
+    expect(repo.previewStudentAccountBindingInvite).toHaveBeenCalledWith(
+      ACTOR,
+      { tokenHash: createHash('sha256').update(token).digest('hex') },
+      expect.any(String),
+    );
+    expect(JSON.stringify(vi.mocked(repo.previewStudentAccountBindingInvite).mock.calls)).not.toContain(token);
+
+    repo.previewStudentAccountBindingInvite = vi.fn().mockRejectedValue(
+      new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student account binding invite not found'),
+    );
+    const unavailableApp = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const unavailable = await unavailableApp.request('/teaching/me/student-account-binding/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: 'U'.repeat(43) }),
+    });
+    expect(unavailable.status).toBe(404);
+    expect(unavailable.headers.get('cache-control')).toBe('no-store');
+    expect(await unavailable.json()).toMatchObject({ error: { code: 'RESOURCE_NOT_FOUND' } });
+  });
+
+  it('lists only the authenticated student binding under the requested organization slug', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const response = await app.request('/teaching/organizations/demo/me/training/assignments?page=2&pageSize=10');
+
+    expect(response.status).toBe(200);
+    expect(repo.listSelfTrainingAssignments).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      { page: 2, pageSize: 10, offset: 10 },
+      expect.any(String),
+    );
+  });
+
+  it('canonicalizes self evidence and never accepts caller-supplied identity or trust', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const occurredAt = new Date(Date.now() - 60_000).toISOString();
+    const assignmentA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const assignmentB = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const response = await app.request('/teaching/organizations/demo/me/training/evidence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        schemaVersion: 1,
+        source: 'timer',
+        sourceEventId: ' timer-event-1 ',
+        occurredAt,
+        activity: 'solve',
+        durationMs: 12_345,
+        metrics: { success: true, resultMs: 12_345 },
+        payloadVersion: 1,
+        assignmentIds: [assignmentB.toUpperCase(), assignmentA, assignmentB],
+      }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(repo.createSelfTrainingEvidence).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      {
+        schemaVersion: 1,
+        source: 'timer',
+        sourceEventId: 'timer-event-1',
+        occurredAt,
+        activity: 'solve',
+        durationMs: 12_345,
+        metrics: { success: true, resultMs: 12_345 },
+        payloadVersion: 1,
+        payload: undefined,
+        assignmentIds: [assignmentA, assignmentB],
+      },
+      expect.any(String),
+    );
+
+    for (const forbidden of ['organizationId', 'studentId', 'actorUserId', 'trustLevel']) {
+      const rejected = await app.request('/teaching/organizations/demo/me/training/evidence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          schemaVersion: 1,
+          source: 'timer',
+          sourceEventId: `event-${forbidden}`,
+          occurredAt,
+          activity: 'solve',
+          metrics: { success: true, resultMs: 123 },
+          payloadVersion: 1,
+          [forbidden]: 'spoofed',
+        }),
+      });
+      expect(rejected.status).toBe(400);
+      expect(await rejected.json()).toMatchObject({ error: { code: 'EVIDENCE_INVALID' } });
+    }
+    expect(repo.createSelfTrainingEvidence).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves database-clock future validation to the repository but rejects oversized evidence', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const future = new Date(Date.now() + 6 * 60_000).toISOString();
+    const futureResponse = await app.request('/teaching/organizations/demo/me/training/evidence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        schemaVersion: 1,
+        source: 'timer',
+        sourceEventId: 'future-event',
+        occurredAt: future,
+        activity: 'solve',
+        metrics: { success: true, resultMs: 123 },
+        payloadVersion: 1,
+      }),
+    });
+    expect(futureResponse.status).toBe(201);
+    expect(repo.createSelfTrainingEvidence).toHaveBeenCalledTimes(1);
+    expect(repo.createSelfTrainingEvidence).toHaveBeenLastCalledWith(
+      ACTOR,
+      'demo',
+      expect.objectContaining({ occurredAt: future }),
+      expect.any(String),
+    );
+
+    const oversizedResponse = await app.request('/teaching/organizations/demo/me/training/evidence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payload: 'x'.repeat(65_536) }),
+    });
+    expect(oversizedResponse.status).toBe(400);
+    expect(await oversizedResponse.json()).toMatchObject({ error: { code: 'INVALID_INPUT' } });
+    expect(repo.createSelfTrainingEvidence).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps concealed self-evidence denials as a no-store 404 without database details', async () => {
+    repo.createSelfTrainingEvidence = vi.fn().mockRejectedValue(
+      new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Training assignment not found'),
+    );
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const response = await app.request('/teaching/organizations/demo/me/training/evidence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        schemaVersion: 1,
+        source: 'timer',
+        sourceEventId: 'concealed-target',
+        occurredAt: '2026-08-17T01:00:00.000Z',
+        activity: 'solve',
+        metrics: { success: true, resultMs: 123 },
+        payloadVersion: 1,
+        assignmentIds: ['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'],
+      }),
+    });
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    const body = await response.json();
+    expect(body).toMatchObject({
+      error: { code: 'RESOURCE_NOT_FOUND', message: 'Training assignment not found' },
+    });
+    expect(JSON.stringify(body)).not.toMatch(/23514|teaching_audit_events|metadata_check/i);
   });
 });
