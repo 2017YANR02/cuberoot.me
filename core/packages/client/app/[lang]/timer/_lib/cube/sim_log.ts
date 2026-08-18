@@ -54,11 +54,11 @@ export interface SimLogPlan {
 }
 
 export interface LiveSimCatchUpPlan {
-  /** Apply every stale move through this state instantly. */
   mode: 'catch-up';
-  setupExp: string;
-  /** Animate only this latest move after the instant state catch-up. */
-  pushExp: string;
+  /** Every newly appended move, already conjugated into the displayed pose. */
+  exp: string;
+  /** Canonical full expression used only if the engine cannot catch up safely. */
+  fallbackExp: string;
 }
 
 export type LiveSimPlan = SimLogPlan | LiveSimCatchUpPlan;
@@ -118,18 +118,9 @@ export function planLiveSimUpdate(
   const incomingCount = ordinary.exp.trim().split(/\s+/).filter(Boolean).length;
   if (currentBacklog + incomingCount <= MAX_LIVE_ANIMATION_BACKLOG) return ordinary;
 
-  const nextTokens = next.turns.trim().split(/\s+/).filter(Boolean);
-  if (nextTokens.length === 0) return ordinary;
-  const beforeLatest: SimLogState = {
-    turns: nextTokens.slice(0, -1).join(' '),
-    pose: next.pose,
-  };
-  const latest = planSimUpdate(beforeLatest, next, true);
-  if (latest.mode !== 'push') return { mode: 'setup', exp: composed(next) };
-
   return {
     mode: 'catch-up',
-    setupExp: composed(beforeLatest),
-    pushExp: latest.exp,
+    exp: ordinary.exp,
+    fallbackExp: composed(next),
   };
 }

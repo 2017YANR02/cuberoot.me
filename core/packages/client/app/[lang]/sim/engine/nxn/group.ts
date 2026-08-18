@@ -168,6 +168,19 @@ export default class CubeGroup extends THREE.Group {
     return 0;
   }
 
+  /**
+   * Finish only this cube's active slice before a real-time mirror catches up.
+   * A stranded pointer hold has no tween to finish; release it and make the
+   * caller rebuild from its canonical expression instead of retaining a lock.
+   */
+  finishForRealtimeCatchUp(): boolean {
+    if (this.tween) this.finish();
+    if (!this.holding) return true;
+    this.angle = 0;
+    this.drop();
+    return false;
+  }
+
   private hold(): boolean {
     const success = this.cube.lock(this.axis, this.layer);
     if (!success) {

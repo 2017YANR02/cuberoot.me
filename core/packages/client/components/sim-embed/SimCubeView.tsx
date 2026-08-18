@@ -393,8 +393,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
         realtime ? (queued ? LIVE_QUEUED_TURN_TICKS : LIVE_TURN_TICKS) : undefined,
       );
     } else if (plan.mode === 'catch-up') {
-      twister.setup(plan.setupExp);
-      twister.push(plan.pushExp, false, 1, LIVE_QUEUED_TURN_TICKS);
+      twister.catchUpRealtime(plan.exp, plan.fallbackExp, LIVE_QUEUED_TURN_TICKS);
     } else {
       twister.setup(plan.exp);
     }
