@@ -7,6 +7,7 @@ import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
 import {
   cleanReconAlgForPlayer,
   expandReconGroupRepeats,
+  normalizeReconSolution,
 } from '@cuberoot/shared/recon-completion';
 
 /**
@@ -222,11 +223,5 @@ export function syncReconPlayerCursorFromText(player: any, textBeforeCaret: stri
 }
 
 export function normalizeSolutionSlashes(text: string): string {
-  return text.split('\n').map(line => {
-    const idx = line.indexOf('//');
-    if (idx < 0) return line;
-    const before = line.slice(0, idx).replace(/[ \t]+$/, '');
-    const after = line.slice(idx + 2).replace(/^[ \t]+/, '');
-    return before === '' ? `// ${after}` : `${before} // ${after}`;
-  }).join('\n');
+  return normalizeReconSolution(text);
 }

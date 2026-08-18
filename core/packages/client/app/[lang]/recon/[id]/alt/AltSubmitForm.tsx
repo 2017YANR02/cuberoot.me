@@ -9,7 +9,7 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { TriangleAlert, ArrowLeft, LogIn } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
-import { getReconScramble } from '@cuberoot/shared/recon-completion';
+import { getReconScramble, normalizeReconSolution } from '@cuberoot/shared/recon-completion';
 import { getRecon, addAlternative, updateAlternative } from '@/lib/recon-api';
 import { revalidateRecon } from '../../revalidate-action';
 import { computeAllStats } from '@/lib/recon-stats';
@@ -72,8 +72,9 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
   );
 
   const handleSubmit = async () => {
-    const trimmed = solution.trim();
+    const trimmed = normalizeReconSolution(solution).trim();
     if (!trimmed || !parentId) return;
+    if (trimmed !== solution) setSolution(trimmed);
     setSubmitting(true);
     try {
       if (isEditing && editIdx != null) {

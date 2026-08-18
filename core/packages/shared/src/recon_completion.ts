@@ -119,6 +119,54 @@ export function spaceReconCubeMoves(text: string): string {
   }).join('\n').trim();
 }
 
+function normalizeReconCommentSpacing(line: string): string {
+  const commentIdx = line.indexOf('//');
+  if (commentIdx < 0) return line;
+  const moves = line.slice(0, commentIdx).replace(/[ \t]+$/, '');
+  const comment = line.slice(commentIdx + 2).replace(/^[ \t]+/, '');
+  return moves === '' ? `// ${comment}` : `${moves} // ${comment}`;
+}
+
+/**
+ * Canonicalise persisted reconstruction text. A standalone AUF stage belongs
+ * to the preceding algorithm stage, so append its moves before that stage's
+ * comment instead of storing a separate `// AUF` line.
+ */
+export function normalizeReconSolution(text: string): string {
+  const normalized: string[] = [];
+
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = normalizeReconCommentSpacing(rawLine);
+    const commentIdx = line.indexOf('//');
+    const moves = commentIdx >= 0 ? line.slice(0, commentIdx).trim() : '';
+    const comment = commentIdx >= 0 ? line.slice(commentIdx + 2).trim() : '';
+
+    if (moves && /^AUF$/i.test(comment)) {
+      let previousIdx = normalized.length - 1;
+      while (previousIdx >= 0 && normalized[previousIdx].trim() === '') previousIdx -= 1;
+
+      if (previousIdx >= 0) {
+        const previous = normalized[previousIdx];
+        const previousCommentIdx = previous.indexOf('//');
+        if (previousCommentIdx >= 0) {
+          const previousMoves = previous.slice(0, previousCommentIdx).trim();
+          const previousComment = previous.slice(previousCommentIdx + 2).trim();
+          if (previousMoves) {
+            normalized[previousIdx] = previousComment
+              ? `${previousMoves} ${moves} // ${previousComment}`
+              : `${previousMoves} ${moves} //`;
+            continue;
+          }
+        }
+      }
+    }
+
+    normalized.push(line);
+  }
+
+  return normalized.join('\n');
+}
+
 /** Normalize submit-form scramble spacing for puzzles whose moves use cube-like tokens. */
 export function normalizeReconScrambleSpacing(event: string, text: string): string {
   const puzzle = reconPuzzleKey(event);

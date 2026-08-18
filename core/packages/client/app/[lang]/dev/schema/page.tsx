@@ -535,6 +535,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 149, slug: 'teaching_campuses_groups_assignments', desc: { zh: '新增校区、班级、学员班级关系与老师负责范围；以复合租户外键、永久关系锁和有效期约束阻止跨租户引用与并发重叠。', en: 'Add campuses, groups, student memberships, and teacher scopes with composite tenant foreign keys, permanent relation locks, and effective-range guards against cross-tenant references and concurrent overlap.' } },
   { n: 150, slug: 'teaching_training_foundation', desc: { zh: '新增版本化训练模板、发布时任务目标、只追加证据与批改、可信来源每日汇总，以及哈希学员账号绑定邀请底座。', en: 'Add versioned training templates, publish-time assignment targets, append-only evidence and reviews, provenance-aware daily rollups, and hashed student account-binding invitations.' } },
   { n: 151, slug: 'wca_verified_display_names', desc: { zh: '把已绑定 WCA 的账号展示名回填为 WCA 官方姓名，统一实名展示。', en: 'Backfill WCA-linked account display names from verified WCA profiles.' } },
+  { n: 152, slug: 'fold_recon_auf', desc: { zh: '把复盘中单独成行的 AUF 转动合并进上一条阶段公式，主解法与另解统一处理。', en: 'Fold standalone AUF moves into the preceding reconstruction stage for both primary and alternative solutions.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
