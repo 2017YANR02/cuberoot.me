@@ -4,7 +4,7 @@ import type {
   TeachingOrganizationStatus,
   TeachingStudentStatus,
 } from "@cuberoot/shared/teaching";
-import { TeachingApiError } from "@/lib/teaching-api";
+import { TeachingApiError } from "@/lib/teaching-api-error";
 
 const ROLE_LABELS: Record<TeachingOrganizationRole, string> = {
   owner: "所有者",
