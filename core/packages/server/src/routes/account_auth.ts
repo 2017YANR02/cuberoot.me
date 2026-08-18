@@ -431,7 +431,9 @@ accountAuthRoutes.post('/auth/link/wca', async (c) => {
     return c.json({ error: 'WCA API unavailable' }, 502);
   }
   if (!me.wca_id) return c.json({ error: 'this WCA account has no WCA ID (never competed)' }, 400);
-  const r = await addIdentity(uid, 'wca', me.wca_id, me.wca_id);
+  const verifiedName = me.name?.normalize('NFC').trim();
+  if (!verifiedName) return c.json({ error: 'WCA profile has no verified name' }, 502);
+  const r = await addIdentity(uid, 'wca', me.wca_id, me.wca_id, verifiedName);
   if (r === 'conflict') return c.json({ error: 'WCA account already linked elsewhere' }, 409);
   // 同步 wca_users 缓存(供其它路径复用),与 /auth/exchange 一致。
   await query(
@@ -516,7 +518,11 @@ accountAuthRoutes.post('/auth/profile', async (c) => {
   if (!isValidDisplayName(name)) return c.json({ error: 'invalid display name' }, 400);
 
   const user = await updateDisplayName(uid, name);
-  if (!user) return c.json({ error: 'account not found' }, 404);
+  if (!user) {
+    const current = await getUserById(uid);
+    if (!current) return c.json({ error: 'account not found' }, 404);
+    return c.json({ error: 'WCA-linked accounts use their verified WCA name' }, 409);
+  }
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   return c.json({ ok: true, token, user: publicUser(user) });
 });

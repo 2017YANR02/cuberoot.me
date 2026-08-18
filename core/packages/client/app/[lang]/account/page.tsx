@@ -34,6 +34,7 @@ function DisplayNameEditor() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const wcaLocked = Boolean(user?.wcaId);
 
   useEffect(() => {
     if (!editing) setName(user?.name ?? '');
@@ -50,6 +51,10 @@ function DisplayNameEditor() {
   };
 
   const save = async () => {
+    if (wcaLocked) {
+      setEditing(false);
+      return;
+    }
     const normalized = normalizeDisplayName(name);
     setName(normalized);
     setError(null);
@@ -83,7 +88,7 @@ function DisplayNameEditor() {
         <span className="auth-idicon"><UserRound size={16} /></span>
         <span className="auth-idprov">{t('用户名', 'Username')}</span>
         <span className="auth-iduid">{user?.name || t('未设置', 'Not set')}</span>
-        {!editing && (
+        {!editing && !wcaLocked && (
           <div className="auth-idactions">
             <button type="button" className="auth-link" onClick={() => { setError(null); setEditing(true); }}>
               {user?.name ? t('修改', 'Edit') : t('设置', 'Set')}
@@ -91,7 +96,12 @@ function DisplayNameEditor() {
           </div>
         )}
       </div>
-      {editing && (
+      {wcaLocked && (
+        <p className="auth-hint account-name-lock-hint">
+          {t('已绑定 WCA，用户名使用 WCA 实名。', 'WCA is linked, so your username uses your verified WCA name.')}
+        </p>
+      )}
+      {editing && !wcaLocked && (
         <form className="account-name-form" onSubmit={(event) => { event.preventDefault(); void save(); }}>
           <label className="auth-label" htmlFor="account-display-name">{t('用户名', 'Username')}</label>
           <div className="account-name-field">
