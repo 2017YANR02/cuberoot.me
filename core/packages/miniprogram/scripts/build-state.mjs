@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
-import { dirname, join, relative } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 
 import { BUILD_ASSETS } from './build-assets.mjs';
 
-export const BUILD_STATE_VERSION = 1;
+export const BUILD_STATE_VERSION = 2;
 
 export function buildStatePath(packageRoot) {
   return join(packageRoot, '.tmp', 'miniprogram-build-state.json');
@@ -32,6 +32,10 @@ export function normalizedRelativePath(root, file) {
   return relative(root, file).replaceAll('\\', '/');
 }
 
+export function sharedSmartCubeSourceRoot(packageRoot) {
+  return resolve(packageRoot, '..', 'shared', 'src', 'smart_cube');
+}
+
 export async function fingerprintFiles(root, files) {
   const hash = createHash('sha256');
   const orderedFiles = [...files].sort((left, right) => (
@@ -49,9 +53,14 @@ export async function fingerprintFiles(root, files) {
 
 export async function collectBuildInputFiles(packageRoot) {
   const sourceFiles = await walkFiles(join(packageRoot, 'src'));
+  const sharedSmartCubeFiles = await walkFiles(sharedSmartCubeSourceRoot(packageRoot));
   return [
     ...sourceFiles,
+    ...sharedSmartCubeFiles,
     ...BUILD_ASSETS.map((asset) => asset.source),
+    resolve(packageRoot, '..', '..', 'package.json'),
+    resolve(packageRoot, '..', '..', 'pnpm-lock.yaml'),
+    resolve(packageRoot, '..', 'shared', 'package.json'),
     join(packageRoot, 'package.json'),
     join(packageRoot, 'project.config.template.json'),
     join(packageRoot, 'tsconfig.json'),

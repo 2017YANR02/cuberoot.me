@@ -615,6 +615,27 @@ describe('mini program account page', () => {
     expect(page.data.status).toContain('设备存储');
   });
 
+  it('does not report ready when a confirmed identity cannot be persisted', async () => {
+    const page = await loadPage({
+      getStorageSync: () => storedSession,
+      removeStorageSync: vi.fn(),
+      request: vi.fn((options: { success(response: unknown): void }) => {
+        options.success({ statusCode: 200, data: { user: storedSession.user } });
+      }),
+      setStorageSync() {
+        throw new Error('storage unavailable');
+      },
+    });
+
+    page.onShow();
+
+    await vi.waitFor(() => expect(page.data.syncState).toBe('error'));
+    expect(page.data.loggedIn).toBe(true);
+    expect(page.data.syncLabel).toBe('待确认');
+    expect(page.data.storageUnavailable).toBe(true);
+    expect(page.data.status).toContain('设备存储暂时无法更新');
+  });
+
   it('keeps an emoji account initial intact', async () => {
     const emojiSession = {
       ...storedSession,
