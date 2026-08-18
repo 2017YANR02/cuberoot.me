@@ -356,6 +356,7 @@ export class TwistNode {
 export default class Twister {
   private cube: Cube;
   private queue: Array<{ action: TwistAction; formulaDurationTicks?: number }> = [];
+  private catchingUpRealtime = false;
   // 在 undo / redo 内部 twist 时为 true,避免误清空 redo 栈
   public suppressRedoClear = false;
   constructor(cube: Cube) {
@@ -739,7 +740,84 @@ export default class Twister {
     this.update();
   }
 
+  /**
+   * Collapse a live smart-cube backlog without reset/rebuild: finish this cube's
+   * active turn, apply stale turns instantly, then animate only the newest turn.
+   * The ordinary setup path remains the correctness fallback for malformed input
+   * or a lock that cannot be released safely.
+   */
+  catchUpRealtime(
+    exp: string,
+    fallbackExp: string,
+    formulaDurationTicks = timing.frames,
+  ): void {
+    const tokens = exp.trim().split(/\s+/).filter(Boolean);
+    const incoming = new TwistNode(exp).parse();
+    const isOrdinaryTurn = (action: TwistAction): boolean => (
+      action.sign !== '#'
+      && action.sign !== '*'
+      && action.sign !== '.'
+      && action.sign !== '~'
+      && action.sign !== ';'
+      && this.cube.table.convert(action).length > 0
+    );
+
+    if (
+      tokens.length === 0
+      || incoming.length !== tokens.length
+      || !Number.isFinite(formulaDurationTicks)
+      || formulaDurationTicks <= 0
+      || incoming.some((action) => !isOrdinaryTurn(action))
+      || this.queue.some(({ action }) => !isOrdinaryTurn(action))
+    ) {
+      this.setup(fallbackExp);
+      return;
+    }
+
+    const pending = this.queue.splice(0);
+    const stale = pending.concat(
+      incoming.slice(0, -1).map((action) => ({ action, formulaDurationTicks })),
+    );
+    const latest = incoming[incoming.length - 1];
+    let safe = true;
+
+    this.catchingUpRealtime = true;
+    try {
+      for (const axis of ['x', 'y', 'z']) {
+        for (const group of this.cube.table.groups[axis]) {
+          if (!group.finishForRealtimeCatchUp()) safe = false;
+        }
+      }
+      if (this.cube.busy) safe = false;
+
+      if (safe) {
+        for (const queued of stale) {
+          if (!this.twist(queued.action, true, false, queued.formulaDurationTicks)) {
+            safe = false;
+            break;
+          }
+        }
+      }
+    } finally {
+      this.catchingUpRealtime = false;
+    }
+
+    if (!safe) {
+      this.queue.length = 0;
+      this.setup(fallbackExp);
+      return;
+    }
+
+    this.queue.push({ action: latest, formulaDurationTicks });
+    this.update();
+    if (!this.cube.busy || this.queue.length > 0) {
+      this.queue.length = 0;
+      this.setup(fallbackExp);
+    }
+  }
+
   update = (): void => {
+    if (this.catchingUpRealtime) return;
     while (true) {
       const queued = this.queue.shift();
       if (queued == undefined) {

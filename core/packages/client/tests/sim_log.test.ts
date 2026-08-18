@@ -123,8 +123,8 @@ describe('planLiveSimUpdate:实况追帧', () => {
       1,
     )).toEqual({
       mode: 'catch-up',
-      setupExp: "R U F'",
-      pushExp: 'D2',
+      exp: "F' D2",
+      fallbackExp: "R U F' D2",
     });
   });
 
@@ -133,7 +133,9 @@ describe('planLiveSimUpdate:实况追帧', () => {
     const plan = planLiveSimUpdate(S('R U', 'x'), next, true, 1);
     expect(plan.mode).toBe('catch-up');
     if (plan.mode !== 'catch-up') return;
-    expect(sameState(faces(`${plan.setupExp} ${plan.pushExp}`), faces('R U F D x'))).toBe(true);
+    const goal = faces('R U F D x');
+    expect(sameState(faces(`R U x ${plan.exp}`), goal)).toBe(true);
+    expect(sameState(faces(plan.fallbackExp), goal)).toBe(true);
   });
 });
 
