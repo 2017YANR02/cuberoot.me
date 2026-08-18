@@ -84,9 +84,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'org/[orgSlug]/members': { title: { zh: '机构成员', en: 'Organization Members' } },
   'org/[orgSlug]/students': { title: { zh: '学员管理', en: 'Student Management' } },
   'org/[orgSlug]/students/[studentId]': { title: { zh: '学员详情', en: 'Student Details' } },
+  'org/[orgSlug]/students/[studentId]/packages': { title: { zh: '学员课包', en: 'Student Packages' } },
   'org/[orgSlug]/campuses': { title: { zh: '校区管理', en: 'Campus Management' } },
   'org/[orgSlug]/classes': { title: { zh: '班级管理', en: 'Class Management' } },
   'org/[orgSlug]/classes/[groupId]': { title: { zh: '班级详情', en: 'Class Details' } },
+  'org/[orgSlug]/packages': { title: { zh: '课包管理', en: 'Package Management' } },
+  'org/[orgSlug]/sessions': { title: { zh: '课次管理', en: 'Session Management' } },
+  'org/[orgSlug]/sessions/[sessionId]': { title: { zh: '课次详情', en: 'Session Details' } },
   'privacy': {
     title: { zh: '移动端与小程序隐私政策', en: 'Mobile and Mini Program Privacy Policy' },
     description: {

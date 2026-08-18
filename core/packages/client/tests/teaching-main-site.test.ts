@@ -58,4 +58,22 @@ describe('main-site teaching architecture', () => {
     expect(classDetail).toContain('listTeachingGroupMemberships');
     expect(studentDetail).toContain('getTeachingStudent');
   });
+
+  it('keeps package and session workflows inside the main-site organization shell', () => {
+    const workspace = readClient('app/[lang]/org/_components/OrgWorkspace.tsx');
+    const studentDetail = readClient('app/[lang]/org/[orgSlug]/students/[studentId]/page.tsx');
+    const sessionList = readClient('app/[lang]/org/[orgSlug]/sessions/page.tsx');
+    const sessionDetail = readClient('app/[lang]/org/[orgSlug]/sessions/[sessionId]/page.tsx');
+
+    expect(workspace).toContain("permission: 'package:read'");
+    expect(workspace).toContain("permission: 'session:read'");
+    expect(studentDetail).toContain('students/${studentId}/packages');
+    expect(studentDetail).toContain('prefetch={false}');
+    expect(sessionList).toContain("hasTeachingPermission(role, 'session:create')");
+    expect(sessionDetail).toContain("hasTeachingPermission(role, 'session:manage')");
+    expect(sessionDetail).toContain('saveTeachingAttendanceBatch');
+    expect(sessionDetail).toContain('completeTeachingSession');
+    expect(sessionDetail).toContain('<AppLink');
+    expect(sessionDetail).not.toContain('router.push');
+  });
 });

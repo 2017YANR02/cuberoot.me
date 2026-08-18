@@ -13,14 +13,18 @@ vi.mock('@/lib/api-base', () => ({
 }));
 
 import {
+  completeTeachingSession,
+  createTeachingSession,
   createTeachingGroupMembership,
   createTeachingMember,
   createTeachingTeacherAssignment,
+  listTeachingPackageProducts,
   listTeachingGroupMemberships,
   createTeachingStudent,
   listTeachingOrganizations,
   listTeachingStudents,
   listTeachingTeacherAssignments,
+  saveTeachingAttendanceBatch,
 } from '@/lib/teaching-saas-api';
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -87,6 +91,55 @@ function teacherAssignment() {
       role: 'teacher',
       status: 'active',
     },
+  };
+}
+
+function packageProduct() {
+  return {
+    id: '018f3e56-31a5-7a88-9b45-337ccdbf7293',
+    code: 'TEN-LESSONS',
+    name: 'Ten lessons',
+    status: 'active',
+    creditUnit: 'lesson',
+    creditType: 'lesson',
+    totalCredits: 10,
+    validityDays: 90,
+    priceAmountMinor: 100000,
+    currency: 'CNY',
+    createdAt: '2026-08-18T00:00:00.000Z',
+    updatedAt: '2026-08-18T00:00:00.000Z',
+  };
+}
+
+function attendance() {
+  return {
+    id: '018f3e56-31a5-7a88-9b45-337ccdbf7294',
+    studentId: student().id,
+    studentPackageId: null,
+    status: 'present',
+    creditCost: 1,
+    notes: '',
+    updatedAt: '2026-08-18T00:00:00.000Z',
+  };
+}
+
+function session() {
+  return {
+    id: '018f3e56-31a5-7a88-9b45-337ccdbf7295',
+    title: 'Tuesday class',
+    startsAt: '2026-08-18T10:00:00.000Z',
+    endsAt: '2026-08-18T11:00:00.000Z',
+    timezone: 'Asia/Shanghai',
+    status: 'scheduled',
+    version: 1,
+    startedAt: null,
+    completedAt: null,
+    cancelledAt: null,
+    teachers: [],
+    attendanceCount: 1,
+    createdAt: '2026-08-18T00:00:00.000Z',
+    updatedAt: '2026-08-18T00:00:00.000Z',
+    attendance: [attendance()],
   };
 }
 
@@ -210,6 +263,73 @@ describe('teaching SaaS client', () => {
       effectiveFrom: teacherAssignment().effectiveFrom,
       effectiveTo: null,
     });
+  });
+
+  it('parses package products from the canonical Core wire shape', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => jsonResponse({
+      packageProducts: [packageProduct()],
+      total: 1,
+      page: 1,
+      pageSize: 100,
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listTeachingPackageProducts('cube academy', 0, 999)).resolves.toMatchObject({
+      items: [packageProduct()],
+      total: 1,
+      pageSize: 100,
+    });
+    expect(fetchMock.mock.calls[0]![0]).toBe('https://api.example.test/v1/teaching/organizations/cube%20academy/package-products?page=1&pageSize=100');
+  });
+
+  it('creates a session with the exact Core body and idempotency key', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => jsonResponse({ session: session() }, 201));
+    vi.stubGlobal('fetch', fetchMock);
+    const input = {
+      title: 'Tuesday class',
+      startsAt: session().startsAt,
+      endsAt: session().endsAt,
+      timezone: 'Asia/Shanghai',
+      teacherUserIds: [42],
+      attendees: [{ studentId: student().id, studentPackageId: packageProduct().id, creditCost: 1 }],
+    };
+
+    await expect(createTeachingSession('cube-academy', input, 'session-key')).resolves.toMatchObject({
+      id: session().id,
+      attendance: [{ displayName: null, studentPackageId: null }],
+    });
+    const [, initValue] = fetchMock.mock.calls[0]!;
+    const init = initValue as RequestInit;
+    expect(init.headers).toMatchObject({ 'Idempotency-Key': 'session-key' });
+    expect(JSON.parse(String(init.body))).toEqual(input);
+  });
+
+  it('saves only attendance ids and statuses and accepts the narrow batch response', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => jsonResponse({ attendance: [attendance()] }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(saveTeachingAttendanceBatch('cube-academy', session().id, [
+      { attendanceId: attendance().id, status: 'present' },
+    ], 'attendance-key')).resolves.toEqual([{ ...attendance(), displayName: null }]);
+    const [, initValue] = fetchMock.mock.calls[0]!;
+    expect(JSON.parse(String((initValue as RequestInit).body))).toEqual({
+      records: [{ attendanceId: attendance().id, status: 'present' }],
+    });
+  });
+
+  it('completes a session with an empty mutation body', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => jsonResponse({
+      session: { id: session().id, status: 'completed', completedAt: '2026-08-18T11:00:00.000Z' },
+      consumption: { attendanceCount: 1, totalCredits: 1 },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(completeTeachingSession('cube-academy', session().id, 'complete-key')).resolves.toMatchObject({
+      session: { status: 'completed' },
+      consumption: { attendanceCount: 1, totalCredits: 1 },
+    });
+    const [, initValue] = fetchMock.mock.calls[0]!;
+    expect(JSON.parse(String((initValue as RequestInit).body))).toEqual({});
   });
 
   it('parses the narrow member-create response while preserving the organization role model', async () => {
