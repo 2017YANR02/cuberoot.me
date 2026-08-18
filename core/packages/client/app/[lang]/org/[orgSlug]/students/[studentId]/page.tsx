@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { hasTeachingPermission, type TeachingOrganizationRole } from '@cuberoot/shared/teaching';
 import { useT } from '@/hooks/useT';
+import AppLink from '@/components/AppLink';
 import { getTeachingStudent, listTeachingMembers, type TeachingMember, type TeachingStudent } from '@/lib/teaching-saas-api';
 import OrgWorkspace from '../../../_components/OrgWorkspace';
 import TeacherAssignmentManager from '../../../_components/TeacherAssignmentManager';
@@ -23,6 +24,7 @@ function StudentDetail({ orgSlug, studentId, role }: { orgSlug: string; studentI
   const [memberTotal, setMemberTotal] = useState(0);
   const [error, setError] = useState('');
   const canManageAssignments = hasTeachingPermission(role, 'assignment:manage');
+  const canReadPackages = hasTeachingPermission(role, 'package:read');
 
   useEffect(() => {
     let cancelled = false;
@@ -56,6 +58,7 @@ function StudentDetail({ orgSlug, studentId, role }: { orgSlug: string; studentI
         <div><strong>{student.accountUserId ? t('已绑定', 'Linked') : t('未绑定', 'Not linked')}</strong><span>{t('主站学习账号', 'Main-site learning account')}</span></div>
         <div><strong>{entityStatusLabel(student.status, t)}</strong><span>{t('学员状态', 'Student status')}</span></div>
       </dl>
+      {canReadPackages && <AppLink className="org-primary-link" href={`/org/${orgSlug}/students/${studentId}/packages`} prefetch={false}>{t('查看课包与流水', 'View packages and ledger')}</AppLink>}
       {canManageAssignments && <TeacherAssignmentManager orgSlug={orgSlug} target={{ studentId }} members={members} memberTotal={memberTotal} allowCreate={student.status === 'active'} />}
     </>
   );
