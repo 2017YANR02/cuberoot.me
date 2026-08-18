@@ -118,6 +118,7 @@ export const SET_GOAL: Record<string, AlgGoal> = {
   'sq1/ep': 'sq1-ep',
   'sq1/obl': 'sq1-obl',
   'sq1/parity': 'sq1-ep',
+  'sq1/pbl': 'sq1-ep',
   // 大魔方
   '4x4/oll-parity': 'oll-4x4',
   '4x4/pll-parity': 'solve',

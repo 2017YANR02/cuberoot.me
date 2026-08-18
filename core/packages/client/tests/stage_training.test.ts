@@ -10,9 +10,13 @@ import {
   invertFaceAlg,
   isStageTrainingSolved,
   randomFaceScramble,
+  reframeStageAlg,
   solverFacesForColors,
+  stageGripColors,
+  stageGripPrefix,
   stageSlotCombos,
   stageTrainingMask,
+  stageTrainingMasks,
   type StageTrainingConfig,
 } from '@/app/[lang]/timer/_lib/stage-training';
 
@@ -46,6 +50,27 @@ describe('stage training scramble construction', () => {
   });
 });
 
+describe('stage training initial grip', () => {
+  it('puts each single selected base on D without exposing a multi-colour winner', () => {
+    expect(['Y', 'W', 'O', 'R', 'G', 'B'].map((color) => stageGripPrefix(color, 'base-down')))
+      .toEqual(['', 'z2', "z'", 'z', "x'", 'x']);
+    expect(stageGripPrefix('WY', 'base-down')).toBe('');
+    expect(stageGripPrefix('W', 'standard')).toBe('');
+  });
+
+  it('reframes scramble and solution tokens without adding counted turns', () => {
+    const reframed = reframeStageAlg("U R2 F' D L B", 'z2');
+    expect(reframed).toBe("D L2 F' U R B");
+    expect(countFaceMoves(reframed)).toBe(6);
+  });
+
+  it('derives concise holding colours from the same orientation source', () => {
+    expect(stageGripColors('z2')).toEqual({ top: 'Y', front: 'G', bottom: 'W' });
+    expect(stageGripColors("x'")).toEqual({ top: 'B', front: 'W', bottom: 'G' });
+    expect(stageGripColors('')).toEqual({ top: 'W', front: 'G', bottom: 'Y' });
+  });
+});
+
 describe('stage training /sim mask', () => {
   it('uses the native Cross mask and follows every cross colour', () => {
     const masks = Array.from({ length: 6 }, (_, face) => stageTrainingMask({ face, combo: '' }, 'cross'));
@@ -63,6 +88,19 @@ describe('stage training /sim mask', () => {
     expect(stageTrainingMask({ face: 0, combo: 'FR FL' }, 'xxcross')).toEqual({ name: 'xxcross', orientation: '' });
     expect(stageTrainingMask({ face: 0, combo: 'FR BL' }, 'xxcross')).toEqual({ name: 'xxcross_diag', orientation: '' });
     expect(stageTrainingMask({ face: 3, combo: 'BL FR' }, 'xxcross').name).toBe('xxcross_diag');
+  });
+
+  it('keeps every selected cross colour visible without revealing the winning face', () => {
+    const masks = stageTrainingMasks({ face: 0, combo: '' }, 'cross', 'WY');
+    expect(masks).toHaveLength(2);
+    expect(masks.map((mask) => mask.name)).toEqual(['Cross', 'Cross']);
+    expect(new Set(masks.map((mask) => mask.orientation)).size).toBe(2);
+  });
+
+  it('shows every eligible slot for multi-colour XCross-family questions', () => {
+    expect(stageTrainingMasks({ face: 0, combo: 'FR' }, 'xcross', 'WY')).toHaveLength(8);
+    expect(stageTrainingMasks({ face: 0, combo: 'FR FL' }, 'xxcross', 'WY')).toHaveLength(12);
+    expect(stageTrainingMasks({ face: 0, combo: 'BL BR FL' }, 'xxxcross', 'WY')).toHaveLength(8);
   });
 });
 

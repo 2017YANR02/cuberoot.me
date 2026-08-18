@@ -9,13 +9,17 @@
  */
 
 import { faceletToCubie, type CubieCube } from '@/lib/cube-facelet';
+import { CUBE_COLOR_LETTER_FOR_FACE, type CubeColorLetter } from '@/lib/cube-colors';
+import { orientedFaceColors } from '@/lib/cube-orientation';
 import { orientationXform } from '@/app/[lang]/sim/engine/nxn/stickering';
 import { FACE_EDGES, FACE_LETTERS, f2lSlots, type FaceIdx } from '@/lib/cross-trainer/model';
+import { conjugateSequence, facePermFor } from './reconstruct/orient';
 
 export type StageTrainingStage = 'cross' | 'xcross' | 'xxcross' | 'xxxcross';
 export type StageTrainingMode = 'plan' | 'guess' | 'smart';
 export type StageScrambleStyle = 'current' | 'optimal' | 'plus-one' | 'fixed';
 export type SmartTrainingMode = 'virtual' | 'physical';
+export type StageGripMode = 'base-down' | 'standard';
 export type StageSlot = number | 'best';
 
 export interface StageTrainingConfig {
@@ -178,6 +182,31 @@ const SOLVER_FACE_TO_PHYSICAL: FaceIdx[] = [3, 0, 4, 1, 2, 5];
 type FaceLetter = 'U' | 'R' | 'F' | 'D' | 'L' | 'B';
 const PHYSICAL_FACE: Record<FaceLetter, FaceIdx> = { U: 0, R: 1, F: 2, D: 3, L: 4, B: 5 };
 const VIEW_ROTATION = ['', 'z2', "z'", 'z', "x'", 'x'] as const;
+
+/** Single-colour questions may follow that base to D. Multi-colour questions
+ * stay in the standard frame so the grip cannot reveal the winning colour. */
+export function stageGripPrefix(colors: string, mode: StageGripMode): string {
+  if (mode === 'standard') return '';
+  const faces = solverFacesForColors(colors);
+  return faces.length === 1 ? VIEW_ROTATION[faces[0]] ?? '' : '';
+}
+
+/** Express the same face-turn sequence in the selected physical grip. */
+export function reframeStageAlg(alg: string, prefix: string): string {
+  const trimmed = alg.trim();
+  if (!trimmed || !prefix) return trimmed;
+  return conjugateSequence(trimmed, facePermFor(prefix)) ?? trimmed;
+}
+
+/** Visible center colours for concise holding instructions. */
+export function stageGripColors(prefix: string): { top: CubeColorLetter; front: CubeColorLetter; bottom: CubeColorLetter } {
+  const shown = orientedFaceColors(prefix);
+  return {
+    top: CUBE_COLOR_LETTER_FOR_FACE[shown.U],
+    front: CUBE_COLOR_LETTER_FOR_FACE[shown.F],
+    bottom: CUBE_COLOR_LETTER_FOR_FACE[shown.D],
+  };
+}
 const POSITIONS: FaceLetter[] = ['U', 'R', 'F', 'D', 'L', 'B'];
 const ROT_SOURCE: Record<string, Partial<Record<FaceLetter, FaceLetter>>> = {
   x: { U: 'F', F: 'D', D: 'B', B: 'U' },
@@ -291,6 +320,25 @@ export function stageTrainingMask(question: Pick<StageQuestion, 'face' | 'combo'
   // worker omits it, still place the right-shaped mask on the right cross face.
   const faceOnly = ORIENTATION_PREFIXES.find((prefix) => physicalFaceMap(prefix)[physicalFace] === 3) ?? '';
   return { name, orientation: orientation ?? faceOnly };
+}
+
+/** Stage masks for every candidate the current colour selection allows.
+ *  Multi-colour auto-slot questions must not hide the losing colours or reveal
+ *  the winning colour/slot before the answer is shown. */
+export function stageTrainingMasks(
+  question: Pick<StageQuestion, 'face' | 'combo'>,
+  stage: StageTrainingStage,
+  colors: string,
+): StageTrainingMask[] {
+  const faces = solverFacesForColors(colors);
+  if (faces.length <= 1) return [stageTrainingMask(question, stage)];
+  if (stage === 'cross') {
+    return faces.map((face) => stageTrainingMask({ face, combo: '' }, stage));
+  }
+  return faces.flatMap((face) => COMBOS[stage].map((combo) => stageTrainingMask({
+    face,
+    combo: combo.map((slot) => STAGE_SLOT_LABELS[slot]).join(' '),
+  }, stage)));
 }
 
 const solvedEdge = (cube: CubieCube, edge: number) => cube.ep[edge] === edge && cube.eo[edge] === 0;

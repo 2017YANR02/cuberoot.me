@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import SimCubeView from '@/components/sim-embed/SimCubeView';
+import BoolToggle from '@/components/BoolToggle';
+import CuberReconPlayer from '@/components/CuberReconPlayer';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { SubsetColorPicker, COLOR_NAME, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { tr } from '@/i18n/tr';
+import { applyOrientationPrefix } from '@/lib/cube-orientation';
 import { persistItem } from '@/lib/safe-storage';
 import type { BluetoothCubeHandle } from '../_lib/bluetooth';
 import { applyScramble, facesEqual, isSolvedFaces, toFaceletString, type CubeFaces } from '../_lib/cube/state';
@@ -16,10 +18,14 @@ import {
   STAGE_ORDER,
   effectiveStageSlot,
   isStageTrainingSolved,
-  stageTrainingMask,
+  reframeStageAlg,
+  stageGripColors,
+  stageGripPrefix,
+  stageTrainingMasks,
   stageSlotCombos,
   stageSlotLabel,
   type SmartTrainingMode,
+  type StageGripMode,
   type StageQuestion,
   type StageScrambleStyle,
   type StageSlot,
@@ -62,9 +68,9 @@ const stageName = (stage: StageTrainingStage) => ({
 })[stage];
 
 const modeLabel = (mode: StageTrainingMode) => ({
-  plan: tr({ zh: '规划最优解', en: 'Plan an optimal solution' }),
-  guess: tr({ zh: '猜最优步数', en: 'Guess optimal length' }),
-  smart: tr({ zh: '智能魔方实拧', en: 'Smart cube execution' }),
+  plan: tr({ zh: '最优解', en: 'Optimal solution' }),
+  guess: tr({ zh: '最优步数', en: 'Optimal move count' }),
+  smart: tr({ zh: '智能魔方', en: 'Smart cube' }),
 })[mode];
 
 const styleLabel = (style: StageScrambleStyle, stage: StageTrainingStage) => ({
@@ -100,10 +106,12 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
   const [mode, setMode] = useState<StageTrainingMode>('plan');
   const [style, setStyle] = useState<StageScrambleStyle>('current');
   const [smartMode, setSmartMode] = useState<SmartTrainingMode>('virtual');
+  const [gripMode, setGripMode] = useState<StageGripMode>('base-down');
   const [question, setQuestion] = useState<StageQuestion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [revealed, setRevealed] = useState(false);
+  const [transparent, setTransparent] = useState(true);
   const [result, setResult] = useState<TrainingResult | null>(null);
   const [stats, setStats] = useState<StatsStore>(loadStats);
   const [smartPhase, setSmartPhase] = useState<SmartPhase>('disconnected');
@@ -128,10 +136,16 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
   const showSlot = stage !== 'cross' && colors.selectedColors.length === 1;
   const statKey = `${mode === 'smart' ? `smart-${smartMode}` : mode}:${stage}`;
   const currentStats = stats[statKey] ?? EMPTY_STATS;
-  const simMoves = [
-    ...(question?.scramble.trim().split(/\s+/).filter(Boolean) ?? []),
-    ...(mode === 'smart' ? smartMoves : []),
-  ];
+  const isSingleColor = colors.selectedColors.length === 1;
+  const effectiveGripMode: StageGripMode = isSingleColor ? gripMode : 'standard';
+  const gripPrefix = stageGripPrefix(colors.subsetKey, effectiveGripMode);
+  const gripColors = stageGripColors(gripPrefix);
+  const displayScramble = reframeStageAlg(question?.scramble ?? '', gripPrefix);
+  const displaySmartMoves = reframeStageAlg(mode === 'smart' ? smartMoves.join(' ') : '', gripPrefix);
+  const simScramble = applyOrientationPrefix(
+    [displayScramble, displaySmartMoves].filter(Boolean).join(' '),
+    gripPrefix,
+  );
   const target = useMemo<CubeFaces | null>(() => {
     if (!question) return null;
     try {
@@ -294,7 +308,39 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
     tr(COLOR_NAME[SOLVER_FACE_COLOR[question.face] ?? 'Y']),
     question.combo.replace(/\s+/g, '+'),
   ].filter(Boolean).join(' ') : '';
-  const simMask = question ? stageTrainingMask(question, stage) : null;
+  const simMasks = useMemo(() => (
+    question ? stageTrainingMasks(question, stage, colors.subsetKey) : []
+  ), [colors.subsetKey, question, stage]);
+  const playerAlg = question && (
+    (mode === 'plan' && revealed) || (mode === 'guess' && result)
+  ) ? reframeStageAlg(question.solution, gripPrefix) : '';
+  const displaySolution = question ? reframeStageAlg(question.solution, gripPrefix) : '';
+  const colorName = (color: ColorLetter) => tr(COLOR_NAME[color]);
+  const gripSummary = effectiveGripMode === 'base-down'
+    ? tr({
+        zh: `${colorName(gripColors.bottom)}底${colorName(gripColors.front)}前`,
+        en: `${colorName(gripColors.bottom)} down, ${colorName(gripColors.front)} front`,
+      })
+    : tr({
+        zh: `${colorName(gripColors.top)}顶${colorName(gripColors.front)}前`,
+        en: `${colorName(gripColors.top)} top, ${colorName(gripColors.front)} front`,
+      });
+  const isVirtualSmart = mode === 'smart' && smartMode === 'virtual';
+  const needsFullySolved = !isSingleColor || (mode === 'smart' && smartMode === 'physical');
+  const preparationNote = isVirtualSmart
+    ? tr({
+        zh: `以${gripSummary}拿好魔方，直接还原屏幕状态。`,
+        en: `Hold the cube ${gripSummary}, then solve the on-screen state directly.`,
+      })
+    : needsFullySolved
+      ? tr({
+          zh: `打乱前请完整还原魔方；以${gripSummary}拿好魔方后执行打乱。`,
+          en: `Fully solve the cube first. Hold it ${gripSummary}, then apply the scramble.`,
+        })
+      : tr({
+          zh: `打乱前只需还原所选底色；以${gripSummary}拿好魔方后执行打乱。`,
+          en: `Only the selected base needs to be solved first. Hold the cube ${gripSummary}, then apply the scramble.`,
+        });
   const accuracy = currentStats.total ? Math.round(currentStats.correct / currentStats.total * 100) : 0;
 
   return (
@@ -327,6 +373,17 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
             </select>
           </label>
           <SubsetColorPicker sel={colors} isZh={isZh} />
+          <label>
+            <span>{tr({ zh: '打乱朝向', en: 'Scramble orientation' })}</span>
+            <select
+              className="stage-training-select"
+              value={effectiveGripMode}
+              onChange={(event) => setGripMode(event.target.value as StageGripMode)}
+            >
+              {isSingleColor && <option value="base-down">{tr({ zh: '底色朝下', en: 'Base color down' })}</option>}
+              <option value="standard">{tr({ zh: '白顶绿前', en: 'White top, green front' })}</option>
+            </select>
+          </label>
           {showSlot && (
             <label>
               <span>{tr({ zh: '槽位', en: 'Slot' })}</span>
@@ -353,7 +410,14 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
               </select>
             </label>
           )}
+          <BoolToggle
+            value={transparent}
+            onChange={setTransparent}
+            label={tr({ zh: '透明', en: 'Transparent' })}
+          />
         </div>
+
+        <p className="stage-training-note">{preparationNote}</p>
 
         {mode === 'guess' && (
           <p className="stage-training-note">
@@ -385,16 +449,20 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
         {!loading && question && (
           <>
             <div className="stage-training-question">
-              <SimCubeView
-                moves={simMoves}
-                animate={mode === 'smart' && smartPhase === 'solving'}
-                stickering={simMask?.name}
-                stickeringOrientation={simMask?.orientation}
-                className="stage-training-cube-3d"
-                ariaLabel={tr({ zh: `${stageName(stage)} 训练打乱`, en: `${stageName(stage)} training scramble` })}
-              />
+              <div className="stage-training-player">
+                <CuberReconPlayer
+                  order={3}
+                  scramble={simScramble}
+                  alg={playerAlg}
+                  backView={false}
+                  hideControls={!playerAlg}
+                  transparent={transparent}
+                  stickeringMasks={simMasks}
+                  ariaLabel={tr({ zh: `${stageName(stage)} 训练打乱`, en: `${stageName(stage)} training scramble` })}
+                />
+              </div>
               <div className="stage-training-prompt">
-                <div className="stage-training-scramble">{question.scramble}</div>
+                <div className="stage-training-scramble">{displayScramble}</div>
                 <div className="stage-training-meta">
                   <span>{tr({ zh: `打乱 ${question.scrambleLength} HTM`, en: `${question.scrambleLength} HTM scramble` })}</span>
                 </div>
@@ -403,15 +471,17 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
 
             {mode === 'plan' && (
               <div className="stage-training-answer-area">
-                {!revealed ? (
-                  <button type="button" className="stage-training-primary" onClick={() => setRevealed(true)}>{tr({ zh: '显示最优答案', en: 'Reveal optimal answer' })}</button>
-                ) : (
-                  <div className="stage-training-answer">
-                    <strong>{question.optimal} HTM</strong>
-                    <span>{frameText}</span>
-                    <code>{question.solution || tr({ zh: '已完成', en: 'Already solved' })}</code>
-                  </div>
-                )}
+                <div className="stage-training-answer">
+                  <strong>{tr({ zh: `最优步数：${question.optimal} HTM`, en: `Optimal: ${question.optimal} HTM` })}</strong>
+                  {!revealed ? (
+                    <button type="button" className="stage-training-primary" onClick={() => setRevealed(true)}>{tr({ zh: '显示最优答案', en: 'Reveal optimal answer' })}</button>
+                  ) : (
+                    <>
+                      <span>{frameText}</span>
+                      <code>{displaySolution || tr({ zh: '已完成', en: 'Already solved' })}</code>
+                    </>
+                  )}
+                </div>
               </div>
             )}
 
@@ -426,7 +496,7 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
                   <div className={`stage-training-feedback ${result.correct ? 'is-correct' : 'is-wrong'}`} role="status">
                     <strong>{result.correct ? tr({ zh: '回答正确', en: 'Correct' }) : tr({ zh: '回答错误', en: 'Incorrect' })}</strong>
                     <span>{tr({ zh: `最优是 ${question.optimal} HTM`, en: `Optimal is ${question.optimal} HTM` })}</span>
-                    <code>{question.solution}</code>
+                    <code>{displaySolution}</code>
                   </div>
                 )}
               </div>
@@ -452,7 +522,7 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
                   <div className={`stage-training-feedback ${result.correct ? 'is-correct' : 'is-wrong'}`} role="status">
                     <strong>{result.correct ? tr({ zh: '最优，回答正确', en: 'Optimal — correct' }) : tr({ zh: '已完成，但不是最优', en: 'Completed, but not optimal' })}</strong>
                     <span>{tr({ zh: `你的解法 ${result.moves} HTM；最优 ${question.optimal} HTM`, en: `Your solution: ${result.moves} HTM; optimal: ${question.optimal} HTM` })}</span>
-                    <code>{question.solution}</code>
+                    <code>{displaySolution}</code>
                   </div>
                 )}
               </div>

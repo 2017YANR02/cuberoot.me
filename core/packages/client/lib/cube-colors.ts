@@ -3,6 +3,16 @@
 // 视角格 / 3D 贴纸 / 色块 / gen 步数徽标 都从这里取色,别再各页硬码。
 
 export type CubeFace = 'U' | 'D' | 'F' | 'B' | 'L' | 'R';
+export type CubeColorLetter = 'W' | 'Y' | 'G' | 'B' | 'O' | 'R';
+
+/** 标准配色里的颜色字母与物理面；需要按颜色找中心面时统一走这里。 */
+export const CUBE_FACE_FOR_COLOR_LETTER: Readonly<Record<CubeColorLetter, CubeFace>> = Object.freeze({
+  W: 'U', Y: 'D', G: 'F', B: 'B', O: 'L', R: 'R',
+});
+
+export const CUBE_COLOR_LETTER_FOR_FACE: Readonly<Record<CubeFace, CubeColorLetter>> = Object.freeze({
+  U: 'W', D: 'Y', F: 'G', B: 'B', L: 'O', R: 'R',
+});
 
 /** 贴纸实心填充色(视角格、3D、色块);深浅主题一致。 */
 export const CUBE_FILL: Record<CubeFace, string> = {

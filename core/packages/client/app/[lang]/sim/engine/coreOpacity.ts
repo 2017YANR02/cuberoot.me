@@ -64,3 +64,13 @@ export function applyCoreOpacity(root: THREE.Object3D, percent: number): void {
     mesh.material = materialOpacity(mesh.material, opacity);
   });
 }
+
+/** Match /predict's transparent-view contract: hide the puzzle body and disable
+ *  NxN's synthetic back-sticker hints so the real reverse stickers show through. */
+export function applyPuzzleTransparency(root: THREE.Object3D, transparent: boolean): void {
+  applyCoreOpacity(root, transparent ? 0 : 100);
+  const nxn = root as THREE.Object3D & {
+    instancedRenderer?: { hint: boolean };
+  };
+  if (nxn.instancedRenderer) nxn.instancedRenderer.hint = !transparent;
+}
