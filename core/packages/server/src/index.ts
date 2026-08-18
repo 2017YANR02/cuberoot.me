@@ -64,11 +64,13 @@ import { teachingSaasRoutes } from './routes/teaching_saas.js';
 import { smsReceiptRoutes } from './routes/sms_receipt.js';
 import { documentRoutes } from './routes/documents.js';
 import { collaborativeDocuments } from './documents/realtime.js';
+import { smartCubeRelay } from './smart_cube/relay.js';
 import { ensureDaemon as ensureCubeoptDaemon, isEnabled as cubeoptEnabled } from './cubeopt/daemon.js';
 import { startWcaPastResultsMonitor } from './monitors/wca_past_results.js';
 import { startWatchedForeignRegMonitor } from './monitors/watched_foreign_reg.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
 import { getCurrentRecords } from './utils/current_records.js';
+import { getIp } from './utils/analytics_helpers.js';
 import { warmCnCompZh } from './utils/cn_comp_zh_cache.js';
 import { startPrewarmCron } from './routes/cubing_live.js';
 import { startMonitors } from './monitors/index.js';
@@ -190,6 +192,30 @@ app.get('/v1/documents/realtime', upgradeWebSocket((c) => {
       const data = event.data;
       if (typeof data === 'string') return;
       connection?.handleMessage(new Uint8Array(data as ArrayBuffer));
+    },
+    onClose() {
+      connection?.handleClose();
+    },
+  };
+}));
+app.get('/v1/smart-cube/relay', upgradeWebSocket((c) => {
+  let connection: ReturnType<typeof smartCubeRelay.connect> | undefined;
+  return {
+    onOpen(_event, ws) {
+      connection = smartCubeRelay.connect({
+        get bufferedAmount() {
+          return ws.raw?.bufferedAmount ?? 0;
+        },
+        send(data) {
+          ws.send(data);
+        },
+        close(code, reason) {
+          ws.close(code, reason);
+        },
+      }, getIp(c));
+    },
+    onMessage(event) {
+      connection?.handleMessage(event.data);
     },
     onClose() {
       connection?.handleClose();

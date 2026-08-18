@@ -214,9 +214,9 @@ export default function TeacherDirectoryEditor({
                 <label><span>{tr({ zh: '英文说明', en: 'English caption' })}</span><input className="directory-field-control" value={image.captionEn} maxLength={160} onChange={(event) => updateImage(index, { captionEn: event.target.value })} /></label>
               </div>
               <div className="directory-photo-actions">
-                <button type="button" onClick={() => moveImage(index, -1)} disabled={index === 0} aria-label={tr({ zh: '照片前移', en: 'Move photo earlier' })}><ChevronUp size={17} /></button>
-                <button type="button" onClick={() => moveImage(index, 1)} disabled={index === draft.images.length - 1} aria-label={tr({ zh: '照片后移', en: 'Move photo later' })}><ChevronDown size={17} /></button>
-                <button type="button" onClick={() => setField('images', draft.images.filter((_, imageIndex) => imageIndex !== index))} aria-label={tr({ zh: '移除照片', en: 'Remove photo' })}><Trash2 size={17} /></button>
+                <button type="button" className="directory-photo-action-button" onClick={() => moveImage(index, -1)} disabled={index === 0} aria-label={tr({ zh: '照片前移', en: 'Move photo earlier' })}><ChevronUp size={17} /></button>
+                <button type="button" className="directory-photo-action-button" onClick={() => moveImage(index, 1)} disabled={index === draft.images.length - 1} aria-label={tr({ zh: '照片后移', en: 'Move photo later' })}><ChevronDown size={17} /></button>
+                <button type="button" className="directory-photo-action-button directory-photo-remove-button" onClick={() => setField('images', draft.images.filter((_, imageIndex) => imageIndex !== index))} aria-label={tr({ zh: '移除照片', en: 'Remove photo' })}><Trash2 size={17} /></button>
               </div>
             </div>)}
           </div>}

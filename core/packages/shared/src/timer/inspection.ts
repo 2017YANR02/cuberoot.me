@@ -30,12 +30,16 @@ export function inspectionPenalty(inspectionMs: number, limitSec: number): AutoP
   return 'ok';
 }
 
-/** Format the live inspection readout using the same boundaries as scoring. */
+/**
+ * Format an active inspection for the timer face.
+ *
+ * Inspection counts up in whole seconds until the configured limit, then uses
+ * the same +2/DNF boundary logic as the recorded solve. Invalid or disabled
+ * input is deliberately rendered as zero so no NaN/Infinity reaches the UI.
+ */
 export function formatInspectionDisplay(inspectionMs: number, limitSec: number): string {
   if (!Number.isFinite(inspectionMs) || inspectionMs <= 0) return '0';
   if (!Number.isFinite(limitSec) || limitSec <= 0) return '0';
-
   const penalty = inspectionPenalty(inspectionMs, limitSec);
-  if (penalty !== 'ok') return penalty;
-  return String(Math.floor(inspectionMs / 1000));
+  return penalty === 'ok' ? String(Math.floor(inspectionMs / 1000)) : penalty;
 }

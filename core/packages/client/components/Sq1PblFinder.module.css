@@ -88,8 +88,8 @@
   width: min(100%, 320px);
 }
 
-.inputWithClear input,
-.auxiliaryEdit input,
+.searchInput,
+.auxiliaryInput,
 .auxiliaryList {
   color: var(--foreground);
   background: var(--background);
@@ -98,17 +98,17 @@
   font: inherit;
 }
 
-.inputWithClear input,
-.auxiliaryEdit input {
+.searchInput,
+.auxiliaryInput {
   min-height: 38px;
   padding: 7px 34px 7px 10px;
 }
 
-.inputWithClear input {
+.searchInput {
   width: 100%;
 }
 
-.auxiliaryEdit input {
+.auxiliaryInput {
   width: min(100%, 480px);
 }
 
@@ -117,8 +117,8 @@
   right: 5px;
 }
 
-.inputWithClear input:focus-visible,
-.auxiliaryEdit input:focus-visible,
+.searchInput:focus-visible,
+.auxiliaryInput:focus-visible,
 .auxiliaryList:focus-visible,
 .button:focus-visible,
 .primaryButton:focus-visible,
@@ -260,7 +260,7 @@
   overflow: hidden;
 }
 
-.fileButton input {
+.fileInput {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -462,7 +462,7 @@
   }
 
   .inputWithClear,
-  .auxiliaryEdit input,
+  .auxiliaryInput,
   .auxiliaryEdit label,
   .pickerField {
     width: 100%;

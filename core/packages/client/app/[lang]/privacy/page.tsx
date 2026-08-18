@@ -40,8 +40,14 @@ export default function PrivacyPage() {
         </li>
         <li>
           {t(
-            '小程序原生外壳不包含广告或分析 SDK,当前版本不调用定位、摄像头、麦克风、相册、通讯录或蓝牙权限。',
-            'The native Mini Program shell contains no advertising or analytics SDK. The current release does not access location, camera, microphone, photo library, contacts, or Bluetooth permissions.',
+            '小程序原生外壳不包含广告或分析 SDK,也不调用定位、摄像头、麦克风、相册或通讯录权限。只有在你主动进入智能魔方连接页并点击搜索后,才会使用蓝牙发现并连接附近的兼容魔方。',
+            'The native Mini Program shell contains no advertising or analytics SDK and does not access location, camera, microphone, photo library, or contacts. Bluetooth is used only after you open the Smart Cube page and tap search, to discover and connect to a nearby compatible cube.',
+          )}
+        </li>
+        <li>
+          {t(
+            '连接期间,小程序读取兼容魔方发送的转动、状态、电量和姿态数据,并通过仅保存在服务器内存中的短时中继实时交给网页计时器。扫描列表、蓝牙地址和实时魔方数据不会写入数据库;断开连接或会话结束后,中继状态会被清除。',
+            'While connected, the Mini Program reads moves, cube state, battery level, and orientation sent by the compatible cube, then delivers them to the web timer through a short-lived relay held only in server memory. Scan results, Bluetooth addresses, and live cube data are not written to the database; relay state is cleared after disconnection or session end.',
           )}
         </li>
       </ul>
