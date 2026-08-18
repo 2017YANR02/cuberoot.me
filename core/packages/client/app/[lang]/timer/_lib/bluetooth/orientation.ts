@@ -87,6 +87,9 @@
  * BLE gyro samples land at roughly 20-50 Hz, below the 60 fps render loop, so
  * raw samples visibly step. `slerpTowards` runs an exponential follow with a
  * ~40 ms time constant: frame-rate independent, converges, never overshoots.
+ * A physical slice turn is different: it rotates the sensor-bearing core by a
+ * whole quarter/half turn, so the live mirror temporarily uses the shorter
+ * time constant below instead of letting repeated M/E/S turns outrun it.
  *
  * ── Settling ──────────────────────────────────────────────────────────────
  * A cube that has stopped moving near a whole orientation is at it; see the
@@ -203,6 +206,15 @@ export function quatSlerp(from: Quat, to: Quat, t: number): Quat {
 /** Default follow time constant, ms. ~40 ms keeps 20-50 Hz BLE samples from
  *  stepping visibly at 60 fps without adding a perceptible lag. */
 export const ORIENTATION_TAU_MS = 40;
+
+/** Slice turns rotate the sensor-bearing core by 90/180 degrees. Preserve the
+ * spherical interpolation, but let that exceptional jump settle within the
+ * live layer animation instead of trailing it by several visible frames. */
+export const SLICE_ORIENTATION_TAU_MS = 20;
+
+/** Keep the faster follow active long enough to cover one BLE slice batch and
+ * its 80-120 ms layer animation. A later pair extends the window. */
+export const SLICE_ORIENTATION_FOLLOW_MS = 180;
 
 /** One frame of exponential follow toward `target`.
  *  alpha = 1 − e^(−dt/τ) makes the result frame-rate independent: halving dt
