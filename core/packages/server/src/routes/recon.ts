@@ -18,9 +18,11 @@ import {
   checkReconRowCompletion,
   hasUnsolvedReason,
   normalizeReconScrambleRow,
+  normalizeReconSolutionRow,
 } from '../utils/recon_completion.js';
 import { fetchCubingAttempts } from '../utils/cubing_proxy.js';
 import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
+import { normalizeReconSolution } from '@cuberoot/shared/recon-completion';
 import { notify, adminRecipients } from '../utils/notify.js';
 
 export const reconRoutes = new Hono();
@@ -532,7 +534,9 @@ reconRoutes.post('/recon/save-edit', async (c) => {
   }
 
   const now = Math.floor(Date.now() / 1000);
-  const enriched = { ...fields, _editedAt: now };
+  const normalizedFields = { ...(fields ?? {}) };
+  normalizeReconSolutionRow(normalizedFields);
+  const enriched = { ...normalizedFields, _editedAt: now };
 
   // 字段级合并:PG jsonb || 是浅合并,右覆盖左(等价 MariaDB JSON_MERGE_PATCH 的扁平场景)
   // postgres@3 自带 jsonb 序列化器,这里直接传对象,driver 单次 stringify 即可。
@@ -548,7 +552,7 @@ reconRoutes.post('/recon/save-edit', async (c) => {
   // NOTE: 同步更新 recons 主表——只写非内部字段
   if (fields) {
     const publicFields: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(fields)) {
+    for (const [k, v] of Object.entries(normalizedFields)) {
       if (!k.startsWith('_')) publicFields[k] = v;
     }
     if (Object.keys(publicFields).length > 0) {
@@ -1029,6 +1033,7 @@ reconRoutes.post('/recon', async (c) => {
 
   const row = jsonToRow(body);
   normalizeReconScrambleRow(row);
+  normalizeReconSolutionRow(row);
   const errors = validateRow(row);
   if (errors.length > 0) {
     return c.json({ error: 'Validation failed', fields: errors }, 400);
@@ -1090,6 +1095,7 @@ reconRoutes.put('/recon/:id', async (c) => {
 
   const row = jsonToRow(body);
   normalizeReconScrambleRow(row, existing[0].event);
+  normalizeReconSolutionRow(row);
   if (Object.keys(row).length === 0) {
     return c.json({ error: 'No valid fields to update' }, 400);
   }
@@ -1194,7 +1200,7 @@ reconRoutes.post('/recon/:id/alternatives', async (c) => {
   const authUser = await requireAuth(c);
   const id = c.req.param('id');
   const body = await c.req.json<{ solution?: string }>();
-  const solution = (body.solution ?? '').trim();
+  const solution = normalizeReconSolution(body.solution ?? '').trim();
   if (!solution) return c.json({ error: 'solution required' }, 400);
   if (Buffer.byteLength(solution, 'utf8') > 65535) return c.json({ error: 'solution too long' }, 400);
 
@@ -1236,7 +1242,7 @@ reconRoutes.put('/recon/:id/alternatives/:idx', async (c) => {
   const id = c.req.param('id');
   const idx = Number(c.req.param('idx'));
   const body = await c.req.json<{ solution?: string }>();
-  const solution = (body.solution ?? '').trim();
+  const solution = normalizeReconSolution(body.solution ?? '').trim();
   if (!solution) return c.json({ error: 'solution required' }, 400);
   if (Buffer.byteLength(solution, 'utf8') > 65535) return c.json({ error: 'solution too long' }, 400);
 
