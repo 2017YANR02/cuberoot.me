@@ -1,45 +1,9 @@
 import "server-only";
-import { randomBytes } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { CubeEventId, SolvePenalty, TimerSolve } from "@/db/schema";
 
 export type { TimerSolve };
-
-function newSolveId(): string {
-  return "ts_" + randomBytes(9).toString("base64url");
-}
-
-export type InsertSolveInput = {
-  event: CubeEventId;
-  timeMs: number;
-  scramble: string;
-  penalty?: SolvePenalty;
-};
-
-export async function insertSolve(
-  userId: string,
-  input: InsertSolveInput,
-): Promise<TimerSolve> {
-  const now = Math.floor(Date.now() / 1000);
-  const id = newSolveId();
-  await db.insert(schema.timerSolves).values({
-    id,
-    userId,
-    event: input.event,
-    timeMs: Math.max(0, Math.floor(input.timeMs)),
-    scramble: input.scramble,
-    penalty: input.penalty ?? "none",
-    createdAt: now,
-  });
-  const row = db
-    .select()
-    .from(schema.timerSolves)
-    .where(eq(schema.timerSolves.id, id))
-    .all()[0];
-  if (!row) throw new Error("insertSolve failed");
-  return row;
-}
 
 // 最近 N 次,createdAt 降序(最新在前)。
 export async function listRecent(
@@ -59,34 +23,6 @@ export async function listRecent(
     .orderBy(desc(schema.timerSolves.createdAt))
     .limit(Math.max(1, Math.floor(limit)))
     .all();
-}
-
-export async function updatePenalty(
-  id: string,
-  userId: string,
-  penalty: SolvePenalty,
-): Promise<boolean> {
-  const res = db
-    .update(schema.timerSolves)
-    .set({ penalty })
-    .where(
-      and(eq(schema.timerSolves.id, id), eq(schema.timerSolves.userId, userId)),
-    )
-    .run();
-  return res.changes > 0;
-}
-
-export async function deleteSolve(
-  id: string,
-  userId: string,
-): Promise<boolean> {
-  const res = db
-    .delete(schema.timerSolves)
-    .where(
-      and(eq(schema.timerSolves.id, id), eq(schema.timerSolves.userId, userId)),
-    )
-    .run();
-  return res.changes > 0;
 }
 
 // ───────────────────────── 统计 ─────────────────────────

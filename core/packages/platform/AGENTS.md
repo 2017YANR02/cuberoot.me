@@ -149,14 +149,15 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 ## 游戏化 / 积分 / 成就
 
 - 积分 `point_ledger` 流水账,统一 `lib/db/points.ts` `awardPoints(userId,delta,reason,{refId,note})`(同 reason+refId 幂等去重),余额 = SUM(delta)。发分点:购物(order-fulfillment onOrderPaid)/完课/发帖/评价/签到/测验满分。`components/PointsBadge.tsx` 展示
-- 成就 `lib/db/achievements.ts`:目录 `ACHIEVEMENTS` 在【代码】定义(不是表),`user_achievements` 只存解锁记录。`recomputeAchievements(userId)` 查状态判定解锁,挂在 awardPoints 末尾 + timer saveSolve。**禁 import points.ts(循环)**,奖励积分直插 `pointLedger`。`/me/badges` 徽章墙
-- 签到 `study_checkins`(userId+date 唯一),`lib/db/checkins.ts` `getStreakInfo` 连续天数。`/me` 个人中心 GitHub 风热力图 `StreakCalendar`;计时/学习自动打卡
-- 排行榜 `/leaderboard`:`lib/db/leaderboard.ts` 聚合 timer_solves(速拧 best, ≥5次防刷)/learning_progress(学习)/point_ledger(积分),周/月/总,nuqs `leaderboardParams`
+- 成就 `lib/db/achievements.ts`:目录 `ACHIEVEMENTS` 在【代码】定义(不是表),`user_achievements` 只存解锁记录。`recomputeAchievements(userId)` 查状态判定解锁,挂在 awardPoints 末尾;旧 timer saveSolve 已停用,不再新增。**禁 import points.ts(循环)**,奖励积分直插 `pointLedger`。`/me/badges` 徽章墙
+- 签到 `study_checkins`(userId+date 唯一),`lib/db/checkins.ts` `getStreakInfo` 连续天数。`/me` 个人中心 GitHub 风热力图 `StreakCalendar`;学习进度与主动签到继续写入,旧计时不再新增签到
+- 排行榜 `/leaderboard`:`lib/db/leaderboard.ts` 聚合旧 timer_solves(速拧 best, ≥5次防刷)/learning_progress(学习)/point_ledger(积分),周/月/总,nuqs `leaderboardParams`
 
 ## 魔方工具
 
-- 计时器 `/timer`:`lib/cube/scramble.ts` 纯前端 WCA 打乱(333/222/444/oh/pyram...),`timer_solves` 存成绩(timeMs+penalty none/plus2/dnf),`lib/db/timer.ts` ao5/ao12/best 统计;`CubeTimer` 空格按住/移动端长按起停,未登录 localStorage 暂存
-- 算法字典 `/algorithms`:`algorithms` 表 + `lib/db/algorithms.ts`(空表 `ensureAlgorithmsSeeded` 自动播种 39 条:21 PLL+OLL+F2L),LIKE 搜索(非 FTS5),`lib/cube/face-svg.tsx` `AlgBoard` 自绘 2D 棋盘示意,admin `/admin/algorithms`
+- 旧计时 `/timer`:兼容入口只链接主站,不读取、展示、导出或迁移旧计时记录;旧 `timer_solves`/`study_checkins` 与 migrations 禁删除或改写
+- 主站训练工具唯一实现:timer/predict/alg/sim 走 `lib/main-site.ts` 真 `<a>`;Platform 不复制训练器或双写教学证据
+- 旧公式 `/algorithms` 与 `/admin/algorithms`:兼容入口只链接主站 `/alg`,不再读取或写入 `algorithms`;旧表与 migrations 保留
 
 ## 收藏 / 学习增强 / 社群
 
