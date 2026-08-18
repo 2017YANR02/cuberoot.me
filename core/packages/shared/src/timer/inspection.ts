@@ -29,3 +29,13 @@ export function inspectionPenalty(inspectionMs: number, limitSec: number): AutoP
   if (inspectionMs > limitSec * 1000) return '+2';
   return 'ok';
 }
+
+/** Format the live inspection readout using the same boundaries as scoring. */
+export function formatInspectionDisplay(inspectionMs: number, limitSec: number): string {
+  if (!Number.isFinite(inspectionMs) || inspectionMs <= 0) return '0';
+  if (!Number.isFinite(limitSec) || limitSec <= 0) return '0';
+
+  const penalty = inspectionPenalty(inspectionMs, limitSec);
+  if (penalty !== 'ok') return penalty;
+  return String(Math.floor(inspectionMs / 1000));
+}

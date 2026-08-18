@@ -10,7 +10,7 @@
  * 我们把 15 换成设置里的值,规则同构。
  */
 import { describe, it, expect } from 'vitest';
-import { inspectionPenalty } from '@/app/[lang]/timer/_shared/inspection';
+import { formatInspectionDisplay, inspectionPenalty } from '@/app/[lang]/timer/_shared/inspection';
 
 const WCA = 15;
 
@@ -59,5 +59,29 @@ describe('inspectionPenalty', () => {
     expect(inspectionPenalty(-1, WCA)).toBe('ok');
     expect(inspectionPenalty(Number.NaN, WCA)).toBe('ok');
     expect(inspectionPenalty(Number.POSITIVE_INFINITY, WCA)).toBe('ok');
+  });
+});
+
+describe('formatInspectionDisplay', () => {
+  it('counts up from zero in whole elapsed seconds', () => {
+    expect(formatInspectionDisplay(0, WCA)).toBe('0');
+    expect(formatInspectionDisplay(999, WCA)).toBe('0');
+    expect(formatInspectionDisplay(1_000, WCA)).toBe('1');
+    expect(formatInspectionDisplay(14_999, WCA)).toBe('14');
+    expect(formatInspectionDisplay(15_000, WCA)).toBe('15');
+  });
+
+  it('uses the canonical strict penalty boundaries', () => {
+    expect(formatInspectionDisplay(15_001, WCA)).toBe('+2');
+    expect(formatInspectionDisplay(17_000, WCA)).toBe('+2');
+    expect(formatInspectionDisplay(17_001, WCA)).toBe('DNF');
+  });
+
+  it('normalizes invalid and disabled inspection input', () => {
+    expect(formatInspectionDisplay(-1, WCA)).toBe('0');
+    expect(formatInspectionDisplay(Number.NaN, WCA)).toBe('0');
+    expect(formatInspectionDisplay(Number.POSITIVE_INFINITY, WCA)).toBe('0');
+    expect(formatInspectionDisplay(60_000, 0)).toBe('0');
+    expect(formatInspectionDisplay(60_000, Number.NaN)).toBe('0');
   });
 });
