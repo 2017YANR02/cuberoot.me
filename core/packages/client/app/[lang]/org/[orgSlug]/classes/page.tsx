@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { hasTeachingPermission, type TeachingCampus, type TeachingOrganizationRole } from '@cuberoot/shared/teaching';
 import { useT } from '@/hooks/useT';
+import AppLink from '@/components/AppLink';
 import { createTeachingGroup, listTeachingCampuses, listTeachingGroups } from '@/lib/teaching-saas-api';
 import OrgWorkspace from '../../_components/OrgWorkspace';
 import {
@@ -91,13 +92,13 @@ function ClassesContent({ orgSlug, page, role }: { orgSlug: string; page: number
           ) : (
             <div className="org-list">
               {groups.result.items.map((group) => (
-                <div className="org-row" key={group.id}>
+                <AppLink className="org-row org-row-link" href={`/org/${orgSlug}/classes/${group.id}`} prefetch={false} key={group.id}>
                   <div className="org-row-main">
                     <div className="org-row-title">{group.name}</div>
                     <div className="org-row-meta">{[group.code, group.campusId ? campusNames.get(group.campusId) ?? t('校区不可见', 'Campus unavailable') : t('未指定校区', 'No campus')].filter(Boolean).join(' / ')}</div>
                   </div>
                   <span className="org-status">{entityStatusLabel(group.status, t)}</span>
-                </div>
+                </AppLink>
               ))}
             </div>
           )}

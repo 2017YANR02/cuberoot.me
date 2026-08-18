@@ -47,6 +47,8 @@
   border-bottom: 1px solid var(--border-default);
 }
 .org-tool-link { color: var(--foreground); text-decoration: none; }
+.org-row-link { color: var(--foreground); text-decoration: none; }
+.org-row-link:hover .org-row-title { color: var(--accent); }
 .org-tool-link span, .org-row-main { min-width: 0; overflow-wrap: anywhere; }
 .org-row-title { font-weight: 600; }
 .org-row-meta { margin-top: 3px; color: var(--muted-foreground); font-size: .88rem; }
@@ -84,6 +86,20 @@
   cursor: pointer;
 }
 .org-form button:disabled { opacity: .6; cursor: wait; }
+.org-subsection { margin-top: 22px; }
+.org-row-action { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.org-secondary-button {
+  width: fit-content;
+  padding: 7px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--foreground);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.org-secondary-button:disabled { opacity: .6; cursor: wait; }
+.org-inline-error { color: var(--destructive); font-size: .82rem; }
 .org-message { margin: 0; }
 .org-message-error { color: var(--destructive); }
 .org-message-success { color: var(--signal-success); }
@@ -99,5 +115,6 @@
   .org-form { grid-template-columns: 1fr; }
   .org-form .org-field-wide, .org-form-actions, .org-message { grid-column: 1; }
   .org-row, .org-tool-link { align-items: start; }
+  .org-row-action { grid-column: 1 / -1; }
   .org-pagination { flex-wrap: wrap; }
 }
