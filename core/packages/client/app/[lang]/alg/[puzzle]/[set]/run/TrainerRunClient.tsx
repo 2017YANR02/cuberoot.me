@@ -1698,11 +1698,21 @@ export default function TrainerRunClient() {
                       />
                     )}
                     {setScrambleFeatures.psf2lExtraScramble && (
-                      <BoolToggle
-                        value={psf2lExtraScramble}
-                        onChange={setPsf2lExtraScramble}
-                        label={tr({ zh: '打散剩余 F2L', en: 'Scramble remaining F2L' })}
-                      />
+                      <div
+                        className="trainer-opts-row"
+                        role="group"
+                        aria-label={tr({ zh: '剩余 F2L 状态', en: 'Remaining F2L state' })}
+                      >
+                        <span>{tr({ zh: '一角', en: 'One corner' })}</span>
+                        <PillToggle
+                          value={!psf2lExtraScramble}
+                          onChange={bothPresent => setPsf2lExtraScramble(!bothPresent)}
+                          onLabel={tr({ zh: '和', en: 'and' })}
+                          offLabel={tr({ zh: '或', en: 'or' })}
+                          ariaLabel={tr({ zh: '一角和一棱或一角或一棱', en: 'One corner and one edge or one corner or one edge' })}
+                        />
+                        <span>{tr({ zh: '一棱', en: 'one edge' })}</span>
+                      </div>
                     )}
                     {setScrambleFeatures.randomFinalAuf && (
                       <BoolToggle
