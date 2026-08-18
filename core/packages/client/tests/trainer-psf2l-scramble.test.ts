@@ -5,7 +5,8 @@ import { cube3x3x3 } from 'cubing/puzzles';
 
 import {
   generateScramble,
-  normalizePsf2lSlotPairs,
+  normalizePsf2lSlots,
+  psf2lSlotPairsForSlots,
   PSF2L_SLOT_PAIRS,
   replaceOuterDAdjustment,
   trainerSetScrambleFeatures,
@@ -82,7 +83,7 @@ describe('PSF2L trainer D adjustment', () => {
     expect(trainerSetScrambleFeatures('3x3', 'psf2l')).toEqual({
       randomInitialD: false,
       psf2lExtraScramble: true,
-      psf2lSlotPairs: true,
+      psf2lSlots: true,
       randomFinalAuf: false,
       f2lSlots: false,
     });
@@ -124,10 +125,12 @@ describe('PSF2L trainer D adjustment', () => {
       .toBe(PSF2L_CASE.setup);
   });
 
-  it('normalizes persisted pair values and rejects an empty result via its fallback', () => {
-    expect(normalizePsf2lSlotPairs(['FL+BR', 'bad', 'FR+BR', 'FL+BR']))
-      .toEqual(['FR+BR', 'FL+BR']);
-    expect(normalizePsf2lSlotPairs([], ['FR+BL'])).toEqual(['FR+BL']);
+  it('normalizes persisted slots, requires two, and expands every selected combination', () => {
+    expect(normalizePsf2lSlots(['BR', 'bad', 'FR', 'BR']))
+      .toEqual(['FR', 'BR']);
+    expect(normalizePsf2lSlots(['FR'], ['FL', 'BL'])).toEqual(['FL', 'BL']);
+    expect(psf2lSlotPairsForSlots(['FL', 'FR', 'BR']))
+      .toEqual(['FR+BR', 'FL+FR', 'FL+BR']);
   });
 
   it('prepares every selectable training pair with the complementary XXCross solved', async () => {
