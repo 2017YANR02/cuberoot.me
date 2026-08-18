@@ -3,8 +3,17 @@ import { Hono, type Context } from 'hono';
 import type postgres from 'postgres';
 import {
   hasTeachingPermission,
+  isTrainingEvidenceSource,
+  isTrainingGoalRegistered,
+  isTrainingGoalMetricKey,
+  isTrainingGoalOperator,
+  isTrainingSourceActivity,
   isTeachingOrganizationRole,
   parseTrainingEvidenceV1,
+  parseTrainingToolConfigForActivity,
+  TRAINING_ASSIGNMENT_STATUSES,
+  TRAINING_REVIEW_STATUSES,
+  TRAINING_SCHEDULE_KINDS,
   TRAINING_EVIDENCE_FUTURE_TOLERANCE_MS,
   TRAINING_EVIDENCE_MAX_BODY_BYTES,
   TEACHING_ATTENDANCE_STATUSES,
@@ -16,6 +25,17 @@ import {
   type TeachingPackageAcquisitionType,
   type TeachingOrganizationRole,
   type TeachingPermission,
+  type TeachingTrainingAssignmentWriteInput,
+  type TeachingTrainingReviewCreateInput,
+  type TeachingTrainingTemplateCreateInput,
+  type TeachingTrainingTemplateVersionCreateInput,
+  type TrainingAssignmentStatus,
+  type TrainingEvidenceActivity,
+  type TrainingEvidenceSource,
+  type TrainingGoalMetricKey,
+  type TrainingGoalOperator,
+  type TrainingReviewStatus,
+  type TrainingScheduleKind,
   type TrainingEvidenceV1,
   TrainingEvidenceValidationError,
 } from '@cuberoot/shared/teaching';
@@ -30,6 +50,8 @@ type JsonValue = postgres.JSONValue;
 type JsonObject = { [key: string]: JsonValue };
 type MutationStatus = 200 | 201;
 type Tx = postgres.TransactionSql;
+
+const TRAINING_REVIEW_CREATE_OPERATION = 'training.review.create';
 
 interface OrganizationAccess {
   id: string;
@@ -152,6 +174,19 @@ interface CreateStudentAccountBindingInviteInput {
 
 interface ConsumeStudentAccountBindingInput {
   tokenHash: string;
+}
+
+type CreateTrainingTemplateInput = TeachingTrainingTemplateCreateInput;
+type CreateTrainingTemplateVersionInput = TeachingTrainingTemplateVersionCreateInput;
+type WriteTrainingAssignmentInput = TeachingTrainingAssignmentWriteInput;
+type CreateTrainingReviewInput = TeachingTrainingReviewCreateInput;
+
+interface TrainingTargetFilter {
+  targetKind: 'group' | 'student' | null;
+}
+
+interface TrainingAssignmentFilter {
+  status: TrainingAssignmentStatus | null;
 }
 
 export interface TeachingSaasRepository {
@@ -330,6 +365,66 @@ export interface TeachingSaasRepository {
     input: TrainingEvidenceV1,
     requestId: string,
   ): Promise<MutationResult>;
+  listTrainingTemplates(
+    actor: TeachingActor, slug: string, pagination: PageInput, requestId: string,
+  ): Promise<PageResult>;
+  getTrainingTemplate(
+    actor: TeachingActor, slug: string, templateId: string, requestId: string,
+  ): Promise<JsonObject>;
+  createTrainingTemplate(
+    actor: TeachingActor, slug: string, input: CreateTrainingTemplateInput,
+    idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  listTrainingTemplateVersions(
+    actor: TeachingActor, slug: string, templateId: string, pagination: PageInput, requestId: string,
+  ): Promise<PageResult>;
+  createTrainingTemplateVersion(
+    actor: TeachingActor, slug: string, templateId: string, input: CreateTrainingTemplateVersionInput,
+    idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  archiveTrainingTemplate(
+    actor: TeachingActor, slug: string, templateId: string,
+    idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  listTrainingAssignments(
+    actor: TeachingActor, slug: string, filter: TrainingAssignmentFilter,
+    pagination: PageInput, requestId: string,
+  ): Promise<PageResult>;
+  getTrainingAssignment(
+    actor: TeachingActor, slug: string, assignmentId: string, requestId: string,
+  ): Promise<JsonObject>;
+  createTrainingAssignment(
+    actor: TeachingActor, slug: string, input: WriteTrainingAssignmentInput,
+    idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  reviseTrainingAssignment(
+    actor: TeachingActor, slug: string, assignmentId: string, input: WriteTrainingAssignmentInput,
+    idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  publishTrainingAssignment(
+    actor: TeachingActor, slug: string, assignmentId: string,
+    idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  closeTrainingAssignment(
+    actor: TeachingActor, slug: string, assignmentId: string,
+    idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  listTrainingAssignmentTargets(
+    actor: TeachingActor, slug: string, assignmentId: string, filter: TrainingTargetFilter,
+    pagination: PageInput, requestId: string,
+  ): Promise<PageResult>;
+  listTrainingTargetEvidence(
+    actor: TeachingActor, slug: string, assignmentId: string, studentId: string,
+    pagination: PageInput, requestId: string,
+  ): Promise<PageResult>;
+  listTrainingTargetReviews(
+    actor: TeachingActor, slug: string, assignmentId: string, studentId: string,
+    pagination: PageInput, requestId: string,
+  ): Promise<PageResult>;
+  createTrainingTargetReview(
+    actor: TeachingActor, slug: string, assignmentId: string, studentId: string,
+    input: CreateTrainingReviewInput, idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
 }
 
 export class TeachingApiException extends Error {
@@ -354,6 +449,10 @@ class ConcealedTeachingPermissionDeniedException extends TeachingApiException {
 
 function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex');
+}
+
+function trainingReviewRequestHash(assignmentId: string, studentId: string, rawBody: string): string {
+  return sha256(JSON.stringify([assignmentId, studentId, rawBody]));
 }
 
 const STUDENT_ACCOUNT_BINDING_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
@@ -455,6 +554,19 @@ function paginationOf(c: Context): PageInput {
     throw new TeachingApiException('INVALID_INPUT', 400, 'page must be positive and pageSize must be 1 to 100');
   }
   return { page, pageSize, offset: (page - 1) * pageSize };
+}
+
+function assertQueryKeys(c: Context, allowed: readonly string[]): void {
+  const allowedSet = new Set(allowed);
+  const unexpected = [...new URL(c.req.url).searchParams.keys()].find((key) => !allowedSet.has(key));
+  if (unexpected) {
+    throw new TeachingApiException('INVALID_INPUT', 400, `${unexpected} is not accepted in this query`);
+  }
+}
+
+function trainingPaginationOf(c: Context, extra: readonly string[] = []): PageInput {
+  assertQueryKeys(c, ['page', 'pageSize', ...extra]);
+  return paginationOf(c);
 }
 
 async function jsonBody(c: Context, maxBytes?: number): Promise<{ value: JsonObject; raw: string }> {
@@ -795,6 +907,153 @@ function parseAttendanceBatchInput(body: JsonObject): AttendanceBatchInput {
     throw new TeachingApiException('INVALID_INPUT', 400, 'records must not repeat an attendanceId');
   }
   return { records };
+}
+
+function parseTrainingTemplateInput(body: JsonObject): CreateTrainingTemplateInput {
+  assertOnlyKeys(body, ['name', 'description'], 'training template input');
+  const description = body.description;
+  if (typeof description !== 'string' || description.length > 4_000) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'description must be a string up to 4000 characters');
+  }
+  return { name: requiredString(body, 'name', 200), description };
+}
+
+function parseTrainingTemplateVersionInput(body: JsonObject): CreateTrainingTemplateVersionInput {
+  assertOnlyKeys(body, ['title', 'instructions', 'source', 'activity', 'toolConfig'], 'training template version input');
+  if (!isTrainingEvidenceSource(body.source)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'source is not a registered training source');
+  }
+  const source = body.source as TrainingEvidenceSource;
+  if (typeof body.activity !== 'string' || !isTrainingSourceActivity(source, body.activity)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'activity is not registered for source');
+  }
+  if (typeof body.instructions !== 'string' || body.instructions.length > 8_000) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'instructions must be a string up to 8000 characters');
+  }
+  let toolConfig: CreateTrainingTemplateVersionInput['toolConfig'];
+  try {
+    toolConfig = parseTrainingToolConfigForActivity(source, body.activity, body.toolConfig);
+  } catch (error) {
+    if (error instanceof TrainingEvidenceValidationError) {
+      throw new TeachingApiException('INVALID_INPUT', 400, error.message);
+    }
+    throw error;
+  }
+  return {
+    title: requiredString(body, 'title', 200),
+    instructions: body.instructions,
+    source,
+    activity: body.activity as TrainingEvidenceActivity,
+    toolConfig,
+  };
+}
+
+function requiredUuidArray(body: JsonObject, key: string): string[] {
+  const value = body[key];
+  if (!Array.isArray(value) || value.length > 100) {
+    throw new TeachingApiException('INVALID_INPUT', 400, `${key} must be an array containing at most 100 UUIDs`);
+  }
+  const result = value.map((entry, index) => {
+    if (typeof entry !== 'string') {
+      throw new TeachingApiException('INVALID_INPUT', 400, `${key}[${index}] must be a UUID`);
+    }
+    return uuidParam(entry, `${key}[${index}]`);
+  });
+  if (new Set(result).size !== result.length) {
+    throw new TeachingApiException('INVALID_INPUT', 400, `${key} must not contain duplicates`);
+  }
+  return result.sort();
+}
+
+function parseTrainingAssignmentInput(body: JsonObject): WriteTrainingAssignmentInput {
+  assertOnlyKeys(
+    body,
+    ['templateVersionId', 'title', 'instructions', 'scheduleKind', 'expectedCount', 'startsAt', 'endsAt', 'groupIds', 'studentIds', 'goals'],
+    'training assignment input',
+  );
+  if (!TRAINING_SCHEDULE_KINDS.includes(body.scheduleKind as TrainingScheduleKind)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'scheduleKind must be once or daily');
+  }
+  if (typeof body.instructions !== 'string' || body.instructions.length > 8_000) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'instructions must be a string up to 8000 characters');
+  }
+  const startsAt = requiredTimestamp(body, 'startsAt');
+  const endsAt = body.endsAt === null ? null : requiredTimestamp(body, 'endsAt');
+  if (endsAt !== null && new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'endsAt must be after startsAt');
+  }
+  if (body.scheduleKind === 'once' && endsAt === null) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'once assignments require endsAt');
+  }
+  const groupIds = requiredUuidArray(body, 'groupIds');
+  const studentIds = requiredUuidArray(body, 'studentIds');
+  if (groupIds.length + studentIds.length < 1 || groupIds.length + studentIds.length > 100) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'groupIds and studentIds must contain 1 to 100 total selectors');
+  }
+  if (!Array.isArray(body.goals) || body.goals.length > 4) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'goals must contain at most 4 items');
+  }
+  const goals = body.goals.map((raw, index) => {
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+      throw new TeachingApiException('INVALID_INPUT', 400, `goals[${index}] must be an object`);
+    }
+    const item = raw as JsonObject;
+    assertOnlyKeys(item, ['metricKey', 'operator', 'targetValue'], `goals[${index}]`);
+    if (!isTrainingGoalMetricKey(item.metricKey)) {
+      throw new TeachingApiException('INVALID_INPUT', 400, `goals[${index}].metricKey is not registered`);
+    }
+    if (!isTrainingGoalOperator(item.operator)) {
+      throw new TeachingApiException('INVALID_INPUT', 400, `goals[${index}].operator is not registered`);
+    }
+    return {
+      metricKey: item.metricKey as TrainingGoalMetricKey,
+      operator: item.operator as TrainingGoalOperator,
+      targetValue: requiredInteger(item, 'targetValue', 0, Number.MAX_SAFE_INTEGER),
+    };
+  });
+  if (new Set(goals.map((goal) => goal.metricKey)).size !== goals.length) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'goals must not repeat metricKey');
+  }
+  return {
+    templateVersionId: requiredUuid(body, 'templateVersionId'),
+    title: requiredString(body, 'title', 200),
+    instructions: body.instructions,
+    scheduleKind: body.scheduleKind as TrainingScheduleKind,
+    expectedCount: requiredInteger(body, 'expectedCount', 1, 100_000),
+    startsAt,
+    endsAt,
+    groupIds,
+    studentIds,
+    goals,
+  };
+}
+
+function parseTrainingReviewInput(body: JsonObject): CreateTrainingReviewInput {
+  assertOnlyKeys(body, ['status', 'rating', 'feedback'], 'training review input');
+  if (!TRAINING_REVIEW_STATUSES.includes(body.status as TrainingReviewStatus)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'status must be commented, needs_changes, or accepted');
+  }
+  const rating = body.rating === null ? null : requiredInteger(body, 'rating', 1, 5);
+  if (typeof body.feedback !== 'string' || body.feedback.length > 8_000) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'feedback must be a string up to 8000 characters');
+  }
+  return { status: body.status as TrainingReviewStatus, rating, feedback: body.feedback };
+}
+
+function trainingTargetFilterOf(c: Context): TrainingTargetFilter {
+  const targetKind = c.req.query('targetKind');
+  if (targetKind !== undefined && targetKind !== 'group' && targetKind !== 'student') {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'targetKind must be group or student');
+  }
+  return { targetKind: targetKind ?? null } as TrainingTargetFilter;
+}
+
+function trainingAssignmentFilterOf(c: Context): TrainingAssignmentFilter {
+  const status = c.req.query('status');
+  if (status !== undefined && !TRAINING_ASSIGNMENT_STATUSES.includes(status as TrainingAssignmentStatus)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'status must be draft, published, or closed');
+  }
+  return { status: (status as TrainingAssignmentStatus | undefined) ?? null };
 }
 
 function asAccess(row: Record<string, unknown>): OrganizationAccess {
@@ -1147,6 +1406,107 @@ function assignmentToJson(row: Record<string, unknown>): JsonObject {
   };
 }
 
+function trainingTemplateToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    organizationId: String(row.organization_id),
+    name: String(row.name),
+    description: String(row.description),
+    status: String(row.status),
+    latestVersionNumber: row.latest_version_number == null ? null : Number(row.latest_version_number),
+    createdAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at),
+  };
+}
+
+function trainingTemplateVersionToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    organizationId: String(row.organization_id),
+    templateId: String(row.template_id),
+    versionNumber: Number(row.version_number),
+    title: String(row.title),
+    instructions: String(row.instructions),
+    source: String(row.source),
+    activity: String(row.activity),
+    toolConfig: row.tool_config as JsonObject,
+    publishedAt: iso(row.published_at),
+  };
+}
+
+function trainingAssignmentToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    organizationId: String(row.organization_id),
+    templateVersionId: String(row.template_version_id),
+    title: String(row.title),
+    instructions: String(row.instructions),
+    status: String(row.status),
+    scheduleKind: String(row.schedule_kind),
+    expectedCount: Number(row.expected_count),
+    timezoneSnapshot: String(row.timezone_snapshot),
+    startsAt: iso(row.starts_at),
+    endsAt: row.ends_at == null ? null : iso(row.ends_at),
+    publishedAt: row.published_at == null ? null : iso(row.published_at),
+    closedAt: row.closed_at == null ? null : iso(row.closed_at),
+    createdAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at),
+  };
+}
+
+function trainingTargetToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    organizationId: String(row.organization_id),
+    assignmentId: String(row.assignment_id),
+    targetKind: String(row.target_kind),
+    groupId: row.group_id == null ? null : String(row.group_id),
+    sourceGroupId: row.source_group_id == null ? null : String(row.source_group_id),
+    studentId: row.student_id == null ? null : String(row.student_id),
+    groupNameSnapshot: row.group_name_snapshot == null ? null : String(row.group_name_snapshot),
+    studentDisplayNameSnapshot: row.student_display_name_snapshot == null
+      ? null
+      : String(row.student_display_name_snapshot),
+    studentExternalRefSnapshot: row.student_external_ref_snapshot == null
+      ? null
+      : String(row.student_external_ref_snapshot),
+    evidenceCount: String(row.evidence_count),
+    firstEvidenceAt: row.first_evidence_at == null ? null : iso(row.first_evidence_at),
+    lastEvidenceAt: row.last_evidence_at == null ? null : iso(row.last_evidence_at),
+    latestReviewRevision: Number(row.latest_review_revision),
+    latestReviewStatus: row.latest_review_status == null ? null : String(row.latest_review_status),
+  };
+}
+
+function trainingGoalToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    organizationId: String(row.organization_id),
+    assignmentId: String(row.assignment_id),
+    metricKey: String(row.metric_key),
+    operator: String(row.operator),
+    targetValue: Number(row.target_value),
+  };
+}
+
+function trainingReviewToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    organizationId: String(row.organization_id),
+    assignmentId: String(row.assignment_id),
+    studentId: String(row.student_id),
+    revision: Number(row.revision),
+    reviewerUserId: row.reviewer_user_id == null ? null : Number(row.reviewer_user_id),
+    reviewerUserIdSnapshot: Number(row.reviewer_user_id_snapshot),
+    reviewerDisplayNameSnapshot: String(row.reviewer_display_name_snapshot),
+    reviewerRoleSnapshot: String(row.reviewer_role_snapshot),
+    status: String(row.status),
+    rating: row.rating == null ? null : Number(row.rating),
+    feedback: String(row.feedback),
+    createdAt: iso(row.created_at),
+  };
+}
+
 function bindingInviteToJson(row: Record<string, unknown>): JsonObject {
   const databaseNow = new Date(String(row.database_now)).getTime();
   if (!Number.isFinite(databaseNow)) {
@@ -1367,8 +1727,555 @@ const ACTIVE_STUDENT_SCOPE_CTE = `
       AND group_student.status = 'active'
   )`;
 
+const ACTIVE_TRAINING_SCOPE_CTE = `
+  WITH active_scope_actor AS (
+    SELECT member.organization_id, member.user_id
+    FROM organization_members member
+    WHERE member.organization_id = ? AND member.user_id = ?
+      AND member.status = 'active' AND member.role IN ('teacher', 'assistant')
+  ), scoped_group_ids AS (
+    SELECT assignment.group_id AS id
+    FROM teacher_assignments assignment
+    JOIN active_scope_actor actor
+      ON actor.organization_id = assignment.organization_id
+     AND actor.user_id = assignment.teacher_user_id
+    JOIN teaching_groups teaching_group
+      ON teaching_group.organization_id = assignment.organization_id
+     AND teaching_group.id = assignment.group_id
+     AND teaching_group.status = 'active'
+    LEFT JOIN teaching_campuses campus
+      ON campus.organization_id = teaching_group.organization_id
+     AND campus.id = teaching_group.campus_id
+    WHERE assignment.organization_id = ? AND assignment.group_id IS NOT NULL
+      AND assignment.effective_from <= NOW()
+      AND (assignment.effective_to IS NULL OR assignment.effective_to > NOW())
+      AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+  ), scoped_student_ids AS (
+    SELECT assignment.student_id AS id
+    FROM teacher_assignments assignment
+    JOIN active_scope_actor actor
+      ON actor.organization_id = assignment.organization_id
+     AND actor.user_id = assignment.teacher_user_id
+    JOIN student_profiles student
+      ON student.organization_id = assignment.organization_id
+     AND student.id = assignment.student_id AND student.status = 'active'
+    WHERE assignment.organization_id = ? AND assignment.student_id IS NOT NULL
+      AND assignment.effective_from <= NOW()
+      AND (assignment.effective_to IS NULL OR assignment.effective_to > NOW())
+    UNION
+    SELECT membership.student_id
+    FROM scoped_group_ids scoped_group
+    JOIN student_group_memberships membership ON membership.group_id = scoped_group.id
+    JOIN student_profiles student
+      ON student.organization_id = membership.organization_id
+     AND student.id = membership.student_id AND student.status = 'active'
+    WHERE membership.organization_id = ?
+      AND membership.effective_from <= NOW()
+      AND (membership.effective_to IS NULL OR membership.effective_to > NOW())
+  )`;
+
+function activeTrainingScopeParams(access: OrganizationAccess, actor: TeachingActor): unknown[] {
+  return [access.id, actor.userId, access.id, access.id, access.id];
+}
+
 function activeStudentScopeParams(access: OrganizationAccess, actor: TeachingActor): unknown[] {
   return [access.id, actor.userId, access.id, access.id];
+}
+
+function hasOrganizationTrainingScope(role: TeachingOrganizationRole): boolean {
+  return role === 'owner' || role === 'admin';
+}
+
+async function actorHasActiveStudentScope(
+  tx: Tx,
+  organizationId: string,
+  actorUserId: number,
+  studentId: string,
+): Promise<boolean> {
+  const rows = await tx`
+    SELECT EXISTS (
+      SELECT 1
+      FROM organization_members member
+      WHERE member.organization_id = ${organizationId}
+        AND member.user_id = ${actorUserId}
+        AND member.status = 'active'
+        AND member.role IN ('teacher', 'assistant')
+        AND EXISTS (
+          SELECT 1 FROM student_profiles scoped_student
+          WHERE scoped_student.organization_id = member.organization_id
+            AND scoped_student.id = ${studentId}
+            AND scoped_student.status = 'active'
+        )
+        AND (
+          EXISTS (
+            SELECT 1 FROM teacher_assignments direct_scope
+            WHERE direct_scope.organization_id = member.organization_id
+              AND direct_scope.teacher_user_id = member.user_id
+              AND direct_scope.student_id = ${studentId}
+              AND direct_scope.effective_from <= clock_timestamp()
+              AND (direct_scope.effective_to IS NULL OR direct_scope.effective_to > clock_timestamp())
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM teacher_assignments group_scope
+            JOIN teaching_groups teaching_group
+              ON teaching_group.organization_id = group_scope.organization_id
+             AND teaching_group.id = group_scope.group_id
+             AND teaching_group.status = 'active'
+            LEFT JOIN teaching_campuses campus
+              ON campus.organization_id = teaching_group.organization_id
+             AND campus.id = teaching_group.campus_id
+            JOIN student_group_memberships membership
+              ON membership.organization_id = group_scope.organization_id
+             AND membership.group_id = group_scope.group_id
+             AND membership.student_id = ${studentId}
+             AND membership.effective_from <= clock_timestamp()
+             AND (membership.effective_to IS NULL OR membership.effective_to > clock_timestamp())
+            WHERE group_scope.organization_id = member.organization_id
+              AND group_scope.teacher_user_id = member.user_id
+              AND group_scope.effective_from <= clock_timestamp()
+              AND (group_scope.effective_to IS NULL OR group_scope.effective_to > clock_timestamp())
+              AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+          )
+        )
+    ) AS allowed`;
+  return Boolean(rows[0]?.allowed);
+}
+
+async function actorHasActiveGroupScope(
+  tx: Tx,
+  organizationId: string,
+  actorUserId: number,
+  groupId: string,
+): Promise<boolean> {
+  const rows = await tx`
+    SELECT EXISTS (
+      SELECT 1
+      FROM organization_members member
+      JOIN teacher_assignments group_scope
+        ON group_scope.organization_id = member.organization_id
+       AND group_scope.teacher_user_id = member.user_id
+       AND group_scope.group_id = ${groupId}
+       AND group_scope.effective_from <= clock_timestamp()
+       AND (group_scope.effective_to IS NULL OR group_scope.effective_to > clock_timestamp())
+      JOIN teaching_groups teaching_group
+        ON teaching_group.organization_id = group_scope.organization_id
+       AND teaching_group.id = group_scope.group_id
+       AND teaching_group.status = 'active'
+      LEFT JOIN teaching_campuses campus
+        ON campus.organization_id = teaching_group.organization_id
+       AND campus.id = teaching_group.campus_id
+      WHERE member.organization_id = ${organizationId}
+        AND member.user_id = ${actorUserId}
+        AND member.status = 'active'
+        AND member.role IN ('teacher', 'assistant')
+        AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+    ) AS allowed`;
+  return Boolean(rows[0]?.allowed);
+}
+
+async function touchTrainingRelationLock(
+  tx: Tx,
+  organizationId: string,
+  relationKind: 'student_group' | 'teacher_group' | 'teacher_student',
+  subjectKey: string,
+  targetKey: string,
+): Promise<void> {
+  await tx`
+    INSERT INTO teaching_relation_locks (
+      organization_id, relation_kind, subject_key, target_key
+    ) VALUES (${organizationId}, ${relationKind}, ${subjectKey}, ${targetKey})
+    ON CONFLICT (organization_id, relation_kind, subject_key, target_key)
+    DO UPDATE SET revision = teaching_relation_locks.revision + 1,
+                  touched_at = clock_timestamp()`;
+}
+
+async function lockAndCheckTeacherGroupScope(
+  tx: Tx,
+  access: OrganizationAccess,
+  actor: TeachingActor,
+  groupId: string,
+): Promise<boolean> {
+  await touchTrainingRelationLock(tx, access.id, 'teacher_group', String(actor.userId), groupId);
+  return actorHasActiveGroupScope(tx, access.id, actor.userId, groupId);
+}
+
+async function actorHasExactDirectStudentScope(
+  tx: Tx,
+  organizationId: string,
+  actorUserId: number,
+  studentId: string,
+): Promise<boolean> {
+  const rows = await tx`
+    SELECT EXISTS (
+      SELECT 1
+      FROM organization_members member
+      JOIN teacher_assignments assignment
+        ON assignment.organization_id = member.organization_id
+       AND assignment.teacher_user_id = member.user_id
+       AND assignment.student_id = ${studentId}
+       AND assignment.effective_from <= clock_timestamp()
+       AND (assignment.effective_to IS NULL OR assignment.effective_to > clock_timestamp())
+      JOIN student_profiles student
+        ON student.organization_id = assignment.organization_id
+       AND student.id = assignment.student_id
+       AND student.status = 'active'
+      WHERE member.organization_id = ${organizationId}
+        AND member.user_id = ${actorUserId}
+        AND member.status = 'active'
+        AND member.role IN ('teacher', 'assistant')
+    ) AS allowed`;
+  return Boolean(rows[0]?.allowed);
+}
+
+async function actorHasExactGroupStudentScope(
+  tx: Tx,
+  organizationId: string,
+  actorUserId: number,
+  groupId: string,
+  studentId: string,
+): Promise<boolean> {
+  const rows = await tx`
+    SELECT EXISTS (
+      SELECT 1
+      FROM organization_members member
+      JOIN teacher_assignments assignment
+        ON assignment.organization_id = member.organization_id
+       AND assignment.teacher_user_id = member.user_id
+       AND assignment.group_id = ${groupId}
+       AND assignment.effective_from <= clock_timestamp()
+       AND (assignment.effective_to IS NULL OR assignment.effective_to > clock_timestamp())
+      JOIN teaching_groups teaching_group
+        ON teaching_group.organization_id = assignment.organization_id
+       AND teaching_group.id = assignment.group_id
+       AND teaching_group.status = 'active'
+      LEFT JOIN teaching_campuses campus
+        ON campus.organization_id = teaching_group.organization_id
+       AND campus.id = teaching_group.campus_id
+      JOIN student_group_memberships membership
+        ON membership.organization_id = assignment.organization_id
+       AND membership.group_id = assignment.group_id
+       AND membership.student_id = ${studentId}
+       AND membership.effective_from <= clock_timestamp()
+       AND (membership.effective_to IS NULL OR membership.effective_to > clock_timestamp())
+      JOIN student_profiles student
+        ON student.organization_id = membership.organization_id
+       AND student.id = membership.student_id
+       AND student.status = 'active'
+      WHERE member.organization_id = ${organizationId}
+        AND member.user_id = ${actorUserId}
+        AND member.status = 'active'
+        AND member.role IN ('teacher', 'assistant')
+        AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+    ) AS allowed`;
+  return Boolean(rows[0]?.allowed);
+}
+
+async function lockAndCheckTeacherStudentScope(
+  tx: Tx,
+  access: OrganizationAccess,
+  actor: TeachingActor,
+  studentId: string,
+): Promise<boolean> {
+  const candidateRows = await tx`
+    SELECT NULL::uuid AS group_id, 0 AS priority
+    FROM teacher_assignments assignment
+    JOIN organization_members member
+      ON member.organization_id = assignment.organization_id
+     AND member.user_id = assignment.teacher_user_id
+     AND member.status = 'active'
+     AND member.role IN ('teacher', 'assistant')
+    JOIN student_profiles student
+      ON student.organization_id = assignment.organization_id
+     AND student.id = assignment.student_id
+     AND student.status = 'active'
+    WHERE assignment.organization_id = ${access.id}
+      AND assignment.teacher_user_id = ${actor.userId}
+      AND assignment.student_id = ${studentId}
+      AND assignment.effective_from <= clock_timestamp()
+      AND (assignment.effective_to IS NULL OR assignment.effective_to > clock_timestamp())
+    UNION ALL
+    SELECT assignment.group_id, 1 AS priority
+    FROM teacher_assignments assignment
+    JOIN organization_members member
+      ON member.organization_id = assignment.organization_id
+     AND member.user_id = assignment.teacher_user_id
+     AND member.status = 'active'
+     AND member.role IN ('teacher', 'assistant')
+    JOIN teaching_groups teaching_group
+      ON teaching_group.organization_id = assignment.organization_id
+     AND teaching_group.id = assignment.group_id
+     AND teaching_group.status = 'active'
+    LEFT JOIN teaching_campuses campus
+      ON campus.organization_id = teaching_group.organization_id
+     AND campus.id = teaching_group.campus_id
+    JOIN student_group_memberships membership
+      ON membership.organization_id = assignment.organization_id
+     AND membership.group_id = assignment.group_id
+     AND membership.student_id = ${studentId}
+     AND membership.effective_from <= clock_timestamp()
+     AND (membership.effective_to IS NULL OR membership.effective_to > clock_timestamp())
+    JOIN student_profiles student
+      ON student.organization_id = membership.organization_id
+     AND student.id = membership.student_id
+     AND student.status = 'active'
+    WHERE assignment.organization_id = ${access.id}
+      AND assignment.teacher_user_id = ${actor.userId}
+      AND assignment.group_id IS NOT NULL
+      AND assignment.effective_from <= clock_timestamp()
+      AND (assignment.effective_to IS NULL OR assignment.effective_to > clock_timestamp())
+      AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+    ORDER BY priority, group_id NULLS FIRST
+    LIMIT 1`;
+  if (!candidateRows.length) return false;
+  const groupId = candidateRows[0].group_id == null ? null : String(candidateRows[0].group_id);
+  if (groupId === null) {
+    await touchTrainingRelationLock(tx, access.id, 'teacher_student', String(actor.userId), studentId);
+    return actorHasExactDirectStudentScope(tx, access.id, actor.userId, studentId);
+  } else {
+    await touchTrainingRelationLock(tx, access.id, 'teacher_group', String(actor.userId), groupId);
+    await touchTrainingRelationLock(tx, access.id, 'student_group', studentId, groupId);
+    return actorHasExactGroupStudentScope(tx, access.id, actor.userId, groupId, studentId);
+  }
+}
+
+async function trainingAssignmentEnvelope(
+  tx: Tx,
+  organizationId: string,
+  assignmentId: string,
+): Promise<JsonObject> {
+  const assignments = await tx`
+    SELECT assignment.*, version.id AS version_id, version.template_id,
+           version.version_number, version.title AS version_title,
+           version.instructions AS version_instructions, version.source,
+           version.activity, version.tool_config, version.published_at AS version_published_at
+    FROM training_assignments assignment
+    JOIN training_template_versions version
+      ON version.organization_id = assignment.organization_id
+     AND version.id = assignment.template_version_id
+    WHERE assignment.organization_id = ${organizationId}
+      AND assignment.id = ${assignmentId}`;
+  if (!assignments.length) {
+    throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Training assignment not found');
+  }
+  const goals = await tx`
+    SELECT * FROM training_assignment_goal_metrics
+    WHERE organization_id = ${organizationId} AND assignment_id = ${assignmentId}
+    ORDER BY metric_key`;
+  const row = assignments[0] as Record<string, unknown>;
+  return {
+    assignment: trainingAssignmentToJson(row),
+    templateVersion: trainingTemplateVersionToJson({
+      id: row.version_id,
+      organization_id: row.organization_id,
+      template_id: row.template_id,
+      version_number: row.version_number,
+      title: row.version_title,
+      instructions: row.version_instructions,
+      source: row.source,
+      activity: row.activity,
+      tool_config: row.tool_config,
+      published_at: row.version_published_at,
+    }),
+    goals: goals.map((goal) => trainingGoalToJson(goal as Record<string, unknown>)),
+  };
+}
+
+async function trainingResourceMissing(
+  tx: Tx,
+  table: 'training_templates' | 'training_assignments',
+  id: string,
+  message: string,
+): Promise<never> {
+  const rows = table === 'training_templates'
+    ? await tx`SELECT 1 FROM training_templates WHERE id = ${id}`
+    : await tx`SELECT 1 FROM training_assignments WHERE id = ${id}`;
+  if (rows.length) throw new ConcealedTeachingPermissionDeniedException(message);
+  throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, message);
+}
+
+async function trainingSelectorMissing(
+  tx: Tx,
+  access: OrganizationAccess,
+  table: 'training_template_versions' | 'teaching_groups' | 'student_profiles',
+  id: string,
+  message: string,
+): Promise<never> {
+  const rows = table === 'training_template_versions'
+    ? await tx`SELECT organization_id FROM training_template_versions WHERE id = ${id}`
+    : table === 'teaching_groups'
+      ? await tx`SELECT organization_id FROM teaching_groups WHERE id = ${id}`
+      : await tx`SELECT organization_id FROM student_profiles WHERE id = ${id}`;
+  if (rows.length && String(rows[0].organization_id) !== access.id) {
+    throw new ConcealedTeachingPermissionDeniedException(message);
+  }
+  throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, message);
+}
+
+async function assertTrainingAssignmentScope(
+  tx: Tx,
+  access: OrganizationAccess,
+  actor: TeachingActor,
+  assignment: Record<string, unknown>,
+  mode: 'read' | 'manage',
+): Promise<void> {
+  if (hasOrganizationTrainingScope(access.role)) return;
+  const selectors = await tx`
+    SELECT target_kind, group_id, student_id, source_group_id
+    FROM training_assignment_targets
+    WHERE organization_id = ${access.id} AND assignment_id = ${String(assignment.id)}
+      AND (target_kind = 'group' OR source_group_id IS NULL)
+    ORDER BY target_kind, COALESCE(group_id, student_id)`;
+  if (mode === 'manage') {
+    if (access.role !== 'teacher') {
+      throw new ConcealedTeachingPermissionDeniedException('Training assignment not found');
+    }
+    for (const selector of selectors) {
+      const allowed = selector.target_kind === 'group'
+        ? await lockAndCheckTeacherGroupScope(tx, access, actor, String(selector.group_id))
+        : await lockAndCheckTeacherStudentScope(tx, access, actor, String(selector.student_id));
+      if (!allowed) throw new ConcealedTeachingPermissionDeniedException('Training assignment not found');
+    }
+    if (!selectors.length) throw new ConcealedTeachingPermissionDeniedException('Training assignment not found');
+    return;
+  }
+  for (const selector of selectors) {
+    const allowed = selector.target_kind === 'group'
+      ? await actorHasActiveGroupScope(tx, access.id, actor.userId, String(selector.group_id))
+      : await actorHasActiveStudentScope(tx, access.id, actor.userId, String(selector.student_id));
+    if (allowed) return;
+  }
+  const expanded = await tx`
+    SELECT student_id FROM training_assignment_targets
+    WHERE organization_id = ${access.id} AND assignment_id = ${String(assignment.id)}
+      AND target_kind = 'student' AND source_group_id IS NOT NULL
+    ORDER BY student_id`;
+  for (const target of expanded) {
+    if (await actorHasActiveStudentScope(tx, access.id, actor.userId, String(target.student_id))) return;
+  }
+  throw new ConcealedTeachingPermissionDeniedException('Training assignment not found');
+}
+
+async function replaceTrainingAssignmentDraft(
+  tx: Tx,
+  access: OrganizationAccess,
+  assignmentId: string,
+  input: WriteTrainingAssignmentInput,
+): Promise<void> {
+  await tx`DELETE FROM training_assignment_goal_metrics
+           WHERE organization_id = ${access.id} AND assignment_id = ${assignmentId}`;
+  await tx`DELETE FROM training_assignment_targets
+           WHERE organization_id = ${access.id} AND assignment_id = ${assignmentId}`;
+  for (const groupId of input.groupIds) {
+    const groups = await tx`SELECT name FROM teaching_groups
+      WHERE organization_id = ${access.id} AND id = ${groupId}`;
+    await tx`INSERT INTO training_assignment_targets (
+      organization_id, assignment_id, target_kind, group_id, group_name_snapshot
+    ) VALUES (${access.id}, ${assignmentId}, 'group', ${groupId}, ${String(groups[0].name)})`;
+  }
+  for (const studentId of input.studentIds) {
+    const students = await tx`SELECT display_name, external_ref FROM student_profiles
+      WHERE organization_id = ${access.id} AND id = ${studentId}`;
+    await tx`INSERT INTO training_assignment_targets (
+      organization_id, assignment_id, target_kind, student_id,
+      student_display_name_snapshot, student_external_ref_snapshot
+    ) VALUES (
+      ${access.id}, ${assignmentId}, 'student', ${studentId},
+      ${String(students[0].display_name)}, ${students[0].external_ref == null ? null : String(students[0].external_ref)}
+    )`;
+  }
+  for (const goal of input.goals) {
+    await tx`INSERT INTO training_assignment_goal_metrics (
+      organization_id, assignment_id, metric_key, operator, target_value
+    ) VALUES (${access.id}, ${assignmentId}, ${goal.metricKey}, ${goal.operator}, ${goal.targetValue})`;
+  }
+}
+
+async function insertTrainingAudit(
+  tx: Tx,
+  access: OrganizationAccess,
+  actor: TeachingActor,
+  action: string,
+  entityType: string,
+  entityId: string,
+  requestId: string,
+  metadata: JsonObject,
+): Promise<void> {
+  await tx`INSERT INTO teaching_audit_events (
+    organization_id, actor_user_id, actor_role, actor_display_name,
+    action, entity_type, entity_id, request_id, metadata
+  ) VALUES (
+    ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+    ${action}, ${entityType}, ${entityId}, ${requestId}, ${sql.json(metadata)}
+  )`;
+}
+
+async function lockAndValidateTrainingSelectors(
+  tx: Tx,
+  access: OrganizationAccess,
+  actor: TeachingActor,
+  input: WriteTrainingAssignmentInput,
+): Promise<Record<string, unknown>> {
+  const versions = await tx`
+    SELECT version.*, template.status AS template_status
+    FROM training_template_versions version
+    JOIN training_templates template
+      ON template.organization_id = version.organization_id
+     AND template.id = version.template_id
+    WHERE version.organization_id = ${access.id}
+      AND version.id = ${input.templateVersionId}
+    FOR UPDATE OF template`;
+  if (!versions.length || versions[0].template_status !== 'active') {
+    await trainingSelectorMissing(
+      tx, access, 'training_template_versions', input.templateVersionId,
+      'Training template version not found',
+    );
+  }
+  const version = versions[0] as Record<string, unknown>;
+  for (const goal of input.goals) {
+    if (!isTrainingGoalRegistered(
+      String(version.source) as TrainingEvidenceSource,
+      String(version.activity),
+      goal.metricKey,
+      goal.operator,
+    )) {
+      throw new TeachingApiException('INVALID_INPUT', 400, `${goal.metricKey}/${goal.operator} is not registered for this training activity`);
+    }
+  }
+  for (const groupId of input.groupIds) {
+    if (!hasOrganizationTrainingScope(access.role)
+        && !await lockAndCheckTeacherGroupScope(tx, access, actor, groupId)) {
+      throw new ConcealedTeachingPermissionDeniedException('Training group selector not found');
+    }
+    const groups = await tx`
+      SELECT teaching_group.id
+      FROM teaching_groups teaching_group
+      LEFT JOIN teaching_campuses campus
+        ON campus.organization_id = teaching_group.organization_id
+       AND campus.id = teaching_group.campus_id
+      WHERE teaching_group.organization_id = ${access.id}
+        AND teaching_group.id = ${groupId}
+        AND teaching_group.status = 'active'
+        AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+      FOR UPDATE OF teaching_group`;
+    if (!groups.length) {
+      await trainingSelectorMissing(tx, access, 'teaching_groups', groupId, 'Training group selector not found');
+    }
+  }
+  for (const studentId of input.studentIds) {
+    if (!hasOrganizationTrainingScope(access.role)
+        && !await lockAndCheckTeacherStudentScope(tx, access, actor, studentId)) {
+      throw new ConcealedTeachingPermissionDeniedException('Training student selector not found');
+    }
+    const students = await tx`
+      SELECT id FROM student_profiles
+      WHERE organization_id = ${access.id} AND id = ${studentId} AND status = 'active'
+      FOR UPDATE`;
+    if (!students.length) {
+      await trainingSelectorMissing(tx, access, 'student_profiles', studentId, 'Training student selector not found');
+    }
+  }
+  return version;
 }
 
 export const teachingSaasRepository: TeachingSaasRepository = {
@@ -3567,6 +4474,886 @@ export const teachingSaasRepository: TeachingSaasRepository = {
     });
   },
 
+  async listTrainingTemplates(actor, slug, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'training.template.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'training:template:read');
+      const [countRows, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          'SELECT COUNT(*)::int AS count FROM training_templates WHERE organization_id = ?',
+          [access.id],
+        ),
+        query<Record<string, unknown>>(
+          `SELECT template.*,
+                  (SELECT MAX(version_number) FROM training_template_versions version
+                   WHERE version.organization_id = template.organization_id
+                     AND version.template_id = template.id) AS latest_version_number
+           FROM training_templates template
+           WHERE template.organization_id = ?
+           ORDER BY CASE template.status WHEN 'active' THEN 0 ELSE 1 END,
+                    template.name, template.id
+           LIMIT ? OFFSET ?`,
+          [access.id, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map(trainingTemplateToJson), total: Number(countRows[0]?.count ?? 0),
+        page: pagination.page, pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async getTrainingTemplate(actor, slug, templateId, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'training.template.read', requestId, async () => {
+      return await sql.begin(async (tx) => {
+        const access = await accessForWrite(tx, actor.userId, slug);
+        requirePermission(access, 'training:template:read');
+        const rows = await tx`
+          SELECT template.*,
+                 (SELECT MAX(version_number) FROM training_template_versions version
+                  WHERE version.organization_id = template.organization_id
+                    AND version.template_id = template.id) AS latest_version_number
+          FROM training_templates template
+          WHERE template.organization_id = ${access.id} AND template.id = ${templateId}`;
+        if (!rows.length) {
+          await trainingResourceMissing(tx, 'training_templates', templateId, 'Training template not found');
+        }
+        return trainingTemplateToJson(rows[0] as Record<string, unknown>);
+      }) as JsonObject;
+    });
+  },
+
+  async createTrainingTemplate(actor, slug, input, idempotencyKey, requestHash, requestId) {
+    await consumeMutationAttempt(actor.userId, 'training.template.create', 120, '1 minute');
+    return withDeniedAccessAudit(actor, slug, 'training.template.create', requestId, async () => {
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'training:template:manage');
+          const idem = await beginIdempotency(
+            tx, actor.userId, access.id, 'training.template.create', idempotencyKey, requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          const rows = await tx`
+            INSERT INTO training_templates (
+              organization_id, name, description, created_by_user_id
+            ) VALUES (${access.id}, ${input.name}, ${input.description}, ${actor.userId})
+            RETURNING *`;
+          const templateId = String(rows[0].id);
+          const template = trainingTemplateToJson({ ...rows[0], latest_version_number: null });
+          await insertTrainingAudit(
+            tx, access, actor, 'training.template.create', 'training_template', templateId,
+            requestId, { name: input.name },
+          );
+          const result: MutationResult = { status: 201, body: { template } };
+          await completeIdempotency(tx, idem.id, result, 'training_template', templateId);
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Training template could not be created');
+      }
+    });
+  },
+
+  async listTrainingTemplateVersions(actor, slug, templateId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'training.template.version.list', requestId, async () => {
+      return await sql.begin(async (tx) => {
+        const access = await accessForWrite(tx, actor.userId, slug);
+        requirePermission(access, 'training:template:read');
+        const templates = await tx`
+          SELECT 1 FROM training_templates
+          WHERE organization_id = ${access.id} AND id = ${templateId}`;
+        if (!templates.length) {
+          await trainingResourceMissing(tx, 'training_templates', templateId, 'Training template not found');
+        }
+        const totals = await tx`
+          SELECT COUNT(*)::int AS total FROM training_template_versions
+          WHERE organization_id = ${access.id} AND template_id = ${templateId}`;
+        const rows = await tx`
+          SELECT * FROM training_template_versions
+          WHERE organization_id = ${access.id} AND template_id = ${templateId}
+          ORDER BY version_number DESC, id DESC
+          LIMIT ${pagination.pageSize} OFFSET ${pagination.offset}`;
+        return {
+          items: rows.map(trainingTemplateVersionToJson), total: Number(totals[0]?.total ?? 0),
+          page: pagination.page, pageSize: pagination.pageSize,
+        };
+      }) as PageResult;
+    });
+  },
+
+  async createTrainingTemplateVersion(
+    actor, slug, templateId, input, idempotencyKey, requestHash, requestId,
+  ) {
+    await consumeMutationAttempt(actor.userId, `training.template.version.create:${templateId}`, 120, '1 minute');
+    return withDeniedAccessAudit(actor, slug, 'training.template.version.create', requestId, async () => {
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'training:template:manage');
+          const templates = await tx`
+            SELECT * FROM training_templates
+            WHERE organization_id = ${access.id} AND id = ${templateId}
+            FOR UPDATE`;
+          if (!templates.length) {
+            await trainingResourceMissing(tx, 'training_templates', templateId, 'Training template not found');
+          }
+          const idem = await beginIdempotency(
+            tx, actor.userId, access.id, `training.template.version.create:${templateId}`,
+            idempotencyKey, requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          if (String(templates[0].status) !== 'active') {
+            throw new TeachingApiException('CONFLICT', 409, 'Archived training templates cannot receive versions');
+          }
+          const rows = await tx`
+            INSERT INTO training_template_versions (
+              organization_id, template_id, version_number, title, instructions,
+              source, activity, tool_config, created_by_user_id, published_by_user_id
+            ) SELECT ${access.id}, ${templateId},
+                     COALESCE(MAX(version_number), 0) + 1,
+                     ${input.title}, ${input.instructions}, ${input.source}, ${input.activity},
+                     ${sql.json(input.toolConfig)}, ${actor.userId}, ${actor.userId}
+              FROM training_template_versions
+             WHERE organization_id = ${access.id} AND template_id = ${templateId}
+            RETURNING *`;
+          const versionId = String(rows[0].id);
+          const templateVersion = trainingTemplateVersionToJson(rows[0] as Record<string, unknown>);
+          await insertTrainingAudit(
+            tx, access, actor, 'training.template.version.create', 'training_template_version',
+            versionId, requestId, { templateId, versionNumber: Number(rows[0].version_number) },
+          );
+          const result: MutationResult = { status: 201, body: { templateVersion } };
+          await completeIdempotency(tx, idem.id, result, 'training_template_version', versionId);
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Training template version could not be created');
+      }
+    });
+  },
+
+  async archiveTrainingTemplate(actor, slug, templateId, idempotencyKey, requestHash, requestId) {
+    await consumeMutationAttempt(actor.userId, `training.template.archive:${templateId}`, 120, '1 minute');
+    return withDeniedAccessAudit(actor, slug, 'training.template.archive', requestId, async () => {
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'training:template:manage');
+          const rows = await tx`
+            SELECT * FROM training_templates
+            WHERE organization_id = ${access.id} AND id = ${templateId}
+            FOR UPDATE`;
+          if (!rows.length) {
+            await trainingResourceMissing(tx, 'training_templates', templateId, 'Training template not found');
+          }
+          const idem = await beginIdempotency(
+            tx, actor.userId, access.id, `training.template.archive:${templateId}`,
+            idempotencyKey, requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          if (String(rows[0].status) !== 'active') {
+            throw new TeachingApiException('CONFLICT', 409, 'Training template is already archived');
+          }
+          const archived = await tx`
+            UPDATE training_templates
+            SET status = 'archived', archived_at = clock_timestamp()
+            WHERE organization_id = ${access.id} AND id = ${templateId}
+            RETURNING *`;
+          const versionRows = await tx`
+            SELECT MAX(version_number) AS latest_version_number
+            FROM training_template_versions
+            WHERE organization_id = ${access.id} AND template_id = ${templateId}`;
+          const template = trainingTemplateToJson({
+            ...archived[0], latest_version_number: versionRows[0]?.latest_version_number,
+          });
+          await insertTrainingAudit(
+            tx, access, actor, 'training.template.archive', 'training_template', templateId,
+            requestId, { reason: 'manual_archive' },
+          );
+          const result: MutationResult = { status: 200, body: { template } };
+          await completeIdempotency(tx, idem.id, result, 'training_template', templateId);
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Training template could not be archived');
+      }
+    });
+  },
+
+  async listTrainingAssignments(actor, slug, filter, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'training.assignment.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'training:assignment:read');
+      const statusSql = filter.status === null ? '' : ' AND assignment.status = ?';
+      const statusParams = filter.status === null ? [] : [filter.status];
+      const organizationScope = hasOrganizationTrainingScope(access.role);
+      const scopeCte = organizationScope ? '' : `${ACTIVE_TRAINING_SCOPE_CTE},`;
+      const scopeSql = organizationScope ? '' : ` AND EXISTS (
+        SELECT 1 FROM training_assignment_targets visible_target
+        WHERE visible_target.organization_id = assignment.organization_id
+          AND visible_target.assignment_id = assignment.id
+          AND (
+            (visible_target.target_kind = 'group' AND visible_target.group_id IN (SELECT id FROM scoped_group_ids))
+            OR (visible_target.target_kind = 'student' AND visible_target.student_id IN (SELECT id FROM scoped_student_ids))
+          )
+      )`;
+      const scopeParams = organizationScope ? [] : activeTrainingScopeParams(access, actor);
+      const countRows = await query<Record<string, unknown>>(
+        `${scopeCte} SELECT COUNT(*)::int AS total
+         FROM training_assignments assignment
+         WHERE assignment.organization_id = ?${statusSql}${scopeSql}`,
+        [...scopeParams, access.id, ...statusParams],
+      );
+      const rows = await query<Record<string, unknown>>(
+        `${scopeCte} SELECT assignment.*
+         FROM training_assignments assignment
+         WHERE assignment.organization_id = ?${statusSql}${scopeSql}
+         ORDER BY assignment.starts_at DESC, assignment.id DESC
+         LIMIT ? OFFSET ?`,
+        [...scopeParams, access.id, ...statusParams, pagination.pageSize, pagination.offset],
+      );
+      return {
+        items: rows.map(trainingAssignmentToJson), total: Number(countRows[0]?.total ?? 0),
+        page: pagination.page, pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async getTrainingAssignment(actor, slug, assignmentId, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'training.assignment.read', requestId, async () => {
+      return await sql.begin(async (tx) => {
+        const access = await accessForWrite(tx, actor.userId, slug);
+        requirePermission(access, 'training:assignment:read');
+        const rows = await tx`
+          SELECT * FROM training_assignments
+          WHERE organization_id = ${access.id} AND id = ${assignmentId}`;
+        if (!rows.length) {
+          await trainingResourceMissing(tx, 'training_assignments', assignmentId, 'Training assignment not found');
+        }
+        await assertTrainingAssignmentScope(
+          tx, access, actor, rows[0] as Record<string, unknown>, 'read',
+        );
+        const body = await trainingAssignmentEnvelope(tx, access.id, assignmentId);
+        await assertTrainingAssignmentScope(
+          tx, access, actor, rows[0] as Record<string, unknown>, 'read',
+        );
+        return body;
+      }) as JsonObject;
+    });
+  },
+
+  async createTrainingAssignment(actor, slug, input, idempotencyKey, requestHash, requestId) {
+    await consumeMutationAttempt(actor.userId, 'training.assignment.create', 180, '1 minute');
+    return withDeniedAccessAudit(actor, slug, 'training.assignment.create', requestId, async () => {
+      try {
+        return await withRepeatableReadRetry<MutationResult>(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'training:assignment:manage');
+          const idem = await beginIdempotency(
+            tx, actor.userId, access.id, 'training.assignment.create', idempotencyKey, requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          await lockAndValidateTrainingSelectors(tx, access, actor, input);
+          const rows = await tx`
+            INSERT INTO training_assignments (
+              organization_id, template_version_id, title, instructions, schedule_kind,
+              expected_count, timezone_snapshot, starts_at, ends_at, created_by_user_id
+            ) VALUES (
+              ${access.id}, ${input.templateVersionId}, ${input.title}, ${input.instructions},
+              ${input.scheduleKind}, ${input.expectedCount}, ${access.timezone},
+              ${input.startsAt}, ${input.endsAt}, ${actor.userId}
+            ) RETURNING *`;
+          const assignmentId = String(rows[0].id);
+          await replaceTrainingAssignmentDraft(tx, access, assignmentId, input);
+          const body = await trainingAssignmentEnvelope(tx, access.id, assignmentId);
+          await insertTrainingAudit(
+            tx, access, actor, 'training.assignment.create', 'training_assignment', assignmentId,
+            requestId, { groupCount: input.groupIds.length, studentCount: input.studentIds.length, goalCount: input.goals.length },
+          );
+          const result: MutationResult = { status: 201, body };
+          await completeIdempotency(tx, idem.id, result, 'training_assignment', assignmentId);
+          return result;
+        });
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Training assignment could not be created');
+      }
+    });
+  },
+
+  async reviseTrainingAssignment(
+    actor, slug, assignmentId, input, idempotencyKey, requestHash, requestId,
+  ) {
+    await consumeMutationAttempt(actor.userId, `training.assignment.revise:${assignmentId}`, 180, '1 minute');
+    return withDeniedAccessAudit(actor, slug, 'training.assignment.revise', requestId, async () => {
+      try {
+        return await withRepeatableReadRetry<MutationResult>(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'training:assignment:manage');
+          const rows = await tx`
+            SELECT * FROM training_assignments
+            WHERE organization_id = ${access.id} AND id = ${assignmentId}
+            FOR UPDATE`;
+          if (!rows.length) {
+            await trainingResourceMissing(tx, 'training_assignments', assignmentId, 'Training assignment not found');
+          }
+          await assertTrainingAssignmentScope(
+            tx, access, actor, rows[0] as Record<string, unknown>, 'manage',
+          );
+          const idem = await beginIdempotency(
+            tx, actor.userId, access.id, `training.assignment.revise:${assignmentId}`,
+            idempotencyKey, requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          if (String(rows[0].status) !== 'draft') {
+            throw new TeachingApiException('CONFLICT', 409, 'Only draft training assignments can be revised');
+          }
+          await lockAndValidateTrainingSelectors(tx, access, actor, input);
+          await tx`
+            UPDATE training_assignments
+            SET template_version_id = ${input.templateVersionId}, title = ${input.title},
+                instructions = ${input.instructions}, schedule_kind = ${input.scheduleKind},
+                expected_count = ${input.expectedCount}, starts_at = ${input.startsAt},
+                ends_at = ${input.endsAt}
+            WHERE organization_id = ${access.id} AND id = ${assignmentId}`;
+          await replaceTrainingAssignmentDraft(tx, access, assignmentId, input);
+          const body = await trainingAssignmentEnvelope(tx, access.id, assignmentId);
+          await insertTrainingAudit(
+            tx, access, actor, 'training.assignment.revise', 'training_assignment', assignmentId,
+            requestId, { groupCount: input.groupIds.length, studentCount: input.studentIds.length, goalCount: input.goals.length },
+          );
+          const result: MutationResult = { status: 200, body };
+          await completeIdempotency(tx, idem.id, result, 'training_assignment', assignmentId);
+          return result;
+        });
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Training assignment could not be revised');
+      }
+    });
+  },
+
+  async publishTrainingAssignment(
+    actor, slug, assignmentId, idempotencyKey, requestHash, requestId,
+  ) {
+    await consumeMutationAttempt(actor.userId, `training.assignment.publish:${assignmentId}`, 120, '1 minute');
+    return withDeniedAccessAudit(actor, slug, 'training.assignment.publish', requestId, async () => {
+      try {
+        return await withRepeatableReadRetry<MutationResult>(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'training:assignment:manage');
+          const assignments = await tx`
+            SELECT assignment.*, version.source, version.activity
+            FROM training_assignments assignment
+            JOIN training_template_versions version
+              ON version.organization_id = assignment.organization_id
+             AND version.id = assignment.template_version_id
+            WHERE assignment.organization_id = ${access.id} AND assignment.id = ${assignmentId}
+            FOR UPDATE OF assignment`;
+          if (!assignments.length) {
+            await trainingResourceMissing(tx, 'training_assignments', assignmentId, 'Training assignment not found');
+          }
+          const assignment = assignments[0] as Record<string, unknown>;
+          await assertTrainingAssignmentScope(tx, access, actor, assignment, 'manage');
+          const selectorRows = await tx`
+            SELECT target_kind, group_id, student_id
+            FROM training_assignment_targets
+            WHERE organization_id = ${access.id} AND assignment_id = ${assignmentId}
+              AND (target_kind = 'group' OR source_group_id IS NULL)
+            ORDER BY target_kind, COALESCE(group_id, student_id)`;
+          const groupIds = selectorRows
+            .filter((row) => row.target_kind === 'group')
+            .map((row) => String(row.group_id))
+            .sort();
+          const directStudentIds = selectorRows
+            .filter((row) => row.target_kind === 'student')
+            .map((row) => String(row.student_id))
+            .sort();
+          const idem = await beginIdempotency(
+            tx, actor.userId, access.id, `training.assignment.publish:${assignmentId}`,
+            idempotencyKey, requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          if (String(assignment.status) !== 'draft') {
+            throw new TeachingApiException('CONFLICT', 409, 'Only draft training assignments can be published');
+          }
+          const instantRows = await tx`SELECT clock_timestamp() AS published_at`;
+          const publishedAt = iso(instantRows[0].published_at);
+
+          for (const groupId of groupIds) {
+            await touchTrainingRelationLock(tx, access.id, 'student_group', '*', groupId);
+          }
+          const groupNames = new Map<string, string>();
+          for (const groupId of groupIds) {
+            const groups = await tx`
+              SELECT teaching_group.id, teaching_group.name
+              FROM teaching_groups teaching_group
+              LEFT JOIN teaching_campuses campus
+                ON campus.organization_id = teaching_group.organization_id
+               AND campus.id = teaching_group.campus_id
+              WHERE teaching_group.organization_id = ${access.id}
+                AND teaching_group.id = ${groupId}
+                AND teaching_group.status = 'active'
+                AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+              FOR UPDATE OF teaching_group`;
+            if (!groups.length) {
+              throw new TeachingApiException('CONFLICT', 409, 'A selected training group is no longer active');
+            }
+            groupNames.set(groupId, String(groups[0].name));
+          }
+
+          const groupSourceByStudent = new Map<string, string>();
+          for (const groupId of groupIds) {
+            const memberships = await tx`
+              SELECT membership.student_id
+              FROM student_group_memberships membership
+              JOIN student_profiles student
+                ON student.organization_id = membership.organization_id
+               AND student.id = membership.student_id
+               AND student.status = 'active'
+              WHERE membership.organization_id = ${access.id}
+                AND membership.group_id = ${groupId}
+                AND membership.effective_from <= ${publishedAt}
+                AND (membership.effective_to IS NULL OR membership.effective_to > ${publishedAt})
+              ORDER BY membership.student_id`;
+            for (const membership of memberships) {
+              const studentId = String(membership.student_id);
+              const previous = groupSourceByStudent.get(studentId);
+              if (previous === undefined || groupId < previous) groupSourceByStudent.set(studentId, groupId);
+            }
+          }
+          const directStudents = new Set(directStudentIds);
+          const allStudentIds = [...new Set([...directStudentIds, ...groupSourceByStudent.keys()])].sort();
+          if (!allStudentIds.length) {
+            throw new TeachingApiException('CONFLICT', 409, 'Published training assignments require at least one active student');
+          }
+          const studentSnapshots = new Map<string, { displayName: string; externalRef: string | null }>();
+          for (const studentId of allStudentIds) {
+            const students = await tx`
+              SELECT id, display_name, external_ref
+              FROM student_profiles
+              WHERE organization_id = ${access.id} AND id = ${studentId} AND status = 'active'
+              FOR UPDATE`;
+            if (!students.length) {
+              throw new TeachingApiException('CONFLICT', 409, 'A selected training student is no longer active');
+            }
+            studentSnapshots.set(studentId, {
+              displayName: String(students[0].display_name),
+              externalRef: students[0].external_ref == null ? null : String(students[0].external_ref),
+            });
+          }
+
+          for (const [groupId, groupName] of groupNames) {
+            await tx`
+              UPDATE training_assignment_targets
+              SET group_name_snapshot = ${groupName}
+              WHERE organization_id = ${access.id} AND assignment_id = ${assignmentId}
+                AND target_kind = 'group' AND group_id = ${groupId}`;
+          }
+          for (const studentId of directStudentIds) {
+            const snapshot = studentSnapshots.get(studentId)!;
+            await tx`
+              UPDATE training_assignment_targets
+              SET student_display_name_snapshot = ${snapshot.displayName},
+                  student_external_ref_snapshot = ${snapshot.externalRef}
+              WHERE organization_id = ${access.id} AND assignment_id = ${assignmentId}
+                AND target_kind = 'student' AND student_id = ${studentId}
+                AND source_group_id IS NULL`;
+          }
+          await tx`
+            DELETE FROM training_assignment_targets
+            WHERE organization_id = ${access.id} AND assignment_id = ${assignmentId}
+              AND target_kind = 'student' AND source_group_id IS NOT NULL`;
+          for (const studentId of allStudentIds) {
+            if (directStudents.has(studentId)) continue;
+            const snapshot = studentSnapshots.get(studentId)!;
+            const sourceGroupId = groupSourceByStudent.get(studentId)!;
+            await tx`
+              INSERT INTO training_assignment_targets (
+                organization_id, assignment_id, target_kind, source_group_id, student_id,
+                student_display_name_snapshot, student_external_ref_snapshot
+              ) VALUES (
+                ${access.id}, ${assignmentId}, 'student', ${sourceGroupId},
+                ${studentId}, ${snapshot.displayName}, ${snapshot.externalRef}
+              )`;
+          }
+          await tx`
+            UPDATE training_assignments
+            SET status = 'published', published_at = ${publishedAt}, published_by_user_id = ${actor.userId}
+            WHERE organization_id = ${access.id} AND id = ${assignmentId}`;
+          const body = await trainingAssignmentEnvelope(tx, access.id, assignmentId);
+          await insertTrainingAudit(
+            tx, access, actor, 'training.assignment.publish', 'training_assignment', assignmentId,
+            requestId, { groupCount: groupIds.length, directStudentCount: directStudentIds.length, studentCount: allStudentIds.length },
+          );
+          const result: MutationResult = { status: 200, body };
+          await completeIdempotency(tx, idem.id, result, 'training_assignment', assignmentId);
+          return result;
+        });
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Training assignment could not be published');
+      }
+    });
+  },
+
+  async closeTrainingAssignment(actor, slug, assignmentId, idempotencyKey, requestHash, requestId) {
+    await consumeMutationAttempt(actor.userId, `training.assignment.close:${assignmentId}`, 120, '1 minute');
+    return withDeniedAccessAudit(actor, slug, 'training.assignment.close', requestId, async () => {
+      try {
+        return await withRepeatableReadRetry<MutationResult>(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'training:assignment:manage');
+          const rows = await tx`
+            SELECT * FROM training_assignments
+            WHERE organization_id = ${access.id} AND id = ${assignmentId}
+            FOR UPDATE`;
+          if (!rows.length) {
+            await trainingResourceMissing(tx, 'training_assignments', assignmentId, 'Training assignment not found');
+          }
+          await assertTrainingAssignmentScope(tx, access, actor, rows[0] as Record<string, unknown>, 'manage');
+          const idem = await beginIdempotency(
+            tx, actor.userId, access.id, `training.assignment.close:${assignmentId}`,
+            idempotencyKey, requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          if (String(rows[0].status) !== 'published') {
+            throw new TeachingApiException('CONFLICT', 409, 'Only published training assignments can be closed');
+          }
+          await tx`
+            UPDATE training_assignments
+            SET status = 'closed', closed_at = clock_timestamp(), closed_by_user_id = ${actor.userId}
+            WHERE organization_id = ${access.id} AND id = ${assignmentId}`;
+          const body = await trainingAssignmentEnvelope(tx, access.id, assignmentId);
+          await insertTrainingAudit(
+            tx, access, actor, 'training.assignment.close', 'training_assignment', assignmentId,
+            requestId, {},
+          );
+          const result: MutationResult = { status: 200, body };
+          await completeIdempotency(tx, idem.id, result, 'training_assignment', assignmentId);
+          return result;
+        });
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Training assignment could not be closed');
+      }
+    });
+  },
+
+  async listTrainingAssignmentTargets(actor, slug, assignmentId, filter, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'training.assignment.target.list', requestId, async () => {
+      return await sql.begin(async (tx) => {
+        const access = await accessForWrite(tx, actor.userId, slug);
+        requirePermission(access, 'training:assignment:read');
+        const assignments = await tx`
+          SELECT * FROM training_assignments
+          WHERE organization_id = ${access.id} AND id = ${assignmentId}`;
+        if (!assignments.length) {
+          await trainingResourceMissing(tx, 'training_assignments', assignmentId, 'Training assignment not found');
+        }
+        await assertTrainingAssignmentScope(
+          tx, access, actor, assignments[0] as Record<string, unknown>, 'read',
+        );
+        const kind = filter.targetKind;
+        if (hasOrganizationTrainingScope(access.role)) {
+          const totals = await tx`
+            SELECT COUNT(*)::int AS total FROM training_assignment_targets target
+            WHERE target.organization_id = ${access.id} AND target.assignment_id = ${assignmentId}
+              AND (${kind}::text IS NULL OR target.target_kind = ${kind})`;
+          const rows = await tx`
+            SELECT * FROM training_assignment_targets target
+            WHERE target.organization_id = ${access.id} AND target.assignment_id = ${assignmentId}
+              AND (${kind}::text IS NULL OR target.target_kind = ${kind})
+            ORDER BY target.target_kind, COALESCE(target.group_name_snapshot, target.student_display_name_snapshot), target.id
+            LIMIT ${pagination.pageSize} OFFSET ${pagination.offset}`;
+          return {
+            items: rows.map(trainingTargetToJson), total: Number(totals[0]?.total ?? 0),
+            page: pagination.page, pageSize: pagination.pageSize,
+          };
+        }
+        const totals = await tx`
+          WITH active_scope_actor AS (
+            SELECT member.organization_id, member.user_id
+            FROM organization_members member
+            WHERE member.organization_id = ${access.id} AND member.user_id = ${actor.userId}
+              AND member.status = 'active' AND member.role IN ('teacher', 'assistant')
+          ), scoped_group_ids AS (
+            SELECT assignment.group_id AS id
+            FROM teacher_assignments assignment
+            JOIN active_scope_actor actor_scope
+              ON actor_scope.organization_id = assignment.organization_id
+             AND actor_scope.user_id = assignment.teacher_user_id
+            JOIN teaching_groups teaching_group
+              ON teaching_group.organization_id = assignment.organization_id
+             AND teaching_group.id = assignment.group_id
+             AND teaching_group.status = 'active'
+            LEFT JOIN teaching_campuses campus
+              ON campus.organization_id = teaching_group.organization_id
+             AND campus.id = teaching_group.campus_id
+            WHERE assignment.organization_id = ${access.id} AND assignment.group_id IS NOT NULL
+              AND assignment.effective_from <= clock_timestamp()
+              AND (assignment.effective_to IS NULL OR assignment.effective_to > clock_timestamp())
+              AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+          ), scoped_student_ids AS (
+            SELECT assignment.student_id AS id
+            FROM teacher_assignments assignment
+            JOIN active_scope_actor actor_scope
+              ON actor_scope.organization_id = assignment.organization_id
+             AND actor_scope.user_id = assignment.teacher_user_id
+            JOIN student_profiles student
+              ON student.organization_id = assignment.organization_id
+             AND student.id = assignment.student_id AND student.status = 'active'
+            WHERE assignment.organization_id = ${access.id} AND assignment.student_id IS NOT NULL
+              AND assignment.effective_from <= clock_timestamp()
+              AND (assignment.effective_to IS NULL OR assignment.effective_to > clock_timestamp())
+            UNION
+            SELECT membership.student_id
+            FROM scoped_group_ids scoped_group
+            JOIN student_group_memberships membership
+              ON membership.organization_id = ${access.id} AND membership.group_id = scoped_group.id
+             AND membership.effective_from <= clock_timestamp()
+             AND (membership.effective_to IS NULL OR membership.effective_to > clock_timestamp())
+            JOIN student_profiles student
+              ON student.organization_id = membership.organization_id
+             AND student.id = membership.student_id AND student.status = 'active'
+          )
+          SELECT COUNT(*)::int AS total FROM training_assignment_targets target
+          WHERE target.organization_id = ${access.id} AND target.assignment_id = ${assignmentId}
+            AND (${kind}::text IS NULL OR target.target_kind = ${kind})
+            AND ((target.target_kind = 'group' AND target.group_id IN (SELECT id FROM scoped_group_ids))
+              OR (target.target_kind = 'student' AND target.student_id IN (SELECT id FROM scoped_student_ids)))`;
+        const rows = await tx`
+          WITH active_scope_actor AS (
+            SELECT member.organization_id, member.user_id
+            FROM organization_members member
+            WHERE member.organization_id = ${access.id} AND member.user_id = ${actor.userId}
+              AND member.status = 'active' AND member.role IN ('teacher', 'assistant')
+          ), scoped_group_ids AS (
+            SELECT assignment.group_id AS id
+            FROM teacher_assignments assignment
+            JOIN active_scope_actor actor_scope
+              ON actor_scope.organization_id = assignment.organization_id
+             AND actor_scope.user_id = assignment.teacher_user_id
+            JOIN teaching_groups teaching_group
+              ON teaching_group.organization_id = assignment.organization_id
+             AND teaching_group.id = assignment.group_id
+             AND teaching_group.status = 'active'
+            LEFT JOIN teaching_campuses campus
+              ON campus.organization_id = teaching_group.organization_id
+             AND campus.id = teaching_group.campus_id
+            WHERE assignment.organization_id = ${access.id} AND assignment.group_id IS NOT NULL
+              AND assignment.effective_from <= clock_timestamp()
+              AND (assignment.effective_to IS NULL OR assignment.effective_to > clock_timestamp())
+              AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+          ), scoped_student_ids AS (
+            SELECT assignment.student_id AS id
+            FROM teacher_assignments assignment
+            JOIN active_scope_actor actor_scope
+              ON actor_scope.organization_id = assignment.organization_id
+             AND actor_scope.user_id = assignment.teacher_user_id
+            JOIN student_profiles student
+              ON student.organization_id = assignment.organization_id
+             AND student.id = assignment.student_id AND student.status = 'active'
+            WHERE assignment.organization_id = ${access.id} AND assignment.student_id IS NOT NULL
+              AND assignment.effective_from <= clock_timestamp()
+              AND (assignment.effective_to IS NULL OR assignment.effective_to > clock_timestamp())
+            UNION
+            SELECT membership.student_id
+            FROM scoped_group_ids scoped_group
+            JOIN student_group_memberships membership
+              ON membership.organization_id = ${access.id} AND membership.group_id = scoped_group.id
+             AND membership.effective_from <= clock_timestamp()
+             AND (membership.effective_to IS NULL OR membership.effective_to > clock_timestamp())
+            JOIN student_profiles student
+              ON student.organization_id = membership.organization_id
+             AND student.id = membership.student_id AND student.status = 'active'
+          )
+          SELECT * FROM training_assignment_targets target
+          WHERE target.organization_id = ${access.id} AND target.assignment_id = ${assignmentId}
+            AND (${kind}::text IS NULL OR target.target_kind = ${kind})
+            AND ((target.target_kind = 'group' AND target.group_id IN (SELECT id FROM scoped_group_ids))
+              OR (target.target_kind = 'student' AND target.student_id IN (SELECT id FROM scoped_student_ids)))
+          ORDER BY target.target_kind, COALESCE(target.group_name_snapshot, target.student_display_name_snapshot), target.id
+          LIMIT ${pagination.pageSize} OFFSET ${pagination.offset}`;
+        return {
+          items: rows.map(trainingTargetToJson), total: Number(totals[0]?.total ?? 0),
+          page: pagination.page, pageSize: pagination.pageSize,
+        };
+      }) as PageResult;
+    });
+  },
+
+  async listTrainingTargetEvidence(actor, slug, assignmentId, studentId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'training.assignment.target.evidence.list', requestId, async () => {
+      return await sql.begin(async (tx) => {
+        const access = await accessForWrite(tx, actor.userId, slug);
+        requirePermission(access, 'training:assignment:read');
+        const assignments = await tx`
+          SELECT * FROM training_assignments
+          WHERE organization_id = ${access.id} AND id = ${assignmentId}`;
+        if (!assignments.length) {
+          await trainingResourceMissing(tx, 'training_assignments', assignmentId, 'Training assignment not found');
+        }
+        await assertTrainingAssignmentScope(tx, access, actor, assignments[0] as Record<string, unknown>, 'read');
+        const targets = await tx`
+          SELECT 1 FROM training_assignment_targets
+          WHERE organization_id = ${access.id} AND assignment_id = ${assignmentId}
+            AND target_kind = 'student' AND student_id = ${studentId}`;
+        if (!targets.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Training assignment target not found');
+        if (!hasOrganizationTrainingScope(access.role)
+            && !await actorHasActiveStudentScope(tx, access.id, actor.userId, studentId)) {
+          throw new ConcealedTeachingPermissionDeniedException('Training assignment target not found');
+        }
+        const totals = await tx`
+          SELECT COUNT(*)::int AS total
+          FROM training_evidence_assignments link
+          WHERE link.organization_id = ${access.id} AND link.assignment_id = ${assignmentId}
+            AND link.student_id = ${studentId}`;
+        const rows = await tx`
+          SELECT evidence.*
+          FROM training_evidence_assignments link
+          JOIN training_evidence evidence
+            ON evidence.organization_id = link.organization_id AND evidence.id = link.evidence_id
+          WHERE link.organization_id = ${access.id} AND link.assignment_id = ${assignmentId}
+            AND link.student_id = ${studentId}
+          ORDER BY evidence.occurred_at DESC, evidence.id DESC
+          LIMIT ${pagination.pageSize} OFFSET ${pagination.offset}`;
+        if (!hasOrganizationTrainingScope(access.role)
+            && !await actorHasActiveStudentScope(tx, access.id, actor.userId, studentId)) {
+          throw new ConcealedTeachingPermissionDeniedException('Training assignment target not found');
+        }
+        return {
+          items: rows.map(trainingEvidenceToJson), total: Number(totals[0]?.total ?? 0),
+          page: pagination.page, pageSize: pagination.pageSize,
+        };
+      }) as PageResult;
+    });
+  },
+
+  async listTrainingTargetReviews(actor, slug, assignmentId, studentId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'training.assignment.target.review.list', requestId, async () => {
+      return await sql.begin(async (tx) => {
+        const access = await accessForWrite(tx, actor.userId, slug);
+        requirePermission(access, 'training:assignment:read');
+        const assignments = await tx`
+          SELECT * FROM training_assignments
+          WHERE organization_id = ${access.id} AND id = ${assignmentId}`;
+        if (!assignments.length) {
+          await trainingResourceMissing(tx, 'training_assignments', assignmentId, 'Training assignment not found');
+        }
+        await assertTrainingAssignmentScope(tx, access, actor, assignments[0] as Record<string, unknown>, 'read');
+        const targets = await tx`
+          SELECT 1 FROM training_assignment_targets
+          WHERE organization_id = ${access.id} AND assignment_id = ${assignmentId}
+            AND target_kind = 'student' AND student_id = ${studentId}`;
+        if (!targets.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Training assignment target not found');
+        if (!hasOrganizationTrainingScope(access.role)
+            && !await actorHasActiveStudentScope(tx, access.id, actor.userId, studentId)) {
+          throw new ConcealedTeachingPermissionDeniedException('Training assignment target not found');
+        }
+        const totals = await tx`
+          SELECT COUNT(*)::int AS total FROM training_submission_reviews
+          WHERE organization_id = ${access.id} AND assignment_id = ${assignmentId}
+            AND student_id = ${studentId}`;
+        const rows = await tx`
+          SELECT * FROM training_submission_reviews
+          WHERE organization_id = ${access.id} AND assignment_id = ${assignmentId}
+            AND student_id = ${studentId}
+          ORDER BY revision DESC, id DESC
+          LIMIT ${pagination.pageSize} OFFSET ${pagination.offset}`;
+        if (!hasOrganizationTrainingScope(access.role)
+            && !await actorHasActiveStudentScope(tx, access.id, actor.userId, studentId)) {
+          throw new ConcealedTeachingPermissionDeniedException('Training assignment target not found');
+        }
+        return {
+          items: rows.map(trainingReviewToJson), total: Number(totals[0]?.total ?? 0),
+          page: pagination.page, pageSize: pagination.pageSize,
+        };
+      }) as PageResult;
+    });
+  },
+
+  async createTrainingTargetReview(
+    actor, slug, assignmentId, studentId, input, idempotencyKey, requestHash, requestId,
+  ) {
+    await consumeMutationAttempt(
+      actor.userId, TRAINING_REVIEW_CREATE_OPERATION, 240, '1 minute',
+    );
+    return withDeniedAccessAudit(actor, slug, 'training.assignment.target.review.create', requestId, async () => {
+      try {
+        return await withRepeatableReadRetry<MutationResult>(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'training:review');
+          const assignments = await tx`
+            SELECT * FROM training_assignments
+            WHERE organization_id = ${access.id} AND id = ${assignmentId}
+            FOR UPDATE`;
+          if (!assignments.length) {
+            await trainingResourceMissing(tx, 'training_assignments', assignmentId, 'Training assignment not found');
+          }
+          const targets = await tx`
+            SELECT * FROM training_assignment_targets
+            WHERE organization_id = ${access.id} AND assignment_id = ${assignmentId}
+              AND target_kind = 'student' AND student_id = ${studentId}
+            FOR UPDATE`;
+          if (!targets.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Training assignment target not found');
+          if (!hasOrganizationTrainingScope(access.role)
+              && !await lockAndCheckTeacherStudentScope(tx, access, actor, studentId)) {
+            throw new ConcealedTeachingPermissionDeniedException('Training assignment target not found');
+          }
+          const idem = await beginIdempotency(
+            tx, actor.userId, access.id,
+            TRAINING_REVIEW_CREATE_OPERATION,
+            idempotencyKey, requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          if (!['published', 'closed'].includes(String(assignments[0].status))) {
+            throw new TeachingApiException('CONFLICT', 409, 'Draft training assignments cannot be reviewed');
+          }
+          if (BigInt(String(targets[0].evidence_count)) < 1n) {
+            throw new TeachingApiException('CONFLICT', 409, 'Training evidence is required before review');
+          }
+          const revision = Number(targets[0].latest_review_revision) + 1;
+          const rows = await tx`
+            INSERT INTO training_submission_reviews (
+              organization_id, assignment_id, student_id, revision,
+              reviewer_user_id, reviewer_user_id_snapshot, reviewer_display_name_snapshot,
+              reviewer_role_snapshot, status, rating, feedback
+            ) VALUES (
+              ${access.id}, ${assignmentId}, ${studentId}, ${revision},
+              ${actor.userId}, ${actor.userId}, ${actor.displayName}, ${access.role},
+              ${input.status}, ${input.rating}, ${input.feedback}
+            ) RETURNING *`;
+          const reviewId = String(rows[0].id);
+          const review = trainingReviewToJson(rows[0] as Record<string, unknown>);
+          await insertTrainingAudit(
+            tx, access, actor, 'training.assignment.target.review.create',
+            'training_submission_review', reviewId, requestId,
+            { assignmentId, studentId, revision, status: input.status, rating: input.rating },
+          );
+          const result: MutationResult = { status: 201, body: { review } };
+          await completeIdempotency(tx, idem.id, result, 'training_submission_review', reviewId);
+          return result;
+        });
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Training review could not be created');
+      }
+    });
+  },
+
   async saveAttendanceBatch(actor, slug, sessionId, input, idempotencyKey, requestHash, requestId) {
     return withDeniedAccessAudit(actor, slug, 'session.attendance.batch', requestId, async () => {
       await consumeMutationAttempt(actor.userId, 'session.attendance.batch', 240, '1 minute');
@@ -4044,6 +5831,261 @@ export function createTeachingSaasRoutes(deps: {
         c.req.param('orgSlug'),
         input,
         requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/training/templates', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listTrainingTemplates(
+        actor, c.req.param('orgSlug'), trainingPaginationOf(c), requestId,
+      );
+      return c.json({ templates: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/training/templates', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+      const result = await repository.createTrainingTemplate(
+        actor, c.req.param('orgSlug'), parseTrainingTemplateInput(body.value),
+        key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/training/templates/:templateId', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      assertQueryKeys(c, []);
+      const template = await repository.getTrainingTemplate(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('templateId'), 'templateId'), requestId,
+      );
+      return c.json({ template });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/training/templates/:templateId/versions', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listTrainingTemplateVersions(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('templateId'), 'templateId'),
+        trainingPaginationOf(c), requestId,
+      );
+      return c.json({ templateVersions: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/training/templates/:templateId/versions', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+      const result = await repository.createTrainingTemplateVersion(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('templateId'), 'templateId'),
+        parseTrainingTemplateVersionInput(body.value), key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/training/templates/:templateId/archive', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+      assertOnlyKeys(body.value, [], 'training template archive input');
+      const result = await repository.archiveTrainingTemplate(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('templateId'), 'templateId'),
+        key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/training/assignments', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listTrainingAssignments(
+        actor, c.req.param('orgSlug'), trainingAssignmentFilterOf(c),
+        trainingPaginationOf(c, ['status']), requestId,
+      );
+      return c.json({ assignments: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/training/assignments', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+      const result = await repository.createTrainingAssignment(
+        actor, c.req.param('orgSlug'), parseTrainingAssignmentInput(body.value),
+        key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/training/assignments/:assignmentId', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      assertQueryKeys(c, []);
+      return c.json(await repository.getTrainingAssignment(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'), requestId,
+      ));
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/revise', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+      const result = await repository.reviseTrainingAssignment(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
+        parseTrainingAssignmentInput(body.value), key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  const trainingAssignmentLifecycleHandler = (action: 'publish' | 'close') => async (c: Context) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+      assertOnlyKeys(body.value, [], `training assignment ${action} input`);
+      const orgSlug = c.req.param('orgSlug') ?? '';
+      const assignmentId = uuidParam(c.req.param('assignmentId') ?? '', 'assignmentId');
+      const result = action === 'publish'
+        ? await repository.publishTrainingAssignment(
+          actor, orgSlug, assignmentId, key, sha256(body.raw), requestId,
+        )
+        : await repository.closeTrainingAssignment(
+          actor, orgSlug, assignmentId, key, sha256(body.raw), requestId,
+        );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  };
+
+  routes.post(
+    '/teaching/organizations/:orgSlug/training/assignments/:assignmentId/publish',
+    trainingAssignmentLifecycleHandler('publish'),
+  );
+  routes.post(
+    '/teaching/organizations/:orgSlug/training/assignments/:assignmentId/close',
+    trainingAssignmentLifecycleHandler('close'),
+  );
+
+  routes.get('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/targets', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listTrainingAssignmentTargets(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
+        trainingTargetFilterOf(c), trainingPaginationOf(c, ['targetKind']), requestId,
+      );
+      return c.json({ targets: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/targets/:studentId/evidence', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listTrainingTargetEvidence(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
+        uuidParam(c.req.param('studentId'), 'studentId'), trainingPaginationOf(c), requestId,
+      );
+      return c.json({ evidence: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/targets/:studentId/reviews', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listTrainingTargetReviews(
+        actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
+        uuidParam(c.req.param('studentId'), 'studentId'), trainingPaginationOf(c), requestId,
+      );
+      return c.json({ reviews: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/targets/:studentId/reviews', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+      const assignmentId = uuidParam(c.req.param('assignmentId'), 'assignmentId');
+      const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+      const result = await repository.createTrainingTargetReview(
+        actor, c.req.param('orgSlug'), assignmentId, studentId, parseTrainingReviewInput(body.value),
+        key, trainingReviewRequestHash(assignmentId, studentId, body.raw), requestId,
       );
       return c.json(result.body, result.status);
     } catch (error) {

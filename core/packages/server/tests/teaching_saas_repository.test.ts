@@ -35,6 +35,10 @@ async function teachingRouteSource(): Promise<string> {
   return readFile(new URL('../src/routes/teaching_saas.ts', import.meta.url), 'utf8');
 }
 
+async function schemaSource(): Promise<string> {
+  return readFile(new URL('../src/db/schema.pg.sql', import.meta.url), 'utf8');
+}
+
 function sourceBetween(source: string, startMarker: string, endMarker: string): string {
   const start = source.indexOf(startMarker);
   const end = source.indexOf(endMarker, start + startMarker.length);
@@ -762,5 +766,155 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(evidence.match(/INSERT INTO training_evidence \(/g)).toHaveLength(1);
     expect(evidence).toContain('for (const assignmentId of assignmentIds)');
     expect(evidence).toContain('replayed: false');
+  });
+
+  it('locks the exact current teacher scope path before validating training selectors', async () => {
+    const source = await teachingRouteSource();
+    const studentScope = sourceBetween(
+      source,
+      'async function lockAndCheckTeacherStudentScope(',
+      '\nasync function trainingAssignmentEnvelope(',
+    );
+    expect(studentScope).toContain("member.status = 'active'");
+    expect(studentScope).toContain("member.role IN ('teacher', 'assistant')");
+    expect(studentScope).toContain("student.status = 'active'");
+    expect(studentScope).toContain("teaching_group.status = 'active'");
+    expect(studentScope).toContain("campus.status = 'active'");
+    const candidate = studentScope.indexOf('const candidateRows = await tx');
+    const teacherStudentLock = studentScope.indexOf("'teacher_student'", candidate);
+    const teacherGroupLock = studentScope.indexOf("'teacher_group'", candidate);
+    const membershipLock = studentScope.indexOf("'student_group'", teacherGroupLock);
+    const exactDirectCheck = studentScope.indexOf('actorHasExactDirectStudentScope(', teacherStudentLock);
+    const exactGroupCheck = studentScope.indexOf('actorHasExactGroupStudentScope(', membershipLock);
+    expect(teacherStudentLock).toBeGreaterThan(candidate);
+    expect(teacherGroupLock).toBeGreaterThan(candidate);
+    expect(membershipLock).toBeGreaterThan(teacherGroupLock);
+    expect(exactDirectCheck).toBeGreaterThan(teacherStudentLock);
+    expect(exactGroupCheck).toBeGreaterThan(membershipLock);
+    expect(studentScope).not.toContain('actorHasActiveStudentScope(');
+
+    const validation = sourceBetween(
+      source,
+      'async function lockAndValidateTrainingSelectors(',
+      '\nexport const teachingSaasRepository',
+    );
+    expect(validation).toContain('lockAndCheckTeacherGroupScope(tx, access, actor, groupId)');
+    expect(validation).toContain('lockAndCheckTeacherStudentScope(tx, access, actor, studentId)');
+    expect(validation).toContain('trainingSelectorMissing(');
+  });
+
+  it('materializes the exact active-student union before publishing an assignment', async () => {
+    const source = await teachingRouteSource();
+    const publish = sourceBetween(
+      source,
+      'async publishTrainingAssignment(',
+      '\n  async closeTrainingAssignment(',
+    );
+    const assignmentLock = publish.indexOf('FOR UPDATE OF assignment');
+    const scope = publish.indexOf("assertTrainingAssignmentScope(tx, access, actor, assignment, 'manage')");
+    const idempotency = publish.indexOf('beginIdempotency(', scope);
+    const databaseInstant = publish.indexOf('SELECT clock_timestamp() AS published_at', idempotency);
+    const groupSetLock = publish.indexOf("'student_group', '*', groupId", databaseInstant);
+    const groupRowLock = publish.indexOf('FOR UPDATE OF teaching_group', groupSetLock);
+    const membershipRead = publish.indexOf('FROM student_group_memberships membership', groupRowLock);
+    const activeStudentJoin = publish.indexOf("student.status = 'active'", membershipRead);
+    const studentRowLock = publish.indexOf('FROM student_profiles', activeStudentJoin);
+    const expandedDelete = publish.indexOf('DELETE FROM training_assignment_targets', studentRowLock);
+    const expandedInsert = publish.indexOf('INSERT INTO training_assignment_targets (', expandedDelete);
+    const publishTransition = publish.indexOf("SET status = 'published'", expandedInsert);
+    expect(assignmentLock).toBeGreaterThan(-1);
+    expect(scope).toBeGreaterThan(assignmentLock);
+    expect(idempotency).toBeGreaterThan(scope);
+    expect(databaseInstant).toBeGreaterThan(idempotency);
+    expect(groupSetLock).toBeGreaterThan(databaseInstant);
+    expect(groupRowLock).toBeGreaterThan(groupSetLock);
+    expect(membershipRead).toBeGreaterThan(groupRowLock);
+    expect(activeStudentJoin).toBeGreaterThan(membershipRead);
+    expect(studentRowLock).toBeGreaterThan(activeStudentJoin);
+    expect(expandedDelete).toBeGreaterThan(studentRowLock);
+    expect(expandedInsert).toBeGreaterThan(expandedDelete);
+    expect(publishTransition).toBeGreaterThan(expandedInsert);
+    expect(publish).toContain('const directStudents = new Set(directStudentIds)');
+    expect(publish).toContain('if (previous === undefined || groupId < previous)');
+    expect(publish).toContain('if (directStudents.has(studentId)) continue');
+    expect(publish).toContain('Published training assignments require at least one active student');
+  });
+
+  it('filters staff target pages by the canonical active scope before pagination', async () => {
+    const source = await teachingRouteSource();
+    const targets = sourceBetween(
+      source,
+      'async listTrainingAssignmentTargets(',
+      '\n  async listTrainingTargetEvidence(',
+    );
+    expect(targets.match(/WITH active_scope_actor AS/g)).toHaveLength(2);
+    expect(targets.match(/member\.status = 'active'/g)).toHaveLength(2);
+    expect(targets.match(/teaching_group\.status = 'active'/g)).toHaveLength(2);
+    expect(targets.match(/campus\.status = 'active'/g)).toHaveLength(2);
+    expect(targets.match(/student\.status = 'active'/g)).toHaveLength(4);
+    const staffItems = targets.lastIndexOf('WITH active_scope_actor AS');
+    const scopedPredicate = targets.indexOf('target.student_id IN (SELECT id FROM scoped_student_ids)', staffItems);
+    const pagination = targets.indexOf('LIMIT ${pagination.pageSize} OFFSET ${pagination.offset}', staffItems);
+    expect(scopedPredicate).toBeGreaterThan(staffItems);
+    expect(pagination).toBeGreaterThan(scopedPredicate);
+  });
+
+  it('replays Stage 3C mutations before mutable input state and keeps reviews append-only', async () => {
+    const source = await teachingRouteSource();
+    const create = sourceBetween(
+      source,
+      'async createTrainingAssignment(',
+      '\n  async reviseTrainingAssignment(',
+    );
+    expect(create.indexOf('beginIdempotency(')).toBeLessThan(
+      create.indexOf('lockAndValidateTrainingSelectors('),
+    );
+
+    const revise = sourceBetween(
+      source,
+      'async reviseTrainingAssignment(',
+      '\n  async publishTrainingAssignment(',
+    );
+    const existingScope = revise.indexOf("assertTrainingAssignmentScope(");
+    const reviseIdempotency = revise.indexOf('beginIdempotency(', existingScope);
+    const replacementValidation = revise.indexOf('lockAndValidateTrainingSelectors(', reviseIdempotency);
+    expect(existingScope).toBeGreaterThan(-1);
+    expect(reviseIdempotency).toBeGreaterThan(existingScope);
+    expect(replacementValidation).toBeGreaterThan(reviseIdempotency);
+
+    const review = sourceBetween(
+      source,
+      'async createTrainingTargetReview(',
+      '\n  async saveAttendanceBatch(',
+    );
+    const operation = source.match(/const TRAINING_REVIEW_CREATE_OPERATION = '([^']+)'/);
+    expect(operation?.[1]).toBe('training.review.create');
+    expect(operation?.[1].length).toBeLessThanOrEqual(100);
+    expect(review.match(/TRAINING_REVIEW_CREATE_OPERATION/g)).toHaveLength(2);
+    expect(review).not.toContain('training.assignment.review.create:${assignmentId}:${studentId}');
+    const targetLock = review.indexOf('FROM training_assignment_targets');
+    const scopeLock = review.indexOf('lockAndCheckTeacherStudentScope(', targetLock);
+    const reviewIdempotency = review.indexOf('beginIdempotency(', scopeLock);
+    const replay = review.indexOf("if ('replay' in idem) return idem.replay", reviewIdempotency);
+    const evidenceCheck = review.indexOf('evidence_count', replay);
+    const revision = review.indexOf('latest_review_revision', evidenceCheck);
+    const insert = review.indexOf('INSERT INTO training_submission_reviews', revision);
+    expect(targetLock).toBeGreaterThan(-1);
+    expect(scopeLock).toBeGreaterThan(targetLock);
+    expect(reviewIdempotency).toBeGreaterThan(scopeLock);
+    expect(replay).toBeGreaterThan(reviewIdempotency);
+    expect(evidenceCheck).toBeGreaterThan(replay);
+    expect(revision).toBeGreaterThan(evidenceCheck);
+    expect(insert).toBeGreaterThan(revision);
+    expect(review).not.toContain('feedback: input.feedback');
+  });
+
+  it('keeps the shared review operation within both persistence column limits', async () => {
+    const [source, schema] = await Promise.all([teachingRouteSource(), schemaSource()]);
+    const operation = source.match(/const TRAINING_REVIEW_CREATE_OPERATION = '([^']+)'/)?.[1];
+    expect(operation).toBeDefined();
+    expect(operation!.length).toBeLessThanOrEqual(100);
+    expect(schema).toMatch(/CREATE TABLE teaching_idempotency_requests[\s\S]*?operation\s+VARCHAR\(100\) NOT NULL/);
+    expect(schema).toMatch(/CREATE TABLE teaching_mutation_rate_limits[\s\S]*?operation\s+VARCHAR\(100\) NOT NULL/);
   });
 });
