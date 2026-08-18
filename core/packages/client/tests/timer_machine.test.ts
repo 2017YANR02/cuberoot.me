@@ -133,6 +133,80 @@ describe('shared timer machine', () => {
     expect(started.state.startedAtMs).toBe(8_000);
   });
 
+  it('stops at the calibrated cube timestamp without counting delivery delay', () => {
+    const running: TimerMachineState = {
+      phase: 'running',
+      lastMs: null,
+      startedAtMs: 20_000,
+      inspectionStartedAtMs: 3_999,
+      inspectionSec: 15,
+      autoPenalty: '+2',
+    };
+    const stopped = apply(running, {
+      type: 'stop-from-cube',
+      nowMs: 25_120,
+      atMs: 25_000,
+    }, inspection);
+
+    expect(stopped.accepted).toBe(true);
+    expect(stopped.solve).toEqual({
+      timeMs: 5_000,
+      inspectionMs: 16_001,
+      autoPenalty: '+2',
+    });
+  });
+
+  it('clamps future cube stop timestamps to arrival and falls back when absent', () => {
+    const running = apply(initialTimerMachineState(), {
+      type: 'start-now',
+      nowMs: 10_000,
+    }).state;
+
+    const future = apply(running, {
+      type: 'stop-from-cube',
+      nowMs: 12_000,
+      atMs: 12_500,
+    });
+    expect(future.solve?.timeMs).toBe(2_000);
+
+    const absent = apply(running, {
+      type: 'stop-from-cube',
+      nowMs: 12_100,
+    });
+    expect(absent.solve?.timeMs).toBe(2_100);
+
+    const invalid = apply(running, {
+      type: 'stop-from-cube',
+      nowMs: 12_200,
+      atMs: Number.NaN,
+    });
+    expect(invalid.solve?.timeMs).toBe(2_200);
+  });
+
+  it('rejects stale cube stops and cube stops outside a running attempt', () => {
+    const running = apply(initialTimerMachineState(), {
+      type: 'start-now',
+      nowMs: 10_000,
+    }).state;
+    const stale = apply(running, {
+      type: 'stop-from-cube',
+      nowMs: 12_000,
+      atMs: 9_999,
+    });
+    expect(stale.accepted).toBe(false);
+    expect(stale.state).toBe(running);
+    expect(stale.solve).toBeUndefined();
+
+    const idle = initialTimerMachineState();
+    const outsideRun = apply(idle, {
+      type: 'stop-from-cube',
+      nowMs: 12_000,
+      atMs: 11_900,
+    });
+    expect(outsideRun.accepted).toBe(false);
+    expect(outsideRun.state).toBe(idle);
+  });
+
   it('normalizes invalid and negative elapsed inputs', () => {
     const started = apply(initialTimerMachineState(), {
       type: 'start-now',

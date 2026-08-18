@@ -39,6 +39,8 @@ export interface TimerHandle {
   stopExternal: (timeMs: number, inspectionMs?: number) => void;
   /** Start an armed attempt from a smart-cube move timestamp. */
   startFromCube: (atMs?: number) => boolean;
+  /** Stop a running attempt at the smart cube's calibrated move timestamp. */
+  stopFromCube: (atMs?: number) => boolean;
   /** Cancel an in-progress arm while preserving the last displayed solve. */
   cancelArm: () => void;
 }
@@ -215,6 +217,15 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     return transition.accepted === true;
   }, [dispatch]);
 
+  const stopFromCube = useCallback((atMs?: number): boolean => {
+    const transition = dispatch({
+      type: 'stop-from-cube',
+      nowMs: performance.now(),
+      atMs,
+    });
+    return transition.accepted === true;
+  }, [dispatch]);
+
   const reset = useCallback(() => {
     dispatch({ type: 'reset' });
   }, [dispatch]);
@@ -240,6 +251,7 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     startNow,
     stopExternal,
     startFromCube,
+    stopFromCube,
     cancelArm,
   };
 }

@@ -665,11 +665,13 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
         try { sub(move, ts); } catch (e) { console.error('[bt-broadcast]', e); }
       }
     },
-    // 魔方回到还原态 = 停表,与 Solo 逐字一致。只在真的在计时时停,所以别人回合里
-    // 随手把魔方拧回还原不会替你交卷。停表走 onPressDown → useTimer 结算 → onSolve
-    // 上报成绩,同时起表(startNow 起的表)和普通起表都落在同一条路径上。
-    onSolved: () => {
-      if (phaseRef.current === 'running') timer.onPressDown();
+    // 魔方回到还原态 = 停表,与 Solo 同一条规则。只在真的在计时时停,所以别人回合里
+    // 随手把魔方拧回还原不会替你交卷。结算使用最后一手的校准时刻,同时起表
+    // (startNow 起的表)和普通起表仍落在同一条 useTimer 路径上。
+    onSolved: (atMs) => {
+      if (phaseRef.current === 'running' && timer.stopFromCube(atMs)) {
+        phaseRef.current = 'stopped';
+      }
     },
     onNeedMac: requestMac,
     onConnectionEvent: (ev) => {
