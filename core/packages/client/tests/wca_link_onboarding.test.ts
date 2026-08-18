@@ -15,6 +15,7 @@ const CLIENT = join(__dirname, '..');
 
 const account = readFileSync(join(SERVER, 'src/utils/account.ts'), 'utf8');
 const route = readFileSync(join(SERVER, 'src/routes/account_auth.ts'), 'utf8');
+const verifiedNameMigration = readFileSync(join(SERVER, 'migrations/0151_wca_verified_display_names.sql'), 'utf8');
 const panel = readFileSync(join(CLIENT, 'components/AuthPanel.tsx'), 'utf8');
 const page = readFileSync(join(CLIENT, 'app/[lang]/account/page.tsx'), 'utf8');
 const socialCb = readFileSync(join(CLIENT, 'app/auth/social/callback/page.tsx'), 'utf8');
@@ -94,6 +95,35 @@ describe('引导只给 OAuth 一条路', () => {
   it('不给手填 WCA ID 的输入框', () => {
     // 手填没有所有权证明 —— 等于让任何人认领别人的成绩和纪录。绑定必须由 WCA 授权回来。
     expect(body).not.toContain('<input');
+  });
+});
+
+describe('WCA 实名锁定用户名', () => {
+  it('绑定 WCA 时用授权资料里的官方姓名覆盖展示名', () => {
+    expect(route).toContain("addIdentity(uid, 'wca', me.wca_id, me.wca_id, verifiedName)");
+    expect(account).toMatch(/provider === 'wca'[\s\S]{0,500}?display_name = \$\{verifiedDisplayName \?\? ''\}/);
+  });
+
+  it('已绑定账号从 WCA 缓存回填官方姓名', () => {
+    expect(verifiedNameMigration).toMatch(/UPDATE app_users AS u[\s\S]*SET display_name = BTRIM\(w\.name\)[\s\S]*FROM wca_users AS w/);
+    expect(verifiedNameMigration).toContain('u.wca_id = w.wca_id');
+    expect(verifiedNameMigration).toContain("NULLIF(BTRIM(w.name), '') IS NOT NULL");
+  });
+
+  it('以后每次 WCA 登录都会刷新官方姓名', () => {
+    expect(account).toContain("provider === 'wca' && profile.name");
+    expect(account).toContain("CASE WHEN ? = 'wca' THEN ?");
+  });
+
+  it('后端写入以 wca_id IS NULL 为原子闸门', () => {
+    expect(account).toMatch(/UPDATE app_users SET display_name = \? WHERE id = \? AND wca_id IS NULL/);
+    expect(route).toContain('WCA-linked accounts use their verified WCA name');
+  });
+
+  it('前端对 WCA 用户隐藏修改入口并说明实名来源', () => {
+    expect(page).toContain('const wcaLocked = Boolean(user?.wcaId)');
+    expect(page).toContain('!editing && !wcaLocked');
+    expect(page).toContain('已绑定 WCA，用户名使用 WCA 实名。');
   });
 });
 

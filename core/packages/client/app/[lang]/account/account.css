@@ -141,6 +141,7 @@
 }
 
 .account-profile-editor { margin-bottom: 28px; }
+.account-name-lock-hint { margin-top: 7px; }
 .account-name-form {
   display: flex;
   flex-direction: column;
