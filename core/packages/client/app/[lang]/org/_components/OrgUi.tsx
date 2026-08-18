@@ -92,6 +92,15 @@ export function entityStatusLabel(status: string, t: ReturnType<typeof useT>): s
     frozen: ['已冻结', 'Frozen'],
     expired: ['已过期', 'Expired'],
     exhausted: ['已用完', 'Exhausted'],
+    draft: ['草稿', 'Draft'],
+    published: ['已发布', 'Published'],
+    closed: ['已结束', 'Closed'],
+    pending: ['待使用', 'Pending'],
+    consumed: ['已使用', 'Consumed'],
+    revoked: ['已撤销', 'Revoked'],
+    commented: ['已批注', 'Commented'],
+    needs_changes: ['需改进', 'Needs changes'],
+    accepted: ['已通过', 'Accepted'],
   };
   const label = labels[status];
   return label ? t(label[0], label[1]) : status;

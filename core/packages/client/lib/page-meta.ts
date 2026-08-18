@@ -91,6 +91,12 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'org/[orgSlug]/packages': { title: { zh: '课包管理', en: 'Package Management' } },
   'org/[orgSlug]/sessions': { title: { zh: '课次管理', en: 'Session Management' } },
   'org/[orgSlug]/sessions/[sessionId]': { title: { zh: '课次详情', en: 'Session Details' } },
+  'org/[orgSlug]/training': { title: { zh: '训练任务', en: 'Training Assignments' } },
+  'org/[orgSlug]/training/templates/[templateId]': { title: { zh: '训练模板', en: 'Training Template' } },
+  'org/[orgSlug]/training/assignments/[assignmentId]': { title: { zh: '训练任务详情', en: 'Training Assignment Details' } },
+  'org/[orgSlug]/training/assignments/[assignmentId]/students/[studentId]': { title: { zh: '训练记录与批改', en: 'Training Evidence and Review' } },
+  'training/[orgSlug]': { title: { zh: '我的训练任务', en: 'My Training Assignments' } },
+  'account/student-binding': { title: { zh: '绑定学员档案', en: 'Link Student Profile' } },
   'privacy': {
     title: { zh: '移动端与小程序隐私政策', en: 'Mobile and Mini Program Privacy Policy' },
     description: {
