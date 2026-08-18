@@ -1,8 +1,11 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { AlgCase, AlgEntry } from '@cuberoot/shared';
 import { hasOhAlgsForHand, ohAlgsForCase } from '@/lib/alg_oh_hand';
 import { ALG_TAG_LABEL, OH_TAG_LABEL } from '@/lib/alg_tags';
 import i18n from '@/i18n/i18n-client';
+
+const categorySource = readFileSync(new URL('../components/AlgCategoryView.tsx', import.meta.url), 'utf8');
 
 function mkCase(no: number, mirror: number | undefined, algs: AlgEntry[][]): AlgCase {
   return {
@@ -23,6 +26,13 @@ function mkCase(no: number, mirror: number | undefined, algs: AlgEntry[][]): Alg
 }
 
 describe('PLL one-handed formulas', () => {
+  it('在标签菜单中并列左右单，不再渲染额外开关', () => {
+    expect(categorySource).toContain('<option value="oh">{OH_TAG_LABEL.left()}</option>');
+    expect(categorySource).toContain('<option value={RIGHT_OH_MENU_VALUE}>{OH_TAG_LABEL.right()}</option>');
+    expect(categorySource).toContain("setTagParams({ tag: 'oh', hand: 'right' })");
+    expect(categorySource).not.toContain('className="alg-oh-hand-toggle"');
+  });
+
   it('将入库 OH 明确标为左单，并为镜像公式提供右单标签', async () => {
     const originalLanguage = i18n.language;
     try {

@@ -80,7 +80,6 @@ import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { hasOhAlgsForHand, OH_HANDS, ohAlgsForCase, type OhHand } from '@/lib/alg_oh_hand';
 import {
   OPTIMAL_METRICS,
@@ -96,6 +95,9 @@ import {
   sortPreferredAlgs,
   usePreferredAlgs,
 } from '@/lib/alg-preferred-algs';
+
+const RIGHT_OH_MENU_VALUE = 'oh-right' as const;
+type AlgTagMenuValue = AlgTag | 'all' | typeof RIGHT_OH_MENU_VALUE;
 
 // oriAdjustSetup / shortOriName 已提到 lib/alg_display 与 case 详情页共用(详情页原先漏了它们,见那里的注释)。
 
@@ -533,10 +535,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     });
   }, []);
   // 筛选 → replace(不往历史里塞;AGENTS.md「URL 状态」)
-  const [tagFilter, setTagFilter] = useQueryState('tag', parseAsStringEnum<AlgTag | 'all'>(['all', ...ALG_TAGS]).withDefault('all'));
-  const [ohHand, setOhHand] = useQueryState(
-    'hand',
-    parseAsStringEnum<OhHand>([...OH_HANDS]).withDefault('left'),
+  const [{ tag: tagFilter, hand: ohHand }, setTagParams] = useQueryStates(
+    {
+      tag: parseAsStringEnum<AlgTag | 'all'>(['all', ...ALG_TAGS]).withDefault('all'),
+      hand: parseAsStringEnum<OhHand>([...OH_HANDS]).withDefault('left'),
+    },
+    { history: 'replace', scroll: false },
   );
   const [notationStyle, setNotationStyle] = useQueryState(
     'notation',
@@ -1200,27 +1204,27 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           <>
             <select
               className="alg-header-select"
-              value={tagFilter}
-              onChange={e => setTagFilter(e.target.value as AlgTag | 'all')}
+              value={tagFilter === 'oh' && ohHand === 'right' ? RIGHT_OH_MENU_VALUE : tagFilter}
+              onChange={e => {
+                const value = e.target.value as AlgTagMenuValue;
+                if (value === RIGHT_OH_MENU_VALUE) {
+                  void setTagParams({ tag: 'oh', hand: 'right' });
+                  return;
+                }
+                void setTagParams({ tag: value, hand: 'left' });
+              }}
               aria-label={tr({ zh: '按标签筛选公式', en: 'Filter algs by tag' })}
             >
               <option value="all">{tr({ zh: '全部公式', en: 'All algs' })}</option>
-              {availableTags.map(t => (
-                <option key={t} value={t}>
-                  {t === 'oh' && canChooseOhHand ? OH_TAG_LABEL[ohHand]() : ALG_TAG_LABEL[t]()}
-                </option>
+              {availableTags.map(t => t === 'oh' && canChooseOhHand ? (
+                <Fragment key={t}>
+                  <option value="oh">{OH_TAG_LABEL.left()}</option>
+                  <option value={RIGHT_OH_MENU_VALUE}>{OH_TAG_LABEL.right()}</option>
+                </Fragment>
+              ) : (
+                <option key={t} value={t}>{ALG_TAG_LABEL[t]()}</option>
               ))}
             </select>
-            {canChooseOhHand && tagFilter === 'oh' && (
-              <PillToggle
-                value={ohHand === 'right'}
-                onChange={right => setOhHand(right ? 'right' : 'left')}
-                offLabel={OH_TAG_LABEL.left()}
-                onLabel={OH_TAG_LABEL.right()}
-                ariaLabel={tr({ zh: '单手公式惯用手', en: 'One-handed algorithm hand' })}
-                className="alg-oh-hand-toggle"
-              />
-            )}
           </>
         )}
         {/* 打印表:子组选择页(没列 case)也给 —— 那一层下载的是**整套**,
