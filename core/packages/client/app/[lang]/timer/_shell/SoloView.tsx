@@ -29,6 +29,11 @@ import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { petReact } from '@/lib/deskpet';
+import {
+  parseTrainingAssignmentDestination,
+  startTrainingEvidenceOutbox,
+  submitTrainingEvidence,
+} from '@/lib/training-evidence';
 import MoreMenu, { type MoreMenuItem } from '../_components/MoreMenu';
 import { syncLangToUrl } from '@/i18n/i18n-client';
 
@@ -243,6 +248,33 @@ interface SoloViewProps {
   onPresenceChange?: (report: TimerPresenceReport) => void;
 }
 
+function submitTimerTrainingEvidence(
+  destination: ReturnType<typeof parseTrainingAssignmentDestination>,
+  solve: Solve,
+): void {
+  if (!destination || !Number.isFinite(solve.ts) || !Number.isFinite(solve.timeMs)) return;
+  const success = solve.penalty !== 'DNF' && solve.penalty !== 'DNS';
+  const durationMs = Math.min(86_400_000, Math.max(0, Math.round(solve.timeMs)));
+  const resultMs = success
+    ? Math.min(86_400_000, durationMs + (solve.penalty === '+2' ? 2_000 : 0))
+    : null;
+  submitTrainingEvidence(destination, {
+    schemaVersion: 1,
+    source: 'timer',
+    sourceEventId: `timer:${solve.id}`,
+    occurredAt: new Date(solve.ts).toISOString(),
+    activity: 'solve',
+    durationMs,
+    metrics: { success, resultMs },
+    payloadVersion: 1,
+    payload: {
+      event: solve.event,
+      penalty: solve.penalty,
+      ...(solve.caseId ? { caseId: solve.caseId } : {}),
+    },
+  });
+}
+
 export default function SoloView({ playersControl, presenceControl, onPresenceChange }: SoloViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -252,6 +284,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const isMobile = useMediaQuery('(max-width: 480px)');
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+
+  const trainingDestinationRef = useRef<ReturnType<typeof parseTrainingAssignmentDestination>>(null);
+  useEffect(() => {
+    trainingDestinationRef.current = parseTrainingAssignmentDestination(window.location.search);
+    return startTrainingEvidenceOutbox(trainingDestinationRef.current);
+  }, []);
 
 
   // 解法提示的全屏浮层由 SolverHintPanel 经同一个 URL param 开合(手机点 pill、桌面把头部的
@@ -863,6 +901,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     }
 
     setByEvent(prev => ({ ...prev, [ev]: [...(prev[ev] ?? []), solve] }));
+    submitTimerTrainingEvidence(trainingDestinationRef.current, solve);
     // 拧完了复盘就在这一屏,不用去成绩里找那条刚拧的。只对录到动作流的成绩成立
     // (判据见 shouldAutoRecap),下一把一开始就收起。
     setRecapId(shouldAutoRecap(solve, { autoRecap: settings.autoRecap }) ? solve.id : null);
@@ -1506,6 +1545,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     }
     setLastPenalty('ok');
     setByEvent(prev => ({ ...prev, [solveEvent]: [...(prev[solveEvent] ?? []), solve] }));
+    submitTimerTrainingEvidence(trainingDestinationRef.current, solve);
     nextScramble();
   };
   const stackmat = useStackmat({ onStop: (ms) => externalTimeRecordRef.current?.(ms) });
