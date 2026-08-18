@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { ChevronLeft, ChevronRight, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox } from 'lucide-react';
+import { Building2, ChevronLeft, ChevronRight, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import FollowedComps from '@/components/FollowedComps';
@@ -110,6 +110,13 @@ export default function AccountPage() {
       href: '/alg/progress',
       icon: <GraduationCap size={22} className="account-card-icon" />,
       title: tr({ zh: '学习进度', en: 'Learning Progress' }),
+    },
+    {
+      key: 'teaching',
+      href: '/org',
+      icon: <Building2 size={22} className="account-card-icon" />,
+      title: tr({ zh: '教学管理', en: 'Teaching' }),
+      desc: tr({ zh: '机构、学员、校区和班级', en: 'Organizations, students, campuses, and classes' }),
     },
     ...(isAdmin ? [{
       key: 'submissions',
