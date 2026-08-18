@@ -5,9 +5,9 @@ import { create } from 'zustand';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import {
   generateScramble, cstimerStyleScramble, F2L_SLOTS, f2lFinalAdjustmentVariants,
-  normalizeF2LSlots, normalizePsf2lSlotPairs, PSF2L_SLOT_PAIRS,
+  normalizeF2LSlots, normalizePsf2lSlots, psf2lSlotPairsForSlots, psf2lSlotsFromPairs,
   trainerSetScrambleFeatures, type F2LFinalAdjustment,
-  type F2LSlot, type Psf2lSlotPair, type ScrambleKind,
+  type F2LSlot, type ScrambleKind,
 } from './trainer-scramble';
 import { caseKey, findCaseByKey } from './trainer-case-key';
 import {
@@ -176,8 +176,8 @@ interface TrainerPrefs {
   randomInitialD: boolean;
   /** PSF2L:保留 XXCross 与目标对子,打散另一组剩余 F2L。 */
   psf2lExtraScramble: boolean;
-  /** PSF2L:允许出题的未还原双槽位,至少一组。 */
-  psf2lSlotPairs: Psf2lSlotPair[];
+  /** PSF2L:允许作为未还原训练槽的槽位,至少两个。 */
+  psf2lSlots: F2LSlot[];
   /** F2L / 进阶 F2L:打乱末尾随机补 AUF。 */
   randomFinalAuf: boolean;
   /** F2L / 进阶 F2L:允许出题的槽位,至少一个。 */
@@ -225,7 +225,7 @@ interface TrainerPrefs {
 }
 const DEFAULT_PREFS: TrainerPrefs = {
   preAuf: true, postAuf: true, randomInitialD: true, psf2lExtraScramble: false,
-  psf2lSlotPairs: [...PSF2L_SLOT_PAIRS],
+  psf2lSlots: [...F2L_SLOTS],
   randomFinalAuf: true, f2lSlots: [...F2L_SLOTS],
   oriSel: {}, timing: false, mode: 'recap', probMode: 'uniform',
   recapOrder: 'shuffle', showRecapRoundEnd: true, timerFont: 'lcd', scrambleFont: 'sans',
@@ -241,15 +241,24 @@ const loadPrefs = (): TrainerPrefs => {
   try {
     const raw = localStorage.getItem(PREFS_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw) as Partial<TrainerPrefs> & { randomFinalY?: unknown };
+      const parsed = JSON.parse(raw) as Partial<TrainerPrefs> & {
+        randomFinalY?: unknown;
+        psf2lSlotPairs?: unknown;
+      };
       // 旧版只有「随机 y」布尔值:关 = 只练 FR,开 / 缺省 = 四槽全练。
       const legacySlots = parsed.randomFinalY === false ? ['FR'] as const : F2L_SLOTS;
-      const { randomFinalY: _legacyRandomFinalY, ...current } = parsed;
+      // 旧版 PSF2L 直接存所选对子；新版四槽 UI 取这些对子涉及的全部槽位。
+      const legacyPsf2lSlots = psf2lSlotsFromPairs(parsed.psf2lSlotPairs);
+      const {
+        randomFinalY: _legacyRandomFinalY,
+        psf2lSlotPairs: _legacyPsf2lSlotPairs,
+        ...current
+      } = parsed;
       return {
         ...DEFAULT_PREFS,
         ...current,
         f2lSlots: normalizeF2LSlots(parsed.f2lSlots, legacySlots),
-        psf2lSlotPairs: normalizePsf2lSlotPairs(parsed.psf2lSlotPairs),
+        psf2lSlots: normalizePsf2lSlots(parsed.psf2lSlots ?? legacyPsf2lSlots),
       };
     }
   } catch { /* ignore */ }
@@ -266,7 +275,7 @@ const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   preAuf: st.preAuf, postAuf: st.postAuf,
   randomInitialD: st.randomInitialD,
   psf2lExtraScramble: st.psf2lExtraScramble,
-  psf2lSlotPairs: st.psf2lSlotPairs,
+  psf2lSlots: st.psf2lSlots,
   randomFinalAuf: st.randomFinalAuf, f2lSlots: st.f2lSlots,
   oriSel: st.oriSel, timing: st.timing, mode: st.mode,
   probMode: st.probMode, recapOrder: st.recapOrder, showRecapRoundEnd: st.showRecapRoundEnd,
@@ -380,7 +389,7 @@ interface TrainerState {
   postAuf: boolean;
   randomInitialD: boolean;
   psf2lExtraScramble: boolean;
-  psf2lSlotPairs: Psf2lSlotPair[];
+  psf2lSlots: F2LSlot[];
   randomFinalAuf: boolean;
   f2lSlots: F2LSlot[];
   oriSel: Record<string, number[]>;
@@ -439,7 +448,7 @@ interface TrainerState {
   setPostAuf: (v: boolean) => void;
   setRandomInitialD: (v: boolean) => void;
   setPsf2lExtraScramble: (v: boolean) => void;
-  setPsf2lSlotPairs: (pairs: readonly Psf2lSlotPair[]) => void;
+  setPsf2lSlots: (slots: readonly F2LSlot[]) => void;
   /** 后台候选池到位后,让当前 PSF2L 打乱立即改用槽位 / 增强候选。 */
   refreshPsf2lExtraScrambles: () => void;
   setRandomFinalAuf: (v: boolean) => void;
@@ -621,7 +630,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   const aufOpts = (st: {
     mode: TrainerMode; puzzle: AlgPuzzle | null; set: string | null;
     preAuf: boolean; postAuf: boolean; randomInitialD: boolean;
-    psf2lExtraScramble: boolean; psf2lSlotPairs: Psf2lSlotPair[];
+    psf2lExtraScramble: boolean; psf2lSlots: F2LSlot[];
     randomFinalAuf: boolean; f2lSlots: F2LSlot[];
     oriSel: Record<string, number[]>;
   }) => {
@@ -642,7 +651,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
           postAuf: st.postAuf,
           randomInitialD: features.randomInitialD && st.randomInitialD,
           psf2lExtraScramble: features.psf2lExtraScramble && st.psf2lExtraScramble,
-          psf2lSlotPairs: features.psf2lSlotPairs ? st.psf2lSlotPairs : undefined,
+          psf2lSlotPairs: features.psf2lSlots ? psf2lSlotPairsForSlots(st.psf2lSlots) : undefined,
           psf2lFaceTurnsOnly: features.psf2lExtraScramble,
           randomFinalAuf: features.randomFinalAuf && st.randomFinalAuf,
           f2lSlots: features.f2lSlots ? st.f2lSlots : undefined,
@@ -1198,7 +1207,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       postAuf: opts?.noAufDefault ? false : prefs.postAuf,
       randomInitialD: prefs.randomInitialD,
       psf2lExtraScramble: prefs.psf2lExtraScramble,
-      psf2lSlotPairs: prefs.psf2lSlotPairs,
+      psf2lSlots: prefs.psf2lSlots,
       randomFinalAuf: prefs.randomFinalAuf,
       f2lSlots: prefs.f2lSlots,
       // 朝向偏好按形状分组、跨 set 通用,没有「本场默认关」这回事 —— 直接取落盘的。
@@ -1319,10 +1328,10 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       persistPrefs(prefsOf(get()));
       regenCurrent();
     },
-    setPsf2lSlotPairs: (pairs) => {
-      const next = normalizePsf2lSlotPairs(pairs, []);
-      if (next.length === 0) return;
-      set({ psf2lSlotPairs: next });
+    setPsf2lSlots: (slots) => {
+      const next = normalizePsf2lSlots(slots, []);
+      if (next.length < 2) return;
+      set({ psf2lSlots: next });
       persistPrefs(prefsOf(get()));
       regenCurrent(true);
     },
