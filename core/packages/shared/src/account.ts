@@ -69,6 +69,25 @@ export function isValidPhone(p: string): boolean {
   return PHONE_RE.test(p);
 }
 
+// 站内用户名只是展示名,不是唯一 handle,也不参与登录。按 Unicode code point 计数,
+// 避免 emoji 等代理对被当成两个字符;拒绝控制符和双向文本控制符,防止换行 / 欺骗显示。
+export const DISPLAY_NAME_MAX_LENGTH = 50;
+const DISPLAY_NAME_FORBIDDEN_RE = /[\u0000-\u001F\u007F-\u009F\u2028\u2029\u202A-\u202E\u2066-\u2069\uD800-\uDFFF]/u;
+
+export function normalizeDisplayName(raw: string): string {
+  return raw.normalize('NFC').trim();
+}
+
+export function displayNameLength(name: string): number {
+  return Array.from(name).length;
+}
+
+export function isValidDisplayName(name: unknown): name is string {
+  if (typeof name !== 'string') return false;
+  const length = displayNameLength(name);
+  return length >= 1 && length <= DISPLAY_NAME_MAX_LENGTH && !DISPLAY_NAME_FORBIDDEN_RE.test(name);
+}
+
 // 密码:仅长度约束(8..128)。不强制字符组成(NIST 800-63B:长度优先,组成规则反而降安全),
 // 前后端共用同一判据。真正的抗爆破靠服务端 scrypt 慢哈希 + 每 IP 限流。
 export function isValidPassword(pw: unknown): pw is string {

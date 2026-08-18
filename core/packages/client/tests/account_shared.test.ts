@@ -3,6 +3,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   ownerKey, isWcaIdFormat, normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
+  DISPLAY_NAME_MAX_LENGTH, displayNameLength, normalizeDisplayName, isValidDisplayName,
 } from '@cuberoot/shared/account';
 
 describe('ownerKey', () => {
@@ -75,5 +76,29 @@ describe('password 校验(长度 8..128)', () => {
     expect(isValidPassword('a'.repeat(129))).toBe(false); // 超 128
     expect(isValidPassword(undefined)).toBe(false);
     expect(isValidPassword(12345678)).toBe(false);       // 非字符串,即便"长度"够
+  });
+});
+
+describe('站内用户名规范化 + 校验', () => {
+  it('去首尾空格并归一 Unicode,中间空格保留', () => {
+    expect(normalizeDisplayName('  Ruinmin Yan  ')).toBe('Ruinmin Yan');
+    expect(normalizeDisplayName(' 颜瑞民 ')).toBe('颜瑞民');
+    expect(normalizeDisplayName('e\u0301')).toBe('é');
+  });
+
+  it('按 Unicode 字符计数并接受边界值', () => {
+    expect(displayNameLength('颜😀')).toBe(2);
+    expect(isValidDisplayName('A')).toBe(true);
+    expect(isValidDisplayName('😀'.repeat(DISPLAY_NAME_MAX_LENGTH))).toBe(true);
+    expect(isValidDisplayName('A'.repeat(DISPLAY_NAME_MAX_LENGTH))).toBe(true);
+  });
+
+  it('拒绝空值、超长、控制字符和双向文本控制符', () => {
+    expect(isValidDisplayName('')).toBe(false);
+    expect(isValidDisplayName('A'.repeat(DISPLAY_NAME_MAX_LENGTH + 1))).toBe(false);
+    expect(isValidDisplayName('line\nbreak')).toBe(false);
+    expect(isValidDisplayName('name\u202Eabc')).toBe(false);
+    expect(isValidDisplayName('name\uD800')).toBe(false);
+    expect(isValidDisplayName(undefined)).toBe(false);
   });
 });

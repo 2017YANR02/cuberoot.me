@@ -93,6 +93,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'POST', p: '/v1/auth/google', g: 'public', zh: '用墙外中继签发的 Google 断言登录/注册', en: 'Sign in/up via relay-signed Google assertion' },
   { d: 'auth', m: 'POST', p: '/v1/auth/link/google', g: 'login', zh: '用墙外中继签发的 Google 断言绑定当前账号', en: 'Link Google identity via relay-signed assertion' },
   { d: 'auth', m: 'POST', p: '/v1/auth/unlink', g: 'login', zh: '解绑一个登录方式(拒绝最后一个)', en: 'Unlink a login method (not the last)' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/profile', g: 'login', c: 'no-store', zh: '修改当前账号的站内用户名并换发 JWT', en: 'Update the current account username and reissue its JWT' },
   { d: 'auth', m: 'POST', p: '/v1/auth/password/set', g: 'login', zh: '设置 / 修改密码(改密先验旧密)', en: 'Set / change password (change verifies the old one)' },
   { d: 'auth', m: 'GET', p: '/v1/auth/identities', g: 'login', zh: '当前账号已绑定的身份列表 + 是否已设密码', en: 'Linked identities of current account + whether a password is set' },
 
