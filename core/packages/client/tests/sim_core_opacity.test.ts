@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
-import { applyCoreOpacity } from '@/app/[lang]/sim/engine/coreOpacity';
+import { applyCoreOpacity, applyPuzzleTransparency } from '@/app/[lang]/sim/engine/coreOpacity';
 import { resolveCaps } from '@/app/[lang]/sim/simCaps';
 import { PG_PUZZLES } from '@/app/[lang]/sim/pgCatalog';
 import type { SimPuzzle } from '@/app/[lang]/sim/PlayerControls';
@@ -9,6 +9,19 @@ import { applyTwistyCoreOpacity } from '@/components/twistyCoreOpacity';
 afterEach(() => vi.unstubAllGlobals());
 
 describe('sim core opacity', () => {
+  it('uses the same core and back-sticker contract for transparent puzzle views', () => {
+    const root = new THREE.Group() as THREE.Group & {
+      instancedRenderer: { xray: boolean; hint: boolean };
+    };
+    root.instancedRenderer = { xray: false, hint: true };
+
+    applyPuzzleTransparency(root, true);
+    expect(root.instancedRenderer).toEqual({ xray: true, hint: false });
+
+    applyPuzzleTransparency(root, false);
+    expect(root.instancedRenderer).toEqual({ xray: false, hint: true });
+  });
+
   it('changes only tagged body/core meshes and restores their base materials', () => {
     const root = new THREE.Group();
     const bodyBase = new THREE.MeshBasicMaterial({ opacity: 0.8 });

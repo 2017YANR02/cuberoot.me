@@ -40,6 +40,7 @@ import type { TimerPresenceReport } from '../_lib/presence';
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
 import { installFakeCube } from '../_lib/bluetooth/fake_cube';
 import { useTimer, type SolveResult } from '../_shared/useTimer';
+import { formatInspectionDisplay, inspectionPenalty } from '../_shared/inspection';
 import { appendSolves, makeSolve, updateSolves } from '../_lib/storage/db';
 import { stageSegmentsFor } from '../_lib/reconstruct/stage_segments';
 import { hintScramble, type ScrambleHint } from '../_lib/bluetooth/scramble_hint';
@@ -963,9 +964,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     if (timer.phase === 'ready') return 'ready';
     if (timer.phase === 'running') return 'running';
     if (timer.phase === 'inspecting') {
+      const penalty = inspectionPenalty(timer.inspectionDisplayMs, inspectionLimit);
+      if (penalty === 'DNF') return 'inspection-dnf';
+      if (penalty === '+2') return 'inspection-plus2';
       const sec = Math.floor(timer.inspectionDisplayMs / 1000);
-      if (sec >= inspectionLimit + 2) return 'inspection-dnf';
-      if (sec >= inspectionLimit) return 'inspection-plus2';
       if (sec >= 12) return 'inspection-warn-12';
       if (sec >= 8) return 'inspection-warn-8';
       return 'inspection';
@@ -977,10 +979,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const digitsText = useMemo(() => {
     if (showCountdown) return String(Math.max(1, Math.ceil((countdownMs ?? 0) / 1000)));
     if (timer.phase === 'inspecting') {
-      const remaining = Math.max(0, Math.ceil((inspectionLimit * 1000 - timer.inspectionDisplayMs) / 1000));
-      if (timer.inspectionDisplayMs > inspectionLimit * 1000 + 2000) return 'DNF';
-      if (timer.inspectionDisplayMs > inspectionLimit * 1000) return '+2';
-      return remaining.toString();
+      return formatInspectionDisplay(timer.inspectionDisplayMs, inspectionLimit);
     }
     if (timer.phase === 'running') {
       return settings.hideTime ? '' : formatMs(timer.displayMs, settings.runningPrecision);

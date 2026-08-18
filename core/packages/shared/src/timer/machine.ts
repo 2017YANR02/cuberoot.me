@@ -22,7 +22,8 @@ export interface TimerMachineState {
 
 export interface TimerMachineConfig {
   inspectionSec: number;
-  inspectionTrigger: 'down' | 'up';
+  /** Defaults to `down`; `up` remains available for compatible native clients. */
+  inspectionTrigger?: 'down' | 'up';
   maxCubeBackdateMs?: number;
 }
 

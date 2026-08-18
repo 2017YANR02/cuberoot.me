@@ -56,6 +56,9 @@ export interface ReconPlayerAdapter<M> {
   /** Build (or rebuild) the puzzle on the world. Called on mount and whenever
    *  `deps` change; guard on world.puzzleKind so it's idempotent. */
   setupPuzzle(world: World): void;
+  /** Restore any module-level puzzle state changed by `setupPuzzle` before the
+   *  shared renderer is disposed. */
+  cleanupPuzzle?(world: World): void;
   /** Reset to the scramble, then snap the first `n` moves instantly. Returns the
    *  clamped target, or undefined if the world isn't the expected kind yet. */
   applyPrefix(world: World, scramble: string, moves: M[], n: number): number | undefined;
@@ -65,7 +68,7 @@ export interface ReconPlayerAdapter<M> {
 }
 
 export default function ReconPlayerBase<M>({
-  scramble, alg, adapter, fillPane = false, hideControls = false, playerRef, fullscreenButton,
+  scramble, alg, adapter, fillPane = false, hideControls = false, playerRef, fullscreenButton, ariaLabel,
 }: {
   scramble: string;
   alg: string;
@@ -78,6 +81,7 @@ export default function ReconPlayerBase<M>({
   /** 全屏/退出全屏按钮(调用方持有 fullscreen 状态),渲染在播放条按钮排最左
    *  (与 /sim 的 <PlaybackBar> 同款位置)。 */
   fullscreenButton?: ReactNode;
+  ariaLabel?: string;
 }) {
   // Latest adapter — the mount effect / loops run once but must always call the
   // current puzzle closures (which close over the latest order / props).
@@ -192,6 +196,7 @@ export default function ReconPlayerBase<M>({
         ro.disconnect();
         backViewRef.current?.dispose();
         backViewRef.current = null;
+        adapterRef.current.cleanupPuzzle?.(world);
         mount.dispose();
         worldRef.current = null;
         rendererRef.current = null;
@@ -275,7 +280,7 @@ export default function ReconPlayerBase<M>({
 
   return (
     <div className={`recon-player${fillPane ? ' recon-player--fill' : ''}`}>
-      <div ref={hostRef} className="recon-player-canvas">
+      <div ref={hostRef} className="recon-player-canvas" role={ariaLabel ? 'img' : undefined} aria-label={ariaLabel}>
         {adapter.backView && <div ref={backFrameRef} className="recon-player-backview" aria-hidden />}
         {hideControls && total > 0 && (
           <ReconPlayOverlay

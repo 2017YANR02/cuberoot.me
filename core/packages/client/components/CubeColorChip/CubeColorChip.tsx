@@ -17,16 +17,11 @@
  * 两片之间的竖线是**缝隙透出背景色**,不是画的线 —— 深浅主题都不用改。
  */
 
-import { CUBE_FILL, type CubeFace } from '@/lib/cube-colors';
+import { CUBE_FACE_FOR_COLOR_LETTER, CUBE_FILL } from '@/lib/cube-colors';
 import { COLOR_NAME, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { tr } from '@/i18n/tr';
 
 import './cube-color-chip.css';
-
-/** 色字母 → 标准配色里的面。和 `lib/cube-colors` 的朝向约定一致。 */
-const FACE_OF_LETTER: Record<ColorLetter, CubeFace> = {
-  W: 'U', Y: 'D', G: 'F', B: 'B', O: 'L', R: 'R',
-};
 
 export const CUBE_COLOR_LETTERS = 'WYGBOR';
 
@@ -145,7 +140,7 @@ export default function CubeColorChip({ colors, title, className }: CubeColorChi
   return (
     <span className={`ccc-chip${className ? ` ${className}` : ''}`} title={label} aria-label={label} role="img">
       {letters.map((c, i) => (
-        <span key={`${c}-${i}`} style={{ background: CUBE_FILL[FACE_OF_LETTER[c]] }} />
+        <span key={`${c}-${i}`} style={{ background: CUBE_FILL[CUBE_FACE_FOR_COLOR_LETTER[c]] }} />
       ))}
     </span>
   );

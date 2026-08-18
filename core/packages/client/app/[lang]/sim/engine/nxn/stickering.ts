@@ -18,6 +18,35 @@ export const FM_OUTLINE = 5 as const;
 
 export type StickeringMaskFn = (initial: number, face: number) => FaceletMask;
 
+const MASK_VISIBILITY: Record<FaceletMask, number> = {
+  [FM_REGULAR]: 5,
+  [FM_OUTLINE]: 4,
+  [FM_ORIENTED]: 3,
+  [FM_ORIENTED2]: 3,
+  [FM_DIM]: 2,
+  [FM_IGNORED]: 1,
+};
+
+/** Union several stage views: a facelet stays visible whenever any constituent
+ *  mask keeps it visible. */
+export function mergeStickeringMaskFns(
+  masks: readonly (StickeringMaskFn | null | undefined)[],
+): StickeringMaskFn | null {
+  const active = masks.filter((mask): mask is StickeringMaskFn => !!mask);
+  if (active.length === 0) return null;
+  if (active.length === 1) return active[0];
+  return (initial, face) => {
+    let visible = active[0](initial, face);
+    for (let i = 1; i < active.length; i++) {
+      const mask = active[i];
+      const value = mask(initial, face);
+      if (MASK_VISIBILITY[value] > MASK_VISIBILITY[visible]) visible = value;
+      if (visible === FM_REGULAR) break;
+    }
+    return visible;
+  };
+}
+
 /** 与面色无关的那几档遮罩色(常量取自 cubing.js)。3D 渲染器
  *  (InstancedRenderer.resolveStickerColor)和平面伴图(net / plan 导出器)共用这一份 ——
  *  否则同一个阶段在魔方上和小图上会是两种灰。 */

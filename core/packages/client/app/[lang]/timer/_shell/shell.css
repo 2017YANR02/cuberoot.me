@@ -121,6 +121,15 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .shell-players-select:focus-visible {
   border-color: var(--accent);
 }
+.shell-topbar-left .shell-scramble-source-select {
+  align-self: center;
+}
+.shell-scramble-source-select .shell-players-select {
+  font-weight: 400;
+}
+.shell-scramble-source-popup {
+  min-width: 0;
+}
 
 /* ── Main column ────────────────────────────────────────── */
 .shell-main {
@@ -171,7 +180,9 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   top: -4px;
   right: -4px;
   transform: translate(100%, -50%);
-  animation: shell-fade-up 200ms ease;
+  /* 角标定位本身依赖 transform。入场动画不能再动画 transform，否则动画期间会
+     覆盖 translate(100%, -50%)，让 WR 瞬间掉进最后一位数字上。 */
+  animation: timer-corner-fade-in 200ms ease;
 }
 @media (prefers-reduced-motion: reduce) {
   .timer-display-corner { animation: none; }
@@ -485,9 +496,9 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   max-width: 24em;
   text-align: center;
 }
-@keyframes shell-fade-up {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes timer-corner-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* PB celebration toast — floating overlay. MUST be position:fixed so it stays

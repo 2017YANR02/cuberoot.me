@@ -49,7 +49,6 @@ function machineConfig(): TimerMachineConfig {
   const settings = getSettings();
   return {
     inspectionSec: settings.inspection,
-    inspectionTrigger: settings.inspectionTrigger,
   };
 }
 

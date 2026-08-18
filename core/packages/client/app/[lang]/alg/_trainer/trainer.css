@@ -946,9 +946,9 @@
   border: none; border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
   margin: 0 0 10px;
 }
-/* 图这一行(主屏与「上一个」卡片共用):标记图标一左一右夹住图。mark-bar 自己
-   display:contents,让它那两个按钮直接当本网格的格子(DOM 不变 → data-no-timer 的
-   closest 查找照常命中)。图关掉时只剩两个图标,仍各据一侧。 */
+/* 图这一行(主屏与「上一个」卡片共用):星标固定在魔方图左侧。mark-bar 自己
+   display:contents,让按钮直接当本网格的格子(DOM 不变 → data-no-timer 的
+   closest 查找照常命中)。 */
 .trainer-figure {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -956,13 +956,9 @@
   gap: 4px;
 }
 .trainer-figure > .trainer-mark-bar { display: contents; }
-/* 三格全部钉在第 1 行:源码顺序是「两个图标 → 图」,不钉行的话自动放置的光标已经越过
-   第 3 列,图会被挤到第 2 行去。 */
-.trainer-figure > .trainer-mark-bar > .trainer-mark-btn:first-child {
+/* 星标钉在第 1 列,图钉在第 2 列；否则自动放置会随 DOM 顺序漂移。 */
+.trainer-figure > .trainer-mark-bar > .trainer-mark-btn {
   grid-row: 1; grid-column: 1; justify-self: end;
-}
-.trainer-figure > .trainer-mark-bar > .trainer-mark-btn:last-child {
-  grid-row: 1; grid-column: 3; justify-self: start;
 }
 /* 中间那格 = 图。不列举容器类名(卡片 / 主屏 / 记忆模式各叫各的),凡不是标记条的
    直接子元素都落第 2 列。 */

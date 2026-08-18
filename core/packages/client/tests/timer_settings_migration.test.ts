@@ -112,6 +112,24 @@ describe('计时器每次进入的打乱默认值', () => {
   });
 });
 
+describe('已删除的观察启动方式', () => {
+  beforeEach(() => { vi.unstubAllGlobals(); });
+
+  it('从老存档中移除松开启动字段', async () => {
+    const mem = installStorage({
+      [KEY]: JSON.stringify({
+        inspectionTrigger: 'up',
+        scrambleClickMigrated: true,
+        recordGyroMigrated: true,
+      }),
+    });
+
+    const { getSettings } = await freshSettings();
+    expect(getSettings()).not.toHaveProperty('inspectionTrigger');
+    expect(JSON.parse(mem.get(KEY) as string)).not.toHaveProperty('inspectionTrigger');
+  });
+});
+
 describe('滚动统计列设置迁移', () => {
   beforeEach(() => { vi.unstubAllGlobals(); });
 
