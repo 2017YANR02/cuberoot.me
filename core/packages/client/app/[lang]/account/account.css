@@ -140,6 +140,19 @@
   color: var(--muted-foreground);
 }
 
+.account-profile-editor { margin-bottom: 28px; }
+.account-name-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+.account-name-field { position: relative; display: flex; align-items: center; }
+.account-name-field .auth-input { padding-right: 36px; }
+.account-name-actions { display: flex; align-items: center; gap: 6px; align-self: flex-start; }
+.account-name-save { padding: 7px 12px; font-size: 13px; border-radius: 8px; }
+.account-name-actions .auth-textbtn { align-self: auto; }
+
 @media (max-width: 480px) {
   .account-page { padding: 18px 14px 48px; }
   .account-name { font-size: 1.4rem; }

@@ -53,6 +53,9 @@ export const removePassword = (currentPassword?: string) =>
  */
 export const deleteAccount = (confirm: string, password?: string) =>
   post<{ ok: true }>('/v1/auth/account/delete', { confirm, password }, true);
+// 修改站内用户名后同时换发带新名字的 JWT,供本机登录态原子刷新。
+export const updateDisplayName = (name: string) =>
+  post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/profile', { name }, true);
 export const sendPhoneCode = (phone: string) => post<{ ok: true }>('/v1/auth/phone/send', { phone });
 export const verifyPhoneCode = (phone: string, code: string) => post<SessionResp>('/v1/auth/phone/verify', { phone, code });
 

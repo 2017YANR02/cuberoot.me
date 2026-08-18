@@ -13,6 +13,7 @@ import { JWT_SECRET } from './session.js';
 // 纯逻辑(归属键 + 输入校验)在 shared,前后端共用 + 客户端可单测;这里再导出保持调用方不变。
 export {
   ownerKey, isWcaIdFormat, normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
+  normalizeDisplayName, isValidDisplayName,
   primaryHandle, deletedOwnerKey, isDeletedOwner,
 } from '@cuberoot/shared/account';
 
@@ -204,6 +205,16 @@ export async function getUserById(id: number): Promise<AppUser | null> {
   const rows = await query<AppUser>(
     'SELECT id, display_name, avatar_url, wca_id FROM app_users WHERE id = ?',
     [id],
+  );
+  return rows[0] ?? null;
+}
+
+/** 修改当前账号的站内展示名。调用方负责鉴权并先做 normalize + validate。 */
+export async function updateDisplayName(id: number, displayName: string): Promise<AppUser | null> {
+  const rows = await query<AppUser>(
+    `UPDATE app_users SET display_name = ? WHERE id = ?
+     RETURNING id, display_name, avatar_url, wca_id`,
+    [displayName, id],
   );
   return rows[0] ?? null;
 }
