@@ -76,4 +76,49 @@ describe('main-site teaching architecture', () => {
     expect(sessionDetail).toContain('<AppLink');
     expect(sessionDetail).not.toContain('router.push');
   });
+
+  it('keeps training management and review inside the main-site organization shell', () => {
+    const workspace = readClient('app/[lang]/org/_components/OrgWorkspace.tsx');
+    const overview = readClient('app/[lang]/org/[orgSlug]/training/page.tsx');
+    const template = readClient('app/[lang]/org/[orgSlug]/training/templates/[templateId]/page.tsx');
+    const assignment = readClient('app/[lang]/org/[orgSlug]/training/assignments/[assignmentId]/page.tsx');
+    const review = readClient('app/[lang]/org/[orgSlug]/training/assignments/[assignmentId]/students/[studentId]/page.tsx');
+
+    expect(workspace).toContain("permission: 'training:assignment:read'");
+    expect(overview).toContain('<TrainingAssignmentForm');
+    expect(template).toContain('TRAINING_SOURCE_ACTIVITIES');
+    expect(template).toContain('toolConfig: { schemaVersion: 1 }');
+    expect(assignment).toContain('publishTeachingTrainingAssignment');
+    expect(assignment).toContain('closeTeachingTrainingAssignment');
+    expect(review).toContain('listTeachingTrainingTargetEvidence');
+    expect(review).toContain('createTeachingTrainingTargetReview');
+    for (const source of [overview, template, assignment, review]) {
+      expect(source).toContain('<AppLink');
+      expect(source).not.toContain('router.push');
+    }
+  });
+
+  it('uses the canonical main-site trainers for learner assignments', () => {
+    const learner = readClient('app/[lang]/training/[orgSlug]/page.tsx');
+    const trainingHelpers = readClient('lib/teaching-training.ts');
+    expect(learner).toContain('listSelfTeachingTrainingAssignments');
+    expect(learner).toContain('trainingToolHref');
+    expect(learner).toContain('<AppLink');
+    for (const route of ["timer: '/timer'", "predict: '/predict'", "'alg-trainer': '/alg'"]) {
+      expect(trainingHelpers).toContain(route);
+    }
+    expect(trainingHelpers).not.toContain('/platform');
+  });
+
+  it('keeps student account binding explicit and token-safe in the main site', () => {
+    const manager = readClient('app/[lang]/org/_components/StudentAccountBindingManager.tsx');
+    const consume = readClient('app/[lang]/account/student-binding/page.tsx');
+    const student = readClient('app/[lang]/org/[orgSlug]/students/[studentId]/page.tsx');
+    expect(manager).toContain('createTeachingStudentAccountBindingInvite');
+    expect(manager).toContain('revokeTeachingStudentAccountBindingInvite');
+    expect(consume).toContain('previewTeachingStudentAccountBinding');
+    expect(consume).toContain('consumeTeachingStudentAccountBinding');
+    expect(student).toContain('<StudentAccountBindingManager');
+    expect(manager).not.toContain('localStorage');
+  });
 });
