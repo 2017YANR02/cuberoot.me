@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { MAIN_SITE_TOOLS } from "@/lib/main-site";
 
-const COLS: { title: string; items: { href: string; label: string }[] }[] = [
+type FooterItem = { href: string; label: string; external?: boolean };
+
+const COLS: { title: string; items: FooterItem[] }[] = [
   {
     title: "平台",
     items: [
@@ -13,9 +16,11 @@ const COLS: { title: string; items: { href: string; label: string }[] }[] = [
   {
     title: "工具",
     items: [
-      { href: "/timer", label: "计时器" },
+      { href: MAIN_SITE_TOOLS.timer, label: "主站计时", external: true },
+      { href: MAIN_SITE_TOOLS.predict, label: "主站预判训练", external: true },
+      { href: MAIN_SITE_TOOLS.algorithms, label: "主站公式训练", external: true },
+      { href: MAIN_SITE_TOOLS.simulator, label: "主站模拟器", external: true },
       { href: "/leaderboard", label: "排行榜" },
-      { href: "/algorithms", label: "算法字典" },
       { href: "/paths", label: "学习路径" },
     ],
   },
@@ -54,9 +59,11 @@ export function SiteFooter() {
             <ul className="space-y-2 text-[13px] text-ink-3">
               {c.items.map((it) => (
                 <li key={it.href}>
-                  <Link href={it.href} className="hover:text-ink">
-                    {it.label}
-                  </Link>
+                  {it.external ? (
+                    <a href={it.href} className="hover:text-ink">{it.label}</a>
+                  ) : (
+                    <Link href={it.href} className="hover:text-ink">{it.label}</Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -66,7 +73,7 @@ export function SiteFooter() {
       <div className="border-t border-line">
         <div className="container-page py-4 text-[12px] text-ink-3 flex flex-wrap items-center justify-between gap-2">
           <span>© {new Date().getFullYear()} 魔方开放社群</span>
-          <span>共创成长 · 共建生态</span>
+          <span>共创成长 共建生态</span>
         </div>
       </div>
     </footer>

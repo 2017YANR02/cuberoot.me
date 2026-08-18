@@ -13,7 +13,6 @@ const NAV = [
   { href: "/admin/products", label: "商品" },
   { href: "/admin/events", label: "赛事" },
   { href: "/admin/news", label: "资讯" },
-  { href: "/admin/algorithms", label: "算法库" },
   { href: "/admin/instructors", label: "讲师" },
   { href: "/admin/posts", label: "帖子" },
   { href: "/admin/orders", label: "订单" },

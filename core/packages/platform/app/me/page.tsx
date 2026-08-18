@@ -20,6 +20,7 @@ import { getBalance } from "@/lib/db/points";
 import { CheckInButton } from "@/components/CheckInButton";
 import { StreakCalendar } from "@/components/StreakCalendar";
 import { PointsBadge } from "@/components/PointsBadge";
+import { MAIN_SITE_TOOLS } from "@/lib/main-site";
 
 export const metadata = {
   title: "个人中心 — 魔方开放社群",
@@ -33,6 +34,7 @@ const QUICK_LINKS: {
   label: string;
   desc: string;
   icon: typeof BookOpen;
+  external?: boolean;
 }[] = [
   { href: "/me/courses", label: "我的课程", desc: "已购课程与学习进度", icon: BookOpen },
   { href: "/me/badges", label: "我的徽章", desc: "解锁的成就徽章", icon: Award },
@@ -41,7 +43,13 @@ const QUICK_LINKS: {
   { href: "/me/wishlist", label: "愿望单", desc: "想买的魔方好物", icon: Bookmark },
   { href: "/me/membership", label: "我的会员", desc: "会员状态与续费", icon: Crown },
   { href: "/me/invite", label: "我的邀请", desc: "邀请码与好友奖励", icon: Gift },
-  { href: "/timer", label: "计时器", desc: "记录还原成绩", icon: Timer },
+  {
+    href: MAIN_SITE_TOOLS.timer,
+    label: "主站计时",
+    desc: "使用 CubeRoot 主站训练工具",
+    icon: Timer,
+    external: true,
+  },
   { href: "/leaderboard", label: "排行榜", desc: "速拧 / 学习 / 积分榜", icon: BarChart3 },
 ];
 
@@ -117,29 +125,38 @@ export default async function MePage() {
       {/* 快捷入口九宫格 */}
       <h2 className="mt-10 mb-4 text-[15px] font-semibold text-ink">快捷入口</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {QUICK_LINKS.map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            className="group flex items-center gap-4 rounded-[14px] border border-line bg-white px-5 py-4 transition hover:border-brand/40 hover:shadow-[0_4px_16px_rgba(42,93,244,0.08)]"
-          >
-            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-soft">
-              <l.icon size={20} className="text-brand" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[15px] font-medium text-ink">
-                {l.label}
+        {QUICK_LINKS.map((l) => {
+          const body = (
+            <>
+              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-soft">
+                <l.icon size={20} className="text-brand" />
               </span>
-              <span className="block truncate text-[12px] text-ink-3">
-                {l.desc}
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-medium text-ink">
+                  {l.label}
+                </span>
+                <span className="block truncate text-[12px] text-ink-3">
+                  {l.desc}
+                </span>
               </span>
-            </span>
-            <ChevronRight
-              size={18}
-              className="shrink-0 text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-brand"
-            />
-          </Link>
-        ))}
+              <ChevronRight
+                size={18}
+                className="shrink-0 text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-brand"
+              />
+            </>
+          );
+          const className =
+            "group flex items-center gap-4 rounded-[14px] border border-line bg-white px-5 py-4 transition hover:border-brand/40 hover:shadow-[0_4px_16px_rgba(42,93,244,0.08)]";
+          return l.external ? (
+            <a key={l.href} href={l.href} className={className}>
+              {body}
+            </a>
+          ) : (
+            <Link key={l.href} href={l.href} className={className}>
+              {body}
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
