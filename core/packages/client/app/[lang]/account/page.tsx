@@ -9,9 +9,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { Building2, ChevronLeft, ChevronRight, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox } from 'lucide-react';
+import { Building2, ChevronLeft, ChevronRight, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, UserRound } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
+import { ClearButton } from '@/components/ClearButton';
 import FollowedComps from '@/components/FollowedComps';
 import AlgValidationAlert from '@/components/AlgValidationAlert';
 import AdminSubmissionsPanel from '@/components/AdminSubmissionsPanel';
@@ -19,9 +20,114 @@ import PageNoticesAdmin from '@/components/PageNoticesAdmin';
 import { AccountPanel, LoginForm, WcaLinkPrompt, DeleteAccountPanel, type SignedIn } from '@/components/AuthPanel';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
-import { ADMIN_WCA_IDS, useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
+import { DISPLAY_NAME_MAX_LENGTH, isValidDisplayName, normalizeDisplayName } from '@cuberoot/shared/account';
+import { updateDisplayName } from '@/lib/account-api';
+import { ADMIN_WCA_IDS, applySession, useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
 import { tr, useLang } from '@/i18n/tr';
 import './account.css';
+
+function DisplayNameEditor() {
+  const t = useT();
+  const user = useAuthStore((s) => s.user);
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(user?.name ?? '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!editing) setName(user?.name ?? '');
+  }, [editing, user?.name]);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  const cancel = () => {
+    setName(user?.name ?? '');
+    setError(null);
+    setEditing(false);
+  };
+
+  const save = async () => {
+    const normalized = normalizeDisplayName(name);
+    setName(normalized);
+    setError(null);
+    if (!isValidDisplayName(normalized)) {
+      setError(t(`请输入 1–${DISPLAY_NAME_MAX_LENGTH} 个字符的用户名，不能包含换行或控制字符。`, `Enter a username of 1–${DISPLAY_NAME_MAX_LENGTH} characters without line breaks or control characters.`));
+      return;
+    }
+    if (normalized === user?.name) {
+      setEditing(false);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const session = await updateDisplayName(normalized);
+      if (!applySession(session.token, session.user)) {
+        throw new Error('session persistence failed');
+      }
+      setEditing(false);
+    } catch {
+      setError(t('用户名保存失败，请稍后重试。', 'Could not save the username. Try again later.'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="account-profile-editor">
+      <h2 className="account-creds-title">{t('个人资料', 'Profile')}</h2>
+      <div className="auth-idrow">
+        <span className="auth-idicon"><UserRound size={16} /></span>
+        <span className="auth-idprov">{t('用户名', 'Username')}</span>
+        <span className="auth-iduid">{user?.name || t('未设置', 'Not set')}</span>
+        {!editing && (
+          <div className="auth-idactions">
+            <button type="button" className="auth-link" onClick={() => { setError(null); setEditing(true); }}>
+              {user?.name ? t('修改', 'Edit') : t('设置', 'Set')}
+            </button>
+          </div>
+        )}
+      </div>
+      {editing && (
+        <form className="account-name-form" onSubmit={(event) => { event.preventDefault(); void save(); }}>
+          <label className="auth-label" htmlFor="account-display-name">{t('用户名', 'Username')}</label>
+          <div className="account-name-field">
+            <input
+              ref={inputRef}
+              id="account-display-name"
+              className="auth-input"
+              value={name}
+              disabled={saving}
+              autoComplete="nickname"
+              aria-describedby="account-display-name-hint"
+              onChange={(event) => {
+                setName(event.target.value);
+                if (error) setError(null);
+              }}
+            />
+            {name && !saving && <ClearButton onClick={() => setName('')} preserveFocus />}
+          </div>
+          <p id="account-display-name-hint" className="auth-hint">
+            {t(`最多 ${DISPLAY_NAME_MAX_LENGTH} 个字符，仅用于站内显示，不能用来登录。`, `Up to ${DISPLAY_NAME_MAX_LENGTH} characters. This is only for display and cannot be used to sign in.`)}
+          </p>
+          {error && <p className="auth-error" role="alert">{error}</p>}
+          <div className="account-name-actions">
+            <button type="submit" className="auth-primary account-name-save" disabled={saving}>
+              {saving && <Loader2 size={14} className="auth-spin" />}
+              {t('保存', 'Save')}
+            </button>
+            <button type="button" className="auth-textbtn" disabled={saving} onClick={cancel}>
+              {t('取消', 'Cancel')}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
 
 export default function AccountPage() {
   const t = useT();
@@ -181,6 +287,7 @@ export default function AccountPage() {
 
           {view === 'signin' ? (
             <section className="account-creds">
+              <DisplayNameEditor />
               <h2 className="account-creds-title">{t('登录方式', 'Sign-in methods')}</h2>
               <AccountPanel />
               {/* 清掉 ?view= —— 否则重新登录后会莫名其妙落在登录方式视图 */}

@@ -17,6 +17,7 @@ import {
   issueCode, verifyCode, loginWithIdentity, addIdentity, removeIdentity, replaceCredentialIdentity,
   getIdentities, getUserById, publicUser,
   normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
+  normalizeDisplayName, isValidDisplayName, updateDisplayName,
   loginWithPassword, setPassword, clearPassword, getPasswordHash, verifyPassword,
   ownerKey, primaryHandle,
   type Provider,
@@ -502,6 +503,22 @@ accountAuthRoutes.post('/auth/unlink', async (c) => {
   const user = await getUserById(uid);
   const token = user ? signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name }) : undefined;
   return c.json({ ok: true, token, user: user ? publicUser(user) : undefined, identities: await getIdentities(uid) });
+});
+
+// ── 站内用户名(展示名,不要求唯一、不参与登录)──
+accountAuthRoutes.post('/auth/profile', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const uid = await requireAppUserId(c);
+  const { name: rawName } = await c.req.json<{ name?: unknown }>().catch(() => ({ name: undefined }));
+  if (typeof rawName !== 'string') return c.json({ error: 'invalid display name' }, 400);
+  const name = normalizeDisplayName(rawName);
+  if (!isValidDisplayName(name)) return c.json({ error: 'invalid display name' }, 400);
+
+  const user = await updateDisplayName(uid, name);
+  if (!user) return c.json({ error: 'account not found' }, 404);
+  const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
+  return c.json({ ok: true, token, user: publicUser(user) });
 });
 
 /**
