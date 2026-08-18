@@ -8,6 +8,7 @@ import AppLink from '@/components/AppLink';
 import { getTeachingStudent, listTeachingMembers, type TeachingMember, type TeachingStudent } from '@/lib/teaching-saas-api';
 import OrgWorkspace from '../../../_components/OrgWorkspace';
 import TeacherAssignmentManager from '../../../_components/TeacherAssignmentManager';
+import StudentAccountBindingManager from '../../../_components/StudentAccountBindingManager';
 import { entityStatusLabel, MutationMessage, teachingErrorMessage } from '../../../_components/OrgUi';
 
 const MEMBER_OPTION_LIMIT = 100;
@@ -24,6 +25,7 @@ function StudentDetail({ orgSlug, studentId, role }: { orgSlug: string; studentI
   const [memberTotal, setMemberTotal] = useState(0);
   const [error, setError] = useState('');
   const canManageAssignments = hasTeachingPermission(role, 'assignment:manage');
+  const canManageStudent = hasTeachingPermission(role, 'student:manage');
   const canReadPackages = hasTeachingPermission(role, 'package:read');
 
   useEffect(() => {
@@ -59,6 +61,7 @@ function StudentDetail({ orgSlug, studentId, role }: { orgSlug: string; studentI
         <div><strong>{entityStatusLabel(student.status, t)}</strong><span>{t('学员状态', 'Student status')}</span></div>
       </dl>
       {canReadPackages && <AppLink className="org-primary-link" href={`/org/${orgSlug}/students/${studentId}/packages`} prefetch={false}>{t('查看课包与流水', 'View packages and ledger')}</AppLink>}
+      {canManageStudent && <StudentAccountBindingManager orgSlug={orgSlug} studentId={studentId} linked={student.accountUserId !== null} />}
       {canManageAssignments && <TeacherAssignmentManager orgSlug={orgSlug} target={{ studentId }} members={members} memberTotal={memberTotal} allowCreate={student.status === 'active'} />}
     </>
   );

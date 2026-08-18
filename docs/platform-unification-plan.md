@@ -2,7 +2,7 @@
 
 最后更新:2026-08-18
 
-状态:架构决策已确认,主站机构 CRM 与课包、课次、出勤、消课流程已落地,训练任务闭环继续实施。
+状态:主站机构 CRM、课包、课次、训练任务、证据批改与账号绑定源码已落地;浏览器多角色验收和生产发布尚未完成。
 
 ## 决策
 
@@ -43,6 +43,11 @@
 - `/org/[orgSlug]/packages`:课包、余额、流水和异常处理。
 - `/org/[orgSlug]/sessions`:排课、出勤、消课、请假和补课。
 - `/org/[orgSlug]/training`:模板、任务、训练日历和完成情况。
+- `/org/[orgSlug]/training/templates/[templateId]`:模板版本管理,工具配置只引用共享 registry。
+- `/org/[orgSlug]/training/assignments/[assignmentId]`:任务编辑、发布、结束和目标学员。
+- `/org/[orgSlug]/training/assignments/[assignmentId]/students/[studentId]`:证据明细和老师批改。
+- `/training/[orgSlug]`:学员任务入口,真链接进入主站 `/timer`、`/predict` 或 `/alg`。
+- `/account/student-binding`:学员登录后预览并确认一次性账号绑定邀请。
 - `/org/[orgSlug]/reports`:课堂反馈、周报和经营报表。
 - `/org/[orgSlug]/settings`:机构设置、权限与审计入口。
 
@@ -70,7 +75,7 @@
 
 1. 机构、成员、学员、校区、班级和负责人。
 2. 课包、余额、排课、出勤、消课和课堂历史。[已完成主站首版]
-3. 账号绑定、训练模板、任务发布、训练日历、证据和批改。
+3. 账号绑定、训练模板、任务发布、学员训练入口、证据和批改。[已完成主站首版]
 4. 监护人、批量导入、请假补课、退款撤销和异常对账。
 5. 课堂反馈、周报、通知、家校沟通和经营报表。
 
@@ -110,3 +115,9 @@
 - 不把旧 SQLite 直接当作新教学系统数据库。
 - 不为旧计时历史建立迁移项目。
 - 不在验证完成前删除 Platform 源码、数据库、上传文件或旧仓库。
+
+## 当前验证边界
+
+- 已完成主站源码、共享契约接线、类型检查和静态回归;训练工具仍只有主站一份实现。
+- 尚未完成 owner、teacher、assistant 与学员账号的真实浏览器全流程,因此暂不切换 Platform 域名。
+- 尚未 push 或部署;生产 migration、登录态 smoke、备份恢复与观察窗口仍属于上线门槛。
