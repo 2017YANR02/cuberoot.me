@@ -51,6 +51,7 @@ import { Button } from "@/components/Button";
 import { FeatureCard } from "@/components/FeatureCard";
 import { StatCard } from "@/components/StatCard";
 import { Badge } from "@/components/Badge";
+import { MAIN_SITE_TOOLS } from "@/lib/main-site";
 
 export const dynamic = "force-dynamic";
 
@@ -87,9 +88,9 @@ const FRONTEND: Feature[] = [
 ];
 
 const CUBE_LEARN: Feature[] = [
-  { icon: Timer, title: "魔方计时器", description: "前端生成 WCA 标准打乱(三阶 / 二阶 / 四阶 / 金字塔等),空格或长按起停,ao5 / ao12 / 最佳成绩自动统计,未登录也能练。" },
+  { icon: Timer, title: "训练工具复用主站", description: "计时、预判、公式训练与模拟器统一使用 CubeRoot 主站实现，Platform 只保留教学管理。" },
   { icon: Trophy, title: "三榜排行", description: "速拧榜 / 学习榜 / 积分榜,周 / 月 / 总三档切换,速拧需满 5 次防刷,真实激励竞争。" },
-  { icon: Boxes, title: "算法字典", description: "内置 39 条公式(21 PLL + OLL + F2L),自绘 2D 棋盘示意每一步,支持搜索与分类筛选。" },
+  { icon: Boxes, title: "主站公式库与训练", description: "公式数据、图示、选择与训练统一复用 CubeRoot 主站，避免两套内容产生差异。" },
   { icon: Route, title: "学习路径", description: "把零散课程打包成进阶路线,跨课计算完成度,一张路线图带学员从入门走到进阶。" },
   { icon: ListChecks, title: "章节测验", description: "看完视频即测,答案不下发客户端、服务端判分讲解,满分自动发积分。" },
   { icon: NotebookPen, title: "时间戳笔记", description: "边看边记一笔,点笔记跳回视频那一秒,我的笔记页统一回顾。" },
@@ -100,7 +101,7 @@ const CUBE_LEARN: Feature[] = [
 const ENGAGE: Feature[] = [
   { icon: Coins, title: "积分体系", description: "购物 / 完课 / 发帖 / 评价 / 签到 / 满分测验自动发分,同来源幂等去重,流水账可追溯。" },
   { icon: Award, title: "成就徽章", description: "多档成就目录,达成条件自动解锁,徽章墙展示成长轨迹。" },
-  { icon: Flame, title: "连续打卡", description: "学习 / 计时自动打卡,GitHub 风格热力图加连续天数,养成每日习惯。" },
+  { icon: Flame, title: "连续打卡", description: "学习进度与主动签到形成 GitHub 风格热力图和连续天数。" },
   { icon: Bell, title: "站内通知", description: "被评论 / 被赞 / 被 @ 实时入站,顶栏铃铛红点,通知中心集中查看。" },
   { icon: Heart, title: "通用收藏", description: "课程 / 商品 / 赛事 / 资讯 / 帖子一键收藏,我的收藏与愿望单分区管理。" },
   { icon: Crown, title: "会员专享价", description: "商品可设会员价或仅会员可购,下单服务端按会员身份计价并拦截越权。" },
@@ -133,7 +134,7 @@ const HIGHLIGHTS: { icon: LucideIcon; title: string; desc: string }[] = [
   { icon: ShieldCheck, title: "手写各家签名", desc: "短信 / 存储 / 微信支付 V3 全部手写签名,零厂商 SDK 体积负担。" },
   { icon: Search, title: "中文 FTS5 分词", desc: "unicode61 无法分 CJK,自定义 SQL 函数插空格 + 前缀通配,中文也能搜。" },
   { icon: Rocket, title: "一键部署", desc: "push main → CI 构建 + scp,systemd 反代,持久库部署目录外不被覆盖。" },
-  { icon: Boxes, title: "魔方垂直自研", desc: "WCA 打乱、ao5 / ao12 统计、算法 2D 棋盘示意全部前端纯算法自绘,不挂第三方魔方库。" },
+  { icon: Boxes, title: "训练能力统一复用", desc: "Platform 不复制计时器、预判、公式训练或模拟器，统一链接主站并复用同一教学证据契约。" },
   { icon: Sparkles, title: "游戏化全自建", desc: "积分幂等流水、成就引擎、打卡热力图、站内通知全自建,不接第三方成长 / 通知系统。" },
 ];
 
@@ -171,9 +172,11 @@ const ROUTE_GROUPS: RouteGroupData[] = [
       { href: "/community", label: "社群" },
       { href: "/news", label: "资讯" },
       { href: "/instructors", label: "讲师" },
-      { href: "/timer", label: "计时器" },
       { href: "/leaderboard", label: "排行榜" },
-      { href: "/algorithms", label: "算法字典" },
+      { href: MAIN_SITE_TOOLS.timer, label: "主站计时", ext: true },
+      { href: MAIN_SITE_TOOLS.predict, label: "主站预判训练", ext: true },
+      { href: MAIN_SITE_TOOLS.algorithms, label: "主站公式训练", ext: true },
+      { href: MAIN_SITE_TOOLS.simulator, label: "主站模拟器", ext: true },
       { href: "/about", label: "关于" },
       { href: "/search?q=魔方", label: "搜索结果" },
     ],
@@ -236,7 +239,6 @@ const ROUTE_GROUPS: RouteGroupData[] = [
       { href: "/admin/qr/stats", label: "二维码扫码统计" },
       { href: "/admin/courses", label: "课程管理" },
       { href: "/admin/paths", label: "学习路径" },
-      { href: "/admin/algorithms", label: "算法库" },
       { href: "/admin/products", label: "商品管理" },
       { href: "/admin/events", label: "赛事管理" },
       { href: "/admin/orders", label: "订单" },
@@ -299,7 +301,7 @@ export default function ProgressPage() {
             做成了一个<span className="text-brand">真能跑通的平台</span>
           </h1>
           <p className="mt-6 text-[15px] md:text-[18px] leading-8 text-ink-2 max-w-2xl">
-            从扫码进站、登录下单、解锁学习,到练习计时、社群交流、成就打卡与邀请裂变,全程在一个站里跑通。下面汇报目前做了什么
+            从扫码进站、登录下单、解锁学习，到通过真链接进入主站训练，再回到机构管理、社群交流与成长记录。下面汇报目前做了什么
             —— 前端用户能看到的体验,后端在背后支撑的能力,以及全部页面入口。
           </p>
           <div className="mt-10 grid gap-4 grid-cols-2 lg:grid-cols-4">
@@ -351,7 +353,7 @@ export default function ProgressPage() {
       <Section
         eyebrow="魔方垂直 练习与学习"
         title="不止卖课,更是能练、能学、能拿证的地方"
-        subtitle="计时打乱、算法字典、进阶路径、章节测验、时间戳笔记到结课证书,围绕魔方学习的工具一应俱全。"
+        subtitle="训练入口统一复用 CubeRoot 主站；Platform 聚焦课程、机构、课包、作业与课堂管理。"
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {CUBE_LEARN.map((f) => (

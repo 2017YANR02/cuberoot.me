@@ -1,22 +1,20 @@
-import { notFound } from "next/navigation";
-import { getAlgorithmById } from "@/lib/db/algorithms";
+import { MainSiteToolNotice } from "@/components/MainSiteToolNotice";
+import { MAIN_SITE_TOOLS } from "@/lib/main-site";
 import { PageHeader } from "../../../_components/Shell";
-import { AlgorithmForm } from "../_Form";
 
-export const dynamic = "force-dynamic";
-
-export default async function EditAlgorithmPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const a = await getAlgorithmById(id);
-  if (!a) notFound();
+export default function EditAlgorithmPage() {
   return (
     <div>
-      <PageHeader title="编辑公式" subtitle={`${a.category} · ${a.name}`} />
-      <AlgorithmForm initial={a} />
+      <PageHeader
+        title="公式维护已停用"
+        subtitle="请在主站的统一公式系统中维护内容。"
+      />
+      <MainSiteToolNotice
+        href={MAIN_SITE_TOOLS.algorithms}
+        linkLabel="打开主站公式库"
+      >
+        Platform 不再编辑独立公式记录。
+      </MainSiteToolNotice>
     </div>
   );
 }

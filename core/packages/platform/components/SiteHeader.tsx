@@ -6,24 +6,27 @@ import { useEffect, useRef, useState } from "react";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { HeaderSearch } from "./HeaderSearch";
 import { NotificationBell } from "./NotificationBell";
+import { MAIN_SITE_TOOLS } from "@/lib/main-site";
 
 // lg = 仅大屏(lg+)显示,中屏(md)收起,避免导航项过多在窄桌面挤压
-type NavItem = { href: string; label: string; lg?: boolean };
+type NavItem = { href: string; label: string; lg?: boolean; external?: boolean };
 const NAV: NavItem[] = [
   { href: "/courses", label: "课程" },
   { href: "/membership", label: "会员" },
   { href: "/shop", label: "商城" },
   { href: "/events", label: "赛事" },
   { href: "/community", label: "社群" },
-  { href: "/timer", label: "计时器" },
+  { href: MAIN_SITE_TOOLS.timer, label: "主站计时", external: true },
   { href: "/news", label: "资讯", lg: true },
   { href: "/instructors", label: "讲师", lg: true },
   { href: "/about", label: "关于", lg: true },
 ];
 
 // 魔方工具/玩法收进「工具」下拉,避免主导航过长
-const TOOLS: { href: string; label: string }[] = [
-  { href: "/algorithms", label: "算法库" },
+const TOOLS: NavItem[] = [
+  { href: MAIN_SITE_TOOLS.algorithms, label: "主站公式训练", external: true },
+  { href: MAIN_SITE_TOOLS.predict, label: "主站预判训练", external: true },
+  { href: MAIN_SITE_TOOLS.simulator, label: "主站模拟器", external: true },
   { href: "/paths", label: "学习路径" },
   { href: "/leaderboard", label: "排行榜" },
 ];
@@ -54,21 +57,17 @@ export function SiteHeader({
 
         <nav className="hidden md:flex items-center gap-1 text-[14px]">
           {NAV.map((n) => {
-            const active = pathname === n.href || pathname.startsWith(n.href + "/");
-            return (
-              <Link
-                key={n.href}
-                href={n.href}
-                className={
-                  "rounded-md px-3 py-1.5 transition " +
-                  (n.lg ? "hidden lg:inline-flex " : "") +
-                  (active
-                    ? "bg-brand-soft text-brand-dark"
-                    : "text-ink-2 hover:text-ink hover:bg-bg-soft")
-                }
-              >
-                {n.label}
-              </Link>
+            const active = !n.external && (pathname === n.href || pathname.startsWith(n.href + "/"));
+            const className =
+              "rounded-md px-3 py-1.5 transition " +
+              (n.lg ? "hidden lg:inline-flex " : "") +
+              (active
+                ? "bg-brand-soft text-brand-dark"
+                : "text-ink-2 hover:text-ink hover:bg-bg-soft");
+            return n.external ? (
+              <a key={n.href} href={n.href} className={className}>{n.label}</a>
+            ) : (
+              <Link key={n.href} href={n.href} className={className}>{n.label}</Link>
             );
           })}
           <ToolsMenu pathname={pathname} />
@@ -118,33 +117,41 @@ export function SiteHeader({
         <div className="md:hidden border-t border-line bg-white">
           <div className="container-page py-3 flex flex-col">
             {NAV.map((n) => {
-              const active = pathname === n.href || pathname.startsWith(n.href + "/");
-              return (
-                <Link
-                  key={n.href}
-                  href={n.href}
-                  onClick={() => setOpen(false)}
-                  className={
-                    "rounded-md px-3 py-2 text-[15px] " +
-                    (active ? "text-brand-dark" : "text-ink-2")
-                  }
-                >
+              const active = !n.external && (pathname === n.href || pathname.startsWith(n.href + "/"));
+              const className =
+                "rounded-md px-3 py-2 text-[15px] " +
+                (active ? "text-brand-dark" : "text-ink-2");
+              return n.external ? (
+                <a key={n.href} href={n.href} onClick={() => setOpen(false)} className={className}>
+                  {n.label}
+                </a>
+              ) : (
+                <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className={className}>
                   {n.label}
                 </Link>
               );
             })}
             <div className="mt-1 px-3 pt-2 text-[12px] text-ink-3">工具</div>
             {TOOLS.map((t) => {
-              const active = pathname === t.href || pathname.startsWith(t.href + "/");
-              return (
+              const active = !t.external && (pathname === t.href || pathname.startsWith(t.href + "/"));
+              const className =
+                "rounded-md px-3 py-2 text-[15px] " +
+                (active ? "text-brand-dark" : "text-ink-2");
+              return t.external ? (
+                <a
+                  key={t.href}
+                  href={t.href}
+                  onClick={() => setOpen(false)}
+                  className={className}
+                >
+                  {t.label}
+                </a>
+              ) : (
                 <Link
                   key={t.href}
                   href={t.href}
                   onClick={() => setOpen(false)}
-                  className={
-                    "rounded-md px-3 py-2 text-[15px] " +
-                    (active ? "text-brand-dark" : "text-ink-2")
-                  }
+                  className={className}
                 >
                   {t.label}
                 </Link>
@@ -218,7 +225,7 @@ function ToolsMenu({ pathname }: { pathname: string }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const active = TOOLS.some(
-    (t) => pathname === t.href || pathname.startsWith(t.href + "/"),
+    (t) => !t.external && (pathname === t.href || pathname.startsWith(t.href + "/")),
   );
 
   useEffect(() => {
@@ -248,16 +255,27 @@ function ToolsMenu({ pathname }: { pathname: string }) {
       </button>
       {open ? (
         <div className="absolute left-0 mt-1 w-40 rounded-md border border-line bg-white shadow-card overflow-hidden z-40">
-          {TOOLS.map((t) => (
-            <Link
-              key={t.href}
-              href={t.href}
-              onClick={() => setOpen(false)}
-              className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
-            >
-              {t.label}
-            </Link>
-          ))}
+          {TOOLS.map((t) =>
+            t.external ? (
+              <a
+                key={t.href}
+                href={t.href}
+                onClick={() => setOpen(false)}
+                className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
+              >
+                {t.label}
+              </a>
+            ) : (
+              <Link
+                key={t.href}
+                href={t.href}
+                onClick={() => setOpen(false)}
+                className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
+              >
+                {t.label}
+              </Link>
+            ),
+          )}
         </div>
       ) : null}
     </div>
