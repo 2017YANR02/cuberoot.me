@@ -558,6 +558,9 @@ html[data-theme=dark] .alg-root {
 .alg-view-toggle {
   align-self: center;
 }
+.alg-oh-hand-toggle {
+  align-self: center;
+}
 /* SQ1 黑顶开关与角度、图示开关按控件中心线对齐。 */
 .alg-sq1-black-top-toggle {
   align-self: center;
@@ -633,6 +636,9 @@ html[data-theme=dark] .alg-root {
   }
   .alg-cat-header .alg-header-select,
   .alg-pdf-menu-item {
+    min-block-size: 44px;
+  }
+  .alg-cat-header .alg-oh-hand-toggle {
     min-block-size: 44px;
   }
   /* 保留紧凑滑轨视觉，同时让整块透明命中区达到 44px。 */

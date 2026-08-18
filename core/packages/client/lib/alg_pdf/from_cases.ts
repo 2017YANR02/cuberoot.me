@@ -37,6 +37,8 @@ export interface FromCasesOptions {
   oriOf?: (c: AlgCase) => number;
   /** 公式筛选(标签筛选);默认全要 */
   algFilter?: (a: AlgEntry) => boolean;
+  /** 覆盖某个 case/视角的公式行；缩略图仍取原 case 的首条公式。 */
+  algsFor?: (c: AlgCase, orientation: number) => readonly AlgEntry[];
   /** 子组名 → 打印用的标题(1LLL 组号换字母制 OLL 名之类) */
   groupLabel?: (subgroup: string) => string;
   /**
@@ -91,7 +93,8 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
       : [rawOri < c.algs.length ? rawOri : 0];
     for (const oriIdx of oris) {
       const allForOri = c.algs[oriIdx] ?? c.algs[0] ?? [];
-      const picked = (algFilter ? allForOri.filter(algFilter) : allForOri).slice(0, maxAlgs);
+      const displayAlgs = o.algsFor?.(c, oriIdx) ?? allForOri;
+      const picked = (algFilter ? displayAlgs.filter(algFilter) : displayAlgs).slice(0, maxAlgs);
       // 印出来的打乱跟着视角转 —— 图是按 `oriAdjustSetup` 画的,打乱不跟着就摆不出图上那个态
       const setup = caseViewSetup(oriAdjustSetup(c.setup, oriIdx), o.viewAngle ?? 'default');
       // 图取未筛选的首条 —— 筛选只该影响印出来的公式,不该换掉这张 case 的图
