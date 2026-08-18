@@ -44,7 +44,9 @@ import {
   usePreferredAlgs,
 } from '@/lib/alg-preferred-algs';
 
-const METRIC_LABEL: Record<string, string> = { stm: 'STM', sqtm: 'SQTM', htm: 'HTM', qtm: 'QTM' };
+const METRIC_LABEL: Record<string, string> = {
+  etm: 'ETM', htm: 'HTM', qtm: 'QTM', stm: 'STM', sqtm: 'SQTM', atm: 'ATM',
+};
 
 /** 一行「标签 + 可复制的公式」(`len` 给了就在右边挂步数徽章)。 */
 function AlgLine({
@@ -508,6 +510,7 @@ export default function AlgCaseMetaContent({
         {m.cp && <Row label={tr({ zh: '角换', en: 'CP' })}>{m.cp}</Row>}
         {m.type && <Row label={tr({ zh: '叠加类型', en: 'Type' })}>{m.type}</Row>}
         {m.gen && <Row label={tr({ zh: '生成元', en: 'Generators' })}><code>{m.gen}</code></Row>}
+        {m.etm != null && <Row label="ETM">{m.etm}</Row>}
 
         {(sym.cn || symFlags.length > 0) && (
           <Row label={tr({ zh: '对称性', en: 'Symmetry' })}>
