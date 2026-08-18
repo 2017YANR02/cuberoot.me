@@ -260,6 +260,11 @@ export function hasTeachingPermission(
 export const TRAINING_EVIDENCE_SOURCES = ['timer', 'predict', 'alg-trainer'] as const;
 export type TrainingEvidenceSource = (typeof TRAINING_EVIDENCE_SOURCES)[number];
 
+export function isTrainingEvidenceSource(value: unknown): value is TrainingEvidenceSource {
+  return typeof value === 'string'
+    && (TRAINING_EVIDENCE_SOURCES as readonly string[]).includes(value);
+}
+
 export const TRAINING_TRUST_LEVELS = [
   'self_reported',
   'server_recomputed',
@@ -291,6 +296,16 @@ export type TrainingGoalMetricKey = (typeof TRAINING_GOAL_METRIC_KEYS)[number];
 export const TRAINING_GOAL_OPERATORS = ['gte', 'lte'] as const;
 export type TrainingGoalOperator = (typeof TRAINING_GOAL_OPERATORS)[number];
 
+export function isTrainingGoalMetricKey(value: unknown): value is TrainingGoalMetricKey {
+  return typeof value === 'string'
+    && (TRAINING_GOAL_METRIC_KEYS as readonly string[]).includes(value);
+}
+
+export function isTrainingGoalOperator(value: unknown): value is TrainingGoalOperator {
+  return typeof value === 'string'
+    && (TRAINING_GOAL_OPERATORS as readonly string[]).includes(value);
+}
+
 type TrainingEvidenceMetricKey = 'success' | 'resultMs';
 type TrainingGoalDefinition = Partial<
   Record<TrainingGoalMetricKey, readonly TrainingGoalOperator[]>
@@ -298,6 +313,7 @@ type TrainingGoalDefinition = Partial<
 interface TrainingActivityDefinition {
   metrics: readonly TrainingEvidenceMetricKey[];
   goals: TrainingGoalDefinition;
+  toolConfig: { readonly schemaVersion: 1 };
 }
 
 /**
@@ -314,6 +330,7 @@ export const TRAINING_ACTIVITY_REGISTRY = {
         success_count: ['gte'],
         best_result_ms: ['lte'],
       },
+      toolConfig: { schemaVersion: 1 },
     },
   },
   predict: {
@@ -324,6 +341,7 @@ export const TRAINING_ACTIVITY_REGISTRY = {
         duration_ms: ['gte'],
         success_count: ['gte'],
       },
+      toolConfig: { schemaVersion: 1 },
     },
   },
   'alg-trainer': {
@@ -334,6 +352,7 @@ export const TRAINING_ACTIVITY_REGISTRY = {
         duration_ms: ['gte'],
         success_count: ['gte'],
       },
+      toolConfig: { schemaVersion: 1 },
     },
   },
 } as const satisfies Record<
@@ -350,6 +369,20 @@ export type TrainingEvidenceActivityForSource<Source extends TrainingEvidenceSou
 
 export type TrainingEvidenceActivity =
   TrainingEvidenceActivityForSource<TrainingEvidenceSource>;
+
+export type TrainingToolConfigForActivity<
+  Source extends TrainingEvidenceSource,
+  Activity extends TrainingEvidenceActivityForSource<Source>,
+> = TrainingActivityRegistry[Source][Activity] extends { readonly toolConfig: infer Config }
+  ? Config
+  : never;
+
+export type TrainingToolConfig = {
+  [Source in TrainingEvidenceSource]: {
+    [Activity in TrainingEvidenceActivityForSource<Source>]:
+      TrainingToolConfigForActivity<Source, Activity>;
+  }[TrainingEvidenceActivityForSource<Source>];
+}[TrainingEvidenceSource];
 
 function trainingActivityKeys<Source extends TrainingEvidenceSource>(
   source: Source,
@@ -391,6 +424,24 @@ function trainingActivityDefinition(
   activity: string,
 ): TrainingActivityDefinition | undefined {
   return (TRAINING_ACTIVITY_REGISTRY[source] as Record<string, TrainingActivityDefinition>)[activity];
+}
+
+export function isTrainingSourceActivity(
+  source: TrainingEvidenceSource,
+  activity: string,
+): activity is TrainingEvidenceActivity {
+  return trainingActivityDefinition(source, activity) !== undefined;
+}
+
+export function isTrainingGoalRegistered(
+  source: TrainingEvidenceSource,
+  activity: string,
+  metricKey: TrainingGoalMetricKey,
+  operator: TrainingGoalOperator,
+): boolean {
+  const definition = trainingActivityDefinition(source, activity);
+  const operators = definition?.goals[metricKey];
+  return operators !== undefined && (operators as readonly string[]).includes(operator);
 }
 
 export const TRAINING_EVIDENCE_FUTURE_TOLERANCE_MS = 5 * 60 * 1_000;
@@ -458,7 +509,7 @@ export interface TeachingTrainingTemplateVersion {
   instructions: string;
   source: TrainingEvidenceSource;
   activity: TrainingEvidenceActivity;
-  toolConfig: Record<string, TrainingEvidenceValue>;
+  toolConfig: TrainingToolConfig;
   publishedAt: string;
 }
 
@@ -519,6 +570,50 @@ export interface TeachingTrainingAssignmentGoalMetric {
   metricKey: TrainingGoalMetricKey;
   operator: TrainingGoalOperator;
   targetValue: number;
+}
+
+export interface TeachingTrainingTemplateCreateInput {
+  name: string;
+  description: string;
+}
+
+export interface TeachingTrainingTemplateVersionCreateInput {
+  title: string;
+  instructions: string;
+  source: TrainingEvidenceSource;
+  activity: TrainingEvidenceActivity;
+  toolConfig: TrainingToolConfig;
+}
+
+export interface TeachingTrainingAssignmentGoalInput {
+  metricKey: TrainingGoalMetricKey;
+  operator: TrainingGoalOperator;
+  targetValue: number;
+}
+
+export interface TeachingTrainingAssignmentWriteInput {
+  templateVersionId: string;
+  title: string;
+  instructions: string;
+  scheduleKind: TrainingScheduleKind;
+  expectedCount: number;
+  startsAt: string;
+  endsAt: string | null;
+  groupIds: string[];
+  studentIds: string[];
+  goals: TeachingTrainingAssignmentGoalInput[];
+}
+
+export interface TeachingTrainingReviewCreateInput {
+  status: TrainingReviewStatus;
+  rating: number | null;
+  feedback: string;
+}
+
+export interface TeachingTrainingAssignmentDetail {
+  assignment: TeachingTrainingAssignment;
+  templateVersion: TeachingTrainingTemplateVersion;
+  goals: TeachingTrainingAssignmentGoalMetric[];
 }
 
 export interface TeachingTrainingEvidence {
@@ -772,6 +867,25 @@ function requireEvidenceRecord(record: Record<string, unknown>, key: string): Re
   return value as Record<string, TrainingEvidenceValue>;
 }
 
+export function parseTrainingToolConfigForActivity(
+  source: TrainingEvidenceSource,
+  activity: string,
+  value: unknown,
+): TrainingToolConfig {
+  const definition = trainingActivityDefinition(source, activity);
+  if (!definition) {
+    throw new TrainingEvidenceValidationError(`activity is not registered for ${source}`);
+  }
+  if (!isRecord(value)
+      || Object.keys(value).length !== 1
+      || value.schemaVersion !== definition.toolConfig.schemaVersion) {
+    throw new TrainingEvidenceValidationError(
+      'toolConfig must contain only the registered schemaVersion for the selected source and activity',
+    );
+  }
+  return { schemaVersion: definition.toolConfig.schemaVersion };
+}
+
 function requireAssignmentIds(value: unknown): string[] | undefined {
   if (value === undefined) return undefined;
   if (!Array.isArray(value) || value.length > TRAINING_EVIDENCE_JSON_LIMITS.maxAssignmentIds) {
@@ -823,7 +937,7 @@ export function parseTrainingEvidenceV1(value: unknown): TrainingEvidenceV1 {
     if (!allowedKeys.has(key)) throw new TrainingEvidenceValidationError(`${key} is not accepted in client evidence`);
   }
   if (value.schemaVersion !== 1) throw new TrainingEvidenceValidationError('schemaVersion must be 1');
-  if (typeof value.source !== 'string' || !(TRAINING_EVIDENCE_SOURCES as readonly string[]).includes(value.source)) {
+  if (!isTrainingEvidenceSource(value.source)) {
     throw new TrainingEvidenceValidationError('source is not supported');
   }
 

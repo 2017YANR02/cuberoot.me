@@ -1,9 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
   hasTeachingPermission,
+  isTrainingEvidenceSource,
+  isTrainingGoalMetricKey,
+  isTrainingGoalOperator,
   parseTrainingEvidenceV1,
+  parseTrainingToolConfigForActivity,
   TRAINING_ACTIVITY_REGISTRY,
   TRAINING_EVIDENCE_JSON_LIMITS,
+  TRAINING_EVIDENCE_SOURCES,
+  TRAINING_GOAL_METRIC_KEYS,
+  TRAINING_GOAL_OPERATORS,
   TRAINING_GOAL_REGISTRY,
   TRAINING_SOURCE_ACTIVITIES,
   type TeachingPermission,
@@ -128,6 +135,38 @@ describe('Stage 3 training shared contract', () => {
     expect(TRAINING_ACTIVITY_REGISTRY.timer.solve.metrics).toEqual(['success', 'resultMs']);
     expect(TRAINING_ACTIVITY_REGISTRY.predict.prediction.metrics).toEqual(['success']);
     expect(TRAINING_ACTIVITY_REGISTRY['alg-trainer'].algorithm_attempt.metrics).toEqual(['success']);
+    for (const source of TRAINING_EVIDENCE_SOURCES) {
+      expect(isTrainingEvidenceSource(source)).toBe(true);
+    }
+    for (const metricKey of TRAINING_GOAL_METRIC_KEYS) {
+      expect(isTrainingGoalMetricKey(metricKey)).toBe(true);
+    }
+    for (const operator of TRAINING_GOAL_OPERATORS) {
+      expect(isTrainingGoalOperator(operator)).toBe(true);
+    }
+    expect(isTrainingEvidenceSource('platform-timer')).toBe(false);
+    expect(isTrainingGoalMetricKey('raw_payload_value')).toBe(false);
+    expect(isTrainingGoalOperator('eq')).toBe(false);
+  });
+
+  it('keeps tool configuration strict and selected by the canonical source/activity pair', () => {
+    for (const source of TRAINING_EVIDENCE_SOURCES) {
+      for (const activity of TRAINING_SOURCE_ACTIVITIES[source]) {
+        expect(parseTrainingToolConfigForActivity(source, activity, { schemaVersion: 1 }))
+          .toEqual({ schemaVersion: 1 });
+      }
+    }
+
+    expect(() => parseTrainingToolConfigForActivity('predict', 'solve', { schemaVersion: 1 })).toThrow();
+    expect(() => parseTrainingToolConfigForActivity('timer', 'solve', {})).toThrow();
+    expect(() => parseTrainingToolConfigForActivity('timer', 'solve', {
+      schemaVersion: 1,
+      url: 'https://example.invalid/trainer',
+    })).toThrow();
+    expect(() => parseTrainingToolConfigForActivity('alg-trainer', 'algorithm_attempt', {
+      schemaVersion: 1,
+      actorUserId: 'forged',
+    })).toThrow();
   });
 
   it('accepts all registered evidence combinations and rejects cross-tool fields', () => {
