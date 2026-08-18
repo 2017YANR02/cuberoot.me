@@ -1,9 +1,12 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { Hono, type Context } from 'hono';
 import type postgres from 'postgres';
 import {
   hasTeachingPermission,
   isTeachingOrganizationRole,
+  parseTrainingEvidenceV1,
+  TRAINING_EVIDENCE_FUTURE_TOLERANCE_MS,
+  TRAINING_EVIDENCE_MAX_BODY_BYTES,
   TEACHING_ATTENDANCE_STATUSES,
   TEACHING_CREDIT_UNITS,
   TEACHING_PACKAGE_ACQUISITION_TYPES,
@@ -13,6 +16,8 @@ import {
   type TeachingPackageAcquisitionType,
   type TeachingOrganizationRole,
   type TeachingPermission,
+  type TrainingEvidenceV1,
+  TrainingEvidenceValidationError,
 } from '@cuberoot/shared/teaching';
 import { query, sql } from '../db/connection.js';
 import {
@@ -139,6 +144,14 @@ interface PageResult {
   total: number;
   page: number;
   pageSize: number;
+}
+
+interface CreateStudentAccountBindingInviteInput {
+  expiresInMinutes: number;
+}
+
+interface ConsumeStudentAccountBindingInput {
+  tokenHash: string;
 }
 
 export interface TeachingSaasRepository {
@@ -273,6 +286,50 @@ export interface TeachingSaasRepository {
     requestHash: string,
     requestId: string,
   ): Promise<MutationResult>;
+  createStudentAccountBindingInvite(
+    actor: TeachingActor,
+    slug: string,
+    studentId: string,
+    input: CreateStudentAccountBindingInviteInput,
+    requestId: string,
+  ): Promise<MutationResult>;
+  getCurrentStudentAccountBindingInvite(
+    actor: TeachingActor,
+    slug: string,
+    studentId: string,
+    requestId: string,
+  ): Promise<JsonObject>;
+  revokeStudentAccountBindingInvite(
+    actor: TeachingActor,
+    slug: string,
+    studentId: string,
+    inviteId: string,
+    idempotencyKey: string,
+    requestHash: string,
+    requestId: string,
+  ): Promise<MutationResult>;
+  previewStudentAccountBindingInvite(
+    actor: TeachingActor,
+    input: ConsumeStudentAccountBindingInput,
+    requestId: string,
+  ): Promise<JsonObject>;
+  consumeStudentAccountBindingInvite(
+    actor: TeachingActor,
+    input: ConsumeStudentAccountBindingInput,
+    requestId: string,
+  ): Promise<MutationResult>;
+  listSelfTrainingAssignments(
+    actor: TeachingActor,
+    slug: string,
+    pagination: PageInput,
+    requestId: string,
+  ): Promise<PageResult>;
+  createSelfTrainingEvidence(
+    actor: TeachingActor,
+    slug: string,
+    input: TrainingEvidenceV1,
+    requestId: string,
+  ): Promise<MutationResult>;
 }
 
 export class TeachingApiException extends Error {
@@ -297,6 +354,77 @@ class ConcealedTeachingPermissionDeniedException extends TeachingApiException {
 
 function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex');
+}
+
+const STUDENT_ACCOUNT_BINDING_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+const SELF_TRAINING_EVIDENCE_BACKFILL_MS = 30 * 24 * 60 * 60 * 1_000;
+
+function assertOnlyKeys(body: JsonObject, allowed: readonly string[], label: string): void {
+  const allowedSet = new Set(allowed);
+  const unexpected = Object.keys(body).find((key) => !allowedSet.has(key));
+  if (unexpected) {
+    throw new TeachingApiException('INVALID_INPUT', 400, `${unexpected} is not accepted in ${label}`);
+  }
+}
+
+function parseStudentAccountBindingInviteInput(body: JsonObject): CreateStudentAccountBindingInviteInput {
+  assertOnlyKeys(body, ['expiresInMinutes'], 'student account binding invite input');
+  const expiresInMinutes = body.expiresInMinutes === undefined
+    ? 60
+    : requiredInteger(body, 'expiresInMinutes', 5, 1_440);
+  return { expiresInMinutes };
+}
+
+function parseStudentAccountBindingConsumeInput(body: JsonObject): { token: string } {
+  assertOnlyKeys(body, ['token'], 'student account binding consume input');
+  const token = requiredString(body, 'token', 43);
+  if (!STUDENT_ACCOUNT_BINDING_TOKEN_PATTERN.test(token)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'token must be a 32-byte base64url value');
+  }
+  return { token };
+}
+
+function stableJson(value: unknown): string {
+  if (value === null || typeof value !== 'object') {
+    const encoded = JSON.stringify(value);
+    if (encoded === undefined) throw new Error('Canonical JSON does not accept undefined');
+    return encoded;
+  }
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
+  const object = value as Record<string, unknown>;
+  return `{${Object.keys(object).sort().map((key) => `${JSON.stringify(key)}:${stableJson(object[key])}`).join(',')}}`;
+}
+
+function canonicalTrainingEvidencePayload(input: TrainingEvidenceV1): JsonObject {
+  return {
+    schemaVersion: 1,
+    source: input.source,
+    sourceEventId: input.sourceEventId,
+    occurredAt: input.occurredAt,
+    activity: input.activity,
+    durationMs: input.durationMs ?? null,
+    metrics: input.metrics as JsonObject,
+    payloadVersion: input.payloadVersion,
+    payload: (input.payload ?? {}) as JsonObject,
+    assignmentIds: input.assignmentIds ?? [],
+  };
+}
+
+async function withRepeatableReadRetry<T>(operation: (tx: Tx) => Promise<T>): Promise<T> {
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      return await sql.begin('isolation level repeatable read', operation) as T;
+    } catch (error) {
+      const code = (error as { code?: string }).code;
+      if ((code !== '40001' && code !== '40P01') || attempt === 4) {
+        if (code === '40001' || code === '40P01') {
+          throw new TeachingApiException('CONFLICT', 409, 'Concurrent training update; retry the complete request');
+        }
+        throw error;
+      }
+    }
+  }
+  throw new TeachingApiException('CONFLICT', 409, 'Concurrent training update; retry the complete request');
 }
 
 function requestIdOf(c: Context): string {
@@ -329,8 +457,11 @@ function paginationOf(c: Context): PageInput {
   return { page, pageSize, offset: (page - 1) * pageSize };
 }
 
-async function jsonBody(c: Context): Promise<{ value: JsonObject; raw: string }> {
+async function jsonBody(c: Context, maxBytes?: number): Promise<{ value: JsonObject; raw: string }> {
   const raw = await c.req.text();
+  if (maxBytes !== undefined && Buffer.byteLength(raw, 'utf8') > maxBytes) {
+    throw new TeachingApiException('INVALID_INPUT', 400, `Request body must not exceed ${maxBytes} bytes`);
+  }
   let value: unknown;
   try {
     value = JSON.parse(raw);
@@ -767,7 +898,7 @@ async function recordDeniedOrganizationAccess(
       actor.displayName,
       action,
       requestId,
-      JSON.stringify({ reason: accessDenialReason(error) }),
+      { reason: accessDenialReason(error) },
       actor.userId,
       slug,
     ],
@@ -1013,6 +1144,182 @@ function assignmentToJson(row: Record<string, unknown>): JsonObject {
       role: String(row.teacher_role_snapshot),
       status: row.teacher_member_status == null ? null : String(row.teacher_member_status),
     },
+  };
+}
+
+function bindingInviteToJson(row: Record<string, unknown>): JsonObject {
+  const databaseNow = new Date(String(row.database_now)).getTime();
+  if (!Number.isFinite(databaseNow)) {
+    throw new Error('Student account binding invite query must include database_now');
+  }
+  const status = row.consumed_at != null
+    ? 'consumed'
+    : row.revoked_at != null
+      ? 'revoked'
+      : row.expired_at != null || new Date(String(row.expires_at)).getTime() <= databaseNow
+        ? 'expired'
+        : 'pending';
+  return {
+    id: String(row.id),
+    organizationId: String(row.organization_id),
+    studentId: String(row.student_id),
+    status,
+    expiresAt: iso(row.expires_at),
+    expiredAt: row.expired_at == null ? null : iso(row.expired_at),
+    consumedAt: row.consumed_at == null ? null : iso(row.consumed_at),
+    revokedAt: row.revoked_at == null ? null : iso(row.revoked_at),
+    createdAt: iso(row.created_at),
+  };
+}
+
+function selfTrainingAssignmentToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    assignment: {
+      id: String(row.assignment_id),
+      organizationId: String(row.organization_id),
+      templateVersionId: String(row.template_version_id),
+      title: String(row.assignment_title),
+      instructions: String(row.assignment_instructions),
+      status: String(row.assignment_status),
+      scheduleKind: String(row.schedule_kind),
+      expectedCount: Number(row.expected_count),
+      timezoneSnapshot: String(row.timezone_snapshot),
+      startsAt: iso(row.starts_at),
+      endsAt: row.ends_at == null ? null : iso(row.ends_at),
+      publishedAt: row.published_at == null ? null : iso(row.published_at),
+      closedAt: row.closed_at == null ? null : iso(row.closed_at),
+      createdAt: iso(row.assignment_created_at),
+      updatedAt: iso(row.assignment_updated_at),
+    },
+    target: {
+      id: String(row.target_id),
+      organizationId: String(row.organization_id),
+      assignmentId: String(row.assignment_id),
+      targetKind: 'student',
+      groupId: null,
+      sourceGroupId: row.source_group_id == null ? null : String(row.source_group_id),
+      studentId: String(row.student_id),
+      groupNameSnapshot: null,
+      studentDisplayNameSnapshot: String(row.student_display_name_snapshot),
+      studentExternalRefSnapshot: row.student_external_ref_snapshot == null
+        ? null
+        : String(row.student_external_ref_snapshot),
+      evidenceCount: String(row.evidence_count),
+      firstEvidenceAt: row.first_evidence_at == null ? null : iso(row.first_evidence_at),
+      lastEvidenceAt: row.last_evidence_at == null ? null : iso(row.last_evidence_at),
+      latestReviewRevision: Number(row.latest_review_revision),
+      latestReviewStatus: row.latest_review_status == null ? null : String(row.latest_review_status),
+    },
+    template: {
+      id: String(row.template_id),
+      name: String(row.template_name),
+    },
+    templateVersion: {
+      id: String(row.template_version_id),
+      organizationId: String(row.organization_id),
+      templateId: String(row.template_id),
+      versionNumber: Number(row.version_number),
+      title: String(row.version_title),
+      instructions: String(row.version_instructions),
+      source: String(row.source),
+      activity: String(row.activity),
+      toolConfig: row.tool_config as JsonObject,
+      publishedAt: iso(row.version_published_at),
+    },
+    goals: (row.goals as Array<Record<string, unknown>>).map((goal) => ({
+      id: String(goal.id),
+      organizationId: String(row.organization_id),
+      assignmentId: String(row.assignment_id),
+      metricKey: String(goal.metricKey),
+      operator: String(goal.operator),
+      targetValue: Number(goal.targetValue),
+    })),
+  };
+}
+
+function trainingEvidenceToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    organizationId: String(row.organization_id),
+    studentId: String(row.student_id),
+    source: String(row.source),
+    sourceEventId: String(row.source_event_id),
+    trustLevel: String(row.trust_level),
+    occurredAt: iso(row.occurred_at),
+    timezoneSnapshot: String(row.timezone_snapshot),
+    localDate: row.local_date instanceof Date
+      ? row.local_date.toISOString().slice(0, 10)
+      : String(row.local_date).slice(0, 10),
+    activity: String(row.activity),
+    durationMs: row.duration_ms == null ? null : Number(row.duration_ms),
+    resultMs: row.result_ms == null ? null : Number(row.result_ms),
+    success: row.success == null ? null : Boolean(row.success),
+    payloadVersion: Number(row.payload_version),
+    createdAt: iso(row.created_at),
+  };
+}
+
+function selfTrainingEvidenceReceipt(row: Record<string, unknown>): JsonObject {
+  const evidence = trainingEvidenceToJson(row);
+  return {
+    id: evidence.id,
+    source: evidence.source,
+    sourceEventId: evidence.sourceEventId,
+    trustLevel: evidence.trustLevel,
+    occurredAt: evidence.occurredAt,
+    localDate: evidence.localDate,
+    durationMs: evidence.durationMs,
+    resultMs: evidence.resultMs,
+    success: evidence.success,
+    createdAt: evidence.createdAt,
+  };
+}
+
+interface BoundSelfStudent {
+  organizationId: string;
+  organizationName: string;
+  organizationTimezone: string;
+  studentId: string;
+  studentDisplayName: string;
+  accountLinkedAt: string;
+  databaseNow: string;
+}
+
+async function boundSelfStudentForUpdate(
+  tx: Tx,
+  actorUserId: number,
+  slug: string,
+): Promise<BoundSelfStudent> {
+  const actors = await tx`
+    SELECT id FROM app_users WHERE id = ${actorUserId} FOR KEY SHARE`;
+  if (!actors.length) {
+    throw new TeachingApiException('UNAUTHENTICATED', 401, 'Authentication required');
+  }
+  const rows = await tx`
+    SELECT o.id AS organization_id, o.name AS organization_name,
+           o.timezone AS organization_timezone,
+           student.id AS student_id, student.display_name AS student_display_name,
+           student.account_linked_at, clock_timestamp() AS database_now
+    FROM organizations o
+    JOIN student_profiles student
+      ON student.organization_id = o.id
+     AND student.account_user_id = ${actorUserId}
+    WHERE o.slug = ${slug}
+      AND o.status = 'active'
+      AND student.status = 'active'
+    FOR UPDATE OF student`;
+  if (!rows.length) {
+    throw new ConcealedTeachingPermissionDeniedException('Student account binding not found');
+  }
+  const row = rows[0] as Record<string, unknown>;
+  return {
+    organizationId: String(row.organization_id),
+    organizationName: String(row.organization_name),
+    organizationTimezone: String(row.organization_timezone),
+    studentId: String(row.student_id),
+    studentDisplayName: String(row.student_display_name),
+    accountLinkedAt: iso(row.account_linked_at),
+    databaseNow: iso(row.database_now),
   };
 }
 
@@ -2596,6 +2903,670 @@ export const teachingSaasRepository: TeachingSaasRepository = {
     });
   },
 
+  async createStudentAccountBindingInvite(actor, slug, studentId, input, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'student.account-binding.invite.create', requestId, async () => {
+      const initialAccess = await accessForRead(actor.userId, slug);
+      requireWritable(initialAccess);
+      requirePermission(initialAccess, 'student:manage');
+      await consumeMutationAttempt(
+        actor.userId,
+        `student-binding-invite:${initialAccess.id}`,
+        30,
+        '1 hour',
+      );
+      const token = randomBytes(32).toString('base64url');
+      const tokenHash = sha256(token);
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'student:manage');
+          const students = await tx`
+            SELECT id, status, account_user_id
+            FROM student_profiles
+            WHERE organization_id = ${access.id} AND id = ${studentId}
+            FOR UPDATE`;
+          if (!students.length) {
+            throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student not found');
+          }
+          const student = students[0] as Record<string, unknown>;
+          if (student.status !== 'active') {
+            throw new TeachingApiException('CONFLICT', 409, 'Only an active student can be linked');
+          }
+          if (student.account_user_id != null) {
+            throw new TeachingApiException('CONFLICT', 409, 'Student already has a linked account');
+          }
+          await tx`
+            UPDATE student_account_binding_invites
+            SET expired_at = GREATEST(expires_at, clock_timestamp())
+            WHERE organization_id = ${access.id}
+              AND student_id = ${studentId}
+              AND expired_at IS NULL AND consumed_at IS NULL AND revoked_at IS NULL
+              AND expires_at <= clock_timestamp()`;
+          await tx`
+            UPDATE student_account_binding_invites
+            SET revoked_at = GREATEST(created_at, clock_timestamp()),
+                revoked_by_user_id = ${actor.userId}
+            WHERE organization_id = ${access.id}
+              AND student_id = ${studentId}
+              AND expired_at IS NULL AND consumed_at IS NULL AND revoked_at IS NULL`;
+          const rows = await tx`
+            INSERT INTO student_account_binding_invites (
+              organization_id, student_id, token_hash, expires_at, created_by_user_id
+            ) VALUES (
+              ${access.id}, ${studentId}, ${tokenHash},
+              clock_timestamp() + make_interval(mins => ${input.expiresInMinutes}),
+              ${actor.userId}
+            )
+            RETURNING *, clock_timestamp() AS database_now`;
+          const invite = bindingInviteToJson(rows[0] as Record<string, unknown>);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'student.account-binding.invite.create', 'student_account_binding_invite',
+              ${String(rows[0].id)}, ${requestId},
+              ${sql.json({ studentId, expiresAt: invite.expiresAt })}
+            )`;
+          return { status: 201, body: { invite, token } } satisfies MutationResult;
+        }) as MutationResult;
+      } catch (error) {
+        uniqueConflict(error, 'A student account binding invite could not be issued concurrently');
+      }
+    });
+  },
+
+  async getCurrentStudentAccountBindingInvite(actor, slug, studentId, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'student.account-binding.invite.read', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'student:manage');
+      const students = await query<Record<string, unknown>>(
+        `SELECT id FROM student_profiles WHERE organization_id = ? AND id = ?`,
+        [access.id, studentId],
+      );
+      if (!students.length) {
+        throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student not found');
+      }
+      const rows = await query<Record<string, unknown>>(
+        `WITH database_clock AS MATERIALIZED (
+           SELECT clock_timestamp() AS database_now
+         )
+         SELECT invite.*, database_clock.database_now
+         FROM student_account_binding_invites invite
+         CROSS JOIN database_clock
+         WHERE invite.organization_id = ? AND invite.student_id = ?
+           AND invite.expired_at IS NULL
+           AND invite.consumed_at IS NULL
+           AND invite.revoked_at IS NULL
+           AND invite.expires_at > database_clock.database_now
+         ORDER BY invite.created_at DESC, invite.id DESC
+         LIMIT 1`,
+        [access.id, studentId],
+      );
+      return { invite: rows.length ? bindingInviteToJson(rows[0]) : null };
+    });
+  },
+
+  async revokeStudentAccountBindingInvite(
+    actor,
+    slug,
+    studentId,
+    inviteId,
+    idempotencyKey,
+    requestHash,
+    requestId,
+  ) {
+    return withDeniedAccessAudit(actor, slug, 'student.account-binding.invite.revoke', requestId, async () => {
+      const initialAccess = await accessForRead(actor.userId, slug);
+      requireWritable(initialAccess);
+      requirePermission(initialAccess, 'student:manage');
+      await consumeMutationAttempt(
+        actor.userId,
+        `student-binding-invite-revoke:${initialAccess.id}`,
+        60,
+        '1 minute',
+      );
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'student:manage');
+          const students = await tx`
+            SELECT id FROM student_profiles
+            WHERE organization_id = ${access.id} AND id = ${studentId}
+            FOR UPDATE`;
+          if (!students.length) {
+            throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student not found');
+          }
+          const rows = await tx`
+            SELECT invite.*, clock_timestamp() AS database_now
+            FROM student_account_binding_invites invite
+            WHERE invite.organization_id = ${access.id}
+              AND invite.student_id = ${studentId}
+              AND invite.id = ${inviteId}
+            FOR UPDATE`;
+          if (!rows.length) {
+            throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student account binding invite not found');
+          }
+          const idem = await beginIdempotency(
+            tx,
+            actor.userId,
+            access.id,
+            `student.account-binding.invite.revoke:${inviteId}`,
+            idempotencyKey,
+            requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          const existing = rows[0] as Record<string, unknown>;
+          if (
+            existing.expired_at != null
+            || existing.consumed_at != null
+            || existing.revoked_at != null
+            || new Date(String(existing.expires_at)).getTime()
+              <= new Date(String(existing.database_now)).getTime()
+          ) {
+            throw new TeachingApiException('CONFLICT', 409, 'Only a current pending invite can be revoked');
+          }
+          const revoked = await tx`
+            UPDATE student_account_binding_invites
+            SET revoked_at = GREATEST(created_at, clock_timestamp()),
+                revoked_by_user_id = ${actor.userId}
+            WHERE organization_id = ${access.id}
+              AND student_id = ${studentId}
+              AND id = ${inviteId}
+              AND expired_at IS NULL AND consumed_at IS NULL AND revoked_at IS NULL
+              AND expires_at > clock_timestamp()
+            RETURNING *, clock_timestamp() AS database_now`;
+          if (!revoked.length) {
+            throw new TeachingApiException('CONFLICT', 409, 'Student account binding invite changed concurrently');
+          }
+          const invite = bindingInviteToJson(revoked[0] as Record<string, unknown>);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'student.account-binding.invite.revoke', 'student_account_binding_invite',
+              ${inviteId}, ${requestId}, ${sql.json({ studentId, reason: 'manual_revoke' })}
+            )`;
+          const result: MutationResult = { status: 200, body: { invite } };
+          await completeIdempotency(
+            tx,
+            idem.id,
+            result,
+            'student_account_binding_invite',
+            inviteId,
+          );
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Student account binding invite could not be revoked');
+      }
+    });
+  },
+
+  async previewStudentAccountBindingInvite(actor, input, requestId) {
+    await consumeMutationAttempt(actor.userId, 'student-binding-preview', 120, '1 hour');
+    const rows = await query<Record<string, unknown>>(
+      `SELECT invite.id, invite.organization_id, invite.student_id,
+              invite.expires_at, invite.expired_at, invite.consumed_at, invite.revoked_at,
+              organization.name AS organization_name, organization.status AS organization_status,
+              student.display_name AS student_display_name, student.status AS student_status,
+              student.account_user_id, clock_timestamp() AS database_now
+       FROM student_account_binding_invites invite
+       JOIN organizations organization ON organization.id = invite.organization_id
+       JOIN student_profiles student
+         ON student.organization_id = invite.organization_id AND student.id = invite.student_id
+       WHERE invite.token_hash = ?`,
+      [input.tokenHash],
+    );
+    if (rows.length) {
+      const row = rows[0];
+      await consumeMutationAttempt(
+        actor.userId,
+        `student-binding-preview:${String(row.organization_id)}`,
+        30,
+        '1 hour',
+      );
+      const available = row.expired_at == null
+        && row.consumed_at == null
+        && row.revoked_at == null
+        && new Date(String(row.expires_at)).getTime() > new Date(String(row.database_now)).getTime()
+        && row.organization_status === 'active'
+        && row.student_status === 'active'
+        && row.account_user_id == null;
+      if (available) {
+        return {
+          organizationName: String(row.organization_name),
+          studentDisplayName: String(row.student_display_name),
+          expiresAt: iso(row.expires_at),
+        };
+      }
+    }
+    throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student account binding invite not found');
+  },
+
+  async consumeStudentAccountBindingInvite(actor, input, requestId) {
+    await consumeMutationAttempt(actor.userId, 'student-binding-consume', 60, '1 hour');
+    const rateScopes = await query<Record<string, unknown>>(
+      `SELECT organization_id FROM student_account_binding_invites WHERE token_hash = ?`,
+      [input.tokenHash],
+    );
+    if (rateScopes.length) {
+      await consumeMutationAttempt(
+        actor.userId,
+        `student-binding-consume:${String(rateScopes[0].organization_id)}`,
+        20,
+        '1 hour',
+      );
+    }
+    type ConsumeOutcome = MutationResult | { unavailable: true };
+    let outcome: ConsumeOutcome;
+    try {
+      outcome = await withRepeatableReadRetry<ConsumeOutcome>(async (tx) => {
+        const actors = await tx`
+          SELECT id FROM app_users WHERE id = ${actor.userId} FOR KEY SHARE`;
+        if (!actors.length) {
+          throw new TeachingApiException('UNAUTHENTICATED', 401, 'Authentication required');
+        }
+        const inviteIdentity = await tx`
+          SELECT organization_id, student_id
+          FROM student_account_binding_invites
+          WHERE token_hash = ${input.tokenHash}`;
+        if (!inviteIdentity.length) return { unavailable: true };
+        const organizationId = String(inviteIdentity[0].organization_id);
+        const studentId = String(inviteIdentity[0].student_id);
+        const students = await tx`
+          SELECT student.id, student.display_name, student.status,
+                 student.account_user_id, student.account_linked_at,
+                 organization.name AS organization_name, organization.status AS organization_status
+          FROM student_profiles student
+          JOIN organizations organization ON organization.id = student.organization_id
+          WHERE student.organization_id = ${organizationId} AND student.id = ${studentId}
+          FOR UPDATE OF student`;
+        if (!students.length) return { unavailable: true };
+        const student = students[0] as Record<string, unknown>;
+        const invites = await tx`
+          WITH database_clock AS MATERIALIZED (
+            SELECT clock_timestamp() AS database_now
+          )
+          SELECT invite.*, database_clock.database_now
+          FROM student_account_binding_invites invite
+          CROSS JOIN database_clock
+          WHERE invite.token_hash = ${input.tokenHash}
+            AND invite.organization_id = ${organizationId}
+            AND invite.student_id = ${studentId}
+          FOR UPDATE OF invite`;
+        if (!invites.length) return { unavailable: true };
+        let invite = invites[0] as Record<string, unknown>;
+
+        const consumedBySameActor = invite.consumed_at != null
+          && Number(invite.consumed_by_user_id_snapshot) === actor.userId
+          && Number(student.account_user_id) === actor.userId;
+        if (consumedBySameActor) {
+          return {
+            status: 200,
+            body: {
+              invite: {
+                id: String(invite.id), status: 'consumed', expiresAt: iso(invite.expires_at),
+                consumedAt: iso(invite.consumed_at), createdAt: iso(invite.created_at),
+              },
+              student: {
+                id: studentId, organizationName: String(student.organization_name),
+                displayName: String(student.display_name), accountLinkedAt: iso(student.account_linked_at),
+              },
+            },
+          };
+        }
+
+        const operationInstant = iso(invite.database_now);
+        const databaseNow = new Date(operationInstant).getTime();
+        const linkedToAnotherAccount = student.account_user_id != null
+          && Number(student.account_user_id) !== actor.userId;
+        if (
+          invite.expired_at != null || invite.revoked_at != null || invite.consumed_at != null
+          || new Date(String(invite.expires_at)).getTime() <= databaseNow
+          || linkedToAnotherAccount
+          || student.organization_status !== 'active' || student.status !== 'active'
+        ) {
+          if (
+            invite.expired_at == null && invite.revoked_at == null && invite.consumed_at == null
+            && new Date(String(invite.expires_at)).getTime() <= databaseNow
+          ) {
+            const expired = await tx`
+              UPDATE student_account_binding_invites
+              SET expired_at = GREATEST(expires_at, ${operationInstant})
+              WHERE id = ${String(invite.id)}
+              RETURNING *`;
+            invite = expired[0] as Record<string, unknown>;
+          }
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, outcome, request_id, metadata
+            ) VALUES (
+              ${organizationId}, ${actor.userId},
+              (SELECT role FROM organization_members
+               WHERE organization_id = ${organizationId} AND user_id = ${actor.userId}),
+              ${actor.displayName}, 'student.account-binding.consume',
+              'student_account_binding_invite', ${String(invite.id)}, 'denied', ${requestId},
+              ${sql.json({ reason: linkedToAnotherAccount ? 'STUDENT_ALREADY_LINKED' : 'INVITE_UNAVAILABLE' })}
+            )`;
+          return { unavailable: true };
+        }
+        if (student.account_user_id == null) {
+          const linked = await tx`
+            UPDATE student_profiles
+            SET account_user_id = ${actor.userId}, account_linked_at = ${operationInstant}
+            WHERE organization_id = ${organizationId} AND id = ${studentId}
+              AND account_user_id IS NULL
+            RETURNING account_linked_at`;
+          if (!linked.length) {
+            throw new TeachingApiException('CONFLICT', 409, 'Student account binding changed concurrently');
+          }
+          student.account_linked_at = linked[0].account_linked_at;
+        }
+        const consumed = await tx`
+          UPDATE student_account_binding_invites
+          SET consumed_at = ${operationInstant},
+              consumed_by_user_id = ${actor.userId},
+              consumed_by_user_id_snapshot = ${actor.userId}
+          WHERE id = ${String(invite.id)}
+            AND expired_at IS NULL AND consumed_at IS NULL AND revoked_at IS NULL
+            AND expires_at > ${operationInstant}
+          RETURNING *`;
+        if (!consumed.length) {
+          throw new TeachingApiException(
+            'RESOURCE_NOT_FOUND',
+            404,
+            'Student account binding invite not found',
+          );
+        }
+        invite = consumed[0] as Record<string, unknown>;
+        await tx`
+          INSERT INTO teaching_audit_events (
+            organization_id, actor_user_id, actor_role, actor_display_name,
+            action, entity_type, entity_id, request_id, metadata
+          ) VALUES (
+            ${organizationId}, ${actor.userId},
+            (SELECT role FROM organization_members
+             WHERE organization_id = ${organizationId} AND user_id = ${actor.userId}),
+            ${actor.displayName}, 'student.account-binding.consume',
+            'student_account_binding_invite', ${String(invite.id)}, ${requestId},
+            ${sql.json({ studentId })}
+          )`;
+        return {
+          status: 200,
+          body: {
+            invite: {
+              id: String(invite.id), status: 'consumed', expiresAt: iso(invite.expires_at),
+              consumedAt: iso(invite.consumed_at), createdAt: iso(invite.created_at),
+            },
+            student: {
+              id: studentId, organizationName: String(student.organization_name),
+              displayName: String(student.display_name), accountLinkedAt: iso(student.account_linked_at),
+            },
+          },
+        };
+      });
+    } catch (error) {
+      if (error instanceof TeachingApiException) throw error;
+      const code = (error as { code?: string }).code;
+      if (code === '23514' || code === '55000') {
+        throw new TeachingApiException(
+          'RESOURCE_NOT_FOUND',
+          404,
+          'Student account binding invite not found',
+        );
+      }
+      uniqueConflict(error, 'This account is already linked to another student in the organization');
+    }
+    if ('unavailable' in outcome) {
+      throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student account binding invite not found');
+    }
+    return outcome;
+  },
+
+  async listSelfTrainingAssignments(actor, slug, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'training.assignment.self.list', requestId, async () => {
+      const page = await sql.begin(async (tx) => {
+        const student = await boundSelfStudentForUpdate(tx, actor.userId, slug);
+        const totals = await tx`
+          SELECT COUNT(*)::int AS total
+          FROM training_assignment_targets target
+          JOIN training_assignments assignment
+            ON assignment.organization_id = target.organization_id
+           AND assignment.id = target.assignment_id
+          WHERE target.organization_id = ${student.organizationId}
+            AND target.student_id = ${student.studentId}
+            AND target.target_kind = 'student'
+            AND assignment.status IN ('published', 'closed')`;
+        const rows = await tx`
+          SELECT assignment.id AS assignment_id, assignment.organization_id,
+                 assignment.template_version_id, assignment.title AS assignment_title,
+                 assignment.instructions AS assignment_instructions,
+                 assignment.status AS assignment_status, assignment.schedule_kind,
+                 assignment.expected_count, assignment.timezone_snapshot,
+                 assignment.starts_at, assignment.ends_at, assignment.published_at,
+                 assignment.closed_at, assignment.created_at AS assignment_created_at,
+                 assignment.updated_at AS assignment_updated_at,
+                 target.id AS target_id, target.source_group_id, target.student_id,
+                 target.student_display_name_snapshot, target.student_external_ref_snapshot,
+                 target.evidence_count, target.first_evidence_at, target.last_evidence_at,
+                 target.latest_review_revision, target.latest_review_status,
+                 template.id AS template_id, template.name AS template_name,
+                 version.version_number, version.title AS version_title,
+                 version.instructions AS version_instructions, version.source, version.activity,
+                 version.tool_config, version.published_at AS version_published_at,
+                 COALESCE((
+                   SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+                     'id', goal.id,
+                     'metricKey', goal.metric_key,
+                     'operator', goal.operator,
+                     'targetValue', goal.target_value
+                   ) ORDER BY goal.metric_key)
+                   FROM training_assignment_goal_metrics goal
+                   WHERE goal.organization_id = assignment.organization_id
+                     AND goal.assignment_id = assignment.id
+                 ), '[]'::jsonb) AS goals
+          FROM training_assignment_targets target
+          JOIN training_assignments assignment
+            ON assignment.organization_id = target.organization_id
+           AND assignment.id = target.assignment_id
+          JOIN training_template_versions version
+            ON version.organization_id = assignment.organization_id
+           AND version.id = assignment.template_version_id
+          JOIN training_templates template
+            ON template.organization_id = version.organization_id
+           AND template.id = version.template_id
+          WHERE target.organization_id = ${student.organizationId}
+            AND target.student_id = ${student.studentId}
+            AND target.target_kind = 'student'
+            AND assignment.status IN ('published', 'closed')
+          ORDER BY assignment.starts_at DESC, assignment.id DESC
+          LIMIT ${pagination.pageSize} OFFSET ${pagination.offset}`;
+        return {
+          items: rows.map((row) => selfTrainingAssignmentToJson(row as Record<string, unknown>)),
+          total: Number(totals[0]?.total ?? 0),
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+        };
+      });
+      return page as PageResult;
+    });
+  },
+
+  async createSelfTrainingEvidence(actor, slug, input, requestId) {
+    const organizations = await query<Record<string, unknown>>(
+      `SELECT id FROM organizations WHERE slug = ?`,
+      [slug],
+    );
+    if (organizations.length) {
+      await consumeMutationAttempt(
+        actor.userId,
+        `training-evidence:${String(organizations[0].id)}`,
+        240,
+        '1 minute',
+      );
+    }
+    return withDeniedAccessAudit(actor, slug, 'training.evidence.self.create', requestId, async () => {
+      const canonicalPayload = canonicalTrainingEvidencePayload(input);
+      const payloadHash = sha256(stableJson(canonicalPayload));
+      const assignmentIds = input.assignmentIds ?? [];
+      try {
+        return await withRepeatableReadRetry<MutationResult>(async (tx) => {
+          const student = await boundSelfStudentForUpdate(tx, actor.userId, slug);
+          const occurredAtMs = new Date(input.occurredAt).getTime();
+          const databaseNowMs = new Date(student.databaseNow).getTime();
+          if (occurredAtMs > databaseNowMs + TRAINING_EVIDENCE_FUTURE_TOLERANCE_MS) {
+            throw new TeachingApiException(
+              'EVIDENCE_INVALID',
+              400,
+              'occurredAt cannot be more than five minutes after the database clock',
+            );
+          }
+          const backfillFloor = Math.max(
+            new Date(student.accountLinkedAt).getTime(),
+            databaseNowMs - SELF_TRAINING_EVIDENCE_BACKFILL_MS,
+          );
+          if (occurredAtMs < backfillFloor) {
+            throw new TeachingApiException(
+              'EVIDENCE_INVALID',
+              400,
+              'occurredAt must follow account linking and stay within the 30-day self-report window',
+            );
+          }
+          const relationSubject = sha256(stableJson({
+            kind: 'training-evidence-student-source',
+            studentId: student.studentId,
+            source: input.source,
+          }));
+          const relationTarget = sha256(stableJson({
+            kind: 'training-evidence-source-event',
+            sourceEventId: input.sourceEventId,
+          }));
+          await tx`
+            INSERT INTO teaching_relation_locks (
+              organization_id, relation_kind, subject_key, target_key
+            ) VALUES (
+              ${student.organizationId}, 'training_evidence', ${relationSubject}, ${relationTarget}
+            )
+            ON CONFLICT (organization_id, relation_kind, subject_key, target_key)
+            DO UPDATE SET revision = teaching_relation_locks.revision + 1,
+                          touched_at = clock_timestamp()`;
+          const existing = await tx`
+            SELECT * FROM training_evidence
+            WHERE organization_id = ${student.organizationId}
+              AND student_id = ${student.studentId}
+              AND source = ${input.source}
+              AND source_event_id = ${input.sourceEventId}
+            FOR UPDATE`;
+          if (existing.length) {
+            const row = existing[0] as Record<string, unknown>;
+            if (String(row.payload_sha256) !== payloadHash) {
+              throw new TeachingApiException(
+                'CONFLICT',
+                409,
+                'sourceEventId is permanently bound to different evidence',
+              );
+            }
+            const links = await tx`
+              SELECT assignment_id
+              FROM training_evidence_assignments
+              WHERE organization_id = ${student.organizationId}
+                AND evidence_id = ${String(row.id)}
+              ORDER BY assignment_id`;
+            return {
+              status: 200,
+              body: {
+                evidence: selfTrainingEvidenceReceipt(row),
+                assignmentIds: links.map((link) => String(link.assignment_id)),
+                replayed: true,
+              },
+            };
+          }
+          for (const assignmentId of assignmentIds) {
+            const targets = await tx`
+              SELECT target.id
+              FROM training_assignment_targets target
+              JOIN training_assignments assignment
+                ON assignment.organization_id = target.organization_id
+               AND assignment.id = target.assignment_id
+              JOIN training_template_versions version
+                ON version.organization_id = assignment.organization_id
+               AND version.id = assignment.template_version_id
+              WHERE target.organization_id = ${student.organizationId}
+                AND target.assignment_id = ${assignmentId}
+                AND target.student_id = ${student.studentId}
+                AND target.target_kind = 'student'
+                AND assignment.status = 'published'
+                AND version.source = ${input.source}
+                AND version.activity = ${input.activity}
+                AND assignment.starts_at <= ${input.occurredAt}
+                AND (assignment.ends_at IS NULL OR assignment.ends_at > ${input.occurredAt})
+              FOR UPDATE OF assignment, target`;
+            if (!targets.length) {
+              throw new ConcealedTeachingPermissionDeniedException('Training assignment not found');
+            }
+          }
+          const resultMs = input.source === 'timer'
+            ? (input.metrics.resultMs as number | null | undefined) ?? null
+            : null;
+          const inserted = await tx`
+            INSERT INTO training_evidence (
+              organization_id, student_id, source, source_event_id, payload_sha256,
+              trust_level, occurred_at, timezone_snapshot, local_date, activity,
+              duration_ms, result_ms, success, metrics, payload_version, payload,
+              submitted_by_user_id
+            ) VALUES (
+              ${student.organizationId}, ${student.studentId}, ${input.source},
+              ${input.sourceEventId}, ${payloadHash}, 'self_reported', ${input.occurredAt},
+              ${student.organizationTimezone}, ${input.occurredAt.slice(0, 10)}, ${input.activity},
+              ${input.durationMs ?? null}, ${resultMs}, ${Boolean(input.metrics.success)},
+              ${sql.json(input.metrics as JsonObject)}, ${input.payloadVersion},
+              ${sql.json((input.payload ?? {}) as JsonObject)}, ${actor.userId}
+            )
+            RETURNING *`;
+          const row = inserted[0] as Record<string, unknown>;
+          for (const assignmentId of assignmentIds) {
+            await tx`
+              INSERT INTO training_evidence_assignments (
+                organization_id, evidence_id, assignment_id, student_id
+              ) VALUES (
+                ${student.organizationId}, ${String(row.id)}, ${assignmentId}, ${student.studentId}
+              )`;
+          }
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${student.organizationId}, ${actor.userId},
+              (SELECT role FROM organization_members
+               WHERE organization_id = ${student.organizationId} AND user_id = ${actor.userId}),
+              ${actor.displayName}, 'training.evidence.self.create', 'training_evidence',
+              ${String(row.id)}, ${requestId},
+              ${sql.json({ source: input.source, activity: input.activity, assignmentCount: assignmentIds.length })}
+            )`;
+          return {
+            status: 201,
+            body: {
+              evidence: selfTrainingEvidenceReceipt(row),
+              assignmentIds,
+              replayed: false,
+            },
+          };
+        });
+      } catch (error) {
+        crmConflict(error, 'Training evidence could not be saved because its student or assignment changed');
+      }
+    });
+  },
+
   async saveAttendanceBatch(actor, slug, sessionId, input, idempotencyKey, requestHash, requestId) {
     return withDeniedAccessAudit(actor, slug, 'session.attendance.batch', requestId, async () => {
       await consumeMutationAttempt(actor.userId, 'session.attendance.batch', 240, '1 minute');
@@ -2932,6 +3903,148 @@ export function createTeachingSaasRoutes(deps: {
       const key = idempotencyKeyOf(c);
       const body = await jsonBody(c);
       const result = await repository.createStudent(actor, c.req.param('orgSlug'), parseStudentInput(body.value), key, sha256(body.raw), requestId);
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/students/:studentId/account-binding-invites', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const body = await jsonBody(c, 1_024);
+      const result = await repository.createStudentAccountBindingInvite(
+        actor,
+        c.req.param('orgSlug'),
+        uuidParam(c.req.param('studentId'), 'studentId'),
+        parseStudentAccountBindingInviteInput(body.value),
+        requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/students/:studentId/account-binding-invite', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const result = await repository.getCurrentStudentAccountBindingInvite(
+        actor,
+        c.req.param('orgSlug'),
+        uuidParam(c.req.param('studentId'), 'studentId'),
+        requestId,
+      );
+      return c.json(result);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post(
+    '/teaching/organizations/:orgSlug/students/:studentId/account-binding-invites/:inviteId/revoke',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const key = idempotencyKeyOf(c);
+        const body = await jsonBody(c, 1_024);
+        assertOnlyKeys(body.value, [], 'student account binding invite revoke input');
+        const result = await repository.revokeStudentAccountBindingInvite(
+          actor,
+          c.req.param('orgSlug'),
+          uuidParam(c.req.param('studentId'), 'studentId'),
+          uuidParam(c.req.param('inviteId'), 'inviteId'),
+          key,
+          sha256(body.raw),
+          requestId,
+        );
+        return c.json(result.body, result.status);
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.post('/teaching/me/student-account-binding/preview', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const body = await jsonBody(c, 1_024);
+      const parsed = parseStudentAccountBindingConsumeInput(body.value);
+      const result = await repository.previewStudentAccountBindingInvite(
+        actor,
+        { tokenHash: sha256(parsed.token) },
+        requestId,
+      );
+      return c.json(result);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/me/student-account-binding/consume', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const body = await jsonBody(c, 1_024);
+      const parsed = parseStudentAccountBindingConsumeInput(body.value);
+      const result = await repository.consumeStudentAccountBindingInvite(
+        actor,
+        { tokenHash: sha256(parsed.token) },
+        requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/me/training/assignments', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listSelfTrainingAssignments(
+        actor,
+        c.req.param('orgSlug'),
+        paginationOf(c),
+        requestId,
+      );
+      return c.json({ assignments: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/me/training/evidence', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+      let input: TrainingEvidenceV1;
+      try {
+        input = parseTrainingEvidenceV1(body.value);
+      } catch (error) {
+        if (error instanceof TrainingEvidenceValidationError) {
+          throw new TeachingApiException('EVIDENCE_INVALID', 400, error.message);
+        }
+        throw error;
+      }
+      const result = await repository.createSelfTrainingEvidence(
+        actor,
+        c.req.param('orgSlug'),
+        input,
+        requestId,
+      );
       return c.json(result.body, result.status);
     } catch (error) {
       return errorResponse(c, error, requestId);
