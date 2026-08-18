@@ -387,12 +387,13 @@ export interface BluetoothCubeHandle {
 }
 
 interface UseBluetoothCubeOpts {
-  /** Called for each move. `timestamp` is `performance.now()` captured when
-   * the BLE characteristic value arrived (absolute high-res ms). The caller
-   * is responsible for re-basing it against any "solve start" reference. */
+  /** Called for each move. `timestamp` is a calibrated `performance.now()`-domain
+   * estimate of when the cube made the move. The caller is responsible for
+   * re-basing it against any "solve start" reference. */
   onMove?: (move: string, timestamp: number) => void;
-  /** Called when state transitions from unsolved → solved. */
-  onSolved?: () => void;
+  /** Called when state transitions from unsolved → solved. Move-triggered
+   * transitions carry that move's calibrated timestamp; state-only reports do not. */
+  onSolved?: (timestamp?: number) => void;
   /**
    * Called for connection-lifecycle events: drop, reconnect attempts, final
    * give-up. Useful for surfacing toasts to the user.
@@ -538,11 +539,11 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
    * every frame (QiYi) would otherwise flip `wasSolved` silently and swallow
    * the very edge the timer is waiting for.
    */
-  const publishSolved = useCallback((isSolved: boolean) => {
+  const publishSolved = useCallback((isSolved: boolean, timestamp?: number) => {
     if (isSolved && !wasSolvedRef.current) {
       wasSolvedRef.current = true;
       setSolved(true);
-      onSolvedRef.current?.();
+      onSolvedRef.current?.(timestamp);
     } else if (!isSolved && wasSolvedRef.current) {
       wasSolvedRef.current = false;
       setSolved(false);
@@ -558,10 +559,10 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
    * string that is published — with a hijack in play, the raw tracker's opinion
    * of "solved" is about a cube nobody is looking at.
    */
-  const publishState = useCallback((rawFacelets: string) => {
+  const publishState = useCallback((rawFacelets: string, timestamp?: number) => {
     const view = applyHijack(hijackRef.current, rawFacelets);
     setFacelets(view);
-    publishSolved(stepSolved(activeStep(), view));
+    publishSolved(stepSolved(activeStep(), view), timestamp);
   }, [publishSolved]);
 
   const handleMove = useCallback((move: string, deviceTs?: number) => {
@@ -590,7 +591,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     // sub-step, so publishing its verdict here would leave every drill unable
     // to finish — the two would only agree in the one case where there is no
     // offset and the step is a full solve.
-    publishState(toFaceletString(trackerRef.current.getFaces()));
+    publishState(toFaceletString(trackerRef.current.getFaces()), ts);
   }, [publishState]);
 
   /**

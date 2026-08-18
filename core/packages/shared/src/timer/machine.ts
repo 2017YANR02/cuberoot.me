@@ -32,6 +32,7 @@ export type TimerMachineAction =
   | { type: 'start-now'; nowMs: number; elapsedMs?: number }
   | { type: 'stop-external'; timeMs: number; inspectionMs?: number }
   | { type: 'start-from-cube'; nowMs: number; atMs?: number }
+  | { type: 'stop-from-cube'; nowMs: number; atMs?: number }
   | { type: 'cancel-arm' }
   | { type: 'reset' };
 
@@ -108,6 +109,35 @@ function startRunning(
       autoPenalty: inspectionPenalty(inspectionMs, state.inspectionSec ?? config.inspectionSec),
     },
     effects,
+  };
+}
+
+function stopRunning(
+  state: TimerMachineState,
+  stoppedAtMs: number,
+): TimerMachineTransition {
+  const startedAtMs = state.startedAtMs ?? stoppedAtMs;
+  const timeMs = finiteNonNegative(stoppedAtMs - startedAtMs);
+  const inspectionMs = state.inspectionStartedAtMs === null
+    ? 0
+    : finiteNonNegative(startedAtMs - state.inspectionStartedAtMs);
+  const solve: SolveResult = {
+    timeMs,
+    inspectionMs,
+    autoPenalty: state.autoPenalty ?? 'ok',
+  };
+  return {
+    state: {
+      ...state,
+      phase: 'stopped',
+      lastMs: timeMs,
+      startedAtMs: null,
+      inspectionStartedAtMs: null,
+      inspectionSec: null,
+      autoPenalty: null,
+    },
+    effects: ['run-stopped'],
+    solve,
   };
 }
 
@@ -212,6 +242,20 @@ export function transitionTimer(
     return { ...startRunning(state, startedAtMs, config), accepted: true };
   }
 
+  if (action.type === 'stop-from-cube') {
+    if (state.phase !== 'running') return { state, effects: [], accepted: false };
+
+    const nowMs = normalizedNow(action.nowMs);
+    const requestedAt = action.atMs === undefined || !Number.isFinite(action.atMs)
+      ? nowMs
+      : action.atMs;
+    const stoppedAtMs = Math.min(nowMs, requestedAt);
+    if (state.startedAtMs !== null && stoppedAtMs < state.startedAtMs) {
+      return { state, effects: [], accepted: false };
+    }
+    return { ...stopRunning(state, stoppedAtMs), accepted: true };
+  }
+
   if (action.type === 'press-up') {
     if (state.phase === 'ready') return startRunning(state, action.nowMs, config);
     if (state.phase === 'holding') {
@@ -231,29 +275,7 @@ export function transitionTimer(
 
   const nowMs = normalizedNow(action.nowMs);
   if (state.phase === 'running') {
-    const startedAtMs = state.startedAtMs ?? nowMs;
-    const timeMs = finiteNonNegative(nowMs - startedAtMs);
-    const inspectionMs = state.inspectionStartedAtMs === null
-      ? 0
-      : finiteNonNegative(startedAtMs - state.inspectionStartedAtMs);
-    const solve: SolveResult = {
-      timeMs,
-      inspectionMs,
-      autoPenalty: state.autoPenalty ?? 'ok',
-    };
-    return {
-      state: {
-        ...state,
-        phase: 'stopped',
-        lastMs: timeMs,
-        startedAtMs: null,
-        inspectionStartedAtMs: null,
-        inspectionSec: null,
-        autoPenalty: null,
-      },
-      effects: ['run-stopped'],
-      solve,
-    };
+    return stopRunning(state, nowMs);
   }
 
   if (state.phase === 'idle' || state.phase === 'stopped') {
