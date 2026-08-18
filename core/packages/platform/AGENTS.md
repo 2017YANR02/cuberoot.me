@@ -149,9 +149,9 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 ## 游戏化 / 积分 / 成就
 
 - 积分 `point_ledger` 流水账,统一 `lib/db/points.ts` `awardPoints(userId,delta,reason,{refId,note})`(同 reason+refId 幂等去重),余额 = SUM(delta)。发分点:购物(order-fulfillment onOrderPaid)/完课/发帖/评价/签到/测验满分。`components/PointsBadge.tsx` 展示
-- 成就 `lib/db/achievements.ts`:目录 `ACHIEVEMENTS` 在【代码】定义(不是表),`user_achievements` 只存解锁记录。`recomputeAchievements(userId)` 查状态判定解锁,挂在 awardPoints 末尾;旧 timer saveSolve 已停用,不再新增。**禁 import points.ts(循环)**,奖励积分直插 `pointLedger`。`/me/badges` 徽章墙
+- 成就 `lib/db/achievements.ts`:目录 `ACHIEVEMENTS` 在【代码】定义(不是表),`user_achievements` 只存解锁记录。`recomputeAchievements(userId)` 查状态判定解锁,挂在 awardPoints 末尾;旧 timer 成就记录保留但不读取、展示或继续解锁。**禁 import points.ts(循环)**,奖励积分直插 `pointLedger`。`/me/badges` 徽章墙
 - 签到 `study_checkins`(userId+date 唯一),`lib/db/checkins.ts` `getStreakInfo` 连续天数。`/me` 个人中心 GitHub 风热力图 `StreakCalendar`;学习进度与主动签到继续写入,旧计时不再新增签到
-- 排行榜 `/leaderboard`:`lib/db/leaderboard.ts` 聚合旧 timer_solves(速拧 best, ≥5次防刷)/learning_progress(学习)/point_ledger(积分),周/月/总,nuqs `leaderboardParams`
+- 排行榜 `/leaderboard`:`lib/db/leaderboard.ts` 仅聚合 learning_progress(学习)/point_ledger(积分),周/月/总,nuqs `leaderboardParams`;禁读取或展示旧 timer_solves
 
 ## 魔方工具
 

@@ -34,7 +34,7 @@ export default async function MyBadgesPage() {
             我的徽章
           </h1>
           <p className="mt-1 text-[13px] text-ink-3">
-            完成学习、计时、社群与成长里程碑,点亮专属徽章。
+            完成学习、社群与成长里程碑,点亮专属徽章。
           </p>
         </div>
         <div className="flex items-center gap-6">

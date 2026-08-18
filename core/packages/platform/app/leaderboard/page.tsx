@@ -6,66 +6,39 @@ import { LeaderboardTabs } from "@/components/LeaderboardTabs";
 import { loadLeaderboardParams } from "@/lib/search-params";
 import { getCurrentUser } from "@/lib/auth-user";
 import {
-  speedBoard,
   studyBoard,
   pointsBoard,
-  formatSolveMs,
   type LeaderRow,
 } from "@/lib/db/leaderboard";
-import { SCRAMBLE_EVENTS } from "@/lib/cube/scramble";
-import type { CubeEventId } from "@/db/schema";
 
 export const metadata: Metadata = {
   title: "排行榜 — 魔方开放社群",
   description:
-    "速拧榜 / 学习榜 / 积分榜:看谁还原最快、谁学得最勤、谁积分最高。按 7 天 / 30 天 / 总榜切换,速拧榜可按三阶、二阶、单手、盲拧等项目排名。",
+    "学习榜 / 积分榜:看谁学得最勤、谁积分最高。按 7 天 / 30 天 / 总榜切换。",
 };
 
 export const dynamic = "force-dynamic";
-
-// event 参数是自由字符串,进 speedBoard 前先校验是真实项目 id,否则回落三阶。
-function safeEvent(raw: string): CubeEventId {
-  const hit = SCRAMBLE_EVENTS.find((e) => e.id === raw);
-  return (hit?.id ?? "333") as CubeEventId;
-}
-
-function eventLabel(id: string): string {
-  return SCRAMBLE_EVENTS.find((e) => e.id === id)?.label ?? "三阶 3x3";
-}
 
 export default async function LeaderboardPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const { board, period, event } = await loadLeaderboardParams(searchParams);
-  const ev = safeEvent(event);
+  const { board, period } = await loadLeaderboardParams(searchParams);
   const me = await getCurrentUser();
 
-  let rows: LeaderRow[] = [];
-  let valueHead = "成绩";
-  let renderValue: (r: LeaderRow) => string = (r) => String(r.value);
-
-  if (board === "speed") {
-    rows = await speedBoard({ event: ev, period, limit: 50 });
-    valueHead = "最快单次";
-    renderValue = (r) => formatSolveMs(r.value);
-  } else if (board === "study") {
-    rows = await studyBoard({ period, limit: 50 });
-    valueHead = "完成课时";
-    renderValue = (r) => `${r.value} 节`;
-  } else {
-    rows = await pointsBoard({ period, limit: 50 });
-    valueHead = "积分";
-    renderValue = (r) => `+${r.value}`;
-  }
+  const rows: LeaderRow[] =
+    board === "study"
+      ? await studyBoard({ period, limit: 50 })
+      : await pointsBoard({ period, limit: 50 });
+  const valueHead = board === "study" ? "完成课时" : "积分";
+  const renderValue = (r: LeaderRow) =>
+    board === "study" ? `${r.value} 节` : `+${r.value}`;
 
   const subtitle =
-    board === "speed"
-      ? `当前展示 ${eventLabel(ev)} 的最快有效成绩,至少完成 5 次才进榜,排除 DNF。`
-      : board === "study"
-        ? "按时间范围内完成的课时数排名,边学边冲榜。"
-        : "按时间范围内的积分净增排名,买课、打卡、发帖都算分。";
+    board === "study"
+      ? "按时间范围内完成的课时数排名,边学边冲榜。"
+      : "按时间范围内的积分净增排名,买课、打卡、发帖都算分。";
 
   return (
     <Section
@@ -73,7 +46,7 @@ export default async function LeaderboardPage({
       title="排行榜"
       subtitle={subtitle}
     >
-      <LeaderboardTabs board={board} period={period} event={ev} />
+      <LeaderboardTabs board={board} period={period} />
 
       {rows.length === 0 ? (
         <div className="rounded-[14px] border border-line bg-white p-12 text-center text-[14px] text-ink-3">
