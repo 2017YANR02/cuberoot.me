@@ -13,7 +13,11 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { planSimUpdate } from '@/app/[lang]/timer/_lib/cube/sim_log';
+import {
+  MAX_LIVE_ANIMATION_BACKLOG,
+  planLiveSimUpdate,
+  planSimUpdate,
+} from '@/app/[lang]/timer/_lib/cube/sim_log';
 import { applyScramble, type CubeFaces } from '@/app/[lang]/timer/_lib/cube/state';
 
 const S = (turns: string, pose = '') => ({ turns, pose });
@@ -91,6 +95,45 @@ describe('planSimUpdate:追加就转给你看', () => {
     // 宽中层不是我们要认的东西 —— conjugateToken 对它返回 null。
     const p = planSimUpdate(S('R U', 'x'), S('R U Mw2', 'x'), true);
     expect(p.mode).toBe('setup');
+  });
+});
+
+describe('planLiveSimUpdate:实况追帧', () => {
+  it('没有积压时保留完整动画', () => {
+    expect(planLiveSimUpdate(S('R U'), S('R U F'), true, 0)).toEqual({
+      mode: 'push',
+      exp: 'F',
+    });
+  });
+
+  it('当前动画加待播未超过上限时不跳步', () => {
+    expect(planLiveSimUpdate(
+      S('R U'),
+      S("R U F'"),
+      true,
+      MAX_LIVE_ANIMATION_BACKLOG - 1,
+    )).toEqual({ mode: 'push', exp: "F'" });
+  });
+
+  it('积压超过上限时瞬时应用旧动作,只动画最新动作', () => {
+    expect(planLiveSimUpdate(
+      S('R U'),
+      S("R U F' D2"),
+      true,
+      1,
+    )).toEqual({
+      mode: 'catch-up',
+      setupExp: "R U F'",
+      pushExp: 'D2',
+    });
+  });
+
+  it('带观看姿态追帧后仍把最新动作共轭到正确层', () => {
+    const next = S('R U F D', 'x');
+    const plan = planLiveSimUpdate(S('R U', 'x'), next, true, 1);
+    expect(plan.mode).toBe('catch-up');
+    if (plan.mode !== 'catch-up') return;
+    expect(sameState(faces(`${plan.setupExp} ${plan.pushExp}`), faces('R U F D x'))).toBe(true);
   });
 });
 

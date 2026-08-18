@@ -91,6 +91,7 @@ export default function TrainerLiveCube({
           view="front"
           className="trainer-live-cube-3d"
           animate
+          realtime
           ariaLabel={tr({
             zh: '智能魔方实时三维状态',
             en: 'Live 3D smart-cube state',
