@@ -50,28 +50,28 @@ describe('F2L trainer scramble features', () => {
     expect(trainerSetScrambleFeatures('3x3', 'f2l')).toEqual({
       randomInitialD: false,
       psf2lExtraScramble: false,
-      psf2lSlotPairs: false,
+      psf2lSlots: false,
       randomFinalAuf: true,
       f2lSlots: true,
     });
     expect(trainerSetScrambleFeatures('3x3', 'adv-f2l')).toEqual({
       randomInitialD: false,
       psf2lExtraScramble: false,
-      psf2lSlotPairs: false,
+      psf2lSlots: false,
       randomFinalAuf: true,
       f2lSlots: true,
     });
     expect(trainerSetScrambleFeatures('3x3', 'zbls')).toEqual({
       randomInitialD: false,
       psf2lExtraScramble: false,
-      psf2lSlotPairs: false,
+      psf2lSlots: false,
       randomFinalAuf: false,
       f2lSlots: false,
     });
     expect(trainerSetScrambleFeatures('3x3', 'mix:adv-f2l+f2l')).toEqual({
       randomInitialD: false,
       psf2lExtraScramble: false,
-      psf2lSlotPairs: false,
+      psf2lSlots: false,
       randomFinalAuf: false,
       f2lSlots: false,
     });

@@ -29,8 +29,8 @@ import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { displayZbllToken } from '@/lib/alg_case_display';
 import {
   availableKinds, purifyScramble, SCRAMBLE_KINDS, trainerSetScrambleFeatures,
-  replaceOuterDAdjustment, PSF2L_SLOT_PAIRS,
-  type F2LSlot, type Psf2lSlotPair, type ScrambleKind,
+  psf2lSlotPairsForSlots, replaceOuterDAdjustment,
+  type F2LSlot, type ScrambleKind,
 } from '@/lib/trainer-scramble';
 import {
   preparePsf2lExtraScrambles,
@@ -93,14 +93,16 @@ function SlotChoicePicker<T extends string>({
   ariaLabel,
   choices,
   selected,
-  keepOneTitle,
+  minimumSelected,
+  keepMinimumTitle,
   onChange,
 }: {
   label: string;
   ariaLabel: string;
   choices: readonly T[];
   selected: readonly T[];
-  keepOneTitle: string;
+  minimumSelected: number;
+  keepMinimumTitle: string;
   onChange: (choices: readonly T[]) => void;
 }) {
   return (
@@ -113,15 +115,15 @@ function SlotChoicePicker<T extends string>({
       >
         {choices.map(choice => {
           const isSelected = selected.includes(choice);
-          const lastSelected = isSelected && selected.length === 1;
+          const atMinimum = isSelected && selected.length <= minimumSelected;
           return (
             <button
               key={choice}
               type="button"
               className={`trainer-ori-cell trainer-slot-cell${isSelected ? ' is-on' : ''}`}
               aria-pressed={isSelected}
-              disabled={lastSelected}
-              title={lastSelected ? keepOneTitle : undefined}
+              disabled={atMinimum}
+              title={atMinimum ? keepMinimumTitle : undefined}
               onClick={() => onChange(
                 isSelected
                   ? selected.filter(value => value !== choice)
@@ -139,37 +141,25 @@ function SlotChoicePicker<T extends string>({
 
 function F2LSlotPicker({
   slots,
+  minimumSelected = 1,
+  ariaLabel = tr({ zh: 'F2L 槽位', en: 'F2L slots' }),
   onChange,
 }: {
   slots: readonly F2LSlot[];
+  minimumSelected?: 1 | 2;
+  ariaLabel?: string;
   onChange: (slots: readonly F2LSlot[]) => void;
 }) {
   return (
     <SlotChoicePicker
       label={tr({ zh: '槽位', en: 'Slots' })}
-      ariaLabel={tr({ zh: 'F2L 槽位', en: 'F2L slots' })}
+      ariaLabel={ariaLabel}
       choices={F2L_SLOT_GRID}
       selected={slots}
-      keepOneTitle={tr({ zh: '至少保留一个槽位', en: 'Keep at least one slot' })}
-      onChange={onChange}
-    />
-  );
-}
-
-function Psf2lSlotPairPicker({
-  pairs,
-  onChange,
-}: {
-  pairs: readonly Psf2lSlotPair[];
-  onChange: (pairs: readonly Psf2lSlotPair[]) => void;
-}) {
-  return (
-    <SlotChoicePicker
-      label={tr({ zh: '双槽位', en: 'Slot pairs' })}
-      ariaLabel={tr({ zh: 'PSF2L 训练双槽位', en: 'PSF2L training slot pairs' })}
-      choices={PSF2L_SLOT_PAIRS}
-      selected={pairs}
-      keepOneTitle={tr({ zh: '至少保留一组训练双槽位', en: 'Keep at least one training pair' })}
+      minimumSelected={minimumSelected}
+      keepMinimumTitle={minimumSelected === 2
+        ? tr({ zh: '至少保留两个槽位', en: 'Keep at least two slots' })
+        : tr({ zh: '至少保留一个槽位', en: 'Keep at least one slot' })}
       onChange={onChange}
     />
   );
@@ -311,8 +301,8 @@ export default function TrainerRunClient() {
   const setRandomInitialD = useTrainerStore(s => s.setRandomInitialD);
   const psf2lExtraScramble = useTrainerStore(s => s.psf2lExtraScramble);
   const setPsf2lExtraScramble = useTrainerStore(s => s.setPsf2lExtraScramble);
-  const psf2lSlotPairs = useTrainerStore(s => s.psf2lSlotPairs);
-  const setPsf2lSlotPairs = useTrainerStore(s => s.setPsf2lSlotPairs);
+  const psf2lSlots = useTrainerStore(s => s.psf2lSlots);
+  const setPsf2lSlots = useTrainerStore(s => s.setPsf2lSlots);
   const refreshPsf2lExtraScrambles = useTrainerStore(s => s.refreshPsf2lExtraScrambles);
   const randomFinalAuf = useTrainerStore(s => s.randomFinalAuf);
   const setRandomFinalAuf = useTrainerStore(s => s.setRandomFinalAuf);
@@ -549,7 +539,7 @@ export default function TrainerRunClient() {
       postAuf,
       randomInitialD: features.randomInitialD && randomInitialD,
       psf2lExtraScramble: features.psf2lExtraScramble && psf2lExtraScramble,
-      psf2lSlotPairs: features.psf2lSlotPairs ? psf2lSlotPairs : undefined,
+      psf2lSlotPairs: features.psf2lSlots ? psf2lSlotPairsForSlots(psf2lSlots) : undefined,
       psf2lFaceTurnsOnly: features.psf2lExtraScramble,
       randomFinalAuf: features.randomFinalAuf && randomFinalAuf,
       f2lSlots: features.f2lSlots ? f2lSlots : undefined,
@@ -557,7 +547,7 @@ export default function TrainerRunClient() {
       orientationSet: isMix ? null : setSlug,
     };
   }, [puzzle, isMix, setSlug, preAuf, postAuf, randomInitialD, psf2lExtraScramble,
-      psf2lSlotPairs,
+      psf2lSlots,
       randomFinalAuf, f2lSlots, oriSel]);
 
   // 改了选中的 case 之后,原先选的那种打乱可能一个 case 都不再支持 —— 此时 <select> 的
@@ -1255,7 +1245,7 @@ export default function TrainerRunClient() {
   const setAdjustSupported = !isMemo && (
     setScrambleFeatures.randomInitialD
     || setScrambleFeatures.psf2lExtraScramble
-    || setScrambleFeatures.psf2lSlotPairs
+    || setScrambleFeatures.psf2lSlots
     || setScrambleFeatures.randomFinalAuf
     || setScrambleFeatures.f2lSlots
   );
@@ -1725,8 +1715,13 @@ export default function TrainerRunClient() {
                   {setScrambleFeatures.f2lSlots && (
                     <F2LSlotPicker slots={f2lSlots} onChange={setF2LSlots} />
                   )}
-                  {setScrambleFeatures.psf2lSlotPairs && (
-                    <Psf2lSlotPairPicker pairs={psf2lSlotPairs} onChange={setPsf2lSlotPairs} />
+                  {setScrambleFeatures.psf2lSlots && (
+                    <F2LSlotPicker
+                      slots={psf2lSlots}
+                      minimumSelected={2}
+                      ariaLabel={tr({ zh: 'PSF2L 训练槽位', en: 'PSF2L training slots' })}
+                      onChange={setPsf2lSlots}
+                    />
                   )}
                 </>
               )}

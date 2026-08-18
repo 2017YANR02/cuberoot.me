@@ -175,7 +175,7 @@ export function caseBaseAlg(c: AlgCase): string {
 export interface TrainerSetScrambleFeatures {
   randomInitialD: boolean;
   psf2lExtraScramble: boolean;
-  psf2lSlotPairs: boolean;
+  psf2lSlots: boolean;
   randomFinalAuf: boolean;
   f2lSlots: boolean;
 }
@@ -185,17 +185,21 @@ export interface F2LFinalAdjustment {
   y: (typeof Y)[number];
 }
 
+const validF2LSlots = (value: unknown): F2LSlot[] => {
+  if (!Array.isArray(value)) return [];
+  const selected = new Set(value.filter((slot): slot is F2LSlot => (
+    typeof slot === 'string' && F2L_SLOTS.includes(slot as F2LSlot)
+  )));
+  return F2L_SLOTS.filter(slot => selected.has(slot));
+};
+
 /** 外部数据只接受四个标准槽位,去重并固定为设置里的显示顺序。 */
 export function normalizeF2LSlots(
   value: unknown,
   fallback: readonly F2LSlot[] = F2L_SLOTS,
 ): F2LSlot[] {
-  if (!Array.isArray(value)) return [...fallback];
-  const selected = new Set(value.filter((slot): slot is F2LSlot => (
-    typeof slot === 'string' && F2L_SLOTS.includes(slot as F2LSlot)
-  )));
-  const normalized = F2L_SLOTS.filter(slot => selected.has(slot));
-  return normalized.length > 0 ? normalized : [...fallback];
+  const normalized = validF2LSlots(value);
+  return normalized.length > 0 ? normalized : validF2LSlots(fallback);
 }
 
 /** 外部数据只接受六种无序双槽位,去重并固定为设置里的显示顺序。 */
@@ -209,6 +213,31 @@ export function normalizePsf2lSlotPairs(
   )));
   const normalized = PSF2L_SLOT_PAIRS.filter(pair => selected.has(pair));
   return normalized.length > 0 ? normalized : [...fallback];
+}
+
+/** PSF2L 训练范围是四槽中的一个集合；少于两槽无法组成一道双槽题。 */
+export function normalizePsf2lSlots(
+  value: unknown,
+  fallback: readonly F2LSlot[] = F2L_SLOTS,
+): F2LSlot[] {
+  const normalized = validF2LSlots(value);
+  if (normalized.length >= 2) return normalized;
+  const normalizedFallback = validF2LSlots(fallback);
+  return normalizedFallback.length >= 2 ? normalizedFallback : [];
+}
+
+/** 用户选中的 n 个槽位展开为 C(n, 2) 个无序训练对子。 */
+export function psf2lSlotPairsForSlots(slots: readonly F2LSlot[]): Psf2lSlotPair[] {
+  const selected = new Set(normalizePsf2lSlots(slots, []));
+  return PSF2L_SLOT_PAIRS.filter(pair => pair.split('+').every(slot => selected.has(slot as F2LSlot)));
+}
+
+/** 旧版按对子保存偏好；迁移时取所有合法对子涉及的槽位。 */
+export function psf2lSlotsFromPairs(value: unknown): F2LSlot[] {
+  const selected = new Set(
+    normalizePsf2lSlotPairs(value, []).flatMap(pair => pair.split('+') as F2LSlot[]),
+  );
+  return F2L_SLOTS.filter(slot => selected.has(slot));
 }
 
 const f2lSlotYs = (slots: readonly F2LSlot[] | undefined): readonly (typeof Y)[number][] => (
@@ -233,7 +262,7 @@ export function f2lFinalAdjustmentVariants(
 const NO_SET_SCRAMBLE_FEATURES: TrainerSetScrambleFeatures = {
   randomInitialD: false,
   psf2lExtraScramble: false,
-  psf2lSlotPairs: false,
+  psf2lSlots: false,
   randomFinalAuf: false,
   f2lSlots: false,
 };
@@ -248,13 +277,13 @@ export function trainerSetScrambleFeatures(
 ): TrainerSetScrambleFeatures {
   if (puzzle === '3x3' && (set === 'f2l' || set === 'adv-f2l')) {
     return {
-      randomInitialD: false, psf2lExtraScramble: false, psf2lSlotPairs: false,
+      randomInitialD: false, psf2lExtraScramble: false, psf2lSlots: false,
       randomFinalAuf: true, f2lSlots: true,
     };
   }
   if (puzzle === '3x3' && set === 'psf2l') {
     return {
-      randomInitialD: false, psf2lExtraScramble: true, psf2lSlotPairs: true,
+      randomInitialD: false, psf2lExtraScramble: true, psf2lSlots: true,
       randomFinalAuf: false, f2lSlots: false,
     };
   }
