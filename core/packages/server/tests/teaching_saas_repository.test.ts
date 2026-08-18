@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { hasTeachingPermission } from '@cuberoot/shared';
 
@@ -30,6 +31,18 @@ const ACTOR: TeachingActor = {
   platformSubject: 'platform-user',
 };
 
+async function teachingRouteSource(): Promise<string> {
+  return readFile(new URL('../src/routes/teaching_saas.ts', import.meta.url), 'utf8');
+}
+
+function sourceBetween(source: string, startMarker: string, endMarker: string): string {
+  const start = source.indexOf(startMarker);
+  const end = source.indexOf(endMarker, start + startMarker.length);
+  expect(start, `${startMarker} missing`).toBeGreaterThan(-1);
+  expect(end, `${endMarker} missing after ${startMarker}`).toBeGreaterThan(start);
+  return source.slice(start, end);
+}
+
 describe('teaching SaaS repository tenant denial audit', () => {
   beforeEach(() => {
     db.query.mockReset();
@@ -61,10 +74,13 @@ describe('teaching SaaS repository tenant denial audit', () => {
       ACTOR.displayName,
       'organization.read',
       'request-read',
-      JSON.stringify({ reason: 'ORGANIZATION_NOT_FOUND' }),
+      { reason: 'ORGANIZATION_NOT_FOUND' },
       ACTOR.userId,
       'other-org',
     ]);
+    expect(db.query.mock.calls[1][1]).not.toContain(
+      JSON.stringify({ reason: 'ORGANIZATION_NOT_FOUND' }),
+    );
   });
 
   it('records a denied audit after a cross-organization write', async () => {
@@ -97,7 +113,7 @@ describe('teaching SaaS repository tenant denial audit', () => {
       ACTOR.displayName,
       'student.create',
       'request-write',
-      JSON.stringify({ reason: 'ORGANIZATION_NOT_FOUND' }),
+      { reason: 'ORGANIZATION_NOT_FOUND' },
       ACTOR.userId,
       'other-org',
     ]);
@@ -224,7 +240,7 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(db.query.mock.calls[1][0]).toContain('WITH active_scope_actor AS');
     expect(db.query.mock.calls[3][0]).toContain('INSERT INTO teaching_audit_events');
     expect(db.query.mock.calls[3][1]).toContain('student.read');
-    expect(db.query.mock.calls[3][1]).toContain(JSON.stringify({ reason: 'PERMISSION_DENIED' }));
+    expect(db.query.mock.calls[3][1]).toContainEqual({ reason: 'PERMISSION_DENIED' });
   });
 
   it('serializes idempotency and records the attempt outside the business transaction', async () => {
@@ -464,7 +480,7 @@ describe('teaching SaaS repository tenant denial audit', () => {
     );
     expect(db.query.mock.calls[3][0]).toContain('INSERT INTO teaching_audit_events');
     expect(db.query.mock.calls[3][1]).toContain('session.read');
-    expect(db.query.mock.calls[3][1]).toContain(JSON.stringify({ reason: 'PERMISSION_DENIED' }));
+    expect(db.query.mock.calls[3][1]).toContainEqual({ reason: 'PERMISSION_DENIED' });
     expect(db.query.mock.calls.some(([statement]) => String(statement).includes('FROM attendance_records'))).toBe(false);
   });
 
@@ -557,7 +573,7 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(statements.some((statement) => statement.includes('teaching_idempotency_requests'))).toBe(false);
     expect(statements.some((statement) => statement.includes('UPDATE attendance_records'))).toBe(false);
     expect(db.query.mock.calls[1][0]).toContain('INSERT INTO teaching_audit_events');
-    expect(db.query.mock.calls[1][1]).toContain(JSON.stringify({ reason: 'PERMISSION_DENIED' }));
+    expect(db.query.mock.calls[1][1]).toContainEqual({ reason: 'PERMISSION_DENIED' });
   });
 
   it('lets an assigned teacher lock packages, consume credits, and complete the session in order', async () => {
@@ -617,5 +633,134 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(packageLock).toBeGreaterThan(-1);
     expect(ledgerInsert).toBeGreaterThan(packageLock);
     expect(completion).toBeGreaterThan(ledgerInsert);
+  });
+
+  it('uses the database clock and keeps invite preview hash-only and read-only', async () => {
+    const source = await teachingRouteSource();
+    const serializer = sourceBetween(source, 'function bindingInviteToJson(', '\nfunction selfTrainingAssignmentToJson(');
+    expect(serializer).toContain('row.database_now');
+    expect(serializer).not.toContain('Date.now');
+
+    const preview = sourceBetween(
+      source,
+      'async previewStudentAccountBindingInvite(',
+      '\n  async consumeStudentAccountBindingInvite(',
+    );
+    expect(preview).toContain('input.tokenHash');
+    expect(preview).toContain('clock_timestamp() AS database_now');
+    expect(preview).toContain("'student-binding-preview'");
+    expect(preview).not.toMatch(/\b(?:INSERT|UPDATE|DELETE)\b/);
+    expect(preview).not.toContain('teaching_audit_events');
+    expect(preview).not.toContain('Date.now');
+  });
+
+  it('checks staff scope before current-invite reads and locks resources before revoke idempotency', async () => {
+    const source = await teachingRouteSource();
+    const current = sourceBetween(
+      source,
+      'async getCurrentStudentAccountBindingInvite(',
+      '\n  async revokeStudentAccountBindingInvite(',
+    );
+    expect(current.indexOf('accessForRead(')).toBeLessThan(current.indexOf("requirePermission(access, 'student:manage')"));
+    expect(current.indexOf("requirePermission(access, 'student:manage')")).toBeLessThan(current.indexOf('FROM student_profiles'));
+    expect(current).toContain('WITH database_clock AS MATERIALIZED');
+    expect(current).toContain('invite.*, database_clock.database_now');
+    expect(current).toContain('invite.expires_at > database_clock.database_now');
+
+    const revoke = sourceBetween(
+      source,
+      'async revokeStudentAccountBindingInvite(',
+      '\n  async previewStudentAccountBindingInvite(',
+    );
+    const permission = revoke.indexOf("requirePermission(initialAccess, 'student:manage')");
+    const transaction = revoke.indexOf('return await sql.begin');
+    const studentLock = revoke.indexOf('FROM student_profiles', transaction);
+    const inviteLock = revoke.indexOf('FROM student_account_binding_invites invite', studentLock);
+    const idempotency = revoke.indexOf('beginIdempotency(', inviteLock);
+    const replay = revoke.indexOf("if ('replay' in idem) return idem.replay", idempotency);
+    const terminalValidation = revoke.indexOf('existing.expired_at != null', replay);
+    expect(permission).toBeGreaterThan(-1);
+    expect(permission).toBeLessThan(transaction);
+    expect(studentLock).toBeGreaterThan(transaction);
+    expect(inviteLock).toBeGreaterThan(studentLock);
+    expect(idempotency).toBeGreaterThan(inviteLock);
+    expect(replay).toBeGreaterThan(idempotency);
+    expect(terminalValidation).toBeGreaterThan(replay);
+    expect(revoke).toContain('clock_timestamp() AS database_now');
+    expect(revoke).toContain('expires_at > clock_timestamp()');
+  });
+
+  it('uses one database instant for consume and rolls back a boundary-expired link', async () => {
+    const source = await teachingRouteSource();
+    const consume = sourceBetween(
+      source,
+      'async consumeStudentAccountBindingInvite(',
+      '\n  async listSelfTrainingAssignments(',
+    );
+    const instantQuery = consume.indexOf('WITH database_clock AS MATERIALIZED');
+    const instantValue = consume.indexOf('const operationInstant = iso(invite.database_now)', instantQuery);
+    const studentLink = consume.indexOf('SET account_user_id = ${actor.userId}, account_linked_at = ${operationInstant}', instantValue);
+    const consumeUpdate = consume.indexOf('SET consumed_at = ${operationInstant}', studentLink);
+    const expiryPredicate = consume.indexOf('AND expires_at > ${operationInstant}', consumeUpdate);
+    const zeroRowFailure = consume.indexOf("throw new TeachingApiException(\n            'RESOURCE_NOT_FOUND'", expiryPredicate);
+    expect(instantQuery).toBeGreaterThan(-1);
+    expect(instantValue).toBeGreaterThan(instantQuery);
+    expect(studentLink).toBeGreaterThan(instantValue);
+    expect(consumeUpdate).toBeGreaterThan(studentLink);
+    expect(expiryPredicate).toBeGreaterThan(consumeUpdate);
+    expect(zeroRowFailure).toBeGreaterThan(expiryPredicate);
+    expect(consume).toContain("if (code === '23514' || code === '55000')");
+    expect(consume).toContain('SET expired_at = GREATEST(expires_at, ${operationInstant})');
+    expect(consume).not.toContain('SET consumed_at = clock_timestamp()');
+  });
+
+  it('orders self evidence locks and permanently binds canonical payload hashes', async () => {
+    const source = await teachingRouteSource();
+    const selfStudent = sourceBetween(
+      source,
+      'async function boundSelfStudentForUpdate(',
+      '\nconst ACTIVE_STUDENT_SCOPE_CTE',
+    );
+    expect(selfStudent.indexOf('FROM app_users')).toBeLessThan(selfStudent.indexOf('FROM organizations o'));
+    expect(selfStudent).toContain('FOR KEY SHARE');
+    expect(selfStudent).toContain('FOR UPDATE OF student');
+    expect(selfStudent).toContain('clock_timestamp() AS database_now');
+
+    const canonical = sourceBetween(
+      source,
+      'function canonicalTrainingEvidencePayload(',
+      '\nasync function withRepeatableReadRetry',
+    );
+    expect(canonical).toContain('assignmentIds: input.assignmentIds ?? []');
+
+    const evidence = sourceBetween(
+      source,
+      'async createSelfTrainingEvidence(',
+      '\n  async saveAttendanceBatch(',
+    );
+    const student = evidence.indexOf('boundSelfStudentForUpdate(');
+    const databaseClock = evidence.indexOf('new Date(student.databaseNow)', student);
+    const naturalLock = evidence.indexOf('INSERT INTO teaching_relation_locks', databaseClock);
+    const existing = evidence.indexOf('FROM training_evidence', naturalLock);
+    const hashMismatch = evidence.indexOf('String(row.payload_sha256) !== payloadHash', existing);
+    const replay = evidence.indexOf('replayed: true', hashMismatch);
+    const targets = evidence.indexOf('FROM training_assignment_targets target', replay);
+    const rawInsert = evidence.indexOf('INSERT INTO training_evidence (', targets);
+    const linkInsert = evidence.indexOf('INSERT INTO training_evidence_assignments (', rawInsert);
+    expect(student).toBeGreaterThan(-1);
+    expect(databaseClock).toBeGreaterThan(student);
+    expect(evidence).toContain('databaseNowMs + TRAINING_EVIDENCE_FUTURE_TOLERANCE_MS');
+    expect(naturalLock).toBeGreaterThan(databaseClock);
+    expect(existing).toBeGreaterThan(naturalLock);
+    expect(hashMismatch).toBeGreaterThan(existing);
+    expect(evidence.slice(hashMismatch, replay)).toContain("'CONFLICT'");
+    expect(evidence.slice(hashMismatch, replay)).toContain('409');
+    expect(replay).toBeGreaterThan(hashMismatch);
+    expect(targets).toBeGreaterThan(replay);
+    expect(rawInsert).toBeGreaterThan(targets);
+    expect(linkInsert).toBeGreaterThan(rawInsert);
+    expect(evidence.match(/INSERT INTO training_evidence \(/g)).toHaveLength(1);
+    expect(evidence).toContain('for (const assignmentId of assignmentIds)');
+    expect(evidence).toContain('replayed: false');
   });
 });

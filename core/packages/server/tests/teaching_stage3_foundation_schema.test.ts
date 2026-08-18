@@ -38,13 +38,12 @@ const TABLES = [
 ] as const;
 
 describe('teaching Stage 3A foundation schema', () => {
-  it('records immutable migration 0150 without exposing unfinished training routes', async () => {
-    const [migration, schema, readme, devSchema, route, migrationFiles] = await Promise.all([
+  it('records immutable migration 0150 and every foundation table', async () => {
+    const [migration, schema, readme, devSchema, migrationFiles] = await Promise.all([
       read('../migrations/0150_teaching_training_foundation.sql'),
       read('../src/db/schema.pg.sql'),
       read('../migrations/README.md'),
       read('../../client/app/[lang]/dev/schema/page.tsx'),
-      read('../src/routes/teaching_saas.ts'),
       readdir(new URL('../migrations/', `${new URL('.', import.meta.url).href}`)),
     ]);
     expect(migration).not.toMatch(/\b(?:BEGIN|COMMIT)\s*;/i);
@@ -54,8 +53,6 @@ describe('teaching Stage 3A foundation schema', () => {
     }))).toBe(150);
     expect(readme).toContain('0150_teaching_training_foundation.sql');
     expect(devSchema).toContain("{ n: 150, slug: 'teaching_training_foundation'");
-    expect(route).not.toMatch(/routes\.(?:get|post|put|patch|delete)\(\s*['"][^'"]*\/training(?:\/|['"])/);
-
     for (const table of TABLES) {
       expect(createTable(migration, table)).toContain('organization_id UUID NOT NULL');
       expect(createTable(schema, table)).toContain('organization_id UUID NOT NULL');

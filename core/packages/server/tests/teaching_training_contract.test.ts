@@ -168,8 +168,9 @@ describe('Stage 3 training shared contract', () => {
     ]) {
       expect(() => parseTrainingEvidenceV1(timerEvidence({ occurredAt })), occurredAt).toThrow();
     }
-    const tooFarFuture = new Date(Date.now() + 10 * 60_000).toISOString();
-    expect(() => parseTrainingEvidenceV1(timerEvidence({ occurredAt: tooFarFuture }))).toThrow(/5 minutes/);
+    const futureForApplicationClock = new Date(Date.now() + 10 * 60_000).toISOString();
+    expect(parseTrainingEvidenceV1(timerEvidence({ occurredAt: futureForApplicationClock })).occurredAt)
+      .toBe(futureForApplicationClock);
   });
 
   it('canonicalizes natural-id and assignment-link inputs before hashing', () => {
