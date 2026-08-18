@@ -14,6 +14,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  appendedSlicePair,
   MAX_LIVE_ANIMATION_BACKLOG,
   planLiveSimUpdate,
   planSimUpdate,
@@ -21,6 +22,45 @@ import {
 import { applyScramble, type CubeFaces } from '@/app/[lang]/timer/_lib/cube/state';
 
 const S = (turns: string, pose = '') => ({ turns, pose });
+
+describe('appendedSlicePair:中层硬件编码对', () => {
+  it.each([
+    ['M', "R L'"],
+    ["M'", "R' L"],
+    ['E', "U D'"],
+    ["E'", "U' D"],
+    ['S', "F' B"],
+    ["S'", "F B'"],
+  ])('%s 的相对面编码会触发姿态追赶', (_slice, pair) => {
+    expect(appendedSlicePair('R U', `R U ${pair}`)).toBe(true);
+  });
+
+  it('两手分两次通知时能跨更新边界识别', () => {
+    expect(appendedSlicePair('R U R', "R U R L'")).toBe(true);
+  });
+
+  it('相对面的上报顺序不影响识别', () => {
+    expect(appendedSlicePair('R U', "R U L' R")).toBe(true);
+  });
+
+  it('M2 的四条四分之一转通知能在批内识别', () => {
+    expect(appendedSlicePair('', "R L' R L'")).toBe(true);
+  });
+
+  it('M2 的半转通知也能识别', () => {
+    expect(appendedSlicePair('U', "U R2 L2'")).toBe(true);
+  });
+
+  it.each([
+    ['普通追加', 'R U', 'R U F'],
+    ['同向相对面', 'R U', 'R U R L'],
+    ['原地不变', 'R U', 'R U'],
+    ['日志回退', 'R U F', 'R U'],
+    ['中途改写', "R U R L'", "R F R L'"],
+  ])('%s 不误判', (_case, prev, next) => {
+    expect(appendedSlicePair(prev, next)).toBe(false);
+  });
+});
 
 /** 一条串作用在复原三阶上的六面贴纸。 */
 const faces = (exp: string): CubeFaces => applyScramble(3, exp);

@@ -31,6 +31,8 @@ import {
   quatSlerp,
   readDevQuatSource,
   sensorBasisForBrand,
+  ORIENTATION_TAU_MS,
+  SLICE_ORIENTATION_TAU_MS,
   slerpTowards,
   CUBE_ORIENTATIONS,
   SNAP_AFTER_MS,
@@ -334,6 +336,38 @@ describe('smoothing', () => {
     const moved = quatAngleTo(from, step);
     expect(moved).toBeGreaterThan(0);
     expect(moved).toBeLessThan(quatAngleTo(from, to));
+  });
+
+  it('slice follow removes the visible half-turn residue within one live animation', () => {
+    const halfTurn = fromAxisAngle(Y, Math.PI);
+    const ordinary = slerpTowards(from, halfTurn, 80, ORIENTATION_TAU_MS);
+    const slice = slerpTowards(from, halfTurn, 80, SLICE_ORIENTATION_TAU_MS);
+    const ordinaryResidue = quatAngleTo(ordinary, halfTurn);
+    const sliceResidue = quatAngleTo(slice, halfTurn);
+
+    // 40 ms smoothing still trails a 180-degree core jump by ~24 degrees after
+    // 80 ms. The selective 20 ms path is still SLERP, but is within ~3.3° by
+    // the time the matching live layer animation finishes.
+    expect(ordinaryResidue / DEG).toBeCloseTo(24.36035, 4);
+    expect(sliceResidue / DEG).toBeCloseTo(3.29682, 4);
+    expect(sliceResidue).toBeLessThan(ordinaryResidue / 7);
+  });
+
+  it('does not accumulate visible core lag across the four M2 turns of H-perm', () => {
+    const halfTurn = fromAxisAngle(Y, Math.PI);
+    let ordinary = from;
+    let slice = from;
+
+    // M2 U M2 U2 M2 U M2: U turns do not move the sensor-bearing core, so
+    // its four targets alternate between the half-turn and calibrated pose.
+    for (const target of [halfTurn, from, halfTurn, from]) {
+      ordinary = slerpTowards(ordinary, target, 80, ORIENTATION_TAU_MS);
+      slice = slerpTowards(slice, target, 80, SLICE_ORIENTATION_TAU_MS);
+    }
+
+    expect(quatAngleTo(ordinary, from) / DEG).toBeCloseTo(21.44933, 4);
+    expect(quatAngleTo(slice, from) / DEG).toBeCloseTo(3.23752, 4);
+    expect(quatAngleTo(slice, from)).toBeLessThan(quatAngleTo(ordinary, from) / 6);
   });
 
   it('is frame-rate independent (one 32 ms step ≈ two 16 ms steps)', () => {
