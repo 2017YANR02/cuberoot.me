@@ -16,7 +16,9 @@
 - 每日打卡、作业批改、课堂反馈、周报和家校沟通。
 - 机构经营报表、教师工作台、学员/家长端与完整审计。
 
-## 现有底座与真实缺口
+## 迁入时旧平台底座与真实缺口
+
+下表描述的是旧平台迁入主仓时的能力基线,不代表后续 Stage 0 至 Stage 3A 的本地实施状态。当前进度与未完成边界见文末实施状态。
 
 | 领域 | 已有实现 | 不能直接当作教学系统的原因 |
 | --- | --- | --- |
@@ -51,7 +53,7 @@
 - `organizations`:机构租户,含 slug、时区、状态和业务设置。
 - `campuses`:机构下的校区或线上教学点。
 - `organization_members`:账号在机构内的成员身份,角色为 owner、admin、teacher、assistant、finance 或 viewer。
-- `student_profiles`:机构内学员档案,可先由老师代建,以后绑定登录账号。
+- `student_profiles`:机构内学员档案,可由老师代建;建档不会自动归属登录账号或主站训练记录,只能通过一次性绑定邀请由已登录学员确认绑定,并记录 `account_linked_at`。
 - `guardian_links`:学员与监护人账号的关系和可见范围。
 - `teaching_groups`:班级或长期教学小组。
 - `group_memberships`:学员入班、转班、退班的有效期历史。
@@ -90,28 +92,27 @@
 
 ### 任务模型
 
-- `training_templates`:机构/老师复用的训练模板,保存工具类型、目标和版本化配置。
-- `training_assignments`:一次布置,含起止时间、目标、说明、批改规则和状态。
-- `assignment_targets`:任务发给班级或个人后的学员级快照。
-- `training_evidence`:来自训练工具的原始证据,只追加不覆盖。
-- `submission_reviews`:老师批改、评分、文字/语音反馈和退回重做记录。
-- `daily_training_rollups`:可重建的日聚合,服务老师看板和周报。
+- `training_templates` 与只追加的 `training_template_versions`:模板身份/归档状态与每版 source、activity、说明和工具配置分离。
+- `training_assignments`:一次布置绑定固定模板版本,采用 once/daily、expected count、IANA 时区快照、半开时间窗和 draft/published/closed 状态。
+- `training_assignment_targets`:草稿可选择班级或个人;发布时把班级选择器展开为不可变的学员快照,只有学员目标可关联证据和批改。
+- `training_assignment_goal_metrics`:保存受 source/activity registry 约束的目标指标和比较方式。
+- `training_evidence` 与 `training_evidence_assignments`:原始证据和任务关联只追加,关联时重验机构、学员、目标、时间窗与 source/activity。
+- `training_submission_reviews`:追加式批改,保存状态、1 至 5 分评分、文字反馈和老师快照;当前 Foundation 不含语音反馈。
+- `daily_training_rollups`:按机构时区、source、activity 和 trust level 可重建的日聚合。
 
-边界条件必须在入口处理:空目标、非法项目、结束早于开始、重复证据、任务已关闭、学员不属于机构、工具不支持该指标时直接拒绝。
+边界条件必须在入口处理:空目标、非法 source/activity/metric、无效 JSON、无显式时区偏移或超过允许未来偏移的时间、结束不晚于开始、重复内容冲突、任务已关闭、学员不属于机构、工具不支持该指标时直接拒绝。
 
 ### 主站工具契约
 
-主站训练工具提交版本化 `TrainingEvidenceV1`:
+主站训练工具只提交严格版本化的 `TrainingEvidenceV1`:schemaVersion、注册的 source/activity、sourceEventId、带显式 offset 的 occurredAt、可选 durationMs、严格注册的 metrics、payloadVersion、受限 payload,以及可选的复数 assignmentIds。当前 source registry 只包含 `timer`、`predict` 和 `alg-trainer`,不能把未登记工具或指标静默当作合法证据。
 
-- `source`:`timer`、`predict`、`alg-trainer` 等稳定枚举。
-- `sourceEventId`:源端唯一 ID,与 source 组成幂等键。
-- `actorUserId`、`occurredAt`、项目/题型、持续时间和结构化指标。
-- 可选 `assignmentId`;必须验证任务目标确实包含该学员。
-- `payloadVersion` 与有限的 source-specific payload;服务端不信任客户端提交的汇总成绩。
+客户端不得提交 organizationId、studentId、actorUserId、trustLevel、timezoneSnapshot 或 localDate。Core 必须从登录态和当前学员账号绑定推导身份,在事务内重验每个任务关联,并由服务端生成机构时区快照、localDate、payload hash 与提交者快照。sourceEventId 的去重范围是机构、学员和 source;重复 ID 只有内容一致时才能按既定语义处理,内容冲突必须拒绝。
 
-任务入口用带签名、短时效的上下文把学员带到主站工具。工具完成后向教学 API 上报证据;平台读取聚合结果。禁止 iframe 抓页面、复制 `/timer`/`/predict` 代码或由老师手工认领无法校验的成绩。
+证据必须明确展示 trust level:`self_reported`、`server_recomputed`、`server_challenge_recomputed` 或 `server_originated`。界面不得把 `self_reported` 表述成“已验证”;只有独立的服务端计算链路才能提升可信等级。
 
-每日打卡应由有效学习/训练证据派生,手动补签作为有审计记录的例外。删除任务不能删除已产生的证据。
+带签名任务上下文、主站 `/timer`、`/predict`、`alg-trainer` 生产者接入和自动回传属于 Stage 3B。本轮 Stage 3A Foundation 不包含这些 adapters,也不包含 Core 训练 routes 或 Platform 训练页面。禁止 iframe 抓页面或复制主站训练引擎。
+
+每日打卡应由不可变证据和机构时区日聚合派生。Foundation 当前不提供手动补签;未来若支持,必须作为独立、可审计且不冒充工具证据的事件。删除任务不能删除已产生的证据。
 
 ## 反馈、周报与沟通
 
@@ -125,6 +126,8 @@
 周报聚合至少包含:实际上课/请假/缺席、消耗与剩余课时、任务完成率、训练天数、关键指标趋势、老师反馈和下周任务。历史周报引用发布时快照,不能随源数据变化悄悄改写。
 
 ## 核心业务闭环
+
+以下是目标业务闭环,不是当前所有阶段均已完成的状态说明。
 
 1. 机构创建课包商品,订单支付后生成学员课包和 grant 流水。
 2. 管理员/老师排课,学员签到,老师完课并确认出勤,事务内生成 consume 流水。
@@ -141,21 +144,25 @@
 - `/students`、`/teachers`、`/classes`:人员与教学关系。
 - `/schedule`、`/sessions/[id]`:排课、签到、完课与课堂记录。
 - `/packages`、`/orders`:课包商品、学员余额和流水。
-- `/assignments`、`/reports`:训练任务、批改、课堂反馈和周报。
+- `/assignments`、`/assignments/[id]`:训练任务创建、发布、目标与学员提交汇总。
+- `/students/[studentId]/training`:学员训练日历与证据明细。
+- `/assignments/[id]/students/[studentId]/review`:批改历史与新增批改。
+- `/reports`:课堂反馈和周报,属于 Stage 4。
 - `/messages`:机构会话。
 - `/settings`:校区、角色、规则、审计和集成设置。
 
-学员/家长端放在 `/learn`:今日任务、训练记录、课表、剩余课时、反馈、周报和消息。现有 `/instructor` 继续表示内容课程讲师,在数据迁移完成前不要把它直接改名或混入机构 teacher 权限。
+未来学员/家长端放在 `/learn`:今日任务、训练记录、课表、剩余课时、反馈、周报和消息。学员端训练归属必须先完成一次性账号绑定,不能因老师建档而自动获得主站训练记录。现有 `/instructor` 继续表示内容课程讲师,在数据迁移完成前不要把它直接改名或混入机构 teacher 权限。
 
 ## 状态机与不变量
 
 - 所有金额用最小货币单位整数,所有课时用明确单位或整数 credit,禁止浮点余额。
 - 数据库存 UTC 时间,机构配置 IANA 时区;日打卡、周报和课程日期按机构时区计算。
-- 订单支付、证据上报、完课消课、退款和 webhook 全部要求幂等键。
+- 管理写操作、完课消课、退款和 webhook 使用 Idempotency-Key;训练证据以机构、学员、source、sourceEventId 和 payload hash 实现不可变去重,不能只依赖通用幂等响应缓存。
 - 财务、课时、课堂事件、反馈发布和权限变更不硬删除;作废使用反向事件或状态迁移。
 - 报表/日聚合可重建,账本和原始事件不可重建时必须长期保留。
 - 所有列表有分页和机构范围索引;教师看板不在应用层遍历全机构数据。
 - 学员未绑定账号、无监护人、多人共用手机号、转班、跨校区、代课、跨周/月和课包同时到期都必须有测试。
+- 学员绑定邀请只保存 token hash;生成新邀请使旧链接失效,预览不消费 token,确认消费后才建立账号归属。明文 token 不进入通用幂等响应缓存。
 
 ## 交付阶段
 
@@ -181,12 +188,16 @@
 
 验收:买课到消课完整闭环;重复完课不重复扣课;退款和撤销都有可追溯反向流水。
 
-### 3. 训练与作业
+### 3A. 训练 Foundation
 
-- 任务模板、个人/班级任务、主站训练证据、每日看板、批改和逾期提醒。
-- 先接 `/timer`,再用同一契约接 `/predict` 和其他训练器。
+- 版本化模板、once/daily 任务、发布时目标快照、追加式证据/任务关联、可信等级、日聚合、追加式批改和一次性账号绑定邀请。
+- 验收:客户端身份与 trust 字段不可伪造;非法 JSON、时间、source/activity/metric、重复内容冲突和跨租户关联被拒绝;日聚合可从原始证据重建。
 
-验收:老师能看到每位学员每天做了什么;重复/伪造/跨租户证据被拒绝。
+### 3B. 训练产品闭环
+
+- Core 训练与绑定 routes、Platform 任务/日历/证据/批改页面,以及主站训练工具生产者接入。
+- 先接 `/timer`,再用同一契约接 `/predict` 和 `alg-trainer`。
+- 验收:老师只能看到负责范围,学员绑定后可提交并查看自己的证据;每条证据明确显示 trust level,不能把 `self_reported` 表述成“已验证”。
 
 ### 4. 反馈、周报与沟通
 
@@ -201,9 +212,9 @@
 
 验收:多机构并发隔离通过;备份恢复演练通过;关键账本可逐笔对账。
 
-## 初始实现顺序
+## Stage 0 初始实现顺序（历史记录）
 
-第一批代码先做阶段 0,但 schema 和契约按最终模型命名,不写单机构快捷字段。顺序为:
+第一批代码先做阶段 0,但 schema 和契约按最终模型命名,不写单机构快捷字段。以下是当时的实施顺序,不是当前待办清单:
 
 1. shared 状态/权限/证据契约。
 2. PostgreSQL migration:organizations、members、students、guardians、audit、idempotency。
@@ -211,11 +222,11 @@
 4. 平台机构选择与 `/org/[orgSlug]` 最小工作台。
 5. 跨租户 API 测试和审计测试。
 
-阶段 0 后再落课包账本。不要先做漂亮的老师看板再回头补租户和账本,否则后续每张表和每个查询都要重写。
+阶段 0 后再落课包账本。Stage 0 的最小证据类型只是占位契约;Stage 3A 正在以去客户端身份字段、严格 registry、JSON 和时间边界的正式证据契约取代它。
 
-## Stage 0、Stage 1 CRM 基础与 Stage 2 实施状态
+## Stage 0、Stage 1 CRM 基础、Stage 2 与 Stage 3A 实施状态
 
-截至 2026-08-17,Stage 0 底座、Stage 1 的校区 / 班级 / 长期负责关系和 Stage 2 的管理端授予、排课、出勤、正常消课 MVP 已完成本地实现:
+截至 2026-08-17,Stage 0 底座、Stage 1 的校区 / 班级 / 长期负责关系和 Stage 2 的管理端授予、排课、出勤、正常消课 MVP 已完成本地实现。Stage 3A 的本地 Foundation schema 与共享契约也已完成并通过定向验证,但不代表训练产品闭环已经完成:
 
 - `@cuberoot/shared` 提供角色 / 权限 / 状态、`TrainingEvidenceV1`、平台身份断言和统一错误码。
 - PostgreSQL `0142` 至 `0146` 建立租户、成员、学员 / 监护人、审计、幂等、平台账号映射、独立写入尝试限流和学员分页索引;最终态同步进 `schema.pg.sql` 与 `/dev/schema`。
@@ -228,6 +239,9 @@
 - PostgreSQL `0149` 建立校区、班级、学员分班、长期老师负责关系和永久关系并发锁；关系采用半开有效期,所有跨表关系使用机构复合外键,归档与新增关系的并发竞争由数据库串行化。
 - Core 已提供校区 / 班级分页与归档、学员分班、班级或个人学员负责人指派和结束关系 API。teacher/assistant 的校区、班级和学员查询都在 SQL 内按当前 active 长期指派收窄,无权资源对外返回 404 并记录内部拒绝审计；`session_teachers` 继续保留每堂课的事实快照。
 - Platform 已提供校区、班级、班级学员和负责人管理页面,以及学员个人负责关系页面。owner/admin 可管理关系,teacher/assistant 只读取 Core 已裁剪的负责范围,不预载全机构学员选择器或同事历史。
+- Stage 3A Foundation 在 PostgreSQL `0150` 建立版本化模板、任务/目标/目标指标、带来源的不可变学员快照、不可变证据及任务关联、追加式批改、日聚合和账号绑定邀请,并为 `student_profiles` 增加 `account_linked_at`;升级路径与最终 schema 路径已在全新 PostgreSQL 18 隔离库验证。
+- `@cuberoot/shared` 已定义细粒度 training permissions、source/activity/metric/trust registry、严格且有界的 JSON 证据解析与 Foundation DTO;source/activity 与目标指标组合由类型和运行时 registry 同时约束。
+- 本轮明确不包含 Core Stage 3 routes、Platform 训练 UI、主站工具 adapters 或端到端账号绑定。Stage 3B 未开始验收,不能把 Foundation 写成 `/timer`、`/predict` 已自动回传或证据已经服务端验证。
 - Stage 1 当前完成的是 CRM 基础闭环；监护人管理工作台、批量导入、远程搜索选择器和完整权限工作台尚未实现,不能把阶段 1 的完整验收标记为通过。
 - Stage 2 当前覆盖管理端授予课包与正常消课闭环,尚未接通订单 / 支付；退款 / 撤销反向流水、请假补课规则和异常流水报表也未完成,不能把阶段 2 的完整验收标记为通过。
 - 手机验证码使用加密随机数和 SQLite 持久限流;生产环境没有真实短信 provider 时拒绝启动部署,不再回退到控制台输出验证码。
@@ -237,16 +251,19 @@
 - 真实 PostgreSQL 18 已验证从 Stage 0 parent snapshot 顺序应用 `0147`、`0148`,得到 7 张 Stage 2 表和 4 个 owner triggers;审计 actor 随账号删除匿名化成功。两事务并发删除仅剩两名 owner 时,READ COMMITTED 下第二笔以 `23514` 拒绝,REPEATABLE READ 下第二笔以 `40001` 拒绝,最终均保留 1 名 owner。
 - 真实 PostgreSQL 18 已分别验证从 Stage 2 最终结构升级 `0149` 与直接加载最终 `schema.pg.sql`。两套隔离 schema 均通过跨机构复合外键、关系 XOR 与半开区间、READ COMMITTED 重叠拒绝、REPEATABLE READ 序列化失败后重试、归档与新增的双向竞争、账号删除匿名化、200 字符教师快照和永久关系锁身份保护。
 - 历史 migration 链依赖 ledger 出现前的旧生产基线,从绝对空库按文件名重放会在 `0003_add_note_to_colpi_words.sql` 因缺少基线表停止。已验证的 Stage 0 最终结构向 `0147`、`0148` 升级不受这个历史缺口影响,但新库初始化 / 灾难恢复只能依赖已验证备份,不能宣称全历史空库重放已通过。
-- 真实 PG 尚未覆盖 20 路幂等 / 限流并发、完整双机构 HTTP API 夹具、课包并发透支、重复完课和整套 runtime 角色权限。线上 `0142` 至 `0149` 也尚未执行。
+- 真实 PostgreSQL 18 已在全新升级库与最终 schema 库中验证 `0150`,两边的语义目录 2424 项完全一致。顺序夹具覆盖跨机构复合外键、发布非空与发布后不可变、邀请过期 / 重发 / 消费、证据身份 / 时间 / 指标 / 自然唯一、日聚合与重建、追加式批改、聚合防篡改和账号删除匿名化。并发夹具覆盖分班新增 / 结束与发布的 RC / RR 双向顺序、班级展开目标 exact-set、直接学员与多班重复命中、同自然键证据、批改 revision 及证据写入与账号删除锁序。
+- 真实 PG 尚未覆盖 20 路幂等 / 限流并发、完整双机构 HTTP API 夹具、课包并发透支、重复完课和整套 runtime 角色权限;线上 `0142` 至 `0150` 也尚未执行。
 - 本机 Docker daemon 未运行,尚未完成从干净构建上下文生成平台镜像的实测。
 - 本地分支尚未与远端最新 `main` 安全整合,也没有 push;线上尚未配置双端同一新密钥或完成登录态 smoke。
 
-本轮本地验证:
+此前已完成的 Stage 0 至 Stage 2 本地验证:
 
 - `pnpm install --frozen-lockfile` 与 `@cuberoot/shared build` 通过。
 - Platform typecheck 通过;全量 Vitest 6 个文件、29 个测试通过。
 - Shared build、Server typecheck 通过;教学权限、repository、Stage 1 / Stage 2 schema、owner guard 与幂等 / 限流边界 Vitest 5 个文件、49 个测试通过。
 - Client typecheck 通过;schema/API drift 与账号删除契约 Vitest 2 个文件、34 个测试通过。
 - 两个 deploy workflow 和一个 platform test workflow 通过 YAML 1.2 解析,所有 workflow `run` 脚本通过 Bash 语法检查;`docker compose config --quiet` 与 `git diff --check` 通过。
+
+Stage 3A Foundation 已通过 shared build / typecheck、Server typecheck、独立 strict TypeScript 契约编译、Server 5 个文件 24 项定向测试、Client typecheck、`/dev/schema` drift 与账号删除契约 2 个文件 36 项测试。`0150` 的 PostgreSQL 18 升级 / 最终 schema 双路径、顺序与 RC / RR 并发夹具均通过,全工作树 `git diff --check` 通过。以上计数只代表 Foundation schema / 契约,不代表尚不存在的 Stage 3 routes、UI 或 adapters。
 
 以上项目必须按 `docs/platform-migration.md` 的删除门槛完成后,旧本地目录和旧 GitHub 仓库才可由仓库所有者删除。
