@@ -77,6 +77,44 @@ function repository(): TeachingSaasRepository {
       status: 201,
       body: { evidence: { id: 'evidence-1' }, assignmentIds: [], replayed: false },
     }),
+    listTrainingTemplates: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    getTrainingTemplate: vi.fn().mockResolvedValue({ template: { id: 'template-1' } }),
+    createTrainingTemplate: vi.fn().mockResolvedValue({
+      status: 201, body: { template: { id: 'template-1' } },
+    }),
+    listTrainingTemplateVersions: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    createTrainingTemplateVersion: vi.fn().mockResolvedValue({
+      status: 201, body: { templateVersion: { id: 'version-1' } },
+    }),
+    archiveTrainingTemplate: vi.fn().mockResolvedValue({
+      status: 200, body: { template: { id: 'template-1', status: 'archived' } },
+    }),
+    listTrainingAssignments: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    getTrainingAssignment: vi.fn().mockResolvedValue({
+      assignment: { id: 'assignment-1' }, templateVersion: { id: 'version-1' }, goals: [],
+    }),
+    createTrainingAssignment: vi.fn().mockResolvedValue({
+      status: 201,
+      body: { assignment: { id: 'assignment-1' }, templateVersion: { id: 'version-1' }, goals: [] },
+    }),
+    reviseTrainingAssignment: vi.fn().mockResolvedValue({
+      status: 200,
+      body: { assignment: { id: 'assignment-1' }, templateVersion: { id: 'version-1' }, goals: [] },
+    }),
+    publishTrainingAssignment: vi.fn().mockResolvedValue({
+      status: 200,
+      body: { assignment: { id: 'assignment-1', status: 'published' }, templateVersion: { id: 'version-1' }, goals: [] },
+    }),
+    closeTrainingAssignment: vi.fn().mockResolvedValue({
+      status: 200,
+      body: { assignment: { id: 'assignment-1', status: 'closed' }, templateVersion: { id: 'version-1' }, goals: [] },
+    }),
+    listTrainingAssignmentTargets: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    listTrainingTargetEvidence: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    listTrainingTargetReviews: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    createTrainingTargetReview: vi.fn().mockResolvedValue({
+      status: 201, body: { review: { id: 'review-1', revision: 1 } },
+    }),
     saveAttendanceBatch: vi.fn().mockResolvedValue({ status: 200, body: { attendance: [] } }),
     completeSession: vi.fn().mockResolvedValue({ status: 200, body: { session: { status: 'completed' } } }),
   };
@@ -618,5 +656,163 @@ describe('teaching SaaS routes', () => {
       error: { code: 'RESOURCE_NOT_FOUND', message: 'Training assignment not found' },
     });
     expect(JSON.stringify(body)).not.toMatch(/23514|teaching_audit_events|metadata_check/i);
+  });
+
+  it('validates Stage 3C templates from the shared tool registry and bounds tool configuration', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const templateId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const raw = JSON.stringify({
+      title: '  计时训练  ', instructions: '', source: 'timer', activity: 'solve',
+      toolConfig: { schemaVersion: 1 },
+    });
+    const created = await app.request(
+      `/teaching/organizations/demo/training/templates/${templateId}/versions`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'template-version-1' },
+        body: raw,
+      },
+    );
+    expect(created.status).toBe(201);
+    expect(repo.createTrainingTemplateVersion).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      templateId,
+      {
+        title: '计时训练', instructions: '', source: 'timer', activity: 'solve',
+        toolConfig: { schemaVersion: 1 },
+      },
+      'template-version-1',
+      createHash('sha256').update(raw).digest('hex'),
+      expect.any(String),
+    );
+
+    for (const [index, invalidBody] of [
+      {
+        title: '错配', instructions: '', source: 'predict', activity: 'solve',
+        toolConfig: { schemaVersion: 1 },
+      },
+      {
+        title: '身份注入', instructions: '', source: 'timer', activity: 'solve',
+        toolConfig: { schemaVersion: 1, studentId: 'forged' },
+      },
+      {
+        title: '链接注入', instructions: '', source: 'timer', activity: 'solve',
+        toolConfig: { schemaVersion: 1, url: 'https://example.invalid/trainer' },
+      },
+      {
+        title: '缺少版本', instructions: '', source: 'timer', activity: 'solve', toolConfig: {},
+      },
+    ].entries()) {
+      const rejected = await app.request(
+        `/teaching/organizations/demo/training/templates/${templateId}/versions`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Idempotency-Key': `bad-version-${index + 1}` },
+          body: JSON.stringify(invalidBody),
+        },
+      );
+      expect(rejected.status).toBe(400);
+    }
+    expect(repo.createTrainingTemplateVersion).toHaveBeenCalledTimes(1);
+  });
+
+  it('normalizes complete Stage 3C assignment writes and keeps targets on a separate paginated route', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const versionId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const groupA = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const groupB = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    const studentId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+    const assignmentId = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+    const raw = JSON.stringify({
+      templateVersionId: versionId,
+      title: '  每日训练  ',
+      instructions: '完成后提交证据',
+      scheduleKind: 'daily',
+      expectedCount: 5,
+      startsAt: '2026-08-18T09:00:00+08:00',
+      endsAt: null,
+      groupIds: [groupB, groupA],
+      studentIds: [studentId],
+      goals: [
+        { metricKey: 'duration_ms', operator: 'gte', targetValue: 60_000 },
+        { metricKey: 'evidence_count', operator: 'gte', targetValue: 5 },
+      ],
+    });
+    const created = await app.request('/teaching/organizations/demo/training/assignments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'assignment-create-1' },
+      body: raw,
+    });
+    expect(created.status).toBe(201);
+    expect(repo.createTrainingAssignment).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      {
+        templateVersionId: versionId,
+        title: '每日训练',
+        instructions: '完成后提交证据',
+        scheduleKind: 'daily',
+        expectedCount: 5,
+        startsAt: '2026-08-18T01:00:00.000Z',
+        endsAt: null,
+        groupIds: [groupA, groupB],
+        studentIds: [studentId],
+        goals: [
+          { metricKey: 'duration_ms', operator: 'gte', targetValue: 60_000 },
+          { metricKey: 'evidence_count', operator: 'gte', targetValue: 5 },
+        ],
+      },
+      'assignment-create-1',
+      createHash('sha256').update(raw).digest('hex'),
+      expect.any(String),
+    );
+
+    const targets = await app.request(
+      `/teaching/organizations/demo/training/assignments/${assignmentId}/targets?targetKind=student&page=2&pageSize=10`,
+    );
+    expect(targets.status).toBe(200);
+    expect(repo.listTrainingAssignmentTargets).toHaveBeenCalledWith(
+      ACTOR, 'demo', assignmentId, { targetKind: 'student' },
+      { page: 2, pageSize: 10, offset: 10 }, expect.any(String),
+    );
+
+    const duplicate = await app.request('/teaching/organizations/demo/training/assignments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'assignment-duplicate' },
+      body: JSON.stringify({ ...JSON.parse(raw), groupIds: [groupA, groupA] }),
+    });
+    expect(duplicate.status).toBe(400);
+    expect(repo.createTrainingAssignment).toHaveBeenCalledTimes(1);
+  });
+
+  it('requires idempotency for Stage 3C review writes and forwards only the strict review body', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const assignmentId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const studentId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const raw = JSON.stringify({ status: 'accepted', rating: 5, feedback: '完成质量稳定' });
+    const response = await app.request(
+      `/teaching/organizations/demo/training/assignments/${assignmentId}/targets/${studentId}/reviews`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'review-1' },
+        body: raw,
+      },
+    );
+    expect(response.status).toBe(201);
+    expect(repo.createTrainingTargetReview).toHaveBeenCalledWith(
+      ACTOR, 'demo', assignmentId, studentId,
+      { status: 'accepted', rating: 5, feedback: '完成质量稳定' },
+      'review-1', createHash('sha256')
+        .update(JSON.stringify([assignmentId, studentId, raw]))
+        .digest('hex'), expect.any(String),
+    );
+
+    const missingKey = await app.request(
+      `/teaching/organizations/demo/training/assignments/${assignmentId}/targets/${studentId}/reviews`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: raw },
+    );
+    expect(missingKey.status).toBe(400);
+    expect(repo.createTrainingTargetReview).toHaveBeenCalledTimes(1);
   });
 });
