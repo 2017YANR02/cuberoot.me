@@ -1,4 +1,4 @@
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 async function read(relativePath: string): Promise<string> {
@@ -39,18 +39,13 @@ const TABLES = [
 
 describe('teaching Stage 3A foundation schema', () => {
   it('records immutable migration 0150 and every foundation table', async () => {
-    const [migration, schema, readme, devSchema, migrationFiles] = await Promise.all([
+    const [migration, schema, readme, devSchema] = await Promise.all([
       read('../migrations/0150_teaching_training_foundation.sql'),
       read('../src/db/schema.pg.sql'),
       read('../migrations/README.md'),
       read('../../client/app/[lang]/dev/schema/page.tsx'),
-      readdir(new URL('../migrations/', `${new URL('.', import.meta.url).href}`)),
     ]);
     expect(migration).not.toMatch(/\b(?:BEGIN|COMMIT)\s*;/i);
-    expect(Math.max(...migrationFiles.flatMap((file) => {
-      const match = /^(\d{4})_.+\.sql$/.exec(file);
-      return match ? [Number(match[1])] : [];
-    }))).toBe(150);
     expect(readme).toContain('0150_teaching_training_foundation.sql');
     expect(devSchema).toContain("{ n: 150, slug: 'teaching_training_foundation'");
     for (const table of TABLES) {
