@@ -89,3 +89,16 @@ export function entityStatusLabel(status: string, t: ReturnType<typeof useT>): s
   const label = labels[status];
   return label ? t(label[0], label[1]) : status;
 }
+
+export function teachingRoleLabel(role: string, t: ReturnType<typeof useT>): string {
+  const labels: Record<string, [string, string]> = {
+    owner: ['所有者', 'Owner'],
+    admin: ['管理员', 'Admin'],
+    teacher: ['老师', 'Teacher'],
+    assistant: ['助教', 'Assistant'],
+    finance: ['财务', 'Finance'],
+    viewer: ['只读成员', 'Viewer'],
+  };
+  const label = labels[role];
+  return label ? t(label[0], label[1]) : role;
+}

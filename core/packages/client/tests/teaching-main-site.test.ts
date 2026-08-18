@@ -34,4 +34,28 @@ describe('main-site teaching architecture', () => {
     expect(css).toContain('var(--signal-success)');
     expect(css).not.toContain('var(--success)');
   });
+
+  it('uses real links for CRM details and keeps tenant authorization on Core', () => {
+    const classes = readClient('app/[lang]/org/[orgSlug]/classes/page.tsx');
+    const students = readClient('app/[lang]/org/[orgSlug]/students/page.tsx');
+    const classDetail = readClient('app/[lang]/org/[orgSlug]/classes/[groupId]/page.tsx');
+    const studentDetail = readClient('app/[lang]/org/[orgSlug]/students/[studentId]/page.tsx');
+    for (const source of [classes, students, classDetail]) {
+      expect(source).toContain('<AppLink');
+      expect(source).toContain('prefetch={false}');
+    }
+    expect(classDetail).toContain("hasTeachingPermission(role, 'assignment:manage')");
+    expect(studentDetail).toContain("hasTeachingPermission(role, 'assignment:manage')");
+    expect(classDetail).not.toContain('router.push');
+    expect(studentDetail).not.toContain('router.push');
+  });
+
+  it('does not load organization-wide assignment choices for scoped teachers', () => {
+    const classDetail = readClient('app/[lang]/org/[orgSlug]/classes/[groupId]/page.tsx');
+    const studentDetail = readClient('app/[lang]/org/[orgSlug]/students/[studentId]/page.tsx');
+    expect(classDetail).toContain('if (!canManageGroup && !canManageAssignments) return');
+    expect(studentDetail).toContain('if (!canManageAssignments) return');
+    expect(classDetail).toContain('listTeachingGroupMemberships');
+    expect(studentDetail).toContain('getTeachingStudent');
+  });
 });

@@ -81,9 +81,12 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'org/[orgSlug]': { title: { zh: '机构概览', en: 'Organization Overview' } },
+  'org/[orgSlug]/members': { title: { zh: '机构成员', en: 'Organization Members' } },
   'org/[orgSlug]/students': { title: { zh: '学员管理', en: 'Student Management' } },
+  'org/[orgSlug]/students/[studentId]': { title: { zh: '学员详情', en: 'Student Details' } },
   'org/[orgSlug]/campuses': { title: { zh: '校区管理', en: 'Campus Management' } },
   'org/[orgSlug]/classes': { title: { zh: '班级管理', en: 'Class Management' } },
+  'org/[orgSlug]/classes/[groupId]': { title: { zh: '班级详情', en: 'Class Details' } },
   'privacy': {
     title: { zh: '移动端与小程序隐私政策', en: 'Mobile and Mini Program Privacy Policy' },
     description: {

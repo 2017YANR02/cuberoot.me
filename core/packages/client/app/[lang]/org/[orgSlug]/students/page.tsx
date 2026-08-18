@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { hasTeachingPermission, type TeachingOrganizationRole } from '@cuberoot/shared/teaching';
 import { useT } from '@/hooks/useT';
+import AppLink from '@/components/AppLink';
 import { createTeachingStudent, listTeachingStudents } from '@/lib/teaching-saas-api';
 import OrgWorkspace from '../../_components/OrgWorkspace';
 import {
@@ -71,13 +72,13 @@ function StudentsContent({ orgSlug, page, role }: { orgSlug: string; page: numbe
           ) : (
             <div className="org-list">
               {students.result.items.map((student) => (
-                <div className="org-row" key={student.id}>
+                <AppLink className="org-row org-row-link" href={`/org/${orgSlug}/students/${student.id}`} prefetch={false} key={student.id}>
                   <div className="org-row-main">
                     <div className="org-row-title">{student.displayName}</div>
                     <div className="org-row-meta">{student.externalRef ?? t('无外部编号', 'No external reference')}</div>
                   </div>
                   <span className="org-status">{entityStatusLabel(student.status, t)}</span>
-                </div>
+                </AppLink>
               ))}
             </div>
           )}
