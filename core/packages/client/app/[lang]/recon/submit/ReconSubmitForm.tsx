@@ -67,6 +67,7 @@ import {
   checkReconCompletion,
   getReconScramble,
   normalizeReconScrambleSpacing,
+  normalizeReconSolution,
 } from '@cuberoot/shared/recon-completion';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
@@ -1350,9 +1351,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // ── Submit ──
   // 校验解法 / 打乱里的非法字符(注释 `//` 之外只允许 ASCII)。合法返回 null,
   // 否则返回带原因 + 逐行定位的多行提示文本(给 alert 用)。
-  const validateNotationFields = (): string | null => {
+  const validateNotationFields = (solution = form.solution || ''): string | null => {
     const fields: { value: string; label: { zh: string; en: string } }[] = [
-      { value: form.solution || '', label: { zh: '解法', en: 'Solution' } },
+      { value: solution, label: { zh: '解法', en: 'Solution' } },
       { value: form.wcaScramble || '', label: { zh: 'WCA 真实打乱', en: 'WCA real scramble' } },
       { value: form.optimalScramble || '', label: { zh: '最优打乱', en: 'Optimal scramble' } },
       { value: form.scramble || '', label: { zh: '打乱', en: 'Scramble' } },
@@ -1381,7 +1382,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     }
     // 记号区(解法 / 打乱,`//` 注释之外)只能用英文字母和符号。中文等文字会被播放器
     // 当成转动 → 复盘无法播放。命中则拦下并指明具体行,让用户改完(把文字移到 `//` 后)重试。
-    const notationError = validateNotationFields();
+    const solution = normalizeReconSolution(form.solution || '');
+    const notationError = validateNotationFields(solution);
     if (notationError) {
       alert(notationError);
       return;
@@ -1399,13 +1401,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       const wcaScramble = normalizeReconScrambleSpacing(form.event || '', form.wcaScramble || '');
       const optimalScramble = normalizeReconScrambleSpacing(form.event || '', form.optimalScramble || '');
       const scramble = normalizeReconScrambleSpacing(form.event || '', form.scramble || '');
-      if (wcaScramble !== (form.wcaScramble || '') || optimalScramble !== (form.optimalScramble || '') || scramble !== (form.scramble || '')) {
-        setForm(previous => ({ ...previous, wcaScramble, optimalScramble, scramble }));
+      if (solution !== (form.solution || '') || wcaScramble !== (form.wcaScramble || '') || optimalScramble !== (form.optimalScramble || '') || scramble !== (form.scramble || '')) {
+        setForm(previous => ({ ...previous, solution, wcaScramble, optimalScramble, scramble }));
       }
       const completion = await checkReconCompletion({
         event: form.event || '',
         scramble: getReconScramble({ optimalScramble, wcaScramble, scramble }),
-        solution: form.solution || '',
+        solution,
       });
       if (completion.status === 'invalid') {
         alert(tr({
@@ -1424,6 +1426,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
       const data: Partial<ReconSolve> = {
         ...form,
+        solution,
         date: toDateInput(form.date),
         reconDate: toDateInput(form.reconDate),
         reconer: form.reconer?.trim() ?? '',
@@ -1436,23 +1439,26 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         // 已复原时主动清掉旧理由；未复原时只保存去掉首尾空白后的说明。
         unsolvedReason: completion.status === 'unsolved' ? unsolvedReason : null,
       };
-      if (stats) {
-        data.stm = stats.stm;
-        data.tps = stats.tps;
-        data.oll = stats.ollFull;
-        data.pll = stats.pllFull;
-        data.ollShort = stats.ollShort;
-        data.pllShort = stats.pllShort;
-        data.freePair = stats.freePair;
-        data.yRot = stats.yRot;
-        data.regrip = stats.regrip;
-        data.lockup = stats.lockup;
-        data.crossType = stats.crossType;
-        data.crossStm = stats.crossStm;
-        data.f2l = stats.f2l;
-        data.ll = stats.ll;
-        data.sMove = stats.sMove;
-        data.crossColor = stats.crossColor;
+      const isBld = isBldEvent(form.event ?? '');
+      const statsTime = (isBld ? form.execTime : form.rawTime) ?? 0;
+      const submissionStats = solution ? computeAllStats(solution, statsTime, form.event) : null;
+      if (submissionStats) {
+        data.stm = submissionStats.stm;
+        data.tps = submissionStats.tps;
+        data.oll = submissionStats.ollFull;
+        data.pll = submissionStats.pllFull;
+        data.ollShort = submissionStats.ollShort;
+        data.pllShort = submissionStats.pllShort;
+        data.freePair = submissionStats.freePair;
+        data.yRot = submissionStats.yRot;
+        data.regrip = submissionStats.regrip;
+        data.lockup = submissionStats.lockup;
+        data.crossType = submissionStats.crossType;
+        data.crossStm = submissionStats.crossStm;
+        data.f2l = submissionStats.f2l;
+        data.ll = submissionStats.ll;
+        data.sMove = submissionStats.sMove;
+        data.crossColor = submissionStats.crossColor;
       }
       if (isEditing && editId) {
         await updateRecon(Number(editId), data);

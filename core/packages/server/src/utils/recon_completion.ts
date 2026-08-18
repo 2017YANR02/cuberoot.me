@@ -1,6 +1,7 @@
 import {
   checkReconCompletion,
   normalizeReconScrambleSpacing,
+  normalizeReconSolution,
   type ReconCompletionResult,
 } from '@cuberoot/shared/recon-completion';
 
@@ -14,6 +15,13 @@ export function normalizeReconScrambleRow(
     if (typeof row[field] === 'string') {
       row[field] = normalizeReconScrambleSpacing(event, row[field]);
     }
+  }
+}
+
+/** Canonicalise a persisted solution, including folding standalone AUF lines. */
+export function normalizeReconSolutionRow(row: Record<string, unknown>): void {
+  if (typeof row.solution === 'string') {
+    row.solution = normalizeReconSolution(row.solution);
   }
 }
 
