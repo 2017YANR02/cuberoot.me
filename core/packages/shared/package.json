@@ -128,6 +128,16 @@
       "default": "./src/calendar.ts"
     },
     "./timer": "./src/timer/index.ts",
+    "./smart-cube/giiker": "./src/smart_cube/giiker.ts",
+    "./smart-cube/gocube": "./src/smart_cube/gocube.ts",
+    "./smart-cube/moyu": "./src/smart_cube/moyu.ts",
+    "./smart-cube/cubie": "./src/smart_cube/cubie.ts",
+    "./smart-cube/gan-crypto": "./src/smart_cube/gan_crypto.ts",
+    "./smart-cube/gan-move-sync": "./src/smart_cube/gan_move_sync.ts",
+    "./smart-cube/gan-v2": "./src/smart_cube/gan_v2.ts",
+    "./smart-cube/gan-v3": "./src/smart_cube/gan_v3.ts",
+    "./smart-cube/gan-v4": "./src/smart_cube/gan_v4.ts",
+    "./smart-cube/relay": "./src/smart_cube/relay.ts",
     "./data/*.json": "./data/*.json"
   },
   "scripts": {

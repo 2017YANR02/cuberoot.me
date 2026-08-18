@@ -549,6 +549,32 @@ describe('mini program authentication', () => {
     });
   });
 
+  it('rejects validation when the confirmed identity cannot be persisted', async () => {
+    const session = {
+      token: 't'.repeat(20),
+      user: { name: 'Old name', wcaId: null },
+    };
+    vi.stubGlobal('wx', {
+      getStorageSync: () => session,
+      request(options: {
+        success(result: { statusCode: number; data: unknown }): void;
+      }) {
+        options.success({
+          statusCode: 200,
+          data: { user: { uid: 12, name: 'New name', wcaId: null } },
+        });
+      },
+      setStorageSync() {
+        throw new Error('storage unavailable');
+      },
+    });
+
+    await expect(validateStoredSession(session)).rejects.toMatchObject({
+      message: 'session storage unavailable',
+      status: -1,
+    });
+  });
+
   it('rejects validation when the server returns a different account uid', async () => {
     const session = {
       token: 't'.repeat(20),
