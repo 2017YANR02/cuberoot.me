@@ -1057,9 +1057,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         try { sub(move, ts); } catch (err) { console.error('[bt-broadcast]', err); }
       }
     },
-    onSolved: () => {
+    onSolved: (atMs) => {
       if (stageTrainingOpen) return;
-      if (phaseSnapshotRef.current === 'running') timer.onPressDown();
+      if (phaseSnapshotRef.current === 'running' && timer.stopFromCube(atMs)) {
+        phaseSnapshotRef.current = 'stopped';
+      }
     },
     onNeedMac: requestMac,
     // The hook has always emitted these; nothing consumed them, so a cube that

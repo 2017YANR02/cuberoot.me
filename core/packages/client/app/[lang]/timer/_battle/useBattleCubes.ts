@@ -33,9 +33,8 @@
  *
  * ## 时刻
  *
- * `onMove` 给的是 BLE 值到达时的 `performance.now()`,和 store 里的时间同一口径,
- * 所以原样往下传。`onSolved` 不带时刻 —— 它是状态跃迁的回调 —— 这一路只能用
- * 「最近一手的时刻」当停表点,比 `performance.now()` 准(BLE 会晚到)。
+ * `onMove` 给的是校准到 `performance.now()` 口径的魔方动作时刻,所以原样往下传。
+ * 动作触发的 `onSolved` 会带同一个时刻;只有纯状态快照没有,那时回退到最近一手。
  */
 
 import { useCallback, useEffect, useRef } from 'react';
@@ -135,8 +134,7 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     [],
   );
 
-  // 每一路最近一手的时刻。onSolved 不带时刻,停表点用它 —— 用 performance.now()
-  // 会把 BLE 那几十毫秒的延迟白算进成绩里。
+  // 每一路最近一手的时刻。纯状态快照触发 solved 时没有动作时刻,才用它兜底。
   const lastMoveAtRef = useRef<number[]>(Array.from({ length: MAX_PLAYERS }, () => 0));
   // 这一路上一次是不是已经预备过了。BLE 会把同一个状态重复报上来,重复 arm 本身
   // 无害(store 幂等),但重复算「第一下转动」就会把起表时刻往后挪。
@@ -215,12 +213,15 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     // 没预备就转动 —— 可能正在拧打乱。下面的 checkArm 会在拧到位时把预备补上。
   }, [syncTrack]);
 
-  const onSolved = useCallback((slot: number) => {
+  const onSolved = useCallback((slot: number, atMs?: number) => {
     const st = useBattleStore.getState();
     if (!slotCounts(slot, st.cubeMode)) return;
     const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
     const attempt = attemptKey(owner, st.players[owner].startTime);
-    const stopped = st.cubeStop(owner, lastMoveAtRef.current[slot] || performance.now());
+    const stopAt = atMs !== undefined && Number.isFinite(atMs)
+      ? atMs
+      : lastMoveAtRef.current[slot] || performance.now();
+    const stopped = st.cubeStop(owner, stopAt);
     armedRef.current[slot] = false;
     // 缓冲无论如何都要清空:这一路已经不在这一把里了,留着只会漏给下一把。
     const track = trackRef.current[slot];
@@ -337,7 +338,7 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
 function useSlot(
   slot: number,
   onMove: (slot: number, move: string, ts: number) => void,
-  onSolved: (slot: number) => void,
+  onSolved: (slot: number, atMs?: number) => void,
   checkArm: (slot: number, handle: BluetoothCubeHandle) => void,
   needMac: (slot: number, deviceName: string, isWrongKey?: boolean) => Promise<string | null>,
   onGyro: ((slot: number, q: Quat) => void) | undefined,
@@ -351,7 +352,7 @@ function useSlot(
       onMove(slot, m, ts);
       if (selfRef.current) checkArm(slot, selfRef.current);
     },
-    onSolved: () => onSolved(slot),
+    onSolved: (atMs) => onSolved(slot, atMs),
     onNeedMac: (deviceName, isWrongKey) => needMac(slot, deviceName, isWrongKey),
     onGyro: onGyro ? (q) => onGyro(slot, q) : undefined,
   });
