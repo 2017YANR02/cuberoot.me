@@ -209,10 +209,13 @@ export async function getUserById(id: number): Promise<AppUser | null> {
   return rows[0] ?? null;
 }
 
-/** 修改当前账号的站内展示名。调用方负责鉴权并先做 normalize + validate。 */
+/**
+ * 修改当前账号的站内展示名。调用方负责鉴权并先做 normalize + validate。
+ * wca_id 条件是最终写入闸门:即使改名与绑定 WCA 并发,也不能在实名绑定后落入自定义名。
+ */
 export async function updateDisplayName(id: number, displayName: string): Promise<AppUser | null> {
   const rows = await query<AppUser>(
-    `UPDATE app_users SET display_name = ? WHERE id = ?
+    `UPDATE app_users SET display_name = ? WHERE id = ? AND wca_id IS NULL
      RETURNING id, display_name, avatar_url, wca_id`,
     [displayName, id],
   );
@@ -252,14 +255,14 @@ export async function loginWithIdentity(
 ): Promise<{ user: AppUser; isNew: boolean }> {
   const existing = await findUserByIdentity(provider, providerUid);
   if (existing) {
-    // 机会式回填展示名/头像(不覆盖用户已自定义的非空名)。
-    if ((!existing.display_name && profile.name) || (!existing.avatar_url && profile.avatar)) {
+    // WCA 姓名是实名认证来源,每次 WCA 登录都刷新;其它来源仍只机会式回填空展示名。
+    if ((provider === 'wca' && profile.name) || (!existing.display_name && profile.name) || (!existing.avatar_url && profile.avatar)) {
       await query(
         `UPDATE app_users SET
-           display_name = CASE WHEN display_name = '' THEN ? ELSE display_name END,
+           display_name = CASE WHEN ? = 'wca' THEN ? WHEN display_name = '' THEN ? ELSE display_name END,
            avatar_url   = COALESCE(avatar_url, ?)
          WHERE id = ?`,
-        [profile.name ?? '', profile.avatar ?? null, existing.id],
+        [provider, profile.name ?? '', profile.name ?? '', profile.avatar ?? null, existing.id],
       );
     }
     return { user: (await getUserById(existing.id)) ?? existing, isNew: false };
@@ -303,16 +306,29 @@ export async function addIdentity(
   provider: Provider,
   providerUid: string,
   wcaMirror?: string | null,
+  verifiedDisplayName?: string | null,
 ): Promise<'ok' | 'conflict' | `has-${SingleProvider}`> {
   const owner = await findUserByIdentity(provider, providerUid);
-  if (owner) return owner.id === userId ? 'ok' : 'conflict';
+  if (owner) {
+    if (owner.id !== userId) return 'conflict';
+    // 幂等重绑也要刷新 WCA 官方姓名,不能让旧自定义名继续留在实名账号上。
+    if (provider === 'wca' && verifiedDisplayName) {
+      await query(
+        'UPDATE app_users SET wca_id = ?, display_name = ? WHERE id = ?',
+        [wcaMirror ?? providerUid, verifiedDisplayName, userId],
+      );
+    }
+    return 'ok';
+  }
   try {
     const status = await sql.begin(async (tx) => {
       // 单账号仅允许一个 WCA(app_users 只有一列 wca_id 镜像)。先占镜像列:已有非空
       // wca_id 时 0 行受影响 → 冲突,不插入孤儿身份(否则镜像与 auth_identities 失同步)。
       if (provider === 'wca') {
         const upd = await tx`
-          UPDATE app_users SET wca_id = ${wcaMirror ?? providerUid}
+          UPDATE app_users SET
+            wca_id = ${wcaMirror ?? providerUid},
+            display_name = ${verifiedDisplayName ?? ''}
           WHERE id = ${userId} AND wca_id IS NULL`;
         if (upd.count === 0) return 'conflict';
       }
