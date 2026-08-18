@@ -5,6 +5,13 @@ import { normalizeAlg } from '@/lib/alg_normalize';
 export const OH_HANDS = ['left', 'right'] as const;
 export type OhHand = (typeof OH_HANDS)[number];
 
+const THREE_BY_THREE_OH_HAND_SETS = new Set(['oll', 'pll']);
+
+/** Sets whose `oh` source formulas have state-verified M-mirror partners. */
+export function supportsOhHands(puzzle: string, set: string): boolean {
+  return puzzle === '3x3' && THREE_BY_THREE_OH_HAND_SETS.has(set);
+}
+
 function mirrorPartner(c: AlgCase, setCases: readonly AlgCase[]): AlgCase | undefined {
   const mirrorNo = c.meta?.mirror;
   return mirrorNo == null ? undefined : setCases.find(candidate => candidate.meta?.no === mirrorNo);
@@ -21,7 +28,7 @@ function mirroredOhEntry(entry: AlgEntry): AlgEntry {
   };
 }
 
-/** 3x3 PLL OH formulas. Right hand = mirror the paired case's left-hand formulas. */
+/** 3x3 OLL/PLL OH formulas. Right hand = mirror the paired case's left-hand formulas. */
 export function ohAlgsForCase(
   c: AlgCase,
   setCases: readonly AlgCase[],

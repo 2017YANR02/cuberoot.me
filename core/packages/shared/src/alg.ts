@@ -48,21 +48,23 @@ export interface AlgEntry {
 }
 
 /**
- * case 的富元数据。只有从站长自编的那张 1LLL 表导入的 case 才有,其余 `undefined`。
- * 字段多且只对一个 set 有意义,所以整块塞 `alg_cases.meta` JSONB,不给表加列。
+ * case 的富元数据。主要来自站长自编的公式表,其余 case 为 `undefined`。
+ * 字段跨公式集不一定齐全,所以整块塞 `alg_cases.meta` JSONB,不给表加列。
  * 前端走弹窗展示,不占主视图。
  */
 export interface AlgCaseMeta {
   /** 表里的 case 编号(1–3916;缺 0005 = LL 连跳) */
   no: number;
   /** OLLCP 名:`AB3` = OLL `A` + 角换 `B` + 识别特征 `3`(十六进制 1–9,A,B,C) */
-  ollcp: string;
+  ollcp?: string;
   /** `PLL` / `ZBLL-U` / `1LLL` / `ELL-A` … */
-  subset: string;
+  subset?: string;
   /** 字母制 OLL 名 */
-  oll: string;
+  oll?: string;
   /** 角换类型 */
-  cp: string;
+  cp?: string;
+  /** 首条人工整理公式的执行步数(不是最优值)。 */
+  etm?: number;
   /** 打乱 = 逆 case 的公式(已剥掉起手 AUF) */
   scramble?: string;
   /** 生成元集合,如 `FLlMU`(大小写不敏感排序,同字母按首次出现) */
@@ -73,8 +75,8 @@ export interface AlgCaseMeta {
   mirror?: number;
   inv?: number;
   im?: number;
-  /** 四套最优解:每个度量下的最优步数 + 对应打乱 */
-  optimal?: Partial<Record<'stm' | 'sqtm' | 'htm' | 'qtm', { len: number; scramble?: string }>>;
+  /** 各度量下的最优步数 + 对应打乱。 */
+  optimal?: Partial<Record<'etm' | 'htm' | 'qtm' | 'stm' | 'sqtm' | 'atm', { len: number; scramble?: string }>>;
   /** COEP(角朝向 + 棱排列)—— 只有 ZBLL / PLL 有 */
   coep?: { alg?: string; scramble?: string };
   /** 对称性 */
@@ -119,7 +121,7 @@ export interface AlgCase {
   oriNames?: string[];
   /** ZBLS only — links cases into the trainer's grid layout. */
   trainerKey?: string;
-  /** 1lll / zbll / pll / ell only — see {@link AlgCaseMeta}. */
+  /** Optional rich metadata for sets such as OLL, PLL, ZBLL, ELL, and 1LLL. */
   meta?: AlgCaseMeta;
   /**
    * 镜像伙伴的 `alg_cases.id`(issue #40 T5)—— 左右镜 + 把最后一槽转回 FR 得到的那张 case。

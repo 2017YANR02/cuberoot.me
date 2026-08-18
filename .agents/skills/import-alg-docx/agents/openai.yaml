@@ -1,0 +1,4 @@
+interface:
+  display_name: "Import Alg DOCX"
+  short_description: "Import curated algorithm DOCX tables into CubeRoot"
+  default_prompt: "Use $import-alg-docx to parse and migrate a curated algorithm DOCX into CubeRoot."
