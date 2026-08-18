@@ -80,7 +80,7 @@ import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
-import { hasOhAlgsForHand, OH_HANDS, ohAlgsForCase, type OhHand } from '@/lib/alg_oh_hand';
+import { hasOhAlgsForHand, OH_HANDS, ohAlgsForCase, supportsOhHands, type OhHand } from '@/lib/alg_oh_hand';
 import {
   OPTIMAL_METRICS,
   availableOptimalMetrics,
@@ -612,7 +612,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   /** 标签筛选真的在生效吗(选了 `oh`、且这个 set 确实有 `oh`)—— 生效时公式列表是个子集 */
   const filtering = tagFilter !== 'all' && availableTags.includes(tagFilter);
 
-  const canChooseOhHand = puzzleParam === '3x3' && set === 'pll';
+  const canChooseOhHand = supportsOhHands(puzzleParam, set);
   const rightHandOh = canChooseOhHand && filtering && tagFilter === 'oh' && ohHand === 'right';
 
   /** 一个 case 在当前筛选下要显示的公式(标签筛选作用在**公式**上,不是 case 上) */

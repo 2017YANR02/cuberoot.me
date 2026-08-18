@@ -115,7 +115,7 @@ const TABLES: Table[] = [
   { name: 'alg_sets', domain: 'alg', origin: 'snapshot', purpose: { zh: '公式集(主键 puzzle + set_slug)', en: 'Alg sets, keyed (puzzle, set_slug)' }, cols: [
     { name: 'puzzle, set_slug (PK)' }, { name: 'source, scraped_at, updated_at' },
   ] },
-  { name: 'alg_cases', domain: 'alg', origin: 'snapshot', evolved: [69, 92], purpose: { zh: '单条公式 case,position 定序(不加名字 UNIQUE,会重名)', en: 'Individual alg cases; ordered by position (no name UNIQUE)' }, cols: [
+  { name: 'alg_cases', domain: 'alg', origin: 'snapshot', evolved: [69, 92, 153], purpose: { zh: '单条公式 case,position 定序(不加名字 UNIQUE,会重名)', en: 'Individual alg cases; ordered by position (no name UNIQUE)' }, cols: [
     { name: 'id (PK)' }, { name: 'puzzle, set_slug' }, { name: 'position', note: { zh: '从 JSON 数组下标导入定序', en: 'order from the source array' } }, { name: 'name, number' },
     { name: 'mirror_case_id', note: { zh: '镜像伙伴,互指;自镜像指自己', en: 'mirror partner; self-mirror points at itself' } },
   ] },
@@ -536,6 +536,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 150, slug: 'teaching_training_foundation', desc: { zh: '新增版本化训练模板、发布时任务目标、只追加证据与批改、可信来源每日汇总，以及哈希学员账号绑定邀请底座。', en: 'Add versioned training templates, publish-time assignment targets, append-only evidence and reviews, provenance-aware daily rollups, and hashed student account-binding invitations.' } },
   { n: 151, slug: 'wca_verified_display_names', desc: { zh: '把已绑定 WCA 的账号展示名回填为 WCA 官方姓名，统一实名展示。', en: 'Backfill WCA-linked account display names from verified WCA profiles.' } },
   { n: 152, slug: 'fold_recon_auf', desc: { zh: '把复盘中单独成行的 AUF 转动合并进上一条阶段公式，主解法与另解统一处理。', en: 'Fold standalone AUF moves into the preceding reconstruction stage for both primary and alternative solutions.' } },
+  { n: 153, slug: 'oll_docx_import', desc: { zh: '按站长整理的 DOCX 重排 OLL 分类与情况，优先导入 269 条公式，并补齐 ETM、最优步数、打乱关系与状态镜像元数据。', en: 'Reorder OLL categories and cases from the owner-curated DOCX, prepend 269 algorithms, and add ETM, optimal-length, scramble-link, and state-mirror metadata.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

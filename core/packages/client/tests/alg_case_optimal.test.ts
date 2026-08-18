@@ -26,15 +26,16 @@ const caseWith = (name: string, optimal?: Record<string, number>): AlgCase => ({
 });
 
 const cases = [
-  caseWith('A', { htm: 8, qtm: 12 }),
-  caseWith('B', { htm: 10, qtm: 14 }),
+  caseWith('A', { etm: 7, htm: 8, qtm: 12, atm: 6 }),
+  caseWith('B', { etm: 9, htm: 10, qtm: 14, atm: 8 }),
   caseWith('C'),
 ];
 
 describe('case optimal metrics', () => {
   it('derives only metrics present in the current scope', () => {
-    expect(availableOptimalMetrics(cases)).toEqual(['htm', 'qtm']);
+    expect(availableOptimalMetrics(cases)).toEqual(['etm', 'htm', 'qtm', 'atm']);
     expect(optimalRange(cases, 'htm')).toEqual({ min: 8, max: 10 });
+    expect(optimalRange(cases, 'atm')).toEqual({ min: 6, max: 8 });
     expect(optimalRange(cases, 'stm')).toBeNull();
   });
 

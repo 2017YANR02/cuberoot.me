@@ -1,6 +1,6 @@
 import type { AlgCase, AlgCaseMeta } from '@cuberoot/shared';
 
-export const OPTIMAL_METRICS = ['htm', 'qtm', 'stm', 'sqtm'] as const;
+export const OPTIMAL_METRICS = ['etm', 'htm', 'qtm', 'stm', 'sqtm', 'atm'] as const;
 export type OptimalMetric = (typeof OPTIMAL_METRICS)[number];
 export type OptimalComparison = 'lte' | 'eq' | 'gte';
 

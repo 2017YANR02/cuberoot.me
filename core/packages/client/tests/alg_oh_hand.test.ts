@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { AlgCase, AlgEntry } from '@cuberoot/shared';
-import { hasOhAlgsForHand, ohAlgsForCase } from '@/lib/alg_oh_hand';
+import { hasOhAlgsForHand, ohAlgsForCase, supportsOhHands } from '@/lib/alg_oh_hand';
 import { ALG_TAG_LABEL, OH_TAG_LABEL } from '@/lib/alg_tags';
 import i18n from '@/i18n/i18n-client';
 
@@ -25,7 +25,14 @@ function mkCase(no: number, mirror: number | undefined, algs: AlgEntry[][]): Alg
   };
 }
 
-describe('PLL one-handed formulas', () => {
+describe('3x3 OLL/PLL one-handed formulas', () => {
+  it('只为有状态镜像契约的三阶 OLL/PLL 开启左右单菜单', () => {
+    expect(supportsOhHands('3x3', 'oll')).toBe(true);
+    expect(supportsOhHands('3x3', 'pll')).toBe(true);
+    expect(supportsOhHands('3x3', 'zbll')).toBe(false);
+    expect(supportsOhHands('2x2', 'oll')).toBe(false);
+    expect(categorySource).toContain('supportsOhHands(puzzleParam, set)');
+  });
   it('在标签菜单中并列左右单，不再渲染额外开关', () => {
     expect(categorySource).toContain('<option value="oh">{OH_TAG_LABEL.left()}</option>');
     expect(categorySource).toContain('<option value={RIGHT_OH_MENU_VALUE}>{OH_TAG_LABEL.right()}</option>');
