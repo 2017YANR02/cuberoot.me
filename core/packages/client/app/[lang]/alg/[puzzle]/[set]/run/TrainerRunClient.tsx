@@ -58,6 +58,12 @@ import { useAlgSrs, autoMarkFromSrs } from '@/lib/alg-srs-store';
 import { useAlgSweep } from '@/lib/alg-sweep-store';
 import { gradeFromSolve } from '@/lib/alg-srs';
 import { trainerSheetFromCases } from '@/lib/alg_pdf/from_trainer';
+import {
+  createTrainingEvidenceEventId,
+  parseTrainingAssignmentDestination,
+  startTrainingEvidenceOutbox,
+  submitTrainingEvidence,
+} from '@/lib/training-evidence';
 import '@/app/[lang]/alg/_trainer/trainer.css';
 import '@/app/[lang]/alg/_trainer/memory.css';
 import '@/app/[lang]/alg/alg.css';
@@ -282,6 +288,9 @@ export default function TrainerRunClient() {
   const hist = useTrainerStore(s => s.hist);
   const timerState = useTrainerStore(s => s.timerState);
   const timerStarted = useTrainerStore(s => s.timerStarted);
+  const trainingDestinationRef = useRef<ReturnType<typeof parseTrainingAssignmentDestination>>(null);
+  const previousTrainingTimerStateRef = useRef(timerState);
+  const previousTrainingSolveCountRef = useRef(solves.length);
   const observingIdx = useTrainerStore(s => s.observingIdx);
   const scrambleKind = useTrainerStore(s => s.scrambleKind);
   const setScrambleKind = useTrainerStore(s => s.setScrambleKind);
@@ -386,6 +395,40 @@ export default function TrainerRunClient() {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [timerState]);
+
+  useEffect(() => {
+    const destination = parseTrainingAssignmentDestination(window.location.search);
+    trainingDestinationRef.current = destination;
+    return startTrainingEvidenceOutbox(destination);
+  }, []);
+
+  useEffect(() => {
+    const previousTimerState = previousTrainingTimerStateRef.current;
+    const previousSolveCount = previousTrainingSolveCountRef.current;
+    previousTrainingTimerStateRef.current = timerState;
+    previousTrainingSolveCountRef.current = solves.length;
+
+    if (previousTimerState !== TimerState.RUNNING || timerState !== TimerState.STOPPING) return;
+    if (solves.length !== previousSolveCount + 1) return;
+    const solve = solves.at(-1);
+    if (!puzzle || !solve || solve.i !== previousSolveCount || !Number.isFinite(solve.ms)) return;
+    submitTrainingEvidence(trainingDestinationRef.current, {
+      schemaVersion: 1,
+      source: 'alg-trainer',
+      sourceEventId: createTrainingEvidenceEventId('alg-trainer'),
+      occurredAt: new Date().toISOString(),
+      activity: 'algorithm_attempt',
+      durationMs: Math.min(86_400_000, Math.max(0, Math.round(solve.ms))),
+      metrics: { success: solve.penalty !== 'DNF' },
+      payloadVersion: 1,
+      payload: {
+        puzzle,
+        set: setSlug,
+        caseKey: solve.caseKey,
+        mode,
+      },
+    });
+  }, [mode, puzzle, setSlug, solves, timerState]);
 
   // 偏好(pre-AUF / 计时 / 模式 / 字体)只在挂载后补水 —— SSG 壳渲染默认值,避免水合不一致
   useEffect(() => { hydratePrefs(); }, [hydratePrefs]);

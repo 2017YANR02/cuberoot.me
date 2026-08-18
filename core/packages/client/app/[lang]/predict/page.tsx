@@ -36,6 +36,12 @@ import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/
 import { tr } from '@/i18n/tr';
 import { eventDisplayName } from '@/lib/wca-events';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
+import {
+  createTrainingEvidenceEventId,
+  parseTrainingAssignmentDestination,
+  startTrainingEvidenceOutbox,
+  submitTrainingEvidence,
+} from '@/lib/training-evidence';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import {
   PREDICT_FILL, PREDICT_ON_FILL, PREDICT_COLOR_NAMES, IDENTITY_COLORS,
@@ -183,6 +189,9 @@ function PredictPageInner() {
   const [playing, setPlaying] = useState(false);
   const [viewResetSeq, setViewResetSeq] = useState(0);
   const startedAt = useRef(0);
+  const trainingDestinationRef = useRef<ReturnType<typeof parseTrainingAssignmentDestination>>(null);
+  const trainingEventIdRef = useRef<string | null>(null);
+  const submittedTrainingEventRef = useRef<string | null>(null);
   const algElRef = useRef<HTMLTextAreaElement | null>(null);
   /** 出题时读的是 ref 而不是 state:公式每敲一个字都在变,不能每个字换一题。 */
   const algRef = useRef(alg);
@@ -260,7 +269,12 @@ function PredictPageInner() {
       const parsed = is333 ? parseMoveInput(text) : puzzle.parse(text);
       setAlgError(parsed.error);
       // 公式不合法就不出题:硬出一道等于把「我看不懂你写的」变成一道答案随机的题。
-      if (parsed.error) { setChallenge(null); return; }
+      if (parsed.error) {
+        trainingEventIdRef.current = null;
+        submittedTrainingEventRef.current = null;
+        setChallenge(null);
+        return;
+      }
       customMoves = parsed.moves;
     } else {
       setAlgError(null);
@@ -280,15 +294,46 @@ function PredictPageInner() {
     setElapsed(0);
     setViewResetSeq((seq) => seq + 1);
     startedAt.current = Date.now();
+    trainingEventIdRef.current = createTrainingEvidenceEventId('predict');
+    submittedTrainingEventRef.current = null;
   }, [puzzle, is333, mode, track, source, moveCount, crossEdges, orientation]);
+
+  const submitPredictionTrainingEvidence = useCallback((success: boolean) => {
+    const sourceEventId = trainingEventIdRef.current;
+    if (!sourceEventId || submittedTrainingEventRef.current === sourceEventId) return;
+    submittedTrainingEventRef.current = sourceEventId;
+    submitTrainingEvidence(trainingDestinationRef.current, {
+      schemaVersion: 1,
+      source: 'predict',
+      sourceEventId,
+      occurredAt: new Date().toISOString(),
+      activity: 'prediction',
+      durationMs: Math.min(86_400_000, Math.max(0, Date.now() - startedAt.current)),
+      metrics: { success },
+      payloadVersion: 1,
+      payload: {
+        puzzle: PREDICT_PICKER_META[puzzleId].eventId,
+        mode,
+        track,
+        source,
+        moveCount,
+      },
+    });
+  }, [puzzleId, mode, track, source, moveCount]);
 
   /** 认输:切到「答案盘面」(目标块整块画在落点上)。透明模式能直接读背贴纸,关闭透明
    *  后提示贴片会把那三面的贴纸浮在方块外侧,所以这里不再替玩家转视角。 */
   const reveal = useCallback(() => {
     if (!ch) return;
+    submitPredictionTrainingEvidence(false);
     setRevealed(true);
-  }, [ch]);
+  }, [ch, submitPredictionTrainingEvidence]);
 
+  useEffect(() => {
+    const destination = parseTrainingAssignmentDestination(window.location.search);
+    trainingDestinationRef.current = destination;
+    return startTrainingEvidenceOutbox(destination);
+  }, []);
   useEffect(() => { deal(); }, [deal]);
   useEffect(() => { setFound(challenge ? challenge.targets.map(() => false) : []); }, [challenge]);
 
@@ -325,8 +370,10 @@ function PredictPageInner() {
     if (hit < 0) { setFeedback({ kind: 'wrong' }); return; }
     // 每次都放一个新对象:连续点对多枚时也要从这一次点击重新计满 1.2 秒。
     setFeedback({ kind: 'correct' });
-    setFound(found.map((v, i) => (i === hit ? true : v)));
-  }, [ch, revealed, found]);
+    const nextFound = found.map((v, i) => (i === hit ? true : v));
+    setFound(nextFound);
+    if (nextFound.every(Boolean)) submitPredictionTrainingEvidence(true);
+  }, [ch, revealed, found, submitPredictionTrainingEvidence]);
 
   /**
    * 每一格的引擎色标签 = **起点盘面的真实颜色**(按朝向翻译)。
