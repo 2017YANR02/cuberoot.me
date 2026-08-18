@@ -69,6 +69,7 @@ import type NxnCube from '@/app/[lang]/sim/engine/nxn/cube';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import { FRONT_SCENE_ROT, homeSceneRot } from '@/app/[lang]/sim/engine/viewControls';
 import {
+  appendedSlicePair,
   planLiveSimUpdate,
   planSimUpdate,
 } from '@/app/[lang]/timer/_lib/cube/sim_log';
@@ -79,6 +80,8 @@ import {
   mirrorForBrand,
   quatAngleTo,
   sensorBasisForBrand,
+  SLICE_ORIENTATION_FOLLOW_MS,
+  SLICE_ORIENTATION_TAU_MS,
   slerpTowards,
   snapWhenSettled,
   type Quat,
@@ -209,6 +212,10 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   const measuredRef = useRef<Quat | null>(null);
   const stillMsRef = useRef(0);
   const pendingCalibrationRef = useRef(false);
+  // M/E/S turns rotate the sensor-bearing core, unlike outer-layer turns. The
+  // matching opposite-face BLE pair temporarily accelerates only orientation
+  // follow; layer timing and every rendering-quality setting remain unchanged.
+  const sliceFollowUntilRef = useRef(0);
   /** 挂载时读一次(避免先按等轴画一帧);之后的改动走下面的 effect。 */
   const viewRef = useRef(view);
   const basisRef = useRef<SensorBasisName>(sensorBasis);
@@ -247,6 +254,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     smoothedRef.current = null;
     measuredRef.current = null;
     stillMsRef.current = 0;
+    sliceFollowUntilRef.current = 0;
   }, [calibrateToken]);
 
   // ── Mount: lazy-load the shared embed lifecycle (which pulls in three + the
@@ -290,9 +298,14 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
           measuredRef.current = measured;
           const target = snapWhenSettled(measured, stillMsRef.current);
           // BLE lands at 20-50 Hz, under the 60 fps loop — ease between samples
-          // so the cube glides instead of stepping.
+          // so the cube glides instead of stepping. A slice turn is the one
+          // exception that moves the sensor-bearing core itself; keep SLERP but
+          // let that large jump finish alongside its layer animation.
+          const orientationTauMs = performance.now() < sliceFollowUntilRef.current
+            ? SLICE_ORIENTATION_TAU_MS
+            : undefined;
           const next = smoothedRef.current
-            ? slerpTowards(smoothedRef.current, target, dtMs)
+            ? slerpTowards(smoothedRef.current, target, dtMs, orientationTauMs)
             : target;
           smoothedRef.current = next;
           const prev = appliedRef.current;
@@ -375,15 +388,22 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   // history and animates only the newest move. Replay keeps the ordinary plan.
   const turns = moves.join(' ');
   const shownRef = useRef({ turns: '', pose: '' });
+  const hasShownRef = useRef(false);
   useEffect(() => {
     const world = mountRef.current?.world;
     if (!ready || !world) return;
     const twister = (world.cube as NxnCube).twister;
     const next = { turns, pose };
+    if (!realtime || turns === '') {
+      sliceFollowUntilRef.current = 0;
+    } else if (hasShownRef.current && appendedSlicePair(shownRef.current.turns, turns)) {
+      sliceFollowUntilRef.current = performance.now() + SLICE_ORIENTATION_FOLLOW_MS;
+    }
     const plan = realtime
       ? planLiveSimUpdate(shownRef.current, next, animate, twister.backlog)
       : planSimUpdate(shownRef.current, next, animate);
     shownRef.current = { turns, pose };
+    hasShownRef.current = true;
     if (plan.mode === 'push') {
       const queued = twister.backlog > 0 || plan.exp.trim().split(/\s+/).length > 1;
       twister.push(

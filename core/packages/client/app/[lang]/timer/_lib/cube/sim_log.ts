@@ -36,7 +36,37 @@
  * 一致时成立,拿新 ρ 去共轭老状态是错的。
  */
 
+import { sliceSplitTable } from '@/lib/slice-pair';
 import { conjugateSequence, facePermFor } from '../reconstruct/orient';
+
+const SLICE_SPLITS = sliceSplitTable();
+
+function tokens(turns: string): string[] {
+  return turns.trim().split(/\s+/).filter(Boolean);
+}
+
+/**
+ * Did this append contain one of the opposite-face pairs emitted for a
+ * physical M/E/S turn? The pair may straddle two React updates, or both moves
+ * may arrive in one BLE batch. Rewrites/rewinds never qualify.
+ *
+ * This is only a timing hint for gyro smoothing. The raw moves remain intact:
+ * replacing them with M/E/S would lose the whole-cube rotation of the core and
+ * make both the displayed state and the reconstruction dishonest.
+ */
+export function appendedSlicePair(prevTurns: string, nextTurns: string): boolean {
+  const prev = tokens(prevTurns);
+  const next = tokens(nextTurns);
+  if (next.length <= prev.length) return false;
+  if (prev.some((turn, index) => next[index] !== turn)) return false;
+
+  // Start at the old/new boundary. If several turns were batched, continue
+  // through the new suffix so a pair wholly inside that batch is also found.
+  for (let end = Math.max(1, prev.length); end < next.length; end += 1) {
+    if (SLICE_SPLITS.has(`${next[end - 1]} ${next[end]}`)) return true;
+  }
+  return false;
+}
 
 /** 一次显示更新的两根轴:动作日志,和只影响看的姿态旋转(可以是空串)。 */
 export interface SimLogState {
