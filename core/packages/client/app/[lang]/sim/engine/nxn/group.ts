@@ -235,7 +235,12 @@ export default class CubeGroup extends THREE.Group {
     this.cube.callback();
   }
 
-  twist(angle: number, fast: boolean, formulaStep = false): boolean {
+  twist(
+    angle: number,
+    fast: boolean,
+    formulaStep = false,
+    formulaDurationTicks = timing.frames,
+  ): boolean {
     if (!Number.isFinite(angle)) {
       if (this.tween) tweener.cancel(this.tween);
       this.tween = undefined;
@@ -266,7 +271,7 @@ export default class CubeGroup extends THREE.Group {
       const d = Math.abs(delta) / (Math.PI / 2);
       // Parsed notation is TPS-based: U/U2/M/x each take one beat. Pointer drag
       // settling is not a formula token, so it keeps scaling by remaining angle.
-      const duration = formulaStep ? timing.frames : tweenDuration(d);
+      const duration = formulaStep ? formulaDurationTicks : tweenDuration(d);
       this.tween = tweener.tween(this.angle, angle, duration, (value: number) => {
         this.angle = value;
         if (Math.abs(this.angle - angle) < 1e-6) {

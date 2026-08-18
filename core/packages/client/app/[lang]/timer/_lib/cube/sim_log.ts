@@ -53,6 +53,19 @@ export interface SimLogPlan {
   exp: string;
 }
 
+export interface LiveSimCatchUpPlan {
+  /** Apply every stale move through this state instantly. */
+  mode: 'catch-up';
+  setupExp: string;
+  /** Animate only this latest move after the instant state catch-up. */
+  pushExp: string;
+}
+
+export type LiveSimPlan = SimLogPlan | LiveSimCatchUpPlan;
+
+/** At most one active turn plus one pending turn may remain visually behind. */
+export const MAX_LIVE_ANIMATION_BACKLOG = 2;
+
 /** `T` 和 `ρ` 拼成实际喂给引擎的那条串。两边都可能是空的。 */
 function composed(s: SimLogState): string {
   if (!s.pose) return s.turns;
@@ -85,4 +98,38 @@ export function planSimUpdate(
   // 转错层,而瞬切只是少一段动画。
   const conj = conjugateSequence(appended, facePermFor(next.pose));
   return conj === null ? { mode: 'setup', exp: full } : { mode: 'push', exp: conj };
+}
+
+/**
+ * Live mirrors prioritize the physical cube's current state over replaying stale
+ * history. A short queue stays fully animated; once active + pending + incoming
+ * moves exceed the cap, every old move is applied instantly and only the newest
+ * move remains animated. No logical move is dropped.
+ */
+export function planLiveSimUpdate(
+  prev: SimLogState,
+  next: SimLogState,
+  animate: boolean,
+  currentBacklog: number,
+): LiveSimPlan {
+  const ordinary = planSimUpdate(prev, next, animate);
+  if (ordinary.mode !== 'push') return ordinary;
+
+  const incomingCount = ordinary.exp.trim().split(/\s+/).filter(Boolean).length;
+  if (currentBacklog + incomingCount <= MAX_LIVE_ANIMATION_BACKLOG) return ordinary;
+
+  const nextTokens = next.turns.trim().split(/\s+/).filter(Boolean);
+  if (nextTokens.length === 0) return ordinary;
+  const beforeLatest: SimLogState = {
+    turns: nextTokens.slice(0, -1).join(' '),
+    pose: next.pose,
+  };
+  const latest = planSimUpdate(beforeLatest, next, true);
+  if (latest.mode !== 'push') return { mode: 'setup', exp: composed(next) };
+
+  return {
+    mode: 'catch-up',
+    setupExp: composed(beforeLatest),
+    pushExp: latest.exp,
+  };
 }
