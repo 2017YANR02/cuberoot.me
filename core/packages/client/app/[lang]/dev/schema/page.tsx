@@ -154,8 +154,8 @@ const TABLES: Table[] = [
   { name: 'organization_members', domain: 'teaching', origin: '0142', naturalKey: true, purpose: { zh: '账号在每个机构内的角色与有效状态；每个已提交机构至少保留一位有效 owner', en: 'Per-organization account roles and status; every committed organization retains an active owner' }, cols: [
     { name: 'organization_id, user_id (PK)' }, { name: 'role, status, invited_by_user_id, joined_at' },
   ] },
-  { name: 'student_profiles', domain: 'teaching', origin: '0142', purpose: { zh: '机构内学员档案；外部编号与关联站内账号都只在本租户内唯一', en: 'Tenant-scoped student profiles; external references and linked accounts are unique within an organization' }, cols: [
-    { name: 'id UUID (PK), organization_id' }, { name: 'account_user_id, external_ref, display_name, status' }, { name: 'profile JSONB, created_by_user_id' },
+  { name: 'student_profiles', domain: 'teaching', origin: '0142', evolved: [150], purpose: { zh: '机构内学员档案；外部编号与关联站内账号都只在本租户内唯一', en: 'Tenant-scoped student profiles; external references and linked accounts are unique within an organization' }, cols: [
+    { name: 'id UUID (PK), organization_id' }, { name: 'account_user_id, account_linked_at, external_ref, display_name, status' }, { name: 'profile JSONB, created_by_user_id' },
   ] },
   { name: 'guardian_links', domain: 'teaching', origin: '0142', purpose: { zh: '机构内学员与监护账号关系，复合外键阻止跨租户关联', en: 'Tenant-scoped student-to-guardian relationships with composite foreign keys blocking cross-tenant links' }, cols: [
     { name: 'id UUID (PK), organization_id, student_id' }, { name: 'guardian_user_id, relationship, status, visibility' },
@@ -181,7 +181,7 @@ const TABLES: Table[] = [
   { name: 'teaching_groups', domain: 'teaching', origin: '0149', purpose: { zh: '机构班级，可归属校区；复合外键阻止跨租户关联', en: 'Tenant groups optionally attached to a campus, with composite foreign keys blocking cross-tenant links' }, cols: [
     { name: 'id UUID (PK), organization_id, campus_id' }, { name: 'code, name, status, archived_at' }, { name: 'created_by_user_id, created_at, updated_at' },
   ] },
-  { name: 'teaching_relation_locks', domain: 'teaching', origin: '0149', naturalKey: true, purpose: { zh: '永久保留的教学关系并发锁行，串行化同一自然键的有效期重叠检查', en: 'Permanent teaching-relation lock rows that serialize effective-range overlap checks for each natural key' }, cols: [
+  { name: 'teaching_relation_locks', domain: 'teaching', origin: '0149', evolved: [150], naturalKey: true, purpose: { zh: '永久保留的教学关系与证据自然键并发锁行，串行化有效期和幂等检查', en: 'Permanent teaching-relation and evidence-key lock rows serializing effective-range and idempotency checks' }, cols: [
     { name: 'id UUID (PK), organization_id' }, { name: 'relation_kind, subject_key, target_key (tenant UNIQUE)' }, { name: 'revision, created_at, touched_at' },
   ] },
   { name: 'student_group_memberships', domain: 'teaching', origin: '0149', naturalKey: true, purpose: { zh: '学员与班级的只追加有效期关系；同一学员与班级的有效区间不可重叠', en: 'Append-only effective-dated student-to-group memberships with no overlap per student and group' }, cols: [
@@ -189,6 +189,36 @@ const TABLES: Table[] = [
   ] },
   { name: 'teacher_assignments', domain: 'teaching', origin: '0149', naturalKey: true, purpose: { zh: '老师对班级或个别学员的长期可见范围；账号注销后保留稳定身份、姓名和角色快照', en: 'Long-term teacher scope over one group or student, retaining stable identity, name, and role snapshots after account deletion' }, cols: [
     { name: 'id UUID (PK), organization_id, teacher_user_id' }, { name: 'teacher_user_id_snapshot, teacher_display_name_snapshot, teacher_role_snapshot' }, { name: 'group_id XOR student_id, effective_from, effective_to, created_by_user_id' },
+  ] },
+  { name: 'training_templates', domain: 'teaching', origin: '0150', purpose: { zh: '机构训练模板根记录；归档终态且内容版本另表保存', en: 'Organization training-template roots with terminal archival and separately versioned content' }, cols: [
+    { name: 'id UUID (PK), organization_id, name, description' }, { name: 'status, archived_at, created_by_user_id, created_at, updated_at' },
+  ] },
+  { name: 'training_template_versions', domain: 'teaching', origin: '0150', naturalKey: true, purpose: { zh: '只追加的训练模板版本，固定工具、活动与有界配置', en: 'Append-only training-template versions freezing tool, activity, and bounded configuration' }, cols: [
+    { name: 'id UUID (PK), organization_id, template_id, version_number' }, { name: 'source, activity, title, instructions, tool_config JSONB' }, { name: 'created_by_user_id, published_by_user_id, created_at' },
+  ] },
+  { name: 'training_assignments', domain: 'teaching', origin: '0150', purpose: { zh: '训练任务草稿、发布与关闭状态机；发布时间、频率、期望次数与时区发布后冻结', en: 'Training-assignment draft, publish, and close lifecycle with schedule, expected count, and timezone frozen at publication' }, cols: [
+    { name: 'id UUID (PK), organization_id, template_version_id' }, { name: 'title, instructions, schedule_kind, expected_count, timezone_snapshot' }, { name: 'starts_at, ends_at, status, published_at, closed_at' },
+  ] },
+  { name: 'training_assignment_targets', domain: 'teaching', origin: '0150', naturalKey: true, purpose: { zh: '任务发布时展开并冻结的学员目标及提交、批改汇总', en: 'Publish-time student target snapshots with submission and review aggregates' }, cols: [
+    { name: 'id UUID (PK), organization_id, assignment_id, target_kind' }, { name: 'group_id / student_id, source_group_id (NULL = direct student)' }, { name: 'display snapshots, evidence and latest-review aggregates' },
+  ] },
+  { name: 'training_assignment_goal_metrics', domain: 'teaching', origin: '0150', naturalKey: true, purpose: { zh: '按工具与活动注册表约束的任务目标指标', en: 'Assignment goal metrics constrained by the source-and-activity registry' }, cols: [
+    { name: 'id UUID (PK), organization_id, assignment_id, metric_key (tenant UNIQUE)' }, { name: 'operator, target_value, created_at' },
+  ] },
+  { name: 'training_evidence', domain: 'teaching', origin: '0150', naturalKey: true, purpose: { zh: '只追加原始训练证据；永久自然幂等键、可信来源、时区与本地日期都由服务端约束', en: 'Append-only raw training evidence with permanent natural idempotency, provenance, timezone, and local-date constraints' }, cols: [
+    { name: 'id UUID (PK), organization_id, student_id' }, { name: 'source, activity, source_event_id, payload_sha256' }, { name: 'trust_level, occurred_at, timezone_snapshot, local_date, bounded metrics / payload' },
+  ] },
+  { name: 'training_evidence_assignments', domain: 'teaching', origin: '0150', naturalKey: true, purpose: { zh: '证据与发布时学员目标的只追加复合关联', en: 'Append-only composite links from evidence to publish-time student targets' }, cols: [
+    { name: 'id UUID (PK), organization_id, evidence_id, assignment_id, student_id' }, { name: 'organization_id, evidence_id, assignment_id (UNIQUE)' }, { name: 'created_at' },
+  ] },
+  { name: 'training_submission_reviews', domain: 'teaching', origin: '0150', naturalKey: true, purpose: { zh: '按任务学员目标递增版本的只追加批改，保留审核人快照', en: 'Append-only revisioned reviews per assignment target retaining reviewer snapshots' }, cols: [
+    { name: 'id UUID (PK), organization_id, assignment_id, student_id, revision' }, { name: 'status, feedback, reviewer_user_id and snapshots, created_at' },
+  ] },
+  { name: 'daily_training_rollups', domain: 'teaching', origin: '0150', naturalKey: true, purpose: { zh: '按学员、本地日期、工具、活动与可信级别分行的可重建每日汇总', en: 'Rebuildable daily rollups by student, local date, source, activity, and trust level' }, cols: [
+    { name: 'organization_id, student_id, local_date, source, activity, trust_level (PK)' }, { name: 'evidence_count, duration_ms, success_count, updated_at' },
+  ] },
+  { name: 'student_account_binding_invites', domain: 'teaching', origin: '0150', naturalKey: true, purpose: { zh: '学员账号绑定邀请，只保存令牌哈希并保留消费、撤销或过期终态', en: 'Student account-binding invitations storing only token hashes with consumed, revoked, or expired terminal states' }, cols: [
+    { name: 'id UUID (PK), organization_id, student_id, token_hash (UNIQUE)' }, { name: 'expires_at, expired_at, consumed_at / by, revoked_at / by' }, { name: 'created_by_user_id, created_at' },
   ] },
   { name: 'lesson_package_products', domain: 'teaching', origin: '0147', naturalKey: true, purpose: { zh: '机构课包产品定义；学员领取后以快照保留历史合同', en: 'Tenant package-product definitions whose terms are snapshotted when issued to a student' }, cols: [
     { name: 'id UUID (PK), organization_id, code (tenant UNIQUE), name, status' }, { name: 'credit_unit, credit_type, total_credits, validity_days' }, { name: 'price_amount_minor, currency, created_by_user_id' },
@@ -503,6 +533,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 147, slug: 'teaching_packages_and_sessions', desc: { zh: '新增课包产品、学员课包与只追加课时账本，并以课堂、教师快照、考勤和只追加事件完成履约闭环。', en: 'Add package products, student-package snapshots, and an append-only credit ledger, then close the fulfilment loop with sessions, teacher snapshots, attendance, and append-only events.' } },
   { n: 148, slug: 'fix_teaching_owner_guard', desc: { zh: '修复机构 owner 延迟约束 trigger：按触发表安全读取 NEW/OLD，并锁定机构行以串行校验并发 owner 变更。', en: 'Fix the deferred organization-owner guard by safely branching before reading NEW or OLD and locking organization rows to serialize concurrent owner changes.' } },
   { n: 149, slug: 'teaching_campuses_groups_assignments', desc: { zh: '新增校区、班级、学员班级关系与老师负责范围；以复合租户外键、永久关系锁和有效期约束阻止跨租户引用与并发重叠。', en: 'Add campuses, groups, student memberships, and teacher scopes with composite tenant foreign keys, permanent relation locks, and effective-range guards against cross-tenant references and concurrent overlap.' } },
+  { n: 150, slug: 'teaching_training_foundation', desc: { zh: '新增版本化训练模板、发布时任务目标、只追加证据与批改、可信来源每日汇总，以及哈希学员账号绑定邀请底座。', en: 'Add versioned training templates, publish-time assignment targets, append-only evidence and reviews, provenance-aware daily rollups, and hashed student account-binding invitations.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

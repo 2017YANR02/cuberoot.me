@@ -23,13 +23,7 @@ const ROUTE = readFileSync(join(SERVER, 'src/routes/account_auth.ts'), 'utf8');
 const API_PATH = '/v1/auth/account/delete';
 
 // ── schema 解析(CREATE TABLE + 后续 ALTER TABLE ADD COLUMN)──
-function loadSchema(): Map<string, Set<string>> {
-  const files = [
-    readFileSync(join(SERVER, 'src/db/schema.pg.sql'), 'utf8'),
-    ...readdirSync(join(SERVER, 'migrations'))
-      .filter((f) => f.endsWith('.sql'))
-      .map((f) => readFileSync(join(SERVER, 'migrations', f), 'utf8')),
-  ];
+function parseSchema(files: string[]): Map<string, Set<string>> {
   const tables = new Map<string, Set<string>>();
   const add = (t: string, c: string) => {
     const key = t.toLowerCase();
@@ -51,7 +45,14 @@ function loadSchema(): Map<string, Set<string>> {
   }
   return tables;
 }
-const SCHEMA = loadSchema();
+const SCHEMA_SNAPSHOT_SQL = readFileSync(join(SERVER, 'src/db/schema.pg.sql'), 'utf8');
+const SNAPSHOT_SCHEMA = parseSchema([SCHEMA_SNAPSHOT_SQL]);
+const SCHEMA = parseSchema([
+  SCHEMA_SNAPSHOT_SQL,
+  ...readdirSync(join(SERVER, 'migrations'))
+    .filter((f) => f.endsWith('.sql'))
+    .map((f) => readFileSync(join(SERVER, 'migrations', f), 'utf8')),
+]);
 
 /** 一眼能看出「这一行属于某个站内用户」的列名。wca_id 太泛(比赛 id / 官方数据都叫它),
  *  所以覆盖率检查靠下面的豁免名单收口,不靠列名本身判断。 */
@@ -60,6 +61,19 @@ const OWNER_COLUMNS = [
   'reporter_id', 'reporter_wca_id', 'voter_wca_id', 'added_by_id', 'owner_key',
   'guest_key',
 ];
+
+const STAGE3_TRAINING_TABLES = [
+  'training_templates',
+  'training_template_versions',
+  'training_assignments',
+  'training_assignment_targets',
+  'training_assignment_goal_metrics',
+  'training_evidence',
+  'training_evidence_assignments',
+  'training_submission_reviews',
+  'daily_training_rollups',
+  'student_account_binding_invites',
+] as const;
 
 describe('清单 ↔ schema', () => {
   it('schema 解析出的表数合理(解析器本身没坏)', () => {
@@ -113,6 +127,12 @@ describe('清单 ↔ schema', () => {
     }
   });
 
+  it('豁免名单里的每张表都存在于受版本控制的 schema 来源', () => {
+    for (const table of Object.keys(NOT_USER_OWNED)) {
+      expect(SCHEMA.has(table), `豁免表 ${table} 不在 schema snapshot 或 migration 里`).toBe(true);
+    }
+  });
+
   it('教学租户表逐张登记账号删除策略', () => {
     expect(Object.keys(NOT_USER_OWNED)).toEqual(expect.arrayContaining([
       'organizations',
@@ -136,7 +156,11 @@ describe('清单 ↔ schema', () => {
       'attendance_records',
       'lesson_credit_ledger',
       'session_events',
+      ...STAGE3_TRAINING_TABLES,
     ]));
+    for (const table of STAGE3_TRAINING_TABLES) {
+      expect(SNAPSHOT_SCHEMA.has(table), `Stage 3 表 ${table} 必须存在于最终 schema snapshot`).toBe(true);
+    }
   });
 });
 
@@ -238,6 +262,14 @@ describe('删除动作本身', () => {
     expect(unlink).toBeGreaterThan(endAssignment);
     expect(unlink).toBeGreaterThan(-1);
     expect(deleteUser).toBeGreaterThan(unlink);
+  });
+
+  it('删除账号前匿名化训练批改 live reviewer，保留不可变快照', () => {
+    const unlinkReview = impl.indexOf('UPDATE training_submission_reviews');
+    const deleteUser = impl.indexOf('DELETE FROM app_users');
+    expect(unlinkReview).toBeGreaterThan(-1);
+    expect(impl.slice(unlinkReview, deleteUser)).toMatch(/SET\s+reviewer_user_id\s*=\s*NULL/);
+    expect(deleteUser).toBeGreaterThan(unlinkReview);
   });
 
   it('复盘按可见性分流:公开的匿名保留,私享 / 不公开列出的删掉', () => {
