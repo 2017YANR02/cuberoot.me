@@ -85,6 +85,13 @@ export function entityStatusLabel(status: string, t: ReturnType<typeof useT>): s
     inactive: ['已停用', 'Inactive'],
     archived: ['已归档', 'Archived'],
     suspended: ['已暂停', 'Suspended'],
+    scheduled: ['已排课', 'Scheduled'],
+    in_progress: ['进行中', 'In progress'],
+    completed: ['已完成', 'Completed'],
+    cancelled: ['已取消', 'Cancelled'],
+    frozen: ['已冻结', 'Frozen'],
+    expired: ['已过期', 'Expired'],
+    exhausted: ['已用完', 'Exhausted'],
   };
   const label = labels[status];
   return label ? t(label[0], label[1]) : status;

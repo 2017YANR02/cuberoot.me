@@ -1,15 +1,27 @@
 import {
+  TEACHING_ATTENDANCE_STATUSES,
   TEACHING_CAMPUS_STATUSES,
+  TEACHING_CREDIT_UNITS,
   TEACHING_GROUP_STATUSES,
   TEACHING_MEMBER_STATUSES,
   TEACHING_ORGANIZATION_ROLES,
   TEACHING_ORGANIZATION_STATUSES,
+  TEACHING_PACKAGE_ACQUISITION_TYPES,
+  TEACHING_PACKAGE_PRODUCT_STATUSES,
+  TEACHING_SESSION_STATUSES,
+  TEACHING_STUDENT_PACKAGE_STATUSES,
   TEACHING_STUDENT_STATUSES,
+  type TeachingAttendanceStatus,
   type TeachingCampus,
+  type TeachingCreditUnit,
   type TeachingGroup,
   type TeachingMemberStatus,
   type TeachingOrganizationRole,
   type TeachingOrganizationStatus,
+  type TeachingPackageAcquisitionType,
+  type TeachingPackageProductStatus,
+  type TeachingSessionStatus,
+  type TeachingStudentPackageStatus,
   type TeachingStudentStatus,
   type TeachingStudentGroupMembership,
   type TeachingTeacherAssignment,
@@ -60,6 +72,112 @@ export interface TeachingMember {
   status: TeachingMemberStatus;
   joinedAt: string | null;
   createdAt: string | null;
+}
+
+export interface TeachingPackageProduct {
+  id: string;
+  code: string;
+  name: string;
+  status: TeachingPackageProductStatus;
+  creditUnit: TeachingCreditUnit;
+  creditType: string;
+  totalCredits: number;
+  validityDays: number | null;
+  priceAmountMinor: number;
+  currency: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeachingStudentPackage {
+  id: string;
+  studentId: string;
+  productId: string;
+  productCode: string;
+  productName: string;
+  creditUnit: TeachingCreditUnit;
+  creditType: string;
+  entitledCredits: number;
+  remainingCredits: number;
+  validityDays: number | null;
+  priceAmountMinor: number;
+  currency: string;
+  status: TeachingStudentPackageStatus;
+  acquisitionType: TeachingPackageAcquisitionType;
+  validFrom: string;
+  validUntil: string | null;
+  sourceSystem: string | null;
+  sourceRef: string | null;
+  sourceLineRef: string | null;
+  createdAt: string;
+}
+
+export interface TeachingCreditLedgerEntry {
+  id: number;
+  studentId: string;
+  entryType: string;
+  delta: number;
+  attendanceId: string | null;
+  sessionId: string | null;
+  sourceSystem: string | null;
+  sourceRef: string | null;
+  sourceLineRef: string | null;
+  reversalOfLedgerId: number | null;
+  reason: string | null;
+  actorRole: string | null;
+  actorDisplayName: string | null;
+  metadata: unknown;
+  createdAt: string;
+}
+
+export interface TeachingSessionTeacher {
+  userId: number;
+  displayName: string;
+  role: 'lead' | 'assistant';
+}
+
+export interface TeachingAttendance {
+  id: string;
+  studentId: string;
+  displayName: string | null;
+  studentPackageId: string | null;
+  status: TeachingAttendanceStatus;
+  creditCost: number;
+  notes: string;
+  updatedAt: string;
+}
+
+export interface TeachingSessionSummary {
+  id: string;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  timezone: string;
+  status: TeachingSessionStatus;
+  version: number;
+  startedAt: string | null;
+  completedAt: string | null;
+  cancelledAt: string | null;
+  teachers: TeachingSessionTeacher[];
+  attendanceCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeachingSession extends TeachingSessionSummary {
+  attendance: TeachingAttendance[];
+}
+
+export interface TeachingSessionCompletion {
+  session: {
+    id: string;
+    status: 'completed';
+    completedAt: string;
+  };
+  consumption: {
+    attendanceCount: number;
+    totalCredits: number;
+  };
 }
 
 export class TeachingApiError extends Error {
@@ -231,6 +349,127 @@ function teacherAssignment(value: unknown): TeachingTeacherAssignment {
       role: enumValue(teacher.role, ASSIGNABLE_TEACHING_ROLES, 'assignment.teacher.role'),
       status: teacher.status === null ? null : enumValue(teacher.status, TEACHING_MEMBER_STATUSES, 'assignment.teacher.status'),
     },
+  };
+}
+
+function packageProduct(value: unknown): TeachingPackageProduct {
+  const item = record(value, 'packageProduct');
+  return {
+    id: string(item.id, 'packageProduct.id'),
+    code: string(item.code, 'packageProduct.code'),
+    name: string(item.name, 'packageProduct.name'),
+    status: enumValue(item.status, TEACHING_PACKAGE_PRODUCT_STATUSES, 'packageProduct.status'),
+    creditUnit: enumValue(item.creditUnit, TEACHING_CREDIT_UNITS, 'packageProduct.creditUnit'),
+    creditType: string(item.creditType, 'packageProduct.creditType'),
+    totalCredits: integer(item.totalCredits, 'packageProduct.totalCredits', 1),
+    validityDays: item.validityDays === null ? null : integer(item.validityDays, 'packageProduct.validityDays', 1),
+    priceAmountMinor: integer(item.priceAmountMinor, 'packageProduct.priceAmountMinor'),
+    currency: string(item.currency, 'packageProduct.currency'),
+    createdAt: string(item.createdAt, 'packageProduct.createdAt'),
+    updatedAt: string(item.updatedAt, 'packageProduct.updatedAt'),
+  };
+}
+
+function studentPackage(value: unknown): TeachingStudentPackage {
+  const item = record(value, 'studentPackage');
+  return {
+    id: string(item.id, 'studentPackage.id'),
+    studentId: string(item.studentId, 'studentPackage.studentId'),
+    productId: string(item.productId, 'studentPackage.productId'),
+    productCode: string(item.productCode, 'studentPackage.productCode'),
+    productName: string(item.productName, 'studentPackage.productName'),
+    creditUnit: enumValue(item.creditUnit, TEACHING_CREDIT_UNITS, 'studentPackage.creditUnit'),
+    creditType: string(item.creditType, 'studentPackage.creditType'),
+    entitledCredits: integer(item.entitledCredits, 'studentPackage.entitledCredits', 1),
+    remainingCredits: integer(item.remainingCredits, 'studentPackage.remainingCredits'),
+    validityDays: item.validityDays === null ? null : integer(item.validityDays, 'studentPackage.validityDays', 1),
+    priceAmountMinor: integer(item.priceAmountMinor, 'studentPackage.priceAmountMinor'),
+    currency: string(item.currency, 'studentPackage.currency'),
+    status: enumValue(item.status, TEACHING_STUDENT_PACKAGE_STATUSES, 'studentPackage.status'),
+    acquisitionType: enumValue(item.acquisitionType, TEACHING_PACKAGE_ACQUISITION_TYPES, 'studentPackage.acquisitionType'),
+    validFrom: string(item.validFrom, 'studentPackage.validFrom'),
+    validUntil: nullableString(item.validUntil, 'studentPackage.validUntil'),
+    sourceSystem: nullableString(item.sourceSystem, 'studentPackage.sourceSystem'),
+    sourceRef: nullableString(item.sourceRef, 'studentPackage.sourceRef'),
+    sourceLineRef: nullableString(item.sourceLineRef, 'studentPackage.sourceLineRef'),
+    createdAt: string(item.createdAt, 'studentPackage.createdAt'),
+  };
+}
+
+function creditLedgerEntry(value: unknown): TeachingCreditLedgerEntry {
+  const item = record(value, 'ledger');
+  return {
+    id: integer(item.id, 'ledger.id', 1),
+    studentId: string(item.studentId, 'ledger.studentId'),
+    entryType: string(item.entryType, 'ledger.entryType'),
+    delta: integer(item.delta, 'ledger.delta', Number.MIN_SAFE_INTEGER),
+    attendanceId: nullableString(item.attendanceId, 'ledger.attendanceId'),
+    sessionId: nullableString(item.sessionId, 'ledger.sessionId'),
+    sourceSystem: nullableString(item.sourceSystem, 'ledger.sourceSystem'),
+    sourceRef: nullableString(item.sourceRef, 'ledger.sourceRef'),
+    sourceLineRef: nullableString(item.sourceLineRef, 'ledger.sourceLineRef'),
+    reversalOfLedgerId: item.reversalOfLedgerId === null ? null : integer(item.reversalOfLedgerId, 'ledger.reversalOfLedgerId', 1),
+    reason: nullableString(item.reason, 'ledger.reason'),
+    actorRole: nullableString(item.actorRole, 'ledger.actorRole'),
+    actorDisplayName: nullableString(item.actorDisplayName, 'ledger.actorDisplayName'),
+    metadata: item.metadata,
+    createdAt: string(item.createdAt, 'ledger.createdAt'),
+  };
+}
+
+const TEACHING_SESSION_TEACHER_ROLES = ['lead', 'assistant'] as const;
+
+function sessionTeacher(value: unknown): TeachingSessionTeacher {
+  const item = record(value, 'session.teacher');
+  return {
+    userId: integer(item.userId, 'session.teacher.userId', 1),
+    displayName: string(item.displayName, 'session.teacher.displayName'),
+    role: enumValue(item.role, TEACHING_SESSION_TEACHER_ROLES, 'session.teacher.role'),
+  };
+}
+
+function attendance(value: unknown): TeachingAttendance {
+  const item = record(value, 'attendance');
+  return {
+    id: string(item.id, 'attendance.id'),
+    studentId: string(item.studentId, 'attendance.studentId'),
+    displayName: optionalNullableString(item.displayName, 'attendance.displayName'),
+    studentPackageId: optionalNullableString(item.studentPackageId, 'attendance.studentPackageId'),
+    status: enumValue(item.status, TEACHING_ATTENDANCE_STATUSES, 'attendance.status'),
+    creditCost: integer(item.creditCost, 'attendance.creditCost', 1),
+    notes: string(item.notes, 'attendance.notes'),
+    updatedAt: string(item.updatedAt, 'attendance.updatedAt'),
+  };
+}
+
+function sessionSummary(value: unknown): TeachingSessionSummary {
+  const item = record(value, 'session');
+  if (!Array.isArray(item.teachers)) throw new TeachingApiError('INVALID_RESPONSE', 502, 'session.teachers is invalid');
+  return {
+    id: string(item.id, 'session.id'),
+    title: string(item.title, 'session.title'),
+    startsAt: string(item.startsAt, 'session.startsAt'),
+    endsAt: string(item.endsAt, 'session.endsAt'),
+    timezone: string(item.timezone, 'session.timezone'),
+    status: enumValue(item.status, TEACHING_SESSION_STATUSES, 'session.status'),
+    version: integer(item.version, 'session.version', 1),
+    startedAt: nullableString(item.startedAt, 'session.startedAt'),
+    completedAt: nullableString(item.completedAt, 'session.completedAt'),
+    cancelledAt: nullableString(item.cancelledAt, 'session.cancelledAt'),
+    teachers: item.teachers.map(sessionTeacher),
+    attendanceCount: integer(item.attendanceCount, 'session.attendanceCount'),
+    createdAt: string(item.createdAt, 'session.createdAt'),
+    updatedAt: string(item.updatedAt, 'session.updatedAt'),
+  };
+}
+
+function sessionDetail(value: unknown): TeachingSession {
+  const item = record(value, 'session');
+  if (!Array.isArray(item.attendance)) throw new TeachingApiError('INVALID_RESPONSE', 502, 'session.attendance is invalid');
+  const parsedAttendance = item.attendance.map(attendance);
+  return {
+    ...sessionSummary({ ...item, attendanceCount: item.attendanceCount ?? parsedAttendance.length }),
+    attendance: parsedAttendance,
   };
 }
 
@@ -458,4 +697,140 @@ export async function revokeTeachingTeacherAssignment(
 ): Promise<TeachingTeacherAssignment> {
   const envelope = record(await post(orgPath(orgSlug, `/teacher-assignments/${encodeURIComponent(assignmentId)}/revoke`), {}, idempotencyKey), 'assignment revoke');
   return teacherAssignment(envelope.assignment);
+}
+
+export async function listTeachingPackageProducts(
+  orgSlug: string,
+  pageNumber = 1,
+  pageSize = 25,
+): Promise<TeachingPage<TeachingPackageProduct>> {
+  return page(await request(orgPath(orgSlug, `/package-products${pageQuery(pageNumber, pageSize)}`)), 'packageProducts', packageProduct);
+}
+
+export async function createTeachingPackageProduct(
+  orgSlug: string,
+  input: {
+    code: string;
+    name: string;
+    creditUnit: TeachingCreditUnit;
+    creditType: string;
+    totalCredits: number;
+    validityDays: number | null;
+    priceAmountMinor: number;
+    currency: string;
+  },
+  idempotencyKey: string,
+): Promise<TeachingPackageProduct> {
+  const envelope = record(await post(orgPath(orgSlug, '/package-products'), input, idempotencyKey), 'package product create');
+  return packageProduct(envelope.packageProduct);
+}
+
+export async function listTeachingStudentPackages(
+  orgSlug: string,
+  studentId: string,
+  pageNumber = 1,
+  pageSize = 25,
+): Promise<TeachingPage<TeachingStudentPackage>> {
+  return page(
+    await request(orgPath(orgSlug, `/students/${encodeURIComponent(studentId)}/packages${pageQuery(pageNumber, pageSize)}`)),
+    'studentPackages',
+    studentPackage,
+  );
+}
+
+export async function createTeachingStudentPackage(
+  orgSlug: string,
+  studentId: string,
+  input: {
+    productId: string;
+    acquisitionType: TeachingPackageAcquisitionType;
+    validFrom?: string;
+    sourceSystem?: string | null;
+    sourceRef?: string | null;
+    sourceLineRef?: string | null;
+  },
+  idempotencyKey: string,
+): Promise<TeachingStudentPackage> {
+  const envelope = record(
+    await post(orgPath(orgSlug, `/students/${encodeURIComponent(studentId)}/packages`), input, idempotencyKey),
+    'student package create',
+  );
+  return studentPackage(envelope.studentPackage);
+}
+
+export async function listTeachingStudentPackageLedger(
+  orgSlug: string,
+  studentPackageId: string,
+  pageNumber = 1,
+  pageSize = 25,
+): Promise<TeachingPage<TeachingCreditLedgerEntry>> {
+  return page(
+    await request(orgPath(orgSlug, `/student-packages/${encodeURIComponent(studentPackageId)}/ledger${pageQuery(pageNumber, pageSize)}`)),
+    'ledger',
+    creditLedgerEntry,
+  );
+}
+
+export async function listTeachingSessions(
+  orgSlug: string,
+  pageNumber = 1,
+  pageSize = 25,
+): Promise<TeachingPage<TeachingSessionSummary>> {
+  return page(await request(orgPath(orgSlug, `/sessions${pageQuery(pageNumber, pageSize)}`)), 'sessions', sessionSummary);
+}
+
+export async function createTeachingSession(
+  orgSlug: string,
+  input: {
+    title: string;
+    startsAt: string;
+    endsAt: string;
+    timezone?: string;
+    teacherUserIds?: number[];
+    attendees?: Array<{ studentId: string; studentPackageId: string; creditCost: number }>;
+  },
+  idempotencyKey: string,
+): Promise<TeachingSession> {
+  const envelope = record(await post(orgPath(orgSlug, '/sessions'), input, idempotencyKey), 'session create');
+  return sessionDetail(envelope.session);
+}
+
+export async function getTeachingSession(orgSlug: string, sessionId: string): Promise<TeachingSession> {
+  const envelope = record(await request(orgPath(orgSlug, `/sessions/${encodeURIComponent(sessionId)}`)), 'session');
+  return sessionDetail(envelope.session);
+}
+
+export async function saveTeachingAttendanceBatch(
+  orgSlug: string,
+  sessionId: string,
+  records: Array<{ attendanceId: string; status: Exclude<TeachingAttendanceStatus, 'expected'> }>,
+  idempotencyKey: string,
+): Promise<TeachingAttendance[]> {
+  const envelope = record(
+    await post(orgPath(orgSlug, `/sessions/${encodeURIComponent(sessionId)}/attendance/batch`), { records }, idempotencyKey),
+    'attendance batch',
+  );
+  if (!Array.isArray(envelope.attendance)) throw new TeachingApiError('INVALID_RESPONSE', 502, 'attendance response is invalid');
+  return envelope.attendance.map(attendance);
+}
+
+export async function completeTeachingSession(
+  orgSlug: string,
+  sessionId: string,
+  idempotencyKey: string,
+): Promise<TeachingSessionCompletion> {
+  const envelope = record(await post(orgPath(orgSlug, `/sessions/${encodeURIComponent(sessionId)}/complete`), {}, idempotencyKey), 'session complete');
+  const sessionItem = record(envelope.session, 'session completion');
+  const consumption = record(envelope.consumption, 'session consumption');
+  return {
+    session: {
+      id: string(sessionItem.id, 'session completion.id'),
+      status: enumValue(sessionItem.status, ['completed'] as const, 'session completion.status'),
+      completedAt: string(sessionItem.completedAt, 'session completion.completedAt'),
+    },
+    consumption: {
+      attendanceCount: integer(consumption.attendanceCount, 'session consumption.attendanceCount'),
+      totalCredits: integer(consumption.totalCredits, 'session consumption.totalCredits'),
+    },
+  };
 }
