@@ -48,6 +48,7 @@ export default function OrgWorkspace({ orgSlug, children }: Props) {
 
   const links: Array<{ href: string; label: string; permission?: TeachingPermission }> = [
     { href: `/org/${organization.slug}`, label: t('概览', 'Overview') },
+    { href: `/org/${organization.slug}/members`, label: t('成员', 'Members'), permission: 'member:read' },
     { href: `/org/${organization.slug}/students`, label: t('学员', 'Students'), permission: 'student:read' },
     { href: `/org/${organization.slug}/campuses`, label: t('校区', 'Campuses'), permission: 'campus:read' },
     { href: `/org/${organization.slug}/classes`, label: t('班级', 'Classes'), permission: 'group:read' },

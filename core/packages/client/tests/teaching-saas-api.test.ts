@@ -13,9 +13,14 @@ vi.mock('@/lib/api-base', () => ({
 }));
 
 import {
+  createTeachingGroupMembership,
+  createTeachingMember,
+  createTeachingTeacherAssignment,
+  listTeachingGroupMemberships,
   createTeachingStudent,
   listTeachingOrganizations,
   listTeachingStudents,
+  listTeachingTeacherAssignments,
 } from '@/lib/teaching-saas-api';
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -47,6 +52,41 @@ function student() {
     status: 'active',
     createdAt: '2026-08-18T00:00:00.000Z',
     updatedAt: '2026-08-18T00:00:00.000Z',
+  };
+}
+
+function membership() {
+  return {
+    id: '018f3e56-31a5-7a88-9b45-337ccdbf7290',
+    groupId: '018f3e56-31a5-7a88-9b45-337ccdbf7291',
+    effectiveFrom: '2026-08-18T00:00:00.000Z',
+    effectiveTo: null,
+    createdAt: '2026-08-18T00:00:00.000Z',
+    student: {
+      id: student().id,
+      externalRef: 'S-001',
+      displayName: 'Student One',
+      status: 'active',
+    },
+  };
+}
+
+function teacherAssignment() {
+  return {
+    id: '018f3e56-31a5-7a88-9b45-337ccdbf7292',
+    teacherUserId: 42,
+    teacherUserIdSnapshot: 42,
+    groupId: membership().groupId,
+    studentId: null,
+    effectiveFrom: '2026-08-18T00:00:00.000Z',
+    effectiveTo: null,
+    createdAt: '2026-08-18T00:00:00.000Z',
+    teacher: {
+      userId: 42,
+      displayName: 'Teacher One',
+      role: 'teacher',
+      status: 'active',
+    },
   };
 }
 
@@ -116,6 +156,77 @@ describe('teaching SaaS client', () => {
 
     await listTeachingStudents('cube-academy', 0, 999);
     expect(fetchMock.mock.calls[0][0]).toBe('https://api.example.test/v1/teaching/organizations/cube-academy/students?page=1&pageSize=100');
+  });
+
+  it('uses the Core membership contract without inventing a client-side relationship shape', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'POST') return jsonResponse({ membership: membership() }, 201);
+      return jsonResponse({ memberships: [membership()], total: 1, page: 1, pageSize: 100 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listTeachingGroupMemberships('cube-academy', membership().groupId, 1, 100)).resolves.toMatchObject({
+      items: [membership()],
+      total: 1,
+    });
+    await createTeachingGroupMembership('cube-academy', membership().groupId, {
+      studentId: student().id,
+      effectiveFrom: membership().effectiveFrom,
+      effectiveTo: null,
+    }, 'membership-key');
+
+    const [url, initValue] = fetchMock.mock.calls[1]!;
+    expect(url).toBe(`https://api.example.test/v1/teaching/organizations/cube-academy/groups/${membership().groupId}/students`);
+    expect((initValue as RequestInit).headers).toMatchObject({ 'Idempotency-Key': 'membership-key' });
+    expect(JSON.parse(String((initValue as RequestInit).body))).toEqual({
+      studentId: student().id,
+      effectiveFrom: membership().effectiveFrom,
+      effectiveTo: null,
+    });
+  });
+
+  it('keeps teacher assignment target XOR in the query and mutation body', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'POST') return jsonResponse({ assignment: teacherAssignment() }, 201);
+      return jsonResponse({ assignments: [teacherAssignment()], total: 1, page: 1, pageSize: 100 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await listTeachingTeacherAssignments('cube-academy', { groupId: membership().groupId }, 1, 100);
+    await createTeachingTeacherAssignment('cube-academy', {
+      teacherUserId: 42,
+      groupId: membership().groupId,
+      studentId: null,
+      effectiveFrom: teacherAssignment().effectiveFrom,
+      effectiveTo: null,
+    }, 'assignment-key');
+
+    expect(fetchMock.mock.calls[0]![0]).toBe(`https://api.example.test/v1/teaching/organizations/cube-academy/teacher-assignments?groupId=${membership().groupId}&page=1&pageSize=100`);
+    const [, initValue] = fetchMock.mock.calls[1]!;
+    expect(JSON.parse(String((initValue as RequestInit).body))).toEqual({
+      teacherUserId: 42,
+      groupId: membership().groupId,
+      studentId: null,
+      effectiveFrom: teacherAssignment().effectiveFrom,
+      effectiveTo: null,
+    });
+  });
+
+  it('parses the narrow member-create response while preserving the organization role model', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({
+      member: { userId: 42, displayName: 'Teacher One', role: 'teacher', status: 'active' },
+    }, 201));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(createTeachingMember('cube-academy', { userId: 42, role: 'teacher' }, 'member-key')).resolves.toEqual({
+      userId: 42,
+      displayName: 'Teacher One',
+      avatarUrl: null,
+      role: 'teacher',
+      status: 'active',
+      joinedAt: null,
+      createdAt: null,
+    });
   });
 
   it('does not call fetch without a main-site session', async () => {

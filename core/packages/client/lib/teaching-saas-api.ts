@@ -1,14 +1,18 @@
 import {
   TEACHING_CAMPUS_STATUSES,
   TEACHING_GROUP_STATUSES,
+  TEACHING_MEMBER_STATUSES,
   TEACHING_ORGANIZATION_ROLES,
   TEACHING_ORGANIZATION_STATUSES,
   TEACHING_STUDENT_STATUSES,
   type TeachingCampus,
   type TeachingGroup,
+  type TeachingMemberStatus,
   type TeachingOrganizationRole,
   type TeachingOrganizationStatus,
   type TeachingStudentStatus,
+  type TeachingStudentGroupMembership,
+  type TeachingTeacherAssignment,
 } from '@cuberoot/shared/teaching';
 import { apiUrl } from '@/lib/api-base';
 import { getSessionToken } from '@/lib/auth-store';
@@ -48,6 +52,16 @@ export interface TeachingPage<T> {
   pageSize: number;
 }
 
+export interface TeachingMember {
+  userId: number;
+  displayName: string;
+  avatarUrl: string | null;
+  role: TeachingOrganizationRole;
+  status: TeachingMemberStatus;
+  joinedAt: string | null;
+  createdAt: string | null;
+}
+
 export class TeachingApiError extends Error {
   constructor(
     public readonly code: string,
@@ -76,6 +90,11 @@ function string(value: unknown, label: string): string {
 
 function nullableString(value: unknown, label: string): string | null {
   if (value === null) return null;
+  return string(value, label);
+}
+
+function optionalNullableString(value: unknown, label: string): string | null {
+  if (value === undefined || value === null) return null;
   return string(value, label);
 }
 
@@ -158,6 +177,60 @@ function group(value: unknown): TeachingGroup {
     archivedAt: nullableString(item.archivedAt, 'group.archivedAt'),
     createdAt: string(item.createdAt, 'group.createdAt'),
     updatedAt: string(item.updatedAt, 'group.updatedAt'),
+  };
+}
+
+function member(value: unknown): TeachingMember {
+  const item = record(value, 'member');
+  return {
+    userId: integer(item.userId, 'member.userId', 1),
+    displayName: string(item.displayName, 'member.displayName'),
+    avatarUrl: optionalNullableString(item.avatarUrl, 'member.avatarUrl'),
+    role: enumValue(item.role, TEACHING_ORGANIZATION_ROLES, 'member.role'),
+    status: enumValue(item.status, TEACHING_MEMBER_STATUSES, 'member.status'),
+    joinedAt: optionalNullableString(item.joinedAt, 'member.joinedAt'),
+    createdAt: optionalNullableString(item.createdAt, 'member.createdAt'),
+  };
+}
+
+function studentGroupMembership(value: unknown): TeachingStudentGroupMembership {
+  const item = record(value, 'membership');
+  const studentItem = record(item.student, 'membership.student');
+  return {
+    id: string(item.id, 'membership.id'),
+    groupId: string(item.groupId, 'membership.groupId'),
+    effectiveFrom: string(item.effectiveFrom, 'membership.effectiveFrom'),
+    effectiveTo: nullableString(item.effectiveTo, 'membership.effectiveTo'),
+    createdAt: string(item.createdAt, 'membership.createdAt'),
+    student: {
+      id: string(studentItem.id, 'membership.student.id'),
+      externalRef: nullableString(studentItem.externalRef, 'membership.student.externalRef'),
+      displayName: string(studentItem.displayName, 'membership.student.displayName'),
+      status: enumValue(studentItem.status, TEACHING_STUDENT_STATUSES, 'membership.student.status'),
+    },
+  };
+}
+
+const ASSIGNABLE_TEACHING_ROLES = ['owner', 'admin', 'teacher', 'assistant'] as const;
+
+function teacherAssignment(value: unknown): TeachingTeacherAssignment {
+  const item = record(value, 'assignment');
+  const teacher = record(item.teacher, 'assignment.teacher');
+  return {
+    id: string(item.id, 'assignment.id'),
+    teacherUserId: nullableNumber(item.teacherUserId, 'assignment.teacherUserId'),
+    teacherUserIdSnapshot: integer(item.teacherUserIdSnapshot, 'assignment.teacherUserIdSnapshot', 1),
+    groupId: nullableString(item.groupId, 'assignment.groupId'),
+    studentId: nullableString(item.studentId, 'assignment.studentId'),
+    effectiveFrom: string(item.effectiveFrom, 'assignment.effectiveFrom'),
+    effectiveTo: nullableString(item.effectiveTo, 'assignment.effectiveTo'),
+    createdAt: string(item.createdAt, 'assignment.createdAt'),
+    teacher: {
+      userId: nullableNumber(teacher.userId, 'assignment.teacher.userId'),
+      displayName: string(teacher.displayName, 'assignment.teacher.displayName'),
+      role: enumValue(teacher.role, ASSIGNABLE_TEACHING_ROLES, 'assignment.teacher.role'),
+      status: teacher.status === null ? null : enumValue(teacher.status, TEACHING_MEMBER_STATUSES, 'assignment.teacher.status'),
+    },
   };
 }
 
@@ -279,6 +352,22 @@ export async function createTeachingStudent(
   return student(record(await post(orgPath(orgSlug, '/students'), input, idempotencyKey), 'student create').student);
 }
 
+export async function getTeachingStudent(orgSlug: string, studentId: string): Promise<TeachingStudent> {
+  return student(record(await request(orgPath(orgSlug, `/students/${encodeURIComponent(studentId)}`)), 'student').student);
+}
+
+export async function listTeachingMembers(orgSlug: string, pageNumber = 1, pageSize = 25): Promise<TeachingPage<TeachingMember>> {
+  return page(await request(orgPath(orgSlug, `/members${pageQuery(pageNumber, pageSize)}`)), 'members', member);
+}
+
+export async function createTeachingMember(
+  orgSlug: string,
+  input: { userId: number; role: Exclude<TeachingOrganizationRole, 'owner'> },
+  idempotencyKey: string,
+): Promise<TeachingMember> {
+  return member(record(await post(orgPath(orgSlug, '/members'), input, idempotencyKey), 'member create').member);
+}
+
 export async function listTeachingCampuses(orgSlug: string, pageNumber = 1, pageSize = 25): Promise<TeachingPage<TeachingCampus>> {
   return page(await request(orgPath(orgSlug, `/campuses${pageQuery(pageNumber, pageSize)}`)), 'campuses', campus);
 }
@@ -301,4 +390,72 @@ export async function createTeachingGroup(
   idempotencyKey: string,
 ): Promise<TeachingGroup> {
   return group(record(await post(orgPath(orgSlug, '/groups'), input, idempotencyKey), 'group create').group);
+}
+
+export async function getTeachingGroup(orgSlug: string, groupId: string): Promise<TeachingGroup> {
+  return group(record(await request(orgPath(orgSlug, `/groups/${encodeURIComponent(groupId)}`)), 'group').group);
+}
+
+export async function listTeachingGroupMemberships(
+  orgSlug: string,
+  groupId: string,
+  pageNumber = 1,
+  pageSize = 25,
+): Promise<TeachingPage<TeachingStudentGroupMembership>> {
+  return page(
+    await request(orgPath(orgSlug, `/groups/${encodeURIComponent(groupId)}/students${pageQuery(pageNumber, pageSize)}`)),
+    'memberships',
+    studentGroupMembership,
+  );
+}
+
+export async function createTeachingGroupMembership(
+  orgSlug: string,
+  groupId: string,
+  input: { studentId: string; effectiveFrom: string; effectiveTo: string | null },
+  idempotencyKey: string,
+): Promise<TeachingStudentGroupMembership> {
+  const envelope = record(await post(orgPath(orgSlug, `/groups/${encodeURIComponent(groupId)}/students`), input, idempotencyKey), 'membership create');
+  return studentGroupMembership(envelope.membership);
+}
+
+export async function revokeTeachingGroupMembership(
+  orgSlug: string,
+  membershipId: string,
+  idempotencyKey: string,
+): Promise<TeachingStudentGroupMembership> {
+  const envelope = record(await post(orgPath(orgSlug, `/student-group-memberships/${encodeURIComponent(membershipId)}/revoke`), {}, idempotencyKey), 'membership revoke');
+  return studentGroupMembership(envelope.membership);
+}
+
+export async function listTeachingTeacherAssignments(
+  orgSlug: string,
+  target: { groupId: string } | { studentId: string },
+  pageNumber = 1,
+  pageSize = 25,
+): Promise<TeachingPage<TeachingTeacherAssignment>> {
+  const query = new URLSearchParams({
+    ...target,
+    page: String(Math.max(1, pageNumber)),
+    pageSize: String(Math.min(100, Math.max(1, pageSize))),
+  });
+  return page(await request(orgPath(orgSlug, `/teacher-assignments?${query}`)), 'assignments', teacherAssignment);
+}
+
+export async function createTeachingTeacherAssignment(
+  orgSlug: string,
+  input: { teacherUserId: number; groupId: string | null; studentId: string | null; effectiveFrom: string; effectiveTo: string | null },
+  idempotencyKey: string,
+): Promise<TeachingTeacherAssignment> {
+  const envelope = record(await post(orgPath(orgSlug, '/teacher-assignments'), input, idempotencyKey), 'assignment create');
+  return teacherAssignment(envelope.assignment);
+}
+
+export async function revokeTeachingTeacherAssignment(
+  orgSlug: string,
+  assignmentId: string,
+  idempotencyKey: string,
+): Promise<TeachingTeacherAssignment> {
+  const envelope = record(await post(orgPath(orgSlug, `/teacher-assignments/${encodeURIComponent(assignmentId)}/revoke`), {}, idempotencyKey), 'assignment revoke');
+  return teacherAssignment(envelope.assignment);
 }
