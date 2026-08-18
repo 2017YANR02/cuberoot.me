@@ -34,8 +34,18 @@ describe('teaching Stage 1 CRM schema', () => {
     expect(createTable(schema, 'session_teachers')).toContain('teacher_display_name_snapshot VARCHAR(200) NOT NULL');
     expect(createTable(schema, 'session_teachers')).toContain('CHAR_LENGTH(teacher_display_name_snapshot) BETWEEN 1 AND 200');
 
-    const crmStart = migration.indexOf('CREATE TABLE teaching_campuses (');
-    expect(schema.endsWith(migration.slice(crmStart))).toBe(true);
+    for (const table of [
+      'teaching_campuses',
+      'teaching_groups',
+      'student_group_memberships',
+      'teacher_assignments',
+    ]) {
+      expect(createTable(schema, table)).toBe(createTable(migration, table));
+    }
+    expect(
+      createTable(schema, 'teaching_relation_locks').replace(", 'training_evidence'", ''),
+    ).toBe(createTable(migration, 'teaching_relation_locks'));
+    expect(createTable(schema, 'teaching_relation_locks')).toContain("'training_evidence'");
     expect(readme).toContain('0149_teaching_campuses_groups_assignments.sql');
     expect(readme).toContain('0148_fix_teaching_owner_guard.sql');
   });

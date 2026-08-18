@@ -103,6 +103,16 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   attendance_records: '课堂考勤属于机构履约历史,记录者账号随删除置空',
   lesson_credit_ledger: '课时余额流水不可变保留,操作者账号随删除置空且保留姓名快照',
   session_events: '课堂事件不可变保留,操作者账号随删除置空且保留姓名快照',
+  training_templates: '机构训练模板独立保留,创建者账号随删除置空',
+  training_template_versions: '已发布训练模板版本不可变保留,创建与发布账号随删除置空',
+  training_assignments: '训练任务及发布时内容快照属于机构,操作者账号随删除置空',
+  training_assignment_targets: '任务目标是发布时学员范围与提交汇总快照,不随账号删除',
+  training_assignment_goal_metrics: '任务目标指标随机构任务保留,不承载账号资料',
+  training_evidence: '原始训练证据不可变保留,提交账号随删除置空',
+  training_evidence_assignments: '证据与任务目标的不可变关联不承载账号资料',
+  training_submission_reviews: '批改版本保留稳定审核人账号、姓名与角色快照,活动账号引用在删除前显式置空',
+  daily_training_rollups: '每日训练汇总由机构原始证据重建,不承载账号资料',
+  student_account_binding_invites: '学员账号绑定邀请只存令牌哈希并保留终态,操作者账号随删除置空',
   memberships: '会员权益状态:留着,同一个人重新绑 WCA 回来还认',
   membership_orders: '交易凭证,财务对账要;只有归属键,没有姓名邮箱',
   contributors: '站方手录的致谢名单,单独处理(只把 wca_id 置 NULL,名字留着)',
@@ -204,6 +214,10 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
           )
       WHERE teacher_user_id = ${userId}`;
     await tx`UPDATE session_teachers SET teacher_user_id = NULL WHERE teacher_user_id = ${userId}`;
+    await tx`
+      UPDATE training_submission_reviews
+      SET reviewer_user_id = NULL
+      WHERE reviewer_user_id = ${userId}`;
 
     // 最后删账号本体。auth_identities 有 ON DELETE CASCADE(0064),身份跟着走。
     await tx`DELETE FROM app_users WHERE id = ${userId}`;
