@@ -68,7 +68,10 @@ import type World from '@/app/[lang]/sim/engine/world';
 import type NxnCube from '@/app/[lang]/sim/engine/nxn/cube';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import { FRONT_SCENE_ROT, homeSceneRot } from '@/app/[lang]/sim/engine/viewControls';
-import { planSimUpdate } from '@/app/[lang]/timer/_lib/cube/sim_log';
+import {
+  planLiveSimUpdate,
+  planSimUpdate,
+} from '@/app/[lang]/timer/_lib/cube/sim_log';
 import {
   advanceStillMs,
   applyOrientation,
@@ -85,10 +88,11 @@ import {
 /** Below this the pose is "unchanged" and we skip the render entirely. */
 const STILL_EPS_RAD = 1e-4;
 
-/** Turns allowed to be mid-flight before the next one snaps what is playing.
- *  Two is enough to keep a fast solve looking continuous and short enough that
- *  the mirror is never meaningfully behind the cube in the user's hands. */
-const MAX_ANIM_QUEUE = 2;
+/** Live mirrors receive completed BLE turns, not continuous layer angles. Keep
+ *  one turn readable without replaying half-second-old history. These values
+ *  alter motion timing only; geometry, materials and render cadence are intact. */
+const LIVE_TURN_TICKS = 7.2; // 120 ms at the engine's nominal 60 Hz.
+const LIVE_QUEUED_TURN_TICKS = 4.8; // 80 ms while catching up.
 
 export interface SimCubeViewProps {
   /** Moves since the cube was last known SOLVED — see the note above. */
@@ -130,11 +134,16 @@ export interface SimCubeViewProps {
    *
    * Only ever applies to a pure APPEND on the TURN log — anything else (a seek,
    * a rewind, a re-anchor, a changed `pose`) still snaps, because there is no
-   * honest animation for "the state jumped". And an append longer than
-   * `MAX_ANIM_QUEUE` finishes what is playing first: the point of the animation
-   * is to make one turn readable, not to let the screen fall behind the hands.
+   * honest animation for "the state jumped". Real-time catch-up is opt-in via
+   * `realtime`; replay callers keep the ordinary /sim animation contract.
    */
   animate?: boolean;
+  /**
+   * Keep an actual smart-cube mirror close to the physical state. Normal turns
+   * remain animated, but a growing BLE batch/queue snaps stale turns and plays
+   * only the newest one. Replay callers leave this off and retain /sim timing.
+   */
+  realtime?: boolean;
   /**
    * Optional /sim stickering preset. The orientation is the same whole-cube
    * rotation prefix accepted by /sim's stickering control (for example `x2`
@@ -176,6 +185,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     sensorBasis = sensorBasisForBrand(null),
     mirror = mirrorForBrand(null),
     animate = false,
+    realtime = false,
     stickering = '',
     stickeringOrientation = '',
     view = 'iso',
@@ -360,25 +370,36 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   // call — turns and pose are two axes and the plan is pure algebra over them.
   // Read _lib/cube/sim_log.ts; there is nothing to decide here.
   //
-  // The queue is capped: fall more than MAX_ANIM_QUEUE behind and the pending
-  // turns are finished instantly before the new one is pushed, so the screen
-  // can drift a couple of turns behind the hands and no further.
+  // Live mode counts the active turn, pending turns, and a newly batched BLE
+  // append together. Once that total crosses the cap, it snaps through stale
+  // history and animates only the newest move. Replay keeps the ordinary plan.
   const turns = moves.join(' ');
   const shownRef = useRef({ turns: '', pose: '' });
   useEffect(() => {
     const world = mountRef.current?.world;
     if (!ready || !world) return;
     const twister = (world.cube as NxnCube).twister;
-    const plan = planSimUpdate(shownRef.current, { turns, pose }, animate);
+    const next = { turns, pose };
+    const plan = realtime
+      ? planLiveSimUpdate(shownRef.current, next, animate, twister.backlog)
+      : planSimUpdate(shownRef.current, next, animate);
     shownRef.current = { turns, pose };
     if (plan.mode === 'push') {
-      if (twister.length > MAX_ANIM_QUEUE) twister.finish();
-      twister.push(plan.exp);
+      const queued = twister.backlog > 0 || plan.exp.trim().split(/\s+/).length > 1;
+      twister.push(
+        plan.exp,
+        false,
+        1,
+        realtime ? (queued ? LIVE_QUEUED_TURN_TICKS : LIVE_TURN_TICKS) : undefined,
+      );
+    } else if (plan.mode === 'catch-up') {
+      twister.setup(plan.setupExp);
+      twister.push(plan.pushExp, false, 1, LIVE_QUEUED_TURN_TICKS);
     } else {
       twister.setup(plan.exp);
     }
     mountRef.current?.invalidate();
-  }, [ready, turns, pose, animate]);
+  }, [ready, turns, pose, animate, realtime]);
 
   return (
     <div

@@ -66,6 +66,42 @@ describe('sim TPS timing', () => {
     }
   });
 
+  it('stores a per-action live duration without changing shared /sim timing', () => {
+    timing.frames = 60;
+    const liveCube = new Cube(3);
+    const simCube = new Cube(3);
+    try {
+      liveCube.twister.push('R', false, 1, 7.2);
+      expect(tweener.tweens).toHaveLength(1);
+      expect(tweener.tweens[0].duration).toBe(7.2);
+      liveCube.twister.finish();
+
+      simCube.twister.push('R');
+      expect(tweener.tweens).toHaveLength(1);
+      expect(tweener.tweens[0].duration).toBe(60);
+    } finally {
+      liveCube.twister.finish();
+      simCube.twister.finish();
+      liveCube.dispose();
+      simCube.dispose();
+    }
+  });
+
+  it('counts the active NxN turn in the live backlog', () => {
+    const cube = new Cube(3);
+    try {
+      cube.twister.push('R U');
+      expect(cube.busy).toBe(true);
+      expect(cube.twister.length).toBe(1);
+      expect(cube.twister.backlog).toBe(2);
+      cube.twister.finish();
+      expect(cube.twister.backlog).toBe(0);
+    } finally {
+      cube.twister.finish();
+      cube.dispose();
+    }
+  });
+
   it('gives every shared non-NxN token one beat regardless of magnitude', () => {
     timing.frames = 60;
     const board = new ClockBoard();

@@ -355,7 +355,7 @@ export class TwistNode {
 
 export default class Twister {
   private cube: Cube;
-  private queue: TwistAction[] = [];
+  private queue: Array<{ action: TwistAction; formulaDurationTicks?: number }> = [];
   // 在 undo / redo 内部 twist 时为 true,避免误清空 redo 栈
   public suppressRedoClear = false;
   constructor(cube: Cube) {
@@ -396,6 +396,13 @@ export default class Twister {
 
   get length(): number {
     return this.queue.length;
+  }
+
+  /** Current formula actions that have not reached their final state yet.
+   *  `length` is retained as the pending-only export/playback contract; a live
+   *  mirror needs the active layer too or it under-counts every queue by one. */
+  get backlog(): number {
+    return this.queue.length + (this.cube.busy ? 1 : 0);
   }
 
   finish(): void {
@@ -720,33 +727,43 @@ export default class Twister {
     };
   }
 
-  push(exp: string, reverse = false, times = 1): void {
+  push(exp: string, reverse = false, times = 1, formulaDurationTicks?: number): void {
     const node = new TwistNode(exp, reverse, times);
     const list = node.parse();
     if (list.length == 0) {
       return;
     }
     for (const action of list) {
-      this.queue.push(action);
+      this.queue.push({ action, formulaDurationTicks });
     }
     this.update();
   }
 
   update = (): void => {
     while (true) {
-      const action = this.queue.shift();
-      if (action == undefined) {
+      const queued = this.queue.shift();
+      if (queued == undefined) {
         return;
       }
-      const success = this.twist(action, false, false);
+      const success = this.twist(
+        queued.action,
+        false,
+        false,
+        queued.formulaDurationTicks,
+      );
       if (!success) {
-        this.queue.unshift(action);
+        this.queue.unshift(queued);
         return;
       }
     }
   };
 
-  twist(action: TwistAction, fast: boolean, force: boolean): boolean {
+  twist(
+    action: TwistAction,
+    fast: boolean,
+    force: boolean,
+    formulaDurationTicks = timing.frames,
+  ): boolean {
     let success = false;
     if (action.sign == "#") {
       this.setup("");
@@ -764,7 +781,7 @@ export default class Twister {
       }
       success = this.cube.lock("a", 1);
       if (success) {
-        tweener.tween(0, 1, timing.frames * action.times, (value: number) => {
+        tweener.tween(0, 1, formulaDurationTicks * action.times, (value: number) => {
           if (value == 1) {
             this.cube.unlock("a", 1);
             this.cube.callback();
@@ -792,7 +809,12 @@ export default class Twister {
       return true;
     }
     for (const rotate of list) {
-      success = rotate.group.twist((Math.PI / 2) * rotate.twist, fast, true);
+      success = rotate.group.twist(
+        (Math.PI / 2) * rotate.twist,
+        fast,
+        true,
+        formulaDurationTicks,
+      );
       // force = instant sync (playback jumpToStep etc.). If the target layer can't lock
       // because a perpendicular layer is stranded holding with no tween (e.g. a drag's
       // snap-back overlapping a jumpToStep), tweener.finish() can't release it and this
@@ -801,7 +823,12 @@ export default class Twister {
       let guard = 8;
       while (!success && force && guard-- > 0) {
         tweener.finish();
-        success = rotate.group.twist((Math.PI / 2) * rotate.twist, fast, true);
+        success = rotate.group.twist(
+          (Math.PI / 2) * rotate.twist,
+          fast,
+          true,
+          formulaDurationTicks,
+        );
       }
       if (!success && force) console.warn('[sim] twister.twist(force): layer never locked, skipped');
     }
