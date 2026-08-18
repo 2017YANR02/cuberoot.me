@@ -19,7 +19,6 @@ import {
   type TeachingAttendanceStatus,
   type TeachingCreditUnit,
   type TeachingApiErrorBody,
-  type TeachingErrorCode,
   type TeachingMemberStatus,
   type TeachingOrganizationRole,
   type TeachingOrganizationStatus,
@@ -31,6 +30,9 @@ import {
   type TeachingStudentStatus,
 } from "@cuberoot/shared/teaching";
 import type { User } from "@/db/schema";
+import { TeachingApiError } from "@/lib/teaching-api-error";
+
+export { TeachingApiError } from "@/lib/teaching-api-error";
 
 const DEFAULT_API_BASE = "https://api.cuberoot.me/v1";
 const ASSERTION_LIFETIME_SECONDS = Math.min(
@@ -246,18 +248,6 @@ export interface CreateTeachingSessionInput {
     studentPackageId: string;
     creditCost: number;
   }>;
-}
-
-export class TeachingApiError extends Error {
-  constructor(
-    readonly code: TeachingErrorCode | "BAD_RESPONSE" | "UNAVAILABLE",
-    message: string,
-    readonly status?: number,
-    readonly requestId?: string,
-  ) {
-    super(message);
-    this.name = "TeachingApiError";
-  }
 }
 
 interface AssertionOptions {
