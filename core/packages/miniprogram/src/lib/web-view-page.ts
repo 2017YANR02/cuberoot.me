@@ -2,7 +2,7 @@ import {
   ApiError,
   clearStoredSession,
   createWebSessionTicket,
-  getStoredSession,
+  getStoredSessionSnapshot,
 } from './auth';
 import {
   createWebSessionHandoffUrl,
@@ -168,6 +168,15 @@ function updateShareMenu(key: unknown): void {
   }
 }
 
+function showWebSessionHandoffFailure(context: WebViewPageContext): void {
+  context.setData({
+    canRetry: true,
+    errorMessage: '登录状态暂未同步，请检查网络后重试。为避免账号错位，暂不会以游客身份打开网页。',
+    errorTitle: '账号同步失败',
+    src: '',
+  });
+}
+
 export function createWebViewPageData(): WebViewPageData {
   return {
     canRetry: false,
@@ -210,7 +219,12 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
     viewAttempt: attempt,
   });
 
-  const session = getStoredSession();
+  const stored = getStoredSessionSnapshot();
+  if (route.sessionHandoff && stored.status === 'unavailable') {
+    if (isCurrentAttempt(context, attempt)) showWebSessionHandoffFailure(context);
+    return true;
+  }
+  const session = stored.session;
   if (!session || !route.sessionHandoff) {
     if (isCurrentAttempt(context, attempt)) context.setData({ src: route.url });
     return true;
@@ -219,19 +233,33 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
   try {
     const { ticket } = await createWebSessionTicket(session);
     if (isCurrentAttempt(context, attempt)) {
-      const currentSession = getStoredSession();
-      context.setData({
-        src: currentSession?.token === session.token
-          ? createWebSessionHandoffUrl(route.path, ticket)
-          : route.url,
-      });
+      const current = getStoredSessionSnapshot();
+      if (current.status === 'unavailable') {
+        showWebSessionHandoffFailure(context);
+      } else {
+        context.setData({
+          src: current.session?.token === session.token
+            ? createWebSessionHandoffUrl(route.path, ticket)
+            : route.url,
+        });
+      }
     }
   } catch (error) {
-    if (error instanceof ApiError && error.status === 401) {
-      const currentSession = getStoredSession();
-      if (currentSession?.token === session.token) clearStoredSession();
+    if (!isCurrentAttempt(context, attempt)) return true;
+
+    const current = getStoredSessionSnapshot();
+    const sessionWasReplaced = current.status === 'available'
+      && current.session?.token !== session.token;
+    const sessionExpired = error instanceof ApiError && error.status === 401;
+    if (sessionExpired && current.status === 'available'
+      && current.session?.token === session.token) {
+      clearStoredSession();
     }
-    if (isCurrentAttempt(context, attempt)) context.setData({ src: route.url });
+    if (sessionExpired || sessionWasReplaced) {
+      context.setData({ src: route.url });
+    } else {
+      showWebSessionHandoffFailure(context);
+    }
   }
   return true;
 }

@@ -176,6 +176,19 @@ describe('mini program app structure', () => {
     expect(genericWebStyles.trim()).toBe('');
   });
 
+  it('starts smart-cube discovery on page load without a second search action', () => {
+    const page = pageFiles['../src/pages/smart-cube/index.ts'];
+    const template = pageFiles['../src/pages/smart-cube/index.wxml'];
+
+    expect(page).toContain('void startConnection(page);');
+    expect(page).toContain('else await smartCubeSession.connectAutomatically();');
+    expect(template).not.toContain('bindtap="connectCube"');
+    expect(template).not.toContain('data-driver=');
+    expect(template).not.toContain('driver-list');
+    expect(template).toContain("phase === 'error' || phase === 'disconnected'");
+    expect(template).toContain('bindtap="retryConnection"');
+  });
+
   it('does not carry an abandoned native timer implementation', () => {
     expect(sourceFiles['../src/lib/timer-store.ts']).toBeUndefined();
     for (const [path, source] of Object.entries(sourceFiles)) {

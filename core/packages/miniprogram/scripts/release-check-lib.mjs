@@ -1,26 +1,104 @@
 import { BUILD_ASSETS } from './build-assets.mjs';
 import { BUILD_STATE_VERSION } from './build-state.mjs';
 
+function wxApiAccess(methods) {
+  return new RegExp(
+    `\\bwx\\s*(?:\\.\\s*(?:${methods})\\b|\\[\\s*["'](?:${methods})["']\\s*\\])`,
+  );
+}
+
+function bundledApiAccess(methods) {
+  return new RegExp(
+    `(?:\\.\\s*(?:${methods})\\b|\\[\\s*["'](?:${methods})["']\\s*\\])`,
+  );
+}
+
+function wxApiDestructure(methods) {
+  return new RegExp(
+    `\\b(?:const|let|var)\\s*\\{[^}]*\\b(?:${methods})\\b[^}]*\\}\\s*=\\s*wx\\b`,
+  );
+}
+
+function bundledApiDestructure(methods) {
+  return new RegExp(
+    `\\b(?:const|let|var)\\s*\\{[^}]*\\b(?:${methods})\\b[^}]*\\}\\s*=`,
+  );
+}
+
+function normalizeAuditPath(path) {
+  return path.replaceAll('\\', '/').replace(/^\.\//, '');
+}
+
+function sensitiveWxCapability(label, methods, markupPattern = null, allow = {}) {
+  const sourceApiPattern = wxApiAccess(methods);
+  const bundledApiPattern = bundledApiAccess(methods);
+  const sourceCodePattern = new RegExp(
+    `${sourceApiPattern.source}|${wxApiDestructure(methods).source}`,
+  );
+  const uploadCodePattern = new RegExp(
+    `${bundledApiPattern.source}|${bundledApiDestructure(methods).source}`,
+  );
+  const allowedSourcePaths = new Set((allow.sourcePaths ?? []).map(normalizeAuditPath));
+  const allowedUploadPaths = new Set((allow.uploadPaths ?? []).map(normalizeAuditPath));
+  return {
+    label,
+    sourcePattern: markupPattern
+      ? new RegExp(`${sourceCodePattern.source}|${markupPattern.source}`)
+      : sourceCodePattern,
+    uploadPattern: markupPattern
+      ? new RegExp(`${uploadCodePattern.source}|${markupPattern.source}`)
+      : uploadCodePattern,
+    sourcePathAllowed: (path) => allowedSourcePaths.has(normalizeAuditPath(path)),
+    uploadPathAllowed: (path) => allowedUploadPaths.has(normalizeAuditPath(path)),
+  };
+}
+
 const sensitiveCapabilities = [
-  [
+  sensitiveWxCapability(
     '微信用户资料',
-    /\bwx\.(?:getUserProfile|getUserInfo)\b|open-type\s*=\s*["'](?:chooseAvatar|getUserInfo)["']/,
-  ],
-  [
+    'getUserProfile|getUserInfo',
+    /open-type\s*=\s*["'](?:chooseAvatar|getUserInfo)["']/,
+  ),
+  sensitiveWxCapability(
     '定位',
-    /\bwx\.(?:getLocation|getFuzzyLocation|chooseLocation|startLocationUpdate|startLocationUpdateBackground|onLocationChange)\b/,
-  ],
-  [
+    'getLocation|getFuzzyLocation|chooseLocation|startLocationUpdate|startLocationUpdateBackground|onLocationChange',
+  ),
+  sensitiveWxCapability(
     '文件、图片或媒体',
-    /\bwx\.(?:chooseImage|chooseMedia|chooseVideo|chooseMessageFile|saveImageToPhotosAlbum|saveVideoToPhotosAlbum)\b/,
-  ],
-  ['录音', /\bwx\.(?:startRecord|getRecorderManager)\b/],
-  ['通讯录、地址或发票', /\bwx\.(?:addPhoneContact|chooseAddress|chooseInvoice|chooseInvoiceTitle)\b/],
-  ['运动数据', /\bwx\.getWeRunData\b/],
-  ['剪贴板内容', /\bwx\.getClipboardData\b/],
-  ['相机或直播画面', /<(?:camera|live-pusher)\b/],
-  ['蓝牙', /\bwx\.(?:openBluetoothAdapter|getBluetoothAdapterState|createBLEConnection|readBLECharacteristicValue|writeBLECharacteristicValue)\b/],
-  ['手机号', /open-type\s*=\s*["']getPhoneNumber["']/],
+    'chooseImage|chooseMedia|chooseVideo|chooseMessageFile|saveImageToPhotosAlbum|saveVideoToPhotosAlbum',
+  ),
+  sensitiveWxCapability('录音', 'startRecord|getRecorderManager'),
+  sensitiveWxCapability(
+    '通讯录、地址或发票',
+    'addPhoneContact|chooseAddress|chooseInvoice|chooseInvoiceTitle',
+  ),
+  sensitiveWxCapability('运动数据', 'getWeRunData'),
+  sensitiveWxCapability('剪贴板内容', 'getClipboardData'),
+  {
+    label: '相机或直播画面',
+    sourcePattern: /<(?:camera|live-pusher)\b/,
+    uploadPattern: /<(?:camera|live-pusher)\b/,
+  },
+  sensitiveWxCapability(
+    '蓝牙',
+    'openBluetoothAdapter|closeBluetoothAdapter|getBluetoothAdapterState|startBluetoothDevicesDiscovery|stopBluetoothDevicesDiscovery|onBluetoothDeviceFound|offBluetoothDeviceFound|createBLEConnection|closeBLEConnection|getBLEDeviceServices|getBLEDeviceCharacteristics|notifyBLECharacteristicValueChange|readBLECharacteristicValue|writeBLECharacteristicValue|onBLECharacteristicValueChange|offBLECharacteristicValueChange|onBLEConnectionStateChange|offBLEConnectionStateChange',
+    null,
+    {
+      sourcePaths: [
+        'src/lib/smart-cube/discover-driver.ts',
+        'src/lib/smart-cube/gan-v4-ble.ts',
+        'src/lib/smart-cube/giiker-ble.ts',
+        'src/lib/smart-cube/gocube-ble.ts',
+        'src/lib/smart-cube/moyu-ble.ts',
+      ],
+      uploadPaths: ['pages/smart-cube/index.js'],
+    },
+  ),
+  {
+    label: '手机号',
+    sourcePattern: /open-type\s*=\s*["']getPhoneNumber["']/,
+    uploadPattern: /open-type\s*=\s*["']getPhoneNumber["']/,
+  },
 ];
 
 const sensitiveManifestKeys = ['requiredPrivateInfos', 'permission'];
@@ -68,6 +146,7 @@ export const PUBLIC_INDEXED_PAGES = [
 
 export const EXPECTED_APP_PAGES = [
   'pages/timer/index',
+  'pages/smart-cube/index',
   'pages/tools/index',
   'pages/account/index',
   'pages/web/index',
@@ -86,6 +165,11 @@ export const MIN_TEXT_CONTRAST_RATIO = 4.5;
 
 export const REQUIRED_RELEASE_CONFIRMATIONS = [
   {
+    key: 'socketDomainConfigured',
+    env: 'WECHAT_MINI_SOCKET_DOMAIN_CONFIGURED',
+    failure: '小程序后台尚未确认配置 socket 合法域名 wss://api.cuberoot.me；配置生效后，上传时设置 WECHAT_MINI_SOCKET_DOMAIN_CONFIGURED=1。',
+  },
+  {
     key: 'basicInfoApproved',
     env: 'WECHAT_MINI_BASIC_INFO_APPROVED',
     failure: '小程序基础信息审核尚未确认通过；后台显示通过后，上传时设置 WECHAT_MINI_BASIC_INFO_APPROVED=1。',
@@ -101,9 +185,34 @@ export const REQUIRED_RELEASE_CONFIRMATIONS = [
     failure: '后台用户隐私保护指引尚未确认与实际能力一致；复核并提交后，上传时设置 WECHAT_MINI_PRIVACY_REVIEWED=1。',
   },
   {
-    key: 'realDeviceTested',
-    env: 'WECHAT_MINI_REAL_DEVICE_TESTED',
-    failure: '本次候选版本尚未确认完成 iOS 和 Android 真机回归；回归通过后，上传时设置 WECHAT_MINI_REAL_DEVICE_TESTED=1。',
+    key: 'iosRealDeviceTested',
+    env: 'WECHAT_MINI_IOS_REAL_DEVICE_TESTED',
+    failure: '本次候选版本尚未确认完成 iOS 真机回归；回归通过后，上传时设置 WECHAT_MINI_IOS_REAL_DEVICE_TESTED=1。',
+  },
+  {
+    key: 'androidRealDeviceTested',
+    env: 'WECHAT_MINI_ANDROID_REAL_DEVICE_TESTED',
+    failure: '本次候选版本尚未确认完成 Android 真机回归；回归通过后，上传时设置 WECHAT_MINI_ANDROID_REAL_DEVICE_TESTED=1。',
+  },
+  {
+    key: 'gan16UiTested',
+    env: 'WECHAT_MINI_GAN16UI_TESTED',
+    failure: 'GAN 16 ui 尚未完成 Android 真机连接、转动同步、电量和断线重连回归；通过后，上传时设置 WECHAT_MINI_GAN16UI_TESTED=1。',
+  },
+  {
+    key: 'goCubeTested',
+    env: 'WECHAT_MINI_GOCUBE_TESTED',
+    failure: 'GoCube 尚未完成真机连接、转动同步、电量和断线重连回归；通过后，上传时设置 WECHAT_MINI_GOCUBE_TESTED=1。',
+  },
+  {
+    key: 'giikerTested',
+    env: 'WECHAT_MINI_GIIKER_TESTED',
+    failure: 'Giiker 与米家智能魔方尚未完成真机连接、转动同步、电量和断线重连回归；通过后，上传时设置 WECHAT_MINI_GIIKER_TESTED=1。',
+  },
+  {
+    key: 'moyuTested',
+    env: 'WECHAT_MINI_MOYU_TESTED',
+    failure: 'MoYu AI（MHC 旧协议）尚未完成真机连接、转动同步和断线重连回归；通过后，上传时设置 WECHAT_MINI_MOYU_TESTED=1。',
   },
 ];
 
@@ -395,10 +504,29 @@ export function collectReleaseFailures({
     if (paths.length === 0) continue;
     failures.push(`${paths.join('、')} 包含${label}；小程序源码和上传包禁止保存服务端凭据。`);
   }
-  for (const [label, pattern] of sensitiveCapabilities) {
-    const paths = auditedFiles
-      .filter(({ source }) => typeof source === 'string' && pattern.test(source))
-      .map(({ path }) => path);
+  for (const {
+    label,
+    sourcePattern,
+    uploadPattern,
+    sourcePathAllowed = () => false,
+    uploadPathAllowed = () => false,
+  } of sensitiveCapabilities) {
+    const paths = [
+      ...sourceFiles
+        .filter(({ path, source }) => (
+          typeof source === 'string'
+          && sourcePattern.test(source)
+          && !sourcePathAllowed(path)
+        ))
+        .map(({ path }) => path),
+      ...uploadFiles
+        .filter(({ path, source }) => (
+          typeof source === 'string'
+          && uploadPattern.test(source)
+          && !uploadPathAllowed(path)
+        ))
+        .map(({ path }) => path),
+    ];
     if (paths.length === 0) continue;
     failures.push(
       `${paths.join('、')} 使用了${label}能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。`,

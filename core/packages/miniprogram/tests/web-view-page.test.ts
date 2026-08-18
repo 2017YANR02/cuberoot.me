@@ -583,7 +583,7 @@ describe('shared web-view page state', () => {
     expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
   });
 
-  it('never leaves the shell loading forever when the handoff request does not finish', async () => {
+  it('keeps a timed-out handoff in a retryable state instead of opening as a guest', async () => {
     vi.useFakeTimers();
     vi.stubGlobal('wx', {
       getStorageSync: () => ({
@@ -601,7 +601,86 @@ describe('shared web-view page state', () => {
     await vi.advanceTimersByTimeAsync(6_000);
     await opening;
 
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data).toMatchObject({
+      canRetry: true,
+      errorMessage: '登录状态暂未同步，请检查网络后重试。为避免账号错位，暂不会以游客身份打开网页。',
+      errorTitle: '账号同步失败',
+      src: '',
+    });
+  });
+
+  it('keeps a handoff route closed when local session storage cannot be read', async () => {
+    const request = vi.fn();
+    vi.stubGlobal('wx', {
+      getStorageSync() {
+        throw new Error('storage unavailable');
+      },
+      nextTick(callback: () => void) { callback(); },
+      request,
+      setNavigationBarTitle,
+    });
+    const context = createContext();
+
+    await openWebRoute(context, 'timer');
+
+    expect(request).not.toHaveBeenCalled();
+    expect(context.data).toMatchObject({
+      canRetry: true,
+      errorTitle: '账号同步失败',
+      src: '',
+    });
+  });
+
+  it('keeps a server-side handoff failure retryable instead of opening as a guest', async () => {
+    vi.stubGlobal('wx', {
+      getStorageSync: () => ({
+        token: 't'.repeat(20),
+        user: { name: 'CubeRoot', wcaId: null },
+      }),
+      removeStorageSync: vi.fn(),
+      nextTick(callback: () => void) { callback(); },
+      setNavigationBarTitle,
+      request(options: {
+        success(result: { statusCode: number; data: unknown }): void;
+      }) {
+        options.success({ statusCode: 503, data: { error: 'temporarily unavailable' } });
+      },
+    });
+    const context = createContext();
+
+    await openWebRoute(context, 'timer');
+
+    expect(context.data).toMatchObject({
+      canRetry: true,
+      errorTitle: '账号同步失败',
+      src: '',
+    });
+  });
+
+  it('keeps a network handoff failure retryable instead of opening as a guest', async () => {
+    vi.stubGlobal('wx', {
+      getStorageSync: () => ({
+        token: 't'.repeat(20),
+        user: { name: 'CubeRoot', wcaId: null },
+      }),
+      removeStorageSync: vi.fn(),
+      nextTick(callback: () => void) { callback(); },
+      setNavigationBarTitle,
+      request(options: {
+        fail(result: { errMsg: string }): void;
+      }) {
+        options.fail({ errMsg: 'request:fail network error' });
+      },
+    });
+    const context = createContext();
+
+    await openWebRoute(context, 'timer');
+
+    expect(context.data).toMatchObject({
+      canRetry: true,
+      errorTitle: '账号同步失败',
+      src: '',
+    });
   });
 
   it('does not revive a web-view after a later load error cancelled the attempt', async () => {

@@ -124,7 +124,25 @@ describe('mini program release check', () => {
     expect(BUILD_ASSETS).toHaveLength(1);
     expect(BUILD_ASSETS[0].output).toBe('assets/share-cover.png');
     const packageRoot = resolve(import.meta.dirname, '..');
-    expect(await collectBuildInputFiles(packageRoot)).toContain(BUILD_ASSETS[0].source);
+    const buildInputs = await collectBuildInputFiles(packageRoot);
+    expect(buildInputs).toContain(BUILD_ASSETS[0].source);
+    expect(buildInputs.some((file) => file.replaceAll('\\', '/').endsWith(
+      '/packages/shared/src/smart_cube/relay.ts',
+    ))).toBe(true);
+    expect(buildInputs.some((file) => file.replaceAll('\\', '/').endsWith(
+      '/core/package.json',
+    ))).toBe(true);
+    expect(buildInputs.some((file) => file.replaceAll('\\', '/').endsWith(
+      '/core/pnpm-lock.yaml',
+    ))).toBe(true);
+    expect(buildInputs.some((file) => file.replaceAll('\\', '/').endsWith(
+      '/packages/shared/package.json',
+    ))).toBe(true);
+    const packageJson = JSON.parse(await readFile(
+      resolve(packageRoot, 'package.json'),
+      'utf8',
+    ));
+    expect(packageJson.scripts['release:check']).toContain('node scripts/build.mjs');
     const source = await readFile(BUILD_ASSETS[0].source);
     expect(source.subarray(0, 8)).toEqual(Buffer.from([
       0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
@@ -221,15 +239,27 @@ describe('mini program release check', () => {
 
   it('requires every human release gate to be explicitly confirmed', () => {
     expect(releaseConfirmationsFromEnv({
+      WECHAT_MINI_SOCKET_DOMAIN_CONFIGURED: '1',
       WECHAT_MINI_BASIC_INFO_APPROVED: '1',
       WECHAT_MINI_FILING_COMPLETED: '0',
       WECHAT_MINI_PRIVACY_REVIEWED: '1',
-      WECHAT_MINI_REAL_DEVICE_TESTED: 'yes',
+      WECHAT_MINI_IOS_REAL_DEVICE_TESTED: '1',
+      WECHAT_MINI_ANDROID_REAL_DEVICE_TESTED: 'yes',
+      WECHAT_MINI_GAN16UI_TESTED: '0',
+      WECHAT_MINI_GOCUBE_TESTED: '1',
+      WECHAT_MINI_GIIKER_TESTED: '1',
+      WECHAT_MINI_MOYU_TESTED: '1',
     })).toEqual({
+      socketDomainConfigured: true,
       basicInfoApproved: true,
       filingCompleted: false,
       privacyReviewed: true,
-      realDeviceTested: false,
+      iosRealDeviceTested: true,
+      androidRealDeviceTested: false,
+      gan16UiTested: false,
+      goCubeTested: true,
+      giikerTested: true,
+      moyuTested: true,
     });
 
     expect(collectReleaseFailures({
@@ -237,11 +267,13 @@ describe('mini program release check', () => {
       releaseConfirmations: {
         ...validInput.releaseConfirmations,
         filingCompleted: false,
-        realDeviceTested: false,
+        androidRealDeviceTested: false,
+        gan16UiTested: false,
       },
     })).toEqual(expect.arrayContaining([
       '小程序备案尚未确认完成；备案状态完成后，上传时设置 WECHAT_MINI_FILING_COMPLETED=1。',
-      '本次候选版本尚未确认完成 iOS 和 Android 真机回归；回归通过后，上传时设置 WECHAT_MINI_REAL_DEVICE_TESTED=1。',
+      '本次候选版本尚未确认完成 Android 真机回归；回归通过后，上传时设置 WECHAT_MINI_ANDROID_REAL_DEVICE_TESTED=1。',
+      'GAN 16 ui 尚未完成 Android 真机连接、转动同步、电量和断线重连回归；通过后，上传时设置 WECHAT_MINI_GAN16UI_TESTED=1。',
     ]));
   });
 
@@ -494,6 +526,115 @@ describe('mini program release check', () => {
     expect(failures).toEqual([
       'app.js 包含小程序 AppSecret；小程序源码和上传包禁止保存服务端凭据。',
       'pages/timer/index.js 使用了蓝牙能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+    ]);
+  });
+
+  it('detects privacy-sensitive APIs after the upload bundle aliases wx', () => {
+    const failures = collectReleaseFailures({
+      ...validInput,
+      uploadFiles: [
+        {
+          path: 'pages/device/index.js',
+          source: 'const api=wx;const open=api.openBluetoothAdapter;const profile=api["getUserProfile"]',
+        },
+      ],
+    });
+
+    expect(failures).toEqual([
+      'pages/device/index.js 使用了微信用户资料能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+      'pages/device/index.js 使用了蓝牙能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+    ]);
+  });
+
+  it('detects destructured privacy-sensitive APIs in source and upload output', () => {
+    const failures = collectReleaseFailures({
+      ...validInput,
+      sourceFiles: [
+        {
+          path: 'src/pages/location/index.ts',
+          source: 'const { getLocation: locate } = wx;locate({})',
+        },
+      ],
+      uploadFiles: [
+        {
+          path: 'pages/import/index.js',
+          source: 'const api=wx;const {chooseImage:pick}=api;pick({})',
+        },
+      ],
+    });
+
+    expect(failures).toEqual([
+      'src/pages/location/index.ts 使用了定位能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+      'pages/import/index.js 使用了文件、图片或媒体能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+    ]);
+  });
+
+  it('allows Bluetooth only in the reviewed native smart-cube boundary', () => {
+    expect(collectReleaseFailures({
+      ...validInput,
+      sourceFiles: [
+        {
+          path: 'src/lib/smart-cube/discover-driver.ts',
+          source: 'const api=wx;api.openBluetoothAdapter({});api.startBluetoothDevicesDiscovery({})',
+        },
+        {
+          path: 'src/lib/smart-cube/gan-v4-ble.ts',
+          source: 'wx.startBluetoothDevicesDiscovery({});wx.onBLEConnectionStateChange(() => {})',
+        },
+      ],
+      uploadFiles: [
+        {
+          path: 'pages/smart-cube/index.js',
+          source: 'const api=wx;api.notifyBLECharacteristicValueChange({});api.closeBLEConnection({})',
+        },
+      ],
+    })).toEqual([]);
+  });
+
+  it('keeps lookalike smart-cube paths outside the Bluetooth boundary', () => {
+    const failures = collectReleaseFailures({
+      ...validInput,
+      sourceFiles: [
+        {
+          path: 'src/lib/smart-cube/gan-v4-ble-copy.ts',
+          source: 'wx.openBluetoothAdapter({})',
+        },
+      ],
+      uploadFiles: [
+        {
+          path: 'pages/smart-cube/debug.js',
+          source: 'const api=wx;api.openBluetoothAdapter({})',
+        },
+      ],
+    });
+
+    expect(failures).toEqual([
+      'src/lib/smart-cube/gan-v4-ble-copy.ts、pages/smart-cube/debug.js 使用了蓝牙能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
+    ]);
+  });
+
+  it('keeps unbundled transport abstractions outside the release privacy boundary', () => {
+    expect(collectReleaseFailures({
+      ...validInput,
+      sourceFiles: [
+        {
+          path: 'src/lib/smart-cube/transport.ts',
+          source: 'export const open = (api) => api.openBluetoothAdapter({})',
+        },
+      ],
+    })).toEqual([]);
+  });
+
+  it('detects bracket-form wx calls in source before bundling', () => {
+    const failures = collectReleaseFailures({
+      ...validInput,
+      sourceFiles: [
+        { path: 'src/pages/device/index.ts', source: 'const open = wx["openBluetoothAdapter"]' },
+      ],
+    });
+
+    expect(failures).toEqual([
+      'src/pages/device/index.ts 使用了蓝牙能力；先更新隐私政策、后台用户隐私保护指引和本检查器的复核边界。',
     ]);
   });
 

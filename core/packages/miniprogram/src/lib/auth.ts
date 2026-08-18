@@ -53,6 +53,10 @@ export class ApiError extends Error {
   }
 }
 
+export function isSessionStorageError(error: unknown): boolean {
+  return error instanceof ApiError && error.status === STORAGE_ERROR_STATUS;
+}
+
 function decodeSessionUser(value: unknown): SessionUser | null {
   if (value === null || typeof value !== 'object') return null;
   const user = value as Record<string, unknown>;
@@ -302,8 +306,8 @@ export async function validateStoredSession(session: SessionData): Promise<Sessi
   const next = { ...session, user: { ...session.user, ...user } };
   const stored = readStoredSessionValue();
   const current = stored.available ? decodeSession(stored.value) : null;
-  if (current?.token === session.token) {
-    writeStoredSessionValue(next);
+  if (current?.token === session.token && !writeStoredSessionValue(next)) {
+    throw new ApiError(STORAGE_ERROR_STATUS, 'session storage unavailable');
   }
   return next;
 }

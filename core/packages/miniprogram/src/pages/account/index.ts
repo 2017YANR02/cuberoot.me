@@ -2,6 +2,7 @@ import {
   ApiError,
   clearStoredSession,
   getStoredSessionSnapshot,
+  isSessionStorageError,
   loginErrorMessage,
   loginWithWechat,
   validateStoredSession,
@@ -118,6 +119,10 @@ Page({
         return;
       }
       if (current.session?.token !== session.token) return;
+      if (isSessionStorageError(error)) {
+        this.showStorageUnavailable('账号已确认，但设备存储暂时无法更新，请清理空间后重试');
+        return;
+      }
       if (error instanceof ApiError && error.status === 401) {
         if (!clearStoredSession()) {
           this.showSyncState('error');
