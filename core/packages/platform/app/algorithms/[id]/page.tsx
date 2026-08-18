@@ -10,7 +10,7 @@ export default function AlgorithmDetail() {
   return (
     <Section
       eyebrow="公式训练"
-      title="该公式已迁移到主站"
+      title="该公式请在主站查看"
       subtitle="Platform 不再维护独立公式详情，避免两套内容产生差异。"
     >
       <MainSiteToolNotice

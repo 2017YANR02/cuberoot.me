@@ -89,7 +89,7 @@ const FRONTEND: Feature[] = [
 
 const CUBE_LEARN: Feature[] = [
   { icon: Timer, title: "训练工具复用主站", description: "计时、预判、公式训练与模拟器统一使用 CubeRoot 主站实现，Platform 只保留教学管理。" },
-  { icon: Trophy, title: "三榜排行", description: "速拧榜 / 学习榜 / 积分榜,周 / 月 / 总三档切换,速拧需满 5 次防刷,真实激励竞争。" },
+  { icon: Trophy, title: "双榜排行", description: "学习榜 / 积分榜,周 / 月 / 总三档切换,围绕教学与社群成长提供真实激励。" },
   { icon: Boxes, title: "主站公式库与训练", description: "公式数据、图示、选择与训练统一复用 CubeRoot 主站，避免两套内容产生差异。" },
   { icon: Route, title: "学习路径", description: "把零散课程打包成进阶路线,跨课计算完成度,一张路线图带学员从入门走到进阶。" },
   { icon: ListChecks, title: "章节测验", description: "看完视频即测,答案不下发客户端、服务端判分讲解,满分自动发积分。" },

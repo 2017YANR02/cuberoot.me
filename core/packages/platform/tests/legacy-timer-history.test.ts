@@ -18,6 +18,10 @@ describe("Platform training-tool reuse boundary", () => {
       algorithms: "https://cuberoot.me/zh/alg",
       simulator: "https://cuberoot.me/zh/sim",
     });
+
+    const notice = source("components/MainSiteToolNotice.tsx");
+    expect(notice).toContain("<a");
+    expect(notice).toContain("href={href}");
   });
 
   it("keeps the legacy timer entry free of history reads, exports, and writes", () => {
@@ -38,6 +42,31 @@ describe("Platform training-tool reuse boundary", () => {
     );
   });
 
+  it("does not expose legacy timer history through leaderboards or badges", () => {
+    const leaderboard = [
+      source("app/leaderboard/page.tsx"),
+      source("components/LeaderboardTabs.tsx"),
+      source("lib/db/leaderboard.ts"),
+      source("lib/search-params.ts"),
+      source("app/progress/page.tsx"),
+    ].join("\n");
+    expect(leaderboard).not.toMatch(
+      /timerSolves|timer_solves|speedBoard|formatSolveMs|速拧榜|最快单次/,
+    );
+
+    const achievements = [
+      source("app/me/badges/page.tsx"),
+      source("components/BadgeWall.tsx"),
+      source("lib/db/achievements.ts"),
+    ].join("\n");
+    expect(achievements).not.toMatch(
+      /timerSolves|first_solve|solves_100|sub_10s|category: "timer"/,
+    );
+    expect(source("lib/db/achievements.ts")).toContain(
+      "filter((key) => BY_KEY.has(key))",
+    );
+  });
+
   it("retires Platform algorithm reads and writes in favor of the main site", () => {
     for (const relativePath of [
       "app/algorithms/page.tsx",
@@ -50,6 +79,7 @@ describe("Platform training-tool reuse boundary", () => {
       expect(file, relativePath).toContain("MAIN_SITE_TOOLS.algorithms");
       expect(file, relativePath).not.toContain("@/lib/db/algorithms");
       expect(file, relativePath).not.toContain("AlgorithmForm");
+      expect(file, relativePath).not.toContain("已迁移到主站");
     }
 
     const actions = source("app/admin/(authed)/algorithms/actions.ts");

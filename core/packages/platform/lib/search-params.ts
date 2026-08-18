@@ -93,15 +93,14 @@ export const newPostParams = {
 };
 export const loadNewPostParams = createLoader(newPostParams);
 
-/* ---------- 排行榜:榜单类型 + 时间范围 + 魔方项目 ---------- */
-export const LEADERBOARD_BOARDS = ["speed", "study", "points"] as const;
+/* ---------- 排行榜:榜单类型 + 时间范围 ---------- */
+export const LEADERBOARD_BOARDS = ["study", "points"] as const;
 export type LeaderboardBoard = (typeof LEADERBOARD_BOARDS)[number];
 export const LEADERBOARD_PERIODS = ["week", "month", "all"] as const;
 export type LeaderboardPeriod = (typeof LEADERBOARD_PERIODS)[number];
 export const leaderboardParams = {
-  board: parseAsStringLiteral(LEADERBOARD_BOARDS).withDefault("speed"),
+  board: parseAsStringLiteral(LEADERBOARD_BOARDS).withDefault("study"),
   period: parseAsStringLiteral(LEADERBOARD_PERIODS).withDefault("week"),
-  event: parseAsString.withDefault("333"), // 速拧榜按魔方项目
 };
 export const loadLeaderboardParams = createLoader(leaderboardParams);
 export const serializeLeaderboardParams = createSerializer(leaderboardParams);
