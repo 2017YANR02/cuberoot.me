@@ -6,8 +6,13 @@
 import type { AlgTag } from '@cuberoot/shared';
 import { tr } from '@/i18n/tr';
 
+export const OH_TAG_LABEL = {
+  left: () => tr({ zh: '左单', en: 'Left OH' }),
+  right: () => tr({ zh: '右单', en: 'Right OH' }),
+} as const;
+
 export const ALG_TAG_LABEL: Record<AlgTag, () => string> = {
-  oh: () => tr({ zh: '单手', en: 'OH' }),
+  oh: OH_TAG_LABEL.left,
   ft: () => tr({ zh: '脚拧', en: 'Feet' }),
   fmc: () => tr({ zh: '最少步', en: 'FMC' }),
   big: () => tr({ zh: '高阶', en: 'Big cube' }),

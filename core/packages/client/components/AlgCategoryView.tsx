@@ -59,7 +59,7 @@ import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { sortByCp } from '@/lib/alg_cp_order';
 import { sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
 import { CUBE_ORIENTATIONS, visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
-import { ALG_TAG_LABEL, ALG_TAGS } from '@/lib/alg_tags';
+import { ALG_TAG_LABEL, ALG_TAGS, OH_TAG_LABEL } from '@/lib/alg_tags';
 import {
   CASE_VIEW_ANGLES,
   caseViewAlg,
@@ -188,7 +188,7 @@ function SetupLine({ puzzle, setup, notationStyle }: {
   );
 }
 
-function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAngle, preferred = false, onPreferredToggle }: {
+function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAngle, ohHand, preferred = false, onPreferredToggle }: {
   entry: AlgEntry;
   puzzle: AlgPuzzle; invalid?: string;
   /** 有值 = 这个 set 吃镜像系统,行尾出翻转图标;`partner` 是伙伴 case 名(没建链时为 null) */
@@ -197,6 +197,7 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
   ori?: number;
   notationStyle: AlgNotationStyle;
   viewAngle: CaseViewAngle;
+  ohHand?: OhHand;
   preferred?: boolean;
   onPreferredToggle?: () => void;
 }) {
@@ -221,9 +222,10 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
       >
         {/* 就是这条过不了校验 —— 卡片红框只说「这张有问题」,不说是哪条 */}
         {invalid && <AlertTriangle size={13} className="alg-alg-invalid-icon" aria-label={invalid} />}
-        {entry.tags?.map(t => (
-          <span key={t} className={`alg-tag alg-tag-${t}`} title={ALG_TAG_LABEL[t]()}>{ALG_TAG_LABEL[t]()}</span>
-        ))}
+        {entry.tags?.map(t => {
+          const label = t === 'oh' && ohHand ? OH_TAG_LABEL[ohHand]() : ALG_TAG_LABEL[t]();
+          return <span key={t} className={`alg-tag alg-tag-${t}`} title={label}>{label}</span>;
+        })}
         <span className="alg-alg-text">
           {algHtml && viewAngle === 'default' && puzzle !== 'sq1' && notationStyle === 'standard'
             ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
@@ -1203,14 +1205,18 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               aria-label={tr({ zh: '按标签筛选公式', en: 'Filter algs by tag' })}
             >
               <option value="all">{tr({ zh: '全部公式', en: 'All algs' })}</option>
-              {availableTags.map(t => <option key={t} value={t}>{ALG_TAG_LABEL[t]()}</option>)}
+              {availableTags.map(t => (
+                <option key={t} value={t}>
+                  {t === 'oh' && canChooseOhHand ? OH_TAG_LABEL[ohHand]() : ALG_TAG_LABEL[t]()}
+                </option>
+              ))}
             </select>
             {canChooseOhHand && tagFilter === 'oh' && (
               <PillToggle
                 value={ohHand === 'right'}
                 onChange={right => setOhHand(right ? 'right' : 'left')}
-                offLabel={tr({ zh: '左手', en: 'Left hand' })}
-                onLabel={tr({ zh: '右手', en: 'Right hand' })}
+                offLabel={OH_TAG_LABEL.left()}
+                onLabel={OH_TAG_LABEL.right()}
                 ariaLabel={tr({ zh: '单手公式惯用手', en: 'One-handed algorithm hand' })}
                 className="alg-oh-hand-toggle"
               />
@@ -1521,6 +1527,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                 mirror={mirrorFor(c)}
                                 notationStyle={displayedNotationStyle}
                                 viewAngle={effectiveViewAngle}
+                                ohHand={rightHandOh ? 'right' : undefined}
                                 preferred={!rightHandOh && preferredAlgRef(entry) === preferredRef}
                                 onPreferredToggle={rightHandOh ? undefined : () => setPreferred(
                                   puzzleParam as AlgPuzzle,

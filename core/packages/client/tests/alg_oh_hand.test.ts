@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { AlgCase, AlgEntry } from '@cuberoot/shared';
 import { hasOhAlgsForHand, ohAlgsForCase } from '@/lib/alg_oh_hand';
+import { ALG_TAG_LABEL, OH_TAG_LABEL } from '@/lib/alg_tags';
+import i18n from '@/i18n/i18n-client';
 
 function mkCase(no: number, mirror: number | undefined, algs: AlgEntry[][]): AlgCase {
   return {
@@ -21,6 +23,22 @@ function mkCase(no: number, mirror: number | undefined, algs: AlgEntry[][]): Alg
 }
 
 describe('PLL one-handed formulas', () => {
+  it('将入库 OH 明确标为左单，并为镜像公式提供右单标签', async () => {
+    const originalLanguage = i18n.language;
+    try {
+      await i18n.changeLanguage('zh');
+      expect(ALG_TAG_LABEL.oh()).toBe('左单');
+      expect(OH_TAG_LABEL.left()).toBe('左单');
+      expect(OH_TAG_LABEL.right()).toBe('右单');
+
+      await i18n.changeLanguage('en');
+      expect(ALG_TAG_LABEL.oh()).toBe('Left OH');
+      expect(OH_TAG_LABEL.right()).toBe('Right OH');
+    } finally {
+      await i18n.changeLanguage(originalLanguage);
+    }
+  });
+
   it('左手保留当前 case 的 OH 原文，右手取镜像 partner 后复用 /sim 的 M 镜像', () => {
     const left = mkCase(11, 12, [[
       { alg: "R U R'", tags: ['oh'] },
