@@ -73,6 +73,17 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'account': { title: { zh: '账号', en: 'Account' } },
+  'org': {
+    title: { zh: '教学管理', en: 'Teaching' },
+    description: {
+      zh: '在 CubeRoot 主站统一管理机构、学员、校区、班级和训练任务。',
+      en: 'Manage organizations, students, campuses, classes, and training assignments on CubeRoot.',
+    },
+  },
+  'org/[orgSlug]': { title: { zh: '机构概览', en: 'Organization Overview' } },
+  'org/[orgSlug]/students': { title: { zh: '学员管理', en: 'Student Management' } },
+  'org/[orgSlug]/campuses': { title: { zh: '校区管理', en: 'Campus Management' } },
+  'org/[orgSlug]/classes': { title: { zh: '班级管理', en: 'Class Management' } },
   'privacy': {
     title: { zh: '移动端与小程序隐私政策', en: 'Mobile and Mini Program Privacy Policy' },
     description: {
