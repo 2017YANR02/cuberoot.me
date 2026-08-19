@@ -37,6 +37,7 @@
     "packages/server": {
       "entry": [
         "scripts/**/*.{ts,mjs}",
+        "tests/fixtures/**/*_pg.ts",
         "src/tools/**/*.ts",
         "src/monitors/**/*.ts",
         "src/**/*-daemon.{ts,mjs}"
