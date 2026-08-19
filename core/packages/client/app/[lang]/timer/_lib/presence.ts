@@ -39,6 +39,11 @@ export interface TimerPresenceAccount {
 export interface TimerPresenceSession extends TimerPresenceReport {
   sessionId: string;
   ip: string;
+  location?: {
+    en: string;
+    zh: string;
+    precision: 'city' | 'country';
+  } | null;
   account: TimerPresenceAccount | null;
   seenAt: number;
 }
@@ -48,7 +53,7 @@ export interface TimerPresenceSnapshot extends TimerPresenceMix {
   sessions: TimerPresenceSession[];
 }
 
-const ENDPOINT = '/v1/timer/presence?v=3';
+const ENDPOINT = '/v1/timer/presence?v=4';
 const HEARTBEAT_MS = 10_000;
 type PresenceFetch = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
