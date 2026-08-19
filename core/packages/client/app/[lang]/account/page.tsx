@@ -4,7 +4,8 @@
  * /account —— 「我的」页,全站唯一。地址里**不带 wcaId**:这是当前登录者的页面,不接受
  * 「看谁的」参数,所以没有 isSelf 分支。别人的东西各归各页(选手档案 /wca/persons/:id、
  * 选手复盘 /recon/person/:id),这里只放属于我的:账号凭据、学习进度、关注的比赛、登出。
- * 也没有登录弹层:未登录就直接渲染登录表单,登录后按 ?next= 回到来处。
+ * 也没有登录弹层:未登录就直接渲染登录表单,登录后按 next 回到来处。一次性绑定令牌只从
+ * fragment 续接,不能进入 query、服务端日志或 Referer。
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -156,7 +157,7 @@ export default function AccountPage() {
 
   // 'wait' = 还没判定(SSR / 正在跳走)—— auth-store 从 localStorage 同步初始化,服务端恒为
   // null,所以判定只能在挂载后做,渲染前固定空壳避免 hydration 错配。
-  // 'onboard' = 刚注册完的那一步「你有 WCA ID 吗」,挡在回跳 ?next= 之前。
+  // 'onboard' = 刚注册完的那一步「你有 WCA ID 吗」,挡在回跳 next 之前。
   const [mode, setMode] = useState<'wait' | 'login' | 'onboard' | 'me'>('wait');
   const next = useRef<string | null>(null);
 
@@ -183,7 +184,8 @@ export default function AccountPage() {
   // 只在挂载时判一次。**不能**改成盯着 user 变化自动跳:忘记密码流在验证码通过时就已经登录,
   // 但人还得留在表单里设新密码 —— 一盯 user 就会把那一步抽走。何时算完成由表单的 onDone 说了算。
   useEffect(() => {
-    next.current = safeNext(new URLSearchParams(window.location.search).get('next'));
+    const fragmentNext = new URLSearchParams(window.location.hash.slice(1)).get('next');
+    next.current = safeNext(fragmentNext) ?? safeNext(new URLSearchParams(window.location.search).get('next'));
     const u = useAuthStore.getState().user;
     if (!u) { setMode('login'); return; }
     // 三方(微信/QQ/支付宝)注册那条路:授权是整页跳走再回来的,回来时人已不在 LoginForm 里,
