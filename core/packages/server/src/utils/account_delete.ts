@@ -104,6 +104,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   lesson_credit_ledger: '课时余额流水不可变保留,操作者账号随删除置空且保留姓名快照',
   session_events: '课堂事件不可变保留,操作者账号随删除置空且保留姓名快照',
   lesson_feedback: '课后反馈修订历史属于机构,作者账号随删除置空且保留姓名与角色快照',
+  teaching_weekly_reports: '教学周报修订属于机构,生成与发布账号随删除置空且保留姓名与角色快照',
   training_templates: '机构训练模板独立保留,创建者账号随删除置空',
   training_template_versions: '已发布训练模板版本不可变保留,创建与发布账号随删除置空',
   training_assignments: '训练任务及发布时内容快照属于机构,操作者账号随删除置空',
@@ -216,6 +217,17 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
       WHERE teacher_user_id = ${userId}`;
     await tx`UPDATE session_teachers SET teacher_user_id = NULL WHERE teacher_user_id = ${userId}`;
     await tx`UPDATE lesson_feedback SET author_user_id = NULL WHERE author_user_id = ${userId}`;
+    await tx`
+      UPDATE teaching_weekly_reports
+      SET generated_by_user_id = CASE
+            WHEN generated_by_user_id = ${userId} THEN NULL
+            ELSE generated_by_user_id
+          END,
+          published_by_user_id = CASE
+            WHEN published_by_user_id = ${userId} THEN NULL
+            ELSE published_by_user_id
+          END
+      WHERE generated_by_user_id = ${userId} OR published_by_user_id = ${userId}`;
     await tx`
       UPDATE training_submission_reviews
       SET reviewer_user_id = NULL
