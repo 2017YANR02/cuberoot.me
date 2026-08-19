@@ -1,5 +1,5 @@
 import { pageMetadata } from '../../../../lib/page-meta';
-import '../../org/org.css';
+import '../../../../components/teaching/teaching.css';
 
 export const generateMetadata = pageMetadata('account/student-binding');
 

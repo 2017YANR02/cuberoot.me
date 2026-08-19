@@ -19,14 +19,21 @@ import {
   createTeachingMember,
   createTeachingTeacherAssignment,
   generateTeachingWeeklyReport,
+  getLearnerTeachingWeeklyReport,
   getTeachingWeeklyReport,
+  listLearnerTeachingLessonFeedback,
+  listLearnerTeachingWeeklyReports,
   listTeachingPackageProducts,
   listTeachingGroupMemberships,
   createTeachingStudent,
   listTeachingOrganizations,
   listTeachingStudents,
   listTeachingTeacherAssignments,
+  listTeachingLearningContexts,
+  listTeachingOrganizationLearningContexts,
   listTeachingWeeklyReports,
+  previewTeachingGuardianAccountBinding,
+  consumeTeachingGuardianAccountBinding,
   publishTeachingWeeklyReport,
   saveTeachingAttendanceBatch,
 } from '@/lib/teaching-saas-api';
@@ -234,6 +241,58 @@ function weeklyReport() {
         }],
       },
     },
+  };
+}
+
+function learningContext() {
+  return {
+    organization: { slug: 'cube-academy', name: 'Cube Academy' },
+    student: { id: student().id, displayName: student().displayName },
+    relationships: [
+      { kind: 'student' },
+      { kind: 'guardian', guardianLinkId: '018f3e56-31a5-7a88-9b45-337ccdbf7299', relationship: 'parent' },
+    ],
+  };
+}
+
+function learnerWeeklyReport(includeAggregate = true) {
+  const staff = weeklyReport();
+  return {
+    id: staff.id,
+    studentId: staff.studentId,
+    studentDisplayNameSnapshot: staff.studentDisplayNameSnapshot,
+    weekStart: staff.weekStart,
+    weekEnd: staff.weekEnd,
+    timezoneSnapshot: staff.timezoneSnapshot,
+    revision: staff.revision,
+    status: 'published',
+    visibility: 'student_and_guardians',
+    teacherSummary: 'Steady progress',
+    nextWeekPlan: 'Build consistency',
+    publishedByDisplayNameSnapshot: 'Teacher One',
+    publishedByRoleSnapshot: 'teacher',
+    publishedAt: '2026-08-18T13:00:00.000Z',
+    ...(includeAggregate ? { aggregate: staff.aggregate } : {}),
+  };
+}
+
+function learnerFeedback() {
+  return {
+    id: '018f3e56-31a5-7a88-9b45-337ccdbf7300',
+    sessionId: session().id,
+    studentId: student().id,
+    revision: 1,
+    visibility: 'student_and_guardians',
+    summary: 'Steady progress',
+    strengths: 'Recognition',
+    challenges: null,
+    nextGoals: 'Consistency',
+    studentDisplayNameSnapshot: student().displayName,
+    attendanceStatusSnapshot: 'present',
+    authorDisplayNameSnapshot: 'Teacher One',
+    authorRoleSnapshot: 'teacher',
+    publishedAt: '2026-08-18T13:00:00.000Z',
+    createdAt: '2026-08-18T12:00:00.000Z',
   };
 }
 
@@ -523,6 +582,112 @@ describe('teaching SaaS client', () => {
       nextWeekPlan: input.nextWeekPlan,
       visibility: input.visibility,
     });
+  });
+
+  it('previews and consumes guardian binding with only the one-time token', async () => {
+    const preview = {
+      organizationName: 'Cube Academy',
+      studentDisplayName: 'Student One',
+      relationship: 'parent',
+      expiresAt: '2026-08-20T00:00:00.000Z',
+    };
+    const consumed = {
+      invite: {
+        id: '018f3e56-31a5-7a88-9b45-337ccdbf7301',
+        status: 'consumed',
+        expiresAt: preview.expiresAt,
+        consumedAt: '2026-08-18T14:00:00.000Z',
+        createdAt: '2026-08-18T12:00:00.000Z',
+      },
+      guardian: {
+        guardianLinkId: '018f3e56-31a5-7a88-9b45-337ccdbf7299',
+        studentId: student().id,
+        organizationName: preview.organizationName,
+        studentDisplayName: preview.studentDisplayName,
+        relationship: preview.relationship,
+        accountLinkedAt: '2026-08-18T14:00:00.000Z',
+      },
+    };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => (
+      jsonResponse(String(input).endsWith('/preview') ? preview : consumed)
+    ));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(previewTeachingGuardianAccountBinding('one-time-token')).resolves.toEqual(preview);
+    await expect(consumeTeachingGuardianAccountBinding('one-time-token')).resolves.toEqual(consumed);
+    for (const [index, suffix] of [[0, 'preview'], [1, 'consume']] as const) {
+      const [url, initValue] = fetchMock.mock.calls[index]!;
+      const init = initValue as RequestInit;
+      expect(url).toBe(`https://api.example.test/v1/teaching/me/guardian-account-binding/${suffix}`);
+      expect(init.cache).toBe('no-store');
+      expect(init.headers).toMatchObject({ Authorization: 'Bearer session-token' });
+      expect(JSON.parse(String(init.body))).toEqual({ token: 'one-time-token' });
+      expect(init.headers).not.toHaveProperty('Idempotency-Key');
+    }
+  });
+
+  it('parses global and organization-scoped learning contexts without identity input', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => jsonResponse({ learningContexts: [learningContext()] }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listTeachingLearningContexts()).resolves.toEqual([learningContext()]);
+    await expect(listTeachingOrganizationLearningContexts('cube academy')).resolves.toEqual([learningContext()]);
+    expect(fetchMock.mock.calls[0]![0]).toBe('https://api.example.test/v1/teaching/me/learning-contexts');
+    expect(fetchMock.mock.calls[1]![0]).toBe('https://api.example.test/v1/teaching/organizations/cube%20academy/me/students');
+
+    const invalid = learningContext();
+    invalid.relationships = [{ kind: 'owner' } as never];
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ learningContexts: [invalid] })));
+    await expect(listTeachingLearningContexts()).rejects.toMatchObject({ code: 'INVALID_RESPONSE', status: 502 });
+  });
+
+  it('uses learner weekly report list and detail paths with narrow published responses', async () => {
+    const listItem = learnerWeeklyReport(false);
+    const detail = learnerWeeklyReport(true);
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => (
+      String(input).includes(`/weekly-reports/${detail.id}`)
+        ? jsonResponse({ weeklyReport: detail })
+        : jsonResponse({ weeklyReports: [listItem], total: 1, page: 1, pageSize: 25 })
+    ));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listLearnerTeachingWeeklyReports('cube academy', student().id, 0, 999)).resolves.toMatchObject({
+      items: [listItem], total: 1, page: 1, pageSize: 25,
+    });
+    await expect(getLearnerTeachingWeeklyReport('cube academy', student().id, detail.id)).resolves.toEqual(detail);
+    expect(fetchMock.mock.calls[0]![0]).toBe(
+      `https://api.example.test/v1/teaching/organizations/cube%20academy/me/students/${student().id}/weekly-reports?page=1&pageSize=100`,
+    );
+    expect(fetchMock.mock.calls[1]![0]).toBe(
+      `https://api.example.test/v1/teaching/organizations/cube%20academy/me/students/${student().id}/weekly-reports/${detail.id}`,
+    );
+  });
+
+  it('rejects learner report visibility drift and requires aggregate on detail', async () => {
+    const staffOnly = { ...learnerWeeklyReport(false), visibility: 'staff_only' };
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ weeklyReports: [staffOnly], total: 1, page: 1, pageSize: 25 })));
+    await expect(listLearnerTeachingWeeklyReports('cube-academy', student().id)).rejects.toMatchObject({ code: 'INVALID_RESPONSE', status: 502 });
+
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ weeklyReport: learnerWeeklyReport(false) })));
+    await expect(getLearnerTeachingWeeklyReport('cube-academy', student().id, weeklyReport().id)).rejects.toMatchObject({ code: 'INVALID_RESPONSE', status: 502 });
+  });
+
+  it('parses learner feedback and strips staff-only fields', async () => {
+    const wire = { ...learnerFeedback(), internalNotes: 'staff secret' };
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => jsonResponse({ feedback: [wire], total: 1, page: 1, pageSize: 25 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await listLearnerTeachingLessonFeedback('cube academy', student().id, 1, 25);
+    expect(result.items[0]).toEqual(learnerFeedback());
+    expect(result.items[0]).not.toHaveProperty('internalNotes');
+    expect(fetchMock.mock.calls[0]![0]).toBe(
+      `https://api.example.test/v1/teaching/organizations/cube%20academy/me/students/${student().id}/lesson-feedback?page=1&pageSize=25`,
+    );
+
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+      feedback: [{ ...learnerFeedback(), visibility: 'staff_only' }], total: 1, page: 1, pageSize: 25,
+    })));
+    await expect(listLearnerTeachingLessonFeedback('cube-academy', student().id)).rejects.toMatchObject({ code: 'INVALID_RESPONSE', status: 502 });
   });
 
   it('parses the narrow member-create response while preserving the organization role model', async () => {

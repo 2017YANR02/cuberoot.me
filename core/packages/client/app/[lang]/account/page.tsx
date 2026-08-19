@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { Building2, ChevronLeft, ChevronRight, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, UserRound } from 'lucide-react';
+import { BookOpen, Building2, ChevronLeft, ChevronRight, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, UserRound } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
@@ -228,6 +228,13 @@ export default function AccountPage() {
       title: tr({ zh: '学习进度', en: 'Learning Progress' }),
     },
     {
+      key: 'learning-center',
+      href: '/learn',
+      icon: <BookOpen size={22} className="account-card-icon" />,
+      title: tr({ zh: '学习中心', en: 'Learning Center' }),
+      desc: tr({ zh: '查看周报、课后反馈和训练任务', en: 'View reports, lesson feedback, and training assignments' }),
+    },
+    {
       key: 'teaching',
       href: '/org',
       icon: <Building2 size={22} className="account-card-icon" />,
@@ -315,7 +322,7 @@ export default function AccountPage() {
             <>
               <nav className="account-cards">
                 {cards.map(({ key, href, icon, title, desc }) => (
-                  <AppLink key={key} href={href} className="account-card">
+                  <AppLink key={key} href={href} className="account-card" prefetch={false}>
                     {icon}
                     <div className="account-card-body">
                       <div className="account-card-title">{title}</div>

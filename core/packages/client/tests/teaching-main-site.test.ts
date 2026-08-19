@@ -29,7 +29,9 @@ describe('main-site teaching architecture', () => {
 
   it('exposes the workspace from the existing account page and supports narrow screens', () => {
     expect(readClient('app/[lang]/account/page.tsx')).toContain("href: '/org'");
-    const css = readClient('app/[lang]/org/org.css');
+    const orgCss = readClient('app/[lang]/org/org.css');
+    expect(orgCss).toContain("@import '../../../components/teaching/teaching.css';");
+    const css = readClient('components/teaching/teaching.css');
     expect(css).toContain('@media (max-width: 479px)');
     expect(css).toContain('var(--signal-success)');
     expect(css).not.toContain('var(--success)');
@@ -107,6 +109,7 @@ describe('main-site teaching architecture', () => {
     const workspace = readClient('app/[lang]/org/_components/OrgWorkspace.tsx');
     const reports = readClient('app/[lang]/org/[orgSlug]/reports/page.tsx');
     const report = readClient('app/[lang]/org/[orgSlug]/reports/[reportId]/page.tsx');
+    const reportSections = readClient('components/teaching/WeeklyReportSections.tsx');
 
     expect(workspace).toContain("permission: 'report:read'");
     expect(reports).toContain("hasTeachingPermission(role, 'report:manage')");
@@ -117,8 +120,10 @@ describe('main-site teaching architecture', () => {
     expect(report).toContain('getTeachingWeeklyReport');
     expect(report).toContain('publishTeachingWeeklyReport');
     expect(reports).toContain('date.getUTCDay() === 1');
-    expect(report).toContain('className="org-rich-text"');
+    expect(report).toContain('<WeeklyReportSections');
+    expect(reportSections).toContain('className="teaching-rich-text"');
     expect(report).not.toContain('internalNotes');
+    expect(reportSections).not.toContain('internalNotes');
     for (const source of [reports, report]) {
       expect(source).toContain('<AppLink');
       expect(source).toContain('prefetch={false}');
@@ -141,12 +146,48 @@ describe('main-site teaching architecture', () => {
   it('keeps student account binding explicit and token-safe in the main site', () => {
     const manager = readClient('app/[lang]/org/_components/StudentAccountBindingManager.tsx');
     const consume = readClient('app/[lang]/account/student-binding/page.tsx');
+    const bindingPage = readClient('components/teaching/TeachingAccountBindingPage.tsx');
     const student = readClient('app/[lang]/org/[orgSlug]/students/[studentId]/page.tsx');
     expect(manager).toContain('createTeachingStudentAccountBindingInvite');
     expect(manager).toContain('revokeTeachingStudentAccountBindingInvite');
-    expect(consume).toContain('previewTeachingStudentAccountBinding');
-    expect(consume).toContain('consumeTeachingStudentAccountBinding');
+    expect(consume).toContain('<TeachingAccountBindingPage kind="student" />');
+    expect(bindingPage).toContain('previewTeachingStudentAccountBinding');
+    expect(bindingPage).toContain('consumeTeachingStudentAccountBinding');
     expect(student).toContain('<StudentAccountBindingManager');
     expect(manager).not.toContain('localStorage');
+    expect(bindingPage).not.toContain('localStorage');
+  });
+
+  it('keeps learner and guardian reading inside the main-site learning center', () => {
+    const account = readClient('app/[lang]/account/page.tsx');
+    const learn = readClient('app/[lang]/learn/page.tsx');
+    const workspace = readClient('components/teaching/LearnerWorkspace.tsx');
+    const overview = readClient('app/[lang]/learn/[orgSlug]/students/[studentId]/page.tsx');
+    const reports = readClient('app/[lang]/learn/[orgSlug]/students/[studentId]/reports/page.tsx');
+    const report = readClient('app/[lang]/learn/[orgSlug]/students/[studentId]/reports/[reportId]/page.tsx');
+    const feedback = readClient('app/[lang]/learn/[orgSlug]/students/[studentId]/feedback/page.tsx');
+    const binding = readClient('app/[lang]/account/guardian-binding/page.tsx');
+    const bindingPage = readClient('components/teaching/TeachingAccountBindingPage.tsx');
+
+    expect(account).toContain("href: '/learn'");
+    expect(learn).toContain('listTeachingLearningContexts');
+    expect(workspace).toContain('listTeachingOrganizationLearningContexts');
+    expect(reports).toContain('listLearnerTeachingWeeklyReports');
+    expect(report).toContain('getLearnerTeachingWeeklyReport');
+    expect(report).toContain('<WeeklyReportSections');
+    expect(feedback).toContain('listLearnerTeachingLessonFeedback');
+    expect(feedback).toContain('<LessonFeedbackList');
+    expect(binding).toContain('<TeachingAccountBindingPage kind="guardian" />');
+    expect(bindingPage).toContain('previewTeachingGuardianAccountBinding');
+    expect(bindingPage).toContain('consumeTeachingGuardianAccountBinding');
+    expect(bindingPage).not.toContain('localStorage');
+    expect(workspace).toContain("relationship.kind === 'student'");
+    expect(workspace).toContain('isSelf && <AppLink href={`/training/');
+    expect(overview).toContain('isSelf && <AppLink');
+    for (const source of [learn, workspace, overview, reports, report]) {
+      expect(source).toContain('<AppLink');
+      expect(source).toContain('prefetch={false}');
+      expect(source).not.toContain('router.push');
+    }
   });
 });
