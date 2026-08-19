@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { TiedPodiumResults } from '../../stats-build/src/statistics/tied_podium_results';
 import {
   findTiedTopThrees,
   parseWcaExportDate,
+  tiedTopThreeQuery,
   tiedTopThreeNotes,
   type TopThreeResultRow,
 } from '../../stats-build/src/statistics/tied_podium_results_core';
 
 describe('tied top-three query scope', () => {
   it('selects valid top threes from every round instead of filtering to finals', () => {
-    const query = new TiedPodiumResults().query();
+    const query = tiedTopThreeQuery();
 
     expect(query).not.toMatch(/round_types|\.final\s*=|round_type_id\s+IN\s*\(\s*'c'/i);
     expect(query).toContain('COUNT(DISTINCT pos) = 3');

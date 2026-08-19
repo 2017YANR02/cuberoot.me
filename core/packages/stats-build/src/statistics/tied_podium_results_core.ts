@@ -25,6 +25,45 @@ export interface TiedTopThreeOccurrence {
 
 const WCA_EXPORT_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
+export function tiedTopThreeQuery(): string {
+  return `
+      WITH candidate_rounds AS (
+        SELECT competition_id, event_id, round_type_id
+        FROM results
+        WHERE pos BETWEEN 1 AND 3
+          AND event_id <> '333fm'
+        GROUP BY competition_id, event_id, round_type_id
+        HAVING COUNT(*) = 3
+          AND COUNT(DISTINCT pos) = 3
+          AND COUNT(DISTINCT person_id) = 3
+          AND (
+            (MIN(average) > 0 AND MIN(average) = MAX(average))
+            OR (MIN(best) > 0 AND MIN(best) = MAX(best))
+          )
+      )
+      SELECT
+        r.event_id,
+        r.competition_id,
+        r.round_type_id,
+        r.person_id,
+        COALESCE(p.name, r.person_name) AS person_name,
+        r.pos,
+        r.best,
+        r.average,
+        c.cell_name AS competition_name,
+        DATE_FORMAT(c.start_date, '%Y-%m-%d') AS start_date
+      FROM candidate_rounds candidate
+      INNER JOIN results r
+        ON r.competition_id = candidate.competition_id
+        AND r.event_id = candidate.event_id
+        AND r.round_type_id = candidate.round_type_id
+      INNER JOIN competitions c ON c.id = r.competition_id
+      LEFT JOIN persons p ON p.wca_id = r.person_id AND p.sub_id = 1
+      WHERE r.pos BETWEEN 1 AND 3
+      ORDER BY c.start_date DESC, r.competition_id, r.event_id, r.round_type_id, r.pos
+    `;
+}
+
 export function parseWcaExportDate(value: unknown): string {
   if (typeof value !== 'string' || !WCA_EXPORT_TIMESTAMP_RE.test(value)) {
     throw new Error('WCA export metadata is missing a canonical UTC export_timestamp');
