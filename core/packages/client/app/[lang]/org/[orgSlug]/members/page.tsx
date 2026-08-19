@@ -95,13 +95,13 @@ function MembersContent({ orgSlug, page, role }: { orgSlug: string; page: number
           <p className="org-help">{t('这里使用主站账号的数字用户 ID；不会在机构内另建一套登录账号。', 'Use the numeric user ID from an existing main-site account. This does not create a separate organization login.')}</p>
           <form className="org-form org-subsection" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
             <fieldset disabled={submitting}>
-              <label>{t('主站用户 ID', 'Main-site user ID')}<input name="userId" type="number" min="1" step="1" required inputMode="numeric" /></label>
+              <label>{t('主站用户 ID', 'Main-site user ID')}<input className="org-form-control" name="userId" type="number" min="1" step="1" required inputMode="numeric" /></label>
               <label>{t('机构角色', 'Organization role')}
-                <select name="role" defaultValue="teacher" required>
+                <select className="org-form-control" name="role" defaultValue="teacher" required>
                   {assignableRoles.map((memberRole) => <option key={memberRole} value={memberRole}>{teachingRoleLabel(memberRole, t)}</option>)}
                 </select>
               </label>
-              <div className="org-form-actions"><button type="submit">{submitting ? t('添加中…', 'Adding…') : t('添加成员', 'Add member')}</button></div>
+              <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('添加中…', 'Adding…') : t('添加成员', 'Add member')}</button></div>
             </fieldset>
             <MutationMessage message={error || message} error={!!error} />
           </form>

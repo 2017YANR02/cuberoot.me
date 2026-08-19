@@ -228,9 +228,9 @@ function SessionsContent({ orgSlug, page, role, timezone }: { orgSlug: string; p
           <h2>{t('安排课次', 'Schedule session')}</h2>
           <form className="org-form" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
             <fieldset disabled={submitting}>
-              <label className="org-field-wide">{t('课次标题', 'Session title')}<input name="title" required maxLength={160} /></label>
-              <label>{t('开始时间', 'Starts at')}<input name="startsAt" type="datetime-local" required /></label>
-              <label>{t('结束时间', 'Ends at')}<input name="endsAt" type="datetime-local" required /></label>
+              <label className="org-field-wide">{t('课次标题', 'Session title')}<input className="org-form-control" name="title" required maxLength={160} /></label>
+              <label>{t('开始时间', 'Starts at')}<input className="org-form-control" name="startsAt" type="datetime-local" required /></label>
+              <label>{t('结束时间', 'Ends at')}<input className="org-form-control" name="endsAt" type="datetime-local" required /></label>
               <p className="org-help org-field-wide">
                 {t(
                   `输入会按当前设备时区转换，课次记录使用机构时区：${timezone}`,
@@ -238,7 +238,7 @@ function SessionsContent({ orgSlug, page, role, timezone }: { orgSlug: string; p
                 )}
               </p>
               <label className="org-field-wide">{t('授课老师（可多选）', 'Teachers (multiple)')}
-                <select name="teacherUserIds" multiple size={Math.min(6, Math.max(2, members.length))}>
+                <select className="org-form-control" name="teacherUserIds" multiple size={Math.min(6, Math.max(2, members.length))}>
                   {members.filter((member) => member.status === 'active' && (member.role === 'teacher' || member.role === 'assistant')).map((member) => (
                     <option value={member.userId} key={member.userId}>{member.displayName} ({teachingRoleLabel(member.role, t)})</option>
                   ))}
@@ -249,16 +249,16 @@ function SessionsContent({ orgSlug, page, role, timezone }: { orgSlug: string; p
               <div className="org-field-wide org-stack">
                 <strong>{t('本次学员与扣课', 'Attendees and credits')}</strong>
                 <div className="org-compact-row">
-                  <select aria-label={t('选择学员', 'Select student')} value={selectedStudentId} onChange={(event) => { setSelectedStudentId(event.target.value); operationKey.reset(); }}>
+                  <select className="org-form-control" aria-label={t('选择学员', 'Select student')} value={selectedStudentId} onChange={(event) => { setSelectedStudentId(event.target.value); operationKey.reset(); }}>
                     <option value="">{t('选择学员', 'Select student')}</option>
                     {availableStudents.map((student) => <option value={student.id} key={student.id}>{student.displayName}</option>)}
                   </select>
-                  <select aria-label={t('选择学员课包', 'Select student package')} value={selectedPackageId} disabled={!selectedStudentId || packagesLoading} onChange={(event) => { setSelectedPackageId(event.target.value); operationKey.reset(); }}>
+                  <select className="org-form-control" aria-label={t('选择学员课包', 'Select student package')} value={selectedPackageId} disabled={!selectedStudentId || packagesLoading} onChange={(event) => { setSelectedPackageId(event.target.value); operationKey.reset(); }}>
                     <option value="">{packagesLoading ? t('正在加载课包…', 'Loading packages…') : t('选择可用课包', 'Select usable package')}</option>
                     {usablePackages.map((item) => <option value={item.id} key={item.id}>{item.productName} ({t(`余 ${item.remainingCredits}`, `${item.remainingCredits} left`)})</option>)}
                   </select>
-                  <input aria-label={t('扣课数', 'Credit cost')} type="number" min={1} max={1_000_000} step={1} value={creditCost} onChange={(event) => { setCreditCost(Number(event.target.value)); operationKey.reset(); }} />
-                  <button type="button" onClick={addAttendee}>{t('添加学员', 'Add student')}</button>
+                  <input className="org-form-control" aria-label={t('扣课数', 'Credit cost')} type="number" min={1} max={1_000_000} step={1} value={creditCost} onChange={(event) => { setCreditCost(Number(event.target.value)); operationKey.reset(); }} />
+                  <button className="org-form-button" type="button" onClick={addAttendee}>{t('添加学员', 'Add student')}</button>
                 </div>
                 {studentTotal > students.length && <p className="org-help">{t('这里只显示前 100 名学员。', 'Only the first 100 students are shown.')}</p>}
                 {!!selectedStudentId && !packagesLoading && !usablePackages.length && <p className="org-help">{t('该学员没有余额足够的有效课包。', 'This student has no active package with enough credits.')}</p>}
@@ -267,14 +267,14 @@ function SessionsContent({ orgSlug, page, role, timezone }: { orgSlug: string; p
                     {attendees.map((attendee) => (
                       <li className="org-compact-row" key={attendee.studentId}>
                         <span>{attendee.studentName}: {attendee.packageName}, {t(`${attendee.creditCost} 课时`, `${attendee.creditCost} credits`)}</span>
-                        <button type="button" className="org-text-button" onClick={() => removeAttendee(attendee.studentId)}>{t('移除', 'Remove')}</button>
+                        <button type="button" className="org-form-button org-text-button" onClick={() => removeAttendee(attendee.studentId)}>{t('移除', 'Remove')}</button>
                       </li>
                     ))}
                   </ul>
                 )}
               </div>
               {optionError && <MutationMessage message={optionError} error />}
-              <div className="org-form-actions"><button type="submit">{submitting ? t('创建中…', 'Creating…') : t('创建课次', 'Create session')}</button></div>
+              <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('创建中…', 'Creating…') : t('创建课次', 'Create session')}</button></div>
             </fieldset>
             <MutationMessage message={mutationError || message} error={!!mutationError} />
           </form>

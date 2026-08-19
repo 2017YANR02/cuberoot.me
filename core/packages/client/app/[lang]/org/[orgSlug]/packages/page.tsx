@@ -124,20 +124,20 @@ function PackagesContent({ orgSlug, page, role }: { orgSlug: string; page: numbe
           <h2>{t('新建课包产品', 'Create package product')}</h2>
           <form className="org-form" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
             <fieldset disabled={submitting}>
-              <label>{t('产品代码', 'Product code')}<input name="code" required maxLength={64} pattern="[a-z0-9][a-z0-9_-]{0,63}" autoCapitalize="none" /></label>
-              <label>{t('产品名称', 'Product name')}<input name="name" required maxLength={160} /></label>
+              <label>{t('产品代码', 'Product code')}<input className="org-form-control" name="code" required maxLength={64} pattern="[a-z0-9][a-z0-9_-]{0,63}" autoCapitalize="none" /></label>
+              <label>{t('产品名称', 'Product name')}<input className="org-form-control" name="name" required maxLength={160} /></label>
               <label>{t('计量单位', 'Credit unit')}
-                <select name="creditUnit" defaultValue="lesson">
+                <select className="org-form-control" name="creditUnit" defaultValue="lesson">
                   <option value="lesson">{t('课时', 'Lesson')}</option>
                   <option value="minute">{t('分钟', 'Minute')}</option>
                 </select>
               </label>
-              <label>{t('课时类型', 'Credit type')}<input name="creditType" required defaultValue="lesson" maxLength={64} pattern="[a-z][a-z0-9_-]{0,63}" autoCapitalize="none" /></label>
-              <label>{t('总额度', 'Total credits')}<input name="totalCredits" type="number" required min={1} max={1_000_000} step={1} /></label>
-              <label>{t('有效天数（留空为长期）', 'Validity days (blank for none)')}<input name="validityDays" type="number" min={1} max={36_500} step={1} /></label>
-              <label>{t('售价', 'Price')}<input name="price" type="number" required min={0} max={9_000_000_000_000} step="0.01" /></label>
-              <label>{t('币种', 'Currency')}<input name="currency" required defaultValue="CNY" minLength={3} maxLength={3} pattern="[A-Za-z]{3}" autoCapitalize="characters" /></label>
-              <div className="org-form-actions"><button type="submit">{submitting ? t('创建中…', 'Creating…') : t('新建课包', 'Create package')}</button></div>
+              <label>{t('课时类型', 'Credit type')}<input className="org-form-control" name="creditType" required defaultValue="lesson" maxLength={64} pattern="[a-z][a-z0-9_-]{0,63}" autoCapitalize="none" /></label>
+              <label>{t('总额度', 'Total credits')}<input className="org-form-control" name="totalCredits" type="number" required min={1} max={1_000_000} step={1} /></label>
+              <label>{t('有效天数（留空为长期）', 'Validity days (blank for none)')}<input className="org-form-control" name="validityDays" type="number" min={1} max={36_500} step={1} /></label>
+              <label>{t('售价', 'Price')}<input className="org-form-control" name="price" type="number" required min={0} max={9_000_000_000_000} step="0.01" /></label>
+              <label>{t('币种', 'Currency')}<input className="org-form-control" name="currency" required defaultValue="CNY" minLength={3} maxLength={3} pattern="[A-Za-z]{3}" autoCapitalize="characters" /></label>
+              <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('创建中…', 'Creating…') : t('新建课包', 'Create package')}</button></div>
             </fieldset>
             <MutationMessage message={mutationError || message} error={!!mutationError} />
           </form>

@@ -162,13 +162,13 @@ function ReviewForm({ orgSlug, assignmentId, studentId, onCreated }: { orgSlug: 
     <form className="org-form org-subsection" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
       <fieldset disabled={submitting}>
         <label>{t('结论', 'Outcome')}
-          <select name="status" defaultValue="commented">
+          <select className="org-form-control" name="status" defaultValue="commented">
             {TRAINING_REVIEW_STATUSES.map((status) => <option key={status} value={status}>{entityStatusLabel(status, t)}</option>)}
           </select>
         </label>
-        <label>{t('评分（可留空）', 'Rating (optional)')}<input name="rating" type="number" min={1} max={5} step={1} /></label>
-        <label className="org-field-wide">{t('反馈', 'Feedback')}<textarea name="feedback" required maxLength={8_000} /></label>
-        <div className="org-form-actions"><button type="submit">{submitting ? t('保存中…', 'Saving…') : t('保存批改', 'Save review')}</button></div>
+        <label>{t('评分（可留空）', 'Rating (optional)')}<input className="org-form-control" name="rating" type="number" min={1} max={5} step={1} /></label>
+        <label className="org-field-wide">{t('反馈', 'Feedback')}<textarea className="org-form-control org-form-textarea" name="feedback" required maxLength={8_000} /></label>
+        <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('保存中…', 'Saving…') : t('保存批改', 'Save review')}</button></div>
       </fieldset>
       <MutationMessage message={error || message} error={!!error} />
     </form>

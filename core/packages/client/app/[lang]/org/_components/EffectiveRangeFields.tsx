@@ -26,8 +26,8 @@ export default function EffectiveRangeFields() {
   const defaultFrom = useMemo(() => localDateTimeValue(new Date()), []);
   return (
     <>
-      <label>{t('开始时间', 'Effective from')}<input name="effectiveFrom" type="datetime-local" defaultValue={defaultFrom} required /></label>
-      <label>{t('结束时间（可选）', 'Effective until (optional)')}<input name="effectiveTo" type="datetime-local" /></label>
+      <label>{t('开始时间', 'Effective from')}<input className="org-form-control" name="effectiveFrom" type="datetime-local" defaultValue={defaultFrom} required /></label>
+      <label>{t('结束时间（可选）', 'Effective until (optional)')}<input className="org-form-control" name="effectiveTo" type="datetime-local" /></label>
       <p className="org-help org-field-wide">{t('时间范围左闭右开；结束时间必须晚于开始时间。', 'The range includes the start and excludes the end. The end must be later than the start.')}</p>
     </>
   );
