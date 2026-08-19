@@ -3,8 +3,8 @@
 /**
  * 公式动画 —— 跑站内 `/sim` 引擎,不是 cubing.js 的 TwistyPlayer。
  *
- * 公式库默认接 NxN(2x2 / 3x3 / 4x4 / 5x5)和 Square-1。记号教学还会显式接入
- * 文法一致的金字塔和斜转;五魔仍由 `AlgPlayer` 分流到 TwistyPlayer。
+ * 公式库默认接 NxN(2x2 / 3x3 / 4x4 / 5x5)、Square-1、金字塔和斜转;
+ * 五魔仍由 `AlgPlayer` 分流到 TwistyPlayer。
  *
  * ## 三件与 TwistyPlayer 不同、写的时候会绊一下的事
  *

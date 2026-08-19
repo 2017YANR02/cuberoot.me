@@ -596,22 +596,6 @@
   display: flex;
   justify-content: center;
 }
-/* TwistySection (non-fillPane) sets the player to width:100% max-width:400px, so
-   its wrapper must carry a definite width — otherwise the flex child collapses to
-   0 (circular intrinsic-width with the percentage-width player) and nothing shows. */
-.bld-cube-wrap > .twisty-section {
-  width: 100%;
-  min-width: 0;
-}
-.bld-cube-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 220px;
-  color: var(--muted-foreground);
-}
-
 .bld-helper-gen {
   display: flex;
   flex-direction: column;

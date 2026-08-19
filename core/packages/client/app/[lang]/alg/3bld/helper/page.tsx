@@ -10,7 +10,7 @@
 //     HTML5-draggable to reorder execution order (upstream <li> drag/drop)
 //   • from the typed restore codes build the solving comms via codeTrans + m2pSolve
 //     (per upstream solver()), with commutator notation per pair via commutator.search
-//   • a 3D cube view (<TwistySection puzzle="3x3x3">) animating
+//   • a 3D cube view (the shared <AlgPlayer>) animating
 //     orientation-prefix + scramble (setup) and the derived comms (alg)
 //   • "生成当前状态打乱 / Generate scramble from state" via mover2scr (ASYNC) + copy
 //
@@ -28,7 +28,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Copy, Check, Shuffle, GripVertical, Wand2 } from 'lucide-react';
-import dynamic from 'next/dynamic';
+import AlgPlayer from '@/components/AlgPlayer';
 import { ClearButton } from '@/components/ClearButton';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { BldConfigBar } from '../_components/BldConfigBar';
@@ -46,16 +46,6 @@ import { commutator } from '@/app/[lang]/alg/commutator/engine';
 import { scramble333 } from '@/app/[lang]/timer/_lib/scramble/nxnxn';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
-
-// TwistySection pulls in cubing.js (heavy) — load it only on the client, lazily.
-const TwistySection = dynamic(() => import('@/components/TwistySection'), {
-  ssr: false,
-  loading: () => (
-    <div className="bld-cube-loading">
-      <Spinner size={18} label={tr({ zh: '加载中', en: 'Loading' })} />
-    </div>
-  ),
-});
 
 // ── the five restore rows ─────────────────────────────────────────────────
 type RowId = 'edge' | 'corner' | 'parity' | 'flip' | 'twist';
@@ -572,7 +562,14 @@ export default function HelperPage(): JSX.Element {
           <span className="bld-section-title">{tr({ zh: '3D 预览', en: '3D preview'
         })}</span>
           <div className="bld-cube-wrap">
-            <TwistySection puzzle="3x3x3" scramble={setupAlg} alg={comms} />
+            <AlgPlayer
+              puzzle="3x3"
+              set=""
+              setup={setupAlg}
+              alg={comms}
+              startSolved={!setupAlg}
+              size={300}
+            />
           </div>
 
           <div className="bld-helper-gen">

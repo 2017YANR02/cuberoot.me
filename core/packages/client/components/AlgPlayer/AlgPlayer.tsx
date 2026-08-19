@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Inline animated cube preview — wraps cubing.js TwistyPlayer.
+ * Inline algorithm preview with the shared `/sim` renderer and controls.
  *
  * Lazy-imports cubing/twisty(~150 KB),所以仅在真正用到时才加载。
  * 接受 (alg, puzzle, set, setup),挂载到一个 div 容器里。
@@ -70,7 +70,7 @@ interface Props {
   /** 撑满父容器(用 ResizeObserver 把像素尺寸直接写入 player),否则用 size 固定方形 */
   fillPane?: boolean;
   /**
-   * 用哪个引擎画。默认:NxN 和 SQ1 走站内 `/sim` 引擎,其余走 TwistyPlayer。
+   * 用哪个引擎画。站内 `/sim` 支持的拼图默认全部走共享引擎。
    *
    * 显式传 `'twisty'` 可钉死 cubing.js。FTO 例外:EIF 宏不是 cubing.js 文法,
    * 因此始终走自有播放器,并通过兼容 handle 支持 admin 光标同步。
@@ -78,9 +78,10 @@ interface Props {
   engine?: 'sim' | 'twisty';
 }
 
-/** 公式库默认给 NxN 和 SQ1 用 sim;教学页可显式启用文法一致的金字塔和斜转。 */
-const DEFAULT_SIM = new Set<AlgPuzzle>(['2x2', '3x3', '4x4', '5x5', 'sq1']);
-const EXPLICIT_SIM = new Set<AlgPuzzle>([...DEFAULT_SIM, 'pyraminx', 'skewb']);
+/** `/sim` 公式播放器当前支持的全部拼图。 */
+const SIM_SUPPORTED = new Set<AlgPuzzle>([
+  '2x2', '3x3', '4x4', '5x5', 'sq1', 'pyraminx', 'skewb',
+]);
 
 const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, ref) {
   const moveDurationMs = props.moveDurationMs ?? DEFAULT_ALG_MOVE_DURATION_MS;
@@ -101,8 +102,8 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
       />
     );
   }
-  const requestedEngine = props.engine ?? (DEFAULT_SIM.has(props.puzzle) ? 'sim' : 'twisty');
-  const useSim = requestedEngine === 'sim' && EXPLICIT_SIM.has(props.puzzle);
+  const requestedEngine = props.engine ?? (SIM_SUPPORTED.has(props.puzzle) ? 'sim' : 'twisty');
+  const useSim = requestedEngine === 'sim' && SIM_SUPPORTED.has(props.puzzle);
   if (useSim) {
     return (
       <AlgSimPlayer

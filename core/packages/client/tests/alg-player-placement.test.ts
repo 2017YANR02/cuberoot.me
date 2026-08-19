@@ -103,16 +103,25 @@ describe('algorithm player placement', () => {
     expect(player).toContain('toucher.destroy()');
   });
 
-  it('routes every SQ1 formula-set player through the shared /sim engine', () => {
+  it('routes every /alg animation surface through the shared /sim-backed AlgPlayer', () => {
     const player = read('components/AlgPlayer/AlgPlayer.tsx');
     const simPlayer = read('components/AlgPlayer/AlgSimPlayer.tsx');
     const editor = read('components/AdminCaseEditor.tsx');
+    const helper = read('app/[lang]/alg/3bld/helper/page.tsx');
+    const comm = read('app/[lang]/alg/3bld/comm/page.tsx');
 
-    expect(player).toMatch(/DEFAULT_SIM[^\n]+\bsq1\b/);
+    expect(player).toMatch(/SIM_SUPPORTED[\s\S]{0,200}\b2x2\b[\s\S]{0,200}\b3x3\b[\s\S]{0,200}\b4x4\b[\s\S]{0,200}\b5x5\b[\s\S]{0,200}\bsq1\b[\s\S]{0,200}\bpyraminx\b[\s\S]{0,200}\bskewb\b/);
     expect(simPlayer).toContain("sq1: 'sq1'");
     expect(simPlayer).toContain("if (puzzle === 'sq1')");
     expect(simPlayer).toContain('(cube as Sq1Cube).setStickering(set)');
-    expect(editor).toContain("engine={puzzle === 'sq1' ? 'sim' : 'twisty'}");
+    expect(editor).toContain('<AlgPlayer');
+    expect(editor).not.toMatch(/<AlgPlayer[\s\S]{0,500}?\bengine=/);
+    for (const source of [helper, comm]) {
+      expect(source).toContain("import AlgPlayer from '@/components/AlgPlayer'");
+      expect(source).toContain('<AlgPlayer');
+      expect(source).not.toContain('TwistySection');
+      expect(source).not.toContain("cubing/twisty");
+    }
     const detail = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx');
     const meta = read('components/AlgCaseMetaContent.tsx');
     expect(detail).not.toMatch(/<AlgPlayer[\s\S]{0,500}?engine=['"]twisty['"]/);
