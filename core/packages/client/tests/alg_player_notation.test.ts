@@ -19,6 +19,7 @@ import {
   resolveSimMoveDurationScale,
   resolveSimPreviewMoves,
   resolveTwistyTempoScale,
+  shouldAnimatePreviewStep,
 } from '@/components/AlgPlayer/player-setup';
 
 const kpuzzle = await cube3x3x3.kpuzzle();
@@ -101,6 +102,15 @@ describe('resolvePlayerSetup', () => {
 });
 
 describe('notation demo timing', () => {
+  it('只给单步前进补间动画,手动拖动相邻步也瞬时跳转', () => {
+    const last = { setupAlg: "(R U)'", step: 0 };
+    expect(shouldAnimatePreviewStep(last, "(R U)'", 1, false)).toBe(true);
+    expect(shouldAnimatePreviewStep(last, "(R U)'", 1, true)).toBe(false);
+    expect(shouldAnimatePreviewStep(last, "(R U)'", 2, false)).toBe(false);
+    expect(shouldAnimatePreviewStep(last, "(R U)'", 0, false)).toBe(false);
+    expect(shouldAnimatePreviewStep(last, "(F)'", 1, false)).toBe(false);
+  });
+
   it('公式预览和记号教学默认共用每 STM 一秒', () => {
     expect(DEFAULT_ALG_MOVE_DURATION_MS).toBe(1000);
     expect(DEFAULT_PREVIEW_TIMING).toEqual({ frames: 60, stepMs: 1000 });
