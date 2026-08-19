@@ -81,7 +81,7 @@ describe('MoveNotationDemo player lifecycle', () => {
     });
 
     expect(host.querySelector('[data-testid="player-alg"]')?.textContent).toBe('R');
-    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-control-mode')).toBe('replay');
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-control-mode')).toBe('none');
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-auto-play')).toBe('true');
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-loop')).toBe('false');
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-play-request')).toBe('5');
@@ -176,7 +176,7 @@ describe('MoveNotationDemo player lifecycle', () => {
     expect(css).not.toContain('.alg-sim-scrub');
   });
 
-  it('can omit playback controls while preserving click-to-play requests', async () => {
+  it('omits the duplicate replay control while preserving click-to-play requests', async () => {
     await act(async () => {
       root.render(createElement(MoveNotationDemo, {
         puzzle: '3x3',
@@ -185,7 +185,6 @@ describe('MoveNotationDemo player lifecycle', () => {
           { move: 'D', caption: '下' },
         ],
         variant: 'compact',
-        showReplay: false,
       }));
     });
 
