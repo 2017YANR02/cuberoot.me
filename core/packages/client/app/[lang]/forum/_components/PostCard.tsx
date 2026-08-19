@@ -11,7 +11,7 @@ import { tr, useLang } from '@/i18n/tr';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
 import type { ForumPost, PostAuthor, ReactionKind } from '@/lib/forum-api';
-import { formatRelativeTime, formatJoinedMonth, formatCount } from '../_lib/forum-format';
+import { formatRelativeTime, formatJoinedDate, formatCount } from '../_lib/forum-format';
 import { ReactionBar } from './ReactionBar';
 
 export function PostCard({
@@ -103,7 +103,7 @@ export function PostCard({
           <span className="forum-post-author-stats">
             {author?.joinedAt && (
               <span title={tr({ zh: '注册时间', en: 'Joined' })}>
-                {tr({ zh: '注册于 ', en: 'Joined ' })}{formatJoinedMonth(author.joinedAt)}
+                {tr({ zh: '注册于 ', en: 'Joined ' })}{formatJoinedDate(author.joinedAt)}
               </span>
             )}
             <span title={tr({ zh: '发帖数', en: 'Posts' })}>
