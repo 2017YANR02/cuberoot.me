@@ -31,7 +31,13 @@ import type Sq1Cube from '@/app/[lang]/sim/engine/sq1/Sq1Cube';
 import type { PuzzleKind } from '@/app/[lang]/sim/engine/world';
 import type { AlgPlayerControlMode, AlgPlayerHandle } from './AlgPlayer';
 import { pickStickering } from './stickering';
-import { resolvePlayerSetup, resolvePreviewTiming, resolveSimMoveDurationScale, resolveSimPreviewMoves } from './player-setup';
+import {
+  resolvePlayerSetup,
+  resolvePreviewTiming,
+  resolveSimMoveDurationScale,
+  resolveSimPreviewMoves,
+  shouldAnimatePreviewStep,
+} from './player-setup';
 import AlgPlaybackControls from './AlgPlaybackControls';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { createStepSeekPlayer } from './step-seek-player';
@@ -131,6 +137,13 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   orientationRef.current = orientation;
   /** 上一帧同步到引擎的状态 —— 用来判断「是不是刚好往前一步」。 */
   const lastRef = useRef<{ setupAlg: string; step: number } | null>(null);
+  /** 滑块拖动的目标步。即使连续经过相邻步，也必须瞬时跳到完整状态。 */
+  const scrubStepRef = useRef<number | null>(null);
+  const scrubToStep = useCallback((next: number) => {
+    if (next === step) return;
+    scrubStepRef.current = next;
+    setStep(next);
+  }, [step]);
 
   // 换公式 = 从头开始。
   useEffect(() => { setStep(0); setPlaying(false); }, [setupAlg, moves]);
@@ -202,9 +215,11 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     if (!m || !ready) return;
     const twister = m.world.cube.twister as PreviewTwister;
     const last = lastRef.current;
+    const instantSeek = scrubStepRef.current === step;
+    scrubStepRef.current = null;
     lastRef.current = { setupAlg, step };
 
-    if (last && last.setupAlg === setupAlg && step === last.step + 1 && step > 0) {
+    if (shouldAnimatePreviewStep(last, setupAlg, step, instantSeek)) {
       twister.push(moves[step - 1]);   // push 自己排队,还在转也不会丢
     } else {
       twister.setup([setupAlg, ...moves.slice(0, step)].join(' '));
@@ -243,6 +258,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
           count={moves.length}
           playing={playing}
           onStepChange={setStep}
+          onScrub={scrubToStep}
           onPlayingChange={setPlaying}
           mode={controlMode}
           onReplay={controlMode === 'replay' ? () => {
