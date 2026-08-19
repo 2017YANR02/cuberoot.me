@@ -41,6 +41,7 @@ jobs:
           # .bin.gz,整目录拉进来会拖垮 checkout。
           sparse-checkout: |
             /core/
+            /docs/platform-unification-plan.md
             /tools/cstimer-scramble/
             /tools/solver/rust-cross/cross-solver-worker.js
             /tools/blddb/data/cornerManmade.json
