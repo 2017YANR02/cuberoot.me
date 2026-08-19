@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { TiedPodiumResults } from '../../stats-build/src/statistics/tied_podium_results';
 import {
   findTiedTopThrees,
+  parseWcaExportDate,
+  tiedTopThreeNotes,
   type TopThreeResultRow,
 } from '../../stats-build/src/statistics/tied_podium_results_core';
 
@@ -80,5 +82,31 @@ describe('findTiedTopThrees', () => {
 
     expect(findTiedTopThrees(rows, 'best')).toHaveLength(1);
     expect(findTiedTopThrees(rows, 'average')).toEqual([]);
+  });
+});
+
+describe('tied podium snapshot provenance', () => {
+  it('derives the UTC export date and keeps it in both checked-in notes', () => {
+    const exportDate = parseWcaExportDate('2026-05-16T00:00:00.000Z');
+    const notes = tiedTopThreeNotes(2, 1, exportDate);
+
+    expect(exportDate).toBe('2026-05-16');
+    expect(notes.note).toContain('WCA export dated 2026-05-16');
+    expect(notes.noteZh).toContain('2026-05-16 的 WCA 导出');
+    expect(notes.noteZh).toContain('任意轮次');
+  });
+
+  it.each([
+    undefined,
+    '',
+    '2026-05-16',
+    '2026-05-16T00:00:00Z',
+    '2026-02-30T00:00:00.000Z',
+  ])('rejects missing or non-canonical export metadata: %s', value => {
+    expect(() => parseWcaExportDate(value)).toThrow(/export_timestamp/);
+  });
+
+  it('rejects a note without an ISO export date', () => {
+    expect(() => tiedTopThreeNotes(2, 1, 'unknown')).toThrow(/export date/);
   });
 });
