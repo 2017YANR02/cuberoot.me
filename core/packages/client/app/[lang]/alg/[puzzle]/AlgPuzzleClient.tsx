@@ -254,9 +254,7 @@ export default function AlgPuzzleClient() {
     const n = counts[s.slug];
     const first = firstCases[s.slug];
     const firstAlg = first?.algs.flat()[0]?.alg ?? first?.standard ?? '';
-    const title = puzzle === 'fto' && ['pf', 'tl', 'lt'].includes(s.slug)
-      ? `${s.short} (${tr(s)})`
-      : s.short ?? tr(s);
+    const title = s.short ?? tr(s);
     return (
       /* LSLL 不在 catalog 里(不是一套公式而是整层枚举),但归属上紧跟 ZBLL,所以就地插在它后面 */
       <Fragment key={s.slug}>
