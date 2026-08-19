@@ -244,6 +244,9 @@ const TABLES: Table[] = [
   { name: 'lesson_feedback', domain: 'teaching', origin: '0154', naturalKey: true, purpose: { zh: '已完课课堂按学员保存的只追加反馈修订历史', en: 'Append-only per-student feedback revisions for completed sessions' }, cols: [
     { name: 'id UUID (PK), organization_id, session_id, student_id, revision' }, { name: 'visibility, summary, strengths, challenges, next_goals, internal_notes' }, { name: 'student / attendance / credit snapshots, author snapshot, published_at, created_at' },
   ] },
+  { name: 'teaching_weekly_reports', domain: 'teaching', origin: '0155', naturalKey: true, purpose: { zh: '按机构、学员和周保存可重算草稿与不可变发布修订', en: 'Recomputable drafts and immutable published revisions by organization, student, and week' }, cols: [
+    { name: 'id UUID (PK), organization_id, student_id, week_start, week_end, revision' }, { name: 'status, visibility, teacher_summary, next_week_plan, aggregate JSONB' }, { name: 'student / timezone / generator / publisher snapshots, generated_at, published_at' },
+  ] },
 
   // ── user artifacts ──────────────────────────────────────
   { name: 'timer_backups', domain: 'studio', origin: '0020', purpose: { zh: '计时器成绩云备份(单快照覆盖)', en: 'Cloud backup of timer sessions (single overwrite snapshot)' }, cols: [
@@ -541,6 +544,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 152, slug: 'fold_recon_auf', desc: { zh: '把复盘中单独成行的 AUF 转动合并进上一条阶段公式，主解法与另解统一处理。', en: 'Fold standalone AUF moves into the preceding reconstruction stage for both primary and alternative solutions.' } },
   { n: 153, slug: 'oll_docx_import', desc: { zh: '按站长整理的 DOCX 重排 OLL 分类与情况，优先导入 269 条公式，并补齐 ETM、最优步数、打乱关系与状态镜像元数据。', en: 'Reorder OLL categories and cases from the owner-curated DOCX, prepend 269 algorithms, and add ETM, optimal-length, scramble-link, and state-mirror metadata.' } },
   { n: 154, slug: 'teaching_lesson_feedback', desc: { zh: '为已完课课堂增加按学员修订的只追加反馈历史、发布可见性与作者匿名化。', en: 'Add append-only per-student feedback revisions, publication visibility, and author anonymization for completed sessions.' } },
+  { n: 155, slug: 'teaching_weekly_reports', desc: { zh: '新增按学员与周修订的教学周报，草稿可重算，发布后冻结聚合、总结、计划与可见性。', en: 'Add revisioned weekly teaching reports with recomputable drafts and immutable published aggregates, summaries, plans, and visibility.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

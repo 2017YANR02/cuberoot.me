@@ -119,6 +119,14 @@ function repository(): TeachingSaasRepository {
     createLessonFeedback: vi.fn().mockResolvedValue({
       status: 201, body: { feedback: { id: 'feedback-1', revision: 1 } },
     }),
+    listWeeklyReports: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    getWeeklyReport: vi.fn().mockResolvedValue({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' }),
+    generateWeeklyReport: vi.fn().mockResolvedValue({
+      status: 201, body: { weeklyReport: { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' } },
+    }),
+    publishWeeklyReport: vi.fn().mockResolvedValue({
+      status: 200, body: { weeklyReport: { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' } },
+    }),
     saveAttendanceBatch: vi.fn().mockResolvedValue({ status: 200, body: { attendance: [] } }),
     completeSession: vi.fn().mockResolvedValue({ status: 200, body: { session: { status: 'completed' } } }),
   };
@@ -477,6 +485,87 @@ describe('teaching SaaS routes', () => {
     );
     expect(response.status).toBe(400);
     expect(repo.createLessonFeedback).not.toHaveBeenCalled();
+  });
+
+  it('lists and reads weekly reports without cacheable responses', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const studentId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const reportId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const list = await app.request(
+      `/teaching/organizations/demo/weekly-reports?studentId=${studentId}&page=2&pageSize=10`,
+    );
+    expect(list.status).toBe(200);
+    expect(list.headers.get('cache-control')).toBe('no-store');
+    expect(repo.listWeeklyReports).toHaveBeenCalledWith(
+      ACTOR, 'demo', { studentId }, { page: 2, pageSize: 10, offset: 10 }, expect.any(String),
+    );
+
+    const detail = await app.request(`/teaching/organizations/demo/weekly-reports/${reportId}`);
+    expect(detail.status).toBe(200);
+    expect(detail.headers.get('cache-control')).toBe('no-store');
+    expect(repo.getWeeklyReport).toHaveBeenCalledWith(ACTOR, 'demo', reportId, expect.any(String));
+  });
+
+  it('validates Monday generation and strict publication bodies with idempotency', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const studentId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const reportId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const generateRaw = JSON.stringify({ studentId, weekStart: '2026-08-17' });
+    const generated = await app.request('/teaching/organizations/demo/weekly-reports/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'weekly-generate-1' },
+      body: generateRaw,
+    });
+    expect(generated.status).toBe(201);
+    expect(repo.generateWeeklyReport).toHaveBeenCalledWith(
+      ACTOR, 'demo', { studentId, weekStart: '2026-08-17' }, 'weekly-generate-1',
+      createHash('sha256').update(generateRaw).digest('hex'), expect.any(String),
+    );
+
+    const publishRaw = JSON.stringify({
+      teacherSummary: '  本周训练稳定  ',
+      nextWeekPlan: '  下周加强观察  ',
+      visibility: 'student_and_guardians',
+    });
+    const published = await app.request(
+      `/teaching/organizations/demo/weekly-reports/${reportId}/publish`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'weekly-publish-1' },
+        body: publishRaw,
+      },
+    );
+    expect(published.status).toBe(200);
+    expect(repo.publishWeeklyReport).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      reportId,
+      { teacherSummary: '本周训练稳定', nextWeekPlan: '下周加强观察', visibility: 'student_and_guardians' },
+      'weekly-publish-1',
+      createHash('sha256').update(publishRaw).digest('hex'),
+      expect.any(String),
+    );
+
+    for (const body of [
+      { studentId, weekStart: '2026-08-18' },
+      { studentId, weekStart: '2026-08-17', actorUserId: 99 },
+    ]) {
+      const invalid = await app.request('/teaching/organizations/demo/weekly-reports/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'weekly-invalid' },
+        body: JSON.stringify(body),
+      });
+      expect(invalid.status).toBe(400);
+    }
+    const invalidPublish = await app.request(
+      `/teaching/organizations/demo/weekly-reports/${reportId}/publish`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'weekly-publish-invalid' },
+        body: JSON.stringify({ teacherSummary: '', nextWeekPlan: 'ok', visibility: 'student' }),
+      },
+    );
+    expect(invalidPublish.status).toBe(400);
   });
 
   it('creates a one-time binding invite without requiring or forwarding generic idempotency', async () => {

@@ -20,6 +20,9 @@ import {
   TEACHING_CREDIT_UNITS,
   TEACHING_FEEDBACK_VISIBILITIES,
   TEACHING_PACKAGE_ACQUISITION_TYPES,
+  TEACHING_WEEKLY_REPORT_VISIBILITIES,
+  type GenerateTeachingWeeklyReportInput,
+  type PublishTeachingWeeklyReportInput,
   type TeachingErrorCode,
   type TeachingAttendanceStatus,
   type TeachingCreditUnit,
@@ -201,6 +204,10 @@ interface TrainingAssignmentFilter {
   status: TrainingAssignmentStatus | null;
 }
 
+interface WeeklyReportFilter {
+  studentId: string | null;
+}
+
 export interface TeachingSaasRepository {
   listOrganizations(actor: TeachingActor): Promise<JsonObject[]>;
   getOrganization(actor: TeachingActor, slug: string, requestId: string): Promise<JsonObject>;
@@ -346,6 +353,36 @@ export interface TeachingSaasRepository {
     sessionId: string,
     studentId: string,
     input: CreateLessonFeedbackInput,
+    idempotencyKey: string,
+    requestHash: string,
+    requestId: string,
+  ): Promise<MutationResult>;
+  listWeeklyReports(
+    actor: TeachingActor,
+    slug: string,
+    filter: WeeklyReportFilter,
+    pagination: PageInput,
+    requestId: string,
+  ): Promise<PageResult>;
+  getWeeklyReport(
+    actor: TeachingActor,
+    slug: string,
+    reportId: string,
+    requestId: string,
+  ): Promise<JsonObject>;
+  generateWeeklyReport(
+    actor: TeachingActor,
+    slug: string,
+    input: GenerateTeachingWeeklyReportInput,
+    idempotencyKey: string,
+    requestHash: string,
+    requestId: string,
+  ): Promise<MutationResult>;
+  publishWeeklyReport(
+    actor: TeachingActor,
+    slug: string,
+    reportId: string,
+    input: PublishTeachingWeeklyReportInput,
     idempotencyKey: string,
     requestHash: string,
     requestId: string,
@@ -553,6 +590,32 @@ async function withRepeatableReadRetry<T>(operation: (tx: Tx) => Promise<T>): Pr
     }
   }
   throw new TeachingApiException('CONFLICT', 409, 'Concurrent training update; retry the complete request');
+}
+
+async function withWeeklyReportGenerateRetry<T>(operation: (tx: Tx) => Promise<T>): Promise<T> {
+  const retryableUniqueConstraints = new Set([
+    'teaching_weekly_reports_revision_unique',
+    'uq_teaching_weekly_reports_one_draft',
+  ]);
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      return await sql.begin('isolation level repeatable read', operation) as T;
+    } catch (error) {
+      const databaseError = error as { code?: string; constraint?: string; constraint_name?: string };
+      const code = databaseError.code;
+      const constraint = databaseError.constraint ?? databaseError.constraint_name;
+      const generateRace = code === '23505'
+        && constraint != null
+        && retryableUniqueConstraints.has(constraint);
+      if ((code !== '40001' && code !== '40P01' && !generateRace) || attempt === 4) {
+        if (code === '40001' || code === '40P01' || generateRace) {
+          throw new TeachingApiException('CONFLICT', 409, 'Concurrent weekly report update; retry the complete request');
+        }
+        throw error;
+      }
+    }
+  }
+  throw new TeachingApiException('CONFLICT', 409, 'Concurrent weekly report update; retry the complete request');
 }
 
 function requestIdOf(c: Context): string {
@@ -957,6 +1020,45 @@ function parseLessonFeedbackInput(body: JsonObject): CreateLessonFeedbackInput {
   };
 }
 
+function requiredMonday(body: JsonObject, key: string): string {
+  const value = requiredString(body, key, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, `${key} must be an ISO date`);
+  }
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value || date.getUTCDay() !== 1) {
+    throw new TeachingApiException('INVALID_INPUT', 400, `${key} must be a valid Monday`);
+  }
+  return value;
+}
+
+function parseGenerateWeeklyReportInput(body: JsonObject): GenerateTeachingWeeklyReportInput {
+  assertOnlyKeys(body, ['studentId', 'weekStart'], 'weekly report generate input');
+  return {
+    studentId: requiredUuid(body, 'studentId'),
+    weekStart: requiredMonday(body, 'weekStart'),
+  };
+}
+
+function parsePublishWeeklyReportInput(body: JsonObject): PublishTeachingWeeklyReportInput {
+  assertOnlyKeys(body, ['teacherSummary', 'nextWeekPlan', 'visibility'], 'weekly report publish input');
+  if (!TEACHING_WEEKLY_REPORT_VISIBILITIES.includes(
+    body.visibility as PublishTeachingWeeklyReportInput['visibility'],
+  )) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'visibility is not supported');
+  }
+  return {
+    teacherSummary: requiredString(body, 'teacherSummary', 5_000),
+    nextWeekPlan: requiredString(body, 'nextWeekPlan', 5_000),
+    visibility: body.visibility as PublishTeachingWeeklyReportInput['visibility'],
+  };
+}
+
+function weeklyReportFilterOf(c: Context): WeeklyReportFilter {
+  const rawStudentId = c.req.query('studentId');
+  return { studentId: rawStudentId === undefined ? null : uuidParam(rawStudentId, 'studentId') };
+}
+
 function parseTrainingTemplateInput(body: JsonObject): CreateTrainingTemplateInput {
   assertOnlyKeys(body, ['name', 'description'], 'training template input');
   const description = body.description;
@@ -1126,11 +1228,22 @@ function requirePermission(access: OrganizationAccess, permission: TeachingPermi
 }
 
 type SessionAccessScope = 'organization' | 'assigned';
+type ReportAccessScope = 'organization' | 'assigned';
 
 function requireSessionScope(
   access: OrganizationAccess,
   permission: 'session:read' | 'session:manage' | 'feedback:read' | 'feedback:manage',
 ): SessionAccessScope {
+  requirePermission(access, permission);
+  if (access.role === 'owner' || access.role === 'admin') return 'organization';
+  if (access.role === 'teacher' || access.role === 'assistant') return 'assigned';
+  throw new TeachingApiException('PERMISSION_DENIED', 403, 'Organization role does not allow this action');
+}
+
+function requireReportScope(
+  access: OrganizationAccess,
+  permission: 'report:read' | 'report:manage',
+): ReportAccessScope {
   requirePermission(access, permission);
   if (access.role === 'owner' || access.role === 'admin') return 'organization';
   if (access.role === 'teacher' || access.role === 'assistant') return 'assigned';
@@ -1402,6 +1515,46 @@ function lessonFeedbackToJson(row: Record<string, unknown>): JsonObject {
     publishedAt: row.published_at == null ? null : iso(row.published_at),
     createdAt: iso(row.created_at),
   };
+}
+
+function weeklyReportToJson(row: Record<string, unknown>, includeAggregate: boolean): JsonObject {
+  const report: JsonObject = {
+    id: String(row.id),
+    organizationId: String(row.organization_id),
+    studentId: String(row.student_id),
+    studentDisplayNameSnapshot: String(row.student_display_name_snapshot),
+    studentExternalRefSnapshot: row.student_external_ref_snapshot == null
+      ? null
+      : String(row.student_external_ref_snapshot),
+    weekStart: String(row.week_start),
+    weekEnd: String(row.week_end),
+    timezoneSnapshot: String(row.timezone_snapshot),
+    revision: Number(row.revision),
+    status: String(row.status),
+    visibility: String(row.visibility),
+    teacherSummary: String(row.teacher_summary),
+    nextWeekPlan: String(row.next_week_plan),
+    generatedByUserId: row.generated_by_user_id == null ? null : Number(row.generated_by_user_id),
+    generatedByUserIdSnapshot: Number(row.generated_by_user_id_snapshot),
+    generatedByDisplayNameSnapshot: String(row.generated_by_display_name_snapshot),
+    generatedByRoleSnapshot: String(row.generated_by_role_snapshot),
+    generatedAt: iso(row.generated_at),
+    publishedByUserId: row.published_by_user_id == null ? null : Number(row.published_by_user_id),
+    publishedByUserIdSnapshot: row.published_by_user_id_snapshot == null
+      ? null
+      : Number(row.published_by_user_id_snapshot),
+    publishedByDisplayNameSnapshot: row.published_by_display_name_snapshot == null
+      ? null
+      : String(row.published_by_display_name_snapshot),
+    publishedByRoleSnapshot: row.published_by_role_snapshot == null
+      ? null
+      : String(row.published_by_role_snapshot),
+    publishedAt: row.published_at == null ? null : iso(row.published_at),
+    createdAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at),
+  };
+  if (includeAggregate) report.aggregate = row.aggregate as JsonObject;
+  return report;
 }
 
 function studentToJson(row: Record<string, unknown>): JsonObject {
@@ -2109,6 +2262,154 @@ async function lockAndCheckTeacherStudentScope(
     await touchTrainingRelationLock(tx, access.id, 'student_group', studentId, groupId);
     return actorHasExactGroupStudentScope(tx, access.id, actor.userId, groupId, studentId);
   }
+}
+
+async function buildWeeklyReportAggregate(
+  tx: Tx,
+  access: OrganizationAccess,
+  studentId: string,
+  weekStart: string,
+): Promise<JsonObject> {
+  const attendanceRows = await tx`
+    SELECT COUNT(*)::int AS session_count,
+           COUNT(*) FILTER (WHERE session.status = 'completed')::int AS completed_session_count,
+           COUNT(*) FILTER (WHERE attendance.status = 'present')::int AS present_count,
+           COUNT(*) FILTER (WHERE attendance.status = 'late')::int AS late_count,
+           COUNT(*) FILTER (WHERE attendance.status = 'absent')::int AS absent_count,
+           COUNT(*) FILTER (WHERE attendance.status = 'excused')::int AS excused_count
+    FROM attendance_records attendance
+    JOIN teaching_sessions session
+      ON session.organization_id = attendance.organization_id
+     AND session.id = attendance.session_id
+    WHERE attendance.organization_id = ${access.id}
+      AND attendance.student_id = ${studentId}
+      AND session.starts_at >= (${weekStart}::date::timestamp AT TIME ZONE ${access.timezone})
+      AND session.starts_at < ((${weekStart}::date + 7)::timestamp AT TIME ZONE ${access.timezone})`;
+  const attendance = attendanceRows[0] as Record<string, unknown>;
+
+  const creditRows = await tx`
+    SELECT COUNT(*)::int AS ledger_entry_count,
+           COALESCE(SUM(-delta) FILTER (WHERE entry_type = 'consume'), 0)::text AS consumed_credits,
+           COALESCE(SUM(delta) FILTER (WHERE delta > 0), 0)::text AS credited_credits,
+           COALESCE(SUM(delta), 0)::text AS net_credit_delta
+    FROM lesson_credit_ledger
+    WHERE organization_id = ${access.id}
+      AND student_id = ${studentId}
+      AND created_at >= (${weekStart}::date::timestamp AT TIME ZONE ${access.timezone})
+      AND created_at < ((${weekStart}::date + 7)::timestamp AT TIME ZONE ${access.timezone})`;
+  const credits = creditRows[0] as Record<string, unknown>;
+
+  const trainingRows = await tx`
+    SELECT source, activity, trust_level,
+           SUM(evidence_count)::text AS evidence_count,
+           SUM(duration_ms)::text AS duration_ms,
+           SUM(success_count)::text AS success_count
+    FROM daily_training_rollups
+    WHERE organization_id = ${access.id}
+      AND student_id = ${studentId}
+      AND local_date BETWEEN ${weekStart}::date AND (${weekStart}::date + 6)
+    GROUP BY source, activity, trust_level
+    ORDER BY source, activity, trust_level`;
+  const trainingDayRows = await tx`
+    SELECT COUNT(DISTINCT local_date)::int AS active_day_count
+    FROM daily_training_rollups
+    WHERE organization_id = ${access.id}
+      AND student_id = ${studentId}
+      AND local_date BETWEEN ${weekStart}::date AND (${weekStart}::date + 6)
+      AND evidence_count > 0`;
+  const dimensions = trainingRows.map((row) => ({
+    source: String(row.source),
+    activity: String(row.activity),
+    trustLevel: String(row.trust_level),
+    evidenceCount: String(row.evidence_count),
+    durationMs: String(row.duration_ms),
+    successCount: String(row.success_count),
+  }));
+
+  const assignmentRows = await tx`
+    SELECT assignment.id, assignment.title, assignment.status, assignment.schedule_kind,
+           assignment.expected_count, assignment.starts_at, assignment.ends_at,
+           target.evidence_count, target.latest_review_revision, target.latest_review_status
+    FROM training_assignment_targets target
+    JOIN training_assignments assignment
+      ON assignment.organization_id = target.organization_id
+     AND assignment.id = target.assignment_id
+    WHERE target.organization_id = ${access.id}
+      AND target.student_id = ${studentId}
+      AND target.target_kind = 'student'
+      AND assignment.status IN ('published', 'closed')
+      AND assignment.starts_at < ((${weekStart}::date + 7)::timestamp AT TIME ZONE ${access.timezone})
+      AND (assignment.ends_at IS NULL
+        OR assignment.ends_at > (${weekStart}::date::timestamp AT TIME ZONE ${access.timezone}))
+    ORDER BY assignment.starts_at, assignment.id`;
+  const assignments = assignmentRows.map((row) => ({
+    assignmentId: String(row.id),
+    title: String(row.title),
+    status: String(row.status),
+    scheduleKind: String(row.schedule_kind),
+    expectedCount: Number(row.expected_count),
+    evidenceCount: String(row.evidence_count),
+    latestReviewRevision: Number(row.latest_review_revision),
+    latestReviewStatus: row.latest_review_status == null ? null : String(row.latest_review_status),
+    startsAt: iso(row.starts_at),
+    endsAt: row.ends_at == null ? null : iso(row.ends_at),
+  }));
+
+  const feedbackRows = await tx`
+    SELECT DISTINCT ON (feedback.session_id)
+           feedback.id, feedback.session_id, feedback.revision, feedback.visibility,
+           feedback.summary, feedback.strengths, feedback.challenges, feedback.next_goals,
+           feedback.published_at, feedback.created_at
+    FROM lesson_feedback feedback
+    JOIN teaching_sessions session
+      ON session.organization_id = feedback.organization_id
+     AND session.id = feedback.session_id
+    WHERE feedback.organization_id = ${access.id}
+      AND feedback.student_id = ${studentId}
+      AND feedback.visibility IN ('student', 'student_and_guardians')
+      AND session.starts_at >= (${weekStart}::date::timestamp AT TIME ZONE ${access.timezone})
+      AND session.starts_at < ((${weekStart}::date + 7)::timestamp AT TIME ZONE ${access.timezone})
+    ORDER BY feedback.session_id, feedback.revision DESC`;
+  const feedback = feedbackRows.map((row) => ({
+    feedbackId: String(row.id),
+    sessionId: String(row.session_id),
+    revision: Number(row.revision),
+    visibility: String(row.visibility),
+    summary: String(row.summary),
+    strengths: row.strengths == null ? null : String(row.strengths),
+    challenges: row.challenges == null ? null : String(row.challenges),
+    nextGoals: row.next_goals == null ? null : String(row.next_goals),
+    publishedAt: row.published_at == null ? null : iso(row.published_at),
+    createdAt: iso(row.created_at),
+  }));
+
+  const sumDimension = (key: 'evidenceCount' | 'durationMs' | 'successCount'): string =>
+    dimensions.reduce((total, dimension) => total + BigInt(dimension[key]), 0n).toString();
+  return {
+    attendance: {
+      sessionCount: Number(attendance.session_count),
+      completedSessionCount: Number(attendance.completed_session_count),
+      presentCount: Number(attendance.present_count),
+      lateCount: Number(attendance.late_count),
+      absentCount: Number(attendance.absent_count),
+      excusedCount: Number(attendance.excused_count),
+    },
+    credits: {
+      ledgerEntryCount: Number(credits.ledger_entry_count),
+      consumedCredits: String(credits.consumed_credits),
+      creditedCredits: String(credits.credited_credits),
+      netCreditDelta: String(credits.net_credit_delta),
+    },
+    training: {
+      activeDayCount: Number(trainingDayRows[0]?.active_day_count ?? 0),
+      evidenceCount: sumDimension('evidenceCount'),
+      durationMs: sumDimension('durationMs'),
+      successCount: sumDimension('successCount'),
+      dimensions,
+    },
+    assignments: { assignmentCount: assignments.length, assignments },
+    lessonFeedback: { feedbackCount: feedback.length, feedback },
+  };
 }
 
 async function trainingAssignmentEnvelope(
@@ -5796,6 +6097,242 @@ export const teachingSaasRepository: TeachingSaasRepository = {
       }
     });
   },
+
+  async listWeeklyReports(actor, slug, filter, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'weekly_report.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      const scope = requireReportScope(access, 'report:read');
+      return await sql.begin(async (tx) => {
+        if (scope === 'assigned' && filter.studentId !== null
+            && !await actorHasActiveStudentScope(tx, access.id, actor.userId, filter.studentId)) {
+          throw new ConcealedTeachingPermissionDeniedException('Weekly report student not found');
+        }
+        const scopeClause = scope === 'assigned'
+          ? sql`AND EXISTS (
+              SELECT 1
+              FROM student_profiles active_student
+              WHERE active_student.organization_id = report.organization_id
+                AND active_student.id = report.student_id
+                AND active_student.status = 'active'
+            )
+            AND EXISTS (
+              SELECT 1 FROM teacher_assignments direct_scope
+              WHERE direct_scope.organization_id = report.organization_id
+                AND direct_scope.teacher_user_id = ${actor.userId}
+                AND direct_scope.student_id = report.student_id
+                AND direct_scope.effective_from <= clock_timestamp()
+                AND (direct_scope.effective_to IS NULL OR direct_scope.effective_to > clock_timestamp())
+              UNION ALL
+              SELECT 1
+              FROM teacher_assignments group_scope
+              JOIN teaching_groups teaching_group
+                ON teaching_group.organization_id = group_scope.organization_id
+               AND teaching_group.id = group_scope.group_id
+               AND teaching_group.status = 'active'
+              LEFT JOIN teaching_campuses campus
+                ON campus.organization_id = teaching_group.organization_id
+               AND campus.id = teaching_group.campus_id
+              JOIN student_group_memberships membership
+                ON membership.organization_id = group_scope.organization_id
+               AND membership.group_id = group_scope.group_id
+               AND membership.student_id = report.student_id
+               AND membership.effective_from <= clock_timestamp()
+               AND (membership.effective_to IS NULL OR membership.effective_to > clock_timestamp())
+              WHERE group_scope.organization_id = report.organization_id
+                AND group_scope.teacher_user_id = ${actor.userId}
+                AND group_scope.effective_from <= clock_timestamp()
+                AND (group_scope.effective_to IS NULL OR group_scope.effective_to > clock_timestamp())
+                AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+            )`
+          : sql``;
+        const studentClause = filter.studentId === null
+          ? sql``
+          : sql`AND report.student_id = ${filter.studentId}`;
+        const totals = await tx`
+          SELECT COUNT(*)::int AS total
+          FROM teaching_weekly_reports report
+          WHERE report.organization_id = ${access.id}
+          ${studentClause}
+          ${scopeClause}`;
+        const rows = await tx`
+          SELECT report.*
+          FROM teaching_weekly_reports report
+          WHERE report.organization_id = ${access.id}
+          ${studentClause}
+          ${scopeClause}
+          ORDER BY report.week_start DESC, report.student_display_name_snapshot, report.revision DESC, report.id
+          LIMIT ${pagination.pageSize} OFFSET ${pagination.offset}`;
+        return {
+          items: rows.map((row) => weeklyReportToJson(row as Record<string, unknown>, false)),
+          total: Number(totals[0]?.total ?? 0),
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+        };
+      }) as PageResult;
+    });
+  },
+
+  async getWeeklyReport(actor, slug, reportId, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'weekly_report.read', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      const scope = requireReportScope(access, 'report:read');
+      return await sql.begin(async (tx) => {
+        const rows = await tx`
+          SELECT * FROM teaching_weekly_reports
+          WHERE organization_id = ${access.id} AND id = ${reportId}`;
+        if (!rows.length) {
+          throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Weekly report not found');
+        }
+        const report = rows[0] as Record<string, unknown>;
+        if (scope === 'assigned'
+            && !await actorHasActiveStudentScope(tx, access.id, actor.userId, String(report.student_id))) {
+          throw new ConcealedTeachingPermissionDeniedException('Weekly report not found');
+        }
+        return weeklyReportToJson(report, true);
+      }) as JsonObject;
+    });
+  },
+
+  async generateWeeklyReport(actor, slug, input, idempotencyKey, requestHash, requestId) {
+    await consumeMutationAttempt(actor.userId, 'weekly_report.generate', 120, '1 minute');
+    return withDeniedAccessAudit(actor, slug, 'weekly_report.generate', requestId, async () => {
+      try {
+        return await withWeeklyReportGenerateRetry<MutationResult>(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          const scope = requireReportScope(access, 'report:manage');
+          if (scope === 'assigned'
+              && !await lockAndCheckTeacherStudentScope(tx, access, actor, input.studentId)) {
+            throw new ConcealedTeachingPermissionDeniedException('Weekly report student not found');
+          }
+          const students = await tx`
+            SELECT id, display_name, external_ref
+            FROM student_profiles
+            WHERE organization_id = ${access.id} AND id = ${input.studentId} AND status = 'active'
+            FOR UPDATE`;
+          if (!students.length) {
+            throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Weekly report student not found');
+          }
+          const idem = await beginIdempotency(
+            tx, actor.userId, access.id, 'weekly_report.generate', idempotencyKey, requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          const aggregate = await buildWeeklyReportAggregate(tx, access, input.studentId, input.weekStart);
+          const drafts = await tx`
+            SELECT id FROM teaching_weekly_reports
+            WHERE organization_id = ${access.id} AND student_id = ${input.studentId}
+              AND week_start = ${input.weekStart}::date AND status = 'draft'
+            FOR UPDATE`;
+          const rows = drafts.length
+            ? await tx`
+                UPDATE teaching_weekly_reports
+                SET aggregate = ${sql.json(aggregate)}, generated_by_user_id = ${actor.userId}
+                WHERE organization_id = ${access.id} AND id = ${String(drafts[0].id)}
+                RETURNING *`
+            : await tx`
+                INSERT INTO teaching_weekly_reports (
+                  organization_id, student_id, student_display_name_snapshot,
+                  student_external_ref_snapshot, week_start, week_end, timezone_snapshot,
+                  revision, aggregate, generated_by_user_id, generated_by_user_id_snapshot,
+                  generated_by_display_name_snapshot, generated_by_role_snapshot
+                ) VALUES (
+                  ${access.id}, ${input.studentId}, ${String(students[0].display_name)},
+                  ${students[0].external_ref == null ? null : String(students[0].external_ref)},
+                  ${input.weekStart}::date, (${input.weekStart}::date + 6), ${access.timezone},
+                  1, ${sql.json(aggregate)}, ${actor.userId}, ${actor.userId},
+                  ${actor.displayName}, ${access.role}
+                ) RETURNING *`;
+          const report = weeklyReportToJson(rows[0] as Record<string, unknown>, true);
+          const reportId = String(rows[0].id);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'weekly_report.generate', 'teaching_weekly_report', ${reportId}, ${requestId},
+              ${sql.json({
+                studentId: input.studentId,
+                weekStart: input.weekStart,
+                revision: Number(rows[0].revision),
+                recomputed: drafts.length > 0,
+              })}
+            )`;
+          const result: MutationResult = {
+            status: drafts.length ? 200 : 201,
+            body: { weeklyReport: report },
+          };
+          await completeIdempotency(tx, idem.id, result, 'teaching_weekly_report', reportId);
+          return result;
+        });
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Weekly report could not be generated');
+      }
+    });
+  },
+
+  async publishWeeklyReport(
+    actor, slug, reportId, input, idempotencyKey, requestHash, requestId,
+  ) {
+    await consumeMutationAttempt(actor.userId, 'weekly_report.publish', 120, '1 minute');
+    return withDeniedAccessAudit(actor, slug, 'weekly_report.publish', requestId, async () => {
+      try {
+        return await withRepeatableReadRetry<MutationResult>(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          const scope = requireReportScope(access, 'report:manage');
+          const reports = await tx`
+            SELECT * FROM teaching_weekly_reports
+            WHERE organization_id = ${access.id} AND id = ${reportId}
+            FOR UPDATE`;
+          if (!reports.length) {
+            throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Weekly report not found');
+          }
+          const report = reports[0] as Record<string, unknown>;
+          if (scope === 'assigned'
+              && !await lockAndCheckTeacherStudentScope(tx, access, actor, String(report.student_id))) {
+            throw new ConcealedTeachingPermissionDeniedException('Weekly report not found');
+          }
+          const idem = await beginIdempotency(
+            tx, actor.userId, access.id, `weekly_report.publish:${reportId}`, idempotencyKey, requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          if (report.status !== 'draft') {
+            throw new TeachingApiException('CONFLICT', 409, 'Weekly report is already published');
+          }
+          const rows = await tx`
+            UPDATE teaching_weekly_reports
+            SET status = 'published', visibility = ${input.visibility},
+                teacher_summary = ${input.teacherSummary}, next_week_plan = ${input.nextWeekPlan},
+                published_by_user_id = ${actor.userId}
+            WHERE organization_id = ${access.id} AND id = ${reportId}
+            RETURNING *`;
+          const published = weeklyReportToJson(rows[0] as Record<string, unknown>, true);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'weekly_report.publish', 'teaching_weekly_report', ${reportId}, ${requestId},
+              ${sql.json({
+                studentId: String(report.student_id),
+                weekStart: String(report.week_start),
+                revision: Number(report.revision),
+                visibility: input.visibility,
+              })}
+            )`;
+          const result: MutationResult = { status: 200, body: { weeklyReport: published } };
+          await completeIdempotency(tx, idem.id, result, 'teaching_weekly_report', reportId);
+          return result;
+        });
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Weekly report could not be published');
+      }
+    });
+  },
 };
 
 function errorResponse(c: Context, error: unknown, requestId: string): Response {
@@ -6625,6 +7162,90 @@ export function createTeachingSaasRoutes(deps: {
         paginationOf(c), requestId,
       );
       return c.json({ ledger: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/weekly-reports', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listWeeklyReports(
+        actor,
+        c.req.param('orgSlug'),
+        weeklyReportFilterOf(c),
+        paginationOf(c),
+        requestId,
+      );
+      return c.json({
+        weeklyReports: page.items,
+        total: page.total,
+        page: page.page,
+        pageSize: page.pageSize,
+      });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/weekly-reports/generate', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      const result = await repository.generateWeeklyReport(
+        actor,
+        c.req.param('orgSlug'),
+        parseGenerateWeeklyReportInput(body.value),
+        key,
+        sha256(body.raw),
+        requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/weekly-reports/:reportId', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const weeklyReport = await repository.getWeeklyReport(
+        actor,
+        c.req.param('orgSlug'),
+        uuidParam(c.req.param('reportId'), 'reportId'),
+        requestId,
+      );
+      return c.json({ weeklyReport });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/weekly-reports/:reportId/publish', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      const reportId = uuidParam(c.req.param('reportId'), 'reportId');
+      const result = await repository.publishWeeklyReport(
+        actor,
+        c.req.param('orgSlug'),
+        reportId,
+        parsePublishWeeklyReportInput(body.value),
+        key,
+        sha256(body.raw),
+        requestId,
+      );
+      return c.json(result.body, result.status);
     } catch (error) {
       return errorResponse(c, error, requestId);
     }

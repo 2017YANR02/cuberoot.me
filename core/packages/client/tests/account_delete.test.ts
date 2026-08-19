@@ -157,6 +157,7 @@ describe('清单 ↔ schema', () => {
       'lesson_credit_ledger',
       'session_events',
       'lesson_feedback',
+      'teaching_weekly_reports',
       ...STAGE3_TRAINING_TABLES,
     ]));
     for (const table of STAGE3_TRAINING_TABLES) {
@@ -278,6 +279,15 @@ describe('删除动作本身', () => {
     const deleteUser = impl.indexOf('DELETE FROM app_users');
     expect(unlinkFeedback).toBeGreaterThan(-1);
     expect(deleteUser).toBeGreaterThan(unlinkFeedback);
+  });
+
+  it('删除账号前分别匿名化周报生成者与发布者，保留不可变快照', () => {
+    const unlinkReport = impl.indexOf('UPDATE teaching_weekly_reports');
+    const deleteUser = impl.indexOf('DELETE FROM app_users');
+    expect(unlinkReport).toBeGreaterThan(-1);
+    expect(impl.slice(unlinkReport, deleteUser)).toContain('generated_by_user_id');
+    expect(impl.slice(unlinkReport, deleteUser)).toContain('published_by_user_id');
+    expect(deleteUser).toBeGreaterThan(unlinkReport);
   });
 
   it('复盘按可见性分流:公开的匿名保留,私享 / 不公开列出的删掉', () => {

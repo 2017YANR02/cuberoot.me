@@ -27,6 +27,7 @@
 .org-section { margin-top: 32px; }
 .org-lead, .org-empty, .org-help { color: var(--muted-foreground); }
 .org-help { margin: 6px 0 0; font-size: .88rem; }
+.org-rich-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 .org-summary {
   display: grid;

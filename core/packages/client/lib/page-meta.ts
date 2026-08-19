@@ -91,6 +91,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'org/[orgSlug]/packages': { title: { zh: '课包管理', en: 'Package Management' } },
   'org/[orgSlug]/sessions': { title: { zh: '课次管理', en: 'Session Management' } },
   'org/[orgSlug]/sessions/[sessionId]': { title: { zh: '课次详情', en: 'Session Details' } },
+  'org/[orgSlug]/reports': { title: { zh: '每周教学报告', en: 'Weekly Teaching Reports' } },
+  'org/[orgSlug]/reports/[reportId]': { title: { zh: '每周教学报告详情', en: 'Weekly Teaching Report Details' } },
   'org/[orgSlug]/training': { title: { zh: '训练任务', en: 'Training Assignments' } },
   'org/[orgSlug]/training/templates/[templateId]': { title: { zh: '训练模板', en: 'Training Template' } },
   'org/[orgSlug]/training/assignments/[assignmentId]': { title: { zh: '训练任务详情', en: 'Training Assignment Details' } },
