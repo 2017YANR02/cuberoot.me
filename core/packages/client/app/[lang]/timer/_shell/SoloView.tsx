@@ -2321,7 +2321,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             selectedEvent={selectorActiveId}
             groups={eventPickerGroups}
             onSelect={(id) => selectEvent(selectorIdToEvent(id))}
-            iconOnlyTrigger
             dataNoTimer
           />
           {/* 收起态用短名称,菜单保留完整名称。放在项目选择器右侧,和「人数」下拉同一组。 */}

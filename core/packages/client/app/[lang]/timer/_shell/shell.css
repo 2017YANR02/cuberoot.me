@@ -90,13 +90,13 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    没有可用难度时槽是空的,contents 让它彻底不占位。 */
 .shell-topbar-diff { display: contents; }
 .shell-topbar-diff .settings-row-tight-group { font-size: 13px; }
-/* 人数、项目、打乱来源在顶栏普通态只显示内容；键盘 focus ring 仍保留。 */
-.shell-topbar-left :is(.pp-trigger, .shell-players-select) {
+/* 人数、打乱来源在顶栏普通态只显示内容；项目菜单由 PuzzlePicker 自己统一处理。 */
+.shell-topbar-left .shell-players-select {
   padding-inline: 4px;
   border-color: transparent;
   background: transparent;
 }
-.shell-topbar-left :is(.pp-trigger, .shell-players-select):focus-visible { border-color: var(--accent); }
+.shell-topbar-left .shell-players-select:focus-visible { border-color: var(--accent); }
 /* 品牌 logo:占第 1 列贴左(与对战 middle-bar 的 logo 同一份资源 + 主页链接). */
 .shell-topbar-brand {
   grid-column: 1;
