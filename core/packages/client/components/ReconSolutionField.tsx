@@ -6,11 +6,12 @@
  * label and any wrapping (submit-field/submit-block), so this only renders the
  * input trio.
  */
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import AlgInput from './AlgInput';
 import ReconAutofill from './ReconAutofill';
 import CubeKeyboardSection from './CubeKeyboardSection';
 import { normalizeSolutionSlashes } from '@/lib/recon-alg-utils';
+import { normalizeReconMoveSuffixOrder } from '@cuberoot/shared/recon-completion';
 
 export interface ReconSolutionFieldHandle {
   /** Imperatively overwrite the textarea's DOM value (for async edit-mode loads
@@ -44,14 +45,29 @@ const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function 
 }, ref) {
   const elRef = useRef<HTMLTextAreaElement | null>(null);
 
+  const writeNormalizedText = useCallback((text: string): string => {
+    const next = normalizeReconMoveSuffixOrder(text);
+    const el = elRef.current;
+    if (el && el.value !== next) {
+      const selectionStart = el.selectionStart;
+      const selectionEnd = el.selectionEnd;
+      el.value = next;
+      if (selectionStart !== null && selectionEnd !== null) {
+        el.setSelectionRange(selectionStart, selectionEnd);
+      }
+      autoResize(el);
+    }
+    onChange(next);
+    return next;
+  }, [onChange]);
+
   useImperativeHandle(ref, () => ({
     setText: (s: string) => {
       const el = elRef.current;
       if (!el) return;
-      el.value = s;
-      autoResize(el);
+      writeNormalizedText(s);
     },
-  }), []);
+  }), [writeNormalizedText]);
 
   useEffect(() => {
     if (autoFocus) elRef.current?.focus();
@@ -82,8 +98,11 @@ const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function 
         autoResize
         style={{ overflow: 'hidden', resize: 'none', fontFamily: 'monospace' }}
         placeholder={placeholder}
-        onChange={(text) => onChange(text)}
-        onCaretChange={(text, caretIndex) => onCaretSync?.(text.slice(0, caretIndex))}
+        onChange={writeNormalizedText}
+        onCaretChange={(text, caretIndex) => {
+          const normalized = normalizeReconMoveSuffixOrder(text);
+          onCaretSync?.(normalized.slice(0, caretIndex));
+        }}
         onFocus={() => onFocusField?.()}
         onBlur={() => {
           onBlurField?.();
@@ -101,11 +120,7 @@ const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function 
         textareaRef={elRef}
         value={value}
         setValue={(next) => {
-          onChange(next);
-          if (elRef.current) {
-            elRef.current.value = next;
-            autoResize(elRef.current);
-          }
+          writeNormalizedText(next);
         }}
         scramble={scramble}
         isMobile={isMobile}
@@ -116,9 +131,9 @@ const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function 
         onInput={() => {
           const el = elRef.current;
           if (!el) return;
-          onChange(el.value);
+          const next = writeNormalizedText(el.value);
           autoResize(el);
-          onCaretSync?.(el.value.slice(0, el.selectionStart ?? el.value.length));
+          onCaretSync?.(next.slice(0, el.selectionStart ?? next.length));
         }}
       />
     </>

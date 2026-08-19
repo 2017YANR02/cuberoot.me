@@ -3,6 +3,7 @@ import {
   checkReconCompletion,
   cleanReconCubeStateMoves,
   getReconScramble,
+  normalizeReconMoveSuffixOrder,
   normalizeReconScrambleSpacing,
 } from '@cuberoot/shared/recon-completion';
 import {
@@ -28,6 +29,26 @@ describe('reconstruction completion validation', () => {
       scramble: "RUR'",
       solution: "R U' R'",
     })).resolves.toEqual({ status: 'solved' });
+  });
+
+  it.each([
+    ['U2', "U'2"],
+    ['R3', "R'3"],
+    ['3Rw4', "3Rw'4"],
+  ])('accepts the prime-before-amount spelling %s + %s', async (scramble, solution) => {
+    await expect(checkReconCompletion({
+      event: '4x4',
+      scramble,
+      solution,
+    })).resolves.toEqual({ status: 'solved' });
+  });
+
+  it('canonicalizes prime-before-amount moves without rewriting comments', () => {
+    expect(normalizeReconMoveSuffixOrder(
+      "U'2 R'3 3Rw'4 R2'3 // examples: U'2 and R'3",
+    )).toBe("U2' R3' 3Rw4' R23' // examples: U'2 and R'3");
+    expect(normalizeReconMoveSuffixOrder("U2' R3' R' // canonical"))
+      .toBe("U2' R3' R' // canonical");
   });
 
   it('treats a solved cube in another whole-cube orientation as solved', async () => {
