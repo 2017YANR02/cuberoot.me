@@ -5,6 +5,7 @@
  * stage markers and cosmetic annotations do not become puzzle moves. Cube
  * notation additionally accepts crowded text such as `ULB2LD'`.
  */
+import { MOVE_RE } from './alg_notation';
 import { canonicalSq1Alg } from './sq1_notation';
 
 export const RECON_COSMETIC_ANNOTATION_CHARS = '.·↑↓⅓⅔​‌‍﻿';
@@ -63,11 +64,27 @@ export function expandReconGroupRepeats(alg: string): string {
   return expanded;
 }
 
+// People sometimes type the prime before a numeric turn amount (`U'2`,
+// `R'3`). cubing.js only accepts the canonical amount-then-prime order (`U2'`,
+// `R3'`). Keep comments byte-identical so examples and stage labels are not
+// rewritten as moves.
+const PRIME_BEFORE_AMOUNT_RE = /((?:\d+(?:-\d+)?)?[RLUDFBMSExyzXYZrludfbmse]w?\d*)'(\d+)/g;
+
+export function normalizeReconMoveSuffixOrder(text: string): string {
+  if (!text) return text;
+  return text.split(/\r?\n/).map((line) => {
+    const commentIdx = line.indexOf('//');
+    const moves = commentIdx >= 0 ? line.slice(0, commentIdx) : line;
+    const comment = commentIdx >= 0 ? line.slice(commentIdx) : '';
+    return moves.replace(PRIME_BEFORE_AMOUNT_RE, "$1$2'") + comment;
+  }).join('\n');
+}
+
 /** Strip reconstruction-only text without rewriting the puzzle's move grammar. */
 export function cleanReconAlgText(text: string): string {
   if (!text) return '';
   const cleaned: string[] = [];
-  for (const line of text.split(/\r?\n/)) {
+  for (const line of normalizeReconMoveSuffixOrder(text).split(/\r?\n/)) {
     const trimmed = line.trim();
     if (COMMENT_LINE_RE.test(trimmed)) continue;
     const commentIdx = trimmed.indexOf('//');
@@ -82,20 +99,20 @@ export function cleanReconAlgText(text: string): string {
 export function cleanReconAlgForPlayer(text: string): string {
   let alg = cleanReconAlgText(text);
   alg = alg.replace(/\(([^)]*)\)(?!\d)/g, '$1');
-  alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?2?'?)(?=[RULDFBMESruldfbmesxyz])/g, '$1 ');
+  alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?\d*'?)(?=[RULDFBMESruldfbmesxyz])/g, '$1 ');
   return alg;
 }
 
 // One whitespace chunk must consist entirely of cube moves. This keeps compact
 // `ULB2LD'` valid while dropping prose labels such as `pl` as a whole instead
 // of accidentally extracting the trailing `l` as a move.
-const CUBE_MOVE_AT_START = /^(?:(?:[2-9]\d*)?[URFDLB]w?|[MESxyzXYZrufdlb])(?:2'?|')?/;
+const UPPERCASE_ROTATION_AT_START = /^([XYZ])(\d*)('?)/;
 
 function splitCubeMoveChunk(chunk: string): string[] | null {
   const moves: string[] = [];
   let rest = chunk;
   while (rest) {
-    const match = rest.match(CUBE_MOVE_AT_START);
+    const match = MOVE_RE.exec(rest) ?? UPPERCASE_ROTATION_AT_START.exec(rest);
     if (!match) return null;
     moves.push(match[0]);
     rest = rest.slice(match[0].length);
@@ -135,7 +152,7 @@ function normalizeReconCommentSpacing(line: string): string {
 export function normalizeReconSolution(text: string): string {
   const normalized: string[] = [];
 
-  for (const rawLine of text.split(/\r?\n/)) {
+  for (const rawLine of normalizeReconMoveSuffixOrder(text).split(/\r?\n/)) {
     const line = normalizeReconCommentSpacing(rawLine);
     const commentIdx = line.indexOf('//');
     const moves = commentIdx >= 0 ? line.slice(0, commentIdx).trim() : '';

@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { normalizeReconSolution } from '@cuberoot/shared/recon-completion';
 
 describe('normalizeReconSolution', () => {
+  it('stores numeric turns with the amount before the prime', () => {
+    expect(normalizeReconSolution("U'2 R'3 3Rw'4 // keep example U'2"))
+      .toBe("U2' R3' 3Rw4' // keep example U'2");
+  });
+
   it('folds the reported standalone AUF into the preceding PLL stage', () => {
     const solution = [
       "U U U F R U' R' U' R U R' F' R U R' U' R' F R F' // PLL-Y",
