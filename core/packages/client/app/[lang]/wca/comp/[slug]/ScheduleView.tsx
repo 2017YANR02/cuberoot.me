@@ -10,7 +10,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import {
   fetchCompSchedule, computeDayColumns, computeCalendarLayout, simpleTimeLabel,
   localizeActivityName, eventOfActivity, formatCell, timeLimitText, cutoffText,
-  advancementText, dayHeaderLabel, fullDateLabel, roundIdOf, h2hEventIds,
+  advancementText, dayHeaderLabel, fullDateLabel, roundIdOf,
   type ScheduleData, type DayColumn,
 } from '@/lib/comp-schedule';
 import { tr } from '@/i18n/tr';
@@ -109,7 +109,6 @@ export default function ScheduleView({ slug, isZh, compName, view, detailsExpand
           {tr({ zh: `本赛程按第一个场地时区(${tz})显示`, en: `Times shown in the first venue's timezone (${tz})` })}
         </p>
       )}
-      <H2hSummary data={data} isZh={isZh} />
       {view === 'calendar' ? (
         <CalendarSection data={filteredData} tz={tz} isZh={isZh} />
       ) : (
@@ -123,24 +122,6 @@ export default function ScheduleView({ slug, isZh, compName, view, detailsExpand
         />
       )}
     </>
-  );
-}
-
-function H2hSummary({ data, isZh }: { data: ScheduleData; isZh: boolean }) {
-  const eventIds = useMemo(() => h2hEventIds(data.rounds), [data.rounds]);
-  if (eventIds.length === 0) return null;
-
-  const label = tr({ zh: '采用 H2H 赛制的项目', en: 'Events using the H2H format' });
-  return (
-    <div className="sched-h2h-summary" aria-label={label} title={label}>
-      <H2hMarker />
-      {eventIds.map(eventId => (
-        <span key={eventId} className="sched-h2h-event">
-          <EventIcon event={eventId} className="sched-block-icon" />
-          {eventDisplayName(eventId, isZh)}
-        </span>
-      ))}
-    </div>
   );
 }
 

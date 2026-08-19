@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { h2hEventIds, isH2hActivity } from '@/lib/comp-schedule';
+import { isH2hActivity } from '@/lib/comp-schedule';
 import type { RoundInfo } from '@/lib/comp-schedule';
 
 const read = (url: URL) => readFileSync(fileURLToPath(url), 'utf8');
@@ -9,6 +9,7 @@ const page = read(new URL('../app/[lang]/wca/comp/page.tsx', import.meta.url));
 const sharedContract = read(new URL('../../shared/src/api/comps_json.ts', import.meta.url));
 const pastGenerator = read(new URL('../../stats-build/src/bin/gen_all_comps.ts', import.meta.url));
 const upcomingGenerator = read(new URL('../../stats-build/src/bin/fetch_upcoming_comps.ts', import.meta.url));
+const compDetailPage = read(new URL('../app/[lang]/wca/comp/[slug]/CompDetailPage.tsx', import.meta.url));
 const scheduleView = read(new URL('../app/[lang]/wca/comp/[slug]/ScheduleView.tsx', import.meta.url));
 const scheduleCalendar = read(new URL('../app/[lang]/wca/comp/[slug]/ScheduleCalendar.tsx', import.meta.url));
 
@@ -51,20 +52,21 @@ describe('WCA competition H2H filter contract', () => {
     expect(page).toContain("label={tr({ zh: 'H2H', en: 'H2H' })}");
   });
 
-  it('lists H2H events once and marks only their exact scheduled rounds', () => {
+  it('marks only exact H2H scheduled rounds', () => {
     const rounds = {
       '333-r1': round('333-r1', '333', 'a'),
       '333-r4': round('333-r4', '333', 'h'),
       '333bf-r3': round('333bf-r3', '333bf', 'h'),
     };
 
-    expect(h2hEventIds(rounds)).toEqual(['333', '333bf']);
     expect(isH2hActivity({ activityCode: '333-r4-g1' }, rounds)).toBe(true);
     expect(isH2hActivity({ activityCode: '333-r1-g1' }, rounds)).toBe(false);
   });
 
-  it('shows the event summary and H2H marker in both schedule layouts', () => {
-    expect(scheduleView).toContain('<H2hSummary data={data} isZh={isZh} />');
+  it('labels H2H below matching event icons and keeps exact markers in both schedule layouts', () => {
+    expect(compDetailPage).toContain("if (ev.rs.some(rd => rd.f === 'h')) h2hBadges[ev.i] = 'H2H';");
+    expect(compDetailPage).toContain('badges={isSchedule ? h2hBadges : isPsych ? {} : eventBadges}');
+    expect(scheduleView).not.toContain('<H2hSummary');
     expect(scheduleView).toContain("round?.format === 'h'");
     expect(scheduleCalendar).toContain('h2h: isH2hActivity(a, data.rounds)');
     expect(scheduleCalendar).toContain('arg.event.extendedProps.h2h && <H2hMarker />');
