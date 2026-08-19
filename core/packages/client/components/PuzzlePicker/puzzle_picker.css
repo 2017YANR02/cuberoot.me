@@ -11,17 +11,17 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.4rem 0.7rem;
+  padding: 0.4rem 0.25rem;
   border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
-  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--muted-foreground);
   font: inherit;
   font-size: 0.85rem;
   line-height: 1;
   cursor: pointer;
   white-space: nowrap;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  transition: color 0.15s, border-color 0.15s;
 }
 .pp-trigger:hover { color: var(--foreground); }
 .pp-trigger:focus-visible {
@@ -31,7 +31,6 @@
 }
 .pp-trigger--active {
   color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
 }
 .pp-trigger-icon { flex-shrink: 0; font-size: 1.05rem; }
 .pp-trigger-label { font-weight: 600; }
@@ -113,7 +112,6 @@
 .pp-item-label { line-height: 1.2; white-space: nowrap; }
 
 @media (max-width: 480px) {
-  .pp-trigger { padding: 0.4rem 0.6rem; }
   .pp-popup { max-width: calc(100vw - 32px); }
   .pp-group-items { grid-template-columns: 1fr; }
 }
