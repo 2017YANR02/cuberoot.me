@@ -225,6 +225,15 @@ export function caseThumbPlan({
   }
 
   if (puzzle === 'fto') {
+    if (set === 'pf' && sticker.kind === 'raw' && sticker.tag === 'lowcubes-fto' && sticker.attrs.image) {
+      return {
+        renderer: 'asset',
+        src: `/${sticker.attrs.image.replace(/^\/+/, '')}`,
+        alt: sticker.attrs.imageAlt || 'FTO Pair Formation case',
+        width: Number(sticker.attrs.imageWidth) || 474,
+        height: Number(sticker.attrs.imageHeight) || 512,
+      };
+    }
     const forward = setup?.trim() ? setup : invertFtoEifAlgorithm(alg);
     return {
       renderer: 'inline-svg',

@@ -29,7 +29,19 @@ import type { AlgPuzzle, AlgSticker } from '@cuberoot/shared';
 import { normalizeAlg } from '@/lib/alg_normalize';
 import { displayAlg } from '@/lib/alg_display';
 import { goalOf, reachesGoal, type AlgGoal } from '@/lib/alg_goals';
-import { invertFtoEifAlgorithm, isFtoEifSolved, parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
+import { ftoEifState, invertFtoEifAlgorithm, isFtoEifSolved, parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
+
+/**
+ * PF must finish at the start of Top Layer, not at a solved FTO. This reference
+ * is derived stage-by-stage: LT 1 setup, followed by inverse(TL 1).
+ */
+export const FTO_PF_TARGET_SETUP = "Uo R U R' U' Rw R' U R U' Rw' Uo' S'";
+
+function sameFtoEifState(left: string, right: string): boolean {
+  const a = ftoEifState(left);
+  const b = ftoEifState(right);
+  return Object.keys(a).every((key) => a[key as keyof typeof a] === b[key as keyof typeof b]);
+}
 
 export interface ValidateAlgResult {
   ok: boolean;
@@ -110,6 +122,11 @@ export async function validateAlgCase(
     const invalid = [...cleanSetup.invalid, ...cleanAlg.invalid];
     if (invalid.length > 0) return { ok: false, reason: `公式语法错误:不支持的 EIF 记号 ${invalid.join(' ')}` };
     const sequence = [...cleanSetup.tokens, ...cleanAlg.tokens].join(' ');
+    if (goalKind === 'fto-pf') {
+      return sameFtoEifState(sequence, FTO_PF_TARGET_SETUP)
+        ? { ok: true, auf: '' }
+        : { ok: false, reason: '执行 setup + alg 后没有完成 FTO Pair Formation' };
+    }
     return isFtoEifSolved(sequence)
       ? { ok: true, auf: '' }
       : { ok: false, reason: '执行 setup + alg 后没有还原 FTO' };
@@ -183,6 +200,7 @@ const GOAL_MISS: Record<AlgGoal, string> = {
   'mega-eo': '五魔方最后一层棱块朝向没完成,或下面四层没保住',
   'mega-co': '五魔方最后一层角块朝向没完成,或 EO / 下面四层没保住',
   'mega-ep': '五魔方最后一层棱块排列没完成,或 CO / 下面四层没保住',
+  'fto-pf': 'FTO Pair Formation 没完成',
   'oll-4x4': '4x4 OLL 没做完(顶面没同色,或顶面以下没还原)',
   centers: '中心块没还原',
   skip: '',

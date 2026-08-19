@@ -9,7 +9,7 @@ import {
   renderFtoEifSvg,
 } from '@/lib/fto-eif-image';
 import { FTO_DRAW_ELEMENTS } from '@/lib/fto-draw-elements';
-import { validateAlgCase } from '@/lib/alg_validation';
+import { FTO_PF_TARGET_SETUP, validateAlgCase } from '@/lib/alg_validation';
 import { createFtoSeekPlayer } from '@/components/AlgPlayer/FtoEifAlgPlayer';
 import { syncPlayerToMoveCount } from '@/lib/recon-alg-utils';
 
@@ -66,10 +66,13 @@ describe('FTO EIF image engine', () => {
   });
 
   it('uses the same strict state engine for database validation', async () => {
-    const alg = 'U S F';
-    const setup = invertFtoEifAlgorithm(alg);
+    const alg = 'S F';
+    const solvedTargetSetup = invertFtoEifAlgorithm(alg);
+    const setup = `${FTO_PF_TARGET_SETUP} ${solvedTargetSetup}`;
     await expect(validateAlgCase(setup, alg, RAW_STICKER, 'fto', 'pf'))
       .resolves.toEqual({ ok: true, auf: '' });
+    await expect(validateAlgCase(solvedTargetSetup, alg, RAW_STICKER, 'fto', 'pf'))
+      .resolves.toMatchObject({ ok: false });
     await expect(validateAlgCase(setup, 'U BAD F', RAW_STICKER, 'fto', 'pf'))
       .resolves.toMatchObject({ ok: false });
     await expect(validateAlgCase('', alg, RAW_STICKER, 'fto', 'pf'))

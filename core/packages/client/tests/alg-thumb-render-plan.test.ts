@@ -212,6 +212,29 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     await expect(algCaseSvg(spec)).resolves.toBe(plan.svg);
   });
 
+  it('FTO Pair Formation 使用 LowCubes 本地识别图', () => {
+    const plan = caseThumbPlan({
+      ...input('fto', 'pf'),
+      sticker: {
+        kind: 'raw',
+        tag: 'lowcubes-fto',
+        attrs: {
+          image: 'cases/fto/pf/1.webp',
+          imageAlt: 'PF (Pair Formation) 1',
+          imageWidth: '474',
+          imageHeight: '512',
+        },
+      },
+    });
+    expect(plan).toEqual({
+      renderer: 'asset',
+      src: '/cases/fto/pf/1.webp',
+      alt: 'PF (Pair Formation) 1',
+      width: 474,
+      height: 512,
+    });
+  });
+
   it('LowCubes Megaminx case 使用本地原图资源', () => {
     const plan = caseThumbPlan({
       ...input('megaminx', 'full-pll'),
