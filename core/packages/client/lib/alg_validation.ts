@@ -36,6 +36,8 @@ import { ftoEifState, invertFtoEifAlgorithm, isFtoEifSolved, parseFtoEifAlgorith
  * is derived stage-by-stage: LT 1 setup, followed by inverse(TL 1).
  */
 export const FTO_PF_TARGET_SETUP = "Uo R U R' U' Rw R' U R U' Rw' Uo' S'";
+/** TL must finish at the Last Triangles starting state, not at a solved FTO. */
+export const FTO_TL_TARGET_SETUP = "Uo R U R' U' Rw R' U R U' Rw' Uo'";
 
 function sameFtoEifState(left: string, right: string): boolean {
   const a = ftoEifState(left);
@@ -116,16 +118,27 @@ export async function validateAlgCase(
     return { ok: false, reason: `未注册校验目标:${puzzle}/${set}` };
   }
   if (puzzle === 'fto') {
-    if (!alg.trim()) return { ok: true, auf: '' };
     const cleanAlg = parseFtoEifAlgorithm(alg);
     const cleanSetup = parseFtoEifAlgorithm(setup);
     const invalid = [...cleanSetup.invalid, ...cleanAlg.invalid];
     if (invalid.length > 0) return { ok: false, reason: `公式语法错误:不支持的 EIF 记号 ${invalid.join(' ')}` };
+    // The only intentional empty FTO entry is a solved 1L3T reference image.
+    // Empty stage algorithms must not bypass validation.
+    if (cleanAlg.tokens.length === 0) {
+      return goalKind === 'solve' && isFtoEifSolved(cleanSetup.tokens.join(' '))
+        ? { ok: true, auf: '' }
+        : { ok: false, reason: 'FTO 空公式只允许用于已还原的参考状态' };
+    }
     const sequence = [...cleanSetup.tokens, ...cleanAlg.tokens].join(' ');
     if (goalKind === 'fto-pf') {
       return sameFtoEifState(sequence, FTO_PF_TARGET_SETUP)
         ? { ok: true, auf: '' }
         : { ok: false, reason: '执行 setup + alg 后没有完成 FTO Pair Formation' };
+    }
+    if (goalKind === 'fto-tl') {
+      return sameFtoEifState(sequence, FTO_TL_TARGET_SETUP)
+        ? { ok: true, auf: '' }
+        : { ok: false, reason: '执行 setup + alg 后没有完成 FTO Top Layer' };
     }
     return isFtoEifSolved(sequence)
       ? { ok: true, auf: '' }
@@ -201,6 +214,7 @@ const GOAL_MISS: Record<AlgGoal, string> = {
   'mega-co': '五魔方最后一层角块朝向没完成,或 EO / 下面四层没保住',
   'mega-ep': '五魔方最后一层棱块排列没完成,或 CO / 下面四层没保住',
   'fto-pf': 'FTO Pair Formation 没完成',
+  'fto-tl': 'FTO Top Layer 没完成',
   'oll-4x4': '4x4 OLL 没做完(顶面没同色,或顶面以下没还原)',
   centers: '中心块没还原',
   skip: '',

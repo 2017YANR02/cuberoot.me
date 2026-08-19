@@ -9,7 +9,7 @@ import {
   renderFtoEifSvg,
 } from '@/lib/fto-eif-image';
 import { FTO_DRAW_ELEMENTS } from '@/lib/fto-draw-elements';
-import { FTO_PF_TARGET_SETUP, validateAlgCase } from '@/lib/alg_validation';
+import { FTO_PF_TARGET_SETUP, FTO_TL_TARGET_SETUP, validateAlgCase } from '@/lib/alg_validation';
 import { createFtoSeekPlayer } from '@/components/AlgPlayer/FtoEifAlgPlayer';
 import { syncPlayerToMoveCount } from '@/lib/recon-alg-utils';
 
@@ -76,6 +76,19 @@ describe('FTO EIF image engine', () => {
     await expect(validateAlgCase(setup, 'U BAD F', RAW_STICKER, 'fto', 'pf'))
       .resolves.toMatchObject({ ok: false });
     await expect(validateAlgCase('', alg, RAW_STICKER, 'fto', 'pf'))
+      .resolves.toMatchObject({ ok: false });
+
+    const tlAlg = 'H';
+    const tlSetup = `${FTO_TL_TARGET_SETUP} ${invertFtoEifAlgorithm(tlAlg)}`;
+    await expect(validateAlgCase(tlSetup, tlAlg, RAW_STICKER, 'fto', 'tl'))
+      .resolves.toEqual({ ok: true, auf: '' });
+    await expect(validateAlgCase(invertFtoEifAlgorithm(tlAlg), tlAlg, RAW_STICKER, 'fto', 'tl'))
+      .resolves.toMatchObject({ ok: false });
+    await expect(validateAlgCase('', '', RAW_STICKER, 'fto', 'tl'))
+      .resolves.toMatchObject({ ok: false });
+    await expect(validateAlgCase('', '', RAW_STICKER, 'fto', '1l3t'))
+      .resolves.toEqual({ ok: true, auf: '' });
+    await expect(validateAlgCase('BAD', '', RAW_STICKER, 'fto', '1l3t'))
       .resolves.toMatchObject({ ok: false });
   });
 });
