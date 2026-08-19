@@ -2,8 +2,9 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { Alg } from 'cubing/alg';
 import { puzzles } from 'cubing/puzzles';
-import { isFtoEifSolved, parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
+import { ftoEifState, isFtoEifSolved, parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
 import { normalizeAlg } from '@/lib/alg_normalize';
+import { FTO_PF_TARGET_SETUP } from '@/lib/alg_validation';
 
 interface MigrationAlgorithm {
   alg: string;
@@ -22,11 +23,30 @@ const SQL = readFileSync(
   new URL('../../server/migrations/0121_lowcubes_fto_megaminx.sql', import.meta.url),
   'utf8',
 );
+const PF_FIX_SQL = readFileSync(
+  new URL('../../server/migrations/0157_fix_fto_pair_formation_setups.sql', import.meta.url),
+  'utf8',
+);
 
-function payload(tag: string): MigrationCase[] {
-  const match = SQL.match(new RegExp(`\\$${tag}\\$([\\s\\S]*?)\\$${tag}\\$`));
+function payload(tag: string, sql = SQL): MigrationCase[] {
+  const match = sql.match(new RegExp(`\\$${tag}\\$([\\s\\S]*?)\\$${tag}\\$`));
   if (!match) throw new Error(`Missing migration payload: ${tag}`);
   return JSON.parse(match[1]) as MigrationCase[];
+}
+
+function correctedPfCases(): MigrationCase[] {
+  const fixes = payload('fto_pf_stage_setups', PF_FIX_SQL) as unknown as Array<{ name: string; setup: string }>;
+  const setupByName = new Map(fixes.map((item) => [item.name, item.setup]));
+  expect(setupByName.size).toBe(10);
+  return payload('lowcubes_fto_pf').map((item) => {
+    const setup = setupByName.get(item.name);
+    if (!setup) throw new Error(`Missing corrected PF setup: ${item.name}`);
+    return {
+      ...item,
+      setup,
+      algs: item.algs.map((orientation) => orientation.map((entry) => ({ ...entry, setup }))),
+    };
+  });
 }
 
 function algorithms(cases: MigrationCase[]): MigrationAlgorithm[] {
@@ -54,11 +74,18 @@ describe('LowCubes migration integrity', () => {
         expect(parseFtoEifAlgorithm(item.alg).invalid, item.alg).toEqual([]);
       }
     }
+
+    for (const item of correctedPfCases()) {
+      expect(parseFtoEifAlgorithm(item.setup).invalid, item.name).toEqual([]);
+      const image = item.sticker.attrs.image;
+      expect(image).toMatch(/^cases\/fto\/pf\/(?:[1-9]|10)\.webp$/);
+      expect(() => readFileSync(new URL(`../public/${image}`, import.meta.url))).not.toThrow();
+    }
   });
 
   it('round-trips every FTO case through every algorithm', () => {
     const cases = [
-      ...payload('lowcubes_fto_pf'),
+      ...correctedPfCases(),
       ...payload('lowcubes_fto_tl'),
       ...payload('lowcubes_fto_lt'),
       ...payload('lowcubes_fto_tcp'),
@@ -68,9 +95,22 @@ describe('LowCubes migration integrity', () => {
     expect(cases).toHaveLength(216);
     expect(solvedReferences.map((item) => item.name)).toEqual(['1.E.1']);
 
+    const pfNames = new Set(correctedPfCases().map((item) => item.name));
+    const pfTarget = ftoEifState(FTO_PF_TARGET_SETUP);
+    const lt1Setup = payload('lowcubes_fto_lt').find((item) => item.name === 'LT 1')?.setup;
+    expect(lt1Setup).toBeTruthy();
+    expect(isFtoEifSolved(FTO_PF_TARGET_SETUP)).toBe(false);
+    expect(ftoEifState(`${FTO_PF_TARGET_SETUP} S`)).toEqual(ftoEifState(lt1Setup!));
+
     for (const item of cases) {
       for (const entry of algorithms([item])) {
-        expect(isFtoEifSolved(`${entry.setup ?? item.setup} ${entry.alg}`), `${item.name}: ${entry.alg}`).toBe(true);
+        const sequence = `${entry.setup ?? item.setup} ${entry.alg}`;
+        if (pfNames.has(item.name)) {
+          expect(ftoEifState(sequence), `${item.name}: ${entry.alg}`).toEqual(pfTarget);
+          expect(isFtoEifSolved(sequence), `${item.name}: ${entry.alg}`).toBe(false);
+        } else {
+          expect(isFtoEifSolved(sequence), `${item.name}: ${entry.alg}`).toBe(true);
+        }
       }
     }
   });
