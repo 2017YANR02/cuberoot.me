@@ -1,0 +1,10 @@
+[Unit]
+Description=Update CubeRoot local IP city database
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/update-cuberoot-geoip-city
+Nice=10
+IOSchedulingClass=idle
