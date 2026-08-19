@@ -634,6 +634,13 @@ describe('teaching SaaS client', () => {
     await expect(listTeachingOrganizationLearningContexts('cube academy')).resolves.toEqual([learningContext()]);
     expect(fetchMock.mock.calls[0]![0]).toBe('https://api.example.test/v1/teaching/me/learning-contexts');
     expect(fetchMock.mock.calls[1]![0]).toBe('https://api.example.test/v1/teaching/organizations/cube%20academy/me/students');
+    for (const [, initValue] of fetchMock.mock.calls) {
+      const init = initValue as RequestInit;
+      expect(init.cache).toBe('no-store');
+      expect(init.method).toBeUndefined();
+      expect(init.body).toBeUndefined();
+      expect(init.headers).toMatchObject({ Authorization: 'Bearer session-token' });
+    }
 
     const invalid = learningContext();
     invalid.relationships = [{ kind: 'owner' } as never];
@@ -661,6 +668,9 @@ describe('teaching SaaS client', () => {
     expect(fetchMock.mock.calls[1]![0]).toBe(
       `https://api.example.test/v1/teaching/organizations/cube%20academy/me/students/${student().id}/weekly-reports/${detail.id}`,
     );
+    for (const [, initValue] of fetchMock.mock.calls) {
+      expect((initValue as RequestInit).cache).toBe('no-store');
+    }
   });
 
   it('rejects learner report visibility drift and requires aggregate on detail', async () => {
@@ -683,6 +693,7 @@ describe('teaching SaaS client', () => {
     expect(fetchMock.mock.calls[0]![0]).toBe(
       `https://api.example.test/v1/teaching/organizations/cube%20academy/me/students/${student().id}/lesson-feedback?page=1&pageSize=25`,
     );
+    expect((fetchMock.mock.calls[0]![1] as RequestInit).cache).toBe('no-store');
 
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
       feedback: [{ ...learnerFeedback(), visibility: 'staff_only' }], total: 1, page: 1, pageSize: 25,
