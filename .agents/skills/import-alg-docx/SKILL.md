@@ -16,7 +16,7 @@ description: Import curated speedcubing algorithm tables from DOCX into CubeRoot
 7. Preserve prime marks on 180-degree turns. Put curated DOCX formulas before existing formulas and remove an existing near-duplicate only after normalizing grouping whitespace and the optional prime after `2`.
 8. Keep the DOCX category and case order. Never substitute the site's previous grouping.
 9. Treat DOCX one-handed formulas as left-handed. Reuse the PLL formula-tag and partner-first left-to-right-hand derivation path to expose right-handed formulas; do not mirror the current case and do not create another mirror implementation.
-10. Reuse `AlgCategoryView`, `AlgCaseView`, `CaseThumb`, `AlgPlayer`, formula-tag helpers, and shared `AlgCaseMeta`; do not create page-local replacements.
+10. Reuse `AlgCategoryView`, `AlgCaseView`, `CaseThumb`, `AlgPlayer`, formula-tag helpers, and shared `AlgCaseMeta`; keep all formula-type badges neutral gray and the unfiltered menu option concise as `All` / `全部`.
 11. Store `ETM` as the first curated formula's execution count and store `ETM*`, `HTM*`, `STM*`, and `ATM*` as optimal metrics. ATM merges simultaneous parallel-layer turns; ETM only merges combinations that a person can execute together.
 12. Run `scripts/build_alg_migration.py` with a state-verified mirror map; inspect the generated SQL before applying it.
 13. Apply DB data changes in the next numbered migration, preserve unrelated rows, and synchronize the `/dev/schema` migration ledger without overwriting parallel edits.
