@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
-import { getSessionToken, nextQuery, useAuthUser } from '@/lib/auth-store';
+import { getSessionToken, useAuthUser } from '@/lib/auth-store';
 import {
   consumeTeachingGuardianAccountBinding,
   consumeTeachingStudentAccountBinding,
@@ -99,13 +99,14 @@ export default function TeachingAccountBindingPage({ kind }: Props) {
 
   if (!mounted) return <main className="teaching-page teaching-centered" aria-busy="true" />;
   if (!user || !getSessionToken()) {
+    const returnPath = window.location.pathname + window.location.hash;
     return (
       <main className="teaching-page teaching-centered">
         <h1>{title}</h1>
         <p>{isGuardian
           ? t('请先登录监护人自己的主站账号，再回来确认绑定。', 'Sign in with the guardian’s own main-site account before confirming the link.')
           : t('请先登录学员自己的主站账号，再回来确认绑定。', 'Sign in with the learner’s own main-site account before confirming the link.')}</p>
-        <AppLink className="teaching-primary-link" href={`/account${nextQuery(window.location.pathname + window.location.hash)}`} prefetch={false}>{t('登录', 'Sign in')}</AppLink>
+        <AppLink className="teaching-primary-link" href={`/account#next=${encodeURIComponent(returnPath)}`} prefetch={false}>{t('登录', 'Sign in')}</AppLink>
       </main>
     );
   }
