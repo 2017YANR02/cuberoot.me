@@ -123,6 +123,7 @@ describe('component reuse rule registry', () => {
       join(ROOT, 'app', '[lang]', 'timer', '_shell', 'SoloView.tsx'),
       join(ROOT, 'app', '[lang]', 'sim', 'PlayerControls.tsx'),
       join(ROOT, 'app', '[lang]', 'scramble', '_components', 'SolveTabs.tsx'),
+      join(ROOT, 'app', '[lang]', 'alg', '_components', 'AlgPuzzleSelect.tsx'),
       join(ROOT, 'app', '[lang]', 'alg', 'time-attack', 'page.tsx'),
     ];
     for (const file of surfaces) {
@@ -130,6 +131,20 @@ describe('component reuse rule registry', () => {
       expect(source, relative(ROOT, file)).toContain("from '@/components/PuzzlePicker/PuzzlePicker'");
       expect(source, relative(ROOT, file)).toContain('<PuzzlePicker');
     }
+  });
+
+  it('keeps the shared selected-puzzle trigger icon-only and frameless', () => {
+    const source = readFileSync(join(ROOT, 'components', 'PuzzlePicker', 'PuzzlePicker.tsx'), 'utf8');
+    const css = readFileSync(join(ROOT, 'components', 'PuzzlePicker', 'puzzle_picker.css'), 'utf8');
+    const triggerRule = css.match(/\.pp-trigger\s*\{([\s\S]*?)\}/)?.[1] ?? '';
+    const activeRule = css.match(/\.pp-trigger--active\s*\{([\s\S]*?)\}/)?.[1] ?? '';
+
+    expect(source).toContain('{!selectedItem && <span className="pp-trigger-label">');
+    expect(source).not.toContain('iconOnlyTrigger');
+    expect(triggerRule).toContain('border: 1px solid transparent');
+    expect(triggerRule).toContain('background: transparent');
+    expect(activeRule).not.toContain('border-color');
+    expect(activeRule).not.toContain('background');
   });
 
   it('keeps WCA metrics and timer rolling statistics on CompactSelect', () => {
