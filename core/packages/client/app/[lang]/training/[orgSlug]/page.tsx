@@ -8,7 +8,7 @@ import { useT } from '@/hooks/useT';
 import { getSessionToken, nextQuery, useAuthUser } from '@/lib/auth-store';
 import { listSelfTeachingTrainingAssignments } from '@/lib/teaching-saas-api';
 import { formatTrainingGoal, trainingSourceLabel, trainingToolHref } from '@/lib/teaching-training';
-import { entityStatusLabel, MutationMessage, TeachingPagination, useTeachingPage } from '../../org/_components/OrgUi';
+import { entityStatusLabel, MutationMessage, TeachingPagination, useTeachingPage } from '@/components/teaching/TeachingUi';
 
 const PAGE_SIZE = 25;
 
