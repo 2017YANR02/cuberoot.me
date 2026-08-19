@@ -514,7 +514,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'timer', m: 'GET', p: '/v1/timer/backup', g: 'login', zh: '取计时器云备份', en: 'Fetch timer backup' },
   { d: 'timer', m: 'POST', p: '/v1/timer/backup', g: 'login', zh: '上传计时器备份', en: 'Upload timer backup' },
   { d: 'timer', m: 'DELETE', p: '/v1/timer/backup', g: 'login', zh: '删除备份', en: 'Delete backup' },
-  { d: 'timer', m: 'GET', p: '/v1/timer/presence', g: 'admin', c: 'no-store', zh: '管理员读取当前计时人数、账号、成绩、IP 与智能魔方设备', en: 'Admin live timer users, accounts, results, IPs, and smart-cube devices' },
+  { d: 'timer', m: 'GET', p: '/v1/timer/presence', g: 'admin', c: 'no-store', zh: '管理员读取当前计时人数、账号、成绩、IP 城市与智能魔方设备', en: 'Admin live timer users, accounts, results, IP cities, and smart-cube devices' },
   { d: 'timer', m: 'POST', p: '/v1/timer/presence', g: 'public', c: 'no-store', zh: '计时页短期心跳（登录可选，最多 4 人）', en: 'Short-lived timer heartbeat (optional login, up to four people)' },
   { d: 'smart-cube', m: 'GET', p: '/v1/smart-cube/relay', g: 'public', c: 'no-store', zh: '小程序原生蓝牙与网站计时器之间的临时 WebSocket 中继', en: 'Ephemeral WebSocket relay between Mini Program native BLE and the web timer' },
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms', g: 'public', zh: '建联机对战房间(多设备同打乱各自计时),返回房间码', en: 'Create an online battle room (multi-device, same scramble); returns a room code' },
