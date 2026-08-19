@@ -22,44 +22,6 @@
   width: 100% !important;
   height: 100% !important;
 }
-/* 控件挤在画布下面一行,窄屏放不下就折行 —— 别给它们塞 spacer 撑成两端对齐 */
-.alg-sim-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  max-width: 100%;
-}
-.alg-sim-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-}
-.alg-sim-btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
-  color: var(--foreground);
-}
-.alg-sim-btn:disabled { opacity: 0.35; cursor: default; }
-.alg-sim-btn.is-primary { color: var(--foreground); }
-.alg-sim-controls.is-replay-only .alg-sim-btn { padding: 6px; }
-.alg-sim-scrub {
-  width: 120px;
-  max-width: 40vw;
-  accent-color: var(--accent);
-}
-.alg-sim-count {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--muted-foreground);
-  font-variant-numeric: tabular-nums;
-}
 .fto-eif-player-art {
   display: flex;
   align-items: center;

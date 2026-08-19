@@ -2,6 +2,8 @@
 
 import { act, createElement, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let playerMounts = 0;
@@ -97,11 +99,7 @@ describe('MoveNotationDemo player lifecycle', () => {
     const onReplay = vi.fn();
     await act(async () => {
       root.render(createElement(AlgPlaybackControls, {
-        step: 1,
         count: 1,
-        playing: false,
-        onStepChange: vi.fn(),
-        onPlayingChange: vi.fn(),
         mode: 'replay',
         onReplay,
       }));
@@ -109,6 +107,7 @@ describe('MoveNotationDemo player lifecycle', () => {
 
     const buttons = host.querySelectorAll('button');
     expect(buttons).toHaveLength(1);
+    expect(buttons[0].classList.contains('playback-bar-btn')).toBe(true);
     expect(buttons[0].getAttribute('aria-label')).toBe('重播');
     expect(host.querySelector('input[type="range"]')).toBeNull();
 
@@ -116,20 +115,27 @@ describe('MoveNotationDemo player lifecycle', () => {
     expect(onReplay).toHaveBeenCalledOnce();
   });
 
-  it('routes timeline dragging through the instant scrub callback', async () => {
-    const onStepChange = vi.fn();
+  it('reuses the canonical playback bar and delegates its five transport actions', async () => {
     const onScrub = vi.fn();
-    const onPlayingChange = vi.fn();
+    const onStepBack = vi.fn();
+    const onTogglePlay = vi.fn();
+    const onStepForward = vi.fn();
     await act(async () => {
       root.render(createElement(AlgPlaybackControls, {
-        step: 0,
+        step: 3,
         count: 7,
         playing: false,
-        onStepChange,
         onScrub,
-        onPlayingChange,
+        onStepBack,
+        onTogglePlay,
+        onStepForward,
       }));
     });
+
+    expect(host.querySelector('.playback-bar')).not.toBeNull();
+    expect(host.querySelector('.playback-scrubber')).not.toBeNull();
+    expect(host.querySelector('.alg-sim-controls')).toBeNull();
+    expect(host.querySelector('.alg-sim-scrub')).toBeNull();
 
     const range = host.querySelector<HTMLInputElement>('input[type="range"]');
     expect(range).not.toBeNull();
@@ -139,9 +145,35 @@ describe('MoveNotationDemo player lifecycle', () => {
       range?.dispatchEvent(new Event('input', { bubbles: true }));
     });
 
-    expect(onPlayingChange).toHaveBeenCalledWith(false);
     expect(onScrub).toHaveBeenCalledWith(4);
-    expect(onStepChange).not.toHaveBeenCalled();
+
+    const buttons = host.querySelectorAll<HTMLButtonElement>('.playback-bar-btn');
+    expect(buttons).toHaveLength(5);
+    await act(async () => {
+      for (const button of buttons) button.click();
+    });
+
+    expect(onScrub.mock.calls.map(([value]) => value)).toEqual([4, 0, 7]);
+    expect(onStepBack).toHaveBeenCalledOnce();
+    expect(onTogglePlay).toHaveBeenCalledOnce();
+    expect(onStepForward).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the formula transport implementation on PlaybackBar without local controls', () => {
+    const controls = readFileSync(
+      join(process.cwd(), 'components', 'AlgPlayer', 'AlgPlaybackControls.tsx'),
+      'utf8',
+    );
+    const css = readFileSync(
+      join(process.cwd(), 'components', 'AlgPlayer', 'alg-sim-player.css'),
+      'utf8',
+    );
+
+    expect(controls).toContain("from '@/components/PlaybackBar'");
+    expect(controls).toContain('<PlaybackBar');
+    expect(controls).not.toContain('type="range"');
+    expect(css).not.toContain('.alg-sim-btn');
+    expect(css).not.toContain('.alg-sim-scrub');
   });
 
   it('can omit playback controls while preserving click-to-play requests', async () => {
