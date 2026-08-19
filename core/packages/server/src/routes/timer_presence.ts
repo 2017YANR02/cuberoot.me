@@ -1,6 +1,7 @@
 import { Hono, type Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { getIp } from '../utils/analytics_helpers';
+import { resolveIpLocation, type IpLocation } from '../utils/ip_geolocation';
 import { optionalAuth, requireAdmin, type WcaUser } from '../utils/recon_helpers';
 
 /** A visible timer tab refreshes its short-lived entry every 10 seconds. */
@@ -40,6 +41,7 @@ export interface TimerPresenceSession {
   players: number;
   events: string[];
   ip: string;
+  location: IpLocation | null;
   account: TimerPresenceAccount | null;
   results: TimerPresenceResult[];
   devices: TimerPresenceDevice[];
@@ -72,6 +74,7 @@ interface TimerPresenceRouteOptions {
   authorizeAdmin?: (c: Context) => Promise<unknown>;
   identifyUser?: (c: Context) => Promise<WcaUser | null>;
   identifyIp?: (c: Context) => string;
+  identifyLocation?: (ip: string) => Promise<IpLocation | null>;
 }
 
 function boundedString(value: unknown, max: number): string | null {
@@ -158,6 +161,7 @@ export function createTimerPresenceRoutes(options: TimerPresenceRouteOptions = {
   const authorizeAdmin = options.authorizeAdmin ?? requireAdmin;
   const identifyUser = options.identifyUser ?? optionalAuth;
   const identifyIp = options.identifyIp ?? getIp;
+  const identifyLocation = options.identifyLocation ?? resolveIpLocation;
 
   const prune = (at: number) => {
     for (const [id, entry] of entries) {
@@ -232,14 +236,19 @@ export function createTimerPresenceRoutes(options: TimerPresenceRouteOptions = {
         return c.json({ error: 'presence capacity reached' }, 503);
       }
 
-      const user = await identifyUser(c);
+      const ip = identifyIp(c);
+      const [user, location] = await Promise.all([
+        identifyUser(c),
+        identifyLocation(ip).catch(() => null),
+      ]);
       entries.set(body.id, {
         normal,
         smart,
         mode: mode as TimerPresenceSession['mode'],
         players,
         events,
-        ip: identifyIp(c),
+        ip,
+        location,
         account: accountOf(user),
         results,
         devices,
