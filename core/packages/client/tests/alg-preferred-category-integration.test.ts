@@ -7,9 +7,10 @@ const detailSource = readFileSync(new URL('../components/AlgCaseMetaContent.tsx'
 describe('primary algorithms on category lists', () => {
   it('loads preferences, pins the selected formula, and renders pin controls on both surfaces', () => {
     expect(source).toContain('loadPreferred(puzzleParam as AlgPuzzle, sourceSet)');
-    expect(source).toContain('sortPreferredAlgs(allAlgsForOri, preferredRef)');
-    expect(source).toContain('preferred={preferredAlgRef(entry) === preferredRef}');
-    expect(source).toContain('onPreferredToggle={() => setPreferred(');
+    expect(source).toContain('const displayAlgsForOri = algsUnderFilter(c, oriIdx, allAlgsForOri)');
+    expect(source).toContain('sortPreferredAlgs(displayAlgsForOri, preferredRef)');
+    expect(source).toContain('preferred={!rightHandOh && preferredAlgRef(entry) === preferredRef}');
+    expect(source).toContain('onPreferredToggle={rightHandOh ? undefined : () => setPreferred(');
     expect(source).toContain("tr({ zh: '置顶公式', en: 'Pin algorithm' })");
     expect(source).toContain("<Pin size={14} fill={preferred ? 'currentColor' : 'none'}");
     expect(detailSource).toContain("tr({ zh: '置顶公式', en: 'Pin algorithm' })");

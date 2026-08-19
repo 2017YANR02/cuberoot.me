@@ -109,17 +109,17 @@ function ClassesContent({ orgSlug, page, role }: { orgSlug: string; page: number
               <h2>{t('新建班级', 'Create class')}</h2>
               <form className="org-form" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
                 <fieldset disabled={submitting}>
-                  <label>{t('班级名称', 'Class name')}<input name="name" required maxLength={160} /></label>
-                  <label>{t('班级代码（可选）', 'Class code (optional)')}<input name="code" maxLength={64} pattern="[a-z0-9][a-z0-9_-]{0,63}" autoCapitalize="none" /></label>
+                  <label>{t('班级名称', 'Class name')}<input className="org-form-control" name="name" required maxLength={160} /></label>
+                  <label>{t('班级代码（可选）', 'Class code (optional)')}<input className="org-form-control" name="code" maxLength={64} pattern="[a-z0-9][a-z0-9_-]{0,63}" autoCapitalize="none" /></label>
                   <label className="org-field-wide">{t('校区（可选）', 'Campus (optional)')}
-                    <select name="campusId" defaultValue="">
+                    <select className="org-form-control" name="campusId" defaultValue="">
                       <option value="">{t('不指定校区', 'No campus')}</option>
                       {campuses.filter((campus) => campus.status === 'active').map((campus) => <option value={campus.id} key={campus.id}>{campus.name}</option>)}
                     </select>
                   </label>
                   {campusError && <MutationMessage message={campusError} error />}
                   {campusTotal > campuses.length && <p className="org-help org-field-wide">{t('这里只显示前 100 个校区；如未找到，请稍后使用搜索。', 'Only the first 100 campuses are shown. Search selection will be added later.')}</p>}
-                  <div className="org-form-actions"><button type="submit">{submitting ? t('创建中…', 'Creating…') : t('新建班级', 'Create class')}</button></div>
+                  <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('创建中…', 'Creating…') : t('新建班级', 'Create class')}</button></div>
                 </fieldset>
                 <MutationMessage message={mutationError || message} error={!!mutationError} />
               </form>

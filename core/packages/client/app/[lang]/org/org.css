@@ -61,7 +61,7 @@
 }
 .org-form .org-field-wide, .org-form-actions, .org-message { grid-column: 1 / -1; }
 .org-form label { display: grid; gap: 6px; font-size: .9rem; }
-.org-form input, .org-form select, .org-form textarea {
+.org-form .org-form-control {
   width: 100%;
   min-height: 42px;
   padding: 8px 10px;
@@ -71,10 +71,10 @@
   border-radius: 8px;
   font: inherit;
 }
-.org-form textarea { min-height: 88px; resize: vertical; }
+.org-form .org-form-textarea { min-height: 88px; resize: vertical; }
 .org-form fieldset { display: contents; }
 .org-form-actions { display: flex; gap: 10px; align-items: center; }
-.org-form button, .org-primary-link, .org-primary-button {
+.org-form .org-form-button, .org-primary-link, .org-primary-button {
   width: fit-content;
   padding: 9px 14px;
   border: 0;
@@ -86,7 +86,7 @@
   text-decoration: none;
   cursor: pointer;
 }
-.org-form button:disabled, .org-primary-button:disabled { opacity: .6; cursor: wait; }
+.org-form .org-form-button:disabled, .org-primary-button:disabled { opacity: .6; cursor: wait; }
 .org-plain-fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .org-subsection { margin-top: 22px; }
 .org-row-action { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -136,7 +136,7 @@
 .org-table { width: 100%; border-collapse: collapse; }
 .org-table th, .org-table td { padding: 10px 12px 10px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border-default); }
 .org-table th { white-space: nowrap; }
-.org-table select { min-height: 38px; color: var(--foreground); background: var(--background); border: 1px solid var(--border-strong); border-radius: 8px; }
+.org-table-control { min-height: 38px; color: var(--foreground); background: var(--background); border: 1px solid var(--border-strong); border-radius: 8px; }
 
 @media (max-width: 479px) {
   .org-page { width: min(100% - 24px, 960px); padding-top: 22px; }

@@ -149,7 +149,7 @@ function StudentPackagesContent({ orgSlug, studentId, page, role }: { orgSlug: s
           <form className="org-form" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
             <fieldset disabled={submitting}>
               <label className="org-field-wide">{t('课包产品', 'Package product')}
-                <select name="productId" required defaultValue="">
+                <select className="org-form-control" name="productId" required defaultValue="">
                   <option value="" disabled>{t('请选择', 'Select one')}</option>
                   {products.filter((product) => product.status === 'active').map((product) => (
                     <option value={product.id} key={product.id}>{product.name} ({product.totalCredits} {product.creditUnit === 'minute' ? t('分钟', 'minutes') : t('课时', 'lessons')})</option>
@@ -157,18 +157,18 @@ function StudentPackagesContent({ orgSlug, studentId, page, role }: { orgSlug: s
                 </select>
               </label>
               <label>{t('发放类型', 'Acquisition type')}
-                <select name="acquisitionType" defaultValue="grant">
+                <select className="org-form-control" name="acquisitionType" defaultValue="grant">
                   <option value="grant">{t('赠送 / 管理员发放', 'Grant')}</option>
                   <option value="purchase">{t('购买登记', 'Purchase')}</option>
                   <option value="migration">{t('历史迁移', 'Migration')}</option>
                 </select>
               </label>
-              <label>{t('生效时间（可选）', 'Valid from (optional)')}<input name="validFrom" type="datetime-local" /></label>
-              <label>{t('来源系统（可选）', 'Source system (optional)')}<input name="sourceSystem" maxLength={80} /></label>
-              <label>{t('来源单号（与来源系统成对）', 'Source reference (with source system)')}<input name="sourceRef" maxLength={160} /></label>
-              <label className="org-field-wide">{t('来源行号（可选）', 'Source line reference (optional)')}<input name="sourceLineRef" maxLength={160} /></label>
+              <label>{t('生效时间（可选）', 'Valid from (optional)')}<input className="org-form-control" name="validFrom" type="datetime-local" /></label>
+              <label>{t('来源系统（可选）', 'Source system (optional)')}<input className="org-form-control" name="sourceSystem" maxLength={80} /></label>
+              <label>{t('来源单号（与来源系统成对）', 'Source reference (with source system)')}<input className="org-form-control" name="sourceRef" maxLength={160} /></label>
+              <label className="org-field-wide">{t('来源行号（可选）', 'Source line reference (optional)')}<input className="org-form-control" name="sourceLineRef" maxLength={160} /></label>
               {productTotal > products.length && <p className="org-help org-field-wide">{t('这里只显示前 100 个产品。', 'Only the first 100 products are shown.')}</p>}
-              <div className="org-form-actions"><button type="submit" disabled={!products.some((product) => product.status === 'active')}>{submitting ? t('发放中…', 'Issuing…') : t('发放课包', 'Issue package')}</button></div>
+              <div className="org-form-actions"><button className="org-form-button" type="submit" disabled={!products.some((product) => product.status === 'active')}>{submitting ? t('发放中…', 'Issuing…') : t('发放课包', 'Issue package')}</button></div>
             </fieldset>
             <MutationMessage message={mutationError || message} error={!!mutationError} />
           </form>

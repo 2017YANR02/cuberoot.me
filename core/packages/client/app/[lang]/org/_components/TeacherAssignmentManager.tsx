@@ -98,13 +98,13 @@ export default function TeacherAssignmentManager({ orgSlug, target, members, mem
         <form className="org-form org-subsection" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
           <fieldset disabled={submitting || !eligibleMembers.length}>
             <label className="org-field-wide">{t('选择负责人', 'Choose teacher')}
-              <select name="teacherUserId" defaultValue="" required>
+              <select className="org-form-control" name="teacherUserId" defaultValue="" required>
                 <option value="" disabled>{t('请选择', 'Select')}</option>
                 {eligibleMembers.map((member) => <option key={member.userId} value={member.userId}>{member.displayName} ({teachingRoleLabel(member.role, t)})</option>)}
               </select>
             </label>
             <EffectiveRangeFields />
-            <div className="org-form-actions"><button type="submit">{submitting ? t('分配中…', 'Assigning…') : t('分配负责人', 'Assign teacher')}</button></div>
+            <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('分配中…', 'Assigning…') : t('分配负责人', 'Assign teacher')}</button></div>
           </fieldset>
           {!eligibleMembers.length && <p className="org-help org-field-wide">{t('没有可分配的有效教学成员。', 'There are no active teaching members to assign.')}</p>}
           {memberTotal > members.length && <p className="org-help org-field-wide">{t('选择器只显示前 100 名成员。', 'The selector shows the first 100 members.')}</p>}

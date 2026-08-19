@@ -133,18 +133,18 @@ function CreateVersionForm({ orgSlug, templateId, language, onCreated }: { orgSl
   return (
     <form className="org-form" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
       <fieldset disabled={submitting}>
-        <label>{t('版本标题', 'Version title')}<input name="title" required maxLength={160} /></label>
+        <label>{t('版本标题', 'Version title')}<input className="org-form-control" name="title" required maxLength={160} /></label>
         <label>{t('主站工具', 'Main-site tool')}
-          <select name="source" value={source} onChange={(event) => { setSource(event.target.value as TrainingEvidenceSource); operationKey.reset(); }}>
+          <select className="org-form-control" name="source" value={source} onChange={(event) => { setSource(event.target.value as TrainingEvidenceSource); operationKey.reset(); }}>
             {TRAINING_EVIDENCE_SOURCES.map((item) => <option value={item} key={item}>{trainingSourceLabel(item, language)}</option>)}
           </select>
         </label>
         <label>{t('训练活动', 'Activity')}
-          <select name="activity" key={source}>{activities.map((activity) => <option value={activity} key={activity}>{activity}</option>)}</select>
+          <select className="org-form-control" name="activity" key={source}>{activities.map((activity) => <option value={activity} key={activity}>{activity}</option>)}</select>
         </label>
-        <label className="org-field-wide">{t('训练说明', 'Instructions')}<textarea name="instructions" required maxLength={8_000} /></label>
+        <label className="org-field-wide">{t('训练说明', 'Instructions')}<textarea className="org-form-control org-form-textarea" name="instructions" required maxLength={8_000} /></label>
         <p className="org-help org-field-wide">{t('这里仅保存教学说明和主站工具类型，不复制计时器或训练器。', 'This stores teaching instructions and the canonical tool type; it does not duplicate a timer or trainer.')}</p>
-        <div className="org-form-actions"><button type="submit">{submitting ? t('发布中…', 'Publishing…') : t('发布版本', 'Publish version')}</button></div>
+        <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('发布中…', 'Publishing…') : t('发布版本', 'Publish version')}</button></div>
       </fieldset>
       <MutationMessage message={error || message} error={!!error} />
     </form>

@@ -77,9 +77,9 @@ export default function StudentAccountBindingManager({ orgSlug, studentId, linke
           <form className="org-form" onSubmit={create}>
             <fieldset disabled={submitting}>
               <label>{t('邀请有效期', 'Invitation expiry')}
-                <select name="expiresInMinutes" defaultValue="1440"><option value="60">{t('1 小时', '1 hour')}</option><option value="1440">{t('1 天', '1 day')}</option><option value="10080">{t('7 天', '7 days')}</option></select>
+                <select className="org-form-control" name="expiresInMinutes" defaultValue="1440"><option value="60">{t('1 小时', '1 hour')}</option><option value="1440">{t('1 天', '1 day')}</option><option value="10080">{t('7 天', '7 days')}</option></select>
               </label>
-              <div className="org-form-actions"><button type="submit">{submitting ? t('生成中…', 'Creating…') : t('生成绑定邀请', 'Create binding invitation')}</button>{invite?.status === 'pending' && <button className="org-secondary-button" type="button" onClick={revoke}>{t('撤销当前邀请', 'Revoke current invitation')}</button>}</div>
+              <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('生成中…', 'Creating…') : t('生成绑定邀请', 'Create binding invitation')}</button>{invite?.status === 'pending' && <button className="org-form-button org-secondary-button" type="button" onClick={revoke}>{t('撤销当前邀请', 'Revoke current invitation')}</button>}</div>
             </fieldset>
           </form>
           {token && <div className="org-subsection"><p className="org-help">{t('请让学员登录自己的主站账号后打开此链接并确认。不要通过日志或公开页面传递令牌。', 'Ask the student to sign in with their own main-site account, then open and confirm this link. Do not expose the token in logs or public pages.')}</p><AppLink className="org-primary-link" href={bindingHref} prefetch={false}>{t('打开一次性绑定页面', 'Open one-time binding page')}</AppLink></div>}
