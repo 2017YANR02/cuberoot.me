@@ -382,7 +382,8 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
         <div className="alg-admin-modal-main">
           <aside className="alg-admin-modal-side">
             {previewSetup.trim() ? (
-              // getPlayer() 提供可 seek handle；SQ1 的 /sim 播放器也实现同一契约。
+              // 统一走 AlgPlayer 的默认分流：公式库支持的拼图复用 /sim 播放器，
+              // getPlayer() 仍提供同一份可 seek handle 给光标同步。
               <AlgPlayer
                 ref={playerHandleRef}
                 alg={debouncedPreview.alg}
@@ -390,7 +391,6 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
                 set={setSlug}
                 setup={previewSetup}
                 fillPane
-                engine={puzzle === 'sq1' ? 'sim' : 'twisty'}
               />
             ) : (
               <div className="alg-admin-modal-side-empty">

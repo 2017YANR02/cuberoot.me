@@ -24,7 +24,6 @@ import {
   type JSX,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import dynamic from 'next/dynamic';
 import { Search, Lightbulb, Boxes, Square, Pencil, Copy, Check, AlertTriangle } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -38,24 +37,14 @@ import AlgPdfButton from '@/components/AlgPdfButton';
 import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
 import AlgAdminValidate from '@/components/AlgAdminValidate';
+import AlgPlayer from '@/components/AlgPlayer';
 import SortableAlgRow from '@/components/SortableAlgRow';
-import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import { reorderCaseAlgs } from '@/lib/alg_sets_api';
 import { scanCases } from '@/lib/alg_validation_scan';
 import { useIsAdmin } from '@/lib/auth-store';
 import '../3bld.css';
 import '../../alg.css';
 import { tr } from '@/i18n/tr';
-
-// TwistySection pulls in cubing.js (heavy) — load only on the client, lazily.
-const TwistySection = dynamic(() => import('@/components/TwistySection'), {
-  ssr: false,
-  loading: () => (
-    <div className="bld-cube-loading">
-      <Spinner size={18} label={tr({ zh: '加载中', en: 'Loading' })} />
-    </div>
-  ),
-});
 
 type Kind = 'corner' | 'edge';
 type AssocMap = Record<string, string>;
@@ -339,10 +328,12 @@ export default function CommLibraryPage(): JSX.Element {
           <div className="bld-comm-focus-cube">
             <div className="bld-cube-wrap">
               {/* case 态起手 + 公式当 alg ⟹ 拖进度条就是「这条换位子怎么解掉它」 */}
-              <TwistySection
-                puzzle="3x3x3"
-                scramble={selectedCase.setup}
-                alg={normalizeAlgForTwisty(PUZZLE, selFirstAlg)}
+              <AlgPlayer
+                puzzle={PUZZLE}
+                set={SET_SLUG[kind]}
+                setup={selectedCase.setup}
+                alg={selFirstAlg}
+                size={300}
               />
             </div>
           </div>
