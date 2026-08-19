@@ -183,6 +183,7 @@ function SessionDetailContent({
                           <td>
                             {canWrite ? (
                               <select
+                                className="org-table-control"
                                 aria-label={t(`${attendance.displayName || attendance.studentId}的出勤`, `Attendance for ${attendance.displayName || attendance.studentId}`)}
                                 value={currentStatus}
                                 onChange={(event) => {

@@ -134,9 +134,9 @@ function CreateTemplateForm({ orgSlug, onCreated }: { orgSlug: string; onCreated
   return (
     <form className="org-form org-subsection" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
       <fieldset disabled={submitting}>
-        <label>{t('模板名称', 'Template name')}<input name="name" required maxLength={160} /></label>
-        <label className="org-field-wide">{t('说明', 'Description')}<textarea name="description" maxLength={2_000} /></label>
-        <div className="org-form-actions"><button type="submit">{submitting ? t('创建中…', 'Creating…') : t('创建模板', 'Create template')}</button></div>
+        <label>{t('模板名称', 'Template name')}<input className="org-form-control" name="name" required maxLength={160} /></label>
+        <label className="org-field-wide">{t('说明', 'Description')}<textarea className="org-form-control org-form-textarea" name="description" maxLength={2_000} /></label>
+        <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('创建中…', 'Creating…') : t('创建模板', 'Create template')}</button></div>
       </fieldset>
       <MutationMessage message={error || message} error={!!error} />
     </form>

@@ -96,10 +96,10 @@ export default function OrganizationsPage() {
         <h2>{t('创建机构', 'Create organization')}</h2>
         <form className="org-form" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
           <fieldset disabled={submitting}>
-            <label>{t('机构名称', 'Organization name')}<input name="name" required maxLength={160} autoComplete="organization" /></label>
-            <label>{t('网址标识', 'URL slug')}<input name="slug" required maxLength={64} pattern="[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?" placeholder="cuberoot-academy" autoCapitalize="none" /></label>
-            <label className="org-field-wide">{t('时区', 'Time zone')}<input name="timezone" required maxLength={64} defaultValue="Asia/Shanghai" autoCapitalize="none" /></label>
-            <div className="org-form-actions"><button type="submit">{submitting ? t('创建中…', 'Creating…') : t('创建机构', 'Create organization')}</button></div>
+            <label>{t('机构名称', 'Organization name')}<input className="org-form-control" name="name" required maxLength={160} autoComplete="organization" /></label>
+            <label>{t('网址标识', 'URL slug')}<input className="org-form-control" name="slug" required maxLength={64} pattern="[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?" placeholder="cuberoot-academy" autoCapitalize="none" /></label>
+            <label className="org-field-wide">{t('时区', 'Time zone')}<input className="org-form-control" name="timezone" required maxLength={64} defaultValue="Asia/Shanghai" autoCapitalize="none" /></label>
+            <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('创建中…', 'Creating…') : t('创建机构', 'Create organization')}</button></div>
           </fieldset>
           <MutationMessage message={error || message} error={!!error} />
         </form>

@@ -157,13 +157,13 @@ function GroupMemberships({ orgSlug, groupId, canManage, students, studentTotal 
         <form className="org-form org-subsection" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
           <fieldset disabled={submitting || !students.some((student) => student.status === 'active')}>
             <label className="org-field-wide">{t('选择学员', 'Choose student')}
-              <select name="studentId" defaultValue="" required>
+              <select className="org-form-control" name="studentId" defaultValue="" required>
                 <option value="" disabled>{t('请选择', 'Select')}</option>
                 {students.filter((student) => student.status === 'active').map((student) => <option key={student.id} value={student.id}>{student.displayName}{student.externalRef ? ` (${student.externalRef})` : ''}</option>)}
               </select>
             </label>
             <EffectiveRangeFields />
-            <div className="org-form-actions"><button type="submit">{submitting ? t('加入中…', 'Adding…') : t('加入班级', 'Add to class')}</button></div>
+            <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('加入中…', 'Adding…') : t('加入班级', 'Add to class')}</button></div>
           </fieldset>
           {!students.some((student) => student.status === 'active') && <p className="org-help org-field-wide">{t('没有可分配的有效学员。', 'There are no active students to assign.')}</p>}
           {studentTotal > students.length && <p className="org-help org-field-wide">{t('选择器只显示前 100 名学员。', 'The selector shows the first 100 students.')}</p>}

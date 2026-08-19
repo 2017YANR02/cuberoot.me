@@ -89,9 +89,9 @@ function StudentsContent({ orgSlug, page, role }: { orgSlug: string; page: numbe
               <h2>{t('新建学员', 'Create student')}</h2>
               <form className="org-form" onSubmit={submit} onChange={() => { operationKey.reset(); setMessage(''); }}>
                 <fieldset disabled={submitting}>
-                  <label>{t('显示名称', 'Display name')}<input name="displayName" required maxLength={160} autoComplete="name" /></label>
-                  <label>{t('外部编号（可选）', 'External reference (optional)')}<input name="externalRef" maxLength={100} autoCapitalize="none" /></label>
-                  <div className="org-form-actions"><button type="submit">{submitting ? t('创建中…', 'Creating…') : t('新建学员', 'Create student')}</button></div>
+                  <label>{t('显示名称', 'Display name')}<input className="org-form-control" name="displayName" required maxLength={160} autoComplete="name" /></label>
+                  <label>{t('外部编号（可选）', 'External reference (optional)')}<input className="org-form-control" name="externalRef" maxLength={100} autoCapitalize="none" /></label>
+                  <div className="org-form-actions"><button className="org-form-button" type="submit">{submitting ? t('创建中…', 'Creating…') : t('新建学员', 'Create student')}</button></div>
                 </fieldset>
                 <MutationMessage message={mutationError || message} error={!!mutationError} />
               </form>
