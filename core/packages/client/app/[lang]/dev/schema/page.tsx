@@ -241,6 +241,9 @@ const TABLES: Table[] = [
   { name: 'session_events', domain: 'teaching', origin: '0147', purpose: { zh: '只追加的课堂状态与考勤变更事件', en: 'Append-only session lifecycle and attendance-change events' }, cols: [
     { name: 'id BIGINT (PK), organization_id, session_id, event_type' }, { name: 'actor snapshot, request_id, metadata, created_at' },
   ] },
+  { name: 'lesson_feedback', domain: 'teaching', origin: '0154', naturalKey: true, purpose: { zh: '已完课课堂按学员保存的只追加反馈修订历史', en: 'Append-only per-student feedback revisions for completed sessions' }, cols: [
+    { name: 'id UUID (PK), organization_id, session_id, student_id, revision' }, { name: 'visibility, summary, strengths, challenges, next_goals, internal_notes' }, { name: 'student / attendance / credit snapshots, author snapshot, published_at, created_at' },
+  ] },
 
   // ── user artifacts ──────────────────────────────────────
   { name: 'timer_backups', domain: 'studio', origin: '0020', purpose: { zh: '计时器成绩云备份(单快照覆盖)', en: 'Cloud backup of timer sessions (single overwrite snapshot)' }, cols: [
@@ -537,6 +540,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 151, slug: 'wca_verified_display_names', desc: { zh: '把已绑定 WCA 的账号展示名回填为 WCA 官方姓名，统一实名展示。', en: 'Backfill WCA-linked account display names from verified WCA profiles.' } },
   { n: 152, slug: 'fold_recon_auf', desc: { zh: '把复盘中单独成行的 AUF 转动合并进上一条阶段公式，主解法与另解统一处理。', en: 'Fold standalone AUF moves into the preceding reconstruction stage for both primary and alternative solutions.' } },
   { n: 153, slug: 'oll_docx_import', desc: { zh: '按站长整理的 DOCX 重排 OLL 分类与情况，优先导入 269 条公式，并补齐 ETM、最优步数、打乱关系与状态镜像元数据。', en: 'Reorder OLL categories and cases from the owner-curated DOCX, prepend 269 algorithms, and add ETM, optimal-length, scramble-link, and state-mirror metadata.' } },
+  { n: 154, slug: 'teaching_lesson_feedback', desc: { zh: '为已完课课堂增加按学员修订的只追加反馈历史、发布可见性与作者匿名化。', en: 'Add append-only per-student feedback revisions, publication visibility, and author anonymization for completed sessions.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

@@ -330,6 +330,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/sessions/:sessionId', g: 'login', c: 'no-store', zh: '读取课堂、教师快照与考勤明细', en: 'Read a session with teacher snapshots and attendance details' },
   { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/batch', g: 'login', c: 'no-store', zh: '按考勤记录 ID 批量更新到课状态，要求幂等键', en: 'Batch-update attendance statuses by attendance-record ID; requires an idempotency key' },
   { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/sessions/:sessionId/complete', g: 'login', c: 'no-store', zh: '同一事务完成课堂并扣减到课课时，要求幂等键', en: 'Complete a session and consume attended credits atomically; requires an idempotency key' },
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/sessions/:sessionId/feedback', g: 'login', c: 'no-store', zh: '分页读取已完课课堂的学员反馈修订历史', en: 'List per-student feedback revisions for a completed session' },
+  { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/sessions/:sessionId/students/:studentId/feedback', g: 'login', c: 'no-store', zh: '为已完课课堂追加一版学员反馈，要求幂等键', en: 'Append a student feedback revision for a completed session; requires an idempotency key' },
 
   // ---- membership ----
   { d: 'membership', m: 'GET', p: '/v1/membership/plans', g: 'public', zh: '会员套餐', en: 'Membership plans' },

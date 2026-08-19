@@ -103,6 +103,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   attendance_records: '课堂考勤属于机构履约历史,记录者账号随删除置空',
   lesson_credit_ledger: '课时余额流水不可变保留,操作者账号随删除置空且保留姓名快照',
   session_events: '课堂事件不可变保留,操作者账号随删除置空且保留姓名快照',
+  lesson_feedback: '课后反馈修订历史属于机构,作者账号随删除置空且保留姓名与角色快照',
   training_templates: '机构训练模板独立保留,创建者账号随删除置空',
   training_template_versions: '已发布训练模板版本不可变保留,创建与发布账号随删除置空',
   training_assignments: '训练任务及发布时内容快照属于机构,操作者账号随删除置空',
@@ -214,6 +215,7 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
           )
       WHERE teacher_user_id = ${userId}`;
     await tx`UPDATE session_teachers SET teacher_user_id = NULL WHERE teacher_user_id = ${userId}`;
+    await tx`UPDATE lesson_feedback SET author_user_id = NULL WHERE author_user_id = ${userId}`;
     await tx`
       UPDATE training_submission_reviews
       SET reviewer_user_id = NULL

@@ -156,6 +156,7 @@ describe('清单 ↔ schema', () => {
       'attendance_records',
       'lesson_credit_ledger',
       'session_events',
+      'lesson_feedback',
       ...STAGE3_TRAINING_TABLES,
     ]));
     for (const table of STAGE3_TRAINING_TABLES) {
@@ -270,6 +271,13 @@ describe('删除动作本身', () => {
     expect(unlinkReview).toBeGreaterThan(-1);
     expect(impl.slice(unlinkReview, deleteUser)).toMatch(/SET\s+reviewer_user_id\s*=\s*NULL/);
     expect(deleteUser).toBeGreaterThan(unlinkReview);
+  });
+
+  it('删除账号前匿名化课后反馈作者，保留不可变快照', () => {
+    const unlinkFeedback = impl.indexOf('UPDATE lesson_feedback SET author_user_id = NULL');
+    const deleteUser = impl.indexOf('DELETE FROM app_users');
+    expect(unlinkFeedback).toBeGreaterThan(-1);
+    expect(deleteUser).toBeGreaterThan(unlinkFeedback);
   });
 
   it('复盘按可见性分流:公开的匿名保留,私享 / 不公开列出的删掉', () => {
