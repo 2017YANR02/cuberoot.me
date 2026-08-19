@@ -550,6 +550,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 155, slug: 'teaching_weekly_reports', desc: { zh: '新增按学员与周修订的教学周报，草稿可重算，发布后冻结聚合、总结、计划与可见性。', en: 'Add revisioned weekly teaching reports with recomputable drafts and immutable published aggregates, summaries, plans, and visibility.' } },
   { n: 156, slug: 'teaching_learner_portal', desc: { zh: '为监护关系增加账号绑定时间与哈希邀请，并建立按学员或监护身份读取已发布周报和课堂反馈的门户契约。', en: 'Add guardian account-link timestamps and hashed invitations, plus portal contracts for learners and guardians to read published weekly reports and lesson feedback.' } },
   { n: 157, slug: 'fix_fto_pair_formation_setups', desc: { zh: '修正 FTO Pair Formation 的阶段 setup，使公式结束于所有三元组已配对的 Top Layer 起始态，而不是整颗还原。', en: 'Correct FTO Pair Formation setups so algorithms finish at the all-triples-paired Top Layer starting state instead of a solved puzzle.' } },
+  { n: 159, slug: 'fix_fto_top_layer_setups', desc: { zh: '修正 FTO Top Layer 的阶段 setup，使公式结束于 Last Triangles 起始态，而不是整颗还原。', en: 'Correct FTO Top Layer setups so algorithms finish at the Last Triangles starting state instead of a solved puzzle.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

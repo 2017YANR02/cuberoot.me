@@ -212,15 +212,15 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     await expect(algCaseSvg(spec)).resolves.toBe(plan.svg);
   });
 
-  it('FTO Pair Formation 使用 LowCubes 本地识别图', () => {
+  it('所有 LowCubes FTO 阶段都优先使用本地识别图', () => {
     const plan = caseThumbPlan({
-      ...input('fto', 'pf'),
+      ...input('fto', 'tl'),
       sticker: {
         kind: 'raw',
         tag: 'lowcubes-fto',
         attrs: {
-          image: 'cases/fto/pf/1.webp',
-          imageAlt: 'PF (Pair Formation) 1',
+          image: 'cases/fto/tl/1.webp',
+          imageAlt: 'TL (Top Layer) 1',
           imageWidth: '474',
           imageHeight: '512',
         },
@@ -228,8 +228,8 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     });
     expect(plan).toEqual({
       renderer: 'asset',
-      src: '/cases/fto/pf/1.webp',
-      alt: 'PF (Pair Formation) 1',
+      src: '/cases/fto/tl/1.webp',
+      alt: 'TL (Top Layer) 1',
       width: 474,
       height: 512,
     });
