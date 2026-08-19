@@ -1,17 +1,28 @@
 import { describe, expect, it } from 'vitest';
+import { TiedPodiumResults } from '../../stats-build/src/statistics/tied_podium_results';
 import {
-  findTiedPodiums,
-  type PodiumResultRow,
+  findTiedTopThrees,
+  type TopThreeResultRow,
 } from '../../stats-build/src/statistics/tied_podium_results_core';
 
+describe('tied top-three query scope', () => {
+  it('selects valid top threes from every round instead of filtering to finals', () => {
+    const query = new TiedPodiumResults().query();
+
+    expect(query).not.toMatch(/round_types|\.final\s*=|round_type_id\s+IN\s*\(\s*'c'/i);
+    expect(query).toContain('COUNT(DISTINCT pos) = 3');
+    expect(query).toContain('COUNT(DISTINCT person_id) = 3');
+  });
+});
+
 function podium(
-  overrides: Partial<PodiumResultRow> = {},
-): PodiumResultRow[] {
+  overrides: Partial<TopThreeResultRow> = {},
+): TopThreeResultRow[] {
   return [1, 2, 3].map(position => ({
     eventId: 'clock',
     competitionId: 'Example2026',
     competitionName: 'Example 2026',
-    roundTypeId: 'f',
+    roundTypeId: '1',
     personId: `2026TEST0${position}`,
     personName: `Person ${position}`,
     position,
@@ -22,14 +33,14 @@ function podium(
   }));
 }
 
-describe('findTiedPodiums', () => {
-  it('finds one official 1st/2nd/3rd average tie and restores podium order', () => {
+describe('findTiedTopThrees', () => {
+  it('finds one non-final official 1st/2nd/3rd average tie and restores place order', () => {
     const rows = podium();
-    const result = findTiedPodiums([rows[2], rows[0], rows[1]], 'average');
+    const result = findTiedTopThrees([rows[2], rows[0], rows[1]], 'average');
 
     expect(result).toHaveLength(1);
     expect(result[0].value).toBe(423);
-    expect(result[0].podium.map(row => row.position)).toEqual([1, 2, 3]);
+    expect(result[0].topThree.map(row => row.position)).toEqual([1, 2, 3]);
   });
 
   it('rejects invalid averages, missing places, duplicate places and duplicate people', () => {
@@ -40,7 +51,7 @@ describe('findTiedPodiums', () => {
     const duplicatePerson = podium({ competitionId: 'DuplicatePerson' });
     duplicatePerson[2].personId = duplicatePerson[1].personId;
 
-    expect(findTiedPodiums([
+    expect(findTiedTopThrees([
       ...invalidAverage,
       ...missingPlace,
       ...duplicatePlace,
@@ -48,12 +59,18 @@ describe('findTiedPodiums', () => {
     ], 'average')).toEqual([]);
   });
 
-  it('keeps different final rounds separate and orders occurrences newest first', () => {
+  it('keeps different competition rounds separate and orders occurrences newest first', () => {
     const older = podium({ competitionId: 'Older2024', startDate: '2024-01-01' });
     const newer = podium({ competitionId: 'Newer2025', startDate: '2025-01-01' });
+    const newerSecondRound = podium({
+      competitionId: 'Newer2025',
+      roundTypeId: '2',
+      startDate: '2025-01-01',
+    });
 
-    expect(findTiedPodiums([...older, ...newer], 'average').map(row => row.competitionId))
-      .toEqual(['Newer2025', 'Older2024']);
+    expect(findTiedTopThrees([...older, ...newer, ...newerSecondRound], 'average')
+      .map(row => `${row.competitionId}:${row.roundTypeId}`))
+      .toEqual(['Newer2025:1', 'Newer2025:2', 'Older2024:1']);
   });
 
   it('finds identical singles independently from different averages', () => {
@@ -61,7 +78,7 @@ describe('findTiedPodiums', () => {
     rows[1].average = 520;
     rows[2].average = 540;
 
-    expect(findTiedPodiums(rows, 'best')).toHaveLength(1);
-    expect(findTiedPodiums(rows, 'average')).toEqual([]);
+    expect(findTiedTopThrees(rows, 'best')).toHaveLength(1);
+    expect(findTiedTopThrees(rows, 'average')).toEqual([]);
   });
 });

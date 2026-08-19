@@ -1,16 +1,18 @@
+import { roundLabel } from '@cuberoot/shared/wca-round';
 import type { RowDataPacket } from 'mysql2';
 import { EVENTS_ENTRIES, eventZh, headerZh } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
 import { Statistic } from '../core/statistic.js';
 import type { StatJson, StatSection, TableHeader } from '../core/statistic.js';
 import {
-  findTiedPodiums,
-  type PodiumResultRow,
-  type TiedPodiumOccurrence,
+  findTiedTopThrees,
+  type TopThreeResultRow,
+  type TiedTopThreeOccurrence,
 } from './tied_podium_results_core.js';
 
 const TABLE_HEADER: TableHeader = {
   Result: 'right',
+  Round: 'left',
   '1st': 'left',
   '2nd': 'left',
   '3rd': 'left',
@@ -20,12 +22,26 @@ const TABLE_HEADER: TableHeader = {
 export class TiedPodiumResults extends Statistic {
   constructor() {
     super();
-    this.title = 'Identical Final Podium Results';
-    this.titleZh = '决赛前三名同分';
+    this.title = 'Identical Top-Three Round Results';
+    this.titleZh = '同轮前三名同分';
   }
 
   query(): string {
     return `
+      WITH candidate_rounds AS (
+        SELECT competition_id, event_id, round_type_id
+        FROM results
+        WHERE pos BETWEEN 1 AND 3
+          AND event_id <> '333fm'
+        GROUP BY competition_id, event_id, round_type_id
+        HAVING COUNT(*) = 3
+          AND COUNT(DISTINCT pos) = 3
+          AND COUNT(DISTINCT person_id) = 3
+          AND (
+            (MIN(average) > 0 AND MIN(average) = MAX(average))
+            OR (MIN(best) > 0 AND MIN(best) = MAX(best))
+          )
+      )
       SELECT
         r.event_id,
         r.competition_id,
@@ -37,12 +53,14 @@ export class TiedPodiumResults extends Statistic {
         r.average,
         c.cell_name AS competition_name,
         DATE_FORMAT(c.start_date, '%Y-%m-%d') AS start_date
-      FROM results r
-      INNER JOIN round_types rt ON rt.id = r.round_type_id AND rt.final = 1
+      FROM candidate_rounds candidate
+      INNER JOIN results r
+        ON r.competition_id = candidate.competition_id
+        AND r.event_id = candidate.event_id
+        AND r.round_type_id = candidate.round_type_id
       INNER JOIN competitions c ON c.id = r.competition_id
       LEFT JOIN persons p ON p.wca_id = r.person_id AND p.sub_id = 1
       WHERE r.pos BETWEEN 1 AND 3
-        AND r.event_id <> '333fm'
       ORDER BY c.start_date DESC, r.competition_id, r.event_id, r.round_type_id, r.pos
     `;
   }
@@ -53,10 +71,10 @@ export class TiedPodiumResults extends Statistic {
     rawRows = null;
     if (global.gc) global.gc();
 
-    const averageOccurrences = findTiedPodiums(rows, 'average');
-    const singleOccurrences = findTiedPodiums(rows, 'best');
-    this.note = `Found ${averageOccurrences.length} final podiums with an identical valid average and ${singleOccurrences.length} with an identical valid single for the official 1st, 2nd and 3rd places. Fewest Moves is excluded.`;
-    this.noteZh = `WCA 决赛官方第 1、2、3 名三人的有效成绩完全相同：平均 ${averageOccurrences.length} 次，单次 ${singleOccurrences.length} 次。不含最少步。`;
+    const averageOccurrences = findTiedTopThrees(rows, 'average');
+    const singleOccurrences = findTiedTopThrees(rows, 'best');
+    this.note = `Across all WCA rounds, the official 1st, 2nd and 3rd places had an identical valid average ${averageOccurrences.length} times and an identical valid single ${singleOccurrences.length} times. Fewest Moves is excluded.`;
+    this.noteZh = `WCA 任意轮次官方第 1、2、3 名三人的有效成绩完全相同：平均 ${averageOccurrences.length} 次，单次 ${singleOccurrences.length} 次。不含最少步。`;
 
     return {
       id: this.id,
@@ -78,7 +96,7 @@ export class TiedPodiumResults extends Statistic {
   }
 }
 
-function mapRow(row: RowDataPacket): PodiumResultRow {
+function mapRow(row: RowDataPacket): TopThreeResultRow {
   return {
     eventId: String(row['event_id']),
     competitionId: String(row['competition_id']),
@@ -94,7 +112,7 @@ function mapRow(row: RowDataPacket): PodiumResultRow {
 }
 
 function buildSections(
-  occurrences: readonly TiedPodiumOccurrence[],
+  occurrences: readonly TiedTopThreeOccurrence[],
   metric: 'average' | 'best',
 ): StatSection[] {
   const metricTitle = metric === 'average' ? 'Average' : 'Single';
@@ -105,7 +123,8 @@ function buildSections(
       .filter(occurrence => occurrence.eventId === eventId)
       .map(occurrence => [
         new SolveTime(eventId, metric === 'average' ? 'average' : 'single', occurrence.value).clockFormat(),
-        ...occurrence.podium.map(personLink),
+        roundLabel(occurrence.roundTypeId),
+        ...occurrence.topThree.map(personLink),
         competitionLink(occurrence),
       ]);
     if (rows.length === 0) continue;
@@ -118,10 +137,10 @@ function buildSections(
   return sections;
 }
 
-function personLink(row: PodiumResultRow): string {
+function personLink(row: TopThreeResultRow): string {
   return `[${row.personName}](https://www.worldcubeassociation.org/persons/${row.personId})`;
 }
 
-function competitionLink(occurrence: TiedPodiumOccurrence): string {
-  return `[${occurrence.competitionName}](https://www.worldcubeassociation.org/competitions/${occurrence.competitionId})`;
+function competitionLink(occurrence: TiedTopThreeOccurrence): string {
+  return `[${occurrence.competitionName}](https://www.worldcubeassociation.org/competitions/${occurrence.competitionId}/results/all#e${occurrence.eventId}_${occurrence.roundTypeId})`;
 }
