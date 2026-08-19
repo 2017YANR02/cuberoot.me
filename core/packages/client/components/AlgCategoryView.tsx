@@ -1215,7 +1215,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               }}
               aria-label={tr({ zh: '按标签筛选公式', en: 'Filter algs by tag' })}
             >
-              <option value="all">{tr({ zh: '全部公式', en: 'All algs' })}</option>
+              <option value="all">{tr({ zh: '全部', en: 'All' })}</option>
               {availableTags.map(t => t === 'oh' && canChooseOhHand ? (
                 <Fragment key={t}>
                   <option value="oh">{OH_TAG_LABEL.left()}</option>

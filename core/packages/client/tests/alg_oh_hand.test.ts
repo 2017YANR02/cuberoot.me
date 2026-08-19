@@ -6,6 +6,7 @@ import { ALG_TAG_LABEL, OH_TAG_LABEL } from '@/lib/alg_tags';
 import i18n from '@/i18n/i18n-client';
 
 const categorySource = readFileSync(new URL('../components/AlgCategoryView.tsx', import.meta.url), 'utf8');
+const algCss = readFileSync(new URL('../app/[lang]/alg/alg.css', import.meta.url), 'utf8');
 
 function mkCase(no: number, mirror: number | undefined, algs: AlgEntry[][]): AlgCase {
   return {
@@ -38,6 +39,13 @@ describe('3x3 OLL/PLL one-handed formulas', () => {
     expect(categorySource).toContain('<option value={RIGHT_OH_MENU_VALUE}>{OH_TAG_LABEL.right()}</option>');
     expect(categorySource).toContain("setTagParams({ tag: 'oh', hand: 'right' })");
     expect(categorySource).not.toContain('className="alg-oh-hand-toggle"');
+  });
+
+  it('类型标签统一为中性灰，筛选默认项保持简短', () => {
+    expect(categorySource).toContain("tr({ zh: '全部', en: 'All' })");
+    expect(categorySource).not.toContain("tr({ zh: '全部公式', en: 'All algs' })");
+    expect(algCss).toContain('background: color-mix(in srgb, var(--foreground) 8%, transparent);');
+    expect(algCss).not.toContain('.alg-tag-oh');
   });
 
   it('将入库 OH 明确标为左单，并为镜像公式提供右单标签', async () => {

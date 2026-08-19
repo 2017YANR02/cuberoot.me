@@ -1532,11 +1532,6 @@ a.alg-community-author:hover {
   color: var(--muted-foreground);
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
-/* 单手最多(300+ 条),给它一点存在感;其余保持中性,免得一行五颜六色 */
-.alg-tag-oh {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-}
 /* 照写的 STM。`R4` 是 1 步 —— 它是个真实的物理动作,不折 mod 4(见 shared/alg_notation) */
 .alg-alg-len {
   flex: none;

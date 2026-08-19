@@ -10,6 +10,8 @@
 - Pen icon: `fmc`.
 - Large-order grid icon: `big`.
 - Keyboard icon: `key`.
+- Render every formula-type badge with the same neutral-gray treatment; do not color one type as an accent.
+- Label the unfiltered formula-type menu option `All` / `全部`.
 
 ## Metrics
 
