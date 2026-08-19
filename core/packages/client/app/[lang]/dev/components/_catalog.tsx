@@ -796,6 +796,41 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'TeachingAccountBindingPage',
+    import: "import TeachingAccountBindingPage from '@/components/teaching/TeachingAccountBindingPage';",
+    category: 'more',
+    zh: '学员与监护人共用的一次性账号绑定页，负责登录回跳、邀请预览、消费和片段密钥清理。',
+    en: 'Shared one-time account-binding page for learners and guardians, including sign-in return, preview, consume, and fragment-secret cleanup.',
+  },
+  {
+    name: 'LearnerWorkspace',
+    import: "import LearnerWorkspace from '@/components/teaching/LearnerWorkspace';",
+    category: 'more',
+    zh: '学习中心的鉴权、档案关系与导航壳；仅学员本人显示训练入口。',
+    en: 'Authentication, relationship, and navigation shell for the learning center; training is shown only to the learner.',
+  },
+  {
+    name: 'WeeklyReportSections',
+    import: "import WeeklyReportSections from '@/components/teaching/WeeklyReportSections';",
+    category: 'more',
+    zh: '教职员工和学员端共用的周报聚合与总结展示。',
+    en: 'Shared weekly aggregate and summary renderer for staff and learner views.',
+  },
+  {
+    name: 'LessonFeedbackList',
+    import: "import LessonFeedbackList from '@/components/teaching/LessonFeedbackList';",
+    category: 'more',
+    zh: '学习中心的已发布课后反馈列表，只接受学员侧窄契约。',
+    en: 'Published lesson-feedback list for the learning center, accepting only the narrow learner contract.',
+  },
+  {
+    name: 'TeachingUi',
+    import: "import { MutationMessage, TeachingPagination, teachingErrorMessage, useOperationKey, useTeachingPage } from '@/components/teaching/TeachingUi';",
+    category: 'more',
+    zh: '教学工作区与学习入口共用的请求状态、错误文案、幂等键和分页工具。',
+    en: 'Shared request state, error copy, idempotency keys, and pagination helpers for teaching and learner workspaces.',
+  },
+  {
     name: 'Sq1ToolsClient',
     import: "import Sq1ToolsClient from '@/components/Sq1ToolsClient';",
     category: 'more',

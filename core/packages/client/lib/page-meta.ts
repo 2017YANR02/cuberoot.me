@@ -99,6 +99,18 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'org/[orgSlug]/training/assignments/[assignmentId]/students/[studentId]': { title: { zh: '训练记录与批改', en: 'Training Evidence and Review' } },
   'training/[orgSlug]': { title: { zh: '我的训练任务', en: 'My Training Assignments' } },
   'account/student-binding': { title: { zh: '绑定学员档案', en: 'Link Student Profile' } },
+  'account/guardian-binding': { title: { zh: '绑定监护人关系', en: 'Link Guardian Relationship' } },
+  'learn': {
+    title: { zh: '学习中心', en: 'Learning Center' },
+    description: {
+      zh: '在 CubeRoot 主站查看已发布的教学周报、课后反馈和训练任务。',
+      en: 'View published teaching reports, lesson feedback, and training assignments on CubeRoot.',
+    },
+  },
+  'learn/[orgSlug]/students/[studentId]': { title: { zh: '学习概览', en: 'Learning Overview' } },
+  'learn/[orgSlug]/students/[studentId]/reports': { title: { zh: '每周教学报告', en: 'Weekly Teaching Reports' } },
+  'learn/[orgSlug]/students/[studentId]/reports/[reportId]': { title: { zh: '每周教学报告详情', en: 'Weekly Teaching Report Details' } },
+  'learn/[orgSlug]/students/[studentId]/feedback': { title: { zh: '课后反馈', en: 'Lesson Feedback' } },
   'privacy': {
     title: { zh: '移动端与小程序隐私政策', en: 'Mobile and Mini Program Privacy Policy' },
     description: {

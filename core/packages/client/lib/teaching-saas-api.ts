@@ -43,6 +43,11 @@ import {
   type TeachingStudentAccountBindingInvite,
   type TeachingStudentAccountBindingInviteCreated,
   type TeachingStudentAccountBindingPreview,
+  type TeachingGuardianAccountBindingConsumed,
+  type TeachingGuardianAccountBindingPreview,
+  type TeachingLearningContext,
+  type TeachingLearnerLessonFeedback,
+  type TeachingLearnerWeeklyReport,
   type TeachingTrainingAssignment,
   type TeachingTrainingAssignmentDetail,
   type TeachingTrainingAssignmentGoalMetric,
@@ -882,6 +887,94 @@ function weeklyReport(value: unknown): TeachingWeeklyReport {
   return { ...weeklyReportSummary(item), aggregate: weeklyReportAggregate(item.aggregate) };
 }
 
+function learningRelationship(value: unknown): TeachingLearningContext['relationships'][number] {
+  const item = record(value, 'learningContext.relationship');
+  const kind = enumValue(item.kind, ['student', 'guardian'] as const, 'learningContext.relationship.kind');
+  if (kind === 'student') return { kind };
+  return {
+    kind,
+    guardianLinkId: string(item.guardianLinkId, 'learningContext.relationship.guardianLinkId'),
+    relationship: string(item.relationship, 'learningContext.relationship.relationship'),
+  };
+}
+
+function learningContext(value: unknown): TeachingLearningContext {
+  const item = record(value, 'learningContext');
+  const organizationItem = record(item.organization, 'learningContext.organization');
+  const studentItem = record(item.student, 'learningContext.student');
+  if (!Array.isArray(item.relationships) || item.relationships.length === 0) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'learningContext.relationships is invalid');
+  }
+  return {
+    organization: {
+      slug: string(organizationItem.slug, 'learningContext.organization.slug'),
+      name: string(organizationItem.name, 'learningContext.organization.name'),
+    },
+    student: {
+      id: string(studentItem.id, 'learningContext.student.id'),
+      displayName: string(studentItem.displayName, 'learningContext.student.displayName'),
+    },
+    relationships: item.relationships.map(learningRelationship),
+  };
+}
+
+function learnerWeeklyReport(value: unknown, requireAggregate: boolean): TeachingLearnerWeeklyReport {
+  const item = record(value, 'learnerWeeklyReport');
+  const visibility = enumValue(
+    item.visibility,
+    ['student', 'student_and_guardians'] as const,
+    'learnerWeeklyReport.visibility',
+  );
+  if (item.status !== 'published') {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'learnerWeeklyReport.status is invalid');
+  }
+  if (requireAggregate && item.aggregate === undefined) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'learnerWeeklyReport.aggregate is invalid');
+  }
+  return {
+    id: string(item.id, 'learnerWeeklyReport.id'),
+    studentId: string(item.studentId, 'learnerWeeklyReport.studentId'),
+    studentDisplayNameSnapshot: string(item.studentDisplayNameSnapshot, 'learnerWeeklyReport.studentDisplayNameSnapshot'),
+    weekStart: string(item.weekStart, 'learnerWeeklyReport.weekStart'),
+    weekEnd: string(item.weekEnd, 'learnerWeeklyReport.weekEnd'),
+    timezoneSnapshot: string(item.timezoneSnapshot, 'learnerWeeklyReport.timezoneSnapshot'),
+    revision: integer(item.revision, 'learnerWeeklyReport.revision', 1),
+    status: 'published',
+    visibility,
+    teacherSummary: string(item.teacherSummary, 'learnerWeeklyReport.teacherSummary'),
+    nextWeekPlan: string(item.nextWeekPlan, 'learnerWeeklyReport.nextWeekPlan'),
+    publishedByDisplayNameSnapshot: string(item.publishedByDisplayNameSnapshot, 'learnerWeeklyReport.publishedByDisplayNameSnapshot'),
+    publishedByRoleSnapshot: enumValue(item.publishedByRoleSnapshot, WEEKLY_REPORT_AUTHOR_ROLES, 'learnerWeeklyReport.publishedByRoleSnapshot'),
+    publishedAt: string(item.publishedAt, 'learnerWeeklyReport.publishedAt'),
+    ...(item.aggregate === undefined ? {} : { aggregate: weeklyReportAggregate(item.aggregate) }),
+  };
+}
+
+function learnerLessonFeedback(value: unknown): TeachingLearnerLessonFeedback {
+  const item = record(value, 'learnerLessonFeedback');
+  return {
+    id: string(item.id, 'learnerLessonFeedback.id'),
+    sessionId: string(item.sessionId, 'learnerLessonFeedback.sessionId'),
+    studentId: string(item.studentId, 'learnerLessonFeedback.studentId'),
+    revision: integer(item.revision, 'learnerLessonFeedback.revision', 1),
+    visibility: enumValue(
+      item.visibility,
+      ['student', 'student_and_guardians'] as const,
+      'learnerLessonFeedback.visibility',
+    ),
+    summary: string(item.summary, 'learnerLessonFeedback.summary'),
+    strengths: nullableString(item.strengths, 'learnerLessonFeedback.strengths'),
+    challenges: nullableString(item.challenges, 'learnerLessonFeedback.challenges'),
+    nextGoals: nullableString(item.nextGoals, 'learnerLessonFeedback.nextGoals'),
+    studentDisplayNameSnapshot: string(item.studentDisplayNameSnapshot, 'learnerLessonFeedback.studentDisplayNameSnapshot'),
+    attendanceStatusSnapshot: enumValue(item.attendanceStatusSnapshot, TEACHING_ATTENDANCE_STATUSES, 'learnerLessonFeedback.attendanceStatusSnapshot'),
+    authorDisplayNameSnapshot: string(item.authorDisplayNameSnapshot, 'learnerLessonFeedback.authorDisplayNameSnapshot'),
+    authorRoleSnapshot: enumValue(item.authorRoleSnapshot, WEEKLY_REPORT_AUTHOR_ROLES, 'learnerLessonFeedback.authorRoleSnapshot'),
+    publishedAt: string(item.publishedAt, 'learnerLessonFeedback.publishedAt'),
+    createdAt: string(item.createdAt, 'learnerLessonFeedback.createdAt'),
+  };
+}
+
 function bindingInvite(value: unknown): TeachingStudentAccountBindingInvite {
   const item = record(value, 'bindingInvite');
   return {
@@ -1678,6 +1771,111 @@ export async function consumeTeachingStudentAccountBinding(
       accountLinkedAt: string(linkedStudent.accountLinkedAt, 'binding consume.student.accountLinkedAt'),
     },
   };
+}
+
+export async function previewTeachingGuardianAccountBinding(
+  token: string,
+): Promise<TeachingGuardianAccountBindingPreview> {
+  const item = record(
+    await postWithoutIdempotency('/v1/teaching/me/guardian-account-binding/preview', { token }),
+    'guardian binding preview',
+  );
+  return {
+    organizationName: string(item.organizationName, 'guardian binding preview.organizationName'),
+    studentDisplayName: string(item.studentDisplayName, 'guardian binding preview.studentDisplayName'),
+    relationship: string(item.relationship, 'guardian binding preview.relationship'),
+    expiresAt: string(item.expiresAt, 'guardian binding preview.expiresAt'),
+  };
+}
+
+export async function consumeTeachingGuardianAccountBinding(
+  token: string,
+): Promise<TeachingGuardianAccountBindingConsumed> {
+  const item = record(
+    await postWithoutIdempotency('/v1/teaching/me/guardian-account-binding/consume', { token }),
+    'guardian binding consume',
+  );
+  const invite = record(item.invite, 'guardian binding consume.invite');
+  const guardian = record(item.guardian, 'guardian binding consume.guardian');
+  return {
+    invite: {
+      id: string(invite.id, 'guardian binding consume.invite.id'),
+      status: enumValue(invite.status, ['consumed'] as const, 'guardian binding consume.invite.status'),
+      expiresAt: string(invite.expiresAt, 'guardian binding consume.invite.expiresAt'),
+      consumedAt: string(invite.consumedAt, 'guardian binding consume.invite.consumedAt'),
+      createdAt: string(invite.createdAt, 'guardian binding consume.invite.createdAt'),
+    },
+    guardian: {
+      guardianLinkId: string(guardian.guardianLinkId, 'guardian binding consume.guardian.guardianLinkId'),
+      studentId: string(guardian.studentId, 'guardian binding consume.guardian.studentId'),
+      organizationName: string(guardian.organizationName, 'guardian binding consume.guardian.organizationName'),
+      studentDisplayName: string(guardian.studentDisplayName, 'guardian binding consume.guardian.studentDisplayName'),
+      relationship: string(guardian.relationship, 'guardian binding consume.guardian.relationship'),
+      accountLinkedAt: string(guardian.accountLinkedAt, 'guardian binding consume.guardian.accountLinkedAt'),
+    },
+  };
+}
+
+function learningContextsEnvelope(value: unknown): TeachingLearningContext[] {
+  const envelope = record(value, 'learningContexts');
+  if (!Array.isArray(envelope.learningContexts)) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'learningContexts response is invalid');
+  }
+  return envelope.learningContexts.map(learningContext);
+}
+
+export async function listTeachingLearningContexts(): Promise<TeachingLearningContext[]> {
+  return learningContextsEnvelope(await request('/v1/teaching/me/learning-contexts'));
+}
+
+export async function listTeachingOrganizationLearningContexts(
+  orgSlug: string,
+): Promise<TeachingLearningContext[]> {
+  return learningContextsEnvelope(await request(orgPath(orgSlug, '/me/students')));
+}
+
+export async function listLearnerTeachingWeeklyReports(
+  orgSlug: string,
+  studentId: string,
+  pageNumber = 1,
+  pageSize = 25,
+): Promise<TeachingPage<TeachingLearnerWeeklyReport>> {
+  return page(
+    await request(orgPath(
+      orgSlug,
+      `/me/students/${encodeURIComponent(studentId)}/weekly-reports${pageQuery(pageNumber, pageSize)}`,
+    )),
+    'weeklyReports',
+    (value) => learnerWeeklyReport(value, false),
+  );
+}
+
+export async function getLearnerTeachingWeeklyReport(
+  orgSlug: string,
+  studentId: string,
+  reportId: string,
+): Promise<TeachingLearnerWeeklyReport> {
+  const envelope = record(await request(orgPath(
+    orgSlug,
+    `/me/students/${encodeURIComponent(studentId)}/weekly-reports/${encodeURIComponent(reportId)}`,
+  )), 'learner weekly report');
+  return learnerWeeklyReport(envelope.weeklyReport, true);
+}
+
+export async function listLearnerTeachingLessonFeedback(
+  orgSlug: string,
+  studentId: string,
+  pageNumber = 1,
+  pageSize = 25,
+): Promise<TeachingPage<TeachingLearnerLessonFeedback>> {
+  return page(
+    await request(orgPath(
+      orgSlug,
+      `/me/students/${encodeURIComponent(studentId)}/lesson-feedback${pageQuery(pageNumber, pageSize)}`,
+    )),
+    'feedback',
+    learnerLessonFeedback,
+  );
 }
 
 export async function listSelfTeachingTrainingAssignments(
