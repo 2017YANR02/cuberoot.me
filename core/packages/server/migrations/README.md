@@ -36,6 +36,8 @@ PostgreSQL schema 变更的 source of truth。`apply_migrations.sh` 会在部署
 
 训练底座增量 `0150_teaching_training_foundation.sql` 的升级基线是已应用至 `0149_teaching_campuses_groups_assignments.sql` 的现有数据库。它为既有学员账号关联补记非未来的关联时间，新增版本化模板、任务目标快照、只追加证据与批改、可信来源每日汇总和只存哈希的账号绑定邀请，并把永久关系锁扩展到证据自然键。该 migration 只建立数据库与共享契约，不开放半成品业务路由；不能把 `0150` 当作空库初始化脚本单独执行。
 
+课后反馈增量 `0154_teaching_lesson_feedback.sql` 的升级基线是已应用至 `0153_oll_docx_import.sql` 的现有数据库。它为已完课课堂增加按学员修订的只追加反馈历史，保留出勤、扣课和作者快照；作者账号删除时只清活动引用，历史正文不可更新或删除。
+
 ## 已应用 migration 不能改
 
 `apply_migrations.sh` 会把每个文件的 SHA-256 写入 ledger。已应用文件的摘要发生变化时会终止执行。修正已上线结构只能新增 migration；需要恢复数据时使用已验证的备份。

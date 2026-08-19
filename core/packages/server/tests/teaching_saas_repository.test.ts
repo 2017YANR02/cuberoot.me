@@ -917,4 +917,61 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(schema).toMatch(/CREATE TABLE teaching_idempotency_requests[\s\S]*?operation\s+VARCHAR\(100\) NOT NULL/);
     expect(schema).toMatch(/CREATE TABLE teaching_mutation_rate_limits[\s\S]*?operation\s+VARCHAR\(100\) NOT NULL/);
   });
+
+  it('conceals assigned-session feedback reads and paginates only after scope checks', async () => {
+    const source = await teachingRouteSource();
+    const list = sourceBetween(
+      source,
+      'async listLessonFeedback(',
+      '\n  async createSession(',
+    );
+    const access = list.indexOf('accessForRead(actor.userId, slug)');
+    const permission = list.indexOf("requireSessionScope(access, 'feedback:read')", access);
+    const assignedScope = list.indexOf('FROM session_teachers assigned', permission);
+    const conceal = list.indexOf('ConcealedTeachingPermissionDeniedException', assignedScope);
+    const count = list.indexOf('SELECT COUNT(*)::int AS count', conceal);
+    const items = list.indexOf('ORDER BY created_at DESC, revision DESC, id DESC', count);
+    const pagination = list.indexOf('LIMIT ? OFFSET ?', items);
+    expect(access).toBeGreaterThan(-1);
+    expect(permission).toBeGreaterThan(access);
+    expect(assignedScope).toBeGreaterThan(permission);
+    expect(conceal).toBeGreaterThan(assignedScope);
+    expect(count).toBeGreaterThan(conceal);
+    expect(items).toBeGreaterThan(count);
+    expect(pagination).toBeGreaterThan(items);
+  });
+
+  it('locks completed-session attendance before appending idempotent lesson feedback', async () => {
+    const source = await teachingRouteSource();
+    const create = sourceBetween(
+      source,
+      'async createLessonFeedback(',
+      '\n};',
+    );
+    const rateLimit = create.indexOf('consumeMutationAttempt(');
+    const transaction = create.indexOf('sql.begin(', rateLimit);
+    const access = create.indexOf('accessForWrite(', transaction);
+    const permission = create.indexOf("requireSessionScope(access, 'feedback:manage')", access);
+    const sessionLock = create.indexOf('FOR UPDATE OF session', permission);
+    const idempotency = create.indexOf('beginIdempotency(', sessionLock);
+    const replay = create.indexOf("if ('replay' in idem) return idem.replay", idempotency);
+    const completed = create.indexOf("sessions[0].status !== 'completed'", replay);
+    const attendanceLock = create.indexOf('FROM attendance_records', completed);
+    const insert = create.indexOf('INSERT INTO lesson_feedback (', attendanceLock);
+    const audit = create.indexOf("'lesson_feedback.create', 'lesson_feedback'", insert);
+    const complete = create.indexOf('completeIdempotency(', audit);
+    expect(rateLimit).toBeGreaterThan(-1);
+    expect(transaction).toBeGreaterThan(rateLimit);
+    expect(access).toBeGreaterThan(transaction);
+    expect(permission).toBeGreaterThan(access);
+    expect(sessionLock).toBeGreaterThan(permission);
+    expect(idempotency).toBeGreaterThan(sessionLock);
+    expect(replay).toBeGreaterThan(idempotency);
+    expect(completed).toBeGreaterThan(replay);
+    expect(attendanceLock).toBeGreaterThan(completed);
+    expect(create.indexOf('FOR UPDATE', attendanceLock)).toBeGreaterThan(attendanceLock);
+    expect(insert).toBeGreaterThan(attendanceLock);
+    expect(audit).toBeGreaterThan(insert);
+    expect(complete).toBeGreaterThan(audit);
+  });
 });

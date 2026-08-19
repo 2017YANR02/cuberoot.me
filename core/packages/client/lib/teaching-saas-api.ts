@@ -2,6 +2,7 @@ import {
   TEACHING_ATTENDANCE_STATUSES,
   TEACHING_CAMPUS_STATUSES,
   TEACHING_CREDIT_UNITS,
+  TEACHING_FEEDBACK_VISIBILITIES,
   TEACHING_GROUP_STATUSES,
   TEACHING_MEMBER_STATUSES,
   TEACHING_ORGANIZATION_ROLES,
@@ -23,6 +24,7 @@ import {
   type TeachingAttendanceStatus,
   type TeachingCampus,
   type TeachingCreditUnit,
+  type TeachingFeedbackVisibility,
   type TeachingGroup,
   type TeachingMemberStatus,
   type TeachingOrganizationRole,
@@ -204,6 +206,28 @@ export interface TeachingSessionCompletion {
     attendanceCount: number;
     totalCredits: number;
   };
+}
+
+export interface TeachingLessonFeedback {
+  id: string;
+  sessionId: string;
+  studentId: string;
+  revision: number;
+  visibility: TeachingFeedbackVisibility;
+  summary: string;
+  strengths: string | null;
+  challenges: string | null;
+  nextGoals: string | null;
+  internalNotes: string | null;
+  studentDisplayNameSnapshot: string;
+  attendanceStatusSnapshot: TeachingAttendanceStatus;
+  creditCostSnapshot: number;
+  authorUserId: number | null;
+  authorUserIdSnapshot: number;
+  authorDisplayNameSnapshot: string;
+  authorRoleSnapshot: TeachingOrganizationRole;
+  publishedAt: string | null;
+  createdAt: string;
 }
 
 export class TeachingApiError extends Error {
@@ -477,6 +501,31 @@ function attendance(value: unknown): TeachingAttendance {
     creditCost: integer(item.creditCost, 'attendance.creditCost', 1),
     notes: string(item.notes, 'attendance.notes'),
     updatedAt: string(item.updatedAt, 'attendance.updatedAt'),
+  };
+}
+
+function lessonFeedback(value: unknown): TeachingLessonFeedback {
+  const item = record(value, 'lesson feedback');
+  return {
+    id: string(item.id, 'lesson feedback.id'),
+    sessionId: string(item.sessionId, 'lesson feedback.sessionId'),
+    studentId: string(item.studentId, 'lesson feedback.studentId'),
+    revision: integer(item.revision, 'lesson feedback.revision', 1),
+    visibility: enumValue(item.visibility, TEACHING_FEEDBACK_VISIBILITIES, 'lesson feedback.visibility'),
+    summary: string(item.summary, 'lesson feedback.summary'),
+    strengths: nullableString(item.strengths, 'lesson feedback.strengths'),
+    challenges: nullableString(item.challenges, 'lesson feedback.challenges'),
+    nextGoals: nullableString(item.nextGoals, 'lesson feedback.nextGoals'),
+    internalNotes: nullableString(item.internalNotes, 'lesson feedback.internalNotes'),
+    studentDisplayNameSnapshot: string(item.studentDisplayNameSnapshot, 'lesson feedback.studentDisplayNameSnapshot'),
+    attendanceStatusSnapshot: enumValue(item.attendanceStatusSnapshot, TEACHING_ATTENDANCE_STATUSES, 'lesson feedback.attendanceStatusSnapshot'),
+    creditCostSnapshot: integer(item.creditCostSnapshot, 'lesson feedback.creditCostSnapshot'),
+    authorUserId: nullableInteger(item.authorUserId, 'lesson feedback.authorUserId', 1),
+    authorUserIdSnapshot: integer(item.authorUserIdSnapshot, 'lesson feedback.authorUserIdSnapshot', 1),
+    authorDisplayNameSnapshot: string(item.authorDisplayNameSnapshot, 'lesson feedback.authorDisplayNameSnapshot'),
+    authorRoleSnapshot: enumValue(item.authorRoleSnapshot, TEACHING_ORGANIZATION_ROLES, 'lesson feedback.authorRoleSnapshot'),
+    publishedAt: nullableString(item.publishedAt, 'lesson feedback.publishedAt'),
+    createdAt: string(item.createdAt, 'lesson feedback.createdAt'),
   };
 }
 
@@ -1086,6 +1135,44 @@ export async function completeTeachingSession(
       totalCredits: integer(consumption.totalCredits, 'session consumption.totalCredits'),
     },
   };
+}
+
+export async function listTeachingLessonFeedback(
+  orgSlug: string,
+  sessionId: string,
+  pageNumber = 1,
+  pageSize = 100,
+): Promise<TeachingPage<TeachingLessonFeedback>> {
+  return page(
+    await request(orgPath(orgSlug, `/sessions/${encodeURIComponent(sessionId)}/feedback${pageQuery(pageNumber, pageSize)}`)),
+    'feedback',
+    lessonFeedback,
+  );
+}
+
+export async function createTeachingLessonFeedback(
+  orgSlug: string,
+  sessionId: string,
+  studentId: string,
+  input: {
+    visibility: TeachingFeedbackVisibility;
+    summary: string;
+    strengths?: string | null;
+    challenges?: string | null;
+    nextGoals?: string | null;
+    internalNotes?: string | null;
+  },
+  idempotencyKey: string,
+): Promise<TeachingLessonFeedback> {
+  const envelope = record(
+    await post(
+      orgPath(orgSlug, `/sessions/${encodeURIComponent(sessionId)}/students/${encodeURIComponent(studentId)}/feedback`),
+      input,
+      idempotencyKey,
+    ),
+    'lesson feedback create',
+  );
+  return lessonFeedback(envelope.feedback);
 }
 
 export async function listTeachingTrainingTemplates(

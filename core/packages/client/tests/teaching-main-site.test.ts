@@ -71,8 +71,13 @@ describe('main-site teaching architecture', () => {
     expect(studentDetail).toContain('prefetch={false}');
     expect(sessionList).toContain("hasTeachingPermission(role, 'session:create')");
     expect(sessionDetail).toContain("hasTeachingPermission(role, 'session:manage')");
+    expect(sessionDetail).toContain("hasTeachingPermission(role, 'feedback:read')");
+    expect(sessionDetail).toContain("hasTeachingPermission(role, 'feedback:manage')");
     expect(sessionDetail).toContain('saveTeachingAttendanceBatch');
     expect(sessionDetail).toContain('completeTeachingSession');
+    expect(sessionDetail).toContain('listTeachingLessonFeedback');
+    expect(sessionDetail).toContain('createTeachingLessonFeedback');
+    expect(sessionDetail).toContain("session.status !== 'completed'");
     expect(sessionDetail).toContain('<AppLink');
     expect(sessionDetail).not.toContain('router.push');
   });

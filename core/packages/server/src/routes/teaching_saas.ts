@@ -18,10 +18,12 @@ import {
   TRAINING_EVIDENCE_MAX_BODY_BYTES,
   TEACHING_ATTENDANCE_STATUSES,
   TEACHING_CREDIT_UNITS,
+  TEACHING_FEEDBACK_VISIBILITIES,
   TEACHING_PACKAGE_ACQUISITION_TYPES,
   type TeachingErrorCode,
   type TeachingAttendanceStatus,
   type TeachingCreditUnit,
+  type TeachingFeedbackVisibility,
   type TeachingPackageAcquisitionType,
   type TeachingOrganizationRole,
   type TeachingPermission,
@@ -52,6 +54,7 @@ type MutationStatus = 200 | 201;
 type Tx = postgres.TransactionSql;
 
 const TRAINING_REVIEW_CREATE_OPERATION = 'training.review.create';
+const LESSON_FEEDBACK_CREATE_OPERATION = 'lesson.feedback.create';
 
 interface OrganizationAccess {
   id: string;
@@ -153,6 +156,15 @@ interface AttendanceBatchInput {
     attendanceId: string;
     status: Exclude<TeachingAttendanceStatus, 'expected'>;
   }>;
+}
+
+interface CreateLessonFeedbackInput {
+  visibility: TeachingFeedbackVisibility;
+  summary: string;
+  strengths: string | null;
+  challenges: string | null;
+  nextGoals: string | null;
+  internalNotes: string | null;
 }
 
 interface PageInput {
@@ -296,6 +308,13 @@ export interface TeachingSaasRepository {
   ): Promise<PageResult>;
   listSessions(actor: TeachingActor, slug: string, pagination: PageInput, requestId: string): Promise<PageResult>;
   getSession(actor: TeachingActor, slug: string, sessionId: string, requestId: string): Promise<JsonObject>;
+  listLessonFeedback(
+    actor: TeachingActor,
+    slug: string,
+    sessionId: string,
+    pagination: PageInput,
+    requestId: string,
+  ): Promise<PageResult>;
   createSession(
     actor: TeachingActor,
     slug: string,
@@ -317,6 +336,16 @@ export interface TeachingSaasRepository {
     actor: TeachingActor,
     slug: string,
     sessionId: string,
+    idempotencyKey: string,
+    requestHash: string,
+    requestId: string,
+  ): Promise<MutationResult>;
+  createLessonFeedback(
+    actor: TeachingActor,
+    slug: string,
+    sessionId: string,
+    studentId: string,
+    input: CreateLessonFeedbackInput,
     idempotencyKey: string,
     requestHash: string,
     requestId: string,
@@ -909,6 +938,25 @@ function parseAttendanceBatchInput(body: JsonObject): AttendanceBatchInput {
   return { records };
 }
 
+function parseLessonFeedbackInput(body: JsonObject): CreateLessonFeedbackInput {
+  assertOnlyKeys(
+    body,
+    ['visibility', 'summary', 'strengths', 'challenges', 'nextGoals', 'internalNotes'],
+    'lesson feedback input',
+  );
+  if (!TEACHING_FEEDBACK_VISIBILITIES.includes(body.visibility as TeachingFeedbackVisibility)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'visibility is not supported');
+  }
+  return {
+    visibility: body.visibility as TeachingFeedbackVisibility,
+    summary: requiredString(body, 'summary', 2_000),
+    strengths: optionalString(body, 'strengths', 4_000),
+    challenges: optionalString(body, 'challenges', 4_000),
+    nextGoals: optionalString(body, 'nextGoals', 4_000),
+    internalNotes: optionalString(body, 'internalNotes', 4_000),
+  };
+}
+
 function parseTrainingTemplateInput(body: JsonObject): CreateTrainingTemplateInput {
   assertOnlyKeys(body, ['name', 'description'], 'training template input');
   const description = body.description;
@@ -1081,7 +1129,7 @@ type SessionAccessScope = 'organization' | 'assigned';
 
 function requireSessionScope(
   access: OrganizationAccess,
-  permission: 'session:read' | 'session:manage',
+  permission: 'session:read' | 'session:manage' | 'feedback:read' | 'feedback:manage',
 ): SessionAccessScope {
   requirePermission(access, permission);
   if (access.role === 'owner' || access.role === 'admin') return 'organization';
@@ -1330,6 +1378,30 @@ function hasOrganizationCrmScope(role: TeachingOrganizationRole): boolean {
 
 function iso(value: unknown): string {
   return value instanceof Date ? value.toISOString() : new Date(String(value)).toISOString();
+}
+
+function lessonFeedbackToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    sessionId: String(row.session_id),
+    studentId: String(row.student_id),
+    revision: Number(row.revision),
+    visibility: String(row.visibility),
+    summary: String(row.summary),
+    strengths: row.strengths == null ? null : String(row.strengths),
+    challenges: row.challenges == null ? null : String(row.challenges),
+    nextGoals: row.next_goals == null ? null : String(row.next_goals),
+    internalNotes: row.internal_notes == null ? null : String(row.internal_notes),
+    studentDisplayNameSnapshot: String(row.student_display_name_snapshot),
+    attendanceStatusSnapshot: String(row.attendance_status_snapshot),
+    creditCostSnapshot: Number(row.credit_cost_snapshot),
+    authorUserId: row.author_user_id == null ? null : Number(row.author_user_id),
+    authorUserIdSnapshot: Number(row.author_user_id_snapshot),
+    authorDisplayNameSnapshot: String(row.author_display_name_snapshot),
+    authorRoleSnapshot: String(row.author_role_snapshot),
+    publishedAt: row.published_at == null ? null : iso(row.published_at),
+    createdAt: iso(row.created_at),
+  };
 }
 
 function studentToJson(row: Record<string, unknown>): JsonObject {
@@ -3699,6 +3771,62 @@ export const teachingSaasRepository: TeachingSaasRepository = {
     });
   },
 
+  async listLessonFeedback(actor, slug, sessionId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'lesson_feedback.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      const scope = requireSessionScope(access, 'feedback:read');
+      const sessions = scope === 'organization'
+        ? await query<Record<string, unknown>>(
+            'SELECT 1 FROM teaching_sessions WHERE organization_id = ? AND id = ?',
+            [access.id, sessionId],
+          )
+        : await query<Record<string, unknown>>(
+            `SELECT 1
+             FROM teaching_sessions session
+             WHERE session.organization_id = ? AND session.id = ?
+               AND EXISTS (
+                 SELECT 1 FROM session_teachers assigned
+                 WHERE assigned.organization_id = session.organization_id
+                   AND assigned.session_id = session.id
+                   AND assigned.teacher_user_id = ?
+               )`,
+            [access.id, sessionId, actor.userId],
+          );
+      if (!sessions.length) {
+        if (scope === 'assigned') {
+          const existing = await query<Record<string, unknown>>(
+            'SELECT 1 FROM teaching_sessions WHERE organization_id = ? AND id = ?',
+            [access.id, sessionId],
+          );
+          if (existing.length) throw new ConcealedTeachingPermissionDeniedException('Session not found');
+        }
+        throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found');
+      }
+      const [countRows, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          `SELECT COUNT(*)::int AS count
+           FROM lesson_feedback
+           WHERE organization_id = ? AND session_id = ?`,
+          [access.id, sessionId],
+        ),
+        query<Record<string, unknown>>(
+          `SELECT *
+           FROM lesson_feedback
+           WHERE organization_id = ? AND session_id = ?
+           ORDER BY created_at DESC, revision DESC, id DESC
+           LIMIT ? OFFSET ?`,
+          [access.id, sessionId, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map(lessonFeedbackToJson),
+        total: Number(countRows[0]?.count ?? 0),
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+      };
+    });
+  },
+
   async createSession(actor, slug, input, idempotencyKey, requestHash, requestId) {
     return withDeniedAccessAudit(actor, slug, 'session.create', requestId, async () => {
       await consumeMutationAttempt(actor.userId, 'session.create', 120, '1 minute');
@@ -5572,6 +5700,102 @@ export const teachingSaasRepository: TeachingSaasRepository = {
       }) as MutationResult;
     });
   },
+
+  async createLessonFeedback(
+    actor, slug, sessionId, studentId, input, idempotencyKey, requestHash, requestId,
+  ) {
+    return withDeniedAccessAudit(actor, slug, 'lesson_feedback.create', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, LESSON_FEEDBACK_CREATE_OPERATION, 120, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          const scope = requireSessionScope(access, 'feedback:manage');
+          const sessions = scope === 'organization'
+            ? await tx`
+                SELECT session.id, session.status
+                FROM teaching_sessions session
+                WHERE session.organization_id = ${access.id} AND session.id = ${sessionId}
+                FOR UPDATE OF session`
+            : await tx`
+                SELECT session.id, session.status
+                FROM teaching_sessions session
+                WHERE session.organization_id = ${access.id} AND session.id = ${sessionId}
+                  AND EXISTS (
+                    SELECT 1 FROM session_teachers assigned
+                    WHERE assigned.organization_id = session.organization_id
+                      AND assigned.session_id = session.id
+                      AND assigned.teacher_user_id = ${actor.userId}
+                  )
+                FOR UPDATE OF session`;
+          if (!sessions.length) {
+            if (scope === 'assigned') {
+              const existing = await tx`
+                SELECT 1 FROM teaching_sessions
+                WHERE organization_id = ${access.id} AND id = ${sessionId}`;
+              if (existing.length) throw new ConcealedTeachingPermissionDeniedException('Session not found');
+            }
+            throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found');
+          }
+          const idem = await beginIdempotency(
+            tx,
+            actor.userId,
+            access.id,
+            LESSON_FEEDBACK_CREATE_OPERATION,
+            idempotencyKey,
+            requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          if (sessions[0].status !== 'completed') {
+            throw new TeachingApiException('CONFLICT', 409, 'Lesson feedback requires a completed session');
+          }
+          const attendance = await tx`
+            SELECT 1
+            FROM attendance_records
+            WHERE organization_id = ${access.id}
+              AND session_id = ${sessionId}
+              AND student_id = ${studentId}
+            FOR UPDATE`;
+          if (!attendance.length) {
+            throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session attendance not found');
+          }
+          const rows = await tx`
+            INSERT INTO lesson_feedback (
+              organization_id, session_id, student_id, visibility,
+              summary, strengths, challenges, next_goals, internal_notes,
+              author_user_id
+            ) VALUES (
+              ${access.id}, ${sessionId}, ${studentId}, ${input.visibility},
+              ${input.summary}, ${input.strengths}, ${input.challenges},
+              ${input.nextGoals}, ${input.internalNotes}, ${actor.userId}
+            )
+            RETURNING *`;
+          const feedback = lessonFeedbackToJson(rows[0] as Record<string, unknown>);
+          const feedbackId = String(rows[0].id);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'lesson_feedback.create', 'lesson_feedback', ${feedbackId}, ${requestId},
+              ${sql.json({
+                sessionId,
+                studentId,
+                revision: Number(rows[0].revision),
+                visibility: input.visibility,
+              })}
+            )`;
+          const result: MutationResult = { status: 201, body: { feedback } };
+          await completeIdempotency(tx, idem.id, result, 'lesson_feedback', feedbackId);
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Lesson feedback could not be created');
+      }
+    });
+  },
 };
 
 function errorResponse(c: Context, error: unknown, requestId: string): Response {
@@ -6478,6 +6702,49 @@ export function createTeachingSaasRoutes(deps: {
       const result = await repository.completeSession(
         actor, c.req.param('orgSlug'), uuidParam(c.req.param('sessionId'), 'sessionId'),
         key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/sessions/:sessionId/feedback', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listLessonFeedback(
+        actor,
+        c.req.param('orgSlug'),
+        uuidParam(c.req.param('sessionId'), 'sessionId'),
+        paginationOf(c),
+        requestId,
+      );
+      return c.json({ feedback: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/sessions/:sessionId/students/:studentId/feedback', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const body = await jsonBody(c);
+      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+      const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+      const result = await repository.createLessonFeedback(
+        actor,
+        c.req.param('orgSlug'),
+        sessionId,
+        studentId,
+        parseLessonFeedbackInput(body.value),
+        key,
+        sha256(JSON.stringify([sessionId, studentId, body.raw])),
+        requestId,
       );
       return c.json(result.body, result.status);
     } catch (error) {
