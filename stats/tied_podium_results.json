@@ -2,8 +2,8 @@
   "id": "tied_podium_results",
   "title": "Identical Final Podium Results",
   "titleZh": "决赛前三名同分",
-  "note": "Found 2 final podiums where the official 1st, 2nd and 3rd places had the same valid average. Fewest Moves is excluded.",
-  "noteZh": "历史上共找到 2 次：WCA 决赛官方第 1、2、3 名三人的有效平均完全相同。不含最少步。",
+  "note": "Found 2 final podiums with an identical valid average and 1 with an identical valid single for the official 1st, 2nd and 3rd places. Fewest Moves is excluded. This checked-in snapshot uses the WCA export dated 2026-05-16.",
+  "noteZh": "WCA 决赛官方第 1、2、3 名三人的有效成绩完全相同：平均 2 次，单次 1 次。不含最少步。当前静态数据使用 2026-05-16 的 WCA 导出。",
   "header": [
     {
       "key": "result",
@@ -60,6 +60,19 @@
           "[Dániel Varga](https://www.worldcubeassociation.org/persons/2008VARG01)",
           "[Norbert Héjja](https://www.worldcubeassociation.org/persons/2008HEJJ01)",
           "[Hungarian Open 2009](https://www.worldcubeassociation.org/competitions/HungarianOpen2009)"
+        ]
+      ]
+    },
+    {
+      "title": "2x2x2 Cube - Single",
+      "titleZh": "二阶魔方 - 单次",
+      "rows": [
+        [
+          "4.34",
+          "[AJ Blair](https://www.worldcubeassociation.org/persons/2009BLAI01)",
+          "[Jackson Warley](https://www.worldcubeassociation.org/persons/2008WARL01)",
+          "[Andy Denney](https://www.worldcubeassociation.org/persons/2013DENN01)",
+          "[Colorado Springs 2013](https://www.worldcubeassociation.org/competitions/ColoradoSprings2013)"
         ]
       ]
     }
