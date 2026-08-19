@@ -8,6 +8,7 @@ export default function AlgPlaybackControls({
   count,
   playing,
   onStepChange,
+  onScrub,
   onPlayingChange,
   mode = 'full',
   onReplay,
@@ -16,6 +17,7 @@ export default function AlgPlaybackControls({
   count: number;
   playing: boolean;
   onStepChange: (step: number) => void;
+  onScrub?: (step: number) => void;
   onPlayingChange: (playing: boolean) => void;
   mode?: 'full' | 'replay';
   onReplay?: () => void;
@@ -25,6 +27,10 @@ export default function AlgPlaybackControls({
   const seek = (next: number) => {
     onPlayingChange(false);
     onStepChange(Math.max(0, Math.min(count, next)));
+  };
+  const scrub = (next: number) => {
+    onPlayingChange(false);
+    (onScrub ?? onStepChange)(Math.max(0, Math.min(count, next)));
   };
 
   if (mode === 'replay') {
@@ -79,7 +85,7 @@ export default function AlgPlaybackControls({
         min={0}
         max={count}
         value={step}
-        onChange={(event) => seek(Number(event.target.value))}
+        onChange={(event) => scrub(Number(event.target.value))}
         aria-label={t('进度', 'Progress')}
       />
       <span className="alg-sim-count">{step}/{count}</span>

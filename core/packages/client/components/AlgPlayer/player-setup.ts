@@ -33,6 +33,18 @@ export function resolveSimMoveDurationScale(puzzle: AlgPuzzle, move: string): nu
   return 2 - 2 / (magnitude + 1);
 }
 
+export function shouldAnimatePreviewStep(
+  last: { setupAlg: string; step: number } | null,
+  setupAlg: string,
+  step: number,
+  instantSeek: boolean,
+): boolean {
+  return !instantSeek
+    && last?.setupAlg === setupAlg
+    && step === last.step + 1
+    && step > 0;
+}
+
 export function resolvePreviewTiming(moveDurationMs?: number, durationScale = 1): { frames: number; stepMs: number } {
   if (moveDurationMs === undefined || !Number.isFinite(moveDurationMs) || moveDurationMs <= 0) {
     return DEFAULT_PREVIEW_TIMING;

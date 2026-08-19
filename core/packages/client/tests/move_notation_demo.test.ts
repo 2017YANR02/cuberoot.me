@@ -116,6 +116,34 @@ describe('MoveNotationDemo player lifecycle', () => {
     expect(onReplay).toHaveBeenCalledOnce();
   });
 
+  it('routes timeline dragging through the instant scrub callback', async () => {
+    const onStepChange = vi.fn();
+    const onScrub = vi.fn();
+    const onPlayingChange = vi.fn();
+    await act(async () => {
+      root.render(createElement(AlgPlaybackControls, {
+        step: 0,
+        count: 7,
+        playing: false,
+        onStepChange,
+        onScrub,
+        onPlayingChange,
+      }));
+    });
+
+    const range = host.querySelector<HTMLInputElement>('input[type="range"]');
+    expect(range).not.toBeNull();
+    await act(async () => {
+      const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+      valueSetter?.call(range, '4');
+      range?.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    expect(onPlayingChange).toHaveBeenCalledWith(false);
+    expect(onScrub).toHaveBeenCalledWith(4);
+    expect(onStepChange).not.toHaveBeenCalled();
+  });
+
   it('can omit playback controls while preserving click-to-play requests', async () => {
     await act(async () => {
       root.render(createElement(MoveNotationDemo, {
