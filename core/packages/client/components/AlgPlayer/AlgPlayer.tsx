@@ -83,8 +83,10 @@ const SIM_SUPPORTED = new Set<AlgPuzzle>([
   '2x2', '3x3', '4x4', '5x5', 'sq1', 'pyraminx', 'skewb',
 ]);
 
+/** EIF macros expand to several physical turns, so the FTO engine uses a shorter beat. */
+const DEFAULT_FTO_MOVE_DURATION_MS = 320;
+
 const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, ref) {
-  const moveDurationMs = props.moveDurationMs ?? DEFAULT_ALG_MOVE_DURATION_MS;
   if (props.puzzle === 'fto') {
     return (
       <FtoEifAlgPlayer
@@ -96,12 +98,13 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         playRequest={props.playRequest}
         loop={props.loop}
         controlMode={props.controlMode}
-        moveDurationMs={moveDurationMs}
+        moveDurationMs={props.moveDurationMs ?? DEFAULT_FTO_MOVE_DURATION_MS}
         size={props.size}
         fillPane={props.fillPane}
       />
     );
   }
+  const moveDurationMs = props.moveDurationMs ?? DEFAULT_ALG_MOVE_DURATION_MS;
   const requestedEngine = props.engine ?? (SIM_SUPPORTED.has(props.puzzle) ? 'sim' : 'twisty');
   const useSim = requestedEngine === 'sim' && SIM_SUPPORTED.has(props.puzzle);
   if (useSim) {

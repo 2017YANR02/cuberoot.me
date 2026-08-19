@@ -278,6 +278,81 @@
   line-height: 1.5;
 }
 
+.alg-fto-notation-intro {
+  max-width: 760px;
+  margin: 14px 0 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.alg-fto-notation-rules {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 30px 42px;
+  margin-top: 38px;
+}
+
+.alg-fto-notation-rules section {
+  min-width: 0;
+}
+
+.alg-fto-notation-rules h2 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 18px;
+}
+
+.alg-fto-notation-rules p {
+  margin: 7px 0 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.alg-fto-notation-codes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 15px;
+  margin-top: 12px;
+}
+
+.alg-fto-notation-codes code {
+  color: var(--foreground);
+  font-size: 14px;
+}
+
+.alg-fto-macro-rule {
+  grid-column: 1 / -1;
+}
+
+.alg-fto-macro-list {
+  margin: 13px 0 0;
+}
+
+.alg-fto-macro-list > div {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
+  padding-block: 5px;
+}
+
+.alg-fto-macro-list dt,
+.alg-fto-macro-list dd {
+  margin: 0;
+}
+
+.alg-fto-macro-list dd {
+  min-width: 0;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.alg-fto-macro-list code {
+  font-size: 12px;
+}
+
 @media (max-width: 720px) {
   .alg-notation-shell {
     padding: 22px 16px 40px;
@@ -294,7 +369,8 @@
   }
 
   .alg-mnemonic-sections,
-  .alg-mnemonic-rules {
+  .alg-mnemonic-rules,
+  .alg-fto-notation-rules {
     grid-template-columns: 1fr;
   }
 
@@ -304,6 +380,15 @@
 
   .alg-notation-reference {
     min-block-size: 44px;
+  }
+
+  .alg-fto-notation-rules {
+    gap: 26px;
+    margin-top: 32px;
+  }
+
+  .alg-fto-macro-rule {
+    grid-column: auto;
   }
 }
 

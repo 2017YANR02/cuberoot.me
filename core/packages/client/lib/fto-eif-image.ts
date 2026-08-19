@@ -23,12 +23,12 @@ export const FTO_EIF_FACE_LABELS: Record<FtoEifFaceKey, string> = {
   u: 'U', f: 'F', r: 'R', l: 'L', d: 'D', e: 'Bl', i: 'Br', b: 'B',
 };
 
-const BASE_MOVES = ['R', 'U', 'F', 'L', 'D', 'B', 'Bl', 'Br', 'Rs', 'Ls', 'Us', 'Fs'] as const;
-type BaseMove = (typeof BASE_MOVES)[number];
+export const FTO_EIF_BASE_MOVES = ['R', 'U', 'F', 'L', 'D', 'B', 'Bl', 'Br', 'Rs', 'Ls', 'Us', 'Fs'] as const;
+export type FtoEifBaseMove = (typeof FTO_EIF_BASE_MOVES)[number];
 type StickerKey = `${FtoEifFaceKey}${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9}`;
 export type FtoEifStickerState = Record<StickerKey, string>;
 
-const CYCLES: Record<BaseMove, StickerKey[][]> = {
+const CYCLES: Record<FtoEifBaseMove, StickerKey[][]> = {
   R: [
     ['f4', 'd7', 'i7'], ['f5', 'd9', 'i9'], ['f8', 'd8', 'i8'],
     ['f7', 'd4', 'i4'], ['f9', 'd5', 'i5'], ['l9', 'b5', 'u9'],
@@ -114,7 +114,7 @@ const ROTATION_CYCLES: Record<'Rt' | 'Lt' | 'Ft', StickerKey[][]> = {
   ],
 };
 
-const ACTION_SEQUENCES: Record<string, BaseMove[]> = {
+export const FTO_EIF_ACTION_SEQUENCES: Readonly<Record<string, readonly FtoEifBaseMove[]>> = {
   Rw: ['R', 'Rs'], Lw: ['L', 'Ls'], Uw: ['U', 'Us'], Fw: ['F', 'Fs'],
   Dw: ['D', 'Us', 'Us'], Bw: ['B', 'Fs', 'Fs'],
   Blw: ['Bl', 'Rs', 'Rs'], Brw: ['Br', 'Ls', 'Ls'],
@@ -127,7 +127,7 @@ const ACTION_SEQUENCES: Record<string, BaseMove[]> = {
 };
 
 const VALID_ROOTS = new Set([
-  ...BASE_MOVES, 'Rw', 'Lw', 'Uw', 'Fw', 'Dw', 'Bw', 'Blw', 'Brw',
+  ...FTO_EIF_BASE_MOVES, 'Rw', 'Lw', 'Uw', 'Fw', 'Dw', 'Bw', 'Blw', 'Brw',
   'Ro', 'Lo', 'Uo', 'Fo', 'Rt', 'Lt', 'Ft', 'S', 'H',
 ]);
 
@@ -137,15 +137,21 @@ function cycle(state: FtoEifStickerState, keys: StickerKey[]): void {
   state[keys.at(-1)!] = first;
 }
 
-function applyBase(state: FtoEifStickerState, move: BaseMove): void {
+function applyBase(state: FtoEifStickerState, move: FtoEifBaseMove): void {
   for (const keys of CYCLES[move]) cycle(state, keys);
 }
 
-function applySequence(state: FtoEifStickerState, sequence: BaseMove[]): void {
+function applySequence(state: FtoEifStickerState, sequence: readonly FtoEifBaseMove[]): void {
   for (const move of sequence) applyBase(state, move);
 }
 
-function tokenParts(token: string): { root: string; turns: number } | null {
+export interface FtoEifTokenParts {
+  root: string;
+  turns: number;
+  suffix: '' | "'" | '2';
+}
+
+export function parseFtoEifToken(token: string): FtoEifTokenParts | null {
   let normalized = token;
   if (normalized.endsWith("2'")) {
     const root = normalized.slice(0, -2);
@@ -158,14 +164,14 @@ function tokenParts(token: string): { root: string; turns: number } | null {
   // Accepting S2 or Uo2 would silently reinterpret unsupported source data.
   if (suffix === '2' && ['S', 'H', 'Ro', 'Lo', 'Uo', 'Fo'].includes(root)) return null;
   const orderFour = root === 'Rt' || root === 'Lt' || root === 'Ft';
-  return { root, turns: suffix === "'" ? (orderFour ? 3 : 2) : suffix === '2' ? 2 : 1 };
+  return { root, suffix, turns: suffix === "'" ? (orderFour ? 3 : 2) : suffix === '2' ? 2 : 1 };
 }
 
 export function parseFtoEifAlgorithm(algorithm: string): { tokens: string[]; invalid: string[] } {
   const raw = algorithm.trim() ? algorithm.trim().split(/\s+/) : [];
   const tokens: string[] = [];
   const invalid: string[] = [];
-  for (const token of raw) (tokenParts(token) ? tokens : invalid).push(token);
+  for (const token of raw) (parseFtoEifToken(token) ? tokens : invalid).push(token);
   return { tokens, invalid };
 }
 
@@ -173,7 +179,7 @@ export function invertFtoEifAlgorithm(algorithm: string): string {
   return algorithm.trim().split(/\s+/).filter(Boolean).reverse().map((token) => {
     // Preserve unsupported input so inversion cannot turn an invalid token into
     // a valid-but-different move before the caller reports it.
-    if (!tokenParts(token)) return token;
+    if (!parseFtoEifToken(token)) return token;
     if (token.includes("'")) return token.replace("'", '');
     if (token.includes('2')) return /^(Rt|Lt|Ft)2$/.test(token) ? token : token.replace('2', '');
     return `${token}'`;
@@ -186,16 +192,16 @@ export function ftoEifState(algorithm: string, palette: FtoEifPalette = DEFAULT_
     for (let index = 1; index <= 9; index += 1) state[`${face}${index}` as StickerKey] = palette[face];
   }
   for (const token of parseFtoEifAlgorithm(algorithm).tokens) {
-    const parts = tokenParts(token)!;
+    const parts = parseFtoEifToken(token)!;
     for (let turn = 0; turn < parts.turns; turn += 1) {
       if (parts.root === 'Rt' || parts.root === 'Lt' || parts.root === 'Ft') {
         for (const keys of ROTATION_CYCLES[parts.root]) cycle(state, keys);
       } else if (parts.root === 'S' || parts.root === 'H') {
         const key = parts.turns === 2 ? `${parts.root}'` : parts.root;
-        applySequence(state, ACTION_SEQUENCES[key]);
+        applySequence(state, FTO_EIF_ACTION_SEQUENCES[key]);
         break;
-      } else if (ACTION_SEQUENCES[parts.root]) {
-        const sequence = ACTION_SEQUENCES[parts.root];
+      } else if (FTO_EIF_ACTION_SEQUENCES[parts.root]) {
+        const sequence = FTO_EIF_ACTION_SEQUENCES[parts.root];
         if (parts.turns === 1) applySequence(state, sequence);
         else {
           applySequence(state, sequence);
@@ -203,7 +209,7 @@ export function ftoEifState(algorithm: string, palette: FtoEifPalette = DEFAULT_
         }
         break;
       } else {
-        applyBase(state, parts.root as BaseMove);
+        applyBase(state, parts.root as FtoEifBaseMove);
       }
     }
   }

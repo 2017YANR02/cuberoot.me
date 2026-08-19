@@ -174,6 +174,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'A visual guide to foolproof and compact Chinese 3×3 move notation, with an inline animated simulator for every move.',
     },
   },
+  'alg/fto/notation': {
+    title: { zh: 'FTO 转动记号', en: 'FTO Move Notation' },
+    description: {
+      zh: 'FTO 的 EIF 单面、宽层、中层、转体与组合记号说明，可直接播放每一种转动的分层动画。',
+      en: 'A visual EIF notation guide for FTO face, wide, slice, rotation and macro moves, with real layer animation for every move.',
+    },
+  },
   'alg/lsll': { title: { zh: 'LSLL 公式集', en: 'LSLL Algorithms' } },
   'alg/lsll/case': { title: { zh: 'LSLL 情况详情', en: 'LSLL Case Detail' } },
   'alg/lsll/route': { title: { zh: 'LSLL 路线详情', en: 'LSLL Route Detail' } },
