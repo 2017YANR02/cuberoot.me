@@ -12,9 +12,10 @@ import { eventDisplayName } from '@/lib/wca-events';
 import { EventIcon } from '@/components/EventIcon';
 import {
   localizeActivityName, eventOfActivity, readableTextColor, dayHeaderLabel,
-  addDaysToKey,
+  addDaysToKey, isH2hActivity,
   type ScheduleData,
 } from '@/lib/comp-schedule';
+import H2hMarker from './H2hMarker';
 
 // WCA's ACTIVITY_OTHER_GREY — non-event activities (check-in, lunch, ceremony).
 const OTHER_GREY = '#666666';
@@ -89,7 +90,14 @@ export default function ScheduleCalendar({
           backgroundColor: color,
           borderColor: color,
           textColor: readableTextColor(color),
-          extendedProps: { room: a.roomName, isOther, eventId: evId, lane: ln?.lane ?? 0, lanes: ln?.lanes ?? 1 },
+          extendedProps: {
+            room: a.roomName,
+            isOther,
+            eventId: evId,
+            h2h: isH2hActivity(a, data.rounds),
+            lane: ln?.lane ?? 0,
+            lanes: ln?.lanes ?? 1,
+          },
         };
       });
     },
@@ -148,6 +156,7 @@ export default function ScheduleCalendar({
                 <div className="fc-event-title fc-sticky">
                   <EventIcon event={evId} className="sched-block-icon" />
                   {arg.event.title}
+                  {arg.event.extendedProps.h2h && <H2hMarker />}
                 </div>
               </div>
             </div>

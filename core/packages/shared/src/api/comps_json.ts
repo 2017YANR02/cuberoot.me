@@ -49,6 +49,8 @@ export interface UpcomingCompRecord {
   round_meta?: Record<string, RoundMeta>;
   /** 含双轮赛制（WCA Reg 9v，2026+）的 event 短码列表：首轮 advancement=percent/100（全员晋级=无淘汰）。无双轮项目时缺省 */
   dual_events?: string[];
+  /** 含 H2H（Head to Head，WCIF round format = h）的 event 短码列表。无 H2H 项目时缺省 */
+  h2h_events?: string[];
 }
 
 export interface PastCompRecord {
@@ -74,6 +76,8 @@ export interface PastCompRecord {
   event_regs?: Record<string, number>;
   /** 含双轮赛制（WCA Reg 9v，2026+）的 event 短码列表：首轮 advancement=percent/100（全员晋级=无淘汰）。无双轮项目时缺省 */
   dual_events?: string[];
+  /** 含 H2H（Head to Head，developer dump rounds.format_id = h）的 event 短码列表。无 H2H 项目时缺省 */
+  h2h_events?: string[];
 }
 
 export async function fetchAllUpcomingCompsJson(): Promise<UpcomingCompRecord[]> {

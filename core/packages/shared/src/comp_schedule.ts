@@ -52,7 +52,7 @@ export interface RoundInfo {
   eventId: string;            // "333"
   roundNumber: number;        // 1-based
   totalRounds: number;        // # rounds for this event (for getRoundTypeId)
-  format: string;             // 'a'|'m'|'1'|'2'|'3'|'5'
+  format: string;             // 'a'|'m'|'1'|'2'|'3'|'5'|'h' (head-to-head)
   timeLimit: { centiseconds: number; cumulativeRoundIds: string[] } | null;
   cutoff: { numberOfAttempts: number; attemptResult: number } | null;
   advancementCondition: { type: 'ranking' | 'percent' | 'attemptResult'; level: number } | null;
