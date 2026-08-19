@@ -15,11 +15,11 @@ import {
   DEFAULT_ALG_MOVE_DURATION_MS,
   DEFAULT_PREVIEW_TIMING,
   resolvePlayerSetup,
+  resolvePreviewStepTransition,
   resolvePreviewTiming,
   resolveSimMoveDurationScale,
   resolveSimPreviewMoves,
   resolveTwistyTempoScale,
-  shouldAnimatePreviewStep,
 } from '@/components/AlgPlayer/player-setup';
 
 const kpuzzle = await cube3x3x3.kpuzzle();
@@ -102,13 +102,14 @@ describe('resolvePlayerSetup', () => {
 });
 
 describe('notation demo timing', () => {
-  it('只给单步前进补间动画,手动拖动相邻步也瞬时跳转', () => {
+  it('前后单步才补间,拖动和跨步跳转都瞬时落位', () => {
     const last = { setupAlg: "(R U)'", step: 0 };
-    expect(shouldAnimatePreviewStep(last, "(R U)'", 1, false)).toBe(true);
-    expect(shouldAnimatePreviewStep(last, "(R U)'", 1, true)).toBe(false);
-    expect(shouldAnimatePreviewStep(last, "(R U)'", 2, false)).toBe(false);
-    expect(shouldAnimatePreviewStep(last, "(R U)'", 0, false)).toBe(false);
-    expect(shouldAnimatePreviewStep(last, "(F)'", 1, false)).toBe(false);
+    expect(resolvePreviewStepTransition(last, "(R U)'", 1, false, true)).toBe('forward');
+    expect(resolvePreviewStepTransition(last, "(R U)'", 1, true, true)).toBe('instant');
+    expect(resolvePreviewStepTransition(last, "(R U)'", 2, false, true)).toBe('instant');
+    expect(resolvePreviewStepTransition({ ...last, step: 1 }, "(R U)'", 0, false, true)).toBe('backward');
+    expect(resolvePreviewStepTransition({ ...last, step: 1 }, "(R U)'", 0, false, false)).toBe('instant');
+    expect(resolvePreviewStepTransition(last, "(F)'", 1, false, true)).toBe('instant');
   });
 
   it('公式预览和记号教学默认共用每 STM 一秒', () => {

@@ -1,6 +1,6 @@
 /* PlaybackBar — twizzle-style two-row transport (scrubber row on top, buttons
-   below). Shared by recon (ReconPlayerBase) and /sim engine playback so both
-   render identically. Sizing: fills its container up to a tidy cap, centered. */
+   below). Shared by recon, /sim and AlgPlayer so every playback surface renders
+   identically. Sizing: fills its container up to a tidy cap, centered. */
 
 .playback-bar {
   --pb-thumb: 14px; /* native range thumb width — keeps the value bubble over the thumb */

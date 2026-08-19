@@ -7,9 +7,9 @@ import './PlaybackBar.css';
 
 /**
  * PlaybackBar — the shared alg-playback control bar for every cube-playback
- * surface (recon's ReconPlayerBase, /sim's engine-mode playback). Twizzle-style
+ * surface (recon's ReconPlayerBase, /sim and AlgPlayer). Twizzle-style
  * two-row layout (alpha.twizzle.net/edit): the scrubber + progress sit on top,
- * the transport buttons underneath. Both surfaces render this exact bar so they
+ * the transport buttons underneath. All surfaces render this exact bar so they
  * stay pixel-identical — don't hand-roll a per-page control row.
  *
  * `leading` / `trailing` slot extra controls into the button row (used by /sim
