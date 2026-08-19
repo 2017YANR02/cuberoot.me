@@ -1630,11 +1630,13 @@ export default function CompDetailPage() {
   };
   const eventBadges: Record<string, string> = {};
   const eventTopBadges: Record<string, string> = {};
+  const h2hBadges: Record<string, string> = {};
   for (const ev of data.events) {
     // 右上角徽标 = 该项目总轮次,用 WCIF 定义的全部轮数(ev.rs),含尚未举办的轮次(如还没打的决赛);
     // 别用 validRoundsFor —— 它只数「有成绩 / 进行中」的轮,会把 status=open 的决赛漏掉(少算一轮)。
     const total = ev.rs.length;
     if (total > 0) eventTopBadges[ev.i] = `${total}`;
+    if (ev.rs.some(rd => rd.f === 'h')) h2hBadges[ev.i] = 'H2H';
   }
   if (eventParam && roundParam) {
     const rounds = validRoundsFor(eventParam);
@@ -1882,7 +1884,7 @@ export default function CompDetailPage() {
                   : { selectedEvent: eventParam, onSelect: onSelectEvent })}
               isZh={isZh}
               onlyAvailable
-              badges={(isPsych || isSchedule) ? {} : eventBadges}
+              badges={isSchedule ? h2hBadges : isPsych ? {} : eventBadges}
               topBadges={isPsych ? {} : eventTopBadges}
               appendEvents={nonWcaEvents}
             />
