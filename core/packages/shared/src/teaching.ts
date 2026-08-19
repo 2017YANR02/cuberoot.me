@@ -232,6 +232,8 @@ export const TEACHING_PERMISSIONS = [
   'training:assignment:read',
   'training:assignment:manage',
   'training:review',
+  'report:read',
+  'report:manage',
 ] as const;
 
 export type TeachingPermission = (typeof TEACHING_PERMISSIONS)[number];
@@ -243,11 +245,13 @@ const ROLE_PERMISSIONS: Record<TeachingOrganizationRole, readonly TeachingPermis
     'member:read', 'student:read', 'campus:read', 'group:read', 'session:read', 'session:manage',
     'feedback:read', 'feedback:manage',
     'training:template:read', 'training:assignment:read', 'training:assignment:manage', 'training:review',
+    'report:read', 'report:manage',
   ],
   assistant: [
     'member:read', 'student:read', 'campus:read', 'group:read', 'session:read', 'session:manage',
     'feedback:read', 'feedback:manage',
     'training:template:read', 'training:assignment:read', 'training:review',
+    'report:read', 'report:manage',
   ],
   finance: ['member:read', 'package:read', 'package:manage', 'finance:read', 'finance:manage'],
   viewer: ['member:read'],
@@ -668,6 +672,135 @@ export interface TeachingDailyTrainingRollup {
   durationMs: string;
   successCount: string;
   updatedAt: string;
+}
+
+export const TEACHING_WEEKLY_REPORT_STATUSES = ['draft', 'published'] as const;
+export type TeachingWeeklyReportStatus = (typeof TEACHING_WEEKLY_REPORT_STATUSES)[number];
+export const TEACHING_WEEKLY_REPORT_VISIBILITIES = [
+  'staff_only',
+  'student',
+  'student_and_guardians',
+] as const;
+export type TeachingWeeklyReportVisibility = (typeof TEACHING_WEEKLY_REPORT_VISIBILITIES)[number];
+
+export interface TeachingWeeklyReportAttendanceAggregate {
+  sessionCount: number;
+  completedSessionCount: number;
+  presentCount: number;
+  lateCount: number;
+  absentCount: number;
+  excusedCount: number;
+}
+
+export interface TeachingWeeklyReportCreditsAggregate {
+  ledgerEntryCount: number;
+  consumedCredits: string;
+  creditedCredits: string;
+  netCreditDelta: string;
+}
+
+export interface TeachingWeeklyReportTrainingDimension {
+  source: TrainingEvidenceSource;
+  activity: TrainingEvidenceActivity;
+  trustLevel: TrainingTrustLevel;
+  evidenceCount: string;
+  durationMs: string;
+  successCount: string;
+}
+
+export interface TeachingWeeklyReportTrainingAggregate {
+  activeDayCount: number;
+  evidenceCount: string;
+  durationMs: string;
+  successCount: string;
+  dimensions: TeachingWeeklyReportTrainingDimension[];
+}
+
+export interface TeachingWeeklyReportAssignmentItem {
+  assignmentId: string;
+  title: string;
+  status: TrainingAssignmentStatus;
+  scheduleKind: TrainingScheduleKind;
+  expectedCount: number;
+  evidenceCount: string;
+  latestReviewRevision: number;
+  latestReviewStatus: TrainingReviewStatus | null;
+  startsAt: string;
+  endsAt: string | null;
+}
+
+export interface TeachingWeeklyReportAssignmentsAggregate {
+  assignmentCount: number;
+  assignments: TeachingWeeklyReportAssignmentItem[];
+}
+
+export interface TeachingWeeklyReportLessonFeedbackItem {
+  feedbackId: string;
+  sessionId: string;
+  revision: number;
+  visibility: TeachingFeedbackVisibility;
+  summary: string;
+  strengths: string | null;
+  challenges: string | null;
+  nextGoals: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+}
+
+export interface TeachingWeeklyReportLessonFeedbackAggregate {
+  feedbackCount: number;
+  feedback: TeachingWeeklyReportLessonFeedbackItem[];
+}
+
+export interface TeachingWeeklyReportAggregate {
+  attendance: TeachingWeeklyReportAttendanceAggregate;
+  credits: TeachingWeeklyReportCreditsAggregate;
+  training: TeachingWeeklyReportTrainingAggregate;
+  assignments: TeachingWeeklyReportAssignmentsAggregate;
+  lessonFeedback: TeachingWeeklyReportLessonFeedbackAggregate;
+}
+
+export interface TeachingWeeklyReportSummary {
+  id: string;
+  organizationId: string;
+  studentId: string;
+  studentDisplayNameSnapshot: string;
+  studentExternalRefSnapshot: string | null;
+  weekStart: string;
+  weekEnd: string;
+  timezoneSnapshot: string;
+  revision: number;
+  status: TeachingWeeklyReportStatus;
+  visibility: TeachingWeeklyReportVisibility;
+  teacherSummary: string;
+  nextWeekPlan: string;
+  generatedByUserId: number | null;
+  generatedByUserIdSnapshot: number;
+  generatedByDisplayNameSnapshot: string;
+  generatedByRoleSnapshot: 'owner' | 'admin' | 'teacher' | 'assistant';
+  generatedAt: string;
+  publishedByUserId: number | null;
+  publishedByUserIdSnapshot: number | null;
+  publishedByDisplayNameSnapshot: string | null;
+  publishedByRoleSnapshot: 'owner' | 'admin' | 'teacher' | 'assistant' | null;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeachingWeeklyReport extends TeachingWeeklyReportSummary {
+  aggregate: TeachingWeeklyReportAggregate;
+}
+
+export interface GenerateTeachingWeeklyReportInput {
+  studentId: string;
+  weekStart: string;
+}
+
+export interface PublishTeachingWeeklyReportInput {
+  teacherSummary: string;
+  nextWeekPlan: string;
+  visibility: TeachingWeeklyReportVisibility;
 }
 
 export type TeachingStudentAccountBindingInviteStatus = 'pending' | 'expired' | 'revoked' | 'consumed';

@@ -103,6 +103,29 @@ describe('main-site teaching architecture', () => {
     }
   });
 
+  it('keeps weekly report generation and publication inside the main-site organization shell', () => {
+    const workspace = readClient('app/[lang]/org/_components/OrgWorkspace.tsx');
+    const reports = readClient('app/[lang]/org/[orgSlug]/reports/page.tsx');
+    const report = readClient('app/[lang]/org/[orgSlug]/reports/[reportId]/page.tsx');
+
+    expect(workspace).toContain("permission: 'report:read'");
+    expect(reports).toContain("hasTeachingPermission(role, 'report:manage')");
+    expect(reports).toContain('listTeachingWeeklyReports');
+    expect(reports).toContain('generateTeachingWeeklyReport');
+    expect(report).toContain("hasTeachingPermission(role, 'report:manage')");
+    expect(report).toContain("report.status === 'draft'");
+    expect(report).toContain('getTeachingWeeklyReport');
+    expect(report).toContain('publishTeachingWeeklyReport');
+    expect(reports).toContain('date.getUTCDay() === 1');
+    expect(report).toContain('className="org-rich-text"');
+    expect(report).not.toContain('internalNotes');
+    for (const source of [reports, report]) {
+      expect(source).toContain('<AppLink');
+      expect(source).toContain('prefetch={false}');
+      expect(source).not.toContain('router.push');
+    }
+  });
+
   it('uses the canonical main-site trainers for learner assignments', () => {
     const learner = readClient('app/[lang]/training/[orgSlug]/page.tsx');
     const trainingHelpers = readClient('lib/teaching-training.ts');

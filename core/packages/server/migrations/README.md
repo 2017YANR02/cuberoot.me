@@ -38,6 +38,8 @@ PostgreSQL schema 变更的 source of truth。`apply_migrations.sh` 会在部署
 
 课后反馈增量 `0154_teaching_lesson_feedback.sql` 的升级基线是已应用至 `0153_oll_docx_import.sql` 的现有数据库。它为已完课课堂增加按学员修订的只追加反馈历史，保留出勤、扣课和作者快照；作者账号删除时只清活动引用，历史正文不可更新或删除。
 
+教学周报增量 `0155_teaching_weekly_reports.sql` 的升级基线是已应用至 `0154_teaching_lesson_feedback.sql` 的现有数据库。它新增按机构、学员和周一归档的周报修订：草稿可重算，发布修订不可变；聚合快照不含内部备注，生成与发布账号删除时仅清活动引用并保留作者快照。
+
 ## 已应用 migration 不能改
 
 `apply_migrations.sh` 会把每个文件的 SHA-256 写入 ledger。已应用文件的摘要发生变化时会终止执行。修正已上线结构只能新增 migration；需要恢复数据时使用已验证的备份。
