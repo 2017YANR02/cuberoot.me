@@ -31,10 +31,10 @@ export function formatCount(n: number, lang: Lang): string {
   return String(n);
 }
 
-/** joinedAt ISO → "2026-05" (member-since granularity). */
-export function formatJoinedMonth(iso: string | null): string {
+/** joinedAt ISO → local calendar date, e.g. "2026-05-01". */
+export function formatJoinedDate(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (!Number.isFinite(d.getTime())) return '';
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  return toIsoDate(d);
 }
