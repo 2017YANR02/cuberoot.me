@@ -36,6 +36,9 @@ export type TeachingPackageAcquisitionType = (typeof TEACHING_PACKAGE_ACQUISITIO
 export const TEACHING_SESSION_STATUSES = ['scheduled', 'in_progress', 'completed', 'cancelled'] as const;
 export type TeachingSessionStatus = (typeof TEACHING_SESSION_STATUSES)[number];
 
+export const TEACHING_FEEDBACK_VISIBILITIES = ['staff_only', 'student', 'student_and_guardians'] as const;
+export type TeachingFeedbackVisibility = (typeof TEACHING_FEEDBACK_VISIBILITIES)[number];
+
 export const TEACHING_ATTENDANCE_STATUSES = ['expected', 'present', 'late', 'absent', 'excused'] as const;
 export type TeachingAttendanceStatus = (typeof TEACHING_ATTENDANCE_STATUSES)[number];
 
@@ -219,6 +222,8 @@ export const TEACHING_PERMISSIONS = [
   'session:read',
   'session:manage',
   'session:create',
+  'feedback:read',
+  'feedback:manage',
   'finance:read',
   'finance:manage',
   'audit:read',
@@ -236,10 +241,12 @@ const ROLE_PERMISSIONS: Record<TeachingOrganizationRole, readonly TeachingPermis
   admin: TEACHING_PERMISSIONS,
   teacher: [
     'member:read', 'student:read', 'campus:read', 'group:read', 'session:read', 'session:manage',
+    'feedback:read', 'feedback:manage',
     'training:template:read', 'training:assignment:read', 'training:assignment:manage', 'training:review',
   ],
   assistant: [
     'member:read', 'student:read', 'campus:read', 'group:read', 'session:read', 'session:manage',
+    'feedback:read', 'feedback:manage',
     'training:template:read', 'training:assignment:read', 'training:review',
   ],
   finance: ['member:read', 'package:read', 'package:manage', 'finance:read', 'finance:manage'],

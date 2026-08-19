@@ -115,6 +115,10 @@ function repository(): TeachingSaasRepository {
     createTrainingTargetReview: vi.fn().mockResolvedValue({
       status: 201, body: { review: { id: 'review-1', revision: 1 } },
     }),
+    listLessonFeedback: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    createLessonFeedback: vi.fn().mockResolvedValue({
+      status: 201, body: { feedback: { id: 'feedback-1', revision: 1 } },
+    }),
     saveAttendanceBatch: vi.fn().mockResolvedValue({ status: 200, body: { attendance: [] } }),
     completeSession: vi.fn().mockResolvedValue({ status: 200, body: { session: { status: 'completed' } } }),
   };
@@ -409,6 +413,70 @@ describe('teaching SaaS routes', () => {
     const detail = await app.request(`/teaching/organizations/demo/sessions/${sessionId}`);
     expect(detail.status).toBe(200);
     expect(repo.getSession).toHaveBeenCalledWith(ACTOR, 'demo', sessionId, expect.any(String));
+  });
+
+  it('lists and appends strict lesson-feedback revisions with target-bound idempotency', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const sessionId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const studentId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+
+    const listed = await app.request(
+      `/teaching/organizations/demo/sessions/${sessionId}/feedback?page=2&pageSize=10`,
+    );
+    expect(listed.status).toBe(200);
+    expect(listed.headers.get('cache-control')).toBe('no-store');
+    expect(repo.listLessonFeedback).toHaveBeenCalledWith(
+      ACTOR, 'demo', sessionId, { page: 2, pageSize: 10, offset: 10 }, expect.any(String),
+    );
+
+    const raw = JSON.stringify({
+      visibility: 'student',
+      summary: '  课堂状态稳定  ',
+      strengths: '  观察准确  ',
+      challenges: null,
+      nextGoals: '  下周完成三次训练  ',
+      internalNotes: null,
+    });
+    const created = await app.request(
+      `/teaching/organizations/demo/sessions/${sessionId}/students/${studentId}/feedback`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'lesson-feedback-1' },
+        body: raw,
+      },
+    );
+    expect(created.status).toBe(201);
+    expect(repo.createLessonFeedback).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      sessionId,
+      studentId,
+      {
+        visibility: 'student',
+        summary: '课堂状态稳定',
+        strengths: '观察准确',
+        challenges: null,
+        nextGoals: '下周完成三次训练',
+        internalNotes: null,
+      },
+      'lesson-feedback-1',
+      createHash('sha256').update(JSON.stringify([sessionId, studentId, raw])).digest('hex'),
+      expect.any(String),
+    );
+  });
+
+  it('rejects unknown lesson-feedback fields before repository access', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const response = await app.request(
+      '/teaching/organizations/demo/sessions/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/students/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/feedback',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'lesson-feedback-invalid' },
+        body: JSON.stringify({ visibility: 'staff_only', summary: '有效摘要', actorUserId: 99 }),
+      },
+    );
+    expect(response.status).toBe(400);
+    expect(repo.createLessonFeedback).not.toHaveBeenCalled();
   });
 
   it('creates a one-time binding invite without requiring or forwarding generic idempotency', async () => {
