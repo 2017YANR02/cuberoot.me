@@ -38,6 +38,7 @@ const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
   cal_reminder: BellRing,
   cal_invite: CalendarPlus,
   cal_rsvp: CalendarCheck,
+  teaching_message: MessagesSquare,
 };
 
 /** TIMESTAMPTZ → 本地 `yyyy-mm-dd hh:mm`。 */
@@ -75,6 +76,7 @@ export default function NotificationsPage() {
     cal_reminder: t('日程提醒', 'Event reminder'),
     cal_invite: t('邀请你参加日程', 'invited you to an event'),
     cal_rsvp: t('回应了你的日程邀请', 'responded to your invitation'),
+    teaching_message: t('发送了教学消息', 'sent a teaching message'),
   }[k]);
 
   const load = useCallback(() => {

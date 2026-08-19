@@ -27,6 +27,7 @@ function StudentDetail({ orgSlug, studentId, role }: { orgSlug: string; studentI
   const canManageAssignments = hasTeachingPermission(role, 'assignment:manage');
   const canManageStudent = hasTeachingPermission(role, 'student:manage');
   const canReadPackages = hasTeachingPermission(role, 'package:read');
+  const canReadConversations = hasTeachingPermission(role, 'conversation:read');
 
   useEffect(() => {
     let cancelled = false;
@@ -60,7 +61,12 @@ function StudentDetail({ orgSlug, studentId, role }: { orgSlug: string; studentI
         <div><strong>{student.accountUserId ? t('已绑定', 'Linked') : t('未绑定', 'Not linked')}</strong><span>{t('主站学习账号', 'Main-site learning account')}</span></div>
         <div><strong>{entityStatusLabel(student.status, t)}</strong><span>{t('学员状态', 'Student status')}</span></div>
       </dl>
-      {canReadPackages && <AppLink className="org-primary-link" href={`/org/${orgSlug}/students/${studentId}/packages`} prefetch={false}>{t('查看课包与流水', 'View packages and ledger')}</AppLink>}
+      {(canReadPackages || canReadConversations) && (
+        <div className="org-row-action">
+          {canReadPackages && <AppLink className="org-primary-link" href={`/org/${orgSlug}/students/${studentId}/packages`} prefetch={false}>{t('查看课包与流水', 'View packages and ledger')}</AppLink>}
+          {canReadConversations && <AppLink className="org-primary-link" href={`/org/${orgSlug}/students/${studentId}/messages`} prefetch={false}>{t('家校沟通', 'Family communication')}</AppLink>}
+        </div>
+      )}
       {canManageStudent && <StudentAccountBindingManager orgSlug={orgSlug} studentId={studentId} linked={student.accountUserId !== null} />}
       {canManageAssignments && <TeacherAssignmentManager orgSlug={orgSlug} target={{ studentId }} members={members} memberTotal={memberTotal} allowCreate={student.status === 'active'} />}
     </>
