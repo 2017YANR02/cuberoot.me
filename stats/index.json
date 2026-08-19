@@ -212,6 +212,11 @@
           "titleZh": "单场包揽全项冠军"
         },
         {
+          "id": "tied_podium_results",
+          "titleEn": "Identical Final Podium Results",
+          "titleZh": "决赛前三名同分"
+        },
+        {
           "id": "most_4th_places",
           "titleEn": "Most 4th places",
           "titleZh": "最多第四名"

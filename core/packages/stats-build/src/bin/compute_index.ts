@@ -56,6 +56,7 @@ const STAT_CATEGORIES = [
     ids: ['best_result_off_podium', 'complete_competition_winners', 'most_4th_places',
           'most_competitions_before_winning', 'most_finals',
           'most_podiums_at_single_competition', 'most_podiums_together',
+          'tied_podium_results',
           'worst_result_on_podium'],
   },
   {

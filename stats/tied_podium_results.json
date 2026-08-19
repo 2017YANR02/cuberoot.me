@@ -1,0 +1,67 @@
+{
+  "id": "tied_podium_results",
+  "title": "Identical Final Podium Results",
+  "titleZh": "决赛前三名同分",
+  "note": "Found 2 final podiums where the official 1st, 2nd and 3rd places had the same valid average. Fewest Moves is excluded.",
+  "noteZh": "历史上共找到 2 次：WCA 决赛官方第 1、2、3 名三人的有效平均完全相同。不含最少步。",
+  "header": [
+    {
+      "key": "result",
+      "label": "Result",
+      "labelZh": "成绩",
+      "align": "right"
+    },
+    {
+      "key": "1st",
+      "label": "1st",
+      "labelZh": "第一名",
+      "align": "left"
+    },
+    {
+      "key": "2nd",
+      "label": "2nd",
+      "labelZh": "第二名",
+      "align": "left"
+    },
+    {
+      "key": "3rd",
+      "label": "3rd",
+      "labelZh": "第三名",
+      "align": "left"
+    },
+    {
+      "key": "competition",
+      "label": "Competition",
+      "labelZh": "比赛",
+      "align": "left"
+    }
+  ],
+  "sections": [
+    {
+      "title": "4x4x4 Cube - Average",
+      "titleZh": "四阶魔方 - 平均",
+      "rows": [
+        [
+          "30.64",
+          "[Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01)",
+          "[Tomoya Firman](https://www.worldcubeassociation.org/persons/2015FIRM01)",
+          "[Tommy Kiprillis](https://www.worldcubeassociation.org/persons/2014KIPR01)",
+          "[Melbourne Cube Days 2018](https://www.worldcubeassociation.org/competitions/MelbourneCubeDays2018)"
+        ]
+      ]
+    },
+    {
+      "title": "Rubik's Magic - Average",
+      "titleZh": "八板 - 平均",
+      "rows": [
+        [
+          "1.18",
+          "[Bálint Bodor](https://www.worldcubeassociation.org/persons/2008BODO01)",
+          "[Dániel Varga](https://www.worldcubeassociation.org/persons/2008VARG01)",
+          "[Norbert Héjja](https://www.worldcubeassociation.org/persons/2008HEJJ01)",
+          "[Hungarian Open 2009](https://www.worldcubeassociation.org/competitions/HungarianOpen2009)"
+        ]
+      ]
+    }
+  ]
+}

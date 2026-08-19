@@ -60,6 +60,7 @@ export const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = 
   'most_competitions_before_winning': () => import('../statistics/most_competitions_before_winning.js'),
   'most_frequent_results': () => import('../statistics/most_frequent_results.js'),
   'most_podiums_together': () => import('../statistics/most_podiums_together.js'),
+  'tied_podium_results': () => import('../statistics/tied_podium_results.js'),
   'most_records_at_single_competition': () => import('../statistics/most_records_at_single_competition.js'),
   'most_solves_before_bld_success': () => import('../statistics/most_solves_before_bld_success.js'),
   'moving_average': () => import('../statistics/moving_average.js'),
