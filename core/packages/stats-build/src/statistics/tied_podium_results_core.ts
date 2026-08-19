@@ -23,6 +23,36 @@ export interface TiedTopThreeOccurrence {
   topThree: [TopThreeResultRow, TopThreeResultRow, TopThreeResultRow];
 }
 
+const WCA_EXPORT_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+
+export function parseWcaExportDate(value: unknown): string {
+  if (typeof value !== 'string' || !WCA_EXPORT_TIMESTAMP_RE.test(value)) {
+    throw new Error('WCA export metadata is missing a canonical UTC export_timestamp');
+  }
+
+  const parsed = new Date(value);
+  if (!Number.isFinite(parsed.getTime()) || parsed.toISOString() !== value) {
+    throw new Error('WCA export metadata contains an invalid export_timestamp');
+  }
+
+  return value.slice(0, 10);
+}
+
+export function tiedTopThreeNotes(
+  averageCount: number,
+  singleCount: number,
+  exportDate: string,
+): { note: string; noteZh: string } {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(exportDate)) {
+    throw new Error('Tied top-three statistics require a WCA export date');
+  }
+
+  return {
+    note: `Across all WCA rounds, the official 1st, 2nd and 3rd places had an identical valid average ${averageCount} times and an identical valid single ${singleCount} times. Fewest Moves is excluded. Data uses the WCA export dated ${exportDate}.`,
+    noteZh: `WCA 任意轮次官方第 1、2、3 名三人的有效成绩完全相同：平均 ${averageCount} 次，单次 ${singleCount} 次。不含最少步。数据使用 ${exportDate} 的 WCA 导出。`,
+  };
+}
+
 /**
  * Find rounds whose official 1st, 2nd and 3rd places share one result.
  * Malformed or tied-position top threes are rejected so they cannot silently become

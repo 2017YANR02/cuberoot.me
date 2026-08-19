@@ -1,14 +1,21 @@
 import { roundLabel } from '@cuberoot/shared/wca-round';
 import type { RowDataPacket } from 'mysql2';
 import { EVENTS_ENTRIES, eventZh, headerZh } from '../core/events.js';
+import { query as dbQuery } from '../core/database.js';
 import { SolveTime } from '../core/solve_time.js';
 import { Statistic } from '../core/statistic.js';
 import type { StatJson, StatSection, TableHeader } from '../core/statistic.js';
 import {
   findTiedTopThrees,
+  parseWcaExportDate,
+  tiedTopThreeNotes,
   type TopThreeResultRow,
   type TiedTopThreeOccurrence,
 } from './tied_podium_results_core.js';
+
+interface ExportTimestampRow extends RowDataPacket {
+  value: string;
+}
 
 const TABLE_HEADER: TableHeader = {
   Result: 'right',
@@ -66,15 +73,32 @@ export class TiedPodiumResults extends Statistic {
   }
 
   async toJson(): Promise<StatJson> {
-    let rawRows: RowDataPacket[] | null = await this.queryResults();
+    const [queriedRows, exportTimestampRows] = await Promise.all([
+      this.queryResults(),
+      dbQuery<ExportTimestampRow[]>(`
+        SELECT value
+        FROM wca_statistics_metadata
+        WHERE field = 'export_timestamp'
+      `),
+    ]);
+    if (exportTimestampRows.length !== 1) {
+      throw new Error('Expected exactly one WCA export_timestamp metadata row');
+    }
+
+    let rawRows: RowDataPacket[] | null = queriedRows;
     const rows = rawRows.map(mapRow);
     rawRows = null;
     if (global.gc) global.gc();
 
     const averageOccurrences = findTiedTopThrees(rows, 'average');
     const singleOccurrences = findTiedTopThrees(rows, 'best');
-    this.note = `Across all WCA rounds, the official 1st, 2nd and 3rd places had an identical valid average ${averageOccurrences.length} times and an identical valid single ${singleOccurrences.length} times. Fewest Moves is excluded.`;
-    this.noteZh = `WCA 任意轮次官方第 1、2、3 名三人的有效成绩完全相同：平均 ${averageOccurrences.length} 次，单次 ${singleOccurrences.length} 次。不含最少步。`;
+    const notes = tiedTopThreeNotes(
+      averageOccurrences.length,
+      singleOccurrences.length,
+      parseWcaExportDate(exportTimestampRows[0].value),
+    );
+    this.note = notes.note;
+    this.noteZh = notes.noteZh;
 
     return {
       id: this.id,
