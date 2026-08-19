@@ -22,7 +22,7 @@ export const TEXTS: Record<string, { en: string; zh: string
 },
   algTrainer:      { en: 'mihlefeld Trainer', zh: 'mihlefeld 训练器'
 },
-  blddb:           { en: 'BLDDB', zh: 'BLDDB 盲拧公式库' },
+  blddb:           { en: 'BLDDB', zh: 'BLDDB' },
   hthGrapher:      { en: 'Calculator', zh: '计算器'
 },
   viz:             { en: 'Distribution', zh: '分布'
