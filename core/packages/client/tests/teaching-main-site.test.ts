@@ -144,6 +144,7 @@ describe('main-site teaching architecture', () => {
   });
 
   it('keeps student account binding explicit and token-safe in the main site', () => {
+    const account = readClient('app/[lang]/account/page.tsx');
     const manager = readClient('app/[lang]/org/_components/StudentAccountBindingManager.tsx');
     const consume = readClient('app/[lang]/account/student-binding/page.tsx');
     const bindingPage = readClient('components/teaching/TeachingAccountBindingPage.tsx');
@@ -153,6 +154,9 @@ describe('main-site teaching architecture', () => {
     expect(consume).toContain('<TeachingAccountBindingPage kind="student" />');
     expect(bindingPage).toContain('previewTeachingStudentAccountBinding');
     expect(bindingPage).toContain('consumeTeachingStudentAccountBinding');
+    expect(bindingPage).toContain('/account#next=');
+    expect(bindingPage).not.toContain('nextQuery(window.location.pathname + window.location.hash)');
+    expect(account).toContain("new URLSearchParams(window.location.hash.slice(1)).get('next')");
     expect(student).toContain('<StudentAccountBindingManager');
     expect(manager).not.toContain('localStorage');
     expect(bindingPage).not.toContain('localStorage');
