@@ -213,8 +213,8 @@
         },
         {
           "id": "tied_podium_results",
-          "titleEn": "Identical Final Podium Results",
-          "titleZh": "决赛前三名同分"
+          "titleEn": "Identical Top-Three Round Results",
+          "titleZh": "同轮前三名同分"
         },
         {
           "id": "most_4th_places",

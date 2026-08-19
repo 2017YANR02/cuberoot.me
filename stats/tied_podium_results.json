@@ -1,15 +1,21 @@
 {
   "id": "tied_podium_results",
-  "title": "Identical Final Podium Results",
-  "titleZh": "决赛前三名同分",
-  "note": "Found 2 final podiums with an identical valid average and 1 with an identical valid single for the official 1st, 2nd and 3rd places. Fewest Moves is excluded. This checked-in snapshot uses the WCA export dated 2026-05-16.",
-  "noteZh": "WCA 决赛官方第 1、2、3 名三人的有效成绩完全相同：平均 2 次，单次 1 次。不含最少步。当前静态数据使用 2026-05-16 的 WCA 导出。",
+  "title": "Identical Top-Three Round Results",
+  "titleZh": "同轮前三名同分",
+  "note": "This checked-in snapshot still contains the 2 final-round average cases and 1 final-round single case from the WCA export dated 2026-05-16. The next statistics CI refresh will expand the query to all rounds. Fewest Moves is excluded.",
+  "noteZh": "当前静态快照仍是 2026-05-16 WCA 导出中的决赛子集：平均 2 次，单次 1 次。下一次统计 CI 将按任意轮次完整重算。不含最少步。",
   "header": [
     {
       "key": "result",
       "label": "Result",
       "labelZh": "成绩",
       "align": "right"
+    },
+    {
+      "key": "round",
+      "label": "Round",
+      "labelZh": "轮次",
+      "align": "left"
     },
     {
       "key": "1st",
@@ -43,10 +49,11 @@
       "rows": [
         [
           "30.64",
+          "Fi",
           "[Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01)",
           "[Tomoya Firman](https://www.worldcubeassociation.org/persons/2015FIRM01)",
           "[Tommy Kiprillis](https://www.worldcubeassociation.org/persons/2014KIPR01)",
-          "[Melbourne Cube Days 2018](https://www.worldcubeassociation.org/competitions/MelbourneCubeDays2018)"
+          "[Melbourne Cube Days 2018](https://www.worldcubeassociation.org/competitions/MelbourneCubeDays2018/results/all#e444_f)"
         ]
       ]
     },
@@ -56,10 +63,11 @@
       "rows": [
         [
           "1.18",
+          "Fi",
           "[Bálint Bodor](https://www.worldcubeassociation.org/persons/2008BODO01)",
           "[Dániel Varga](https://www.worldcubeassociation.org/persons/2008VARG01)",
           "[Norbert Héjja](https://www.worldcubeassociation.org/persons/2008HEJJ01)",
-          "[Hungarian Open 2009](https://www.worldcubeassociation.org/competitions/HungarianOpen2009)"
+          "[Hungarian Open 2009](https://www.worldcubeassociation.org/competitions/HungarianOpen2009/results/all#emagic_f)"
         ]
       ]
     },
@@ -69,10 +77,11 @@
       "rows": [
         [
           "4.34",
+          "Fi",
           "[AJ Blair](https://www.worldcubeassociation.org/persons/2009BLAI01)",
           "[Jackson Warley](https://www.worldcubeassociation.org/persons/2008WARL01)",
           "[Andy Denney](https://www.worldcubeassociation.org/persons/2013DENN01)",
-          "[Colorado Springs 2013](https://www.worldcubeassociation.org/competitions/ColoradoSprings2013)"
+          "[Colorado Springs 2013](https://www.worldcubeassociation.org/competitions/ColoradoSprings2013/results/all#e222_f)"
         ]
       ]
     }
