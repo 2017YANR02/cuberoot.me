@@ -60,7 +60,7 @@ export default function NotationPage() {
           className="alg-notation-demo-section"
           aria-label={t('紧凑记号动画', 'Compact notation animation')}
         >
-          <MoveNotationDemo puzzle="3x3" moves={compactDemoOptions()} variant="compact" showReplay={false} />
+          <MoveNotationDemo puzzle="3x3" moves={compactDemoOptions()} variant="compact" />
         </section>
 
         <div className="alg-notation-modes">
