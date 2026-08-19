@@ -22,7 +22,11 @@ import {
   TEACHING_PACKAGE_ACQUISITION_TYPES,
   TEACHING_WEEKLY_REPORT_VISIBILITIES,
   type GenerateTeachingWeeklyReportInput,
+  type CreateTeachingConversationInput,
+  type MarkTeachingConversationReadInput,
   type PublishTeachingWeeklyReportInput,
+  type ReplyTeachingConversationInput,
+  type TeachingConversationActorRole,
   type TeachingErrorCode,
   type TeachingAttendanceStatus,
   type TeachingCreditUnit,
@@ -209,6 +213,11 @@ interface TrainingAssignmentFilter {
 
 interface WeeklyReportFilter {
   studentId: string | null;
+}
+
+interface ConversationMessagePageInput {
+  afterSequence: number;
+  limit: number;
 }
 
 export interface TeachingSaasRepository {
@@ -462,6 +471,33 @@ export interface TeachingSaasRepository {
     slug: string | null,
     requestId: string,
   ): Promise<JsonObject[]>;
+  listConversations(
+    actor: TeachingActor, slug: string, studentId: string,
+    pagination: PageInput, requestId: string,
+  ): Promise<PageResult>;
+  createConversation(
+    actor: TeachingActor, slug: string, studentId: string,
+    input: CreateTeachingConversationInput, idempotencyKey: string,
+    requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  getConversation(
+    actor: TeachingActor, slug: string, studentId: string,
+    conversationId: string, requestId: string,
+  ): Promise<JsonObject>;
+  listConversationMessages(
+    actor: TeachingActor, slug: string, studentId: string,
+    conversationId: string, pagination: ConversationMessagePageInput, requestId: string,
+  ): Promise<{ items: JsonObject[]; afterSequence: number; nextAfterSequence: number; hasMore: boolean }>;
+  replyConversation(
+    actor: TeachingActor, slug: string, studentId: string, conversationId: string,
+    input: ReplyTeachingConversationInput, idempotencyKey: string,
+    requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  markConversationRead(
+    actor: TeachingActor, slug: string, studentId: string, conversationId: string,
+    input: MarkTeachingConversationReadInput, idempotencyKey: string,
+    requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
   listLearnerWeeklyReports(
     actor: TeachingActor,
     slug: string,
@@ -628,6 +664,40 @@ function parseGuardianAccountBindingConsumeInput(body: JsonObject): { token: str
     throw new TeachingApiException('INVALID_INPUT', 400, 'token must be a 32-byte base64url value');
   }
   return { token };
+}
+
+function parseCreateConversationInput(body: JsonObject): CreateTeachingConversationInput {
+  assertOnlyKeys(body, ['subject', 'body'], 'conversation create input');
+  return {
+    subject: requiredString(body, 'subject', 200),
+    body: requiredString(body, 'body', 10_000),
+  };
+}
+
+function parseReplyConversationInput(body: JsonObject): ReplyTeachingConversationInput {
+  assertOnlyKeys(body, ['body'], 'conversation reply input');
+  return { body: requiredString(body, 'body', 10_000) };
+}
+
+function parseMarkConversationReadInput(body: JsonObject): MarkTeachingConversationReadInput {
+  assertOnlyKeys(body, ['lastReadSequence'], 'conversation read input');
+  return { lastReadSequence: requiredInteger(body, 'lastReadSequence', 0, 2_147_483_647) };
+}
+
+function conversationMessagePaginationOf(c: Context): ConversationMessagePageInput {
+  assertQueryKeys(c, ['afterSequence', 'limit']);
+  const afterRaw = c.req.query('afterSequence');
+  const limitRaw = c.req.query('limit');
+  const afterSequence = afterRaw === undefined ? 0 : Number(afterRaw);
+  const limit = limitRaw === undefined ? 50 : Number(limitRaw);
+  if (!Number.isSafeInteger(afterSequence) || afterSequence < 0 || afterSequence > 2_147_483_647
+      || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
+    throw new TeachingApiException(
+      'INVALID_INPUT', 400,
+      'afterSequence must be a non-negative integer and limit must be 1 to 100',
+    );
+  }
+  return { afterSequence, limit };
 }
 
 function stableJson(value: unknown): string {
@@ -1389,13 +1459,13 @@ async function recordDeniedOrganizationAccess(
        organization_id, actor_user_id, actor_role, actor_display_name,
        action, entity_type, entity_id, outcome, request_id, metadata
      )
-     SELECT o.id, ?, m.role, ?, ?, 'organization', o.id::text, 'denied', ?, ?::jsonb
+     SELECT o.id, actor_account.id, m.role, ?, ?, 'organization', o.id::text, 'denied', ?, ?::jsonb
      FROM organizations o
+     LEFT JOIN app_users actor_account ON actor_account.id = ?
      LEFT JOIN organization_members m
-       ON m.organization_id = o.id AND m.user_id = ?
+       ON m.organization_id = o.id AND m.user_id = actor_account.id
      WHERE o.slug = ?`,
     [
-      actor.userId,
       actor.displayName,
       action,
       requestId,
@@ -2815,6 +2885,359 @@ async function lockAndValidateTrainingSelectors(
     }
   }
   return version;
+}
+
+interface ConversationActorScope {
+  organization: Pick<OrganizationAccess, 'id' | 'slug' | 'name' | 'timezone' | 'status' | 'version'>;
+  student: { id: string; displayName: string };
+  actorOwnerKey: string;
+  role: TeachingConversationActorRole;
+  relationship: string | null;
+  staffAccess: OrganizationAccess | null;
+}
+
+function conversationDisplayName(actor: TeachingActor, scope: ConversationActorScope): string {
+  const displayName = actor.displayName.trim();
+  if (displayName) return displayName;
+  if (scope.role === 'student') return scope.student.displayName;
+  return scope.role === 'guardian' ? 'Guardian' : 'Staff';
+}
+
+async function lockConversationActorScope(
+  tx: Tx,
+  actor: TeachingActor,
+  slug: string,
+  studentId: string,
+  mode: 'read' | 'write',
+): Promise<ConversationActorScope> {
+  const actorRows = await tx`
+    SELECT COALESCE(NULLIF(wca_id, ''), 'u' || id::text) AS owner_key
+    FROM app_users
+    WHERE id = ${actor.userId}
+    FOR KEY SHARE`;
+  if (!actorRows.length) {
+    throw new ConcealedTeachingPermissionDeniedException('Conversation student not found');
+  }
+  const actorOwnerKey = String(actorRows[0].owner_key);
+  const contextRows = await tx`
+    SELECT o.id, o.slug, o.name, o.timezone, o.status, o.version,
+           student.id AS student_id, student.display_name, student.account_user_id
+    FROM organizations o
+    JOIN student_profiles student ON student.organization_id = o.id
+    WHERE o.slug = ${slug} AND student.id = ${studentId} AND student.status = 'active'
+    FOR SHARE OF o, student`;
+  if (!contextRows.length) {
+    throw new ConcealedTeachingPermissionDeniedException('Conversation student not found');
+  }
+  const row = contextRows[0] as Record<string, unknown>;
+  const organization = {
+    id: String(row.id), slug: String(row.slug), name: String(row.name),
+    timezone: String(row.timezone), status: row.status as OrganizationAccess['status'],
+    version: Number(row.version),
+  };
+  const student = { id: String(row.student_id), displayName: String(row.display_name) };
+  const memberRows = await tx`
+    SELECT role FROM organization_members
+    WHERE organization_id = ${organization.id} AND user_id = ${actor.userId} AND status = 'active'
+    FOR SHARE`;
+  const memberRole = memberRows[0]?.role;
+  if (isTeachingOrganizationRole(memberRole)) {
+    const staffAccess: OrganizationAccess = { ...organization, role: memberRole };
+    if (mode === 'write' && organization.status !== 'active') {
+      throw new TeachingApiException('ORGANIZATION_SUSPENDED', 409, 'Organization is not active');
+    }
+    if (memberRole === 'owner' || memberRole === 'admin') {
+      return {
+        organization, student, actorOwnerKey,
+        role: memberRole, relationship: null, staffAccess,
+      };
+    }
+    if ((memberRole === 'teacher' || memberRole === 'assistant')
+        && await lockAndCheckTeacherStudentScope(tx, staffAccess, actor, studentId)) {
+      return {
+        organization, student, actorOwnerKey,
+        role: memberRole, relationship: null, staffAccess,
+      };
+    }
+  }
+  if (organization.status !== 'active') {
+    throw new ConcealedTeachingPermissionDeniedException('Conversation student not found');
+  }
+  if (row.account_user_id != null && Number(row.account_user_id) === actor.userId) {
+    return {
+      organization, student, actorOwnerKey,
+      role: 'student', relationship: null, staffAccess: null,
+    };
+  }
+  const guardianRows = await tx`
+    SELECT relationship
+    FROM guardian_links
+    WHERE organization_id = ${organization.id}
+      AND student_id = ${studentId}
+      AND guardian_user_id = ${actor.userId}
+      AND status = 'active'
+    ORDER BY id
+    LIMIT 1
+    FOR SHARE`;
+  if (guardianRows.length) {
+    return {
+      organization, student, actorOwnerKey, role: 'guardian',
+      relationship: String(guardianRows[0].relationship), staffAccess: null,
+    };
+  }
+  throw new ConcealedTeachingPermissionDeniedException('Conversation student not found');
+}
+
+function conversationRow(row: Record<string, unknown>): JsonObject {
+  const lastMessageSequence = Number(row.last_message_sequence);
+  const lastReadSequence = Number(row.last_read_sequence ?? 0);
+  return {
+    id: String(row.id),
+    organization: { slug: String(row.organization_slug), name: String(row.organization_name) },
+    student: { id: String(row.student_id), displayName: String(row.student_display_name_snapshot) },
+    subject: String(row.subject),
+    lastMessageSequence,
+    lastMessageAt: iso(row.last_message_at),
+    createdAt: iso(row.created_at),
+    createdBy: {
+      displayName: String(row.created_by_display_name_snapshot),
+      role: String(row.created_by_role_snapshot),
+      relationship: row.created_by_relationship_snapshot == null
+        ? null : String(row.created_by_relationship_snapshot),
+    },
+    lastReadSequence,
+    unreadCount: Math.max(0, lastMessageSequence - lastReadSequence),
+  };
+}
+
+function conversationMessageRow(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    conversationId: String(row.conversation_id),
+    sequence: Number(row.sequence),
+    body: String(row.body),
+    author: {
+      displayName: String(row.author_display_name_snapshot),
+      role: String(row.author_role_snapshot),
+      relationship: row.author_relationship_snapshot == null
+        ? null : String(row.author_relationship_snapshot),
+    },
+    createdAt: iso(row.created_at),
+  };
+}
+
+async function conversationRecipients(
+  tx: Tx,
+  scope: ConversationActorScope,
+  excludedUserId: number,
+): Promise<Array<Record<string, unknown>>> {
+  const rows = await tx`
+    WITH eligible AS (
+      SELECT member.user_id, member.role::text AS role, NULL::text AS relationship,
+             app.display_name, app.wca_id, 0 AS priority
+      FROM organization_members member
+      JOIN app_users app ON app.id = member.user_id
+      WHERE member.organization_id = ${scope.organization.id}
+        AND member.status = 'active'
+        AND member.role IN ('owner', 'admin')
+      UNION ALL
+      SELECT member.user_id, member.role::text, NULL::text,
+             app.display_name, app.wca_id, 1
+      FROM organization_members member
+      JOIN app_users app ON app.id = member.user_id
+      WHERE member.organization_id = ${scope.organization.id}
+        AND member.status = 'active'
+        AND member.role IN ('teacher', 'assistant')
+        AND (
+          EXISTS (
+            SELECT 1 FROM teacher_assignments assignment
+            WHERE assignment.organization_id = member.organization_id
+              AND assignment.teacher_user_id = member.user_id
+              AND assignment.student_id = ${scope.student.id}
+              AND assignment.effective_from <= clock_timestamp()
+              AND (assignment.effective_to IS NULL OR assignment.effective_to > clock_timestamp())
+          ) OR EXISTS (
+            SELECT 1
+            FROM teacher_assignments assignment
+            JOIN teaching_groups teaching_group
+              ON teaching_group.organization_id = assignment.organization_id
+             AND teaching_group.id = assignment.group_id
+             AND teaching_group.status = 'active'
+            LEFT JOIN teaching_campuses campus
+              ON campus.organization_id = teaching_group.organization_id
+             AND campus.id = teaching_group.campus_id
+            JOIN student_group_memberships membership
+              ON membership.organization_id = assignment.organization_id
+             AND membership.group_id = assignment.group_id
+             AND membership.student_id = ${scope.student.id}
+             AND membership.effective_from <= clock_timestamp()
+             AND (membership.effective_to IS NULL OR membership.effective_to > clock_timestamp())
+            WHERE assignment.organization_id = member.organization_id
+              AND assignment.teacher_user_id = member.user_id
+              AND assignment.effective_from <= clock_timestamp()
+              AND (assignment.effective_to IS NULL OR assignment.effective_to > clock_timestamp())
+              AND (teaching_group.campus_id IS NULL OR campus.status = 'active')
+          )
+        )
+      UNION ALL
+      SELECT student.account_user_id, 'student', NULL::text,
+             app.display_name, app.wca_id, 2
+      FROM student_profiles student
+      JOIN app_users app ON app.id = student.account_user_id
+      WHERE student.organization_id = ${scope.organization.id}
+        AND student.id = ${scope.student.id}
+        AND student.status = 'active'
+      UNION ALL
+      SELECT guardian.guardian_user_id, 'guardian', guardian.relationship,
+             app.display_name, app.wca_id, 3
+      FROM guardian_links guardian
+      JOIN app_users app ON app.id = guardian.guardian_user_id
+      WHERE guardian.organization_id = ${scope.organization.id}
+        AND guardian.student_id = ${scope.student.id}
+        AND guardian.status = 'active'
+    )
+    SELECT DISTINCT ON (user_id)
+      user_id, role, relationship,
+      COALESCE(NULLIF(btrim(display_name), ''),
+        CASE WHEN role = 'student' THEN ${scope.student.displayName}
+             WHEN role = 'guardian' THEN 'Guardian' ELSE 'Staff' END) AS display_name,
+      COALESCE(NULLIF(wca_id, ''), 'u' || user_id::text) AS owner_key
+    FROM eligible
+    WHERE user_id <> ${excludedUserId}
+    ORDER BY user_id, priority`;
+  return rows as unknown as Array<Record<string, unknown>>;
+}
+
+async function lockConversationRecipientUsers(
+  tx: Tx,
+  recipients: Array<Record<string, unknown>>,
+): Promise<Array<Record<string, unknown>>> {
+  const live = new Set<number>();
+  const userIds = [...new Set(recipients.map((recipient) => Number(recipient.user_id)))]
+    .sort((left, right) => left - right);
+  for (const userId of userIds) {
+    const rows = await tx`SELECT id FROM app_users WHERE id = ${userId} FOR KEY SHARE`;
+    if (rows.length) live.add(userId);
+  }
+  return recipients.filter((recipient) => live.has(Number(recipient.user_id)));
+}
+
+async function upsertConversationParticipant(
+  tx: Tx,
+  scope: ConversationActorScope,
+  conversationId: string,
+  userId: number,
+  displayName: string,
+  role: TeachingConversationActorRole,
+  relationship: string | null,
+  lastReadSequence: number,
+): Promise<number> {
+  const rows = await tx`
+    INSERT INTO teaching_conversation_participants (
+      organization_id, conversation_id, student_id, participant_user_id,
+      participant_display_name_snapshot, participant_role_snapshot,
+      participant_relationship_snapshot, last_read_sequence
+    ) VALUES (
+      ${scope.organization.id}, ${conversationId}, ${scope.student.id}, ${userId},
+      ${displayName}, ${role}, ${relationship}, ${lastReadSequence}
+    )
+    ON CONFLICT (organization_id, conversation_id, participant_user_id)
+      WHERE participant_user_id IS NOT NULL
+    DO UPDATE SET last_read_sequence = GREATEST(
+      teaching_conversation_participants.last_read_sequence,
+      EXCLUDED.last_read_sequence
+    )
+    RETURNING last_read_sequence`;
+  return Number(rows[0].last_read_sequence);
+}
+
+async function appendConversationMessage(
+  tx: Tx,
+  actor: TeachingActor,
+  scope: ConversationActorScope,
+  conversationId: string,
+  subject: string,
+  body: string,
+  recipients: Array<Record<string, unknown>>,
+): Promise<{ message: JsonObject; lastMessageSequence: number; lastMessageAt: string }> {
+  const allocated = await tx`
+    UPDATE teaching_conversations
+    SET last_message_sequence = last_message_sequence + 1,
+        last_message_at = clock_timestamp()
+    WHERE organization_id = ${scope.organization.id}
+      AND id = ${conversationId}
+      AND student_id = ${scope.student.id}
+    RETURNING last_message_sequence, last_message_at`;
+  if (!allocated.length) {
+    throw new ConcealedTeachingPermissionDeniedException('Conversation not found');
+  }
+  const sequence = Number(allocated[0].last_message_sequence);
+  const displayName = conversationDisplayName(actor, scope);
+  const messages = await tx`
+    INSERT INTO teaching_conversation_messages (
+      organization_id, conversation_id, student_id, sequence, body,
+      author_user_id, author_display_name_snapshot, author_role_snapshot,
+      author_relationship_snapshot
+    ) VALUES (
+      ${scope.organization.id}, ${conversationId}, ${scope.student.id}, ${sequence}, ${body},
+      ${actor.userId}, ${displayName}, ${scope.role}, ${scope.relationship}
+    )
+    RETURNING *`;
+  await upsertConversationParticipant(
+    tx, scope, conversationId, actor.userId, displayName,
+    scope.role, scope.relationship, sequence,
+  );
+  for (const recipient of recipients) {
+    await upsertConversationParticipant(
+      tx, scope, conversationId, Number(recipient.user_id), String(recipient.display_name),
+      recipient.role as TeachingConversationActorRole,
+      recipient.relationship == null ? null : String(recipient.relationship), 0,
+    );
+    const isLearner = recipient.role === 'student' || recipient.role === 'guardian';
+    const link = isLearner
+      ? `/learn/${encodeURIComponent(scope.organization.slug)}`
+        + `/students/${encodeURIComponent(scope.student.id)}`
+        + `/messages/${encodeURIComponent(conversationId)}`
+      : `/org/${encodeURIComponent(scope.organization.slug)}`
+        + `/students/${encodeURIComponent(scope.student.id)}`
+        + `/messages/${encodeURIComponent(conversationId)}`;
+    await tx`
+      INSERT INTO notifications (
+        user_key, kind, actor_key, actor_name, title, excerpt, link, dedupe_key
+      ) VALUES (
+        ${String(recipient.owner_key)}, 'teaching_message', ${scope.actorOwnerKey},
+        ${displayName.slice(0, 100)}, ${subject}, ${body.slice(0, 500)}, ${link},
+        ${`teaching-message:${conversationId}:${sequence}`}
+      )
+      ON CONFLICT (user_key, kind, dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING`;
+  }
+  return {
+    message: conversationMessageRow(messages[0] as Record<string, unknown>),
+    lastMessageSequence: sequence,
+    lastMessageAt: iso(allocated[0].last_message_at),
+  };
+}
+
+async function insertConversationAudit(
+  tx: Tx,
+  actor: TeachingActor,
+  scope: ConversationActorScope,
+  action: string,
+  entityType: string,
+  entityId: string,
+  requestId: string,
+  metadata: JsonObject,
+): Promise<void> {
+  const staffRole = scope.staffAccess?.role ?? null;
+  await tx`
+    INSERT INTO teaching_audit_events (
+      organization_id, actor_user_id, actor_role, actor_display_name,
+      action, entity_type, entity_id, request_id, metadata
+    ) VALUES (
+      ${scope.organization.id}, ${actor.userId}, ${staffRole}, ${conversationDisplayName(actor, scope)},
+      ${action}, ${entityType}, ${entityId}, ${requestId},
+      ${sql.json({ ...metadata, actorKind: scope.role, actorRelationship: scope.relationship })}
+    )`;
 }
 
 export const teachingSaasRepository: TeachingSaasRepository = {
@@ -5342,6 +5765,261 @@ export const teachingSaasRepository: TeachingSaasRepository = {
     return contexts;
   },
 
+  async listConversations(actor, slug, studentId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'conversation.list', requestId, async () => {
+      return await sql.begin(async (tx) => {
+        const scope = await lockConversationActorScope(tx, actor, slug, studentId, 'read');
+        const totals = await tx`
+          SELECT COUNT(*)::int AS total
+          FROM teaching_conversations conversation
+          WHERE conversation.organization_id = ${scope.organization.id}
+            AND conversation.student_id = ${scope.student.id}`;
+        const rows = await tx`
+          SELECT conversation.*, organization.slug AS organization_slug,
+                 organization.name AS organization_name,
+                 COALESCE(participant.last_read_sequence, 0) AS last_read_sequence
+          FROM teaching_conversations conversation
+          JOIN organizations organization ON organization.id = conversation.organization_id
+          LEFT JOIN teaching_conversation_participants participant
+            ON participant.organization_id = conversation.organization_id
+           AND participant.conversation_id = conversation.id
+           AND participant.participant_user_id = ${actor.userId}
+          WHERE conversation.organization_id = ${scope.organization.id}
+            AND conversation.student_id = ${scope.student.id}
+          ORDER BY conversation.last_message_at DESC, conversation.id DESC
+          LIMIT ${pagination.pageSize} OFFSET ${pagination.offset}`;
+        return {
+          items: rows.map((row) => conversationRow(row as Record<string, unknown>)),
+          total: Number(totals[0]?.total ?? 0),
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+        };
+      }) as PageResult;
+    });
+  },
+
+  async createConversation(
+    actor, slug, studentId, input, idempotencyKey, requestHash, requestId,
+  ) {
+    await consumeMutationAttempt(actor.userId, 'conversation.create', 60, '1 hour');
+    return withDeniedAccessAudit(actor, slug, 'conversation.create', requestId, async () => {
+      return await sql.begin(async (tx) => {
+        const scope = await lockConversationActorScope(tx, actor, slug, studentId, 'write');
+        const recipients = await lockConversationRecipientUsers(
+          tx,
+          await conversationRecipients(tx, scope, actor.userId),
+        );
+        const idem = await beginIdempotency(
+          tx, actor.userId, scope.organization.id,
+          `conversation.create:${studentId}`, idempotencyKey, requestHash,
+        );
+        if ('replay' in idem) return idem.replay;
+        const displayName = conversationDisplayName(actor, scope);
+        const inserted = await tx`
+          INSERT INTO teaching_conversations (
+            organization_id, student_id, student_display_name_snapshot, subject,
+            created_by_user_id, created_by_display_name_snapshot,
+            created_by_role_snapshot, created_by_relationship_snapshot
+          ) VALUES (
+            ${scope.organization.id}, ${scope.student.id}, ${scope.student.displayName}, ${input.subject},
+            ${actor.userId}, ${displayName}, ${scope.role}, ${scope.relationship}
+          )
+          RETURNING id`;
+        const conversationId = String(inserted[0].id);
+        const appended = await appendConversationMessage(
+          tx, actor, scope, conversationId, input.subject, input.body, recipients,
+        );
+        const rows = await tx`
+          SELECT conversation.*, ${scope.organization.slug}::text AS organization_slug,
+                 ${scope.organization.name}::text AS organization_name,
+                 participant.last_read_sequence
+          FROM teaching_conversations conversation
+          JOIN teaching_conversation_participants participant
+            ON participant.organization_id = conversation.organization_id
+           AND participant.conversation_id = conversation.id
+           AND participant.participant_user_id = ${actor.userId}
+          WHERE conversation.organization_id = ${scope.organization.id}
+            AND conversation.id = ${conversationId}
+            AND conversation.student_id = ${scope.student.id}`;
+        const result: MutationResult = {
+          status: 201,
+          body: {
+            conversation: conversationRow(rows[0] as Record<string, unknown>),
+            message: appended.message,
+          },
+        };
+        await insertConversationAudit(
+          tx, actor, scope, 'conversation.create', 'teaching_conversation',
+          conversationId, requestId, { studentId },
+        );
+        await completeIdempotency(tx, idem.id, result, 'teaching_conversation', conversationId);
+        return result;
+      }) as MutationResult;
+    });
+  },
+
+  async getConversation(actor, slug, studentId, conversationId, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'conversation.read', requestId, async () => {
+      return await sql.begin(async (tx) => {
+        const scope = await lockConversationActorScope(tx, actor, slug, studentId, 'read');
+        const rows = await tx`
+          SELECT conversation.*, ${scope.organization.slug}::text AS organization_slug,
+                 ${scope.organization.name}::text AS organization_name,
+                 COALESCE(participant.last_read_sequence, 0) AS last_read_sequence
+          FROM teaching_conversations conversation
+          LEFT JOIN teaching_conversation_participants participant
+            ON participant.organization_id = conversation.organization_id
+           AND participant.conversation_id = conversation.id
+           AND participant.participant_user_id = ${actor.userId}
+          WHERE conversation.organization_id = ${scope.organization.id}
+            AND conversation.id = ${conversationId}
+            AND conversation.student_id = ${scope.student.id}
+          FOR SHARE OF conversation`;
+        if (!rows.length) {
+          throw new ConcealedTeachingPermissionDeniedException('Conversation not found');
+        }
+        return conversationRow(rows[0] as Record<string, unknown>);
+      }) as JsonObject;
+    });
+  },
+
+  async listConversationMessages(
+    actor, slug, studentId, conversationId, pagination, requestId,
+  ) {
+    return withDeniedAccessAudit(actor, slug, 'conversation.message.list', requestId, async () => {
+      return await sql.begin(async (tx) => {
+        const scope = await lockConversationActorScope(tx, actor, slug, studentId, 'read');
+        const conversations = await tx`
+          SELECT id FROM teaching_conversations
+          WHERE organization_id = ${scope.organization.id}
+            AND id = ${conversationId} AND student_id = ${scope.student.id}
+          FOR SHARE`;
+        if (!conversations.length) {
+          throw new ConcealedTeachingPermissionDeniedException('Conversation not found');
+        }
+        const rows = await tx`
+          SELECT * FROM teaching_conversation_messages
+          WHERE organization_id = ${scope.organization.id}
+            AND conversation_id = ${conversationId}
+            AND student_id = ${scope.student.id}
+            AND sequence > ${pagination.afterSequence}
+          ORDER BY sequence
+          LIMIT ${pagination.limit + 1}`;
+        const hasMore = rows.length > pagination.limit;
+        const visible = hasMore ? rows.slice(0, pagination.limit) : rows;
+        const nextAfterSequence = visible.length
+          ? Number(visible[visible.length - 1].sequence)
+          : pagination.afterSequence;
+        return {
+          items: visible.map((row) => conversationMessageRow(row as Record<string, unknown>)),
+          afterSequence: pagination.afterSequence,
+          nextAfterSequence,
+          hasMore,
+        };
+      });
+    });
+  },
+
+  async replyConversation(
+    actor, slug, studentId, conversationId, input, idempotencyKey, requestHash, requestId,
+  ) {
+    await consumeMutationAttempt(actor.userId, `conversation.reply:${conversationId}`, 120, '1 hour');
+    return withDeniedAccessAudit(actor, slug, 'conversation.message.send', requestId, async () => {
+      return await sql.begin(async (tx) => {
+        const scope = await lockConversationActorScope(tx, actor, slug, studentId, 'write');
+        const recipients = await lockConversationRecipientUsers(
+          tx,
+          await conversationRecipients(tx, scope, actor.userId),
+        );
+        const conversations = await tx`
+          SELECT subject FROM teaching_conversations
+          WHERE organization_id = ${scope.organization.id}
+            AND id = ${conversationId} AND student_id = ${scope.student.id}
+          FOR UPDATE`;
+        if (!conversations.length) {
+          throw new ConcealedTeachingPermissionDeniedException('Conversation not found');
+        }
+        const idem = await beginIdempotency(
+          tx, actor.userId, scope.organization.id,
+          `conversation.message.send:${conversationId}`, idempotencyKey, requestHash,
+        );
+        if ('replay' in idem) return idem.replay;
+        const appended = await appendConversationMessage(
+          tx, actor, scope, conversationId, String(conversations[0].subject), input.body, recipients,
+        );
+        const result: MutationResult = {
+          status: 201,
+          body: {
+            message: appended.message,
+            conversation: {
+              id: conversationId,
+              lastMessageSequence: appended.lastMessageSequence,
+              lastMessageAt: appended.lastMessageAt,
+              lastReadSequence: appended.lastMessageSequence,
+              unreadCount: 0,
+            },
+          },
+        };
+        await insertConversationAudit(
+          tx, actor, scope, 'conversation.message.send', 'teaching_conversation_message',
+          String(appended.message.id), requestId, { conversationId, studentId },
+        );
+        await completeIdempotency(
+          tx, idem.id, result, 'teaching_conversation_message', String(appended.message.id),
+        );
+        return result;
+      }) as MutationResult;
+    });
+  },
+
+  async markConversationRead(
+    actor, slug, studentId, conversationId, input, idempotencyKey, requestHash, requestId,
+  ) {
+    await consumeMutationAttempt(actor.userId, `conversation.read:${conversationId}`, 240, '1 hour');
+    return withDeniedAccessAudit(actor, slug, 'conversation.read.mark', requestId, async () => {
+      return await sql.begin(async (tx) => {
+        const scope = await lockConversationActorScope(tx, actor, slug, studentId, 'read');
+        const conversations = await tx`
+          SELECT last_message_sequence FROM teaching_conversations
+          WHERE organization_id = ${scope.organization.id}
+            AND id = ${conversationId} AND student_id = ${scope.student.id}
+          FOR SHARE`;
+        if (!conversations.length) {
+          throw new ConcealedTeachingPermissionDeniedException('Conversation not found');
+        }
+        const lastMessageSequence = Number(conversations[0].last_message_sequence);
+        if (input.lastReadSequence > lastMessageSequence) {
+          throw new TeachingApiException(
+            'INVALID_INPUT', 400, 'lastReadSequence cannot exceed the latest message sequence',
+          );
+        }
+        const idem = await beginIdempotency(
+          tx, actor.userId, scope.organization.id,
+          `conversation.read.mark:${conversationId}`, idempotencyKey, requestHash,
+        );
+        if ('replay' in idem) return idem.replay;
+        const lastReadSequence = await upsertConversationParticipant(
+          tx, scope, conversationId, actor.userId, conversationDisplayName(actor, scope),
+          scope.role, scope.relationship, input.lastReadSequence,
+        );
+        await tx`
+          UPDATE notifications SET read_at = COALESCE(read_at, NOW())
+          WHERE user_key = ${scope.actorOwnerKey}
+            AND kind = 'teaching_message'
+            AND dedupe_key LIKE ${`teaching-message:${conversationId}:%`}
+            AND split_part(dedupe_key, ':', 3) ~ '^[0-9]+$'
+            AND split_part(dedupe_key, ':', 3)::integer <= ${lastReadSequence}
+            AND read_at IS NULL`;
+        const result: MutationResult = {
+          status: 200,
+          body: { read: { conversationId, lastReadSequence } },
+        };
+        await completeIdempotency(tx, idem.id, result, 'teaching_conversation_read', conversationId);
+        return result;
+      }) as MutationResult;
+    });
+  },
+
   async listLearnerWeeklyReports(actor, slug, studentId, pagination, requestId) {
     return withDeniedAccessAudit(actor, slug, 'weekly_report.learner.list', requestId, async () => {
       const commonParams = [slug, studentId, actor.userId, actor.userId];
@@ -7517,6 +8195,165 @@ export function createTeachingSaasRoutes(deps: {
       return errorResponse(c, error, requestId);
     }
   });
+
+  routes.get(
+    '/teaching/organizations/:orgSlug/students/:studentId/conversations',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const page = await repository.listConversations(
+          actor,
+          c.req.param('orgSlug'),
+          uuidParam(c.req.param('studentId'), 'studentId'),
+          trainingPaginationOf(c),
+          requestId,
+        );
+        return c.json({
+          conversations: page.items,
+          total: page.total,
+          page: page.page,
+          pageSize: page.pageSize,
+        });
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.post(
+    '/teaching/organizations/:orgSlug/students/:studentId/conversations',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+        // JSON may encode CJK text as UTF-8 or \uXXXX escapes; keep the byte cap above
+        // the strict 10,000-character field limit so valid localized content is accepted.
+        const body = await jsonBody(c, 65_536);
+        const input = parseCreateConversationInput(body.value);
+        const result = await repository.createConversation(
+          actor,
+          c.req.param('orgSlug'),
+          studentId,
+          input,
+          idempotencyKeyOf(c),
+          sha256(stableJson({ studentId, input })),
+          requestId,
+        );
+        return c.json(result.body, result.status);
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.get(
+    '/teaching/organizations/:orgSlug/students/:studentId/conversations/:conversationId',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        assertQueryKeys(c, []);
+        const conversation = await repository.getConversation(
+          actor,
+          c.req.param('orgSlug'),
+          uuidParam(c.req.param('studentId'), 'studentId'),
+          uuidParam(c.req.param('conversationId'), 'conversationId'),
+          requestId,
+        );
+        return c.json({ conversation });
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.get(
+    '/teaching/organizations/:orgSlug/students/:studentId/conversations/:conversationId/messages',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const page = await repository.listConversationMessages(
+          actor,
+          c.req.param('orgSlug'),
+          uuidParam(c.req.param('studentId'), 'studentId'),
+          uuidParam(c.req.param('conversationId'), 'conversationId'),
+          conversationMessagePaginationOf(c),
+          requestId,
+        );
+        return c.json({
+          messages: page.items,
+          afterSequence: page.afterSequence,
+          nextAfterSequence: page.nextAfterSequence,
+          hasMore: page.hasMore,
+        });
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.post(
+    '/teaching/organizations/:orgSlug/students/:studentId/conversations/:conversationId/messages',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+        const conversationId = uuidParam(c.req.param('conversationId'), 'conversationId');
+        const body = await jsonBody(c, 65_536);
+        const input = parseReplyConversationInput(body.value);
+        const result = await repository.replyConversation(
+          actor,
+          c.req.param('orgSlug'),
+          studentId,
+          conversationId,
+          input,
+          idempotencyKeyOf(c),
+          sha256(stableJson({ studentId, conversationId, input })),
+          requestId,
+        );
+        return c.json(result.body, result.status);
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.post(
+    '/teaching/organizations/:orgSlug/students/:studentId/conversations/:conversationId/read',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+        const conversationId = uuidParam(c.req.param('conversationId'), 'conversationId');
+        const body = await jsonBody(c, 1_024);
+        const input = parseMarkConversationReadInput(body.value);
+        const result = await repository.markConversationRead(
+          actor,
+          c.req.param('orgSlug'),
+          studentId,
+          conversationId,
+          input,
+          idempotencyKeyOf(c),
+          sha256(stableJson({ studentId, conversationId, input })),
+          requestId,
+        );
+        return c.json(result.body, result.status);
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
 
   routes.get(
     '/teaching/organizations/:orgSlug/me/students/:studentId/weekly-reports',

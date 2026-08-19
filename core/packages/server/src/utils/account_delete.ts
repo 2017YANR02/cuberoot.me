@@ -116,6 +116,9 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   daily_training_rollups: '每日训练汇总由机构原始证据重建,不承载账号资料',
   student_account_binding_invites: '学员账号绑定邀请只存令牌哈希并保留终态,操作者账号随删除置空',
   guardian_account_binding_invites: '监护人账号绑定邀请只存令牌哈希并保留终态,操作者账号随删除置空',
+  teaching_conversations: '家校沟通会话属于机构,创建账号随删除置空且保留身份快照',
+  teaching_conversation_participants: '家校沟通参与记录属于机构,活动账号随删除置空且保留身份与已读快照',
+  teaching_conversation_messages: '家校沟通消息不可变保留,作者账号随删除置空且保留身份快照',
   memberships: '会员权益状态:留着,同一个人重新绑 WCA 回来还认',
   membership_orders: '交易凭证,财务对账要;只有归属键,没有姓名邮箱',
   contributors: '站方手录的致谢名单,单独处理(只把 wca_id 置 NULL,名字留着)',
@@ -155,6 +158,11 @@ export class AccountOwnsOrganizationError extends Error {
 export async function deleteAccount(userId: number, key: string): Promise<void> {
   const tomb = deletedOwnerKey(userId);
   await sql.begin(async (tx) => {
+    // 与教学沟通写事务共用 app_users 第一把锁。账号一旦进入删除流程,新消息、参与者
+    // 与已读游标都必须先等待删除完成,不能在持有 conversation 锁后再反向等待账号行。
+    const accounts = await tx`SELECT id FROM app_users WHERE id = ${userId} FOR UPDATE`;
+    if (!accounts.length) return;
+
     // 锁住机构与本人 owner 行,和成员角色变更使用同一把机构锁。DB 的 deferred
     // constraint trigger 是最终兜底;这里先给账号注销接口一个稳定、可解释的 409。
     const soleOwnerships = await tx`
@@ -233,6 +241,18 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
       UPDATE training_submission_reviews
       SET reviewer_user_id = NULL
       WHERE reviewer_user_id = ${userId}`;
+    await tx`
+      UPDATE teaching_conversations
+      SET created_by_user_id = NULL
+      WHERE created_by_user_id = ${userId}`;
+    await tx`
+      UPDATE teaching_conversation_messages
+      SET author_user_id = NULL
+      WHERE author_user_id = ${userId}`;
+    await tx`
+      UPDATE teaching_conversation_participants
+      SET participant_user_id = NULL
+      WHERE participant_user_id = ${userId}`;
     // 账号绑定状态由账号外键与绑定时间共同表达,删除时必须在同一事务里成对清空。
     await tx`
       UPDATE student_profiles

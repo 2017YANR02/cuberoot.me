@@ -93,6 +93,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'org/[orgSlug]/sessions/[sessionId]': { title: { zh: '课次详情', en: 'Session Details' } },
   'org/[orgSlug]/reports': { title: { zh: '每周教学报告', en: 'Weekly Teaching Reports' } },
   'org/[orgSlug]/reports/[reportId]': { title: { zh: '每周教学报告详情', en: 'Weekly Teaching Report Details' } },
+  'org/[orgSlug]/students/[studentId]/messages': { title: { zh: '家校沟通', en: 'Family Communication' } },
+  'org/[orgSlug]/students/[studentId]/messages/[conversationId]': { title: { zh: '沟通详情', en: 'Communication Thread' } },
   'org/[orgSlug]/training': { title: { zh: '训练任务', en: 'Training Assignments' } },
   'org/[orgSlug]/training/templates/[templateId]': { title: { zh: '训练模板', en: 'Training Template' } },
   'org/[orgSlug]/training/assignments/[assignmentId]': { title: { zh: '训练任务详情', en: 'Training Assignment Details' } },
@@ -111,6 +113,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'learn/[orgSlug]/students/[studentId]/reports': { title: { zh: '每周教学报告', en: 'Weekly Teaching Reports' } },
   'learn/[orgSlug]/students/[studentId]/reports/[reportId]': { title: { zh: '每周教学报告详情', en: 'Weekly Teaching Report Details' } },
   'learn/[orgSlug]/students/[studentId]/feedback': { title: { zh: '课后反馈', en: 'Lesson Feedback' } },
+  'learn/[orgSlug]/students/[studentId]/messages': { title: { zh: '消息', en: 'Messages' } },
+  'learn/[orgSlug]/students/[studentId]/messages/[conversationId]': { title: { zh: '消息详情', en: 'Message Thread' } },
   'privacy': {
     title: { zh: '移动端与小程序隐私政策', en: 'Mobile and Mini Program Privacy Policy' },
     description: {

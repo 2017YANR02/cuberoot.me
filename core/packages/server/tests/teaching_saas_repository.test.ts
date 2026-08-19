@@ -73,8 +73,8 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(db.query).toHaveBeenCalledTimes(2);
     expect(db.query.mock.calls[1][0]).toContain('INSERT INTO teaching_audit_events');
     expect(db.query.mock.calls[1][0]).toContain("'denied'");
+    expect(db.query.mock.calls[1][0]).toContain('LEFT JOIN app_users actor_account');
     expect(db.query.mock.calls[1][1]).toEqual([
-      ACTOR.userId,
       ACTOR.displayName,
       'organization.read',
       'request-read',
@@ -112,8 +112,8 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(db.query).toHaveBeenCalledTimes(2);
     expect(db.query.mock.calls[0][0]).toContain('INSERT INTO teaching_mutation_rate_limits');
     expect(db.query.mock.calls[1][0]).toContain('INSERT INTO teaching_audit_events');
+    expect(db.query.mock.calls[1][0]).toContain('LEFT JOIN app_users actor_account');
     expect(db.query.mock.calls[1][1]).toEqual([
-      ACTOR.userId,
       ACTOR.displayName,
       'student.create',
       'request-write',

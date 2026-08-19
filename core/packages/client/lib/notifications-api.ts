@@ -8,7 +8,8 @@ export type NotificationKind =
   | 'forum_review' | 'forum_approved' | 'forum_rejected'
   | 'comp_reg'
   | 'document_change'
-  | 'cal_reminder' | 'cal_invite' | 'cal_rsvp';
+  | 'cal_reminder' | 'cal_invite' | 'cal_rsvp'
+  | 'teaching_message';
 
 export interface SiteNotification {
   id: number;

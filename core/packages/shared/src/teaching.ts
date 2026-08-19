@@ -234,6 +234,8 @@ export const TEACHING_PERMISSIONS = [
   'training:review',
   'report:read',
   'report:manage',
+  'conversation:read',
+  'conversation:manage',
 ] as const;
 
 export type TeachingPermission = (typeof TEACHING_PERMISSIONS)[number];
@@ -246,12 +248,14 @@ const ROLE_PERMISSIONS: Record<TeachingOrganizationRole, readonly TeachingPermis
     'feedback:read', 'feedback:manage',
     'training:template:read', 'training:assignment:read', 'training:assignment:manage', 'training:review',
     'report:read', 'report:manage',
+    'conversation:read', 'conversation:manage',
   ],
   assistant: [
     'member:read', 'student:read', 'campus:read', 'group:read', 'session:read', 'session:manage',
     'feedback:read', 'feedback:manage',
     'training:template:read', 'training:assignment:read', 'training:review',
     'report:read', 'report:manage',
+    'conversation:read', 'conversation:manage',
   ],
   finance: ['member:read', 'package:read', 'package:manage', 'finance:read', 'finance:manage'],
   viewer: ['member:read'],
@@ -906,6 +910,98 @@ export interface TeachingLearningContext {
   organization: { slug: string; name: string };
   student: { id: string; displayName: string };
   relationships: TeachingLearningRelationship[];
+}
+
+export const TEACHING_CONVERSATION_ACTOR_ROLES = [
+  'owner',
+  'admin',
+  'teacher',
+  'assistant',
+  'student',
+  'guardian',
+] as const;
+
+export type TeachingConversationActorRole = (typeof TEACHING_CONVERSATION_ACTOR_ROLES)[number];
+
+export interface TeachingConversationActorSnapshot {
+  displayName: string;
+  role: TeachingConversationActorRole;
+  relationship: string | null;
+}
+
+export interface TeachingConversationSummary {
+  id: string;
+  organization: { slug: string; name: string };
+  student: { id: string; displayName: string };
+  subject: string;
+  lastMessageSequence: number;
+  lastMessageAt: string;
+  createdAt: string;
+  createdBy: TeachingConversationActorSnapshot;
+  lastReadSequence: number;
+  unreadCount: number;
+}
+
+export interface TeachingConversationMessage {
+  id: string;
+  conversationId: string;
+  sequence: number;
+  body: string;
+  author: TeachingConversationActorSnapshot;
+  createdAt: string;
+}
+
+export interface CreateTeachingConversationInput {
+  subject: string;
+  body: string;
+}
+
+export interface ReplyTeachingConversationInput {
+  body: string;
+}
+
+export interface MarkTeachingConversationReadInput {
+  lastReadSequence: number;
+}
+
+export interface MarkTeachingConversationReadResult {
+  conversationId: string;
+  lastReadSequence: number;
+}
+
+export interface TeachingConversationListResponse {
+  conversations: TeachingConversationSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface CreateTeachingConversationResponse {
+  conversation: TeachingConversationSummary;
+  message: TeachingConversationMessage;
+}
+
+export interface TeachingConversationDetailResponse {
+  conversation: TeachingConversationSummary;
+}
+
+export interface TeachingConversationMessagesResponse {
+  messages: TeachingConversationMessage[];
+  afterSequence: number;
+  nextAfterSequence: number;
+  hasMore: boolean;
+}
+
+export interface ReplyTeachingConversationResponse {
+  message: TeachingConversationMessage;
+  conversation: Pick<
+    TeachingConversationSummary,
+    'id' | 'lastMessageSequence' | 'lastMessageAt' | 'lastReadSequence' | 'unreadCount'
+  >;
+}
+
+export interface MarkTeachingConversationReadResponse {
+  read: MarkTeachingConversationReadResult;
 }
 
 export interface TeachingLearnerLessonFeedback {

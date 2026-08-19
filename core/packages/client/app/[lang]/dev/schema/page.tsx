@@ -250,6 +250,15 @@ const TABLES: Table[] = [
   { name: 'teaching_weekly_reports', domain: 'teaching', origin: '0155', naturalKey: true, purpose: { zh: '按机构、学员和周保存可重算草稿与不可变发布修订', en: 'Recomputable drafts and immutable published revisions by organization, student, and week' }, cols: [
     { name: 'id UUID (PK), organization_id, student_id, week_start, week_end, revision' }, { name: 'status, visibility, teacher_summary, next_week_plan, aggregate JSONB' }, { name: 'student / timezone / generator / publisher snapshots, generated_at, published_at' },
   ] },
+  { name: 'teaching_conversations', domain: 'teaching', origin: '0158', purpose: { zh: '按机构与学员隔离的家校沟通会话，父行原子分配连续消息序号', en: 'Tenant- and student-scoped family communication threads whose parent row atomically allocates continuous message sequences' }, cols: [
+    { name: 'id UUID (PK), organization_id, student_id, subject' }, { name: 'last_message_sequence, last_message_at' }, { name: 'student / creator identity snapshots, created_at' },
+  ] },
+  { name: 'teaching_conversation_participants', domain: 'teaching', origin: '0158', naturalKey: true, purpose: { zh: '每账号每会话独立且只增不减的已读游标与参与身份快照', en: 'Independent monotonic read cursors and participant identity snapshots per account and conversation' }, cols: [
+    { name: 'id UUID (PK), organization_id, conversation_id, student_id' }, { name: 'participant_user_id and identity snapshots' }, { name: 'last_read_sequence, joined_at' },
+  ] },
+  { name: 'teaching_conversation_messages', domain: 'teaching', origin: '0158', naturalKey: true, purpose: { zh: '正文与作者快照不可变的会话消息，按父行分配序号稳定分页', en: 'Append-only conversation messages with immutable author snapshots and parent-allocated sequence pagination' }, cols: [
+    { name: 'id UUID (PK), organization_id, conversation_id, student_id' }, { name: 'sequence (conversation UNIQUE), body' }, { name: 'author_user_id and identity snapshots, created_at' },
+  ] },
 
   // ── user artifacts ──────────────────────────────────────
   { name: 'timer_backups', domain: 'studio', origin: '0020', purpose: { zh: '计时器成绩云备份(单快照覆盖)', en: 'Cloud backup of timer sessions (single overwrite snapshot)' }, cols: [
@@ -550,6 +559,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 155, slug: 'teaching_weekly_reports', desc: { zh: '新增按学员与周修订的教学周报，草稿可重算，发布后冻结聚合、总结、计划与可见性。', en: 'Add revisioned weekly teaching reports with recomputable drafts and immutable published aggregates, summaries, plans, and visibility.' } },
   { n: 156, slug: 'teaching_learner_portal', desc: { zh: '为监护关系增加账号绑定时间与哈希邀请，并建立按学员或监护身份读取已发布周报和课堂反馈的门户契约。', en: 'Add guardian account-link timestamps and hashed invitations, plus portal contracts for learners and guardians to read published weekly reports and lesson feedback.' } },
   { n: 157, slug: 'fix_fto_pair_formation_setups', desc: { zh: '修正 FTO Pair Formation 的阶段 setup，使公式结束于所有三元组已配对的 Top Layer 起始态，而不是整颗还原。', en: 'Correct FTO Pair Formation setups so algorithms finish at the all-triples-paired Top Layer starting state instead of a solved puzzle.' } },
+  { n: 158, slug: 'teaching_conversations', desc: { zh: '新增家校沟通会话、连续消息序号、每账号单调已读游标，以及同事务去重的站内提醒。', en: 'Add family communication threads, continuous message sequences, per-account monotonic read cursors, and transactionally deduplicated inbox reminders.' } },
   { n: 159, slug: 'fix_fto_top_layer_setups', desc: { zh: '修正 FTO Top Layer 的阶段 setup，使公式结束于 Last Triangles 起始态，而不是整颗还原。', en: 'Correct FTO Top Layer setups so algorithms finish at the Last Triangles starting state instead of a solved puzzle.' } },
 ];
 

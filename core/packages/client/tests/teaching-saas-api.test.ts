@@ -14,12 +14,14 @@ vi.mock('@/lib/api-base', () => ({
 
 import {
   completeTeachingSession,
+  createTeachingConversation,
   createTeachingSession,
   createTeachingGroupMembership,
   createTeachingMember,
   createTeachingTeacherAssignment,
   generateTeachingWeeklyReport,
   getLearnerTeachingWeeklyReport,
+  getTeachingConversation,
   getTeachingWeeklyReport,
   listLearnerTeachingLessonFeedback,
   listLearnerTeachingWeeklyReports,
@@ -27,14 +29,18 @@ import {
   listTeachingGroupMemberships,
   createTeachingStudent,
   listTeachingOrganizations,
+  listTeachingConversationMessages,
+  listTeachingConversations,
   listTeachingStudents,
   listTeachingTeacherAssignments,
   listTeachingLearningContexts,
   listTeachingOrganizationLearningContexts,
   listTeachingWeeklyReports,
+  markTeachingConversationRead,
   previewTeachingGuardianAccountBinding,
   consumeTeachingGuardianAccountBinding,
   publishTeachingWeeklyReport,
+  replyTeachingConversation,
   saveTeachingAttendanceBatch,
 } from '@/lib/teaching-saas-api';
 
@@ -67,6 +73,36 @@ function student() {
     status: 'active',
     createdAt: '2026-08-18T00:00:00.000Z',
     updatedAt: '2026-08-18T00:00:00.000Z',
+  };
+}
+
+function conversationSummary(overrides: Record<string, unknown> = {}) {
+  return {
+    id: '018f3e56-31a5-7a88-9b45-337ccdbf7310',
+    organization: { slug: organization().slug, name: organization().name },
+    student: { id: student().id, displayName: student().displayName },
+    subject: 'August learning plan',
+    lastMessageSequence: 2,
+    lastMessageAt: '2026-08-18T14:10:00.000Z',
+    createdAt: '2026-08-18T14:00:00.000Z',
+    createdBy: { displayName: 'Teacher One', role: 'teacher', relationship: null },
+    lastReadSequence: 1,
+    unreadCount: 1,
+    ...overrides,
+  };
+}
+
+function conversationMessage(sequence = 1, overrides: Record<string, unknown> = {}) {
+  return {
+    id: `018f3e56-31a5-7a88-9b45-337ccdbf73${sequence}`,
+    conversationId: conversationSummary().id,
+    sequence,
+    body: sequence === 1 ? 'Please review this week\'s plan.' : 'Reviewed, thank you.',
+    author: sequence === 1
+      ? { displayName: 'Teacher One', role: 'teacher', relationship: null }
+      : { displayName: 'Parent One', role: 'guardian', relationship: 'parent' },
+    createdAt: `2026-08-18T14:${String(sequence).padStart(2, '0')}:00.000Z`,
+    ...overrides,
   };
 }
 
@@ -646,6 +682,108 @@ describe('teaching SaaS client', () => {
     invalid.relationships = [{ kind: 'owner' } as never];
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ learningContexts: [invalid] })));
     await expect(listTeachingLearningContexts()).rejects.toMatchObject({ code: 'INVALID_RESPONSE', status: 502 });
+  });
+
+  it('uses the exact conversation GET paths, no-store cache, and cursor contract', async () => {
+    const summary = conversationSummary();
+    const messages = [conversationMessage(1), conversationMessage(2)];
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ conversations: [summary], total: 1, page: 1, pageSize: 100 }))
+      .mockResolvedValueOnce(jsonResponse({ conversation: summary }))
+      .mockResolvedValueOnce(jsonResponse({ messages, afterSequence: 0, nextAfterSequence: 2, hasMore: false }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listTeachingConversations('cube-academy', student().id, 0, 999)).resolves.toEqual({
+      conversations: [summary], total: 1, page: 1, pageSize: 100,
+    });
+    await expect(getTeachingConversation('cube-academy', student().id, summary.id)).resolves.toEqual({ conversation: summary });
+    await expect(listTeachingConversationMessages('cube-academy', student().id, summary.id, -10, 999)).resolves.toEqual({
+      messages, afterSequence: 0, nextAfterSequence: 2, hasMore: false,
+    });
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      `https://api.example.test/v1/teaching/organizations/cube-academy/students/${student().id}/conversations?page=1&pageSize=100`,
+      `https://api.example.test/v1/teaching/organizations/cube-academy/students/${student().id}/conversations/${summary.id}`,
+      `https://api.example.test/v1/teaching/organizations/cube-academy/students/${student().id}/conversations/${summary.id}/messages?afterSequence=0&limit=100`,
+    ]);
+    for (const [, initValue] of fetchMock.mock.calls) {
+      const init = initValue as RequestInit;
+      expect(init.cache).toBe('no-store');
+      expect(init.method).toBeUndefined();
+      expect(init.body).toBeUndefined();
+    }
+  });
+
+  it('sends strict conversation mutation bodies with independent idempotency keys', async () => {
+    const created = conversationSummary({ lastMessageSequence: 1, lastReadSequence: 1, unreadCount: 0 });
+    const firstMessage = conversationMessage(1);
+    const secondMessage = conversationMessage(2);
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ conversation: created, message: firstMessage }, 201))
+      .mockResolvedValueOnce(jsonResponse({
+        message: secondMessage,
+        conversation: {
+          id: created.id,
+          lastMessageSequence: 2,
+          lastMessageAt: secondMessage.createdAt,
+          lastReadSequence: 2,
+          unreadCount: 0,
+        },
+      }, 201))
+      .mockResolvedValueOnce(jsonResponse({ read: { conversationId: created.id, lastReadSequence: 2 } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const createInput = { subject: created.subject, body: firstMessage.body, ignored: true };
+    const replyInput = { body: secondMessage.body, ignored: true };
+    const readInput = { lastReadSequence: 2, ignored: true };
+
+    await createTeachingConversation('cube-academy', student().id, createInput, 'create-key');
+    await replyTeachingConversation('cube-academy', student().id, created.id, replyInput, 'reply-key');
+    await markTeachingConversationRead('cube-academy', student().id, created.id, readInput, 'read-key');
+
+    const expectedBodies = [
+      { subject: createInput.subject, body: createInput.body },
+      { body: replyInput.body },
+      { lastReadSequence: readInput.lastReadSequence },
+    ];
+    const expectedKeys = ['create-key', 'reply-key', 'read-key'];
+    fetchMock.mock.calls.forEach(([, initValue], index) => {
+      const init = initValue as RequestInit;
+      expect(init.method).toBe('POST');
+      expect(init.cache).toBe('no-store');
+      expect(init.headers).toMatchObject({ 'Idempotency-Key': expectedKeys[index] });
+      expect(JSON.parse(String(init.body))).toEqual(expectedBodies[index]);
+    });
+  });
+
+  it('rejects conversation role, scope, ordering, and cursor drift', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+      conversations: [conversationSummary({
+        createdBy: { displayName: 'Unknown', role: 'finance', relationship: null },
+      })],
+      total: 1,
+      page: 1,
+      pageSize: 25,
+    })));
+    await expect(listTeachingConversations('cube-academy', student().id)).rejects.toMatchObject({
+      code: 'INVALID_RESPONSE', status: 502,
+    });
+
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+      conversation: conversationSummary({ student: { id: 'another-student', displayName: 'Other' } }),
+    })));
+    await expect(getTeachingConversation('cube-academy', student().id, conversationSummary().id)).rejects.toMatchObject({
+      code: 'INVALID_RESPONSE', status: 502,
+    });
+
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+      messages: [conversationMessage(2), conversationMessage(1)],
+      afterSequence: 0,
+      nextAfterSequence: 1,
+      hasMore: false,
+    })));
+    await expect(listTeachingConversationMessages(
+      'cube-academy', student().id, conversationSummary().id,
+    )).rejects.toMatchObject({ code: 'INVALID_RESPONSE', status: 502 });
   });
 
   it('uses learner weekly report list and detail paths with narrow published responses', async () => {
