@@ -158,6 +158,7 @@ interface CompEntry {
   registered?: number;
   round_meta?: Record<string, RoundMeta>;
   dual_events?: string[];
+  h2h_events?: string[];
 }
 
 // ---------- small helpers ----------
@@ -730,6 +731,8 @@ interface AllComp {
   round_meta?: Record<string, RoundMeta>;
   /** 含双轮赛制（Reg 9v，2026+）的 event 短码：首轮 advancement=percent/100。无则缺省 */
   dual_events?: string[];
+  /** 含 H2H（Head to Head，WCIF round format = h）的 event 短码。无则缺省 */
+  h2h_events?: string[];
 }
 
 /** 含双轮赛制的 event 短码：首轮 advancement=percent/100（全员晋级=无淘汰，Reg 9v）+ 该项目 ≥2 轮 + 2026+。 */
@@ -860,17 +863,20 @@ interface WcifEntry {
   eventRegs: Record<string, number>;
   // event 短码 → round-1 WCIF 配置（限时/及格/晋级/资格）
   roundMeta: Record<string, RoundMeta>;
+  // 含 H2H（Head to Head，round format = h）的 event 短码
+  h2hEvents: string[];
 }
 
 function wcifCacheOk(cached: unknown): cached is WcifEntry {
-  // 新缓存格式必须含 rounds + competitors + eventRegs + roundMeta；旧格式（缺任一）视为失效，重拉。
+  // 新缓存格式必须含 rounds + competitors + eventRegs + roundMeta + h2hEvents；旧格式（缺任一）视为失效，重拉。
   return (
     typeof cached === 'object' &&
     cached !== null &&
     'rounds' in cached &&
     'competitors' in cached &&
     'eventRegs' in cached &&
-    'roundMeta' in cached
+    'roundMeta' in cached &&
+    'h2hEvents' in cached
   );
 }
 
@@ -902,6 +908,7 @@ async function fetchWcif(compId: string): Promise<WcifEntry | Record<string, nev
     return {};
   }
   type WcifRound = {
+    format?: string;
     timeLimit?: { centiseconds?: number; cumulativeRoundIds?: string[] } | null;
     cutoff?: { numberOfAttempts?: number; attemptResult?: number } | null;
     advancementCondition?: { type?: string; level?: number } | null;
@@ -912,6 +919,7 @@ async function fetchWcif(compId: string): Promise<WcifEntry | Record<string, nev
   };
   const rounds: Record<string, number> = {};
   const roundMeta: Record<string, RoundMeta> = {};
+  const h2hEvents: string[] = [];
   for (const ev of d.events ?? []) {
     const eid = ev.id;
     if (!eid) {
@@ -920,6 +928,7 @@ async function fetchWcif(compId: string): Promise<WcifEntry | Record<string, nev
     const rs = ev.rounds ?? [];
     const short = (EVENT_ORDER_MAP[eid] ?? [999, eid])[1] as string;
     rounds[short] = rs.length;
+    if (rs.some((r) => r.format === 'h')) h2hEvents.push(short);
     // round-1 配置 + event 级 qualification → 紧凑 meta
     const r1 = rs[0];
     const m: RoundMeta = {};
@@ -950,7 +959,7 @@ async function fetchWcif(compId: string): Promise<WcifEntry | Record<string, nev
       eventRegs[short] = (eventRegs[short] ?? 0) + 1;
     }
   }
-  const out: WcifEntry = { rounds, competitors, eventRegs, roundMeta };
+  const out: WcifEntry = { rounds, competitors, eventRegs, roundMeta, h2hEvents };
   writeFileSync(cacheFile, JSON.stringify(out), 'utf-8');
   return out;
 }
@@ -998,10 +1007,10 @@ async function fetchWcifBatch(compIds: Iterable<string>): Promise<Record<string,
       const cid = pending[i]!;
       try {
         const r = await fetchWcif(cid);
-        out[cid] = wcifCacheOk(r) ? r : { rounds: {}, competitors: [], eventRegs: {}, roundMeta: {} };
+        out[cid] = wcifCacheOk(r) ? r : { rounds: {}, competitors: [], eventRegs: {}, roundMeta: {}, h2hEvents: [] };
       } catch (e) {
         console.log(`[WCIF][WARN] ${cid}: ${(e as Error).message ?? e}`);
-        out[cid] = { rounds: {}, competitors: [], eventRegs: {}, roundMeta: {} };
+        out[cid] = { rounds: {}, competitors: [], eventRegs: {}, roundMeta: {}, h2hEvents: [] };
       }
       done += 1;
       if (done % 50 === 0 || done === pending.length) {
@@ -1242,6 +1251,8 @@ async function main(): Promise<void> {
     c.round_meta = wcifMap[c.id!]?.roundMeta ?? {};
     const de = dualEventsOf(wcifMap[c.id!], c.start_date);
     if (de.length) c.dual_events = de;
+    const he = wcifMap[c.id!]?.h2hEvents ?? [];
+    if (he.length) c.h2h_events = he;
   }
   if (allComps) {
     for (const c of allComps) {
@@ -1251,6 +1262,8 @@ async function main(): Promise<void> {
       c.round_meta = wcifMap[c.id]?.roundMeta ?? {};
       const de = dualEventsOf(wcifMap[c.id], c.start_date);
       if (de.length) c.dual_events = de;
+      const he = wcifMap[c.id]?.h2hEvents ?? [];
+      if (he.length) c.h2h_events = he;
     }
   }
 

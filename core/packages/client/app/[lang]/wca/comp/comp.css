@@ -1735,6 +1735,22 @@ td.is-pr {
 .sched-empty, .sched-note { color: var(--muted-foreground); }
 .sched-empty { text-align: center; padding: 48px 20px; font-size: 0.95rem; }
 .sched-note { font-size: 0.82rem; margin: 0 0 10px; }
+.sched-h2h-summary {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 7px 12px;
+  margin: 8px 0 2px; font-size: 0.88rem;
+}
+.sched-h2h-event {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-weight: 600; white-space: nowrap;
+}
+.sched-h2h-event .sched-block-icon { margin-right: 0; }
+.sched-h2h-marker {
+  display: inline-flex; align-items: center; flex: none;
+  padding: 0 0.32em; border: 1px solid currentColor; border-radius: 999px;
+  font-size: 0.64rem; font-weight: 800; line-height: 1.35;
+  letter-spacing: 0.03em; white-space: nowrap;
+}
+.sched-fc .sched-h2h-marker { margin-left: 0.38em; }
 
 /* Mobile day switcher (calendar) */
 .sched-day-switcher {
