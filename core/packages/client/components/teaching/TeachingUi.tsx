@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { TeachingConversationActorSnapshot } from '@cuberoot/shared/teaching';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { TeachingApiError, type TeachingPage } from '@/lib/teaching-saas-api';
@@ -118,7 +119,30 @@ export function teachingRoleLabel(role: string, t: ReturnType<typeof useT>): str
     assistant: ['助教', 'Assistant'],
     finance: ['财务', 'Finance'],
     viewer: ['只读成员', 'Viewer'],
+    student: ['学员', 'Learner'],
+    guardian: ['监护人', 'Guardian'],
   };
   const label = labels[role];
   return label ? t(label[0], label[1]) : role;
+}
+
+export function teachingConversationActorLabel(
+  actor: TeachingConversationActorSnapshot,
+  t: ReturnType<typeof useT>,
+): string {
+  const role = teachingRoleLabel(actor.role, t);
+  if (actor.relationship) {
+    return t(
+      `${actor.displayName}（${role}：${actor.relationship}）`,
+      `${actor.displayName} (${role}: ${actor.relationship})`,
+    );
+  }
+  return t(`${actor.displayName}（${role}）`, `${actor.displayName} (${role})`);
+}
+
+export function teachingDateTime(value: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf())
+    ? value
+    : date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }

@@ -194,4 +194,40 @@ describe('main-site teaching architecture', () => {
       expect(source).not.toContain('router.push');
     }
   });
+
+  it('shares one conversation UI across learner and staff routes with real links and narrow layout', () => {
+    const learnerWorkspace = readClient('components/teaching/LearnerWorkspace.tsx');
+    const learnerOverview = readClient('app/[lang]/learn/[orgSlug]/students/[studentId]/page.tsx');
+    const studentDetail = readClient('app/[lang]/org/[orgSlug]/students/[studentId]/page.tsx');
+    const conversationList = readClient('components/teaching/TeachingConversationList.tsx');
+    const conversationThread = readClient('components/teaching/TeachingConversationThread.tsx');
+    const learnerMessages = readClient('app/[lang]/learn/[orgSlug]/students/[studentId]/messages/page.tsx');
+    const learnerThread = readClient('app/[lang]/learn/[orgSlug]/students/[studentId]/messages/[conversationId]/page.tsx');
+    const staffMessages = readClient('app/[lang]/org/[orgSlug]/students/[studentId]/messages/page.tsx');
+    const staffThread = readClient('app/[lang]/org/[orgSlug]/students/[studentId]/messages/[conversationId]/page.tsx');
+    const css = readClient('components/teaching/teaching.css');
+
+    expect(learnerWorkspace).toContain('href={`${baseHref}/messages`}');
+    expect(learnerOverview).toContain('href={`${baseHref}/messages`}');
+    expect(studentDetail).toContain("hasTeachingPermission(role, 'conversation:read')");
+    expect(studentDetail).toContain('students/${studentId}/messages');
+    for (const source of [learnerWorkspace, learnerOverview, studentDetail, conversationList, conversationThread]) {
+      expect(source).toContain('<AppLink');
+      expect(source).toContain('prefetch={false}');
+      expect(source).not.toContain('router.push');
+    }
+    expect(learnerMessages).toContain('<TeachingConversationList');
+    expect(learnerThread).toContain('<TeachingConversationThread');
+    expect(staffMessages).toContain("hasTeachingPermission(organization.role, 'conversation:read')");
+    expect(staffMessages).toContain("hasTeachingPermission(organization.role, 'conversation:manage')");
+    expect(staffThread).toContain("hasTeachingPermission(organization.role, 'conversation:read')");
+    expect(staffThread).toContain("hasTeachingPermission(organization.role, 'conversation:manage')");
+    expect(conversationList).toContain('maxLength={200}');
+    expect(conversationList).toContain('maxLength={10_000}');
+    expect(conversationThread).toContain('markTeachingConversationRead');
+    expect(conversationThread).toContain('refreshNotificationsUnread');
+    expect(conversationThread).toContain('maxLength={10_000}');
+    expect(css).toContain('.teaching-conversation-entry { grid-template-columns: 42px minmax(0, 1fr);');
+    expect(css).toContain('.teaching-conversation-body { min-width: 0; margin: 0; white-space: pre-wrap;');
+  });
 });

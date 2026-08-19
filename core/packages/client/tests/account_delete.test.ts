@@ -76,6 +76,12 @@ const STAGE3_TRAINING_TABLES = [
   'guardian_account_binding_invites',
 ] as const;
 
+const STAGE4_CONVERSATION_TABLES = [
+  'teaching_conversations',
+  'teaching_conversation_participants',
+  'teaching_conversation_messages',
+] as const;
+
 describe('清单 ↔ schema', () => {
   it('schema 解析出的表数合理(解析器本身没坏)', () => {
     expect(SCHEMA.size).toBeGreaterThan(50);
@@ -161,9 +167,10 @@ describe('清单 ↔ schema', () => {
       'lesson_feedback',
       'teaching_weekly_reports',
       ...STAGE3_TRAINING_TABLES,
+      ...STAGE4_CONVERSATION_TABLES,
     ]));
-    for (const table of STAGE3_TRAINING_TABLES) {
-      expect(SNAPSHOT_SCHEMA.has(table), `Stage 3 表 ${table} 必须存在于最终 schema snapshot`).toBe(true);
+    for (const table of [...STAGE3_TRAINING_TABLES, ...STAGE4_CONVERSATION_TABLES]) {
+      expect(SNAPSHOT_SCHEMA.has(table), `教学表 ${table} 必须存在于最终 schema snapshot`).toBe(true);
     }
   });
 });

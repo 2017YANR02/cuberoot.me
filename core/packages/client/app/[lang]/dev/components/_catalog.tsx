@@ -824,6 +824,20 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Published lesson-feedback list for the learning center, accepting only the narrow learner contract.',
   },
   {
+    name: 'TeachingConversationList',
+    import: "import TeachingConversationList from '@/components/teaching/TeachingConversationList';",
+    category: 'more',
+    zh: '教职员工、学员和监护人共用的教学消息主题列表与发起表单。',
+    en: 'Shared teaching conversation list and compose form for staff, learners, and guardians.',
+  },
+  {
+    name: 'TeachingConversationThread',
+    import: "import TeachingConversationThread from '@/components/teaching/TeachingConversationThread';",
+    category: 'more',
+    zh: '按服务端消息序号展示、分页、回复并同步已读状态的共用沟通正文。',
+    en: 'Shared conversation thread ordered by server sequence, with pagination, replies, and read-state sync.',
+  },
+  {
     name: 'TeachingUi',
     import: "import { MutationMessage, TeachingPagination, teachingErrorMessage, useOperationKey, useTeachingPage } from '@/components/teaching/TeachingUi';",
     category: 'more',
