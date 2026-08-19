@@ -1,14 +1,14 @@
 # 教学平台前端统一计划
 
-最后更新:2026-08-18
+最后更新:2026-08-19
 
-状态:主站机构 CRM、课包、课次、训练任务、证据批改与账号绑定源码已落地;浏览器多角色验收和生产发布尚未完成。
+状态:主站机构 CRM、课包、课次、训练任务、证据批改、账号绑定、学员/监护人读取、周报通知与家校沟通源码已落地;浏览器多角色验收和生产发布尚未完成。
 
 ## 决策
 
 最终不保留独立 Platform 前端。教学系统作为主站的一部分运行:
 
-- `core/packages/client` 是唯一 Web 前端,教学管理入口使用 `/org/*`。
+- `core/packages/client` 是唯一 Web 前端,教职员工入口使用 `/org/*`,学员/监护人入口使用 `/learn/*`。
 - `core/packages/server` 提供全部多机构教学 API,PostgreSQL 是教学业务唯一事实来源。
 - `core/packages/shared` 保存前后端共享契约,不放第二套业务实现。
 - `core/packages/platform` 只作为迁移期来源,停止新增产品能力;仅允许安全修复、迁移辅助和必要的数据导出。
@@ -23,13 +23,14 @@
 | --- | --- | --- |
 | 公开站点与训练工具 | `packages/client` | 继续使用现有主站页面和组件 |
 | 机构与教师后台 | `packages/client/app/[lang]/org` | 独立后台布局,仍属于主站应用 |
+| 学员与监护人门户 | `packages/client/app/[lang]/learn` | 复用主站账号、教学 API 与中性教学组件 |
 | 登录与账号 | 主站现有账号体系 | 不再保留 `cube_user` 独立 Cookie 或跨站身份桥接 |
 | 教学 API | `packages/server` | 统一鉴权、租户权限、审计和幂等 |
 | 教学数据 | PostgreSQL | 机构、课包、课堂、作业、证据和反馈均以此为准 |
 | 共享契约 | `packages/shared` | DTO、权限、状态、严格 parser 与 registry |
 | 旧 Platform SQLite | 迁移期只读 | 按功能决定归档或迁移,不再承载新增教学业务 |
 
-主站路由沿用语言规范:英文裸路径 `/org/*`,中文 `/zh/org/*`。`platform.cuberoot.me` 在最终切换后只做 308 跳转到主站对应入口,不再返回第二套页面。
+主站路由沿用语言规范:英文使用 `/org/*`、`/learn/*`,中文使用 `/zh/org/*`、`/zh/learn/*`。`platform.cuberoot.me` 在最终切换后只做 308 跳转到主站对应入口,不再返回第二套页面。
 
 ## 功能路由
 
@@ -48,7 +49,13 @@
 - `/org/[orgSlug]/training/assignments/[assignmentId]/students/[studentId]`:证据明细和老师批改。
 - `/training/[orgSlug]`:学员任务入口,真链接进入主站 `/timer`、`/predict` 或 `/alg`。
 - `/account/student-binding`:学员登录后预览并确认一次性账号绑定邀请。
-- `/org/[orgSlug]/reports`:课堂反馈、周报和经营报表。
+- `/account/guardian-binding`:监护人登录后预览并确认一次性账号绑定邀请。
+- `/org/[orgSlug]/reports`:课堂反馈与周报。
+- `/org/[orgSlug]/students/[studentId]/messages`:教职员工侧家校会话与回复。
+- `/learn`:当前账号可访问的学员上下文。
+- `/learn/[orgSlug]/students/[studentId]`:学员/监护人概览。
+- `/learn/[orgSlug]/students/[studentId]/reports`、`/feedback`:已发布周报与对外课堂反馈。
+- `/learn/[orgSlug]/students/[studentId]/messages`:学员/监护人侧家校会话与回复。
 - `/org/[orgSlug]/settings`:机构设置、权限与审计入口。
 
 页面只消费 Core API。不得从主站直接读取 Platform SQLite,也不得从 `packages/client` 跨目录引用 `packages/platform/app` 或其页面组件。
@@ -78,7 +85,8 @@
 3. 账号绑定、训练模板、任务发布、学员训练入口、证据和批改。[已完成主站首版]
 4. 监护人、批量导入、请假补课、退款撤销和异常对账。
 5. 课堂反馈和教师周报。[已完成主站首版]
-6. 学员/监护人读取、通知、家校沟通和经营报表。
+6. 学员/监护人读取、通知和家校沟通。[已完成主站首版]
+7. 经营报表、批量导入和更完整的异常工作台。
 
 每个切片先确认主站是否已有等价能力。已有的直接链接或扩展,不得复制实现。
 
@@ -91,7 +99,7 @@
 
 ### 5. 切换与退役
 
-- 主站 `/org` 完成多角色、多机构、桌面端与窄屏验收。
+- 主站 `/org` 与 `/learn` 完成多角色、多机构、桌面端与窄屏验收。
 - 完成老师布置任务、学员进入主站工具、证据回传、老师批改的完整浏览器流程。
 - 先部署 Core migration/API,再部署主站,观察稳定后将 Platform 域名 308 到主站。
 - 停止 Platform workflow、systemd 服务和运行时写入,但在观察期内保留可恢复包、SQLite 和 uploads 备份。
@@ -119,6 +127,7 @@
 
 ## 当前验证边界
 
-- 已完成主站源码、共享契约接线、类型检查和静态回归;训练工具仍只有主站一份实现。
+- 已完成主站源码、共享契约接线、类型检查、静态回归和关键 PostgreSQL 并发夹具;训练工具仍只有主站一份实现。
+- 已完成学员/监护人实时授权读取、绑定邀请、周报与反馈投影、站内消息、单调已读游标和事务内通知的源码闭环。
 - 尚未完成 owner、teacher、assistant 与学员账号的真实浏览器全流程,因此暂不切换 Platform 域名。
-- 尚未 push 或部署;生产 migration、登录态 smoke、备份恢复与观察窗口仍属于上线门槛。
+- 生产 migration、登录态 smoke、备份恢复与观察窗口仍属于上线门槛;推送和部署结果以本次发布记录为准。
