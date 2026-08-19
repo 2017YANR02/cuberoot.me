@@ -44,6 +44,7 @@ export type AlgGoal =
   | 'mega-co'      // 五魔方最后一层角棱翻色,排列自由
   | 'mega-ep'      // 五魔方最后一层棱排列完成,角排列自由
   | 'fto-pf'       // FTO Pair Formation 完成:进入约定的 TL 起始态,尚未整解
+  | 'fto-tl'       // FTO Top Layer 完成:进入约定的 Last Triangles 起始态,尚未整解
   | 'oll-4x4'      // 4x4:除顶面外全还原,顶面同色(排列自由)
   | 'centers'      // 只看中心块(5x5 L2C)
   | 'skip';        // 判不了(sticker 是 raw,或压根没有 setup)
@@ -136,7 +137,7 @@ export const SET_GOAL: Record<string, AlgGoal> = {
   'skewb/sarahs-advanced': 'solve',
   // FTO 使用自己的 EIF 状态机校验；仍登记在同一契约里，防止目录新增漏校验。
   'fto/pf': 'fto-pf',
-  'fto/tl': 'solve',
+  'fto/tl': 'fto-tl',
   'fto/lt': 'solve',
   'fto/tcp': 'solve',
   'fto/1l3t': 'solve',
