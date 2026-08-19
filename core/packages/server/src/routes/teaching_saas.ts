@@ -191,6 +191,9 @@ interface ConsumeStudentAccountBindingInput {
   tokenHash: string;
 }
 
+type CreateGuardianAccountBindingInviteInput = CreateStudentAccountBindingInviteInput;
+type ConsumeGuardianAccountBindingInput = ConsumeStudentAccountBindingInput;
+
 type CreateTrainingTemplateInput = TeachingTrainingTemplateCreateInput;
 type CreateTrainingTemplateVersionInput = TeachingTrainingTemplateVersionCreateInput;
 type WriteTrainingAssignmentInput = TeachingTrainingAssignmentWriteInput;
@@ -419,6 +422,67 @@ export interface TeachingSaasRepository {
     input: ConsumeStudentAccountBindingInput,
     requestId: string,
   ): Promise<MutationResult>;
+  createGuardianAccountBindingInvite(
+    actor: TeachingActor,
+    slug: string,
+    studentId: string,
+    guardianLinkId: string,
+    input: CreateGuardianAccountBindingInviteInput,
+    requestId: string,
+  ): Promise<MutationResult>;
+  getCurrentGuardianAccountBindingInvite(
+    actor: TeachingActor,
+    slug: string,
+    studentId: string,
+    guardianLinkId: string,
+    requestId: string,
+  ): Promise<JsonObject>;
+  revokeGuardianAccountBindingInvite(
+    actor: TeachingActor,
+    slug: string,
+    studentId: string,
+    guardianLinkId: string,
+    inviteId: string,
+    idempotencyKey: string,
+    requestHash: string,
+    requestId: string,
+  ): Promise<MutationResult>;
+  previewGuardianAccountBindingInvite(
+    actor: TeachingActor,
+    input: ConsumeGuardianAccountBindingInput,
+    requestId: string,
+  ): Promise<JsonObject>;
+  consumeGuardianAccountBindingInvite(
+    actor: TeachingActor,
+    input: ConsumeGuardianAccountBindingInput,
+    requestId: string,
+  ): Promise<MutationResult>;
+  listLearningContexts(
+    actor: TeachingActor,
+    slug: string | null,
+    requestId: string,
+  ): Promise<JsonObject[]>;
+  listLearnerWeeklyReports(
+    actor: TeachingActor,
+    slug: string,
+    studentId: string,
+    pagination: PageInput,
+    requestId: string,
+  ): Promise<PageResult>;
+  getLearnerWeeklyReport(
+    actor: TeachingActor,
+    slug: string,
+    studentId: string,
+    reportId: string,
+    requestId: string,
+  ): Promise<JsonObject>;
+  listLearnerLessonFeedback(
+    actor: TeachingActor,
+    slug: string,
+    studentId: string,
+    pagination: PageInput,
+    requestId: string,
+  ): Promise<PageResult>;
   listSelfTrainingAssignments(
     actor: TeachingActor,
     slug: string,
@@ -542,6 +606,23 @@ function parseStudentAccountBindingInviteInput(body: JsonObject): CreateStudentA
 
 function parseStudentAccountBindingConsumeInput(body: JsonObject): { token: string } {
   assertOnlyKeys(body, ['token'], 'student account binding consume input');
+  const token = requiredString(body, 'token', 43);
+  if (!STUDENT_ACCOUNT_BINDING_TOKEN_PATTERN.test(token)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'token must be a 32-byte base64url value');
+  }
+  return { token };
+}
+
+function parseGuardianAccountBindingInviteInput(body: JsonObject): CreateGuardianAccountBindingInviteInput {
+  assertOnlyKeys(body, ['expiresInMinutes'], 'guardian account binding invite input');
+  const expiresInMinutes = body.expiresInMinutes === undefined
+    ? 60
+    : requiredInteger(body, 'expiresInMinutes', 5, 1_440);
+  return { expiresInMinutes };
+}
+
+function parseGuardianAccountBindingConsumeInput(body: JsonObject): { token: string } {
+  assertOnlyKeys(body, ['token'], 'guardian account binding consume input');
   const token = requiredString(body, 'token', 43);
   if (!STUDENT_ACCOUNT_BINDING_TOKEN_PATTERN.test(token)) {
     throw new TeachingApiException('INVALID_INPUT', 400, 'token must be a 32-byte base64url value');
@@ -1755,6 +1836,91 @@ function bindingInviteToJson(row: Record<string, unknown>): JsonObject {
     revokedAt: row.revoked_at == null ? null : iso(row.revoked_at),
     createdAt: iso(row.created_at),
   };
+}
+
+function guardianBindingInviteToJson(row: Record<string, unknown>): JsonObject {
+  const databaseNow = new Date(String(row.database_now)).getTime();
+  if (!Number.isFinite(databaseNow)) {
+    throw new Error('Guardian account binding invite query must include database_now');
+  }
+  const status = row.consumed_at != null
+    ? 'consumed'
+    : row.revoked_at != null
+      ? 'revoked'
+      : row.expired_at != null || new Date(String(row.expires_at)).getTime() <= databaseNow
+        ? 'expired'
+        : 'pending';
+  return {
+    id: String(row.id),
+    organizationId: String(row.organization_id),
+    guardianLinkId: String(row.guardian_link_id),
+    status,
+    expiresAt: iso(row.expires_at),
+    expiredAt: row.expired_at == null ? null : iso(row.expired_at),
+    consumedAt: row.consumed_at == null ? null : iso(row.consumed_at),
+    revokedAt: row.revoked_at == null ? null : iso(row.revoked_at),
+    createdAt: iso(row.created_at),
+  };
+}
+
+function learnerLessonFeedbackToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    sessionId: String(row.session_id),
+    studentId: String(row.student_id),
+    revision: Number(row.revision),
+    visibility: String(row.visibility),
+    summary: String(row.summary),
+    strengths: row.strengths == null ? null : String(row.strengths),
+    challenges: row.challenges == null ? null : String(row.challenges),
+    nextGoals: row.next_goals == null ? null : String(row.next_goals),
+    studentDisplayNameSnapshot: String(row.student_display_name_snapshot),
+    attendanceStatusSnapshot: String(row.attendance_status_snapshot),
+    authorDisplayNameSnapshot: String(row.author_display_name_snapshot),
+    authorRoleSnapshot: String(row.author_role_snapshot),
+    publishedAt: iso(row.published_at),
+    createdAt: iso(row.created_at),
+  };
+}
+
+function learnerWeeklyReportToJson(row: Record<string, unknown>, includeAggregate: boolean): JsonObject {
+  const report: JsonObject = {
+    id: String(row.id),
+    studentId: String(row.student_id),
+    studentDisplayNameSnapshot: String(row.student_display_name_snapshot),
+    weekStart: String(row.week_start),
+    weekEnd: String(row.week_end),
+    timezoneSnapshot: String(row.timezone_snapshot),
+    revision: Number(row.revision),
+    status: 'published',
+    visibility: String(row.visibility),
+    teacherSummary: String(row.teacher_summary),
+    nextWeekPlan: String(row.next_week_plan),
+    publishedByDisplayNameSnapshot: String(row.published_by_display_name_snapshot),
+    publishedByRoleSnapshot: String(row.published_by_role_snapshot),
+    publishedAt: iso(row.published_at),
+  };
+  if (!includeAggregate) return report;
+
+  const aggregate = row.aggregate as Record<string, JsonValue>;
+  const lessonFeedback = aggregate.lessonFeedback as Record<string, JsonValue>;
+  const visibleFeedback = Array.isArray(lessonFeedback.feedback)
+    ? lessonFeedback.feedback.filter((item) => {
+        if (item == null || typeof item !== 'object' || Array.isArray(item)) return false;
+        const visibility = (item as Record<string, JsonValue>).visibility;
+        return visibility === 'student_and_guardians'
+          || (row.is_self === true && visibility === 'student');
+      })
+    : [];
+  report.aggregate = {
+    ...aggregate,
+    lessonFeedback: {
+      ...lessonFeedback,
+      feedbackCount: visibleFeedback.length,
+      feedback: visibleFeedback,
+    },
+  };
+  return report;
 }
 
 function selfTrainingAssignmentToJson(row: Record<string, unknown>): JsonObject {
@@ -4667,6 +4833,666 @@ export const teachingSaasRepository: TeachingSaasRepository = {
     return outcome;
   },
 
+  async createGuardianAccountBindingInvite(
+    actor, slug, studentId, guardianLinkId, input, requestId,
+  ) {
+    return withDeniedAccessAudit(actor, slug, 'guardian.account-binding.invite.create', requestId, async () => {
+      const initialAccess = await accessForRead(actor.userId, slug);
+      requireWritable(initialAccess);
+      requirePermission(initialAccess, 'student:manage');
+      await consumeMutationAttempt(
+        actor.userId,
+        `guardian-binding-invite:${initialAccess.id}`,
+        30,
+        '1 hour',
+      );
+      const token = randomBytes(32).toString('base64url');
+      const tokenHash = sha256(token);
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'student:manage');
+          const guardians = await tx`
+            SELECT guardian.id, guardian.status, guardian.guardian_user_id,
+                   student.status AS student_status
+            FROM guardian_links guardian
+            JOIN student_profiles student
+              ON student.organization_id = guardian.organization_id
+             AND student.id = guardian.student_id
+            WHERE guardian.organization_id = ${access.id}
+              AND guardian.student_id = ${studentId}
+              AND guardian.id = ${guardianLinkId}
+            FOR UPDATE OF guardian`;
+          if (!guardians.length) {
+            throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Guardian link not found');
+          }
+          const guardian = guardians[0] as Record<string, unknown>;
+          if (guardian.status !== 'active' || guardian.student_status !== 'active') {
+            throw new TeachingApiException('CONFLICT', 409, 'Only an active guardian link can be linked');
+          }
+          if (guardian.guardian_user_id != null) {
+            throw new TeachingApiException('CONFLICT', 409, 'Guardian link already has a linked account');
+          }
+          await tx`
+            UPDATE guardian_account_binding_invites
+            SET expired_at = GREATEST(expires_at, clock_timestamp())
+            WHERE organization_id = ${access.id}
+              AND guardian_link_id = ${guardianLinkId}
+              AND expired_at IS NULL AND consumed_at IS NULL AND revoked_at IS NULL
+              AND expires_at <= clock_timestamp()`;
+          await tx`
+            UPDATE guardian_account_binding_invites
+            SET revoked_at = GREATEST(created_at, clock_timestamp()),
+                revoked_by_user_id = ${actor.userId}
+            WHERE organization_id = ${access.id}
+              AND guardian_link_id = ${guardianLinkId}
+              AND expired_at IS NULL AND consumed_at IS NULL AND revoked_at IS NULL`;
+          const rows = await tx`
+            INSERT INTO guardian_account_binding_invites (
+              organization_id, guardian_link_id, token_hash, expires_at, created_by_user_id
+            ) VALUES (
+              ${access.id}, ${guardianLinkId}, ${tokenHash},
+              clock_timestamp() + make_interval(mins => ${input.expiresInMinutes}),
+              ${actor.userId}
+            )
+            RETURNING *, clock_timestamp() AS database_now`;
+          const invite = guardianBindingInviteToJson(rows[0] as Record<string, unknown>);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'guardian.account-binding.invite.create', 'guardian_account_binding_invite',
+              ${String(rows[0].id)}, ${requestId},
+              ${sql.json({ studentId, guardianLinkId, expiresAt: invite.expiresAt })}
+            )`;
+          return { status: 201, body: { invite, token } } satisfies MutationResult;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        uniqueConflict(error, 'A guardian account binding invite could not be issued concurrently');
+      }
+    });
+  },
+
+  async getCurrentGuardianAccountBindingInvite(
+    actor, slug, studentId, guardianLinkId, requestId,
+  ) {
+    return withDeniedAccessAudit(actor, slug, 'guardian.account-binding.invite.read', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'student:manage');
+      const guardians = await query<Record<string, unknown>>(
+        `SELECT id FROM guardian_links
+         WHERE organization_id = ? AND student_id = ? AND id = ?`,
+        [access.id, studentId, guardianLinkId],
+      );
+      if (!guardians.length) {
+        throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Guardian link not found');
+      }
+      const rows = await query<Record<string, unknown>>(
+        `WITH database_clock AS MATERIALIZED (
+           SELECT clock_timestamp() AS database_now
+         )
+         SELECT invite.*, database_clock.database_now
+         FROM guardian_account_binding_invites invite
+         CROSS JOIN database_clock
+         WHERE invite.organization_id = ? AND invite.guardian_link_id = ?
+           AND invite.expired_at IS NULL
+           AND invite.consumed_at IS NULL
+           AND invite.revoked_at IS NULL
+           AND invite.expires_at > database_clock.database_now
+         ORDER BY invite.created_at DESC, invite.id DESC
+         LIMIT 1`,
+        [access.id, guardianLinkId],
+      );
+      return { invite: rows.length ? guardianBindingInviteToJson(rows[0]) : null };
+    });
+  },
+
+  async revokeGuardianAccountBindingInvite(
+    actor, slug, studentId, guardianLinkId, inviteId,
+    idempotencyKey, requestHash, requestId,
+  ) {
+    return withDeniedAccessAudit(actor, slug, 'guardian.account-binding.invite.revoke', requestId, async () => {
+      const initialAccess = await accessForRead(actor.userId, slug);
+      requireWritable(initialAccess);
+      requirePermission(initialAccess, 'student:manage');
+      await consumeMutationAttempt(
+        actor.userId,
+        `guardian-binding-invite-revoke:${initialAccess.id}`,
+        60,
+        '1 minute',
+      );
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'student:manage');
+          const guardians = await tx`
+            SELECT id FROM guardian_links
+            WHERE organization_id = ${access.id}
+              AND student_id = ${studentId} AND id = ${guardianLinkId}
+            FOR UPDATE`;
+          if (!guardians.length) {
+            throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Guardian link not found');
+          }
+          const rows = await tx`
+            SELECT invite.*, clock_timestamp() AS database_now
+            FROM guardian_account_binding_invites invite
+            WHERE invite.organization_id = ${access.id}
+              AND invite.guardian_link_id = ${guardianLinkId}
+              AND invite.id = ${inviteId}
+            FOR UPDATE`;
+          if (!rows.length) {
+            throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Guardian account binding invite not found');
+          }
+          const idem = await beginIdempotency(
+            tx,
+            actor.userId,
+            access.id,
+            `guardian.account-binding.invite.revoke:${inviteId}`,
+            idempotencyKey,
+            requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          const existing = rows[0] as Record<string, unknown>;
+          if (
+            existing.expired_at != null || existing.consumed_at != null || existing.revoked_at != null
+            || new Date(String(existing.expires_at)).getTime()
+              <= new Date(String(existing.database_now)).getTime()
+          ) {
+            throw new TeachingApiException('CONFLICT', 409, 'Only a current pending invite can be revoked');
+          }
+          const revoked = await tx`
+            UPDATE guardian_account_binding_invites
+            SET revoked_at = GREATEST(created_at, clock_timestamp()),
+                revoked_by_user_id = ${actor.userId}
+            WHERE organization_id = ${access.id}
+              AND guardian_link_id = ${guardianLinkId}
+              AND id = ${inviteId}
+              AND expired_at IS NULL AND consumed_at IS NULL AND revoked_at IS NULL
+              AND expires_at > clock_timestamp()
+            RETURNING *, clock_timestamp() AS database_now`;
+          if (!revoked.length) {
+            throw new TeachingApiException('CONFLICT', 409, 'Guardian account binding invite changed concurrently');
+          }
+          const invite = guardianBindingInviteToJson(revoked[0] as Record<string, unknown>);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'guardian.account-binding.invite.revoke', 'guardian_account_binding_invite',
+              ${inviteId}, ${requestId},
+              ${sql.json({ studentId, guardianLinkId, reason: 'manual_revoke' })}
+            )`;
+          const result: MutationResult = { status: 200, body: { invite } };
+          await completeIdempotency(tx, idem.id, result, 'guardian_account_binding_invite', inviteId);
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Guardian account binding invite could not be revoked');
+      }
+    });
+  },
+
+  async previewGuardianAccountBindingInvite(actor, input, requestId) {
+    await consumeMutationAttempt(actor.userId, 'guardian-binding-preview', 120, '1 hour');
+    const rows = await query<Record<string, unknown>>(
+      `SELECT invite.id, invite.organization_id, invite.guardian_link_id,
+              invite.expires_at, invite.expired_at, invite.consumed_at, invite.revoked_at,
+              organization.name AS organization_name, organization.status AS organization_status,
+              student.display_name AS student_display_name, student.status AS student_status,
+              guardian.relationship, guardian.status AS guardian_status,
+              guardian.guardian_user_id, clock_timestamp() AS database_now
+       FROM guardian_account_binding_invites invite
+       JOIN organizations organization ON organization.id = invite.organization_id
+       JOIN guardian_links guardian
+         ON guardian.organization_id = invite.organization_id AND guardian.id = invite.guardian_link_id
+       JOIN student_profiles student
+         ON student.organization_id = guardian.organization_id AND student.id = guardian.student_id
+       WHERE invite.token_hash = ?`,
+      [input.tokenHash],
+    );
+    if (rows.length) {
+      const row = rows[0];
+      await consumeMutationAttempt(
+        actor.userId,
+        `guardian-binding-preview:${String(row.organization_id)}`,
+        30,
+        '1 hour',
+      );
+      const available = row.expired_at == null
+        && row.consumed_at == null
+        && row.revoked_at == null
+        && new Date(String(row.expires_at)).getTime() > new Date(String(row.database_now)).getTime()
+        && row.organization_status === 'active'
+        && row.student_status === 'active'
+        && row.guardian_status === 'active'
+        && row.guardian_user_id == null;
+      if (available) {
+        return {
+          organizationName: String(row.organization_name),
+          studentDisplayName: String(row.student_display_name),
+          relationship: String(row.relationship),
+          expiresAt: iso(row.expires_at),
+        };
+      }
+    }
+    throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Guardian account binding invite not found');
+  },
+
+  async consumeGuardianAccountBindingInvite(actor, input, requestId) {
+    await consumeMutationAttempt(actor.userId, 'guardian-binding-consume', 60, '1 hour');
+    const rateScopes = await query<Record<string, unknown>>(
+      `SELECT organization_id FROM guardian_account_binding_invites WHERE token_hash = ?`,
+      [input.tokenHash],
+    );
+    if (rateScopes.length) {
+      await consumeMutationAttempt(
+        actor.userId,
+        `guardian-binding-consume:${String(rateScopes[0].organization_id)}`,
+        20,
+        '1 hour',
+      );
+    }
+    type ConsumeOutcome = MutationResult | { unavailable: true };
+    let outcome: ConsumeOutcome;
+    try {
+      outcome = await withRepeatableReadRetry<ConsumeOutcome>(async (tx) => {
+        const actors = await tx`
+          SELECT id FROM app_users WHERE id = ${actor.userId} FOR KEY SHARE`;
+        if (!actors.length) {
+          throw new TeachingApiException('UNAUTHENTICATED', 401, 'Authentication required');
+        }
+        const inviteIdentity = await tx`
+          SELECT organization_id, guardian_link_id
+          FROM guardian_account_binding_invites
+          WHERE token_hash = ${input.tokenHash}`;
+        if (!inviteIdentity.length) return { unavailable: true };
+        const organizationId = String(inviteIdentity[0].organization_id);
+        const guardianLinkId = String(inviteIdentity[0].guardian_link_id);
+        const guardians = await tx`
+          SELECT guardian.id, guardian.student_id, guardian.relationship,
+                 guardian.status, guardian.guardian_user_id, guardian.account_linked_at,
+                 student.display_name AS student_display_name, student.status AS student_status,
+                 organization.name AS organization_name, organization.status AS organization_status
+          FROM guardian_links guardian
+          JOIN organizations organization ON organization.id = guardian.organization_id
+          JOIN student_profiles student
+            ON student.organization_id = guardian.organization_id AND student.id = guardian.student_id
+          WHERE guardian.organization_id = ${organizationId} AND guardian.id = ${guardianLinkId}
+          FOR UPDATE OF guardian`;
+        if (!guardians.length) return { unavailable: true };
+        const guardian = guardians[0] as Record<string, unknown>;
+        const invites = await tx`
+          WITH database_clock AS MATERIALIZED (
+            SELECT clock_timestamp() AS database_now
+          )
+          SELECT invite.*, database_clock.database_now
+          FROM guardian_account_binding_invites invite
+          CROSS JOIN database_clock
+          WHERE invite.token_hash = ${input.tokenHash}
+            AND invite.organization_id = ${organizationId}
+            AND invite.guardian_link_id = ${guardianLinkId}
+          FOR UPDATE OF invite`;
+        if (!invites.length) return { unavailable: true };
+        let invite = invites[0] as Record<string, unknown>;
+        const studentId = String(guardian.student_id);
+        const consumedBySameActor = invite.consumed_at != null
+          && Number(invite.consumed_by_user_id_snapshot) === actor.userId
+          && Number(guardian.guardian_user_id) === actor.userId;
+        if (consumedBySameActor) {
+          return {
+            status: 200,
+            body: {
+              invite: {
+                id: String(invite.id), status: 'consumed', expiresAt: iso(invite.expires_at),
+                consumedAt: iso(invite.consumed_at), createdAt: iso(invite.created_at),
+              },
+              guardian: {
+                guardianLinkId, studentId,
+                organizationName: String(guardian.organization_name),
+                studentDisplayName: String(guardian.student_display_name),
+                relationship: String(guardian.relationship),
+                accountLinkedAt: iso(guardian.account_linked_at),
+              },
+            },
+          };
+        }
+        const operationInstant = iso(invite.database_now);
+        const databaseNow = new Date(operationInstant).getTime();
+        const linkedToAnotherAccount = guardian.guardian_user_id != null
+          && Number(guardian.guardian_user_id) !== actor.userId;
+        if (
+          invite.expired_at != null || invite.revoked_at != null || invite.consumed_at != null
+          || new Date(String(invite.expires_at)).getTime() <= databaseNow
+          || linkedToAnotherAccount
+          || guardian.organization_status !== 'active'
+          || guardian.student_status !== 'active'
+          || guardian.status !== 'active'
+        ) {
+          if (
+            invite.expired_at == null && invite.revoked_at == null && invite.consumed_at == null
+            && new Date(String(invite.expires_at)).getTime() <= databaseNow
+          ) {
+            const expired = await tx`
+              UPDATE guardian_account_binding_invites
+              SET expired_at = GREATEST(expires_at, ${operationInstant})
+              WHERE id = ${String(invite.id)}
+              RETURNING *`;
+            invite = expired[0] as Record<string, unknown>;
+          }
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, outcome, request_id, metadata
+            ) VALUES (
+              ${organizationId}, ${actor.userId},
+              (SELECT role FROM organization_members
+               WHERE organization_id = ${organizationId} AND user_id = ${actor.userId}),
+              ${actor.displayName}, 'guardian.account-binding.consume',
+              'guardian_account_binding_invite', ${String(invite.id)}, 'denied', ${requestId},
+              ${sql.json({ reason: linkedToAnotherAccount ? 'GUARDIAN_ALREADY_LINKED' : 'INVITE_UNAVAILABLE' })}
+            )`;
+          return { unavailable: true };
+        }
+        const linked = await tx`
+          UPDATE guardian_links
+          SET guardian_user_id = ${actor.userId}, account_linked_at = ${operationInstant}
+          WHERE organization_id = ${organizationId} AND id = ${guardianLinkId}
+            AND guardian_user_id IS NULL AND status = 'active'
+          RETURNING account_linked_at`;
+        if (!linked.length) {
+          throw new TeachingApiException('CONFLICT', 409, 'Guardian account binding changed concurrently');
+        }
+        guardian.account_linked_at = linked[0].account_linked_at;
+        const consumed = await tx`
+          UPDATE guardian_account_binding_invites
+          SET consumed_at = ${operationInstant},
+              consumed_by_user_id = ${actor.userId},
+              consumed_by_user_id_snapshot = ${actor.userId}
+          WHERE id = ${String(invite.id)}
+            AND expired_at IS NULL AND consumed_at IS NULL AND revoked_at IS NULL
+            AND expires_at > ${operationInstant}
+          RETURNING *`;
+        if (!consumed.length) {
+          throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Guardian account binding invite not found');
+        }
+        invite = consumed[0] as Record<string, unknown>;
+        await tx`
+          INSERT INTO teaching_audit_events (
+            organization_id, actor_user_id, actor_role, actor_display_name,
+            action, entity_type, entity_id, request_id, metadata
+          ) VALUES (
+            ${organizationId}, ${actor.userId},
+            (SELECT role FROM organization_members
+             WHERE organization_id = ${organizationId} AND user_id = ${actor.userId}),
+            ${actor.displayName}, 'guardian.account-binding.consume',
+            'guardian_account_binding_invite', ${String(invite.id)}, ${requestId},
+            ${sql.json({ studentId, guardianLinkId })}
+          )`;
+        return {
+          status: 200,
+          body: {
+            invite: {
+              id: String(invite.id), status: 'consumed', expiresAt: iso(invite.expires_at),
+              consumedAt: iso(invite.consumed_at), createdAt: iso(invite.created_at),
+            },
+            guardian: {
+              guardianLinkId, studentId,
+              organizationName: String(guardian.organization_name),
+              studentDisplayName: String(guardian.student_display_name),
+              relationship: String(guardian.relationship),
+              accountLinkedAt: iso(guardian.account_linked_at),
+            },
+          },
+        };
+      });
+    } catch (error) {
+      if (error instanceof TeachingApiException) throw error;
+      const code = (error as { code?: string }).code;
+      if (code === '23514' || code === '55000') {
+        throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Guardian account binding invite not found');
+      }
+      uniqueConflict(error, 'This account is already linked to this student as a guardian');
+    }
+    if ('unavailable' in outcome) {
+      throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Guardian account binding invite not found');
+    }
+    return outcome;
+  },
+
+  async listLearningContexts(actor, slug, requestId) {
+    const rows = await query<Record<string, unknown>>(
+      `SELECT context.organization_slug, context.organization_name,
+              context.student_id, context.student_display_name,
+              context.relationship_kind, context.guardian_link_id, context.relationship
+       FROM (
+         SELECT organization.slug AS organization_slug,
+                organization.name AS organization_name,
+                student.id AS student_id,
+                student.display_name AS student_display_name,
+                'student'::text AS relationship_kind,
+                NULL::uuid AS guardian_link_id,
+                NULL::text AS relationship,
+                0 AS relationship_order
+         FROM student_profiles student
+         JOIN organizations organization ON organization.id = student.organization_id
+         WHERE student.account_user_id = ?
+           AND student.status = 'active'
+           AND organization.status = 'active'
+           AND (?::text IS NULL OR organization.slug = ?)
+         UNION ALL
+         SELECT organization.slug AS organization_slug,
+                organization.name AS organization_name,
+                student.id AS student_id,
+                student.display_name AS student_display_name,
+                'guardian'::text AS relationship_kind,
+                guardian.id AS guardian_link_id,
+                guardian.relationship,
+                1 AS relationship_order
+         FROM guardian_links guardian
+         JOIN organizations organization ON organization.id = guardian.organization_id
+         JOIN student_profiles student
+           ON student.organization_id = guardian.organization_id
+          AND student.id = guardian.student_id
+         WHERE guardian.guardian_user_id = ?
+           AND guardian.status = 'active'
+           AND student.status = 'active'
+           AND organization.status = 'active'
+           AND (?::text IS NULL OR organization.slug = ?)
+       ) context
+       ORDER BY context.organization_slug,
+                context.student_display_name, context.student_id,
+                context.relationship_order, context.guardian_link_id`,
+      [actor.userId, slug, slug, actor.userId, slug, slug],
+    );
+    const contexts: JsonObject[] = [];
+    let previousKey: string | null = null;
+    for (const row of rows) {
+      const key = `${String(row.organization_slug)}:${String(row.student_id)}`;
+      if (key !== previousKey) {
+        contexts.push({
+          organization: {
+            slug: String(row.organization_slug),
+            name: String(row.organization_name),
+          },
+          student: {
+            id: String(row.student_id),
+            displayName: String(row.student_display_name),
+          },
+          relationships: [],
+        });
+        previousKey = key;
+      }
+      const relationships = contexts[contexts.length - 1].relationships as JsonObject[];
+      relationships.push(row.relationship_kind === 'student'
+        ? { kind: 'student' }
+        : {
+            kind: 'guardian',
+            guardianLinkId: String(row.guardian_link_id),
+            relationship: String(row.relationship),
+          });
+    }
+    return contexts;
+  },
+
+  async listLearnerWeeklyReports(actor, slug, studentId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'weekly_report.learner.list', requestId, async () => {
+      const commonParams = [slug, studentId, actor.userId, actor.userId];
+      const visibilitySql = `report.status = 'published'
+        AND report.published_at IS NOT NULL
+        AND report.visibility IN ('student', 'student_and_guardians')
+        AND (
+          student.account_user_id = ?
+          OR (
+            report.visibility = 'student_and_guardians'
+            AND EXISTS (
+              SELECT 1 FROM guardian_links guardian
+              WHERE guardian.organization_id = student.organization_id
+                AND guardian.student_id = student.id
+                AND guardian.guardian_user_id = ?
+                AND guardian.status = 'active'
+            )
+          )
+        )`;
+      const totals = await query<Record<string, unknown>>(
+        `SELECT COUNT(*)::int AS total
+         FROM teaching_weekly_reports report
+         JOIN organizations organization ON organization.id = report.organization_id
+         JOIN student_profiles student
+           ON student.organization_id = report.organization_id AND student.id = report.student_id
+         WHERE organization.slug = ? AND organization.status = 'active'
+           AND student.id = ? AND student.status = 'active'
+           AND ${visibilitySql}`,
+        commonParams,
+      );
+      const rows = await query<Record<string, unknown>>(
+        `SELECT report.*, (student.account_user_id = ?) AS is_self
+         FROM teaching_weekly_reports report
+         JOIN organizations organization ON organization.id = report.organization_id
+         JOIN student_profiles student
+           ON student.organization_id = report.organization_id AND student.id = report.student_id
+         WHERE organization.slug = ? AND organization.status = 'active'
+           AND student.id = ? AND student.status = 'active'
+           AND ${visibilitySql}
+         ORDER BY report.week_start DESC, report.revision DESC, report.id
+         LIMIT ? OFFSET ?`,
+        [actor.userId, ...commonParams, pagination.pageSize, pagination.offset],
+      );
+      return {
+        items: rows.map((row) => learnerWeeklyReportToJson(row, false)),
+        total: Number(totals[0]?.total ?? 0),
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async getLearnerWeeklyReport(actor, slug, studentId, reportId, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'weekly_report.learner.read', requestId, async () => {
+      const rows = await query<Record<string, unknown>>(
+        `SELECT report.*, (student.account_user_id = ?) AS is_self
+         FROM teaching_weekly_reports report
+         JOIN organizations organization ON organization.id = report.organization_id
+         JOIN student_profiles student
+           ON student.organization_id = report.organization_id AND student.id = report.student_id
+         WHERE organization.slug = ? AND organization.status = 'active'
+           AND student.id = ? AND student.status = 'active'
+           AND report.id = ?
+           AND report.status = 'published' AND report.published_at IS NOT NULL
+           AND report.visibility IN ('student', 'student_and_guardians')
+           AND (
+             student.account_user_id = ?
+             OR (
+               report.visibility = 'student_and_guardians'
+               AND EXISTS (
+                 SELECT 1 FROM guardian_links guardian
+                 WHERE guardian.organization_id = student.organization_id
+                   AND guardian.student_id = student.id
+                   AND guardian.guardian_user_id = ?
+                   AND guardian.status = 'active'
+               )
+             )
+           )`,
+        [actor.userId, slug, studentId, reportId, actor.userId, actor.userId],
+      );
+      if (!rows.length) {
+        throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Weekly report not found');
+      }
+      return learnerWeeklyReportToJson(rows[0], true);
+    });
+  },
+
+  async listLearnerLessonFeedback(actor, slug, studentId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'lesson_feedback.learner.list', requestId, async () => {
+      const visibleFeedbackSql = `organization.slug = ? AND organization.status = 'active'
+        AND student.id = ? AND student.status = 'active'
+        AND feedback.published_at IS NOT NULL
+        AND feedback.visibility IN ('student', 'student_and_guardians')
+        AND (
+          student.account_user_id = ?
+          OR (
+            feedback.visibility = 'student_and_guardians'
+            AND EXISTS (
+              SELECT 1 FROM guardian_links guardian
+              WHERE guardian.organization_id = student.organization_id
+                AND guardian.student_id = student.id
+                AND guardian.guardian_user_id = ?
+                AND guardian.status = 'active'
+            )
+          )
+        )`;
+      const params = [slug, studentId, actor.userId, actor.userId];
+      const totals = await query<Record<string, unknown>>(
+        `WITH visible AS (
+           SELECT feedback.id,
+                  ROW_NUMBER() OVER (
+                    PARTITION BY feedback.session_id, feedback.student_id
+                    ORDER BY feedback.revision DESC, feedback.id DESC
+                  ) AS visible_revision_rank
+           FROM lesson_feedback feedback
+           JOIN organizations organization ON organization.id = feedback.organization_id
+           JOIN student_profiles student
+             ON student.organization_id = feedback.organization_id AND student.id = feedback.student_id
+           WHERE ${visibleFeedbackSql}
+         )
+         SELECT COUNT(*)::int AS total FROM visible WHERE visible_revision_rank = 1`,
+        params,
+      );
+      const rows = await query<Record<string, unknown>>(
+        `WITH visible AS (
+           SELECT feedback.*,
+                  ROW_NUMBER() OVER (
+                    PARTITION BY feedback.session_id, feedback.student_id
+                    ORDER BY feedback.revision DESC, feedback.id DESC
+                  ) AS visible_revision_rank
+           FROM lesson_feedback feedback
+           JOIN organizations organization ON organization.id = feedback.organization_id
+           JOIN student_profiles student
+             ON student.organization_id = feedback.organization_id AND student.id = feedback.student_id
+           WHERE ${visibleFeedbackSql}
+         )
+         SELECT * FROM visible
+         WHERE visible_revision_rank = 1
+         ORDER BY published_at DESC, session_id DESC, id DESC
+         LIMIT ? OFFSET ?`,
+        [...params, pagination.pageSize, pagination.offset],
+      );
+      return {
+        items: rows.map(learnerLessonFeedbackToJson),
+        total: Number(totals[0]?.total ?? 0),
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+      };
+    });
+  },
+
   async listSelfTrainingAssignments(actor, slug, pagination, requestId) {
     return withDeniedAccessAudit(actor, slug, 'training.assignment.self.list', requestId, async () => {
       const page = await sql.begin(async (tx) => {
@@ -6554,6 +7380,216 @@ export function createTeachingSaasRoutes(deps: {
       return errorResponse(c, error, requestId);
     }
   });
+
+  routes.post(
+    '/teaching/organizations/:orgSlug/students/:studentId/guardian-links/:guardianLinkId/account-binding-invites',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const body = await jsonBody(c, 1_024);
+        const result = await repository.createGuardianAccountBindingInvite(
+          actor,
+          c.req.param('orgSlug'),
+          uuidParam(c.req.param('studentId'), 'studentId'),
+          uuidParam(c.req.param('guardianLinkId'), 'guardianLinkId'),
+          parseGuardianAccountBindingInviteInput(body.value),
+          requestId,
+        );
+        return c.json(result.body, result.status);
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.get(
+    '/teaching/organizations/:orgSlug/students/:studentId/guardian-links/:guardianLinkId/account-binding-invite',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const result = await repository.getCurrentGuardianAccountBindingInvite(
+          actor,
+          c.req.param('orgSlug'),
+          uuidParam(c.req.param('studentId'), 'studentId'),
+          uuidParam(c.req.param('guardianLinkId'), 'guardianLinkId'),
+          requestId,
+        );
+        return c.json(result);
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.post(
+    '/teaching/organizations/:orgSlug/students/:studentId/guardian-links/:guardianLinkId/account-binding-invites/:inviteId/revoke',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const key = idempotencyKeyOf(c);
+        const body = await jsonBody(c, 1_024);
+        assertOnlyKeys(body.value, [], 'guardian account binding invite revoke input');
+        const result = await repository.revokeGuardianAccountBindingInvite(
+          actor,
+          c.req.param('orgSlug'),
+          uuidParam(c.req.param('studentId'), 'studentId'),
+          uuidParam(c.req.param('guardianLinkId'), 'guardianLinkId'),
+          uuidParam(c.req.param('inviteId'), 'inviteId'),
+          key,
+          sha256(body.raw),
+          requestId,
+        );
+        return c.json(result.body, result.status);
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.post('/teaching/me/guardian-account-binding/preview', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const body = await jsonBody(c, 1_024);
+      const parsed = parseGuardianAccountBindingConsumeInput(body.value);
+      const result = await repository.previewGuardianAccountBindingInvite(
+        actor,
+        { tokenHash: sha256(parsed.token) },
+        requestId,
+      );
+      return c.json(result);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/me/guardian-account-binding/consume', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const body = await jsonBody(c, 1_024);
+      const parsed = parseGuardianAccountBindingConsumeInput(body.value);
+      const result = await repository.consumeGuardianAccountBindingInvite(
+        actor,
+        { tokenHash: sha256(parsed.token) },
+        requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/me/learning-contexts', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      return c.json({
+        learningContexts: await repository.listLearningContexts(actor, null, requestId),
+      });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/me/students', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      return c.json({
+        learningContexts: await repository.listLearningContexts(
+          actor,
+          c.req.param('orgSlug'),
+          requestId,
+        ),
+      });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get(
+    '/teaching/organizations/:orgSlug/me/students/:studentId/weekly-reports',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const page = await repository.listLearnerWeeklyReports(
+          actor,
+          c.req.param('orgSlug'),
+          uuidParam(c.req.param('studentId'), 'studentId'),
+          paginationOf(c),
+          requestId,
+        );
+        return c.json({
+          weeklyReports: page.items,
+          total: page.total,
+          page: page.page,
+          pageSize: page.pageSize,
+        });
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.get(
+    '/teaching/organizations/:orgSlug/me/students/:studentId/weekly-reports/:reportId',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const weeklyReport = await repository.getLearnerWeeklyReport(
+          actor,
+          c.req.param('orgSlug'),
+          uuidParam(c.req.param('studentId'), 'studentId'),
+          uuidParam(c.req.param('reportId'), 'reportId'),
+          requestId,
+        );
+        return c.json({ weeklyReport });
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.get(
+    '/teaching/organizations/:orgSlug/me/students/:studentId/lesson-feedback',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const page = await repository.listLearnerLessonFeedback(
+          actor,
+          c.req.param('orgSlug'),
+          uuidParam(c.req.param('studentId'), 'studentId'),
+          paginationOf(c),
+          requestId,
+        );
+        return c.json({
+          feedback: page.items,
+          total: page.total,
+          page: page.page,
+          pageSize: page.pageSize,
+        });
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
 
   routes.get('/teaching/organizations/:orgSlug/me/training/assignments', async (c) => {
     const requestId = requestIdOf(c);

@@ -73,6 +73,7 @@ const STAGE3_TRAINING_TABLES = [
   'training_submission_reviews',
   'daily_training_rollups',
   'student_account_binding_invites',
+  'guardian_account_binding_invites',
 ] as const;
 
 describe('清单 ↔ schema', () => {
@@ -139,6 +140,7 @@ describe('清单 ↔ schema', () => {
       'organization_members',
       'student_profiles',
       'guardian_links',
+      'guardian_account_binding_invites',
       'teaching_audit_events',
       'teaching_idempotency_requests',
       'teaching_mutation_rate_limits',
@@ -288,6 +290,21 @@ describe('删除动作本身', () => {
     expect(impl.slice(unlinkReport, deleteUser)).toContain('generated_by_user_id');
     expect(impl.slice(unlinkReport, deleteUser)).toContain('published_by_user_id');
     expect(deleteUser).toBeGreaterThan(unlinkReport);
+  });
+
+  it('删除账号前成对清空学员与监护人账号绑定状态', () => {
+    const unlinkStudent = impl.indexOf('UPDATE student_profiles');
+    const unlinkGuardian = impl.indexOf('UPDATE guardian_links');
+    const deleteUser = impl.indexOf('DELETE FROM app_users');
+    expect(unlinkStudent).toBeGreaterThan(-1);
+    expect(impl.slice(unlinkStudent, unlinkGuardian)).toMatch(
+      /SET account_user_id = NULL, account_linked_at = NULL/,
+    );
+    expect(unlinkGuardian).toBeGreaterThan(unlinkStudent);
+    expect(impl.slice(unlinkGuardian, deleteUser)).toMatch(
+      /SET guardian_user_id = NULL, account_linked_at = NULL/,
+    );
+    expect(deleteUser).toBeGreaterThan(unlinkGuardian);
   });
 
   it('复盘按可见性分流:公开的匿名保留,私享 / 不公开列出的删掉', () => {

@@ -40,6 +40,8 @@ PostgreSQL schema 变更的 source of truth。`apply_migrations.sh` 会在部署
 
 教学周报增量 `0155_teaching_weekly_reports.sql` 的升级基线是已应用至 `0154_teaching_lesson_feedback.sql` 的现有数据库。它新增按机构、学员和周一归档的周报修订：草稿可重算，发布修订不可变；聚合快照不含内部备注，生成与发布账号删除时仅清活动引用并保留作者快照。
 
+学员门户增量 `0156_teaching_learner_portal.sql` 的升级基线是已应用至 `0155_teaching_weekly_reports.sql` 的现有数据库。它为监护关系补记账号绑定时间，并新增只存令牌哈希、保留终态与账号快照的监护人账号绑定邀请；学员与监护人的读取权限继续由活动账号关系、发布状态和可见性在查询时共同校验。
+
 ## 已应用 migration 不能改
 
 `apply_migrations.sh` 会把每个文件的 SHA-256 写入 ledger。已应用文件的摘要发生变化时会终止执行。修正已上线结构只能新增 migration；需要恢复数据时使用已验证的备份。

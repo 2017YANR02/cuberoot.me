@@ -157,8 +157,8 @@ const TABLES: Table[] = [
   { name: 'student_profiles', domain: 'teaching', origin: '0142', evolved: [150], purpose: { zh: '机构内学员档案；外部编号与关联站内账号都只在本租户内唯一', en: 'Tenant-scoped student profiles; external references and linked accounts are unique within an organization' }, cols: [
     { name: 'id UUID (PK), organization_id' }, { name: 'account_user_id, account_linked_at, external_ref, display_name, status' }, { name: 'profile JSONB, created_by_user_id' },
   ] },
-  { name: 'guardian_links', domain: 'teaching', origin: '0142', purpose: { zh: '机构内学员与监护账号关系，复合外键阻止跨租户关联', en: 'Tenant-scoped student-to-guardian relationships with composite foreign keys blocking cross-tenant links' }, cols: [
-    { name: 'id UUID (PK), organization_id, student_id' }, { name: 'guardian_user_id, relationship, status, visibility' },
+  { name: 'guardian_links', domain: 'teaching', origin: '0142', evolved: [156], purpose: { zh: '机构内学员与监护账号关系，复合外键阻止跨租户关联', en: 'Tenant-scoped student-to-guardian relationships with composite foreign keys blocking cross-tenant links' }, cols: [
+    { name: 'id UUID (PK), organization_id, student_id' }, { name: 'guardian_user_id, account_linked_at, relationship, status, visibility' },
   ] },
   { name: 'teaching_audit_events', domain: 'teaching', origin: '0142', purpose: { zh: '教学业务追加式审计日志；账号删除后保留操作者快照', en: 'Append-only teaching audit log retaining actor snapshots after account deletion' }, cols: [
     { name: 'id BIGINT (PK), organization_id, actor_user_id' }, { name: 'actor_role, actor_display_name, action, entity_type, entity_id' }, { name: 'outcome, request_id, metadata, created_at' },
@@ -219,6 +219,9 @@ const TABLES: Table[] = [
   ] },
   { name: 'student_account_binding_invites', domain: 'teaching', origin: '0150', naturalKey: true, purpose: { zh: '学员账号绑定邀请，只保存令牌哈希并保留消费、撤销或过期终态', en: 'Student account-binding invitations storing only token hashes with consumed, revoked, or expired terminal states' }, cols: [
     { name: 'id UUID (PK), organization_id, student_id, token_hash (UNIQUE)' }, { name: 'expires_at, expired_at, consumed_at / by, revoked_at / by' }, { name: 'created_by_user_id, created_at' },
+  ] },
+  { name: 'guardian_account_binding_invites', domain: 'teaching', origin: '0156', naturalKey: true, purpose: { zh: '监护账号绑定邀请，只保存令牌哈希并保留消费账号快照与不可变终态', en: 'Guardian account-binding invitations storing only token hashes with consumer snapshots and immutable terminal states' }, cols: [
+    { name: 'id UUID (PK), organization_id, guardian_link_id, token_hash (UNIQUE)' }, { name: 'expires_at, expired_at, consumed_at / by / by_snapshot, revoked_at / by' }, { name: 'created_by_user_id, created_at' },
   ] },
   { name: 'lesson_package_products', domain: 'teaching', origin: '0147', naturalKey: true, purpose: { zh: '机构课包产品定义；学员领取后以快照保留历史合同', en: 'Tenant package-product definitions whose terms are snapshotted when issued to a student' }, cols: [
     { name: 'id UUID (PK), organization_id, code (tenant UNIQUE), name, status' }, { name: 'credit_unit, credit_type, total_credits, validity_days' }, { name: 'price_amount_minor, currency, created_by_user_id' },
@@ -545,6 +548,8 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 153, slug: 'oll_docx_import', desc: { zh: '按站长整理的 DOCX 重排 OLL 分类与情况，优先导入 269 条公式，并补齐 ETM、最优步数、打乱关系与状态镜像元数据。', en: 'Reorder OLL categories and cases from the owner-curated DOCX, prepend 269 algorithms, and add ETM, optimal-length, scramble-link, and state-mirror metadata.' } },
   { n: 154, slug: 'teaching_lesson_feedback', desc: { zh: '为已完课课堂增加按学员修订的只追加反馈历史、发布可见性与作者匿名化。', en: 'Add append-only per-student feedback revisions, publication visibility, and author anonymization for completed sessions.' } },
   { n: 155, slug: 'teaching_weekly_reports', desc: { zh: '新增按学员与周修订的教学周报，草稿可重算，发布后冻结聚合、总结、计划与可见性。', en: 'Add revisioned weekly teaching reports with recomputable drafts and immutable published aggregates, summaries, plans, and visibility.' } },
+  { n: 156, slug: 'teaching_learner_portal', desc: { zh: '为监护关系增加账号绑定时间与哈希邀请，并建立按学员或监护身份读取已发布周报和课堂反馈的门户契约。', en: 'Add guardian account-link timestamps and hashed invitations, plus portal contracts for learners and guardians to read published weekly reports and lesson feedback.' } },
+  { n: 157, slug: 'fix_fto_pair_formation_setups', desc: { zh: '修正 FTO Pair Formation 的阶段 setup，使公式结束于所有三元组已配对的 Top Layer 起始态，而不是整颗还原。', en: 'Correct FTO Pair Formation setups so algorithms finish at the all-triples-paired Top Layer starting state instead of a solved puzzle.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
