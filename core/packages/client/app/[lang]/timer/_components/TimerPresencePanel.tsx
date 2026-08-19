@@ -44,6 +44,7 @@ export default function TimerPresencePanel({ snapshot }: { snapshot: TimerPresen
 
   const title = tr({ zh: '当前计时会话', en: 'Live timer sessions' });
   const value = (n: number | undefined) => n === undefined ? '—' : String(n);
+  const hasLocation = snapshot?.sessions.some(session => session.location) ?? false;
   const modeLabel = (mode: 'solo' | 'local' | 'net') => ({
     solo: tr({ zh: '单人', en: 'Solo' }),
     local: tr({ zh: '本机对战', en: 'Local battle' }),
@@ -109,7 +110,12 @@ export default function TimerPresencePanel({ snapshot }: { snapshot: TimerPresen
                         {session.account.wcaId || session.account.ownerId}
                       </div>
                     )}
-                    <div className="timer-presence-meta"><Globe2 size={13} />{session.ip}</div>
+                    <div className="timer-presence-meta">
+                      <Globe2 size={13} />
+                      <span>
+                        {session.location ? `${tr(session.location)} ${session.ip}` : session.ip}
+                      </span>
+                    </div>
                     {session.devices.map(device => (
                       <div className="timer-presence-meta" key={device.id || device.name}>
                         <Bluetooth size={13} />
@@ -126,6 +132,16 @@ export default function TimerPresencePanel({ snapshot }: { snapshot: TimerPresen
                   </section>
                 );
               })}
+              {hasLocation && (
+                <a
+                  className="timer-presence-attribution"
+                  href="https://db-ip.com"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  IP Geolocation by DB-IP
+                </a>
+              )}
             </div>
           ) : (
             <div className="timer-presence-empty">{tr({ zh: '当前无人计时', en: 'No active timers' })}</div>

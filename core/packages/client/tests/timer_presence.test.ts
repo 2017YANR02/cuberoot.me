@@ -20,6 +20,7 @@ describe('timer presence API', () => {
       authorizeAdmin: async () => { adminChecks += 1; },
       identifyUser: async () => ({ wcaId: 'u42', name: 'Timer User', uid: 42, realWcaId: '2024TEST01' }),
       identifyIp: () => '203.0.113.10',
+      identifyLocation: async () => ({ en: 'United States Test City', zh: '美国 测试市', precision: 'city' }),
     });
     const post = (id: string, normal: number, smart: number, details = {}) => routes.request('/timer/presence', {
       method: 'POST',
@@ -54,6 +55,7 @@ describe('timer presence API', () => {
         players: 1,
         events: ['333'],
         ip: '203.0.113.10',
+        location: { en: 'United States Test City', zh: '美国 测试市', precision: 'city' },
         account: { ownerId: 'u42', name: 'Timer User', wcaId: '2024TEST01' },
         results: [{ event: '333', timeMs: 8123, penalty: 'ok', at: 900 }],
         devices: [{ name: 'GAN 12 ui', id: 'origin-device-id' }],
@@ -72,6 +74,7 @@ describe('timer presence API', () => {
       authorizeAdmin: async () => {},
       identifyUser: async () => null,
       identifyIp: () => '198.51.100.4',
+      identifyLocation: async () => null,
     });
     const post = (normal: number, smart: number) => routes.request('/timer/presence', {
       method: 'POST',
@@ -82,18 +85,38 @@ describe('timer presence API', () => {
     expect((await post(2, 0)).status).toBe(204);
     expect((await post(1, 1)).status).toBe(204);
     const active = await (await routes.request('/timer/presence')).json() as {
-      sessions: Array<{ account: unknown; ip: string; players: number; events: string[] }>;
+      sessions: Array<{ account: unknown; ip: string; location: unknown; players: number; events: string[] }>;
       total: number;
     };
     expect(active.total).toBe(2);
     expect(active.sessions[0]).toMatchObject({
       account: null,
       ip: '198.51.100.4',
+      location: null,
       players: 2,
       events: [],
     });
     expect((await post(0, 0)).status).toBe(204);
     expect(await (await routes.request('/timer/presence')).json()).toMatchObject({ total: 0, sessions: [] });
+  });
+
+  it('keeps the heartbeat alive when local city lookup fails', async () => {
+    const routes = createTimerPresenceRoutes({
+      authorizeAdmin: async () => {},
+      identifyUser: async () => null,
+      identifyIp: () => '203.0.113.20',
+      identifyLocation: async () => { throw new Error('database unavailable'); },
+    });
+    const response = await routes.request('/timer/presence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: IDS[0], normal: 1, smart: 0 }),
+    });
+
+    expect(response.status).toBe(204);
+    expect(await (await routes.request('/timer/presence')).json()).toMatchObject({
+      sessions: [{ ip: '203.0.113.20', location: null }],
+    });
   });
 
   it('rejects invalid core fields but keeps counts when optional details are malformed', async () => {

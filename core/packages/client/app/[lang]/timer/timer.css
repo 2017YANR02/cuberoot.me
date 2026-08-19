@@ -212,6 +212,13 @@
   overflow-wrap: anywhere;
   font-size: inherit;
 }
+.timer-presence-attribution {
+  display: inline-block;
+  margin: 3px 4px 0;
+  color: var(--faint-foreground);
+  font-size: 9px;
+}
+.timer-presence-attribution:hover { color: var(--muted-foreground); }
 .timer-presence-result {
   justify-content: space-between;
   gap: 12px;
