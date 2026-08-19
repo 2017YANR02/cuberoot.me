@@ -1164,6 +1164,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         {data && !showSubgroupPicker && !showSubSubgroupPicker && !showAllCases && !collection?.cardsOnly && (
           <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />
         )}
+        {puzzleParam === 'fto' && (
+          <Link href="/alg/fto/notation" className="alg-recog-cta" prefetch={false}>
+            <HelpCircle size={15} aria-hidden="true" />
+            {tr({ zh: '转动记号', en: 'Move notation' })}
+          </Link>
+        )}
         {!collection && !subgroupParam && puzzleParam === 'sq1' && set === 'cs' && (
           <Link href="/sq1/cs/name" className="alg-recog-cta" prefetch={false}>
             {tr({ zh: '命名', en: 'Shape names' })}

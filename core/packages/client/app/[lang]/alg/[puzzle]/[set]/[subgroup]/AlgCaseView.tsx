@@ -17,7 +17,7 @@
  */
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, ExternalLink, Copy, Check, Shuffle, Pencil, FlipHorizontal2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Copy, Check, Shuffle, Pencil, FlipHorizontal2, HelpCircle } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { AlgCase, AlgEntry, AlgFile, AlgPuzzle, AlgSubmission } from '@cuberoot/shared';
@@ -356,6 +356,12 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
         {puzzle === 'sq1' && set === 'pbl' && (
           <Link href="/alg/sq1/pbl-notation" className="alg-recog-cta" prefetch={false}>
             {tr({ zh: '助记说明', en: 'Mnemonic guide' })}
+          </Link>
+        )}
+        {puzzle === 'fto' && (
+          <Link href="/alg/fto/notation" className="alg-recog-cta" prefetch={false}>
+            <HelpCircle size={15} aria-hidden="true" />
+            {tr({ zh: '转动记号', en: 'Move notation' })}
           </Link>
         )}
         {canChooseViewAngle && (

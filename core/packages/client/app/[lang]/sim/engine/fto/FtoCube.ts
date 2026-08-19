@@ -11,14 +11,20 @@
  * allow a swapped pair of same-colour centres to read solved, which is the correct answer.
  *
  * FTO is the only face-turning octahedron engine, so the begin/finish machinery is inlined
- * here (cf. MegaminxCube for the dodecahedron analog). Conforms to TweenCube<FtoMove>.
+ * here (cf. MegaminxCube for the dodecahedron analog). Conforms to
+ * TweenCube<FtoAnimationMove>; ordinary `/sim` face moves remain unchanged while the
+ * algorithm player can also animate EIF slices, wide turns and whole-puzzle rotations.
  */
 import * as THREE from 'three';
 import MoveHistory from '../MoveHistory';
 import { makeAnim, type PieceAnim } from '../pieceAnim';
 import type { TweenCube } from '../TweenTwister';
 import FtoTwister from './FtoTwister';
-import { FACE_NORMAL, ftoMoveToString, type FtoMove } from './ftoState';
+import {
+  ftoAnimationMoveToString,
+  type FtoAnimationMove,
+} from './ftoAnimation';
+import { FACE_NORMAL } from './ftoState';
 import { buildFtoPieces, faceAxisVec, R_IN, FTO_COLORS } from './ftoGeometry';
 
 export type { PieceAnim };
@@ -33,7 +39,7 @@ interface FtoPiece {
   stickerFaces: number[];
 }
 
-export default class FtoCube extends THREE.Group implements TweenCube<FtoMove> {
+export default class FtoCube extends THREE.Group implements TweenCube<FtoAnimationMove> {
   callbacks: (() => void)[] = [];
   dirty = true;
   order = 0;
@@ -70,40 +76,58 @@ export default class FtoCube extends THREE.Group implements TweenCube<FtoMove> {
     return out.length ? out : [0, 1, 2, 3, 4, 5, 6, 7];
   }
 
-  /** Pivots a face turn rotates: every cell currently on face f's cap side. */
-  private pivotsForMove(move: FtoMove): THREE.Object3D[] {
+  /** Pivots selected by a face, middle-slice, wide or whole-puzzle turn. */
+  private pivotsForMove(move: FtoAnimationMove): THREE.Object3D[] {
+    if ('kind' in move && (move.kind === 'vertex-rotation' || move.layer === 'whole')) {
+      return this.pieces.map(piece => piece.pivot);
+    }
     const n = this.axes[move.face];
     const out: THREE.Object3D[] = [];
-    for (const p of this.pieces) if (n.dot(this.liveCenter(p)) > CUT) out.push(p.pivot);
+    for (const p of this.pieces) {
+      const distance = n.dot(this.liveCenter(p));
+      const selected = !('kind' in move)
+        ? distance > CUT
+        : move.layer === 'slice'
+          ? distance > -CUT && distance < CUT
+          : distance > -CUT;
+      if (selected) out.push(p.pivot);
+    }
     return out;
   }
 
-  beginMove(move: FtoMove): PieceAnim[] {
-    const axis = this.axes[move.face];
-    const angle = move.dir * TURN; // dir −1 = −120° = clockwise from outside (bare token)
+  beginMove(move: FtoAnimationMove): PieceAnim[] {
+    let axis: THREE.Vector3;
+    let angle: number;
+    if ('kind' in move && move.kind === 'vertex-rotation') {
+      axis = new THREE.Vector3(...move.axis);
+      angle = move.quarterTurns * Math.PI / 2;
+    } else {
+      axis = this.axes[move.face];
+      angle = move.dir * TURN; // dir −1 = −120° = clockwise from outside (bare token)
+    }
     const delta = new THREE.Quaternion().setFromAxisAngle(axis, angle);
     return this.pivotsForMove(move).map((pivot) => makeAnim(pivot, delta, axis, angle));
   }
 
-  finishMove(anims: PieceAnim[], move: FtoMove): void {
+  finishMove(anims: PieceAnim[], move: FtoAnimationMove): void {
     for (const a of anims) a.pivot.quaternion.copy(a.endQuat);
-    this.history.record(ftoMoveToString(move));
+    this.history.record(ftoAnimationMoveToString(move));
     this.dirty = true;
     for (const cb of this.callbacks) cb();
   }
 
-  applyMoveInstant(move: FtoMove): void {
+  applyMoveInstant(move: FtoAnimationMove): void {
     const anims = this.beginMove(move);
     this.finishMove(anims, move);
   }
 
-  applyMoveSilent(move: FtoMove): void {
+  applyMoveSilent(move: FtoAnimationMove): void {
     const anims = this.beginMove(move);
     for (const a of anims) a.pivot.quaternion.copy(a.endQuat);
     this.dirty = true;
   }
 
-  applyMovesInstant(moves: FtoMove[]): void {
+  applyMovesInstant(moves: FtoAnimationMove[]): void {
     this.reset();
     for (const m of moves) this.applyMoveInstant(m);
   }
