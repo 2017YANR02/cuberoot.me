@@ -460,6 +460,9 @@ export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: b
   // Keep this versioned query until every pre-migration one-hour cache has expired,
   // otherwise a new client can briefly pair migrated user keys with stale case data.
   if (puzzle === 'sq1' && set === 'cs') query.set('v', '2026-08-15-squanmate');
+  // PF setups changed from a fully-solved target to the real pair-formation stage.
+  // Bust the public one-hour cache so deployed clients do not keep validating the old states.
+  if (puzzle === 'fto' && set === 'pf') query.set('v', '2026-08-19-pf-stage');
   if (opts?.fresh) query.set('_', String(Date.now()));
   const queryString = query.toString();
   const url = `${base}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}`
