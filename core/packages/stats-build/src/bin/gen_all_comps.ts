@@ -76,7 +76,7 @@ interface QualRow extends RowDataPacket {
   event_id: string;
   qualification: string | null;
 }
-interface DualRow extends RowDataPacket {
+interface EventMarkerRow extends RowDataPacket {
   competition_id: string;
   event_id: string;
 }
@@ -179,7 +179,7 @@ async function main() {
   // 只有 2026 起的比赛可能有(新规)，SQL 已按年份收口(只扫几十场，开销可忽略)。
   // 不按 end_date 收口:all_past_comps 的 rows 本就只含已结束比赛(短码 dualByComp 自然只命中它们)，
   // 而 comp_dual.json 要含进行中/即将开始的比赛(完整 id dualFullByComp)。
-  const dualRows = await query<DualRow[]>(`
+  const dualRows = await query<EventMarkerRow[]>(`
     SELECT DISTINCT ce.competition_id, ce.event_id
     FROM rounds r
     JOIN competition_events ce ON ce.id = r.competition_event_id
@@ -203,6 +203,25 @@ async function main() {
   const fullRank = (e: string) => EVENT_RANK[EVENT_SHORT[e] ?? e] ?? 999;
   for (const arr of dualFullByComp.values()) {
     arr.sort((a, b) => fullRank(a) - fullRank(b));
+  }
+
+  // ── H2H（Head to Head）→ 每场采用 format_id = h 的 event 短码列表 ────────────────
+  // h 是赛制(format)，不是决赛轮次(round_type_id = f)。直接读 rounds 可覆盖尚无成绩的 H2H 轮次。
+  const h2hRows = await query<EventMarkerRow[]>(`
+    SELECT DISTINCT ce.competition_id, ce.event_id
+    FROM rounds r
+    JOIN competition_events ce ON ce.id = r.competition_event_id
+    WHERE r.format_id = 'h'
+  `);
+  const h2hByComp = new Map<string, string[]>();
+  for (const hr of h2hRows) {
+    const short = EVENT_SHORT[hr.event_id] ?? hr.event_id;
+    let arr = h2hByComp.get(hr.competition_id);
+    if (!arr) { arr = []; h2hByComp.set(hr.competition_id, arr); }
+    arr.push(short);
+  }
+  for (const arr of h2hByComp.values()) {
+    arr.sort((a, b) => (EVENT_RANK[a] ?? 999) - (EVENT_RANK[b] ?? 999));
   }
 
   const out = rows
@@ -237,6 +256,7 @@ async function main() {
         events: shortEvents,
         ...(rounds && Object.keys(rounds).length > 0 ? { rounds } : {}),
         ...(dualByComp.get(r.id)?.length ? { dual_events: dualByComp.get(r.id) } : {}),
+        ...(h2hByComp.get(r.id)?.length ? { h2h_events: h2hByComp.get(r.id) } : {}),
         ...(eventRegs && Object.keys(eventRegs).length > 0 ? { event_regs: eventRegs } : {}),
         ...(Number(r.competitors_count) > 0 ? { competitors: Number(r.competitors_count) } : {}),
         ...(Number(r.competitor_limit) > 0 ? { competitor_limit: Number(r.competitor_limit) } : {}),

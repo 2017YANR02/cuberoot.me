@@ -22,11 +22,11 @@ description: "Use when touching WCA competition JSON (upcoming_comps/all_past_co
 
 ## `all_upcoming_comps.json`（Globe + All 模式）
 
-纯数组，每条：`id`、`name`、`city`、`country`（ISO alpha-2）、`start_date`、`end_date`、`events`（短名）、`competitor_limit`、`latitude_degrees`、`longitude_degrees`、`url`
+纯数组，每条：`id`、`name`、`city`、`country`（ISO alpha-2）、`start_date`、`end_date`、`events`（短名）、`competitor_limit`、`latitude_degrees`、`longitude_degrees`、`url`；H2H 项目写入可选 `h2h_events`（短名，WCIF `rounds[].format = h`）
 
 ## `all_past_comps.json`（History 模式）
 
-纯数组（~14k 条），每条：`id`、`name`、`city`、`country`、`latitude_degrees`、`longitude_degrees`、`start_date`、`end_date`、`events`（短名）。无 url — 前端从 id 反推 `https://www.worldcubeassociation.org/competitions/{id}`。
+纯数组（~14k 条），每条：`id`、`name`、`city`、`country`、`latitude_degrees`、`longitude_degrees`、`start_date`、`end_date`、`events`（短名）；H2H 项目写入可选 `h2h_events`（短名，developer dump `rounds.format_id = h`）。无 url — 前端从 id 反推 `https://www.worldcubeassociation.org/competitions/{id}`。
 
 ## UI 比赛搜索（任何"输入比赛"的地方都用它）
 

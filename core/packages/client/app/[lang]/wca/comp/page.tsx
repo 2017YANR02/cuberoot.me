@@ -121,6 +121,8 @@ interface Competition {
   rounds?: Record<string, number>;
   /** 含双轮赛制（WCA Reg 9v，2026+）的 event 短码列表：首轮全员晋级（advancement=percent/100）。无双轮项目时缺省 */
   dual_events?: string[];
+  /** 含 H2H（Head to Head，WCA round format = h）的 event 短码列表。无 H2H 项目时缺省 */
+  h2h_events?: string[];
   /** event 短码 → 该项目报名/参赛人数（upcoming=WCIF 报名聚合，past=results 实际参赛）；缺省时格子留空 */
   event_regs?: Record<string, number>;
   /** event 短码 → round-1 WCIF 紧凑配置（限时/及格/晋级/资格）。未来比赛内联自 JSON；过去比赛由懒加载 meta 文件补；缺时运行时 WCIF 兜底 */
@@ -562,6 +564,7 @@ function adaptAllComp(w: UpcomingCompRecord, topCuberMap: Map<string, TopCuber[]
     events: w.events,
     rounds: w.rounds,
     dual_events: w.dual_events,
+    h2h_events: w.h2h_events,
     event_regs: w.event_regs,
     roundMeta: w.round_meta,
     competitor_limit: w.competitor_limit,
@@ -589,6 +592,7 @@ function adaptPastComp(w: PastCompRecord): Competition {
     events: w.events,
     rounds: w.rounds,
     dual_events: w.dual_events,
+    h2h_events: w.h2h_events,
     event_regs: w.event_regs,
     competitor_limit: w.competitor_limit ?? 0,
     competitors: w.competitors,
@@ -1474,7 +1478,12 @@ function CalendarPageInner() {
     'dual',
     parseAsBoolean.withDefault(false).withOptions({ history: 'replace', scroll: false }),
   );
-  // 合并筛选菜单(issue #33):已取消 / 首秀 / 双轮 + (仅列表视图)整场列/项目格 metric。
+  // H2H（Head to Head）：只保留含至少一个 format=h 项目的比赛。走 nuqs，可分享深链。
+  const [h2hOnly, setH2hOnly] = useQueryState(
+    'h2h',
+    parseAsBoolean.withDefault(false).withOptions({ history: 'replace', scroll: false }),
+  );
+  // 合并筛选菜单(issue #33):已取消 / 首秀 / 双轮 / H2H + (仅列表视图)整场列/项目格 metric。
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersWrapRef = useRef<HTMLDivElement>(null);
   const filtersPanelRef = useRef<HTMLDivElement>(null);
@@ -1764,9 +1773,10 @@ function CalendarPageInner() {
       if (cancelledFilter === 'only' && !isCancelledComp(comp, cancelledCutoffIso)) return false;
       if (debutIds && !debutIds.has(comp.id)) return false;
       if (dualOnly && !(comp.dual_events && comp.dual_events.length > 0)) return false;
+      if (h2hOnly && !(comp.h2h_events && comp.h2h_events.length > 0)) return false;
       return true;
     },
-    [compQuery, selectedCuber, selectedCuberCompIds, countryFilterSet, eventFilters, daysFilter, dateFrom, dateTo, cancelledFilter, cancelledCutoffIso, debutIds, dualOnly],
+    [compQuery, selectedCuber, selectedCuberCompIds, countryFilterSet, eventFilters, daysFilter, dateFrom, dateTo, cancelledFilter, cancelledCutoffIso, debutIds, dualOnly, h2hOnly],
   );
 
   // 中国内地比赛 WCA WCIF 多无报名数据(报名走 cubing.com),用 cn_upcoming_registrations(compId→WCA ID 列表)
@@ -2042,11 +2052,12 @@ function CalendarPageInner() {
           allLabel={t('upcoming.allCountries')}
         />
         {(() => {
-          // 已取消 / 首秀 / 双轮 合并成一个菜单(issue #33,不用 lucide 图标);
+          // 已取消 / 首秀 / 双轮 / H2H 合并成一个菜单(issue #33,不用 lucide 图标);
           // 整场列 / 项目格 metric 只在列表视图出现(人数和上限 / 满员率等仅列表有意义)。
           const activeCount = (cancelledFilter === 'only' ? 1 : 0)
             + (debutMode !== 'off' ? 1 : 0)
-            + (dualOnly ? 1 : 0);
+            + (dualOnly ? 1 : 0)
+            + (h2hOnly ? 1 : 0);
           return (
             <div className="comp-filters-wrap" ref={filtersWrapRef}>
               <button
@@ -2081,6 +2092,16 @@ function CalendarPageInner() {
                       value={dualOnly}
                       onChange={(v) => setDualOnly(v)}
                       label={tr({ zh: '双轮', en: 'Dual rounds' })}
+                    />
+                  </div>
+                  <div
+                    className="comp-filters-row"
+                    title={tr({ zh: '只显示含 H2H（Head to Head，对阵赛制）项目的比赛；以 WCA 轮次的 format = h 为准', en: 'Show only competitions with an H2H (Head to Head) event, identified by WCA round format = h' })}
+                  >
+                    <BoolToggle
+                      value={h2hOnly}
+                      onChange={(v) => setH2hOnly(v)}
+                      label={tr({ zh: 'H2H', en: 'H2H' })}
                     />
                   </div>
                   <label

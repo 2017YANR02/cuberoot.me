@@ -251,6 +251,23 @@ export function roundIdOf(activityCode: string): string {
   return activityCode.split('-').slice(0, 2).join('-');
 }
 
+/** Event ids whose competition rounds use the experimental head-to-head format. */
+export function h2hEventIds(rounds: Record<string, RoundInfo>): string[] {
+  return [...new Set(
+    Object.values(rounds)
+      .filter(round => round.format === 'h')
+      .map(round => round.eventId),
+  )];
+}
+
+/** Whether this exact scheduled activity belongs to a head-to-head round. */
+export function isH2hActivity(
+  activity: { activityCode: string },
+  rounds: Record<string, RoundInfo>,
+): boolean {
+  return rounds[roundIdOf(activity.activityCode)]?.format === 'h';
+}
+
 /**
  * Localized human name for a schedule activity.
  * - other-*: ACTIVITY_NAMES[key]?.[lang]; unknown key -> raw activity.name.
