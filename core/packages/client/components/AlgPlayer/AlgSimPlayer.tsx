@@ -10,8 +10,8 @@
  *
  * 1. **状态 = setup + 已走的步**,不是「一个可 seek 的时间轴」。引擎只有两个入口:
  *    `twister.setup(exp)`(先复位再整体重放,瞬时)和 `twister.push(exp)`(排队播动画)。
- *    所以只有「刚好往前走一步」才 push 出动画,其余(拖进度条 / 后退 / 换公式)一律
- *    整条 setup 重来。同一套取舍见 `/predict` 的题板。
+ *    所以 NxN 前后单步用 push 播动画,其余(拖进度条 / 首尾跳转 / 换公式)一律
+ *    整条 setup 重来;不支持倒播的拼图后退也走 setup。同一套取舍见 `/sim` 播放器。
  * 2. **拖拽只转视角,不转层**。`paintMode` + `dragEmpty='view'` 把每一次拖都判成看视角,
  *    再配 `orbitSceneFree`(只转场景,不折成整体转体)—— 折成转体会改动魔方本身的状态,
  *    那是画板要的,预览不要。
@@ -23,6 +23,7 @@
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type { AlgPuzzle } from '@cuberoot/shared';
+import { invertMoveString } from '@cuberoot/shared/alg-notation';
 import SimStage from '@/components/sim-embed/SimStage';
 import { useT } from '@/hooks/useT';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
@@ -33,10 +34,10 @@ import type { AlgPlayerControlMode, AlgPlayerHandle } from './AlgPlayer';
 import { pickStickering } from './stickering';
 import {
   resolvePlayerSetup,
+  resolvePreviewStepTransition,
   resolvePreviewTiming,
   resolveSimMoveDurationScale,
   resolveSimPreviewMoves,
-  shouldAnimatePreviewStep,
 } from './player-setup';
 import AlgPlaybackControls from './AlgPlaybackControls';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
@@ -127,9 +128,36 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   const [playing, setPlaying] = useState(false);
   const [replayRequest, setReplayRequest] = useState(0);
   const [ready, setReady] = useState(false);
+  const stepRef = useRef(step);
+  stepRef.current = step;
+  /** 进度条、首尾跳转和外部光标同步都必须瞬时落到完整状态。 */
+  const instantStepRef = useRef<number | null>(null);
+  const jumpToStep = useCallback((next: number) => {
+    const target = Math.max(0, Math.min(moves.length, next));
+    if (target === stepRef.current) return;
+    instantStepRef.current = target;
+    stepRef.current = target;
+    setStep(target);
+  }, [moves.length]);
+  const stepBack = useCallback(() => {
+    instantStepRef.current = null;
+    setStep(current => {
+      const next = Math.max(0, current - 1);
+      stepRef.current = next;
+      return next;
+    });
+  }, []);
+  const stepForward = useCallback(() => {
+    instantStepRef.current = null;
+    setStep(current => {
+      const next = Math.min(moves.length, current + 1);
+      stepRef.current = next;
+      return next;
+    });
+  }, [moves.length]);
   const seekPlayer = useMemo(
-    () => createStepSeekPlayer(moves.length, setStep),
-    [moves.length],
+    () => createStepSeekPlayer(moves.length, jumpToStep),
+    [moves.length, jumpToStep],
   );
   useImperativeHandle(ref, () => ({ getPlayer: () => seekPlayer }), [seekPlayer]);
   const mountRef = useRef<SimMount | null>(null);
@@ -137,24 +165,17 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   orientationRef.current = orientation;
   /** 上一帧同步到引擎的状态 —— 用来判断「是不是刚好往前一步」。 */
   const lastRef = useRef<{ setupAlg: string; step: number } | null>(null);
-  /** 滑块拖动的目标步。即使连续经过相邻步，也必须瞬时跳到完整状态。 */
-  const scrubStepRef = useRef<number | null>(null);
-  const scrubToStep = useCallback((next: number) => {
-    if (next === step) return;
-    scrubStepRef.current = next;
-    setStep(next);
-  }, [step]);
 
   // 换公式 = 从头开始。
-  useEffect(() => { setStep(0); setPlaying(false); }, [setupAlg, moves]);
+  useEffect(() => { jumpToStep(0); setPlaying(false); }, [setupAlg, moves, jumpToStep]);
 
   useEffect(() => {
     if (!ready || !autoPlay || moves.length === 0) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    setStep(0);
+    jumpToStep(0);
     setPlaying(true);
     setReplayRequest(request => request + 1);
-  }, [ready, autoPlay, alg, playRequest, setupAlg, moves.length]);
+  }, [ready, autoPlay, alg, playRequest, setupAlg, moves.length, jumpToStep]);
 
   const mount = useCallback(async (host: HTMLElement) => {
     const {
@@ -195,6 +216,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       m.dispose();
       mountRef.current = null;
       lastRef.current = null;
+      instantStepRef.current = null;
     };
   }, [puzzleKind, puzzle, set, previewTiming.frames]);
 
@@ -207,25 +229,49 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   }, [orientation, puzzle, ready]);
 
   /**
-   * 把 (setup, step) 同步到引擎。只有「同一条公式、刚好 +1 步」才播动画,
-   * 其余一律整条重放 —— 后退和拖进度条没有「倒着播」的入口,硬凑只会把状态弄脏。
+   * 把 (setup, step) 同步到引擎。前后单步沿用 `/sim` 的转角动画;
+   * 拖动、首尾跳转、外部光标同步和循环复位都用 setup 瞬时落到完整状态。
    */
   useEffect(() => {
     const m = mountRef.current;
     if (!m || !ready) return;
     const twister = m.world.cube.twister as PreviewTwister;
     const last = lastRef.current;
-    const instantSeek = scrubStepRef.current === step;
-    scrubStepRef.current = null;
+    const instantSeek = instantStepRef.current === step;
+    instantStepRef.current = null;
     lastRef.current = { setupAlg, step };
 
-    if (shouldAnimatePreviewStep(last, setupAlg, step, instantSeek)) {
+    const transition = resolvePreviewStepTransition(
+      last,
+      setupAlg,
+      step,
+      instantSeek,
+      Boolean(NXN_ORDER[puzzle]),
+    );
+    if (transition === 'forward') {
       twister.push(moves[step - 1]);   // push 自己排队,还在转也不会丢
+    } else if (transition === 'backward') {
+      twister.push(invertMoveString(moves[step]));
     } else {
       twister.setup([setupAlg, ...moves.slice(0, step)].join(' '));
     }
     m.invalidate();
-  }, [setupAlg, moves, step, ready]);
+  }, [setupAlg, moves, puzzle, step, ready]);
+
+  const togglePlayback = useCallback(() => {
+    if (playing) {
+      setPlaying(false);
+      return;
+    }
+    if (stepRef.current >= moves.length) jumpToStep(0);
+    setPlaying(true);
+  }, [jumpToStep, moves.length, playing]);
+
+  const replay = useCallback(() => {
+    jumpToStep(0);
+    setPlaying(true);
+    setReplayRequest(request => request + 1);
+  }, [jumpToStep]);
 
   // 自动播放:走到头就停。
   useEffect(() => {
@@ -238,11 +284,14 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
         ? Math.min(previewTiming.stepMs, 260)
         : previewTiming.stepMs;
     const id = setTimeout(
-      () => setStep(s => atLastFrame ? 0 : Math.min(s + 1, moves.length)),
+      () => {
+        if (atLastFrame) jumpToStep(0);
+        else stepForward();
+      },
       delay,
     );
     return () => clearTimeout(id);
-  }, [playing, loop, step, moves.length, hasCustomTiming, previewTiming.stepMs, replayRequest]);
+  }, [playing, loop, step, moves.length, hasCustomTiming, previewTiming.stepMs, replayRequest, jumpToStep, stepForward]);
 
   return (
     <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`}>
@@ -252,22 +301,23 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
         onReady={() => setReady(true)}
         busyLabel={t('正在加载魔方', 'Loading the cube')}
       />
-      {controlMode !== 'none' && (
+      {controlMode === 'replay' ? (
+        <AlgPlaybackControls
+          mode="replay"
+          count={moves.length}
+          onReplay={replay}
+        />
+      ) : controlMode === 'full' ? (
         <AlgPlaybackControls
           step={step}
           count={moves.length}
           playing={playing}
-          onStepChange={setStep}
-          onScrub={scrubToStep}
-          onPlayingChange={setPlaying}
-          mode={controlMode}
-          onReplay={controlMode === 'replay' ? () => {
-            setStep(0);
-            setPlaying(true);
-            setReplayRequest(request => request + 1);
-          } : undefined}
+          onScrub={jumpToStep}
+          onStepBack={stepBack}
+          onTogglePlay={togglePlayback}
+          onStepForward={stepForward}
         />
-      )}
+      ) : null}
     </div>
   );
 });

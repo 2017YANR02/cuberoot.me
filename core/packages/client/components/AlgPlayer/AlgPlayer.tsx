@@ -225,12 +225,8 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
     <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`}>
       {host}
       <AlgPlaybackControls
-        step={0}
-        count={alg.trim() ? 1 : 0}
-        playing={false}
-        onStepChange={() => {}}
-        onPlayingChange={() => {}}
         mode="replay"
+        count={alg.trim() ? 1 : 0}
         onReplay={() => {
           const player = playerRef.current;
           if (!player) return;

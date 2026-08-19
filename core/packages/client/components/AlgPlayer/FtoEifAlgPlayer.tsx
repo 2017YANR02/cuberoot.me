@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { useT } from '@/hooks/useT';
 import { invertFtoEifAlgorithm, parseFtoEifAlgorithm, renderFtoEifSvg } from '@/lib/fto-eif-image';
 import type { AlgPlayerControlMode, AlgPlayerHandle } from './AlgPlayer';
@@ -45,24 +45,43 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [replayRequest, setReplayRequest] = useState(0);
+  const jumpToStep = useCallback((next: number) => {
+    setStep(Math.max(0, Math.min(parsedAlg.tokens.length, next)));
+  }, [parsedAlg.tokens.length]);
   const seekPlayer = useMemo(
-    () => createFtoSeekPlayer(parsedAlg.tokens.length, setStep),
-    [parsedAlg.tokens.length],
+    () => createFtoSeekPlayer(parsedAlg.tokens.length, jumpToStep),
+    [parsedAlg.tokens.length, jumpToStep],
   );
   useImperativeHandle(ref, () => ({ getPlayer: () => seekPlayer }), [seekPlayer]);
 
   useEffect(() => {
-    setStep(0);
+    jumpToStep(0);
     setPlaying(false);
-  }, [setupAlg, alg]);
+  }, [setupAlg, alg, jumpToStep]);
 
   useEffect(() => {
     if (!autoPlay || parsedAlg.tokens.length === 0) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    setStep(0);
+    jumpToStep(0);
     setPlaying(true);
     setReplayRequest(request => request + 1);
-  }, [alg, autoPlay, playRequest, setupAlg, parsedAlg.tokens.length]);
+  }, [alg, autoPlay, playRequest, setupAlg, parsedAlg.tokens.length, jumpToStep]);
+
+  const stepBack = useCallback(() => jumpToStep(step - 1), [jumpToStep, step]);
+  const stepForward = useCallback(() => jumpToStep(step + 1), [jumpToStep, step]);
+  const togglePlayback = useCallback(() => {
+    if (playing) {
+      setPlaying(false);
+      return;
+    }
+    if (step >= parsedAlg.tokens.length) jumpToStep(0);
+    setPlaying(true);
+  }, [jumpToStep, parsedAlg.tokens.length, playing, step]);
+  const replay = useCallback(() => {
+    jumpToStep(0);
+    setPlaying(true);
+    setReplayRequest(request => request + 1);
+  }, [jumpToStep]);
 
   useEffect(() => {
     if (!playing) return;
@@ -73,11 +92,11 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
     }
     const delay = atEnd ? LOOP_PAUSE_MS : Math.max(40, moveDurationMs);
     const timer = setTimeout(
-      () => setStep(current => atEnd ? 0 : Math.min(current + 1, parsedAlg.tokens.length)),
+      () => jumpToStep(atEnd ? 0 : step + 1),
       delay,
     );
     return () => clearTimeout(timer);
-  }, [loop, moveDurationMs, parsedAlg.tokens.length, playing, replayRequest, step]);
+  }, [loop, moveDurationMs, parsedAlg.tokens.length, playing, replayRequest, step, jumpToStep]);
 
   const visibleAlgorithm = [setupAlg, ...parsedAlg.tokens.slice(0, step)].filter(Boolean).join(' ');
   const svg = useMemo(
@@ -103,21 +122,23 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
           {t('不支持的 EIF 记号', 'Unsupported EIF notation')}: {invalid.join(' ')}
         </p>
       )}
-      {controlMode !== 'none' && (
+      {controlMode === 'replay' ? (
+        <AlgPlaybackControls
+          mode="replay"
+          count={parsedAlg.tokens.length}
+          onReplay={replay}
+        />
+      ) : controlMode === 'full' ? (
         <AlgPlaybackControls
           step={step}
           count={parsedAlg.tokens.length}
           playing={playing}
-          onStepChange={setStep}
-          onPlayingChange={setPlaying}
-          mode={controlMode}
-          onReplay={controlMode === 'replay' ? () => {
-            setStep(0);
-            setPlaying(true);
-            setReplayRequest(request => request + 1);
-          } : undefined}
+          onScrub={jumpToStep}
+          onStepBack={stepBack}
+          onTogglePlay={togglePlayback}
+          onStepForward={stepForward}
         />
-      )}
+      ) : null}
     </div>
   );
 });
