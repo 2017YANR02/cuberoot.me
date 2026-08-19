@@ -53,9 +53,10 @@ export class TiedPodiumResults extends Statistic {
     rawRows = null;
     if (global.gc) global.gc();
 
-    const occurrences = findTiedPodiums(rows, 'average');
-    this.note = `Found ${occurrences.length} final podiums where the official 1st, 2nd and 3rd places had the same valid average. Fewest Moves is excluded.`;
-    this.noteZh = `历史上共找到 ${occurrences.length} 次：WCA 决赛官方第 1、2、3 名三人的有效平均完全相同。不含最少步。`;
+    const averageOccurrences = findTiedPodiums(rows, 'average');
+    const singleOccurrences = findTiedPodiums(rows, 'best');
+    this.note = `Found ${averageOccurrences.length} final podiums with an identical valid average and ${singleOccurrences.length} with an identical valid single for the official 1st, 2nd and 3rd places. Fewest Moves is excluded.`;
+    this.noteZh = `WCA 决赛官方第 1、2、3 名三人的有效成绩完全相同：平均 ${averageOccurrences.length} 次，单次 ${singleOccurrences.length} 次。不含最少步。`;
 
     return {
       id: this.id,
@@ -69,7 +70,10 @@ export class TiedPodiumResults extends Statistic {
         labelZh: headerZh(label),
         align,
       })),
-      sections: buildSections(occurrences),
+      sections: [
+        ...buildSections(averageOccurrences, 'average'),
+        ...buildSections(singleOccurrences, 'best'),
+      ],
     };
   }
 }
@@ -89,20 +93,25 @@ function mapRow(row: RowDataPacket): PodiumResultRow {
   };
 }
 
-function buildSections(occurrences: readonly TiedPodiumOccurrence[]): StatSection[] {
+function buildSections(
+  occurrences: readonly TiedPodiumOccurrence[],
+  metric: 'average' | 'best',
+): StatSection[] {
+  const metricTitle = metric === 'average' ? 'Average' : 'Single';
+  const metricTitleZh = metric === 'average' ? '平均' : '单次';
   const sections: StatSection[] = [];
   for (const [eventId, eventName] of EVENTS_ENTRIES) {
     const rows = occurrences
       .filter(occurrence => occurrence.eventId === eventId)
       .map(occurrence => [
-        new SolveTime(eventId, 'average', occurrence.value).clockFormat(),
+        new SolveTime(eventId, metric === 'average' ? 'average' : 'single', occurrence.value).clockFormat(),
         ...occurrence.podium.map(personLink),
         competitionLink(occurrence),
       ]);
     if (rows.length === 0) continue;
     sections.push({
-      title: `${eventName} - Average`,
-      titleZh: `${eventZh(eventName)} - 平均`,
+      title: `${eventName} - ${metricTitle}`,
+      titleZh: `${eventZh(eventName)} - ${metricTitleZh}`,
       rows,
     });
   }

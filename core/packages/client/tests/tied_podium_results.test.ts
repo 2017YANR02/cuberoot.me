@@ -55,4 +55,13 @@ describe('findTiedPodiums', () => {
     expect(findTiedPodiums([...older, ...newer], 'average').map(row => row.competitionId))
       .toEqual(['Newer2025', 'Older2024']);
   });
+
+  it('finds identical singles independently from different averages', () => {
+    const rows = podium({ best: 434, average: 500 });
+    rows[1].average = 520;
+    rows[2].average = 540;
+
+    expect(findTiedPodiums(rows, 'best')).toHaveLength(1);
+    expect(findTiedPodiums(rows, 'average')).toEqual([]);
+  });
 });

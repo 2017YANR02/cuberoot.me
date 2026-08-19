@@ -193,11 +193,25 @@ export function SectionsView({ header, sections, searchTerm, isZh, selectedEvent
 
   const showMetricFilter = availableMetrics.size >= 2;
 
+  const eventMetrics = useMemo(() => {
+    if (!selectedEvent) return availableMetrics;
+    const metrics = new Set<string>();
+    sections.forEach(s => {
+      const separatorIndex = s.title.lastIndexOf(' - ');
+      if (separatorIndex < 0) return;
+      const eventName = s.title.substring(0, separatorIndex);
+      if (EVENT_NAME_TO_ID[eventName] === selectedEvent) {
+        metrics.add(s.title.substring(separatorIndex + 3));
+      }
+    });
+    return metrics;
+  }, [availableMetrics, sections, selectedEvent]);
+
   useEffect(() => {
-    if (showMetricFilter && !selectedMetric) {
-      setSelectedMetric(Array.from(availableMetrics)[0]);
+    if (showMetricFilter && (!selectedMetric || !eventMetrics.has(selectedMetric))) {
+      setSelectedMetric(Array.from(eventMetrics)[0] ?? Array.from(availableMetrics)[0]);
     }
-  }, [showMetricFilter, availableMetrics, selectedMetric]);
+  }, [showMetricFilter, availableMetrics, eventMetrics, selectedMetric]);
 
   const visibleSections = useMemo(() => {
     let result = sections;
