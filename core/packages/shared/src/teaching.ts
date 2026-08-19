@@ -849,6 +849,105 @@ export interface TeachingStudentAccountBindingPreview {
   expiresAt: string;
 }
 
+export type TeachingGuardianAccountBindingInviteStatus = TeachingStudentAccountBindingInviteStatus;
+
+export interface TeachingGuardianAccountBindingInvite {
+  id: string;
+  organizationId: string;
+  guardianLinkId: string;
+  status: TeachingGuardianAccountBindingInviteStatus;
+  expiresAt: string;
+  expiredAt: string | null;
+  consumedAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+}
+
+export interface TeachingGuardianAccountBindingInviteCreated {
+  invite: TeachingGuardianAccountBindingInvite;
+  token: string;
+}
+
+export interface TeachingGuardianAccountBindingInviteCurrent {
+  invite: TeachingGuardianAccountBindingInvite | null;
+}
+
+export interface TeachingGuardianAccountBindingInviteRevoked {
+  invite: TeachingGuardianAccountBindingInvite;
+}
+
+export interface TeachingGuardianAccountBindingPreview {
+  organizationName: string;
+  studentDisplayName: string;
+  relationship: string;
+  expiresAt: string;
+}
+
+export interface TeachingGuardianAccountBindingConsumed {
+  invite: Pick<
+    TeachingGuardianAccountBindingInvite,
+    'id' | 'status' | 'expiresAt' | 'consumedAt' | 'createdAt'
+  >;
+  guardian: {
+    guardianLinkId: string;
+    studentId: string;
+    organizationName: string;
+    studentDisplayName: string;
+    relationship: string;
+    accountLinkedAt: string;
+  };
+}
+
+export type TeachingLearningRelationship =
+  | { kind: 'student' }
+  | { kind: 'guardian'; guardianLinkId: string; relationship: string };
+
+export interface TeachingLearningContext {
+  organization: { slug: string; name: string };
+  student: { id: string; displayName: string };
+  relationships: TeachingLearningRelationship[];
+}
+
+export interface TeachingLearnerLessonFeedback {
+  id: string;
+  sessionId: string;
+  studentId: string;
+  revision: number;
+  visibility: Exclude<TeachingFeedbackVisibility, 'staff_only'>;
+  summary: string;
+  strengths: string | null;
+  challenges: string | null;
+  nextGoals: string | null;
+  studentDisplayNameSnapshot: string;
+  attendanceStatusSnapshot: TeachingAttendanceStatus;
+  authorDisplayNameSnapshot: string;
+  authorRoleSnapshot: 'owner' | 'admin' | 'teacher' | 'assistant';
+  publishedAt: string;
+  createdAt: string;
+}
+
+export type TeachingLearnerWeeklyReportAggregate = Omit<TeachingWeeklyReportAggregate, 'lessonFeedback'> & {
+  lessonFeedback: TeachingWeeklyReportLessonFeedbackAggregate;
+};
+
+export interface TeachingLearnerWeeklyReport {
+  id: string;
+  studentId: string;
+  studentDisplayNameSnapshot: string;
+  weekStart: string;
+  weekEnd: string;
+  timezoneSnapshot: string;
+  revision: number;
+  status: 'published';
+  visibility: Exclude<TeachingWeeklyReportVisibility, 'staff_only'>;
+  teacherSummary: string;
+  nextWeekPlan: string;
+  publishedByDisplayNameSnapshot: string;
+  publishedByRoleSnapshot: 'owner' | 'admin' | 'teacher' | 'assistant';
+  publishedAt: string;
+  aggregate?: TeachingLearnerWeeklyReportAggregate;
+}
+
 export interface TeachingSelfTrainingAssignment {
   assignment: TeachingTrainingAssignment;
   target: Extract<TeachingTrainingAssignmentTarget, { targetKind: 'student' }>;

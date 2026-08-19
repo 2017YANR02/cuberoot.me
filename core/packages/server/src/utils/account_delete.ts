@@ -115,6 +115,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   training_submission_reviews: '批改版本保留稳定审核人账号、姓名与角色快照,活动账号引用在删除前显式置空',
   daily_training_rollups: '每日训练汇总由机构原始证据重建,不承载账号资料',
   student_account_binding_invites: '学员账号绑定邀请只存令牌哈希并保留终态,操作者账号随删除置空',
+  guardian_account_binding_invites: '监护人账号绑定邀请只存令牌哈希并保留终态,操作者账号随删除置空',
   memberships: '会员权益状态:留着,同一个人重新绑 WCA 回来还认',
   membership_orders: '交易凭证,财务对账要;只有归属键,没有姓名邮箱',
   contributors: '站方手录的致谢名单,单独处理(只把 wca_id 置 NULL,名字留着)',
@@ -232,6 +233,15 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
       UPDATE training_submission_reviews
       SET reviewer_user_id = NULL
       WHERE reviewer_user_id = ${userId}`;
+    // 账号绑定状态由账号外键与绑定时间共同表达,删除时必须在同一事务里成对清空。
+    await tx`
+      UPDATE student_profiles
+      SET account_user_id = NULL, account_linked_at = NULL
+      WHERE account_user_id = ${userId}`;
+    await tx`
+      UPDATE guardian_links
+      SET guardian_user_id = NULL, account_linked_at = NULL
+      WHERE guardian_user_id = ${userId}`;
 
     // 最后删账号本体。auth_identities 有 ON DELETE CASCADE(0064),身份跟着走。
     await tx`DELETE FROM app_users WHERE id = ${userId}`;

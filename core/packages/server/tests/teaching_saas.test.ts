@@ -72,6 +72,29 @@ function repository(): TeachingSaasRepository {
       status: 200,
       body: { invite: { id: 'invite-1', status: 'consumed' }, student: { id: 'student-1' } },
     }),
+    createGuardianAccountBindingInvite: vi.fn().mockResolvedValue({
+      status: 201,
+      body: { invite: { id: 'guardian-invite-1', status: 'pending' }, token: 'b'.repeat(43) },
+    }),
+    getCurrentGuardianAccountBindingInvite: vi.fn().mockResolvedValue({
+      invite: { id: 'guardian-invite-1', status: 'pending' },
+    }),
+    revokeGuardianAccountBindingInvite: vi.fn().mockResolvedValue({
+      status: 200,
+      body: { invite: { id: 'guardian-invite-1', status: 'revoked' } },
+    }),
+    previewGuardianAccountBindingInvite: vi.fn().mockResolvedValue({
+      organizationName: 'Demo', studentDisplayName: 'Student', relationship: 'parent',
+      expiresAt: '2026-08-18T02:00:00.000Z',
+    }),
+    consumeGuardianAccountBindingInvite: vi.fn().mockResolvedValue({
+      status: 200,
+      body: { invite: { id: 'guardian-invite-1', status: 'consumed' }, guardian: { guardianLinkId: 'link-1' } },
+    }),
+    listLearningContexts: vi.fn().mockResolvedValue([]),
+    listLearnerWeeklyReports: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    getLearnerWeeklyReport: vi.fn().mockResolvedValue({ id: 'weekly-report-1', status: 'published' }),
+    listLearnerLessonFeedback: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
     listSelfTrainingAssignments: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
     createSelfTrainingEvidence: vi.fn().mockResolvedValue({
       status: 201,
@@ -675,6 +698,181 @@ describe('teaching SaaS routes', () => {
     expect(unavailable.status).toBe(404);
     expect(unavailable.headers.get('cache-control')).toBe('no-store');
     expect(await unavailable.json()).toMatchObject({ error: { code: 'RESOURCE_NOT_FOUND' } });
+  });
+
+  it('manages a strict guardian binding invite without caching the raw token', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const studentId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const guardianLinkId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+    const inviteId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    const base = `/teaching/organizations/demo/students/${studentId}/guardian-links/${guardianLinkId}`;
+
+    const created = await app.request(`${base}/account-binding-invites`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'must-not-cache-token' },
+      body: '{}',
+    });
+    expect(created.status).toBe(201);
+    expect(created.headers.get('cache-control')).toBe('no-store');
+    expect(repo.createGuardianAccountBindingInvite).toHaveBeenCalledWith(
+      ACTOR, 'demo', studentId, guardianLinkId, { expiresInMinutes: 60 }, expect.any(String),
+    );
+    expect(vi.mocked(repo.createGuardianAccountBindingInvite).mock.calls[0])
+      .not.toContain('must-not-cache-token');
+
+    const current = await app.request(`${base}/account-binding-invite`);
+    expect(current.status).toBe(200);
+    expect(current.headers.get('cache-control')).toBe('no-store');
+    expect(await current.json()).toEqual({ invite: { id: 'guardian-invite-1', status: 'pending' } });
+    expect(repo.getCurrentGuardianAccountBindingInvite).toHaveBeenCalledWith(
+      ACTOR, 'demo', studentId, guardianLinkId, expect.any(String),
+    );
+
+    const raw = '{}';
+    const revoked = await app.request(`${base}/account-binding-invites/${inviteId}/revoke`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'guardian-revoke-1' },
+      body: raw,
+    });
+    expect(revoked.status).toBe(200);
+    expect(revoked.headers.get('cache-control')).toBe('no-store');
+    expect(repo.revokeGuardianAccountBindingInvite).toHaveBeenCalledWith(
+      ACTOR, 'demo', studentId, guardianLinkId, inviteId, 'guardian-revoke-1',
+      createHash('sha256').update(raw).digest('hex'), expect.any(String),
+    );
+
+    const invalid = await app.request(`${base}/account-binding-invites`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ expiresInMinutes: 60, guardianUserId: 99 }),
+    });
+    expect(invalid.status).toBe(400);
+    expect(repo.createGuardianAccountBindingInvite).toHaveBeenCalledTimes(1);
+  });
+
+  it('previews and consumes a guardian invite by hash only', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const token = 'G'.repeat(43);
+
+    const preview = await app.request('/teaching/me/guardian-account-binding/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    expect(preview.status).toBe(200);
+    expect(preview.headers.get('cache-control')).toBe('no-store');
+    expect(await preview.json()).toEqual({
+      organizationName: 'Demo',
+      studentDisplayName: 'Student',
+      relationship: 'parent',
+      expiresAt: '2026-08-18T02:00:00.000Z',
+    });
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    expect(repo.previewGuardianAccountBindingInvite).toHaveBeenCalledWith(
+      ACTOR, { tokenHash }, expect.any(String),
+    );
+
+    const consumed = await app.request('/teaching/me/guardian-account-binding/consume', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    expect(consumed.status).toBe(200);
+    expect(consumed.headers.get('cache-control')).toBe('no-store');
+    expect(repo.consumeGuardianAccountBindingInvite).toHaveBeenCalledWith(
+      ACTOR, { tokenHash }, expect.any(String),
+    );
+    expect(JSON.stringify([
+      ...vi.mocked(repo.previewGuardianAccountBindingInvite).mock.calls,
+      ...vi.mocked(repo.consumeGuardianAccountBindingInvite).mock.calls,
+    ])).not.toContain(token);
+
+    const invalid = await app.request('/teaching/me/guardian-account-binding/consume', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, studentId: 'spoofed' }),
+    });
+    expect(invalid.status).toBe(400);
+    expect(repo.consumeGuardianAccountBindingInvite).toHaveBeenCalledTimes(1);
+  });
+
+  it('discovers stable global and organization-scoped learning contexts', async () => {
+    const context = {
+      organization: { slug: 'demo', name: 'Demo' },
+      student: { id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', displayName: 'Student' },
+      relationships: [
+        { kind: 'student' },
+        { kind: 'guardian', guardianLinkId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', relationship: 'parent' },
+      ],
+    };
+    repo.listLearningContexts = vi.fn().mockResolvedValue([context]);
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+
+    const global = await app.request('/teaching/me/learning-contexts');
+    expect(global.status).toBe(200);
+    expect(global.headers.get('cache-control')).toBe('no-store');
+    expect(await global.json()).toEqual({ learningContexts: [context] });
+    expect(repo.listLearningContexts).toHaveBeenNthCalledWith(1, ACTOR, null, expect.any(String));
+
+    const scoped = await app.request('/teaching/organizations/demo/me/students');
+    expect(scoped.status).toBe(200);
+    expect(scoped.headers.get('cache-control')).toBe('no-store');
+    expect(await scoped.json()).toEqual({ learningContexts: [context] });
+    expect(repo.listLearningContexts).toHaveBeenNthCalledWith(2, ACTOR, 'demo', expect.any(String));
+    expect(JSON.stringify(context).toLowerCase()).not.toContain('userid');
+  });
+
+  it('returns learner report and feedback envelopes with bounded pagination', async () => {
+    const studentId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const reportId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    repo.listLearnerWeeklyReports = vi.fn().mockResolvedValue({
+      items: [{ id: reportId, status: 'published' }], total: 3, page: 2, pageSize: 10,
+    });
+    repo.getLearnerWeeklyReport = vi.fn().mockResolvedValue({ id: reportId, status: 'published' });
+    repo.listLearnerLessonFeedback = vi.fn().mockResolvedValue({
+      items: [{ id: 'feedback-1', visibility: 'student' }], total: 1, page: 1, pageSize: 5,
+    });
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+
+    const reports = await app.request(
+      `/teaching/organizations/demo/me/students/${studentId}/weekly-reports?page=2&pageSize=10`,
+    );
+    expect(reports.status).toBe(200);
+    expect(reports.headers.get('cache-control')).toBe('no-store');
+    expect(await reports.json()).toEqual({
+      weeklyReports: [{ id: reportId, status: 'published' }], total: 3, page: 2, pageSize: 10,
+    });
+    expect(repo.listLearnerWeeklyReports).toHaveBeenCalledWith(
+      ACTOR, 'demo', studentId, { page: 2, pageSize: 10, offset: 10 }, expect.any(String),
+    );
+
+    const detail = await app.request(
+      `/teaching/organizations/demo/me/students/${studentId}/weekly-reports/${reportId}`,
+    );
+    expect(detail.status).toBe(200);
+    expect(detail.headers.get('cache-control')).toBe('no-store');
+    expect(await detail.json()).toEqual({ weeklyReport: { id: reportId, status: 'published' } });
+    expect(repo.getLearnerWeeklyReport).toHaveBeenCalledWith(
+      ACTOR, 'demo', studentId, reportId, expect.any(String),
+    );
+
+    const feedback = await app.request(
+      `/teaching/organizations/demo/me/students/${studentId}/lesson-feedback?page=1&pageSize=5`,
+    );
+    expect(feedback.status).toBe(200);
+    expect(feedback.headers.get('cache-control')).toBe('no-store');
+    expect(await feedback.json()).toEqual({
+      feedback: [{ id: 'feedback-1', visibility: 'student' }], total: 1, page: 1, pageSize: 5,
+    });
+    expect(repo.listLearnerLessonFeedback).toHaveBeenCalledWith(
+      ACTOR, 'demo', studentId, { page: 1, pageSize: 5, offset: 0 }, expect.any(String),
+    );
+
+    const oversized = await app.request(
+      `/teaching/organizations/demo/me/students/${studentId}/lesson-feedback?pageSize=101`,
+    );
+    expect(oversized.status).toBe(400);
+    expect(repo.listLearnerLessonFeedback).toHaveBeenCalledTimes(1);
   });
 
   it('lists only the authenticated student binding under the requested organization slug', async () => {
