@@ -313,6 +313,7 @@ export default function DeskPet() {
   const [hidden, setHidden] = useState(false);
   const [resting, setResting] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [touchActionsVisible, setTouchActionsVisible] = useState(false);
   // PLL performer overlay — opened by the toolbar button or a `clawd:perform`
   // CustomEvent (optional detail.caseName).
   const [performOpen, setPerformOpen] = useState(false);
@@ -886,8 +887,8 @@ export default function DeskPet() {
         }));
       } else if (e.pointerType !== 'mouse') {
         clearTimeout(touchActionsTimer);
-        root.classList.add('touch-actions');
-        touchActionsTimer = setTimeout(() => root.classList.remove('touch-actions'), 3000);
+        setTouchActionsVisible(true);
+        touchActionsTimer = setTimeout(() => setTouchActionsVisible(false), 3000);
       }
       if (!dnd && !mini) { setState('idle', true); resetIdle(); }
     };
@@ -1037,7 +1038,7 @@ export default function DeskPet() {
         inputMode="search"
         style={{ position: 'fixed', bottom: 0, left: 0, width: 1, height: 1, opacity: 0, padding: 0, margin: 0, border: 0, fontSize: 16, background: 'transparent', pointerEvents: 'none', zIndex: -1 }}
       />
-      <div className={`clawd-deskpet${searchOpen ? ' pet-front' : ''}`} data-size={size} data-char={character} ref={rootRef}>
+      <div className={`clawd-deskpet${searchOpen ? ' pet-front' : ''}${touchActionsVisible ? ' touch-actions' : ''}`} data-size={size} data-char={character} ref={rootRef}>
         <style>{CSS}</style>
         <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" aria-hidden>
           <defs>
