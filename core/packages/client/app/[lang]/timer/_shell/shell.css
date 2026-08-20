@@ -1169,7 +1169,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 
 /* 统计条是相对 .shell-main 绝对定位的左下角浮层,复盘一展开就正好压在它上面。
    往上让一整格 —— 它是成绩 / 图表面板的唯一入口,不能在拧完那一刻消失。 */
-.shell-main:has(> .shell-recap) .shell-stat-rail,
+.shell-main:has(> .shell-recap) .shell-stat-rail { bottom: calc(var(--recap-h) + 10px); }
 .shell-main:has(> .shell-recap) .shell-device-actions { bottom: calc(var(--recap-h) + 10px); }
 
 /* ── Distraction-free fade while running ────────────────── */
