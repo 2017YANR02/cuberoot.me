@@ -454,7 +454,7 @@ export const ForumMarkdownEditor = forwardRef<ForumEditorHandle, ForumMarkdownEd
         <div className="forum-editor-video-preview">
           <div className="forum-editor-video-heading">
             <span>{video.fileName}</span>
-            <button type="button" onClick={removeVideo} aria-label={tt('移除视频', 'Remove video')}>
+            <button className="forum-editor-video-remove" type="button" onClick={removeVideo} aria-label={tt('移除视频', 'Remove video')}>
               <X size={15} aria-hidden="true" />
               {tt('移除', 'Remove')}
             </button>

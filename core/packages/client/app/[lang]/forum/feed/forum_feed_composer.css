@@ -69,5 +69,5 @@
   .forum-feed-composer { margin-top: 2px; }
   .forum-feed-compose-trigger { align-items: flex-start; }
   .forum-feed-compose-kinds { padding-top: 1px; }
-  .forum-feed-compose-actions > button { flex: 1; }
+  .forum-feed-compose-action { flex: 1; }
 }
