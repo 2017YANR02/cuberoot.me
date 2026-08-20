@@ -531,6 +531,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: '3D puzzle simulators for 28 puzzle types — drag to turn, play back solutions.',
     },
   },
+  'comp-sim': {
+    title: { zh: '比赛模拟', en: 'Competition Simulator' },
+    description: {
+      zh: '使用真实 WCA 比赛、轮次、对手、打乱和晋级规则，完整模拟叫号、观察、成绩录入与排名。',
+      en: 'Rehearse a real WCA competition with authentic rounds, competitors, scrambles, call-ups, inspection, results, rankings and advancement.',
+    },
+  },
   'sim/stages': { title: { zh: '阶段遮罩速查', en: 'Stage Masks' } },
   'site': { title: { zh: '网站导航', en: 'Sites Directory' } },
   'solver': { title: { zh: '求解器', en: 'Solver' } },

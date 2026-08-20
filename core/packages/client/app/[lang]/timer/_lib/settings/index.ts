@@ -6,7 +6,7 @@
  * re-render when settings change.
  */
 
-import { DEFAULT_ROUND_CONFIG, type RoundConfig } from '../round';
+import { DEFAULT_ROUND_CONFIG, type RoundConfig } from '@cuberoot/shared/timer';
 import { useSyncExternalStore } from 'react';
 import { persistItem } from '@/lib/safe-storage';
 import {
@@ -277,7 +277,7 @@ export interface TimerSettings {
    * Round simulation — practise under real WCA round conditions (format,
    * cutoff, time limit). The round's attempts are NOT persisted: solves are
    * stored as usual and the round is just a tail slice of them, so there is no
-   * second source of truth to keep in sync. See ../round.ts.
+   * second source of truth to keep in sync. See @cuberoot/shared/timer.
    */
   round: RoundConfig;
 

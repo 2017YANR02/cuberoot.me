@@ -129,7 +129,7 @@ function decodeStageSegments(value: unknown): Solve['stageSegments'] | null {
   return decoded as unknown as NonNullable<Solve['stageSegments']>;
 }
 
-function decodeSolve(value: unknown, event: EventId): Solve | null {
+export function decodeTimerSolve(value: unknown, event: EventId): Solve | null {
   if (!isRecord(value)) return null;
   if (!isSafeKey(value.id)) return null;
   if (!isFiniteNonNegative(value.timeMs) || !isValidDateMs(value.ts)) return null;
@@ -259,7 +259,7 @@ function decodeByEvent(value: unknown): TimerSolvesByEvent | null {
     const solves: Solve[] = [];
     const ids = new Set<string>();
     for (const rawSolve of rawSolves) {
-      const solve = decodeSolve(rawSolve, rawEvent);
+      const solve = decodeTimerSolve(rawSolve, rawEvent);
       if (!solve || ids.has(solve.id)) return null;
       ids.add(solve.id);
       solves.push(solve);
@@ -368,7 +368,7 @@ export function decodeTimerDatabase(
       const target = merged[rawSession.event] ?? [];
       const ids = idsByEvent.get(rawSession.event) ?? new Set<string>();
       for (const rawSolve of rawSession.solves) {
-        const solve = decodeSolve(rawSolve, rawSession.event);
+        const solve = decodeTimerSolve(rawSolve, rawSession.event);
         if (!solve || ids.has(solve.id)) return null;
         ids.add(solve.id);
         target.push(solve);

@@ -106,7 +106,7 @@ import { extractReplayParam } from '../_lib/share/paste_import';
 import SettingsPanel from '../_components/SettingsPanel';
 import GoalProgress from '../_components/GoalProgress';
 import RoundPanel from '../_components/RoundPanel';
-import { roundAttempts } from '../_lib/round';
+import { roundAttempts } from '@cuberoot/shared/timer';
 import { generateDrillScramble, type DrillType } from '../_lib/scramble/drill';
 import SolverHints from '../_components/SolverHints';
 import SolverHintPanel, { HINTS_PARAM } from '../_components/SolverHintPanel';

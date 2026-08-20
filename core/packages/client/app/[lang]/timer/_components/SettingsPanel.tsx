@@ -50,7 +50,7 @@ import { ClearButton } from '@/components/ClearButton';
 import ResetDefaultsButton from '@/components/ResetDefaultsButton';
 import { tr } from '@/i18n/tr';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
-import { cutoffPhase, roundAttempts, type RoundFormat } from '../_lib/round';
+import { cutoffPhase, roundAttempts, type RoundFormat } from '@cuberoot/shared/timer';
 import {
   RESERVED_BINDINGS,
   TIMER_ACTIONS,

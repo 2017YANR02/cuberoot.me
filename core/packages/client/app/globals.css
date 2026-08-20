@@ -143,7 +143,7 @@ body {
   }
 }
 
-/* dark-locked pages: wca-stats family only.
+/* dark-locked pages: wca-stats family and the immersive competition simulator.
    :root:has() lifts tokens to root so body bg flips with the container; without
    this, max-width pages leak light bg on the sides. These pages don't
    participate in ThemeToggle — always dark, by design.
@@ -163,7 +163,9 @@ html:root:not([data-palette-scheme=dark]):has(.nemesizer-page),
 html:root:not([data-palette-scheme=dark]):has(.fun-stats),
 html:root:not([data-palette-scheme=dark]):has(.result-watch-page),
 html:root:not([data-palette-scheme=dark]):has(.cs-page),
-html:root:not([data-palette-scheme=dark]):has(.tr-page) {
+html:root:not([data-palette-scheme=dark]):has(.tr-page),
+html:root:not([data-palette-scheme=dark]):has(.comp-sim-page),
+html:root:not([data-palette-scheme=dark]):has(.comp-sim-live) {
   color-scheme: dark;
   --background: #171717;
   --foreground: #ededed;
