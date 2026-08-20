@@ -118,6 +118,11 @@ export interface BluetoothTimerSourceOptions {
   onConnectionLost?: () => void;
 }
 
+export interface BluetoothTimerSource extends ExternalTimerSource {
+  /** Connect a device already returned by a shared Web Bluetooth chooser. */
+  connectDevice(device: BluetoothDevice): Promise<void>;
+}
+
 /**
  * Create a (disconnected) BLE timer source. One source handles one device at a
  * time; call connect() again after disconnect() to pick a different one.
@@ -128,7 +133,7 @@ export interface BluetoothTimerSourceOptions {
  */
 export function createBluetoothTimerSource(
   opts: BluetoothTimerSourceOptions = {},
-): ExternalTimerSource {
+): BluetoothTimerSource {
   const bus = createExternalTimerBus();
 
   let device: BluetoothDevice | null = null;
@@ -175,6 +180,65 @@ export function createBluetoothTimerSource(
     emit({ state: 'DISCONNECT' });
   };
 
+  const connectDevice = async (picked: BluetoothDevice): Promise<void> => {
+    if (connected) return;
+
+    const picker = pickDriver(picked);
+    if (!picker) {
+      throw new Error(`Unrecognised smart timer: ${picked.name ?? '(no name)'}`);
+    }
+    if (!picked.gatt) {
+      throw new Error('Selected device does not expose a GATT server.');
+    }
+
+    // Resolve the MAC BEFORE opening GATT — advertisements stop once the
+    // browser connects. csTimer's qiyitimer.js does the same.
+    let mac: string | null = null;
+    if (picker.needsMac) {
+      const advertisedMac = normalizeMac(
+        await watchAdvertisementsMac(picked, { specs: [QIYI_MAC_ADV] }),
+      );
+      const suggestedMac = qiyiTimerMacFromName(picked.name) ?? undefined;
+      mac = advertisedMac;
+      // Match csTimer's `reqMacAddr(true, ...)`: when the advertisement API
+      // cannot reveal the real address, show the name-derived default for
+      // confirmation instead of silently opening a connection with a guess.
+      if (!mac && opts.onNeedMac) {
+        try { mac = normalizeMac(await opts.onNeedMac(picked.name ?? '', suggestedMac)); }
+        catch { mac = null; }
+      }
+      // QiYi ignores a hello without the exact MAC, leaving a connection
+      // that looks successful but never emits data. Cancelling the manual
+      // fallback must therefore cancel the connection before GATT opens.
+      if (!mac) return;
+    }
+
+    const server = await picked.gatt.connect();
+
+    const onDisc = (): void => {
+      if (tearingDown || !connected) return;
+      teardown('gatt-lost');
+      opts.onConnectionLost?.();
+    };
+    picked.addEventListener('gattserverdisconnected', onDisc);
+
+    try {
+      const started = await picker.start(server, emit, { mac });
+      cleanup = started.cleanup;
+    } catch (err) {
+      picked.removeEventListener('gattserverdisconnected', onDisc);
+      try { server.disconnect(); } catch { /* ignore */ }
+      throw err;
+    }
+
+    device = picked;
+    onGattDisconnected = onDisc;
+    connected = true;
+    kind = picker.kind;
+    deviceName = prettyDeviceName(picked);
+    state = 'IDLE';
+  };
+
   return {
     get kind() { return kind; },
     get deviceName() { return deviceName; },
@@ -219,61 +283,10 @@ export function createBluetoothTimerSource(
         throw err;
       }
 
-      const picker = pickDriver(picked);
-      if (!picker) {
-        throw new Error(`Unrecognised smart timer: ${picked.name ?? '(no name)'}`);
-      }
-      if (!picked.gatt) {
-        throw new Error('Selected device does not expose a GATT server.');
-      }
-
-      // Resolve the MAC BEFORE opening GATT — advertisements stop once the
-      // browser connects. csTimer's qiyitimer.js does the same.
-      let mac: string | null = null;
-      if (picker.needsMac) {
-        const advertisedMac = normalizeMac(
-          await watchAdvertisementsMac(picked, { specs: [QIYI_MAC_ADV] }),
-        );
-        const suggestedMac = qiyiTimerMacFromName(picked.name) ?? undefined;
-        mac = advertisedMac;
-        // Match csTimer's `reqMacAddr(true, ...)`: when the advertisement API
-        // cannot reveal the real address, show the name-derived default for
-        // confirmation instead of silently opening a connection with a guess.
-        if (!mac && opts.onNeedMac) {
-          try { mac = normalizeMac(await opts.onNeedMac(picked.name ?? '', suggestedMac)); }
-          catch { mac = null; }
-        }
-        // QiYi ignores a hello without the exact MAC, leaving a connection
-        // that looks successful but never emits data. Cancelling the manual
-        // fallback must therefore cancel the connection before GATT opens.
-        if (!mac) return;
-      }
-
-      const server = await picked.gatt.connect();
-
-      const onDisc = (): void => {
-        if (tearingDown || !connected) return;
-        teardown('gatt-lost');
-        opts.onConnectionLost?.();
-      };
-      picked.addEventListener('gattserverdisconnected', onDisc);
-
-      try {
-        const started = await picker.start(server, emit, { mac });
-        cleanup = started.cleanup;
-      } catch (err) {
-        picked.removeEventListener('gattserverdisconnected', onDisc);
-        try { server.disconnect(); } catch { /* ignore */ }
-        throw err;
-      }
-
-      device = picked;
-      onGattDisconnected = onDisc;
-      connected = true;
-      kind = picker.kind;
-      deviceName = prettyDeviceName(picked);
-      state = 'IDLE';
+      await connectDevice(picked);
     },
+
+    connectDevice,
 
     async disconnect(): Promise<void> {
       if (!connected && !device) return;
@@ -302,9 +315,11 @@ export interface BluetoothTimerHandle {
   lastEvent: ExternalTimerEvent | null;
   /** Open the picker + connect. Must be called from a user gesture. */
   connect(): Promise<void>;
+  /** Connect a device already returned by a shared Web Bluetooth chooser. */
+  connectDevice(device: BluetoothDevice): Promise<void>;
   disconnect(): void;
   /** Escape hatch for callers that want the raw source (e.g. to subscribe). */
-  source: ExternalTimerSource;
+  source: BluetoothTimerSource;
 }
 
 const DISCONNECTED_STATUS: ExternalTimerStatus = {
@@ -329,7 +344,7 @@ export function useBluetoothTimer(opts: UseBluetoothTimerOptions = {}): Bluetoot
   useEffect(() => { onNeedMacRef.current = opts.onNeedMac; }, [opts.onNeedMac]);
   useEffect(() => { onConnectionLostRef.current = opts.onConnectionLost; }, [opts.onConnectionLost]);
 
-  const sourceRef = useRef<ExternalTimerSource | null>(null);
+  const sourceRef = useRef<BluetoothTimerSource | null>(null);
   if (sourceRef.current === null) {
     sourceRef.current = createBluetoothTimerSource({
       onNeedMac: (name) => onNeedMacRef.current?.(name) ?? Promise.resolve(null),
@@ -358,10 +373,15 @@ export function useBluetoothTimer(opts: UseBluetoothTimerOptions = {}): Bluetoot
     setStatus(snapshotExternalTimer(source));
   }, [source]);
 
+  const connectDevice = useCallback(async (device: BluetoothDevice): Promise<void> => {
+    await source.connectDevice(device);
+    setStatus(snapshotExternalTimer(source));
+  }, [source]);
+
   const disconnect = useCallback((): void => {
     void source.disconnect();
     setStatus(snapshotExternalTimer(source));
   }, [source]);
 
-  return { status, lastEvent, connect, disconnect, source };
+  return { status, lastEvent, connect, connectDevice, disconnect, source };
 }

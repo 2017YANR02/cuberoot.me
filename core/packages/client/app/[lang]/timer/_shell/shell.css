@@ -553,45 +553,64 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   padding: 6px 12px;
 }
 .shell-undersurface:empty { display: none; }
-.shell-device-menu {
+.shell-device-actions {
   position: absolute;
   left: 50%;
   bottom: 10px;
   z-index: 3;
   transform: translateX(-50%);
-}
-.shell-device-connect {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
   min-height: 40px;
-  padding: 7px 14px;
   border: 1px solid var(--border-default);
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent);
+  overflow: hidden;
+  transition: background 120ms, border-color 120ms, color 120ms;
+}
+.shell-device-connect,
+.shell-stackmat-connect {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  border: 0;
+  background: transparent;
+  color: inherit;
   font: inherit;
   font-size: 13px;
   font-weight: 600;
   line-height: 1;
-  white-space: nowrap;
   cursor: pointer;
-  transition: background 120ms, border-color 120ms, color 120ms;
 }
-.shell-device-connect:hover,
-.shell-device-connect.more-menu-btn.open {
+.shell-device-connect {
+  gap: 6px;
+  padding: 7px 14px;
+  white-space: nowrap;
+}
+.shell-stackmat-connect {
+  width: 40px;
+  padding: 7px 10px 7px 8px;
+  border-left: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.shell-device-actions:hover {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 16%, var(--background));
 }
-.shell-device-connect.is-active {
+.shell-device-actions.is-active {
   border-color: color-mix(in srgb, var(--signal-success) 45%, transparent);
   background: color-mix(in srgb, var(--signal-success) 12%, var(--background));
   color: var(--signal-success);
 }
-.shell-device-connect:focus-visible {
+.shell-device-connect:hover,
+.shell-stackmat-connect:hover {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+.shell-device-connect:focus-visible,
+.shell-stackmat-connect:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: -3px;
 }
 .trainer-subset-btn {
   padding: 4px 12px;
@@ -1151,7 +1170,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 /* 统计条是相对 .shell-main 绝对定位的左下角浮层,复盘一展开就正好压在它上面。
    往上让一整格 —— 它是成绩 / 图表面板的唯一入口,不能在拧完那一刻消失。 */
 .shell-main:has(> .shell-recap) .shell-stat-rail,
-.shell-main:has(> .shell-recap) .shell-device-menu { bottom: calc(var(--recap-h) + 10px); }
+.shell-main:has(> .shell-recap) .shell-device-actions { bottom: calc(var(--recap-h) + 10px); }
 
 /* ── Distraction-free fade while running ────────────────── */
 .timer-shell.is-solving .surface-chrome {
@@ -1567,7 +1586,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   .shell-topbar-diff .settings-row-tight-group { font-size: 12px; gap: 4px; }
   .shell-topbar-right .tb-btn { width: 30px; height: 30px; }
   .shell-stat-rail { bottom: 8px; }
-  .shell-device-menu { bottom: 8px; }
+  .shell-device-actions { bottom: 8px; }
   .shell-stat-val { font-size: 13px; }
   .timing-surface-scramble { top: 8px; }
 }
@@ -1712,7 +1731,7 @@ body:has(.battle-container .penalty-dropdown.open) .clawd-deskpet {
 /* Fullscreen: hide chrome rows, keep just the surface. */
 .timer-shell.fullscreen .shell-topbar,
 .timer-shell.fullscreen .shell-stat-rail,
-.timer-shell.fullscreen .shell-device-menu,
+.timer-shell.fullscreen .shell-device-actions,
 .timer-shell.fullscreen .shell-undersurface,
 .timer-shell.fullscreen .scramble-src-bar,
 .timer-shell.fullscreen .shell-rail {

@@ -117,11 +117,7 @@ const DRIVERS: CubeDriver[] = [
   moyu32Driver, moyuDriver, giikerDriver, ganV2Driver,
 ];
 
-/**
- * The registry, for the picker guard test. Nothing in the app should reach for
- * this — `connect()` owns device selection, and a second caller doing its own
- * matching is how the chooser and the driver end up disagreeing.
- */
+/** Canonical registry shared by the cube connector and unified device picker. */
 export const CUBE_DRIVERS: readonly CubeDriver[] = DRIVERS;
 
 function pickDriver(device: BluetoothDevice): CubeDriver | null {
@@ -341,6 +337,39 @@ export function pickerOptions(acceptAllDevices: boolean, nameOnly = false): Requ
   };
 }
 
+/**
+ * Open one Web Bluetooth chooser while preserving the adapter-wake and Bluefy
+ * compatibility path used by smart cubes. `optionsForEnvironment` lets a
+ * shared caller add other supported BLE devices without reimplementing the
+ * browser-specific picker safeguards in a page component.
+ */
+export async function requestBluetoothDevice(
+  optionsForEnvironment: (nameOnly: boolean) => RequestDeviceOptions,
+): Promise<BluetoothDevice | null> {
+  if (typeof navigator === 'undefined' || !navigator.bluetooth) {
+    const err = new Error('NO_WEB_BLUETOOTH') as Error & { kind?: string };
+    err.kind = 'no-web-bluetooth';
+    throw err;
+  }
+
+  const inBluefy = isBluefy();
+  const budget = readyBudget(inBluefy);
+  const readiness = await bluetoothReady(budget.maxMs, budget.callMs);
+
+  try {
+    return await requestDeviceWaking(
+      navigator.bluetooth,
+      optionsForEnvironment(inBluefy),
+      readiness,
+      inBluefy,
+    );
+  } catch (err) {
+    if (isNoDeviceSelected(err)) return null;
+    if (readiness !== 'ready') throw new BluetoothConnectError('adapter-asleep', err);
+    throw atStage('picker', err);
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /*  Hook                                                               */
 /* ------------------------------------------------------------------ */
@@ -360,6 +389,8 @@ export interface BluetoothCubeHandle {
   facelets: string | null;
   /** Open the picker + connect. Rejects with a {@link BluetoothConnectError}. */
   connect(pick?: ConnectPickOptions): Promise<void>;
+  /** Connect a device already returned by a shared Web Bluetooth chooser. */
+  connectDevice(device: BluetoothDevice): Promise<void>;
   /** Disconnect + cleanup. */
   disconnect(): void;
   /** Reset internal cube state to "solved" (after the user resets the cube physically). */
@@ -1006,6 +1037,24 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     }
   }, [handleMove, handleCubeState, cancelPendingReconnect, internalDisconnect]);
 
+  const connectDevice = useCallback(async (device: BluetoothDevice): Promise<void> => {
+    intentionalDisconnectRef.current = false;
+    cancelPendingReconnect();
+
+    // Recover the MAC from BLE advertisements BEFORE connecting. Known
+    // non-MAC drivers skip this entirely; MAC-keyed and name-unknown devices
+    // keep listening until a usable payload arrives or the bounded watch
+    // times out. This avoids both Bluefy's incomplete-first-event race and a
+    // needless delay for GoCube / Giiker / legacy MoYu.
+    const nameDriver = pickDriver(device);
+    const shouldWatchMac = nameDriver === null || nameDriver.needsMac === true;
+    const advMac = shouldWatchMac
+      ? await watchAdvertisementsMac(device)
+        .catch((err: unknown) => { throw atStage('advertisement', err); })
+      : null;
+    await attachToDevice(device, advMac);
+  }, [attachToDevice, cancelPendingReconnect]);
+
   const connect = useCallback(async (pick?: ConnectPickOptions): Promise<void> => {
     // Dev escape hatch: `__cuberootFakeCube.arm()` in the console stands up a
     // fake GAN v4 peripheral so the whole smart-cube experience can be driven
@@ -1066,66 +1115,14 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       return;
     }
 
-    if (typeof navigator === 'undefined' || !navigator.bluetooth) {
-      // Tagged error: TimerPage swaps in env-specific advice modal.
-      const err = new Error('NO_WEB_BLUETOOTH') as Error & { kind?: string };
-      err.kind = 'no-web-bluetooth';
-      throw err;
-    }
-
-    // Fresh user-initiated connect: clear the intentional-disconnect flag
-    // so a future drop will trigger auto-reconnect.
-    intentionalDisconnectRef.current = false;
-    cancelPendingReconnect();
-
-    // Give a sleeping adapter a moment to wake before we ask it for anything.
-    const inBluefy = isBluefy();
-    const budget = readyBudget(inBluefy);
-    const readiness = await bluetoothReady(budget.maxMs, budget.callMs);
-
-    let device: BluetoothDevice;
-    try {
-      device = await requestDeviceWaking(
-        navigator.bluetooth,
-        // `nameOnly` on Bluefy — service filters empty its chooser. See pickerOptions.
-        pickerOptions(pick?.acceptAllDevices === true, inBluefy),
-        readiness,
-        inBluefy,
-      );
-    } catch (err) {
-      // User cancelled the picker, denied permission, or no device found.
-      // We don't throw — the caller asked us to connect; we just return
-      // without changing state. Re-throw on truly unexpected errors.
-      //
-      // Matched by error *name* rather than `instanceof DOMException`: iOS
-      // Bluefy bridges Web Bluetooth to native code and rejects with bare
-      // values, so an instanceof test can never hold there and a dismissed
-      // chooser would surface as a connection failure. See connect_error.ts.
-      if (isNoDeviceSelected(err)) return;
-      // A refusal while the adapter never reported itself ready is not a
-      // mystery, so don't present it as one: the raw value here is Bluefy's
-      // opaque `2`, and a user shown that number has nothing to act on. Say
-      // what actually happened and let the modal give the Bluefy-specific
-      // advice next to it.
-      if (readiness !== 'ready') throw new BluetoothConnectError('adapter-asleep', err);
-      throw atStage('picker', err);
-    }
-
-    // Recover the MAC from BLE advertisements BEFORE connecting. Known
-    // non-MAC drivers skip this entirely; MAC-keyed and name-unknown devices
-    // keep listening until a usable payload arrives or the bounded watch
-    // times out. This avoids both Bluefy's incomplete-first-event race and a
-    // needless delay for GoCube / Giiker / legacy MoYu.
-    const nameDriver = pickDriver(device);
-    const shouldWatchMac = nameDriver === null || nameDriver.needsMac === true;
-    const advMac = shouldWatchMac
-      ? await watchAdvertisementsMac(device)
-        .catch((err: unknown) => { throw atStage('advertisement', err); })
-      : null;
-    await attachToDevice(device, advMac);
+    const device = await requestBluetoothDevice((nameOnly) =>
+      pickerOptions(pick?.acceptAllDevices === true, nameOnly));
+    if (!device) return;
+    await connectDevice(device);
   }, [
     attachToDevice,
     cancelPendingReconnect,
+    connectDevice,
     gyroSink,
     handleCubeState,
     handleMove,
@@ -1185,6 +1182,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     solved,
     facelets,
     connect,
+    connectDevice,
     disconnect,
     resetState,
     getFaces,
