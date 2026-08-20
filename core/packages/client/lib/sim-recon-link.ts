@@ -8,6 +8,7 @@
  */
 
 import { encodeUrlAlg } from './cubedb-url';
+import { cleanFtoReconAlgForPlayer } from '@cuberoot/shared/recon-completion';
 
 /** sim puzzleKind (cuber engine) — number for NxN, else a named twisty/sq1/ivy/dino/redi/rex/heli/gear/clock. */
 type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'clock';
@@ -20,6 +21,7 @@ export function reconEventForSim(p: SimPuzzle | string): string | null {
   if (p === 'pyraminx') return 'pyra';
   if (p === 'skewb') return 'skewb';
   if (p === 'megaminx') return 'mega';
+  if (p === 'fto') return 'fto';
   // 魔表两边同一套 WCA 记号(针脚 token + y2),原样递过去就行。
   if (p === 'clock') return 'clock';
   if (typeof p === 'number' && p >= 2 && p <= 7) return `${p}x${p}`;
@@ -39,6 +41,7 @@ export function simPuzzleForReconEvent(ev: string): string | null {
     case 'pyra': return 'pyraminx';
     case 'mega': return 'megaminx';
     case 'skewb': return 'skewb';
+    case 'fto': return 'fto';
     case 'clock': return 'clock';
     default: return null; // unknown event — no sim equivalent
   }
@@ -60,9 +63,10 @@ export function buildReconSubmitQuery(reconEvent: string, scramble: string, solu
  *  simulator can still replay a reconstruction backwards from solved. */
 export function buildSimQuery(simPuzzle: string, scramble: string, solution: string): string {
   const params = new URLSearchParams();
+  const simSolution = simPuzzle === 'fto' ? cleanFtoReconAlgForPlayer(solution) : solution.trim();
   params.set('puzzle', simPuzzle);
   if (scramble.trim()) params.set('setup', scramble.trim());
-  if (solution.trim()) params.set('alg', solution.trim());
-  if (!scramble.trim() && solution.trim()) params.set('anchor', 'end');
+  if (simSolution) params.set('alg', simSolution);
+  if (!scramble.trim() && simSolution) params.set('anchor', 'end');
   return params.toString();
 }

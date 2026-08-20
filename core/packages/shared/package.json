@@ -72,6 +72,10 @@
       "node": "./dist/recon_completion.js",
       "default": "./src/recon_completion.ts"
     },
+    "./fto-notation": {
+      "node": "./dist/fto_notation.js",
+      "default": "./src/fto_notation.ts"
+    },
     "./recon-slice": {
       "node": "./dist/recon_slice.js",
       "default": "./src/recon_slice.ts"

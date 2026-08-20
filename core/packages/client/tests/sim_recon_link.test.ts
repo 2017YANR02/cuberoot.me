@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildSimQuery, simPuzzleForReconEvent } from '@/lib/sim-recon-link';
+import { buildSimQuery, reconEventForSim, simPuzzleForReconEvent } from '@/lib/sim-recon-link';
+import { buildExternalLinks, getPuzzleId } from '@/lib/recon-utils';
 
 describe('buildSimQuery', () => {
   it('anchors a solution-only reconstruction at the solved endpoint', () => {
@@ -23,6 +24,24 @@ describe('buildSimQuery', () => {
       puzzle: '3',
       setup: "R U R'",
       alg: "R U' R'",
+    });
+  });
+
+  it('round-trips FTO between simulator and reconstruction', () => {
+    expect(reconEventForSim('fto')).toBe('fto');
+    expect(simPuzzleForReconEvent('fto')).toBe('fto');
+    expect(getPuzzleId('fto')).toBe('fto');
+    expect(buildExternalLinks('fto', 'R', "R'").cubedbUrl).toBeNull();
+  });
+
+  it('cleans reconstruction annotations without splitting FTO EIF roots', () => {
+    const solution = "(Bl Rw)2 // first pair\nT’ Br' // finish";
+    const query = new URLSearchParams(buildSimQuery('fto', '', solution));
+
+    expect(Object.fromEntries(query)).toEqual({
+      puzzle: 'fto',
+      alg: "Bl Rw Bl Rw\nT’ Br'",
+      anchor: 'end',
     });
   });
 });

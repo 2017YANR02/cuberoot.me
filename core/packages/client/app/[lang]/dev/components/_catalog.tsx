@@ -1657,6 +1657,14 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `懒加载 three + /sim cuber World;可选 playerRef 暴露光标同步句柄。`, en: `Lazy-loads three + the /sim cuber World; optional playerRef exposes a caret-sync handle.` },
   },
   {
+    name: 'FtoReconPlayer',
+    import: "import FtoReconPlayer from '@/components/recon/FtoReconPlayer';",
+    category: 'display',
+    zh: `复用 /sim FTO WebGL 引擎和 EIF 分组记号桥的只读复盘播放器,宽转、层转、整体转、顶点转和宏都保持一个记号一步。`,
+    en: `Read-only reconstruction player reusing the /sim FTO WebGL engine and grouped EIF notation bridge; wide, slice, whole-puzzle, vertex and macro turns each remain one notation step.`,
+    note: { zh: `共用 ReconPlayerBase 和 PlaybackBar;可选 playerRef 暴露光标同步句柄。`, en: `Shares ReconPlayerBase and PlaybackBar; optional playerRef exposes a caret-sync handle.` },
+  },
+  {
     name: 'Sq1StateSvg',
     import: "import { Sq1StateSvg } from '@/components/Sq1StateSvg';",
     category: 'display',
@@ -2225,8 +2233,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'ReconPlayerCanvas',
     import: "import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';",
     category: 'more',
-    zh: `复盘 3D 播放器(动画演示)的详情页渲染层:委托 ReconEnginePlayer 按项目选引擎(sq1 / NxN → 自有 cuber 引擎,其余 → cubing.js TwistySection),传 event/scramble/displayText/playerRef 即播。/recon/[id] 详情页与成绩弹窗 AttemptPopover 共用,避免重复;hideControls 时改用画面内播放/暂停浮层。`,
-    en: `Detail-page render layer for the reconstruction 3D player (animation demo): delegates the engine choice to ReconEnginePlayer (sq1 / NxN → in-house cuber engine, else → cubing.js TwistySection); pass event/scramble/displayText/playerRef to play. Shared by the /recon/[id] detail page and the AttemptPopover solve popup to avoid duplication; hideControls switches to an in-frame play/pause overlay.`,
+    zh: `复盘 3D 播放器(动画演示)的详情页渲染层:委托 ReconEnginePlayer 按项目选引擎(sq1 / FTO / NxN → 自有 cuber 引擎,其余 → cubing.js TwistySection),传 event/scramble/displayText/playerRef 即播。/recon/[id] 详情页与成绩弹窗 AttemptPopover 共用,避免重复;hideControls 时改用画面内播放/暂停浮层。`,
+    en: `Detail-page render layer for the reconstruction 3D player (animation demo): delegates the engine choice to ReconEnginePlayer (sq1 / FTO / NxN → in-house cuber engine, else → cubing.js TwistySection); pass event/scramble/displayText/playerRef to play. Shared by the /recon/[id] detail page and the AttemptPopover solve popup to avoid duplication; hideControls switches to an in-frame play/pause overlay.`,
   },
   {
     name: 'ByCompList',

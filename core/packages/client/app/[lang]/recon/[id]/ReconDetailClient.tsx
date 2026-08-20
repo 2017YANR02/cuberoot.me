@@ -18,7 +18,7 @@ import {
   Lock, Link2, LogIn,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
-import { getReconScramble } from '@cuberoot/shared/recon-completion';
+import { cleanFtoReconAlgForPlayer, getReconScramble } from '@cuberoot/shared/recon-completion';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 import {
   getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, getDouyinCover,
@@ -520,7 +520,7 @@ function ExternalLinks({ event, scramble, alg, solveId, caption, copyText }: {
   // 外站出链(alg.cubing.net / cubedb.net)只给管理员——普通读者用不上,且
   // 参数是给上游站排查复盘数据用的。useIsAdmin 是 hydration-safe 版,不能裸读 store。
   const isAdminUser = useIsAdmin();
-  const playerAlg = cleanForPlayer(alg);
+  const playerAlg = event === 'fto' ? cleanFtoReconAlgForPlayer(alg) : cleanForPlayer(alg);
   const { algUrl, algSiteName, cubedbUrl } = buildExternalLinks(event, scramble, playerAlg);
   const simPuzzle = simPuzzleForReconEvent(event);
   const simHref = simPuzzle ? `/sim?${buildSimQuery(simPuzzle, scramble, alg)}` : null;
@@ -552,7 +552,7 @@ function ExternalLinks({ event, scramble, alg, solveId, caption, copyText }: {
       {isAdminUser && (
         <>
           <a href={algUrl} target="_blank" rel="noopener noreferrer">{algSiteName}</a>
-          <a href={cubedbUrl} target="_blank" rel="noopener noreferrer">cubedb.net</a>
+          {cubedbUrl && <a href={cubedbUrl} target="_blank" rel="noopener noreferrer">cubedb.net</a>}
         </>
       )}
       {simHref && <Link href={simHref} prefetch={false}>{tr({ zh: '模拟器', en: 'simulator' })}</Link>}

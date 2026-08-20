@@ -46,6 +46,30 @@ describe('FTO EIF animated move bridge', () => {
     expect(parsed.groups[6]).toHaveLength(FTO_EIF_ACTION_SEQUENCES["H'"].length);
   });
 
+  it('canonicalizes common FTO aliases without changing their rendered pose', () => {
+    const aliases = parseFtoEifMoveGroups("BL BR bl br rw RW BLw brw rs RO rt R’ T T' T2");
+    expect(aliases.tokens).toEqual([
+      'Bl', 'Br', 'Bl', 'Br', 'Rw', 'Rw', 'Blw', 'Brw', 'Rs', 'Ro', 'Rt', "R'", "Ft'", 'Ft', 'Ft2',
+    ]);
+    expect(aliases.invalid).toEqual([]);
+
+    for (const [alias, canonical] of [['BL', 'Bl'], ['BRw', 'Brw'], ['rs', 'Rs'], ['rt', 'Rt']] as const) {
+      const aliasCube = makeCube();
+      const canonicalCube = makeCube();
+      apply(aliasCube, ftoEifTokenMoves(alias)!);
+      apply(canonicalCube, ftoEifTokenMoves(canonical)!);
+      expectSamePose(aliasCube, canonicalCube);
+    }
+
+    for (const [alias, canonical] of [['T', "Ft'"], ["T'", 'Ft'], ['T2', 'Ft2']] as const) {
+      const aliasCube = makeCube();
+      const canonicalCube = makeCube();
+      apply(aliasCube, ftoEifTokenMoves(alias)!);
+      apply(canonicalCube, ftoEifTokenMoves(canonical)!);
+      expectSamePose(aliasCube, canonicalCube);
+    }
+  });
+
   it('turns 2 as two physical 120-degree moves while vertex 2 is one 180-degree move', () => {
     expect(ftoEifTokenMoves('U2')).toHaveLength(2);
     expect(ftoEifTokenMoves('Rw2')).toHaveLength(2);
