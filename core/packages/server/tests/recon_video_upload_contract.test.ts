@@ -33,8 +33,8 @@ describe('recon video upload contract', () => {
     expect(upload).toContain('RECON_VIDEO_MAX_BYTES');
     expect(upload).toContain('RECON_VIDEO_DAILY_BYTES');
     expect(upload).toContain('RECON_VIDEO_DAILY_COUNT');
-    expect(upload).toContain('sniffVideo(signature)');
-    expect(upload).toContain("const tempKey = `${stem}.part`");
+    expect(upload).toContain('receiveVideoUpload(c.req.raw.body, RECON_VIDEO_DIR, RECON_VIDEO_MAX_BYTES)');
+    expect(upload).toContain('error instanceof VideoUploadError');
     expect(upload).toContain('await fs.rename(tempPath, finalPath)');
     expect(route.indexOf("reconRoutes.get('/recon/video/:id'")).toBeLessThan(
       route.indexOf("reconRoutes.get('/recon/:id'"),
