@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Images, LoaderCircle, MessageCircle } from 'lucide-react';
+import { Check, Copy, Images, LoaderCircle, MessageCircle } from 'lucide-react';
 import { ClearButton } from '@/components/ClearButton';
 import { tr } from '@/i18n/tr';
 import {
@@ -45,8 +45,8 @@ function errorText(error: unknown): string {
   }
   if (code === 'sdk-timeout' || code === 'sdk-6') {
     return tr({
-      zh: '连接电脑微信超时。请允许浏览器访问本地网络，并确认电脑微信已登录、解锁且未开启全局代理。',
-      en: 'Connection to WeChat desktop timed out. Allow local network access, and make sure WeChat is signed in, unlocked, and no global proxy is enabled.',
+      zh: '电脑微信连接超时（即使微信已被唤起，也不代表分享连接成功）。最常见原因是系统或全局代理拦截了浏览器与微信的本机通信；请关闭代理，彻底退出并重启电脑微信后重试。',
+      en: 'Connection to WeChat desktop timed out. Opening WeChat does not mean the share connection succeeded. A system or global proxy is the most common cause because it can block local communication between the browser and WeChat. Disable the proxy, fully quit and restart WeChat, then try again.',
     });
   }
   return tr({ zh: '暂时无法调用电脑微信，请稍后重试。', en: 'WeChat desktop is temporarily unavailable. Please try again.' });
@@ -129,6 +129,89 @@ export function WeChatPcShareModal({ onClose }: { onClose: () => void }) {
           <p className={`wechat-pc-share-status is-${state}`} role={state === 'error' ? 'alert' : 'status'}>
             {message}
           </p>
+        )}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+export function MobilePageShareModal({
+  mode,
+  onClose,
+}: {
+  mode: 'wechat' | 'browser';
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const copyLink = async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = url;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try { document.execCommand('copy'); } catch { /* Clipboard fallback unavailable. */ }
+      textarea.remove();
+    }
+    setCopied(true);
+  };
+
+  if (typeof document === 'undefined') return null;
+  const inWeChat = mode === 'wechat';
+  return createPortal(
+    <div
+      className="wechat-pc-share-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mobile-page-share-title"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="wechat-pc-share-modal">
+        <ClearButton
+          variant="standalone"
+          className="wechat-pc-share-close"
+          onClick={onClose}
+          ariaLabel={tr({ zh: '关闭', en: 'Close' })}
+        />
+        <h2 id="mobile-page-share-title">{tr({ zh: '分享当前页面', en: 'Share this page' })}</h2>
+        {inWeChat ? (
+          <>
+            <p>{tr({
+              zh: '微信内置浏览器不允许网页直接弹出分享对象，请使用微信自己的菜单：',
+              en: 'WeChat does not let a web page open the recipient picker directly. Use WeChat’s own menu:',
+            })}</p>
+            <ol className="wechat-mobile-share-steps">
+              <li>{tr({ zh: '点右上角“…”', en: 'Tap “…” in the top-right corner' })}</li>
+              <li>{tr({ zh: '选择“发送给朋友”或“分享到朋友圈”', en: 'Choose “Send to a friend” or “Share to Moments”' })}</li>
+            </ol>
+          </>
+        ) : (
+          <>
+            <p>{tr({
+              zh: '当前浏览器无法打开系统分享面板。复制链接后，可直接粘贴到微信发送。',
+              en: 'This browser could not open the system share sheet. Copy the link and paste it into WeChat.',
+            })}</p>
+            <button className="wechat-pc-share-action wechat-mobile-share-copy" type="button" onClick={copyLink}>
+              {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
+              <span>{copied ? tr({ zh: '链接已复制', en: 'Link copied' }) : tr({ zh: '复制页面链接', en: 'Copy page link' })}</span>
+            </button>
+          </>
         )}
       </div>
     </div>,
