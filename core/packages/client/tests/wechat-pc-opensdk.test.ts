@@ -4,6 +4,7 @@ import { extractWeChatOpenSdkCode } from '@/lib/wechat-pc-opensdk';
 describe('extractWeChatOpenSdkCode', () => {
   it.each([
     [0, 0],
+    [{ errcode: 6 }, 6],
     [{ errCode: -11034 }, -11034],
     [{ err_code: 3 }, 3],
     [{ code: 6 }, 6],
