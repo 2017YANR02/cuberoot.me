@@ -33,7 +33,7 @@ import {
   applyScramble,
   MOVES_FULL,
 } from './cube3x3';
-import { GSolver, matches } from './gsolver';
+import { GSolver, matches } from '@/lib/cstimer-gsolver';
 import { parseScramble } from '../cube/moves';
 
 // ---- Move sets ----

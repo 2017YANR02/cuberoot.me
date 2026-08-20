@@ -12,9 +12,12 @@ import { describe, expect, it } from 'vitest';
 import {
   EMPTY_SKEWB_FACELET, SKEWB_CORNER_BLOCKS, SKEWB_FACES, SKEWB_GODS_NUMBER, SKEWB_MOVE_NAMES,
   SKEWB_STATE_COUNT, SKEWB_STICKERS, SKEWB_STICKER_SIBLINGS, SOLVED_SKEWB_FACELET,
-  deriveSkewbScramble, randomLegalSkewbFacelet, skewbFaceletFromMoves, skewbGraphStats,
-  solveSkewbFacelet, validateSkewbFacelet,
+  deriveSkewbScramble, randomLegalSkewbFacelet, skewbFaceletFromMoves,
+  skewbFirstLayerExamplesByLength, skewbFirstLayerStats, skewbGraphStats,
+  solvedSkewbFirstLayerColors, solveSkewbFacelet, solveSkewbFirstLayerFacelet, validateSkewbFacelet,
+  type SkewbFace,
 } from '@/lib/skewb-solver';
+import { solveSkewb, solveSkewbFace } from '@/lib/skewb-face-solver';
 
 const OPPOSITE: Record<string, string> = { U: 'D', D: 'U', R: 'L', L: 'R', F: 'B', B: 'F' };
 
@@ -25,6 +28,61 @@ function isUniform(facelet: string): boolean {
     if ([...face].some((c) => c !== face[0])) return false;
   }
   return true;
+}
+
+/**
+ * 测试侧的底层判据：只读公开的角块三元组和最终 facelet，不调用求解器里的目标函数或几何缓存。
+ * targetColors 是还原面字母(U/D/R/L/F/B)，目标层可落在任意物理面，但该面的中心也必须是目标色。
+ */
+function hasFirstLayer(facelet: string, targetColors: readonly string[]): boolean {
+  for (let bottom = 0; bottom < SKEWB_FACES.length; bottom++) {
+    const touching = SKEWB_CORNER_BLOCKS.filter((block) =>
+      block.some((slot) => Math.floor(slot / 5) === bottom));
+    const bottomSlots = touching.map((block) => block.find((slot) => Math.floor(slot / 5) === bottom));
+    if (!bottomSlots.every((slot) => slot !== undefined && targetColors.includes(facelet[slot]))) continue;
+    const bottomColor = facelet[bottomSlots[0]!];
+    if (!bottomSlots.every((slot) => facelet[slot!] === bottomColor)) continue;
+    if (facelet[bottom * 5] !== bottomColor) continue;
+
+    let sidesPaired = true;
+    for (let side = 0; side < SKEWB_FACES.length; side++) {
+      if (side === bottom || SKEWB_FACES[side] === OPPOSITE[SKEWB_FACES[bottom]]) continue;
+      const sideSlots = touching.flatMap((block) => {
+        const slot = block.find((candidate) => Math.floor(candidate / 5) === side);
+        return slot === undefined ? [] : [slot];
+      });
+      if (sideSlots.length !== 2 || facelet[sideSlots[0]] !== facelet[sideSlots[1]]) {
+        sidesPaired = false;
+        break;
+      }
+    }
+    if (sidesPaired) return true;
+  }
+  return false;
+}
+
+/** 小深度独立 oracle：只用公开打乱解析器逐层展开，不读取生产距离表或目标缓存。 */
+function independentFirstLayerDistance(scramble: string, targetColors: readonly string[], maxDepth: number): number | null {
+  const start = skewbFaceletFromMoves(scramble);
+  if (hasFirstLayer(start, targetColors)) return 0;
+  let frontier: Array<{ alg: string; lastAxis: string }> = [{ alg: '', lastAxis: '' }];
+  const seen = new Set<string>([start]);
+  for (let depth = 1; depth <= maxDepth; depth++) {
+    const next: typeof frontier = [];
+    for (const current of frontier) {
+      for (const move of SKEWB_MOVE_NAMES) {
+        if (move[0] === current.lastAxis) continue;
+        const alg = current.alg ? `${current.alg} ${move}` : move;
+        const state = skewbFaceletFromMoves(`${scramble} ${alg}`);
+        if (seen.has(state)) continue;
+        if (hasFirstLayer(state, targetColors)) return depth;
+        seen.add(state);
+        next.push({ alg, lastAxis: move[0] });
+      }
+    }
+    frontier = next;
+  }
+  return null;
 }
 
 describe('斜转:块划分', () => {
@@ -141,6 +199,83 @@ describe('斜转:解与打乱', () => {
       }
       const facelet = skewbFaceletFromMoves(tokens.join(' '));
       expect(solveSkewbFacelet(facelet).length).toBeLessThanOrEqual(n);
+    }
+  });
+});
+
+describe('斜转:底层最优', () => {
+  const single = [540, 4_320, 23_760, 136_080, 622_080, 1_603_260, 745_200, 14_040];
+  const dual = [1_068, 8_544, 46_752, 261_648, 1_051_728, 1_582_428, 196_560, 552];
+  const colorNeutral = [3_110, 24_880, 133_152, 666_904, 1_675_934, 640_870, 4_430];
+
+  it('锁定单色、双色、六色的完整精确分布', () => {
+    expect(skewbFirstLayerStats(['U']).histogram).toEqual(single);
+    expect(skewbFirstLayerStats(['U', 'D']).histogram).toEqual(dual);
+    expect(skewbFirstLayerStats(SKEWB_FACES).histogram).toEqual(colorNeutral);
+    for (const histogram of [single, dual, colorNeutral]) {
+      expect(histogram.reduce((sum, count) => sum + count, 0)).toBe(SKEWB_STATE_COUNT);
+    }
+  });
+
+  it('生产距离与小深度独立 facelet BFS 一致', () => {
+    const cases: Array<{ scramble: string; colors: readonly SkewbFace[] }> = [
+      { scramble: '', colors: ['U'] },
+      { scramble: "R U'", colors: ['U'] },
+      { scramble: "R U' L", colors: ['U', 'D'] },
+      { scramble: "B L' U R", colors: [...SKEWB_FACES] },
+    ];
+    for (const testCase of cases) {
+      const facelet = skewbFaceletFromMoves(testCase.scramble);
+      const actual = solveSkewbFirstLayerFacelet(facelet, testCase.colors).length;
+      expect(actual).toBeLessThanOrEqual(4);
+      expect(independentFirstLayerDistance(testCase.scramble, testCase.colors, actual)).toBe(actual);
+    }
+  });
+
+  it('返回的解都真正完成所选底层，且底色越多最优步数不会增加', () => {
+    const scrambles = [
+      "R U' L B' R' U",
+      "B L' U R B' U' L",
+      "U R B' L U' R' B L'",
+    ];
+    for (const scramble of scrambles) {
+      const facelet = skewbFaceletFromMoves(scramble);
+      const one = solveSkewbFirstLayerFacelet(facelet, ['U']);
+      const two = solveSkewbFirstLayerFacelet(facelet, ['U', 'D']);
+      const six = solveSkewbFirstLayerFacelet(facelet, SKEWB_FACES);
+      expect(six.length).toBeLessThanOrEqual(two.length);
+      expect(two.length).toBeLessThanOrEqual(one.length);
+      expect(hasFirstLayer(skewbFaceletFromMoves(`${scramble} ${one.solution}`), ['U'])).toBe(true);
+      expect(hasFirstLayer(skewbFaceletFromMoves(`${scramble} ${two.solution}`), ['U', 'D'])).toBe(true);
+      expect(hasFirstLayer(skewbFaceletFromMoves(`${scramble} ${six.solution}`), SKEWB_FACES)).toBe(true);
+      expect(solvedSkewbFirstLayerColors(skewbFaceletFromMoves(`${scramble} ${one.solution}`))).toContain('U');
+    }
+  });
+
+  it('计时器现有完整还原复用共享全空间表，六面候选都真正完成一个底层', () => {
+    const scramble = "R U' L B' R' U";
+    const full = solveSkewb(scramble);
+    expect(solveSkewbFacelet(skewbFaceletFromMoves(`${scramble} ${full.moves.join(' ')}`)).length).toBe(0);
+    const faces = solveSkewbFace(scramble);
+    expect(faces).toHaveLength(6);
+    for (const face of faces) {
+      const solution = face.moves.map((move) => move.trim()).join(' ');
+      expect(solvedSkewbFirstLayerColors(skewbFaceletFromMoves(`${scramble} ${solution}`)).length).toBeGreaterThan(0);
+    }
+  });
+
+  it('每个非空分布档都有可回放代表状态，并深链所需的解长与档位一致', () => {
+    const examples = skewbFirstLayerExamplesByLength(SKEWB_FACES, 12);
+    const nonemptyBins = colorNeutral.flatMap((count, distance) => count > 0 ? [distance] : []);
+    expect([...examples.keys()].sort((a, b) => a - b)).toEqual(nonemptyBins);
+    for (const [distance, scrambles] of examples) {
+      expect(scrambles.length).toBe(12);
+      for (const scramble of scrambles) {
+        const facelet = skewbFaceletFromMoves(scramble);
+        const solution = solveSkewbFirstLayerFacelet(facelet, SKEWB_FACES);
+        expect(solution.length).toBe(distance);
+        expect(hasFirstLayer(skewbFaceletFromMoves(`${scramble} ${solution.solution}`), SKEWB_FACES)).toBe(true);
+      }
     }
   });
 });
