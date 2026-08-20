@@ -15,6 +15,8 @@ import { formatMs } from '../_lib/stats';
 
 interface Props {
   timer: BluetoothTimerHandle;
+  /** Connection already started by the bottom Bluetooth button's user gesture. */
+  connectAttempt?: Promise<void> | null;
   macPrompt: { deviceName: string; suggestedMac?: string } | null;
   onSubmitMac: (mac: string) => void;
   onCancelMac: () => void;
@@ -64,6 +66,7 @@ function connectErrorMessage(err: unknown): string {
 
 export default function BluetoothTimerModal({
   timer,
+  connectAttempt,
   macPrompt,
   onSubmitMac,
   onCancelMac,
@@ -115,6 +118,24 @@ export default function BluetoothTimerModal({
       setBusy(false);
     }
   }, [timer]);
+
+  useEffect(() => {
+    if (!connectAttempt) return;
+    let active = true;
+    setBusy(true);
+    setError('');
+    void connectAttempt.then(
+      () => { if (active) setBusy(false); },
+      (reason: unknown) => {
+        if (!active) return;
+        if ((reason as { kind?: unknown } | null)?.kind !== 'no-web-bluetooth') {
+          setError(connectErrorMessage(reason));
+        }
+        setBusy(false);
+      },
+    );
+    return () => { active = false; };
+  }, [connectAttempt]);
 
   const submitMac = useCallback(() => {
     const normalized = normalizeMac(macInput);

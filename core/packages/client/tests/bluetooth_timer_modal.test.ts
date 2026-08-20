@@ -17,6 +17,7 @@ function timerHandle(overrides: Partial<BluetoothTimerHandle> = {}): BluetoothTi
     },
     lastEvent: null,
     connect: vi.fn(() => Promise.resolve()),
+    connectDevice: vi.fn(() => Promise.resolve()),
     disconnect: vi.fn(),
     source: {} as BluetoothTimerHandle['source'],
     ...overrides,
