@@ -9,7 +9,7 @@ import Link from '@/components/AppLink';
 import { tr, useLang } from '@/i18n/tr';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import type { ForumThread, LatestThread, SearchThread } from '@/lib/forum-api';
-import { formatRelativeTime, formatCount } from '../_lib/forum-format';
+import { formatRelativeTime, formatCount } from '@/lib/forum-format';
 
 export const THREAD_PAGE_SIZE = 20;
 

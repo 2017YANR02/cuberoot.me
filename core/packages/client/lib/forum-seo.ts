@@ -4,6 +4,9 @@
 // social card (title + first-post excerpt) instead of the generic site card.
 
 import { apiUrl } from './api-base';
+import { excerptFromMarkdown } from '@cuberoot/shared/forum';
+
+export { excerptFromMarkdown } from '@cuberoot/shared/forum';
 
 const REVALIDATE = 3600; // 1h — a thread's title/first post rarely change; replies don't affect the card
 
@@ -46,18 +49,4 @@ export async function fetchThreadForSeo(id: string, isZh: boolean): Promise<Thre
   } catch {
     return null;
   }
-}
-
-/** Strip common Markdown to a plain one-line snippet, capped ~120 chars. */
-export function excerptFromMarkdown(md: string): string {
-  const plain = md
-    .replace(/```[\s\S]*?```/g, ' ')          // fenced code blocks
-    .replace(/`[^`]*`/g, ' ')                 // inline code
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')    // images
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')  // links → link text
-    .replace(/^\s{0,3}>+\s?/gm, ' ')          // blockquotes
-    .replace(/[#*_~>`|]+/g, ' ')              // residual md punctuation
-    .replace(/\s+/g, ' ')
-    .trim();
-  return plain.length > 120 ? `${plain.slice(0, 120).trimEnd()}…` : plain;
 }
