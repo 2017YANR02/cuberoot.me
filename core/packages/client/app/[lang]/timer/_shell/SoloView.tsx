@@ -2037,16 +2037,20 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return () => document.removeEventListener('pointerdown', onDocDown);
   }, [onPressDown]);
 
-  // ── More menu items ─────────────────────────────────────────────
-  const moreItems = useMemo<MoreMenuItem[]>(() => [
+  // ── External devices + More menu items ──────────────────────────
+  // Keep smart-cube connection in this click handler: requestDevice() must stay
+  // in the user-activation call stack. Moving it into an effect breaks Web Bluetooth.
+  const deviceItems = useMemo<MoreMenuItem[]>(() => [
     {
-      icon: <Footprints size={14} />,
-      label: tr({ zh: '打乱足迹', en: 'Scramble marks' }),
-      href: '/timer/marks',
+      icon: <Bluetooth size={14} />,
+      label: bluetoothCube.status.connected
+        ? tr({
+            zh: `智能魔方：${bluetoothCube.status.deviceName}`,
+            en: `Smart cube: ${bluetoothCube.status.deviceName}`,
+          })
+        : tr({ zh: '智能魔方', en: 'Smart cube' }),
+      onClick: openBluetooth,
     },
-    // External timing devices. These used to sit inside the mobile-only block,
-    // which made the Stackmat toggle unreachable on desktop — exactly where a
-    // Stackmat is most likely to be plugged in.
     {
       icon: <Bluetooth size={14} />,
       label: bluetoothTimer.status.connected
@@ -2062,10 +2066,25 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       label: stackmat.status.listening
         ? tr({ zh: 'Stackmat 监听中', en: 'Stackmat listening' })
         : tr({ zh: 'Stackmat 计时器（麦克风）', en: 'Stackmat timer (mic)' }),
-      // Opens the panel rather than toggling straight away: which audio input
-      // the browser picked, and whether frames are decoding at all, is the
-      // difference between "works" and "silently does nothing".
       onClick: () => setStackmatOpen(true),
+    },
+  ], [
+    bluetoothCube.status.connected,
+    bluetoothCube.status.deviceName,
+    bluetoothTimer.status.connected,
+    bluetoothTimer.status.deviceName,
+    openBluetooth,
+    stackmat.status.listening,
+  ]);
+  const deviceActive = bluetoothCube.status.connected
+    || bluetoothTimer.status.connected
+    || stackmat.status.listening;
+
+  const moreItems = useMemo<MoreMenuItem[]>(() => [
+    {
+      icon: <Footprints size={14} />,
+      label: tr({ zh: '打乱足迹', en: 'Scramble marks' }),
+      href: '/timer/marks',
     },
     ...(isMobile ? [
       { icon: <BarChart3 size={14} />, label: tr({ zh: '统计', en: 'Stats'
@@ -2099,7 +2118,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     }), onClick: () => window.print() },
     { icon: <Trash2 size={14} />, label: tr({ zh: '清空当前项目', en: 'Clear current event'
     }), onClick: clearAll, danger: true, disabled: !solves.length },
-  ], [isZh, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, bluetoothTimer.status.connected, bluetoothTimer.status.deviceName, i18n, event]);
+  ], [isZh, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, i18n, event]);
 
   const allSolves = useMemo(() => {
     const out: Solve[] = [];
@@ -2366,17 +2385,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               </span>
             </button>
           )}
-          <button
-            type="button"
-            className={`tb-btn${bluetoothCube.status.connected ? ' connected' : ''}`}
-            onClick={openBluetooth}
-            title={bluetoothCube.status.connected
-              ? ((isZh ? `已连接 ${bluetoothCube.status.deviceName}` : `Connected: ${bluetoothCube.status.deviceName}`))
-              : tr({ zh: '智能魔方', en: 'Smart cube'
-                            })}
-          >
-            <Bluetooth size={14} />
-          </button>
           <MoreMenu items={moreItems} />
           <button type="button" className="tb-btn" onClick={() => setSettingsOpen(true)} title={tr({ zh: '设置', en: 'Settings'
         })}>
@@ -2725,6 +2733,20 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         {(event === '222' || event === 'pyra' || event === 'skewb' || event === 'sq1' || event === 'mega') && (
           <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} event={event} /></div>
         )}
+
+        <MoreMenu
+          items={deviceItems}
+          className="shell-device-menu surface-chrome"
+          triggerClassName={`shell-device-connect${deviceActive ? ' is-active' : ''}`}
+          triggerLabel={tr({ zh: '连接外部设备', en: 'Connect external device' })}
+          placement="above-center"
+          trigger={(
+            <>
+              <Bluetooth size={16} />
+              <span>{tr({ zh: '连接', en: 'Connect' })}</span>
+            </>
+          )}
+        />
 
         {/* 右侧配置栏:解法提示(仅 333,逐阶段最优 + 分步解法)常驻可折叠面板 ——
             桌面收成主区右侧竖栏。手机上这颗 pill 挂在顶栏(见上),不再落在打乱图下方。

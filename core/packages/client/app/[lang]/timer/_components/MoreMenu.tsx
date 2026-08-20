@@ -3,9 +3,9 @@
 /**
  * MoreMenu — collapsible dropdown for rarely-used toolbar actions.
  *
- * Toggles open on click, closes on outside mousedown or Escape. Panel
- * pins to the right edge of the trigger; on narrow screens it caps at
- * 240px wide and stays right-aligned so it never overflows the viewport.
+ * Toggles open on click, closes on outside mousedown or Escape. The default
+ * toolbar trigger opens below its right edge; callers can supply a labelled
+ * trigger and open above it for bottom-of-page actions.
  */
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -25,9 +25,21 @@ export interface MoreMenuItem {
 
 interface Props {
   items: MoreMenuItem[];
+  trigger?: ReactNode;
+  triggerLabel?: string;
+  className?: string;
+  triggerClassName?: string;
+  placement?: 'below-end' | 'above-center';
 }
 
-export default function MoreMenu({ items }: Props) {
+export default function MoreMenu({
+  items,
+  trigger,
+  triggerLabel,
+  className,
+  triggerClassName,
+  placement = 'below-end',
+}: Props) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -50,20 +62,31 @@ export default function MoreMenu({ items }: Props) {
     };
   }, [open]);
 
-  const tip = tr({ zh: '更多', en: 'More' });
+  const tip = triggerLabel ?? tr({ zh: '更多', en: 'More' });
+  const wrapClassName = [
+    'more-menu',
+    placement === 'above-center' ? 'more-menu--above-center' : '',
+    className ?? '',
+  ].filter(Boolean).join(' ');
+  const buttonClassName = [
+    'tb-btn',
+    'more-menu-btn',
+    open ? 'open' : '',
+    triggerClassName ?? '',
+  ].filter(Boolean).join(' ');
 
   return (
-    <div className="more-menu" ref={wrapRef}>
+    <div className={wrapClassName} ref={wrapRef} data-no-timer>
       <button
         type="button"
-        className={`tb-btn more-menu-btn ${open ? 'open' : ''}`}
+        className={buttonClassName}
         onClick={() => setOpen(o => !o)}
         title={tip}
         aria-label={tip}
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <MoreHorizontal size={14} />
+        {trigger ?? <MoreHorizontal size={14} />}
       </button>
       {open && (
         <div ref={panelRef} className="more-menu-panel" role="menu">
