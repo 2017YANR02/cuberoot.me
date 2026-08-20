@@ -104,11 +104,11 @@ export function WeChatPcShareModal({ onClose }: { onClose: () => void }) {
           en: 'Share this page through WeChat desktop. Sign in and unlock WeChat first.',
         })}</p>
         <div className="wechat-pc-share-actions">
-          <button type="button" onClick={() => share('chat')} disabled={state === 'loading'}>
+          <button className="wechat-pc-share-action" type="button" onClick={() => share('chat')} disabled={state === 'loading'}>
             {activeScene === 'chat' ? <LoaderCircle className="wechat-pc-share-spinner" aria-hidden /> : <MessageCircle aria-hidden />}
             <span>{tr({ zh: '发给微信朋友', en: 'Send to a friend' })}</span>
           </button>
-          <button type="button" onClick={() => share('timeline')} disabled={state === 'loading'}>
+          <button className="wechat-pc-share-action" type="button" onClick={() => share('timeline')} disabled={state === 'loading'}>
             {activeScene === 'timeline' ? <LoaderCircle className="wechat-pc-share-spinner" aria-hidden /> : <Images aria-hidden />}
             <span>{tr({ zh: '分享到朋友圈', en: 'Share to Moments' })}</span>
           </button>
