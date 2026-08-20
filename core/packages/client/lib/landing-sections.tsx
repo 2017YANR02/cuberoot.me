@@ -7,7 +7,7 @@ import {
   Compass, Grid2x2, Trophy, Timer as TimerIcon, Code as CodeIcon,
   Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School,
-  FileText, Table2, Award,
+  FileText, Table2, Award, Radio,
   type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
@@ -45,6 +45,7 @@ export const TEXTS: Record<string, { en: string; zh: string
   alg:             { en: 'Tutorial',   zh: '教程' },
   teaching:        { en: 'Courses', zh: '课程' },
   teachers:        { en: 'Teachers & Schools', zh: '老师与机构' },
+  liveScripts:     { en: 'Live Scripts', zh: '直播话术' },
   documents:       { en: 'Docs', zh: '文档' },
   spreadsheets:    { en: 'Sheets', zh: '表格' },
   algdb:           { en: 'Algorithms', zh: '公式' },
@@ -167,11 +168,13 @@ export const SECTIONS: Section[] = [
     eyebrow: { en: 'LEARN', zh: '学习' },
     title:   { en: 'Tutorials, terms, rules.', zh: '教程、术语、规则。'
     },
-    sub:     { en: 'Find teachers and schools, browse course plans and illustrated tutorials, learn the terms, regulations and group theory, then use a quiz to check what stuck.', zh: '寻找魔方老师和培训机构,浏览录播课方案与图文教程,学习术语、规则和群论,再用问答检验掌握程度。'
+    sub:     { en: 'Find teachers and schools, browse their livestream scripts, course plans and illustrated tutorials, learn the terms, regulations and group theory, then use a quiz to check what stuck.', zh: '寻找魔方老师和培训机构,浏览直播话术、录播课方案与图文教程,学习术语、规则和群论,再用问答检验掌握程度。'
     },
     cards: [
       { id: 'teaching', href: '/courses', internal: true, tier: 'medium', Icon: GraduationCap, nameKey: 'teaching', adminOnly: true },
       { id: 'teachers', href: '/teachers', internal: true, tier: 'medium', Icon: School, nameKey: 'teachers' },
+      { id: 'live-scripts', href: '/teachers/scripts', internal: true, tier: 'medium', Icon: Radio, nameKey: 'liveScripts' },
+      { id: 'meet', href: '/meet', internal: true, tier: 'medium', Icon: Video, nameKey: 'meet' },
       { id: 'documents', href: '/docs', internal: true, tier: 'medium', Icon: FileText, nameKey: 'documents' },
       { id: 'spreadsheets', href: '/sheets', internal: true, tier: 'medium', Icon: Table2, nameKey: 'spreadsheets' },
       { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg' },
@@ -191,7 +194,6 @@ export const SECTIONS: Section[] = [
     },
     cards: [
       { id: 'forum', href: '/forum', internal: true, tier: 'medium', Icon: MessagesSquare, nameKey: 'forum' },
-      { id: 'meet', href: '/meet',  internal: true,  tier: 'medium', Icon: Video,      nameKey: 'meet' },
       { id: 'dev', href: '/dev', internal: true, tier: 'medium', Icon: CodeIcon, nameKey: 'dev' },
       { id: 'blog', href: '/blog/', internal: false, tier: 'medium', Icon: BookOpen, nameKey: 'blog' },
       { id: 'site', href: '/site',  internal: true,  tier: 'medium', Icon: Compass,  nameKey: 'sitesDirectory' },
