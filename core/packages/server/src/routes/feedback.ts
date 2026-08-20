@@ -6,10 +6,11 @@
  *                        (last_reply_*, user_read_at, admin_read_at)。admin 在 /feedback/admin 审核。
  *   - feedback_media:    截图存 BYTEA(沿用 article_image);短视频落磁盘(FEEDBACK_MEDIA_DIR),
  *                        PG 只存 disk_path → 不进每日备份。
- *   - feedback_messages: GitHub issue 式来回对话(role=user/admin)。开帖人在 /feedback 查看自己的
- *                        线程并回复;admin 在 /feedback/admin 回复。未读经 mine/unread 红点 + admin 列表高亮。
+ *   - feedback_messages: GitHub issue 式公开对话(role=user/admin)。所有人可读,任意登录用户可回复;
+ *                        admin 在 /feedback/admin 审核。未读经 mine/unread 红点 + admin 列表高亮。
  *
- * 鉴权:提交 / 传附件 / 回帖 / 看线程 = requireAuth + 拥有该 feedback(或 admin)。
+ * 鉴权:提交 / 传附件 / 回帖 = requireAuth;看列表 / 线程 = 公开。
+ *       附件仅开帖人或 admin 可追加;公开响应不含联系方式 / 来源页 / 设备信息。
  *       删单条回帖 = requireAuth + 该回帖本人(或 admin)。
  *       审核列表 / 改状态 / 删整条 = requireAdmin;取媒体公开(immutable 长缓存)。
  *
@@ -22,7 +23,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { query } from '../db/connection.js';
-import { requireAuth, requireAdmin, ADMIN_WCA_IDS, checkRateLimit } from '../utils/recon_helpers.js';
+import { requireAuth, requireAdmin, optionalAuth, ADMIN_WCA_IDS, checkRateLimit } from '../utils/recon_helpers.js';
 import { sendBark } from '../monitors/bark.js';
 import { sniffVideo, VIDEO_EXT } from '../utils/video_upload.js';
 
@@ -136,6 +137,20 @@ interface ThreadFeedbackRow extends FeedbackRow {
   last_reply_role: string | null;
   user_read_at: string | Date | null;
   admin_read_at: string | Date | null;
+  has_unread?: boolean;
+}
+
+interface PublicFeedbackRow {
+  id: number | string;
+  kind: string;
+  body: string;
+  wca_id: string;
+  wca_name: string;
+  status: string;
+  created_at: string | Date;
+  updated_at: string | Date;
+  last_reply_at: string | Date | null;
+  last_reply_role: string | null;
 }
 
 /** 管理视角:线程最后动作来自用户(含仅开帖) 且管理员尚未读 → 未读。 */
@@ -146,8 +161,9 @@ function adminUnread(r: ThreadFeedbackRow): boolean {
   return r.admin_read_at == null || new Date(activity) > new Date(r.admin_read_at);
 }
 
-/** 用户视角:有管理员回复且本人尚未读 → 未读。 */
+/** 用户视角:有其他人回复且本人尚未读 → 未读。 */
 function userUnread(r: ThreadFeedbackRow): boolean {
+  if (r.has_unread != null) return r.has_unread === true;
   if (r.last_reply_role !== 'admin' || r.last_reply_at == null) return false;
   return r.user_read_at == null || new Date(r.last_reply_at) > new Date(r.user_read_at);
 }
@@ -341,7 +357,12 @@ feedbackRoutes.get('/feedback/mine', async (c) => {
   const user = await requireAuth(c);
   const rows = await query<ThreadFeedbackRow>(
     `SELECT id, kind, body, wca_id, wca_name, contact, page_url, lang, theme, viewport, user_agent,
-            status, created_at, updated_at, last_reply_at, last_reply_role, user_read_at, admin_read_at
+            status, created_at, updated_at, last_reply_at, last_reply_role, user_read_at, admin_read_at,
+            EXISTS (
+              SELECT 1 FROM feedback_messages fm
+              WHERE fm.feedback_id = feedback.id AND fm.wca_id <> feedback.wca_id
+                AND (feedback.user_read_at IS NULL OR fm.created_at > feedback.user_read_at)
+            ) AS has_unread
      FROM feedback WHERE wca_id = ?
      ORDER BY COALESCE(last_reply_at, created_at) DESC, id DESC
      LIMIT 200`,
@@ -364,34 +385,68 @@ feedbackRoutes.get('/feedback/mine', async (c) => {
   return c.json({ items });
 });
 
-// ── GET /v1/feedback/mine/unread — 当前用户「有管理员新回复」的线程数(给入口红点) ──
+// ── GET /v1/feedback/mine/unread — 当前用户「有其他人新回复」的线程数(给入口红点) ──
 feedbackRoutes.get('/feedback/mine/unread', async (c) => {
   c.header('Cache-Control', 'no-store');
   const user = await requireAuth(c);
   const rows = await query<{ n: number | string }>(
     `SELECT COUNT(*) AS n FROM feedback
-     WHERE wca_id = ? AND last_reply_role = 'admin'
-       AND (user_read_at IS NULL OR last_reply_at > user_read_at)`,
+     WHERE wca_id = ? AND EXISTS (
+       SELECT 1 FROM feedback_messages fm
+       WHERE fm.feedback_id = feedback.id AND fm.wca_id <> feedback.wca_id
+         AND (feedback.user_read_at IS NULL OR fm.created_at > feedback.user_read_at)
+     )`,
     [user.wcaId],
   );
   return c.json({ count: Number(rows[0].n) });
 });
 
-// ── GET /v1/feedback/:id/thread — 单条反馈完整对话(发帖人或 admin),取阅即标记已读 ──
+// ── GET /v1/feedback/public — 公开反馈列表(不返回联系方式 / 环境字段) ────────────
+feedbackRoutes.get('/feedback/public', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const parsedPage = Number.parseInt(c.req.query('page') ?? '', 10);
+  const parsedSize = Number.parseInt(c.req.query('size') ?? '', 10);
+  const page = Number.isSafeInteger(parsedPage) ? Math.max(1, Math.min(1_000_000, parsedPage)) : 1;
+  const size = Number.isFinite(parsedSize) ? Math.max(1, Math.min(100, parsedSize)) : 20;
+  const offset = (page - 1) * size;
+
+  const [totals, rows] = await Promise.all([
+    query<{ n: number | string }>('SELECT COUNT(*) AS n FROM feedback'),
+    query<PublicFeedbackRow>(
+      `SELECT id, kind, body, wca_id, wca_name, status, created_at, updated_at,
+              last_reply_at, last_reply_role
+       FROM feedback
+       ORDER BY COALESCE(last_reply_at, created_at) DESC, id DESC
+       LIMIT ? OFFSET ?`,
+      [size, offset],
+    ),
+  ]);
+  const ids = rows.map((r) => Number(r.id));
+  const [media, counts] = await Promise.all([mediaMap(ids), replyCounts(ids)]);
+  const items = rows.map((r) => ({
+    id: Number(r.id), kind: r.kind, body: r.body, wcaId: r.wca_id, wcaName: r.wca_name,
+    status: r.status, createdAt: r.created_at, updatedAt: r.updated_at,
+    lastReplyAt: r.last_reply_at, lastReplyRole: r.last_reply_role,
+    replyCount: counts.get(Number(r.id)) ?? 0,
+    media: media.get(Number(r.id)) ?? [],
+  }));
+  return c.json({ items, total: Number(totals[0]?.n ?? 0), page, size });
+});
+
+// ── GET /v1/feedback/:id/thread — 单条反馈公开对话;作者 / admin 取阅时标记已读 ──
 feedbackRoutes.get('/feedback/:id/thread', async (c) => {
   c.header('Cache-Control', 'no-store');
-  const user = await requireAuth(c);
+  const user = await optionalAuth(c);
   const id = Number(c.req.param('id'));
   if (!Number.isFinite(id)) throw new Error('Validation: invalid id');
   const fb = await loadFeedback(id);
   if (!fb) throw new Error('Validation: feedback not found');
-  const admin = isAdmin(user.wcaId);
-  const owner = fb.wcaId === user.wcaId;
-  if (!admin && !owner) throw new Error('Cannot view others feedback');
+  const admin = user != null && isAdmin(user.wcaId);
+  const owner = user != null && fb.wcaId === user.wcaId;
 
-  const rows = await query<ThreadFeedbackRow>(
-    `SELECT id, kind, body, wca_id, wca_name, contact, page_url, lang, theme, viewport, user_agent,
-            status, created_at, updated_at, last_reply_at, last_reply_role, user_read_at, admin_read_at
+  const rows = await query<PublicFeedbackRow>(
+    `SELECT id, kind, body, wca_id, wca_name, status, created_at, updated_at,
+            last_reply_at, last_reply_role
      FROM feedback WHERE id = ?`, [id]);
   const r = rows[0];
   const media = await mediaMap([id]);
@@ -409,9 +464,9 @@ feedbackRoutes.get('/feedback/:id/thread', async (c) => {
   return c.json({
     feedback: {
       id: Number(r.id), kind: r.kind, body: r.body, wcaId: r.wca_id, wcaName: r.wca_name,
-      contact: r.contact, pageUrl: r.page_url, lang: r.lang, theme: r.theme, viewport: r.viewport,
-      userAgent: r.user_agent, status: r.status, createdAt: r.created_at, updatedAt: r.updated_at,
+      status: r.status, createdAt: r.created_at, updatedAt: r.updated_at,
       lastReplyAt: r.last_reply_at, lastReplyRole: r.last_reply_role,
+      replyCount: msgs.length,
       media: media.get(id) ?? [],
     },
     messages: msgs.map((m) => ({
@@ -421,7 +476,7 @@ feedbackRoutes.get('/feedback/:id/thread', async (c) => {
   });
 });
 
-// ── POST /v1/feedback/:id/reply — 回帖(发帖人或 admin) ────────────────────────
+// ── POST /v1/feedback/:id/reply — 任意登录用户回帖 ────────────────────────────
 feedbackRoutes.post('/feedback/:id/reply', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
@@ -432,7 +487,6 @@ feedbackRoutes.post('/feedback/:id/reply', async (c) => {
   if (!fb) throw new Error('Validation: feedback not found');
   const admin = isAdmin(user.wcaId);
   const owner = fb.wcaId === user.wcaId;
-  if (!admin && !owner) throw new Error('Cannot reply to others feedback');
 
   let body: { body?: unknown };
   try {

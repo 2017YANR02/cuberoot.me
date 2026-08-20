@@ -443,6 +443,22 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
         justify-content: center;
         padding: 0.85rem 0.6rem;
     }
+    /* 7 张「其他」卡按 2 + 2 + 3 排,避免末行只剩一张。 */
+    .landing-page #section-other .cards-container {
+        grid-template-columns: repeat(6, 1fr);
+    }
+    .landing-page #section-other .card {
+        grid-column: span 3;
+    }
+    .landing-page #section-other .card:nth-last-child(-n + 3) {
+        grid-column: span 2;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+    .landing-page #section-other .card:nth-last-child(-n + 3) .card-name {
+        font-size: clamp(0.72rem, 3.6vw, 1rem);
+        text-align: center;
+    }
 }
 
 /* ── 中国备案信息（仅 cuberoot.me 显示）── */

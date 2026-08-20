@@ -1,16 +1,17 @@
 'use client';
 
 /**
- * 反馈对话面板(GitHub issue 式来回)。发帖人在 /feedback、admin 在 /feedback/admin 共用。
- * 挂载即拉 GET /feedback/:id/thread(后端据请求方角色标记已读)→ 渲染往来气泡 + 回复框。
+ * 反馈公开对话面板(GitHub issue 式来回)。/feedback 与 /feedback/admin 共用。
+ * 挂载即拉公开 thread;登录用户可回复,本人可删自己的回复,admin 可审核。
  * 开帖正文由父卡片渲染,这里只渲染后续 messages。双主题走 globals token。
  */
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CornerDownRight, Trash2 } from 'lucide-react';
+import { CornerDownRight, LogIn, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/Spinner/Spinner';
+import { useT } from '@/hooks/useT';
 import { displayCuberName } from '@/lib/cuber-name-display';
-import { getOwnerKey, isAdmin } from '@/lib/auth-store';
+import { getOwnerKey, isAdmin, useAuthStore } from '@/lib/auth-store';
 import { fetchFeedbackThread, replyToFeedback, deleteFeedbackMessage, type FeedbackMessage } from '@/lib/feedback-api';
 import { refreshFeedbackUnread } from '@/lib/feedback-unread';
 import './feedback-conversation.css';
@@ -27,7 +28,9 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
 }) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = useT();
+  const user = useAuthStore((s) => s.user);
+  const login = useAuthStore((s) => s.login);
 
   const [messages, setMessages] = useState<FeedbackMessage[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -36,16 +39,19 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
 
-  const myId = getOwnerKey();
-  const admin = isAdmin();
+  const myId = user ? getOwnerKey() : null;
+  const admin = user != null && isAdmin();
   const canDelete = (m: FeedbackMessage) => admin || m.wcaId === myId;
 
   const load = useCallback(() => {
     setErr(null);
     fetchFeedbackThread(feedbackId)
-      .then((d) => { setMessages(d.messages); refreshFeedbackUnread(); }) // 取阅已标记已读 → 同步桌宠角标
+      .then((d) => {
+        setMessages(d.messages);
+        if (user) refreshFeedbackUnread(); // 作者 / admin 取阅已标记已读 → 同步桌宠角标
+      })
       .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
-  }, [feedbackId]);
+  }, [feedbackId, user]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -119,21 +125,27 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
 
       {err && <p className="fbc-err">{err}</p>}
 
-      <div className="fbc-reply">
-        <textarea
-          className="fbc-input"
-          value={reply}
-          maxLength={REPLY_MAX}
-          rows={2}
-          onChange={(e) => setReply(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void send(); } }}
-          placeholder={t('写一条回复…(Ctrl+Enter 发送)', 'Write a reply… (Ctrl+Enter to send)')}
-        />
-        <button type="button" className="fbc-send" onClick={() => void send()} disabled={!reply.trim() || sending}>
-          {sending ? <Spinner size={14} /> : <CornerDownRight size={14} />}
-          {t('回复', 'Reply')}
+      {user ? (
+        <div className="fbc-reply">
+          <textarea
+            className="fbc-input"
+            value={reply}
+            maxLength={REPLY_MAX}
+            rows={2}
+            onChange={(e) => setReply(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void send(); } }}
+            placeholder={t('写一条回复…(Ctrl+Enter 发送)', 'Write a reply… (Ctrl+Enter to send)')}
+          />
+          <button type="button" className="fbc-send" onClick={() => void send()} disabled={!reply.trim() || sending}>
+            {sending ? <Spinner size={14} /> : <CornerDownRight size={14} />}
+            {t('回复', 'Reply')}
+          </button>
+        </div>
+      ) : (
+        <button type="button" className="fbc-login" onClick={login}>
+          <LogIn size={14} /> {t('登录后回复', 'Sign in to reply')}
         </button>
-      </div>
+      )}
     </div>
   );
 }
