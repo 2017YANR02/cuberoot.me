@@ -50,12 +50,6 @@
   flex-direction: column;
   gap: 2px;
 }
-.more-menu--above-center .more-menu-panel {
-  top: auto;
-  right: 50%;
-  bottom: calc(100% + 6px);
-  transform: translateX(50%);
-}
 .more-menu-item {
   display: flex;
   align-items: center;

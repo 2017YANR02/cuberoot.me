@@ -77,6 +77,10 @@ import { formatTargetTime, useSettings, getSettings, updateSettings } from '../_
 import { warmupSound } from '../_lib/sound';
 import { setMetronomeHold } from '@/lib/metronome';
 import { useBluetoothCube } from '../_lib/bluetooth';
+import {
+  classifyUnifiedBluetoothDevice,
+  requestUnifiedBluetoothDevice,
+} from '../_lib/bluetooth/unified_picker';
 import type { TimerPresenceReport } from '../_lib/presence';
 import { mirrorForBrand, readDevQuatSource, sensorBasisForBrand, type Quat } from '../_lib/bluetooth/orientation';
 import { GyroRecorder, encodeGyroTrack } from '../_lib/bluetooth/gyro_track';
@@ -1828,6 +1832,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [bluetoothConnectAttempt, setBluetoothConnectAttempt] = useState<Promise<void> | null>(null);
   const bluetoothConnectingRef = useRef(false);
   const [bluetoothTimerOpen, setBluetoothTimerOpen] = useState(false);
+  const [bluetoothTimerConnectAttempt, setBluetoothTimerConnectAttempt] = useState<Promise<void> | null>(null);
   const [stackmatOpen, setStackmatOpen] = useState(false);
   const [trainerSubsetOpen, setTrainerSubsetOpen] = useState<'oll' | 'pll' | null>(null);
   const [statsModalOpen, setStatsModalOpen] = useState(false);
@@ -1837,23 +1842,59 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [bldHelperOpen, setBldHelperOpen] = useState(false);
   const [showCrossSession, setShowCrossSession] = useState(false);
 
-  const openBluetooth = useCallback(() => {
-    setBluetoothOpen(true);
-    if (bluetoothCube.status.connected || bluetoothConnectingRef.current) return;
+  const connectExternalBluetooth = useCallback(() => {
+    if (bluetoothCube.status.connected) {
+      setBluetoothOpen(true);
+      return;
+    }
+    if (bluetoothTimer.status.connected) {
+      setBluetoothTimerOpen(true);
+      return;
+    }
+    if (bluetoothConnectingRef.current) return;
 
-    // requestDevice() must run in this click's user-activation call stack.
-    // BluetoothModal observes the same promise so it can still own progress,
-    // errors, and the manual retry path.
+    // Exactly one requestDevice() starts from this click. After the user picks
+    // a device, its registry/service signature routes it to the matching
+    // connector without an intermediate in-app device-type menu.
     bluetoothConnectingRef.current = true;
-    const attempt = bluetoothCube.connect();
-    setBluetoothConnectAttempt(attempt);
-    void attempt.finally(() => {
-      bluetoothConnectingRef.current = false;
-    }).catch(() => {
-      // BluetoothModal renders the actionable error. This catch only prevents
-      // the parent-owned observer promise from becoming unhandled.
-    });
-  }, [bluetoothCube]);
+    void (async () => {
+      let modalOwner: 'cube' | 'timer' | null = null;
+      try {
+        const device = await requestUnifiedBluetoothDevice();
+        if (!device) return;
+        const kind = await classifyUnifiedBluetoothDevice(device);
+        if (kind === 'smart-timer') {
+          modalOwner = 'timer';
+          setBluetoothTimerOpen(true);
+          const attempt = bluetoothTimer.connectDevice(device);
+          setBluetoothTimerConnectAttempt(attempt);
+          await attempt;
+          return;
+        }
+
+        modalOwner = 'cube';
+        setBluetoothOpen(true);
+        const attempt = bluetoothCube.connectDevice(device);
+        setBluetoothConnectAttempt(attempt);
+        await attempt;
+      } catch (error) {
+        // Connection errors are rendered by the relevant modal. A failure
+        // before classification has no better device-specific owner, so reuse
+        // the mature Bluetooth diagnostics shown by the smart-cube modal.
+        if (modalOwner === null) {
+          const failedAttempt = Promise.reject(error);
+          void failedAttempt.catch(() => undefined);
+          setBluetoothConnectAttempt(failedAttempt);
+          setBluetoothOpen(true);
+        }
+      } finally {
+        bluetoothConnectingRef.current = false;
+      }
+    })();
+  }, [
+    bluetoothCube,
+    bluetoothTimer,
+  ]);
 
   // ── Fullscreen ──────────────────────────────────────────────────
   const [fullscreen, setFullscreen] = useState(false);
@@ -2038,44 +2079,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [onPressDown]);
 
   // ── External devices + More menu items ──────────────────────────
-  // Keep smart-cube connection in this click handler: requestDevice() must stay
-  // in the user-activation call stack. Moving it into an effect breaks Web Bluetooth.
-  const deviceItems = useMemo<MoreMenuItem[]>(() => [
-    {
-      icon: <Bluetooth size={14} />,
-      label: bluetoothCube.status.connected
-        ? tr({
-            zh: `智能魔方：${bluetoothCube.status.deviceName}`,
-            en: `Smart cube: ${bluetoothCube.status.deviceName}`,
-          })
-        : tr({ zh: '智能魔方', en: 'Smart cube' }),
-      onClick: openBluetooth,
-    },
-    {
-      icon: <Bluetooth size={14} />,
-      label: bluetoothTimer.status.connected
-        ? tr({
-            zh: `蓝牙计时器：${bluetoothTimer.status.deviceName}`,
-            en: `Bluetooth timer: ${bluetoothTimer.status.deviceName}`,
-          })
-        : tr({ zh: '蓝牙智能计时器', en: 'Bluetooth smart timer' }),
-      onClick: () => setBluetoothTimerOpen(true),
-    },
-    {
-      icon: <Mic size={14} />,
-      label: stackmat.status.listening
-        ? tr({ zh: 'Stackmat 监听中', en: 'Stackmat listening' })
-        : tr({ zh: 'Stackmat 计时器（麦克风）', en: 'Stackmat timer (mic)' }),
-      onClick: () => setStackmatOpen(true),
-    },
-  ], [
-    bluetoothCube.status.connected,
-    bluetoothCube.status.deviceName,
-    bluetoothTimer.status.connected,
-    bluetoothTimer.status.deviceName,
-    openBluetooth,
-    stackmat.status.listening,
-  ]);
   const deviceActive = bluetoothCube.status.connected
     || bluetoothTimer.status.connected
     || stackmat.status.listening;
@@ -2734,19 +2737,27 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} event={event} /></div>
         )}
 
-        <MoreMenu
-          items={deviceItems}
-          className="shell-device-menu surface-chrome"
-          triggerClassName={`shell-device-connect${deviceActive ? ' is-active' : ''}`}
-          triggerLabel={tr({ zh: '连接外部设备', en: 'Connect external device' })}
-          placement="above-center"
-          trigger={(
-            <>
-              <Bluetooth size={16} />
-              <span>{tr({ zh: '连接', en: 'Connect' })}</span>
-            </>
-          )}
-        />
+        <div className={`shell-device-actions surface-chrome${deviceActive ? ' is-active' : ''}`} data-no-timer>
+          <button
+            type="button"
+            className="shell-device-connect"
+            onClick={connectExternalBluetooth}
+            title={tr({ zh: '连接蓝牙设备', en: 'Connect Bluetooth device' })}
+            aria-label={tr({ zh: '连接蓝牙设备', en: 'Connect Bluetooth device' })}
+          >
+            <Bluetooth size={16} />
+            <span>{tr({ zh: '连接', en: 'Connect' })}</span>
+          </button>
+          <button
+            type="button"
+            className={`shell-stackmat-connect${stackmat.status.listening ? ' is-active' : ''}`}
+            onClick={() => setStackmatOpen(true)}
+            title={tr({ zh: '连接 Stackmat 麦克风计时器', en: 'Connect Stackmat microphone timer' })}
+            aria-label={tr({ zh: '连接 Stackmat 麦克风计时器', en: 'Connect Stackmat microphone timer' })}
+          >
+            <Mic size={15} />
+          </button>
+        </div>
 
         {/* 右侧配置栏:解法提示(仅 333,逐阶段最优 + 分步解法)常驻可折叠面板 ——
             桌面收成主区右侧竖栏。手机上这颗 pill 挂在顶栏(见上),不再落在打乱图下方。
@@ -2910,12 +2921,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       {bluetoothTimerOpen && (
         <BluetoothTimerModal
           timer={bluetoothTimer}
+          connectAttempt={bluetoothTimerConnectAttempt}
           macPrompt={bluetoothTimerMacPrompt}
           onSubmitMac={resolveBluetoothTimerMac}
           onCancelMac={() => resolveBluetoothTimerMac(null)}
           onClose={() => {
             if (bluetoothTimerMacResolverRef.current) resolveBluetoothTimerMac(null);
             setBluetoothTimerOpen(false);
+            setBluetoothTimerConnectAttempt(null);
           }}
         />
       )}
