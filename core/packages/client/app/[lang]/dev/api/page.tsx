@@ -47,6 +47,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'content', zh: '内容与运维', en: 'Content & ops' },
   { key: 'timer', zh: '计时器', en: 'Timer' },
   { key: 'smart-cube', zh: '智能魔方', en: 'Smart cube' },
+  { key: 'wechat', zh: '微信开放能力', en: 'WeChat Open Platform' },
   { key: 'calendar', zh: '日历', en: 'Calendar' },
   { key: 'system', zh: '系统与渲染', en: 'System & render' },
 ];
@@ -62,7 +63,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   comp_follows cube cubeopt_solve cubing_live documents feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
-//   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wiki
+//   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
   // ---- auth ----
@@ -436,7 +437,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'quiz', m: 'POST', p: '/v1/quiz/admin/reports/:id/resolve', g: 'admin', zh: '标记举报已处理', en: 'Mark report resolved' },
 
   // ---- wechat ----
-  { d: 'wechat', m: 'GET', p: '/v1/wechat/jssdk-signature', g: 'public', zh: '微信 JS-SDK wx.config 签名(朋友圈/会话分享卡片;未配公众号返回 disabled)', en: 'WeChat JS-SDK wx.config signature (Moments/chat share card; returns disabled when the MP account is unconfigured)' },
+  { d: 'wechat', m: 'GET', p: '/v1/wechat/jssdk-signature', g: 'public', c: 'no-store', zh: '微信 JS-SDK wx.config 签名(朋友圈/会话分享卡片;未配公众号返回 disabled)', en: 'WeChat JS-SDK wx.config signature (Moments/chat share card; returns disabled when the MP account is unconfigured)' },
+  { d: 'wechat', m: 'POST', p: '/v1/wechat/pc-opensdk-ticket', g: 'public', c: 'no-store', zh: '签发网站应用 PC OpenSDK 五分钟一次性分享 ticket', en: 'Issue a five-minute single-use sharing ticket for the Website App PC OpenSDK' },
 
   // ---- content ----
   { d: 'content', m: 'GET', p: '/v1/teachers', g: 'public', c: 'cdn', zh: '魔方老师与培训机构目录', en: 'Cube teacher and training-school directory' },
