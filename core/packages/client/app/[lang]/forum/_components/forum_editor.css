@@ -183,7 +183,7 @@
   white-space: nowrap;
 }
 
-.forum-editor-video-heading button {
+.forum-editor-video-remove {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -194,7 +194,7 @@
   cursor: pointer;
 }
 
-.forum-editor-video-heading button:hover { color: var(--destructive); }
+.forum-editor-video-remove:hover { color: var(--destructive); }
 
 /* ─── error ─── */
 .forum-editor-error {

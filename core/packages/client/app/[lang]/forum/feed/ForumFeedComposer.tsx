@@ -177,12 +177,12 @@ export function ForumFeedComposer({ onCreated }: { onCreated: () => void }) {
           />
           {error && <div className="forum-error">{error}</div>}
           <div className="forum-feed-compose-actions">
-            <button type="button" className="forum-btn-ghost" onClick={collapse} disabled={mediaBusy || submitting}>
+            <button type="button" className="forum-btn-ghost forum-feed-compose-action" onClick={collapse} disabled={mediaBusy || submitting}>
               <T zh="取消" en="Cancel" />
             </button>
             <button
               type="button"
-              className="forum-btn-primary"
+              className="forum-btn-primary forum-feed-compose-action"
               onClick={submit}
               disabled={!forumSlug || !title.trim() || (!content.trim() && !video) || mediaBusy || submitting}
             >
