@@ -91,13 +91,14 @@ const PLACEHOLDERS_EN = [
 ];
 
 function dayOfYear(d: Date): number {
-  const start = new Date(d.getFullYear(), 0, 0);
-  return Math.floor((d.getTime() - start.getTime()) / 86400000);
+  const start = Date.UTC(d.getUTCFullYear(), 0, 0);
+  const current = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  return Math.floor((current - start) / 86400000);
 }
 
-function rotatingPlaceholder(isZh: boolean): string {
+function rotatingPlaceholder(isZh: boolean, day: number): string {
   const list = (isZh ? PLACEHOLDERS_ZH : PLACEHOLDERS_EN);
-  return list[dayOfYear(new Date()) % list.length];
+  return list[day % list.length];
 }
 
 function HeaderMore({ overflow, title, href, onClick }: {
@@ -144,12 +145,19 @@ export default function LandingSearch({ cards, lang }: Props) {
     onResult: (text) => { setQuery(text); setOpen(true); },
   });
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
+  // SSR 和 hydration 首帧固定用同一个文案;挂载后才读取当天日期。
+  // 否则服务器与手机跨 UTC 日期时会各选中相邻文案,触发 React #418。
+  const [placeholderDay, setPlaceholderDay] = useState(0);
   const textInputRef = useRef<HTMLInputElement>(null);
   const [expandedPersons, setExpandedPersons] = useState(false);
   const [expandedRecons, setExpandedRecons] = useState(false);
   const [expandedGlossary, setExpandedGlossary] = useState(false);
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setPlaceholderDay(dayOfYear(new Date()));
+  }, []);
 
   const {
     q, xSearchEnabled, xLoaded,
@@ -337,7 +345,7 @@ export default function LandingSearch({ cards, lang }: Props) {
             }
           }}
           placeholder={listening ? tr({ zh: '请说…', en: 'Listening…'
-                  }) : rotatingPlaceholder(isZh)}
+                  }) : rotatingPlaceholder(isZh, placeholderDay)}
         />
         {query !== '' && (
           <ClearButton
