@@ -171,6 +171,18 @@ jobs:
           STAGE=/www/wwwroot/contests-next.new
           BACKUP=/www/wwwroot/contests-next.bak-$(date +%s)
 
+          cleanup_stage() {
+            status=$?
+            trap - EXIT
+            set +e
+            if [ -d "$STAGE" ] && [ ! -L "$STAGE" ] && [ "$(readlink -f -- "$STAGE")" = "$STAGE" ]; then
+              rm -rf -- "$STAGE"
+            fi
+            rm -f -- /tmp/contests-next.tar.gz /tmp/contests-next.service
+            exit "$status"
+          }
+          trap cleanup_stage EXIT
+
           test -s /etc/contests-next.env
           rm -rf "$STAGE"
           mkdir -p "$STAGE"
