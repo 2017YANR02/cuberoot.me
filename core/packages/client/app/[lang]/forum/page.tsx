@@ -4,26 +4,22 @@
 // Structure modeled on classic forum landing (speedsolving-style taxonomy).
 
 import { useEffect, useState } from 'react';
-import { Plus, Search, ShieldCheck } from 'lucide-react';
 import Link from '@/components/AppLink';
-import BackHome from '@/components/BackHome';
-import WcaAuth from '@/components/WcaAuth';
 import { tr, T, useLang } from '@/i18n/tr';
-import { useIsAdmin } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import {
   fetchForumIndex, fetchLatestThreads,
   type ForumIndexData, type LatestThread,
 } from '@/lib/forum-api';
 import { forumIcon } from './_lib/forum-icons';
-import { formatRelativeTime, formatCount } from './_lib/forum-format';
+import { formatRelativeTime, formatCount } from '@/lib/forum-format';
+import { ForumHeader } from './_components/ForumHeader';
 import { ThreadRowList } from './_components/ThreadRowList';
 import './forum.css';
 
 export default function ForumIndexPage() {
   const lang = useLang();
   const zh = lang === 'zh';
-  const isAdmin = useIsAdmin();
   const [data, setData] = useState<ForumIndexData | null>(null);
   const [latest, setLatest] = useState<LatestThread[]>([]);
   const [error, setError] = useState('');
@@ -41,32 +37,7 @@ export default function ForumIndexPage() {
 
   return (
     <div className="forum-page">
-      <BackHome />
-      <div className="forum-page-header">
-        <div>
-          <h1><T zh="论坛" en="Forum" /></h1>
-          <p className="forum-subtitle">
-            <T zh="魔方速拧社区:提问、讨论、分享。" en="The speedcubing community: ask, discuss, share." />
-          </p>
-        </div>
-        <div className="forum-header-actions">
-          {isAdmin && (
-            <Link href="/forum/review" prefetch={false} className="forum-btn-ghost" title={tr({ zh: '审核', en: 'Moderation' })}>
-              <ShieldCheck size={15} aria-hidden="true" />
-              <T zh="审核" en="Review" />
-            </Link>
-          )}
-          <Link href="/forum/search" prefetch={false} className="forum-btn-ghost" title={tr({ zh: '搜索', en: 'Search' })}>
-            <Search size={15} aria-hidden="true" />
-            <T zh="搜索" en="Search" />
-          </Link>
-          <Link href="/forum/new" prefetch={false} className="forum-btn-primary">
-            <Plus size={15} aria-hidden="true" />
-            <T zh="发帖" en="Post thread" />
-          </Link>
-          <WcaAuth />
-        </div>
-      </div>
+      <ForumHeader activeView="boards" />
 
       {error && <div className="forum-error">{error}</div>}
       {!data && !error && <div className="forum-loading"><T zh="加载中…" en="Loading…" /></div>}

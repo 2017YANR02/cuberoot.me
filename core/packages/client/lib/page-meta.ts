@@ -318,6 +318,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Speedcubing forum — ask, discuss, share.',
     },
   },
+  'forum/feed': {
+    title: { zh: '社区动态', en: 'Community Feed' },
+    description: {
+      zh: '浏览 CubeRoot 魔方社区各版块的新主题与近期活跃讨论。',
+      en: 'Browse new threads and recently active discussions across the CubeRoot speedcubing community.',
+    },
+  },
   'forum/new': { title: { zh: '发帖', en: 'New thread' } },
   'forum/review': { title: { zh: '论坛审核', en: 'Forum moderation' } },
   'forum/search': { title: { zh: '论坛搜索', en: 'Forum search' } },

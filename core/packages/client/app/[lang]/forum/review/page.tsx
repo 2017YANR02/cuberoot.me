@@ -17,7 +17,7 @@ import {
   type ReviewItem, type ForumReport,
 } from '@/lib/forum-api';
 import { ForumBreadcrumbs } from '../_components/ForumBreadcrumbs';
-import { formatRelativeTime } from '../_lib/forum-format';
+import { formatRelativeTime } from '@/lib/forum-format';
 import '../forum.css';
 import './forum_review.css';
 

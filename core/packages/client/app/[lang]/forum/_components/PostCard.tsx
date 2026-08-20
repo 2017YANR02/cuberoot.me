@@ -11,7 +11,7 @@ import { tr, useLang } from '@/i18n/tr';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
 import type { ForumPost, PostAuthor, ReactionKind } from '@/lib/forum-api';
-import { formatRelativeTime, formatJoinedDate, formatCount } from '../_lib/forum-format';
+import { formatRelativeTime, formatJoinedDate, formatCount } from '@/lib/forum-format';
 import { ReactionBar } from './ReactionBar';
 
 export function PostCard({

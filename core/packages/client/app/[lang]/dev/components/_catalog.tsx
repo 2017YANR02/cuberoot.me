@@ -796,6 +796,20 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'ForumFeedList',
+    import: "import { ForumFeedList } from '@/components/forum/ForumFeedList';",
+    category: 'more',
+    zh: '论坛与首页共用的社区动态流,展示主题首帖摘录、作者、版块、反应和活跃度。',
+    en: 'Shared community feed for the forum and landing page, with first-post excerpts, authors, boards, reactions, and activity.',
+  },
+  {
+    name: 'ForumFeedPreview',
+    import: "import ForumFeedPreview from '@/components/forum/ForumFeedPreview';",
+    category: 'more',
+    zh: '首页的轻量社区动态预览,读取活跃主题并链接到完整动态流与版块目录。',
+    en: 'Lightweight landing-page community preview linking to the full feed and board directory.',
+  },
+  {
     name: 'TeachingAccountBindingPage',
     import: "import TeachingAccountBindingPage from '@/components/teaching/TeachingAccountBindingPage';",
     category: 'more',

@@ -12,6 +12,7 @@ import {
 } from '../utils/recon_helpers.js';
 import type { WcaUser } from '../utils/recon_helpers.js';
 import { notify, adminRecipients } from '../utils/notify.js';
+import { excerptFromMarkdown } from '@cuberoot/shared/forum';
 
 export const forumRoutes = new Hono();
 
@@ -152,6 +153,64 @@ async function reactionsFor(postIds: number[]): Promise<Map<number, { kind: stri
       .sort((a, b) => b.count - a.count));
   }
   return map;
+}
+
+interface ForumAuthorProfile {
+  name: string;
+  avatarUrl: string | null;
+  joinedAt: Date | null;
+  postCount: number;
+  wcaId: string | null;
+  isAdmin: boolean;
+}
+
+/** Build the canonical forum author card for both thread pages and activity feeds. */
+async function authorProfilesFor(authorNames: Map<string, string>): Promise<Record<string, ForumAuthorProfile>> {
+  const authorIds = [...authorNames.keys()];
+  const authors: Record<string, ForumAuthorProfile> = {};
+  if (authorIds.length === 0) return authors;
+
+  const ph = authorIds.map(() => '?').join(',');
+  const countRows = await query<{ author_id: string; n: number }>(
+    `SELECT p.author_id, COUNT(*)::int AS n FROM forum_posts p
+     JOIN forum_threads t2 ON t2.id = p.thread_id
+     WHERE p.author_id IN (${ph}) AND NOT p.is_deleted AND NOT t2.is_deleted
+       AND p.status = 'approved'
+     GROUP BY p.author_id`,
+    authorIds,
+  );
+  const postCounts = new Map(countRows.map((r) => [r.author_id, r.n]));
+
+  const wcaKeys = authorIds.filter((a) => !/^u\d+$/.test(a));
+  const uidKeys = authorIds.filter((a) => /^u\d+$/.test(a));
+  const profile = new Map<string, { avatar_url: string | null; created_at: Date; display_name: string }>();
+  if (wcaKeys.length > 0) {
+    const rows = await query<{ wca_id: string; avatar_url: string | null; created_at: Date; display_name: string }>(
+      `SELECT wca_id, avatar_url, created_at, display_name FROM app_users WHERE wca_id IN (${wcaKeys.map(() => '?').join(',')})`,
+      wcaKeys,
+    );
+    for (const r of rows) profile.set(r.wca_id, r);
+  }
+  if (uidKeys.length > 0) {
+    const rows = await query<{ id: string; avatar_url: string | null; created_at: Date; display_name: string }>(
+      `SELECT id, avatar_url, created_at, display_name FROM app_users WHERE id IN (${uidKeys.map(() => '?').join(',')})`,
+      uidKeys.map((a) => Number(a.slice(1))),
+    );
+    for (const r of rows) profile.set(`u${r.id}`, r);
+  }
+
+  for (const authorId of authorIds) {
+    const p = profile.get(authorId);
+    authors[authorId] = {
+      name: p?.display_name || authorNames.get(authorId) || '',
+      avatarUrl: p?.avatar_url ?? null,
+      joinedAt: p?.created_at ?? null,
+      postCount: postCounts.get(authorId) ?? 0,
+      wcaId: /^u\d+$/.test(authorId) ? null : authorId,
+      isAdmin: ADMIN_WCA_IDS.includes(authorId),
+    };
+  }
+  return authors;
 }
 
 // ==================== GET /v1/forum/index ====================
@@ -330,51 +389,7 @@ forumRoutes.get('/forum/t/:id', async (c) => {
   const postIds = posts.map((p) => Number(p.id));
   const reactions = await reactionsFor(postIds);
 
-  // authors 档案:发帖数 + app_users 的头像/注册时间(ownerKey 是 u<uid> 时按内部 id 匹配)
-  const authorIds = [...new Set(posts.map((p) => p.author_id))];
-  const authors: Record<string, { name: string; avatarUrl: string | null; joinedAt: Date | null; postCount: number; wcaId: string | null; isAdmin: boolean }> = {};
-  if (authorIds.length > 0) {
-    const ph = authorIds.map(() => '?').join(',');
-    const countRows = await query<{ author_id: string; n: number }>(
-      `SELECT p.author_id, COUNT(*)::int AS n FROM forum_posts p
-       JOIN forum_threads t2 ON t2.id = p.thread_id
-       WHERE p.author_id IN (${ph}) AND NOT p.is_deleted AND NOT t2.is_deleted
-         AND p.status = 'approved'
-       GROUP BY p.author_id`,
-      authorIds,
-    );
-    const postCounts = new Map(countRows.map((r) => [r.author_id, r.n]));
-
-    const wcaKeys = authorIds.filter((a) => !/^u\d+$/.test(a));
-    const uidKeys = authorIds.filter((a) => /^u\d+$/.test(a));
-    const profile = new Map<string, { avatar_url: string | null; created_at: Date; display_name: string }>();
-    if (wcaKeys.length > 0) {
-      const rows = await query<{ wca_id: string; avatar_url: string | null; created_at: Date; display_name: string }>(
-        `SELECT wca_id, avatar_url, created_at, display_name FROM app_users WHERE wca_id IN (${wcaKeys.map(() => '?').join(',')})`,
-        wcaKeys,
-      );
-      for (const r of rows) profile.set(r.wca_id, r);
-    }
-    if (uidKeys.length > 0) {
-      const rows = await query<{ id: string; avatar_url: string | null; created_at: Date; display_name: string }>(
-        `SELECT id, avatar_url, created_at, display_name FROM app_users WHERE id IN (${uidKeys.map(() => '?').join(',')})`,
-        uidKeys.map((a) => Number(a.slice(1))),
-      );
-      for (const r of rows) profile.set('u' + r.id, r);
-    }
-    for (const a of authorIds) {
-      const p = profile.get(a);
-      const lastName = posts.find((x) => x.author_id === a)?.author_name ?? '';
-      authors[a] = {
-        name: p?.display_name || lastName,
-        avatarUrl: p?.avatar_url ?? null,
-        joinedAt: p?.created_at ?? null,
-        postCount: postCounts.get(a) ?? 0,
-        wcaId: /^u\d+$/.test(a) ? null : a,
-        isAdmin: ADMIN_WCA_IDS.includes(a),
-      };
-    }
-  }
+  const authors = await authorProfilesFor(new Map(posts.map((p) => [p.author_id, p.author_name])));
 
   // 可选鉴权(viewer 已在上面取):游客照常读,登录者多拿自己的反应
   const myReactions: Record<number, string> = {};
@@ -737,6 +752,62 @@ forumRoutes.get('/forum/latest', async (c) => {
     threads: rows.map((r) => ({
       ...threadJson(r), forumSlug: r.forum_slug, forumNameEn: r.forum_name_en, forumNameZh: r.forum_name_zh,
     })),
+  });
+});
+
+// ==================== GET /v1/forum/feed ====================
+// Reddit/X 式阅读流:仍以主题首帖为内容单元,复用回复、反应、审核和版块归属。
+forumRoutes.get('/forum/feed', async (c) => {
+  noStore(c);
+  const rawSort = c.req.query('sort') ?? 'active';
+  if (rawSort !== 'active' && rawSort !== 'latest') {
+    return c.json({ error: 'sort must be active or latest' }, 400);
+  }
+  const sort = rawSort as 'active' | 'latest';
+  const page = posInt(c.req.query('page'), 1, 1, 100000);
+  const size = posInt(c.req.query('size'), 20, 1, 50);
+  const orderBy = sort === 'latest' ? 't.created_at DESC' : 't.last_post_at DESC';
+
+  const totals = await query<{ n: number }>(
+    `SELECT COUNT(*)::int AS n FROM forum_threads t
+     WHERE NOT t.is_deleted AND t.status = 'approved' AND EXISTS (
+       SELECT 1 FROM forum_posts p
+       WHERE p.thread_id = t.id AND NOT p.is_deleted AND p.status = 'approved'
+     )`,
+  );
+  const rows = await query<ThreadRow & { first_post_id: string; first_post_content: string }>(
+    `SELECT ${THREAD_COLS}, f.slug AS forum_slug, f.name_en AS forum_name_en, f.name_zh AS forum_name_zh,
+            fp.id AS first_post_id, fp.content AS first_post_content
+     FROM forum_threads t
+     JOIN forum_forums f ON f.id = t.forum_id
+     JOIN LATERAL (
+       SELECT p.id, p.content FROM forum_posts p
+       WHERE p.thread_id = t.id AND NOT p.is_deleted AND p.status = 'approved'
+       ORDER BY p.id LIMIT 1
+     ) fp ON TRUE
+     WHERE NOT t.is_deleted AND t.status = 'approved'
+     ORDER BY ${orderBy}, t.id DESC LIMIT ? OFFSET ?`,
+    [size, (page - 1) * size],
+  );
+  const postIds = rows.map((r) => Number(r.first_post_id));
+  const reactions = await reactionsFor(postIds);
+  const authors = await authorProfilesFor(new Map(rows.map((r) => [r.author_id, r.author_name])));
+
+  return c.json({
+    threads: rows.map((r) => ({
+      ...threadJson(r),
+      forumSlug: r.forum_slug,
+      forumNameEn: r.forum_name_en,
+      forumNameZh: r.forum_name_zh,
+      firstPostId: Number(r.first_post_id),
+      excerpt: excerptFromMarkdown(r.first_post_content, 240),
+      reactions: reactions.get(Number(r.first_post_id)) ?? [],
+      author: authors[r.author_id],
+    })),
+    total: totals[0]?.n ?? 0,
+    page,
+    size,
+    sort,
   });
 });
 

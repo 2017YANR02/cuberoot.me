@@ -1,5 +1,4 @@
-// Forum-local formatting helpers (relative time, compact counts).
-// Kept inside app/[lang]/forum/ on purpose — forum-only, not a site-wide util.
+// Forum formatting shared by the forum route family and landing-page feed preview.
 
 import { toIsoDate } from '@/lib/wca-date';
 import type { Lang } from '@/i18n/tr';

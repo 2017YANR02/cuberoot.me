@@ -159,6 +159,23 @@ export interface LatestThread extends ForumThread {
   forumNameZh: string;
 }
 
+export type ForumFeedSort = 'active' | 'latest';
+
+export interface ForumFeedThread extends LatestThread {
+  firstPostId: number;
+  excerpt: string;
+  reactions: PostReaction[];
+  author: PostAuthor;
+}
+
+export interface ForumFeedData {
+  threads: ForumFeedThread[];
+  total: number;
+  page: number;
+  size: number;
+  sort: ForumFeedSort;
+}
+
 export interface SearchThread extends LatestThread {
   snippet: string | null;
 }
@@ -208,6 +225,12 @@ export async function fetchThread(id: number, page: number, size: number): Promi
 
 export async function fetchLatestThreads(limit: number): Promise<{ threads: LatestThread[] }> {
   return apiGet<{ threads: LatestThread[] }>('/latest', { limit: String(limit) });
+}
+
+export async function fetchForumFeed(
+  sort: ForumFeedSort, page: number, size: number,
+): Promise<ForumFeedData> {
+  return apiGet<ForumFeedData>('/feed', { sort, page: String(page), size: String(size) });
 }
 
 export async function searchForum(q: string, page: number, size: number): Promise<SearchData> {
