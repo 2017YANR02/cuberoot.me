@@ -162,7 +162,7 @@ export default function FeedbackModal({ lang, onClose }: Props) {
             <span className="fb-done-icon"><Check size={28} strokeWidth={2.4} /></span>
             <p>{t('收到了,谢谢你的反馈 ♡', 'Got it — thanks for the feedback ♡')}</p>
             <AppLink href="/feedback" className="fb-admin-link" onClick={onClose}>
-              <MessagesSquare size={14} /> {t('在「我的反馈」查看进度和回复', 'Track it in My feedback')}
+              <MessagesSquare size={14} /> {t('在公开反馈页查看进度和回复', 'Follow it on the public feedback page')}
             </AppLink>
           </div>
         ) : !user ? (
@@ -245,7 +245,7 @@ export default function FeedbackModal({ lang, onClose }: Props) {
 
             <div className="fb-links">
               <AppLink href="/feedback" className="fb-admin-link" onClick={onClose}>
-                <MessagesSquare size={14} /> {t('我的反馈', 'My feedback')}
+                <MessagesSquare size={14} /> {t('公开反馈', 'Public feedback')}
               </AppLink>
               {isAdmin() && (
                 <AppLink href="/feedback/admin" className="fb-admin-link" onClick={onClose}>

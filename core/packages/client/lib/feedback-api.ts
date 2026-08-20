@@ -54,6 +54,29 @@ export interface AdminFeedbackItem {
   media: FeedbackMedia[];
 }
 
+/** 公开反馈列表 / 线程中的安全字段,不含联系方式与浏览环境。 */
+export interface PublicFeedbackItem {
+  id: number;
+  kind: FeedbackKind;
+  body: string;
+  wcaId: string;
+  wcaName: string;
+  status: FeedbackStatus;
+  createdAt: string;
+  updatedAt: string;
+  lastReplyAt: string | null;
+  lastReplyRole: FeedbackRole | null;
+  replyCount: number;
+  media: FeedbackMedia[];
+}
+
+export interface PublicFeedbackPage {
+  items: PublicFeedbackItem[];
+  total: number;
+  page: number;
+  size: number;
+}
+
 /** 用户自己的反馈线程(列表项)。 */
 export interface MyFeedbackItem {
   id: number;
@@ -78,7 +101,7 @@ export interface FeedbackMessage {
 }
 
 export interface FeedbackThread {
-  feedback: AdminFeedbackItem;
+  feedback: PublicFeedbackItem;
   messages: FeedbackMessage[];
 }
 
@@ -146,6 +169,13 @@ export function feedbackMediaUrl(id: number): string {
 }
 
 // ── 对话(GitHub issue 式来回) ──────────────────────────────────────────────────
+/** 公开反馈流。 */
+export async function fetchPublicFeedback(page = 1, size = 20): Promise<PublicFeedbackPage> {
+  const qs = new URLSearchParams({ page: String(page), size: String(size) });
+  const r = await fetch(apiUrl(`/v1/feedback/public?${qs}`), { headers: authHeaders(false), cache: 'no-store' });
+  return handle<PublicFeedbackPage>(r);
+}
+
 /** 当前登录用户自己的反馈线程列表。 */
 export async function fetchMyFeedback(): Promise<MyFeedbackItem[]> {
   const r = await fetch(apiUrl('/v1/feedback/mine'), { headers: authHeaders(false), cache: 'no-store' });
@@ -153,20 +183,20 @@ export async function fetchMyFeedback(): Promise<MyFeedbackItem[]> {
   return data.items ?? [];
 }
 
-/** 「有管理员新回复」未读线程数(给入口红点)。 */
+/** 「有其他人新回复」未读线程数(给入口红点)。 */
 export async function fetchMyFeedbackUnread(): Promise<number> {
   const r = await fetch(apiUrl('/v1/feedback/mine/unread'), { headers: authHeaders(false), cache: 'no-store' });
   const data = await handle<{ count: number }>(r);
   return data.count ?? 0;
 }
 
-/** 单条反馈的完整对话(发帖人或 admin);取阅即标记该方已读。 */
+/** 单条反馈的公开完整对话;作者 / admin 取阅时标记已读。 */
 export async function fetchFeedbackThread(id: number): Promise<FeedbackThread> {
   const r = await fetch(apiUrl(`/v1/feedback/${id}/thread`), { headers: authHeaders(false), cache: 'no-store' });
   return handle<FeedbackThread>(r);
 }
 
-/** 回帖(发帖人或 admin)。 */
+/** 任意登录用户回帖。 */
 export async function replyToFeedback(id: number, body: string): Promise<{ id: number }> {
   const r = await fetch(apiUrl(`/v1/feedback/${id}/reply`), {
     method: 'POST',

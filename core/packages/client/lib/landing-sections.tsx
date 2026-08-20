@@ -5,7 +5,7 @@
 import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, Code as CodeIcon,
-  Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, Eye, Palette,
+  Brain, Box, Sigma, Scale, Sprout, Brush, MessageCircle, MessagesSquare, Shapes, Blocks, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School,
   FileText, Table2, Award, Radio,
   type LucideIcon,
@@ -88,6 +88,7 @@ export const TEXTS: Record<string, { en: string; zh: string
   whyCube:         { en: 'Why Cube', zh: '为何学魔方'
 },
   forum:           { en: 'Forum', zh: '论坛' },
+  feedback:        { en: 'Feedback', zh: '反馈' },
   meet:            { en: 'Meeting', zh: '会议' },
   achievements:    { en: 'Achievements', zh: '成就' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线'
@@ -190,10 +191,11 @@ export const SECTIONS: Section[] = [
     eyebrow: { en: 'OTHER', zh: '其他' },
     title:   { en: 'Read, build, explore.', zh: '阅读、开发、探索。'
     },
-    sub:     { en: 'Forum, code notes, blog, link directory, unofficial world records.', zh: '论坛、代码笔记、博客、站点导航与非官方纪录。'
+    sub:     { en: 'Forum, public feedback, code notes, blog, link directory and unofficial world records.', zh: '论坛、公开反馈、代码笔记、博客、站点导航与非官方纪录。'
     },
     cards: [
       { id: 'forum', href: '/forum', internal: true, tier: 'medium', Icon: MessagesSquare, nameKey: 'forum' },
+      { id: 'feedback', href: '/feedback', internal: true, tier: 'medium', Icon: MessageCircle, nameKey: 'feedback' },
       { id: 'dev', href: '/dev', internal: true, tier: 'medium', Icon: CodeIcon, nameKey: 'dev' },
       { id: 'blog', href: '/blog/', internal: false, tier: 'medium', Icon: BookOpen, nameKey: 'blog' },
       { id: 'site', href: '/site',  internal: true,  tier: 'medium', Icon: Compass,  nameKey: 'sitesDirectory' },
