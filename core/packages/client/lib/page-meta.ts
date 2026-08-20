@@ -571,6 +571,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Cubing tutorials — from a first solve through CFOP and Roux, organised by topic, with diagrams and animations.',
     },
   },
+  'live-script': {
+    title: { zh: '直播话术', en: 'Livestream Script' },
+    description: {
+      zh: '魔方根直播提词稿：从开场、自我介绍和魔方数学，到学习价值、课程说明、问答与收尾。',
+      en: 'A structured CubeRoot livestream script covering the opening, introduction, cube mathematics, learning value, courses, Q&A, and closing.',
+    },
+  },
   'wb': { title: { zh: '非官方纪录', en: 'World Bests' } },
   'wca': {
     title: { zh: 'WCA 统计', en: 'WCA Statistics' },
