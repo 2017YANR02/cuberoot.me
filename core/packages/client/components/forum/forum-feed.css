@@ -100,6 +100,46 @@
   overflow-wrap: anywhere;
 }
 
+.community-feed-images {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  width: min(100%, 680px);
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.community-feed-images.is-single {
+  grid-template-columns: minmax(0, 1fr);
+  width: min(100%, 620px);
+}
+
+.community-feed-images a {
+  display: block;
+  min-width: 0;
+  aspect-ratio: 16 / 10;
+}
+
+.community-feed-images img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.community-feed-images.is-single a {
+  aspect-ratio: auto;
+  max-height: min(68vh, 620px);
+}
+
+.community-feed-images.is-single img {
+  height: auto;
+  max-height: min(68vh, 620px);
+  object-fit: contain;
+  object-position: left center;
+}
+
 .community-feed-meta {
   display: flex;
   align-items: center;
@@ -177,6 +217,7 @@
   .community-feed-title { font-size: 0.96rem; }
   .community-feed-excerpt { font-size: 0.84rem; -webkit-line-clamp: 2; }
   .community-feed-meta { gap: 11px; }
+  .community-feed-images { border-radius: 8px; }
   .community-feed-active { flex-basis: 100%; }
   .forum-feed-preview { min-height: 500px; margin-bottom: 2.5rem; }
   .forum-feed-preview-header { align-items: flex-start; flex-direction: column; }

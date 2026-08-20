@@ -2,13 +2,19 @@
 
 // /forum/new — start a new thread. ?f= preselects the target forum.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsString } from 'nuqs';
 import { Key } from 'lucide-react';
 import { tr, T, useLang } from '@/i18n/tr';
 import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
-import { fetchForumIndex, createThread, type ForumIndexData } from '@/lib/forum-api';
+import {
+  createThread,
+  deleteForumVideo,
+  fetchForumIndex,
+  type ForumIndexData,
+  type ForumVideoDraft,
+} from '@/lib/forum-api';
 import { ForumBreadcrumbs } from '../_components/ForumBreadcrumbs';
 import { ForumMarkdownEditor } from '../_components/ForumMarkdownEditor';
 import '../forum.css';
@@ -28,8 +34,19 @@ export default function ForumNewThreadPage() {
   const [index, setIndex] = useState<ForumIndexData | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [video, setVideo] = useState<ForumVideoDraft | null>(null);
+  const [mediaBusy, setMediaBusy] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const videoRef = useRef<ForumVideoDraft | null>(null);
+
+  useEffect(() => { videoRef.current = video; }, [video]);
+  useEffect(() => () => {
+    const pending = videoRef.current;
+    if (!pending) return;
+    URL.revokeObjectURL(pending.previewUrl);
+    void deleteForumVideo(pending.id).catch(() => {});
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,14 +75,16 @@ export default function ForumNewThreadPage() {
     const body = content.trim();
     if (!selected) return setError(tr({ zh: '请选择版块', en: 'Pick a forum' }));
     if (!t) return setError(tr({ zh: '标题不能为空', en: 'Title is required' }));
-    if (!body) return setError(tr({ zh: '内容不能为空', en: 'Content is required' }));
+    if (!body && !video) return setError(tr({ zh: '请填写文字或上传视频', en: 'Write something or upload a video' }));
     if (body.length > MAX_CONTENT_LEN) {
       return setError(tr({ zh: `内容超过 ${MAX_CONTENT_LEN} 字上限`, en: `Content exceeds ${MAX_CONTENT_LEN} characters` }));
     }
     setSubmitting(true);
     setError('');
     try {
-      const res = await createThread(selected, t, body);
+      const res = await createThread(selected, t, body, video?.id);
+      if (video) URL.revokeObjectURL(video.previewUrl);
+      videoRef.current = null;
       const prefix = lang === 'zh' ? '/zh' : '';
       router.push(`${prefix}/forum/t/${res.id}`);
     } catch (e) {
@@ -74,7 +93,7 @@ export default function ForumNewThreadPage() {
     }
   };
 
-  const canSubmit = !!selected && !!title.trim() && !!content.trim() && !submitting;
+  const canSubmit = !!selected && !!title.trim() && (!!content.trim() || !!video) && !submitting && !mediaBusy;
 
   return (
     <div className="forum-page forum-new-page">
@@ -133,11 +152,14 @@ export default function ForumNewThreadPage() {
           </label>
 
           <div className="forum-new-field">
-            <span className="forum-new-label"><T zh="内容" en="Content" /></span>
+            <span className="forum-new-label"><T zh="内容与媒体" en="Content and media" /></span>
             <ForumMarkdownEditor
               value={content}
               onChange={setContent}
-              placeholder={tr({ zh: '展开说说…支持 Markdown 与标红 / 标蓝 / 活动画等指令', en: 'Tell us more… Markdown plus highlights / alg players and more' })}
+              video={video}
+              onVideoChange={setVideo}
+              onUploadStateChange={setMediaBusy}
+              placeholder={tr({ zh: '写点文字，或直接上传图片 / 视频…', en: 'Write something, or upload images / video…' })}
             />
           </div>
 

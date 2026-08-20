@@ -796,11 +796,18 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'ForumVideoPlayer',
+    import: "import { ForumVideoPlayer } from '@/components/forum/ForumVideoPlayer';",
+    category: 'more',
+    zh: '论坛动态、主题页与编辑器共用的响应式短视频播放器，支持移动端原地播放和时长标记。',
+    en: 'Responsive short-video player shared by forum feeds, threads, and editors, with inline mobile playback and a duration label.',
+  },
+  {
     name: 'ForumFeedList',
     import: "import { ForumFeedList } from '@/components/forum/ForumFeedList';",
     category: 'more',
-    zh: '论坛与首页共用的社区动态流,展示主题首帖摘录、作者、版块、反应和活跃度。',
-    en: 'Shared community feed for the forum and landing page, with first-post excerpts, authors, boards, reactions, and activity.',
+    zh: '论坛与首页共用的社区动态流，展示主题首帖文字、图片、视频、作者、版块、反应和活跃度。',
+    en: 'Shared community feed for the forum and landing page, with first-post text, images, videos, authors, boards, reactions, and activity.',
   },
   {
     name: 'ForumFeedPreview',

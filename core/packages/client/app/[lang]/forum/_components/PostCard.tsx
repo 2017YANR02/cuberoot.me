@@ -13,6 +13,7 @@ import { renderArticleMarkdown } from '@/lib/article-markdown';
 import type { ForumPost, PostAuthor, ReactionKind } from '@/lib/forum-api';
 import { formatRelativeTime, formatJoinedDate, formatCount } from '@/lib/forum-format';
 import { ReactionBar } from './ReactionBar';
+import { ForumVideoPlayer } from '@/components/forum/ForumVideoPlayer';
 
 export function PostCard({
   post, author, myKind, permalink, canEdit, canDelete, canQuote, canReport,
@@ -62,7 +63,7 @@ export function PostCard({
   }
 
   // 待审/驳回楼层:非作者非管理员拿到的是掩码空内容 → 只render占位,楼号不塌
-  if (post.status !== 'approved' && !post.content) {
+  if (post.status !== 'approved' && !post.content && (post.videos ?? []).length === 0) {
     return (
       <article className="forum-post is-deleted" id={`post-${post.id}`}>
         <div className="forum-post-deleted">
@@ -150,7 +151,8 @@ export function PostCard({
               {tr({ zh: '驳回原因:', en: 'Reason: ' })}{post.reviewNote}
             </div>
           )}
-          {renderArticleMarkdown(post.content)}
+          {post.content && renderArticleMarkdown(post.content)}
+          {(post.videos ?? []).map((video) => <ForumVideoPlayer key={video.id} video={video} />)}
         </div>
         )}
         {!bodyOverride && (

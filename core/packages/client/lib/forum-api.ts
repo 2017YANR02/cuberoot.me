@@ -100,6 +100,19 @@ export interface PostReaction {
   names: string[];
 }
 
+export interface ForumVideo {
+  id: number;
+  token: string;
+  mime: string;
+  sizeBytes: number;
+  durationMs: number;
+}
+
+export interface ForumVideoDraft extends ForumVideo {
+  fileName: string;
+  previewUrl: string;
+}
+
 export interface ForumPost {
   id: number;
   authorId: string;
@@ -114,6 +127,7 @@ export interface ForumPost {
   reviewNote: string | null;
   postNo: number;
   reactions: PostReaction[];
+  videos: ForumVideo[];
 }
 
 export interface PostAuthor {
@@ -164,6 +178,8 @@ export type ForumFeedSort = 'active' | 'latest';
 export interface ForumFeedThread extends LatestThread {
   firstPostId: number;
   excerpt: string;
+  imageUrls: string[];
+  videos: ForumVideo[];
   reactions: PostReaction[];
   author: PostAuthor;
 }
@@ -238,9 +254,25 @@ export async function searchForum(q: string, page: number, size: number): Promis
 }
 
 export async function createThread(
-  forumSlug: string, title: string, content: string,
+  forumSlug: string, title: string, content: string, videoId?: number,
 ): Promise<{ ok: boolean; id: number; status: ForumReviewStatus }> {
-  return apiSend('POST', '/threads', { forumSlug, title, content });
+  return apiSend('POST', '/threads', { forumSlug, title, content, videoId });
+}
+
+export async function uploadForumVideo(file: File): Promise<ForumVideo> {
+  return handleApi<ForumVideo>(await fetch(`${API_BASE}/video`, {
+    method: 'POST',
+    headers: authHeaders(false),
+    body: file,
+  }));
+}
+
+export async function deleteForumVideo(id: number): Promise<{ ok: boolean }> {
+  return apiSend('DELETE', `/video/${id}`);
+}
+
+export function forumVideoUrl(token: string): string {
+  return `${API_BASE}/video/${encodeURIComponent(token)}`;
 }
 
 export async function createPost(

@@ -2,9 +2,12 @@
  * 论坛(/forum)路由:分类/子版索引、主题列表、帖子分页、发帖/回帖/编辑/软删、
  * 置顶/锁帖(管理员)、反应(一人一帖一条)、浏览计数、最新活跃、搜索、举报。
  * 结构对标 speedsolving.com;作者键 = 全站归属键 ownerKey(真 wca_id 或 u<uid>)。
- * 表:forum_categories / forum_forums / forum_threads / forum_posts / forum_reactions / forum_reports(0066)。
+ * 表:forum_categories / forum_forums / forum_threads / forum_posts / forum_reactions / forum_reports(0066)
+ * + forum_videos(0163)。
  */
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
@@ -12,7 +15,18 @@ import {
 } from '../utils/recon_helpers.js';
 import type { WcaUser } from '../utils/recon_helpers.js';
 import { notify, adminRecipients } from '../utils/notify.js';
-import { excerptFromMarkdown } from '@cuberoot/shared/forum';
+import {
+  FORUM_VIDEO_MAX_DURATION_MS,
+  excerptFromMarkdown,
+  imageUrlsFromMarkdown,
+} from '@cuberoot/shared/forum';
+import {
+  readVideoDurationMs,
+  receiveVideoUpload,
+  storedVideoResponse,
+  VideoUploadError,
+  VIDEO_EXT,
+} from '../utils/video_upload.js';
 
 export const forumRoutes = new Hono();
 
@@ -72,6 +86,11 @@ function escapeLike(s: string): string {
 
 // 正文长度上限。长文并入论坛后(原 /article 无此限),放宽到 50k 让教程级长帖能发。
 const MAX_CONTENT_LEN = 50000;
+const FORUM_VIDEO_MAX_BYTES = 200 * 1024 * 1024;
+const FORUM_VIDEO_DAILY_BYTES = 1024 * 1024 * 1024;
+const FORUM_VIDEO_DAILY_COUNT = 20;
+// Production deploys replace dist/, not this sibling directory, so uploads survive releases.
+const FORUM_VIDEO_DIR = process.env.FORUM_VIDEO_DIR || path.join(process.cwd(), '.forum-videos');
 
 // ── 发帖审核(issue #36,Discourse approve-post-count 模式)────────────────────
 // 新用户前 N 帖(含主题首帖)须管理员过审才公开;已过审帖数 >= N 视为可信直发。
@@ -155,6 +174,97 @@ async function reactionsFor(postIds: number[]): Promise<Map<number, { kind: stri
   return map;
 }
 
+interface ForumVideoRow {
+  id: number | string;
+  post_id?: number | string;
+  public_token: string;
+  storage_key: string;
+  mime: string;
+  size_bytes: number | string;
+  duration_ms: number | string;
+}
+
+interface ForumVideoJson {
+  id: number;
+  token: string;
+  mime: string;
+  sizeBytes: number;
+  durationMs: number;
+}
+
+function videoJson(row: ForumVideoRow): ForumVideoJson {
+  return {
+    id: Number(row.id),
+    token: row.public_token,
+    mime: row.mime,
+    sizeBytes: Number(row.size_bytes),
+    durationMs: Number(row.duration_ms),
+  };
+}
+
+/** Remove abandoned upload drafts opportunistically so browser closes do not leak storage forever. */
+async function cleanupExpiredForumVideos(): Promise<void> {
+  const expired = await query<{ storage_key: string }>(
+    `DELETE FROM forum_videos
+     WHERE post_id IS NULL AND created_at < NOW() - INTERVAL '1 day'
+     RETURNING storage_key`,
+  );
+  await Promise.all(expired.map(async ({ storage_key: storageKey }) => {
+    if (path.basename(storageKey) !== storageKey) return;
+    await fs.unlink(path.join(FORUM_VIDEO_DIR, storageKey)).catch(() => {});
+  }));
+}
+
+async function videosForPosts(postIds: number[]): Promise<Map<number, ForumVideoJson[]>> {
+  const result = new Map<number, ForumVideoJson[]>();
+  if (postIds.length === 0) return result;
+  const rows = await query<ForumVideoRow & { post_id: string }>(
+    `SELECT id, post_id, public_token, storage_key, mime, size_bytes, duration_ms
+     FROM forum_videos WHERE post_id IN (${postIds.map(() => '?').join(',')}) ORDER BY id`,
+    postIds,
+  );
+  for (const row of rows) {
+    const postId = Number(row.post_id);
+    const items = result.get(postId) ?? [];
+    items.push(videoJson(row));
+    result.set(postId, items);
+  }
+  return result;
+}
+
+async function serveForumVideo(c: Context, headOnly: boolean): Promise<Response> {
+  const token = c.req.param('token');
+  if (!token || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(token)) {
+    return c.json({ error: 'Not found' }, 404);
+  }
+  const rows = await query<ForumVideoRow>(
+    `SELECT v.id, v.public_token, v.storage_key, v.mime, v.size_bytes, v.duration_ms
+     FROM forum_videos v
+     JOIN forum_posts p ON p.id = v.post_id
+     JOIN forum_threads t ON t.id = p.thread_id
+     WHERE v.public_token = ? AND NOT p.is_deleted AND p.status = 'approved'
+       AND NOT t.is_deleted AND t.status = 'approved'`,
+    [token],
+  );
+  if (rows.length === 0) return c.json({ error: 'Not found' }, 404);
+  const row = rows[0];
+  if (path.basename(row.storage_key) !== row.storage_key) return c.json({ error: 'Not found' }, 404);
+  const filePath = path.join(FORUM_VIDEO_DIR, row.storage_key);
+  const stat = await fs.stat(filePath).catch(() => null);
+  const size = Number(row.size_bytes);
+  if (!stat?.isFile()) return c.json({ error: 'Not found' }, 404);
+  if (!Number.isSafeInteger(size) || size <= 0 || stat.size !== size) {
+    return c.json({ error: 'Video storage mismatch' }, 500);
+  }
+  return storedVideoResponse({
+    filePath,
+    mime: row.mime,
+    size,
+    rangeHeader: c.req.header('range'),
+    headOnly,
+  });
+}
+
 interface ForumAuthorProfile {
   name: string;
   avatarUrl: string | null;
@@ -212,6 +322,97 @@ async function authorProfilesFor(authorNames: Map<string, string>): Promise<Reco
   }
   return authors;
 }
+
+// ==================== /v1/forum/video ====================
+// 任何登录用户都可上传一条待绑定短视频;创建主题时才原子绑定首帖。
+forumRoutes.post('/forum/video', async (c) => {
+  noStore(c);
+  const authUser = await requireAuth(c);
+  checkRateLimit(getIp(c), { bucket: 'forum-video-upload-ip', max: 40 });
+  checkRateLimit(authUser.wcaId, { bucket: 'forum-video-upload-user', max: 25 });
+  await cleanupExpiredForumVideos();
+
+  const lengthHeader = c.req.header('content-length');
+  const announcedBytes = lengthHeader ? Number(lengthHeader) : null;
+  if (announcedBytes != null && (!Number.isSafeInteger(announcedBytes) || announcedBytes <= 0)) {
+    return c.json({ error: 'invalid video size' }, 400);
+  }
+  if (announcedBytes != null && announcedBytes > FORUM_VIDEO_MAX_BYTES) {
+    return c.json({ error: 'video too large (max 200MB)' }, 413);
+  }
+
+  const usageRows = await query<{ count: number | string; bytes: number | string }>(
+    `SELECT COUNT(*) AS count, COALESCE(SUM(size_bytes), 0) AS bytes
+     FROM forum_videos WHERE owner_id = ? AND created_at >= NOW() - INTERVAL '1 day'`,
+    [authUser.wcaId],
+  );
+  const dailyCount = Number(usageRows[0]?.count ?? 0);
+  const dailyBytes = Number(usageRows[0]?.bytes ?? 0);
+  if (dailyCount >= FORUM_VIDEO_DAILY_COUNT
+      || (announcedBytes != null && dailyBytes + announcedBytes > FORUM_VIDEO_DAILY_BYTES)) {
+    return c.json({ error: 'daily video upload quota exceeded' }, 429);
+  }
+
+  let received: Awaited<ReturnType<typeof receiveVideoUpload>>;
+  try {
+    received = await receiveVideoUpload(c.req.raw.body, FORUM_VIDEO_DIR, FORUM_VIDEO_MAX_BYTES);
+  } catch (error) {
+    if (error instanceof VideoUploadError) return c.json({ error: error.message }, error.status);
+    throw error;
+  }
+
+  const { stem, tempPath, mime, sizeBytes } = received;
+  try {
+    if (dailyBytes + sizeBytes > FORUM_VIDEO_DAILY_BYTES) {
+      return c.json({ error: 'daily video upload quota exceeded' }, 429);
+    }
+    const durationMs = await readVideoDurationMs(tempPath, mime);
+    if (durationMs == null) return c.json({ error: 'cannot read video duration' }, 400);
+    if (durationMs > FORUM_VIDEO_MAX_DURATION_MS) {
+      return c.json({ error: `video exceeds ${FORUM_VIDEO_MAX_DURATION_MS / 1000} seconds` }, 400);
+    }
+
+    const storageKey = `${stem}.${VIDEO_EXT[mime]}`;
+    const finalPath = path.join(FORUM_VIDEO_DIR, storageKey);
+    await fs.rename(tempPath, finalPath);
+    try {
+      const inserted = await query<ForumVideoRow>(
+        `INSERT INTO forum_videos
+           (owner_id, public_token, storage_key, mime, size_bytes, duration_ms)
+         VALUES (?, ?, ?, ?, ?, ?) RETURNING id, public_token, storage_key, mime, size_bytes, duration_ms`,
+        [authUser.wcaId, stem, storageKey, mime, sizeBytes, durationMs],
+      );
+      return c.json(videoJson(inserted[0]), 201);
+    } catch (error) {
+      await fs.unlink(finalPath).catch(() => {});
+      throw error;
+    }
+  } finally {
+    await fs.unlink(tempPath).catch(() => {});
+  }
+});
+
+forumRoutes.delete('/forum/video/:id', async (c) => {
+  noStore(c);
+  const authUser = await requireAuth(c);
+  const id = Number(c.req.param('id'));
+  if (!Number.isSafeInteger(id) || id <= 0) return c.json({ error: 'Not found' }, 404);
+  const removed = await query<{ storage_key: string }>(
+    `DELETE FROM forum_videos
+     WHERE id = ? AND owner_id = ? AND post_id IS NULL
+     RETURNING storage_key`,
+    [id, authUser.wcaId],
+  );
+  if (removed.length === 0) return c.json({ error: 'Not found' }, 404);
+  const storageKey = removed[0].storage_key;
+  if (path.basename(storageKey) === storageKey) {
+    await fs.unlink(path.join(FORUM_VIDEO_DIR, storageKey)).catch(() => {});
+  }
+  return c.json({ ok: true });
+});
+
+forumRoutes.get('/forum/video/:token', (c) => serveForumVideo(c, false));
+forumRoutes.on('HEAD', '/forum/video/:token', (c) => serveForumVideo(c, true));
 
 // ==================== GET /v1/forum/index ====================
 // 论坛首页:分类 → 子版(计数现算,不反规范化)+ 全站统计。
@@ -388,6 +589,7 @@ forumRoutes.get('/forum/t/:id', async (c) => {
 
   const postIds = posts.map((p) => Number(p.id));
   const reactions = await reactionsFor(postIds);
+  const videos = await videosForPosts(postIds);
 
   const authors = await authorProfilesFor(new Map(posts.map((p) => [p.author_id, p.author_name])));
 
@@ -421,6 +623,7 @@ forumRoutes.get('/forum/t/:id', async (c) => {
         reviewNote: canSee ? p.review_note : null,
         postNo: offset + i + 1,
         reactions: reactions.get(Number(p.id)) ?? [],
+        videos: p.is_deleted || !canSee ? [] : videos.get(Number(p.id)) ?? [],
       };
     }),
     authors,
@@ -434,13 +637,17 @@ forumRoutes.post('/forum/threads', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
-  const body = await c.req.json<{ forumSlug?: string; title?: string; content?: string }>();
+  const body = await c.req.json<{ forumSlug?: string; title?: string; content?: string; videoId?: number }>();
   const title = (body.title ?? '').trim();
   const content = (body.content ?? '').trim();
+  const videoId = body.videoId == null ? null : Number(body.videoId);
   if (!body.forumSlug) return c.json({ error: 'forumSlug is required' }, 400);
   if (!title) return c.json({ error: 'title is required' }, 400);
   if (title.length > 200) return c.json({ error: 'title exceeds 200 characters' }, 400);
-  if (!content) return c.json({ error: 'content is required' }, 400);
+  if (videoId != null && (!Number.isSafeInteger(videoId) || videoId <= 0)) {
+    return c.json({ error: 'videoId is invalid' }, 400);
+  }
+  if (!content && videoId == null) return c.json({ error: 'content or video is required' }, 400);
   if (content.length > MAX_CONTENT_LEN) return c.json({ error: `content exceeds ${MAX_CONTENT_LEN} characters` }, 400);
 
   const forums = await query<{ id: string; admin_only: boolean }>(
@@ -452,17 +659,40 @@ forumRoutes.post('/forum/threads', async (c) => {
   }
 
   const status = await statusFor(authUser, title + '\n' + content);
-  // 单条语句 CTE:主题 + 首帖一起落库,中途崩不会留无首帖的空主题;status 主题/首帖同值
-  const inserted = await query<{ thread_id: string }>(
-    `WITH nt AS (
-       INSERT INTO forum_threads (forum_id, title, author_id, author_name, last_post_author_id, last_post_author_name, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id
-     )
-     INSERT INTO forum_posts (thread_id, author_id, author_name, content, status)
-     SELECT id, ?, ?, ?, ? FROM nt RETURNING thread_id`,
-    [Number(forums[0].id), title, authUser.wcaId, authUser.name, authUser.wcaId, authUser.name, status,
-     authUser.wcaId, authUser.name, content, status],
-  );
+  // 主题、首帖与可选视频在一条 SQL 中落库;视频必须属于当前用户且尚未绑定。
+  const inserted = videoId == null
+    ? await query<{ thread_id: string }>(
+        `WITH nt AS (
+           INSERT INTO forum_threads (forum_id, title, author_id, author_name, last_post_author_id, last_post_author_name, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id
+         )
+         INSERT INTO forum_posts (thread_id, author_id, author_name, content, status)
+         SELECT id, ?, ?, ?, ? FROM nt RETURNING thread_id`,
+        [Number(forums[0].id), title, authUser.wcaId, authUser.name, authUser.wcaId, authUser.name, status,
+         authUser.wcaId, authUser.name, content, status],
+      )
+    : await query<{ thread_id: string }>(
+        `WITH fv AS (
+           SELECT id FROM forum_videos
+           WHERE id = ? AND owner_id = ? AND post_id IS NULL
+             AND created_at >= NOW() - INTERVAL '1 day'
+           FOR UPDATE
+         ), nt AS (
+           INSERT INTO forum_threads (forum_id, title, author_id, author_name, last_post_author_id, last_post_author_name, status)
+           SELECT ?, ?, ?, ?, ?, ?, ? FROM fv RETURNING id
+         ), np AS (
+           INSERT INTO forum_posts (thread_id, author_id, author_name, content, status)
+           SELECT id, ?, ?, ?, ? FROM nt RETURNING id, thread_id
+         ), linked AS (
+           UPDATE forum_videos v SET post_id = np.id, attached_at = NOW()
+           FROM np WHERE v.id = ? RETURNING np.thread_id
+         )
+         SELECT thread_id FROM linked`,
+        [videoId, authUser.wcaId,
+         Number(forums[0].id), title, authUser.wcaId, authUser.name, authUser.wcaId, authUser.name, status,
+         authUser.wcaId, authUser.name, content, status, videoId],
+      );
+  if (inserted.length === 0) return c.json({ error: 'video is unavailable; upload it again' }, 409);
   const threadId = Number(inserted[0].thread_id);
 
   // 新主题 → 管理员。回帖不给管理员发(否则热帖会把收件箱淹了),回帖只找主题作者。
@@ -473,7 +703,7 @@ forumRoutes.post('/forum/threads', async (c) => {
     actorKey: authUser.wcaId,
     actorName: authUser.name,
     title,
-    excerpt: content,
+    excerpt: content || title,
     link: status === 'pending' ? '/forum/review' : `/forum/t/${threadId}`,
   });
   return c.json({ ok: true, id: threadId, status });
@@ -791,6 +1021,7 @@ forumRoutes.get('/forum/feed', async (c) => {
   );
   const postIds = rows.map((r) => Number(r.first_post_id));
   const reactions = await reactionsFor(postIds);
+  const videos = await videosForPosts(postIds);
   const authors = await authorProfilesFor(new Map(rows.map((r) => [r.author_id, r.author_name])));
 
   return c.json({
@@ -801,6 +1032,8 @@ forumRoutes.get('/forum/feed', async (c) => {
       forumNameZh: r.forum_name_zh,
       firstPostId: Number(r.first_post_id),
       excerpt: excerptFromMarkdown(r.first_post_content, 240),
+      imageUrls: imageUrlsFromMarkdown(r.first_post_content),
+      videos: videos.get(Number(r.first_post_id)) ?? [],
       reactions: reactions.get(Number(r.first_post_id)) ?? [],
       author: authors[r.author_id],
     })),
