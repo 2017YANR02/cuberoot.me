@@ -198,10 +198,15 @@ export default function AlgProgressCasesPage() {
     const sets = [...new Set(queue.map(c => c.set))].sort();
     // 一套就是一场普通会话;多套才走合练(合练 key 要带 set 前缀,与 caseKey 的约定一致)
     const single = sets.length === 1;
-    const sessionId = single ? sets[0] : mixSessionId(sets);
+    const virtualDrill = single
+      ? virtualAlgSet(puzzle, sets[0])?.casesFromStoredKeys != null
+      : false;
+    const sessionId = single
+      ? (virtualDrill ? `${sets[0]}:drill` : sets[0])
+      : mixSessionId(sets);
     const keys = queue.map(c => (single ? c.key : `${c.set}:${c.key}`));
     const href = single
-      ? `/alg/${puzzle}/${sets[0]}/run`
+      ? `/alg/${puzzle}/${sets[0]}/run${virtualDrill ? '?drill=1' : ''}`
       : `/alg/${puzzle}/mix/run?sets=${sets.map(encodeURIComponent).join(',')}`;
     return { href, n: queue.length, apply: () => presetSessionSelection(puzzle, sessionId, keys) };
   }, []);
