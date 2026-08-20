@@ -164,16 +164,16 @@
       "Sweden"
     ],
     [
-      "[Porfyrkuben 2024](https://www.worldcubeassociation.org/competitions/Porfyrkuben2024)",
-      "10.00",
-      17,
-      "Sweden"
-    ],
-    [
       "[Mahalo iā Maui 2025](https://www.worldcubeassociation.org/competitions/MahaloiaMaui2025)",
       "10.00",
       9,
       "United States"
+    ],
+    [
+      "[Porfyrkuben 2024](https://www.worldcubeassociation.org/competitions/Porfyrkuben2024)",
+      "10.00",
+      17,
+      "Sweden"
     ],
     [
       "[Bristol Spring 2010](https://www.worldcubeassociation.org/competitions/BristolSpring2010)",
@@ -206,12 +206,6 @@
       "Sweden"
     ],
     [
-      "[Kanta-Hämeen Vääntelyt 2026](https://www.worldcubeassociation.org/competitions/KantaHameenKuutionvaantelyt2026)",
-      "9.82",
-      22,
-      "Finland"
-    ],
-    [
       "[Czech Open 2009](https://www.worldcubeassociation.org/competitions/CzechOpen2009)",
       "9.82",
       55,
@@ -222,6 +216,12 @@
       "9.82",
       11,
       "Sweden"
+    ],
+    [
+      "[Kanta-Hämeen Vääntelyt 2026](https://www.worldcubeassociation.org/competitions/KantaHameenKuutionvaantelyt2026)",
+      "9.82",
+      22,
+      "Finland"
     ],
     [
       "[VERK XVI 2026](https://www.worldcubeassociation.org/competitions/VERKXVI2026)",
@@ -254,16 +254,16 @@
       "Sweden"
     ],
     [
-      "[Bogotá No Duerme 2024](https://www.worldcubeassociation.org/competitions/BogotaNoDuerme2024)",
-      "9.75",
-      28,
-      "Colombia"
-    ],
-    [
       "[Val d'Aran Open 2024](https://www.worldcubeassociation.org/competitions/ValdAranOpen2024)",
       "9.75",
       28,
       "Spain"
+    ],
+    [
+      "[Bogotá No Duerme 2024](https://www.worldcubeassociation.org/competitions/BogotaNoDuerme2024)",
+      "9.75",
+      28,
+      "Colombia"
     ],
     [
       "[Welcome Back Again Jkpg 2021](https://www.worldcubeassociation.org/competitions/WelcomeBackAgainJkpg2021)",
@@ -380,16 +380,16 @@
       "Sweden"
     ],
     [
-      "[GA Cubers Mashed Potatoes 2022](https://www.worldcubeassociation.org/competitions/GACubersMashedPotatoes2022)",
-      "9.36",
-      25,
-      "United States"
-    ],
-    [
       "[Lyon Winter Open 2012](https://www.worldcubeassociation.org/competitions/LyonWinterOpen2012)",
       "9.36",
       25,
       "France"
+    ],
+    [
+      "[GA Cubers Mashed Potatoes 2022](https://www.worldcubeassociation.org/competitions/GACubersMashedPotatoes2022)",
+      "9.36",
+      25,
+      "United States"
     ],
     [
       "[Solving in Sayre 2025](https://www.worldcubeassociation.org/competitions/SolvinginSayre2025)",
@@ -482,6 +482,12 @@
       "Belarus"
     ],
     [
+      "[Kansas Championship 2026](https://www.worldcubeassociation.org/competitions/KansasChampionship2026)",
+      "9.13",
+      40,
+      "United States"
+    ],
+    [
       "[24 Horas El Tambo 2024](https://www.worldcubeassociation.org/competitions/24HorasElTambo2024)",
       "9.13",
       8,
@@ -542,18 +548,6 @@
       "United States"
     ],
     [
-      "[Great Lakes Championship 2026](https://www.worldcubeassociation.org/competitions/GreatLakesChampionship2026)",
-      "9.00",
-      228,
-      "United States"
-    ],
-    [
-      "[NZ South Island Champs 2025](https://www.worldcubeassociation.org/competitions/NZSouthIslandChampionship2025)",
-      "9.00",
-      34,
-      "New Zealand"
-    ],
-    [
       "[Sint Michielsgestel 2019](https://www.worldcubeassociation.org/competitions/CubeWeekendStMichielsgestel2019)",
       "9.00",
       45,
@@ -564,6 +558,18 @@
       "9.00",
       16,
       "Philippines"
+    ],
+    [
+      "[NZ South Island Champs 2025](https://www.worldcubeassociation.org/competitions/NZSouthIslandChampionship2025)",
+      "9.00",
+      34,
+      "New Zealand"
+    ],
+    [
+      "[Great Lakes Championship 2026](https://www.worldcubeassociation.org/competitions/GreatLakesChampionship2026)",
+      "9.00",
+      228,
+      "United States"
     ],
     [
       "[Danish Open 2014](https://www.worldcubeassociation.org/competitions/DanishOpen2014)",
@@ -624,12 +630,6 @@
       "8.87",
       31,
       "Indonesia"
-    ],
-    [
-      "[Great Lakes Championship 2025](https://www.worldcubeassociation.org/competitions/GreatLakesChampionship2025)",
-      "8.85",
-      257,
-      "United States"
     ]
   ]
 }

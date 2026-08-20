@@ -53,6 +53,20 @@
     ],
     [
       77,
+      "[Bence Barát](https://www.worldcubeassociation.org/persons/2008BARA01)",
+      "Hungary",
+      "[Hungarian Open 2008](https://www.worldcubeassociation.org/competitions/HungarianOpen2008)",
+      null
+    ],
+    [
+      77,
+      "[Dániel Varga](https://www.worldcubeassociation.org/persons/2008VARG01)",
+      "Hungary",
+      "[Hungarian Open 2008](https://www.worldcubeassociation.org/competitions/HungarianOpen2008)",
+      null
+    ],
+    [
+      77,
       "[Daniel Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA01)",
       "Denmark",
       "[Danish Special 2015](https://www.worldcubeassociation.org/competitions/DanishSpecial2015)",
@@ -66,20 +80,6 @@
       null
     ],
     [
-      76,
-      "[Bence Barát](https://www.worldcubeassociation.org/persons/2008BARA01)",
-      "Hungary",
-      "[Hungarian Open 2008](https://www.worldcubeassociation.org/competitions/HungarianOpen2008)",
-      null
-    ],
-    [
-      76,
-      "[Dániel Varga](https://www.worldcubeassociation.org/persons/2008VARG01)",
-      "Hungary",
-      "[Hungarian Open 2008](https://www.worldcubeassociation.org/competitions/HungarianOpen2008)",
-      null
-    ],
-    [
       67,
       "[Henrik Buus Aagaard](https://www.worldcubeassociation.org/persons/2006BUUS01)",
       "Denmark",
@@ -87,7 +87,7 @@
       null
     ],
     [
-      65,
+      66,
       "[Szabolcs Szántai](https://www.worldcubeassociation.org/persons/2016SZAN01)",
       "Hungary",
       "[Hungarian Nationals 2016](https://www.worldcubeassociation.org/competitions/HungarianNationals2016)",
@@ -431,6 +431,13 @@
     ],
     [
       30,
+      "[Balázs Polyák](https://www.worldcubeassociation.org/persons/2017POLY02)",
+      "Hungary",
+      "[Budapest FMClvester 2024](https://www.worldcubeassociation.org/competitions/BudapestFMClvester2024)",
+      null
+    ],
+    [
+      30,
       "[Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03)",
       "Sweden",
       "[SSL 3 Kungsbacka 2017](https://www.worldcubeassociation.org/competitions/SSL3Kungsbacka2017)",
@@ -455,13 +462,6 @@
       "[İskender Aznavur](https://www.worldcubeassociation.org/persons/2013AZNA01)",
       "Turkey",
       "[Turkish Open 2013](https://www.worldcubeassociation.org/competitions/TurkishOpen2013)",
-      null
-    ],
-    [
-      29,
-      "[Balázs Polyák](https://www.worldcubeassociation.org/persons/2017POLY02)",
-      "Hungary",
-      "[Budapest FMClvester 2024](https://www.worldcubeassociation.org/competitions/BudapestFMClvester2024)",
       null
     ],
     [
