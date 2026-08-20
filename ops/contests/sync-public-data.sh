@@ -56,6 +56,26 @@ fi
 node "$SCRIPT_DIR/extract-event-categories.mjs" \
   "$IMPORT_DIR/events.json" "$IMPORT_DIR/export/export_event_categories.csv"
 
+validate_csv_header() {
+  local file="$1"
+  local expected="$2"
+  local actual
+  actual="$(sed -n '1{s/\r$//;p;}' "$IMPORT_DIR/export/$file")"
+  if [ "$actual" != "$expected" ]; then
+    echo "ERROR: unexpected CSV header in $file" >&2
+    echo "  expected: $expected" >&2
+    echo "  actual:   $actual" >&2
+    exit 1
+  fi
+}
+
+validate_csv_header export_event_categories.csv 'id,category_id,rank,name,short_name,color,hidden,video_based'
+validate_csv_header export_events.csv 'id,event_id,name,category_id,rank,format,default_round_format,participants,higher_is_better,submissions_allowed,has_memo,hidden,description,important_info,rule,created_at,updated_at'
+validate_csv_header export_persons.csv 'id,name,localized_name,region_code,wca_id,approved,created_at,updated_at'
+validate_csv_header export_contests.csv 'id,competition_id,state,name,short_name,type,region_code,city,venue,address,latitude_microdegrees,longitude_microdegrees,start_date,end_date,start_time,timezone,organizer_ids,contact,description,competitor_limit,participants,schedule,created_at,updated_at'
+validate_csv_header export_rounds.csv 'id,competition_id,event_id,round_number,round_type_id,format,time_limit_centiseconds,time_limit_cumulative_round_ids,cutoff_attempt_result,cutoff_number_of_attempts,proceed_type,proceed_value,open,created_at,updated_at'
+validate_csv_header export_results.csv 'id,event_id,date,approved,person_ids,region_code,super_region_code,attempts,best,average,record_category,regional_single_record,regional_average_record,competition_id,round_id,ranking,proceeds,video_link,discussion_link,created_at,updated_at'
+
 for file in export_event_categories.csv export_events.csv export_persons.csv export_contests.csv export_rounds.csv export_results.csv; do
   if ! sed -n '2p' "$IMPORT_DIR/export/$file" | grep -q .; then
     echo "ERROR: $file has no data rows" >&2
@@ -84,7 +104,7 @@ CREATE TEMP TABLE import_event_categories (
 );
 CREATE TEMP TABLE import_events (
   id text, event_id text, name text, category_id text, rank text, format text, default_round_format text,
-  participants text, submissions_allowed text, has_memo text, hidden text, description text,
+  participants text, higher_is_better text, submissions_allowed text, has_memo text, hidden text, description text,
   important_info text, rule text, created_at text, updated_at text
 );
 CREATE TEMP TABLE import_persons (
@@ -114,6 +134,18 @@ CREATE TEMP TABLE import_results (
 \copy import_contests FROM '$IMPORT_DIR/export/export_contests.csv' WITH (FORMAT csv, HEADER true)
 \copy import_rounds FROM '$IMPORT_DIR/export/export_rounds.csv' WITH (FORMAT csv, HEADER true)
 \copy import_results FROM '$IMPORT_DIR/export/export_results.csv' WITH (FORMAT csv, HEADER true)
+
+DO \$\$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM import_events
+    WHERE COALESCE(NULLIF(higher_is_better, '')::boolean, false)
+  ) THEN
+    RAISE EXCEPTION 'public export contains higher-is-better events unsupported by the pinned RecordRanks revision';
+  END IF;
+END
+\$\$;
 
 LOCK TABLE
   record_ranks.results,
