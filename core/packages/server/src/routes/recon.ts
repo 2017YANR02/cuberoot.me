@@ -6,6 +6,10 @@
  * NOTE: 迁移自 PHP recon/api/index.php → Hono
  */
 import { Hono, type Context } from 'hono';
+import { randomUUID } from 'node:crypto';
+import { createReadStream, promises as fs } from 'node:fs';
+import path from 'node:path';
+import { Readable } from 'node:stream';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
@@ -24,8 +28,67 @@ import { fetchCubingAttempts } from '../utils/cubing_proxy.js';
 import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
 import { normalizeReconSolution } from '@cuberoot/shared/recon-completion';
 import { notify, adminRecipients } from '../utils/notify.js';
+import { parseVideoByteRange, sniffVideo, VIDEO_EXT } from '../utils/video_upload.js';
+import { hasActiveMembership } from '../utils/membership.js';
 
 export const reconRoutes = new Hono();
+
+const RECON_VIDEO_MAX_BYTES = 200 * 1024 * 1024;
+const RECON_VIDEO_DAILY_BYTES = 1024 * 1024 * 1024;
+const RECON_VIDEO_DAILY_COUNT = 12;
+// Production deploys replace dist/, not this sibling directory, so uploads survive releases.
+const RECON_VIDEO_DIR = process.env.RECON_VIDEO_DIR || path.join(process.cwd(), '.recon-videos');
+
+interface ReconVideoRow {
+  mime: string;
+  storage_key: string;
+  size_bytes: number | string;
+}
+
+async function serveReconVideo(c: Context, headOnly: boolean): Promise<Response> {
+  const id = Number(c.req.param('id'));
+  if (!Number.isSafeInteger(id) || id <= 0) return c.json({ error: 'Not found' }, 404);
+
+  const rows = await query<ReconVideoRow>(
+    'SELECT mime, storage_key, size_bytes FROM recon_videos WHERE id = ?',
+    [id],
+  );
+  if (!rows.length) return c.json({ error: 'Not found' }, 404);
+
+  const row = rows[0];
+  if (path.basename(row.storage_key) !== row.storage_key) return c.json({ error: 'Not found' }, 404);
+  const filePath = path.join(RECON_VIDEO_DIR, row.storage_key);
+  const stat = await fs.stat(filePath).catch(() => null);
+  if (!stat?.isFile()) return c.json({ error: 'Not found' }, 404);
+
+  const size = Number(row.size_bytes);
+  if (!Number.isSafeInteger(size) || size <= 0 || stat.size !== size) {
+    return c.json({ error: 'Video storage mismatch' }, 500);
+  }
+
+  const rangeHeader = c.req.header('range');
+  const range = parseVideoByteRange(rangeHeader, size);
+  if (rangeHeader && !range) {
+    return new Response(null, {
+      status: 416,
+      headers: { 'Content-Range': `bytes */${size}`, 'Accept-Ranges': 'bytes' },
+    });
+  }
+
+  const start = range?.start ?? 0;
+  const end = range?.end ?? size - 1;
+  const headers = new Headers({
+    'Accept-Ranges': 'bytes',
+    'Cache-Control': 'public, max-age=300, s-maxage=31536000, immutable',
+    'Content-Length': String(end - start + 1),
+    'Content-Type': row.mime,
+  });
+  if (range) headers.set('Content-Range', `bytes ${start}-${end}/${size}`);
+  if (headOnly) return new Response(null, { status: range ? 206 : 200, headers });
+
+  const body = Readable.toWeb(createReadStream(filePath, { start, end })) as ReadableStream<Uint8Array>;
+  return new Response(body, { status: range ? 206 : 200, headers });
+}
 
 /** 通知用的 recon 抬头 + 站内链接。id 段即可打开详情页(前端 parseReconId 兼容 slug)。 */
 async function reconNotifyMeta(reconId: number): Promise<{ title: string; link: string }> {
@@ -978,6 +1041,115 @@ reconRoutes.get('/recon/list-persons', async (c) => {
   c.header('Cache-Control', 'public, max-age=300');
   return c.json(rows);
 });
+
+// POST /v1/recon/video — active members may upload one raw MP4/WebM/MOV file.
+// The public URL is appended to the existing video_url field by the submit form.
+reconRoutes.post('/recon/video', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const authUser = await requireAuth(c);
+  checkRateLimit(getIp(c), { bucket: 'recon-video-upload-ip', max: 30 });
+  checkRateLimit(authUser.wcaId, { bucket: 'recon-video-upload-user', max: 20 });
+
+  if (!(await hasActiveMembership(authUser.wcaId))) {
+    return c.json({ error: 'active membership required' }, 403);
+  }
+
+  const lengthHeader = c.req.header('content-length');
+  const announcedBytes = lengthHeader ? Number(lengthHeader) : null;
+  if (announcedBytes != null && (!Number.isSafeInteger(announcedBytes) || announcedBytes <= 0)) {
+    return c.json({ error: 'invalid video size' }, 400);
+  }
+  if (announcedBytes != null && announcedBytes > RECON_VIDEO_MAX_BYTES) {
+    return c.json({ error: 'video too large (max 200MB)' }, 413);
+  }
+
+  const usageRows = await query<{ count: number | string; bytes: number | string }>(
+    `SELECT COUNT(*) AS count, COALESCE(SUM(size_bytes), 0) AS bytes
+       FROM recon_videos
+      WHERE owner_wca_id = ? AND created_at >= NOW() - INTERVAL '1 day'`,
+    [authUser.wcaId],
+  );
+  const dailyCount = Number(usageRows[0]?.count ?? 0);
+  const dailyBytes = Number(usageRows[0]?.bytes ?? 0);
+  if (dailyCount >= RECON_VIDEO_DAILY_COUNT
+      || (announcedBytes != null && dailyBytes + announcedBytes > RECON_VIDEO_DAILY_BYTES)) {
+    return c.json({ error: 'daily video upload quota exceeded' }, 429);
+  }
+
+  const requestBody = c.req.raw.body;
+  if (!requestBody) return c.json({ error: 'video file is required' }, 400);
+
+  await fs.mkdir(RECON_VIDEO_DIR, { recursive: true });
+  const stem = randomUUID();
+  const tempKey = `${stem}.part`;
+  const tempPath = path.join(RECON_VIDEO_DIR, tempKey);
+  const file = await fs.open(tempPath, 'wx');
+  const reader = requestBody.getReader();
+  let total = 0;
+  let signature = Buffer.alloc(0);
+  let tooLarge = false;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value?.byteLength) continue;
+      total += value.byteLength;
+      if (total > RECON_VIDEO_MAX_BYTES) {
+        tooLarge = true;
+        await reader.cancel();
+        break;
+      }
+      if (signature.length < 32) {
+        const needed = 32 - signature.length;
+        signature = Buffer.concat([signature, Buffer.from(value.subarray(0, needed))]);
+      }
+      await file.write(value);
+    }
+  } catch (error) {
+    await file.close().catch(() => {});
+    await fs.unlink(tempPath).catch(() => {});
+    throw error;
+  }
+  await file.close();
+
+  if (tooLarge) {
+    await fs.unlink(tempPath).catch(() => {});
+    return c.json({ error: 'video too large (max 200MB)' }, 413);
+  }
+  if (total <= 0) {
+    await fs.unlink(tempPath).catch(() => {});
+    return c.json({ error: 'video file is required' }, 400);
+  }
+
+  const mime = sniffVideo(signature);
+  if (!mime) {
+    await fs.unlink(tempPath).catch(() => {});
+    return c.json({ error: 'file must be an MP4, WebM, or MOV video' }, 400);
+  }
+  if (dailyBytes + total > RECON_VIDEO_DAILY_BYTES) {
+    await fs.unlink(tempPath).catch(() => {});
+    return c.json({ error: 'daily video upload quota exceeded' }, 429);
+  }
+
+  const storageKey = `${stem}.${VIDEO_EXT[mime]}`;
+  const finalPath = path.join(RECON_VIDEO_DIR, storageKey);
+  await fs.rename(tempPath, finalPath);
+  try {
+    const inserted = await query<{ id: number | string }>(
+      `INSERT INTO recon_videos (owner_wca_id, storage_key, mime, size_bytes)
+       VALUES (?, ?, ?, ?) RETURNING id`,
+      [authUser.wcaId, storageKey, mime, total],
+    );
+    return c.json({ id: Number(inserted[0].id) }, 201);
+  } catch (error) {
+    await fs.unlink(finalPath).catch(() => {});
+    throw error;
+  }
+});
+
+reconRoutes.get('/recon/video/:id', (c) => serveReconVideo(c, false));
+reconRoutes.on('HEAD', '/recon/video/:id', (c) => serveReconVideo(c, true));
 
 // ==================== 动态参数路由（必须在所有具名路由之后注册） ====================
 // NOTE: /:id 会匹配任何 /v1/recon/xxx 路径，所以具名路由必须先注册

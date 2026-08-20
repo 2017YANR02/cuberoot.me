@@ -24,6 +24,7 @@ import path from 'node:path';
 import { query } from '../db/connection.js';
 import { requireAuth, requireAdmin, ADMIN_WCA_IDS, checkRateLimit } from '../utils/recon_helpers.js';
 import { sendBark } from '../monitors/bark.js';
+import { sniffVideo, VIDEO_EXT } from '../utils/video_upload.js';
 
 export const feedbackRoutes = new Hono();
 
@@ -56,24 +57,6 @@ function pngDimensions(buf: Buffer): { width: number | null; height: number | nu
   } catch { /* store NULL */ }
   return { width: null, height: null };
 }
-
-/** 嗅探视频容器(EBML/WebM 或 ISO BMFF mp4/mov);非视频返 null。优先信任嗅探结果。 */
-function sniffVideo(buf: Buffer): string | null {
-  if (buf.length >= 4 && buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3) {
-    return 'video/webm';
-  }
-  if (buf.length >= 12 && buf[4] === 0x66 && buf[5] === 0x74 && buf[6] === 0x79 && buf[7] === 0x70) {
-    const brand = buf.toString('ascii', 8, 12);
-    return brand.startsWith('qt') ? 'video/quicktime' : 'video/mp4';
-  }
-  return null;
-}
-
-const VIDEO_EXT: Record<string, string> = {
-  'video/mp4': 'mp4',
-  'video/webm': 'webm',
-  'video/quicktime': 'mov',
-};
 
 interface FeedbackRow {
   id: number | string;

@@ -4,11 +4,12 @@
 import type {
   ReconSolve, ReconComment, EditHistoryItem, ReconAlternative,
 } from '@cuberoot/shared';
-import { API_ORIGIN } from './api-base';
+import { API_ORIGIN, publicApiUrl } from './api-base';
 import { getWcaId } from './auth-store';
 import { authHeaders, handleApi } from './admin-api';
 
 const API_BASE = API_ORIGIN + '/v1/recon';
+export const RECON_VIDEO_MAX_BYTES = 200 * 1024 * 1024;
 
 function originForUrl(): string {
   return typeof window === 'undefined' ? 'http://localhost' : window.location.origin;
@@ -117,6 +118,20 @@ export async function updateRecon(id: number, fields: Partial<ReconSolve>): Prom
 
 export async function deleteRecon(id: number): Promise<{ ok: boolean }> {
   return apiDelete<{ ok: boolean }>(`/${id}`);
+}
+
+export async function uploadReconVideo(file: File): Promise<{ id: number; url: string }> {
+  const headers = new Headers(authHeaders(false));
+  headers.set('Content-Type', file.type || 'application/octet-stream');
+  const result = await handleApi<{ id: number }>(await fetch(`${API_BASE}/video`, {
+    method: 'POST',
+    headers,
+    body: file,
+  }));
+  return {
+    id: result.id,
+    url: publicApiUrl(`/v1/recon/video/${result.id}`),
+  };
 }
 
 // ── Alternatives ──

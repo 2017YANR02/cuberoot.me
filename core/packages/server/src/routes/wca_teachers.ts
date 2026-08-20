@@ -8,6 +8,7 @@
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
 import { ADMIN_WCA_IDS, requireAuth } from '../utils/recon_helpers.js';
+import { hasActiveMembership } from '../utils/membership.js';
 import {
   mayReplaceTeacher,
   normalizeWcaEventId,
@@ -77,13 +78,9 @@ wcaTeacherRoutes.put('/wca/teachers/:studentId/:eventId', async (c) => {
   if (studentWcaId === teacherWcaId) return c.json({ error: 'a person cannot be their own teacher' }, 400);
 
   if (!isAdmin) {
-    const memberships = await query<{ ok: number }>(
-      `SELECT 1 AS ok FROM memberships
-        WHERE wca_id = ? AND (expires_at IS NULL OR expires_at > NOW())
-        LIMIT 1`,
-      [actorWcaId],
-    );
-    if (!memberships.length) return c.json({ error: 'active membership required' }, 403);
+    if (!(await hasActiveMembership(actorWcaId))) {
+      return c.json({ error: 'active membership required' }, 403);
+    }
   }
 
   const people = await query<{ wca_id: string; name: string }>(

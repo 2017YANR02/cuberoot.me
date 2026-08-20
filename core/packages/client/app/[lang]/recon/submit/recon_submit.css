@@ -271,6 +271,21 @@
   border-color: color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
+.submit-video-upload {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.submit-video-upload .submit-reuse-btn {
+  margin-bottom: 0;
+}
+
+.submit-video-file {
+  display: none;
+}
+
 /* —— 复用以前的填写:选择器弹窗(YouTube「重用以前视频的详细信息」式)—— */
 .rr-overlay {
   position: fixed;
