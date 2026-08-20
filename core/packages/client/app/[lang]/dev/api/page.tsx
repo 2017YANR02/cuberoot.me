@@ -188,6 +188,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'recon', m: 'GET', p: '/v1/recon/check-duplicate', g: 'public', zh: '查重', en: 'Duplicate check' },
   { d: 'recon', m: 'GET', p: '/v1/recon/:id', g: 'public', zh: '单条复盘', en: 'Single recon' },
   { d: 'recon', m: 'GET', p: '/v1/recon/:id/same-scramble', g: 'public', zh: '同打乱的其它复盘', en: 'Same-scramble recons' },
+  { d: 'recon', m: 'POST', p: '/v1/recon/video', g: 'login', zh: '会员上传复盘视频', en: 'Member recon video upload' },
+  { d: 'recon', m: 'GET', p: '/v1/recon/video/:id', g: 'public', zh: '流式读取复盘视频', en: 'Stream recon video' },
   { d: 'recon', m: 'POST', p: '/v1/recon', g: 'login', zh: '新建复盘', en: 'Create recon' },
   { d: 'recon', m: 'PUT', p: '/v1/recon/:id', g: 'login', zh: '编辑复盘', en: 'Edit recon' },
   { d: 'recon', m: 'DELETE', p: '/v1/recon/:id', g: 'login', zh: '删除复盘', en: 'Delete recon' },

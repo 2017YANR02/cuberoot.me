@@ -52,6 +52,9 @@ core/packages/alg-build/data/alg_detections.log
 tmp/
 .tmp/
 
+# Local fallback storage for member-uploaded reconstruction videos.
+.recon-videos/
+
 # stats-build 中间产物 (historical_ranks 等)
 core/packages/stats-build/output/
 # wca_stats_extra 增量 build 拉取的服务器旧指纹快照(CI 临时文件)

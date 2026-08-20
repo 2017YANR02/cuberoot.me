@@ -92,7 +92,7 @@ export async function listPlans(): Promise<{ plans: MembershipPlan[]; payEnabled
   return handleApi(await fetch(`${BASE}/plans`));
 }
 
-export async function getMyMembership(): Promise<{ membership: Membership | null }> {
+export async function getMyMembership(): Promise<{ membership: Membership | null; isMember?: boolean }> {
   return handleApi(await fetch(`${BASE}/me`, { headers: authHeaders(false) }));
 }
 
