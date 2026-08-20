@@ -111,6 +111,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'learn/[orgSlug]/students/[studentId]': { title: { zh: '学习概览', en: 'Learning Overview' } },
+  'learn/[orgSlug]/students/[studentId]/sessions': { title: { zh: '课次与请假', en: 'Sessions and Leave' } },
   'learn/[orgSlug]/students/[studentId]/reports': { title: { zh: '每周教学报告', en: 'Weekly Teaching Reports' } },
   'learn/[orgSlug]/students/[studentId]/reports/[reportId]': { title: { zh: '每周教学报告详情', en: 'Weekly Teaching Report Details' } },
   'learn/[orgSlug]/students/[studentId]/feedback': { title: { zh: '课后反馈', en: 'Lesson Feedback' } },

@@ -232,19 +232,25 @@ const TABLES: Table[] = [
   { name: 'student_packages', domain: 'teaching', origin: '0147', evolved: [164], purpose: { zh: '学员课包合同快照；余额始终由课时流水求和', en: 'Student package contract snapshots whose balances are always derived from the credit ledger' }, cols: [
     { name: 'id UUID (PK), organization_id, student_id, product_id' }, { name: 'product / credit / price snapshots, lifecycle_status, acquisition_type' }, { name: 'valid_from, valid_until, external source tuple, credit_ledger_revision' },
   ] },
-  { name: 'teaching_sessions', domain: 'teaching', origin: '0147', purpose: { zh: '机构课堂时间、时区与履约状态', en: 'Tenant session schedule, timezone, and fulfilment state' }, cols: [
+  { name: 'teaching_sessions', domain: 'teaching', origin: '0147', evolved: [165], purpose: { zh: '机构课堂时间、时区与履约状态；取消课堂会原子释放目标补课', en: 'Tenant session schedule, timezone, and fulfilment state; cancellation atomically releases targeted makeups' }, cols: [
     { name: 'id UUID (PK), organization_id, title' }, { name: 'starts_at, ends_at, timezone, status, version' }, { name: 'started_at, completed_at, cancelled_at' },
   ] },
   { name: 'session_teachers', domain: 'teaching', origin: '0147', evolved: [149], naturalKey: true, purpose: { zh: '课堂教师分配；账号删除后仍保留教师 ID 与姓名快照', en: 'Session teacher assignments retaining ID and display-name snapshots after account deletion' }, cols: [
     { name: 'id UUID (PK), organization_id, session_id' }, { name: 'teacher_user_id, teacher_user_id_snapshot, teacher_display_name_snapshot' }, { name: 'role, created_at' },
   ] },
-  { name: 'attendance_records', domain: 'teaching', origin: '0147', naturalKey: true, purpose: { zh: '每位学员在每堂课的考勤与扣课规划，复合外键阻止跨租户引用', en: 'Per-student session attendance and planned credit consumption with composite tenant foreign keys' }, cols: [
+  { name: 'attendance_records', domain: 'teaching', origin: '0147', evolved: [165], naturalKey: true, purpose: { zh: '每位学员在每堂课的考勤与扣课规划；批准请假与 excused 状态必须同事务落地', en: 'Per-student session attendance and planned credit consumption; approved leave and excused status must commit together' }, cols: [
     { name: 'id UUID (PK), organization_id, session_id, student_id' }, { name: 'student_package_id, status, credit_cost, notes' }, { name: 'recorded_by_user_id, created_at, updated_at' },
   ] },
-  { name: 'lesson_credit_ledger', domain: 'teaching', origin: '0147', evolved: [164], naturalKey: true, purpose: { zh: '只追加的课时账本；扣课、退款与等额撤销由课包父行串行保护', en: 'Append-only credit ledger whose consumption, refunds, and exact reversals serialize on the package parent row' }, cols: [
+  { name: 'leave_requests', domain: 'teaching', origin: '0165', naturalKey: true, purpose: { zh: '按考勤留存待处理、批准、拒绝或取消的请假历史；批准与 excused 考勤原子同步', en: 'Auditable pending, approved, rejected, or cancelled leave history per attendance; approval atomically synchronizes excused attendance' }, cols: [
+    { name: 'id UUID (PK), organization_id, session_id, attendance_id, student_id' }, { name: 'status, reason, decision_reason, decided_at' }, { name: 'requester / decider live ids and immutable identity snapshots, created_at, updated_at' },
+  ] },
+  { name: 'makeup_attempts', domain: 'teaching', origin: '0165', naturalKey: true, purpose: { zh: '把已批准请假的来源考勤映射到未来目标考勤，并跟踪已安排、已完成、失败或取消状态', en: 'Map approved-leave source attendance to future target attendance and track scheduled, fulfilled, failed, or cancelled outcomes' }, cols: [
+    { name: 'id UUID (PK), organization_id, source / target session and attendance ids' }, { name: 'student_id, student_package_id, credit_cost, status, reason' }, { name: 'creator / resolver live ids and immutable identity snapshots, resolution_reason, timestamps' },
+  ] },
+  { name: 'lesson_credit_ledger', domain: 'teaching', origin: '0147', evolved: [164, 165], naturalKey: true, purpose: { zh: '只追加的课时账本；扣课、退款与等额撤销由课包父行串行保护，补课仅在到课完成时扣一次', en: 'Append-only credit ledger whose consumption, refunds, and exact reversals serialize on the package parent row; fulfilled makeup attendance consumes exactly once' }, cols: [
     { name: 'id BIGINT (PK), organization_id, student_package_id, student_id' }, { name: 'entry_type, delta, attendance_id, session_id, idempotency_key' }, { name: 'source / reversal references, actor snapshot, metadata, created_at' },
   ] },
-  { name: 'session_events', domain: 'teaching', origin: '0147', purpose: { zh: '只追加的课堂状态与考勤变更事件', en: 'Append-only session lifecycle and attendance-change events' }, cols: [
+  { name: 'session_events', domain: 'teaching', origin: '0147', evolved: [165], purpose: { zh: '只追加的课堂、考勤、请假与补课状态事件', en: 'Append-only session, attendance, leave, and makeup lifecycle events' }, cols: [
     { name: 'id BIGINT (PK), organization_id, session_id, event_type' }, { name: 'actor snapshot, request_id, metadata, created_at' },
   ] },
   { name: 'lesson_feedback', domain: 'teaching', origin: '0154', naturalKey: true, purpose: { zh: '已完课课堂按学员保存的只追加反馈修订历史', en: 'Append-only per-student feedback revisions for completed sessions' }, cols: [
@@ -576,6 +582,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 162, slug: 'recon_video_uploads', desc: { zh: '新增会员复盘视频上传元数据，以归属、格式、大小和创建时间约束服务器文件。', en: 'Add member recon-video upload metadata, constraining server files by owner, format, size, and creation time.' } },
   { n: 163, slug: 'forum_videos', desc: { zh: '新增论坛短视频上传元数据；任意登录账号可上传，发布主题时原子绑定首帖，时长由服务端读取媒体容器并校验。', en: 'Add forum short-video upload metadata; any signed-in account may upload, thread creation atomically attaches it to the first post, and the server validates duration from the media container.' } },
   { n: 164, slug: 'teaching_credit_adjustments', desc: { zh: '强化课时账本：以课包父行串行化所有写入，约束退款来源与等额撤销，并禁止余额降至负数。', en: 'Harden the credit ledger by serializing every write on its package, constraining refund sources and exact reversals, and preventing negative balances.' } },
+  { n: 165, slug: 'teaching_leave_makeups', desc: { zh: '新增可审计的请假与补课状态机：批准请假原子同步考勤，补课复用未来考勤且仅在到课完成时扣课，课堂取消会释放待履约补课。', en: 'Add auditable leave and makeup state machines: leave approval atomically synchronizes attendance, makeups reuse future attendance and consume only on attended completion, and session cancellation releases scheduled makeups.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

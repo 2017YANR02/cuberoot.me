@@ -104,6 +104,8 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   attendance_records: '课堂考勤属于机构履约历史,记录者账号随删除置空',
   lesson_credit_ledger: '课时余额流水不可变保留,操作者账号随删除置空且保留姓名快照',
   session_events: '课堂事件不可变保留,操作者账号随删除置空且保留姓名快照',
+  leave_requests: '请假申请与处理历史不可删除,申请人和处理人账号随删除置空且保留身份快照',
+  makeup_attempts: '补课安排与履约历史不可删除,创建人和处理人账号随删除置空且保留身份快照',
   lesson_feedback: '课后反馈修订历史属于机构,作者账号随删除置空且保留姓名与角色快照',
   teaching_weekly_reports: '教学周报修订属于机构,生成与发布账号随删除置空且保留姓名与角色快照',
   training_templates: '机构训练模板独立保留,创建者账号随删除置空',
@@ -226,6 +228,28 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
           )
       WHERE teacher_user_id = ${userId}`;
     await tx`UPDATE session_teachers SET teacher_user_id = NULL WHERE teacher_user_id = ${userId}`;
+    await tx`
+      UPDATE leave_requests
+      SET requested_by_user_id = CASE
+            WHEN requested_by_user_id = ${userId} THEN NULL
+            ELSE requested_by_user_id
+          END,
+          decided_by_user_id = CASE
+            WHEN decided_by_user_id = ${userId} THEN NULL
+            ELSE decided_by_user_id
+          END
+      WHERE requested_by_user_id = ${userId} OR decided_by_user_id = ${userId}`;
+    await tx`
+      UPDATE makeup_attempts
+      SET created_by_user_id = CASE
+            WHEN created_by_user_id = ${userId} THEN NULL
+            ELSE created_by_user_id
+          END,
+          resolved_by_user_id = CASE
+            WHEN resolved_by_user_id = ${userId} THEN NULL
+            ELSE resolved_by_user_id
+          END
+      WHERE created_by_user_id = ${userId} OR resolved_by_user_id = ${userId}`;
     await tx`UPDATE lesson_feedback SET author_user_id = NULL WHERE author_user_id = ${userId}`;
     await tx`
       UPDATE teaching_weekly_reports

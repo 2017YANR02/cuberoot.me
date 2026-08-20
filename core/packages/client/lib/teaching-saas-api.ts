@@ -6,6 +6,8 @@ import {
   TEACHING_CREDIT_UNITS,
   TEACHING_FEEDBACK_VISIBILITIES,
   TEACHING_GROUP_STATUSES,
+  TEACHING_LEAVE_REQUEST_STATUSES,
+  TEACHING_MAKEUP_ATTEMPT_STATUSES,
   TEACHING_MEMBER_STATUSES,
   TEACHING_ORGANIZATION_ROLES,
   TEACHING_ORGANIZATION_STATUSES,
@@ -64,6 +66,11 @@ import {
   type TeachingGuardianAccountBindingConsumed,
   type TeachingGuardianAccountBindingPreview,
   type TeachingLearningContext,
+  type TeachingLeaveRequest,
+  type TeachingMakeupAttempt,
+  type TeachingMakeupCandidate,
+  type TeachingAttendanceActorSnapshot,
+  type TeachingLearnerSessionSummary,
   type TeachingLearnerLessonFeedback,
   type TeachingLearnerWeeklyReport,
   type TeachingTrainingAssignment,
@@ -228,6 +235,29 @@ export interface TeachingSessionCompletion {
     attendanceCount: number;
     totalCredits: number;
   };
+}
+
+export type {
+  TeachingAttendanceActorSnapshot,
+  TeachingLearnerSessionSummary,
+  TeachingLeaveRequest,
+  TeachingMakeupAttempt,
+  TeachingMakeupCandidate,
+} from '@cuberoot/shared/teaching';
+
+export interface TeachingLeaveRequestMutationResult {
+  leaveRequest: TeachingLeaveRequest;
+  attendance: TeachingAttendance;
+}
+
+export interface TeachingMakeupMutationResult {
+  makeupAttempt: TeachingMakeupAttempt;
+  attendance: TeachingAttendance;
+}
+
+export interface TeachingSessionCancellationResult {
+  session: TeachingSession;
+  makeupAttempts: TeachingMakeupAttempt[];
 }
 
 export interface TeachingLessonFeedback {
@@ -838,15 +868,19 @@ function sessionTeacher(value: unknown): TeachingSessionTeacher {
 
 function attendance(value: unknown): TeachingAttendance {
   const item = record(value, 'attendance');
+  const creditCost = integer(item.creditCost, 'attendance.creditCost');
+  if (creditCost > 1_000_000) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'attendance.creditCost is invalid');
+  }
   return {
     id: string(item.id, 'attendance.id'),
     studentId: string(item.studentId, 'attendance.studentId'),
     displayName: optionalNullableString(item.displayName, 'attendance.displayName'),
     studentPackageId: optionalNullableString(item.studentPackageId, 'attendance.studentPackageId'),
     status: enumValue(item.status, TEACHING_ATTENDANCE_STATUSES, 'attendance.status'),
-    creditCost: integer(item.creditCost, 'attendance.creditCost', 1),
-    notes: string(item.notes, 'attendance.notes'),
-    updatedAt: string(item.updatedAt, 'attendance.updatedAt'),
+    creditCost,
+    notes: canonicalBoundedResponseString(item.notes, 'attendance.notes', 500),
+    updatedAt: isoTimestamp(item.updatedAt, 'attendance.updatedAt'),
   };
 }
 
@@ -903,6 +937,247 @@ function sessionDetail(value: unknown): TeachingSession {
   return {
     ...sessionSummary({ ...item, attendanceCount: item.attendanceCount ?? parsedAttendance.length }),
     attendance: parsedAttendance,
+  };
+}
+
+function uuidString(value: unknown, label: string): string {
+  const parsed = string(value, label);
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parsed)) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, `${label} is invalid`);
+  }
+  return parsed;
+}
+
+function canonicalResponseString(value: unknown, label: string, maximum: number): string {
+  const parsed = string(value, label);
+  if (parsed.length < 1 || parsed.length > maximum || parsed.trim() !== parsed) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, `${label} is invalid`);
+  }
+  return parsed;
+}
+
+function canonicalBoundedResponseString(value: unknown, label: string, maximum: number): string {
+  const parsed = string(value, label);
+  if (parsed.length > maximum || parsed.trim() !== parsed) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, `${label} is invalid`);
+  }
+  return parsed;
+}
+
+const TEACHING_LEAVE_ACTOR_ROLES = ['owner', 'admin', 'teacher', 'assistant', 'student', 'guardian'] as const;
+const TEACHING_LEARNER_TEACHER_ROLES = ['teacher', 'assistant'] as const;
+
+function teachingActorSnapshot(value: unknown, label: string): TeachingAttendanceActorSnapshot {
+  const item = exactRecord(value, ['userId', 'displayName', 'role', 'relationship'], label);
+  const role = enumValue(item.role, TEACHING_LEAVE_ACTOR_ROLES, `${label}.role`);
+  const relationship = nullableString(item.relationship, `${label}.relationship`);
+  if (
+    (role === 'guardian' && (
+      relationship === null
+      || relationship.length > 100
+      || relationship.trim() !== relationship
+    ))
+    || (role !== 'guardian' && relationship !== null)
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, `${label}.relationship is invalid`);
+  }
+  return {
+    userId: positiveBigIntString(item.userId, `${label}.userId`),
+    displayName: canonicalResponseString(item.displayName, `${label}.displayName`, 160),
+    role,
+    relationship,
+  };
+}
+
+function teachingStaffActorSnapshot(value: unknown, label: string): TeachingAttendanceActorSnapshot {
+  const actor = teachingActorSnapshot(value, label);
+  if (actor.role === 'student' || actor.role === 'guardian') {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, `${label}.role is invalid`);
+  }
+  return actor;
+}
+
+function nullableStaffActorSnapshot(value: unknown, label: string): TeachingAttendanceActorSnapshot | null {
+  if (value === null) return null;
+  return teachingStaffActorSnapshot(value, label);
+}
+
+function leaveRequest(value: unknown): TeachingLeaveRequest {
+  const item = exactRecord(value, [
+    'id', 'organizationId', 'sessionId', 'attendanceId', 'studentId', 'status', 'reason',
+    'decisionReason', 'requestedBy', 'decidedBy', 'decidedAt', 'createdAt', 'updatedAt',
+  ], 'leaveRequest');
+  const status = enumValue(item.status, TEACHING_LEAVE_REQUEST_STATUSES, 'leaveRequest.status');
+  const decisionReason = item.decisionReason === null
+    ? null
+    : canonicalResponseString(item.decisionReason, 'leaveRequest.decisionReason', 500);
+  const decidedBy = nullableStaffActorSnapshot(item.decidedBy, 'leaveRequest.decidedBy');
+  const decidedAt = item.decidedAt === null ? null : isoTimestamp(item.decidedAt, 'leaveRequest.decidedAt');
+  const hasDecision = decisionReason !== null && decidedBy !== null && decidedAt !== null;
+  if (
+    (decisionReason === null) !== (decidedBy === null)
+    || (decidedBy === null) !== (decidedAt === null)
+    || (status === 'pending' && hasDecision)
+    || (status !== 'pending' && !hasDecision)
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'leaveRequest decision state is invalid');
+  }
+  return {
+    id: uuidString(item.id, 'leaveRequest.id'),
+    organizationId: uuidString(item.organizationId, 'leaveRequest.organizationId'),
+    sessionId: uuidString(item.sessionId, 'leaveRequest.sessionId'),
+    attendanceId: uuidString(item.attendanceId, 'leaveRequest.attendanceId'),
+    studentId: uuidString(item.studentId, 'leaveRequest.studentId'),
+    status,
+    reason: canonicalResponseString(item.reason, 'leaveRequest.reason', 500),
+    decisionReason,
+    requestedBy: teachingActorSnapshot(item.requestedBy, 'leaveRequest.requestedBy'),
+    decidedBy,
+    decidedAt,
+    createdAt: isoTimestamp(item.createdAt, 'leaveRequest.createdAt'),
+    updatedAt: isoTimestamp(item.updatedAt, 'leaveRequest.updatedAt'),
+  };
+}
+
+function makeupAttempt(value: unknown): TeachingMakeupAttempt {
+  const item = exactRecord(value, [
+    'id', 'organizationId', 'sourceSessionId', 'sourceAttendanceId', 'targetSessionId', 'targetAttendanceId',
+    'studentId', 'studentPackageId', 'creditCost', 'status', 'reason', 'createdBy', 'resolvedBy',
+    'resolutionReason', 'resolvedAt', 'createdAt', 'updatedAt',
+  ], 'makeupAttempt');
+  const status = enumValue(item.status, TEACHING_MAKEUP_ATTEMPT_STATUSES, 'makeupAttempt.status');
+  const resolvedBy = nullableStaffActorSnapshot(item.resolvedBy, 'makeupAttempt.resolvedBy');
+  const resolutionReason = item.resolutionReason === null
+    ? null
+    : canonicalResponseString(item.resolutionReason, 'makeupAttempt.resolutionReason', 500);
+  const resolvedAt = item.resolvedAt === null ? null : isoTimestamp(item.resolvedAt, 'makeupAttempt.resolvedAt');
+  const hasResolution = resolvedBy !== null && resolutionReason !== null && resolvedAt !== null;
+  if (
+    (resolvedBy === null) !== (resolutionReason === null)
+    || (resolutionReason === null) !== (resolvedAt === null)
+    || (status === 'scheduled' && hasResolution)
+    || (status !== 'scheduled' && !hasResolution)
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'makeupAttempt resolution state is invalid');
+  }
+  const creditCost = integer(item.creditCost, 'makeupAttempt.creditCost', 1);
+  if (creditCost > 1_000_000) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'makeupAttempt.creditCost is invalid');
+  }
+  return {
+    id: uuidString(item.id, 'makeupAttempt.id'),
+    organizationId: uuidString(item.organizationId, 'makeupAttempt.organizationId'),
+    sourceSessionId: uuidString(item.sourceSessionId, 'makeupAttempt.sourceSessionId'),
+    sourceAttendanceId: uuidString(item.sourceAttendanceId, 'makeupAttempt.sourceAttendanceId'),
+    targetSessionId: uuidString(item.targetSessionId, 'makeupAttempt.targetSessionId'),
+    targetAttendanceId: uuidString(item.targetAttendanceId, 'makeupAttempt.targetAttendanceId'),
+    studentId: uuidString(item.studentId, 'makeupAttempt.studentId'),
+    studentPackageId: uuidString(item.studentPackageId, 'makeupAttempt.studentPackageId'),
+    creditCost,
+    status,
+    reason: canonicalResponseString(item.reason, 'makeupAttempt.reason', 500),
+    createdBy: teachingStaffActorSnapshot(item.createdBy, 'makeupAttempt.createdBy'),
+    resolvedBy,
+    resolutionReason,
+    resolvedAt,
+    createdAt: isoTimestamp(item.createdAt, 'makeupAttempt.createdAt'),
+    updatedAt: isoTimestamp(item.updatedAt, 'makeupAttempt.updatedAt'),
+  };
+}
+
+function learnerSessionTeacher(value: unknown) {
+  const item = exactRecord(value, ['displayName', 'role'], 'learnerSession.teacher');
+  return {
+    displayName: canonicalResponseString(item.displayName, 'learnerSession.teacher.displayName', 160),
+    role: enumValue(item.role, TEACHING_LEARNER_TEACHER_ROLES, 'learnerSession.teacher.role'),
+  };
+}
+
+function makeupCandidateTeacher(value: unknown) {
+  const item = exactRecord(value, ['userId', 'displayName', 'role'], 'makeupCandidate.teacher');
+  return {
+    userId: positiveBigIntString(item.userId, 'makeupCandidate.teacher.userId'),
+    displayName: canonicalResponseString(item.displayName, 'makeupCandidate.teacher.displayName', 160),
+    role: enumValue(item.role, TEACHING_LEARNER_TEACHER_ROLES, 'makeupCandidate.teacher.role'),
+  };
+}
+
+function learnerSessionAttendance(value: unknown) {
+  const item = exactRecord(
+    value,
+    ['id', 'status', 'creditCost', 'updatedAt'],
+    'learnerSession.attendance',
+  );
+  const creditCost = integer(item.creditCost, 'learnerSession.attendance.creditCost');
+  if (creditCost > 1_000_000) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'learnerSession.attendance.creditCost is invalid');
+  }
+  return {
+    id: uuidString(item.id, 'learnerSession.attendance.id'),
+    status: enumValue(item.status, TEACHING_ATTENDANCE_STATUSES, 'learnerSession.attendance.status'),
+    creditCost,
+    updatedAt: isoTimestamp(item.updatedAt, 'learnerSession.attendance.updatedAt'),
+  };
+}
+
+function learnerSessionSummary(value: unknown): TeachingLearnerSessionSummary {
+  const item = exactRecord(value, [
+    'id', 'title', 'startsAt', 'endsAt', 'timezone', 'status', 'teachers', 'attendance', 'activeLeaveRequest',
+  ], 'learnerSession');
+  if (!Array.isArray(item.teachers)) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'learnerSession.teachers is invalid');
+  }
+  const activeLeaveRequest = item.activeLeaveRequest === null ? null : leaveRequest(item.activeLeaveRequest);
+  const id = uuidString(item.id, 'learnerSession.id');
+  const attendanceItem = learnerSessionAttendance(item.attendance);
+  const startsAt = isoTimestamp(item.startsAt, 'learnerSession.startsAt');
+  const endsAt = isoTimestamp(item.endsAt, 'learnerSession.endsAt');
+  if (
+    new Date(endsAt).getTime() <= new Date(startsAt).getTime()
+    || (
+    activeLeaveRequest !== null
+    && (
+      activeLeaveRequest.sessionId !== id
+      || activeLeaveRequest.attendanceId !== attendanceItem.id
+      || (activeLeaveRequest.status !== 'pending' && activeLeaveRequest.status !== 'approved')
+    )
+    )
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'learnerSession state is invalid');
+  }
+  return {
+    id,
+    title: canonicalResponseString(item.title, 'learnerSession.title', 160),
+    startsAt,
+    endsAt,
+    timezone: canonicalResponseString(item.timezone, 'learnerSession.timezone', 64),
+    status: enumValue(item.status, TEACHING_SESSION_STATUSES, 'learnerSession.status'),
+    teachers: item.teachers.map(learnerSessionTeacher),
+    attendance: attendanceItem,
+    activeLeaveRequest,
+  };
+}
+
+function makeupCandidate(value: unknown): TeachingMakeupCandidate {
+  const item = exactRecord(value, [
+    'sessionId', 'title', 'startsAt', 'endsAt', 'timezone', 'teachers', 'attendanceId',
+  ], 'makeupCandidate');
+  if (!Array.isArray(item.teachers)) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'makeupCandidate.teachers is invalid');
+  }
+  const startsAt = isoTimestamp(item.startsAt, 'makeupCandidate.startsAt');
+  const endsAt = isoTimestamp(item.endsAt, 'makeupCandidate.endsAt');
+  if (new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'makeupCandidate time range is invalid');
+  }
+  return {
+    sessionId: uuidString(item.sessionId, 'makeupCandidate.sessionId'),
+    title: canonicalResponseString(item.title, 'makeupCandidate.title', 160),
+    startsAt,
+    endsAt,
+    timezone: canonicalResponseString(item.timezone, 'makeupCandidate.timezone', 64),
+    teachers: item.teachers.map(makeupCandidateTeacher),
+    attendanceId: item.attendanceId === null ? null : uuidString(item.attendanceId, 'makeupCandidate.attendanceId'),
   };
 }
 
@@ -1829,10 +2104,211 @@ export async function getTeachingSession(orgSlug: string, sessionId: string): Pr
   return sessionDetail(envelope.session);
 }
 
+function parseLeaveMutation(
+  value: unknown,
+  sessionId: string,
+  attendanceId: string,
+  expectedStatus?: 'approved' | 'rejected' | 'cancelled',
+): TeachingLeaveRequestMutationResult {
+  const envelope = exactRecord(value, ['leaveRequest', 'attendance'], 'leave request mutation');
+  const leave = leaveRequest(envelope.leaveRequest);
+  const attendanceItem = attendance(envelope.attendance);
+  if (
+    leave.sessionId !== sessionId
+    || leave.attendanceId !== attendanceId
+    || attendanceItem.id !== attendanceId
+    || attendanceItem.studentId !== leave.studentId
+    || (expectedStatus !== undefined && leave.status !== expectedStatus)
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'leave request mutation response is invalid');
+  }
+  return { leaveRequest: leave, attendance: attendanceItem };
+}
+
+export async function listTeachingLeaveRequests(
+  orgSlug: string,
+  sessionId: string,
+  pageNumber = 1,
+  pageSize = 100,
+): Promise<TeachingPage<TeachingLeaveRequest>> {
+  const result = exactPage(
+    await request(orgPath(
+      orgSlug,
+      `/sessions/${encodeURIComponent(sessionId)}/leave-requests${pageQuery(pageNumber, pageSize)}`,
+    )),
+    'leaveRequests',
+    leaveRequest,
+  );
+  if (result.items.some((item) => item.sessionId !== sessionId)) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'leave request page response is invalid');
+  }
+  return result;
+}
+
+export async function createTeachingLeaveRequest(
+  orgSlug: string,
+  sessionId: string,
+  attendanceId: string,
+  input: { reason: string },
+  idempotencyKey: string,
+): Promise<TeachingLeaveRequestMutationResult> {
+  return parseLeaveMutation(
+    await post(orgPath(
+      orgSlug,
+      `/sessions/${encodeURIComponent(sessionId)}/attendance/${encodeURIComponent(attendanceId)}/leave-requests`,
+    ), { reason: input.reason }, idempotencyKey),
+    sessionId,
+    attendanceId,
+  );
+}
+
+export async function decideTeachingLeaveRequest(
+  orgSlug: string,
+  sessionId: string,
+  attendanceId: string,
+  leaveRequestId: string,
+  input: { decision: 'approved' | 'rejected'; reason: string },
+  idempotencyKey: string,
+): Promise<TeachingLeaveRequestMutationResult> {
+  const result = parseLeaveMutation(
+    await post(orgPath(
+      orgSlug,
+      `/sessions/${encodeURIComponent(sessionId)}/attendance/${encodeURIComponent(attendanceId)}/leave-requests/${encodeURIComponent(leaveRequestId)}/decision`,
+    ), { decision: input.decision, reason: input.reason }, idempotencyKey),
+    sessionId,
+    attendanceId,
+    input.decision,
+  );
+  if (result.leaveRequest.id !== leaveRequestId) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'leave request decision response is invalid');
+  }
+  return result;
+}
+
+export async function cancelTeachingLeaveRequest(
+  orgSlug: string,
+  sessionId: string,
+  attendanceId: string,
+  leaveRequestId: string,
+  input: { reason: string },
+  idempotencyKey: string,
+): Promise<TeachingLeaveRequestMutationResult> {
+  const result = parseLeaveMutation(
+    await post(orgPath(
+      orgSlug,
+      `/sessions/${encodeURIComponent(sessionId)}/attendance/${encodeURIComponent(attendanceId)}/leave-requests/${encodeURIComponent(leaveRequestId)}/cancel`,
+    ), { reason: input.reason }, idempotencyKey),
+    sessionId,
+    attendanceId,
+    'cancelled',
+  );
+  if (result.leaveRequest.id !== leaveRequestId) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'leave request cancellation response is invalid');
+  }
+  return result;
+}
+
+export async function listTeachingMakeupAttempts(
+  orgSlug: string,
+  sessionId: string,
+  attendanceId: string,
+  pageNumber = 1,
+  pageSize = 100,
+): Promise<TeachingPage<TeachingMakeupAttempt>> {
+  const result = exactPage(
+    await request(orgPath(
+      orgSlug,
+      `/sessions/${encodeURIComponent(sessionId)}/attendance/${encodeURIComponent(attendanceId)}/makeups${pageQuery(pageNumber, pageSize)}`,
+    )),
+    'makeupAttempts',
+    makeupAttempt,
+  );
+  if (result.items.some((item) => item.sourceSessionId !== sessionId || item.sourceAttendanceId !== attendanceId)) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'makeup attempt page response is invalid');
+  }
+  return result;
+}
+
+export async function listTeachingMakeupCandidates(
+  orgSlug: string,
+  sessionId: string,
+  attendanceId: string,
+  pageNumber = 1,
+  pageSize = 100,
+): Promise<TeachingPage<TeachingMakeupCandidate>> {
+  return exactPage(
+    await request(orgPath(
+      orgSlug,
+      `/sessions/${encodeURIComponent(sessionId)}/attendance/${encodeURIComponent(attendanceId)}/makeups/candidates${pageQuery(pageNumber, pageSize)}`,
+    )),
+    'candidates',
+    makeupCandidate,
+  );
+}
+
+export async function createTeachingMakeupAttempt(
+  orgSlug: string,
+  sessionId: string,
+  attendanceId: string,
+  input: { targetSessionId: string; reason: string },
+  idempotencyKey: string,
+): Promise<TeachingMakeupMutationResult> {
+  const envelope = exactRecord(
+    await post(orgPath(
+      orgSlug,
+      `/sessions/${encodeURIComponent(sessionId)}/attendance/${encodeURIComponent(attendanceId)}/makeups`,
+    ), { targetSessionId: input.targetSessionId, reason: input.reason }, idempotencyKey),
+    ['makeupAttempt', 'attendance'],
+    'makeup attempt mutation',
+  );
+  const attempt = makeupAttempt(envelope.makeupAttempt);
+  const attendanceItem = attendance(envelope.attendance);
+  if (
+    attempt.sourceSessionId !== sessionId
+    || attempt.sourceAttendanceId !== attendanceId
+    || attempt.targetSessionId !== input.targetSessionId
+    || attempt.targetAttendanceId !== attendanceItem.id
+    || attempt.studentId !== attendanceItem.studentId
+    || attempt.status !== 'scheduled'
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'makeup attempt mutation response is invalid');
+  }
+  return { makeupAttempt: attempt, attendance: attendanceItem };
+}
+
+export async function cancelTeachingSession(
+  orgSlug: string,
+  sessionId: string,
+  input: { reason: string },
+  idempotencyKey: string,
+): Promise<TeachingSessionCancellationResult> {
+  const envelope = exactRecord(
+    await post(orgPath(orgSlug, `/sessions/${encodeURIComponent(sessionId)}/cancel`), { reason: input.reason }, idempotencyKey),
+    ['session', 'makeupAttempts'],
+    'session cancellation',
+  );
+  if (!Array.isArray(envelope.makeupAttempts)) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'session cancellation.makeupAttempts is invalid');
+  }
+  const sessionItem = sessionDetail(envelope.session);
+  const makeupAttempts = envelope.makeupAttempts.map(makeupAttempt);
+  if (
+    sessionItem.id !== sessionId
+    || sessionItem.status !== 'cancelled'
+    || makeupAttempts.some((item) => (
+      (item.sourceSessionId !== sessionId && item.targetSessionId !== sessionId)
+      || item.status !== 'cancelled'
+    ))
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'session cancellation response is invalid');
+  }
+  return { session: sessionItem, makeupAttempts };
+}
+
 export async function saveTeachingAttendanceBatch(
   orgSlug: string,
   sessionId: string,
-  records: Array<{ attendanceId: string; status: Exclude<TeachingAttendanceStatus, 'expected'> }>,
+  records: Array<{ attendanceId: string; status: Exclude<TeachingAttendanceStatus, 'expected' | 'excused'> }>,
   idempotencyKey: string,
 ): Promise<TeachingAttendance[]> {
   const envelope = record(
@@ -2510,6 +2986,97 @@ export async function listLearnerTeachingWeeklyReports(
     'weeklyReports',
     (value) => learnerWeeklyReport(value, false),
   );
+}
+
+function learnerSessionPath(orgSlug: string, studentId: string, suffix = ''): string {
+  return orgPath(orgSlug, `/me/students/${encodeURIComponent(studentId)}/sessions${suffix}`);
+}
+
+export async function listLearnerTeachingSessions(
+  orgSlug: string,
+  studentId: string,
+  pageNumber = 1,
+  pageSize = 25,
+): Promise<TeachingPage<TeachingLearnerSessionSummary>> {
+  const result = exactPage(
+    await request(learnerSessionPath(orgSlug, studentId, pageQuery(pageNumber, pageSize))),
+    'sessions',
+    learnerSessionSummary,
+  );
+  if (result.items.some((item) => item.activeLeaveRequest !== null && item.activeLeaveRequest.studentId !== studentId)) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'learner session page response is invalid');
+  }
+  return result;
+}
+
+export async function listLearnerTeachingLeaveRequests(
+  orgSlug: string,
+  studentId: string,
+  sessionId: string,
+  pageNumber = 1,
+  pageSize = 100,
+): Promise<TeachingPage<TeachingLeaveRequest>> {
+  const result = exactPage(
+    await request(learnerSessionPath(
+      orgSlug,
+      studentId,
+      `/${encodeURIComponent(sessionId)}/leave-requests${pageQuery(pageNumber, pageSize)}`,
+    )),
+    'leaveRequests',
+    leaveRequest,
+  );
+  if (result.items.some((item) => item.studentId !== studentId || item.sessionId !== sessionId)) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'learner leave request page response is invalid');
+  }
+  return result;
+}
+
+export async function createLearnerTeachingLeaveRequest(
+  orgSlug: string,
+  studentId: string,
+  sessionId: string,
+  attendanceId: string,
+  input: { reason: string },
+  idempotencyKey: string,
+): Promise<TeachingLeaveRequestMutationResult> {
+  const result = parseLeaveMutation(
+    await post(learnerSessionPath(
+      orgSlug,
+      studentId,
+      `/${encodeURIComponent(sessionId)}/attendance/${encodeURIComponent(attendanceId)}/leave-requests`,
+    ), { reason: input.reason }, idempotencyKey),
+    sessionId,
+    attendanceId,
+  );
+  if (result.leaveRequest.studentId !== studentId) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'learner leave request mutation response is invalid');
+  }
+  return result;
+}
+
+export async function cancelLearnerTeachingLeaveRequest(
+  orgSlug: string,
+  studentId: string,
+  sessionId: string,
+  attendanceId: string,
+  leaveRequestId: string,
+  input: { reason: string },
+  idempotencyKey: string,
+): Promise<TeachingLeaveRequestMutationResult> {
+  const result = parseLeaveMutation(
+    await post(learnerSessionPath(
+      orgSlug,
+      studentId,
+      `/${encodeURIComponent(sessionId)}/attendance/${encodeURIComponent(attendanceId)}/leave-requests/${encodeURIComponent(leaveRequestId)}/cancel`,
+    ), { reason: input.reason }, idempotencyKey),
+    sessionId,
+    attendanceId,
+    'cancelled',
+  );
+  if (result.leaveRequest.id !== leaveRequestId || result.leaveRequest.studentId !== studentId) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'learner leave request cancellation response is invalid');
+  }
+  return result;
 }
 
 export async function getLearnerTeachingWeeklyReport(

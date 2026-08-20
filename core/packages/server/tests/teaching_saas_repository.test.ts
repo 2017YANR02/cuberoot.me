@@ -661,13 +661,18 @@ describe('teaching SaaS repository tenant denial audit', () => {
         student_package_id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
         status: 'present', credit_cost: 1,
       }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{
         id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', lifecycle_status: 'active',
+        student_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
         valid_from: '2026-01-01T00:00:00.000Z', valid_until: null,
       }])
+      .mockResolvedValueOnce([{ completed_at: '2026-08-18T02:00:00.000Z' }])
       .mockResolvedValueOnce([{ balance: 10 }])
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ completed_at: '2026-08-18T02:00:00.000Z' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([]);
@@ -695,8 +700,8 @@ describe('teaching SaaS repository tenant denial audit', () => {
     const ledgerInsert = statements.findIndex((statement) => statement.includes('INSERT INTO lesson_credit_ledger'));
     const completion = statements.findIndex((statement) => statement.includes('UPDATE teaching_sessions'));
     expect(packageLock).toBeGreaterThan(-1);
-    expect(ledgerInsert).toBeGreaterThan(packageLock);
-    expect(completion).toBeGreaterThan(ledgerInsert);
+    expect(completion).toBeGreaterThan(packageLock);
+    expect(ledgerInsert).toBeGreaterThan(completion);
   });
 
   it('uses the database clock and keeps invite preview hash-only and read-only', async () => {
@@ -1097,5 +1102,78 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(reversedCheck).toBeGreaterThan(reversalReplay);
     expect(reversalBalance).toBeGreaterThan(reversedCheck);
     expect(reversal).toContain('reversalLedgerIdempotencyKey(ledgerId, idempotencyKey)');
+  });
+
+  it('uses one stable lock graph for makeup scheduling, completion, and cancellation', async () => {
+    const source = await teachingRouteSource();
+    const cancellationGraph = sourceBetween(
+      source,
+      'async function lockManagedCancellationGraph(',
+      '\nfunction requireLearnerScope(',
+    );
+    const discoveredAttempts = cancellationGraph.indexOf('const discoveredAttempts = await tx');
+    const sortedSessionIds = cancellationGraph.indexOf('])].sort()', discoveredAttempts);
+    const sessionLock = cancellationGraph.indexOf('ORDER BY session.id', sortedSessionIds);
+    const sessionForUpdate = cancellationGraph.indexOf('FOR UPDATE OF session', sessionLock);
+    const retryRead = cancellationGraph.indexOf('const attempts = await tx', sessionForUpdate);
+    const retryGuard = cancellationGraph.indexOf('Makeup scheduling changed; retry cancellation', retryRead);
+    expect(discoveredAttempts).toBeGreaterThan(-1);
+    expect(sortedSessionIds).toBeGreaterThan(discoveredAttempts);
+    expect(sessionLock).toBeGreaterThan(sortedSessionIds);
+    expect(sessionForUpdate).toBeGreaterThan(sessionLock);
+    expect(retryRead).toBeGreaterThan(sessionForUpdate);
+    expect(retryGuard).toBeGreaterThan(retryRead);
+
+    const schedule = sourceBetween(source, 'async scheduleMakeup(', '\n  async saveAttendanceBatch(');
+    expect(schedule).toContain('const sessionIds = [sessionId, input.targetSessionId].sort()');
+    expect(schedule).toContain('ORDER BY id FOR UPDATE');
+    expect(schedule).toContain('ORDER BY attendance.id');
+    expect(schedule).toContain('TRANSACTION_TIMESTAMP() AS operation_now');
+
+    const complete = sourceBetween(source, 'async completeSession(', '\n  async cancelSession(');
+    const completeSessionLock = complete.indexOf('FOR UPDATE OF s');
+    const completeAttendanceLock = complete.indexOf('ORDER BY student_package_id NULLS LAST, id');
+    const pendingLeaveLock = complete.indexOf("status = 'pending'", completeAttendanceLock);
+    const expectedConflict = complete.indexOf("row.status === 'expected'", pendingLeaveLock);
+    const attemptLock = complete.indexOf('FROM makeup_attempts', expectedConflict);
+    const packageLock = complete.indexOf('FROM student_packages', attemptLock);
+    expect(completeSessionLock).toBeGreaterThan(-1);
+    expect(completeAttendanceLock).toBeGreaterThan(completeSessionLock);
+    expect(pendingLeaveLock).toBeGreaterThan(completeAttendanceLock);
+    expect(expectedConflict).toBeGreaterThan(pendingLeaveLock);
+    expect(attemptLock).toBeGreaterThan(expectedConflict);
+    expect(packageLock).toBeGreaterThan(attemptLock);
+
+    const cancel = sourceBetween(source, 'async cancelSession(', '\n};');
+    const graphLock = cancel.indexOf('lockManagedCancellationGraph(');
+    const cancelAttendanceLock = cancel.indexOf(
+      'ORDER BY attendance.student_package_id NULLS LAST, attendance.id',
+      graphLock,
+    );
+    const cancelLeaveLock = cancel.indexOf('FROM leave_requests', cancelAttendanceLock);
+    const cancelAttemptLock = cancel.indexOf('FROM makeup_attempts', cancelLeaveLock);
+    expect(graphLock).toBeGreaterThan(-1);
+    expect(cancelAttendanceLock).toBeGreaterThan(graphLock);
+    expect(cancelLeaveLock).toBeGreaterThan(cancelAttendanceLock);
+    expect(cancelAttemptLock).toBeGreaterThan(cancelLeaveLock);
+  });
+
+  it('replays every leave mutation before mutable session or request state checks', async () => {
+    const source = await teachingRouteSource();
+    for (const [start, end, mutableCheck] of [
+      ['async createLearnerLeaveRequest(', '\n  async cancelLearnerLeaveRequest(', "sessions[0].status"],
+      ['async cancelLearnerLeaveRequest(', '\n  async listLearnerWeeklyReports(', "sessions[0].status"],
+      ['async createLeaveRequest(', '\n  async decideLeaveRequest(', 'session.status'],
+      ['async decideLeaveRequest(', '\n  async cancelLeaveRequest(', 'session.status'],
+      ['async cancelLeaveRequest(', '\n  async listMakeupAttempts(', 'session.status'],
+    ] as const) {
+      const mutation = sourceBetween(source, start, end);
+      const idempotency = mutation.indexOf('beginIdempotency(');
+      const replay = mutation.indexOf("if ('replay' in idem) return idem.replay", idempotency);
+      const stateCheck = mutation.indexOf(mutableCheck, replay);
+      expect(idempotency, start).toBeGreaterThan(-1);
+      expect(replay, start).toBeGreaterThan(idempotency);
+      expect(stateCheck, start).toBeGreaterThan(replay);
+    }
   });
 });

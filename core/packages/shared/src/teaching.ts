@@ -53,6 +53,32 @@ export type TeachingFeedbackVisibility = (typeof TEACHING_FEEDBACK_VISIBILITIES)
 export const TEACHING_ATTENDANCE_STATUSES = ['expected', 'present', 'late', 'absent', 'excused'] as const;
 export type TeachingAttendanceStatus = (typeof TEACHING_ATTENDANCE_STATUSES)[number];
 
+export const TEACHING_LEAVE_REQUEST_STATUSES = [
+  'pending',
+  'approved',
+  'rejected',
+  'cancelled',
+] as const;
+export type TeachingLeaveRequestStatus = (typeof TEACHING_LEAVE_REQUEST_STATUSES)[number];
+
+export const TEACHING_MAKEUP_ATTEMPT_STATUSES = [
+  'scheduled',
+  'fulfilled',
+  'failed',
+  'cancelled',
+] as const;
+export type TeachingMakeupAttemptStatus = (typeof TEACHING_MAKEUP_ATTEMPT_STATUSES)[number];
+
+export const TEACHING_ATTENDANCE_ACTOR_ROLES = [
+  'owner',
+  'admin',
+  'teacher',
+  'assistant',
+  'student',
+  'guardian',
+] as const;
+export type TeachingAttendanceActorRole = (typeof TEACHING_ATTENDANCE_ACTOR_ROLES)[number];
+
 export const TEACHING_CAMPUS_STATUSES = ['active', 'archived'] as const;
 export type TeachingCampusStatus = (typeof TEACHING_CAMPUS_STATUSES)[number];
 
@@ -774,6 +800,83 @@ export interface TeachingCreditAdjustment {
     creditUnit: TeachingCreditUnit;
     creditType: string;
   };
+}
+
+export interface TeachingAttendanceActorSnapshot {
+  userId: string;
+  displayName: string;
+  role: TeachingAttendanceActorRole;
+  relationship: string | null;
+}
+
+export interface TeachingLeaveRequest {
+  id: string;
+  organizationId: string;
+  sessionId: string;
+  attendanceId: string;
+  studentId: string;
+  status: TeachingLeaveRequestStatus;
+  reason: string;
+  decisionReason: string | null;
+  requestedBy: TeachingAttendanceActorSnapshot;
+  decidedBy: TeachingAttendanceActorSnapshot | null;
+  decidedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeachingMakeupAttempt {
+  id: string;
+  organizationId: string;
+  sourceSessionId: string;
+  sourceAttendanceId: string;
+  targetSessionId: string;
+  targetAttendanceId: string;
+  studentId: string;
+  studentPackageId: string;
+  creditCost: number;
+  status: TeachingMakeupAttemptStatus;
+  reason: string;
+  createdBy: TeachingAttendanceActorSnapshot;
+  resolvedBy: TeachingAttendanceActorSnapshot | null;
+  resolutionReason: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeachingMakeupCandidate {
+  sessionId: string;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  timezone: string;
+  teachers: Array<{
+    userId: string;
+    displayName: string;
+    role: 'teacher' | 'assistant';
+  }>;
+  attendanceId: string | null;
+}
+
+export interface TeachingLearnerSessionSummary {
+  id: string;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  timezone: string;
+  status: TeachingSessionStatus;
+  teachers: Array<{
+    displayName: string;
+    role: 'teacher' | 'assistant';
+  }>;
+  attendance: {
+    id: string;
+    status: TeachingAttendanceStatus;
+    creditCost: number;
+    updatedAt: string;
+  };
+  activeLeaveRequest: TeachingLeaveRequest | null;
 }
 
 export const TEACHING_WEEKLY_REPORT_STATUSES = ['draft', 'published'] as const;

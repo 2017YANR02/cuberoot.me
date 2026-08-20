@@ -16,6 +16,7 @@ export default function LearnerOverviewPage() {
           <h2>{t('学习概览', 'Learning overview')}</h2>
           <p className="teaching-lead">{t('周报与课后反馈只展示老师已经发布并授权当前关系查看的内容。', 'Weekly reports and lesson feedback only show published content authorized for the current relationship.')}</p>
           <div className="teaching-tools">
+            <AppLink className="teaching-tool-link" href={`${baseHref}/sessions`} prefetch={false}><span><strong>{t('课次与请假', 'Sessions and leave')}</strong><br />{t('查看上课安排并提交、跟踪请假', 'Review schedules and submit or track leave requests')}</span><span aria-hidden="true">→</span></AppLink>
             <AppLink className="teaching-tool-link" href={`${baseHref}/reports`} prefetch={false}><span><strong>{t('每周教学报告', 'Weekly teaching reports')}</strong><br />{t('查看本周总结与下周计划', 'Review weekly summaries and next-week plans')}</span><span aria-hidden="true">→</span></AppLink>
             <AppLink className="teaching-tool-link" href={`${baseHref}/feedback`} prefetch={false}><span><strong>{t('课后反馈', 'Lesson feedback')}</strong><br />{t('查看老师发布的课堂反馈', 'Review published feedback from teachers')}</span><span aria-hidden="true">→</span></AppLink>
             <AppLink className="teaching-tool-link" href={`${baseHref}/messages`} prefetch={false}><span><strong>{t('消息', 'Messages')}</strong><br />{t('与老师查看并继续教学沟通', 'Review and continue teaching conversations with staff')}</span><span aria-hidden="true">→</span></AppLink>

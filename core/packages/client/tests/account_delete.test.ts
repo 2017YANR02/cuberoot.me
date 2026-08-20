@@ -82,6 +82,11 @@ const STAGE4_CONVERSATION_TABLES = [
   'teaching_conversation_messages',
 ] as const;
 
+const LEAVE_MAKEUP_TABLES = [
+  'leave_requests',
+  'makeup_attempts',
+] as const;
+
 describe('清单 ↔ schema', () => {
   it('schema 解析出的表数合理(解析器本身没坏)', () => {
     expect(SCHEMA.size).toBeGreaterThan(50);
@@ -164,12 +169,17 @@ describe('清单 ↔ schema', () => {
       'attendance_records',
       'lesson_credit_ledger',
       'session_events',
+      ...LEAVE_MAKEUP_TABLES,
       'lesson_feedback',
       'teaching_weekly_reports',
       ...STAGE3_TRAINING_TABLES,
       ...STAGE4_CONVERSATION_TABLES,
     ]));
-    for (const table of [...STAGE3_TRAINING_TABLES, ...STAGE4_CONVERSATION_TABLES]) {
+    for (const table of [
+      ...STAGE3_TRAINING_TABLES,
+      ...STAGE4_CONVERSATION_TABLES,
+      ...LEAVE_MAKEUP_TABLES,
+    ]) {
       expect(SNAPSHOT_SCHEMA.has(table), `教学表 ${table} 必须存在于最终 schema snapshot`).toBe(true);
     }
   });
@@ -288,6 +298,27 @@ describe('删除动作本身', () => {
     const deleteUser = impl.indexOf('DELETE FROM app_users');
     expect(unlinkFeedback).toBeGreaterThan(-1);
     expect(deleteUser).toBeGreaterThan(unlinkFeedback);
+  });
+
+  it('删除账号前切断请假与补课的实时账号引用，保留不可变身份快照', () => {
+    const unlinkLeave = impl.indexOf('UPDATE leave_requests');
+    const unlinkMakeup = impl.indexOf('UPDATE makeup_attempts');
+    const unlinkFeedback = impl.indexOf('UPDATE lesson_feedback');
+    const deleteUser = impl.indexOf('DELETE FROM app_users');
+    expect(unlinkLeave).toBeGreaterThan(-1);
+    expect(unlinkMakeup).toBeGreaterThan(unlinkLeave);
+    expect(unlinkFeedback).toBeGreaterThan(unlinkMakeup);
+    expect(deleteUser).toBeGreaterThan(unlinkMakeup);
+
+    const leaveUpdate = impl.slice(unlinkLeave, unlinkMakeup);
+    expect(leaveUpdate).toContain('requested_by_user_id');
+    expect(leaveUpdate).toContain('decided_by_user_id');
+    expect(leaveUpdate).not.toMatch(/_snapshot\s*=/);
+
+    const makeupUpdate = impl.slice(unlinkMakeup, unlinkFeedback);
+    expect(makeupUpdate).toContain('created_by_user_id');
+    expect(makeupUpdate).toContain('resolved_by_user_id');
+    expect(makeupUpdate).not.toMatch(/_snapshot\s*=/);
   });
 
   it('删除账号前分别匿名化周报生成者与发布者，保留不可变快照', () => {

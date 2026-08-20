@@ -13,24 +13,36 @@ vi.mock('@/lib/api-base', () => ({
 }));
 
 import {
+  cancelLearnerTeachingLeaveRequest,
+  cancelTeachingLeaveRequest,
+  cancelTeachingSession,
   completeTeachingSession,
+  createLearnerTeachingLeaveRequest,
   createTeachingConversation,
+  createTeachingLeaveRequest,
+  createTeachingMakeupAttempt,
   createTeachingSession,
   createTeachingGroupMembership,
   createTeachingMember,
   createTeachingTeacherAssignment,
+  decideTeachingLeaveRequest,
   generateTeachingWeeklyReport,
   getTeachingOperationsOverview,
   getLearnerTeachingWeeklyReport,
   getTeachingConversation,
   getTeachingWeeklyReport,
   listLearnerTeachingLessonFeedback,
+  listLearnerTeachingLeaveRequests,
+  listLearnerTeachingSessions,
   listLearnerTeachingWeeklyReports,
   listTeachingPackageProducts,
   listTeachingCreditAdjustments,
   listTeachingGroupMemberships,
   createTeachingStudent,
   listTeachingOrganizations,
+  listTeachingLeaveRequests,
+  listTeachingMakeupAttempts,
+  listTeachingMakeupCandidates,
   listTeachingConversationMessages,
   listTeachingConversations,
   listTeachingStudents,
@@ -226,7 +238,7 @@ function creditAdjustment(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function attendance() {
+function attendance(overrides: Record<string, unknown> = {}) {
   return {
     id: '018f3e56-31a5-7a88-9b45-337ccdbf7294',
     studentId: student().id,
@@ -235,6 +247,7 @@ function attendance() {
     creditCost: 1,
     notes: '',
     updatedAt: '2026-08-18T00:00:00.000Z',
+    ...overrides,
   };
 }
 
@@ -255,6 +268,97 @@ function session() {
     createdAt: '2026-08-18T00:00:00.000Z',
     updatedAt: '2026-08-18T00:00:00.000Z',
     attendance: [attendance()],
+  };
+}
+
+function attendanceActor(role: 'owner' | 'admin' | 'teacher' | 'assistant' | 'student' | 'guardian' = 'teacher') {
+  return {
+    userId: '9007199254740993',
+    displayName: role === 'student' ? 'Student One' : 'Teacher One',
+    role,
+    relationship: role === 'guardian' ? 'parent' : null,
+  };
+}
+
+function leaveRequest(
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled' = 'pending',
+  overrides: Record<string, unknown> = {},
+) {
+  const decided = status !== 'pending';
+  return {
+    id: '018f3e56-31a5-7a88-9b45-337ccdbf7311',
+    organizationId: organization().id,
+    sessionId: session().id,
+    attendanceId: attendance().id,
+    studentId: student().id,
+    status,
+    reason: 'Family appointment',
+    decisionReason: decided ? 'Handled by staff' : null,
+    requestedBy: attendanceActor('student'),
+    decidedBy: decided ? attendanceActor('teacher') : null,
+    decidedAt: decided ? '2026-08-18T01:00:00.000Z' : null,
+    createdAt: '2026-08-18T00:00:00.000Z',
+    updatedAt: decided ? '2026-08-18T01:00:00.000Z' : '2026-08-18T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+function makeupAttempt(
+  status: 'scheduled' | 'fulfilled' | 'failed' | 'cancelled' = 'scheduled',
+  overrides: Record<string, unknown> = {},
+) {
+  const resolved = status !== 'scheduled';
+  return {
+    id: '018f3e56-31a5-7a88-9b45-337ccdbf7314',
+    organizationId: organization().id,
+    sourceSessionId: session().id,
+    sourceAttendanceId: attendance().id,
+    targetSessionId: '018f3e56-31a5-7a88-9b45-337ccdbf7312',
+    targetAttendanceId: '018f3e56-31a5-7a88-9b45-337ccdbf7313',
+    studentId: student().id,
+    studentPackageId: studentPackage().id,
+    creditCost: 1,
+    status,
+    reason: 'Join the next class',
+    createdBy: attendanceActor('teacher'),
+    resolvedBy: resolved ? attendanceActor('teacher') : null,
+    resolutionReason: resolved ? 'Session cancelled' : null,
+    resolvedAt: resolved ? '2026-08-18T02:00:00.000Z' : null,
+    createdAt: '2026-08-18T01:30:00.000Z',
+    updatedAt: resolved ? '2026-08-18T02:00:00.000Z' : '2026-08-18T01:30:00.000Z',
+    ...overrides,
+  };
+}
+
+function makeupCandidate() {
+  return {
+    sessionId: '018f3e56-31a5-7a88-9b45-337ccdbf7312',
+    title: 'Thursday class',
+    startsAt: '2026-08-20T10:00:00.000Z',
+    endsAt: '2026-08-20T11:00:00.000Z',
+    timezone: 'Asia/Shanghai',
+    teachers: [{ userId: '9007199254740993', displayName: 'Teacher One', role: 'teacher' }],
+    attendanceId: null,
+  };
+}
+
+function learnerSession(overrides: Record<string, unknown> = {}) {
+  return {
+    id: session().id,
+    title: session().title,
+    startsAt: session().startsAt,
+    endsAt: session().endsAt,
+    timezone: session().timezone,
+    status: 'scheduled',
+    teachers: makeupCandidate().teachers.map(({ userId: _userId, ...teacher }) => teacher),
+    attendance: {
+      id: attendance().id,
+      status: 'expected',
+      creditCost: 0,
+      updatedAt: attendance().updatedAt,
+    },
+    activeLeaveRequest: null,
+    ...overrides,
   };
 }
 
@@ -791,6 +895,160 @@ describe('teaching SaaS client', () => {
     });
     const [, initValue] = fetchMock.mock.calls[0]!;
     expect(JSON.parse(String((initValue as RequestInit).body))).toEqual({});
+  });
+
+  it('uses the frozen staff leave and makeup paths, bodies, envelopes, and idempotency keys', async () => {
+    const pending = leaveRequest();
+    const approved = leaveRequest('approved', { decisionReason: 'Approved absence' });
+    const cancelled = leaveRequest('cancelled', { decisionReason: 'Request withdrawn' });
+    const scheduledAttempt = makeupAttempt();
+    const cancelledSourceAttempt = makeupAttempt('cancelled');
+    const cancelledSession = {
+      ...session(),
+      status: 'cancelled',
+      cancelledAt: '2026-08-18T02:00:00.000Z',
+      updatedAt: '2026-08-18T02:00:00.000Z',
+    };
+    const responses = [
+      jsonResponse({ leaveRequests: [pending], total: 1, page: 2, pageSize: 25 }),
+      jsonResponse({ leaveRequest: pending, attendance: attendance({ status: 'expected', creditCost: 0 }) }, 201),
+      jsonResponse({ leaveRequest: approved, attendance: attendance({ status: 'excused', creditCost: 0 }) }),
+      jsonResponse({ leaveRequest: cancelled, attendance: attendance({ status: 'expected', creditCost: 0 }) }),
+      jsonResponse({ makeupAttempts: [scheduledAttempt], total: 1, page: 1, pageSize: 100 }),
+      jsonResponse({ candidates: [makeupCandidate()], total: 1, page: 1, pageSize: 50 }),
+      jsonResponse({
+        makeupAttempt: scheduledAttempt,
+        attendance: attendance({
+          id: scheduledAttempt.targetAttendanceId,
+          status: 'expected',
+          creditCost: scheduledAttempt.creditCost,
+          studentPackageId: scheduledAttempt.studentPackageId,
+        }),
+      }, 201),
+      jsonResponse({ session: cancelledSession, makeupAttempts: [cancelledSourceAttempt] }),
+    ];
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => responses.shift()!);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await listTeachingLeaveRequests('cube academy', session().id, 2, 25);
+    await createTeachingLeaveRequest('cube academy', session().id, attendance().id, { reason: pending.reason }, 'leave-key');
+    await decideTeachingLeaveRequest(
+      'cube academy', session().id, attendance().id, pending.id,
+      { decision: 'approved', reason: 'Approved absence' }, 'decision-key',
+    );
+    await cancelTeachingLeaveRequest(
+      'cube academy', session().id, attendance().id, pending.id,
+      { reason: 'Request withdrawn' }, 'leave-cancel-key',
+    );
+    await listTeachingMakeupAttempts('cube academy', session().id, attendance().id);
+    await listTeachingMakeupCandidates('cube academy', session().id, attendance().id, 1, 50);
+    await createTeachingMakeupAttempt(
+      'cube academy', session().id, attendance().id,
+      { targetSessionId: makeupCandidate().sessionId, reason: scheduledAttempt.reason }, 'makeup-key',
+    );
+    await expect(cancelTeachingSession(
+      'cube academy', session().id, { reason: 'Class cannot proceed' }, 'session-cancel-key',
+    )).resolves.toMatchObject({
+      session: { status: 'cancelled' },
+      makeupAttempts: [{ sourceSessionId: session().id, status: 'cancelled' }],
+    });
+
+    const base = `https://api.example.test/v1/teaching/organizations/cube%20academy/sessions/${session().id}`;
+    expect(fetchMock.mock.calls.map((call) => call[0])).toEqual([
+      `${base}/leave-requests?page=2&pageSize=25`,
+      `${base}/attendance/${attendance().id}/leave-requests`,
+      `${base}/attendance/${attendance().id}/leave-requests/${pending.id}/decision`,
+      `${base}/attendance/${attendance().id}/leave-requests/${pending.id}/cancel`,
+      `${base}/attendance/${attendance().id}/makeups?page=1&pageSize=100`,
+      `${base}/attendance/${attendance().id}/makeups/candidates?page=1&pageSize=50`,
+      `${base}/attendance/${attendance().id}/makeups`,
+      `${base}/cancel`,
+    ]);
+    expect(JSON.parse(String((fetchMock.mock.calls[2]![1] as RequestInit).body))).toEqual({
+      decision: 'approved', reason: 'Approved absence',
+    });
+    expect(JSON.parse(String((fetchMock.mock.calls[6]![1] as RequestInit).body))).toEqual({
+      targetSessionId: makeupCandidate().sessionId, reason: scheduledAttempt.reason,
+    });
+    expect((fetchMock.mock.calls[7]![1] as RequestInit).headers).toMatchObject({
+      'Idempotency-Key': 'session-cancel-key',
+    });
+  });
+
+  it('uses only the frozen learner session and leave routes', async () => {
+    const pending = leaveRequest();
+    const cancelled = leaveRequest('cancelled', { decisionReason: 'Family plans changed' });
+    const responses = [
+      jsonResponse({ sessions: [learnerSession()], total: 1, page: 1, pageSize: 25 }),
+      jsonResponse({ leaveRequests: [pending], total: 1, page: 1, pageSize: 100 }),
+      jsonResponse({ leaveRequest: pending, attendance: attendance({ status: 'expected', creditCost: 0 }) }, 201),
+      jsonResponse({ leaveRequest: cancelled, attendance: attendance({ status: 'expected', creditCost: 0 }) }),
+    ];
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => responses.shift()!);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await listLearnerTeachingSessions('cube academy', student().id);
+    await listLearnerTeachingLeaveRequests('cube academy', student().id, session().id);
+    await createLearnerTeachingLeaveRequest(
+      'cube academy', student().id, session().id, attendance().id,
+      { reason: pending.reason }, 'learner-leave-key',
+    );
+    await cancelLearnerTeachingLeaveRequest(
+      'cube academy', student().id, session().id, attendance().id, pending.id,
+      { reason: 'Family plans changed' }, 'learner-cancel-key',
+    );
+
+    const base = `https://api.example.test/v1/teaching/organizations/cube%20academy/me/students/${student().id}/sessions`;
+    expect(fetchMock.mock.calls.map((call) => call[0])).toEqual([
+      `${base}?page=1&pageSize=25`,
+      `${base}/${session().id}/leave-requests?page=1&pageSize=100`,
+      `${base}/${session().id}/attendance/${attendance().id}/leave-requests`,
+      `${base}/${session().id}/attendance/${attendance().id}/leave-requests/${pending.id}/cancel`,
+    ]);
+    expect(fetchMock.mock.calls.every((call) => (call[1] as RequestInit).cache === 'no-store')).toBe(true);
+    expect((fetchMock.mock.calls[2]![1] as RequestInit).headers).toMatchObject({
+      'Idempotency-Key': 'learner-leave-key',
+    });
+  });
+
+  it.each([
+    ['cancelled leave without a complete decision', () => ({
+      leaveRequests: [leaveRequest('cancelled', { decisionReason: null, decidedBy: null, decidedAt: null })],
+      total: 1, page: 1, pageSize: 100,
+    }), () => listTeachingLeaveRequests('cube-academy', session().id)],
+    ['attendance credit above the database maximum', () => ({
+      sessions: [learnerSession({ attendance: {
+        id: attendance().id, status: 'expected', creditCost: 1_000_001, updatedAt: attendance().updatedAt,
+      } })],
+      total: 1, page: 1, pageSize: 25,
+    }), () => listLearnerTeachingSessions('cube-academy', student().id)],
+    ['learner attendance exposing a package id', () => ({
+      sessions: [learnerSession({ attendance: {
+        id: attendance().id, status: 'expected', studentPackageId: studentPackage().id,
+        creditCost: 0, updatedAt: attendance().updatedAt,
+      } })],
+      total: 1, page: 1, pageSize: 25,
+    }), () => listLearnerTeachingSessions('cube-academy', student().id)],
+    ['learner attendance exposing notes', () => ({
+      sessions: [learnerSession({ attendance: {
+        id: attendance().id, status: 'expected', creditCost: 0,
+        notes: 'private staff note', updatedAt: attendance().updatedAt,
+      } })],
+      total: 1, page: 1, pageSize: 25,
+    }), () => listLearnerTeachingSessions('cube-academy', student().id)],
+    ['learner teacher exposing a user id', () => ({
+      sessions: [learnerSession({ teachers: [{
+        userId: '9007199254740993', displayName: 'Teacher One', role: 'teacher',
+      }] })],
+      total: 1, page: 1, pageSize: 25,
+    }), () => listLearnerTeachingSessions('cube-academy', student().id)],
+    ['makeup credit above the database maximum', () => ({
+      makeupAttempts: [makeupAttempt('scheduled', { creditCost: 1_000_001 })],
+      total: 1, page: 1, pageSize: 100,
+    }), () => listTeachingMakeupAttempts('cube-academy', session().id, attendance().id)],
+  ])('rejects %s', async (_label, response, invoke) => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(response())));
+    await expect(invoke()).rejects.toMatchObject({ code: 'INVALID_RESPONSE', status: 502 });
   });
 
   it('lists weekly report summaries with the exact optional student filter', async () => {
