@@ -32,6 +32,7 @@ export const PURGE_TABLES: readonly (readonly [string, string])[] = [
   ['scramble_marks', 'wca_id'],          // 打乱标记
   ['timer_backups', 'wca_id'],           // 计时器云备份
   ['timer_sessions', 'wca_id'],          // 计时器会话
+  ['recon_videos', 'owner_wca_id'],      // 未提交的复盘视频上传
   ['train_results', 'user_id'],          // 训练成绩
   ['paint_drawings', 'wca_id'],          // 画板作品(仅本人可见)
   ['notifications', 'user_key'],         // 我的收件箱
