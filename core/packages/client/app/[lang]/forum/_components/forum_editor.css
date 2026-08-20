@@ -132,6 +132,9 @@
   background: var(--muted);
 }
 
+.forum-editor.is-compact .forum-editor-split { min-height: 260px; }
+.forum-editor.is-compact .forum-editor-cm-loading { min-height: 260px; }
+
 .forum-editor-drop-hint {
   position: absolute;
   inset: 0;
@@ -160,6 +163,39 @@
   font-style: italic;
 }
 
+.forum-editor-video-preview {
+  min-width: 0;
+}
+
+.forum-editor-video-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.forum-editor-video-heading > span {
+  max-width: min(100%, 520px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.forum-editor-video-heading button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  padding: 3px 5px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.forum-editor-video-heading button:hover { color: var(--destructive); }
+
 /* ─── error ─── */
 .forum-editor-error {
   font-size: 14px;
@@ -185,6 +221,8 @@
   .forum-editor-preview {
     max-height: 60vh;
   }
+  .forum-editor.is-compact .forum-editor-source,
+  .forum-editor.is-compact .forum-editor-cm-loading { min-height: 220px; }
   .forum-editor-tool-hint {
     width: 100%;
     margin-left: 0;

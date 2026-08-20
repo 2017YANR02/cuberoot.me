@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { excerptFromMarkdown } from '@cuberoot/shared/forum';
+import { excerptFromMarkdown, imageUrlsFromMarkdown } from '@cuberoot/shared/forum';
 import { formatJoinedDate } from '@/lib/forum-format';
 
 describe('forum joined date formatting', () => {
@@ -23,5 +23,20 @@ describe('forum feed excerpts', () => {
   it('drops code and image payloads and applies the requested limit', () => {
     const markdown = '开头 ![图](https://example.com/a.png) `inline` ```hidden``` 后续内容';
     expect(excerptFromMarkdown(markdown, 6)).toBe('开头 后续内…');
+  });
+});
+
+describe('forum feed images', () => {
+  it('extracts unique Markdown image URLs in post order', () => {
+    const markdown = [
+      '![first](https://img.example/a.webp)',
+      '[not an image](https://img.example/skip.webp)',
+      '![](https://img.example/b.png "caption")',
+      '![duplicate](https://img.example/a.webp)',
+    ].join('\n');
+    expect(imageUrlsFromMarkdown(markdown)).toEqual([
+      'https://img.example/a.webp',
+      'https://img.example/b.png',
+    ]);
   });
 });

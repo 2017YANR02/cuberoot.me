@@ -7,6 +7,7 @@ import { tr, useLang } from '@/i18n/tr';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { formatCount, formatRelativeTime } from '@/lib/forum-format';
 import { REACTION_EMOJI, type ForumFeedThread } from '@/lib/forum-api';
+import { ForumVideoPlayer } from './ForumVideoPlayer';
 import './forum-feed.css';
 
 export function ForumFeedList({ threads, compact = false }: { threads: ForumFeedThread[]; compact?: boolean }) {
@@ -18,6 +19,8 @@ export function ForumFeedList({ threads, compact = false }: { threads: ForumFeed
       {threads.map((thread) => {
         const displayName = ownerDisplayName(thread.authorId, thread.author.name || thread.authorName, zh);
         const reactionCount = thread.reactions.reduce((sum, reaction) => sum + reaction.count, 0);
+        const imageUrls = thread.imageUrls ?? [];
+        const videos = thread.videos ?? [];
         return (
           <article className="community-feed-item" key={thread.id}>
             <div className="community-feed-avatar" aria-hidden="true">
@@ -40,6 +43,16 @@ export function ForumFeedList({ threads, compact = false }: { threads: ForumFeed
                 {thread.title}
               </Link>
               {thread.excerpt && <p className="community-feed-excerpt">{thread.excerpt}</p>}
+              {!compact && imageUrls.length > 0 && (
+                <div className={`community-feed-images${imageUrls.length === 1 ? ' is-single' : ''}`}>
+                  {imageUrls.slice(0, 4).map((url, index) => (
+                    <Link key={`${url}-${index}`} href={`/forum/t/${thread.id}`} prefetch={false}>
+                      <img src={url} alt={tr({ zh: `帖子图片 ${index + 1}`, en: `Post image ${index + 1}` })} loading="lazy" />
+                    </Link>
+                  ))}
+                </div>
+              )}
+              {!compact && videos.map((video) => <ForumVideoPlayer key={video.id} video={video} />)}
               <div className="community-feed-meta">
                 <span title={tr({ zh: `${reactionCount} 个反应`, en: `${reactionCount} reactions` })}>
                   <span className="community-feed-reactions" aria-hidden="true">

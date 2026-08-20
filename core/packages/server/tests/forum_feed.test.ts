@@ -33,7 +33,7 @@ const threadRow = {
   forum_name_en: 'General',
   forum_name_zh: '综合讨论',
   first_post_id: '21',
-  first_post_content: '# Hello\n\nA **useful** [discussion](https://example.com).',
+  first_post_content: '# Hello\n\nA **useful** [discussion](https://example.com).\n\n![turn](https://img.example/turn.webp)',
 };
 
 describe('forum activity feed', () => {
@@ -47,6 +47,10 @@ describe('forum activity feed', () => {
         { post_id: '21', kind: 'like', author_name: 'A' },
         { post_id: '21', kind: 'like', author_name: 'B' },
       ])
+      .mockResolvedValueOnce([{
+        id: '31', post_id: '21', public_token: '11111111-1111-4111-8111-111111111111',
+        storage_key: 'clip.mp4', mime: 'video/mp4', size_bytes: '1234', duration_ms: '19000',
+      }])
       .mockResolvedValueOnce([{ author_id: '2017TEST01', n: 7 }])
       .mockResolvedValueOnce([{
         wca_id: '2017TEST01',
@@ -73,6 +77,14 @@ describe('forum activity feed', () => {
         firstPostId: 21,
         forumSlug: 'general',
         excerpt: 'Hello A useful discussion.',
+        imageUrls: ['https://img.example/turn.webp'],
+        videos: [{
+          id: 31,
+          token: '11111111-1111-4111-8111-111111111111',
+          mime: 'video/mp4',
+          sizeBytes: 1234,
+          durationMs: 19000,
+        }],
         reactions: [{ kind: 'like', count: 2, names: ['A', 'B'] }],
         author: {
           name: 'Canonical User',

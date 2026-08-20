@@ -6,10 +6,8 @@
  * NOTE: 迁移自 PHP recon/api/index.php → Hono
  */
 import { Hono, type Context } from 'hono';
-import { randomUUID } from 'node:crypto';
-import { createReadStream, promises as fs } from 'node:fs';
+import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { Readable } from 'node:stream';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
@@ -28,7 +26,12 @@ import { fetchCubingAttempts } from '../utils/cubing_proxy.js';
 import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
 import { normalizeReconSolution } from '@cuberoot/shared/recon-completion';
 import { notify, adminRecipients } from '../utils/notify.js';
-import { parseVideoByteRange, sniffVideo, VIDEO_EXT } from '../utils/video_upload.js';
+import {
+  receiveVideoUpload,
+  storedVideoResponse,
+  VideoUploadError,
+  VIDEO_EXT,
+} from '../utils/video_upload.js';
 import { hasActiveMembership } from '../utils/membership.js';
 
 export const reconRoutes = new Hono();
@@ -66,28 +69,13 @@ async function serveReconVideo(c: Context, headOnly: boolean): Promise<Response>
     return c.json({ error: 'Video storage mismatch' }, 500);
   }
 
-  const rangeHeader = c.req.header('range');
-  const range = parseVideoByteRange(rangeHeader, size);
-  if (rangeHeader && !range) {
-    return new Response(null, {
-      status: 416,
-      headers: { 'Content-Range': `bytes */${size}`, 'Accept-Ranges': 'bytes' },
-    });
-  }
-
-  const start = range?.start ?? 0;
-  const end = range?.end ?? size - 1;
-  const headers = new Headers({
-    'Accept-Ranges': 'bytes',
-    'Cache-Control': 'public, max-age=300, s-maxage=31536000, immutable',
-    'Content-Length': String(end - start + 1),
-    'Content-Type': row.mime,
+  return storedVideoResponse({
+    filePath,
+    mime: row.mime,
+    size,
+    rangeHeader: c.req.header('range'),
+    headOnly,
   });
-  if (range) headers.set('Content-Range', `bytes ${start}-${end}/${size}`);
-  if (headOnly) return new Response(null, { status: range ? 206 : 200, headers });
-
-  const body = Readable.toWeb(createReadStream(filePath, { start, end })) as ReadableStream<Uint8Array>;
-  return new Response(body, { status: range ? 206 : 200, headers });
 }
 
 /** 通知用的 recon 抬头 + 站内链接。id 段即可打开详情页(前端 parseReconId 兼容 slug)。 */
@@ -1076,75 +1064,35 @@ reconRoutes.post('/recon/video', async (c) => {
     return c.json({ error: 'daily video upload quota exceeded' }, 429);
   }
 
-  const requestBody = c.req.raw.body;
-  if (!requestBody) return c.json({ error: 'video file is required' }, 400);
-
-  await fs.mkdir(RECON_VIDEO_DIR, { recursive: true });
-  const stem = randomUUID();
-  const tempKey = `${stem}.part`;
-  const tempPath = path.join(RECON_VIDEO_DIR, tempKey);
-  const file = await fs.open(tempPath, 'wx');
-  const reader = requestBody.getReader();
-  let total = 0;
-  let signature = Buffer.alloc(0);
-  let tooLarge = false;
-
+  let received: Awaited<ReturnType<typeof receiveVideoUpload>>;
   try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (!value?.byteLength) continue;
-      total += value.byteLength;
-      if (total > RECON_VIDEO_MAX_BYTES) {
-        tooLarge = true;
-        await reader.cancel();
-        break;
-      }
-      if (signature.length < 32) {
-        const needed = 32 - signature.length;
-        signature = Buffer.concat([signature, Buffer.from(value.subarray(0, needed))]);
-      }
-      await file.write(value);
+    received = await receiveVideoUpload(c.req.raw.body, RECON_VIDEO_DIR, RECON_VIDEO_MAX_BYTES);
+  } catch (error) {
+    if (error instanceof VideoUploadError) return c.json({ error: error.message }, error.status);
+    throw error;
+  }
+  const { stem, tempPath, mime, sizeBytes } = received;
+  try {
+    if (dailyBytes + sizeBytes > RECON_VIDEO_DAILY_BYTES) {
+      return c.json({ error: 'daily video upload quota exceeded' }, 429);
     }
-  } catch (error) {
-    await file.close().catch(() => {});
-    await fs.unlink(tempPath).catch(() => {});
-    throw error;
-  }
-  await file.close();
 
-  if (tooLarge) {
+    const storageKey = `${stem}.${VIDEO_EXT[mime]}`;
+    const finalPath = path.join(RECON_VIDEO_DIR, storageKey);
+    await fs.rename(tempPath, finalPath);
+    try {
+      const inserted = await query<{ id: number | string }>(
+        `INSERT INTO recon_videos (owner_wca_id, storage_key, mime, size_bytes)
+         VALUES (?, ?, ?, ?) RETURNING id`,
+        [authUser.wcaId, storageKey, mime, sizeBytes],
+      );
+      return c.json({ id: Number(inserted[0].id) }, 201);
+    } catch (error) {
+      await fs.unlink(finalPath).catch(() => {});
+      throw error;
+    }
+  } finally {
     await fs.unlink(tempPath).catch(() => {});
-    return c.json({ error: 'video too large (max 200MB)' }, 413);
-  }
-  if (total <= 0) {
-    await fs.unlink(tempPath).catch(() => {});
-    return c.json({ error: 'video file is required' }, 400);
-  }
-
-  const mime = sniffVideo(signature);
-  if (!mime) {
-    await fs.unlink(tempPath).catch(() => {});
-    return c.json({ error: 'file must be an MP4, WebM, or MOV video' }, 400);
-  }
-  if (dailyBytes + total > RECON_VIDEO_DAILY_BYTES) {
-    await fs.unlink(tempPath).catch(() => {});
-    return c.json({ error: 'daily video upload quota exceeded' }, 429);
-  }
-
-  const storageKey = `${stem}.${VIDEO_EXT[mime]}`;
-  const finalPath = path.join(RECON_VIDEO_DIR, storageKey);
-  await fs.rename(tempPath, finalPath);
-  try {
-    const inserted = await query<{ id: number | string }>(
-      `INSERT INTO recon_videos (owner_wca_id, storage_key, mime, size_bytes)
-       VALUES (?, ?, ?, ?) RETURNING id`,
-      [authUser.wcaId, storageKey, mime, total],
-    );
-    return c.json({ id: Number(inserted[0].id) }, 201);
-  } catch (error) {
-    await fs.unlink(finalPath).catch(() => {});
-    throw error;
   }
 });
 

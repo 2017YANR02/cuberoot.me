@@ -353,6 +353,7 @@ const TABLES: Table[] = [
   { name: 'forum_forums', domain: 'community', origin: '0066', purpose: { zh: '论坛子版(发帖目的地,seed 16 版)', en: 'Forum boards (16 seeded)' } },
   { name: 'forum_threads', domain: 'community', origin: '0066', purpose: { zh: '论坛主题(置顶 / 锁帖 / 软删 + 末帖缓存)', en: 'Forum threads (pin / lock / soft-delete + last-post cache)' } },
   { name: 'forum_posts', domain: 'community', origin: '0066', purpose: { zh: '论坛帖子(markdown 正文,软删保楼层号)', en: 'Forum posts (markdown body, soft-delete keeps post numbers)' } },
+  { name: 'forum_videos', domain: 'community', origin: '0163', purpose: { zh: '论坛短视频上传元数据，发布前归属账号，发布时原子绑定首帖', en: 'Forum short-video upload metadata, owned before publishing and atomically attached to the first post' } },
   { name: 'forum_reactions', domain: 'community', origin: '0066', purpose: { zh: '帖子反应(一人一帖一条,可换类型)', en: 'Post reactions (one per user per post)' } },
   { name: 'forum_reports', domain: 'community', origin: '0066', purpose: { zh: '帖子举报(一人一帖一条,resolved_at 空 = 待处理)', en: 'Post reports (one per user per post, null resolved_at = open)' } },
   { name: 'quiz_questions', domain: 'community', origin: '0100', purpose: { zh: '/quiz 社区题:登录用户自己出的题,直接上线,与内置题库同池出场', en: '/quiz community questions — written by members, live immediately, drawn alongside the built-in bank' }, cols: [
@@ -573,6 +574,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 160, slug: 'teacher_live_scripts', desc: { zh: '新增老师与培训机构名下的结构化直播话术，并迁移魔方根首次直播完整话术。', en: 'Add structured livestream scripts owned by teacher and school profiles, and migrate the complete first CubeRoot livestream script.' } },
   { n: 161, slug: 'expand_first_live_script', desc: { zh: '依据原直播字幕扩充魔方根首次直播中文整理稿，恢复个人经历、教学案例、直播幕后与未来规划。', en: 'Expand the first CubeRoot livestream script from its transcript, restoring personal history, teaching stories, behind-the-scenes details, and future plans.' } },
   { n: 162, slug: 'recon_video_uploads', desc: { zh: '新增会员复盘视频上传元数据，以归属、格式、大小和创建时间约束服务器文件。', en: 'Add member recon-video upload metadata, constraining server files by owner, format, size, and creation time.' } },
+  { n: 163, slug: 'forum_videos', desc: { zh: '新增论坛短视频上传元数据；任意登录账号可上传，发布主题时原子绑定首帖，时长由服务端读取媒体容器并校验。', en: 'Add forum short-video upload metadata; any signed-in account may upload, thread creation atomically attaches it to the first post, and the server validates duration from the media container.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

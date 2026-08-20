@@ -171,3 +171,7 @@ Skill 路径按 catalog 的 root alias 展开,禁猜路径。
 ## 造非 WCA 小魔方求解器 loop
 
 `/loop 继续造小魔方求解器`(或"造非 WCA 求解器")= 读 `solver/NONWCA_PUZZLE_LOOP.md` 全文,按 §0 推进;纯 TS 路线(Ivy 范式,非 Rust),TIER D 前有 soft-gate。
+
+## 论坛视频时长
+
+“视频时长限制改成 X”=只改 `core/packages/shared/src/forum.ts` 的 `FORUM_VIDEO_MAX_DURATION_SECONDS`，前端提示/预检与服务端校验共用它。

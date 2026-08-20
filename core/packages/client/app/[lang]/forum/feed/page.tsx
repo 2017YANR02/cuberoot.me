@@ -8,6 +8,7 @@ import { ForumFeedList } from '@/components/forum/ForumFeedList';
 import { T, tr, useLang } from '@/i18n/tr';
 import { fetchForumFeed, type ForumFeedData, type ForumFeedSort } from '@/lib/forum-api';
 import { ForumHeader } from '../_components/ForumHeader';
+import { ForumFeedComposer } from './ForumFeedComposer';
 import '../forum.css';
 
 const SORTS: ForumFeedSort[] = ['active', 'latest'];
@@ -26,6 +27,7 @@ export default function ForumFeedPage() {
   const safeSize = PAGE_SIZES.includes(size) ? size : 20;
   const [data, setData] = useState<ForumFeedData | null>(null);
   const [error, setError] = useState('');
+  const [refreshNonce, setRefreshNonce] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,7 +37,7 @@ export default function ForumFeedPage() {
       .then((next) => { if (!cancelled) setData(next); })
       .catch((e) => { if (!cancelled) setError((e as Error).message); });
     return () => { cancelled = true; };
-  }, [sort, safePage, safeSize]);
+  }, [sort, safePage, safeSize, refreshNonce]);
 
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / safeSize));
 
@@ -46,6 +48,13 @@ export default function ForumFeedPage() {
   return (
     <div className="forum-page">
       <ForumHeader activeView="feed" />
+      <ForumFeedComposer
+        onCreated={() => {
+          void setSort('latest');
+          void setPage(1);
+          setRefreshNonce((nonce) => nonce + 1);
+        }}
+      />
       <div className="forum-feed-toolbar">
         <PillToggle
           value={sort === 'latest'}
