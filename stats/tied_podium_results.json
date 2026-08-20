@@ -2,8 +2,8 @@
   "id": "tied_podium_results",
   "title": "Identical Top-Three Round Results",
   "titleZh": "同轮前三名同分",
-  "note": "This checked-in snapshot still contains the 2 final-round average cases and 1 final-round single case from the WCA export dated 2026-05-16. The next statistics CI refresh will expand the query to all rounds. Fewest Moves is excluded.",
-  "noteZh": "当前静态快照仍是 2026-05-16 WCA 导出中的决赛子集：平均 2 次，单次 1 次。下一次统计 CI 将按任意轮次完整重算。不含最少步。",
+  "note": "Across all WCA rounds, the official 1st, 2nd and 3rd places had an identical valid average 7 times and an identical valid single 2 times. Fewest Moves is excluded. Data uses the WCA export dated 2026-08-19.",
+  "noteZh": "WCA 任意轮次官方第 1、2、3 名三人的有效成绩完全相同：平均 7 次，单次 2 次。不含最少步。数据使用 2026-08-19 的 WCA 导出。",
   "header": [
     {
       "key": "result",
@@ -44,6 +44,42 @@
   ],
   "sections": [
     {
+      "title": "Rubik's Cube - Average",
+      "titleZh": "三阶魔方 - 平均",
+      "rows": [
+        [
+          "8.98",
+          "R1",
+          "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+          "[Michał Rzewuski](https://www.worldcubeassociation.org/persons/2014RZEW01)",
+          "[Bartłomiej Owczarek](https://www.worldcubeassociation.org/persons/2013OWCZ01)",
+          "[CFL Domaniewice 2018](https://www.worldcubeassociation.org/competitions/CubeFactoryLeagueDomaniewice2018/results/all#e333_1)"
+        ]
+      ]
+    },
+    {
+      "title": "2x2x2 Cube - Average",
+      "titleZh": "二阶魔方 - 平均",
+      "rows": [
+        [
+          "2.42",
+          "R1",
+          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+          "[Santino Maiorino](https://www.worldcubeassociation.org/persons/2017MAIO01)",
+          "[Daniel Guerra](https://www.worldcubeassociation.org/persons/2022GUER14)",
+          "[Cubing Knights V 2023](https://www.worldcubeassociation.org/competitions/CubingKnightsV2023/results/all#e222_1)"
+        ],
+        [
+          "4.69",
+          "R2",
+          "[Fernando Mendez Mesa](https://www.worldcubeassociation.org/persons/2017MESA01)",
+          "[Eduard Esteban García Domínguez](https://www.worldcubeassociation.org/persons/2011EDUA01)",
+          "[David Verdooren Flórez](https://www.worldcubeassociation.org/persons/2017FLOR05)",
+          "[Caracolí Open 2019](https://www.worldcubeassociation.org/competitions/CaracoliOpen2019/results/all#e222_2)"
+        ]
+      ]
+    },
+    {
       "title": "4x4x4 Cube - Average",
       "titleZh": "四阶魔方 - 平均",
       "rows": [
@@ -54,6 +90,34 @@
           "[Tomoya Firman](https://www.worldcubeassociation.org/persons/2015FIRM01)",
           "[Tommy Kiprillis](https://www.worldcubeassociation.org/persons/2014KIPR01)",
           "[Melbourne Cube Days 2018](https://www.worldcubeassociation.org/competitions/MelbourneCubeDays2018/results/all#e444_f)"
+        ]
+      ]
+    },
+    {
+      "title": "Pyraminx - Average",
+      "titleZh": "金字塔 - 平均",
+      "rows": [
+        [
+          "3.24",
+          "R1",
+          "[Braden Richards](https://www.worldcubeassociation.org/persons/2017RICH02)",
+          "[Xavier Ye](https://www.worldcubeassociation.org/persons/2021YEXA01)",
+          "[Livia Kleiner](https://www.worldcubeassociation.org/persons/2013KLEI03)",
+          "[Pretzel Mania Summer 2024](https://www.worldcubeassociation.org/competitions/PretzelManiaSummer2024/results/all#epyram_1)"
+        ]
+      ]
+    },
+    {
+      "title": "Rubik's Clock - Average",
+      "titleZh": "魔表 - 平均",
+      "rows": [
+        [
+          "4.23",
+          "Fi",
+          "[Tobiasz Gładysz](https://www.worldcubeassociation.org/persons/2024GLAD02)",
+          "[Eliza Mikrut](https://www.worldcubeassociation.org/persons/2024MIKR01)",
+          "[Jongwon Kook (국종원)](https://www.worldcubeassociation.org/persons/2023KOOK01)",
+          "[All Rounders Katowice II 2026](https://www.worldcubeassociation.org/competitions/AllRoundersKatowiceII2026/results/all#eclock_c)"
         ]
       ]
     },
@@ -75,6 +139,14 @@
       "title": "2x2x2 Cube - Single",
       "titleZh": "二阶魔方 - 单次",
       "rows": [
+        [
+          "4.15",
+          "R1",
+          "[Filippo Brancaleoni](https://www.worldcubeassociation.org/persons/2008BRAN01)",
+          "[Riccardo Simone](https://www.worldcubeassociation.org/persons/2008SIMO01)",
+          "[Mariano D'Imperio](https://www.worldcubeassociation.org/persons/2009DIMP01)",
+          "[Florence Fantastic 2013](https://www.worldcubeassociation.org/competitions/FlorenceFantastic2013/results/all#e222_1)"
+        ],
         [
           "4.34",
           "Fi",
