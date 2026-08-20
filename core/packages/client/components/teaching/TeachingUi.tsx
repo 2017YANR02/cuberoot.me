@@ -11,11 +11,19 @@ import { TeachingApiError, type TeachingPage } from '@/lib/teaching-saas-api';
 
 export function useOperationKey() {
   const keyRef = useRef('');
-  const get = useCallback(() => {
+  const intentRef = useRef('');
+  const get = useCallback((intent = '') => {
+    if (intentRef.current !== intent) {
+      keyRef.current = '';
+      intentRef.current = intent;
+    }
     keyRef.current ||= crypto.randomUUID();
     return keyRef.current;
   }, []);
-  const reset = useCallback(() => { keyRef.current = ''; }, []);
+  const reset = useCallback(() => {
+    keyRef.current = '';
+    intentRef.current = '';
+  }, []);
   return { get, reset };
 }
 

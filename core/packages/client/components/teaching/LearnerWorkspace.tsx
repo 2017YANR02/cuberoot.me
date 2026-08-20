@@ -43,7 +43,7 @@ export default function LearnerWorkspace({ orgSlug, studentId, children }: Props
     return (
       <main className="teaching-page teaching-centered">
         <h1>{t('学习中心', 'Learning center')}</h1>
-        <p>{t('登录后查看学员周报、课后反馈、消息和训练任务。', 'Sign in to view weekly reports, lesson feedback, messages, and training assignments.')}</p>
+        <p>{t('登录后查看课次、请假、周报、课后反馈、消息和训练任务。', 'Sign in to view sessions, leave requests, weekly reports, lesson feedback, messages, and training assignments.')}</p>
         <AppLink className="teaching-primary-link" href={`/account${nextQuery(window.location.pathname)}`} prefetch={false}>{t('登录', 'Sign in')}</AppLink>
       </main>
     );
@@ -75,6 +75,7 @@ export default function LearnerWorkspace({ orgSlug, studentId, children }: Props
       </header>
       <nav className="teaching-nav" aria-label={t('学习档案导航', 'Learning profile navigation')}>
         <AppLink href={baseHref} prefetch={false}>{t('概览', 'Overview')}</AppLink>
+        <AppLink href={`${baseHref}/sessions`} prefetch={false}>{t('课次与请假', 'Sessions and leave')}</AppLink>
         <AppLink href={`${baseHref}/reports`} prefetch={false}>{t('周报', 'Reports')}</AppLink>
         <AppLink href={`${baseHref}/feedback`} prefetch={false}>{t('课后反馈', 'Lesson feedback')}</AppLink>
         <AppLink href={`${baseHref}/messages`} prefetch={false}>{t('消息', 'Messages')}</AppLink>

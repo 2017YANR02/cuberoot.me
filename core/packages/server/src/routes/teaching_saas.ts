@@ -174,8 +174,26 @@ interface CreateSessionInput {
 interface AttendanceBatchInput {
   records: Array<{
     attendanceId: string;
-    status: Exclude<TeachingAttendanceStatus, 'expected'>;
+    status: Extract<TeachingAttendanceStatus, 'present' | 'late' | 'absent'>;
   }>;
+}
+
+interface LeaveRequestInput {
+  reason: string;
+}
+
+interface LeaveDecisionInput {
+  decision: 'approved' | 'rejected';
+  reason: string;
+}
+
+interface MakeupScheduleInput {
+  targetSessionId: string;
+  reason: string;
+}
+
+interface SessionCancelInput {
+  reason: string;
 }
 
 interface CreateLessonFeedbackInput {
@@ -397,6 +415,53 @@ export interface TeachingSaasRepository {
     idempotencyKey: string,
     requestHash: string,
     requestId: string,
+  ): Promise<MutationResult>;
+  cancelSession(
+    actor: TeachingActor, slug: string, sessionId: string, input: SessionCancelInput,
+    idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  listLeaveRequests(
+    actor: TeachingActor, slug: string, sessionId: string, pagination: PageInput, requestId: string,
+  ): Promise<PageResult>;
+  createLeaveRequest(
+    actor: TeachingActor, slug: string, sessionId: string, attendanceId: string,
+    input: LeaveRequestInput, idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  decideLeaveRequest(
+    actor: TeachingActor, slug: string, sessionId: string, attendanceId: string, leaveRequestId: string,
+    input: LeaveDecisionInput, idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  cancelLeaveRequest(
+    actor: TeachingActor, slug: string, sessionId: string, attendanceId: string, leaveRequestId: string,
+    input: LeaveRequestInput, idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  listMakeupAttempts(
+    actor: TeachingActor, slug: string, sessionId: string, attendanceId: string,
+    pagination: PageInput, requestId: string,
+  ): Promise<PageResult>;
+  listMakeupCandidates(
+    actor: TeachingActor, slug: string, sessionId: string, attendanceId: string,
+    pagination: PageInput, requestId: string,
+  ): Promise<PageResult>;
+  scheduleMakeup(
+    actor: TeachingActor, slug: string, sessionId: string, attendanceId: string,
+    input: MakeupScheduleInput, idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  listLearnerSessions(
+    actor: TeachingActor, slug: string, studentId: string, pagination: PageInput, requestId: string,
+  ): Promise<PageResult>;
+  listLearnerLeaveRequests(
+    actor: TeachingActor, slug: string, studentId: string, sessionId: string,
+    pagination: PageInput, requestId: string,
+  ): Promise<PageResult>;
+  createLearnerLeaveRequest(
+    actor: TeachingActor, slug: string, studentId: string, sessionId: string, attendanceId: string,
+    input: LeaveRequestInput, idempotencyKey: string, requestHash: string, requestId: string,
+  ): Promise<MutationResult>;
+  cancelLearnerLeaveRequest(
+    actor: TeachingActor, slug: string, studentId: string, sessionId: string, attendanceId: string,
+    leaveRequestId: string, input: LeaveRequestInput, idempotencyKey: string,
+    requestHash: string, requestId: string,
   ): Promise<MutationResult>;
   createLessonFeedback(
     actor: TeachingActor,
@@ -1206,6 +1271,7 @@ function parseSessionInput(body: JsonObject): CreateSessionInput {
 }
 
 function parseAttendanceBatchInput(body: JsonObject): AttendanceBatchInput {
+  assertOnlyKeys(body, ['records'], 'attendance batch input');
   if (!Array.isArray(body.records) || body.records.length < 1 || body.records.length > 500) {
     throw new TeachingApiException('INVALID_INPUT', 400, 'records must contain 1 to 500 attendance updates');
   }
@@ -1214,18 +1280,48 @@ function parseAttendanceBatchInput(body: JsonObject): AttendanceBatchInput {
       throw new TeachingApiException('INVALID_INPUT', 400, `records[${index}] must be an object`);
     }
     const item = raw as JsonObject;
-    if (!TEACHING_ATTENDANCE_STATUSES.includes(item.status as TeachingAttendanceStatus) || item.status === 'expected') {
-      throw new TeachingApiException('INVALID_INPUT', 400, `records[${index}].status must resolve attendance`);
+    assertOnlyKeys(item, ['attendanceId', 'status'], `records[${index}]`);
+    if (!['present', 'late', 'absent'].includes(String(item.status))) {
+      throw new TeachingApiException(
+        'INVALID_INPUT', 400,
+        `records[${index}].status must be present, late, or absent; excused requires leave approval`,
+      );
     }
     return {
       attendanceId: requiredUuid(item, 'attendanceId'),
-      status: item.status as Exclude<TeachingAttendanceStatus, 'expected'>,
+      status: item.status as Extract<TeachingAttendanceStatus, 'present' | 'late' | 'absent'>,
     };
   });
   if (new Set(records.map((item) => item.attendanceId)).size !== records.length) {
     throw new TeachingApiException('INVALID_INPUT', 400, 'records must not repeat an attendanceId');
   }
   return { records };
+}
+
+function parseLeaveRequestInput(body: JsonObject): LeaveRequestInput {
+  assertOnlyKeys(body, ['reason'], 'leave request input');
+  return { reason: requiredString(body, 'reason', 500) };
+}
+
+function parseLeaveDecisionInput(body: JsonObject): LeaveDecisionInput {
+  assertOnlyKeys(body, ['decision', 'reason'], 'leave decision input');
+  if (body.decision !== 'approved' && body.decision !== 'rejected') {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'decision must be approved or rejected');
+  }
+  return { decision: body.decision, reason: requiredString(body, 'reason', 500) };
+}
+
+function parseMakeupScheduleInput(body: JsonObject): MakeupScheduleInput {
+  assertOnlyKeys(body, ['targetSessionId', 'reason'], 'makeup schedule input');
+  return {
+    targetSessionId: requiredUuid(body, 'targetSessionId'),
+    reason: requiredString(body, 'reason', 500),
+  };
+}
+
+function parseSessionCancelInput(body: JsonObject): SessionCancelInput {
+  assertOnlyKeys(body, ['reason'], 'session cancellation input');
+  return { reason: requiredString(body, 'reason', 500) };
 }
 
 function parseLessonFeedbackInput(body: JsonObject): CreateLessonFeedbackInput {
@@ -1814,6 +1910,71 @@ function creditAdjustmentToJson(row: Record<string, unknown>): JsonObject {
       creditUnit: String(row.credit_unit),
       creditType: String(row.credit_type),
     },
+  };
+}
+
+function actorSnapshotToJson(row: Record<string, unknown>, prefix: string): JsonObject | null {
+  const userId = row[`${prefix}_user_id_snapshot`];
+  if (userId == null) return null;
+  return {
+    userId: String(userId),
+    displayName: String(row[`${prefix}_display_name_snapshot`]),
+    role: String(row[`${prefix}_role_snapshot`]),
+    relationship: row[`${prefix}_relationship_snapshot`] == null
+      ? null
+      : String(row[`${prefix}_relationship_snapshot`]),
+  };
+}
+
+function attendanceToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.attendance_id ?? row.id),
+    studentId: String(row.student_id),
+    studentPackageId: row.student_package_id == null ? null : String(row.student_package_id),
+    status: String(row.attendance_status ?? row.status),
+    creditCost: Number(row.credit_cost),
+    notes: row.notes == null ? null : String(row.notes),
+    updatedAt: new Date(String(row.attendance_updated_at ?? row.updated_at)).toISOString(),
+  };
+}
+
+function leaveRequestToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    organizationId: String(row.organization_id),
+    sessionId: String(row.session_id),
+    attendanceId: String(row.attendance_id),
+    studentId: String(row.student_id),
+    status: String(row.status),
+    reason: String(row.reason),
+    decisionReason: row.decision_reason == null ? null : String(row.decision_reason),
+    requestedBy: actorSnapshotToJson(row, 'requested_by'),
+    decidedBy: actorSnapshotToJson(row, 'decided_by'),
+    decidedAt: row.decided_at == null ? null : new Date(String(row.decided_at)).toISOString(),
+    createdAt: new Date(String(row.created_at)).toISOString(),
+    updatedAt: new Date(String(row.updated_at)).toISOString(),
+  };
+}
+
+function makeupAttemptToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    organizationId: String(row.organization_id),
+    sourceSessionId: String(row.source_session_id),
+    sourceAttendanceId: String(row.source_attendance_id),
+    targetSessionId: String(row.target_session_id),
+    targetAttendanceId: String(row.target_attendance_id),
+    studentId: String(row.student_id),
+    studentPackageId: String(row.student_package_id),
+    creditCost: Number(row.credit_cost),
+    status: String(row.status),
+    reason: String(row.reason),
+    createdBy: actorSnapshotToJson(row, 'created_by'),
+    resolvedBy: actorSnapshotToJson(row, 'resolved_by'),
+    resolutionReason: row.resolution_reason == null ? null : String(row.resolution_reason),
+    resolvedAt: row.resolved_at == null ? null : new Date(String(row.resolved_at)).toISOString(),
+    createdAt: new Date(String(row.created_at)).toISOString(),
+    updatedAt: new Date(String(row.updated_at)).toISOString(),
   };
 }
 
@@ -3159,6 +3320,105 @@ async function lockConversationActorScope(
     };
   }
   throw new ConcealedTeachingPermissionDeniedException('Conversation student not found');
+}
+
+async function lockManagedSession(
+  tx: Tx,
+  access: OrganizationAccess,
+  actor: TeachingActor,
+  sessionId: string,
+): Promise<Record<string, unknown>> {
+  const scope = requireSessionScope(access, 'session:manage');
+  const rows = scope === 'organization'
+    ? await tx`
+        SELECT session.* FROM teaching_sessions session
+        WHERE session.organization_id = ${access.id} AND session.id = ${sessionId}
+        FOR UPDATE OF session`
+    : await tx`
+        SELECT session.* FROM teaching_sessions session
+        WHERE session.organization_id = ${access.id} AND session.id = ${sessionId}
+          AND EXISTS (
+            SELECT 1 FROM session_teachers assigned
+            WHERE assigned.organization_id = session.organization_id
+              AND assigned.session_id = session.id
+              AND assigned.teacher_user_id = ${actor.userId}
+          )
+        FOR UPDATE OF session`;
+  if (rows.length) return rows[0] as Record<string, unknown>;
+  if (scope === 'assigned') {
+    const existing = await tx`
+      SELECT 1 FROM teaching_sessions WHERE organization_id = ${access.id} AND id = ${sessionId}`;
+    if (existing.length) throw new ConcealedTeachingPermissionDeniedException('Session not found');
+  }
+  throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found');
+}
+
+async function lockManagedCancellationGraph(
+  tx: Tx,
+  access: OrganizationAccess,
+  actor: TeachingActor,
+  sessionId: string,
+): Promise<{
+  session: Record<string, unknown>;
+}> {
+  const scope = requireSessionScope(access, 'session:manage');
+  const discoveredAttempts = await tx`
+    SELECT source_session_id, target_session_id
+    FROM makeup_attempts
+    WHERE organization_id = ${access.id} AND status = 'scheduled'
+      AND (source_session_id = ${sessionId} OR target_session_id = ${sessionId})
+    ORDER BY source_session_id, target_session_id, id`;
+  const sessionIds = [...new Set([
+    sessionId,
+    ...discoveredAttempts.flatMap((row) => [
+      String(row.source_session_id),
+      String(row.target_session_id),
+    ]),
+  ])].sort();
+  const sessions = await tx`
+    SELECT session.* FROM teaching_sessions session
+    WHERE session.organization_id = ${access.id} AND session.id IN ${sql(sessionIds)}
+    ORDER BY session.id
+    FOR UPDATE OF session`;
+  const session = sessions.find((row) => String(row.id) === sessionId) as
+    | Record<string, unknown>
+    | undefined;
+  if (!session) {
+    throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found');
+  }
+  if (sessions.length !== sessionIds.length) {
+    throw new TeachingApiException('CONFLICT', 409, 'A related makeup session no longer exists');
+  }
+  if (scope === 'assigned') {
+    const assigned = await tx`
+      SELECT session_id FROM session_teachers
+      WHERE organization_id = ${access.id} AND session_id IN ${sql(sessionIds)}
+        AND teacher_user_id = ${actor.userId}
+      ORDER BY session_id, id
+      FOR SHARE`;
+    if (new Set(assigned.map((row) => String(row.session_id))).size !== sessionIds.length) {
+      throw new ConcealedTeachingPermissionDeniedException('Session not found');
+    }
+  }
+  const attempts = await tx`
+    SELECT source_session_id, target_session_id FROM makeup_attempts
+    WHERE organization_id = ${access.id} AND status = 'scheduled'
+      AND (source_session_id = ${sessionId} OR target_session_id = ${sessionId})
+    ORDER BY source_session_id, target_session_id, id`;
+  const lockedSessionIds = new Set(sessionIds);
+  if (attempts.some((row) => (
+    !lockedSessionIds.has(String(row.source_session_id))
+      || !lockedSessionIds.has(String(row.target_session_id))
+  ))) {
+    throw new TeachingApiException('CONFLICT', 409, 'Makeup scheduling changed; retry cancellation');
+  }
+  return { session };
+}
+
+function requireLearnerScope(scope: ConversationActorScope): void {
+  if (scope.staffAccess !== null || (scope.role !== 'student' && scope.role !== 'guardian')) {
+    throw new ConcealedTeachingPermissionDeniedException('Learner session not found');
+  }
 }
 
 function conversationRow(row: Record<string, unknown>): JsonObject {
@@ -6526,6 +6786,264 @@ export const teachingSaasRepository: TeachingSaasRepository = {
     });
   },
 
+  async listLearnerSessions(actor, slug, studentId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'learner.session.list', requestId, async () => {
+      return await sql.begin(async (tx) => {
+        const scope = await lockConversationActorScope(tx, actor, slug, studentId, 'read');
+        requireLearnerScope(scope);
+        const rows = await tx`
+          SELECT session.*, attendance.id AS attendance_id,
+                 attendance.status AS attendance_status, attendance.credit_cost,
+                 attendance.updated_at AS attendance_updated_at,
+                 COUNT(*) OVER()::int AS total,
+                 COALESCE((SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+                   'displayName', teacher.teacher_display_name_snapshot,
+                   'role', CASE teacher.role WHEN 'lead' THEN 'teacher' ELSE 'assistant' END
+                 ) ORDER BY CASE teacher.role WHEN 'lead' THEN 0 ELSE 1 END,
+                   teacher.teacher_display_name_snapshot, teacher.id)
+                  FROM session_teachers teacher
+                  WHERE teacher.organization_id = session.organization_id
+                    AND teacher.session_id = session.id AND teacher.role IN ('lead', 'assistant')),
+                  '[]'::jsonb) AS teachers,
+                 active_leave.active_leave_request
+          FROM attendance_records attendance
+          JOIN teaching_sessions session
+            ON session.organization_id = attendance.organization_id
+           AND session.id = attendance.session_id
+          LEFT JOIN LATERAL (
+            SELECT JSONB_BUILD_OBJECT(
+              'id', leave_request.id::text,
+              'organizationId', leave_request.organization_id::text,
+              'sessionId', leave_request.session_id::text,
+              'attendanceId', leave_request.attendance_id::text,
+              'studentId', leave_request.student_id::text,
+              'status', leave_request.status,
+              'reason', leave_request.reason,
+              'decisionReason', leave_request.decision_reason,
+              'requestedBy', JSONB_BUILD_OBJECT(
+                'userId', leave_request.requested_by_user_id_snapshot::text,
+                'displayName', leave_request.requested_by_display_name_snapshot,
+                'role', leave_request.requested_by_role_snapshot,
+                'relationship', leave_request.requested_by_relationship_snapshot
+              ),
+              'decidedBy', CASE WHEN leave_request.decided_by_user_id_snapshot IS NULL THEN NULL
+                ELSE JSONB_BUILD_OBJECT(
+                  'userId', leave_request.decided_by_user_id_snapshot::text,
+                  'displayName', leave_request.decided_by_display_name_snapshot,
+                  'role', leave_request.decided_by_role_snapshot,
+                  'relationship', NULL
+                ) END,
+              'decidedAt', leave_request.decided_at,
+              'createdAt', leave_request.created_at,
+              'updatedAt', leave_request.updated_at
+            ) AS active_leave_request
+            FROM leave_requests leave_request
+            WHERE leave_request.organization_id = attendance.organization_id
+              AND leave_request.attendance_id = attendance.id
+              AND leave_request.status IN ('pending', 'approved')
+            ORDER BY leave_request.created_at DESC, leave_request.id DESC LIMIT 1
+          ) active_leave ON TRUE
+          WHERE attendance.organization_id = ${scope.organization.id}
+            AND attendance.student_id = ${studentId}
+          ORDER BY session.starts_at DESC, session.id DESC
+          LIMIT ${pagination.pageSize} OFFSET ${pagination.offset}`;
+        return {
+          items: rows.map((row) => ({
+            id: String(row.id), title: String(row.title),
+            startsAt: new Date(String(row.starts_at)).toISOString(),
+            endsAt: new Date(String(row.ends_at)).toISOString(), timezone: String(row.timezone),
+            status: String(row.status), teachers: row.teachers as JsonValue,
+            attendance: {
+              id: String(row.attendance_id),
+              status: String(row.attendance_status),
+              creditCost: Number(row.credit_cost),
+              updatedAt: new Date(String(row.attendance_updated_at)).toISOString(),
+            },
+            activeLeaveRequest: (row.active_leave_request as JsonValue | null) ?? null,
+          })),
+          total: Number(rows[0]?.total ?? 0), page: pagination.page, pageSize: pagination.pageSize,
+        };
+      });
+    });
+  },
+
+  async listLearnerLeaveRequests(actor, slug, studentId, sessionId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'learner.leave_request.list', requestId, async () => {
+      return await sql.begin(async (tx) => {
+        const scope = await lockConversationActorScope(tx, actor, slug, studentId, 'read');
+        requireLearnerScope(scope);
+        const attendance = await tx`
+          SELECT id FROM attendance_records
+          WHERE organization_id = ${scope.organization.id} AND session_id = ${sessionId}
+            AND student_id = ${studentId}`;
+        if (!attendance.length) throw new ConcealedTeachingPermissionDeniedException('Learner session not found');
+        const [counts, rows] = await Promise.all([
+          tx`SELECT COUNT(*)::int AS count FROM leave_requests
+             WHERE organization_id = ${scope.organization.id} AND session_id = ${sessionId}
+               AND student_id = ${studentId}`,
+          tx`SELECT * FROM leave_requests
+             WHERE organization_id = ${scope.organization.id} AND session_id = ${sessionId}
+               AND student_id = ${studentId}
+             ORDER BY created_at DESC, id DESC
+             LIMIT ${pagination.pageSize} OFFSET ${pagination.offset}`,
+        ]);
+        return {
+          items: rows.map((row) => leaveRequestToJson(row as Record<string, unknown>)),
+          total: Number(counts[0]?.count ?? 0), page: pagination.page, pageSize: pagination.pageSize,
+        };
+      });
+    });
+  },
+
+  async createLearnerLeaveRequest(
+    actor, slug, studentId, sessionId, attendanceId,
+    input, idempotencyKey, requestHash, requestId,
+  ) {
+    return withDeniedAccessAudit(actor, slug, 'learner.leave_request.create', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'learner.leave_request.create', 60, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const scope = await lockConversationActorScope(tx, actor, slug, studentId, 'write');
+          requireLearnerScope(scope);
+          const sessions = await tx`
+            SELECT * FROM teaching_sessions
+            WHERE organization_id = ${scope.organization.id} AND id = ${sessionId}
+            FOR UPDATE`;
+          if (!sessions.length) throw new ConcealedTeachingPermissionDeniedException('Learner session not found');
+          const attendance = await tx`
+            SELECT * FROM attendance_records
+            WHERE organization_id = ${scope.organization.id} AND session_id = ${sessionId}
+              AND id = ${attendanceId} AND student_id = ${studentId}
+            FOR UPDATE`;
+          if (!attendance.length) throw new ConcealedTeachingPermissionDeniedException('Learner session not found');
+          const idem = await beginIdempotency(
+            tx, actor.userId, scope.organization.id,
+            `learner.leave_request.create:${studentId}:${attendanceId}`,
+            idempotencyKey, requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          if (!['scheduled', 'in_progress'].includes(String(sessions[0].status))
+              || attendance[0].status !== 'expected') {
+            throw new TeachingApiException('CONFLICT', 409, 'Leave requires expected attendance in an open session');
+          }
+          const displayName = conversationDisplayName(actor, scope);
+          const rows = await tx`
+            INSERT INTO leave_requests (
+              organization_id, session_id, attendance_id, student_id, reason,
+              requested_by_user_id, requested_by_user_id_snapshot,
+              requested_by_display_name_snapshot, requested_by_role_snapshot,
+              requested_by_relationship_snapshot
+            ) VALUES (
+              ${scope.organization.id}, ${sessionId}, ${attendanceId}, ${studentId}, ${input.reason},
+              ${actor.userId}, ${actor.userId}, ${displayName}, ${scope.role}, ${scope.relationship}
+            ) RETURNING *`;
+          const leaveRequestId = String(rows[0].id);
+          await tx`INSERT INTO session_events (
+            organization_id, session_id, event_type, actor_user_id, actor_role,
+            actor_display_name, request_id, metadata
+          ) VALUES (
+            ${scope.organization.id}, ${sessionId}, 'leave_requested', ${actor.userId}, ${scope.role},
+            ${displayName}, ${requestId}, ${sql.json({ leaveRequestId, attendanceId, studentId })}
+          )`;
+          await tx`INSERT INTO teaching_audit_events (
+            organization_id, actor_user_id, actor_role, actor_display_name,
+            action, entity_type, entity_id, request_id, metadata
+          ) VALUES (
+            ${scope.organization.id}, ${actor.userId}, ${scope.role}, ${displayName},
+            'learner.leave_request.create', 'leave_request', ${leaveRequestId}, ${requestId},
+            ${sql.json({ sessionId, attendanceId, studentId })}
+          )`;
+          const result: MutationResult = {
+            status: 201,
+            body: {
+              leaveRequest: leaveRequestToJson(rows[0] as Record<string, unknown>),
+              attendance: attendanceToJson(attendance[0] as Record<string, unknown>),
+            },
+          };
+          await completeIdempotency(tx, idem.id, result, 'leave_request', leaveRequestId);
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Leave request conflicts with the current attendance state');
+      }
+    });
+  },
+
+  async cancelLearnerLeaveRequest(
+    actor, slug, studentId, sessionId, attendanceId, leaveRequestId,
+    input, idempotencyKey, requestHash, requestId,
+  ) {
+    return withDeniedAccessAudit(actor, slug, 'learner.leave_request.cancel', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'learner.leave_request.cancel', 60, '1 minute');
+      return await sql.begin(async (tx) => {
+        const scope = await lockConversationActorScope(tx, actor, slug, studentId, 'write');
+        requireLearnerScope(scope);
+        const sessions = await tx`SELECT id, status FROM teaching_sessions
+          WHERE organization_id = ${scope.organization.id} AND id = ${sessionId} FOR UPDATE`;
+        if (!sessions.length) throw new ConcealedTeachingPermissionDeniedException('Learner session not found');
+        const attendance = await tx`
+          SELECT * FROM attendance_records
+          WHERE organization_id = ${scope.organization.id} AND session_id = ${sessionId}
+            AND id = ${attendanceId} AND student_id = ${studentId}
+          FOR UPDATE`;
+        if (!attendance.length) throw new ConcealedTeachingPermissionDeniedException('Learner session not found');
+        const requests = await tx`
+          SELECT * FROM leave_requests
+          WHERE organization_id = ${scope.organization.id} AND session_id = ${sessionId}
+            AND attendance_id = ${attendanceId} AND id = ${leaveRequestId}
+            AND student_id = ${studentId} AND requested_by_user_id_snapshot = ${actor.userId}
+          FOR UPDATE`;
+        if (!requests.length) throw new ConcealedTeachingPermissionDeniedException('Leave request not found');
+        const idem = await beginIdempotency(
+          tx, actor.userId, scope.organization.id,
+          `learner.leave_request.cancel:${studentId}:${leaveRequestId}`,
+          idempotencyKey, requestHash,
+        );
+        if ('replay' in idem) return idem.replay;
+        if (!['scheduled', 'in_progress'].includes(String(sessions[0].status))) {
+          throw new TeachingApiException('CONFLICT', 409, 'Leave requests cannot be cancelled after session closure');
+        }
+        if (requests[0].status !== 'pending') {
+          throw new TeachingApiException('CONFLICT', 409, 'Only a pending leave request can be cancelled');
+        }
+        const displayName = conversationDisplayName(actor, scope);
+        const rows = await tx`
+          UPDATE leave_requests SET
+            status = 'cancelled', decision_reason = ${input.reason},
+            decided_by_user_id = ${actor.userId}, decided_by_user_id_snapshot = ${actor.userId},
+            decided_by_display_name_snapshot = ${displayName},
+            decided_by_role_snapshot = ${scope.role}, decided_at = NOW()
+          WHERE organization_id = ${scope.organization.id} AND id = ${leaveRequestId}
+          RETURNING *`;
+        await tx`INSERT INTO session_events (
+          organization_id, session_id, event_type, actor_user_id, actor_role,
+          actor_display_name, request_id, metadata
+        ) VALUES (
+          ${scope.organization.id}, ${sessionId}, 'leave_cancelled', ${actor.userId}, ${scope.role},
+          ${displayName}, ${requestId}, ${sql.json({ leaveRequestId, attendanceId, studentId })}
+        )`;
+        await tx`INSERT INTO teaching_audit_events (
+          organization_id, actor_user_id, actor_role, actor_display_name,
+          action, entity_type, entity_id, request_id, metadata
+        ) VALUES (
+          ${scope.organization.id}, ${actor.userId}, ${scope.role}, ${displayName},
+          'learner.leave_request.cancel', 'leave_request', ${leaveRequestId}, ${requestId},
+          ${sql.json({ sessionId, attendanceId, studentId })}
+        )`;
+        const result: MutationResult = {
+          status: 200,
+          body: {
+            leaveRequest: leaveRequestToJson(rows[0] as Record<string, unknown>),
+            attendance: attendanceToJson(attendance[0] as Record<string, unknown>),
+          },
+        };
+        await completeIdempotency(tx, idem.id, result, 'leave_request', leaveRequestId);
+        return result;
+      }) as MutationResult;
+    });
+  },
+
   async listLearnerWeeklyReports(actor, slug, studentId, pagination, requestId) {
     return withDeniedAccessAudit(actor, slug, 'weekly_report.learner.list', requestId, async () => {
       const commonParams = [slug, studentId, actor.userId, actor.userId];
@@ -7793,6 +8311,546 @@ export const teachingSaasRepository: TeachingSaasRepository = {
     });
   },
 
+  async listLeaveRequests(actor, slug, sessionId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'leave_request.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      const scope = requireSessionScope(access, 'session:read');
+      const assigned = scope === 'assigned'
+        ? `AND EXISTS (SELECT 1 FROM session_teachers assigned
+             WHERE assigned.organization_id = session.organization_id
+               AND assigned.session_id = session.id AND assigned.teacher_user_id = ?)`
+        : '';
+      const params = scope === 'assigned' ? [access.id, sessionId, actor.userId] : [access.id, sessionId];
+      const sessions = await query<Record<string, unknown>>(
+        `SELECT 1 FROM teaching_sessions session
+         WHERE session.organization_id = ? AND session.id = ? ${assigned}`,
+        params,
+      );
+      if (!sessions.length) throw new ConcealedTeachingPermissionDeniedException('Session not found');
+      const [counts, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          'SELECT COUNT(*)::int AS count FROM leave_requests WHERE organization_id = ? AND session_id = ?',
+          [access.id, sessionId],
+        ),
+        query<Record<string, unknown>>(
+          `SELECT * FROM leave_requests
+           WHERE organization_id = ? AND session_id = ?
+           ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+          [access.id, sessionId, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map(leaveRequestToJson), total: Number(counts[0]?.count ?? 0),
+        page: pagination.page, pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async createLeaveRequest(
+    actor, slug, sessionId, attendanceId, input, idempotencyKey, requestHash, requestId,
+  ) {
+    return withDeniedAccessAudit(actor, slug, 'leave_request.create', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'leave_request.create', 120, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          const session = await lockManagedSession(tx, access, actor, sessionId);
+          const attendance = await tx`
+            SELECT * FROM attendance_records
+            WHERE organization_id = ${access.id} AND session_id = ${sessionId} AND id = ${attendanceId}
+            FOR UPDATE`;
+          if (!attendance.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Attendance record not found');
+          const idem = await beginIdempotency(
+            tx, actor.userId, access.id, `leave_request.create:${attendanceId}`,
+            idempotencyKey, requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          if (!['scheduled', 'in_progress'].includes(String(session.status))) {
+            throw new TeachingApiException('CONFLICT', 409, 'Leave can only be requested for an open session');
+          }
+          const rows = await tx`
+            INSERT INTO leave_requests (
+              organization_id, session_id, attendance_id, student_id, reason,
+              requested_by_user_id, requested_by_user_id_snapshot,
+              requested_by_display_name_snapshot, requested_by_role_snapshot
+            ) VALUES (
+              ${access.id}, ${sessionId}, ${attendanceId}, ${String(attendance[0].student_id)}, ${input.reason},
+              ${actor.userId}, ${actor.userId}, ${actor.displayName}, ${access.role}
+            ) RETURNING *`;
+          const leaveRequest = leaveRequestToJson(rows[0] as Record<string, unknown>);
+          await tx`INSERT INTO session_events (
+            organization_id, session_id, event_type, actor_user_id, actor_role,
+            actor_display_name, request_id, metadata
+          ) VALUES (
+            ${access.id}, ${sessionId}, 'leave_requested', ${actor.userId}, ${access.role},
+            ${actor.displayName}, ${requestId}, ${sql.json({ leaveRequestId: String(rows[0].id), attendanceId })}
+          )`;
+          await insertTrainingAudit(
+            tx, access, actor, 'leave_request.create', 'leave_request', String(rows[0].id), requestId,
+            { sessionId, attendanceId },
+          );
+          const result: MutationResult = {
+            status: 201, body: { leaveRequest, attendance: attendanceToJson(attendance[0] as Record<string, unknown>) },
+          };
+          await completeIdempotency(tx, idem.id, result, 'leave_request', String(rows[0].id));
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Leave request conflicts with the current attendance state');
+      }
+    });
+  },
+
+  async decideLeaveRequest(
+    actor, slug, sessionId, attendanceId, leaveRequestId,
+    input, idempotencyKey, requestHash, requestId,
+  ) {
+    return withDeniedAccessAudit(actor, slug, 'leave_request.decide', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'leave_request.decide', 120, '1 minute');
+      return await sql.begin(async (tx) => {
+        const access = await accessForWrite(tx, actor.userId, slug);
+        requireWritable(access);
+        const session = await lockManagedSession(tx, access, actor, sessionId);
+        const attendance = await tx`
+          SELECT * FROM attendance_records
+          WHERE organization_id = ${access.id} AND session_id = ${sessionId} AND id = ${attendanceId}
+          FOR UPDATE`;
+        if (!attendance.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Attendance record not found');
+        const requests = await tx`
+          SELECT * FROM leave_requests
+          WHERE organization_id = ${access.id} AND session_id = ${sessionId}
+            AND attendance_id = ${attendanceId} AND id = ${leaveRequestId}
+          FOR UPDATE`;
+        if (!requests.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Leave request not found');
+        const idem = await beginIdempotency(
+          tx, actor.userId, access.id, `leave_request.decide:${leaveRequestId}`,
+          idempotencyKey, requestHash,
+        );
+        if ('replay' in idem) return idem.replay;
+        if (!['scheduled', 'in_progress'].includes(String(session.status))) {
+          throw new TeachingApiException('CONFLICT', 409, 'Leave requests cannot be decided after session closure');
+        }
+        if (requests[0].status !== 'pending') {
+          throw new TeachingApiException('CONFLICT', 409, 'Leave request has already been decided');
+        }
+        if (input.decision === 'approved') {
+          if (attendance[0].status !== 'expected') {
+            throw new TeachingApiException('CONFLICT', 409, 'Approved leave requires expected attendance');
+          }
+          await tx`
+            UPDATE attendance_records SET status = 'excused', recorded_by_user_id = ${actor.userId}
+            WHERE organization_id = ${access.id} AND id = ${attendanceId}`;
+        }
+        const rows = await tx`
+          UPDATE leave_requests SET
+            status = ${input.decision}, decision_reason = ${input.reason},
+            decided_by_user_id = ${actor.userId}, decided_by_user_id_snapshot = ${actor.userId},
+            decided_by_display_name_snapshot = ${actor.displayName},
+            decided_by_role_snapshot = ${access.role}, decided_at = NOW()
+          WHERE organization_id = ${access.id} AND id = ${leaveRequestId}
+          RETURNING *`;
+        const savedAttendance = await tx`
+          SELECT * FROM attendance_records WHERE organization_id = ${access.id} AND id = ${attendanceId}`;
+        await tx`INSERT INTO session_events (
+          organization_id, session_id, event_type, actor_user_id, actor_role,
+          actor_display_name, request_id, metadata
+        ) VALUES (
+          ${access.id}, ${sessionId}, 'leave_decided', ${actor.userId}, ${access.role},
+          ${actor.displayName}, ${requestId},
+          ${sql.json({ leaveRequestId, attendanceId, decision: input.decision })}
+        )`;
+        await insertTrainingAudit(
+          tx, access, actor, 'leave_request.decide', 'leave_request', leaveRequestId, requestId,
+          { sessionId, attendanceId, decision: input.decision },
+        );
+        const result: MutationResult = {
+          status: 200,
+          body: {
+            leaveRequest: leaveRequestToJson(rows[0] as Record<string, unknown>),
+            attendance: attendanceToJson(savedAttendance[0] as Record<string, unknown>),
+          },
+        };
+        await completeIdempotency(tx, idem.id, result, 'leave_request', leaveRequestId);
+        return result;
+      }) as MutationResult;
+    });
+  },
+
+  async cancelLeaveRequest(
+    actor, slug, sessionId, attendanceId, leaveRequestId,
+    input, idempotencyKey, requestHash, requestId,
+  ) {
+    return withDeniedAccessAudit(actor, slug, 'leave_request.cancel', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'leave_request.cancel', 120, '1 minute');
+      return await sql.begin(async (tx) => {
+        const access = await accessForWrite(tx, actor.userId, slug);
+        requireWritable(access);
+        const session = await lockManagedSession(tx, access, actor, sessionId);
+        const attendance = await tx`
+          SELECT * FROM attendance_records
+          WHERE organization_id = ${access.id} AND session_id = ${sessionId} AND id = ${attendanceId}
+          FOR UPDATE`;
+        if (!attendance.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Attendance record not found');
+        const requests = await tx`
+          SELECT * FROM leave_requests
+          WHERE organization_id = ${access.id} AND session_id = ${sessionId}
+            AND attendance_id = ${attendanceId} AND id = ${leaveRequestId}
+          FOR UPDATE`;
+        if (!requests.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Leave request not found');
+        const idem = await beginIdempotency(
+          tx, actor.userId, access.id, `leave_request.cancel:${leaveRequestId}`,
+          idempotencyKey, requestHash,
+        );
+        if ('replay' in idem) return idem.replay;
+        if (!['scheduled', 'in_progress'].includes(String(session.status))) {
+          throw new TeachingApiException('CONFLICT', 409, 'Leave requests cannot be cancelled after session closure');
+        }
+        if (requests[0].status !== 'pending') {
+          throw new TeachingApiException('CONFLICT', 409, 'Only a pending leave request can be cancelled');
+        }
+        const rows = await tx`
+          UPDATE leave_requests SET
+            status = 'cancelled', decision_reason = ${input.reason},
+            decided_by_user_id = ${actor.userId}, decided_by_user_id_snapshot = ${actor.userId},
+            decided_by_display_name_snapshot = ${actor.displayName},
+            decided_by_role_snapshot = ${access.role}, decided_at = NOW()
+          WHERE organization_id = ${access.id} AND id = ${leaveRequestId}
+          RETURNING *`;
+        await tx`INSERT INTO session_events (
+          organization_id, session_id, event_type, actor_user_id, actor_role,
+          actor_display_name, request_id, metadata
+        ) VALUES (
+          ${access.id}, ${sessionId}, 'leave_cancelled', ${actor.userId}, ${access.role},
+          ${actor.displayName}, ${requestId}, ${sql.json({ leaveRequestId, attendanceId })}
+        )`;
+        await insertTrainingAudit(
+          tx, access, actor, 'leave_request.cancel', 'leave_request', leaveRequestId, requestId,
+          { sessionId, attendanceId },
+        );
+        const result: MutationResult = {
+          status: 200,
+          body: {
+            leaveRequest: leaveRequestToJson(rows[0] as Record<string, unknown>),
+            attendance: attendanceToJson(attendance[0] as Record<string, unknown>),
+          },
+        };
+        await completeIdempotency(tx, idem.id, result, 'leave_request', leaveRequestId);
+        return result;
+      }) as MutationResult;
+    });
+  },
+
+  async listMakeupAttempts(actor, slug, sessionId, attendanceId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'makeup_attempt.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      const scope = requireSessionScope(access, 'session:read');
+      const sessionParams = scope === 'assigned'
+        ? [access.id, sessionId, actor.userId, attendanceId]
+        : [access.id, sessionId, attendanceId];
+      const assigned = scope === 'assigned'
+        ? `AND EXISTS (SELECT 1 FROM session_teachers assigned
+             WHERE assigned.organization_id = session.organization_id
+               AND assigned.session_id = session.id AND assigned.teacher_user_id = ?)`
+        : '';
+      const source = await query<Record<string, unknown>>(
+        `SELECT attendance.id FROM teaching_sessions session
+         JOIN attendance_records attendance
+           ON attendance.organization_id = session.organization_id AND attendance.session_id = session.id
+         WHERE session.organization_id = ? AND session.id = ? ${assigned}
+           AND attendance.id = ?`,
+        sessionParams,
+      );
+      if (!source.length) throw new ConcealedTeachingPermissionDeniedException('Attendance record not found');
+      const [counts, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          'SELECT COUNT(*)::int AS count FROM makeup_attempts WHERE organization_id = ? AND source_attendance_id = ?',
+          [access.id, attendanceId],
+        ),
+        query<Record<string, unknown>>(
+          `SELECT * FROM makeup_attempts
+           WHERE organization_id = ? AND source_attendance_id = ?
+           ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+          [access.id, attendanceId, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map(makeupAttemptToJson), total: Number(counts[0]?.count ?? 0),
+        page: pagination.page, pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async listMakeupCandidates(actor, slug, sessionId, attendanceId, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'makeup_attempt.candidates', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      const scope = requireSessionScope(access, 'session:read');
+      const source = await query<Record<string, unknown>>(
+        `SELECT source.ends_at, attendance.student_id, attendance.student_package_id,
+                attendance.credit_cost
+         FROM teaching_sessions source
+         JOIN attendance_records attendance
+           ON attendance.organization_id = source.organization_id AND attendance.session_id = source.id
+         JOIN leave_requests leave_request
+           ON leave_request.organization_id = attendance.organization_id
+          AND leave_request.attendance_id = attendance.id AND leave_request.status = 'approved'
+         WHERE source.organization_id = ? AND source.id = ? AND attendance.id = ?
+           AND source.status IN ('scheduled', 'in_progress', 'completed')
+           ${scope === 'assigned' ? `AND EXISTS (
+             SELECT 1 FROM session_teachers assigned
+             WHERE assigned.organization_id = source.organization_id
+               AND assigned.session_id = source.id AND assigned.teacher_user_id = ?
+           )` : ''}`,
+        scope === 'assigned'
+          ? [access.id, sessionId, attendanceId, actor.userId]
+          : [access.id, sessionId, attendanceId],
+      );
+      if (!source.length) throw new ConcealedTeachingPermissionDeniedException('Attendance record not found');
+      const sourceRow = source[0];
+      const rows = await query<Record<string, unknown>>(
+        `SELECT target.id AS session_id, target.title, target.starts_at, target.ends_at, target.timezone,
+                target_attendance.id AS attendance_id,
+                COUNT(*) OVER()::int AS total,
+                COALESCE((
+                  SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+                    'userId', teacher.teacher_user_id_snapshot::text,
+                    'displayName', teacher.teacher_display_name_snapshot,
+                    'role', CASE teacher.role WHEN 'lead' THEN 'teacher' ELSE 'assistant' END
+                  ) ORDER BY CASE teacher.role WHEN 'lead' THEN 0 ELSE 1 END,
+                    teacher.teacher_display_name_snapshot, teacher.id)
+                  FROM session_teachers teacher
+                  WHERE teacher.organization_id = target.organization_id
+                    AND teacher.session_id = target.id AND teacher.role IN ('lead', 'assistant')
+                ), '[]'::jsonb) AS teachers
+         FROM teaching_sessions target
+         JOIN student_packages package
+           ON package.organization_id = target.organization_id AND package.id = ?
+          AND package.student_id = ? AND package.lifecycle_status = 'active'
+          AND package.valid_from <= target.starts_at
+          AND (package.valid_until IS NULL OR package.valid_until > target.starts_at)
+         LEFT JOIN attendance_records target_attendance
+           ON target_attendance.organization_id = target.organization_id
+          AND target_attendance.session_id = target.id
+          AND target_attendance.student_id = ?
+         WHERE target.organization_id = ? AND target.status = 'scheduled'
+           AND target.id <> ? AND target.starts_at > NOW() AND target.starts_at > ?
+           AND (target_attendance.id IS NULL OR (
+             target_attendance.status = 'expected'
+             AND target_attendance.student_package_id = ?
+             AND target_attendance.credit_cost = ?
+           ))
+           AND NOT EXISTS (
+             SELECT 1 FROM makeup_attempts nested
+             WHERE nested.organization_id = target.organization_id
+               AND (
+                 nested.target_attendance_id = ?
+                 OR (nested.source_attendance_id = ? AND nested.status IN ('scheduled', 'fulfilled'))
+                 OR (target_attendance.id IS NOT NULL AND (
+                   nested.source_attendance_id = target_attendance.id
+                   OR nested.target_attendance_id = target_attendance.id
+                 ))
+               )
+           )
+           ${scope === 'assigned' ? `AND EXISTS (
+             SELECT 1 FROM session_teachers assigned
+             WHERE assigned.organization_id = target.organization_id
+               AND assigned.session_id = target.id AND assigned.teacher_user_id = ?
+           )` : ''}
+         ORDER BY target.starts_at, target.id LIMIT ? OFFSET ?`,
+        scope === 'assigned'
+          ? [sourceRow.student_package_id, sourceRow.student_id,
+              sourceRow.student_id, access.id, sessionId, sourceRow.ends_at,
+              sourceRow.student_package_id, sourceRow.credit_cost, attendanceId, attendanceId, actor.userId,
+              pagination.pageSize, pagination.offset]
+          : [sourceRow.student_package_id, sourceRow.student_id,
+              sourceRow.student_id, access.id, sessionId, sourceRow.ends_at,
+              sourceRow.student_package_id, sourceRow.credit_cost, attendanceId, attendanceId,
+              pagination.pageSize, pagination.offset],
+      );
+      return {
+        items: rows.map((row) => ({
+          sessionId: String(row.session_id), title: String(row.title),
+          startsAt: new Date(String(row.starts_at)).toISOString(),
+          endsAt: new Date(String(row.ends_at)).toISOString(), timezone: String(row.timezone),
+          teachers: row.teachers as JsonValue,
+          attendanceId: row.attendance_id == null ? null : String(row.attendance_id),
+        })),
+        total: Number(rows[0]?.total ?? 0), page: pagination.page, pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async scheduleMakeup(
+    actor, slug, sessionId, attendanceId, input, idempotencyKey, requestHash, requestId,
+  ) {
+    return withDeniedAccessAudit(actor, slug, 'makeup_attempt.schedule', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'makeup_attempt.schedule', 120, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          const scope = requireSessionScope(access, 'session:manage');
+          const sessionIds = [sessionId, input.targetSessionId].sort();
+          const sessions = await tx`
+            SELECT session.*, TRANSACTION_TIMESTAMP() AS operation_now FROM teaching_sessions session
+            WHERE organization_id = ${access.id} AND id IN ${sql(sessionIds)}
+            ORDER BY id FOR UPDATE`;
+          if (sessions.length !== 2) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Session not found');
+          if (scope === 'assigned') {
+            const assigned = await tx`
+              SELECT session_id FROM session_teachers
+              WHERE organization_id = ${access.id} AND session_id IN ${sql(sessionIds)}
+                AND teacher_user_id = ${actor.userId}
+              ORDER BY session_id, id FOR SHARE`;
+            if (new Set(assigned.map((row) => String(row.session_id))).size !== 2) {
+              throw new ConcealedTeachingPermissionDeniedException('Session not found');
+            }
+          }
+          const sourceSession = sessions.find((row) => String(row.id) === sessionId) as Record<string, unknown>;
+          const targetSession = sessions.find((row) => String(row.id) === input.targetSessionId) as Record<string, unknown>;
+          const attendanceRows = await tx`
+            SELECT attendance.*
+            FROM attendance_records attendance
+            JOIN attendance_records source
+              ON source.organization_id = attendance.organization_id
+             AND source.session_id = ${sessionId} AND source.id = ${attendanceId}
+            WHERE attendance.organization_id = ${access.id}
+              AND (
+                attendance.id = source.id
+                OR (
+                  attendance.session_id = ${input.targetSessionId}
+                  AND attendance.student_id = source.student_id
+                )
+              )
+            ORDER BY attendance.id
+            FOR UPDATE OF attendance`;
+          const sourceAttendanceRows = attendanceRows.filter((row) => String(row.id) === attendanceId);
+          if (!sourceAttendanceRows.length) {
+            throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Attendance record not found');
+          }
+          const sourceAttendance = sourceAttendanceRows[0] as Record<string, unknown>;
+          const targetAttendanceRows = attendanceRows.filter(
+            (row) => String(row.session_id) === input.targetSessionId
+              && String(row.student_id) === String(sourceAttendance.student_id),
+          );
+          const targetAttendanceId = targetAttendanceRows[0]?.id == null
+            ? null
+            : String(targetAttendanceRows[0].id);
+          const existingAttempts = await tx`
+            SELECT id, status, source_attendance_id, target_attendance_id FROM makeup_attempts
+            WHERE organization_id = ${access.id}
+              AND (
+                target_attendance_id = ${attendanceId}
+                OR (source_attendance_id = ${attendanceId} AND status IN ('scheduled', 'fulfilled'))
+                OR (${targetAttendanceId}::uuid IS NOT NULL AND (
+                  source_attendance_id = ${targetAttendanceId}
+                  OR target_attendance_id = ${targetAttendanceId}
+                ))
+              )
+            ORDER BY id FOR UPDATE`;
+          const approvedLeave = await tx`
+            SELECT id FROM leave_requests
+            WHERE organization_id = ${access.id} AND attendance_id = ${attendanceId} AND status = 'approved'
+            FOR UPDATE`;
+          const packageId = sourceAttendance.student_package_id == null
+            ? null
+            : String(sourceAttendance.student_package_id);
+          const packageRows = packageId === null
+            ? []
+            : await tx`SELECT id, lifecycle_status, valid_from, valid_until FROM student_packages
+              WHERE organization_id = ${access.id} AND id = ${packageId}
+                AND student_id = ${String(sourceAttendance.student_id)}
+              FOR SHARE`;
+          const idem = await beginIdempotency(
+            tx, actor.userId, access.id, `makeup_attempt.schedule:${attendanceId}`,
+            idempotencyKey, requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          if (!approvedLeave.length || sourceAttendance.status !== 'excused' || packageId === null) {
+            throw new TeachingApiException('CONFLICT', 409, 'Makeup requires approved excused attendance with a package');
+          }
+          if (!['scheduled', 'in_progress', 'completed'].includes(String(sourceSession.status))) {
+            throw new TeachingApiException('CONFLICT', 409, 'Source session cannot accept a makeup');
+          }
+          if (targetSession.status !== 'scheduled'
+              || new Date(String(targetSession.starts_at)).getTime()
+                <= new Date(String(targetSession.operation_now)).getTime()
+              || new Date(String(targetSession.starts_at)).getTime() <= new Date(String(sourceSession.ends_at)).getTime()) {
+            throw new TeachingApiException('CONFLICT', 409, 'Target session must be a later future scheduled session');
+          }
+          const studentPackage = packageRows[0] as Record<string, unknown> | undefined;
+          const targetStartsAt = new Date(String(targetSession.starts_at)).getTime();
+          if (!studentPackage || studentPackage.lifecycle_status !== 'active'
+              || new Date(String(studentPackage.valid_from)).getTime() > targetStartsAt
+              || (studentPackage.valid_until != null
+                && new Date(String(studentPackage.valid_until)).getTime() <= targetStartsAt)) {
+            throw new TeachingApiException('CONFLICT', 409, 'Student package is not active for the target session');
+          }
+          if (existingAttempts.length) {
+            throw new TeachingApiException('CONFLICT', 409, 'Attendance is already part of a makeup chain');
+          }
+          let targetAttendance: Record<string, unknown>;
+          if (targetAttendanceRows.length) {
+            targetAttendance = targetAttendanceRows[0] as Record<string, unknown>;
+            if (targetAttendance.status !== 'expected'
+                || String(targetAttendance.student_package_id) !== packageId
+                || Number(targetAttendance.credit_cost) !== Number(sourceAttendance.credit_cost)) {
+              throw new TeachingApiException('CONFLICT', 409, 'Existing target attendance does not match the source');
+            }
+          } else {
+            const insertedAttendance = await tx`
+              INSERT INTO attendance_records (
+                organization_id, session_id, student_id, student_package_id,
+                status, credit_cost, notes
+              ) VALUES (
+                ${access.id}, ${input.targetSessionId}, ${String(sourceAttendance.student_id)},
+                ${packageId}, 'expected', ${Number(sourceAttendance.credit_cost)}, ''
+              ) RETURNING *`;
+            targetAttendance = insertedAttendance[0] as Record<string, unknown>;
+          }
+          const rows = await tx`
+            INSERT INTO makeup_attempts (
+              organization_id, source_session_id, source_attendance_id,
+              target_session_id, target_attendance_id, student_id, student_package_id,
+              credit_cost, reason, created_by_user_id, created_by_user_id_snapshot,
+              created_by_display_name_snapshot, created_by_role_snapshot
+            ) VALUES (
+              ${access.id}, ${sessionId}, ${attendanceId}, ${input.targetSessionId},
+              ${String(targetAttendance.id)}, ${String(sourceAttendance.student_id)}, ${packageId},
+              ${Number(sourceAttendance.credit_cost)}, ${input.reason}, ${actor.userId}, ${actor.userId},
+              ${actor.displayName}, ${access.role}
+            ) RETURNING *`;
+          const makeupAttemptId = String(rows[0].id);
+          await tx`INSERT INTO session_events (
+            organization_id, session_id, event_type, actor_user_id, actor_role,
+            actor_display_name, request_id, metadata
+          ) VALUES (
+            ${access.id}, ${input.targetSessionId}, 'makeup_scheduled', ${actor.userId}, ${access.role},
+            ${actor.displayName}, ${requestId},
+            ${sql.json({ makeupAttemptId, sourceSessionId: sessionId, sourceAttendanceId: attendanceId })}
+          )`;
+          await insertTrainingAudit(
+            tx, access, actor, 'makeup_attempt.schedule', 'makeup_attempt', makeupAttemptId, requestId,
+            { sourceSessionId: sessionId, sourceAttendanceId: attendanceId, targetSessionId: input.targetSessionId },
+          );
+          const result: MutationResult = {
+            status: 201,
+            body: {
+              makeupAttempt: makeupAttemptToJson(rows[0] as Record<string, unknown>),
+              attendance: attendanceToJson(targetAttendance),
+            },
+          };
+          await completeIdempotency(tx, idem.id, result, 'makeup_attempt', makeupAttemptId);
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Makeup scheduling conflicts with the current attendance state');
+      }
+    });
+  },
+
   async saveAttendanceBatch(actor, slug, sessionId, input, idempotencyKey, requestHash, requestId) {
     return withDeniedAccessAudit(actor, slug, 'session.attendance.batch', requestId, async () => {
       await consumeMutationAttempt(actor.userId, 'session.attendance.batch', 240, '1 minute');
@@ -7831,6 +8889,29 @@ export const teachingSaasRepository: TeachingSaasRepository = {
         if (!['scheduled', 'in_progress'].includes(String(sessions[0].status))) {
           throw new TeachingApiException('CONFLICT', 409, 'Attendance cannot change after the session is closed');
         }
+        const attendanceIds = [...input.records.map((item) => item.attendanceId)].sort();
+        const lockedAttendance = await tx`
+          SELECT id, student_package_id FROM attendance_records
+          WHERE organization_id = ${access.id} AND session_id = ${sessionId}
+            AND id IN ${sql(attendanceIds)}
+          ORDER BY student_package_id NULLS LAST, id
+          FOR UPDATE`;
+        if (lockedAttendance.length !== attendanceIds.length) {
+          throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Attendance record not found');
+        }
+        const protectedLeave = await tx`
+          SELECT attendance_id FROM leave_requests
+          WHERE organization_id = ${access.id}
+            AND attendance_id IN ${sql(attendanceIds)}
+            AND status IN ('pending', 'approved')
+          ORDER BY attendance_id
+          FOR UPDATE`;
+        if (protectedLeave.length) {
+          throw new TeachingApiException(
+            'CONFLICT', 409,
+            'Pending or approved leave attendance must be changed through the leave workflow',
+          );
+        }
         const saved: JsonObject[] = [];
         for (const item of input.records) {
           const rows = await tx`
@@ -7843,7 +8924,8 @@ export const teachingSaasRepository: TeachingSaasRepository = {
           saved.push({
             id: String(row.id), studentId: String(row.student_id),
             studentPackageId: row.student_package_id == null ? null : String(row.student_package_id),
-            status: String(row.status), creditCost: Number(row.credit_cost), notes: String(row.notes),
+            status: String(row.status), creditCost: Number(row.credit_cost),
+            notes: row.notes == null ? null : String(row.notes),
             updatedAt: new Date(String(row.updated_at)).toISOString(),
           });
         }
@@ -7934,21 +9016,44 @@ export const teachingSaasRepository: TeachingSaasRepository = {
         if (!attendanceRows.length) {
           throw new TeachingApiException('CONFLICT', 409, 'Session needs attendance before completion');
         }
+        const pendingLeaves = await tx`
+          SELECT id FROM leave_requests
+          WHERE organization_id = ${access.id} AND session_id = ${sessionId} AND status = 'pending'
+          ORDER BY attendance_id, id
+          FOR UPDATE`;
+        if (pendingLeaves.length) {
+          throw new TeachingApiException('CONFLICT', 409, 'Resolve pending leave requests before completion');
+        }
         if (attendanceRows.some((row) => row.status === 'expected')) {
           throw new TeachingApiException('CONFLICT', 409, 'Resolve all expected attendance before completion');
         }
+        await tx`
+          SELECT id FROM makeup_attempts
+          WHERE organization_id = ${access.id} AND target_session_id = ${sessionId}
+            AND status = 'scheduled'
+          ORDER BY id FOR UPDATE`;
         const billable = attendanceRows.filter((row) => row.status === 'present' || row.status === 'late');
+        const packageIds = [...new Set(billable.map((row) => String(row.student_package_id)))].sort();
+        const lockedPackages = packageIds.length
+          ? await tx`
+              SELECT id, student_id, lifecycle_status, valid_from, valid_until
+              FROM student_packages
+              WHERE organization_id = ${access.id} AND id IN ${sql(packageIds)}
+              ORDER BY id
+              FOR UPDATE`
+          : [];
+        const completed = await tx`
+          UPDATE teaching_sessions
+          SET status = 'completed', completed_at = NOW(), version = version + 1
+          WHERE organization_id = ${access.id} AND id = ${sessionId}
+          RETURNING completed_at`;
         let totalCredits = 0;
         for (const attendance of billable) {
           const packageId = String(attendance.student_package_id);
-          const packages = await tx`
-            SELECT id, lifecycle_status, valid_from, valid_until
-            FROM student_packages
-            WHERE organization_id = ${access.id} AND id = ${packageId}
-              AND student_id = ${String(attendance.student_id)}
-            FOR UPDATE`;
-          if (!packages.length) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student package not found');
-          const studentPackage = packages[0] as Record<string, unknown>;
+          const studentPackage = lockedPackages.find((row) => (
+            String(row.id) === packageId && String(row.student_id) === String(attendance.student_id)
+          )) as Record<string, unknown> | undefined;
+          if (!studentPackage) throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student package not found');
           const sessionStartsAt = new Date(String(session.starts_at)).getTime();
           if (
             studentPackage.lifecycle_status !== 'active' ||
@@ -7978,11 +9083,42 @@ export const teachingSaasRepository: TeachingSaasRepository = {
             )`;
           totalCredits += creditCost;
         }
-        const completed = await tx`
-          UPDATE teaching_sessions
-          SET status = 'completed', completed_at = NOW(), version = version + 1
-          WHERE organization_id = ${access.id} AND id = ${sessionId}
-          RETURNING completed_at`;
+        const resolvedMakeups = await tx`
+          UPDATE makeup_attempts attempt
+          SET status = CASE attendance.status
+                WHEN 'present' THEN 'fulfilled'
+                WHEN 'late' THEN 'fulfilled'
+                ELSE 'failed'
+              END,
+              resolved_by_user_id = ${actor.userId},
+              resolved_by_user_id_snapshot = ${actor.userId},
+              resolved_by_display_name_snapshot = ${actor.displayName},
+              resolved_by_role_snapshot = ${access.role},
+              resolution_reason = CASE attendance.status
+                WHEN 'present' THEN 'Target attendance completed'
+                WHEN 'late' THEN 'Target attendance completed'
+                ELSE 'Target attendance was not billable'
+              END,
+              resolved_at = NOW()
+          FROM attendance_records attendance
+          WHERE attempt.organization_id = ${access.id}
+            AND attempt.target_session_id = ${sessionId}
+            AND attempt.status = 'scheduled'
+            AND attendance.organization_id = attempt.organization_id
+            AND attendance.id = attempt.target_attendance_id
+            AND attendance.status IN ('present', 'late', 'absent', 'excused')
+          RETURNING attempt.id, attempt.status, attempt.source_session_id`;
+        for (const makeup of resolvedMakeups) {
+          await tx`INSERT INTO session_events (
+            organization_id, session_id, event_type, actor_user_id, actor_role,
+            actor_display_name, request_id, metadata
+          ) VALUES (
+            ${access.id}, ${sessionId},
+            ${makeup.status === 'fulfilled' ? 'makeup_fulfilled' : 'makeup_failed'},
+            ${actor.userId}, ${access.role}, ${actor.displayName}, ${requestId},
+            ${sql.json({ makeupAttemptId: String(makeup.id), sourceSessionId: String(makeup.source_session_id) })}
+          )`;
+        }
         await tx`
           INSERT INTO session_events (
             organization_id, session_id, event_type, actor_user_id, actor_role,
@@ -8005,6 +9141,138 @@ export const teachingSaasRepository: TeachingSaasRepository = {
           status: 200,
           body: { session: { id: sessionId, status: 'completed', completedAt: new Date(String(completed[0].completed_at)).toISOString() },
             consumption: { attendanceCount: billable.length, totalCredits } },
+        };
+        await completeIdempotency(tx, idem.id, result, 'teaching_session', sessionId);
+        return result;
+      }) as MutationResult;
+    });
+  },
+
+  async cancelSession(actor, slug, sessionId, input, idempotencyKey, requestHash, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'session.cancel', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'session.cancel', 120, '1 minute');
+      return await sql.begin(async (tx) => {
+        const access = await accessForWrite(tx, actor.userId, slug);
+        requireWritable(access);
+        const cancellation = await lockManagedCancellationGraph(tx, access, actor, sessionId);
+        const { session } = cancellation;
+        const attendanceRows = await tx`
+          SELECT attendance.*, student.display_name
+          FROM attendance_records attendance
+          JOIN student_profiles student
+            ON student.organization_id = attendance.organization_id
+           AND student.id = attendance.student_id
+          WHERE attendance.organization_id = ${access.id} AND attendance.session_id = ${sessionId}
+          ORDER BY attendance.student_package_id NULLS LAST, attendance.id
+          FOR UPDATE OF attendance`;
+        const leaveRows = await tx`
+          SELECT * FROM leave_requests
+          WHERE organization_id = ${access.id} AND session_id = ${sessionId} AND status = 'pending'
+          ORDER BY attendance_id, id FOR UPDATE`;
+        const attemptRows = await tx`
+          SELECT * FROM makeup_attempts
+          WHERE organization_id = ${access.id} AND status = 'scheduled'
+            AND (source_session_id = ${sessionId} OR target_session_id = ${sessionId})
+          ORDER BY id FOR UPDATE`;
+        const idem = await beginIdempotency(
+          tx, actor.userId, access.id, `session.cancel:${sessionId}`,
+          idempotencyKey, requestHash,
+        );
+        if ('replay' in idem) return idem.replay;
+        if (session.status === 'completed') {
+          throw new TeachingApiException('CONFLICT', 409, 'A completed session cannot be cancelled');
+        }
+        if (session.status !== 'cancelled') {
+          await tx`
+            UPDATE leave_requests SET
+              status = 'cancelled', decision_reason = ${input.reason},
+              decided_by_user_id = ${actor.userId}, decided_by_user_id_snapshot = ${actor.userId},
+              decided_by_display_name_snapshot = ${actor.displayName},
+              decided_by_role_snapshot = ${access.role}, decided_at = NOW()
+            WHERE organization_id = ${access.id} AND session_id = ${sessionId} AND status = 'pending'`;
+          await tx`
+            UPDATE makeup_attempts SET
+              status = 'cancelled', resolved_by_user_id = ${actor.userId},
+              resolved_by_user_id_snapshot = ${actor.userId},
+              resolved_by_display_name_snapshot = ${actor.displayName},
+              resolved_by_role_snapshot = ${access.role},
+              resolution_reason = ${input.reason}, resolved_at = NOW()
+            WHERE organization_id = ${access.id} AND status = 'scheduled'
+              AND (source_session_id = ${sessionId} OR target_session_id = ${sessionId})`;
+          await tx`
+            UPDATE teaching_sessions
+            SET status = 'cancelled', cancelled_at = NOW(), version = version + 1
+            WHERE organization_id = ${access.id} AND id = ${sessionId}`;
+          if (leaveRows.length) {
+            await tx`INSERT INTO session_events (
+              organization_id, session_id, event_type, actor_user_id, actor_role,
+              actor_display_name, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${sessionId}, 'leave_cancelled', ${actor.userId}, ${access.role},
+              ${actor.displayName}, ${requestId}, ${sql.json({ count: leaveRows.length, reason: input.reason })}
+            )`;
+          }
+          if (attemptRows.length) {
+            await tx`INSERT INTO session_events (
+              organization_id, session_id, event_type, actor_user_id, actor_role,
+              actor_display_name, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${sessionId}, 'makeup_cancelled', ${actor.userId}, ${access.role},
+              ${actor.displayName}, ${requestId}, ${sql.json({ count: attemptRows.length, reason: input.reason })}
+            )`;
+          }
+          await tx`INSERT INTO session_events (
+            organization_id, session_id, event_type, actor_user_id, actor_role,
+            actor_display_name, request_id, metadata
+          ) VALUES (
+            ${access.id}, ${sessionId}, 'cancelled', ${actor.userId}, ${access.role},
+            ${actor.displayName}, ${requestId}, ${sql.json({ reason: input.reason })}
+          )`;
+          await insertTrainingAudit(
+            tx, access, actor, 'session.cancel', 'teaching_session', sessionId, requestId,
+            { reason: input.reason, leaveRequestCount: leaveRows.length, makeupAttemptCount: attemptRows.length },
+          );
+        }
+        const details = await tx`
+          SELECT session.*,
+            COALESCE((SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+              'userId', teacher.teacher_user_id_snapshot,
+              'displayName', teacher.teacher_display_name_snapshot,
+              'role', teacher.role
+            ) ORDER BY CASE teacher.role WHEN 'lead' THEN 0 WHEN 'assistant' THEN 1 ELSE 2 END,
+              teacher.teacher_display_name_snapshot, teacher.id)
+             FROM session_teachers teacher
+             WHERE teacher.organization_id = session.organization_id
+               AND teacher.session_id = session.id), '[]'::jsonb) AS teachers
+          FROM teaching_sessions session
+          WHERE session.organization_id = ${access.id} AND session.id = ${sessionId}`;
+        const detail = details[0] as Record<string, unknown>;
+        const resolvedAttempts = attemptRows.length
+          ? await tx`
+              SELECT * FROM makeup_attempts
+              WHERE organization_id = ${access.id}
+                AND id IN ${sql(attemptRows.map((row) => String(row.id)))}
+              ORDER BY created_at DESC, id DESC`
+          : [];
+        const sessionJson: JsonObject = {
+          id: sessionId, title: String(detail.title),
+          startsAt: new Date(String(detail.starts_at)).toISOString(),
+          endsAt: new Date(String(detail.ends_at)).toISOString(), timezone: String(detail.timezone),
+          status: String(detail.status), version: Number(detail.version),
+          startedAt: detail.started_at == null ? null : new Date(String(detail.started_at)).toISOString(),
+          completedAt: detail.completed_at == null ? null : new Date(String(detail.completed_at)).toISOString(),
+          cancelledAt: detail.cancelled_at == null ? null : new Date(String(detail.cancelled_at)).toISOString(),
+          teachers: detail.teachers as JsonValue,
+          attendance: attendanceRows.map((row) => ({
+            ...attendanceToJson(row as Record<string, unknown>), displayName: String(row.display_name),
+          })),
+          attendanceCount: attendanceRows.length,
+          createdAt: new Date(String(detail.created_at)).toISOString(),
+          updatedAt: new Date(String(detail.updated_at)).toISOString(),
+        };
+        const result: MutationResult = {
+          status: 200,
+          body: { session: sessionJson, makeupAttempts: resolvedAttempts.map(makeupAttemptToJson) },
         };
         await completeIdempotency(tx, idem.id, result, 'teaching_session', sessionId);
         return result;
@@ -8945,6 +10213,90 @@ export function createTeachingSaasRoutes(deps: {
     },
   );
 
+  routes.get('/teaching/organizations/:orgSlug/me/students/:studentId/sessions', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+      const page = await repository.listLearnerSessions(
+        actor, c.req.param('orgSlug'), studentId, paginationOf(c), requestId,
+      );
+      return c.json({ sessions: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get(
+    '/teaching/organizations/:orgSlug/me/students/:studentId/sessions/:sessionId/leave-requests',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+        const page = await repository.listLearnerLeaveRequests(
+          actor, c.req.param('orgSlug'), studentId, sessionId, paginationOf(c), requestId,
+        );
+        return c.json({
+          leaveRequests: page.items, total: page.total, page: page.page, pageSize: page.pageSize,
+        });
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.post(
+    '/teaching/organizations/:orgSlug/me/students/:studentId/sessions/:sessionId/attendance/:attendanceId/leave-requests',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+        const body = await jsonBody(c, 4_096);
+        const input = parseLeaveRequestInput(body.value);
+        const result = await repository.createLearnerLeaveRequest(
+          actor, c.req.param('orgSlug'), studentId, sessionId, attendanceId, input,
+          idempotencyKeyOf(c), sha256(stableJson({ studentId, sessionId, attendanceId, input })), requestId,
+        );
+        return c.json(result.body, result.status);
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.post(
+    '/teaching/organizations/:orgSlug/me/students/:studentId/sessions/:sessionId/attendance/:attendanceId/leave-requests/:leaveRequestId/cancel',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+        const leaveRequestId = uuidParam(c.req.param('leaveRequestId'), 'leaveRequestId');
+        const body = await jsonBody(c, 4_096);
+        const input = parseLeaveRequestInput(body.value);
+        const result = await repository.cancelLearnerLeaveRequest(
+          actor, c.req.param('orgSlug'), studentId, sessionId, attendanceId, leaveRequestId, input,
+          idempotencyKeyOf(c),
+          sha256(stableJson({ studentId, sessionId, attendanceId, leaveRequestId, input })), requestId,
+        );
+        return c.json(result.body, result.status);
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
   routes.get('/teaching/organizations/:orgSlug/me/training/assignments', async (c) => {
     const requestId = requestIdOf(c);
     c.header('Cache-Control', 'no-store');
@@ -9753,6 +11105,155 @@ export function createTeachingSaasRoutes(deps: {
     }
   });
 
+  routes.get('/teaching/organizations/:orgSlug/sessions/:sessionId/leave-requests', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+      const page = await repository.listLeaveRequests(
+        actor, c.req.param('orgSlug'), sessionId, paginationOf(c), requestId,
+      );
+      return c.json({
+        leaveRequests: page.items, total: page.total, page: page.page, pageSize: page.pageSize,
+      });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post(
+    '/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/leave-requests',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+        const body = await jsonBody(c, 4_096);
+        const input = parseLeaveRequestInput(body.value);
+        const result = await repository.createLeaveRequest(
+          actor, c.req.param('orgSlug'), sessionId, attendanceId, input, idempotencyKeyOf(c),
+          sha256(stableJson({ sessionId, attendanceId, input })), requestId,
+        );
+        return c.json(result.body, result.status);
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.post(
+    '/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/leave-requests/:leaveRequestId/decision',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+        const leaveRequestId = uuidParam(c.req.param('leaveRequestId'), 'leaveRequestId');
+        const body = await jsonBody(c, 4_096);
+        const input = parseLeaveDecisionInput(body.value);
+        const result = await repository.decideLeaveRequest(
+          actor, c.req.param('orgSlug'), sessionId, attendanceId, leaveRequestId, input,
+          idempotencyKeyOf(c),
+          sha256(stableJson({ sessionId, attendanceId, leaveRequestId, input })), requestId,
+        );
+        return c.json(result.body, result.status);
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.post(
+    '/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/leave-requests/:leaveRequestId/cancel',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+        const leaveRequestId = uuidParam(c.req.param('leaveRequestId'), 'leaveRequestId');
+        const body = await jsonBody(c, 4_096);
+        const input = parseLeaveRequestInput(body.value);
+        const result = await repository.cancelLeaveRequest(
+          actor, c.req.param('orgSlug'), sessionId, attendanceId, leaveRequestId, input,
+          idempotencyKeyOf(c),
+          sha256(stableJson({ sessionId, attendanceId, leaveRequestId, input })), requestId,
+        );
+        return c.json(result.body, result.status);
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.get(
+    '/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/makeups',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+        const page = await repository.listMakeupAttempts(
+          actor, c.req.param('orgSlug'), sessionId, attendanceId, paginationOf(c), requestId,
+        );
+        return c.json({
+          makeupAttempts: page.items, total: page.total, page: page.page, pageSize: page.pageSize,
+        });
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.get(
+    '/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/makeups/candidates',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+        const page = await repository.listMakeupCandidates(
+          actor, c.req.param('orgSlug'), sessionId, attendanceId, paginationOf(c), requestId,
+        );
+        return c.json({ candidates: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.post(
+    '/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/makeups',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+        const body = await jsonBody(c, 4_096);
+        const input = parseMakeupScheduleInput(body.value);
+        const result = await repository.scheduleMakeup(
+          actor, c.req.param('orgSlug'), sessionId, attendanceId, input, idempotencyKeyOf(c),
+          sha256(stableJson({ sessionId, attendanceId, input })), requestId,
+        );
+        return c.json(result.body, result.status);
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
   routes.post('/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/batch', async (c) => {
     const requestId = requestIdOf(c);
     c.header('Cache-Control', 'no-store');
@@ -9783,6 +11284,24 @@ export function createTeachingSaasRoutes(deps: {
       const result = await repository.completeSession(
         actor, c.req.param('orgSlug'), uuidParam(c.req.param('sessionId'), 'sessionId'),
         key, sha256(body.raw), requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/sessions/:sessionId/cancel', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+      const body = await jsonBody(c, 4_096);
+      const input = parseSessionCancelInput(body.value);
+      const result = await repository.cancelSession(
+        actor, c.req.param('orgSlug'), sessionId, input, idempotencyKeyOf(c),
+        sha256(stableJson({ sessionId, input })), requestId,
       );
       return c.json(result.body, result.status);
     } catch (error) {

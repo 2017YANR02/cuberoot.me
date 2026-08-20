@@ -27,6 +27,22 @@ const indexTs = join(SERVER, 'src', 'index.ts');
 const routesDir = join(SERVER, 'src', 'routes');
 const schemaPage = join(ROOT, 'app', '[lang]', 'dev', 'schema', 'page.tsx');
 const apiPage = join(ROOT, 'app', '[lang]', 'dev', 'api', 'page.tsx');
+const migrationReadme = join(SERVER, 'migrations', 'README.md');
+
+const LEAVE_MAKEUP_ENDPOINTS = [
+  ['GET', '/v1/teaching/organizations/:orgSlug/sessions/:sessionId/leave-requests'],
+  ['POST', '/v1/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/leave-requests'],
+  ['POST', '/v1/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/leave-requests/:leaveRequestId/decision'],
+  ['POST', '/v1/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/leave-requests/:leaveRequestId/cancel'],
+  ['GET', '/v1/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/makeups'],
+  ['GET', '/v1/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/makeups/candidates'],
+  ['POST', '/v1/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/makeups'],
+  ['POST', '/v1/teaching/organizations/:orgSlug/sessions/:sessionId/cancel'],
+  ['GET', '/v1/teaching/organizations/:orgSlug/me/students/:studentId/sessions'],
+  ['GET', '/v1/teaching/organizations/:orgSlug/me/students/:studentId/sessions/:sessionId/leave-requests'],
+  ['POST', '/v1/teaching/organizations/:orgSlug/me/students/:studentId/sessions/:sessionId/attendance/:attendanceId/leave-requests'],
+  ['POST', '/v1/teaching/organizations/:orgSlug/me/students/:studentId/sessions/:sessionId/attendance/:attendanceId/leave-requests/:leaveRequestId/cancel'],
+] as const;
 
 describe('/dev/schema migration ledger drift', () => {
   it('MIGRATIONS lists exactly the migration files on disk', () => {
@@ -63,6 +79,19 @@ describe('/dev/schema migration ledger drift', () => {
         .map(([number, slugs]) => [number, slugs.sort()] as const)
         .sort(([a], [b]) => a.localeCompare(b)),
     );
+  });
+
+  it('0165 leave/makeup tables and migration documentation stay visible', () => {
+    const schema = readFileSync(schemaPage, 'utf8');
+    const readme = readFileSync(migrationReadme, 'utf8');
+    for (const table of ['leave_requests', 'makeup_attempts']) {
+      const start = schema.indexOf(`{ name: '${table}'`);
+      expect(start, `${table} missing from /dev/schema`).toBeGreaterThan(-1);
+      const entry = schema.slice(start, schema.indexOf('\n  { name:', start + 1));
+      expect(entry).toContain("origin: '0165'");
+      expect(entry).toContain('naturalKey: true');
+    }
+    expect(readme).toContain('0165_teaching_leave_makeups.sql');
   });
 });
 
@@ -119,5 +148,17 @@ describe('/dev/api endpoint catalog drift', () => {
 
     expect(fromRoute.length).toBeGreaterThan(0);
     expect(fromCatalog).toEqual(fromRoute);
+  });
+
+  it('freezes leave/makeup endpoint docs and idempotency requirements', () => {
+    const api = readFileSync(apiPage, 'utf8');
+    const rows = api.split('\n');
+    for (const [method, path] of LEAVE_MAKEUP_ENDPOINTS) {
+      const row = rows.find((line) => line.includes(`m: '${method}'`) && line.includes(`p: '${path}'`));
+      expect(row, `${method} ${path} missing from /dev/api`).toBeDefined();
+      expect(row).toContain("g: 'login'");
+      expect(row).toContain("c: 'no-store'");
+      if (method !== 'GET') expect(row).toContain('idempotency key');
+    }
   });
 });
