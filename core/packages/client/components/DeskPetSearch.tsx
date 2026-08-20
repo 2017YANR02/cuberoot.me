@@ -14,10 +14,12 @@ import WcaAuth from '@/components/WcaAuth';
 import DonateModal from '@/components/DonateModal';
 import FeedbackModal from '@/components/FeedbackModal';
 import DeskPetGallery from '@/components/DeskPetGallery';
-import { WeChatPcShareModal } from '@/components/WeChatPcShareModal';
+import { MobilePageShareModal, WeChatPcShareModal } from '@/components/WeChatPcShareModal';
 import { SEARCH_CARDS } from '@/lib/landing-sections';
 import { isAdmin } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
+import { isInWeChat } from '@/lib/wechat-share';
+import { tr } from '@/i18n/tr';
 
 const CSS = `
 .deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:100010;display:flex;
@@ -74,7 +76,6 @@ const CSS = `
   /* Mobile toolbar is at the top, so popups open downward and left-aligned to
      their trigger so they don't run off the left edge. */
   .deskpet-toolbar .lang-menu{left:0;right:auto;top:calc(100% + 4px);bottom:auto;}
-  .deskpet-toolbar .wechat-pc-share-trigger{display:none;}
   /* Box hugs the keyboard: visualViewport shrinks the backdrop, keep only a
      small breathing gap at the bottom. */
   .deskpet-search-backdrop{padding-bottom:6px;}
@@ -121,6 +122,7 @@ export default function DeskPetSearch({
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [wechatShareOpen, setWechatShareOpen] = useState(false);
+  const [mobileShareHelp, setMobileShareHelp] = useState<'wechat' | 'browser' | null>(null);
   const fbUnread = useFeedbackUnread();
 
   // 反馈按钮红点跟共享未读数;关掉反馈弹窗后复查一次(可能刚读过)。轮询由桌宠统一做。
@@ -171,6 +173,35 @@ export default function DeskPetSearch({
     ['/donate/alipay.webp', '/donate/wechat.webp'].forEach((href) => {
       const img = new Image();
       img.src = href;
+    });
+  };
+
+  const shareCurrentPage = () => {
+    if (isInWeChat()) {
+      setMobileShareHelp('wechat');
+      return;
+    }
+
+    const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+      || window.matchMedia('(max-width: 768px)').matches;
+    if (!mobile) {
+      setWechatShareOpen(true);
+      return;
+    }
+
+    if (typeof navigator.share !== 'function') {
+      setMobileShareHelp('browser');
+      return;
+    }
+
+    const description = document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content;
+    void navigator.share({
+      title: document.title,
+      text: description || undefined,
+      url: window.location.href,
+    }).catch((error: unknown) => {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      setMobileShareHelp('browser');
     });
   };
 
@@ -240,8 +271,9 @@ export default function DeskPetSearch({
             }} />
           )}
         </button>
-        <button type="button" className="icon-only wechat-pc-share-trigger" onClick={() => setWechatShareOpen(true)}
-          title={t('微信分享', 'Share to WeChat')} aria-label={t('微信分享', 'Share to WeChat')}>
+        <button type="button" className="icon-only" onClick={shareCurrentPage}
+          title={tr({ zh: '分享当前页面', en: 'Share this page' })}
+          aria-label={tr({ zh: '分享当前页面', en: 'Share this page' })}>
           <Share2 size={16} />
         </button>
         <button type="button" className={`icon-only${metronomeOpen ? ' is-active' : ''}`}
@@ -287,6 +319,9 @@ export default function DeskPetSearch({
       {feedbackOpen && <FeedbackModal lang={lang} onClose={() => setFeedbackOpen(false)} />}
       {galleryOpen && <DeskPetGallery lang={lang} onClose={() => setGalleryOpen(false)} />}
       {wechatShareOpen && <WeChatPcShareModal onClose={() => setWechatShareOpen(false)} />}
+      {mobileShareHelp && (
+        <MobilePageShareModal mode={mobileShareHelp} onClose={() => setMobileShareHelp(null)} />
+      )}
     </div>
   );
 }
