@@ -2000,6 +2000,14 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `需传 url / code / onClose。/alg 训练器房间与 /timer 联机对战共用;二维码固定深码白底(不随主题反色),保证扫得出。`, en: `Takes url / code / onClose. Shared by /alg trainer rooms and /timer online battle; the QR stays dark-on-white regardless of theme so it always scans.` },
   },
   {
+    name: 'WeChatPcShareModal',
+    import: "import { WeChatPcShareModal } from '@/components/WeChatPcShareModal';",
+    category: 'more',
+    zh: `电脑端微信分享弹窗,按需调用网站应用 PC OpenSDK,可把当前页面发给微信朋友或分享到朋友圈。`,
+    en: `Desktop WeChat sharing modal that calls the Website App PC OpenSDK on demand to send the current page to a friend or Moments.`,
+    note: { zh: `需传 onClose。仅桌面端入口使用;用户点击具体分享动作后才申请一次性 ticket。`, en: `Takes onClose. Used only by the desktop entry; requests a single-use ticket only after a share action is clicked.` },
+  },
+  {
     name: 'DonateModal',
     import: "import DonateModal from '@/components/DonateModal';",
     category: 'more',
