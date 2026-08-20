@@ -115,7 +115,7 @@ describe('wca_kinch stats deploy contract', () => {
 
   it('can bootstrap stats-extra without duplicating or waiting for the full daily pipeline', () => {
     expect(workflow).toMatch(/pipeline:\s+[\s\S]*?- wca_stats_extra/);
-    expect(workflow.match(/inputs\.pipeline != 'wca_stats_extra'/g)).toHaveLength(22);
+    expect(workflow.match(/inputs\.pipeline != 'wca_stats_extra'/g)).toHaveLength(23);
     expect(workflow).toMatch(/name: Build WCA stats extra\s+working-directory:/);
     expect(workflow).toMatch(/name: Apply WCA stats extra on server\s+env:/);
   });
