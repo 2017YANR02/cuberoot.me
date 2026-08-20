@@ -422,8 +422,14 @@ function WeakCards({ recs }: { recs: Record<string, SrsRecs> }) {
     Promise.all(sets.map(ps => {
       const [p, ...rest] = ps.split('/');
       const slug = rest.join('/');
-      // 虚拟集(LSLL)库里没有这张表 —— 别去拉一个注定 404 的 JSON,下面按「查不到 case」渲染
-      if (virtualAlgSet(p as AlgPuzzle, slug)) return Promise.resolve([ps, [] as AlgCase[]] as const);
+      const virtual = virtualAlgSet(p as AlgPuzzle, slug);
+      if (virtual?.loadCasesByKeys) {
+        return virtual.loadCasesByKeys(top.filter(t => t.ps === ps).map(t => t.key))
+          .then(cases => [ps, cases] as const)
+          .catch(() => [ps, [] as AlgCase[]] as const);
+      }
+      // 没有按 key 加载能力的虚拟集不能去拉一个注定 404 的库表。
+      if (virtual) return Promise.resolve([ps, [] as AlgCase[]] as const);
       return loadAlg(p as AlgPuzzle, slug)
         .then(f => [ps, f.cases] as const)
         .catch(() => [ps, [] as AlgCase[]] as const);
