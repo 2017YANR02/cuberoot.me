@@ -2,7 +2,7 @@
 /**
  * Recon scramble/solution live preview — shared by the recon submit form and the
  * add/edit-alternative form so both render an identical player. Engine selection is
- * delegated to ReconEnginePlayer (SQ1 / NxN → in-house cuber engine, else → cubing.js
+ * delegated to ReconEnginePlayer (SQ1 / FTO / NxN → in-house cuber engine, else → cubing.js
  * TwistySection); this wrapper owns the submit-flow specifics: an always-on back-view
  * mini window, and debouncing scramble/solution so callers can pass raw, every-keystroke
  * values.

@@ -48,6 +48,7 @@ export default abstract class TweenTwister<TMove> {
   protected beginAnims(move: TMove): PieceAnim[] { return this.cube.beginMove(move); }
 
   get length(): number { return this.queue.length; }
+  get busy(): boolean { return this.activeTween !== null || this.queue.length > 0; }
 
   /** Flush all pending tweens to their end states. */
   finish(): void {

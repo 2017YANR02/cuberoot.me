@@ -6,6 +6,7 @@
  * notation additionally accepts crowded text such as `ULB2LD'`.
  */
 import { MOVE_RE } from './alg_notation';
+import { isFtoEifSolved, parseFtoEifAlgorithm } from './fto_notation';
 import { canonicalSq1Alg } from './sq1_notation';
 
 export const RECON_COSMETIC_ANNOTATION_CHARS = '.·↑↓⅓⅔​‌‍﻿';
@@ -43,6 +44,7 @@ const EVENT_PUZZLE = {
   mega: 'megaminx',
   clock: 'clock',
   skewb: 'skewb',
+  fto: 'fto',
 } as const;
 
 export type ReconPuzzleKey = (typeof EVENT_PUZZLE)[keyof typeof EVENT_PUZZLE];
@@ -101,6 +103,11 @@ export function cleanReconAlgForPlayer(text: string): string {
   alg = alg.replace(/\(([^)]*)\)(?!\d)/g, '$1');
   alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?\d*'?)(?=[RULDFBMESruldfbmesxyz])/g, '$1 ');
   return alg;
+}
+
+/** FTO keeps multi-letter EIF roots intact, so only remove recon grouping syntax. */
+export function cleanFtoReconAlgForPlayer(text: string): string {
+  return cleanReconAlgText(text).replace(/\(([^)]*)\)(?!\d)/g, '$1');
 }
 
 // One whitespace chunk must consist entirely of cube moves. This keeps compact
@@ -317,6 +324,19 @@ export async function checkReconCompletion(input: {
 }): Promise<ReconCompletionResult> {
   const puzzle = reconPuzzleKey(input.event);
   if (!puzzle || !hasRealScramble(input.scramble)) return { status: 'unchecked' };
+
+  if (puzzle === 'fto') {
+    const scramble = cleanFtoReconAlgForPlayer(input.scramble);
+    const solution = cleanFtoReconAlgForPlayer(input.solution);
+    const parsedScramble = parseFtoEifAlgorithm(scramble);
+    const parsedSolution = parseFtoEifAlgorithm(solution);
+    if (parsedScramble.invalid.length > 0 || parsedSolution.invalid.length > 0) {
+      return { status: 'invalid' };
+    }
+    return isFtoEifSolved(`${parsedScramble.tokens.join(' ')} ${parsedSolution.tokens.join(' ')}`.trim())
+      ? { status: 'solved' }
+      : { status: 'unsolved' };
+  }
 
   const isCube = /^(?:[2-7]x[2-7]x[2-7])$/.test(puzzle);
   const scramble = puzzle === 'square1'

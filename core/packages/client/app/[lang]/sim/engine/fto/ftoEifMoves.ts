@@ -3,7 +3,7 @@ import {
   parseFtoEifAlgorithm,
   parseFtoEifToken,
   type FtoEifBaseMove,
-} from '@/lib/fto-eif-image';
+} from '@cuberoot/shared/fto-notation';
 import type { FtoAnimationMove, FtoLayerMove, FtoVertexRotationMove } from './ftoAnimation';
 import type { FtoMove } from './ftoState';
 
@@ -65,7 +65,7 @@ export function ftoEifTokenMoves(token: string): FtoAnimationMove[] | null {
       kind: 'vertex-rotation',
       axis: VERTEX_AXES[parts.root],
       quarterTurns: parts.suffix === "'" ? -1 : parts.suffix === '2' ? 2 : 1,
-      token,
+      token: parts.token,
     } satisfies FtoVertexRotationMove];
   }
 
@@ -80,7 +80,7 @@ export function ftoEifTokenMoves(token: string): FtoAnimationMove[] | null {
       : WHOLE_ROOTS.has(parts.root) ? 'whole'
         : null;
   if (!layer) return null;
-  return repeatedMove({ kind: 'layer', face, layer, dir, token } satisfies FtoLayerMove, repeat);
+  return repeatedMove({ kind: 'layer', face, layer, dir, token: parts.token } satisfies FtoLayerMove, repeat);
 }
 
 export interface FtoEifMoveGroups {

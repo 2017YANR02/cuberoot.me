@@ -81,7 +81,7 @@ import { tr } from '@/i18n/tr';
 
 // ── Constants ──
 
-const EVENTS = ['3x3', '2x2', '4x4', '5x5', '6x6', '7x7', '3bld', '4bld', '5bld', 'oh', 'sq1', 'pyra', 'mega', 'clock', 'skewb', 'fmc', 'mbld'];
+const EVENTS = ['3x3', '2x2', '4x4', '5x5', '6x6', '7x7', '3bld', '4bld', '5bld', 'oh', 'sq1', 'pyra', 'mega', 'clock', 'skewb', 'fto', 'fmc', 'mbld'];
 const METHODS = ['CFOP', 'Roux', 'ZZ', 'Petrus', 'LBL', 'Mehta', 'ZB', 'Other'];
 const ROUNDS_FALLBACK = ['1', '2', '3', 'f'];
 type ScrambleField = 'wca' | 'optimal' | 'generic';

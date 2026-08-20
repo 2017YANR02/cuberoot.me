@@ -2,7 +2,7 @@
 
 /**
  * ReconPlayerCanvas — 复盘 3D 播放器(动画演示)的详情页渲染层。引擎选择委托
- * ReconEnginePlayer(sq1 / NxN → 自有 cuber 引擎,其余 → cubing.js TwistySection)。
+ * ReconEnginePlayer(sq1 / FTO / NxN → 自有 cuber 引擎,其余 → cubing.js TwistySection)。
  * 从 /recon/[id] 详情页抽出,详情页与统一成绩弹窗(AttemptPopover)共用,避免重复。
  *
  * 无 scramble 但有解法时锚定终点:从解法逆序所得的状态播到还原。只有打乱和解法
