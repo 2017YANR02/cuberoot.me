@@ -27,12 +27,14 @@ import {
   listLearnerTeachingLessonFeedback,
   listLearnerTeachingWeeklyReports,
   listTeachingPackageProducts,
+  listTeachingCreditAdjustments,
   listTeachingGroupMemberships,
   createTeachingStudent,
   listTeachingOrganizations,
   listTeachingConversationMessages,
   listTeachingConversations,
   listTeachingStudents,
+  listTeachingStudentPackageLedger,
   listTeachingTeacherAssignments,
   listTeachingLearningContexts,
   listTeachingOrganizationLearningContexts,
@@ -42,6 +44,8 @@ import {
   consumeTeachingGuardianAccountBinding,
   publishTeachingWeeklyReport,
   replyTeachingConversation,
+  refundTeachingStudentPackage,
+  reverseTeachingCreditLedgerEntry,
   saveTeachingAttendanceBatch,
 } from '@/lib/teaching-saas-api';
 
@@ -156,6 +160,69 @@ function packageProduct() {
     currency: 'CNY',
     createdAt: '2026-08-18T00:00:00.000Z',
     updatedAt: '2026-08-18T00:00:00.000Z',
+  };
+}
+
+function studentPackage(overrides: Record<string, unknown> = {}) {
+  return {
+    id: '018f3e56-31a5-7a88-9b45-337ccdbf7297',
+    studentId: student().id,
+    productId: packageProduct().id,
+    productCode: packageProduct().code,
+    productName: packageProduct().name,
+    creditUnit: 'lesson',
+    creditType: 'lesson',
+    entitledCredits: 10,
+    remainingCredits: 8,
+    validityDays: 90,
+    priceAmountMinor: 100000,
+    currency: 'CNY',
+    status: 'active',
+    acquisitionType: 'purchase',
+    validFrom: '2026-08-18T00:00:00.000Z',
+    validUntil: '2026-11-16T00:00:00.000Z',
+    sourceSystem: 'shop',
+    sourceRef: 'ORDER-1',
+    sourceLineRef: null,
+    createdAt: '2026-08-18T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+function creditLedgerEntry(overrides: Record<string, unknown> = {}) {
+  return {
+    id: '9007199254740993',
+    studentId: student().id,
+    entryType: 'refund',
+    delta: -2,
+    attendanceId: null,
+    sessionId: null,
+    sourceSystem: 'shop',
+    sourceRef: 'REFUND-1',
+    sourceLineRef: null,
+    reversalOfLedgerId: null,
+    reversedByLedgerId: null,
+    reason: 'Customer refund',
+    actorRole: 'finance',
+    actorDisplayName: 'Finance One',
+    metadata: { channel: 'manual' },
+    createdAt: '2026-08-20T12:00:00.000Z',
+    ...overrides,
+  };
+}
+
+function creditAdjustment(overrides: Record<string, unknown> = {}) {
+  return {
+    ledgerEntry: creditLedgerEntry(),
+    student: { id: student().id, displayName: student().displayName },
+    studentPackage: {
+      id: studentPackage().id,
+      productCode: packageProduct().code,
+      productName: packageProduct().name,
+      creditUnit: 'lesson',
+      creditType: 'lesson',
+    },
+    ...overrides,
   };
 }
 
@@ -528,6 +595,152 @@ describe('teaching SaaS client', () => {
       code: 'INVALID_RESPONSE',
       status: 502,
     });
+  });
+
+  it('keeps ledger bigint ids as strings and rejects wire-shape drift', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => jsonResponse({
+      ledger: [creditLedgerEntry()], total: 1, page: 1, pageSize: 25,
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listTeachingStudentPackageLedger('cube academy', studentPackage().id)).resolves.toMatchObject({
+      items: [{ id: '9007199254740993', reversedByLedgerId: null }],
+    });
+    expect(fetchMock.mock.calls[0]![0]).toBe(
+      `https://api.example.test/v1/teaching/organizations/cube%20academy/student-packages/${studentPackage().id}/ledger?page=1&pageSize=25`,
+    );
+
+    for (const invalid of [
+      creditLedgerEntry({ id: 9007199254740992 }),
+      creditLedgerEntry({ entryType: 'correction' }),
+      creditLedgerEntry({ unexpected: true }),
+      creditLedgerEntry({ reason: ' Customer refund' }),
+      creditLedgerEntry({ reason: 'x'.repeat(501) }),
+      creditLedgerEntry({ sourceSystem: 's'.repeat(65) }),
+      creditLedgerEntry({ sourceRef: 'r'.repeat(161) }),
+      creditLedgerEntry({ sourceLineRef: 'l'.repeat(161) }),
+      creditLedgerEntry({
+        entryType: 'reversal',
+        delta: 2,
+        reversalOfLedgerId: '9007199254740992',
+        reason: 'Incorrect refund',
+      }),
+      creditLedgerEntry({
+        entryType: 'reversal',
+        delta: 2,
+        sourceSystem: null,
+        sourceRef: null,
+        reversalOfLedgerId: '9007199254740992',
+        reason: ' Incorrect refund',
+      }),
+      creditLedgerEntry({
+        entryType: 'reversal',
+        delta: 2,
+        sourceSystem: null,
+        sourceRef: null,
+        reversalOfLedgerId: '9007199254740992',
+        reason: 'x'.repeat(501),
+      }),
+    ]) {
+      vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ ledger: [invalid], total: 1, page: 1, pageSize: 25 })));
+      await expect(listTeachingStudentPackageLedger('cube-academy', studentPackage().id)).rejects.toMatchObject({
+        code: 'INVALID_RESPONSE', status: 502,
+      });
+    }
+  });
+
+  it('parses the strict finance adjustment feed from the operations endpoint', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => jsonResponse({
+      creditAdjustments: [creditAdjustment()], total: 1, page: 1, pageSize: 100,
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listTeachingCreditAdjustments('cube academy', 0, 999)).resolves.toMatchObject({
+      items: [{ ledgerEntry: { id: '9007199254740993' }, student: { displayName: 'Student One' } }],
+      page: 1,
+      pageSize: 100,
+    });
+    expect(fetchMock.mock.calls[0]![0]).toBe(
+      'https://api.example.test/v1/teaching/organizations/cube%20academy/operations/credit-adjustments?page=1&pageSize=100',
+    );
+  });
+
+  it('rejects inconsistent finance feed and mutation relationships', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+      creditAdjustments: [creditAdjustment({
+        student: { id: '018f3e56-31a5-7a88-9b45-337ccdbf7000', displayName: 'Wrong student' },
+      })],
+      total: 1,
+      page: 1,
+      pageSize: 25,
+    })));
+    await expect(listTeachingCreditAdjustments('cube-academy')).rejects.toMatchObject({
+      code: 'INVALID_RESPONSE', status: 502,
+    });
+
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+      ledgerEntry: creditLedgerEntry({ delta: -1 }),
+      studentPackage: studentPackage(),
+    }, 201)));
+    await expect(refundTeachingStudentPackage('cube-academy', studentPackage().id, {
+      credits: 2,
+      reason: 'Customer refund',
+      sourceSystem: 'shop',
+      sourceRef: 'REFUND-1',
+      sourceLineRef: null,
+    }, 'refund-key')).rejects.toMatchObject({ code: 'INVALID_RESPONSE', status: 502 });
+
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+      ledgerEntry: creditLedgerEntry({
+        id: '9007199254740994', entryType: 'reversal', delta: 2,
+        sourceSystem: null, sourceRef: null, reversalOfLedgerId: '9007199254740992',
+        reason: 'Incorrect refund',
+      }),
+      studentPackage: studentPackage(),
+    }, 201)));
+    await expect(reverseTeachingCreditLedgerEntry(
+      'cube-academy', studentPackage().id, '9007199254740993', { reason: 'Incorrect refund' }, 'reverse-key',
+    )).rejects.toMatchObject({ code: 'INVALID_RESPONSE', status: 502 });
+  });
+
+  it('posts refund and reversal mutations with exact paths, bodies, and idempotency keys', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => {
+      const isReversal = String(_input).endsWith('/reversal');
+      return jsonResponse({
+        ledgerEntry: isReversal
+          ? creditLedgerEntry({
+              id: '9007199254740994', entryType: 'reversal', delta: 2,
+              sourceSystem: null, sourceRef: null, reversalOfLedgerId: '9007199254740993',
+              reason: 'Incorrect refund',
+            })
+          : creditLedgerEntry(),
+        studentPackage: studentPackage(),
+      }, 201);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const refundInput = {
+      credits: 2,
+      reason: 'Customer refund',
+      sourceSystem: 'shop',
+      sourceRef: 'REFUND-1',
+      sourceLineRef: null,
+    };
+
+    await refundTeachingStudentPackage('cube-academy', studentPackage().id, refundInput, 'refund-key');
+    await reverseTeachingCreditLedgerEntry(
+      'cube-academy', studentPackage().id, '9007199254740993', { reason: 'Incorrect refund' }, 'reverse-key',
+    );
+
+    expect(fetchMock.mock.calls[0]![0]).toBe(
+      `https://api.example.test/v1/teaching/organizations/cube-academy/student-packages/${studentPackage().id}/refunds`,
+    );
+    expect(fetchMock.mock.calls[1]![0]).toBe(
+      `https://api.example.test/v1/teaching/organizations/cube-academy/student-packages/${studentPackage().id}/ledger/9007199254740993/reversal`,
+    );
+    expect(JSON.parse(String((fetchMock.mock.calls[0]![1] as RequestInit).body))).toEqual(refundInput);
+    expect(JSON.parse(String((fetchMock.mock.calls[1]![1] as RequestInit).body))).toEqual({ reason: 'Incorrect refund' });
+    expect((fetchMock.mock.calls[0]![1] as RequestInit).headers).toMatchObject({ 'Idempotency-Key': 'refund-key' });
+    expect((fetchMock.mock.calls[1]![1] as RequestInit).headers).toMatchObject({ 'Idempotency-Key': 'reverse-key' });
   });
 
   it('creates a session with the exact Core body and idempotency key', async () => {

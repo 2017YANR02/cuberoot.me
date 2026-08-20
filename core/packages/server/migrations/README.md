@@ -44,6 +44,8 @@ PostgreSQL schema 变更的 source of truth。`apply_migrations.sh` 会在部署
 
 家校沟通增量 `0158_teaching_conversations.sql` 的升级基线是已应用至 `0157_fix_fto_pair_formation_setups.sql` 的现有数据库。它新增按机构和学员隔离的会话、每账号独立且单调的已读游标、由父行原子分配的连续消息序号，以及与消息同事务、按来源键去重的站内通知；正文与身份快照不可变，账号删除只切断活动账号引用。
 
+课时退款与撤销增量 `0164_teaching_credit_adjustments.sql` 的升级基线是已应用至 `0163_forum_videos.sql` 的现有数据库。它以 `student_packages` 父行更新串行化 API 与直接 SQL 的全部账本写入，补齐退款来源唯一性、等额单次撤销和非负余额约束；迁移前置检查会拒绝不满足最终约束的既有账本数据。
+
 ## 已应用 migration 不能改
 
 `apply_migrations.sh` 会把每个文件的 SHA-256 写入 ledger。已应用文件的摘要发生变化时会终止执行。修正已上线结构只能新增 migration；需要恢复数据时使用已验证的备份。

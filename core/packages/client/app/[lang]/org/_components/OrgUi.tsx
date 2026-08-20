@@ -1,4 +1,5 @@
 export {
+  creditLedgerEntryLabel,
   entityStatusLabel,
   MutationMessage,
   TeachingPagination,
