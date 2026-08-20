@@ -10,6 +10,7 @@ import StickyScrollGuard from "@/components/StickyScrollGuard";
 import AppNuqsAdapter from "@/components/AppNuqsAdapter";
 import { BROWSER_API_ORIGIN } from "@/lib/api-base";
 import { BROWSER_STATIC_ORIGIN } from "@/lib/stats-base";
+import { TIMER_BOOT_EARLY_SCRIPT } from "@/app/[lang]/timer/_lib/timer_boot_early";
 import "./fonts.css";
 import "./globals.css";
 // 统计表「列头吸顶」共用工具(.sticky-scroll + .sticky-thead),全站可用,免各页重复 import。
@@ -94,6 +95,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
         {/* eslint-disable-next-line @next/next/no-sync-scripts -- inline bootstrap, must run before paint */}
         <script dangerouslySetInnerHTML={{ __html: LANG_BOOTSTRAP }} />
+        {/* Path-gated timer guard: it must run before route chunks so old WebKit
+            and failed chunk loads cannot leave the server loading shell forever. */}
+        <script dangerouslySetInnerHTML={{ __html: TIMER_BOOT_EARLY_SCRIPT }} />
       </head>
       <body suppressHydrationWarning>
         {/* auth callback: inject bg iframe before React so the prior page shows (no black flash).

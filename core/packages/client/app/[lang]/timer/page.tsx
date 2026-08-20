@@ -3,23 +3,13 @@
 /**
  * /timer — speed-cubing timer (Next.js, redesigned shell).
  *
- * The implementation lives in `_shell/TimerShell` (mode host) → SoloView. It's
- * dynamically imported with ssr:false so the cubing.js scramble bundle stays
- * off the server render path and the page remains SSG (first paint = calm
- * Solo, mode read from ?mode after mount).
+ * TimerBootstrap owns the client-only import so a failed shell chunk cannot
+ * leave the server-rendered loading text on screen forever. The heavy timer
+ * implementation still stays off the server render path.
  */
 
-import dynamic from 'next/dynamic';
-
-const TimerShell = dynamic(() => import('./_shell/TimerShell'), {
-  ssr: false,
-  loading: () => (
-    <div style={{ padding: 24, fontFamily: 'ui-sans-serif, system-ui' }}>
-      <p style={{ color: 'var(--muted-foreground)' }}>Loading timer…</p>
-    </div>
-  ),
-});
+import TimerBootstrap from './_components/TimerBootstrap';
 
 export default function Page() {
-  return <TimerShell />;
+  return <TimerBootstrap />;
 }
