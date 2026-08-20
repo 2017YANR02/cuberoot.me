@@ -1,12 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import type { TeachingOperationsOverview } from '@cuberoot/shared/teaching';
+import { parseAsInteger, useQueryState } from 'nuqs';
+import {
+  hasTeachingPermission,
+  type TeachingOperationsOverview,
+  type TeachingOrganizationRole,
+} from '@cuberoot/shared/teaching';
+import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
-import { getTeachingOperationsOverview } from '@/lib/teaching-saas-api';
+import { getTeachingOperationsOverview, listTeachingCreditAdjustments } from '@/lib/teaching-saas-api';
 import OrgWorkspace from '../../_components/OrgWorkspace';
-import { teachingErrorMessage } from '../../_components/OrgUi';
+import {
+  creditLedgerEntryLabel,
+  TeachingPagination,
+  teachingErrorMessage,
+  useTeachingPage,
+} from '../../_components/OrgUi';
+
+const PAGE_SIZE = 25;
 
 function MetricRow({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
   return (
@@ -22,15 +35,33 @@ function MetricRow({ label, value, detail }: { label: string; value: string | nu
 
 export default function OrganizationOperationsPage() {
   const params = useParams<{ orgSlug: string }>();
+  const [rawPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const page = Math.max(1, rawPage);
   return (
     <OrgWorkspace orgSlug={params.orgSlug}>
-      {() => <OperationsContent orgSlug={params.orgSlug} />}
+      {(organization) => <OperationsContent orgSlug={params.orgSlug} role={organization.role} page={page} />}
     </OrgWorkspace>
   );
 }
 
-function OperationsContent({ orgSlug }: { orgSlug: string }) {
+function OperationsContent({
+  orgSlug,
+  role,
+  page,
+}: {
+  orgSlug: string;
+  role: TeachingOrganizationRole;
+  page: number;
+}) {
   const t = useT();
+  const canReadFinance = hasTeachingPermission(role, 'finance:read');
+  const adjustmentLoader = useCallback(
+    () => canReadFinance
+      ? listTeachingCreditAdjustments(orgSlug, page, PAGE_SIZE)
+      : Promise.resolve({ items: [], total: 0, page, pageSize: PAGE_SIZE }),
+    [canReadFinance, orgSlug, page],
+  );
+  const adjustments = useTeachingPage(adjustmentLoader);
   const [overview, setOverview] = useState<TeachingOperationsOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -137,6 +168,51 @@ function OperationsContent({ orgSlug }: { orgSlug: string }) {
           </div>
         )}
       </section>
+
+      {canReadFinance && (
+        <section className="org-section">
+          <h2>{t('异常课时流水', 'Credit adjustment ledger')}</h2>
+          <p className="org-lead">{t('这里只显示调整、退款、到期和冲正流水；余额以学员课包页的服务端结果为准。', 'This feed shows adjustments, refunds, expirations, and reversals. Use the server balance on the student package page as authoritative.')}</p>
+          {adjustments.loading ? <p aria-busy="true">{t('正在加载流水…', 'Loading ledger…')}</p> : adjustments.error ? (
+            <p role="alert">{adjustments.error}</p>
+          ) : !adjustments.result?.items.length ? (
+            <p className="org-empty">{t('暂无异常流水。', 'No credit adjustments were found.')}</p>
+          ) : (
+            <div className="org-list">
+              {adjustments.result.items.map((adjustment) => {
+                const entry = adjustment.ledgerEntry;
+                return (
+                  <div className="org-row" key={entry.id}>
+                    <div className="org-row-main">
+                      <div className="org-row-title">
+                        <AppLink
+                          href={`/org/${orgSlug}/students/${adjustment.student.id}/packages`}
+                          prefetch={false}
+                        >
+                          {adjustment.student.displayName}
+                        </AppLink>
+                        {' '}{adjustment.studentPackage.productName}
+                      </div>
+                      <div className="org-row-meta">
+                        {creditLedgerEntryLabel(entry.entryType, t)} / {entry.delta > 0 ? `+${entry.delta}` : entry.delta} {adjustment.studentPackage.creditUnit === 'minute' ? t('分钟', 'minutes') : t('课时', 'lessons')} / {new Date(entry.createdAt).toLocaleString()}
+                      </div>
+                      <div className="org-row-meta">{entry.reason || t('未填写原因', 'No reason provided')} / {entry.actorDisplayName}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {adjustments.result && (
+            <TeachingPagination
+              page={adjustments.result.page}
+              pageSize={adjustments.result.pageSize}
+              total={adjustments.result.total}
+              baseHref={`/org/${orgSlug}/operations`}
+            />
+          )}
+        </section>
+      )}
     </>
   );
 }

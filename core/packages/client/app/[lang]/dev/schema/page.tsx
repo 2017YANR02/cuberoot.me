@@ -229,8 +229,8 @@ const TABLES: Table[] = [
   { name: 'lesson_package_products', domain: 'teaching', origin: '0147', naturalKey: true, purpose: { zh: '机构课包产品定义；学员领取后以快照保留历史合同', en: 'Tenant package-product definitions whose terms are snapshotted when issued to a student' }, cols: [
     { name: 'id UUID (PK), organization_id, code (tenant UNIQUE), name, status' }, { name: 'credit_unit, credit_type, total_credits, validity_days' }, { name: 'price_amount_minor, currency, created_by_user_id' },
   ] },
-  { name: 'student_packages', domain: 'teaching', origin: '0147', purpose: { zh: '学员课包合同快照；余额始终由课时流水求和', en: 'Student package contract snapshots whose balances are always derived from the credit ledger' }, cols: [
-    { name: 'id UUID (PK), organization_id, student_id, product_id' }, { name: 'product / credit / price snapshots, lifecycle_status, acquisition_type' }, { name: 'valid_from, valid_until, external source tuple' },
+  { name: 'student_packages', domain: 'teaching', origin: '0147', evolved: [164], purpose: { zh: '学员课包合同快照；余额始终由课时流水求和', en: 'Student package contract snapshots whose balances are always derived from the credit ledger' }, cols: [
+    { name: 'id UUID (PK), organization_id, student_id, product_id' }, { name: 'product / credit / price snapshots, lifecycle_status, acquisition_type' }, { name: 'valid_from, valid_until, external source tuple, credit_ledger_revision' },
   ] },
   { name: 'teaching_sessions', domain: 'teaching', origin: '0147', purpose: { zh: '机构课堂时间、时区与履约状态', en: 'Tenant session schedule, timezone, and fulfilment state' }, cols: [
     { name: 'id UUID (PK), organization_id, title' }, { name: 'starts_at, ends_at, timezone, status, version' }, { name: 'started_at, completed_at, cancelled_at' },
@@ -241,7 +241,7 @@ const TABLES: Table[] = [
   { name: 'attendance_records', domain: 'teaching', origin: '0147', naturalKey: true, purpose: { zh: '每位学员在每堂课的考勤与扣课规划，复合外键阻止跨租户引用', en: 'Per-student session attendance and planned credit consumption with composite tenant foreign keys' }, cols: [
     { name: 'id UUID (PK), organization_id, session_id, student_id' }, { name: 'student_package_id, status, credit_cost, notes' }, { name: 'recorded_by_user_id, created_at, updated_at' },
   ] },
-  { name: 'lesson_credit_ledger', domain: 'teaching', origin: '0147', naturalKey: true, purpose: { zh: '只追加的课时账本；每条考勤永久最多一笔扣课', en: 'Append-only credit ledger with permanently at most one consumption entry per attendance record' }, cols: [
+  { name: 'lesson_credit_ledger', domain: 'teaching', origin: '0147', evolved: [164], naturalKey: true, purpose: { zh: '只追加的课时账本；扣课、退款与等额撤销由课包父行串行保护', en: 'Append-only credit ledger whose consumption, refunds, and exact reversals serialize on the package parent row' }, cols: [
     { name: 'id BIGINT (PK), organization_id, student_package_id, student_id' }, { name: 'entry_type, delta, attendance_id, session_id, idempotency_key' }, { name: 'source / reversal references, actor snapshot, metadata, created_at' },
   ] },
   { name: 'session_events', domain: 'teaching', origin: '0147', purpose: { zh: '只追加的课堂状态与考勤变更事件', en: 'Append-only session lifecycle and attendance-change events' }, cols: [
@@ -575,6 +575,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 161, slug: 'expand_first_live_script', desc: { zh: '依据原直播字幕扩充魔方根首次直播中文整理稿，恢复个人经历、教学案例、直播幕后与未来规划。', en: 'Expand the first CubeRoot livestream script from its transcript, restoring personal history, teaching stories, behind-the-scenes details, and future plans.' } },
   { n: 162, slug: 'recon_video_uploads', desc: { zh: '新增会员复盘视频上传元数据，以归属、格式、大小和创建时间约束服务器文件。', en: 'Add member recon-video upload metadata, constraining server files by owner, format, size, and creation time.' } },
   { n: 163, slug: 'forum_videos', desc: { zh: '新增论坛短视频上传元数据；任意登录账号可上传，发布主题时原子绑定首帖，时长由服务端读取媒体容器并校验。', en: 'Add forum short-video upload metadata; any signed-in account may upload, thread creation atomically attaches it to the first post, and the server validates duration from the media container.' } },
+  { n: 164, slug: 'teaching_credit_adjustments', desc: { zh: '强化课时账本：以课包父行串行化所有写入，约束退款来源与等额撤销，并禁止余额降至负数。', en: 'Harden the credit ledger by serializing every write on its package, constraining refund sources and exact reversals, and preventing negative balances.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

@@ -146,6 +146,18 @@ interface CreateStudentPackageInput {
   sourceLineRef: string | null;
 }
 
+interface CreateCreditRefundInput {
+  credits: number;
+  reason: string;
+  sourceSystem: string;
+  sourceRef: string;
+  sourceLineRef: string | null;
+}
+
+interface CreateCreditReversalInput {
+  reason: string;
+}
+
 interface CreateSessionInput {
   title: string;
   startsAt: string;
@@ -327,6 +339,31 @@ export interface TeachingSaasRepository {
     pagination: PageInput,
     requestId: string,
   ): Promise<PageResult>;
+  listCreditAdjustments(
+    actor: TeachingActor,
+    slug: string,
+    pagination: PageInput,
+    requestId: string,
+  ): Promise<PageResult>;
+  refundStudentPackageCredits(
+    actor: TeachingActor,
+    slug: string,
+    studentPackageId: string,
+    input: CreateCreditRefundInput,
+    idempotencyKey: string,
+    requestHash: string,
+    requestId: string,
+  ): Promise<MutationResult>;
+  reverseStudentPackageLedgerEntry(
+    actor: TeachingActor,
+    slug: string,
+    studentPackageId: string,
+    ledgerId: string,
+    input: CreateCreditReversalInput,
+    idempotencyKey: string,
+    requestHash: string,
+    requestId: string,
+  ): Promise<MutationResult>;
   listSessions(actor: TeachingActor, slug: string, pagination: PageInput, requestId: string): Promise<PageResult>;
   getSession(actor: TeachingActor, slug: string, sessionId: string, requestId: string): Promise<JsonObject>;
   listLessonFeedback(
@@ -619,6 +656,14 @@ function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex');
 }
 
+function refundLedgerIdempotencyKey(idempotencyKey: string): string {
+  return `refund:v1:${sha256(idempotencyKey)}`;
+}
+
+function reversalLedgerIdempotencyKey(ledgerId: string, idempotencyKey: string): string {
+  return `reversal:v1:${ledgerId}:${sha256(idempotencyKey)}`;
+}
+
 function trainingReviewRequestHash(assignmentId: string, studentId: string, rawBody: string): string {
   return sha256(JSON.stringify([assignmentId, studentId, rawBody]));
 }
@@ -881,6 +926,15 @@ function uuidParam(value: string, key: string): string {
   return requiredUuid({ [key]: value }, key);
 }
 
+const PG_BIGINT_MAX = 9_223_372_036_854_775_807n;
+
+function bigintParam(value: string, key: string): string {
+  if (!/^[1-9]\d{0,18}$/.test(value) || BigInt(value) > PG_BIGINT_MAX) {
+    throw new TeachingApiException('INVALID_INPUT', 400, `${key} must be a positive PostgreSQL BIGINT decimal`);
+  }
+  return value;
+}
+
 function requiredTimestamp(body: JsonObject, key: string): string {
   const value = requiredString(body, key, 40);
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,3})?(?:(Z)|([+-])(\d{2}):(\d{2}))$/.exec(value);
@@ -1082,6 +1136,26 @@ function parseStudentPackageInput(body: JsonObject): CreateStudentPackageInput {
     sourceRef,
     sourceLineRef,
   };
+}
+
+function parseCreditRefundInput(body: JsonObject): CreateCreditRefundInput {
+  assertOnlyKeys(
+    body,
+    ['credits', 'reason', 'sourceSystem', 'sourceRef', 'sourceLineRef'],
+    'credit refund input',
+  );
+  return {
+    credits: requiredInteger(body, 'credits', 1, 1_000_000),
+    reason: requiredString(body, 'reason', 500),
+    sourceSystem: requiredString(body, 'sourceSystem', 64),
+    sourceRef: requiredString(body, 'sourceRef', 160),
+    sourceLineRef: optionalString(body, 'sourceLineRef', 160),
+  };
+}
+
+function parseCreditReversalInput(body: JsonObject): CreateCreditReversalInput {
+  assertOnlyKeys(body, ['reason'], 'credit reversal input');
+  return { reason: requiredString(body, 'reason', 500) };
 }
 
 function parseSessionInput(body: JsonObject): CreateSessionInput {
@@ -1436,6 +1510,40 @@ async function accessForWrite(tx: Tx, actorUserId: number, slug: string): Promis
   return asAccess(rows[0] as Record<string, unknown>);
 }
 
+async function lockStudentPackageForCreditMutation(
+  tx: Tx,
+  organizationId: string,
+  studentPackageId: string,
+): Promise<Record<string, unknown>> {
+  const packages = await tx`
+    SELECT p.*
+    FROM student_packages p
+    WHERE p.organization_id = ${organizationId} AND p.id = ${studentPackageId}
+    FOR UPDATE OF p`;
+  if (packages.length) return packages[0] as Record<string, unknown>;
+
+  const existing = await tx`
+    SELECT organization_id
+    FROM student_packages
+    WHERE id = ${studentPackageId}`;
+  if (existing.length && String(existing[0].organization_id) !== organizationId) {
+    throw new ConcealedTeachingPermissionDeniedException('Student package not found');
+  }
+  throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Student package not found');
+}
+
+async function studentPackageCreditBalance(
+  tx: Tx,
+  organizationId: string,
+  studentPackageId: string,
+): Promise<number> {
+  const rows = await tx`
+    SELECT COALESCE(SUM(delta), 0)::bigint AS balance
+    FROM lesson_credit_ledger
+    WHERE organization_id = ${organizationId} AND student_package_id = ${studentPackageId}`;
+  return Number(rows[0]?.balance ?? 0);
+}
+
 function isAccessDenial(error: unknown): error is TeachingApiException {
   return error instanceof ConcealedTeachingPermissionDeniedException || (
     error instanceof TeachingApiException &&
@@ -1644,6 +1752,69 @@ function hasOrganizationCrmScope(role: TeachingOrganizationRole): boolean {
 
 function iso(value: unknown): string {
   return value instanceof Date ? value.toISOString() : new Date(String(value)).toISOString();
+}
+
+function studentPackageToJson(row: Record<string, unknown>, remainingCredits: number): JsonObject {
+  return {
+    id: String(row.id),
+    studentId: String(row.student_id),
+    productId: String(row.product_id),
+    productCode: String(row.product_code_snapshot),
+    productName: String(row.product_name_snapshot),
+    creditUnit: String(row.credit_unit),
+    creditType: String(row.credit_type),
+    entitledCredits: Number(row.entitled_credits),
+    remainingCredits,
+    validityDays: row.validity_days_snapshot == null ? null : Number(row.validity_days_snapshot),
+    priceAmountMinor: Number(row.price_amount_minor),
+    currency: String(row.currency),
+    status: String(row.lifecycle_status),
+    acquisitionType: String(row.acquisition_type),
+    validFrom: iso(row.valid_from),
+    validUntil: row.valid_until == null ? null : iso(row.valid_until),
+    sourceSystem: row.source_system == null ? null : String(row.source_system),
+    sourceRef: row.source_ref == null ? null : String(row.source_ref),
+    sourceLineRef: row.source_line_ref == null ? null : String(row.source_line_ref),
+    createdAt: iso(row.created_at),
+  };
+}
+
+function creditLedgerEntryToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    id: String(row.id),
+    studentId: String(row.student_id),
+    entryType: String(row.entry_type),
+    delta: Number(row.delta),
+    attendanceId: row.attendance_id == null ? null : String(row.attendance_id),
+    sessionId: row.session_id == null ? null : String(row.session_id),
+    sourceSystem: row.source_system == null ? null : String(row.source_system),
+    sourceRef: row.source_ref == null ? null : String(row.source_ref),
+    sourceLineRef: row.source_line_ref == null ? null : String(row.source_line_ref),
+    reversalOfLedgerId: row.reversal_of_ledger_id == null ? null : String(row.reversal_of_ledger_id),
+    reversedByLedgerId: row.reversed_by_ledger_id == null ? null : String(row.reversed_by_ledger_id),
+    reason: String(row.reason),
+    actorRole: String(row.actor_role),
+    actorDisplayName: String(row.actor_display_name),
+    metadata: row.metadata as JsonValue,
+    createdAt: iso(row.created_at),
+  };
+}
+
+function creditAdjustmentToJson(row: Record<string, unknown>): JsonObject {
+  return {
+    ledgerEntry: creditLedgerEntryToJson(row),
+    student: {
+      id: String(row.student_id),
+      displayName: String(row.student_display_name),
+    },
+    studentPackage: {
+      id: String(row.student_package_id),
+      productCode: String(row.product_code_snapshot),
+      productName: String(row.product_name_snapshot),
+      creditUnit: String(row.credit_unit),
+      creditType: String(row.credit_type),
+    },
+  };
 }
 
 function lessonFeedbackToJson(row: Record<string, unknown>): JsonObject {
@@ -4480,21 +4651,7 @@ export const teachingSaasRepository: TeachingSaasRepository = {
         ),
       ]);
       return {
-        items: rows.map((row) => ({
-          id: String(row.id), studentId: String(row.student_id), productId: String(row.product_id),
-          productCode: String(row.product_code_snapshot), productName: String(row.product_name_snapshot),
-          creditUnit: String(row.credit_unit), creditType: String(row.credit_type),
-          entitledCredits: Number(row.entitled_credits), remainingCredits: Number(row.remaining_credits),
-          validityDays: row.validity_days_snapshot == null ? null : Number(row.validity_days_snapshot),
-          priceAmountMinor: Number(row.price_amount_minor), currency: String(row.currency),
-          status: String(row.lifecycle_status), acquisitionType: String(row.acquisition_type),
-          validFrom: new Date(String(row.valid_from)).toISOString(),
-          validUntil: row.valid_until == null ? null : new Date(String(row.valid_until)).toISOString(),
-          sourceSystem: row.source_system == null ? null : String(row.source_system),
-          sourceRef: row.source_ref == null ? null : String(row.source_ref),
-          sourceLineRef: row.source_line_ref == null ? null : String(row.source_line_ref),
-          createdAt: new Date(String(row.created_at)).toISOString(),
-        })),
+        items: rows.map((row) => studentPackageToJson(row, Number(row.remaining_credits))),
         total: Number(countRows[0]?.count ?? 0), page: pagination.page, pageSize: pagination.pageSize,
       };
     });
@@ -4565,21 +4722,12 @@ export const teachingSaasRepository: TeachingSaasRepository = {
             )`;
           const result: MutationResult = {
             status: 201,
-            body: { studentPackage: {
-              id: studentPackageId, studentId, productId: input.productId,
-              productCode: String(studentPackage.product_code_snapshot),
-              productName: String(studentPackage.product_name_snapshot),
-              creditUnit: String(studentPackage.credit_unit), creditType: String(studentPackage.credit_type),
-              entitledCredits: Number(studentPackage.entitled_credits),
-              remainingCredits: Number(studentPackage.entitled_credits),
-              validityDays: studentPackage.validity_days_snapshot == null ? null : Number(studentPackage.validity_days_snapshot),
-              priceAmountMinor: Number(studentPackage.price_amount_minor), currency: String(studentPackage.currency),
-              status: String(studentPackage.lifecycle_status), acquisitionType: String(studentPackage.acquisition_type),
-              validFrom: new Date(String(studentPackage.valid_from)).toISOString(),
-              validUntil: studentPackage.valid_until == null ? null : new Date(String(studentPackage.valid_until)).toISOString(),
-              sourceSystem: input.sourceSystem, sourceRef: input.sourceRef, sourceLineRef: input.sourceLineRef,
-              createdAt: new Date(String(studentPackage.created_at)).toISOString(),
-            } },
+            body: {
+              studentPackage: studentPackageToJson(
+                studentPackage,
+                Number(studentPackage.entitled_credits),
+              ),
+            },
           };
           await completeIdempotency(tx, idem.id, result, 'student_package', studentPackageId);
           return result;
@@ -4606,30 +4754,244 @@ export const teachingSaasRepository: TeachingSaasRepository = {
           [access.id, studentPackageId],
         ),
         query<Record<string, unknown>>(
-          `SELECT id, student_id, entry_type, delta, attendance_id, session_id,
-                  source_system, source_ref, source_line_ref, reversal_of_ledger_id,
-                  reason, actor_role, actor_display_name, metadata, created_at
-           FROM lesson_credit_ledger
-           WHERE organization_id = ? AND student_package_id = ?
-           ORDER BY created_at, id LIMIT ? OFFSET ?`,
+          `SELECT ledger.id, ledger.student_id, ledger.entry_type, ledger.delta,
+                  ledger.attendance_id, ledger.session_id, ledger.source_system,
+                  ledger.source_ref, ledger.source_line_ref, ledger.reversal_of_ledger_id,
+                  reversed.id AS reversed_by_ledger_id, ledger.reason, ledger.actor_role,
+                  ledger.actor_display_name, ledger.metadata, ledger.created_at
+           FROM lesson_credit_ledger ledger
+           LEFT JOIN lesson_credit_ledger reversed
+             ON reversed.organization_id = ledger.organization_id
+            AND reversed.reversal_of_ledger_id = ledger.id
+           WHERE ledger.organization_id = ? AND ledger.student_package_id = ?
+           ORDER BY ledger.created_at DESC, ledger.id DESC LIMIT ? OFFSET ?`,
           [access.id, studentPackageId, pagination.pageSize, pagination.offset],
         ),
       ]);
       return {
-        items: rows.map((row) => ({
-          id: Number(row.id), studentId: String(row.student_id), entryType: String(row.entry_type),
-          delta: Number(row.delta), attendanceId: row.attendance_id == null ? null : String(row.attendance_id),
-          sessionId: row.session_id == null ? null : String(row.session_id),
-          sourceSystem: row.source_system == null ? null : String(row.source_system),
-          sourceRef: row.source_ref == null ? null : String(row.source_ref),
-          sourceLineRef: row.source_line_ref == null ? null : String(row.source_line_ref),
-          reversalOfLedgerId: row.reversal_of_ledger_id == null ? null : Number(row.reversal_of_ledger_id),
-          reason: String(row.reason), actorRole: String(row.actor_role),
-          actorDisplayName: String(row.actor_display_name), metadata: row.metadata as JsonValue,
-          createdAt: new Date(String(row.created_at)).toISOString(),
-        })),
+        items: rows.map(creditLedgerEntryToJson),
         total: Number(countRows[0]?.count ?? 0), page: pagination.page, pageSize: pagination.pageSize,
       };
+    });
+  },
+
+  async listCreditAdjustments(actor, slug, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'credit_adjustment.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'finance:read');
+      const [countRows, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          `SELECT COUNT(*)::int AS count
+           FROM lesson_credit_ledger
+           WHERE organization_id = ?
+             AND entry_type IN ('adjustment', 'refund', 'reversal', 'expiration')`,
+          [access.id],
+        ),
+        query<Record<string, unknown>>(
+          `SELECT ledger.id, ledger.student_package_id, ledger.student_id,
+                  ledger.entry_type, ledger.delta, ledger.attendance_id, ledger.session_id,
+                  ledger.source_system, ledger.source_ref, ledger.source_line_ref,
+                  ledger.reversal_of_ledger_id, reversed.id AS reversed_by_ledger_id,
+                  ledger.reason, ledger.actor_role, ledger.actor_display_name,
+                  ledger.metadata, ledger.created_at,
+                  student.display_name AS student_display_name,
+                  package.product_code_snapshot, package.product_name_snapshot,
+                  package.credit_unit, package.credit_type
+           FROM lesson_credit_ledger ledger
+           JOIN student_profiles student
+             ON student.organization_id = ledger.organization_id
+            AND student.id = ledger.student_id
+           JOIN student_packages package
+             ON package.organization_id = ledger.organization_id
+            AND package.id = ledger.student_package_id
+            AND package.student_id = ledger.student_id
+           LEFT JOIN lesson_credit_ledger reversed
+             ON reversed.organization_id = ledger.organization_id
+            AND reversed.reversal_of_ledger_id = ledger.id
+           WHERE ledger.organization_id = ?
+             AND ledger.entry_type IN ('adjustment', 'refund', 'reversal', 'expiration')
+           ORDER BY ledger.created_at DESC, ledger.id DESC
+           LIMIT ? OFFSET ?`,
+          [access.id, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      return {
+        items: rows.map(creditAdjustmentToJson),
+        total: Number(countRows[0]?.count ?? 0),
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+      };
+    });
+  },
+
+  async refundStudentPackageCredits(
+    actor, slug, studentPackageId, input, idempotencyKey, requestHash, requestId,
+  ) {
+    return withDeniedAccessAudit(actor, slug, 'student_package.refund', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'student_package.refund', 120, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'finance:manage');
+          const studentPackage = await lockStudentPackageForCreditMutation(
+            tx, access.id, studentPackageId,
+          );
+          const idem = await beginIdempotency(
+            tx,
+            actor.userId,
+            access.id,
+            `student_package.refund:${studentPackageId}`,
+            idempotencyKey,
+            requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+
+          const balance = await studentPackageCreditBalance(tx, access.id, studentPackageId);
+          if (balance < input.credits) {
+            throw new TeachingApiException('CONFLICT', 409, 'Refund would make the package credit balance negative');
+          }
+          const inserted = await tx`
+            INSERT INTO lesson_credit_ledger (
+              organization_id, student_package_id, student_id, entry_type, delta,
+              idempotency_key, source_system, source_ref, source_line_ref, reason,
+              actor_user_id, actor_role, actor_display_name, metadata
+            ) VALUES (
+              ${access.id}, ${studentPackageId}, ${String(studentPackage.student_id)},
+              'refund', ${-input.credits}, ${refundLedgerIdempotencyKey(idempotencyKey)},
+              ${input.sourceSystem}, ${input.sourceRef}, ${input.sourceLineRef}, ${input.reason},
+              ${actor.userId}, ${access.role}, ${actor.displayName},
+              ${sql.json({ credits: input.credits })}
+            )
+            RETURNING *`;
+          const ledgerEntry = inserted[0] as Record<string, unknown>;
+          const ledgerId = String(ledgerEntry.id);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'student_package.refund', 'lesson_credit_ledger', ${ledgerId}, ${requestId},
+              ${sql.json({
+                studentPackageId,
+                credits: input.credits,
+                sourceSystem: input.sourceSystem,
+                sourceRef: input.sourceRef,
+                sourceLineRef: input.sourceLineRef,
+              })}
+            )`;
+          const result: MutationResult = {
+            status: 201,
+            body: {
+              ledgerEntry: creditLedgerEntryToJson(ledgerEntry),
+              studentPackage: studentPackageToJson(studentPackage, balance - input.credits),
+            },
+          };
+          await completeIdempotency(tx, idem.id, result, 'lesson_credit_ledger', ledgerId);
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Credit refund conflicts with the current package ledger');
+      }
+    });
+  },
+
+  async reverseStudentPackageLedgerEntry(
+    actor, slug, studentPackageId, ledgerId, input, idempotencyKey, requestHash, requestId,
+  ) {
+    return withDeniedAccessAudit(actor, slug, 'student_package.ledger.reversal', requestId, async () => {
+      await consumeMutationAttempt(actor.userId, 'student_package.ledger.reversal', 120, '1 minute');
+      try {
+        return await sql.begin(async (tx) => {
+          const access = await accessForWrite(tx, actor.userId, slug);
+          requireWritable(access);
+          requirePermission(access, 'finance:manage');
+          const studentPackage = await lockStudentPackageForCreditMutation(
+            tx, access.id, studentPackageId,
+          );
+          const targets = await tx`
+            SELECT target.*, reversed.id AS reversed_by_ledger_id
+            FROM lesson_credit_ledger target
+            LEFT JOIN lesson_credit_ledger reversed
+              ON reversed.organization_id = target.organization_id
+             AND reversed.reversal_of_ledger_id = target.id
+            WHERE target.organization_id = ${access.id}
+              AND target.student_package_id = ${studentPackageId}
+              AND target.id = ${ledgerId}`;
+          if (!targets.length) {
+            const existing = await tx`
+              SELECT organization_id, student_package_id
+              FROM lesson_credit_ledger
+              WHERE id = ${ledgerId}`;
+            if (existing.length && String(existing[0].organization_id) !== access.id) {
+              throw new ConcealedTeachingPermissionDeniedException('Credit ledger entry not found');
+            }
+            throw new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Credit ledger entry not found');
+          }
+          const target = targets[0] as Record<string, unknown>;
+          if (target.entry_type === 'reversal') {
+            throw new TeachingApiException('CONFLICT', 409, 'A reversal entry cannot be reversed');
+          }
+          const idem = await beginIdempotency(
+            tx,
+            actor.userId,
+            access.id,
+            `student_package.ledger.reversal:${studentPackageId}:${ledgerId}`,
+            idempotencyKey,
+            requestHash,
+          );
+          if ('replay' in idem) return idem.replay;
+          if (target.reversed_by_ledger_id != null) {
+            throw new TeachingApiException('CONFLICT', 409, 'Credit ledger entry was already reversed');
+          }
+
+          const balance = await studentPackageCreditBalance(tx, access.id, studentPackageId);
+          const delta = -Number(target.delta);
+          if (balance + delta < 0) {
+            throw new TeachingApiException('CONFLICT', 409, 'Reversal would make the package credit balance negative');
+          }
+          const inserted = await tx`
+            INSERT INTO lesson_credit_ledger (
+              organization_id, student_package_id, student_id, entry_type, delta,
+              idempotency_key, reversal_of_ledger_id, reason,
+              actor_user_id, actor_role, actor_display_name, metadata
+            ) VALUES (
+              ${access.id}, ${studentPackageId}, ${String(studentPackage.student_id)},
+              'reversal', ${delta}, ${reversalLedgerIdempotencyKey(ledgerId, idempotencyKey)},
+              ${ledgerId}, ${input.reason}, ${actor.userId}, ${access.role},
+              ${actor.displayName}, ${sql.json({ reversedLedgerId: ledgerId })}
+            )
+            RETURNING *`;
+          const ledgerEntry = inserted[0] as Record<string, unknown>;
+          const reversalLedgerId = String(ledgerEntry.id);
+          await tx`
+            INSERT INTO teaching_audit_events (
+              organization_id, actor_user_id, actor_role, actor_display_name,
+              action, entity_type, entity_id, request_id, metadata
+            ) VALUES (
+              ${access.id}, ${actor.userId}, ${access.role}, ${actor.displayName},
+              'student_package.ledger.reversal', 'lesson_credit_ledger',
+              ${reversalLedgerId}, ${requestId},
+              ${sql.json({ studentPackageId, reversedLedgerId: ledgerId, delta })}
+            )`;
+          const result: MutationResult = {
+            status: 201,
+            body: {
+              ledgerEntry: creditLedgerEntryToJson(ledgerEntry),
+              studentPackage: studentPackageToJson(studentPackage, balance + delta),
+            },
+          };
+          await completeIdempotency(
+            tx, idem.id, result, 'lesson_credit_ledger', reversalLedgerId,
+          );
+          return result;
+        }) as MutationResult;
+      } catch (error) {
+        if (error instanceof TeachingApiException) throw error;
+        return crmConflict(error, 'Credit reversal conflicts with the current package ledger');
+      }
     });
   },
 
@@ -9190,6 +9552,76 @@ export function createTeachingSaasRoutes(deps: {
         paginationOf(c), requestId,
       );
       return c.json({ ledger: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post('/teaching/organizations/:orgSlug/student-packages/:packageId/refunds', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const key = idempotencyKeyOf(c);
+      const packageId = uuidParam(c.req.param('packageId'), 'packageId');
+      const body = await jsonBody(c, 4_096);
+      const result = await repository.refundStudentPackageCredits(
+        actor,
+        c.req.param('orgSlug'),
+        packageId,
+        parseCreditRefundInput(body.value),
+        key,
+        sha256(JSON.stringify([packageId, body.raw])),
+        requestId,
+      );
+      return c.json(result.body, result.status);
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.post(
+    '/teaching/organizations/:orgSlug/student-packages/:packageId/ledger/:ledgerId/reversal',
+    async (c) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const key = idempotencyKeyOf(c);
+        const packageId = uuidParam(c.req.param('packageId'), 'packageId');
+        const ledgerId = bigintParam(c.req.param('ledgerId'), 'ledgerId');
+        const body = await jsonBody(c, 4_096);
+        const result = await repository.reverseStudentPackageLedgerEntry(
+          actor,
+          c.req.param('orgSlug'),
+          packageId,
+          ledgerId,
+          parseCreditReversalInput(body.value),
+          key,
+          sha256(JSON.stringify([packageId, ledgerId, body.raw])),
+          requestId,
+        );
+        return c.json(result.body, result.status);
+      } catch (error) {
+        return errorResponse(c, error, requestId);
+      }
+    },
+  );
+
+  routes.get('/teaching/organizations/:orgSlug/operations/credit-adjustments', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listCreditAdjustments(
+        actor, c.req.param('orgSlug'), paginationOf(c), requestId,
+      );
+      return c.json({
+        creditAdjustments: page.items,
+        total: page.total,
+        page: page.page,
+        pageSize: page.pageSize,
+      });
     } catch (error) {
       return errorResponse(c, error, requestId);
     }

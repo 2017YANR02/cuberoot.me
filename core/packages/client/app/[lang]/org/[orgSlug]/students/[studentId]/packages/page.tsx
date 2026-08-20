@@ -12,12 +12,15 @@ import {
   listTeachingPackageProducts,
   listTeachingStudentPackageLedger,
   listTeachingStudentPackages,
+  refundTeachingStudentPackage,
+  reverseTeachingCreditLedgerEntry,
   type TeachingPackageProduct,
   type TeachingStudent,
   type TeachingStudentPackage,
 } from '@/lib/teaching-saas-api';
 import OrgWorkspace from '../../../../_components/OrgWorkspace';
 import {
+  creditLedgerEntryLabel,
   entityStatusLabel,
   MutationMessage,
   TeachingPagination,
@@ -53,6 +56,7 @@ function StudentPackagesContent({ orgSlug, studentId, page, role }: { orgSlug: s
   const [message, setMessage] = useState('');
   const [mutationError, setMutationError] = useState('');
   const canManage = hasTeachingPermission(role, 'package:manage');
+  const canManageFinance = hasTeachingPermission(role, 'finance:manage');
 
   useEffect(() => {
     let cancelled = false;
@@ -138,7 +142,15 @@ function StudentPackagesContent({ orgSlug, studentId, page, role }: { orgSlug: s
         <p className="org-empty">{t('该学员还没有课包。', 'This student has no packages yet.')}</p>
       ) : (
         <div className="org-list">
-          {packages.result.items.map((item) => <StudentPackageRow key={item.id} orgSlug={orgSlug} item={item} />)}
+          {packages.result.items.map((item) => (
+            <StudentPackageRow
+              key={item.id}
+              orgSlug={orgSlug}
+              item={item}
+              canManageFinance={canManageFinance}
+              onChanged={packages.reload}
+            />
+          ))}
         </div>
       )}
       {packages.result && <TeachingPagination page={packages.result.page} pageSize={packages.result.pageSize} total={packages.result.total} baseHref={`/org/${orgSlug}/students/${studentId}/packages`} />}
@@ -178,10 +190,29 @@ function StudentPackagesContent({ orgSlug, studentId, page, role }: { orgSlug: s
   );
 }
 
-function StudentPackageRow({ orgSlug, item }: { orgSlug: string; item: TeachingStudentPackage }) {
+function StudentPackageRow({
+  orgSlug,
+  item,
+  canManageFinance,
+  onChanged,
+}: {
+  orgSlug: string;
+  item: TeachingStudentPackage;
+  canManageFinance: boolean;
+  onChanged: () => void;
+}) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [refundOpen, setRefundOpen] = useState(false);
+  const [refundSubmitting, setRefundSubmitting] = useState(false);
+  const [reverseTargetId, setReverseTargetId] = useState<string | null>(null);
+  const [reversing, setReversing] = useState(false);
+  const [message, setMessage] = useState('');
+  const [mutationError, setMutationError] = useState('');
+  const refundOperationKey = useOperationKey();
+  const reverseOperationKey = useOperationKey();
+  const refundCreditLimit = Math.min(item.remainingCredits, 1_000_000);
   const loader = useCallback(
     () => open
       ? listTeachingStudentPackageLedger(orgSlug, item.id, page, PAGE_SIZE)
@@ -189,6 +220,81 @@ function StudentPackageRow({ orgSlug, item }: { orgSlug: string; item: TeachingS
     [item.id, open, orgSlug, page],
   );
   const ledger = useTeachingPage(loader);
+
+  async function submitRefund(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const credits = Number(data.get('credits'));
+    const reason = String(data.get('reason') ?? '').trim();
+    const sourceSystem = String(data.get('sourceSystem') ?? '').trim();
+    const sourceRef = String(data.get('sourceRef') ?? '').trim();
+    const sourceLineRef = String(data.get('sourceLineRef') ?? '').trim() || null;
+    if (!Number.isSafeInteger(credits) || credits < 1 || credits > refundCreditLimit) {
+      setMutationError(t('退款课时必须是正整数，且不能超过当前余额。', 'Refund credits must be a positive integer no greater than the current balance.'));
+      return;
+    }
+    if (!reason || !sourceSystem || !sourceRef) {
+      setMutationError(t('请填写退款原因、来源系统和来源单号。', 'Provide the refund reason, source system, and source reference.'));
+      return;
+    }
+    setRefundSubmitting(true);
+    setMessage('');
+    setMutationError('');
+    try {
+      await refundTeachingStudentPackage(orgSlug, item.id, {
+        credits,
+        reason,
+        sourceSystem,
+        sourceRef,
+        sourceLineRef,
+      }, refundOperationKey.get());
+      form.reset();
+      refundOperationKey.reset();
+      setRefundOpen(false);
+      setOpen(true);
+      ledger.reload();
+      onChanged();
+      setMessage(t('课时退款流水已入账。', 'Credit refund ledger entry recorded.'));
+    } catch (reasonValue) {
+      setMutationError(teachingErrorMessage(reasonValue, t));
+    } finally {
+      setRefundSubmitting(false);
+    }
+  }
+
+  async function submitReversal(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!reverseTargetId) return;
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const reason = String(data.get('reason') ?? '').trim();
+    if (!reason) {
+      setMutationError(t('请填写冲正原因。', 'Provide a reversal reason.'));
+      return;
+    }
+    setReversing(true);
+    setMessage('');
+    setMutationError('');
+    try {
+      await reverseTeachingCreditLedgerEntry(
+        orgSlug,
+        item.id,
+        reverseTargetId,
+        { reason },
+        reverseOperationKey.get(),
+      );
+      reverseOperationKey.reset();
+      setReverseTargetId(null);
+      ledger.reload();
+      onChanged();
+      setMessage(t('冲正流水已入账。', 'Reversal ledger entry recorded.'));
+    } catch (reasonValue) {
+      setMutationError(teachingErrorMessage(reasonValue, t));
+    } finally {
+      setReversing(false);
+    }
+  }
 
   return (
     <div className="org-row">
@@ -201,6 +307,29 @@ function StudentPackageRow({ orgSlug, item }: { orgSlug: string; item: TeachingS
         <button type="button" className="org-text-button" onClick={() => setOpen((value) => !value)} aria-expanded={open}>
           {open ? t('收起流水', 'Hide ledger') : t('查看流水', 'View ledger')}
         </button>
+        {canManageFinance && item.remainingCredits > 0 && (
+          <button
+            type="button"
+            className="org-text-button"
+            onClick={() => { setRefundOpen((value) => !value); setMessage(''); setMutationError(''); refundOperationKey.reset(); }}
+            aria-expanded={refundOpen}
+          >
+            {refundOpen ? t('取消课时退款', 'Cancel credit refund') : t('登记课时退款', 'Record credit refund')}
+          </button>
+        )}
+        {canManageFinance && item.remainingCredits > 0 && refundOpen && (
+          <form className="org-form" onSubmit={submitRefund} onChange={() => { refundOperationKey.reset(); setMessage(''); }}>
+            <fieldset disabled={refundSubmitting}>
+              <p className="org-help org-field-wide">{t('这里只减少课时或额度；实际退款款项在线下或外部系统处理。', 'This only reduces lesson credits; the actual refund payment is handled offline or in an external system.')}</p>
+              <label>{t('退回课时', 'Refund credits')}<input className="org-form-control" name="credits" type="number" min={1} max={refundCreditLimit} step={1} required /></label>
+              <label className="org-field-wide">{t('退款原因', 'Refund reason')}<input className="org-form-control" name="reason" maxLength={500} required /></label>
+              <label>{t('来源系统', 'Source system')}<input className="org-form-control" name="sourceSystem" maxLength={64} required /></label>
+              <label>{t('来源单号', 'Source reference')}<input className="org-form-control" name="sourceRef" maxLength={160} required /></label>
+              <label className="org-field-wide">{t('来源行号（可选）', 'Source line reference (optional)')}<input className="org-form-control" name="sourceLineRef" maxLength={160} /></label>
+              <div className="org-form-actions"><button className="org-form-button" type="submit">{refundSubmitting ? t('入账中…', 'Recording…') : t('确认登记', 'Confirm entry')}</button></div>
+            </fieldset>
+          </form>
+        )}
         {open && (
           <div className="org-stack">
             {ledger.loading ? <p aria-busy="true">{t('正在加载流水…', 'Loading ledger…')}</p> : ledger.error ? (
@@ -211,11 +340,34 @@ function StudentPackageRow({ orgSlug, item }: { orgSlug: string; item: TeachingS
               <ol className="org-ledger">
                 {ledger.result.items.map((entry) => (
                   <li key={entry.id}>
-                    <strong>{entry.delta > 0 ? `+${entry.delta}` : entry.delta}</strong> {entry.entryType}
-                    <span className="org-row-meta"> {new Date(entry.createdAt).toLocaleString()}{entry.reason ? ` / ${entry.reason}` : ''}</span>
+                    <strong>{entry.delta > 0 ? `+${entry.delta}` : entry.delta}</strong> {creditLedgerEntryLabel(entry.entryType, t)}
+                    <span className="org-row-meta"> {new Date(entry.createdAt).toLocaleString()}{entry.reason ? ` / ${entry.reason}` : ''} / {entry.actorDisplayName}</span>
+                    {entry.reversedByLedgerId ? (
+                      <span className="org-row-meta"> {t('已冲正', 'Reversed')}</span>
+                    ) : canManageFinance && entry.entryType !== 'reversal' ? (
+                      <button
+                        type="button"
+                        className="org-text-button"
+                        onClick={() => { reverseOperationKey.reset(); setReverseTargetId(entry.id); setMessage(''); setMutationError(''); }}
+                        aria-expanded={reverseTargetId === entry.id}
+                      >
+                        {t('冲正此笔', 'Reverse entry')}
+                      </button>
+                    ) : null}
                   </li>
                 ))}
               </ol>
+            )}
+            {canManageFinance && reverseTargetId && (
+              <form className="org-form" onSubmit={submitReversal} onChange={() => { reverseOperationKey.reset(); setMessage(''); }}>
+                <fieldset disabled={reversing}>
+                  <label className="org-field-wide">{t('冲正原因', 'Reversal reason')}<input className="org-form-control" name="reason" maxLength={500} required /></label>
+                  <div className="org-form-actions">
+                    <button className="org-form-button" type="submit">{reversing ? t('入账中…', 'Recording…') : t('确认冲正', 'Confirm reversal')}</button>
+                    <button type="button" className="org-text-button" onClick={() => { setReverseTargetId(null); reverseOperationKey.reset(); }}>{t('取消', 'Cancel')}</button>
+                  </div>
+                </fieldset>
+              </form>
             )}
             {ledger.result && Math.ceil(ledger.result.total / ledger.result.pageSize) > 1 && (
               <div className="org-compact-row">
@@ -224,8 +376,10 @@ function StudentPackageRow({ orgSlug, item }: { orgSlug: string; item: TeachingS
                 <button type="button" className="org-text-button" disabled={page * ledger.result.pageSize >= ledger.result.total} onClick={() => setPage((value) => value + 1)}>{t('下一页', 'Next')}</button>
               </div>
             )}
+            <MutationMessage message={mutationError || message} error={!!mutationError} />
           </div>
         )}
+        {!open && <MutationMessage message={mutationError || message} error={!!mutationError} />}
       </div>
     </div>
   );
