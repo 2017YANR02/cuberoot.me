@@ -35,7 +35,6 @@ import { useTranslation } from 'react-i18next';
 import type * as THREE from 'three';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import SimStage from '@/components/sim-embed/SimStage';
-import { useT } from '@/hooks/useT';
 import { EMPTY_COLOR_HEX, usePainter, type FaceLetter, type PaintColor, type PaintSpec } from './_paint-shared';
 import { PaintPalette, PaintActions } from './_PaintToolbar';
 
@@ -78,7 +77,6 @@ export default function Interactive3DPuzzle({
   puzzle, spec, facelet, onChange, activeColor, onActiveColorChange, paletteFaces, pixelSize,
   onSolve, solveLabel, solveTitle, hideSolve, plainSolve,
 }: Interactive3DPuzzleProps) {
-  const t = useT();
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
 
@@ -197,11 +195,6 @@ export default function Interactive3DPuzzle({
         faces={paletteFaces}
       />
 
-      <p className="vc-p3d-hint">
-        {t('点一下贴纸涂色(右键置灰),拖动整体转体 —— 立体画板不会拧动任何一层。',
-          'Tap a sticker to paint it (right-click to erase); drag to turn the whole puzzle — the 3D painter never twists a layer.')}
-      </p>
-
       <PaintActions
         facelet={facelet}
         spec={spec}
@@ -220,8 +213,4 @@ export default function Interactive3DPuzzle({
 const INLINE_CSS = `
 .vc-p3d { display: flex; flex-direction: column; align-items: center; gap: 0.7rem; width: 100%; }
 .vc-p3d-stage .sim-stage-canvas { cursor: crosshair; }
-.vc-p3d-hint {
-  font-size: 0.8rem; color: var(--muted-foreground); text-align: center;
-  max-width: 26rem; line-height: 1.5;
-}
 `;
