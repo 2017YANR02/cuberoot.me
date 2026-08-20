@@ -57,10 +57,36 @@ describe('teacher livestream scripts', () => {
     expect(source).toContain('?::jsonb');
   });
 
-  it('migration cascades with the parent profile and seeds the complete nine-section script', () => {
+  it('migration cascades with the parent profile and seeds the initial nine-section script', () => {
     const migration = readFileSync(join(SERVER_ROOT, 'migrations', '0160_teacher_live_scripts.sql'), 'utf8');
     expect(migration).toContain('REFERENCES teacher_directory_entries(id) ON DELETE CASCADE');
     expect(migration).toContain("'2017YANR02'");
     expect(migration.match(/\"number\":\"\d{2}\"/g)).toHaveLength(9);
+  });
+
+  it('expands the first script into a Chinese-only transcript-grounded edition', () => {
+    const migration = readFileSync(join(SERVER_ROOT, 'migrations', '0161_expand_first_live_script.sql'), 'utf8');
+    const json = migration.match(/\$script\$([\s\S]+?)\$script\$::jsonb/)?.[1];
+    expect(json).toBeTruthy();
+
+    const content = JSON.parse(json!) as {
+      preparation: Array<{ zh: string; en: string }>;
+      sections: Array<{ title: { zh: string; en: string }; beats: unknown[] }>;
+      notes: Array<{ zh: string; en: string }>;
+    };
+    const serialized = JSON.stringify(content);
+    const beatCount = content.sections.reduce((total, section) => total + section.beats.length, 0);
+
+    expect(content.sections).toHaveLength(15);
+    expect(beatCount).toBeGreaterThanOrEqual(90);
+    expect(serialized).not.toMatch(/"en":"[^"]+"/);
+    expect(serialized).toContain('105 场');
+    expect(serialized).toContain('190,080 种');
+    expect(serialized).toContain('六个三阶多盲');
+    expect(serialized).toContain('C919');
+    expect(serialized).toContain('乔治华盛顿大学');
+    expect(serialized).toContain('Feliks Zemdegs');
+    expect(serialized).toContain('安卓、iOS、Windows 和 macOS');
+    expect(migration).toContain("t.wca_id = '2017YANR02'");
   });
 });

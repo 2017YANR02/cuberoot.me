@@ -568,6 +568,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 158, slug: 'teaching_conversations', desc: { zh: '新增家校沟通会话、连续消息序号、每账号单调已读游标，以及同事务去重的站内提醒。', en: 'Add family communication threads, continuous message sequences, per-account monotonic read cursors, and transactionally deduplicated inbox reminders.' } },
   { n: 159, slug: 'fix_fto_top_layer_setups', desc: { zh: '修正 FTO Top Layer 的阶段 setup，使公式结束于 Last Triangles 起始态，而不是整颗还原。', en: 'Correct FTO Top Layer setups so algorithms finish at the Last Triangles starting state instead of a solved puzzle.' } },
   { n: 160, slug: 'teacher_live_scripts', desc: { zh: '新增老师与培训机构名下的结构化直播话术，并迁移魔方根首次直播完整话术。', en: 'Add structured livestream scripts owned by teacher and school profiles, and migrate the complete first CubeRoot livestream script.' } },
+  { n: 161, slug: 'expand_first_live_script', desc: { zh: '依据原直播字幕扩充魔方根首次直播中文整理稿，恢复个人经历、教学案例、直播幕后与未来规划。', en: 'Expand the first CubeRoot livestream script from its transcript, restoring personal history, teaching stories, behind-the-scenes details, and future plans.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
