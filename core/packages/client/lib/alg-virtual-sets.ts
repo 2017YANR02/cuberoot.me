@@ -13,7 +13,7 @@ import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { LISTED_CASES } from './lsll/model';
 import {
   LSLL_ROUNDS, LSLL_TRAINER_NOTE, lsllCaseKeyString, lsllNextRoundScope, lsllRoundLabel, lsllRoundScope,
-  lsllScopeLabel, lsllSelectHref, loadLsllCases, parseLsllScope, resolveLsllCase,
+  lsllScopeLabel, lsllSelectHref, loadLsllCases, loadLsllCasesByKeys, parseLsllScope, resolveLsllCase,
 } from './lsll/trainer-set';
 
 export interface VirtualAlgSet {
@@ -34,6 +34,8 @@ export interface VirtualAlgSet {
   totalCases: number;
   /** 本场练哪一批。scope 取自 `?scope=`,认不出由各集自己兜底。 */
   loadCases: (scope: string | null) => Promise<AlgCase[]>;
+  /** 进度页按持久化 key 取回少量 case,避免枚举整个虚拟集。 */
+  loadCasesByKeys?: (keys: readonly string[]) => Promise<AlgCase[]>;
   /** 「选 case」按钮的去处(虚拟集没有 select 页)。 */
   selectHref: (scope: string | null) => string;
   /** 范围名,接在顶栏集名后面。 */
@@ -77,6 +79,7 @@ const REGISTRY: VirtualAlgSet[] = [
     note: LSLL_TRAINER_NOTE,
     totalCases: LISTED_CASES,
     loadCases: loadLsllCases,
+    loadCasesByKeys: loadLsllCasesByKeys,
     selectHref: lsllSelectHref,
     scopeLabel: lsllScopeLabel,
     roundLabel: lsllRoundLabel,

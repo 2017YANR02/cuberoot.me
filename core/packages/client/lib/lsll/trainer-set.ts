@@ -12,6 +12,7 @@
  */
 import type { AlgCase, AlgSticker } from '@cuberoot/shared';
 import { compareAlgGroupLabel } from '@/lib/alg_group_order';
+import { caseKey } from '@/lib/trainer-case-key';
 import {
   canonicalKey, categoryBySlug, classify, composeState, decodeKey, displayState, enumerateCategory,
   keyFromString, keyToString, rotateU, unpackState, type LsllState,
@@ -185,6 +186,27 @@ function lsllCase(key: number, letter: string): AlgCase {
   };
 }
 
+/** Rebuild one virtual LSLL case from the key persisted by alg progress. */
+export function lsllCaseFromStoredKey(storedKey: string): AlgCase | null {
+  const split = storedKey.indexOf('|');
+  if (split <= 0) return null;
+
+  const name = storedKey.slice(split + 1);
+  const space = name.lastIndexOf(' ');
+  if (space <= 0) return null;
+
+  const key = keyFromString(name.slice(space + 1));
+  if (key == null) return null;
+  const state = decodeKey(key);
+  if (!state || canonicalKey(state) !== key) return null;
+
+  const category = classify(state).category;
+  if (category.pureLL) return null;
+
+  const c = lsllCase(key, category.letter);
+  return caseKey(c) === storedKey ? c : null;
+}
+
 /** 从 case 名取回 canonical key(`/alg/lsll/case?k=` 与现算打乱都要它)。 */
 export function lsllCaseKeyString(c: AlgCase): string {
   return c.name.slice(c.name.lastIndexOf(' ') + 1);
@@ -257,6 +279,33 @@ export async function resolveLsllCase(c: AlgCase): Promise<{ setup: string; alg?
     SETUP_CACHE.set(key, '');
     return null;
   }
+}
+
+/** Load only persisted LSLL cases instead of enumerating the whole virtual set. */
+export async function loadLsllCasesByKeys(keys: readonly string[]): Promise<AlgCase[]> {
+  const cases = [...new Set(keys)]
+    .map(lsllCaseFromStoredKey)
+    .filter((c): c is AlgCase => c !== null);
+  let cursor = 0;
+
+  const worker = async () => {
+    while (cursor < cases.length) {
+      const c = cases[cursor++];
+      try {
+        const resolved = await resolveLsllCase(c);
+        if (!resolved) continue;
+        c.setup = resolved.setup;
+        if (resolved.alg) c.algs = [[{ alg: resolved.alg }]];
+      } catch {
+        // Keep the recognizable case available even when its formula cannot resolve.
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(4, cases.length) }, () => worker()),
+  );
+  return cases;
 }
 
 export const LSLL_TRAINER_NOTE = {
