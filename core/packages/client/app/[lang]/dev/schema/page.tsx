@@ -95,6 +95,9 @@ const TABLES: Table[] = [
   { name: 'recons', domain: 'recon', origin: 'snapshot', evolved: [5, 29, 32], purpose: { zh: '复盘库:打乱 + 解法 + 视频 + 署名', en: 'Solve reconstructions: scramble + solution + video + credit' }, cols: [
     { name: 'id, official, event, method, date' }, { name: 'comp, comp_wca_id, country, city, round' }, { name: 'person, person_id, co_persons', note: { zh: '合作还原署名', en: 'co-solver credit' } }, { name: 'raw_time' },
   ] },
+  { name: 'recon_videos', domain: 'recon', origin: '0162', purpose: { zh: '会员上传的复盘视频服务器文件元数据', en: 'Server-file metadata for member-uploaded recon videos' }, cols: [
+    { name: 'id, owner_wca_id' }, { name: 'storage_key, mime, size_bytes' }, { name: 'created_at' },
+  ] },
   { name: 'recon_ground_truth_cases', domain: 'recon', origin: '0105', naturalKey: true, purpose: { zh: '管理员逐条核对的复盘回归样本；confirmed 才导出，且保存来源快照以发现后续改动', en: 'Admin-reviewed reconstruction regression cases; only confirmed rows export, with source snapshots for later-change detection' }, cols: [
     { name: 'recon_id (PK)' }, { name: 'status', note: { zh: 'confirmed / discussion / rejected', en: 'confirmed / discussion / rejected' } }, { name: 'replay, truth, truth_mode' }, { name: 'source_event, source_added_by_id, source_scramble, source_solution' }, { name: 'created_by_id, updated_by_id, created_at, updated_at' },
   ] },
@@ -569,6 +572,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 159, slug: 'fix_fto_top_layer_setups', desc: { zh: '修正 FTO Top Layer 的阶段 setup，使公式结束于 Last Triangles 起始态，而不是整颗还原。', en: 'Correct FTO Top Layer setups so algorithms finish at the Last Triangles starting state instead of a solved puzzle.' } },
   { n: 160, slug: 'teacher_live_scripts', desc: { zh: '新增老师与培训机构名下的结构化直播话术，并迁移魔方根首次直播完整话术。', en: 'Add structured livestream scripts owned by teacher and school profiles, and migrate the complete first CubeRoot livestream script.' } },
   { n: 161, slug: 'expand_first_live_script', desc: { zh: '依据原直播字幕扩充魔方根首次直播中文整理稿，恢复个人经历、教学案例、直播幕后与未来规划。', en: 'Expand the first CubeRoot livestream script from its transcript, restoring personal history, teaching stories, behind-the-scenes details, and future plans.' } },
+  { n: 162, slug: 'recon_video_uploads', desc: { zh: '新增会员复盘视频上传元数据，以归属、格式、大小和创建时间约束服务器文件。', en: 'Add member recon-video upload metadata, constraining server files by owner, format, size, and creation time.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

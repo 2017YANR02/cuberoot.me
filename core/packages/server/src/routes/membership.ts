@@ -29,6 +29,7 @@ import QRCode from 'qrcode';
 import { query } from '../db/connection.js';
 import { requireAuth, requireAdmin, checkRateLimit } from '../utils/recon_helpers.js';
 import { signXunhupay, verifyXunhupaySign, type SignParams } from '@cuberoot/shared/payment';
+import { isAdminWcaId } from '@cuberoot/shared/admin';
 import * as alipay from '../payment/alipay.js';
 import * as wechat from '../payment/wechat.js';
 
@@ -237,7 +238,11 @@ membershipRoutes.get('/membership/me', async (c) => {
   c.header('Cache-Control', 'no-store');
   const user = await requireAuth(c);
   const rows = await query<MembershipRow>('SELECT * FROM memberships WHERE wca_id = ?', [user.wcaId]);
-  return c.json({ membership: rows[0] ? membershipToJson(rows[0]) : null });
+  const membership = rows[0] ? membershipToJson(rows[0]) : null;
+  return c.json({
+    membership,
+    isMember: isAdminWcaId(user.wcaId) || !!membership?.active,
+  });
 });
 
 // 设置续费/找回联系方式(仅已有会员可设)。

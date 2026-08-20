@@ -19,6 +19,7 @@ import type { ReconSolve, ReconOfficial } from '@cuberoot/shared';
 import {
   getRecon, addRecon, updateRecon, deleteRecon,
   checkDuplicate, listRecons, resolveShortUrl, fetchMethodCubeHistory,
+  uploadReconVideo, RECON_VIDEO_MAX_BYTES,
 } from '@/lib/recon-api';
 import AppLink from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
@@ -38,6 +39,7 @@ import ScramblePicker from './ScramblePicker';
 import GroupScramblePicker from './GroupScramblePicker';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useMembership } from '@/hooks/useMembership';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -71,7 +73,7 @@ import {
 } from '@cuberoot/shared/recon-completion';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowLeft, ArrowRightLeft, History, Home, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3 } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, History, Home, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3, Upload } from 'lucide-react';
 import { Spinner } from '@/components/Spinner/Spinner';
 import '../recon.css';
 import './recon_submit.css';
@@ -175,8 +177,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   const authUser = useAuthStore(s => s.user);
   const login = useAuthStore(s => s.login);
+  const { isMember } = useMembership();
 
   const [saving, setSaving] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [videoUploadError, setVideoUploadError] = useState('');
+  const videoUploadInputRef = useRef<HTMLInputElement>(null);
   const [loadingEdit, setLoadingEdit] = useState(isEditing || !!fromId);
   const [flagVer, setFlagVer] = useState(flagDataVersion());
 
@@ -303,6 +309,37 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const setField = useCallback(<K extends keyof ReconSolve>(key: K, value: ReconSolve[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
     pruneReused(key as string);
+  }, [pruneReused]);
+
+  const handleVideoUpload = useCallback(async (file: File | undefined) => {
+    if (!file) return;
+    setVideoUploadError('');
+    const supported = ['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type)
+      || /\.(mp4|webm|mov)$/i.test(file.name);
+    if (!supported) {
+      setVideoUploadError(tr({ zh: '仅支持 MP4、WebM 或 MOV 视频。', en: 'Only MP4, WebM, or MOV videos are supported.' }));
+      return;
+    }
+    if (file.size <= 0 || file.size > RECON_VIDEO_MAX_BYTES) {
+      setVideoUploadError(tr({ zh: '视频大小不能超过 200MB。', en: 'The video must not exceed 200MB.' }));
+      return;
+    }
+
+    setVideoUploading(true);
+    try {
+      const uploaded = await uploadReconVideo(file);
+      setForm(prev => {
+        const urls = (prev.videoUrl || '').split('\n').map(line => line.trim()).filter(Boolean);
+        if (!urls.includes(uploaded.url)) urls.push(uploaded.url);
+        return { ...prev, videoUrl: urls.join('\n') };
+      });
+      pruneReused('videoUrl');
+    } catch (error) {
+      setVideoUploadError((error as Error).message);
+    } finally {
+      setVideoUploading(false);
+      if (videoUploadInputRef.current) videoUploadInputRef.current.value = '';
+    }
   }, [pruneReused]);
 
   const activeScrambleValue = scrambleField === 'wca'
@@ -2141,9 +2178,39 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             )}
 
             <div className="submit-row">
-                <label className={`submit-field submit-field-wide${reusedCls('videoUrl')}`}>
-                  <span className="submit-label">{tr({ zh: '视频链接(每一个链接占一行)', en: 'Video URL (one link per line)' })}</span>
+                <div className={`submit-field submit-field-wide${reusedCls('videoUrl')}`}>
+                  <label className="submit-label" htmlFor="recon-video-urls">
+                    {tr({ zh: '视频链接(每一个链接占一行)', en: 'Video URL (one link per line)' })}
+                  </label>
+                  {isMember && (
+                    <div className="submit-video-upload">
+                      <input
+                        ref={videoUploadInputRef}
+                        id="recon-video-upload"
+                        className="submit-video-file"
+                        type="file"
+                        accept="video/mp4,video/webm,video/quicktime,.mov"
+                        onChange={event => void handleVideoUpload(event.target.files?.[0])}
+                        disabled={videoUploading}
+                      />
+                      <button
+                        type="button"
+                        className="submit-reuse-btn"
+                        onClick={() => videoUploadInputRef.current?.click()}
+                        disabled={videoUploading}
+                      >
+                        {videoUploading ? <Spinner size={14} /> : <Upload size={14} />}
+                        {videoUploading
+                          ? tr({ zh: '正在上传', en: 'Uploading' })
+                          : tr({ zh: '上传视频', en: 'Upload video' })}
+                      </button>
+                      <span className="submit-hint">
+                        {tr({ zh: '会员专享，MP4 / WebM / MOV，最大 200MB', en: 'Members only, MP4 / WebM / MOV, up to 200MB' })}
+                      </span>
+                    </div>
+                  )}
                   <textarea
+                    id="recon-video-urls"
                     className="submit-field-textarea"
                     value={form.videoUrl || ''}
                     onChange={e => setField('videoUrl', e.target.value)}
@@ -2169,7 +2236,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     }}
                     rows={2}
                   />
-                </label>
+                  {videoUploadError && <span className="submit-hint submit-hint-warn">{videoUploadError}</span>}
+                </div>
               </div>
 
               <div className="submit-row">
@@ -2261,7 +2329,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
             {/* Submit buttons */}
             <div className="submit-actions">
-              <button className="submit-btn submit-btn-primary" onClick={handleSubmit} disabled={saving}>
+              <button className="submit-btn submit-btn-primary" onClick={handleSubmit} disabled={saving || videoUploading}>
                 {saving
                   ? t('recon.submitting')
                   : isEditing
