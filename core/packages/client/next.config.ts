@@ -231,6 +231,9 @@ const nextConfig: NextConfig = {
         // the client reads the real id from window.location. URL bar is unchanged
         // (rewrite, not redirect). See persons/[wcaId]/page.tsx.
         { source: "/:lang(en|zh)/wca/persons/:wcaId", destination: "/:lang/wca/persons/_" },
+        // Teacher/organization livestream scripts are DB-backed and unbounded.
+        // One static shell reads the real numeric id from window.location.
+        { source: "/:lang(en|zh)/teachers/scripts/:scriptId([0-9]+)", destination: "/:lang/teachers/scripts/_" },
         // Colpi letter-pair detail: same sentinel-shell trick as persons above.
         // Crawlers enumerate the pair space; without this each pair URL burns a
         // function render after every deploy (per-deployment ISR cache reset).

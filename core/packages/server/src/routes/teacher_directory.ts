@@ -80,12 +80,67 @@ interface DirectoryRow {
   updated_at: Date;
 }
 
+type ScriptCueKind = 'action' | 'interaction' | 'transition' | 'optional';
+interface LocalizedText { zh: string; en: string }
+interface ScriptBeat {
+  kind: 'say' | 'cue';
+  cue?: ScriptCueKind;
+  text: LocalizedText;
+}
+interface ScriptSection {
+  id: string;
+  title: LocalizedText;
+  duration: LocalizedText;
+  goal: LocalizedText;
+  beats: ScriptBeat[];
+}
+interface ScriptLink { href: string; label: LocalizedText }
+interface ScriptContent {
+  preparation: LocalizedText[];
+  sections: ScriptSection[];
+  notes: LocalizedText[];
+  referenceLinks: ScriptLink[];
+}
+interface LiveScriptDraft {
+  teacherEntryId: number;
+  titleZh: string;
+  titleEn: string;
+  summaryZh: string;
+  summaryEn: string;
+  durationMinutes: number;
+  content: ScriptContent;
+  isVisible: boolean;
+}
+interface LiveScriptRow {
+  id: number | string;
+  teacher_entry_id: number | string;
+  title_zh: string;
+  title_en: string;
+  summary_zh: string;
+  summary_en: string;
+  duration_minutes: number;
+  content: ScriptContent;
+  is_visible: boolean;
+  owner_key: string;
+  teacher_kind: EntryKind;
+  teacher_name_zh: string;
+  teacher_name_en: string;
+  teacher_is_visible: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
 const COLUMNS = `id, kind, name_zh, name_en, location_zh, location_en,
   description_zh, description_en, specialties_zh, specialties_en, teaching_mode,
   contacts, images, contact, website, wca_id, is_curated, is_visible, owner_key, owner_name, created_at, updated_at`;
 const KINDS: readonly EntryKind[] = ['teacher', 'organization'];
 const MODES: readonly TeachingMode[] = ['online', 'in_person', 'both'];
 const IMAGE_KINDS: readonly ImageKind[] = ['portrait', 'organization', 'teaching', 'other'];
+const SCRIPT_CUE_KINDS: readonly ScriptCueKind[] = ['action', 'interaction', 'transition', 'optional'];
+const SCRIPT_COLUMNS = `s.id, s.teacher_entry_id, s.title_zh, s.title_en, s.summary_zh, s.summary_en,
+  s.duration_minutes, s.content, s.is_visible, s.created_at, s.updated_at,
+  t.owner_key, t.kind AS teacher_kind, t.name_zh AS teacher_name_zh,
+  t.name_en AS teacher_name_en, t.is_visible AS teacher_is_visible`;
 
 function noStore(c: { header: (key: string, value: string) => void }): void {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -218,6 +273,131 @@ function validateDraft(draft: DirectoryDraft): string | null {
   return null;
 }
 
+function cleanLocalizedText(value: unknown, max: number): LocalizedText {
+  const source = value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+  return { zh: cleanText(source.zh, max), en: cleanText(source.en, max) };
+}
+
+function cleanScriptContent(value: unknown): ScriptContent {
+  const source = value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+  const preparation = Array.isArray(source.preparation)
+    ? source.preparation.slice(0, 12).map((item) => cleanLocalizedText(item, 500)).filter((item) => item.zh || item.en)
+    : [];
+  const notes = Array.isArray(source.notes)
+    ? source.notes.slice(0, 12).map((item) => cleanLocalizedText(item, 1000)).filter((item) => item.zh || item.en)
+    : [];
+  const referenceLinks: ScriptLink[] = [];
+  if (Array.isArray(source.referenceLinks)) {
+    for (const item of source.referenceLinks.slice(0, 12)) {
+      if (!item || typeof item !== 'object') continue;
+      const link = item as Record<string, unknown>;
+      const href = cleanText(link.href, 2000);
+      const label = cleanLocalizedText(link.label, 160);
+      if (!href || (!href.startsWith('/') && !isHttpUrl(href)) || (!label.zh && !label.en)) continue;
+      referenceLinks.push({ href, label });
+    }
+  }
+  const sections: ScriptSection[] = [];
+  const sectionIds = new Set<string>();
+  if (Array.isArray(source.sections)) {
+    for (const [sectionIndex, item] of source.sections.slice(0, 30).entries()) {
+      if (!item || typeof item !== 'object') continue;
+      const section = item as Record<string, unknown>;
+      const beats: ScriptBeat[] = [];
+      if (Array.isArray(section.beats)) {
+        for (const beatItem of section.beats.slice(0, 50)) {
+          if (!beatItem || typeof beatItem !== 'object') continue;
+          const beat = beatItem as Record<string, unknown>;
+          const text = cleanLocalizedText(beat.text, 5000);
+          if (!text.zh && !text.en) continue;
+          if (beat.kind === 'cue') {
+            beats.push({
+              kind: 'cue',
+              cue: SCRIPT_CUE_KINDS.includes(beat.cue as ScriptCueKind) ? beat.cue as ScriptCueKind : 'action',
+              text,
+            });
+          } else {
+            beats.push({ kind: 'say', text });
+          }
+        }
+      }
+      const title = cleanLocalizedText(section.title, 200);
+      if ((!title.zh && !title.en) || beats.length === 0) continue;
+      const rawId = cleanText(section.id, 80).toLocaleLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+      const baseId = rawId || `section-${sectionIndex + 1}`;
+      let id = baseId;
+      let suffix = 2;
+      while (sectionIds.has(id)) id = `${baseId}-${suffix++}`;
+      sectionIds.add(id);
+      sections.push({
+        id,
+        title,
+        duration: cleanLocalizedText(section.duration, 80),
+        goal: cleanLocalizedText(section.goal, 500),
+        beats,
+      });
+    }
+  }
+  return { preparation, sections, notes, referenceLinks };
+}
+
+function readLiveScriptDraft(body: Partial<LiveScriptDraft>, defaults?: { isVisible: boolean }): LiveScriptDraft {
+  const content = cleanScriptContent(body.content);
+  return {
+    teacherEntryId: Number(body.teacherEntryId),
+    titleZh: cleanText(body.titleZh, 200),
+    titleEn: cleanText(body.titleEn, 200),
+    summaryZh: cleanText(body.summaryZh, 1000),
+    summaryEn: cleanText(body.summaryEn, 1000),
+    durationMinutes: Number(body.durationMinutes),
+    content,
+    isVisible: typeof body.isVisible === 'boolean' ? body.isVisible : defaults?.isVisible ?? true,
+  };
+}
+
+function validateLiveScriptDraft(draft: LiveScriptDraft): string | null {
+  if (!Number.isSafeInteger(draft.teacherEntryId) || draft.teacherEntryId <= 0) return 'teacher_required';
+  if (!draft.titleZh && !draft.titleEn) return 'title_required';
+  if (!Number.isInteger(draft.durationMinutes) || draft.durationMinutes < 1 || draft.durationMinutes > 240) return 'duration_invalid';
+  if (draft.content.sections.length === 0) return 'section_required';
+  if (JSON.stringify(draft.content).length > 200_000) return 'content_too_large';
+  return null;
+}
+
+function liveScriptToJson(row: LiveScriptRow, withOwner = false) {
+  return {
+    id: Number(row.id),
+    teacherEntryId: Number(row.teacher_entry_id),
+    titleZh: row.title_zh,
+    titleEn: row.title_en,
+    summaryZh: row.summary_zh,
+    summaryEn: row.summary_en,
+    durationMinutes: row.duration_minutes,
+    content: cleanScriptContent(row.content),
+    isVisible: row.is_visible,
+    teacher: {
+      id: Number(row.teacher_entry_id),
+      kind: row.teacher_kind,
+      nameZh: row.teacher_name_zh,
+      nameEn: row.teacher_name_en,
+      isVisible: row.teacher_is_visible,
+    },
+    ...(withOwner ? { ownerKey: row.owner_key } : {}),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+async function requireOwnedTeacherEntry(id: number, user: WcaUser, admin: boolean): Promise<DirectoryRow | null> {
+  const rows = await query<DirectoryRow>(`SELECT ${COLUMNS} FROM teacher_directory_entries WHERE id = ?`, [id]);
+  if (rows.length === 0 || (!admin && rows[0].owner_key !== user.wcaId)) return null;
+  return rows[0];
+}
+
 function toJson(row: DirectoryRow, withOwner = false) {
   return {
     id: Number(row.id),
@@ -272,6 +452,153 @@ teacherDirectoryRoutes.get('/teachers/mine', async (c) => {
     [user.wcaId],
   );
   return c.json({ entries: rows.map((row) => toJson(row, true)) });
+});
+
+teacherDirectoryRoutes.get('/teachers/scripts', async (c) => {
+  const rows = await query<LiveScriptRow>(
+    `SELECT ${SCRIPT_COLUMNS}
+     FROM teacher_live_scripts s
+     JOIN teacher_directory_entries t ON t.id = s.teacher_entry_id
+     WHERE s.is_visible = TRUE AND t.is_visible = TRUE
+     ORDER BY s.updated_at DESC, s.id DESC`,
+  );
+  if (rows.length === 0) noStore(c);
+  else c.header('Cache-Control', 'public, max-age=60, s-maxage=300');
+  return c.json({ scripts: rows.map((row) => liveScriptToJson(row)) });
+});
+
+teacherDirectoryRoutes.get('/teachers/scripts/mine', async (c) => {
+  noStore(c);
+  const user = await requireAuth(c);
+  const rows = await query<LiveScriptRow>(
+    `SELECT ${SCRIPT_COLUMNS}
+     FROM teacher_live_scripts s
+     JOIN teacher_directory_entries t ON t.id = s.teacher_entry_id
+     WHERE t.owner_key = ?
+     ORDER BY s.updated_at DESC, s.id DESC`,
+    [user.wcaId],
+  );
+  return c.json({ scripts: rows.map((row) => liveScriptToJson(row, true)) });
+});
+
+teacherDirectoryRoutes.get('/teachers/scripts/owned/:id', async (c) => {
+  noStore(c);
+  const { user, admin } = await requireDirectoryEditor(c);
+  const id = Number(c.req.param('id'));
+  if (!Number.isSafeInteger(id) || id <= 0) return c.json({ error: 'Invalid script id' }, 400);
+  const rows = await query<LiveScriptRow>(
+    `SELECT ${SCRIPT_COLUMNS}
+     FROM teacher_live_scripts s
+     JOIN teacher_directory_entries t ON t.id = s.teacher_entry_id
+     WHERE s.id = ?`,
+    [id],
+  );
+  if (rows.length === 0) return c.json({ error: 'Live script not found' }, 404);
+  if (!admin && rows[0].owner_key !== user.wcaId) return c.json({ error: 'Cannot view this live script' }, 403);
+  return c.json({ script: liveScriptToJson(rows[0], true) });
+});
+
+teacherDirectoryRoutes.get('/teachers/scripts/:id', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (!Number.isSafeInteger(id) || id <= 0) return c.json({ error: 'Invalid script id' }, 400);
+  const rows = await query<LiveScriptRow>(
+    `SELECT ${SCRIPT_COLUMNS}
+     FROM teacher_live_scripts s
+     JOIN teacher_directory_entries t ON t.id = s.teacher_entry_id
+     WHERE s.id = ? AND s.is_visible = TRUE AND t.is_visible = TRUE`,
+    [id],
+  );
+  if (rows.length === 0) {
+    noStore(c);
+    return c.json({ error: 'Live script not found' }, 404);
+  }
+  c.header('Cache-Control', 'public, max-age=60, s-maxage=300');
+  return c.json({ script: liveScriptToJson(rows[0]) });
+});
+
+teacherDirectoryRoutes.post('/teachers/scripts', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c));
+  const { user, admin } = await requireDirectoryEditor(c);
+  const draft = readLiveScriptDraft(await c.req.json<Partial<LiveScriptDraft>>());
+  const error = validateLiveScriptDraft(draft);
+  if (error) return c.json({ error: 'Invalid live script', code: error }, 400);
+  const teacher = await requireOwnedTeacherEntry(draft.teacherEntryId, user, admin);
+  if (!teacher) return c.json({ error: 'Cannot create a script for this directory entry' }, 403);
+  const rows = await query<LiveScriptRow>(
+    `WITH inserted AS (
+       INSERT INTO teacher_live_scripts
+         (teacher_entry_id, title_zh, title_en, summary_zh, summary_en, duration_minutes, content, is_visible)
+       VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?)
+       RETURNING *
+     )
+     SELECT i.id, i.teacher_entry_id, i.title_zh, i.title_en, i.summary_zh, i.summary_en,
+       i.duration_minutes, i.content, i.is_visible, i.created_at, i.updated_at,
+       t.owner_key, t.kind AS teacher_kind, t.name_zh AS teacher_name_zh,
+       t.name_en AS teacher_name_en, t.is_visible AS teacher_is_visible
+     FROM inserted i JOIN teacher_directory_entries t ON t.id = i.teacher_entry_id`,
+    [
+      draft.teacherEntryId, draft.titleZh, draft.titleEn, draft.summaryZh, draft.summaryEn,
+      draft.durationMinutes, draft.content, draft.isVisible,
+    ],
+  );
+  return c.json({ script: liveScriptToJson(rows[0], true) }, 201);
+});
+
+teacherDirectoryRoutes.put('/teachers/scripts/:id', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c));
+  const { user, admin } = await requireDirectoryEditor(c);
+  const id = Number(c.req.param('id'));
+  if (!Number.isSafeInteger(id) || id <= 0) return c.json({ error: 'Invalid script id' }, 400);
+  const existing = await query<LiveScriptRow>(
+    `SELECT ${SCRIPT_COLUMNS}
+     FROM teacher_live_scripts s JOIN teacher_directory_entries t ON t.id = s.teacher_entry_id
+     WHERE s.id = ?`,
+    [id],
+  );
+  if (existing.length === 0) return c.json({ error: 'Live script not found' }, 404);
+  if (!admin && existing[0].owner_key !== user.wcaId) return c.json({ error: 'Cannot edit this live script' }, 403);
+  const draft = readLiveScriptDraft(await c.req.json<Partial<LiveScriptDraft>>(), { isVisible: existing[0].is_visible });
+  const error = validateLiveScriptDraft(draft);
+  if (error) return c.json({ error: 'Invalid live script', code: error }, 400);
+  const teacher = await requireOwnedTeacherEntry(draft.teacherEntryId, user, admin);
+  if (!teacher) return c.json({ error: 'Cannot move this script to that directory entry' }, 403);
+  const rows = await query<LiveScriptRow>(
+    `WITH updated AS (
+       UPDATE teacher_live_scripts SET
+         teacher_entry_id = ?, title_zh = ?, title_en = ?, summary_zh = ?, summary_en = ?,
+         duration_minutes = ?, content = ?::jsonb, is_visible = ?
+       WHERE id = ? RETURNING *
+     )
+     SELECT u.id, u.teacher_entry_id, u.title_zh, u.title_en, u.summary_zh, u.summary_en,
+       u.duration_minutes, u.content, u.is_visible, u.created_at, u.updated_at,
+       t.owner_key, t.kind AS teacher_kind, t.name_zh AS teacher_name_zh,
+       t.name_en AS teacher_name_en, t.is_visible AS teacher_is_visible
+     FROM updated u JOIN teacher_directory_entries t ON t.id = u.teacher_entry_id`,
+    [
+      draft.teacherEntryId, draft.titleZh, draft.titleEn, draft.summaryZh, draft.summaryEn,
+      draft.durationMinutes, draft.content, draft.isVisible, id,
+    ],
+  );
+  return c.json({ script: liveScriptToJson(rows[0], true) });
+});
+
+teacherDirectoryRoutes.delete('/teachers/scripts/:id', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c));
+  const { user, admin } = await requireDirectoryEditor(c);
+  const id = Number(c.req.param('id'));
+  if (!Number.isSafeInteger(id) || id <= 0) return c.json({ error: 'Invalid script id' }, 400);
+  const rows = await query<{ owner_key: string }>(
+    `SELECT t.owner_key FROM teacher_live_scripts s
+     JOIN teacher_directory_entries t ON t.id = s.teacher_entry_id WHERE s.id = ?`,
+    [id],
+  );
+  if (rows.length === 0) return c.json({ error: 'Live script not found' }, 404);
+  if (!admin && rows[0].owner_key !== user.wcaId) return c.json({ error: 'Cannot delete this live script' }, 403);
+  await query('DELETE FROM teacher_live_scripts WHERE id = ?', [id]);
+  return c.json({ ok: true });
 });
 
 teacherDirectoryRoutes.post('/teachers', async (c) => {

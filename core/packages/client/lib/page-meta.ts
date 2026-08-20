@@ -571,13 +571,15 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Cubing tutorials — from a first solve through CFOP and Roux, organised by topic, with diagrams and animations.',
     },
   },
-  'live-script': {
-    title: { zh: '直播话术', en: 'Livestream Script' },
+  'teachers/scripts': {
+    title: { zh: '直播话术库', en: 'Livestream Script Library' },
     description: {
-      zh: '魔方根直播提词稿：从开场、自我介绍和魔方数学，到学习价值、课程说明、问答与收尾。',
-      en: 'A structured CubeRoot livestream script covering the opening, introduction, cube mathematics, learning value, courses, Q&A, and closing.',
+      zh: '浏览魔方老师与培训机构公开的结构化直播话术，也可登录创建并维护自己的提词稿。',
+      en: 'Browse structured livestream scripts shared by cube teachers and schools, or sign in to create and maintain your own.',
     },
   },
+  'teachers/scripts/manage': { title: { zh: '管理直播话术', en: 'Manage Livestream Scripts' } },
+  'teachers/scripts/edit': { title: { zh: '编辑直播话术', en: 'Edit Livestream Script' } },
   'wb': { title: { zh: '非官方纪录', en: 'World Bests' } },
   'wca': {
     title: { zh: 'WCA 统计', en: 'WCA Statistics' },

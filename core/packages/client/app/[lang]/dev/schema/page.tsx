@@ -371,6 +371,12 @@ const TABLES: Table[] = [
     { name: 'is_curated, is_visible', note: { zh: '管理员认证与作者控制的公开状态', en: 'admin curation and owner-controlled public visibility' } },
     { name: 'owner_key, owner_name', note: { zh: '作者身份与显示名;公开列表不返回 owner_key', en: 'author identity and display name; the public list omits owner_key' } },
   ] },
+  { name: 'teacher_live_scripts', domain: 'community', origin: '0160', purpose: { zh: '老师与培训机构名下的结构化直播话术;公开读取同时受话术和资料可见性控制', en: 'Structured livestream scripts owned by teacher and school profiles; public reads require both the script and profile to be visible' }, cols: [
+    { name: 'teacher_entry_id', note: { zh: '关联 teacher_directory_entries,删除资料时级联删除', en: 'References teacher_directory_entries and cascades when the profile is deleted' } },
+    { name: 'title_zh / title_en, summary_zh / summary_en, duration_minutes' },
+    { name: 'content JSONB', note: { zh: '准备清单、分段话术、提示、备注与参考链接', en: 'Preparation, sections, cues, notes, and reference links' } },
+    { name: 'is_visible, created_at, updated_at' },
+  ] },
   { name: 'teaching_advanced_lessons', domain: 'community', origin: '0127', purpose: { zh: '/courses 的 CFOP 后续课程池;管理员维护三阶和二阶路线的双语内容', en: 'Post-CFOP lesson pool for /courses; administrators maintain bilingual 3×3 and 2×2 tracks' }, cols: [
     { name: 'track, position', note: { zh: 'track 为 333 / 222,position 控制路线内顺序', en: 'track is 333 / 222; position controls order within a track' } },
     { name: 'title_zh / title_en', note: { zh: '两种语言标题均必填', en: 'both language titles are required' } },
@@ -561,6 +567,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 157, slug: 'fix_fto_pair_formation_setups', desc: { zh: '修正 FTO Pair Formation 的阶段 setup，使公式结束于所有三元组已配对的 Top Layer 起始态，而不是整颗还原。', en: 'Correct FTO Pair Formation setups so algorithms finish at the all-triples-paired Top Layer starting state instead of a solved puzzle.' } },
   { n: 158, slug: 'teaching_conversations', desc: { zh: '新增家校沟通会话、连续消息序号、每账号单调已读游标，以及同事务去重的站内提醒。', en: 'Add family communication threads, continuous message sequences, per-account monotonic read cursors, and transactionally deduplicated inbox reminders.' } },
   { n: 159, slug: 'fix_fto_top_layer_setups', desc: { zh: '修正 FTO Top Layer 的阶段 setup，使公式结束于 Last Triangles 起始态，而不是整颗还原。', en: 'Correct FTO Top Layer setups so algorithms finish at the Last Triangles starting state instead of a solved puzzle.' } },
+  { n: 160, slug: 'teacher_live_scripts', desc: { zh: '新增老师与培训机构名下的结构化直播话术，并迁移魔方根首次直播完整话术。', en: 'Add structured livestream scripts owned by teacher and school profiles, and migrate the complete first CubeRoot livestream script.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
