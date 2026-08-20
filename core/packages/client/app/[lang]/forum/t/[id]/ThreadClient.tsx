@@ -21,7 +21,7 @@ import { ForumBreadcrumbs } from '../../_components/ForumBreadcrumbs';
 import { PostCard } from '../../_components/PostCard';
 import { ForumComposer, type ForumComposerHandle } from '../../_components/ForumComposer';
 import { ForumMarkdownEditor } from '../../_components/ForumMarkdownEditor';
-import { formatCount } from '../../_lib/forum-format';
+import { formatCount } from '@/lib/forum-format';
 import '../../forum.css';
 import './forum_thread.css';
 import '@/components/hash-highlight.css';

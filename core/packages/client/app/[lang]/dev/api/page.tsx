@@ -398,6 +398,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'forum', m: 'GET', p: '/v1/forum/f/:slug', g: 'public', zh: '子版主题列表(置顶单列,分页)', en: 'Board thread list (pinned split, paged)' },
   { d: 'forum', m: 'GET', p: '/v1/forum/t/:id', g: 'public', zh: '主题帖子分页(登录附本人反应)', en: 'Thread posts (my reactions when signed in)' },
   { d: 'forum', m: 'GET', p: '/v1/forum/latest', g: 'public', zh: '全版最新活跃主题', en: 'Latest active threads' },
+  { d: 'forum', m: 'GET', p: '/v1/forum/feed', g: 'public', zh: '社区动态流(活跃 / 最新排序,首帖摘录)', en: 'Community feed (active / latest order, first-post excerpts)' },
   { d: 'forum', m: 'GET', p: '/v1/forum/search', g: 'public', zh: '搜标题 + 正文,带摘录', en: 'Search titles + bodies with snippet' },
   { d: 'forum', m: 'POST', p: '/v1/forum/threads', g: 'login', zh: '发主题(公告版仅管理员)', en: 'Create thread (announcements admin-only)' },
   { d: 'forum', m: 'POST', p: '/v1/forum/posts', g: 'login', zh: '回帖(锁帖仅管理员)', en: 'Reply (locked threads admin-only)' },

@@ -107,6 +107,7 @@
       "node": "./dist/quiz.js",
       "default": "./src/quiz.ts"
     },
+    "./forum": "./src/forum.ts",
     "./cube-unfolded-svg": {
       "node": "./dist/cube_unfolded_svg.js",
       "default": "./src/cube_unfolded_svg.ts"

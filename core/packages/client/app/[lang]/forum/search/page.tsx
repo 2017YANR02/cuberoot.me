@@ -10,7 +10,7 @@ import { tr, T, useLang } from '@/i18n/tr';
 import { searchForum, type SearchData } from '@/lib/forum-api';
 import { ForumBreadcrumbs } from '../_components/ForumBreadcrumbs';
 import { ThreadRowList } from '../_components/ThreadRowList';
-import { formatCount } from '../_lib/forum-format';
+import { formatCount } from '@/lib/forum-format';
 import '../forum.css';
 import './forum_search.css';
 

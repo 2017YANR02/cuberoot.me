@@ -14,7 +14,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useIsAdmin } from '@/lib/auth-store';
 import { fetchForumList, type ForumListData } from '@/lib/forum-api';
 import { forumIcon } from '../../_lib/forum-icons';
-import { formatCount } from '../../_lib/forum-format';
+import { formatCount } from '@/lib/forum-format';
 import { ForumBreadcrumbs } from '../../_components/ForumBreadcrumbs';
 import { ThreadRowList } from '../../_components/ThreadRowList';
 import '../../forum.css';

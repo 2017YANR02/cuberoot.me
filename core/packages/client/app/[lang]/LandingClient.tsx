@@ -20,6 +20,7 @@ const HOME_WIDGET_HEIGHT = {
   recentScrambles: 320,
   todayRecon: 360,
   ongoingComps: 240,
+  communityFeed: 460,
 } as const;
 
 const OngoingComps = dynamic(() => import('@/components/OngoingComps'), {
@@ -30,6 +31,9 @@ const RecentScrambles = dynamic(() => import('@/components/RecentScrambles'), {
 });
 const TodayRecon = dynamic(() => import('@/components/TodayRecon'), {
   loading: () => <div style={{ minHeight: HOME_WIDGET_HEIGHT.todayRecon }} aria-hidden="true" />,
+});
+const ForumFeedPreview = dynamic(() => import('@/components/forum/ForumFeedPreview'), {
+  loading: () => <div style={{ minHeight: HOME_WIDGET_HEIGHT.communityFeed }} aria-hidden="true" />,
 });
 import { useEffectiveTheme } from '@/lib/theme';
 import '../landing.css';
@@ -149,6 +153,10 @@ export default function LandingPage() {
 
       <LazyVisible minHeight={HOME_WIDGET_HEIGHT.ongoingComps} rootMargin="120px 0px" unwrapWhenVisible>
         <OngoingComps lang={lang} />
+      </LazyVisible>
+
+      <LazyVisible minHeight={HOME_WIDGET_HEIGHT.communityFeed} rootMargin="120px 0px" unwrapWhenVisible>
+        <ForumFeedPreview />
       </LazyVisible>
 
       <div className="cards-sections">
