@@ -47,7 +47,7 @@
   margin-top: 20px;
 }
 
-.wechat-pc-share-actions button {
+.wechat-pc-share-action {
   display: flex;
   min-width: 0;
   min-height: 88px;
@@ -64,11 +64,11 @@
   font: inherit;
 }
 
-.wechat-pc-share-actions button:hover:not(:disabled) {
+.wechat-pc-share-action:hover:not(:disabled) {
   background: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
-.wechat-pc-share-actions button:disabled {
+.wechat-pc-share-action:disabled {
   cursor: wait;
   opacity: 0.68;
 }
@@ -105,7 +105,7 @@
 @media (max-width: 480px) {
   .wechat-pc-share-modal { padding: 20px 16px; }
   .wechat-pc-share-actions { grid-template-columns: 1fr; }
-  .wechat-pc-share-actions button { min-height: 64px; }
+  .wechat-pc-share-action { min-height: 64px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
