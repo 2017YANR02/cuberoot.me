@@ -42,6 +42,7 @@ import {
   type TeachingFeedbackVisibility,
   type TeachingGroup,
   type TeachingMemberStatus,
+  type TeachingOperationsOverview,
   type TeachingOrganizationRole,
   type TeachingOrganizationStatus,
   type TeachingPackageAcquisitionType,
@@ -277,6 +278,19 @@ function record(value: unknown, label: string): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+function exactRecord(value: unknown, keys: readonly string[], label: string): Record<string, unknown> {
+  const parsed = record(value, label);
+  const actualKeys = Object.keys(parsed).sort();
+  const expectedKeys = [...keys].sort();
+  if (
+    actualKeys.length !== expectedKeys.length
+    || actualKeys.some((key, index) => key !== expectedKeys[index])
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, `${label} response is invalid`);
+  }
+  return parsed;
+}
+
 function string(value: unknown, label: string): string {
   if (typeof value !== 'string') {
     throw new TeachingApiError('INVALID_RESPONSE', 502, `${label} is invalid`);
@@ -304,6 +318,19 @@ function number(value: unknown, label: string): number {
 function integer(value: unknown, label: string, minimum = 0): number {
   const parsed = number(value, label);
   if (!Number.isSafeInteger(parsed) || parsed < minimum) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, `${label} is invalid`);
+  }
+  return parsed;
+}
+
+function isoDate(value: unknown, label: string): string {
+  const parsed = string(value, label);
+  const date = new Date(`${parsed}T00:00:00.000Z`);
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(parsed)
+    || Number.isNaN(date.valueOf())
+    || date.toISOString().slice(0, 10) !== parsed
+  ) {
     throw new TeachingApiError('INVALID_RESPONSE', 502, `${label} is invalid`);
   }
   return parsed;
@@ -344,6 +371,149 @@ function organization(value: unknown): TeachingOrganizationAccess {
     status: enumValue(item.status, TEACHING_ORGANIZATION_STATUSES, 'organization.status'),
     version: integer(item.version, 'organization.version'),
     role: enumValue(item.role, TEACHING_ORGANIZATION_ROLES, 'organization.role'),
+  };
+}
+
+function operationsOverview(value: unknown): TeachingOperationsOverview {
+  const item = exactRecord(
+    value,
+    ['range', 'sessions', 'attendance', 'creditConsumption', 'packages', 'training', 'teacherLoad'],
+    'operationsOverview',
+  );
+  const range = exactRecord(item.range, ['fromDate', 'throughDate', 'timezone', 'days'], 'operationsOverview.range');
+  const fromDate = isoDate(range.fromDate, 'operationsOverview.range.fromDate');
+  const throughDate = isoDate(range.throughDate, 'operationsOverview.range.throughDate');
+  const timezone = string(range.timezone, 'operationsOverview.range.timezone').trim();
+  const days = integer(range.days, 'operationsOverview.range.days', 1);
+  if (!timezone || days !== 30 || fromDate > throughDate) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'operationsOverview.range response is invalid');
+  }
+
+  const sessions = exactRecord(
+    item.sessions,
+    ['scheduled', 'inProgress', 'completed', 'cancelled', 'total'],
+    'operationsOverview.sessions',
+  );
+  const parsedSessions = {
+    scheduled: integer(sessions.scheduled, 'operationsOverview.sessions.scheduled'),
+    inProgress: integer(sessions.inProgress, 'operationsOverview.sessions.inProgress'),
+    completed: integer(sessions.completed, 'operationsOverview.sessions.completed'),
+    cancelled: integer(sessions.cancelled, 'operationsOverview.sessions.cancelled'),
+    total: integer(sessions.total, 'operationsOverview.sessions.total'),
+  };
+  if (
+    parsedSessions.total
+    !== parsedSessions.scheduled + parsedSessions.inProgress + parsedSessions.completed + parsedSessions.cancelled
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'operationsOverview.sessions response is invalid');
+  }
+
+  const attendance = exactRecord(
+    item.attendance,
+    ['expected', 'present', 'late', 'absent', 'excused', 'total'],
+    'operationsOverview.attendance',
+  );
+  const parsedAttendance = {
+    expected: integer(attendance.expected, 'operationsOverview.attendance.expected'),
+    present: integer(attendance.present, 'operationsOverview.attendance.present'),
+    late: integer(attendance.late, 'operationsOverview.attendance.late'),
+    absent: integer(attendance.absent, 'operationsOverview.attendance.absent'),
+    excused: integer(attendance.excused, 'operationsOverview.attendance.excused'),
+    total: integer(attendance.total, 'operationsOverview.attendance.total'),
+  };
+  if (
+    parsedAttendance.total
+    !== parsedAttendance.expected
+      + parsedAttendance.present
+      + parsedAttendance.late
+      + parsedAttendance.absent
+      + parsedAttendance.excused
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'operationsOverview.attendance response is invalid');
+  }
+
+  if (!Array.isArray(item.creditConsumption)) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'operationsOverview.creditConsumption response is invalid');
+  }
+  const creditConsumption = item.creditConsumption.map((value, index) => {
+    const credit = exactRecord(
+      value,
+      ['creditUnit', 'creditType', 'amount'],
+      `operationsOverview.creditConsumption[${index}]`,
+    );
+    const creditType = string(credit.creditType, `operationsOverview.creditConsumption[${index}].creditType`).trim();
+    const amount = string(credit.amount, `operationsOverview.creditConsumption[${index}].amount`);
+    if (!creditType || !/^(0|[1-9]\d*)$/.test(amount)) {
+      throw new TeachingApiError('INVALID_RESPONSE', 502, `operationsOverview.creditConsumption[${index}] response is invalid`);
+    }
+    return {
+      creditUnit: enumValue(
+        credit.creditUnit,
+        TEACHING_CREDIT_UNITS,
+        `operationsOverview.creditConsumption[${index}].creditUnit`,
+      ),
+      creditType,
+      amount,
+    };
+  });
+
+  const packages = exactRecord(
+    item.packages,
+    ['active', 'lowBalance', 'expiringSoon'],
+    'operationsOverview.packages',
+  );
+  const parsedPackages = {
+    active: integer(packages.active, 'operationsOverview.packages.active'),
+    lowBalance: integer(packages.lowBalance, 'operationsOverview.packages.lowBalance'),
+    expiringSoon: integer(packages.expiringSoon, 'operationsOverview.packages.expiringSoon'),
+  };
+  if (parsedPackages.lowBalance > parsedPackages.active || parsedPackages.expiringSoon > parsedPackages.active) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'operationsOverview.packages response is invalid');
+  }
+
+  const training = exactRecord(
+    item.training,
+    ['assignments', 'studentTargets', 'targetsWithEvidence'],
+    'operationsOverview.training',
+  );
+  const parsedTraining = {
+    assignments: integer(training.assignments, 'operationsOverview.training.assignments'),
+    studentTargets: integer(training.studentTargets, 'operationsOverview.training.studentTargets'),
+    targetsWithEvidence: integer(training.targetsWithEvidence, 'operationsOverview.training.targetsWithEvidence'),
+  };
+  if (parsedTraining.targetsWithEvidence > parsedTraining.studentTargets) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'operationsOverview.training response is invalid');
+  }
+
+  if (!Array.isArray(item.teacherLoad) || item.teacherLoad.length > 10) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'operationsOverview.teacherLoad response is invalid');
+  }
+  const teacherLoad = item.teacherLoad.map((value, index) => {
+    const teacher = exactRecord(
+      value,
+      ['displayName', 'sessionCount', 'completedSessionCount'],
+      `operationsOverview.teacherLoad[${index}]`,
+    );
+    const displayName = string(teacher.displayName, `operationsOverview.teacherLoad[${index}].displayName`).trim();
+    const sessionCount = integer(teacher.sessionCount, `operationsOverview.teacherLoad[${index}].sessionCount`);
+    const completedSessionCount = integer(
+      teacher.completedSessionCount,
+      `operationsOverview.teacherLoad[${index}].completedSessionCount`,
+    );
+    if (!displayName || completedSessionCount > sessionCount) {
+      throw new TeachingApiError('INVALID_RESPONSE', 502, `operationsOverview.teacherLoad[${index}] response is invalid`);
+    }
+    return { displayName, sessionCount, completedSessionCount };
+  });
+
+  return {
+    range: { fromDate, throughDate, timezone, days },
+    sessions: parsedSessions,
+    attendance: parsedAttendance,
+    creditConsumption,
+    packages: parsedPackages,
+    training: parsedTraining,
+    teacherLoad,
   };
 }
 
@@ -1200,6 +1370,15 @@ export async function getTeachingOrganizationSummary(orgSlug: string): Promise<T
     memberCount: nullableNumber(summary.memberCount, 'summary.memberCount'),
     studentCount: nullableNumber(summary.studentCount, 'summary.studentCount'),
   };
+}
+
+export async function getTeachingOperationsOverview(orgSlug: string): Promise<TeachingOperationsOverview> {
+  const envelope = exactRecord(
+    await request(orgPath(orgSlug, '/operations/overview')),
+    ['operationsOverview'],
+    'operations overview envelope',
+  );
+  return operationsOverview(envelope.operationsOverview);
 }
 
 export async function listTeachingStudents(orgSlug: string, pageNumber = 1, pageSize = 25): Promise<TeachingPage<TeachingStudent>> {
