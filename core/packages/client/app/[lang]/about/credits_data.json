@@ -310,5 +310,12 @@
     "zh": "/predict 预判训练的玩法原型(模式设定与 F2L 公式池)",
     "en": "Gameplay original behind /predict (modes + F2L alg pool)",
     "long_en": "lookahead challenge concept, game modes, F2L insertion pool"
+  },
+  {
+    "name": "Your Next PR — Competition Simulator",
+    "url": "https://yournextpr.shop/comp-sim/",
+    "zh": "/comp-sim 比赛现场模拟的产品流程、交互与训练理念来源；经作者授权复刻，CubeRoot 复用本站 WCA 数据、轮次与计时基础设施重新实现",
+    "en": "Product flow, interactions and training concept behind /comp-sim; reproduced with the author's permission and reimplemented on CubeRoot's WCA, round and timer infrastructure",
+    "long_en": "Your Next PR's Competition Simulator established the one-chance competition rehearsal: authentic WCA competitions, opponents and scrambles; randomized call-ups; inspection cues; manual result entry; official-style standings and progression. CubeRoot's implementation is a clean integration with its existing WCA data, round engine, identity, event, result-formatting and responsive UI components. Media remains an explicit local manifest until licensed audio and video files are supplied."
   }
 ]

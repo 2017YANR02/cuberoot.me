@@ -9,6 +9,21 @@ export const ROUND_ORDER: Record<string, number> = {
   'h': 6, '0': 7,
 };
 
+// Full competition order. Unlike roundBucket(), this deliberately keeps
+// qualification, B Final and Final positions distinct for one-to-one WCIF pairing.
+const ROUND_CHRONOLOGICAL_ORDER: Readonly<Record<string, number>> = {
+  '0': 0, 'h': 1,
+  '1': 2, 'd': 3,
+  '2': 4, 'e': 5,
+  '3': 6, 'g': 7,
+  'b': 8,
+  'c': 9, 'f': 10,
+};
+
+export function roundChronologicalOrder(roundTypeId: string): number {
+  return ROUND_CHRONOLOGICAL_ORDER[roundTypeId] ?? Number.MAX_SAFE_INTEGER;
+}
+
 // 所有 WCA round_type_id 折叠到 4 档(组合赛制 C- / B-Final 一并并入对应基础轮次)。
 export type RoundBucket = 'first' | 'second' | 'third' | 'final';
 export function roundBucket(rt: string): RoundBucket {

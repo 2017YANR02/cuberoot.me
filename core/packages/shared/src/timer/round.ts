@@ -60,7 +60,7 @@ import { effectiveMs } from './types';
 /* Config                                                              */
 /* ------------------------------------------------------------------ */
 
-export type RoundFormat = 'bo1' | 'bo3' | 'ao5' | 'mo3';
+export type RoundFormat = 'bo1' | 'bo2' | 'bo3' | 'bo5' | 'ao5' | 'mo3';
 
 export interface RoundConfig {
   /** Master switch. Nothing here reads it — display sites do. */
@@ -90,7 +90,9 @@ export const DEFAULT_ROUND_CONFIG: RoundConfig = {
 export function roundAttempts(format: RoundFormat): number {
   switch (format) {
     case 'bo1': return 1;
+    case 'bo2': return 2;
     case 'bo3': return 3;
+    case 'bo5': return 5;
     case 'mo3': return 3;
     case 'ao5': return 5;
   }
@@ -169,7 +171,7 @@ function wcaAverage(times: number[]): number {
 function applyFormat(format: RoundFormat, times: number[]): number {
   if (format === 'ao5') return wcaAverage(times);
   if (format === 'mo3') return wcaMean(times);
-  return wcaBest(times); // bo1 / bo3 — 9f6
+  return wcaBest(times); // best-of formats — 9f6
 }
 
 /* ------------------------------------------------------------------ */

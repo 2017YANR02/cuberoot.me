@@ -7,12 +7,22 @@ import { persistItem } from './safe-storage';
 const WCIF_URL = (id: string) =>
   `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(id)}/wcif/public`;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-// v3: cache now stores full CompWcif (rounds + round-1 meta + competitorLimit), not just rounds.
-const CACHE_PREFIX = 'wcif-meta-v3-';
+// v5: preserves cumulative time-limit round IDs instead of flattening them to a boolean.
+const CACHE_PREFIX = 'wcif-meta-v5-';
 
 import type { RoundMeta } from '@cuberoot/shared';
 
 export type RoundFormat = '1' | '2' | '3' | '5' | 'a' | 'm' | 'h';
+
+export interface CompWcifRound {
+  id: string;
+  format: RoundFormat;
+  timeLimitCs: number | null;
+  cumulative: boolean;
+  cumulativeRoundIds: string[];
+  cutoff: { numberOfAttempts: number; attemptResult: number } | null;
+  advancementCondition: { type: 'ranking' | 'percent' | 'attemptResult'; level: number } | null;
+}
 
 const VALID_FORMATS: ReadonlySet<string> = new Set(['1', '2', '3', '5', 'a', 'm', 'h']);
 
@@ -30,11 +40,12 @@ function encodeQual(q: { type?: string; resultType?: string; level?: number | nu
 
 export interface CompWcif {
   rounds: Record<string, RoundFormat[]>;  // WCA eventId → 各轮 format
+  roundDetails: Record<string, CompWcifRound[]>; // WCA eventId → 每轮完整规则
   meta: Record<string, RoundMeta>;         // WCA eventId → round-1 紧凑 meta（与静态 JSON 同形状）
   competitorLimit: number | null;          // 比赛级人数上限（通常非空）
 }
 
-const EMPTY_WCIF: CompWcif = { rounds: {}, meta: {}, competitorLimit: null };
+const EMPTY_WCIF: CompWcif = { rounds: {}, roundDetails: {}, meta: {}, competitorLimit: null };
 
 interface CacheEntry { t: number; v: CompWcif; }
 
@@ -195,6 +206,7 @@ export async function fetchCubingZh(wcaId: string): Promise<CubingZhMeta> {
 }
 
 interface WcifRoundRaw {
+  id?: string;
   format?: string;
   timeLimit?: { centiseconds?: number; cumulativeRoundIds?: string[] } | null;
   cutoff?: { numberOfAttempts?: number; attemptResult?: number } | null;
@@ -218,12 +230,39 @@ export async function fetchCompWcif(compId: string): Promise<CompWcif> {
         events?: { id: string; qualification?: WcifQualRaw | null; rounds?: WcifRoundRaw[] }[];
       };
       const rounds: Record<string, RoundFormat[]> = {};
+      const roundDetails: Record<string, CompWcifRound[]> = {};
       const meta: Record<string, RoundMeta> = {};
       for (const e of data.events ?? []) {
         const rs = e.rounds ?? [];
         rounds[e.id] = rs.map(r => {
           const f = r.format;
           return (f && VALID_FORMATS.has(f)) ? (f as RoundFormat) : '1';
+        });
+        roundDetails[e.id] = rs.map((r, index) => {
+          const rawFormat = r.format;
+          const format = rawFormat && VALID_FORMATS.has(rawFormat) ? rawFormat as RoundFormat : '1';
+          const cutoff = typeof r.cutoff?.numberOfAttempts === 'number'
+            && typeof r.cutoff?.attemptResult === 'number'
+            ? { numberOfAttempts: r.cutoff.numberOfAttempts, attemptResult: r.cutoff.attemptResult }
+            : null;
+          const rawAdv = r.advancementCondition;
+          const advancementCondition: CompWcifRound['advancementCondition'] = rawAdv
+            && (rawAdv.type === 'ranking' || rawAdv.type === 'percent' || rawAdv.type === 'attemptResult')
+            && typeof rawAdv.level === 'number'
+            ? { type: rawAdv.type, level: rawAdv.level }
+            : null;
+          const cumulativeRoundIds = r.timeLimit?.cumulativeRoundIds?.filter((id): id is string => (
+            typeof id === 'string' && id.length > 0
+          )) ?? [];
+          return {
+            id: r.id || `${e.id}-r${index + 1}`,
+            format,
+            timeLimitCs: typeof r.timeLimit?.centiseconds === 'number' ? r.timeLimit.centiseconds : null,
+            cumulative: cumulativeRoundIds.length > 0,
+            cumulativeRoundIds,
+            cutoff,
+            advancementCondition,
+          };
         });
         const r1 = rs[0];
         const m: RoundMeta = {};
@@ -240,7 +279,7 @@ export async function fetchCompWcif(compId: string): Promise<CompWcif> {
         if (q) m.q = q;
         if (Object.keys(m).length > 0) meta[e.id] = m;
       }
-      const out: CompWcif = { rounds, meta, competitorLimit: data.competitorLimit ?? null };
+      const out: CompWcif = { rounds, roundDetails, meta, competitorLimit: data.competitorLimit ?? null };
       cacheSet(compId, out);
       return out;
     } catch {

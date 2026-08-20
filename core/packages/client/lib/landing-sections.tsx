@@ -77,6 +77,7 @@ export const TEXTS: Record<string, { en: string; zh: string
 },
   sim:             { en: 'Sim', zh: '模拟'
 },
+  compSim:         { en: 'Comp Sim', zh: '比赛模拟' },
   icon:            { en: 'Icons', zh: '图标'
 },
   comp:            { en: 'Comp', zh: '比赛'
@@ -123,6 +124,7 @@ export interface Section {
 // 主入口 — 搜索框正下方的整行直达卡,从 train / tool 分组里提上来,分组里不再重复出现。
 export const PRIMARY_CARDS: CardConfig[] = [
   { id: 'timer',    href: '/timer',    internal: true, tier: 'medium', Icon: TimerIcon,  nameKey: 'timer' },
+  { id: 'comp-sim', href: '/comp-sim', internal: true, tier: 'medium', Icon: Radio,      nameKey: 'compSim' },
   { id: 'algdb',    href: '/alg',      internal: true, tier: 'medium', Icon: Blocks,     nameKey: 'algdb' },
   { id: 'sim',      href: '/sim',      internal: true, tier: 'medium', Icon: Box,        nameKey: 'sim' },
   { id: 'recon',    href: '/recon',    internal: true, tier: 'medium', Icon: ScanSearch, nameKey: 'recon' },

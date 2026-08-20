@@ -9,6 +9,7 @@ import { obtmCount, parseScrambleStrict } from '../_lib/cube/moves';
 import { applyMoves, applyScramble, isSolvedFaces } from '../_lib/cube/state';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
+import { parseTimerEntry } from '@cuberoot/shared/timer';
 
 interface Props {
   event: EventId;
@@ -16,44 +17,6 @@ interface Props {
   isZh: boolean;
   onClose: () => void;
   onSubmit: (solve: Solve) => void;
-}
-
-/**
- * Parse a time string into ms. Accepts:
- *   "DNF" / "DNS" → the corresponding penalty with a 0 ms time
- *   "12.34" / "12" / ".34"
- *   "1:23.45" / "1:23"
- *   "1:23:45.67"
- *   Optional "+2 " prefix returns { ms, plus2: true }.
- */
-function parseTimeStr(input: string): { ms: number; penalty: Penalty } | null {
-  let s = input.trim();
-  if (!s) return null;
-  let penalty: Penalty = 'ok';
-  if (/^dnf$/i.test(s)) return { ms: 0, penalty: 'DNF' };
-  if (/^dns$/i.test(s)) return { ms: 0, penalty: 'DNS' };
-  if (/^\+2\s+/i.test(s)) {
-    penalty = '+2';
-    s = s.replace(/^\+2\s+/i, '');
-  }
-  const parts = s.split(':');
-  if (parts.length > 3) return null;
-  let h = 0, m = 0, sec = 0;
-  if (parts.length === 3) {
-    h = Number(parts[0]); m = Number(parts[1]); sec = Number(parts[2]);
-  } else if (parts.length === 2) {
-    m = Number(parts[0]); sec = Number(parts[1]);
-  } else {
-    sec = Number(parts[0]);
-  }
-  if (!isFinite(h) || !isFinite(m) || !isFinite(sec)) return null;
-  if (h < 0 || m < 0 || sec < 0) return null;
-  const total = h * 3600000 + m * 60000 + Math.round(sec * 1000);
-  if (penalty === '+2') {
-    if (total < 2000) return null;
-    return { ms: total - 2000, penalty: '+2' };
-  }
-  return { ms: total, penalty };
 }
 
 /** Strict non-negative-integer parse — rejects "", "1.5", "1e3", "-2", "abc". */
@@ -72,7 +35,7 @@ function parseCount(input: string): number | null {
  * `checkMbldEntry`; this wrapper only does string → number and reason → text.
  */
 function parseMbldEntry(solvedStr: string, attemptedStr: string, timeStr: string): MbldEntryCheck {
-  const t = parseTimeStr(timeStr);
+  const t = parseTimerEntry(timeStr);
   return checkMbldEntry(
     parseCount(solvedStr),
     parseCount(attemptedStr),
@@ -200,7 +163,7 @@ export default function ManualEntryModal({ event, currentScramble, onClose, onSu
     });
     }
   } else {
-    const r = parseTimeStr(timeStr);
+    const r = parseTimerEntry(timeStr);
     if (timeStr.trim() === '') {
       parseErr = tr({ zh: '请输入时间', en: 'Enter time'
     });
