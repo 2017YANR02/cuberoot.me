@@ -2,6 +2,7 @@ import { apiUrl } from '@/lib/api-base';
 
 const SDK_SRC = 'https://res.wx.qq.com/connect/zh_CN/htmledition/js/wxopensdk.js';
 const SDK_LOAD_TIMEOUT_MS = 15_000;
+const WECHAT_LAUNCH_TIMEOUT_MS = 8_000;
 
 export type WeChatShareScene = 'chat' | 'timeline';
 
@@ -123,7 +124,7 @@ export function extractWeChatOpenSdkCode(result: unknown): number | undefined {
   if (typeof result === 'number') return result;
   if (!result || typeof result !== 'object') return undefined;
   const record = result as Record<string, unknown>;
-  for (const key of ['errCode', 'err_code', 'code']) {
+  for (const key of ['errcode', 'errCode', 'err_code', 'code']) {
     if (typeof record[key] === 'number') return record[key];
   }
   return undefined;
@@ -153,7 +154,7 @@ export async function shareCurrentPageToWeChat(scene: WeChatShareScene): Promise
     thumburl: new URL('/icons/icon-512.png', window.location.origin).href,
     scene,
     ticket,
-    timeout: 30_000,
+    timeout: WECHAT_LAUNCH_TIMEOUT_MS,
   });
   const code = extractWeChatOpenSdkCode(result);
   if (code !== undefined && code !== 0) throw new WeChatPcShareError(`sdk-${code}`);
