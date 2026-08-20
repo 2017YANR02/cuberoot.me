@@ -33,7 +33,7 @@ const APP = join(ROOT, 'app', '[lang]');
 
 // 路由(相对 [lang] 的 posix 路径)→ 豁免理由。
 //
-// 前 7 条是**哨兵壳**:dynamicParams=false + generateStaticParams 返回 '_',真实
+// 前 9 条是**哨兵壳**:dynamicParams=false + generateStaticParams 返回 '_',真实
 // URL 被 rewrite 到 /_,服务端根本拿不到参数值。要给它们真标题只能改成动态渲染,
 // 而那是唯一会撞 Vercel 配额的改动(见 AGENTS.md「省 Vercel 配额」②)。这些页的
 // tab 标题仍由客户端 hook 提供 —— 用户看得对,爬虫看不到,是刻意的取舍。
@@ -45,6 +45,7 @@ const ALLOWLIST = new Map<string, string>([
   ['memo/colpi/[pair]', '哨兵壳:字母对服务端不可见'],
   ['recon/person/[wcaId]', '哨兵壳:WCA ID 服务端不可见'],
   ['recon/submit/[editId]', '哨兵壳:提交表单,且本就 noindex'],
+  ['teachers/scripts/[scriptId]', '哨兵壳:数据库话术 id 服务端不可见'],
   ['wca/comp/[slug]', '哨兵壳:~17k 比赛页,robots.txt 同样 Disallow'],
   ['wca/persons/[wcaId]', '哨兵壳:~200k 选手页,robots.txt 同样 Disallow'],
   ['ffmpeg-poc', 'dev/poc 页,不进站点地图(app/sitemap.ts EXCLUDE)'],
