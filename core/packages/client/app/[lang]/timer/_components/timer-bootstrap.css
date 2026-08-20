@@ -1,0 +1,93 @@
+.timer-bootstrap {
+  width: min(calc(100% - 32px), 560px);
+  min-height: 50dvh;
+  margin-inline: auto;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 14px;
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+.timer-bootstrap-loading {
+  color: var(--muted-foreground);
+}
+
+.timer-bootstrap-loading p,
+.timer-bootstrap-error p,
+.timer-bootstrap-title {
+  margin: 0;
+}
+
+.timer-bootstrap-title {
+  font-size: clamp(22px, 5vw, 30px);
+  line-height: 1.2;
+}
+
+.timer-bootstrap-message {
+  max-width: 52ch;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.timer-bootstrap-diagnostic {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  color: var(--muted-foreground);
+}
+
+.timer-bootstrap-diagnostic span {
+  white-space: nowrap;
+}
+
+.timer-bootstrap-diagnostic code {
+  color: var(--foreground);
+  font-size: 0.95em;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.timer-bootstrap-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.timer-bootstrap-button {
+  appearance: none;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  cursor: pointer;
+}
+
+.timer-bootstrap-button:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.timer-bootstrap-button-primary {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.timer-bootstrap-button-primary:hover {
+  background: color-mix(in srgb, var(--primary) 88%, black);
+}
+
+.timer-bootstrap-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.timer-bootstrap-copied {
+  color: var(--signal-success);
+  font-size: 13px;
+}
