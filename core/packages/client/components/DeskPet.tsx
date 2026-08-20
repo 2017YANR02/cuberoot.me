@@ -249,17 +249,17 @@ const CSS = `
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-hit{left:27%;top:28%;width:46%;height:54%;}
 .clawd-deskpet.dragging .clawd-deskpet-hit{cursor:grabbing;}
 /* The hide action belongs to the pet itself. Reuse the shared ClearButton and
-   reveal it only while the pet is hovered or keyboard-focused. */
+   reveal it on real hover, keyboard focus, or briefly after a touch tap. */
 .clawd-deskpet-dismiss.clear-btn--standalone{position:absolute;z-index:4;
   opacity:0;pointer-events:none;transition:opacity .15s;}
-.clawd-deskpet:hover .clawd-deskpet-dismiss,
 .clawd-deskpet:focus-within .clawd-deskpet-dismiss{opacity:1;pointer-events:auto;}
+@media (hover:hover){.clawd-deskpet:hover .clawd-deskpet-dismiss{opacity:1;pointer-events:auto;}}
+@media (hover:none){.clawd-deskpet.touch-actions .clawd-deskpet-dismiss{opacity:1;pointer-events:auto;}}
 .clawd-deskpet[data-char=clawd] .clawd-deskpet-dismiss{left:calc(69% - 10px);top:calc(66% - 10px);}
 .clawd-deskpet[data-char=calico] .clawd-deskpet-dismiss{left:calc(80% - 10px);top:calc(30% - 10px);}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-dismiss{left:calc(73% - 10px);top:calc(28% - 10px);}
 .clawd-deskpet.mini-mode:not(.mini-left) .clawd-deskpet-dismiss{left:12%;top:12%;}
 .clawd-deskpet.mini-mode.mini-left .clawd-deskpet-dismiss{left:calc(88% - 20px);top:12%;}
-@media (hover:none){.clawd-deskpet-dismiss.clear-btn--standalone{opacity:1;pointer-events:auto;}}
 /* Unread-feedback badge — anchored to each character's body, always visible while
    the pet is on screen. Visual only; the clickable badges remain accessible. */
 .clawd-deskpet-badge{position:absolute;z-index:3;pointer-events:none;
@@ -812,6 +812,7 @@ export default function DeskPet() {
 
     let clicks = 0;
     let clickTimer: ReturnType<typeof setTimeout> | undefined;
+    let touchActionsTimer: ReturnType<typeof setTimeout> | undefined;
     const onClick = () => {
       if (suppressClick) { suppressClick = false; return; }
       if (dragging) return;
@@ -883,6 +884,10 @@ export default function DeskPet() {
           right: parseInt(root.style.right || '20', 10),
           bottom: parseInt(root.style.bottom || '20', 10),
         }));
+      } else if (e.pointerType !== 'mouse') {
+        clearTimeout(touchActionsTimer);
+        root.classList.add('touch-actions');
+        touchActionsTimer = setTimeout(() => root.classList.remove('touch-actions'), 3000);
       }
       if (!dnd && !mini) { setState('idle', true); resetIdle(); }
     };
@@ -961,6 +966,7 @@ export default function DeskPet() {
       clearTimeout(autoTimer);
       clearTimeout(idleTimer);
       clearTimeout(clickTimer);
+      clearTimeout(touchActionsTimer);
       clearTimeout(miniTimer);
       clearTimeout(randomTimer);
       window.removeEventListener('pointermove', onMove);
