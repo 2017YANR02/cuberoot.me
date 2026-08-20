@@ -33,6 +33,9 @@ describe('main-site teaching architecture', () => {
     expect(orgCss).toContain("@import '../../../components/teaching/teaching.css';");
     const css = readClient('components/teaching/teaching.css');
     expect(css).toContain('@media (max-width: 479px)');
+    expect(css).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))');
+    expect(css).toContain(':is(.teaching-form, .org-form) { grid-template-columns: 1fr; }');
+    expect(css).toContain(':is(.teaching-table-wrap, .org-table-wrap) { overflow-x: auto; }');
     expect(css).toContain('var(--signal-success)');
     expect(css).not.toContain('var(--success)');
   });
@@ -77,11 +80,34 @@ describe('main-site teaching architecture', () => {
     expect(sessionDetail).toContain("hasTeachingPermission(role, 'feedback:manage')");
     expect(sessionDetail).toContain('saveTeachingAttendanceBatch');
     expect(sessionDetail).toContain('completeTeachingSession');
+    expect(sessionDetail).toContain('listTeachingLeaveRequests(orgSlug, sessionId),');
+    expect(sessionDetail).toContain('createTeachingLeaveRequest');
+    expect(sessionDetail).toContain('decideTeachingLeaveRequest');
+    expect(sessionDetail).toContain('listTeachingMakeupCandidates');
+    expect(sessionDetail).toContain('createTeachingMakeupAttempt');
+    expect(sessionDetail).toContain('cancelTeachingSession');
+    expect(sessionDetail).toContain('Promise.all([\n      listTeachingMakeupAttempts(orgSlug, sessionId, makeupAttendanceId),');
+    expect(sessionDetail.match(/listTeachingMakeupAttempts\(/g)).toHaveLength(1);
+    expect(sessionDetail).not.toMatch(/attendance\.map\([\s\S]{0,300}listTeachingMakeupAttempts/);
+    expect(sessionDetail).toContain('leaveDecisionOperation.get(`${orgSlug}:${sessionId}:${request.attendanceId}:${request.id}:${decision}:${parsedReason}`)');
+    expect(sessionDetail).toContain('leaveDecisionOperation.get(`${orgSlug}:${sessionId}:${request.attendanceId}:${request.id}:cancel:${parsedReason}`)');
+    expect(sessionDetail).toContain("canManage && request.status === 'pending'");
+    expect(sessionDetail).toContain("attendance.status !== 'excused'");
+    expect(sessionDetail).toContain("item.status === 'pending' || item.status === 'approved'");
     expect(sessionDetail).toContain('listTeachingLessonFeedback');
     expect(sessionDetail).toContain('createTeachingLessonFeedback');
     expect(sessionDetail).toContain("session.status !== 'completed'");
     expect(sessionDetail).toContain('<AppLink');
     expect(sessionDetail).not.toContain('router.push');
+  });
+
+  it('keeps operation keys stable only for the same concrete request intent', () => {
+    const teachingUi = readClient('components/teaching/TeachingUi.tsx');
+
+    expect(teachingUi).toContain("const intentRef = useRef('')");
+    expect(teachingUi).toContain('if (intentRef.current !== intent)');
+    expect(teachingUi).toContain("keyRef.current = ''");
+    expect(teachingUi).toContain('intentRef.current = intent');
   });
 
   it('keeps finance corrections permission-gated on the canonical student package page', () => {
@@ -207,6 +233,7 @@ describe('main-site teaching architecture', () => {
     const reports = readClient('app/[lang]/learn/[orgSlug]/students/[studentId]/reports/page.tsx');
     const report = readClient('app/[lang]/learn/[orgSlug]/students/[studentId]/reports/[reportId]/page.tsx');
     const feedback = readClient('app/[lang]/learn/[orgSlug]/students/[studentId]/feedback/page.tsx');
+    const sessions = readClient('app/[lang]/learn/[orgSlug]/students/[studentId]/sessions/page.tsx');
     const binding = readClient('app/[lang]/account/guardian-binding/page.tsx');
     const bindingPage = readClient('components/teaching/TeachingAccountBindingPage.tsx');
 
@@ -218,6 +245,15 @@ describe('main-site teaching architecture', () => {
     expect(report).toContain('<WeeklyReportSections');
     expect(feedback).toContain('listLearnerTeachingLessonFeedback');
     expect(feedback).toContain('<LessonFeedbackList');
+    expect(sessions).toContain('listLearnerTeachingSessions');
+    expect(sessions).toContain('listLearnerTeachingLeaveRequests');
+    expect(sessions).toContain('createLearnerTeachingLeaveRequest');
+    expect(sessions).toContain('cancelLearnerTeachingLeaveRequest');
+    expect(sessions).toContain('useOperationKey');
+    expect(sessions).toContain('requestOperation.get(`${orgSlug}:${studentId}:${selectedSession.id}:${selectedSession.attendance.id}:${canonicalReason}`)');
+    expect(sessions).toContain('cancelOperation.get(`${orgSlug}:${studentId}:${selectedSession.id}:${selectedSession.attendance.id}:${request.id}:${canonicalReason}`)');
+    expect(sessions).not.toContain('listTeachingStudents');
+    expect(sessions).not.toContain('listTeachingLeaveRequests');
     expect(binding).toContain('<TeachingAccountBindingPage kind="guardian" />');
     expect(bindingPage).toContain('previewTeachingGuardianAccountBinding');
     expect(bindingPage).toContain('consumeTeachingGuardianAccountBinding');
@@ -230,6 +266,8 @@ describe('main-site teaching architecture', () => {
       expect(source).toContain('prefetch={false}');
       expect(source).not.toContain('router.push');
     }
+    expect(sessions).toContain('<TeachingPagination');
+    expect(sessions).not.toContain('router.push');
   });
 
   it('shares one conversation UI across learner and staff routes with real links and narrow layout', () => {

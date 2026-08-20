@@ -71,6 +71,32 @@ function repository(): TeachingSaasRepository {
     listSessions: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
     getSession: vi.fn().mockResolvedValue({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' }),
     createSession: vi.fn().mockResolvedValue({ status: 201, body: { session: { id: 'session-1' } } }),
+    cancelSession: vi.fn().mockResolvedValue({
+      status: 200, body: { session: { id: 'session-1', status: 'cancelled' }, makeupAttempts: [] },
+    }),
+    listLeaveRequests: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    createLeaveRequest: vi.fn().mockResolvedValue({
+      status: 201, body: { leaveRequest: { id: 'leave-1' }, attendance: { status: 'expected' } },
+    }),
+    decideLeaveRequest: vi.fn().mockResolvedValue({
+      status: 200, body: { leaveRequest: { id: 'leave-1', status: 'approved' }, attendance: { status: 'excused' } },
+    }),
+    cancelLeaveRequest: vi.fn().mockResolvedValue({
+      status: 200, body: { leaveRequest: { id: 'leave-1', status: 'cancelled' }, attendance: { status: 'expected' } },
+    }),
+    listMakeupAttempts: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    listMakeupCandidates: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    scheduleMakeup: vi.fn().mockResolvedValue({
+      status: 201, body: { makeupAttempt: { id: 'makeup-1' }, attendance: { status: 'expected' } },
+    }),
+    listLearnerSessions: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    listLearnerLeaveRequests: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    createLearnerLeaveRequest: vi.fn().mockResolvedValue({
+      status: 201, body: { leaveRequest: { id: 'leave-1' }, attendance: { status: 'expected' } },
+    }),
+    cancelLearnerLeaveRequest: vi.fn().mockResolvedValue({
+      status: 200, body: { leaveRequest: { id: 'leave-1', status: 'cancelled' }, attendance: { status: 'expected' } },
+    }),
     createStudentAccountBindingInvite: vi.fn().mockResolvedValue({
       status: 201,
       body: { invite: { id: 'invite-1', status: 'pending' }, token: 'a'.repeat(43) },
@@ -177,6 +203,73 @@ describe('teaching SaaS routes', () => {
 
   beforeEach(() => {
     repo = repository();
+  });
+
+  it('registers the frozen staff and learner leave/makeup routes with strict bodies', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const sessionId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const attendanceId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const leaveRequestId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    const targetSessionId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+    const studentId = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+    const staffBase = `/teaching/organizations/demo/sessions/${sessionId}`;
+    const attendanceBase = `${staffBase}/attendance/${attendanceId}`;
+    const learnerBase = `/teaching/organizations/demo/me/students/${studentId}/sessions/${sessionId}`;
+    const post = (path: string, body: Record<string, unknown>, key: string) => app.request(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
+      body: JSON.stringify(body),
+    });
+
+    const responses = [
+      await app.request(`${staffBase}/leave-requests?page=1&pageSize=10`),
+      await post(`${attendanceBase}/leave-requests`, { reason: 'Family leave' }, 'staff-leave'),
+      await post(
+        `${attendanceBase}/leave-requests/${leaveRequestId}/decision`,
+        { decision: 'approved', reason: 'Approved' },
+        'staff-decision',
+      ),
+      await post(
+        `${attendanceBase}/leave-requests/${leaveRequestId}/cancel`,
+        { reason: 'Cancelled' },
+        'staff-leave-cancel',
+      ),
+      await app.request(`${attendanceBase}/makeups?page=1&pageSize=10`),
+      await app.request(`${attendanceBase}/makeups/candidates?page=1&pageSize=10`),
+      await post(
+        `${attendanceBase}/makeups`,
+        { targetSessionId, reason: 'Makeup class' },
+        'staff-makeup',
+      ),
+      await post(`${staffBase}/cancel`, { reason: 'Weather' }, 'session-cancel'),
+      await app.request(`/teaching/organizations/demo/me/students/${studentId}/sessions?page=1&pageSize=10`),
+      await app.request(`${learnerBase}/leave-requests?page=1&pageSize=10`),
+      await post(`${learnerBase}/attendance/${attendanceId}/leave-requests`, { reason: 'Sick' }, 'learner-leave'),
+      await post(
+        `${learnerBase}/attendance/${attendanceId}/leave-requests/${leaveRequestId}/cancel`,
+        { reason: 'Recovered' },
+        'learner-leave-cancel',
+      ),
+    ];
+    expect(responses.map((response) => response.status)).toEqual([
+      200, 201, 200, 200, 200, 200, 201, 200, 200, 200, 201, 200,
+    ]);
+    for (const method of [
+      'listLeaveRequests', 'createLeaveRequest', 'decideLeaveRequest', 'cancelLeaveRequest',
+      'listMakeupAttempts', 'listMakeupCandidates', 'scheduleMakeup', 'cancelSession',
+      'listLearnerSessions', 'listLearnerLeaveRequests', 'createLearnerLeaveRequest',
+      'cancelLearnerLeaveRequest',
+    ] as const) {
+      expect(repo[method]).toHaveBeenCalledTimes(1);
+    }
+
+    const rejected = await post(
+      `${attendanceBase}/makeups`,
+      { targetSessionId, reason: 'Makeup class', studentId },
+      'staff-makeup-extra',
+    );
+    expect(rejected.status).toBe(400);
+    expect(repo.scheduleMakeup).toHaveBeenCalledTimes(1);
   });
 
   it('returns structured unauthenticated errors without cacheable responses', async () => {
@@ -548,7 +641,7 @@ describe('teaching SaaS routes', () => {
     expect(repo.createSession).not.toHaveBeenCalled();
   });
 
-  it('discards caller-supplied attendance ownership and exposes session detail by UUID', async () => {
+  it('rejects caller-supplied attendance ownership and exposes session detail by UUID', async () => {
     const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
     const sessionId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
     const attendanceId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
@@ -565,11 +658,8 @@ describe('teaching SaaS routes', () => {
         }],
       }),
     });
-    expect(sanitized.status).toBe(200);
-    expect(repo.saveAttendanceBatch).toHaveBeenCalledWith(
-      ACTOR, 'demo', sessionId, { records: [{ attendanceId, status: 'present' }] },
-      'attendance-invalid', expect.any(String), expect.any(String),
-    );
+    expect(sanitized.status).toBe(400);
+    expect(repo.saveAttendanceBatch).not.toHaveBeenCalled();
 
     const detail = await app.request(`/teaching/organizations/demo/sessions/${sessionId}`);
     expect(detail.status).toBe(200);

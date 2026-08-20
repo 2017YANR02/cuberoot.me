@@ -46,6 +46,8 @@ PostgreSQL schema 变更的 source of truth。`apply_migrations.sh` 会在部署
 
 课时退款与撤销增量 `0164_teaching_credit_adjustments.sql` 的升级基线是已应用至 `0163_forum_videos.sql` 的现有数据库。它以 `student_packages` 父行更新串行化 API 与直接 SQL 的全部账本写入，补齐退款来源唯一性、等额单次撤销和非负余额约束；迁移前置检查会拒绝不满足最终约束的既有账本数据。
 
+请假与补课增量 `0165_teaching_leave_makeups.sql` 的升级基线是已应用至 `0164_teaching_credit_adjustments.sql` 的现有数据库。它新增不可删除的请假与补课审计历史，以延迟约束保证批准请假和 `excused` 考勤同事务落地，并把已批准请假映射到同学员、同课包的未来考勤；补课到课完成时沿用既有账本唯一键仅扣一次，缺席、请假或目标课堂取消后可重新安排，且禁止嵌套补课链。课堂、考勤、补课与课包写事务统一按课堂、考勤、补课、课包顺序加锁；不能把 `0165` 当作空库初始化脚本单独执行。
+
 ## 已应用 migration 不能改
 
 `apply_migrations.sh` 会把每个文件的 SHA-256 写入 ledger。已应用文件的摘要发生变化时会终止执行。修正已上线结构只能新增 migration；需要恢复数据时使用已验证的备份。
