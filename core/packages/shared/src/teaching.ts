@@ -226,6 +226,7 @@ export const TEACHING_PERMISSIONS = [
   'feedback:manage',
   'finance:read',
   'finance:manage',
+  'operations:read',
   'audit:read',
   'training:template:read',
   'training:template:manage',
@@ -257,7 +258,7 @@ const ROLE_PERMISSIONS: Record<TeachingOrganizationRole, readonly TeachingPermis
     'report:read', 'report:manage',
     'conversation:read', 'conversation:manage',
   ],
-  finance: ['member:read', 'package:read', 'package:manage', 'finance:read', 'finance:manage'],
+  finance: ['member:read', 'package:read', 'package:manage', 'finance:read', 'finance:manage', 'operations:read'],
   viewer: ['member:read'],
 };
 
@@ -676,6 +677,50 @@ export interface TeachingDailyTrainingRollup {
   durationMs: string;
   successCount: string;
   updatedAt: string;
+}
+
+export interface TeachingOperationsOverview {
+  range: {
+    fromDate: string;
+    throughDate: string;
+    timezone: string;
+    days: 30;
+  };
+  sessions: {
+    scheduled: number;
+    inProgress: number;
+    completed: number;
+    cancelled: number;
+    total: number;
+  };
+  attendance: {
+    expected: number;
+    present: number;
+    late: number;
+    absent: number;
+    excused: number;
+    total: number;
+  };
+  creditConsumption: Array<{
+    creditUnit: TeachingCreditUnit;
+    creditType: string;
+    amount: string;
+  }>;
+  packages: {
+    active: number;
+    lowBalance: number;
+    expiringSoon: number;
+  };
+  training: {
+    assignments: number;
+    studentTargets: number;
+    targetsWithEvidence: number;
+  };
+  teacherLoad: Array<{
+    displayName: string;
+    sessionCount: number;
+    completedSessionCount: number;
+  }>;
 }
 
 export const TEACHING_WEEKLY_REPORT_STATUSES = ['draft', 'published'] as const;

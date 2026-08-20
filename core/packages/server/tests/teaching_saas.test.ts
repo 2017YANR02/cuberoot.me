@@ -23,6 +23,20 @@ function repository(): TeachingSaasRepository {
       memberCount: 1,
       studentCount: 0,
     }),
+    getOperationsOverview: vi.fn().mockResolvedValue({
+      range: {
+        fromDate: '2026-07-22',
+        throughDate: '2026-08-20',
+        timezone: 'Asia/Shanghai',
+        days: 30,
+      },
+      sessions: { scheduled: 0, inProgress: 0, completed: 0, cancelled: 0, total: 0 },
+      attendance: { expected: 0, present: 0, late: 0, absent: 0, excused: 0, total: 0 },
+      creditConsumption: [],
+      packages: { active: 0, lowBalance: 0, expiringSoon: 0 },
+      training: { assignments: 0, studentTargets: 0, targetsWithEvidence: 0 },
+      teacherLoad: [],
+    }),
     createOrganization: vi.fn().mockResolvedValue({
       status: 201,
       body: { organization: { id: 'org-1', slug: 'demo' } },
@@ -245,7 +259,12 @@ describe('teaching SaaS routes', () => {
     await expect(app.request('/teaching/organizations/demo/summary')).resolves.toMatchObject({ status: 200 });
     await expect(app.request('/teaching/organizations/demo/members')).resolves.toMatchObject({ status: 200 });
     await expect(app.request('/teaching/organizations/demo/students')).resolves.toMatchObject({ status: 200 });
+    const operations = await app.request('/teaching/organizations/demo/operations/overview');
+    expect(operations.status).toBe(200);
+    expect(operations.headers.get('cache-control')).toBe('no-store');
+    expect(await operations.json()).toMatchObject({ operationsOverview: { range: { days: 30 } } });
     expect(repo.getOrganizationSummary).toHaveBeenCalledWith(ACTOR, 'demo', expect.any(String));
+    expect(repo.getOperationsOverview).toHaveBeenCalledWith(ACTOR, 'demo', expect.any(String));
     expect(repo.listMembers).toHaveBeenCalledWith(
       ACTOR,
       'demo',
