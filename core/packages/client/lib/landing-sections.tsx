@@ -198,7 +198,7 @@ export const SECTIONS: Section[] = [
       { id: 'blog', href: '/blog/', internal: false, tier: 'medium', Icon: BookOpen, nameKey: 'blog' },
       { id: 'site', href: '/site',  internal: true,  tier: 'medium', Icon: Compass,  nameKey: 'sitesDirectory' },
       { id: 'wb',   href: '/wb',    internal: true,  tier: 'medium', Icon: Trophy,   nameKey: 'worldBests' },
-      { id: 'achievements', href: '/achievements', internal: true, tier: 'utility', Icon: Award, nameKey: 'achievements' },
+      { id: 'achievements', href: '/achievements', internal: true, tier: 'medium', Icon: Award, nameKey: 'achievements' },
     ],
   },
 ];
