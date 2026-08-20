@@ -57,6 +57,9 @@ jobs:
   build:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    concurrency:
+      group: update-stats-full
+      cancel-in-progress: false
     # NOTE: 确保输出中文不乱码（ubuntu 默认 locale 可能非 UTF-8）
     env:
       LANG: en_US.UTF-8
@@ -272,7 +275,23 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         # NOTE: -T -n + ServerAlive 防 ssh 半挂死(2026-05-10 run #222 远端 apply 早完成,
         # 客户端等 FIN 卡 2h+)。同 wca_stats_extra apply。
-        run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/apply_load.sh /tmp/wca_import historical_ranks_apply'
+        # 4.5 GB = 当前目标关系约 3.6 GB + WAL/索引安全余量;不足时在 TRUNCATE 前失败并清理上传。
+        run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'MIN_FREE_BYTES=4500000000 /usr/local/bin/apply_load.sh /tmp/wca_import historical_ranks_apply'
+
+      # apply_load 自己会清理;这里兜住 scp 中断、apply step 未启动等情况。
+      - name: Cleanup historical ranks upload
+        if: always() && (github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra')
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '
+            dir=/tmp/wca_import
+            if [ -e "$dir" ]; then
+              [ -d "$dir" ] && [ ! -L "$dir" ] && [ "$(readlink -f -- "$dir")" = "$dir" ] || exit 1
+              rm -rf -- "$dir"
+            fi
+          '
 
       # ── WCA stats extra:6 个 cubing.pro 风格 stats(grand_slam / all_results 等) ──
       # 增量:先拉服务器现有 per-comp 指纹,builder 只重灌指纹变动比赛的 wca_results_flat 行
@@ -316,6 +335,21 @@ jobs:
         # NOTE: -T -n + ServerAlive 防 ssh 半连卡死(2026-05-09 一次 FIN 丢了卡 1h+);
         # 远端正常退出 → 立刻断;sshd 没回 FIN → 90s 内 keepalive 探活失败强断.
         run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/apply_load.sh /tmp/wca_stats_extra wca_stats_extra_apply'
+
+      # apply_load 自己会清理;这里兜住 scp 中断、apply step 未启动等情况。
+      - name: Cleanup WCA stats extra upload
+        if: always()
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '
+            dir=/tmp/wca_stats_extra
+            if [ -e "$dir" ]; then
+              [ -d "$dir" ] && [ ! -L "$dir" ] && [ "$(readlink -f -- "$dir")" = "$dir" ] || exit 1
+              rm -rf -- "$dir"
+            fi
+          '
 
       # 重灌后 nginx 24h api_cache 仍持着老数据 → 清掉,新 id 排序立刻生效
       # (memory: reference_nginx_proxy_cache.md)

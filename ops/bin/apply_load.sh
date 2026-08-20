@@ -1,8 +1,8 @@
 #!/bin/bash
 # apply_load.sh — 通用 PG 加载器,由 GH Actions 通过 ssh 触发
-# 用法: apply_load.sh <import_dir> <log_tag>
+# 用法: MIN_FREE_BYTES=<bytes> apply_load.sh <import_dir> <log_tag>
 # 输入: $IMPORT_DIR/{load.sql, *.copy.tsv}
-# 输出: 按 load.sql 内容替换/插入 PG 表;成功后清空 IMPORT_DIR
+# 输出: 按 load.sql 内容替换/插入 PG 表;退出时清空 IMPORT_DIR
 set -euo pipefail
 
 if [ $# -ne 2 ]; then
@@ -11,6 +11,42 @@ if [ $# -ne 2 ]; then
 fi
 IMPORT_DIR="$1"
 LOG_TAG="$2"
+MIN_FREE_BYTES="${MIN_FREE_BYTES:-0}"
+
+case "$IMPORT_DIR" in
+  /tmp/*) ;;
+  *)
+    echo "[$LOG_TAG] import directory must be an absolute child of /tmp: $IMPORT_DIR" >&2
+    exit 2
+    ;;
+esac
+
+RESOLVED_IMPORT_DIR="$(readlink -f -- "$IMPORT_DIR" 2>/dev/null || true)"
+if [ "$RESOLVED_IMPORT_DIR" != "$IMPORT_DIR" ] || [ ! -d "$IMPORT_DIR" ] || [ -L "$IMPORT_DIR" ]; then
+  echo "[$LOG_TAG] unsafe or missing import directory: $IMPORT_DIR" >&2
+  exit 2
+fi
+
+cleanup_import_dir() {
+  local status=$?
+  trap - EXIT
+  set +e
+  cd /
+  if [ -d "$IMPORT_DIR" ] && [ ! -L "$IMPORT_DIR" ] && [ "$(readlink -f -- "$IMPORT_DIR")" = "$IMPORT_DIR" ]; then
+    rm -rf -- "$IMPORT_DIR"
+  fi
+  if [ "$status" -ne 0 ]; then
+    logger -t "$LOG_TAG" "failed with status $status; cleaned $IMPORT_DIR"
+    echo "[$LOG_TAG] failed with status $status; cleaned $IMPORT_DIR" >&2
+  fi
+  exit "$status"
+}
+trap cleanup_import_dir EXIT
+
+if ! [[ "$MIN_FREE_BYTES" =~ ^[0-9]+$ ]]; then
+  echo "[$LOG_TAG] MIN_FREE_BYTES must be a non-negative integer" >&2
+  exit 2
+fi
 
 load_db_password() {
   if [ -n "${PGPASSWORD:-}" ]; then
@@ -55,7 +91,18 @@ for f in "${TSV_FILES[@]}"; do
   fi
 done
 
-echo "[$LOG_TAG] preflight OK; files in $IMPORT_DIR:"
+AVAILABLE_BYTES="$(LC_ALL=C df -B1 --output=avail "$IMPORT_DIR" | tail -n 1 | tr -d '[:space:]')"
+if ! [[ "$AVAILABLE_BYTES" =~ ^[0-9]+$ ]]; then
+  echo "[$LOG_TAG] could not determine free disk space" >&2
+  exit 1
+fi
+if (( AVAILABLE_BYTES < MIN_FREE_BYTES )); then
+  echo "[$LOG_TAG] insufficient disk space: available=${AVAILABLE_BYTES}, required=${MIN_FREE_BYTES}; abort" >&2
+  logger -t "$LOG_TAG" "insufficient disk space: available=${AVAILABLE_BYTES}, required=${MIN_FREE_BYTES}; abort"
+  exit 1
+fi
+
+echo "[$LOG_TAG] preflight OK; available=${AVAILABLE_BYTES}, required=${MIN_FREE_BYTES}; files in $IMPORT_DIR:"
 ls -lh "$IMPORT_DIR"
 logger -t "$LOG_TAG" "applying load.sql"
 START_TS=$(date +%s)
@@ -72,10 +119,8 @@ echo "::endgroup::"
 
 END_TS=$(date +%s)
 ELAPSED=$((END_TS - START_TS))
-echo "[$LOG_TAG] psql done in ${ELAPSED}s; cleaning up"
-logger -t "$LOG_TAG" "psql done in ${ELAPSED}s; cleaning up"
-
-rm -rf "$IMPORT_DIR"
+echo "[$LOG_TAG] psql done in ${ELAPSED}s; cleaning up on exit"
+logger -t "$LOG_TAG" "psql done in ${ELAPSED}s; cleaning up on exit"
 
 logger -t "$LOG_TAG" "success"
 echo "OK ${ELAPSED}s"
