@@ -519,7 +519,7 @@
 .manage-script-row h3 { margin: 0; font-size: 1rem; }
 .manage-script-row p { margin: 5px 0 0; color: var(--muted-foreground); font-size: 0.8rem; }
 .manage-script-actions { display: flex; flex-wrap: wrap; gap: 8px 14px; }
-.manage-script-actions button { border: 0; border-bottom: 1px solid var(--border-default); background: transparent; color: var(--destructive); padding: 5px 0; font: inherit; font-size: 0.82rem; cursor: pointer; }
+.manage-delete-button { border: 0; border-bottom: 1px solid var(--border-default); background: transparent; color: var(--destructive); padding: 5px 0; font: inherit; font-size: 0.82rem; cursor: pointer; }
 .script-editor-hero { max-width: 800px; padding: 46px 0 52px; }
 .script-form { display: grid; gap: 44px; }
 .script-form-section { display: grid; gap: 16px; padding-bottom: 42px; border-bottom: 1px solid var(--border-default); }
@@ -541,17 +541,17 @@ textarea.script-control { min-height: 110px; resize: vertical; line-height: 1.55
 .script-outline-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .script-outline-heading strong { margin-right: auto; }
 .script-mini-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.script-mini-actions button,
+.script-mini-button,
 .script-add-button { border: 0; background: transparent; color: var(--muted-foreground); padding: 4px 0; font: inherit; font-size: 0.8rem; cursor: pointer; }
-.script-mini-actions button:hover,
+.script-mini-button:hover,
 .script-add-button:hover { color: var(--accent); }
 .script-beat-editor { display: grid; grid-template-columns: 120px minmax(0, 1fr) auto; gap: 10px; align-items: start; }
-.script-beat-editor textarea { min-height: 92px; }
-.script-beat-editor button { border: 0; background: transparent; color: var(--destructive); padding: 10px 0; font: inherit; cursor: pointer; }
+.script-beat-copy { min-height: 92px; }
+.script-beat-remove { border: 0; background: transparent; color: var(--destructive); padding: 10px 0; font: inherit; cursor: pointer; }
 .script-form-message { margin: 0; color: var(--destructive); font-size: 0.86rem; }
 .script-save-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
-.script-save-row button { border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-foreground); padding: 11px 18px; font: inherit; font-weight: 750; cursor: pointer; }
-.script-save-row button:disabled { opacity: 0.5; cursor: not-allowed; }
+.script-save-button { border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-foreground); padding: 11px 18px; font: inherit; font-weight: 750; cursor: pointer; }
+.script-save-button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 @media (max-width: 640px) {
   .scripts-page,
@@ -562,5 +562,5 @@ textarea.script-control { min-height: 110px; resize: vertical; line-height: 1.55
   .script-form-grid { grid-template-columns: 1fr; }
   .script-outline-item { grid-template-columns: 1fr; }
   .script-beat-editor { grid-template-columns: 1fr; }
-  .script-beat-editor button { justify-self: start; }
+  .script-beat-remove { justify-self: start; }
 }
