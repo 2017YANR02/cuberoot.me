@@ -1,12 +1,12 @@
 'use client';
 
 // Desk-pet search overlay — reuses the homepage LandingSearch in a centered
-// modal, with the pet controls (character / size / lang / theme / rest / reset /
-// hide) as a horizontal toolbar below the search box. Lazy-loaded by DeskPet so
+// modal, with the pet controls (character / size / lang / theme / rest / reset)
+// as a horizontal toolbar below the search box. Lazy-loaded by DeskPet so
 // the site-search data layer only loads when the user actually opens search.
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Maximize2, Coffee, EyeOff, Heart, Home, Sparkles, Shuffle, Boxes, MessageSquarePlus, Music } from 'lucide-react';
+import { Maximize2, Coffee, Heart, Home, Sparkles, Shuffle, Boxes, MessageSquarePlus, Music } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import LandingSearch from '@/components/LandingSearch';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -91,7 +91,6 @@ export default function DeskPetSearch({
   onCycleChar,
   onCycleSize,
   onToggleRest,
-  onHide,
   randomMode,
   onToggleRandom,
   metronomeOpen,
@@ -108,7 +107,6 @@ export default function DeskPetSearch({
   onCycleChar: () => void;
   onCycleSize: () => void;
   onToggleRest: () => void;
-  onHide: () => void;
   randomMode: boolean;
   onToggleRandom: () => void;
   metronomeOpen: boolean;
@@ -276,10 +274,6 @@ export default function DeskPetSearch({
         <button type="button" className="icon-only" onClick={onToggleRest}
           title={resting ? t('叫醒它', 'Wake up') : t('休息一下', 'Take a nap')}>
           <Coffee size={16} />
-        </button>
-        <button type="button" className="icon-only" onClick={onHide}
-          title={t('隐藏,刷新后恢复', 'Hide, restored on reload')}>
-          <EyeOff size={16} />
         </button>
       </div>
       {donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}

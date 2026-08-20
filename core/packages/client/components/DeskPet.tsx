@@ -17,6 +17,7 @@ import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread'
 import { useAlgSubmissionUnread, refreshAlgSubmissionUnread } from '@/lib/alg-submission-unread';
 import { useNotificationsUnread, refreshNotificationsUnread } from '@/lib/notifications-unread';
 import AppLink from '@/components/AppLink';
+import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
 import { subscribeBeat, setMetronome, getMetronomeState } from '@/lib/metronome';
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
@@ -247,6 +248,18 @@ const CSS = `
 .clawd-deskpet[data-char=calico] .clawd-deskpet-hit{left:20%;top:30%;width:60%;height:60%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-hit{left:27%;top:28%;width:46%;height:54%;}
 .clawd-deskpet.dragging .clawd-deskpet-hit{cursor:grabbing;}
+/* The hide action belongs to the pet itself. Reuse the shared ClearButton and
+   reveal it only while the pet is hovered or keyboard-focused. */
+.clawd-deskpet-dismiss.clear-btn--standalone{position:absolute;z-index:4;
+  opacity:0;pointer-events:none;transition:opacity .15s;}
+.clawd-deskpet:hover .clawd-deskpet-dismiss,
+.clawd-deskpet:focus-within .clawd-deskpet-dismiss{opacity:1;pointer-events:auto;}
+.clawd-deskpet[data-char=clawd] .clawd-deskpet-dismiss{left:calc(69% - 10px);top:calc(66% - 10px);}
+.clawd-deskpet[data-char=calico] .clawd-deskpet-dismiss{left:calc(80% - 10px);top:calc(30% - 10px);}
+.clawd-deskpet[data-char=cloudling] .clawd-deskpet-dismiss{left:calc(73% - 10px);top:calc(28% - 10px);}
+.clawd-deskpet.mini-mode:not(.mini-left) .clawd-deskpet-dismiss{left:12%;top:12%;}
+.clawd-deskpet.mini-mode.mini-left .clawd-deskpet-dismiss{left:calc(88% - 20px);top:12%;}
+@media (hover:none){.clawd-deskpet-dismiss.clear-btn--standalone{opacity:1;pointer-events:auto;}}
 /* Unread-feedback badge — anchored to each character's body, always visible while
    the pet is on screen. Visual only; the clickable badges remain accessible. */
 .clawd-deskpet-badge{position:absolute;z-index:3;pointer-events:none;
@@ -1071,6 +1084,12 @@ export default function DeskPet() {
             {algUnread > 9 ? '9+' : algUnread}
           </button>
         )}
+        <ClearButton
+          variant="standalone"
+          className="clawd-deskpet-dismiss"
+          ariaLabel={t('隐藏,刷新后恢复', 'Hide, restored on reload')}
+          onClick={() => setHidden(true)}
+        />
         <div
           className="clawd-deskpet-hit"
           ref={hitRef}
@@ -1093,7 +1112,6 @@ export default function DeskPet() {
           onCycleChar={cycleChar}
           onCycleSize={cycleSize}
           onToggleRest={() => { if (resting) ctrlRef.current?.wake(); else ctrlRef.current?.rest(); }}
-          onHide={() => { setHidden(true); setSearchOpen(false); }}
           randomMode={randomMode}
           onToggleRandom={toggleRandom}
           metronomeOpen={metronomeOpen}
