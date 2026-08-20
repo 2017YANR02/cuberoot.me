@@ -43,6 +43,7 @@ jobs:
           sparse-checkout: |
             /core/
             /docs/platform-unification-plan.md
+            /ops/nginx/www.cuberoot.me.conf
             /tools/cstimer-scramble/
             /tools/solver/rust-cross/cross-solver-worker.js
             /tools/blddb/data/cornerManmade.json
