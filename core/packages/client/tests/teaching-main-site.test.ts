@@ -84,6 +84,18 @@ describe('main-site teaching architecture', () => {
     expect(sessionDetail).not.toContain('router.push');
   });
 
+  it('keeps the operations overview inside the main-site organization shell', () => {
+    const workspace = readClient('app/[lang]/org/_components/OrgWorkspace.tsx');
+    const operations = readClient('app/[lang]/org/[orgSlug]/operations/page.tsx');
+
+    expect(workspace).toContain("permission: 'operations:read'");
+    expect(operations).toContain('getTeachingOperationsOverview');
+    expect(operations).toContain('creditConsumption');
+    expect(operations).toContain('teacherLoad');
+    expect(operations).not.toContain('packages/platform');
+    expect(operations).not.toContain('router.push');
+  });
+
   it('keeps training management and review inside the main-site organization shell', () => {
     const workspace = readClient('app/[lang]/org/_components/OrgWorkspace.tsx');
     const overview = readClient('app/[lang]/org/[orgSlug]/training/page.tsx');

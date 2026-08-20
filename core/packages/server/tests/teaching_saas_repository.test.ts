@@ -359,6 +359,7 @@ describe('teaching SaaS repository tenant denial audit', () => {
       expect(hasTeachingPermission(role, 'session:create')).toBe(true);
       expect(hasTeachingPermission(role, 'session:manage')).toBe(true);
       expect(hasTeachingPermission(role, 'package:manage')).toBe(true);
+      expect(hasTeachingPermission(role, 'operations:read')).toBe(true);
     }
     for (const role of ['teacher', 'assistant'] as const) {
       expect(hasTeachingPermission(role, 'session:read')).toBe(true);
@@ -371,14 +372,73 @@ describe('teaching SaaS repository tenant denial audit', () => {
       expect(hasTeachingPermission(role, 'group:manage')).toBe(false);
       expect(hasTeachingPermission(role, 'assignment:manage')).toBe(false);
       expect(hasTeachingPermission(role, 'package:read')).toBe(false);
+      expect(hasTeachingPermission(role, 'operations:read')).toBe(false);
     }
     expect(hasTeachingPermission('finance', 'package:read')).toBe(true);
     expect(hasTeachingPermission('finance', 'package:manage')).toBe(true);
+    expect(hasTeachingPermission('finance', 'operations:read')).toBe(true);
     expect(hasTeachingPermission('finance', 'session:read')).toBe(false);
     expect(hasTeachingPermission('finance', 'session:manage')).toBe(false);
     expect(hasTeachingPermission('viewer', 'member:read')).toBe(true);
     expect(hasTeachingPermission('viewer', 'finance:read')).toBe(false);
     expect(hasTeachingPermission('viewer', 'session:read')).toBe(false);
+    expect(hasTeachingPermission('viewer', 'operations:read')).toBe(false);
+  });
+
+  it('aggregates an organization-local 30-day operations overview', async () => {
+    db.query
+      .mockResolvedValueOnce([{
+        id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
+        status: 'active', version: 1, role: 'finance',
+      }])
+      .mockResolvedValueOnce([{
+        database_now: '2026-08-20T12:00:00.000Z',
+        from_date: '2026-07-22',
+        through_date: '2026-08-20',
+        starts_at: '2026-07-21T16:00:00.000Z',
+        ends_at: '2026-08-20T16:00:00.000Z',
+      }])
+      .mockResolvedValueOnce([{ scheduled: 2, in_progress: 1, completed: 7, cancelled: 1, total: 11 }])
+      .mockResolvedValueOnce([{ expected: 2, present: 12, late: 1, absent: 1, excused: 1, total: 17 }])
+      .mockResolvedValueOnce([{ credit_unit: 'lesson', credit_type: 'standard', amount: '13' }])
+      .mockResolvedValueOnce([{ active: 10, low_balance: 2, expiring_soon: 3 }])
+      .mockResolvedValueOnce([{ assignments: 4, student_targets: 15, targets_with_evidence: 9 }])
+      .mockResolvedValueOnce([{ display_name: 'Teacher One', session_count: 6, completed_session_count: 4 }]);
+
+    await expect(teachingSaasRepository.getOperationsOverview(
+      ACTOR,
+      'demo',
+      'request-operations',
+    )).resolves.toEqual({
+      range: {
+        fromDate: '2026-07-22',
+        throughDate: '2026-08-20',
+        timezone: 'Asia/Shanghai',
+        days: 30,
+      },
+      sessions: { scheduled: 2, inProgress: 1, completed: 7, cancelled: 1, total: 11 },
+      attendance: { expected: 2, present: 12, late: 1, absent: 1, excused: 1, total: 17 },
+      creditConsumption: [{ creditUnit: 'lesson', creditType: 'standard', amount: '13' }],
+      packages: { active: 10, lowBalance: 2, expiringSoon: 3 },
+      training: { assignments: 4, studentTargets: 15, targetsWithEvidence: 9 },
+      teacherLoad: [{ displayName: 'Teacher One', sessionCount: 6, completedSessionCount: 4 }],
+    });
+  });
+
+  it('fails closed when the operations date range cannot be derived', async () => {
+    db.query
+      .mockResolvedValueOnce([{
+        id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
+        status: 'active', version: 1, role: 'finance',
+      }])
+      .mockResolvedValueOnce([]);
+
+    await expect(teachingSaasRepository.getOperationsOverview(
+      ACTOR,
+      'demo',
+      'request-operations',
+    )).rejects.toThrow('Unable to derive operations overview range');
+    expect(db.query).toHaveBeenCalledTimes(2);
   });
 
   it.each(['teacher', 'assistant'] as const)(

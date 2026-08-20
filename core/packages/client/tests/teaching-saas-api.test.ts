@@ -20,6 +20,7 @@ import {
   createTeachingMember,
   createTeachingTeacherAssignment,
   generateTeachingWeeklyReport,
+  getTeachingOperationsOverview,
   getLearnerTeachingWeeklyReport,
   getTeachingConversation,
   getTeachingWeeklyReport,
@@ -187,6 +188,37 @@ function session() {
     createdAt: '2026-08-18T00:00:00.000Z',
     updatedAt: '2026-08-18T00:00:00.000Z',
     attendance: [attendance()],
+  };
+}
+
+function operationsOverview(overrides: Record<string, unknown> = {}) {
+  return {
+    range: {
+      fromDate: '2026-07-22',
+      throughDate: '2026-08-20',
+      timezone: 'Asia/Shanghai',
+      days: 30,
+    },
+    sessions: {
+      scheduled: 2,
+      inProgress: 1,
+      completed: 7,
+      cancelled: 1,
+      total: 11,
+    },
+    attendance: {
+      expected: 2,
+      present: 12,
+      late: 1,
+      absent: 1,
+      excused: 1,
+      total: 17,
+    },
+    creditConsumption: [{ creditUnit: 'lesson', creditType: 'standard', amount: '13' }],
+    packages: { active: 10, lowBalance: 2, expiringSoon: 3 },
+    training: { assignments: 4, studentTargets: 15, targetsWithEvidence: 9 },
+    teacherLoad: [{ displayName: 'Teacher One', sessionCount: 6, completedSessionCount: 4 }],
+    ...overrides,
   };
 }
 
@@ -469,6 +501,33 @@ describe('teaching SaaS client', () => {
       pageSize: 100,
     });
     expect(fetchMock.mock.calls[0]![0]).toBe('https://api.example.test/v1/teaching/organizations/cube%20academy/package-products?page=1&pageSize=100');
+  });
+
+  it('parses the operations overview from the canonical no-store endpoint', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => jsonResponse({
+      operationsOverview: operationsOverview(),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getTeachingOperationsOverview('cube academy')).resolves.toEqual(operationsOverview());
+    expect(fetchMock.mock.calls[0]![0]).toBe(
+      'https://api.example.test/v1/teaching/organizations/cube%20academy/operations/overview',
+    );
+    expect(fetchMock.mock.calls[0]![1]).toMatchObject({ cache: 'no-store' });
+  });
+
+  it.each([
+    ['a non-30-day range', { ...operationsOverview(), range: { fromDate: '2026-07-22', throughDate: '2026-08-20', timezone: 'Asia/Shanghai', days: 29 } }],
+    ['a mismatched session total', { ...operationsOverview(), sessions: { scheduled: 2, inProgress: 1, completed: 7, cancelled: 1, total: 12 } }],
+    ['a fractional credit amount', { ...operationsOverview(), creditConsumption: [{ creditUnit: 'lesson', creditType: 'standard', amount: '1.5' }] }],
+    ['an impossible teacher completion count', { ...operationsOverview(), teacherLoad: [{ displayName: 'Teacher One', sessionCount: 2, completedSessionCount: 3 }] }],
+  ])('rejects operations overview responses with %s', async (_label, overview) => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ operationsOverview: overview })));
+
+    await expect(getTeachingOperationsOverview('cube-academy')).rejects.toMatchObject({
+      code: 'INVALID_RESPONSE',
+      status: 502,
+    });
   });
 
   it('creates a session with the exact Core body and idempotency key', async () => {
