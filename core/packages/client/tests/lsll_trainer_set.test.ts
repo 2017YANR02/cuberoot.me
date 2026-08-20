@@ -259,6 +259,13 @@ describe('装出来的 case', () => {
     });
 
     const virtual = virtualAlgSet('3x3', 'lsll');
+    expect(virtual?.casesFromStoredKeys).toBeTypeOf('function');
+    const shells = virtual!.casesFromStoredKeys!([storedKey, storedKey, 'bad']);
+    expect(shells.map(caseKey)).toEqual([storedKey]);
+    expect(shells[0].setup).toBe('');
+    expect(shells[0].algs).toEqual([[]]);
+    expect(caseRequests).toBe(0);
+
     expect(virtual?.loadCasesByKeys).toBeTypeOf('function');
     const cases = await virtual!.loadCasesByKeys!([
       storedKey,

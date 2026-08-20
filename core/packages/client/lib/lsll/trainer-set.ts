@@ -207,6 +207,13 @@ export function lsllCaseFromStoredKey(storedKey: string): AlgCase | null {
   return caseKey(c) === storedKey ? c : null;
 }
 
+/** Rebuild a small persisted selection without resolving every scramble up front. */
+export function lsllCasesFromStoredKeys(keys: readonly string[]): AlgCase[] {
+  return [...new Set(keys)]
+    .map(lsllCaseFromStoredKey)
+    .filter((c): c is AlgCase => c !== null);
+}
+
 /** 从 case 名取回 canonical key(`/alg/lsll/case?k=` 与现算打乱都要它)。 */
 export function lsllCaseKeyString(c: AlgCase): string {
   return c.name.slice(c.name.lastIndexOf(' ') + 1);
@@ -283,9 +290,7 @@ export async function resolveLsllCase(c: AlgCase): Promise<{ setup: string; alg?
 
 /** Load only persisted LSLL cases instead of enumerating the whole virtual set. */
 export async function loadLsllCasesByKeys(keys: readonly string[]): Promise<AlgCase[]> {
-  const cases = [...new Set(keys)]
-    .map(lsllCaseFromStoredKey)
-    .filter((c): c is AlgCase => c !== null);
+  const cases = lsllCasesFromStoredKeys(keys);
   let cursor = 0;
 
   const worker = async () => {

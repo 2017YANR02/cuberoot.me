@@ -20,7 +20,11 @@ const g = globalThis as unknown as { window?: unknown; localStorage?: ReturnType
 g.window = { addEventListener() {} };
 g.localStorage = makeLocalStorage();
 
-const { useTrainerStore } = await import('@/lib/trainer-store');
+const {
+  presetSessionSelection,
+  readSessionSelection,
+  useTrainerStore,
+} = await import('@/lib/trainer-store');
 
 const st = () => useTrainerStore.getState();
 
@@ -102,6 +106,14 @@ describe('trainer-store 开关联动', () => {
 
     const saved = JSON.parse(g.localStorage!.getItem('trainer:prefs') ?? '{}');
     expect(saved.showRecapRoundEnd).toBe(false);
+  });
+
+  it('外部专练选择使用独立会话,不覆盖普通 LSLL 轮次', () => {
+    const keys = ['A+|A+ abc', 'B-|B- def'];
+    presetSessionSelection('3x3', 'lsll:drill', keys);
+
+    expect(readSessionSelection('3x3', 'lsll:drill')).toEqual(keys);
+    expect(readSessionSelection('3x3', 'lsll')).toEqual([]);
   });
 
   it('旧偏好没有公式集特化字段时回落到默认开启', () => {

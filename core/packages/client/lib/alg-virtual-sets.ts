@@ -13,7 +13,8 @@ import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { LISTED_CASES } from './lsll/model';
 import {
   LSLL_ROUNDS, LSLL_TRAINER_NOTE, lsllCaseKeyString, lsllNextRoundScope, lsllRoundLabel, lsllRoundScope,
-  lsllScopeLabel, lsllSelectHref, loadLsllCases, loadLsllCasesByKeys, parseLsllScope, resolveLsllCase,
+  lsllCasesFromStoredKeys, lsllScopeLabel, lsllSelectHref, loadLsllCases, loadLsllCasesByKeys,
+  parseLsllScope, resolveLsllCase,
 } from './lsll/trainer-set';
 
 export interface VirtualAlgSet {
@@ -36,6 +37,8 @@ export interface VirtualAlgSet {
   loadCases: (scope: string | null) => Promise<AlgCase[]>;
   /** 进度页按持久化 key 取回少量 case,避免枚举整个虚拟集。 */
   loadCasesByKeys?: (keys: readonly string[]) => Promise<AlgCase[]>;
+  /** 专练按持久化 key 反建 case 壳;打乱和公式仍由训练器逐题解析。 */
+  casesFromStoredKeys?: (keys: readonly string[]) => AlgCase[];
   /** 「选 case」按钮的去处(虚拟集没有 select 页)。 */
   selectHref: (scope: string | null) => string;
   /** 范围名,接在顶栏集名后面。 */
@@ -80,6 +83,7 @@ const REGISTRY: VirtualAlgSet[] = [
     totalCases: LISTED_CASES,
     loadCases: loadLsllCases,
     loadCasesByKeys: loadLsllCasesByKeys,
+    casesFromStoredKeys: lsllCasesFromStoredKeys,
     selectHref: lsllSelectHref,
     scopeLabel: lsllScopeLabel,
     roundLabel: lsllRoundLabel,
