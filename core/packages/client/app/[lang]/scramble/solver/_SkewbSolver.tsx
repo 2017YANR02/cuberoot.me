@@ -17,12 +17,17 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
+import { useTranslation } from 'react-i18next';
 import { ListSelect } from '@/components/ListSelect';
+import {
+  SubsetColorPicker, useUrlSubsetSelection,
+} from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 import {
   EMPTY_SKEWB_FACELET, deriveSkewbScramble, invertSkewbAlg, prewarmSkewbGraph,
-  skewbFaceletFromMoves, solveSkewbFacelet, validateSkewbFacelet,
+  skewbFaceletFromMoves, skewbFacesForColors, solveSkewbFacelet,
+  solveSkewbFirstLayerFacelet, validateSkewbFacelet,
 } from '@/lib/skewb-solver';
 import { PuzzleOptimalSolver } from '../_components/PuzzleOptimalSolver';
 import { SPEC_BY_EVENT } from './_puzzle-specs';
@@ -32,9 +37,12 @@ import { SKEWB_PAINT } from './_paint-spec-skewb';
 import type { PaintColor } from './_paint-shared';
 
 type View = 'cube' | 'net' | 'scramble' | 'recon';
+type Goal = 'full' | 'layer';
 
 export default function SkewbSolver() {
   const t = useT();
+  const { i18n } = useTranslation();
+  const isZh = i18n.language.startsWith('zh');
   const spec = SPEC_BY_EVENT.skewb;
 
   // 打乱串与 PuzzleOptimalSolver 共用同一个 nuqs key(同 key 的 hook 之间自动同步)。
@@ -44,6 +52,18 @@ export default function SkewbSolver() {
   const [view, setView] = useQueryState(
     'view',
     parseAsStringEnum<View>(['cube', 'net', 'scramble', 'recon']).withDefault(scrambleFirst ? 'scramble' : 'cube'),
+  );
+  const [goal, setGoal] = useQueryState(
+    'goal',
+    parseAsStringEnum<Goal>(['full', 'layer']).withDefault('full'),
+  );
+  const [colorsParam, setColorsParam] = useQueryState('colors', parseAsString);
+  const layerColors = useUrlSubsetSelection('cn', colorsParam, (key) => { void setColorsParam(key); });
+  const layerFaces = useMemo(
+    () => skewbFacesForColors(layerColors.selectedColors),
+    // selectedColors is derived from this stable key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [layerColors.subsetKey],
   );
 
   const [facelet, setFacelet] = useState(EMPTY_SKEWB_FACELET);
@@ -101,8 +121,10 @@ export default function SkewbSolver() {
   const result = useMemo(() => {
     if (facelet.includes('X')) return null;
     if (validateSkewbFacelet(facelet)) return null;   // 非法状态由画板自己报
-    return solveSkewbFacelet(facelet);
-  }, [facelet]);
+    return goal === 'layer'
+      ? solveSkewbFirstLayerFacelet(facelet, layerFaces)
+      : solveSkewbFacelet(facelet);
+  }, [facelet, goal, layerFaces]);
 
   const deriveScramble = (fc: string) => {
     if (validateSkewbFacelet(fc)) return;
@@ -141,7 +163,7 @@ export default function SkewbSolver() {
       topSlot={(
         <section className="skewb-paint">
           <style>{INLINE_CSS}</style>
-          <div className="skewb-paint-view">
+          <div className="skewb-paint-controls">
             <ListSelect
               clearable={false}
               value={view}
@@ -154,6 +176,21 @@ export default function SkewbSolver() {
                 { value: 'recon', label: t('复盘', 'Reconstruction') },
               ]}
             />
+            {painting && (
+              <>
+                <ListSelect
+                  clearable={false}
+                  value={goal}
+                  onChange={(v) => void setGoal(v as Goal)}
+                  allLabel=""
+                  items={[
+                    { value: 'full', label: t('整解', 'Full solve') },
+                    { value: 'layer', label: t('底层', 'First layer') },
+                  ]}
+                />
+                {goal === 'layer' && <SubsetColorPicker sel={layerColors} isZh={isZh} />}
+              </>
+            )}
           </div>
 
           {painting && (
@@ -183,11 +220,18 @@ export default function SkewbSolver() {
               <div className="skewb-paint-out" aria-live="polite">
                 {facelet.includes('X') ? (
                   <p className="skewb-paint-hint">
-                    {t('把 30 格都涂上颜色,立刻给出最优解(每 120° 转一步,最多 11 步)。',
-                      "Fill all 30 stickers to get the optimal solution instantly (one move per 120° turn, at most 11).")}
+                    {goal === 'layer'
+                      ? t('把 30 格都涂上颜色,立刻给出所选底色的底层最优解。底层包含 1 个中心和 4 个相邻角,每 120° 转一步。',
+                        'Fill all 30 stickers to get an optimal first-layer solution for the selected bottom colors. A layer contains one centre and its four neighbouring corners; one move per 120° turn.')
+                      : t('把 30 格都涂上颜色,立刻给出最优解(每 120° 转一步,最多 11 步)。',
+                        'Fill all 30 stickers to get the optimal solution instantly (one move per 120° turn, at most 11).')}
                   </p>
                 ) : result === null ? null : result.length === 0 ? (
-                  <p className="pos-result-solved">{tr({ zh: '已是还原态', en: 'Already solved' })}</p>
+                  <p className="pos-result-solved">
+                    {goal === 'layer'
+                      ? tr({ zh: '底层已还原', en: 'First layer already solved' })
+                      : tr({ zh: '已是还原态', en: 'Already solved' })}
+                  </p>
                 ) : (
                   <>
                     <div className="pos-result-len">
@@ -221,9 +265,12 @@ const INLINE_CSS = `
   display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
   margin-bottom: 1rem;
 }
-.skewb-paint-view { width: fit-content; max-width: 100%; }
-/* 视图切换器:下拉贴合内容(默认 min-width 是给带搜索的长列表的,这里 3 个短项不需要) */
-.skewb-paint-view .list-select-popup { min-width: 0; width: max-content; right: auto; }
+.skewb-paint-controls {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.5rem;
+  width: fit-content; max-width: 100%;
+}
+/* 短选项下拉贴合内容；底色面板由共享 SubsetColorPicker 自己做视口钳位。 */
+.skewb-paint-controls .list-select-popup { min-width: 0; width: max-content; right: auto; }
 .skewb-paint-canvas { display: flex; justify-content: center; width: 100%; }
 .skewb-paint-recon {
   display: flex; flex-direction: column; align-items: center; gap: 0.4rem;

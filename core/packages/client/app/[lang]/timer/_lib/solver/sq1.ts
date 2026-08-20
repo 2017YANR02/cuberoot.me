@@ -51,7 +51,7 @@
  * model in `cube/sq1_state.ts`.
  */
 
-import { GSolver, matches } from './gsolver';
+import { GSolver, matches } from '@/lib/cstimer-gsolver';
 
 // ---- Move set ----
 

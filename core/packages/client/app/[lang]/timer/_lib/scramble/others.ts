@@ -15,7 +15,7 @@
  */
 
 import { solvePyra } from '../solver/pyra';
-import { solveSkewb } from '../solver/skewb';
+import { solveSkewb } from '@/lib/skewb-face-solver';
 import { scrambleSq1RandomState } from './sq1_rs';
 
 const SUFFIX2 = ['', "'"];

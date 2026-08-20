@@ -15,7 +15,7 @@
  * DBL corner). cstimer uses the same.
  */
 
-import { GSolver, matches } from './gsolver';
+import { GSolver, matches } from '@/lib/cstimer-gsolver';
 import { parseScramble } from '../cube/moves';
 
 export const SOLVED_2X2 = 'UUUURRRRFFFFDDDDLLLLBBBB';

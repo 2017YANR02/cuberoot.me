@@ -16,7 +16,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Star, ChevronRight } from 'lucide-react';
 import { solve2x2, solve2x2Face } from '../_lib/solver/cube2x2';
 import { solvePyra, solvePyraV } from '../_lib/solver/pyra';
-import { solveSkewb, solveSkewbFace } from '../_lib/solver/skewb';
+import { solveSkewb, solveSkewbFace } from '@/lib/skewb-face-solver';
 import { cstimerSolveByKey } from '@/lib/cstimer-scramble';
 import { sq1MoveCounts } from '@/lib/sq1-metrics';
 import { solveMega, type MegaSolveResult } from '../_lib/solver/mega';
