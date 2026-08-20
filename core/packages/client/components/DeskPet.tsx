@@ -814,9 +814,18 @@ export default function DeskPet() {
     let clicks = 0;
     let clickTimer: ReturnType<typeof setTimeout> | undefined;
     let touchActionsTimer: ReturnType<typeof setTimeout> | undefined;
+    const revealTouchActions = () => {
+      clearTimeout(touchActionsTimer);
+      setTouchActionsVisible(true);
+      touchActionsTimer = setTimeout(() => setTouchActionsVisible(false), 3000);
+    };
     const onClick = () => {
       if (suppressClick) { suppressClick = false; return; }
       if (dragging) return;
+      // Keep the touch-only dismiss action and search open in this same click.
+      // Updating the DOM during pointerup can cancel iOS's trailing click,
+      // making the first tap reveal only the dismiss action.
+      if (lastTouch) revealTouchActions();
       if (dnd || asleep) { exitRest(); return; }
       // In cling mode a tap just opens search (no multi-click react poses).
       if (mini) { openSearch(); return; }
@@ -885,10 +894,6 @@ export default function DeskPet() {
           right: parseInt(root.style.right || '20', 10),
           bottom: parseInt(root.style.bottom || '20', 10),
         }));
-      } else if (e.pointerType !== 'mouse') {
-        clearTimeout(touchActionsTimer);
-        setTouchActionsVisible(true);
-        touchActionsTimer = setTimeout(() => setTouchActionsVisible(false), 3000);
       }
       if (!dnd && !mini) { setState('idle', true); resetIdle(); }
     };
