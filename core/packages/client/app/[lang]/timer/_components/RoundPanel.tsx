@@ -19,8 +19,8 @@ import { RotateCcw } from 'lucide-react';
 import type { Solve, EventId } from '../_lib/types';
 import { effectiveMs } from '../_lib/types';
 import { formatMs, formatEventMs } from '../_lib/stats';
-import type { RoundConfig, RoundAttempt } from '../_lib/round';
-import { roundResult, roundProjection } from '../_lib/round';
+import type { RoundConfig, RoundAttempt } from '@cuberoot/shared/timer';
+import { roundResult, roundProjection } from '@cuberoot/shared/timer';
 import { tr, useLang } from '@/i18n/tr';
 
 export interface RoundPanelProps {

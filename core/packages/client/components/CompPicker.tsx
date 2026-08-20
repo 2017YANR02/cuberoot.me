@@ -39,6 +39,9 @@ interface Props {
   /** Hide competitions that haven't started yet (start_date > today). For
    *  reconstructing past solves, an upcoming comp is never a valid pick. */
   hideFuture?: boolean;
+  /** Hide competitions whose recorded end date is after today. The caller must
+   *  still verify that official results have actually been published. */
+  hideNotEnded?: boolean;
   /** Drop cancelled comps (isCancelledComp: empty events + long past) from
    *  suggestions entirely rather than strike them through. A cancelled comp has
    *  no results to reconstruct, so recon never offers it as a pick. */
@@ -50,7 +53,7 @@ interface Props {
   restrictComps?: Comp[];
 }
 
-export function CompPicker({ value, onChange, onPick, placeholder, isZh, className, disableSuggestions, presets, onUrlPaste, hideFuture, hideCancelled, restrictComps }: Props) {
+export function CompPicker({ value, onChange, onPick, placeholder, isZh, className, disableSuggestions, presets, onUrlPaste, hideFuture, hideNotEnded, hideCancelled, restrictComps }: Props) {
   const [comps, setComps] = useState<Comp[] | null>(null);
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<Comp[]>([]);
@@ -106,9 +109,13 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
   useEffect(() => {
     let cancelled = false;
     if (!open) { setResults([]); return; }
-    const dropCancelled = (arr: Comp[]) => hideCancelled ? arr.filter(c => !isCancelledComp(c)) : arr;
+    const today = new Date().toISOString().slice(0, 10);
+    const dropIneligible = (arr: Comp[]) => arr.filter((c) => (
+      (!hideCancelled || !isCancelledComp(c))
+      && (!hideNotEnded || !c.end_date || c.end_date <= today)
+    ));
     if (restrictComps) {
-      setResults(dropCancelled(value.trim() ? searchComps(value, restrictComps, 20) : restrictComps.slice(0, 20)));
+      setResults(dropIneligible(value.trim() ? searchComps(value, restrictComps, 20) : restrictComps.slice(0, 20)));
       return;
     }
     if (!value.trim()) { setResults([]); return; }
@@ -118,10 +125,10 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
       const pool = hideFuture
         ? data.filter(c => !c.start_date || c.start_date <= new Date().toISOString().slice(0, 10))
         : data;
-      setResults(dropCancelled(searchComps(value, pool, 20)));
+      setResults(dropIneligible(searchComps(value, pool, 20)));
     })();
     return () => { cancelled = true; };
-  }, [value, open, ensureLoaded, hideFuture, hideCancelled, restrictComps]);
+  }, [value, open, ensureLoaded, hideFuture, hideNotEnded, hideCancelled, restrictComps]);
 
   const handlePick = (c: Comp) => {
     onPick(c);

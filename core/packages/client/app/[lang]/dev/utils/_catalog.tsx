@@ -315,6 +315,23 @@ export const CATALOG: UtilEntry[] = [
     zh: '紧凑日期区间,同月只显示尾日。',
     en: 'Compact date range; same-month collapses to the end day.',
   },
+  {
+    name: 'parseTimerEntry',
+    sig: 'parseTimerEntry(input: string): { ms: number; penalty: Penalty } | null',
+    imp: "import { parseTimerEntry } from '@cuberoot/shared/timer';",
+    usage: "parseTimerEntry('12.34+2') // { ms: 12340, penalty: '+2' }",
+    category: 'format',
+    zh: '统一解析手动计时输入，支持秒、分:秒、DNF 与 +2。',
+    en: 'Parse manual timer input consistently, including seconds, minutes, DNF and +2.',
+  },
+  {
+    name: 'decodeTimerSolve',
+    sig: 'decodeTimerSolve(value: unknown, event: EventId): Solve | null',
+    imp: "import { decodeTimerSolve } from '@cuberoot/shared/timer';",
+    category: 'format',
+    zh: '从未知的持久化数据安全恢复计时成绩，非法结构返回 null。',
+    en: 'Safely restore a timer solve from unknown persisted data; invalid structures return null.',
+  },
 
   // ── wca ───────────────────────────────────
   {
@@ -352,6 +369,23 @@ export const CATALOG: UtilEntry[] = [
     category: 'wca',
     zh: 'round_type_id → 简短轮次标签。',
     en: 'round_type_id → short round label.',
+  },
+  {
+    name: 'roundChronologicalOrder',
+    sig: 'roundChronologicalOrder(roundTypeId: string): number',
+    imp: "import { roundChronologicalOrder } from '@cuberoot/shared';",
+    usage: "['f', '1', 'h'].sort((a, b) => roundChronologicalOrder(a) - roundChronologicalOrder(b))",
+    category: 'wca',
+    zh: '按完整 WCA 轮次顺序排序，保留资格赛、B 决赛与决赛的独立位置。',
+    en: 'Sort by the full WCA round sequence while keeping qualification, B Final and Final distinct.',
+  },
+  {
+    name: 'roundResult',
+    sig: 'roundResult(solves: Solve[], config: RoundConfig): RoundResult',
+    imp: "import { roundResult } from '@cuberoot/shared/timer';",
+    category: 'wca',
+    zh: '统一计算 WCA 轮次成绩，覆盖赛制、及格线、单次与累计时限。',
+    en: 'Compute a WCA round result consistently across formats, cutoffs, per-attempt and cumulative limits.',
   },
   {
     name: 'localizeCompName',

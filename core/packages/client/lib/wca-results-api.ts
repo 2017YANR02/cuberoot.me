@@ -10,10 +10,11 @@ import type { WcaResultRow as WcaPersonResultRow } from './wca-person-api';
 
 /** Recon round (`1`/`2`/`3`/`f`) → WCA round_type_id variants (incl. combined / cutoff). */
 export const ROUND_VARIANTS: Record<string, string[]> = {
-  '1': ['1', 'b', 'd'],
+  '0': ['0', 'h'],
+  '1': ['1', 'd'],
   '2': ['2', 'e'],
   '3': ['3', 'g'],
-  'f': ['f', 'c', 'h'],
+  'f': ['f', 'c', 'b'],
 };
 
 export function matchRoundType(reconRound: string, wcaRoundTypeId: string): boolean {
@@ -21,7 +22,7 @@ export function matchRoundType(reconRound: string, wcaRoundTypeId: string): bool
   return variants ? variants.includes(wcaRoundTypeId) : wcaRoundTypeId === reconRound;
 }
 
-interface WcaResultRow {
+export interface WcaResultRow {
   id?: number | null;
   wca_id: string;
   competition_id: string;
@@ -32,11 +33,15 @@ interface WcaResultRow {
   best: number;
   average: number;
   pos: number;
+  name?: string;
+  country_iso2?: string;
+  best_index?: number;
+  worst_index?: number;
   regional_single_record?: string | null;
   regional_average_record?: string | null;
 }
 
-interface WcaRound {
+export interface WcaRound {
   id: number;
   roundTypeId: string;
   results: WcaResultRow[];
@@ -331,7 +336,7 @@ function loadCubingLive(compWcaId: string): Promise<CubingLiveData | null> {
 }
 
 // Locate one person's result row within a comp's live data for an event/round.
-// Primary match by round code (ROUND_VARIANTS: recon `f` → cubing `f`/`c`/`h`, etc.);
+// Primary match by round code (ROUND_VARIANTS: recon `f` → cubing `f`/`c`/`b`, etc.);
 // falls back to the round's best-single / average value when the code doesn't line up.
 async function findCubingLiveHit(
   compWcaId: string, reconEvent: string, round: string, personId: string,

@@ -18,7 +18,7 @@ import {
   roundCutoffMade,
   roundProjection,
   type RoundConfig,
-} from '@/app/[lang]/timer/_lib/round';
+} from '@cuberoot/shared/timer';
 import { bpa as statsBpa, wpa as statsWpa } from '@/app/[lang]/timer/_lib/stats';
 
 let seq = 0;
