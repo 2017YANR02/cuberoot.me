@@ -70,8 +70,21 @@ import {
 export type { BluetoothCubeStatus, CubeBrand } from './types';
 export type { CubeDriver, CubeDriverStartResult, GyroSink, GyroQuaternion, GyroVelocity } from './driver';
 import { isBluefy } from './env';
-export { detectBluetoothEnv, envAdvice, isBluefy } from './env';
-export type { BluetoothEnv, EnvAdvice } from './env';
+export {
+  clientEnvironmentLabel,
+  detectBluetoothEnv,
+  detectClientEnvironment,
+  envAdvice,
+  isBluefy,
+} from './env';
+export type {
+  BluetoothEnv,
+  ClientBrowser,
+  ClientEnvironment,
+  ClientNavigatorSnapshot,
+  ClientOS,
+  EnvAdvice,
+} from './env';
 export { BluetoothConnectError, CONNECT_STAGE_LABEL, describeError } from './connect_error';
 export type { ConnectStage } from './connect_error';
 export { mayUseMiniProgramBridge } from './miniprogram_bridge';

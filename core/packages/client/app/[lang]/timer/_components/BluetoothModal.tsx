@@ -11,7 +11,16 @@
  */
 
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
-import { detectBluetoothEnv, envAdvice, mayUseMiniProgramBridge, BluetoothConnectError, CONNECT_STAGE_LABEL, describeError } from '../_lib/bluetooth';
+import {
+  BluetoothConnectError,
+  CONNECT_STAGE_LABEL,
+  clientEnvironmentLabel,
+  describeError,
+  detectBluetoothEnv,
+  detectClientEnvironment,
+  envAdvice,
+  mayUseMiniProgramBridge,
+} from '../_lib/bluetooth';
 import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '../_lib/bluetooth';
 import { normalizeMac } from '../_lib/bluetooth/mac';
 import { Bluetooth, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
@@ -169,7 +178,7 @@ function ConnectFailure({ failure, inBluefy, busy, onShowAllDevices }: {
   );
 }
 
-export default function BluetoothModal({ isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac }: Props) {
+export default function BluetoothModal({ cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac }: Props) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile(480);
@@ -240,10 +249,11 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
     focusable?.focus();
   }, []);
 
+  const clientEnvironment = detectClientEnvironment();
   const env = detectBluetoothEnv();
   const advice = envAdvice(env);
   const miniProgramBridge = mayUseMiniProgramBridge();
-  const supported = miniProgramBridge || env === 'available' || env === 'available-bluefy';
+  const canConnect = miniProgramBridge || env === 'available' || env === 'available-bluefy';
   const inBluefy = env === 'available-bluefy';
   const connected = cube.status.connected;
 
@@ -284,6 +294,15 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
           <Bluetooth size={20} />
           <span>{tr({ zh: '智能魔方', en: 'Smart cube' })}</span>
         </h2>
+
+        {!macPrompt && !connected && (
+          <p className="bt-tip" style={{ margin: '0 0 10px' }}>
+            {tr({ zh: '检测到：', en: 'Detected: ' })}
+            <strong style={{ color: 'var(--foreground)' }}>
+              {tr(clientEnvironmentLabel(clientEnvironment))}
+            </strong>
+          </p>
+        )}
 
         {macPrompt && (
           <div className="modal-section">
@@ -337,7 +356,7 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
           </div>
         )}
 
-        {!macPrompt && !supported && advice && (
+        {!macPrompt && !connected && !canConnect && advice && (
           <>
             <div className="modal-section bt-warn">
               <h3 className="bt-warn-title">{tr(advice.title)}</h3>
@@ -352,18 +371,20 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
                   rel="noopener noreferrer"
                 >
                   <ExternalLink size={14} />
-                  <span>{isZh ? advice.urlLabel?.zh ?? advice.url : advice.urlLabel?.en ?? advice.url}</span>
+                  <span>{advice.urlLabel ? tr(advice.urlLabel) : advice.url}</span>
                 </a>
               </div>
             )}
-            <div className="modal-section bt-tip">
-              <p>{tr({ zh: '提示：在 Bluefy 里访问本页后，把它"添加到主屏幕"就能像 App 一样随时打开。', en: 'Tip: once Bluefy loads this page, "Add to Home Screen" so it opens like a native app.'
-            })}</p>
-            </div>
+            {clientEnvironment.os === 'ios' && advice.url && (
+              <div className="modal-section bt-tip">
+                <p>{tr({ zh: '提示：在 Bluefy 里访问本页后，把它“添加到主屏幕”就能像 App 一样随时打开。', en: 'Tip: once Bluefy loads this page, “Add to Home Screen” so it opens like a native app.'
+              })}</p>
+              </div>
+            )}
           </>
         )}
 
-        {supported && inBluefy && !connected && (
+        {canConnect && inBluefy && !connected && (
           <div className="modal-section bt-tip" style={{ marginBottom: 8 }}>
             <p style={{ color: 'var(--signal-success)' }}>
               <Check size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
@@ -373,7 +394,7 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
           </div>
         )}
 
-        {supported && !connected && !macPrompt && (
+        {canConnect && !connected && !macPrompt && (
           <div className="modal-section">
             <p>{tr({ zh: '点击下方按钮，选择并连接你的智能魔方。', en: 'Click below to choose and connect your smart cube.'
             })}</p>
@@ -417,7 +438,7 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
           </div>
         )}
 
-        {supported && connected && (
+        {connected && (
           <>
             <div className="modal-section bt-connected-summary">
               <div className="bt-connected-primary">
@@ -451,7 +472,7 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
           </>
         )}
 
-        {supported && connected && (
+        {connected && (
           <div
             className="modal-actions"
             style={isMobile ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}

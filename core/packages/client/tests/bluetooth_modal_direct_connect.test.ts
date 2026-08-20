@@ -82,6 +82,55 @@ describe('BluetoothModal direct connection attempt', () => {
     expect(host.textContent).not.toContain('Bluefy');
   });
 
+  it('shows the detected Android browser and a useful fallback when it lacks Bluetooth', async () => {
+    Object.defineProperty(navigator, 'bluetooth', {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(navigator, 'userAgent', {
+      configurable: true,
+      value: 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/121.0 Mobile Safari/537.36 SamsungBrowser/25.0',
+    });
+
+    await act(async () => {
+      root.render(createElement(BluetoothModal, {
+        isZh: false,
+        cube: disconnectedCube,
+        onClose: vi.fn(),
+        onConnect: vi.fn(() => Promise.resolve()),
+      }));
+    });
+
+    expect(host.textContent).toContain('Detected: Android, Samsung Internet');
+    expect(host.textContent).toContain('This Android browser has no Web Bluetooth');
+    expect(host.querySelector('.bt-connect-btn')).toBeNull();
+    expect(host.textContent).not.toContain('Install Bluefy');
+  });
+
+  it('shows an OpenHarmony-specific fallback for ArkWeb without the API', async () => {
+    Object.defineProperty(navigator, 'bluetooth', {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(navigator, 'userAgent', {
+      configurable: true,
+      value: 'Mozilla/5.0 (Phone;OpenHarmony 6.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 ArkWeb/6.0.0.42 Mobile',
+    });
+
+    await act(async () => {
+      root.render(createElement(BluetoothModal, {
+        isZh: false,
+        cube: disconnectedCube,
+        onClose: vi.fn(),
+        onConnect: vi.fn(() => Promise.resolve()),
+      }));
+    });
+
+    expect(host.textContent).toContain('Detected: HarmonyOS / OpenHarmony, ArkWeb');
+    expect(host.textContent).toContain('This HarmonyOS browser cannot connect to the cube');
+    expect(host.querySelector('.bt-connect-btn')).toBeNull();
+  });
+
   it('shows progress and owns errors from a connection started by the icon click', async () => {
     let rejectAttempt!: (reason: unknown) => void;
     const connectAttempt = new Promise<void>((_resolve, reject) => {
