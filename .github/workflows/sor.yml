@@ -225,6 +225,16 @@ jobs:
         run: |
           set -euo pipefail
           SSH="ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i $HOME/.ssh/sor_id $DEPLOY_USER@$DEPLOY_HOST"
+          cleanup_remote() {
+            $SSH '
+              dir=/tmp/sor_import
+              if [ -e "$dir" ]; then
+                [ -d "$dir" ] && [ ! -L "$dir" ] && [ "$(readlink -f -- "$dir")" = "$dir" ] || exit 1
+                rm -rf -- "$dir"
+              fi
+            ' || true
+          }
+          trap cleanup_remote EXIT
           $SSH 'mkdir -p /tmp/sor_import && rm -rf /tmp/sor_import/*'
           scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/sor_id \
             import/load.sql import/*.copy.tsv "$DEPLOY_USER@$DEPLOY_HOST:/tmp/sor_import/"

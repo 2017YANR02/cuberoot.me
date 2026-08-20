@@ -1,7 +1,7 @@
-# 部署 nginx vhost conf 到 cuberoot.me。
-# 改 ops/nginx/*.conf → push → 自动 scp + nginx -t + reload。
+# 部署 nginx vhost conf 与主机日志保留策略。
+# 改 ops/nginx/*.conf / ops/logrotate/nginx / ops/journald/* → push → 自动校验并应用。
 # 失败自动回滚到 .bak。
-name: Deploy Nginx Config
+name: Deploy Web Ops Config
 
 on:
   workflow_dispatch:
@@ -9,6 +9,8 @@ on:
     branches: [main]
     paths:
       - 'ops/nginx/**'
+      - 'ops/logrotate/nginx'
+      - 'ops/journald/**'
       - '.github/workflows/deploy_nginx.yml'
 
 jobs:
@@ -37,6 +39,10 @@ jobs:
             scp -i ~/.ssh/id "$f" \
               "$DEPLOY_USER@$DEPLOY_HOST:/tmp/${name}.new"
           done
+          scp -i ~/.ssh/id ops/logrotate/nginx \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/nginx.logrotate.new"
+          scp -i ~/.ssh/id ops/journald/10-cuberoot-disk-cap.conf \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-journald.new"
 
       - name: Apply + validate + reload (with rollback on failure)
         env:
@@ -95,4 +101,68 @@ jobs:
 
           nginx -s reload
           echo "OK: nginx reloaded; backups at ${VHOST_DIR}/*.bak-${TS}"
+          REMOTE
+
+      - name: Apply logrotate policy (with validation and rollback)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          set -euo pipefail
+          STAGING=/tmp/nginx.logrotate.new
+          LIVE=/etc/logrotate.d/nginx
+          BACKUP="${LIVE}.bak-$(date +%s)"
+          trap 'rm -f -- "$STAGING"' EXIT
+
+          test -s "$STAGING"
+          logrotate --debug "$STAGING" >/dev/null 2>&1
+          if [ -f "$LIVE" ] && cmp -s "$LIVE" "$STAGING"; then
+            echo "no-op: logrotate policy already matches"
+            exit 0
+          fi
+
+          cp "$LIVE" "$BACKUP"
+          install -m 0644 "$STAGING" "$LIVE"
+          if ! logrotate --debug "$LIVE" >/dev/null 2>&1; then
+            cp "$BACKUP" "$LIVE"
+            echo "ERROR: logrotate validation failed; restored $BACKUP" >&2
+            exit 1
+          fi
+          echo "OK: logrotate policy applied; backup at $BACKUP"
+          REMOTE
+
+      - name: Apply journald disk cap (with validation and rollback)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          set -euo pipefail
+          STAGING=/tmp/cuberoot-journald.new
+          LIVE=/etc/systemd/journald.conf.d/10-cuberoot-disk-cap.conf
+          BACKUP="${LIVE}.bak-$(date +%s)"
+          trap 'rm -f -- "$STAGING"' EXIT
+
+          test -s "$STAGING"
+          install -d -m 0755 /etc/systemd/journald.conf.d
+          if [ -f "$LIVE" ] && cmp -s "$LIVE" "$STAGING"; then
+            echo "no-op: journald disk cap already matches"
+            exit 0
+          fi
+
+          HAD_LIVE=0
+          if [ -f "$LIVE" ]; then
+            cp "$LIVE" "$BACKUP"
+            HAD_LIVE=1
+          fi
+          install -m 0644 "$STAGING" "$LIVE"
+          if ! systemd-analyze cat-config systemd/journald.conf >/dev/null; then
+            if [ "$HAD_LIVE" -eq 1 ]; then cp "$BACKUP" "$LIVE"; else rm -f "$LIVE"; fi
+            echo "ERROR: journald config validation failed; rolled back" >&2
+            exit 1
+          fi
+          systemctl restart systemd-journald
+          journalctl --vacuum-size=512M >/dev/null
+          echo "OK: journald disk cap applied"
           REMOTE
