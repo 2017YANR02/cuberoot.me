@@ -309,7 +309,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   },
   'sheets/edit': { title: { zh: '编辑协作表格', en: 'Edit Collaborative Spreadsheet' } },
   'eocross_trainer': { title: { zh: 'EO 十字训练', en: 'EOCross Trainer' } },
-  'feedback': { title: { zh: '我的反馈', en: 'My feedback' } },
+  'feedback': {
+    title: { zh: '反馈', en: 'Feedback' },
+    description: {
+      zh: '公开查看 CubeRoot 反馈、进展与回复,登录后可提交反馈或参与讨论。',
+      en: 'Browse public CubeRoot feedback, progress, and replies, then sign in to submit or join the discussion.',
+    },
+  },
   'feedback/admin': { title: { zh: '反馈审核', en: 'Feedback' } },
   'forum': {
     title: { zh: '论坛', en: 'Forum' },
