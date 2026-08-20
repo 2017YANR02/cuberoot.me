@@ -37,8 +37,17 @@ function errorText(error: unknown): string {
   if (code === 'rate-limit') {
     return tr({ zh: '操作过于频繁，请稍后再试。', en: 'Too many attempts. Please try again shortly.' });
   }
+  if (code === 'sdk-2') {
+    return tr({
+      zh: '无法连接电脑微信。请在浏览器的网站权限中允许“本地网络访问”，并关闭全局代理后重试。',
+      en: 'Cannot connect to WeChat desktop. Allow Local network access in this site\'s browser permissions and disable any global proxy, then try again.',
+    });
+  }
   if (code === 'sdk-timeout' || code === 'sdk-6') {
-    return tr({ zh: '等待电脑微信响应超时，请确认微信已登录并解锁。', en: 'WeChat desktop did not respond. Make sure it is signed in and unlocked.' });
+    return tr({
+      zh: '连接电脑微信超时。请允许浏览器访问本地网络，并确认电脑微信已登录、解锁且未开启全局代理。',
+      en: 'Connection to WeChat desktop timed out. Allow local network access, and make sure WeChat is signed in, unlocked, and no global proxy is enabled.',
+    });
   }
   return tr({ zh: '暂时无法调用电脑微信，请稍后重试。', en: 'WeChat desktop is temporarily unavailable. Please try again.' });
 }
@@ -70,7 +79,10 @@ export function WeChatPcShareModal({ onClose }: { onClose: () => void }) {
       await shareCurrentPageToWeChat(scene);
       if (!mountedRef.current) return;
       setState('success');
-      setMessage(tr({ zh: '已交给电脑微信，请在微信窗口中完成分享。', en: 'Sent to WeChat desktop. Finish sharing in the WeChat window.' }));
+      setMessage(tr({
+        zh: '微信分享调用已发起，请在电脑微信中查看并继续。',
+        en: 'The WeChat share action was triggered. Continue in WeChat desktop.',
+      }));
     } catch (error) {
       if (!mountedRef.current) return;
       setState('error');
