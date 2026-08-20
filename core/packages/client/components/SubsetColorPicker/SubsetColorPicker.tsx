@@ -228,6 +228,51 @@ export function useSubsetSelection(initialMode: ColorMode = 'cn', initialSubsetK
   }, [colorMode, singleColor, dualPairKey, quadExcludedPairKey]);
 }
 
+/**
+ * 把底色选择器与 URL 参数双向同步。URL 水合 / 前进后退时以 URL 为准，用户点选时再写回 URL。
+ * 两条普通 effect 直接互写会在客户端初次水合的短暂不一致上交替回滚；这里用 ref 标记
+ * 「本次状态变化来自 URL」，让一次同步只有一个方向。
+ */
+export function useUrlSubsetSelection(
+  initialMode: ColorMode,
+  urlSubsetKey: string | null,
+  setUrlSubsetKey: (key: string | null) => void,
+): SubsetSelection {
+  const allColorsKey = subsetKeyFromLetters(COLOR_LETTERS);
+  const sortedUrlKey = urlSubsetKey
+    ? subsetKeyFromLetters(urlSubsetKey.split('').filter(
+      (color): color is ColorLetter => (COLOR_LETTERS as readonly string[]).includes(color),
+    ))
+    : allColorsKey;
+  const normalizedUrlKey = MODE_ORDER.some((mode) =>
+    subsetOptionsFor(mode).some((option) => option.key === sortedUrlKey))
+    ? sortedUrlKey
+    : allColorsKey;
+  const sel = useSubsetSelection(initialMode, normalizedUrlKey);
+  const applyingUrlRef = useRef(false);
+  const setUrlSubsetKeyRef = useRef(setUrlSubsetKey);
+  setUrlSubsetKeyRef.current = setUrlSubsetKey;
+
+  useEffect(() => {
+    if (normalizedUrlKey === sel.subsetKey) return;
+    applyingUrlRef.current = true;
+    sel.selectByKey(normalizedUrlKey);
+    // selectByKey is derived from the current picker state; the URL key is the trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedUrlKey]);
+
+  useEffect(() => {
+    if (applyingUrlRef.current) {
+      if (normalizedUrlKey === sel.subsetKey) applyingUrlRef.current = false;
+      return;
+    }
+    if (normalizedUrlKey === sel.subsetKey) return;
+    setUrlSubsetKeyRef.current(sel.subsetKey === allColorsKey ? null : sel.subsetKey);
+  }, [normalizedUrlKey, sel.subsetKey]);
+
+  return sel;
+}
+
 // allOption:可选的「综合」档(合并全部底色档)。仅首页概率视图传入 —— stats / StageSolver / 类型视图
 // 都是「选一个档」的语境,不传就完全不出现这一项(菜单/触发按钮均无变化)。active 时触发钮显示「综合」
 // 文字、菜单里该整行高亮,其余色块不高亮(调用方把 sel.subsetKey 置空即可)。

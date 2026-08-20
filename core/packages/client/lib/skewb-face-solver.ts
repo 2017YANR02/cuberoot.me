@@ -19,9 +19,15 @@
  * variants for the face solver; we don't need them for the full solve.
  */
 
-import { GSolver, matches } from './gsolver';
+import { GSolver } from './cstimer-gsolver';
+import {
+  SKEWB_MOVE_NAMES,
+  SOLVED_SKEWB_FACELET,
+  skewbFaceletFromMoves,
+  solveSkewbFacelet,
+} from './skewb-solver';
 
-export const SOLVED_SKEWB = 'UUUUURRRRRFFFFFDDDDDLLLLLBBBBB';
+export const SOLVED_SKEWB = SOLVED_SKEWB_FACELET;
 
 // Sticker indices kept for readability of the cycle tables below; the
 // trailing `void` statements satisfy noUnusedLocals.
@@ -109,14 +115,6 @@ export function applySkewbScramble(scramble: string, start: string = SOLVED_SKEW
 
 // --- Solvers (lazy singletons) ---
 
-let fullSolver: GSolver | null = null;
-function getFullSolver(): GSolver {
-  if (!fullSolver) {
-    fullSolver = new GSolver([SOLVED_SKEWB], skewbMove, MOVES_SKEWB);
-  }
-  return fullSolver;
-}
-
 // Face solver: for each face, the cstimer "Skewb Face" target asks for that
 // face fully solved + the 4 adjacent face's two-corner stripes that face it.
 // Targets verbatim from cstimer (face order U R F D L B):
@@ -144,19 +142,13 @@ function getFaceSolver(): GSolver {
 
 /** Optimal full Skewb solve. */
 export function solveSkewb(scramble: string): { moves: string[]; length: number } {
-  const state = applySkewbScramble(scramble);
-  if (matches(state, SOLVED_SKEWB)) return { moves: [], length: 0 };
-  const solver = getFullSolver();
-  // Skewb god's number is 11 in HTM (with 4 axes & 2 directions = 8 moves).
-  const sol = solver.search(state, 0, 12);
-  const moves = sol ?? [];
-  return { moves, length: moves.length };
+  const result = solveSkewbFacelet(skewbFaceletFromMoves(scramble));
+  return { moves: result.moves.map((move) => SKEWB_MOVE_NAMES[move]), length: result.length };
 }
 
 /** Solve each of the 6 faces (Skewb Face — make face + adjacent stripes
  *  match the cstimer target). Returns one entry per face. */
 export function solveSkewbFace(scramble: string): { face: string; moves: string[] }[] {
-  const state = applySkewbScramble(scramble);
   const solver = getFaceSolver();
   const out: { face: string; moves: string[] }[] = [];
   for (let i = 0; i < 6; i++) {
@@ -169,7 +161,6 @@ export function solveSkewbFace(scramble: string): { face: string; moves: string[
     }
     const sol = solver.search(templated, 0, 11);
     out.push({ face: FACE_NAMES[i], moves: sol ?? [] });
-    void state;
   }
   return out;
 }
@@ -179,10 +170,9 @@ export function solveSkewbFace(scramble: string): { face: string; moves: string[
 export function __skewbSelfTest(): string {
   const scramble = "R U' L' B R' L U' B'";
   const r = solveSkewb(scramble);
-  let s = applySkewbScramble(scramble);
-  for (const m of r.moves) s = skewbMove(s, m);
-  if (!matches(s, SOLVED_SKEWB)) {
-    throw new Error(`skewb full solve failed: ${s}`);
+  const final = skewbFaceletFromMoves(`${scramble} ${r.moves.join(' ')}`);
+  if (solveSkewbFacelet(final).length !== 0) {
+    throw new Error(`skewb full solve failed: ${final}`);
   }
   const fr = solveSkewbFace(scramble);
   if (fr.length !== 6) throw new Error(`expected 6 faces, got ${fr.length}`);

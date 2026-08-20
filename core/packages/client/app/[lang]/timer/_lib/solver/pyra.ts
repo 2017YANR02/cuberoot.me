@@ -24,7 +24,7 @@
  * "2" amount because 2× a 120° move equals "'".
  */
 
-import { GSolver, matches } from './gsolver';
+import { GSolver, matches } from '@/lib/cstimer-gsolver';
 import { parseScramble } from '../cube/moves';
 
 // 24-char state: F R L D, 6 stickers each.

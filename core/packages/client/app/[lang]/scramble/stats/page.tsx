@@ -17,6 +17,7 @@ import BicDistView from './_components/BicDistView';
 import Essential2x2View from './_components/Essential2x2View';
 import { ESS_STAT_DATASETS, ESS_STAT_SLUGS, type EssStatSlug } from '@/lib/essential-2x2';
 import PyraminxEssentialView from './_components/PyraminxEssentialView';
+import SkewbFirstLayerDistView from './_components/SkewbFirstLayerDistView';
 import ScrambleLengthView, {
   type EventLengthsJson, type EventLengthsAvgJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
 } from './_components/ScrambleLengthView';
@@ -64,7 +65,7 @@ import {
 import { VariantSelect } from '@/components/VariantSelect';
 import SolveTabs, { type SolvePuzzle } from '../_components/SolveTabs';
 import {
-  SubsetColorPicker, useSubsetSelection, fillColorsForSubset,
+  SubsetColorPicker, useUrlSubsetSelection, fillColorsForSubset,
   COLOR_HEX, type ColorLetter,
 } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import './scramble_stats.css';
@@ -311,12 +312,13 @@ function computeStats(counts: Record<string, number>) {
   };
 }
 
-// 2×2 / 金字塔的难度数据源。一个下拉装下全部 9 档(原先「数据源 3 档 + 面板内数据集 6 档」
+// 2×2 / 金字塔 / 斜转的难度数据源。一个下拉装下整解与局部目标；每个项目只露适用档。
+// 2×2 一个下拉装下全部 9 档(原先「数据源 3 档 + 面板内数据集 6 档」
 // 两个菜单已合并 —— 它们本就不是正交的两个轴,每一档其实都是一组(总体, 统计量)):
 //   整解 3 档:'wca'(WCA 真题采样)/ 'all'(全部 3,674,160 个状态)/ 'ess'(去重后 77,801 个本质状态)
 //   局部目标 6 档:ESS_STAT_SLUGS(底面 / 底层 / 两角块;分母是商或子集,各档自报口径)
 // 用 <optgroup> 分成两组,免得读者把 9 项读成并列的数据源。仅 2×2 有局部目标档(金字塔只有 3 档)。
-type EssSrc = 'wca' | 'all' | 'ess' | EssStatSlug;
+type EssSrc = 'wca' | 'all' | 'ess' | 'skewb-fl' | EssStatSlug;
 
 // 仅在独立 /scramble/stats 页接管浏览器标题。嵌入求解页时不渲染本组件 ——
 // 否则它的 useDocumentTitle 会和求解器的标题互相覆盖(且 cleanup 把标题重置成品牌名)。
@@ -378,15 +380,14 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const [logY, setLogY] = useQueryState(k('log'), parseAsBoolean.withDefault(false));
   // 底色子集进 URL(?colors):首次挂载从 URL 还原,之后 subsetKey 变化写回(filter → replace)。
   const [colorsParam, setColorsParam] = useQueryState(k('colors'), parseAsString);
-  const sel = useSubsetSelection('cn', colorsParam ?? undefined);
+  const sel = useUrlSubsetSelection('cn', colorsParam, (key) => { void setColorsParam(key); });
   // 图表显示口径也进 URL:y 轴(百分比/数量,?y)、曲线(pdf/cdf,?chart)。
   const [yMode, setYMode] = useQueryState(k('y'), parseAsStringEnum<YMode>(['percent', 'count']).withDefault('percent'));
   const [chartMode, setChartMode] = useQueryState(k('chart'), parseAsStringEnum<ChartMode>(['pdf', 'cdf']).withDefault('pdf'));
-  // 2×2 难度数据源:WCA 真题采样(默认)/ 所有本质状态(全 3,674,160 态精确统计)。仅 event=222 有意义。
-  // 数据源(9 档,见 EssSrc 注释)。旧深链 ?dsrc=all / ?dsrc=wca 语义不变。
+  // 小魔方难度数据源(见 EssSrc 注释)。旧深链 ?dsrc=all / ?dsrc=wca 语义不变。
   const [essSrc, setEssSrc] = useQueryState(
     k('src'),
-    parseAsStringEnum<EssSrc>(['wca', 'all', 'ess', ...ESS_STAT_SLUGS]).withDefault('wca'),
+    parseAsStringEnum<EssSrc>(['wca', 'all', 'ess', 'skewb-fl', ...ESS_STAT_SLUGS]).withDefault('wca'),
   );
   // 组平均(?avg):观测单位 = 一组打乱的平均(某场某轮某组);备打开关(?avgx)仅 avg 时露。
   // filter 性质 → replace。数据懒加载(默认页不拉,省流量)。
@@ -429,21 +430,6 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   useEffect(() => {
     void loadFlagData().then((v) => { if (v !== flagVer) setFlagVer(v); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // 底色子集 → 写回 ?colors(六色默认省略,filter → replace)。
-  useEffect(() => {
-    void setColorsParam(sel.subsetKey === 'BGORWY' ? null : sel.subsetKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sel.subsetKey]);
-
-  // ?colors → 底色子集。选择器的状态在 useSubsetSelection 内部,URL 只在挂载时给过初值;
-  // 少了这一路,任何**不经过选择器**的 URL 变化(覆盖矩阵的深链、浏览器前进后退)都只换地址
-  // 不换图。两路各自带等值判断,不会来回打架。
-  useEffect(() => {
-    const want = colorsParam ?? 'BGORWY';
-    if (want !== sel.subsetKey) sel.selectByKey(want);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [colorsParam]);
 
   useEffect(() => {
     // v= bump:2026-06-14 333 整解最优注入真实产出(240 雏形 → 226,965 样本),防缓存旧 JSON
@@ -911,8 +897,18 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   // 非 3x3 puzzle 项目:难度 tab 显示 puzzle 整解分布,3x3 专属的合并/数据集开关无意义,隐藏。
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
-  // 2×2 / 金字塔的精确枚举视图激活:难度 tab + 数据源切到 all(所有状态)或 ess(所有本质状态)。
-  const isEssential = tab === 'difficulty' && (event === '222' || event === 'pyram') && essSrc !== 'wca';
+  // 同一个 URL 键跨项目复用；项目切换后把不适用的旧值仅在显示层折回 WCA，避免白屏或菜单悬空。
+  const effectiveEssSrc: EssSrc = event === 'skewb'
+    ? (essSrc === 'skewb-fl' ? essSrc : 'wca')
+    : event === '222'
+      ? (essSrc === 'skewb-fl' ? 'wca' : essSrc)
+      : event === 'pyram'
+        ? (essSrc === 'all' || essSrc === 'ess' ? essSrc : 'wca')
+        : 'wca';
+  // 2×2 / 金字塔的精确枚举视图，及斜转底层全状态精确视图。
+  const isEssential = tab === 'difficulty' && (event === '222' || event === 'pyram') && effectiveEssSrc !== 'wca';
+  const isSkewbFirstLayer = tab === 'difficulty' && event === 'skewb' && effectiveEssSrc === 'skewb-fl';
+  const isTheoreticalPuzzleView = isEssential || isSkewbFirstLayer;
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -1031,7 +1027,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   // 图表 / 时间线视图开关(难度 + 长度共用);仅当当前选择支持时间线时出现。组平均模式下时间线不适用,隐藏。
   // 2×2「所有本质状态」是理论全空间统计,无「首次出现」时间线概念,隐藏该开关。
-  const viewToggle = canTimeline && !avgOn && !isEssential ? (
+  const viewToggle = canTimeline && !avgOn && !isTheoreticalPuzzleView ? (
     <div className="scramble-stats-view-toggle">
       <PillToggle
         value={viewMode === 'timeline'}
@@ -1130,7 +1126,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   // 工具栏三个切换钮(合并/分开、单次/平均、图表/时间线)共用一个说明气泡,而非各自一个「?」;
   // 按当前哪些钮实际渲染,只拼对应那几段说明。
-  const canShowTimelineToggle = canTimeline && !avgOn && !isEssential;
+  const canShowTimelineToggle = canTimeline && !avgOn && !isTheoreticalPuzzleView;
   const toggleInfoBits: string[] = [];
   if (showMergeToggle) {
     toggleInfoBits.push(tab === 'difficulty'
@@ -1189,27 +1185,33 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
                                   : event === 'sia123' ? 'sia123'
                                   : null;
 
-  // 2×2 / 金字塔:数据源下拉。与「难度/打乱长度」tab 同一行(和 tabsBar 语义/视觉上是同一组控件)。
+  // 2×2 / 金字塔 / 斜转:数据源下拉。与「难度/打乱长度」tab 同一行。
   // 页面唯一的数据源选择器:整解 3 档 + (仅 2×2)局部目标 6 档,optgroup 分组。每一档只渲染归属
   // 自己那一档的面板 —— 别再把不同总体的图上下堆在同一屏(用户读不出两张几乎重合的直方图差在哪)。
-  const hasEssential = tab === 'difficulty' && (event === '222' || event === 'pyram');
+  const hasEssential = tab === 'difficulty' && (event === '222' || event === 'pyram' || event === 'skewb');
   const has222Stats = event === '222';
   const ESS_SRC_LABEL: Record<string, { zh: string; en: string }> = {
     wca: { zh: 'WCA 真题', en: 'WCA' },
     all: { zh: '所有状态', en: 'All states' },
     ess: { zh: '所有本质状态', en: 'Essential states' },
+    'skewb-fl': { zh: '底层最优', en: 'Optimal first layer' },
     ...Object.fromEntries(ESS_STAT_DATASETS.map((d) => [d.slug, d.label])),
   };
   const srcToggle = hasEssential ? (
     <VariantSelect
       className="scramble-stats-select"
-      value={essSrc}
-      groups={has222Stats
+      value={effectiveEssSrc}
+      groups={event === 'skewb'
         ? [
-          { label: tr({ zh: '完整', en: 'Full solve' }), options: ['wca', 'all', 'ess'] },
-          { label: tr({ zh: '子集', en: 'Sub-goals (first face / layer)' }), options: ESS_STAT_SLUGS },
+          { label: tr({ zh: '整解', en: 'Full solve' }), options: ['wca'] },
+          { label: tr({ zh: '子目标', en: 'Sub-goals' }), options: ['skewb-fl'] },
         ]
-        : [{ label: tr({ zh: '完整', en: 'Full solve' }), options: ['wca', 'all', 'ess'] }]}
+        : has222Stats
+          ? [
+            { label: tr({ zh: '完整', en: 'Full solve' }), options: ['wca', 'all', 'ess'] },
+            { label: tr({ zh: '子集', en: 'Sub-goals (first face / layer)' }), options: ESS_STAT_SLUGS },
+          ]
+          : [{ label: tr({ zh: '完整', en: 'Full solve' }), options: ['wca', 'all', 'ess'] }]}
       onChange={(v) => setEssSrc(v as EssSrc)}
       isZh={isZh}
       label={(v) => tr(ESS_SRC_LABEL[v])}
@@ -1380,11 +1382,13 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       return (
         <div className="scramble-stats-page">
           {header}
-          {isEssential
+          {isSkewbFirstLayer
+            ? <SkewbFirstLayerDistView isZh={isZh} sel={sel} />
+            : isEssential
             ? (event === 'pyram'
               // 局部目标 6 档只有 2×2 有;金字塔若从 URL 拿到这些 slug,退回「所有状态」而不是白屏。
-              ? <PyraminxEssentialView isZh={isZh} pop={essSrc === 'ess' ? 'ess' : 'all'} />
-              : <Essential2x2View isZh={isZh} view={essSrc} />)
+              ? <PyraminxEssentialView isZh={isZh} pop={effectiveEssSrc === 'ess' ? 'ess' : 'all'} />
+              : <Essential2x2View isZh={isZh} view={effectiveEssSrc} />)
             : timelineActive
               ? timelineBlock
               : <PuzzleDistView isZh={isZh} puzzleKey={puzzleKey} />}

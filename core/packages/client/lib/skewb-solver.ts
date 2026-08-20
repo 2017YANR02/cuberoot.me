@@ -37,6 +37,16 @@ export const SKEWB_GODS_NUMBER = 11;
 /** 全空间态数(Jaap / WCA 通用值);建表时会实测校验。 */
 export const SKEWB_STATE_COUNT = 3_149_280;
 
+/** 选择器里的 WCA 配色字母 → facelet 中的还原面字母。 */
+export type SkewbColorLetter = 'W' | 'Y' | 'R' | 'O' | 'B' | 'G';
+export const SKEWB_COLOR_FACE: Readonly<Record<SkewbColorLetter, SkewbFace>> = {
+  W: 'U', Y: 'D', R: 'R', O: 'L', B: 'B', G: 'F',
+};
+
+export function skewbFacesForColors(colors: readonly SkewbColorLetter[]): SkewbFace[] {
+  return colors.map((color) => SKEWB_COLOR_FACE[color]);
+}
+
 /** 对面色(下标即面序):U↔D、R↔L、F↔B。 */
 const OPPOSITE: readonly number[] = [3, 4, 5, 0, 1, 2];
 
@@ -187,12 +197,23 @@ function buildCoord(slots: readonly number[]): Coord {
       for (let i = 0; i < n; i++) nxt[i] = cur[lp[i]];
       const k = coordKey(nxt);
       let id = index.get(k);
-      if (id === undefined) { id = states.length; index.set(k, id); states.push(nxt); }
+      if (id === undefined) {
+        id = states.length;
+        index.set(k, id);
+        states.push(nxt);
+      }
       moves[qi * MOVE_PERMS.length + m] = id;
     }
   }
 
-  return { slots, localPerm, index, states, moveTable: Int32Array.from(moves), n: states.length };
+  return {
+    slots,
+    localPerm,
+    index,
+    states,
+    moveTable: Int32Array.from(moves),
+    n: states.length,
+  };
 }
 
 export interface SkewbGraph {
@@ -204,6 +225,17 @@ export interface SkewbGraph {
 }
 
 let cached: SkewbGraph | null = null;
+let cachedCoords: { corner: Coord; center: Coord } | null = null;
+
+function skewbCoords(): { corner: Coord; center: Coord } {
+  if (!cachedCoords) {
+    cachedCoords = {
+      corner: buildCoord(SKEWB_CORNER_SLOTS),
+      center: buildCoord(SKEWB_CENTER_SLOTS),
+    };
+  }
+  return cachedCoords;
+}
 
 /** 判「某坐标状态的每一面都单色」——用来找出全部「看着已还原」的态(含整体旋转的那些)。 */
 function uniformFaceCandidates(c: Coord): number[] {
@@ -226,8 +258,7 @@ function uniformFaceCandidates(c: Coord): number[] {
 export function skewbGraph(): SkewbGraph {
   if (cached) return cached;
 
-  const corner = buildCoord(SKEWB_CORNER_SLOTS);
-  const center = buildCoord(SKEWB_CENTER_SLOTS);
+  const { corner, center } = skewbCoords();
   const total = corner.n * center.n;
   const nMoves = MOVE_PERMS.length;
 
@@ -282,6 +313,172 @@ export function skewbGraph(): SkewbGraph {
 
   cached = { corner, center, dist, total };
   return cached;
+}
+
+// ─── 底层目标:1 个中心 + 4 个相邻角(csTimer「Skewb Face」语义) ───
+
+interface SkewbLayerGeometry {
+  bottom: readonly number[];
+  sides: ReadonlyArray<readonly [number, number]>;
+}
+
+/**
+ * 每个物理底面的 4 张底贴 + 4 对侧贴。全部从角块划分反推,不手抄展开图槽位:
+ * 底层还原 = 底面四张贴纸同为目标色,且相邻四面上的两张底角贴纸分别同色。
+ */
+const SKEWB_LAYER_GEOMETRY: readonly SkewbLayerGeometry[] = SKEWB_FACES.map((_, bottomFace) => {
+  const touching = SKEWB_CORNER_BLOCKS.filter((block) =>
+    block.some((slot) => Math.floor(slot / SKEWB_SLOTS_PER_FACE) === bottomFace));
+  const bottom = touching.map((block) => {
+    const slot = block.find((s) => Math.floor(s / SKEWB_SLOTS_PER_FACE) === bottomFace);
+    if (slot === undefined) throw new Error('skewb-solver: 底层几何缺底贴');
+    return slot;
+  });
+  const sides: Array<readonly [number, number]> = [];
+  for (let sideFace = 0; sideFace < SKEWB_FACES.length; sideFace++) {
+    if (sideFace === bottomFace || sideFace === OPPOSITE[bottomFace]) continue;
+    const pair = touching.flatMap((block) => {
+      const slot = block.find((s) => Math.floor(s / SKEWB_SLOTS_PER_FACE) === sideFace);
+      return slot === undefined ? [] : [slot];
+    });
+    if (pair.length !== 2) throw new Error('skewb-solver: 底层几何侧贴不成对');
+    sides.push([pair[0], pair[1]]);
+  }
+  if (bottom.length !== 4 || sides.length !== 4) throw new Error('skewb-solver: 底层几何不完整');
+  return { bottom, sides };
+});
+
+const CORNER_LOCAL_BY_SLOT: ReadonlyMap<number, number> =
+  new Map(SKEWB_CORNER_SLOTS.map((slot, local) => [slot, local]));
+
+function cornerSticker(state: Uint8Array, slot: number): number {
+  const local = CORNER_LOCAL_BY_SLOT.get(slot);
+  if (local === undefined) throw new Error('skewb-solver: 底层目标读到了非角格');
+  return state[local];
+}
+
+function isFirstLayerCornerGoal(state: Uint8Array, bottomFace: number, targetColor: number): boolean {
+  const geometry = SKEWB_LAYER_GEOMETRY[bottomFace];
+  if (geometry.bottom.some((slot) => cornerSticker(state, slot) !== targetColor)) return false;
+  return geometry.sides.every(([a, b]) => cornerSticker(state, a) === cornerSticker(state, b));
+}
+
+/** 返回当前状态已经完成底层的颜色；目标包含该色中心及其相邻四角。 */
+export function solvedSkewbFirstLayerColors(facelet: string): SkewbFace[] {
+  const colors = faceletColors(facelet);
+  if (!colors) return [];
+  const solved: SkewbFace[] = [];
+  for (let targetColor = 0; targetColor < SKEWB_FACES.length; targetColor++) {
+    for (let bottomFace = 0; bottomFace < SKEWB_FACES.length; bottomFace++) {
+      if (colors[bottomFace * SKEWB_SLOTS_PER_FACE] !== targetColor) continue;
+      const geometry = SKEWB_LAYER_GEOMETRY[bottomFace];
+      if (geometry.bottom.some((slot) => colors[slot] !== targetColor)) continue;
+      if (!geometry.sides.every(([a, b]) => colors[a] === colors[b])) continue;
+      solved.push(SKEWB_FACES[targetColor]);
+      break;
+    }
+  }
+  return solved;
+}
+
+export interface SkewbFirstLayerGraph {
+  corner: Coord;
+  center: Coord;
+  /** 全 3,149,280 态到所选底色目标集合的精确距离。 */
+  dist: Uint8Array;
+  histogram: readonly number[];
+  goalCount: number;
+  colorMask: number;
+}
+
+const firstLayerCache = new Map<number, SkewbFirstLayerGraph>();
+
+function firstLayerColorMask(colors?: readonly SkewbFace[]): number {
+  const selected = colors?.length ? colors : SKEWB_FACES;
+  let mask = 0;
+  for (const face of selected) {
+    const color = (SKEWB_FACES as readonly string[]).indexOf(face);
+    if (color < 0) throw new Error(`skewb-solver: 未知底色 ${face}`);
+    mask |= 1 << color;
+  }
+  if (mask === 0) throw new Error('skewb-solver: 至少选择一种底色');
+  return mask;
+}
+
+/** 对所选底色取最短的斜转底层精确表。目标与 csTimer 一致：1 个中心 + 4 个相邻角。 */
+export function skewbFirstLayerGraph(colors?: readonly SkewbFace[]): SkewbFirstLayerGraph {
+  const colorMask = firstLayerColorMask(colors);
+  const prior = firstLayerCache.get(colorMask);
+  if (prior) return prior;
+
+  const { corner, center } = skewbCoords();
+  const goals: number[] = [];
+  for (let ci = 0; ci < corner.n; ci++) {
+    const state = corner.states[ci];
+    const cornerGoals: number[] = [];
+    for (let targetColor = 0; targetColor < SKEWB_FACES.length; targetColor++) {
+      if ((colorMask & (1 << targetColor)) === 0) continue;
+      for (let bottomFace = 0; bottomFace < SKEWB_FACES.length; bottomFace++) {
+        if (isFirstLayerCornerGoal(state, bottomFace, targetColor)) {
+          cornerGoals.push(targetColor * SKEWB_FACES.length + bottomFace);
+        }
+      }
+    }
+    if (cornerGoals.length === 0) continue;
+    for (let centerIndex = 0; centerIndex < center.n; centerIndex++) {
+      const centerState = center.states[centerIndex];
+      if (!cornerGoals.some((goal) => {
+        const targetColor = Math.floor(goal / SKEWB_FACES.length);
+        const bottomFace = goal % SKEWB_FACES.length;
+        return centerState[bottomFace] === targetColor;
+      })) continue;
+      goals.push(ci * center.n + centerIndex);
+    }
+  }
+  if (goals.length === 0) throw new Error('skewb-solver: 找不到底层目标态');
+
+  const total = corner.n * center.n;
+  const dist = new Uint8Array(total).fill(255);
+  const cornerQueue = new Int32Array(total);
+  const centerQueue = new Int32Array(total);
+  let head = 0;
+  let tail = 0;
+  for (const goal of goals) {
+    if (dist[goal] === 0) continue;
+    dist[goal] = 0;
+    cornerQueue[tail] = Math.floor(goal / center.n);
+    centerQueue[tail] = goal % center.n;
+    tail++;
+  }
+  while (head < tail) {
+    const cornerIndex = cornerQueue[head];
+    const centerIndex = centerQueue[head];
+    head++;
+    const nextDistance = dist[cornerIndex * center.n + centerIndex] + 1;
+    const cornerRow = cornerIndex * MOVE_PERMS.length;
+    const centerRow = centerIndex * MOVE_PERMS.length;
+    for (let move = 0; move < MOVE_PERMS.length; move++) {
+      const nextCorner = corner.moveTable[cornerRow + move];
+      const nextCenter = center.moveTable[centerRow + move];
+      const next = nextCorner * center.n + nextCenter;
+      if (dist[next] !== 255) continue;
+      dist[next] = nextDistance;
+      cornerQueue[tail] = nextCorner;
+      centerQueue[tail] = nextCenter;
+      tail++;
+    }
+  }
+
+  const histogram: number[] = [];
+  for (const distance of dist) {
+    if (distance === 255) throw new Error('skewb-solver: 底层距离表未覆盖全部角状态');
+    histogram[distance] = (histogram[distance] ?? 0) + 1;
+  }
+  for (let i = 0; i < histogram.length; i++) histogram[i] ??= 0;
+
+  const graph = { corner, center, dist, histogram, goalCount: goals.length, colorMask };
+  firstLayerCache.set(colorMask, graph);
+  return graph;
 }
 
 // ─── 校验 / 求解 ───
@@ -365,6 +562,38 @@ export function solveSkewbFacelet(facelet: string): SkewbSolution {
   return { length: moves.length, solution: moves.map((m) => SKEWB_MOVE_NAMES[m]).join(' '), moves };
 }
 
+/** 所画状态到所选底色中任意完整底层的最优解。 */
+export function solveSkewbFirstLayerFacelet(
+  facelet: string,
+  colors?: readonly SkewbFace[],
+): SkewbSolution {
+  const graph = skewbFirstLayerGraph(colors);
+  let index = faceletToIndex(facelet);
+  let distance = graph.dist[index];
+  if (distance === 255) throw new Error('skewb-solver: 底层状态不可达');
+  const moves: number[] = [];
+  while (distance > 0) {
+    const cornerIndex = Math.floor(index / graph.center.n);
+    const centerIndex = index % graph.center.n;
+    const cornerRow = cornerIndex * MOVE_PERMS.length;
+    const centerRow = centerIndex * MOVE_PERMS.length;
+    let stepped = false;
+    for (let move = 0; move < MOVE_PERMS.length; move++) {
+      const nextCorner = graph.corner.moveTable[cornerRow + move];
+      const nextCenter = graph.center.moveTable[centerRow + move];
+      const next = nextCorner * graph.center.n + nextCenter;
+      if (graph.dist[next] !== distance - 1) continue;
+      moves.push(move);
+      index = next;
+      distance--;
+      stepped = true;
+      break;
+    }
+    if (!stepped) throw new Error('skewb-solver: 底层梯度下降卡住(距离表坏了)');
+  }
+  return { length: moves.length, solution: moves.map((move) => SKEWB_MOVE_NAMES[move]).join(' '), moves };
+}
+
 /** 反推一条到达所画状态的打乱 = 最优解取逆(逐步反序取逆招)。 */
 export function deriveSkewbScramble(facelet: string): string {
   const { moves } = solveSkewbFacelet(facelet);
@@ -422,4 +651,61 @@ export function skewbGraphStats(): { total: number; histogram: number[]; corners
   }
   for (let i = 0; i < histogram.length; i++) histogram[i] ??= 0;
   return { total: g.total, histogram, corners: g.corner.n, centers: g.center.n };
+}
+
+export interface SkewbFirstLayerStats {
+  total: number;
+  histogram: number[];
+  corners: number;
+  centers: number;
+  goalStates: number;
+  godsNumber: number;
+}
+
+/** 底层全空间精确分布：直接遍历全部 3,149,280 个中心×角状态，不抽样。 */
+export function skewbFirstLayerStats(colors?: readonly SkewbFace[]): SkewbFirstLayerStats {
+  const graph = skewbFirstLayerGraph(colors);
+  const histogram = [...graph.histogram];
+  return {
+    total: histogram.reduce((sum, count) => sum + count, 0),
+    histogram,
+    corners: graph.corner.n,
+    centers: graph.center.n,
+    goalStates: graph.goalCount,
+    godsNumber: histogram.length - 1,
+  };
+}
+
+function faceletFromCoordPair(corner: Coord, center: Coord, index: number): string {
+  const cornerIndex = Math.floor(index / center.n);
+  const centerIndex = index % center.n;
+  const colors = new Uint8Array(SKEWB_STICKERS);
+  corner.slots.forEach((slot, local) => { colors[slot] = corner.states[cornerIndex][local]; });
+  center.slots.forEach((slot, local) => { colors[slot] = center.states[centerIndex][local]; });
+  return Array.from(colors, (color) => SKEWB_FACES[color]).join('');
+}
+
+/** 每个非空步数档的可回放代表打乱。 */
+export function skewbFirstLayerExamplesByLength(
+  colors?: readonly SkewbFace[],
+  limitPerLength = 12,
+): Map<number, string[]> {
+  if (!Number.isInteger(limitPerLength) || limitPerLength < 1) {
+    throw new Error('skewb-solver: 每档样例上限必须是正整数');
+  }
+  const graph = skewbFirstLayerGraph(colors);
+  const out = new Map<number, string[]>();
+  // 先跳过 identity，让 0 步档优先展示“底层已好但整块未还原”的真实状态；若没有再回填还原态。
+  for (let offset = 1; offset <= graph.dist.length; offset++) {
+    const index = offset % graph.dist.length;
+    const distance = graph.dist[index];
+    const examples = out.get(distance) ?? [];
+    if (examples.length >= limitPerLength) continue;
+    const facelet = faceletFromCoordPair(graph.corner, graph.center, index);
+    examples.push(deriveSkewbScramble(facelet));
+    out.set(distance, examples);
+    if (out.size === graph.histogram.length
+      && [...out.values()].every((items) => items.length >= limitPerLength)) break;
+  }
+  return out;
 }

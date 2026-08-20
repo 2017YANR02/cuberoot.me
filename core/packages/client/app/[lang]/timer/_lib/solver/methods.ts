@@ -13,7 +13,7 @@ import {
   cubeMove, applyScramble, parsedToCstimer,
   MOVES_FULL, MOVES_NO_D, MOVES_ROUX_SB, MOVES_ZZ_F2L,
 } from './cube3x3';
-import { GSolver, solveParallel, matches, type ParallelTarget } from './gsolver';
+import { GSolver, solveParallel, matches, type ParallelTarget } from '@/lib/cstimer-gsolver';
 import { parseScramble } from '../cube/moves';
 import { solveThistle, type ThistleResult } from './thistle';
 import { solveFto as solveFtoImpl, verifyScrambleSolution as verifyFto } from './fto';
