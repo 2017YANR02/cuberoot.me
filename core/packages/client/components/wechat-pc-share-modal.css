@@ -1,0 +1,113 @@
+.wechat-pc-share-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100020;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--foreground) 42%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.wechat-pc-share-modal {
+  position: relative;
+  width: min(390px, 100%);
+  padding: 24px;
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 18px 60px color-mix(in srgb, var(--foreground) 24%, transparent);
+}
+
+.wechat-pc-share-modal h2 {
+  margin: 0 28px 6px 0;
+  font-size: 1.08rem;
+}
+
+.wechat-pc-share-modal > p:not(.wechat-pc-share-status) {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.wechat-pc-share-close.clear-btn--standalone {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.wechat-pc-share-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.wechat-pc-share-actions button {
+  display: flex;
+  min-width: 0;
+  min-height: 88px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 14px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border-default));
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--foreground);
+  cursor: pointer;
+  font: inherit;
+}
+
+.wechat-pc-share-actions button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.wechat-pc-share-actions button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.wechat-pc-share-actions svg {
+  width: 25px;
+  height: 25px;
+  color: var(--accent);
+}
+
+.wechat-pc-share-actions span {
+  white-space: nowrap;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.wechat-pc-share-spinner {
+  animation: wechat-pc-share-spin 0.8s linear infinite;
+}
+
+.wechat-pc-share-status {
+  margin: 14px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.wechat-pc-share-status.is-success { color: var(--signal-success); }
+.wechat-pc-share-status.is-error { color: var(--signal-warning); }
+
+@keyframes wechat-pc-share-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 480px) {
+  .wechat-pc-share-modal { padding: 20px 16px; }
+  .wechat-pc-share-actions { grid-template-columns: 1fr; }
+  .wechat-pc-share-actions button { min-height: 64px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wechat-pc-share-spinner { animation: none; }
+}
