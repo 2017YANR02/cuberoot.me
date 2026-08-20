@@ -13,8 +13,10 @@
  */
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import type { AlgCase } from '@cuberoot/shared';
+import { invertMoveString } from '@cuberoot/shared/alg-notation';
 import { generateScramble } from '@/lib/trainer-scramble';
 import { caseKey } from '@/lib/trainer-case-key';
+import { virtualAlgSet } from '@/lib/alg-virtual-sets';
 import {
   CATEGORIES, canonicalKey, classify, composeState, keyFromString, keyToString,
   locateFromScramble, unpackState,
@@ -235,6 +237,41 @@ describe('装出来的 case', () => {
     // 打乱还没现算出来时是空的(store 抽到哪条解哪条),不是拿别的东西凑一条
     expect(c.setup).toBe('');
     expect(generateScramble(c, '3x3', 'inv', { preAuf: true, postAuf: true })).toBe('');
+  });
+
+  it('进度页能从持久化 key 反建 case 并补回公式,坏 key 不混进来', async () => {
+    const scramble = "R U R' U' R U R' U'";
+    const located = locateFromScramble(scramble);
+    expect(located.ok).toBe(true);
+    if (!located.ok) return;
+
+    const letter = located.category.letter;
+    const storedKey = `${letter}|${letter} ${located.keyStr}`;
+    const alg = invertMoveString(scramble).replace(/2'/g, '2');
+    let caseRequests = 0;
+    vi.stubGlobal('fetch', async (input: string) => {
+      const url = new URL(input, 'https://x');
+      if (url.pathname.endsWith(`/alg/lsll/case/${located.keyStr}`)) {
+        caseRequests++;
+        return { ok: true, json: async () => ({ status: 'ok', htm: 8, algs: [alg] }) };
+      }
+      throw new Error(`unexpected request: ${url.pathname}`);
+    });
+
+    const virtual = virtualAlgSet('3x3', 'lsll');
+    expect(virtual?.loadCasesByKeys).toBeTypeOf('function');
+    const cases = await virtual!.loadCasesByKeys!([
+      storedKey,
+      storedKey,
+      'bad',
+      `${letter}|wrong 123`,
+    ]);
+
+    expect(cases.map(caseKey)).toEqual([storedKey]);
+    expect(cases[0].setup).toBe(scramble);
+    expect(cases[0].algs[0][0]?.alg).toBe(alg);
+    expect(virtual!.caseHref(cases[0])).toBe(`/alg/lsll/case?k=${located.keyStr}`);
+    expect(caseRequests).toBe(1);
   });
 });
 

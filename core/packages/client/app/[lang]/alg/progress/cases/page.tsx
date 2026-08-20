@@ -119,7 +119,9 @@ export default function AlgProgressCasesPage() {
   const neededSets = useMemo(() => {
     if (!data) return [];
     return scopedSets.filter(({ puzzle, set }) => {
-      if (virtualAlgSet(puzzle, set)) return false;      // 虚拟集库里没有这张表
+      const virtual = virtualAlgSet(puzzle, set);
+      if (virtual && !virtual.loadCasesByKeys) return false;
+      if (virtual && filter === 'none') return false;   // 少量已标记 key 不能拿来算全集补集
       if (filter === 'none') return true;
       const m = data.marks[`${puzzle}/${set}`] ?? {};
       for (const k in m) {
@@ -136,28 +138,38 @@ export default function AlgProgressCasesPage() {
     if (missing.length === 0) { setLoadingAlgs(false); return; }
     let alive = true;
     setLoadingAlgs(true);
-    void Promise.all(missing.map(({ puzzle, set }) =>
-      loadAlg(puzzle, set)
-        .then(f => [`${puzzle}/${set}`, f.cases] as const)
-        .catch(() => [`${puzzle}/${set}`, [] as AlgCase[]] as const),
-    )).then(pairs => {
+    void Promise.all(missing.map(({ puzzle, set }) => {
+      const ps = `${puzzle}/${set}`;
+      const virtual = virtualAlgSet(puzzle, set);
+      const load = virtual?.loadCasesByKeys
+        ? virtual.loadCasesByKeys(
+            Object.entries(data?.marks[ps] ?? {})
+              .filter(([, mark]) => mark.s != null)
+              .map(([key]) => key),
+          )
+        : loadAlg(puzzle, set).then(f => f.cases);
+      return load
+        .then(cases => [ps, cases] as const)
+        .catch(() => [ps, [] as AlgCase[]] as const);
+    })).then(pairs => {
       if (!alive) return;
       setAlgBySet(prev => ({ ...prev, ...Object.fromEntries(pairs) }));
       setLoadingAlgs(false);
     });
     return () => { alive = false; };
-  }, [neededSets, algBySet]);
+  }, [neededSets, algBySet, data]);
 
   const sources = useMemo<SetCaseSource[]>(() => {
     if (!data) return [];
     return scopedSets.map(({ puzzle, set }) => {
       const ps = `${puzzle}/${set}`;
       const cases = algBySet[ps];
+      const virtual = virtualAlgSet(puzzle, set);
       return {
         puzzle, set,
         marks: data.marks[ps] ?? {},
         recs: data.recs[ps],
-        allKeys: cases ? cases.map(caseKey) : undefined,
+        allKeys: !virtual && cases ? cases.map(caseKey) : undefined,
       };
     });
   }, [data, scopedSets, algBySet]);
@@ -310,9 +322,10 @@ function CaseRow({ row, cases }: { row: ProgressCase; cases: AlgCase[] | undefin
   const c = cases ? findCaseByKey(cases, row.key) : undefined;
   const alg = c ? (c.algs.flat()[0]?.alg ?? c.standard ?? '') : '';
   const name = c ? primaryCaseName(row.puzzle, row.set, c) : (row.key.split('|').pop() ?? row.key);
+  const virtual = virtualAlgSet(row.puzzle, row.set);
   const href = c
-    ? algCaseHref(row.puzzle, row.set, c)
-    : `/alg/${row.puzzle}/${row.set}`;
+    ? (virtual ? virtual.caseHref(c) : algCaseHref(row.puzzle, row.set, c))
+    : (virtual ? virtual.selectHref(null) : `/alg/${row.puzzle}/${row.set}`);
 
   return (
     <Link href={href} className="alg-case-row" prefetch={false}>
