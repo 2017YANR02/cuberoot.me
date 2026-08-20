@@ -20,11 +20,13 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # 只取 core/(server bundle + migrations + cube555 daemon glue),跳过仓库根 ~1GB 静态残留(blob:none partial clone)。
+      # 只取 core/(server bundle + migrations + cube555 daemon glue)与 server 契约测试依赖的 nginx 配置,
+      # 跳过仓库根 ~1GB 静态残留(blob:none partial clone)。
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
             core
+            ops/nginx
           filter: blob:none
 
       - uses: pnpm/action-setup@v4
