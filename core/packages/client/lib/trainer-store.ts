@@ -167,6 +167,11 @@ export function presetSessionSelection(puzzle: string, sessionId: string, keys: 
   persist(puzzle, sessionId, { ...prev, selected: [...keys] });
 }
 
+/** Read an externally preset selection without exposing the trainer storage key. */
+export function readSessionSelection(puzzle: string, sessionId: string): string[] {
+  return loadPersisted(puzzle, sessionId).selected;
+}
+
 /** 跨 set 的训练偏好(pre/post-AUF / 计时 / 模式 / 概率 / 字体),全局一份。 */
 interface TrainerPrefs {
   preAuf: boolean;

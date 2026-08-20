@@ -10,7 +10,7 @@ import { ArrowLeft, Settings, Copy, Check, QrCode, RotateCcw, X } from 'lucide-r
 import { ALG_CATALOG, getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
 import {
   useTrainerStore, TimerState, trainerPool, trainerScramblesReady, mixSessionId,
-  completedRecapCount, type TrainerMode,
+  completedRecapCount, readSessionSelection, type TrainerMode,
 } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
@@ -200,6 +200,8 @@ export default function TrainerRunClient() {
   const viewApplied = useRef(false);
   // 深链模式:进度总览页的「复习 N」直接带 ?mode=memo 进来。只应用一次,之后用户自己切不再被覆盖。
   const [modeParam] = useQueryState('mode');
+  // 进度清单的「专练」:case key 已预置在独立会话里,虚拟集按 key 反建这批 case。
+  const [drillParam] = useQueryState('drill');
   const modeApplied = useRef(false);
   // 单设备分屏是大视图状态,进历史栈；分享 URL 也能直接恢复同一视图。
   const [splitParam, setSplitParam] = useQueryState(
@@ -215,13 +217,14 @@ export default function TrainerRunClient() {
    */
   const virtual = useMemo(() => (puzzle ? virtualAlgSet(puzzle, setSlug) : undefined), [puzzle, setSlug]);
   const virtualScope = virtual ? (scopeParam?.trim().toLowerCase() || null) : null;
+  const isVirtualDrill = drillParam === '1' && virtual?.casesFromStoredKeys != null;
 
   // 分轮次的范围(LSLL 已收录:302 条一轮、494 轮):轮次名贴在复习进度前面,
   // 「本轮结束」的主按钮是**下一轮的 URL** —— 换 scope 就是换一场,那批 case 全换了
   // 新的收尾 ZBLL,不是重洗同一批。ref 给键盘用(弹窗里回车 = 点主按钮)。
-  const roundLabel = virtual?.roundLabel?.(virtualScope) ?? null;
-  const roundNumber = virtual?.roundNumber?.(virtualScope) ?? null;
-  const totalRounds = virtual?.totalRounds ?? null;
+  const roundLabel = isVirtualDrill ? null : (virtual?.roundLabel?.(virtualScope) ?? null);
+  const roundNumber = isVirtualDrill ? null : (virtual?.roundNumber?.(virtualScope) ?? null);
+  const totalRounds = isVirtualDrill ? null : (virtual?.totalRounds ?? null);
   const [roundDraft, setRoundDraft] = useState('');
   // Escape 会主动 blur；用 ref 跳过紧随其后的 onBlur 提交，避免闭包仍读到
   // Escape 前的有效数字并意外跳到那一轮。
@@ -243,7 +246,7 @@ export default function TrainerRunClient() {
     setRoundDraft(String(nextRound));
     if (nextRound !== roundNumber) void setScopeParam(virtual.scopeForRound(nextRound));
   };
-  const nextRoundScope = virtual?.nextRoundScope?.(virtualScope) ?? null;
+  const nextRoundScope = isVirtualDrill ? null : (virtual?.nextRoundScope?.(virtualScope) ?? null);
   const nextRoundHref = nextRoundScope
     ? `/alg/${puzzleParam}/${setSlug}/run?scope=${encodeURIComponent(nextRoundScope)}`
     : null;
@@ -460,7 +463,9 @@ export default function TrainerRunClient() {
   // 虚拟集换范围(?scope=)= 换一整批 case,所以范围要进会话 id,否则装完一次就再也不重装
   const sessionId = isMix
     ? mixSessionId(mixKey.split(',').filter(Boolean))
-    : (virtual && virtualScope ? `${setSlug}:${virtualScope}` : setSlug);
+    : (isVirtualDrill
+        ? `${setSlug}:drill`
+        : (virtual && virtualScope ? `${setSlug}:${virtualScope}` : setSlug));
   useEffect(() => {
     if (!puzzle || !meta) return;
     if (storePuzzle === puzzle && storeSet === sessionId && cases.length > 0) return;
@@ -472,11 +477,17 @@ export default function TrainerRunClient() {
       return;
     }
     if (virtual) {
-      // 虚拟集没有 select 页可勾 —— 装进来的这一批就是本场
-      virtual.loadCases(virtualScope)
+      // 专练直接按已预置的 key 反建 case,不受 LSLL 默认轮次限制;打乱仍由训练器逐题解析。
+      const presetCases = isVirtualDrill
+        ? virtual.casesFromStoredKeys?.(readSessionSelection(puzzle, sessionId)) ?? []
+        : [];
+      const loadCases = presetCases.length > 0
+        ? Promise.resolve(presetCases)
+        : virtual.loadCases(virtualScope);
+      loadCases
         .then(cs => loadSession(puzzle, sessionId, cs, {
           defaultAll: true, caseResolver: virtual.resolveCase, noAufDefault: virtual.noAufDefault,
-          roundEndPromptRequired: virtual.totalRounds != null,
+          roundEndPromptRequired: !isVirtualDrill && virtual.totalRounds != null,
         }))
         .catch(e => console.error('[trainer] virtual loadCases failed', e));
       return;
@@ -489,7 +500,7 @@ export default function TrainerRunClient() {
         loadSession(puzzle, setSlug, d.cases);
       })
       .catch(e => console.error('[trainer] loadAlg failed', e));
-  }, [puzzle, setSlug, sessionId, meta, isMix, mixKey, virtual, virtualScope,
+  }, [puzzle, setSlug, sessionId, meta, isMix, mixKey, virtual, virtualScope, isVirtualDrill,
       storePuzzle, storeSet, cases.length, loadSession, loadMixSession]);
 
   // 双槽位基态在 loadSession 前已准备；增强 PSF2L 的后缀还要按真实魔方状态筛选,
@@ -1094,7 +1105,7 @@ export default function TrainerRunClient() {
 
   // 顶栏范围后缀:库内集是子组名,虚拟集是它自己那套范围命名(LSLL:大类 / 已收录)
   const scopeSuffix = virtual
-    ? tr(virtual.scopeLabel(virtualScope))
+    ? (isVirtualDrill ? '' : tr(virtual.scopeLabel(virtualScope)))
     : scopeSlug
     ? (setSlug === 'zbll' ? displayZbllToken(scopeSlug) : scopeSlug.toUpperCase())
     : '';
