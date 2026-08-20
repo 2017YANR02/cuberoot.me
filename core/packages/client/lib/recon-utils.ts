@@ -111,6 +111,7 @@ const PUZZLE_MAP: Record<string, string> = {
   '6x6': '6x6x6', '7x7': '7x7x7', '3bld': '3x3x3', '4bld': '4x4x4',
   '5bld': '5x5x5', oh: '3x3x3', sq1: 'square1',
   pyra: 'pyraminx', mega: 'megaminx', clock: 'clock', skewb: 'skewb',
+  fto: 'fto',
 };
 
 export function getPuzzleId(event: string): string {
@@ -227,7 +228,7 @@ export function buildExternalLinks(
   event: string,
   scramble: string,
   alg: string,
-): { algUrl: string; algSiteName: string; cubedbUrl: string } {
+): { algUrl: string; algSiteName: string; cubedbUrl: string | null } {
   const puzzle = getPuzzleId(event);
   const setupStr = encodeURIComponent(scramble);
   const algStr = encodeURIComponent(alg);
@@ -236,8 +237,10 @@ export function buildExternalLinks(
     ? `https://alg.cubing.net/?setup=${setupStr}&alg=${algStr}&puzzle=${puzzle}`
     : `https://alpha.twizzle.net/edit/?puzzle=${puzzle}&setup-alg=${setupStr}&alg=${algStr}`;
   const algSiteName = isCube ? 'alg.cubing.net' : 'twizzle.net';
-  const cubedbPuzzle = getCubedbPuzzle(event);
-  const cubedbUrl = `https://cubedb.net/?puzzle=${cubedbPuzzle}&scramble=${setupStr}&alg=${algStr}`;
+  // CubeDB has no FTO renderer; do not silently hand an FTO reconstruction to its 3x3 fallback.
+  const cubedbUrl = event === 'fto'
+    ? null
+    : `https://cubedb.net/?puzzle=${getCubedbPuzzle(event)}&scramble=${setupStr}&alg=${algStr}`;
   return { algUrl, algSiteName, cubedbUrl };
 }
 

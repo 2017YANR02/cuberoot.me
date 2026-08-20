@@ -72,8 +72,9 @@ import {
   parseMegaMoves, megaMovesToString, invertMegaMoves, reduceMegaAlg, randomMegaScramble, type MegaMove,
 } from './engine/mega/megaState';
 import {
-  parseFtoMoves, ftoMovesToString, invertFtoMoves, reduceFtoAlg, randomFtoScramble, type FtoMove,
+  parseFtoMoves, ftoMovesToString, invertFtoMoves, randomFtoScramble, type FtoMove,
 } from './engine/fto/ftoState';
+import { parseFtoEifMoveGroups } from './engine/fto/ftoEifMoves';
 import {
   parseClockSteps, clockStepsToString, invertClockSteps, type ClockStep,
 } from './engine/clock/clockBoard';
@@ -142,6 +143,11 @@ import StickeringSelect from './StickeringSelect';
 import type { PickGrain, CustomTreatment } from './engine/nxn/customStickering';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
 import { stripGripMarks } from '@cuberoot/shared/alg-notation';
+import {
+  canonicalFtoEifAlgorithm,
+  invertFtoEifAlgorithm,
+  reduceFtoEifAlgorithm,
+} from '@cuberoot/shared/fto-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
 import { ClearButton } from '@/components/ClearButton';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
@@ -545,10 +551,14 @@ type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyramin
 interface CornerSpec {
   /** Parse alg / scramble text → the puzzle's move list. */
   parse(s: string): unknown[];
+  /** Optional notation-token groups for moves that expand to multiple physical turns. */
+  parseGroups?(s: string): unknown[][];
   /** Move list → canonical text. */
   toString(moves: unknown[]): string;
   /** The inverse sequence (for the "Algorithm" playback base + 取逆 tool). */
   invert(moves: unknown[]): unknown[];
+  /** Text-level inverse for grouped notation whose timeline tokens must stay intact. */
+  invertText?(s: string): string;
   /** Fold / cancel redundant moves (消步). */
   reduce(s: string): string;
   /** A fresh random scramble string. */
@@ -559,10 +569,14 @@ interface CornerSpec {
  *  `unknown` — the move always comes from the same puzzle's spec, so it matches). */
 interface CornerCube {
   twister: {
+    readonly length: number;
+    readonly busy?: boolean;
     finish(): void;
     setup(s: string): void;
     push(s: string): void;
     twist(move: unknown, fast: boolean, force: boolean): boolean;
+    setupMoves?(moves: readonly unknown[], init?: string): void;
+    pushMoves?(moves: readonly unknown[]): void;
   };
   applyMoveInstant(move: unknown): void;
 }
@@ -627,9 +641,15 @@ const CORNER_SPECS: Record<CornerKind, CornerSpec> = {
   },
   fto: {
     parse: parseFtoMoves,
+    parseGroups: (s) => {
+      const parsed = parseFtoEifMoveGroups(s);
+      if (parsed.invalid.length > 0) throw new Error(`Invalid FTO notation: ${parsed.invalid.join(' ')}`);
+      return parsed.groups;
+    },
     toString: (m) => ftoMovesToString(m as FtoMove[]),
     invert: (m) => invertFtoMoves(m as FtoMove[]),
-    reduce: reduceFtoAlg,
+    invertText: invertFtoEifAlgorithm,
+    reduce: (s) => reduceFtoEifAlgorithm(s) ?? canonicalFtoEifAlgorithm(s) ?? s,
     scramble: () => ftoMovesToString(randomFtoScramble(30)),
   },
   // 魔表:一"步" = 一次拧 或 一次 y2 翻面(y2 在记号里是独立 token,得能单独跨过去)。
@@ -642,6 +662,10 @@ const CORNER_SPECS: Record<CornerKind, CornerSpec> = {
     scramble: () => randomClockScramble(),
   },
 };
+
+function parseCornerGroups(spec: CornerSpec, text: string): unknown[][] {
+  return spec.parseGroups?.(text) ?? spec.parse(text).map((move) => [move]);
+}
 
 /** Collapse adjacent identical edge twists (X X = identity — each is an involution). */
 function reduceHeliAlg(s: string): string {
@@ -1238,9 +1262,9 @@ export default function PlayerControls({
   // One move list for whichever corner-turn engine puzzle is active (empty otherwise).
   // algDraft 是**正在打字**的文本 → 随时可能停在半个 token 上,解析器严格会抛;兜住当空
   // (与 ivyActions 同款),让页面继续跑、等用户把这一招打完。
-  const cornerActions = useMemo<unknown[]>(() => {
+  const cornerActions = useMemo<unknown[][]>(() => {
     if (!corner) return [];
-    try { return corner.parse(algDraft); } catch { return []; }
+    try { return parseCornerGroups(corner, algDraft); } catch { return []; }
   }, [corner, algDraft]);
 
   // Char range of every play-item (move token / grip mark), in play order — the
@@ -1253,7 +1277,7 @@ export default function PlayerControls({
     // 半个 token(还在打)解析不了 → 不算一项,别让它抛出去炸掉整页。
     if (corner) {
       return findWhitespaceTokenPositions(algDraft).filter((tk) => {
-        try { return corner.parse(tk.text).length === 1; } catch { return false; }
+        try { return parseCornerGroups(corner, tk.text).length === 1; } catch { return false; }
       });
     }
     // NxN: WCA move tokens + grip marks (↑↓·), merged back into text order.
@@ -1357,13 +1381,25 @@ export default function PlayerControls({
       const cube = world.cube as unknown as CornerCube;
       cube.twister.finish();
       const effSetup = settings.playbackMode === 'algorithm'
-        ? (toEngineText(setupDraft) + ' ' + corner.toString(corner.invert(cornerActions))).trim()
+        ? (toEngineText(setupDraft) + ' ' + (corner.invertText
+          ? corner.invertText(algDraft)
+          : corner.toString(corner.invert(cornerActions.flat())))).trim()
         : toEngineText(setupDraft);
       // 打乱框同样是逐键触发的:半个 token 会让 twister.setup 的解析抛。兜住 = 保持上一次
       // 的合法基座不动,等这一招打完(比整页崩掉或悄悄跳回还原态都合理)。
-      try { cube.twister.setup(effSetup); } catch { return; }
       const target = Math.max(0, Math.min(n, cornerActions.length));
-      for (let i = 0; i < target; i++) cube.applyMoveInstant(cornerActions[i]);
+      try {
+        if (corner.parseGroups && cube.twister.setupMoves) {
+          const baseMoves = parseCornerGroups(corner, effSetup).flat();
+          cube.twister.setupMoves([
+            ...baseMoves,
+            ...cornerActions.slice(0, target).flat(),
+          ], effSetup);
+        } else {
+          cube.twister.setup(effSetup);
+          for (let i = 0; i < target; i++) cube.applyMoveInstant(cornerActions[i][0]);
+        }
+      } catch { return; }
       setStep(target);
       return;
     }
@@ -1420,7 +1456,7 @@ export default function PlayerControls({
   const prevAlgTextRef = useRef(alg);
 
   useEffect(() => {
-    const actions: unknown[] = isSq1 ? sq1Actions : isIvy ? ivyActions : corner ? cornerActions : nxnItems;
+    const actions = isSq1 ? sq1Actions : isIvy ? ivyActions : corner ? cornerActions : nxnItems;
     const prevText = prevAlgTextRef.current;
     prevAlgTextRef.current = algDraft;
     if (skipAutoResetRef.current) {
@@ -1450,7 +1486,10 @@ export default function PlayerControls({
           && algDraft.startsWith(prevText)
         ) {
           if (corner) {
-            (world.cube as unknown as CornerCube).twister.twist(actions[n - 1], false, true);
+            const twister = (world.cube as unknown as CornerCube).twister;
+            const group = actions[n - 1] as unknown[];
+            if (corner.parseGroups && twister.pushMoves) twister.pushMoves(group);
+            else twister.twist(group[0], false, true);
             stepRef.current = n;
             setStep(n);
             return;
@@ -1489,7 +1528,7 @@ export default function PlayerControls({
     // → 必须像上面 Ivy / NxN 两条一样兜住,否则打字打到一半整页崩。单字母记号的拼图(dino /
     // pyraminx …)前缀恰好总是合法,所以一直没暴露;魔表的 token 有 3–6 字符,一打就中。
     if (corner) {
-      try { return corner.parse(algBefore).length; } catch { return null; }
+      try { return parseCornerGroups(corner, algBefore).length; } catch { return null; }
     }
     return null;
   }, [isSq1, isIvy, corner]);
@@ -1620,7 +1659,8 @@ export default function PlayerControls({
         } else if (isIvy) {
           (world.cube as unknown as import('./engine/ivy/IvyCube').default).applyMoveInstant(ivyActions[s]);
         } else if (corner) {
-          (world.cube as unknown as CornerCube).applyMoveInstant(cornerActions[s]);
+          const cube = world.cube as unknown as CornerCube;
+          for (const move of cornerActions[s]) cube.applyMoveInstant(move);
         } else {
           const it = nxnItems[s];
           if (it.kind === 'move') (world.cube as import('./engine/nxn/cube').default).twister.twist(it.action, true, true);
@@ -1640,7 +1680,13 @@ export default function PlayerControls({
         started = ivyCube.twister.twist(ivyActions[s], false, false);
       } else if (corner) {
         const cube = world.cube as unknown as CornerCube;
-        started = cube.twister.twist(cornerActions[s], false, false);
+        if (corner.parseGroups && cube.twister.pushMoves) {
+          if (cube.twister.busy) return;
+          cube.twister.pushMoves(cornerActions[s]);
+          started = true;
+        } else {
+          started = cube.twister.twist(cornerActions[s][0], false, false);
+        }
       } else {
         const cube = world.cube as import('./engine/nxn/cube').default;
         // 换握动画播完才接下一步(镜像「转动动画完成才接下一步」的节拍约定)。
@@ -1714,7 +1760,9 @@ export default function PlayerControls({
 
   const invertForPuzzle = useCallback((s: string): string => {
     if (corner) {
-      try { return corner.toString(corner.invert(corner.parse(s))); } catch { return s; }
+      try {
+        return corner.invertText?.(s) ?? corner.toString(corner.invert(corner.parse(s)));
+      } catch { return s; }
     }
     if (!isSq1) return invertAlg(stripHandMarks(s)); // 倒序后换握/推法位点失义,直接剥
     const inv = invertSq1Alg(s);
@@ -1983,7 +2031,19 @@ export default function PlayerControls({
     }
     if (!world) return;
     const engScramble = toEngineText(scramble);
-    const tw = world.cube.twister as unknown as { length: number; setup: (e: string) => void; push: (e: string) => void };
+    const tw = (world.cube as unknown as CornerCube).twister;
+    if (corner?.parseGroups && tw.setupMoves && tw.pushMoves) {
+      let groups: unknown[][];
+      try { groups = parseCornerGroups(corner, engScramble); } catch { return; }
+      if (tw.busy) {
+        tw.setupMoves(groups.flat(), engScramble);
+        return;
+      }
+      world.controller.clearFrozen();
+      tw.setupMoves([], '');
+      tw.pushMoves(groups.flat());
+      return;
+    }
     // 动画仍在播时再次点播放键 = 直接跳到完整打乱态(走快速 WASM 整体应用,不从头重播,
     // 高阶 400+ 步宽转也是瞬时)。等价于解法框 focus 的跳过。
     if (tw.length > 0) { tw.setup(engScramble); return; }
@@ -1994,17 +2054,24 @@ export default function PlayerControls({
     world.controller.clearFrozen();
     tw.setup('');
     tw.push(engScramble);
-  }, [setupDraft, isTwistyMode, world, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText]);
+  }, [setupDraft, isTwistyMode, world, corner, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText]);
 
   // 点解法框时,若打乱动画仍在逐步播放(高阶打乱可达 400+ 步 ≈ 分钟级),立即落到完整打乱态,
   // 让用户马上能在打乱好的魔方上输解法。走快速整体应用 setup(打乱文本):它清空待播队列后用
   // WASM 路径一次性重建,不逐步 replay,高阶宽转也不卡(逐步 finish 会几百万次 getColor 卡死)。
   const flushPendingScramble = useCallback(() => {
     if (!world || isTwistyMode) return;
-    const tw = (world.cube as unknown as { twister?: { length: number; setup: (e: string) => void } }).twister;
+    const tw = (world.cube as unknown as CornerCube).twister;
     const scr = setupDraft.trim();
-    if (tw && tw.length > 0 && scr) tw.setup(toEngineText(scr));
-  }, [world, isTwistyMode, setupDraft, toEngineText]);
+    const hasPendingAnimation = corner?.parseGroups ? tw?.busy : (tw?.length ?? 0) > 0;
+    if (!tw || !hasPendingAnimation || !scr) return;
+    const engScramble = toEngineText(scr);
+    if (corner?.parseGroups && tw.setupMoves) {
+      try { tw.setupMoves(parseCornerGroups(corner, engScramble).flat(), engScramble); } catch { /* keep last legal state */ }
+      return;
+    }
+    tw.setup(engScramble);
+  }, [world, isTwistyMode, corner, setupDraft, toEngineText]);
 
   // cubedb-style "反推打乱": invert + re-orient + solve the current solution to
   // recover the clean rotation-free scramble it solves, drop it into the

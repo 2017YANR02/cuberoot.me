@@ -9,6 +9,7 @@
  *   - NxN       → CuberReconPlayer
  *   - skewb     → TweenReconPlayer(skewb)     — WCA R/U/L/B notation, engine-verified vs cubing.js
  *   - pyraminx  → TweenReconPlayer(pyraminx)  — WCA U/L/R/B + tips
+ *   - fto       → FtoReconPlayer              — shared EIF notation bridge
  *   - else      → cubing.js TwistySection     — megaminx (needs a notation converter) + clock
  * NxN / skewb / pyra solutions run through cleanForPlayer; sq1 keeps its raw tokens.
  *
@@ -27,13 +28,14 @@
 import { type ReactNode, type RefObject } from 'react';
 import { getPuzzleId } from '@/lib/recon-utils';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
-import { cleanReconAlgText } from '@cuberoot/shared/recon-completion';
+import { cleanFtoReconAlgForPlayer, cleanReconAlgText } from '@cuberoot/shared/recon-completion';
 import { parseSkewbMoves } from '@/app/[lang]/sim/engine/skewb/skewbState';
 import { parsePyraMoves } from '@/app/[lang]/sim/engine/pyra/pyraState';
 import TwistySection from '@/components/TwistySection';
 import Sq1ReconPlayer from '@/components/Sq1ReconPlayer';
 import CuberReconPlayer from '@/components/CuberReconPlayer';
 import TweenReconPlayer from './TweenReconPlayer';
+import FtoReconPlayer from './FtoReconPlayer';
 import './recon-engine-player.css';
 
 /** 2..7-order NxN cube ids (2x2x2 .. 7x7x7). */
@@ -72,6 +74,19 @@ export default function ReconEnginePlayer({
         playerRef={playerRef}
         fillPane={fillPane}
         backView={backView}
+        hideControls={hideControls}
+        fullscreenButton={fullscreenButton}
+      />
+    );
+  }
+  if (puzzleId === 'fto') {
+    return (
+      <FtoReconPlayer
+        scramble={scramble}
+        alg={cleanFtoReconAlgForPlayer(solution)}
+        anchorAtEnd={anchorAtEnd}
+        playerRef={playerRef}
+        fillPane={fillPane}
         hideControls={hideControls}
         fullscreenButton={fullscreenButton}
       />

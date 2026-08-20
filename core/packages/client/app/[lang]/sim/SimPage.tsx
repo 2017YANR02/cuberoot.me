@@ -410,10 +410,10 @@ export default function SimPage() {
   const twisty = (isTwistyPuzzle(puzzleParam) || pgDef !== undefined) && !useEngine;
 
   // 「去复盘」头部链接:把当前打乱 / 解法交给 /recon/submit,与 recon 表单的「去模拟器」互为往返。
-  // 引擎版 skewb/pyra/mega/fto 用自有记号,/recon(WCA 记号)解析不了 → 不给链接(门槛同 useEngine)。
+  // 引擎版 skewb/pyra/mega 的自有记号尚未贯通 /recon；FTO 两端共用 EIF 解析器，可直接交接。
   // 解法先剥手部记号(FTN / 换握 / 推法),否则 recon 的 alg 解析会被这些注解噎住。
   const reconHref = useMemo(() => {
-    const ev = useEngine ? null : reconEventForSim(puzzleParam);
+    const ev = useEngine && puzzleParam !== 'fto' ? null : reconEventForSim(puzzleParam);
     if (!ev) return null;
     return `/recon/submit?${buildReconSubmitQuery(ev, setupParam, stripHandMarks(algParam))}`;
   }, [useEngine, puzzleParam, setupParam, algParam]);

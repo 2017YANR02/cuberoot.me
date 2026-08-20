@@ -106,6 +106,31 @@ U X R' U R' D2 R U' R' D2 R2 x' U' pl 1-A+`;
       .resolves.toEqual({ status: 'solved' });
   });
 
+  it('checks FTO completion across aliases, layers, rotations and macros', async () => {
+    await expect(checkReconCompletion({
+      event: 'fto',
+      scramble: "BL rw Fs' Uo Rt2 S H' T",
+      solution: "T' H S' Rt2 Uo' Fs Rw' Bl'",
+    })).resolves.toEqual({ status: 'solved' });
+    await expect(checkReconCompletion({
+      event: 'FTO',
+      scramble: "br R’",
+      solution: "R Br'",
+    })).resolves.toEqual({ status: 'solved' });
+    await expect(checkReconCompletion({
+      event: 'fto',
+      scramble: '(Bl Rw)2 // paired turns',
+      solution: "(Rw' Bl')2 // inverse",
+    })).resolves.toEqual({ status: 'solved' });
+  });
+
+  it('rejects invalid or incomplete FTO reconstructions', async () => {
+    await expect(checkReconCompletion({ event: 'fto', scramble: 'R nope', solution: "R'" }))
+      .resolves.toEqual({ status: 'invalid' });
+    await expect(checkReconCompletion({ event: 'fto', scramble: 'Rw', solution: "R'" }))
+      .resolves.toEqual({ status: 'unsolved' });
+  });
+
   it.each(['OH', '3BLD', 'Pyraminx', 'SQ1', 'Skewb', 'Mirror', '3x3 Smart'].map((event) => [event]))(
     'checks the historical %s event alias',
     async (event) => {

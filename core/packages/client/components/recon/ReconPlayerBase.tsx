@@ -65,6 +65,9 @@ export interface ReconPlayerAdapter<M> {
   /** Push one move with animation during playback. Returns false if the world
    *  isn't the expected kind (playback then stops). */
   pushMove(world: World, move: M): boolean;
+  /** Optional delay until the next notation step. Grouped notations such as an
+   *  FTO macro remain one scrub step while their physical turns finish. */
+  playbackDelayMs?(move: M): number;
 }
 
 export default function ReconPlayerBase<M>({
@@ -240,10 +243,13 @@ export default function ReconPlayerBase<M>({
     if (target != null) setStep(target);
   }, [alg, ready, applyStep, setStep]);
 
-  // ── Animated playback (push one move at a time) ──
+  // ── Animated playback (push one notation step at a time) ──
   useEffect(() => {
     if (!playing) return;
-    const timer = window.setInterval(() => {
+    let cancelled = false;
+    let timer: number | null = null;
+    const advance = () => {
+      if (cancelled) return;
       const world = worldRef.current;
       const moves = movesRef.current;
       const s = stepRef.current;
@@ -251,13 +257,20 @@ export default function ReconPlayerBase<M>({
         setPlaying(false);
         return;
       }
-      if (!adapterRef.current.pushMove(world, moves[s])) {
+      const move = moves[s];
+      if (!adapterRef.current.pushMove(world, move)) {
         setPlaying(false);
         return;
       }
       setStep(s + 1);
-    }, PLAY_INTERVAL_MS);
-    return () => window.clearInterval(timer);
+      const delay = adapterRef.current.playbackDelayMs?.(move) ?? PLAY_INTERVAL_MS;
+      timer = window.setTimeout(advance, Math.max(16, delay));
+    };
+    timer = window.setTimeout(advance, PLAY_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      if (timer != null) window.clearTimeout(timer);
+    };
   }, [playing, setStep]);
 
   // ── Expose imperative handle for caret-driven scrubbing / list-driven playback ──

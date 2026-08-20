@@ -13,12 +13,10 @@ import { TriangleAlert } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getReconScramble } from '@cuberoot/shared/recon-completion';
 import { getRecon } from '@/lib/recon-api';
-import { getPuzzleId } from '@/lib/recon-utils';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import TwistySection from '@/components/TwistySection';
+import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';
 import SolutionView from '@/components/SolutionView';
-import { cleanForPlayer } from '@/lib/recon-alg-utils';
 import { computeAllStats } from '@/lib/recon-stats';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -55,8 +53,6 @@ export default function ReconAltViewClient() {
   const alt = parent?.alternatives?.[idx];
   const scramble = parent ? getReconScramble(parent) : '';
   const displayScramble = parent?.event === 'sq1' ? formatScrambleForEvent('sq1', scramble) : scramble;
-  const puzzle = parent ? getPuzzleId(parent.event) : '3x3x3';
-
   const stats = useMemo(
     () => alt ? computeAllStats(alt.solution, parent?.rawTime ?? 0, parent?.event) : null,
     [alt, parent?.rawTime, parent?.event],
@@ -93,11 +89,11 @@ export default function ReconAltViewClient() {
         {/* 桌面/平板: 左栏动画 */}
         {!isMobile && (
           <div className="submit-player-pane">
-            {scramble && parent.event && parent.event !== 'sq1' && (
-              <TwistySection
-                puzzle={puzzle}
+            {scramble && parent.event && (
+              <ReconPlayerCanvas
+                event={parent.event}
                 scramble={scramble}
-                alg={cleanForPlayer(alt.solution)}
+                displayText={alt.solution}
                 playerRef={playerRef}
                 fillPane
               />
@@ -119,12 +115,12 @@ export default function ReconAltViewClient() {
             </label>
 
             {/* 手机端: 动画在打乱与解法之间 */}
-            {isMobile && scramble && parent.event && parent.event !== 'sq1' && (
+            {isMobile && scramble && parent.event && (
               <div className="submit-inline-player">
-                <TwistySection
-                  puzzle={puzzle}
+                <ReconPlayerCanvas
+                  event={parent.event}
                   scramble={scramble}
-                  alg={cleanForPlayer(alt.solution)}
+                  displayText={alt.solution}
                   playerRef={playerRef}
                   fillPane
                 />
