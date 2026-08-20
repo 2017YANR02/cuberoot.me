@@ -2,6 +2,7 @@ import {
   TEACHING_ATTENDANCE_STATUSES,
   TEACHING_CAMPUS_STATUSES,
   TEACHING_CONVERSATION_ACTOR_ROLES,
+  TEACHING_CREDIT_LEDGER_ENTRY_TYPES,
   TEACHING_CREDIT_UNITS,
   TEACHING_FEEDBACK_VISIBILITIES,
   TEACHING_GROUP_STATUSES,
@@ -39,7 +40,10 @@ import {
   type TeachingConversationMessage,
   type TeachingConversationMessagesResponse,
   type TeachingConversationSummary,
+  type TeachingCreditAdjustment,
+  type TeachingCreditLedgerEntry,
   type TeachingFeedbackVisibility,
+  type TeachingJsonValue,
   type TeachingGroup,
   type TeachingMemberStatus,
   type TeachingOperationsOverview,
@@ -169,22 +173,11 @@ export interface TeachingStudentPackage {
   createdAt: string;
 }
 
-export interface TeachingCreditLedgerEntry {
-  id: number;
-  studentId: string;
-  entryType: string;
-  delta: number;
-  attendanceId: string | null;
-  sessionId: string | null;
-  sourceSystem: string | null;
-  sourceRef: string | null;
-  sourceLineRef: string | null;
-  reversalOfLedgerId: number | null;
-  reason: string | null;
-  actorRole: string | null;
-  actorDisplayName: string | null;
-  metadata: unknown;
-  createdAt: string;
+export type { TeachingCreditAdjustment, TeachingCreditLedgerEntry } from '@cuberoot/shared/teaching';
+
+export interface TeachingCreditLedgerMutationResult {
+  ledgerEntry: TeachingCreditLedgerEntry;
+  studentPackage: TeachingStudentPackage;
 }
 
 export interface TeachingSessionTeacher {
@@ -342,6 +335,42 @@ function enumValue<const T extends readonly string[]>(value: unknown, values: T,
     throw new TeachingApiError('INVALID_RESPONSE', 502, `${label} is invalid`);
   }
   return parsed as T[number];
+}
+
+const POSTGRES_BIGINT_MAX = '9223372036854775807';
+
+function positiveBigIntString(value: unknown, label: string): string {
+  const parsed = string(value, label);
+  if (
+    !/^[1-9]\d*$/.test(parsed)
+    || parsed.length > POSTGRES_BIGINT_MAX.length
+    || (parsed.length === POSTGRES_BIGINT_MAX.length && parsed > POSTGRES_BIGINT_MAX)
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, `${label} is invalid`);
+  }
+  return parsed;
+}
+
+function isoTimestamp(value: unknown, label: string): string {
+  const parsed = string(value, label);
+  const timestamp = Date.parse(parsed);
+  if (Number.isNaN(timestamp) || new Date(timestamp).toISOString() !== parsed) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, `${label} is invalid`);
+  }
+  return parsed;
+}
+
+function jsonValue(value: unknown, label: string): TeachingJsonValue {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new TeachingApiError('INVALID_RESPONSE', 502, `${label} is invalid`);
+    return value;
+  }
+  if (Array.isArray(value)) return value.map((item, index) => jsonValue(item, `${label}[${index}]`));
+  const item = record(value, label);
+  return Object.fromEntries(
+    Object.entries(item).map(([key, nested]) => [key, jsonValue(nested, `${label}.${key}`)]),
+  );
 }
 
 function nullableNumber(value: unknown, label: string): number | null {
@@ -631,7 +660,16 @@ function packageProduct(value: unknown): TeachingPackageProduct {
 }
 
 function studentPackage(value: unknown): TeachingStudentPackage {
-  const item = record(value, 'studentPackage');
+  const item = exactRecord(
+    value,
+    [
+      'id', 'studentId', 'productId', 'productCode', 'productName', 'creditUnit', 'creditType',
+      'entitledCredits', 'remainingCredits', 'validityDays', 'priceAmountMinor', 'currency',
+      'status', 'acquisitionType', 'validFrom', 'validUntil', 'sourceSystem', 'sourceRef',
+      'sourceLineRef', 'createdAt',
+    ],
+    'studentPackage',
+  );
   return {
     id: string(item.id, 'studentPackage.id'),
     studentId: string(item.studentId, 'studentPackage.studentId'),
@@ -657,23 +695,133 @@ function studentPackage(value: unknown): TeachingStudentPackage {
 }
 
 function creditLedgerEntry(value: unknown): TeachingCreditLedgerEntry {
-  const item = record(value, 'ledger');
+  const item = exactRecord(
+    value,
+    [
+      'id', 'studentId', 'entryType', 'delta', 'attendanceId', 'sessionId', 'sourceSystem',
+      'sourceRef', 'sourceLineRef', 'reversalOfLedgerId', 'reversedByLedgerId', 'reason',
+      'actorRole', 'actorDisplayName', 'metadata', 'createdAt',
+    ],
+    'ledgerEntry',
+  );
+  const parsed: TeachingCreditLedgerEntry = {
+    id: positiveBigIntString(item.id, 'ledgerEntry.id'),
+    studentId: string(item.studentId, 'ledgerEntry.studentId'),
+    entryType: enumValue(item.entryType, TEACHING_CREDIT_LEDGER_ENTRY_TYPES, 'ledgerEntry.entryType'),
+    delta: integer(item.delta, 'ledgerEntry.delta', -1_000_000),
+    attendanceId: nullableString(item.attendanceId, 'ledgerEntry.attendanceId'),
+    sessionId: nullableString(item.sessionId, 'ledgerEntry.sessionId'),
+    sourceSystem: nullableString(item.sourceSystem, 'ledgerEntry.sourceSystem'),
+    sourceRef: nullableString(item.sourceRef, 'ledgerEntry.sourceRef'),
+    sourceLineRef: nullableString(item.sourceLineRef, 'ledgerEntry.sourceLineRef'),
+    reversalOfLedgerId: item.reversalOfLedgerId === null
+      ? null
+      : positiveBigIntString(item.reversalOfLedgerId, 'ledgerEntry.reversalOfLedgerId'),
+    reversedByLedgerId: item.reversedByLedgerId === null
+      ? null
+      : positiveBigIntString(item.reversedByLedgerId, 'ledgerEntry.reversedByLedgerId'),
+    reason: string(item.reason, 'ledgerEntry.reason'),
+    actorRole: string(item.actorRole, 'ledgerEntry.actorRole'),
+    actorDisplayName: string(item.actorDisplayName, 'ledgerEntry.actorDisplayName'),
+    metadata: jsonValue(item.metadata, 'ledgerEntry.metadata'),
+    createdAt: isoTimestamp(item.createdAt, 'ledgerEntry.createdAt'),
+  };
+
+  const hasSourcePair = parsed.sourceSystem !== null && parsed.sourceRef !== null;
+  const hasNoSource = parsed.sourceSystem === null
+    && parsed.sourceRef === null
+    && parsed.sourceLineRef === null;
+  const sourcesAreCanonical = (
+    (parsed.sourceSystem === null || (
+      parsed.sourceSystem.length >= 1
+      && parsed.sourceSystem.length <= 64
+      && parsed.sourceSystem.trim() === parsed.sourceSystem
+    ))
+    && (parsed.sourceRef === null || (
+      parsed.sourceRef.length >= 1
+      && parsed.sourceRef.length <= 160
+      && parsed.sourceRef.trim() === parsed.sourceRef
+    ))
+    && (parsed.sourceLineRef === null || (
+      parsed.sourceLineRef.length >= 1
+      && parsed.sourceLineRef.length <= 160
+      && parsed.sourceLineRef.trim() === parsed.sourceLineRef
+    ))
+  );
+  const reasonIsCanonical = parsed.reason.length >= 1
+    && parsed.reason.length <= 500
+    && parsed.reason.trim() === parsed.reason;
+  if (
+    parsed.delta === 0
+    || parsed.delta > 1_000_000
+    || (parsed.sourceSystem === null) !== (parsed.sourceRef === null)
+    || (parsed.sourceLineRef !== null && !hasSourcePair)
+    || !sourcesAreCanonical
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'ledgerEntry response is invalid');
+  }
+
+  const hasAttendance = parsed.attendanceId !== null;
+  const hasSession = parsed.sessionId !== null;
+  const hasReversalTarget = parsed.reversalOfLedgerId !== null;
+  const standardShape = !hasAttendance && !hasSession && !hasReversalTarget;
+  const validEntryShape = (
+    ((parsed.entryType === 'purchase' || parsed.entryType === 'grant') && parsed.delta > 0 && standardShape)
+    || (parsed.entryType === 'consume' && parsed.delta < 0 && hasAttendance && hasSession && !hasReversalTarget)
+    || (parsed.entryType === 'refund' && parsed.delta < 0 && standardShape && hasSourcePair && reasonIsCanonical)
+    || (parsed.entryType === 'adjustment' && standardShape)
+    || (parsed.entryType === 'expiration' && parsed.delta < 0 && standardShape)
+    || (parsed.entryType === 'reversal' && parsed.delta !== 0 && !hasAttendance && !hasSession && hasReversalTarget && hasNoSource && reasonIsCanonical)
+  );
+  if (!validEntryShape) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'ledgerEntry response is invalid');
+  }
+  return parsed;
+}
+
+function creditAdjustment(value: unknown): TeachingCreditAdjustment {
+  const item = exactRecord(value, ['ledgerEntry', 'student', 'studentPackage'], 'creditAdjustment');
+  const adjustmentStudent = exactRecord(item.student, ['id', 'displayName'], 'creditAdjustment.student');
+  const adjustmentPackage = exactRecord(
+    item.studentPackage,
+    ['id', 'productCode', 'productName', 'creditUnit', 'creditType'],
+    'creditAdjustment.studentPackage',
+  );
+  const ledgerEntry = creditLedgerEntry(item.ledgerEntry);
+  const studentId = string(adjustmentStudent.id, 'creditAdjustment.student.id');
+  if (
+    ledgerEntry.studentId !== studentId
+    || !(['adjustment', 'refund', 'reversal', 'expiration'] as const).includes(
+      ledgerEntry.entryType as 'adjustment' | 'refund' | 'reversal' | 'expiration',
+    )
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'creditAdjustment response is invalid');
+  }
   return {
-    id: integer(item.id, 'ledger.id', 1),
-    studentId: string(item.studentId, 'ledger.studentId'),
-    entryType: string(item.entryType, 'ledger.entryType'),
-    delta: integer(item.delta, 'ledger.delta', Number.MIN_SAFE_INTEGER),
-    attendanceId: nullableString(item.attendanceId, 'ledger.attendanceId'),
-    sessionId: nullableString(item.sessionId, 'ledger.sessionId'),
-    sourceSystem: nullableString(item.sourceSystem, 'ledger.sourceSystem'),
-    sourceRef: nullableString(item.sourceRef, 'ledger.sourceRef'),
-    sourceLineRef: nullableString(item.sourceLineRef, 'ledger.sourceLineRef'),
-    reversalOfLedgerId: item.reversalOfLedgerId === null ? null : integer(item.reversalOfLedgerId, 'ledger.reversalOfLedgerId', 1),
-    reason: nullableString(item.reason, 'ledger.reason'),
-    actorRole: nullableString(item.actorRole, 'ledger.actorRole'),
-    actorDisplayName: nullableString(item.actorDisplayName, 'ledger.actorDisplayName'),
-    metadata: item.metadata,
-    createdAt: string(item.createdAt, 'ledger.createdAt'),
+    ledgerEntry,
+    student: {
+      id: studentId,
+      displayName: string(adjustmentStudent.displayName, 'creditAdjustment.student.displayName'),
+    },
+    studentPackage: {
+      id: string(adjustmentPackage.id, 'creditAdjustment.studentPackage.id'),
+      productCode: string(adjustmentPackage.productCode, 'creditAdjustment.studentPackage.productCode'),
+      productName: string(adjustmentPackage.productName, 'creditAdjustment.studentPackage.productName'),
+      creditUnit: enumValue(
+        adjustmentPackage.creditUnit,
+        TEACHING_CREDIT_UNITS,
+        'creditAdjustment.studentPackage.creditUnit',
+      ),
+      creditType: string(adjustmentPackage.creditType, 'creditAdjustment.studentPackage.creditType'),
+    },
+  };
+}
+
+function creditLedgerMutationResult(value: unknown): TeachingCreditLedgerMutationResult {
+  const envelope = exactRecord(value, ['ledgerEntry', 'studentPackage'], 'credit ledger mutation');
+  return {
+    ledgerEntry: creditLedgerEntry(envelope.ledgerEntry),
+    studentPackage: studentPackage(envelope.studentPackage),
   };
 }
 
@@ -1326,6 +1474,19 @@ function page<T>(value: unknown, key: string, parse: (item: unknown) => T): Teac
   };
 }
 
+function exactPage<T>(value: unknown, key: string, parse: (item: unknown) => T): TeachingPage<T> {
+  const envelope = exactRecord(value, [key, 'total', 'page', 'pageSize'], `${key} page`);
+  if (!Array.isArray(envelope[key])) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, `${key} response is invalid`);
+  }
+  return {
+    items: envelope[key].map(parse),
+    total: integer(envelope.total, `${key}.total`),
+    page: integer(envelope.page, `${key}.page`, 1),
+    pageSize: integer(envelope.pageSize, `${key}.pageSize`, 1),
+  };
+}
+
 function orgPath(orgSlug: string, suffix = ''): string {
   return `/v1/teaching/organizations/${encodeURIComponent(orgSlug)}${suffix}`;
 }
@@ -1379,6 +1540,18 @@ export async function getTeachingOperationsOverview(orgSlug: string): Promise<Te
     'operations overview envelope',
   );
   return operationsOverview(envelope.operationsOverview);
+}
+
+export async function listTeachingCreditAdjustments(
+  orgSlug: string,
+  pageNumber = 1,
+  pageSize = 25,
+): Promise<TeachingPage<TeachingCreditAdjustment>> {
+  return exactPage(
+    await request(orgPath(orgSlug, `/operations/credit-adjustments${pageQuery(pageNumber, pageSize)}`)),
+    'creditAdjustments',
+    creditAdjustment,
+  );
 }
 
 export async function listTeachingStudents(orgSlug: string, pageNumber = 1, pageSize = 25): Promise<TeachingPage<TeachingStudent>> {
@@ -1566,11 +1739,65 @@ export async function listTeachingStudentPackageLedger(
   pageNumber = 1,
   pageSize = 25,
 ): Promise<TeachingPage<TeachingCreditLedgerEntry>> {
-  return page(
+  return exactPage(
     await request(orgPath(orgSlug, `/student-packages/${encodeURIComponent(studentPackageId)}/ledger${pageQuery(pageNumber, pageSize)}`)),
     'ledger',
     creditLedgerEntry,
   );
+}
+
+export async function refundTeachingStudentPackage(
+  orgSlug: string,
+  studentPackageId: string,
+  input: {
+    credits: number;
+    reason: string;
+    sourceSystem: string;
+    sourceRef: string;
+    sourceLineRef: string | null;
+  },
+  idempotencyKey: string,
+): Promise<TeachingCreditLedgerMutationResult> {
+  const result = creditLedgerMutationResult(await post(
+    orgPath(orgSlug, `/student-packages/${encodeURIComponent(studentPackageId)}/refunds`),
+    input,
+    idempotencyKey,
+  ));
+  if (
+    result.studentPackage.id !== studentPackageId
+    || result.studentPackage.studentId !== result.ledgerEntry.studentId
+    || result.ledgerEntry.entryType !== 'refund'
+    || result.ledgerEntry.delta !== -input.credits
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'credit refund response is invalid');
+  }
+  return result;
+}
+
+export async function reverseTeachingCreditLedgerEntry(
+  orgSlug: string,
+  studentPackageId: string,
+  ledgerId: string,
+  input: { reason: string },
+  idempotencyKey: string,
+): Promise<TeachingCreditLedgerMutationResult> {
+  const result = creditLedgerMutationResult(await post(
+    orgPath(
+      orgSlug,
+      `/student-packages/${encodeURIComponent(studentPackageId)}/ledger/${encodeURIComponent(ledgerId)}/reversal`,
+    ),
+    input,
+    idempotencyKey,
+  ));
+  if (
+    result.studentPackage.id !== studentPackageId
+    || result.studentPackage.studentId !== result.ledgerEntry.studentId
+    || result.ledgerEntry.entryType !== 'reversal'
+    || result.ledgerEntry.reversalOfLedgerId !== ledgerId
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'credit reversal response is invalid');
+  }
+  return result;
 }
 
 export async function listTeachingSessions(

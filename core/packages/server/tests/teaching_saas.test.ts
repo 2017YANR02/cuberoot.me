@@ -65,6 +65,9 @@ function repository(): TeachingSaasRepository {
     listStudentPackages: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
     createStudentPackage: vi.fn().mockResolvedValue({ status: 201, body: { studentPackage: { id: 'package-1' } } }),
     listStudentPackageLedger: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    listCreditAdjustments: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
+    refundStudentPackageCredits: vi.fn().mockResolvedValue({ status: 201, body: { ledgerEntry: { id: '1' }, studentPackage: { id: 'package-1' } } }),
+    reverseStudentPackageLedgerEntry: vi.fn().mockResolvedValue({ status: 201, body: { ledgerEntry: { id: '2' }, studentPackage: { id: 'package-1' } } }),
     listSessions: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
     getSession: vi.fn().mockResolvedValue({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' }),
     createSession: vi.fn().mockResolvedValue({ status: 201, body: { session: { id: 'session-1' } } }),
@@ -382,6 +385,114 @@ describe('teaching SaaS routes', () => {
       'product-1',
       createHash('sha256').update(raw).digest('hex'),
       expect.any(String),
+    );
+  });
+
+  it('binds refund and reversal idempotency hashes to their path resources', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const packageId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    const refundRaw = JSON.stringify({
+      credits: 2,
+      reason: ' Duplicate charge ',
+      sourceSystem: 'stripe',
+      sourceRef: 'refund-42',
+      sourceLineRef: null,
+    });
+    const refund = await app.request(
+      `/teaching/organizations/demo/student-packages/${packageId}/refunds`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'refund-key' },
+        body: refundRaw,
+      },
+    );
+    expect(refund.status).toBe(201);
+    expect(await refund.json()).toEqual({ ledgerEntry: { id: '1' }, studentPackage: { id: 'package-1' } });
+    expect(repo.refundStudentPackageCredits).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      packageId,
+      {
+        credits: 2,
+        reason: 'Duplicate charge',
+        sourceSystem: 'stripe',
+        sourceRef: 'refund-42',
+        sourceLineRef: null,
+      },
+      'refund-key',
+      createHash('sha256').update(JSON.stringify([packageId, refundRaw])).digest('hex'),
+      expect.any(String),
+    );
+
+    const ledgerId = '9223372036854775807';
+    const reversalRaw = JSON.stringify({ reason: 'Wrong package' });
+    const reversal = await app.request(
+      `/teaching/organizations/demo/student-packages/${packageId}/ledger/${ledgerId}/reversal`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'reversal-key' },
+        body: reversalRaw,
+      },
+    );
+    expect(reversal.status).toBe(201);
+    expect(await reversal.json()).toEqual({ ledgerEntry: { id: '2' }, studentPackage: { id: 'package-1' } });
+    expect(repo.reverseStudentPackageLedgerEntry).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      packageId,
+      ledgerId,
+      { reason: 'Wrong package' },
+      'reversal-key',
+      createHash('sha256').update(JSON.stringify([packageId, ledgerId, reversalRaw])).digest('hex'),
+      expect.any(String),
+    );
+  });
+
+  it('rejects unknown refund fields and out-of-range ledger bigint ids', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const packageId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    const invalidRefund = await app.request(
+      `/teaching/organizations/demo/student-packages/${packageId}/refunds`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'refund-key' },
+        body: JSON.stringify({
+          credits: 1, reason: 'reason', sourceSystem: 'manual', sourceRef: '1', extra: true,
+        }),
+      },
+    );
+    expect(invalidRefund.status).toBe(400);
+    expect(repo.refundStudentPackageCredits).not.toHaveBeenCalled();
+
+    const invalidReversal = await app.request(
+      `/teaching/organizations/demo/student-packages/${packageId}/ledger/9223372036854775808/reversal`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'reversal-key' },
+        body: JSON.stringify({ reason: 'reason' }),
+      },
+    );
+    expect(invalidReversal.status).toBe(400);
+    expect(repo.reverseStudentPackageLedgerEntry).not.toHaveBeenCalled();
+  });
+
+  it('returns the frozen credit-adjustment feed envelope', async () => {
+    repo.listCreditAdjustments = vi.fn().mockResolvedValue({
+      items: [{ ledgerEntry: { id: '9007199254740993' } }], total: 1, page: 2, pageSize: 10,
+    });
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const response = await app.request(
+      '/teaching/organizations/demo/operations/credit-adjustments?page=2&pageSize=10',
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      creditAdjustments: [{ ledgerEntry: { id: '9007199254740993' } }],
+      total: 1,
+      page: 2,
+      pageSize: 10,
+    });
+    expect(repo.listCreditAdjustments).toHaveBeenCalledWith(
+      ACTOR, 'demo', { page: 2, pageSize: 10, offset: 10 }, expect.any(String),
     );
   });
 

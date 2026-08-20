@@ -84,6 +84,25 @@ describe('main-site teaching architecture', () => {
     expect(sessionDetail).not.toContain('router.push');
   });
 
+  it('keeps finance corrections permission-gated on the canonical student package page', () => {
+    const packages = readClient('app/[lang]/org/[orgSlug]/students/[studentId]/packages/page.tsx');
+
+    expect(packages).toContain("hasTeachingPermission(role, 'finance:manage')");
+    expect(packages).toContain("canManageFinance && item.remainingCredits > 0");
+    expect(packages).not.toContain("canManageFinance && item.status === 'active'");
+    expect(packages).toContain('Math.min(item.remainingCredits, 1_000_000)');
+    expect(packages).toContain('credits > refundCreditLimit');
+    expect(packages).toContain('max={refundCreditLimit}');
+    expect(packages).toContain('实际退款款项在线下或外部系统处理');
+    expect(packages).toContain('refundTeachingStudentPackage');
+    expect(packages).toContain('reverseTeachingCreditLedgerEntry');
+    expect(packages).toContain('useOperationKey');
+    expect(packages).toContain('reversedByLedgerId');
+    expect(packages).not.toContain('balanceAfter');
+    expect(packages).not.toContain('packages/platform');
+    expect(packages).not.toContain('router.push');
+  });
+
   it('keeps the operations overview inside the main-site organization shell', () => {
     const workspace = readClient('app/[lang]/org/_components/OrgWorkspace.tsx');
     const operations = readClient('app/[lang]/org/[orgSlug]/operations/page.tsx');
@@ -92,6 +111,12 @@ describe('main-site teaching architecture', () => {
     expect(operations).toContain('getTeachingOperationsOverview');
     expect(operations).toContain('creditConsumption');
     expect(operations).toContain('teacherLoad');
+    expect(operations).toContain("hasTeachingPermission(role, 'finance:read')");
+    expect(operations).toContain('listTeachingCreditAdjustments');
+    expect(operations).toContain('<TeachingPagination');
+    expect(operations).toContain('<AppLink');
+    expect(operations).toContain('prefetch={false}');
+    expect(operations).not.toContain('balanceAfter');
     expect(operations).not.toContain('packages/platform');
     expect(operations).not.toContain('router.push');
   });

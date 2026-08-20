@@ -30,6 +30,17 @@ export type TeachingStudentPackageStatus = (typeof TEACHING_STUDENT_PACKAGE_STAT
 export const TEACHING_CREDIT_UNITS = ['lesson', 'minute'] as const;
 export type TeachingCreditUnit = (typeof TEACHING_CREDIT_UNITS)[number];
 
+export const TEACHING_CREDIT_LEDGER_ENTRY_TYPES = [
+  'purchase',
+  'grant',
+  'consume',
+  'refund',
+  'adjustment',
+  'expiration',
+  'reversal',
+] as const;
+export type TeachingCreditLedgerEntryType = (typeof TEACHING_CREDIT_LEDGER_ENTRY_TYPES)[number];
+
 export const TEACHING_PACKAGE_ACQUISITION_TYPES = ['purchase', 'grant', 'migration'] as const;
 export type TeachingPackageAcquisitionType = (typeof TEACHING_PACKAGE_ACQUISITION_TYPES)[number];
 
@@ -721,6 +732,48 @@ export interface TeachingOperationsOverview {
     sessionCount: number;
     completedSessionCount: number;
   }>;
+}
+
+export type TeachingJsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | TeachingJsonValue[]
+  | { [key: string]: TeachingJsonValue };
+
+export interface TeachingCreditLedgerEntry {
+  id: string;
+  studentId: string;
+  entryType: TeachingCreditLedgerEntryType;
+  delta: number;
+  attendanceId: string | null;
+  sessionId: string | null;
+  sourceSystem: string | null;
+  sourceRef: string | null;
+  sourceLineRef: string | null;
+  reversalOfLedgerId: string | null;
+  reversedByLedgerId: string | null;
+  reason: string;
+  actorRole: string;
+  actorDisplayName: string;
+  metadata: TeachingJsonValue;
+  createdAt: string;
+}
+
+export interface TeachingCreditAdjustment {
+  ledgerEntry: TeachingCreditLedgerEntry;
+  student: {
+    id: string;
+    displayName: string;
+  };
+  studentPackage: {
+    id: string;
+    productCode: string;
+    productName: string;
+    creditUnit: TeachingCreditUnit;
+    creditType: string;
+  };
 }
 
 export const TEACHING_WEEKLY_REPORT_STATUSES = ['draft', 'published'] as const;

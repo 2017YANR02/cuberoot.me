@@ -1034,4 +1034,68 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(audit).toBeGreaterThan(insert);
     expect(complete).toBeGreaterThan(audit);
   });
+
+  it('reads package ledgers newest-first with a stable descending bigint tie-breaker', async () => {
+    const source = await teachingRouteSource();
+    const list = sourceBetween(
+      source,
+      'async listStudentPackageLedger(',
+      '\n  async listCreditAdjustments(',
+    );
+    expect(list).toContain("requirePermission(access, 'package:read')");
+    expect(list).toContain('ORDER BY ledger.created_at DESC, ledger.id DESC LIMIT ? OFFSET ?');
+    expect(list).toContain('reversed.id AS reversed_by_ledger_id');
+  });
+
+  it('limits the organization adjustment feed to finance readers and indexed entry types', async () => {
+    const source = await teachingRouteSource();
+    const list = sourceBetween(
+      source,
+      'async listCreditAdjustments(',
+      '\n  async refundStudentPackageCredits(',
+    );
+    expect(list).toContain("requirePermission(access, 'finance:read')");
+    expect(list.match(/entry_type IN \('adjustment', 'refund', 'reversal', 'expiration'\)/g)).toHaveLength(2);
+    expect(list).toContain('ORDER BY ledger.created_at DESC, ledger.id DESC');
+    expect(list).toContain('rows.map(creditAdjustmentToJson)');
+  });
+
+  it('locks package and target resources before refund and reversal idempotency', async () => {
+    const source = await teachingRouteSource();
+    const refund = sourceBetween(
+      source,
+      'async refundStudentPackageCredits(',
+      '\n  async reverseStudentPackageLedgerEntry(',
+    );
+    const refundPermission = refund.indexOf("requirePermission(access, 'finance:manage')");
+    const refundPackage = refund.indexOf('lockStudentPackageForCreditMutation(', refundPermission);
+    const refundIdempotency = refund.indexOf('beginIdempotency(', refundPackage);
+    const refundReplay = refund.indexOf("if ('replay' in idem) return idem.replay", refundIdempotency);
+    const refundBalance = refund.indexOf('studentPackageCreditBalance(', refundReplay);
+    expect(refundPackage).toBeGreaterThan(refundPermission);
+    expect(refundIdempotency).toBeGreaterThan(refundPackage);
+    expect(refundReplay).toBeGreaterThan(refundIdempotency);
+    expect(refundBalance).toBeGreaterThan(refundReplay);
+    expect(refund).toContain('refundLedgerIdempotencyKey(idempotencyKey)');
+
+    const reversal = sourceBetween(
+      source,
+      'async reverseStudentPackageLedgerEntry(',
+      '\n  async listWeeklyReports(',
+    );
+    const reversalPermission = reversal.indexOf("requirePermission(access, 'finance:manage')");
+    const reversalPackage = reversal.indexOf('lockStudentPackageForCreditMutation(', reversalPermission);
+    const reversalTarget = reversal.indexOf('FROM lesson_credit_ledger target', reversalPackage);
+    const reversalIdempotency = reversal.indexOf('beginIdempotency(', reversalTarget);
+    const reversalReplay = reversal.indexOf("if ('replay' in idem) return idem.replay", reversalIdempotency);
+    const reversedCheck = reversal.indexOf('target.reversed_by_ledger_id != null', reversalReplay);
+    const reversalBalance = reversal.indexOf('studentPackageCreditBalance(', reversedCheck);
+    expect(reversalPackage).toBeGreaterThan(reversalPermission);
+    expect(reversalTarget).toBeGreaterThan(reversalPackage);
+    expect(reversalIdempotency).toBeGreaterThan(reversalTarget);
+    expect(reversalReplay).toBeGreaterThan(reversalIdempotency);
+    expect(reversedCheck).toBeGreaterThan(reversalReplay);
+    expect(reversalBalance).toBeGreaterThan(reversedCheck);
+    expect(reversal).toContain('reversalLedgerIdempotencyKey(ledgerId, idempotencyKey)');
+  });
 });

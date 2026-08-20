@@ -1,7 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { TeachingConversationActorSnapshot } from '@cuberoot/shared/teaching';
+import type {
+  TeachingConversationActorSnapshot,
+  TeachingCreditLedgerEntryType,
+} from '@cuberoot/shared/teaching';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { TeachingApiError, type TeachingPage } from '@/lib/teaching-saas-api';
@@ -109,6 +112,23 @@ export function entityStatusLabel(status: string, t: ReturnType<typeof useT>): s
   };
   const label = labels[status];
   return label ? t(label[0], label[1]) : status;
+}
+
+export function creditLedgerEntryLabel(
+  entryType: TeachingCreditLedgerEntryType,
+  t: ReturnType<typeof useT>,
+): string {
+  const labels: Record<TeachingCreditLedgerEntryType, [string, string]> = {
+    purchase: ['购买入账', 'Purchase credit'],
+    grant: ['发放入账', 'Grant credit'],
+    consume: ['完课扣减', 'Lesson consumption'],
+    refund: ['退款扣减', 'Refund deduction'],
+    adjustment: ['人工调整', 'Manual adjustment'],
+    expiration: ['到期扣减', 'Expiration deduction'],
+    reversal: ['冲正', 'Reversal'],
+  };
+  const label = labels[entryType];
+  return t(label[0], label[1]);
 }
 
 export function teachingRoleLabel(role: string, t: ReturnType<typeof useT>): string {
