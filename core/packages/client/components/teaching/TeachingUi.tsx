@@ -73,20 +73,30 @@ export function TeachingPagination({
   pageSize,
   total,
   baseHref,
+  query,
 }: {
   page: number;
   pageSize: number;
   total: number;
   baseHref: string;
+  query?: Readonly<Record<string, string | null | undefined>>;
 }) {
   const t = useT();
   const pages = Math.max(1, Math.ceil(total / pageSize));
   if (pages <= 1) return null;
+  const pageHref = (targetPage: number) => {
+    const params = new URLSearchParams();
+    Object.entries(query ?? {}).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+    params.set('page', String(targetPage));
+    return `${baseHref}?${params.toString()}`;
+  };
   return (
     <nav className="teaching-pagination" aria-label={t('分页', 'Pagination')}>
-      {page > 1 && <AppLink href={`${baseHref}?page=${page - 1}`} prefetch={false}>{t('上一页', 'Previous')}</AppLink>}
+      {page > 1 && <AppLink href={pageHref(page - 1)} prefetch={false}>{t('上一页', 'Previous')}</AppLink>}
       <span>{t(`第 ${page} / ${pages} 页`, `Page ${page} of ${pages}`)}</span>
-      {page < pages && <AppLink href={`${baseHref}?page=${page + 1}`} prefetch={false}>{t('下一页', 'Next')}</AppLink>}
+      {page < pages && <AppLink href={pageHref(page + 1)} prefetch={false}>{t('下一页', 'Next')}</AppLink>}
     </nav>
   );
 }

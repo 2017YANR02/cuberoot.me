@@ -57,6 +57,7 @@ export default function OrgWorkspace({ orgSlug, children }: Props) {
     { href: `/org/${organization.slug}/training`, label: t('训练', 'Training'), permission: 'training:assignment:read' },
     { href: `/org/${organization.slug}/reports`, label: t('周报', 'Reports'), permission: 'report:read' },
     { href: `/org/${organization.slug}/operations`, label: t('经营', 'Operations'), permission: 'operations:read' },
+    { href: `/org/${organization.slug}/audit`, label: t('审计', 'Audit'), permission: 'audit:read' },
   ];
 
   return (

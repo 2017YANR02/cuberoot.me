@@ -147,6 +147,24 @@ describe('main-site teaching architecture', () => {
     expect(operations).not.toContain('router.push');
   });
 
+  it('keeps searchable audit history inside the main-site organization shell', () => {
+    const workspace = readClient('app/[lang]/org/_components/OrgWorkspace.tsx');
+    const audit = readClient('app/[lang]/org/[orgSlug]/audit/page.tsx');
+
+    expect(workspace).toContain("permission: 'audit:read'");
+    expect(audit).toContain("hasTeachingPermission(organization.role, 'audit:read')");
+    expect(audit).toContain('listTeachingAuditEvents');
+    expect(audit).toContain('useQueryStates');
+    expect(audit).toContain('<SearchInput');
+    expect(audit).toContain('<TeachingPagination');
+    expect(audit).toContain('exportSpreadsheetCsv');
+    expect(audit).toContain('escapeSpreadsheetTextCell');
+    expect(audit).not.toContain('actorUserId');
+    expect(audit).not.toContain('metadata');
+    expect(audit).not.toContain('packages/platform');
+    expect(audit).not.toContain('router.push');
+  });
+
   it('keeps training management and review inside the main-site organization shell', () => {
     const workspace = readClient('app/[lang]/org/_components/OrgWorkspace.tsx');
     const overview = readClient('app/[lang]/org/[orgSlug]/training/page.tsx');

@@ -360,6 +360,7 @@ describe('teaching SaaS repository tenant denial audit', () => {
       expect(hasTeachingPermission(role, 'session:manage')).toBe(true);
       expect(hasTeachingPermission(role, 'package:manage')).toBe(true);
       expect(hasTeachingPermission(role, 'operations:read')).toBe(true);
+      expect(hasTeachingPermission(role, 'audit:read')).toBe(true);
     }
     for (const role of ['teacher', 'assistant'] as const) {
       expect(hasTeachingPermission(role, 'session:read')).toBe(true);
@@ -373,16 +374,75 @@ describe('teaching SaaS repository tenant denial audit', () => {
       expect(hasTeachingPermission(role, 'assignment:manage')).toBe(false);
       expect(hasTeachingPermission(role, 'package:read')).toBe(false);
       expect(hasTeachingPermission(role, 'operations:read')).toBe(false);
+      expect(hasTeachingPermission(role, 'audit:read')).toBe(false);
     }
     expect(hasTeachingPermission('finance', 'package:read')).toBe(true);
     expect(hasTeachingPermission('finance', 'package:manage')).toBe(true);
     expect(hasTeachingPermission('finance', 'operations:read')).toBe(true);
+    expect(hasTeachingPermission('finance', 'audit:read')).toBe(false);
     expect(hasTeachingPermission('finance', 'session:read')).toBe(false);
     expect(hasTeachingPermission('finance', 'session:manage')).toBe(false);
     expect(hasTeachingPermission('viewer', 'member:read')).toBe(true);
     expect(hasTeachingPermission('viewer', 'finance:read')).toBe(false);
     expect(hasTeachingPermission('viewer', 'session:read')).toBe(false);
     expect(hasTeachingPermission('viewer', 'operations:read')).toBe(false);
+    expect(hasTeachingPermission('viewer', 'audit:read')).toBe(false);
+  });
+
+  it('searches organization audit events with literal text and stable pagination', async () => {
+    const auditId = '9007199254740993';
+    const entityId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    db.query
+      .mockResolvedValueOnce([{
+        id: 'organization-id', slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai',
+        status: 'active', version: 1, role: 'admin',
+      }])
+      .mockResolvedValueOnce([{ count: 1 }])
+      .mockResolvedValueOnce([{
+        id: auditId,
+        actor_display_name: 'Admin One',
+        actor_role: 'admin',
+        action: 'training.review.create',
+        entity_type: 'training_review',
+        entity_id: entityId,
+        outcome: 'denied',
+        request_id: 'req-1',
+        created_at: '2026-08-20T12:00:00.000Z',
+      }]);
+
+    await expect(teachingSaasRepository.listAuditEvents(
+      ACTOR,
+      'demo',
+      { q: 'Review_100%', outcome: 'denied' },
+      { page: 2, pageSize: 10, offset: 10 },
+      'request-audit',
+    )).resolves.toEqual({
+      items: [{
+        id: auditId,
+        actorDisplayName: 'Admin One',
+        actorRole: 'admin',
+        action: 'training.review.create',
+        entityType: 'training_review',
+        entityId,
+        outcome: 'denied',
+        requestId: 'req-1',
+        createdAt: '2026-08-20T12:00:00.000Z',
+      }],
+      total: 1,
+      page: 2,
+      pageSize: 10,
+    });
+
+    const countCall = db.query.mock.calls[1]!;
+    const listCall = db.query.mock.calls[2]!;
+    expect(String(countCall[0])).toContain('strpos(lower(');
+    expect(String(countCall[0])).not.toContain('ILIKE');
+    expect(countCall[1]).toEqual([
+      'organization-id', 'denied', 'denied',
+      'Review_100%', 'Review_100%', 'Review_100%', 'Review_100%', 'Review_100%', 'Review_100%',
+    ]);
+    expect(String(listCall[0])).toContain('ORDER BY created_at DESC, id DESC');
+    expect(listCall[1]).toEqual([...countCall[1], 10, 10]);
   });
 
   it('aggregates an organization-local 30-day operations overview', async () => {

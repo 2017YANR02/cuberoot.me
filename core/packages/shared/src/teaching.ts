@@ -760,6 +760,22 @@ export interface TeachingOperationsOverview {
   }>;
 }
 
+export const TEACHING_AUDIT_OUTCOMES = ['succeeded', 'denied', 'failed'] as const;
+
+export type TeachingAuditOutcome = (typeof TEACHING_AUDIT_OUTCOMES)[number];
+
+export interface TeachingAuditEvent {
+  id: string;
+  actorDisplayName: string;
+  actorRole: TeachingOrganizationRole | null;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  outcome: TeachingAuditOutcome;
+  requestId: string | null;
+  createdAt: string;
+}
+
 export type TeachingJsonValue =
   | string
   | number

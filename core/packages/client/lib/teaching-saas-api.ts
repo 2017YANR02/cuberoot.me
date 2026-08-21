@@ -1,5 +1,6 @@
 import {
   TEACHING_ATTENDANCE_STATUSES,
+  TEACHING_AUDIT_OUTCOMES,
   TEACHING_CAMPUS_STATUSES,
   TEACHING_CONVERSATION_ACTOR_ROLES,
   TEACHING_CREDIT_LEDGER_ENTRY_TYPES,
@@ -28,6 +29,8 @@ import {
   TRAINING_TRUST_LEVELS,
   isTrainingSourceActivity,
   type TeachingAttendanceStatus,
+  type TeachingAuditEvent,
+  type TeachingAuditOutcome,
   type TeachingCampus,
   type CreateTeachingConversationInput,
   type CreateTeachingConversationResponse,
@@ -381,6 +384,10 @@ function positiveBigIntString(value: unknown, label: string): string {
   return parsed;
 }
 
+function unicodeCodePointLength(value: string): number {
+  return Array.from(value).length;
+}
+
 function isoTimestamp(value: unknown, label: string): string {
   const parsed = string(value, label);
   const timestamp = Date.parse(parsed);
@@ -573,6 +580,43 @@ function operationsOverview(value: unknown): TeachingOperationsOverview {
     packages: parsedPackages,
     training: parsedTraining,
     teacherLoad,
+  };
+}
+
+function auditEvent(value: unknown): TeachingAuditEvent {
+  const item = exactRecord(
+    value,
+    ['id', 'actorDisplayName', 'actorRole', 'action', 'entityType', 'entityId', 'outcome', 'requestId', 'createdAt'],
+    'auditEvent',
+  );
+  const actorDisplayName = string(item.actorDisplayName, 'auditEvent.actorDisplayName');
+  const action = string(item.action, 'auditEvent.action');
+  const entityType = string(item.entityType, 'auditEvent.entityType');
+  const entityId = item.entityId === null ? null : string(item.entityId, 'auditEvent.entityId');
+  const requestId = item.requestId === null ? null : string(item.requestId, 'auditEvent.requestId');
+  if (
+    unicodeCodePointLength(actorDisplayName) > 200
+    || unicodeCodePointLength(action) > 100
+    || action.trim().length < 1
+    || unicodeCodePointLength(entityType) > 80
+    || entityType.trim().length < 1
+    || (entityId !== null && unicodeCodePointLength(entityId) > 100)
+    || (requestId !== null && unicodeCodePointLength(requestId) > 100)
+  ) {
+    throw new TeachingApiError('INVALID_RESPONSE', 502, 'auditEvent response is invalid');
+  }
+  return {
+    id: positiveBigIntString(item.id, 'auditEvent.id'),
+    actorDisplayName,
+    actorRole: item.actorRole === null
+      ? null
+      : enumValue(item.actorRole, TEACHING_ORGANIZATION_ROLES, 'auditEvent.actorRole'),
+    action,
+    entityType,
+    entityId,
+    outcome: enumValue(item.outcome, TEACHING_AUDIT_OUTCOMES, 'auditEvent.outcome'),
+    requestId,
+    createdAt: isoTimestamp(item.createdAt, 'auditEvent.createdAt'),
   };
 }
 
@@ -1815,6 +1859,25 @@ export async function getTeachingOperationsOverview(orgSlug: string): Promise<Te
     'operations overview envelope',
   );
   return operationsOverview(envelope.operationsOverview);
+}
+
+export async function listTeachingAuditEvents(
+  orgSlug: string,
+  pageNumber = 1,
+  pageSize = 30,
+  filters: { q?: string; outcome?: TeachingAuditOutcome | null } = {},
+): Promise<TeachingPage<TeachingAuditEvent>> {
+  const safePage = Number.isSafeInteger(pageNumber) ? Math.max(1, pageNumber) : 1;
+  const safePageSize = Number.isSafeInteger(pageSize) ? Math.min(100, Math.max(1, pageSize)) : 30;
+  const query = new URLSearchParams({ page: String(safePage), pageSize: String(safePageSize) });
+  const search = filters.q?.trim();
+  if (search) query.set('q', search);
+  if (filters.outcome) query.set('outcome', filters.outcome);
+  return exactPage(
+    await request(orgPath(orgSlug, `/audit-events?${query.toString()}`)),
+    'auditEvents',
+    auditEvent,
+  );
 }
 
 export async function listTeachingCreditAdjustments(
