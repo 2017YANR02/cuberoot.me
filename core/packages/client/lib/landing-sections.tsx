@@ -124,7 +124,6 @@ export interface Section {
 // 主入口 — 搜索框正下方的整行直达卡,从 train / tool 分组里提上来,分组里不再重复出现。
 export const PRIMARY_CARDS: CardConfig[] = [
   { id: 'timer',    href: '/timer',    internal: true, tier: 'medium', Icon: TimerIcon,  nameKey: 'timer' },
-  { id: 'comp-sim', href: '/comp-sim', internal: true, tier: 'medium', Icon: Radio,      nameKey: 'compSim' },
   { id: 'algdb',    href: '/alg',      internal: true, tier: 'medium', Icon: Blocks,     nameKey: 'algdb' },
   { id: 'sim',      href: '/sim',      internal: true, tier: 'medium', Icon: Box,        nameKey: 'sim' },
   { id: 'recon',    href: '/recon',    internal: true, tier: 'medium', Icon: ScanSearch, nameKey: 'recon' },
@@ -156,9 +155,10 @@ export const SECTIONS: Section[] = [
     sub:     { en: 'A solver for any scramble and frame-accurate timing, plus competition management, cube mosaics, vector drawings, event icons, time zone conversion and a shareable calendar.', zh: '把任意打乱交给求解器、逐帧核对成绩,也能管理比赛、拼马赛克、画矢量图、生成项目图标、换算时区和分享日历。'
     },
     cards: [
+      { id: 'contests',     href: '/contests',    internal: true, tier: 'medium', iconImg: '/icons/upstream/recordranks.png', nameKey: 'contests' },
+      { id: 'comp-sim',    href: '/comp-sim',    internal: true, tier: 'medium', Icon: Radio,      nameKey: 'compSim' },
       { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', Icon: Film,       nameKey: 'frameCount' },
       { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', iconImg: '/icons/upstream/solver.png', nameKey: 'solver' },
-      { id: 'contests',     href: '/contests',    internal: true, tier: 'medium', iconImg: '/icons/upstream/recordranks.png', nameKey: 'contests' },
       { id: 'mosaic',      href: '/mosaic',      internal: true, tier: 'medium', Icon: Grid2x2,    nameKey: 'mosaic' },
       { id: 'paint',       href: '/paint',       internal: true, tier: 'medium', Icon: Brush,      nameKey: 'paint' },
       { id: 'icon',        href: '/icon',        internal: true, tier: 'medium', Icon: Shapes,     nameKey: 'icon' },
