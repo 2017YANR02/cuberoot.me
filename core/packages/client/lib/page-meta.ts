@@ -226,6 +226,20 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'A personal calendar with month, week and day views, recurring events, reminders and guests — time-zone aware, with an optional public link that can show busy times only.',
     },
   },
+  'color-test': {
+    title: { zh: '颜色测试', en: 'Colour Tests' },
+    description: {
+      zh: '魔方颜色训练:练习分辨标准三阶魔方的对色与邻色,或通过 Stroop 色词干扰测试专注力。',
+      en: 'Cube colour training for recognising opposite and adjacent faces, plus a Stroop colour-word interference test.',
+    },
+  },
+  'color-test/relations': {
+    title: { zh: '对色与邻色测试', en: 'Opposite or Adjacent?' },
+    description: {
+      zh: '看两个标准三阶魔方颜色,判断它们是对色还是邻色,完整练习 15 种不重复组合。',
+      en: 'Classify two standard 3×3 cube colours as opposite or adjacent across all 15 unique pairs.',
+    },
+  },
   'dev': {
     title: { zh: '开发', en: 'Dev' },
     description: {

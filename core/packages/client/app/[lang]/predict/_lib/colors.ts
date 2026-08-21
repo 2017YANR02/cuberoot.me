@@ -9,7 +9,7 @@
  * 带 `m:` 前缀(`m:U` / `m:DBR`)。不加前缀的话五魔方的 `U`/`R`/`F`/`L`/`D` 会和立方体
  * 那 5 个字母撞成同一个色号,而两边的白 / 红 / 绿根本不是同一个色值。
  */
-import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
+import { CUBE_COLOR_NAMES, CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import {
   DEFAULT_MEGA_COLORS, MEGA_FACE_NAMES, type MegaFaceKey,
 } from '@/app/[lang]/scramble/gen/_svg/mega_svg';
@@ -38,16 +38,6 @@ const MEGA_INK: Record<MegaFaceKey, { on: string; zh: string; en: string }> = {
   B:   { on: DARK_TEXT,  zh: '浅绿', en: 'light green' },
   DBL: { on: DARK_TEXT,  zh: '橙',   en: 'orange' },
   DL:  { on: DARK_TEXT,  zh: '浅蓝', en: 'light blue' },
-};
-
-/** 面 → 颜色名(立方体族按站内标准配色:U 白 D 黄 F 绿 B 蓝 L 橙 R 红)。 */
-const CUBE_COLOR_NAMES: Record<CubeFace, { zh: string; en: string }> = {
-  U: { zh: '白', en: 'white' },
-  D: { zh: '黄', en: 'yellow' },
-  F: { zh: '绿', en: 'green' },
-  B: { zh: '蓝', en: 'blue' },
-  L: { zh: '橙', en: 'orange' },
-  R: { zh: '红', en: 'red' },
 };
 
 const megaEntries = <T,>(pick: (face: MegaFaceKey) => T): Record<string, T> =>
