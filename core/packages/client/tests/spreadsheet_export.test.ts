@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as XLSX from 'xlsx';
-import { buildSpreadsheetCsv, buildSpreadsheetPdf, buildSpreadsheetXlsx, parseSpreadsheetFile } from '@/lib/spreadsheet-export';
+import { buildSpreadsheetCsv, buildSpreadsheetPdf, buildSpreadsheetXlsx, escapeSpreadsheetTextCell, parseSpreadsheetFile } from '@/lib/spreadsheet-export';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -63,5 +63,13 @@ describe('spreadsheet XLSX export', () => {
     };
     const text = await buildSpreadsheetCsv(data, [data, other]).text();
     expect(text).toBe('1200,3600,42\r\n2400,,');
+  });
+
+  it('escapes untrusted text that spreadsheet applications can interpret as formulas', () => {
+    expect(escapeSpreadsheetTextCell('=HYPERLINK("https://example.test")')).toBe('\'=HYPERLINK("https://example.test")');
+    expect(escapeSpreadsheetTextCell('  +1')).toBe("'  +1");
+    expect(escapeSpreadsheetTextCell('-2')).toBe("'-2");
+    expect(escapeSpreadsheetTextCell('@SUM(A1:A2)')).toBe("'@SUM(A1:A2)");
+    expect(escapeSpreadsheetTextCell('ordinary text')).toBe('ordinary text');
   });
 });

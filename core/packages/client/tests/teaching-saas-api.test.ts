@@ -37,6 +37,7 @@ import {
   listLearnerTeachingWeeklyReports,
   listTeachingPackageProducts,
   listTeachingCreditAdjustments,
+  listTeachingAuditEvents,
   listTeachingGroupMemberships,
   createTeachingStudent,
   listTeachingOrganizations,
@@ -393,6 +394,21 @@ function operationsOverview(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function auditEvent(overrides: Record<string, unknown> = {}) {
+  return {
+    id: '9007199254740993',
+    actorDisplayName: 'Admin One',
+    actorRole: 'admin',
+    action: 'training.review.create',
+    entityType: 'training_review',
+    entityId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    outcome: 'denied',
+    requestId: 'req-1',
+    createdAt: '2026-08-20T12:00:00.000Z',
+    ...overrides,
+  };
+}
+
 function weeklyReport() {
   return {
     id: '018f3e56-31a5-7a88-9b45-337ccdbf7296',
@@ -696,6 +712,96 @@ describe('teaching SaaS client', () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ operationsOverview: overview })));
 
     await expect(getTeachingOperationsOverview('cube-academy')).rejects.toMatchObject({
+      code: 'INVALID_RESPONSE',
+      status: 502,
+    });
+  });
+
+  it('parses filtered audit events from the canonical no-store endpoint', async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => jsonResponse({
+      auditEvents: [auditEvent()],
+      total: 1,
+      page: 2,
+      pageSize: 10,
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listTeachingAuditEvents('cube academy', 2, 10, {
+      q: ' review denied ',
+      outcome: 'denied',
+    })).resolves.toEqual({ items: [auditEvent()], total: 1, page: 2, pageSize: 10 });
+    expect(fetchMock.mock.calls[0]![0]).toBe(
+      'https://api.example.test/v1/teaching/organizations/cube%20academy/audit-events?page=2&pageSize=10&q=review+denied&outcome=denied',
+    );
+    expect(fetchMock.mock.calls[0]![1]).toMatchObject({ cache: 'no-store' });
+  });
+
+  it('accepts audit events at the database wire limits', async () => {
+    const event = auditEvent({
+      id: '9223372036854775807',
+      actorDisplayName: '🧱'.repeat(200),
+      action: '🧱'.repeat(100),
+      entityType: '🧱'.repeat(80),
+      entityId: '🧱'.repeat(100),
+      requestId: '🧱'.repeat(100),
+    });
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+      auditEvents: [event],
+      total: 1,
+      page: 1,
+      pageSize: 30,
+    })));
+
+    await expect(listTeachingAuditEvents('cube-academy')).resolves.toMatchObject({
+      items: [event],
+    });
+  });
+
+  it('accepts the first PostgreSQL audit identity value', async () => {
+    const event = auditEvent({ id: '1' });
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+      auditEvents: [event],
+      total: 1,
+      page: 1,
+      pageSize: 30,
+    })));
+
+    await expect(listTeachingAuditEvents('cube-academy')).resolves.toMatchObject({
+      items: [event],
+    });
+  });
+
+  it('rejects audit event wire-shape drift', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+      auditEvents: [auditEvent({ metadata: { secret: true } })],
+      total: 1,
+      page: 1,
+      pageSize: 30,
+    })));
+
+    await expect(listTeachingAuditEvents('cube-academy')).rejects.toMatchObject({
+      code: 'INVALID_RESPONSE',
+      status: 502,
+    });
+  });
+
+  it.each([
+    ['a numeric bigint id', auditEvent({ id: 1 })],
+    ['an out-of-range bigint id', auditEvent({ id: '9223372036854775808' })],
+    ['an overlong actor display name', auditEvent({ actorDisplayName: 'a'.repeat(201) })],
+    ['an overlong Unicode actor display name', auditEvent({ actorDisplayName: '🧱'.repeat(201) })],
+    ['an overlong entity type', auditEvent({ entityType: 'e'.repeat(81) })],
+    ['an overlong entity id', auditEvent({ entityId: 'e'.repeat(101) })],
+    ['an overlong request id', auditEvent({ requestId: 'r'.repeat(101) })],
+  ])('rejects audit events with %s', async (_label, event) => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+      auditEvents: [event],
+      total: 1,
+      page: 1,
+      pageSize: 30,
+    })));
+
+    await expect(listTeachingAuditEvents('cube-academy')).rejects.toMatchObject({
       code: 'INVALID_RESPONSE',
       status: 502,
     });

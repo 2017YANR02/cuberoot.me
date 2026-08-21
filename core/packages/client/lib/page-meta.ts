@@ -94,6 +94,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'org/[orgSlug]/reports': { title: { zh: '每周教学报告', en: 'Weekly Teaching Reports' } },
   'org/[orgSlug]/reports/[reportId]': { title: { zh: '每周教学报告详情', en: 'Weekly Teaching Report Details' } },
   'org/[orgSlug]/operations': { title: { zh: '经营概览', en: 'Operations Overview' } },
+  'org/[orgSlug]/audit': { title: { zh: '机构审计记录', en: 'Organization Audit Log' } },
   'org/[orgSlug]/students/[studentId]/messages': { title: { zh: '家校沟通', en: 'Family Communication' } },
   'org/[orgSlug]/students/[studentId]/messages/[conversationId]': { title: { zh: '沟通详情', en: 'Communication Thread' } },
   'org/[orgSlug]/training': { title: { zh: '训练任务', en: 'Training Assignments' } },

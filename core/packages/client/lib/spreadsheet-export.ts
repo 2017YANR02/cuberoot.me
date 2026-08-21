@@ -19,6 +19,10 @@ function safeSheetName(name: string, used: Set<string>): string {
   return candidate;
 }
 
+export function escapeSpreadsheetTextCell(value: string): string {
+  return /^[\u0000-\u0020]*[=+\-@]/.test(value) ? `'${value}` : value;
+}
+
 function excelNumberFormat(style: CellStyle): string | undefined {
   const format = style.numberFormat || 'general';
   if (format === 'general') return undefined;
