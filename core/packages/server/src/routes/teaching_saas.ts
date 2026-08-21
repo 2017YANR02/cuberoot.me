@@ -20,6 +20,7 @@ import {
   TEACHING_CREDIT_UNITS,
   TEACHING_FEEDBACK_VISIBILITIES,
   TEACHING_PACKAGE_ACQUISITION_TYPES,
+  TEACHING_AUDIT_OUTCOMES,
   TEACHING_WEEKLY_REPORT_VISIBILITIES,
   type GenerateTeachingWeeklyReportInput,
   type CreateTeachingConversationInput,
@@ -29,6 +30,8 @@ import {
   type TeachingConversationActorRole,
   type TeachingErrorCode,
   type TeachingAttendanceStatus,
+  type TeachingAuditEvent,
+  type TeachingAuditOutcome,
   type TeachingCreditUnit,
   type TeachingFeedbackVisibility,
   type TeachingPackageAcquisitionType,
@@ -218,6 +221,13 @@ interface PageResult {
   pageSize: number;
 }
 
+interface AuditPageResult {
+  items: TeachingAuditEvent[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 interface CreateStudentAccountBindingInviteInput {
   expiresInMinutes: number;
 }
@@ -246,6 +256,11 @@ interface WeeklyReportFilter {
   studentId: string | null;
 }
 
+interface AuditEventFilter {
+  q: string | null;
+  outcome: TeachingAuditOutcome | null;
+}
+
 interface ConversationMessagePageInput {
   afterSequence: number;
   limit: number;
@@ -256,6 +271,13 @@ export interface TeachingSaasRepository {
   getOrganization(actor: TeachingActor, slug: string, requestId: string): Promise<JsonObject>;
   getOrganizationSummary(actor: TeachingActor, slug: string, requestId: string): Promise<JsonObject>;
   getOperationsOverview(actor: TeachingActor, slug: string, requestId: string): Promise<TeachingOperationsOverview>;
+  listAuditEvents(
+    actor: TeachingActor,
+    slug: string,
+    filter: AuditEventFilter,
+    pagination: PageInput,
+    requestId: string,
+  ): Promise<AuditPageResult>;
   createOrganization(
     actor: TeachingActor,
     input: CreateOrganizationInput,
@@ -1380,6 +1402,25 @@ function parsePublishWeeklyReportInput(body: JsonObject): PublishTeachingWeeklyR
 function weeklyReportFilterOf(c: Context): WeeklyReportFilter {
   const rawStudentId = c.req.query('studentId');
   return { studentId: rawStudentId === undefined ? null : uuidParam(rawStudentId, 'studentId') };
+}
+
+function auditEventFilterOf(c: Context): AuditEventFilter {
+  const qRaw = c.req.query('q');
+  const q = qRaw === undefined ? null : qRaw.trim();
+  if (q !== null && (q === '' || q.length > 100)) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'q must be 1 to 100 characters after trimming');
+  }
+  const outcomeRaw = c.req.query('outcome');
+  if (
+    outcomeRaw !== undefined &&
+    !TEACHING_AUDIT_OUTCOMES.includes(outcomeRaw as TeachingAuditOutcome)
+  ) {
+    throw new TeachingApiException('INVALID_INPUT', 400, 'outcome is not supported');
+  }
+  return {
+    q,
+    outcome: outcomeRaw === undefined ? null : outcomeRaw as TeachingAuditOutcome,
+  };
 }
 
 function parseTrainingTemplateInput(body: JsonObject): CreateTrainingTemplateInput {
@@ -3865,6 +3906,74 @@ export const teachingSaasRepository: TeachingSaasRepository = {
           displayName: String(row.display_name), sessionCount: Number(row.session_count ?? 0),
           completedSessionCount: Number(row.completed_session_count ?? 0),
         })),
+      };
+    });
+  },
+
+  async listAuditEvents(actor, slug, filter, pagination, requestId) {
+    return withDeniedAccessAudit(actor, slug, 'audit.list', requestId, async () => {
+      const access = await accessForRead(actor.userId, slug);
+      requirePermission(access, 'audit:read');
+      const predicate = `organization_id = ?
+        AND (?::text IS NULL OR outcome = ?)
+        AND (?::text IS NULL
+          OR strpos(lower(actor_display_name), lower(?)) > 0
+          OR strpos(lower(action), lower(?)) > 0
+          OR strpos(lower(entity_type), lower(?)) > 0
+          OR strpos(lower(COALESCE(entity_id::text, '')), lower(?)) > 0
+          OR strpos(lower(COALESCE(request_id, '')), lower(?)) > 0)`;
+      const params = [
+        access.id,
+        filter.outcome,
+        filter.outcome,
+        filter.q,
+        filter.q,
+        filter.q,
+        filter.q,
+        filter.q,
+        filter.q,
+      ];
+      const [countRows, rows] = await Promise.all([
+        query<Record<string, unknown>>(
+          `SELECT COUNT(*)::int AS count FROM teaching_audit_events WHERE ${predicate}`,
+          params,
+        ),
+        query<Record<string, unknown>>(
+          `SELECT id::text AS id, actor_display_name, actor_role, action, entity_type,
+                  entity_id::text AS entity_id, outcome, request_id, created_at::text AS created_at
+           FROM teaching_audit_events
+           WHERE ${predicate}
+           ORDER BY created_at DESC, id DESC
+           LIMIT ? OFFSET ?`,
+          [...params, pagination.pageSize, pagination.offset],
+        ),
+      ]);
+      const items: TeachingAuditEvent[] = rows.map((row) => {
+        const actorRole = row.actor_role === null ? null : String(row.actor_role);
+        const outcome = String(row.outcome);
+        if (actorRole !== null && !isTeachingOrganizationRole(actorRole)) {
+          throw new Error('Invalid teaching audit actor role');
+        }
+        if (!TEACHING_AUDIT_OUTCOMES.includes(outcome as TeachingAuditOutcome)) {
+          throw new Error('Invalid teaching audit outcome');
+        }
+        return {
+          id: String(row.id),
+          actorDisplayName: String(row.actor_display_name),
+          actorRole,
+          action: String(row.action),
+          entityType: String(row.entity_type),
+          entityId: row.entity_id === null ? null : String(row.entity_id),
+          outcome: outcome as TeachingAuditOutcome,
+          requestId: row.request_id === null ? null : String(row.request_id),
+          createdAt: iso(row.created_at),
+        };
+      });
+      return {
+        items,
+        total: Number(countRows[0]?.count ?? 0),
+        page: pagination.page,
+        pageSize: pagination.pageSize,
       };
     });
   },
@@ -9689,6 +9798,24 @@ export function createTeachingSaasRoutes(deps: {
     try {
       const actor = await authenticate(c);
       return c.json({ operationsOverview: await repository.getOperationsOverview(actor, c.req.param('orgSlug'), requestId) });
+    } catch (error) {
+      return errorResponse(c, error, requestId);
+    }
+  });
+
+  routes.get('/teaching/organizations/:orgSlug/audit-events', async (c) => {
+    const requestId = requestIdOf(c);
+    c.header('Cache-Control', 'no-store');
+    try {
+      const actor = await authenticate(c);
+      const page = await repository.listAuditEvents(
+        actor,
+        c.req.param('orgSlug'),
+        auditEventFilterOf(c),
+        trainingPaginationOf(c, ['q', 'outcome']),
+        requestId,
+      );
+      return c.json({ auditEvents: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
     } catch (error) {
       return errorResponse(c, error, requestId);
     }

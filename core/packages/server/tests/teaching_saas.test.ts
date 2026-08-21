@@ -37,6 +37,7 @@ function repository(): TeachingSaasRepository {
       training: { assignments: 0, studentTargets: 0, targetsWithEvidence: 0 },
       teacherLoad: [],
     }),
+    listAuditEvents: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 30 }),
     createOrganization: vi.fn().mockResolvedValue({
       status: 201,
       body: { organization: { id: 'org-1', slug: 'demo' } },
@@ -359,8 +360,21 @@ describe('teaching SaaS routes', () => {
     expect(operations.status).toBe(200);
     expect(operations.headers.get('cache-control')).toBe('no-store');
     expect(await operations.json()).toMatchObject({ operationsOverview: { range: { days: 30 } } });
+    const audit = await app.request(
+      '/teaching/organizations/demo/audit-events?q=denied%20review&outcome=denied&page=2&pageSize=10',
+    );
+    expect(audit.status).toBe(200);
+    expect(audit.headers.get('cache-control')).toBe('no-store');
+    expect(await audit.json()).toEqual({ auditEvents: [], total: 0, page: 1, pageSize: 30 });
     expect(repo.getOrganizationSummary).toHaveBeenCalledWith(ACTOR, 'demo', expect.any(String));
     expect(repo.getOperationsOverview).toHaveBeenCalledWith(ACTOR, 'demo', expect.any(String));
+    expect(repo.listAuditEvents).toHaveBeenCalledWith(
+      ACTOR,
+      'demo',
+      { q: 'denied review', outcome: 'denied' },
+      { page: 2, pageSize: 10, offset: 10 },
+      expect.any(String),
+    );
     expect(repo.listMembers).toHaveBeenCalledWith(
       ACTOR,
       'demo',
@@ -373,6 +387,16 @@ describe('teaching SaaS routes', () => {
       { page: 1, pageSize: 30, offset: 0 },
       expect.any(String),
     );
+  });
+
+  it('rejects unknown audit outcomes before repository access', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+
+    const response = await app.request('/teaching/organizations/demo/audit-events?outcome=unknown');
+
+    expect(response.status).toBe(400);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(repo.listAuditEvents).not.toHaveBeenCalled();
   });
 
   it('validates and forwards bounded pagination', async () => {
