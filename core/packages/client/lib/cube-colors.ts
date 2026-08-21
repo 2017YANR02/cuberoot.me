@@ -14,6 +14,21 @@ export const CUBE_COLOR_LETTER_FOR_FACE: Readonly<Record<CubeFace, CubeColorLett
   U: 'W', D: 'Y', F: 'G', B: 'B', L: 'O', R: 'R',
 });
 
+/** 面对应的颜色名；需要把标准六色展示成文字时统一走这里。 */
+export const CUBE_COLOR_NAMES: Readonly<Record<CubeFace, { zh: string; en: string }>> = Object.freeze({
+  U: { zh: '白', en: 'white' },
+  D: { zh: '黄', en: 'yellow' },
+  F: { zh: '绿', en: 'green' },
+  B: { zh: '蓝', en: 'blue' },
+  L: { zh: '橙', en: 'orange' },
+  R: { zh: '红', en: 'red' },
+});
+
+/** 标准三阶配色里的对面关系。 */
+export const CUBE_OPPOSITE_FACE: Readonly<Record<CubeFace, CubeFace>> = Object.freeze({
+  U: 'D', D: 'U', F: 'B', B: 'F', L: 'R', R: 'L',
+});
+
 /** 贴纸实心填充色(视角格、3D、色块);深浅主题一致。 */
 export const CUBE_FILL: Record<CubeFace, string> = {
   U: '#FFFFFF',

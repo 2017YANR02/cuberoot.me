@@ -36,7 +36,7 @@ export const TEXTS: Record<string, { en: string; zh: string
 },
   predict:         { en: 'Lookahead', zh: '预判'
 },
-  stroop:          { en: 'Stroop', zh: 'Stroop'
+  colorTest:       { en: 'Colour Tests', zh: '颜色测试'
 },
   frameCount:      { en: 'Frame Count', zh: '数帧'
 },
@@ -137,12 +137,12 @@ export const SECTIONS: Section[] = [
     eyebrow: { en: 'TRAIN', zh: '训练' },
     title:   { en: 'Recall, look ahead, drill.', zh: '记忆、预判、背公式。'
     },
-    sub:     { en: 'Memory drills, lookahead practice and a colour-interference focus test, plus the blindfolded algorithm database and two classic algorithm trainers. Head-to-head battles live inside the timer.', zh: '盲拧记忆、预判练习、色词干扰测专注力,外加盲拧公式库与两套经典公式训练器;双人对战在计时器里。'
+    sub:     { en: 'Memory drills, lookahead practice and colour relationship and interference tests, plus the blindfolded algorithm database and two classic algorithm trainers. Head-to-head battles live inside the timer.', zh: '盲拧记忆、预判练习、颜色关系与色词干扰测试,外加盲拧公式库与两套经典公式训练器;双人对战在计时器里。'
     },
     cards: [
       { id: 'memo',     href: '/memo',         internal: true, tier: 'standard', Icon: Brain,     nameKey: 'memo' },
       { id: 'predict',  href: '/predict',      internal: true, tier: 'standard', Icon: Eye,       nameKey: 'predict' },
-      { id: 'stroop',   href: '/stroop',       internal: true, tier: 'standard', Icon: Palette,   nameKey: 'stroop' },
+      { id: 'color-test', href: '/color-test',  internal: true, tier: 'standard', Icon: Palette,   nameKey: 'colorTest' },
       { id: 'blddb',    href: '/blddb',        internal: true, tier: 'standard', iconImg: '/icons/upstream/blddb.png', nameKey: 'blddb' },
       { id: 'trainer',  href: '/alg-trainers', internal: true, tier: 'standard', iconImg: '/icons/upstream/algtrainer.png', nameKey: 'algTrainer' },
       { id: 'cstimer',  href: '/cstimer',      internal: true, tier: 'standard', nameKey: 'cstimer', iconImg: '/cstimer_logo.png' },
@@ -234,6 +234,9 @@ export const SEARCH_CARDS: LandingSearchCard[] = [
         sectionTitleZh: sec.eyebrow.zh,
       })),
   ),
+  // 颜色测试的两个子项收在入口页里,这里保留直达搜索。
+  { id: 'color-relations', href: '/color-test/relations', internal: true, nameEn: 'Opposite or Adjacent?', nameZh: '对色与邻色', sectionTitleEn: 'Colour Tests', sectionTitleZh: '颜色测试' },
+  { id: 'stroop', href: '/stroop', internal: true, nameEn: 'Stroop', nameZh: 'Stroop', sectionTitleEn: 'Colour Tests', sectionTitleZh: '颜色测试' },
   // /dev 子页,不在落地页网格上,单列于此让全站搜索仍能找到
   { id: 'dev-llm', href: '/dev/llm', internal: true, nameEn: 'Large Language Models', nameZh: '大模型', sectionTitleEn: 'Dev', sectionTitleZh: '开发' },
   { id: 'fable', href: '/dev/llm/fable', internal: true, nameEn: 'Claude Fable 5', nameZh: 'Claude Fable 5', sectionTitleEn: 'Dev', sectionTitleZh: '开发' },
