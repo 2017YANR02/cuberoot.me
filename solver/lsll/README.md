@@ -42,7 +42,7 @@ node solve_loop.mjs
 ```
 
 `solve_loop.mjs` 是**全量入口**:内部反复拉起 `solve.mjs` 直到全量完(cubeopt 跑久了会抛
-emscripten `unwind` 把进程带走,每个 case 即落盘所以重启零损失)。别裸跑 `solve.mjs`。
+Emscripten `unwind`,子进程会安静退出;每个 case 即落盘所以重启零损失)。别裸跑 `solve.mjs`。
 
 开跑前先量一发速度(约一分钟,顺带把所有闸门都走一遍):
 

@@ -300,6 +300,16 @@ function solveAll(scrambles, label) {
 //     ida_search 里)。也就是说 unwind 之后 pthread / 堆状态已经坏了,继续跑是在坏状态上算。
 // 最怕的不是崩,是**不崩**:搜索被打断后返回一条更长但仍能解开的解,回放校验照样过,
 // htm 就静默虚高 —— 而这条管道的全部意义就是「最优」。所以宁可重载表。
+// 只把已知的 Emscripten 控制信号转成安静退出;不能吞掉后继跑。其他异常重抛,
+// 保留 Node 的完整堆栈与 solve_loop 的连续零进展保护。
+const EXPECTED_UNWIND_EXIT = 75;
+process.on('uncaughtException', (error) => {
+  if (error === 'unwind' || (error instanceof Error && error.message === 'unwind')) {
+    process.exit(EXPECTED_UNWIND_EXIT);
+  }
+  throw error;
+});
+
 for (const [key, baseScramble] of todo) {
   const best = bestOf(solveAll(aufImages(baseScramble), key));
   // 取到轨道最短之后,首末招都不可能是 U 系 —— 是的话剥掉就得到同轨道更短的成员,与最短矛盾。
