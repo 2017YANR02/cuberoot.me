@@ -1,8 +1,8 @@
 // solve.mjs 的自动重启外壳 —— 全量入口就是它:`node solve_loop.mjs`。
 //
 // cubeopt 的 in-proc 求解跑上几千条后会抛 emscripten `unwind`(长生命周期进程里 pthread /
-// main-thread-proxying 的资源累积),进程直接死。solve.mjs 每条即落盘、重启按 key 跳过已完成,
-// 所以崩溃零损失,这里只管重新拉起来接着跑。
+// main-thread-proxying 的资源累积)。solve.mjs 将这个已知信号转成安静退出;每条即落盘、
+// 重启按 key 跳过已完成,所以回收零损失,这里只管重新拉起来接着跑。
 //
 // 失安全:连续 3 轮**零进展**(下一条确定性崩溃 / 表载不进去)就 exit 2 停下来报警,
 // 不静默跳数据、也不无限重启。正常的资源型崩溃总是有进展,只会触发一次重启。
