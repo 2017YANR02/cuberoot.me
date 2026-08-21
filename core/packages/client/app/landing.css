@@ -164,7 +164,7 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
 }
 
 /* ── full-width hero 卡片(顶层入口,在 SECTIONS 之上) ── */
-/* 10 张 hero 卡统一排成 5 × 2。外壳是唯一网格，两个子分组不生成盒子，
+/* hero 卡由同一个外壳统一排布。两个子分组不生成盒子，
    卡片直接成为外壳的格子项。 */
 .landing-page .hero-grids {
     display: grid;
@@ -223,17 +223,19 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     }
 }
 @media (max-width: 640px) {
-    /* 窄屏保持每行 2 个，只收紧间距与内边距。 */
+    /* 9 个主入口在手机端固定排成 3 × 3。 */
     .landing-page .hero-grids {
-        gap: 0.6rem;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.45rem;
         margin-bottom: 2rem;
     }
     .landing-page .hero-card {
-        gap: 0.5rem;
-        padding: 1.25rem 0.4rem;
+        gap: 0.45rem;
+        padding: 1rem 0.25rem;
     }
     .landing-page .hero-card-name {
-        font-size: clamp(0.9rem, 4vw, 1.05rem);
+        font-size: clamp(0.82rem, 3.5vw, 1rem);
+        white-space: nowrap;
     }
 }
 
