@@ -2,8 +2,30 @@ export const DEFAULT_TIMEOUT_MS = 20_000;
 export const MAX_EVIDENCE = 4;
 export const MAX_DETAIL_LENGTH = 500;
 export const STORAGE_KEY = 'timer.boot.lastDiagnostic';
-export const EARLY_STORAGE_KEY = 'timer.boot.earlyEvidence';
-export const MIN_SUPPORTED_CHROMIUM_MAJOR = 91;
+export const APP_STORAGE_KEY = 'app.boot.lastDiagnostic';
+export const EARLY_STORAGE_KEY = 'app.boot.earlyEvidence';
+export const MIN_SUPPORTED_CHROMIUM_MAJOR = 111;
+const APP_BOOT_GRACE_MS = 5_000;
+
+export const APP_BOOT_COPY = {
+  title: { zh: '页面未能启动', en: 'Page failed to start' },
+  message: {
+    zh: '请检查网络后重试。如果仍然失败，请把下面的诊断信息发给我们。',
+    en: 'Check your connection and retry. If it still fails, send us the diagnostic information below.',
+  },
+  outdatedWechatMessage: {
+    zh: '当前微信内置浏览器版本过旧，无法打开此页面。请先升级微信；如果仍然失败，请点击右上角菜单，选择“在浏览器打开”。',
+    en: 'The browser built into WeChat is too old to open this page. Update WeChat first. If it still fails, use the top-right menu to open the page in your browser.',
+  },
+  outdatedBrowserMessage: {
+    zh: '当前浏览器版本过旧，无法打开此页面。请升级浏览器后重试。',
+    en: 'This browser is too old to open this page. Update it and try again.',
+  },
+  diagnosticCode: { zh: '诊断编号', en: 'Diagnostic code' },
+  retry: { zh: '重试', en: 'Retry' },
+  copy: { zh: '复制诊断信息', en: 'Copy diagnostic info' },
+  copied: { zh: '已复制', en: 'Copied' },
+} as const;
 
 export const TIMER_BOOT_COPY = {
   loading: { zh: '正在加载计时器…', en: 'Loading timer…' },
@@ -26,21 +48,25 @@ export const TIMER_BOOT_COPY = {
   copied: { zh: '已复制', en: 'Copied' },
 } as const;
 
-const EARLY_COPY_JSON = JSON.stringify(TIMER_BOOT_COPY);
+const EARLY_COPY_JSON = JSON.stringify({ app: APP_BOOT_COPY, timer: TIMER_BOOT_COPY });
 
 /**
  * Runs from the server HTML before React hydration. Keep this ES5-shaped: its
- * purpose is to replace the loading shell even when an old WebKit cannot parse
- * the route chunk that contains TimerBootstrap itself.
+ * purpose is to show an actionable failure even when an old engine cannot
+ * parse the shared Next.js runtime chunks that would normally render React.
  */
-export const TIMER_BOOT_EARLY_SCRIPT = `(function () {
-  if (!/^\\/(?:zh\\/)?timer(?:\\/|$)/.test(window.location.pathname)) return;
-  document.documentElement.setAttribute('data-timer-boot-guard', 'active');
-  if (window.__timerBootEarly && window.__timerBootEarly.stop) window.__timerBootEarly.stop();
-  var copy = ${EARLY_COPY_JSON};
+export const APP_BOOT_EARLY_SCRIPT = `(function () {
+  var isTimer = /^\\/(?:zh\\/)?timer(?:\\/|$)/.test(window.location.pathname);
+  document.documentElement.setAttribute('data-app-boot-guard', 'active');
+  if (window.__appBootEarly && window.__appBootEarly.stop) window.__appBootEarly.stop();
+  var allCopy = ${EARLY_COPY_JSON};
+  var copy = isTimer ? allCopy.timer : allCopy.app;
   var evidence = [];
   var stopped = false;
+  var rendered = false;
+  var renderQueued = false;
   var timer = 0;
+  var graceTimer = 0;
   try { window.sessionStorage.setItem('${EARLY_STORAGE_KEY}', '[]'); } catch (_) {}
   function compact(value) {
     return String(value || '').replace(/\\s+/g, ' ').replace(/^\\s+|\\s+$/g, '').slice(0, ${MAX_DETAIL_LENGTH});
@@ -58,6 +84,20 @@ export const TIMER_BOOT_EARLY_SCRIPT = `(function () {
     evidence.push(item);
     if (evidence.length > ${MAX_EVIDENCE}) evidence.shift();
     try { window.sessionStorage.setItem('${EARLY_STORAGE_KEY}', JSON.stringify(evidence)); } catch (_) {}
+    if (isFatal(item)) queueFailure();
+  }
+  function isFatal(item) {
+    var combined = item.name + ' ' + item.message + ' ' + (item.url || '');
+    if (/_next\\/static\\/chunks/i.test(combined)) return true;
+    return /ChunkLoadError|Loading chunk|dynamically imported module|module script|CSS_CHUNK_LOAD_FAILED/i.test(combined);
+  }
+  function queueFailure() {
+    if (stopped || rendered || renderQueued) return;
+    renderQueued = true;
+    window.setTimeout(function () {
+      renderQueued = false;
+      renderFailure();
+    }, 0);
   }
   function onError(event) {
     var target = event.target || {};
@@ -107,7 +147,7 @@ export const TIMER_BOOT_EARLY_SCRIPT = `(function () {
   }
   function diagnosticText(report) {
     var lines = [
-      'CubeRoot timer startup diagnostic',
+      isTimer ? 'CubeRoot timer startup diagnostic' : 'CubeRoot page startup diagnostic',
       'Code: ' + report.code,
       'Type: ' + report.kind,
       'Time: ' + report.occurredAt,
@@ -156,8 +196,21 @@ export const TIMER_BOOT_EARLY_SCRIPT = `(function () {
     return /MicroMessenger/i.test(report.userAgent) ? 'outdatedWechatMessage' : 'outdatedBrowserMessage';
   }
   function renderFailure() {
-    var root = document.querySelector('[data-timer-bootstrap="loading"]');
-    if (!root) return;
+    if (stopped || rendered) return;
+    if (!document.body) {
+      queueFailure();
+      return;
+    }
+    var root = isTimer ? document.querySelector('[data-timer-bootstrap="loading"]') : null;
+    var overlay = !root;
+    if (!root) {
+      root = document.querySelector('[data-app-bootstrap="error"]');
+      if (!root) {
+        root = document.createElement('main');
+        document.body.insertBefore(root, document.body.firstChild);
+      }
+    }
+    rendered = true;
     capture.stop();
     var kind = classify();
     var tags = { network: 'NET', chunk: 'CHUNK', script: 'SCRIPT', promise: 'PROMISE', timeout: 'TIMEOUT' };
@@ -167,19 +220,22 @@ export const TIMER_BOOT_EARLY_SCRIPT = `(function () {
       fingerprint += '|' + evidence[index].source + '|' + evidence[index].name + '|' + evidence[index].message + '|' + (evidence[index].url || '');
     }
     var report = {
-      code: 'TMR-' + tags[kind] + '-' + hash(fingerprint),
+      code: (isTimer ? 'TMR-' : 'APP-') + tags[kind] + '-' + hash(fingerprint),
       kind: kind,
       occurredAt: new Date().toISOString(),
       path: window.location.pathname,
       online: typeof navigator.onLine === 'boolean' ? navigator.onLine : null,
       userAgent: navigator.userAgent || '',
       errorName: last ? last.name : 'TimeoutError',
-      errorMessage: last ? last.message : 'Timer shell did not start before the timeout.',
+      errorMessage: last ? last.message : 'The page did not start before the timeout.',
       evidence: evidence.slice(0)
     };
-    try { window.__timerBootDiagnostic = report; } catch (_) {}
-    try { window.sessionStorage.setItem('${STORAGE_KEY}', JSON.stringify(report)); } catch (_) {}
-    if (window.console && console.error) console.error('[timer-bootstrap]', report);
+    try { window.__appBootDiagnostic = report; } catch (_) {}
+    if (isTimer) {
+      try { window.__timerBootDiagnostic = report; } catch (_) {}
+    }
+    try { window.sessionStorage.setItem(isTimer ? '${STORAGE_KEY}' : '${APP_STORAGE_KEY}', JSON.stringify(report)); } catch (_) {}
+    if (window.console && console.error) console.error(isTimer ? '[timer-bootstrap]' : '[app-bootstrap]', report);
 
     var language = document.documentElement.lang.indexOf('zh') === 0 ? 'zh' : 'en';
     function label(key) { return copy[key][language]; }
@@ -191,32 +247,33 @@ export const TIMER_BOOT_EARLY_SCRIPT = `(function () {
       return element;
     }
     root.textContent = '';
-    root.className = 'timer-bootstrap timer-bootstrap-error';
-    root.setAttribute('data-timer-bootstrap', 'error');
+    root.className = 'app-startup app-startup-error ' + (overlay ? 'app-startup-overlay' : 'app-startup-page');
+    root.setAttribute('data-app-bootstrap', 'error');
+    if (isTimer) root.setAttribute('data-timer-bootstrap', 'error');
     root.setAttribute('role', 'alert');
-    append('h1', 'timer-bootstrap-title', label('title'));
-    append('p', 'timer-bootstrap-message', label(messageKey(report)));
-    var diagnostic = append('p', 'timer-bootstrap-diagnostic', '');
+    append('h1', 'app-startup-title', label('title'));
+    append('p', 'app-startup-message', label(messageKey(report)));
+    var diagnostic = append('p', 'app-startup-diagnostic', '');
     var diagnosticLabel = document.createElement('span');
     diagnosticLabel.textContent = label('diagnosticCode');
     diagnostic.appendChild(diagnosticLabel);
     var code = document.createElement('code');
     code.textContent = report.code;
     diagnostic.appendChild(code);
-    var actions = append('div', 'timer-bootstrap-actions', '');
+    var actions = append('div', 'app-startup-actions', '');
     var retry = document.createElement('button');
     retry.type = 'button';
-    retry.className = 'timer-bootstrap-button timer-bootstrap-button-primary';
+    retry.className = 'app-startup-button app-startup-button-primary';
     retry.textContent = label('retry');
     retry.onclick = function () { window.location.reload(); };
     actions.appendChild(retry);
     var copyButton = document.createElement('button');
     copyButton.type = 'button';
-    copyButton.className = 'timer-bootstrap-button';
+    copyButton.className = 'app-startup-button';
     copyButton.textContent = label('copy');
     copyButton.onclick = function () {
       copyReport(report, function (copied) {
-        if (copied && !root.querySelector('.timer-bootstrap-copied')) append('p', 'timer-bootstrap-copied', label('copied'));
+        if (copied && !root.querySelector('.app-startup-copied')) append('p', 'app-startup-copied', label('copied'));
       });
     };
     actions.appendChild(copyButton);
@@ -229,15 +286,29 @@ export const TIMER_BOOT_EARLY_SCRIPT = `(function () {
       if (stopped) return;
       stopped = true;
       window.clearTimeout(timer);
+      window.clearTimeout(graceTimer);
       window.removeEventListener('error', onError, true);
       window.removeEventListener('unhandledrejection', onRejection);
+      window.removeEventListener('load', onLoad);
+      window.removeEventListener('app-boot-stop', stopFromEvent);
       window.removeEventListener('timer-boot-stop', stopFromEvent);
-      document.documentElement.setAttribute('data-timer-boot-guard', 'stopped');
+      document.documentElement.setAttribute('data-app-boot-guard', 'stopped');
       try { window.sessionStorage.removeItem('${EARLY_STORAGE_KEY}'); } catch (_) {}
     }
   };
   function stopFromEvent() { capture.stop(); }
+  function onLoad() {
+    if (isTimer) return;
+    graceTimer = window.setTimeout(function () { capture.stop(); }, ${APP_BOOT_GRACE_MS});
+  }
+  window.addEventListener('app-boot-stop', stopFromEvent);
   window.addEventListener('timer-boot-stop', stopFromEvent);
-  try { window.__timerBootEarly = capture; } catch (_) {}
-  timer = window.setTimeout(renderFailure, ${DEFAULT_TIMEOUT_MS});
+  window.addEventListener('load', onLoad);
+  try { window.__appBootEarly = capture; } catch (_) {}
+  if (!isTimer) {
+    if (document.readyState === 'complete') onLoad();
+  } else {
+    try { window.__timerBootEarly = capture; } catch (_) {}
+    timer = window.setTimeout(renderFailure, ${DEFAULT_TIMEOUT_MS});
+  }
 })();`;

@@ -17,7 +17,7 @@ import {
   MIN_SUPPORTED_CHROMIUM_MAJOR,
   STORAGE_KEY,
   TIMER_BOOT_COPY,
-} from '../_lib/timer_boot_early';
+} from '@/lib/app_boot_early';
 import './timer-bootstrap.css';
 
 export type TimerBootFailureKind =
@@ -50,6 +50,11 @@ export interface TimerBootDiagnostic {
 
 declare global {
   interface Window {
+    __appBootDiagnostic?: TimerBootDiagnostic;
+    __appBootEarly?: {
+      evidence: TimerBootEvidence[];
+      stop: () => void;
+    };
     __timerBootDiagnostic?: TimerBootDiagnostic;
     __timerBootEarly?: {
       evidence: TimerBootEvidence[];
@@ -384,7 +389,7 @@ export default function TimerBootstrap({
       // Ignore unavailable or malformed startup evidence.
     }
     const evidence = earlyCapture?.evidence.slice(-MAX_EVIDENCE) ?? storedEvidence;
-    window.dispatchEvent(new Event('timer-boot-stop'));
+    window.dispatchEvent(new Event('app-boot-stop'));
     earlyCapture?.stop();
     const recordEvidence = (item: TimerBootEvidence) => {
       evidence.push(item);
