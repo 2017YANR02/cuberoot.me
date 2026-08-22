@@ -29,6 +29,7 @@ const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/
 interface InputGridProps {
   avatarState?: AvatarState[];
   onPlayerOverride?: (playerIdx: number) => void;
+  readOnly?: boolean;
 }
 
 // NOTE: 不再需要动态字号缩放 — CSS 统一用 17px 确保最长格式也能在 90px 内完整显示
@@ -36,7 +37,7 @@ function fitFontStyle(_displayVal: string): React.CSSProperties | undefined {
   return undefined;
 }
 
-export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
+export function InputGrid({ avatarState, onPlayerOverride, readOnly = false }: InputGridProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const state = useCalcStore();
@@ -50,6 +51,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
 
   // NOTE: 输入框值变更处理
   const handleBlur = useCallback((p: number, t: number, rawValue: string) => {
+    if (readOnly) return;
     const absIdx = state.seedOn + p;
     if (rawValue.trim() === '' || rawValue.trim() === '-') {
       state.updateTime(absIdx, t, 0);
@@ -59,7 +61,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
       state.updateTime(absIdx, t, textToTime(rawValue));
     }
     state.saveToUrl();
-  }, [state, isMbf]);
+  }, [state, isMbf, readOnly]);
 
   // NOTE: 鼠标滚轮微调 — 每步 ±1 centisecond（0.01秒）
   // 必须用原生事件（非 passive）才能阻止页面滚动，React onWheel 默认 passive
@@ -70,6 +72,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
     const prev = wheelHandlers.current.get(el);
     if (prev) return; // 已绑定
     const handler = (e: WheelEvent) => {
+      if (readOnly) return;
       e.preventDefault();
       const absIdx = state.seedOn + p;
       const cur = state.times[absIdx]?.[t];
@@ -80,16 +83,17 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
     };
     el.addEventListener('wheel', handler, { passive: false });
     wheelHandlers.current.set(el, handler);
-  }, [state]);
+  }, [state, readOnly]);
 
   // NOTE: tavg 提交（无小数点也按 textToTime 解析，1234 → 12.34）
   const commitTavg = useCallback((p: number, raw: string) => {
+    if (readOnly) return;
     const absIdx = state.seedOn + p;
     const v = raw.trim();
     if (v === '' || v === '-') state.setTargetAvg(absIdx, 0);
     else state.setTargetAvg(absIdx, textToTime(v));
     state.saveToUrl();
-  }, [state]);
+  }, [state, readOnly]);
 
   // NOTE: 键盘导航 — time-cell zigzag + autoAdvance；tavg-cell 写到 targetAvg、不跳格
   // inputMode="none" 不会触发原生输入，所以数字/小数点/退格/DNF 全要手动处理
@@ -99,6 +103,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
     t: number,
     kind: 'time' | 'tavg' = 'time',
   ) => {
+    if (readOnly) return;
     const input = e.target as HTMLInputElement;
     const absIdx = state.seedOn + p;
     const isTavg = kind === 'tavg';
@@ -217,10 +222,11 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
     }
 
     // Arrow/Escape/Ctrl+Z 由 Numpad 的全局 keydown 处理
-  }, [state, handleBlur, commitTavg]);
+  }, [state, handleBlur, commitTavg, readOnly]);
 
   // NOTE: 粘贴也只保留数字 / . / :，过滤掉其余字符
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    if (readOnly) return;
     e.preventDefault();
     const clean = (e.clipboardData.getData('text') || '').replace(/[^0-9.:]/g, '');
     const input = e.target as HTMLInputElement;
@@ -228,7 +234,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
     const end = input.selectionEnd ?? input.value.length;
     input.value = input.value.slice(0, start) + clean + input.value.slice(end);
     input.selectionStart = input.selectionEnd = start + clean.length;
-  }, []);
+  }, [readOnly]);
 
   // NOTE: ghost bar 状态（用于 emoji 显示）
   // 原版 input_grid.js#861-875 Target Avg 状态 emoji
@@ -304,6 +310,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
               type="checkbox"
               className="player-toggle calc-input"
               checked={enabled}
+              disabled={readOnly}
               onChange={() => state.togglePlayer(p)}
             />
 
@@ -317,6 +324,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
               data-loading={avatarState?.[p]?.loading && !avatarState[p].active
                 ? avatarState[p].loading
                 : undefined}
+              disabled={readOnly}
               onClick={() => onPlayerOverride?.(p)}
             >
               {/* NOTE: loading 时 img 隐藏，由 CSS ::after 显示 data-loading 文字 */}
@@ -340,6 +348,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                 type="text"
                 inputMode="none"
                 disabled={!enabled}
+                readOnly={readOnly}
                 placeholder={tr({ zh: '目标', en: 'Target'
                 })}
                 defaultValue={(() => {
@@ -349,7 +358,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                 key={`tavg_${absIdx}_${state.getTargetAvg(absIdx)}_${enabled}`}
                 style={!enabled ? { opacity: 0.3 } : undefined}
                 onBlur={(e) => commitTavg(p, e.target.value)}
-                onFocus={(e) => { state.setFocusedCell(p, -1); e.target.select(); }}
+                onFocus={(e) => { if (!readOnly) state.setFocusedCell(p, -1); e.target.select(); }}
                 onKeyDown={(e) => handleKeyDown(e, p, 0, 'tavg')}
                 onPaste={handlePaste}
               />
@@ -403,14 +412,15 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                     type="text"
                     inputMode="none"
                     disabled={!enabled}
+                    readOnly={readOnly}
                     defaultValue={displayVal}
-                    key={`${absIdx}_${t}_${val}_${enabled}`}
+                    key={`${absIdx}_${t}_${val}_${enabled}_${readOnly}`}
                     placeholder={`#${t + 1}`}
                     style={fitFontStyle(displayVal)}
                     onBlur={(e) => {
                       handleBlur(p, t, e.target.value);
                     }}
-                    onFocus={(e) => { state.setFocusedCell(p, t); e.target.select(); }}
+                    onFocus={(e) => { if (!readOnly) state.setFocusedCell(p, t); e.target.select(); }}
                     onKeyDown={(e) => handleKeyDown(e, p, t)}
                     onPaste={handlePaste}
                   />

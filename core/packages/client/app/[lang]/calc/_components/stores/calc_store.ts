@@ -2,6 +2,7 @@
 // 使用 Zustand 替代手动观察者模式，React 组件自动响应状态变更
 
 import { create } from 'zustand';
+import { parseCalcLiveSnapshot, type CalcLiveSnapshot } from '@cuberoot/shared';
 import {
   DNF_VALUE, UNFINISHED_VALUE,
   getAverage, getSortedIndices, getBestSingle,
@@ -68,6 +69,8 @@ export interface CalcState {
   getTargetAvg: (seedIdx: number) => number;
   setTargetAvg: (seedIdx: number, val: number) => void;
   clearTargetAvgs: () => void;
+  getLiveSnapshot: () => CalcLiveSnapshot;
+  applyLiveSnapshot: (snapshot: CalcLiveSnapshot) => boolean;
 
   // ── URL Sync ──
   saveToUrl: () => void;
@@ -201,6 +204,39 @@ export const useCalcStore = create<CalcState>((set, get) => ({
   },
   clearTargetAvgs: () => set({ targetAvgs: {} }),
 
+  getLiveSnapshot: () => {
+    const s = get();
+    const snapshot = parseCalcLiveSnapshot({
+      version: 1,
+      event: s.event,
+      times: s.times,
+      names: s.names,
+      seedOn: s.seedOn,
+      playerEnabled: s.playerEnabled,
+      targetAvgs: s.targetAvgs,
+    });
+    if (!snapshot) throw new Error('Invalid calculator state for live sharing');
+    return snapshot;
+  },
+
+  applyLiveSnapshot: (snapshot) => {
+    const next = parseCalcLiveSnapshot(snapshot);
+    if (!next) return false;
+    set({
+      event: next.event,
+      times: next.times,
+      names: next.names,
+      seedOn: next.seedOn,
+      playerEnabled: next.playerEnabled,
+      targetAvgs: next.targetAvgs,
+      timeLive: [-1, -1],
+      timeLiveStart: -1,
+      focusedCell: [-1, -1],
+    });
+    get().updateSort();
+    return true;
+  },
+
   // ── URL Sync ──
 
   saveToUrl: () => {
@@ -208,12 +244,14 @@ export const useCalcStore = create<CalcState>((set, get) => ({
     urlDebounceTimer = setTimeout(() => {
       const s = get();
       const params = new URLSearchParams();
-      // NOTE: 保留现有的 lang 参数 + nuqs 管理的 ?tab=(本 store 重建整个 query,不保留会被清掉)
+      // NOTE: 保留现有的 lang 参数 + nuqs 管理的 tab/live(本 store 重建整个 query,不保留会被清掉)
       const cur = new URLSearchParams(window.location.search);
       const curLang = cur.get('lang');
       if (curLang) params.set('lang', curLang);
       const curTab = cur.get('tab');
       if (curTab) params.set('tab', curTab);
+      const curLive = cur.get('live');
+      if (curLive) params.set('live', curLive);
       if (s.event) params.set('event', s.event);
 
       // NOTE: 保存 Target Avg（centiseconds），替代原来的 n0/n1 名字
