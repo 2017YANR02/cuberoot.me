@@ -3,7 +3,7 @@
 // (PLACE_CITY_ZH 城市段 + PLACE_ADMIN_ZH 行政区段,key=`${ISO2}:${normSeg}`,来源见
 // scripts/gen-place-zh.mjs:GeoNames exonym + OpenCC + LLM 兜底);两路都再回退手维护 CITY_ZH;最后原文。
 
-import { CN_PLACE_ZH, CN_PLACE_DISAMBIG } from '@/lib/data/cn-region';
+import { CN_PLACE_PROVINCE, CN_PLACE_ZH, CN_PLACE_DISAMBIG } from '@/lib/data/cn-region';
 import { PLACE_CITY_ZH, PLACE_ADMIN_ZH } from '@/lib/data/place-zh';
 
 // 手维护补充表(覆盖层 / 无 iso2 调用时的兜底 / 台湾等 CN_PLACE_ZH 未覆盖处)。
@@ -70,6 +70,24 @@ function normSeg(s: string): string {
 }
 // 大中华区旧表(CN_PLACE_ZH)的 key 归一化(无去音标,拼音无音标)。
 const cnNorm = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+/** Resolve a mainland-China WCA city string to its province. Explicit province
+ * segments win so homographs such as Taizhou, Zhejiang are not inferred from
+ * the ambiguous bare city key. A bare known city falls back to its mapped
+ * province; empty or unknown input returns null. */
+export function resolveCnProvince(city: string): { zh: string; en: string } | null {
+  if (!city) return null;
+  const keys = city.split(',').map((s) => cnNorm(s)).filter(Boolean);
+  for (const key of keys) {
+    const hit = CN_PLACE_PROVINCE[key];
+    if (hit && (key === cnNorm(hit.en) || key === `${cnNorm(hit.en)}province`)) return hit;
+  }
+  for (const key of keys) {
+    const hit = CN_PLACE_PROVINCE[key];
+    if (hit) return hit;
+  }
+  return null;
+}
 
 export function normalizeCityKey(city: string): string {
   let s = city.split(/,\s*/)[0].trim();

@@ -7,7 +7,7 @@
 // 查不到(多地点比赛 / 新城市)回退到国家「中国」,不丢数据。
 
 import { countryName } from '@/lib/country-name';
-import { CN_PLACE_PROVINCE } from '@/lib/data/cn-region';
+import { resolveCnProvince } from '@/lib/city-localize';
 import type { WcaCompetition } from '@/lib/wca-person-api';
 
 export interface RegionStat {
@@ -17,31 +17,11 @@ export interface RegionStat {
   count: number;
 }
 
-// 与 gen-cn-region.mjs 必须同一套规范化
-const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
-
-function cnProvince(city: string): { zh: string; en: string } | null {
-  if (!city) return null;
-  const keys = city.split(',').map((s) => norm(s)).filter(Boolean);
-  // 1) 优先显式省份段(段规范化后自身即省份)。否则同拼音城市段会抢先误判 —— 如「台州, 浙江」的
-  //    城市段 taizhou 在 CN_PLACE_PROVINCE 里指向江苏(泰州的省),会把浙江台州错算成江苏。
-  for (const k of keys) {
-    const hit = CN_PLACE_PROVINCE[k];
-    if (hit && (k === norm(hit.en) || k === norm(hit.en) + 'province')) return hit;
-  }
-  // 2) 回退:任一段(城市)推断所属省份(无显式省份段时,如裸城市名)。
-  for (const k of keys) {
-    const hit = CN_PLACE_PROVINCE[k];
-    if (hit) return hit;
-  }
-  return null;
-}
-
 export function buildRegionStats(comps: WcaCompetition[], isZh: boolean): RegionStat[] {
   const m = new Map<string, RegionStat>();
   for (const c of comps) {
     const iso2 = (c.country_iso2 || '').toUpperCase();
-    const prov = iso2 === 'CN' ? cnProvince(c.city || '') : null;
+    const prov = iso2 === 'CN' ? resolveCnProvince(c.city || '') : null;
     let key: string;
     let label: string;
     let flag: string | null;
