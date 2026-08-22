@@ -4,8 +4,9 @@
 // 每行 = checkbox + 5(或3)个成绩输入框 + targetAvg 框 + 头像按钮
 // 功能：zigzag 跳格、WR badge、排名标签、Ao5 括号标注、fitFont 自适应字号
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { RotateCcw, Search, UserRound } from 'lucide-react';
 import { useCalcStore, isMbfForEvent } from '../stores/calc_store';
 import {
   DNF_VALUE,
@@ -16,12 +17,16 @@ import { isWR } from '../engine/wr_data';
 import { recordAndUpdate, nextCell, prevCell, navigateToCell, tryAutoAdvance, shouldAutoAdvance } from './Numpad';
 import { tr } from '@/i18n/tr';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import PersonLink from '@/components/PersonLink';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
+import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 
 // NOTE: 头像按钮状态 — 由 CalcPage 管理，通过 props 传入
 export interface AvatarState {
   active: boolean;       // 是否处于个人数据模式
   loading?: string;      // 加载中文字（如 '⏳'）
   avatarUrl?: string;    // 已识别选手的头像 URL
+  wcaId?: string;        // 已识别选手的 WCA ID（用于个人成绩页链接）
 }
 
 // NOTE: 默认头像 SVG（通用人像轮廓）— 原版 input_grid.js#1365
@@ -29,8 +34,122 @@ const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/
 
 interface InputGridProps {
   avatarState?: AvatarState[];
-  onPlayerOverride?: (playerIdx: number) => void;
+  onSearchPlayer?: (playerIdx: number) => void;
+  onClearPlayerOverride?: (playerIdx: number) => void;
   readOnly?: boolean;
+}
+
+interface PlayerIdentityProps {
+  playerIdx: number;
+  playerName: string;
+  avatar?: AvatarState;
+  readOnly: boolean;
+  onSearch?: () => void;
+  onClearOverride?: () => void;
+}
+
+function PlayerIdentity({
+  playerIdx,
+  playerName,
+  avatar,
+  readOnly,
+  onSearch,
+  onClearOverride,
+}: PlayerIdentityProps) {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const hasIdentityActions = Boolean(avatar?.wcaId || avatar?.active);
+  const loading = Boolean(avatar?.loading && !avatar.active);
+  const canOpen = !readOnly || Boolean(avatar?.wcaId);
+  const menuLabel = playerName
+    ? tr({ zh: `${playerName} 的选手菜单`, en: `Player menu for ${playerName}` })
+    : tr({ zh: '搜索选手', en: 'Search for a player' });
+
+  usePanelClamp(open, panelRef);
+  usePopoverDismiss(open, () => setOpen(false), panelRef, triggerRef);
+
+  const handleTrigger = () => {
+    if (!canOpen || loading) return;
+    if (!hasIdentityActions) {
+      onSearch?.();
+      return;
+    }
+    setOpen(current => !current);
+  };
+
+  return (
+    <div className="me-identity">
+      <button
+        ref={triggerRef}
+        type="button"
+        className={`me-btn calc-btn${avatar?.active ? ' me-active' : ''}`}
+        title={menuLabel}
+        aria-label={menuLabel}
+        aria-haspopup={hasIdentityActions ? 'menu' : undefined}
+        aria-expanded={hasIdentityActions ? open : undefined}
+        data-loading={loading ? avatar?.loading : undefined}
+        disabled={!canOpen || loading}
+        onClick={handleTrigger}
+      >
+        {/* NOTE: loading 时 img 隐藏，由 CSS ::after 显示 data-loading 文字 */}
+        <img
+          className="me-avatar"
+          src={avatar?.avatarUrl || DEFAULT_AVATAR}
+          alt={playerName || 'avatar'}
+          style={loading ? { display: 'none' } : undefined}
+        />
+      </button>
+      {playerName && (
+        <span className="me-name" title={playerName}>{playerName}</span>
+      )}
+      {open && (
+        <div ref={panelRef} className="me-menu" role="menu" aria-label={menuLabel}>
+          {!readOnly && (
+            <button
+              type="button"
+              role="menuitem"
+              className="me-menu-item"
+              onClick={() => {
+                setOpen(false);
+                onSearch?.();
+              }}
+            >
+              <Search size={15} aria-hidden="true" />
+              <span>{tr({ zh: '搜索或更换选手', en: 'Search or change player' })}</span>
+            </button>
+          )}
+          {avatar?.wcaId && (
+            <PersonLink
+              wcaId={avatar.wcaId}
+              className="me-menu-item"
+              title={tr({ zh: '查看个人成绩', en: 'View personal results' })}
+            >
+              <UserRound size={15} aria-hidden="true" />
+              <span>{tr({ zh: '查看个人成绩', en: 'View personal results' })}</span>
+            </PersonLink>
+          )}
+          {!readOnly && avatar?.active && (
+            <button
+              type="button"
+              role="menuitem"
+              className="me-menu-item"
+              onClick={() => {
+                setOpen(false);
+                onClearOverride?.();
+              }}
+            >
+              <RotateCcw size={15} aria-hidden="true" />
+              <span>{tr({
+                zh: `切回世界第 ${playerIdx + 1} 名数据`,
+                en: `Use World #${playerIdx + 1} data`,
+              })}</span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // NOTE: 不再需要动态字号缩放 — CSS 统一用 17px 确保最长格式也能在 90px 内完整显示
@@ -38,7 +157,12 @@ function fitFontStyle(_displayVal: string): React.CSSProperties | undefined {
   return undefined;
 }
 
-export function InputGrid({ avatarState, onPlayerOverride, readOnly = false }: InputGridProps) {
+export function InputGrid({
+  avatarState,
+  onSearchPlayer,
+  onClearPlayerOverride,
+  readOnly = false,
+}: InputGridProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const state = useCalcStore();
@@ -320,33 +444,15 @@ export function InputGrid({ avatarState, onPlayerOverride, readOnly = false }: I
               onChange={() => state.togglePlayer(p)}
             />
 
-            {/* 头像与选手名 — 原版头像按钮扩展为完整身份区 */}
-            <div className="me-identity">
-              <button
-                className={`me-btn calc-btn${avatarState?.[p]?.active ? ' me-active' : ''}`}
-                title={avatarState?.[p]?.active
-                  ? tr({ zh: `切换回世界第 ${p + 1} 名`, en: `Switch back to World #${p + 1}` })
-                  : tr({ zh: '搜索选手', en: 'Search for a player' })}
-                data-loading={avatarState?.[p]?.loading && !avatarState[p].active
-                  ? avatarState[p].loading
-                  : undefined}
-                disabled={readOnly}
-                onClick={() => onPlayerOverride?.(p)}
-              >
-                {/* NOTE: loading 时 img 隐藏，由 CSS ::after 显示 data-loading 文字 */}
-                <img
-                  className="me-avatar"
-                  src={avatarState?.[p]?.avatarUrl || DEFAULT_AVATAR}
-                  alt={playerName || 'avatar'}
-                  style={avatarState?.[p]?.loading && !avatarState[p].active
-                    ? { display: 'none' }
-                    : undefined}
-                />
-              </button>
-              {playerName && (
-                <span className="me-name" title={playerName}>{playerName}</span>
-              )}
-            </div>
+            {/* 头像与选手名 — 有身份时展开搜索 / 个人成绩 / 数据源动作 */}
+            <PlayerIdentity
+              playerIdx={p}
+              playerName={playerName}
+              avatar={avatarState?.[p]}
+              readOnly={readOnly}
+              onSearch={() => onSearchPlayer?.(p)}
+              onClearOverride={() => onClearPlayerOverride?.(p)}
+            />
 
             {/* Target Avg 输入框 — 每行独立（原版 input_grid.js 行 103-107）*/}
             <div className="time-cell-wrapper">

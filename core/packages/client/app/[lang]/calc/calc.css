@@ -1057,6 +1057,7 @@
 
 /* ── 头像按钮 ── */
 .calc-page .me-identity {
+    position: relative;
     display: flex;
     flex: 0 0 auto;
     flex-direction: column;
@@ -1122,4 +1123,51 @@
     background: var(--muted);
     font-size: 16px;
     border-radius: 50%;
+}
+
+.calc-page .me-menu {
+    /* anchored-panel: clamped (usePanelClamp in PlayerIdentity) */
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 50;
+    display: flex;
+    width: max-content;
+    max-width: min(240px, calc(100vw - 16px));
+    flex-direction: column;
+    align-self: flex-start;
+    gap: 2px;
+    padding: 4px;
+    border: 1px solid var(--border-default);
+    border-radius: 6px;
+    background: var(--popover);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--foreground) 24%, transparent);
+}
+
+.calc-page .me-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 9px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--foreground);
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.25;
+    text-align: left;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.calc-page .me-menu-item:hover,
+.calc-page .me-menu-item:focus-visible {
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.calc-page .me-menu-item:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
 }
