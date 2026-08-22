@@ -94,7 +94,7 @@ describe('TimerBootstrap', () => {
     expect(host.textContent).toContain(TIMER_BOOT_COPY.message.en);
   });
 
-  it('tells an outdated WeChat WebView to update or open the system browser', async () => {
+  it('does not tell an up-to-date WeChat user to update again', async () => {
     vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(WECHAT_CHROME_83_USER_AGENT);
 
     await act(async () => {
@@ -107,6 +107,8 @@ describe('TimerBootstrap', () => {
     });
 
     expect(host.textContent).toContain(TIMER_BOOT_COPY.outdatedWechatMessage.en);
+    expect(host.textContent).toContain("phone's operating system are up to date");
+    expect(host.textContent).not.toContain('Update WeChat');
     expect(host.textContent).not.toContain(TIMER_BOOT_COPY.message.en);
   });
 
@@ -206,6 +208,8 @@ describe('app bootstrap early guard', () => {
     vi.advanceTimersByTime(0);
 
     expect(shell.textContent).toContain(TIMER_BOOT_COPY.outdatedWechatMessage.zh);
+    expect(shell.textContent).toContain('微信和手机系统已是最新版');
+    expect(shell.textContent).not.toContain('升级微信');
     expect(shell.textContent).not.toContain(TIMER_BOOT_COPY.message.zh);
   });
 
