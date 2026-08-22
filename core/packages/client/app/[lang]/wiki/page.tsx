@@ -30,6 +30,7 @@ import BoolToggle from '@/components/BoolToggle';
 import './wiki.css';
 import '@/components/hash-highlight.css';
 import { tr } from '@/i18n/tr';
+import { UserIdLabel } from '@/components/UserIdLabel';
 
 const LETTERS = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
 
@@ -389,7 +390,7 @@ export default function WikiPage() {
                         {(() => { const b = renderTermBody(e, showBoth, singleLang); return b ? <div className="wiki-entry-body">{b}</div> : null; })()}
                         {e.source === 'user' && e.ownerName && (
                           <div className="wiki-entry-meta">
-                            — {e.ownerName}
+                            — {e.ownerName} <UserIdLabel userId={e.ownerUserId} />
                           </div>
                         )}
                       </>
@@ -410,7 +411,7 @@ export default function WikiPage() {
                               <>
                                 <div className="wiki-addition-body">{renderBodyLines(a.body)}</div>
                                 <div className="wiki-addition-meta">
-                                  <span>+ {a.ownerName || a.ownerWcaId}</span>
+                                  <span>+ {a.ownerName || a.ownerWcaId} <UserIdLabel userId={a.ownerUserId} /></span>
                                   {(isAdmin || myKey === a.ownerWcaId) && (
                                     <>
                                       <button

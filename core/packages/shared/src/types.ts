@@ -170,6 +170,8 @@ export interface ReconSolve {
   addedBy?: string;
   /** 添加者 WCA ID */
   addedById?: string;
+  /** 添加者的公开 CubeRoot 账号 ID；未注册或已注销时为空 */
+  addedByUserId?: number | null;
   /** 视频链接（多行，每行一个 URL） */
   videoUrl?: string;
   /** 另解列表——任何登录用户都能给同一个 solve 投自己的另解 */
@@ -195,6 +197,7 @@ export interface ReconAlternative {
   solution: string;
   addedById: string;
   addedBy: string;
+  addedByUserId?: number | null;
   /** Unix timestamp */
   createdAt: number;
 }
@@ -209,6 +212,7 @@ export interface AlgSubmission {
   notes: string | null;
   authorId: string;
   authorName: string;
+  authorUserId?: number | null;
   /** ISO timestamp from DB */
   createdAt: string;
 }
@@ -219,6 +223,7 @@ export interface ReconComment {
   reconId: number;
   authorId: string;
   authorName: string;
+  authorUserId?: number | null;
   content: string;
   /** Unix timestamp */
   createdAt: number;

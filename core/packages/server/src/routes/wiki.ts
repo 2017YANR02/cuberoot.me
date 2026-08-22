@@ -19,6 +19,7 @@ import {
   ADMIN_WCA_IDS,
   checkRateLimit,
 } from '../utils/recon_helpers.js';
+import { publicUserIdsForOwnerKeys } from '../utils/account.js';
 
 export const wikiRoutes = new Hono();
 
@@ -52,7 +53,11 @@ interface AdditionRow {
   updated_at: string | Date;
 }
 
-function termToJson(t: TermRow, additions: AdditionRow[] = []) {
+function termToJson(
+  t: TermRow,
+  additions: AdditionRow[] = [],
+  userIds: ReadonlyMap<string, number> = new Map(),
+) {
   return {
     id: Number(t.id),
     letter: t.letter,
@@ -66,21 +71,23 @@ function termToJson(t: TermRow, additions: AdditionRow[] = []) {
     source: t.source,
     ownerWcaId: t.owner_wca_id,
     ownerName: t.owner_name,
+    ownerUserId: userIds.get(t.owner_wca_id ?? '') ?? null,
     createdAt: t.created_at,
     updatedAt: t.updated_at,
     additions: additions
       .filter(a => Number(a.term_id) === Number(t.id))
-      .map(additionToJson),
+      .map((addition) => additionToJson(addition, userIds)),
   };
 }
 
-function additionToJson(a: AdditionRow) {
+function additionToJson(a: AdditionRow, userIds: ReadonlyMap<string, number> = new Map()) {
   return {
     id: Number(a.id),
     termId: Number(a.term_id),
     body: a.body,
     ownerWcaId: a.owner_wca_id,
     ownerName: a.owner_name,
+    ownerUserId: userIds.get(a.owner_wca_id) ?? null,
     createdAt: a.created_at,
     updatedAt: a.updated_at,
   };
@@ -153,12 +160,16 @@ wikiRoutes.get('/wiki/terms', async (c) => {
      WHERE deleted_at IS NULL
      ORDER BY term_id, created_at`,
   );
+  const userIds = await publicUserIdsForOwnerKeys([
+    ...terms.map((term) => term.owner_wca_id),
+    ...additions.map((addition) => addition.owner_wca_id),
+  ]);
 
   // group by letter
   const sectionsMap = new Map<string, ReturnType<typeof termToJson>[]>();
   for (const t of terms) {
     const arr = sectionsMap.get(t.letter) ?? [];
-    arr.push(termToJson(t, additions));
+    arr.push(termToJson(t, additions, userIds));
     sectionsMap.set(t.letter, arr);
   }
   const sections = Array.from(sectionsMap.entries())
@@ -192,7 +203,8 @@ wikiRoutes.post('/wiki/terms', async (c) => {
      RETURNING *`,
     [letter, nextPos, bi.v.head, bi.v.body, bi.v.headEn, bi.v.headZh, bi.v.bodyEn, bi.v.bodyZh, user.wcaId, user.name],
   );
-  return c.json(termToJson(inserted[0]));
+  const userIds = await publicUserIdsForOwnerKeys([inserted[0].owner_wca_id]);
+  return c.json(termToJson(inserted[0], [], userIds));
 });
 
 // PATCH /v1/wiki/terms/:id — owner 或 admin 改 head/body
@@ -226,7 +238,8 @@ wikiRoutes.patch('/wiki/terms/:id', async (c) => {
      WHERE id = ? RETURNING *`,
     [bi.v.head, bi.v.body, bi.v.headEn, bi.v.headZh, bi.v.bodyEn, bi.v.bodyZh, id],
   );
-  return c.json(termToJson(updated[0]));
+  const userIds = await publicUserIdsForOwnerKeys([updated[0].owner_wca_id]);
+  return c.json(termToJson(updated[0], [], userIds));
 });
 
 // DELETE /v1/wiki/terms/:id — admin 软删 (普通用户不能删 term,只能加增补)
@@ -272,7 +285,8 @@ wikiRoutes.post('/wiki/terms/:id/additions', async (c) => {
      RETURNING *`,
     [termId, bod.v, user.wcaId, user.name],
   );
-  return c.json(additionToJson(inserted[0]));
+  const userIds = await publicUserIdsForOwnerKeys([inserted[0].owner_wca_id]);
+  return c.json(additionToJson(inserted[0], userIds));
 });
 
 // PATCH /v1/wiki/additions/:id — owner 或 admin 改 body
@@ -302,7 +316,8 @@ wikiRoutes.patch('/wiki/additions/:id', async (c) => {
     'UPDATE wiki_additions SET body = ?, updated_at = NOW() WHERE id = ? RETURNING *',
     [bod.v, id],
   );
-  return c.json(additionToJson(updated[0]));
+  const userIds = await publicUserIdsForOwnerKeys([updated[0].owner_wca_id]);
+  return c.json(additionToJson(updated[0], userIds));
 });
 
 // DELETE /v1/wiki/additions/:id — owner 或 admin 软删自己的增补

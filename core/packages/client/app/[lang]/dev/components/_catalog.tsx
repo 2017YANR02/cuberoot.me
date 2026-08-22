@@ -66,6 +66,7 @@ import MoreToggle from '@/components/MoreToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { TeX } from '@/components/math/Tex';
 import { UnofficialMark } from '@/components/UnofficialMark';
+import { UserIdLabel } from '@/components/UserIdLabel';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
 import Paginator from '@/components/wca-stats/Paginator';
@@ -795,6 +796,15 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 };
 
 export const CATALOG: ComponentEntry[] = [
+  {
+    name: 'UserIdLabel',
+    import: "import { UserIdLabel } from '@/components/UserIdLabel';",
+    category: 'badge',
+    zh: '统一展示公开 CubeRoot 账号 ID；账号页可复制，作者署名处使用紧凑形式。无有效 ID 时不渲染。',
+    en: 'Canonical public CubeRoot account ID label, copyable on the account page and compact beside authors. Renders nothing without a valid ID.',
+    usage: '<UserIdLabel userId={66} />\n<UserIdLabel userId={66} full copyable />',
+    Demo: () => <UserIdLabel userId={66} />,
+  },
   {
     name: 'ClientLoadStatus',
     import: "import { AppFailure, ClientLoadStatus } from '@/components/StartupStatus';",

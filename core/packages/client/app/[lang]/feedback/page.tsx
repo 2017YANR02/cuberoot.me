@@ -12,6 +12,7 @@ import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
 import FeedbackModal from '@/components/FeedbackModal';
 import FeedbackConversation from '@/components/FeedbackConversation';
+import { UserIdLabel } from '@/components/UserIdLabel';
 import Paginator from '@/components/wca-stats/Paginator';
 import { useT } from '@/hooks/useT';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
@@ -123,6 +124,7 @@ export default function FeedbackPage() {
               <button type="button" className="fbm-card-head" onClick={() => toggle(it.id)} aria-expanded={expanded}>
                 <span className="fbm-kind"><Icon size={14} /></span>
                 <span className="fbm-author">{author}</span>
+                <UserIdLabel userId={it.userId} />
                 <span className="fbm-when">{String(it.createdAt).slice(0, 10)}</span>
                 <span className={`fbm-badge fbm-badge-${it.status}`}>
                   {it.status === 'new' ? t('新', 'New') : it.status === 'triaged' ? t('处理中', 'In progress') : t('已完成', 'Done')}

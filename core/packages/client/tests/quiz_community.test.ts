@@ -51,7 +51,7 @@ const row = (over: Partial<CommunityQuestionRow> = {}): CommunityQuestionRow => 
   options: [{ zh: '甲', en: 'A' }, { zh: '乙', en: 'B' }, { zh: '丙', en: 'C' }],
   answerIdx: 0,
   answerZh: '', answerEn: '', accept: [],
-  authorName: '某人', status: 'published', hiddenNote: '', reportCount: 0,
+  authorName: '某人', authorUserId: 66, status: 'published', hiddenNote: '', reportCount: 0,
   createdAt: '', updatedAt: '',
   ...over,
 });

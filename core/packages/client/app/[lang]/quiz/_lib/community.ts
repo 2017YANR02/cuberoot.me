@@ -41,6 +41,7 @@ export function toQuestion(row: CommunityQuestionRow): Question | null {
   const by: Contributed = {
     dbId: row.id,
     authorName: row.authorName,
+    authorUserId: row.authorUserId,
     onlyLang: onlyLangOf(row),
   };
   const base = {

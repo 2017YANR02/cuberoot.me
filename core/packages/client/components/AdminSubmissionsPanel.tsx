@@ -12,6 +12,7 @@ import type { AlgSubmission } from '@cuberoot/shared';
 import { fetchRecentSubmissions, markSubmissionsSeen } from '@/lib/alg_api';
 import { setAlgSubmissionUnread } from '@/lib/alg-submission-unread';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
+import { UserIdLabel } from '@/components/UserIdLabel';
 
 const CSS = `
 .alg-subnotify-backdrop{position:fixed;inset:0;z-index:2147483600;background:transparent;}
@@ -105,7 +106,9 @@ export default function AdminSubmissionsPanel({ lang, onClose }: Props) {
                 <span className="sn-time">{s.createdAt.slice(0, 16).replace('T', ' ')}</span>
               </div>
               <div className="sn-alg">{s.alg}</div>
-              <div className="sn-author">{t('投稿者', 'by')}: {ownerDisplayName(s.authorId, s.authorName, isZh)}</div>
+              <div className="sn-author">
+                {t('投稿者', 'by')}: {ownerDisplayName(s.authorId, s.authorName, isZh)} <UserIdLabel userId={s.authorUserId} />
+              </div>
               {s.notes && <div className="sn-notes">{s.notes}</div>}
             </NextLink>
           ))}

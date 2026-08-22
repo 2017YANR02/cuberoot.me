@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
+import { UserIdLabel } from '@/components/UserIdLabel';
 import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';
 import { useAuthStore } from '@/lib/auth-store';
@@ -170,6 +171,7 @@ export default function NotificationsPage() {
                   <span className="ntf-main">
                     <span className="ntf-line">
                       <strong className="ntf-actor">{n.actorName}</strong>
+                      <UserIdLabel userId={n.actorUserId} />
                       <span className="ntf-action">{kindText(n.kind)}</span>
                     </span>
                     <span className="ntf-target">{n.title}</span>

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Budget-limited fake localStorage: setItem throws (like iOS Safari's
 // "The quota has been exceeded.") once total chars would exceed the budget.
@@ -32,7 +32,7 @@ const g = globalThis as unknown as { window?: unknown; localStorage?: FakeLS };
 g.window = { addEventListener() {} };
 g.localStorage = makeLocalStorage(1_000_000);
 
-const { applySession, persistAuthItem, useAuthStore } = await import('@/lib/auth-store');
+const { applySession, ensureFreshToken, persistAuthItem, useAuthStore } = await import('@/lib/auth-store');
 
 function setLS(ls: FakeLS) { g.localStorage = ls; }
 
@@ -113,5 +113,50 @@ describe('applySession', () => {
     expect(localStorage.getItem('cuberoot_jwt')).toBe('old-token');
     expect(JSON.parse(localStorage.getItem('wca_user') ?? 'null')).toEqual(previousUser);
     expect(useAuthStore.getState().user).toEqual(previousUser);
+  });
+});
+
+describe('ensureFreshToken legacy session upgrade', () => {
+  beforeEach(() => {
+    setLS(makeLocalStorage(1_000_000));
+    useAuthStore.getState().refresh();
+    vi.unstubAllGlobals();
+  });
+
+  it('refreshes a WCA-only session immediately and persists its numeric uid', async () => {
+    localStorage.setItem('wca_user', JSON.stringify({
+      wcaId: '2017YANR02', name: '颜瑞民', avatar: '', country: '',
+    }));
+    localStorage.setItem('cuberoot_jwt', 'legacy-token-without-exp');
+    useAuthStore.getState().refresh();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        token: 'upgraded-token',
+        user: { uid: 66, wcaId: '2017YANR02', name: '颜瑞民', avatar: '' },
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await ensureFreshToken();
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(localStorage.getItem('cuberoot_jwt')).toBe('upgraded-token');
+    expect(JSON.parse(localStorage.getItem('wca_user') ?? 'null')).toMatchObject({ uid: 66 });
+    expect(useAuthStore.getState().user?.uid).toBe(66);
+  });
+
+  it('does not refresh a current session solely to rediscover an existing uid', async () => {
+    localStorage.setItem('wca_user', JSON.stringify({
+      uid: 66, wcaId: '2017YANR02', name: '颜瑞民', avatar: '', country: '',
+    }));
+    localStorage.setItem('cuberoot_jwt', 'token-without-exp');
+    useAuthStore.getState().refresh();
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await ensureFreshToken();
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

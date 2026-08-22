@@ -7,6 +7,7 @@ import { Hono } from 'hono';
 import { query } from '../db/connection.js';
 import { requireAuth } from '../utils/recon_helpers.js';
 import { rememberLang, verifyUnsubToken } from '../utils/notify.js';
+import { publicUserIdsForOwnerKeys } from '../utils/account.js';
 
 export const notificationRoutes = new Hono();
 
@@ -125,11 +126,13 @@ notificationRoutes.get('/notifications', async (c) => {
        FROM notifications WHERE user_key = ? ORDER BY created_at DESC LIMIT ?`,
     [user.wcaId, limit],
   );
+  const userIds = await publicUserIdsForOwnerKeys(rows.map((r) => r.actor_key));
   return c.json(rows.map((r) => ({
     id: Number(r.id),
     kind: r.kind,
     actorKey: r.actor_key,
     actorName: r.actor_name,
+    actorUserId: userIds.get(r.actor_key) ?? null,
     title: r.title,
     excerpt: r.excerpt,
     link: r.link,

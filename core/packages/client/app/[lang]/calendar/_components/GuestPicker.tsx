@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { UserPlus, X, Check, Ban } from 'lucide-react';
 import { ClearButton } from '@/components/ClearButton';
+import { UserIdLabel } from '@/components/UserIdLabel';
 import { searchPeople, type PersonHit } from '@/lib/calendar-api';
 import { tr } from '@/i18n/tr';
 import type { EventGuest } from '@cuberoot/shared/calendar';
@@ -44,7 +45,7 @@ export default function GuestPicker({ guests, onChange, meKey, disabled }: Props
 
   const add = (p: PersonHit): void => {
     if (guests.some((g) => g.key === p.key)) return;
-    onChange([...guests, { key: p.key, name: p.name, avatar: p.avatar, status: 'pending' }]);
+    onChange([...guests, { key: p.key, name: p.name, userId: p.userId, avatar: p.avatar, status: 'pending' }]);
     setQ('');
     setHits([]);
   };
@@ -73,6 +74,7 @@ export default function GuestPicker({ guests, onChange, meKey, disabled }: Props
                   ? <img src={p.avatar} alt="" className="cal-avatar" />
                   : <span className="cal-avatar is-blank" aria-hidden />}
                 <span className="cal-guest-name">{p.name}</span>
+                <UserIdLabel userId={p.userId} />
                 {p.wcaId && <span className="cal-guest-id">{p.wcaId}</span>}
               </button>
             </li>
@@ -91,6 +93,7 @@ export default function GuestPicker({ guests, onChange, meKey, disabled }: Props
                 ? <img src={g.avatar} alt="" className="cal-avatar" />
                 : <span className="cal-avatar is-blank" aria-hidden />}
               <span className="cal-guest-name">{g.name || g.key}</span>
+              <UserIdLabel userId={g.userId} />
               {g.status === 'accepted' && <Check size={13} aria-label={tr({ zh: '已接受', en: 'Accepted' })} />}
               {g.status === 'declined' && <Ban size={13} aria-label={tr({ zh: '已拒绝', en: 'Declined' })} />}
               {!disabled && (

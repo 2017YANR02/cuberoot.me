@@ -544,6 +544,7 @@ function learnerFeedback() {
     nextGoals: 'Consistency',
     studentDisplayNameSnapshot: student().displayName,
     attendanceStatusSnapshot: 'present',
+    authorUserId: 66,
     authorDisplayNameSnapshot: 'Teacher One',
     authorRoleSnapshot: 'teacher',
     publishedAt: '2026-08-18T13:00:00.000Z',

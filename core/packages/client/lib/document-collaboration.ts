@@ -17,6 +17,7 @@ export interface DocumentReply {
   id: string;
   authorKey: string;
   authorName: string;
+  authorUserId?: number;
   body: string;
   createdAt: number;
 }
@@ -25,6 +26,7 @@ export interface DocumentComment {
   id: string;
   authorKey: string;
   authorName: string;
+  authorUserId?: number;
   body: string;
   createdAt: number;
   resolvedAt: number | null;
@@ -36,6 +38,7 @@ export interface DocumentSuggestion {
   id: string;
   authorKey: string;
   authorName: string;
+  authorUserId?: number;
   anchor: DocumentAnchor;
   beforeText: string;
   replacement: string;
@@ -48,6 +51,7 @@ export interface DocumentActivity {
   id: string;
   authorKey: string;
   authorName: string;
+  authorUserId?: number;
   kind: 'edit' | 'comment' | 'reply' | 'resolve' | 'suggestion' | 'accept' | 'reject';
   summary: string;
   createdAt: number;

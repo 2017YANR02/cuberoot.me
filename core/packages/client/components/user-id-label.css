@@ -1,0 +1,24 @@
+.user-id-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.user-id-label.is-copyable {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--muted-foreground);
+  cursor: copy;
+}
+
+.user-id-label.is-copyable:hover {
+  color: var(--foreground);
+}

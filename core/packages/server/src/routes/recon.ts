@@ -33,6 +33,7 @@ import {
   VIDEO_EXT,
 } from '../utils/video_upload.js';
 import { hasActiveMembership } from '../utils/membership.js';
+import { publicUserIdsForOwnerKeys } from '../utils/account.js';
 
 export const reconRoutes = new Hono();
 
@@ -41,6 +42,35 @@ const RECON_VIDEO_DAILY_BYTES = 1024 * 1024 * 1024;
 const RECON_VIDEO_DAILY_COUNT = 12;
 // Production deploys replace dist/, not this sibling directory, so uploads survive releases.
 const RECON_VIDEO_DIR = process.env.RECON_VIDEO_DIR || path.join(process.cwd(), '.recon-videos');
+
+async function reconRowsToJson(rows: Record<string, unknown>[]): Promise<Record<string, unknown>[]> {
+  const results = rows.map(rowToJson);
+  const ownerKeys = results.flatMap((result) => {
+    const alternatives = Array.isArray(result.alternatives) ? result.alternatives : [];
+    return [
+      typeof result.addedById === 'string' ? result.addedById : null,
+      ...alternatives.map((alternative) => (
+        alternative && typeof alternative === 'object' && typeof alternative.addedById === 'string'
+          ? alternative.addedById
+          : null
+      )),
+    ];
+  });
+  const userIds = await publicUserIdsForOwnerKeys(ownerKeys);
+  for (const result of results) {
+    if (typeof result.addedById === 'string') {
+      result.addedByUserId = userIds.get(result.addedById) ?? null;
+    }
+    if (Array.isArray(result.alternatives)) {
+      result.alternatives = result.alternatives.map((alternative) => {
+        if (!alternative || typeof alternative !== 'object') return alternative;
+        const ownerKey = typeof alternative.addedById === 'string' ? alternative.addedById : '';
+        return { ...alternative, addedByUserId: userIds.get(ownerKey) ?? null };
+      });
+    }
+  }
+  return results;
+}
 
 interface ReconVideoRow {
   mime: string;
@@ -164,7 +194,7 @@ reconRoutes.get('/recon/list', async (c) => {
     );
   }
 
-  return c.json(rows.map(rowToJson));
+  return c.json(await reconRowsToJson(rows));
 });
 
 // ==================== GET /v1/recon/:id/same-scramble ====================
@@ -189,7 +219,7 @@ reconRoutes.get('/recon/:id/same-scramble', async (c) => {
   );
   // 可变数据,浏览器短缓存即可(SSR 已给首屏,客户端再刷新求新)。
   c.header('Cache-Control', 'public, max-age=300');
-  return c.json(rows.map(rowToJson));
+  return c.json(await reconRowsToJson(rows));
 });
 
 // ==================== GET /v1/recon/person/:wcaId ====================
@@ -214,7 +244,7 @@ reconRoutes.get('/recon/person/:wcaId', async (c) => {
      ORDER BY id DESC`,
     [wcaId, wcaId, wcaId, coMatch, ...visParams],
   );
-  return c.json(rows.map(rowToJson));
+  return c.json(await reconRowsToJson(rows));
 });
 
 // ==================== GET /v1/recon/latest ====================
@@ -228,7 +258,7 @@ reconRoutes.get('/recon/latest', async (c) => {
     c.header('Cache-Control', 'public, max-age=300');
     return c.json(null);
   }
-  const result = rowToJson(rows[0] as Record<string, unknown>);
+  const result = (await reconRowsToJson([rows[0] as Record<string, unknown>]))[0];
 
   // 合并编辑覆盖层(同 /:id)
   const edits = await query<{ fields: Record<string, unknown> }>(
@@ -267,10 +297,10 @@ reconRoutes.get('/recon/today', async (c) => {
     // created_at 全空的旧库:退回最新一条
     const fallback = await query<Record<string, unknown>>(`SELECT ${TODAY_COLUMNS} FROM recons WHERE visibility = 'public' ORDER BY id DESC LIMIT 1`);
     c.header('Cache-Control', 'public, max-age=300');
-    return c.json(fallback.map(rowToJson));
+    return c.json(await reconRowsToJson(fallback));
   }
   c.header('Cache-Control', 'public, max-age=300');
-  return c.json(rows.map(rowToJson));
+  return c.json(await reconRowsToJson(rows));
 });
 
 // ==================== GET /v1/recon/check-duplicate ====================
@@ -381,12 +411,14 @@ reconRoutes.get('/recon/comments', async (c) => {
     `SELECT id, recon_id, author_id, author_name, content, created_at, updated_at, pinned, parent_id
      FROM comments WHERE recon_id = ? ORDER BY pinned DESC, created_at ASC`, [reconId]
   );
+  const userIds = await publicUserIdsForOwnerKeys(rows.map((row) => row.author_id));
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   return c.json(rows.map(r => ({
     id: Number(r.id),
     reconId: Number(r.recon_id),
     authorId: r.author_id,
     authorName: r.author_name,
+    authorUserId: userIds.get(r.author_id) ?? null,
     content: r.content,
     createdAt: Number(r.created_at),
     updatedAt: r.updated_at ? Number(r.updated_at) : null,
@@ -1123,7 +1155,7 @@ reconRoutes.get('/recon/:id', async (c) => {
     }
   }
 
-  const result = rowToJson(raw);
+  const result = (await reconRowsToJson([raw]))[0];
 
   // 合并编辑覆盖层(PG JSONB driver 已经反序列化为 JS object)
   const edits = await query<{ fields: Record<string, unknown> }>(
@@ -1296,6 +1328,14 @@ interface AlternativeEntry {
   createdAt: number;
 }
 
+async function alternativesToJson(alts: AlternativeEntry[]) {
+  const userIds = await publicUserIdsForOwnerKeys(alts.map((alternative) => alternative.addedById));
+  return alts.map((alternative) => ({
+    ...alternative,
+    addedByUserId: userIds.get(alternative.addedById) ?? null,
+  }));
+}
+
 async function loadAlternatives(id: string): Promise<AlternativeEntry[] | null> {
   const rows = await query<{ alternatives: string | null }>(
     'SELECT alternatives FROM recons WHERE id = ?', [id]
@@ -1351,7 +1391,7 @@ reconRoutes.post('/recon/:id/alternatives', async (c) => {
     console.warn('[recon] alternative notify failed:', (e as Error).message);
   }
 
-  return c.json({ alternatives: alts });
+  return c.json({ alternatives: await alternativesToJson(alts) });
 });
 
 // PUT /v1/recon/:id/alternatives/:idx — 改某条另解
@@ -1377,7 +1417,7 @@ reconRoutes.put('/recon/:id/alternatives/:idx', async (c) => {
 
   alts[idx] = { ...alts[idx], solution };
   await saveAlternatives(id, alts);
-  return c.json({ alternatives: alts });
+  return c.json({ alternatives: await alternativesToJson(alts) });
 });
 
 // DELETE /v1/recon/:id/alternatives/:idx — 删某条另解
@@ -1399,5 +1439,5 @@ reconRoutes.delete('/recon/:id/alternatives/:idx', async (c) => {
 
   alts.splice(idx, 1);
   await saveAlternatives(id, alts);
-  return c.json({ alternatives: alts });
+  return c.json({ alternatives: await alternativesToJson(alts) });
 });

@@ -18,6 +18,7 @@ export interface ForumLastThread {
   lastPostAt: string;
   lastPostAuthorId: string;
   lastPostAuthorName: string;
+  lastPostAuthorUserId: number | null;
 }
 
 export interface ForumBoard {
@@ -50,6 +51,7 @@ export interface ForumStats {
   posts: number;
   members: number;
   latestMemberName: string;
+  latestMemberUserId: number | null;
 }
 
 export interface ForumIndexData {
@@ -65,12 +67,14 @@ export interface ForumThread {
   title: string;
   authorId: string;
   authorName: string;
+  authorUserId: number | null;
   createdAt: string;
   replyCount: number;
   viewCount: number;
   lastPostAt: string;
   lastPostAuthorId: string;
   lastPostAuthorName: string;
+  lastPostAuthorUserId: number | null;
   isPinned: boolean;
   isLocked: boolean;
   status: ForumReviewStatus;
@@ -136,6 +140,7 @@ export interface PostAuthor {
   joinedAt: string | null;
   postCount: number;
   wcaId: string | null;
+  userId: number | null;
   isAdmin: boolean;
 }
 
@@ -319,9 +324,11 @@ export interface ForumReport {
   threadTitle: string;
   postAuthorId: string;
   postAuthorName: string;
+  postAuthorUserId: number | null;
   excerpt: string;
   reporterId: string;
   reporterName: string;
+  reporterUserId: number | null;
   reason: string;
   createdAt: string;
   resolvedAt: string | null;
@@ -350,6 +357,7 @@ export interface ReviewItem {
   forumNameZh: string | null;
   authorId: string;
   authorName: string;
+  authorUserId: number | null;
   content: string;
   createdAt: string;
 }

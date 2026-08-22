@@ -2321,6 +2321,7 @@ function learnerLessonFeedbackToJson(row: Record<string, unknown>): JsonObject {
     nextGoals: row.next_goals == null ? null : String(row.next_goals),
     studentDisplayNameSnapshot: String(row.student_display_name_snapshot),
     attendanceStatusSnapshot: String(row.attendance_status_snapshot),
+    authorUserId: row.author_user_id == null ? null : Number(row.author_user_id),
     authorDisplayNameSnapshot: String(row.author_display_name_snapshot),
     authorRoleSnapshot: String(row.author_role_snapshot),
     publishedAt: iso(row.published_at),

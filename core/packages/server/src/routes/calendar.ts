@@ -293,7 +293,7 @@ async function guestsFor(eventIds: number[]): Promise<Map<number, EventGuest[]>>
     const id = Number(r.event_id);
     const p = profiles.get(r.guest_key);
     const list = out.get(id) ?? [];
-    list.push({ key: r.guest_key, name: p?.name || r.guest_key, avatar: p?.avatar, status: r.status });
+    list.push({ key: r.guest_key, name: p?.name || r.guest_key, userId: p?.userId, avatar: p?.avatar, status: r.status });
     out.set(id, list);
   }
   return out;
@@ -302,8 +302,8 @@ async function guestsFor(eventIds: number[]): Promise<Map<number, EventGuest[]>>
 interface ProfileRow { wca_id: string | null; uid: string | number; display_name: string; avatar_url: string | null }
 
 /** 归属键 → 昵称 / 头像。wca_id 与 `u<id>` 两种键一次查完。 */
-async function profilesFor(keys: string[]): Promise<Map<string, { name: string; avatar: string }>> {
-  const out = new Map<string, { name: string; avatar: string }>();
+async function profilesFor(keys: string[]): Promise<Map<string, { name: string; userId: number; avatar: string }>> {
+  const out = new Map<string, { name: string; userId: number; avatar: string }>();
   if (keys.length === 0) return out;
   const rows = await query<ProfileRow>(
     `SELECT wca_id, id AS uid, display_name, avatar_url FROM app_users
@@ -312,7 +312,7 @@ async function profilesFor(keys: string[]): Promise<Map<string, { name: string; 
     [...keys, ...keys],
   );
   for (const r of rows) {
-    const entry = { name: r.display_name || '', avatar: r.avatar_url || '' };
+    const entry = { name: r.display_name || '', userId: Number(r.uid), avatar: r.avatar_url || '' };
     if (r.wca_id) out.set(r.wca_id, entry);
     out.set(`u${r.uid}`, entry);
   }
@@ -866,6 +866,7 @@ calendarRoutes.get('/calendar/people', async (c) => {
     people: rows.map((r) => ({
       key: r.wca_id || `u${r.uid}`,
       name: r.display_name || (r.wca_id ?? ''),
+      userId: Number(r.uid),
       avatar: r.avatar_url || '',
       wcaId: r.wca_id || '',
     })),
@@ -915,6 +916,7 @@ interface PublicPayload {
   detail: ShareDetail;
   tz: string;
   ownerName: string;
+  ownerUserId: number | null;
   calendars: { id: number; name: string; color: string }[];
   events: CalEvent[];
 }
@@ -933,7 +935,7 @@ async function loadPublic(token: string, from: number, to: number): Promise<Publ
   const picked = numList(share.calendar_ids);
   const visible = picked.length ? cals.filter((x) => picked.includes(x.id)) : cals;
   if (visible.length === 0) {
-    return { title: share.title, detail: share.detail, tz: share.tz, ownerName: '', calendars: [], events: [] };
+    return { title: share.title, detail: share.detail, tz: share.tz, ownerName: '', ownerUserId: null, calendars: [], events: [] };
   }
   const ids = visible.map((x) => x.id);
   const rows = await query<EventRow>(
@@ -955,6 +957,7 @@ async function loadPublic(token: string, from: number, to: number): Promise<Publ
     detail: share.detail,
     tz: share.tz,
     ownerName: profile?.name || '',
+    ownerUserId: profile?.userId ?? null,
     calendars: visible.map((x) => ({ id: x.id, name: x.name, color: x.color })),
     events,
   };

@@ -306,22 +306,28 @@ function jwtExpMs(token: string): number | null {
   }
 }
 
-/** 启动时调用:cuberoot_jwt 临近过期则静默续签。best-effort,失败不影响现有登录态。 */
+/** 启动时调用:旧会话缺 uid 或 cuberoot_jwt 临近过期时静默续签。best-effort,失败不影响现有登录态。 */
 export async function ensureFreshToken(): Promise<void> {
   if (typeof window === 'undefined') return;
   const token = localStorage.getItem(JWT_KEY);
   if (!token) return;
   const expMs = jwtExpMs(token);
-  // 无 exp(永久 token)无需续;剩余还很多也不续。
-  if (expMs == null || expMs - Date.now() > REFRESH_BEFORE_MS) return;
+  const storedUser = readUser();
+  const needsUserId = storedUser != null && !Number.isSafeInteger(storedUser.uid);
+  // 老会话缺 uid 时立即升级;否则无 exp(永久 token)无需续,剩余还很多也不续。
+  if (!needsUserId && (expMs == null || expMs - Date.now() > REFRESH_BEFORE_MS)) return;
   try {
     const r = await fetch(apiUrl('/v1/auth/refresh'), {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!r.ok) return;
-    const data = (await r.json()) as { token?: string };
-    if (data.token) persistItem(JWT_KEY, data.token);
+    const data = (await r.json()) as { token?: string; user?: WcaUser };
+    if (data.token && data.user) {
+      applySession(data.token, data.user);
+    } else if (data.token) {
+      persistItem(JWT_KEY, data.token);
+    }
   } catch {
     // 网络/后端不可用 — 保留旧 token,下次启动再试。
   }
