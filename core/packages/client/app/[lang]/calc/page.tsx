@@ -6,7 +6,7 @@
 // 比赛名 → 图表 → 输入网格 → 控制按钮 → 进度滑杆 → 数字键盘 → 项目选择器 → 统计表
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
+import { useQueryState, useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +28,10 @@ import { ProgressSliders } from './_components/components/ProgressSliders';
 import AverageMode from './_components/average_mode/AverageMode';
 import { useCalcLive } from './_components/live/useCalcLive';
 import { RoomQrModal } from '@/components/RoomQrModal';
+import { EventIcon } from '@/components/EventIcon';
+import { eventDisplayName } from '@/lib/wca-events';
+import { roundLabel } from '@/lib/wca-round-meta';
+import { compLinkProps } from '@/lib/comp-link';
 import './calc.css';
 import { tr } from '@/i18n/tr';
 
@@ -70,6 +74,13 @@ export function CalcPage() {
     'live',
     parseAsString.withOptions({ history: 'push' }),
   );
+  const [sourceContext] = useQueryStates({
+    sourceEvent: parseAsString,
+    comp: parseAsString,
+    compName: parseAsString,
+    round: parseAsString,
+    wcaId: parseAsString,
+  });
 
   const handleLiveSnapshot = useCallback((snapshot: CalcLiveSnapshot) => {
     const state = useCalcStore.getState();
@@ -423,9 +434,42 @@ export function CalcPage() {
     setQrUrl(null);
   }, [live]);
 
+  const sourceComp = sourceContext.comp && sourceContext.sourceEvent === event
+    ? sourceContext.comp
+    : null;
+  const sourceCompName = sourceContext.compName || sourceComp;
+  const sourceResultLabel = sourceComp
+    ? tr({
+        zh: `返回 ${sourceCompName} ${eventDisplayName(event, true)} ${sourceContext.round ? roundLabel(sourceContext.round) : ''} 成绩`,
+        en: `Return to ${sourceCompName} ${eventDisplayName(event, false)} ${sourceContext.round ? roundLabel(sourceContext.round) : ''} results`,
+      })
+    : '';
+
   return (
     <div className="hth-app calc-page">
       <BackHome />
+      {sourceComp && (
+        <div className="calc-source-row">
+          <span className="calc-source-label">{tr({ zh: '来自比赛成绩', en: 'Competition result' })}</span>
+          <Link
+            {...compLinkProps(sourceComp, {
+              view: 'result',
+              event,
+              round: sourceContext.round || undefined,
+            })}
+            className="calc-source-link"
+            aria-label={sourceResultLabel}
+            title={sourceResultLabel}
+          >
+            <span className="calc-source-name">{sourceCompName}</span>
+            <span className="calc-source-meta">
+              <EventIcon event={event} className="calc-source-event-icon" />
+              <span>{eventDisplayName(event, isZh)}</span>
+              {sourceContext.round && <span>{roundLabel(sourceContext.round)}</span>}
+            </span>
+          </Link>
+        </div>
+      )}
       {activeTab === 'average' ? (
         <>
           {/* 简易版顶部一行: 项目选择器 + 切回对比版 toggle */}

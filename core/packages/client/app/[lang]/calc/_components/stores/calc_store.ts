@@ -244,7 +244,7 @@ export const useCalcStore = create<CalcState>((set, get) => ({
     urlDebounceTimer = setTimeout(() => {
       const s = get();
       const params = new URLSearchParams();
-      // NOTE: 保留现有的 lang 参数 + nuqs 管理的 tab/live(本 store 重建整个 query,不保留会被清掉)
+      // NOTE: 保留现有的 lang 参数 + nuqs 管理的 tab/live/比赛来源(本 store 重建整个 query,不保留会被清掉)
       const cur = new URLSearchParams(window.location.search);
       const curLang = cur.get('lang');
       if (curLang) params.set('lang', curLang);
@@ -252,7 +252,21 @@ export const useCalcStore = create<CalcState>((set, get) => ({
       if (curTab) params.set('tab', curTab);
       const curLive = cur.get('live');
       if (curLive) params.set('live', curLive);
+      // 比赛来源只跟随原项目；用户手动切项目后自动移除，避免留下错误的比赛上下文。
+      if (cur.get('sourceEvent') === s.event) {
+        for (const key of ['sourceEvent', 'comp', 'compName', 'round', 'wcaId']) {
+          const value = cur.get(key);
+          if (value) params.set(key, value);
+        }
+      }
       if (s.event) params.set('event', s.event);
+
+      // NOTE: 显式名字随成绩 URL 保存；默认占位名不写，保持普通分享链接简短。
+      for (let i = 0; i < s.names.length; i++) {
+        const name = s.names[i]?.trim();
+        const fallback = 'Name ' + String.fromCharCode(65 + i);
+        if (name && name !== fallback) params.set('name' + i, name);
+      }
 
       // NOTE: 保存 Target Avg（centiseconds），替代原来的 n0/n1 名字
       for (let i = 0; i < 2; i++) {
@@ -284,33 +298,47 @@ export const useCalcStore = create<CalcState>((set, get) => ({
     let event = get().event;
     if (params.has('event')) event = params.get('event')!;
 
-    // 恢复成绩
-    const times = [...get().times.map(row => [...row])];
+    const sc = solveCountForEvent(event);
+
+    // 恢复成绩。URL 是完整快照，先清空旧 store，避免同一 SPA 会话中的旧 t1/seed 残留。
+    let rowCount = 2;
+    while (params.has('t' + rowCount) || params.has('name' + rowCount)) rowCount++;
+    const times = Array.from({ length: rowCount }, () => new Array(sc).fill(0) as number[]);
+    const names = Array.from(
+      { length: rowCount },
+      (_, i) => params.get('name' + i)?.trim() || 'Name ' + String.fromCharCode(65 + i),
+    );
     let j = 0;
     while (params.has('t' + j)) {
       const parts = params.get('t' + j)!.split(',').map(Number);
-      if (j >= times.length) times.push([0, 0, 0, 0, 0]);
-      for (let k = 0; k < 5 && k < parts.length; k++) {
-        times[j][k] = parts[k] || 0;
+      if (j >= times.length) times.push(new Array(sc).fill(0));
+      for (let k = 0; k < sc && k < parts.length; k++) {
+        const value = parts[k];
+        times[j][k] = Number.isFinite(value) ? (value < 0 ? DNF_VALUE : value) : 0;
       }
       j++;
     }
 
-    set({ event, times });
-
     // NOTE: 恢复 Target Avg（centiseconds）
-    const seedOn = get().seedOn;
-    const newTargetAvgs = { ...get().targetAvgs };
+    const newTargetAvgs: Record<number, number> = {};
     for (let i = 0; i < 2; i++) {
       if (params.has('target' + i)) {
         const ta = parseInt(params.get('target' + i)!, 10);
-        if (ta > 0) newTargetAvgs[seedOn + i] = ta;
+        if (ta > 0) newTargetAvgs[i] = ta;
       }
     }
-    set({ targetAvgs: newTargetAvgs });
-
-    // NOTE: Mo3 项目 times 数组必须截断为 3 元素
-    get().resizeTimes(solveCountForEvent(event));
+    set({
+      event,
+      times,
+      names,
+      seedOn: 0,
+      playerEnabled: [true, params.has('t1') || params.has('name1')],
+      targetAvgs: newTargetAvgs,
+      timeLive: [-1, -1],
+      timeLiveStart: -1,
+      focusedCell: [-1, -1],
+    });
+    get().updateSort();
   },
 
   // ── 查询辅助 ──

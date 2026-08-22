@@ -27,13 +27,15 @@ export function EventSelector() {
   };
 
   return (
-    <PuzzlePicker
-      wcaEvents={WCA_EVENTS}
-      availableEvents={NO_NON_WCA_EVENTS}
-      selectedEvent={event}
-      onSelect={handleSelect}
-      isZh={isZh}
-    />
+    <div className="event-selector">
+      <PuzzlePicker
+        wcaEvents={WCA_EVENTS}
+        availableEvents={NO_NON_WCA_EVENTS}
+        selectedEvent={event}
+        onSelect={handleSelect}
+        isZh={isZh}
+      />
+    </div>
   );
 }
 
