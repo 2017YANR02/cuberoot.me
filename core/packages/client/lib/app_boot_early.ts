@@ -14,8 +14,8 @@ export const APP_BOOT_COPY = {
     en: 'Check your connection and retry. If it still fails, send us the diagnostic information below.',
   },
   outdatedWechatMessage: {
-    zh: '当前微信内置浏览器版本过旧，无法打开此页面。请先升级微信；如果仍然失败，请点击右上角菜单，选择“在浏览器打开”。',
-    en: 'The browser built into WeChat is too old to open this page. Update WeChat first. If it still fails, use the top-right menu to open the page in your browser.',
+    zh: '当前微信内置浏览器无法打开此页面。即使微信和手机系统已是最新版，也可能仍使用较旧内核。请点击右上角菜单，选择“在浏览器打开”。',
+    en: 'WeChat\'s built-in browser cannot open this page. It may still use an older engine even when WeChat and your phone\'s operating system are up to date. Use the top-right menu and choose “Open in Browser.”',
   },
   outdatedBrowserMessage: {
     zh: '当前浏览器版本过旧，无法打开此页面。请升级浏览器后重试。',
@@ -35,8 +35,8 @@ export const TIMER_BOOT_COPY = {
     en: 'Check your connection and retry. If it still fails, send us the diagnostic information below.',
   },
   outdatedWechatMessage: {
-    zh: '当前微信内置浏览器版本过旧，无法启动计时器。请先升级微信；如果仍然失败，请点击右上角菜单，选择“在浏览器打开”。',
-    en: 'The browser built into WeChat is too old to start the timer. Update WeChat first. If it still fails, use the top-right menu to open this page in your browser.',
+    zh: '当前微信内置浏览器无法启动计时器。即使微信和手机系统已是最新版，也可能仍使用较旧内核。请点击右上角菜单，选择“在浏览器打开”。',
+    en: 'WeChat\'s built-in browser cannot start the timer. It may still use an older engine even when WeChat and your phone\'s operating system are up to date. Use the top-right menu and choose “Open in Browser.”',
   },
   outdatedBrowserMessage: {
     zh: '当前浏览器版本过旧，无法启动计时器。请升级浏览器后重试。',
