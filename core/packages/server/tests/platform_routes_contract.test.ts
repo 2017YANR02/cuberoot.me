@@ -80,6 +80,7 @@ describe('Platform typed quiz contract', () => {
 
 describe('Platform private data and media tokens', () => {
   it('documents and deploys both required production secrets', () => {
+    expect(deployCoreSource).toContain('            .github/workflows/deploy_core.yml');
     for (const name of ['PLATFORM_DATA_ENCRYPTION_KEY_V1', 'PLATFORM_MEDIA_SIGNING_SECRET']) {
       expect(envExampleSource).toContain(`${name}=`);
       expect(deployCoreSource).toContain(`secrets.${name}`);
