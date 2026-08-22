@@ -20,14 +20,13 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # 只取 core/(server bundle + migrations + cube555 daemon glue)、server 契约测试依赖的 nginx 配置与本 workflow,
+      # 只取 core/(server bundle + migrations + cube555 daemon glue)与 server 契约测试依赖的 nginx 配置,
       # 跳过仓库根 ~1GB 静态残留(blob:none partial clone)。
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
             core
             ops/nginx
-            .github/workflows/deploy_core.yml
           filter: blob:none
 
       - uses: pnpm/action-setup@v4
@@ -130,30 +129,14 @@ jobs:
           test -n "$PLATFORM_MEDIA_SIGNING_SECRET" || { echo "ERROR: PLATFORM_MEDIA_SIGNING_SECRET secret missing"; exit 1; }
           node -e 'const value=process.env.PLATFORM_DATA_ENCRYPTION_KEY_V1||""; const bytes=Buffer.from(value,"base64"); if(bytes.length!==32||bytes.toString("base64").replace(/=+$/,"")!==value.replace(/=+$/, "")) process.exit(1)'
           test "${#PLATFORM_MEDIA_SIGNING_SECRET}" -ge 32 || { echo "ERROR: PLATFORM_MEDIA_SIGNING_SECRET must be at least 32 characters"; exit 1; }
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            core/packages/server/scripts/sync-platform-private-secrets.sh \
+            "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/.sync-platform-private-secrets.sh"
           printf '%s\n%s\n' "$PLATFORM_DATA_ENCRYPTION_KEY_V1" "$PLATFORM_MEDIA_SIGNING_SECRET" | \
             ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
               -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
               "root@${{ secrets.DEPLOY_HOST }}" \
-              'set -e
-               IFS= read -r DATA_KEY
-               IFS= read -r MEDIA_SECRET
-               ENV_FILE=/root/core-api/.env
-               test -s "$ENV_FILE"
-               EXISTING_DATA_KEY="$(sed -n "s/^PLATFORM_DATA_ENCRYPTION_KEY_V1=//p" "$ENV_FILE" | tail -1)"
-               if [ -n "$EXISTING_DATA_KEY" ] && [ "$EXISTING_DATA_KEY" != "$DATA_KEY" ]; then
-                 echo "ERROR: Existing PLATFORM_DATA_ENCRYPTION_KEY_V1 does not match the immutable v1 deploy secret"
-                 exit 1
-               fi
-               DATA_KEY_TO_WRITE="${EXISTING_DATA_KEY:-$DATA_KEY}"
-               TMP_FILE="$(mktemp /root/core-api/.env.platform.XXXXXX)"
-               trap '\''rm -f "$TMP_FILE"'\'' EXIT
-               awk '\''index($0, "PLATFORM_DATA_ENCRYPTION_KEY_V1=") != 1 && index($0, "PLATFORM_MEDIA_SIGNING_SECRET=") != 1 { print }'\'' "$ENV_FILE" > "$TMP_FILE"
-               printf "%s=%s\n" PLATFORM_DATA_ENCRYPTION_KEY_V1 "$DATA_KEY_TO_WRITE" >> "$TMP_FILE"
-               printf "%s=%s\n" PLATFORM_MEDIA_SIGNING_SECRET "$MEDIA_SECRET" >> "$TMP_FILE"
-               chmod --reference="$ENV_FILE" "$TMP_FILE"
-               chown --reference="$ENV_FILE" "$TMP_FILE"
-               mv "$TMP_FILE" "$ENV_FILE"
-               trap - EXIT'
+              'sh /root/core-api/.sync-platform-private-secrets.sh /root/core-api/.env'
 
       - name: Deploy server
         run: |

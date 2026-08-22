@@ -14,7 +14,7 @@ const catalogSource = readFileSync(new URL('../src/routes/platform_catalog.ts', 
 const learningSource = readFileSync(new URL('../src/routes/platform_learning.ts', import.meta.url), 'utf8');
 const qrSource = readFileSync(new URL('../src/routes/platform_qr.ts', import.meta.url), 'utf8');
 const envExampleSource = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
-const deployCoreSource = readFileSync(new URL('../../../../.github/workflows/deploy_core.yml', import.meta.url), 'utf8');
+const deploySecretSyncSource = readFileSync(new URL('../scripts/sync-platform-private-secrets.sh', import.meta.url), 'utf8');
 
 const originalEncryptionKey = process.env.PLATFORM_DATA_ENCRYPTION_KEY_V1;
 const originalMediaSecret = process.env.PLATFORM_MEDIA_SIGNING_SECRET;
@@ -80,20 +80,15 @@ describe('Platform typed quiz contract', () => {
 
 describe('Platform private data and media tokens', () => {
   it('documents and deploys both required production secrets', () => {
-    expect(deployCoreSource).toContain('            .github/workflows/deploy_core.yml');
     for (const name of ['PLATFORM_DATA_ENCRYPTION_KEY_V1', 'PLATFORM_MEDIA_SIGNING_SECRET']) {
       expect(envExampleSource).toContain(`${name}=`);
-      expect(deployCoreSource).toContain(`secrets.${name}`);
+      expect(deploySecretSyncSource).toContain(`${name}`);
     }
-    const secretSyncStep = deployCoreSource.slice(
-      deployCoreSource.indexOf('- name: Sync Platform private-data secrets'),
-      deployCoreSource.indexOf('- name: Deploy server'),
-    );
-    expect(secretSyncStep).toContain('Existing PLATFORM_DATA_ENCRYPTION_KEY_V1 does not match the immutable v1 deploy secret');
-    expect(secretSyncStep).toContain('DATA_KEY_TO_WRITE="${EXISTING_DATA_KEY:-$DATA_KEY}"');
-    expect(secretSyncStep).toContain('PLATFORM_DATA_ENCRYPTION_KEY_V1=');
-    expect(secretSyncStep).toContain('PLATFORM_MEDIA_SIGNING_SECRET=');
-    expect(secretSyncStep.match(/mv "\$TMP_FILE" "\$ENV_FILE"/g)).toHaveLength(1);
+    expect(deploySecretSyncSource).toContain('Existing PLATFORM_DATA_ENCRYPTION_KEY_V1 does not match the immutable v1 deploy secret');
+    expect(deploySecretSyncSource).toContain('DATA_KEY_TO_WRITE="${EXISTING_DATA_KEY:-$DATA_KEY}"');
+    expect(deploySecretSyncSource).toContain('PLATFORM_DATA_ENCRYPTION_KEY_V1=');
+    expect(deploySecretSyncSource).toContain('PLATFORM_MEDIA_SIGNING_SECRET=');
+    expect(deploySecretSyncSource.match(/mv "\$TMP_FILE" "\$ENV_FILE"/g)).toHaveLength(1);
   });
 
   it('round-trips encrypted quiz answers and rejects tamper, wrong version, and missing key', () => {
