@@ -227,6 +227,11 @@ export function solveIvy(scramble: string): IvySolution {
   return { solution: names.join(' '), length: names.length };
 }
 
+/** Exact optimal move count of an Ivy scramble. */
+export function ivyDistanceOfScramble(scramble: string): number {
+  return solveIvy(scramble).length;
+}
+
 export interface IvyState {
   /** centers[face] = home-color id (0..5 = U R F B L D) currently sitting at that face. */
   centers: number[];
@@ -258,6 +263,37 @@ function indexToScramble(g: IvyGraph, idx: number): string {
     cur = nextIdx(g, cur, mi);
   }
   return sol.reverse().map((mi) => MOVES[mi ^ 1].name).join(' ');
+}
+
+/**
+ * Uniformly sample a reachable Ivy state whose exact optimal distance lies in [lo, hi], then
+ * return the inverse of its optimal solution as a scramble. The full graph is only 29,160 states,
+ * so selecting an exact rank avoids rejection fallbacks and also handles rare depths 0 and 8.
+ */
+export function generateIvyByDistance(lo: number, hi: number, rng: () => number): string {
+  if (!Number.isInteger(lo) || !Number.isInteger(hi)) {
+    throw new Error('ivy-solver: difficulty bounds must be integers');
+  }
+  if (lo < 0 || hi > IVY_GODS_NUMBER || lo > hi) {
+    throw new Error(`ivy-solver: difficulty range must be within 0..${IVY_GODS_NUMBER}`);
+  }
+  const sample = rng();
+  if (!Number.isFinite(sample) || sample < 0 || sample >= 1) {
+    throw new Error('ivy-solver: rng must return a number in [0,1)');
+  }
+
+  let eligible = 0;
+  for (let distance = lo; distance <= hi; distance++) eligible += IVY_LENGTH_DISTRIBUTION[distance];
+  let rank = Math.floor(sample * eligible);
+  const g = graph();
+  for (let index = 0; index < g.dist.length; index++) {
+    const distance = g.dist[index];
+    if (distance < lo || distance > hi) continue;
+    // Timer 以空字符串表示「还在生成」；0 步状态需用非空恒等序列。
+    if (rank === 0) return indexToScramble(g, index) || "R R'";
+    rank--;
+  }
+  throw new Error('ivy-solver: difficulty sample out of range');
 }
 
 /**

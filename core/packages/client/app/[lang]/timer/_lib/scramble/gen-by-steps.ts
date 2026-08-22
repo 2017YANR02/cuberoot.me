@@ -1,10 +1,14 @@
 /*
  * gen-by-steps — local "按步数生成" dispatch for the timer's random source. Maps (event, settings) to a
  * pooled generator keyed by metric+range, or null when by-steps isn't active for this event. Keeps the
- * generator choice (2×2 vs pyraminx) and pool-key convention in one place; SoloView just takes the pool.
+ * generator choice (2×2 / pyraminx / Skewb / Ivy / Gear) and pool-key convention in one place;
+ * SoloView just takes the pool.
  */
 
 import { generate222ByMetric, cube222MetricOfScramble, type Cube222Metric } from '@/lib/cube222-metric';
+import { generateGearByDistance, gearDistanceOfScramble } from '@/lib/gear-solver';
+import { generateIvyByDistance, ivyDistanceOfScramble } from '@/lib/ivy-solver';
+import { generateSkewbByDistance, skewbDistanceOfScramble } from '@/lib/skewb-solver';
 import { generatePyramByMetric, pyramMetricOf, type PyramMetric } from './pyram-metric';
 import { stepPuzzleOf, stepMetricSpec } from './step-metrics';
 
@@ -38,7 +42,12 @@ export function genByStepsScramble(
   if (puzzle === '222') {
     return { key, gen: () => generate222ByMetric(metric as Cube222Metric, b.lo, b.hi, Math.random) };
   }
-  return { key, gen: () => generatePyramByMetric(metric as PyramMetric, b.lo, b.hi, Math.random) };
+  if (puzzle === 'pyra') {
+    return { key, gen: () => generatePyramByMetric(metric as PyramMetric, b.lo, b.hi, Math.random) };
+  }
+  if (puzzle === 'skewb') return { key, gen: () => generateSkewbByDistance(b.lo, b.hi, Math.random) };
+  if (puzzle === 'ivy') return { key, gen: () => generateIvyByDistance(b.lo, b.hi, Math.random) };
+  return { key, gen: () => generateGearByDistance(b.lo, b.hi, Math.random) };
 }
 
 /** Stable signature of the by-steps settings for regenerate-on-change (empty when inactive). */
@@ -53,7 +62,10 @@ export function scrambleStepMetric(event: string, metric: string, scramble: stri
   const puzzle = stepPuzzleOf(event);
   if (!puzzle) return null;
   if (puzzle === '222') return cube222MetricOfScramble(scramble, metric as Cube222Metric);
-  return pyramMetricOf(scramble, metric as PyramMetric);
+  if (puzzle === 'pyra') return pyramMetricOf(scramble, metric as PyramMetric);
+  if (puzzle === 'skewb') return metric === 'htm' ? skewbDistanceOfScramble(scramble) : null;
+  if (puzzle === 'ivy') return metric === 'htm' ? ivyDistanceOfScramble(scramble) : null;
+  return metric === 'ftm' ? gearDistanceOfScramble(scramble) : null;
 }
 
 /** WCA-filter bounds for this event+settings, or null when the step filter isn't active. */

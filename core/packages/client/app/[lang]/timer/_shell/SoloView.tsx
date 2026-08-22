@@ -480,8 +480,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const wcaSourceSig = settings.scrambleSource === 'wca'
     ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}|${wcaDiffSig}|${wcaStepSig}|${wcaCompUnindexed ? 'U' : ''}|${wcaOptimalOn ? 'O' : ''}`
     : 'random';
-  // 按步数生成签名(2×2 / 金字塔,随机来源):开启且选了步数才生效,变了即重置打乱队列(同 wcaSourceSig 机制)。
-  const genStepsSig = settings.scrambleSource === 'random'
+  // 按步数生成签名:随机来源一律生效；非 WCA 项目即便全局来源仍记着「真题」也只能本地生成，
+  // 因此同样要让难度变化重置打乱队列。WCA 项目的真题来源由 wcaStepSig 负责。
+  const genStepsSig = (settings.scrambleSource === 'random'
+    || (settings.scrambleSource === 'wca' && !wcaEventId(event)))
     ? genByStepsSig(event, settings)
     : '';
   // 随机来源的「难度」(3×3 族):按所选阶段的最优步数直接生成状态(lib/cross-trainer)。
@@ -540,16 +542,17 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // deterministic seeded-sync mode where consumption order must stay exact.
     const s = getSettings();
     if (s.syncSeed) return generateScramble(event);
-    // 非 WCA puzzle:打乱在 csTimer Worker 里算,nonwca.ts 自带队列。别再套一层
-    // scramble_pool —— 那会把「还在生成」的 '' 也缓存进 buffer。'' 由下面的 effect 补。
-    if (isNonWcaEvent(event)) return generateScramble(event);
     // 「按难度生成」(3×3 族):状态在 worker 里按阶段最优步数采样,再由 min2phase 转成打乱 ——
     // 同样是异步的,队列干了就先出 '',由下面的 effect 补上(期间转圈)。
     if (trainerSpecRef.current) return peekTrainer(trainerSpecRef.current);
-    // 「按步数生成」(2×2 / 金字塔):从完整状态空间均匀采样、按所选度量最优步数过滤(非案例库)。
+    // 「按步数生成」(2×2 / 金字塔 / 斜转 / 枫叶 / 齿轮):从完整状态空间均匀采样、
+    // 按所选度量最优步数生成(非案例库)。必须先于 non-WCA worker 分支,否则后两项会绕过难度。
     // 度量+区间进 pool key,改设置即换 buffer;拒绝采样 + IDA* 在后台 idle 生成,不阻塞计时。
     const byStepsScr = genByStepsScramble(event, s);
     if (byStepsScr) return takeScramble(byStepsScr.key, byStepsScr.gen, canGenScramble);
+    // 其余非 WCA puzzle:打乱在 csTimer Worker 里算,nonwca.ts 自带队列。别再套一层
+    // scramble_pool —— 那会把「还在生成」的 '' 也缓存进 buffer。'' 由下面的 effect 补。
+    if (isNonWcaEvent(event)) return generateScramble(event);
     return takeScramble(`${event}|${s.cnMode}|${event === '222' ? mode222 : ''}`, () => generateScramble(event), canGenScramble);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, genStepsSig, trainerSigVal, manualSig, canGenScramble, mode222]);
@@ -625,7 +628,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 不是「还在生成」—— 塞一条生成打乱进去会把提示吞掉。
   const [nonWcaLoading, setNonWcaLoading] = useState(false);
   useEffect(() => {
-    if (!isNonWcaEvent(event) || settings.scrambleSource === 'manual') { setNonWcaLoading(false); return; }
+    // 枫叶/齿轮启用精确难度后由完整图生成，不再启动 csTimer Worker 补位；尤其 0 步的
+    // 恒等打乱也不能被当成「Worker 尚未返回」。
+    if (!isNonWcaEvent(event) || settings.scrambleSource === 'manual' || genStepsSig) {
+      setNonWcaLoading(false);
+      return;
+    }
     prefetchNonWca(event);
     if (scramble !== '') { setNonWcaLoading(false); return; }
     let cancelled = false;
@@ -640,7 +648,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       applyScrambleHist({ list, idx: cur.idx });
     });
     return () => { cancelled = true; };
-  }, [event, scramble, settings.scrambleSource, applyScrambleHist]);
+  }, [event, scramble, settings.scrambleSource, genStepsSig, applyScrambleHist]);
 
   // 「按难度生成」:状态采样在 worker(冷启建表 0.3~10s),打乱文本由 min2phase 现算 —— 首条要等,
   // 之后队列已预热。'' = 还在生成(转圈)。**取不到分两种**:worker 证明了这个窗口没有任何状态

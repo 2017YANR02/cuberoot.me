@@ -1,11 +1,12 @@
 'use client';
 
 /**
- * GenStepsConfig — 「按步数」子面板(event ∈ {2×2, 金字塔} 时出现,随机生成 + WCA 真题两种来源都用)。
+ * GenStepsConfig — 「按步数」子面板(精确小状态项目共用;随机生成 + 支持项目的 WCA 真题两种来源都用)。
  *
  * 随机生成:从该魔方完整状态空间均匀采样、按所选度量的最优步数过滤后生成打乱(滑条走完整范围)。
  * WCA 真题:把拉到的真实比赛打乱按同一度量过滤(滑条只给语料实际出现的步数 wcaRange,不出必空的低步数)。
- * 度量表见 _lib/scramble/step-metrics.ts;2×2 生成算法见 lib/cube222-metric,金字塔见 _lib/scramble/pyram-metric。
+ * 度量表见 _lib/scramble/step-metrics.ts;2×2 生成算法见 lib/cube222-metric,金字塔见
+ * _lib/scramble/pyram-metric,其余项目复用 lib 下已有的全空间精确求解表。
  */
 
 import { useEffect, type ReactNode } from 'react';
