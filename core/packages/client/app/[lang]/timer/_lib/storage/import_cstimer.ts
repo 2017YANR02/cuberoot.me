@@ -275,7 +275,15 @@ export function parseCstimerExport(jsonText: string): CstimerSessionParsed[] {
     });
   }
 
-  // Sort sessions by id ascending for stable display.
-  out.sort((a, b) => Number(a.sessionId) - Number(b.sessionId));
+  // csTimer lets users reorder groups without renumbering sessionN. Its own
+  // importer and session picker use metadata.rank, so preserve that visible
+  // order and only fall back to the numeric id for older exports.
+  const sourceRank = (session: CstimerSessionParsed): number => {
+    const rank = sessionMeta[session.sessionId]?.rank;
+    return typeof rank === 'number' && Number.isFinite(rank)
+      ? rank
+      : Number(session.sessionId);
+  };
+  out.sort((a, b) => sourceRank(a) - sourceRank(b) || Number(a.sessionId) - Number(b.sessionId));
   return out;
 }

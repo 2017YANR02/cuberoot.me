@@ -121,3 +121,26 @@ describe('csTimer import — regression guard on the old reversed format', () =>
     expect(sessions[0].solves[0].timeMs).not.toBe(0);
   });
 });
+
+describe('csTimer import — session structure', () => {
+  it('preserves group names, empty groups, and the user-visible rank order', () => {
+    const raw = JSON.stringify({
+      session2: JSON.stringify([[[0, 2_000], 'R', '', 1_700_000_200]]),
+      session7: JSON.stringify([]),
+      session10: JSON.stringify([[[0, 10_000], 'U', '', 1_700_000_100]]),
+      properties: {
+        sessionData: JSON.stringify({
+          '2': { name: 'Second by id', opt: { scrType: '222' }, rank: 3 },
+          '7': { name: 'Empty drills', opt: { scrType: 'fto' }, rank: 1 },
+          '10': { name: 'Main 3x3', opt: { scrType: '333' }, rank: 2 },
+        }),
+      },
+    });
+
+    const sessions = parseCstimerExport(raw);
+    expect(sessions.map(session => session.sessionId)).toEqual(['7', '10', '2']);
+    expect(sessions.map(session => session.name)).toEqual(['Empty drills', 'Main 3x3', 'Second by id']);
+    expect(sessions.map(session => session.event)).toEqual(['fto', '333', '222']);
+    expect(sessions[0].solves).toEqual([]);
+  });
+});
