@@ -14,6 +14,9 @@ import {
 } from '@/lib/app_boot_early';
 
 const WECHAT_CHROME_83_USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; wv) AppleWebKit/537.36 Chrome/83.0.4103.106 Mobile Safari/537.36 MicroMessenger/8.0.76';
+const ANDROID_CHROME_78_USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; V1921A) AppleWebKit/537.36 Chrome/78.0.3904.96 Mobile Safari/537.36';
+const IOS_15_WECHAT_USER_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_8_8 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 MicroMessenger/8.0.76';
+const MODERN_CHROME_USER_AGENT = 'Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/140.0.0.0 Mobile Safari/537.36';
 
 function ReadyTimer() {
   return createElement('div', null, 'timer ready');
@@ -94,7 +97,7 @@ describe('TimerBootstrap', () => {
     expect(host.textContent).toContain(TIMER_BOOT_COPY.message.en);
   });
 
-  it('does not tell an up-to-date WeChat user to update again', async () => {
+  it('does not promise that opening an old Android system browser will help', async () => {
     vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(WECHAT_CHROME_83_USER_AGENT);
 
     await act(async () => {
@@ -107,9 +110,57 @@ describe('TimerBootstrap', () => {
     });
 
     expect(host.textContent).toContain(TIMER_BOOT_COPY.outdatedWechatMessage.en);
-    expect(host.textContent).toContain("phone's operating system are up to date");
-    expect(host.textContent).not.toContain('Update WeChat');
+    expect(host.textContent).toContain('merely choosing “Open in system browser” may not help');
     expect(host.textContent).not.toContain(TIMER_BOOT_COPY.message.en);
+  });
+
+  it('explains that an old iOS system engine affects every browser on the device', async () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(IOS_15_WECHAT_USER_AGENT);
+
+    await act(async () => {
+      root.render(createElement(TimerBootstrap, {
+        loadTimerShell: async () => {
+          throw new SyntaxError('Invalid regular expression: invalid group specifier name');
+        },
+      }));
+      await Promise.resolve();
+    });
+
+    expect(host.textContent).toContain(TIMER_BOOT_COPY.outdatedIosMessage.en);
+    expect(host.textContent).toContain('switching browsers on the same device may not help');
+    expect(host.textContent).not.toContain(TIMER_BOOT_COPY.message.en);
+  });
+
+  it('routes an obsolete standalone Android browser to browser guidance', async () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(ANDROID_CHROME_78_USER_AGENT);
+
+    await act(async () => {
+      root.render(createElement(TimerBootstrap, {
+        loadTimerShell: async () => {
+          throw new SyntaxError("Unexpected token '?'");
+        },
+      }));
+      await Promise.resolve();
+    });
+
+    expect(host.textContent).toContain(TIMER_BOOT_COPY.outdatedBrowserMessage.en);
+    expect(host.textContent).not.toContain(TIMER_BOOT_COPY.outdatedWechatMessage.en);
+  });
+
+  it('keeps generic diagnostics for a modern browser syntax error', async () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(MODERN_CHROME_USER_AGENT);
+
+    await act(async () => {
+      root.render(createElement(TimerBootstrap, {
+        loadTimerShell: async () => {
+          throw new SyntaxError('Unexpected token');
+        },
+      }));
+      await Promise.resolve();
+    });
+
+    expect(host.textContent).toContain(TIMER_BOOT_COPY.message.en);
+    expect(host.textContent).not.toContain(TIMER_BOOT_COPY.outdatedBrowserMessage.en);
   });
 
   it('retains window error and unhandled rejection evidence for the timeout report', async () => {
@@ -122,6 +173,11 @@ describe('TimerBootstrap', () => {
 
     const rejection = new Event('unhandledrejection') as PromiseRejectionEvent;
     Object.defineProperty(rejection, 'reason', { value: new Error('background rejection') });
+    const insights = document.createElement('script');
+    insights.src = 'https://cuberoot.me/_vercel/insights/script.js';
+    document.head.appendChild(insights);
+    insights.dispatchEvent(new Event('error'));
+    insights.remove();
     window.dispatchEvent(rejection);
     window.dispatchEvent(new ErrorEvent('error', {
       message: 'SyntaxError: Unexpected token',
@@ -208,8 +264,29 @@ describe('app bootstrap early guard', () => {
     vi.advanceTimersByTime(0);
 
     expect(shell.textContent).toContain(TIMER_BOOT_COPY.outdatedWechatMessage.zh);
-    expect(shell.textContent).toContain('微信和手机系统已是最新版');
-    expect(shell.textContent).not.toContain('升级微信');
+    expect(shell.textContent).toContain('在系统浏览器打开');
+    expect(shell.textContent).toContain('不一定有效');
+    expect(shell.textContent).not.toContain(TIMER_BOOT_COPY.message.zh);
+  });
+
+  it('shows iOS system-update guidance before React hydrates', () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(IOS_15_WECHAT_USER_AGENT);
+    window.history.replaceState({}, '', '/zh/timer');
+    document.documentElement.lang = 'zh-Hans';
+    const shell = document.createElement('main');
+    shell.setAttribute('data-timer-bootstrap', 'loading');
+    document.body.appendChild(shell);
+
+    window.eval(APP_BOOT_EARLY_SCRIPT);
+    window.dispatchEvent(new ErrorEvent('error', {
+      error: new SyntaxError('Invalid regular expression: invalid group specifier name'),
+      message: 'Invalid regular expression: invalid group specifier name',
+      filename: 'https://cuberoot.me/_next/static/chunks/timer.js',
+    }));
+    vi.advanceTimersByTime(0);
+
+    expect(shell.textContent).toContain(TIMER_BOOT_COPY.outdatedIosMessage.zh);
+    expect(shell.textContent).toContain('同一台设备上更换浏览器可能无效');
     expect(shell.textContent).not.toContain(TIMER_BOOT_COPY.message.zh);
   });
 

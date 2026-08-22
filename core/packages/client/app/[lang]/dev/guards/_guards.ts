@@ -15,6 +15,15 @@ export interface PairedGuard {
 
 export const PAIRED_GUARDS: PairedGuard[] = [
   {
+    id: 'browser-regexp-lookbehind',
+    scope: 'project',
+    hook: 'block-browser-regexp-lookbehind.ps1',
+    test: 'browser-regexp-compat.test.ts',
+    baseline: '0（6→0）',
+    zh: { title: '浏览器端正则后行断言', desc: '浏览器会执行的 client、platform、shared、visualcube 源码禁用正则后行断言,避免 iOS 16.4 之前的 WebKit 在解析 chunk 时整页启动失败。改用捕获边界或显式前字符判断;Codex 写入即拦,CI 全量扫描。' },
+    en: { title: 'Browser RegExp lookbehind', desc: 'Browser-delivered client, platform, shared, and visualcube source may not use RegExp lookbehind because WebKit before iOS 16.4 rejects the whole chunk while parsing. Use captured boundaries or an explicit previous-character check; Codex blocks writes immediately and CI scans the complete browser source surface.' },
+  },
+  {
     id: 'workspace-reparse-links',
     scope: 'project',
     hook: 'block-workspace-reparse-links.ps1',
