@@ -223,6 +223,11 @@ export function solveGear(scramble: string): GearSolution {
   return { solution: names.join(' '), length: names.length };
 }
 
+/** Exact optimal face-turn count of a Gear Cube scramble. */
+export function gearDistanceOfScramble(scramble: string): number {
+  return solveGear(scramble).length;
+}
+
 /** Shortest scramble producing state `key` = inverse of its optimal solution (reverse path). */
 function keyToScramble(g: GearGraph, startKey: number): string {
   if (startKey === g.states[0]) return '';
@@ -244,6 +249,37 @@ function keyToScramble(g: GearGraph, startKey: number): string {
     .reverse()
     .map((mv) => MOVE_BY_NAME.get(mv)!.inverse)
     .join(' ');
+}
+
+/**
+ * Uniformly sample a reachable Gear Cube state whose exact optimal distance lies in [lo, hi],
+ * then return its shortest scramble. The complete 41,472-state BFS graph is already the solver's
+ * source of truth, so rare depths never need a nearest-distance fallback.
+ */
+export function generateGearByDistance(lo: number, hi: number, rng: () => number): string {
+  if (!Number.isInteger(lo) || !Number.isInteger(hi)) {
+    throw new Error('gear-solver: difficulty bounds must be integers');
+  }
+  if (lo < 0 || hi > GEAR_GODS_NUMBER || lo > hi) {
+    throw new Error(`gear-solver: difficulty range must be within 0..${GEAR_GODS_NUMBER}`);
+  }
+  const sample = rng();
+  if (!Number.isFinite(sample) || sample < 0 || sample >= 1) {
+    throw new Error('gear-solver: rng must return a number in [0,1)');
+  }
+
+  let eligible = 0;
+  for (let distance = lo; distance <= hi; distance++) eligible += GEAR_LENGTH_DISTRIBUTION[distance];
+  let rank = Math.floor(sample * eligible);
+  const g = graph();
+  for (const key of g.states) {
+    const distance = g.dist.get(key)!;
+    if (distance < lo || distance > hi) continue;
+    // Timer 以空字符串表示「还在生成」；0 步状态需用非空恒等序列。
+    if (rank === 0) return keyToScramble(g, key) || "U' U";
+    rank--;
+  }
+  throw new Error('gear-solver: difficulty sample out of range');
 }
 
 /**

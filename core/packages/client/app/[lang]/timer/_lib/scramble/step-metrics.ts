@@ -3,10 +3,11 @@
  * (GenStepsConfig), the local generator dispatch (SoloView), and the WCA real-scramble filter (wca_pool).
  * Single source of truth so the dropdown options, the slider bounds, and the actual filtering never drift.
  *
- * Ranges come from the exact enumerations: 2×2 stats/scramble/2x2_essential.json, pyraminx pyram_essential.json.
+ * Ranges come from exact enumerations: 2×2 stats/scramble/2x2_essential.json, pyraminx
+ * pyram_essential.json, and the shared exact Skewb / Ivy / Gear graphs in lib/*-solver.ts.
  */
 
-export type StepPuzzle = '222' | 'pyra';
+export type StepPuzzle = '222' | 'pyra' | 'skewb' | 'ivy' | 'gear';
 
 export interface StepMetricSpec {
   key: string;
@@ -34,11 +35,22 @@ export const STEP_METRICS: Record<StepPuzzle, StepMetricSpec[]> = {
     { key: 'v', zh: 'V', en: 'V', range: [0, 7], band: [3, 5] },
     { key: 'cube', zh: '魔方', en: 'Cube', range: [0, 11], wcaRange: [2, 11], band: [6, 9] },
   ],
+  skewb: [
+    { key: 'htm', zh: '魔方', en: 'Cube', range: [0, 11], wcaRange: [7, 11], band: [8, 10] },
+  ],
+  ivy: [
+    { key: 'htm', zh: '魔方', en: 'Cube', range: [0, 8], band: [5, 7] },
+  ],
+  gear: [
+    { key: 'ftm', zh: '魔方', en: 'Cube', range: [0, 6], band: [4, 5] },
+  ],
 };
 
 /** The timer EventId → step-metric puzzle, or null if this event has no by-steps mode. */
 export function stepPuzzleOf(event: string): StepPuzzle | null {
-  return event === '222' ? '222' : event === 'pyra' ? 'pyra' : null;
+  return event === '222' || event === 'pyra' || event === 'skewb' || event === 'ivy' || event === 'gear'
+    ? event
+    : null;
 }
 export function stepMetricsFor(event: string): StepMetricSpec[] | null {
   const p = stepPuzzleOf(event);
