@@ -7,7 +7,12 @@ import TimerBootstrap, {
   buildTimerBootDiagnostic,
   type TimerBootDiagnostic,
 } from '@/app/[lang]/timer/_components/TimerBootstrap';
-import { TIMER_BOOT_EARLY_SCRIPT } from '@/app/[lang]/timer/_lib/timer_boot_early';
+import {
+  TIMER_BOOT_COPY,
+  TIMER_BOOT_EARLY_SCRIPT,
+} from '@/app/[lang]/timer/_lib/timer_boot_early';
+
+const WECHAT_CHROME_83_USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; wv) AppleWebKit/537.36 Chrome/83.0.4103.106 Mobile Safari/537.36 MicroMessenger/8.0.76';
 
 function ReadyTimer() {
   return createElement('div', null, 'timer ready');
@@ -85,6 +90,23 @@ describe('TimerBootstrap', () => {
 
     expect(host.querySelector('code')?.textContent).toMatch(/^TMR-CHUNK-/);
     expect(window.__timerBootDiagnostic?.kind).toBe('chunk');
+    expect(host.textContent).toContain(TIMER_BOOT_COPY.message.en);
+  });
+
+  it('tells an outdated WeChat WebView to update or open the system browser', async () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(WECHAT_CHROME_83_USER_AGENT);
+
+    await act(async () => {
+      root.render(createElement(TimerBootstrap, {
+        loadTimerShell: async () => {
+          throw new SyntaxError("Unexpected token '='");
+        },
+      }));
+      await Promise.resolve();
+    });
+
+    expect(host.textContent).toContain(TIMER_BOOT_COPY.outdatedWechatMessage.en);
+    expect(host.textContent).not.toContain(TIMER_BOOT_COPY.message.en);
   });
 
   it('retains window error and unhandled rejection evidence for the timeout report', async () => {
@@ -142,6 +164,7 @@ describe('timer bootstrap early guard', () => {
   afterEach(() => {
     window.__timerBootEarly?.stop();
     document.documentElement.removeAttribute('data-timer-boot-guard');
+    document.documentElement.removeAttribute('lang');
     document.querySelector('[data-timer-bootstrap]')?.remove();
     vi.useRealTimers();
     vi.restoreAllMocks();
@@ -160,6 +183,26 @@ describe('timer bootstrap early guard', () => {
     expect(shell.querySelector('code')?.textContent).toMatch(/^TMR-TIMEOUT-/);
     expect(shell.querySelectorAll('button')).toHaveLength(2);
     expect(window.__timerBootDiagnostic?.kind).toBe('timeout');
+  });
+
+  it('shows the outdated WeChat guidance before React hydrates', () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(WECHAT_CHROME_83_USER_AGENT);
+    window.history.replaceState({}, '', '/zh/timer');
+    document.documentElement.lang = 'zh-Hans';
+    const shell = document.createElement('main');
+    shell.setAttribute('data-timer-bootstrap', 'loading');
+    document.body.appendChild(shell);
+
+    window.eval(TIMER_BOOT_EARLY_SCRIPT);
+    window.dispatchEvent(new ErrorEvent('error', {
+      error: new SyntaxError("Unexpected token '='"),
+      message: "Uncaught SyntaxError: Unexpected token '='",
+      filename: 'https://cuberoot.me/_next/static/chunks/timer.js',
+    }));
+    vi.advanceTimersByTime(20_000);
+
+    expect(shell.textContent).toContain(TIMER_BOOT_COPY.outdatedWechatMessage.zh);
+    expect(shell.textContent).not.toContain(TIMER_BOOT_COPY.message.zh);
   });
 
   it('does not install the early guard outside the timer route', () => {

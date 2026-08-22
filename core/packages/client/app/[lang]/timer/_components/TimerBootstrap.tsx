@@ -14,6 +14,7 @@ import {
   EARLY_STORAGE_KEY,
   MAX_DETAIL_LENGTH,
   MAX_EVIDENCE,
+  MIN_SUPPORTED_CHROMIUM_MAJOR,
   STORAGE_KEY,
   TIMER_BOOT_COPY,
 } from '../_lib/timer_boot_early';
@@ -243,6 +244,27 @@ function diagnosticText(diagnostic: TimerBootDiagnostic): string {
   ].join('\n');
 }
 
+function failureMessage(diagnostic: TimerBootDiagnostic) {
+  const versionMatch = /(?:Chrome|Chromium|CriOS)\/(\d+)/i.exec(diagnostic.userAgent);
+  const chromiumMajor = versionMatch ? Number.parseInt(versionMatch[1], 10) : Number.NaN;
+  if (!Number.isFinite(chromiumMajor) || chromiumMajor >= MIN_SUPPORTED_CHROMIUM_MAJOR) {
+    return TIMER_BOOT_COPY.message;
+  }
+
+  const combined = [
+    diagnostic.errorName,
+    diagnostic.errorMessage,
+    ...diagnostic.evidence.flatMap(item => [item.name, item.message]),
+  ].join(' ');
+  if (!/SyntaxError|Unexpected token|parse error/i.test(combined)) {
+    return TIMER_BOOT_COPY.message;
+  }
+
+  return /MicroMessenger/i.test(diagnostic.userAgent)
+    ? TIMER_BOOT_COPY.outdatedWechatMessage
+    : TIMER_BOOT_COPY.outdatedBrowserMessage;
+}
+
 async function copyDiagnostic(diagnostic: TimerBootDiagnostic): Promise<boolean> {
   const text = diagnosticText(diagnostic);
   try {
@@ -285,7 +307,7 @@ function TimerBootFailurePanel({
         {tr(TIMER_BOOT_COPY.title)}
       </h1>
       <p className="timer-bootstrap-message">
-        {tr(TIMER_BOOT_COPY.message)}
+        {tr(failureMessage(diagnostic))}
       </p>
       <p className="timer-bootstrap-diagnostic">
         <span>{tr(TIMER_BOOT_COPY.diagnosticCode)}</span>
