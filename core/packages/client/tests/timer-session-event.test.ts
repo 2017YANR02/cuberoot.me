@@ -37,7 +37,10 @@ async function loadDb() {
 }
 
 describe('timer session event associations', () => {
-  beforeEach(() => storage.clear());
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    storage.clear();
+  });
 
   it('associates a new session with the current event', async () => {
     seed([{ id: 'a', name: 'A', createdTs: 1 }], 'a', { a: {} });
@@ -83,5 +86,56 @@ describe('timer session event associations', () => {
 
     expect(db.getSessionEvent('a')).toBeNull();
     expect(db.activateSessionForEvent('222')).toBeNull();
+  });
+
+  it('imports named sessions in source order with one atomic write', async () => {
+    seed([{ id: 'a', name: 'Existing', createdTs: 1, event: '333' }], 'a', { a: {} });
+    const db = await loadDb();
+    const write = vi.spyOn(storage, 'setItem');
+
+    const result = db.importNamedSessions([
+      {
+        name: 'OH practice',
+        event: '333oh',
+        solves: [{ id: 'oh1', timeMs: 9_000, penalty: 'ok', scramble: 'R', event: '333', ts: 20 }],
+      },
+      { name: 'Empty FTO', event: 'fto', solves: [] },
+      { name: 'Unmapped empty group', solves: [] },
+    ]);
+
+    expect(result).toEqual({ sessionCount: 3, solveCount: 1 });
+    expect(write).toHaveBeenCalledTimes(1);
+
+    const stored = JSON.parse(storage.getItem(DB_KEY)!) as {
+      activeSessionId: string;
+      sessions: Array<{ id: string; name: string; event?: string }>;
+      dataBySession: Record<string, Record<string, Array<{ event: string }>>>;
+    };
+    expect(stored.activeSessionId).toBe('a');
+    expect(stored.sessions.map(session => session.name)).toEqual([
+      'Existing', 'OH practice', 'Empty FTO', 'Unmapped empty group',
+    ]);
+    expect(stored.sessions.slice(1).map(session => session.event)).toEqual(['333oh', 'fto', undefined]);
+
+    const importedIds = stored.sessions.slice(1).map(session => session.id);
+    expect(stored.dataBySession[importedIds[0]]['333oh'][0].event).toBe('333oh');
+    expect(stored.dataBySession[importedIds[1]]).toEqual({});
+    expect(stored.dataBySession[importedIds[2]]).toEqual({});
+  });
+
+  it('leaves the existing database untouched when the atomic bulk write fails', async () => {
+    seed([{ id: 'a', name: 'Existing', createdTs: 1 }], 'a', { a: {} });
+    const before = storage.getItem(DB_KEY);
+    const db = await loadDb();
+    vi.spyOn(storage, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+
+    expect(db.importNamedSessions([
+      {
+        name: 'New group',
+        event: '333',
+        solves: [{ id: 'x', timeMs: 1_000, penalty: 'ok', scramble: 'R', event: '333', ts: 2 }],
+      },
+    ])).toBeNull();
+    expect(storage.getItem(DB_KEY)).toBe(before);
   });
 });
