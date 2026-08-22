@@ -54,6 +54,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
       .filter((route) => route.access === 'public'
         && route.pattern !== ''
         && !route.pattern.includes(':')
+        && !route.canonicalHref
         && !['search', 'offline', 'login', 'notifications'].includes(route.id))
       .map((route) => `platform/${route.pattern}`)
       .sort();
@@ -64,6 +65,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(page).toContain('metadataFromEntry');
     expect(page).toContain('match.definition.title');
     expect(page).toContain('match.definition.description');
+    expect(page).toContain('fillPlatformParams(match.definition.canonicalHref, match.params)');
     expect(PLATFORM_SITEMAP_PATHS.slice().sort()).toEqual(expected);
   });
 });

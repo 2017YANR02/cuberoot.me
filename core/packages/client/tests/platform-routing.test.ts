@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { NextRequest } from 'next/server';
 import {
   executePlatformAction,
   loadPlatformLessonMedia,
@@ -15,10 +16,13 @@ import {
 import {
   fillPlatformParams,
   matchPlatformRoute,
+  resolvePlatformCanonicalPath,
   PLATFORM_NAV,
   PLATFORM_ROUTES,
+  PLATFORM_CANONICAL_REWRITES,
 } from '@/lib/platform-routes';
 import { isPlatformPaymentAttemptResult } from '@/lib/platform-types';
+import { proxy } from '../proxy';
 import type {
   PlatformActionId,
   PlatformActionInput,
@@ -148,13 +152,68 @@ describe('Platform route conservation', () => {
 
   it('keeps the eight product domains and exact canonical main-site destinations', () => {
     expect(new Set(PLATFORM_NAV.map((entry) => entry.area)).size).toBe(8);
-    expect(routeById('algorithms').canonicalHref).toBe('/alg');
-    expect(routeById('algorithm-detail')).toMatchObject({ canonicalHref: '/alg', kind: 'canonical' });
+    expect(routeById('algorithms').canonicalHref).toBe('/alg/3x3');
+    expect(routeById('algorithm-detail')).toMatchObject({ canonicalHref: '/alg/3x3', kind: 'canonical' });
     expect(routeById('algorithm-detail').description.en).toContain('auto-seeded demo data');
     expect(routeById('admin-community').canonicalHref).toBe('/forum/review');
     expect(routeById('org').canonicalHref).toBe('/org');
     expect(fillPlatformParams(routeById('org-class').canonicalHref!, { orgSlug: 'cube root', groupId: 'group/1' }))
       .toBe('/org/cube%20root/classes/group%2F1');
+  });
+
+  it('serves every canonical alias through the complete main-site implementation', () => {
+    const canonicalRoutes = PLATFORM_ROUTES.filter((route) => route.kind === 'canonical');
+    expect(PLATFORM_CANONICAL_REWRITES).toHaveLength(canonicalRoutes.length);
+    expect(PLATFORM_CANONICAL_REWRITES).toContainEqual({
+      source: '/:lang(en|zh)/platform/timer',
+      destination: '/:lang/timer',
+    });
+    expect(PLATFORM_CANONICAL_REWRITES).toContainEqual({
+      source: '/:lang(en|zh)/platform/org/:orgSlug/classes/:groupId',
+      destination: '/:lang/org/:orgSlug/classes/:groupId',
+    });
+    expect(PLATFORM_CANONICAL_REWRITES).toContainEqual({
+      source: '/:lang(en|zh)/platform/admin/community',
+      destination: '/:lang/forum/review',
+    });
+  });
+
+  it('resolves canonical SEO targets without losing dynamic parameters', () => {
+    expect(resolvePlatformCanonicalPath(['timer'])).toEqual({ path: '/timer', rewritten: true });
+    expect(resolvePlatformCanonicalPath(['teachers'])).toEqual({ path: '/teachers', rewritten: false });
+    expect(resolvePlatformCanonicalPath(['org', 'cube root', 'classes', 'group/1'])).toEqual({
+      path: '/org/cube%20root/classes/group%2F1',
+      rewritten: true,
+    });
+    expect(resolvePlatformCanonicalPath(['courses'])).toBeNull();
+  });
+
+  it('emits canonical headers for rewritten aliases and aligned alternates for shared pages', () => {
+    const timerLinks = proxy(new NextRequest('https://cuberoot.me/zh/platform/timer')).headers.get('Link');
+    expect(timerLinks).toContain('<https://cuberoot.me/zh/timer>; rel="canonical"');
+    expect(timerLinks).toContain('<https://cuberoot.me/timer>; rel="alternate"; hreflang="en"');
+    expect(timerLinks).not.toContain('cuberoot.me/zh/platform/timer');
+
+    const teacherLinks = proxy(new NextRequest('https://cuberoot.me/zh/platform/teachers')).headers.get('Link');
+    expect(teacherLinks).not.toContain('rel="canonical"');
+    expect(teacherLinks).toContain('<https://cuberoot.me/teachers>; rel="alternate"; hreflang="en"');
+  });
+
+  it('keeps private, admin, and login aliases out of search indexes', () => {
+    for (const path of [
+      '/zh/platform/account',
+      '/zh/platform/org',
+      '/zh/platform/admin/algorithms',
+      '/zh/platform/login',
+    ]) {
+      const response = proxy(new NextRequest(`https://cuberoot.me${path}`));
+      expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
+      expect(response.headers.get('Link')).toBeNull();
+    }
+
+    const publicResponse = proxy(new NextRequest('https://cuberoot.me/zh/platform/timer'));
+    expect(publicResponse.headers.get('X-Robots-Tag')).toBeNull();
+    expect(publicResponse.headers.get('Link')).toContain('rel="canonical"');
   });
 });
 

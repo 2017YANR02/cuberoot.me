@@ -26,6 +26,7 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { fillPlatformParams, matchPlatformRoute } from './lib/platform-routes';
 
 const SUPPORTED_LOCALES = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED_LOCALES[number];
@@ -103,8 +104,36 @@ const CANONICAL_HOST = 'https://cuberoot.me';
 // generateMetadata of their own and still need the header's canonical.
 const OWNS_ITS_CANONICAL = /^\/recon\/\d[^/]*$/;
 
+function platformSeoRoute(rest: string): { rest: string; ownsCanonical: boolean; noindex: boolean } | null {
+  if (rest !== '/platform' && !rest.startsWith('/platform/')) return null;
+  const rawSegments = rest === '/platform'
+    ? []
+    : rest.slice('/platform/'.length).split('/').filter(Boolean);
+  const segments = rawSegments.map((segment) => {
+    try { return decodeURIComponent(segment); } catch { return segment; }
+  });
+  const match = matchPlatformRoute(segments);
+  if (!match) return { rest, ownsCanonical: true, noindex: true };
+  const noindex = match.definition.access !== 'public'
+    || ['search', 'offline', 'login', 'notifications'].includes(match.definition.id);
+  const canonicalRest = match.definition.canonicalHref
+    ? fillPlatformParams(match.definition.canonicalHref, match.params)
+    : rest;
+  return {
+    rest: canonicalRest,
+    ownsCanonical: match.definition.kind !== 'canonical',
+    noindex,
+  };
+}
+
 function setSeoLinkHeaders(res: NextResponse, rest: string, locale: Locale) {
-  const sub = rest === '/' ? '' : rest;
+  const platformRoute = platformSeoRoute(rest);
+  if (platformRoute?.noindex) {
+    res.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return;
+  }
+  const seoRest = platformRoute?.rest ?? rest;
+  const sub = seoRest === '/' ? '' : seoRest;
   const en = `${CANONICAL_HOST}${sub || '/'}`; // bare
   const zh = `${CANONICAL_HOST}/zh${sub}`;
   const self = locale === 'zh' ? zh : en;
@@ -115,7 +144,8 @@ function setSeoLinkHeaders(res: NextResponse, rest: string, locale: Locale) {
     `<${zh}>; rel="alternate"; hreflang="zh-Hans"`,
     `<${en}>; rel="alternate"; hreflang="x-default"`,
   ];
-  if (!OWNS_ITS_CANONICAL.test(sub)) links.unshift(`<${self}>; rel="canonical"`);
+  const ownsCanonical = platformRoute?.ownsCanonical ?? OWNS_ITS_CANONICAL.test(sub);
+  if (!ownsCanonical) links.unshift(`<${self}>; rel="canonical"`);
   // append (not set) so we never clobber Next's own preload Link headers.
   res.headers.append('Link', links.join(', '));
 }

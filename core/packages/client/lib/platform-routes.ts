@@ -58,8 +58,8 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   route({ id: 'me-membership', pattern: 'account/membership', area: 'account', access: 'account', kind: 'dashboard', title: text('我的课程会员', 'My course memberships'), resource: 'account-memberships', actions: ['create-order'], description: text('查看本人课程会员状态、有效期并续期。', 'Review your course membership status and validity, then renew it.') }),
   route({ id: 'notifications', pattern: 'notifications', area: 'account', access: 'account', kind: 'collection', title: text('消息', 'Notifications'), resource: 'notifications', canonicalHref: '/notifications', canonicalLabel: text('打开完整消息中心', 'Open the full notification center') }),
   canonical('timer', 'timer', 'learning', 'public', text('计时器', 'Timer'), '/timer'),
-  canonical('algorithms', 'algorithms', 'learning', 'public', text('公式库', 'Algorithms'), '/alg'),
-  route({ id: 'algorithm-detail', pattern: 'algorithms/:id', area: 'learning', access: 'public', kind: 'canonical', title: text('旧公式详情', 'Legacy algorithm details'), canonicalHref: '/alg', canonicalLabel: text('在主站公式库中查找', 'Find it in the main-site library'), description: text('旧 Platform 的公式 ID 来自自动播种的演示数据，未作为稳定产品标识迁移；请在主站公式库按公式或分类查找。', 'Legacy Platform algorithm IDs came from auto-seeded demo data and were not migrated as stable product identifiers. Find the algorithm by notation or category in the main-site library.') }),
+  canonical('algorithms', 'algorithms', 'learning', 'public', text('公式库', 'Algorithms'), '/alg/3x3'),
+  route({ id: 'algorithm-detail', pattern: 'algorithms/:id', area: 'learning', access: 'public', kind: 'canonical', title: text('旧公式详情', 'Legacy algorithm details'), canonicalHref: '/alg/3x3', canonicalLabel: text('在主站公式库中查找', 'Find it in the main-site library'), description: text('旧 Platform 的公式 ID 来自自动播种的演示数据，未作为稳定产品标识迁移；请在主站公式库按公式或分类查找。', 'Legacy Platform algorithm IDs came from auto-seeded demo data and were not migrated as stable product identifiers. Find the algorithm by notation or category in the main-site library.') }),
   route({ id: 'courses', pattern: 'courses', area: 'learning', access: 'public', kind: 'collection', title: text('课程', 'Courses'), resource: 'courses' }),
   route({ id: 'course-detail', pattern: 'courses/:id', area: 'learning', access: 'public', kind: 'detail', title: text('课程详情', 'Course details'), resource: 'courses', actions: ['enroll', 'favorite', 'submit-review'] }),
   route({ id: 'course-lesson', pattern: 'courses/:id/learn/:lessonId', area: 'learning', access: 'account', kind: 'detail', title: text('课程学习', 'Course lesson'), resource: 'course-lesson', actions: ['update-progress', 'save-note', 'submit-quiz'] }),
@@ -116,9 +116,9 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   canonical('org-student-responsibilities', 'org/:orgSlug/students/:studentId/responsibilities', 'organization', 'account', text('学员责任关系', 'Student responsibilities'), '/org/:orgSlug/students/:studentId'),
 
   route({ id: 'admin', pattern: 'admin', area: 'admin', access: 'admin', kind: 'dashboard', title: text('Platform 管理', 'Platform administration'), resource: 'admin-analytics' }),
-  canonical('admin-algorithms', 'admin/algorithms', 'admin', 'admin', text('公式内容管理', 'Algorithm content'), '/alg'),
-  canonical('admin-algorithm-new', 'admin/algorithms/new', 'admin', 'admin', text('新建公式内容', 'Create algorithm content'), '/alg'),
-  canonical('admin-algorithm-detail', 'admin/algorithms/:id', 'admin', 'admin', text('编辑公式内容', 'Edit algorithm content'), '/alg'),
+  canonical('admin-algorithms', 'admin/algorithms', 'admin', 'admin', text('公式内容管理', 'Algorithm content'), '/alg/3x3'),
+  canonical('admin-algorithm-new', 'admin/algorithms/new', 'admin', 'admin', text('新建公式内容', 'Create algorithm content'), '/alg/3x3'),
+  canonical('admin-algorithm-detail', 'admin/algorithms/:id', 'admin', 'admin', text('编辑公式内容', 'Edit algorithm content'), '/alg/3x3'),
   route({ id: 'admin-application', pattern: 'admin/teacher-applications/:id', area: 'admin', access: 'admin', kind: 'detail', title: text('讲师申请审核', 'Instructor application review'), resource: 'admin-applications', actions: ['admin-review'] }),
   route({ id: 'admin-applications', pattern: 'admin/teacher-applications', area: 'admin', access: 'admin', kind: 'collection', title: text('讲师申请', 'Instructor applications'), resource: 'admin-applications' }),
   route({ id: 'admin-coupons', pattern: 'admin/coupons', area: 'admin', access: 'admin', kind: 'collection', title: text('优惠券', 'Coupons'), resource: 'admin-coupons', actions: ['admin-save', 'admin-delete'] }),
@@ -184,6 +184,29 @@ export function matchPlatformRoute(segments: readonly string[]): PlatformRouteMa
 export function fillPlatformParams(template: string, params: Record<string, string>): string {
   return template.replace(/:([A-Za-z][A-Za-z0-9]*)/g, (_, name: string) => encodeURIComponent(params[name] ?? ''));
 }
+
+export function resolvePlatformCanonicalPath(segments: readonly string[]): {
+  path: string;
+  rewritten: boolean;
+} | null {
+  const match = matchPlatformRoute(segments);
+  if (!match?.definition.canonicalHref) return null;
+  return {
+    path: fillPlatformParams(match.definition.canonicalHref, match.params),
+    rewritten: match.definition.kind === 'canonical',
+  };
+}
+
+/**
+ * Canonical Platform aliases are internal rewrites, not link-card substitutes:
+ * the browser keeps /platform/* while Next serves the existing main-site page.
+ */
+export const PLATFORM_CANONICAL_REWRITES = PLATFORM_ROUTES
+  .filter((definition) => definition.kind === 'canonical' && definition.canonicalHref)
+  .map((definition) => ({
+    source: `/:lang(en|zh)/platform/${definition.pattern}`,
+    destination: `/:lang${definition.canonicalHref}`,
+  }));
 
 export const PLATFORM_NAV: ReadonlyArray<{
   area: PlatformArea;

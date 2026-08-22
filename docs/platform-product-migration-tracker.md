@@ -2,7 +2,7 @@
 
 最后更新：2026-08-22
 
-状态：`P0-P7 已完成并通过本地终审；P8 发布、线上 smoke 与观察窗口待完成`
+状态：`P0-P7 已完成；P8 发布验收进行中，旧资产 30 天观察窗口尚未启动`
 
 ## 0. 当前结论
 
@@ -13,6 +13,7 @@
 - 首页新增 `Platform` 卡片，作为这些能力的唯一聚合入口。
 - `platform.cuberoot.me` 继续返回 HTTP 410，不跳转、不展示旧页面。
 - 主站已有能力必须共享组件、API 与数据源；`/platform/*` 可以提供同壳深链，但不得复制 teacher、forum、alg、timer、notifications、org、learn。
+- 已有主站完整页面通过 Next 内部 rewrite 直接服务 `/platform/*` 别名：浏览器保留 Platform URL，但执行的是同一份页面、组件与数据链，不允许用跳转卡片代替功能。
 - 旧 seed/demo 不导入生产库；旧 timer 历史明确不迁移。没有历史数据只意味着空状态开始，不意味着取消功能。
 - 新写入只进入主站 PostgreSQL 与主站媒体存储，禁止恢复 SQLite 或双写。
 - 在本跟踪的守恒、测试、部署和观察门槛全部通过前，不得删除旧源码、旧 GitHub 仓库、SQLite 或仍未定性的资产。
@@ -46,7 +47,7 @@
 
 `/platform` 不是第二个站点，而是主站里的业务能力目录。页面按用户任务组织为：发现、学习、交易、社区、教学者、机构、账户、运营。
 
-每个 `/platform/*` 页面都使用统一 `PlatformShell`：
+Platform 原生页面使用统一 `PlatformShell`；canonical rewrite 别名直接渲染目标主站页面及其原有 shell，不再额外套一层 Platform shell。两类页面共同遵守：
 
 - 当前领域导航与面包屑；
 - 主站语言、账号、主题和返回首页入口；
@@ -64,7 +65,7 @@
 | 账户子域 | `/platform/account/{courses,membership,badges,favorites,notes,wishlist,invites}` | 主站用户身份下的真实空状态与读写链 |
 | 通知 | `/platform/notifications` | 共享主站通知组件和数据源 |
 | 计时/榜单 | `/platform/timer`、`/platform/leaderboard` | 共享主站 timer；旧历史不迁，榜单只用新数据或现有主站数据 |
-| 公式 | `/platform/algorithms`、`/platform/algorithms/[id]` | 复用 `/alg` 数据、播放器和训练入口；旧详情页本就不读取旧 ID，新路由保留同样的兼容入口语义 |
+| 公式 | `/platform/algorithms`、`/platform/algorithms/[id]` | 复用 `/alg/3x3` 数据、播放器和训练入口；旧详情页会读取自动 seed 生成的随机 ID，但这些 ID 不是稳定产品标识，迁移后统一进入主站公式库检索 |
 | 课程 | `/platform/courses`、`/platform/courses/[courseId]`、`/platform/courses/[courseId]/learn/[lessonId]` | 完整目录、详情、购买、权益、课时与学习闭环 |
 | 学习路径 | `/platform/paths`、`/platform/paths/[pathId]` | 有序引用同一课程/课时 ID |
 | 教师 | `/platform/teachers`、`/platform/teachers/[id]`、`/platform/teachers/apply` | 共享教师目录、图片、联系方式；补正式申请与审核状态 |
@@ -256,24 +257,25 @@ Platform 不进入已经 11,486 行的 `teaching_saas.ts`。后端按业务切�
 
 退出条件：管理写操作、导出、打印、权限与审计逐项对齐旧能力；QR 安全与 UV 测试通过。
 
-### P7 守恒、体验与安全终验 — `已完成（本地）`
+### P7 守恒、体验与安全终验 — `已完成`
 
 - [x] capability manifest 守恒测试：95 / 13 / 34 / 4，未归属 0。
 - [x] client/server/shared typecheck 与定向单测。
 - [x] auth、owner、instructor、finance、org、admin、跨租户权限矩阵的合同与状态机测试。
 - [x] payment、refund、entitlement、inventory、event capacity、QR、certificate 的幂等与边界测试。
 - [x] Chrome 精确矩阵：1280px 中文 Platform 首页；390px 中文首页与账户会员权限态；430px 中文主站入口与课程深链。三档均无横向溢出，console 无 JS error；英文视觉未单独实测，双语 metadata 由自动测试覆盖。
-- [x] independent product/data/code agent review，所有本地 findings 闭环。
+- [x] independent product/data/code agent review；首轮终审结论在补充审计后被重新打开，canonical link-only、账号注销完整性与 CI 缺口均已修复并完成本地回归，最终三路复审均为 PASS，Blocker/Major/Minor 均为 0。
 
 真实登录角色、支付沙箱与生产 API 的浏览器 smoke 属于 P8 发布验收，不用 mock 或未上线 API 冒充完成。
 
 退出条件：三路 reviewer 结论均为 PASS，或每条 finding 都有修复与复验记录。
 
-### P8 发布、观察与旧仓决策 — `待实施`
+### P8 发布、观察与旧仓决策 — `发布验收进行中`
 
 - [ ] commit 只包含本任务文件；push 仅在用户明确要求时执行。
 - [ ] 所有相关 Test/Deploy workflow `completed/success`。
 - [ ] 线上 `/platform` 关键路径/API/支付沙箱/权限 smoke；`platform.cuberoot.me` 仍为 410。
+- [x] PostgreSQL 账号注销实库夹具已进入 Test workflow，固定 57 个直接外键、48 张表、12 张不可变证据表、旧 outbox 去标识与伪造上下文拒绝行为；本地 PostgreSQL 13 已从 0167 全新建库并通过，发布 CI 再复验。
 - [ ] 全量上线后重新启动至少 30 天观察窗口；期间无旧写入、回调或唯一资产依赖。
 - [ ] 观察结束后给出旧本地目录、GitHub 仓库、SQLite 与媒体的删除清单，由用户明确批准。
 
@@ -302,12 +304,17 @@ Platform 不进入已经 11,486 行的 `teaching_saas.ts`。后端按业务切�
 | 2026-08-22 | 产品 surface agent 第一轮 | FAIL：旧 tracker 取消了必须恢复的产品能力 | 已重开 P0-P8，按 95/13/34/4 并集守恒 |
 | 2026-08-22 | 数据/交易 agent 第一轮 | FAIL：缺 catalog、learning、commerce、QR 正式模型与支付硬契约 | 已写入目标模型、权限和交易验收 |
 | 2026-08-22 | 代码复用 agent 第一轮 | FAIL：当前 `/courses` 非商业课程系统，且不得继续膨胀 `teaching_saas.ts` | 已锁定五个 route slice 与 canonical reuse 边界 |
-| 2026-08-22 | 产品 surface agent 终审 | PASS：旧页面/Handler/Action/metadata 全量守恒，会员、支付、履约、隐私与空状态闭环 | 42/42 capability 为 `implemented`、`reviewed`；客户端定向回归通过 |
-| 2026-08-22 | 数据/交易 agent 终审 | PASS：无 blocker/major | 62 张 Platform PG 表；fresh/repeat/rollback/约束验证通过；1,157 行历史数据处置差值 0；本机 PG13 仅完成静态兼容审计 |
-| 2026-08-22 | 代码/安全 agent 终审 | PASS：重复数据源、会员工具栏、SEO canonical/sitemap 与加密 V1 防误轮换 findings 已闭环 | server 3 files/25 tests、client 6 files/51 tests、三包 typecheck、部署 YAML 与 diff check 通过 |
-| 2026-08-22 | Root 集成验收 | PASS（本地） | client 6 files/51 tests、server 3 files/25 tests、shared/server/client typecheck；1280/430/390 精确浏览器矩阵通过 |
+| 2026-08-22 | 产品 surface agent 初次终审 | PASS 后被补充审计重新打开 | 当时补充审计发现的 19 个共享 canonical 页面仍是 link-only；当前路由表共有 22 条 canonical rewrite，旧结论不再作为最终放行证据 |
+| 2026-08-22 | 数据/交易 agent 初次终审 | PASS 后被补充审计重新打开 | 后续发现账号注销仅盘点外键、未处理全部不可变账本与隐私快照，旧结论不再作为最终放行证据 |
+| 2026-08-22 | 代码/安全 agent 初次终审 | PASS 后被补充审计重新打开 | 后续发现 Test sparse checkout、CSS guard 与注销测试存在覆盖缺口，旧结论不再作为最终放行证据 |
+| 2026-08-22 | Root 初次集成验收 | PASS 后被发布 CI 否决 | Test workflow 失败，已按真实失败重新打开并修复，不能沿用初次 PASS |
+| 2026-08-22 | 三路补充审计 | FAIL：canonical link-only、账号注销、CI/测试覆盖仍有 blocker | 19 个共享页改为内部 rewrite；0168 增加原子清理/匿名化、12 表深度守卫与 PostgreSQL 夹具；workflow 补齐 docs sparse checkout 和 PG13 service |
+| 2026-08-22 | Root 修复后本地回归 | PASS | client 494 files/6,315 tests（另 3 files/5 tests skipped）、Platform 定向 4 files/67 tests、server 33 files/272 tests、shared/server/client typecheck；PG13 fresh snapshot 与 0167→0168 升级路径、真实删号及 12/12 不可变证据断言通过；6 条代表性 `/zh/platform/*` 深链返回 200 |
+| 2026-08-22 | 产品 surface agent 最终复审 | PASS：Blocker/Major/Minor 0 | 42/42 capability、95/13/34/4 surface 守恒；49/49 定向测试；公开 canonical、私有 noindex、主页入口、旧域 410、timer 排除与文档状态通过 |
+| 2026-08-22 | 数据/交易 agent 最终复审 | PASS：Blocker/Major/Minor 0 | PostgreSQL 13 fresh snapshot 与 0167→0168 升级路径通过；48 表、57 FK、12/12 不可变证据及 4 个无原始 userId outbox payload 通过 |
+| 2026-08-22 | 代码/安全 agent 最终复审 | PASS：Blocker/Major/Minor 0 | 最终 schema 与升级库 1,635 项语义差异为 0；CI 的 PG 快照启用 `-X -v ON_ERROR_STOP=1`，阻止 SQL 中途错误假绿；3 files/26 tests、typecheck、diff-check 通过 |
 
-浏览器证据明细：1280px `/zh/platform` 验证标题、H1 与 8 个领域真链接；390px 验证 `/zh/platform` 和 `/zh/platform/account/membership` 权限态与登录链接；430px 验证 `/zh` 的 Platform 卡片和 `/zh/platform/courses` 深链刷新。三档 `scrollWidth < innerWidth`；新 API 尚未发布时课程目录返回预期 404，并正确显示可重试错误态。真实登录角色、支付沙箱、上线 API 与旧域名状态在 P8 复验。
+浏览器证据明细：初次 1280/430/390 矩阵验证 `/zh/platform`、首页卡片、会员权限态与课程深链，无横向溢出或应用 JS error。补充修复后，本地 SSR 对 `/zh/platform`、`timer`、`algorithms`、`org`、`admin/community`、`teachers` 六条代表性深链均返回 200；1280px 首页与完整 timer、390px 首页与会员权限态无横向溢出。浏览器发现 rewrite 页缺 canonical 后已修复，HTTP Link 对 `/zh/platform/timer` 指向 `/zh/timer`，共享讲师页的 alternate 指向 `/teachers`；最终真实登录角色、支付边界、上线 API 与旧域名状态在 P8 复验。
 
 后续每个阶段结束必须增加：提交、验证命令、浏览器证据、reviewer、finding、修复和复验结果。不得用口头“看起来完整”替代账本。
 

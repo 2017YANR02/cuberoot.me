@@ -381,13 +381,14 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction }: {
             <label key={item.key} className={item.kind === 'textarea' || item.kind === 'lines' || item.kind === 'json' ? 'platform-form-wide' : undefined}>
               <span>{label}</span>
               {item.kind === 'select' ? (
-                <select value={String(value)} required={item.required} onChange={(event) => setValues((current) => ({ ...current, [item.key]: event.target.value }))}>
+                <select className="platform-field-control" value={String(value)} required={item.required} onChange={(event) => setValues((current) => ({ ...current, [item.key]: event.target.value }))}>
                   {item.options?.map((choice) => <option key={choice.value} value={choice.value}>{t(choice.label.zh, choice.label.en)}</option>)}
                 </select>
               ) : item.kind === 'textarea' || item.kind === 'lines' || item.kind === 'json' ? (
-                <textarea value={String(value)} rows={item.rows ?? 4} required={item.required} onChange={(event) => setValues((current) => ({ ...current, [item.key]: event.target.value }))} />
+                <textarea className="platform-field-control platform-field-textarea" value={String(value)} rows={item.rows ?? 4} required={item.required} onChange={(event) => setValues((current) => ({ ...current, [item.key]: event.target.value }))} />
               ) : (
                 <input
+                  className="platform-field-control"
                   value={String(value)}
                   type={item.kind ?? 'text'}
                   required={item.required}
@@ -626,15 +627,15 @@ function PlatformQuizAttemptForm({ entity, lessonId, busy, runAction }: {
             <fieldset key={id}>
               <legend>{index + 1}. {prompt}</legend>
               {type === 'text' ? (
-                <input required value={String(answers[id] ?? '')} onChange={(event) => setAnswer(id, event.target.value)} />
+                <input className="platform-field-control" required value={String(answers[id] ?? '')} onChange={(event) => setAnswer(id, event.target.value)} />
               ) : type === 'boolean' ? (
-                <select required value={answers[id] === undefined ? '' : String(answers[id])} onChange={(event) => setAnswer(id, event.target.value === 'true')}>
+                <select className="platform-field-control" required value={answers[id] === undefined ? '' : String(answers[id])} onChange={(event) => setAnswer(id, event.target.value === 'true')}>
                   <option value="">{t('请选择', 'Choose')}</option>
                   <option value="true">{t('正确', 'True')}</option>
                   <option value="false">{t('错误', 'False')}</option>
                 </select>
               ) : type === 'single_choice' ? (
-                <select required value={String(answers[id] ?? '')} onChange={(event) => setAnswer(id, event.target.value)}>
+                <select className="platform-field-control" required value={String(answers[id] ?? '')} onChange={(event) => setAnswer(id, event.target.value)}>
                   <option value="">{t('请选择', 'Choose')}</option>
                   {choices.map((choice, choiceIndex) => {
                     const record = choice && typeof choice === 'object' && !Array.isArray(choice) ? choice as Record<string, unknown> : null;
@@ -650,7 +651,7 @@ function PlatformQuizAttemptForm({ entity, lessonId, busy, runAction }: {
                     const value = String(record?.value ?? record?.id ?? choiceIndex);
                     const label = String(record?.[english ? 'labelEn' : 'labelZh'] ?? record?.label ?? choice);
                     const selected = Array.isArray(answers[id]) && answers[id].includes(value);
-                    return <button key={value} type="button" aria-pressed={selected} onClick={() => setAnswer(id, selected ? (answers[id] as unknown[]).filter((item) => item !== value) : [...(Array.isArray(answers[id]) ? answers[id] as unknown[] : []), value])}>{label}</button>;
+                    return <button className="platform-answer-option" key={value} type="button" aria-pressed={selected} onClick={() => setAnswer(id, selected ? (answers[id] as unknown[]).filter((item) => item !== value) : [...(Array.isArray(answers[id]) ? answers[id] as unknown[] : []), value])}>{label}</button>;
                   })}
                 </div>
               )}
