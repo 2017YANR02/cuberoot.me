@@ -31,17 +31,12 @@
 /* ── 项目选择器 + 简易版 toggle 同行 ── */
 .calc-page .calc-event-row {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
     max-width: 900px;
     margin: 0 auto 12px;
     padding: 0 4px;
-}
-
-.calc-page .calc-event-row .event-selector {
-    flex: 1;
-    margin: 0;
-    min-width: 0;
 }
 
 .calc-page .calc-title-help {
@@ -59,11 +54,10 @@
 
 .calc-page .calc-mode-toggle {
     flex-shrink: 0;
-    align-self: stretch;
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 0 12px;
+    padding: 0.42rem 12px;
     border-radius: 8px;
     border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
     background: color-mix(in srgb, var(--foreground) 4%, transparent);
@@ -89,6 +83,46 @@
 .calc-page .calc-mode-toggle-active:hover {
     background: color-mix(in srgb, var(--toggle-on) 80%, var(--foreground));
     color: var(--accent-foreground);
+}
+
+.calc-page .calc-live-share-active {
+    color: var(--signal-success);
+    border-color: color-mix(in srgb, var(--signal-success) 28%, transparent);
+}
+
+.calc-page .calc-live-viewer-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    color: var(--muted-foreground);
+    font-size: 0.86rem;
+    white-space: nowrap;
+}
+
+.calc-page .calc-live-viewer-status.is-live {
+    color: var(--signal-success);
+}
+
+.calc-page .calc-live-leave {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border: none;
+    background: transparent;
+    color: var(--muted-foreground);
+    cursor: pointer;
+}
+
+.calc-page .calc-live-leave:hover {
+    color: var(--foreground);
+}
+
+.calc-page :is(.calc-mode-toggle, .calc-live-leave):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
 }
 
 @media (max-width: 600px) {
@@ -128,94 +162,6 @@
     color: var(--foreground);
     border-color: var(--border-strong);
     background: var(--card);
-}
-
-/* ── 项目选择器（浅色主题适配） ── */
-
-.calc-page .event-selector {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    padding: 10px;
-    margin: 0 auto 12px;
-    max-width: 800px;
-    background: color-mix(in srgb, var(--foreground) 4%, transparent);
-    border-radius: 8px;
-    border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
-    box-sizing: border-box;
-    justify-content: center;
-}
-
-.calc-page .event-btn {
-    position: relative;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid transparent;
-    border-radius: 8px;
-    background: color-mix(in srgb, var(--foreground) 5%, transparent);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    padding: 0;
-}
-
-.calc-page .event-btn .cubing-icon {
-    font-size: 20px;
-    color: var(--muted-foreground);
-    transition: color 0.2s ease;
-}
-
-/* 废止项目展开/收起三角(沿用 .event-btn 方块底,只定义箭头本体) */
-.calc-page .event-selector .event-more-arrow {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--muted-foreground);
-    transition: color 0.2s ease;
-}
-.calc-page .event-selector .event-btn:hover .event-more-arrow { color: var(--foreground); }
-
-.calc-page .event-btn:hover {
-    background: color-mix(in srgb, var(--foreground) 10%, transparent);
-    border-color: color-mix(in srgb, var(--foreground) 15%, transparent);
-}
-
-.calc-page .event-btn:hover .cubing-icon {
-    color: var(--foreground);
-}
-
-.calc-page .event-btn.active {
-    background: var(--toggle-on);
-    border-color: color-mix(in srgb, var(--toggle-on) 80%, var(--card));
-}
-
-.calc-page .event-btn.active .cubing-icon {
-    color: var(--accent-foreground);
-}
-
-/* NOTE: CSS tooltip 悬浮提示 — 朝下显示,避免被浏览器顶部 chrome (书签栏) 遮挡 */
-.calc-page .event-btn::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--foreground);
-    color: var(--background);
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    white-space: nowrap;
-    box-shadow: 0 2px 8px color-mix(in srgb, var(--foreground) 25%, transparent);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s;
-    z-index: 100;
-}
-
-.calc-page .event-btn:hover::after {
-    opacity: 1;
 }
 
 /* ── SVG 图表容器 ── */
