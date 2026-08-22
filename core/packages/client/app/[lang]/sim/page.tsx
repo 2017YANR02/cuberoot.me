@@ -17,24 +17,17 @@
 
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
+import { ClientLoadStatus } from '@/components/StartupStatus';
 
 const SimPage = dynamic(() => import('./SimPage'), {
   ssr: false,
-  loading: () => (
-    <div style={{ padding: 24, fontFamily: 'ui-sans-serif, system-ui' }}>
-      <p style={{ color: '#888' }}>Loading 3D cube engine…</p>
-    </div>
-  ),
+  loading: () => <ClientLoadStatus label={{ zh: '正在加载 3D 魔方引擎…', en: 'Loading 3D cube engine…' }} />,
 });
 
 export default function Page() {
   return (
     <Suspense
-      fallback={
-        <div style={{ padding: 24, fontFamily: 'ui-sans-serif, system-ui' }}>
-          <p style={{ color: '#888' }}>Loading…</p>
-        </div>
-      }
+      fallback={<ClientLoadStatus />}
     >
       <SimPage />
     </Suspense>

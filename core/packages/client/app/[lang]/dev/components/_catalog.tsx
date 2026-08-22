@@ -796,6 +796,13 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'ClientLoadStatus',
+    import: "import { AppFailure, ClientLoadStatus } from '@/components/StartupStatus';",
+    category: 'more',
+    zh: '顶层客户端 chunk 的可见加载、超时和启动失败状态，超时后提供重试操作。',
+    en: 'Visible loading, timeout, and startup-failure states for route-critical client chunks, with an actionable retry after timeout.',
+  },
+  {
     name: 'ForumVideoPlayer',
     import: "import { ForumVideoPlayer } from '@/components/forum/ForumVideoPlayer';",
     category: 'more',

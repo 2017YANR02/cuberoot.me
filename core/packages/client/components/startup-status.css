@@ -1,0 +1,113 @@
+.app-startup {
+  width: min(calc(100% - 32px), 560px);
+  margin-inline: auto;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 14px;
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+.app-startup-page {
+  min-height: 70vh;
+  min-height: 70dvh;
+}
+
+.app-startup-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  inset: 0;
+  z-index: 2147483647;
+  width: auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 24px max(16px, calc((100vw - 560px) / 2));
+  overflow: auto;
+  background: var(--background);
+}
+
+.app-startup-loading {
+  color: var(--muted-foreground);
+}
+
+.app-startup p,
+.app-startup-title {
+  margin: 0;
+}
+
+.app-startup-title {
+  font-size: clamp(22px, 5vw, 30px);
+  line-height: 1.2;
+}
+
+.app-startup-message {
+  max-width: 52ch;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.app-startup-diagnostic {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  color: var(--muted-foreground);
+}
+
+.app-startup-diagnostic span {
+  white-space: nowrap;
+}
+
+.app-startup-diagnostic code {
+  color: var(--foreground);
+  font-size: 0.95em;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.app-startup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.app-startup-button {
+  appearance: none;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  cursor: pointer;
+}
+
+.app-startup-button:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.app-startup-button-primary {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.app-startup-button-primary:hover {
+  background: color-mix(in srgb, var(--primary) 88%, black);
+}
+
+.app-startup-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.app-startup-copied {
+  color: var(--signal-success);
+  font-size: 13px;
+}
