@@ -25,6 +25,35 @@ describe('calculator competition result links', () => {
     expect(url.searchParams.get('wcaId')).toBe('2023LIUY04');
   });
 
+  it('prefills partial live results while leaving future attempts empty', () => {
+    const partialHref = calcCompetitionHref({
+      eventId: 'clock',
+      attempts: [488],
+      personName: '刘烨宁',
+      competitionId: 'FuzhouSpecial2026',
+      roundTypeId: 'd',
+    });
+    const partialUrl = new URL(partialHref, 'https://cuberoot.me');
+
+    expect(partialUrl.searchParams.get('t0')).toBe('488');
+
+    const dnfHref = calcCompetitionHref({
+      eventId: 'clock',
+      attempts: [-1],
+      competitionId: 'FuzhouSpecial2026',
+      roundTypeId: 'd',
+    });
+    expect(new URL(dnfHref, 'https://cuberoot.me').searchParams.get('t0')).toBe('-1');
+
+    const pendingHref = calcCompetitionHref({
+      eventId: 'clock',
+      attempts: [],
+      competitionId: 'FuzhouSpecial2026',
+      roundTypeId: 'd',
+    });
+    expect(new URL(pendingHref, 'https://cuberoot.me').searchParams.has('t0')).toBe(false);
+  });
+
   it('converts WCA units into calculator units', () => {
     expect(wcaAttemptToCalcValue('333', 629)).toBe(629);
     expect(wcaAttemptToCalcValue('333fm', 26)).toBe(2600);
