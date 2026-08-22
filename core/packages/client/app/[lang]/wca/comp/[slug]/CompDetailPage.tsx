@@ -2370,6 +2370,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
               eventId: r.e,
               attempts: effAttempts,
               personName: fullCuberName,
+              personNumber: r.n,
               wcaId: wcaid,
               competitionId: compId,
               competitionName: compName,

@@ -8,9 +8,14 @@ import {
   getAverage, getSortedIndices, getBestSingle,
   setMoveCntMode, setMbfMode,
 } from '../engine/calc_engine';
+import { hasEnteredCalcAttempt } from '@/lib/calc-link';
 
 // NOTE: re-export 供其他模块统一从 calc_store 导入
 export { DNF_VALUE };
+
+export function serializeCalcAttemptRow(attempts: readonly number[]): string {
+  return attempts.map(value => value === DNF_VALUE ? -1 : value).join(',');
+}
 
 // ── 常量 ──
 
@@ -254,7 +259,7 @@ export const useCalcStore = create<CalcState>((set, get) => ({
       if (curLive) params.set('live', curLive);
       // 比赛来源只跟随原项目；用户手动切项目后自动移除，避免留下错误的比赛上下文。
       if (cur.get('sourceEvent') === s.event) {
-        for (const key of ['sourceEvent', 'comp', 'compName', 'round', 'wcaId']) {
+        for (const key of ['sourceEvent', 'comp', 'compName', 'round', 'sourceUser', 'wcaId']) {
           const value = cur.get(key);
           if (value) params.set(key, value);
         }
@@ -279,8 +284,8 @@ export const useCalcStore = create<CalcState>((set, get) => ({
       const sc = solveCountForEvent(s.event);
       for (let i = 0; i < s.times.length; i++) {
         const t = s.times[i].slice(0, sc);
-        if (t.some(v => v > 0)) {
-          params.set('t' + i, t.join(','));
+        if (hasEnteredCalcAttempt(t)) {
+          params.set('t' + i, serializeCalcAttemptRow(t));
         }
       }
       // 豁免:zustand store(无法用 React hook)+ t0/t1.. 动态键的成绩数据序列化,不适合 nuqs 固定 schema;
