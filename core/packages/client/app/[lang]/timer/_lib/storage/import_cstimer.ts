@@ -12,6 +12,7 @@
 
 import type { EventId, Solve } from '../types';
 import { newId } from './db';
+import type { TimerImportSession } from './import_timer';
 
 interface CstimerSessionMeta {
   name?: string;
@@ -139,18 +140,7 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   return { event: '333', matched: false };
 }
 
-export interface CstimerSessionParsed {
-  /** cstimer session id (the digits in "session1"). */
-  sessionId: string;
-  /** Display name shown in cstimer (or "Session N" fallback). */
-  name: string;
-  /** Mapped EventId. Falls back to '333' if scrType + name both unknown. */
-  event: EventId;
-  /** Whether the event mapping was confident (vs '333' fallback). */
-  matched: boolean;
-  /** Parsed solves, sorted oldest → newest. */
-  solves: Solve[];
-}
+export type CstimerSessionParsed = TimerImportSession;
 
 /**
  * Parse a cstimer "Local backup → Export" JSON string into per-session entries.
