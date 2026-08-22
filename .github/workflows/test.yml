@@ -32,7 +32,9 @@ jobs:
       # 缺文件的类型测试会自动 skip,不会红。
       # 例外:stats/scramble 下那两个小 JSON —— skip_probability / skewb_odds 拿它们跟站上
       # 已发布的数据对表;整个 stats/scramble 是 235MB(downloads/ 占大头),所以只点名到文件.
-      # 例外:all_past_comps.json —— H2H 回归会核对已提交比赛快照中的真实赛制标记。
+      # 例外:all_past_comps.json + all_upcoming_comps.json —— H2H 与比赛搜索回归会核对
+      # 已提交比赛快照中的真实赛制和省份搜索结果。
+      # 例外:Platform 退役 vhost —— 教学架构守卫会确认旧域名只返回 410、不再反代旧应用。
       # 点名到文件就必须关 cone 模式(cone 只认目录),模式改成 gitignore 风格、前导 / 锚定仓库根.
       - uses: actions/checkout@v6
         with:
@@ -43,6 +45,7 @@ jobs:
           sparse-checkout: |
             /core/
             /docs/platform-unification-plan.md
+            /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
             /tools/cstimer-scramble/
             /tools/solver/rust-cross/cross-solver-worker.js
@@ -58,6 +61,7 @@ jobs:
             /.github/workflows/stats.yml
             /.githooks/pre-commit
             /stats/all_past_comps.json
+            /stats/all_upcoming_comps.json
             /stats/scramble/2x2_essential.json
             /stats/scramble/puzzle_distribution.json
             /stats/scramble/recent_scrambles.json
