@@ -181,13 +181,13 @@ server/src/domains/teaching/
 
 当前 `core/packages/` 同时包含：
 
-- 可部署应用：client、server、platform、mobile、miniprogram。
+- 当前产品应用：client、server、mobile、miniprogram；`platform` 目录和部署定义属于已完成迁移后的历史兼容与退役清理范围，不是未来继续建设的新应用。
 - 共享库：shared、visualcube、stack-kernel、vendor-sr-puzzlegen。
 - 离线任务：alg-build、stats-build、scramble-stats-build、wb-build。
 
 pnpm 视角下它们当然都是 workspace package，但人类语义已经不够清楚。`apps/ + packages/ + jobs/` 比含义模糊的 `webapp/` 更适合作为条件成熟后的候选布局，不过它不是近期必须完成的目标。当前 `packages/client` 虽然命名不理想，技术上仍是合法 workspace package；先用文档、边界守卫和 package manifest 表达所有权，已经能获得大部分收益。
 
-物理迁移会同时触碰 `pnpm-workspace.yaml`、Turbo graph、workflow 的 paths 与 working-directory、Dockerfile、standalone 产物路径、本地 stats/tools 回退路径，以及仓库外的部署项目配置。只有逻辑边界已经解耦、工具链先做到路径可配置，并且迁移收益高于这些风险时，才逐个 app 或 job 迁移。不要为了给即将退役的 Platform 改一个 `platform-compat` 名字而先改整套部署链。
+物理迁移会同时触碰 `pnpm-workspace.yaml`、Turbo graph、workflow 的 paths 与 working-directory、Dockerfile、standalone 产物路径、本地 stats/tools 回退路径，以及仓库外的部署项目配置。只有逻辑边界已经解耦、工具链先做到路径可配置，并且迁移收益高于这些风险时，才逐个 app 或 job 迁移。已完成产品迁移的 Platform 不进入 `apps/*` 物理整理任务，也不为它新建 `platform-compat`。
 
 ### P1 快速修复项：README 给出的第一条开发命令当前就会失败
 
@@ -293,21 +293,21 @@ core/
     wb-build/
 ```
 
-这张树是候选布局，不是迁移任务单。特别是不要预建 `sim-core`、`timer-core`、`teaching-domain`，也不要先把 Platform 重命名为 `platform-compat`。没有合格依赖闭包或稳定消费者时，空目录和新 package 只会增加样板。
+这张树是候选布局，不是迁移任务单。特别是不要预建 `sim-core`、`timer-core`、`teaching-domain`，也不要把已完成迁移的 Platform 搬进未来 `apps/*`。没有合格依赖闭包或稳定消费者时，空目录和新 package 只会增加样板。
 
-### Platform 应按能力迁移，不能整站一次跳转
+### Platform 已完成迁移，不再列为架构迁移阶段
 
-`packages/platform` 目前是 Next 全栈应用，这种形式本身没有问题；但现有 [platform-migration.md](./platform-migration.md) 已明确 `/org/*`、`/learn/*` 最终统一进主站，Platform 是迁移来源和历史兼容。因此不要再花一轮工程把它“前后端分离”，也不要把它当未来新端的共享后端。
+仓库所有者于 2026-08-21 确认 Platform 已完全迁移。`/org/*`、`/learn/*` 和对应教学 API 的最终归属已经是主站 `packages/client`、`packages/server` 与 PostgreSQL；因此 Platform 既不是待迁移应用，也不是未来新端的共享后端，更不应再花一轮工程做“前后端分离”或移动到 `apps/platform-web`。
 
-完成机构和教学 SaaS 迁移不等于整个 Platform 已可退役。它仍承载 SQLite 上的内容、商店、订单、支付回调、上传、二维码、证书和后台能力。HTTP 308 只能处理经验证可安全跳转的页面；支付 POST 回调、签名绑定 URL、历史深链和静态媒体 URL 可能不能靠跳转迁移。
+当前仍存在的 `packages/platform`、Platform test/deploy workflow、SQLite 和部署定义应按“历史兼容或退役遗留”理解；它们的存在不能反向推导产品迁移尚未完成。后续若确认没有线上流量、写入、回调和恢复职责，处理的是退役清理，不是继续迁业务能力。
 
-退役前至少要有三张切换清单：
+删除或关闭遗留项前仍需一张只读清单：
 
-1. 路由能力矩阵：每条页面、API、回调和静态 URL 明确选择迁移、反向代理、暂留或下线，并有探活与回滚。
-2. 数据切换方案：schema 和 backfill、影子读与对账、短暂停写或增量同步、切到唯一 writer、观察期和回滚点。除非具备 outbox、幂等键和持续对账，不做无约束双写；上传归属和旧媒体 URL 必须保持稳定。
-3. 身份切换方案：主账号与 Platform 用户 ID 映射、重复账号冲突策略、旧会话选择重新登录还是换票、邀请迁移，以及 HMAC bridge 密钥何时退役。旧 session 和入口未耗尽前不能先关桥。
+1. 确认域名、页面、API、支付回调、上传和静态 URL 已无活动职责或已有最终去向。
+2. 确认 SQLite、uploads、历史凭据和恢复包已有保留或销毁决定，不把删除源码误当成数据迁移。
+3. 确认 Platform workflow、服务和旧身份桥已经停用后，再由仓库所有者执行可恢复的归档或删除。
 
-Platform 保持现目录和部署方式，直到逐项能力完成迁移，风险低于为了“legacy 感”先改路径。最终则应避免 SQLite Platform 与 Hono 教学域长期形成两个事实源。
+在完成这张清理清单前，遗留目录保持原位即可；不要为了目录观感把退役代码搬进长期 `apps/*`。架构图只画当前事实源和当前消费者，历史实现放在迁移记录中。
 
 ### iOS 与 Android 是否分别建 app
 
@@ -390,13 +390,13 @@ miniprogram                  -X-> React DOM modules
 
 验收：标为 runtime-neutral 的 core 不接触 DOM、浏览器存储和平台 API；若未来存在 React UI package，必须显式声明 React runtime，不能冒充 universal。每个可运行 app 和源码库具有与其形态相称的明确验证契约，可能是 build、typecheck、unit 或 smoke，不为满足表面规范制造空测试脚本。
 
-### 阶段 2B：按能力迁移 Platform
+### 阶段 2B：关闭 Platform 文档漂移
 
-- 先完成路由能力矩阵、身份映射与数据切换方案，再迁页面和 API。
-- API 与数据库先扩展兼容，Web/Platform 消费者后迁移，观察完成后才收缩旧契约。
-- 支付回调、上传与旧媒体 URL 单独验收；不把 Platform 退役和目录大搬家放进同一变更。
+- 将 Platform 跟踪文档明确标成“迁移已完成，正文为历史记录”，禁止 AI 从旧的未勾选计划反推当前状态。
+- 盘点残留 workflow、服务、SQLite、uploads、回调和域名职责；只记录仍需保留或清理的运维项，不再创建产品迁移 backlog。
+- 不把退役清理和 `apps/*` 目录整理放进同一变更。
 
-验收：唯一 writer 和事实源明确，对账通过；旧 session、回调、深链和静态 URL 有已验证去向；每一步都有可执行回滚。
+验收：当前架构文档只把主站 Web、Core API 和 PostgreSQL 列为教学系统运行单元；历史文档不会再把已完成迁移描述成待办。
 
 ### 阶段 3A：安全收根目录 PS1
 
@@ -412,7 +412,7 @@ miniprogram                  -X-> React DOM modules
 - 先让 workspace pattern、workflow paths、working-directory、Dockerfile、standalone 入口和脚本路径可配置或已盘点。
 - 检查仓库外部署项目的根目录设置，但不在没有证据时假定其当前值。
 - 一次只移动一个 app 或 job，先迁低耦合目标；保持 URL、域名、API、schema 和运行逻辑不变。
-- `packages/platform` 在退役前保持原位；`stats/`、`tools/` 和 `.sync` 不与 app 路径迁移混做。
+- `packages/platform` 不迁入 `apps/*`；其历史清理与 `stats/`、`tools/`、`.sync` 及其他 app 路径迁移分开处理。
 
 验收：每次都是纯路径提交，相关应用的 build/typecheck/smoke 与部署 dry-run 通过；路径迁移没有夹带业务重构。
 
@@ -432,11 +432,10 @@ miniprogram                  -X-> React DOM modules
 - 不要因为两个文件相似就建 package；先确认它们有相同语义和相同运行时。
 - 不要按行数批量切文件，制造几十个无业务名字的 `helpers.ts`。
 - 不要先做 `packages/client -> webapp` 的巨大重命名，再假装架构已经改善。
-- 不要同时移动 Web、API、Platform、Mobile 和 Job；当前 workspace、workflow、容器与发布路径都把位置当契约。
+- 不要同时移动 Web、API、Mobile 和 Job；当前 workspace、workflow、容器与发布路径都把位置当契约。
 - 不要把整个模拟器 `World` 搬进新 package 后就称为 headless core。
-- 不要用整站 308 或未经对账的双写来“快速退役” Platform。
 - 不要第一步迁走 `stats/` 和 `tools/`，破坏当前部署与回滚链。
-- 不要把 Platform 的教学能力继续双向开发；按既定统一计划收口。
+- 不要因遗留 Platform 目录仍存在，就把已经完成的产品迁移重新列为待办。
 
 ## 最终评价
 
