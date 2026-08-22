@@ -43,7 +43,7 @@ import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, isWcaCom
 import { takeScramble } from '../_lib/scramble/scramble_pool';
 import { preScrambleFor } from '../_lib/scramble/pre_scramble';
 import { applyOrientationPrefix } from '@/lib/cube-orientation';
-import { cstimer222Spec, use222Mode, use222Type } from '@/lib/scramble-222-mode';
+import { cstimer222Spec, isCube222StateType, use222Mode, use222Type } from '@/lib/scramble-222-mode';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
 import { trainerSpecOf, trainerSig } from '../_lib/scramble/trainer-source';
 import { peekTrainer, awaitTrainer, prefetchTrainer, releaseTrainer, retryTrainer } from '../_lib/scramble/trainer_pool';
@@ -453,7 +453,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 真题:optimal → 服务端 God's-number 最优等态(复用 optimal_scramble);随机状态 → 见 scramble222。
   const [mode222] = use222Mode();
   const [type222] = use222Type();
-  // csTimer 的专项类型只在本地随机来源生效。WCA 真题与同步种子仍走完整状态链,专项偏好原样保留。
+  const wca222Type = event === '222' && settings.scrambleSource === 'wca' && !settings.syncSeed
+    && isCube222StateType(type222) ? type222 : undefined;
+  const wca222TypeSig = wca222Type ?? '';
+  // 随机来源继续让 csTimer 直接生成专项状态；WCA 来源在既有真题池里用同一状态谓词筛选。
   const special222Spec = useMemo(
     () => event === '222' && settings.scrambleSource === 'random' && !settings.syncSeed
       ? cstimer222Spec(type222)
@@ -484,21 +487,23 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       // 难度控件此时照常显示可操作(WcaSourceConfig 只看开关不看有无选中比赛),丢弃会静默出不符条件的
       // 打乱(如选了 0 步十字却拿到普通打乱);date 池服务端 /random 对空 from/to 走飞镖采样带环绕补齐,
       // 稀有档(0 步十字)也能出题。
-      diff: !wcaDiffIsConditionalOnly && !wcaCompUnindexed && settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
+      diff: !wca222Type && !wcaDiffIsConditionalOnly && !wcaCompUnindexed && settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
         ? {
           variant: wcaDiffRef.variant, stage: wcaDiffRef.stage,
           colors: settings.wcaDiffColors, steps: settings.wcaDiffSteps,
           merged: settings.wcaDiffMerged,
         }
         : undefined,
-      stepFilter: wcaStep ?? undefined,
+      // 二阶专项与「按步数」互斥:隐藏的旧步数偏好不能继续叠加过滤。
+      stepFilter: wca222Type ? undefined : wcaStep ?? undefined,
+      typeFilter: wca222Type,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, wcaOptimalOn, settings.wcaDifficultyOn, wcaDiffRef.variant, wcaDiffRef.stage, settings.wcaDiffColors, settings.wcaDiffSteps, settings.wcaDiffMerged, wcaStepSig, wcaCompUnindexed]);
+  }, [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, wcaOptimalOn, settings.wcaDifficultyOn, wcaDiffRef.variant, wcaDiffRef.stage, settings.wcaDiffColors, settings.wcaDiffSteps, settings.wcaDiffMerged, wcaStepSig, wca222TypeSig, wcaCompUnindexed]);
   const wcaSpecRef = useRef(wcaSpec);
   wcaSpecRef.current = wcaSpec;
   const wcaSourceSig = settings.scrambleSource === 'wca'
-    ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}|${wcaDiffSig}|${wcaStepSig}|${wcaCompUnindexed ? 'U' : ''}|${wcaOptimalOn ? 'O' : ''}`
+    ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}|${wcaDiffSig}|${wcaStepSig}|${wca222TypeSig}|${wcaCompUnindexed ? 'U' : ''}|${wcaOptimalOn ? 'O' : ''}`
     : 'random';
   // 按步数生成签名:随机来源一律生效；非 WCA 项目即便全局来源仍记着「真题」也只能本地生成，
   // 因此同样要让难度变化重置打乱队列。WCA 项目的真题来源由 wcaStepSig 负责。
@@ -2495,15 +2500,18 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                         }}>{tr({ zh: '再试一次', en: 'Try again' })}</button></>}</span>
                   : wcaSourceEmpty
                     ? <span className="scramble-empty">{
-                        // 「按步数」过滤在 comp/date 两模式都生效,先判——真题近上帝数,低步数常无匹配。
-                        wcaStep
-                          ? tr({ zh: '该步数范围没有匹配的 WCA 真题,换个步数试试', en: 'No WCA scramble matches this move-count range — try another range' })
+                        // 二阶状态类型和「按步数」在 comp/date 两模式都生效；专项优先判，避免隐藏的
+                        // 旧步数偏好让空结果提示张冠李戴。
+                        wca222Type
+                          ? tr({ zh: '该范围没有匹配此类型的 WCA 真题,换个类型或范围试试', en: 'No WCA scramble of this type matches the range — try another type or range' })
+                          : wcaStep
+                            ? tr({ zh: '该步数范围没有匹配的 WCA 真题,换个步数试试', en: 'No WCA scramble matches this move-count range — try another range' })
                           // 难度过滤 date/comp 两模式都生效(wcaSpec.diff 仅在难度实际生效时有值)——
                           // 先判难度,再判 comp 缺项目,避免 comp+难度为空时误报「该比赛没有此项目」。
                           // comp 模式再按覆盖探测(isWcaCompUnindexed)细分:该场压根没进难度库(离线管道
                           // 还没算,常见新赛)→ 换步数/配色也没用,提示改用日期模式;已入库只是此难度档无匹配
                           // → 提示换步数/配色。
-                          : wcaSpec.diff
+                            : wcaSpec.diff
                             ? wcaSpec.mode === 'comp'
                               ? isWcaCompUnindexed(wcaSpec)
                                 ? tr({ zh: '难度库待更新', en: 'Difficulty index not updated yet' })

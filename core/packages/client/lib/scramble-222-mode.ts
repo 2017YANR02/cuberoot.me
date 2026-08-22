@@ -10,6 +10,7 @@
  */
 import { useEffect, useState } from 'react';
 import { persistItem } from './safe-storage';
+import { CUBE222_STATE_TYPES, type Cube222StateType } from './cube222-metric';
 
 export type Scramble222Mode = 'wca' | 'optimal';
 
@@ -27,6 +28,12 @@ export const SCRAMBLE_222_TYPES = [
   'nobar',
 ] as const;
 export type Scramble222Type = (typeof SCRAMBLE_222_TYPES)[number];
+/** WCA 真题可按最终状态精确判定的类型；3-gen 只描述生成过程，不能用于真题筛选。 */
+export const WCA_SCRAMBLE_222_TYPES = ['full', ...CUBE222_STATE_TYPES] as const;
+
+export function isCube222StateType(type: Scramble222Type): type is Cube222StateType {
+  return CUBE222_STATE_TYPES.includes(type as Cube222StateType);
+}
 
 interface Scramble222TypeMeta {
   label: { zh: string; en: string };
