@@ -12,8 +12,7 @@
  *   会议中   MeetStage:宫格 / 焦点布局、屏幕共享、聊天、参与者、设备切换、说话高亮。
  *
  * 与 /timer 对战房里那条视频的**唯一**授权区别:对战房有在册名单(pid 必须在
- * battle_rooms.players 里)且免登录;会议室要登录,进哪一间由 9 位 45 bit 的会议码决定
- * (见 lib/video-room-api.ts 的 MEET_CODE_ALPHABET)。
+ * battle_rooms.players 里)且免登录;会议室要登录,进哪一间由 4 位数字会议码决定。
  *
  * 本站不存任何会议记录:房在首个人真正连接时由 LiveKit 自动创建、没人了自动关。
  * 因此既没有「会议列表」可以被人翻,也不需要清理任务。刷新页面会带着 ?room= 回到同一场会。
@@ -43,10 +42,10 @@ import { nextQuery, useAuthUser } from '@/lib/auth-store';
 import {
   MEET_CODE_LEN,
   VideoDeniedError,
+  createMeetCode,
   getMeetToken,
   getVideoConfig,
   isMeetCode,
-  newMeetCode,
   normalizeMeetCode,
   type VideoConfig,
   type VideoToken,
@@ -115,6 +114,18 @@ export default function MeetPage() {
       })
       .finally(() => setBusy(false));
   }, [fail]);
+
+  const createMeeting = useCallback(() => {
+    setBusy(true);
+    setErr(null);
+    createMeetCode()
+      .then((fresh) => setRoomParam(fresh))
+      .catch((e: unknown) => {
+        if (!(e instanceof VideoDeniedError)) { fail('connect'); return; }
+        fail(e.reason === 'invalid' ? 'stale-api' : e.reason);
+      })
+      .finally(() => setBusy(false));
+  }, [fail, setRoomParam]);
 
   /**
    * 挂断 = 回大厅。**必须连 ?room= 一起清掉**:只清 token 的话,渲染会退回到「入会前」
@@ -275,7 +286,7 @@ export default function MeetPage() {
           type="button"
           className="meet-go"
           disabled={busy}
-          onClick={() => { setErr(null); const fresh = newMeetCode(); void setRoomParam(fresh); }}
+          onClick={createMeeting}
         >
           <Video size={15} />
           {tr({ zh: '新建会议', en: 'New meeting' })}
@@ -285,10 +296,13 @@ export default function MeetPage() {
       <div className="meet-row">
         <input
           type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="off"
           className="meet-code-input"
           value={codeInput}
           // 粘整条邀请链接也认:normalizeMeetCode 会把 ?room= 挖出来。
-          placeholder={tr({ zh: '会议码或邀请链接', en: 'Code or invite link' })}
+          placeholder={tr({ zh: '4 位会议码或邀请链接', en: '4-digit code or invite link' })}
           onChange={(e) => setCodeInput(normalizeMeetCode(e.target.value))}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && codeInput.length === MEET_CODE_LEN) {

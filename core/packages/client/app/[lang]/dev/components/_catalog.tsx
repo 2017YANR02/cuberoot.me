@@ -2033,8 +2033,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'RoomCodeInput',
     import: "import { RoomCodeInput } from '@/components/RoomCodeInput';",
     category: 'more',
-    zh: `统一的 5 位房间码输入框:自动转大写并过滤无效字符,填满即触发加入,同一码不会因重渲染重复提交。`,
-    en: `Shared five-character room-code input: uppercases and filters input, joins as soon as all characters are entered, and prevents duplicate submissions across rerenders.`,
+    zh: `统一的 4 位数字房间码输入框:过滤非数字并唤起数字键盘,填满即触发加入,同一码不会因重渲染重复提交。`,
+    en: `Shared four-digit numeric room-code input: filters non-digits, opens a numeric keypad, joins when complete, and prevents duplicate submissions across rerenders.`,
     note: { zh: `/alg 训练器协同房与 /timer 联机对战共用;传 value / onValueChange / onComplete,连接中用 disabled 锁定。`, en: `Shared by /alg trainer rooms and /timer online battle; pass value / onValueChange / onComplete, and disable it while connecting.` },
   },
   {

@@ -705,7 +705,11 @@ export function CalcPage() {
         </>
       )}
       {qrUrl && live.code && (
-        <RoomQrModal url={qrUrl} code={live.code} onClose={() => setQrUrl(null)} />
+        <RoomQrModal
+          url={live.currentInviteUrl() ?? qrUrl}
+          code={live.code}
+          onClose={() => setQrUrl(null)}
+        />
       )}
     </div>
   );

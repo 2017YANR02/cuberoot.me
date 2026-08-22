@@ -3,7 +3,7 @@
 /**
  * NetBattleView — /timer 的「联机对战」模式(?players=net)。
  *
- * 多设备对战:每人用自己的设备,一人创建房间(拿到 5 位房间码 / 邀请链接),其余人
+ * 多设备对战:每人用自己的设备,一人创建房间(拿到 4 位数字房间码 / 邀请链接),其余人
  * 加入;全房共用同一条打乱,各自在本机计时,成绩与实时状态互相可见,任一玩家可开
  * 下一轮(CAS)。参照 /alg 训练器协同房间的成熟模式:HTTP 轮询(1s,no-store)+
  * PG 单行 jsonb 原子合并,无 WebSocket(见 lib/battle-room-api.ts / server
@@ -1212,7 +1212,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
                   {tr({ zh: '创建房间', en: 'Create room' })}
                 </button>
                 <span className="net-lobby-or">{tr({ zh: '或输入', en: 'or enter' })}</span>
-                {/* 填满 5 位即自动加入,无「加入」按钮 */}
+                {/* 填满 4 位即自动加入,无「加入」按钮 */}
                 <RoomCodeInput
                   className="net-input net-input-code"
                   data-no-timer

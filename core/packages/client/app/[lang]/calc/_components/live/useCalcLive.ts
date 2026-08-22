@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  CALC_LIVE_ROOM_CODE_LENGTH,
   isCalcLiveHostToken,
   isCalcLiveRoomCode,
   parseCalcLiveServerMessage,
@@ -9,7 +10,8 @@ import {
 } from '@cuberoot/shared';
 import { websocketApiUrl } from '@/lib/api-base';
 
-const ROOM_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const ROOM_CODE_SPACE = 10 ** CALC_LIVE_ROOM_CODE_LENGTH;
+const MAX_COLLISION_RETRIES = 20;
 const RECONNECT_DELAY_MS = 1_500;
 const SEND_DEBOUNCE_MS = 120;
 
@@ -34,10 +36,13 @@ function sessionKey(code: string): string {
   return `cuberoot.calc.live.${code}`;
 }
 
-function randomFromAlphabet(length: number): string {
-  const bytes = new Uint8Array(length);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => ROOM_ALPHABET[byte % ROOM_ALPHABET.length]).join('');
+function randomRoomCode(exclude?: string): string {
+  let code: string;
+  do {
+    const value = crypto.getRandomValues(new Uint32Array(1))[0] % ROOM_CODE_SPACE;
+    code = value.toString().padStart(CALC_LIVE_ROOM_CODE_LENGTH, '0');
+  } while (code === exclude);
+  return code;
 }
 
 function randomToken(): string {
@@ -60,7 +65,7 @@ export function useCalcLive({
   onSnapshot,
   subscribe,
 }: UseCalcLiveOptions) {
-  const normalizedCode = liveCode?.trim().toUpperCase() ?? null;
+  const normalizedCode = liveCode?.trim() ?? null;
   const [session, setSession] = useState<SessionResolution>({ checked: false, code: null, token: null });
   const [connection, setConnection] = useState<ConnectionState>('idle');
   const [hostOnline, setHostOnline] = useState(false);
@@ -70,6 +75,7 @@ export function useCalcLive({
   const readyRef = useRef(false);
   const getSnapshotRef = useRef(getSnapshot);
   const onSnapshotRef = useRef(onSnapshot);
+  const collisionRetriesRef = useRef(0);
 
   useEffect(() => { getSnapshotRef.current = getSnapshot; }, [getSnapshot]);
   useEffect(() => { onSnapshotRef.current = onSnapshot; }, [onSnapshot]);
@@ -145,6 +151,7 @@ export function useCalcLive({
         const message = parseCalcLiveServerMessage(decoded);
         if (!message) return;
         if (message.type === 'ready') {
+          collisionRetriesRef.current = 0;
           readyRef.current = true;
           setConnection('connected');
           if (role === 'host') sendSnapshot();
@@ -166,6 +173,19 @@ export function useCalcLive({
         readyRef.current = false;
         setHostOnline(false);
         if (disposed) return;
+        if (role === 'host' && session.code && event.code === 1008 && event.reason === 'room code taken'
+          && collisionRetriesRef.current < MAX_COLLISION_RETRIES) {
+          collisionRetriesRef.current++;
+          const previousCode = session.code;
+          const code = randomRoomCode(previousCode);
+          const token = randomToken();
+          sessionStorage.removeItem(sessionKey(previousCode));
+          sessionStorage.setItem(sessionKey(code), token);
+          setSession({ checked: true, code, token });
+          void setLiveCode(code);
+          setConnection('connecting');
+          return;
+        }
         const terminal = role === 'host'
           && event.code === 1008
           && event.reason !== 'room not found';
@@ -185,7 +205,7 @@ export function useCalcLive({
       if (socketRef.current === activeSocket) socketRef.current = null;
       activeSocket?.close(1000, 'page changed');
     };
-  }, [role, sendSnapshot, session.code, session.token]);
+  }, [role, sendSnapshot, session.code, session.token, setLiveCode]);
 
   useEffect(() => {
     if (role !== 'host') return;
@@ -201,7 +221,8 @@ export function useCalcLive({
   }, [role, sendSnapshot, subscribe]);
 
   const start = useCallback((): { code: string; url: string } => {
-    const code = randomFromAlphabet(8);
+    collisionRetriesRef.current = 0;
+    const code = randomRoomCode();
     const token = randomToken();
     sessionStorage.setItem(sessionKey(code), token);
     setSession({ checked: true, code, token });

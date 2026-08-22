@@ -2,11 +2,11 @@ import { WCA_EVENT_ORDER } from './wca_events';
 
 export const CALC_LIVE_MAX_MESSAGE_BYTES = 16 * 1024;
 export const CALC_LIVE_MAX_RESULT = 2_000_000_000;
-export const CALC_LIVE_ROOM_CODE_LENGTH = 8;
+export const CALC_LIVE_ROOM_CODE_LENGTH = 4;
 
 const WCA_EVENTS = new Set<string>(WCA_EVENT_ORDER);
 const MO3_EVENTS = new Set(['666', '777', '444bf', '555bf', '333fm', '333mbf', '333mbo']);
-const ROOM_CODE_RE = /^[A-HJ-NP-Z2-9]{8}$/;
+const ROOM_CODE_RE = /^\d{4}$/;
 const HOST_TOKEN_RE = /^[a-f0-9]{32,64}$/;
 
 export interface CalcLiveSnapshot {
