@@ -26,7 +26,7 @@ g.window = { addEventListener() {} };
 g.localStorage = makeLocalStorage();
 
 // 内存房间模拟:createRoom 记下 keys,claimRoomBatch 顺序出队(最多 count 格),nextRoundRoom 重置游标 + 轮次。
-const sim = { code: 'ROOM1', order: 'shuffle' as 'seq' | 'shuffle', round: 1, total: 0, keys: [] as string[], idx: 0 };
+const sim = { code: '0427', order: 'shuffle' as 'seq' | 'shuffle', round: 1, total: 0, keys: [] as string[], idx: 0 };
 /** >0 时接下来这么多次 claim 抛 429(模拟限流);vi.mock 提升到顶层,用 var 让工厂能读到。 */
 // eslint-disable-next-line no-var
 var claimFail = 0;
@@ -101,7 +101,7 @@ describe('trainer-store online room', () => {
     await flush();
     expect(res.ok).toBe(true);
     let s = useTrainerStore.getState();
-    expect(s.room?.code).toBe('ROOM1');
+    expect(s.room?.code).toBe('0427');
     expect(s.mode).toBe('recap');                 // 建房强制复习模式
     expect(s.currentKey).toBe(keys[0]);           // 领到第一题
     expect(curRecap()).toEqual({ pos: 1, total: 3 }); // pos = 全局领取序号
@@ -270,7 +270,7 @@ describe('trainer-store online room', () => {
     st0.setMode('recap');
     st0.setRecapOrder('seq');
     st0.restartRecapRound();
-    useTrainerStore.setState({ room: { code: 'ROOM1', order: 'seq', round: 1, total: 5 }, hist: { list: [], idx: -1 } });
+    useTrainerStore.setState({ room: { code: '0427', order: 'seq', round: 1, total: 5 }, hist: { list: [], idx: -1 } });
 
     useTrainerStore.getState().leaveRoom();
     await flush();

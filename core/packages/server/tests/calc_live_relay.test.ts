@@ -1,6 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it, vi } from 'vitest';
-import { parseCalcLiveSnapshot, type CalcLiveSnapshot } from '@cuberoot/shared';
+import {
+  isCalcLiveRoomCode,
+  parseCalcLiveHello,
+  parseCalcLiveSnapshot,
+  type CalcLiveSnapshot,
+} from '@cuberoot/shared';
 import {
   CALC_LIVE_MAX_BUFFERED_BYTES,
   CALC_LIVE_ROOM_IDLE_MS,
@@ -8,7 +13,7 @@ import {
   type CalcLiveRelaySocket,
 } from '../src/calc/live_relay.js';
 
-const CODE = 'ABCDEFGH';
+const CODE = '0427';
 const TOKEN = 'a'.repeat(32);
 
 function snapshot(event = 'sq1'): CalcLiveSnapshot {
@@ -146,6 +151,18 @@ describe('parseCalcLiveSnapshot', () => {
       ...snapshot(),
       times: [[2_000_000_001, 0, 0, 0, 0], [0, 0, 0, 0, 0]],
     })).toBeNull();
+  });
+});
+
+describe('calc live room code', () => {
+  it('accepts exactly four digits including a leading zero', () => {
+    expect(isCalcLiveRoomCode('0427')).toBe(true);
+    expect(parseCalcLiveHello({ type: 'hello', role: 'viewer', code: '0427' }))
+      .toEqual({ type: 'hello', role: 'viewer', code: '0427' });
+  });
+
+  it.each(['123', '12345', '12A4', ' 1234', '１２３４'])('rejects invalid code %s', (code) => {
+    expect(isCalcLiveRoomCode(code)).toBe(false);
   });
 });
 

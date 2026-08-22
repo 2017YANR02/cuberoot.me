@@ -21,7 +21,7 @@ describe('RoomCodeInput', () => {
     host.remove();
   });
 
-  it('normalizes five entered characters and submits once', async () => {
+  it('keeps four digits including a leading zero and submits once', async () => {
     const complete = vi.fn();
     function Harness() {
       const [value, setValue] = useState('');
@@ -32,13 +32,15 @@ describe('RoomCodeInput', () => {
     const input = host.querySelector('input') as HTMLInputElement;
     const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
     await act(async () => {
-      valueSetter?.call(input, 'ab-12c');
+      valueSetter?.call(input, 'a0b-12c3');
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
 
-    expect(input.value).toBe('AB12C');
+    expect(input.value).toBe('0123');
+    expect(input.inputMode).toBe('numeric');
+    expect(input.pattern).toBe('[0-9]*');
     expect(complete).toHaveBeenCalledTimes(1);
-    expect(complete).toHaveBeenCalledWith('AB12C');
+    expect(complete).toHaveBeenCalledWith('0123');
 
     await act(async () => {
       input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
@@ -61,17 +63,17 @@ describe('RoomCodeInput', () => {
       })));
     };
 
-    await render('AB12C', first);
+    await render('0123', first);
     expect(first).toHaveBeenCalledOnce();
 
-    await render('AB12C', second);
-    await render('AB12C', second, true);
-    await render('AB12C', second);
+    await render('0123', second);
+    await render('0123', second, true);
+    await render('0123', second);
     expect(second).not.toHaveBeenCalled();
 
-    // Editing below five characters deliberately arms the same code for a new attempt.
-    await render('AB12', second);
-    await render('AB12C', second);
+    // Editing below four characters deliberately arms the same code for a new attempt.
+    await render('012', second);
+    await render('0123', second);
     expect(second).toHaveBeenCalledOnce();
   });
 });

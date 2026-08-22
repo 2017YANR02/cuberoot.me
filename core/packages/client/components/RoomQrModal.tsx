@@ -1,7 +1,7 @@
 'use client';
 
 // 房间邀请二维码弹窗:把邀请链接编成二维码,队友扫码即进房。
-// 训练器(/alg 联机房)与 /timer 联机对战共用 —— 调用方只管把邀请 url + 房间码传进来。
+// /alg、/timer、/calc、/meet 共用 —— 调用方只管把邀请 url + 房间码传进来。
 // 二维码用 uqr 本地生成 SVG(自成一体,不依赖外部 CDN);永远 深底/白 高对比,不随主题反色 —— 扫码可靠。
 import { useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
