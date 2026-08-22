@@ -120,6 +120,40 @@ jobs:
              case "$PLATFORM_SECRET" in *[!0-9A-Fa-f]*) echo "ERROR: platform TEACHING_PLATFORM_SECRET must be unquoted hexadecimal"; exit 1;; esac
              test "$CORE_SECRET" = "$PLATFORM_SECRET" || { echo "ERROR: teaching bridge secrets do not match"; exit 1; }'
 
+      - name: Sync Platform private-data secrets
+        env:
+          PLATFORM_DATA_ENCRYPTION_KEY_V1: ${{ secrets.PLATFORM_DATA_ENCRYPTION_KEY_V1 }}
+          PLATFORM_MEDIA_SIGNING_SECRET: ${{ secrets.PLATFORM_MEDIA_SIGNING_SECRET }}
+        run: |
+          test -n "$PLATFORM_DATA_ENCRYPTION_KEY_V1" || { echo "ERROR: PLATFORM_DATA_ENCRYPTION_KEY_V1 secret missing"; exit 1; }
+          test -n "$PLATFORM_MEDIA_SIGNING_SECRET" || { echo "ERROR: PLATFORM_MEDIA_SIGNING_SECRET secret missing"; exit 1; }
+          node -e 'const value=process.env.PLATFORM_DATA_ENCRYPTION_KEY_V1||""; const bytes=Buffer.from(value,"base64"); if(bytes.length!==32||bytes.toString("base64").replace(/=+$/,"")!==value.replace(/=+$/, "")) process.exit(1)'
+          test "${#PLATFORM_MEDIA_SIGNING_SECRET}" -ge 32 || { echo "ERROR: PLATFORM_MEDIA_SIGNING_SECRET must be at least 32 characters"; exit 1; }
+          printf '%s\n%s\n' "$PLATFORM_DATA_ENCRYPTION_KEY_V1" "$PLATFORM_MEDIA_SIGNING_SECRET" | \
+            ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+              -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+              "root@${{ secrets.DEPLOY_HOST }}" \
+              'set -e
+               IFS= read -r DATA_KEY
+               IFS= read -r MEDIA_SECRET
+               ENV_FILE=/root/core-api/.env
+               test -s "$ENV_FILE"
+               EXISTING_DATA_KEY="$(sed -n "s/^PLATFORM_DATA_ENCRYPTION_KEY_V1=//p" "$ENV_FILE" | tail -1)"
+               if [ -n "$EXISTING_DATA_KEY" ] && [ "$EXISTING_DATA_KEY" != "$DATA_KEY" ]; then
+                 echo "ERROR: Existing PLATFORM_DATA_ENCRYPTION_KEY_V1 does not match the immutable v1 deploy secret"
+                 exit 1
+               fi
+               DATA_KEY_TO_WRITE="${EXISTING_DATA_KEY:-$DATA_KEY}"
+               TMP_FILE="$(mktemp /root/core-api/.env.platform.XXXXXX)"
+               trap '\''rm -f "$TMP_FILE"'\'' EXIT
+               awk '\''index($0, "PLATFORM_DATA_ENCRYPTION_KEY_V1=") != 1 && index($0, "PLATFORM_MEDIA_SIGNING_SECRET=") != 1 { print }'\'' "$ENV_FILE" > "$TMP_FILE"
+               printf "%s=%s\n" PLATFORM_DATA_ENCRYPTION_KEY_V1 "$DATA_KEY_TO_WRITE" >> "$TMP_FILE"
+               printf "%s=%s\n" PLATFORM_MEDIA_SIGNING_SECRET "$MEDIA_SECRET" >> "$TMP_FILE"
+               chmod --reference="$ENV_FILE" "$TMP_FILE"
+               chown --reference="$ENV_FILE" "$TMP_FILE"
+               mv "$TMP_FILE" "$ENV_FILE"
+               trap - EXIT'
+
       - name: Deploy server
         run: |
           # bundle 自包含 → 只需要 scp 单文件 + sourcemap + migrations。

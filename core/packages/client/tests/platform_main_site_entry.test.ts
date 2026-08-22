@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { PLATFORM_ROUTES } from '@/lib/platform-routes';
+import { PLATFORM_SITEMAP_PATHS } from '@/app/sitemap';
 
 const read = (relativePath: string) => readFileSync(new URL(`../${relativePath}`, import.meta.url), 'utf8');
 
@@ -24,6 +26,8 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     const account = read('app/[lang]/account/page.tsx');
 
     expect(landing).toMatch(/<Link\s+href="\/search"[\s\S]*?prefetch=\{false\}/);
+    expect(sections).toMatch(/\{ id: 'platform', href: '\/platform', internal: true,[^}]+\}/);
+    expect(sections.match(/\{ id: 'platform', href: '\/platform'[^}]+\}/)?.[0]).not.toContain('adminOnly');
     expect(sections).toMatch(/\{ id: 'teaching', href: '\/courses', internal: true,[^}]+\}/);
     expect(sections.match(/\{ id: 'teaching', href: '\/courses'[^}]+\}/)?.[0]).not.toContain('adminOnly');
     expect(account).toContain("key: 'membership'");
@@ -41,5 +45,25 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(search).toMatch(/href=\{c\.href\}\s+prefetch=\{false\}/);
     expect(search).toMatch(/href=\{`\/wca\/persons\/\$\{p\.wcaId\}`\}\s+prefetch=\{false\}/);
     expect(search).toContain("aria-label={tr({ zh: '全站搜索', en: 'Site search' })}");
+  });
+
+  it('gives public Platform subroutes distinct metadata and sitemap coverage', () => {
+    const layout = read('app/[lang]/platform/layout.tsx');
+    const page = read('app/[lang]/platform/[...segments]/page.tsx');
+    const expected = PLATFORM_ROUTES
+      .filter((route) => route.access === 'public'
+        && route.pattern !== ''
+        && !route.pattern.includes(':')
+        && !['search', 'offline', 'login', 'notifications'].includes(route.id))
+      .map((route) => `platform/${route.pattern}`)
+      .sort();
+
+    expect(layout).toContain("pageMetadata('platform')");
+    expect(layout).toContain("canonical: lang === 'zh' ? zh : en");
+    expect(layout).toContain("languages: { en, zh, 'x-default': en }");
+    expect(page).toContain('metadataFromEntry');
+    expect(page).toContain('match.definition.title');
+    expect(page).toContain('match.definition.description');
+    expect(PLATFORM_SITEMAP_PATHS.slice().sort()).toEqual(expected);
   });
 });

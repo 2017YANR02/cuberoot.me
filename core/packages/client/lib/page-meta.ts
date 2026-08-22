@@ -73,6 +73,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'account': { title: { zh: '账号', en: 'Account' } },
+  'platform': {
+    title: { zh: '课程与学习 Platform', en: 'Courses and learning Platform' },
+    description: {
+      zh: 'CubeRoot 主站内的课程、学习记录、讲师服务、活动、交易和教学机构统一入口。',
+      en: 'The CubeRoot main-site hub for courses, learning records, instructors, events, commerce, and teaching organizations.',
+    },
+  },
   'org': {
     title: { zh: '教学管理', en: 'Teaching' },
     description: {

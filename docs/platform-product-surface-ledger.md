@@ -1,124 +1,149 @@
-# Platform 产品 surface 处置账本
+# Platform 产品 surface 守恒账本
 
 基线日期：2026-08-22
-权威源码：退役前只读副本 `D:\cube\cube-platform\app`
-目标原则：不建立独立 Platform 前端，不建立 `/platform` 产品壳；已有能力复用主站，seed/demo 和零数据能力不重建。
 
-## 1. 守恒结论
+权威来源：退役前只读副本 `D:\cube\cube-platform\app` 与主仓归档 `core/packages/platform/app` 的并集。
 
-| Surface | 来源数量 | 已归属 | 未归属 |
-| --- | ---: | ---: | ---: |
-| 页面 | 83 | 83 | 0 |
-| Route Handler | 13 | 13 | 0 |
-| Server Action 文件 | 33 | 33 | 0 |
-| Metadata route | 4 | 4 | 0 |
+目标：完整恢复产品能力到主站 `/platform/*`；不恢复独立前端、旧 auth/admin、SQLite、seed/demo、原始遥测回放或旧 timer 历史。
 
-主仓归档源码比退役前副本多出的 12 个 `/org` 页面，属于后来接入的机构教学前端历史，不属于这 83 个旧产品页面；它们已经由主站 `/org` 和 `/learn` 承接。
+## 1. 守恒总表
 
-两份源码树的完整差分为：退役前权威副本 `83 / 13 / 33 / 4`，主仓归档源码 `95 / 13 / 32 / 4`（页面 / Route Handler / Server Action 文件 / Metadata route）。Handler 与 metadata 清单完全一致；归档源码只多 12 个 `/org` 页面和 `org/actions.ts`，权威副本只多 `actions/timer.ts` 与 `admin/(authed)/algorithms/actions.ts`。这些差异都在下方逐项归属，不再存在“待生成差分”。
+| Surface | 权威副本 | 主仓归档 | 并集目标 | 已映射 | 未映射 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 页面 | 83 | 95 | 95 | 95 | 0 |
+| Route Handler | 13 | 13 | 13 | 13 | 0 |
+| Server Action 文件 | 33 | 32 | 34 | 34 | 0 |
+| Metadata route | 4 | 4 | 4 | 4 | 0 |
 
-## 2. 83 个页面
+当前 95 / 13 / 34 / 4 全部映射已由 capability manifest 标记为 `implemented`、`reviewed` 并通过守恒测试；发布状态仍以主 tracker 的 P8 为准。
 
-路径按旧 Platform 根路径书写；同一行中的所有路径共享处置结果。
+## 2. 权威副本 83 个页面
 
-| 来源路径 | 数量 | 最终处置 | 主站入口或理由 |
+| 来源页面 | 数量 | 最终 URL | 能力与复用边界 |
 | --- | ---: | --- | --- |
-| `/`、`/about`、`/progress` | 3 | 合并后归档 | 复用主站 `/`、`/about`、`/achievements`；不导入旧营销数字 |
-| `/login`、`/me`、`/offline` | 3 | 直接复用 | `/account` 与主站 PWA；不迁 OTP、session 或 seed 账号 |
-| `/me/badges`、`/me/favorites`、`/me/notes`、`/me/wishlist`、`/me/invite` | 5 | 取消 | 对应生产表均为零行或 seed；不造空壳 |
-| `/me/courses`、`/me/membership`、`/membership` | 3 | 归档旧语义 | 生产课程权益和会员均为零；不得冒充主站支持型 `/membership` |
-| `/notifications` | 1 | 直接复用 | 主站 `/notifications`，生产源为零行 |
-| `/timer`、`/leaderboard` | 2 | 直接复用并取消历史迁移 | 主站 `/timer`；用户明确不迁 timer history 和派生榜单 |
-| `/algorithms`、`/algorithms/[id]` | 2 | 合并且不写入 | 主站 `/alg` 已覆盖 35 条等价 seed；4 条不可靠记录拒绝导入 |
-| `/courses`、`/courses/[id]`、`/courses/[id]/learn/[lessonId]` | 3 | 直接复用，源内容归档 | 主站 `/courses`；生产 6 门课程均为 seed，课时和学习进度均为零 |
-| `/paths`、`/paths/[id]` | 2 | 源内容归档 | 3 条路径和 9 条条目只引用上述 6 门 seed 课程，不创建第二套课程路径 |
-| `/instructors`、`/instructors/[id]`、`/instructors/apply` | 3 | 直接复用，旧申请取消 | 主站 `/teachers` 和 `/teachers/edit`；5 位讲师为 seed，申请表为零 |
-| `/instructor`、`/instructor/courses`、`/instructor/courses/[id]`、`/instructor/students`、`/instructor/earnings` | 5 | 取消旧控制台 | 无真实课程权益、学生或结算数据；不复制 dashboard |
-| `/community`、`/community/circle/[id]`、`/community/posts/[id]`、`/community/posts/new` | 4 | 直接复用，seed 归档 | 主站 `/forum`；帖子、评论和点赞均为固定 seed |
-| `/events`、`/events/[id]` | 2 | 取消 | 5 条商业活动为 seed，0 条报名关系；不得冒充 `/calendar` 或 WCA 比赛 |
-| `/news`、`/news/[id]` | 2 | 取消 | 5 条新闻为 seed；真实公告继续使用主站论坛公告能力 |
-| `/shop`、`/shop/[id]` | 2 | 取消 | 6 件商品为 seed，生产订单为零；不建立空商城 |
-| `/orders`、`/orders/[id]` | 2 | 取消 | 生产订单为零；不建立空订单或伪造权益 |
-| `/qr/[code]` | 1 | 取消 | 2 个二维码只指向 demo 页面；卡面仅随加密归档保留 |
-| `/cert/[code]` | 1 | 取消 | 生产证书为零行 |
-| `/search` | 1 | 以主站组件重建入口 | 主站 `/search?q=`，复用 `LandingSearch` 与 `useSiteSearch` 唯一索引 |
-| `/admin/login`、`/admin/(authed)` | 2 | 取消 | 不保留旧总后台和独立管理员认证 |
-| `/admin/(authed)/algorithms`、`/[id]`、`/new` | 3 | 取消旧后台 | 主站公式库已有自己的权限和管理契约 |
-| `/admin/(authed)/applications`、`/[id]` | 2 | 取消 | 申请表零行；不让教师目录编辑器冒充审核流 |
-| `/admin/(authed)/coupons` | 1 | 取消 | 零行且没有继续商城产品 |
-| `/admin/(authed)/courses`、`/[id]`、`/new`、`/paths` | 4 | 取消旧后台 | seed 课程和路径归档，主站课程保持唯一实现 |
-| `/admin/(authed)/events`、`/[id]`、`/new` | 3 | 取消 | seed-only 商业活动不重建 |
-| `/admin/(authed)/events-track`、`/logs` | 2 | 取消产品入口 | 原始遥测只留受限加密归档，不进入产品库 |
-| `/admin/(authed)/instructor-payouts`、`/instructors`、`/instructors/[id]`、`/instructors/new` | 4 | 取消旧后台 | payout 和申请零行；主站教师目录独立运作 |
-| `/admin/(authed)/invites` | 1 | 取消 | 邀请码零行；不可混入 `/org` 绑定邀请 |
-| `/admin/(authed)/news`、`/[id]`、`/new`、`/posts` | 4 | 取消旧后台 | seed 内容不导入；主站论坛继续使用自己的管理能力 |
-| `/admin/(authed)/orders`、`/reconcile` | 2 | 取消 | 生产订单和支付日志均为零，不造对账假闭环 |
-| `/admin/(authed)/products`、`/[id]`、`/new` | 3 | 取消 | seed 商品归档，不建商城 |
-| `/admin/(authed)/qr`、`/[code]`、`/cards`、`/prompts`、`/stats` | 5 | 取消 | QR、模板和统计均为 demo/seed；无稳定真实目标 |
+| `/`、`/about`、`/progress` | 3 | `/platform`、`/platform/about`、`/platform/progress` | 新聚合与进度页；引用主站训练成果 |
+| `/login`、`/me`、`/offline` | 3 | `/platform/login`、`/platform/account`、`/platform/offline` | 主站 auth/session/PWA |
+| `/me/badges`、`/me/favorites`、`/me/notes`、`/me/wishlist`、`/me/invite` | 5 | `/platform/account/{badges,favorites,notes,wishlist,invites}` | 新个人数据域；空数据也保留入口和写链 |
+| `/me/courses`、`/me/membership`、`/membership` | 3 | `/platform/account/courses`、`/platform/account/membership`、`/platform/membership` | 课程权益会员，和主站支持型会员分开 |
+| `/notifications` | 1 | `/platform/notifications` | 共享主站通知组件/API/表 |
+| `/timer`、`/leaderboard` | 2 | `/platform/timer`、`/platform/leaderboard` | 共享主站 timer；旧历史不迁 |
+| `/algorithms`、`/algorithms/[id]` | 2 | `/platform/algorithms`、`/platform/algorithms/[id]` | 复用 `/alg` 数据、播放器与训练；旧详情页本就不读取旧 ID，新路由保持该兼容入口语义 |
+| `/courses`、`/courses/[id]`、`/courses/[id]/learn/[lessonId]` | 3 | 同路径加 `/platform` 前缀 | 目录、详情、购买、权益、课时、学习 |
+| `/paths`、`/paths/[id]` | 2 | `/platform/paths`、`/platform/paths/[id]` | 有序课程/课时路径 |
+| `/instructors`、`/instructors/[id]`、`/instructors/apply` | 3 | `/platform/teachers`、`/platform/teachers/[id]`、`/platform/teachers/apply` | 共享教师目录；新增申请审核 |
+| `/instructor`、`/instructor/courses`、`/instructor/courses/[id]`、`/instructor/students`、`/instructor/earnings` | 5 | `/platform/instructor` 与同名子路由 | 课程 owner、购买者、收入与结算；非 org 正式学员 |
+| `/community`、`/community/circle/[id]`、`/community/posts/[id]`、`/community/posts/new` | 4 | `/platform/community`、`circles/[id]`、`posts/[id]`、`posts/new` | 共享 forum；圈子映射 forum 分类/群组 |
+| `/events`、`/events/[id]` | 2 | `/platform/events`、`/platform/events/[id]` | 新商业教学活动与报名，非 WCA 赛事 |
+| `/news`、`/news/[id]` | 2 | `/platform/news`、`/platform/news/[id]` | 可管理双语资讯 |
+| `/shop`、`/shop/[id]` | 2 | `/platform/shop`、`/platform/shop/[id]` | 商品、库存、价格与购买 |
+| `/orders`、`/orders/[id]` | 2 | `/platform/orders`、`/platform/orders/[id]` | 支付、取消、退款、履约、权益联动 |
+| `/qr/[code]` | 1 | `/platform/qr/[code]` | 跳转/落地、禁用、修订、扫描统计 |
+| `/cert/[code]` | 1 | `/platform/cert/[code]` | 证书验证与图片 |
+| `/search` | 1 | `/platform/search?q=` | 扩展主站唯一搜索契约 |
+| `/admin/login`、`/admin/(authed)` | 2 | `/platform/admin` | 主站 auth/admin guard，无独立认证 |
+| 管理算法列表/详情/新建 | 3 | `/platform/admin/algorithms`、`/[id]`、`/new` | 共享 canonical 算法管理 |
+| 管理讲师申请列表/详情 | 2 | `/platform/admin/teacher-applications`、`/[id]` | 新申请审核状态机 |
+| 管理优惠券 | 1 | `/platform/admin/coupons` | 新课程/商品/活动优惠服务 |
+| 管理课程列表/详情/新建、路径 | 4 | `/platform/admin/courses...`、`/platform/admin/paths` | 课程、课时、测验与路径管理 |
+| 管理活动列表/详情/新建 | 3 | `/platform/admin/events`、`/[id]`、`/new` | 活动与名额管理 |
+| `events-track`、`logs` | 2 | `/platform/admin/analytics`、`/platform/admin/logs` | 最小化 analytics 与审计，不恢复原始回放 |
+| payout、讲师列表/详情/新建 | 4 | `/platform/admin/payouts`、`/platform/admin/teachers...` | 目录共享，补角色、分成与结算 |
+| 管理邀请 | 1 | `/platform/admin/invites` | Platform 营销邀请，非 org 邀请 |
+| 管理新闻列表/详情/新建、帖子 | 4 | `/platform/admin/news...`、`/platform/admin/community` | 资讯管理与 forum moderation |
+| 管理订单、对账 | 2 | `/platform/admin/orders`、`/platform/admin/reconcile` | 支付/退款/差异审计 |
+| 管理商品列表/详情/新建 | 3 | `/platform/admin/products`、`/[id]`、`/new` | 商品、价格和库存管理 |
+| 管理 QR 列表/详情/卡面/模板/统计 | 5 | `/platform/admin/qr`、`/[code]`、`/cards`、`/prompts`、`/stats` | 批量、复制、启停、软删、恢复、排序、打印、统计 |
 
 合计：83。
 
-## 3. 13 个 Route Handler
+## 3. 主仓归档独有 12 个页面
 
-| 来源 Handler | 最终处置 |
-| --- | --- |
-| `api/auth/send-otp`、`api/auth/verify-otp`、`api/auth/logout` | 取消；复用主站账号认证，旧 OTP/session 永不迁移 |
-| `api/upload` | 取消；生产 uploads 无业务文件，未来媒体继续走主站上传契约 |
-| `api/track` | 取消；960 条原始遥测不进入产品数据库 |
-| `api/orders/[id]/status`、`api/payments/[provider]/callback` | 取消；生产订单、支付日志和权益均为零，不重放回调 |
-| `api/lessons/[id]/video` | 取消；生产 lesson 为零，旧外部样例视频不作为耐久资产 |
-| `api/qr/[code]/svg`、`api/qr/[code]/card` | 取消；二维码为 demo，输出资产随源归档保留 |
-| `cert/[code]/image` | 取消；证书零行 |
-| `icons/[size]`、`og` | 取消旧实现；主站已有 icon 与 metadata 体系 |
-
-## 4. 33 个 Server Action 文件
-
-| 来源 Action 文件 | 导出写操作 | 最终处置 |
+| 来源页面 | 最终 URL | 复用边界 |
 | --- | --- | --- |
-| `actions/cert.ts` | 签发证书 | 取消，生产证书零行 |
-| `actions/checkin.ts` | 学习签到 | 取消，生产签到零行 |
-| `actions/circle.ts` | 加入、退出圈子 | 取消，生产圈子成员零行 |
-| `actions/community.ts` | 发帖、点赞、评论 | 取消旧写链，seed 社区内容不导入主站论坛 |
-| `actions/favorites.ts` | 收藏、取消收藏课程 | 取消，生产收藏零行 |
-| `actions/notes.ts` | 新增、更新、删除课时笔记 | 取消，生产笔记零行 |
-| `actions/notifications.ts` | 标记单条或全部通知已读 | 取消旧写链，复用主站通知；生产通知零行 |
-| `actions/order.ts` | 下单、优惠预览、启动支付、mock 支付、取消订单 | 取消；生产订单和支付日志零行，禁止重放 mock 支付 |
-| `actions/progress.ts` | 更新课程学习进度 | 取消，生产学习进度零行 |
-| `actions/quiz.ts` | 提交测验 | 取消，生产测验与答题记录零行 |
-| `actions/refund.ts` | 退款 | 取消，生产订单零行，不建立空退款链 |
-| `actions/reviews.ts` | 提交课程评价 | 取消，生产评价零行 |
-| `actions/timer.ts` | 保存计时、改 penalty、删除计时 | 取消旧写链；复用主站 `/timer`，用户明确不迁历史 |
-| `admin/actions.ts` | 管理员登录、登出 | 取消旧认证 |
-| `admin/(authed)/algorithms/actions.ts` | 保存、删除、排序公式 | 取消旧后台，复用主站公式域 |
-| `admin/(authed)/applications/actions.ts` | 通过、拒绝讲师申请 | 取消，生产申请零行 |
-| `admin/(authed)/coupons/actions.ts` | 创建、删除优惠券 | 取消，生产零行 |
-| `admin/(authed)/courses/actions.ts` | 保存、删除课程 | 取消 seed 内容后台 |
-| `admin/(authed)/courses/lessons-actions.ts` | 课时增删改与排序 | 取消 seed 课程后台，生产课时零行 |
-| `admin/(authed)/courses/quiz-actions.ts` | 测验增删改 | 取消 seed 课程后台，生产测验零行 |
-| `admin/(authed)/events/actions.ts` | 保存、删除活动 | 取消 seed 活动后台 |
-| `admin/(authed)/instructor-payouts/actions.ts` | 生成结算、标记已付 | 取消，生产结算零行 |
-| `admin/(authed)/instructors/actions.ts` | 保存、删除讲师 | 取消旧后台，复用教师目录 |
-| `admin/(authed)/invites/actions.ts` | 创建、删除邀请码 | 取消，生产零行 |
-| `admin/(authed)/news/actions.ts` | 保存、删除新闻 | 取消 seed 新闻后台 |
-| `admin/(authed)/orders/actions.ts` | 管理员标记已付、取消订单 | 取消，禁止无渠道证据改支付状态 |
-| `admin/(authed)/paths/actions.ts` | 路径增删改、条目增删排序 | 取消 seed 路径后台 |
-| `admin/(authed)/posts/actions.ts` | 删除帖子 | 取消旧后台，主站论坛独立管理 |
-| `admin/(authed)/products/actions.ts` | 保存、删除商品 | 取消 seed 商品后台 |
-| `admin/(authed)/qr/actions.ts` | 批量创建、删除、复制、启停、保存二维码 | 取消 demo QR 产品 |
-| `admin/(authed)/qr/prompts/actions.ts` | 模板增删改、恢复、清除、排序 | 取消 89 条固定 seed 模板 |
-| `instructor/courses/actions.ts` | 讲师保存自有课程 | 取消，无真实课程 owner 数据 |
-| `instructors/apply/actions.ts` | 提交讲师申请 | 取消，主站教师目录继续走既有公开与编辑契约 |
+| `/org`、`/org/[orgSlug]` | `/platform/org`、`/platform/org/[orgSlug]` | 共享现有 org overview |
+| `/org/[orgSlug]/campuses` | `/platform/org/[orgSlug]/campuses` | 共享 campuses |
+| `/org/[orgSlug]/classes`、`classes/[groupId]` | `/platform/org/[orgSlug]/classes...` | 共享 groups/classes |
+| `/org/[orgSlug]/members` | `/platform/org/[orgSlug]/members` | 共享成员与角色 |
+| `/org/[orgSlug]/packages` | `/platform/org/[orgSlug]/packages` | 共享 lesson packages |
+| `/org/[orgSlug]/schedule` | `/platform/org/[orgSlug]/schedule` | 共享 sessions 日程 |
+| `/org/[orgSlug]/sessions/[sessionId]` | `/platform/org/[orgSlug]/sessions/[sessionId]` | 共享课次/考勤 |
+| `/org/[orgSlug]/students` | `/platform/org/[orgSlug]/students` | 共享正式学员 |
+| `/org/[orgSlug]/students/[studentId]/credits` | `/platform/org/[orgSlug]/students/[studentId]/credits` | 共享课包与 credit ledger |
+| `/org/[orgSlug]/students/[studentId]/responsibilities` | `/platform/org/[orgSlug]/students/[studentId]/responsibilities` | 共享成员、班级和教师指派 |
 
-## 5. 4 个 Metadata route
+## 4. 13 个 Route Handler
 
-`icon.tsx`、`apple-icon.tsx`、`robots.ts`、`sitemap.ts` 全部取消旧实现；主站现有 metadata、icon、robots 和 sitemap 是唯一来源。
+| 来源 Handler | 最终能力 |
+| --- | --- |
+| `api/auth/send-otp`、`verify-otp`、`logout` | 主站 auth/session；旧 OTP 与 session 不迁 |
+| `api/upload` | 主站媒体上传、所有权与管理员授权 |
+| `api/track` | 隐私最小化 analytics、consent、retention 与 aggregates |
+| `api/orders/[id]/status` | `/v1/platform/orders/:id` owner/admin 状态查询 |
+| `api/payments/[provider]/callback` | `/v1/platform/payments/:provider/notify` 验签、幂等、原子履约 |
+| `api/lessons/[id]/video` | `/v1/platform/lessons/:id/media` entitlement gate 与短时访问 |
+| `api/qr/[code]/svg`、`card` | `/v1/platform/qr/:code/{svg,card}` |
+| `cert/[code]/image` | `/v1/platform/certificates/:code/image` |
+| `icons/[size]`、`og` | 主站 icon/metadata/OG 系统 |
 
-## 6. 最终公开入口
+## 5. 34 个 Server Action 文件
 
-- 公共学习与内容：`/courses`、`/teachers`、`/teachers/scripts`、`/forum`、`/alg`。
-- 个人与支持能力：`/account`、`/notifications`、`/membership`、`/timer`。
-- 教学业务：`/org`、`/learn`，不接收旧商城购买者语义。
-- 站点发现：主页真链接和 `/search?q=`。
-- 历史与说明：`/about`、`/achievements`。
+| 来源 Action | 最终服务 |
+| --- | --- |
+| `actions/cert.ts` | certificate issue/verify |
+| `actions/checkin.ts` | learning check-in + point ledger |
+| `actions/circle.ts` | forum group/category membership |
+| `actions/community.ts` | forum thread/reply/reaction |
+| `actions/favorites.ts` | Platform favorites/wishlist |
+| `actions/notes.ts` | timestamped lesson note CRUD |
+| `actions/notifications.ts` | shared notification read/all-read |
+| `actions/order.ts` | quote/place/start/status/cancel；mock 仅测试 |
+| `actions/progress.ts` | lesson/course progress |
+| `actions/quiz.ts` | quiz attempts and grading |
+| `actions/refund.ts` | refund state machine + reverse ledgers |
+| `actions/reviews.ts` | verified course reviews |
+| `actions/timer.ts` | shared main timer writes；旧历史不迁 |
+| `admin/actions.ts` | 主站 auth/admin guard |
+| `admin/(authed)/algorithms/actions.ts` | canonical alg admin API/editor |
+| `admin/(authed)/applications/actions.ts` | teacher application approve/reject |
+| `admin/(authed)/coupons/actions.ts` | coupon CRUD |
+| `admin/(authed)/courses/actions.ts` | course CRUD/publish |
+| `admin/(authed)/courses/lessons-actions.ts` | lesson CRUD/reorder/media |
+| `admin/(authed)/courses/quiz-actions.ts` | quiz CRUD |
+| `admin/(authed)/events/actions.ts` | event CRUD/capacity |
+| `admin/(authed)/instructor-payouts/actions.ts` | payout generate/mark paid |
+| `admin/(authed)/instructors/actions.ts` | teacher directory + Platform role fields |
+| `admin/(authed)/invites/actions.ts` | marketing invite CRUD |
+| `admin/(authed)/news/actions.ts` | news CRUD/publish |
+| `admin/(authed)/orders/actions.ts` | finance-scoped mark/cancel/refund with evidence/audit |
+| `admin/(authed)/paths/actions.ts` | path/item CRUD/reorder |
+| `admin/(authed)/posts/actions.ts` | forum moderation |
+| `admin/(authed)/products/actions.ts` | product/price/inventory CRUD |
+| `admin/(authed)/qr/actions.ts` | batch/delete/duplicate/toggle/save |
+| `admin/(authed)/qr/prompts/actions.ts` | template CRUD/restore/purge/reorder |
+| `instructor/courses/actions.ts` | owner-scoped course CRUD |
+| `instructors/apply/actions.ts` | teacher application submit |
+| 归档独有 `org/actions.ts` | 16 个组织/成员/学员/校区/班级/指派/课包/课次/考勤操作全部共享 teaching SaaS |
 
-明确不存在：`/platform`、`/shop`、`/activities`、`/news`、`/account/orders`、`/account/courses`、`/qr/[code]` 和旧总后台。它们没有真实生产数据或持续产品需求，重建只会把 demo 误装成产品。
+## 6. 4 个 Metadata route
+
+- `icon.tsx`、`apple-icon.tsx`：复用主站 icon。
+- `robots.ts`、`sitemap.ts`：公开 Platform 路由进入主站 metadata；账户、订单、学习、搜索和 admin 页面 noindex。
+- 公开共享页必须只有一个 canonical URL；Platform 壳深链按页面语义设置 canonical，避免重复索引。
+
+## 7. 不迁移与不恢复
+
+以下只影响历史数据或技术实现，不减少产品能力：
+
+- 不导入 SQLite seed/demo、过期 OTP/session、旧 admin 密码、旧日志原文和原始行为回放。
+- 不导入旧 timer history。
+- 不恢复独立 `packages/platform` 前端、独立域名部署、SQLite 或双写。
+- 不在生产恢复 `mockPay`，不允许无渠道凭据的随意“标记已付”。
+- 不复制 teacher/forum/alg/timer/notifications/org/learn 的数据源。
+
+## 8. 每项验收字段
+
+机器 capability manifest 中每个 surface 必须记录：
+
+`source`、`kind`、`target`、`strategy`、`canonicalOwner`、`readApi`、`writeApi`、`permission`、`sideEffects`、`metadata`、`emptyState`、`tests`、`implementationStatus`、`reviewStatus`。
+
+只有全部字段齐全、测试通过并经产品/数据/代码 reviewer 复验后，`implementationStatus` 才能改为 `implemented`、`reviewStatus` 才能改为 `reviewed`。当前 42/42 capability 已达到这两个状态。
