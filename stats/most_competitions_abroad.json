@@ -107,11 +107,11 @@
     ],
     [
       123,
-      "[Oleg Gritsenko](https://www.worldcubeassociation.org/persons/2011GRIT01)"
+      "[Chan Tak Chuen (陳德泉)](https://www.worldcubeassociation.org/persons/2007CHUE01)"
     ],
     [
-      122,
-      "[Chan Tak Chuen (陳德泉)](https://www.worldcubeassociation.org/persons/2007CHUE01)"
+      123,
+      "[Oleg Gritsenko](https://www.worldcubeassociation.org/persons/2011GRIT01)"
     ],
     [
       121,
@@ -150,7 +150,7 @@
       "[Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01)"
     ],
     [
-      107,
+      108,
       "[Ivan Lew Yi Wen (刘义文)](https://www.worldcubeassociation.org/persons/2012WENI01)"
     ],
     [
@@ -163,11 +163,11 @@
     ],
     [
       104,
-      "[Ng Jia Quan (黄佳铨)](https://www.worldcubeassociation.org/persons/2015QUAN03)"
+      "[Zhedong Wang (王哲栋)](https://www.worldcubeassociation.org/persons/2015WANG83)"
     ],
     [
-      103,
-      "[Zhedong Wang (王哲栋)](https://www.worldcubeassociation.org/persons/2015WANG83)"
+      104,
+      "[Ng Jia Quan (黄佳铨)](https://www.worldcubeassociation.org/persons/2015QUAN03)"
     ],
     [
       103,
@@ -199,11 +199,11 @@
     ],
     [
       95,
-      "[Thomas Mæhle Schmidt](https://www.worldcubeassociation.org/persons/2013SCHM02)"
+      "[Vincenzo Maria Gammino](https://www.worldcubeassociation.org/persons/2016GAMM01)"
     ],
     [
       95,
-      "[Vincenzo Maria Gammino](https://www.worldcubeassociation.org/persons/2016GAMM01)"
+      "[Thomas Mæhle Schmidt](https://www.worldcubeassociation.org/persons/2013SCHM02)"
     ],
     [
       94,
@@ -299,11 +299,11 @@
     ],
     [
       77,
-      "[Ivan Li Ka Leong (李嘉亮)](https://www.worldcubeassociation.org/persons/2015LEON02)"
+      "[Jedrick Remonde](https://www.worldcubeassociation.org/persons/2008REMO01)"
     ],
     [
       77,
-      "[Jedrick Remonde](https://www.worldcubeassociation.org/persons/2008REMO01)"
+      "[Ivan Li Ka Leong (李嘉亮)](https://www.worldcubeassociation.org/persons/2015LEON02)"
     ],
     [
       76,
@@ -331,15 +331,15 @@
     ],
     [
       73,
-      "[Amey Gaba](https://www.worldcubeassociation.org/persons/2016GABA02)"
-    ],
-    [
-      73,
       "[Dorian Chan](https://www.worldcubeassociation.org/persons/2023DORI01)"
     ],
     [
       73,
       "[Pablo Nicolás Oshiro Mondoñedo](https://www.worldcubeassociation.org/persons/2010MOND01)"
+    ],
+    [
+      73,
+      "[Amey Gaba](https://www.worldcubeassociation.org/persons/2016GABA02)"
     ],
     [
       73,
@@ -354,12 +354,12 @@
       "[Mok Man Kit (莫文傑)](https://www.worldcubeassociation.org/persons/2009KITM01)"
     ],
     [
-      71,
-      "[Niki Placskó](https://www.worldcubeassociation.org/persons/2008PLAC01)"
+      72,
+      "[Ming Zheng (郑鸣)](https://www.worldcubeassociation.org/persons/2009ZHEN11)"
     ],
     [
       71,
-      "[Ming Zheng (郑鸣)](https://www.worldcubeassociation.org/persons/2009ZHEN11)"
+      "[Niki Placskó](https://www.worldcubeassociation.org/persons/2008PLAC01)"
     ],
     [
       71,
@@ -367,15 +367,7 @@
     ],
     [
       70,
-      "[Elias Malomgré](https://www.worldcubeassociation.org/persons/2017MALO02)"
-    ],
-    [
-      70,
-      "[AJ Nicholls](https://www.worldcubeassociation.org/persons/2015NICH04)"
-    ],
-    [
-      70,
-      "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)"
+      "[Chris Mills](https://www.worldcubeassociation.org/persons/2014MILL04)"
     ],
     [
       70,
@@ -387,7 +379,15 @@
     ],
     [
       70,
-      "[Chris Mills](https://www.worldcubeassociation.org/persons/2014MILL04)"
+      "[Elias Malomgré](https://www.worldcubeassociation.org/persons/2017MALO02)"
+    ],
+    [
+      70,
+      "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)"
+    ],
+    [
+      70,
+      "[AJ Nicholls](https://www.worldcubeassociation.org/persons/2015NICH04)"
     ],
     [
       69,
@@ -403,10 +403,6 @@
     ],
     [
       68,
-      "[Mengfei Shen (沈梦非)](https://www.worldcubeassociation.org/persons/2018SHEN07)"
-    ],
-    [
-      68,
       "[Lim Chun Yik (林峻毅)](https://www.worldcubeassociation.org/persons/2018YIKL01)"
     ],
     [
@@ -416,6 +412,10 @@
     [
       68,
       "[Jernej Omulec](https://www.worldcubeassociation.org/persons/2010OMUL01)"
+    ],
+    [
+      68,
+      "[Mengfei Shen (沈梦非)](https://www.worldcubeassociation.org/persons/2018SHEN07)"
     ]
   ]
 }

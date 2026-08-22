@@ -27249,6 +27249,12 @@
     "WuhuOpen2026": {
       "name": "Wuhu Open 2026"
     },
+    "KoreaOpen2026": {
+      "name": "Korea Open 2026"
+    },
+    "GuangzhouGraDUAL3x3II2026": {
+      "name": "Guangzhou GraDUAL 3x3 II 2026"
+    },
     "DanishCubeDay2008": {
       "name": "Danish Cube Day 2008"
     },
@@ -31943,6 +31949,9 @@
     },
     "BaliDiscoveryMasters2026": {
       "name": "Bali Discovery Master 2026"
+    },
+    "VietnamChampionship2026": {
+      "name": "Vietnam Championship 2026"
     },
     "KociewieOpen2011": {
       "name": "Kociewie Open 2011"
@@ -37431,6 +37440,9 @@
     "OhioStateSummerWarmUp2026": {
       "name": "Ohio State Summer Warm Up 2026"
     },
+    "CulturaCamposdoJordao2026": {
+      "name": "Cultura Campos do Jordão 2026"
+    },
     "BigCubesSummer2009": {
       "name": "Big Cubes Summer 2009"
     },
@@ -41877,11 +41889,11 @@
     "QinhuangdaoOpen2019": {
       "name": "Qinhuangdao Open 2019"
     },
-    "EmpireStateSpring2019": {
-      "name": "Empire State Spring 2019"
-    },
     "PennCubeDaySpring2019": {
       "name": "Penn Cube Day Spring 2019"
+    },
+    "EmpireStateSpring2019": {
+      "name": "Empire State Spring 2019"
     },
     "ReadyForSummerFrisco2019": {
       "name": "Ready For Summer Frisco 2019"
@@ -41958,11 +41970,11 @@
     "NxNxNurtingen2023": {
       "name": "NxNxNürtingen 2023"
     },
-    "BristolWinter2024": {
-      "name": "Bristol Winter 2024"
-    },
     "DeNxNver2024": {
       "name": "DeNxNver 2024"
+    },
+    "BristolWinter2024": {
+      "name": "Bristol Winter 2024"
     },
     "NinerNationSilence2024": {
       "name": "Niner Nation Silence 2024"
@@ -41991,11 +42003,11 @@
     "NayaritOpen2024": {
       "name": "Nayarit Open 2024"
     },
-    "KarnatakaCubeChampionship2024": {
-      "name": "Karnataka Cube Championship 2024"
-    },
     "RobinsonLatkrabangOpen2024": {
       "name": "Robinson Latkrabang Open 2024"
+    },
+    "KarnatakaCubeChampionship2024": {
+      "name": "Karnataka Cube Championship 2024"
     },
     "NapervilleWinter2025": {
       "name": "Naperville Winter 2025"
@@ -42228,11 +42240,11 @@
     "SwisscubingCupII2026": {
       "name": "Swisscubing Cup II 2026"
     },
-    "KopliNxNRampage2026": {
-      "name": "Kopli NxN Rampage 2026"
-    },
     "PinoyBigCubesOpen2026": {
       "name": "Pinoy Big Cubes Open 2026"
+    },
+    "KopliNxNRampage2026": {
+      "name": "Kopli NxN Rampage 2026"
     },
     "WinnipegSpring2026": {
       "name": "Winnipeg Spring 2026"
@@ -52848,11 +52860,11 @@
     "SelangorPBQ2026": {
       "name": "Selangor PBQ 2026"
     },
-    "MentalBreakdownBangkok2026": {
-      "name": "Mental Breakdown Bangkok 2026"
-    },
     "MallorcaOpen2026": {
       "name": "Mallorca Open 2026"
+    },
+    "MentalBreakdownBangkok2026": {
+      "name": "Mental Breakdown Bangkok 2026"
     },
     "FantabulousMinnesota2015": {
       "name": "Fantabulous MN Competition 2015"
