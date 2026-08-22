@@ -10,6 +10,7 @@
  *
  * Input:  <dataRoot>/<key>/scrambles.txt        (id,scramble per line)
  * Output: <dataRoot>/222/222_metrics.csv        (id,face,layer,htm,qtm)
+ *         <dataRoot>/222/222_types.csv          (id,eg,cll,eg1,eg2,tcllp,tclln,tcll,ls,nobar)
  *         <dataRoot>/pyraminx/pyraminx_metrics.csv (id,v,cube)
  * Incremental: existing rows are kept; only ids not yet present are computed + appended.
  *
@@ -25,8 +26,10 @@ import readline from 'node:readline';
 import cube222Mod from '../lib/cube222-metric.ts';
 import pyraMod from '../app/[lang]/timer/_lib/solver/pyra.ts';
 
-const { create222MetricEvaluator } = cube222Mod as {
+const { create222MetricEvaluator, cube222StateFlagsOfScramble, CUBE222_STATE_TYPES } = cube222Mod as {
   create222MetricEvaluator: () => (s: string) => { face: number; layer: number; htm: number; qtm: number } | null;
+  cube222StateFlagsOfScramble: (s: string) => Record<string, boolean> | null;
+  CUBE222_STATE_TYPES: readonly string[];
 };
 const { solvePyra, solvePyraV } = pyraMod as {
   solvePyra: (s: string) => { moves: string[] };
@@ -51,6 +54,8 @@ interface Spec {
   key: string;
   header: string[];
   compute: (scr: string) => (number | null)[];
+  outputFile?: string;
+  logKey?: string;
 }
 // 222 查表 evaluator 惰性建表:无新打乱时(日常增量常见)完全不付建表成本。
 let eval222: ((s: string) => { face: number; layer: number; htm: number; qtm: number } | null) | null = null;
@@ -71,6 +76,17 @@ const SPECS: Record<string, Spec> = {
     key: 'pyraminx',
     header: ['id', 'v', 'cube'],
     compute: (scr) => [pyraV(scr), pyraCube(scr)],
+  },
+};
+
+const TYPE_222_SPEC: Spec = {
+  key: '222',
+  header: ['id', ...CUBE222_STATE_TYPES],
+  outputFile: '222_types.csv',
+  logKey: '222-types',
+  compute: (scr) => {
+    const flags = cube222StateFlagsOfScramble(scr);
+    return flags ? CUBE222_STATE_TYPES.map((type) => flags[type] ? 1 : 0) : CUBE222_STATE_TYPES.map(() => null);
   },
 };
 
@@ -96,7 +112,8 @@ async function build(spec: Spec): Promise<void> {
   const dir = path.join(DATA_ROOT, spec.key);
   const txtPath = path.join(dir, 'scrambles.txt');
   if (!fs.existsSync(txtPath)) { console.warn(`[skip] ${spec.key}: missing ${txtPath}`); return; }
-  const outPath = path.join(dir, `${spec.key}_metrics.csv`);
+  const label = spec.logKey ?? spec.key;
+  const outPath = path.join(dir, spec.outputFile ?? `${spec.key}_metrics.csv`);
   const done = await loadDoneIds(outPath, spec.header.length);
   if (!fs.existsSync(outPath)) fs.writeFileSync(outPath, spec.header.join(',') + '\n');
 
@@ -119,14 +136,17 @@ async function build(spec: Spec): Promise<void> {
     if (added % FLUSH_EVERY === 0) {
       flush();
       const rate = Math.round(added / ((Date.now() - t0) / 1000));
-      console.log(`  [${spec.key}] ${added} computed (${rate}/s)...`);
+      console.log(`  [${label}] ${added} computed (${rate}/s)...`);
     }
   }
   flush();
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
-  console.log(`[${spec.key}] +${added} new, ${skipped} cached${bad ? `, ${bad} unmeasurable` : ''} in ${secs}s → ${outPath}`);
+  console.log(`[${label}] +${added} new, ${skipped} cached${bad ? `, ${bad} unmeasurable` : ''} in ${secs}s → ${outPath}`);
 }
 
 const requested = process.argv.slice(2).filter((a) => a in SPECS);
 const keys = requested.length ? requested : Object.keys(SPECS);
-for (const k of keys) await build(SPECS[k]);
+for (const k of keys) {
+  await build(SPECS[k]);
+  if (k === '222') await build(TYPE_222_SPEC);
+}

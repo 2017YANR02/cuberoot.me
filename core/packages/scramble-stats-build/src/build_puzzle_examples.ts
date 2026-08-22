@@ -41,6 +41,8 @@ interface PuzzleSpec {
   // 「按步数」多口径(2×2 底面/底层/魔方/QTM、金字塔 V/魔方):示例按每个口径的度量值分桶,
   // 写进 metrics.<key>.bins。值来自 <key>_metrics.csv(build_puzzle_metrics.mts 预算)。
   metricsCsv?: { file: string; cols: string[] };
+  // 二阶专项最终状态标签。值来自共享 classifier 预算的 222_types.csv；每个 true 列单独蓄真题样本。
+  typesCsv?: { file: string; cols: string[] };
   // sq1 = 可证 WCA 12c4 最优(Sq1WcaSolver)。示例源 = sq1_wca_exact.csv + 未 ingest 完成块,
   // 按 wca_exact / opt 的 slash 数分桶,写进 bins/binsAlt(近最优 2026-06-18 退役,不再产 near 示例)。
   exact?: boolean;
@@ -48,7 +50,11 @@ interface PuzzleSpec {
 
 // 与 build_puzzle_dist.ts 的 PUZZLES 对齐(顺序无关,sq1 视 dist 是否存在决定产不产)。
 const PUZZLES: PuzzleSpec[] = [
-  { key: '222', event: '222', metricsCsv: { file: '222_metrics.csv', cols: ['face', 'layer', 'htm', 'qtm'] } },
+  {
+    key: '222', event: '222',
+    metricsCsv: { file: '222_metrics.csv', cols: ['face', 'layer', 'htm', 'qtm'] },
+    typesCsv: { file: '222_types.csv', cols: ['eg', 'cll', 'eg1', 'eg2', 'tcllp', 'tclln', 'tcll', 'ls', 'nobar'] },
+  },
   { key: 'pyraminx', event: 'pyram', metricsCsv: { file: 'pyraminx_metrics.csv', cols: ['v', 'cube'] } },
   { key: 'skewb', event: 'skewb' },
   { key: 'sq1', event: 'sq1', exact: true }, // 精确档:bins=wca_exact、binsAlt=slash(opt_scramble 驱动「原始/最优」)
@@ -180,6 +186,34 @@ async function bucketIdsByMetrics(csvPath: string, cols: string[]): Promise<Reco
     }
   }
   return out;
+}
+
+// 二阶状态标签 CSV:id,<type...>,值只能是 0/1。一趟读取，同时得到每类完整 id 集与有效行数。
+async function bucketIdsByFlags(csvPath: string, cols: string[]): Promise<{ buckets: Record<string, string[]>; rows: number }> {
+  const buckets: Record<string, string[]> = Object.fromEntries(cols.map((c) => [c, []]));
+  const rl = readline.createInterface({ input: fs.createReadStream(csvPath, 'utf-8'), crlfDelay: Infinity });
+  const idx: Record<string, number> = {};
+  let idIdx = -1;
+  let rows = 0;
+  for await (const line of rl) {
+    if (!line) continue;
+    if (idIdx === -1) {
+      const header = line.split(',');
+      idIdx = header.indexOf('id');
+      for (const c of cols) {
+        const i = header.indexOf(c);
+        if (idIdx === -1 || i === -1) throw new Error(`missing id/'${c}' in ${csvPath} header: ${line}`);
+        idx[c] = i;
+      }
+      continue;
+    }
+    const parts = line.split(',');
+    const id = parts[idIdx];
+    if (!id || cols.some((c) => parts[idx[c]] !== '0' && parts[idx[c]] !== '1')) continue;
+    rows++;
+    for (const c of cols) if (parts[idx[c]] === '1') buckets[c].push(id);
+  }
+  return { buckets, rows };
 }
 
 // sq1 精确档双分桶:读 sq1_wca_exact.csv + _exact_chunks/*_sq1.csv(全量灌注进行中时块未 ingest),
@@ -433,11 +467,11 @@ async function main() {
         continue;
       }
       const perMetricFull = await bucketIdsByMetrics(mcsvPath, spec.metricsCsv.cols);
+      let corpus = 0;
+      const rlc = readline.createInterface({ input: fs.createReadStream(mtxtPath, 'utf-8'), crlfDelay: Infinity });
+      for await (const line of rlc) if (line && line.includes(',')) corpus++;
       // 覆盖率守卫(与 build_puzzle_dist 同款):<99.5% = build_puzzle_metrics 没跑完,硬失败防半截样本发布。
       {
-        let corpus = 0;
-        const rlc = readline.createInterface({ input: fs.createReadStream(mtxtPath, 'utf-8'), crlfDelay: Infinity });
-        for await (const line of rlc) if (line && line.includes(',')) corpus++;
         let rows = 0;
         for (const ids of perMetricFull[spec.metricsCsv.cols[0]].values()) rows += ids.length;
         if (rows < corpus * 0.995) {
@@ -454,6 +488,27 @@ async function main() {
           for (const id of picked) wantedIds.add(id);
         }
         sampledPerMetric[col] = sampled;
+      }
+      let perTypeFull: Record<string, string[]> | null = null;
+      const sampledPerType: Record<string, string[]> = {};
+      if (spec.typesCsv) {
+        const tcsvPath = path.join(dataRoot, spec.key, spec.typesCsv.file);
+        if (!fs.existsSync(tcsvPath)) {
+          throw new Error(`[${spec.key}] missing ${tcsvPath} — run build_puzzle_metrics.mts first`);
+        }
+        const tagged = await bucketIdsByFlags(tcsvPath, spec.typesCsv.cols);
+        if (tagged.rows < corpus * 0.995) {
+          throw new Error(`[${spec.key}] types CSV covers ${tagged.rows}/${corpus} corpus scrambles — run build_puzzle_metrics.mts first`);
+        }
+        perTypeFull = tagged.buckets;
+        for (const col of spec.typesCsv.cols) {
+          const ids = perTypeFull[col];
+          // 这些桶直接供计时器循环出题，不是统计页的少量展示样本。稀有类型保留全集，
+          // 常见类型均匀保留最多 FULL_BIN_CAP 条，避免长期只在 20 条示例里打转。
+          const picked = pickUniform(ids, Math.min(ids.length, FULL_BIN_CAP));
+          sampledPerType[col] = picked;
+          for (const id of picked) wantedIds.add(id);
+        }
       }
       // 原始打乱串(仅被采样 id)
       const scrambleOf = new Map<string, string>();
@@ -473,6 +528,7 @@ async function main() {
       // 全量 id(countryDist 按国聚合用)= 各口径全量桶并集(所有口径同一 id 集)。
       const allIds = new Set<string>();
       for (const col of spec.metricsCsv.cols) for (const ids of perMetricFull[col].values()) for (const id of ids) allIds.add(id);
+      if (perTypeFull) for (const ids of Object.values(perTypeFull)) for (const id of ids) allIds.add(id);
       const { comps, idMeta, idToComp } = await buildCompMeta(wantedIds, allIds, scramblesTsv, compTsv);
       const metricsOut: Record<string, unknown> = {};
       const note: string[] = [];
@@ -497,7 +553,24 @@ async function main() {
         let n = 0; for (const b of Object.values(bins)) n += b.length;
         note.push(`${col}=${Object.keys(bins).length}bin/${n}`);
       }
-      puzzlesOut[spec.key] = { comps, idMeta, metrics: metricsOut };
+      const typesOut: Record<string, Sample[]> = {};
+      for (const [type, ids] of Object.entries(sampledPerType)) {
+        const arr: Sample[] = [];
+        for (const id of ids) {
+          const scr = scrambleOf.get(id);
+          if (scr === undefined) continue;
+          const opt = optOf.get(id);
+          arr.push(opt ? [id, scr, opt] : [id, scr]);
+        }
+        if (arr.length) typesOut[type] = arr;
+        note.push(`${type}=${arr.length}/${perTypeFull?.[type].length ?? 0}`);
+      }
+      puzzlesOut[spec.key] = {
+        comps,
+        idMeta,
+        metrics: metricsOut,
+        ...(Object.keys(typesOut).length ? { types: typesOut } : {}),
+      };
       console.log(`  [${spec.key}] ${note.join(', ')}, ${Object.keys(comps).length} comps`);
       continue;
     }

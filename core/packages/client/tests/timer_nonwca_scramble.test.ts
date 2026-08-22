@@ -39,7 +39,8 @@ import { MPYR_MOVE_NAMES, mpyrFacelets, mpyrSolvedFacelets } from '@/lib/mpyr-so
 import { NON_WCA_EVENT_IDS, cstimerKeyForEvent } from '@/app/[lang]/timer/_lib/scramble/nonwca';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import { pocketFaceletFromMoves } from '@/lib/pocket-facelet';
-import { SCRAMBLE_222_TYPES, cstimer222Spec } from '@/lib/scramble-222-mode';
+import { SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, cstimer222Spec } from '@/lib/scramble-222-mode';
+import { CUBE222_STATE_TYPES, cube222StateTypeMatchesScramble } from '@/lib/cube222-metric';
 
 const BUNDLE = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -145,6 +146,24 @@ describe('2x2 special scramble catalog', () => {
     expect(spec).toEqual({ key: '2223', length: 25 });
     expect(tokens(ask(spec.key, spec.length)).length).toBe(25);
   });
+
+  it('offers only final-state families for WCA real scrambles', () => {
+    expect(WCA_SCRAMBLE_222_TYPES).toEqual(['full', ...CUBE222_STATE_TYPES]);
+    expect(WCA_SCRAMBLE_222_TYPES).not.toContain('3gen');
+  });
+
+  it('classifies every state-family scramble with the shared WCA predicate', () => {
+    for (const type of CUBE222_STATE_TYPES) {
+      const spec = cstimer222Spec(type)!;
+      for (let draw = 0; draw < 12; draw++) {
+        const scramble = ask(spec.key, spec.length ?? 0);
+        expect(
+          cube222StateTypeMatchesScramble(scramble, type),
+          `${type} classifier rejected ${scramble}`,
+        ).toBe(true);
+      }
+    }
+  }, 120_000);
 
   it('generates actual no-bar states', () => {
     const spec = cstimer222Spec('nobar')!;

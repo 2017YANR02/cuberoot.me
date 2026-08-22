@@ -7,6 +7,7 @@
 import { tr, useLang } from '@/i18n/tr';
 import {
   SCRAMBLE_222_TYPES,
+  type Scramble222Type,
   scramble222TypeLabel,
   use222Mode,
   use222Type,
@@ -20,17 +21,21 @@ interface Props {
   showLabel?: boolean;
   /** 仅计时器随机来源启用:显示 csTimer 的二阶专项打乱类型。 */
   showSpecialTypes?: boolean;
+  /** 来源支持的类型子集；WCA 真题会排除只描述生成过程的 3-gen。 */
+  typeOptions?: readonly Scramble222Type[];
 }
 
 export default function Scramble222ModePicker({
   active222,
   showLabel = true,
   showSpecialTypes = false,
+  typeOptions = SCRAMBLE_222_TYPES,
 }: Props) {
   const [mode, setMode] = use222Mode();
   const [type, setType] = use222Type();
   const isZh = useLang() === 'zh';
   if (!active222) return null;
+  const activeType = typeOptions.includes(type) ? type : 'full';
   return (
     <>
       {showSpecialTypes && (
@@ -38,8 +43,8 @@ export default function Scramble222ModePicker({
           <span className="settings-row-label">{tr({ zh: '类型', en: 'Type' })}</span>
           <VariantSelect
             className="settings-row-control-select"
-            value={type}
-            options={SCRAMBLE_222_TYPES}
+            value={activeType}
+            options={typeOptions}
             onChange={(value) => setType(value as typeof type)}
             isZh={isZh}
             label={scramble222TypeLabel}
@@ -47,7 +52,7 @@ export default function Scramble222ModePicker({
           />
         </span>
       )}
-      {(!showSpecialTypes || type === 'full') && (
+      {(!showSpecialTypes || activeType === 'full') && (
         <ScrambleModePickerRow
           iconEvent={showLabel ? '222' : undefined}
           label={showLabel ? tr({ zh: '口径', en: 'style' }) : undefined}
