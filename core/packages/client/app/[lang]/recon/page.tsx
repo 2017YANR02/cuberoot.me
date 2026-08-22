@@ -817,6 +817,9 @@ export default function ReconListPage() {
         <div>
           <h1>
             {t('recon.title')}
+            <Link href="/recon/submit" className="recon-add-btn" title={t('recon.add')} aria-label={t('recon.add')}>
+              <Plus size={18} />
+            </Link>
             <Link
               href="/recon-about"
               className="recon-title-help"
@@ -832,7 +835,7 @@ export default function ReconListPage() {
         </div>
       </div>
 
-      {/* 工具栏：WCA toggle + 计数 + 添加 + 登录；filter 全在表头 popover */}
+      {/* 工具栏：WCA toggle + 计数 + 登录；filter 全在表头 popover */}
       <div className="recon-toolbar">
         <div className="recon-type-toggle">
           <button
@@ -890,9 +893,6 @@ export default function ReconListPage() {
               <TestTube2 size={17} />
             </Link>
           ) : null}
-          <Link href="/recon/submit" className="recon-add-btn" title={t('recon.add')} aria-label={t('recon.add')}>
-            <Plus size={18} />
-          </Link>
           <WcaAuth />
           <SearchInput
             value={filters.search}
