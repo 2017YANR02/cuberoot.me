@@ -14,7 +14,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { GraduationCap, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { ALG_CATALOG, ALG_CATALOG_SECTIONS, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import AlgPuzzleSelect from '../_components/AlgPuzzleSelect';
 import BackHome from '@/components/BackHome';
@@ -307,8 +307,7 @@ export default function AlgPuzzleClient() {
           />
         )}
         <Link href="/alg/progress" className="alg-index-progress-link" prefetch={false}>
-          <GraduationCap size={16} aria-hidden="true" />
-          {tr({ zh: '学习进度', en: 'Progress' })}
+          {tr({ zh: '进度', en: 'Progress' })}
         </Link>
         {/* 这一层就是「这个魔方的所有公式集」,校验粒度跟着它 —— 一次扫完本页列出的每套 */}
         <AlgAdminValidate

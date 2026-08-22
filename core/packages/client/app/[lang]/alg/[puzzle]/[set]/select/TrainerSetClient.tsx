@@ -59,6 +59,11 @@ export default function TrainerSetClient() {
 
   const puzzle = resolveAlgPuzzle(puzzleParam);   // 接受 event code(333)或 legacy puzzle 名(3x3)
 
+  // mix 是 SSG 哨兵页,静态 HTML 看不到 `?sets=`。客户端首帧必须继续渲染同一份
+  // 加载壳,挂载后才能按 query 切到选题页,否则整棵子树会触发 hydration #418。
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   // 合练:`/alg/<puzzle>/mix/select?sets=pll,zbll`
   const [setsParam] = useQueryState('sets');
   const mixSets = useMemo(
@@ -66,17 +71,18 @@ export default function TrainerSetClient() {
     [isMix, puzzle, setsParam],
   );
   const mixKey = mixSets.join(',');
+  const mixReady = mounted && isMix && mixSets.length >= MIX_MIN_SETS;
   // 必须 memo:合练的 meta 是现造的字面量,身份每次 render 都变,而它进了装载 effect 的
   // 依赖 —— 不 memo 就是「effect → set state → 新 meta → effect」的死循环。
   const meta = useMemo(() => (
     puzzle
       ? (isMix
-          ? (mixSets.length >= MIX_MIN_SETS
+          ? (mixReady
               ? { zh: mixTitle(puzzle, mixSets), en: mixTitle(puzzle, mixSets) }
               : undefined)
           : getAlgSetMeta(puzzle, setSlug))
       : undefined
-  ), [puzzle, isMix, mixSets, setSlug]);
+  ), [puzzle, isMix, mixReady, mixSets, setSlug]);
 
   const cases = useTrainerStore(s => s.cases);
   const selected = useTrainerStore(s => s.selected);
@@ -94,10 +100,6 @@ export default function TrainerSetClient() {
   const loadSrsMulti = useAlgSrs(s => s.loadSrsMulti);
   /** 画笔:null = 普通选择;其余 = 点 cell / 组头 涂该标记(再涂同标记 = 清除)。会话内状态,不进 URL。 */
   const [brush, setBrush] = useState<TrainerMarkBrush | null>(null);
-
-  // SSG 壳里读不到 `?sets=`(静态 HTML 没有 query),挂载前别急着说「至少要选两套」
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!puzzle || !meta) return;
