@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { describe, expect, it, vi } from 'vitest';
 import { parseCalcLiveSnapshot, type CalcLiveSnapshot } from '@cuberoot/shared';
 import {
@@ -145,5 +146,23 @@ describe('parseCalcLiveSnapshot', () => {
       ...snapshot(),
       times: [[2_000_000_001, 0, 0, 0, 0], [0, 0, 0, 0, 0]],
     })).toBeNull();
+  });
+});
+
+describe('calc live production proxy contract', () => {
+  it('forwards WebSocket upgrades without buffering or caching', async () => {
+    const nginx = await readFile(
+      new URL('../../../../ops/nginx/www.cuberoot.me.conf', import.meta.url),
+      'utf8',
+    );
+    const start = nginx.indexOf('location = /v1/calc/live');
+    const block = nginx.slice(start, nginx.indexOf('\n    }', start));
+
+    expect(start).toBeGreaterThan(-1);
+    expect(block).toContain('proxy_set_header Upgrade $http_upgrade');
+    expect(block).toContain('proxy_set_header Connection $connection_upgrade');
+    expect(block).toContain('proxy_buffering off');
+    expect(block).toContain('proxy_cache off');
+    expect(block).toContain('proxy_read_timeout 1h');
   });
 });
