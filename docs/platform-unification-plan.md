@@ -2,7 +2,7 @@
 
 最后更新:2026-08-22
 
-状态:机构教学前端统一与旧 Platform 产品能力的本地实施已经完成,独立前端已退役;P8 发布验收与至少 30 天观察尚未完成,旧 seed/demo 和计时历史按决策不迁移。后续执行以[Platform 产品能力与数据迁移跟踪](./platform-product-migration-tracker.md)为准。
+状态:机构教学前端统一与旧 Platform 产品能力已经实施并通过 P8 发布验收,独立前端已退役;至少 30 天观察已于 2026-08-22 启动,旧 seed/demo 和计时历史按决策不迁移。后续执行以[Platform 产品能力与数据迁移跟踪](./platform-product-migration-tracker.md)为准。
 
 ## 决策
 

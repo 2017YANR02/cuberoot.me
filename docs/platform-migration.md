@@ -127,7 +127,7 @@ Stage 0 至 Stage 4 的详细设计和验证边界记录在[多机构教学 SaaS
 
 ## 删除旧本地目录与旧 GitHub 仓库前的门槛
 
-除满足以下源码历史条件外,还必须完成[产品迁移跟踪表 P7](./platform-product-migration-tracker.md#p7最终对账观察与删除授权),旧本地目录与旧 GitHub 仓库才可由仓库所有者删除:
+除满足以下源码历史条件外,还必须完成[产品迁移跟踪表 P8](./platform-product-migration-tracker.md#p8-发布观察与旧仓决策--发布验收已完成观察中)的观察与删除授权,旧本地目录与旧 GitHub 仓库才可由仓库所有者删除:
 
 1. 主仓远端仍可达原 subtree 父提交,并保留完整 `core/packages/platform` 归档源码。
 2. 旧 SQLite、uploads 和非 Git 文件已备份或明确放弃,且需要保留的备份已验证可读。
