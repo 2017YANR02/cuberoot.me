@@ -69,6 +69,16 @@ export function CalcPage() {
   // URL 恢复与直播快照都属于外部完整状态，事件变化时不能再走“手动切项目清空成绩”。
   const preservingExternalEventRef = useRef<string | null>(null);
 
+  // NOTE: 本机预览暴露状态给 Playwright 手动验收；线上域名不暴露。
+  useEffect(() => {
+    if (
+      process.env.NODE_ENV === 'production'
+      && window.location.hostname !== '127.0.0.1'
+      && window.location.hostname !== 'localhost'
+    ) return;
+    (globalThis as unknown as { __calcStore?: typeof useCalcStore }).__calcStore = useCalcStore;
+  }, []);
+
   // NOTE: tab 走 nuqs ?tab=（replace,不堆历史,刷新可恢复)。默认 compare 自动从 URL 省略。
   // 成绩数据(event/target/t0..)由 calc_store 自己序列化进 URL,saveToUrl 会保留本 ?tab=。
   const [tab, setTab] = useQueryState(
@@ -128,12 +138,18 @@ export function CalcPage() {
     if (!sourceContext.wcaId || sourceContext.sourceEvent !== event || liveCode) return;
 
     let cancelled = false;
+    setAvatarState(prev => {
+      if (prev[0]?.active) return prev;
+      const next = [...prev];
+      next[0] = { ...next[0], wcaId: sourceContext.wcaId || undefined };
+      return next;
+    });
     void fetchAvatar(sourceContext.wcaId).then(avatarUrl => {
       if (cancelled || !avatarUrl) return;
       setAvatarState(prev => {
         if (prev[0]?.active) return prev;
         const next = [...prev];
-        next[0] = { ...next[0], avatarUrl };
+        next[0] = { ...next[0], avatarUrl, wcaId: sourceContext.wcaId || undefined };
         return next;
       });
     });
@@ -307,7 +323,7 @@ export function CalcPage() {
               if (ov && ov.name === pl.name) {
                 setAvatarState(prev => {
                   const next = [...prev];
-                  next[i] = { active: true, avatarUrl: url || '' };
+                  next[i] = { active: true, avatarUrl: url || '', wcaId: pl.wca_id };
                   return next;
                 });
               }
@@ -416,32 +432,32 @@ export function CalcPage() {
     }
   }, []);
 
-  // NOTE: 头像按钮点击 — 1:1 还原原版 app.js#368-418 的 player-override 逻辑
-  const handlePlayerOverride = useCallback((p: number) => {
-    const override = getPlayerOverride(p);
-
-    if (override) {
-      // NOTE: 已激活 → 切换回世界数据
-      clearPlayerOverride(p);
-      setAvatarState(prev => {
-        const next = [...prev];
-        next[p] = { active: false };
-        return next;
-      });
-      // NOTE: 恢复 Target 为 WR Average — 原版 app.js#377-380
-      const state = useCalcStore.getState();
-      const isMbf = isMbfForEvent(state.event);
-      if (!isMbf) {
-        const wr12 = getAvgWR12(state.event);
-        if (wr12) state.setTargetAvg(state.seedOn + p, wr12[p]);
-      }
-      doRandFill();
-      return;
-    }
-
-    // NOTE: 未激活 → 打开搜索 modal
+  const handleSearchPlayer = useCallback((p: number) => {
     pickerTargetRef.current = p;
     setPickerOpen(true);
+  }, []);
+
+  // NOTE: 头像菜单切回世界数据 — 原版 app.js#368-418 的清除 player-override 逻辑
+  const handleClearPlayerOverride = useCallback((p: number) => {
+    const override = getPlayerOverride(p);
+    if (!override) return;
+
+    clearPlayerOverride(p);
+    setAvatarState(prev => {
+      const next = [...prev];
+      next[p] = { active: false };
+      return next;
+    });
+    // NOTE: 恢复 Target 为 WR Average — 原版 app.js#377-380
+    const state = useCalcStore.getState();
+    state.setNames(state.seedOn + p, `Name ${String.fromCharCode(65 + state.seedOn + p)}`);
+    const isMbf = isMbfForEvent(state.event);
+    if (!isMbf) {
+      const wr12 = getAvgWR12(state.event);
+      if (wr12) state.setTargetAvg(state.seedOn + p, wr12[p]);
+    }
+    doRandFill();
+    state.saveToUrl();
   }, [doRandFill]);
 
   // NOTE: 搜索结果选中 — 加载选手数据并更新状态
@@ -449,27 +465,35 @@ export function CalcPage() {
     setPickerOpen(false);
     const p = pickerTargetRef.current;
     let avatarUrl = person.avatarUrl || '';
+    const state = useCalcStore.getState();
+
+    // 身份先落到计算器状态和分享 URL；即使该项目暂无成绩，仍可从头像进入个人成绩页。
+    state.setNames(state.seedOn + p, person.name);
+    state.saveToUrl();
 
     // NOTE: loading 状态 — 按钮显示 ⏳
     setAvatarState(prev => {
       const next = [...prev];
-      next[p] = { active: false, loading: '⏳' };
+      next[p] = { active: false, loading: '⏳', avatarUrl, wcaId: person.wcaId };
       return next;
     });
 
-    const state = useCalcStore.getState();
     const data = await fetchUserTimes(person.wcaId, state.event);
     if (!data) {
+      if (!avatarUrl) avatarUrl = await fetchAvatar(person.wcaId);
       setAvatarState(prev => {
         const next = [...prev];
-        next[p] = { active: false };
+        next[p] = { active: false, avatarUrl, wcaId: person.wcaId };
         return next;
       });
-      alert((isZh
-                  ? `未找到 ${person.wcaId} 该项目的数据。`
-                  : 'No data found for ' + person.wcaId + ' in this event.'));
+      alert(tr({
+        zh: `未找到 ${person.wcaId} 该项目的数据。`,
+        en: `No data found for ${person.wcaId} in this event.`,
+      }));
       return;
     }
+
+    state.setNames(state.seedOn + p, data.name || person.name);
 
     // NOTE: FMC 数据对齐 — WCA API 返回原始步数，内部用 步数×100
     const isFmc = state.event === '333fm';
@@ -496,11 +520,12 @@ export function CalcPage() {
 
     setAvatarState(prev => {
       const next = [...prev];
-      next[p] = { active: true, avatarUrl };
+      next[p] = { active: true, avatarUrl, wcaId: person.wcaId };
       return next;
     });
 
     doRandFill();
+    state.saveToUrl();
   }, [doRandFill]);
 
   // NOTE: 搜索 modal 关闭（点击遮罩/Esc）
@@ -585,7 +610,8 @@ export function CalcPage() {
           {/* 输入网格 */}
           <InputGrid
             avatarState={avatarState}
-            onPlayerOverride={handlePlayerOverride}
+            onSearchPlayer={handleSearchPlayer}
+            onClearPlayerOverride={handleClearPlayerOverride}
             readOnly={isLiveViewer}
           />
 
