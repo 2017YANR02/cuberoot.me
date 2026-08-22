@@ -103,6 +103,27 @@ jobs:
           echo "OK: nginx reloaded; backups at ${VHOST_DIR}/*.bak-${TS}"
           REMOTE
 
+      - name: Keep retired Platform service stopped
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          set -euo pipefail
+          if systemctl list-unit-files --type=service --no-legend | awk '{print $1}' | grep -Fxq 'platform-next.service'; then
+            systemctl disable --now platform-next.service
+          fi
+          if systemctl is-active --quiet platform-next.service; then
+            echo "ERROR: retired Platform service is still active" >&2
+            exit 1
+          fi
+          if curl --max-time 2 --silent --show-error --output /dev/null http://127.0.0.1:3004/; then
+            echo "ERROR: retired Platform listener is still reachable" >&2
+            exit 1
+          fi
+          echo "OK: retired Platform service and listener are stopped"
+          REMOTE
+
       - name: Apply logrotate policy (with validation and rollback)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}

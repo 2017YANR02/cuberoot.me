@@ -7,7 +7,7 @@ pnpm + Turbo monorepo,所有新开发都在这里。
 ```
 core/packages/
 ├── client/         # React 19 + Next.js 16 主站训练 / 工具前端
-├── platform/       # Next.js 16 + SQLite 机构 / 教师 / 课程交易平台
+├── platform/       # 已退役的 Platform 源码与 SQLite migration 归档
 ├── server/         # Hono + PostgreSQL 13(WCA OAuth + recon + alg + 训练数据)
 ├── shared/         # 共享类型与通用数据
 ├── visualcube/     # 自有 NxN SVG 渲染器
@@ -34,9 +34,6 @@ pnpm install
 pnpm --filter @cuberoot/client dev          # 前端 dev,127.0.0.1:3000
 pnpm --filter @cuberoot/client typecheck     # tsgo
 pnpm --filter @cuberoot/client build
-pnpm --filter @cuberoot/platform dev       # 平台 dev,127.0.0.1:3100
-pnpm --filter @cuberoot/platform typecheck
-pnpm --filter @cuberoot/platform test
 pnpm --filter @cuberoot/server typecheck
 ```
 

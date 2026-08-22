@@ -9,7 +9,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 1. **根目录** — static.cuberoot.me 服的共享静态(`tools/` forks + `stats/` WCA JSON)+ 仓库基建(`ops/` `docs/` workflows)。
 2. **`core/`** — pnpm + Turbo monorepo,所有新开发在这里:
    - `packages/client` — React 19 + Next.js 16(App Router),主站训练 / 工具前端
-   - `packages/platform` — React 19 + Next.js 16 + SQLite,机构 / 教师 / 课程交易平台
+   - `packages/platform` — 已退役的历史归档,不测试、不部署;教学前端统一在 `packages/client`
    - `packages/server` — Hono + PostgreSQL 13(WCA OAuth + recon + alg 库,部署云服务器)
    - `packages/shared` — 共享类型;公式数据在 PG `alg_sets/alg_cases`,`loadAlg` 走 `/api/alg/sets/:p/:s`
    - `packages/visualcube` — 自有封装;CI/server bundle 前必须先 `pnpm -F @cuberoot/visualcube build`

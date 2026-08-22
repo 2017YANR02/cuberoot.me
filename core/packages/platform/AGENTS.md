@@ -2,7 +2,7 @@
 
 ## 项目
 
-CubeRoot monorepo 的教学与机构平台工作区。迁移与边界记录见根目录 `docs/platform-migration.md`。
+已退役 Platform 前端的历史归档。主站 `/org` 与 `/learn` 是唯一教学入口;本目录不再测试、部署或新增产品功能。迁移与边界记录见根目录 `docs/platform-migration.md`。
 
 ## 技术栈
 
@@ -181,19 +181,12 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 - `SwRegister` 仅 production 注册,dev 不注册避免 HMR 闹;`PwaInstallButton` 监听 `beforeinstallprompt`,iOS Safari 不触发(用户自己 → 添加到主屏幕)
 - 离线壳 `/offline`
 
-## 部署
+## 退役
 
-- 线上 https://platform.cuberoot.me;push main → 根目录 `.github/workflows/deploy_platform.yml`。
-- systemd `platform-next` 反代 :3004,unit 在根目录 `ops/systemd/platform-next.service`。
-- nginx vhost 不在本 repo,在 cuberoot.me repo `ops/nginx/platform.cuberoot.me.conf`。
-- CI 两坑:node-version 必须 24(better-sqlite3 ABI);`db:migrate+seed` 排在 `next build` 前(`app/sitemap.ts` 构建期查 DB)。build 时设 `NEXT_PUBLIC_SITE_URL=https://platform.cuberoot.me`。
-- 持久库 `/var/lib/cube-platform/data.db`(`DB_PATH` env,部署目录外),重新部署不覆盖;首次从 bundle seed。
-- 上传文件真身 `/var/lib/cube-platform/uploads`,部署时软链进 `LIVE/public/uploads`,换目录不丢图。
-- 持久库已存在时,部署 restart 前跑 `ops/migrate.cjs`(随包发,自包含、drizzle `__drizzle_migrations` 兼容)补未应用迁移;失败回滚。加表加列正常写 drizzle migration 即可,不用手 ALTER。
-- GitHub Actions secrets:`PLATFORM_DEPLOY_HOST`、`PLATFORM_DEPLOY_USER`、`PLATFORM_DEPLOY_SSH_KEY`;真实值不进仓库。
-- 生产鉴权、教学桥接和短信变量放 `/etc/cube-platform.env`;workflow 在替换 live 文件前校验两端教学密钥相同与短信配置完整。
-- `next.config.ts` 设 `output: "standalone"` + `serverExternalPackages: ["wechatpay-node-v3","alipay-sdk"]`。
-- 备选:`Dockerfile` + `docker-compose.yml`(named volume `/data/data.db`)仍在,本地容器跑用;线上走上面的 systemd。
+- `platform.cuberoot.me` 只返回 410,不跳转也不反代本应用。
+- 独立 test/deploy workflow 与 systemd unit 已删除,禁止重新启用。
+- SQLite、uploads、migration 与源码只作离线归档,不接受线上写入。
+- 需要的新能力进入 `packages/client`、`packages/server` 与 `packages/shared`。
 
 ## 常见坑
 

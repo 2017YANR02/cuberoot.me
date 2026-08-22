@@ -6,7 +6,7 @@ import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, Code as CodeIcon,
   Brain, Box, Sigma, Scale, Sprout, Brush, MessageCircle, MessagesSquare, Shapes, Blocks, Eye, Palette,
-  CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School,
+  CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School, Building2,
   FileText, Table2, Award, Radio,
   type LucideIcon,
 } from 'lucide-react';
@@ -43,6 +43,8 @@ export const TEXTS: Record<string, { en: string; zh: string
   scramble:        { en: 'Scramble', zh: '打乱'
 },
   alg:             { en: 'Tutorial',   zh: '教程' },
+  teachingManagement: { en: 'Teaching', zh: '教学管理' },
+  learningCenter:  { en: 'Learning Center', zh: '学习中心' },
   teaching:        { en: 'Courses', zh: '课程' },
   teachers:        { en: 'Teachers & Schools', zh: '老师与机构' },
   liveScripts:     { en: 'Live Scripts', zh: '直播话术' },
@@ -174,6 +176,8 @@ export const SECTIONS: Section[] = [
     sub:     { en: 'Find teachers and schools, browse their livestream scripts, course plans and illustrated tutorials, learn the terms, regulations and group theory, then use a quiz to check what stuck.', zh: '寻找魔方老师和培训机构,浏览直播话术、录播课方案与图文教程,学习术语、规则和群论,再用问答检验掌握程度。'
     },
     cards: [
+      { id: 'teaching-management', href: '/org', internal: true, tier: 'medium', Icon: Building2, nameKey: 'teachingManagement' },
+      { id: 'learning-center', href: '/learn', internal: true, tier: 'medium', Icon: BookOpen, nameKey: 'learningCenter' },
       { id: 'teaching', href: '/courses', internal: true, tier: 'medium', Icon: GraduationCap, nameKey: 'teaching', adminOnly: true },
       { id: 'teachers', href: '/teachers', internal: true, tier: 'medium', Icon: School, nameKey: 'teachers' },
       { id: 'live-scripts', href: '/teachers/scripts', internal: true, tier: 'medium', Icon: Radio, nameKey: 'liveScripts' },

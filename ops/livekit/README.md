@@ -5,7 +5,7 @@
 
 ## 拓扑:单机
 
-LiveKit 与全站跑在**同一台服务器**上(nginx / cuberoot-next / mira-next / platform-next /
+LiveKit 与全站跑在**同一台服务器**上(nginx / cuberoot-next / mira-next /
 core-api / PostgreSQL 都在这台),该机在境内。所以没有"媒体节点"与"主站"之分 ——
 LiveKit 是这台机器上多出来的一个 systemd 服务。
 
