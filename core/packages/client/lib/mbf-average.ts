@@ -11,7 +11,7 @@ const UNKNOWN_TIME = 99_999;          // TTTTT==99999 表示无时间记录(旧�
 //   dd      = 99 - 差值(difference = solved - missed;旧编码负差值时 dd 可 > 99)
 //   seconds = TTTTT(99999 = 未知)
 //   missed  = MM
-function decodeMbldFields(v: number): { dd: number; seconds: number; missed: number } {
+export function decodeMbldFields(v: number): { dd: number; seconds: number; missed: number } {
   if (v >= OLD_FORMAT_MIN) {
     // 旧:1SSAATTTTT → solved = 99 - SS, attempted = AA, time = TTTTT 秒
     const seconds = v % 100_000;
