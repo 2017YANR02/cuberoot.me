@@ -13,7 +13,7 @@ export function wcaIdToCubingSlug(wcaId: string): string {
     .replace(/([a-z])([A-Z])/g, '$1-$2')       // lc→UC: HefeiCubing → Hefei-Cubing
     .replace(/(\d)([A-Z])/g, '$1-$2')           // digit→UC: 3IV → 3-IV
     .replace(/([A-Z])(\d)/g, '$1-$2')           // UC→digit: IV2026 → IV-2026
-    .replace(/(?<!\d)([a-z])(\d)/g, '$1-$2');   // lc→digit (前面不是 digit):League3 → League-3,但 NxN 里 x3 保留
+    .replace(/(^|[^\d])([a-z])(\d)/g, '$1$2-$3'); // lc→digit (前面不是 digit):League3 → League-3,但 NxN 里 x3 保留
 }
 
 /** 真实比赛名 → cubing.com slug:按词边界(空格/连字符)分段,每段剥非字母数字(撇号等,与 WCA ID 同口径),

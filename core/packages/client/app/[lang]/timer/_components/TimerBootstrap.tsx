@@ -14,9 +14,10 @@ import {
   EARLY_STORAGE_KEY,
   MAX_DETAIL_LENGTH,
   MAX_EVIDENCE,
-  MIN_SUPPORTED_CHROMIUM_MAJOR,
   STORAGE_KEY,
   TIMER_BOOT_COPY,
+  bootFailureMessageKey,
+  isNonCriticalBootResourceUrl,
 } from '@/lib/app_boot_early';
 import './timer-bootstrap.css';
 
@@ -250,24 +251,7 @@ function diagnosticText(diagnostic: TimerBootDiagnostic): string {
 }
 
 function failureMessage(diagnostic: TimerBootDiagnostic) {
-  const versionMatch = /(?:Chrome|Chromium|CriOS)\/(\d+)/i.exec(diagnostic.userAgent);
-  const chromiumMajor = versionMatch ? Number.parseInt(versionMatch[1], 10) : Number.NaN;
-  if (!Number.isFinite(chromiumMajor) || chromiumMajor >= MIN_SUPPORTED_CHROMIUM_MAJOR) {
-    return TIMER_BOOT_COPY.message;
-  }
-
-  const combined = [
-    diagnostic.errorName,
-    diagnostic.errorMessage,
-    ...diagnostic.evidence.flatMap(item => [item.name, item.message]),
-  ].join(' ');
-  if (!/SyntaxError|Unexpected token|parse error/i.test(combined)) {
-    return TIMER_BOOT_COPY.message;
-  }
-
-  return /MicroMessenger/i.test(diagnostic.userAgent)
-    ? TIMER_BOOT_COPY.outdatedWechatMessage
-    : TIMER_BOOT_COPY.outdatedBrowserMessage;
+  return TIMER_BOOT_COPY[bootFailureMessageKey(diagnostic)];
 }
 
 async function copyDiagnostic(diagnostic: TimerBootDiagnostic): Promise<boolean> {
@@ -392,6 +376,7 @@ export default function TimerBootstrap({
     window.dispatchEvent(new Event('app-boot-stop'));
     earlyCapture?.stop();
     const recordEvidence = (item: TimerBootEvidence) => {
+      if (isNonCriticalBootResourceUrl(item.url)) return;
       evidence.push(item);
       if (evidence.length > MAX_EVIDENCE) evidence.shift();
     };

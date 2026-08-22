@@ -143,7 +143,7 @@ export function stripFtnBlocks(s: string): string {
 
 /** 推法糖:紧跟招式的尾缀 `p`(`U'p`) */
 export function stripPushMarks(s: string): string {
-  return s.replace(/(?<=\S)p(?=\s|$)/g, '');
+  return s.replace(/(\S)p(?=\s|$)/g, '$1');
 }
 
 /** 行注释 `// …` */

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { stripPushMarks } from '@cuberoot/shared/alg-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from '@/app/[lang]/sim/engine/hands/ftn';
 
 // FTN [...] 注解块(FINGERTRICKS.md §7,部分实装):剥离 + @pin 单簇解析。
@@ -12,6 +13,12 @@ describe('stripFtnBlocks', () => {
   });
   it('无块输入零变化', () => {
     expect(stripFtnBlocks("R U R' U'")).toBe("R U R' U'");
+  });
+});
+
+describe('stripPushMarks', () => {
+  it('strips only a move suffix and preserves its preceding character', () => {
+    expect(stripPushMarks("p U'p Rpp\nx")).toBe("p U' Rp\nx");
   });
 });
 

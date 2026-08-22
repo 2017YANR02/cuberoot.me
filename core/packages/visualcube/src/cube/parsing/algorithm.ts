@@ -79,36 +79,35 @@ function preprocessAlgorithm(algorithm: string): string {
   // Pass 2.5: Normalize uppercase-wide range notation `m-NUw[mods]` (cubing.js
   // style) into lowercase `m-Nu[mods]` so Pass 3 can handle it. `1-N` is a
   // special case (lower bound is the outer layer) — it's just N-layer wide.
-  r = r.replace(/(?<=^|[\s()'])(\d+)-(\d+)([UDLRFB])w([23]?'?)/g, (_m, lo: string, hi: string, face: string, mod: string) => {
+  r = r.replace(/(^|[\s()'])(\d+)-(\d+)([UDLRFB])w([23]?'?)/g, (_m, boundary: string, lo: string, hi: string, face: string, mod: string) => {
     const lower = parseInt(lo, 10);
     const upper = parseInt(hi, 10);
     if (lower === 1) {
       // `1-N` = N-layer wide. `1-2Xw` collapses to default `Xw`.
-      if (upper === 2) return ` ${face}w${mod}`;
-      return ` ${upper}${face}w${mod}`;
+      if (upper === 2) return `${boundary} ${face}w${mod}`;
+      return `${boundary} ${upper}${face}w${mod}`;
     }
-    return ` ${lower}-${upper}${face.toLowerCase()}${mod}`;
+    return `${boundary} ${lower}-${upper}${face.toLowerCase()}${mod}`;
   });
 
   // Pass 3: range slices `m-Nr` for lowercase wide faces (PHP fcs_format_alg).
   // Examples: `2-4r` → ` 4r R'`; `3-5r` → ` 5r 2r'`; `2-4r'` → ` 4r' R`;
   // `2-4r2` → ` 4r2 R2` (already normalized to `4r2 R2`).
-  // Lookbehind `(?<=^|[\s()'])` ensures the leading digit starts a token, so
-  // we don't accidentally split tokens like `R2-3r` (not a real notation
-  // anyway, but defensive).
-  r = r.replace(/(?<=^|[\s()'])([2-9])-([2-9])([udlrfb])([23]?'?)/g, (_m, lower: string, upper: string, face: string, mod: string) => {
+  // Capturing and restoring the boundary ensures the leading digit starts a
+  // token, so we don't accidentally split forms like `R2-3r`.
+  r = r.replace(/(^|[\s()'])([2-9])-([2-9])([udlrfb])([23]?'?)/g, (_m, boundary: string, lower: string, upper: string, face: string, mod: string) => {
     const upperFace = face.toUpperCase()
     const hasPrime = mod.indexOf("'") >= 0
     const power = mod.replace("'", '') // "" | "2" | "3"
     if (lower === '2') {
       // 2-Nr → ` Nr R'`  /  2-Nr' → ` Nr' R`
-      if (!hasPrime) return ` ${upper}${face}${power} ${upperFace}${power}'`
-      return ` ${upper}${face}${power}' ${upperFace}${power}`
+      if (!hasPrime) return `${boundary} ${upper}${face}${power} ${upperFace}${power}'`
+      return `${boundary} ${upper}${face}${power}' ${upperFace}${power}`
     }
     // m-Nr (m>2) → ` Nr (m-1)r'`  /  m-Nr' → ` Nr' (m-1)r`
     const inner = String(parseInt(lower, 10) - 1)
-    if (!hasPrime) return ` ${upper}${face}${power} ${inner}${face}${power}'`
-    return ` ${upper}${face}${power}' ${inner}${face}${power}`
+    if (!hasPrime) return `${boundary} ${upper}${face}${power} ${inner}${face}${power}'`
+    return `${boundary} ${upper}${face}${power}' ${inner}${face}${power}`
   })
 
   // Pass 4: single inner-layer `mU/D/L/R/F/B` (uppercase, NOT followed by `w`).
@@ -116,19 +115,19 @@ function preprocessAlgorithm(algorithm: string): string {
   // The `(?!w)` negative lookahead prevents this from matching `3Rw` (which is
   // outer-block notation handled by the main turnRegex). The uppercase set
   // guarantees we only catch single-layer notation, not slice/rotation.
-  // Lookbehind `(?<=^|[\s()'])` ensures the leading digit starts a token —
-  // otherwise `U2R` (no space) would be mis-rewritten by the leading `2R`.
-  r = r.replace(/(?<=^|[\s()'])([2-9]|[1-9]\d+)([UDLRFB])(?!w)([23]?'?)/g, (_m, layers: string, face: string, mod: string) => {
+  // Capturing and restoring the boundary avoids rewriting a suffix such as
+  // the leading `2R` inside `U2R`.
+  r = r.replace(/(^|[\s()'])([2-9]|[1-9]\d+)([UDLRFB])(?!w)([23]?'?)/g, (_m, boundary: string, layers: string, face: string, mod: string) => {
     const lowerFace = face.toLowerCase()
     const hasPrime = mod.indexOf("'") >= 0
     const power = mod.replace("'", '')
     if (layers === '2') {
-      if (!hasPrime) return ` 2${lowerFace}${power} ${face}${power}'`
-      return ` 2${lowerFace}${power}' ${face}${power}`
+      if (!hasPrime) return `${boundary} 2${lowerFace}${power} ${face}${power}'`
+      return `${boundary} 2${lowerFace}${power}' ${face}${power}`
     }
     const inner = String(parseInt(layers, 10) - 1)
-    if (!hasPrime) return ` ${layers}${lowerFace}${power} ${inner}${lowerFace}${power}'`
-    return ` ${layers}${lowerFace}${power}' ${inner}${lowerFace}${power}`
+    if (!hasPrime) return `${boundary} ${layers}${lowerFace}${power} ${inner}${lowerFace}${power}'`
+    return `${boundary} ${layers}${lowerFace}${power}' ${inner}${lowerFace}${power}`
   })
 
   return r
