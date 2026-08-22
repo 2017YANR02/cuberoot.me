@@ -4,6 +4,8 @@
 
 审计范围：仓库顶层、`core/` workspace、Web、API、Platform、Mobile、小程序、共享包、构建任务、上游同步脚本和已跟踪静态数据。本次只做静态审计，不修改实现，不以单个文件长度代替架构判断。
 
+复审方式：主审后又做了三路独立反方复审，分别专查运行时与迁移切换、package 边界、仓库脚本与发布路径；再由主审逐条回查证据。以下建议因此刻意偏保守：逻辑边界是近期目标，物理目录只是条件成熟后的可选结果。
+
 ## 一句话结论
 
 CubeRoot 不是“一坨没有架构的代码”。它是一个已经有清晰运行时、共享能力、测试和部署纪律，但从单 Web 产品快速长成多端平台后，源码边界和仓库物理布局没有完全收口的 monorepo。
@@ -17,15 +19,15 @@ CubeRoot 不是“一坨没有架构的代码”。它是一个已经有清晰�
 1. 消灭 API 对 Web 应用源码的反向依赖。
 2. 把 `@cuberoot/shared` 从混合运行时入口收成真正的跨端边界。
 3. 拆分教学 SaaS 等高变更、高耦合巨型模块。
-4. 明确 deployable app、共享 library、离线 job、生成数据和上游产物的物理归属。
-5. 边界稳定以后，再把 `packages/client` 等应用迁到 `apps/`，不要先做纯改名大搬家。
+4. 明确 deployable app、共享 library、离线 job、生成数据和上游产物的逻辑归属。
+5. 只有路径迁移能带来可量化收益时，才逐个把应用迁到 `apps/`；不要把目录改名当成架构整改本身。
 
 ## 总评分
 
 | 维度 | 评分 | 锐评 |
 | --- | ---: | --- |
 | 产品和运行时分层 | 7/10 | Web、API、统计管道、求解器和多端有明确职责，不是一个进程包打天下。 |
-| package 依赖设计 | 6/10 | 总体是应用围绕共享包的健康结构，但存在 `server -> client` 暗线。 |
+| package 依赖设计 | 6/10 | 总体是应用围绕共享包的健康结构，但 Server、离线 Job 和构建脚本仍有指向 Web 私有实现或资产的暗线。 |
 | 跨端复用边界 | 5/10 | 纯算法和协议已经能复用，`shared` 根入口却混入 React、DOM、存储和 HTTP client。 |
 | 模块内聚度 | 5/10 | 大量页面和领域代码合理，但少数高频业务文件已明显超过单文件可维护边界。 |
 | 测试与防回归 | 8/10 | 测试量、CI ratchet、组件复用守卫和历史清理记录都很强，这是项目最不像屎山的地方。 |
@@ -40,7 +42,7 @@ CubeRoot 不是“一坨没有架构的代码”。它是一个已经有清晰�
 
 因此，朋友所说“前后端没有分离”并不准确。准确表述是：
 
-> 运行时和部署已经分离，但源码依赖方向还有一处明显穿透。
+> 主 Web 与 Hono API 已拥有独立部署产物、进程、端口和数据职责，因此属于运行时前后端分离；但 CI 触发图、构建依赖和文件资产仍未完全解耦，尚不能称为工程依赖完全分离。
 
 使用 Next route handler、Server Component 或 Server Action 也不自动等于“前后端没分离”。应判断的是数据所有权、部署边界和依赖方向，而不是仓库里是否同时出现 `.tsx` 与 SQL。
 
@@ -62,12 +64,13 @@ Mobile 使用 React、Vite 和 Capacitor，适合由同一份应用代码承载 
 
 ## 真问题，按优先级排序
 
-### P0：API 反向穿透 Web 源码
+### P0：API 反向穿透 Web 源码与资产
 
 `core/packages/server/tsconfig.json` 把 `@/*` 映射到 `../client/*`，并为了类型检查 Web 源码给 Node 服务加入 DOM lib。生产代码中至少有以下穿透：
 
 - `server/src/routes/engine_render.ts` 直接导入 Web `/sim` 下的 `World`、SVG exporter 和图片工具。
 - `server/src/routes/cube.ts` 从 Web `lib/cube3` 导入 `invertAlg`。
+- `server/src/cubeopt/solve-daemon.mjs` 的默认求解模块路径指向 Web `public/cubeopt/cube48opt5.mjs`。即使该功能可由环境变量覆盖、默认未必在线启用，这仍是源码 import 之外的隐藏文件资产耦合。
 - `@cuberoot/server` 的 `package.json` 又没有声明对 `@cuberoot/client` 的依赖，package graph 看不见真实关系。
 
 这条路径不是随手乱接，它解决了前后端渲染一致性，也有 headless 防线；但它仍是当前最严重的架构问题：
@@ -82,10 +85,26 @@ Mobile 使用 React、Vite 和 Capacitor，适合由同一份应用代码承载 
 
 ```text
 apps/web ──────┐
-apps/api ──────┴──> packages/sim-core ──> 相关纯领域 subpath
+apps/api ──────┴──> 一个经验证的无 UI 窄内核或明确发布的共享构建产物
 ```
 
-短期先建立守卫，冻结现有例外，禁止新增 `server -> client` import；然后先移动小而纯的 `invertAlg`，再沿已有 headless seam 抽出 `sim-core` 或 `puzzle-render`。不要一次搬走整个 `/sim`。
+短期先建立守卫，冻结现有例外，禁止新增 `server -> client` import、动态加载和文件路径读取；然后先移动小而纯的 `invertAlg`，再审计服务端渲染所需代码的完整 import closure。现有 `World` 会继续带入具体谜题、DOM、Worker 和 Web alias，并不是现成的 headless core；更现实的方案可能是只抽 API 当前所需谜题的窄 `puzzle-render-core`，而不是预建一个包住整个 `/sim` 的 `sim-core`。新内核的硬门槛是不得包含 `@/`、React、DOM、Worker、CSS 或 Web app 路径。
+
+CubeOpt 模块也应成为 API 自有部署资产或有明确生成、版本和复制契约的共享构建产物，不能继续靠默认路径读取 Web `public/`。这里的验收不能只 grep 静态 import，还要检查动态加载、默认文件路径和静态资产读取。
+
+### P1：离线 Job 和 Mobile 构建也在穿透 Web 私有实现
+
+`core/packages/scramble-stats-build` 至少有 9 个源码文件直接引用 Client 路径，包括 STM solver、多种谜题 solver 和 CubeOpt 资产；其中一个采样构建文件就直接加载十余个 Web solver。该 Job 的 manifest 又未声明对 Client 的依赖，因此 workspace graph 同样看不见真实闭包。
+
+这类复用本身不一定错：统计构建理应和线上求解结果一致。错的是复用入口位于 Web 应用私有目录。风险低于 API 运行时反向依赖，却会让未来任何 `client -> apps/web` 路径迁移变成全仓手术。
+
+Mobile 的 Android 图标生成脚本也直接导入 Web 图标生成器并读取 Web `public/icons`。这是构建期关系，不应与生产运行时依赖同罪处理，但必须二选一：抽出共享品牌资产生成器与规范源，或登记为窄而明确的 build-time 例外。
+
+建议规则是：
+
+- Job 的计算逻辑只能 import 领域 package；尚未抽取前可登记为 Web-owned tooling，但不得伪装成独立 Job。
+- Job 可以向 app 生成产物，但输出目录、格式、版本和所有者必须通过显式 artifact contract 声明，不能反向 import app 内部实现。
+- 不因看到第二个消费者就预建“万能 solver 包”；先抽当前消费者真正共同需要的最小纯核。
 
 ### P1 高风险维护债：教学 API 已成为巨型模块
 
@@ -131,7 +150,7 @@ server/src/domains/teaching/
 
 1. 禁止新增裸 `@cuberoot/shared` import，只从明确 subpath 进入。
 2. 根 barrel 只保留兼容，不再新增导出。
-3. React 组件、OAuth hook、browser storage 和浏览器 API client 回到 Web，或暂时归到明确的 `shared/browser/*`。
+3. React 组件、OAuth hook、browser storage 和浏览器 API client 默认回到 Web；迁移期如需兼容，`shared` 只保留带弃用说明的窄 re-export，不把 `shared/browser/*` 建成新的长期杂物层。
 4. DTO、错误码、运行时 schema、状态机和序列化规则先按领域归入明确 subpath，不先建新的万能 `contracts` 或 `domain`。
 5. 把共享模块测试迁回其所有者；当前 client 和 server 测试都存在直接读取另一 app 源码的情况，测试归属也在泄漏。
 6. 只有消费者、运行时和变更节奏都稳定以后，才把 `timer-core`、`smart-cube-core`、`teaching-domain` 等拆成独立 package。
@@ -166,7 +185,9 @@ server/src/domains/teaching/
 - 共享库：shared、visualcube、stack-kernel、vendor-sr-puzzlegen。
 - 离线任务：alg-build、stats-build、scramble-stats-build、wb-build。
 
-pnpm 视角下它们当然都是 workspace package，但人类语义已经不够清楚。随着 iOS、Android、小程序和更多平台继续增加，建议最终整理为 `apps/ + packages/ + jobs/`。这是真正有意义的目录升级，比新建一个 `webapp/` 更清晰。
+pnpm 视角下它们当然都是 workspace package，但人类语义已经不够清楚。`apps/ + packages/ + jobs/` 比含义模糊的 `webapp/` 更适合作为条件成熟后的候选布局，不过它不是近期必须完成的目标。当前 `packages/client` 虽然命名不理想，技术上仍是合法 workspace package；先用文档、边界守卫和 package manifest 表达所有权，已经能获得大部分收益。
+
+物理迁移会同时触碰 `pnpm-workspace.yaml`、Turbo graph、workflow 的 paths 与 working-directory、Dockerfile、standalone 产物路径、本地 stats/tools 回退路径，以及仓库外的部署项目配置。只有逻辑边界已经解耦、工具链先做到路径可配置，并且迁移收益高于这些风险时，才逐个 app 或 job 迁移。不要为了给即将退役的 Platform 改一个 `platform-compat` 名字而先改整套部署链。
 
 ### P1 快速修复项：README 给出的第一条开发命令当前就会失败
 
@@ -174,11 +195,11 @@ pnpm 视角下它们当然都是 workspace package，但人类语义已经不够
 
 这比“根目录有几个 PS1”更伤项目观感，因为它让最公开的开发入口立即失信。应把 `cd core` 或 PowerShell 的 `Set-Location core` 写进代码块，并让一个最小文档 smoke test 验证 README 中声明的工作目录和 package manifest。它是低风险、应最先修的门面问题。
 
-### P2：根目录 PowerShell 脚本应该收，但保留一个入口
+### P2：根目录 PowerShell 脚本应该收，但先消除“脚本位置就是仓库根”的契约
 
 根目录当前有 7 个 tracked `.ps1`，合计约 1,694 行。好消息是已经存在统一入口 `sync_upstream.ps1`；坏消息是它仍直接调度 6 个根级实现脚本，部分文档也仍指导用户直接运行私有脚本。
 
-建议结构：
+长期建议结构：
 
 ```text
 sync_upstream.ps1                 # 根目录唯一入口，做薄 wrapper
@@ -195,14 +216,23 @@ scripts/
     lib/
       sync-utils.ps1
     config/
-      ...                         # 现 .sync 配置和模板
+      ...                         # .sync 稳定后再分批迁移
     postprocess/
-      blddb.mjs                   # 现 .sync/blddb_postprocess.mjs
+      blddb.mjs
   data-build/
     ...                           # 现 2x2、pyraminx 数据生成与验证脚本
 ```
 
-保留 `sync_upstream.ps1` 的命令和参数，是为了可发现性、日常一键运行和公开入口兼容；私有实现脚本不应继续污染根目录。迁移时检索并更新所有实际引用、相对路径、文档和生成提示。当前未发现 GitHub workflow 直接调用这些根级私有脚本；只有确认仓库外仍有定时任务或快捷方式依赖旧名时，才临时保留旧名 shim。
+不能直接照这个树 `git mv`。多个脚本把 `$PSScriptRoot` 当仓库根，另一些又硬编码本机绝对路径；现在移动会把输出写到错误目录、找不到 `.sync`，或者只在作者机器上碰巧成功。
+
+最低风险顺序是：
+
+1. 先统一显式 `RepoRoot`，由稳定根入口传入，并断言 `.git`、`core`、`tools`、`ops` 等哨兵路径。
+2. 新增真正无副作用的路径校验模式；现有 `-DryRun` 若未同时 `-SkipPull`，仍可能对外部上游执行 stash、pull、stash pop，不能当迁移验收。
+3. 单独提交，只移动私有 PS1；根 `sync_upstream.ps1` 长期作为普通 wrapper 保留，并以 `@PSBoundParameters` 转发相同参数。
+4. `.sync` 仍先留在原位。运行时库、配置、模板和 Node 后处理器以后按类别分别迁移，每次只改变一个路径维度。
+
+当前未发现 GitHub workflow 直接调用这些根级私有脚本，但仓库 grep 无法证明 Windows 任务计划、桌面快捷方式、PowerShell profile 或个人脚本没有使用旧路径。移动前应审计仓库外入口；有真实调用时，旧名 shim 至少保留一个发布周期。
 
 ### P2：大文件很多，但不能按行数机械拆
 
@@ -219,7 +249,7 @@ Client 有大量数据即代码、几何算法、求解器和复杂交互，单�
 
 ## 到底什么应该放 package
 
-package 是稳定的跨应用依赖和构建边界，不是“被复用两次的文件夹”。
+package 是稳定的依赖或构建边界，不是“被复用两次的文件夹”。满足以下任一条件才值得建：多个真实消费者需要稳定接口；它有独立发布或生成产物；它需要 WASM、原生编译等特殊工具链；它有与应用不同的运行时或验证生命周期。两个消费者是常见信号，不是硬门槛，`stack-kernel` 这类单消费者但有独立 WASM 构建边界的 package 完全合理。
 
 | 内容 | 推荐归属 |
 | --- | --- |
@@ -227,50 +257,57 @@ package 是稳定的跨应用依赖和构建边界，不是“被复用两次的
 | 同一 Web 应用多个页面复用 | `apps/web/components`、`hooks`、`lib` |
 | 两个以上 app 共用的纯业务规则 | 先放 `shared/<domain>`；具备独立构建和变更边界后再建领域 package |
 | API DTO、错误码、枚举、运行时校验 schema | 跟随所属领域；只有稳定的全局契约真实存在时才建通用 `contracts` |
-| Web 与 API 共用的无 DOM 引擎 | 独立 headless package，例如 `sim-core` |
+| Web 与 API 共用的无 DOM 引擎 | 完整依赖闭包确认无 UI 后，才建窄 headless package；不要默认搬整个 `World` |
 | React DOM 组件和 CSS | 默认留 Web；只有两个相同 React runtime 和设计系统的真实 app 都消费时才建 UI package |
 | Web Storage、微信存储、原生文件系统 | 各 app 的 adapter |
 | 蓝牙协议和包解析 | domain/shared |
 | Web Bluetooth、微信 BLE、Capacitor bridge | 各 app adapter |
-| 构建器和数据生成器 | `jobs/` 或 `tools/`，不进 shared |
+| 构建器和数据生成器 | 逻辑上标为 Job 或 Tool；是否物理迁 `jobs/` 取决于路径解耦收益 |
 | “常用函数大全” | 不建立万能 utils package |
 
 只在 Web 内复用的东西搬进 workspace package，通常是在增加发布、构建、测试和依赖成本，而不是改善架构。
 
-## 前后端和多端的长期目标结构
+## 前后端和多端的长期规范：先定规则，后定目录
 
-不建议新增泛化的 `webapp/`。如果决定整理，使用 `apps/web`：
+不建议新增含义泛化的 `webapp/`。当前也不必为了显得规范，立刻把 `packages/client` 改名。若逻辑边界已经稳定，且路径迁移能明确降低工具链或协作成本，候选终局才是：
 
 ```text
 core/
-  apps/
-    web/                 # 现 packages/client，主站 Next
-    api/                 # 现 packages/server，Hono + PostgreSQL
-    mobile/              # React + Capacitor，内部包含 android/ 和未来 ios/
-    miniprogram/         # 微信小程序壳和平台能力
-    platform-compat/     # 仍在线的迁移兼容应用；完成全部退役门槛后才移出 apps
+  apps/                  # 可独立运行或部署的应用
+    web/                 # 现 packages/client
+    api/                 # 现 packages/server
+    mobile/              # 一份 Capacitor app，含 Android 与未来 iOS 原生壳
+    miniprogram/         # 微信小程序壳
 
-  packages/
-    shared/              # 过渡期按明确领域 subpath 收口
-    teaching-domain/     # 仅在多 app 真实消费并形成稳定边界后拆出
-    timer-core/
-    smart-cube-core/
-    sim-core/            # 无 DOM 的模拟器/服务端渲染内核
+  packages/              # 稳定依赖、特殊构建或发布边界
+    shared/              # 过渡期按领域 subpath 收口
     visualcube/
     stack-kernel/
     vendor-sr-puzzlegen/
+    <new-domain-core>/    # 只有满足本文 package 判据后才新增
 
-  jobs/
+  jobs/                  # 路径已解耦后才考虑迁移的离线程序
     alg-build/
     stats-build/
     scramble-stats-build/
     wb-build/
-
 ```
+
+这张树是候选布局，不是迁移任务单。特别是不要预建 `sim-core`、`timer-core`、`teaching-domain`，也不要先把 Platform 重命名为 `platform-compat`。没有合格依赖闭包或稳定消费者时，空目录和新 package 只会增加样板。
+
+### Platform 应按能力迁移，不能整站一次跳转
 
 `packages/platform` 目前是 Next 全栈应用，这种形式本身没有问题；但现有 [platform-migration.md](./platform-migration.md) 已明确 `/org/*`、`/learn/*` 最终统一进主站，Platform 是迁移来源和历史兼容。因此不要再花一轮工程把它“前后端分离”，也不要把它当未来新端的共享后端。
 
-不过，完成机构和教学 SaaS 迁移不等于整个 Platform 已可退役。它当前仍有独立 workflow，并继续承载 SQLite 上的内容、商店、订单、支付、上传和后台兼容能力。移动到 `legacy/` 或停止部署前，必须逐项决定这些能力是迁入 Web + Hono、保留为独立在线应用，还是明确下线归档；门槛未完成时仍应留在 `apps/`。最终应避免 SQLite Platform 与 Hono 教学域长期形成两个教学事实源。
+完成机构和教学 SaaS 迁移不等于整个 Platform 已可退役。它仍承载 SQLite 上的内容、商店、订单、支付回调、上传、二维码、证书和后台能力。HTTP 308 只能处理经验证可安全跳转的页面；支付 POST 回调、签名绑定 URL、历史深链和静态媒体 URL 可能不能靠跳转迁移。
+
+退役前至少要有三张切换清单：
+
+1. 路由能力矩阵：每条页面、API、回调和静态 URL 明确选择迁移、反向代理、暂留或下线，并有探活与回滚。
+2. 数据切换方案：schema 和 backfill、影子读与对账、短暂停写或增量同步、切到唯一 writer、观察期和回滚点。除非具备 outbox、幂等键和持续对账，不做无约束双写；上传归属和旧媒体 URL 必须保持稳定。
+3. 身份切换方案：主账号与 Platform 用户 ID 映射、重复账号冲突策略、旧会话选择重新登录还是换票、邀请迁移，以及 HMAC bridge 密钥何时退役。旧 session 和入口未耗尽前不能先关桥。
+
+Platform 保持现目录和部署方式，直到逐项能力完成迁移，风险低于为了“legacy 感”先改路径。最终则应避免 SQLite Platform 与 Hono 教学域长期形成两个事实源。
 
 ### iOS 与 Android 是否分别建 app
 
@@ -284,41 +321,56 @@ core/
 
 小程序则应保持独立 app，因为它不是 React DOM runtime。跨端共享业务规则、协议、DTO 和状态机，不强行共享页面。
 
+### 多端真正需要统一的是 API 兼容契约
+
+Web 可以和 API 接近同步上线，但 Android、未来 iOS 和小程序不会原子升级；商店审核、用户滞留旧版本和小程序发布节奏都意味着旧客户端会长期存在。当前小程序有构建与检查，不等于已有自动发布工作流，架构方案不能假设所有客户端能同时切换。
+
+因此多端规范的重点不是把目录排整齐，而是：
+
+- API 变更遵循 expand → migrate → contract：先增加向后兼容字段或端点，等各端迁移和观察完成后才删除旧契约。
+- DTO 之外还要有运行时 schema、错误码和能力探测；共享 TypeScript 类型不能保护已发布的旧二进制。
+- 明确最低支持版本、弃用窗口、客户端版本或 feature capability，并保持旧 token、登录票据和刷新流程在窗口内可用。
+- 为 Web、Mobile、小程序分别建立关键鉴权与数据流的契约测试；API 先兼容发布，各端后迁移，最后才清旧字段和旧端点。
+
 ### 推荐依赖规则
 
 ```text
-apps/* 生产源码         -> packages/*
-jobs/*                  -> packages/*
-apps/A 生产源码         -X-> apps/B 内部源码
-packages/*              -X-> apps/*
-api 生产源码            -X-> web/*
-runtime-neutral core    -X-> DOM/浏览器存储/平台 API
-miniprogram             -X-> React DOM modules
+deployable app 生产源码      -> package
+offline job 计算源码         -> package
+app A 生产源码               -X-> app B 内部源码
+package                     -X-> app
+API 生产源码                 -X-> Web 私有源码或 public 资产
+runtime-neutral core         -X-> DOM/浏览器存储/平台 API
+miniprogram                  -X-> React DOM modules
 ```
 
 计划提供给 Web、Mobile 和小程序共同使用的服务端权威数据、账号能力和写操作必须 API-first。不能把这类唯一实现藏在 Next Server Action、浏览器 localStorage 或 Platform SQLite 后面，再让其他端抓页面或复制逻辑。纯计算、状态机和记号解析应 package-first，由各端本地复用。
 
-跨 app 的契约测试应逐步迁入明确的 integration suite；构建脚本若确有跨 app 复用需求，应提取公共生成器或登记窄例外。守卫只拦 deployable app 的生产源码反向依赖，不能误伤测试和构建阶段的已声明关系。
+跨 app 的契约测试应逐步迁入明确的 integration suite；构建脚本若确有跨 app 复用需求，应提取公共生成器或登记窄例外。Job 向 app 写生成产物时走显式 artifact contract。守卫要区分生产运行时、离线计算、测试和构建阶段，不能把已声明关系与隐藏反向依赖混为一谈。
 
 ## 推荐执行顺序
 
 ### 阶段 0：先立边界，不搬目录
 
-- 写一页短 ADR，确定 deployable app 生产源码的 `apps -> packages` 方向和窄例外。
+- 先修根 README 的工作目录，让公开开发入口与真实 `core/` workspace 一致；这是独立的低风险文档改动。
+- 写一页短 ADR，确定 deployable app 生产源码的 `app -> package` 方向、Job artifact contract 和窄例外；规则不依赖目录是否已经叫 `apps/`。
+- 同时写明多客户端的 API 兼容、最低版本和弃用策略，后续服务端变更按 expand → migrate → contract 发布。
 - 用现有 `ts-morph` 或 dependency graph 脚本加 CI 守卫。
-- 暂时 allowlist 当前 4 条 `server -> client` import，禁止数量增长。
+- 分别 allowlist 当前 Server → Client 静态 import、动态加载与资产路径，以及 Job/Mobile 的 build-time 穿透；禁止数量增长，避免用一张模糊白名单永久合法化。
 - 禁止新增裸 `@cuberoot/shared` import。
 - 为现有超大文件建 ratchet，不把生成数据和 vendored code 算进去。
 
-验收：新增反向 import 会在提交前或 CI 失败，当前行为不变。
+验收：新增未声明的反向 import 或文件路径耦合会在提交前或 CI 失败，当前行为不变；关键 API 契约至少覆盖一个旧客户端 fixture。
 
 ### 阶段 1A：修真实边界漏洞
 
 - 把 `invertAlg` 移入纯领域模块。
-- 抽取 `sim-core` 或 `puzzle-render`，让 Web 和 API 成为同级消费者。
+- 审计 Server renderer 的完整 import closure，只抽 API 真正需要、且无 `@/`、React、DOM、Worker 和 CSS 的最小 `puzzle-render-core`；若做不到，先保留并缩窄 seam，不强造 `sim-core`。
+- 把 CubeOpt 默认模块改为 API 自有部署资产或有版本的共享构建产物。
+- 将统计 Job 复用的 solver 逐类提取到窄领域模块，或在抽取前明确标为 Web-owned tooling；Mobile 图标生成器同理处理为共享工具或 build-time 例外。
 - Server tsconfig 删除指向整个 client 树的 alias 和 DOM 妥协。
 
-验收：Server 生产代码对 Client 源码 import 为 0，server manifest 能完整描述真实依赖。
+验收：Server 对 Client 的静态 import、动态加载、默认路径和静态资产读取均为 0，server manifest 能完整描述真实依赖；抽出的窄内核通过 Node 环境测试证明无浏览器副作用。
 
 ### 阶段 1B：并行拆教学巨型模块
 
@@ -328,7 +380,7 @@ miniprogram             -X-> React DOM modules
 
 验收：路由装配、领域编排和 SQL 所有权清晰；定向测试仍锁住事务与权限边界。
 
-### 阶段 2：收口 shared、打包策略和测试所有权
+### 阶段 2A：收口 shared、打包策略和测试所有权
 
 - 根 barrel 冻结并逐步移除 browser-only 导出。
 - 合并两份 `WcaPersonPicker` 的消费者到 Web 规范实现。
@@ -336,22 +388,39 @@ miniprogram             -X-> React DOM modules
 - 单独盘点 exports、Turbo 依赖和所有消费者后，再统一 shared 的 source/dist 消费策略。
 - 按真实稳定领域拆 package，不追求 package 数量。
 
-验收：标为 runtime-neutral 的 core 不接触 DOM、浏览器存储和平台 API；若未来存在 React UI package，必须显式声明 React runtime，不能冒充 universal。每个 package 能独立 typecheck/test。
+验收：标为 runtime-neutral 的 core 不接触 DOM、浏览器存储和平台 API；若未来存在 React UI package，必须显式声明 React runtime，不能冒充 universal。每个可运行 app 和源码库具有与其形态相称的明确验证契约，可能是 build、typecheck、unit 或 smoke，不为满足表面规范制造空测试脚本。
 
-### 阶段 3：整理物理目录
+### 阶段 2B：按能力迁移 Platform
 
-- 把 deployable runtime 迁到 `apps/`，离线程序迁到 `jobs/`。
-- 根 PS1 收进 `scripts/upstream/`，保留一个兼容入口。
-- Platform 按既定迁移门槛归档或退役。
-- 更新 Turbo、workspace、workflow、tsconfig、文档和部署路径。
+- 先完成路由能力矩阵、身份映射与数据切换方案，再迁页面和 API。
+- API 与数据库先扩展兼容，Web/Platform 消费者后迁移，观察完成后才收缩旧契约。
+- 支付回调、上传与旧媒体 URL 单独验收；不把 Platform 退役和目录大搬家放进同一变更。
 
-验收：纯路径迁移与逻辑重构分开提交；所有应用仍能独立 build/typecheck/test。
+验收：唯一 writer 和事实源明确，对账通过；旧 session、回调、深链和静态 URL 有已验证去向；每一步都有可执行回滚。
+
+### 阶段 3A：安全收根目录 PS1
+
+- 先统一显式 `RepoRoot`、路径断言和真正无副作用的路径校验模式。
+- 根统一入口负责传参；另用 `-DryRun -SkipPull` 验证现有流程，不把普通 `-DryRun` 误认为无副作用。
+- 下一次独立提交只 `git mv` 私有 PS1，根入口不动；`.sync` 再按库、配置和后处理分批迁移。
+- 移动前盘点仓库外任务计划、快捷方式和个人脚本，必要时保留旧名 shim 一个发布周期。
+
+验收：从任意工作目录执行路径校验都解析到同一 RepoRoot；移动提交不改同步逻辑，产物路径与移动前一致。
+
+### 阶段 3B：有收益时才逐个整理 app 或 job 目录
+
+- 先让 workspace pattern、workflow paths、working-directory、Dockerfile、standalone 入口和脚本路径可配置或已盘点。
+- 检查仓库外部署项目的根目录设置，但不在没有证据时假定其当前值。
+- 一次只移动一个 app 或 job，先迁低耦合目标；保持 URL、域名、API、schema 和运行逻辑不变。
+- `packages/platform` 在退役前保持原位；`stats/`、`tools/` 和 `.sync` 不与 app 路径迁移混做。
+
+验收：每次都是纯路径提交，相关应用的 build/typecheck/smoke 与部署 dry-run 通过；路径迁移没有夹带业务重构。
 
 ### 阶段 4：再决定是否拆数据仓
 
 - 先记录 Git 和 CI 实测成本。
-- 若 `stats/` 已成为 checkout、存储或发布瓶颈，再设计独立数据发布链。
-- `tools/` 的上游产物也只在能保留固定版本、可复现构建和静态回滚时拆出。
+- 若 `stats/` 已成为 checkout、存储或发布瓶颈，再设计带版本清单、校验和、影子发布、失败回滚和双写对账的独立数据发布链。
+- `tools/` 是公开静态树，BLDDB 等还把路径写入构建结果；只能按可重建且有固定上游版本的子树逐个评估，不能整树搬。
 
 验收：部署和回滚能力不低于现在，主站不依赖开发机临时状态。
 
@@ -363,6 +432,9 @@ miniprogram             -X-> React DOM modules
 - 不要因为两个文件相似就建 package；先确认它们有相同语义和相同运行时。
 - 不要按行数批量切文件，制造几十个无业务名字的 `helpers.ts`。
 - 不要先做 `packages/client -> webapp` 的巨大重命名，再假装架构已经改善。
+- 不要同时移动 Web、API、Platform、Mobile 和 Job；当前 workspace、workflow、容器与发布路径都把位置当契约。
+- 不要把整个模拟器 `World` 搬进新 package 后就称为 headless core。
+- 不要用整站 308 或未经对账的双写来“快速退役” Platform。
 - 不要第一步迁走 `stats/` 和 `tools/`，破坏当前部署与回滚链。
 - 不要把 Platform 的教学能力继续双向开发；按既定统一计划收口。
 
@@ -372,11 +444,12 @@ miniprogram             -X-> React DOM modules
 
 CubeRoot 的真实状态是：
 
-- 不是前后端没分离，而是有一条后端穿透 Web 的隐藏依赖。
+- 不是前后端没分离，而是运行时已经分离，源码、资产和 CI 依赖还没有完全解耦。
 - 不是完全没有复用，而是已经有大量正确复用，同时 `shared` 入口需要从万能箱收口。
 - 不是所有大文件都该拆，但教学 API 已经到了必须治理的规模。
-- 不是根目录出现 PS1 就不专业，而是实现脚本应该下沉，只留一个稳定入口。
-- 不是必须建 `webapp/`，而是多端时代应该最终采用 `apps/ + packages/ + jobs/`。
+- 不是根目录出现 PS1 就不专业，而是它们先要摆脱对脚本位置和本机路径的依赖，再下沉实现、保留稳定入口。
+- 不是必须建 `webapp/`；`apps/ + packages/ + jobs/` 只是边界稳定且收益明确后的候选布局。
+- 多平台最先要统一的不是页面目录，而是向后兼容的 API、身份、错误码和状态机契约。
 
 一句收尾锐评：
 
