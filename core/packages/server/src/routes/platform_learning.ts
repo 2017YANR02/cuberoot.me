@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { requirePlatformActor, requirePlatformAdmin } from '../platform/auth.js';
 import { decryptPlatformPrivateData, encryptPlatformPrivateData } from '../platform/data_encryption.js';
 import {
@@ -203,8 +203,8 @@ platformLearningRoutes.put('/me/progress/:lessonId', async (c) => {
                 started_at AS "startedAt", completed_at AS "completedAt", updated_at AS "updatedAt"
     `, [actor.userId, lessonId, lesson.revision, status, progressBps, positionSeconds]);
     await enqueuePlatformEvent(db, 'learning.progress_updated', 'lesson', lessonId,
-      `learning.progress:${actor.userId}:${lessonId}:${lesson.revision}:${progressBps}:${positionSeconds}`, {
-        userId: actor.userId, lessonId, courseId: lesson.courseId, progressBps, status,
+      `learning.progress:${lessonId}:${lesson.revision}:${progressBps}:${positionSeconds}:${randomUUID()}`, {
+        lessonId, courseId: lesson.courseId, progressBps, status,
       });
     return { status: 200, body: rows[0]!, resourceType: 'lesson_progress', resourceId: lessonId };
   });
@@ -414,7 +414,7 @@ platformLearningRoutes.post('/courses/:courseId/enrollment', async (c) => {
       ) VALUES ($1::uuid, 'grant', 1, NOW(), 'free course self-enrollment', $2)
     `, [rows[0].id, actor.userId]);
     await enqueuePlatformEvent(db, 'learning.course_enrolled', 'course_entitlement', rows[0].id,
-      `learning.enrollment:${rows[0].id}:${Date.now()}`, { userId: actor.userId, courseId });
+      `learning.enrollment:${rows[0].id}:${Date.now()}`, { courseId });
     return { status: 201, body: { id: rows[0].id, courseId, status: 'active' }, resourceType: 'course_entitlement', resourceId: rows[0].id };
   });
   return sendMutation(c, result);
@@ -769,7 +769,7 @@ platformLearningRoutes.post('/learning/lessons/:lessonId/quiz', async (c) => {
       answersSnapshot.keyVersion, scorePoints, maxPoints, scoreBps, passed]);
     await enqueuePlatformEvent(db, 'learning.quiz_graded', 'quiz_attempt', String(rows[0]!.id),
       `learning.quiz:${rows[0]!.id}`, {
-        attemptId: rows[0]!.id, quizId: quiz.id, userId: actor.userId, scoreBps, passed,
+        attemptId: rows[0]!.id, quizId: quiz.id, scoreBps, passed,
       });
     return { status: 201, body: rows[0]!, resourceType: 'quiz_attempt', resourceId: String(rows[0]!.id) };
   });
@@ -876,7 +876,7 @@ platformLearningRoutes.post('/instructor/certificates', async (c) => {
       RETURNING id::text, status, issued_at AS "issuedAt"
     `, [hash, userId, courseId, entitlements[0].id, recipientName, entitlements[0].title, imageMediaId, actor.userId]);
     await enqueuePlatformEvent(db, 'learning.certificate_issued', 'certificate', String(rows[0]!.id),
-      `learning.certificate:${rows[0]!.id}`, { certificateId: rows[0]!.id, courseId, userId });
+      `learning.certificate:${rows[0]!.id}`, { certificateId: rows[0]!.id, courseId });
     return {
       status: 201,
       body: { ...rows[0], verificationCode },

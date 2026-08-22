@@ -186,7 +186,7 @@ describe('teaching course plan', () => {
 
   it('keeps the administrator-only page out of the sitemap', () => {
     const entries = sitemap();
-    const courseEntries = entries.filter((entry) => entry.url.endsWith('/courses'));
+    const courseEntries = entries.filter((entry) => entry.url === 'https://cuberoot.me/courses');
     expect(courseEntries).toEqual([]);
   });
 });

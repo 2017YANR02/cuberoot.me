@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 import dns from "node:dns";
+import { PLATFORM_CANONICAL_REWRITES } from "./lib/platform-routes";
 
 // Force IPv4 first for upstream rewrites — node fetch's default IPv6-first
 // order causes intermittent `getaddrinfo ENOTFOUND` on api.cuberoot.me proxy
@@ -221,6 +222,10 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
+        // Platform canonical aliases keep their /platform/* URL while serving
+        // the existing main-site implementation. This is the complete shared
+        // functionality, not a duplicate page or a link-only placeholder.
+        ...PLATFORM_CANONICAL_REWRITES,
         // Legacy WCA OAuth callback URL — registered with WCA as /callback.html.
         // Internal rewrite (not redirect) so the URL bar stays /callback.html and
         // WCA's exact redirect_uri match still passes. Same page as /auth/callback.

@@ -70,7 +70,81 @@ const PLATFORM_TABLES = [
   'platform_idempotency_requests',
 ] as const;
 
+const PLATFORM_ACCOUNT_DELETE_EVIDENCE_TABLES = [
+  'platform_course_revisions',
+  'platform_lesson_revisions',
+  'platform_quiz_revisions',
+  'platform_inventory_ledger',
+  'platform_fulfillment_ledger',
+  'platform_entitlement_ledger',
+  'platform_membership_ledger',
+  'platform_point_ledger',
+  'platform_instructor_revenue_ledger',
+  'platform_qr_revisions',
+  'platform_privacy_consents',
+  'platform_audit_events',
+] as const;
+
 describe('main-site Platform PostgreSQL schema', () => {
+  it('keeps Platform account deletion compatible with immutable evidence', async () => {
+    const [migration, schema, readme, devSchema, accountDelete, learning, fixture] = await Promise.all([
+      read('../migrations/0168_platform_account_deletion.sql'),
+      read('../src/db/schema.pg.sql'),
+      read('../migrations/README.md'),
+      read('../../client/app/[lang]/dev/schema/page.tsx'),
+      read('../src/utils/account_delete.ts'),
+      read('../src/routes/platform_learning.ts'),
+      read('./fixtures/platform_account_deletion_pg.sql'),
+    ]);
+
+    expect(migration).not.toMatch(/^(?:BEGIN|COMMIT)\s*;/im);
+    expect(schema).toContain('-- Platform account-deletion safeguards (final schema state from migration 0168).');
+    expect(schema).not.toContain('-- 0168_platform_account_deletion.sql');
+    expect(schema).not.toMatch(/ALTER TABLE platform_instructors\s+ALTER COLUMN user_id DROP NOT NULL/);
+    expect(schema).toContain('user_id BIGINT UNIQUE REFERENCES app_users(id) ON DELETE SET NULL');
+    expect(schema).toContain('owner_tombstone_key VARCHAR(160)');
+    expect(schema).toContain('CREATE UNIQUE INDEX uq_platform_checkins_subject_date');
+    expect(schema).toContain('CHECK ((user_id IS NOT NULL)::integer + (subject_key IS NOT NULL)::integer = 1)');
+    expect(schema).toContain('CREATE TRIGGER platform_prepare_account_delete');
+    expect(schema.match(/CREATE OR REPLACE FUNCTION trg_platform_reject_update_delete/g)).toHaveLength(1);
+    expect(schema.match(/CREATE OR REPLACE FUNCTION trg_validate_platform_exact_reversal/g)).toHaveLength(1);
+    expect(schema.match(/CREATE OR REPLACE FUNCTION trg_guard_platform_reconciliation_record/g)).toHaveLength(1);
+    expect(readme).toContain('0168_platform_account_deletion.sql');
+    expect(devSchema).toContain("{ n: 168, slug: 'platform_account_deletion'");
+    expect(migration).toContain('ALTER COLUMN user_id DROP NOT NULL');
+    expect(migration).toContain('REFERENCES app_users(id) ON DELETE SET NULL');
+    expect(migration).toContain('CREATE TRIGGER platform_prepare_account_delete');
+    expect(migration).toContain('pg_trigger_depth() < 2');
+    expect(migration).toContain("delete_tombstone <> 'deleted:' || delete_user_id::TEXT");
+    expect(migration).toContain("to_jsonb(NEW) - ARRAY['actor_user_id', 'actor_key']");
+    expect(migration).toContain('CREATE TRIGGER platform_instructor_payouts_account_delete_guard');
+    expect(migration).toContain('UPDATE platform_privacy_consents');
+    expect(migration).toContain('DELETE FROM platform_outbox_events');
+    expect(fixture).toContain('IS DISTINCT FROM ROW(57, 48, 53, 4, 0)');
+    expect(fixture).toContain('direct append-only update unexpectedly succeeded');
+    expect(fixture).toContain('legacy outbox account identifiers survived deletion');
+    expect(accountDelete).toContain("['platform_idempotency_requests', 'actor_key']");
+    expect(accountDelete).toContain('PLATFORM_ACCOUNT_DELETE_TABLES');
+    expect(accountDelete).not.toContain("set_config('cuberoot.account_delete_tombstone'");
+    expect(learning).toContain('randomUUID()');
+    const outboxCalls = [...learning.matchAll(/enqueuePlatformEvent\([\s\S]*?\);/g)]
+      .map((match) => match[0]);
+    expect(outboxCalls).toHaveLength(4);
+    expect(outboxCalls.map((call) => call.match(/'learning\.[a-z_]+'/)?.[0])).toEqual([
+      "'learning.progress_updated'",
+      "'learning.course_enrolled'",
+      "'learning.quiz_graded'",
+      "'learning.certificate_issued'",
+    ]);
+    for (const call of outboxCalls) {
+      expect(call).not.toMatch(/\buserId\b/);
+    }
+    for (const table of PLATFORM_ACCOUNT_DELETE_EVIDENCE_TABLES) {
+      expect(migration).toContain(`TG_TABLE_NAME = '${table}'`);
+      expect(fixture).toContain(`-- account-delete-evidence: ${table}`);
+    }
+  });
+
   it('keeps migration 0167, the canonical snapshot, the ledger, and /dev/schema in sync', async () => {
     const [migration, schema, readme, devSchema] = await Promise.all([
       read('../migrations/0167_platform_core.sql'),
@@ -81,14 +155,19 @@ describe('main-site Platform PostgreSQL schema', () => {
 
     expect(migration).not.toMatch(/^(?:BEGIN|COMMIT)\s*;/im);
     expect(schema).toContain('-- Canonical schema additions from migration 0167.');
-    expect(schema).toContain(migration.trim());
     expect(readme).toContain('0167_platform_core.sql');
     expect(devSchema).toContain("{ n: 167, slug: 'platform_core'");
 
     const migrationTables = [...migration.matchAll(/^CREATE TABLE (platform_[a-z0-9_]+) \(/gm)]
       .map((match) => match[1]);
+    const schemaTables = [...schema.matchAll(/^CREATE TABLE (platform_[a-z0-9_]+) \(/gm)]
+      .map((match) => match[1]);
     expect(migrationTables).toEqual(PLATFORM_TABLES);
+    expect(schemaTables).toEqual(PLATFORM_TABLES);
     expect(new Set(migrationTables).size).toBe(62);
+    expect(new Set(schemaTables).size).toBe(62);
+    expect(schema.indexOf('CREATE TABLE app_users')).toBeLessThan(schema.indexOf('CREATE TABLE platform_instructors'));
+    expect(schema.indexOf('CREATE TABLE teacher_directory_entries')).toBeLessThan(schema.indexOf('CREATE TABLE platform_instructors'));
     for (const table of PLATFORM_TABLES) {
       expect(devSchema).toContain(`'${table}'`);
     }

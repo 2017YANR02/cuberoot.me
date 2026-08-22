@@ -7,17 +7,35 @@ on:
   pull_request:
     paths:
       - 'core/**'
+      - 'docs/platform-capability-manifest.json'
+      - 'docs/platform-unification-plan.md'
       - '.github/workflows/test.yml'
   push:
     branches: [main]
     paths:
       - 'core/**'
+      - 'docs/platform-capability-manifest.json'
+      - 'docs/platform-unification-plan.md'
       - '.github/workflows/test.yml'
 
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cuberoot_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cuberoot_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       # 只需 core/(根有 stats/ 709MB + tools/ 等 ~1GB 静态残留);blob:none partial clone 跳过下载.
       # 例外:tools/cstimer-scramble(519K)是非 WCA 求解器测试的打乱 oracle,必须拉进来,
@@ -44,6 +62,7 @@ jobs:
           # .bin.gz,整目录拉进来会拖垮 checkout。
           sparse-checkout: |
             /core/
+            /docs/platform-capability-manifest.json
             /docs/platform-unification-plan.md
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
@@ -83,6 +102,18 @@ jobs:
       - name: Install dependencies
         working-directory: core
         run: pnpm install --frozen-lockfile
+
+      - name: PostgreSQL 13 final schema snapshot
+        working-directory: core/packages/server
+        env:
+          PGPASSWORD: postgres
+        run: psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d cuberoot_test -f src/db/schema.pg.sql
+
+      - name: Platform account deletion PostgreSQL 13 upgrade regression
+        working-directory: core/packages/server
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -d cuberoot_test -f tests/fixtures/platform_account_deletion_pg.sql
 
       # client typecheck 走 tsgo --noEmit,不像旧 tsc -b 会自建 project references,
       # 它 import @cuberoot/shared + visualcube 的产物;server tsconfig references 这两个,
