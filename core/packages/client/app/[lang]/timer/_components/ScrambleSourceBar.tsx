@@ -21,7 +21,7 @@ import { stepPuzzleOf } from '../_lib/scramble/step-metrics';
 import { canTrainerDifficulty } from '../_lib/scramble/trainer-source';
 import { tr } from '@/i18n/tr';
 import Scramble222ModePicker from '@/components/Scramble222ModePicker';
-import { use222Type } from '@/lib/scramble-222-mode';
+import { SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, use222Type, type Scramble222Type } from '@/lib/scramble-222-mode';
 
 interface Props {
   event: EventId;
@@ -35,9 +35,14 @@ export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
   const hasSteps = !!stepPuzzleOf(event);
   const src = s.scrambleSource;
   const [type222] = use222Type();
-  // 专项类型只属于本地随机生成。真题与同步种子继续使用完整状态口径,但不覆盖用户保存的专项选择。
-  const show222SpecialTypes = event === '222' && src === 'random' && !s.syncSeed;
-  const uses222SpecialType = show222SpecialTypes && type222 !== 'full';
+  // 随机来源支持 csTimer 全部类型；WCA 真题只显示能从最终状态精确判定的类型。
+  // 3-gen 只是一种生成过程，切到真题时按完整状态显示，但不覆盖用户保存的随机来源偏好。
+  const type222Options: readonly Scramble222Type[] | null = event === '222' && !s.syncSeed
+    ? src === 'random' ? SCRAMBLE_222_TYPES : src === 'wca' ? WCA_SCRAMBLE_222_TYPES : null
+    : null;
+  const show222SpecialTypes = !!type222Options;
+  const active222Type = type222Options?.includes(type222) ? type222 : 'full';
+  const uses222SpecialType = show222SpecialTypes && active222Type !== 'full';
 
   // 「打乱来源」下拉本身已挪到顶栏(和「人数」/项目选择器同组,见 SoloView);这里只留下
   // 各来源的细项配置。random 且无「按步数」时无细项 → 整条为空,靠 CSS :empty 收起。
@@ -72,7 +77,12 @@ export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
       {uses222SpecialType && (
         <div className="wca-src-config">
           <div className="settings-row wca-src-toprow">
-            <Scramble222ModePicker active222 showLabel={false} showSpecialTypes />
+            <Scramble222ModePicker
+              active222
+              showLabel={false}
+              showSpecialTypes
+              typeOptions={type222Options ?? undefined}
+            />
           </div>
         </div>
       )}
@@ -91,6 +101,7 @@ export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
                 active222
                 showLabel={false}
                 showSpecialTypes={show222SpecialTypes}
+                typeOptions={type222Options ?? undefined}
               />
             : undefined}
         />

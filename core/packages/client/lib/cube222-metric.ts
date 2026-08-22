@@ -80,6 +80,9 @@ const CC = [
   [1, 2, 4], [1, 5, 2], [1, 3, 5], [1, 4, 3],
 ];
 const FACE_SLOTS: number[][] = [[0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 4, 5], [2, 3, 6, 7], [0, 3, 4, 7], [1, 2, 5, 6]];
+// Same faces in 2x2 row-major sticker order. No-bar needs the two true face diagonals, whereas
+// FACE_SLOTS only promises a convenient four-corner set for the solved-face/layer predicates.
+const FACE_ROW_SLOTS: number[][] = [[2, 3, 1, 0], [5, 4, 6, 7], [1, 0, 5, 4], [3, 2, 7, 6], [0, 3, 4, 7], [2, 1, 6, 5]];
 // layer adjacency: per face, 4 [slotA, slotB, sharedFace] pairs that must agree for a solved layer.
 const ADJ: number[][][] = [
   [[0, 1, 2], [1, 2, 5], [2, 3, 3], [3, 0, 4]],
@@ -117,6 +120,81 @@ function anyLayerSolved(s: State): boolean {
     if (ok) return true;
   }
   return false;
+}
+
+// ── exact 2x2 state families (shared by timer + WCA stats pipeline) ──────────────────────────────
+// csTimer's EG-family generators use this fixed-DBL gauge with the movable corners ordered as
+// URF, UBR, UFL, ULB, DFR, DRB, DLF. Keep the conversion here so offline tagging and live WCA
+// filtering cannot drift from one another.
+const CSTIMER_TO_OURS = [0, 3, 1, 2, 4, 7, 5] as const;
+const OURS_TO_CSTIMER = new Int8Array(8).fill(-1);
+CSTIMER_TO_OURS.forEach((ours, cstimer) => { OURS_TO_CSTIMER[ours] = cstimer; });
+const CSTIMER_BOTTOM = [4, 5, 6] as const;
+
+export const CUBE222_STATE_TYPES = [
+  'eg',
+  'cll',
+  'eg1',
+  'eg2',
+  'tcllp',
+  'tclln',
+  'tcll',
+  'ls',
+  'nobar',
+] as const;
+export type Cube222StateType = (typeof CUBE222_STATE_TYPES)[number];
+export type Cube222StateFlags = Record<Cube222StateType, boolean>;
+
+function cstimerBottom(s: State): { perm: number[]; ori: number[] } {
+  return {
+    perm: CSTIMER_BOTTOM.map((pos) => OURS_TO_CSTIMER[s.cp[CSTIMER_TO_OURS[pos]]]),
+    ori: CSTIMER_BOTTOM.map((pos) => s.co[CSTIMER_TO_OURS[pos]]),
+  };
+}
+
+function same3(a: readonly number[], b: readonly number[]): boolean {
+  return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+}
+
+function noBar(s: State): boolean {
+  for (let f = 0; f < 6; f++) {
+    const slots = FACE_ROW_SLOTS[f];
+    const diagonal = new Set([
+      showColor(s, slots[0], f),
+      showColor(s, slots[3], f),
+    ]);
+    if (diagonal.has(showColor(s, slots[1], f)) || diagonal.has(showColor(s, slots[2], f))) return false;
+  }
+  return true;
+}
+
+function stateTypeFlags(s: State): Cube222StateFlags {
+  const { perm, ori } = cstimerBottom(s);
+  const bottomOriented = same3(ori, [0, 0, 0]);
+  const cll = bottomOriented && same3(perm, [4, 5, 6]);
+  const eg2 = bottomOriented && same3(perm, [4, 6, 5]);
+  const eg1 = bottomOriented && (
+    same3(perm, [6, 5, 4])
+    || same3(perm, [5, 4, 6])
+    || same3(perm, [5, 6, 4])
+    || same3(perm, [6, 4, 5])
+  );
+  const tcllp = same3(perm, [4, 5, 6]) && same3(ori, [1, 0, 0]);
+  const tclln = same3(perm, [4, 5, 6]) && same3(ori, [2, 0, 0]);
+  // LS:DRB / DLF / fixed DBL stay solved; the DFR cubie and one top cubie exchange positions.
+  const ls = perm[1] === 5 && perm[2] === 6 && ori[1] === 0 && ori[2] === 0
+    && perm[0] >= 0 && perm[0] <= 3;
+  return {
+    eg: cll || eg1 || eg2,
+    cll,
+    eg1,
+    eg2,
+    tcllp,
+    tclln,
+    tcll: tcllp || tclln,
+    ls,
+    nobar: noBar(s),
+  };
 }
 
 // ── pruning tables for full-solve IDA* (orientation 729, permutation 5040) ───────────────────────
@@ -309,6 +387,16 @@ function stateFromScramble(scramble: string): State | null {
 export function cube222MetricOfScramble(scramble: string, metric: Cube222Metric): number | null {
   const s = stateFromScramble(scramble);
   return s ? metricOf(s, metric) : null;
+}
+
+/** Exact csTimer-compatible state-family tags for one WCA 2x2 scramble. */
+export function cube222StateFlagsOfScramble(scramble: string): Cube222StateFlags | null {
+  const s = stateFromScramble(scramble);
+  return s ? stateTypeFlags(s) : null;
+}
+
+export function cube222StateTypeMatchesScramble(scramble: string, type: Cube222StateType): boolean {
+  return cube222StateFlagsOfScramble(scramble)?.[type] ?? false;
 }
 
 // ── offline batch evaluator (stats pipeline / node scripts ONLY) ─────────────────────────────────

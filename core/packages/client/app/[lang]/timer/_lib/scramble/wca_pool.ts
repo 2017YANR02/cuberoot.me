@@ -21,7 +21,8 @@ import { fetchWcaScrambles } from '@/lib/wca-results-api';
 import { fetchByDifficulty } from '@/lib/scramble-by-difficulty';
 import { groupIdxOf } from '@/lib/wca-scramble-group';
 import { LENGTH_VARIANT } from '@/lib/scramble-variants';
-import { fetchPuzzleExamples, type PuzzleExamplesJson } from '@/lib/puzzle-examples';
+import { fetchPuzzleExamples, type PuzzleExampleSample, type PuzzleExamplesJson } from '@/lib/puzzle-examples';
+import { cube222StateTypeMatchesScramble, type Cube222StateType } from '@/lib/cube222-metric';
 import { scrambleStepMetric } from './gen-by-steps';
 import type { EventId } from '../types';
 
@@ -81,6 +82,8 @@ export interface WcaSourceSpec {
   // 「按步数」过滤(2×2 / 金字塔 / 斜转):客户端算每条真题的度量步数,只留 [lo,hi] 内的。
   // date + comp 两种模式都生效(真题分布近上帝数,低步数可能全被过滤 → knownEmpty → UI 提示)。
   stepFilter?: { metric: string; lo: number; hi: number };
+  // 二阶专项状态过滤。只接受能从最终状态精确判定的类型；3-gen 不属于这个集合。
+  typeFilter?: Cube222StateType;
 }
 
 /** 一条真实打乱的来源元数据(键名对齐首页 RecentScrambles 的 ScrMeta)。 */
@@ -251,13 +254,14 @@ function specKey(spec: WcaSourceSpec): string | null {
   const opt = wantOptimal(spec, w) ? '|opt' : ''; // 原始/最优打乱用不同池,切换即重灌
   // 「按步数」过滤两种模式都生效,进 key(切换度量/区间即重灌)。
   const sf = spec.stepFilter ? `|S:${spec.stepFilter.metric}:${spec.stepFilter.lo}.${spec.stepFilter.hi}` : '';
+  const tf = spec.typeFilter ? `|T:${spec.typeFilter}` : '';
   // 难度过滤 date + comp 两模式都生效;steps 非空才计入池 key(切换难度即重灌)。
   // merged 也进 key:同一组难度参数在合并/分开两种口径下是两个不同的池,不进 key 会切换后吃到旧池。
   const d = spec.diff && spec.diff.steps.length > 0
     ? `|D:${spec.diff.variant}:${spec.diff.stage}:${spec.diff.colors}:${[...spec.diff.steps].sort((a, b) => a - b).join('.')}${spec.diff.merged ? ':m' : ''}`
     : '';
-  if (spec.mode === 'comp') return spec.comp ? `c|${spec.comp}|${w}|${spec.round}|${spec.group}${opt}${sf}${d}` : null;
-  return `d|${w}|${spec.from}|${spec.to}${opt}${d}${sf}`;
+  if (spec.mode === 'comp') return spec.comp ? `c|${spec.comp}|${w}|${spec.round}|${spec.group}${opt}${sf}${tf}${d}` : null;
+  return `d|${w}|${spec.from}|${spec.to}${opt}${d}${sf}${tf}`;
 }
 
 function rememberMeta(s: string, m: WcaScrambleMeta): void {
@@ -276,6 +280,11 @@ function stepPass(spec: WcaSourceSpec, scramble: string): boolean {
   const d = scrambleStepMetric(spec.event, spec.stepFilter.metric, scramble);
   if (d == null) return true;
   return d >= spec.stepFilter.lo && d <= spec.stepFilter.hi;
+}
+
+function localPass(spec: WcaSourceSpec, scramble: string): boolean {
+  if (!stepPass(spec, scramble)) return false;
+  return !spec.typeFilter || cube222StateTypeMatchesScramble(scramble, spec.typeFilter);
 }
 
 type CompRow = { scramble: string; meta: WcaScrambleMeta };
@@ -303,7 +312,7 @@ async function compRowsAll(spec: WcaSourceSpec, w: string, useOptimal: boolean):
       scramble: normalize(useOptimal && r.optimal_scramble ? r.optimal_scramble : r.scramble),
       meta: { ci: spec.comp, cn: spec.compName || spec.comp, e: w, r: r.round_type_id, g: r.group_id, n: r.scramble_num, x: (r.is_extra ? 1 : 0) as 0 | 1 },
     }))
-    .filter((it) => stepPass(spec, it.scramble)) // 「按步数」过滤(该比赛此步数无匹配 → rows 空 → 提示)
+    .filter((it) => localPass(spec, it.scramble)) // 本地精确过滤(该比赛无匹配 → rows 空 → 提示)
     .sort((A, B) => compOrder(A.meta, B.meta));
 }
 
@@ -412,31 +421,36 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
   persist();
 }
 
-/** 「按步数」:从 puzzle_examples.json 的 metrics.<度量>.bins(多口径)或 bins(单口径)收集 [lo,hi] 内真题,登记来源元数据,
- *  存进 precomputedFor[key]。返回收集到的条数(0 = 该度量/区间无预计算,回退 live 采样)。 */
+/** 从 puzzle_examples.json 的步数桶或二阶状态桶收集真题并登记来源元数据。
+ *  返回收集到的条数(0 = 无预计算,回退 live 采样)。 */
 async function seedPrecomputed(spec: WcaSourceSpec, key: string): Promise<number> {
   const sf = spec.stepFilter;
-  if (!sf) return 0;
+  const tf = spec.typeFilter;
+  if (!sf && !tf) return 0;
   const exKey = EXAMPLES_KEY[spec.event];
   if (!exKey) return 0;
   const j = await loadExamples();
   const entry = j?.puzzles?.[exKey];
-  const bins = entry?.metrics?.[sf.metric]?.bins ?? (sf.metric === 'htm' ? entry?.bins : undefined);
-  if (!entry || !bins) return 0;
+  if (!entry) return 0;
+  const samples: PuzzleExampleSample[] = [];
+  if (tf) {
+    samples.push(...(entry.types?.[tf] ?? []));
+  } else if (sf) {
+    const bins = entry.metrics?.[sf.metric]?.bins ?? (sf.metric === 'htm' ? entry.bins : undefined);
+    if (!bins) return 0;
+    for (let v = sf.lo; v <= sf.hi; v++) samples.push(...(bins[String(v)] ?? []));
+  }
+  if (samples.length === 0) return 0;
   // 最优模式与 live 语义一致:只端有最优等态的示例(最优打乱同态,度量值不变),不静默回退原打乱。
   const useOptimal = wantOptimal(spec, wev(spec)!);
   const list: string[] = [];
-  for (let v = sf.lo; v <= sf.hi; v++) {
-    const samples = bins[String(v)];
-    if (!samples) continue;
-    for (const smp of samples) {
-      const raw = useOptimal ? smp[2] : smp[1];
-      if (!raw) continue;
-      const s = normalize(raw);
-      list.push(s);
-      const m = entry.idMeta[smp[0]];
-      if (m) rememberMeta(s, { ci: m[0], cn: entry.comps[m[0]]?.[0] ?? m[0], e: m[1], r: m[3], g: m[4], n: m[2], x: m[5] as 0 | 1 });
-    }
+  for (const smp of samples) {
+    const raw = useOptimal ? smp[2] : smp[1];
+    if (!raw) continue;
+    const s = normalize(raw);
+    list.push(s);
+    const m = entry.idMeta[smp[0]];
+    if (m) rememberMeta(s, { ci: m[0], cn: entry.comps[m[0]]?.[0] ?? m[0], e: m[1], r: m[3], g: m[4], n: m[2], x: m[5] as 0 | 1 });
   }
   precomputedFor.set(key, list);
   return list.length;
@@ -480,13 +494,14 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
     return qs;
   };
   const q = (pools[key] ??= []);
+  const hasLocalFilter = !!spec.stepFilter || !!spec.typeFilter;
   // 封闭集已确认(该 spec 的真题就这几条)→ 本地洗牌灌回,零网络。稀有难度档常态走这条。
   const closed = closedFor.get(key);
   if (closed && closed.length > 0) { refillFrom(q, closed); knownEmpty.delete(key); persist(); return; }
-  // 「按步数」:先用预计算真题桶播种(稀有区间即时+可靠,如 2×2 底层=0),再 live 补充变化。
+  // 本地精确筛选先用预计算真题桶播种(稀有步数区间 / 二阶状态族即时可靠),再 live 补充变化。
   let hasPrecomputed = false;
   // 预计算真题桶是全时段的,只在无日期范围时播种(有 from/to 时 live 采样才尊重日期过滤)。
-  if (spec.stepFilter && !spec.from && !spec.to) {
+  if (hasLocalFilter && !spec.from && !spec.to) {
     if (!precomputedSeeded.has(key)) {
       await seedPrecomputed(spec, key);
       if (examplesCache) precomputedSeeded.add(key); // examples 读到了才不再重试;fetch 失败留待下次
@@ -501,12 +516,12 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
       knownEmpty.delete(key);
     }
   }
-  // live 采样:无 stepFilter → 1 批(原行为);有 stepFilter 且无预计算 → MAX_FILTER_BATCHES 批找稀有匹配,
+  // live 采样:无本地过滤 → 1 批(原行为);有本地过滤且无预计算 → MAX_FILTER_BATCHES 批找稀有匹配,
   // 全空才判 knownEmpty;有预计算 → 只补 3 批变化(常见区间一批即中并短路,稀有区间靠预计算不硬搜),永不判空。
-  const maxBatches = spec.stepFilter ? (hasPrecomputed ? 3 : MAX_FILTER_BATCHES) : 1;
-  // 封闭集只在「全时段 + 无 stepFilter」时可判(见 closedFor):有 from/to 走 comp-sampling(抽 30 场,
-  // 回得少不代表穷尽);stepFilter 有自己的预计算桶 + 多批采样路径,回条数与匹配数不对应。
-  const canClose = !spec.stepFilter && !spec.from && !spec.to;
+  const maxBatches = hasLocalFilter ? (hasPrecomputed ? 3 : MAX_FILTER_BATCHES) : 1;
+  // 封闭集只在「全时段 + 无本地过滤」时可判(见 closedFor):有 from/to 走 comp-sampling(抽 30 场,
+  // 回得少不代表穷尽);本地过滤有自己的预计算桶 + 多批采样路径,回条数与匹配数不对应。
+  const canClose = !hasLocalFilter && !spec.from && !spec.to;
   let totalAdded = 0;
   for (let batch = 0; batch < maxBatches; batch++) {
     const res = await fetch(apiUrl(`/v1/wca/scrambles/random?${buildQs().toString()}`));
@@ -523,7 +538,7 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
       // 最优模式且该条带最优等态 → 用最优打乱(同态,更短);否则用原打乱(服务器在稀有难度档无最优时回退)。
       const useOpt = useOptimal && !!it.o;
       const s = normalize(useOpt ? it.o! : it.scramble);
-      if (!stepPass(spec, s)) continue; // 「按步数」客户端过滤(服务端不懂 2×2/金字塔度量)
+      if (!localPass(spec, s)) continue; // 客户端精确过滤(服务端不懂小魔方步数 / 二阶状态族)
       q.push(s);
       got.push(s);
       added++;
@@ -538,8 +553,8 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
     totalAdded += added;
     if (added > 0) break; // 已找到匹配,不再多抓(短路,常态一批即够)
   }
-  // 连抓 maxBatches 批仍一条不落且无预计算(仅 stepFilter 会到此)→ 该步数区间在真题里没有 → 确认空。
-  if (spec.stepFilter && !hasPrecomputed && totalAdded === 0) { knownEmpty.add(key); return; }
+  // 连抓 maxBatches 批仍一条不落且无预计算 → 当前步数区间 / 状态类型没有真题 → 确认空。
+  if (hasLocalFilter && !hasPrecomputed && totalAdded === 0) { knownEmpty.add(key); return; }
   knownEmpty.delete(key);
   persist();
 }
