@@ -8,6 +8,7 @@ import { Hourglass, Check, CircleX, ExternalLink } from 'lucide-react';
 import Link from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import { UserIdLabel } from '@/components/UserIdLabel';
 import { tr, T, useLang } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
@@ -129,7 +130,10 @@ export default function ForumReviewPage() {
                       ? tr({ zh: '新主题', en: 'New thread' })
                       : tr({ zh: '回帖', en: 'Reply' })}
                   </span>
-                  <span className="forum-review-item-author">{ownerDisplayName(item.authorId, item.authorName, zh)}</span>
+                  <span className="forum-review-item-author">
+                    {ownerDisplayName(item.authorId, item.authorName, zh)}
+                    <UserIdLabel userId={item.authorUserId} />
+                  </span>
                   <span className="forum-review-item-time">{formatRelativeTime(item.createdAt, lang)}</span>
                   {item.type === 'thread' && (item.forumNameZh || item.forumNameEn) && (
                     <span className="forum-review-item-forum">{zh ? item.forumNameZh : item.forumNameEn}</span>
@@ -185,8 +189,10 @@ export default function ForumReviewPage() {
                       </span>
                       <span className="forum-review-item-author">
                         {ownerDisplayName(r.reporterId, r.reporterName, zh)}
+                        <UserIdLabel userId={r.reporterUserId} />
                         {' → '}
                         {ownerDisplayName(r.postAuthorId, r.postAuthorName, zh)}
+                        <UserIdLabel userId={r.postAuthorUserId} />
                       </span>
                       <span className="forum-review-item-time">{formatRelativeTime(r.createdAt, lang)}</span>
                       {r.resolvedAt && (

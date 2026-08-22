@@ -45,6 +45,7 @@ export interface EventGuest {
   /** 归属键(真 wca_id 或 u<uid>) */
   key: string;
   name: string;
+  userId?: number;
   avatar?: string;
   status: 'pending' | 'accepted' | 'declined';
 }

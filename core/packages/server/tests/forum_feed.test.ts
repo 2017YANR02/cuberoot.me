@@ -53,11 +53,16 @@ describe('forum activity feed', () => {
       }])
       .mockResolvedValueOnce([{ author_id: '2017TEST01', n: 7 }])
       .mockResolvedValueOnce([{
+        id: '66',
         wca_id: '2017TEST01',
         avatar_url: 'https://example.com/avatar.png',
         created_at: new Date('2020-01-02T00:00:00.000Z'),
         display_name: 'Canonical User',
-      }]);
+      }])
+      .mockResolvedValueOnce([
+        { id: '66', wca_id: '2017TEST01' },
+        { id: '77', wca_id: '2018TEST02' },
+      ]);
 
     const response = await forumRoutes.request('/forum/feed?sort=active&page=2&size=10');
     const body = await response.json();
@@ -74,6 +79,8 @@ describe('forum activity feed', () => {
       sort: 'active',
       threads: [{
         id: 12,
+        authorUserId: 66,
+        lastPostAuthorUserId: 77,
         firstPostId: 21,
         forumSlug: 'general',
         excerpt: 'Hello A useful discussion.',
@@ -91,6 +98,7 @@ describe('forum activity feed', () => {
           avatarUrl: 'https://example.com/avatar.png',
           postCount: 7,
           wcaId: '2017TEST01',
+          userId: 66,
           isAdmin: true,
         },
       }],

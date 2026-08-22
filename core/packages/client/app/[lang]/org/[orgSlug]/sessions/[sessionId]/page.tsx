@@ -12,6 +12,7 @@ import {
   type TeachingOrganizationRole,
 } from '@cuberoot/shared/teaching';
 import AppLink from '@/components/AppLink';
+import { UserIdLabel } from '@/components/UserIdLabel';
 import { useT } from '@/hooks/useT';
 import {
   completeTeachingSession,
@@ -794,10 +795,7 @@ function SessionDetailContent({
                   {item.nextGoals && <p><strong>{t('目标：', 'Goals:')}</strong> {item.nextGoals}</p>}
                   {item.internalNotes && <p><strong>{t('内部备注：', 'Internal notes:')}</strong> {item.internalNotes}</p>}
                   <p className="org-row-meta">
-                    {t(
-                      `${item.authorDisplayNameSnapshot}，${feedbackVisibilityLabel(item.visibility)}，${new Date(item.createdAt).toLocaleString()}`,
-                      `${item.authorDisplayNameSnapshot}, ${feedbackVisibilityLabel(item.visibility)}, ${new Date(item.createdAt).toLocaleString()}`,
-                    )}
+                    {item.authorDisplayNameSnapshot} <UserIdLabel userId={item.authorUserId} /> / {feedbackVisibilityLabel(item.visibility)} / {new Date(item.createdAt).toLocaleString()}
                   </p>
                 </article>
               ))}

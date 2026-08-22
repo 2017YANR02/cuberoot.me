@@ -1676,6 +1676,7 @@ function learnerLessonFeedback(value: unknown): TeachingLearnerLessonFeedback {
     nextGoals: nullableString(item.nextGoals, 'learnerLessonFeedback.nextGoals'),
     studentDisplayNameSnapshot: string(item.studentDisplayNameSnapshot, 'learnerLessonFeedback.studentDisplayNameSnapshot'),
     attendanceStatusSnapshot: enumValue(item.attendanceStatusSnapshot, TEACHING_ATTENDANCE_STATUSES, 'learnerLessonFeedback.attendanceStatusSnapshot'),
+    authorUserId: nullableInteger(item.authorUserId, 'learnerLessonFeedback.authorUserId', 1),
     authorDisplayNameSnapshot: string(item.authorDisplayNameSnapshot, 'learnerLessonFeedback.authorDisplayNameSnapshot'),
     authorRoleSnapshot: enumValue(item.authorRoleSnapshot, WEEKLY_REPORT_AUTHOR_ROLES, 'learnerLessonFeedback.authorRoleSnapshot'),
     publishedAt: string(item.publishedAt, 'learnerLessonFeedback.publishedAt'),

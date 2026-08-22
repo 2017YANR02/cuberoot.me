@@ -38,6 +38,7 @@ export interface AdminFeedbackItem {
   body: string;
   wcaId: string;
   wcaName: string;
+  userId: number | null;
   contact: string | null;
   pageUrl: string | null;
   lang: string | null;
@@ -61,6 +62,7 @@ export interface PublicFeedbackItem {
   body: string;
   wcaId: string;
   wcaName: string;
+  userId: number | null;
   status: FeedbackStatus;
   createdAt: string;
   updatedAt: string;
@@ -96,6 +98,7 @@ export interface FeedbackMessage {
   role: FeedbackRole;
   wcaId: string;
   wcaName: string;
+  userId: number | null;
   body: string;
   createdAt: string;
 }

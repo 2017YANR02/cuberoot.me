@@ -160,6 +160,7 @@ export async function rotateShareToken(): Promise<ShareSettings> {
 export interface PersonHit {
   key: string;
   name: string;
+  userId: number;
   avatar: string;
   wcaId: string;
 }
@@ -183,6 +184,7 @@ export interface PublicCalendar {
   detail: ShareDetail;
   tz: string;
   ownerName: string;
+  ownerUserId: number | null;
   calendars: { id: number; name: string; color: string }[];
   events: CalEvent[];
 }

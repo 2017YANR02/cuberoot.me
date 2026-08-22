@@ -15,6 +15,7 @@ import {
 import { is3x3TopLayerSet } from '@cuberoot/shared';
 import { canonicalize3x3WideMoves, startsWithYRotation } from '@cuberoot/shared/alg-notation';
 import { normalizeCaseNameForSet } from '../utils/sq1_cs.js';
+import { publicUserIdsForOwnerKeys } from '../utils/account.js';
 
 export const algRoutes = new Hono();
 
@@ -30,7 +31,7 @@ interface AlgSubmissionRow {
   created_at: string | Date;
 }
 
-function rowToJson(row: AlgSubmissionRow) {
+function rowToJson(row: AlgSubmissionRow, userIds: ReadonlyMap<string, number> = new Map()) {
   return {
     id: row.id,
     puzzle: row.puzzle,
@@ -40,8 +41,14 @@ function rowToJson(row: AlgSubmissionRow) {
     notes: row.notes,
     authorId: row.author_id,
     authorName: row.author_name,
+    authorUserId: userIds.get(row.author_id) ?? null,
     createdAt: typeof row.created_at === 'string' ? row.created_at : row.created_at.toISOString(),
   };
+}
+
+async function rowsToJson(rows: AlgSubmissionRow[]) {
+  const userIds = await publicUserIdsForOwnerKeys(rows.map((row) => row.author_id));
+  return rows.map((row) => rowToJson(row, userIds));
 }
 
 const ALG_MAX_BYTES = 4096;
@@ -62,7 +69,7 @@ algRoutes.get('/alg/:puzzle/:set/submissions', async (c) => {
     'SELECT * FROM alg_submissions WHERE puzzle = ? AND set_slug = ? ORDER BY id ASC',
     [puzzle, setSlug],
   );
-  return c.json(rows.map(rowToJson));
+  return c.json(await rowsToJson(rows));
 });
 
 // GET /v1/alg/submissions/admin/unread — admin:晚于本人已读水位的新投稿数(排除自己投的)
@@ -87,7 +94,7 @@ algRoutes.get('/alg/submissions/admin/recent', async (c) => {
     'SELECT * FROM alg_submissions ORDER BY id DESC LIMIT ?',
     [limit],
   );
-  return c.json(rows.map(rowToJson));
+  return c.json(await rowsToJson(rows));
 });
 
 // POST /v1/alg/submissions/admin/seen — admin:把当前所有投稿标记为已读(清角标)
@@ -126,7 +133,7 @@ algRoutes.post('/alg/:puzzle/:set/:case/submit', async (c) => {
     'INSERT INTO alg_submissions (puzzle, set_slug, case_name, alg, notes, author_id, author_name) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *',
     [puzzle, setSlug, caseName, alg, notes, user.wcaId, user.name],
   );
-  return c.json(rowToJson(inserted[0]));
+  return c.json((await rowsToJson(inserted))[0]);
 });
 
 // PUT /v1/alg/submissions/:id — 改自己的(或 admin)。caseName 仅 admin 可改。
@@ -169,7 +176,7 @@ algRoutes.put('/alg/submissions/:id', async (c) => {
     await query('UPDATE alg_submissions SET alg = ?, notes = ? WHERE id = ?', [alg, notes, id]);
   }
   const updated = await query<AlgSubmissionRow>('SELECT * FROM alg_submissions WHERE id = ?', [id]);
-  return c.json(rowToJson(updated[0]));
+  return c.json((await rowsToJson(updated))[0]);
 });
 
 // DELETE /v1/alg/submissions/:id — 删自己的(或 admin)

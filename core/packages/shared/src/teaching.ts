@@ -1233,6 +1233,7 @@ export interface TeachingLearnerLessonFeedback {
   nextGoals: string | null;
   studentDisplayNameSnapshot: string;
   attendanceStatusSnapshot: TeachingAttendanceStatus;
+  authorUserId: number | null;
   authorDisplayNameSnapshot: string;
   authorRoleSnapshot: 'owner' | 'admin' | 'teacher' | 'assistant';
   publishedAt: string;

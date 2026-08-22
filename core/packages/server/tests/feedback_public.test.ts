@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   requireAdmin: vi.fn(),
   optionalAuth: vi.fn(),
   sendBark: vi.fn(() => Promise.resolve()),
+  publicUserIdsForOwnerKeys: vi.fn(),
 }));
 
 vi.mock('../src/db/connection.js', () => ({ query: mocks.query }));
@@ -18,6 +19,7 @@ vi.mock('../src/utils/recon_helpers.js', () => ({
   ADMIN_WCA_IDS: ['2017ADMIN01'],
 }));
 vi.mock('../src/monitors/bark.js', () => ({ sendBark: mocks.sendBark }));
+vi.mock('../src/utils/account.js', () => ({ publicUserIdsForOwnerKeys: mocks.publicUserIdsForOwnerKeys }));
 
 import { feedbackRoutes } from '../src/routes/feedback.js';
 
@@ -44,6 +46,9 @@ describe('public feedback', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.optionalAuth.mockResolvedValue(null);
+    mocks.publicUserIdsForOwnerKeys.mockImplementation(async (ownerKeys: string[]) => new Map(
+      ownerKeys.map((ownerKey) => [ownerKey, ownerKey === '2017OWNER01' ? 66 : 77]),
+    ));
   });
 
   it('lists every feedback item without exposing private diagnostics', async () => {
@@ -71,6 +76,7 @@ describe('public feedback', () => {
         id: 42,
         body: 'Public feedback body',
         wcaId: '2017OWNER01',
+        userId: 66,
         replyCount: 2,
         media: [{ id: 7, kind: 'image' }],
       }],
@@ -109,8 +115,8 @@ describe('public feedback', () => {
 
     expect(response.status).toBe(200);
     expect(mocks.optionalAuth).toHaveBeenCalledOnce();
-    expect(body.feedback).toMatchObject({ id: 42, wcaId: '2017OWNER01', replyCount: 1 });
-    expect(body.messages).toHaveLength(1);
+    expect(body.feedback).toMatchObject({ id: 42, wcaId: '2017OWNER01', userId: 66, replyCount: 1 });
+    expect(body.messages).toMatchObject([{ userId: 77 }]);
     expect(body.feedback).not.toHaveProperty('contact');
     expect(body.feedback).not.toHaveProperty('pageUrl');
     expect(body.feedback).not.toHaveProperty('userAgent');

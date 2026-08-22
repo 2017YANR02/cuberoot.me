@@ -18,6 +18,7 @@ import FollowedComps from '@/components/FollowedComps';
 import AlgValidationAlert from '@/components/AlgValidationAlert';
 import AdminSubmissionsPanel from '@/components/AdminSubmissionsPanel';
 import PageNoticesAdmin from '@/components/PageNoticesAdmin';
+import { UserIdLabel } from '@/components/UserIdLabel';
 import { AccountPanel, LoginForm, WcaLinkPrompt, DeleteAccountPanel, type SignedIn } from '@/components/AuthPanel';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
@@ -301,6 +302,7 @@ export default function AccountPage() {
         <>
           <div className="account-id-row">
             <h1 className="account-name">{user?.name || t('未命名', 'Unnamed')}</h1>
+            <UserIdLabel userId={user?.uid} full copyable />
             {wcaId && <div className="account-wid">{wcaId}</div>}
           </div>
 

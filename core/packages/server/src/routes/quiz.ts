@@ -20,6 +20,7 @@ import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
 import type { WcaUser } from '../utils/recon_helpers.js';
 import { notify, adminRecipients } from '../utils/notify.js';
+import { publicUserIdsForOwnerKeys } from '../utils/account.js';
 
 export const quizRoutes = new Hono();
 
@@ -67,7 +68,11 @@ interface QuestionRow {
 }
 
 /** 行 → API 形状(camelCase)。omitAuthorKey:公开列表不外发别人的归属键。 */
-function toJson(r: QuestionRow, opts: { withKey?: boolean } = {}) {
+function toJson(
+  r: QuestionRow,
+  userIds: ReadonlyMap<string, number>,
+  opts: { withKey?: boolean } = {},
+) {
   return {
     id: Number(r.id),
     cat: r.cat,
@@ -80,6 +85,7 @@ function toJson(r: QuestionRow, opts: { withKey?: boolean } = {}) {
     answerZh: r.answer_zh, answerEn: r.answer_en,
     accept: r.accept ?? [],
     authorName: r.author_name,
+    authorUserId: userIds.get(r.author_key) ?? null,
     ...(opts.withKey ? { authorKey: r.author_key } : {}),
     status: r.status,
     hiddenNote: r.hidden_note ?? '',
@@ -87,6 +93,11 @@ function toJson(r: QuestionRow, opts: { withKey?: boolean } = {}) {
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
+}
+
+async function rowsToJson(rows: QuestionRow[], opts: { withKey?: boolean } = {}) {
+  const userIds = await publicUserIdsForOwnerKeys(rows.map((r) => r.author_key));
+  return rows.map((r) => toJson(r, userIds, opts));
 }
 
 const COLUMNS = `id, cat, level, type, q_zh, q_en, why_zh, why_en, options, answer_idx,
@@ -125,7 +136,7 @@ quizRoutes.get('/quiz/questions', async (c) => {
   );
   // 用户随时会加题,浏览器只缓 60s;共享层同龄,免得刚出的题半天不露面。
   c.header('Cache-Control', 'public, max-age=60, s-maxage=60');
-  return c.json({ questions: rows.map((r) => toJson(r)) });
+  return c.json({ questions: await rowsToJson(rows) });
 });
 
 // ==================== GET /v1/quiz/mine ====================
@@ -137,7 +148,7 @@ quizRoutes.get('/quiz/mine', async (c) => {
     `SELECT ${COLUMNS} FROM quiz_questions WHERE author_key = ? ORDER BY id DESC`,
     [user.wcaId],
   );
-  return c.json({ questions: rows.map((r) => toJson(r, { withKey: true })) });
+  return c.json({ questions: await rowsToJson(rows, { withKey: true }) });
 });
 
 // ==================== POST /v1/quiz/questions ====================
@@ -172,7 +183,7 @@ quizRoutes.post('/quiz/questions', async (c) => {
       user.wcaId, user.name,
     ],
   );
-  return c.json({ question: toJson(rows[0], { withKey: true }) });
+  return c.json({ question: (await rowsToJson(rows, { withKey: true }))[0] });
 });
 
 // ==================== PATCH /v1/quiz/questions/:id ====================
@@ -228,7 +239,7 @@ quizRoutes.patch('/quiz/questions/:id', async (c) => {
       link: '/quiz/mine',
     });
   }
-  return c.json({ question: toJson(rows[0], { withKey: true }) });
+  return c.json({ question: (await rowsToJson(rows, { withKey: true }))[0] });
 });
 
 // ==================== DELETE /v1/quiz/questions/:id ====================
@@ -310,7 +321,7 @@ quizRoutes.get('/quiz/admin/questions', async (c) => {
   const rows = await query<QuestionRow>(
     `SELECT ${COLUMNS} FROM quiz_questions ORDER BY id DESC LIMIT 500`,
   );
-  return c.json({ questions: rows.map((r) => toJson(r, { withKey: true })) });
+  return c.json({ questions: await rowsToJson(rows, { withKey: true }) });
 });
 
 // ==================== GET /v1/quiz/admin/reports ====================
@@ -324,23 +335,26 @@ quizRoutes.get('/quiz/admin/reports', async (c) => {
     id: number | string; question_id: number | string;
     reporter_key: string; reporter_name: string; reason: string;
     created_at: Date; resolved_at: Date | null;
-    q_zh: string; q_en: string; author_name: string; status: string;
+    q_zh: string; q_en: string; author_key: string; author_name: string; status: string;
   }>(
     `SELECT r.id, r.question_id, r.reporter_key, r.reporter_name, r.reason,
-            r.created_at, r.resolved_at, q.q_zh, q.q_en, q.author_name, q.status
+            r.created_at, r.resolved_at, q.q_zh, q.q_en, q.author_key, q.author_name, q.status
      FROM quiz_question_reports r
      JOIN quiz_questions q ON q.id = r.question_id
      ${all ? '' : 'WHERE r.resolved_at IS NULL'}
      ORDER BY r.created_at DESC LIMIT 200`,
   );
+  const userIds = await publicUserIdsForOwnerKeys(rows.flatMap((r) => [r.author_key, r.reporter_key]));
   return c.json({
     reports: rows.map((r) => ({
       id: Number(r.id),
       questionId: Number(r.question_id),
       qZh: r.q_zh, qEn: r.q_en,
       authorName: r.author_name,
+      authorUserId: userIds.get(r.author_key) ?? null,
       questionStatus: r.status,
       reporterKey: r.reporter_key, reporterName: r.reporter_name, reason: r.reason,
+      reporterUserId: userIds.get(r.reporter_key) ?? null,
       createdAt: r.created_at, resolvedAt: r.resolved_at,
     })),
   });

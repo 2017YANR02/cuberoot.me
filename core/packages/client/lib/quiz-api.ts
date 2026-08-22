@@ -21,6 +21,7 @@ export interface CommunityQuestionRow {
   accept: string[];
   authorKey?: string;
   authorName: string;
+  authorUserId: number | null;
   status: string;
   hiddenNote: string;
   reportCount: number;
@@ -33,8 +34,10 @@ export interface QuizReportRow {
   questionId: number;
   qZh: string; qEn: string;
   authorName: string;
+  authorUserId: number | null;
   questionStatus: string;
   reporterKey: string; reporterName: string;
+  reporterUserId: number | null;
   reason: string;
   createdAt: string;
   resolvedAt: string | null;

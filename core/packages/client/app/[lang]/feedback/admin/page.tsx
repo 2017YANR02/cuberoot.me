@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Trash2, Lightbulb, Bug, MessageSquare, ExternalLink, ChevronDown } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import FeedbackConversation from '@/components/FeedbackConversation';
+import { UserIdLabel } from '@/components/UserIdLabel';
 import { useAuthStore } from '@/lib/auth-store';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -158,6 +159,7 @@ export default function FeedbackAdminPage() {
 
               <div className="fba-meta">
                 <span className="fba-who">{displayCuberName(it.wcaName, isZh) || it.wcaId}</span>
+                <UserIdLabel userId={it.userId} />
                 {it.contact && <span className="fba-contact">{it.contact}</span>}
                 {it.pageUrl && (
                   <a className="fba-pageurl" href={it.pageUrl} target="_blank" rel="noreferrer">
