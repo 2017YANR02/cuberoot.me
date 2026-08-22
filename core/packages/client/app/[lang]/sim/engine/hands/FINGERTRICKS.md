@@ -333,7 +333,7 @@ num      ::= digit+ ["." digit+] | "." digit+           ; 距离单位 U;省略 
 const CUBE_ONLY = s => s
   .replace(/\[[^\]]*\]/g, '')        // ① 剥注解块(先剥,U'p[…] 塌成 U'p)
   .replace(/[↑↓·]/g, ' ')            // ② 剥换握(换成空格:紧贴形 ↑U 塌成 " U",禁粘连;同 stripGripMarks)
-  .replace(/(?<=\S)p(?=\s|$)/g, '')  // ③ 剥 push 糖(WCA token 无 p 结尾,安全)
+  .replace(/(\S)p(?=\s|$)/g, '$1')   // ③ 剥 push 糖(WCA token 无 p 结尾,安全)
   .replace(/\s+/g, ' ').trim();
 ```
 

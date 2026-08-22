@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 import {
   APP_BOOT_EARLY_SCRIPT,
   MIN_SUPPORTED_CHROMIUM_MAJOR,
+  MIN_SUPPORTED_SAFARI_MAJOR,
+  MIN_SUPPORTED_SAFARI_MINOR,
 } from '@/lib/app_boot_early';
 
 const CLIENT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -24,9 +26,12 @@ describe('browser support policy', () => {
       'safari 16.4',
     ]);
     expect(MIN_SUPPORTED_CHROMIUM_MAJOR).toBe(111);
+    expect([MIN_SUPPORTED_SAFARI_MAJOR, MIN_SUPPORTED_SAFARI_MINOR]).toEqual([16, 4]);
   });
 
   it('keeps the pre-hydration fallback parseable by obsolete engines', () => {
     expect(APP_BOOT_EARLY_SCRIPT).not.toMatch(/=>|\bconst\b|\blet\b|\?\./);
+    expect(APP_BOOT_EARLY_SCRIPT).not.toContain('(?<' + '=');
+    expect(APP_BOOT_EARLY_SCRIPT).not.toContain('(?<' + '!');
   });
 });

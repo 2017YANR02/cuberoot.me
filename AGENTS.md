@@ -99,6 +99,7 @@ pnpm --filter @cuberoot/client lint
 
 - 优先编辑已有文件;改完跑 typecheck。
 - 改动先定位根因,禁止在症状点打补丁;根因定位后落地用最小实现,不臆造抽象层/翻译层。
+- 浏览器端源码禁用正则后行断言,改用捕获边界或显式前字符判断;Hook + CI 守卫。
 - UI 可用 lucide-react;不放页面级"返回"按钮(wizard 步骤间不算)。
 - `BackHome` 必须放进与正文同宽的 header/topbar/wrap，禁直接挂在 full-bleed page root 下。
 - 按钮式交互必须真 `<button>`(剥 UA 样式)或 `AppLink`,禁 `<div/span onClick>`(iOS Safari tap 不可靠);例外 div 加 `role="button"`+`tabIndex`+`onKeyDown`;豁免注释 `allow-static-onclick`。守卫:hook + CI ratchet。

@@ -107,6 +107,7 @@ function mightMatch(target, content) {
   if (name.includes('nuqs-ime')) return /<(?:input|textarea)\b|useQueryState/.test(content);
   if (name.includes('raw-localstorage')) return /localStorage\s*\.\s*setItem/.test(content);
   if (name.includes('webkit-no-webrtc')) return /\.\s*(?:launch|launchPersistentContext)\s*\(/.test(content);
+  if (name.includes('browser-regexp-lookbehind')) return content.includes('(?<=') || content.includes('(?<!');
   return true;
 }
 

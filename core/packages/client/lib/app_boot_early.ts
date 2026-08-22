@@ -5,6 +5,8 @@ export const STORAGE_KEY = 'timer.boot.lastDiagnostic';
 export const APP_STORAGE_KEY = 'app.boot.lastDiagnostic';
 export const EARLY_STORAGE_KEY = 'app.boot.earlyEvidence';
 export const MIN_SUPPORTED_CHROMIUM_MAJOR = 111;
+export const MIN_SUPPORTED_SAFARI_MAJOR = 16;
+export const MIN_SUPPORTED_SAFARI_MINOR = 4;
 const APP_BOOT_GRACE_MS = 5_000;
 
 export const APP_BOOT_COPY = {
@@ -14,12 +16,16 @@ export const APP_BOOT_COPY = {
     en: 'Check your connection and retry. If it still fails, send us the diagnostic information below.',
   },
   outdatedWechatMessage: {
-    zh: '当前微信内置浏览器无法打开此页面。即使微信和手机系统已是最新版，也可能仍使用较旧内核。请点击右上角菜单，选择“在浏览器打开”。',
-    en: 'WeChat\'s built-in browser cannot open this page. It may still use an older engine even when WeChat and your phone\'s operating system are up to date. Use the top-right menu and choose “Open in Browser.”',
+    zh: '当前微信内置浏览器内核过旧，无法打开此页面。请改用并确认已更新的现代浏览器；仅选择“在系统浏览器打开”不一定有效。无法更新浏览器时，请暂用另一台设备。',
+    en: 'This WeChat browser engine is too old to open the page. Use a modern browser that is actually up to date; merely choosing “Open in system browser” may not help. If no browser can be updated, use another device.',
   },
   outdatedBrowserMessage: {
-    zh: '当前浏览器版本过旧，无法打开此页面。请升级浏览器后重试。',
-    en: 'This browser is too old to open this page. Update it and try again.',
+    zh: '当前浏览器内核过旧，无法打开此页面。请更新或改用现代浏览器；手机自带浏览器即使显示最新版，内核也可能仍然过旧。无法更新时，请暂用另一台设备。',
+    en: 'This browser engine is too old to open the page. Update it or use a modern browser; a built-in browser may still have an old engine even when it reports that it is current. If it cannot be updated, use another device.',
+  },
+  outdatedIosMessage: {
+    zh: '当前 iPhone 或 iPad 的系统浏览器内核过旧，无法打开此页面。请升级 iOS 或 iPadOS 后重试；仅在同一台设备上更换浏览器可能无效。设备无法升级时，请暂用另一台设备。',
+    en: 'This iPhone or iPad system browser engine is too old to open the page. Update iOS or iPadOS; switching browsers on the same device may not help. If the device cannot be updated, use another device.',
   },
   diagnosticCode: { zh: '诊断编号', en: 'Diagnostic code' },
   retry: { zh: '重试', en: 'Retry' },
@@ -35,18 +41,80 @@ export const TIMER_BOOT_COPY = {
     en: 'Check your connection and retry. If it still fails, send us the diagnostic information below.',
   },
   outdatedWechatMessage: {
-    zh: '当前微信内置浏览器无法启动计时器。即使微信和手机系统已是最新版，也可能仍使用较旧内核。请点击右上角菜单，选择“在浏览器打开”。',
-    en: 'WeChat\'s built-in browser cannot start the timer. It may still use an older engine even when WeChat and your phone\'s operating system are up to date. Use the top-right menu and choose “Open in Browser.”',
+    zh: '当前微信内置浏览器内核过旧，无法启动计时器。请改用并确认已更新的现代浏览器；仅选择“在系统浏览器打开”不一定有效。无法更新浏览器时，请暂用另一台设备。',
+    en: 'This WeChat browser engine is too old to start the timer. Use a modern browser that is actually up to date; merely choosing “Open in system browser” may not help. If no browser can be updated, use another device.',
   },
   outdatedBrowserMessage: {
-    zh: '当前浏览器版本过旧，无法启动计时器。请升级浏览器后重试。',
-    en: 'This browser is too old to start the timer. Update it and try again.',
+    zh: '当前浏览器内核过旧，无法启动计时器。请更新或改用现代浏览器；手机自带浏览器即使显示最新版，内核也可能仍然过旧。无法更新时，请暂用另一台设备。',
+    en: 'This browser engine is too old to start the timer. Update it or use a modern browser; a built-in browser may still have an old engine even when it reports that it is current. If it cannot be updated, use another device.',
+  },
+  outdatedIosMessage: {
+    zh: '当前 iPhone 或 iPad 的系统浏览器内核过旧，无法启动计时器。请升级 iOS 或 iPadOS 后重试；仅在同一台设备上更换浏览器可能无效。设备无法升级时，请暂用另一台设备。',
+    en: 'This iPhone or iPad system browser engine is too old to start the timer. Update iOS or iPadOS; switching browsers on the same device may not help. If the device cannot be updated, use another device.',
   },
   diagnosticCode: { zh: '诊断编号', en: 'Diagnostic code' },
   retry: { zh: '重试', en: 'Retry' },
   copy: { zh: '复制诊断信息', en: 'Copy diagnostic info' },
   copied: { zh: '已复制', en: 'Copied' },
 } as const;
+
+export type BootFailureMessageKey =
+  | 'message'
+  | 'outdatedWechatMessage'
+  | 'outdatedBrowserMessage'
+  | 'outdatedIosMessage';
+
+interface BootFailureForMessage {
+  userAgent: string;
+  errorName: string;
+  errorMessage: string;
+  evidence: ReadonlyArray<{ name: string; message: string }>;
+}
+
+function versionBelow(
+  match: RegExpExecArray | null,
+  minimumMajor: number,
+  minimumMinor: number,
+): boolean {
+  if (!match) return false;
+  const major = Number.parseInt(match[1] ?? '', 10);
+  const minor = Number.parseInt(match[2] ?? '0', 10);
+  return Number.isFinite(major)
+    && (major < minimumMajor || (major === minimumMajor && minor < minimumMinor));
+}
+
+export function bootFailureMessageKey(report: BootFailureForMessage): BootFailureMessageKey {
+  const combined = [
+    report.errorName,
+    report.errorMessage,
+    ...report.evidence.flatMap(item => [item.name, item.message]),
+  ].join(' ');
+  if (!/SyntaxError|Unexpected token|Invalid regular expression|invalid group specifier|parse error/i.test(combined)) {
+    return 'message';
+  }
+
+  const userAgent = report.userAgent || '';
+  const isIosDevice = /(?:iPhone|iPad|iPod)|(?:Macintosh.*Mobile\/)/i.test(userAgent);
+  if (isIosDevice) {
+    return versionBelow(/OS (\d+)[._](\d+)/i.exec(userAgent), MIN_SUPPORTED_SAFARI_MAJOR, MIN_SUPPORTED_SAFARI_MINOR)
+      ? 'outdatedIosMessage'
+      : 'message';
+  }
+
+  const chromiumMatch = /(?:Chrome|Chromium)\/(\d+)/i.exec(userAgent);
+  if (chromiumMatch && Number.parseInt(chromiumMatch[1] ?? '', 10) < MIN_SUPPORTED_CHROMIUM_MAJOR) {
+    return /MicroMessenger/i.test(userAgent) ? 'outdatedWechatMessage' : 'outdatedBrowserMessage';
+  }
+
+  const safariMatch = /Version\/(\d+)(?:\.(\d+))?.*Safari\//i.exec(userAgent);
+  return versionBelow(safariMatch, MIN_SUPPORTED_SAFARI_MAJOR, MIN_SUPPORTED_SAFARI_MINOR)
+    ? 'outdatedBrowserMessage'
+    : 'message';
+}
+
+export function isNonCriticalBootResourceUrl(url: string | undefined): boolean {
+  return Boolean(url && /\/_vercel\/(?:insights|speed-insights)\//i.test(url));
+}
 
 const EARLY_COPY_JSON = JSON.stringify({ app: APP_BOOT_COPY, timer: TIMER_BOOT_COPY });
 
@@ -81,6 +149,7 @@ export const APP_BOOT_EARLY_SCRIPT = `(function () {
     }
   }
   function remember(item) {
+    if (item.url && /\\/_vercel\\/(?:insights|speed-insights)\\//i.test(item.url)) return;
     evidence.push(item);
     if (evidence.length > ${MAX_EVIDENCE}) evidence.shift();
     try { window.sessionStorage.setItem('${EARLY_STORAGE_KEY}', JSON.stringify(evidence)); } catch (_) {}
@@ -186,14 +255,33 @@ export const APP_BOOT_EARLY_SCRIPT = `(function () {
     }
   }
   function messageKey(report) {
-    var versionMatch = /(?:Chrome|Chromium|CriOS)\\/(\\d+)/i.exec(report.userAgent || '');
-    if (!versionMatch || parseInt(versionMatch[1], 10) >= ${MIN_SUPPORTED_CHROMIUM_MAJOR}) return 'message';
     var combined = report.errorName + ' ' + report.errorMessage;
     for (var index = 0; index < report.evidence.length; index += 1) {
       combined += ' ' + report.evidence[index].name + ' ' + report.evidence[index].message;
     }
-    if (!/SyntaxError|Unexpected token|parse error/i.test(combined)) return 'message';
-    return /MicroMessenger/i.test(report.userAgent) ? 'outdatedWechatMessage' : 'outdatedBrowserMessage';
+    if (!/SyntaxError|Unexpected token|Invalid regular expression|invalid group specifier|parse error/i.test(combined)) return 'message';
+    var userAgent = report.userAgent || '';
+    var isIosDevice = /(?:iPhone|iPad|iPod)|(?:Macintosh.*Mobile\\/)/i.test(userAgent);
+    if (isIosDevice) {
+      var iosMatch = /OS (\\d+)[._](\\d+)/i.exec(userAgent);
+      if (!iosMatch) return 'message';
+      var iosMajor = parseInt(iosMatch[1], 10);
+      var iosMinor = parseInt(iosMatch[2], 10);
+      return iosMajor < ${MIN_SUPPORTED_SAFARI_MAJOR} || (iosMajor === ${MIN_SUPPORTED_SAFARI_MAJOR} && iosMinor < ${MIN_SUPPORTED_SAFARI_MINOR})
+        ? 'outdatedIosMessage'
+        : 'message';
+    }
+    var chromiumMatch = /(?:Chrome|Chromium)\\/(\\d+)/i.exec(userAgent);
+    if (chromiumMatch && parseInt(chromiumMatch[1], 10) < ${MIN_SUPPORTED_CHROMIUM_MAJOR}) {
+      return /MicroMessenger/i.test(userAgent) ? 'outdatedWechatMessage' : 'outdatedBrowserMessage';
+    }
+    var safariMatch = /Version\\/(\\d+)(?:\\.(\\d+))?(?:.*)Safari\\//i.exec(userAgent);
+    if (!safariMatch) return 'message';
+    var safariMajor = parseInt(safariMatch[1], 10);
+    var safariMinor = parseInt(safariMatch[2] || '0', 10);
+    return safariMajor < ${MIN_SUPPORTED_SAFARI_MAJOR} || (safariMajor === ${MIN_SUPPORTED_SAFARI_MAJOR} && safariMinor < ${MIN_SUPPORTED_SAFARI_MINOR})
+      ? 'outdatedBrowserMessage'
+      : 'message';
   }
   function renderFailure() {
     if (stopped || rendered) return;
