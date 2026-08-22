@@ -4,6 +4,7 @@ import {
   isDctimerDatabase,
   parseDctimerExport,
 } from '@/app/[lang]/timer/_lib/storage/import_dctimer';
+import { planTimerImport } from '@/app/[lang]/timer/_lib/storage/import_timer';
 
 async function sqliteFixture(schemaAndData: string): Promise<Uint8Array> {
   const SQL = await initSqlJs();
@@ -118,5 +119,48 @@ describe('dcTimer database validation', () => {
 
     const unrelated = await sqliteFixture('CREATE TABLE notes(id integer, body text);');
     expect(await parseDctimerExport(unrelated)).toEqual([]);
+  });
+});
+
+describe('external timer one-click import planning', () => {
+  it('imports matched and empty groups atomically without asking for event choices', () => {
+    const solve = {
+      id: 'solve-1',
+      timeMs: 1234,
+      penalty: 'ok' as const,
+      scramble: 'R U',
+      event: '333' as const,
+      ts: 1,
+    };
+    const plan = planTimerImport([
+      { sessionId: '1', name: 'Main', event: '333', matched: true, solves: [solve] },
+      { sessionId: '2', name: 'Empty unknown', event: '333', matched: false, solves: [] },
+    ]);
+
+    expect(plan.solveCount).toBe(1);
+    expect(plan.unresolvedSessionIds).toEqual([]);
+    expect(plan.sessions).toEqual([
+      { name: 'Main', event: '333', solves: [solve] },
+      { name: 'Empty unknown', solves: [] },
+    ]);
+  });
+
+  it('pauses the whole import until every populated unknown group has a target event', () => {
+    const solve = {
+      id: 'solve-2',
+      timeMs: 5678,
+      penalty: 'ok' as const,
+      scramble: 'U2',
+      event: '333' as const,
+      ts: 2,
+    };
+    const session = { sessionId: 'mystery', name: 'Mystery', event: '333' as const, matched: false, solves: [solve] };
+
+    expect(planTimerImport([session]).unresolvedSessionIds).toEqual(['mystery']);
+    expect(planTimerImport([session], { mystery: 'pyra' })).toEqual({
+      solveCount: 1,
+      unresolvedSessionIds: [],
+      sessions: [{ name: 'Mystery', event: 'pyra', solves: [solve] }],
+    });
   });
 });

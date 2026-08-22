@@ -29,13 +29,17 @@ import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../_lib/scramble';
 import {
-  appendSolves, exportJson, exportSpeedstacks, importJson, inspectImportJson, listBackups,
-  importNamedSessions, loadAll, pushBackup, replaceSolves, restoreBackup,
+  exportJson, exportSpeedstacks, importJson, inspectImportJson, listBackups,
+  importNamedSessions, loadAll, pushBackup, restoreBackup,
   type BackupEntry,
 } from '../_lib/storage/db';
 import { parseCstimerExport } from '../_lib/storage/import_cstimer';
 import { isDctimerDatabase, parseDctimerExport } from '../_lib/storage/import_dctimer';
-import type { TimerImportSession, TimerImportSource } from '../_lib/storage/import_timer';
+import {
+  planTimerImport,
+  type TimerImportSession,
+  type TimerImportSource,
+} from '../_lib/storage/import_timer';
 import { exportCstimerJson } from '../_lib/storage/export_cstimer';
 import { exportSolvesCsv } from '../_lib/storage/export_csv';
 import { uploadBackup, restoreFromCloud, fetchBackupMeta, formatSyncTime, type CloudBackupMeta } from '../_lib/storage/cloud';
@@ -309,15 +313,15 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
   const timerFileRef = useRef<HTMLInputElement | null>(null);
   const [timerImportSource, setTimerImportSource] = useState<TimerImportSource | null>(null);
   const [timerImportSessions, setTimerImportSessions] = useState<TimerImportSession[] | null>(null);
-  // Per-session "imported" flag so the UI dims/disables the buttons after action.
-  const [timerImported, setTimerImported] = useState<Record<string, 'append' | 'replace'>>({});
   const [timerImportTargets, setTimerImportTargets] = useState<Record<string, EventId>>({});
   const [timerBulkImported, setTimerBulkImported] = useState(false);
+  const [timerImportBusy, setTimerImportBusy] = useState(false);
 
-  const timerImportSolveCount = timerImportSessions?.reduce((sum, session) => sum + session.solves.length, 0) ?? 0;
-  const timerImportUnresolvedCount = timerImportSessions?.filter(
-    session => session.solves.length > 0 && !session.matched && !timerImportTargets[session.sessionId],
-  ).length ?? 0;
+  const timerImportPlan = timerImportSessions
+    ? planTimerImport(timerImportSessions, timerImportTargets)
+    : null;
+  const timerImportSolveCount = timerImportPlan?.solveCount ?? 0;
+  const timerImportUnresolvedCount = timerImportPlan?.unresolvedSessionIds.length ?? 0;
 
   // ── Import / export status ──
   const [ioMsg, setIoMsg] = useState<string | null>(null);
@@ -517,10 +521,63 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
     }));
   }
 
+  function importTimerSessionsAsNew(
+    sessions: readonly TimerImportSession[],
+    targets: Readonly<Record<string, EventId>>,
+  ): boolean {
+    const plan = planTimerImport(sessions, targets);
+    if (plan.unresolvedSessionIds.length > 0) {
+      alert(tr({
+        zh: `请先为 ${plan.unresolvedSessionIds.length} 个未识别的分组选择项目。`,
+        en: `Choose an event for ${plan.unresolvedSessionIds.length} unrecognized groups first.`,
+      }));
+      return false;
+    }
+
+    const result = importNamedSessions(plan.sessions);
+    if (!result) {
+      alert(tr({ zh: '整体导入失败，请检查存储空间后重试。', en: 'Bulk import failed. Check storage space and try again.' }));
+      return false;
+    }
+
+    setTimerBulkImported(true);
+    onDataReplaced?.();
+    flashIoMsg(tr({
+      zh: `已新建 ${result.sessionCount} 个会话并导入 ${result.solveCount} 条成绩`,
+      en: `Created ${result.sessionCount} sessions and imported ${result.solveCount} solves`,
+    }));
+    return true;
+  }
+
+  function stageOrImportTimerSessions(
+    source: TimerImportSource,
+    sessions: TimerImportSession[],
+  ): void {
+    setTimerImportSource(source);
+    setTimerImportSessions(sessions);
+    setTimerImportTargets({});
+    setTimerBulkImported(false);
+
+    const plan = planTimerImport(sessions);
+    if (plan.unresolvedSessionIds.length > 0) {
+      flashIoMsg(tr({
+        zh: `已读取 ${sessions.length} 个分组，请为 ${plan.unresolvedSessionIds.length} 个未识别分组选择项目`,
+        en: `Read ${sessions.length} groups; choose events for ${plan.unresolvedSessionIds.length} unrecognized groups`,
+      }));
+      return;
+    }
+    importTimerSessionsAsNew(sessions, {});
+  }
+
   async function onTimerImportFile(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     const file = e.target.files?.[0];
     e.target.value = ''; // allow re-selecting the same file
     if (!file) return;
+    setTimerImportBusy(true);
+    setTimerImportSource(null);
+    setTimerImportSessions(null);
+    setTimerImportTargets({});
+    setTimerBulkImported(false);
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       if (isDctimerDatabase(bytes)) {
@@ -532,11 +589,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           }));
           return;
         }
-        setTimerImportSource('dcTimer');
-        setTimerImportSessions(sessions);
-        setTimerImported({});
-        setTimerImportTargets({});
-        setTimerBulkImported(false);
+        stageOrImportTimerSessions('dcTimer', sessions);
         return;
       }
 
@@ -554,7 +607,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
         }
         setTimerImportSource(null);
         setTimerImportSessions(null);
-        setTimerImported({});
         setTimerImportTargets({});
         setTimerBulkImported(false);
         onDataReplaced?.();
@@ -567,68 +619,18 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
         }));
         return;
       }
-      setTimerImportSource('csTimer');
-      setTimerImportSessions(sessions);
-      setTimerImported({});
-      setTimerImportTargets({});
-      setTimerBulkImported(false);
+      stageOrImportTimerSessions('csTimer', sessions);
     } catch {
       alert(tr({ zh: '读取文件失败。', en: 'Failed to read file.'
       }));
+    } finally {
+      setTimerImportBusy(false);
     }
-  }
-
-  function importTimerSession(sess: TimerImportSession, mode: 'append' | 'replace'): void {
-    if (sess.solves.length === 0) {
-      alert(tr({ zh: '该会话没有可导入的成绩。', en: 'This session has no solves.'
-    }));
-      return;
-    }
-    if (mode === 'replace') {
-      const confirmMsg = tr({
-        zh: `确认用 ${sess.solves.length} 条记录替换 ${eventInfo(sess.event).nameZh} 的全部成绩？`,
-        en: `Replace all ${eventInfo(sess.event).nameEn} solves with ${sess.solves.length} from "${sess.name}"?`,
-      });
-      if (!confirm(confirmMsg)) return;
-      replaceSolves(sess.event, sess.solves);
-    } else {
-      appendSolves(sess.event, sess.solves);
-    }
-    setTimerImported(prev => ({ ...prev, [sess.sessionId]: mode }));
-    onDataReplaced?.();
-    flashIoMsg(tr({ zh: `已导入 ${sess.solves.length} 条成绩`, en: `Imported ${sess.solves.length} solves` }));
   }
 
   function importAllTimerSessions(): void {
     if (!timerImportSessions || timerImportSessions.length === 0) return;
-    if (timerImportUnresolvedCount > 0) {
-      alert(tr({
-        zh: `请先为 ${timerImportUnresolvedCount} 个未识别的分组选择项目。`,
-        en: `Choose an event for ${timerImportUnresolvedCount} unrecognized groups first.`,
-      }));
-      return;
-    }
-    if (!confirm(tr({
-      zh: `将按原顺序新增 ${timerImportSessions.length} 个会话并导入 ${timerImportSolveCount} 条成绩，现有数据不会被覆盖。是否继续？`,
-      en: `Create ${timerImportSessions.length} new sessions in the original order and import ${timerImportSolveCount} solves? Existing data will not be replaced.`,
-    }))) return;
-
-    const result = importNamedSessions(timerImportSessions.map(session => ({
-      name: session.name,
-      event: timerImportTargets[session.sessionId] ?? (session.matched ? session.event : undefined),
-      solves: session.solves,
-    })));
-    if (!result) {
-      alert(tr({ zh: '整体导入失败，请检查存储空间后重试。', en: 'Bulk import failed. Check storage space and try again.' }));
-      return;
-    }
-
-    setTimerBulkImported(true);
-    onDataReplaced?.();
-    flashIoMsg(tr({
-      zh: `已新建 ${result.sessionCount} 个会话并导入 ${result.solveCount} 条成绩`,
-      en: `Created ${result.sessionCount} sessions and imported ${result.solveCount} solves`,
-    }));
+    importTimerSessionsAsNew(timerImportSessions, timerImportTargets);
   }
 
   async function showBackupPicker(): Promise<void> {
@@ -1335,12 +1337,17 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             />
             <button
               className="hint-btn"
+              disabled={timerImportBusy}
               onClick={() => timerFileRef.current?.click()}
+              aria-busy={timerImportBusy}
             >
-              {tr({ zh: '选择文件…', en: 'Choose file…'
-            })}
+              {timerImportBusy
+                ? tr({ zh: '正在导入…', en: 'Importing…' })
+                : tr({ zh: '一键导入', en: 'One-click import' })}
             </button>
-            <span className="hint">{tr({ zh: '支持 CubeRoot 备份、csTimer 与 dcTimer 导出文件', en: 'Accepts CubeRoot backups, csTimer exports, and dcTimer exports'
+            <span className="hint">{tr({
+              zh: '选择 csTimer 或 dcTimer 文件后自动按原分组新增会话，不覆盖现有数据；CubeRoot 备份覆盖前会确认',
+              en: 'Selecting a csTimer or dcTimer file automatically creates sessions from its groups without replacing existing data; CubeRoot backups ask before replacing data',
             })}</span>
           </Row>
           <Row label={tr({ zh: '导出', en: 'Export'
@@ -1383,34 +1390,37 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           {ioMsg !== null && (
             <Row label=""><span className="hint" role="status" aria-live="polite">{ioMsg}</span></Row>
           )}
-          {timerImportSessions && timerImportSessions.length > 0 && (
+          {timerImportSessions && timerImportSessions.length > 0 && timerBulkImported && (
+            <Row label="">
+              <span className="hint" role="status">{tr({
+                zh: `${timerImportSource}：已导入 ${timerImportSessions.length} 个分组、${timerImportSolveCount} 条成绩`,
+                en: `${timerImportSource}: imported ${timerImportSessions.length} groups and ${timerImportSolveCount} solves`,
+              })}</span>
+            </Row>
+          )}
+          {timerImportSessions && timerImportSessions.length > 0 && !timerBulkImported && (
             <>
               <Row label="">
                 <button
                   className="hint-btn"
-                  disabled={timerBulkImported || timerImportUnresolvedCount > 0}
+                  disabled={timerImportUnresolvedCount > 0}
                   onClick={importAllTimerSessions}
                   title={timerImportUnresolvedCount > 0
                     ? tr({ zh: `还有 ${timerImportUnresolvedCount} 个分组需要选择项目`, en: `${timerImportUnresolvedCount} groups still need an event` })
                     : tr({ zh: '保留全部分组名和顺序，分别建立新会话', en: 'Keep every group name and order as separate new sessions' })}
                 >
-                  {timerBulkImported
-                    ? tr({ zh: '已整体导入', en: 'Imported all' })
-                    : tr({ zh: '全部导入为新会话', en: 'Import all as new sessions' })}
+                  {tr({ zh: '完成导入', en: 'Finish import' })}
                 </button>
                 <span className="hint">{tr({
-                  zh: `${timerImportSource}：${timerImportSessions.length} 个分组，${timerImportSolveCount} 条成绩，不覆盖现有数据`,
-                  en: `${timerImportSource}: ${timerImportSessions.length} groups, ${timerImportSolveCount} solves; existing data stays unchanged`,
+                  zh: `${timerImportSource}：已读取 ${timerImportSessions.length} 个分组、${timerImportSolveCount} 条成绩；为未识别分组选择项目后完成导入`,
+                  en: `${timerImportSource}: read ${timerImportSessions.length} groups and ${timerImportSolveCount} solves; choose events for unrecognized groups to finish`,
                 })}</span>
               </Row>
               <div className="cstimer-import-list">
                 {timerImportSessions.map(sess => {
                   const ev = eventInfo(sess.event);
                   const evLabel = tr({ zh: ev.nameZh, en: ev.nameEn });
-                  const done = timerImported[sess.sessionId];
                   const selectedTarget = timerImportTargets[sess.sessionId];
-                  const disabled = timerBulkImported || sess.solves.length === 0 || (!sess.matched && !selectedTarget);
-                  const importSession = selectedTarget ? { ...sess, event: selectedTarget } : sess;
                   return (
                     <div key={sess.sessionId} className="cstimer-import-row">
                       <div className="cstimer-import-info">
@@ -1434,28 +1444,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
                             </select>
                           </label>
                         )}
-                      </div>
-                      <div className="cstimer-import-actions">
-                        <button
-                          className="hint-btn"
-                          disabled={disabled || done === 'append'}
-                          onClick={() => importTimerSession(importSession, 'append')}
-                          title={tr({ zh: '追加到现有成绩', en: 'Append to existing solves'
-                          })}
-                        >
-                          {done === 'append' ? tr({ zh: '已追加', en: 'Appended' }) : tr({ zh: '追加', en: 'Append' })}
-                        </button>
-                        <button
-                          className="hint-btn"
-                          disabled={disabled || done === 'replace'}
-                          onClick={() => importTimerSession(importSession, 'replace')}
-                          title={tr({ zh: '清空该项目并以此覆盖', en: 'Clear this event and replace'
-                          })}
-                        >
-                          {done === 'replace' ? tr({ zh: '已替换', en: 'Replaced'
-                                                          }) : tr({ zh: '替换', en: 'Replace'
-                                                              })}
-                        </button>
                       </div>
                     </div>
                   );
