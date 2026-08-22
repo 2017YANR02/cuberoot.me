@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
 
 // 合练(多套公式集混成一场练)的三条硬约定:
 //  1) case key:单集会话逐字节不变(历史进度不能失效),合练才加 set 前缀;
@@ -29,6 +30,22 @@ const { useAlgSrs } = await import('@/lib/alg-srs-store');
 const { ALG_CATALOG } = await import('@cuberoot/shared');
 
 const readLocal = (key: string) => JSON.parse(g.localStorage!.getItem(key) ?? '{}') as Record<string, unknown>;
+
+describe('合练 SSG hydration', () => {
+  it.each([
+    '../app/[lang]/alg/[puzzle]/[set]/run/TrainerRunClient.tsx',
+    '../app/[lang]/alg/[puzzle]/[set]/select/TrainerSetClient.tsx',
+  ])('%s 的 query 分支只在挂载后启用', (relativePath) => {
+    const source = readFileSync(new URL(relativePath, import.meta.url), 'utf8');
+    const mountedState = source.indexOf('const [mounted, setMounted] = useState(false);');
+    const mixReady = source.indexOf('const mixReady = mounted && isMix && mixSets.length >= MIX_MIN_SETS;');
+    const meta = source.indexOf('const meta = useMemo');
+
+    expect(mountedState).toBeGreaterThan(-1);
+    expect(mixReady).toBeGreaterThan(mountedState);
+    expect(meta).toBeGreaterThan(mixReady);
+  });
+});
 
 describe('合练 case key', () => {
   it('单集会话的 key 与历史格式逐字节相同', () => {

@@ -253,6 +253,11 @@ export default function TrainerRunClient() {
   const nextRoundHrefRef = useRef<string | null>(null);
   nextRoundHrefRef.current = nextRoundHref;
 
+  // mix 是 SSG 哨兵页,静态 HTML 看不到 `?sets=`。客户端首帧必须继续渲染同一份
+  // 加载壳,挂载后才能按 query 切到训练页,否则整棵子树会触发 hydration #418。
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   // 合练:`/alg/<puzzle>/mix/run?sets=pll,zbll` —— mix 是哨兵段,成员集合在 query 里
   const [setsParam] = useQueryState('sets');
   const isMix = setSlug === MIX_SLUG;
@@ -260,7 +265,7 @@ export default function TrainerRunClient() {
     () => (isMix ? parseMixSets(puzzle ?? null, setsParam) : []),
     [isMix, puzzle, setsParam],
   );
-  const mixReady = isMix && mixSets.length >= MIX_MIN_SETS;
+  const mixReady = mounted && isMix && mixSets.length >= MIX_MIN_SETS;
   // 必须 memo:合练的 meta 是现造的字面量,身份每次 render 都变,而它进了下面装载
   // effect 的依赖 —— 不 memo 就是「effect → set state → 新 meta → effect」的死循环。
   const meta = useMemo(() => (
@@ -435,10 +440,6 @@ export default function TrainerRunClient() {
 
   // 偏好(pre-AUF / 计时 / 模式 / 字体)只在挂载后补水 —— SSG 壳渲染默认值,避免水合不一致
   useEffect(() => { hydratePrefs(); }, [hydratePrefs]);
-
-  // SSG 壳里读不到 `?sets=`(静态 HTML 没有 query),挂载前别急着说「至少要选两套」
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
 
   // per-case 学习标记(pill / 轮盘掌握位 / M 键):本地 + 登录后云端合并。
   // 合练一次装齐全部成员集 —— 标记/记忆仍分别落各自 set,合练与单练是同一份进度。
