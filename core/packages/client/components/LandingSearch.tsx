@@ -13,8 +13,8 @@
  *  - EventIcon lazy-loaded via next/dynamic (was React.lazy in Vite)
  *  - useSpeechToText / smart_paste removed for now (nice-to-have, defer)
  */
-import { useState, useEffect, useRef, useMemo } from 'react';
-import Link from 'next/link';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import Link from '@/components/AppLink';
 import { useRouter, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
@@ -115,7 +115,7 @@ function HeaderMore({ overflow, title, href, onClick }: {
   );
   if (href) {
     return (
-      <Link href={href} className="landing-search-header-more" onClick={onClick} title={title}>
+      <Link href={href} prefetch={false} className="landing-search-header-more" onClick={onClick} title={title}>
         {inner}
       </Link>
     );
@@ -130,15 +130,33 @@ function HeaderMore({ overflow, title, href, onClick }: {
 interface Props {
   cards: LandingSearchCard[];
   lang: 'zh' | 'en';
+  /** Controlled query for the standalone /search page. Omit on the homepage. */
+  query?: string;
+  onQueryChange?: (query: string) => void;
+  /** Keep results in document flow instead of behaving like a dismissible dropdown. */
+  persistentResults?: boolean;
+  autoFocus?: boolean;
 }
 
-export default function LandingSearch({ cards, lang }: Props) {
+export default function LandingSearch({
+  cards,
+  lang,
+  query: controlledQuery,
+  onQueryChange,
+  persistentResults = false,
+  autoFocus = false,
+}: Props) {
   const isZh = lang === 'zh';
   const params = useParams<{ lang?: string }>();
   // Pattern B: English is the bare path → empty prefix; only Chinese is /zh.
   const effLang = params?.lang === 'zh' || params?.lang === 'en' ? params.lang : lang;
   const langPrefix = effLang === 'zh' ? '/zh' : '';
-  const [query, setQuery] = useState('');
+  const [internalQuery, setInternalQuery] = useState('');
+  const query = controlledQuery ?? internalQuery;
+  const setQuery = useCallback((value: string) => {
+    if (controlledQuery === undefined) setInternalQuery(value);
+    onQueryChange?.(value);
+  }, [controlledQuery, onQueryChange]);
   const [open, setOpen] = useState(false);
   const { supported: micSupported, listening, start: micStart, stop: micStop } = useSpeechToText({
     lang: isZh ? 'zh-CN' : 'en-US',
@@ -186,7 +204,7 @@ export default function LandingSearch({ cards, lang }: Props) {
     return () => document.removeEventListener('mousedown', onDown);
   }, [open]);
 
-  const showDropdown = open && q !== '';
+  const showDropdown = (persistentResults || open) && q !== '';
 
   // Prepend [lang] segment to internal paths. Vite uses ?lang= query;
   // Next uses /<lang>/* path prefix.
@@ -194,11 +212,17 @@ export default function LandingSearch({ cards, lang }: Props) {
     const url = `${langPrefix}${path}`;
     return extraQuery ? `${url}?${extraQuery}` : url;
   };
+  const hrefWithQuery = (path: string, extraQuery?: string): string => (
+    extraQuery ? `${path}?${extraQuery}` : path
+  );
 
-  const closeAfter = () => { setOpen(false); setQuery(''); };
+  const closeAfter = () => {
+    setOpen(false);
+    if (!persistentResults) setQuery('');
+  };
   const goCard = (c: LandingSearchCard) => {
     closeAfter();
-    if (c.internal) router.push(c.href);
+    if (c.internal) router.push(langHref(c.href));
     else window.location.href = c.href;
   };
 
@@ -285,7 +309,7 @@ export default function LandingSearch({ cards, lang }: Props) {
         {visiblePersons.map(p => (
           <Link
             key={p.wcaId}
-            href={langHref(`/wca/persons/${p.wcaId}`)}
+            href={`/wca/persons/${p.wcaId}`}
             prefetch={false}
             className="landing-search-item landing-search-item--rich"
             onClick={closeAfter}
@@ -302,7 +326,7 @@ export default function LandingSearch({ cards, lang }: Props) {
   ) : null;
 
   return (
-    <div className="landing-search" ref={wrapRef}>
+    <div className={`landing-search${persistentResults ? ' landing-search--page' : ''}`} ref={wrapRef}>
       <div
         className="landing-search-input"
         onMouseDown={e => {
@@ -328,6 +352,7 @@ export default function LandingSearch({ cards, lang }: Props) {
         <input
           ref={textInputRef}
           type="text"
+          autoFocus={autoFocus}
           className="landing-search-field"
           value={query}
           onChange={e => { setQuery(e.target.value); setOpen(true); }}
@@ -346,6 +371,7 @@ export default function LandingSearch({ cards, lang }: Props) {
           }}
           placeholder={listening ? tr({ zh: '请说…', en: 'Listening…'
                   }) : rotatingPlaceholder(isZh, placeholderDay)}
+          aria-label={tr({ zh: '全站搜索', en: 'Site search' })}
         />
         {query !== '' && (
           <ClearButton
@@ -400,7 +426,8 @@ export default function LandingSearch({ cards, lang }: Props) {
               </div>
               <div className="landing-search-grid">
                 <Link
-                  href={langHref('/wca/comp', `year=${yearMatch}`)}
+                  href={hrefWithQuery('/wca/comp', `year=${yearMatch}`)}
+                  prefetch={false}
                   className="landing-search-item"
                   onClick={closeAfter}
                 >
@@ -446,15 +473,16 @@ export default function LandingSearch({ cards, lang }: Props) {
               </div>
               <div className="landing-search-grid">
                 {cardMatches.map(c => (
-                  <button
-                    type="button"
+                  <Link
                     key={c.id}
+                    href={c.href}
+                    prefetch={false}
                     className="landing-search-item"
-                    onClick={() => goCard(c)}
+                    onClick={closeAfter}
                   >
                     <span className="landing-search-item-name">{(isZh ? c.nameZh : c.nameEn)}</span>
                     <span className="landing-search-item-meta">{(isZh ? c.sectionTitleZh : c.sectionTitleEn)}</span>
-                  </button>
+                  </Link>
                 ))}
               </div>
             </section>
@@ -470,7 +498,8 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {toolMatches.map(it => (
                   <Link
                     key={it.path}
-                    href={langHref(it.path)}
+                    href={it.path}
+                    prefetch={false}
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
@@ -492,7 +521,8 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {lookupMatches.map(it => (
                   <Link
                     key={`${it.path}|${it.extraQuery ?? ''}`}
-                    href={langHref(it.path, it.extraQuery)}
+                    href={hrefWithQuery(it.path, it.extraQuery)}
+                    prefetch={false}
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
@@ -518,7 +548,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                       return (
                         <Link
                           key={`s:${s.id}`}
-                          href={langHref(`/wca/${s.id}`)}
+                          href={`/wca/${s.id}`}
                           prefetch={false}
                           className="landing-search-item"
                           onClick={closeAfter}
@@ -533,7 +563,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                     return (
                       <Link
                         key={`m:${parent.id}:${metric.id}`}
-                        href={`${langHref(`/wca/${parent.id}`)}#metric=${metric.id}`}
+                        href={`/wca/${parent.id}#metric=${metric.id}`}
                         prefetch={false}
                         className="landing-search-item"
                         onClick={closeAfter}
@@ -558,7 +588,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {aboutMatches.map(a => (
                   <Link
                     key={a.id}
-                    href={langHref(`/wca/about/${a.id}`)}
+                    href={`/wca/about/${a.id}`}
                     prefetch={false}
                     className="landing-search-item"
                     onClick={closeAfter}
@@ -581,7 +611,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {stackMatches.map(s => (
                   <Link
                     key={s.slug}
-                    href={langHref(`/dev/stack/${s.slug}`)}
+                    href={`/dev/stack/${s.slug}`}
                     prefetch={false}
                     className="landing-search-item"
                     onClick={closeAfter}
@@ -612,7 +642,8 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {visibleGlossary.map(g => (
                   <Link
                     key={g.slug}
-                    href={`${langHref('/wiki')}#${g.slug}`}
+                    href={`/wiki#${g.slug}`}
+                    prefetch={false}
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
@@ -635,7 +666,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {algSetMatches.map(a => (
                   <Link
                     key={`${a.puzzle}/${a.setSlug}`}
-                    href={langHref(a.path)}
+                    href={a.path}
                     prefetch={false}
                     className="landing-search-item"
                     onClick={closeAfter}
@@ -659,7 +690,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                   <HeaderMore
                     overflow={compMatches.length - COMP_INITIAL_CAP}
                     title={(isZh ? `查看全部 ${compMatches.length} 场` : `View all ${compMatches.length}`)}
-                    href={langHref(`/wca/comp`, `view=list&q=${encodeURIComponent(q)}`)}
+                    href={hrefWithQuery('/wca/comp', `view=list&q=${encodeURIComponent(q)}`)}
                     onClick={closeAfter}
                   />
                 )}
@@ -671,7 +702,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                   return (
                     <Link
                       key={c.id}
-                      {...compLinkProps(c.id, undefined, lang)}
+                      {...compLinkProps(c.id)}
                       className="landing-search-item landing-search-item--rich"
                       onClick={closeAfter}
                     >
@@ -710,7 +741,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {visibleRecons.map(r => (
                   <Link
                     key={r.id}
-                    href={langHref(`/recon/${reconPathSeg(r)}`)}
+                    href={`/recon/${reconPathSeg(r)}`}
                     prefetch={false}
                     className="landing-search-item landing-search-item--rich"
                     onClick={closeAfter}

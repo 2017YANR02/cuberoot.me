@@ -505,6 +505,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   },
   'scramble/sub-solver': { title: { zh: '子群求解器', en: 'Subsolver' } },
   'scramble/symmetry': { title: { zh: '对称型', en: 'Symmetry' } },
+  'search': {
+    title: { zh: '全站搜索', en: 'Site Search' },
+    description: {
+      zh: '搜索 CubeRoot 的页面、工具、WCA 比赛与选手、统计、复盘、术语和公式库。',
+      en: 'Search CubeRoot pages, tools, WCA competitions and persons, statistics, reconstructions, glossary entries, and algorithm sets.',
+    },
+  },
   'alg/sq1/inspect': { title: { zh: 'SQ1 打乱检查', en: 'Square-1 Scramble Inspector' } },
   'alg/sq1/visualize': { title: { zh: 'SQ1 形状过程', en: 'Square-1 Shape Visualizer' } },
   'alg/sq1/import': { title: { zh: 'SQ1 复形公式导入', en: 'Square-1 Algorithm Importer' } },

@@ -171,7 +171,7 @@ describe('teaching course plan', () => {
     })));
   });
 
-  it('marks the homepage entry as administrator-only', () => {
+  it('publishes the canonical courses entry on the homepage', () => {
     const teachingCard = SECTIONS
       .flatMap((section) => section.cards)
       .find((card) => card.id === 'teaching');
@@ -179,8 +179,8 @@ describe('teaching course plan', () => {
     expect(teachingCard).toMatchObject({
       href: '/courses',
       internal: true,
-      adminOnly: true,
     });
+    expect(teachingCard?.adminOnly).toBeUndefined();
     expect(TEXTS.teaching).toEqual({ zh: '课程', en: 'Courses' });
   });
 

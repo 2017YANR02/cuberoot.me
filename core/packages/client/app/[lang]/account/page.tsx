@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { BookOpen, Building2, ChevronLeft, ChevronRight, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, UserRound } from 'lucide-react';
+import { Bell, BookOpen, Building2, ChevronLeft, ChevronRight, HeartHandshake, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, UserRound } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
@@ -243,6 +243,19 @@ export default function AccountPage() {
       icon: <Building2 size={22} className="account-card-icon" />,
       title: tr({ zh: '教学管理', en: 'Teaching' }),
       desc: tr({ zh: '机构、学员、校区和班级', en: 'Organizations, students, campuses, and classes' }),
+    },
+    {
+      key: 'membership',
+      href: '/membership',
+      icon: <HeartHandshake size={22} className="account-card-icon" />,
+      title: tr({ zh: '会员', en: 'Membership' }),
+      desc: tr({ zh: '查看会员方案和当前权益', en: 'View plans and your current benefits' }),
+    },
+    {
+      key: 'notifications',
+      href: '/notifications',
+      icon: <Bell size={22} className="account-card-icon" />,
+      title: tr({ zh: '消息', en: 'Notifications' }),
     },
     ...(isAdmin ? [{
       key: 'submissions',
