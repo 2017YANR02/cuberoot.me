@@ -1417,8 +1417,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'Scramble222ModePicker',
     import: "import Scramble222ModePicker from '@/components/Scramble222ModePicker';",
     category: 'toggle',
-    zh: `2x2 打乱口径切换(WCA 官方 11 步与最优最短),仅当选中 2x2 时显示,选择持久化到 localStorage;两种口径都经 TNoodle 握位模型选最顺手的等价打乱。`,
-    en: `2x2 scramble-style toggle (official WCA 11-move vs shortest-optimal), shown only when 2x2 is selected, persisting the choice to localStorage; both styles pick the most ergonomic equivalent via TNoodle's grip model.`,
+    zh: `统一 2x2 打乱选择器:默认切换 WCA 官方 11 步与最优最短;计时器随机来源可通过 showSpecialTypes 复用同一组件显示 csTimer 专项类型。口径与类型分别持久化。`,
+    en: `Unified 2x2 scramble picker: toggles official WCA 11-move vs shortest-optimal by default, and can expose csTimer special types for the timer's random source via showSpecialTypes. Style and type persist independently.`,
   },
   {
     name: 'Scramble333ModePicker',

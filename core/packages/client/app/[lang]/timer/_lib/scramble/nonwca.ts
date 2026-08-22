@@ -6,9 +6,10 @@
  * ship a scrambler of our own for them. The engine runs in a Web Worker
  * (see ./cstimer_worker.ts), so generation is asynchronous, while the timer's
  * dispatcher (`registerScramble`) is synchronous. The gap is bridged with a
- * small per-event queue:
+ * small per-generator queue. Non-WCA projects and the timer's 2x2 special
+ * scrambles share this bridge without sharing queued results:
  *
- *   - `take()` (what the dispatcher calls) pops a ready scramble and kicks off a
+ *   - `take*()` (what the dispatcher calls) pops a ready scramble and kicks off a
  *     background top-up. It returns '' when the queue is dry — a *loading*
  *     placeholder, never a fake or wrong-puzzle scramble.
  *   - `nextNonWcaScramble()` awaits a real one; SoloView calls it to fill that
@@ -21,10 +22,10 @@
 import type { EventId } from '../types';
 import { cstimerWorkerScramble, warmCstimerWorker } from './cstimer_worker';
 
-interface NonWcaSpec {
+export interface CstimerScrambleSpec {
   /** csTimer scrambler key, passed verbatim to `scrMgr.scramblers[key]`. */
   key: string;
-  /** csTimer's 2nd argument. All six of ours are random-state → ignored. */
+  /** csTimer's 2nd argument. Random-state generators ignore it; random-move generators use it. */
   length?: number;
 }
 
@@ -39,7 +40,7 @@ interface NonWcaSpec {
  * scrType in ../storage/{import,export}_cstimer.ts, and a case in
  * tests/timer_nonwca_scramble.test.ts.
  */
-const NON_WCA: Partial<Record<EventId, NonWcaSpec>> = {
+const NON_WCA: Partial<Record<EventId, CstimerScrambleSpec>> = {
   fto:      { key: 'ftoso' },
   kilominx: { key: 'klmso' },
   gear:     { key: 'gearso' },
@@ -65,28 +66,60 @@ export function isNonWcaEvent(event: EventId): boolean {
 /** How many scrambles to keep queued ahead of the user. */
 const TARGET = 2;
 
-const queues = new Map<EventId, string[]>();
-const inFlight = new Map<EventId, number>();
+const queues = new Map<string, string[]>();
+const inFlight = new Map<string, number>();
 
-function queueOf(event: EventId): string[] {
-  let q = queues.get(event);
-  if (!q) { q = []; queues.set(event, q); }
+/** 生成参数本身就是队列身份,防止同一项目的不同专项类型串队。 */
+function queueKey(spec: CstimerScrambleSpec): string {
+  return `${spec.key}|${spec.length ?? 0}`;
+}
+
+function queueOf(spec: CstimerScrambleSpec): string[] {
+  const id = queueKey(spec);
+  let q = queues.get(id);
+  if (!q) { q = []; queues.set(id, q); }
   return q;
 }
 
 /** Kick off background generation until the queue reaches TARGET. */
-function topUp(event: EventId): void {
-  const spec = NON_WCA[event];
-  if (!spec) return;
-  const q = queueOf(event);
-  const running = inFlight.get(event) ?? 0;
+function topUp(spec: CstimerScrambleSpec, label = spec.key): void {
+  const id = queueKey(spec);
+  const q = queueOf(spec);
+  const running = inFlight.get(id) ?? 0;
   const want = TARGET - q.length - running;
   for (let i = 0; i < want; i++) {
-    inFlight.set(event, (inFlight.get(event) ?? 0) + 1);
+    inFlight.set(id, (inFlight.get(id) ?? 0) + 1);
     void cstimerWorkerScramble(spec.key, spec.length ?? 0)
-      .then((s) => { if (s) queueOf(event).push(s); })
-      .catch((err) => { console.warn(`[timer] ${event} scramble failed:`, err); })
-      .finally(() => { inFlight.set(event, Math.max(0, (inFlight.get(event) ?? 1) - 1)); });
+      .then((s) => { if (s) queueOf(spec).push(s); })
+      .catch((err) => { console.warn(`[timer] ${label} scramble failed:`, err); })
+      .finally(() => { inFlight.set(id, Math.max(0, (inFlight.get(id) ?? 1) - 1)); });
+  }
+}
+
+/** 同步消费任意 csTimer worker 队列；空串表示仍在异步生成。 */
+export function takeCstimerScramble(spec: CstimerScrambleSpec): string {
+  const s = queueOf(spec).shift() ?? '';
+  topUp(spec);
+  return s;
+}
+
+/** 预热任意 csTimer worker 队列。 */
+export function prefetchCstimerScramble(spec: CstimerScrambleSpec): void {
+  warmCstimerWorker();
+  topUp(spec);
+}
+
+/** 等待任意 csTimer worker 队列的一条真实打乱。 */
+export async function nextCstimerScramble(spec: CstimerScrambleSpec, label = spec.key): Promise<string> {
+  const queued = queueOf(spec).shift();
+  if (queued) { topUp(spec, label); return queued; }
+  try {
+    const s = await cstimerWorkerScramble(spec.key, spec.length ?? 0);
+    topUp(spec, label);
+    return s;
+  } catch (err) {
+    console.warn(`[timer] ${label} scramble failed:`, err);
+    return '';
   }
 }
 
@@ -96,21 +129,20 @@ function topUp(event: EventId): void {
  * spinner and fills it in via `nextNonWcaScramble`).
  */
 export function takeNonWcaScramble(event: EventId): string {
-  const s = queueOf(event).shift() ?? '';
-  topUp(event);
-  return s;
+  const spec = NON_WCA[event];
+  return spec ? takeCstimerScramble(spec) : '';
 }
 
 /** Is a scramble for `event` available right now (no await needed)? */
 export function hasNonWcaScramble(event: EventId): boolean {
-  return queueOf(event).length > 0;
+  const spec = NON_WCA[event];
+  return spec ? queueOf(spec).length > 0 : false;
 }
 
 /** Start the engine + fill the queue for `event` ahead of demand. */
 export function prefetchNonWca(event: EventId): void {
-  if (!NON_WCA[event]) return;
-  warmCstimerWorker();
-  topUp(event);
+  const spec = NON_WCA[event];
+  if (spec) prefetchCstimerScramble(spec);
 }
 
 /**
@@ -119,17 +151,7 @@ export function prefetchNonWca(event: EventId): void {
  */
 export async function nextNonWcaScramble(event: EventId): Promise<string> {
   const spec = NON_WCA[event];
-  if (!spec) return '';
-  const queued = queueOf(event).shift();
-  if (queued) { topUp(event); return queued; }
-  try {
-    const s = await cstimerWorkerScramble(spec.key, spec.length ?? 0);
-    topUp(event);
-    return s;
-  } catch (err) {
-    console.warn(`[timer] ${event} scramble failed:`, err);
-    return '';
-  }
+  return spec ? nextCstimerScramble(spec, event) : '';
 }
 
 /**
@@ -139,7 +161,7 @@ export async function nextNonWcaScramble(event: EventId): Promise<string> {
 export async function fillNonWca(event: EventId, count: number): Promise<void> {
   const spec = NON_WCA[event];
   if (!spec) return;
-  const q = queueOf(event);
+  const q = queueOf(spec);
   const need = count - q.length;
   if (need <= 0) return;
   const batch = await Promise.all(
