@@ -50,8 +50,9 @@ import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { SPEC_BY_EVENT } from './_puzzle-specs';
 import LazyVisible from '@/components/LazyVisible';
+import { ClientLoadStatus } from '@/components/StartupStatus';
 
-const Loading = () => <div style={{ padding: 16 }}>Loading…</div>;
+const Loading = () => <ClientLoadStatus />;
 
 // 分布区(下半区)懒载:ssr:false + 只在 LazyVisible 滚入视口后才挂,既不进首屏 bundle,
 // 也不在首屏跑分布的现场求解。

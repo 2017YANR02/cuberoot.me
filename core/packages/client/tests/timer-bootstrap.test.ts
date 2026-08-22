@@ -8,9 +8,10 @@ import TimerBootstrap, {
   type TimerBootDiagnostic,
 } from '@/app/[lang]/timer/_components/TimerBootstrap';
 import {
+  APP_BOOT_COPY,
+  APP_BOOT_EARLY_SCRIPT,
   TIMER_BOOT_COPY,
-  TIMER_BOOT_EARLY_SCRIPT,
-} from '@/app/[lang]/timer/_lib/timer_boot_early';
+} from '@/lib/app_boot_early';
 
 const WECHAT_CHROME_83_USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; wv) AppleWebKit/537.36 Chrome/83.0.4103.106 Mobile Safari/537.36 MicroMessenger/8.0.76';
 
@@ -152,20 +153,23 @@ describe('buildTimerBootDiagnostic', () => {
   });
 });
 
-describe('timer bootstrap early guard', () => {
+describe('app bootstrap early guard', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.spyOn(console, 'error').mockImplementation(() => {});
     window.history.replaceState({}, '', '/timer');
     window.__timerBootDiagnostic = undefined;
     window.__timerBootEarly = undefined;
+    window.__appBootDiagnostic = undefined;
+    window.__appBootEarly = undefined;
   });
 
   afterEach(() => {
-    window.__timerBootEarly?.stop();
-    document.documentElement.removeAttribute('data-timer-boot-guard');
+    window.__appBootEarly?.stop();
+    document.documentElement.removeAttribute('data-app-boot-guard');
     document.documentElement.removeAttribute('lang');
     document.querySelector('[data-timer-bootstrap]')?.remove();
+    document.querySelector('[data-app-bootstrap]')?.remove();
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
@@ -175,10 +179,10 @@ describe('timer bootstrap early guard', () => {
     shell.setAttribute('data-timer-bootstrap', 'loading');
     document.body.appendChild(shell);
 
-    window.eval(TIMER_BOOT_EARLY_SCRIPT);
+    window.eval(APP_BOOT_EARLY_SCRIPT);
     vi.advanceTimersByTime(20_000);
 
-    expect(document.documentElement.getAttribute('data-timer-boot-guard')).toBe('stopped');
+    expect(document.documentElement.getAttribute('data-app-boot-guard')).toBe('stopped');
     expect(shell.getAttribute('role')).toBe('alert');
     expect(shell.querySelector('code')?.textContent).toMatch(/^TMR-TIMEOUT-/);
     expect(shell.querySelectorAll('button')).toHaveLength(2);
@@ -193,24 +197,46 @@ describe('timer bootstrap early guard', () => {
     shell.setAttribute('data-timer-bootstrap', 'loading');
     document.body.appendChild(shell);
 
-    window.eval(TIMER_BOOT_EARLY_SCRIPT);
+    window.eval(APP_BOOT_EARLY_SCRIPT);
     window.dispatchEvent(new ErrorEvent('error', {
       error: new SyntaxError("Unexpected token '='"),
       message: "Uncaught SyntaxError: Unexpected token '='",
       filename: 'https://cuberoot.me/_next/static/chunks/timer.js',
     }));
-    vi.advanceTimersByTime(20_000);
+    vi.advanceTimersByTime(0);
 
     expect(shell.textContent).toContain(TIMER_BOOT_COPY.outdatedWechatMessage.zh);
     expect(shell.textContent).not.toContain(TIMER_BOOT_COPY.message.zh);
   });
 
-  it('does not install the early guard outside the timer route', () => {
+  it('shows the same actionable fallback on another route with a shared chunk parse failure', () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(WECHAT_CHROME_83_USER_AGENT);
+    window.history.replaceState({}, '', '/zh/paint');
+    document.documentElement.lang = 'zh-Hans';
+
+    window.eval(APP_BOOT_EARLY_SCRIPT);
+    window.dispatchEvent(new ErrorEvent('error', {
+      error: new SyntaxError("Unexpected token '='"),
+      message: "Uncaught SyntaxError: Unexpected token '='",
+      filename: 'https://cuberoot.me/_next/static/chunks/shared.js',
+    }));
+    vi.advanceTimersByTime(0);
+
+    const alert = document.querySelector('[data-app-bootstrap="error"]');
+    expect(alert?.textContent).toContain(APP_BOOT_COPY.outdatedWechatMessage.zh);
+    expect(alert?.querySelector('code')?.textContent).toMatch(/^APP-CHUNK-/);
+    expect(window.__appBootDiagnostic?.kind).toBe('chunk');
+  });
+
+  it('stops quietly after a normal non-timer page load', () => {
     window.history.replaceState({}, '', '/wca');
 
-    window.eval(TIMER_BOOT_EARLY_SCRIPT);
+    window.eval(APP_BOOT_EARLY_SCRIPT);
+    window.dispatchEvent(new Event('load'));
+    vi.advanceTimersByTime(5_000);
 
-    expect(window.__timerBootEarly).toBeUndefined();
-    expect(document.documentElement.hasAttribute('data-timer-boot-guard')).toBe(false);
+    expect(document.documentElement.getAttribute('data-app-boot-guard')).toBe('stopped');
+    expect(document.querySelector('[data-app-bootstrap="error"]')).toBeNull();
+    expect(window.__appBootDiagnostic).toBeUndefined();
   });
 });
