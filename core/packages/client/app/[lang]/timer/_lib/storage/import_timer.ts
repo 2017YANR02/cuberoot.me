@@ -15,3 +15,34 @@ export interface TimerImportSession {
   /** Parsed solves, sorted oldest to newest. */
   solves: Solve[];
 }
+
+export interface TimerImportPlan {
+  sessions: Array<{
+    name: string;
+    event?: EventId;
+    solves: Solve[];
+  }>;
+  solveCount: number;
+  unresolvedSessionIds: string[];
+}
+
+/** Resolve user-selected event overrides and identify the only sessions that block atomic import. */
+export function planTimerImport(
+  sessions: readonly TimerImportSession[],
+  targets: Readonly<Record<string, EventId>> = {},
+): TimerImportPlan {
+  const unresolvedSessionIds: string[] = [];
+  let solveCount = 0;
+  const plannedSessions = sessions.map((session) => {
+    const event = targets[session.sessionId] ?? (session.matched ? session.event : undefined);
+    solveCount += session.solves.length;
+    if (session.solves.length > 0 && !event) unresolvedSessionIds.push(session.sessionId);
+    return {
+      name: session.name,
+      ...(event ? { event } : {}),
+      solves: session.solves,
+    };
+  });
+
+  return { sessions: plannedSessions, solveCount, unresolvedSessionIds };
+}
