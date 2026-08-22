@@ -6,17 +6,17 @@
 // 比赛名 → 图表 → 输入网格 → 控制按钮 → 进度滑杆 → 数字键盘 → 项目选择器 → 统计表
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { useTranslation } from 'react-i18next';
-import { Sigma, HelpCircle } from 'lucide-react';
+import { Sigma, HelpCircle, Share2, Radio, LogOut } from 'lucide-react';
 import { useCalcStore, isMbfForEvent, solveCountForEvent } from './_components/stores/calc_store';
 import { setCurrentEvent, setMoveCntMode, setMbfMode } from './_components/engine/calc_engine';
 import { load as loadWrIds, loadDefaults, setPlayerOverride, clearPlayerOverride, getPlayerOverride, getAvgWR12 } from './_components/engine/wr_data';
 import { sampleOneSolve } from './_components/engine/sim_engine';
 import { render as chartRender } from './_components/components/chart_renderer';
-import { WcaPersonPicker, fetchUserTimes, fetchAvatar } from '@cuberoot/shared';
+import { WcaPersonPicker, fetchUserTimes, fetchAvatar, type CalcLiveSnapshot } from '@cuberoot/shared';
 import { Chart } from './_components/components/Chart';
 import { InputGrid } from './_components/components/InputGrid';
 import type { AvatarState } from './_components/components/InputGrid';
@@ -26,12 +26,15 @@ import { EventSelector } from './_components/components/EventSelector';
 import { SimButtons } from './_components/components/SimButtons';
 import { ProgressSliders } from './_components/components/ProgressSliders';
 import AverageMode from './_components/average_mode/AverageMode';
+import { useCalcLive } from './_components/live/useCalcLive';
+import { RoomQrModal } from '@/components/RoomQrModal';
 import './calc.css';
 import { tr } from '@/i18n/tr';
 
 type CalcTab = 'compare' | 'average';
 
-
+const getCalcLiveSnapshot = () => useCalcStore.getState().getLiveSnapshot();
+const subscribeCalcLive = (listener: () => void) => useCalcStore.subscribe(listener);
 
 // ── Wake Lock — 原版 app.js#20-31 ──
 let wakeLock: WakeLockSentinel | null = null;
@@ -54,6 +57,8 @@ export function CalcPage() {
   const initDone = useRef(false);
   // NOTE: 防止 event useEffect 在首次挂载时清空 URL 恢复的数据
   const eventInitRef = useRef(false);
+  // URL 恢复与直播快照都属于外部完整状态，事件变化时不能再走“手动切项目清空成绩”。
+  const preservingExternalEventRef = useRef<string | null>(null);
 
   // NOTE: tab 走 nuqs ?tab=（replace,不堆历史,刷新可恢复)。默认 compare 自动从 URL 省略。
   // 成绩数据(event/target/t0..)由 calc_store 自己序列化进 URL,saveToUrl 会保留本 ?tab=。
@@ -61,6 +66,34 @@ export function CalcPage() {
     'tab',
     parseAsStringEnum<CalcTab>(['compare', 'average']).withDefault('compare'),
   );
+  const [liveCode, setLiveCode] = useQueryState(
+    'live',
+    parseAsString.withOptions({ history: 'push' }),
+  );
+
+  const handleLiveSnapshot = useCallback((snapshot: CalcLiveSnapshot) => {
+    const state = useCalcStore.getState();
+    if (state.event !== snapshot.event) preservingExternalEventRef.current = snapshot.event;
+    if (!state.applyLiveSnapshot(snapshot)) return;
+    setCurrentEvent(snapshot.event);
+    setMoveCntMode(snapshot.event === '333fm');
+    setMbfMode(snapshot.event === '333mbf' || snapshot.event === '333mbo');
+  }, []);
+
+  const live = useCalcLive({
+    liveCode,
+    setLiveCode: (code) => { void setLiveCode(code); },
+    getSnapshot: getCalcLiveSnapshot,
+    onSnapshot: handleLiveSnapshot,
+    subscribe: subscribeCalcLive,
+  });
+  const isLiveViewer = live.role === 'viewer' || live.role === 'resolving' || live.role === 'invalid';
+  const activeTab: CalcTab = liveCode ? 'compare' : tab;
+  const [qrUrl, setQrUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (liveCode && tab !== 'compare') void setTab('compare');
+  }, [liveCode, setTab, tab]);
 
   // NOTE: 头像按钮状态 — 原版 input_grid.js 的 setMeButtonState 逻辑转为 React state
   const [avatarState, setAvatarState] = useState<AvatarState[]>([
@@ -82,9 +115,11 @@ export function CalcPage() {
     if (initDone.current) return;
     initDone.current = true;
 
+    const eventBeforeLoad = useCalcStore.getState().event;
     loadFromUrl();
     const state = useCalcStore.getState();
     const eventId = state.event;
+    if (eventId !== eventBeforeLoad) preservingExternalEventRef.current = eventId;
     setCurrentEvent(eventId);
     setMoveCntMode(eventId === '333fm');
     setMbfMode(eventId === '333mbf' || eventId === '333mbo');
@@ -109,6 +144,12 @@ export function CalcPage() {
     setCurrentEvent(event);
     setMoveCntMode(event === '333fm');
     setMbfMode(event === '333mbf' || event === '333mbo');
+
+    if (preservingExternalEventRef.current === event) {
+      preservingExternalEventRef.current = null;
+      eventInitRef.current = true;
+      return;
+    }
 
     if (!eventInitRef.current) {
       eventInitRef.current = true;
@@ -242,6 +283,7 @@ export function CalcPage() {
   // NOTE: 空格键触发秒表 — 原版 app.js#190
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (isLiveViewer) return;
       if (e.code === 'Space' && !(e.target instanceof HTMLInputElement)) {
         e.preventDefault();
         toggleStopwatch();
@@ -249,7 +291,7 @@ export function CalcPage() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [toggleStopwatch]);
+  }, [isLiveViewer, toggleStopwatch]);
 
 
 
@@ -367,10 +409,24 @@ export function CalcPage() {
     setPickerOpen(false);
   }, []);
 
+  const openLiveShare = useCallback(() => {
+    const existing = live.currentInviteUrl();
+    if (existing) {
+      setQrUrl(existing);
+      return;
+    }
+    setQrUrl(live.start().url);
+  }, [live]);
+
+  const leaveLive = useCallback(() => {
+    live.leave();
+    setQrUrl(null);
+  }, [live]);
+
   return (
     <div className="hth-app calc-page">
       <BackHome />
-      {tab === 'average' ? (
+      {activeTab === 'average' ? (
         <>
           {/* 简易版顶部一行: 项目选择器 + 切回对比版 toggle */}
           <div className="calc-event-row">
@@ -392,45 +448,88 @@ export function CalcPage() {
       ) : (
         <>
           {/* SVG 图表 */}
-          <Chart />
+          <Chart readOnly={isLiveViewer} />
 
           {/* 输入网格 */}
           <InputGrid
             avatarState={avatarState}
             onPlayerOverride={handlePlayerOverride}
+            readOnly={isLiveViewer}
           />
 
           {/* WCA 选手搜索 modal — 原版 app.js#327-364 */}
-          <WcaPersonPicker
-            mode="modal"
-            open={pickerOpen}
-            onSelect={handlePersonSelect}
-            onClose={handlePickerClose}
-          />
+          {!isLiveViewer && (
+            <WcaPersonPicker
+              mode="modal"
+              open={pickerOpen}
+              onSelect={handlePersonSelect}
+              onClose={handlePickerClose}
+            />
+          )}
 
           {/* 控制按钮 */}
-          <SimButtons />
+          {!isLiveViewer && <SimButtons />}
 
           {/* 进步幅度滑杆 */}
-          <ProgressSliders />
+          {!isLiveViewer && <ProgressSliders />}
 
           {/* 数字键盘 */}
-          <Numpad onEnsureWrTop2Loaded={ensureWrTop2Loaded} />
+          {!isLiveViewer && <Numpad onEnsureWrTop2Loaded={ensureWrTop2Loaded} />}
 
           {/* 项目选择器 + 简易版 toggle 同一行 */}
           <div className="calc-event-row">
-            <EventSelector />
-            <button
-              type="button"
-              className="calc-mode-toggle calc-btn"
-              onClick={() => setTab('average')}
-              title={tr({ zh: '切到简易版', en: 'Switch to Simple'
-            })}
-            >
-              <Sigma size={14} />
-              <span>{tr({ zh: '简易版', en: 'Simple'
-            })}</span>
-            </button>
+            {isLiveViewer ? (
+              <span
+                className={`calc-live-viewer-status${live.connection === 'connected' && live.hostOnline ? ' is-live' : ''}`}
+                aria-live="polite"
+              >
+                <Radio size={15} aria-hidden="true" />
+                {live.connection === 'connected'
+                  ? live.hostOnline
+                    ? tr({ zh: '成绩直播', en: 'Live results' })
+                    : tr({ zh: '等待主播', en: 'Waiting for host' })
+                  : live.role === 'invalid'
+                    ? tr({ zh: '直播链接无效', en: 'Invalid live link' })
+                    : tr({ zh: '正在连接直播', en: 'Connecting to live results' })}
+              </span>
+            ) : (
+              <>
+                <EventSelector />
+                <button
+                  type="button"
+                  className="calc-mode-toggle calc-btn"
+                  onClick={() => setTab('average')}
+                  title={tr({ zh: '切到简易版', en: 'Switch to Simple' })}
+                >
+                  <Sigma size={14} />
+                  <span>{tr({ zh: '简易版', en: 'Simple' })}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`calc-mode-toggle calc-btn${live.role === 'host' ? ' calc-live-share-active' : ''}`}
+                  onClick={openLiveShare}
+                  title={tr({ zh: '分享成绩直播', en: 'Share live results' })}
+                >
+                  {live.role === 'host' ? <Radio size={14} aria-hidden="true" /> : <Share2 size={14} aria-hidden="true" />}
+                  <span>{live.role === 'host'
+                    ? live.connection === 'connected'
+                      ? tr({ zh: '直播中', en: 'Live' })
+                      : tr({ zh: '正在连接', en: 'Connecting' })
+                    : tr({ zh: '分享直播', en: 'Share live' })}</span>
+                </button>
+              </>
+            )}
+            {isLiveViewer && (
+              <button
+                type="button"
+                className="calc-live-leave calc-btn"
+                onClick={leaveLive}
+                title={tr({ zh: '退出观看', en: 'Leave live view' })}
+                aria-label={tr({ zh: '退出观看', en: 'Leave live view' })}
+              >
+                <LogOut size={15} aria-hidden="true" />
+              </button>
+            )}
             <Link
               href="/calc-about"
               className="calc-title-help"
@@ -446,6 +545,9 @@ export function CalcPage() {
           {/* 指标表格 */}
           <CalcTable />
         </>
+      )}
+      {qrUrl && live.code && (
+        <RoomQrModal url={qrUrl} code={live.code} onClose={() => setQrUrl(null)} />
       )}
     </div>
   );
