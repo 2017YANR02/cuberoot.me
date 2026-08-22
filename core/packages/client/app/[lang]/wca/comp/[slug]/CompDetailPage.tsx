@@ -10,7 +10,7 @@ import Link from '@/components/AppLink';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download } from 'lucide-react';
+import { ArrowLeft, X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download, Calculator } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
@@ -36,6 +36,7 @@ import { getSimilarComps, type SeriesComp } from '@/lib/comp-series';
 import { getSameCityComps } from '@/lib/comp-city';
 import { onIdle } from '@/lib/on-idle';
 import { compLinkProps } from '@/lib/comp-link';
+import { calcCompetitionHref } from '@/lib/calc-link';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import BoolToggle from '@/components/BoolToggle';
 import type { CompPersonalRecordSlot } from '@cuberoot/shared';
@@ -2365,6 +2366,19 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
             const effBest = effectiveFieldValue(chain, 'best', r.b);
             const effAvg = effectiveFieldValue(chain, 'average', effectiveAvg(r));
             const effAttempts = trimEmptyAttempts(effectiveAttempts(chain, r.v));
+            const calcHref = compId ? calcCompetitionHref({
+              eventId: r.e,
+              attempts: effAttempts,
+              personName: fullCuberName,
+              wcaId: wcaid,
+              competitionId: compId,
+              competitionName: compName,
+              roundTypeId: r.r,
+            }) : null;
+            const calcLabel = tr({
+              zh: `把 ${fullCuberName} 的成绩带到计算器`,
+              en: `Open ${fullCuberName}'s results in calculator`,
+            });
             const isOdd = idx % 2 === 1;
             const advanced = advancers?.has(r.n);
             const cls = [advanced ? 'row-advanced' : '', isOdd ? 'row-odd' : ''].filter(Boolean).join(' ');
@@ -2383,6 +2397,18 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                   >
                     {cuberName}
                   </span>
+                  {calcHref && (
+                    <Link
+                      href={calcHref}
+                      prefetch={false}
+                      className="comp-calc-link"
+                      aria-label={calcLabel}
+                      title={calcLabel}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <Calculator size={13} strokeWidth={1.8} aria-hidden="true" />
+                    </Link>
+                  )}
                   {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
                 </td>
                 {(() => {

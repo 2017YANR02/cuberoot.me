@@ -682,6 +682,31 @@ td.is-pr {
 
 .td-person { display: flex; align-items: center; gap: 8px; }
 
+.comp-calc-link {
+  display: inline-flex;
+  flex: 0 0 22px;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: -3px;
+  border-radius: 4px;
+  color: var(--muted-foreground);
+  opacity: 0.58;
+  text-decoration: none;
+}
+.comp-calc-link:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  opacity: 1;
+}
+.comp-calc-link:focus-visible {
+  color: var(--accent);
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+  opacity: 1;
+}
+
 /* CN 比赛固定选手列宽 — 容得下 3 个汉字或紧凑外国名 + 旗子,避免少数外国长名撑爆整列 */
 .comp-table-cn .th-person,
 .comp-table-cn .td-person {
@@ -689,6 +714,7 @@ td.is-pr {
   max-width: 120px;
 }
 .comp-table-cn .td-person .cuber-name {
+  flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
