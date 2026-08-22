@@ -4,10 +4,16 @@ export interface CalcCompetitionLinkInput {
   eventId: string;
   attempts: number[];
   personName?: string;
+  personNumber?: number;
   wcaId?: string;
   competitionId: string;
   competitionName?: string;
   roundTypeId: string;
+}
+
+/** Zero means an unattempted cell; DNF/DNS are entered attempts and must survive sharing. */
+export function hasEnteredCalcAttempt(attempts: readonly number[]): boolean {
+  return attempts.some(value => value !== 0);
 }
 
 /** Convert a raw WCA attempt into the calculator's internal numeric unit. */
@@ -28,11 +34,14 @@ export function calcCompetitionHref(input: CalcCompetitionLinkInput): string {
   params.set('sourceEvent', input.eventId);
 
   const attempts = input.attempts.map(value => wcaAttemptToCalcValue(input.eventId, value));
-  if (attempts.some(value => value !== 0)) params.set('t0', attempts.join(','));
+  if (hasEnteredCalcAttempt(attempts)) params.set('t0', attempts.join(','));
   if (input.personName) params.set('name0', input.personName);
   params.set('comp', input.competitionId);
   if (input.competitionName) params.set('compName', input.competitionName);
   params.set('round', input.roundTypeId);
+  if (Number.isInteger(input.personNumber) && input.personNumber! > 0) {
+    params.set('sourceUser', String(input.personNumber));
+  }
   if (input.wcaId) params.set('wcaId', input.wcaId);
 
   return `/calc?${params.toString()}`;

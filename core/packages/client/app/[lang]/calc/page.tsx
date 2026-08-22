@@ -11,7 +11,7 @@ import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { useTranslation } from 'react-i18next';
 import { Sigma, HelpCircle, Share2, Radio, LogOut } from 'lucide-react';
-import { useCalcStore, isMbfForEvent, solveCountForEvent } from './_components/stores/calc_store';
+import { DNF_VALUE, useCalcStore, isMbfForEvent, solveCountForEvent } from './_components/stores/calc_store';
 import { setCurrentEvent, setMoveCntMode, setMbfMode } from './_components/engine/calc_engine';
 import { load as loadWrIds, loadDefaults, setPlayerOverride, clearPlayerOverride, getPlayerOverride, getAvgWR12 } from './_components/engine/wr_data';
 import { sampleOneSolve } from './_components/engine/sim_engine';
@@ -32,6 +32,11 @@ import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { roundLabel } from '@/lib/wca-round-meta';
 import { compLinkProps } from '@/lib/comp-link';
+import {
+  extractCompetitionCalcAttempts,
+  mergeCompetitionCalcAttempts,
+  type CalcCompetitionData,
+} from '@/lib/calc-competition-source';
 import './calc.css';
 import { tr } from '@/i18n/tr';
 
@@ -79,6 +84,7 @@ export function CalcPage() {
     comp: parseAsString,
     compName: parseAsString,
     round: parseAsString,
+    sourceUser: parseAsString,
     wcaId: parseAsString,
   });
 
@@ -192,6 +198,70 @@ export function CalcPage() {
     // NOTE: 同步 URL 中的 event= 参数
     useCalcStore.getState().saveToUrl();
   }, [event]);
+
+  // 比赛成绩链接是可恢复的上下文，不只是点击当刻的 t0 快照。旧链接或尚未出分时打开的
+  // 链接会从比赛数据补回当前成绩；请求期间若用户已手动输入，则保留用户输入。
+  useEffect(() => {
+    const { comp, sourceEvent, round, sourceUser, wcaId } = sourceContext;
+    if (!comp || !sourceEvent || !round || (!wcaId && !sourceUser)) return;
+    if (sourceEvent !== event || liveCode) return;
+
+    const requestBaseline = [...(useCalcStore.getState().times[0] ?? [])];
+    const controller = new AbortController();
+
+    void (async () => {
+      try {
+        const response = await fetch(
+          `/api/comp/${encodeURIComponent(comp)}?only=${encodeURIComponent(sourceEvent)}`,
+          { signal: controller.signal },
+        );
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json() as CalcCompetitionData;
+        const incoming = extractCompetitionCalcAttempts(data, {
+          eventId: sourceEvent,
+          roundTypeId: round,
+          wcaId,
+          personNumber: sourceUser ? Number(sourceUser) : null,
+        });
+        if (!incoming || controller.signal.aborted) return;
+
+        const state = useCalcStore.getState();
+        if (state.event !== sourceEvent) return;
+        const current = state.times[0] ?? [];
+        // WCA 数据以负数表示 DNF/DNS；计算器内部统一使用 DNF 哨兵，URL 再序列化回 -1。
+        const internalIncoming = incoming.map(value => value < 0 ? DNF_VALUE : value);
+        const next = mergeCompetitionCalcAttempts(
+          current,
+          requestBaseline,
+          internalIncoming,
+          solveCountForEvent(sourceEvent),
+        );
+        if (!next || next.every((value, index) => value === (current[index] ?? 0))) return;
+
+        useCalcStore.setState(currentState => {
+          const times = currentState.times.map(row => [...row]);
+          times[0] = next;
+          return { times };
+        });
+        useCalcStore.getState().updateSort();
+        useCalcStore.getState().saveToUrl();
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.warn('Failed to restore competition results in calculator:', error);
+        }
+      }
+    })();
+
+    return () => controller.abort();
+  }, [
+    event,
+    liveCode,
+    sourceContext.comp,
+    sourceContext.round,
+    sourceContext.sourceEvent,
+    sourceContext.sourceUser,
+    sourceContext.wcaId,
+  ]);
 
   // NOTE: 按需加载世界 TOP 2 — 当两侧都没有 override 时,首次"随机"会触发这个;
   // 拉 KDE 数据 + 填 Target(仅当为 0)+ 激活头像。返回 Promise 给 Numpad await。
