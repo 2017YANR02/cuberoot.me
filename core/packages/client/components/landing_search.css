@@ -7,6 +7,20 @@
   margin: 0 auto 2.5rem;
 }
 
+/* /search reuses the exact result renderer, but the result list belongs to the
+   page flow instead of covering nearby content like the homepage dropdown. */
+.landing-search--page {
+  max-width: none;
+  margin-bottom: 0;
+}
+
+.landing-search--page .landing-search-panel {
+  position: relative;
+  top: auto;
+  margin-top: 0.75rem;
+  max-height: none;
+}
+
 .landing-search-input {
   position: relative;
   display: flex;

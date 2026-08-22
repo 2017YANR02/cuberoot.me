@@ -1,0 +1,30 @@
+.site-search-page {
+  width: min(960px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 64px;
+}
+
+.site-search-back-row {
+  width: 100%;
+}
+
+.site-search-header {
+  margin: 24px 0;
+}
+
+.site-search-header h1 {
+  margin: 0 0 7px;
+  font-size: clamp(1.7rem, 4vw, 2.35rem);
+}
+
+.site-search-header p {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 480px) {
+  .site-search-page {
+    width: min(100% - 24px, 960px);
+    padding-top: 18px;
+  }
+}

@@ -178,7 +178,7 @@ export const SECTIONS: Section[] = [
     cards: [
       { id: 'teaching-management', href: '/org', internal: true, tier: 'medium', Icon: Building2, nameKey: 'teachingManagement' },
       { id: 'learning-center', href: '/learn', internal: true, tier: 'medium', Icon: BookOpen, nameKey: 'learningCenter' },
-      { id: 'teaching', href: '/courses', internal: true, tier: 'medium', Icon: GraduationCap, nameKey: 'teaching', adminOnly: true },
+      { id: 'teaching', href: '/courses', internal: true, tier: 'medium', Icon: GraduationCap, nameKey: 'teaching' },
       { id: 'teachers', href: '/teachers', internal: true, tier: 'medium', Icon: School, nameKey: 'teachers' },
       { id: 'live-scripts', href: '/teachers/scripts', internal: true, tier: 'medium', Icon: Radio, nameKey: 'liveScripts' },
       { id: 'meet', href: '/meet', internal: true, tier: 'medium', Icon: Video, nameKey: 'meet' },
