@@ -26,6 +26,7 @@ import { query } from '../db/connection.js';
 import { requireAuth, requireAdmin, optionalAuth, ADMIN_WCA_IDS, checkRateLimit } from '../utils/recon_helpers.js';
 import { sendBark } from '../monitors/bark.js';
 import { sniffVideo, VIDEO_EXT } from '../utils/video_upload.js';
+import { publicUserIdsForOwnerKeys } from '../utils/account.js';
 
 export const feedbackRoutes = new Hono();
 
@@ -422,9 +423,14 @@ feedbackRoutes.get('/feedback/public', async (c) => {
     ),
   ]);
   const ids = rows.map((r) => Number(r.id));
-  const [media, counts] = await Promise.all([mediaMap(ids), replyCounts(ids)]);
+  const [media, counts, userIds] = await Promise.all([
+    mediaMap(ids),
+    replyCounts(ids),
+    publicUserIdsForOwnerKeys(rows.map((r) => r.wca_id)),
+  ]);
   const items = rows.map((r) => ({
     id: Number(r.id), kind: r.kind, body: r.body, wcaId: r.wca_id, wcaName: r.wca_name,
+    userId: userIds.get(r.wca_id) ?? null,
     status: r.status, createdAt: r.created_at, updatedAt: r.updated_at,
     lastReplyAt: r.last_reply_at, lastReplyRole: r.last_reply_role,
     replyCount: counts.get(Number(r.id)) ?? 0,
@@ -456,6 +462,7 @@ feedbackRoutes.get('/feedback/:id/thread', async (c) => {
   }>(
     `SELECT id, role, wca_id, wca_name, body, created_at FROM feedback_messages
      WHERE feedback_id = ? ORDER BY created_at, id`, [id]);
+  const userIds = await publicUserIdsForOwnerKeys([r.wca_id, ...msgs.map((m) => m.wca_id)]);
 
   // 取阅即标记请求方已读(admin 看自己提的反馈则两边都标)。
   if (admin) await query('UPDATE feedback SET admin_read_at = NOW() WHERE id = ?', [id]);
@@ -464,6 +471,7 @@ feedbackRoutes.get('/feedback/:id/thread', async (c) => {
   return c.json({
     feedback: {
       id: Number(r.id), kind: r.kind, body: r.body, wcaId: r.wca_id, wcaName: r.wca_name,
+      userId: userIds.get(r.wca_id) ?? null,
       status: r.status, createdAt: r.created_at, updatedAt: r.updated_at,
       lastReplyAt: r.last_reply_at, lastReplyRole: r.last_reply_role,
       replyCount: msgs.length,
@@ -471,6 +479,7 @@ feedbackRoutes.get('/feedback/:id/thread', async (c) => {
     },
     messages: msgs.map((m) => ({
       id: Number(m.id), role: m.role, wcaId: m.wca_id, wcaName: m.wca_name,
+      userId: userIds.get(m.wca_id) ?? null,
       body: m.body, createdAt: m.created_at,
     })),
   });
@@ -573,7 +582,11 @@ feedbackRoutes.get('/feedback', async (c) => {
   );
 
   const ids = rows.map((r) => Number(r.id));
-  const [media, counts] = await Promise.all([mediaMap(ids), replyCounts(ids)]);
+  const [media, counts, userIds] = await Promise.all([
+    mediaMap(ids),
+    replyCounts(ids),
+    publicUserIdsForOwnerKeys(rows.map((r) => r.wca_id)),
+  ]);
 
   const items = rows.map((r) => ({
     id: Number(r.id),
@@ -581,6 +594,7 @@ feedbackRoutes.get('/feedback', async (c) => {
     body: r.body,
     wcaId: r.wca_id,
     wcaName: r.wca_name,
+    userId: userIds.get(r.wca_id) ?? null,
     contact: r.contact,
     pageUrl: r.page_url,
     lang: r.lang,

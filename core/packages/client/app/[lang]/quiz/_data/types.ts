@@ -33,6 +33,7 @@ export interface Contributed {
   /** quiz_questions.id。举报 / 编辑 / 删除都用它。 */
   dbId: number;
   authorName: string;
+  authorUserId: number | null;
   /**
    * 作者只写了这一种语言,另一侧是原文回落 —— 答题页据此标注「仅中文 / English only」。
    * 双语齐全(或管理员补译过)则为 null。

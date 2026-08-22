@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Key, MoreVertical } from 'lucide-react';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
+import { UserIdLabel } from '@/components/UserIdLabel';
 import { Flag } from '@/components/Flag';
 import { wcaPersonUrl } from '@/lib/recon-utils';
 import { personFlagIso2 } from '@/lib/country-flags';
@@ -176,9 +177,10 @@ export function DiscussionEditBox({
  * 合成键在 WCA 官网没有档案页(/persons/u144 是 404),所以只有真 WCA id 才出外链。
  * 国旗同理:查不到国籍时不渲染(空 iso2 会渲染成一个空白占位方块)。
  */
-export function AuthorName({ id, name, className }: {
+export function AuthorName({ id, name, userId, className }: {
   id: string | undefined | null;
   name: string | undefined | null;
+  userId?: number | null;
   className?: string;
 }) {
   const { i18n } = useTranslation();
@@ -192,23 +194,25 @@ export function AuthorName({ id, name, className }: {
           {displayName}
         </a>
       ) : <span className={className}>{displayName}</span>}
+      <UserIdLabel userId={userId} />
     </>
   );
 }
 
 /** 作者元信息条:国旗 + 名字(真 WCA id 才链到 WCA profile)+ 时间戳 */
 export function UserHeadline({
-  authorId, authorName, createdAt, suffix,
+  authorId, authorName, authorUserId, createdAt, suffix,
 }: {
   authorId: string | undefined | null;
   authorName: string | undefined | null;
+  authorUserId?: number | null;
   createdAt: number;
   /** 时间戳后追加文本(如 "(已编辑)") */
   suffix?: ReactNode;
 }) {
   return (
     <div className="yt-comment-meta">
-      <AuthorName id={authorId} name={authorName} className="yt-comment-author" />
+      <AuthorName id={authorId} name={authorName} userId={authorUserId} className="yt-comment-author" />
       <span className="yt-comment-time">
         {toIsoDate(new Date(createdAt * 1000))}
         {suffix}
@@ -265,4 +269,3 @@ export function UserAvatarFallback({ name, avatar }: { name?: string | null; ava
     </div>
   );
 }
-

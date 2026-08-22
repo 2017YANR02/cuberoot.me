@@ -13,6 +13,7 @@ import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import { is3x3TopLayerSet, type AlgSubmission, type AlgSticker } from '@cuberoot/shared';
 import { startsWithYRotation } from '@cuberoot/shared/alg-notation';
 import PersonLink from '@/components/PersonLink';
+import { UserIdLabel } from '@/components/UserIdLabel';
 import { addSubmission, updateSubmission, deleteSubmission } from '@/lib/alg_api';
 import { validateAlgCase, setupForCase } from '@/lib/alg_validation';
 import { caseViewAlg, displayAlg, type CaseViewAngle } from '@/lib/alg_display';
@@ -261,6 +262,7 @@ export default function CommunityAlgs({
                 >
                   {ownerDisplayName(s.authorId, s.authorName, isZh)}
                 </PersonLink>
+                <UserIdLabel userId={s.authorUserId} />
                 {canEdit && (
                   <span className="alg-community-actions">
                     <button type="button" className="alg-community-action-btn" onClick={() => startEdit(s)} title={tr({ zh: '编辑', en: 'Edit' })}>

@@ -15,6 +15,7 @@ import {
 } from '../utils/recon_helpers.js';
 import type { WcaUser } from '../utils/recon_helpers.js';
 import { notify, adminRecipients } from '../utils/notify.js';
+import { publicUserIdsForOwnerKeys } from '../utils/account.js';
 import {
   FORUM_VIDEO_MAX_DURATION_MS,
   excerptFromMarkdown,
@@ -137,12 +138,15 @@ interface ThreadRow {
   snippet_content?: string | null;
 }
 
-function threadJson(r: ThreadRow) {
+function threadJson(r: ThreadRow, userIds: ReadonlyMap<string, number> = new Map()) {
   return {
     id: Number(r.id), title: r.title, authorId: r.author_id, authorName: r.author_name,
+    authorUserId: userIds.get(r.author_id) ?? null,
     createdAt: r.created_at, replyCount: r.reply_count, viewCount: r.view_count,
     lastPostAt: r.last_post_at, lastPostAuthorId: r.last_post_author_id,
-    lastPostAuthorName: r.last_post_author_name, isPinned: r.is_pinned, isLocked: r.is_locked,
+    lastPostAuthorName: r.last_post_author_name,
+    lastPostAuthorUserId: userIds.get(r.last_post_author_id ?? '') ?? null,
+    isPinned: r.is_pinned, isLocked: r.is_locked,
     status: r.status, postTotal: r.post_total,
   };
 }
@@ -271,6 +275,7 @@ interface ForumAuthorProfile {
   joinedAt: Date | null;
   postCount: number;
   wcaId: string | null;
+  userId: number | null;
   isAdmin: boolean;
 }
 
@@ -293,10 +298,10 @@ async function authorProfilesFor(authorNames: Map<string, string>): Promise<Reco
 
   const wcaKeys = authorIds.filter((a) => !/^u\d+$/.test(a));
   const uidKeys = authorIds.filter((a) => /^u\d+$/.test(a));
-  const profile = new Map<string, { avatar_url: string | null; created_at: Date; display_name: string }>();
+  const profile = new Map<string, { id: string; avatar_url: string | null; created_at: Date; display_name: string }>();
   if (wcaKeys.length > 0) {
-    const rows = await query<{ wca_id: string; avatar_url: string | null; created_at: Date; display_name: string }>(
-      `SELECT wca_id, avatar_url, created_at, display_name FROM app_users WHERE wca_id IN (${wcaKeys.map(() => '?').join(',')})`,
+    const rows = await query<{ id: string; wca_id: string; avatar_url: string | null; created_at: Date; display_name: string }>(
+      `SELECT id, wca_id, avatar_url, created_at, display_name FROM app_users WHERE wca_id IN (${wcaKeys.map(() => '?').join(',')})`,
       wcaKeys,
     );
     for (const r of rows) profile.set(r.wca_id, r);
@@ -317,6 +322,7 @@ async function authorProfilesFor(authorNames: Map<string, string>): Promise<Reco
       joinedAt: p?.created_at ?? null,
       postCount: postCounts.get(authorId) ?? 0,
       wcaId: /^u\d+$/.test(authorId) ? null : authorId,
+      userId: p ? Number(p.id) : null,
       isAdmin: ADMIN_WCA_IDS.includes(authorId),
     };
   }
@@ -446,6 +452,7 @@ forumRoutes.get('/forum/index', async (c) => {
      ORDER BY c.sort_order, c.id, f.sort_order, f.id`,
   );
 
+  const lastAuthorUserIds = await publicUserIdsForOwnerKeys(rows.map((row) => row.lt_author_id));
   const cats: {
     id: number; slug: string; nameEn: string; nameZh: string;
     forums: Record<string, unknown>[];
@@ -463,20 +470,28 @@ forumRoutes.get('/forum/index', async (c) => {
       lastThread: r.lt_id == null ? null : {
         id: Number(r.lt_id), title: r.lt_title, lastPostAt: r.lt_last_post_at,
         lastPostAuthorId: r.lt_author_id, lastPostAuthorName: r.lt_author_name,
+        lastPostAuthorUserId: lastAuthorUserIds.get(r.lt_author_id ?? '') ?? null,
       },
     });
   }
 
-  const stats = await query<{ threads: number; posts: number; members: number; latest_member: string | null }>(
+  const stats = await query<{ threads: number; posts: number; members: number; latest_member: string | null; latest_member_id: number | null }>(
     `SELECT (SELECT COUNT(*) FROM forum_threads WHERE NOT is_deleted AND status = 'approved')::int AS threads,
             (SELECT (COALESCE(SUM(reply_count), 0) + COUNT(*)) FROM forum_threads WHERE NOT is_deleted AND status = 'approved')::int AS posts,
             (SELECT COUNT(*) FROM app_users)::int AS members,
-            (SELECT display_name FROM app_users ORDER BY id DESC LIMIT 1) AS latest_member`,
+            (SELECT display_name FROM app_users ORDER BY id DESC LIMIT 1) AS latest_member,
+            (SELECT id FROM app_users ORDER BY id DESC LIMIT 1) AS latest_member_id`,
   );
   const s = stats[0];
   return c.json({
     categories: cats,
-    stats: { threads: s.threads, posts: s.posts, members: s.members, latestMemberName: s.latest_member ?? '' },
+    stats: {
+      threads: s.threads,
+      posts: s.posts,
+      members: s.members,
+      latestMemberName: s.latest_member ?? '',
+      latestMemberUserId: s.latest_member_id == null ? null : Number(s.latest_member_id),
+    },
   });
 });
 
@@ -524,14 +539,17 @@ forumRoutes.get('/forum/f/:slug', async (c) => {
     [forumId],
   );
 
+  const threadUserIds = await publicUserIdsForOwnerKeys(
+    [...pinned, ...threads].flatMap((thread) => [thread.author_id, thread.last_post_author_id]),
+  );
   return c.json({
     forum: {
       id: forumId, slug: f.slug, nameEn: f.name_en, nameZh: f.name_zh,
       descEn: f.desc_en, descZh: f.desc_zh, icon: f.icon, adminOnly: f.admin_only,
     },
     category: { slug: f.cat_slug, nameEn: f.cat_name_en, nameZh: f.cat_name_zh },
-    pinned: pinned.map(threadJson),
-    threads: threads.map(threadJson),
+    pinned: pinned.map((thread) => threadJson(thread, threadUserIds)),
+    threads: threads.map((thread) => threadJson(thread, threadUserIds)),
     total: totals[0].n, page, size,
   });
 });
@@ -592,6 +610,7 @@ forumRoutes.get('/forum/t/:id', async (c) => {
   const videos = await videosForPosts(postIds);
 
   const authors = await authorProfilesFor(new Map(posts.map((p) => [p.author_id, p.author_name])));
+  const threadUserIds = await publicUserIdsForOwnerKeys([t.author_id, t.last_post_author_id]);
 
   // 可选鉴权(viewer 已在上面取):游客照常读,登录者多拿自己的反应
   const myReactions: Record<number, string> = {};
@@ -605,7 +624,7 @@ forumRoutes.get('/forum/t/:id', async (c) => {
   }
 
   return c.json({
-    thread: { ...threadJson(t), forumId: Number(t.forum_id), reviewNote: t.review_note },
+    thread: { ...threadJson(t, threadUserIds), forumId: Number(t.forum_id), reviewNote: t.review_note },
     forum: { slug: t.forum_slug, nameEn: t.forum_name_en, nameZh: t.forum_name_zh },
     category: { slug: t.cat_slug, nameEn: t.cat_name_en, nameZh: t.cat_name_zh },
     posts: posts.map((p, i) => {
@@ -978,9 +997,10 @@ forumRoutes.get('/forum/latest', async (c) => {
      ORDER BY t.last_post_at DESC LIMIT ?`,
     [limit],
   );
+  const userIds = await publicUserIdsForOwnerKeys(rows.flatMap((row) => [row.author_id, row.last_post_author_id]));
   return c.json({
     threads: rows.map((r) => ({
-      ...threadJson(r), forumSlug: r.forum_slug, forumNameEn: r.forum_name_en, forumNameZh: r.forum_name_zh,
+      ...threadJson(r, userIds), forumSlug: r.forum_slug, forumNameEn: r.forum_name_en, forumNameZh: r.forum_name_zh,
     })),
   });
 });
@@ -1023,10 +1043,11 @@ forumRoutes.get('/forum/feed', async (c) => {
   const reactions = await reactionsFor(postIds);
   const videos = await videosForPosts(postIds);
   const authors = await authorProfilesFor(new Map(rows.map((r) => [r.author_id, r.author_name])));
+  const userIds = await publicUserIdsForOwnerKeys(rows.flatMap((row) => [row.author_id, row.last_post_author_id]));
 
   return c.json({
     threads: rows.map((r) => ({
-      ...threadJson(r),
+      ...threadJson(r, userIds),
       forumSlug: r.forum_slug,
       forumNameEn: r.forum_name_en,
       forumNameZh: r.forum_name_zh,
@@ -1077,6 +1098,7 @@ forumRoutes.get('/forum/search', async (c) => {
     `SELECT COUNT(*)::int AS n FROM forum_threads t WHERE ${where}`,
     [pattern, pattern],
   );
+  const userIds = await publicUserIdsForOwnerKeys(rows.flatMap((row) => [row.author_id, row.last_post_author_id]));
 
   const lowered = q.toLowerCase();
   return c.json({
@@ -1090,7 +1112,7 @@ forumRoutes.get('/forum/search', async (c) => {
         snippet = (start > 0 ? '…' : '') + slice + (start + 120 < content.length ? '…' : '');
       }
       return {
-        ...threadJson(r), forumSlug: r.forum_slug, forumNameEn: r.forum_name_en, forumNameZh: r.forum_name_zh,
+        ...threadJson(r, userIds), forumSlug: r.forum_slug, forumNameEn: r.forum_name_en, forumNameZh: r.forum_name_zh,
         snippet,
       };
     }),
@@ -1166,12 +1188,16 @@ forumRoutes.get('/forum/reports', async (c) => {
      ${all ? '' : 'WHERE r.resolved_at IS NULL'}
      ORDER BY r.created_at DESC LIMIT 200`,
   );
+  const userIds = await publicUserIdsForOwnerKeys(rows.flatMap((r) => [r.reporter_id, r.post_author_id]));
   return c.json({
     reports: rows.map((r) => ({
       id: Number(r.id), postId: Number(r.post_id), threadId: Number(r.thread_id),
       threadTitle: r.thread_title, postAuthorId: r.post_author_id, postAuthorName: r.post_author_name,
+      postAuthorUserId: userIds.get(r.post_author_id) ?? null,
       excerpt: r.content.slice(0, 200),
-      reporterId: r.reporter_id, reporterName: r.reporter_name, reason: r.reason,
+      reporterId: r.reporter_id, reporterName: r.reporter_name,
+      reporterUserId: userIds.get(r.reporter_id) ?? null,
+      reason: r.reason,
       createdAt: r.created_at, resolvedAt: r.resolved_at,
     })),
   });
@@ -1220,17 +1246,23 @@ forumRoutes.get('/forum/review', async (c) => {
        AND t.status = 'approved' AND NOT t.is_deleted
      ORDER BY p.created_at LIMIT 100`,
   );
+  const userIds = await publicUserIdsForOwnerKeys([
+    ...threads.map((r) => r.author_id),
+    ...posts.map((r) => r.author_id),
+  ]);
 
   const items = [
     ...threads.map((r) => ({
       type: 'thread' as const, id: Number(r.id), threadId: Number(r.id),
       threadTitle: r.title, forumNameEn: r.forum_name_en, forumNameZh: r.forum_name_zh,
-      authorId: r.author_id, authorName: r.author_name, content: r.content, createdAt: r.created_at,
+      authorId: r.author_id, authorName: r.author_name, authorUserId: userIds.get(r.author_id) ?? null,
+      content: r.content, createdAt: r.created_at,
     })),
     ...posts.map((r) => ({
       type: 'post' as const, id: Number(r.id), threadId: Number(r.thread_id),
       threadTitle: r.thread_title, forumNameEn: null, forumNameZh: null,
-      authorId: r.author_id, authorName: r.author_name, content: r.content, createdAt: r.created_at,
+      authorId: r.author_id, authorName: r.author_name, authorUserId: userIds.get(r.author_id) ?? null,
+      content: r.content, createdAt: r.created_at,
     })),
   ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   return c.json({ items });

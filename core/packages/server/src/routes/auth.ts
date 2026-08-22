@@ -106,7 +106,13 @@ authRoutes.get('/auth/me', async (c) => {
 
   try {
     const payload = verifySession(authHeader.slice(7));
-    return c.json({ user: { uid: payload.uid, wcaId: payload.wcaId ?? null, name: payload.name ?? '' } });
+    const account = payload.uid != null
+      ? await getUserById(payload.uid)
+      : payload.wcaId
+        ? await findUserByWcaId(payload.wcaId)
+        : null;
+    if (!account) return c.json({ error: 'Invalid token' }, 401);
+    return c.json({ user: publicUser(account) });
   } catch {
     return c.json({ error: 'Invalid token' }, 401);
   }
@@ -169,7 +175,7 @@ authRoutes.post('/auth/exchange', async (c) => {
 
 // 用未过期的 cuberoot_jwt 续签一张新的 365 天 JWT(滑动过期)。
 // 前端在 token 临近过期时静默调用 → 只要一年内活跃过就不掉线;整年不活跃才需重新 WCA 登录。
-// 只接受自签 JWT(WCA access_token 验签会失败 → 401,走 /auth/exchange);不碰 DB。
+// 只接受自签 JWT(WCA access_token 验签会失败 → 401,走 /auth/exchange)。
 authRoutes.post('/auth/refresh', async (c) => {
   const authHeader = c.req.header('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
@@ -189,7 +195,7 @@ authRoutes.post('/auth/refresh', async (c) => {
     const u = await getUserById(uid);
     if (!u) return c.json({ error: 'unauthorized' }, 401);
     const fresh = signSession({ uid: u.id, wcaId: u.wca_id, name: u.display_name || (payload.name ?? '') });
-    return c.json({ token: fresh });
+    return c.json({ token: fresh, user: publicUser(u) });
   } catch {
     // 过期或非法 JWT — 不续签,前端回退到重新登录。
     return c.json({ error: 'unauthorized' }, 401);

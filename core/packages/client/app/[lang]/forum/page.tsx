@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import Link from '@/components/AppLink';
 import { tr, T, useLang } from '@/i18n/tr';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import { UserIdLabel } from '@/components/UserIdLabel';
 import {
   fetchForumIndex, fetchLatestThreads,
   type ForumIndexData, type LatestThread,
@@ -81,6 +82,7 @@ export default function ForumIndexPage() {
                                 </Link>
                                 <span className="forum-forum-last-sub">
                                   {displayCuberName(f.lastThread.lastPostAuthorName, zh)}
+                                  <UserIdLabel userId={f.lastThread.lastPostAuthorUserId} />
                                   {' '}
                                   {formatRelativeTime(f.lastThread.lastPostAt, lang)}
                                 </span>
@@ -114,7 +116,10 @@ export default function ForumIndexPage() {
                 {data.stats.latestMemberName && (
                   <div>
                     <dt><T zh="最新成员" en="Newest member" /></dt>
-                    <dd>{displayCuberName(data.stats.latestMemberName, zh)}</dd>
+                    <dd>
+                      {displayCuberName(data.stats.latestMemberName, zh)}
+                      <UserIdLabel userId={data.stats.latestMemberUserId} />
+                    </dd>
                   </div>
                 )}
               </dl>

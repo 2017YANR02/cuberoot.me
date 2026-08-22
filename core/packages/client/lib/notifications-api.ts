@@ -16,6 +16,7 @@ export interface SiteNotification {
   kind: NotificationKind;
   actorKey: string;
   actorName: string;
+  actorUserId: number | null;
   /** 通知抬头,如 recon 的「选手 项目 比赛」。 */
   title: string;
   excerpt: string;

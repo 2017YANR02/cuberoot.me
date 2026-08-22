@@ -378,9 +378,9 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
       : displayCuberName(solve.reconer, isZh) === displayCuberName(solve.addedBy, isZh));
 
   // 复盘者 / 添加者的 id 是归属键 ownerKey,不一定是 WCA id —— 出链判定收敛在 AuthorName。
-  const renderContributor = (name: string, id?: string) => (
+  const renderContributor = (name: string, id?: string, userId?: number | null) => (
     <span className="detail-meta-value">
-      <AuthorName id={id} name={name} />
+      <AuthorName id={id} name={name} userId={userId} />
     </span>
   );
 
@@ -461,7 +461,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           {sameContributor ? (
             <div className="detail-meta-item">
               <span className="detail-meta-label detail-meta-label-dual"><PenLine size={16} /><UserPlus size={16} /></span>
-              {renderContributor(solve.reconer!, solve.reconerId || solve.addedById)}
+              {renderContributor(solve.reconer!, solve.reconerId || solve.addedById, solve.addedByUserId)}
             </div>
           ) : solve.reconer && (
             <div className="detail-meta-item">
@@ -478,7 +478,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           {!sameContributor && solve.addedBy && (
             <div className="detail-meta-item">
               <span className="detail-meta-label"><UserPlus size={16} /></span>
-              {renderContributor(solve.addedBy, solve.addedById)}
+              {renderContributor(solve.addedBy, solve.addedById, solve.addedByUserId)}
             </div>
           )}
         </div>
@@ -1696,7 +1696,7 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime, event }: {
               <div key={`${alt.addedById}-${alt.createdAt}-${idx}`} className="yt-comment">
                 <UserAvatarFallback name={alt.addedBy} avatar={isOwn ? user?.avatar : null} />
                 <div className="yt-comment-content">
-                  <UserHeadline authorId={alt.addedById} authorName={alt.addedBy} createdAt={alt.createdAt} />
+                  <UserHeadline authorId={alt.addedById} authorName={alt.addedBy} authorUserId={alt.addedByUserId} createdAt={alt.createdAt} />
                   {stats.stm > 0 && (
                     <div className="alt-stats-line">
                       <span>{stats.stm} STM</span>
@@ -1876,6 +1876,7 @@ function CommentsView({
           <UserHeadline
             authorId={comment.authorId}
             authorName={comment.authorName}
+            authorUserId={comment.authorUserId}
             createdAt={comment.createdAt}
             suffix={comment.updatedAt ? ` (${t('recon.edited')})` : null}
           />

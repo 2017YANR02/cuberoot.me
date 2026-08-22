@@ -18,6 +18,7 @@ export interface WikiAddition {
   body: string;
   ownerWcaId: string;
   ownerName: string;
+  ownerUserId: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,6 +38,7 @@ export interface WikiTerm {
   source: 'seed' | 'user';
   ownerWcaId: string | null;
   ownerName: string;
+  ownerUserId: number | null;
   createdAt: string;
   updatedAt: string;
   additions: WikiAddition[];

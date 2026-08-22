@@ -459,3 +459,37 @@ export function publicUser(user: AppUser): {
     avatar: user.avatar_url ?? '',
   };
 }
+
+/**
+ * Resolve opaque owner keys to public CubeRoot account IDs in one batch.
+ * Deleted owners and WCA-only people without an app_users row intentionally have no ID.
+ */
+export async function publicUserIdsForOwnerKeys(
+  ownerKeys: readonly (string | null | undefined)[],
+): Promise<Map<string, number>> {
+  const keys = [...new Set(ownerKeys.filter((key): key is string => typeof key === 'string' && key.length > 0))];
+  const wcaKeys = keys.filter((key) => /^\d{4}[A-Z]{4}\d{2}$/.test(key));
+  const uidKeys = keys
+    .map((key) => /^u([1-9]\d*)$/.exec(key))
+    .filter((match): match is RegExpExecArray => match !== null)
+    .map((match) => Number(match[1]))
+    .filter((id) => Number.isSafeInteger(id));
+  const result = new Map<string, number>();
+
+  if (wcaKeys.length > 0) {
+    const rows = await query<{ id: number | string; wca_id: string }>(
+      `SELECT id, wca_id FROM app_users WHERE wca_id IN (${wcaKeys.map(() => '?').join(',')})`,
+      wcaKeys,
+    );
+    for (const row of rows) result.set(row.wca_id, Number(row.id));
+  }
+  if (uidKeys.length > 0) {
+    const rows = await query<{ id: number | string }>(
+      `SELECT id FROM app_users WHERE id IN (${uidKeys.map(() => '?').join(',')})`,
+      uidKeys,
+    );
+    for (const row of rows) result.set(`u${row.id}`, Number(row.id));
+  }
+
+  return result;
+}
