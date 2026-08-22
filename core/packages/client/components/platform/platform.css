@@ -286,12 +286,7 @@
 }
 
 .platform-search-input,
-.platform-form-fields input,
-.platform-form-fields textarea,
-.platform-decision select,
-.platform-domain-form input,
-.platform-domain-form textarea,
-.platform-domain-form select {
+.platform-field-control {
   width: 100%;
   border: 1px solid var(--input);
   border-radius: 9px;
@@ -307,12 +302,7 @@
 }
 
 .platform-search-input:focus,
-.platform-form-fields input:focus,
-.platform-form-fields textarea:focus,
-.platform-decision select:focus,
-.platform-domain-form input:focus,
-.platform-domain-form textarea:focus,
-.platform-domain-form select:focus {
+.platform-field-control:focus {
   border-color: var(--ring);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 22%, transparent);
 }
@@ -329,7 +319,7 @@
   height: 14px;
 }
 
-.platform-sort button,
+.platform-sort-button,
 .platform-text-button {
   display: inline-flex;
   min-height: 36px;
@@ -344,7 +334,7 @@
   cursor: pointer;
 }
 
-.platform-sort button:hover,
+.platform-sort-button:hover,
 .platform-text-button:hover {
   color: var(--foreground);
 }
@@ -568,35 +558,6 @@
   padding-top: 24px;
 }
 
-.platform-form-fields {
-  display: grid;
-  gap: 14px;
-  max-width: 640px;
-}
-
-.platform-form-fields label,
-.platform-decision {
-  display: grid;
-  gap: 6px;
-  color: var(--muted-foreground);
-  font-size: 0.78rem;
-}
-
-.platform-form-fields input,
-.platform-form-fields textarea,
-.platform-decision select {
-  padding: 10px 11px;
-}
-
-.platform-form-fields textarea {
-  resize: vertical;
-}
-
-.platform-decision {
-  width: fit-content;
-  margin-bottom: 14px;
-}
-
 .platform-write-actions {
   display: flex;
   flex-wrap: wrap;
@@ -675,15 +636,13 @@
   grid-column: 1 / -1;
 }
 
-.platform-domain-form input,
-.platform-domain-form textarea,
-.platform-domain-form select {
+.platform-field-control {
   min-width: 0;
   width: 100%;
   padding: 10px 11px;
 }
 
-.platform-domain-form textarea {
+.platform-field-textarea {
   resize: vertical;
 }
 
@@ -832,7 +791,7 @@
   gap: 8px;
 }
 
-.platform-answer-options button {
+.platform-answer-option {
   min-height: 40px;
   border: 1px solid var(--border-strong);
   border-radius: 8px;
@@ -841,7 +800,7 @@
   background: var(--background);
 }
 
-.platform-answer-options button[aria-pressed='true'] {
+.platform-answer-option[aria-pressed='true'] {
   border-color: var(--primary);
   color: var(--primary);
   background: var(--accent-soft);
@@ -857,7 +816,7 @@
   font-size: 0.86rem;
 }
 
-:where(.platform-shell a, .platform-shell button, .platform-shell input, .platform-shell textarea, .platform-shell select):focus-visible {
+.platform-shell :focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
@@ -923,7 +882,7 @@
     overflow-x: auto;
   }
 
-  .platform-sort button,
+  .platform-sort-button,
   .platform-text-button,
   .platform-button {
     min-height: 44px;

@@ -52,6 +52,7 @@ export const PURGE_TABLES: readonly (readonly [string, string])[] = [
   ['collaborative_document_subscriptions', 'user_key'], // 我的协作文档订阅与最后查看时间
   ['collaborative_document_members', 'user_key'], // 别人文档授予我的权限
   ['collaborative_documents', 'owner_key'],       // 我的私有协作文档(成员随文档级联删除)
+  ['platform_idempotency_requests', 'actor_key'], // Platform 短期写入防重记录
   ['wca_users', 'wca_id'],               // WCA OAuth 缓存(含 access_token,必须销毁)
 ];
 
@@ -77,12 +78,68 @@ export const ANONYMIZE_TABLES: readonly { table: string; idCol: string; nameCol?
 ];
 
 /**
+ * 直接引用 app_users 的 Platform 表。注销策略由 0168 的 app_users BEFORE DELETE
+ * trigger 原子执行；这份清单只给覆盖率测试做 schema 漂移守卫。
+ */
+export const PLATFORM_ACCOUNT_DELETE_TABLES = [
+  'platform_instructors',
+  'platform_instructor_applications',
+  'platform_media_assets',
+  'platform_courses',
+  'platform_course_owners',
+  'platform_course_revisions',
+  'platform_lesson_revisions',
+  'platform_learning_paths',
+  'platform_quiz_revisions',
+  'platform_products',
+  'platform_events',
+  'platform_news_articles',
+  'platform_coupons',
+  'platform_shipping_addresses',
+  'platform_orders',
+  'platform_coupon_redemptions',
+  'platform_refunds',
+  'platform_inventory_ledger',
+  'platform_fulfillment_ledger',
+  'platform_event_registrations',
+  'platform_course_entitlements',
+  'platform_entitlement_ledger',
+  'platform_memberships',
+  'platform_membership_ledger',
+  'platform_lesson_progress',
+  'platform_lesson_notes',
+  'platform_favorites',
+  'platform_quiz_attempts',
+  'platform_course_reviews',
+  'platform_certificates',
+  'platform_checkins',
+  'platform_point_ledger',
+  'platform_user_achievements',
+  'platform_instructor_revenue_ledger',
+  'platform_instructor_payouts',
+  'platform_invite_codes',
+  'platform_invite_redemptions',
+  'platform_qr_codes',
+  'platform_qr_revisions',
+  'platform_qr_scans',
+  'platform_qr_templates',
+  'platform_qr_card_jobs',
+  'platform_privacy_consents',
+  'platform_analytics_events',
+  'platform_retention_jobs',
+  'platform_reconciliation_records',
+  'platform_audit_events',
+  'platform_idempotency_requests',
+] as const;
+
+/**
  * 带归属列、但**故意**不进上面两张清单的表 —— 覆盖率守卫拿这份名单放行,所以每一条都得有理由。
  * 新表要么进清单,要么进这里,不能两边都不在(那就是漏了)。
  */
 export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   app_users: '账号本体,最后整行删',
   auth_identities: '身份行,随 app_users 级联删',
+  auth_web_session_tickets: '网页登录短时单次票据随 app_users 级联删',
   organizations: '机构主体独立保留,创建者外键随账号删除置空',
   organization_members: '机构成员关系随账号删除级联,但最后一位有效 owner 会被事务拒绝',
   student_profiles: '学员档案属于机构,关联站内账号随账号删除置空',
@@ -288,7 +345,8 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
       SET guardian_user_id = NULL, account_linked_at = NULL
       WHERE guardian_user_id = ${userId}`;
 
-    // 最后删账号本体。auth_identities 有 ON DELETE CASCADE(0064),身份跟着走。
+    // 最后删账号本体。auth_identities 有 ON DELETE CASCADE(0064),Platform 由 0168
+    // 的 BEFORE DELETE trigger 在同一事务内完整清理并匿名化。
     await tx`DELETE FROM app_users WHERE id = ${userId}`;
   });
 }

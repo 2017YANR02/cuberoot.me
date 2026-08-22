@@ -9,7 +9,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  PURGE_TABLES, ANONYMIZE_TABLES, NOT_USER_OWNED, AccountOwnsOrganizationError,
+  PURGE_TABLES, ANONYMIZE_TABLES, PLATFORM_ACCOUNT_DELETE_TABLES,
+  NOT_USER_OWNED, AccountOwnsOrganizationError,
 } from '../../server/src/utils/account_delete';
 import {
   deletedOwnerKey, isDeletedOwner, primaryHandle, ownerKey,
@@ -108,6 +109,14 @@ describe('清单 ↔ schema', () => {
     }
   });
 
+  it('Platform 每张直接引用 app_users 的表都进入数据库注销守卫', () => {
+    expect(PLATFORM_ACCOUNT_DELETE_TABLES).toHaveLength(48);
+    expect(new Set(PLATFORM_ACCOUNT_DELETE_TABLES).size).toBe(48);
+    for (const table of PLATFORM_ACCOUNT_DELETE_TABLES) {
+      expect(SCHEMA.has(table), `表 ${table} 不在 schema 里`).toBe(true);
+    }
+  });
+
   it('私有数据是删、公开内容是改,两张清单不重叠地混用同一张表的同一列', () => {
     const purged = new Set(PURGE_TABLES.map(([t, c]) => `${t}.${c}`));
     for (const { table, idCol } of ANONYMIZE_TABLES) {
@@ -120,17 +129,35 @@ describe('清单 ↔ schema', () => {
     const handled = new Set<string>([
       ...PURGE_TABLES.map(([t]) => t),
       ...ANONYMIZE_TABLES.map((a) => a.table),
+      ...PLATFORM_ACCOUNT_DELETE_TABLES,
       ...Object.keys(NOT_USER_OWNED),
       'recons',   // 按可见性分流(公开的匿名化 / 私享的删),不走清单,见 deleteAccount
     ]);
     const missing: string[] = [];
     for (const [table, cols] of SCHEMA) {
       if (table.startsWith('wca_fs_')) continue;   // 趣味统计全是 WCA 官方数据派生
-      if (!OWNER_COLUMNS.some((c) => cols.has(c))) continue;
+      if (![...cols].some((c) => c === 'user_id' || c.endsWith('_user_id') || OWNER_COLUMNS.includes(c))) continue;
       if (!handled.has(table)) missing.push(table);
     }
     // 新建带归属键的表却忘了想「注销时它该怎么办」—— 这条就是那一刻的提醒。
     expect(missing, `这些表带归属列但没在注销清单里表态: ${missing.join(', ')}`).toEqual([]);
+  });
+
+  it('Platform 注销策略覆盖私有清理、PII 擦除、不可变证据墓碑化和防伪造守卫', () => {
+    expect(PURGE_TABLES).toContainEqual(['platform_idempotency_requests', 'actor_key']);
+    const implementation = readFileSync(join(SERVER, 'src/utils/account_delete.ts'), 'utf8');
+    const migration = readFileSync(join(SERVER, 'migrations/0168_platform_account_deletion.sql'), 'utf8');
+    const fixture = readFileSync(join(SERVER, 'tests/fixtures/platform_account_deletion_pg.sql'), 'utf8');
+    expect(implementation).not.toContain("set_config('cuberoot.account_delete_tombstone'");
+    expect(implementation).toContain('Platform 由 0168');
+    expect(migration).toContain('CREATE TRIGGER platform_prepare_account_delete');
+    expect(migration).toContain('pg_trigger_depth() < 2');
+    expect(migration).toContain("status = 'archived'");
+    expect(migration).toContain('payout_profile_encrypted = NULL');
+    expect(migration).toContain('payout_profile_snapshot_encrypted = NULL');
+    expect(migration).toContain('UPDATE platform_privacy_consents');
+    expect(fixture).toContain('direct append-only update unexpectedly succeeded');
+    expect(fixture).toContain('DELETE FROM app_users WHERE id = 101');
   });
 
   it('豁免名单每条都写了理由', () => {

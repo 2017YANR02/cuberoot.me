@@ -405,10 +405,10 @@ export function PlatformRouteView({
               />
               <div className="platform-sort" aria-label={t('排序', 'Sort')}>
                 <Search aria-hidden />
-                <button type="button" onClick={() => { void setSort('updated'); }}>
+                <button type="button" className="platform-sort-button" onClick={() => { void setSort('updated'); }}>
                   {t('最近更新', 'Updated')}<SortArrow active={sort === 'updated'} dir="desc" />
                 </button>
-                <button type="button" onClick={() => { void setSort('title'); }}>
+                <button type="button" className="platform-sort-button" onClick={() => { void setSort('title'); }}>
                   {t('标题', 'Title')}<SortArrow active={sort === 'title'} dir="asc" />
                 </button>
               </div>

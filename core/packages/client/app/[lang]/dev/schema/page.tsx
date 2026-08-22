@@ -613,6 +613,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 165, slug: 'teaching_leave_makeups', desc: { zh: '新增可审计的请假与补课状态机：批准请假原子同步考勤，补课复用未来考勤且仅在到课完成时扣课，课堂取消会释放待履约补课。', en: 'Add auditable leave and makeup state machines: leave approval atomically synchronizes attendance, makeups reuse future attendance and consume only on attended completion, and session cancellation releases scheduled makeups.' } },
   { n: 166, slug: 'timer_boot_events', desc: { zh: '新增匿名计时器启动统计：按单次打开去重，只保留粗粒度运行环境分桶，并自动清理 90 天前数据。', en: 'Add anonymous timer startup telemetry deduplicated per opening, retaining only coarse runtime buckets and pruning data older than 90 days.' } },
   { n: 167, slug: 'platform_core', desc: { zh: '新增主站 Platform 的目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等 PostgreSQL 底座；复用统一账号，不恢复旧 SQLite 双写。', en: 'Add the main-site Platform PostgreSQL foundation for catalog, learning, commerce, content, instructors, QR, privacy, audit, outbox, and idempotency on canonical accounts, without restoring legacy SQLite dual-write.' } },
+  { n: 168, slug: 'platform_account_deletion', desc: { zh: '以账号删除触发器原子覆盖 Platform 的 48 张直接关联表：删除私有数据、擦除个人资料，并在 12 张只追加版本、账本和审计表中保留不可伪造的墓碑证据。', en: 'Atomically cover all 48 directly linked Platform tables from an account-delete trigger: purge private data, erase personal information, and retain unforgeable tombstoned evidence across 12 append-only revision, ledger, and audit tables.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

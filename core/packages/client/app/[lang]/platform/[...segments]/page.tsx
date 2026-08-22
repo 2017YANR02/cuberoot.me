@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PlatformRouteView } from '@/components/platform/PlatformRouteView';
 import { metadataFromEntry } from '@/lib/page-meta';
-import { matchPlatformRoute } from '@/lib/platform-routes';
+import { fillPlatformParams, matchPlatformRoute } from '@/lib/platform-routes';
 
 export async function generateMetadata({ params }: {
   params: Promise<{ lang: string; segments: string[] }>;
@@ -17,9 +17,11 @@ export async function generateMetadata({ params }: {
     title: match.definition.title,
     description: match.definition.description,
   }, lang);
-  const routePath = `platform/${segments.map(encodeURIComponent).join('/')}`;
-  const en = `https://cuberoot.me/${routePath}`;
-  const zh = `https://cuberoot.me/zh/${routePath}`;
+  const canonicalPath = match.definition.canonicalHref
+    ? fillPlatformParams(match.definition.canonicalHref, match.params)
+    : `/platform/${segments.map(encodeURIComponent).join('/')}`;
+  const en = `https://cuberoot.me${canonicalPath}`;
+  const zh = `https://cuberoot.me/zh${canonicalPath}`;
 
   return {
     ...metadata,

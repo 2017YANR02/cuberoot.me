@@ -27,7 +27,7 @@
 | `/me/courses`、`/me/membership`、`/membership` | 3 | `/platform/account/courses`、`/platform/account/membership`、`/platform/membership` | 课程权益会员，和主站支持型会员分开 |
 | `/notifications` | 1 | `/platform/notifications` | 共享主站通知组件/API/表 |
 | `/timer`、`/leaderboard` | 2 | `/platform/timer`、`/platform/leaderboard` | 共享主站 timer；旧历史不迁 |
-| `/algorithms`、`/algorithms/[id]` | 2 | `/platform/algorithms`、`/platform/algorithms/[id]` | 复用 `/alg` 数据、播放器与训练；旧详情页本就不读取旧 ID，新路由保持该兼容入口语义 |
+| `/algorithms`、`/algorithms/[id]` | 2 | `/platform/algorithms`、`/platform/algorithms/[id]` | 内部 rewrite 到 `/alg/3x3`，复用同一数据、播放器与训练；旧详情页读取的是自动 seed 生成的随机 ID，不把它当稳定产品标识迁移 |
 | `/courses`、`/courses/[id]`、`/courses/[id]/learn/[lessonId]` | 3 | 同路径加 `/platform` 前缀 | 目录、详情、购买、权益、课时、学习 |
 | `/paths`、`/paths/[id]` | 2 | `/platform/paths`、`/platform/paths/[id]` | 有序课程/课时路径 |
 | `/instructors`、`/instructors/[id]`、`/instructors/apply` | 3 | `/platform/teachers`、`/platform/teachers/[id]`、`/platform/teachers/apply` | 共享教师目录；新增申请审核 |
@@ -128,7 +128,7 @@
 
 - `icon.tsx`、`apple-icon.tsx`：复用主站 icon。
 - `robots.ts`、`sitemap.ts`：公开 Platform 路由进入主站 metadata；账户、订单、学习、搜索和 admin 页面 noindex。
-- 公开共享页必须只有一个 canonical URL；Platform 壳深链按页面语义设置 canonical，避免重复索引。
+- 公开共享页必须只有一个 canonical URL；已有完整主站页面由 Next 内部 rewrite 服务 `/platform/*` 别名，浏览器 URL 不变、页面实现不复制，metadata 指向主站 canonical，Platform 别名不进入 sitemap。
 
 ## 7. 不迁移与不恢复
 

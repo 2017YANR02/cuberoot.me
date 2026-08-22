@@ -61,6 +61,7 @@ export const PLATFORM_SITEMAP_PATHS = PLATFORM_ROUTES
   .filter((route) => route.access === 'public'
     && route.pattern !== ''
     && !route.pattern.includes(':')
+    && !route.canonicalHref
     && !PLATFORM_NOINDEX_IDS.has(route.id))
   .map((route) => `platform/${route.pattern}`);
 

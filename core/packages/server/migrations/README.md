@@ -52,6 +52,8 @@ PostgreSQL schema 变更的 source of truth。`apply_migrations.sh` 会在部署
 
 主站 Platform 底座增量 `0167_platform_core.sql` 的升级基线是已应用至 `0166_timer_boot_events.sql` 的现有数据库。它在统一 `app_users` 身份下新增目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等模型，以整数最小货币单位、支付核验、状态机、只追加账本、稳定 actor key 和复合外键约束交易与管理写入；它不恢复旧 Platform SQLite 双写，也不迁移少量 demo 或计时器历史数据，不能当作空库初始化脚本单独执行。
 
+Platform 账号注销增量 `0168_platform_account_deletion.sql` 由 `app_users` 的 `BEFORE DELETE` 触发器原子覆盖 48 张直接关联表：删除私有和短期数据，擦除订单、报名、测验、证书、讲师及提现资料中的 PII，保留并墓碑化交易、同意、版本、账本和审计证据。12 张只追加表仅接受该嵌套删除事务的精确字段变更，直接伪造事务变量仍会拒绝；真实 PostgreSQL 事务夹具在测试 workflow 中逐次验证。
+
 ## 已应用 migration 不能改
 
 `apply_migrations.sh` 会把每个文件的 SHA-256 写入 ledger。已应用文件的摘要发生变化时会终止执行。修正已上线结构只能新增 migration；需要恢复数据时使用已验证的备份。
