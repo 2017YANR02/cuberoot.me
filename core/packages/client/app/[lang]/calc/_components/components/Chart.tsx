@@ -11,7 +11,7 @@ import {
 } from './chart_renderer';
 import { initDrag, onAfterRender as dragAfterRender } from './chart_drag_handler';
 
-export function Chart() {
+export function Chart({ readOnly = false }: { readOnly?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // NOTE: 挂载 SVG + 拖动交互
@@ -22,13 +22,13 @@ export function Chart() {
     chartRender();
 
     // NOTE: 挂载拖动事件，cleanup 返回卸载函数
-    const cleanupDrag = initDrag();
+    const cleanupDrag = readOnly ? () => {} : initDrag();
 
     return () => {
       cleanupDrag();
       destroyChart();
     };
-  }, []);
+  }, [readOnly]);
 
   // NOTE: 订阅 store 变更 → 重新渲染图表
   // 只监听影响图表的关键字段，避免不相关变更触发重绘
@@ -41,8 +41,8 @@ export function Chart() {
 
   useEffect(() => {
     chartRender();
-    dragAfterRender();
-  }, [times, seedOn, event, playerEnabled, names, targetAvgs]);
+    if (!readOnly) dragAfterRender();
+  }, [times, seedOn, event, playerEnabled, names, targetAvgs, readOnly]);
 
   return (
     <div id="chart-container" ref={containerRef} />
