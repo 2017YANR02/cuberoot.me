@@ -470,8 +470,9 @@ function PlatformManagedQuizPanel({ definition, courseId, lessonId, busy, runAct
   }, [courseId, lessonId, revision, scope]);
 
   const refreshingAction: RunAction = async (action, id, payload) => {
-    await runAction(action, id, payload);
+    const actionResult = await runAction(action, id, payload);
     setRevision((value) => value + 1);
+    return actionResult;
   };
 
   return (
@@ -798,8 +799,9 @@ function PlatformShippingAddressManager({ definition, busy, runAction, onAddress
     return () => controller.abort();
   }, [onAddresses, revision]);
   const refreshingAction: RunAction = async (...args) => {
-    await runAction(...args);
+    const actionResult = await runAction(...args);
     setRevision((value) => value + 1);
+    return actionResult;
   };
   return (
     <section className="platform-domain-actions">
