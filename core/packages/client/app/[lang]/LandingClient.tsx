@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { Heart, Radio, Trophy, ListOrdered, LogIn, User, type LucideIcon } from 'lucide-react';
+import { Heart, Radio, Trophy, ListOrdered, LogIn, Search, User, type LucideIcon } from 'lucide-react';
 import Link from '@/components/AppLink';
 import LangToggle from '@/components/LangToggle';
 import { useTranslation } from 'react-i18next';
@@ -89,6 +89,15 @@ export default function LandingPage() {
   return (
     <div className="landing-page">
       <div className="landing-auth">
+        <Link
+          href="/search"
+          className="landing-auth-btn is-avatar"
+          title={tr({ zh: '全站搜索', en: 'Site search' })}
+          aria-label={tr({ zh: '全站搜索', en: 'Site search' })}
+          prefetch={false}
+        >
+          <Search size={16} aria-hidden="true" />
+        </Link>
         <LangToggle />
         {!user ? (
           <Link href={`/account${nextQuery(pathname)}`} className="landing-auth-btn is-login" prefetch={false}>
