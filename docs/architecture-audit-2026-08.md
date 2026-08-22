@@ -2,6 +2,8 @@
 
 审计日期：2026-08-21
 
+状态说明（2026-08-22）：本文的架构证据仍可用于后续现代化调查，但其中“Platform 产品迁移已完成”的判断已被旧产品 surface、混合来源 SQLite 数据和静态资产清单推翻。Platform 当前边界以[产品能力与数据迁移跟踪](./platform-product-migration-tracker.md)为准；本文对应段落已更正，架构源码实施继续暂停。
+
 审计范围：仓库顶层、`core/` workspace、Web、API、Platform、Mobile、小程序、共享包、构建任务、上游同步脚本和已跟踪静态数据。本次只做静态审计，不修改实现，不以单个文件长度代替架构判断。
 
 复审方式：主审后又做了三路独立反方复审，分别专查运行时与迁移切换、package 边界、仓库脚本与发布路径；再由主审逐条回查证据。以下建议因此刻意偏保守：逻辑边界是近期目标，物理目录只是条件成熟后的可选结果。
@@ -181,13 +183,13 @@ server/src/domains/teaching/
 
 当前 `core/packages/` 同时包含：
 
-- 当前产品应用：client、server、mobile、miniprogram；`platform` 目录和部署定义属于已完成迁移后的历史兼容与退役清理范围，不是未来继续建设的新应用。
+- 当前产品应用：client、server、mobile、miniprogram；`platform` 独立前端已退役且不再建设，但其源码仍是未完成产品能力与数据迁移的取证来源，不属于未来 `apps/*`。
 - 共享库：shared、visualcube、stack-kernel、vendor-sr-puzzlegen。
 - 离线任务：alg-build、stats-build、scramble-stats-build、wb-build。
 
 pnpm 视角下它们当然都是 workspace package，但人类语义已经不够清楚。`apps/ + packages/ + jobs/` 比含义模糊的 `webapp/` 更适合作为条件成熟后的候选布局，不过它不是近期必须完成的目标。当前 `packages/client` 虽然命名不理想，技术上仍是合法 workspace package；先用文档、边界守卫和 package manifest 表达所有权，已经能获得大部分收益。
 
-物理迁移会同时触碰 `pnpm-workspace.yaml`、Turbo graph、workflow 的 paths 与 working-directory、Dockerfile、standalone 产物路径、本地 stats/tools 回退路径，以及仓库外的部署项目配置。只有逻辑边界已经解耦、工具链先做到路径可配置，并且迁移收益高于这些风险时，才逐个 app 或 job 迁移。已完成产品迁移的 Platform 不进入 `apps/*` 物理整理任务，也不为它新建 `platform-compat`。
+物理迁移会同时触碰 `pnpm-workspace.yaml`、Turbo graph、workflow 的 paths 与 working-directory、Dockerfile、standalone 产物路径、本地 stats/tools 回退路径，以及仓库外的部署项目配置。只有逻辑边界已经解耦、工具链先做到路径可配置，并且迁移收益高于这些风险时，才逐个 app 或 job 迁移。Platform 不恢复独立 app，也不进入 `apps/*` 物理整理任务；它先按独立产品与数据跟踪表迁入主站，且不新建 `platform-compat`。
 
 ### P1 快速修复项：README 给出的第一条开发命令当前就会失败
 
@@ -293,21 +295,22 @@ core/
     wb-build/
 ```
 
-这张树是候选布局，不是迁移任务单。特别是不要预建 `sim-core`、`timer-core`、`teaching-domain`，也不要把已完成迁移的 Platform 搬进未来 `apps/*`。没有合格依赖闭包或稳定消费者时，空目录和新 package 只会增加样板。
+这张树是候选布局，不是迁移任务单。特别是不要预建 `sim-core`、`timer-core`、`teaching-domain`，也不要把已退役但产品迁移未完成的 Platform 搬进未来 `apps/*`。没有合格依赖闭包或稳定消费者时，空目录和新 package 只会增加样板。
 
-### Platform 已完成迁移，不再列为架构迁移阶段
+### Platform 独立前端已退役，产品与数据迁移尚未完成
 
-仓库所有者于 2026-08-21 确认 Platform 已完全迁移。`/org/*`、`/learn/*` 和对应教学 API 的最终归属已经是主站 `packages/client`、`packages/server` 与 PostgreSQL；因此 Platform 既不是待迁移应用，也不是未来新端的共享后端，更不应再花一轮工程做“前后端分离”或移动到 `apps/platform-web`。
+`/org/*`、`/learn/*` 和对应教学 API 的最终归属已经是主站 `packages/client`、`packages/server` 与 PostgreSQL；独立 Platform 前端因此不是待恢复应用，也不是未来新端的共享后端，更不应再做一套“前后端分离”或移动到 `apps/platform-web`。
 
-`packages/platform`、SQLite 和 uploads 现在只作为历史归档保留；Platform test/deploy workflow 与 systemd unit 已删除，旧域名只返回 410。它们不能反向推导产品迁移尚未完成。
+但 2026-08-22 的复核确认旧站仍有 83 个页面、13 个 Route Handler、18 个 Server Action 文件、混合来源 SQLite 记录和 `public/**` 静态资产，主站尚未逐项承接。`packages/platform` 与旧本地仓现在是迁移取证来源；Platform test/deploy workflow 与 systemd unit 已删除，旧域名继续返回 410。源码退役、教学前端切换和产品数据迁移必须分开验收。
 
-最终删除归档前仍需一张只读清单：
+后续工作以[Platform 产品能力与数据迁移跟踪](./platform-product-migration-tracker.md)为准，至少包括：
 
-1. 确认页面、API、支付回调、上传和静态 URL 已无活动职责或已有最终去向。
-2. 确认 SQLite、uploads、历史凭据和恢复包已有保留或销毁决定，不把删除源码误当成数据迁移。
-3. 确认退役发布全绿、旧服务与监听停止后,再由仓库所有者执行可恢复的归档或删除。
+1. 为页面、Route Handler、Server Action、metadata、支付回调和媒体建立完整责任 ledger。
+2. 对 SQLite 逐行区分 seed/demo、用户、运营、交易、日志和敏感瞬态记录，并完成一致性快照与恢复。
+3. 复用主站现有能力，将仍需保留的产品能力迁入真实领域，不建立 `/platform` 壳。
+4. 源码、数据库、媒体、凭据和外部回调分别满足删除或保留门槛后，再由仓库所有者逐项决定。
 
-在完成这张清理清单前，遗留目录保持原位即可；不要为了目录观感把退役代码搬进长期 `apps/*`。架构图只画当前事实源和当前消费者，历史实现放在迁移记录中。
+在独立跟踪表完成前，遗留目录保持原位；不要为了目录观感搬进长期 `apps/*`。架构图应同时标明当前主站运行单元和 Platform 迁移来源，不能把来源误画成活动前端。
 
 ### iOS 与 Android 是否分别建 app
 
@@ -390,13 +393,13 @@ miniprogram                  -X-> React DOM modules
 
 验收：标为 runtime-neutral 的 core 不接触 DOM、浏览器存储和平台 API；若未来存在 React UI package，必须显式声明 React runtime，不能冒充 universal。每个可运行 app 和源码库具有与其形态相称的明确验证契约，可能是 build、typecheck、unit 或 smoke，不为满足表面规范制造空测试脚本。
 
-### 阶段 2B：关闭 Platform 文档漂移
+### 阶段 2B：等待 Platform 产品与数据迁移
 
-- 将 Platform 跟踪文档明确标成“迁移已完成，正文为历史记录”，禁止 AI 从旧的未勾选计划反推当前状态。
-- 盘点残留 workflow、服务、SQLite、uploads、回调和域名职责；只记录仍需保留或清理的运维项，不再创建产品迁移 backlog。
-- 不把退役清理和 `apps/*` 目录整理放进同一变更。
+- 以独立产品迁移跟踪表为唯一执行入口，补齐旧 surface、SQLite、媒体、身份、交易与删除责任。
+- 本架构阶段只允许只读依赖调查；不与产品迁移并行移动目录、拆契约或清理 Platform 来源。
+- Platform 不恢复独立前端，也不进入 `apps/*`；能力最终归入主站领域。
 
-验收：当前架构文档只把主站 Web、Core API 和 PostgreSQL 列为教学系统运行单元；历史文档不会再把已完成迁移描述成待办。
+验收：Platform 产品跟踪 P7 完成，主站是唯一运行前端，旧 surface 和数据全部有已验收去向，架构文档据新基线重新授权。
 
 ### 阶段 3A：安全收根目录 PS1
 
@@ -435,7 +438,7 @@ miniprogram                  -X-> React DOM modules
 - 不要同时移动 Web、API、Mobile 和 Job；当前 workspace、workflow、容器与发布路径都把位置当契约。
 - 不要把整个模拟器 `World` 搬进新 package 后就称为 headless core。
 - 不要第一步迁走 `stats/` 和 `tools/`，破坏当前部署与回滚链。
-- 不要因遗留 Platform 目录仍存在，就把已经完成的产品迁移重新列为待办。
+- 不要因 Platform 独立前端已退役，就把尚未逐项验收的产品能力和数据误写成已迁移。
 
 ## 最终评价
 
