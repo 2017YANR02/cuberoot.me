@@ -7,6 +7,7 @@ import { LISTED_CATEGORIES } from '@/lib/lsll/model';
 import { STACK_TOOLS_META } from './[lang]/dev/stack/_lib/stack_meta';
 import { LLM_TOOLS_META } from './[lang]/dev/llm/_lib/llm_meta';
 import { ABOUT_REGISTRY } from './[lang]/wca/about/[id]/_lib/registry';
+import { PLATFORM_ROUTES } from '@/lib/platform-routes';
 
 // Static-routes sitemap. The fs scan below runs during `next build` (where app/
 // source exists) and the result is baked into the static /sitemap.xml served by
@@ -50,6 +51,19 @@ const EXCLUDE = new Set(['ffmpeg-poc', 'jsonEditor', 'courses', 'search']);
 // under each alg set (interactive tools, not content, and near-duplicates of
 // the set page) and LSLL's degenerate O group (LISTED_CATEGORIES drops it
 // because the site itself does not link it — see LsllCategory.pureLL).
+const PLATFORM_NOINDEX_IDS = new Set(['search', 'offline', 'login', 'notifications']);
+
+// The Platform UI is one catch-all route, so the filesystem walk can only see
+// /platform itself. List its static public directories from the same route
+// registry that powers navigation; parameterized client shells stay out until
+// there is a stable, server-visible entity catalog to enumerate.
+export const PLATFORM_SITEMAP_PATHS = PLATFORM_ROUTES
+  .filter((route) => route.access === 'public'
+    && route.pattern !== ''
+    && !route.pattern.includes(':')
+    && !PLATFORM_NOINDEX_IDS.has(route.id))
+  .map((route) => `platform/${route.pattern}`);
+
 const EXTRA = [
   ...(ALG_PUZZLES as readonly string[]).map((puzzle) => `alg/${puzzle}`),
   ...Object.entries(ALG_CATALOG).flatMap(([puzzle, sets]) =>
@@ -60,6 +74,7 @@ const EXTRA = [
   ...STACK_TOOLS_META.map((t) => `dev/stack/${t.slug}`),
   ...LLM_TOOLS_META.map((t) => `dev/llm/${t.slug}`),
   ...Object.keys(ABOUT_REGISTRY).map((id) => `wca/about/${id}`),
+  ...PLATFORM_SITEMAP_PATHS,
   'recognize/pll',
   'recognize/oll',
   'alg/3x3/zbll/simple',

@@ -112,6 +112,7 @@
       "default": "./src/quiz.ts"
     },
     "./forum": "./src/forum.ts",
+    "./platform": "./src/platform.ts",
     "./cube-unfolded-svg": {
       "node": "./dist/cube_unfolded_svg.js",
       "default": "./src/cube_unfolded_svg.ts"

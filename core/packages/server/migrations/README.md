@@ -50,6 +50,8 @@ PostgreSQL schema 变更的 source of truth。`apply_migrations.sh` 会在部署
 
 计时器启动统计增量 `0166_timer_boot_events.sql` 新增按单次打开 UUID 去重的启动结果表；只保存内核、系统、容器和支持状态分桶，不保存完整 UA、IP、错误正文或账号，并由应用保留最近 90 天。
 
+主站 Platform 底座增量 `0167_platform_core.sql` 的升级基线是已应用至 `0166_timer_boot_events.sql` 的现有数据库。它在统一 `app_users` 身份下新增目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等模型，以整数最小货币单位、支付核验、状态机、只追加账本、稳定 actor key 和复合外键约束交易与管理写入；它不恢复旧 Platform SQLite 双写，也不迁移少量 demo 或计时器历史数据，不能当作空库初始化脚本单独执行。
+
 ## 已应用 migration 不能改
 
 `apply_migrations.sh` 会把每个文件的 SHA-256 写入 ledger。已应用文件的摘要发生变化时会终止执行。修正已上线结构只能新增 migration；需要恢复数据时使用已验证的备份。
