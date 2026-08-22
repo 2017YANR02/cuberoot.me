@@ -2,11 +2,11 @@
 
 最后更新:2026-08-22
 
-状态:Platform 迁移已经全部完成,独立前端已退役。本文保留导入证据和历史边界;旧源码、SQLite 与 uploads 继续作为离线档案保留。
+状态:源码、Git 历史和 monorepo 接入已完成,独立前端已退役;旧产品能力与业务数据迁移尚未完成。本文只保留源码接入证据和历史边界,当前执行状态以[Platform 产品能力与数据迁移跟踪](./platform-product-migration-tracker.md)为准。
 
 ## 目标
 
-把原独立平台完整纳入 `cuberoot.me` 主仓库,先以 `core/packages/platform` 完整保存源码与历史,再把仍需要的教学管理能力迁入主站。旧本地目录和旧 GitHub 仓库最终可由仓库所有者删除,但删除前必须满足本文的切换门槛。
+把原独立平台的源码与历史纳入 `cuberoot.me` 主仓库,先以 `core/packages/platform` 保存可追踪来源,再把仍需要的能力和业务数据迁入主站。旧本地目录和旧 GitHub 仓库最终可由仓库所有者删除,但必须先满足产品与数据跟踪表的最终门槛。
 
 这次迁移解决代码、Git 历史、workspace、CI、构建和部署归属。生产数据库、上传文件、运行时环境变量与 GitHub secrets 都是仓库外状态,不会因为代码迁移自动搬家。
 
@@ -79,7 +79,7 @@
 4. 完成账号绑定、任务、反馈、周报、通知和家校沟通的真实多角色端到端验收。
 5. 补齐经营报表、审计检索、导出、备份恢复演练与长期运维观察。
 
-`packages/client` 同时负责公开训练工具与最终教学管理界面,只消费 shared/Core 契约,不复制 timer、predict、alg 或 sim 引擎。旧 Platform 内容/商城与 SQLite 已离线归档;新多租户教学交易域不再写入 SQLite,按[多机构教学 SaaS 设计](./teaching-saas-plan.md)在 Hono/PostgreSQL 落 schema 与权限边界。
+`packages/client` 同时负责公开训练工具与最终教学管理界面,只消费 shared/Core 契约,不复制 timer、predict、alg 或 sim 引擎。旧 Platform 内容、商城与 SQLite 当前仅离线保留,产品能力和业务数据仍须按新的产品迁移跟踪表逐项处理;新多租户教学交易域不再写入 SQLite,按[多机构教学 SaaS 设计](./teaching-saas-plan.md)在 Hono/PostgreSQL 落 schema 与权限边界。
 
 ## 阶段性实施记录
 
@@ -127,7 +127,7 @@ Stage 0 至 Stage 4 的详细设计和验证边界记录在[多机构教学 SaaS
 
 ## 删除旧本地目录与旧 GitHub 仓库前的门槛
 
-以下项目全部完成后,旧本地目录与旧 GitHub 仓库可由仓库所有者删除:
+除满足以下源码历史条件外,还必须完成[产品迁移跟踪表 P7](./platform-product-migration-tracker.md#p7最终对账观察与删除授权),旧本地目录与旧 GitHub 仓库才可由仓库所有者删除:
 
 1. 主仓远端仍可达原 subtree 父提交,并保留完整 `core/packages/platform` 归档源码。
 2. 旧 SQLite、uploads 和非 Git 文件已备份或明确放弃,且需要保留的备份已验证可读。
