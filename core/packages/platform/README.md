@@ -1,6 +1,6 @@
-# CubeRoot 教学与机构平台
+# CubeRoot 旧 Platform 归档
 
-从原独立平台仓库迁入的 Next.js 应用,现在是 CubeRoot monorepo 的 `@cuberoot/platform` 工作区。
+从原独立平台仓库迁入的历史源码。独立前端已经退役,不再测试、构建或部署;主站 `@cuberoot/client` 的 `/org` 与 `/learn` 是唯一教学入口。这里仅保留必要的数据导出、取证与回滚参考。
 
 ## 技术栈
 
@@ -26,12 +26,11 @@ components/         SiteHeader/Footer/Section/Button/Badge/FeatureCard/StatCard
 data/               全部 mock(courses / products / events / news / instructors)
 ```
 
-## 开发
+## 归档检查
 
 ```bash
 cd core
 pnpm install
-pnpm --filter @cuberoot/platform dev        # http://127.0.0.1:3100
 pnpm --filter @cuberoot/platform build
 pnpm --filter @cuberoot/platform typecheck
 pnpm --filter @cuberoot/platform test
@@ -46,6 +45,6 @@ pnpm --filter @cuberoot/platform test
 
 ## 产品边界
 
-- 现有:课程、章节、学习进度、订单、会员、讲师 / 管理后台、支付和内容运营。
-- 下一阶段:机构多租户、课包 / 剩余课时、排课 / 上课历史、训练任务、学员打卡作业、教师周反馈与家校沟通。
+- 历史内容:课程、章节、学习进度、订单、会员、讲师 / 管理后台、支付和内容运营。
+- 新能力一律进入主站与 Core,不在此目录继续开发产品功能。
 - 迁移记录、外部状态和旧仓库删除门槛见 [`docs/platform-migration.md`](../../../docs/platform-migration.md)。

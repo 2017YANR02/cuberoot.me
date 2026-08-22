@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -15,7 +15,25 @@ describe('main-site teaching architecture', () => {
     const plan = readFileSync(join(REPO, 'docs', 'platform-unification-plan.md'), 'utf8');
     expect(plan).toContain('`core/packages/client` 是唯一 Web 前端');
     expect(plan).toContain('旧 Platform 计时历史不迁移');
-    expect(plan).toContain('`core/packages/platform` 只作为迁移期来源');
+    expect(plan).toContain('`core/packages/platform` 只作为历史归档来源');
+  });
+
+  it('exposes both teaching entry points on the main homepage', () => {
+    const landing = readClient('lib/landing-sections.tsx');
+    expect(landing).toContain("href: '/org'");
+    expect(landing).toContain("href: '/learn'");
+    expect(landing).toContain("teachingManagement: { en: 'Teaching', zh: '教学管理' }");
+    expect(landing).toContain("learningCenter:  { en: 'Learning Center', zh: '学习中心' }");
+  });
+
+  it('keeps the retired Platform host disconnected from its legacy app', () => {
+    const nginx = readFileSync(join(REPO, 'ops', 'nginx', 'platform.cuberoot.me.conf'), 'utf8');
+    expect(nginx).toContain('return 410;');
+    expect(nginx).not.toContain('proxy_pass');
+    expect(nginx).not.toContain('127.0.0.1:3004');
+    expect(existsSync(join(REPO, '.github', 'workflows', 'deploy_platform.yml'))).toBe(false);
+    expect(existsSync(join(REPO, '.github', 'workflows', 'test_platform.yml'))).toBe(false);
+    expect(existsSync(join(REPO, 'ops', 'systemd', 'platform-next.service'))).toBe(false);
   });
 
   it('links teaching users to canonical main-site tools', () => {
