@@ -1,5 +1,5 @@
 /**
- * Every non-WCA puzzle the timer offers must actually produce a real scramble.
+ * Every csTimer-backed puzzle / 2x2 special type the timer offers must actually produce a real scramble.
  *
  * An event in the picker that yields an empty string (or, worse, a 3x3 scramble
  * from the dispatcher's fallback) is worse than no event at all — so this file
@@ -38,6 +38,8 @@ import { solveGear, GEAR_GODS_NUMBER } from '@/lib/gear-solver';
 import { MPYR_MOVE_NAMES, mpyrFacelets, mpyrSolvedFacelets } from '@/lib/mpyr-solver';
 import { NON_WCA_EVENT_IDS, cstimerKeyForEvent } from '@/app/[lang]/timer/_lib/scramble/nonwca';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
+import { pocketFaceletFromMoves } from '@/lib/pocket-facelet';
+import { SCRAMBLE_222_TYPES, cstimer222Spec } from '@/lib/scramble-222-mode';
 
 const BUNDLE = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -121,6 +123,45 @@ describe('non-WCA scramble catalog', () => {
       expect(a, `${id}: generator returned the same scramble twice`).not.toBe(b);
     }
   }, 120_000);
+});
+
+describe('2x2 special scramble catalog', () => {
+  it('maps every non-full type to the vendored csTimer engine', () => {
+    const specialTypes = SCRAMBLE_222_TYPES.filter((type) => type !== 'full');
+    expect(specialTypes).toHaveLength(10);
+    for (const type of specialTypes) {
+      const spec = cstimer222Spec(type);
+      expect(spec, `${type} has no csTimer spec`).toBeTruthy();
+      const scramble = ask(spec!.key, spec!.length ?? 0);
+      expect(scramble.length, `${type}: empty scramble`).toBeGreaterThan(0);
+      for (const tok of tokens(scramble)) {
+        expect(/^[URF](?:2|')?$/.test(tok), `${type}: bad 2x2 token ${tok} in ${scramble}`).toBe(true);
+      }
+    }
+  }, 120_000);
+
+  it('keeps the 3-gen contract at 25 moves', () => {
+    const spec = cstimer222Spec('3gen')!;
+    expect(spec).toEqual({ key: '2223', length: 25 });
+    expect(tokens(ask(spec.key, spec.length)).length).toBe(25);
+  });
+
+  it('generates actual no-bar states', () => {
+    const spec = cstimer222Spec('nobar')!;
+    for (let draw = 0; draw < 12; draw++) {
+      const facelet = pocketFaceletFromMoves(ask(spec.key));
+      for (let face = 0; face < 6; face++) {
+        const i = face * 4;
+        // A 2x2 face's adjacent pairs always cross its two diagonals. Equal colors
+        // within one diagonal are allowed; any match across diagonals is a bar.
+        const diagonal = new Set([facelet[i], facelet[i + 3]]);
+        expect(
+          diagonal.has(facelet[i + 1]) || diagonal.has(facelet[i + 2]),
+          `222nb produced a bar on face ${face}: ${facelet}`,
+        ).toBe(false);
+      }
+    }
+  }, 60_000);
 });
 
 describe('fto (ftoso)', () => {
