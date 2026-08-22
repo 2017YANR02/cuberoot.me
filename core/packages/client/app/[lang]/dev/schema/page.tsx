@@ -273,6 +273,11 @@ const TABLES: Table[] = [
   { name: 'timer_backups', domain: 'studio', origin: '0020', purpose: { zh: '计时器成绩云备份(单快照覆盖)', en: 'Cloud backup of timer sessions (single overwrite snapshot)' }, cols: [
     { name: 'wca_id (PK)' }, { name: 'blob', note: { zh: '导出的 JSON', en: 'exported JSON' } }, { name: 'byte_size, solve_count, updated_at' },
   ] },
+  { name: 'timer_boot_events', domain: 'studio', origin: '0166', purpose: { zh: '按单次打开去重统计计时页启动尝试、成功与失败，保留 90 天', en: 'Deduplicated timer startup attempts, successes, and failures retained for 90 days' }, cols: [
+    { name: 'boot_id UUID (PK), path, outcome, failure_kind' },
+    { name: 'engine_family / major, os_family / major, container, support_status', note: { zh: '仅粗粒度分桶，不保存完整 UA、IP、错误正文或账号', en: 'Coarse buckets only; no raw UA, IP, error text, or account' } },
+    { name: 'attempted_at, updated_at' },
+  ] },
   { name: 'timer_sessions', domain: 'studio', origin: 'snapshot', purpose: { zh: '计时器分组 / 分段', en: 'Timer sessions / groups' } },
   { name: 'train_results', domain: 'studio', origin: 'snapshot', purpose: { zh: '公式计时训练成绩', en: 'Trainer (timed-alg) results' } },
   { name: 'collaborative_documents', domain: 'studio', origin: '0122', evolved: [123], purpose: { zh: '通用协作文档与在线表格：标题、类型、所有者及可合并的 Yjs 状态', en: 'Collaborative docs and spreadsheets: title, kind, owner, and mergeable Yjs state' }, cols: [
@@ -583,6 +588,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 163, slug: 'forum_videos', desc: { zh: '新增论坛短视频上传元数据；任意登录账号可上传，发布主题时原子绑定首帖，时长由服务端读取媒体容器并校验。', en: 'Add forum short-video upload metadata; any signed-in account may upload, thread creation atomically attaches it to the first post, and the server validates duration from the media container.' } },
   { n: 164, slug: 'teaching_credit_adjustments', desc: { zh: '强化课时账本：以课包父行串行化所有写入，约束退款来源与等额撤销，并禁止余额降至负数。', en: 'Harden the credit ledger by serializing every write on its package, constraining refund sources and exact reversals, and preventing negative balances.' } },
   { n: 165, slug: 'teaching_leave_makeups', desc: { zh: '新增可审计的请假与补课状态机：批准请假原子同步考勤，补课复用未来考勤且仅在到课完成时扣课，课堂取消会释放待履约补课。', en: 'Add auditable leave and makeup state machines: leave approval atomically synchronizes attendance, makeups reuse future attendance and consume only on attended completion, and session cancellation releases scheduled makeups.' } },
+  { n: 166, slug: 'timer_boot_events', desc: { zh: '新增匿名计时器启动统计：按单次打开去重，只保留粗粒度运行环境分桶，并自动清理 90 天前数据。', en: 'Add anonymous timer startup telemetry deduplicated per opening, retaining only coarse runtime buckets and pruning data older than 90 days.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

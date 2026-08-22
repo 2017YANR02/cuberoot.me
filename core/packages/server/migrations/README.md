@@ -48,6 +48,8 @@ PostgreSQL schema 变更的 source of truth。`apply_migrations.sh` 会在部署
 
 请假与补课增量 `0165_teaching_leave_makeups.sql` 的升级基线是已应用至 `0164_teaching_credit_adjustments.sql` 的现有数据库。它新增不可删除的请假与补课审计历史，以延迟约束保证批准请假和 `excused` 考勤同事务落地，并把已批准请假映射到同学员、同课包的未来考勤；补课到课完成时沿用既有账本唯一键仅扣一次，缺席、请假或目标课堂取消后可重新安排，且禁止嵌套补课链。课堂、考勤、补课与课包写事务统一按课堂、考勤、补课、课包顺序加锁；不能把 `0165` 当作空库初始化脚本单独执行。
 
+计时器启动统计增量 `0166_timer_boot_events.sql` 新增按单次打开 UUID 去重的启动结果表；只保存内核、系统、容器和支持状态分桶，不保存完整 UA、IP、错误正文或账号，并由应用保留最近 90 天。
+
 ## 已应用 migration 不能改
 
 `apply_migrations.sh` 会把每个文件的 SHA-256 写入 ledger。已应用文件的摘要发生变化时会终止执行。修正已上线结构只能新增 migration；需要恢复数据时使用已验证的备份。
