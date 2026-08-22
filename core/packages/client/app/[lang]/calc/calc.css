@@ -97,7 +97,6 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
 }
-
 .calc-page .calc-title-help {
     flex-shrink: 0;
     align-self: center;
