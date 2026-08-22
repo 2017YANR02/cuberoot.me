@@ -18,17 +18,11 @@ import {
   TIMER_BOOT_COPY,
   bootFailureMessageKey,
   isNonCriticalBootResourceUrl,
+  type TimerBootTelemetryFailureKind,
 } from '@/lib/app_boot_early';
 import './timer-bootstrap.css';
 
-export type TimerBootFailureKind =
-  | 'network'
-  | 'chunk'
-  | 'script'
-  | 'promise'
-  | 'timeout'
-  | 'runtime'
-  | 'unknown';
+export type TimerBootFailureKind = TimerBootTelemetryFailureKind;
 
 export interface TimerBootEvidence {
   source: 'error' | 'unhandledrejection' | 'import' | 'runtime';
@@ -220,6 +214,7 @@ export function buildTimerBootDiagnostic(
 
 function persistDiagnostic(diagnostic: TimerBootDiagnostic): void {
   if (typeof window === 'undefined') return;
+  window.__timerBootTelemetry?.report('failure', diagnostic.kind);
   try {
     window.__timerBootDiagnostic = diagnostic;
   } catch {
@@ -352,6 +347,13 @@ class TimerRuntimeBoundary extends Component<TimerRuntimeBoundaryProps, TimerRun
   }
 }
 
+function TimerBootSuccessMarker() {
+  useEffect(() => {
+    window.__timerBootTelemetry?.report('success');
+  }, []);
+  return null;
+}
+
 const importTimerShell = () => import('../_shell/TimerShell');
 
 export default function TimerBootstrap({
@@ -364,6 +366,7 @@ export default function TimerBootstrap({
 
   useEffect(() => {
     let active = true;
+    window.__startTimerBootTelemetry?.();
     const earlyCapture = window.__timerBootEarly;
     let storedEvidence: TimerBootEvidence[] = [];
     try {
@@ -431,6 +434,7 @@ export default function TimerBootstrap({
     return (
       <TimerRuntimeBoundary onRetry={onRetry}>
         <TimerShell />
+        <TimerBootSuccessMarker />
       </TimerRuntimeBoundary>
     );
   }

@@ -62,7 +62,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live documents feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
-//   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
+//   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
@@ -553,6 +553,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'timer', m: 'GET', p: '/v1/timer/backup', g: 'login', zh: '取计时器云备份', en: 'Fetch timer backup' },
   { d: 'timer', m: 'POST', p: '/v1/timer/backup', g: 'login', zh: '上传计时器备份', en: 'Upload timer backup' },
   { d: 'timer', m: 'DELETE', p: '/v1/timer/backup', g: 'login', zh: '删除备份', en: 'Delete backup' },
+  { d: 'timer', m: 'POST', p: '/v1/timer/boot-events', g: 'public', c: 'no-store', zh: '匿名记录一次计时页启动尝试、成功或失败，只保存运行环境分桶', en: 'Record an anonymous timer startup attempt, success, or failure using runtime buckets only' },
+  { d: 'timer', m: 'GET', p: '/v1/timer/boot-stats', g: 'admin', c: 'no-store', zh: '管理员读取 7、30、90 天启动成功率及环境分组', en: 'Admin startup success rates for 7, 30, and 90 days with runtime breakdowns' },
   { d: 'timer', m: 'GET', p: '/v1/timer/presence', g: 'admin', c: 'no-store', zh: '管理员读取当前计时人数、账号、成绩、IP 城市与智能魔方设备', en: 'Admin live timer users, accounts, results, IP cities, and smart-cube devices' },
   { d: 'timer', m: 'POST', p: '/v1/timer/presence', g: 'public', c: 'no-store', zh: '计时页短期心跳（登录可选，最多 4 人）', en: 'Short-lived timer heartbeat (optional login, up to four people)' },
   { d: 'smart-cube', m: 'GET', p: '/v1/smart-cube/relay', g: 'public', c: 'no-store', zh: '小程序原生蓝牙与网站计时器之间的临时 WebSocket 中继', en: 'Ephemeral WebSocket relay between Mini Program native BLE and the web timer' },

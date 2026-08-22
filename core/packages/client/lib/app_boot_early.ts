@@ -1,3 +1,5 @@
+import { BROWSER_API_ORIGIN } from '@/lib/api-base';
+
 export const DEFAULT_TIMEOUT_MS = 20_000;
 export const MAX_EVIDENCE = 4;
 export const MAX_DETAIL_LENGTH = 500;
@@ -7,7 +9,31 @@ export const EARLY_STORAGE_KEY = 'app.boot.earlyEvidence';
 export const MIN_SUPPORTED_CHROMIUM_MAJOR = 111;
 export const MIN_SUPPORTED_SAFARI_MAJOR = 16;
 export const MIN_SUPPORTED_SAFARI_MINOR = 4;
+export const TIMER_BOOT_TELEMETRY_PATH = '/v1/timer/boot-events';
 const APP_BOOT_GRACE_MS = 5_000;
+
+export type TimerBootTelemetryOutcome = 'attempt' | 'success' | 'failure';
+export type TimerBootTelemetryFailureKind =
+  | 'network'
+  | 'chunk'
+  | 'script'
+  | 'promise'
+  | 'timeout'
+  | 'runtime'
+  | 'unknown';
+
+export interface TimerBootTelemetryReporter {
+  bootId: string;
+  outcome: TimerBootTelemetryOutcome;
+  report: (outcome: TimerBootTelemetryOutcome, failureKind?: TimerBootTelemetryFailureKind) => void;
+}
+
+declare global {
+  interface Window {
+    __startTimerBootTelemetry?: () => TimerBootTelemetryReporter;
+    __timerBootTelemetry?: TimerBootTelemetryReporter;
+  }
+}
 
 export const APP_BOOT_COPY = {
   title: { zh: '页面未能启动', en: 'Page failed to start' },
@@ -117,6 +143,7 @@ export function isNonCriticalBootResourceUrl(url: string | undefined): boolean {
 }
 
 const EARLY_COPY_JSON = JSON.stringify({ app: APP_BOOT_COPY, timer: TIMER_BOOT_COPY });
+const TIMER_BOOT_TELEMETRY_URL_JSON = JSON.stringify(`${BROWSER_API_ORIGIN}${TIMER_BOOT_TELEMETRY_PATH}`);
 
 /**
  * Runs from the server HTML before React hydration. Keep this ES5-shaped: its
@@ -139,6 +166,53 @@ export const APP_BOOT_EARLY_SCRIPT = `(function () {
   function compact(value) {
     return String(value || '').replace(/\\s+/g, ' ').replace(/^\\s+|\\s+$/g, '').slice(0, ${MAX_DETAIL_LENGTH});
   }
+  function createBootId() {
+    var value = '';
+    for (var index = 0; index < 36; index += 1) {
+      if (index === 8 || index === 13 || index === 18 || index === 23) value += '-';
+      else if (index === 14) value += '4';
+      else if (index === 19) value += (8 + Math.floor(Math.random() * 4)).toString(16);
+      else value += Math.floor(Math.random() * 16).toString(16);
+    }
+    return value;
+  }
+  function startTimerBootTelemetry() {
+    var current = window.__timerBootTelemetry;
+    if (current && current.outcome === 'attempt') return current;
+    var bootId = createBootId();
+    var sent = {};
+    var reporter = {
+      bootId: bootId,
+      outcome: 'attempt',
+      report: function (outcome, failureKind) {
+        if (sent[outcome]) return;
+        sent[outcome] = true;
+        reporter.outcome = outcome;
+        var path = window.location.pathname.indexOf('/zh/timer') === 0 ? '/zh/timer' : '/timer';
+        var payload = JSON.stringify({
+          version: 1,
+          bootId: bootId,
+          outcome: outcome,
+          path: path,
+          failureKind: outcome === 'failure' ? (failureKind || 'unknown') : null
+        });
+        try {
+          if (navigator.sendBeacon && navigator.sendBeacon(${TIMER_BOOT_TELEMETRY_URL_JSON}, payload)) return;
+        } catch (_) {}
+        try {
+          var request = new XMLHttpRequest();
+          request.open('POST', ${TIMER_BOOT_TELEMETRY_URL_JSON}, true);
+          request.setRequestHeader('Content-Type', 'text/plain;charset=UTF-8');
+          request.send(payload);
+        } catch (_) {}
+      }
+    };
+    try { window.__timerBootTelemetry = reporter; } catch (_) {}
+    reporter.report('attempt');
+    return reporter;
+  }
+  try { window.__startTimerBootTelemetry = startTimerBootTelemetry; } catch (_) {}
+  if (isTimer) startTimerBootTelemetry();
   function safeUrl(value) {
     if (!value) return '';
     try {
@@ -324,6 +398,7 @@ export const APP_BOOT_EARLY_SCRIPT = `(function () {
     }
     try { window.sessionStorage.setItem(isTimer ? '${STORAGE_KEY}' : '${APP_STORAGE_KEY}', JSON.stringify(report)); } catch (_) {}
     if (window.console && console.error) console.error(isTimer ? '[timer-bootstrap]' : '[app-bootstrap]', report);
+    if (isTimer && window.__timerBootTelemetry) window.__timerBootTelemetry.report('failure', kind);
 
     var language = document.documentElement.lang.indexOf('zh') === 0 ? 'zh' : 'en';
     function label(key) { return copy[key][language]; }

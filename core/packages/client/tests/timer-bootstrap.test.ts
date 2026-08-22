@@ -11,6 +11,7 @@ import {
   APP_BOOT_COPY,
   APP_BOOT_EARLY_SCRIPT,
   TIMER_BOOT_COPY,
+  type TimerBootTelemetryReporter,
 } from '@/lib/app_boot_early';
 
 const WECHAT_CHROME_83_USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; wv) AppleWebKit/537.36 Chrome/83.0.4103.106 Mobile Safari/537.36 MicroMessenger/8.0.76';
@@ -26,12 +27,20 @@ describe('TimerBootstrap', () => {
   let host: HTMLDivElement;
   let root: Root;
   let consoleError: ReturnType<typeof vi.spyOn>;
+  let telemetryReport: TimerBootTelemetryReporter['report'];
 
   beforeEach(() => {
     (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     vi.useFakeTimers();
     consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     window.__timerBootDiagnostic = undefined;
+    telemetryReport = vi.fn<TimerBootTelemetryReporter['report']>();
+    window.__timerBootTelemetry = {
+      bootId: '11111111-1111-4111-8111-111111111111',
+      outcome: 'attempt',
+      report: telemetryReport,
+    };
+    window.__startTimerBootTelemetry = vi.fn(() => window.__timerBootTelemetry!);
     window.sessionStorage.clear();
     host = document.createElement('div');
     document.body.appendChild(host);
@@ -41,6 +50,8 @@ describe('TimerBootstrap', () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     host.remove();
+    window.__timerBootTelemetry = undefined;
+    window.__startTimerBootTelemetry = undefined;
     vi.useRealTimers();
     consoleError.mockRestore();
     vi.restoreAllMocks();
@@ -56,6 +67,8 @@ describe('TimerBootstrap', () => {
 
     expect(host.textContent).toContain('timer ready');
     expect(host.textContent).not.toContain('Loading timer');
+    expect(window.__startTimerBootTelemetry).toHaveBeenCalledTimes(1);
+    expect(telemetryReport).toHaveBeenCalledWith('success');
   });
 
   it('shows a diagnostic code and retries after a startup timeout', async () => {
@@ -74,6 +87,7 @@ describe('TimerBootstrap', () => {
     expect(alert).not.toBeNull();
     expect(alert?.querySelector('code')?.textContent).toMatch(/^TMR-TIMEOUT-/);
     expect(window.__timerBootDiagnostic?.kind).toBe('timeout');
+    expect(telemetryReport).toHaveBeenCalledWith('failure', 'timeout');
     expect(consoleError).toHaveBeenCalledWith('[timer-bootstrap]', expect.any(Object));
 
     const retryButton = Array.from(host.querySelectorAll('button'))
@@ -212,6 +226,8 @@ describe('buildTimerBootDiagnostic', () => {
 });
 
 describe('app bootstrap early guard', () => {
+  let sendBeacon: ReturnType<typeof vi.fn>;
+
   beforeEach(() => {
     vi.useFakeTimers();
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -220,6 +236,13 @@ describe('app bootstrap early guard', () => {
     window.__timerBootEarly = undefined;
     window.__appBootDiagnostic = undefined;
     window.__appBootEarly = undefined;
+    window.__timerBootTelemetry = undefined;
+    window.__startTimerBootTelemetry = undefined;
+    sendBeacon = vi.fn(() => true);
+    Object.defineProperty(window.navigator, 'sendBeacon', {
+      configurable: true,
+      value: sendBeacon,
+    });
   });
 
   afterEach(() => {
@@ -228,6 +251,9 @@ describe('app bootstrap early guard', () => {
     document.documentElement.removeAttribute('lang');
     document.querySelector('[data-timer-bootstrap]')?.remove();
     document.querySelector('[data-app-bootstrap]')?.remove();
+    window.__timerBootTelemetry = undefined;
+    window.__startTimerBootTelemetry = undefined;
+    Reflect.deleteProperty(window.navigator, 'sendBeacon');
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
@@ -245,6 +271,39 @@ describe('app bootstrap early guard', () => {
     expect(shell.querySelector('code')?.textContent).toMatch(/^TMR-TIMEOUT-/);
     expect(shell.querySelectorAll('button')).toHaveLength(2);
     expect(window.__timerBootDiagnostic?.kind).toBe('timeout');
+  });
+
+  it('reports one anonymous attempt and advances the same opening to failure', () => {
+    const shell = document.createElement('main');
+    shell.setAttribute('data-timer-bootstrap', 'loading');
+    document.body.appendChild(shell);
+
+    window.eval(APP_BOOT_EARLY_SCRIPT);
+    const attempt = JSON.parse(String(sendBeacon.mock.calls[0]?.[1])) as Record<string, unknown>;
+    expect(sendBeacon.mock.calls[0]?.[0]).toMatch(/\/v1\/timer\/boot-events$/);
+    expect(attempt).toMatchObject({
+      version: 1,
+      outcome: 'attempt',
+      path: '/timer',
+      failureKind: null,
+    });
+    expect(attempt.bootId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(Object.keys(attempt).sort()).toEqual(['bootId', 'failureKind', 'outcome', 'path', 'version']);
+
+    window.dispatchEvent(new ErrorEvent('error', {
+      error: new SyntaxError("Unexpected token '='"),
+      message: "Uncaught SyntaxError: Unexpected token '='",
+      filename: 'https://cuberoot.me/_next/static/chunks/timer.js',
+    }));
+    vi.advanceTimersByTime(0);
+
+    const failure = JSON.parse(String(sendBeacon.mock.calls[1]?.[1])) as Record<string, unknown>;
+    expect(failure).toMatchObject({
+      bootId: attempt.bootId,
+      outcome: 'failure',
+      failureKind: 'chunk',
+    });
+    expect(sendBeacon).toHaveBeenCalledTimes(2);
   });
 
   it('shows the outdated WeChat guidance before React hydrates', () => {

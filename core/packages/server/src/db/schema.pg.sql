@@ -248,7 +248,32 @@ CREATE TABLE timer_backups (
   updated_at  BIGINT      NOT NULL
 );
 
--- ── 10c. wca_scrambles (migration 0035_wca_scrambles.sql) ──
+-- ── 10c. timer_boot_events (migration 0166_timer_boot_events.sql) ──
+-- Anonymous one-row-per-opening timer startup outcomes. The server stores only
+-- coarse runtime buckets; raw UA, IP, error text, and account identity are absent.
+CREATE TABLE timer_boot_events (
+  boot_id UUID PRIMARY KEY,
+  path VARCHAR(16) NOT NULL CHECK (path IN ('/timer', '/zh/timer')),
+  outcome VARCHAR(12) NOT NULL CHECK (outcome IN ('attempt', 'success', 'failure')),
+  failure_kind VARCHAR(16) CHECK (failure_kind IN (
+    'network', 'chunk', 'script', 'promise', 'timeout', 'runtime', 'unknown'
+  )),
+  engine_family VARCHAR(16) NOT NULL CHECK (engine_family IN ('chromium', 'webkit', 'gecko', 'other')),
+  engine_major SMALLINT CHECK (engine_major BETWEEN 1 AND 999),
+  os_family VARCHAR(16) NOT NULL CHECK (os_family IN ('android', 'ios', 'windows', 'macos', 'linux', 'other')),
+  os_major SMALLINT CHECK (os_major BETWEEN 1 AND 999),
+  container VARCHAR(16) NOT NULL CHECK (container IN ('wechat', 'webview', 'browser')),
+  support_status VARCHAR(20) NOT NULL CHECK (support_status IN ('supported', 'below-baseline', 'unknown')),
+  attempted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT timer_boot_events_failure_shape CHECK (
+    (outcome = 'failure' AND failure_kind IS NOT NULL)
+    OR (outcome <> 'failure' AND failure_kind IS NULL)
+  )
+);
+CREATE INDEX idx_timer_boot_events_attempted_at ON timer_boot_events(attempted_at);
+
+-- ── 10d. wca_scrambles (migration 0035_wca_scrambles.sql) ──
 -- 全量 WCA 比赛打乱镜像(源 WCA dump scrambles 表,~305 万行)。扁平行 = 前端 WcaScrambleRow[]。
 -- 首灌走 mysql -B 导出 → scp → \copy;CI 日更增量。数据不入 migration。
 CREATE TABLE wca_scrambles (
@@ -268,7 +293,7 @@ CREATE INDEX idx_wca_scr_event_id  ON wca_scrambles(event_id, id);
 -- (event_id, rnd, id):/random 全时段飞镖采样,WHERE event_id=? AND rnd>=<随机> ORDER BY rnd,id 纯索引扫描(migration 0037)。
 CREATE INDEX idx_wca_scr_event_rnd ON wca_scrambles(event_id, rnd, id);
 
--- ── 10d. scramble_marks (migration 0041_scramble_marks.sql) ──
+-- ── 10e. scramble_marks (migration 0041_scramble_marks.sql) ──
 -- 公开「打卡」:登录用户标记做过的 WCA 真实打乱(/timer)。打乱用六元自然键标识
 -- (wca_scrambles 的 id 会随重灌漂移;comp 模式新比赛走 cache 表,镜像里可能没有,故无 FK)。
 -- name/country 写入时冗余快照(wca_users 无 country,country 客户端报,纯装饰)。
