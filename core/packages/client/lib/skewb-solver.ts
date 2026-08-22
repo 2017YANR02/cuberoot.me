@@ -562,6 +562,66 @@ export function solveSkewbFacelet(facelet: string): SkewbSolution {
   return { length: moves.length, solution: moves.map((m) => SKEWB_MOVE_NAMES[m]).join(' '), moves };
 }
 
+/** 一段斜转打乱的整解最优 HTM；120° 转计 1 步。 */
+export function skewbDistanceOfScramble(scramble: string): number {
+  return solveSkewbFacelet(skewbFaceletFromMoves(scramble)).length;
+}
+
+let cachedFullHistogram: readonly number[] | null = null;
+
+function fullHistogram(g: SkewbGraph): readonly number[] {
+  if (cachedFullHistogram) return cachedFullHistogram;
+  const histogram = new Array<number>(SKEWB_GODS_NUMBER + 1).fill(0);
+  for (const distance of g.dist) {
+    if (distance <= SKEWB_GODS_NUMBER) histogram[distance]++;
+  }
+  cachedFullHistogram = histogram;
+  return histogram;
+}
+
+function scrambleFromGraphIndex(g: SkewbGraph, index: number): string {
+  const scramble = descend(g, index).reverse().map((move) => SKEWB_MOVE_NAMES[MOVE_INVERSE[move]]).join(' ');
+  // Timer 以空字符串表示「还在生成」；0 步状态需用非空恒等序列，避免合法结果被当成占位符。
+  return scramble || "R R'";
+}
+
+/**
+ * 从完整 3,149,280 状态空间中均匀抽取整解最优 HTM 落在 [lo, hi] 的状态，并返回其最优打乱。
+ * 先按精确直方图选中允许集合中的序号，再扫距离表定位状态；因此 0/1/11 步等稀有档也必定命中，
+ * 不需要有次数上限且可能越界的拒绝采样。
+ */
+export function generateSkewbByDistance(
+  lo: number,
+  hi: number,
+  rng: () => number,
+): string {
+  if (!Number.isInteger(lo) || !Number.isInteger(hi)) {
+    throw new Error('skewb-solver: 难度边界必须是整数');
+  }
+  if (lo < 0 || hi > SKEWB_GODS_NUMBER || lo > hi) {
+    throw new Error(`skewb-solver: 难度范围必须在 0..${SKEWB_GODS_NUMBER} 内且下限不大于上限`);
+  }
+  const sample = rng();
+  if (!Number.isFinite(sample) || sample < 0 || sample >= 1) {
+    throw new Error('skewb-solver: 随机数必须落在 [0,1)');
+  }
+
+  const g = skewbGraph();
+  const histogram = fullHistogram(g);
+  let eligible = 0;
+  for (let distance = lo; distance <= hi; distance++) eligible += histogram[distance];
+  if (eligible === 0) throw new Error('skewb-solver: 所选难度范围没有合法状态');
+
+  let rank = Math.floor(sample * eligible);
+  for (let index = 0; index < g.total; index++) {
+    const distance = g.dist[index];
+    if (distance < lo || distance > hi) continue;
+    if (rank === 0) return scrambleFromGraphIndex(g, index);
+    rank--;
+  }
+  throw new Error('skewb-solver: 难度状态抽样越界');
+}
+
 /** 所画状态到所选底色中任意完整底层的最优解。 */
 export function solveSkewbFirstLayerFacelet(
   facelet: string,
@@ -643,13 +703,7 @@ export function randomLegalSkewbFacelet(): string {
  */
 export function skewbGraphStats(): { total: number; histogram: number[]; corners: number; centers: number } {
   const g = skewbGraph();
-  const histogram: number[] = [];
-  for (let i = 0; i < g.total; i++) {
-    const d = g.dist[i];
-    if (d === 255) continue;      // 乘积全可达时不会发生;不可达档由测试断言为 0
-    histogram[d] = (histogram[d] ?? 0) + 1;
-  }
-  for (let i = 0; i < histogram.length; i++) histogram[i] ??= 0;
+  const histogram = [...fullHistogram(g)];
   return { total: g.total, histogram, corners: g.corner.n, centers: g.center.n };
 }
 

@@ -78,7 +78,7 @@ export interface WcaSourceSpec {
   // merged = 跨 3x3 族取题(/random 传 family=1;by-difficulty 省略 event —— 两端都是「合并池」口径,
   // 与 /scramble/stats 难度 tab 一致)。关掉则只在当前项目里找。
   diff?: { variant: string; stage: string; colors: string; steps: number[]; merged: boolean };
-  // 「按步数」过滤(2×2 / 金字塔):客户端算每条真题的度量步数,只留 [lo,hi] 内的。
+  // 「按步数」过滤(2×2 / 金字塔 / 斜转):客户端算每条真题的度量步数,只留 [lo,hi] 内的。
   // date + comp 两种模式都生效(真题分布近上帝数,低步数可能全被过滤 → knownEmpty → UI 提示)。
   stepFilter?: { metric: string; lo: number; hi: number };
 }
@@ -115,7 +115,7 @@ const MAX_FILTER_BATCHES = 30;
 // 「按步数」预计算真题桶:stats/scramble/puzzle_examples.json 的 metrics.<度量>.bins 存了每个步数值的
 // 真实比赛打乱(稀有值全量,≤300)。稀有区间(如 2×2 底层=0)live 采样难命中,直接播种这些预计算真题
 // → 即时+可靠;常见区间再用 live 补充变化。timer event → puzzle_examples.json 的 puzzle key。
-const EXAMPLES_KEY: Record<string, string> = { '222': '222', pyra: 'pyraminx' };
+const EXAMPLES_KEY: Record<string, string> = { '222': '222', pyra: 'pyraminx', skewb: 'skewb' };
 let examplesCache: PuzzleExamplesJson | null = null;
 let examplesPromise: Promise<PuzzleExamplesJson | null> | null = null;
 function loadExamples(): Promise<PuzzleExamplesJson | null> {
@@ -269,7 +269,7 @@ function rememberMeta(s: string, m: WcaScrambleMeta): void {
   }
 }
 
-/** 「按步数」过滤:该条真题的度量步数是否落在 [lo,hi] 内。无 stepFilter 或无法度量(非 2×2/金字塔、
+/** 「按步数」过滤:该条真题的度量步数是否落在 [lo,hi] 内。无 stepFilter 或无法度量(非 2×2/金字塔/斜转、
  *  记号超出 gauge)时放行(不误杀)。 */
 function stepPass(spec: WcaSourceSpec, scramble: string): boolean {
   if (!spec.stepFilter) return true;
@@ -412,7 +412,7 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
   persist();
 }
 
-/** 「按步数」:从 puzzle_examples.json 的 metrics.<度量>.bins 收集 [lo,hi] 内真题,登记来源元数据,
+/** 「按步数」:从 puzzle_examples.json 的 metrics.<度量>.bins(多口径)或 bins(单口径)收集 [lo,hi] 内真题,登记来源元数据,
  *  存进 precomputedFor[key]。返回收集到的条数(0 = 该度量/区间无预计算,回退 live 采样)。 */
 async function seedPrecomputed(spec: WcaSourceSpec, key: string): Promise<number> {
   const sf = spec.stepFilter;
@@ -421,7 +421,7 @@ async function seedPrecomputed(spec: WcaSourceSpec, key: string): Promise<number
   if (!exKey) return 0;
   const j = await loadExamples();
   const entry = j?.puzzles?.[exKey];
-  const bins = entry?.metrics?.[sf.metric]?.bins;
+  const bins = entry?.metrics?.[sf.metric]?.bins ?? (sf.metric === 'htm' ? entry?.bins : undefined);
   if (!entry || !bins) return 0;
   // 最优模式与 live 语义一致:只端有最优等态的示例(最优打乱同态,度量值不变),不静默回退原打乱。
   const useOptimal = wantOptimal(spec, wev(spec)!);
