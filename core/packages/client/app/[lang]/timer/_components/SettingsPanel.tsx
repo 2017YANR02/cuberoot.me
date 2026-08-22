@@ -30,7 +30,7 @@ import { isVoiceAvailable } from '../_lib/sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../_lib/scramble';
 import {
   appendSolves, exportJson, exportSpeedstacks, importJson, inspectImportJson, listBackups,
-  loadAll, pushBackup, replaceSolves, restoreBackup,
+  importNamedSessions, loadAll, pushBackup, replaceSolves, restoreBackup,
   type BackupEntry,
 } from '../_lib/storage/db';
 import { parseCstimerExport, type CstimerSessionParsed } from '../_lib/storage/import_cstimer';
@@ -309,6 +309,12 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
   // Per-session "imported" flag so the UI dims/disables the buttons after action.
   const [cstimerImported, setCstimerImported] = useState<Record<string, 'append' | 'replace'>>({});
   const [cstimerTargets, setCstimerTargets] = useState<Record<string, EventId>>({});
+  const [cstimerBulkImported, setCstimerBulkImported] = useState(false);
+
+  const cstimerSolveCount = cstimerSessions?.reduce((sum, session) => sum + session.solves.length, 0) ?? 0;
+  const cstimerUnresolvedCount = cstimerSessions?.filter(
+    session => session.solves.length > 0 && !session.matched && !cstimerTargets[session.sessionId],
+  ).length ?? 0;
 
   // ── Import / export status ──
   const [ioMsg, setIoMsg] = useState<string | null>(null);
@@ -529,6 +535,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
         setCstimerSessions(null);
         setCstimerImported({});
         setCstimerTargets({});
+        setCstimerBulkImported(false);
         onDataReplaced?.();
         flashIoMsg(tr({ zh: 'CubeRoot 备份已导入', en: 'CubeRoot backup imported' }));
         return;
@@ -542,6 +549,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
       setCstimerSessions(sessions);
       setCstimerImported({});
       setCstimerTargets({});
+      setCstimerBulkImported(false);
     };
     reader.onerror = () => {
       alert(tr({ zh: '读取文件失败。', en: 'Failed to read file.'
@@ -569,6 +577,38 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
     setCstimerImported(prev => ({ ...prev, [sess.sessionId]: mode }));
     onDataReplaced?.();
     flashIoMsg(tr({ zh: `已导入 ${sess.solves.length} 条成绩`, en: `Imported ${sess.solves.length} solves` }));
+  }
+
+  function importAllCstimerSessions(): void {
+    if (!cstimerSessions || cstimerSessions.length === 0) return;
+    if (cstimerUnresolvedCount > 0) {
+      alert(tr({
+        zh: `请先为 ${cstimerUnresolvedCount} 个未识别的分组选择项目。`,
+        en: `Choose an event for ${cstimerUnresolvedCount} unrecognized groups first.`,
+      }));
+      return;
+    }
+    if (!confirm(tr({
+      zh: `将按原顺序新增 ${cstimerSessions.length} 个会话并导入 ${cstimerSolveCount} 条成绩，现有数据不会被覆盖。是否继续？`,
+      en: `Create ${cstimerSessions.length} new sessions in the original order and import ${cstimerSolveCount} solves? Existing data will not be replaced.`,
+    }))) return;
+
+    const result = importNamedSessions(cstimerSessions.map(session => ({
+      name: session.name,
+      event: cstimerTargets[session.sessionId] ?? (session.matched ? session.event : undefined),
+      solves: session.solves,
+    })));
+    if (!result) {
+      alert(tr({ zh: '整体导入失败，请检查存储空间后重试。', en: 'Bulk import failed. Check storage space and try again.' }));
+      return;
+    }
+
+    setCstimerBulkImported(true);
+    onDataReplaced?.();
+    flashIoMsg(tr({
+      zh: `已新建 ${result.sessionCount} 个会话并导入 ${result.solveCount} 条成绩`,
+      en: `Created ${result.sessionCount} sessions and imported ${result.solveCount} solves`,
+    }));
   }
 
   async function showBackupPicker(): Promise<void> {
@@ -1324,62 +1364,84 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             <Row label=""><span className="hint" role="status" aria-live="polite">{ioMsg}</span></Row>
           )}
           {cstimerSessions && cstimerSessions.length > 0 && (
-            <div className="cstimer-import-list">
-              {cstimerSessions.map(sess => {
-                const ev = eventInfo(sess.event);
-                const evLabel = tr({ zh: ev.nameZh, en: ev.nameEn });
-                const done = cstimerImported[sess.sessionId];
-                const selectedTarget = cstimerTargets[sess.sessionId];
-                const disabled = sess.solves.length === 0 || (!sess.matched && !selectedTarget);
-                const importSession = selectedTarget ? { ...sess, event: selectedTarget } : sess;
-                return (
-                  <div key={sess.sessionId} className="cstimer-import-row">
-                    <div className="cstimer-import-info">
-                      <span className="cstimer-import-name">{sess.name}</span>
-                      {sess.matched ? (
-                        <span className="hint">{tr({ zh: `${sess.solves.length} 条 → ${evLabel}`, en: `${sess.solves.length} solves → ${evLabel}` })}</span>
-                      ) : (
-                        <label className="cstimer-target-picker">
-                          <span>{tr({ zh: `${sess.solves.length} 条，选择项目`, en: `${sess.solves.length} solves, choose event` })}</span>
-                          <select
-                            className="cstimer-target-select"
-                            value={selectedTarget ?? ''}
-                            onChange={(event) => setCstimerTargets((current) => ({ ...current, [sess.sessionId]: event.target.value as EventId }))}
-                          >
-                            <option value="" disabled>{tr({ zh: '选择项目', en: 'Choose event' })}</option>
-                            {EVENTS.map((item) => (
-                              <option key={item.id} value={item.id}>{tr({ zh: item.nameZh, en: item.nameEn })}</option>
-                            ))}
-                          </select>
-                        </label>
-                      )}
+            <>
+              <Row label="">
+                <button
+                  className="hint-btn"
+                  disabled={cstimerBulkImported || cstimerUnresolvedCount > 0}
+                  onClick={importAllCstimerSessions}
+                  title={cstimerUnresolvedCount > 0
+                    ? tr({ zh: `还有 ${cstimerUnresolvedCount} 个分组需要选择项目`, en: `${cstimerUnresolvedCount} groups still need an event` })
+                    : tr({ zh: '保留全部分组名和顺序，分别建立新会话', en: 'Keep every group name and order as separate new sessions' })}
+                >
+                  {cstimerBulkImported
+                    ? tr({ zh: '已整体导入', en: 'Imported all' })
+                    : tr({ zh: '全部导入为新会话', en: 'Import all as new sessions' })}
+                </button>
+                <span className="hint">{tr({
+                  zh: `${cstimerSessions.length} 个分组，${cstimerSolveCount} 条成绩，不覆盖现有数据`,
+                  en: `${cstimerSessions.length} groups, ${cstimerSolveCount} solves; existing data stays unchanged`,
+                })}</span>
+              </Row>
+              <div className="cstimer-import-list">
+                {cstimerSessions.map(sess => {
+                  const ev = eventInfo(sess.event);
+                  const evLabel = tr({ zh: ev.nameZh, en: ev.nameEn });
+                  const done = cstimerImported[sess.sessionId];
+                  const selectedTarget = cstimerTargets[sess.sessionId];
+                  const disabled = cstimerBulkImported || sess.solves.length === 0 || (!sess.matched && !selectedTarget);
+                  const importSession = selectedTarget ? { ...sess, event: selectedTarget } : sess;
+                  return (
+                    <div key={sess.sessionId} className="cstimer-import-row">
+                      <div className="cstimer-import-info">
+                        <span className="cstimer-import-name">{sess.name}</span>
+                        {sess.matched ? (
+                          <span className="hint">{tr({ zh: `${sess.solves.length} 条 → ${evLabel}`, en: `${sess.solves.length} solves → ${evLabel}` })}</span>
+                        ) : sess.solves.length === 0 ? (
+                          <span className="hint">{tr({ zh: '空分组', en: 'Empty group' })}</span>
+                        ) : (
+                          <label className="cstimer-target-picker">
+                            <span>{tr({ zh: `${sess.solves.length} 条，选择项目`, en: `${sess.solves.length} solves, choose event` })}</span>
+                            <select
+                              className="cstimer-target-select"
+                              value={selectedTarget ?? ''}
+                              onChange={(event) => setCstimerTargets((current) => ({ ...current, [sess.sessionId]: event.target.value as EventId }))}
+                            >
+                              <option value="" disabled>{tr({ zh: '选择项目', en: 'Choose event' })}</option>
+                              {EVENTS.map((item) => (
+                                <option key={item.id} value={item.id}>{tr({ zh: item.nameZh, en: item.nameEn })}</option>
+                              ))}
+                            </select>
+                          </label>
+                        )}
+                      </div>
+                      <div className="cstimer-import-actions">
+                        <button
+                          className="hint-btn"
+                          disabled={disabled || done === 'append'}
+                          onClick={() => importCstimerSession(importSession, 'append')}
+                          title={tr({ zh: '追加到现有成绩', en: 'Append to existing solves'
+                          })}
+                        >
+                          {done === 'append' ? tr({ zh: '已追加', en: 'Appended' }) : tr({ zh: '追加', en: 'Append' })}
+                        </button>
+                        <button
+                          className="hint-btn"
+                          disabled={disabled || done === 'replace'}
+                          onClick={() => importCstimerSession(importSession, 'replace')}
+                          title={tr({ zh: '清空该项目并以此覆盖', en: 'Clear this event and replace'
+                          })}
+                        >
+                          {done === 'replace' ? tr({ zh: '已替换', en: 'Replaced'
+                                                          }) : tr({ zh: '替换', en: 'Replace'
+                                                              })}
+                        </button>
+                      </div>
                     </div>
-                    <div className="cstimer-import-actions">
-                      <button
-                        className="hint-btn"
-                        disabled={disabled || done === 'append'}
-                        onClick={() => importCstimerSession(importSession, 'append')}
-                        title={tr({ zh: '追加到现有成绩', en: 'Append to existing solves'
-                        })}
-                      >
-                        {done === 'append' ? tr({ zh: '已追加', en: 'Appended' }) : tr({ zh: '追加', en: 'Append' })}
-                      </button>
-                      <button
-                        className="hint-btn"
-                        disabled={disabled || done === 'replace'}
-                        onClick={() => importCstimerSession(importSession, 'replace')}
-                        title={tr({ zh: '清空该项目并以此覆盖', en: 'Clear this event and replace'
-                        })}
-                      >
-                        {done === 'replace' ? tr({ zh: '已替换', en: 'Replaced'
-                                                        }) : tr({ zh: '替换', en: 'Replace'
-                                                            })}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            </>
           )}
           <Row label={tr({ zh: '重算分阶段数据', en: 'Reanalyze stage data'
         })}>

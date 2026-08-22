@@ -92,9 +92,9 @@ function loadRaw(): DbShapeV3 {
   }
 }
 
-function saveRaw(db: DbShapeV3): void {
+function saveRaw(db: DbShapeV3): boolean {
   // 活库写入:配额满时 persistItem 会先驱逐可再生缓存再重试,尽量保住真实数据。
-  persistItem(KEY, JSON.stringify(db));
+  return persistItem(KEY, JSON.stringify(db));
 }
 
 /** Read the active session's byEvent map (always an object). */
@@ -244,6 +244,63 @@ export function createSession(name: string, event?: EventId): string {
   db.dataBySession[id] = {};
   saveRaw(db);
   return id;
+}
+
+export interface NamedSessionImport {
+  name: string;
+  /** Empty, unmapped source sessions may omit an event association. */
+  event?: EventId;
+  solves: Solve[];
+}
+
+export interface NamedSessionImportResult {
+  sessionCount: number;
+  solveCount: number;
+}
+
+/**
+ * Add multiple named sessions in source order with one localStorage write.
+ * Existing sessions and the active-session selection are left untouched.
+ * A populated source session without an event is rejected before any write.
+ */
+export function importNamedSessions(
+  sources: readonly NamedSessionImport[],
+): NamedSessionImportResult | null {
+  if (sources.length === 0 || sources.some(source => source.solves.length > 0 && !source.event)) {
+    return null;
+  }
+
+  const db = loadRaw();
+  const usedIds = new Set(db.sessions.map(session => session.id));
+  const createdTs = Date.now();
+  let solveCount = 0;
+
+  for (const source of sources) {
+    let id = genSessionId();
+    while (usedIds.has(id)) id = genSessionId();
+    usedIds.add(id);
+
+    const name = source.name.trim().length > 0 ? source.name : defaultSessionName();
+    db.sessions.push({
+      id,
+      name,
+      createdTs,
+      ...(source.event ? { event: source.event } : {}),
+    });
+
+    if (source.event && source.solves.length > 0) {
+      const normalized = source.solves
+        .map(solve => solve.event === source.event ? solve : { ...solve, event: source.event })
+        .sort((a, b) => a.ts - b.ts);
+      db.dataBySession[id] = { [source.event]: normalized };
+      solveCount += normalized.length;
+    } else {
+      db.dataBySession[id] = {};
+    }
+  }
+
+  if (!saveRaw(db)) return null;
+  return { sessionCount: sources.length, solveCount };
 }
 
 export function renameSession(id: string, name: string): void {
@@ -440,8 +497,7 @@ export function inspectImportJson(json: string): NativeImportPreview | null {
 export function importJson(json: string): boolean {
   const db = parseImportedDb(json);
   if (!db) return false;
-  saveRaw(db);
-  return true;
+  return saveRaw(db);
 }
 
 /**
@@ -451,7 +507,9 @@ export function importJson(json: string): boolean {
 export function replaceSolves(eventId: EventId, solves: Solve[]): void {
   const db = loadRaw();
   const be = activeByEvent(db);
-  be[eventId] = solves.slice().sort((a, b) => a.ts - b.ts);
+  be[eventId] = solves
+    .map(solve => solve.event === eventId ? solve : { ...solve, event: eventId })
+    .sort((a, b) => a.ts - b.ts);
   db.dataBySession[db.activeSessionId] = be;
   const active = db.sessions.find(s => s.id === db.activeSessionId);
   if (active) active.event = eventId;
@@ -466,7 +524,8 @@ export function appendSolves(eventId: EventId, solves: Solve[]): void {
   const db = loadRaw();
   const be = activeByEvent(db);
   const existing = be[eventId] ?? [];
-  be[eventId] = [...existing, ...solves].sort((a, b) => a.ts - b.ts);
+  const normalized = solves.map(solve => solve.event === eventId ? solve : { ...solve, event: eventId });
+  be[eventId] = [...existing, ...normalized].sort((a, b) => a.ts - b.ts);
   db.dataBySession[db.activeSessionId] = be;
   const active = db.sessions.find(s => s.id === db.activeSessionId);
   if (active) active.event = eventId;
