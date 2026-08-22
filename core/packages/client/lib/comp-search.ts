@@ -1,6 +1,6 @@
 // Ported from packages/client-vite/src/utils/comp_search.ts.
 import { compNameZh, countryToIso2, loadFlagData } from './country-flags';
-import { localizeCity } from './city-localize';
+import { localizeCity, resolveCnProvince } from './city-localize';
 import { statsUrl } from './stats-base';
 
 export interface Comp {
@@ -162,6 +162,9 @@ export function searchComps(query: string, comps: Comp[], limit = 20): Comp[] {
     const nameZh = compNameZh(c.name);
     const city = (c.city || '').toLowerCase();
     const cityZh = c.city ? localizeCity(c.city, true, c.country) : '';
+    const province = c.country.toUpperCase() === 'CN' && c.city
+      ? resolveCnProvince(c.city)
+      : null;
     let s = 0;
     if (id === q) s = 1000;
     else if (id.startsWith(q)) s = Math.max(s, 900);
@@ -169,7 +172,8 @@ export function searchComps(query: string, comps: Comp[], limit = 20): Comp[] {
     else if (id.includes(q)) s = Math.max(s, 700);
     else if (
       compNameMatches(name, raw) || nameZh.includes(raw) ||
-      city.includes(q) || (cityZh && cityZh.includes(raw))
+      city.includes(q) || (cityZh && cityZh.includes(raw)) ||
+      province?.en.toLowerCase().includes(q) || province?.zh.includes(raw)
     ) {
       s = 500;
     }
