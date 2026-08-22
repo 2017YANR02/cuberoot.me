@@ -2,7 +2,7 @@
 
 最后更新：2026-08-22
 
-状态：`P0-P7 已完成；P8 发布验收进行中，旧资产 30 天观察窗口尚未启动`
+状态：`P0-P7 与 P8 发布验收已完成；旧资产 30 天观察窗口已于 2026-08-22 启动，删除决策未到期`
 
 ## 0. 当前结论
 
@@ -266,20 +266,22 @@ Platform 不进入已经 11,486 行的 `teaching_saas.ts`。后端按业务切�
 - [x] Chrome 精确矩阵：1280px 中文 Platform 首页；390px 中文首页与账户会员权限态；430px 中文主站入口与课程深链。三档均无横向溢出，console 无 JS error；英文视觉未单独实测，双语 metadata 由自动测试覆盖。
 - [x] independent product/data/code agent review；首轮终审结论在补充审计后被重新打开，canonical link-only、账号注销完整性与 CI 缺口均已修复并完成本地回归，最终三路复审均为 PASS，Blocker/Major/Minor 均为 0。
 
-真实登录角色、支付沙箱与生产 API 的浏览器 smoke 属于 P8 发布验收，不用 mock 或未上线 API 冒充完成。
+真实登录角色、支付状态机与生产 API 的发布验证属于 P8；生产目录为空时不得为了 smoke 导入 seed/demo 或制造真实订单，交易边界由 PostgreSQL/服务端状态机回归验证，线上只验证真实可用的公开与鉴权边界。
 
 退出条件：三路 reviewer 结论均为 PASS，或每条 finding 都有修复与复验记录。
 
-### P8 发布、观察与旧仓决策 — `发布验收进行中`
+### P8 发布、观察与旧仓决策 — `发布验收已完成，观察中`
 
-- [ ] commit 只包含本任务文件；push 仅在用户明确要求时执行。
-- [ ] 所有相关 Test/Deploy workflow `completed/success`。
-- [ ] 线上 `/platform` 关键路径/API/支付沙箱/权限 smoke；`platform.cuberoot.me` 仍为 410。
-- [x] PostgreSQL 账号注销实库夹具已进入 Test workflow，固定 57 个直接外键、48 张表、12 张不可变证据表、旧 outbox 去标识与伪造上下文拒绝行为；本地 PostgreSQL 13 已从 0167 全新建库并通过，发布 CI 再复验。
-- [ ] 全量上线后重新启动至少 30 天观察窗口；期间无旧写入、回调或唯一资产依赖。
+- [x] Platform 发布提交只包含本任务文件；用户明确要求后已 push，最终代码提交为 `73bea4e8e4`，上游比赛数据配套收尾为 `ab54b397ac`。
+- [x] 最终提交的 Test `32600584942`、Deploy Next `32600584945`、Deploy Core `32600584944` 均为 `completed/success`。
+- [x] 线上 `/platform` 及 timer、algorithms、teachers、courses、org、admin/community 代表路径均为 200；公开页 canonical/alternate、私有页 `noindex, nofollow`、公开 API 200、未登录私有 API 401 均符合契约；`platform.cuberoot.me` 的 HTTP 与 HTTPS 均直接返回 410。
+- [x] 生产 courses 与 membership plans 均为空，符合不导入 seed/demo 的决策；因此未伪造可交易标的或制造生产订单，支付/退款/幂等/权限状态机由最终 Test workflow 的真实 PostgreSQL 与服务端回归放行。
+- [x] PostgreSQL 账号注销实库夹具已进入 Test workflow，固定 57 个直接外键、48 张表、12 张不可变证据表、旧 outbox 去标识与伪造上下文拒绝行为；本地与发布 CI 的 PostgreSQL 13 fresh snapshot、0167→0168 升级路径均已通过。
+- [x] 全量上线后已于 2026-08-22 启动至少 30 天观察窗口。
+- [ ] 观察至少持续至 2026-09-21，并确认期间无旧写入、回调或唯一资产依赖。
 - [ ] 观察结束后给出旧本地目录、GitHub 仓库、SQLite 与媒体的删除清单，由用户明确批准。
 
-退出条件：用户明确批准删除前只读保留；删除走可恢复流程并记录证据。
+发布退出条件已满足；旧资产删除退出条件尚未满足。用户明确批准删除前只读保留；删除走可恢复流程并记录证据。
 
 ## 8. 测试矩阵
 
@@ -313,8 +315,9 @@ Platform 不进入已经 11,486 行的 `teaching_saas.ts`。后端按业务切�
 | 2026-08-22 | 产品 surface agent 最终复审 | PASS：Blocker/Major/Minor 0 | 42/42 capability、95/13/34/4 surface 守恒；49/49 定向测试；公开 canonical、私有 noindex、主页入口、旧域 410、timer 排除与文档状态通过 |
 | 2026-08-22 | 数据/交易 agent 最终复审 | PASS：Blocker/Major/Minor 0 | PostgreSQL 13 fresh snapshot 与 0167→0168 升级路径通过；48 表、57 FK、12/12 不可变证据及 4 个无原始 userId outbox payload 通过 |
 | 2026-08-22 | 代码/安全 agent 最终复审 | PASS：Blocker/Major/Minor 0 | 最终 schema 与升级库 1,635 项语义差异为 0；CI 的 PG 快照启用 `-X -v ON_ERROR_STOP=1`，阻止 SQL 中途错误假绿；3 files/26 tests、typecheck、diff-check 通过 |
+| 2026-08-22 | Root 最终发布验收 | PASS：发布完成，观察窗口启动 | `ab54b397ac` 的 Test `32600584942`、Deploy Next `32600584945`、Deploy Core `32600584944` 全绿；线上代表路由/SEO/API/鉴权通过，旧子域 HTTP/HTTPS 均为 410；空生产目录与不导入 seed/demo 决策一致 |
 
-浏览器证据明细：初次 1280/430/390 矩阵验证 `/zh/platform`、首页卡片、会员权限态与课程深链，无横向溢出或应用 JS error。补充修复后，本地 SSR 对 `/zh/platform`、`timer`、`algorithms`、`org`、`admin/community`、`teachers` 六条代表性深链均返回 200；1280px 首页与完整 timer、390px 首页与会员权限态无横向溢出。浏览器发现 rewrite 页缺 canonical 后已修复，HTTP Link 对 `/zh/platform/timer` 指向 `/zh/timer`，共享讲师页的 alternate 指向 `/teachers`；最终真实登录角色、支付边界、上线 API 与旧域名状态在 P8 复验。
+浏览器证据明细：初次 1280/430/390 矩阵验证 `/zh/platform`、首页卡片、会员权限态与课程深链，无横向溢出或应用 JS error。补充修复后，本地 SSR 对 `/zh/platform`、`timer`、`algorithms`、`org`、`admin/community`、`teachers` 六条代表性深链均返回 200；1280px 首页与完整 timer、390px 首页与会员权限态无横向溢出。浏览器发现 rewrite 页缺 canonical 后已修复。最终线上复验确认 timer/algorithms 的 HTTP canonical 指向主站实现，teachers 的 HTML canonical 指向 `/teachers`，私有/管理入口 noindex，生产空目录与不导入 seed/demo 决策一致，旧域名 HTTP/HTTPS 均为 410。
 
 后续每个阶段结束必须增加：提交、验证命令、浏览器证据、reviewer、finding、修复和复验结果。不得用口头“看起来完整”替代账本。
 
