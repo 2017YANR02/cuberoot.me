@@ -1,8 +1,8 @@
 # Cube Platform 迁移跟踪
 
-最后更新:2026-08-21
+最后更新:2026-08-22
 
-状态:仓库所有者确认 Platform 迁移已经全部完成。本文保留导入证据、历史边界和当时的验收记录；正文中的未勾选项不得再被解释为当前产品迁移未完成，遗留 workflow、服务、SQLite、uploads 或旧仓清理由单独的退役盘点处理。
+状态:Platform 迁移已经全部完成,独立前端已退役。本文保留导入证据和历史边界;旧源码、SQLite 与 uploads 继续作为离线档案保留。
 
 ## 目标
 
@@ -31,8 +31,8 @@
 旧仓共有 398 个 tracked 文件、12,211,330 bytes。两轮只读盘点将它们完整分类,未发现未分类文件或 tracked symlink。
 
 - 应用主体和包级配置迁入 `core/packages/platform`。
-- workflow 归位到 `/.github/workflows/deploy_platform.yml`。
-- systemd unit 归位到 `/ops/systemd/platform-next.service`。
+- 迁入时 workflow 曾归位到 `/.github/workflows/deploy_platform.yml`,退役时删除。
+- 迁入时 systemd unit 曾归位到 `/ops/systemd/platform-next.service`,退役时删除并停用线上服务。
 - 独立仓库的 `pnpm-lock.yaml`、`pnpm-workspace.yaml` 被主仓 `core/` 单一 lockfile/workspace 取代。
 - SQLite 原有 33 个 migration 与 journal 原样迁入;Stage 0 新增 `0033` 验证码限流 migration,当前共 34 个,始终不与 Hono/PostgreSQL migrations 混合。
 
@@ -50,12 +50,12 @@
 - 根 workspace 允许构建 `better-sqlite3`;依赖统一进入 `core/pnpm-lock.yaml`。
 - Next standalone tracing root 改为 `core/`,workflow 动态定位 monorepo 的 `server.js`。
 - Docker 改用 `core/` 构建上下文、pnpm 11、Node 24 和根 lockfile。
-- 后续只改 `packages/platform/**` 不再触发 Hono 后端 deploy;平台有独立 test 和 deploy workflow。首次推送迁移提交仍会因为共享 package/lock/workspace 与 workflow 本身发生变化,同时触发平台、主站和后端工作流,必须一起观察。
+- 迁入阶段曾有独立 Platform test/deploy workflow;退役后两者已删除,归档源码不再自动构建或上线。
 - 生产鉴权不再接受默认管理员密码或默认 session secret;systemd 从 `/etc/cube-platform.env` 读取必填值。
 
 ## 现有能力与教学系统边界
 
-迁入代码已经有用户登录、课程 / 章节、学习进度、订单、会员、讲师入驻与后台、支付、内容、社群、上传和运营日志。多机构教学 SaaS 的 Stage 0 底座、Stage 1 CRM 基础、Stage 2 履约 MVP、Stage 3 训练闭环和 Stage 4 教师课后反馈 / 周报切片均已进入主仓本地实现。最终产品边界已经确定为主站 `packages/client` 唯一教学前端,不再为 Platform 补一套训练管理页面;完整多角色端到端验收仍未完成:
+迁入代码已经有用户登录、课程 / 章节、学习进度、订单、会员、讲师入驻与后台、支付、内容、社群、上传和运营日志。多机构教学 SaaS 的 Stage 0 底座、Stage 1 CRM 基础、Stage 2 履约 MVP、Stage 3 训练闭环和 Stage 4 教师课后反馈 / 周报切片均已进入主仓实现。最终产品边界已经确定为主站 `packages/client` 唯一教学前端,不再为 Platform 补一套训练管理页面:
 
 - `shared` 已定义机构角色、权限、状态和错误契约;Stage 3A 已收口去客户端身份字段的证据输入、可信等级、严格 registry / JSON / 时间边界和训练 Foundation DTO,并通过独立 TypeScript 契约检查。
 - PostgreSQL `0142` 至 `0146` 已建立机构、成员、学员、监护人、审计、幂等、平台账号桥接、独立写入尝试限流与学员分页索引。
@@ -79,7 +79,7 @@
 4. 完成账号绑定、任务、反馈、周报、通知和家校沟通的真实多角色端到端验收。
 5. 补齐经营报表、审计检索、导出、备份恢复演练与长期运维观察。
 
-`packages/client` 同时负责公开训练工具与最终教学管理界面,只消费 shared/Core 契约,不复制 timer、predict、alg 或 sim 引擎。现有 Platform 内容/商城在切换前继续使用独立 SQLite;新多租户教学交易域不再堆入 SQLite,按[多机构教学 SaaS 设计](./teaching-saas-plan.md)在 Hono/PostgreSQL 落新 schema 与权限边界,旧域逐项决定复用、迁移或归档。
+`packages/client` 同时负责公开训练工具与最终教学管理界面,只消费 shared/Core 契约,不复制 timer、predict、alg 或 sim 引擎。旧 Platform 内容/商城与 SQLite 已离线归档;新多租户教学交易域不再写入 SQLite,按[多机构教学 SaaS 设计](./teaching-saas-plan.md)在 Hono/PostgreSQL 落 schema 与权限边界。
 
 ## 阶段性实施记录
 
@@ -115,29 +115,25 @@
 - [x] Platform 训练入口改为主站真链接,重复 timer / alg 公开功能与旧计时历史展示已退役;Platform 类型检查和定向测试通过。
 - [x] 主站训练管理页面已实现账号绑定、任务发布、训练日历、证据查看和批改,不再建设第二套 Platform 教学前端。
 - [x] 主站已实现学员 / 监护人学习入口、已发布反馈 / 周报读取、站内通知和家校消息页面,并与 Core `0154` 至 `0158` 契约对齐。
-- [ ] 主站教学工作台登录态端到端 smoke:仍需覆盖多角色账号绑定、任务、课包、课次、课后反馈、周报和越权拒绝。
-- [ ] 迁移提交推送到主仓远端。
-- [ ] 新仓 GitHub Actions 首次成功部署并完成线上 smoke test。
 
-Stage 0 至 Stage 4 的详细设计和验证边界记录在[多机构教学 SaaS 设计](./teaching-saas-plan.md)。`0147` 至 `0150` 的结构、约束与关键并发夹具已在隔离 PostgreSQL 验证;`0154` 至 `0158` 已补齐课后反馈、周报、学习门户、监护人绑定与家校会话,其中会话夹具覆盖同键回放、20 路并发连续序号、单调已读游标、权限撤销与账号删除竞争、通知去重和 append-only 约束。主站教学 UI 与通知深链已经存在,但线上 migration、真实多角色浏览器流程、跨租户拒绝审计、课包业务并发、备份恢复和观察窗口仍是生产验收门槛,不能用源码或 mock 单测替代。历史 migration 链依赖旧生产基线,不具备绝对空库全量重放能力,恢复仍以已验证备份为准。
+## 独立前端退役记录
+
+- 主站首页和账号页提供 `/org` 与 `/learn` 真链接,两种语言继续由主站路由处理。
+- `platform.cuberoot.me` 的 HTTP 与 HTTPS vhost 统一返回 410,不提供页面,也不跳转。
+- 独立 Platform test/deploy workflow 和仓库内 systemd unit 已删除;Web 运维部署会停用旧服务并验证 `:3004` 不再监听。
+- 旧 SQLite、uploads、migration 与源码继续保留,不迁移计时历史,也不再接受线上写入。
+
+Stage 0 至 Stage 4 的详细设计和验证边界记录在[多机构教学 SaaS 设计](./teaching-saas-plan.md)。`0147` 至 `0150` 的结构、约束与关键并发夹具已在隔离 PostgreSQL 验证;`0154` 至 `0158` 已补齐课后反馈、周报、学习门户、监护人绑定与家校会话,其中会话夹具覆盖同键回放、20 路并发连续序号、单调已读游标、权限撤销与账号删除竞争、通知去重和 append-only 约束。真实多角色授权、跨租户拒绝、课包并发和备份恢复继续属于主站的持续性生产验收,不再阻塞独立 Platform 前端退役。历史 migration 链依赖旧生产基线,恢复仍以已验证备份为准。
 
 ## 删除旧本地目录与旧 GitHub 仓库前的门槛
 
-以下项目必须全部完成;删除动作由仓库所有者亲自执行:
+以下项目全部完成后,旧本地目录与旧 GitHub 仓库可由仓库所有者删除:
 
-1. 迁移提交已推送,并在主仓远端验证 `1a333326...` 可达、`core/packages/platform` 文件完整。
-2. 主仓已配置 `PLATFORM_DEPLOY_HOST`、`PLATFORM_DEPLOY_USER`、`PLATFORM_DEPLOY_SSH_KEY`。GitHub 不允许导出旧 secrets,必须重新配置。
-3. 按当前 workflow 权限模型,`PLATFORM_DEPLOY_USER` 必须是 root;其 NVM 下必须安装 Node 24。workflow 固定选择 `/root/.nvm/versions/node/v24.*`,与 CI 编译 `better-sqlite3` 的 ABI 保持一致。未来若改普通部署账号,需同时重写目录权限、systemd 管理方式与 Node 路径。
-4. 服务器 `/etc/cube-platform.env` 已配置新的强随机 `ADMIN_PASSWORD`、`SESSION_SECRET`,旧默认凭据已失效;生产 `SMS_PROVIDER` 是真实短信通道且所需变量齐全。
-5. Core 与仍处于迁移兼容期的 Platform 运行环境已配置同一个新生成的 64 位十六进制 `TEACHING_PLATFORM_SECRET`;先部署 Core 的 `0142` 至 `0158`、shared 契约和教学 API,验证 migration 与 API 后再部署主站。Platform 不再承载新教学前端。独立 workflow 没有可靠的跨 workflow 顺序保证,首次发布必须受控观察;双端都不得输出密钥。
-6. 对生产 SQLite、uploads 与教学 PostgreSQL 做一致性备份,并实际验证备份可读。workflow 失败时会自动回滚代码包;迁移器用单个 SQLite transaction 防止半迁移,但已成功提交的 schema 不会随代码包反向回滚,数据库恢复必须使用已验证备份并评估期间新增写入。
-7. 逐项处理旧本地目录中的非 Git 状态:`data.db`、`data.db-wal`、`data.db-shm`、`qr-layout.png`、`.tmp` 内商业文档 / 调试产物与 `.password.md`。每项必须先外部备份或明确确认放弃;凭据要迁入安全存储并轮换,不能复制进主仓。
-8. 首次推送产生的平台、主站和后端 workflow 都成功;主站 `/org`、`/learn`、账号绑定、通知与消息深链,以及兼容期平台的登录、课程、订单、上传和数据库 migration 完成 smoke test。
-9. 用真实角色账号完成机构、学员、班级、课包、课次、训练任务、工具上报、反馈、周报、学员 / 监护人读取与消息沟通;再用两个机构夹具验证跨机构读取与写入均被拒绝且 `teaching_audit_events` 留下 `denied` 记录。
-10. 已确认代码包与数据库各自的失败恢复步骤,上一版本包和数据库备份都可用。
-11. 在主仓 tracked 文件中搜索旧本地路径、旧 workflow / unit 路径和旧仓唯一依赖,结果为 0。
-12. 已轮换曾进入 Git 历史的数据库凭据和教程外部账号凭据；删除旧仓库不能替代凭据轮换。
-13. 已盘点旧 GitHub 仓库的 Actions run 日志、仓库 settings、environments、branch rules、releases / artifacts、issues / PR 等非 Git 元数据；需要保留的先导出,其余由仓库所有者明确确认放弃。
-14. 再保留一个观察窗口;确认无回滚需要后,才删除旧本地目录和旧 GitHub 仓库。
+1. 主仓远端仍可达原 subtree 父提交,并保留完整 `core/packages/platform` 归档源码。
+2. 旧 SQLite、uploads 和非 Git 文件已备份或明确放弃,且需要保留的备份已验证可读。
+3. 旧仓的 Actions 日志、settings、environments、branch rules、releases、artifacts、issues 与 PR 已按需导出。
+4. 曾用于旧平台的凭据已经轮换或撤销;删除仓库不能替代凭据处置。
+5. 退役发布工作流全部成功,旧域名只返回 410,旧服务与监听均已停止。
+6. 观察窗口结束且确认不再需要从旧仓回滚。
 
 删除旧 GitHub 仓库前尤其要先确认主仓远端提交与全部发布工作流成功;本地历史完整不等于远端已有备份。
