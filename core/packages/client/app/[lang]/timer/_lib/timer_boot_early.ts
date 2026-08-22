@@ -3,6 +3,7 @@ export const MAX_EVIDENCE = 4;
 export const MAX_DETAIL_LENGTH = 500;
 export const STORAGE_KEY = 'timer.boot.lastDiagnostic';
 export const EARLY_STORAGE_KEY = 'timer.boot.earlyEvidence';
+export const MIN_SUPPORTED_CHROMIUM_MAJOR = 91;
 
 export const TIMER_BOOT_COPY = {
   loading: { zh: '正在加载计时器…', en: 'Loading timer…' },
@@ -10,6 +11,14 @@ export const TIMER_BOOT_COPY = {
   message: {
     zh: '请检查网络后重试。如果仍然失败，请把下面的诊断信息发给我们。',
     en: 'Check your connection and retry. If it still fails, send us the diagnostic information below.',
+  },
+  outdatedWechatMessage: {
+    zh: '当前微信内置浏览器版本过旧，无法启动计时器。请先升级微信；如果仍然失败，请点击右上角菜单，选择“在浏览器打开”。',
+    en: 'The browser built into WeChat is too old to start the timer. Update WeChat first. If it still fails, use the top-right menu to open this page in your browser.',
+  },
+  outdatedBrowserMessage: {
+    zh: '当前浏览器版本过旧，无法启动计时器。请升级浏览器后重试。',
+    en: 'This browser is too old to start the timer. Update it and try again.',
   },
   diagnosticCode: { zh: '诊断编号', en: 'Diagnostic code' },
   retry: { zh: '重试', en: 'Retry' },
@@ -136,6 +145,16 @@ export const TIMER_BOOT_EARLY_SCRIPT = `(function () {
       fallbackCopy(text, done);
     }
   }
+  function messageKey(report) {
+    var versionMatch = /(?:Chrome|Chromium|CriOS)\\/(\\d+)/i.exec(report.userAgent || '');
+    if (!versionMatch || parseInt(versionMatch[1], 10) >= ${MIN_SUPPORTED_CHROMIUM_MAJOR}) return 'message';
+    var combined = report.errorName + ' ' + report.errorMessage;
+    for (var index = 0; index < report.evidence.length; index += 1) {
+      combined += ' ' + report.evidence[index].name + ' ' + report.evidence[index].message;
+    }
+    if (!/SyntaxError|Unexpected token|parse error/i.test(combined)) return 'message';
+    return /MicroMessenger/i.test(report.userAgent) ? 'outdatedWechatMessage' : 'outdatedBrowserMessage';
+  }
   function renderFailure() {
     var root = document.querySelector('[data-timer-bootstrap="loading"]');
     if (!root) return;
@@ -176,7 +195,7 @@ export const TIMER_BOOT_EARLY_SCRIPT = `(function () {
     root.setAttribute('data-timer-bootstrap', 'error');
     root.setAttribute('role', 'alert');
     append('h1', 'timer-bootstrap-title', label('title'));
-    append('p', 'timer-bootstrap-message', label('message'));
+    append('p', 'timer-bootstrap-message', label(messageKey(report)));
     var diagnostic = append('p', 'timer-bootstrap-diagnostic', '');
     var diagnosticLabel = document.createElement('span');
     diagnosticLabel.textContent = label('diagnosticCode');
