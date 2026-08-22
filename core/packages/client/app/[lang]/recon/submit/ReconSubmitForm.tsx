@@ -199,6 +199,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   const solutionFieldRef = useRef<ReconSolutionFieldHandle>(null);
   const unsolvedReasonRef = useRef<HTMLTextAreaElement>(null);
+  const solverUserTouched = useRef(false);
 
   const [form, setForm] = useState<Partial<ReconSolve>>({
     official: 'wca',
@@ -1278,6 +1279,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   // ── Person picker handlers ──
   const handleSolverPick = useCallback((p: WcaPersonLite | null) => {
+    solverUserTouched.current = true;
     if (!p) {
       setField('person', '');
       setField('personId', '');
@@ -1290,6 +1292,21 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   }, [setField]);
 
   const clearSolver = useCallback(() => handleSolverPick(null), [handleSolverPick]);
+
+  // Default a new reconstruction to the signed-in WCA person. Never override an
+  // edit, copied/deep-linked person, or a picker the user has already touched.
+  useEffect(() => {
+    if (isEditing || fromId || !authUser?.wcaId || solverUserTouched.current) return;
+    setForm(prev => {
+      if (prev.person || prev.personId) return prev;
+      return {
+        ...prev,
+        person: authUser.name || authUser.wcaId,
+        personId: authUser.wcaId,
+        personCountry: authUser.country || personFlagIso2(authUser.wcaId),
+      };
+    });
+  }, [authUser, flagVer, fromId, isEditing]);
 
   // ── Co-solvers (共同完成者) ──
   const [addingCo, setAddingCo] = useState(false);
