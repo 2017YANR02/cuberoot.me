@@ -15,12 +15,13 @@ import {
 import { isWR } from '../engine/wr_data';
 import { recordAndUpdate, nextCell, prevCell, navigateToCell, tryAutoAdvance, shouldAutoAdvance } from './Numpad';
 import { tr } from '@/i18n/tr';
+import { displayCuberName } from '@/lib/cuber-name-display';
 
 // NOTE: 头像按钮状态 — 由 CalcPage 管理，通过 props 传入
 export interface AvatarState {
   active: boolean;       // 是否处于个人数据模式
   loading?: string;      // 加载中文字（如 '⏳'）
-  avatarUrl?: string;    // 激活时的头像 URL
+  avatarUrl?: string;    // 已识别选手的头像 URL
 }
 
 // NOTE: 默认头像 SVG（通用人像轮廓）— 原版 input_grid.js#1365
@@ -264,6 +265,11 @@ export function InputGrid({ avatarState, onPlayerOverride, readOnly = false }: I
         const enabled = state.playerEnabled[p];
         const absIdx = state.seedOn + p;
         const playerClass = p === 0 ? 'player-a' : 'player-b';
+        const rawName = state.names[absIdx]?.trim() || '';
+        const fallbackName = `Name ${String.fromCharCode(65 + absIdx)}`;
+        const playerName = rawName && rawName !== fallbackName
+          ? displayCuberName(rawName, isZh)
+          : '';
 
         const row = state.times[absIdx];
 
@@ -314,31 +320,33 @@ export function InputGrid({ avatarState, onPlayerOverride, readOnly = false }: I
               onChange={() => state.togglePlayer(p)}
             />
 
-            {/* 头像按钮 — 原版 input_grid.js#118-136 */}
-            <button
-              className={`me-btn calc-btn${avatarState?.[p]?.active ? ' me-active' : ''}`}
-              title={avatarState?.[p]?.active
-                ? ((isZh ? `切换回世界第 ${p + 1} 名` : `Switch back to World #${p + 1}`))
-                : tr({ zh: '搜索选手', en: 'Search for a player'
-                                  })}
-              data-loading={avatarState?.[p]?.loading && !avatarState[p].active
-                ? avatarState[p].loading
-                : undefined}
-              disabled={readOnly}
-              onClick={() => onPlayerOverride?.(p)}
-            >
-              {/* NOTE: loading 时 img 隐藏，由 CSS ::after 显示 data-loading 文字 */}
-              <img
-                className="me-avatar"
-                src={avatarState?.[p]?.active
-                  ? (avatarState[p].avatarUrl || DEFAULT_AVATAR)
-                  : DEFAULT_AVATAR}
-                alt="avatar"
-                style={avatarState?.[p]?.loading && !avatarState[p].active
-                  ? { display: 'none' }
+            {/* 头像与选手名 — 原版头像按钮扩展为完整身份区 */}
+            <div className="me-identity">
+              <button
+                className={`me-btn calc-btn${avatarState?.[p]?.active ? ' me-active' : ''}`}
+                title={avatarState?.[p]?.active
+                  ? tr({ zh: `切换回世界第 ${p + 1} 名`, en: `Switch back to World #${p + 1}` })
+                  : tr({ zh: '搜索选手', en: 'Search for a player' })}
+                data-loading={avatarState?.[p]?.loading && !avatarState[p].active
+                  ? avatarState[p].loading
                   : undefined}
-              />
-            </button>
+                disabled={readOnly}
+                onClick={() => onPlayerOverride?.(p)}
+              >
+                {/* NOTE: loading 时 img 隐藏，由 CSS ::after 显示 data-loading 文字 */}
+                <img
+                  className="me-avatar"
+                  src={avatarState?.[p]?.avatarUrl || DEFAULT_AVATAR}
+                  alt={playerName || 'avatar'}
+                  style={avatarState?.[p]?.loading && !avatarState[p].active
+                    ? { display: 'none' }
+                    : undefined}
+                />
+              </button>
+              {playerName && (
+                <span className="me-name" title={playerName}>{playerName}</span>
+              )}
+            </div>
 
             {/* Target Avg 输入框 — 每行独立（原版 input_grid.js 行 103-107）*/}
             <div className="time-cell-wrapper">

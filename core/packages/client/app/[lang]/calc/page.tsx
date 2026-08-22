@@ -123,6 +123,24 @@ export function CalcPage() {
   // NOTE: 当前搜索目标 player 索引（0 或 1）
   const pickerTargetRef = useRef(0);
 
+  // 比赛成绩跳转保留普通计算模式，仅补充对应选手的 WCA 头像。
+  useEffect(() => {
+    if (!sourceContext.wcaId || sourceContext.sourceEvent !== event || liveCode) return;
+
+    let cancelled = false;
+    void fetchAvatar(sourceContext.wcaId).then(avatarUrl => {
+      if (cancelled || !avatarUrl) return;
+      setAvatarState(prev => {
+        if (prev[0]?.active) return prev;
+        const next = [...prev];
+        next[0] = { ...next[0], avatarUrl };
+        return next;
+      });
+    });
+
+    return () => { cancelled = true; };
+  }, [event, liveCode, sourceContext.sourceEvent, sourceContext.wcaId]);
+
   // NOTE: 初始化 — 加载 URL 参数 + 预加载 WR 值（用于 isWR 高亮）
   // 默认进入"空白"状态:不自动填 Target、不 rand-fill、不激活头像。
   // 用户点 "🎲 World TOP 2" 按钮才走完整 loadDefaults + 填充流程。
