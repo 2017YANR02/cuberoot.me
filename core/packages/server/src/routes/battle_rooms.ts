@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { checkRateLimit } from '../utils/recon_helpers.js';
+import { generateRoomCode, ROOM_CODE_CREATE_ATTEMPTS, ROOM_CODE_RE } from '../utils/room_code.js';
 
 /**
  * /v1/battle/rooms — /timer 联机对战房间(多设备,各自设备计时)。
@@ -43,9 +44,6 @@ import { checkRateLimit } from '../utils/recon_helpers.js';
  */
 export const battleRoomsRoutes = new Hono();
 
-/** 房间码字母表:去掉易混的 0/O/1/I/L(与 trainer_rooms 一致)。 */
-const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-const CODE_LEN = 5;
 const MAX_PLAYERS = 8;
 const NAME_MAX = 24;
 const SCRAMBLE_MAX = 1200;
@@ -60,21 +58,12 @@ const OFFLINE_MS = 15_000;
 /** 「同时开始」倒计时:全员准备到起表的提前量(> 轮询周期,慢的一端也来得及看到)。 */
 const COUNTDOWN_MS = 3_000;
 
-const CODE_RE = /^[A-Z0-9]{4,12}$/;
 const EVENT_RE = /^[A-Za-z0-9]{2,16}$/;
 const PID_RE = /^[a-z0-9]{6,16}$/;
 const WCA_ID_RE = /^\d{4}[A-Z]{4}\d{2}$/;
 const ISO2_RE = /^[A-Za-z]{2}$/;
 const PHASES = new Set(['idle', 'ready', 'inspecting', 'solving']);
 const PENALTIES = new Set(['ok', '+2', 'dnf']);
-
-function randCode(): string {
-  let s = '';
-  for (let i = 0; i < CODE_LEN; i++) {
-    s += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
-  }
-  return s;
-}
 
 function randPid(): string {
   let s = '';
@@ -83,8 +72,8 @@ function randPid(): string {
 }
 
 function parseCode(raw: string | undefined): string | null {
-  const s = (raw ?? '').trim().toUpperCase();
-  return CODE_RE.test(s) ? s : null;
+  const s = (raw ?? '').trim();
+  return ROOM_CODE_RE.test(s) ? s : null;
 }
 
 function parseEvent(raw: unknown): string | null {
@@ -259,8 +248,8 @@ battleRoomsRoutes.post('/battle/rooms', async (c) => {
   };
   const scrambles: Record<string, string> = { [event]: scramble };
 
-  for (let attempt = 0; attempt < 6; attempt++) {
-    const code = randCode();
+  for (let attempt = 0; attempt < ROOM_CODE_CREATE_ATTEMPTS; attempt++) {
+    const code = generateRoomCode();
     try {
       await query(
         `INSERT INTO battle_rooms (code, event, round, scrambles, players, results, history, scores, admin, created_at, updated_at)

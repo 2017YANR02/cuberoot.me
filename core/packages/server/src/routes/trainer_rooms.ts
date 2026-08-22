@@ -3,6 +3,7 @@ import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { normalizeCaseKeysForSet } from '../utils/sq1_cs.js';
 import { checkRateLimit } from '../utils/recon_helpers.js';
+import { generateRoomCode, ROOM_CODE_CREATE_ATTEMPTS, ROOM_CODE_RE } from '../utils/room_code.js';
 
 /**
  * /v1/trainer/rooms — 公式训练器「协同房间」(多设备在线复习分工)。
@@ -23,9 +24,6 @@ import { checkRateLimit } from '../utils/recon_helpers.js';
  */
 export const trainerRoomsRoutes = new Hono();
 
-/** 房间码字母表:去掉易混的 0/O/1/I/L。 */
-const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-const CODE_LEN = 5;
 /** 单个房间池上限(1LLL ~3915,留余量)。 */
 const MAX_KEYS = 5000;
 const MAX_KEY_LEN = 160;
@@ -43,14 +41,6 @@ const RATE = {
   nextRound: { bucket: 'trainer-room-next', max: 60 },
 } as const;
 
-function randCode(): string {
-  let s = '';
-  for (let i = 0; i < CODE_LEN; i++) {
-    s += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
-  }
-  return s;
-}
-
 /** Fisher-Yates(服务端每轮洗一次;不需要密码学强度)。 */
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -61,12 +51,11 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-const CODE_RE = /^[A-Z0-9]{4,12}$/;
 const ID_RE = /^[A-Za-z0-9_-]{1,48}$/;
 
 function parseCode(raw: string | undefined): string | null {
-  const s = (raw ?? '').trim().toUpperCase();
-  return CODE_RE.test(s) ? s : null;
+  const s = (raw ?? '').trim();
+  return ROOM_CODE_RE.test(s) ? s : null;
 }
 
 /** 校验 keys:非空字符串数组、条数与单条长度设上限、去重后仍非空。 */
@@ -124,8 +113,8 @@ trainerRoomsRoutes.post('/trainer/rooms', async (c) => {
   query('DELETE FROM trainer_rooms WHERE updated_at < ?', [now - ROOM_TTL_MS]).catch(() => {});
 
   // 生成不重复房间码(极小概率撞了重试)
-  for (let attempt = 0; attempt < 6; attempt++) {
-    const code = randCode();
+  for (let attempt = 0; attempt < ROOM_CODE_CREATE_ATTEMPTS; attempt++) {
+    const code = generateRoomCode();
     try {
       await query(
         `INSERT INTO trainer_rooms

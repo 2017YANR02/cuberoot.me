@@ -4,12 +4,14 @@ import { AccessToken, RoomServiceClient, TrackSource } from 'livekit-server-sdk'
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
+import { pickAvailableRoomCode, ROOM_CODE_RE } from '../utils/room_code.js';
 
 /**
  * /v1/video — 全站视频通话的凭证签发(LiveKit SFU)。两种房,同一套带宽闸:
  *
  *   GET  /video/config      — 视频功能是否可用、两种房各自的人数上限
  *   POST /video/token       — 对战房(/timer 联机):{code,pid}      → {url,token,…}
+ *   POST /video/meet/code   — 会议室(/meet):     Bearer          → {code}
  *   POST /video/meet/token  — 会议室(/meet):     {code} + Bearer → {url,token,…}
  *
  * 媒体面完全由自建的 LiveKit 服务器承担(信令 + SFU 转发),本服务只做两件事:
@@ -18,11 +20,11 @@ import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
  *
  * 两种房的授权模型是**不同**的,这是本文件最要紧的一处区别:
  *
- *   对战房 `battle-<code>`  免登录。房间码只有 5 位(24 bit)且用户会当面念出来,可猜 ——
+ *   对战房 `battle-<code>`  免登录。房间码只有 4 位数字且用户会当面念出来,可猜 ——
  *                           所以必须回库确认该 pid 此刻确实在 battle_rooms.players 里。
  *                           identity = pid,显示名取房里的昵称(不接受客户端自报)。
- *   会议室 `meet-<code>`    **必须登录**。没有在册名单可查,进哪一间由会议码决定(45 bit 熵,
- *                           见 MEET_CODE_RE),但「能不能用这个功能」由账号决定。identity 与
+ *   会议室 `meet-<code>`    **必须登录**。进哪一间由 4 位数字会议码决定;新建时服务端会避开
+ *                           活跃房与刚分配的码,但短码不是秘密。identity 与
  *                           显示名一律取自 token 里的账号 —— 客户端只报会议码,报不了自己是谁,
  *                           所以会议里不可能出现顶着别人名字的画面。
  *
@@ -85,22 +87,22 @@ const TOKEN_TTL = '10m';
 /** 房间在最后一个人离开后保留多久(秒),方便短暂断线后回到原房。 */
 const ROOM_EMPTY_TIMEOUT = 300;
 
-const CODE_RE = /^[A-Z0-9]{4,12}$/;
 const PID_RE = /^[a-z0-9]{6,16}$/;
 
 /**
- * 会议码:32 字符表(去掉 0/1/I/O 这些会抄错的)取 9 位 = 45 bit。
- *
- * 登录只解决「谁能用这个功能」,**进哪一间会议仍然只由这个码决定** —— 没有在册名单可查,
- * 任何登录用户拿到码就能进。所以熵仍是房间层面唯一的防线:45 bit 配上 60 次/分钟的限流,
- * 扫穿要 10^7 年量级;对战房那个 5 位码(24 bit)之所以必须回库校验,正因为它只有一千万种、
- * 还会被人当面念出来。
- * 客户端 lib/video-room-api.ts 按同一张表生成,两处必须一致 —— 守卫见
- * client tests/meet-code-format.test.ts(不一致的话每一次「新建会议」都会 400)。
+ * 会议码固定为 4 位数字。客户端也持有同一格式用于粘贴归一与入会前校验，守卫见
+ * client tests/meet-code-format.test.ts。
  */
-const MEET_CODE_RE = /^[2-9A-HJ-NP-Z]{9}$/;
+const MEET_CODE_RE = /^\d{4}$/;
 
-const RATE = { bucket: 'video-token', max: 60 } as const;
+const RATE = {
+  token: { bucket: 'video-token', max: 60 },
+  meetCode: { bucket: 'video-meet-code', max: 20 },
+} as const;
+
+/** 刚分配但尚未连上 LiveKit 的码也短暂占位，封住两个「新建」同时拿到同一码的窗口。 */
+const MEET_CODE_RESERVATION_MS = 10 * 60 * 1000;
+const pendingMeetCodes = new Map<string, number>();
 
 /** 视频功能是否配置齐全。缺任一项就整体关掉(而不是运行到一半才报错)。 */
 function videoEnabled(): boolean {
@@ -255,16 +257,16 @@ async function mintToken(room: string, identity: string, name: string, maxPartic
 // POST /video/token — 校验 {code,pid} 确实是该房间的在册玩家,过带宽闸,签 LiveKit JWT。
 videoRoomsRoutes.post('/video/token', async (c) => {
   c.header('Cache-Control', 'no-store');
-  checkRateLimit(getIp(c), RATE);
+  checkRateLimit(getIp(c), RATE.token);
 
   if (!videoEnabled()) return c.json({ error: 'video not configured' }, 503);
 
   let body: { code?: unknown; pid?: unknown };
   try { body = await c.req.json(); } catch { return c.json({ error: 'invalid body' }, 400); }
 
-  const code = typeof body.code === 'string' ? body.code.toUpperCase() : '';
+  const code = typeof body.code === 'string' ? body.code : '';
   const pid = typeof body.pid === 'string' ? body.pid : '';
-  if (!CODE_RE.test(code) || !PID_RE.test(pid)) {
+  if (!ROOM_CODE_RE.test(code) || !PID_RE.test(pid)) {
     return c.json({ error: 'invalid code/pid' }, 400);
   }
 
@@ -286,6 +288,39 @@ videoRoomsRoutes.post('/video/token', async (c) => {
   return c.json(await mintToken(roomName, pid, rows[0].name ?? pid, MAX_VIDEO_PARTICIPANTS));
 });
 
+// POST /video/meet/code — 给「新建会议」分配一个当前未占用的四位数字码。
+// 不预建 LiveKit 房间:用户可能点完不入会，空房不应污染服务端状态。
+videoRoomsRoutes.post('/video/meet/code', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c), RATE.meetCode);
+
+  if (!videoEnabled()) return c.json({ error: 'video not configured' }, 503);
+  await requireAuth(c);
+
+  let rooms: Awaited<ReturnType<RoomServiceClient['listRooms']>>;
+  try {
+    rooms = await svc().listRooms();
+  } catch {
+    return c.json({ error: 'unavailable' }, 503);
+  }
+
+  const now = Date.now();
+  for (const [code, expiresAt] of pendingMeetCodes) {
+    if (expiresAt <= now) pendingMeetCodes.delete(code);
+  }
+
+  const occupied = new Set<string>(pendingMeetCodes.keys());
+  for (const room of rooms) {
+    const match = /^meet-(\d{4})$/.exec(room.name);
+    if (match) occupied.add(match[1]!);
+  }
+
+  const code = pickAvailableRoomCode(occupied);
+  if (!code) return c.json({ error: 'unavailable' }, 503);
+  pendingMeetCodes.set(code, now + MEET_CODE_RESERVATION_MS);
+  return c.json({ code });
+});
+
 // POST /video/meet/token — 会议室凭证。**必须登录**:requireAuth 抛的
 // 'Authentication required' 由全局 onError 转成 401。
 //
@@ -295,7 +330,7 @@ videoRoomsRoutes.post('/video/token', async (c) => {
 // 本站仍不存任何会议记录,也就没有「会议列表」可以被人翻。
 videoRoomsRoutes.post('/video/meet/token', async (c) => {
   c.header('Cache-Control', 'no-store');
-  checkRateLimit(getIp(c), RATE);
+  checkRateLimit(getIp(c), RATE.token);
 
   if (!videoEnabled()) return c.json({ error: 'video not configured' }, 503);
 
@@ -304,7 +339,7 @@ videoRoomsRoutes.post('/video/meet/token', async (c) => {
   let body: { code?: unknown };
   try { body = await c.req.json(); } catch { return c.json({ error: 'invalid body' }, 400); }
 
-  const code = typeof body.code === 'string' ? body.code.toUpperCase() : '';
+  const code = typeof body.code === 'string' ? body.code : '';
   if (!MEET_CODE_RE.test(code)) return c.json({ error: 'invalid code' }, 400);
 
   // identity 用归属键(绑了 WCA 是真 wca_id,否则 u<uid>)—— 同一个人刷新页面重连会被认成

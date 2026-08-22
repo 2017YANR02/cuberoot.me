@@ -573,6 +573,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/leave', g: 'public', zh: '离开房间(空房即删)', en: 'Leave the room (empty room is deleted)' },
   { d: 'timer', m: 'GET', p: '/v1/video/config', g: 'public', c: 'no-store', zh: '本站是否启用视频通话 + 单房人数/码率上限', en: 'Whether video calling is enabled, plus per-room participant and bitrate caps' },
   { d: 'timer', m: 'POST', p: '/v1/video/token', g: 'public', c: 'no-store', zh: '换取对战房视频的 LiveKit 凭证(校验 pid 在房内 + 带宽预算)', en: 'Mint a LiveKit token for a battle room’s video (verifies the pid is in the room and the bandwidth budget allows it)' },
+  { d: 'timer', m: 'POST', p: '/v1/video/meet/code', g: 'login', c: 'no-store', zh: '分配一个未被活跃会议或待创建会议占用的 4 位数字码', en: 'Allocate a four-digit numeric code not held by an active or pending meeting' },
+  { d: 'timer', m: 'POST', p: '/v1/video/meet/token', g: 'login', c: 'no-store', zh: '换取会议室 LiveKit 凭证(校验 4 位会议码 + 带宽预算)', en: 'Mint a meeting-room LiveKit token (validates the four-digit code and bandwidth budget)' },
 
   // ---- calendar ----
   { d: 'calendar', m: 'GET', p: '/v1/calendar/bootstrap', g: 'login', c: 'no-store', zh: '首屏:我的日历列表 + 对外展示设置(首访自动建主日历)', en: 'First paint: my calendars + share settings (creates the default calendar on first visit)' },

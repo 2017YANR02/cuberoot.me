@@ -31,51 +31,28 @@ export interface VideoConfig {
   maxBitrateMbps: number;
 }
 
-/**
- * 会议码字母表:32 个字符,去掉了 0/1/I/O 这些照着念或抄会错的。
- * **必须与服务端 video_rooms.ts 的 MEET_CODE_RE 完全一致** —— 客户端生成、服务端校验,
- * 分叉的话每一次「新建会议」都会 400。守卫见 tests/meet-code-format.test.ts。
- */
-export const MEET_CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-
-/** 9 位 × 32 字符 = 45 bit。会议室没有名单可查,链接就是凭证,熵是唯一的防线。 */
-export const MEET_CODE_LEN = 9;
-
-/** 从 32 字符表里取 n 个字符。32 整除 256,所以 `byte % 32` 是均匀的,不需要拒绝采样。 */
-function randomFrom(alphabet: string, n: number): string {
-  const bytes = new Uint8Array(n);
-  crypto.getRandomValues(bytes);
-  let out = '';
-  for (const b of bytes) out += alphabet[b % alphabet.length];
-  return out;
-}
-
-/** 新建一个会议码。用 crypto 而不是 Math.random —— 后者可预测,等于没有熵。 */
-export function newMeetCode(): string {
-  return randomFrom(MEET_CODE_ALPHABET, MEET_CODE_LEN);
-}
+/** 必须与服务端 video_rooms.ts 的 MEET_CODE_RE 完全一致。 */
+export const MEET_CODE_ALPHABET = '0123456789';
+export const MEET_CODE_LEN = 4;
 
 /**
- * 把用户手抄 / 粘贴进来的会议码归一:大写,丢掉字母表以外的一切(空格、连字符、
- * 整条 URL 里的斜杠)。抄错成 0/O、1/I 的那两对不在这里纠 —— 猜错人家的房间比报错更糟。
+ * 把用户手抄 / 粘贴进来的会议码归一:只留数字，整条邀请链接则读取 room 参数。
  */
 export function normalizeMeetCode(raw: string): string {
   // 粘进来的多半是整条邀请链接,先把 ?room= 挖出来。
   const fromUrl = /[?&]room=([^&#\s]*)/i.exec(raw);
   if (fromUrl) return keepAlphabet(fromUrl[1]!);
 
-  // 看着像链接、却没有 room= —— 直接判空。硬过滤的话 "https://cuberoot.me/" 里的
-  // H T T P S C U B E 全在字母表里,会拼出 HTTPSCUBE 这么个**合法**会议码,
-  // 把人静默送进一个陌生人的房间。宁可什么都不给。
+  // 看着像链接、却没有 room= —— 直接判空，不能拿 URL 里的其他数字拼成会议码。
   if (/[:/?#]/.test(raw)) return '';
 
   return keepAlphabet(raw);
 }
 
-/** 只留字母表里的字符(丢掉空格、连字符这些手抄进来的噪声),截到码长。 */
+/** 只留数字(丢掉空格、连字符这些手抄进来的噪声),截到码长。 */
 function keepAlphabet(raw: string): string {
   let out = '';
-  for (const ch of raw.toUpperCase()) if (MEET_CODE_ALPHABET.includes(ch)) out += ch;
+  for (const ch of raw) if (MEET_CODE_ALPHABET.includes(ch)) out += ch;
   return out.slice(0, MEET_CODE_LEN);
 }
 
@@ -157,18 +134,34 @@ export async function getMeetToken(code: string): Promise<VideoToken> {
   return postToken('/v1/video/meet/token', { code }, true);
 }
 
+/**
+ * 分配一个当前未被活跃会议或待入会创建流程占用的四位数字码。
+ * 由服务端分配，客户端本地随机无法看见其他活跃房间。
+ */
+export async function createMeetCode(): Promise<string> {
+  const res = await fetch(apiUrl('/v1/video/meet/code'), {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getSessionToken()}` },
+  });
+  if (!res.ok) return throwVideoDenied(res);
+  const data = (await res.json()) as { code?: unknown };
+  if (typeof data.code !== 'string' || !isMeetCode(data.code)) throw new VideoDeniedError('invalid');
+  return data.code;
+}
+
 async function postToken(path: string, body: Record<string, string>, authed = false): Promise<VideoToken> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (authed) headers.Authorization = `Bearer ${getSessionToken()}`;
   const res = await fetch(apiUrl(path), { method: 'POST', headers, body: JSON.stringify(body) });
-  if (res.status === 401) throw new VideoDeniedError('auth');
-  if (!res.ok) {
-    const msg = (await res.json().catch(() => ({}))) as { error?: string };
-    // 服务端的 400 文案是 'invalid code/id/name' 这种带细节的串,收敛成一个 reason ——
-    // 细节对用户没用,而漏收敛会让未知串混进 VideoDenyReason 的联合类型里当合法值。
-    const raw = msg.error ?? '';
-    const reason: VideoDenyReason = raw.startsWith('invalid') ? 'invalid' : (raw as VideoDenyReason);
-    throw new VideoDeniedError(reason || 'unavailable');
-  }
+  if (!res.ok) return throwVideoDenied(res);
   return res.json();
+}
+
+async function throwVideoDenied(res: Response): Promise<never> {
+  if (res.status === 401) throw new VideoDeniedError('auth');
+  const msg = (await res.json().catch(() => ({}))) as { error?: string };
+  // 服务端的 400 文案是 'invalid code/id/name' 这种带细节的串,收敛成一个 reason。
+  const raw = msg.error ?? '';
+  const reason: VideoDenyReason = raw.startsWith('invalid') ? 'invalid' : (raw as VideoDenyReason);
+  throw new VideoDeniedError(reason || 'unavailable');
 }

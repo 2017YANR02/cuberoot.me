@@ -1594,8 +1594,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
     joinRoom: async (rawCode) => {
       const st = get();
-      const code = rawCode.trim().toUpperCase();
-      if (!/^[A-Z0-9]{4,12}$/.test(code)) return { ok: false, error: 'invalid code' };
+      const code = rawCode.trim();
+      if (!/^\d{4}$/.test(code)) return { ok: false, error: 'invalid code' };
       if (!st.puzzle || !st.set) return { ok: false, error: 'no set loaded' };
       set({ roomBusy: true, roomError: null });
       try {
