@@ -23,43 +23,43 @@
 | 表 | 源行数 | 分类 | 最终处置 |
 | --- | ---: | --- | --- |
 | `algorithms` | 39 | 固定 seed | `merged-no-write=35`，`rejected=4`；主站新增 0 |
-| `certificates` | 0 | zero-row | 不建空壳 |
-| `circle_members` | 0 | zero-row | 不建空壳 |
+| `certificates` | 0 | zero-row | 不导入历史；目标证书功能从空数据开始 |
+| `circle_members` | 0 | zero-row | 不导入历史；社区复用主站 forum |
 | `collection_items` | 9 | seed 课程路径 | 可逆归档，待 owner 确认；不导入 |
 | `collections` | 3 | seed 课程路径 | 可逆归档，待 owner 确认；不导入 |
 | `comments` | 8 | 固定 seed | 可逆归档，待 owner 确认；不导入论坛 |
-| `coupons` | 0 | zero-row | 不建空壳 |
-| `course_reviews` | 0 | zero-row | 不建空壳 |
+| `coupons` | 0 | zero-row | 不导入历史；目标优惠功能从空数据开始 |
+| `course_reviews` | 0 | zero-row | 不导入历史；目标评价功能从空数据开始 |
 | `courses` | 6 | 固定 seed | 可逆归档，待 owner 确认；不导入课程 |
-| `error_logs` | 0 | zero-row | 不建空壳 |
+| `error_logs` | 0 | zero-row | 不导入历史；目标复用主站观测与审计 |
 | `events` | 5 | 固定 seed | 可逆归档，待 owner 确认；不导入活动 |
 | `events_track` | 960 | 隐私遥测 | 权威加密归档；临时明文审计副本已收紧 ACL，不进入产品库 |
-| `favorites` | 0 | zero-row | 不建空壳 |
-| `instructor_applications` | 0 | zero-row | 不建申请流 |
-| `instructor_payouts` | 0 | zero-row | 不建结算流 |
+| `favorites` | 0 | zero-row | 不导入历史；目标收藏功能从空数据开始 |
+| `instructor_applications` | 0 | zero-row | 不导入历史；目标申请流从空数据开始 |
+| `instructor_payouts` | 0 | zero-row | 不导入历史；目标结算账本从空数据开始 |
 | `instructors` | 5 | 固定 seed | 可逆归档，待 owner 确认；不导入教师目录 |
-| `invite_codes` | 0 | zero-row | 不建增长邀请 |
-| `learning_progress` | 0 | zero-row | 不建课程进度 |
-| `lesson_notes` | 0 | zero-row | 不建笔记 |
+| `invite_codes` | 0 | zero-row | 不导入历史；目标营销邀请从空数据开始 |
+| `learning_progress` | 0 | zero-row | 不导入历史；目标课程进度从空数据开始 |
+| `lesson_notes` | 0 | zero-row | 不导入历史；目标笔记功能从空数据开始 |
 | `lessons` | 0 | zero-row | 不导入课时 |
 | `memberships` | 0 | zero-row | 不导成主站会员或课程权益 |
 | `news` | 5 | 固定 seed | 可逆归档，待 owner 确认；不导入公告 |
 | `notifications` | 0 | zero-row | 复用主站通知，不迁数据 |
-| `orders` | 0 | zero-row | 不建订单、支付或权益 |
+| `orders` | 0 | zero-row | 不导入历史；目标订单、支付与权益从空数据开始 |
 | `otp_codes` | 0 | zero-row | 不迁认证瞬态数据 |
 | `payment_logs` | 0 | zero-row | 不重放支付回调 |
-| `point_ledger` | 0 | zero-row | 不建积分账本 |
+| `point_ledger` | 0 | zero-row | 不导入历史；目标积分账本从空数据开始 |
 | `post_likes` | 10 | 固定 seed | 可逆归档，待 owner 确认；不导入 reaction |
 | `posts` | 5 | 固定 seed | 可逆归档，待 owner 确认；不导入论坛 |
-| `products` | 6 | 固定 seed | 可逆归档，待 owner 确认；不建商城 |
-| `prompt_templates` | 89 | 固定 seed | 可逆归档，待 owner 确认；不建 QR 模板后台 |
-| `qr_codes` | 2 | demo | 可逆归档，待 owner 确认；不保留公开 QR |
-| `quiz_attempts` | 0 | zero-row | 不建空壳 |
-| `quizzes` | 0 | zero-row | 不建空壳 |
-| `request_logs` | 0 | zero-row | 不建空壳 |
-| `study_checkins` | 0 | zero-row | 不建空壳 |
+| `products` | 6 | 固定 seed | 可逆归档，待 owner 确认；旧 seed 不导入，目标商城功能从空数据开始 |
+| `prompt_templates` | 89 | 固定 seed | 可逆归档，待 owner 确认；旧 seed 不导入，目标 QR 模板后台从空数据开始 |
+| `qr_codes` | 2 | demo | 可逆归档，待 owner 确认；旧公开 QR 与链接不导入，目标 QR 创建、审批与扫描功能从空数据开始 |
+| `quiz_attempts` | 0 | zero-row | 不导入历史；目标测验记录从空数据开始 |
+| `quizzes` | 0 | zero-row | 不导入历史；目标测验功能从空数据开始 |
+| `request_logs` | 0 | zero-row | 不导入历史；目标复用主站观测与审计 |
+| `study_checkins` | 0 | zero-row | 不导入历史；目标签到功能从空数据开始 |
 | `timer_solves` | 0 | 用户明确不迁 | 不迁 timer history |
-| `user_achievements` | 0 | zero-row | 不制造历史成就 |
+| `user_achievements` | 0 | zero-row | 不制造历史成就；目标成就功能从空数据开始 |
 | `users` | 5 | `u_test_*` 固定 seed | 可逆归档，待 owner 确认；不创建主站账号或 identity bridge |
 
 FTS shadow 表是派生索引，不属于 39 张业务表，不迁移。
@@ -90,7 +90,7 @@ FTS shadow 表是派生索引，不属于 39 张业务表，不迁移。
 - 源 schema 没有数据库 FK，因此由审计脚本逐项验证了 41 组业务关系；完整 child/parent、检查行数、空值数、缺失父记录数与恢复副本一致性见无敏感值 sidecar，缺失父记录为 0。
 - 所有在用 JSON 字段合法；业务唯一键无重复。
 - 以下数字只作为旧展示快照归档，不迁成事实：课程声明 109 课时而实际 0；声明 4,438 学员而付费订单 0；帖子声明 55 点赞而关系行 10；QR 声明 93 扫描而 `qr_scan` 51；活动声明 985 报名但没有报名关系表。
-- 生产订单、支付、课程权益、学习进度、正式学生、结算、申请和证书均为 0，因此不需要目标身份 bridge、交易 ledger 或导入事务。
+- 生产订单、支付、课程权益、学习进度、正式学生、结算、申请和证书均为 0，因此不需要历史导入事务或旧身份 bridge；目标产品仍须建立完整交易、权益、学习、申请、结算与证书模型，并从空数据开始。
 
 ## 6. 媒体
 

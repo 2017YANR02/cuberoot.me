@@ -1,5 +1,6 @@
 packages:
   - 'packages/*'
+  - '!packages/platform'
 allowBuilds:
   better-sqlite3: true
   core-js: true

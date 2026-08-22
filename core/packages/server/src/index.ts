@@ -63,6 +63,11 @@ import { quizRoutes } from './routes/quiz.js';
 import { teacherDirectoryRoutes } from './routes/teacher_directory.js';
 import { teachingRoutes } from './routes/teaching.js';
 import { teachingSaasRoutes } from './routes/teaching_saas.js';
+import { platformCatalogRoutes } from './routes/platform_catalog.js';
+import { platformContentRoutes } from './routes/platform_content.js';
+import { platformLearningRoutes } from './routes/platform_learning.js';
+import { platformCommerceRoutes } from './routes/platform_commerce.js';
+import { platformQrRoutes } from './routes/platform_qr.js';
 import { smsReceiptRoutes } from './routes/sms_receipt.js';
 import { documentRoutes } from './routes/documents.js';
 import { collaborativeDocuments } from './documents/realtime.js';
@@ -185,6 +190,11 @@ app.route('/v1', quizRoutes);
 app.route('/v1', teacherDirectoryRoutes);
 app.route('/v1', teachingRoutes);
 app.route('/v1', teachingSaasRoutes);
+app.route('/v1', platformCatalogRoutes);
+app.route('/v1', platformContentRoutes);
+app.route('/v1/platform', platformLearningRoutes);
+app.route('/v1/platform', platformCommerceRoutes);
+app.route('/v1/platform', platformQrRoutes);
 app.get('/v1/documents/realtime', upgradeWebSocket((c) => {
   let connection: ReturnType<typeof collaborativeDocuments.handleConnection> | undefined;
   return {

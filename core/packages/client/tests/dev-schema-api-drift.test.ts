@@ -9,7 +9,7 @@
 //                   app/[lang]/dev/schema/page.tsx.
 //
 //   /dev/api     — its `covers-routes` manifest must equal the route files actually
-//                   mounted via app.route('/v1', …) in server/src/index.ts. Mount a
+//                   mounted beneath /v1 via app.route() in server/src/index.ts. Mount a
 //                   new route without documenting it → red.
 //                   Fix: add the endpoints + the file stem to the manifest in
 //                   app/[lang]/dev/api/page.tsx.
@@ -111,7 +111,7 @@ describe('/dev/api endpoint catalog drift', () => {
       for (const id of m[1].split(',').map((s) => s.trim()).filter(Boolean)) idToFile.set(id, m[2]);
     }
     const mounted = new Set<string>();
-    for (const m of idx.matchAll(/app\.route\(\s*['"]\/v1['"]\s*,\s*([A-Za-z0-9_]+)\s*\)/g)) {
+    for (const m of idx.matchAll(/app\.route\(\s*['"]\/v1(?:\/[^'"]*)?['"]\s*,\s*([A-Za-z0-9_]+)\s*\)/g)) {
       const file = idToFile.get(m[1]);
       if (file) mounted.add(file);
     }
@@ -148,6 +148,30 @@ describe('/dev/api endpoint catalog drift', () => {
 
     expect(fromRoute.length).toBeGreaterThan(0);
     expect(fromCatalog).toEqual(fromRoute);
+  });
+
+  it('lists every Platform route with its mounted method and path', () => {
+    const platformFiles = new Map([
+      ['platform_catalog.ts', '/v1'],
+      ['platform_content.ts', '/v1'],
+      ['platform_learning.ts', '/v1/platform'],
+      ['platform_commerce.ts', '/v1/platform'],
+      ['platform_qr.ts', '/v1/platform'],
+    ]);
+    const fromRoutes = [...platformFiles]
+      .flatMap(([file, mount]) => {
+        const source = readFileSync(join(routesDir, file), 'utf8');
+        return [...source.matchAll(/Routes\.(get|post|put|patch|delete)\(\s*'([^']+)'/g)]
+          .map((match) => `${match[1].toUpperCase()} ${mount}${match[2]}`);
+      })
+      .sort();
+    const api = readFileSync(apiPage, 'utf8');
+    const fromCatalog = [...api.matchAll(/\{ d: 'platform', m: '(GET|POST|PUT|PATCH|DELETE)', p: '([^']+)'/g)]
+      .map((match) => `${match[1]} ${match[2]}`)
+      .sort();
+
+    expect(fromRoutes.length).toBeGreaterThan(0);
+    expect(fromCatalog).toEqual(fromRoutes);
   });
 
   it('freezes leave/makeup endpoint docs and idempotency requirements', () => {

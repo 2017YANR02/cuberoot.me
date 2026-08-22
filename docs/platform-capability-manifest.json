@@ -1,0 +1,1632 @@
+{
+  "version": 1,
+  "baselineDate": "2026-08-22",
+  "sourceRoots": {
+    "retired": "D:/cube/cube-platform/app",
+    "archive": "core/packages/platform/app"
+  },
+  "targetRoot": "core/packages/client/app/[lang]/platform",
+  "expectedCounts": {
+    "page": 95,
+    "handler": 13,
+    "action": 34,
+    "metadata": 4
+  },
+  "requiredCapabilityFields": [
+    "id",
+    "kind",
+    "mappings",
+    "strategy",
+    "canonicalOwner",
+    "readApi",
+    "writeApi",
+    "permission",
+    "sideEffects",
+    "metadata",
+    "emptyState",
+    "tests",
+    "implementationStatus",
+    "reviewStatus"
+  ],
+  "capabilities": [
+    {
+      "id": "hub",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/",
+          "/platform"
+        ],
+        [
+          "retired:/about",
+          "/platform/about"
+        ],
+        [
+          "retired:/progress",
+          "/platform/progress"
+        ]
+      ],
+      "strategy": "new-main-site-view",
+      "canonicalOwner": "platform",
+      "readApi": [
+        "/v1/platform/courses",
+        "/v1/platform/events",
+        "/v1/platform/products"
+      ],
+      "writeApi": [],
+      "permission": "public; progress requires signed-in owner",
+      "sideEffects": "none",
+      "metadata": "public except owner progress is noindex",
+      "emptyState": "show capability directory and zero progress",
+      "tests": [
+        "platform-capability-manifest.test.ts",
+        "platform-routing.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "session-and-shell",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/login",
+          "/platform/login"
+        ],
+        [
+          "retired:/me",
+          "/platform/account"
+        ],
+        [
+          "retired:/offline",
+          "/platform/offline"
+        ]
+      ],
+      "strategy": "reuse-main-auth-and-pwa",
+      "canonicalOwner": "auth",
+      "readApi": [
+        "/v1/auth/me"
+      ],
+      "writeApi": [
+        "/v1/auth/*"
+      ],
+      "permission": "public shell; account requires signed-in owner",
+      "sideEffects": "main-site session only",
+      "metadata": "noindex",
+      "emptyState": "signed-out prompt or offline guidance",
+      "tests": [
+        "platform-routing.test.ts",
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "account-learning",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/me/badges",
+          "/platform/account/badges"
+        ],
+        [
+          "retired:/me/courses",
+          "/platform/account/courses"
+        ],
+        [
+          "retired:/me/favorites",
+          "/platform/account/favorites"
+        ],
+        [
+          "retired:/me/invite",
+          "/platform/account/invites"
+        ],
+        [
+          "retired:/me/membership",
+          "/platform/account/membership"
+        ],
+        [
+          "retired:/me/notes",
+          "/platform/account/notes"
+        ],
+        [
+          "retired:/me/wishlist",
+          "/platform/account/wishlist"
+        ],
+        [
+          "retired:/membership",
+          "/platform/membership"
+        ]
+      ],
+      "strategy": "new-platform-learning-domain",
+      "canonicalOwner": "platform-learning",
+      "readApi": [
+        "/v1/platform/membership-plans",
+        "/v1/platform/entitlements",
+        "/v1/platform/me/memberships",
+        "/v1/platform/me/*"
+      ],
+      "writeApi": [
+        "/v1/platform/me/*",
+        "/v1/platform/orders"
+      ],
+      "permission": "owner; membership catalog is public",
+      "sideEffects": "favorites, notes, invitations, membership orders and entitlements",
+      "metadata": "account noindex; membership public",
+      "emptyState": "real empty collections with the next valid action",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "notifications",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/notifications",
+          "/platform/notifications"
+        ]
+      ],
+      "strategy": "canonical-deep-link",
+      "canonicalOwner": "notifications",
+      "readApi": [
+        "/v1/notifications"
+      ],
+      "writeApi": [
+        "/v1/notifications/*"
+      ],
+      "permission": "signed-in owner",
+      "sideEffects": "mark read in shared notification store",
+      "metadata": "noindex",
+      "emptyState": "shared notification empty state",
+      "tests": [
+        "platform-routing.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "timer",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/timer",
+          "/platform/timer"
+        ],
+        [
+          "retired:/leaderboard",
+          "/platform/leaderboard"
+        ]
+      ],
+      "strategy": "canonical-deep-link",
+      "canonicalOwner": "timer",
+      "readApi": [
+        "/timer"
+      ],
+      "writeApi": [
+        "/timer"
+      ],
+      "permission": "same as main timer",
+      "sideEffects": "new main-site timer data only; old history is not imported",
+      "metadata": "canonical main timer",
+      "emptyState": "shared timer and current leaderboard empty state",
+      "tests": [
+        "platform-routing.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "algorithms",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/algorithms",
+          "/platform/algorithms"
+        ],
+        [
+          "retired:/algorithms/[id]",
+          "/platform/algorithms/[id]"
+        ]
+      ],
+      "strategy": "canonical-deep-link",
+      "canonicalOwner": "alg",
+      "readApi": [
+        "/api/alg/sets/:p/:s"
+      ],
+      "writeApi": [
+        "/api/alg/admin/*"
+      ],
+      "permission": "public read; canonical alg admin write",
+      "sideEffects": "algorithm preference and progress stay in canonical store",
+      "metadata": "canonical alg route",
+      "emptyState": "legacy detail ids were random identifiers for auto-seeded demo rows, so they are not fabricated or migrated; the replacement explains the boundary and links to the canonical alg library",
+      "tests": [
+        "platform-routing.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "courses",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/courses",
+          "/platform/courses"
+        ],
+        [
+          "retired:/courses/[id]",
+          "/platform/courses/[courseId]"
+        ],
+        [
+          "retired:/courses/[id]/learn/[lessonId]",
+          "/platform/courses/[courseId]/learn/[lessonId]"
+        ]
+      ],
+      "strategy": "new-platform-catalog-and-learning",
+      "canonicalOwner": "platform-catalog",
+      "readApi": [
+        "/v1/platform/courses",
+        "/v1/platform/courses/:courseId",
+        "/v1/platform/courses/:courseId/lessons/:lessonId"
+      ],
+      "writeApi": [
+        "/v1/platform/me/progress/:lessonId",
+        "/v1/platform/me/notes/:id",
+        "/v1/platform/learning/lessons/:lessonId/quiz"
+      ],
+      "permission": "public catalog; entitlement-gated lesson",
+      "sideEffects": "progress, notes, quiz attempts and review eligibility",
+      "metadata": "public catalog and course; learning noindex",
+      "emptyState": "empty catalog or entitlement purchase prompt",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "paths",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/paths",
+          "/platform/paths"
+        ],
+        [
+          "retired:/paths/[id]",
+          "/platform/paths/[pathId]"
+        ]
+      ],
+      "strategy": "new-platform-catalog",
+      "canonicalOwner": "platform-catalog",
+      "readApi": [
+        "/v1/platform/paths",
+        "/v1/platform/paths/:id"
+      ],
+      "writeApi": [
+        "/v1/platform/admin/paths"
+      ],
+      "permission": "public published read; admin write",
+      "sideEffects": "ordered references to canonical courses and lessons",
+      "metadata": "public",
+      "emptyState": "no published learning paths",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "teachers",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/instructors",
+          "/platform/teachers"
+        ],
+        [
+          "retired:/instructors/[id]",
+          "/platform/teachers/[id]"
+        ],
+        [
+          "retired:/instructors/apply",
+          "/platform/teachers/apply"
+        ]
+      ],
+      "strategy": "reuse-teacher-directory-plus-application",
+      "canonicalOwner": "teacher-directory",
+      "readApi": [
+        "/v1/teachers",
+        "/v1/teachers/:id",
+        "/v1/platform/instructor/applications/current"
+      ],
+      "writeApi": [
+        "/v1/platform/instructor/applications"
+      ],
+      "permission": "public directory; signed-in applicant",
+      "sideEffects": "application state and shared teacher profile linkage",
+      "metadata": "public directory and profiles; application noindex",
+      "emptyState": "shared directory empty or application status",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "instructor-console",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/instructor",
+          "/platform/instructor"
+        ],
+        [
+          "retired:/instructor/courses",
+          "/platform/instructor/courses"
+        ],
+        [
+          "retired:/instructor/courses/[id]",
+          "/platform/instructor/courses/[id]"
+        ],
+        [
+          "retired:/instructor/students",
+          "/platform/instructor/students"
+        ],
+        [
+          "retired:/instructor/earnings",
+          "/platform/instructor/earnings"
+        ]
+      ],
+      "strategy": "new-owner-scoped-console",
+      "canonicalOwner": "platform-instructor",
+      "readApi": [
+        "/v1/platform/instructor/*"
+      ],
+      "writeApi": [
+        "/v1/platform/instructor/courses/*"
+      ],
+      "permission": "approved instructor and course owner",
+      "sideEffects": "course revisions and payout ledger requests",
+      "metadata": "noindex",
+      "emptyState": "application or first-course prompt",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "community",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/community",
+          "/platform/community"
+        ],
+        [
+          "retired:/community/circle/[id]",
+          "/platform/community/circles/[id]"
+        ],
+        [
+          "retired:/community/posts/[id]",
+          "/platform/community/posts/[id]"
+        ],
+        [
+          "retired:/community/posts/new",
+          "/platform/community/posts/new"
+        ]
+      ],
+      "strategy": "canonical-deep-link",
+      "canonicalOwner": "forum",
+      "readApi": [
+        "/v1/forum/*"
+      ],
+      "writeApi": [
+        "/v1/forum/*"
+      ],
+      "permission": "forum policy",
+      "sideEffects": "threads, replies, reactions and reports in shared forum",
+      "metadata": "canonical forum routes",
+      "emptyState": "shared forum empty state",
+      "tests": [
+        "platform-routing.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "events",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/events",
+          "/platform/events"
+        ],
+        [
+          "retired:/events/[id]",
+          "/platform/events/[id]"
+        ]
+      ],
+      "strategy": "new-platform-content-and-commerce",
+      "canonicalOwner": "platform-content",
+      "readApi": [
+        "/v1/platform/events",
+        "/v1/platform/events/:id"
+      ],
+      "writeApi": [
+        "/v1/platform/orders"
+      ],
+      "permission": "public published read; entitlement owner registration",
+      "sideEffects": "capacity reservation, order and registration ledger",
+      "metadata": "public",
+      "emptyState": "no published events",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "news",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/news",
+          "/platform/news"
+        ],
+        [
+          "retired:/news/[id]",
+          "/platform/news/[id]"
+        ]
+      ],
+      "strategy": "new-platform-content",
+      "canonicalOwner": "platform-content",
+      "readApi": [
+        "/v1/platform/news",
+        "/v1/platform/news/:id"
+      ],
+      "writeApi": [
+        "/v1/platform/admin/news"
+      ],
+      "permission": "public published read; admin write",
+      "sideEffects": "publish revisions",
+      "metadata": "public",
+      "emptyState": "no published news",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "shop",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/shop",
+          "/platform/shop"
+        ],
+        [
+          "retired:/shop/[id]",
+          "/platform/shop/[id]"
+        ]
+      ],
+      "strategy": "new-platform-content-and-commerce",
+      "canonicalOwner": "platform-commerce",
+      "readApi": [
+        "/v1/platform/products",
+        "/v1/platform/products/:id"
+      ],
+      "writeApi": [
+        "/v1/platform/orders"
+      ],
+      "permission": "public published read; owner purchase",
+      "sideEffects": "inventory reservation, order and fulfilment ledger",
+      "metadata": "public",
+      "emptyState": "no published products or out-of-stock state",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "orders",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/orders",
+          "/platform/orders"
+        ],
+        [
+          "retired:/orders/[id]",
+          "/platform/orders/[id]"
+        ]
+      ],
+      "strategy": "new-transactional-commerce",
+      "canonicalOwner": "platform-commerce",
+      "readApi": [
+        "/v1/platform/orders",
+        "/v1/platform/orders/:id"
+      ],
+      "writeApi": [
+        "/v1/platform/orders",
+        "/v1/platform/orders/:id/payment-attempts",
+        "/v1/platform/orders/:id/cancel",
+        "/v1/platform/admin/orders/:id/refund"
+      ],
+      "permission": "owner; finance/admin scoped operations",
+      "sideEffects": "payment, refund, entitlement, inventory, capacity, outbox and payout ledgers",
+      "metadata": "noindex",
+      "emptyState": "no orders with links to sellable catalogs",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "public-utilities",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/qr/[code]",
+          "/platform/qr/[code]"
+        ],
+        [
+          "retired:/cert/[code]",
+          "/platform/cert/[code]"
+        ],
+        [
+          "retired:/search",
+          "/platform/search"
+        ]
+      ],
+      "strategy": "platform-gateway-and-main-search",
+      "canonicalOwner": "platform",
+      "readApi": [
+        "/v1/platform/qr/:code",
+        "/v1/platform/certificates/:code",
+        "/v1/platform/search",
+        "/v1/platform/courses"
+      ],
+      "writeApi": [],
+      "permission": "public; search query and disabled-target safeguards",
+      "sideEffects": "privacy-minimized QR scan aggregation",
+      "metadata": "QR and cert policy; search noindex; membership public",
+      "emptyState": "invalid, disabled or not-found states are explicit",
+      "tests": [
+        "platform_routes_contract.test.ts",
+        "platform-routing.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "admin-shell",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/admin/login",
+          "/platform/admin"
+        ],
+        [
+          "retired:/admin",
+          "/platform/admin"
+        ]
+      ],
+      "strategy": "reuse-main-admin-guard",
+      "canonicalOwner": "auth",
+      "readApi": [
+        "/v1/platform/admin/courses",
+        "/v1/platform/admin/orders"
+      ],
+      "writeApi": [],
+      "permission": "main-site admin",
+      "sideEffects": "none",
+      "metadata": "noindex",
+      "emptyState": "access denied or zero-domain summary",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "admin-algorithms",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/admin/algorithms",
+          "/platform/admin/algorithms"
+        ],
+        [
+          "retired:/admin/algorithms/[id]",
+          "/platform/admin/algorithms/[id]"
+        ],
+        [
+          "retired:/admin/algorithms/new",
+          "/platform/admin/algorithms/new"
+        ]
+      ],
+      "strategy": "canonical-deep-link",
+      "canonicalOwner": "alg",
+      "readApi": [
+        "/api/alg/admin/*"
+      ],
+      "writeApi": [
+        "/api/alg/admin/*"
+      ],
+      "permission": "main-site alg admin",
+      "sideEffects": "canonical algorithm writes only",
+      "metadata": "noindex",
+      "emptyState": "canonical algorithm admin empty state",
+      "tests": [
+        "platform-routing.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "admin-teacher-applications",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/admin/applications",
+          "/platform/admin/teacher-applications"
+        ],
+        [
+          "retired:/admin/applications/[id]",
+          "/platform/admin/teacher-applications/[id]"
+        ]
+      ],
+      "strategy": "new-platform-admin",
+      "canonicalOwner": "platform-instructor",
+      "readApi": [
+        "/v1/platform/admin/instructor-applications"
+      ],
+      "writeApi": [
+        "/v1/platform/admin/instructor-applications/:id/decision"
+      ],
+      "permission": "main-site admin",
+      "sideEffects": "application transitions, role grant and teacher profile link",
+      "metadata": "noindex",
+      "emptyState": "no pending applications",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "admin-coupons",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/admin/coupons",
+          "/platform/admin/coupons"
+        ]
+      ],
+      "strategy": "new-platform-admin",
+      "canonicalOwner": "platform-commerce",
+      "readApi": [
+        "/v1/platform/admin/coupons"
+      ],
+      "writeApi": [
+        "/v1/platform/admin/coupons/*"
+      ],
+      "permission": "finance/admin",
+      "sideEffects": "coupon versions and redemption limits",
+      "metadata": "noindex",
+      "emptyState": "no coupons",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "admin-catalog",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/admin/courses",
+          "/platform/admin/courses"
+        ],
+        [
+          "retired:/admin/courses/[id]",
+          "/platform/admin/courses/[id]"
+        ],
+        [
+          "retired:/admin/courses/new",
+          "/platform/admin/courses/new"
+        ],
+        [
+          "retired:/admin/paths",
+          "/platform/admin/paths"
+        ]
+      ],
+      "strategy": "new-platform-admin",
+      "canonicalOwner": "platform-catalog",
+      "readApi": [
+        "/v1/platform/admin/courses",
+        "/v1/platform/admin/paths"
+      ],
+      "writeApi": [
+        "/v1/platform/admin/courses/*",
+        "/v1/platform/admin/paths/*"
+      ],
+      "permission": "admin; instructor writes remain owner-scoped",
+      "sideEffects": "draft revisions, lesson and quiz ordering, publish transitions",
+      "metadata": "noindex",
+      "emptyState": "first course or path prompt",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "admin-events-observability",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/admin/events",
+          "/platform/admin/events"
+        ],
+        [
+          "retired:/admin/events/[id]",
+          "/platform/admin/events/[id]"
+        ],
+        [
+          "retired:/admin/events/new",
+          "/platform/admin/events/new"
+        ],
+        [
+          "retired:/admin/events-track",
+          "/platform/admin/analytics"
+        ],
+        [
+          "retired:/admin/logs",
+          "/platform/admin/logs"
+        ]
+      ],
+      "strategy": "new-platform-admin-and-shared-observability",
+      "canonicalOwner": "platform-content",
+      "readApi": [
+        "/v1/platform/admin/events",
+        "/v1/platform/admin/analytics",
+        "/v1/platform/admin/logs"
+      ],
+      "writeApi": [
+        "/v1/platform/admin/events/*"
+      ],
+      "permission": "admin; logs require audit scope",
+      "sideEffects": "event revisions and capacity; privacy-minimized aggregates",
+      "metadata": "noindex",
+      "emptyState": "no events, aggregates or audit entries",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "admin-instructors",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/admin/instructor-payouts",
+          "/platform/admin/payouts"
+        ],
+        [
+          "retired:/admin/instructors",
+          "/platform/admin/teachers"
+        ],
+        [
+          "retired:/admin/instructors/[id]",
+          "/platform/admin/teachers/[id]"
+        ],
+        [
+          "retired:/admin/instructors/new",
+          "/platform/admin/teachers/new"
+        ]
+      ],
+      "strategy": "reuse-teacher-directory-plus-platform-ledgers",
+      "canonicalOwner": "platform-instructor",
+      "readApi": [
+        "/v1/teachers",
+        "/v1/platform/admin/instructor-payouts"
+      ],
+      "writeApi": [
+        "/v1/teachers/*",
+        "/v1/platform/admin/instructor-payouts/*"
+      ],
+      "permission": "admin; payout write requires finance scope",
+      "sideEffects": "teacher link, revenue share and immutable payout ledger",
+      "metadata": "noindex",
+      "emptyState": "shared teacher directory or no payouts",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "admin-growth-content-community",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/admin/invites",
+          "/platform/admin/invites"
+        ],
+        [
+          "retired:/admin/news",
+          "/platform/admin/news"
+        ],
+        [
+          "retired:/admin/news/[id]",
+          "/platform/admin/news/[id]"
+        ],
+        [
+          "retired:/admin/news/new",
+          "/platform/admin/news/new"
+        ],
+        [
+          "retired:/admin/posts",
+          "/platform/admin/community"
+        ]
+      ],
+      "strategy": "new-platform-content-plus-forum-moderation",
+      "canonicalOwner": "platform-content",
+      "readApi": [
+        "/v1/platform/admin/invites",
+        "/v1/platform/admin/news",
+        "/v1/forum/admin/*"
+      ],
+      "writeApi": [
+        "/v1/platform/admin/invites/*",
+        "/v1/platform/admin/news/*",
+        "/v1/forum/admin/*"
+      ],
+      "permission": "main-site admin or forum moderator",
+      "sideEffects": "invite redemption, news revisions and forum moderation audit",
+      "metadata": "noindex",
+      "emptyState": "no invitations, news or moderation queue",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "admin-orders",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/admin/orders",
+          "/platform/admin/orders"
+        ],
+        [
+          "retired:/admin/reconcile",
+          "/platform/admin/reconcile"
+        ]
+      ],
+      "strategy": "new-platform-commerce-admin",
+      "canonicalOwner": "platform-commerce",
+      "readApi": [
+        "/v1/platform/admin/orders",
+        "/v1/platform/admin/reconciliation"
+      ],
+      "writeApi": [
+        "/v1/platform/admin/orders/:id/*",
+        "/v1/platform/admin/reconciliation/*"
+      ],
+      "permission": "finance/admin",
+      "sideEffects": "audited payment, refund and reconciliation transitions",
+      "metadata": "noindex",
+      "emptyState": "no orders or reconciliation differences",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "admin-products",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/admin/products",
+          "/platform/admin/products"
+        ],
+        [
+          "retired:/admin/products/[id]",
+          "/platform/admin/products/[id]"
+        ],
+        [
+          "retired:/admin/products/new",
+          "/platform/admin/products/new"
+        ]
+      ],
+      "strategy": "new-platform-commerce-admin",
+      "canonicalOwner": "platform-commerce",
+      "readApi": [
+        "/v1/platform/admin/products"
+      ],
+      "writeApi": [
+        "/v1/platform/admin/products/*"
+      ],
+      "permission": "admin; inventory write is audited",
+      "sideEffects": "product revisions, prices and inventory ledger",
+      "metadata": "noindex",
+      "emptyState": "first product prompt",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "admin-qr",
+      "kind": "page",
+      "mappings": [
+        [
+          "retired:/admin/qr",
+          "/platform/admin/qr"
+        ],
+        [
+          "retired:/admin/qr/[code]",
+          "/platform/admin/qr/[code]"
+        ],
+        [
+          "retired:/admin/qr/cards",
+          "/platform/admin/qr/cards"
+        ],
+        [
+          "retired:/admin/qr/prompts",
+          "/platform/admin/qr/prompts"
+        ],
+        [
+          "retired:/admin/qr/stats",
+          "/platform/admin/qr/stats"
+        ]
+      ],
+      "strategy": "new-platform-qr-admin",
+      "canonicalOwner": "platform-qr",
+      "readApi": [
+        "/v1/platform/admin/qr/*"
+      ],
+      "writeApi": [
+        "/v1/platform/admin/qr/*"
+      ],
+      "permission": "main-site admin",
+      "sideEffects": "revision, enable, soft-delete, template, print job and aggregate scan writes",
+      "metadata": "noindex",
+      "emptyState": "first QR code or template prompt",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "organization-deep-links",
+      "kind": "page",
+      "mappings": [
+        [
+          "archive:/org",
+          "/platform/org"
+        ],
+        [
+          "archive:/org/[orgSlug]",
+          "/platform/org/[orgSlug]"
+        ],
+        [
+          "archive:/org/[orgSlug]/campuses",
+          "/platform/org/[orgSlug]/campuses"
+        ],
+        [
+          "archive:/org/[orgSlug]/classes",
+          "/platform/org/[orgSlug]/classes"
+        ],
+        [
+          "archive:/org/[orgSlug]/classes/[groupId]",
+          "/platform/org/[orgSlug]/classes/[groupId]"
+        ],
+        [
+          "archive:/org/[orgSlug]/members",
+          "/platform/org/[orgSlug]/members"
+        ],
+        [
+          "archive:/org/[orgSlug]/packages",
+          "/platform/org/[orgSlug]/packages"
+        ],
+        [
+          "archive:/org/[orgSlug]/schedule",
+          "/platform/org/[orgSlug]/schedule"
+        ],
+        [
+          "archive:/org/[orgSlug]/sessions/[sessionId]",
+          "/platform/org/[orgSlug]/sessions/[sessionId]"
+        ],
+        [
+          "archive:/org/[orgSlug]/students",
+          "/platform/org/[orgSlug]/students"
+        ],
+        [
+          "archive:/org/[orgSlug]/students/[studentId]/credits",
+          "/platform/org/[orgSlug]/students/[studentId]/credits"
+        ],
+        [
+          "archive:/org/[orgSlug]/students/[studentId]/responsibilities",
+          "/platform/org/[orgSlug]/students/[studentId]/responsibilities"
+        ]
+      ],
+      "strategy": "canonical-deep-link",
+      "canonicalOwner": "teaching-saas",
+      "readApi": [
+        "/v1/teaching/organizations/*"
+      ],
+      "writeApi": [
+        "/v1/teaching/organizations/*"
+      ],
+      "permission": "existing organization role and assignment scope",
+      "sideEffects": "canonical organization, student, class, package, session and attendance writes",
+      "metadata": "canonical org routes; private details noindex",
+      "emptyState": "shared organization empty states",
+      "tests": [
+        "platform-routing.test.ts",
+        "teaching-main-site.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "auth-handlers",
+      "kind": "handler",
+      "mappings": [
+        [
+          "retired:/api/auth/send-otp",
+          "/v1/auth/*"
+        ],
+        [
+          "retired:/api/auth/verify-otp",
+          "/v1/auth/*"
+        ],
+        [
+          "retired:/api/auth/logout",
+          "/v1/auth/*"
+        ]
+      ],
+      "strategy": "reuse-main-auth",
+      "canonicalOwner": "auth",
+      "readApi": [
+        "/v1/auth/me"
+      ],
+      "writeApi": [
+        "/v1/auth/*"
+      ],
+      "permission": "main auth policy",
+      "sideEffects": "main session only; old OTP and session data not imported",
+      "metadata": "not-applicable",
+      "emptyState": "structured authentication error",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "media-and-analytics-handlers",
+      "kind": "handler",
+      "mappings": [
+        [
+          "retired:/api/upload",
+          "/v1/images"
+        ],
+        [
+          "retired:/api/track",
+          "/v1/platform/analytics"
+        ]
+      ],
+      "strategy": "reuse-media-and-minimize-analytics",
+      "canonicalOwner": "media-and-observability",
+      "readApi": [
+        "/v1/platform/admin/analytics"
+      ],
+      "writeApi": [
+        "/v1/images",
+        "/v1/platform/analytics"
+      ],
+      "permission": "image owner/admin; consented analytics",
+      "sideEffects": "owned media and retention-limited aggregate events",
+      "metadata": "not-applicable",
+      "emptyState": "structured validation error",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "commerce-handlers",
+      "kind": "handler",
+      "mappings": [
+        [
+          "retired:/api/orders/[id]/status",
+          "/v1/platform/orders/:id"
+        ],
+        [
+          "retired:/api/payments/[provider]/callback",
+          "/v1/platform/payments/:provider/notify"
+        ]
+      ],
+      "strategy": "new-transactional-commerce",
+      "canonicalOwner": "platform-commerce",
+      "readApi": [
+        "/v1/platform/orders/:id"
+      ],
+      "writeApi": [
+        "/v1/platform/payments/:provider/notify"
+      ],
+      "permission": "order owner/admin; signed provider webhook",
+      "sideEffects": "atomic order, fulfilment, entitlement, stock, capacity and outbox transition",
+      "metadata": "not-applicable",
+      "emptyState": "not-found or rejected webhook",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "learning-handler",
+      "kind": "handler",
+      "mappings": [
+        [
+          "retired:/api/lessons/[id]/video",
+          "/v1/platform/lessons/:id/media"
+        ]
+      ],
+      "strategy": "new-entitlement-gate",
+      "canonicalOwner": "platform-learning",
+      "readApi": [
+        "/v1/platform/lessons/:id/media"
+      ],
+      "writeApi": [],
+      "permission": "active entitlement owner",
+      "sideEffects": "short-lived authorized media access only",
+      "metadata": "not-applicable",
+      "emptyState": "concealed not-found or purchase prompt",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "qr-handlers",
+      "kind": "handler",
+      "mappings": [
+        [
+          "retired:/api/qr/[code]/svg",
+          "/v1/platform/qr/:code/svg"
+        ],
+        [
+          "retired:/api/qr/[code]/card",
+          "/v1/platform/qr/:code/card"
+        ]
+      ],
+      "strategy": "new-platform-qr",
+      "canonicalOwner": "platform-qr",
+      "readApi": [
+        "/v1/platform/qr/:code/svg",
+        "/v1/platform/qr/:code/card"
+      ],
+      "writeApi": [],
+      "permission": "public enabled code",
+      "sideEffects": "none",
+      "metadata": "not-applicable",
+      "emptyState": "disabled or not-found",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "certificate-image-handler",
+      "kind": "handler",
+      "mappings": [
+        [
+          "retired:/cert/[code]/image",
+          "/v1/platform/certificates/:code/image"
+        ]
+      ],
+      "strategy": "new-platform-learning",
+      "canonicalOwner": "platform-learning",
+      "readApi": [
+        "/v1/platform/certificates/:code/image"
+      ],
+      "writeApi": [],
+      "permission": "public valid certificate",
+      "sideEffects": "none",
+      "metadata": "not-applicable",
+      "emptyState": "invalid or revoked certificate",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "icon-og-handlers",
+      "kind": "handler",
+      "mappings": [
+        [
+          "retired:/icons/[size]",
+          "/icons/CubeRoot.png"
+        ],
+        [
+          "retired:/og",
+          "/icons/CubeRoot.png"
+        ]
+      ],
+      "strategy": "reuse-main-metadata-assets",
+      "canonicalOwner": "main-site-metadata",
+      "readApi": [
+        "/icons/CubeRoot.png"
+      ],
+      "writeApi": [],
+      "permission": "public",
+      "sideEffects": "none",
+      "metadata": "main-site icon and open graph policy",
+      "emptyState": "static fallback asset",
+      "tests": [
+        "platform-capability-manifest.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "learning-actions",
+      "kind": "action",
+      "mappings": [
+        [
+          "retired:/actions/cert.ts",
+          "/v1/platform/certificates"
+        ],
+        [
+          "retired:/actions/checkin.ts",
+          "/v1/platform/check-ins"
+        ],
+        [
+          "retired:/actions/favorites.ts",
+          "/v1/platform/account/favorites"
+        ],
+        [
+          "retired:/actions/notes.ts",
+          "/v1/platform/notes"
+        ],
+        [
+          "retired:/actions/progress.ts",
+          "/v1/platform/progress"
+        ],
+        [
+          "retired:/actions/quiz.ts",
+          "/v1/platform/quizzes/:id/attempts"
+        ],
+        [
+          "retired:/actions/reviews.ts",
+          "/v1/platform/reviews"
+        ]
+      ],
+      "strategy": "replace-server-actions-with-api",
+      "canonicalOwner": "platform-learning",
+      "readApi": [
+        "/v1/platform/me/*"
+      ],
+      "writeApi": [
+        "/v1/platform/instructor/certificates",
+        "/v1/platform/me/checkins",
+        "/v1/platform/me/*",
+        "/v1/platform/learning/lessons/:lessonId/quiz",
+        "/v1/platform/courses/:courseId/reviews"
+      ],
+      "permission": "signed-in owner with entitlement where required",
+      "sideEffects": "learning and immutable point/certificate ledgers",
+      "metadata": "not-applicable",
+      "emptyState": "structured domain error",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "shared-actions",
+      "kind": "action",
+      "mappings": [
+        [
+          "retired:/actions/circle.ts",
+          "/v1/forum/*"
+        ],
+        [
+          "retired:/actions/community.ts",
+          "/v1/forum/*"
+        ],
+        [
+          "retired:/actions/notifications.ts",
+          "/v1/notifications/*"
+        ],
+        [
+          "retired:/actions/timer.ts",
+          "/timer"
+        ]
+      ],
+      "strategy": "reuse-canonical-services",
+      "canonicalOwner": "forum-notifications-timer",
+      "readApi": [
+        "/v1/forum/*",
+        "/v1/notifications",
+        "/timer"
+      ],
+      "writeApi": [
+        "/v1/forum/*",
+        "/v1/notifications/*",
+        "/timer"
+      ],
+      "permission": "canonical service policy",
+      "sideEffects": "canonical stores only; old timer history not imported",
+      "metadata": "not-applicable",
+      "emptyState": "canonical service empty state",
+      "tests": [
+        "platform-routing.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "commerce-actions",
+      "kind": "action",
+      "mappings": [
+        [
+          "retired:/actions/order.ts",
+          "/v1/platform/orders"
+        ],
+        [
+          "retired:/actions/refund.ts",
+          "/v1/platform/orders/:id/refunds"
+        ]
+      ],
+      "strategy": "replace-server-actions-with-api",
+      "canonicalOwner": "platform-commerce",
+      "readApi": [
+        "/v1/platform/orders/:id"
+      ],
+      "writeApi": [
+        "/v1/platform/orders",
+        "/v1/platform/orders/:id/payment-attempts",
+        "/v1/platform/orders/:id/cancel",
+        "/v1/platform/admin/orders/:id/refund"
+      ],
+      "permission": "owner; finance/admin for manual operations",
+      "sideEffects": "transactional payment, refund and reverse ledgers",
+      "metadata": "not-applicable",
+      "emptyState": "structured domain error",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "admin-core-actions",
+      "kind": "action",
+      "mappings": [
+        [
+          "retired:/admin/actions.ts",
+          "/v1/platform/admin/*"
+        ],
+        [
+          "retired:/admin/algorithms/actions.ts",
+          "/api/alg/admin/*"
+        ],
+        [
+          "retired:/admin/applications/actions.ts",
+          "/v1/platform/admin/teacher-applications/*"
+        ],
+        [
+          "retired:/admin/coupons/actions.ts",
+          "/v1/platform/admin/coupons/*"
+        ],
+        [
+          "retired:/admin/courses/actions.ts",
+          "/v1/platform/admin/courses/*"
+        ],
+        [
+          "retired:/admin/courses/lessons-actions.ts",
+          "/v1/platform/admin/courses/:id/lessons/*"
+        ],
+        [
+          "retired:/admin/courses/quiz-actions.ts",
+          "/v1/platform/admin/quizzes/*"
+        ],
+        [
+          "retired:/admin/events/actions.ts",
+          "/v1/platform/admin/events/*"
+        ],
+        [
+          "retired:/admin/instructor-payouts/actions.ts",
+          "/v1/platform/admin/payouts/*"
+        ],
+        [
+          "retired:/admin/instructors/actions.ts",
+          "/v1/teachers/*"
+        ],
+        [
+          "retired:/admin/invites/actions.ts",
+          "/v1/platform/admin/invites/*"
+        ],
+        [
+          "retired:/admin/news/actions.ts",
+          "/v1/platform/admin/news/*"
+        ],
+        [
+          "retired:/admin/orders/actions.ts",
+          "/v1/platform/admin/orders/*"
+        ],
+        [
+          "retired:/admin/paths/actions.ts",
+          "/v1/platform/admin/paths/*"
+        ],
+        [
+          "retired:/admin/posts/actions.ts",
+          "/v1/forum/admin/*"
+        ],
+        [
+          "retired:/admin/products/actions.ts",
+          "/v1/platform/admin/products/*"
+        ],
+        [
+          "retired:/admin/qr/actions.ts",
+          "/v1/platform/admin/qr/*"
+        ],
+        [
+          "retired:/admin/qr/prompts/actions.ts",
+          "/v1/platform/admin/qr/templates/*"
+        ]
+      ],
+      "strategy": "replace-server-actions-with-scoped-api",
+      "canonicalOwner": "platform-admin-and-canonical-domains",
+      "readApi": [
+        "/v1/platform/admin/*",
+        "/api/alg/admin/*",
+        "/v1/teachers/*",
+        "/v1/forum/admin/*"
+      ],
+      "writeApi": [
+        "/v1/platform/admin/*",
+        "/api/alg/admin/*",
+        "/v1/teachers/*",
+        "/v1/forum/admin/*"
+      ],
+      "permission": "main-site admin with domain-specific finance, content or moderation scope",
+      "sideEffects": "revision and immutable financial/audit ledgers",
+      "metadata": "not-applicable",
+      "emptyState": "structured admin domain error",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "instructor-actions",
+      "kind": "action",
+      "mappings": [
+        [
+          "retired:/instructor/courses/actions.ts",
+          "/v1/platform/instructor/courses/*"
+        ],
+        [
+          "retired:/instructors/apply/actions.ts",
+          "/v1/platform/teacher-applications"
+        ]
+      ],
+      "strategy": "replace-server-actions-with-owner-api",
+      "canonicalOwner": "platform-instructor",
+      "readApi": [
+        "/v1/platform/instructor/*",
+        "/v1/platform/instructor/applications/current"
+      ],
+      "writeApi": [
+        "/v1/platform/instructor/courses/*",
+        "/v1/platform/instructor/applications"
+      ],
+      "permission": "approved instructor owner or signed-in applicant",
+      "sideEffects": "course revisions and application state",
+      "metadata": "not-applicable",
+      "emptyState": "structured owner or application error",
+      "tests": [
+        "platform_routes_contract.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "organization-actions",
+      "kind": "action",
+      "mappings": [
+        [
+          "archive:/org/actions.ts",
+          "/v1/teaching/organizations/*"
+        ]
+      ],
+      "strategy": "reuse-canonical-teaching-saas",
+      "canonicalOwner": "teaching-saas",
+      "readApi": [
+        "/v1/teaching/organizations/*"
+      ],
+      "writeApi": [
+        "/v1/teaching/organizations/*"
+      ],
+      "permission": "existing organization role and assignment scope",
+      "sideEffects": "canonical organization teaching writes",
+      "metadata": "not-applicable",
+      "emptyState": "canonical teaching domain error",
+      "tests": [
+        "teaching-main-site.test.ts",
+        "platform-routing.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    },
+    {
+      "id": "metadata-routes",
+      "kind": "metadata",
+      "mappings": [
+        [
+          "retired:/icon.tsx",
+          "/icons/CubeRoot.png"
+        ],
+        [
+          "retired:/apple-icon.tsx",
+          "/icons/CubeRoot.png"
+        ],
+        [
+          "retired:/robots.ts",
+          "/robots.txt"
+        ],
+        [
+          "retired:/sitemap.ts",
+          "/sitemap.xml"
+        ]
+      ],
+      "strategy": "reuse-main-site-metadata",
+      "canonicalOwner": "main-site-metadata",
+      "readApi": [
+        "/robots.txt",
+        "/sitemap.xml",
+        "/icons/CubeRoot.png"
+      ],
+      "writeApi": [],
+      "permission": "public",
+      "sideEffects": "none",
+      "metadata": "one canonical host; public Platform routes indexed and private routes noindex",
+      "emptyState": "main-site static metadata fallback",
+      "tests": [
+        "platform-capability-manifest.test.ts",
+        "page-metadata-coverage.test.ts"
+      ],
+      "implementationStatus": "implemented",
+      "reviewStatus": "reviewed"
+    }
+  ]
+}

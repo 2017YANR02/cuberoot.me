@@ -1,607 +1,318 @@
-# Platform 产品能力与数据迁移跟踪
+# Platform 主站完整迁移跟踪
 
 最后更新：2026-08-22
 
-状态：`P1-P5 完成；P6 进行中；P7 观察计时已启动`
+状态：`P0-P7 已完成并通过本地终审；P8 发布、线上 smoke 与观察窗口待完成`
 
-当前结论：旧 Platform 的生产权威来源已经冻结并完成隔离恢复，83 个页面、13 个 Route Handler、33 个 Server Action、4 个 metadata route 和 1,157 条业务记录均有唯一处置。没有真实账号、订单、支付、课程权益、课时、学习进度、讲师申请、结算或证书需要导入；旧商业内容均为 seed/demo，因而不重建商城、订单、活动、新闻、QR 或独立后台。主站只补唯一 `/search?q=`、首页搜索真链接、公开课程入口和账户内会员/消息入口。产品、数据、代码三路实施终审均已通过；当前仍不得删除旧仓、SQLite 或静态资产，P6 的窄屏与部署验收、P7 的观察和删除授权尚未完成。
+## 0. 当前结论
 
-本次实施的权威明细：
+旧 Platform 的功能必须完整进入 CubeRoot 主站，但不恢复独立 Platform 前端、独立部署、SQLite 运行时或第二套账号系统。
 
-- [Platform 产品 surface 处置账本](./platform-product-surface-ledger.md)：`83 + 13 + 33 + 4` 项全部归属，未归属 0。
-- [Platform 权威数据与处置账本](./platform-data-disposition-ledger.md)：`35 merged-no-write + 4 rejected + 158 reversible-archive-pending-owner + 960 retained-under-policy = 1,157`，差值 0。
-- 第 4.2 至 4.5 节保留的是冻结前的本地调查历史；与新账本不一致时，以生产冻结快照和两份处置账本为准，禁止把本地 SQLite 与生产快照合并。
-- 冻结/观察起点：`2026-08-22T12:05Z`；最早观察结束：`2026-09-21T12:05Z`。
+- 主入口：`/platform`；中文入口：`/zh/platform`。
+- 全部 Platform 用户路径位于 `/platform/*`，使用主站 shell、账号、权限、主题与双语体系。
+- 首页新增 `Platform` 卡片，作为这些能力的唯一聚合入口。
+- `platform.cuberoot.me` 继续返回 HTTP 410，不跳转、不展示旧页面。
+- 主站已有能力必须共享组件、API 与数据源；`/platform/*` 可以提供同壳深链，但不得复制 teacher、forum、alg、timer、notifications、org、learn。
+- 旧 seed/demo 不导入生产库；旧 timer 历史明确不迁移。没有历史数据只意味着空状态开始，不意味着取消功能。
+- 新写入只进入主站 PostgreSQL 与主站媒体存储，禁止恢复 SQLite 或双写。
+- 在本跟踪的守恒、测试、部署和观察门槛全部通过前，不得删除旧源码、旧 GitHub 仓库、SQLite 或仍未定性的资产。
 
-## 1. 文档职责
+本次迁移按两套来源的并集守恒：
 
-本文是旧 Platform 产品能力与业务数据迁入主站的唯一执行跟踪入口，负责回答：
+| Surface | 退役前权威副本 | 主仓归档 | 并集目标 | 未归属 |
+| --- | ---: | ---: | ---: | ---: |
+| 页面 | 83 | 95 | 95 | 0 |
+| Route Handler | 13 | 13 | 13 | 0 |
+| Server Action 文件 | 33 | 32 | 34 | 0 |
+| Metadata route | 4 | 4 | 4 | 0 |
 
-1. 旧站每个页面、Route Handler、Server Action、业务表和媒体引用最终去哪里。
-2. 哪些直接复用主站，哪些扩展主站，哪些转换导入，哪些必须经仓库所有者明确批准后归档或销毁。
-3. 每一阶段开始、完成、回滚和停止的条件是什么。
-4. 何时才允许删除旧本地源码目录和旧 GitHub 仓库，以及哪些受控数据归档必须继续保留。
+差异是归档独有 12 个 `/org/*` 页面和 `org/actions.ts`，退役前副本独有 timer Action 与算法管理 Action。逐项去向见 [Platform 产品 surface 账本](./platform-product-surface-ledger.md)。历史数据的逐行处置仍以 [Platform 数据处置账本](./platform-data-disposition-ledger.md) 为准；数据账本不能决定产品功能是否保留。
 
-相关文档的边界：
+## 1. 完成定义
 
-- [platform-migration.md](./platform-migration.md)只记录源码、Git 历史和 monorepo 接入历史，不再代表产品与数据已经迁完。
-- [platform-unification-plan.md](./platform-unification-plan.md)只记录机构教学前端切换；已进入主站的 `/org`、`/learn` 能力不在本文重复实现，其未闭环的生产验收仍由原计划跟踪。
-- [architecture-modernization-tracker.md](./architecture-modernization-tracker.md)在本文完成前暂停源码重构实施，只允许只读调查，避免在错误的 Platform 完成前提上固化新边界。
-- [architecture-audit-2026-08.md](./architecture-audit-2026-08.md)是 2026-08-21 的静态审计快照；其中“Platform 产品迁移已完成”的结论已被 2026-08-22 的数据与路由证据推翻。
+“完整迁移”同时满足以下五层，缺一层都不能标记完成：
 
-## 2. 状态规则
+1. 产品守恒：95 个页面、13 个 Handler、34 个 Action 文件、4 个 metadata route 均有目标入口、行为、权限、空状态与测试。
+2. 复用守恒：身份、教师、论坛、算法、计时、通知、组织教学只有一份权威组件/API/数据源。
+3. 数据守恒：正式业务表使用 PostgreSQL；seed/demo、敏感瞬态数据与旧 timer 历史不导入；真实非空数据按数据账本逐行守恒。
+4. 交易守恒：商品、课程、活动均通过统一订单、支付、退款、优惠、权益、库存/名额、对账与结算账本闭环。
+5. 发布守恒：中英双语、桌面与窄屏、metadata、权限、安全、定向测试、typecheck、build、CI、部署和线上 smoke 全部通过。
 
-| 状态 | 含义 |
+页面能打开、API 能返回 200、测试单独通过或旧数据为零，都不能替代上述完成定义。
+
+## 2. 产品与 URL 架构
+
+### 2.1 Platform 首页与共享导航
+
+`/platform` 不是第二个站点，而是主站里的业务能力目录。页面按用户任务组织为：发现、学习、交易、社区、教学者、机构、账户、运营。
+
+每个 `/platform/*` 页面都使用统一 `PlatformShell`：
+
+- 当前领域导航与面包屑；
+- 主站语言、账号、主题和返回首页入口；
+- 登录、管理员、讲师、机构角色的条件入口；
+- 窄屏下可触摸、可横向滚动或折叠的导航；
+- 真正的 `AppLink`，支持中键与 Ctrl 点击；
+- 不复制目标页面主体组件，不用 redirect-only 冒充复用。
+
+### 2.2 公开与个人路径
+
+| 领域 | 最终路径 | 实现原则 |
+| --- | --- | --- |
+| 首页/说明/进度 | `/platform`、`/platform/about`、`/platform/progress` | 新聚合页；进度汇总课程、测验、签到、证书，并引用主站训练数据 |
+| 登录/账户/离线 | `/platform/login`、`/platform/account`、`/platform/offline` | 复用主站 auth/session/PWA，不恢复旧 OTP/session |
+| 账户子域 | `/platform/account/{courses,membership,badges,favorites,notes,wishlist,invites}` | 主站用户身份下的真实空状态与读写链 |
+| 通知 | `/platform/notifications` | 共享主站通知组件和数据源 |
+| 计时/榜单 | `/platform/timer`、`/platform/leaderboard` | 共享主站 timer；旧历史不迁，榜单只用新数据或现有主站数据 |
+| 公式 | `/platform/algorithms`、`/platform/algorithms/[id]` | 复用 `/alg` 数据、播放器和训练入口；旧详情页本就不读取旧 ID，新路由保留同样的兼容入口语义 |
+| 课程 | `/platform/courses`、`/platform/courses/[courseId]`、`/platform/courses/[courseId]/learn/[lessonId]` | 完整目录、详情、购买、权益、课时与学习闭环 |
+| 学习路径 | `/platform/paths`、`/platform/paths/[pathId]` | 有序引用同一课程/课时 ID |
+| 教师 | `/platform/teachers`、`/platform/teachers/[id]`、`/platform/teachers/apply` | 共享教师目录、图片、联系方式；补正式申请与审核状态 |
+| 教师控制台 | `/platform/instructor`、`/platform/instructor/{courses,students,earnings}`、`/platform/instructor/courses/[id]` | 课程 owner、付费购买者、收入和结算；不冒充 `/org` 正式学员 |
+| 社区 | `/platform/community`、`/platform/community/circles/[id]`、`/platform/community/posts/[id]`、`/platform/community/posts/new` | 共享 forum 帖子、回复、反应、举报和管理；圈子映射为论坛分类/群组 |
+| 活动 | `/platform/events`、`/platform/events/[id]` | 商业教学活动与报名，不映射 WCA 赛事 |
+| 资讯 | `/platform/news`、`/platform/news/[id]` | 可管理、可搜索的双语资讯 |
+| 商城 | `/platform/shop`、`/platform/shop/[id]` | 实体/数字商品、库存、会员价和购买链 |
+| 订单 | `/platform/orders`、`/platform/orders/[id]` | 统一订单详情、支付、取消、退款、履约与权益联动 |
+| QR/证书 | `/platform/qr/[code]`、`/platform/cert/[code]` | 跳转/落地、禁用、扫描统计；证书验证和图片 |
+| 搜索 | `/platform/search?q=` | 扩展主站唯一搜索契约，增加 Platform 实体 provider |
+| 课程会员 | `/platform/membership`、`/platform/account/membership` | Platform 课程权益会员；与主站支持型 `/membership` 分开 |
+
+### 2.3 机构教学路径
+
+归档独有的 12 个 `/org/*` 页面保留 `/platform/org/*` 深链，并共享现有 `/org`、`/learn`、`/training` 数据和组件：
+
+- `/platform/org`
+- `/platform/org/[orgSlug]`
+- `/platform/org/[orgSlug]/{campuses,classes,members,packages,schedule,students}`
+- `/platform/org/[orgSlug]/classes/[groupId]`
+- `/platform/org/[orgSlug]/sessions/[sessionId]`
+- `/platform/org/[orgSlug]/students/[studentId]/{credits,responsibilities}`
+
+这些路径只能作为 Platform 壳内的共享体验，不得新建组织、学生、课包、课次或考勤表。
+
+### 2.4 管理路径
+
+`/platform/admin` 复用主站账号和 admin guard，不恢复 `/admin/login` 的独立密码。管理面包括：
+
+- `algorithms`
+- `teacher-applications`
+- `coupons`
+- `courses`、课程课时与测验、`paths`
+- `events`
+- `analytics`、`logs`
+- `payouts`
+- `teachers`
+- `invites`
+- `news`
+- `community`
+- `orders`、`reconcile`
+- `products`
+- `qr`、`qr/[code]`、`qr/cards`、`qr/prompts`、`qr/stats`
+
+同领域的新建、详情和编辑采用一个可复用 editor，以路由参数控制模式，不复制三份页面实现。
+
+## 3. 复用边界
+
+| 能力 | 唯一权威来源 | Platform 适配方式 |
+| --- | --- | --- |
+| 账号与登录 | `AuthPanel`、auth store、主站 auth routes | 共享登录面板、session 与 owner key |
+| 内部链接 | `AppLink` | 自动处理英文裸路径与 `/zh` |
+| 教师目录 | `/teachers`、`teacher-directory-api`、`teacher_directory.ts` | 抽取共享目录 view/editor，再由两个路由 import |
+| 社区 | `/forum`、forum API | 共享帖子、回复、反应、举报、moderation |
+| 算法 | `/alg`、PG alg sets/cases、`AlgPlayer` | 共享详情与播放契约，不建 Platform 算法表 |
+| 计时 | `/timer` | 共享引擎与新数据；不迁旧 timer history |
+| 通知 | `/notifications`、notification routes | Platform 业务写入同一通知源和 outbox |
+| 组织教学 | `/org`、`/learn`、`/training`、teaching SaaS API | 抽共享视图或显式 gateway，不 import server internals |
+| 媒体 | 主站图片上传与所有权校验 | 课程、商品、资讯、教师、QR 共用授权存储 |
+| 搜索 | `LandingSearch` / site-search contract | 增加 Platform provider，不建第二索引 |
+| 支付 provider | 现有 Alipay/WeChat/Xunhupay 适配器 | 只复用 provider 和签名；订单/权益模型独立 |
+| 支持型会员 | `/membership` | 保持独立，不授予 Platform 课程权益 |
+
+跨页复用先抽到 `components/platform` 或中性共享组件，再由原页和 `/platform/*` 同时 import；禁止从一个 page 目录直接 import 另一个 page 的私有组件。
+
+## 4. 新领域模块
+
+Platform 不进入已经 11,486 行的 `teaching_saas.ts`。后端按业务切片建立独立 route：
+
+- `platform_catalog.ts`：课程、课时、路径、教师申请与 owner 关系。
+- `platform_content.ts`：活动、资讯、商品和公共检索。
+- `platform_learning.ts`：权益、进度、笔记、收藏、测验、评价、证书、签到、积分、成就。
+- `platform_commerce.ts`：订单、订单项、优惠、支付、退款、履约、结算、对账。
+- `platform_qr.ts`：二维码、修订、卡面、模板、扫描统计。
+
+共享契约按同样边界放在 `@cuberoot/shared`，不得复制 auth/forum/notification/teacher/teaching 类型。
+
+## 5. PostgreSQL 目标模型
+
+### 5.1 直接复用
+
+- 用户、身份、登录：`app_users`、`auth_identities` 与现有认证表。
+- 社区：forum tables。
+- 通知：notifications，并增加可重试 outbox 与 dedupe key。
+- 算法：`alg_sets`、`alg_cases`。
+- 教师公开资料：teacher directory；Platform 只关联 teacher entry 与申请/角色。
+- 机构教学：现有 teaching organizations、members、students、guardians、campuses、groups、packages、credits、sessions、attendance、training、reports、conversations、audit。
+- 观测：现有日志/指标体系；不恢复旧原始行为回放。
+
+### 5.2 新增
+
+- Catalog：courses、course revisions、lessons、lesson revisions、media、paths、path items。
+- Learning：course entitlements、progress、notes、favorites/wishlist、quizzes、questions、attempts、reviews、certificates、check-ins、point ledger、achievements。
+- Commerce：orders、order items、sellable snapshots、payment attempts、provider events、refunds、fulfilment ledger、coupons、coupon redemptions。
+- Content：events、event registrations、news、products、inventory ledger、shipping addresses/fulfilment。
+- Instructor：applications、course ownership、revenue shares、payout ledger。
+- Growth：Platform invite codes/redemptions；不得混用 `/org` 成员邀请。
+- QR：codes、revisions、scans、templates、card jobs。
+- Privacy：consent、最小化 analytics events、aggregates 与 retention jobs。
+
+所有表使用主站用户键、PG FK/CHECK/partial unique、必要的 tenant composite FK；金额以整数 minor unit 加 currency 存储。删除行为优先 soft delete/revision，审计和财务账本不得物理覆盖。
+
+## 6. 安全与交易硬契约
+
+- 所有重要写操作接收 `Idempotency-Key`，保存 request hash 与响应；同 key 不同 payload 拒绝。
+- 用户只能读取本人的订单、权益和学习数据。
+- 讲师只能管理自有课程，并读取该课程的购买/获权学员；隐藏不必要联系方式。
+- 机构权限继续使用 org role 和 assignment scope；内容创建权不等于财务、退款或结算权。
+- 跨租户读取采用 concealed 404 或明确 403，并写 denied audit。
+- 课程媒体必须验证 entitlement，返回短时签名 URL 或受控流，不得公共缓存。
+- 支付 webhook 必须先验签，再核 merchant/app、provider、订单、金额和币种。
+- provider event id 与 provider transaction id 唯一；订单翻转、权益/积分/库存/名额和通知 outbox 在同一事务内完成。
+- 退款、拒付和取消使用独立幂等状态机，精确逆向原 ledger，不误伤其他续费或购买。
+- 最后一件库存、最后一个名额和优惠额度采用行锁/原子条件更新，禁止超售。
+- QR 目标只允许批准的 http/https 或站内路径，拒绝 `javascript:`、`data:`；打印码不可硬删，扫描 UV 全局去重。
+- 生产环境禁止 mock payment；管理员手动入账必须记录渠道凭据、操作者、原因与审计。
+
+现有会员支付实现只能作为 provider 接入参考，不直接复用其订单状态机。Platform commerce 上线前必须通过金额/币种/merchant 校验、原子履约和重复回调测试。
+
+## 7. 实施阶段
+
+### P0 跟踪、范围与契约冻结 — `已完成`
+
+- [x] 重新确认“功能完整迁移，seed/demo 与 timer 历史不迁”。
+- [x] 盘点权威副本与归档并集：95 / 13 / 34 / 4。
+- [x] 重写本跟踪与 surface 账本，不再以零数据取消功能。
+- [x] 建立机器可校验的 capability manifest，逐项关联 source、target、reuse、API、permission、test。
+- [x] 三路 agent 对 tracker 与 manifest 独立复核，未归属为 0。
+
+退出条件：文档、manifest、测试中的数量和目标一致；无“取消功能”的旧结论残留。
+
+### P1 共享契约、PG schema 与骨架 — `已完成`
+
+- [x] shared catalog/content/learning/commerce/QR DTO 与校验。
+- [x] 新编号 migration、`schema.pg.sql`、迁移 README、`/dev/schema` 同步。
+- [x] 五个独立 server route slice、统一 auth/permission/idempotency/outbox helper。
+- [x] `/platform` shell、导航、空/错/载入状态、首页卡片、metadata 基线。
+- [x] `/dev/api`、CORS/cache header、client API helpers 同步。
+
+退出条件：本地 migration 可重复应用；schema/API drift tests、server typecheck、client typecheck 通过。
+
+### P2 公共目录与内容 — `已完成`
+
+- [x] Platform 首页、about、search、offline。
+- [x] courses、course detail、lesson entitlement gate、paths。
+- [x] teachers/apply/detail，共享教师目录。
+- [x] events、news、shop。
+- [x] algorithms、community、timer、notifications 共享适配。
+- [x] 公开路由 metadata、sitemap、canonical；私有/搜索/admin noindex。
+
+退出条件：公开深链刷新、空状态、搜索、中英、SEO 与桌面/390px 均通过。
+
+### P3 Commerce 与 entitlement — `已完成`
+
+- [x] 订单草稿、价格/分成/商品快照、优惠预览与并发保留。
+- [x] 支付启动、状态轮询、provider webhook、幂等履约。
+- [x] 取消、退款、拒付、库存/活动名额、课程权益精确逆向。
+- [x] orders、order detail、shop/event/course 购买链、课程会员。
+- [x] 对账差异与人工处置审计。
+
+退出条件：重复/乱序 webhook 100 次只履约一次；所有 crash 点可重放收敛；错金额/币种/merchant 必拒。
+
+### P4 学员完整学习闭环 — `已完成`
+
+- [x] account courses/favorites/wishlist/notes/badges/invites/membership。
+- [x] lesson player、进度、时间戳笔记、测验 attempt、评价。
+- [x] 签到、积分、成就、证书签发/验证/图片。
+- [x] progress 汇总主站训练与 Platform 学习。
+
+退出条件：未获权不能看受限内容；已购可学习；退款只撤对应权益；证书可验证且不可伪造。
+
+### P5 教师业务 — `已完成`
+
+- [x] 申请、审核、教师角色与 teacher directory 关联。
+- [x] instructor dashboard、自有课程/课时/测验管理。
+- [x] students 只显示课程购买/获权者，不写入 org student profiles。
+- [x] earnings、revenue share、payout ledger 与 paid audit。
+
+退出条件：owner/讲师/财务/管理员边界通过越权矩阵；结算可从订单 ledger 重算。
+
+### P6 社区、运营、QR 与机构深链 — `已完成`
+
+- [x] forum 圈子/帖子/新建/详情共享体验。
+- [x] admin 全领域 CRUD、moderation、analytics、logs、orders、reconcile。
+- [x] QR 批量、复制、启停、软删除、模板恢复/排序、卡面、统计。
+- [x] `/platform/org/*` 12 条归档路径共享现有组织教学组件。
+- [x] 通知 outbox、邀请、最小化 analytics、数据保留/删除策略。
+
+退出条件：管理写操作、导出、打印、权限与审计逐项对齐旧能力；QR 安全与 UV 测试通过。
+
+### P7 守恒、体验与安全终验 — `已完成（本地）`
+
+- [x] capability manifest 守恒测试：95 / 13 / 34 / 4，未归属 0。
+- [x] client/server/shared typecheck 与定向单测。
+- [x] auth、owner、instructor、finance、org、admin、跨租户权限矩阵的合同与状态机测试。
+- [x] payment、refund、entitlement、inventory、event capacity、QR、certificate 的幂等与边界测试。
+- [x] Chrome 精确矩阵：1280px 中文 Platform 首页；390px 中文首页与账户会员权限态；430px 中文主站入口与课程深链。三档均无横向溢出，console 无 JS error；英文视觉未单独实测，双语 metadata 由自动测试覆盖。
+- [x] independent product/data/code agent review，所有本地 findings 闭环。
+
+真实登录角色、支付沙箱与生产 API 的浏览器 smoke 属于 P8 发布验收，不用 mock 或未上线 API 冒充完成。
+
+退出条件：三路 reviewer 结论均为 PASS，或每条 finding 都有修复与复验记录。
+
+### P8 发布、观察与旧仓决策 — `待实施`
+
+- [ ] commit 只包含本任务文件；push 仅在用户明确要求时执行。
+- [ ] 所有相关 Test/Deploy workflow `completed/success`。
+- [ ] 线上 `/platform` 关键路径/API/支付沙箱/权限 smoke；`platform.cuberoot.me` 仍为 410。
+- [ ] 全量上线后重新启动至少 30 天观察窗口；期间无旧写入、回调或唯一资产依赖。
+- [ ] 观察结束后给出旧本地目录、GitHub 仓库、SQLite 与媒体的删除清单，由用户明确批准。
+
+退出条件：用户明确批准删除前只读保留；删除走可恢复流程并记录证据。
+
+## 8. 测试矩阵
+
+| 层 | 最低证据 |
 | --- | --- |
-| `待盘点` | 只知道能力或数据存在，尚未完成来源、语义和目标核验 |
-| `待决策` | 证据齐全，等待仓库所有者确定迁移、复用、归档或销毁 |
-| `待实施` | 目标契约与验收已确定，并已获得该切片实施授权 |
-| `进行中` | 当前切片有唯一 owner，正在按已登记范围实施 |
-| `阻塞` | 有具体、可验证且无法在当前范围内消除的阻塞 |
-| `待验收` | 实现已完成，等待数据、功能、部署或观察窗口验收 |
-| `完成` | 代码、数据、入口、权限、回滚和线上证据全部齐全 |
-| `明确归档` | 仓库所有者明确决定不迁，来源、保留期限和恢复方式已记录 |
-| `安全销毁` | 按批准的保留策略安全销毁敏感或过期运行数据，并留存不可逆证明 |
-| `取消` | 明确决定不再保留某项能力，记录决定人、日期和原因 |
+| Contract | manifest 数量与 source tree 自动比对；DTO validator 边界测试 |
+| DB | fresh migration、重复 migration、FK/CHECK/unique、RLS/permission helper、rollback/restore 演练 |
+| Catalog | draft/publish/unpublish、排序、slug/ID、空目录、不可见内容 |
+| Learning | entitlement、progress 上下界、note CRUD、quiz 重答规则、review eligibility、certificate uniqueness |
+| Commerce | 幂等下单、价格快照、优惠并发、库存/名额、回调验签/乱序/重复、退款/拒付、对账 |
+| Instructor | application state machine、ownership、buyer visibility、earnings/payout 重算 |
+| QR | scheme allowlist、disable、revision、duplicate、scan dedupe、SVG/card、soft delete/restore |
+| Shared domains | teacher/forum/alg/timer/notifications/org 无第二数据源，原 canonical route 不回归 |
+| UI | en/zh、desktop/430/390、keyboard/touch/middle-click、deep link、refresh、empty/error/loading |
+| SEO | page metadata coverage、public sitemap、canonical、private/admin/search noindex |
+| Release | CI/deploy green、live API/route smoke、old subdomain 410 |
 
-以下证据不能互相替代：
+## 9. 审核记录
 
-- 源码存在不等于数据已迁移。
-- 数据行数相等不等于字段语义、来源和媒体完整。
-- seed、demo、营销展示计数不等于真实用户或交易事实。
-- typecheck、单测或 CI 成功不等于线上功能可用。
-- 页面能打开不等于登录、权限、支付、回调和写入链路正确。
-- SQLite 文件被复制不等于快照一致，也不等于主站已经脱离旧运行时。
-- HTTP 410 不等于后台、脚本、任务或本地管理入口已经停止写入。
-
-## 3. 已锁定的产品决定
-
-1. 不恢复独立 Platform 前端，也不建立 `apps/platform-web`。
-2. `platform.cuberoot.me` 保持 HTTP 410，不展示页面，也不跳转。
-3. 最终用户入口全部位于 `cuberoot.me`；英文裸路径，中文增加 `/zh`。
-4. 不建立 `/platform` 总入口。公开功能进入对应主站领域，个人功能进入 `/account`，机构功能进入 `/org`，学员和监护人功能进入 `/learn`。
-5. 主站已有等价能力时必须复用，不复制 timer、公式库、论坛、通知、账号、媒体上传、支付基础设施或教学组件。
-6. 旧 `timer_solves` 及其派生排行榜和徽章按仓库所有者决定不迁移；`study_checkins=0` 只记录零行证据，不把它误写成用户已经批准丢弃的历史。
-7. 除前一条外，非空源记录必须逐行分类和守恒；实现者不得静默丢弃。seed/demo、敏感瞬态数据和运行日志不等于应导入产品库，须走各自处置策略。
-8. 新线上写入只进入主站 PostgreSQL 和主站媒体存储；不恢复 SQLite 双写。
-9. 旧目录、旧 GitHub 仓库、SQLite、WAL/SHM、备份、静态资产、外部上传和回调在各自删除门槛满足前不得删除。
-10. 旧课程购买者、旧课程通行证和机构教学域里的正式师生关系是三种不同语义，禁止互相冒充。
-11. 旧课程通行证不直接转换为主站支持型会员；最多复用支付和页面基础设施，权益模型必须分开。
-12. P2 已确认没有需要新建的旧 Platform 动态详情产品；保留能力的最终路径以产品 surface 处置账本为准。
-
-## 4. 当前证据基线
-
-### 4.1 源码来源与路由面
-
-2026-08-22 只读核验：
-
-| 来源 | 页面 | Route Handler | Server Action 文件 | Metadata route | 说明 |
-| --- | ---: | ---: | ---: | ---: | --- |
-| `D:\cube\cube-platform\app` | 83 | 13 | 33 | 4 | 退役前产品面的权威只读证据 |
-| `core/packages/platform/app` | 95 | 13 | 32 | 4 | 主仓归档源码；页面比旧本地源多 12 个 `/org` 页面 |
-| `core/packages/client/app/[lang]` | 307 | 不适用 | 不适用 | 不适用 | 主站现状；任何新增前必须查重 |
-
-归档源码多出的 12 个页面全部位于 `/org`：
-
-- `org/page.tsx`
-- `org/[orgSlug]/page.tsx`
-- `org/[orgSlug]/campuses/page.tsx`
-- `org/[orgSlug]/classes/page.tsx`
-- `org/[orgSlug]/classes/[groupId]/page.tsx`
-- `org/[orgSlug]/members/page.tsx`
-- `org/[orgSlug]/packages/page.tsx`
-- `org/[orgSlug]/schedule/page.tsx`
-- `org/[orgSlug]/sessions/[sessionId]/page.tsx`
-- `org/[orgSlug]/students/page.tsx`
-- `org/[orgSlug]/students/[studentId]/credits/page.tsx`
-- `org/[orgSlug]/students/[studentId]/responsibilities/page.tsx`
-
-这些页面已由主站教学前端取代，不是仍需复制的旧产品页。完整文件差分已经完成：Route Handler 与 metadata 完全一致；权威副本独有 `actions/timer.ts` 和 `admin/(authed)/algorithms/actions.ts`，主仓归档独有 `org/actions.ts`。前两项分别归到主站 timer 与公式域且不迁旧写链，后一项由主站现有 `/org` 领域承接。
-
-旧站 13 个 Route Handler：
-
-- `api/auth/send-otp`、`api/auth/verify-otp`、`api/auth/logout`
-- `api/upload`、`api/track`
-- `api/orders/[id]/status`、`api/payments/[provider]/callback`
-- `api/lessons/[id]/video`
-- `api/qr/[code]/svg`、`api/qr/[code]/card`
-- `cert/[code]/image`、`icons/[size]`、`og`
-
-33 个 Server Action 文件覆盖：管理员认证、证书、签到、圈子、社区、收藏、笔记、通知、下单与支付、进度、测验、退款、评价、timer、讲师申请与课程，以及旧后台的申请、公式、优惠、课程、课时、测验、活动、讲师、结算、邀请、新闻、订单、路径、帖子、商品和 QR 管理。逐文件导出与处置见产品 surface 账本。
-
-Metadata surface 包括 `icon.tsx`、`apple-icon.tsx`、`robots.ts`、`sitemap.ts`。P1 必须登记每个导出动作、鉴权、来源表、外部副作用和最终去向，不能只盘点页面。
-
-### 4.2 本地 SQLite 观察值
-
-| 观察时间 | 文件 | 大小 | SHA-256 | 当前结论 |
-| --- | --- | ---: | --- | --- |
-| 2026-08-22 首次盘点 | `D:\cube\cube-platform\data.db` | 1,298,432 bytes | `6469D418BDFCB6DA6E9A095FE7666BEF67BBBE3C813BD04D1B95D5A284BBDC24` | 非一致性快照，仅保留为漂移证据 |
-| 2026-08-22T11:47:05Z 复核 | `D:\cube\cube-platform\data.db` | 1,298,432 bytes | `CA8D4F57CA291DC3FBDDC2E4109995724B0039C2AB65259FF28714E520D5F8EE` | 文件大小未变但哈希已变；`LastWriteTimeUtc=2026-08-22T11:02:30.7667522Z` |
-| 2026-08-22T11:47:05Z 复核 | `D:\cube\cube-platform\data.db-wal` | 0 bytes | `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855` | WAL 存在，不能只复制 DB 文件 |
-| 2026-08-22T11:47:05Z 复核 | `D:\cube\cube-platform\data.db-shm` | 32,768 bytes | `FD4C9FDA9CD3F9AE7C962B0DDF37232294D55580E1AA165AA06129B8549389EB` | SHM 存在，说明仍需查明所有 SQLite 使用者 |
-| 2026-08-22 首次盘点 | `core/packages/platform/data.db` | 696,320 bytes | `2787EB7366F59FBBAFB7D0D0399D02610C3B05DE07D87725C1849DABA483A49E` | 结构存在，但已抽查业务表为空；不能充当旧数据备份 |
-
-旧库首次盘点得到 `integrity_check=ok`，但 `journal_mode=wal`；同日复核已经实证文件哈希漂移并出现 WAL/SHM。以上都只是只读观察值，不是权威来源或一致性快照。原因未解释前，P1 的任何后续盘点都处于阻塞状态；必须先冻结并证明全部写入者停止，再按 7.1 制作新快照，重跑完整性、schema、逐表行数、主键/时间范围、内容哈希和隔离恢复核验。
-
-已知内容仍只能暂定为来源混合：包含 seed/demo、待核实用户、mock 交易、运行日志和敏感瞬态记录，不能概括为全是真实业务数据。实施前还必须找到生产数据库、备份、外部对象存储和上传目录的最终权威来源。
-
-实际 SQLite 有 39 张非 FTS 业务表；归档 `schema.ts` 还定义了实库不存在的 `otp_rate_limits`。P1 必须输出“实际数据库 schema 与归档源码 schema”的 drift，不能只信任何一侧。
-
-### 4.3 数据行数与来源风险
-
-SQLite FTS 内部表不直接迁移，目标系统按主站搜索能力重建索引。
-
-| 领域 | 源表与当前行数 | 已知来源风险 | 当前处置 |
+| 日期 | 审核 | 结论 | 处理 |
 | --- | --- | --- | --- |
-| 用户与认证 | `users=7`、`otp_codes=4` | 5 个 `u_test_*` 是 seed；2 个用户待核实；OTP 已过期且含原始验证码 | 逐行分类；OTP 永不导入，按敏感数据策略销毁 |
-| 邀请增长 | `invite_codes=1` | 不能拿 `/org` 成员邀请替代营销邀请码 | 核实来源、奖励与是否仍有业务价值 |
-| 课程目录 | `courses=7` | 来源包含静态 seed；当前主站 `/courses` 是受限的静态教学方案，不是既有商业课程模型 | 字段审计后建立唯一目标聚合模型 |
-| 课程内容 | `lessons=5`、`quizzes=5` | 均来自 `starter-3x3` 演示课程 | 默认不当成用户内容；先做 seed hash 分类 |
-| 学习路径 | `collections=3`、`collection_items=9` | 这是有序跨课程学习路径，不是个人收藏 | 归入课程路径，禁止重复迁移 |
-| 学习状态 | `learning_progress=0`、`quiz_attempts=0`、`lesson_notes=0`、`course_reviews=0`、`study_checkins=0` | 零行表 | 记录表级零行证据，不造数据 |
-| 公式 | `algorithms=39` | 来源与主站重复度未知 | 按 puzzle、set、case、公式内容去重 |
-| 商品与订单 | `products=6`、`orders=2` | 商品来自 seed 候选；2 单均为 `paid + mock_wechat`，无 provider 证据 | 不作为真实结算或授予权益证据 |
-| 会员与交易辅助 | `memberships=1`、`coupons=0`、`payment_logs=0`、`point_ledger=0` | 唯一会员虽写 active，但已于 2026-07-08 到期 | 保留源状态；不得导成当前有效权益 |
-| 业务活动 | `events=5` | 来源含 seed；展示报名数与订单关系不一致 | 与 WCA 项目、比赛日历分开命名和建模 |
-| 埋点 | `events_track=789` | 含 user/anon/url/referer/payload，可能含个人信息 | 单独做隐私、聚合价值与保留期限决策 |
-| 新闻 | `news=5` | 来源含静态 seed | 核实后迁移、合并或批准归档 |
-| 社区 | `posts=5`、`comments=8`、`post_likes=10`、`circle_members=0` | 非空记录全部来自 seed；展示点赞数与关系表不一致 | 不直接污染主站论坛；先做 seed 分类 |
-| 个人收藏 | `favorites=0` | 与 `collections` 无关 | 零行证据 |
-| 讲师 | `instructors=5`、`instructor_applications=0`、`instructor_payouts=0` | 讲师资料来自 seed 候选，缺主站 owner 与双语字段 | 核实后映射教师目录或批准归档 |
-| 二维码 | `qr_codes=4` | 目标可能依赖尚未锁定的课程、商品和活动 URL | 延后到目标 URL 稳定后处理 |
-| QR 提示模板 | `prompt_templates=91` | 89 条共享固定迁移时间，2 条后续操作，至少 1 条软删除 | 独立做 seed hash；由 owner 决定保留产品能力还是归档 |
-| 证书与成就 | `certificates=0`、`user_achievements=0` | 零行表 | 不制造历史证书或成就 |
-| 通知 | `notifications=0` | 零行表 | 复用主站通知，不迁空壳 |
-| 计时 | `timer_solves=0` | 仓库所有者已明确不迁历史 | `明确归档` |
-| 运维 | `error_logs=92`、`request_logs=0` | 不属于产品内容，可能含敏感上下文 | 按日志保留策略处理，不导入产品库 |
-
-表级分类和行级处置必须分开：
-
-- 表级：`zero-row`、`seed/demo-only`、`mixed provenance`。
-- 行级守恒：`imported + merged + reversible-archive-pending-owner + retained-under-policy + securely-discarded/expired-operational + rejected-with-reason + blocked = source rows`。
-
-`empty` 不是逐行结果，不能放进源行数加法。每种处置必须有决定人、日期、原因和可查询证据。
-
-### 4.4 派生计数不可信
-
-旧库缺少数据库外键，`foreign_keys=0`，schema 和 migration 未建立关系约束。`PRAGMA foreign_key_check` 成功不能证明应用关系完整。已发现：
-
-- `posts.likes` 合计 55，`post_likes` 只有 10 行。
-- `courses.lessons` 合计 114，真实 `lessons` 只有 5 行。
-- `courses.students_enrolled` 合计 4438，已付课程订单数量为 0。
-- `events.registered` 合计 985，已付活动订单数量仅 1。
-- 讲师 `students_taught` 没有正式学生关系来源。
-
-每个派生字段必须被标成 `legacy display snapshot`、按可信关系重算、重置或经批准归档。未经核实的营销数字不得迁成真实产品数据。
-
-### 4.5 上传与媒体
-
-两个 `public/uploads` 除 `.gitkeep` 外均为 0 个文件，但这不能证明媒体不存在。已确认还有：
-
-- 旧仓 `public/demo/lesson-1.mp4` 至 `lesson-5.mp4`，共 5 个演示视频。
-- `public/card/front-city.webp`，5,617,948 bytes，SHA-256 `533799C8EAB9DD77E7E1D91BBE868B29006A6E42B55B3EDDF593D683DEADDCE5`。
-- `public/card/front-ink.webp`，3,406,902 bytes，SHA-256 `5C926FD7FFBB7283942A74E3B057D05B815E5AFD040DBD66F9560ED06F722BC8`。
-- 数据库中有课程视频指向外部样例或第三方 URL；外链不能当耐久备份。
-- 归档 `core/packages/platform/public` 也持有部分静态副本；删除两个旧源码树仍可能同时丢失唯一资产。
-
-P1 必须扫描所有 DB 字符串引用、根相对路径、`public/**`、部署包、生产磁盘、对象存储和外链。清单至少记录源路径、内容哈希、MIME、图片尺寸或视频时长/编码、授权、所有权、目标路径和引用关系。
-
-## 5. 主站命名空间与最终 URL
-
-最终 URL 与逐项取消理由以 [Platform 产品 surface 处置账本](./platform-product-surface-ledger.md) 为准：不存在 `/platform`，没有需要新建的旧 Platform 动态详情路由。最终保留入口为 `/courses`、`/teachers`、`/teachers/scripts`、`/forum`、`/alg`、`/account`、`/notifications`、`/membership`、`/timer`、`/org`、`/learn`、`/search?q=`、`/about` 和 `/achievements`。
-
-以下表格保留实施前的候选分析记录，所有 `待盘点`、`待决策` 和 `待实施` 状态均已被处置账本取代，不再作为当前任务清单：
-
-| 旧能力 | 主站归属与候选入口 | 复用或转换边界 | 状态 |
-| --- | --- | --- | --- |
-| Platform 首页 | 主站首页 | 不保留 Platform 产品壳；只增加已验收领域的真链接 | `待实施` |
-| `/about` | 主站 `/about` 或历史页 | 团队、商业使命、路线图、讲师招募逐项核实后合并、归档或取消，不能静默吞掉 | `待决策` |
-| `/progress` | 候选 `/achievements` 或 `/dev/architecture/history` | 这是建设成果汇报，不是个人课程进度；历史营销声明必须先核实 | `待决策` |
-| `/login` | `/account` 与现有登录流程 | 复用主站手机号身份；不迁 OTP、cookie、session | `待盘点` |
-| `/courses*` | `/courses`；候选 `/courses/[courseSlug]` 与 lesson 子路由 | 保留唯一课程体验，复用现有 UI、媒体、认证和教学组件；不能强塞进现有静态 outline 类型 | `待盘点` |
-| `/paths*` | 候选 `/courses/paths/[pathSlug]` | `collections` 是有序课程路径 | `待盘点` |
-| `/me/courses` | 候选 `/account/courses` | 只迁真实购买或学习权益，不迁 `/progress` 成果页 | `待盘点` |
-| `/instructors*` | `/teachers`；候选 `/teachers/[teacherSlug]` | 复用教师目录和编辑器，补 owner、来源、缺失字段策略 | `待盘点` |
-| 讲师申请与审核 | 候选 `/teachers/apply` 与领域管理入口 | 与现有“编辑者直接控制公开状态”不是同一流程；必须重建或明确取消 | `待决策` |
-| `/instructor/courses*` | 课程领域管理入口 | 复用目标课程模型，不搬旧 dashboard | `待盘点` |
-| `/instructor/students` | 课程购买与权益视图 | 不映射到 `/org/*/students` | `待盘点` |
-| `/instructor/earnings` | 商业结算领域，仅在有可靠源数据和持续需求时建立 | 空 payout 表不能证明结算能力需要重建 | `待决策` |
-| `/algorithms*` | `/alg` | 复用公式库、播放器、训练与权限契约 | `待盘点` |
-| `/timer`、`/leaderboard` | `/timer` | 复用主站计时器；旧历史和派生排行不迁 | `明确归档` |
-| `/community*` | `/forum` | 旧 post 转 thread + first post，comments 转 ordered posts，likes 转 reactions，circle 转 forum 范畴 | `待盘点` |
-| `/events*` | 候选 `/activities`，P2 与 `/events` 二选一 | 面向可报名商业活动；不得与 WCA 项目、`/calendar`、`/contests` 混淆 | `待决策` |
-| `/news*` | `/news` 与候选详情路由 | 先判断是否复用现有长文或公告能力 | `待盘点` |
-| `/shop*` | `/shop` 与候选 `/shop/[productSlug]` | 复用支付、媒体和账户基础设施；建立唯一商业商品模型 | `待盘点` |
-| `/orders*` | `/account/orders` 与候选详情路由 | 只允许本人和授权管理员读取 | `待盘点` |
-| 旧课程会员 | `/account/courses` 下的 course entitlement | 不映射成主站支持型会员 | `待盘点` |
-| 主站支持型会员 | 保持 `/membership`、`/account/membership` | 可复用支付基础设施，但与旧课程通行证分开 | `不在迁移范围` |
-| `/me/favorites`、`/me/wishlist`、`/me/notes`、`/me/badges` | `/account/*` 或领域内个人状态 | 仅为非空且有真实价值的数据建入口；`collections` 不属于此处 | `待盘点` |
-| `/me/invite` 与邀请后台 | 候选 `/account/invites` 与增长管理入口 | 营销邀请码不能被机构成员邀请替代 | `待决策` |
-| `/notifications` | `/notifications` | 复用主站通知系统 | `待盘点` |
-| `/cert/[code]` | `/cert/[code]` | 当前 0 行；保留能力前先确认是否仍需要生成和图片输出 | `待决策` |
-| `/qr/[code]` 与 QR 后台 | `/qr/[code]`；候选 QR 管理入口 | 目标 URL 稳定后处理查看、编辑、批量、启停、聚合、SVG/card、打印、扫描统计和提示模板 | `待盘点` |
-| `/search` | 候选 `/search?q=` 或扩展首页 `LandingSearch` | 主站当前没有等价的可分享全局搜索页；必须锁定一种入口并复用统一索引 | `待决策` |
-| `/offline` | 主站 PWA 离线行为 | 复用 PWA 策略，不搬旧页面壳 | `待盘点` |
-| `/me` | `/account` | 统一个人入口，补登录、未登录、空态和深链回跳 | `待盘点` |
-| 埋点分析 | 候选商业分析管理入口或只保留聚合 | 原始事件先做隐私与保留策略，不与业务活动混合 | `待决策` |
-| 支付对账 | 候选商业对账管理入口 | 若继续电商则必须保留支付、退款、净额和渠道对账能力 | `待决策` |
-| `/admin/*` | 主站按课程、内容、商业、增长、QR 等领域分开的管理入口 | 不复制旧总后台；逐域确认权限、审计和必要性 | `待盘点` |
-| `/org/*` | 保持 `/org/[orgSlug]/*` | 教学前端切换已完成，本文不重复实施；不代表该业务域所有生产验收都完成 | `已切换` |
-| 学员与监护人 | 保持 `/learn/[orgSlug]/students/[studentId]/*` | 学习门户切换已完成，剩余生产验收由教学计划跟踪 | `已切换` |
-
-中文路由使用 `/zh` 前缀。单语旧内容不得复制到另一语言假装翻译：只有真实翻译才互设 hreflang；缺失语言页使用 `noindex, follow`，sitemap 只收录真实存在的语言。
-
-## 6. 非页面责任矩阵
-
-本节保留实施前的条件设计。最终结果已经锁定为：旧认证、上传、埋点、订单、支付、课程视频、QR、证书、旧 metadata 和全部 33 个旧 Server Action 文件均不迁移；主站已有领域继续使用自己的 canonical 契约。逐文件结果见产品 surface 处置账本，不得按下面的历史候选描述重建商业接口。
-
-### 6.1 Route Handler
-
-| 旧 Handler | 最终责任 | 决策门槛 |
-| --- | --- | --- |
-| auth send/verify OTP、logout | 淘汰旧认证，复用主站手机号登录和 session | 不迁 OTP；证明旧回调和 session 已不可用 |
-| upload | 复用主站媒体上传、所有权和授权校验 | 完成 MIME、大小、归属、扫描和目标 URL 契约 |
-| track | 聚合迁移或按政策保留/销毁 | 先审 user/anon/url/referer/payload 与保留期限 |
-| order status | 商业订单本人查询接口 | 目标订单模型、身份和所有权已锁定 |
-| payment callback | 仅在商业能力获批后重建主站 provider 回调 | 幂等、签名、状态机、退款和对账测试齐全；永不重放旧回调 |
-| lesson video | 主站媒体授权读取 | 课程、购买权益和媒体来源已锁定 |
-| QR svg/card | 主站 QR 输出能力或批准取消 | 所有目标 URL 和模板责任已稳定 |
-| certificate image | 主站证书图片输出或批准取消 | 证书模型有真实需求；当前源表为 0 |
-| icons、OG | 复用主站 metadata 与本地静态资产 | 不迁旧 Platform 品牌壳 |
-
-### 6.2 Server Action 文件
-
-| 旧写能力组 | 涵盖的 Action 文件 | 最终责任 |
-| --- | --- | --- |
-| 管理员认证 | `admin/actions.ts` | 淘汰旧管理员登录，复用主站管理员权限 |
-| 课程与路径 | `instructor/courses`、`admin/courses`、`admin/paths` | 目标课程领域写接口与领域权限 |
-| 教师与申请 | `instructors/apply`、`admin/applications`、`admin/instructors` | 教师资料 owner、申请审核或明确取消 |
-| 内容 | `admin/algorithms`、`admin/events`、`admin/news`、`admin/posts` | 各自领域管理写接口，不建万能后台 |
-| 商业 | `admin/products`、`admin/orders`、`admin/coupons`、`admin/instructor-payouts` | 商品、订单、优惠、退款/结算与审计 |
-| 增长 | `admin/invites` | 营销邀请码与奖励，或明确取消 |
-| QR | `admin/qr`、`admin/qr/prompts` | 创建、批量、复制、启停、编辑、模板生命周期与审计 |
-
-### 6.3 Metadata route
-
-`icon.tsx`、`apple-icon.tsx`、`robots.ts` 和 `sitemap.ts` 不逐文件复制。每个最终公开领域按主站 metadata、sitemap、canonical、hreflang 与 `noindex` 契约重建；旧 Platform 品牌 metadata 归档。
-
-## 7. 迁移契约
-
-本节是发现真实用户或交易数据时必须遵守的安全契约。本次权威快照证明这些目标导入类别均为 0，因此身份 bridge、交易状态机、导入 ledger 和字段转换没有被激活；实际处置以数据账本为准。
-
-### 7.1 权威来源与一致性快照
-
-1. 冻结并证明所有 SQLite 写入者停止：进程、后台任务、脚本、管理入口、定时任务和回调逐项记录。
-2. 记录冻结时间、操作者、旧域 410 状态和端口/进程证据。
-3. 使用 SQLite online backup API，或停写后 checkpoint，再制作 DB 一致性快照；不能只复制正在 WAL 模式运行的 `data.db`。
-4. 记录 DB、WAL/SHM 状态、schema 与 migration 版本、page size、page count、大小和 SHA-256。
-5. 对快照执行 `integrity_check`、实际 schema 导出、逐表行数、主键范围、时间范围和内容哈希。
-6. 从副本在隔离环境恢复，再重复完整性、行数、schema 与内容哈希核验。
-7. 生产库、最后备份和本地库出现差异时逐项解释，不默认选择行数最多或时间最新者。
-8. 为数据库和媒体各保存一份加密、访问受控、不可变的权威归档；原件不原地修改。
-
-### 7.2 来源分类
-
-每条记录先分类为 `seed/demo`、`user-created`、`operator-created`、`transactional`、`runtime-log` 或 `sensitive-transient`，再决定行级处置。分类至少依据：
-
-- seed/migration 源码与固定主键、固定时间、固定内容哈希。
-- 创建时间、更新时间、软删除和操作者。
-- 与真实身份、订单 provider、支付凭据、外部回调或内容媒体的关联。
-- 与主站现有内容的精确和近似重复。
-
-seed/demo 不是自动删除许可；它可以被复用、明确归档或安全销毁，但必须留下 owner 决定。
-
-### 7.3 身份映射
-
-- 旧 `users` 的身份字段是唯一手机号，不是假设中的邮箱或密码。
-- 复用主站手机号身份和 `teaching_platform_identities(platform_subject, user_id)`；`platform_subject` 使用旧 `users.id`，手机号按主站 E.164 契约规范化后匹配。
-- 导入前审计目标库已有 bridge 行、手机号重复、共享手机号、无效号码和已绑定冲突。
-- 安全且唯一的手机号才允许自动映射；冲突进入人工裁决，禁止“取第一条”。
-- 5 个已确认 seed test 用户不得创建主站账号。
-- 无法映射但持有订单、内容或作者关系的主体使用带来源标识的历史主体或可认领流程，不能冒认当前用户。
-- OTP、cookie、session 和认证瞬态数据永不导入。
-- bridge 使用级联删除，不能作为永久迁移证据；另建追加式来源 ledger。
-- 订单、评论、点赞、课程权益和讲师资料必须引用同一份已确认映射。
-
-身份基线、冲突表和历史主体策略是任何作者、订单或权益导入的前置 gate。
-
-### 7.4 显式关系与派生字段
-
-由于源库没有数据库外键，P1 必须建立关系目录并逐对验证：
-
-- 订单到用户、商品和活动。
-- 会员到用户、订单与课程权益。
-- 课程到章节、测验和学习路径条目。
-- 帖子到作者、评论、点赞和圈子关系。
-- QR 到目标 URL、模板和事件。
-- 复合主键的唯一性、枚举、时间、金额和 JSON shape。
-
-每个派生计数字段必须记录其权威来源和处置；展示快照不能覆盖真实关系，也不能为了“看起来完整”制造关系行。
-
-### 7.5 幂等、原子性与中断恢复
-
-每个导入对象至少记录：
-
-- `source_system + source_table + canonical_source_pk` 稳定唯一键。
-- 来源快照版本和内容哈希。
-- 导入批次、目标类型与目标主键。
-- `imported`、`merged`、`reversible-archive-pending-owner`、`retained-under-policy`、`securely-discarded`、`rejected` 或 `blocked` 结果。
-- 冲突原因、人工决定、决定人和时间。
-
-复合源主键必须确定性序列化。目标写入与 ledger 写入必须在同一数据库事务内，导入任务必须持有并发锁。验证至少覆盖：
-
-- 目标写成功但 ledger 写失败。
-- 事务中途崩溃和重启。
-- 相同快照、相同批次和不同批次重复执行。
-- 第二次执行为 0 新目标、0 新副作用、0 重复对象，目标哈希不变。
-- 回滚前检测目标对象是否已有新系统引用；有引用时只能补偿，不机械删除。
-
-### 7.6 交易、支付与权益
-
-- 依赖顺序固定为：产品和价格快照 → 订单 → 支付证据 → 课程 entitlement 或活动库存 → 退款撤权 → 对账。
-- 2 个 `mock_wechat` paid 订单没有 provider 证据，默认不得当成真实结算或授予权益的证据。
-- 源订单无币种列；只有可靠 provider 证据能决定币种，无法证明时写 `unknown`，禁止猜测。
-- 同时保留源状态和“当前有效权益”两种语义；已过期会员不得导成当前有效。
-- 旧课程通行证进入独立 course entitlement，不并入主站支持型会员。
-- 历史订单导入不得触发报名、积分、通知、会员开通或其他履约副作用。
-- 商品快照缺失字段显式为未知，不能用当前商品覆盖历史事实。
-- 不重放支付回调，不重新扣款，不补发无法证明的支付成功状态。
-- 电商上线验收必须覆盖：创建订单、幂等回调、状态轮询、本人所有权、权益发放、活动库存、防超卖、退款撤权、支付返回页和渠道对账。
-
-### 7.7 领域字段转换
-
-| 领域 | 必须先锁定的转换 |
-| --- | --- |
-| Forum | post → thread + first post；comments → ordered posts；likes → reactions；circle → forum；seed 内容不得直接公开 |
-| Alg | `333` → 主站 `3x3` 规范；category → set slug；无法可靠形成 case 的记录进入人工复核 |
-| Teacher | 来源主体、owner、公开状态、双语简介、联系方式和缺失字段；申请审核与编辑公开分开 |
-| Courses | 课程、章节、测验、路径、价格、可见性、购买权益和现有教学方案的边界 |
-| Commerce | 先商品，再订单，再 entitlement；源状态、provider、币种和历史商品快照分开 |
-| QR | code、目标类型、目标 URL、启停、模板、输出资产和 scan event；必须等目标 URL 稳定 |
-
-### 7.8 内容、媒体与 SEO
-
-- 保留标题、正文、作者、发布时间、更新历史、可见性、排序和关联关系。
-- 富文本执行允许标签、链接、嵌入和脚本清理，不直接信任旧 HTML。
-- 所有正文、封面、头像、二维码、视频和下载链接生成引用清单。
-- 媒体完成字节哈希、MIME、图片尺寸或视频时长/编码、授权、所有权、目标 URL 和 HTTP/权限验证。
-- 缺失媒体不得用无来源占位图冒充完成；对应记录保持未完成。
-- 单语内容记录 source language 和 translation status；不把机翻或原文复制伪装成已审核双语。
-- 新公开路由遵守主站 metadata、canonical、sitemap 和 hreflang 规则。
-
-### 7.9 保留、归档与删除
-
-源码删除和数据销毁分开验收：
-
-- 旧本地源码目录和旧 GitHub 仓库：P7 完成后可由仓库所有者逐项批准删除。
-- 权威数据库和媒体归档：按金融、身份、内容和恢复策略保留，不因源码删除自动销毁。
-- 手机号和身份映射：受限访问，按账号与审计策略保留。
-- OTP：不迁移，不进入普通长期明文归档；按批准期限安全销毁。
-- 请求日志、错误日志和埋点：完成隐私、取证价值和保留期判断后，聚合、受控保留或安全销毁。
-- 凭据、provider 配置和外部回调：迁移后轮换或停用，单独留存验证。
-
-最终删除清单必须逐项列出：本地目录、GitHub 仓库、每份 DB/备份、WAL/SHM、上传、静态媒体、对象存储、部署包、凭据、回调、任务和运行服务。仓库所有者逐项决定，禁止“删仓库”带过全部数据责任。
-
-## 8. 实施阶段
-
-### P0：纠正状态并冻结破坏性动作
-
-状态：`完成`
-
-- [x] 确认整体产品与数据迁移未完成。
-- [x] 确认旧本地数据库包含混合来源的非空记录。
-- [x] 明确不迁移旧计时历史。
-- [x] 将旧迁移文档改为历史记录并指向本文。
-- [x] 暂停架构源码改造，避免并行冲突。
-- [x] 禁止删除旧目录、旧仓、SQLite、备份和资产。
-- [x] 记录 SQLite 同日哈希漂移和 WAL/SHM 证据；P1 不得在写入者未冻结时继续盘点。
-- [x] 修正所有活动架构文档中“Platform 产品迁移已完成”的矛盾表述。
-- [x] 三路独立复审无 blocker。
-
-完成门槛：仓库中的所有活动文档一致；三路 reviewer 对本方案给出 PASS。P0 完成只允许进入 P1 只读盘点，不授权数据写入。
-
-### P1：权威来源、完整 surface 与逐行分类
-
-状态：`完成`
-
-- [x] 冻结并证明全部旧 SQLite 写入者停止。
-- [x] 制作一致性数据库快照和加密不可变归档，并完成隔离恢复。
-- [x] 对生产、备份、本地和主仓 DB 输出 schema、行数、哈希与 drift。
-- [x] 建立 83 个旧页面、13 个 Route Handler、33 个 Server Action 文件、4 个 metadata route 的逐项 ledger。
-- [x] 比较本地旧源与主仓归档，解释 12 个 `/org` 页面及其他差异。
-- [x] 为 39 张业务表逐行标记来源类别和行级处置。
-- [x] 建立无外键情况下的 41 组显式关系核验、孤儿报告和派生字段报告。
-- [x] 定位所有 DB 媒体引用、`public/**`、生产磁盘、对象存储和外链。
-- [x] 建立敏感字段、凭据、外部回调、任务和运行日志清单。
-
-完成门槛：每个旧 surface、源业务行和媒体引用有唯一责任项；权威来源没有未解释分叉；恢复演练通过。
-
-### P2：主站复用、身份基线与目标契约
-
-状态：`完成`
-
-- [x] 审计 `/courses`、`/teachers`、`/forum`、`/membership`、`/notifications`、`/account`、`/alg`、`/timer`、支付、媒体和搜索的现有契约。
-- [x] 将每项旧能力确定为直接复用、扩展主站、合并且不写入、明确归档、策略保留或取消之一。
-- [x] 锁定课程、教师、活动、新闻、商城、订单、QR、搜索和管理入口的 URL、权限、SEO 与双语策略。
-- [x] 核验 5 个 `u_test_*` 账号全为 seed；无历史主体，因此身份 bridge、冲突认领和目标账号写入不适用。
-- [x] 核验目标导入为 0 行；无需来源写入 ledger、目标唯一键或导入事务，源侧仍由不可变快照保证恢复。
-- [x] 完成课程、商业、QR、论坛和公式的字段与处置映射。
-- [x] 确认无需新增 schema 或 API；唯一新增 UI 复用现有 `LandingSearch` 和主站领域入口。
-
-完成门槛：第 5、6、7 节全部从候选变成已批准契约；身份基线已可验证；不得存在含糊的“以后再说”。P2 完成前禁止正式数据写入。
-
-### P3：公开只读内容
-
-状态：`完成`
-
-实施结果：35 条公式由主站 canonical 库等价覆盖且不写入，4 条不可靠公式拒绝；讲师、课程、路径、新闻、活动和社区内容均为固定 seed/demo，当前只在可恢复归档中保留，等待仓库所有者批准最终处置，不污染主站真实内容。公开能力继续复用 `/alg`、`/teachers`、`/courses`、`/forum`、`/about` 和 `/achievements`。
-
-按依赖从小到大分批：
-
-1. 公式去重并接入 `/alg`。
-2. 核实后的讲师资料接入 `/teachers`。
-3. 课程、章节、测验和学习路径接入唯一 `/courses` 体验。
-4. 新闻与商业活动。
-5. 经 seed 分类后仍需保留的社区内容接入 `/forum`。
-6. `/about` 和建设成果内容按批准决定合并或归档。
-
-每批同时完成数据、详情页、主入口、单语/双语 SEO、权限、桌面、窄屏和回滚验证。不能只导数据或只搭空页面。
-
-### P4：商品、订单、课程权益与个人状态
-
-状态：`完成`
-
-实施结果：生产商品 6 条为 seed；订单、支付日志、会员、课程权益、学习进度、收藏、笔记和测验记录均为 0。没有可迁交易或个人状态，不建立商城、订单、权益或支付状态机；主站支持型 `/membership` 保持独立语义。
-
-1. 先迁产品和历史商品快照。
-2. 导入经核实的订单历史，不触发任何履约副作用。
-3. 建立课程 entitlement，明确当前有效性；不并入主站支持型会员。
-4. 如继续商业能力，完成支付状态机、库存、退款撤权和对账。
-5. 迁移经核实的个人课程状态、收藏、点赞等；零行能力不造空产品壳。
-6. 验证匿名、本人、其他用户、领域管理员和站点管理员权限。
-
-完成门槛：所有非空交易记录均已逐行处置；金额、币种、状态、provider、权益和对账无未解释差异。
-
-### P5：作者、教师与领域管理写能力
-
-状态：`完成`
-
-- [x] 旧课程、商品、活动、新闻和社区写入口取消；各主站领域继续使用自己的 canonical 写契约。
-- [x] 旧教师申请审核取消；生产申请 0 行，不用目录编辑器冒充审核流。
-- [x] 旧订单、优惠、退款和结算写能力取消；对应真实记录 0 行，不建立空商业后台。
-- [x] 旧邀请、QR 提示模板和运营分析当前可恢复保留，等待仓库所有者批准最终归档或销毁；不作为主站产品重建。
-- [x] 没有新增管理写入，因此无需新增 CSRF、上传或越权面；主站原有写能力保持原测试边界。
-
-### P6：QR、搜索、入口与线上闭环
-
-状态：`进行中`
-
-- [x] 2 个 QR 和全部模板均为 demo/seed，当前可恢复保留并等待仓库所有者批准最终处置；不迁管理、批量、SVG/card、打印或统计能力。
-- [x] 建立唯一 `/search?q=`，复用 `LandingSearch` 与 `useSiteSearch`，不维护第二套索引。
-- [x] 主站首页提供搜索、公开课程、教师和其他现存领域真链接；已取消的活动、新闻和商城不造入口。
-- [x] `/account` 提供主站会员与消息入口；不存在旧订单或课程权益入口。
-- [x] `/org` 与 `/learn` 保持现有教学入口，不与商城购买者语义混合。
-- [x] 英文、中文、metadata 和 sitemap 策略已实现；查询型 `/search` 不进 sitemap。
-- [ ] 390px 和 430px 的搜索、首页与账户入口本地 UI 验收。
-- [ ] 新入口部署后的线上 smoke 与相关 CI 全绿。
-- [x] `platform.cuberoot.me` 继续直接返回 410，主站不存在 `/platform` 产品壳。
-
-### P7：最终对账、观察与删除授权
-
-状态：`观察中`
-
-- [x] 表级零行/seed 分类和逐行守恒公式均为 0 差值。
-- [x] 所有关系、派生字段和媒体引用均有处置结果。
-- [x] 路由、Handler、Action 和 metadata ledger 不存在未归属项。
-- [x] 目标导入为 0，重复执行等价于 0 新目标、0 新副作用、0 重复；无需导入脚本。
-- [x] 权威数据库归档在隔离环境恢复成功；生产无业务上传，demo 媒体当前可恢复保留并等待仓库所有者批准最终处置。
-- [x] 客户端 typecheck、完整常规测试和定向回归全绿；慢速 analyzer 按仓库规则留给 CI。
-- [ ] 相关 CI、部署和线上 smoke 全绿。
-- [x] 产品、数据、代码三路独立实施终审无 blocker、major 或 minor。
-- [ ] 最少 30 天观察窗口完成：`2026-08-22T12:05Z` 至不早于 `2026-09-21T12:05Z`；期间旧应用须保持 0 次读写，且无未解释对账差异、权限事故或回滚触发。
-- [ ] 源码与数据的逐项删除/保留清单由仓库所有者批准。
-
-只有 P7 全部完成，仓库所有者才可以删除批准项中的旧本地源码目录和旧 GitHub 仓库。权威数据归档、媒体、身份和金融记录继续按各自保留策略处理，不能随源码仓库一起删除。
-
-## 9. 每批验收矩阵
-
-| 类别 | 必需证据 |
-| --- | --- |
-| 来源 | 权威快照时间、冻结证据、DB/WAL 状态、大小、SHA-256、schema 和恢复结果 |
-| 分类 | seed/demo、用户、运营、交易、日志、敏感瞬态的逐行依据 |
-| 映射 | 源表/主键到目标表/主键的追加式 ledger |
-| 守恒 | 行级处置总数等于源行数，差值为 0；零行是表级证据 |
-| 关系 | 显式关系目录无孤儿；JSON、枚举、时间、金额和复合主键有效 |
-| 去重 | 与主站现有数据的精确和近似重复报告，人工决定可追踪 |
-| 派生 | 每个展示计数有保留快照、重算、重置或归档决定 |
-| 媒体 | 引用、定位、哈希、MIME、尺寸/时长、编码、授权、权限和 HTTP 验证 |
-| 身份 | 手机号规范化、bridge 冲突、seed 用户、历史主体和可认领结果 |
-| 权限 | 匿名、本人、其他用户、领域管理员、站点管理员的允许与拒绝矩阵 |
-| 页面 | 英文、中文、390px、430px、桌面、空态、错误态和深链接 |
-| 入口 | 首页、账号或领域页存在真链接；不依赖记忆 URL |
-| 写入 | 唯一键、事务、并发锁、崩溃恢复、重复提交、审计和补偿回滚 |
-| 商业 | 创建订单、回调、状态、库存、权益、退款撤权、返回页和对账 |
-| 部署 | 实际 workflow、生产 migration、健康检查和关键路由 smoke |
-| 回滚 | 代码、数据库、媒体和外部回调分别有恢复点与实测 |
-
-## 10. 多 AI 并行规则
-
-- 每批只有一个 parent owner，先在本文登记批次 ID、精确文件清单和来源快照哈希。
-- 只有 parent owner 修改本文状态和来源 ledger；reviewer 只读并回传结论。
-- 数据导入 ledger 只有一个写者；其他 agent 只能读快照或在隔离副本试算。
-- 开始前和交接时记录 `planned → active → review → handed-off → complete`。
-- 热点文件不可并行修改：Server 路由入口、migration ledger、shared export、page metadata、首页/导航/account、package.json 和 lockfile。
-- 文件范围重叠、快照变化或目标 schema 变化时立即停下，重新登记范围。
-- agent 完成实现后必须由另一 agent 独立审查；parent 负责复核证据和最终提交。
-
-## 11. 与架构现代化工作的协调
-
-在 P7 完成前：
-
-- 旧架构审计中基于“Platform 产品迁移已完成”的决定视为过期前提。
-- 另一个 AI 可以继续只读依赖调查和记录候选问题，但不实施源码重构、目录移动、契约拆分、部署触发调整或旧 Platform 责任删除。
-- 禁止开始 BND-02/03/05/06、CTR、PKG、LYT 和 Platform RET-03/04。
-- DOC/PS1 等无热点批次也默认不放行；若以后需要并行，先在两份 tracker 中登记显式冲突矩阵和精确文件范围。
-- 已有未提交改动保留现场，不继续扩大；Platform 每批开始前逐文件检查重叠。
-- Platform 完成后先刷新真实依赖基线和架构跟踪文档，再重新授权架构批次。
-
-## 12. 停止条件
-
-出现以下任一情况，当前切片停止扩大范围并保留可恢复状态：
-
-- 无法确定生产数据库或媒体的权威来源。
-- 无法证明全部 SQLite 写入者已经停止。
-- 目标表已有同名、同 slug、同订单号、同手机号或同来源主键，但无法可靠合并。
-- 需要重放支付、猜测币种/支付状态、授予 mock 订单权益或复制旧认证凭据。
-- 行级守恒有非零差值，或显式关系存在无法解释的孤儿。
-- 媒体引用存在但源文件、授权或所有权未定位。
-- 当前目标文件与另一个 AI 或用户的未提交改动重叠。
-- 目标写入与 ledger 不能处于同一事务，或无法证明崩溃后幂等恢复。
-- 需要同时改变 URL、API、schema 和部署才能保持可运行，无法拆成可回滚切片。
-- 测试只能证明 build 成功，不能证明真实导入、权限和线上读取成立。
-
-## 13. 每批交付记录模板
-
-- 批次 ID、唯一 owner、范围和明确排除项。
-- 修改文件的字面清单和热点冲突检查。
-- 来源快照、schema drift、目标 migration 和 ledger 版本。
-- seed/demo、用户、运营、交易、日志和敏感瞬态分类数量。
-- 导入、合并、批准归档、策略保留、安全销毁、拒绝和阻塞数量。
-- 去重、关系、派生字段、身份、权限和媒体证据。
-- 英文、中文、桌面、390px 与 430px 证据。
-- 本地测试、CI、部署、线上 smoke 和观察窗口。
-- 代码、数据库、媒体、凭据和外部回调的回滚方式。
-- 独立审核结论、修复项和复审结论。
-- 提交 SHA；默认只 commit，不 push，除非仓库所有者明确要求或部署规则要求上线验证。
-
-## 14. 审核记录
-
-| 日期 | 审核方向 | Reviewer | 轮次 | 结论 | 关键问题 |
-| --- | --- | --- | ---: | --- | --- |
-| 2026-08-22 | 产品能力与 URL 守恒 | `platform_product_review` | 1 | `不通过` | 漏 Route Handler/Action/metadata；progress、collections、会员语义错误；搜索、QR、邀请、分析、对账与支付闭环不足 |
-| 2026-08-22 | 数据、身份、交易与恢复 | `platform_data_review` | 1 | `不通过` | 来源误判；一致性快照、身份 bridge、mock 订单、派生计数、幂等、媒体和删除门槛不足 |
-| 2026-08-22 | 主站复用、架构冲突与可实施性 | `platform_arch_review` | 1 | `不通过` | 活动文档矛盾；身份阶段过晚；守恒口径不安全；QR/API 依赖和并行规则不足 |
-| 2026-08-22 | 产品能力与 URL 守恒 | `platform_product_review` | 2 | `通过` | 旧 surface、产品语义、支付/身份/媒体/SEO/入口和五份文档边界已闭环 |
-| 2026-08-22 | 数据、身份、交易与恢复 | `platform_data_review` | 2 | `不通过` | 复核时发现 SQLite 哈希漂移及 WAL/SHM；文档必须记录漂移并把冻结、权威快照和隔离恢复留作 P1 前置 gate |
-| 2026-08-22 | 主站复用、架构冲突与可实施性 | `platform_arch_review` | 2 | `不通过` | 旧仓删除、架构恢复和写入停止的旧表述仍可绕过 P1/P7 门槛 |
-| 2026-08-22 | 数据、身份、交易与恢复 | `platform_data_review` | 3 | `通过` | 两次观察、DB/WAL/SHM 漂移和 P1 冻结、权威快照、完整核验 gate 已准确记录 |
-| 2026-08-22 | 主站复用、架构冲突与可实施性 | `platform_arch_review` | 3 | `通过` | P1 writer 取证、P7 删除授权和架构恢复四重门槛已在五份文档中统一 |
-| 2026-08-22 | 实施终审：产品与 URL | `platform_product_final_review` | 1 | `不通过` | 完整 Action 数和源码差分口径不一致，P6 被提前写成完成 |
-| 2026-08-22 | 实施终审：数据与恢复 | `platform_data_final_review` | 1 | `不通过` | 明文审计副本 ACL 过宽，158 行被误写为 owner 已批准，缺少可复现无敏感值 sidecar |
-| 2026-08-22 | 实施终审：代码与主站复用 | `platform_code_final_review` | 1 | `不通过` | 搜索使用错误 Link/语言拼接，缺预取、SEO、无障碍和回归约束 |
-| 2026-08-22 | 实施终审：产品与 URL | `platform_product_final_review` | 2 | `通过` | `83 / 13 / 33 / 4`、源码差分、最终 URL、取消项和 P6/P7 状态一致，无未关闭问题 |
-| 2026-08-22 | 实施终审：数据与恢复 | `platform_data_final_review` | 2 | `通过但修正` | 无 blocker/major；继续收紧 ACL 表述、owner 处置文案和动态守恒检查 |
-| 2026-08-22 | 实施终审：代码与主站复用 | `platform_code_final_review` | 2 | `不通过` | 独立搜索页点击或修饰键新开结果会清空当前 URL 查询 |
-| 2026-08-22 | 实施终审：数据与恢复 | `platform_data_final_review` | 3 | `通过` | ACL、owner 边界、39 表/1,157 行/41 关系、动态守恒与 sidecar 全部一致，无未关闭问题 |
-| 2026-08-22 | 实施终审：代码与主站复用 | `platform_code_final_review` | 3 | `通过` | 独立页保留 URL 查询并有 Ctrl+点击交互回归；无未关闭问题 |
-
-前三轮审核是实施前方案审核；产品、数据、代码三路实施终审也已完成。审核和本地完成均不替代窄屏视觉、部署验收、30 天观察或仓库所有者的删除授权。
-
-## 15. 变更记录
-
-| 日期 | 变更 | 证据 |
-| --- | --- | --- |
-| 2026-08-22 | 重新打开 Platform 产品能力与数据迁移；纠正“源码和教学前端完成等于整体迁移完成”的错误 | 旧源码 surface、两份 SQLite 哈希与业务表只读行数、主站现有路由 |
-| 2026-08-22 | 根据三路首轮独立审核补齐写能力、来源分类、身份、交易、媒体、幂等、删除和并行执行门槛 | 三位只读 reviewer 的 blocker/major/minor 报告 |
-| 2026-08-22 | 记录 SQLite 同日哈希漂移，收紧 writer 冻结、旧仓删除和架构恢复门槛；三路独立复审全部通过 | 产品第 2 轮、数据与架构第 3 轮 PASS |
-| 2026-08-22 | 完成生产冻结、隔离恢复、全部 surface/数据处置和主站入口实现，进入 P7 观察 | 两份处置账本、主站 `/search` 与入口改动；客户端 typecheck、492 个测试文件共 6,289 项通过；三路实施终审通过，窄屏视觉和部署待补 |
+| 2026-08-22 | 产品 surface agent 第一轮 | FAIL：旧 tracker 取消了必须恢复的产品能力 | 已重开 P0-P8，按 95/13/34/4 并集守恒 |
+| 2026-08-22 | 数据/交易 agent 第一轮 | FAIL：缺 catalog、learning、commerce、QR 正式模型与支付硬契约 | 已写入目标模型、权限和交易验收 |
+| 2026-08-22 | 代码复用 agent 第一轮 | FAIL：当前 `/courses` 非商业课程系统，且不得继续膨胀 `teaching_saas.ts` | 已锁定五个 route slice 与 canonical reuse 边界 |
+| 2026-08-22 | 产品 surface agent 终审 | PASS：旧页面/Handler/Action/metadata 全量守恒，会员、支付、履约、隐私与空状态闭环 | 42/42 capability 为 `implemented`、`reviewed`；客户端定向回归通过 |
+| 2026-08-22 | 数据/交易 agent 终审 | PASS：无 blocker/major | 62 张 Platform PG 表；fresh/repeat/rollback/约束验证通过；1,157 行历史数据处置差值 0；本机 PG13 仅完成静态兼容审计 |
+| 2026-08-22 | 代码/安全 agent 终审 | PASS：重复数据源、会员工具栏、SEO canonical/sitemap 与加密 V1 防误轮换 findings 已闭环 | server 3 files/25 tests、client 6 files/51 tests、三包 typecheck、部署 YAML 与 diff check 通过 |
+| 2026-08-22 | Root 集成验收 | PASS（本地） | client 6 files/51 tests、server 3 files/25 tests、shared/server/client typecheck；1280/430/390 精确浏览器矩阵通过 |
+
+浏览器证据明细：1280px `/zh/platform` 验证标题、H1 与 8 个领域真链接；390px 验证 `/zh/platform` 和 `/zh/platform/account/membership` 权限态与登录链接；430px 验证 `/zh` 的 Platform 卡片和 `/zh/platform/courses` 深链刷新。三档 `scrollWidth < innerWidth`；新 API 尚未发布时课程目录返回预期 404，并正确显示可重试错误态。真实登录角色、支付沙箱、上线 API 与旧域名状态在 P8 复验。
+
+后续每个阶段结束必须增加：提交、验证命令、浏览器证据、reviewer、finding、修复和复验结果。不得用口头“看起来完整”替代账本。
+
+## 10. 与其他任务的协调
+
+- [architecture-modernization-tracker.md](./architecture-modernization-tracker.md) 的大规模源码重构在 Platform P7 前继续暂停实施，只允许 characterization test、边界文档与不碰 Platform 热点的工作。
+- `teaching_saas.ts` 的渐进拆分可先补 characterization tests，但 Platform 不 import 它的内部 repository；只通过稳定 API 与 client helper 复用。
+- `server/src/index.ts`、shared exports、migration ledger、`page-meta.ts`、sitemap 与首页卡片是串行集成热点，保持单一 owner。

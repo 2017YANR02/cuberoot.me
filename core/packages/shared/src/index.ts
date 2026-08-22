@@ -32,3 +32,4 @@ export * from './kinch';
 export * from './pr_streak';
 export * from './teaching';
 export * from './calc_live';
+export * from './platform';

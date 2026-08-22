@@ -23,7 +23,7 @@ interface Table {
 
 type DomainKey =
   | 'mirror' | 'derived' | 'scramble' | 'recon' | 'alg'
-  | 'comp' | 'account' | 'teaching' | 'studio' | 'commerce' | 'community';
+  | 'comp' | 'account' | 'teaching' | 'platform' | 'studio' | 'commerce' | 'community';
 
 const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
   { key: 'mirror', dot: '#5BA8FF', name: { zh: 'WCA 镜像', en: 'WCA mirror' }, sub: { zh: '每日开发者导出离线重建', en: 'rebuilt offline from the daily export' } },
@@ -34,6 +34,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
   { key: 'comp', dot: '#4A90D9', name: { zh: '比赛 & 缓存 & 状态机', en: 'Comp & caches' }, sub: { zh: '关注 / 直播缓存 / dump 增量', en: 'follows, live cache, dump state' } },
   { key: 'account', dot: 'var(--accent)', name: { zh: '账号与登录', en: 'Accounts & auth' }, sub: { zh: '用户 / 身份 / 验证码 / 单次票据', en: 'users, identities, codes, single-use tickets' } },
   { key: 'teaching', dot: 'var(--signal-info)', name: { zh: '教学 SaaS', en: 'Teaching SaaS' }, sub: { zh: '机构 / 学员 / 课包 / 课堂 / 审计', en: 'organizations, students, packages, sessions, audit' } },
+  { key: 'platform', dot: 'var(--signal-warning)', name: { zh: 'Platform 主站业务', en: 'Main-site Platform' }, sub: { zh: '课程 / 学习 / 交易 / 内容 / 讲师 / QR', en: 'catalog, learning, commerce, content, instructors, QR' } },
   { key: 'studio', dot: '#67C18E', name: { zh: '用户产物', en: 'User artifacts' }, sub: { zh: '计时 / 训练 / 绘图', en: 'timer, trainer, paint' } },
   { key: 'commerce', dot: '#A78BFA', name: { zh: '会员 & 赞助 & 反馈', en: 'Commerce & feedback' }, sub: { zh: '订阅 / 致谢 / 反馈', en: 'membership, sponsors, feedback' } },
   { key: 'community', dot: '#4FC3DC', name: { zh: '社区内容 & 站务', en: 'Community & ops' }, sub: { zh: '长文 / wiki / 导航 / runbook', en: 'articles, wiki, nav, runbook' } },
@@ -267,6 +268,28 @@ const TABLES: Table[] = [
   ] },
   { name: 'teaching_conversation_messages', domain: 'teaching', origin: '0158', naturalKey: true, purpose: { zh: '正文与作者快照不可变的会话消息，按父行分配序号稳定分页', en: 'Append-only conversation messages with immutable author snapshots and parent-allocated sequence pagination' }, cols: [
     { name: 'id UUID (PK), organization_id, conversation_id, student_id' }, { name: 'sequence (conversation UNIQUE), body' }, { name: 'author_user_id and identity snapshots, created_at' },
+  ] },
+
+  // ── main-site Platform ─────────────────────────────────
+  { name: 'platform_*', domain: 'platform', origin: '0167', purpose: { zh: '主站 Platform 的 62 表 PostgreSQL 底座：统一账号下的目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等；不恢复旧 SQLite 双写，也不迁移少量 demo / 计时器历史数据', en: 'The 62-table PostgreSQL foundation for main-site Platform catalog, learning, commerce, content, instructors, QR, privacy, audit, outbox, and idempotency under canonical accounts; no legacy SQLite dual-write or small demo/timer-history migration' }, family: [
+    'platform_instructors', 'platform_instructor_applications', 'platform_media_assets', 'platform_courses',
+    'platform_course_owners', 'platform_course_revisions', 'platform_lessons', 'platform_lesson_revisions',
+    'platform_learning_paths', 'platform_learning_path_items', 'platform_quizzes', 'platform_quiz_revisions',
+    'platform_quiz_questions', 'platform_products', 'platform_product_variants', 'platform_events',
+    'platform_event_ticket_types', 'platform_news_articles', 'platform_membership_plans', 'platform_coupons',
+    'platform_shipping_addresses', 'platform_orders', 'platform_order_items', 'platform_coupon_redemptions',
+    'platform_payment_attempts', 'platform_provider_events', 'platform_refunds', 'platform_inventory_ledger',
+    'platform_fulfillment_ledger', 'platform_event_registrations', 'platform_course_entitlements',
+    'platform_entitlement_ledger', 'platform_memberships', 'platform_membership_ledger',
+    'platform_lesson_progress', 'platform_lesson_notes', 'platform_favorites', 'platform_quiz_attempts',
+    'platform_course_reviews', 'platform_certificates', 'platform_checkins', 'platform_point_ledger',
+    'platform_achievements', 'platform_user_achievements', 'platform_instructor_revenue_ledger',
+    'platform_instructor_payouts', 'platform_instructor_payout_items', 'platform_invite_codes',
+    'platform_invite_redemptions', 'platform_qr_codes', 'platform_qr_revisions', 'platform_qr_scans',
+    'platform_qr_templates', 'platform_qr_card_jobs', 'platform_privacy_consents',
+    'platform_analytics_events', 'platform_analytics_daily_aggregates', 'platform_retention_jobs',
+    'platform_reconciliation_records', 'platform_audit_events', 'platform_outbox_events',
+    'platform_idempotency_requests',
   ] },
 
   // ── user artifacts ──────────────────────────────────────
@@ -589,6 +612,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 164, slug: 'teaching_credit_adjustments', desc: { zh: '强化课时账本：以课包父行串行化所有写入，约束退款来源与等额撤销，并禁止余额降至负数。', en: 'Harden the credit ledger by serializing every write on its package, constraining refund sources and exact reversals, and preventing negative balances.' } },
   { n: 165, slug: 'teaching_leave_makeups', desc: { zh: '新增可审计的请假与补课状态机：批准请假原子同步考勤，补课复用未来考勤且仅在到课完成时扣课，课堂取消会释放待履约补课。', en: 'Add auditable leave and makeup state machines: leave approval atomically synchronizes attendance, makeups reuse future attendance and consume only on attended completion, and session cancellation releases scheduled makeups.' } },
   { n: 166, slug: 'timer_boot_events', desc: { zh: '新增匿名计时器启动统计：按单次打开去重，只保留粗粒度运行环境分桶，并自动清理 90 天前数据。', en: 'Add anonymous timer startup telemetry deduplicated per opening, retaining only coarse runtime buckets and pruning data older than 90 days.' } },
+  { n: 167, slug: 'platform_core', desc: { zh: '新增主站 Platform 的目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等 PostgreSQL 底座；复用统一账号，不恢复旧 SQLite 双写。', en: 'Add the main-site Platform PostgreSQL foundation for catalog, learning, commerce, content, instructors, QR, privacy, audit, outbox, and idempotency on canonical accounts, without restoring legacy SQLite dual-write.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
