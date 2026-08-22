@@ -43,7 +43,7 @@ import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, isWcaCom
 import { takeScramble } from '../_lib/scramble/scramble_pool';
 import { preScrambleFor } from '../_lib/scramble/pre_scramble';
 import { applyOrientationPrefix } from '@/lib/cube-orientation';
-import { use222Mode } from '@/lib/scramble-222-mode';
+import { cstimer222Spec, use222Mode, use222Type } from '@/lib/scramble-222-mode';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
 import { trainerSpecOf, trainerSig } from '../_lib/scramble/trainer-source';
 import { peekTrainer, awaitTrainer, prefetchTrainer, releaseTrainer, retryTrainer } from '../_lib/scramble/trainer_pool';
@@ -67,7 +67,14 @@ import type { EventId, Penalty, Solve } from '../_lib/types';
 import { EVENTS, isBldEvent, toWcaSpelling, fromWcaSpelling } from '../_lib/types';
 import { stageSegmentsFor } from '../_lib/reconstruct/stage_segments';
 import { shouldAutoRecap } from '../_lib/reconstruct/recap';
-import { isNonWcaEvent, prefetchNonWca, nextNonWcaScramble } from '../_lib/scramble/nonwca';
+import {
+  isNonWcaEvent,
+  nextCstimerScramble,
+  nextNonWcaScramble,
+  prefetchCstimerScramble,
+  prefetchNonWca,
+  takeCstimerScramble,
+} from '../_lib/scramble/nonwca';
 import {
   loadAll, saveAll, makeSolve,
   listSessions, getActiveSessionId, moveSolveToSession,
@@ -445,6 +452,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 2x2 口径(WCA 11 步 ↔ 最优/Q|H):与 /scramble/gen 同一个全站设置(Scramble222ModePicker)。
   // 真题:optimal → 服务端 God's-number 最优等态(复用 optimal_scramble);随机状态 → 见 scramble222。
   const [mode222] = use222Mode();
+  const [type222] = use222Type();
+  // csTimer 的专项类型只在本地随机来源生效。WCA 真题与同步种子仍走完整状态链,专项偏好原样保留。
+  const special222Spec = useMemo(
+    () => event === '222' && settings.scrambleSource === 'random' && !settings.syncSeed
+      ? cstimer222Spec(type222)
+      : null,
+    [event, settings.scrambleSource, settings.syncSeed, type222],
+  );
+  const special222SpecRef = useRef(special222Spec);
+  special222SpecRef.current = special222Spec;
+  const special222Sig = special222Spec
+    ? `${special222Spec.key}|${special222Spec.length ?? 0}`
+    : '';
   const wcaOptimalOn = event === '222' ? mode222 === 'optimal' : settings.wcaUseOptimal;
   const wcaDiffRef = variantDataRef(settings.wcaDiffVariant, settings.wcaDiffStage);
   const wcaDiffIsConditionalOnly = wcaDiffRef.variant === 'second_layer';
@@ -482,7 +502,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     : 'random';
   // 按步数生成签名:随机来源一律生效；非 WCA 项目即便全局来源仍记着「真题」也只能本地生成，
   // 因此同样要让难度变化重置打乱队列。WCA 项目的真题来源由 wcaStepSig 负责。
-  const genStepsSig = (settings.scrambleSource === 'random'
+  const genStepsSig = !special222Spec && (settings.scrambleSource === 'random'
     || (settings.scrambleSource === 'wca' && !wcaEventId(event)))
     ? genByStepsSig(event, settings)
     : '';
@@ -542,6 +562,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // deterministic seeded-sync mode where consumption order must stay exact.
     const s = getSettings();
     if (s.syncSeed) return generateScramble(event);
+    // 二阶专项类型复用 vendored csTimer worker 与统一队列。目标条件已由对应 scrambler 保证,
+    // 因此它优先于普通难度 / 按步数链；空串只表示 worker 尚未返回,由下方 effect 补位。
+    const special = special222SpecRef.current;
+    if (special) return takeCstimerScramble(special);
     // 「按难度生成」(3×3 族):状态在 worker 里按阶段最优步数采样,再由 min2phase 转成打乱 ——
     // 同样是异步的,队列干了就先出 '',由下面的 effect 补上(期间转圈)。
     if (trainerSpecRef.current) return peekTrainer(trainerSpecRef.current);
@@ -555,7 +579,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (isNonWcaEvent(event)) return generateScramble(event);
     return takeScramble(`${event}|${s.cnMode}|${event === '222' ? mode222 : ''}`, () => generateScramble(event), canGenScramble);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, genStepsSig, trainerSigVal, manualSig, canGenScramble, mode222]);
+  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, special222Sig, genStepsSig, trainerSigVal, manualSig, canGenScramble, mode222]);
 
   const [scrambleHist, setScrambleHist] = useState<{ list: string[]; idx: number }>(
     () => ({ list: [genScramble()], idx: 0 }),
@@ -621,26 +645,31 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scramble, settings.scrambleSource, wcaSourceSig, applyScrambleHist]);
 
-  // 非 WCA puzzle(FTO / 二阶五魔 / 齿轮…):打乱由 vendored csTimer 引擎在 Worker 里算
-  // (随机态 IDA*,FTO 单条 1~3s),同 WCA 真题一样是异步的 —— 队列干了就先出 '',这里补上,
+  // csTimer worker 打乱(二阶专项 / FTO / 二阶五魔 / 齿轮…):与 WCA 真题一样是异步的 ——
+  // 队列干了就先出 '',这里补上；队列身份包含 scrambler key + length,专项之间不会串题。
   // 期间显示转圈(而不是掉进 '—' 或退化成三阶打乱)。队列已有货时只做后台预取,不动当前打乱。
   // 手动输入模式例外:那里的 '' 表示「队列是空的,去粘贴打乱」(strip 有对应提示),
   // 不是「还在生成」—— 塞一条生成打乱进去会把提示吞掉。
-  const [nonWcaLoading, setNonWcaLoading] = useState(false);
+  const [cstimerLoading, setCstimerLoading] = useState(false);
   useEffect(() => {
     // 枫叶/齿轮启用精确难度后由完整图生成，不再启动 csTimer Worker 补位；尤其 0 步的
     // 恒等打乱也不能被当成「Worker 尚未返回」。
-    if (!isNonWcaEvent(event) || settings.scrambleSource === 'manual' || genStepsSig) {
-      setNonWcaLoading(false);
+    const special = special222SpecRef.current;
+    if ((!special && !isNonWcaEvent(event)) || settings.scrambleSource === 'manual' || genStepsSig) {
+      setCstimerLoading(false);
       return;
     }
-    prefetchNonWca(event);
-    if (scramble !== '') { setNonWcaLoading(false); return; }
+    if (special) prefetchCstimerScramble(special);
+    else prefetchNonWca(event);
+    if (scramble !== '') { setCstimerLoading(false); return; }
     let cancelled = false;
-    setNonWcaLoading(true);
-    void nextNonWcaScramble(event).then((real) => {
+    setCstimerLoading(true);
+    const pending = special
+      ? nextCstimerScramble(special, `222:${type222}`)
+      : nextNonWcaScramble(event);
+    void pending.then((real) => {
       if (cancelled) return;
-      setNonWcaLoading(false);
+      setCstimerLoading(false);
       const cur = scrambleHistRef.current;
       if (!real || cur.list[cur.idx] !== '') return;
       const list = [...cur.list];
@@ -648,7 +677,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       applyScrambleHist({ list, idx: cur.idx });
     });
     return () => { cancelled = true; };
-  }, [event, scramble, settings.scrambleSource, genStepsSig, applyScrambleHist]);
+  }, [event, scramble, settings.scrambleSource, special222Sig, genStepsSig, type222, applyScrambleHist]);
 
   // 「按难度生成」:状态采样在 worker(冷启建表 0.3~10s),打乱文本由 min2phase 现算 —— 首条要等,
   // 之后队列已预热。'' = 还在生成(转圈)。**取不到分两种**:worker 证明了这个窗口没有任何状态
@@ -2441,10 +2470,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                   : tr({ zh: '点击换一个打乱', en: 'Click to refresh'
                                       })}
             >
-              <span className="scramble-text">{scrambleLoading || nonWcaLoading || trainerLoading
+              <span className="scramble-text">{scrambleLoading || cstimerLoading || trainerLoading
                 // 转圈取代了原来的「加载真实打乱…」文字,所以它是唯一的加载提示 → 传 label 供读屏。
                 // 原来包在外面的 .scramble-loading 没有任何 CSS 规则也没有别的消费者,一并去掉。
-                ? <Spinner size={22} label={nonWcaLoading || trainerLoading
+                ? <Spinner size={22} label={cstimerLoading || trainerLoading
                     ? tr({ zh: '生成打乱', en: 'Generating scramble' })
                     : tr({ zh: '加载真实打乱', en: 'Loading real scramble' })} />
                 : trainerMiss

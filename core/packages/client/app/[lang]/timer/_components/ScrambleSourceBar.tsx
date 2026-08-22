@@ -21,6 +21,7 @@ import { stepPuzzleOf } from '../_lib/scramble/step-metrics';
 import { canTrainerDifficulty } from '../_lib/scramble/trainer-source';
 import { tr } from '@/i18n/tr';
 import Scramble222ModePicker from '@/components/Scramble222ModePicker';
+import { use222Type } from '@/lib/scramble-222-mode';
 
 interface Props {
   event: EventId;
@@ -33,6 +34,10 @@ export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
   const s = useSettings();
   const hasSteps = !!stepPuzzleOf(event);
   const src = s.scrambleSource;
+  const [type222] = use222Type();
+  // 专项类型只属于本地随机生成。真题与同步种子继续使用完整状态口径,但不覆盖用户保存的专项选择。
+  const show222SpecialTypes = event === '222' && src === 'random' && !s.syncSeed;
+  const uses222SpecialType = show222SpecialTypes && type222 !== 'full';
 
   // 「打乱来源」下拉本身已挪到顶栏(和「人数」/项目选择器同组,见 SoloView);这里只留下
   // 各来源的细项配置。random 且无「按步数」时无细项 → 整条为空,靠 CSS :empty 收起。
@@ -63,7 +68,16 @@ export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
         <GenDiffConfig isZh={isZh} settings={s} updateSettings={updateSettings} toggleSlot={diffSlot} />
       )}
 
-      {hasSteps && src !== 'manual' && (
+      {/* 二阶专项打乱有自己的精确目标条件,不再叠加「按步数」状态筛选。 */}
+      {uses222SpecialType && (
+        <div className="wca-src-config">
+          <div className="settings-row wca-src-toprow">
+            <Scramble222ModePicker active222 showLabel={false} showSpecialTypes />
+          </div>
+        </div>
+      )}
+
+      {hasSteps && src !== 'manual' && !uses222SpecialType && (
         <GenStepsConfig
           isZh={isZh}
           event={event}
@@ -72,7 +86,13 @@ export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
           updateSettings={updateSettings}
           // 2x2 口径 toggle(WCA 11 步 ↔ 最优/Q|H)塞进「按步数」顶行左侧,与它并排成一组;
           // 对随机状态与 WCA 真题都生效(真题的「最优」= 服务端 God's-number 最优等态)。
-          extraToprow={event === '222' ? <Scramble222ModePicker active222 showLabel={false} /> : undefined}
+          extraToprow={event === '222'
+            ? <Scramble222ModePicker
+                active222
+                showLabel={false}
+                showSpecialTypes={show222SpecialTypes}
+              />
+            : undefined}
         />
       )}
     </div>
