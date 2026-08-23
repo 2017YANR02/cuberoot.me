@@ -10,12 +10,14 @@ let playerMounts = 0;
 let playerUnmounts = 0;
 
 vi.mock('@/components/AlgPlayer/AlgPlayer', () => ({
-  default: function PlayerProbe({ alg, autoPlay, playRequest, loop, controlMode }: {
+  default: function PlayerProbe({ alg, autoPlay, playRequest, loop, controlMode, engine, startSolved }: {
     alg: string;
     autoPlay?: boolean;
     playRequest?: number;
     loop?: boolean;
     controlMode?: string;
+    engine?: string;
+    startSolved?: boolean;
   }) {
     useEffect(() => {
       playerMounts++;
@@ -27,6 +29,8 @@ vi.mock('@/components/AlgPlayer/AlgPlayer', () => ({
       'data-play-request': String(playRequest ?? 0),
       'data-loop': String(Boolean(loop)),
       'data-control-mode': controlMode,
+      'data-engine': engine,
+      'data-start-solved': String(Boolean(startSolved)),
     }, alg);
   },
 }));
@@ -72,6 +76,7 @@ describe('MoveNotationDemo player lifecycle', () => {
     });
 
     const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>('.move-notation-option'));
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-auto-play')).toBe('false');
     await act(async () => {
       buttons[1].click();
       buttons[2].click();
@@ -81,7 +86,9 @@ describe('MoveNotationDemo player lifecycle', () => {
     });
 
     expect(host.querySelector('[data-testid="player-alg"]')?.textContent).toBe('R');
-    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-control-mode')).toBe('none');
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-control-mode')).toBeNull();
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-engine')).toBeNull();
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-start-solved')).toBe('true');
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-auto-play')).toBe('true');
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-loop')).toBe('false');
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-play-request')).toBe('5');
@@ -176,7 +183,7 @@ describe('MoveNotationDemo player lifecycle', () => {
     expect(css).not.toContain('.alg-sim-scrub');
   });
 
-  it('omits the duplicate replay control while preserving click-to-play requests', async () => {
+  it('uses the same default full controls and engine routing as formula previews', async () => {
     await act(async () => {
       root.render(createElement(MoveNotationDemo, {
         puzzle: '3x3',
@@ -189,9 +196,12 @@ describe('MoveNotationDemo player lifecycle', () => {
     });
 
     const buttons = host.querySelectorAll<HTMLButtonElement>('.move-notation-option');
-    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-control-mode')).toBe('none');
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-control-mode')).toBeNull();
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-engine')).toBeNull();
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-auto-play')).toBe('false');
 
     await act(async () => buttons[1].click());
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-play-request')).toBe('1');
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-auto-play')).toBe('true');
   });
 });
