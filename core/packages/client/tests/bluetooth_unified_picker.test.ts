@@ -3,6 +3,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   classifyUnifiedBluetoothDevice,
+  GAN_V1_DEVICE_INFORMATION_SERVICE,
   requestUnifiedBluetoothDevice,
   unifiedBluetoothPickerOptions,
 } from '@/app/[lang]/timer/_lib/bluetooth/unified_picker';
@@ -55,6 +56,7 @@ describe('unified Bluetooth picker', () => {
       for (const prefix of driver.namePrefixes) expect(prefixes).toContain(prefix);
       expect(services).toContain(driver.service);
     }
+    expect(services).toContain(GAN_V1_DEVICE_INFORMATION_SERVICE);
   });
 
   it('keeps the Bluefy picker name-only while retaining timer permissions', () => {
@@ -104,5 +106,21 @@ describe('unified Bluetooth picker', () => {
     expect(timer.server.getPrimaryService).toHaveBeenCalledWith(GAN_TIMER_SERVICE);
     expect(timer.server.getPrimaryServices).not.toHaveBeenCalled();
     expect(timer.disconnect).not.toHaveBeenCalled();
+  });
+
+  it('does not misroute a legacy GAN v1 cube with FFF0 + 180A as a GAN timer', async () => {
+    const cube = fakeDevice(
+      'GAN-i',
+      [GAN_TIMER_SERVICE, GAN_V1_DEVICE_INFORMATION_SERVICE],
+      { rejectEnumeration: true },
+    );
+
+    await expect(classifyUnifiedBluetoothDevice(cube.device)).resolves.toBe('smart-cube');
+    expect(cube.server.getPrimaryService).toHaveBeenCalledWith(
+      GAN_V1_DEVICE_INFORMATION_SERVICE,
+    );
+    expect(cube.server.getPrimaryService).not.toHaveBeenCalledWith(GAN_TIMER_SERVICE);
+    expect(cube.server.getPrimaryServices).not.toHaveBeenCalled();
+    expect(cube.disconnect).toHaveBeenCalledOnce();
   });
 });

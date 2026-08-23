@@ -7,6 +7,9 @@ import { BLUETOOTH_TIMER_DRIVERS } from './timer';
 
 export type UnifiedBluetoothDeviceKind = 'smart-cube' | 'smart-timer';
 
+/** GAN v1 cubes share FFF0 with GAN timers but additionally expose 180A. */
+export const GAN_V1_DEVICE_INFORMATION_SERVICE = '0000180a-0000-1000-8000-00805f9b34fb';
+
 function unique<T>(values: readonly T[]): T[] {
   return Array.from(new Set(values));
 }
@@ -25,6 +28,7 @@ export function unifiedBluetoothPickerOptions(nameOnly = false): RequestDeviceOp
     optionalServices: unique([
       ...(cube.optionalServices ?? []),
       ...BLUETOOTH_TIMER_DRIVERS.map((driver) => driver.service),
+      GAN_V1_DEVICE_INFORMATION_SERVICE,
     ]),
     optionalManufacturerData: unique([
       ...(cube.optionalManufacturerData ?? []),
@@ -62,6 +66,22 @@ export async function classifyUnifiedBluetoothDevice(
   const server = await device.gatt.connect();
   try {
     const timerServices = new Set(timerMatches.map((driver) => driver.service.toLowerCase()));
+
+    // Legacy GAN v1 cubes expose the same FFF0 primary service as the GAN
+    // timer. csTimer distinguishes them by the cube's additional Device
+    // Information service (180A), so probe that exact service before FFF0.
+    // The cube connector will then either select a supported cube driver or
+    // report that this legacy protocol is unsupported; it must never subscribe
+    // to the cube's FFF5 move history as though it were timer state.
+    if (timerMatches.some((driver) => driver.kind === 'gan-timer')) {
+      try {
+        await server.getPrimaryService(GAN_V1_DEVICE_INFORMATION_SERVICE);
+        server.disconnect();
+        return 'smart-cube';
+      } catch {
+        // No 180A: continue with the direct smart-timer service probe.
+      }
+    }
 
     // Ask for the known timer service directly, as csTimer does. Some Web
     // Bluetooth bridges can resolve a specific service but cannot enumerate

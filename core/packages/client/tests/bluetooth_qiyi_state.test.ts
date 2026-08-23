@@ -76,7 +76,7 @@ async function makeRig(): Promise<Rig> {
   await qiyiDriver.start(
     gatt.asServer,
     (m) => { moves.push(m); order.push(`move:${m}`); },
-    { onState: (f) => { states.push(f); order.push('state'); } },
+    { mac: 'CC:A3:00:00:A1:B2', onState: (f) => { states.push(f); order.push('state'); } },
   );
   const notify = gatt.char(QIYI_SERVICE, QIYI_CHAR);
 
