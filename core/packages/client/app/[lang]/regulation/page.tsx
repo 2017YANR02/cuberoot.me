@@ -67,14 +67,14 @@ export default function RegulationHub() {
             </span>
             <span className="reg-hub-news-title">
               {t(
-                'FTO 成为新项目、魔表退役,安静锦标赛与资格起始日期',
-                'FTO added & Clock retired · Quiet Championships & qualification start dates',
+                '2027 年起,WCA 官方尝试强制采用 G5 计时器 4-pad 模式',
+                'G5 timer 4-pad mode required for official WCA attempts from 2027',
               )}
             </span>
             <span className="reg-hub-news-sub">
               {t(
-                'WCA 官方对项目列表与竞赛要求政策的近期调整(2026 年 5–6 月)',
-                'Recent WCA changes to the events list and Competition Requirements Policy (May–Jun 2026)',
+                '2027-01-02 生效;现有纪录保留,2-pad 与 4-pad 成绩共同排名',
+                'Effective 2027-01-02; existing records stand and 2-pad and 4-pad results rank together',
               )}
             </span>
           </span>

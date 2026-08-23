@@ -1,7 +1,7 @@
 'use client';
 
 // /regulation/news — WCA 规则与赛事动态。
-// 忠实搬运 WCA 官方近期公告(项目列表变更 / 竞赛要求政策 5.5 / 安静锦标赛说明)。
+// 忠实整理 WCA 官方近期公告(4-pad 计时 / 项目列表变更 / 竞赛要求政策 5.5 / 安静锦标赛说明)。
 // 英文取官方原文措辞,中文为忠实翻译,按时间倒序排列。非注册表章节,
 // 故不走 RegArticleLayout —— 自带面包屑 + 来源页脚,复用 .reg-page 外壳。
 
@@ -14,6 +14,8 @@ import { Callout, RegList } from '../_components/primitives';
 import '../regulation.css';
 import './news.css';
 
+const POST_4_PAD = 'https://www.worldcubeassociation.org/posts/adoption-of-4-pad-timing-august-2026';
+const FOUR_PAD_EXPLAINER = 'https://drive.google.com/file/d/13fQghYapzMIPQnGeo53r80_cmKcp0NrW/view';
 const POST_EVENTS = 'https://www.worldcubeassociation.org/posts/changes-to-the-wca-s-list-of-official-events-june-2026';
 const POST_POLICY = 'https://www.worldcubeassociation.org/posts/wca-competition-requirements-policy-update-5-5-may-2026';
 const QUIET_DOC = 'https://docs.google.com/document/d/1oYeA8YZQaVIwml0nA5KtZmJJp3WrAb2zcOnoyksIRBg/edit';
@@ -59,6 +61,91 @@ export default function RegulationNews() {
         </header>
 
         <div className="news-list">
+
+          {/* ───────────── 4-pad 计时(2026-08)───────────── */}
+          <article className="news-item">
+            <div className="news-meta">
+              <span className="news-date">2026-08-23</span>
+              <SourceLink href={POST_4_PAD} label={t('官方原文', 'Official post')} />
+              <SourceLink href={FOUR_PAD_EXPLAINER} label={t('决策说明', 'Decision explainer')} />
+            </div>
+            <h2 className="news-title">
+              {t('WCA 将全面采用 4-pad 计时', 'WCA to adopt 4-pad timing')}
+            </h2>
+            <p className="news-lede">
+              {t(
+                '从 2027 年 1 月 2 日起,所有采用速拧计时器记录的 WCA 官方尝试,都必须使用 Speed Stacks G5 StackMat™ Pro Timer 的 4-pad 模式。WCA 表示,这一改变能更可靠地确认成绩符合规则,进一步保障官方成绩的公正性与可信度。',
+                'From January 2, 2027, every official WCA attempt recorded with a speedsolving timer must use a Speed Stacks G5 StackMat™ Pro Timer in 4-pad mode. The WCA says the change will make it easier to verify that official times comply with the Regulations and strengthen the integrity of recognized results.',
+              )}
+            </p>
+
+            <Callout tone="warn" label={t('现行规则尚未改变', 'Current rules remain in force')}>
+              {t(
+                '新要求到 2027-01-02 才生效。在此之前,比赛仍应遵守现行的 2-pad 规定;启动与停止计时器的规则修订草案将在 2026 年 9 月公布并征求社区意见。本站会在正式规则发布后同步完整条款。',
+                'The new requirement does not take effect until 2027-01-02. Until then, competitions must continue to follow the current 2-pad rule. Draft changes covering how the timer is started and stopped will be published for community feedback in September 2026; this site will update its full text after the official Regulations are released.',
+              )}
+            </Callout>
+
+            <h3 className="news-sub-title">{t('为什么要改', 'Why the change')}</h3>
+            <p className="news-lede">
+              {t(
+                '两感应垫计时器本身能够精确计时,但成绩成立仍依赖选手完全按规则启动和停止计时器。部分违规动作很难由现场裁判直接发现;逐帧复核录像虽然可行,却耗时且依赖高质量视频。WCA 表示,没有找到只修改规则措辞或沿用现有设备要求就能令人满意地解决问题的方法,因此选择切换到 4-pad 模式。',
+                'Two-sensor timers can measure time precisely, but a valid result still depends on the competitor starting and stopping the timer exactly as required. Some infringements are difficult for a judge to see live, while frame-by-frame video review is slow and depends on high-quality footage. The WCA found no satisfactory wording change or other solution that could retain the existing timer requirements, so it chose 4-pad mode.',
+              )}
+            </p>
+
+            <h3 className="news-sub-title">{t('会发生哪些变化', 'What will change')}</h3>
+            <RegList items={[
+              t(
+                '认可计时器要求将由目前的 2-pad 模式以及允许 G3、G4 计时器,改为必须使用 G5 计时器的 4-pad 模式。',
+                'The approved-timer requirements will move from today’s 2-pad mode, which also allows G3 and G4 timers, to mandatory G5 timers in 4-pad mode.',
+              ),
+              t(
+                '启动和停止速拧计时器的相关规则会配合 4-pad 模式修订。',
+                'The Regulations for starting and stopping the speedsolving timer will be revised for 4-pad mode.',
+              ),
+              t(
+                '目前没有 4-pad 设备的地区会在生效日前收到 G5 计时器,费用与物流由 WCA 承担。',
+                'Regions that do not currently have 4-pad-capable equipment will receive G5 timers before the effective date, with the WCA covering costs and logistics.',
+              ),
+            ]} />
+
+            <h3 className="news-sub-title">{t('纪录与排名如何处理', 'Records and rankings')}</h3>
+            <Callout tone="success" label={t('不重置纪录', 'No record reset')}>
+              {t(
+                'WCA 认为,对绝大多数选手与项目而言,2-pad 和 4-pad 成绩的差异可以忽略。因此现有纪录继续有效,直到被 4-pad 成绩打破;4-pad 成绩也会与 2-pad 成绩共同计入排名。',
+                'The WCA considers the difference between 2-pad and 4-pad results negligible for the vast majority of competitors and events. Existing records therefore remain valid until broken by a 4-pad result, and results from both modes will be ranked together.',
+              )}
+            </Callout>
+            <p className="news-lede" style={{ marginTop: 20 }}>
+              {t(
+                'WCA 排名页还会为二阶、魔表、金字塔和斜转增加筛选,可在“全部成绩”与“4-pad 成绩”之间切换。',
+                'The WCA Rankings page will also add a filter for 2×2, Clock, Pyraminx and Skewb, allowing users to switch between all results and 4-pad results.',
+              )}
+            </p>
+
+            <h3 className="news-sub-title">{t('关键时间点', 'Key dates')}</h3>
+            <ul className="news-milestones">
+              <li className="news-ms">
+                <span className="news-ms-date">2026-08-23</span>
+                <span className="news-ms-text">
+                  {t('WCA 正式公布采用 4-pad 计时的决定。', 'The WCA announces its decision to adopt 4-pad timing.')}
+                </span>
+              </li>
+              <li className="news-ms">
+                <span className="news-ms-date">2026-09</span>
+                <span className="news-ms-text">
+                  {t('计划公布规则修订草案,向社区征求意见。', 'Draft Regulations changes are scheduled for community feedback.')}
+                </span>
+              </li>
+              <li className="news-ms">
+                <span className="news-ms-date">2027-01-02</span>
+                <span className="news-ms-text">
+                  <strong>{t('G5 计时器 4-pad 模式要求正式生效。', 'The G5 timer 4-pad requirement takes effect.')}</strong>
+                </span>
+              </li>
+            </ul>
+          </article>
 
           {/* ───────────── 项目列表变更(2026-06)───────────── */}
           <article className="news-item">
@@ -270,6 +357,8 @@ export default function RegulationNews() {
           </p>
           <p style={{ marginTop: 12 }}>
             <Link href="/regulation">{t('← 返回规则总览', '← Back to overview')}</Link>
+            {' · '}
+            <a href={POST_4_PAD} target="_blank" rel="noopener noreferrer">{t('4-pad 计时公告', '4-pad timing post')}</a>
             {' · '}
             <a href={POST_EVENTS} target="_blank" rel="noopener noreferrer">{t('项目列表变更', 'Events list change')}</a>
             {' · '}
