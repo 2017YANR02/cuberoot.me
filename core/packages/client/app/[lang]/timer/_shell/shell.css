@@ -567,6 +567,9 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   background: var(--accent-soft);
   color: var(--accent);
   overflow: hidden;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
   transition: background 120ms, border-color 120ms, color 120ms;
 }
 .shell-device-connect,
