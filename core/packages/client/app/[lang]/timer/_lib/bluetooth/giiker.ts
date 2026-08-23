@@ -8,7 +8,12 @@ import {
   matchesGiikerName,
   parseGiikerFrame,
 } from '@cuberoot/shared/smart-cube/giiker';
-import type { CubeDriver, CubeDriverContext, CubeDriverStartResult } from './driver';
+import {
+  writeGattValue,
+  type CubeDriver,
+  type CubeDriverContext,
+  type CubeDriverStartResult,
+} from './driver';
 import type { CubeBrand } from './types';
 
 export const giikerDriver: CubeDriver = {
@@ -74,9 +79,7 @@ export const giikerDriver: CubeDriver = {
           readChar.addEventListener('characteristicvaluechanged', onBattery);
           void readChar.startNotifications().then(async () => {
             const command = new Uint8Array([GIIKER_COMMAND_BATTERY]);
-            if (writeChar.writeValueWithResponse) await writeChar.writeValueWithResponse(command);
-            else if (writeChar.writeValueWithoutResponse) await writeChar.writeValueWithoutResponse(command);
-            else await writeChar.writeValue(command);
+            await writeGattValue(writeChar, command);
           }).catch(() => finish(null));
           setTimeout(() => finish(null), 1_500);
         });

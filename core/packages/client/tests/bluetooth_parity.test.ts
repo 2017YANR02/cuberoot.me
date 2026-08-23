@@ -366,7 +366,7 @@ async function makeQiyiRig(deviceName = QIYI_DEVICE, mac: string | null = QIYI_N
 
   const gatt = makeFakeGatt(deviceName, { [QIYI_SERVICE]: [QIYI_CHAR] });
   const ourMoves: string[] = [];
-  await qiyiDriver.start(gatt.asServer, (m) => ourMoves.push(m));
+  await qiyiDriver.start(gatt.asServer, (m) => ourMoves.push(m), { mac });
   const notify = gatt.char(QIYI_SERVICE, QIYI_CHAR);
 
   return {

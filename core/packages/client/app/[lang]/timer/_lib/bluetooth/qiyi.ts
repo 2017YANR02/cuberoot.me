@@ -32,13 +32,17 @@
  *   power = [0, 2][mv & 1]              -> 0 = CW, 2 = CCW (no doubles)
  */
 
-import type {
-  CubeDriver, CubeDriverContext, CubeDriverStartResult, TimedMove,
+import {
+  writeGattValue,
+  type CubeDriver,
+  type CubeDriverContext,
+  type CubeDriverStartResult,
+  type TimedMove,
 } from './driver';
 import type { CubeBrand } from './types';
 import { crc16Modbus } from './crc';
 import { aesEcbDecrypt, aesEcbEncrypt, expandKey } from './gan_crypto';
-import { QIYI_MAC_ADV } from './mac';
+import { QIYI_MAC_ADV, macStringToBytes, normalizeMac } from './mac';
 import { fromFaceletString } from '../cube/state';
 
 const QIYI_SERVICE = '0000fff0-0000-1000-8000-00805f9b34fb';
@@ -93,16 +97,14 @@ function buildPacket(content: ReadonlyArray<number>, w: Uint8Array): Uint8Array 
  * MAC prefix for QiYi Smart Cube is `CC:A3:00:00:` followed by the trailing
  * four hex chars of the device name.
  *
- * Returns 6 bytes in big-endian MAC order ([0]=high) or null.
+ * Returns a normalized big-endian MAC string or null.
  */
-function macFromDeviceName(name: string | undefined): Uint8Array | null {
+export function qiyiDefaultMac(name: string | null | undefined): string | null {
   if (!name) return null;
   const m = /^(?:QY-QYSC|XMD-TornadoV4-i)-.-([0-9A-F]{4})$/i.exec(name.trim());
   if (!m) return null;
   const tail = m[1].toUpperCase();
-  return new Uint8Array([0xcc, 0xa3, 0x00, 0x00,
-    parseInt(tail.slice(0, 2), 16),
-    parseInt(tail.slice(2, 4), 16)]);
+  return normalizeMac(`CC:A3:00:00:${tail.slice(0, 2)}:${tail.slice(2, 4)}`);
 }
 
 interface DecodeState {
@@ -232,6 +234,7 @@ export const qiyiDriver: CubeDriver = {
   service: QIYI_SERVICE,
   namePrefixes: ['QY-QYSC', 'XMD-TornadoV4-i'],
   optionalServices: [],
+  needsMac: true,
   macAdv: QIYI_MAC_ADV,
   // TODO(gyro): the Tornado V4 does carry an orientation feed, but NOBODY has
   // published its layout — cstimer's `qiyicube.js` decodes only opcodes 0x02
@@ -244,6 +247,10 @@ export const qiyiDriver: CubeDriver = {
   matches(device: BluetoothDevice): boolean {
     const n = (device.name ?? '').trim();
     return /^(QY-QYSC|XMD-TornadoV4-i)/i.test(n);
+  },
+
+  defaultMac(device: BluetoothDevice): string | null {
+    return qiyiDefaultMac(device.name);
   },
 
   async start(server, onMove, ctx?: CubeDriverContext): Promise<CubeDriverStartResult> {
@@ -259,13 +266,7 @@ export const qiyiDriver: CubeDriver = {
       // Allocate a fresh ArrayBuffer to satisfy strict TS BufferSource typing.
       const ab = new ArrayBuffer(enc.length);
       new Uint8Array(ab).set(enc);
-      if (cubeChar.writeValueWithResponse) {
-        await cubeChar.writeValueWithResponse(ab);
-      } else if (cubeChar.writeValueWithoutResponse) {
-        await cubeChar.writeValueWithoutResponse(ab);
-      } else {
-        await cubeChar.writeValue(ab);
-      }
+      await writeGattValue(cubeChar, ab);
     };
 
     const onChar = (ev: Event): void => {
@@ -298,23 +299,27 @@ export const qiyiDriver: CubeDriver = {
     };
 
     cubeChar.addEventListener('characteristicvaluechanged', onChar);
-    await cubeChar.startNotifications();
+    try {
+      await cubeChar.startNotifications();
 
-    // Send initial hello. Without a known MAC the cube ignores it, so try a
-    // best-effort name-derived MAC; if that fails, we still subscribe and
-    // hope a later ack-loop kicks the cube into streaming.
-    const mac = macFromDeviceName(server.device.name);
-    if (mac) {
+      // The connector resolves advertisement / saved / name-derived / manual
+      // MAC sources before start(). A missing or malformed address cannot yield
+      // a working QiYi session because the cube validates it in this hello.
+      const mac = normalizeMac(ctx?.mac);
+      if (!mac) throw new Error('QiYi cube: MAC required');
+      const macBytes = macStringToBytes(mac);
       const helloContent: number[] = [
         0x00, 0x6b, 0x01, 0x00, 0x00, 0x22, 0x06, 0x00, 0x02, 0x08, 0x00,
       ];
       // cstimer sends MAC bytes in reverse (low byte first).
-      for (let i = 5; i >= 0; i--) helloContent.push(mac[i]);
-      try {
-        await send(helloContent);
-      } catch {
-        // Non-fatal — some firmwares stream after subscribe alone.
-      }
+      for (let i = 5; i >= 0; i--) helloContent.push(macBytes[i]);
+      // A rejected hello means the cube cannot stream; propagate the failure so
+      // callers do not present a false connected state.
+      await send(helloContent);
+    } catch (error) {
+      cubeChar.removeEventListener('characteristicvaluechanged', onChar);
+      try { await cubeChar.stopNotifications(); } catch { /* Best-effort rollback. */ }
+      throw error;
     }
 
     let cleaned = false;
