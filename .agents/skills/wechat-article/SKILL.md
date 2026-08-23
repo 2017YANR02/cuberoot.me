@@ -11,5 +11,6 @@ description: Prepare CubeRoot content for a WeChat Official Account article thro
 4. Put temporary deliverables under the repository-root `.tmp/wechat/` directory with stable descriptive names.
 5. When a cover is needed, use the image-generation workflow, keep important text and subjects inside the central crop-safe area, verify text and factual visual details, and save the final image beside the Markdown draft.
 6. Whenever a cover or illustration shows a timer, use an accurately shaped Speed Stacks G5 (史塔克五代) timer with its blue-black body, central display, and four yellow hand/fingerprint pads; never substitute a generic timer.
-7. Use WeMD only for preview, theming, and copy-ready output; provide the draft path and concise instructions for pasting it into WeMD and then the WeChat editor.
-8. Never control or edit `mp.weixin.qq.com`, save or submit its draft, or publish on the user's behalf; the user performs the final paste, review, save, and publication.
+7. Before delivery, run `node scripts/check-markdown.mjs <draft.md>` and inspect the WeMD preview; never hand off content containing visible Markdown markers or broken emphasis.
+8. Use WeMD only for preview, theming, and copy-ready output; provide the draft path and concise instructions for pasting it into WeMD and then the WeChat editor.
+9. Never control or edit `mp.weixin.qq.com`, save or submit its draft, or publish on the user's behalf; the user performs the final paste, review, save, and publication.
