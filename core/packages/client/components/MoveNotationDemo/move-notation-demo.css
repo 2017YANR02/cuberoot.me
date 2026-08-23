@@ -6,6 +6,13 @@
   justify-self: start;
 }
 
+.move-notation-options {
+  max-height: 340px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
 .move-notation-option {
   display: flex;
   gap: 8px;
@@ -18,6 +25,10 @@
   color: var(--foreground);
   text-align: left;
   cursor: pointer;
+}
+
+.move-notation-option.is-group-start {
+  margin-top: 9px;
 }
 
 .move-notation-option:hover,
@@ -47,6 +58,10 @@
 }
 
 @media (max-width: 380px) {
+  .move-notation-options {
+    max-height: 280px;
+  }
+
   .move-notation-options code {
     flex-basis: 54px;
   }

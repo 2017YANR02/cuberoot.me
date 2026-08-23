@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatAlgNotation } from '@/lib/alg-notation-display';
+import { formatAlgNotation, formatCubeMoveDescription } from '@/lib/alg-notation-display';
 
 describe('formatAlgNotation', () => {
   it('keeps standard notation byte-for-byte', () => {
@@ -19,9 +19,15 @@ describe('formatAlgNotation', () => {
     );
   });
 
-  it('renders rotations and slice moves with the requested Chinese symbols', () => {
-    expect(formatAlgNotation("x y2 z' E M' S2", 'dumb')).toBe("天，地2，人'，赤，中'，经2");
-    expect(formatAlgNotation("e m' s2", 'dumb')).toBe("赤，中'，经2");
+  it('renders rotations and slice moves as full foolproof instructions', () => {
+    expect(formatAlgNotation("x y2 z' E M' S2", 'dumb')).toBe(
+      '整体沿右层顺时针转90度，整体沿上层转180度，整体沿前层逆时针转90度，下面第二层顺时针转90度，左面第二层逆时针转90度，前面第二层转180度',
+    );
+    expect(formatAlgNotation("e m' s2", 'dumb')).toBe(
+      '下面方向所有内层顺时针转90度，左面方向所有内层逆时针转90度，前面方向所有内层转180度',
+    );
+    expect(formatCubeMoveDescription('x', 'zh')).toBe('整体沿右层顺时针转90度');
+    expect(formatCubeMoveDescription('E', 'zh')).toBe('下面第二层顺时针转90度');
   });
 
   it('renders compact Chinese notation without standard move tokens', () => {
@@ -43,8 +49,13 @@ describe('formatAlgNotation', () => {
     expect(formatAlgNotation('R note U', 'dumb')).toBe('右面顺时针转90度 note 上面顺时针转90度');
   });
 
-  it('returns empty and unsupported layer notation safely', () => {
+  it('supports explicit repeat counts and numeric layers while preserving invalid input', () => {
     expect(formatAlgNotation('', 'dumb')).toBe('');
-    expect(formatAlgNotation('3Rw R0 2R', 'dumb')).toBe('3Rw，R0，2R');
+    expect(formatAlgNotation("U2' R3 R3'", 'dumb')).toBe(
+      '上面转180度，右面顺时针转270度，右面逆时针转270度',
+    );
+    expect(formatAlgNotation('3Rw R0 2R', 'dumb')).toBe(
+      '右面外侧3层顺时针转90度，R0，右面第2层顺时针转90度',
+    );
   });
 });

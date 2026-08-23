@@ -216,4 +216,38 @@ describe('MoveNotationDemo player lifecycle', () => {
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-play-request')).toBe('1');
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-auto-play')).toBe('true');
   });
+
+  it('derives cube captions from the same formatter as foolproof notation', async () => {
+    await act(async () => {
+      root.render(createElement(MoveNotationDemo, {
+        puzzle: '3x3',
+        moves: [{ move: 'x' }, { move: 'E' }],
+        variant: 'compact',
+      }));
+    });
+
+    const captions = Array.from(host.querySelectorAll('.move-notation-option span'))
+      .map(node => node.textContent);
+    expect(captions).toEqual([
+      '整体沿右层顺时针转90度',
+      '下面第二层顺时针转90度',
+    ]);
+  });
+
+  it('visually groups suffix variants of the same base move', async () => {
+    await act(async () => {
+      root.render(createElement(MoveNotationDemo, {
+        puzzle: '3x3',
+        moves: [
+          { move: 'U' }, { move: "U'" }, { move: 'U2' }, { move: "U2'" },
+          { move: 'D' }, { move: "D'" }, { move: 'D2' }, { move: "D2'" },
+        ],
+        variant: 'compact',
+      }));
+    });
+
+    const groupStarts = host.querySelectorAll('.move-notation-option.is-group-start');
+    expect(groupStarts).toHaveLength(1);
+    expect(groupStarts[0].textContent).toBe('D下面顺时针转90度');
+  });
 });
