@@ -4,42 +4,16 @@ import Link from '@/components/AppLink';
 import MoveNotationDemo, { type MoveNotationOption } from '@/components/MoveNotationDemo/MoveNotationDemo';
 import { useT } from '@/hooks/useT';
 import { formatAlgNotation } from '@/lib/alg-notation-display';
+import { CUBE_ALL_MOVES } from '@/lib/move-notation-catalog';
 import '../../alg.css';
 import '../../notation-guide.css';
 
-interface DemoMove {
-  move: string;
-  source?: string;
-}
-
-const COMPACT_DEMO_MOVES: DemoMove[] = [
-  { move: 'U' },
-  { move: 'D' },
-  { move: 'L' },
-  { move: 'R' },
-  { move: 'F' },
-  { move: 'B' },
-  { move: 'u', source: 'u' },
-  { move: 'd', source: 'd' },
-  { move: 'l', source: 'l' },
-  { move: 'r', source: 'r' },
-  { move: 'f', source: 'f' },
-  { move: 'b', source: 'b' },
-  { move: 'x' },
-  { move: 'y' },
-  { move: 'z' },
-  { move: 'E' },
-  { move: 'M' },
-  { move: 'S' },
-];
-
-const MODE_EXAMPLES = ['R', "U'", 'r', 'F2'];
+const MODE_EXAMPLES = ['R', "U'", 'Rw', 'F2', "U2'", 'R3', "R3'", 'x', 'E'];
 
 function compactDemoOptions(): MoveNotationOption[] {
-  return COMPACT_DEMO_MOVES.map(({ move, source }) => ({
+  return CUBE_ALL_MOVES.map(move => ({
     move,
     symbol: formatAlgNotation(move, 'zh-compact'),
-    caption: source ?? move,
   }));
 }
 
@@ -84,8 +58,8 @@ export default function NotationPage() {
           <section aria-labelledby="foolproof-rule-title">
             <h2 id="foolproof-rule-title">{t('傻瓜', 'Foolproof')}</h2>
             <p>{t(
-              '直接写出方向；转体和中层仍用 x、y、z、E、M、S。',
-              'Write the direction in full; rotations and slice moves remain x, y, z, E, M, and S.',
+              '直接写出面、层、方向和角度；面转、宽层、中层与整体转体使用同一套说明。',
+              'Write the face, layer, direction, and angle in full; face, wide, slice, and rotation moves use one description system.',
             )}</p>
             <div className="alg-notation-long-examples">
               {MODE_EXAMPLES.map(alg => (

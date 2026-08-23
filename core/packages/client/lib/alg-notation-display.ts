@@ -49,6 +49,30 @@ const SLICE_ZH: Record<string, string> = {
   s: '经',
 };
 
+const ROTATION_AXIS_ZH: Record<string, string> = {
+  x: '右层',
+  y: '上层',
+  z: '前层',
+};
+
+const ROTATION_AXIS_EN: Record<string, string> = {
+  x: 'right-layer',
+  y: 'up-layer',
+  z: 'front-layer',
+};
+
+const SLICE_FACE_ZH: Record<string, string> = {
+  E: '下面',
+  M: '左面',
+  S: '前面',
+};
+
+const SLICE_FACE_EN: Record<string, string> = {
+  E: 'bottom',
+  M: 'left',
+  S: 'front',
+};
+
 function specialMoveToZh(move: ParsedMove): string | null {
   if (move.layer != null) return null;
 
@@ -68,25 +92,106 @@ function doubleLayerOf(move: ParsedMove): '' | '双' | null {
   return isWideFamily && (move.layer == null || move.layer === '2') ? '双' : null;
 }
 
+function turnZh(amount: number): string | null {
+  const turns = Math.abs(amount);
+  if (!Number.isFinite(turns) || turns === 0) return null;
+  if (turns === 2) return '转180度';
+  return `${amount < 0 ? '逆时针' : '顺时针'}转${turns * 90}度`;
+}
+
+function turnEn(amount: number): string | null {
+  const turns = Math.abs(amount);
+  if (!Number.isFinite(turns) || turns === 0) return null;
+  if (turns === 2) return '180 degrees';
+  return `${amount < 0 ? 'counter-clockwise' : 'clockwise'} ${turns * 90} degrees`;
+}
+
+function layerRangeZh(layer: string): string {
+  const [from, to] = layer.split('-');
+  return to ? `第${from}至第${to}层` : `第${from}层`;
+}
+
+function layerRangeEn(layer: string): string {
+  const [from, to] = layer.split('-');
+  return to ? `layers ${from} through ${to}` : `layer ${from}`;
+}
+
+function wideLayerCountZh(layer: string): string {
+  const [from, to] = layer.split('-');
+  return to ? `外侧第${from}至第${to}层` : `外侧${from}层`;
+}
+
+function wideLayerCountEn(layer: string): string {
+  const [from, to] = layer.split('-');
+  return to ? `outer layers ${from} through ${to}` : `outer ${from} layers`;
+}
+
+function cubeMoveSubjectZh(move: ParsedMove): string | null {
+  if (move.kind === 'rotation') {
+    const axis = ROTATION_AXIS_ZH[move.family];
+    return axis ? `整体沿${axis}` : null;
+  }
+
+  if (move.kind === 'slice') {
+    const family = move.family.toUpperCase();
+    const face = SLICE_FACE_ZH[family];
+    if (!face) return null;
+    return move.family === family ? `${face}第二层` : `${face}方向所有内层`;
+  }
+
+  const face = FACE_ZH[move.family[0]?.toUpperCase()];
+  if (!face) return null;
+  const wideFamily = move.family.endsWith('w') || move.family === move.family.toLowerCase();
+  if (wideFamily) {
+    if (move.layer && move.layer !== '2') return `${face}${wideLayerCountZh(move.layer)}`;
+    return `${face}双层`;
+  }
+  if (move.layer) return `${face}${layerRangeZh(move.layer)}`;
+  return face;
+}
+
+function cubeMoveSubjectEn(move: ParsedMove): string | null {
+  if (move.kind === 'rotation') {
+    const axis = ROTATION_AXIS_EN[move.family];
+    return axis ? `Whole puzzle around the ${axis} axis` : null;
+  }
+
+  if (move.kind === 'slice') {
+    const family = move.family.toUpperCase();
+    const face = SLICE_FACE_EN[family];
+    if (!face) return null;
+    return move.family === family ? `Second layer from the ${face}` : `All inner layers along the ${face} axis`;
+  }
+
+  const faceKey = move.family[0]?.toUpperCase();
+  const face = ({ U: 'Up', D: 'Down', L: 'Left', R: 'Right', F: 'Front', B: 'Back' } as Record<string, string>)[faceKey];
+  if (!face) return null;
+  const wideFamily = move.family.endsWith('w') || move.family === move.family.toLowerCase();
+  if (wideFamily) {
+    if (move.layer && move.layer !== '2') return `${face} ${wideLayerCountEn(move.layer)}`;
+    return `${face} two layers`;
+  }
+  if (move.layer) return `${face} ${layerRangeEn(move.layer)}`;
+  return `${face} face`;
+}
+
+function describeParsedCubeMove(move: ParsedMove, language: 'zh' | 'en'): string {
+  const subject = language === 'zh' ? cubeMoveSubjectZh(move) : cubeMoveSubjectEn(move);
+  const turn = language === 'zh' ? turnZh(move.amount) : turnEn(move.amount);
+  if (!subject || !turn) return move.raw;
+  return language === 'zh' ? `${subject}${turn}` : `${subject}, ${turn}`;
+}
+
+/** Shared single-move wording used by notation guides and foolproof display. */
+export function formatCubeMoveDescription(move: string, language: 'zh' | 'en'): string {
+  const { moves, junk } = tokenizeMoves(move);
+  const parsed = moves[0];
+  if (!parsed || moves.length !== 1 || junk.length > 0 || parsed.raw !== move) return move;
+  return describeParsedCubeMove(parsed, language);
+}
+
 function moveToDumbZh(move: ParsedMove): string {
-  const specialMove = specialMoveToZh(move);
-  if (specialMove) return specialMove;
-  if (move.kind === 'rotation' || move.kind === 'slice') return move.raw;
-
-  const family = move.family;
-  const face = FACE_ZH[family[0]?.toUpperCase()];
-  if (!face) return move.raw;
-
-  const doubleLayer = doubleLayerOf(move);
-  if (doubleLayer == null) return move.raw;
-  const layer = doubleLayer ? '双层' : '';
-
-  const quarterTurns = Math.abs(move.amount);
-  if (!Number.isFinite(quarterTurns) || quarterTurns === 0) return move.raw;
-  if (quarterTurns === 2) return `${face}${layer}转180度`;
-
-  const direction = move.amount < 0 ? '逆时针' : '顺时针';
-  return `${face}${layer}${direction}转${quarterTurns * 90}度`;
+  return describeParsedCubeMove(move, 'zh');
 }
 
 function compactSuffix(amount: number): string {

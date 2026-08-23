@@ -4,27 +4,29 @@ import Link from '@/components/AppLink';
 import MoveNotationDemo, { type MoveNotationOption } from '@/components/MoveNotationDemo/MoveNotationDemo';
 import { useT } from '@/hooks/useT';
 import { FTO_EIF_ACTION_SEQUENCES } from '@/lib/fto-eif-image';
+import {
+  FTO_FACE_MOVES,
+  FTO_FACE_ROOTS,
+  FTO_MACRO_MOVES,
+  FTO_ROTATION_MOVES,
+  FTO_FACE_ROTATION_ROOTS,
+  FTO_SLICE_MOVES,
+  FTO_SLICE_ROOTS,
+  FTO_VERTEX_ROTATION_ROOTS,
+  FTO_WIDE_MOVES,
+  FTO_WIDE_ROOTS,
+} from '@/lib/move-notation-catalog';
 import '../../alg.css';
 import '../../notation-guide.css';
-
-const FACE_MOVES = ['U', 'F', 'R', 'L', 'D', 'Bl', 'Br', 'B'];
-const WIDE_MOVES = ['Uw', 'Fw', 'Rw', 'Lw', 'Dw', 'Blw', 'Brw', 'Bw'];
-const SLICE_MOVES = ['Us', 'Fs', 'Rs', 'Ls'];
-const ROTATIONS = ['Uo', 'Fo', 'Ro', 'Lo', 'Rt', 'Lt', 'Ft'];
-const MACROS = ['S', "S'", 'H', "H'"];
 
 export default function FtoNotationPage() {
   const t = useT();
   const options: MoveNotationOption[] = [
-    ...FACE_MOVES.map(move => ({ move, caption: t('单面', 'Face') })),
-    ...WIDE_MOVES.map(move => ({ move, caption: t('宽层', 'Wide') })),
-    ...SLICE_MOVES.map(move => ({ move, caption: t('中层', 'Slice') })),
-    ...ROTATIONS.map(move => ({ move, caption: t('转体', 'Rotation') })),
-    ...MACROS.map(move => ({ move, caption: t('公式', 'Macro') })),
-    { move: "U'", caption: t('逆转', 'Prime') },
-    { move: 'U2', caption: t('两次', 'Twice') },
-    { move: "Rt'", caption: t('逆转', 'Prime') },
-    { move: 'Rt2', caption: '180°' },
+    ...FTO_FACE_MOVES.map(move => ({ move, caption: t('单面', 'Face') })),
+    ...FTO_WIDE_MOVES.map(move => ({ move, caption: t('宽层', 'Wide') })),
+    ...FTO_SLICE_MOVES.map(move => ({ move, caption: t('中层', 'Slice') })),
+    ...FTO_ROTATION_MOVES.map(move => ({ move, caption: t('转体', 'Rotation') })),
+    ...FTO_MACRO_MOVES.map(move => ({ move, caption: t('公式', 'Macro') })),
   ];
 
   return (
@@ -64,7 +66,7 @@ export default function FtoNotationPage() {
               'U、F、R、L、D、Bl、Br、B 分别转动一个三角面。Bl 和 Br 是左后面与右后面。',
               'U, F, R, L, D, Bl, Br and B turn one triangular face. Bl and Br are the back-left and back-right faces.',
             )}</p>
-            <div className="alg-fto-notation-codes">{FACE_MOVES.map(move => <code key={move}>{move}</code>)}</div>
+            <div className="alg-fto-notation-codes">{FTO_FACE_ROOTS.map(move => <code key={move}>{move}</code>)}</div>
           </section>
 
           <section aria-labelledby="fto-wide-title">
@@ -73,7 +75,7 @@ export default function FtoNotationPage() {
               'w 表示该面连同相邻中层一起转；s 表示只转对应的中层。它们是同时转动的层，不是为了画图临时拼出来的多步。',
               'w turns the face and its adjacent middle layer together; s turns only the corresponding middle layer. These are simultaneous layers, not a visual approximation made from separate moves.',
             )}</p>
-            <div className="alg-fto-notation-codes">{[...WIDE_MOVES, ...SLICE_MOVES].map(move => <code key={move}>{move}</code>)}</div>
+            <div className="alg-fto-notation-codes">{[...FTO_WIDE_ROOTS, ...FTO_SLICE_ROOTS].map(move => <code key={move}>{move}</code>)}</div>
           </section>
 
           <section aria-labelledby="fto-rotation-title">
@@ -82,7 +84,7 @@ export default function FtoNotationPage() {
               'Uo、Fo、Ro、Lo 围绕对应面的轴转 120°。Rt、Lt、Ft 围绕对应顶点的轴转 90°，撇号反向，2 表示 180°。',
               'Uo, Fo, Ro and Lo rotate 120° around the corresponding face axis. Rt, Lt and Ft rotate 90° around the corresponding vertex axis; a prime reverses it and 2 means 180°.',
             )}</p>
-            <div className="alg-fto-notation-codes">{ROTATIONS.map(move => <code key={move}>{move}</code>)}</div>
+            <div className="alg-fto-notation-codes">{[...FTO_FACE_ROTATION_ROOTS, ...FTO_VERTEX_ROTATION_ROOTS].map(move => <code key={move}>{move}</code>)}</div>
           </section>
 
           <section className="alg-fto-macro-rule" aria-labelledby="fto-macro-title">
