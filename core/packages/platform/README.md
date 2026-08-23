@@ -1,50 +1,21 @@
-# CubeRoot 旧 Platform 归档
+# @cuberoot/platform 历史归档
 
-从原独立平台仓库迁入的历史源码。独立前端已经退役,不再测试、构建或部署;主站 `@cuberoot/client` 的 `/org` 与 `/learn` 是唯一教学入口。这里仅保留必要的数据导出、取证与回滚参考。
+状态：`RETIRED`。
 
-## 技术栈
+本目录保存退役 Platform 前端、SQLite migration 和相关历史证据，已从 `core/pnpm-workspace.yaml` 排除。它不是可开发、可测试、可构建或可部署的应用，也没有受支持的原地运行命令。
 
-- **Next 16 App Router** + React 19 + TS5
-- **Tailwind v4**(`@tailwindcss/postcss`,token 在 `app/globals.css`)
-- lucide-react 图标
-- RSC + Server Actions;公开内容页在 `next build` 时从 SQLite 预渲染
+现役产品归属：
 
-## 目录
+- Web 入口和页面：`../client` 的 `/platform/*`，必要深链复用 `/org/*`、`/learn/*` 等主站能力。
+- API 和 PostgreSQL 数据：`../server`。
+- 跨端稳定契约：`../shared`。
 
-```
-app/                Next App Router
-  page.tsx          Landing
-  about/            关于我们
-  courses/          课程列表 + [id] 详情
-  shop/             商城列表 + [id] 详情
-  events/           赛事列表 + [id] 详情
-  community/        社群
-  news/             资讯
-  instructors/      讲师列表
-  instructors/apply 讲师入驻申请
-components/         SiteHeader/Footer/Section/Button/Badge/FeatureCard/StatCard
-data/               全部 mock(courses / products / events / news / instructors)
-```
+禁止现役 package 导入本目录源码，禁止恢复独立账号、SQLite 写入、独立前端或独立部署。需要历史取证或恢复时，必须先获得明确授权，并在隔离副本中操作。
 
-## 归档检查
+当前状态见：
 
-```bash
-cd core
-pnpm install
-pnpm --filter @cuberoot/platform build
-pnpm --filter @cuberoot/platform typecheck
-pnpm --filter @cuberoot/platform test
-```
+- [`../../../docs/platform-product-migration-tracker.md`](../../../docs/platform-product-migration-tracker.md)
+- [`../../../docs/architecture-modernization-tracker.md`](../../../docs/architecture-modernization-tracker.md)
+- [`../../../docs/platform-data-disposition-ledger.md`](../../../docs/platform-data-disposition-ledger.md)
 
-## 设计 token(`app/globals.css`)
-
-- 品牌色 `--color-brand: #2A5DF4` / `brand-dark` / `brand-soft` / `brand-tint`
-- 文字 `--color-ink / ink-2 / ink-3`
-- 分割 `--color-line / line-soft`
-- 背景 `--color-bg-soft`
-
-## 产品边界
-
-- 历史内容:课程、章节、学习进度、订单、会员、讲师 / 管理后台、支付和内容运营。
-- 新能力一律进入主站与 Core,不在此目录继续开发产品功能。
-- 迁移记录、外部状态和旧仓库删除门槛见 [`docs/platform-migration.md`](../../../docs/platform-migration.md)。
+旧实现细节保存在 Git 历史中，不再把旧命令复制到现役文档。

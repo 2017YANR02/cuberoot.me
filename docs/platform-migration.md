@@ -1,8 +1,10 @@
 # Cube Platform 迁移跟踪
 
-最后更新:2026-08-22
+最后更新:2026-08-23
 
-状态:源码、Git 历史和 monorepo 接入已完成,独立前端已退役;旧产品能力与业务数据迁移尚未完成。本文只保留源码接入证据和历史边界,当前执行状态以[Platform 产品能力与数据迁移跟踪](./platform-product-migration-tracker.md)为准。
+状态:`HISTORICAL / COMPLETED`。源码、Git 历史和 monorepo 接入已完成，独立前端已退役。P0-P8 产品与数据迁移已经完成发布验收；P9 已推送，CI 与线上角色态的剩余状态以[Platform 主站完整迁移跟踪](./platform-product-migration-tracker.md)为准。
+
+> 本文从“目标”起保存当时的迁入计划、旧命令和时点 TODO，只作历史证据，不是当前开发/部署手册，也不得用未勾选旧项重新打开已验收工作。
 
 ## 目标
 
@@ -10,7 +12,7 @@
 
 这次迁移解决代码、Git 历史、workspace、CI、构建和部署归属。生产数据库、上传文件、运行时环境变量与 GitHub secrets 都是仓库外状态,不会因为代码迁移自动搬家。
 
-最终前端架构已经确定:不保留独立 Platform 前端。`core/packages/client` 的 `/org/*` 是教职员工工作台,`/learn/*` 是学员 / 监护人入口,`packages/platform` 仅作为迁移来源与历史兼容。详细顺序和验收门槛见[教学平台前端统一计划](./platform-unification-plan.md)。
+最终前端架构已经确定：不保留独立 Platform 前端。`core/packages/client` 的 `/platform/*` 是产品聚合入口，并复用 `/org/*`、`/learn/*` 等主站深链；`packages/platform` 仅作为历史归档。详细当前状态见[Platform 主站完整迁移跟踪](./platform-product-migration-tracker.md)。
 
 ## Git 证据
 
@@ -44,18 +46,18 @@
 - 旧仓未跟踪的 `qr-layout.png`。
 - `.tmp` 内的商业计划书、截图和调试产物。
 
-## Monorepo 适配
+## 迁入阶段的 Monorepo 适配（历史快照）
 
-- workspace 名称改为 `@cuberoot/platform`,根脚本提供 dev/build/typecheck/test 入口。
-- 根 workspace 允许构建 `better-sqlite3`;依赖统一进入 `core/pnpm-lock.yaml`。
-- Next standalone tracing root 改为 `core/`,workflow 动态定位 monorepo 的 `server.js`。
-- Docker 改用 `core/` 构建上下文、pnpm 11、Node 24 和根 lockfile。
+- workspace 名称曾改为 `@cuberoot/platform`，根脚本曾提供 dev/build/typecheck/test 入口；退役时已全部移除。
+- 根 workspace 曾允许构建 `better-sqlite3`，依赖曾统一进入 `core/pnpm-lock.yaml`。
+- Next standalone tracing root 曾改为 `core/`，workflow 曾动态定位 monorepo 的 `server.js`。
+- Docker 曾改用 `core/` 构建上下文、pnpm 11、Node 24 和根 lockfile。
 - 迁入阶段曾有独立 Platform test/deploy workflow;退役后两者已删除,归档源码不再自动构建或上线。
-- 生产鉴权不再接受默认管理员密码或默认 session secret;systemd 从 `/etc/cube-platform.env` 读取必填值。
+- 独立运行时退役前，生产鉴权不接受默认管理员密码或默认 session secret，systemd 曾从 `/etc/cube-platform.env` 读取必填值；该 unit 已删除并停用。
 
-## 现有能力与教学系统边界
+## 迁入阶段的能力与教学系统边界（历史快照）
 
-迁入代码已经有用户登录、课程 / 章节、学习进度、订单、会员、讲师入驻与后台、支付、内容、社群、上传和运营日志。多机构教学 SaaS 的 Stage 0 底座、Stage 1 CRM 基础、Stage 2 履约 MVP、Stage 3 训练闭环和 Stage 4 教师课后反馈 / 周报切片均已进入主仓实现。最终产品边界已经确定为主站 `packages/client` 唯一教学前端,不再为 Platform 补一套训练管理页面:
+以下内容只记录迁入阶段的实现切片和当时的后续清单，不是当前产品待办。迁入代码当时已有用户登录、课程 / 章节、学习进度、订单、会员、讲师入驻与后台、支付、内容、社群、上传和运营日志。多机构教学 SaaS 的 Stage 0 底座、Stage 1 CRM 基础、Stage 2 履约 MVP、Stage 3 训练闭环和 Stage 4 教师课后反馈 / 周报切片均已进入主仓实现。最终产品边界已经确定为主站 `packages/client` 唯一教学前端，不再为 Platform 补一套训练管理页面：
 
 - `shared` 已定义机构角色、权限、状态和错误契约;Stage 3A 已收口去客户端身份字段的证据输入、可信等级、严格 registry / JSON / 时间边界和训练 Foundation DTO,并通过独立 TypeScript 契约检查。
 - PostgreSQL `0142` 至 `0146` 已建立机构、成员、学员、监护人、审计、幂等、平台账号桥接、独立写入尝试限流与学员分页索引。
@@ -68,10 +70,10 @@
 - 主站 `/timer`、`/predict` 与 `alg-trainer` 已加入受任务参数约束的证据适配器和本地重试队列;普通访问不生成或上传训练证据,所有当前浏览器证据仍明确标记为 `self_reported`。`/sim` 暂时只作为主站工具链接,不伪装成已验证证据源。
 - Platform 已把训练入口统一为主站真链接,并退役重复的 timer 历史展示、速度榜、timer 徽章与旧算法公开实现。按仓库所有者最新决定,旧 Platform SQLite 计时历史不迁入新训练证据系统;原表和 migration 只为兼容保留,不删除运行态数据。
 - 主站 `/org/*` 已接入账号绑定、训练模板、任务发布、训练日历、证据、批改、课包、课次、教师课后反馈、周报和学员消息;`/learn/*` 已接入学员 / 监护人上下文、已发布周报与反馈、消息会话和通知深链。Platform 不再承担这些界面。
-- Stage 1 尚缺监护人管理工作台、批量导入、远程搜索选择器和完整权限工作台；当前不能视为完整 CRM 验收通过。
+- 迁入阶段的 Stage 1 尚缺监护人管理工作台、批量导入、远程搜索选择器和完整权限工作台；这条历史判断不代表当前迁移未完成。
 - OTP 已改为持久限流、加密随机码和生产短信 fail-closed。
 
-后续能力统一在主站 `/org/*` 与 `/learn/*` 产品边界内补齐:
+当时记录的后续能力统一归入主站 `/org/*` 与 `/learn/*` 产品边界：
 
 1. 补齐监护人管理、批量导入、远程搜索和完整角色权限工作台。
 2. 补齐课包支付接单、退款 / 撤销反向流水、到期执行与异常对账。
@@ -79,7 +81,7 @@
 4. 完成账号绑定、任务、反馈、周报、通知和家校沟通的真实多角色端到端验收。
 5. 补齐经营报表、审计检索、导出、备份恢复演练与长期运维观察。
 
-`packages/client` 同时负责公开训练工具与最终教学管理界面,只消费 shared/Core 契约,不复制 timer、predict、alg 或 sim 引擎。旧 Platform 内容、商城与 SQLite 当前仅离线保留,产品能力和业务数据仍须按新的产品迁移跟踪表逐项处理;新多租户教学交易域不再写入 SQLite,按[多机构教学 SaaS 设计](./teaching-saas-plan.md)在 Hono/PostgreSQL 落 schema 与权限边界。
+当前 `packages/client` 同时负责公开训练工具与最终教学管理界面，只消费 shared/Core 契约，不复制 timer、predict、alg 或 sim 引擎。Platform P0-P8 产品与数据迁移已完成发布验收；旧内容、商城与 SQLite 只读离线保留到观察和处置流程结束。新多租户教学交易域不再写入 SQLite，按[多机构教学 SaaS 设计](./teaching-saas-plan.md)在 Hono/PostgreSQL 落 schema 与权限边界。
 
 ## 阶段性实施记录
 
