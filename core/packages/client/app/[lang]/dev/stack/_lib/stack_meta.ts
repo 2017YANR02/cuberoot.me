@@ -1,5 +1,4 @@
-// Auto-generated. Reflects landing-card fields only; full detail in stack_tools/<slug>.tsx (lazy).
-// Regen: node /tmp/extract_stack_meta.mjs (or just hand-edit when adding a tool).
+// Manually maintained landing-card metadata. Keep full detail in stack_tools/<slug>.tsx (lazy).
 
 export interface StackToolMeta {
   slug: string;
