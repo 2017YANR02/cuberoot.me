@@ -11,13 +11,27 @@ import {
   GAN_TIMER_SERVICE,
 } from '@/app/[lang]/timer/_lib/bluetooth/timer';
 
-function fakeDevice(name: string, serviceUuids: string[] = []) {
+function fakeDevice(
+  name: string,
+  serviceUuids: string[] = [],
+  options: { rejectEnumeration?: boolean } = {},
+) {
   const disconnect = vi.fn();
   const server = {
     connected: true,
     connect: vi.fn(async () => server),
     disconnect,
-    getPrimaryServices: vi.fn(async () => serviceUuids.map((uuid) => ({ uuid }))),
+    getPrimaryService: vi.fn(async (uuid: string | number) => {
+      const matched = serviceUuids.find((serviceUuid) => serviceUuid === uuid);
+      if (matched) return { uuid: matched };
+      throw new DOMException(`Service ${String(uuid)} was not found.`, 'NotFoundError');
+    }),
+    getPrimaryServices: vi.fn(async () => {
+      if (options.rejectEnumeration) {
+        throw new DOMException('Service enumeration is unavailable.', 'NotSupportedError');
+      }
+      return serviceUuids.map((uuid) => ({ uuid }));
+    }),
   } as unknown as BluetoothRemoteGATTServer;
   const device = { name, gatt: server } as unknown as BluetoothDevice;
   return { device, server, disconnect };
@@ -81,5 +95,14 @@ describe('unified Bluetooth picker', () => {
     await expect(classifyUnifiedBluetoothDevice(cube.device)).resolves.toBe('smart-cube');
     expect(cube.server.connect).toHaveBeenCalledOnce();
     expect(cube.disconnect).toHaveBeenCalledOnce();
+  });
+
+  it('routes a GAN timer when the Bluetooth bridge cannot enumerate services', async () => {
+    const timer = fakeDevice('GAN-Timer', [GAN_TIMER_SERVICE], { rejectEnumeration: true });
+
+    await expect(classifyUnifiedBluetoothDevice(timer.device)).resolves.toBe('smart-timer');
+    expect(timer.server.getPrimaryService).toHaveBeenCalledWith(GAN_TIMER_SERVICE);
+    expect(timer.server.getPrimaryServices).not.toHaveBeenCalled();
+    expect(timer.disconnect).not.toHaveBeenCalled();
   });
 });
