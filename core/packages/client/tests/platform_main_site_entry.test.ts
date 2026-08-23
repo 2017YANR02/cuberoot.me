@@ -37,6 +37,36 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(account).toMatch(/<AppLink key=\{key\} href=\{href\} className="account-card" prefetch=\{false\}>/);
   });
 
+  it('keeps Platform navigation public while the homepage is driven by real role data', () => {
+    const shell = read('components/platform/PlatformShell.tsx');
+    const routeView = read('components/platform/PlatformRouteView.tsx');
+    const styles = read('components/platform/platform.css');
+    const homeStart = routeView.indexOf('function PlatformLanding');
+    const homeEnd = routeView.indexOf('\nfunction PlatformAboutView', homeStart);
+
+    expect(shell).toContain('PLATFORM_PUBLIC_NAV');
+    expect(shell).not.toMatch(/\bPLATFORM_NAV\b/);
+    expect(routeView).not.toContain('platform-track');
+    expect(routeView).not.toContain('platform-directory');
+    expect(styles).not.toMatch(/\.platform-(track|directory|landing-links)\b/);
+    expect(styles).toMatch(/\.platform-nav\s*\{[^}]*grid-template-columns:\s*repeat\(5,/s);
+    expect(styles).toMatch(/\.platform-account-link\s*\{[^}]*min-height:\s*44px/s);
+    expect(homeStart).toBeGreaterThanOrEqual(0);
+    expect(homeEnd).toBeGreaterThan(homeStart);
+
+    const home = routeView.slice(homeStart, homeEnd);
+    expect(home).toContain('useAuthUser()');
+    expect(home).toContain('useIsAdmin()');
+    expect(home).toMatch(/loadPlatformResource\(\s*'account-courses'/);
+    expect(home).toMatch(/loadPlatformResource\(\s*'account-progress'/);
+    expect(home).toMatch(/loadPlatformResource\(\s*'instructor-courses'/);
+    expect(home).toMatch(/listTeachingOrganizations\(/);
+    expect(home).not.toMatch(/\bPLATFORM_ROUTES\b|\bexecutePlatformAction\b|<PlatformDomainActions\b/);
+    expect(routeView).toContain('const permissionDenied = error instanceof PlatformPermissionError;');
+    expect(routeView).toMatch(/!permissionDenied \? <PlatformDomainContent/);
+    expect(routeView).toMatch(/permissionDenied \|\| \(\['membership', 'me-membership'\]/);
+  });
+
   it('uses AppLink and disables prefetch for high-cardinality search results', () => {
     const search = read('components/LandingSearch.tsx');
 
