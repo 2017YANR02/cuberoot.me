@@ -2,11 +2,11 @@
 
 最后更新：2026-08-23
 
-本轮审计取证基线：复验时仓库 `HEAD` 为 `e253ae1d0a1255ea91dae6e9abfcd99b3c1fdeb6`；本文件自身提交造成的 `HEAD` 前进不视为事实漂移。每个实施批次开始前仍必须重新记录当时的 `HEAD` 和工作树重叠情况。
+Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59`，工作树无未提交改动；本批文档、测试守卫及跟踪文件自身造成的前进不视为基线漂移。每个后续实施批次开始前仍必须重新记录当时的 `HEAD` 和工作树重叠情况。
 
-状态：Platform P0-P8 技术迁移与发布验收已完成；P9 主站产品体验改版已在本地完成并通过三路复审，待发布和线上角色态复验。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。架构源码改造不再被“Platform 迁移未完成”全局阻塞，但仍未获得实施授权。
+状态：Platform P0-P8 技术迁移与发布验收已完成；P9 已推送，两个部署 workflow 成功，Test 的陈旧源码字符串守卫已在本批修正并等待推送重跑，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1 的 DOC-01 至 DOC-04 已通过独立复审，DOC-05 已建立诚实的 `PARTIAL` 登记并保留三类不可复现缺口；业务源码、目录搬迁与后续批次仍未授权。
 
-> 状态校正：2026-08-22 重新打开的产品与数据迁移已按 [Platform 主站完整迁移跟踪](./platform-product-migration-tracker.md) 完成 P0-P8。P9 是迁移完成后的主站产品体验改版，不恢复独立 Platform app，也不改变本架构方案的长期边界。任何源码实施仍须刷新依赖基线、完成新的独立复审并取得用户授权；与 Platform 热点重叠的实施另等 P9 发布及线上验收完成。
+> 状态校正：2026-08-22 重新打开的产品与数据迁移已按 [Platform 主站完整迁移跟踪](./platform-product-migration-tracker.md) 完成 P0-P8。P9 是迁移完成后的主站产品体验改版，不恢复独立 Platform app，也不改变本架构方案的长期边界。Batch 1 只改善入口、状态和生成物可发现性；后续源码实施仍须刷新依赖基线、完成新的独立复审并取得用户授权。
 
 ## 1. 用途
 
@@ -41,7 +41,7 @@
 | API | `core/packages/server`，Hono + PostgreSQL | 运行进程和部署产物已与 Web 分离；源码、资产和部署触发仍需解耦 |
 | Mobile | `core/packages/mobile`，React + Capacitor | 当前只有 Android 原生工程；iOS 计划以后在 macOS 上加入并复用同一 React 应用，尚未落库 |
 | 小程序 | `core/packages/miniprogram`，独立运行时 | 保持独立 app，不与 React DOM UI 强行共享 |
-| Platform | 活跃产品已迁入 `client`、`server`、`shared` 并完成 P0-P8 发布验收；P9 主站产品体验待发布验收。`core/packages/platform` 是 workspace 外历史归档，不测试、不部署、不新增产品功能 | 不建 `apps/platform-web`；P9 和旧资产观察独立跟踪，不阻塞无重叠的架构调查与规划 |
+| Platform | 活跃产品已迁入 `client`、`server`、`shared` 并完成 P0-P8 发布验收；P9 已推送且两个部署 workflow 成功，Test 失败待修复重跑，线上角色态待验收。`core/packages/platform` 是 workspace 外历史归档，不测试、不部署、不新增产品功能 | 不建 `apps/platform-web`；P9 和旧资产观察独立跟踪，不阻塞无重叠的架构调查与规划 |
 | 共享能力 | `shared`、`visualcube`、`stack-kernel` 等已有边界 | 先治理公开入口，再按真实边界信号决定是否拆包 |
 | 离线任务 | 多个 builder 目前与应用一起位于 `core/packages` | 逻辑边界稳定后才考虑 `jobs/*` |
 | 根脚本 | 根目录有统一入口和多个 PowerShell 实现脚本 | 先盘点调用者，再移动私有实现 |
@@ -138,11 +138,11 @@ API     ─X─> Web 源码或 Web public
 
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
-| DOC-01 | 在根 `AGENTS.md` 顶部增加一屏系统地图 | `待授权` | 80 行以内说明路径、职责、事实源、新代码归属、禁止依赖、验证与部署影响 |
-| DOC-02 | 修正根 README 的真实工作目录和首条命令 | `待授权` | 新环境按 README 进入 `core/` 后可执行安装与最小验证，不再从仓库根直接运行 pnpm |
-| DOC-03 | 为 client、server、mobile、miniprogram 增加或校准极短局部说明 | `待授权` | 每份只写局部差异，不复制根规则；AI 能在目标目录获得正确命令和边界 |
-| DOC-04 | 建立文档状态约定并标记 Platform 遗留目录 | `待授权` | 活跃计划、已完成记录、历史文档和退役说明可被明确区分；归档 README、DEPLOY 和局部 AGENTS 不再把旧目录或失效的 workspace 命令写成活跃开发入口 |
-| DOC-05 | 登记生成物 | `待授权` | 每类生成物记录 source、output、command、owner、CI drift check |
+| DOC-01 | 在根 `AGENTS.md` 顶部增加一屏系统地图 | `完成` | 80 行以内说明路径、职责、事实源、新代码归属、禁止依赖、验证与部署影响；变更后独立复审 PASS |
+| DOC-02 | 修正根 README 的真实工作目录和首条命令 | `完成` | 新环境按 README 进入 `core/` 后可执行安装与最小验证，不再从仓库根直接运行 pnpm；变更后独立复审 PASS |
+| DOC-03 | 为 client、server、mobile、miniprogram 增加或校准极短局部说明 | `完成` | 每份只写局部差异，不复制根规则；AI 能在目标目录获得正确命令和边界；变更后独立复审 PASS |
+| DOC-04 | 建立文档状态约定并标记 Platform 遗留目录 | `完成` | 活跃计划、已完成记录、历史文档和退役说明可被明确区分；归档入口不再把失效命令写成活跃开发入口；变更后独立复审 PASS |
+| DOC-05 | 登记生成物 | `进行中` | 已建立 `REFERENCE / PARTIAL` 登记并纠正 PG facts 跨 clone 路径与 stack metadata 伪生成声明；vendored 矩阵、TNoodle i18n generator、migration 数据族 owner 尚未闭环，独立复审结论为 PARTIAL |
 
 ### B. 真实依赖边界
 
@@ -209,7 +209,7 @@ G 阶段不再阻塞架构规划。RET-01/03 的完成只代表运行责任已�
 
 ## 9. 推荐实施批次
 
-以下批次均未获得实施授权。Platform P7 已完成，不再构成全局暂停条件；首个源码批次开始前仍必须基于当时 `HEAD` 刷新依赖基线、完成新的独立复审并取得用户授权。只读调查和为保持跟踪文件事实一致所必需的状态校正可以继续，DOC-01 至 DOC-05 仍待授权；与 Platform 集成热点重叠的源码实施须另等 P9 发布及线上角色态验收完成。
+批次 1 已获得用户授权，当前正在实施；批次 2 至 7 仍未授权。首个源码批次开始前必须基于当时 `HEAD` 刷新真实依赖基线、完成新的独立复审并取得用户授权；不得把本批文档治理扩张成业务源码、目录或部署改造。
 
 ### 批次 1：文档与入口
 
@@ -291,9 +291,12 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | 架构边界与 package 判据 | `architecture_boundary_review` | `历史复验通过` | 仅审核 2026-08-21 的架构方向，不授权当前恢复实施；Platform 前提已被后续证据修正 |
 | 多端 API、兼容与生成契约 | `multiclient_contract_review` | `历史复验通过` | 仅审核 2026-08-21 的多端方向；先做消费者矩阵与 `auth/web-session` 试点 |
 | 迁移、CI、部署与退役风险 | `migration_risk_review` | `历史复验通过` | 仅审核 2026-08-21 的风险方案；Platform 产品迁移现由独立跟踪表重新审核 |
-| Platform 当前状态与归档边界 | `platform_change_audit` | `当前复验通过` | 旧包未恢复；P0-P8 已完成，P9 待发布；应解除旧的全局阻塞并保留资产观察边界 |
+| Platform 当前状态与归档边界 | `platform_change_audit` | `当前复验通过` | 旧包未恢复；P0-P8 已完成；P9 已推送且部署成功，Test 失败待重跑、线上角色态待验收；保留资产观察边界 |
 | Platform 外工作树架构影响 | `worktree_arch_impact` | `当前复验通过` | Platform 外并行改动不影响 Web/API、package、多端、PS1 或部署结论；不要求改变工作包 |
 | 跟踪表与当前仓库一致性 | `tracker_consistency_review` | `当前复验通过` | 必须刷新 Platform 状态和事实快照；旧 PASS 不得替代迁移后依赖基线与重新复审 |
+| Batch 1 系统地图与边界事实 | `batch1_baseline` | `复审 PASS` | API 独立产物与现存 Web 耦合、活跃 app/package/job、Platform workspace 排除和宽部署触发均已准确表达；无 blocker/major/minor 遗留 |
+| Batch 1 README/归档状态 | `batch1_doc_audit` | `复审 PASS` | client/server/mobile/miniprogram 局部入口、中央文档状态和 Platform 退役墓碑与当前仓库一致；DOC-03/04 通过 |
+| Batch 1 生成物与 AI 可用性 | `batch1_generated_ai` | `复审 PARTIAL` | pgFacts 跨 clone 生成与 stack_meta 人工 source 重分类通过；vendored 矩阵、TNoodle i18n generator、migration 数据族 owner 仍是 DOC-05 blocker，EventIcon/DeskPet drift 守卫为后续 major |
 
 审核要求：
 
@@ -303,12 +306,14 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 4. 不得因追求目录标准化而忽略现有 workflow、构建产物和部署路径。
 5. 审核只读，不编辑文件；由主 Agent 统一合并结论。
 
-2026-08-21 的三名 Reviewer 曾确认当时的总体架构路线成立；随后 Platform 大迁移显著改变了依赖图，所以旧 PASS 只保留为历史审查证据，不能直接授权当前实施。2026-08-23 的三路只读审核确认原长期方向仍成立，并将计划从“Platform 全局阻塞”校准回“待授权”；这仍不授权任何源码、目录或部署改造。
+2026-08-21 的三名 Reviewer 曾确认当时的总体架构路线成立；随后 Platform 大迁移显著改变了依赖图，所以旧 PASS 只保留为历史审查证据，不能直接授权当前实施。2026-08-23 的 Batch 1 先做三路只读初审，再做变更后的定点复审：DOC-01 至 DOC-04 均 PASS，DOC-05 因三类已公开的不可复现缺口保持 PARTIAL。
 
 ## 13. 变更记录
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-23 | 完成 Batch 1 的系统地图、README/局部入口、文档状态和 Platform 退役墓碑；建立 `REFERENCE / PARTIAL` 生成物登记，修正 PG facts 跨 clone 生成路径与 stack metadata 错误生成声明 | 三路变更后复审：DOC-01/02 PASS、DOC-03/04 PASS、DOC-05 PARTIAL；PG facts 实际重建 1/1、定向测试 7/7、client typecheck、LF 与 `git diff --check` 通过；等待提交、push 与 workflow 重跑 |
+| 2026-08-23 | 用户授权 Batch 1；以 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59` 为干净基线开始系统地图、README、文档状态、Platform 墓碑和生成物登记 | `batch1_baseline`、`batch1_doc_audit`、`batch1_generated_ai` 三路只读初审 |
 | 2026-08-23 | Platform P0-P8 完成发布验收后解除旧的全局阻塞；P9 产品体验待发布，旧资产继续观察；架构实施恢复为待授权 | `platform-product-migration-tracker.md`、workspace/workflow/旧 runtime 只读核对；三路当前审核 |
 | 2026-08-22 | 因旧 Platform 非空业务数据和未迁产品能力被重新确认，暂停架构源码改造并改由独立跟踪表先行 | SQLite、旧路由与主站路由只读盘点；`platform-product-migration-tracker.md` |
 | 2026-08-21 | 建立跟踪文档；当时确认 Platform 不属于未来独立 app 或 `apps/*` 计划 | 历史决定仍禁止恢复独立前端；“产品迁移完成”部分已于 2026-08-22 被新证据修正 |
