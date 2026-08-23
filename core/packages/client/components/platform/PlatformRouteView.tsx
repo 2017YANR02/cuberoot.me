@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ExternalLink, Search, Sparkles } from 'lucide-react';
+import { ArrowRight, ExternalLink, Search } from 'lucide-react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
 import { AccountPanel, LoginForm } from '@/components/AuthPanel';
@@ -9,14 +9,17 @@ import BoolToggle from '@/components/BoolToggle';
 import SearchInput from '@/components/SearchInput';
 import SortArrow from '@/components/SortArrow';
 import { useT } from '@/hooks/useT';
-import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
+import { getSessionToken, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import {
   executePlatformAction,
   loadPlatformResource,
   PLATFORM_ACTION_LABELS,
   PlatformPermissionError,
 } from '@/lib/platform-gateway';
-import { fillPlatformParams, PLATFORM_NAV, PLATFORM_ROUTES } from '@/lib/platform-routes';
+import { fillPlatformParams, PLATFORM_ROUTES } from '@/lib/platform-routes';
+import { listTeachingLearningContexts, listTeachingOrganizations } from '@/lib/teaching-saas-api';
+import type { TeachingLearningContext } from '@cuberoot/shared/teaching';
+import type { TeachingOrganizationAccess } from '@/lib/teaching-saas-api';
 import type {
   PlatformActionId,
   PlatformActionResult,
@@ -76,48 +79,205 @@ function favoriteType(definition: PlatformRouteDefinition, item: PlatformEntity)
 
 function PlatformLanding() {
   const t = useT();
-  const areas = PLATFORM_NAV.map((nav) => ({
-    ...nav,
-    routes: PLATFORM_ROUTES.filter((route) => route.area === nav.area)
-      .filter((route) => route.pattern && !route.pattern.includes(':') && !['about', 'offline', 'login', 'account'].includes(route.id))
-  }));
-  const accessLabel = (access: PlatformRouteDefinition['access']) => access === 'public'
-    ? null
-    : access === 'account'
-      ? t('需登录', 'Sign-in required')
-      : access === 'instructor'
-        ? t('讲师', 'Instructor')
-        : t('管理员', 'Admin');
+  const user = useAuthUser();
+  const isAdmin = useIsAdmin();
+  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [courses, setCourses] = useState<PlatformEntity[]>([]);
+  const [progress, setProgress] = useState<PlatformEntity[]>([]);
+  const [learningContexts, setLearningContexts] = useState<TeachingLearningContext[]>([]);
+  const [organizations, setOrganizations] = useState<TeachingOrganizationAccess[]>([]);
+  const [instructor, setInstructor] = useState(false);
+  const [partialFailure, setPartialFailure] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    if (!mounted || !user) {
+      setCourses([]);
+      setProgress([]);
+      setLearningContexts([]);
+      setOrganizations([]);
+      setInstructor(false);
+      setPartialFailure(false);
+      setLoading(false);
+      return;
+    }
+    let active = true;
+    const controller = new AbortController();
+    setLoading(true);
+    setCourses([]);
+    setProgress([]);
+    setLearningContexts([]);
+    setOrganizations([]);
+    setInstructor(false);
+    setPartialFailure(false);
+    const platformOptions = { params: {}, signal: controller.signal };
+    const hasTeachingSession = Boolean(getSessionToken());
+    void Promise.allSettled([
+      loadPlatformResource('account-courses', platformOptions),
+      loadPlatformResource('account-progress', platformOptions),
+      loadPlatformResource('instructor-courses', platformOptions),
+      hasTeachingSession ? listTeachingOrganizations() : Promise.resolve([]),
+      hasTeachingSession ? listTeachingLearningContexts() : Promise.resolve([]),
+    ]).then(([courseResult, progressResult, instructorResult, organizationResult, contextResult]) => {
+      if (!active) return;
+      setCourses(courseResult.status === 'fulfilled' ? courseResult.value.items : []);
+      setProgress(progressResult.status === 'fulfilled' ? progressResult.value.items : []);
+      setInstructor(instructorResult.status === 'fulfilled');
+      setOrganizations(organizationResult.status === 'fulfilled' ? organizationResult.value : []);
+      setLearningContexts(contextResult.status === 'fulfilled' ? contextResult.value : []);
+      const unexpectedInstructorFailure = instructorResult.status === 'rejected'
+        && !(instructorResult.reason instanceof PlatformPermissionError);
+      setPartialFailure(
+        courseResult.status === 'rejected'
+        || progressResult.status === 'rejected'
+        || organizationResult.status === 'rejected'
+        || contextResult.status === 'rejected'
+        || unexpectedInstructorFailure,
+      );
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [mounted, user]);
+
+  const signedIn = mounted && Boolean(user);
+  const nextProgress = progress.find((item) => item.data?.status !== 'completed') ?? progress[0];
+  const currentCourse = courses.find((item) => item.id === nextProgress?.data?.courseId) ?? courses[0];
+  const progressBps = typeof currentCourse?.data?.progressBps === 'number' && Number.isFinite(currentCourse.data.progressBps)
+    ? Math.min(10_000, Math.max(0, currentCourse.data.progressBps))
+    : null;
+  const continueHref = nextProgress && typeof nextProgress.data?.courseId === 'string'
+    ? `/platform/courses/${encodeURIComponent(nextProgress.data.courseId)}/learn/${encodeURIComponent(String(nextProgress.data.lessonId ?? nextProgress.id))}`
+    : currentCourse
+      ? `/platform/courses/${encodeURIComponent(currentCourse.id)}`
+      : '/platform/courses';
+  const primaryLabel = signedIn && currentCourse
+    ? t('继续学习', 'Continue learning')
+    : t('浏览课程', 'Browse courses');
+  const firstLearningContext = learningContexts[0];
+  const firstOrganization = organizations[0];
+  const hasWorkspaces = instructor || Boolean(firstOrganization) || (mounted && isAdmin);
+
+  const discovery = [
+    { href: '/platform/courses', title: t('系统课程', 'Structured courses'), description: t('按主题找到课程、课时与学习路径。', 'Find courses, lessons, and paths by topic.') },
+    { href: '/platform/teachers', title: t('讲师名录', 'Teacher directory'), description: t('查看主站中的真实讲师资料与教学方向。', 'Meet verified teachers and explore their specialties.') },
+    { href: '/platform/community', title: t('学习社区', 'Learning community'), description: t('把问题、经验与学习成果带到讨论中。', 'Bring questions, experience, and progress into the discussion.') },
+    { href: '/platform/events', title: t('活动与实践', 'Events and practice'), description: t('参加活动，并继续使用主站计时器与公式库练习。', 'Join events and keep practicing with the main-site tools.') },
+  ];
+
   return (
     <div className="platform-landing">
-      <div className="platform-landing-copy">
-        <span className="platform-kicker"><Sparkles aria-hidden />{t('一个账号，一条完整学习路径', 'One account, one continuous learning path')}</span>
-        <h1>{t('从发现课程到完成学习，都留在 CubeRoot 主站。', 'From discovery to completion, everything stays on CubeRoot.')}</h1>
-        <p>{t('Platform 不再是独立前端。这里汇集课程、讲师、活动、交易、学习记录与机构协作，并复用主站已经成熟的社区和工具。', 'Platform is no longer a separate frontend. Courses, instructors, events, commerce, learning records, and organizations meet here while mature community and tool experiences are reused from the main site.')}</p>
-      </div>
-      <div className="platform-track" aria-label={t('Platform 功能入口', 'Platform feature entry points')}>
-        {PLATFORM_NAV.map((item, index) => (
-          <AppLink key={item.area} href={item.href} className="platform-track-stop" prefetch={false}>
-            <span>{String(index + 1).padStart(2, '0')}</span>
-            <strong>{t(item.label.zh, item.label.en)}</strong>
+      <header className="platform-home-hero">
+        <span className="platform-kicker">{t('CubeRoot 学习与服务', 'Learning and services on CubeRoot')}</span>
+        <h1>{t('学会一件事，然后在同一个地方继续进步。', 'Learn something, then keep moving in the same place.')}</h1>
+        <p>{t('课程、讲师、社区、练习工具和教学协作都在主站共用同一个账号。Platform 负责把下一步放在你面前，而不是再造一套站点。', 'Courses, teachers, community, practice tools, and teaching work share one main-site account. Platform puts the next step in front of you instead of becoming another site.')}</p>
+        <div className="platform-home-actions">
+          <AppLink className="platform-button platform-button-primary" href={signedIn ? continueHref : '/platform/courses'} prefetch={false}>
+            {primaryLabel}<ArrowRight aria-hidden />
           </AppLink>
-        ))}
-      </div>
-      <div className="platform-directory">
-        {areas.map((area) => (
-          <section key={area.area}>
-            <h2>{t(area.label.zh, area.label.en)}</h2>
-            <div>
-              {area.routes.map((route) => (
-                <AppLink key={route.id} href={`/platform/${route.pattern}`} prefetch={false}>
-                  <span>{t(route.title.zh, route.title.en)}</span>
-                  {accessLabel(route.access) ? <small>{accessLabel(route.access)}</small> : null}
-                </AppLink>
-              ))}
+          <AppLink className="platform-home-secondary" href="/platform/teachers" prefetch={false}>{t('寻找讲师', 'Find a teacher')}</AppLink>
+        </div>
+      </header>
+
+      {signedIn ? (
+        <section className="platform-home-learning" aria-labelledby="platform-home-learning-title">
+          <div className="platform-home-section-heading">
+            <span>{t('你的下一步', 'Your next step')}</span>
+            <h2 id="platform-home-learning-title">{t(`${user?.name ?? ''}，继续上次的学习。`, `Continue where you left off, ${user?.name ?? ''}.`)}</h2>
+          </div>
+          {loading ? (
+            <p className="platform-home-status" role="status" aria-busy="true" aria-live="polite">{t('正在读取学习进度与工作区…', 'Loading your learning and workspaces…')}</p>
+          ) : currentCourse ? (
+            <AppLink className="platform-home-resume" href={continueHref} prefetch={false}>
+              <span>
+                <small>{t('继续课程', 'Continue course')}</small>
+                <strong>{currentCourse.title}</strong>
+                {nextProgress ? <span>{nextProgress.title}</span> : null}
+              </span>
+              <span className="platform-home-progress">
+                {progressBps === null ? t('打开', 'Open') : `${Math.round(progressBps / 100)}%`}
+                <ArrowRight aria-hidden />
+              </span>
+            </AppLink>
+          ) : firstLearningContext ? (
+            <AppLink className="platform-home-resume" href="/learn" prefetch={false}>
+              <span>
+                <small>{firstLearningContext.organization.name}</small>
+                <strong>{firstLearningContext.student.displayName}</strong>
+                <span>{t('打开主站学习档案', 'Open the main-site learning record')}</span>
+              </span>
+              <span className="platform-home-progress">{t('查看', 'View')}<ArrowRight aria-hidden /></span>
+            </AppLink>
+          ) : (
+            <div className="platform-home-empty">
+              <p>{t('还没有进行中的课程。先选一门真正想学的内容。', 'No course is in progress yet. Start with something you genuinely want to learn.')}</p>
+              <AppLink href="/platform/courses" prefetch={false}>{t('查看全部课程', 'See all courses')}<ArrowRight aria-hidden /></AppLink>
             </div>
-          </section>
-        ))}
-      </div>
+          )}
+          <div className="platform-home-quick-links">
+            <AppLink href="/platform/account/progress" prefetch={false}>{t('学习进度', 'Learning progress')}</AppLink>
+            <AppLink href="/platform/notifications" prefetch={false}>{t('消息', 'Messages')}</AppLink>
+            <AppLink href="/platform/account/courses" prefetch={false}>{t('我的课程', 'My courses')}</AppLink>
+          </div>
+          {partialFailure ? <p className="platform-home-note">{t('部分个人入口暂时未能加载，公开内容仍可正常使用。', 'Some personal entries could not load; public content is still available.')}</p> : null}
+        </section>
+      ) : null}
+
+      <section className="platform-home-discovery" aria-labelledby="platform-home-discovery-title">
+        <div className="platform-home-section-heading">
+          <span>{t('从需求出发', 'Start with the need')}</span>
+          <h2 id="platform-home-discovery-title">{t('现在想做什么？', 'What do you want to do now?')}</h2>
+        </div>
+        <div className="platform-home-action-list">
+          {discovery.map((item) => (
+            <AppLink key={item.href} href={item.href} prefetch={false}>
+              <span><strong>{item.title}</strong><small>{item.description}</small></span>
+              <ArrowRight aria-hidden />
+            </AppLink>
+          ))}
+        </div>
+      </section>
+
+      {signedIn && hasWorkspaces ? (
+        <section className="platform-home-workspaces" aria-labelledby="platform-home-workspaces-title">
+          <div className="platform-home-section-heading">
+            <span>{t('身份与协作', 'Roles and collaboration')}</span>
+            <h2 id="platform-home-workspaces-title">{t('你的工作区', 'Your workspaces')}</h2>
+          </div>
+          <div className="platform-home-workspace-list">
+            {instructor ? (
+              <AppLink href="/platform/instructor" prefetch={false}>
+                <span><strong>{t('讲师工作台', 'Instructor workspace')}</strong><small>{t('管理课程、学员与收入', 'Manage courses, students, and earnings')}</small></span>
+                <ArrowRight aria-hidden />
+              </AppLink>
+            ) : null}
+            {firstOrganization ? (
+              <AppLink href={`/platform/org/${encodeURIComponent(firstOrganization.slug)}`} prefetch={false}>
+                <span><strong>{firstOrganization.name}</strong><small>{organizations.length > 1 ? t(`另有 ${organizations.length - 1} 个机构`, `${organizations.length - 1} more organizations`) : t('机构工作台', 'Organization workspace')}</small></span>
+                <ArrowRight aria-hidden />
+              </AppLink>
+            ) : null}
+            {mounted && isAdmin ? (
+              <AppLink href="/platform/admin" prefetch={false}>
+                <span><strong>{t('Platform 管理', 'Platform administration')}</strong><small>{t('进入统一管理工作区', 'Open the unified administration workspace')}</small></span>
+                <ArrowRight aria-hidden />
+              </AppLink>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      <footer className="platform-home-more">
+        <span>{t('继续探索', 'Keep exploring')}</span>
+        <AppLink href="/platform/paths" prefetch={false}>{t('学习路径', 'Learning paths')}</AppLink>
+        <AppLink href="/platform/news" prefetch={false}>{t('资讯', 'News')}</AppLink>
+        <AppLink href="/platform/shop" prefetch={false}>{t('商店', 'Shop')}</AppLink>
+        <AppLink href="/platform/about" prefetch={false}>{t('关于 Platform', 'About Platform')}</AppLink>
+      </footer>
     </div>
   );
 }
@@ -318,6 +478,7 @@ export function PlatformRouteView({
   const loadsResource = Boolean(definition.resource)
     && definition.id !== 'account-privacy'
     && (definition.kind !== 'form' || definition.id === 'teacher-apply');
+  const permissionDenied = error instanceof PlatformPermissionError;
 
   useEffect(() => { setMounted(true); }, []);
   const allowed = definition.access === 'public'
@@ -393,7 +554,8 @@ export function PlatformRouteView({
         <>
           {(definition.kind === 'collection' || definition.kind === 'dashboard')
             && definition.id !== 'membership'
-            && definition.id !== 'me-membership' ? (
+            && definition.id !== 'me-membership'
+            && !permissionDenied ? (
             <div className="platform-toolbar">
               <SearchInput
                 value={query}
@@ -422,7 +584,7 @@ export function PlatformRouteView({
             </div>
           ) : null}
 
-          {!loadsResource ? null : error instanceof PlatformPermissionError ? (
+          {!loadsResource ? null : permissionDenied ? (
             <PlatformState kind="permission" message={error.status === 403 ? t('当前账号没有访问这个工作区的角色。', 'Your account does not have the role required for this workspace.') : undefined} />
           ) : error ? (
             <PlatformState kind="error" message={error.message} onRetry={() => setRetry((value) => value + 1)} />
@@ -451,9 +613,9 @@ export function PlatformRouteView({
             </AppLink>
           ) : null}
 
-          <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} />
+          {!permissionDenied ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} /> : null}
 
-          {(['membership', 'me-membership'].includes(definition.id) && !result) ? null : (
+          {permissionDenied || (['membership', 'me-membership'].includes(definition.id) && !result) ? null : (
             <PlatformDomainActions
               definition={definition}
               params={params}

@@ -16,7 +16,7 @@
 
 .platform-masthead {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 18px;
   padding-block: 28px 16px;
 }
@@ -50,12 +50,29 @@
   font-size: 0.86rem;
 }
 
+.platform-account-link {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  min-height: 44px;
+  padding-inline: 9px;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  font-weight: 680;
+  text-decoration: none;
+  text-underline-offset: 4px;
+  white-space: nowrap;
+}
+
+.platform-account-link:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+}
+
 .platform-nav {
   display: flex;
   gap: 2px;
-  overflow-x: auto;
   border-block: 1px solid var(--border-default);
-  scrollbar-width: thin;
 }
 
 .platform-nav-link {
@@ -81,7 +98,7 @@
 .platform-nav-link::after {
   position: absolute;
   right: 12px;
-  bottom: -1px;
+  bottom: 0;
   left: 12px;
   height: 2px;
   background: transparent;
@@ -103,22 +120,25 @@
 
 .platform-landing {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.55fr);
-  gap: 64px;
-  align-items: start;
+  gap: 56px;
 }
 
-.platform-landing-copy h1,
+.platform-home-hero {
+  max-width: 900px;
+  padding-block: 20px 18px;
+}
+
+.platform-home-hero h1,
 .platform-route-header h1 {
   max-width: 820px;
   margin: 12px 0 14px;
-  font-size: clamp(2rem, 5vw, 4.3rem);
-  line-height: 1.02;
-  letter-spacing: -0.055em;
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 1.04;
+  letter-spacing: -0.05em;
   text-wrap: balance;
 }
 
-.platform-landing-copy p,
+.platform-home-hero > p,
 .platform-route-header p {
   max-width: 760px;
   margin: 0;
@@ -139,88 +159,240 @@
   text-transform: uppercase;
 }
 
-.platform-kicker svg {
-  width: 15px;
-  height: 15px;
-}
-
-.platform-track {
+.platform-home-actions {
   display: flex;
-  flex-direction: column;
-  border-top: 1px solid var(--border-strong);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+  margin-top: 26px;
 }
 
-.platform-track-stop {
-  display: grid;
-  grid-template-columns: 34px 1fr;
-  gap: 12px;
+.platform-home-actions .platform-button {
+  min-height: 46px;
+  padding-inline: 16px;
+}
+
+.platform-home-secondary {
+  display: inline-flex;
   align-items: center;
-  min-height: 50px;
-  border-bottom: 1px solid var(--border-default);
+  min-height: 44px;
+  color: var(--muted-foreground);
+  font-size: 0.86rem;
+  font-weight: 680;
+  text-decoration: none;
+  text-underline-offset: 4px;
+}
+
+.platform-home-secondary:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+}
+
+.platform-home-learning,
+.platform-home-discovery,
+.platform-home-workspaces {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.34fr) minmax(0, 1fr);
+  gap: 28px 48px;
+  border-top: 1px solid var(--border-strong);
+  padding-top: 28px;
+}
+
+.platform-home-section-heading span,
+.platform-home-more > span {
+  color: var(--faint-foreground);
+  font-size: 0.7rem;
+  font-weight: 720;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.platform-home-section-heading h2 {
+  max-width: 310px;
+  margin: 8px 0 0;
+  font-size: clamp(1.15rem, 2.2vw, 1.65rem);
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+.platform-home-status,
+.platform-home-empty,
+.platform-home-resume,
+.platform-home-action-list,
+.platform-home-workspace-list,
+.platform-home-quick-links,
+.platform-home-note {
+  grid-column: 2;
+}
+
+.platform-home-status {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.86rem;
+}
+
+.platform-home-resume {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  min-height: 104px;
+  border-block: 1px solid var(--border-default);
+  padding-block: 18px;
   color: var(--foreground);
   text-decoration: none;
 }
 
-.platform-track-stop span {
-  color: var(--faint-foreground);
-  font-size: 0.69rem;
-  font-variant-numeric: tabular-nums;
+.platform-home-resume > span:first-child {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
 }
 
-.platform-track-stop strong {
-  font-size: 0.9rem;
-  font-weight: 650;
+.platform-home-resume small,
+.platform-home-resume > span:first-child > span,
+.platform-home-action-list small,
+.platform-home-workspace-list small {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  font-weight: 450;
+  line-height: 1.5;
 }
 
-.platform-track-stop:hover strong {
+.platform-home-resume strong {
+  overflow: hidden;
+  font-size: 1.08rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.platform-home-resume:hover strong,
+.platform-home-action-list a:hover strong,
+.platform-home-workspace-list a:hover strong {
   color: var(--primary);
 }
 
-.platform-landing-links,
-.platform-directory {
-  grid-column: 1 / -1;
-  margin-top: 14px;
-  border-top: 1px solid var(--border-default);
-  padding-top: 24px;
+.platform-home-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 720;
+  white-space: nowrap;
 }
 
-.platform-directory {
+.platform-home-progress svg,
+.platform-home-empty svg,
+.platform-home-action-list svg,
+.platform-home-workspace-list svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.platform-home-empty {
+  border-block: 1px solid var(--border-default);
+  padding-block: 18px;
+}
+
+.platform-home-empty p {
+  margin: 0 0 10px;
+  color: var(--muted-foreground);
+  font-size: 0.86rem;
+  line-height: 1.65;
+}
+
+.platform-home-empty a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 680;
+}
+
+.platform-home-quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: -14px;
+}
+
+.platform-home-quick-links a,
+.platform-home-more a {
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  text-underline-offset: 4px;
+}
+
+.platform-home-quick-links a:hover,
+.platform-home-more a:hover {
+  color: var(--foreground);
+}
+
+.platform-home-note {
+  margin: -12px 0 0;
+  color: var(--faint-foreground);
+  font-size: 0.76rem;
+}
+
+.platform-home-action-list,
+.platform-home-workspace-list {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 30px 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--border-default);
 }
 
-.platform-directory section h2,
+.platform-home-action-list a,
+.platform-home-workspace-list a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  min-height: 94px;
+  border-bottom: 1px solid var(--border-default);
+  padding-block: 16px;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.platform-home-action-list a:nth-child(odd),
+.platform-home-workspace-list a:nth-child(odd) {
+  padding-right: 24px;
+}
+
+.platform-home-action-list a:nth-child(even),
+.platform-home-workspace-list a:nth-child(even) {
+  border-left: 1px solid var(--border-default);
+  padding-left: 24px;
+}
+
+.platform-home-action-list a > span,
+.platform-home-workspace-list a > span {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.platform-home-action-list strong,
+.platform-home-workspace-list strong {
+  overflow-wrap: anywhere;
+  font-size: 0.92rem;
+}
+
+.platform-home-more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  align-items: center;
+  border-top: 1px solid var(--border-default);
+  padding-top: 22px;
+}
+
 .platform-static-view h2 {
   margin: 0 0 12px;
   font-size: 0.94rem;
-}
-
-.platform-directory section > div {
-  display: grid;
-  border-top: 1px solid var(--border-default);
-}
-
-.platform-directory a {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  align-items: baseline;
-  padding-block: 9px;
-  border-bottom: 1px solid var(--border-default);
-  color: var(--foreground);
-  font-size: 0.82rem;
-  text-decoration: none;
-}
-
-.platform-directory a:hover span {
-  color: var(--primary);
-}
-
-.platform-directory small {
-  color: var(--faint-foreground);
-  font-size: 0.66rem;
-  white-space: nowrap;
 }
 
 .platform-static-view {
@@ -240,21 +412,18 @@
   line-height: 1.75;
 }
 
-.platform-landing-links h2,
 .platform-related h2,
 .platform-write-panel h2 {
   margin: 0 0 14px;
   font-size: 0.92rem;
 }
 
-.platform-landing-links > div,
 .platform-related > div {
   display: flex;
   flex-wrap: wrap;
   gap: 10px 18px;
 }
 
-.platform-landing-links a,
 .platform-related a {
   color: var(--foreground);
   font-size: 0.88rem;
@@ -823,17 +992,40 @@
 
 @media (max-width: 760px) {
   .platform-landing {
-    grid-template-columns: 1fr;
-    gap: 38px;
+    gap: 42px;
   }
 
-  .platform-landing-links {
-    grid-column: auto;
-    margin-top: 0;
+  .platform-home-learning,
+  .platform-home-discovery,
+  .platform-home-workspaces {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
   }
 
-  .platform-directory {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .platform-home-status,
+  .platform-home-empty,
+  .platform-home-resume,
+  .platform-home-action-list,
+  .platform-home-workspace-list,
+  .platform-home-quick-links,
+  .platform-home-note {
+    grid-column: 1;
+  }
+
+  .platform-home-action-list,
+  .platform-home-workspace-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .platform-home-action-list a:nth-child(odd),
+  .platform-home-workspace-list a:nth-child(odd) {
+    padding-right: 0;
+  }
+
+  .platform-home-action-list a:nth-child(even),
+  .platform-home-workspace-list a:nth-child(even) {
+    border-left: 0;
+    padding-left: 0;
   }
 }
 
@@ -855,21 +1047,51 @@
 
   .platform-nav {
     width: 100%;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
     padding-inline: 14px;
   }
 
   .platform-nav-link {
+    justify-content: center;
+    min-width: 0;
     min-height: 46px;
-    padding-inline: 10px;
+    padding-inline: 0;
+    font-size: 0.72rem;
+  }
+
+  .platform-nav-link svg {
+    display: none;
+  }
+
+  .platform-nav-link::after {
+    right: 6px;
+    left: 6px;
   }
 
   .platform-main {
     padding-block: 32px 72px;
   }
 
-  .platform-landing-copy h1,
+  .platform-home-hero h1,
   .platform-route-header h1 {
     letter-spacing: -0.045em;
+  }
+
+  .platform-home-hero {
+    padding-block: 10px 6px;
+  }
+
+  .platform-home-resume {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .platform-home-resume strong {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
   }
 
   .platform-toolbar,
@@ -909,12 +1131,6 @@
   .platform-form-grid {
     grid-template-columns: 1fr;
   }
-
-
-  .platform-directory {
-    grid-template-columns: 1fr;
-  }
-
   .platform-form-grid .platform-form-wide {
     grid-column: auto;
   }
