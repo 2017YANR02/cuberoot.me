@@ -2158,6 +2158,14 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `纯副作用组件,return null;配套 CSS 在 components/sticky-table.css。`, en: `Side-effect-only component that returns null; companion CSS lives in components/sticky-table.css.` },
   },
   {
+    name: 'ScreenWakeLock',
+    import: "import ScreenWakeLock from '@/components/ScreenWakeLock';",
+    category: 'more',
+    zh: `无 UI:在站内页面可见时申请屏幕常亮,切到后台时释放,返回前台时重新申请。`,
+    en: `No UI: requests a screen wake lock while a site page is visible, releases it in the background, and reacquires it on return.`,
+    note: { zh: `挂在 root layout;浏览器或系统拒绝时静默降级,Safari 在首次交互时重试。`, en: `Mounted in the root layout; silently degrades when denied and retries on the first interaction for Safari.` },
+  },
+  {
     name: 'ColFilter',
     import: "import { ColFilter } from '@/components/ColFilter/ColFilter';",
     category: 'more',

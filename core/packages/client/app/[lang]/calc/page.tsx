@@ -45,19 +45,6 @@ type CalcTab = 'compare' | 'average';
 const getCalcLiveSnapshot = () => useCalcStore.getState().getLiveSnapshot();
 const subscribeCalcLive = (listener: () => void) => useCalcStore.subscribe(listener);
 
-// ── Wake Lock — 原版 app.js#20-31 ──
-let wakeLock: WakeLockSentinel | null = null;
-async function requestWakeLock(): Promise<void> {
-  if (!('wakeLock' in navigator)) return;
-  try {
-    wakeLock = await navigator.wakeLock.request('screen');
-    wakeLock.addEventListener('release', () => { wakeLock = null; });
-  } catch (e) {
-    // NOTE: 用户拒绝或系统不支持时静默失败
-    console.log('Wake Lock request failed:', (e as Error).message);
-  }
-}
-
 export function CalcPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -178,15 +165,6 @@ export function CalcPage() {
     // NOTE: 仅预加载 wr_ids.json(同源静态文件,极快)以支持 isWR 标记;
     // 不调 loadDefaults,避免拉取选手 100 把 + 设置 override
     loadWrIds();
-
-    // NOTE: Wake Lock 防息屏 — 原版 app.js#318-323
-    requestWakeLock();
-    const onVisChange = () => { if (document.visibilityState === 'visible') requestWakeLock(); };
-    document.addEventListener('visibilitychange', onVisChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', onVisChange);
-    };
   }, [loadFromUrl]);
 
   // NOTE: 项目切换时重置数据 + 重新加载 WR 默认数据（原版 app.js#138-187）
