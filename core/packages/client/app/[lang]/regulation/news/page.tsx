@@ -16,6 +16,7 @@ import './news.css';
 
 const POST_4_PAD = 'https://www.worldcubeassociation.org/posts/adoption-of-4-pad-timing-august-2026';
 const FOUR_PAD_EXPLAINER = 'https://drive.google.com/file/d/13fQghYapzMIPQnGeo53r80_cmKcp0NrW/view';
+const REG_A7G = 'https://www.worldcubeassociation.org/regulations/#A7g';
 const POST_EVENTS = 'https://www.worldcubeassociation.org/posts/changes-to-the-wca-s-list-of-official-events-june-2026';
 const POST_POLICY = 'https://www.worldcubeassociation.org/posts/wca-competition-requirements-policy-update-5-5-may-2026';
 const QUIET_DOC = 'https://docs.google.com/document/d/1oYeA8YZQaVIwml0nA5KtZmJJp3WrAb2zcOnoyksIRBg/edit';
@@ -52,12 +53,6 @@ export default function RegulationNews() {
             {t('WCA 官方公告', 'WCA announcements')}
           </div>
           <h1 className="reg-title">{t('最新动态', "What’s New")}</h1>
-          <p className="reg-subtitle">
-            {t(
-              'WCA 官方对规则、政策与项目列表的近期调整,按时间整理',
-              'Recent WCA changes to its regulations, policy and the list of official events',
-            )}
-          </p>
         </header>
 
         <div className="news-list">
@@ -68,9 +63,10 @@ export default function RegulationNews() {
               <span className="news-date">2026-08-23</span>
               <SourceLink href={POST_4_PAD} label={t('官方原文', 'Official post')} />
               <SourceLink href={FOUR_PAD_EXPLAINER} label={t('决策说明', 'Decision explainer')} />
+              <SourceLink href={REG_A7G} label={t('现行 A7g 条款', 'Current Regulation A7g')} />
             </div>
             <h2 className="news-title">
-              {t('WCA 将全面采用 4-pad 计时', 'WCA to adopt 4-pad timing')}
+              {t('WCA 将要求使用 4-pad 计时', 'WCA to require 4-pad timing')}
             </h2>
             <p className="news-lede">
               {t(
@@ -93,6 +89,45 @@ export default function RegulationNews() {
                 'Two-sensor timers can measure time precisely, but a valid result still depends on the competitor starting and stopping the timer exactly as required. Some infringements are difficult for a judge to see live, while frame-by-frame video review is slow and depends on high-quality footage. The WCA found no satisfactory wording change or other solution that could retain the existing timer requirements, so it chose 4-pad mode.',
               )}
             </p>
+
+            <h3 className="news-sub-title">{t('WCA 认为 4-pad 能解决什么', 'What the WCA expects 4-pad to solve')}</h3>
+            <RegList items={[
+              t(
+                '几乎消除因意外或疏忽造成的计时器违规。',
+                'Nearly eliminate timer infringements caused by accidents or carelessness.',
+              ),
+              t(
+                '让通过计时器违规获取不当优势变得极其困难,实际操作上几乎不可行;4-pad 模式下的违规也会更加明显。',
+                'Make it extremely difficult and impractical to gain an unfair advantage through a timer infringement, while making infringements in 4-pad mode more apparent.',
+              ),
+              t(
+                '提供基于硬件的解决方案,无需在计时器之外增加设备。',
+                'Provide a hardware-based solution without requiring equipment beyond the timer itself.',
+              ),
+            ]} />
+
+            <h3 className="news-sub-title">{t('评估过但未采用的方案', 'Alternatives considered but not adopted')}</h3>
+            <RegList items={[
+              t(
+                '3D 打印附件:不能完全可靠地阻止启动违规,需要额外设备,也无法阻止停止计时器时的违规。',
+                '3D-printed attachments: they would not prevent starting infringements with complete reliability, would require extra equipment, and would not address infringements when stopping the timer.',
+              ),
+              t(
+                '规定魔方必须放在垫子标线处:容易被忘记,难以在所有比赛中切实执行,需要改造设备,同样无法阻止停止计时器时的违规。',
+                'A prescribed cube position marked on the mat: the procedure would be easy to forget, unrealistic to enforce at every competition, require modified equipment, and still not address stopping infringements.',
+              ),
+              t(
+                '只加强对顶尖选手的监督:计时器违规并非只发生在顶尖水平,长期依赖志愿者逐帧审查也无法规模化。对于符合规则 11f1 的相关尝试,逐帧录像分析仍可继续使用。',
+                'Stricter monitoring of top competitors alone: timer infringements are not confined to the top level, and continual frame-by-frame review is not a scalable use of volunteer resources. Frame-by-frame analysis remains available for relevant attempts under Regulation 11f1.',
+              ),
+            ]} />
+
+            <Callout tone="info" label={t('WCA 承认单一供应商的取舍', 'The WCA acknowledges the single-supplier trade-off')}>
+              {t(
+                'WCA 说明,目前唯一可用的 4-pad 计时器由 Speed Stacks 生产,因此这一决定会把 WCA 限制在单一计时器供应商,并约束未来认可其他计时器的空间。WCA 明确认可这一商业取舍,并认为继续使用其历来认可的 Speed Stacks 计时器及最新 4-pad 技术,是目前对组织最有利的选择。',
+                'The WCA notes that Speed Stacks currently makes the only available 4-pad timer. The decision therefore limits the WCA to one timer supplier and constrains the possibility of recognizing other timers in the future. The WCA explicitly accepts this commercial trade-off and considers continued use of the Speed Stacks timers it has historically recognized, now with 4-pad technology, the best outcome for the organization.',
+              )}
+            </Callout>
 
             <h3 className="news-sub-title">{t('会发生哪些变化', 'What will change')}</h3>
             <RegList items={[
@@ -124,7 +159,68 @@ export default function RegulationNews() {
               )}
             </p>
 
-            <h3 className="news-sub-title">{t('关键时间点', 'Key dates')}</h3>
+            <p className="news-lede">
+              {t(
+                'WCA 预计,4-pad 成绩会比 2-pad 成绩略慢。对绝大多数选手和项目而言影响可以忽略,但在部分项目的最顶尖水平可能较为明显。因此,切换后可能会有一段时间,计时较短项目的纪录比过去更难打破。根据这些项目顶尖专项选手的反馈,WCA 仍预计现有纪录最终都会被 4-pad 成绩打破。',
+                'The WCA expects 4-pad times to be slightly slower than 2-pad times. The effect should be negligible for the vast majority of competitors and events, but may be significant at the very top of some events. Sprint-event records may therefore be harder to break for a period after the switch. Based on feedback from top specialists in those events, the WCA still expects every current record eventually to be broken in 4-pad mode.',
+              )}
+            </p>
+
+            <h3 className="news-sub-title">{t('过渡期对选手的影响', 'Effect on competitors during the transition')}</h3>
+            <p className="news-lede">
+              {t(
+                'WCA 预计,新选手学习 4-pad 计时器的过程会与目前学习 2-pad 计时器相近。经验较多的选手也可能需要时间适应新操作,但随着使用增加,4-pad 预计会逐渐成为自然习惯。',
+                'The WCA expects new competitors to go through a learning process with 4-pad timers similar to the current process for 2-pad timers. More experienced competitors may also need time to adjust, but 4-pad operation is expected to become second nature with continued use.',
+              )}
+            </p>
+            <Callout tone="warn" label={t('A7g 不代表自动获得额外尝试', 'A7g does not make an extra attempt automatic')}>
+              {t(
+                'WCA 预计,过渡初期可能会有选手因不熟悉新规则而依据 A7g 获得额外尝试,并认为这是可以接受的取舍。按照现行 A7g,是否给予额外尝试由 WCA 代表酌情决定,且相关意外或惩罚必须由选手经验不足所致。',
+                'The WCA expects that some competitors may receive extra attempts under Regulation A7g early in the transition because they are unfamiliar with the new Regulations, and considers this an acceptable trade-off. Under the current A7g, an extra attempt is granted only at the WCA Delegate’s discretion, and the incident or penalty must have been caused by the competitor’s inexperience.',
+              )}
+            </Callout>
+
+            <h3 className="news-sub-title">{t('这项决定是如何形成的', 'How the decision was reached')}</h3>
+            <ul className="news-milestones">
+              <li className="news-ms">
+                <span className="news-ms-date">{t('2025–2026 年初', '2025–early 2026')}</span>
+                <span className="news-ms-text">
+                  {t(
+                    '2025 年至 2026 年初,WCA 规则委员会开始内部调查和讨论,并正式征询顶尖选手;收到的反馈强烈支持切换到 4-pad。',
+                    'From 2025 into early 2026, the WCA Regulations Committee investigated and discussed the change internally and formally sought feedback from top competitors; the responses strongly favored a switch to 4-pad.',
+                  )}
+                </span>
+              </li>
+              <li className="news-ms">
+                <span className="news-ms-date">2026-04</span>
+                <span className="news-ms-text">
+                  {t(
+                    'WCA 大型锦标赛组、规则委员会和 WCA 管理层(董事会与执行主任)正式讨论这一方案。讨论意见几乎全部支持切换,随后成立了负责过渡实施与物流的小型工作组。',
+                    'The WCA Major Championships Team, the Regulations Committee, and WCA executives (the Board and Executive Director) formally discussed the proposal. The discussion was almost entirely in favor, and a smaller group was formed to implement the transition and its logistics.',
+                  )}
+                </span>
+              </li>
+              <li className="news-ms">
+                <span className="news-ms-date">2026-05</span>
+                <span className="news-ms-text">
+                  {t(
+                    'WCA 又向相关利益方征求意见:顶尖选手提供不同项目、规则措辞和 4-pad 模式潜在作弊方式方面的反馈,高级代表评估对组织者、代表、新选手和有经验选手的影响。WCA 表示,这一阶段的反馈几乎全部支持对所有选手采用 4-pad。各地区设备存量调查结合与 Speed Stacks 的商业沟通表明,WCA 有资金与物流能力为有需要的地区供应 G5 计时器。',
+                    'The WCA then consulted relevant stakeholders: top competitors provided event-specific input on wording and possible cheating in 4-pad mode, while Senior Delegates assessed effects on organizers, Delegates, inexperienced competitors, and experienced competitors. The WCA says feedback at this stage was almost entirely in favor of switching all competitors to 4-pad. An equipment survey, together with commercial discussions with Speed Stacks, indicated that the WCA had the financial and logistical capacity to supply G5 timers where needed.',
+                  )}
+                </span>
+              </li>
+              <li className="news-ms">
+                <span className="news-ms-date">{t('2026 年夏季', 'Summer 2026')}</span>
+                <span className="news-ms-text">
+                  {t(
+                    '经 WCA 董事会批准,WCA 正式决定在 2027 年规则周期切换到 4-pad 模式。',
+                    'With approval from the WCA Board, the WCA committed to the switch for the 2027 Regulations cycle.',
+                  )}
+                </span>
+              </li>
+            </ul>
+
+            <h3 className="news-sub-title">{t('实施时间点', 'Implementation dates')}</h3>
             <ul className="news-milestones">
               <li className="news-ms">
                 <span className="news-ms-date">2026-08-23</span>
