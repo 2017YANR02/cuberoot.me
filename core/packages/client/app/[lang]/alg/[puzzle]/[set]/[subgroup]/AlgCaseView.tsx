@@ -489,9 +489,9 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
               return (
                 <div key={oi} className="alg-case-detail-ori">
                   {multiOri && <div className="alg-case-detail-ori-label">{shortOriName(oriNames![oi])}</div>}
-                  <div className="alg-case-detail-ori-main">
+                  <div className="alg-case-detail-ori-main alg-player-list-layout">
                     {selectedEntry && (
-                      <div className="alg-case-detail-ori-player">
+                      <div className="alg-case-detail-ori-player alg-player-list-player">
                         <AlgPlayer
                           alg={displayAlg(caseViewAlg(selectedEntry.alg, effectiveViewAngle))}
                           puzzle={puzzle}
@@ -504,7 +504,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                         />
                       </div>
                     )}
-                    <div className="alg-case-detail-ori-algs">
+                    <div className="alg-case-detail-ori-algs alg-player-list-options">
                       {dragAlgs ? withDnd(oi)(rows) : rows}
                     </div>
                   </div>

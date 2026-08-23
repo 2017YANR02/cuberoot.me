@@ -18,6 +18,7 @@ import AlgSimPlayer from './AlgSimPlayer';
 import FtoEifAlgPlayer from './FtoEifAlgPlayer';
 import AlgPlaybackControls from './AlgPlaybackControls';
 import { DEFAULT_ALG_MOVE_DURATION_MS, resolvePlayerSetup, resolveTwistyTempoScale } from './player-setup';
+import './alg-sim-player.css';
 
 export interface AlgPlayerHandle {
   /** 拿到底层播放器或兼容 seek adapter,给光标 sync 等高级用法用。 */

@@ -35,6 +35,15 @@ export function resolveSimMoveDurationScale(puzzle: AlgPuzzle, move: string): nu
 
 export type PreviewStepTransition = 'instant' | 'forward' | 'backward';
 
+/** 换播放序列时不能沿用上一条公式的 step，否则会把旧索引瞬时套到新公式上。 */
+export function resolvePreviewSyncStep(
+  lastSequenceKey: string | null,
+  sequenceKey: string,
+  requestedStep: number,
+): number {
+  return lastSequenceKey !== null && lastSequenceKey !== sequenceKey ? 0 : requestedStep;
+}
+
 export function resolvePreviewStepTransition(
   last: { setupAlg: string; step: number } | null,
   setupAlg: string,
