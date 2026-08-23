@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { mergeLiveRoundRows } from '@/hooks/useLiveStream';
 import {
-  mergeWcaLiveRoundRows,
   normalizeWcaLiveRecordTag,
   type WcaLiveEnrichedRow,
 } from '@/hooks/useWcaLiveStream';
@@ -22,18 +22,18 @@ function row(overrides: Partial<WcaLiveEnrichedRow> = {}): WcaLiveEnrichedRow {
   };
 }
 
-describe('mergeWcaLiveRoundRows', () => {
+describe('mergeLiveRoundRows', () => {
   it('preserves exact PR ranks and keatoned records when scores are unchanged', () => {
     const previous = row({ pS: 43, pA: 55, sk: { tag: 'NR' }, ak: { tag: 'CR' } });
-    const [merged] = mergeWcaLiveRoundRows([previous], [row()]);
+    const [merged] = mergeLiveRoundRows([previous], [row()]);
 
     expect(merged).toMatchObject({ pS: 43, pA: 55, sk: { tag: 'NR' }, ak: { tag: 'CR' } });
   });
 
   it('drops only the enrichments whose underlying score changed', () => {
     const previous = row({ pS: 43, pA: 55, sk: { tag: 'NR' }, ak: { tag: 'CR' } });
-    const [bestChanged] = mergeWcaLiveRoundRows([previous], [row({ b: 700 })]);
-    const [averageChanged] = mergeWcaLiveRoundRows([previous], [row({ a: 900 })]);
+    const [bestChanged] = mergeLiveRoundRows([previous], [row({ b: 700 })]);
+    const [averageChanged] = mergeLiveRoundRows([previous], [row({ a: 900 })]);
 
     expect(bestChanged).toMatchObject({ pA: 55, ak: { tag: 'CR' } });
     expect(bestChanged.pS).toBeUndefined();
@@ -45,8 +45,8 @@ describe('mergeWcaLiveRoundRows', () => {
 
   it('keeps fresh incoming enrichments and does not copy ranks onto new rows', () => {
     const previous = row({ pS: 43, pA: 55 });
-    const [updated] = mergeWcaLiveRoundRows([previous], [row({ pS: 12, pA: 18 })]);
-    const [newResult] = mergeWcaLiveRoundRows([previous], [row({ i: 202, n: 8 })]);
+    const [updated] = mergeLiveRoundRows([previous], [row({ pS: 12, pA: 18 })]);
+    const [newResult] = mergeLiveRoundRows([previous], [row({ i: 202, n: 8 })]);
 
     expect(updated).toMatchObject({ pS: 12, pA: 18 });
     expect(newResult.pS).toBeUndefined();
