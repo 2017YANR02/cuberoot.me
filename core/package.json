@@ -3,6 +3,7 @@
   "private": true,
   "packageManager": "pnpm@11.1.2",
   "scripts": {
+    "audit:boundaries": "node scripts/check-architecture-boundaries.mjs",
     "dev:next": "turbo dev --filter=@cuberoot/client",
     "dev:server": "turbo dev --filter=@cuberoot/server",
     "build": "turbo build",
@@ -10,6 +11,7 @@
     "lint": "turbo lint"
   },
   "devDependencies": {
+    "ajv": "^8.20.0",
     "knip": "^6.21.0",
     "sharp": "0.34.5",
     "ts-morph": "^28.0.0",
