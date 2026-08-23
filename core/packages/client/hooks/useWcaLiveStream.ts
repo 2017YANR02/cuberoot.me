@@ -21,53 +21,11 @@ const WCA_LIVE_API = 'https://live.worldcubeassociation.org/api';
  *  WCA Live,大赛几百人同时看时这个数字乘出去就是它要扛的 QPS。 */
 const POLL_MS = 15_000;
 
-export interface WcaLiveEnrichedRow extends LiveResultRow {
-  pS?: number;
-  pA?: number;
-  sk?: unknown;
-  ak?: unknown;
-}
+export type WcaLiveEnrichedRow = LiveResultRow;
 
 /** WCA Live 会把个人纪录也标成 PR；精确 PR 名次由首屏 API 的 pS/pA 提供。 */
 export function normalizeWcaLiveRecordTag(tag: string | null): string {
   return tag === 'PR' ? '' : (tag ?? '');
-}
-
-/**
- * WCA Live 轮询只带成绩和地区纪录，不带服务端算好的个人纪录名次/日掩信息。
- * 对应成绩没变时保留 enrich；成绩一变就立即丢弃旧 enrich，避免展示过期名次。
- */
-export function mergeWcaLiveRoundRows<T extends WcaLiveEnrichedRow>(
-  previous: readonly T[],
-  incoming: readonly T[],
-): T[] {
-  const keyOf = (row: LiveResultRow): string | null => {
-    if (row.i > 0) return `i:${row.i}`;
-    if (row.n > 0) return `n:${row.n}`;
-    return null;
-  };
-  const previousByKey = new Map<string, T>();
-  for (const row of previous) {
-    const key = keyOf(row);
-    if (key) previousByKey.set(key, row);
-  }
-
-  return incoming.map(row => {
-    const key = keyOf(row);
-    const old = key ? previousByKey.get(key) : undefined;
-    if (!old) return row;
-
-    const merged = { ...row };
-    if (row.b === old.b) {
-      if (merged.pS === undefined && old.pS !== undefined) merged.pS = old.pS;
-      if (merged.sk === undefined && old.sk !== undefined) merged.sk = old.sk;
-    }
-    if (row.a === old.a) {
-      if (merged.pA === undefined && old.pA !== undefined) merged.pA = old.pA;
-      if (merged.ak === undefined && old.ak !== undefined) merged.ak = old.ak;
-    }
-    return merged;
-  });
 }
 
 export interface WcaLiveRoundUpdate {

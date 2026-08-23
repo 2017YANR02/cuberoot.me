@@ -13,6 +13,45 @@ import { useEffect, useRef, useState } from 'react';
 export interface LiveResultRow {
   i: number; c: number; n: number; e: string; r: string; f: string;
   b: number; a: number; v: number[]; sr: string; ar: string | number;
+  pS?: number; pA?: number;
+  sk?: unknown; ak?: unknown;
+}
+
+/**
+ * 实时源只带成绩和地区纪录，不带首屏 API 算好的个人纪录名次/日掩信息。
+ * 对应成绩没变时保留 enrich；成绩一变就立即丢弃旧 enrich，避免展示过期名次。
+ */
+export function mergeLiveRoundRows<T extends LiveResultRow>(
+  previous: readonly T[],
+  incoming: readonly T[],
+): T[] {
+  const keyOf = (row: LiveResultRow): string | null => {
+    if (row.i > 0) return `i:${row.i}`;
+    if (row.n > 0) return `n:${row.n}`;
+    return null;
+  };
+  const previousByKey = new Map<string, T>();
+  for (const row of previous) {
+    const key = keyOf(row);
+    if (key) previousByKey.set(key, row);
+  }
+
+  return incoming.map(row => {
+    const key = keyOf(row);
+    const old = key ? previousByKey.get(key) : undefined;
+    if (!old) return row;
+
+    const merged = { ...row };
+    if (row.b === old.b) {
+      if (merged.pS === undefined && old.pS !== undefined) merged.pS = old.pS;
+      if (merged.sk === undefined && old.sk !== undefined) merged.sk = old.sk;
+    }
+    if (row.a === old.a) {
+      if (merged.pA === undefined && old.pA !== undefined) merged.pA = old.pA;
+      if (merged.ak === undefined && old.ak !== undefined) merged.ak = old.ak;
+    }
+    return merged;
+  });
 }
 
 export interface RoundMetaForSort {
@@ -244,7 +283,7 @@ export function applyResultPatch(
   arr: LiveResultRow[],
   patch: Extract<LivePatch, { kind: 'result.new' | 'result.update' }>,
 ): LiveResultRow[] {
-  const incoming = patch.result;
+  const [incoming] = mergeLiveRoundRows(arr, [patch.result]);
   const idx = arr.findIndex(r => r.i === incoming.i);
   let next: LiveResultRow[];
   if (idx >= 0) {
