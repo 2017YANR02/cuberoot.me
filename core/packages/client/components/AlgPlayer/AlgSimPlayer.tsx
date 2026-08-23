@@ -34,6 +34,7 @@ import type { AlgPlayerControlMode, AlgPlayerHandle } from './AlgPlayer';
 import { pickStickering } from './stickering';
 import {
   resolvePlayerSetup,
+  resolvePreviewSyncStep,
   resolvePreviewStepTransition,
   resolvePreviewTiming,
   resolveSimMoveDurationScale,
@@ -42,7 +43,6 @@ import {
 import AlgPlaybackControls from './AlgPlaybackControls';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { createStepSeekPlayer } from './step-seek-player';
-import './alg-sim-player.css';
 
 const LOOP_PAUSE_MS = 900;
 
@@ -123,6 +123,11 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   const setupAlg = useMemo(() => {
     return resolvePlayerSetup(puzzle, alg, setup, startSolved);
   }, [puzzle, alg, setup, startSolved]);
+  /** 同一个 setup 下切换 R / R' 也必须视为一条全新的播放序列。 */
+  const sequenceKey = useMemo(
+    () => JSON.stringify([puzzle, setupAlg, moves]),
+    [puzzle, setupAlg, moves],
+  );
 
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -164,10 +169,10 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   const orientationRef = useRef(orientation);
   orientationRef.current = orientation;
   /** 上一帧同步到引擎的状态 —— 用来判断「是不是刚好往前一步」。 */
-  const lastRef = useRef<{ setupAlg: string; step: number } | null>(null);
+  const lastRef = useRef<{ sequenceKey: string; setupAlg: string; step: number } | null>(null);
 
   // 换公式 = 从头开始。
-  useEffect(() => { jumpToStep(0); setPlaying(false); }, [setupAlg, moves, jumpToStep]);
+  useEffect(() => { jumpToStep(0); setPlaying(false); }, [sequenceKey, jumpToStep]);
 
   useEffect(() => {
     if (!ready || !autoPlay || moves.length === 0) return;
@@ -237,26 +242,30 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     if (!m || !ready) return;
     const twister = m.world.cube.twister as PreviewTwister;
     const last = lastRef.current;
-    const instantSeek = instantStepRef.current === step;
+    // React 会在同一轮 effect 中先请求 step=0，再以旧 render 的 step 同步引擎。
+    // 新序列必须在这里直接钉到第 0 步，否则 R → R' 会先瞬移到 R' 末态再复位，形成回弹。
+    const syncStep = resolvePreviewSyncStep(last?.sequenceKey ?? null, sequenceKey, step);
+    const sequenceChanged = syncStep !== step;
+    const instantSeek = sequenceChanged || instantStepRef.current === syncStep;
     instantStepRef.current = null;
-    lastRef.current = { setupAlg, step };
+    lastRef.current = { sequenceKey, setupAlg, step: syncStep };
 
     const transition = resolvePreviewStepTransition(
       last,
       setupAlg,
-      step,
+      syncStep,
       instantSeek,
       Boolean(NXN_ORDER[puzzle]),
     );
     if (transition === 'forward') {
-      twister.push(moves[step - 1]);   // push 自己排队,还在转也不会丢
+      twister.push(moves[syncStep - 1]);   // push 自己排队,还在转也不会丢
     } else if (transition === 'backward') {
-      twister.push(invertMoveString(moves[step]));
+      twister.push(invertMoveString(moves[syncStep]));
     } else {
-      twister.setup([setupAlg, ...moves.slice(0, step)].join(' '));
+      twister.setup([setupAlg, ...moves.slice(0, syncStep)].join(' '));
     }
     m.invalidate();
-  }, [setupAlg, moves, puzzle, step, ready]);
+  }, [sequenceKey, setupAlg, moves, puzzle, step, ready]);
 
   const togglePlayback = useCallback(() => {
     if (playing) {

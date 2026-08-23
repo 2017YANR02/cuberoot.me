@@ -1,30 +1,18 @@
 .move-notation-demo {
-  display: grid;
-  grid-template-columns: minmax(270px, .9fr) minmax(250px, 1.1fr);
-  gap: clamp(24px, 5vw, 54px);
-  align-items: center;
   margin-top: 18px;
 }
 
 .move-notation-stage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 0;
-}
-
-.move-notation-options {
-  align-self: stretch;
+  justify-self: start;
 }
 
 .move-notation-option {
-  display: grid;
-  grid-template-columns: minmax(54px, max-content) minmax(0, 1fr);
-  gap: 14px;
+  display: flex;
+  gap: 8px;
   align-items: baseline;
   width: 100%;
-  min-height: 46px;
-  padding: 8px 10px;
+  min-height: 26px;
+  padding: 3px 0;
   border: 0;
   background: transparent;
   color: var(--foreground);
@@ -34,99 +22,32 @@
 
 .move-notation-option:hover,
 .move-notation-option:focus-visible {
-  background: color-mix(in srgb, var(--accent) 7%, transparent);
-  outline: none;
-}
-
-.move-notation-option.is-active {
-  box-shadow: inset 3px 0 0 var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+  outline: 1px solid transparent;
 }
 
 .move-notation-options code {
+  flex: 0 0 68px;
   color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 17px;
-  font-weight: 750;
+  font-family: var(--font-mono, Consolas, monospace);
+  font-size: 13px;
+  font-weight: 700;
   white-space: nowrap;
 }
 
 .move-notation-options span {
+  min-width: 0;
   color: var(--muted-foreground);
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.65;
 }
 
 .move-notation-demo.is-compact {
-  grid-template-columns: minmax(230px, 260px) minmax(0, 1fr);
-  gap: clamp(18px, 4vw, 36px);
   margin-top: 0;
 }
 
-.move-notation-demo.is-compact .move-notation-options {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 4px;
-}
-
-.move-notation-demo.is-compact .move-notation-option {
-  grid-template-columns: 1fr;
-  gap: 2px;
-  justify-items: center;
-  min-width: 0;
-  min-height: 58px;
-  padding: 6px 2px;
-  border-radius: 6px;
-  text-align: center;
-}
-
-.move-notation-demo.is-compact .move-notation-options code {
-  font-size: 23px;
-}
-
-.move-notation-demo.is-compact .move-notation-options span {
-  overflow: hidden;
-  max-width: 100%;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-@media (max-width: 720px) {
-  .move-notation-demo,
-  .move-notation-demo.is-compact {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-
-  .move-notation-stage { order: 1; }
-  .move-notation-options { order: 2; }
-
-  .move-notation-demo.is-compact {
-    gap: 8px;
-  }
-}
-
 @media (max-width: 380px) {
-  .move-notation-demo:not(.is-compact) .move-notation-option {
-    grid-template-columns: 48px minmax(0, 1fr);
-    gap: 9px;
-  }
-
-  .move-notation-demo.is-compact .move-notation-options {
-    gap: 2px;
-  }
-
-  .move-notation-demo.is-compact .move-notation-option {
-    min-height: 52px;
-  }
-
-  .move-notation-demo.is-compact .move-notation-options code {
-    font-size: 21px;
-  }
-
-  .move-notation-demo.is-compact .move-notation-options span {
-    font-size: 9px;
+  .move-notation-options code {
+    flex-basis: 54px;
   }
 }

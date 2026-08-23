@@ -432,9 +432,9 @@ export default function AlgCaseMetaContent({
       )}
 
       <div className="alg-meta-case">
-        <div className={playable ? 'alg-meta-case-player-layout alg-case-detail-ori-main' : undefined}>
+        <div className={playable ? 'alg-meta-case-player-layout alg-case-detail-ori-main alg-player-list-layout' : undefined}>
           {playable && selectedAlg && (
-            <div className="alg-case-detail-ori-player">
+            <div className="alg-case-detail-ori-player alg-player-list-player">
               <AlgPlayer
                 alg={selectedAlg.playbackAlg}
                 puzzle={puzzle}
@@ -449,7 +449,7 @@ export default function AlgCaseMetaContent({
               />
             </div>
           )}
-          <div className={playable ? 'alg-meta-case-algs alg-case-detail-ori-algs' : 'alg-meta-case-algs'}>
+          <div className={playable ? 'alg-meta-case-algs alg-case-detail-ori-algs alg-player-list-options' : 'alg-meta-case-algs'}>
             {algsWrap(algs.map((a) => {
               const rowKey = `${a.key}:${a.originalIndex}`;
               const selected = playable && selectedAlg === a;

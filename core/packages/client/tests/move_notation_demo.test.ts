@@ -76,6 +76,9 @@ describe('MoveNotationDemo player lifecycle', () => {
     });
 
     const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>('.move-notation-option'));
+    expect(host.querySelector('.move-notation-demo')?.classList.contains('alg-player-list-layout')).toBe(true);
+    expect(host.querySelector('.move-notation-stage')?.classList.contains('alg-player-list-player')).toBe(true);
+    expect(host.querySelector('.move-notation-options')?.classList.contains('alg-player-list-options')).toBe(true);
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-auto-play')).toBe('false');
     await act(async () => {
       buttons[1].click();
@@ -181,6 +184,15 @@ describe('MoveNotationDemo player lifecycle', () => {
     expect(controls).not.toContain('type="range"');
     expect(css).not.toContain('.alg-sim-btn');
     expect(css).not.toContain('.alg-sim-scrub');
+  });
+
+  it('contains extension-modified inline style hydration noise at the exact leaf', () => {
+    const stage = readFileSync(
+      join(process.cwd(), 'components', 'sim-embed', 'SimStage.tsx'),
+      'utf8',
+    );
+
+    expect(stage).toContain('<style suppressHydrationWarning>{INLINE_CSS}</style>');
   });
 
   it('uses the same default full controls and engine routing as formula previews', async () => {
