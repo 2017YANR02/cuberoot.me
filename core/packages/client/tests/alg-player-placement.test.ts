@@ -23,30 +23,31 @@ describe('algorithm player placement', () => {
     expect(detail).toMatch(/<AlgCaseMetaContent[\s\S]*?\bplayable\b/);
     expect(meta).toContain("import AlgPlayer from '@/components/AlgPlayer'");
     expect(meta.match(/<AlgPlayer\b/g) ?? []).toHaveLength(1);
-    expect(meta).toContain("'alg-meta-case-player-layout alg-case-detail-ori-main'");
+    expect(meta).toContain("'alg-meta-case-player-layout alg-case-detail-ori-main alg-player-list-layout'");
   });
 
   it('reuses the fixed F2L player-and-list layout for every lean case detail', () => {
     const detail = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx');
     const styles = read('app/[lang]/alg/alg.css');
+    const sharedStyles = read('components/AlgPlayer/alg-sim-player.css');
 
     expect(detail).toMatch(/caseObj\.algs\.map\(\(oriAlgs, oi\) => \{[\s\S]*?const orientedSetup = oriAdjustSetup\(caseObj\.setup, oi\);/);
-    expect(detail).toMatch(/className="alg-case-detail-ori-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{displayAlg\(caseViewAlg\(selectedEntry\.alg, effectiveViewAngle\)\)\}[\s\S]*?setup=\{caseViewSetup\(selectedEntry\.setup \?\? orientedSetup, effectiveViewAngle\)\}/);
+    expect(detail).toMatch(/className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{displayAlg\(caseViewAlg\(selectedEntry\.alg, effectiveViewAngle\)\)\}[\s\S]*?setup=\{caseViewSetup\(selectedEntry\.setup \?\? orientedSetup, effectiveViewAngle\)\}/);
     expect(detail).not.toContain('inlinePlayer');
     expect(detail).toContain('autoPlay={playRequest > 0}');
     expect(detail).toContain('playRequest={playRequest}');
     expect(detail).toContain('className="alg-case-detail-lean is-paired-player"');
     expect(detail).toContain('className="alg-case-detail-lean-algs is-paired-player"');
-    expect(detail).toMatch(/className="alg-case-detail-ori-main"[\s\S]*?className="alg-case-detail-ori-player"[\s\S]*?className="alg-case-detail-ori-algs"/);
+    expect(detail).toMatch(/className="alg-case-detail-ori-main alg-player-list-layout"[\s\S]*?className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?className="alg-case-detail-ori-algs alg-player-list-options"/);
     expect(detail).toMatch(/className="alg-case-detail-lean-thumb"[\s\S]*?<CaseThumb/);
     expect(detail).not.toContain('{!multiOri && (');
     expect(detail).not.toContain('is-without-thumb');
     expect(styles).toMatch(/\.alg-case-detail-lean-algs\.is-paired-player\s*\{\s*gap:\s*24px;/);
-    expect(styles).toMatch(/\.alg-case-detail-ori-main\s*\{[\s\S]*?grid-template-columns:\s*300px minmax\(0, 1fr\);/);
+    expect(sharedStyles).toMatch(/\.alg-player-list-layout\s*\{[\s\S]*?grid-template-columns:\s*300px minmax\(0, 1fr\);/);
     expect(styles).toContain('@media (max-width: 900px)');
     expect(styles).toContain('.alg-case-detail-lean.is-paired-player .alg-case-detail-lean-aside');
     expect(styles).toContain('.alg-case-detail-ori-algs > .alg-alg-sortable:has(.alg-alg-row.is-expanded)');
-    expect(styles).toMatch(/@media \(max-width: 680px\)[\s\S]*?\.alg-case-detail-ori-main\s*\{[\s\S]*?flex-direction:\s*column;/);
+    expect(sharedStyles).toMatch(/@media \(max-width: 900px\)[\s\S]*?\.alg-player-list-layout\s*\{[\s\S]*?flex-direction:\s*column;/);
   });
 
   it('keeps rich metadata above a fixed shared player and alg list', () => {
@@ -65,7 +66,7 @@ describe('algorithm player placement', () => {
     expect(beforePlayer).not.toContain('<AlgPlayer');
     expect(meta).toContain("const selectedAlg = algs.find(a => `${a.key}:${a.originalIndex}` === selectedAlgKey) ?? algs[0]");
     expect(meta).toContain('playbackAlg: shown');
-    expect(meta).toMatch(/alg-meta-case-player-layout alg-case-detail-ori-main[\s\S]*?className="alg-case-detail-ori-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{selectedAlg\.playbackAlg\}[\s\S]*?alg-meta-case-algs alg-case-detail-ori-algs/);
+    expect(meta).toMatch(/alg-meta-case-player-layout alg-case-detail-ori-main alg-player-list-layout[\s\S]*?className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{selectedAlg\.playbackAlg\}[\s\S]*?alg-meta-case-algs alg-case-detail-ori-algs alg-player-list-options/);
     expect(meta).toContain('selected={selected}');
     expect(meta).toContain('setSelectedAlgKey(rowKey)');
     expect(meta).toContain('setPlayRequest(current => current + 1)');
