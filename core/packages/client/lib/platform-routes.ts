@@ -208,17 +208,14 @@ export const PLATFORM_CANONICAL_REWRITES = PLATFORM_ROUTES
     destination: `/:lang${definition.canonicalHref}`,
   }));
 
-export const PLATFORM_NAV: ReadonlyArray<{
-  area: PlatformArea;
+export const PLATFORM_PUBLIC_NAV: ReadonlyArray<{
+  id: 'discover' | 'courses' | 'community' | 'teachers' | 'organizations';
   label: PlatformRouteDefinition['title'];
   href: string;
 }> = [
-  { area: 'discover', label: text('发现', 'Discover'), href: '/platform' },
-  { area: 'learning', label: text('学习', 'Learn'), href: '/platform/courses' },
-  { area: 'community', label: text('社区', 'Community'), href: '/platform/community' },
-  { area: 'commerce', label: text('商店', 'Shop'), href: '/platform/shop' },
-  { area: 'account', label: text('我的', 'My account'), href: '/platform/account/courses' },
-  { area: 'instructor', label: text('讲师', 'Instructor'), href: '/platform/instructor' },
-  { area: 'organization', label: text('机构', 'Organization'), href: '/platform/org' },
-  { area: 'admin', label: text('管理', 'Admin'), href: '/platform/admin' },
+  { id: 'discover', label: text('发现', 'Discover'), href: '/platform' },
+  { id: 'courses', label: text('课程', 'Courses'), href: '/platform/courses' },
+  { id: 'community', label: text('社区', 'Community'), href: '/platform/community' },
+  { id: 'teachers', label: text('讲师', 'Teachers'), href: '/platform/teachers' },
+  { id: 'organizations', label: text('机构', 'Schools'), href: '/platform/org' },
 ];

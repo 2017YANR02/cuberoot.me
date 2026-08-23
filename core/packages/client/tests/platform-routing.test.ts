@@ -17,7 +17,7 @@ import {
   fillPlatformParams,
   matchPlatformRoute,
   resolvePlatformCanonicalPath,
-  PLATFORM_NAV,
+  PLATFORM_PUBLIC_NAV,
   PLATFORM_ROUTES,
   PLATFORM_CANONICAL_REWRITES,
 } from '@/lib/platform-routes';
@@ -151,7 +151,30 @@ describe('Platform route conservation', () => {
   });
 
   it('keeps the eight product domains and exact canonical main-site destinations', () => {
-    expect(new Set(PLATFORM_NAV.map((entry) => entry.area)).size).toBe(8);
+    expect([...new Set(PLATFORM_ROUTES.map((route) => route.area))].sort()).toEqual([
+      'account',
+      'admin',
+      'commerce',
+      'community',
+      'discover',
+      'instructor',
+      'learning',
+      'organization',
+    ]);
+    expect(PLATFORM_PUBLIC_NAV.map((entry) => entry.label.zh)).toEqual([
+      '发现',
+      '课程',
+      '社区',
+      '讲师',
+      '机构',
+    ]);
+    expect(PLATFORM_PUBLIC_NAV.map((entry) => entry.href)).toEqual([
+      '/platform',
+      '/platform/courses',
+      '/platform/community',
+      '/platform/teachers',
+      '/platform/org',
+    ]);
     expect(routeById('algorithms').canonicalHref).toBe('/alg/3x3');
     expect(routeById('algorithm-detail')).toMatchObject({ canonicalHref: '/alg/3x3', kind: 'canonical' });
     expect(routeById('algorithm-detail').description.en).toContain('auto-seeded demo data');
