@@ -61,10 +61,29 @@ export async function classifyUnifiedBluetoothDevice(
 
   const server = await device.gatt.connect();
   try {
-    const services = await server.getPrimaryServices();
     const timerServices = new Set(timerMatches.map((driver) => driver.service.toLowerCase()));
-    const isTimer = services.some((service) => timerServices.has(service.uuid.toLowerCase()));
-    if (isTimer) return 'smart-timer';
+
+    // Ask for the known timer service directly, as csTimer does. Some Web
+    // Bluetooth bridges can resolve a specific service but cannot enumerate
+    // every primary service, so enumeration must only be the fallback.
+    let directProbeError: unknown;
+    for (const driver of timerMatches) {
+      try {
+        await server.getPrimaryService(driver.service);
+        return 'smart-timer';
+      } catch (error) {
+        directProbeError ??= error;
+      }
+    }
+
+    try {
+      const services = await server.getPrimaryServices();
+      const isTimer = services.some((service) => timerServices.has(service.uuid.toLowerCase()));
+      if (isTimer) return 'smart-timer';
+    } catch {
+      throw directProbeError;
+    }
+
     server.disconnect();
     return 'smart-cube';
   } catch (error) {
