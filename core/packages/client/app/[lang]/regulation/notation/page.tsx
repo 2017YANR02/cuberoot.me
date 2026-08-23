@@ -4,11 +4,10 @@
 //
 // The visual showcase of the guide: each move family shares one /sim-backed
 // player, while a compact selector switches the symbol being demonstrated.
-// Square-1 and Clock are explained with bespoke diagrams + tables instead of 3D
-// (sq1 3D in cubing.js is unreliable; clock notation reads better as a diagram).
+// Square-1 keeps its diagram below the shared player; Clock remains diagram-only.
 //
 // Content paraphrases the official Article 12; canonical symbols verified against
-// worldcubeassociation.org/regulations/full/#12 (2025 revision).
+// worldcubeassociation.org/regulations/#12 (2026-04-01 revision).
 
 import type { ReactNode } from 'react';
 import { Sparkles } from 'lucide-react';
@@ -18,10 +17,55 @@ import { RegSection, Callout, RegList } from '../_components/primitives';
 import MoveNotationDemo from '@/components/MoveNotationDemo/MoveNotationDemo';
 import './notation.css';
 import { T } from '@/i18n/tr';
+import {
+  BIG_CUBE_MOVES,
+  CUBE_FACE_MOVES,
+  CUBE_ROTATION_MOVES,
+  CUBE_SLICE_MOVES,
+  CUBE_WIDE_MOVES,
+  PYRAMINX_EXTENSION_MOVES,
+  PYRAMINX_WCA_MOVES,
+  SKEWB_EXTENSION_MOVES,
+  SKEWB_WCA_MOVES,
+  SQUARE1_MOVES,
+} from '@/lib/move-notation-catalog';
 
 /** Inline mono token for prose (e.g. <K>R'</K>). */
 function K({ children }: { children: ReactNode }) {
   return <code className="nt-k">{children}</code>;
+}
+
+type Translator = (zh: string, en: string) => string;
+
+function pyraminxCaption(move: string, t: Translator): string {
+  const root = move.replace("'", '');
+  const direction = move.endsWith("'")
+    ? t('逆时针120度', '120 degrees counter-clockwise')
+    : t('顺时针120度', '120 degrees clockwise');
+  if (/^[ULRB]$/.test(root)) return t(`两层，${direction}`, `Two layers, ${direction}`);
+  if (/^[ulrb]$/.test(root)) return t(`尖角，${direction}`, `Tip only, ${direction}`);
+  if (root.endsWith('w')) return t(`对面层，${direction}`, `Opposite face layer, ${direction}`);
+  return t(`整体转体，${direction}`, `Whole-puzzle rotation, ${direction}`);
+}
+
+function skewbCaption(move: string, t: Translator): string {
+  const root = move.replace(/[2']/g, '');
+  if (/^[xyz]$/.test(root)) {
+    if (move.endsWith('2')) return t('整体转体180度', 'Whole-puzzle rotation, 180 degrees');
+    return move.endsWith("'")
+      ? t('整体逆时针转体90度', 'Whole-puzzle rotation, 90 degrees counter-clockwise')
+      : t('整体顺时针转体90度', 'Whole-puzzle rotation, 90 degrees clockwise');
+  }
+  return move.endsWith("'")
+    ? t('顶点层逆时针120度', 'Corner layer, 120 degrees counter-clockwise')
+    : t('顶点层顺时针120度', 'Corner layer, 120 degrees clockwise');
+}
+
+function square1Caption(move: string, t: Translator): string {
+  if (move === '/') return t('右半部翻转180度', 'Flip the right half 180 degrees');
+  const match = /^\((-?\d+),(-?\d+)\)$/.exec(move);
+  if (!match) return move;
+  return t(`上层${match[1]}格，下层${match[2]}格`, `Top ${match[1]} notches, bottom ${match[2]} notches`);
 }
 
 export default function NotationPage() {
@@ -51,34 +95,31 @@ export default function NotationPage() {
           <T zh={<>三阶的六个面各有一个字母:<K>F</K> 前、<K>B</K> 后、<K>R</K> 右、<K>L</K> 左、<K>U</K> 顶、<K>D</K> 底。单独一个字母 = 把那个面<b>顺时针转 90°</b>(以正对该面的视角为准)。</>} en={<>Each of the six faces has a letter: <K>F</K> front, <K>B</K> back, <K>R</K> right, <K>L</K> left, <K>U</K> up, <K>D</K> down. A bare letter means turn that face <b>90° clockwise</b>, as seen looking straight at it.</>} />
         }
       >
-        <MoveNotationDemo puzzle="3x3" moves={[
-          { move: 'R', caption: t('右面顺时针 90°', 'Right face, 90° clockwise') },
-          { move: "R'", caption: t('加撇号:逆时针', "Add ': counter-clockwise") },
-          { move: 'R2', caption: t('加 2:转半圈 180°', 'Add 2: a 180° half turn') },
-          { move: 'U', caption: t('顶面顺时针 90°', 'Up face, 90° clockwise') },
-          { move: 'F', caption: t('前面顺时针 90°', 'Front face, 90° clockwise') },
-          { move: 'L', caption: t('左面顺时针 90°', 'Left face, 90° clockwise') },
-        ]} />
+        <MoveNotationDemo puzzle="3x3" moves={CUBE_FACE_MOVES.map(move => ({ move }))} />
 
         <h3 className="reg-sub-title">{t('宽层转动:带两层一起', 'Wide turns: two layers at once')}</h3>
         <p className="reg-sec-lede" style={{ marginTop: 0 }}>
           {<T zh={<>字母后加 <K>w</K>(wide,“宽”)表示连<b>外侧两层</b>一起转,比如 <K>Rw</K>、<K>Uw</K>。常见的小写写法 <K>r</K> <K>u</K> 与之等价。</>} en={<>A <K>w</K> suffix (“wide”) turns the <b>outer two layers</b> together, e.g. <K>Rw</K>, <K>Uw</K>. The lowercase forms <K>r</K> <K>u</K> mean the same thing.</>} />}
         </p>
-        <MoveNotationDemo puzzle="3x3" moves={[
-          { move: 'Rw', caption: t('右侧两层一起顺时针', 'Right two layers, clockwise') },
-          { move: 'Uw', caption: t('顶部两层一起顺时针', 'Top two layers, clockwise') },
-          { move: 'Fw', caption: t('前侧两层一起顺时针', 'Front two layers, clockwise') },
-        ]} />
+        <MoveNotationDemo puzzle="3x3" moves={CUBE_WIDE_MOVES.map(move => ({ move }))} />
+
+        <h3 className="reg-sub-title">{t('夹层转动:只转中间层', 'Slice turns: middle layers only')}</h3>
+        <p className="reg-sec-lede" style={{ marginTop: 0 }}>
+          {<T zh={<>公式与播放器还支持 <K>E</K> <K>M</K> <K>S</K>。它们分别以底面、左面、前面的方向为准。比如傻瓜记号把 <K>E</K> 写成“下面第二层顺时针转90度”。这些是常用公式扩展,不是 WCA 第 12 条列出的正式 NxN 记号。</>} en={<>Algorithms and the player also support <K>E</K>, <K>M</K>, and <K>S</K>, following the down, left, and front directions. These are common algorithm extensions rather than official NxN notation listed in WCA Article 12.</>} />}
+        </p>
+        <MoveNotationDemo puzzle="3x3" moves={CUBE_SLICE_MOVES.map(move => ({ move }))} />
 
         <h3 className="reg-sub-title">{t('整体旋转:转的是整个魔方', 'Rotations: turning the whole puzzle')}</h3>
         <p className="reg-sec-lede" style={{ marginTop: 0 }}>
           {<T zh={<>小写 <K>x</K> <K>y</K> <K>z</K> 不动任何一层,而是把<b>整个魔方</b>转一下,用来换观察角度。<K>x</K> 跟 <K>R</K> 同向、<K>y</K> 跟 <K>U</K> 同向、<K>z</K> 跟 <K>F</K> 同向。它们不计入步数。</>} en={<>Lowercase <K>x</K> <K>y</K> <K>z</K> turn the <b>whole puzzle</b> without moving any single layer — used to re-orient your view. <K>x</K> follows <K>R</K>, <K>y</K> follows <K>U</K>, <K>z</K> follows <K>F</K>. They don't count as moves.</>} />}
         </p>
-        <MoveNotationDemo puzzle="3x3" moves={[
-          { move: 'x', caption: t('整体绕 R 轴翻', 'Whole cube, around the R axis') },
-          { move: 'y', caption: t('整体绕 U 轴转', 'Whole cube, around the U axis') },
-          { move: 'z', caption: t('整体绕 F 轴转', 'Whole cube, around the F axis') },
-        ]} />
+        <MoveNotationDemo puzzle="3x3" moves={CUBE_ROTATION_MOVES.map(move => ({ move }))} />
+        <Callout tone="info" label={t('正式后缀与播放器扩展', 'Official suffixes and player extensions')}>
+          {t(
+            "WCA 正式记号使用 X、X'、X2。本站播放器还完整接受 X2'、X3、X3' 等重复次数写法；例如 U2'、R3、R3' 都会按写出的真实转动量播放。",
+            "Official WCA notation uses X, X', and X2. The player also accepts explicit repeat forms such as X2', X3, and X3'; U2', R3, and R3' animate the written physical turn amount.",
+          )}
+        </Callout>
       </RegSection>
 
       {/* ── Big cubes ──────────────────────────────────────── */}
@@ -100,12 +141,7 @@ export default function NotationPage() {
                                                                                   So <K>Rw</K> is just shorthand for <K>2Rw</K> — wide defaults to 2 layers.
                                                                                 </>} />}
         </Callout>
-        <MoveNotationDemo puzzle="4x4" moves={[
-          { move: 'R', caption: t('只转最外右层', 'Outer right layer only') },
-          { move: '2R', caption: t('右起第 2 层', 'The 2nd layer from the right') },
-          { move: 'Rw', caption: t('外侧 2 层', 'Outer 2 layers') },
-          { move: '3Rw', caption: t('外侧 3 层', 'Outer 3 layers') },
-        ]} />
+        <MoveNotationDemo puzzle="4x4" moves={BIG_CUBE_MOVES.map(move => ({ move }))} />
         <p className="reg-foot-note">
           {t(
             '同一套规则适用于 5×5、6×6、7×7 等所有 NxN —— 数字越大、层数越多,字母含义不变。',
@@ -140,14 +176,17 @@ export default function NotationPage() {
           <T zh={<>金字塔有四个顶点。<b>大写</b> <K>U</K> <K>L</K> <K>R</K> <K>B</K> 表示绕某个顶点把<b>外侧两层</b>一起转 120°;<b>小写</b> <K>u</K> <K>l</K> <K>r</K> <K>b</K> 只转那个<b>顶角的尖块</b>。加撇号即逆时针。</>} en={<>The Pyraminx has four corners. <b>Capitals</b> <K>U</K> <K>L</K> <K>R</K> <K>B</K> turn the <b>outer two layers</b> around a corner by 120°; <b>lowercase</b> <K>u</K> <K>l</K> <K>r</K> <K>b</K> turn only that <b>corner tip</b>. A prime makes it counter-clockwise.</>} />
         }
       >
-        <MoveNotationDemo puzzle="pyraminx" moves={[
-          { move: 'U', caption: t('上顶点:两层', 'Up corner: two layers') },
-          { move: 'u', caption: t('上顶点:只转尖', 'Up corner: tip only') },
-          { move: 'R', caption: t('右顶点:两层', 'Right corner: two layers') },
-          { move: 'L', caption: t('左顶点:两层', 'Left corner: two layers') },
-          { move: 'B', caption: t('后顶点:两层', 'Back corner: two layers') },
-          { move: 'r', caption: t('右顶点:只转尖', 'Right corner: tip only') },
-        ]} />
+        <MoveNotationDemo
+          puzzle="pyraminx"
+          moves={[...PYRAMINX_WCA_MOVES, ...PYRAMINX_EXTENSION_MOVES]
+            .map(move => ({ move, caption: pyraminxCaption(move, t) }))}
+        />
+        <Callout tone="info" label={t('正式记号与播放器扩展', 'Official notation and player extensions')}>
+          {t(
+            'U、L、R、B 和小写尖角转动是 WCA 正式记号。Dw、Lw、Rw、Fw 以及 y、Lv、Rv、Bv 是本站公式与播放器支持的常用扩展。',
+            'U, L, R, B and the lowercase tip turns are official WCA notation. Dw, Lw, Rw, Fw and y, Lv, Rv, Bv are common extensions supported by the algorithm system and player.',
+          )}
+        </Callout>
       </RegSection>
 
       {/* ── Skewb ──────────────────────────────────────────── */}
@@ -158,12 +197,17 @@ export default function NotationPage() {
           <T zh={<>斜转沿着<b>对角顶点轴</b>切开。四个字母各指一个顶点附近的那一块:<K>U</K> 上、<K>R</K> 右下、<K>L</K> 左下、<K>B</K> 后,顺时针转 120°;加撇号即逆时针。</>} en={<>The Skewb cuts along <b>diagonal corner axes</b>. Each letter names the layer around one corner: <K>U</K> upper, <K>R</K> bottom-right, <K>L</K> bottom-left, <K>B</K> back, turned 120° clockwise; a prime reverses it.</>} />
         }
       >
-        <MoveNotationDemo puzzle="skewb" moves={[
-          { move: 'R', caption: t('右下顶点 120°', 'Bottom-right corner, 120°') },
-          { move: 'U', caption: t('上顶点 120°', 'Upper corner, 120°') },
-          { move: 'L', caption: t('左下顶点 120°', 'Bottom-left corner, 120°') },
-          { move: 'B', caption: t('后顶点 120°', 'Back corner, 120°') },
-        ]} />
+        <MoveNotationDemo
+          puzzle="skewb"
+          moves={[...SKEWB_WCA_MOVES, ...SKEWB_EXTENSION_MOVES]
+            .map(move => ({ move, caption: skewbCaption(move, t) }))}
+        />
+        <Callout tone="info" label={t('正式记号与播放器扩展', 'Official notation and player extensions')}>
+          {t(
+            'R、U、L、B 及其逆转是 WCA 正式记号。F、UL、UR、D 和 x、y、z 转体是本站斜转公式引擎已有的扩展握法。',
+            'R, U, L, B and their inverse turns are official WCA notation. F, UL, UR, D and x, y, z rotations are existing extended grips in the site Skewb algorithm engine.',
+          )}
+        </Callout>
       </RegSection>
 
       {/* ── Square-1 (diagram, not 3D) ─────────────────────── */}
@@ -174,6 +218,10 @@ export default function NotationPage() {
           <T zh={<>Square-1 的层会变成不规则形状,所以记号不用面字母,而是数<b>30° 为一格</b>。每一步写成一个数对 <K>(x, y)</K>:上层顺时针转 <b>x</b> 格、下层顺时针转 <b>y</b> 格(负数即逆时针)。斜线 <K>/</K> 表示把<b>右半个魔方翻 180°</b>。</>} en={<>Square-1 layers turn into irregular shapes, so it counts in <b>30° units</b> rather than face letters. Each step is a pair <K>(x, y)</K>: turn the top layer <b>x</b> notches clockwise and the bottom <b>y</b> notches clockwise (negatives go counter-clockwise). A slash <K>/</K> <b>flips the right half of the puzzle by 180°</b>.</>} />
         }
       >
+        <MoveNotationDemo
+          puzzle="sq1"
+          moves={SQUARE1_MOVES.map(move => ({ move, caption: square1Caption(move, t) }))}
+        />
         <div className="nt-sq1">
           <div className="nt-sq1-figs">
           {/* (x, y): top / bottom layer rotations */}
