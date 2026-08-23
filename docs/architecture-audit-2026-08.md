@@ -2,7 +2,7 @@
 
 审计日期：2026-08-21
 
-状态说明（2026-08-22）：本文的架构证据仍可用于后续现代化调查，但其中“Platform 产品迁移已完成”的判断已被旧产品 surface、混合来源 SQLite 数据和静态资产清单推翻。Platform 当前边界以[产品能力与数据迁移跟踪](./platform-product-migration-tracker.md)为准；本文对应段落已更正，架构源码实施继续暂停。
+状态说明（2026-08-23）：本文是 2026-08-21 起形成的审计快照，架构证据仍可用于后续现代化调查。Platform P0-P8 技术迁移与发布验收现已完成，P9 主站产品体验改版待发布和线上角色态复验，旧资产观察至少持续至 2026-09-21。Platform 当前边界以[架构现代化跟踪](./architecture-modernization-tracker.md)和[主站完整迁移跟踪](./platform-product-migration-tracker.md)为准；迁移后的源码实施仍须刷新依赖基线、重新复审并取得用户授权。
 
 审计范围：仓库顶层、`core/` workspace、Web、API、Platform、Mobile、小程序、共享包、构建任务、上游同步脚本和已跟踪静态数据。本次只做静态审计，不修改实现，不以单个文件长度代替架构判断。
 
@@ -50,7 +50,7 @@ CubeRoot 不是“一坨没有架构的代码”。它是一个已经有清晰�
 
 ### 2. workspace 总体依赖图是健康的
 
-`client`、`server`、`platform`、`mobile`、`miniprogram` 和多个 builder 都依赖 `@cuberoot/shared`，`visualcube`、`stack-kernel` 和 `vendor-sr-puzzlegen` 也已有独立边界。这是典型的应用围绕共享能力的 hub-and-spoke 结构。
+当前活动的 `client`、`server`、`mobile`、`miniprogram` 和多个 builder 都依赖 `@cuberoot/shared`；已退役的 `platform` 归档也保留历史依赖，但已被 workspace 排除。`visualcube`、`stack-kernel` 和 `vendor-sr-puzzlegen` 另有独立边界。这仍是典型的应用围绕共享能力的 hub-and-spoke 结构。
 
 `@cuberoot/visualcube` 是当前最好的 package 范本：有明确职责、有多个真实消费者、有独立构建边界，调用方不需要知道它的内部目录。
 
@@ -183,13 +183,13 @@ server/src/domains/teaching/
 
 当前 `core/packages/` 同时包含：
 
-- 当前产品应用：client、server、mobile、miniprogram；`platform` 独立前端已退役且不再建设，但其源码仍是未完成产品能力与数据迁移的取证来源，不属于未来 `apps/*`。
+- 当前产品应用：client、server、mobile、miniprogram；活跃 Platform 产品位于 client/server/shared，`platform` 独立前端归档已被 workspace 排除，不属于未来 `apps/*`。
 - 共享库：shared、visualcube、stack-kernel、vendor-sr-puzzlegen。
 - 离线任务：alg-build、stats-build、scramble-stats-build、wb-build。
 
-pnpm 视角下它们当然都是 workspace package，但人类语义已经不够清楚。`apps/ + packages/ + jobs/` 比含义模糊的 `webapp/` 更适合作为条件成熟后的候选布局，不过它不是近期必须完成的目标。当前 `packages/client` 虽然命名不理想，技术上仍是合法 workspace package；先用文档、边界守卫和 package manifest 表达所有权，已经能获得大部分收益。
+除 Platform 历史归档外，其余这些目录在 pnpm 视角下都是 workspace package，但人类语义已经不够清楚。`apps/ + packages/ + jobs/` 比含义模糊的 `webapp/` 更适合作为条件成熟后的候选布局，不过它不是近期必须完成的目标。当前 `packages/client` 虽然命名不理想，技术上仍是合法 workspace package；先用文档、边界守卫和 package manifest 表达所有权，已经能获得大部分收益。
 
-物理迁移会同时触碰 `pnpm-workspace.yaml`、Turbo graph、workflow 的 paths 与 working-directory、Dockerfile、standalone 产物路径、本地 stats/tools 回退路径，以及仓库外的部署项目配置。只有逻辑边界已经解耦、工具链先做到路径可配置，并且迁移收益高于这些风险时，才逐个 app 或 job 迁移。Platform 不恢复独立 app，也不进入 `apps/*` 物理整理任务；它先按独立产品与数据跟踪表迁入主站，且不新建 `platform-compat`。
+物理迁移会同时触碰 `pnpm-workspace.yaml`、Turbo graph、workflow 的 paths 与 working-directory、Dockerfile、standalone 产物路径、本地 stats/tools 回退路径，以及仓库外的部署项目配置。只有逻辑边界已经解耦、工具链先做到路径可配置，并且迁移收益高于这些风险时，才逐个 app 或 job 迁移。Platform 已迁入主站且不恢复独立 app，也不进入 `apps/*` 物理整理任务；不新建 `platform-compat`。
 
 ### P1 快速修复项：README 给出的第一条开发命令当前就会失败
 
@@ -295,22 +295,21 @@ core/
     wb-build/
 ```
 
-这张树是候选布局，不是迁移任务单。特别是不要预建 `sim-core`、`timer-core`、`teaching-domain`，也不要把已退役但产品迁移未完成的 Platform 搬进未来 `apps/*`。没有合格依赖闭包或稳定消费者时，空目录和新 package 只会增加样板。
+这张树是候选布局，不是迁移任务单。特别是不要预建 `sim-core`、`timer-core`、`teaching-domain`，也不要把已退役的 Platform 归档搬进未来 `apps/*`。没有合格依赖闭包或稳定消费者时，空目录和新 package 只会增加样板。
 
-### Platform 独立前端已退役，产品与数据迁移尚未完成
+### Platform 独立前端已退役，活跃产品已迁入主站
 
-`/org/*`、`/learn/*` 和对应教学 API 的最终归属已经是主站 `packages/client`、`packages/server` 与 PostgreSQL；独立 Platform 前端因此不是待恢复应用，也不是未来新端的共享后端，更不应再做一套“前后端分离”或移动到 `apps/platform-web`。
+活跃 Platform 产品现在位于主站 `packages/client`、`packages/server`、`packages/shared` 与 PostgreSQL；`/platform/*` 复用 `/org/*`、`/learn/*`、教师、论坛、公式、计时和通知等权威实现。独立 Platform 前端不是待恢复应用，也不是未来新端的共享后端，更不应再做一套“前后端分离”或移动到 `apps/platform-web`。
 
-但 2026-08-22 的复核确认旧站仍有 83 个页面、13 个 Route Handler、18 个 Server Action 文件、混合来源 SQLite 记录和 `public/**` 静态资产，主站尚未逐项承接。`packages/platform` 与旧本地仓现在是迁移取证来源；Platform test/deploy workflow 与 systemd unit 已删除，旧域名继续返回 410。源码退役、教学前端切换和产品数据迁移必须分开验收。
+2026-08-22 的补充复核曾确认旧站与主仓归档的并集大于最初盘点，因此迁移按 95 个页面、13 个 Route Handler、34 个 Server Action 文件和 4 个 metadata route 重新做守恒。P0-P8 现已完成技术迁移与发布验收；P9 是迁移完成后的角色化产品入口改版，本地实现和复审已完成但尚待发布。`packages/platform` 与旧本地仓继续作为历史归档；独立 test/deploy workflow 与 service unit 已删除，旧域名保持 410。
 
-后续工作以[Platform 产品能力与数据迁移跟踪](./platform-product-migration-tracker.md)为准，至少包括：
+后续 Platform 工作以[主站完整迁移跟踪](./platform-product-migration-tracker.md)为准，当前只剩：
 
-1. 为页面、Route Handler、Server Action、metadata、支付回调和媒体建立完整责任 ledger。
-2. 对 SQLite 逐行区分 seed/demo、用户、运营、交易、日志和敏感瞬态记录，并完成一致性快照与恢复。
-3. 复用主站现有能力，将仍需保留的产品能力迁入真实领域，不建立 `/platform` 壳。
-4. 源码、数据库、媒体、凭据和外部回调分别满足删除或保留门槛后，再由仓库所有者逐项决定。
+1. 发布 P9，并完成线上 CI、部署、smoke 与真实角色态复验。
+2. 观察旧资产至少至 2026-09-21，确认没有旧写入、回调或唯一资产依赖。
+3. 源码、数据库、媒体、凭据和最终配置分别满足删除或保留门槛后，再由仓库所有者逐项决定。
 
-在独立跟踪表完成前，遗留目录保持原位；不要为了目录观感搬进长期 `apps/*`。架构图应同时标明当前主站运行单元和 Platform 迁移来源，不能把来源误画成活动前端。
+遗留目录在观察和授权完成前保持原位；不要为了目录观感搬进长期 `apps/*`。架构图应同时标明当前主站运行单元和 Platform 历史归档，不能把归档误画成活动前端。
 
 ### iOS 与 Android 是否分别建 app
 
@@ -393,13 +392,13 @@ miniprogram                  -X-> React DOM modules
 
 验收：标为 runtime-neutral 的 core 不接触 DOM、浏览器存储和平台 API；若未来存在 React UI package，必须显式声明 React runtime，不能冒充 universal。每个可运行 app 和源码库具有与其形态相称的明确验证契约，可能是 build、typecheck、unit 或 smoke，不为满足表面规范制造空测试脚本。
 
-### 阶段 2B：等待 Platform 产品与数据迁移
+### 阶段 2B：Platform 迁移检查点已通过
 
-- 以独立产品迁移跟踪表为唯一执行入口，补齐旧 surface、SQLite、媒体、身份、交易与删除责任。
-- 本架构阶段只允许只读依赖调查；不与产品迁移并行移动目录、拆契约或清理 Platform 来源。
-- Platform 不恢复独立前端，也不进入 `apps/*`；能力最终归入主站领域。
+- P0-P8 已完成旧 surface、SQLite、媒体、身份、交易与运行退役责任的逐项处置和保管责任验收，主站是唯一运行前端。
+- P9 产品入口改版与旧资产观察继续走独立跟踪，不恢复独立前端，也不进入 `apps/*`。
+- 迁移后的依赖图已经变化；任何架构源码实施仍先重建基线并重新授权，与 Platform 热点重叠的改动另等 P9 发布验收。
 
-验收：Platform 产品跟踪 P7 完成，主站是唯一运行前端，旧 surface 和数据全部有已验收去向，架构文档据新基线重新授权。
+验收：P0-P8 发布验收和三路复审已有记录；旧资产观察至少至 2026-09-21，永久处置仍待用户单独授权。
 
 ### 阶段 3A：安全收根目录 PS1
 
@@ -438,7 +437,7 @@ miniprogram                  -X-> React DOM modules
 - 不要同时移动 Web、API、Mobile 和 Job；当前 workspace、workflow、容器与发布路径都把位置当契约。
 - 不要把整个模拟器 `World` 搬进新 package 后就称为 headless core。
 - 不要第一步迁走 `stats/` 和 `tools/`，破坏当前部署与回滚链。
-- 不要因 Platform 独立前端已退役，就把尚未逐项验收的产品能力和数据误写成已迁移。
+- 不要仅因 Platform 独立前端退役就宣称迁移完成；当前 P0-P8 完成结论来自 surface 守恒、数据处置、测试、发布和线上验收证据，而不是来自目录或 runtime 退役本身。
 
 ## 最终评价
 
