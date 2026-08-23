@@ -62,7 +62,9 @@ async function makeQiyiRig(): Promise<QiyiRig> {
 
   const gatt = makeFakeGatt(QIYI_DEVICE, { [QIYI_SERVICE]: [QIYI_CHAR] });
   const moves: Array<{ mv: string; ts?: number }> = [];
-  await qiyiDriver.start(gatt.asServer, (mv, ts) => moves.push({ mv, ts }), {});
+  await qiyiDriver.start(gatt.asServer, (mv, ts) => moves.push({ mv, ts }), {
+    mac: 'CC:A3:00:00:A1:B2',
+  });
   const notify = gatt.char(QIYI_SERVICE, QIYI_CHAR);
   return { sb, crypto, moves, feed: (c) => notify.emit(c) };
 }

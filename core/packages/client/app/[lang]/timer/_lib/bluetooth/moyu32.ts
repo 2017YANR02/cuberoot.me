@@ -76,8 +76,12 @@ import {
   toBitReader,
   type GyroSink,
 } from './gan_crypto';
-import type {
-  CubeDriver, CubeDriverContext, CubeDriverStartResult, TimedMove,
+import {
+  writeGattValue,
+  type CubeDriver,
+  type CubeDriverContext,
+  type CubeDriverStartResult,
+  type TimedMove,
 } from './driver';
 import { fromFaceletString } from '../cube/state';
 import { MOYU32_MAC_ADV, macStringToBytes, normalizeMac } from './mac';
@@ -422,11 +426,7 @@ export const moyu32Driver: CubeDriver = {
       const buf = new Uint8Array(enc.length);
       buf.set(enc);
       try {
-        if (cmdChar.writeValueWithResponse) {
-          await cmdChar.writeValueWithResponse(buf);
-        } else {
-          await cmdChar.writeValue(buf);
-        }
+        await writeGattValue(cmdChar, buf);
       } catch {
         // Ignore — write rejected; the cube may still stream regardless.
       }

@@ -29,6 +29,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { requestBluetoothDevice } from '../index';
 import type { BluetoothTimerDriver } from './driver';
 import { ganTimerDriver } from './gan_timer';
 import { QIYI_MAC_ADV, normalizeMac, watchAdvertisementsMac } from '../mac';
@@ -87,6 +88,27 @@ export const BLUETOOTH_TIMER_DRIVERS: readonly BluetoothTimerDriver[] = [
   qiyiTimerDriver,
 ];
 
+/**
+ * Standalone smart-timer chooser options.
+ *
+ * Keep the filters name-only even outside Bluefy: GAN timers do not reliably
+ * advertise FFF0 in their scan record. Services and manufacturer data are
+ * still requested as optional permissions for discovery after selection.
+ */
+export function bluetoothTimerPickerOptions(_nameOnly = false): RequestDeviceOptions {
+  return {
+    filters: BLUETOOTH_TIMER_DRIVERS.flatMap((driver) =>
+      driver.namePrefixes.map((namePrefix) => ({ namePrefix }))),
+    optionalServices: Array.from(new Set(
+      BLUETOOTH_TIMER_DRIVERS.map((driver) => driver.service),
+    )),
+    optionalManufacturerData: Array.from(new Set(
+      BLUETOOTH_TIMER_DRIVERS.flatMap((driver) =>
+        Array.from(driver.manufacturerDataCics ?? [])),
+    )),
+  };
+}
+
 function pickDriver(device: BluetoothDevice): BluetoothTimerDriver | null {
   for (const d of BLUETOOTH_TIMER_DRIVERS) if (d.matches(device)) return d;
   return null;
@@ -127,9 +149,9 @@ export interface BluetoothTimerSource extends ExternalTimerSource {
  * Create a (disconnected) BLE timer source. One source handles one device at a
  * time; call connect() again after disconnect() to pick a different one.
  *
- * There is no auto-reconnect here, unlike the smart-cube hook: a timer that
- * drops mid-solve cannot have its reading recovered anyway, and csTimer also
- * just reports DISCONNECT and waits for the user.
+ * Like csTimer, an unexpected disconnect schedules one same-device reconnect
+ * after 2.5 seconds. Manual disconnect cancels it. The interrupted solve still
+ * cannot be recovered, so consumers receive DISCONNECT before the retry.
  */
 export function createBluetoothTimerSource(
   opts: BluetoothTimerSourceOptions = {},
@@ -137,15 +159,21 @@ export function createBluetoothTimerSource(
   const bus = createExternalTimerBus();
 
   let device: BluetoothDevice | null = null;
+  let driver: BluetoothTimerDriver | null = null;
+  let mac: string | null = null;
   let cleanup: (() => void) | null = null;
   let onGattDisconnected: ((ev: Event) => void) | null = null;
   let connected = false;
+  let connecting = false;
   let state: ExternalTimerState = 'DISCONNECT';
   let lastTimeMs = 0;
   let deviceName = '';
   let kind: ExternalTimerKind = 'unknown';
   /** Set while disconnect() is unwinding, so the GATT listener stays quiet. */
   let tearingDown = false;
+  /** Invalidates async work from an older connection attempt. */
+  let generation = 0;
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   const emit = (ev: ExternalTimerEvent): void => {
     state = ev.state;
@@ -155,7 +183,13 @@ export function createBluetoothTimerSource(
     bus.emit(ev);
   };
 
-  const teardown = (reason: 'manual' | 'gatt-lost'): void => {
+  const cancelReconnect = (): void => {
+    if (reconnectTimer === null) return;
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  };
+
+  const releaseConnection = (forgetDevice: boolean): void => {
     tearingDown = true;
     try {
       cleanup?.();
@@ -164,79 +198,164 @@ export function createBluetoothTimerSource(
         if (onGattDisconnected) {
           dev.removeEventListener('gattserverdisconnected', onGattDisconnected);
         }
-        if (reason === 'manual' && dev.gatt?.connected) {
+        if (dev.gatt?.connected) {
           try { dev.gatt.disconnect(); } catch { /* ignore */ }
         }
       }
     } finally {
       cleanup = null;
-      device = null;
       onGattDisconnected = null;
       connected = false;
-      deviceName = '';
-      kind = 'unknown';
+      connecting = false;
+      if (forgetDevice) {
+        device = null;
+        driver = null;
+        mac = null;
+        deviceName = '';
+        kind = 'unknown';
+      }
       tearingDown = false;
     }
-    emit({ state: 'DISCONNECT' });
   };
 
+  const attachKnownDevice = async (
+    picked: BluetoothDevice,
+    pickedDriver: BluetoothTimerDriver,
+    pickedMac: string | null,
+    reconnecting: boolean,
+  ): Promise<void> => {
+    if (!picked.gatt) {
+      throw new Error('Selected device does not expose a GATT server.');
+    }
+
+    const currentGeneration = ++generation;
+    connecting = true;
+    device = picked;
+    driver = pickedDriver;
+    mac = pickedMac;
+    kind = pickedDriver.kind;
+    deviceName = prettyDeviceName(picked);
+
+    try {
+      const server = await picked.gatt.connect();
+      if (currentGeneration !== generation) {
+        throw new Error('Bluetooth timer connection was superseded.');
+      }
+
+      const onDisc = (): void => {
+        if (tearingDown || currentGeneration !== generation) return;
+        handleConnectionLost(currentGeneration);
+      };
+      onGattDisconnected = onDisc;
+      picked.addEventListener('gattserverdisconnected', onDisc);
+
+      const started = await pickedDriver.start(server, (ev) => {
+        if (currentGeneration !== generation) return;
+        if (ev.state === 'DISCONNECT') {
+          handleConnectionLost(currentGeneration);
+          return;
+        }
+        emit(ev);
+      }, { mac: pickedMac });
+
+      if (currentGeneration !== generation) {
+        started.cleanup();
+        throw new Error('Bluetooth timer disconnected during setup.');
+      }
+
+      cleanup = started.cleanup;
+      connected = true;
+      connecting = false;
+      state = 'IDLE';
+      // A normal connect is snapshotted by its awaiting caller. An automatic
+      // reconnect has no caller, so publish one state event to refresh React.
+      if (reconnecting) emit({ state: 'IDLE' });
+    } catch (error) {
+      if (currentGeneration === generation) {
+        generation += 1;
+        releaseConnection(!reconnecting);
+      }
+      throw error;
+    }
+  };
+
+  const scheduleReconnect = (expectedGeneration: number): void => {
+    cancelReconnect();
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      if (expectedGeneration !== generation || !device || !driver) return;
+      const reconnectDevice = device;
+      const reconnectDriver = driver;
+      const reconnectMac = mac;
+      void attachKnownDevice(reconnectDevice, reconnectDriver, reconnectMac, true).catch(() => {
+        // The source is already in DISCONNECT. Match csTimer's single delayed
+        // retry and leave a further attempt to an explicit user action.
+      });
+    }, 2500);
+  };
+
+  function handleConnectionLost(currentGeneration: number): void {
+    if (tearingDown || currentGeneration !== generation) return;
+    if (!connected && !connecting) return;
+
+    generation += 1;
+    const reconnectGeneration = generation;
+    releaseConnection(false);
+    scheduleReconnect(reconnectGeneration);
+    // Notify the owner before the generic DISCONNECT event clears its active
+    // attempt bookkeeping. The connection has already been released, so both
+    // callbacks still observe connected=false.
+    opts.onConnectionLost?.();
+    emit({ state: 'DISCONNECT' });
+  }
+
   const connectDevice = async (picked: BluetoothDevice): Promise<void> => {
-    if (connected) return;
+    if (connected || connecting) return;
+
+    cancelReconnect();
+    generation += 1;
+    releaseConnection(true);
 
     const picker = pickDriver(picked);
     if (!picker) {
       throw new Error(`Unrecognised smart timer: ${picked.name ?? '(no name)'}`);
     }
-    if (!picked.gatt) {
-      throw new Error('Selected device does not expose a GATT server.');
-    }
-
+    const setupGeneration = generation;
+    connecting = true;
     // Resolve the MAC BEFORE opening GATT — advertisements stop once the
     // browser connects. csTimer's qiyitimer.js does the same.
-    let mac: string | null = null;
-    if (picker.needsMac) {
-      const advertisedMac = normalizeMac(
-        await watchAdvertisementsMac(picked, { specs: [QIYI_MAC_ADV] }),
-      );
-      const suggestedMac = qiyiTimerMacFromName(picked.name) ?? undefined;
-      mac = advertisedMac;
-      // Match csTimer's `reqMacAddr(true, ...)`: when the advertisement API
-      // cannot reveal the real address, show the name-derived default for
-      // confirmation instead of silently opening a connection with a guess.
-      if (!mac && opts.onNeedMac) {
-        try { mac = normalizeMac(await opts.onNeedMac(picked.name ?? '', suggestedMac)); }
-        catch { mac = null; }
-      }
-      // QiYi ignores a hello without the exact MAC, leaving a connection
-      // that looks successful but never emits data. Cancelling the manual
-      // fallback must therefore cancel the connection before GATT opens.
-      if (!mac) return;
-    }
-
-    const server = await picked.gatt.connect();
-
-    const onDisc = (): void => {
-      if (tearingDown || !connected) return;
-      teardown('gatt-lost');
-      opts.onConnectionLost?.();
-    };
-    picked.addEventListener('gattserverdisconnected', onDisc);
-
+    let resolvedMac: string | null = null;
     try {
-      const started = await picker.start(server, emit, { mac });
-      cleanup = started.cleanup;
-    } catch (err) {
-      picked.removeEventListener('gattserverdisconnected', onDisc);
-      try { server.disconnect(); } catch { /* ignore */ }
-      throw err;
-    }
+      if (picker.needsMac) {
+        const advertisedMac = normalizeMac(
+          await watchAdvertisementsMac(picked, { specs: [QIYI_MAC_ADV] }),
+        );
+        if (setupGeneration !== generation) return;
+        const suggestedMac = qiyiTimerMacFromName(picked.name) ?? undefined;
+        resolvedMac = advertisedMac;
+        // Match csTimer's `reqMacAddr(true, ...)`: when the advertisement API
+        // cannot reveal the real address, show the name-derived default for
+        // confirmation instead of silently opening a connection with a guess.
+        if (!resolvedMac && opts.onNeedMac) {
+          try { resolvedMac = normalizeMac(await opts.onNeedMac(picked.name ?? '', suggestedMac)); }
+          catch { resolvedMac = null; }
+        }
+        if (setupGeneration !== generation) return;
+        // QiYi ignores a hello without the exact MAC, leaving a connection
+        // that looks successful but never emits data. Cancelling the manual
+        // fallback must therefore cancel the connection before GATT opens.
+        if (!resolvedMac) {
+          connecting = false;
+          return;
+        }
+      }
 
-    device = picked;
-    onGattDisconnected = onDisc;
-    connected = true;
-    kind = picker.kind;
-    deviceName = prettyDeviceName(picked);
-    state = 'IDLE';
+      connecting = false;
+      await attachKnownDevice(picked, picker, resolvedMac, false);
+    } catch (error) {
+      if (setupGeneration === generation) connecting = false;
+      throw error;
+    }
   };
 
   return {
@@ -251,46 +370,31 @@ export function createBluetoothTimerSource(
     },
 
     async connect(): Promise<void> {
-      if (connected) return;
-      if (typeof navigator === 'undefined' || !navigator.bluetooth) {
-        const err = new Error('NO_WEB_BLUETOOTH') as Error & { kind?: string };
-        err.kind = 'no-web-bluetooth';
-        throw err;
-      }
-
-      // csTimer filters smart timers by name prefix only — the GAN timer does
-      // not advertise fff0 in its scan record, so a services filter misses it.
-      const filters: BluetoothLEScanFilter[] = BLUETOOTH_TIMER_DRIVERS.flatMap((d) =>
-        d.namePrefixes.map((namePrefix) => ({ namePrefix })));
-      const optionalServices = Array.from(new Set(BLUETOOTH_TIMER_DRIVERS.map((d) => d.service)));
-      const cics = Array.from(new Set(
-        BLUETOOTH_TIMER_DRIVERS.flatMap((d) => Array.from(d.manufacturerDataCics ?? [])),
-      ));
-
-      let picked: BluetoothDevice;
+      if (connected || connecting) return;
+      const pickerGeneration = ++generation;
+      connecting = true;
+      let picked: BluetoothDevice | null;
       try {
-        picked = await navigator.bluetooth.requestDevice({
-          filters,
-          optionalServices,
-          optionalManufacturerData: cics,
-        });
-      } catch (err) {
-        // Picker cancelled / nothing found: not an error the caller must show.
-        if (err instanceof DOMException
-          && (err.name === 'NotFoundError' || err.name === 'NotAllowedError')) {
-          return;
-        }
-        throw err;
+        picked = await requestBluetoothDevice(bluetoothTimerPickerOptions);
+      } catch (error) {
+        if (pickerGeneration === generation) connecting = false;
+        throw error;
       }
-
+      if (pickerGeneration !== generation) return;
+      connecting = false;
+      if (!picked) return;
       await connectDevice(picked);
     },
 
     connectDevice,
 
     async disconnect(): Promise<void> {
-      if (!connected && !device) return;
-      teardown('manual');
+      const wasActive = connected || connecting;
+      if (!wasActive && !device && reconnectTimer === null) return;
+      cancelReconnect();
+      generation += 1;
+      releaseConnection(true);
+      if (wasActive) emit({ state: 'DISCONNECT' });
     },
   };
 }
