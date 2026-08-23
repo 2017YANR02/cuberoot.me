@@ -27,10 +27,6 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
 
   if (!selected) return null;
 
-  // /sim's in-house engine covers these teaching grammars. Megaminx's R++/D++
-  // column turns use the compatible cubing renderer, just as the full simulator does.
-  const engine = puzzle === 'megaminx' ? 'twisty' : 'sim';
-
   return (
     <div className={`move-notation-demo is-${variant}`}>
       <div className="move-notation-stage">
@@ -39,10 +35,8 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
           puzzle={puzzle}
           set=""
           startSolved
-          autoPlay
+          autoPlay={playRequest > 0}
           playRequest={playRequest}
-          controlMode="none"
-          engine={engine}
           size={260}
         />
       </div>
