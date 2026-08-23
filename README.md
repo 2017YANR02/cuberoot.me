@@ -16,12 +16,14 @@ Solvers, trainers, analytics, and statistics for the Rubik's Cube — all in the
 
 ```
 cuberoot.me/
-├── core/                  pnpm + Turbo monorepo — all application code
+├── core/                  pnpm + Turbo monorepo — active product apps and shared packages
 │   └── packages/
 │       ├── client/        React 19 + Next.js 16 (App Router) — the site itself
 │       ├── platform/      Retired read-only archive; its product surfaces now live under client /platform
 │       ├── server/        Hono + PostgreSQL 13 — WCA OAuth, reconstructions, algorithm library
-│       ├── shared/        Types shared between client and server
+│       ├── mobile/        React + Capacitor — Android now, reusable for a future iOS target
+│       ├── miniprogram/   WeChat Mini Program — independent native runtime
+│       ├── shared/        Stable contracts and runtime-neutral logic shared across consumers
 │       ├── visualcube/    In-house NxN cube SVG renderer
 │       ├── stats-build/   WCA statistics pipeline, refreshed daily by CI
 │       └── ...            alg-build, scramble-stats-build, wb-build, stack-kernel
@@ -46,6 +48,7 @@ cuberoot.me/
 Requires pnpm 11 and Node 20 or newer.
 
 ```bash
+cd core
 pnpm install
 
 pnpm --filter @cuberoot/client dev         # http://127.0.0.1:3000/
@@ -58,6 +61,9 @@ API calls are proxied to production through Next.js rewrites, so the full site
 runs without a local backend. Platform is part of that same frontend at
 `/platform`; the archived `packages/platform` app is excluded from the workspace
 and is not built or deployed.
+
+Architecture decisions, document status, and generated-artifact ownership are
+indexed in [`docs/README.md`](./docs/README.md).
 
 ---
 

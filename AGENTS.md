@@ -2,20 +2,32 @@
 
 This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
-## 仓库布局
+## 系统地图（先读）
 
-仓库 `2017YANR02/cuberoot.me`(域名 `cuberoot.me`):
+仓库 `2017YANR02/cuberoot.me` 的活跃应用、共享能力和生成任务在同一个仓库管理，不等于同一个运行时或部署单元。
 
-1. **根目录** — static.cuberoot.me 服的共享静态(`tools/` forks + `stats/` WCA JSON)+ 仓库基建(`ops/` `docs/` workflows)。
-2. **`core/`** — pnpm + Turbo monorepo,所有新开发在这里:
-   - `packages/client` — React 19 + Next.js 16(App Router),主站训练 / 工具前端
-   - `packages/platform` — 已退役的历史归档,不测试、不部署;教学前端统一在 `packages/client`
-   - `packages/server` — Hono + PostgreSQL 13(WCA OAuth + recon + alg 库,部署云服务器)
-   - `packages/shared` — 共享类型;公式数据在 PG `alg_sets/alg_cases`,`loadAlg` 走 `/api/alg/sets/:p/:s`
-   - `packages/visualcube` — 自有封装;CI/server bundle 前必须先 `pnpm -F @cuberoot/visualcube build`
-   - `packages/stats-build` — WCA 统计管道(stats.yml 日更 cron)
-3. **`solver/`** — workspace 外,Rust 求解引擎:产 native 分析器喂 `/scramble/*`(`update_cross_stats.ps1` 的 `$SolverDir`)+ 编 WASM。`target/ tables/(~34GB) pkg-*` 只本机有。
-4. **`reconer/`** — workspace 外,速拧视频自动复盘。TS 流水线自带 package.json(reconer/ 里 `pnpm test`/`pnpm typecheck`);Python 链冻结;`videos/` 只本机。背景必读 `reconer/AGENTS.md`/`roadmap.md`。
+| 路径 | 责任与边界 |
+| --- | --- |
+| `core/packages/client` | 唯一 Web 前端，包含 `/platform/*` 产品入口及其复用的 `/org/*`、`/learn/*` 深链 |
+| `core/packages/server` | Hono API + PostgreSQL，独立运行和部署；对 Web 源码与 `client/public` 的旧耦合是待治理债务，不得扩大 |
+| `core/packages/mobile` | React + Capacitor 应用，当前 Android，未来 iOS 默认复用同一 React 应用 |
+| `core/packages/miniprogram` | 微信小程序独立运行时，不复用 React DOM UI |
+| `core/packages/shared` | 稳定契约、纯规则与跨端数据模型；公式数据以 PG `alg_sets/alg_cases` 为准 |
+| `core/packages/visualcube` 等 | 有明确构建或运行时边界的共享 package |
+| `core/packages/*-build` | 离线 job，输出统计、数据或迁移生成物，不是在线 app |
+| `core/packages/platform` | workspace 外的退役历史归档，不测试、不构建、不部署、不引入新功能 |
+| `solver/` | workspace 外 Rust 求解引擎，产 native 分析器和 WASM；`target/`、`tables/`、`pkg-*` 仅本机有 |
+| `reconer/` | workspace 外速拧视频自动复盘；进入前读 `reconer/AGENTS.md` 和 `roadmap.md` |
+| `tools/` / `stats/` | `static.cuberoot.me` 服务的混合 upstream/static 树与已提交数据生成物，本轮不迁仓 |
+| `ops/` / `docs/` / `.github/workflows` | 运维、状态/设计记录和 CI/部署契约 |
+
+事实源按优先级核对：`core/pnpm-workspace.yaml` 与各 `package.json` 定义 workspace/命令；源码路由、shared schema 和 migration 定义运行契约；`.github/workflows` 与 `ops/` 定义发布边界；`docs/generated-artifacts.md` 定义生成物；`docs/architecture-modernization-tracker.md` 是架构执行入口。
+
+新代码归属：页面和平台适配留在所属 app；稳定、运行时中性且有真实多端消费者的契约/纯逻辑才进共享 package；只因两份文件相似不拆 package。
+
+新增生产依赖禁止 `package -> app`、`app A -> app B 源码`、`server -> client/client public`、`miniprogram -> React DOM/Next`、跨包 deep import 和任何现役包对 `packages/platform` 的引用；已有违规在架构跟踪表里递减，不得扩大。
+
+所有 core pnpm 命令先进入 `core/`；验证使用目标 package 的 `typecheck`/`test`/`build`；当前 API 部署仍对广泛 `core/**` 变更敏感，push 前必须按 workflow path filter 核对实际触发和运行产物。
 
 ## 模块归属(fork 不能改)
 

@@ -1,6 +1,6 @@
 # CubeRoot 微信小程序
 
-原生小程序外壳。成熟业务页面通过 `web-view` 直接复用网站，微信登录和未来的蓝牙等平台能力使用原生实现。完整状态和维护约定见 [`../../docs/MINIPROGRAM.md`](../../docs/MINIPROGRAM.md)。
+现役原生小程序外壳。成熟业务页面通过 `web-view` 复用网站运行界面，不导入 Web 源码；微信登录和未来的蓝牙等平台能力使用原生实现。`package.json`、`src/`、`project.config.json` 与 [`../../docs/MINIPROGRAM.md`](../../docs/MINIPROGRAM.md) 是局部事实源。
 
 ## 开发
 

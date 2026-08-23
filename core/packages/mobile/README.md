@@ -2,6 +2,8 @@
 
 React + Vite + Capacitor 8 app. Android is the first native target; iOS can be added from macOS later without duplicating the React UI.
 
+Status: active native app. `package.json`, `capacitor.config.ts`, `android/` and this README are its local sources of truth; the website is not its source tree.
+
 The bundled app is local-first: timing, scrambles, statistics, settings and history work from the packaged `dist/` without a network connection. The full website is an explicit secondary link, never the app's runtime or automatic start screen.
 
 ## Maintenance rule
