@@ -3,7 +3,47 @@
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useLiveStream, type LivePatch, type LiveResultRow } from '@/hooks/useLiveStream';
+import { applyResultPatch, mergeLiveRoundRows, useLiveStream, type LivePatch, type LiveResultRow } from '@/hooks/useLiveStream';
+
+function resultRow(overrides: Partial<LiveResultRow> = {}): LiveResultRow {
+  return {
+    i: 7, c: 42, n: 9, e: '333', r: '1', f: 'a',
+    b: 1000, a: 1200, v: [1000, 1200, 1400], sr: '', ar: '',
+    ...overrides,
+  };
+}
+
+describe('applyResultPatch', () => {
+  it('preserves server PR ranks across a cubing.com result.all snapshot', () => {
+    const previous = resultRow({ pS: 42, pA: 8 });
+    const [updated] = mergeLiveRoundRows([previous], [resultRow()]);
+
+    expect(updated).toMatchObject({ pS: 42, pA: 8 });
+  });
+
+  it('preserves server PR ranks when a cubing.com update keeps the scores unchanged', () => {
+    const previous = resultRow({ pS: 42, pA: 8 });
+    const [updated] = applyResultPatch([previous], {
+      kind: 'result.update',
+      result: resultRow({ v: [1000, 1100, 1200, 1300, 1400] }),
+      roundFormat: 'a',
+    });
+
+    expect(updated).toMatchObject({ pS: 42, pA: 8 });
+  });
+
+  it('drops only the stale PR rank when its underlying score changes', () => {
+    const previous = resultRow({ pS: 42, pA: 8 });
+    const [updated] = applyResultPatch([previous], {
+      kind: 'result.update',
+      result: resultRow({ b: 900 }),
+      roundFormat: 'a',
+    });
+
+    expect(updated.pS).toBeUndefined();
+    expect(updated.pA).toBe(8);
+  });
+});
 
 class FakeWebSocket {
   static readonly OPEN = 1;
