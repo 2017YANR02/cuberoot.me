@@ -1,3 +1,5 @@
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
+
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -11,6 +13,7 @@ const COMMAND_ADAPTER = join(REPO_ROOT, '.codex/hooks/adapt-codex-command-payloa
 const HOOK_CONFIG = join(REPO_ROOT, '.codex/hooks.json');
 const DELETE_FIXTURE = join(HERE, 'fixtures/block-rm-use-trash-fixture.mjs');
 const WEBKIT_FIXTURE = join(HERE, 'fixtures/block-webkit-no-webrtc-fixture.mjs');
+const ARCHITECTURE_HOOK = join(REPO_ROOT, '.codex/hooks/block-architecture-boundaries.ps1');
 
 function runAdapter(adapter: string, target: string, payload: object) {
   return spawnSync(process.execPath, [adapter, target], {
@@ -65,6 +68,63 @@ describe('Codex hook payload adapters', () => {
       tool_name: 'exec',
       cwd: REPO_ROOT,
       tool_input: `const patch = ${JSON.stringify(patch)}; text(await tools.apply_patch(patch));`,
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe('');
+  });
+
+  it('routes an architecture violation through the write adapter', () => {
+    const probe = ['core', 'packages', 'client/lib/architecture-hook-probe.ts'].join('/');
+    const patch = [
+      '*** Begin Patch',
+      `*** Add File: ${probe}`,
+      "+import type { Lang } from '@cuberoot/shared';",
+      '*** End Patch',
+    ].join('\n');
+    const result = runAdapter(WRITE_ADAPTER, ARCHITECTURE_HOOK, {
+      tool_name: 'apply_patch',
+      cwd: REPO_ROOT,
+      tool_input: { command: patch },
+    });
+
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision).toBe('deny');
+  });
+
+  it.each([
+    ['vendor wildcard', '@cuberoot/vendor-sr-puzzlegen/private'],
+    ['workspace private subpath', '@cuberoot/visualcube/private'],
+  ])('does not bypass %s imports on Windows paths', (_label, specifier) => {
+    const probe = ['core', 'packages', 'client/lib/workspace-hook-probe.ts'].join('/');
+    const patch = [
+      '*** Begin Patch',
+      `*** Add File: ${probe}`,
+      `+import puzzle from '${specifier}';`,
+      '*** End Patch',
+    ].join('\n');
+    const result = runAdapter(WRITE_ADAPTER, ARCHITECTURE_HOOK, {
+      tool_name: 'apply_patch',
+      cwd: REPO_ROOT,
+      tool_input: { command: patch },
+    });
+
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision).toBe('deny');
+  });
+
+  it('allows a declared public workspace entrypoint', () => {
+    const probe = ['core', 'packages', 'client/lib/workspace-hook-probe.ts'].join('/');
+    const patch = [
+      '*** Begin Patch',
+      `*** Add File: ${probe}`,
+      "+import { cubeSVG } from '@cuberoot/visualcube';",
+      '*** End Patch',
+    ].join('\n');
+    const result = runAdapter(WRITE_ADAPTER, ARCHITECTURE_HOOK, {
+      tool_name: 'apply_patch',
+      cwd: REPO_ROOT,
+      tool_input: { command: patch },
     });
 
     expect(result.status).toBe(0);

@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cuberoot.me/schemas/architecture-boundaries.schema.json",
+  "title": "CubeRoot architecture boundary manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schemaVersion", "baseline", "policy", "manualContracts", "legacyFindings"],
+  "properties": {
+    "$schema": { "const": "./architecture-boundaries.schema.json" },
+    "schemaVersion": { "const": 1 },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capturedAt", "sourceCommit", "scanner", "scope"],
+      "properties": {
+        "capturedAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "sourceCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "scanner": { "type": "string" },
+        "scope": { "type": "string" }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["activeWorkspaceSource", "archivedWorkspaces", "rules"],
+      "properties": {
+        "activeWorkspaceSource": { "type": "string" },
+        "archivedWorkspaces": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "rules": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+      }
+    },
+    "manualContracts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "from", "to", "phase", "mechanism", "owner", "rationale", "replacement", "evidence"],
+        "properties": {
+          "id": { "type": "string" },
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "phase": { "enum": ["runtime-source", "runtime-file", "build-import", "build-artifact", "test-contract", "subprocess-native", "generated-artifact", "deploy-trigger", "deploy-target"] },
+          "mechanism": { "type": "string" },
+          "owner": { "type": "string" },
+          "rationale": { "type": "string" },
+          "replacement": { "type": "string" },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["file"],
+              "properties": {
+                "file": { "type": "string" },
+                "contains": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "legacyFindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "mechanism", "rule", "sourceKind", "target"],
+        "properties": {
+          "file": { "type": "string" },
+          "importKind": { "enum": ["runtime", "type-only"] },
+          "mechanism": { "type": "string" },
+          "rule": {
+            "enum": [
+              "shared-root-import",
+              "cross-package-alias-import",
+              "cross-package-relative-module",
+              "workspace-app-root-import",
+              "workspace-unexported-import",
+              "workspace-wildcard-import",
+              "cross-package-path",
+              "subprocess-call",
+              "cross-package-alias-definition"
+            ]
+          },
+          "sourceKind": { "enum": ["runtime", "build", "test", "artifact", "subprocess"] },
+          "specifier": { "type": "string" },
+          "target": { "type": "string" },
+          "occurrences": { "type": "integer", "minimum": 2 }
+        }
+      }
+    }
+  }
+}
