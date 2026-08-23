@@ -4,7 +4,7 @@
 
 Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59`，工作树无未提交改动；本批文档、测试守卫及跟踪文件自身造成的前进不视为基线漂移。每个后续实施批次开始前仍必须重新记录当时的 `HEAD` 和工作树重叠情况。
 
-状态：Platform P0-P8 技术迁移与发布验收已完成；P9 已推送，两个部署 workflow 成功，Test 的陈旧源码字符串守卫已在本批修正并等待推送重跑，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1 的 DOC-01 至 DOC-04 已通过独立复审，DOC-05 已建立诚实的 `PARTIAL` 登记并保留三类不可复现缺口；业务源码、目录搬迁与后续批次仍未授权。
+状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1 已提交并发布；Batch 2 已获用户授权，当前只实施依赖基线、候选清单和“只拦新增违规”的机器守卫，不移动目录、不改业务运行时。
 
 > 状态校正：2026-08-22 重新打开的产品与数据迁移已按 [Platform 主站完整迁移跟踪](./platform-product-migration-tracker.md) 完成 P0-P8。P9 是迁移完成后的主站产品体验改版，不恢复独立 Platform app，也不改变本架构方案的长期边界。Batch 1 只改善入口、状态和生成物可发现性；后续源码实施仍须刷新依赖基线、完成新的独立复审并取得用户授权。
 
@@ -41,7 +41,7 @@ Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b
 | API | `core/packages/server`，Hono + PostgreSQL | 运行进程和部署产物已与 Web 分离；源码、资产和部署触发仍需解耦 |
 | Mobile | `core/packages/mobile`，React + Capacitor | 当前只有 Android 原生工程；iOS 计划以后在 macOS 上加入并复用同一 React 应用，尚未落库 |
 | 小程序 | `core/packages/miniprogram`，独立运行时 | 保持独立 app，不与 React DOM UI 强行共享 |
-| Platform | 活跃产品已迁入 `client`、`server`、`shared` 并完成 P0-P8 发布验收；P9 已推送且两个部署 workflow 成功，Test 失败待修复重跑，线上角色态待验收。`core/packages/platform` 是 workspace 外历史归档，不测试、不部署、不新增产品功能 | 不建 `apps/platform-web`；P9 和旧资产观察独立跟踪，不阻塞无重叠的架构调查与规划 |
+| Platform | 活跃产品已迁入 `client`、`server`、`shared` 并完成 P0-P8 发布验收；P9 的 Test 与两个部署 workflow 已全绿，线上角色态待验收。`core/packages/platform` 是 workspace 外历史归档，不测试、不部署、不新增产品功能 | 不建 `apps/platform-web`；P9 和旧资产观察独立跟踪，不阻塞无重叠的架构调查与规划 |
 | 共享能力 | `shared`、`visualcube`、`stack-kernel` 等已有边界 | 先治理公开入口，再按真实边界信号决定是否拆包 |
 | 离线任务 | 多个 builder 目前与应用一起位于 `core/packages` | 逻辑边界稳定后才考虑 `jobs/*` |
 | 根脚本 | 根目录有统一入口和多个 PowerShell 实现脚本 | 先盘点调用者，再移动私有实现 |
@@ -148,11 +148,11 @@ API     ─X─> Web 源码或 Web public
 
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
-| BND-01 | 生成真实系统依赖基线 | `待授权` | 覆盖静态 import、动态加载、路径读取、构建复制、非 workspace 原生工具、子进程、大表、环境变量覆盖和部署目标 |
+| BND-01 | 生成真实系统依赖基线 | `进行中` | 覆盖静态 import、动态加载、路径读取、构建复制、非 workspace 原生工具、子进程、大表、环境变量覆盖和部署目标 |
 | BND-02 | 消除 API 对 Web 源码的 import | `待授权` | `packages/server` 不再 import `packages/client` 源文件，相关测试和部署通过 |
 | BND-03 | 消除 API 对 Web public 的运行时读取 | `待授权` | 资产归 API、自有构建产物或合格共享包；从真实部署产物启用功能并执行一次 daemon 请求，Web 目录不存在时仍可用 |
-| BND-04 | 按边类型增加跨 app 依赖守卫 | `待授权` | 分别建立 runtime、build、test、artifact 和 subprocess baseline；只拦新增未声明违规，hook 与 CI 均有真实触发测试 |
-| BND-05 | 收口 package 公开 exports | `待授权` | 冻结 `@cuberoot/shared` 根 barrel，禁止新增裸根 import 和跨包 deep import；subpath 标明运行时属性，旧违规可递减 |
+| BND-04 | 按边类型增加跨 app 依赖守卫 | `进行中` | 分别建立 runtime、build、test、artifact 和 subprocess baseline；只拦新增未声明违规，hook 与 CI 均有真实触发测试 |
+| BND-05 | 收口 package 公开 exports | `进行中` | 冻结 `@cuberoot/shared` 根 barrel，禁止新增裸根 import 和跨包 deep import；subpath 标明运行时属性，旧违规可递减 |
 | BND-06 | 收窄部署触发边界 | `待授权` | 纯 Web、Mobile、小程序变更不再误触发 API 部署；shared、server 与真实依赖变化仍能触发 |
 
 ### C. 多端 API 与领域契约
@@ -172,7 +172,7 @@ API     ─X─> Web 源码或 Web public
 
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
-| PKG-01 | 形成候选模块清单 | `待授权` | 每项列出消费者、边界信号、运行时、依赖闭包、测试和不提取的替代方案 |
+| PKG-01 | 形成候选模块清单 | `进行中` | 每项列出消费者、边界信号、运行时、依赖闭包、测试和不提取的替代方案 |
 | PKG-02 | 优先提取纯记号、状态、验证或格式化逻辑 | `待授权` | 只处理满足第 7 节门槛的模块，一次一个领域 |
 | PKG-03 | UI 共享采用显式例外 | `待授权` | 只有设计系统和交互契约一致时共享 React UI；小程序不套 React DOM 抽象 |
 
@@ -209,7 +209,7 @@ G 阶段不再阻塞架构规划。RET-01/03 的完成只代表运行责任已�
 
 ## 9. 推荐实施批次
 
-批次 1 已获得用户授权，当前正在实施；批次 2 至 7 仍未授权。首个源码批次开始前必须基于当时 `HEAD` 刷新真实依赖基线、完成新的独立复审并取得用户授权；不得把本批文档治理扩张成业务源码、目录或部署改造。
+批次 1 已完成；批次 2 已获得用户授权并基于 `dc4f3e8d50b6e8ff43abce35a7e3e2bfe621008c` 的干净工作树开始实施；批次 3 至 7 仍未授权。Batch 2 不得扩张成业务源码、目录或部署改造。
 
 ### 批次 1：文档与入口
 
@@ -291,7 +291,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | 架构边界与 package 判据 | `architecture_boundary_review` | `历史复验通过` | 仅审核 2026-08-21 的架构方向，不授权当前恢复实施；Platform 前提已被后续证据修正 |
 | 多端 API、兼容与生成契约 | `multiclient_contract_review` | `历史复验通过` | 仅审核 2026-08-21 的多端方向；先做消费者矩阵与 `auth/web-session` 试点 |
 | 迁移、CI、部署与退役风险 | `migration_risk_review` | `历史复验通过` | 仅审核 2026-08-21 的风险方案；Platform 产品迁移现由独立跟踪表重新审核 |
-| Platform 当前状态与归档边界 | `platform_change_audit` | `当前复验通过` | 旧包未恢复；P0-P8 已完成；P9 已推送且部署成功，Test 失败待重跑、线上角色态待验收；保留资产观察边界 |
+| Platform 当前状态与归档边界 | `platform_change_audit` | `当前复验通过` | 旧包未恢复；P0-P8 已完成；P9 Test 与部署全绿，线上角色态待验收；保留资产观察边界 |
 | Platform 外工作树架构影响 | `worktree_arch_impact` | `当前复验通过` | Platform 外并行改动不影响 Web/API、package、多端、PS1 或部署结论；不要求改变工作包 |
 | 跟踪表与当前仓库一致性 | `tracker_consistency_review` | `当前复验通过` | 必须刷新 Platform 状态和事实快照；旧 PASS 不得替代迁移后依赖基线与重新复审 |
 | Batch 1 系统地图与边界事实 | `batch1_baseline` | `复审 PASS` | API 独立产物与现存 Web 耦合、活跃 app/package/job、Platform workspace 排除和宽部署触发均已准确表达；无 blocker/major/minor 遗留 |
@@ -312,7 +312,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
-| 2026-08-23 | 完成 Batch 1 的系统地图、README/局部入口、文档状态和 Platform 退役墓碑；建立 `REFERENCE / PARTIAL` 生成物登记，修正 PG facts 跨 clone 生成路径与 stack metadata 错误生成声明 | 三路变更后复审：DOC-01/02 PASS、DOC-03/04 PASS、DOC-05 PARTIAL；PG facts 实际重建 1/1、定向测试 7/7、client typecheck、LF 与 `git diff --check` 通过；等待提交、push 与 workflow 重跑 |
+| 2026-08-23 | Batch 1 以 `ebf0240cb0`、`dc4f3e8d50` 提交并推送；系统地图、README/局部入口、文档状态、Platform 退役墓碑和生成物登记落地 | 三路变更后复审：DOC-01/02 PASS、DOC-03/04 PASS、DOC-05 PARTIAL；PG facts 实际重建 1/1、定向测试 7/7、client typecheck、LF 与 diff-check 通过；Test `32668704812`、Deploy Next `32668704815`、Deploy Core `32668704776` 全绿；主站、`/zh/platform`、`/v1/health` 线上 smoke 通过 |
 | 2026-08-23 | 用户授权 Batch 1；以 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59` 为干净基线开始系统地图、README、文档状态、Platform 墓碑和生成物登记 | `batch1_baseline`、`batch1_doc_audit`、`batch1_generated_ai` 三路只读初审 |
 | 2026-08-23 | Platform P0-P8 完成发布验收后解除旧的全局阻塞；P9 产品体验待发布，旧资产继续观察；架构实施恢复为待授权 | `platform-product-migration-tracker.md`、workspace/workflow/旧 runtime 只读核对；三路当前审核 |
 | 2026-08-22 | 因旧 Platform 非空业务数据和未迁产品能力被重新确认，暂停架构源码改造并改由独立跟踪表先行 | SQLite、旧路由与主站路由只读盘点；`platform-product-migration-tracker.md` |

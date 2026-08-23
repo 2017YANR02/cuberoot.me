@@ -2,7 +2,7 @@
 
 最后更新：2026-08-23
 
-状态：`P0-P8 技术迁移与发布验收已完成；P9 已推送，Deploy Next/Core 成功，Test 因既有 AlgPlayer source-string 守卫断言漂移失败，线上角色态复验待补；旧资产 30 天观察中，删除决策未到期`
+状态：`P0-P8 技术迁移与发布验收已完成；P9 的陈旧 AlgPlayer 守卫已修复，Test 与 Deploy Next/Core 全绿，线上角色态复验待补；旧资产 30 天观察中，删除决策未到期`
 
 ## 0. 当前结论
 
@@ -11,7 +11,7 @@
 - 主入口：`/platform`；中文入口：`/zh/platform`。
 - 全部 Platform 用户路径位于 `/platform/*`，使用主站 shell、账号、权限、主题与双语体系。
 - 首页新增 `Platform` 卡片，作为这些能力的唯一聚合入口。
-- `/platform` 首页已改为角色与任务驱动入口：公共导航收敛为发现、课程、社区、讲师、机构，登录后按真实课程、进度、讲师、机构与管理员权限显示一个对应工作台入口；旧编号目录、完整路由表和后台 CRUD 清单已移除。P9 提交 `d715a79d6a` 已进入 `main`；两个部署 workflow 成功，Test 仍需修复与该页面无关的旧 source-string 断言并重新变绿，真实登录角色态仍待线上复验。
+- `/platform` 首页已改为角色与任务驱动入口：公共导航收敛为发现、课程、社区、讲师、机构，登录后按真实课程、进度、讲师、机构与管理员权限显示一个对应工作台入口；旧编号目录、完整路由表和后台 CRUD 清单已移除。P9 提交 `d715a79d6a` 已进入 `main`；陈旧 source-string 守卫已由 `ebf0240cb0` 修复，Test 与两个部署 workflow 已全绿，真实登录角色态仍待线上复验。
 - `platform.cuberoot.me` 继续返回 HTTP 410，不跳转、不展示旧页面。
 - 主站已有能力必须共享组件、API 与数据源；`/platform/*` 可以提供同壳深链，但不得复制 teacher、forum、alg、timer、notifications、org、learn。
 - 已有主站完整页面通过 Next 内部 rewrite 直接服务 `/platform/*` 别名：浏览器保留 Platform URL，但执行的是同一份页面、组件与数据链，不允许用跳转卡片代替功能。
@@ -304,7 +304,7 @@ Platform 不进入已经 11,486 行的 `teaching_saas.ts`。后端按业务切�
 
 发布退出条件已满足；旧资产删除退出条件尚未满足。用户明确批准删除前只读保留；删除走可恢复流程并记录证据。
 
-### P9 产品入口与角色体验重做 — `已推送；Test 与线上角色态待验收`
+### P9 产品入口与角色体验重做 — `代码与发布已验收；线上角色态待验收`
 
 - [x] 盘点 `PlatformShell`、首页、导航、账户菜单和各角色工作台的现有组件，复用现有认证、权限、API、路由与 `AppLink`。
 - [x] 删除首页三重信息架构：移除右侧编号目录、底部完整路由表和后台 CRUD 清单，同一层级只保留一套导航。
@@ -363,14 +363,14 @@ P9 退出条件：
 | 2026-08-22 | Root 最终发布验收 | PASS：发布完成，观察窗口启动 | `ab54b397ac` 的 Test `32600584942`、Deploy Next `32600584945`、Deploy Core `32600584944` 全绿；线上代表路由/SEO/API/鉴权通过，旧子域 HTTP/HTTPS 均为 410；空生产目录与不导入 seed/demo 决策一致 |
 | 2026-08-23 | 用户截图与产品体验复审 | FAIL：技术迁移完成，但首页仍是路由目录，不是角色化产品入口 | 新开 P9；删除重复导航和后台清单，按游客、学员、讲师、机构、管理员重做首屏任务与工作台入口 |
 | 2026-08-23 | P9 三路独立复审 | PASS：产品信息架构、无障碍/响应式、代码复用均为 Blocker/Major 0 | 修复深链无权限时仍显示写操作、切换账号短暂残留旧角色入口、移动端账户入口触控高度及加载状态播报；定向测试与游客截图矩阵复验通过 |
-| 2026-08-23 | P9 推送后的 workflow | PARTIAL：Deploy Next `32666524812`、Deploy Core `32666524825` 成功；Test `32666524807` 失败 | 失败仅位于 `alg-player-placement.test.ts` 的 3 个旧 class source-string 断言，业务测试 6,179 通过、150 skipped；独立修复测试守卫并重新跑全套，不能提前把 P9 标完成 |
+| 2026-08-23 | P9 守卫修复后的 workflow | PASS：Test `32668704812`、Deploy Next `32668704815`、Deploy Core `32668704776` 全绿 | `ebf0240cb0` 修复 `alg-player-placement.test.ts` 的陈旧 source-string 断言；主站、`/zh/platform` 与 API `/v1/health` 线上 smoke 通过；真实登录角色态仍单独待验收 |
 
-浏览器证据明细：P8 的 1280/430/390 矩阵只证明 `/zh/platform`、首页卡片、会员权限态和课程深链在技术上可达、无横向溢出且没有应用 JS error；它没有证明信息架构和角色任务体验合格。补充修复后，本地 SSR 对 `/zh/platform`、`timer`、`algorithms`、`org`、`admin/community`、`teachers` 六条代表性深链均返回 200；最终线上复验确认 timer/algorithms 的 HTTP canonical 指向主站实现，teachers 的 HTML canonical 指向 `/teachers`，私有/管理入口 noindex，生产空目录与不导入 seed/demo 决策一致，旧域名 HTTP/HTTPS 均为 410。2026-08-23 的 P9 本地复验中，目标视口 1280×900、1024×760、430×900、390×844 的页面 `scrollWidth` 均等于 `clientWidth`，顶部五项导航的 `scrollWidth` 也均等于 `clientWidth`；390px 英文导航同样无溢出。旧编号目录和底部完整路由表计数均为 0。P9 已推送且两个部署 workflow 成功，但真实登录角色截图和全绿 Test 证据仍缺，因此不提前宣称 P9 完成。
+浏览器证据明细：P8 的 1280/430/390 矩阵只证明 `/zh/platform`、首页卡片、会员权限态和课程深链在技术上可达、无横向溢出且没有应用 JS error；它没有证明信息架构和角色任务体验合格。补充修复后，本地 SSR 对 `/zh/platform`、`timer`、`algorithms`、`org`、`admin/community`、`teachers` 六条代表性深链均返回 200；最终线上复验确认 timer/algorithms 的 HTTP canonical 指向主站实现，teachers 的 HTML canonical 指向 `/teachers`，私有/管理入口 noindex，生产空目录与不导入 seed/demo 决策一致，旧域名 HTTP/HTTPS 均为 410。2026-08-23 的 P9 本地复验中，目标视口 1280×900、1024×760、430×900、390×844 的页面 `scrollWidth` 均等于 `clientWidth`，顶部五项导航的 `scrollWidth` 也均等于 `clientWidth`；390px 英文导航同样无溢出。旧编号目录和底部完整路由表计数均为 0。P9 已推送且后续 Test 与两个部署 workflow 全绿；仍不提前宣称角色体验完成，因为真实登录角色截图尚缺。
 
 后续每个阶段结束必须增加：提交、验证命令、浏览器证据、reviewer、finding、修复和复验结果。不得用口头“看起来完整”替代账本。
 
 ## 10. 与其他任务的协调
 
-- [architecture-modernization-tracker.md](./architecture-modernization-tracker.md) 已获准先执行不改业务逻辑的 Batch 1 文档与入口治理；后续源码批次仍按该 tracker 独立刷新基线、审核和授权。
+- [architecture-modernization-tracker.md](./architecture-modernization-tracker.md) 的 Batch 1 已完成，Batch 2 已获准执行依赖基线、候选清单与新增违规守卫；后续源码批次仍按该 tracker 独立刷新基线、审核和授权。
 - `teaching_saas.ts` 的渐进拆分可先补 characterization tests，但 Platform 不 import 它的内部 repository；只通过稳定 API 与 client helper 复用。
 - `server/src/index.ts`、shared exports、migration ledger、`page-meta.ts`、sitemap 与首页卡片是串行集成热点，保持单一 owner。
