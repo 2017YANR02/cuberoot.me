@@ -77,7 +77,9 @@ jobs:
             /tools/blddb/data/bigbld/midgeManmade.json
             /.codex/hooks/
             /.codex/hooks.json
-            /.github/workflows/stats.yml
+            # architecture-boundaries.json 把部署和产物流水线当作人工契约证据；
+            # 必须检出整个 workflow 目录，否则 sparse CI 会把“未检出”误报为“文件缺失”。
+            /.github/workflows/
             /.githooks/pre-commit
             /stats/all_past_comps.json
             /stats/all_upcoming_comps.json
