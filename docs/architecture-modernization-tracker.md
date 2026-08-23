@@ -4,7 +4,7 @@
 
 Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59`，工作树无未提交改动；本批文档、测试守卫及跟踪文件自身造成的前进不视为基线漂移。每个后续实施批次开始前仍必须重新记录当时的 `HEAD` 和工作树重叠情况。
 
-状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1 已提交并发布；Batch 2 的依赖基线、候选清单和“只拦新增违规”机器守卫已在本地通过验证与独立复审，待提交、发布和新会话 Hook 实触发验收。本批不移动目录、不改业务运行时。
+状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1 已提交并发布；Batch 2 的依赖基线、候选清单和“只拦新增违规”机器守卫已以 `b52d27a514`、`5bca2cbdac` 提交并发布，本地验证、独立复审、Test、Deploy Next、Deploy Core 和线上 smoke 均通过。BND-04 仍待下一个独立 Codex 会话的项目 Hook 宿主实触发，BND-05 仍待公开 subpath 运行时属性登记；两项都不因本批发布而提前标记完成。本批不移动目录、不改业务运行时。
 
 > 状态校正：2026-08-22 重新打开的产品与数据迁移已按 [Platform 主站完整迁移跟踪](./platform-product-migration-tracker.md) 完成 P0-P8。P9 是迁移完成后的主站产品体验改版，不恢复独立 Platform app，也不改变本架构方案的长期边界。Batch 1 只改善入口、状态和生成物可发现性；后续源码实施仍须刷新依赖基线、完成新的独立复审并取得用户授权。
 
@@ -209,7 +209,7 @@ G 阶段不再阻塞架构规划。RET-01/03 的完成只代表运行责任已�
 
 ## 9. 推荐实施批次
 
-批次 1 已完成；批次 2 已获得用户授权并基于 `f6eebfcec9f218ba770504b003215dcf196815c6` 的工作树快照实施。该 SHA 比 Batch 1 发布点多一条无重叠的 WCA 文档提交，不改变扫描范围；批次 3 至 7 仍未授权。Batch 2 不得扩张成业务源码、目录或部署改造。
+批次 1 已完成；批次 2 已获得用户授权，基于 `f6eebfcec9f218ba770504b003215dcf196815c6` 的工作树快照实施，并以 `b52d27a514`、`5bca2cbdac` 发布。实施期间同步了无重叠的 WCA 统计和文档提交，未改变扫描范围；批次 3 至 7 仍未授权。Batch 2 未扩张成业务源码、目录或部署改造。
 
 ### 批次 1：文档与入口
 
@@ -318,7 +318,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
-| 2026-08-23 | Batch 2 本地实现完成，待提交和发布；建立依赖旧债多重集、JSON Schema、人工产物契约、共用 Hook/CI 扫描器与 package 候选清单，不移动源码、不改业务运行时 | `audit:boundaries` 通过：326 个精确旧债指纹、342 次出现、15 条人工契约；定向 Vitest 3 文件 29 测试、client typecheck、diff-check 通过；两路定点复审确认 scanner 与 package 方案 PASS，Hook 宿主实触发留待新会话 |
+| 2026-08-23 | Batch 2 以 `b52d27a514`、`5bca2cbdac` 提交并发布；建立依赖旧债多重集、JSON Schema、人工产物契约、共用 Hook/CI 扫描器与 package 候选清单，不移动源码、不改业务运行时 | `audit:boundaries` 通过：326 个精确旧债指纹、342 次出现、15 条人工契约；定向 Vitest 3 文件 29 测试、client typecheck、recon ground-truth 4 测试和 diff-check 通过；两路定点复审 PASS。首次 Test `32673128886` 暴露 sparse checkout 未检出 workflow 契约证据，修复后 Test `32673340650`、Deploy Next `32673128910`、Deploy Core `32673128957` 全绿；主页、`/zh/dev/guards`、`/zh/platform`、`/v1/health` 线上 smoke 均为 200，守卫页展示 326/342 基线；Hook 宿主实触发留待新会话 |
 | 2026-08-23 | Batch 1 以 `ebf0240cb0`、`dc4f3e8d50` 提交并推送；系统地图、README/局部入口、文档状态、Platform 退役墓碑和生成物登记落地 | 三路变更后复审：DOC-01/02 PASS、DOC-03/04 PASS、DOC-05 PARTIAL；PG facts 实际重建 1/1、定向测试 7/7、client typecheck、LF 与 diff-check 通过；Test `32668704812`、Deploy Next `32668704815`、Deploy Core `32668704776` 全绿；主站、`/zh/platform`、`/v1/health` 线上 smoke 通过 |
 | 2026-08-23 | 用户授权 Batch 1；以 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59` 为干净基线开始系统地图、README、文档状态、Platform 墓碑和生成物登记 | `batch1_baseline`、`batch1_doc_audit`、`batch1_generated_ai` 三路只读初审 |
 | 2026-08-23 | Platform P0-P8 完成发布验收后解除旧的全局阻塞；P9 产品体验待发布，旧资产继续观察；架构实施恢复为待授权 | `platform-product-migration-tracker.md`、workspace/workflow/旧 runtime 只读核对；三路当前审核 |
