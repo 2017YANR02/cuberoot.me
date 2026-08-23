@@ -103,6 +103,10 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
+      - name: Architecture boundary guard
+        working-directory: core
+        run: pnpm audit:boundaries
+
       - name: PostgreSQL 13 final schema snapshot
         working-directory: core/packages/server
         env:

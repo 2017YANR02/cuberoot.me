@@ -1,0 +1,3029 @@
+{
+  "$schema": "./architecture-boundaries.schema.json",
+  "schemaVersion": 1,
+  "baseline": {
+    "capturedAt": "2026-08-23",
+    "sourceCommit": "f6eebfcec9f218ba770504b003215dcf196815c6",
+    "scanner": "scripts/check-architecture-boundaries.mjs",
+    "scope": "active core/packages workspaces; packages/platform excluded"
+  },
+  "policy": {
+    "activeWorkspaceSource": "pnpm-workspace.yaml",
+    "archivedWorkspaces": ["packages/platform"],
+    "rules": [
+      "Existing findings are exact legacy debt: deletion is allowed, substitution or addition fails.",
+      "New @cuberoot/shared root imports are forbidden; use an explicit exported subpath.",
+      "Apps and jobs may not import another app's private source or public directory.",
+      "Build, test, artifact, subprocess and deploy edges require an explicit contract."
+    ]
+  },
+  "manualContracts": [
+    {
+      "id": "server-client-engine-render-source",
+      "from": "packages/server",
+      "to": "packages/client private simulator source",
+      "phase": "runtime-source",
+      "mechanism": "server tsconfig @/* alias plus three static imports",
+      "owner": "server",
+      "rationale": "The API headless renderer currently reuses the Web simulator implementation.",
+      "replacement": "BND-02: extract a headless runtime-neutral simulator boundary, then remove the alias imports.",
+      "evidence": [
+        { "file": "core/packages/server/src/routes/engine_render.ts", "contains": "import World from '@/app/[lang]/sim/engine/world';" },
+        { "file": "core/packages/server/tsconfig.json", "contains": "\"paths\": { \"@/*\": [\"../client/*\"] }" }
+      ]
+    },
+    {
+      "id": "server-client-cube-alg-source",
+      "from": "packages/server",
+      "to": "packages/client/lib/cube3",
+      "phase": "runtime-source",
+      "mechanism": "server tsconfig @/* alias static import",
+      "owner": "server",
+      "rationale": "The cube route imports one pure algorithm helper through the Web-private alias.",
+      "replacement": "BND-02: expose the pure helper through an existing runtime-neutral package subpath.",
+      "evidence": [
+        { "file": "core/packages/server/src/routes/cube.ts", "contains": "import { invertAlg } from '@/lib/cube3';" }
+      ]
+    },
+    {
+      "id": "server-client-cubeopt-runtime-assets",
+      "from": "packages/server cubeopt child",
+      "to": "packages/client/public/cubeopt and solver/tables",
+      "phase": "runtime-file",
+      "mechanism": "environment-overridable default filesystem paths",
+      "owner": "server",
+      "rationale": "The API solver child loads a Web public module and a local large pruning table at runtime.",
+      "replacement": "BND-03: make both files explicit API deployment artifacts and verify with the Web tree absent.",
+      "evidence": [
+        { "file": "core/packages/server/src/cubeopt/solve-daemon.mjs", "contains": "core/packages/client/public/cubeopt/cube48opt5.mjs" },
+        { "file": "core/packages/server/src/cubeopt/solve-daemon.mjs", "contains": "solver/tables/h48/h48prun31h5.dat" }
+      ]
+    },
+    {
+      "id": "server-cubeopt-subprocess",
+      "from": "packages/server",
+      "to": "cubeopt Node child and WASM/table assets",
+      "phase": "subprocess-native",
+      "mechanism": "spawn process.execPath with CUBEOPT_* environment overrides",
+      "owner": "server",
+      "rationale": "The child owns a large table and has independent lifecycle, queue and failure semantics.",
+      "replacement": "Keep the daemon contract explicit; BND-03 must relocate its assets without hiding the process boundary.",
+      "evidence": [
+        { "file": "core/packages/server/src/cubeopt/daemon.ts", "contains": "proc = spawn(process.execPath, [DAEMON_SCRIPT]" },
+        { "file": "core/packages/server/src/cubeopt/daemon.ts", "contains": "CUBEOPT_DAEMON_SCRIPT" }
+      ]
+    },
+    {
+      "id": "server-cube555-subprocess",
+      "from": "packages/server",
+      "to": "cube555 native or Java daemon",
+      "phase": "subprocess-native",
+      "mechanism": "spawn with CUBE555_NATIVE_BIN, JAVA_BIN and CUBE555_HOME",
+      "owner": "server",
+      "rationale": "The 5x5 solver is a separately installed native/Java runtime selected by environment.",
+      "replacement": "Retain the explicit daemon adapter and deployment smoke; do not model it as a TypeScript import.",
+      "evidence": [
+        { "file": "core/packages/server/src/cube555/daemon.ts", "contains": "const NATIVE_BIN = process.env.CUBE555_NATIVE_BIN;" },
+        { "file": ".github/workflows/deploy_core.yml", "contains": "core/cube555-daemon/Daemon.java" }
+      ]
+    },
+    {
+      "id": "server-geoip-subprocess",
+      "from": "packages/server",
+      "to": "mmdblookup executable and city database",
+      "phase": "subprocess-native",
+      "mechanism": "GEOIP_LOOKUP_BIN and GEOIP_CITY_DB_PATH environment contract",
+      "owner": "server",
+      "rationale": "IP geolocation depends on a host executable and database outside the workspace.",
+      "replacement": "Keep environment overrides and server tests; any replacement must preserve the same failure behavior.",
+      "evidence": [
+        { "file": "core/packages/server/src/utils/ip_geolocation.ts", "contains": "process.env.GEOIP_LOOKUP_BIN || 'mmdblookup'" },
+        { "file": "core/packages/server/src/utils/ip_geolocation.ts", "contains": "process.env.GEOIP_CITY_DB_PATH || DEFAULT_DB_PATH" },
+        { "file": "core/packages/server/src/utils/ip_geolocation.ts", "contains": "execFileAsync(" }
+      ]
+    },
+    {
+      "id": "mobile-client-brand-assets",
+      "from": "packages/mobile build",
+      "to": "packages/client icon generator and public icons",
+      "phase": "build-import",
+      "mechanism": "dynamic import plus filesystem reads during Android asset generation",
+      "owner": "mobile",
+      "rationale": "Android assets intentionally derive from the website brand source of truth.",
+      "replacement": "If another consumer appears, extract a brand-assets build package; do not share runtime UI.",
+      "evidence": [
+        { "file": "core/packages/mobile/scripts/gen-android-assets.mjs", "contains": "await import('../../client/scripts/gen-app-icons.mjs');" },
+        { "file": ".github/workflows/test.yml", "contains": "Verify Android brand assets" }
+      ]
+    },
+    {
+      "id": "scramble-build-client-solvers",
+      "from": "packages/scramble-stats-build",
+      "to": "packages/client private solver modules",
+      "phase": "build-import",
+      "mechanism": "pathToFileURL dynamic imports from the offline puzzle registry",
+      "owner": "scramble-stats-build",
+      "rationale": "The offline registry imports Web-private solver modules with mixed dependency closures; Clock is proven pure, while modules such as bicube and sia222 still include Web data-loading concerns.",
+      "replacement": "PKG-02 candidate: extract one proven pure core at a time, splitting any Web loader before the module can join a runtime-neutral solver package.",
+      "evidence": [
+        { "file": "core/packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts", "contains": "await mod('../../client/lib/cuboid335-solver')" },
+        { "file": "core/packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts", "contains": "await mod('../../client/lib/sia222-solver')" }
+      ]
+    },
+    {
+      "id": "scramble-build-root-artifacts",
+      "from": "packages/scramble-stats-build",
+      "to": "repo stats/scramble and solver native analyzers/tables",
+      "phase": "build-artifact",
+      "mechanism": "PowerShell orchestration plus JSON/binary artifact generation",
+      "owner": "scramble-stats-build",
+      "rationale": "The offline job consumes non-workspace solver binaries and publishes versioned static data outside core.",
+      "replacement": "Keep the job boundary explicit; PS1-01 must map callers before any script relocation.",
+      "evidence": [
+        { "file": "core/packages/scramble-stats-build/update_cross_stats.ps1", "contains": "$SolverDir   = 'D:\\cube\\cuberoot.me\\solver'" },
+        { "file": "core/packages/scramble-stats-build/update_cross_stats.ps1", "contains": "$env:CUBE_TABLE_DIR = Join-Path $SolverDir 'tables'" }
+      ]
+    },
+    {
+      "id": "stats-build-root-artifacts",
+      "from": "packages/stats-build",
+      "to": "repo stats and deployed PostgreSQL derived tables",
+      "phase": "generated-artifact",
+      "mechanism": "JSON/TSV generation, workflow upload and database load",
+      "owner": "stats-build",
+      "rationale": "The daily job publishes static JSON and separately loads derived database tables.",
+      "replacement": "Preserve builder, upload and load manifests as one reviewed contract; use the existing pipeline dry-run guard for changes.",
+      "evidence": [
+        { "file": "core/packages/stats-build/src/bin/compute.ts", "contains": "const outputPath = resolve(outputDir, `${statId}.json`)" },
+        { "file": ".github/workflows/stats.yml", "contains": "historical_ranks_snapshot.copy.tsv" }
+      ]
+    },
+    {
+      "id": "nemesizer-generated-runtime-artifacts",
+      "from": "packages/stats-build nemesizer job",
+      "to": "repo stats/nemesizer and packages/server runtime loader",
+      "phase": "generated-artifact",
+      "mechanism": "workflow-generated binary files consumed through NEMESIZER_DATA_DIR",
+      "owner": "stats-build and server",
+      "rationale": "The producer writes compressed binary datasets outside core, while the API reads the deployed artifact directory at runtime.",
+      "replacement": "Keep producer, workflow publication and server loader paths as one versioned artifact contract with parity fixtures.",
+      "evidence": [
+        { "file": "core/packages/stats-build/src/bin/nemesizer.ts", "contains": "const OUTPUT_DIR = resolve(__dirname, '../../../../../stats/nemesizer')" },
+        { "file": ".github/workflows/stats.yml", "contains": "Generate nemesizer dataset" },
+        { "file": ".github/workflows/stats.yml", "contains": "git add -A stats/" },
+        { "file": ".github/workflows/stats.yml", "contains": "gh workflow run sync_toolkit.yml" },
+        { "file": ".github/workflows/sync_toolkit.yml", "contains": "REMOTE=/www/wwwroot/toolkit" },
+        { "file": ".github/workflows/sync_toolkit.yml", "contains": "for dir in tools stats; do" },
+        { "file": ".github/workflows/sync_toolkit.yml", "contains": "\"$dir/\" \"${USER}@${HOST}:${REMOTE}/${dir}/\"" },
+        { "file": "core/packages/server/src/nemesizer/loader.ts", "contains": "process.env.NEMESIZER_DATA_DIR" },
+        { "file": "core/packages/server/src/nemesizer/loader.ts", "contains": "'/www/wwwroot/toolkit/stats/nemesizer'" },
+        { "file": "core/packages/server/src/nemesizer/loader.ts", "contains": "readFile(path.join(DATA_DIR, 'persons.bin.gz'))" }
+      ]
+    },
+    {
+      "id": "alg-build-server-migrations",
+      "from": "packages/alg-build",
+      "to": "packages/server/migrations",
+      "phase": "generated-artifact",
+      "mechanism": "deterministic SQL generator writes a server migration",
+      "owner": "alg-build",
+      "rationale": "Curated algorithm import tooling intentionally produces backend schema/data migrations.",
+      "replacement": "Keep the generated migration reviewed and committed; do not turn the generator into a server runtime dependency.",
+      "evidence": [
+        { "file": "core/packages/alg-build/gen_psf2l_sql.mts", "contains": "resolve(HERE, '../server/migrations/0116_psf2l.sql')" }
+      ]
+    },
+    {
+      "id": "client-server-contract-tests",
+      "from": "packages/client tests",
+      "to": "packages/server private utilities, routes, schema and migrations",
+      "phase": "test-contract",
+      "mechanism": "relative imports and direct fixture/source reads",
+      "owner": "client tests",
+      "rationale": "Integration guards currently verify cross-layer behavior from the client test suite.",
+      "replacement": "Move reusable contract fixtures to a neutral test boundary when the corresponding domain is refactored.",
+      "evidence": [
+        { "file": "core/packages/client/tests/account_delete.test.ts", "contains": "from '../../server/src/utils/account_delete';" },
+        { "file": "core/packages/client/tests/alg_3x3_wide_notation.test.ts", "contains": "../../server/src/db/schema.pg.sql" }
+      ]
+    },
+    {
+      "id": "deploy-core-broad-trigger",
+      "from": "core tree changes",
+      "to": "Deploy Core workflow",
+      "phase": "deploy-trigger",
+      "mechanism": "GitHub Actions paths: core/** except archived platform",
+      "owner": "ops",
+      "rationale": "The API deploy currently triggers for unrelated Web, Mobile and Mini Program changes.",
+      "replacement": "BND-06: narrow to server plus its actual shared/build inputs after BND-02 and BND-03.",
+      "evidence": [
+        { "file": ".github/workflows/deploy_core.yml", "contains": "- 'core/**'" },
+        { "file": ".github/workflows/deploy_core.yml", "contains": "- '!core/packages/platform/**'" }
+      ]
+    },
+    {
+      "id": "deploy-next-target",
+      "from": "packages/client plus shared and visualcube changes",
+      "to": "Next standalone deployment",
+      "phase": "deploy-target",
+      "mechanism": "GitHub Actions filtered build, packaged standalone output and remote restart",
+      "owner": "ops",
+      "rationale": "The Web app already has an independently built and deployed runtime artifact.",
+      "replacement": "Keep this deployment independent; a future physical directory move must update the trigger and sparse checkout atomically.",
+      "evidence": [
+        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/client/**'" },
+        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/shared/**'" },
+        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/visualcube/**'" }
+      ]
+    }
+  ],
+  "legacyFindings": [
+    {
+      "file": "packages/alg-build/dryrun_ll_algs.mjs",
+      "mechanism": "execFileSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "docker"
+    },
+    {
+      "file": "packages/alg-build/fix_1lll_meta_assignment.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "core/packages/server/migrations/0102_fix_1lll_meta_assignment.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/alg-build/fix_bad_ll_cases.mjs",
+      "mechanism": "execFileSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "docker"
+    },
+    {
+      "file": "packages/alg-build/gen_best2x2_sql.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "core/packages/server/migrations/0104_best_2x2_algs.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/alg-build/gen_cubingapp_beginner_ll_sql.mts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../server/migrations/0109_cubingapp_beginner_ll.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/alg-build/gen_cubingapp_roux_pyraminx_sql.mts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../server/migrations/0110_cubingapp_roux_pyraminx.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/alg-build/gen_cubingapp_sq1_sql.mts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../server/migrations/0107_sq1_cubingapp_csp.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/alg-build/gen_cubingapp_sq1_stages_sql.mts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../server/migrations/0108_sq1_cubingapp_stages.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/alg-build/gen_psf2l_sql.mts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../server/migrations/0116_psf2l.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/alg-build/phase4_verify.mjs",
+      "mechanism": "execFileSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "docker"
+    },
+    {
+      "file": "packages/alg-build/phase4_verify.mjs",
+      "mechanism": "execFileSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "ssh"
+    },
+    {
+      "file": "packages/alg-build/verify_alt_scrambles.mjs",
+      "mechanism": "execFileSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "ssh"
+    },
+    {
+      "file": "packages/client/app/[lang]/2x2x2/_TwoToolsPage.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/_components/AlgPuzzleSelect.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/_trainer/events.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/_trainer/MemoryTrainer.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/_trainer/MixSetPicker.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/_trainer/OrientationPicker.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/_trainer/smartcube.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/_trainer/trainer-components.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/_trainer/useTrainerCube.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgSubOrCaseClient.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/[puzzle]/[set]/run/TrainerRunClient.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/[puzzle]/[set]/run/TrainerSplitScreen.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/[puzzle]/[set]/select/TrainerSetClient.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/[puzzle]/AlgPuzzleClient.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/3bld/comm/page.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/progress/cases/page.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/progress/page.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/skewb-trainer/page.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/alg/time-attack/page.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/calc/_components/engine/wr_data.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/calc/_components/engine/wr_data.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/calc/_components/live/useCalcLive.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/calc/_components/stores/calc_store.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/calc/page.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/math/probability/_components/SetAccounting.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/math/probability/_components/SetAccounting.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/nemesizer/_components/NemesizerPersonPicker.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/recognize/[algSetId]/guide/RecognitionGuideClient.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/recon/[id]/alt/[altIdx]/ReconAltViewClient.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/recon/[id]/alt/AltSubmitForm.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/recon/[id]/ReconDetailClient.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/recon/page.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/recon/person/[wcaId]/ReconPersonClient.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/recon/submit/ReconReuseModal.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/recon/submit/ReconSubmitForm.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/recon/submit/ScramblePicker.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/sim/AlgsPanel.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/sq1/cs/name/Sq1ShapeGuideClient.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/wca/_globe/GlobeMapClient.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/wca/comp/[slug]/CompDetailPage.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/[lang]/wca/comp/page.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/app/recon-sitemap.xml/route.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/AdminCaseEditor.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/AdminSubmissionsPanel.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/AlgAdminValidate.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/AlgCaseMetaContent.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/AlgCaseMetaModal.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/AlgCategoryView.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/AlgEditor.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/AlgMirrorPanel.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/AlgPlayer/AlgPlayer.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/AlgPlayer/AlgSimPlayer.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/AlgPlayer/player-setup.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/AlgPlayer/stickering.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/CaseThumb.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/CommunityAlgs.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/CompCuberPicker.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/distribution-viz/_engine/data_fetch.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/distribution-viz/DistributionViz.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/MoveNotationDemo/MoveNotationDemo.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/persons/sections/results/AttemptPopover.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/platform/PlatformDomainActions.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/PllPerformerOverlay.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/recon/ReconCompletionBadge.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/ReconCard/ReconCard.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/RecordSelect/RecordSelect.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/Sq1PblFinder.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/Sq1PracticeTools.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/TodayRecon.tsx",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/ValidationReportModal.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/components/WcaPersonPicker.tsx",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_api.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_case_display.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_case_link.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_case_optimal.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_goals.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_normalize.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_oh_hand.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_pdf/case_svg.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_pdf/from_cases.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_pdf/from_trainer.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_precondition.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_probability.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_scramble.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_sets_api.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_simple_zbll.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_tags.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_thumb_plan.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_validation_scan.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg_validation.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg-mix-saved.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg-mix.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg-preferred-algs.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg-progress-cases.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg-time-attack-order.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/alg-virtual-sets.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/comp-sim.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/comp-wcif.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/lsll/trainer-set.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/platform-gateway.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/psf2l-extra-scramble.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/recognize-db-sets.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/recognize-sets.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/recognize-sq1-shapes.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/recon-api.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/recon-attempt-lookup.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/recon-cache.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/recon-seo.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/recon-stats.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/recon-store.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/site-search.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/trainer-case-key.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/trainer-scramble.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/trainer-store.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/wca-round-meta.ts",
+      "importKind": "runtime",
+      "mechanism": "static-export",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/lib/wca-round-meta.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/scripts/auf-align-f2l.mts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "build",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/scripts/dev-safe.mjs",
+      "mechanism": "execSync",
+      "occurrences": 3,
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/client/scripts/dev-safe.mjs",
+      "mechanism": "spawn",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/client/scripts/gen-lsll-zbll-overlay.mts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "build",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/scripts/gen-lsll-zbls-overlay.mts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "build",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/scripts/mirror-link-plan.mts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "build",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/scripts/normalize-slot-to-fr.mts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "build",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/scripts/predev-clean.mjs",
+      "mechanism": "execSync",
+      "occurrences": 2,
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/client/scripts/predev-clean.mjs",
+      "mechanism": "execSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "netstat -ano -p tcp"
+    },
+    {
+      "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "core/packages/server/migrations/0105_recon_ground_truth.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "core/packages/server/migrations/0106_recon_ground_truth_candidates.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "core/packages/server/src/routes/recon_ground_truth.ts",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "core/packages/shared/src/recon_ground_truth.ts",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "core/packages/shared/src/recon_slice.ts",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
+      "mechanism": "spawnSync",
+      "occurrences": 2,
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "git"
+    },
+    {
+      "file": "packages/client/scripts/sq1-pbl-check.mjs",
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/client/scripts/sq1-pbl/build-alg-migration.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../../server/migrations/0140_sq1_pbl.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/scripts/sq1-pbl/export-finder-jar.mjs",
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/client/scripts/sync-deskpet.mjs",
+      "mechanism": "execFileSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "git"
+    },
+    {
+      "file": "packages/client/scripts/test-slow.mjs",
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "pnpm"
+    },
+    {
+      "file": "packages/client/scripts/test-solvers.mjs",
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "pnpm"
+    },
+    {
+      "file": "packages/client/tests/_puzzle_mask_derive.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/vendor-sr-puzzlegen/simulator/megaminx/megaminxSimulator",
+      "rule": "workspace-wildcard-import",
+      "target": "vendor-sr-puzzlegen"
+    },
+    {
+      "file": "packages/client/tests/_puzzle_mask_derive.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/vendor-sr-puzzlegen/simulator/pyraminx/pyraminxSimulator",
+      "rule": "workspace-wildcard-import",
+      "target": "vendor-sr-puzzlegen"
+    },
+    {
+      "file": "packages/client/tests/_puzzle_mask_derive.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/vendor-sr-puzzlegen/simulator/skewb/skewbSimulator",
+      "rule": "workspace-wildcard-import",
+      "target": "vendor-sr-puzzlegen"
+    },
+    {
+      "file": "packages/client/tests/account_delete.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/account_delete",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/account_delete.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/account_password_reset.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/session",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/alg_3x3_wide_notation.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_3x3_wide_notation.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/migrations/0135_alg_3x3_lowercase_wide.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/alg_3x3_wide_notation.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/src/db/schema.pg.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/alg_3x3_wide_notation.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/src/routes/alg_sets.ts",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/alg_3x3_wide_notation.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/src/routes/alg.ts",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/alg_case_display.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_case_optimal.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_case_slug.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_f2l_setup_guard.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/alg_case_setup",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/alg_f2l_setup_guard.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_f2l_setup_guard.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/migrations/0136_alg_f2l_setup_required.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/alg_f2l_setup_guard.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/src/db/schema.pg.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/alg_f2l_setup_guard.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/src/routes/alg_sets.ts",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/alg_goal_coverage.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_leading_y_rewrite.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_ll_orientation.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_mirror_cascade.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_mirror_rewrite.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_mirror_sync.test.ts",
+      "importKind": "runtime",
+      "mechanism": "dynamic-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/alg_mirror.js",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/alg_mirror_sync.test.ts",
+      "importKind": "runtime",
+      "mechanism": "vi.mock",
+      "sourceKind": "test",
+      "specifier": "../../server/src/db/connection.js",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/alg_mirror_sync.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_oh_hand.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_pdf_from_cases.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_scramble.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_simple_zbll.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_slice_case.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_smartcube.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_sq1_validation.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_top_layer_db_guard.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg_top_layer_db_guard.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/migrations/0132_alg_top_layer_no_leading_y.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/alg_top_layer_db_guard.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/src/db/schema.pg.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/alg-load-cache-version.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg-mix.test.ts",
+      "importKind": "runtime",
+      "mechanism": "dynamic-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg-mix.test.ts",
+      "importKind": "type-only",
+      "mechanism": "import-type",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg-preferred-algs.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg-sq1-set-names.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg-thumb-render-plan.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/alg-time-attack-order.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/browser-regexp-compat.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/shared/src",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/browser-regexp-compat.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/visualcube/src",
+      "target": "visualcube"
+    },
+    {
+      "file": "packages/client/tests/browser-regexp-compat.test.ts",
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/client/tests/codex_hook_adapters.test.ts",
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/client/tests/comp-trim.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/comp_trim",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/cubingapp-beginner-ll-port.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/cubingapp-beginner-ll-port.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/cubingapp-roux-pyraminx-port.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/first_layer_integration.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/scramble-stats-build/backfill_xcross_variant.ps1",
+      "target": "scramble-stats-build"
+    },
+    {
+      "file": "packages/client/tests/first_layer_integration.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/scramble-stats-build/src/build_comp_steps.ts",
+      "target": "scramble-stats-build"
+    },
+    {
+      "file": "packages/client/tests/first_layer_integration.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/scramble-stats-build/src/build_recent_scrambles.ts",
+      "target": "scramble-stats-build"
+    },
+    {
+      "file": "packages/client/tests/first_layer_integration.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/scramble-stats-build/src/variants.ts",
+      "target": "scramble-stats-build"
+    },
+    {
+      "file": "packages/client/tests/first_layer_integration.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/scramble-stats-build/update_cross_stats.ps1",
+      "target": "scramble-stats-build"
+    },
+    {
+      "file": "packages/client/tests/fto_eif_image.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/i18n-cubing-term-blacklist.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../alg-build",
+      "target": "alg-build"
+    },
+    {
+      "file": "packages/client/tests/landing_comps.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../stats-build/src/landing_comps",
+      "rule": "cross-package-relative-module",
+      "target": "stats-build"
+    },
+    {
+      "file": "packages/client/tests/ll_optimal_dist.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/lowcubes_migration_integrity.test.ts",
+      "mechanism": "readFileSync",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/migrations/0121_lowcubes_fto_megaminx.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/lowcubes_migration_integrity.test.ts",
+      "mechanism": "readFileSync",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/migrations/0157_fix_fto_pair_formation_setups.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/lowcubes_migration_integrity.test.ts",
+      "mechanism": "readFileSync",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/migrations/0159_fix_fto_top_layer_setups.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/lsll_rounds.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/lsll_trainer_set.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/no-stray-images.test.ts",
+      "mechanism": "execSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "git ls-files"
+    },
+    {
+      "file": "packages/client/tests/no-stray-images.test.ts",
+      "mechanism": "execSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "git rev-parse --show-toplevel"
+    },
+    {
+      "file": "packages/client/tests/oll_docx_import.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/oll_docx_import.test.ts",
+      "mechanism": "readFileSync",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/migrations/0153_oll_docx_import.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/one_credential_per_account.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/person_page_mirror_parity.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/person_page",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/plan-hide-grey-sides.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/puzzle-mask.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/vendor-sr-puzzlegen/simulator/pyraminx/pyraminxSimulator",
+      "rule": "workspace-wildcard-import",
+      "target": "vendor-sr-puzzlegen"
+    },
+    {
+      "file": "packages/client/tests/pyraminx_trainer_scramble.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/recent_records_feed_tag.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/current_records",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/recognize_sets.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/recon_completion.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/recon_completion",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/recon_ground_truth.test.ts",
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/client/tests/recon-duplicate-query.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/recon_helpers",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/server/migrations/0106_recon_ground_truth_candidates.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/server/src/routes/recon_ground_truth.ts",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/shared/src/recon_ground_truth.ts",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/client/tests/recon-server-validation.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/recon_helpers",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/record_format_pr_segment.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/record_format",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/record_format.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/record_format",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/second_layer_integration.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/scramble-stats-build/src/build_comp_steps.ts",
+      "target": "scramble-stats-build"
+    },
+    {
+      "file": "packages/client/tests/second_layer_integration.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/scramble-stats-build/src/build_recent_scrambles.ts",
+      "target": "scramble-stats-build"
+    },
+    {
+      "file": "packages/client/tests/second_layer_integration.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/scramble-stats-build/src/variants.ts",
+      "target": "scramble-stats-build"
+    },
+    {
+      "file": "packages/client/tests/sq1_cs_squanmate_alignment.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/migrations/0137_sq1_cs_squanmate_alignment.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/sq1_pbl_alg_library.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/sq1_pbl_alg_library.test.ts",
+      "mechanism": "readFileSync",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/migrations/0140_sq1_pbl.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/stale_record_tag.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/current_records",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/teaching_message_notification_contract.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/teaching-content.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/migrations/0127_teaching_advanced_lessons.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/teaching-content.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server/src/routes/teaching.ts",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/tied_podium_results.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../stats-build/src/statistics/tied_podium_results_core",
+      "rule": "cross-package-relative-module",
+      "target": "stats-build"
+    },
+    {
+      "file": "packages/client/tests/timer_presence.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/routes/timer_presence",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/trainer-f2l-scramble.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/trainer-pdf.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/trainer-psf2l-scramble.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/trainer-store-lookahead.test.ts",
+      "importKind": "type-only",
+      "mechanism": "import-type",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/trainer-store-quota.test.ts",
+      "importKind": "type-only",
+      "mechanism": "import-type",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/trainer-store-recap.test.ts",
+      "importKind": "type-only",
+      "mechanism": "import-type",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/trainer-store-room.test.ts",
+      "importKind": "type-only",
+      "mechanism": "import-type",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/wca_comp_h2h_filter.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../shared/src/api/comps_json.ts",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/wca_comp_h2h_filter.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../stats-build/src/bin/fetch_upcoming_comps.ts",
+      "target": "stats-build"
+    },
+    {
+      "file": "packages/client/tests/wca_comp_h2h_filter.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../stats-build/src/bin/gen_all_comps.ts",
+      "target": "stats-build"
+    },
+    {
+      "file": "packages/client/tests/wca_link_onboarding.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../server",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/wca_live_overlay.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/wca_live_overlay",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/wca-calculators-port.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/wca_name_filter",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/wca-person-picker-free-text.test.ts",
+      "importKind": "runtime",
+      "mechanism": "vi.mock",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/wca-teachers.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "../../server/src/utils/wca_teachers",
+      "rule": "cross-package-relative-module",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/workspace-reparse-links-guard.test.ts",
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/miniprogram/tests/release-check.test.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "/packages/shared/package.json",
+      "target": "shared"
+    },
+    {
+      "file": "packages/miniprogram/tests/release-check.test.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "/packages/shared/src/smart_cube/relay.ts",
+      "target": "shared"
+    },
+    {
+      "file": "packages/miniprogram/tests/web-routes.test.ts",
+      "importKind": "runtime",
+      "mechanism": "import.meta.glob",
+      "sourceKind": "test",
+      "specifier": "../../client/app/**/page.tsx",
+      "rule": "cross-package-relative-module",
+      "target": "client"
+    },
+    {
+      "file": "packages/miniprogram/tests/web-routes.test.ts",
+      "importKind": "runtime",
+      "mechanism": "import.meta.glob",
+      "sourceKind": "test",
+      "specifier": "../../client/next.config.ts",
+      "rule": "cross-package-relative-module",
+      "target": "client"
+    },
+    {
+      "file": "packages/miniprogram/tests/web-routes.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../client/app/auth/miniprogram/page.tsx",
+      "target": "client"
+    },
+    {
+      "file": "packages/miniprogram/tests/web-routes.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../client/next.config.ts",
+      "target": "client"
+    },
+    {
+      "file": "packages/mobile/scripts/gen-android-assets.mjs",
+      "importKind": "runtime",
+      "mechanism": "dynamic-import",
+      "sourceKind": "build",
+      "specifier": "../../client/scripts/gen-app-icons.mjs",
+      "rule": "cross-package-relative-module",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/build_length_opt.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "core/packages/client/public/cubeopt/cube48opt5.mjs",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/build_length_opt.mjs",
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_bic_table.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/bicube-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_examples.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/clock-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/bsq-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/cm3-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/crz3a-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/ctico-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/cuboid233-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/cuboid334-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/cuboid335-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/cuboid336-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/cuboid337-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/heli-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/helicv-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/sia222-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/sq2-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/ssq1-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_sia123_table.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/sia123-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/build_sia222_table.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/sia222-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/scramble-stats-build/src/clock_analyzer.mts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/lib/clock-solver",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/scripts/gen-glossary.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "../../client/app/[lang]/wiki/glossary.json",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/src/calc/live_relay.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/server/src/cube555/daemon.ts",
+      "mechanism": "spawn",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/server/src/cubeopt/daemon.ts",
+      "mechanism": "spawn",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/server/src/cubeopt/solve-daemon.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "runtime",
+      "specifier": "core/packages/client/public/cubeopt/cube48opt5.mjs",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/src/routes/alg_sets.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/server/src/routes/alg.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/server/src/routes/cube.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@/lib/cube3",
+      "rule": "cross-package-alias-import",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/src/routes/cubing_live.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/server/src/routes/engine_render.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@/app/[lang]/sim/engine/world",
+      "rule": "cross-package-alias-import",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/src/routes/engine_render.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@/app/[lang]/sim/sim_svg_export_schematic",
+      "rule": "cross-package-alias-import",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/src/routes/engine_render.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@/lib/puzzle-image/engine-svg",
+      "rule": "cross-package-alias-import",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/src/tools/engine_render_smoke.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "runtime",
+      "specifier": "../client/.tmp/png/engine-render",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/src/tools/run_tests.ts",
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/server/src/utils/alg_case_setup.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/server/src/utils/ip_geolocation.ts",
+      "mechanism": "execFileAsync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/server/tests/calc_live_relay.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/server/tests/platform_core_schema.test.ts",
+      "mechanism": "read",
+      "occurrences": 2,
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../client/app/[lang]/dev/schema/page.tsx",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/tests/teaching_conversations_schema.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../client/app/[lang]/dev/api/page.tsx",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/tests/teaching_conversations_schema.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../client/app/[lang]/dev/schema/page.tsx",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/tests/teaching_learner_portal_schema.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../client/app/[lang]/dev/api/page.tsx",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/tests/teaching_learner_portal_schema.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../client/app/[lang]/dev/schema/page.tsx",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/tests/teaching_saas_repository.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "packages/server/tests/teaching_stage2_schema.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../shared/src/teaching.ts",
+      "target": "shared"
+    },
+    {
+      "file": "packages/server/tests/teaching_stage3_foundation_schema.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../client/app/[lang]/dev/schema/page.tsx",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/tests/teaching_weekly_reports_schema.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../client/app/[lang]/dev/api/page.tsx",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/tests/teaching_weekly_reports_schema.test.ts",
+      "mechanism": "read",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../client/app/[lang]/dev/schema/page.tsx",
+      "target": "client"
+    },
+    {
+      "file": "packages/server/tsconfig.json",
+      "mechanism": "tsconfig-path",
+      "rule": "cross-package-alias-definition",
+      "sourceKind": "runtime",
+      "specifier": "@/*=../client/*",
+      "target": "client"
+    },
+    {
+      "file": "packages/stats-build/src/bin/compute_all.ts",
+      "mechanism": "fork",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/stats-build/src/bin/seed_comp_dump_state.ts",
+      "mechanism": "execFileSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "ssh"
+    },
+    {
+      "file": "packages/stats-build/src/bin/seed_comp_dump_state.ts",
+      "mechanism": "execSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "packages/stats-build/src/bin/update_database.ts",
+      "mechanism": "execSync",
+      "occurrences": 12,
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    }
+  ]
+}

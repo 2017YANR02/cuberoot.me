@@ -4,7 +4,7 @@
 
 Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59`，工作树无未提交改动；本批文档、测试守卫及跟踪文件自身造成的前进不视为基线漂移。每个后续实施批次开始前仍必须重新记录当时的 `HEAD` 和工作树重叠情况。
 
-状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1 已提交并发布；Batch 2 已获用户授权，当前只实施依赖基线、候选清单和“只拦新增违规”的机器守卫，不移动目录、不改业务运行时。
+状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1 已提交并发布；Batch 2 的依赖基线、候选清单和“只拦新增违规”机器守卫已在本地通过验证与独立复审，待提交、发布和新会话 Hook 实触发验收。本批不移动目录、不改业务运行时。
 
 > 状态校正：2026-08-22 重新打开的产品与数据迁移已按 [Platform 主站完整迁移跟踪](./platform-product-migration-tracker.md) 完成 P0-P8。P9 是迁移完成后的主站产品体验改版，不恢复独立 Platform app，也不改变本架构方案的长期边界。Batch 1 只改善入口、状态和生成物可发现性；后续源码实施仍须刷新依赖基线、完成新的独立复审并取得用户授权。
 
@@ -148,11 +148,11 @@ API     ─X─> Web 源码或 Web public
 
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
-| BND-01 | 生成真实系统依赖基线 | `进行中` | 覆盖静态 import、动态加载、路径读取、构建复制、非 workspace 原生工具、子进程、大表、环境变量覆盖和部署目标 |
+| BND-01 | 生成真实系统依赖基线 | `完成` | 已登记 326 个精确旧债指纹、342 次出现和 15 条人工契约，覆盖静态 import、动态加载、路径读取、构建复制、非 workspace 原生工具、子进程、大表、环境变量覆盖和部署目标；独立复审 PASS |
 | BND-02 | 消除 API 对 Web 源码的 import | `待授权` | `packages/server` 不再 import `packages/client` 源文件，相关测试和部署通过 |
 | BND-03 | 消除 API 对 Web public 的运行时读取 | `待授权` | 资产归 API、自有构建产物或合格共享包；从真实部署产物启用功能并执行一次 daemon 请求，Web 目录不存在时仍可用 |
-| BND-04 | 按边类型增加跨 app 依赖守卫 | `进行中` | 分别建立 runtime、build、test、artifact 和 subprocess baseline；只拦新增未声明违规，hook 与 CI 均有真实触发测试 |
-| BND-05 | 收口 package 公开 exports | `进行中` | 冻结 `@cuberoot/shared` 根 barrel，禁止新增裸根 import 和跨包 deep import；subpath 标明运行时属性，旧违规可递减 |
+| BND-04 | 按边类型增加跨 app 依赖守卫 | `进行中` | runtime、build、test、artifact 和 subprocess baseline 已进入 CI，新增和重复违规会失败、旧债减少可通过；write adapter 已实测，项目 Hook 因当前宿主不热加载配置，仍待下一个独立 Codex 会话实触发 |
+| BND-05 | 收口 package 公开 exports | `进行中` | 已冻结 `@cuberoot/shared` 裸根新增并按任意 workspace package 的 `exports` 拦私有 deep import；公开 subpath 运行时属性尚未全部登记，未来无 `exports["."]` 的 package 还须增加裸根拒绝验收 |
 | BND-06 | 收窄部署触发边界 | `待授权` | 纯 Web、Mobile、小程序变更不再误触发 API 部署；shared、server 与真实依赖变化仍能触发 |
 
 ### C. 多端 API 与领域契约
@@ -172,7 +172,7 @@ API     ─X─> Web 源码或 Web public
 
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
-| PKG-01 | 形成候选模块清单 | `进行中` | 每项列出消费者、边界信号、运行时、依赖闭包、测试和不提取的替代方案 |
+| PKG-01 | 形成候选模块清单 | `完成` | 每项已列出消费者、边界信号、运行时、依赖闭包、测试和不提取的替代方案；清单见 [`architecture-package-candidates.md`](architecture-package-candidates.md)，独立复审 PASS |
 | PKG-02 | 优先提取纯记号、状态、验证或格式化逻辑 | `待授权` | 只处理满足第 7 节门槛的模块，一次一个领域 |
 | PKG-03 | UI 共享采用显式例外 | `待授权` | 只有设计系统和交互契约一致时共享 React UI；小程序不套 React DOM 抽象 |
 
@@ -209,7 +209,7 @@ G 阶段不再阻塞架构规划。RET-01/03 的完成只代表运行责任已�
 
 ## 9. 推荐实施批次
 
-批次 1 已完成；批次 2 已获得用户授权并基于 `dc4f3e8d50b6e8ff43abce35a7e3e2bfe621008c` 的干净工作树开始实施；批次 3 至 7 仍未授权。Batch 2 不得扩张成业务源码、目录或部署改造。
+批次 1 已完成；批次 2 已获得用户授权并基于 `f6eebfcec9f218ba770504b003215dcf196815c6` 的工作树快照实施。该 SHA 比 Batch 1 发布点多一条无重叠的 WCA 文档提交，不改变扫描范围；批次 3 至 7 仍未授权。Batch 2 不得扩张成业务源码、目录或部署改造。
 
 ### 批次 1：文档与入口
 
@@ -222,6 +222,8 @@ G 阶段不再阻塞架构规划。RET-01/03 的完成只代表运行责任已�
 范围：BND-01、BND-04、BND-05、PKG-01。
 
 特点：先建立 baseline 和新增违规拦截，不在同一提交大规模修旧债。
+
+约束：项目 PreToolUse Hook 只为新会话中的新增片段提供快速反馈，完整文件和既有绑定关系以 CI 扫描为权威。BND-05 只有在公开 subpath 的运行时属性完成登记后才能标记完成。
 
 ### 批次 3：API 与 Web 解耦
 
@@ -297,6 +299,10 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | Batch 1 系统地图与边界事实 | `batch1_baseline` | `复审 PASS` | API 独立产物与现存 Web 耦合、活跃 app/package/job、Platform workspace 排除和宽部署触发均已准确表达；无 blocker/major/minor 遗留 |
 | Batch 1 README/归档状态 | `batch1_doc_audit` | `复审 PASS` | client/server/mobile/miniprogram 局部入口、中央文档状态和 Platform 退役墓碑与当前仓库一致；DOC-03/04 通过 |
 | Batch 1 生成物与 AI 可用性 | `batch1_generated_ai` | `复审 PARTIAL` | pgFacts 跨 clone 生成与 stack_meta 人工 source 重分类通过；vendored 矩阵、TNoodle i18n generator、migration 数据族 owner 仍是 DOC-05 blocker，EventIcon/DeskPet drift 守卫为后续 major |
+| Batch 2 依赖扫描与精确旧债基线 | `batch1_baseline` | `复审 PASS` | occurrence 多重集、workspace 动态发现、TS import-equals、路径组合、子进程、schema 和完整 Nemesizer 产物链均有实证；326 个指纹、342 次出现、15 条人工契约通过 |
+| Batch 2 package 与多端目录判断 | `batch1_generated_ai` | `复审 PASS` | 不建 `webapp/`、不拆仓、不立即迁 `apps/*`；Clock 为首个条件候选，bicube/sia222 先拆纯核心与 Web loader；当前 blocker 和 major 均为 0 |
+| Batch 2 Hook 与 CI 闭环 | `batch1_doc_audit` | `复审 PARTIAL` | 共用扫描器、write adapter、CI 和定向测试通过；当前 Codex 宿主不会热加载新写入的 Hook 配置，因此不能在同一会话宣称项目级实触发完成 |
+| Batch 2 项目 Hook 宿主探针 | `batch2_hook_probe` | `待新会话复验` | 同一线程树的独立 Agent 仍未加载新配置，违规探针未被宿主 deny；探针已移入回收站且工作树无残留，下一个独立 Codex 会话必须真实触发后才能关闭 BND-04 |
 
 审核要求：
 
@@ -306,12 +312,13 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 4. 不得因追求目录标准化而忽略现有 workflow、构建产物和部署路径。
 5. 审核只读，不编辑文件；由主 Agent 统一合并结论。
 
-2026-08-21 的三名 Reviewer 曾确认当时的总体架构路线成立；随后 Platform 大迁移显著改变了依赖图，所以旧 PASS 只保留为历史审查证据，不能直接授权当前实施。2026-08-23 的 Batch 1 先做三路只读初审，再做变更后的定点复审：DOC-01 至 DOC-04 均 PASS，DOC-05 因三类已公开的不可复现缺口保持 PARTIAL。
+2026-08-21 的三名 Reviewer 曾确认当时的总体架构路线成立；随后 Platform 大迁移显著改变了依赖图，所以旧 PASS 只保留为历史审查证据，不能直接授权当前实施。2026-08-23 的 Batch 1 先做三路只读初审，再做变更后的定点复审：DOC-01 至 DOC-04 均 PASS，DOC-05 因三类已公开的不可复现缺口保持 PARTIAL。Batch 2 再以当前 workspace、workflow、exports、真实路径和子进程调用重建基线；机器守卫与 package 方案已复审通过，项目 Hook 的宿主级验收因配置不热加载明确留到下一独立会话。
 
 ## 13. 变更记录
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-23 | Batch 2 本地实现完成，待提交和发布；建立依赖旧债多重集、JSON Schema、人工产物契约、共用 Hook/CI 扫描器与 package 候选清单，不移动源码、不改业务运行时 | `audit:boundaries` 通过：326 个精确旧债指纹、342 次出现、15 条人工契约；定向 Vitest 3 文件 29 测试、client typecheck、diff-check 通过；两路定点复审确认 scanner 与 package 方案 PASS，Hook 宿主实触发留待新会话 |
 | 2026-08-23 | Batch 1 以 `ebf0240cb0`、`dc4f3e8d50` 提交并推送；系统地图、README/局部入口、文档状态、Platform 退役墓碑和生成物登记落地 | 三路变更后复审：DOC-01/02 PASS、DOC-03/04 PASS、DOC-05 PARTIAL；PG facts 实际重建 1/1、定向测试 7/7、client typecheck、LF 与 diff-check 通过；Test `32668704812`、Deploy Next `32668704815`、Deploy Core `32668704776` 全绿；主站、`/zh/platform`、`/v1/health` 线上 smoke 通过 |
 | 2026-08-23 | 用户授权 Batch 1；以 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59` 为干净基线开始系统地图、README、文档状态、Platform 墓碑和生成物登记 | `batch1_baseline`、`batch1_doc_audit`、`batch1_generated_ai` 三路只读初审 |
 | 2026-08-23 | Platform P0-P8 完成发布验收后解除旧的全局阻塞；P9 产品体验待发布，旧资产继续观察；架构实施恢复为待授权 | `platform-product-migration-tracker.md`、workspace/workflow/旧 runtime 只读核对；三路当前审核 |
