@@ -87,7 +87,8 @@ export default function SimStage({
 
   return (
     <div className={`sim-stage${className ? ` ${className}` : ''}`}>
-      <style>{INLINE_CSS}</style>
+      {/* 暗色扩展可能在 hydration 前给 style 注入 class；仅忽略这个叶子节点的外部属性差异。 */}
+      <style suppressHydrationWarning>{INLINE_CSS}</style>
       <div ref={hostRef} className="sim-stage-canvas" style={{ width: size, height: size }} />
       {children}
       {!ready && showBusy && (

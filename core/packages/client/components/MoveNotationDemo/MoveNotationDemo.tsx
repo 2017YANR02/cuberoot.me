@@ -28,8 +28,8 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
   if (!selected) return null;
 
   return (
-    <div className={`move-notation-demo is-${variant}`}>
-      <div className="move-notation-stage">
+    <div className={`move-notation-demo alg-player-list-layout is-${variant}`}>
+      <div className="move-notation-stage alg-player-list-player">
         <AlgPlayer
           alg={selected.move}
           puzzle={puzzle}
@@ -41,7 +41,7 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
         />
       </div>
 
-      <div className="move-notation-options" aria-label={t('选择要演示的记号', 'Choose a move to demonstrate')}>
+      <div className="move-notation-options alg-player-list-options" aria-label={t('选择要演示的记号', 'Choose a move to demonstrate')}>
         {moves.map(option => {
           const active = option.move === selected.move;
           return (

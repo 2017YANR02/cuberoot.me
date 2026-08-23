@@ -15,6 +15,7 @@ import {
   DEFAULT_ALG_MOVE_DURATION_MS,
   DEFAULT_PREVIEW_TIMING,
   resolvePlayerSetup,
+  resolvePreviewSyncStep,
   resolvePreviewStepTransition,
   resolvePreviewTiming,
   resolveSimMoveDurationScale,
@@ -102,6 +103,12 @@ describe('resolvePlayerSetup', () => {
 });
 
 describe('notation demo timing', () => {
+  it('切换公式时先同步到新序列第 0 步,不沿用旧公式的末步索引', () => {
+    expect(resolvePreviewSyncStep('3x3:R', "3x3:R'", 1)).toBe(0);
+    expect(resolvePreviewSyncStep("3x3:R'", "3x3:R'", 1)).toBe(1);
+    expect(resolvePreviewSyncStep(null, '3x3:R', 0)).toBe(0);
+  });
+
   it('前后单步才补间,拖动和跨步跳转都瞬时落位', () => {
     const last = { setupAlg: "(R U)'", step: 0 };
     expect(resolvePreviewStepTransition(last, "(R U)'", 1, false, true)).toBe('forward');
