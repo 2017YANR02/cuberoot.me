@@ -642,14 +642,14 @@ export const CLOCK_GODS_NUMBER = 12;
  * 这是**别人算出来的**:全空间 12^14 的 God's algorithm 由 Tomas Rokicki 用陪集分解跑穿
  * (12^5 = 248,832 个陪集压到 9,906 个代表元,约 3 天),表格取自 Jaap Scherphuis 的页面
  * <https://www.jaapsch.net/puzzles/clock.htm>。本机重算不可能,所以本仓库做的是**核验**,
- * 三层证据在 `scripts/clock/verify_distribution.mts`(用本仓库自己的招式模型,不引用求解器):
+ * 三层证据在 `packages/client/scripts/clock/verify_distribution.mts`(用本仓库自己的转动模型,不引用求解器):
  *
  *   1) 逐档求和 === 12^14 —— 抓誊抄错(实测抓到过 d=4 / d=11 各错一位)
  *   2) d ≤ 4 各档由 30 种 move type 全组合枚举 + 去重**精确重算**,逐档 `===` 对账
  *   3) 均匀随机态抽样直方图对理论占比(卡方 + 逐档 σ),并核对均值 9.4337 与上限 12
  *
  * d = 12 那一档另有硬对账:Rokicki 公布了全部 39,248 个 12 步状态(`solver/reference/clock/
- * dist12.txt`),本站求解器把它们逐个解出恰为 12 步 —— 全 39,248 条已跑通(`clock_solver.test.ts`,
+ * dist12.txt`),本站求解器把它们逐个解出恰为 12 步 —— 全 39,248 条已跑通(`packages/client/tests/clock_solver.test.ts`,
  * `CLOCK_DIST12_FULL=1`)。
  *
  * 因为 WCA 打乱是**均匀随机态**,这张表同时就是比赛打乱难度的真实分布(不需要真题语料)。

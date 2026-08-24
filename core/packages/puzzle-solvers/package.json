@@ -1,0 +1,23 @@
+{
+  "name": "@cuberoot/puzzle-solvers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./clock": {
+      "types": "./src/clock.ts",
+      "node": "./dist/clock.js",
+      "default": "./src/clock.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm run build && vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "vitest": "^4.1.6"
+  }
+}

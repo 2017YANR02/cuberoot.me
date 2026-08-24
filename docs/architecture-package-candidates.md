@@ -1,6 +1,6 @@
 # CubeRoot package 候选清单
 
-状态：`ACTIVE / Batch 2`。本清单只做候选判定，不授权移动源码。当前事实基线见 [`core/architecture-boundaries.json`](../core/architecture-boundaries.json)，机器扫描器见 [`core/scripts/check-architecture-boundaries.mjs`](../core/scripts/check-architecture-boundaries.mjs)。
+状态：`ACTIVE / Batch 5`。本清单记录候选判定与已验证结果；实际迁移仍以架构跟踪表的批次门禁为准。当前事实基线见 [`core/architecture-boundaries.json`](../core/architecture-boundaries.json)，机器扫描器见 [`core/scripts/check-architecture-boundaries.mjs`](../core/scripts/check-architecture-boundaries.mjs)。
 
 ## 结论
 
@@ -12,7 +12,7 @@ CubeRoot 需要收紧的是运行时和部署边界，不是把“看起来能�
 
 | 候选 | 当前消费者与边界信号 | 依赖闭包与验证 | 决定 | 不提取时的替代方案 |
 | --- | --- | --- | --- | --- |
-| 纯 puzzle solver 家族，首个切片为 Clock | Web UI、Web 测试和 `scramble-stats-build` 都直接使用 `client/lib/clock-solver.ts`；离线任务目前跨 app 动态 import 私有源码 | Clock 是纯 TypeScript、无 DOM、无 React、无下载表；已有 solver、distribution、sim board 测试。bicube、sia222 等现有文件仍含 `statsUrl`/fetch 等 Web loader，不能整文件视为纯核心 | `优先候选`。未来 package 可用 `@cuberoot/puzzle-solvers`，只开放 `./clock` 等显式 subpath，不设根 barrel。Clock 先验证独立 build、Node import、浏览器消费和原 fixture；其他 solver 必须先拆开纯核心与 Web loader，再逐个评估。禁止一次搬完 20 个 solver | 保留 client 私有模块，但离线 job 的跨 app import 会继续成为登记旧债 |
+| 纯 puzzle solver 家族，首个切片为 Clock | Web UI、Web 测试和 `scramble-stats-build` 已统一使用公开入口 `@cuberoot/puzzle-solvers/clock`，不再跨 app import 私有源码 | Clock 是纯 TypeScript、无 DOM、无 React、无下载表；独立 package build/typecheck/quick test、Node/Worker import、浏览器 bundle、analyzer 单线程与 Worker fixture 均有门禁。bicube、sia222 等现有文件仍含 `statsUrl`/fetch 等 Web loader，不能整文件视为纯核心 | `已落地 / Batch 5`。package 只开放 `./clock`，不设根 barrel；机器测试明确拒绝裸根 import。其他 solver 必须先拆开纯核心与 Web loader，再逐个评估，禁止一次搬完 | 其他 solver 继续留在 client 私有模块，直到分别满足纯度、真实多消费者和独立验证门槛 |
 | Headless simulator core | API 的 `engine_render.ts` 通过 server 的 `@/*` alias import 三个 Web 私有模块；Web 同时运行同一引擎 | 已有 Node headless gate 和渲染 smoke，但闭包约 90 个文件，仍需证明无 DOM、WebGL renderer、客户端 worker 和私有 `@/lib` 值依赖 | `Batch 3 条件候选`。只抽状态、几何、场景组装和 schematic SVG；交互、手势、人体、WebGL 生命周期留在 Web。先生成闭包清单再移动 | 暂时保留 3 条 alias 旧债；不能把 tsconfig alias 当长期公开 API |
 | Cubeopt 模块、WASM 与大表 | API daemon 和离线统计读取 Web public 下的模块，同时读取 repo 外大表 | Node 子进程、WASM/JS 模块和约 972M 表具有独立部署生命周期；代码 package 不能自动解决产物归属 | `不是普通 TS package`。在 Batch 3 建 API 自有 artifact bundle、版本清单、环境覆盖和“无 Web 目录”smoke | 继续把关系登记为 runtime-file/subprocess 契约，但不得增加新的 Web public 读取者 |
 | `invertAlg` 等小型纯 helper | API 当前只为一个 helper import `client/lib/cube3`；仓库内已有多个不同语义的同名实现 | 单函数不足以形成独立生命周期，且不同 puzzle/notation 的逆操作不能盲目合并 | `不建新 package`。先确认语义，再放入现有 `@cuberoot/shared` 的明确 notation subpath，并配 fixture | API 保留一条 client alias 旧债，直到 Batch 3 最小迁移 |

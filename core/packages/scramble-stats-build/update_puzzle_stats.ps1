@@ -53,7 +53,7 @@ $PkgDir      = $PSScriptRoot
 #          (需本机 13GB sq1_wca_jsqfull.bin; 缺表则告警跳过, 分布留旧值)。build_puzzle_dist 读 exact CSV。
 #          近最优(twophase)2026-06-18 退役, 代码仍在 solver/src/sq1_twophase.rs 作对照。
 #   clock = 精确最优解, 带 soln 列。analyzer 是 **TS** 不是 Rust exe(魔表求解器本就是纯 TS,
-#           client/lib/clock-solver.ts,可证最优 ~10ms/态): 注册表用 tsx 字段代替 exe。
+#           @cuberoot/puzzle-solvers/clock,可证最优 ~10ms/态): 注册表用 tsx 字段代替 exe。
 $PUZZLE = @{
   '222'    = @{ event = '222';   exe = 'cube222_analyzer.exe' }
   pyraminx = @{ event = 'pyram'; exe = 'pyraminx_analyzer.exe' }
@@ -113,6 +113,15 @@ function Append-Lines($master, $src, $skipHeader){
     $i = 0
     foreach($line in [IO.File]::ReadLines($src)){ if($skipHeader -and $i -eq 0){ $i++; continue }; $sw.Write($line); $sw.Write("`n"); $i++ }
   } finally { $sw.Close() }
+}
+
+if (-not $BuildOnly -and $RegPuzzles -contains 'clock') {
+  Step '[clock] 构建 @cuberoot/puzzle-solvers Node 产物'
+  Push-Location (Join-Path $PkgDir '..\..')
+  try {
+    pnpm --filter @cuberoot/puzzle-solvers build
+    if ($LASTEXITCODE -ne 0) { throw '@cuberoot/puzzle-solvers build 失败' }
+  } finally { Pop-Location }
 }
 
 if (-not $BuildOnly) {

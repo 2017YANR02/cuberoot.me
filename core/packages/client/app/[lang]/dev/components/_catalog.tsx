@@ -55,7 +55,7 @@ import HeaderToggles from '@/components/HeaderToggles';
 import CubeShorthand from '@/components/CubeShorthand';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import InteractiveClock, { type ClockBoardMode } from '@/components/InteractiveClock';
-import { clockStateFromAlg } from '@/lib/clock-solver';
+import { clockStateFromAlg } from '@cuberoot/puzzle-solvers/clock';
 import { VisualCube } from '@/components/VisualCube';
 import { AttemptsList } from '@/components/persons/sections/results/AttemptsList';
 import { AttemptsGrid } from '@/components/wca-results/AttemptsGrid';

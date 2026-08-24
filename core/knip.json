@@ -31,6 +31,9 @@
       "ignore": ["public/**"],
       "ignoreDependencies": ["@types/mdx"]
     },
+    "packages/puzzle-solvers": {
+      "entry": ["src/clock.ts", "tests/**/*.test.ts"]
+    },
     "packages/vendor-sr-puzzlegen": {
       "entry": ["src/index.ts"]
     },
@@ -47,7 +50,7 @@
       "entry": ["*.{mjs,mts,ts}", "src/**/*.{mjs,mts,ts}"]
     },
     "packages/scramble-stats-build": {
-      "entry": ["*.{mjs,ts,mts}", "src/**/*.{mjs,ts,mts}"]
+      "entry": ["*.{mjs,ts,mts}", "src/**/*.{mjs,ts,mts}", "tests/**/*.test.ts"]
     },
     "packages/wb-build": {
       "entry": ["src/**/*.{mjs,ts}"]

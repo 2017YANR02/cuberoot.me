@@ -1,7 +1,7 @@
 # 魔表(Rubik's Clock)求解器 — 参考实现收藏
 
 **这个目录不参与任何构建。** 里面全是第三方原作者的代码,原样收录、只读、不编译、不被任何
-workspace import。本站真正在跑的求解器是 `core/packages/client/lib/clock-solver.ts`(纯 TS,
+workspace import。本站真正在跑的求解器通过 `@cuberoot/puzzle-solvers/clock` 暴露，源码是 `core/packages/puzzle-solvers/src/clock.ts`(纯 TS,
 独立写成,见文末对照)。
 
 收录动机:魔表是少数几个「全状态空间被完整算穿」的扭计魔方之一 —— 12^14 = 1,283,918,464,548,864
@@ -118,7 +118,7 @@ csTimer 作者 Shuang Chen 的独立实现,GPLv3。`moveArr[18][14]` 直接给�
 Rokicki 的成果之一,也是这份收藏里**最有实用价值**的东西:它把「最难的那一档」变成可精确对账的
 测试集。每行 14 个整数,OptClock 格式(见 §4),0..11。
 
-映射到本站 `lib/clock-solver.ts` 的 `posit`(物理帧,18 个盘,正面 0..8、背面 9..17):
+映射到本站 `@cuberoot/puzzle-solvers/clock` 的 `posit`(物理帧,18 个盘,正面 0..8、背面 9..17):
 
 | dist12 列(0-indexed) | 含义 | 本站 `posit` 下标 |
 |---|---|---|
@@ -142,14 +142,14 @@ CLOCK_DIST12_FULL=1 pnpm --filter @cuberoot/client test:solvers clock
 分布表本身的三层核验(恒等式 / 低档精确枚举 / 抽样)在
 `core/packages/client/scripts/clock/verify_distribution.mts`。**d ≤ 4 各档已用本仓库自己的招式模型
 独立重算并逐档吻合**(`--depth 4`,4.01 亿元组、约 3.2 GB、数分钟;`317,141,342` 那一档即此)。
-表格本身进了 `client/lib/clock-solver.ts` 的 `CLOCK_LENGTH_DISTRIBUTION`,常数级恒等式护栏在
+表格本身进了 `@cuberoot/puzzle-solvers/clock` 的 `CLOCK_LENGTH_DISTRIBUTION`,常数级恒等式护栏在
 `tests/clock_distribution.test.ts`(CI 常跑),消费方是 `/scramble/stats?event=clock` 的难度曲线。
 
 ---
 
 ## 7. 与本站 TS 求解器的关系
 
-`core/packages/client/lib/clock-solver.ts` 是**独立写成**的(先于本目录收录这些代码),没有抄任何一份。
+`core/packages/puzzle-solvers/src/clock.ts` 是**独立写成**的(先于本目录收录这些代码),没有抄任何一份。
 写完再读上游,发现思路与 Rokicki 的陪集内那一步是同一个:
 
 |  | 本站 TS | Rokicki 陪集 | OptClock |

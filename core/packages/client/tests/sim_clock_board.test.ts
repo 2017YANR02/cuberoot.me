@@ -1,7 +1,7 @@
 /**
  * ClockBoard(/sim 的魔表引擎)—— 坐标帧与步进等价性。
  *
- * 唯一真正会错的地方是帧:`lib/clock-solver` 把 y2 折成每步招式的绝对 side(索引**起手帧**
+ * 唯一真正会错的地方是帧:`@cuberoot/puzzle-solvers/clock` 把 y2 折成每步招式的绝对 side(索引**起手帧**
  * 的两个半区),同时又要求 `posit[0..8]` 恒为**当前朝己**那面。整段一次算完可以"末了再对调
  * 一次"糊过去(`clockStateFromAlg` 就是这么做的),逐步播放的引擎不行。
  *
@@ -19,7 +19,7 @@ import {
   SOLVED_CLOCK, applyClockMoves, clockMoveDelta, clockStateFromAlg, invertClockMoves,
   isClockSolved, parseClockMoves, randomClockScramble, randomClockState, reduceClockAlg,
   solveClock,
-} from '@/lib/clock-solver';
+} from '@cuberoot/puzzle-solvers/clock';
 
 /** 逐步喂:每步 applyMoveInstant,拿最终的规范状态。 */
 function stepThrough(alg: string) {
@@ -163,7 +163,7 @@ describe('ClockBoard —— 动画扫动量', () => {
   });
 });
 
-// 这三个算子住在 `lib/clock-solver`,但测试放这儿:那边的 `clock_solver.test.ts` 名字命中
+// 这三个算子住在 `@cuberoot/puzzle-solvers/clock`,但测试放这儿:那边的 `clock_solver.test.ts` 名字命中
 // `*_solver.test.ts`,默认不进 CI(走 `test:solvers`)。播放条按钮直接依赖它们,得每次 CI 都跑。
 describe('魔表算法算子(消步 / 取逆 / 打乱)', () => {
   const ALGS = [...WITH_Y2, ...WITHOUT_Y2];

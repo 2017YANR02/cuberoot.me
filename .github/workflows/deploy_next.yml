@@ -10,6 +10,7 @@ on:
     paths:
       - 'core/packages/client/**'
       - 'core/packages/puzzle-render-core/**'
+      - 'core/packages/puzzle-solvers/**'
       - 'core/packages/shared/**'
       - 'core/packages/stack-kernel/package.json'
       - 'core/packages/stack-kernel/pkg/**'
@@ -61,7 +62,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # build script prebuilds the Client workspace dependencies that emit dist/
-      # (@cuberoot/shared, visualcube, vendor-sr-puzzlegen, puzzle-render-core)
+      # (@cuberoot/shared, visualcube, vendor-sr-puzzlegen, puzzle-render-core,
+      # puzzle-solvers)
       # before `next build` (commit 889729fab). Standalone output ON because
       # NODE_ENV=production + VERCEL!=1 (see next.config.ts isVercel gate).
       - name: Build Next standalone
