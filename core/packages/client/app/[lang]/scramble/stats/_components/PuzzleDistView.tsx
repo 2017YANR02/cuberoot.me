@@ -24,7 +24,7 @@ import {
 import { stepMetricsFor } from '@/app/[lang]/timer/_lib/scramble/step-metrics';
 import {
   CLOCK_GODS_NUMBER, CLOCK_LENGTH_DISTRIBUTION, CLOCK_MEAN_LENGTH, CLOCK_STATE_COUNT,
-} from '@/lib/clock-solver';
+} from '@cuberoot/puzzle-solvers/clock';
 import { tr } from '@/i18n/tr';
 
 // puzzle key → 在线求解器 event slug(/scramble/solver?event=;sq1 不在表里 → 示例卡不可点)。
@@ -61,7 +61,7 @@ const CLOCK_THEORY_COLOR = '#7a8896';
 // ── 魔表:唯一一个「全空间分布已知」的 WCA 项目 ────────────────────────────────
 // 12^14 个状态全被算穿(Rokicki 陪集法,God 12),所以除了真题语料直方图,还能叠一条**理论
 // 精确曲线**。因为 WCA 打乱是均匀随机态,这条曲线就是真题的极限分布 —— 语料越多两条越贴合,
-// 差距即抽样噪声。数据 + 三层核验见 lib/clock-solver 的 CLOCK_LENGTH_DISTRIBUTION 注释。
+// 差距即抽样噪声。数据 + 三层核验见 @cuberoot/puzzle-solvers/clock 的 CLOCK_LENGTH_DISTRIBUTION 注释。
 const CLOCK_THEORY_COUNTS: Record<string, number> = Object.fromEntries(
   CLOCK_LENGTH_DISTRIBUTION.map((n, d) => [String(d), n]),
 );

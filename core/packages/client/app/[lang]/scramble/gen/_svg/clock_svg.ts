@@ -12,6 +12,9 @@
  * PDF — exactly mirroring tnoodle's per-event color override.
  */
 
+import type { ClockState } from '@cuberoot/puzzle-solvers/clock';
+export type { ClockState } from '@cuberoot/puzzle-solvers/clock';
+
 export const CLOCK_COLOR_KEYS = [
   'Front', 'FrontClock', 'FrontTopClock', 'FrontHand', 'FrontHandBorder', 'FrontPin',
   'Back', 'BackClock', 'BackTopClock', 'BackHand', 'BackHandBorder', 'BackPin',
@@ -33,13 +36,6 @@ export const DEFAULT_CLOCK_COLORS: Record<ClockColorKey, string> = {
   BackHandBorder: '#ccddee',
   BackPin: '#446699',
 };
-
-export interface ClockState {
-  /** 18 positions, 0..11 each. Indices 0..8 = front 3x3 dials, 9..17 = back. */
-  posit: number[];
-  /** Flips after each y2; affects which side reads as "Front" when rendering. */
-  rightSideUp: boolean;
-}
 
 const TURNS = ['UR', 'DR', 'DL', 'UL', 'U', 'R', 'D', 'L', 'ALL'] as const;
 const MOVES: number[][] = [

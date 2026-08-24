@@ -37,7 +37,7 @@ function rules(file: string, content: string): string[] {
 
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
-    expect(MANIFEST.legacyFindings).toHaveLength(319);
+    expect(MANIFEST.legacyFindings).toHaveLength(317);
     expect(compareFindings(CURRENT, MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
     expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(175);
@@ -67,6 +67,8 @@ describe('architecture boundary guard', () => {
       .toContain('workspace-unexported-import');
     expect(rules(CLIENT_PROBE, "import x from '@cuberoot/puzzle-render-core/engine/private';"))
       .toContain('workspace-unexported-import');
+    expect(rules(CLIENT_PROBE, "import x from '@cuberoot/puzzle-solvers';"))
+      .toContain('workspace-unexported-import');
     expect(rules(CLIENT_PROBE, "import x from '@cuberoot/server';"))
       .toContain('workspace-app-root-import');
     expect(rules(CLIENT_PROBE, "import server = require('@cuberoot/server');"))
@@ -86,6 +88,8 @@ describe('architecture boundary guard', () => {
     expect(rules(CLIENT_PROBE, "import { deletedOwnerKey } from '@cuberoot/shared/account';"))
       .toEqual([]);
     expect(rules(CLIENT_PROBE, "import { cubeSVG } from '@cuberoot/visualcube';"))
+      .toEqual([]);
+    expect(rules(CLIENT_PROBE, "import { solveClock } from '@cuberoot/puzzle-solvers/clock';"))
       .toEqual([]);
     expect(rules(CLIENT_TEST_PROBE, "import x from '../../components/Probe';"))
       .toEqual([]);

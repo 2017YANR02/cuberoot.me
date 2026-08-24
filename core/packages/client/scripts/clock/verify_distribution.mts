@@ -3,7 +3,7 @@
  *
  * 分布表本身取自 Jaap Scherphuis(https://www.jaapsch.net/puzzles/clock.htm),全空间
  * 12^14 = 1,283,918,464,548,864 个状态。**本脚本不引用任何现成求解器**,只用本仓库自己的
- * 招式模型(lib/clock-solver,语义锚在 tnoodle ClockPuzzle.java)去核验它。
+ * 招式模型(@cuberoot/puzzle-solvers/clock,语义锚在 tnoodle ClockPuzzle.java)去核验它。
  *
  * 三层证据,强度递减:
  *
@@ -18,14 +18,11 @@
  * 全表(尤其 d ≥ 5 的那 1.28e15 个状态)**无法在本机重算** —— 那是 Kogler / Rokicki 量级的
  * 全空间 BFS。第 2 层只对低档给出严格证明,第 3 层给出对高档的统计证据。别把它写成"已证明"。
  *
- * Run: pnpm --filter @cuberoot/client exec tsx scripts/clock/verify_distribution.mts [--depth 3|4] [--samples 20000]
+ * Run: pnpm --filter @cuberoot/client verify:clock-distribution -- [--depth 3|4] [--samples 20000]
  */
-// tsx 把仓库内 TS 模块编成 CJS,具名导入拿不到(vitest / Next 打包器下正常)→ 走 default interop。
-import * as clockNs from '../../lib/clock-solver.ts';
-
-type ClockMod = typeof import('../../lib/clock-solver.ts');
-const { CLOCK_TYPE_MASKS, clockMoveDelta, randomClockState, solveClock } =
-  ((clockNs as unknown as { default?: ClockMod }).default ?? clockNs) as ClockMod;
+import {
+  CLOCK_TYPE_MASKS, clockMoveDelta, randomClockState, solveClock,
+} from '@cuberoot/puzzle-solvers/clock';
 
 /** Jaap 的 God 表:JAAP[d] = 最优步数恰为 d 的状态数。 */
 const JAAP: readonly bigint[] = [

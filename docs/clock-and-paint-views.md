@@ -96,7 +96,7 @@ tnoodle 移植)都带完整 move 语义 + 展开图。→ 平面画板可直接�
 ### P1 魔表求解器(纯 TS)— **完成** ✅
 
 产出:
-- `lib/clock-solver.ts` — 14 维状态模型 + 30 种 move type + WCA/扩展记号 parse/toString +
+- `@cuberoot/puzzle-solvers/clock`（源码 `packages/puzzle-solvers/src/clock.ts`）— 14 维状态模型 + 30 种 move type + WCA/扩展记号 parse/toString +
   **可证最优**求解器 + WCA 规范 14 步分解 + 反推打乱 + 随机态。零下载表、零 worker。
 - `tests/clock_solver.test.ts` — 16 条,全绿(走 `pnpm -F @cuberoot/client test:solvers clock`,
   按仓库惯例 `*_solver.test.ts` 不进 CI 常规集)。
@@ -168,7 +168,7 @@ Kogler 本人那份最早的证明程序**没有公开源码**,只有方法描�
 - [x] `solver/_ClockSolver.tsx` —— 三视图 + 最优解 + WCA 规范 ≤14 步分解 + 还原 / 随机 / 求打乱。
 - [x] `page.tsx` dispatch + `SolveTabs` 的 `SolvePuzzle`/`EVENT_ID`/`PUZZLE_BY_EVENT` 加 `clock`。
 - [x] `clock_svg.ts` 的几何常量改为 **export**(不再各算一份),角位 ↔ 表盘的镜像关系统一从
-      `lib/clock-solver` 的四张表取 → 画板与打乱图逐像素同格。
+      `@cuberoot/puzzle-solvers/clock` 的四张映射表取 → 画板与打乱图逐像素同格。
 - [x] `/dev` 组件目录登记 `InteractiveClock`。
 
 浏览器实证(非推断):

@@ -8,7 +8,7 @@
  * 交互无论如何得自己写,所以写一份、用两处。
  *
  * 几何常量全部从 `clock_svg.ts`(tnoodle `ClockPuzzle.java` 的移植)取,不重抄 → 本板与站内
- * 打乱图逐像素同格。角位 ↔ 表盘下标的镜像关系从 `lib/clock-solver` 的四张表取,同样不重抄。
+ * 打乱图逐像素同格。角位 ↔ 表盘下标的镜像关系从 `@cuberoot/puzzle-solvers/clock` 的四张表取,同样不重抄。
  *
  * 两种模式(UI 上叫「摆盘 / 转动」):
  *   edit(摆盘)—— 直接拖指针摆状态,不产生招式。**角盘正反联动**(front + back ≡ 0)由组件维持,
@@ -28,7 +28,7 @@ import {
 import {
   CLOCK_BACK_CORNER_DIAL, CLOCK_BACK_QUAD, CLOCK_FRONT_CORNER_DIAL, CLOCK_FRONT_QUAD,
   applyClockMove, clockPinName, type ClockMove, type ClockState,
-} from '@/lib/clock-solver';
+} from '@cuberoot/puzzle-solvers/clock';
 import './interactive_clock.css';
 
 export type ClockBoardMode = 'edit' | 'turn';

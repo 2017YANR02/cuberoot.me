@@ -201,6 +201,11 @@ function moduleFinding(packages, owner, file, specifier, kind, mechanism) {
     if (target.dir !== owner.dir && APP_JOB_PACKAGES.has(target.dir)) {
       return { ...common, rule: 'workspace-app-root-import', target: target.dir };
     }
+    const subpathExports = target.exports && typeof target.exports === 'object'
+      && Object.keys(target.exports).some((key) => key.startsWith('.'));
+    if (subpathExports && !Object.hasOwn(target.exports, '.')) {
+      return { ...common, rule: 'workspace-unexported-import', target: target.dir };
+    }
     return null;
   }
   if (!exportedSubpath(target, subpath)) {
