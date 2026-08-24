@@ -2,7 +2,7 @@
  * ClockBoard —— 魔表在 `/sim` 里的「引擎」。
  *
  * 与其它 /sim 引擎唯一的不同:**它不画 3D**。魔表没有立体形态(cubing.js 与 twizzle 都把它
- * 硬编码成 2D),所以这个 Group 里一个 mesh 都没有,画面由 DOM 层的 `_SimClockBoard` →
+ * 硬编码成 2D),所以这个 Group 里一个 mesh 都没有,画面由 DOM 层的 `SimClockBoard` →
  * `components/InteractiveClock` 那张 SVG 出。它仍是 THREE.Group、仍住在 world.scene 里,是
  * 为了原样满足引擎契约(world.cube / TweenCube / twister),让播放条那 ~13 处 `corner` 分支
  * 一处都不用改就能驱动它 —— 与「平面图」(_SimCubeNet)把 SVG 盖在画布上是同一套路子。
@@ -29,20 +29,29 @@ import TweenTwister, { type TweenCube } from '../TweenTwister';
 import { makeAnim, type PieceAnim } from '../pieceAnim';
 import {
   CLOCK_BACK_CORNER_DIAL, CLOCK_BACK_QUAD, CLOCK_FRONT_CORNER_DIAL, CLOCK_FRONT_QUAD,
-  SOLVED_CLOCK, clockMovesToString, parseClockMoves, withClockFlipParity,
+  SOLVED_CLOCK,
   type ClockMove, type ClockState,
 } from '@cuberoot/puzzle-solvers/clock';
+import {
+  clockStepToken,
+  parseClockSteps,
+  type ClockStep,
+} from '@/lib/clock-notation';
+
+export {
+  clockGestureToken,
+  clockStepToken,
+  clockStepsToString,
+  invertClockSteps,
+  parseClockSteps,
+} from '@/lib/clock-notation';
+export type { ClockStep } from '@/lib/clock-notation';
 
 const mod12 = (x: number) => ((x % 12) + 12) % 12;
 const DIALS = 18;
 /** 一格 = 30°。 */
 const STEP_RAD = Math.PI / 6;
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
-
-/** 播放条的一步:一次拧,或一次翻面。y2 在记号里是独立 token,所以它也得是独立一步。 */
-export type ClockStep =
-  | { kind: 'move'; move: ClockMove }
-  | { kind: 'flip' };
 
 /** 起手帧 ↔ 朝己帧:两个 9 元块对调(自逆)。 */
 function swapHalves(p: readonly number[]): number[] {
@@ -74,64 +83,6 @@ export function clockSignedDelta(move: ClockMove): number[] {
   }
   for (const dial of touched) d[dial] += s;
   return d;
-}
-
-/**
- * 一步 → 一个可被 `parseClockMoves` 原样吃回去的 token 串(history 重放用)。
- *
- * history 是把 `init + moves.join(' ')` 整段重放的,所以每个 token 必须**不改变后续 token 的
- * 正反面上下文**:与当前帧同侧的招式直接写名字,异侧的写成成对的 `y2 X y2`(进去、拧、回来)。
- *
- * `frame` 必须传录制那一刻的帧(0 = 正面朝己),不能省 —— 序列里的 `flip` 步会把帧带走,
- * 假设"恒在正面"的成对写法会让 flip 之后的每一招都落错面(`sim_clock_board.test.ts` 锁)。
- * 这串只进 history,不进用户看的解法框。
- */
-export function clockStepToken(step: ClockStep, frame: 0 | 1): string {
-  if (step.kind === 'flip') return 'y2';
-  const text = clockMovesToString([step.move]); // side=1 时形如 "y2 UL2+"
-  const bare = step.move.side === 1 ? text.slice(3) : text; // 剥掉那个 y2,只留"在自己那面看到的名字"
-  return step.move.side === frame ? bare : `y2 ${bare} y2`;
-}
-
-/** 一段算法 → 步骤列表(y2 是独立一步)。坏 token 抛错。 */
-export function parseClockSteps(alg: string): ClockStep[] {
-  const moves = parseClockMoves(alg);
-  const out: ClockStep[] = [];
-  let i = 0;
-  for (const raw of alg.trim().split(/\s+/).filter(Boolean)) {
-    if (raw === 'y2') { out.push({ kind: 'flip' }); continue; }
-    if (/^[UDud]{4}$/.test(raw)) continue; // tnoodle 末尾的针脚状态描述
-    out.push({ kind: 'move', move: moves[i++] });
-  }
-  return out;
-}
-
-/** 步骤列表 → 规范记号(招式自带绝对 side,按面重新分组;末尾姿势由 `withClockFlipParity` 兜)。 */
-export function clockStepsToString(steps: readonly ClockStep[]): string {
-  const moves = steps.filter((s): s is { kind: 'move'; move: ClockMove } => s.kind === 'move');
-  const endsFlipped = steps.filter((s) => s.kind === 'flip').length % 2 === 1;
-  return withClockFlipParity(clockMovesToString(moves.map((s) => s.move)), endsFlipped);
-}
-
-/**
- * 手势(在画板上转一次)→ 追加到解法框的 token 串。
- *
- * `InteractiveClock` 给的 `move.side` 是**半区下标**(0 = 左 = 朝己),不是绝对面。解法串是从头
- * 解析的,所以 token 必须写成「相对当前朝己那面」且**不改变后面招式的正反面上下文**:
- *   左半区 → 裸名字(WCA 记号本就相对朝己面,前面有几个 y2 都对)
- *   右半区 → 成对的 `y2 X y2`(进去、转、回来;两个半区同屏,不翻面也能转背面)
- * 与 history 用的 `clockStepToken` 是同一条规则,只是那边的 side 已是绝对面、得显式带帧。
- */
-export function clockGestureToken(move: ClockMove): string {
-  const text = clockMovesToString([move]); // panel=1 时形如 "y2 UL2+"
-  return move.side === 0 ? text : `${text} y2`;
-}
-
-/** 步骤列表的逆:倒序 + 每步幅度取反(翻面自逆)。 */
-export function invertClockSteps(steps: readonly ClockStep[]): ClockStep[] {
-  return steps.slice().reverse().map((s) => (
-    s.kind === 'flip' ? s : { kind: 'move' as const, move: { ...s.move, amount: mod12(-s.move.amount) } }
-  ));
 }
 
 export default class ClockBoard extends THREE.Group implements TweenCube<ClockStep> {
@@ -192,6 +143,11 @@ export default class ClockBoard extends THREE.Group implements TweenCube<ClockSt
 
   get complete(): boolean {
     return this.raw.every((v) => mod12(v) === 0);
+  }
+
+  /** 通知 SVG 动画层启动逐帧重绘；离散状态仍只在 finishMove 时落定。 */
+  onAnimationStart(): void {
+    this.fire();
   }
 
   beginMove(step: ClockStep): PieceAnim[] {

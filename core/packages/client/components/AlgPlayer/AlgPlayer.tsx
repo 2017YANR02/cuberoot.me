@@ -11,13 +11,17 @@
  *  - AlgEditor (admin):编辑时显示当前 focused 行的预览,核对公式
  */
 import { useEffect, useRef, useImperativeHandle, forwardRef, type CSSProperties } from 'react';
-import type { AlgPuzzle } from '@cuberoot/shared';
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import { pickStickering } from './stickering';
 import AlgSimPlayer from './AlgSimPlayer';
 import FtoEifAlgPlayer from './FtoEifAlgPlayer';
 import AlgPlaybackControls from './AlgPlaybackControls';
-import { DEFAULT_ALG_MOVE_DURATION_MS, resolvePlayerSetup, resolveTwistyTempoScale } from './player-setup';
+import {
+  DEFAULT_ALG_MOVE_DURATION_MS,
+  resolvePlayerSetup,
+  resolveTwistyTempoScale,
+  type AlgPlayerPuzzle,
+} from './player-setup';
 import './alg-sim-player.css';
 
 export interface AlgPlayerHandle {
@@ -29,7 +33,7 @@ export interface AlgPlayerHandle {
 export type AlgPlayerControlMode = 'full' | 'replay' | 'none';
 
 /** Map our AlgPuzzle slug to cubing.js's TwistyPlayer puzzle id. */
-export const TWISTY_PUZZLE: Record<AlgPuzzle, string> = {
+export const TWISTY_PUZZLE: Record<AlgPlayerPuzzle, string> = {
   '2x2': '2x2x2',
   '3x3': '3x3x3',
   '4x4': '4x4x4',
@@ -39,6 +43,7 @@ export const TWISTY_PUZZLE: Record<AlgPuzzle, string> = {
   'pyraminx': 'pyraminx',
   'skewb': 'skewb',
   'fto': 'fto',
+  'clock': 'clock',
 };
 
 /** 归一化搬去了 `lib/alg_normalize.ts`(校验器要用同一份)。这里转出去,老 import 不用改。 */
@@ -49,7 +54,9 @@ export { pickStickering };
 
 interface Props {
   alg: string;
-  puzzle: AlgPuzzle;
+  puzzle: AlgPlayerPuzzle;
+  /** Override the rendered NxN order while retaining the selected notation grammar. */
+  puzzleOrder?: number;
   set: string;
   setup?: string;
   /** NxN 预览的整体拿方；只重贴颜色，不改公式状态。 */
@@ -71,7 +78,7 @@ interface Props {
   /** 撑满父容器(用 ResizeObserver 把像素尺寸直接写入 player),否则用 size 固定方形 */
   fillPane?: boolean;
   /**
-   * 用哪个引擎画。站内 `/sim` 支持的拼图默认全部走共享引擎。
+   * 用哪个引擎画。已具备完整公式预览契约的拼图默认走共享引擎。
    *
    * 显式传 `'twisty'` 可钉死 cubing.js。FTO 例外:EIF 宏不是 cubing.js 文法,
    * 因此始终走自有播放器,并通过兼容 handle 支持 admin 光标同步。
@@ -80,8 +87,8 @@ interface Props {
 }
 
 /** `/sim` 公式播放器当前支持的全部拼图。 */
-const SIM_SUPPORTED = new Set<AlgPuzzle>([
-  '2x2', '3x3', '4x4', '5x5', 'sq1', 'pyraminx', 'skewb',
+const SIM_SUPPORTED = new Set<AlgPlayerPuzzle>([
+  '2x2', '3x3', '4x4', '5x5', 'sq1', 'pyraminx', 'skewb', 'clock',
 ]);
 
 /** EIF macros expand to several physical turns, so the FTO engine uses a shorter beat. */
@@ -109,10 +116,20 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
   const requestedEngine = props.engine ?? (SIM_SUPPORTED.has(props.puzzle) ? 'sim' : 'twisty');
   const useSim = requestedEngine === 'sim' && SIM_SUPPORTED.has(props.puzzle);
   if (useSim) {
+    const simInstanceKey = JSON.stringify([
+      props.puzzle,
+      props.puzzleOrder ?? null,
+      props.set,
+      moveDurationMs,
+      props.size ?? 260,
+      props.fillPane ?? false,
+    ]);
     return (
       <AlgSimPlayer
+        key={simInstanceKey}
         ref={ref}
         alg={props.alg} puzzle={props.puzzle} set={props.set} setup={props.setup}
+        puzzleOrder={props.puzzleOrder}
         orientation={props.orientation}
         startSolved={props.startSolved} autoPlay={props.autoPlay} loop={props.loop}
         playRequest={props.playRequest}
@@ -137,8 +154,8 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
     let player: any = null;
     let ro: ResizeObserver | null = null;
     let replayTimer: ReturnType<typeof setInterval> | null = null;
-    const normalized = normalizeAlgForTwisty(puzzle, alg);
-    const stickering = pickStickering(puzzle, set);
+    const normalized = puzzle === 'clock' ? alg : normalizeAlgForTwisty(puzzle, alg);
+    const stickering = puzzle === 'clock' ? undefined : pickStickering(puzzle, set);
     const setupForTwisty = resolvePlayerSetup(puzzle, alg, setup, startSolved);
     const tempoScale = resolveTwistyTempoScale(moveDurationMs, normalized);
     const replayDelayMs = tempoScale !== undefined && moveDurationMs ? moveDurationMs + 900 : 1800;

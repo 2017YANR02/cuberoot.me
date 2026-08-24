@@ -21,6 +21,8 @@ import type MoveHistory from './MoveHistory';
 /** The cube surface a TweenTwister drives. All four engines conform. */
 export interface TweenCube<TMove> {
   beginMove(move: TMove): PieceAnim[];
+  /** Notify renderers that an animated move has started. */
+  onAnimationStart?(): void;
   finishMove(anims: PieceAnim[], move: TMove): void;
   /** Snap to end pose + advance discrete state + record history. */
   applyMoveInstant(move: TMove): void;
@@ -156,5 +158,6 @@ export default abstract class TweenTwister<TMove> {
       }
       return false;
     });
+    this.cube.onAnimationStart?.();
   }
 }

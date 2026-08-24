@@ -10,8 +10,9 @@ let playerMounts = 0;
 let playerUnmounts = 0;
 
 vi.mock('@/components/AlgPlayer/AlgPlayer', () => ({
-  default: function PlayerProbe({ alg, autoPlay, playRequest, loop, controlMode, engine, startSolved }: {
+  default: function PlayerProbe({ alg, puzzleOrder, autoPlay, playRequest, loop, controlMode, engine, startSolved }: {
     alg: string;
+    puzzleOrder?: number;
     autoPlay?: boolean;
     playRequest?: number;
     loop?: boolean;
@@ -25,6 +26,7 @@ vi.mock('@/components/AlgPlayer/AlgPlayer', () => ({
     }, []);
     return createElement('output', {
       'data-testid': 'player-alg',
+      'data-puzzle-order': String(puzzleOrder ?? ''),
       'data-auto-play': String(Boolean(autoPlay)),
       'data-play-request': String(playRequest ?? 0),
       'data-loop': String(Boolean(loop)),
@@ -103,6 +105,18 @@ describe('MoveNotationDemo player lifecycle', () => {
     await act(async () => buttons[2].click());
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-play-request')).toBe('6');
     expect(playerMounts).toBe(1);
+  });
+
+  it('forwards a selected NxN order into the shared algorithm player', async () => {
+    await act(async () => {
+      root.render(createElement(MoveNotationDemo, {
+        puzzle: '3x3',
+        puzzleOrder: 7,
+        moves: [{ move: 'R' }],
+      }));
+    });
+
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-puzzle-order')).toBe('7');
   });
 
   it('renders only one replay button in the teaching control mode', async () => {
@@ -195,7 +209,7 @@ describe('MoveNotationDemo player lifecycle', () => {
     expect(stage).toContain('<style suppressHydrationWarning>{INLINE_CSS}</style>');
   });
 
-  it('uses the same default full controls and engine routing as formula previews', async () => {
+  it('hides transport controls while preserving shared player routing and click-to-play', async () => {
     await act(async () => {
       root.render(createElement(MoveNotationDemo, {
         puzzle: '3x3',
@@ -208,7 +222,7 @@ describe('MoveNotationDemo player lifecycle', () => {
     });
 
     const buttons = host.querySelectorAll<HTMLButtonElement>('.move-notation-option');
-    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-control-mode')).toBeNull();
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-control-mode')).toBe('none');
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-engine')).toBeNull();
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-auto-play')).toBe('false');
 
@@ -246,7 +260,7 @@ describe('MoveNotationDemo player lifecycle', () => {
     expect(host.querySelector('.move-notation-standard')?.textContent).toBe("R3'");
     expect(host.querySelector('.move-notation-alias')?.textContent).toBe("右3'");
     expect(Array.from(host.querySelectorAll('.move-notation-columns span')).map(node => node.textContent)).toEqual([
-      '标准',
+      '英文',
       '紧凑',
       '傻瓜',
     ]);
@@ -276,8 +290,13 @@ describe('MoveNotationDemo player lifecycle', () => {
       }));
     });
 
-    const groupStarts = host.querySelectorAll('.move-notation-option.is-group-start');
-    expect(groupStarts).toHaveLength(1);
-    expect(groupStarts[0].textContent).toBe('D下面顺时针转90度');
+    const groups = Array.from(host.querySelectorAll('.move-notation-group'));
+    expect(groups).toHaveLength(2);
+    expect(Array.from(groups[0].querySelectorAll('code')).map(node => node.textContent)).toEqual([
+      'U', "U'", 'U2', "U2'",
+    ]);
+    expect(Array.from(groups[1].querySelectorAll('code')).map(node => node.textContent)).toEqual([
+      'D', "D'", 'D2', "D2'",
+    ]);
   });
 });

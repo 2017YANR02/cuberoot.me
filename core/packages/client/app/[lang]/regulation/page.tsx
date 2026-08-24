@@ -10,7 +10,7 @@ import { Newspaper, ArrowRight, ScrollText } from 'lucide-react';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { useT } from '../../../hooks/useT';
-import { CORE_ARTICLES, EVENT_ARTICLES, type RegArticle } from './_data/articles';
+import { CORE_ARTICLES, EVENT_ARTICLES, regArticleHref, type RegArticle } from './_data/articles';
 import { useRegText } from './_components/reg-text';
 import './regulation.css';
 
@@ -18,7 +18,7 @@ function ChapterCard({ a }: { a: RegArticle }) {
   const { badge, title, tagline } = useRegText();
   const Icon = a.Icon;
   return (
-    <Link href={`/regulation/${a.slug}`} className="reg-hub-card">
+    <Link href={regArticleHref(a)} className="reg-hub-card">
       <span className="reg-hub-card-icon"><Icon size={26} /></span>
       <span className="reg-hub-card-badge">{badge(a)}</span>
       <span className="reg-hub-card-title">{title(a)}</span>

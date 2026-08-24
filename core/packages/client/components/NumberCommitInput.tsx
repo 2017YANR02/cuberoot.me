@@ -53,7 +53,14 @@ export default function NumberCommitInput({
         onFocus?.(e);
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.currentTarget.blur();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          setText(String(value));
+          e.currentTarget.blur();
+        }
         onKeyDown?.(e);
       }}
     />

@@ -3,8 +3,7 @@
 /**
  * 公式动画 —— 跑站内 `/sim` 引擎,不是 cubing.js 的 TwistyPlayer。
  *
- * 公式库默认接 NxN(2x2 / 3x3 / 4x4 / 5x5)、Square-1、金字塔和斜转;
- * 五魔仍由 `AlgPlayer` 分流到 TwistyPlayer。
+ * 公式库与记号页统一接 NxN、Square-1、魔表、金字塔和斜转。
  *
  * ## 三件与 TwistyPlayer 不同、写的时候会绊一下的事
  *
@@ -22,7 +21,6 @@
  */
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import type { AlgPuzzle } from '@cuberoot/shared';
 import { invertMoveString } from '@cuberoot/shared/alg-notation';
 import SimStage from '@/components/sim-embed/SimStage';
 import { useT } from '@/hooks/useT';
@@ -30,6 +28,7 @@ import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type Sq1Cube from '@/app/[lang]/sim/engine/sq1/Sq1Cube';
 import type { PuzzleKind } from '@/app/[lang]/sim/engine/world';
+import SimClockBoard from '@/components/sim-embed/SimClockBoard';
 import type { AlgPlayerControlMode, AlgPlayerHandle } from './AlgPlayer';
 import { pickStickering } from './stickering';
 import {
@@ -39,22 +38,25 @@ import {
   resolvePreviewTiming,
   resolveSimMoveDurationScale,
   resolveSimPreviewMoves,
+  type AlgPlayerPuzzle,
 } from './player-setup';
 import AlgPlaybackControls from './AlgPlaybackControls';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
+import { NXN_ORDER_DEFAULT, clampNxNOrder } from '@/lib/nxn-order';
 import { createStepSeekPlayer } from './step-seek-player';
 
 const LOOP_PAUSE_MS = 900;
 
-export const NXN_ORDER: Partial<Record<AlgPuzzle, number>> = {
+export const NXN_ORDER: Partial<Record<AlgPlayerPuzzle, number>> = {
   '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5,
 };
 
-const SIM_PUZZLE: Partial<Record<AlgPuzzle, PuzzleKind>> = {
+const SIM_PUZZLE: Partial<Record<AlgPlayerPuzzle, PuzzleKind>> = {
   ...NXN_ORDER,
   sq1: 'sq1',
   pyraminx: 'pyraminx',
   skewb: 'skewb',
+  clock: 'clock',
 };
 
 type PreviewTwister = {
@@ -82,7 +84,8 @@ async function preloadEngine() {
 
 const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   alg: string;
-  puzzle: AlgPuzzle;
+  puzzle: AlgPlayerPuzzle;
+  puzzleOrder?: number;
   set: string;
   setup?: string;
   orientation?: string;
@@ -96,10 +99,13 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
   fillPane?: boolean;
 }>(function AlgSimPlayer({
-  alg, puzzle, set, setup, orientation = '', startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false,
+  alg, puzzle, puzzleOrder, set, setup, orientation = '', startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false,
 }, ref) {
   const t = useT();
-  const puzzleKind = SIM_PUZZLE[puzzle] ?? 3;
+  const canonicalPuzzleKind = SIM_PUZZLE[puzzle] ?? NXN_ORDER_DEFAULT;
+  const puzzleKind = NXN_ORDER[puzzle] !== undefined && puzzleOrder !== undefined
+    ? clampNxNOrder(puzzleOrder)
+    : canonicalPuzzleKind;
 
   /**
    * 逐步切开。库里存的是**人写的**文本(换握记号、连写、分组括号都有),
@@ -125,8 +131,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   }, [puzzle, alg, setup, startSolved]);
   /** 同一个 setup 下切换 R / R' 也必须视为一条全新的播放序列。 */
   const sequenceKey = useMemo(
-    () => JSON.stringify([puzzle, setupAlg, moves]),
-    [puzzle, setupAlg, moves],
+    () => JSON.stringify([puzzle, puzzleKind, setupAlg, moves]),
+    [puzzle, puzzleKind, setupAlg, moves],
   );
 
   const [step, setStep] = useState(0);
@@ -166,6 +172,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   );
   useImperativeHandle(ref, () => ({ getPlayer: () => seekPlayer }), [seekPlayer]);
   const mountRef = useRef<SimMount | null>(null);
+  const clockUserMoveRef = useRef<((action: string) => void) | null>(null);
+  const getWorld = useCallback(() => mountRef.current?.world ?? null, []);
   const orientationRef = useRef(orientation);
   orientationRef.current = orientation;
   /** 上一帧同步到引擎的状态 —— 用来判断「是不是刚好往前一步」。 */
@@ -200,8 +208,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     world.controller.dragEmpty = 'view';
     world.controller.onOrbit = (dx, dy) => orbitSceneFree(world, dx, dy, ORBIT_K);
 
-    const order = NXN_ORDER[puzzle];
-    const name = pickStickering(puzzle, set, 'sim');
+    const order = typeof puzzleKind === 'number' ? puzzleKind : undefined;
+    const name = puzzle === 'clock' ? undefined : pickStickering(puzzle, set, 'sim');
     if (order) {
       (cube as Cube).instancedRenderer.setFaceColorOverride(orientedCubeFaceColors(orientationRef.current));
     }
@@ -228,10 +236,10 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   /** 菜单切换只重贴当前预览的颜色，不重建 world，也不改变 case 状态。 */
   useEffect(() => {
     const m = mountRef.current;
-    if (!m || !ready || !NXN_ORDER[puzzle]) return;
+    if (!m || !ready || typeof puzzleKind !== 'number') return;
     (m.world.cube as Cube).instancedRenderer.setFaceColorOverride(orientedCubeFaceColors(orientation));
     m.invalidate();
-  }, [orientation, puzzle, ready]);
+  }, [orientation, puzzleKind, ready]);
 
   /**
    * 把 (setup, step) 同步到引擎。前后单步沿用 `/sim` 的转角动画;
@@ -255,17 +263,18 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       setupAlg,
       syncStep,
       instantSeek,
-      Boolean(NXN_ORDER[puzzle]),
+      typeof puzzleKind === 'number',
     );
     if (transition === 'forward') {
-      twister.push(moves[syncStep - 1]);   // push 自己排队,还在转也不会丢
+      const move = moves[syncStep - 1];
+      twister.push(move);   // push 自己排队,还在转也不会丢
     } else if (transition === 'backward') {
       twister.push(invertMoveString(moves[syncStep]));
     } else {
       twister.setup([setupAlg, ...moves.slice(0, syncStep)].join(' '));
     }
     m.invalidate();
-  }, [sequenceKey, setupAlg, moves, puzzle, step, ready]);
+  }, [sequenceKey, setupAlg, moves, puzzle, puzzleKind, step, ready]);
 
   const togglePlayback = useCallback(() => {
     if (playing) {
@@ -309,7 +318,17 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
         mount={mount}
         onReady={() => setReady(true)}
         busyLabel={t('正在加载魔方', 'Loading the cube')}
-      />
+      >
+        {puzzle === 'clock' && (
+          <SimClockBoard
+            getWorld={getWorld}
+            worldTick={ready ? 1 : 0}
+            userMoveRef={clockUserMoveRef}
+            pointerTurns={false}
+            showLockedMessage={false}
+          />
+        )}
+      </SimStage>
       {controlMode === 'replay' ? (
         <AlgPlaybackControls
           mode="replay"

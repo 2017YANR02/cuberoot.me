@@ -1,9 +1,9 @@
 // Single source of truth for the WCA Regulations chapter set.
 //
 // The hub (page.tsx), the per-article shell (RegArticleLayout) and the
-// prev/next navigation all read from here. Each chapter lives at
-// /regulation/<slug> as its own static route. Order in REG_ARTICLES is the
-// canonical reading order (drives prev/next).
+// prev/next navigation all read from here. Most chapters live at
+// /regulation/<slug>; href overrides a chapter whose guide has a canonical
+// route elsewhere. Order in REG_ARTICLES is the canonical reading order.
 //
 // Numbering follows the official WCA Regulations: core articles 1,2,3,4,5,7,9,
 // 10,11,12 (6 and 8 don't exist in the current revision) plus event-specific
@@ -24,8 +24,10 @@ export type RegGroup = 'core' | 'event';
 export interface Msg { zh: string; en: string; }
 
 export interface RegArticle {
-  /** URL segment: /regulation/<slug> */
+  /** Stable chapter identifier and default /regulation/<slug> URL segment. */
   slug: string;
+  /** Override when a chapter's illustrated guide lives outside /regulation. */
+  href?: string;
   /** Article number / appendix letter as printed in the regs ('4', '12', 'A'). */
   num: string;
   group: RegGroup;
@@ -82,7 +84,7 @@ export const REG_ARTICLES: RegArticle[] = [
     tagline: { zh: '干扰、设备故障与额外机会的处理', en: 'Interruptions, equipment failures and extra attempts' },
   },
   {
-    slug: 'notation', num: '12', group: 'core', Icon: RotateCw,
+    slug: 'notation', href: '/notation?wca=true', num: '12', group: 'core', Icon: RotateCw,
     title: { zh: '转动表示方法', en: 'Notation' },
     tagline: { zh: '每种魔方怎么记一步转动 —— 全部 3D 动画演示', en: 'How a move is written for every puzzle — all in 3D' },
   },
@@ -120,6 +122,10 @@ export const REG_ARTICLES: RegArticle[] = [
 
 export const CORE_ARTICLES = REG_ARTICLES.filter((a) => a.group === 'core');
 export const EVENT_ARTICLES = REG_ARTICLES.filter((a) => a.group === 'event');
+
+export function regArticleHref(article: RegArticle): string {
+  return article.href ?? `/regulation/${article.slug}`;
+}
 
 export function articleBySlug(slug: string): RegArticle | undefined {
   return REG_ARTICLES.find((a) => a.slug === slug);
