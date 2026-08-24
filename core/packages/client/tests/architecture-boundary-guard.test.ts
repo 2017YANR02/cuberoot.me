@@ -37,10 +37,10 @@ function rules(file: string, content: string): string[] {
 
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
-    expect(MANIFEST.legacyFindings).toHaveLength(317);
+    expect(MANIFEST.legacyFindings).toHaveLength(314);
     expect(compareFindings(CURRENT, MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
     expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length);
-    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(175);
+    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(172);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
