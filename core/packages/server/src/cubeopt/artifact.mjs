@@ -6,18 +6,26 @@ import { resolve } from 'node:path';
 export const CUBEOPT_ARTIFACT_SCHEMA = 'cuberoot.cubeopt-artifact/v1';
 export const CUBEOPT_POINTER_SCHEMA = 'cuberoot.cubeopt-current/v1';
 export const CUBEOPT_PROTOCOL = 1;
-export const CUBEOPT_VARIANT = 'opt5';
-
-const EXPECTED = Object.freeze({
-  module: 'cube48opt5.mjs',
-  wasm: 'cube48opt5.wasm',
-  table: 'h48prun31h5.dat',
+export const CUBEOPT_VARIANTS = Object.freeze({
+  opt5: Object.freeze({
+    files: Object.freeze({
+      module: 'cube48opt5.mjs',
+      wasm: 'cube48opt5.wasm',
+      table: 'h48prun31h5.dat',
+    }),
+    tableBytes: 972_840_960,
+  }),
+  opt6: Object.freeze({
+    files: Object.freeze({
+      module: 'cube48opt6.mjs',
+      wasm: 'cube48opt6.wasm',
+      table: 'h48prun31h6.dat',
+    }),
+    tableBytes: 1_945_681_920,
+  }),
 });
 
-// This size is a property of the h5 table consumed by the currently deployed
-// opt5 executable. Keeping it in the runtime contract prevents an h6 table
-// renamed to h5 from allocating almost 2 GB before the mismatch is noticed.
-const OPT5_TABLE_BYTES = 972_840_960;
+const BUNDLE_ID = /^cubeopt-([A-Za-z0-9]+)-[A-Za-z0-9._-]+$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const PORTABLE_DIRECTORY_FSYNC_ERRORS = new Set(['EINVAL', 'ENOTSUP', 'EISDIR', 'EPERM']);
 
@@ -32,6 +40,34 @@ function requireNonEmptyString(value, field) {
   return value;
 }
 
+export function cubeoptVariantContract(rawVariant) {
+  const variant = requireNonEmptyString(rawVariant, 'variant');
+  if (!Object.hasOwn(CUBEOPT_VARIANTS, variant)) {
+    throw artifactError(`unsupported variant ${JSON.stringify(variant)}; expected opt5 or opt6`);
+  }
+  const contract = CUBEOPT_VARIANTS[variant];
+  return Object.freeze({ variant, ...contract });
+}
+
+export function cubeoptVariantContractFromModuleName(rawModuleName) {
+  const moduleName = requireNonEmptyString(rawModuleName, 'module filename');
+  const entry = Object.entries(CUBEOPT_VARIANTS)
+    .find(([, contract]) => contract.files.module === moduleName);
+  if (!entry) {
+    const expected = Object.values(CUBEOPT_VARIANTS).map((contract) => contract.files.module).join(' or ');
+    throw artifactError(`unsupported module filename ${JSON.stringify(moduleName)}; expected ${expected}`);
+  }
+  return cubeoptVariantContract(entry[0]);
+}
+
+export function cubeoptBundleVariant(bundle, field = 'bundle') {
+  const match = requireNonEmptyString(bundle, field).match(BUNDLE_ID);
+  if (!match) {
+    throw artifactError(`${field} must be a portable cubeopt-<variant>-<suffix> bundle ID`);
+  }
+  return cubeoptVariantContract(match[1]).variant;
+}
+
 function validateManifest(manifest, { allowFixtureSizes }) {
   if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
     throw artifactError('manifest.json must contain an object');
@@ -40,11 +76,11 @@ function validateManifest(manifest, { allowFixtureSizes }) {
     throw artifactError(`unsupported schema ${JSON.stringify(manifest.schema)}`);
   }
   const bundle = requireNonEmptyString(manifest.bundle, 'bundle');
-  if (!/^cubeopt-opt5-[A-Za-z0-9._-]+$/.test(bundle)) {
-    throw artifactError('bundle must start with cubeopt-opt5- and contain only portable characters');
-  }
-  if (manifest.variant !== CUBEOPT_VARIANT) {
-    throw artifactError(`variant must be ${CUBEOPT_VARIANT}, got ${JSON.stringify(manifest.variant)}`);
+  const variant = requireNonEmptyString(manifest.variant, 'variant');
+  const contract = cubeoptVariantContract(variant);
+  const variantFromBundle = cubeoptBundleVariant(bundle);
+  if (variantFromBundle !== variant) {
+    throw artifactError(`bundle variant ${variantFromBundle} does not match manifest variant ${variant}`);
   }
   if (manifest.protocol !== CUBEOPT_PROTOCOL) {
     throw artifactError(`protocol must be ${CUBEOPT_PROTOCOL}, got ${JSON.stringify(manifest.protocol)}`);
@@ -62,7 +98,7 @@ function validateManifest(manifest, { allowFixtureSizes }) {
   if (!files || typeof files !== 'object' || Array.isArray(files)) {
     throw artifactError('files must be an object');
   }
-  for (const [role, expectedPath] of Object.entries(EXPECTED)) {
+  for (const [role, expectedPath] of Object.entries(contract.files)) {
     const entry = files[role];
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
       throw artifactError(`files.${role} must be an object`);
@@ -77,9 +113,11 @@ function validateManifest(manifest, { allowFixtureSizes }) {
       throw artifactError(`files.${role}.sha256 must be a lowercase SHA-256 digest`);
     }
   }
-  if (!allowFixtureSizes && files.table.bytes !== OPT5_TABLE_BYTES) {
-    throw artifactError(`opt5 table must be ${OPT5_TABLE_BYTES} bytes, got ${files.table.bytes}`);
+  if (!allowFixtureSizes && files.table.bytes !== contract.tableBytes) {
+    throw artifactError(`${variant} table must be ${contract.tableBytes} bytes, got ${files.table.bytes}`);
   }
+
+  return contract;
 }
 
 function sha256File(path) {
@@ -90,6 +128,17 @@ function sha256File(path) {
     stream.on('data', (chunk) => hash.update(chunk));
     stream.on('end', () => resolveHash(hash.digest('hex')));
   });
+}
+
+async function readRegularUtf8(path, label) {
+  try {
+    const info = await lstat(path);
+    if (!info.isFile()) throw artifactError(`${label} must be a regular file, not a symlink`);
+    return await readFile(path, 'utf8');
+  } catch (error) {
+    if (error?.message?.startsWith('cubeopt artifact:')) throw error;
+    throw artifactError(`cannot read ${label}: ${error.message}`);
+  }
 }
 
 /**
@@ -120,18 +169,19 @@ export async function syncDirectoryDurably(
  * Resolve current.json and fully verify its API-owned immutable CubeOpt bundle.
  *
  * `allowFixtureSizes` exists only so ordinary tests can exercise the real hash
- * and manifest checks without checking a 972 MB table into the repository. The
+ * and manifest checks without checking a large prune table into the repository. The
  * daemon never enables it.
  */
 export async function loadCubeoptArtifact(storeDir, { allowFixtureSizes = false } = {}) {
   const store = resolve(requireNonEmptyString(storeDir, 'CUBEOPT_ARTIFACT_DIR'));
   const currentPath = resolve(store, 'current.json');
+  const currentSource = await readRegularUtf8(currentPath, 'current.json');
   let current;
   try {
-    current = JSON.parse(await readFile(currentPath, 'utf8'));
+    current = JSON.parse(currentSource);
   } catch (error) {
     if (error instanceof SyntaxError) throw artifactError(`invalid current.json: ${error.message}`);
-    throw artifactError(`cannot read current.json: ${error.message}`);
+    throw error;
   }
   if (!current || typeof current !== 'object' || Array.isArray(current)) {
     throw artifactError('current.json must contain an object');
@@ -140,9 +190,7 @@ export async function loadCubeoptArtifact(storeDir, { allowFixtureSizes = false 
     throw artifactError(`unsupported current pointer schema ${JSON.stringify(current.schema)}`);
   }
   const bundle = requireNonEmptyString(current.bundle, 'current.bundle');
-  if (!/^cubeopt-opt5-[A-Za-z0-9._-]+$/.test(bundle)) {
-    throw artifactError('current.bundle must be a portable cubeopt-opt5- bundle ID');
-  }
+  cubeoptBundleVariant(bundle, 'current.bundle');
 
   const artifact = await verifyCubeoptBundle(resolve(store, 'bundles', bundle), { allowFixtureSizes });
   if (artifact.manifest.bundle !== bundle) {
@@ -163,17 +211,18 @@ export async function verifyCubeoptBundle(bundleDir, { allowFixtureSizes = false
   if (!rootInfo.isDirectory()) throw artifactError('bundle path must be a real directory, not a symlink');
   const canonicalRoot = await realpath(root);
   const manifestPath = resolve(root, 'manifest.json');
+  const manifestSource = await readRegularUtf8(manifestPath, 'manifest.json');
   let manifest;
   try {
-    manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+    manifest = JSON.parse(manifestSource);
   } catch (error) {
     if (error instanceof SyntaxError) throw artifactError(`invalid manifest.json: ${error.message}`);
-    throw artifactError(`cannot read manifest.json: ${error.message}`);
+    throw error;
   }
-  validateManifest(manifest, { allowFixtureSizes });
+  const contract = validateManifest(manifest, { allowFixtureSizes });
 
   const paths = {};
-  for (const [role, expectedPath] of Object.entries(EXPECTED)) {
+  for (const [role, expectedPath] of Object.entries(contract.files)) {
     const path = resolve(root, expectedPath);
     let info;
     try {
@@ -195,13 +244,27 @@ export async function verifyCubeoptBundle(bundleDir, { allowFixtureSizes = false
   // The generated Node wrapper hard-codes both adjacent filenames for its wasm
   // and worker-thread bootstrap. Validate those references before importing it.
   const moduleSource = await readFile(paths.modulePath, 'utf8');
-  if (!moduleSource.includes(EXPECTED.module) || !moduleSource.includes(EXPECTED.wasm)) {
-    throw artifactError(`module must reference adjacent ${EXPECTED.module} and ${EXPECTED.wasm}`);
+  if (!moduleSource.includes(contract.files.module) || !moduleSource.includes(contract.files.wasm)) {
+    throw artifactError(`module must reference adjacent ${contract.files.module} and ${contract.files.wasm}`);
   }
   const referencedVariants = [...moduleSource.matchAll(/cube48opt([0-9]+)\.(?:mjs|wasm)/g)]
     .map((match) => match[1]);
-  if (referencedVariants.some((variant) => variant !== '5')) {
-    throw artifactError(`module contains a non-opt5 cube48opt reference: ${referencedVariants.join(', ')}`);
+  const expectedLevel = contract.variant.slice(3);
+  if (referencedVariants.some((variant) => variant !== expectedLevel)) {
+    throw artifactError(`module contains a cube48opt reference outside ${contract.variant}: ${referencedVariants.join(', ')}`);
+  }
+
+  // The wasm binary embeds both its own adjacent filename and the prune-table
+  // filename. Basenames and self-authored hashes alone cannot detect an opt5
+  // wasm renamed to opt6, so lock these embedded markers to the manifest too.
+  const wasmSource = (await readFile(paths.wasmPath)).toString('latin1');
+  if (!wasmSource.includes(contract.files.wasm) || !wasmSource.includes(contract.files.table)) {
+    throw artifactError(`wasm must reference adjacent ${contract.files.wasm} and ${contract.files.table}`);
+  }
+  const wasmReferencedVariants = [...wasmSource.matchAll(/(?:cube48opt([0-9]+)\.wasm|h48prun31h([0-9]+)\.dat)/g)]
+    .map((match) => match[1] ?? match[2]);
+  if (wasmReferencedVariants.some((variant) => variant !== expectedLevel)) {
+    throw artifactError(`wasm contains a cube48opt reference outside ${contract.variant}: ${wasmReferencedVariants.join(', ')}`);
   }
 
   return Object.freeze({
@@ -222,9 +285,7 @@ export async function verifyCubeoptBundle(bundleDir, { allowFixtureSizes = false
 export async function promoteCubeoptBundle(storeDir, bundle, { allowFixtureSizes = false } = {}) {
   const store = resolve(requireNonEmptyString(storeDir, 'artifact store'));
   const bundleId = requireNonEmptyString(bundle, 'bundle');
-  if (!/^cubeopt-opt5-[A-Za-z0-9._-]+$/.test(bundleId)) {
-    throw artifactError('bundle must be a portable cubeopt-opt5- bundle ID');
-  }
+  cubeoptBundleVariant(bundleId);
   const artifact = await verifyCubeoptBundle(resolve(store, 'bundles', bundleId), { allowFixtureSizes });
   if (artifact.manifest.bundle !== bundleId) {
     throw artifactError(`requested bundle ${bundleId} does not match manifest bundle ${artifact.manifest.bundle}`);

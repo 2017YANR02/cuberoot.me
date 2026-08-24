@@ -1,7 +1,7 @@
 // Long-lived cube48opt optimal-solve daemon (Node child process).
 //
 // Loads ONE manifest-verified cubeopt prune table into the wasm heap once
-// (the current API contract is opt5 / 972M h5),
+// (the manifest selects a strictly matched opt5/h5 or opt6/h6 bundle),
 // then serves solve requests over line-based stdio — exactly the cube555 daemon
 // shape (see ../cube555/daemon.ts), but for 3x3 god's-number optimal solving.
 //
@@ -24,7 +24,7 @@
 //
 // Env:
 //   CUBEOPT_ARTIFACT_DIR  required API-owned store containing current.json and
-//                         immutable opt5 module / wasm / table bundles
+//                         one immutable, variant-consistent module / wasm / table bundle
 //   CUBEOPT_THREADS       solve thread-pool size (default 2)
 import { openSync, readSync, closeSync, fstatSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';

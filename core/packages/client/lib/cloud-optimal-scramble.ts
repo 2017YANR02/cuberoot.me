@@ -1,6 +1,6 @@
 /**
  * cloudOptimalScramble — derive the optimal-length scramble reaching the same
- * state as a given scramble, via the server-side CubeOpt solver (currently opt5).
+ * state as a given scramble, via the server-side manifest-selected CubeOpt solver.
  *
  * POSTs to /v1/scramble/optimal-solve (the same endpoint /scramble/solver's
  * "cloud" mode + 求打乱(最优) use — see app/[lang]/scramble/solver/_Cube3Solver.tsx),
@@ -12,7 +12,7 @@
  * /scramble/solver's 求打乱(最优) flow both do; this is the one shared client
  * implementation of the protocol so neither has to re-parse the SSE stream.
  *
- * 3x3-only (the endpoint currently serves the manifest-locked opt5 bundle) and login-gated
+ * 3x3-only (the endpoint serves one manifest-locked artifact bundle) and login-gated
  * (requireAuth server-side — throws with the server's error message on 401).
  */
 import { Alg } from 'cubing/alg';

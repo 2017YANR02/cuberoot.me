@@ -2,9 +2,9 @@
  * /v1/scramble/optimal-solve — 3x3 god's-number optimal solve, server-side.
  *
  * Backs the "云端求解" option on /scramble/solver for users who don't want to
- * download the large cubeopt prune table. The current executable contract is
- * the opt5 wrapper plus its h5 table; changing variant requires a new verified
- * artifact contract, not independent module/table environment overrides. The
+ * download the large cubeopt prune table. The executable contract supports a
+ * manifest-selected opt5/h5 or opt6/h6 bundle, not independent module/table
+ * environment overrides. The
  * daemon runs under memory guards in cubeopt/daemon.ts.
  *
  * Guards (all three the user asked for):

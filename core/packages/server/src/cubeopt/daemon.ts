@@ -2,7 +2,7 @@
  * cube48opt optimal-solve daemon manager.
  *
  * Spawns a long-lived Node child (./solve-daemon.mjs) that holds ONE cubeopt
- * manifest-verified opt5 / h5 artifact bundle in its wasm heap and solves 3x3 scrambles
+ * manifest-verified opt5/h5 or opt6/h6 artifact bundle in its wasm heap and solves 3x3 scrambles
  * to god's-number optimal over line-based stdio. Same shape as cube555/daemon.ts.
  *
  * Concurrency: the child's solve_scramble() is synchronous, so it processes
@@ -11,10 +11,10 @@
  * out (kill + respawn the child if a single solve hangs past the deadline).
  *
  * Env:
- *   CUBEOPT_SOLVE_ENABLED=1   enable (default OFF — the 972M table must be on
- *                             disk first; until then the route returns 503)
+ *   CUBEOPT_SOLVE_ENABLED=1   enable (default OFF — the selected opt5/opt6
+ *                             table must be on disk first; otherwise 503)
  *   CUBEOPT_ARTIFACT_DIR      required API-owned store root. current.json
- *                             selects one verified immutable opt5 bundle.
+ *                             selects one verified immutable bundle.
  *   CUBEOPT_THREADS           forwarded to the child (default 2)
  *   CUBEOPT_BOOT_TIMEOUT_MS   spawn-to-READY deadline (default 300000)
  */
@@ -60,7 +60,7 @@ function positiveIntegerEnv(name: string, fallback: number): number {
 // active), not when it's enqueued — so time spent waiting behind another solve
 // never counts against it, and never triggers a daemon kill.
 const SOLVE_TIMEOUT_MS = positiveIntegerEnv('CUBEOPT_TIMEOUT_MS', 180_000);
-// Loading and hashing the near-1GB artifact is a separate lifecycle phase. A
+// Loading and hashing the up-to-2GB artifact is a separate lifecycle phase. A
 // hash-valid but unusable wrapper must not leave API requests awaiting READY
 // forever; this deadline recycles the child before any solve is queued.
 const BOOT_TIMEOUT_MS = positiveIntegerEnv('CUBEOPT_BOOT_TIMEOUT_MS', 300_000);

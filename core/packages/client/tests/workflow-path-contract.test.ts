@@ -312,8 +312,8 @@ describe('deployment workflow path contracts', () => {
     expect(enabledBranch).toContain('node --env-file=.env "$staging/dist/cubeopt/provision.mjs"');
     expect(enabledBranch).toContain('--env-file /root/core-api/.env');
     expect(enabledBranch).toContain('--default-store /root/core-api/artifacts/cubeopt');
-    expect(enabledBranch).toContain('--bundle cubeopt-opt5-legacy-runtime-v1');
-    expect(enabledBranch).toContain('--source-url legacy-runtime://cubeopt-opt5');
+    expect(enabledBranch).toContain('--bundle-suffix legacy-runtime-v1');
+    expect(enabledBranch).toContain('--source-url legacy-runtime://cubeopt');
     expect(enabledBranch).toContain('--source-revision pre-api-artifact-store');
     expect(enabledBranch).toContain('--source-build-command "byte-for-byte migration from legacy production paths"');
     expect(enabledBranch).toContain('node --env-file=.env "$staging/dist/cubeopt/verify.mjs"');
