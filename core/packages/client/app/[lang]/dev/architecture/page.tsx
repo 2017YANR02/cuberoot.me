@@ -172,6 +172,12 @@ export default function ArchitecturePage() {
               <tr><td><code>cuberoot.me/blog/</code><br/><code>blog.cuberoot.me</code></td><td><L zh="双轨 DNS 分线路:同台 nginx alias / GH Pages" en="Dual via split-horizon DNS: same-VM nginx alias / GH Pages" /></td><td><L zh="WordPress 静态归档 (2026-05 phase 2 freeze)" en="WordPress static archive (frozen 2026-05)" /></td></tr>
             </tbody>
           </table>
+          <p className="arch-sec-lede">
+            <L
+              zh={<>生产容量、发布恢复、健康检查与备份边界见 <Link href="/dev/infrastructure" className="arch-mod-link">基础设施公开档案</Link>。</>}
+              en={<>For production capacity, release recovery, health checks, and backup boundaries, see the <Link href="/dev/infrastructure" className="arch-mod-link">public infrastructure profile</Link>.</>}
+            />
+          </p>
         </section>
 
         {/* 05 Dev environment */}
