@@ -5,7 +5,8 @@
  *   - cube + view in {iso,plan,trans,oll,pll,...}  → @cuberoot/visualcube
  *   - cube + view=net|wca                          → cubing.js 2D net
  *   - sq1 / mega / pyra / skewb + view=net|wca     → cubing.js 2D net
- *   - sq1 / mega / pyra / skewb + view=iso|top     → sr-puzzlegen (linkedom)
+ *   - sq1 / mega / pyra / skewb + view=iso         → @cuberoot/puzzle-render-core
+ *   - sq1 / mega / pyra / skewb + view=top         → dedicated flat-view renderers
  *
  * URL params:
  *   alg / case / setup       WCA notation (case = inverse of alg on solved)
@@ -36,12 +37,12 @@
  */
 import { Hono } from 'hono';
 import { renderFromSimpleQuery } from '@cuberoot/visualcube';
-import { invertAlg } from '@/lib/cube3';
+import { invertAlg } from '@cuberoot/shared/alg-transform';
 import { invertSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { renderUnfoldedSvg } from '@cuberoot/shared/cube-unfolded-svg';
+import { renderPuzzleIsoSvg } from '@cuberoot/puzzle-render-core/iso-svg';
 import { renderPuzzleNetSVG } from './cubing_render.js';
 import { renderSrPuzzlegenSVG } from './sr_render.js';
-import { renderEngineIsoSVG } from './engine_render.js';
 
 export const cubeRoutes = new Hono();
 
@@ -110,12 +111,9 @@ cubeRoutes.get('/visualcube.svg', async (c) => {
     return c.text(`Server-side net render unavailable for ${puzzle}/${event}`, 501);
   }
 
-  // Non-cube iso/top(Phase 4,PLAN-sr-retirement):iso 首选 /sim 引擎 headless
-  // 渲染(engine_render,与 /sim 伴图同导出器同观感),失败回退 sr-puzzlegen
-  // (后悔药,观察期后随 Phase 5 删);top 仍 sr(mega-top 俯视是 sr 特有形态,
-  // skewb-top 自绘 fan)。engine 路径 case = 先逆变换再正向 setup(与 client
-  // render.ts 同一 invert 函数集)。上线注意:响应观感变 → 消费方按缓存规则
-  // bump `v=`(nginx 24h cache 键含 query)。
+  // Non-cube iso/top: iso 只走共享的 /sim headless 核心；top 走独立的
+  // 平面视图实现。两者不是互相回退关系，避免同一 iso 契约存在两套实现。
+  // iso 路径 case = 先逆变换再正向 setup(与 client render.ts 一致)。
   if (puzzle === 'sq1' || puzzle === 'megaminx' || puzzle === 'pyraminx' || puzzle === 'skewb') {
     const v: 'iso' | 'top' = view === 'top' ? 'top' : 'iso';
     const sizeRaw = parseInt(q('size') ?? '256', 10);
@@ -124,12 +122,13 @@ cubeRoutes.get('/visualcube.svg', async (c) => {
       const forward = isCase
         ? (puzzle === 'sq1' ? invertSq1Alg(algStr) : invertAlg(algStr))
         : algStr;
-      const engineSvg = renderEngineIsoSVG(puzzle, forward, q('r'), size);
+      const engineSvg = renderPuzzleIsoSvg(puzzle, forward, q('r'), size);
       if (engineSvg) {
         c.header('Content-Type', 'image/svg+xml; charset=utf-8');
         c.header('Cache-Control', 'public, max-age=86400');
         return c.body(engineSvg);
       }
+      return c.text(`Server-side engine render failed for puzzle=${puzzle}`, 500);
     }
     const svg = await renderSrPuzzlegenSVG(puzzle, v, algStr, isCase, q('r'), size);
     if (svg) {

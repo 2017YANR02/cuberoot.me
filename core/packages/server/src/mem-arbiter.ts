@@ -1,6 +1,6 @@
 /**
  * Single-tenant memory arbiter for the two heavy in-process solvers on the small
- * (~3.5GB) box: the cube48 opt6 prune table (~2GB resident, cubeopt/daemon.ts)
+ * host: the configured cube48 pruning artifact (cubeopt/daemon.ts)
  * and the cube555 JVM (~540MB, cube555/daemon.ts). Loaded together they push the
  * box into the OOM / watchdog-drop zone, so we keep only ONE resident at a time.
  *

@@ -1,0 +1,63 @@
+{
+  "name": "@cuberoot/puzzle-render-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./iso-svg": {
+      "types": "./src/iso-svg.ts",
+      "node": "./dist/iso-svg.js",
+      "default": "./src/iso-svg.ts"
+    },
+    "./bsp": "./src/bsp.ts",
+    "./engine/CornerTurnCube": "./src/engine/CornerTurnCube.ts",
+    "./engine/MoveHistory": "./src/engine/MoveHistory.ts",
+    "./engine/TweenTwister": "./src/engine/TweenTwister.ts",
+    "./engine/cornerNotation": "./src/engine/cornerNotation.ts",
+    "./engine/define": "./src/engine/define.ts",
+    "./engine/mega/MegaminxCube": "./src/engine/mega/MegaminxCube.ts",
+    "./engine/mega/MegaminxTwister": "./src/engine/mega/MegaminxTwister.ts",
+    "./engine/mega/megaGeometry": "./src/engine/mega/megaGeometry.ts",
+    "./engine/mega/megaState": "./src/engine/mega/megaState.ts",
+    "./engine/pieceAnim": "./src/engine/pieceAnim.ts",
+    "./engine/polytopeCut": "./src/engine/polytopeCut.ts",
+    "./engine/pyra/PyraCube": "./src/engine/pyra/PyraCube.ts",
+    "./engine/pyra/PyraTwister": "./src/engine/pyra/PyraTwister.ts",
+    "./engine/pyra/pyraGeometry": "./src/engine/pyra/pyraGeometry.ts",
+    "./engine/pyra/pyraState": "./src/engine/pyra/pyraState.ts",
+    "./engine/skewb/SkewbCube": "./src/engine/skewb/SkewbCube.ts",
+    "./engine/skewb/SkewbTwister": "./src/engine/skewb/SkewbTwister.ts",
+    "./engine/skewb/skewbGeometry": "./src/engine/skewb/skewbGeometry.ts",
+    "./engine/skewb/skewbState": "./src/engine/skewb/skewbState.ts",
+    "./engine/sq1/Sq1Cube": "./src/engine/sq1/Sq1Cube.ts",
+    "./engine/sq1/Sq1Twister": "./src/engine/sq1/Sq1Twister.ts",
+    "./engine/sq1/sq1Colors": "./src/engine/sq1/sq1Colors.ts",
+    "./engine/sq1/sq1Geometry": "./src/engine/sq1/sq1Geometry.ts",
+    "./engine/sq1/sq1State": "./src/engine/sq1/sq1State.ts",
+    "./engine/stickerGeom": "./src/engine/stickerGeom.ts",
+    "./engine/tweenTiming": "./src/engine/tweenTiming.ts",
+    "./engine/tweener": "./src/engine/tweener.ts",
+    "./schematic": "./src/schematic.ts",
+    "./support/cube-colors": "./src/support/cube-colors.ts",
+    "./support/engine-svg": "./src/support/engine-svg.ts",
+    "./support/pg-colors": "./src/support/pg-colors.ts",
+    "./support/sim-timing": "./src/support/sim-timing.ts",
+    "./support/sq1-stage-mask": "./src/support/sq1-stage-mask.ts",
+    "./support/sticker-mask": "./src/support/sticker-mask.ts",
+    "./svg-utils": "./src/svg-utils.ts"
+  },
+  "scripts": {
+    "build": "tsc -b && esbuild src/iso-svg.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/iso-svg.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cuberoot/shared": "workspace:*",
+    "three": "^0.183.2"
+  },
+  "devDependencies": {
+    "@types/three": "^0.183.1",
+    "esbuild": "^0.27.4",
+    "typescript": "^5"
+  }
+}

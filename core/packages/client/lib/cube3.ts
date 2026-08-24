@@ -5,6 +5,7 @@
 import { Alg, Move } from 'cubing/alg';
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
 import { mirrorFamily, mirrorKeepsAmount, type MirrorAxis } from '@cuberoot/shared/alg-notation';
+export { invertAlg } from '@cuberoot/shared/alg-transform';
 
 let _kpuzzle: Promise<KPuzzle> | null = null;
 
@@ -14,16 +15,6 @@ export function getCube3(): Promise<KPuzzle> {
     _kpuzzle = import('cubing/puzzles').then((m) => m.cube3x3x3.kpuzzle());
   }
   return _kpuzzle;
-}
-
-/** "R U R' U'" → "U R U' R'". Handles wide / slice / rotation correctly. */
-export function invertAlg(alg: string): string {
-  if (!alg) return '';
-  try {
-    return new Alg(alg).invert().toString();
-  } catch {
-    return '';
-  }
 }
 
 /** Apply alg to solved cube → KPattern. Handles parsing errors gracefully. */

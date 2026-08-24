@@ -1,0 +1,111 @@
+// Ported from huazhechen/cuber (MIT) — src/cuber/tweener.ts
+import { elapsedMsToSimTicks } from '../support/sim-timing';
+
+export class Tween {
+  begin: number;
+  end: number;
+  duration: number;
+  callback: (v: number) => boolean | void;
+  value: number;
+  constructor(begin: number, end: number, duration: number, callback: (v: number) => boolean | void) {
+    this.begin = begin;
+    this.end = end;
+    this.duration = duration;
+    this.callback = callback;
+    this.value = 0;
+  }
+
+  finish(): void {
+    this.callback(this.end);
+  }
+
+  update(deltaTicks = 1): boolean {
+    if (!Number.isFinite(deltaTicks) || deltaTicks <= 0) return false;
+    this.value += deltaTicks;
+    let elapsed = this.value / this.duration;
+    elapsed = elapsed > 1 ? 1 : elapsed;
+    elapsed = elapsed < 0 ? 0 : elapsed;
+    elapsed = elapsed - 1;
+    elapsed = 1 - elapsed * elapsed;
+    const value = elapsed == 1 ? this.end : this.begin + (this.end - this.begin) * elapsed;
+    return this.callback(value) === true;
+  }
+}
+
+export class Tweener {
+  tweens: Tween[];
+  /** 暂停 rAF 自动推进。导出 mp4 时离线 manual tick,需要先停掉自动 update 避免冲突。 */
+  paused = false;
+  private lastFrameMs: number | null = null;
+
+  get length(): number {
+    return this.tweens.length;
+  }
+
+  constructor() {
+    this.tweens = [];
+    // headless 守卫(PLAN-sr-retirement Phase 1):本模块底部是 import 即执行的单例,
+    // 内核(cube/group/twister)import 它 → 无 rAF 环境(Node/服务端)构造即炸。
+    // headless 下不起自动环:调用方要么走 finish()(setup/reset 已如此,瞬时到位),
+    // 要么手动 update()(mp4 离线 tick 同款)。
+    if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(this.loop.bind(this));
+  }
+
+  loop(frameMs: number): void {
+    requestAnimationFrame(this.loop.bind(this));
+    const deltaTicks = this.lastFrameMs === null ? 0 : elapsedMsToSimTicks(frameMs - this.lastFrameMs);
+    this.lastFrameMs = frameMs;
+    if (this.paused) return;
+    this.update(deltaTicks);
+  }
+
+  tween(begin: number, end: number, duration: number, update: (v: number) => boolean | void): Tween {
+    const tween = new Tween(begin, end, duration, update);
+    this.tweens.push(tween);
+    return tween;
+  }
+
+  update(deltaTicks = 1): boolean {
+    if (this.tweens.length === 0) return false;
+    let i = 0;
+    let len = this.tweens.length;
+    while (i < len) {
+      if (this.tweens[i].update(deltaTicks)) {
+        this.tweens.splice(i, 1);
+        len--;
+      } else {
+        i++;
+      }
+    }
+    return true;
+  }
+
+  finish(tween: Tween | undefined = undefined): void {
+    if (tween) {
+      for (let i = 0; i < this.tweens.length; i++) {
+        if (this.tweens[i] == tween) {
+          tween.finish();
+          this.tweens.splice(i, 1);
+          return;
+        }
+      }
+    } else {
+      const tweens = this.tweens.splice(0, this.tweens.length);
+      for (const t of tweens) {
+        t.finish();
+      }
+    }
+  }
+
+  cancel(tween: Tween): void {
+    for (let i = 0; i < this.tweens.length; i++) {
+      if (this.tweens[i] == tween) {
+        this.tweens.splice(i, 1);
+        return;
+      }
+    }
+  }
+}
+
+const tweener = new Tweener();
+export default tweener;

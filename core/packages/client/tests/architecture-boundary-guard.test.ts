@@ -37,20 +37,20 @@ function rules(file: string, content: string): string[] {
 
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
-    expect(MANIFEST.legacyFindings).toHaveLength(326);
-    expect(compareFindings(CURRENT, MANIFEST.legacyFindings).additions).toEqual([]);
-    expect(CURRENT.length).toBeLessThanOrEqual(MANIFEST.legacyFindings.length);
+    expect(MANIFEST.legacyFindings).toHaveLength(319);
+    expect(compareFindings(CURRENT, MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(175);
-    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(4);
+    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(15);
+    expect(MANIFEST.manualContracts).toHaveLength(13);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([
-      'runtime-source', 'runtime-file', 'build-import', 'build-artifact', 'test-contract',
-      'subprocess-native', 'generated-artifact', 'deploy-trigger', 'deploy-target',
+      'runtime-file', 'build-import', 'build-artifact', 'test-contract',
+      'subprocess-native', 'generated-artifact', 'deploy-target',
     ]));
   });
 
@@ -64,6 +64,8 @@ describe('architecture boundary guard', () => {
     expect(rules(CLIENT_PROBE, "import x from '@cuberoot/vendor-sr-puzzlegen/private';"))
       .toContain('workspace-wildcard-import');
     expect(rules(CLIENT_PROBE, "import x from '@cuberoot/visualcube/private';"))
+      .toContain('workspace-unexported-import');
+    expect(rules(CLIENT_PROBE, "import x from '@cuberoot/puzzle-render-core/engine/private';"))
       .toContain('workspace-unexported-import');
     expect(rules(CLIENT_PROBE, "import x from '@cuberoot/server';"))
       .toContain('workspace-app-root-import');

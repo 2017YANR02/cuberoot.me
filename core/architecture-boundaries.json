@@ -19,44 +19,18 @@
   },
   "manualContracts": [
     {
-      "id": "server-client-engine-render-source",
-      "from": "packages/server",
-      "to": "packages/client private simulator source",
-      "phase": "runtime-source",
-      "mechanism": "server tsconfig @/* alias plus three static imports",
-      "owner": "server",
-      "rationale": "The API headless renderer currently reuses the Web simulator implementation.",
-      "replacement": "BND-02: extract a headless runtime-neutral simulator boundary, then remove the alias imports.",
-      "evidence": [
-        { "file": "core/packages/server/src/routes/engine_render.ts", "contains": "import World from '@/app/[lang]/sim/engine/world';" },
-        { "file": "core/packages/server/tsconfig.json", "contains": "\"paths\": { \"@/*\": [\"../client/*\"] }" }
-      ]
-    },
-    {
-      "id": "server-client-cube-alg-source",
-      "from": "packages/server",
-      "to": "packages/client/lib/cube3",
-      "phase": "runtime-source",
-      "mechanism": "server tsconfig @/* alias static import",
-      "owner": "server",
-      "rationale": "The cube route imports one pure algorithm helper through the Web-private alias.",
-      "replacement": "BND-02: expose the pure helper through an existing runtime-neutral package subpath.",
-      "evidence": [
-        { "file": "core/packages/server/src/routes/cube.ts", "contains": "import { invertAlg } from '@/lib/cube3';" }
-      ]
-    },
-    {
-      "id": "server-client-cubeopt-runtime-assets",
-      "from": "packages/server cubeopt child",
-      "to": "packages/client/public/cubeopt and solver/tables",
+      "id": "server-cubeopt-artifact-store",
+      "from": "packages/server CubeOpt manager and child",
+      "to": "API-owned immutable artifact store",
       "phase": "runtime-file",
-      "mechanism": "environment-overridable default filesystem paths",
+      "mechanism": "CUBEOPT_ARTIFACT_DIR current pointer plus verified immutable bundle manifest",
       "owner": "server",
-      "rationale": "The API solver child loads a Web public module and a local large pruning table at runtime.",
-      "replacement": "BND-03: make both files explicit API deployment artifacts and verify with the Web tree absent.",
+      "rationale": "The large CubeOpt module, WASM and pruning table have an independent lifecycle and must not come from Web source or public assets.",
+      "replacement": "Retain prepare, verify and atomic promote commands; deploy only the daemon code through the ordinary API workflow.",
       "evidence": [
-        { "file": "core/packages/server/src/cubeopt/solve-daemon.mjs", "contains": "core/packages/client/public/cubeopt/cube48opt5.mjs" },
-        { "file": "core/packages/server/src/cubeopt/solve-daemon.mjs", "contains": "solver/tables/h48/h48prun31h5.dat" }
+        { "file": "core/packages/server/src/cubeopt/artifact.mjs", "contains": "const currentPath = resolve(store, 'current.json')" },
+        { "file": "core/packages/server/src/cubeopt/config.ts", "contains": "CUBEOPT_ARTIFACT_DIR is required" },
+        { "file": "core/packages/server/CUBEOPT_ARTIFACT.md", "contains": "CubeOpt API artifact store" }
       ]
     },
     {
@@ -64,13 +38,14 @@
       "from": "packages/server",
       "to": "cubeopt Node child and WASM/table assets",
       "phase": "subprocess-native",
-      "mechanism": "spawn process.execPath with CUBEOPT_* environment overrides",
+      "mechanism": "spawn built solve-daemon.mjs with the verified artifact-store environment",
       "owner": "server",
       "rationale": "The child owns a large table and has independent lifecycle, queue and failure semantics.",
-      "replacement": "Keep the daemon contract explicit; BND-03 must relocate its assets without hiding the process boundary.",
+      "replacement": "Keep one production daemon manager and validate it through the bundled smoke entry; do not duplicate its stdio protocol.",
       "evidence": [
         { "file": "core/packages/server/src/cubeopt/daemon.ts", "contains": "proc = spawn(process.execPath, [DAEMON_SCRIPT]" },
-        { "file": "core/packages/server/src/cubeopt/daemon.ts", "contains": "CUBEOPT_DAEMON_SCRIPT" }
+        { "file": "core/packages/server/src/tools/cubeopt_smoke.ts", "contains": "const { solveOptimal } = await import('../cubeopt/daemon.js');" },
+        { "file": ".github/workflows/deploy_core.yml", "contains": "core/packages/server/dist/cubeopt/solve-daemon.mjs" }
       ]
     },
     {
@@ -208,22 +183,23 @@
       ]
     },
     {
-      "id": "deploy-core-broad-trigger",
-      "from": "core tree changes",
-      "to": "Deploy Core workflow",
-      "phase": "deploy-trigger",
-      "mechanism": "GitHub Actions paths: core/** except archived platform",
+      "id": "deploy-core-target",
+      "from": "packages/server plus declared build and runtime inputs",
+      "to": "independent API deployment",
+      "phase": "deploy-target",
+      "mechanism": "filtered workflow build and explicit server, daemon and migration artifacts",
       "owner": "ops",
-      "rationale": "The API deploy currently triggers for unrelated Web, Mobile and Mini Program changes.",
-      "replacement": "BND-06: narrow to server plus its actual shared/build inputs after BND-02 and BND-03.",
+      "rationale": "The API deploy must react to its real package inputs without being coupled to unrelated Web, Mobile or Mini Program changes.",
+      "replacement": "Keep the workflow-path contract matrix aligned whenever a Server workspace dependency or deployment artifact changes.",
       "evidence": [
-        { "file": ".github/workflows/deploy_core.yml", "contains": "- 'core/**'" },
-        { "file": ".github/workflows/deploy_core.yml", "contains": "- '!core/packages/platform/**'" }
+        { "file": ".github/workflows/deploy_core.yml", "contains": "- 'core/packages/server/**'" },
+        { "file": ".github/workflows/deploy_core.yml", "contains": "- 'core/packages/puzzle-render-core/**'" },
+        { "file": "core/packages/client/tests/workflow-path-contract.test.ts", "contains": "keeps the Core deploy boundary limited to real API production inputs" }
       ]
     },
     {
       "id": "deploy-next-target",
-      "from": "packages/client plus shared and visualcube changes",
+      "from": "packages/client plus every workspace and deployment input consumed by the Next build",
       "to": "Next standalone deployment",
       "phase": "deploy-target",
       "mechanism": "GitHub Actions filtered build, packaged standalone output and remote restart",
@@ -233,7 +209,14 @@
       "evidence": [
         { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/client/**'" },
         { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/shared/**'" },
-        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/visualcube/**'" }
+        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/visualcube/**'" },
+        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/vendor-sr-puzzlegen/**'" },
+        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/stack-kernel/package.json'" },
+        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/stack-kernel/pkg/**'" },
+        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/puzzle-render-core/**'" },
+        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/package.json'" },
+        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'ops/systemd/cuberoot-next.service'" },
+        { "file": "core/packages/client/tests/workflow-path-contract.test.ts", "contains": "keeps the Next deploy boundary aligned with its build and runtime inputs" }
       ]
     }
   ],
@@ -2796,14 +2779,6 @@
       "target": "<dynamic>"
     },
     {
-      "file": "packages/server/src/cubeopt/solve-daemon.mjs",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "runtime",
-      "specifier": "core/packages/client/public/cubeopt/cube48opt5.mjs",
-      "target": "client"
-    },
-    {
       "file": "packages/server/src/routes/alg_sets.ts",
       "importKind": "runtime",
       "mechanism": "static-import",
@@ -2822,15 +2797,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/server/src/routes/cube.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@/lib/cube3",
-      "rule": "cross-package-alias-import",
-      "target": "client"
-    },
-    {
       "file": "packages/server/src/routes/cubing_live.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
@@ -2838,41 +2804,6 @@
       "specifier": "@cuberoot/shared",
       "rule": "shared-root-import",
       "target": "shared"
-    },
-    {
-      "file": "packages/server/src/routes/engine_render.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@/app/[lang]/sim/engine/world",
-      "rule": "cross-package-alias-import",
-      "target": "client"
-    },
-    {
-      "file": "packages/server/src/routes/engine_render.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@/app/[lang]/sim/sim_svg_export_schematic",
-      "rule": "cross-package-alias-import",
-      "target": "client"
-    },
-    {
-      "file": "packages/server/src/routes/engine_render.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@/lib/puzzle-image/engine-svg",
-      "rule": "cross-package-alias-import",
-      "target": "client"
-    },
-    {
-      "file": "packages/server/src/tools/engine_render_smoke.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "runtime",
-      "specifier": "../client/.tmp/png/engine-render",
-      "target": "client"
     },
     {
       "file": "packages/server/src/tools/run_tests.ts",
@@ -2986,14 +2917,6 @@
       "rule": "cross-package-path",
       "sourceKind": "test",
       "specifier": "../../client/app/[lang]/dev/schema/page.tsx",
-      "target": "client"
-    },
-    {
-      "file": "packages/server/tsconfig.json",
-      "mechanism": "tsconfig-path",
-      "rule": "cross-package-alias-definition",
-      "sourceKind": "runtime",
-      "specifier": "@/*=../client/*",
       "target": "client"
     },
     {

@@ -2,7 +2,7 @@
  * cube48opt optimal-solve daemon manager.
  *
  * Spawns a long-lived Node child (./solve-daemon.mjs) that holds ONE cubeopt
- * prune table (default opt5 / 972M) in its wasm heap and solves 3x3 scrambles
+ * manifest-verified opt5 / h5 artifact bundle in its wasm heap and solves 3x3 scrambles
  * to god's-number optimal over line-based stdio. Same shape as cube555/daemon.ts.
  *
  * Concurrency: the child's solve_scramble() is synchronous, so it processes
@@ -13,31 +13,57 @@
  * Env:
  *   CUBEOPT_SOLVE_ENABLED=1   enable (default OFF — the 972M table must be on
  *                             disk first; until then the route returns 503)
- *   CUBEOPT_DAEMON_SCRIPT     path to solve-daemon.mjs (default: alongside this
- *                             file in dev; set explicitly in the prod bundle)
- *   CUBEOPT_MODULE / CUBEOPT_TABLE / CUBEOPT_THREADS  forwarded to the child
- *                             (see solve-daemon.mjs for defaults)
+ *   CUBEOPT_ARTIFACT_DIR      required API-owned store root. current.json
+ *                             selects one verified immutable opt5 bundle.
+ *   CUBEOPT_THREADS           forwarded to the child (default 2)
+ *   CUBEOPT_BOOT_TIMEOUT_MS   spawn-to-READY deadline (default 300000)
  */
 import { spawn, type ChildProcess } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
-import { writeFileSync, readFileSync } from 'node:fs';
+import { basename, dirname, resolve } from 'node:path';
+import { existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { registerTenant, claimMemory } from '../mem-arbiter.js';
+import { createBootDeadline } from './boot-deadline.js';
+import { cubeoptChildEnv, resolveCubeoptArtifactConfig } from './config.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const ENABLED = process.env.CUBEOPT_SOLVE_ENABLED === '1';
-const DAEMON_SCRIPT = process.env.CUBEOPT_DAEMON_SCRIPT
-  ? resolve(process.env.CUBEOPT_DAEMON_SCRIPT)
-  : resolve(__dirname, 'solve-daemon.mjs');
+const ARTIFACT_CONFIG = resolveCubeoptArtifactConfig(process.env);
+const ENABLED = ARTIFACT_CONFIG.enabled;
+const DAEMON_SCRIPT = basename(__dirname) === 'cubeopt'
+  ? resolve(__dirname, 'solve-daemon.mjs')
+  : resolve(__dirname, 'cubeopt', 'solve-daemon.mjs');
+const ARTIFACT_DIR = ARTIFACT_CONFIG.artifactStore;
+const CONFIG_ERROR = !ENABLED
+  ? null
+  : ARTIFACT_CONFIG.configError
+    ?? (!existsSync(DAEMON_SCRIPT)
+      ? `built daemon is missing at ${DAEMON_SCRIPT}; deploy dist/cubeopt/solve-daemon.mjs with server.bundle.js`
+      : null);
+
+if (CONFIG_ERROR) console.error(`[cubeopt] configuration error: ${CONFIG_ERROR}`);
+if (ARTIFACT_CONFIG.warning) console.warn(`[cubeopt] ${ARTIFACT_CONFIG.warning}`);
+
+function positiveIntegerEnv(name: string, fallback: number): number {
+  const raw = process.env[name]?.trim();
+  if (!raw) return fallback;
+  const parsed = Number(raw);
+  if (Number.isSafeInteger(parsed) && parsed > 0) return parsed;
+  console.warn(`[cubeopt] ignoring invalid ${name}; using ${fallback}`);
+  return fallback;
+}
 
 // A single optimal solve on a 2-vCPU box can take tens of seconds and, for the
 // hardest scrambles, a couple of minutes. Past this we treat the child as hung
 // and recycle it. This timer starts when the solve ACTUALLY begins (becomes
 // active), not when it's enqueued — so time spent waiting behind another solve
 // never counts against it, and never triggers a daemon kill.
-const SOLVE_TIMEOUT_MS = Number(process.env.CUBEOPT_TIMEOUT_MS) || 180_000;
+const SOLVE_TIMEOUT_MS = positiveIntegerEnv('CUBEOPT_TIMEOUT_MS', 180_000);
+// Loading and hashing the near-1GB artifact is a separate lifecycle phase. A
+// hash-valid but unusable wrapper must not leave API requests awaiting READY
+// forever; this deadline recycles the child before any solve is queued.
+const BOOT_TIMEOUT_MS = positiveIntegerEnv('CUBEOPT_BOOT_TIMEOUT_MS', 300_000);
 // How long a request may WAIT in the queue (behind other solves) before we give
 // up on it — rejected cleanly with a "busy" error, WITHOUT killing the daemon.
 const QUEUE_WAIT_MS = Number(process.env.CUBEOPT_QUEUE_WAIT_MS) || 120_000;
@@ -134,38 +160,52 @@ function spawnDaemon(): Promise<void> {
     // dies DURING the (multi-second) table load — the watchdog dropping it under
     // memory pressure, an OOM, a bad table — the 'exit' handler below must
     // reject this promise, or the awaiting solve hangs forever.
-    let settled = false;
     const spawnStartedAt = Date.now();
-    const finishOk = () => { if (!settled) { settled = true; lastLoadMs = Date.now() - spawnStartedAt; resolveBoot(); } };
-    const finishErr = (e: Error) => { if (!settled) { settled = true; rejectBoot(e); } };
+    let proc: ChildProcess | null = null;
+    const bootDeadline = createBootDeadline(BOOT_TIMEOUT_MS, () => {
+      rejectBoot(new Error(`solver did not become ready within ${BOOT_TIMEOUT_MS}ms`));
+      if (proc && child === proc) {
+        ready = false;
+        try { proc.kill('SIGKILL'); } catch { /* exit/error handler owns cleanup */ }
+      }
+    });
+    const finishOk = () => {
+      bootDeadline.finish(() => {
+        lastLoadMs = Date.now() - spawnStartedAt;
+        resolveBoot();
+      });
+    };
+    const finishErr = (error: Error) => {
+      bootDeadline.finish(() => rejectBoot(error));
+    };
     console.log(`[cubeopt] spawn: node ${DAEMON_SCRIPT}`);
-    let proc: ChildProcess;
     try {
       proc = spawn(process.execPath, [DAEMON_SCRIPT], {
-        env: { ...process.env },
+        env: cubeoptChildEnv(process.env, ARTIFACT_DIR!),
         stdio: ['pipe', 'pipe', 'pipe'],
       });
     } catch (err) {
       finishErr(err as Error);
       return;
     }
-    child = proc;
+    const spawned = proc;
+    child = spawned;
 
     // Layer 3: make THIS process the OOM killer's first victim, so a memory
     // spike that beats the watchdog poll sacrifices the (respawnable) table
     // process instead of core-api / postgres. Linux-only, best effort.
-    if (process.platform === 'linux' && proc.pid) {
-      try { writeFileSync(`/proc/${proc.pid}/oom_score_adj`, '1000'); } catch { /* /proc unavailable */ }
+    if (process.platform === 'linux' && spawned.pid) {
+      try { writeFileSync(`/proc/${spawned.pid}/oom_score_adj`, '1000'); } catch { /* /proc unavailable */ }
     }
 
-    proc.stderr?.on('data', (chunk: Buffer) => {
+    spawned.stderr?.on('data', (chunk: Buffer) => {
       for (const line of chunk.toString().split('\n')) {
         const t = line.trim();
         if (t) console.error(`[cubeopt-wasm] ${t}`);
       }
     });
 
-    const rl = createInterface({ input: proc.stdout! });
+    const rl = createInterface({ input: spawned.stdout! });
     rl.on('line', (line) => {
       if (!ready) {
         if (line.startsWith('READY')) {
@@ -198,7 +238,7 @@ function spawnDaemon(): Promise<void> {
       pump(); // start the next queued solve
     });
 
-    proc.on('exit', (code, signal) => {
+    spawned.on('exit', (code, signal) => {
       console.error(`[cubeopt] daemon exited code=${code} signal=${signal}`);
       ready = false;
       child = null;
@@ -208,7 +248,7 @@ function spawnDaemon(): Promise<void> {
       finishErr(new Error(`solver exited before ready (code=${code}, signal=${signal})`));
     });
 
-    proc.on('error', (err) => {
+    spawned.on('error', (err) => {
       console.error('[cubeopt] spawn error:', err);
       ready = false;
       child = null;
@@ -220,6 +260,7 @@ function spawnDaemon(): Promise<void> {
 
 export function ensureDaemon(): Promise<void> {
   if (!ENABLED) return Promise.reject(new Error('cloud optimal solve is disabled'));
+  if (CONFIG_ERROR) return Promise.reject(new Error(CONFIG_ERROR));
   if (ready) return Promise.resolve();
   if (Date.now() < cooldownUntil) {
     return Promise.reject(new Error('Rate limit: solver cooling down after memory pressure, try again shortly'));
@@ -290,6 +331,11 @@ function startMonitors(): void {
 
 export function isEnabled(): boolean {
   return ENABLED;
+}
+
+/** True only when the enabled feature has a complete static runtime contract. */
+export function isConfigured(): boolean {
+  return ENABLED && CONFIG_ERROR === null;
 }
 
 export function isReady(): boolean {

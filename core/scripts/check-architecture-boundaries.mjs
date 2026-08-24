@@ -206,7 +206,7 @@ function moduleFinding(packages, owner, file, specifier, kind, mechanism) {
   if (!exportedSubpath(target, subpath)) {
     return { ...common, rule: 'workspace-unexported-import', target: target.dir };
   }
-  if (exportUsesWildcard(target, subpath) && target.dir === 'vendor-sr-puzzlegen') {
+  if (exportUsesWildcard(target, subpath)) {
     return { ...common, rule: 'workspace-wildcard-import', target: target.dir };
   }
   return null;

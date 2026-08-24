@@ -4,7 +4,7 @@
 
 ## 边界
 
-- API 不得新增对 `packages/client` 源码或 `packages/client/public` 的依赖；现有源码 import、tsconfig alias 和 cubeopt 资产读取按[架构审计](../../../docs/architecture-audit-2026-08.md)与[执行跟踪](../../../docs/architecture-modernization-tracker.md)递减。
+- API 不得新增对 `packages/client` 源码或 `packages/client/public` 的依赖；CubeOpt 运行资产使用 [API 自有 artifact store](./CUBEOPT_ARTIFACT.md)，其余现有源码 import 和 tsconfig alias 按[架构审计](../../../docs/architecture-audit-2026-08.md)与[执行跟踪](../../../docs/architecture-modernization-tracker.md)递减。
 - 稳定 DTO、schema 和纯规则放在 `@cuberoot/shared` 显式 subpath，Node-only 实现留在本 package。
 - PostgreSQL schema 变更新增顺序 migration，先在本地 PG 13 验证，push 后由部署 workflow 自动应用。
 

@@ -20,9 +20,16 @@
  * 逐像素光照;背景与 PNG 截图一致导出为透明。
  */
 import * as THREE from 'three';
+import {
+  clipPolyByPlane,
+  fmt,
+  hexOf,
+} from '@cuberoot/puzzle-render-core/svg-utils';
 import type World from './engine/world';
 import { getRawCoreBorder, getRawStickerScale } from './engine/nxn/rawCore';
 import { STICKER_INNER, STICKER_CORNER_RADIUS } from './engine/define';
+
+export { clipPolyByPlane, fmt, hexOf } from '@cuberoot/puzzle-render-core/svg-utils';
 
 export interface SimSvgExportOptions {
   world: Pick<World, 'scene' | 'camera' | 'width' | 'height'>;
@@ -207,26 +214,6 @@ function textureEntry(tex: THREE.Texture, cache: Map<THREE.Texture, TexEntry | n
   return entry;
 }
 
-/** Sutherland–Hodgman: 保留 n·p + d ≥ 0 的一侧。返回新数组(顶点为新建 Vector3)。
- *  (export: sim_svg_export_bsp 复用) */
-export function clipPolyByPlane(pts: THREE.Vector3[], nx: number, ny: number, nz: number, d: number): THREE.Vector3[] {
-  const out: THREE.Vector3[] = [];
-  const n = pts.length;
-  for (let i = 0; i < n; i++) {
-    const a = pts[i];
-    const b = pts[(i + 1) % n];
-    const da = a.x * nx + a.y * ny + a.z * nz + d;
-    const db = b.x * nx + b.y * ny + b.z * nz + d;
-    if (da >= 0) {
-      out.push(a);
-      if (db < 0) out.push(new THREE.Vector3().lerpVectors(a, b, da / (da - db)));
-    } else if (db >= 0) {
-      out.push(new THREE.Vector3().lerpVectors(a, b, da / (da - db)));
-    }
-  }
-  return out;
-}
-
 /** 原核 argmax 分色:把三角形按「哪个 slot 的 dot(p,N) 最大」切成 ≤slots.length 片。 */
 function splitByRawSlots(tri: THREE.Vector3[], slots: RawSlot[]): { pts: THREE.Vector3[]; slot: RawSlot }[] {
   if (slots.length === 1) return [{ pts: tri, slot: slots[0] }];
@@ -285,23 +272,6 @@ function splitByStickerBorder(poly: THREE.Vector3[], n: THREE.Vector3): { inside
 }
 
 const _c = new THREE.Color();
-/** 线性(或 sRGB 直存)分量 → #rrggbb。(export: sim_svg_export_bsp 复用) */
-export function hexOf(r: number, g: number, b: number, srgb: boolean): string {
-  if (srgb) {
-    // 输入已是 sRGB 域(cubing.js 场景):字节直出
-    const to = (v: number): string => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, '0');
-    return `#${to(r)}${to(g)}${to(b)}`;
-  }
-  _c.setRGB(Math.min(1, Math.max(0, r)), Math.min(1, Math.max(0, g)), Math.min(1, Math.max(0, b)));
-  // 组件是线性域(材质色/instanceColor/光照均线性),getHexString 默认转 sRGB 输出。
-  return `#${_c.getHexString()}`;
-}
-
-/** 输出坐标压到 0.01px。(export: sim_svg_export_bsp 复用) */
-export function fmt(v: number): number {
-  return Math.round(v * 100) / 100;
-}
-
 /** 2×3 仿射解:src 三点 → dst 三点。返回 SVG matrix(a b c d e f);退化返回 null。 */
 function solveAffine(
   sx0: number, sy0: number, sx1: number, sy1: number, sx2: number, sy2: number,
