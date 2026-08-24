@@ -1,13 +1,13 @@
 /**
- * Server-side iso/top render for sq1 / megaminx / pyraminx / skewb via sr-puzzlegen.
+ * Server-side top render for sq1 / megaminx / pyraminx / skewb.
  *
  * Mirrors client-side `PuzzleSVG` + `VisualCubeEditorPage` rendering path:
  * sr-puzzlegen.SVG() mounts an <svg> into a host element using
  * `document.createElementNS`. linkedom provides a Node DOM, same one already
  * used by cubing_render.ts for net rendering.
  *
- * Variants this covers:
- *   sq1  iso, megaminx iso, megaminx top, pyraminx iso, skewb iso
+ * This module intentionally does not implement iso rendering; iso has one
+ * canonical implementation in @cuberoot/puzzle-render-core/iso-svg.
  * skewb-top uses @cuberoot/shared/skewb-pyramid-svg (pure string, no DOM).
  */
 import { parseHTML } from 'linkedom';
@@ -32,13 +32,13 @@ function ensureDom(): Promise<void> {
 }
 
 type Puzzle = 'sq1' | 'megaminx' | 'pyraminx' | 'skewb';
-type Variant = 'iso' | 'top';
+type Variant = 'top';
 
-function srTypeOf(puzzle: Puzzle, variant: Variant): string | null {
+function srTypeOf(puzzle: Puzzle): string | null {
   if (puzzle === 'sq1') return 'square1';
-  if (puzzle === 'megaminx') return variant === 'top' ? 'megaminx-top' : 'megaminx';
+  if (puzzle === 'megaminx') return 'megaminx-top';
   if (puzzle === 'pyraminx') return 'pyraminx';
-  if (puzzle === 'skewb') return variant === 'top' ? null : 'skewb';
+  if (puzzle === 'skewb') return null;
   return null;
 }
 
@@ -81,7 +81,7 @@ export async function renderSrPuzzlegenSVG(
     }
   }
 
-  const type = srTypeOf(puzzle, variant);
+  const type = srTypeOf(puzzle);
   if (!type) return null;
   await ensureDom();
 

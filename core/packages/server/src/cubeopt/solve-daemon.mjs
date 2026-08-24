@@ -1,6 +1,7 @@
 // Long-lived cube48opt optimal-solve daemon (Node child process).
 //
-// Loads ONE cubeopt prune table into the wasm heap once (default opt5 / 972M h5),
+// Loads ONE manifest-verified cubeopt prune table into the wasm heap once
+// (the current API contract is opt5 / 972M h5),
 // then serves solve requests over line-based stdio — exactly the cube555 daemon
 // shape (see ../cube555/daemon.ts), but for 3x3 god's-number optimal solving.
 //
@@ -22,23 +23,17 @@
 //   FIFO one-at-a-time — that IS the global serial queue.
 //
 // Env:
-//   CUBEOPT_MODULE   path to cube48optN.mjs   (default repo public/cubeopt/cube48opt5.mjs)
-//   CUBEOPT_TABLE    path to the .dat table   (default repo solver/tables/h48/h48prun31h5.dat)
-//   CUBEOPT_THREADS  solve thread-pool size   (default 2 — the prod box is 2 vCPU)
+//   CUBEOPT_ARTIFACT_DIR  required API-owned store containing current.json and
+//                         immutable opt5 module / wasm / table bundles
+//   CUBEOPT_THREADS       solve thread-pool size (default 2)
 import { openSync, readSync, closeSync, fstatSync } from 'node:fs';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { createInterface } from 'node:readline';
+import { loadCubeoptArtifact } from './artifact.mjs';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-// repo root = .../core/packages/server/src/cubeopt -> up 5
-const repoRoot = resolve(__dirname, '../../../../..');
-const MJS = process.env.CUBEOPT_MODULE
-  ? resolve(process.env.CUBEOPT_MODULE)
-  : resolve(repoRoot, 'core/packages/client/public/cubeopt/cube48opt5.mjs');
-const DAT = process.env.CUBEOPT_TABLE
-  ? resolve(process.env.CUBEOPT_TABLE)
-  : resolve(repoRoot, 'solver/tables/h48/h48prun31h5.dat');
+const artifact = await loadCubeoptArtifact(process.env.CUBEOPT_ARTIFACT_DIR);
+const MJS = artifact.modulePath;
+const DAT = artifact.tablePath;
 const THREADS = Math.max(1, Number(process.env.CUBEOPT_THREADS) || 2);
 
 // Validate a single scramble token-by-token: only HTM face turns (the wasm can't

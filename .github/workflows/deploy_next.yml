@@ -9,9 +9,18 @@ on:
     branches: [main]
     paths:
       - 'core/packages/client/**'
+      - 'core/packages/puzzle-render-core/**'
       - 'core/packages/shared/**'
+      - 'core/packages/stack-kernel/package.json'
+      - 'core/packages/stack-kernel/pkg/**'
+      - 'core/packages/vendor-sr-puzzlegen/**'
       - 'core/packages/visualcube/**'
+      - 'core/package.json'
       - 'core/pnpm-lock.yaml'
+      - 'core/pnpm-workspace.yaml'
+      - 'core/tsconfig.base.json'
+      - 'core/patches/**'
+      - 'ops/systemd/cuberoot-next.service'
       - '.github/workflows/deploy_next.yml'
 
 # Serialize deploys. Concurrent runs clobbered the shared /tmp/cuberoot-next.tar.gz:
@@ -51,7 +60,8 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
-      # build script in package.json prebuilds @cuberoot/shared + visualcube
+      # build script prebuilds the Client workspace dependencies that emit dist/
+      # (@cuberoot/shared, visualcube, vendor-sr-puzzlegen, puzzle-render-core)
       # before `next build` (commit 889729fab). Standalone output ON because
       # NODE_ENV=production + VERCEL!=1 (see next.config.ts isVercel gate).
       - name: Build Next standalone

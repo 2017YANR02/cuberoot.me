@@ -2,10 +2,10 @@
  * /v1/scramble/optimal-solve — 3x3 god's-number optimal solve, server-side.
  *
  * Backs the "云端求解" option on /scramble/solver for users who don't want to
- * download the multi-GB cubeopt prune table. The server holds opt6 (1.9G) for
- * speed (median ~4s vs opt5's ~21s); every opt level returns the SAME optimal
- * solution, only faster with a bigger table. opt6 on the small box runs under
- * memory guards (idle-unload + watchdog + oom_score_adj) in cubeopt/daemon.ts.
+ * download the large cubeopt prune table. The current executable contract is
+ * the opt5 wrapper plus its h5 table; changing variant requires a new verified
+ * artifact contract, not independent module/table environment overrides. The
+ * daemon runs under memory guards in cubeopt/daemon.ts.
  *
  * Guards (all three the user asked for):
  *   • login gate     — requireAuth; anonymous users keep the local-download path.
@@ -18,13 +18,20 @@
  *   → SSE: data {"i":idx,"htm":N,"solution":"..."}      one per solved scramble
  *          event:error data {"i":idx,"error":"..."}     one per failed scramble
  *          event:done  data {"ok":N,"fail":N}           terminal
- * GET  /v1/scramble/optimal-solve/ready → { enabled, ready }
+ * GET  /v1/scramble/optimal-solve/ready → { enabled, configured, ready }
  */
 import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { streamSSE } from 'hono/streaming';
 import { requireAuth, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
-import { solveOptimal, isEnabled, isReady, ensureDaemon, getLastLoadMs } from '../cubeopt/daemon.js';
+import {
+  solveOptimal,
+  isEnabled,
+  isConfigured,
+  isReady,
+  ensureDaemon,
+  getLastLoadMs,
+} from '../cubeopt/daemon.js';
 
 export const cubeoptSolveRoutes = new Hono();
 
@@ -57,12 +64,12 @@ function cleanScramble(raw: unknown): string | null {
 }
 
 cubeoptSolveRoutes.get('/scramble/optimal-solve/ready', (c) => {
-  return c.json({ enabled: isEnabled(), ready: isReady() }, 200, NO_CACHE);
+  return c.json({ enabled: isEnabled(), configured: isConfigured(), ready: isReady() }, 200, NO_CACHE);
 });
 
 cubeoptSolveRoutes.post('/scramble/optimal-solve', async (c) => {
   c.header('Cache-Control', 'no-store');
-  if (!isEnabled()) return c.json({ error: 'Cloud optimal solve is not available' }, 503, NO_CACHE);
+  if (!isConfigured()) return c.json({ error: 'Cloud optimal solve is not available' }, 503, NO_CACHE);
 
   const user = await requireAuth(c); // login gate — throws → 401
   // Admins have no throttle; everyone else gets the per-IP window above. Doing

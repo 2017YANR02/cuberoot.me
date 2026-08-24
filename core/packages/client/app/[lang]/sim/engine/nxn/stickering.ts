@@ -4,76 +4,30 @@
 // z=N-1 为 F,x=N-1 为 R)。语义与 cubing.js 相同:mask 定义在 SOLVED 帧的
 // (initial, face) 上,渲染层按 slot 改色 → 颜色随块走,打乱后依然标注同一批块。
 import { FACE } from "../define";
-
-/** facelet 级遮罩码(渲染层消费):0 原色 / 1 变暗 / 2 忽略灰 / 3 EO 青 / 4 第二定向黄 /
- *  5 原色 + 描边。0-4 逐条对着 cubing.js 的 PieceStickering;5 是站内加的 —— 不换色,
- *  沿贴纸边缘描一圈高亮色(engine/nxn/stickerOutline.ts),给「就是要盯这一枚」的场合。 */
-export type FaceletMask = 0 | 1 | 2 | 3 | 4 | 5;
-export const FM_REGULAR = 0 as const;
-export const FM_DIM = 1 as const;
-export const FM_IGNORED = 2 as const;
-export const FM_ORIENTED = 3 as const;
-export const FM_ORIENTED2 = 4 as const;
-export const FM_OUTLINE = 5 as const;
-
-export type StickeringMaskFn = (initial: number, face: number) => FaceletMask;
-
-const MASK_VISIBILITY: Record<FaceletMask, number> = {
-  [FM_REGULAR]: 5,
-  [FM_OUTLINE]: 4,
-  [FM_ORIENTED]: 3,
-  [FM_ORIENTED2]: 3,
-  [FM_DIM]: 2,
-  [FM_IGNORED]: 1,
-};
-
-/** Union several stage views: a facelet stays visible whenever any constituent
- *  mask keeps it visible. */
-export function mergeStickeringMaskFns(
-  masks: readonly (StickeringMaskFn | null | undefined)[],
-): StickeringMaskFn | null {
-  const active = masks.filter((mask): mask is StickeringMaskFn => !!mask);
-  if (active.length === 0) return null;
-  if (active.length === 1) return active[0];
-  return (initial, face) => {
-    let visible = active[0](initial, face);
-    for (let i = 1; i < active.length; i++) {
-      const mask = active[i];
-      const value = mask(initial, face);
-      if (MASK_VISIBILITY[value] > MASK_VISIBILITY[visible]) visible = value;
-      if (visible === FM_REGULAR) break;
-    }
-    return visible;
-  };
-}
-
-/** 与面色无关的那几档遮罩色(常量取自 cubing.js)。3D 渲染器
- *  (InstancedRenderer.resolveStickerColor)和平面伴图(net / plan 导出器)共用这一份 ——
- *  否则同一个阶段在魔方上和小图上会是两种灰。 */
-export const FM_FIXED_COLOR: Partial<Record<FaceletMask, string>> = {
-  [FM_IGNORED]: '#666666',
-  [FM_ORIENTED]: '#44ddcc',
-  [FM_ORIENTED2]: '#fffdaa',
-};
-
-/** FM_DIM 下纯白压到哪:白色减半就是灰,会跟 FM_IGNORED 那档灰撞。 */
-export const FM_DIM_WHITE = '#dddddd';
-
-/** FM_DIM = 原色在 **sRGB 分量上**减半(twizzle 的暗度;线性域减半只暗 ~27%,看不出来)。
- *  3D 侧在 THREE.Color 上做同一件事,这里是平面导出的字符串版。认不出的色值原样退回。 */
-export function dimFaceletColor(hex: string): string {
-  const m = /^#([0-9a-f]{6})$/i.exec(hex.trim());
-  if (!m) return hex;
-  const n = parseInt(m[1], 16);
-  if (n === 0xffffff) return FM_DIM_WHITE;
-  const half = (shift: number) => (((n >> shift) & 0xff) >> 1).toString(16).padStart(2, '0');
-  return `#${half(16)}${half(8)}${half(0)}`;
-}
-
-/** 一格的实际显示色:遮罩码 + 该格本来的颜色 → 画出来的颜色。 */
-export function faceletDisplayColor(code: FaceletMask, base: string): string {
-  return FM_FIXED_COLOR[code] ?? (code === FM_DIM ? dimFaceletColor(base) : base);
-}
+import {
+  FM_DIM,
+  FM_IGNORED,
+  FM_ORIENTED,
+  FM_ORIENTED2,
+  FM_REGULAR,
+  type FaceletMask,
+  type StickeringMaskFn,
+} from '@cuberoot/puzzle-render-core/support/sticker-mask';
+export {
+  FM_DIM,
+  FM_DIM_WHITE,
+  FM_FIXED_COLOR,
+  FM_IGNORED,
+  FM_ORIENTED,
+  FM_ORIENTED2,
+  FM_OUTLINE,
+  FM_REGULAR,
+  dimFaceletColor,
+  faceletDisplayColor,
+  mergeStickeringMaskFns,
+  type FaceletMask,
+  type StickeringMaskFn,
+} from '@cuberoot/puzzle-render-core/support/sticker-mask';
 
 /** piece 级语义(cubing.js PieceStickering),展开成 [主贴纸, 次贴纸] 两个 facelet 码。
  *  主贴纸 = kpuzzle facelets[0]:有 U/D 贴纸取 U/D,否则取 F/B(E 层棱),再否则 L/R。 */
