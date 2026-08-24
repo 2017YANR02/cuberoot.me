@@ -121,6 +121,7 @@
 .news-dist .y { background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); font-weight: 600; }
 .news-dist .n { background: color-mix(in srgb, var(--bad) 11%, transparent); color: var(--bad); font-weight: 600; }
 .news-dist-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--rule); border-radius: 12px; }
+.news-pad-table { min-width: 720px; }
 
 /* ── 响应式 ─────────────────────────────────── */
 @media (max-width: 720px) {

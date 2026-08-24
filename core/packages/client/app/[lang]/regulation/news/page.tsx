@@ -16,6 +16,7 @@ import './news.css';
 
 const POST_4_PAD = 'https://www.worldcubeassociation.org/posts/adoption-of-4-pad-timing-august-2026';
 const FOUR_PAD_EXPLAINER = 'https://drive.google.com/file/d/13fQghYapzMIPQnGeo53r80_cmKcp0NrW/view';
+const SPEED_STACKS_G5 = 'https://www.speedstacks.com/news/2021-02-28/new-g5-timer/';
 const REG_A7G = 'https://www.worldcubeassociation.org/regulations/#A7g';
 const POST_EVENTS = 'https://www.worldcubeassociation.org/posts/changes-to-the-wca-s-list-of-official-events-june-2026';
 const POST_POLICY = 'https://www.worldcubeassociation.org/posts/wca-competition-requirements-policy-update-5-5-may-2026';
@@ -63,6 +64,7 @@ export default function RegulationNews() {
               <span className="news-date">2026-08-23</span>
               <SourceLink href={POST_4_PAD} label={t('官方原文', 'Official post')} />
               <SourceLink href={FOUR_PAD_EXPLAINER} label={t('决策说明', 'Decision explainer')} />
+              <SourceLink href={SPEED_STACKS_G5} label={t('G5 工作原理', 'How the G5 works')} />
               <SourceLink href={REG_A7G} label={t('现行 A7g 条款', 'Current Regulation A7g')} />
             </div>
             <h2 className="news-title">
@@ -79,6 +81,52 @@ export default function RegulationNews() {
               {t(
                 '新要求到 2027-01-02 才生效。在此之前,比赛仍应遵守现行的 2-pad 规定;启动与停止计时器的规则修订草案将在 2026 年 9 月公布并征求社区意见。本站会在正式规则发布后同步完整条款。',
                 'The new requirement does not take effect until 2027-01-02. Until then, competitions must continue to follow the current 2-pad rule. Draft changes covering how the timer is started and stopped will be published for community feedback in September 2026; this site will update its full text after the official Regulations are released.',
+              )}
+            </Callout>
+
+            <h3 className="news-sub-title">{t('2-pad 和 4-pad 到底是什么', 'What 2-pad and 4-pad actually mean')}</h3>
+            <p className="news-lede">
+              {t(
+                '这里的 pad 指计时器上的触摸感应区,不是计时器或手的数量。G5 计时器共有四个感应区:左右两块供手指接触的主要感应区,以及计时器背面两块供拇指接触的较小感应区。Speed Stacks 官方说明,G5 可在 2-pad 与 4-pad 两种模式之间切换。',
+                'Here, pad means a touch-sensitive area on the timer, not a number of timers or hands. The G5 has four sensor areas: two main pads for the fingers and two smaller pads on the back for the thumbs. Speed Stacks explains that the G5 can switch between 2-pad and 4-pad modes.',
+              )}
+            </p>
+            <div className="news-dist-wrap">
+              <table className="news-dist news-pad-table">
+                <thead>
+                  <tr>
+                    <th>{t('模式', 'Mode')}</th>
+                    <th>{t('生效的感应区', 'Active sensor areas')}</th>
+                    <th>{t('启动计时', 'Starting')}</th>
+                    <th>{t('停止计时', 'Stopping')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>2-pad</td>
+                    <td>{t('只要求左右两块主要感应区;G5 在此模式下与 G4 的工作方式相同。', 'Only the two main pads are required; in this mode, the G5 operates like a G4.')}</td>
+                    <td>{t('双手手指接触两块主要感应区,计时器就绪后移开双手。', 'Touch the two main pads with the fingers of both hands, then lift both hands once the timer is ready.')}</td>
+                    <td>{t('双手重新触及左右两块主要感应区。', 'Touch the left and right main pads again with both hands.')}</td>
+                  </tr>
+                  <tr>
+                    <td>4-pad</td>
+                    <td>{t('左右两块主要感应区和背面两块拇指感应区,四块都必须触发。', 'Both main pads and both rear thumb pads are required, so all four must be activated.')}</td>
+                    <td>{t('双手手指接触主要感应区,双手拇指同时接触背面小感应区;计时器就绪后移开双手。', 'Touch the main pads with the fingers and the two rear pads with the thumbs, then lift both hands once the timer is ready.')}</td>
+                    <td>{t('双手回到计时器,同时触发全部四块感应区。', 'Return both hands to the timer and activate all four sensor areas.')}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="news-lede" style={{ marginTop: 20 }}>
+              {t(
+                '设备上长按 RESET 键 5 秒即可切换模式;显示屏与指示灯会显示当前模式。相比只检查两块主要感应区,4-pad 还要求双手拇指参与,从硬件上使不完整接触、手腕触碰等不规范启停方式更难触发计时器。',
+                'Holding RESET for five seconds switches modes, and the display and indicator light show the active mode. Compared with checking only the two main pads, 4-pad also requires both thumbs, making incomplete contact, wrist contact, and similar improper starts or stops much harder to register at the hardware level.',
+              )}
+            </p>
+            <Callout tone="info" label={t('设备原理不等于最终规则文本', 'Hardware behavior is not the final Regulations wording')}>
+              {t(
+                '以上是 G5 计时器本身的工作方式。WCA 尚未公布 2027 年正式的启动、停止动作与罚则文本;这些细节以 2026 年 9 月公布的草案及随后生效的正式规则为准。',
+                'The description above explains how the G5 hardware works. The WCA has not yet published the final 2027 wording for starting, stopping, or penalties; those details will be governed by the September 2026 draft and the official Regulations that subsequently take effect.',
               )}
             </Callout>
 
