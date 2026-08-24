@@ -153,6 +153,15 @@ $invokeParams = $env:CUBEROOT_SCRIPT_PARAMS | ConvertFrom-Json -AsHashtable
 Write-Output 'ORCHESTRATION_CONTRACT_RETURNED'
 '@
 
+$nativeFailureWrapper = @'
+$ErrorActionPreference = 'Stop'
+function global:git {
+    $global:LASTEXITCODE = 23
+}
+$invokeParams = $env:CUBEROOT_SCRIPT_PARAMS | ConvertFrom-Json -AsHashtable
+& $env:CUBEROOT_SCRIPT @invokeParams
+'@
+
 $temporaryRoots = [System.Collections.Generic.List[string]]::new()
 
 function Assert-True
@@ -243,6 +252,60 @@ function Assert-ParameterSurface
         $actualTargets = @($validateSet.PositionalArguments | ForEach-Object { $_.SafeGetValue() })
         $expectedTargets = @('cstimer', 'solver', 'algtrainers', 'blddb', 'recordranks')
         Assert-True (($actualTargets -join ',') -ceq ($expectedTargets -join ',')) "-Only ValidateSet 漂移：$($actualTargets -join ',')"
+    }
+}
+
+function Assert-RepositoryTopology
+{
+    $expectedRootScripts = @('_sync_blddb.ps1', 'sync_upstream.ps1')
+    $actualRootScripts = @(
+        Get-ChildItem -LiteralPath $RepoRoot -Filter '*.ps1' -File |
+            ForEach-Object { $_.Name } |
+            Sort-Object
+    )
+    Assert-True (($actualRootScripts -join "`n") -ceq ($expectedRootScripts -join "`n")) "根目录 PowerShell 入口漂移：expected=$($expectedRootScripts -join ', '); actual=$($actualRootScripts -join ', ')"
+
+    $canonicalScripts = @(
+        'scripts/upstream/sync-all.ps1'
+        'scripts/upstream/sync-cstimer.ps1'
+        'scripts/upstream/sync-cstimer-scramble.ps1'
+        'scripts/upstream/sync-rubiks-solver-demo.ps1'
+        'scripts/upstream/sync-alg-trainers.ps1'
+        'scripts/upstream/sync-blddb.ps1'
+        'scripts/upstream/sync-recordranks.ps1'
+    )
+    foreach ($relativePath in $canonicalScripts)
+    {
+        Assert-True (Test-Path -LiteralPath (Join-Path $RepoRoot $relativePath) -PathType Leaf) "缺少 canonical upstream 脚本：$relativePath"
+    }
+
+    foreach ($legacyPath in @(
+        '_sync_cstimer.ps1'
+        '_sync_cstimer_scramble.ps1'
+        '_sync_RubiksSolverDemo.ps1'
+        '_sync_recordranks.ps1'
+        'sync_alg_trainers.ps1'
+    ))
+    {
+        Assert-True (-not (Test-Path -LiteralPath (Join-Path $RepoRoot $legacyPath))) "私有旧入口不得留在根目录：$legacyPath"
+    }
+
+    $shimTargets = [ordered]@{
+        'sync_upstream.ps1' = 'scripts/upstream/sync-all.ps1'
+        '_sync_blddb.ps1' = 'scripts/upstream/sync-blddb.ps1'
+    }
+    foreach ($shimName in $shimTargets.Keys)
+    {
+        $shimPath = Join-Path $RepoRoot $shimName
+        $shimAst = Get-ScriptAst -Path $shimPath
+        $functionDefinitions = @($shimAst.FindAll({
+            param($node)
+            $node -is [System.Management.Automation.Language.FunctionDefinitionAst]
+        }, $true))
+        $shimSource = Get-Content -LiteralPath $shimPath -Raw
+        Assert-True ($functionDefinitions.Count -eq 0) "$shimName 必须保持薄 shim，不得承载实现函数。"
+        Assert-True ($shimSource.Contains('$PSBoundParameters')) "$shimName 必须从 PSBoundParameters 转发显式参数。"
+        Assert-True ($shimSource.Contains($shimTargets[$shimName])) "$shimName 必须调用 canonical 实现 $($shimTargets[$shimName])。"
     }
 }
 
@@ -348,6 +411,47 @@ function Invoke-IsolatedPowerShell
     $startInfo.ArgumentList.Add('-NonInteractive')
     $startInfo.ArgumentList.Add('-Command')
     $startInfo.ArgumentList.Add($Wrapper)
+    foreach ($key in $Environment.Keys) { $startInfo.Environment[$key] = "$($Environment[$key])" }
+
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $startInfo
+    [void]$process.Start()
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
+    if (-not $process.WaitForExit(30000))
+    {
+        $process.Kill($true)
+        $process.WaitForExit()
+        throw "$Description 子进程 30 秒内未退出。"
+    }
+    return [pscustomobject]@{
+        ExitCode = $process.ExitCode
+        Stdout = $stdoutTask.GetAwaiter().GetResult()
+        Stderr = $stderrTask.GetAwaiter().GetResult()
+    }
+}
+
+function Invoke-IsolatedFile
+{
+    param(
+        [string]$Script,
+        [string]$WorkingDirectory,
+        [string[]]$Arguments = @(),
+        [hashtable]$Environment = @{},
+        [string]$Description
+    )
+
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = (Get-Command pwsh -ErrorAction Stop).Source
+    $startInfo.WorkingDirectory = $WorkingDirectory
+    $startInfo.UseShellExecute = $false
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $startInfo.ArgumentList.Add('-NoProfile')
+    $startInfo.ArgumentList.Add('-NonInteractive')
+    $startInfo.ArgumentList.Add('-File')
+    $startInfo.ArgumentList.Add($Script)
+    foreach ($argument in $Arguments) { $startInfo.ArgumentList.Add($argument) }
     foreach ($key in $Environment.Keys) { $startInfo.Environment[$key] = "$($Environment[$key])" }
 
     $process = [System.Diagnostics.Process]::new()
@@ -569,6 +673,8 @@ function Assert-GitStashGuard
 
 try
 {
+    Assert-RepositoryTopology
+
     foreach ($contract in $contracts)
     {
         foreach ($script in Resolve-ContractScripts -Contract $contract -Root $RepoRoot)
@@ -806,11 +912,94 @@ try
         }
     }
 
-    $orchestrationPath = if (Test-Path -LiteralPath (Join-Path $RepoRoot 'scripts\upstream\sync-all.ps1'))
-    {
-        Join-Path $RepoRoot 'scripts\upstream\sync-all.ps1'
+    $fileEntryFixture = New-FixtureRepo
+    $fileEntryScript = Join-Path $fileEntryFixture.Root 'sync_upstream.ps1'
+    $beforeFileEntry = @(Get-TreeFingerprint -Root $fileEntryFixture.Sandbox)
+    $fileEntryResult = Invoke-IsolatedFile -Script $fileEntryScript -WorkingDirectory $fileEntryFixture.Cwd -Description 'root file entrypoint' -Arguments @(
+        '-RepoRoot', $fileEntryFixture.Root,
+        '-Only', 'cstimer',
+        '-SkipPull',
+        '-DryRun',
+        '-ValidateOnly'
+    )
+    $fileEntryFailure = Format-ProcessFailure -Id 'root-file-entrypoint' -Result $fileEntryResult
+    Assert-True ($fileEntryResult.ExitCode -eq 0) $fileEntryFailure
+    Assert-True (($fileEntryResult.Stdout + $fileEntryResult.Stderr).Contains($fileEntryFixture.Root)) "$fileEntryFailure`n根入口没有从任意 cwd 使用显式 RepoRoot。"
+    $afterFileEntry = @(Get-TreeFingerprint -Root $fileEntryFixture.Sandbox)
+    Assert-True (($beforeFileEntry -join "`n") -ceq ($afterFileEntry -join "`n")) '真实 -File 根入口改写了测试沙箱。'
+
+    $blddbShimFixture = New-FixtureRepo
+    $blddbProbePath = Join-Path $blddbShimFixture.Root 'scripts/upstream/sync-blddb.ps1'
+    Set-Content -LiteralPath $blddbProbePath -NoNewline -Value @'
+param(
+    [string]$BlddbDir,
+    [string]$ProjectDir,
+    [switch]$SkipPull,
+    [switch]$SkipInstall,
+    [string]$RepoRoot,
+    [switch]$ValidateOnly
+)
+[ordered]@{
+    BlddbDir = $BlddbDir
+    ProjectDir = $ProjectDir
+    SkipPull = [bool]$SkipPull
+    SkipInstall = [bool]$SkipInstall
+    RepoRoot = $RepoRoot
+    ValidateOnly = [bool]$ValidateOnly
+} | ConvertTo-Json -Compress
+'@
+    $blddbShim = Join-Path $blddbShimFixture.Root '_sync_blddb.ps1'
+    $explicitBlddbDir = Join-Path $blddbShimFixture.External 'blddb explicit'
+    $explicitProjectDir = Join-Path $blddbShimFixture.External 'project explicit'
+    $explicitRepoRoot = Join-Path $blddbShimFixture.External 'repo explicit'
+    $explicitForward = Invoke-IsolatedFile -Script $blddbShim -WorkingDirectory $blddbShimFixture.Cwd -Description 'BLDDB shim explicit forwarding' -Arguments @(
+        '-BlddbDir', $explicitBlddbDir,
+        '-ProjectDir', $explicitProjectDir,
+        '-SkipPull',
+        '-SkipInstall',
+        '-RepoRoot', $explicitRepoRoot,
+        '-ValidateOnly'
+    )
+    $explicitForwardFailure = Format-ProcessFailure -Id 'blddb-shim-explicit-forwarding' -Result $explicitForward
+    Assert-True ($explicitForward.ExitCode -eq 0) $explicitForwardFailure
+    $explicitPayload = $explicitForward.Stdout.Trim() | ConvertFrom-Json
+    Assert-True ($explicitPayload.BlddbDir -ceq $explicitBlddbDir) 'BLDDB shim 丢失 BlddbDir。'
+    Assert-True ($explicitPayload.ProjectDir -ceq $explicitProjectDir) 'BLDDB shim 丢失 ProjectDir。'
+    Assert-True ($explicitPayload.SkipPull -eq $true) 'BLDDB shim 丢失 SkipPull。'
+    Assert-True ($explicitPayload.SkipInstall -eq $true) 'BLDDB shim 丢失 SkipInstall。'
+    Assert-True ($explicitPayload.RepoRoot -ceq $explicitRepoRoot) 'BLDDB shim 丢失显式 RepoRoot。'
+    Assert-True ($explicitPayload.ValidateOnly -eq $true) 'BLDDB shim 丢失 ValidateOnly。'
+
+    $legacyProjectDir = Join-Path $blddbShimFixture.External 'legacy project root'
+    $legacyForward = Invoke-IsolatedFile -Script $blddbShim -WorkingDirectory $blddbShimFixture.Cwd -Description 'BLDDB shim legacy root forwarding' -Arguments @(
+        '-ProjectDir', $legacyProjectDir,
+        '-ValidateOnly'
+    )
+    $legacyForwardFailure = Format-ProcessFailure -Id 'blddb-shim-legacy-root-forwarding' -Result $legacyForward
+    Assert-True ($legacyForward.ExitCode -eq 0) $legacyForwardFailure
+    $legacyPayload = $legacyForward.Stdout.Trim() | ConvertFrom-Json
+    Assert-True ($legacyPayload.ProjectDir -ceq $legacyProjectDir) 'BLDDB shim 丢失旧 ProjectDir。'
+    Assert-True ($legacyPayload.RepoRoot -ceq $legacyProjectDir) 'BLDDB shim 必须把旧 ProjectDir 映射为 RepoRoot。'
+
+    $nativeFailureFixture = New-FixtureRepo
+    $nativeFailureUpstream = Join-Path $nativeFailureFixture.External 'cstimer'
+    New-Item -ItemType Directory -Path (Join-Path $nativeFailureUpstream '.git') -Force | Out-Null
+    $nativeFailureScript = Join-Path $nativeFailureFixture.Root 'scripts/upstream/sync-cstimer.ps1'
+    $beforeNativeFailure = @(Get-TreeFingerprint -Root $nativeFailureFixture.Sandbox)
+    $nativeFailureResult = Invoke-IsolatedPowerShell -Wrapper $nativeFailureWrapper -WorkingDirectory $nativeFailureFixture.Cwd -Description 'native failure propagation' -Environment @{
+        CUBEROOT_SCRIPT = $nativeFailureScript
+        CUBEROOT_SCRIPT_PARAMS = (@{
+            RepoRoot = $nativeFailureFixture.Root
+            CstimerDir = $nativeFailureUpstream
+        } | ConvertTo-Json -Compress)
     }
-    else { Join-Path $RepoRoot 'sync_upstream.ps1' }
+    $nativeFailureOutput = $nativeFailureResult.Stdout + $nativeFailureResult.Stderr
+    Assert-True ($nativeFailureResult.ExitCode -ne 0) '原生命令失败必须让同步脚本非零退出。'
+    Assert-True ($nativeFailureOutput.Contains('退出码 23')) '原生命令失败必须报告原始退出码 23。'
+    $afterNativeFailure = @(Get-TreeFingerprint -Root $nativeFailureFixture.Sandbox)
+    Assert-True (($beforeNativeFailure -join "`n") -ceq ($afterNativeFailure -join "`n")) '原生命令失败测试改写了测试沙箱。'
+
+    $orchestrationPath = Join-Path $RepoRoot 'scripts/upstream/sync-all.ps1'
     $orchestrationSource = Get-Content -LiteralPath $orchestrationPath -Raw
     $orchestrationAst = Get-ScriptAst -Path $orchestrationPath
     $cstimerGuards = @($orchestrationAst.FindAll({
@@ -820,16 +1009,16 @@ try
     }, $true))
     Assert-True ($cstimerGuards.Count -eq 1) '-Only cstimer 必须映射到唯一的 csTimer 编排分支。'
     $cstimerBranchSource = $cstimerGuards[0].Clauses[0].Item2.Extent.Text
-    Assert-True ($cstimerBranchSource -match '(?m)^\s*&[^\r\n]*(?:_sync_cstimer|sync-cstimer)\.ps1[^\r\n]*-RepoRoot\s+\$root[^\r\n]*-SkipPull') 'csTimer 分支必须调用主同步任务，并显式传 RepoRoot 和 SkipPull。'
-    Assert-True ($cstimerBranchSource -match '(?m)^\s*&[^\r\n]*(?:_sync_cstimer_scramble|sync-cstimer-scramble)\.ps1[^\r\n]*-RepoRoot\s+\$root[^\r\n]*-SkipPull') 'csTimer 分支必须调用打乱同步任务，并显式传 RepoRoot 和 SkipPull。'
-    Assert-True ($orchestrationSource -match '(?m)^\s*&[^\r\n]*(?:_sync_RubiksSolverDemo|sync-rubiks-solver-demo)\.ps1[^\r\n]*-RepoRoot\s+\$root[^\r\n]*@dry') 'Solver 调用必须显式传 RepoRoot 和 DryRun 参数集。'
-    Assert-True ($orchestrationSource -match '(?m)^\s*&[^\r\n]*(?:sync_alg_trainers|sync-alg-trainers)\.ps1[^\r\n]*-RepoRoot\s+\$root[^\r\n]*@dry') 'Alg-Trainers 调用必须显式传 RepoRoot 和 DryRun 参数集。'
-    Assert-True ($orchestrationSource -match '(?m)^\s*&[^\r\n]*(?:_sync_blddb|sync-blddb)\.ps1[^\r\n]*-RepoRoot\s+\$root[^\r\n]*-SkipPull') 'BLDDB 调用必须显式传 RepoRoot 和 SkipPull。'
+    Assert-True ($cstimerBranchSource -match '(?m)^\s*&[^\r\n]*sync-cstimer\.ps1[^\r\n]*-RepoRoot\s+\$root[^\r\n]*-SkipPull') 'csTimer 分支必须调用 canonical 主同步任务，并显式传 RepoRoot 和 SkipPull。'
+    Assert-True ($cstimerBranchSource -match '(?m)^\s*&[^\r\n]*sync-cstimer-scramble\.ps1[^\r\n]*-RepoRoot\s+\$root[^\r\n]*-SkipPull') 'csTimer 分支必须调用 canonical 打乱同步任务，并显式传 RepoRoot 和 SkipPull。'
+    Assert-True ($orchestrationSource -match '(?m)^\s*&[^\r\n]*sync-rubiks-solver-demo\.ps1[^\r\n]*-RepoRoot\s+\$root[^\r\n]*@dry') 'Solver 调用必须显式传 RepoRoot 和 DryRun 参数集。'
+    Assert-True ($orchestrationSource -match '(?m)^\s*&[^\r\n]*sync-alg-trainers\.ps1[^\r\n]*-RepoRoot\s+\$root[^\r\n]*@dry') 'Alg-Trainers 调用必须显式传 RepoRoot 和 DryRun 参数集。'
+    Assert-True ($orchestrationSource -match '(?m)^\s*&[^\r\n]*sync-blddb\.ps1[^\r\n]*-RepoRoot\s+\$root[^\r\n]*-SkipPull') 'BLDDB 调用必须显式传 RepoRoot 和 SkipPull。'
     Assert-True ($orchestrationSource -match '\$dry\s*=\s*if\s*\(\$DryRun\)\s*\{\s*@\{\s*DryRun\s*=\s*\$true\s*\}') 'DryRun 参数集必须继续由总入口转发。'
     Assert-True ($orchestrationSource -match '\$recordRanksArgs\s*=\s*@\{\s*RepoRoot\s*=\s*\$root\s*\}') 'RecordRanks 参数集必须显式包含 RepoRoot。'
     Assert-True ($orchestrationSource -match 'if\s*\(\$SkipPull\)\s*\{\s*\$recordRanksArgs\.SkipPull\s*=\s*\$true\s*\}') 'RecordRanks 必须转发 SkipPull。'
     Assert-True ($orchestrationSource -match 'if\s*\(\$DryRun\)\s*\{\s*\$recordRanksArgs\.DryRun\s*=\s*\$true\s*\}') 'RecordRanks 必须转发 DryRun。'
-    Assert-True ($orchestrationSource -match '(?m)^\s*&[^\r\n]*(?:_sync_recordranks|sync-recordranks)\.ps1[^\r\n]*@recordRanksArgs') 'RecordRanks 调用必须使用受测参数集。'
+    Assert-True ($orchestrationSource -match '(?m)^\s*&[^\r\n]*sync-recordranks\.ps1[^\r\n]*@recordRanksArgs') 'RecordRanks canonical 调用必须使用受测参数集。'
 
     Write-Host "upstream sync PowerShell contract passed: $RepoRoot" -ForegroundColor Green
 }

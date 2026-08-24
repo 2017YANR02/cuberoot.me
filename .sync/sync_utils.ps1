@@ -3,7 +3,7 @@
     同步脚本公共工具函数
 .DESCRIPTION
     提供文件/目录同步、GA 代码生成、UTF-8 字节级读写等工具函数，
-    供根目录上游同步脚本共用。
+    供上游同步脚本共用。
 #>
 
 function Resolve-CubeRootRepoRoot

@@ -21,20 +21,21 @@
 #>
 param(
     [string]$CstimerDir = "D:\cube\cstimer",
-    [string]$ProjectDir = $PSScriptRoot,
+    [string]$ProjectDir = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..')),
     [switch]$SkipPull,
     [string]$RepoRoot,
     [switch]$ValidateOnly
 )
 
 $ErrorActionPreference = 'Stop'
+$defaultRepoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $syncBootstrapRoot = if ($RepoRoot) { [IO.Path]::GetFullPath($RepoRoot) } else { [IO.Path]::GetFullPath($ProjectDir) }
 . (Join-Path $syncBootstrapRoot '.sync\sync_utils.ps1')
-$ProjectDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $ProjectDir -ScriptRoot $PSScriptRoot
+$ProjectDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $ProjectDir -ScriptRoot $defaultRepoRoot
 Assert-SyncInternalFiles -RepoRoot $ProjectDir -RelativePaths @(
-    '_sync_cstimer_scramble.ps1'
+    'scripts/upstream/sync-cstimer-scramble.ps1'
     '.sync/sync_utils.ps1'
-) -PowerShellScripts @('_sync_cstimer_scramble.ps1')
+) -PowerShellScripts @('scripts/upstream/sync-cstimer-scramble.ps1')
 if ($ValidateOnly)
 {
     Write-Host "csTimer 打乱源码同步脚本校验通过：$ProjectDir" -ForegroundColor Green
@@ -218,7 +219,7 @@ License: GPLv3 (see ./LICENSE)
 Files in lib/ and scramble/ are copied from upstream src/js/lib/ and
 src/js/scramble/. A few of them (scramble_sq1_new.js / pyraminx.js / redi.js)
 carry cuberoot.me additions — the `solveScramble` exports. Do not hand-edit for
-upstream changes; resync via _sync_cstimer_scramble.ps1 at repo root, which
+upstream changes; resync via scripts/upstream/sync-cstimer-scramble.ps1, which
 three-way merges against the commit recorded above.
 
 Used by:  core/packages/client/lib/cstimer-scramble.ts

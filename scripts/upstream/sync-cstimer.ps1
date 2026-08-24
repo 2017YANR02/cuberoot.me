@@ -12,20 +12,21 @@
 #>
 param(
     [string]$CstimerDir = "D:\cube\cstimer",
-    [string]$ProjectDir = $PSScriptRoot,
+    [string]$ProjectDir = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..')),
     [switch]$SkipPull,
     [string]$RepoRoot,
     [switch]$ValidateOnly
 )
 
 $ErrorActionPreference = 'Stop'
+$defaultRepoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $syncBootstrapRoot = if ($RepoRoot) { [IO.Path]::GetFullPath($RepoRoot) } else { [IO.Path]::GetFullPath($ProjectDir) }
 . (Join-Path $syncBootstrapRoot '.sync\sync_utils.ps1')
-$ProjectDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $ProjectDir -ScriptRoot $PSScriptRoot
+$ProjectDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $ProjectDir -ScriptRoot $defaultRepoRoot
 Assert-SyncInternalFiles -RepoRoot $ProjectDir -RelativePaths @(
-    '_sync_cstimer.ps1'
+    'scripts/upstream/sync-cstimer.ps1'
     '.sync/sync_utils.ps1'
-) -PowerShellScripts @('_sync_cstimer.ps1')
+) -PowerShellScripts @('scripts/upstream/sync-cstimer.ps1')
 if ($ValidateOnly)
 {
     Write-Host "csTimer 构建同步脚本校验通过：$ProjectDir" -ForegroundColor Green
@@ -117,7 +118,7 @@ if ($html.Contains($anchor)) {
     Write-Host "  警告：未找到 LANG_CUR 锚点，跳过注入" -ForegroundColor Yellow
 }
 
-# NOTE: 不自动 commit —— 统一由 sync_upstream.ps1 跑完全部上游后由人工审 diff 再提交。
+# NOTE: 不自动 commit —— 统一由根目录 sync_upstream.ps1 跑完全部上游后由人工审 diff 再提交。
 $version = Get-CheckedNativeText -FilePath 'git' -ArgumentList @(
     '-C', $CstimerDir, 'describe', '--tags', '--always'
 )
