@@ -93,6 +93,21 @@ function targetCommand(target) {
   return { command: process.execPath, args: [target] };
 }
 
+function isArchitectureTarget(target) {
+  return normalizePath(target).toLowerCase().endsWith('/block-architecture-boundaries.ps1');
+}
+
+function runTarget(target, payload, cwd) {
+  const targetProcess = targetCommand(target);
+  const result = spawnSync(targetProcess.command, targetProcess.args, {
+    cwd,
+    input: JSON.stringify(payload),
+    encoding: 'utf8',
+    windowsHide: true,
+  });
+  return String(result.stdout || '').trim();
+}
+
 function mightMatch(target, content) {
   const name = normalizePath(target).split('/').pop()?.toLowerCase() ?? '';
   if (name.includes('raw-checkbox')) return /checkbox/.test(content);
@@ -124,28 +139,43 @@ function run() {
     try { payload = JSON.parse(raw || '{}'); } catch { return; }
     const writes = writesFromPayload(payload);
     if (!writes.length) return;
-    for (const write of writes) {
-      const cwd = String(payload.cwd || process.cwd());
+    const cwd = String(payload.cwd || process.cwd());
+    const preparedWrites = writes.map((write) => {
       const filePath = isAbsolute(write.filePath) ? write.filePath : resolve(cwd, write.filePath);
       let content = write.content;
       if (write.sourcePath) {
         const sourcePath = isAbsolute(write.sourcePath) ? write.sourcePath : resolve(cwd, write.sourcePath);
         try { content = `${readFileSync(sourcePath, 'utf8')}\n${content}`; } catch { /* fail open */ }
       }
-      const adapted = JSON.stringify({
+      return { filePath, content };
+    });
+
+    const architectureTargets = targets.filter(isArchitectureTarget);
+    if (architectureTargets.length) {
+      const architecturePayload = {
+        ...payload,
+        tool_input: {
+          writes: preparedWrites.map(({ filePath, content }) => ({ file_path: filePath, content })),
+        },
+      };
+      for (const target of architectureTargets) {
+        const output = runTarget(target, architecturePayload, cwd);
+        if (output) {
+          process.stdout.write(output);
+          return;
+        }
+      }
+    }
+
+    const generalTargets = targets.filter((target) => !isArchitectureTarget(target));
+    for (const { filePath, content } of preparedWrites) {
+      const adapted = {
         ...payload,
         tool_input: { file_path: filePath, content },
-      });
-      for (const target of targets) {
+      };
+      for (const target of generalTargets) {
         if (!mightMatch(target, content)) continue;
-        const targetProcess = targetCommand(target);
-        const result = spawnSync(targetProcess.command, targetProcess.args, {
-          cwd,
-          input: adapted,
-          encoding: 'utf8',
-          windowsHide: true,
-        });
-        const output = String(result.stdout || '').trim();
+        const output = runTarget(target, adapted, cwd);
         if (output) {
           process.stdout.write(output);
           return;
