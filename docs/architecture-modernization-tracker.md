@@ -4,8 +4,10 @@
 
 Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59`，工作树无未提交改动；本批文档、测试守卫及跟踪文件自身造成的前进不视为基线漂移。每个后续实施批次开始前仍必须重新记录当时的 `HEAD` 和工作树重叠情况。
 
-状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 在两次生产前置校验安全暴露并修正 store provision 与 opt5/opt6 假设后，最终修正 `6756c599a1` 已由 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` 全绿发布。生产部署确认 `cubeopt-opt6-legacy-runtime-v1` 制品、启用态 manager 加载与 `R → R'`（1 HTM）真实请求通过，API 健康、启用/配置状态及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网 smoke 均为 200；因此 BND-02、BND-03、BND-06 和 Batch 3 的 PKG-02 最小切片已关闭。BND-04 仍待下一个独立 Codex 会话的项目 Hook 宿主实触发，BND-05 仍待公开 subpath 运行时属性登记。Batch 4 的 `auth/web-session` 中性契约试点、小程序真实构建依赖图和首次微信用户空昵称兼容已随 `ba22fd81e1` 发布；Test `32697884591`、Deploy Next `32697884578`、Deploy Core `32697884597` 全部成功，API 健康、缺失 WCA token、畸形票据、未登录取票和 Web 回调壳安全 smoke 均符合预期，CTR-02 已关闭。真实账号登录成功链路没有用生产凭据手工执行，其 producer/consumer 正向路径由可执行 route/session fixture 证明；CTR-03 的稳定错误码仍按后续兼容切片推进。Batch 5 的 Clock 窄切片已随 `1db7804111` 发布；隔离干净工作树、本地门槛与三路独立复核通过，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 全部成功，API 健康及中英文 `/sim` 公网 smoke 为 200 且无模块解析错误，本切片已关闭。Batch 6 的根 PowerShell 治理已随 `b02005a50e` 发布；三路终审、本地与 Linux 合同、Test、Deploy Next、静态工具同步及五条公网 smoke 全绿，PS1-01 至 PS1-04 已关闭。
+状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 在两次生产前置校验安全暴露并修正 store provision 与 opt5/opt6 假设后，最终修正 `6756c599a1` 已由 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` 全绿发布。生产部署确认 `cubeopt-opt6-legacy-runtime-v1` 制品、启用态 manager 加载与 `R → R'`（1 HTM）真实请求通过，API 健康、启用/配置状态及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网 smoke 均为 200；因此 BND-02、BND-03、BND-04、BND-06 和 Batch 3 的 PKG-02 最小切片已关闭。BND-04 的共用 AST 检测器置于写入钩子链首后，当前 Codex 宿主已真实拒绝违规跨 app import 且探针未落盘；BND-05 仍待公开 subpath 运行时属性登记。Batch 4 的 `auth/web-session` 中性契约试点、小程序真实构建依赖图和首次微信用户空昵称兼容已随 `ba22fd81e1` 发布；Test `32697884591`、Deploy Next `32697884578`、Deploy Core `32697884597` 全部成功，API 健康、缺失 WCA token、畸形票据、未登录取票和 Web 回调壳安全 smoke 均符合预期，CTR-02 已关闭。真实账号登录成功链路没有用生产凭据手工执行，其 producer/consumer 正向路径由可执行 route/session fixture 证明；CTR-03 的稳定错误码仍按后续兼容切片推进。Batch 5 的 Clock 窄切片已随 `1db7804111` 发布；隔离干净工作树、本地门槛与三路独立复核通过，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 全部成功，API 健康及中英文 `/sim` 公网 smoke 为 200 且无模块解析错误，本切片已关闭。Batch 6 的根 PowerShell 治理已随 `b02005a50e` 发布；三路终审、本地与 Linux 合同、Test、Deploy Next、静态工具同步及五条公网 smoke 全绿，PS1-01 至 PS1-04 已关闭。
 
+> BND-04 证据校正：仅把架构守卫移到链首仍会被多文件 patch 的逐文件一般守卫拖入 30 秒超时。最终实现先把同一 patch 的全部 writes 一次性交给架构检测器，再执行一般守卫；末尾才出现违规的真实五文件探针约 6 秒内被 deny，五文件均未落盘。
+>
 > 状态校正：2026-08-22 重新打开的产品与数据迁移已按 [Platform 主站完整迁移跟踪](./platform-product-migration-tracker.md) 完成 P0-P8。P9 是迁移完成后的主站产品体验改版，不恢复独立 Platform app，也不改变本架构方案的长期边界。Batch 1 只改善入口、状态和生成物可发现性；后续源码实施仍须刷新依赖基线、完成新的独立复审并取得用户授权。
 
 ## 1. 用途
@@ -152,7 +154,7 @@ API     ─X─> Web 源码或 Web public
 | BND-01 | 生成真实系统依赖基线 | `完成` | 当前登记 314 个精确旧债指纹、330 次出现和 13 条人工契约，覆盖静态 import、动态加载、路径读取、构建复制、非 workspace 原生工具、子进程、大表、环境变量覆盖和部署目标；Batch 3 相对旧基线净消除 7 个身份，Batch 5 Clock 再消除 2 个跨 app 私有路径身份，本次统一转动记号演示再消除 3 个 Shared 裸根类型导入身份，均经精确守卫复核 |
 | BND-02 | 消除 API 对 Web 源码的 import | `完成` | Server→Client 源码边清零，隔离 bundle 已证明不需要 Client 目录；Deploy Core `32692270167` 成功后，生产 API 健康与 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网路由均为 200 且返回真实 SVG |
 | BND-03 | 消除 API 对 Web public 的运行时读取 | `完成` | API 自有 manifest/校验和/原子晋级支持 opt5/h5 与 opt6/h6；Deploy Core `32692270167` 确认生产 `cubeopt-opt6-legacy-runtime-v1`，启用态 manager 加载后完成 `R → R'`（1 HTM）真实 smoke，公网 readiness 同时确认 enabled/configured |
-| BND-04 | 按边类型增加跨 app 依赖守卫 | `进行中` | runtime、build、test、artifact 和 subprocess baseline 已进入 CI；任何新增、重复或陈旧基线都会失败，旧债减少必须经过审核并显式刷新 manifest；write adapter 已实测，项目 Hook 仍待下一个独立 Codex 会话宿主实触发 |
+| BND-04 | 按边类型增加跨 app 依赖守卫 | `完成` | runtime、build、test、artifact 和 subprocess baseline 已进入 CI；任何新增、重复或陈旧基线都会失败。写入 adapter 先把同一 patch 的全部 writes 一次性交给架构检测器，再逐文件执行一般守卫；真实五文件 `tools.apply_patch` 探针在末尾放置跨 app import，宿主约 6 秒内 deny 且五文件均未落盘；CI 全文件扫描仍为权威兜底 |
 | BND-05 | 收口 package 公开 exports | `进行中` | 已冻结 `@cuberoot/shared` 裸根新增并按任意 workspace package 的 `exports` 拦私有 deep import；公开 subpath 运行时属性尚未全部登记，未来无 `exports["."]` 的 package 还须增加裸根拒绝验收 |
 | BND-06 | 收窄部署触发边界 | `完成` | Test 的 push/PR 与 Deploy Core/Next 由 workspace package.json 依赖递归生成精确路径矩阵；触发/排除矩阵定向测试通过，相关路径推送真实触发并通过 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` |
 
@@ -368,6 +370,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | Batch 6 CLI、副作用、拓扑与文档终审 | `batch6_ps1_cli_audit` | `GO PS1-04，0 Blocker / 0 Major / 0 Minor` | 根精确 2 个 shim、canonical 精确 7 个；两层 RepoRoot、`.sync` bootstrap、任意 cwd、BLDDB legacy、native 退出码、文档和 tracker 均一致。终审提出的 `.sync` 旧“根目录脚本”注释已修正 |
 | Batch 6 CLI 契约与提交面终审 | `batch6_review_cli` | `GO PS1-04，0 Blocker / 0 Major / 0 Minor` | 参数顺序、三种根模式、真实 `pwsh -File`、子入口 flag 与编排转发通过；终审发现两个 shim 未入 index 后先阻断，显式纳入提交并再次完成 Windows 合同和 7/7 路径复验后转 GO |
 | Batch 6 测试与 workflow 终审 | `batch6_review_tests` | `GO PS1-04，0 Blocker / 0 Major` | 先阻断全局 flag 子串、同值 root fixture、根脚本白名单触发和弱退出码断言；修为真实行为、双仓库、根级 `*.ps1` 触发、`/*.ps1` sparse 与精确“退出码 23”后，Windows、Linux 只读合同及路径矩阵 7/7 均通过 |
+| Batch 7 BND-04 宿主探针 | `root`、`batch6_review_cli` | `GO，0 Blocker / 0 Major / 0 Minor` | 首次真实探针因逐文件串行一般守卫先耗尽 30 秒而 fail-open；修复后同一 patch 的全部 writes 先经单次架构扫描，再进入一般守卫。四个普通文件后追加跨 app import 的真实五文件探针约 6 秒内被 `cross-package-alias-import` deny，五文件均不存在；两文件定向测试 26/26、client typecheck、边界审计和 diff-check 通过 |
 
 审核要求：
 
@@ -379,10 +382,13 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 2026-08-21 的三名 Reviewer 曾确认当时的总体架构路线成立；随后 Platform 大迁移显著改变了依赖图，所以旧 PASS 只保留为历史审查证据，不能直接授权当前实施。2026-08-23 的 Batch 1 先做三路只读初审，再做变更后的定点复审：DOC-01 至 DOC-04 均 PASS，DOC-05 因三类已公开的不可复现缺口保持 PARTIAL。Batch 2 再以当前 workspace、workflow、exports、真实路径和子进程调用重建基线；机器守卫与 package 方案已复审通过，项目 Hook 的宿主级验收因配置不热加载明确留到下一独立会话。Batch 3 实施后由三路 Agent 分别审核共享源码边界、CubeOpt 制品与原子部署、workflow 与跟踪一致性；两次生产前置校验暴露的 store 与 variant 假设均安全修正，最终独立复核与 `6756c599a1` 的三条工作流、生产 manager 及公网路由 smoke 已全部通过。Batch 4 实施后 Reviewer 先后阻断测试伪依赖和源码字符串自证；两项改为真实依赖图与可执行 route/session 回归后最终复核 PASS，`ba22fd81e1` 的三条工作流和生产安全边界 smoke 也已通过。Batch 5 开工前由三名 Reviewer 分别复核纯核心边界、条件导出和 workflow、测试与 Worker 运行证明；实施后测试 Reviewer 阻断了“同模型自证但独立 oracle 未进 CI”的缺口，改为常规 CI 精确执行 `clock_solver` 后三路代码复核均转 GO。`1db7804111` 随后通过隔离工作树、Test、Deploy Next、Deploy Core、API 健康和中英文 `/sim` 公网 smoke，Clock 切片正式关闭。Batch 6 的三路只读审计关闭 PS1-01；PS1-02/03 实施后先后堵住全局 flag 子串和同值 root fixture 两处假绿，PS1-04 终审再发现 shim 未入 index、Test 根脚本白名单和弱退出码断言三处问题。全部修正后，根目录精确双 shim、7 个 canonical 实现、Windows/Linux 只读合同和 workflow 路径矩阵均由三路 Reviewer 最终 GO。BND-04/05 与 DOC-05 的保留项不因 Batch 3/4/5/6 的局部推进而提前关闭。
 
+> Batch 7 校正：上一段末尾“BND-04/05 保留”只适用于 Batch 6 结束时；本次真实多文件宿主探针与独立复核通过后，BND-04 已关闭，BND-05 与 DOC-05 继续保留。
+
 ## 13. 变更记录
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-24 | Batch 7 BND-04 宿主级写入守卫关闭 | 首次违规探针在 30 秒后意外落盘，确认逐文件串行一般守卫耗尽超时；改为同一 patch 的全部 writes 先经单次架构扫描后，真实五文件探针在末尾放置违规仍约 6 秒内被 `cross-package-alias-import` deny，五文件均未落盘。两文件定向测试 26/26、client typecheck、边界审计 314/330/13 与 diff-check 通过 |
 | 2026-08-24 | Batch 6 PS1-04 完成发布验收，PS1-01 至 PS1-04 关闭 | `b02005a50e`；根目录只保留统一入口和 BLDDB 兼容 shim，7 个私有实现进入 `scripts/upstream/`。三路 Reviewer 最终 GO；Test `32730444612`、Deploy Next `32730444571`、Sync static toolkit `32730444528` 全绿，五条公网 smoke 为 200 且无错误标记；兼容 shim 的有序退役进入 PS1-05 |
 | 2026-08-24 | Batch 6 PS1-03 CLI 与 CI 契约关闭，PS1-04 获准按迁移门禁实施 | AST 严格冻结 7 个入口参数面；双仓库锁定三种根模式，编排 probe 逐子脚本锁定 `Only/RepoRoot/SkipPull/DryRun`。Test workflow 路径矩阵 7/7，Windows 与 Linux 完整合同通过；两名独立 Reviewer 最终 GO |
 | 2026-08-24 | Batch 6 PS1-02 关闭，统一根解析、无副作用校验与失败退出 | 7 个入口支持 `RepoRoot`/`ValidateOnly`；不同路径的双仓库 fixture 锁定默认、显式与旧根参数，clone/git/install/build/write 均由副作用探针和 fingerprint 守卫；PowerShell AST 9/9 与完整 Windows 合同通过 |
