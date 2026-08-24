@@ -149,7 +149,7 @@ API     ─X─> Web 源码或 Web public
 
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
-| BND-01 | 生成真实系统依赖基线 | `完成` | 当前登记 317 个精确旧债指纹、333 次出现和 13 条人工契约，覆盖静态 import、动态加载、路径读取、构建复制、非 workspace 原生工具、子进程、大表、环境变量覆盖和部署目标；Batch 3 相对旧基线净消除 7 个身份，Batch 5 Clock 再消除 2 个跨 app 私有路径身份，均经独立逐项复核 |
+| BND-01 | 生成真实系统依赖基线 | `完成` | 当前登记 314 个精确旧债指纹、330 次出现和 13 条人工契约，覆盖静态 import、动态加载、路径读取、构建复制、非 workspace 原生工具、子进程、大表、环境变量覆盖和部署目标；Batch 3 相对旧基线净消除 7 个身份，Batch 5 Clock 再消除 2 个跨 app 私有路径身份，本次统一转动记号演示再消除 3 个 Shared 裸根类型导入身份，均经精确守卫复核 |
 | BND-02 | 消除 API 对 Web 源码的 import | `完成` | Server→Client 源码边清零，隔离 bundle 已证明不需要 Client 目录；Deploy Core `32692270167` 成功后，生产 API 健康与 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网路由均为 200 且返回真实 SVG |
 | BND-03 | 消除 API 对 Web public 的运行时读取 | `完成` | API 自有 manifest/校验和/原子晋级支持 opt5/h5 与 opt6/h6；Deploy Core `32692270167` 确认生产 `cubeopt-opt6-legacy-runtime-v1`，启用态 manager 加载后完成 `R → R'`（1 HTM）真实 smoke，公网 readiness 同时确认 enabled/configured |
 | BND-04 | 按边类型增加跨 app 依赖守卫 | `进行中` | runtime、build、test、artifact 和 subprocess baseline 已进入 CI；任何新增、重复或陈旧基线都会失败，旧债减少必须经过审核并显式刷新 manifest；write adapter 已实测，项目 Hook 仍待下一个独立 Codex 会话宿主实触发 |

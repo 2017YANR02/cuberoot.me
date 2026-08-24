@@ -95,12 +95,14 @@ function doubleLayerOf(move: ParsedMove): '' | '双' | null {
 function turnZh(amount: number): string | null {
   const turns = Math.abs(amount);
   if (!Number.isFinite(turns) || turns === 0) return null;
+  if (turns % 2 === 0) return `转${turns * 90}度`;
   return `${amount < 0 ? '逆时针' : '顺时针'}转${turns * 90}度`;
 }
 
 function turnEn(amount: number): string | null {
   const turns = Math.abs(amount);
   if (!Number.isFinite(turns) || turns === 0) return null;
+  if (turns % 2 === 0) return `${turns * 90} degrees`;
   return `${amount < 0 ? 'counter-clockwise' : 'clockwise'} ${turns * 90} degrees`;
 }
 

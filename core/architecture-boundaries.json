@@ -772,24 +772,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/components/AlgPlayer/AlgPlayer.tsx",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/components/AlgPlayer/AlgSimPlayer.tsx",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/components/AlgPlayer/player-setup.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
@@ -846,15 +828,6 @@
     {
       "file": "packages/client/components/distribution-viz/DistributionViz.tsx",
       "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/components/MoveNotationDemo/MoveNotationDemo.tsx",
-      "importKind": "type-only",
       "mechanism": "static-import",
       "sourceKind": "runtime",
       "specifier": "@cuberoot/shared",
