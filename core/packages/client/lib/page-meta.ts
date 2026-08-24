@@ -266,6 +266,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'dev/architecture/decisions': { title: { zh: '技术决策', en: 'Technical Decisions' } },
   'dev/architecture/flow': { title: { zh: '请求流程', en: 'Request Flow' } },
   'dev/architecture/history': { title: { zh: '历程', en: 'History' } },
+  'dev/infrastructure': {
+    title: { zh: '生产基础设施', en: 'Production Infrastructure' },
+    description: {
+      zh: 'CubeRoot 生产环境的公开档案:容量、请求路径、发布恢复、健康检查、备份和安全披露边界。',
+      en: 'A public profile of CubeRoot production capacity, request routing, release recovery, health checks, backups, and disclosure boundaries.',
+    },
+  },
   'dev/components': { title: { zh: '组件库', en: 'Components' } },
   'dev/cubingchina': { title: { zh: '粗饼网 CubingChina : 中国 WCA 赛事平台 — Yii 1.1 上的报名 / 直播 / 成绩镜像', en: 'CubingChina : China\'s WCA competition platform — registration, live results and a WCA mirror on Yii 1.1' } },
   'dev/dead-code': { title: { zh: '死代码守卫', en: 'Dead Code Guard' } },
