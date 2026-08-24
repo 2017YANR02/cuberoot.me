@@ -3,9 +3,9 @@ Commit:  90e9689
 Date:    2026-07-29 14:31:24 +0800
 License: GPL-3.0 (see ./LICENSE)
 
-Static export of the upstream Next.js app, built by _sync_blddb.ps1 at repo root.
+Static export of the upstream Next.js app, built by scripts/upstream/sync-blddb.ps1.
 Do NOT hand-edit anything here — it is generated. Patches (static-export config +
-i18n cookies() removal) live in that script; upstream notes in D:\cube\blddb\CLAUDE.md.
+i18n cookies() removal) live in that script; invoke it through sync_upstream.ps1 -Only blddb.
 
 data/ keeps only the hand-curated "manmade" JSON. Upstream imports all of it at build
 time (so the iframe app already has it inside the _next chunks); this copy exists for

@@ -93,13 +93,7 @@ const TEST_PATHS = [
   `!${packagePath('platform', '**')}`,
   repoPath('docs', 'platform-capability-manifest.json'),
   repoPath('docs', 'platform-unification-plan.md'),
-  repoPath('sync_upstream.ps1'),
-  repoPath('_sync_blddb.ps1'),
-  repoPath('_sync_cstimer.ps1'),
-  repoPath('_sync_cstimer_scramble.ps1'),
-  repoPath('_sync_recordranks.ps1'),
-  repoPath('_sync_RubiksSolverDemo.ps1'),
-  repoPath('sync_alg_trainers.ps1'),
+  '*.ps1',
   repoPath('.sync', '**'),
   repoPath('scripts', 'upstream', '**'),
   repoPath('ops', 'nginx', '**'),
@@ -277,6 +271,9 @@ describe('deployment workflow path contracts', () => {
       expect(workflowTriggers(paths, [repoPath('ops', 'nginx', 'www.cuberoot.me.conf')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('ops', 'nginx', 'api.cuberoot.me.conf')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('sync_upstream.ps1')])).toBe(true);
+      expect(workflowTriggers(paths, [repoPath('_sync_blddb.ps1')])).toBe(true);
+      expect(workflowTriggers(paths, [repoPath('_sync_cstimer.ps1')])).toBe(true);
+      expect(workflowTriggers(paths, [repoPath('nested', '_sync_cstimer.ps1')])).toBe(false);
       expect(workflowTriggers(paths, [repoPath('.sync', 'sync_utils.ps1')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('scripts', 'upstream', 'sync-all.ps1')])).toBe(true);
       expect(workflowTriggers(paths, [packagePath('platform', 'README.md')])).toBe(false);

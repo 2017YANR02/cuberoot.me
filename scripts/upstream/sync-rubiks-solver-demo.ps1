@@ -17,7 +17,7 @@
 #>
 param(
     [string]$UpstreamDir = "D:\cube\RubiksSolverDemo",
-    [string]$LocalDir = $PSScriptRoot,
+    [string]$LocalDir = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..')),
     [switch]$DryRun,
     [string]$RepoRoot,
     [switch]$ValidateOnly
@@ -25,16 +25,17 @@ param(
 
 $ErrorActionPreference = "Stop"
 # NOTE: 引入公共工具函数（Sync-FileIfChanged / Sync-Directory / Get-GaInlineCode / Read-Utf8File / Write-Utf8File）
+$defaultRepoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $syncBootstrapRoot = if ($RepoRoot) { [IO.Path]::GetFullPath($RepoRoot) } else { [IO.Path]::GetFullPath($LocalDir) }
 . (Join-Path $syncBootstrapRoot '.sync\sync_utils.ps1')
-$LocalDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $LocalDir -ScriptRoot $PSScriptRoot
+$LocalDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $LocalDir -ScriptRoot $defaultRepoRoot
 $syncDir = Join-Path $LocalDir '.sync'
 Assert-SyncInternalFiles -RepoRoot $LocalDir -RelativePaths @(
-    '_sync_RubiksSolverDemo.ps1'
+    'scripts/upstream/sync-rubiks-solver-demo.ps1'
     '.sync/sync_utils.ps1'
     '.sync/page_config.json'
     '.sync/menu_template.html'
-) -PowerShellScripts @('_sync_RubiksSolverDemo.ps1')
+) -PowerShellScripts @('scripts/upstream/sync-rubiks-solver-demo.ps1')
 if ($ValidateOnly)
 {
     Write-Host "RubiksSolverDemo 同步脚本校验通过：$LocalDir" -ForegroundColor Green

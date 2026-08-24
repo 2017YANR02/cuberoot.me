@@ -24,8 +24,8 @@
 | `stats.wca` / checked-in generated | `core/packages/stats-build/src/**`、WCA dump → `stats/` 下的主统计产物（根 JSON、`records/**`、`historical/**`、`sor_over_time/**` 等）与加载用临时 TSV；不含另有 owner 的 `scramble/**`、`tutorial/**` 和下行 upcoming 文件 | 单项调试：cwd `core`，`pnpm --filter @cuberoot/stats-build compute <stat-id>`；全量只按 `.github/workflows/stats.yml` 的 `compute_all.ts` 与后续步骤运行 | `@cuberoot/stats-build` + `stats.yml` | workflow 自己生成、校验、提交并加载，不是独立的 regen-diff 守卫；builder、传输清单和 load SQL 三处必须同步 |
 | `stats.upcoming` / checked-in generated | WCA/WCIF 与比赛名数据 → `stats/{upcoming_comps,all_upcoming_comps,cn_upcoming_registrations,comp_names_zh,comp_elevations}.json` | `.github/workflows/update_upcoming.yml` | `update_upcoming.yml` | 日更 workflow 生成并提交；与主统计管线分开 |
 | `stats.scramble` / local heavy artifact | `core/packages/scramble-stats-build/src/**`、`solver/` 本机表和样本 → `stats/scramble/**` | cwd `core`：按目标运行 `pnpm --filter @cuberoot/scramble-stats-build build:*`；完整流程按对应 runbook/Skill | `@cuberoot/scramble-stats-build` + solver owner | 普通 CI 不重算大表；用 fixture、schema、数值 baseline 和已提交结果测试，产物不得手调数字 |
-| `tools.blddb` / vendored sync | blddb 上游与 `_sync_blddb.ps1` → `tools/blddb/**` | cwd repo root：`pwsh -NoProfile -File .\_sync_blddb.ps1` | `_sync_blddb.ps1` + `tools/blddb/UPSTREAM.txt` | 已有上游记录；同步后审阅本地包装与 license |
-| `tools.cstimer-scramble` / vendored sync | csTimer 上游与 `_sync_cstimer_scramble.ps1` → `tools/cstimer-scramble/**` | cwd repo root：`pwsh -NoProfile -File .\_sync_cstimer_scramble.ps1` | `_sync_cstimer_scramble.ps1` + `tools/cstimer-scramble/UPSTREAM.txt` | 已有上游记录；同步后审阅站内调用契约 |
+| `tools.blddb` / vendored sync | blddb 上游与 `scripts/upstream/sync-blddb.ps1` → `tools/blddb/**` | cwd repo root：`pwsh -NoProfile -File .\sync_upstream.ps1 -Only blddb` | `scripts/upstream/sync-blddb.ps1` + `tools/blddb/UPSTREAM.txt` | 已有上游记录；根 `_sync_blddb.ps1` 仅为已确认仓外调用保留兼容；同步后审阅本地包装与 license |
+| `tools.cstimer-scramble` / vendored sync | csTimer 上游与 `scripts/upstream/sync-cstimer-scramble.ps1` → `tools/cstimer-scramble/**` | cwd repo root：`pwsh -NoProfile -File .\sync_upstream.ps1 -Only cstimer` | `scripts/upstream/sync-cstimer-scramble.ps1` + `tools/cstimer-scramble/UPSTREAM.txt` | 已有上游记录；同步后审阅站内调用契约 |
 | `client.regulation-verbatim` / upstream snapshot | WCA 规则源、`reg-check.mjs`、`build-reg-clauses.mjs` → source snapshot、hash 与 `_data/reg-clauses/_full.json` | cwd `core`：`node packages/client/scripts/reg-check.mjs --write`，再运行 `node packages/client/scripts/build-reg-clauses.mjs` | client regulation + `regulation_drift.yml` | workflow 检测漂移后自动重建逐字全文镜像并开 PR |
 | `client.regulation-illustrated` / human-authored derivative | 已审阅的规则变化 → `/regulation/<slug>` 图文讲解 | 按 `update-regulation` 流程人工改写 | client regulation | workflow 只开或更新 issue；不得把图文版描述成自动生成 |
 | `client.event-icons` / checked-in generated | `components/EventIcon/svg/**` → `svg-map*.ts` | cwd `core/packages/client/components/EventIcon`：`node gen-svg-map.mjs` | `components/EventIcon` | `icons_drift.yml` 只比较上游和本地 SVG；当前没有在普通 CI 重生成 map 并检查 diff |
@@ -49,7 +49,7 @@
 
 | ID | 当前事实 | 缺口 |
 | --- | --- | --- |
-| `tools.other-vendored` | 根目录还有 `_sync_RubiksSolverDemo.ps1`、`_sync_cstimer.ps1`、`_sync_recordranks.ps1` 等同步入口 | 缺统一的逐 vendor URL、branch、commit、license、patch owner 清单；`sync_toolkit.yml` 是发布 workflow，不是 source 生成器或 drift owner |
+| `tools.other-vendored` | 各 vendor 实现已集中到 `scripts/upstream/`，根目录只保留统一入口与 BLDDB 兼容 shim | 缺统一的逐 vendor URL、branch、commit、license、patch owner 清单；`sync_toolkit.yml` 是发布 workflow，不是 source 生成器或 drift owner |
 | `client.tnoodle-i18n` | `_tnoodle-i18n.ts` 文件头称由 `scripts/build_tnoodle_i18n.mjs` 从外部 checkout 生成 | 仓库内没有该脚本，文件头还记录本机绝对 source 路径；补回可复现 generator 前只能视为 legacy checked-in snapshot |
 | `client.event-icons-map-drift` | `gen-svg-map.mjs` 可重建映射 | 缺普通 CI 的 generator-diff 检查；现有 `icons_drift.yml` 不覆盖 map 是否过期 |
 | `client.deskpet-cube-drift` | builder 命令明确且输出已提交 | 缺只重建并检查 diff 的廉价守卫 |

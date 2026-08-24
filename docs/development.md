@@ -57,9 +57,8 @@ pnpm --filter @cuberoot/client dev
 ### Solver（or18/RubiksSolverDemo）
 
 ```powershell
-git -C D:\cube\RubiksSolverDemo pull
 cd D:\cube\cuberoot.me
-.\_sync_RubiksSolverDemo.ps1
+pwsh -NoProfile -File .\sync_upstream.ps1 -Only solver
 ```
 
 同步 `src/` 运行时、根目录依赖、13 个 HTML 页面。模板文件在 `.sync/` 目录。
@@ -67,9 +66,8 @@ cd D:\cube\cuberoot.me
 ### Alg-Trainers（mihlefeld/Alg-Trainers）
 
 ```powershell
-git -C D:\cube\mihlefeld-alg-trainers pull
 cd D:\cube\cuberoot.me
-.\sync_alg_trainers.ps1
+pwsh -NoProfile -File .\sync_upstream.ps1 -Only algtrainers
 ```
 
 同步 30 个训练器目录 + `src/` + `style/`，为每个训练器注入 `i18n.js`。

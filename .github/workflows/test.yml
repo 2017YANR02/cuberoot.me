@@ -10,13 +10,7 @@ on:
       - '!core/packages/platform/**'
       - 'docs/platform-capability-manifest.json'
       - 'docs/platform-unification-plan.md'
-      - 'sync_upstream.ps1'
-      - '_sync_blddb.ps1'
-      - '_sync_cstimer.ps1'
-      - '_sync_cstimer_scramble.ps1'
-      - '_sync_recordranks.ps1'
-      - '_sync_RubiksSolverDemo.ps1'
-      - 'sync_alg_trainers.ps1'
+      - '*.ps1'
       - '.sync/**'
       - 'scripts/upstream/**'
       - 'ops/nginx/**'
@@ -30,13 +24,7 @@ on:
       - '!core/packages/platform/**'
       - 'docs/platform-capability-manifest.json'
       - 'docs/platform-unification-plan.md'
-      - 'sync_upstream.ps1'
-      - '_sync_blddb.ps1'
-      - '_sync_cstimer.ps1'
-      - '_sync_cstimer_scramble.ps1'
-      - '_sync_recordranks.ps1'
-      - '_sync_RubiksSolverDemo.ps1'
-      - 'sync_alg_trainers.ps1'
+      - '*.ps1'
       - '.sync/**'
       - 'scripts/upstream/**'
       - 'ops/nginx/**'
@@ -90,13 +78,7 @@ jobs:
             /core/
             /docs/platform-capability-manifest.json
             /docs/platform-unification-plan.md
-            /sync_upstream.ps1
-            /_sync_blddb.ps1
-            /_sync_cstimer.ps1
-            /_sync_cstimer_scramble.ps1
-            /_sync_recordranks.ps1
-            /_sync_RubiksSolverDemo.ps1
-            /sync_alg_trainers.ps1
+            /*.ps1
             /.sync/
             /scripts/upstream/
             /ops/nginx/platform.cuberoot.me.conf

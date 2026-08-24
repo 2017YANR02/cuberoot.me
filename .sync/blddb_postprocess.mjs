@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// BLDDB 同步的后处理 —— 由 _sync_blddb.ps1 在拷贝完 out/ 之后调用，也可以单独跑。
+// BLDDB 同步的后处理 —— 由 scripts/upstream/sync-blddb.ps1 在拷贝完 out/ 之后调用，也可以单独跑。
 //
 //   node .sync/blddb_postprocess.mjs [--upstream D:\cube\blddb] [--repo <仓库根>]
 //
@@ -126,7 +126,7 @@ async function stepFinger() {
   const started = Date.now();
   for (const type of MANMADE_TYPES) {
     const file = path.join(DATA, `${type}Manmade.json`);
-    if (!existsSync(file)) throw new Error(`缺 ${type}Manmade.json —— 先跑 _sync_blddb.ps1`);
+    if (!existsSync(file)) throw new Error(`缺 ${type}Manmade.json —— 先跑 sync_upstream.ps1 -Only blddb`);
     const set = readJson(file);
     const before = readFileSync(file).length;
     let entries = 0;
@@ -169,7 +169,7 @@ async function stepFinger() {
  */
 function stepBigbld() {
   const dir = path.join(DATA, 'bigbld');
-  if (!existsSync(dir)) throw new Error(`缺 tools/blddb/data/bigbld/ —— 先跑 _sync_blddb.ps1`);
+  if (!existsSync(dir)) throw new Error(`缺 tools/blddb/data/bigbld/ —— 先跑 sync_upstream.ps1 -Only blddb`);
   for (const type of BIGBLD_TYPES) {
     const file = path.join(dir, `${type}Manmade.json`);
     if (!existsSync(file)) throw new Error(`缺 bigbld/${type}Manmade.json`);
