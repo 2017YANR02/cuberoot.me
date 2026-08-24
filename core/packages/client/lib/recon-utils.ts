@@ -205,6 +205,11 @@ export function isBldEvent(event: string): boolean {
   return ['3bld', '4bld', '5bld', 'mbld'].includes(event);
 }
 
+/** 二阶没有三阶 CFOP 分段统计，详情页只展示录入的方法。 */
+export function hasMethodOnlyReconStats(event: string): boolean {
+  return event === '2x2';
+}
+
 export function attemptsPerRound(event: string): number {
   if (event === 'mbld') return 1;
   if (['6x6', '7x7', '3bld', '4bld', '5bld', 'fmc'].includes(event)) return 3;
