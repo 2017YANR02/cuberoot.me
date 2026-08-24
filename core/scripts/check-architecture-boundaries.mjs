@@ -486,17 +486,23 @@ export function validateManualContracts(contracts) {
 export function violationsFromHookPayload(payload) {
   const input = payload?.tool_input;
   if (!input || typeof input !== 'object') return [];
-  const filePath = slash(input.file_path ?? '');
-  const source = String(input.content ?? '');
-  if (!/\/core\/packages\/(?!platform\/)[a-z0-9-]+\//i.test(`/${filePath}`)) return [];
-  const ownerDir = filePath.match(/\/core\/packages\/([a-z0-9-]+)\//i)?.[1]
-    ?? filePath.match(/^core\/packages\/([a-z0-9-]+)\//i)?.[1];
-  if (!ownerDir || ownerDir === 'platform') return [];
   const packages = activePackages();
-  const owner = packages.find((item) => item.dir === ownerDir);
-  if (!owner) return [];
-  const absoluteFile = resolve(REPO_ROOT, filePath);
-  return scanSourceText(packages, owner, absoluteFile, source);
+  const writes = Array.isArray(input.writes) ? input.writes : [input];
+  const violations = [];
+  for (const write of writes) {
+    if (!write || typeof write !== 'object') continue;
+    const filePath = slash(write.file_path ?? '');
+    const source = String(write.content ?? '');
+    if (!/\/core\/packages\/(?!platform\/)[a-z0-9-]+\//i.test(`/${filePath}`)) continue;
+    const ownerDir = filePath.match(/\/core\/packages\/([a-z0-9-]+)\//i)?.[1]
+      ?? filePath.match(/^core\/packages\/([a-z0-9-]+)\//i)?.[1];
+    if (!ownerDir || ownerDir === 'platform') continue;
+    const owner = packages.find((item) => item.dir === ownerDir);
+    if (!owner) continue;
+    const absoluteFile = resolve(REPO_ROOT, filePath);
+    violations.push(...scanSourceText(packages, owner, absoluteFile, source));
+  }
+  return violations;
 }
 
 function printFindings(title, findings) {
