@@ -142,10 +142,7 @@ export default function LandingPage() {
         });
         const inner = (
           <>
-            <span className="landing-featured-news-label">
-              <FeaturedIcon size={15} aria-hidden="true" />
-              {tr({ zh: '重磅新闻', en: 'Breaking news' })}
-            </span>
+            <FeaturedIcon className="landing-featured-news-icon" size={15} aria-hidden="true" />
             <span className="landing-featured-news-body">{body}</span>
             <ArrowRight className="landing-featured-news-arrow" size={16} aria-hidden="true" />
           </>
