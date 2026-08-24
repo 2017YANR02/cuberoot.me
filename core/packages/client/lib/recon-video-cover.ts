@@ -1,6 +1,6 @@
 // 视频封面解析 + 代理取图(YouTube 直链 / B 站 BV / 抖音)。
 // 复盘卡片(ReconCard)与成绩弹窗(AttemptPopover→VideoCoverThumb)共用,避免重复造轮子。
-// b23.tv 短链不含 BV id、无法取封面,视作无封面(回退占位)。
+// b23.tv 短链不含 BV id、无法取封面,视作无封面(由调用方渲染回退内容)。
 
 import { getBiliCover, getDouyinCover } from '@/lib/recon-api';
 
@@ -22,7 +22,7 @@ export function videoCoverInfo(url: string): CoverRef | null {
 }
 
 // videoUrl 多行。按语言挑能出封面的视频:中文优先 B 站、英文优先 YouTube;
-// 首选平台没有就退而用另一平台;两者皆无 → null(回退打乱图)。
+// 首选平台没有就退而用另一平台;两者皆无 → null(由调用方渲染回退内容)。
 export function pickReconCover(videoUrl: string | undefined, isZh: boolean): CoverRef | null {
   if (!videoUrl) return null;
   let yt: CoverRef | null = null;
