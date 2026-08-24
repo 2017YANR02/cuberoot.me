@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -11,6 +11,9 @@ import {
   CUBEOPT_ARTIFACT_SCHEMA,
   CUBEOPT_POINTER_SCHEMA,
   CUBEOPT_PROTOCOL,
+  CUBEOPT_VARIANTS,
+  cubeoptBundleVariant,
+  cubeoptVariantContract,
   loadCubeoptArtifact,
   promoteCubeoptBundle,
   syncDirectoryDurably,
@@ -25,28 +28,45 @@ function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
 }
 
-async function makeFixture({ store: existingStore, bundle = 'cubeopt-opt5-test-fixture' } = {}) {
+async function createTestSymlink(targetFile, linkPath) {
+  if (process.platform !== 'win32') {
+    await symlink(targetFile, linkPath, 'file');
+    return;
+  }
+  // Unprivileged Windows can create directory junctions but not file symlinks.
+  // lstat must reject either reparse-point shape before reading JSON.
+  const targetDirectory = `${targetFile}.junction-target`;
+  await mkdir(targetDirectory);
+  await symlink(targetDirectory, linkPath, 'junction');
+}
+
+async function makeFixture({
+  store: existingStore,
+  variant = 'opt5',
+  bundle = `cubeopt-${variant}-test-fixture`,
+} = {}) {
   const store = existingStore || await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-'));
   if (!existingStore) scratchDirs.push(store);
   const root = join(store, 'bundles', bundle);
   await mkdir(root, { recursive: true });
+  const contract = CUBEOPT_VARIANTS[variant];
+  if (!contract) throw new Error(`unsupported test fixture variant ${variant}`);
   const contents = {
-    module: Buffer.from('// fixture references cube48opt5.mjs and cube48opt5.wasm\nexport default async () => ({});\n'),
-    wasm: Buffer.from([0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00]),
-    table: Buffer.from('small deterministic opt5 table fixture\n'),
+    module: Buffer.from(`// fixture references ${contract.files.module} and ${contract.files.wasm}\nexport default async () => ({});\n`),
+    wasm: Buffer.concat([
+      Buffer.from([0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00]),
+      Buffer.from(`\0${contract.files.wasm}\0${contract.files.table}\0`),
+    ]),
+    table: Buffer.from(`small deterministic ${variant} table fixture\n`),
   };
-  const paths = {
-    module: 'cube48opt5.mjs',
-    wasm: 'cube48opt5.wasm',
-    table: 'h48prun31h5.dat',
-  };
+  const paths = contract.files;
   for (const role of Object.keys(paths)) {
     await writeFile(join(root, paths[role]), contents[role]);
   }
   const manifest = {
     schema: CUBEOPT_ARTIFACT_SCHEMA,
     bundle,
-    variant: 'opt5',
+    variant,
     protocol: CUBEOPT_PROTOCOL,
     source: {
       url: 'fixture://cubeopt',
@@ -103,15 +123,16 @@ describe('CubeOpt artifact bundle', () => {
     expect(config.configError).toMatch(/CUBEOPT_ARTIFACT_DIR is required/);
   });
 
-  it('resolves all runtime files through one verified current pointer', async () => {
-    const { root, store, bundle } = await makeFixture();
+  it.each(['opt5', 'opt6'])('resolves all %s runtime files through one verified current pointer', async (variant) => {
+    const { root, store, bundle } = await makeFixture({ variant });
     await promoteCubeoptBundle(store, bundle, { allowFixtureSizes: true });
     const artifact = await loadCubeoptArtifact(store, { allowFixtureSizes: true });
+    const contract = CUBEOPT_VARIANTS[variant];
 
-    expect(artifact.manifest.variant).toBe('opt5');
-    expect(artifact.modulePath).toBe(join(root, 'cube48opt5.mjs'));
-    expect(artifact.wasmPath).toBe(join(root, 'cube48opt5.wasm'));
-    expect(artifact.tablePath).toBe(join(root, 'h48prun31h5.dat'));
+    expect(artifact.manifest.variant).toBe(variant);
+    expect(artifact.modulePath).toBe(join(root, contract.files.module));
+    expect(artifact.wasmPath).toBe(join(root, contract.files.wasm));
+    expect(artifact.tablePath).toBe(join(root, contract.files.table));
     expect(JSON.parse(await readFile(join(store, 'current.json'), 'utf8'))).toEqual({
       schema: CUBEOPT_POINTER_SCHEMA,
       bundle,
@@ -127,6 +148,16 @@ describe('CubeOpt artifact bundle', () => {
       .rejects.toThrow(/cannot read current\.json/);
   });
 
+  it('rejects a current pointer that is a symbolic link', async () => {
+    const { store, bundle } = await makeFixture();
+    const externalCurrent = join(store, 'external-current.json');
+    await writeFile(externalCurrent, JSON.stringify({ schema: CUBEOPT_POINTER_SCHEMA, bundle }));
+    await createTestSymlink(externalCurrent, join(store, 'current.json'));
+
+    await expect(loadCubeoptArtifact(store, { allowFixtureSizes: true }))
+      .rejects.toThrow(/current\.json must be a regular file, not a symlink/);
+  });
+
   it('rejects a missing manifest', async () => {
     const store = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-'));
     scratchDirs.push(store);
@@ -135,6 +166,17 @@ describe('CubeOpt artifact bundle', () => {
 
     await expect(verifyCubeoptBundle(root, { allowFixtureSizes: true }))
       .rejects.toThrow(/cannot read manifest\.json/);
+  });
+
+  it('rejects a manifest that is a symbolic link', async () => {
+    const { root, store } = await makeFixture();
+    const manifestPath = join(root, 'manifest.json');
+    const externalManifest = join(store, 'external-manifest.json');
+    await rename(manifestPath, externalManifest);
+    await createTestSymlink(externalManifest, manifestPath);
+
+    await expect(verifyCubeoptBundle(root, { allowFixtureSizes: true }))
+      .rejects.toThrow(/manifest\.json must be a regular file, not a symlink/);
   });
 
   it('rejects a missing manifest-listed file', async () => {
@@ -160,7 +202,23 @@ describe('CubeOpt artifact bundle', () => {
     await writeManifest(root, manifest);
 
     await expect(verifyCubeoptBundle(root, { allowFixtureSizes: true }))
-      .rejects.toThrow(/variant must be opt5/);
+      .rejects.toThrow(/bundle variant opt5 does not match manifest variant opt6/);
+  });
+
+  it('rejects an unsupported CubeOpt variant', async () => {
+    const { root, manifest } = await makeFixture();
+    manifest.variant = 'opt7';
+    await writeManifest(root, manifest);
+
+    await expect(verifyCubeoptBundle(root, { allowFixtureSizes: true }))
+      .rejects.toThrow(/unsupported variant "opt7"; expected opt5 or opt6/);
+  });
+
+  it.each(['toString', 'constructor'])('rejects inherited object key %s as a variant', (variant) => {
+    expect(() => cubeoptVariantContract(variant))
+      .toThrow(new RegExp(`unsupported variant "${variant}"`));
+    expect(() => cubeoptBundleVariant(`cubeopt-${variant}-fixture`))
+      .toThrow(new RegExp(`unsupported variant "${variant}"`));
   });
 
   it.each([
@@ -176,9 +234,13 @@ describe('CubeOpt artifact bundle', () => {
     await expect(verifyCubeoptBundle(root, { allowFixtureSizes: true })).rejects.toThrow(expected);
   });
 
-  it('rejects fixture-sized tables under the production contract', async () => {
-    const { root } = await makeFixture();
-    await expect(verifyCubeoptBundle(root)).rejects.toThrow(/opt5 table must be 972840960 bytes/);
+  it.each([
+    ['opt5', 972_840_960],
+    ['opt6', 1_945_681_920],
+  ])('rejects fixture-sized %s tables under the production contract', async (variant, tableBytes) => {
+    const { root } = await makeFixture({ variant });
+    await expect(verifyCubeoptBundle(root))
+      .rejects.toThrow(new RegExp(`${variant} table must be ${tableBytes} bytes`));
   });
 
   it('rejects a wrapper that references another variant', async () => {
@@ -190,7 +252,22 @@ describe('CubeOpt artifact bundle', () => {
     await writeManifest(root, manifest);
 
     await expect(verifyCubeoptBundle(root, { allowFixtureSizes: true }))
-      .rejects.toThrow(/non-opt5 cube48opt reference/);
+      .rejects.toThrow(/cube48opt reference outside opt5/);
+  });
+
+  it('rejects an opt5 wasm renamed and rehashed as opt6', async () => {
+    const { root, manifest } = await makeFixture({ variant: 'opt6' });
+    const renamedOpt5Wasm = Buffer.concat([
+      Buffer.from([0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00]),
+      Buffer.from('\0cube48opt5.wasm\0h48prun31h5.dat\0'),
+    ]);
+    await writeFile(join(root, 'cube48opt6.wasm'), renamedOpt5Wasm);
+    manifest.files.wasm.bytes = renamedOpt5Wasm.length;
+    manifest.files.wasm.sha256 = sha256(renamedOpt5Wasm);
+    await writeManifest(root, manifest);
+
+    await expect(verifyCubeoptBundle(root, { allowFixtureSizes: true }))
+      .rejects.toThrow(/wasm must reference adjacent cube48opt6\.wasm and h48prun31h6\.dat/);
   });
 
   it('keeps current on a verified bundle and never exposes a failed promotion', async () => {
@@ -273,7 +350,7 @@ describe('CubeOpt artifact bundle', () => {
       env,
       envFile,
       defaultStore: store,
-      bundle: 'cubeopt-opt5-legacy-runtime-v1',
+      bundleSuffix: 'legacy-runtime-v1',
       sourceUrl: 'fixture://legacy-runtime',
       sourceRevision: 'test-only',
       sourceBuildCommand: 'copy fixture bytes',
@@ -294,20 +371,115 @@ describe('CubeOpt artifact bundle', () => {
     expect(await readFile(envFile, 'utf8')).toBe(persisted);
   });
 
-  it('resumes after prepare completed before the current pointer was promoted', async () => {
-    const source = await makeFixture({ bundle: 'cubeopt-opt5-resume-source' });
-    const deployment = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-resume-'));
+  it('derives an opt6 bundle from matching legacy module, wasm, and h6 table paths', async () => {
+    const source = await makeFixture({ variant: 'opt6', bundle: 'cubeopt-opt6-provision-source' });
+    const deployment = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-opt6-deploy-'));
     scratchDirs.push(deployment);
     const envFile = join(deployment, '.env');
     const store = join(deployment, 'artifacts', 'cubeopt');
-    const bundle = 'cubeopt-opt5-legacy-runtime-v1';
+    await writeFile(envFile, 'CUBEOPT_SOLVE_ENABLED=1\n');
+
+    const result = await provisionCubeoptArtifact({
+      env: {
+        CUBEOPT_MODULE: join(source.root, 'cube48opt6.mjs'),
+        CUBEOPT_TABLE: join(source.root, 'h48prun31h6.dat'),
+      },
+      envFile,
+      defaultStore: store,
+      bundleSuffix: 'legacy-runtime-v1',
+      sourceUrl: 'fixture://legacy-runtime',
+      sourceRevision: 'test-only',
+      sourceBuildCommand: 'copy fixture bytes',
+      allowFixtureSizes: true,
+    });
+
+    expect(result).toEqual({ storeDir: resolve(store), migrated: true, envUpdated: true });
+    const artifact = await loadCubeoptArtifact(store, { allowFixtureSizes: true });
+    expect(artifact.manifest.bundle).toBe('cubeopt-opt6-legacy-runtime-v1');
+    expect(artifact.manifest.variant).toBe('opt6');
+    expect(artifact.modulePath).toBe(join(artifact.root, 'cube48opt6.mjs'));
+    expect(artifact.wasmPath).toBe(join(artifact.root, 'cube48opt6.wasm'));
+    expect(artifact.tablePath).toBe(join(artifact.root, 'h48prun31h6.dat'));
+  });
+
+  it.each([
+    ['opt5', 'opt6'],
+    ['opt6', 'opt5'],
+  ])('rejects a legacy source set that mixes %s module and wasm with a %s table', async (moduleVariant, tableVariant) => {
+    const moduleSource = await makeFixture({
+      variant: moduleVariant,
+      bundle: `cubeopt-${moduleVariant}-mixed-module-source`,
+    });
+    const tableSource = await makeFixture({
+      variant: tableVariant,
+      bundle: `cubeopt-${tableVariant}-mixed-table-source`,
+    });
+    const moduleContract = CUBEOPT_VARIANTS[moduleVariant];
+    const tableContract = CUBEOPT_VARIANTS[tableVariant];
+    const deployment = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-mixed-deploy-'));
+    scratchDirs.push(deployment);
+    const envFile = join(deployment, '.env');
+    const originalEnv = 'CUBEOPT_SOLVE_ENABLED=1\n';
+    await writeFile(envFile, originalEnv);
+
+    await expect(provisionCubeoptArtifact({
+      env: {
+        CUBEOPT_MODULE: join(moduleSource.root, moduleContract.files.module),
+        CUBEOPT_TABLE: join(tableSource.root, tableContract.files.table),
+      },
+      envFile,
+      defaultStore: join(deployment, 'artifacts', 'cubeopt'),
+      bundleSuffix: 'legacy-runtime-v1',
+      sourceUrl: 'fixture://legacy-runtime',
+      sourceRevision: 'test-only',
+      sourceBuildCommand: 'copy fixture bytes',
+      allowFixtureSizes: true,
+    })).rejects.toThrow(new RegExp(
+      `must be named ${moduleContract.files.table.replaceAll('.', '\\.')} for ${moduleVariant}`,
+    ));
+    expect(await readFile(envFile, 'utf8')).toBe(originalEnv);
+  });
+
+  it('rejects an unsupported legacy module basename before mutating the store or env', async () => {
+    const deployment = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-unsupported-deploy-'));
+    scratchDirs.push(deployment);
+    const envFile = join(deployment, '.env');
+    const originalEnv = 'CUBEOPT_SOLVE_ENABLED=1\n';
+    await writeFile(envFile, originalEnv);
+
+    await expect(provisionCubeoptArtifact({
+      env: {
+        CUBEOPT_MODULE: join(deployment, 'cube48opt7.mjs'),
+        CUBEOPT_TABLE: join(deployment, 'h48prun31h7.dat'),
+      },
+      envFile,
+      defaultStore: join(deployment, 'artifacts', 'cubeopt'),
+      bundleSuffix: 'legacy-runtime-v1',
+      sourceUrl: 'fixture://legacy-runtime',
+      sourceRevision: 'test-only',
+      sourceBuildCommand: 'copy fixture bytes',
+      allowFixtureSizes: true,
+    })).rejects.toThrow(/unsupported module filename.*expected cube48opt5\.mjs or cube48opt6\.mjs/);
+    expect(await readFile(envFile, 'utf8')).toBe(originalEnv);
+  });
+
+  it.each(['opt5', 'opt6'])(
+    'resumes an %s migration after prepare completed before the current pointer was promoted',
+    async (variant) => {
+    const contract = CUBEOPT_VARIANTS[variant];
+    const source = await makeFixture({ variant, bundle: `cubeopt-${variant}-resume-source` });
+    const deployment = await mkdtemp(join(tmpdir(), `cuberoot-cubeopt-${variant}-resume-`));
+    scratchDirs.push(deployment);
+    const envFile = join(deployment, '.env');
+    const store = join(deployment, 'artifacts', 'cubeopt');
+    const bundle = `cubeopt-${variant}-legacy-runtime-v1`;
     await writeFile(envFile, 'CUBEOPT_SOLVE_ENABLED=1\n');
     await prepareCubeoptArtifact({
       storeDir: store,
       bundle,
-      modulePath: join(source.root, 'cube48opt5.mjs'),
-      wasmPath: join(source.root, 'cube48opt5.wasm'),
-      tablePath: join(source.root, 'h48prun31h5.dat'),
+      modulePath: join(source.root, contract.files.module),
+      wasmPath: join(source.root, contract.files.wasm),
+      tablePath: join(source.root, contract.files.table),
       sourceUrl: 'fixture://legacy-runtime',
       sourceRevision: 'test-only',
       sourceBuildCommand: 'copy fixture bytes',
@@ -316,12 +488,12 @@ describe('CubeOpt artifact bundle', () => {
 
     const result = await provisionCubeoptArtifact({
       env: {
-        CUBEOPT_MODULE: join(source.root, 'cube48opt5.mjs'),
-        CUBEOPT_TABLE: join(source.root, 'h48prun31h5.dat'),
+        CUBEOPT_MODULE: join(source.root, contract.files.module),
+        CUBEOPT_TABLE: join(source.root, contract.files.table),
       },
       envFile,
       defaultStore: store,
-      bundle,
+      bundleSuffix: 'legacy-runtime-v1',
       sourceUrl: 'fixture://legacy-runtime',
       sourceRevision: 'test-only',
       sourceBuildCommand: 'copy fixture bytes',
@@ -330,7 +502,8 @@ describe('CubeOpt artifact bundle', () => {
 
     expect(result).toEqual({ storeDir: resolve(store), migrated: true, envUpdated: true });
     expect((await loadCubeoptArtifact(store, { allowFixtureSizes: true })).manifest.bundle).toBe(bundle);
-  });
+    },
+  );
 
   it('persists the store after a current pointer already exists without legacy inputs', async () => {
     const artifact = await makeFixture({ bundle: 'cubeopt-opt5-current-before-env' });
@@ -380,7 +553,7 @@ describe('CubeOpt artifact bundle', () => {
       },
       envFile,
       defaultStore: store,
-      bundle,
+      bundleSuffix: 'legacy-runtime-v1',
       sourceUrl: 'fixture://legacy-runtime',
       sourceRevision: 'test-only',
       sourceBuildCommand: 'copy fixture bytes',
@@ -404,7 +577,7 @@ describe('CubeOpt artifact bundle', () => {
       env,
       envFile,
       defaultStore: store,
-      bundle: 'cubeopt-opt5-legacy-runtime-v1',
+      bundleSuffix: 'legacy-runtime-v1',
       sourceUrl: 'fixture://legacy-runtime',
       sourceRevision: 'test-only',
       sourceBuildCommand: 'copy fixture bytes',
@@ -451,7 +624,7 @@ describe('CubeOpt artifact bundle', () => {
       env: {},
       envFile,
       defaultStore: join(deployment, 'artifacts', 'cubeopt'),
-      bundle: 'cubeopt-opt5-legacy-runtime-v1',
+      bundleSuffix: 'legacy-runtime-v1',
       sourceUrl: 'fixture://legacy-runtime',
       sourceRevision: 'test-only',
       sourceBuildCommand: 'copy fixture bytes',
@@ -487,7 +660,7 @@ describe('CubeOpt artifact bundle', () => {
       output,
       '--env-file', envFile,
       '--default-store', join(deployment, 'artifacts', 'cubeopt'),
-      '--bundle', 'cubeopt-opt5-legacy-runtime-v1',
+      '--bundle-suffix', 'legacy-runtime-v1',
       '--source-url', 'fixture://legacy-runtime',
       '--source-revision', 'test-only',
       '--source-build-command', 'copy fixture bytes',

@@ -281,7 +281,7 @@ loadNemesizerDataset().catch(err => {
 // nemesizer + cubing-live prewarm all warm at once), so we do NOT want to add
 // ~2GB here. The daemon spawns on the first /v1/scramble/optimal-solve request
 // instead (idle-unload + memory watchdog manage it thereafter). Set
-// CUBEOPT_WARM_ON_BOOT=1 to pre-warm anyway (fine for the small opt5 table).
+// CUBEOPT_WARM_ON_BOOT=1 to pre-warm anyway when the selected table fits safely.
 if (cubeoptEnabled() && process.env.CUBEOPT_WARM_ON_BOOT === '1') {
   ensureCubeoptDaemon().catch(err => {
     console.error('[cubeopt] startup warm failed:', err);

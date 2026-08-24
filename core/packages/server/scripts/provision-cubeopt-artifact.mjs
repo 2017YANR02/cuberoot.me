@@ -14,6 +14,8 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import {
   assertCubeoptArtifactSources,
+  cubeoptArtifactContractFromModulePath,
+  detectCubeoptArtifactSources,
   prepareCubeoptArtifact,
 } from './lib/prepare-cubeopt-artifact.mjs';
 import {
@@ -91,7 +93,7 @@ export async function provisionCubeoptArtifact({
   env = process.env,
   envFile: rawEnvFile,
   defaultStore: rawDefaultStore,
-  bundle: rawBundle,
+  bundleSuffix: rawBundleSuffix,
   sourceUrl,
   sourceRevision,
   sourceBuildCommand,
@@ -108,10 +110,16 @@ export async function provisionCubeoptArtifact({
   if (await pathExists(currentPath)) {
     await loadCubeoptArtifact(resolvedStore, { allowFixtureSizes });
   } else {
-    const bundle = required(rawBundle, '--bundle');
     const modulePath = resolve(required(env.CUBEOPT_MODULE, 'legacy CUBEOPT_MODULE'));
     const tablePath = resolve(required(env.CUBEOPT_TABLE, 'legacy CUBEOPT_TABLE'));
-    const wasmPath = resolve(dirname(modulePath), 'cube48opt5.wasm');
+    const moduleContract = cubeoptArtifactContractFromModulePath(modulePath);
+    const wasmPath = resolve(dirname(modulePath), moduleContract.files.wasm);
+    const contract = detectCubeoptArtifactSources({ modulePath, wasmPath, tablePath });
+    const bundleSuffix = required(rawBundleSuffix, '--bundle-suffix');
+    if (!/^[A-Za-z0-9._-]+$/.test(bundleSuffix)) {
+      throw new Error('--bundle-suffix must contain only portable characters');
+    }
+    const bundle = `cubeopt-${contract.variant}-${bundleSuffix}`;
     const bundleDir = resolve(resolvedStore, 'bundles', bundle);
 
     if (await pathExists(bundleDir)) {
@@ -151,7 +159,7 @@ function parseCliOptions() {
     options: {
       'env-file': { type: 'string' },
       'default-store': { type: 'string' },
-      bundle: { type: 'string' },
+      'bundle-suffix': { type: 'string' },
       'source-url': { type: 'string' },
       'source-revision': { type: 'string' },
       'source-build-command': { type: 'string' },
@@ -161,7 +169,7 @@ function parseCliOptions() {
   return {
     envFile: values['env-file'],
     defaultStore: values['default-store'],
-    bundle: values.bundle,
+    bundleSuffix: values['bundle-suffix'],
     sourceUrl: values['source-url'],
     sourceRevision: values['source-revision'],
     sourceBuildCommand: values['source-build-command'],

@@ -5,7 +5,8 @@ import { basename, resolve } from 'node:path';
 import {
   CUBEOPT_ARTIFACT_SCHEMA,
   CUBEOPT_PROTOCOL,
-  CUBEOPT_VARIANT,
+  cubeoptBundleVariant,
+  cubeoptVariantContractFromModuleName,
   syncDirectoryDurably,
   verifyCubeoptBundle,
 } from '../../src/cubeopt/artifact.mjs';
@@ -36,6 +37,22 @@ async function fileEntry(path, expectedName) {
   return { path: expectedName, bytes: info.size, sha256: await hashFile(path) };
 }
 
+export function cubeoptArtifactContractFromModulePath(modulePath) {
+  const moduleName = basename(modulePath);
+  return cubeoptVariantContractFromModuleName(moduleName);
+}
+
+export function detectCubeoptArtifactSources({ modulePath, wasmPath, tablePath }) {
+  const contract = cubeoptArtifactContractFromModulePath(modulePath);
+  const inputs = { module: modulePath, wasm: wasmPath, table: tablePath };
+  for (const [role, expectedName] of Object.entries(contract.files)) {
+    if (basename(inputs[role]) !== expectedName) {
+      throw new Error(`${inputs[role]} must be named ${expectedName} for ${contract.variant}`);
+    }
+  }
+  return contract;
+}
+
 export async function assertCubeoptArtifactSources(manifest, {
   modulePath,
   wasmPath,
@@ -46,13 +63,16 @@ export async function assertCubeoptArtifactSources(manifest, {
     wasm: resolve(wasmPath),
     table: resolve(tablePath),
   };
-  const names = {
-    module: 'cube48opt5.mjs',
-    wasm: 'cube48opt5.wasm',
-    table: 'h48prun31h5.dat',
-  };
-  for (const role of Object.keys(names)) {
-    const actual = await fileEntry(inputs[role], names[role]);
+  const contract = detectCubeoptArtifactSources({
+    modulePath: inputs.module,
+    wasmPath: inputs.wasm,
+    tablePath: inputs.table,
+  });
+  if (manifest.variant !== contract.variant) {
+    throw new Error(`existing immutable bundle variant ${manifest.variant} does not match ${contract.variant} legacy sources`);
+  }
+  for (const role of Object.keys(contract.files)) {
+    const actual = await fileEntry(inputs[role], contract.files[role]);
     const expected = manifest.files[role];
     if (actual.bytes !== expected.bytes || actual.sha256 !== expected.sha256) {
       throw new Error(`existing immutable bundle ${role} does not match the current legacy source`);
@@ -79,9 +99,6 @@ export async function prepareCubeoptArtifact({
   allowFixtureSizes = false,
 }) {
   const bundle = required(rawBundle, 'bundle');
-  if (!/^cubeopt-opt5-[A-Za-z0-9._-]+$/.test(bundle)) {
-    throw new Error('--bundle must start with cubeopt-opt5- and contain only portable characters');
-  }
   const source = {
     url: required(sourceUrl, 'source-url'),
     revision: required(sourceRevision, 'source-revision'),
@@ -93,11 +110,15 @@ export async function prepareCubeoptArtifact({
     wasm: resolve(required(rawWasmPath, 'wasm')),
     table: resolve(required(rawTablePath, 'table')),
   };
-  const names = {
-    module: 'cube48opt5.mjs',
-    wasm: 'cube48opt5.wasm',
-    table: 'h48prun31h5.dat',
-  };
+  const contract = detectCubeoptArtifactSources({
+    modulePath: inputs.module,
+    wasmPath: inputs.wasm,
+    tablePath: inputs.table,
+  });
+  if (cubeoptBundleVariant(bundle, '--bundle') !== contract.variant) {
+    throw new Error(`--bundle must start with cubeopt-${contract.variant}- and contain only portable characters`);
+  }
+  const names = contract.files;
 
   const bundlesDir = resolve(storeDir, 'bundles');
   const finalDir = resolve(bundlesDir, bundle);
@@ -118,7 +139,7 @@ export async function prepareCubeoptArtifact({
   const manifest = {
     schema: CUBEOPT_ARTIFACT_SCHEMA,
     bundle,
-    variant: CUBEOPT_VARIANT,
+    variant: contract.variant,
     protocol: CUBEOPT_PROTOCOL,
     source,
     files,
