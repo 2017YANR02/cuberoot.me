@@ -2,9 +2,11 @@ import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { build } from 'esbuild';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { prepareCubeoptArtifact } from '../scripts/prepare-cubeopt-artifact.mjs';
+import { prepareCubeoptArtifact } from '../scripts/lib/prepare-cubeopt-artifact.mjs';
+import { provisionCubeoptArtifact } from '../scripts/provision-cubeopt-artifact.mjs';
 import {
   CUBEOPT_ARTIFACT_SCHEMA,
   CUBEOPT_POINTER_SCHEMA,
@@ -254,6 +256,255 @@ describe('CubeOpt artifact bundle', () => {
       sourceBuildCommand: 'create deterministic fixture',
     })).rejects.toThrow(/opt5 table must be 972840960 bytes/);
     expect(await readdir(join(targetStore, 'bundles'))).toEqual([]);
+  });
+
+  it('idempotently provisions the API store from legacy deployment paths', async () => {
+    const source = await makeFixture({ bundle: 'cubeopt-opt5-provision-source' });
+    const deployment = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-deploy-'));
+    scratchDirs.push(deployment);
+    const envFile = join(deployment, '.env');
+    const store = join(deployment, 'artifacts', 'cubeopt');
+    await writeFile(envFile, 'UNCHANGED=value\n export CUBEOPT_ARTIFACT_DIR=/stale/duplicate\nCUBEOPT_ARTIFACT_DIR=\n');
+    const env = {
+      CUBEOPT_MODULE: join(source.root, 'cube48opt5.mjs'),
+      CUBEOPT_TABLE: join(source.root, 'h48prun31h5.dat'),
+    };
+    const options = {
+      env,
+      envFile,
+      defaultStore: store,
+      bundle: 'cubeopt-opt5-legacy-runtime-v1',
+      sourceUrl: 'fixture://legacy-runtime',
+      sourceRevision: 'test-only',
+      sourceBuildCommand: 'copy fixture bytes',
+      allowFixtureSizes: true,
+    };
+
+    const first = await provisionCubeoptArtifact(options);
+    expect(first).toEqual({ storeDir: resolve(store), migrated: true, envUpdated: true });
+    expect((await loadCubeoptArtifact(store, { allowFixtureSizes: true })).manifest.bundle)
+      .toBe('cubeopt-opt5-legacy-runtime-v1');
+    const persisted = await readFile(envFile, 'utf8');
+    expect(persisted).toContain('UNCHANGED=value\n');
+    expect(persisted.match(/^CUBEOPT_ARTIFACT_DIR=/gm)).toHaveLength(1);
+    expect(persisted).toContain(`CUBEOPT_ARTIFACT_DIR=${resolve(store)}\n`);
+
+    const second = await provisionCubeoptArtifact(options);
+    expect(second).toEqual({ storeDir: resolve(store), migrated: false, envUpdated: false });
+    expect(await readFile(envFile, 'utf8')).toBe(persisted);
+  });
+
+  it('resumes after prepare completed before the current pointer was promoted', async () => {
+    const source = await makeFixture({ bundle: 'cubeopt-opt5-resume-source' });
+    const deployment = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-resume-'));
+    scratchDirs.push(deployment);
+    const envFile = join(deployment, '.env');
+    const store = join(deployment, 'artifacts', 'cubeopt');
+    const bundle = 'cubeopt-opt5-legacy-runtime-v1';
+    await writeFile(envFile, 'CUBEOPT_SOLVE_ENABLED=1\n');
+    await prepareCubeoptArtifact({
+      storeDir: store,
+      bundle,
+      modulePath: join(source.root, 'cube48opt5.mjs'),
+      wasmPath: join(source.root, 'cube48opt5.wasm'),
+      tablePath: join(source.root, 'h48prun31h5.dat'),
+      sourceUrl: 'fixture://legacy-runtime',
+      sourceRevision: 'test-only',
+      sourceBuildCommand: 'copy fixture bytes',
+      allowFixtureSizes: true,
+    });
+
+    const result = await provisionCubeoptArtifact({
+      env: {
+        CUBEOPT_MODULE: join(source.root, 'cube48opt5.mjs'),
+        CUBEOPT_TABLE: join(source.root, 'h48prun31h5.dat'),
+      },
+      envFile,
+      defaultStore: store,
+      bundle,
+      sourceUrl: 'fixture://legacy-runtime',
+      sourceRevision: 'test-only',
+      sourceBuildCommand: 'copy fixture bytes',
+      allowFixtureSizes: true,
+    });
+
+    expect(result).toEqual({ storeDir: resolve(store), migrated: true, envUpdated: true });
+    expect((await loadCubeoptArtifact(store, { allowFixtureSizes: true })).manifest.bundle).toBe(bundle);
+  });
+
+  it('persists the store after a current pointer already exists without legacy inputs', async () => {
+    const artifact = await makeFixture({ bundle: 'cubeopt-opt5-current-before-env' });
+    await promoteCubeoptBundle(artifact.store, artifact.bundle, { allowFixtureSizes: true });
+    const deployment = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-current-before-env-'));
+    scratchDirs.push(deployment);
+    const envFile = join(deployment, '.env');
+    await writeFile(envFile, 'CUBEOPT_SOLVE_ENABLED=1\n');
+
+    const result = await provisionCubeoptArtifact({
+      env: {},
+      envFile,
+      defaultStore: artifact.store,
+      allowFixtureSizes: true,
+    });
+
+    expect(result).toEqual({ storeDir: resolve(artifact.store), migrated: false, envUpdated: true });
+    expect(await readFile(envFile, 'utf8')).toContain(`CUBEOPT_ARTIFACT_DIR=${resolve(artifact.store)}\n`);
+  });
+
+  it('rejects a prepared retry bundle when the legacy source bytes changed', async () => {
+    const source = await makeFixture({ bundle: 'cubeopt-opt5-source-before-change' });
+    const deployment = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-source-drift-'));
+    scratchDirs.push(deployment);
+    const envFile = join(deployment, '.env');
+    const store = join(deployment, 'artifacts', 'cubeopt');
+    const bundle = 'cubeopt-opt5-legacy-runtime-v1';
+    const originalEnv = 'CUBEOPT_SOLVE_ENABLED=1\n';
+    await writeFile(envFile, originalEnv);
+    await prepareCubeoptArtifact({
+      storeDir: store,
+      bundle,
+      modulePath: join(source.root, 'cube48opt5.mjs'),
+      wasmPath: join(source.root, 'cube48opt5.wasm'),
+      tablePath: join(source.root, 'h48prun31h5.dat'),
+      sourceUrl: 'fixture://legacy-runtime',
+      sourceRevision: 'test-only',
+      sourceBuildCommand: 'copy fixture bytes',
+      allowFixtureSizes: true,
+    });
+    await writeFile(join(source.root, 'cube48opt5.mjs'), '// changed legacy source\n');
+
+    await expect(provisionCubeoptArtifact({
+      env: {
+        CUBEOPT_MODULE: join(source.root, 'cube48opt5.mjs'),
+        CUBEOPT_TABLE: join(source.root, 'h48prun31h5.dat'),
+      },
+      envFile,
+      defaultStore: store,
+      bundle,
+      sourceUrl: 'fixture://legacy-runtime',
+      sourceRevision: 'test-only',
+      sourceBuildCommand: 'copy fixture bytes',
+      allowFixtureSizes: true,
+    })).rejects.toThrow(/does not match the current legacy source/);
+    expect(await readFile(envFile, 'utf8')).toBe(originalEnv);
+    await expect(readFile(join(store, 'current.json'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('resumes after promotion completed but env persistence failed', async () => {
+    const source = await makeFixture({ bundle: 'cubeopt-opt5-env-retry-source' });
+    const deployment = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-env-retry-'));
+    scratchDirs.push(deployment);
+    const envFile = join(deployment, 'missing', '.env');
+    const store = join(deployment, 'artifacts', 'cubeopt');
+    const env = {
+      CUBEOPT_MODULE: join(source.root, 'cube48opt5.mjs'),
+      CUBEOPT_TABLE: join(source.root, 'h48prun31h5.dat'),
+    };
+    const options = {
+      env,
+      envFile,
+      defaultStore: store,
+      bundle: 'cubeopt-opt5-legacy-runtime-v1',
+      sourceUrl: 'fixture://legacy-runtime',
+      sourceRevision: 'test-only',
+      sourceBuildCommand: 'copy fixture bytes',
+      allowFixtureSizes: true,
+    };
+
+    await expect(provisionCubeoptArtifact(options)).rejects.toMatchObject({ code: 'ENOENT' });
+    expect((await loadCubeoptArtifact(store, { allowFixtureSizes: true })).manifest.bundle)
+      .toBe('cubeopt-opt5-legacy-runtime-v1');
+    await mkdir(dirname(envFile), { recursive: true });
+    await writeFile(envFile, 'CUBEOPT_SOLVE_ENABLED=1\n');
+
+    expect(await provisionCubeoptArtifact(options))
+      .toEqual({ storeDir: resolve(store), migrated: false, envUpdated: true });
+  });
+
+  it('does not rewrite env when the existing current pointer is corrupt', async () => {
+    const deployment = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-corrupt-current-'));
+    scratchDirs.push(deployment);
+    const envFile = join(deployment, '.env');
+    const store = join(deployment, 'artifacts', 'cubeopt');
+    const original = 'CUBEOPT_SOLVE_ENABLED=1\n';
+    await mkdir(store, { recursive: true });
+    await writeFile(join(store, 'current.json'), '{"schema":"broken"}\n');
+    await writeFile(envFile, original);
+
+    await expect(provisionCubeoptArtifact({
+      env: {},
+      envFile,
+      defaultStore: store,
+      allowFixtureSizes: true,
+    })).rejects.toThrow(/unsupported current pointer schema/);
+    expect(await readFile(envFile, 'utf8')).toBe(original);
+  });
+
+  it('does not mutate the runtime env file when legacy sources are incomplete', async () => {
+    const deployment = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-deploy-'));
+    scratchDirs.push(deployment);
+    const envFile = join(deployment, '.env');
+    const original = 'CUBEOPT_SOLVE_ENABLED=1\n';
+    await writeFile(envFile, original);
+
+    await expect(provisionCubeoptArtifact({
+      env: {},
+      envFile,
+      defaultStore: join(deployment, 'artifacts', 'cubeopt'),
+      bundle: 'cubeopt-opt5-legacy-runtime-v1',
+      sourceUrl: 'fixture://legacy-runtime',
+      sourceRevision: 'test-only',
+      sourceBuildCommand: 'copy fixture bytes',
+      allowFixtureSizes: true,
+    })).rejects.toThrow(/legacy CUBEOPT_MODULE/);
+    expect(await readFile(envFile, 'utf8')).toBe(original);
+  });
+
+  it('executes the bundled provision CLI without invoking another bundled CLI', async () => {
+    const deployment = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-bundled-cli-'));
+    scratchDirs.push(deployment);
+    const envFile = join(deployment, '.env');
+    const output = join(deployment, 'provision.mjs');
+    await writeFile(envFile, 'CUBEOPT_SOLVE_ENABLED=1\n');
+    await build({
+      entryPoints: [resolve(__dirname, '../scripts/provision-cubeopt-artifact.mjs')],
+      bundle: true,
+      platform: 'node',
+      target: 'node22',
+      format: 'esm',
+      outfile: output,
+      logLevel: 'silent',
+    });
+
+    const originalArgv = process.argv;
+    const originalLegacy = {
+      CUBEOPT_ARTIFACT_DIR: process.env.CUBEOPT_ARTIFACT_DIR,
+      CUBEOPT_MODULE: process.env.CUBEOPT_MODULE,
+      CUBEOPT_TABLE: process.env.CUBEOPT_TABLE,
+    };
+    process.argv = [
+      process.execPath,
+      output,
+      '--env-file', envFile,
+      '--default-store', join(deployment, 'artifacts', 'cubeopt'),
+      '--bundle', 'cubeopt-opt5-legacy-runtime-v1',
+      '--source-url', 'fixture://legacy-runtime',
+      '--source-revision', 'test-only',
+      '--source-build-command', 'copy fixture bytes',
+    ];
+    delete process.env.CUBEOPT_ARTIFACT_DIR;
+    delete process.env.CUBEOPT_MODULE;
+    delete process.env.CUBEOPT_TABLE;
+    try {
+      await expect(import(`${pathToFileURL(output).href}?run=${Date.now()}`))
+        .rejects.toThrow(/missing required legacy CUBEOPT_MODULE/);
+    } finally {
+      process.argv = originalArgv;
+      for (const [name, value] of Object.entries(originalLegacy)) {
+        if (value === undefined) delete process.env[name];
+        else process.env[name] = value;
+      }
+    }
   });
 
   it('keeps server runtime sources free of Web and solver-table path fallbacks', async () => {

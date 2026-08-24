@@ -59,20 +59,24 @@ prepare 先复制到 store 同文件系统的 staging 目录，完整校验后 r
 ```text
 packages/server/dist/server.bundle.js
 packages/server/dist/cubeopt/solve-daemon.mjs
+packages/server/dist/cubeopt/provision.mjs
+packages/server/dist/cubeopt/verify.mjs
 packages/server/dist/cubeopt/smoke.mjs
 ```
 
-部署单元必须同时带上这三个文件，并把预先验证的 artifact store 放在 API 管理的持久位置。发布环境只配置：
+部署单元必须同时带上这些文件，并把已验证的 artifact store 放在 API 管理的持久位置。发布环境只配置：
 
 ```text
 CUBEOPT_SOLVE_ENABLED=1
 CUBEOPT_ARTIFACT_DIR=<absolute artifact store>
 ```
 
-迁移期间若旧 `CUBEOPT_DAEMON_SCRIPT`、`CUBEOPT_MODULE` 或 `CUBEOPT_TABLE` 仍存在，只要 `CUBEOPT_ARTIFACT_DIR` 已配置就会显式 warning 并忽略旧值；未配置 store 则 hard-fail，不会进入 legacy fallback。这样可以先 provision store 并上线新代码，确认后再清旧环境变量。部署 artifact 后执行真实 daemon smoke；它加载并校验真实大表，再用单步打乱验证协议和求解结果：
+首次发布会在切换 release 前运行 `provision.mjs`。若 store 已有有效 `current.json`，它只做校验；若 store 尚不存在，它才从旧部署环境的 `CUBEOPT_MODULE` 和 `CUBEOPT_TABLE` 读取现有真实字节，派生同目录 wasm，调用同一套 prepare/promote 实现建立逻辑不可变 bundle，并原子写入 `CUBEOPT_ARTIFACT_DIR`。固定 bundle ID 让 prepare 成功而后续步骤失败的重跑可以复用已校验 bundle，不重复复制接近 1 GB 的表；复用前还会核对旧部署源的三份真实字节未变化。env 仅在 current 完整校验后原子更新。
+
+这条路径只存在于部署工具，不在 Server runtime 内。运行时若旧 `CUBEOPT_DAEMON_SCRIPT`、`CUBEOPT_MODULE` 或 `CUBEOPT_TABLE` 仍存在，只要 `CUBEOPT_ARTIFACT_DIR` 已配置就会显式 warning 并忽略旧值；未配置 store 则 hard-fail，不会进入 legacy fallback。部署 artifact 后执行真实 daemon smoke；它加载并校验真实大表，再用单步打乱验证协议和求解结果：
 
 ```powershell
 pnpm --filter @cuberoot/server cubeopt:smoke -- --store $ArtifactStore
 ```
 
-真实大表 smoke 属发布/制品验收，不进普通 Test workflow。`smoke.mjs` 直接调用生产 `solveOptimal` 管理器，不复制 daemon 的 stdio 协议。部署 workflow 是否复制两个 CubeOpt 入口、提供 artifact store 并在 reload 前完成 prepare、promote、verify 必须在 workflow 切片中单独验收；仅 server build 成功不代表生产资产已就绪。
+真实大表 smoke 属发布/制品验收，不进普通 Test workflow。`smoke.mjs` 直接调用生产 `solveOptimal` 管理器，不复制 daemon 的 stdio 协议。部署 workflow 是否复制全部 CubeOpt 入口、提供持久 store，并在 reload 前完成幂等 provision 与独立 verify，必须在 workflow 契约测试中单独验收；仅 server build 成功不代表生产资产已就绪。
