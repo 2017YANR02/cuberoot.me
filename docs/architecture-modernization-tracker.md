@@ -4,7 +4,7 @@
 
 Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59`，工作树无未提交改动；本批文档、测试守卫及跟踪文件自身造成的前进不视为基线漂移。每个后续实施批次开始前仍必须重新记录当时的 `HEAD` 和工作树重叠情况。
 
-状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 在两次生产前置校验安全暴露并修正 store provision 与 opt5/opt6 假设后，最终修正 `6756c599a1` 已由 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` 全绿发布。生产部署确认 `cubeopt-opt6-legacy-runtime-v1` 制品、启用态 manager 加载与 `R → R'`（1 HTM）真实请求通过，API 健康、启用/配置状态及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网 smoke 均为 200；因此 BND-02、BND-03、BND-04、BND-06 和 Batch 3 的 PKG-02 最小切片已关闭。BND-04 的共用 AST 检测器置于写入钩子链首后，当前 Codex 宿主已真实拒绝违规跨 app import 且探针未落盘；BND-05 仍待公开 subpath 运行时属性登记。Batch 4 的 `auth/web-session` 中性契约试点、小程序真实构建依赖图和首次微信用户空昵称兼容已随 `ba22fd81e1` 发布；Test `32697884591`、Deploy Next `32697884578`、Deploy Core `32697884597` 全部成功，API 健康、缺失 WCA token、畸形票据、未登录取票和 Web 回调壳安全 smoke 均符合预期，CTR-02 已关闭。真实账号登录成功链路没有用生产凭据手工执行，其 producer/consumer 正向路径由可执行 route/session fixture 证明；CTR-03 的稳定错误码仍按后续兼容切片推进。Batch 5 的 Clock 窄切片已随 `1db7804111` 发布；隔离干净工作树、本地门槛与三路独立复核通过，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 全部成功，API 健康及中英文 `/sim` 公网 smoke 为 200 且无模块解析错误，本切片已关闭。Batch 6 的根 PowerShell 治理已随 `b02005a50e` 发布；三路终审、本地与 Linux 合同、Test、Deploy Next、静态工具同步及五条公网 smoke 全绿，PS1-01 至 PS1-04 已关闭。Batch 7 的物理目录整理已完成收益评估并决定不执行；PKG-03 已以条件触发政策关闭，当前不新建跨端 React UI package。
+状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 在两次生产前置校验安全暴露并修正 store provision 与 opt5/opt6 假设后，最终修正 `6756c599a1` 已由 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` 全绿发布。生产部署确认 `cubeopt-opt6-legacy-runtime-v1` 制品、启用态 manager 加载与 `R → R'`（1 HTM）真实请求通过，API 健康、启用/配置状态及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网 smoke 均为 200；因此 BND-02、BND-03、BND-04、BND-06 和 Batch 3 的 PKG-02 最小切片已关闭。BND-04 的共用 AST 检测器置于写入钩子链首后，当前 Codex 宿主已真实拒绝违规跨 app import 且探针未落盘；BND-05 仍待公开 subpath 运行时属性登记。Batch 4 的 `auth/web-session` 中性契约试点、小程序真实构建依赖图和首次微信用户空昵称兼容已随 `ba22fd81e1` 发布；Test `32697884591`、Deploy Next `32697884578`、Deploy Core `32697884597` 全部成功，API 健康、缺失 WCA token、畸形票据、未登录取票和 Web 回调壳安全 smoke 均符合预期，CTR-02 已关闭。真实账号登录成功链路没有用生产凭据手工执行，其 producer/consumer 正向路径由可执行 route/session fixture 证明；CTR-03 已在六个认证端点完成稳定错误码兼容切片并通过独立复审，迁移期继续保留旧 `error` 字段，不扩张为全 API 一次性改造。Batch 5 的 Clock 窄切片已随 `1db7804111` 发布；隔离干净工作树、本地门槛与三路独立复核通过，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 全部成功，API 健康及中英文 `/sim` 公网 smoke 为 200 且无模块解析错误，本切片已关闭。Batch 6 的根 PowerShell 治理已随 `b02005a50e` 发布；三路终审、本地与 Linux 合同、Test、Deploy Next、静态工具同步及五条公网 smoke 全绿，PS1-01 至 PS1-04 已关闭。Batch 7 的物理目录整理已完成收益评估并决定不执行；PKG-03 已以条件触发政策关闭，当前不新建跨端 React UI package。
 
 > BND-04 证据校正：仅把架构守卫移到链首仍会被多文件 patch 的逐文件一般守卫拖入 30 秒超时。最终实现先把同一 patch 的全部 writes 一次性交给架构检测器，再执行一般守卫；末尾才出现违规的真实五文件探针约 6 秒内被 deny，五文件均未落盘。
 >
@@ -165,7 +165,7 @@ API     ─X─> Web 源码或 Web public
 | --- | --- | --- | --- |
 | CTR-01 | 建立 endpoint/transport 级真实消费者矩阵 | `完成` | 已按 endpoint、认证传输、wire shape、真实消费者和发布节奏登记首个 auth 试点；Mobile 当前没有认证消费者，不造占位代码 |
 | CTR-02 | 以 `auth/web-session` 建立中性契约 subpath 试点 | `完成` | Server、Web 与小程序复用显式 `@cuberoot/shared/auth/web-session` 的 ticket、DTO 和 decoder；边界审计验证该 subpath 的静态及动态运行时闭包不含 React、DOM、Next、Capacitor、微信 API、Node-only 模块或 axios。`ba22fd81e1` 的三条工作流全绿，生产边界 smoke 通过 |
-| CTR-03 | 建立运行时 schema 与稳定错误码 | `进行中（schema 切片完成）` | wire schema 已接受服务端真实的首次微信用户空昵称，producer/consumer fixture 覆盖 required uid/avatar、opaque token 和 ticket；稳定错误码仍按兼容扩展新增 `{ code, message }`、迁移期保留旧 `{ error }`，不在试点里一次性改完全部 endpoint |
+| CTR-03 | 建立运行时 schema 与稳定错误码 | `完成` | `auth/web-session` 的严格 decoder 已覆盖正常会话、票据与稳定错误 envelope；六个试点端点统一返回 `{ code, message, error }`，其中旧 `error` 在迁移期保留，Web 兼容不破坏。小程序优先按 code 映射且保留旧 HTTP status fallback；真实 Hono producer 矩阵、非 2xx `wx.request` 消费链和畸形输入回归已通过。本切片不宣称全部 API endpoint 已一次性迁移 |
 | CTR-04 | 确定已发布客户端支持政策和跨版本 fixture | `完成` | 当前小程序仍在 P0 上线阻塞期，Mobile 也尚无 auth 消费者，因此不存在可声称受支持的历史发布版；首个正式发布版才建立 v1 基线。此后支持当前版与上一正式版且不少于 90 天，服务端遵循 expand → migrate → contract；本批 fixture 锁定旧请求、新响应、额外字段和本地旧会话读取 |
 | CTR-05 | 决定是否建立独立 contracts package | `完成` | 当前不建；现有 `@cuberoot/shared` 的显式中性 subpath 足够，只有出现独立生命周期、原生代码生成或 shared 无法保持中性时才重新立项 |
 | CTR-06 | 决定是否启用 codegen | `完成` | 当前不启用；没有 Swift/Kotlin 消费者、对外 SDK 或 schema 单一事实源需求，手写窄 schema 与 fixture 的成本和可审查性更合适 |
@@ -375,6 +375,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | Batch 6 测试与 workflow 终审 | `batch6_review_tests` | `GO PS1-04，0 Blocker / 0 Major` | 先阻断全局 flag 子串、同值 root fixture、根脚本白名单触发和弱退出码断言；修为真实行为、双仓库、根级 `*.ps1` 触发、`/*.ps1` sparse 与精确“退出码 23”后，Windows、Linux 只读合同及路径矩阵 7/7 均通过 |
 | Batch 7 BND-04 宿主探针 | `root`、`batch6_review_cli` | `GO，0 Blocker / 0 Major / 0 Minor` | 首次真实探针因逐文件串行一般守卫先耗尽 30 秒而 fail-open；修复后同一 patch 的全部 writes 先经单次架构扫描，再进入一般守卫。四个普通文件后追加跨 app import 的真实五文件探针约 6 秒内被 `cross-package-alias-import` deny，五文件均不存在；两文件定向测试 26/26、client typecheck、边界审计和 diff-check 通过 |
 | Batch 7 目录布局与跨端 UI package 裁决 | `batch6_review_tests` | `GO，评估后不执行` | 14 个 package workspace；快照 `4418bea0bc` 的 6 个部署敏感目录有 357 次 tracked path 匹配，另有 8 个相关 workflow，均未显示可量化迁移收益；关闭物理重排，不建 `webapp/`、不搬 Platform 归档。PKG-03 只在至少两个 React app 真实共享设计、交互与无障碍契约时重开，小程序不计入 React DOM 消费者 |
+| Batch 7 CTR-03 稳定错误码终审 | `batch6_review_tests` | `GO，0 Blocker / 0 Major / 0 Minor` | 六个试点端点的 producer、shared 严格 decoder、小程序 code-first 映射与旧 `error`/HTTP status 兼容边界一致；Reviewer 以真实 `wx.request → requestJson → ApiError.code → loginErrorMessage` 冲突 fixture 证明 code 优先，并覆盖服务端七类微信失败分支，未把试点夸大成全 API 迁移 |
 
 审核要求：
 
@@ -392,6 +393,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-24 | Batch 7 CTR-03 稳定错误码兼容切片关闭 | 六个 auth 试点端点统一稳定 `{ code, message, error }` envelope，迁移期保留旧字段；小程序 code-first 且保留旧 status fallback。独立 Reviewer 最终 GO，Mini auth 32/32、Server wire contract 15/15 与 diff-check 通过；本地提交，不提前声称发布验收 |
 | 2026-08-24 | Batch 7 物理目录整理评估关闭，PKG-03 改为条件触发政策 | 14 个 package workspace；实施前快照 `4418bea0bc` 的 6 个部署敏感目录有 357 次 tracked path 匹配，另有 8 个相关 workflow；审计未发现可量化收益。LYT-01 以“不执行”完成，LYT-02 至 LYT-04 取消/不适用。不建 `webapp/`、不搬 Platform 归档，当前不造跨端 React UI package |
 | 2026-08-24 | Batch 7 BND-04 宿主级写入守卫关闭 | 首次违规探针在 30 秒后意外落盘，确认逐文件串行一般守卫耗尽超时；改为同一 patch 的全部 writes 先经单次架构扫描后，真实五文件探针在末尾放置违规仍约 6 秒内被 `cross-package-alias-import` deny，五文件均未落盘。两文件定向测试 26/26、client typecheck、边界审计 314/330/13 与 diff-check 通过 |
 | 2026-08-24 | Batch 6 PS1-04 完成发布验收，PS1-01 至 PS1-04 关闭 | `b02005a50e`；根目录只保留统一入口和 BLDDB 兼容 shim，7 个私有实现进入 `scripts/upstream/`。三路 Reviewer 最终 GO；Test `32730444612`、Deploy Next `32730444571`、Sync static toolkit `32730444528` 全绿，五条公网 smoke 为 200 且无错误标记；兼容 shim 的有序退役进入 PS1-05 |

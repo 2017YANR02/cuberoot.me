@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  decodeWebSessionError,
   decodeWebSession,
   decodeWebSessionTicketEnvelope,
   decodeWebSessionUserEnvelope,
@@ -74,6 +75,19 @@ describe('mini program web session contract', () => {
       ticket: 'A'.repeat(43),
       expiresIn: Number.MAX_SAFE_INTEGER + 1,
     })).toBeNull();
+  });
+
+  it('accepts only canonical stable auth error envelopes', () => {
+    const error = {
+      code: 'INVALID_WECHAT_CODE',
+      message: 'invalid wechat code',
+      error: 'invalid wechat code',
+    };
+    expect(decodeWebSessionError(error)).toEqual(error);
+    expect(decodeWebSessionError({ ...error, code: 'MESSAGE_CHANGED_LATER' })).toBeNull();
+    expect(decodeWebSessionError({ ...error, error: 'legacy text drifted' })).toBeNull();
+    expect(decodeWebSessionError({ ...error, message: 'unsafe\nmessage', error: 'unsafe\nmessage' })).toBeNull();
+    expect(decodeWebSessionError({ code: error.code, error: error.error })).toBeNull();
   });
 
   it('accepts only same-site path destinations', () => {

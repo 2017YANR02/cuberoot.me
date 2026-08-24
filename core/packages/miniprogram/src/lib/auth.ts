@@ -1,9 +1,11 @@
 import { API_ORIGIN } from './runtime-config';
 import {
+  decodeWebSessionError,
   decodeWebSession,
   decodeWebSessionTicketEnvelope,
   decodeWebSessionUserEnvelope,
   type WebSessionTicketEnvelope,
+  type WebSessionErrorCode,
 } from '@cuberoot/shared/auth/web-session';
 import {
   clearRuntimeTimeout,
@@ -49,6 +51,7 @@ export class ApiError extends Error {
   constructor(
     public readonly status: number,
     message: string,
+    public readonly code: WebSessionErrorCode | null = null,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -190,9 +193,12 @@ function requestJson<T>(
               resolve(response.data as T);
               return;
             }
+            const authError = decodeWebSessionError(body);
             reject(new ApiError(
               response.statusCode,
-              typeof body?.error === 'string' ? body.error : `HTTP ${response.statusCode}`,
+              authError?.message
+                ?? (typeof body?.error === 'string' ? body.error : `HTTP ${response.statusCode}`),
+              authError?.code ?? null,
             ));
           });
         },
@@ -328,6 +334,11 @@ export async function createWebSessionTicket(session: SessionData): Promise<WebS
 export function loginErrorMessage(error: unknown): string {
   if (!(error instanceof ApiError)) return '登录失败，请稍后重试';
   if (error.status === STORAGE_ERROR_STATUS) return '设备存储不可用，请清理空间后重试';
+  if (error.code === 'WECHAT_UNIONID_REQUIRED') return '暂未获得 UnionID，请先完成开放平台绑定';
+  if (error.code === 'WECHAT_NOT_CONFIGURED') return '服务端还未配置小程序密钥';
+  if (error.code === 'RATE_LIMITED') return '微信登录操作过于频繁，请稍后再试';
+  if (error.code === 'ACCOUNT_BLOCKED') return '微信暂时无法为此账号完成登录';
+  if (error.code === 'INVALID_WECHAT_CODE') return '微信登录码已失效，请重试';
   if (error.status === 409) return '暂未获得 UnionID，请先完成开放平台绑定';
   if (error.status === 503) return '服务端还未配置小程序密钥';
   if (error.status === 429) return '微信登录操作过于频繁，请稍后再试';
