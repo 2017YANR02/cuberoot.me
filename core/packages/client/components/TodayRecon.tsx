@@ -2,7 +2,7 @@
 
 // Landing「今日复盘」— /recon 最新录入那天的全部复盘。每次加载自动取最新一天。
 // 宽屏一行四卡、≤1080px 三卡、≤900px 两卡(复用 /recon?view=grid 的 ReconCard 竖排卡,
-// 但不显示打乱缩略图:scrambleThumb={false},只有视频封面才出缩略图区);
+// 但不显示打乱公式:showScrambleFallback={false},只有视频封面才出媒体区);
 // 超出固定高度的部分走右侧滚动条(.scroll-panel,与「比赛中心」同一套)。点卡进 /recon/[id] 看完整回放。
 // 数据:lib/recon-api getTodayRecons()(主用 /v1/recon/today,回退 /latest 单条)。
 import { useEffect, useState } from 'react';
@@ -56,7 +56,7 @@ export default function TodayRecon({ lang }: Props) {
 
       <div className="tr-cards scroll-panel scroll-panel--hover-lift">
         {recons.map((s) => (
-          <ReconCard key={s.id} solve={s} isZh={isZh} href={`/recon/${reconPathSeg(s)}`} scrambleThumb={false} />
+          <ReconCard key={s.id} solve={s} isZh={isZh} href={`/recon/${reconPathSeg(s)}`} showScrambleFallback={false} />
         ))}
       </div>
     </div>

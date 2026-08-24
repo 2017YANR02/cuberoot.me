@@ -15,15 +15,15 @@ import { Flag } from '@/components/Flag';
 import { localizeCompName } from '@/lib/comp-localize';
 import { RecordBadge } from '@/components/RecordBadge';
 import { EventIcon } from '@/components/EventIcon';
-import { isWcaEvent, eventDisplayName, toWcaEventId } from '@/lib/wca-events';
-import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
+import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
+import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { tr } from '@/i18n/tr';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 import './recon_card.css';
 
-// 卡片缩略图：有视频→封面图（YouTube 直链 / B 站 / 抖音异步取），否则打乱图，再否则项目图标。
-// scrambleThumb=false（首页「今日复盘」）时只留视频封面，没封面就整块不渲染（返回 null）。
-function ReconCardMedia({ solve, isZh, scrambleThumb }: { solve: ReconSolve; isZh: boolean; scrambleThumb: boolean }) {
+// 卡片媒体区：有视频→封面图（YouTube 直链 / B 站 / 抖音异步取），否则打乱公式，再否则项目图标。
+// showScrambleFallback=false（首页「今日复盘」）时只留视频封面，没封面就整块不渲染（返回 null）。
+function ReconCardMedia({ solve, isZh, showScrambleFallback }: { solve: ReconSolve; isZh: boolean; showScrambleFallback: boolean }) {
   const cover = useMemo(() => pickReconCover(solve.videoUrl, isZh), [solve.videoUrl, isZh]);
   const ytSrc = cover ? coverSyncSrc(cover) : null;
   const [asyncSrc, setAsyncSrc] = useState<string | null>(null);
@@ -60,16 +60,15 @@ function ReconCardMedia({ solve, isZh, scrambleThumb }: { solve: ReconSolve; isZ
     );
   }
 
-  if (!scrambleThumb) return null;
+  if (!showScrambleFallback) return null;
 
-  // 无封面：打乱图（自包含 SVG）→ 项目图标兜底
-  const previewEvent = toWcaEventId(solve.event);
   const scramble = getReconScramble(solve);
+  const displayScramble = formatScrambleForEvent(solve.event, scramble);
   const hasVideo = !!solve.videoUrl && solve.videoUrl.trim() !== '';
   return (
     <div className="recon-card-media">
-      {scramble && eventHasScramblePreview(previewEvent) ? (
-        <ScramblePreview2D event={previewEvent} scramble={scramble} size={52} />
+      {displayScramble ? (
+        <span className="recon-card-scramble mono" title={displayScramble}>{displayScramble}</span>
       ) : (
         <div className="recon-card-media-empty">
           {isWcaEvent(solve.event)
@@ -89,8 +88,8 @@ function ReconCardMedia({ solve, isZh, scrambleThumb }: { solve: ReconSolve; isZ
   );
 }
 
-export function ReconCard({ solve, isZh, href, horizontal = false, scrambleThumb = true }: {
-  solve: ReconSolve; isZh: boolean; href: string; horizontal?: boolean; scrambleThumb?: boolean;
+export function ReconCard({ solve, isZh, href, horizontal = false, showScrambleFallback = true }: {
+  solve: ReconSolve; isZh: boolean; href: string; horizontal?: boolean; showScrambleFallback?: boolean;
 }) {
   const cubers = [
     { name: solve.person || '', country: solve.personCountry },
@@ -101,7 +100,7 @@ export function ReconCard({ solve, isZh, href, horizontal = false, scrambleThumb
 
   return (
     <Link href={href} prefetch={false} className={`recon-card${horizontal ? ' recon-card--row' : ''}`}>
-      <ReconCardMedia solve={solve} isZh={isZh} scrambleThumb={scrambleThumb} />
+      <ReconCardMedia solve={solve} isZh={isZh} showScrambleFallback={showScrambleFallback} />
       <div className="recon-card-body">
         {/* 表头风格:成绩 + 项目图标 + 项目名 + 国旗 + 选手名,同一行(对齐 /recon 详情页标题) */}
         <div className="recon-card-head">

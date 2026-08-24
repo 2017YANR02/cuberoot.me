@@ -38,7 +38,7 @@
   justify-content: center;
 }
 
-/* 缩略图区——scramble 2D net（自包含 SVG）居中 */
+/* 媒体区——视频封面或打乱公式居中 */
 .recon-card-media {
   position: relative;
   display: flex;
@@ -48,6 +48,20 @@
   background: var(--muted);
   border-bottom: 1px solid var(--border-default);
   overflow: hidden;
+}
+.recon-card-scramble {
+  display: -webkit-box;
+  max-width: 100%;
+  padding: 10px 14px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 .recon-card-media-empty {
   display: inline-flex;
@@ -176,4 +190,8 @@
 
 @media (max-width: 480px) {
   .recon-card-media { height: 96px; }
+  .recon-card-scramble {
+    padding-inline: 10px;
+    font-size: 0.72rem;
+  }
 }
