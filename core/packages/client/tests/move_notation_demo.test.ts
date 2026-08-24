@@ -226,12 +226,25 @@ describe('MoveNotationDemo player lifecycle', () => {
       }));
     });
 
-    const captions = Array.from(host.querySelectorAll('.move-notation-option span'))
+    const captions = Array.from(host.querySelectorAll('.move-notation-option > span'))
       .map(node => node.textContent);
     expect(captions).toEqual([
       '整体沿右层顺时针转90度',
       '下面第二层顺时针转90度',
     ]);
+  });
+
+  it('keeps canonical move notation visible beside a localized alias', async () => {
+    await act(async () => {
+      root.render(createElement(MoveNotationDemo, {
+        puzzle: '3x3',
+        moves: [{ move: "R3'", symbol: "右3'", caption: '右面逆时针转270度' }],
+        variant: 'compact',
+      }));
+    });
+
+    expect(host.querySelector('.move-notation-standard')?.textContent).toBe("R3'");
+    expect(host.querySelector('.move-notation-alias')?.textContent).toBe("右3'");
   });
 
   it('visually groups suffix variants of the same base move', async () => {

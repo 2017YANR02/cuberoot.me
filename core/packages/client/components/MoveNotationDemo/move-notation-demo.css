@@ -38,7 +38,10 @@
 }
 
 .move-notation-options code {
-  flex: 0 0 68px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  flex: 0 0 92px;
+  gap: 5px;
   color: var(--accent);
   font-family: var(--font-mono, Consolas, monospace);
   font-size: 13px;
@@ -46,7 +49,11 @@
   white-space: nowrap;
 }
 
-.move-notation-options span {
+.move-notation-options code > span:only-child {
+  grid-column: 1 / -1;
+}
+
+.move-notation-option > span {
   min-width: 0;
   color: var(--muted-foreground);
   font-size: 12px;
@@ -63,6 +70,6 @@
   }
 
   .move-notation-options code {
-    flex-basis: 54px;
+    flex-basis: 88px;
   }
 }
