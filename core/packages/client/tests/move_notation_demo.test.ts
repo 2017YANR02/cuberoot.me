@@ -91,7 +91,7 @@ describe('MoveNotationDemo player lifecycle', () => {
     });
 
     expect(host.querySelector('[data-testid="player-alg"]')?.textContent).toBe('R');
-    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-control-mode')).toBeNull();
+    expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-control-mode')).toBe('none');
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-engine')).toBeNull();
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-start-solved')).toBe('true');
     expect(host.querySelector('[data-testid="player-alg"]')?.getAttribute('data-auto-play')).toBe('true');
