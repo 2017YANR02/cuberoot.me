@@ -9,6 +9,10 @@ import BoolToggle from '@/components/BoolToggle';
 import MoveNotationDemo, { type MoveNotationOption } from '@/components/MoveNotationDemo/MoveNotationDemo';
 import NxNOrderInput from '@/components/NxNOrderInput';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
+import NotationTrainer, {
+  NOTATION_TRAINING_MODES,
+  type NotationTrainingMode,
+} from './_components/NotationTrainer';
 import { useT } from '@/hooks/useT';
 import { T } from '@/i18n/tr';
 import {
@@ -123,6 +127,14 @@ export default function NotationPage() {
     'wca',
     parseAsBoolean.withDefault(false),
   );
+  const [training, setTraining] = useQueryState(
+    'train',
+    parseAsBoolean.withDefault(false).withOptions({ history: 'push' }),
+  );
+  const [trainingMode, setTrainingMode] = useQueryState(
+    'trainingMode',
+    parseAsStringEnum<NotationTrainingMode>([...NOTATION_TRAINING_MODES]).withDefault('perform'),
+  );
   const cubeOrder = clampNxNOrder(order);
   const activePuzzle: NotationPuzzle = wcaOnly && puzzle === 'fto' ? '333' : puzzle;
   useEffect(() => {
@@ -159,6 +171,25 @@ export default function NotationPage() {
     ...FTO_MACRO_MOVES.map(move => demoOption(move, t('组合动作', 'Macro'))),
   ];
   const cubeMoves = wcaOnly ? cubeWcaMovesForOrder(cubeOrder) : cubeMovesForOrder(cubeOrder);
+  const cubeOptions = cubeDemoOptions(cubeMoves);
+  const megaminxOptions = MEGAMINX_WCA_MOVES.map(move => demoOption(move, formatMegaminxMoveDescription(move, t)));
+  const pyraminxOptions = (wcaOnly ? PYRAMINX_WCA_MOVES : [...PYRAMINX_WCA_MOVES, ...PYRAMINX_EXTENSION_MOVES])
+    .map(move => demoOption(move, formatPyraminxMoveDescription(move, t)));
+  const skewbOptions = (wcaOnly ? SKEWB_WCA_MOVES : [...SKEWB_WCA_MOVES, ...SKEWB_EXTENSION_MOVES])
+    .map(move => demoOption(move, formatSkewbMoveDescription(move, t)));
+  const square1Options = SQUARE1_MOVES.map(move => demoOption(move, formatSquare1MoveDescription(move, t)));
+  const clockOptions = CLOCK_WCA_MOVES.map(move => demoOption(move, formatClockMoveDescription(move, t)));
+  const activeOptions: readonly MoveNotationOption[] = activePuzzle === '333' ? cubeOptions
+    : activePuzzle === 'minx' ? megaminxOptions
+      : activePuzzle === 'pyram' ? pyraminxOptions
+        : activePuzzle === 'skewb' ? skewbOptions
+          : activePuzzle === 'sq1' ? square1Options
+            : activePuzzle === 'clock' ? clockOptions
+              : ftoMoves;
+  const activePlayerPuzzle = activePuzzle === '333' ? '3x3'
+    : activePuzzle === 'minx' ? 'megaminx'
+      : activePuzzle === 'pyram' ? 'pyraminx'
+        : activePuzzle;
 
   return (
     <main className="notation-page">
@@ -202,14 +233,31 @@ export default function NotationPage() {
             onChange={next => void setWcaOnly(next)}
             label={t('仅 WCA 记号', 'WCA notation only')}
           />
+          <BoolToggle
+            value={training}
+            onChange={next => void setTraining(next)}
+            label={t('训练模式', 'Training mode')}
+          />
         </nav>
 
-        {activePuzzle === '333' && <div id="cube" className="notation-catalog-section">
+        {training && (
+          <NotationTrainer
+            key={`${activePuzzle}-${cubeOrder}-${notationStyle}-${wcaOnly}-${trainingMode}`}
+            puzzle={activePlayerPuzzle}
+            puzzleOrder={activePuzzle === '333' ? cubeOrder : undefined}
+            moves={activeOptions}
+            notationStyle={activePuzzle === 'sq1' ? 'standard' : notationStyle}
+            mode={trainingMode}
+            onModeChange={next => void setTrainingMode(next)}
+          />
+        )}
+
+        {!training && activePuzzle === '333' && <div id="cube" className="notation-catalog-section">
           <div className="alg-notation-demo-section">
             <MoveNotationDemo
               puzzle="3x3"
               puzzleOrder={cubeOrder}
-              moves={cubeDemoOptions(cubeMoves)}
+              moves={cubeOptions}
               notationStyle={notationStyle}
               transposeGroups
               variant="compact"
@@ -218,56 +266,56 @@ export default function NotationPage() {
           <CubeRuleNotes order={cubeOrder} />
         </div>}
 
-        {activePuzzle === 'minx' && <section id="megaminx" className="notation-catalog-section">
+        {!training && activePuzzle === 'minx' && <section id="megaminx" className="notation-catalog-section">
           <MoveNotationDemo
             puzzle="megaminx"
-            moves={MEGAMINX_WCA_MOVES.map(move => demoOption(move, formatMegaminxMoveDescription(move, t)))}
+            moves={megaminxOptions}
             notationStyle={notationStyle}
             transposeGroups
             variant="compact"
           />
         </section>}
 
-        {activePuzzle === 'pyram' && <section id="pyraminx" className="notation-catalog-section">
+        {!training && activePuzzle === 'pyram' && <section id="pyraminx" className="notation-catalog-section">
           <MoveNotationDemo
             puzzle="pyraminx"
-            moves={(wcaOnly ? PYRAMINX_WCA_MOVES : [...PYRAMINX_WCA_MOVES, ...PYRAMINX_EXTENSION_MOVES]).map(move => demoOption(move, formatPyraminxMoveDescription(move, t)))}
+            moves={pyraminxOptions}
             notationStyle={notationStyle}
             transposeGroups
             variant="compact"
           />
         </section>}
 
-        {activePuzzle === 'skewb' && <section id="skewb" className="notation-catalog-section">
+        {!training && activePuzzle === 'skewb' && <section id="skewb" className="notation-catalog-section">
           <MoveNotationDemo
             puzzle="skewb"
-            moves={(wcaOnly ? SKEWB_WCA_MOVES : [...SKEWB_WCA_MOVES, ...SKEWB_EXTENSION_MOVES]).map(move => demoOption(move, formatSkewbMoveDescription(move, t)))}
+            moves={skewbOptions}
             notationStyle={notationStyle}
             transposeGroups
             variant="compact"
           />
         </section>}
 
-        {activePuzzle === 'sq1' && <section id="square1" className="notation-catalog-section" aria-labelledby="square1-title">
+        {!training && activePuzzle === 'sq1' && <section id="square1" className="notation-catalog-section" aria-labelledby="square1-title">
           <div className="notation-section-heading">
             <h2 id="square1-title">Square-1</h2>
             <span>{t('WCA 第 12c 条', 'WCA Article 12c')}</span>
           </div>
           <p className="notation-section-copy">{t('每一步写成数对 (x, y)：上层顺时针转 x 个 30 度单位，下层顺时针转 y 个 30 度单位，负数表示逆时针。斜线 / 表示把右半部翻转 180 度。例如 (1,0) 只转上层一格，(0,-1) 只将下层逆时针转一格。', 'Each step is a pair (x, y): turn the top layer x 30-degree units clockwise and the bottom layer y units clockwise; negative values go counter-clockwise. A slash / flips the right half by 180 degrees. For example, (1,0) turns only the top by one unit and (0,-1) turns only the bottom counter-clockwise by one unit.')}</p>
-          <MoveNotationDemo puzzle="sq1" moves={SQUARE1_MOVES.map(move => ({ move, caption: formatSquare1MoveDescription(move, t) }))} layout="square1-grid" variant="compact" />
+          <MoveNotationDemo puzzle="sq1" moves={square1Options} layout="square1-grid" variant="compact" />
         </section>}
 
-        {activePuzzle === 'clock' && <section id="clock" className="notation-catalog-section">
+        {!training && activePuzzle === 'clock' && <section id="clock" className="notation-catalog-section">
           <MoveNotationDemo
             puzzle="clock"
-            moves={CLOCK_WCA_MOVES.map(move => demoOption(move, formatClockMoveDescription(move, t)))}
+            moves={clockOptions}
             notationStyle={notationStyle}
             transposeGroups
             variant="compact"
           />
         </section>}
 
-        {activePuzzle === 'fto' && <section id="fto" className="notation-catalog-section">
+        {!training && activePuzzle === 'fto' && <section id="fto" className="notation-catalog-section">
           <MoveNotationDemo
             puzzle="fto"
             moves={ftoMoves}

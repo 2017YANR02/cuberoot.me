@@ -31,6 +31,7 @@ export interface AlgPlayerHandle {
 }
 
 export type AlgPlayerControlMode = 'full' | 'replay' | 'none';
+export type AlgPlayerInteractionMode = 'view' | 'turn';
 
 /** Map our AlgPuzzle slug to cubing.js's TwistyPlayer puzzle id. */
 export const TWISTY_PUZZLE: Record<AlgPlayerPuzzle, string> = {
@@ -71,6 +72,10 @@ interface Props {
   loop?: boolean;
   /** 完整播放条或仅重播按钮。记号教学使用极简重播模式。 */
   controlMode?: AlgPlayerControlMode;
+  /** 拖拽只调整视角，或直接使用 `/sim` 的手拧交互。 */
+  interactionMode?: AlgPlayerInteractionMode;
+  /** `interactionMode='turn'` 时返回 `/sim` 产生的标准转动记号。 */
+  onUserMove?: (move: string) => void;
   /** 每个 STM 的动画时长(ms)，默认 1000。 */
   moveDurationMs?: number;
   /** 自定义尺寸,默认 260px;`fillPane=true` 时忽略 */
@@ -88,7 +93,7 @@ interface Props {
 
 /** `/sim` 公式播放器当前支持的全部拼图。 */
 const SIM_SUPPORTED = new Set<AlgPlayerPuzzle>([
-  '2x2', '3x3', '4x4', '5x5', 'sq1', 'pyraminx', 'skewb', 'clock',
+  '2x2', '3x3', '4x4', '5x5', 'sq1', 'megaminx', 'pyraminx', 'skewb', 'clock',
 ]);
 
 /** EIF macros expand to several physical turns, so the FTO engine uses a shorter beat. */
@@ -106,6 +111,8 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         playRequest={props.playRequest}
         loop={props.loop}
         controlMode={props.controlMode}
+        interactionMode={props.interactionMode}
+        onUserMove={props.onUserMove}
         moveDurationMs={props.moveDurationMs ?? DEFAULT_FTO_MOVE_DURATION_MS}
         size={props.size}
         fillPane={props.fillPane}
@@ -123,6 +130,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
       moveDurationMs,
       props.size ?? 260,
       props.fillPane ?? false,
+      props.interactionMode ?? 'view',
     ]);
     return (
       <AlgSimPlayer
@@ -134,6 +142,8 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         startSolved={props.startSolved} autoPlay={props.autoPlay} loop={props.loop}
         playRequest={props.playRequest}
         controlMode={props.controlMode}
+        interactionMode={props.interactionMode}
+        onUserMove={props.onUserMove}
         moveDurationMs={moveDurationMs} size={props.size ?? 260} fillPane={props.fillPane}
       />
     );
@@ -199,6 +209,7 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
         }
         host.appendChild(player);
         playerRef.current = player;
+        if (startSolved) player.timestamp = 0;
         const canAutoPlay = autoPlay && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (canAutoPlay) {
           player.play?.();
