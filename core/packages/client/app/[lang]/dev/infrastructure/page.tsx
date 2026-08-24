@@ -66,9 +66,9 @@ const LAYERS = [
 ] as const;
 
 const PUBLIC_SPECS = [
-  { label: { zh: '计算', en: 'Compute' }, value: { zh: '2 vCPU', en: '2 vCPU' } },
-  { label: { zh: '内存', en: 'Memory' }, value: { zh: '4 GiB', en: '4 GiB' } },
-  { label: { zh: '系统盘', en: 'System disk' }, value: { zh: '50 GiB', en: '50 GiB' } },
+  { label: { zh: '计算', en: 'Compute' }, value: { zh: '4 vCPU', en: '4 vCPU' } },
+  { label: { zh: '内存', en: 'Memory' }, value: { zh: '16 GiB', en: '16 GiB' } },
+  { label: { zh: '系统盘', en: 'System disk' }, value: { zh: '80 GiB', en: '80 GiB' } },
   { label: { zh: '网络上限', en: 'Network ceiling' }, value: { zh: '200 Mbps', en: '200 Mbps' } },
 ] as const;
 

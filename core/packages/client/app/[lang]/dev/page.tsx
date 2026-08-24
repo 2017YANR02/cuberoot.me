@@ -40,13 +40,13 @@ const CARDS: Card[] = [
       title: '基础设施',
       sub: 'Infrastructure',
       tagline: '生产环境的公开档案:容量、请求路径、发布、监控、备份和安全披露边界',
-      meta: '2 vCPU / 4 GiB / 发布与恢复',
+      meta: '4 vCPU / 16 GiB / 发布与恢复',
     },
     en: {
       title: 'Infrastructure',
       sub: 'Production systems',
       tagline: 'A public profile of production capacity, request routing, releases, monitoring, backups, and disclosure boundaries',
-      meta: '2 vCPU / 4 GiB / release and recovery',
+      meta: '4 vCPU / 16 GiB / release and recovery',
     },
   },
   {
