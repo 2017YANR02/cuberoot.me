@@ -194,7 +194,7 @@ API     ─X─> Web 源码或 Web public
 
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
-| PS1-01 | 盘点根脚本调用图和仓库外调用者 | `排队中` | workflow、文档、计划任务、快捷方式、生成标记和脚本互调均有记录；无法核验的外部调用明确标注未知 |
+| PS1-01 | 盘点根脚本调用图和仓库外调用者 | `完成` | 7 个脚本、互调、文档、生成标记和仓库外 BLDDB 固定路径已登记；workflow、计划任务、快捷方式与 profile 的当前机器扫描均无调用，无法核验的外部调用保持未知 |
 | PS1-02 | 统一 RepoRoot 与无副作用检查模式 | `排队中` | 从任意 cwd 解析到同一仓库；新增 `-ValidateOnly` 或等价模式，不联网、不 pull、不 stash、不生成、不写入 |
 | PS1-03 | 冻结并测试公开 CLI 契约 | `排队中` | 记录根入口与各直调脚本的参数、退出码和调用方式；`-Only`、`-SkipPull`、`-DryRun` 均有兼容测试 |
 | PS1-04 | 保留根入口并移动私有实现 | `排队中` | 严格在 PS1-01 → 02 → 03 后执行；根入口稳定，shim 原样转发 `@PSBoundParameters` 和显式 RepoRoot |
@@ -273,6 +273,22 @@ Clock 切片实施基线：2026-08-24 启动时 `HEAD=fc11613b29f2004908f75b6173
 
 特点：先冻结调用者、路径和 CLI，再移动私有实现；现有 `-DryRun` 不作为无副作用验收。
 
+PS1-01 事实快照（2026-08-24）：根目录共有 7 个 tracked `.ps1`、1,694 行；`sync_upstream.ps1` 是统一人工入口，其余 6 个是可直调实现。仓库内没有 workflow 或 package script 直接调用这些脚本；编排器调用全部 6 个实现，文档仍直调 BLDDB、RubiksSolverDemo 与 Alg-Trainers，生成标记仍写有 BLDDB 和 csTimer scramble 的旧根路径。
+
+| 根脚本 | 当前参数 | 仓库内调用与路径契约 | 默认副作用摘要 |
+| --- | --- | --- | --- |
+| `sync_upstream.ps1` | `-Only`、`-SkipPull`、`-DryRun` | `ops/contests/README.md` 为规范入口；直接调度其余 6 个脚本 | 默认对外部 clone 执行 stash、pull、stash pop，再运行生成/同步；RecordRanks 可推 fork |
+| `_sync_cstimer.ps1` | `-CstimerDir`、`-ProjectDir` | 仅编排器直接调用；`docs/generated-artifacts.md` 登记 | pull、构建并覆盖 `tools/cstimer` 与 Client public 产物 |
+| `_sync_cstimer_scramble.ps1` | `-CstimerDir`、`-ProjectDir` | 编排器、生成物文档和 `tools/cstimer-scramble/UPSTREAM.txt` | pull、三方合并并写 `tools/cstimer-scramble` |
+| `_sync_RubiksSolverDemo.ps1` | `-UpstreamDir`、`-LocalDir`、`-DryRun` | 编排器、`docs/development.md`；与 Alg-Trainers 共用 `.sync/sync_utils.ps1` | 同步并重写 Solver fork 静态产物；`DryRun` 只抑制仓库写入 |
+| `sync_alg_trainers.ps1` | `-UpstreamDir`、`-LocalDir`、`-DryRun` | 编排器、`docs/development.md`；与 Solver 共用 `.sync/sync_utils.ps1` | 同步并重写 Alg-Trainers 静态产物；`DryRun` 只抑制仓库写入 |
+| `_sync_blddb.ps1` | `-BlddbDir`、`-ProjectDir`、`-SkipPull`、`-SkipInstall` | 编排器、站内文档、`.sync/blddb_postprocess.mjs`、生成标记；仓库外 `D:\cube\blddb\AGENTS.md` 明确指向旧根路径 | pull/install、临时补丁、build、替换 `tools/blddb`、后处理 |
+| `_sync_recordranks.ps1` | `-RecordRanksDir`、`-ProjectDir`、`-SkipPull`、`-DryRun`、`-SkipInstall` | 编排器和生成物文档 | 可 fetch/merge、安装/测试/build、推 fork，并更新部署 SHA；`DryRun` 仍会 fetch |
+
+本机仓库外核查覆盖 221 个计划任务、223 个任务动作、4 个标准桌面/开始菜单根下递归发现的 432 个快捷方式和 2 个现存 PowerShell profile：未发现脚本名调用；`D:\cube` 文本扫描确认 `D:\cube\blddb\AGENTS.md` 是真实的旧根路径说明，因此 `_sync_blddb.ps1` 在迁移时必须保留兼容 shim。未挂载磁盘、其他机器、未纳入扫描的个人脚本和远端手工流程无法由仓库证明，继续标记为未知；六个子脚本的旧参数在 PS1-03 冻结，只有 BLDDB 有证据要求继续保留旧根路径，不为纯假设给其余 5 个实现保留长期 root shim。
+
+CI 事实：当前 Test、Deploy Next、Deploy Core、sync toolkit 与 contest deploy 的 path filter 均不覆盖根 `*.ps1` 或未来 `scripts/upstream/**`；如果只移动文件，可能没有任何 CI 运行。PS1-03 必须先加入脚本 CLI/无副作用契约测试及对应触发路径，PS1-04 才能获准移动。
+
 ### 批次 7：可选目录整理
 
 范围：LYT 工作包。
@@ -340,6 +356,9 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | Batch 5 Clock 边界与复用判据 | `batch5_clock_boundary_audit` | `GO，已发布验收` | 13 个直接消费者已统一到唯一 `./clock` 公开边界，旧路径引用与重复定义清零；package 仍为零 import 的运行时中性纯 TypeScript，TNoodle 独立公式 oracle 和 Sim 有符号动画语义未被错误合并；`1db7804111` 发布后中英文 `/sim` smoke 通过 |
 | Batch 5 Clock 构建、导出与发布矩阵 | `batch5_clock_build_release_audit` | `GO，已发布验收` | Node `dist`、Browser/Next source、裸根拒绝、根 lock、PS1 预构建和 Test/Deploy 路径矩阵闭环；隔离工作树按干净 CI 顺序复验通过，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 全部成功 |
 | Batch 5 Clock 测试与运行时证明 | `batch5_clock_test_audit` | `GO，已发布验收` | 初审发现常规 CI 缺独立 oracle 后已阻断发布；精确加入 `test:solvers clock_solver` 并由 workflow 契约锁定，独立复跑 package/workflow 10/10 和 oracle 18/18 后转 GO；真实 Test 全绿，Browser Web Worker 不是当前消费者，不为测试制造假依赖 |
+| Batch 6 根脚本职责与复用点 | `batch6_ps1_inventory_audit` | `PS1-01 PASS，移动 HOLD` | 7 个脚本与 `.sync/sync_utils.ps1` 均 AST 通过；脚本应进 `scripts/upstream` 而非 package，两个 csTimer 职责不同且不应强并；RepoRoot、ValidateOnly、CLI 测试完成前不得移动 |
+| Batch 6 仓内外调用与发布触发 | `batch6_ps1_callers_audit` | `PS1-01 PASS，移动 HOLD` | 当前机器计划任务、快捷方式、profile 均无命中，只有 BLDDB 仓外文档确认依赖旧绝对路径；其他外部调用保持未知。现有 workflow 不覆盖根脚本或未来目录，PS1-03 必须补路径触发和契约测试 |
+| Batch 6 CLI、副作用与退出码 | `batch6_ps1_cli_audit` | `PS1-01 PASS，移动 HOLD` | `-SkipPull` 对 csTimer 失效、`-DryRun` 仍会 pull/fetch、部分 native 失败可能继续使用旧产物；必须先落显式 RepoRoot、真正早返回的 ValidateOnly 和统一失败退出，再冻结 CLI |
 
 审核要求：
 
@@ -349,12 +368,13 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 4. 不得因追求目录标准化而忽略现有 workflow、构建产物和部署路径。
 5. 审核只读，不编辑文件；由主 Agent 统一合并结论。
 
-2026-08-21 的三名 Reviewer 曾确认当时的总体架构路线成立；随后 Platform 大迁移显著改变了依赖图，所以旧 PASS 只保留为历史审查证据，不能直接授权当前实施。2026-08-23 的 Batch 1 先做三路只读初审，再做变更后的定点复审：DOC-01 至 DOC-04 均 PASS，DOC-05 因三类已公开的不可复现缺口保持 PARTIAL。Batch 2 再以当前 workspace、workflow、exports、真实路径和子进程调用重建基线；机器守卫与 package 方案已复审通过，项目 Hook 的宿主级验收因配置不热加载明确留到下一独立会话。Batch 3 实施后由三路 Agent 分别审核共享源码边界、CubeOpt 制品与原子部署、workflow 与跟踪一致性；两次生产前置校验暴露的 store 与 variant 假设均安全修正，最终独立复核与 `6756c599a1` 的三条工作流、生产 manager 及公网路由 smoke 已全部通过。Batch 4 实施后 Reviewer 先后阻断测试伪依赖和源码字符串自证；两项改为真实依赖图与可执行 route/session 回归后最终复核 PASS，`ba22fd81e1` 的三条工作流和生产安全边界 smoke 也已通过。Batch 5 开工前由三名 Reviewer 分别复核纯核心边界、条件导出和 workflow、测试与 Worker 运行证明；实施后测试 Reviewer 阻断了“同模型自证但独立 oracle 未进 CI”的缺口，改为常规 CI 精确执行 `clock_solver` 后三路代码复核均转 GO。`1db7804111` 随后通过隔离工作树、Test、Deploy Next、Deploy Core、API 健康和中英文 `/sim` 公网 smoke，Clock 切片正式关闭。BND-04/05 与 DOC-05 的保留项不因 Batch 3/4/5 的局部推进而提前关闭。
+2026-08-21 的三名 Reviewer 曾确认当时的总体架构路线成立；随后 Platform 大迁移显著改变了依赖图，所以旧 PASS 只保留为历史审查证据，不能直接授权当前实施。2026-08-23 的 Batch 1 先做三路只读初审，再做变更后的定点复审：DOC-01 至 DOC-04 均 PASS，DOC-05 因三类已公开的不可复现缺口保持 PARTIAL。Batch 2 再以当前 workspace、workflow、exports、真实路径和子进程调用重建基线；机器守卫与 package 方案已复审通过，项目 Hook 的宿主级验收因配置不热加载明确留到下一独立会话。Batch 3 实施后由三路 Agent 分别审核共享源码边界、CubeOpt 制品与原子部署、workflow 与跟踪一致性；两次生产前置校验暴露的 store 与 variant 假设均安全修正，最终独立复核与 `6756c599a1` 的三条工作流、生产 manager 及公网路由 smoke 已全部通过。Batch 4 实施后 Reviewer 先后阻断测试伪依赖和源码字符串自证；两项改为真实依赖图与可执行 route/session 回归后最终复核 PASS，`ba22fd81e1` 的三条工作流和生产安全边界 smoke 也已通过。Batch 5 开工前由三名 Reviewer 分别复核纯核心边界、条件导出和 workflow、测试与 Worker 运行证明；实施后测试 Reviewer 阻断了“同模型自证但独立 oracle 未进 CI”的缺口，改为常规 CI 精确执行 `clock_solver` 后三路代码复核均转 GO。`1db7804111` 随后通过隔离工作树、Test、Deploy Next、Deploy Core、API 健康和中英文 `/sim` 公网 smoke，Clock 切片正式关闭。Batch 6 的三路只读审计关闭 PS1-01，同时共同阻断提前搬目录：必须先修 RepoRoot、ValidateOnly、csTimer `-SkipPull`、native 失败退出与 CI 路径空洞，再冻结 CLI。BND-04/05 与 DOC-05 的保留项不因 Batch 3/4/5/6 的局部推进而提前关闭。
 
 ## 13. 变更记录
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-24 | Batch 6 PS1-01 调用图与仓外调用者调查关闭，PS1-04 继续 HOLD | 7 个根脚本、互调、文档、生成标记、221 个计划任务、223 个任务动作、432 个快捷方式与 2 个 profile 已登记；仅 BLDDB 仓外文档确认固定旧路径。三路 Reviewer 同时确认 RepoRoot、副作用、退出码和 CI 触发缺口必须先在 PS1-02/03 关闭 |
 | 2026-08-24 | Batch 5 Clock 窄 package 完成发布验收，本切片关闭 | `1db7804111`；隔离干净工作树复验全绿，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 均成功。API 健康为 200 且 DB connected，中英文 `/sim` 为 200，响应中无模块解析错误 |
 | 2026-08-24 | Batch 5 Clock 窄 package 本地实施完成，三路代码复核转 GO，等待字面提交与发布验收 | 只公开 `@cuberoot/puzzle-solvers/clock`；13 个消费者与两条离线旧债已收口，独立 oracle 明确进入 CI。package 11/11、精确强测 18/18、package/workflow 10/10、analyzer、Sim、typecheck、Knip、分布重算和 317/333/13 边界审计通过；隔离工作树、真实 Test、Deploy Next、Deploy Core 与线上 smoke 尚待执行 |
 | 2026-08-24 | Batch 5 以 Clock 为唯一切片恢复实施，跟踪文档先行并完成三路实施前独立审计 | 13 个直接消费者、2 条跨 app 私有路径旧债和纯 TypeScript 零依赖闭包已核对；方案只公开 `@cuberoot/puzzle-solvers/clock`，在干净克隆、快速 CI、Node/Worker/Browser、analyzer、裸包根拒绝和 workflow 矩阵闭环前保持发布 HOLD |
