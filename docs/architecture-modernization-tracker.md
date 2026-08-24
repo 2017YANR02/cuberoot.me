@@ -4,7 +4,7 @@
 
 Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59`，工作树无未提交改动；本批文档、测试守卫及跟踪文件自身造成的前进不视为基线漂移。每个后续实施批次开始前仍必须重新记录当时的 `HEAD` 和工作树重叠情况。
 
-状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 在两次生产前置校验安全暴露并修正 store provision 与 opt5/opt6 假设后，最终修正 `6756c599a1` 已由 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` 全绿发布。生产部署确认 `cubeopt-opt6-legacy-runtime-v1` 制品、启用态 manager 加载与 `R → R'`（1 HTM）真实请求通过，API 健康、启用/配置状态及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网 smoke 均为 200；因此 BND-02、BND-03、BND-04、BND-06 和 Batch 3 的 PKG-02 最小切片已关闭。BND-04 的共用 AST 检测器置于写入钩子链首后，当前 Codex 宿主已真实拒绝违规跨 app import 且探针未落盘；BND-05 仍待公开 subpath 运行时属性登记。Batch 4 的 `auth/web-session` 中性契约试点、小程序真实构建依赖图和首次微信用户空昵称兼容已随 `ba22fd81e1` 发布；Test `32697884591`、Deploy Next `32697884578`、Deploy Core `32697884597` 全部成功，API 健康、缺失 WCA token、畸形票据、未登录取票和 Web 回调壳安全 smoke 均符合预期，CTR-02 已关闭。真实账号登录成功链路没有用生产凭据手工执行，其 producer/consumer 正向路径由可执行 route/session fixture 证明；CTR-03 的稳定错误码仍按后续兼容切片推进。Batch 5 的 Clock 窄切片已随 `1db7804111` 发布；隔离干净工作树、本地门槛与三路独立复核通过，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 全部成功，API 健康及中英文 `/sim` 公网 smoke 为 200 且无模块解析错误，本切片已关闭。Batch 6 的根 PowerShell 治理已随 `b02005a50e` 发布；三路终审、本地与 Linux 合同、Test、Deploy Next、静态工具同步及五条公网 smoke 全绿，PS1-01 至 PS1-04 已关闭。
+状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 在两次生产前置校验安全暴露并修正 store provision 与 opt5/opt6 假设后，最终修正 `6756c599a1` 已由 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` 全绿发布。生产部署确认 `cubeopt-opt6-legacy-runtime-v1` 制品、启用态 manager 加载与 `R → R'`（1 HTM）真实请求通过，API 健康、启用/配置状态及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网 smoke 均为 200；因此 BND-02、BND-03、BND-04、BND-06 和 Batch 3 的 PKG-02 最小切片已关闭。BND-04 的共用 AST 检测器置于写入钩子链首后，当前 Codex 宿主已真实拒绝违规跨 app import 且探针未落盘；BND-05 仍待公开 subpath 运行时属性登记。Batch 4 的 `auth/web-session` 中性契约试点、小程序真实构建依赖图和首次微信用户空昵称兼容已随 `ba22fd81e1` 发布；Test `32697884591`、Deploy Next `32697884578`、Deploy Core `32697884597` 全部成功，API 健康、缺失 WCA token、畸形票据、未登录取票和 Web 回调壳安全 smoke 均符合预期，CTR-02 已关闭。真实账号登录成功链路没有用生产凭据手工执行，其 producer/consumer 正向路径由可执行 route/session fixture 证明；CTR-03 的稳定错误码仍按后续兼容切片推进。Batch 5 的 Clock 窄切片已随 `1db7804111` 发布；隔离干净工作树、本地门槛与三路独立复核通过，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 全部成功，API 健康及中英文 `/sim` 公网 smoke 为 200 且无模块解析错误，本切片已关闭。Batch 6 的根 PowerShell 治理已随 `b02005a50e` 发布；三路终审、本地与 Linux 合同、Test、Deploy Next、静态工具同步及五条公网 smoke 全绿，PS1-01 至 PS1-04 已关闭。Batch 7 的物理目录整理已完成收益评估并决定不执行；PKG-03 已以条件触发政策关闭，当前不新建跨端 React UI package。
 
 > BND-04 证据校正：仅把架构守卫移到链首仍会被多文件 patch 的逐文件一般守卫拖入 30 秒超时。最终实现先把同一 patch 的全部 writes 一次性交给架构检测器，再执行一般守卫；末尾才出现违规的真实五文件探针约 6 秒内被 deny，五文件均未落盘。
 >
@@ -32,6 +32,7 @@ Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b
 | `阻塞` | 有具体且可验证的外部阻塞 |
 | `观察中` | 实施和发布已完成，仍处于有明确截止时间的运行或资产观察窗口 |
 | `完成` | 验收证据齐全，已记录提交或发布结果 |
+| `取消/不适用` | 前置评估已证明无需实施，后续工作包不再启动 |
 | `取消` | 明确决定不做，并记录原因 |
 
 状态只能在有证据时前进。源码存在、单测通过、部署成功和线上切换是不同层级，不得互相替代。
@@ -190,7 +191,7 @@ API     ─X─> Web 源码或 Web public
 | --- | --- | --- | --- |
 | PKG-01 | 形成候选模块清单 | `完成` | 每项已列出消费者、边界信号、运行时、依赖闭包、测试和不提取的替代方案；清单见 [`architecture-package-candidates.md`](architecture-package-candidates.md)，独立复审 PASS |
 | PKG-02 | 优先提取纯记号、状态、验证或格式化逻辑 | `进行中（Batch 5 Clock 切片已关闭）` | `shared/alg-transform`、四拼图窄无头 `puzzle-render-core` 与只公开 `@cuberoot/puzzle-solvers/clock` 的 Clock 纯核心均已发布；Clock 不搬其他 solver，已通过隔离工作树、独立 oracle、Node/Worker/Browser bundle、analyzer、边界、CI、部署与生产 smoke，后续仍按单域窄切片继续 |
-| PKG-03 | UI 共享采用显式例外 | `排队中` | 只有设计系统和交互契约一致时共享 React UI；小程序不套 React DOM 抽象 |
+| PKG-03 | UI 共享采用显式触发政策 | `完成（当前不建包）` | 当前没有真实跨端 React UI 消费者，不为潜在复用造包；只有至少 2 个 React app 同时复用且设计、交互与无障碍契约一致时重开。小程序不运行 React DOM，不计入消费者 |
 
 ### E. 根目录 PowerShell 脚本
 
@@ -206,12 +207,12 @@ API     ─X─> Web 源码或 Web public
 
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
-| LYT-01 | 评估 `apps/* + packages/* + jobs/*` 收益 | `排队中` | 有实测搜索、CI、部署或协作收益，不以目录好看作为理由 |
-| LYT-02 | 让工具链先做到路径可迁移 | `排队中` | 仅在 LYT-01 证明值得移动后启动；清点 workspace、Turbo 任务与真实产物、workflow filters/working-directory/sparse checkout/cache、Docker、standalone、运行时资源和外部部署根 |
-| LYT-03 | 一次只移动一个 app 或 job | `排队中` | 仅在 LYT-01/02 通过后启动；`git mv` 与必要路径配置原子提交，禁止业务逻辑变化；URL、API、schema 和运行逻辑不变 |
-| LYT-04 | 验证路径迁移的触发、产物与运行 | `排队中` | 仅在实际路径迁移发生时启动；新路径真实触发正确 workflow，两个 Web 部署目标、代表性路由、静态资产和 API 连接均通过 smoke，配置可随提交整体回滚 |
+| LYT-01 | 评估 `apps/* + packages/* + jobs/*` 收益 | `完成（评估后不执行）` | 当前 14 个 package workspace；实施前提交快照 `4418bea0bc` 的 6 个部署敏感目录产生 357 次 tracked path 匹配，8 个 workflow 引用活动 workspace 或其锁文件；未发现可量化的搜索、CI、部署或协作收益，物理重排只有大面积路径 churn |
+| LYT-02 | 让工具链先做到路径可迁移 | `取消/不适用` | LYT-01 未证明移动有收益，因此不为未发生的目录迁移改 workspace、Turbo、workflow、Docker、standalone 或运行时资源路径 |
+| LYT-03 | 一次只移动一个 app 或 job | `取消/不适用` | 不建立 `webapp/`，不移动现有 app/job，也不把 workspace 外的 Platform 历史归档搬入活动目录树 |
+| LYT-04 | 验证路径迁移的触发、产物与运行 | `取消/不适用` | 没有路径迁移，不制造新的 workflow 触发、部署产物或 smoke 验收面；如未来出现量化收益，必须从 LYT-01 重新评估 |
 
-Platform 不进入 F 阶段。
+Platform 不进入 F 阶段，也不以归档名义移动到 `apps/platform-web` 或其他活动 app 目录。
 
 ### G. Platform 退役与归档责任：不是产品迁移
 
@@ -302,7 +303,9 @@ PS1-04 实施与发布证据（2026-08-24）：7 个私有实现以 `git mv` 进
 
 范围：LYT 工作包。
 
-特点：不是默认必做项。前六批已经解决大多数问题时，可以选择取消本批次。
+状态：已关闭。LYT-01 对 14 个 package workspace、实施前提交快照 `4418bea0bc` 中 6 个部署敏感目录的 357 次 tracked path 匹配，以及 8 个相关 workflow 完成量化审计，未发现物理重排收益；因此不建立 `webapp/`，不执行 `apps/* + packages/* + jobs/*` 重排，不移动 Platform 归档，LYT-02 至 LYT-04 取消/不适用。
+
+可复查口径：`pnpm -r list --depth -1 --json` 的结果排除 `core/` workspace root 后为 14；在仓库根执行 `@(git grep -o -E 'core/packages/(client|server|shared|mobile|miniprogram|visualcube)' 4418bea0bc --).Count` 为 357 occurrences；对 `.github/workflows/*.{yml,yaml}` 搜索活动 workspace 路径及 `core/pnpm-{workspace,lock}.yaml` 后去重为 8 个文件。数字只描述实施前快照和上述集合，不冒充整个仓库的永久常量。
 
 Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已单独执行并验收的 Platform 迁移与退役记录；RET-02 的观察和既有退役事实均不授权 RET-04 永久处置旧资产。
 
@@ -371,6 +374,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | Batch 6 CLI 契约与提交面终审 | `batch6_review_cli` | `GO PS1-04，0 Blocker / 0 Major / 0 Minor` | 参数顺序、三种根模式、真实 `pwsh -File`、子入口 flag 与编排转发通过；终审发现两个 shim 未入 index 后先阻断，显式纳入提交并再次完成 Windows 合同和 7/7 路径复验后转 GO |
 | Batch 6 测试与 workflow 终审 | `batch6_review_tests` | `GO PS1-04，0 Blocker / 0 Major` | 先阻断全局 flag 子串、同值 root fixture、根脚本白名单触发和弱退出码断言；修为真实行为、双仓库、根级 `*.ps1` 触发、`/*.ps1` sparse 与精确“退出码 23”后，Windows、Linux 只读合同及路径矩阵 7/7 均通过 |
 | Batch 7 BND-04 宿主探针 | `root`、`batch6_review_cli` | `GO，0 Blocker / 0 Major / 0 Minor` | 首次真实探针因逐文件串行一般守卫先耗尽 30 秒而 fail-open；修复后同一 patch 的全部 writes 先经单次架构扫描，再进入一般守卫。四个普通文件后追加跨 app import 的真实五文件探针约 6 秒内被 `cross-package-alias-import` deny，五文件均不存在；两文件定向测试 26/26、client typecheck、边界审计和 diff-check 通过 |
+| Batch 7 目录布局与跨端 UI package 裁决 | `batch6_review_tests` | `GO，评估后不执行` | 14 个 package workspace；快照 `4418bea0bc` 的 6 个部署敏感目录有 357 次 tracked path 匹配，另有 8 个相关 workflow，均未显示可量化迁移收益；关闭物理重排，不建 `webapp/`、不搬 Platform 归档。PKG-03 只在至少两个 React app 真实共享设计、交互与无障碍契约时重开，小程序不计入 React DOM 消费者 |
 
 审核要求：
 
@@ -388,6 +392,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-24 | Batch 7 物理目录整理评估关闭，PKG-03 改为条件触发政策 | 14 个 package workspace；实施前快照 `4418bea0bc` 的 6 个部署敏感目录有 357 次 tracked path 匹配，另有 8 个相关 workflow；审计未发现可量化收益。LYT-01 以“不执行”完成，LYT-02 至 LYT-04 取消/不适用。不建 `webapp/`、不搬 Platform 归档，当前不造跨端 React UI package |
 | 2026-08-24 | Batch 7 BND-04 宿主级写入守卫关闭 | 首次违规探针在 30 秒后意外落盘，确认逐文件串行一般守卫耗尽超时；改为同一 patch 的全部 writes 先经单次架构扫描后，真实五文件探针在末尾放置违规仍约 6 秒内被 `cross-package-alias-import` deny，五文件均未落盘。两文件定向测试 26/26、client typecheck、边界审计 314/330/13 与 diff-check 通过 |
 | 2026-08-24 | Batch 6 PS1-04 完成发布验收，PS1-01 至 PS1-04 关闭 | `b02005a50e`；根目录只保留统一入口和 BLDDB 兼容 shim，7 个私有实现进入 `scripts/upstream/`。三路 Reviewer 最终 GO；Test `32730444612`、Deploy Next `32730444571`、Sync static toolkit `32730444528` 全绿，五条公网 smoke 为 200 且无错误标记；兼容 shim 的有序退役进入 PS1-05 |
 | 2026-08-24 | Batch 6 PS1-03 CLI 与 CI 契约关闭，PS1-04 获准按迁移门禁实施 | AST 严格冻结 7 个入口参数面；双仓库锁定三种根模式，编排 probe 逐子脚本锁定 `Only/RepoRoot/SkipPull/DryRun`。Test workflow 路径矩阵 7/7，Windows 与 Linux 完整合同通过；两名独立 Reviewer 最终 GO |
