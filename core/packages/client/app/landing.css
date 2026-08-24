@@ -203,14 +203,8 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     outline: 2px solid var(--ring);
     outline-offset: 3px;
 }
-.landing-page .landing-featured-news-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
+.landing-page .landing-featured-news-icon {
     color: var(--home-news-color);
-    font-size: 0.78rem;
-    font-weight: 700;
-    white-space: nowrap;
 }
 .landing-page .landing-featured-news-body {
     min-width: 0;
@@ -274,21 +268,15 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
 }
 @media (max-width: 640px) {
     .landing-page .landing-featured-news {
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 0.25rem 0.55rem;
+        grid-template-columns: max-content minmax(0, 1fr) auto;
+        gap: 0.55rem;
         margin-bottom: 1.75rem;
         padding: 0.65rem 0.75rem;
     }
-    .landing-page .landing-featured-news-label {
-        grid-column: 1;
-    }
     .landing-page .landing-featured-news-body {
-        grid-column: 1;
         font-size: 0.8rem;
     }
     .landing-page .landing-featured-news-arrow {
-        grid-column: 2;
-        grid-row: 1 / span 2;
         align-self: center;
     }
     /* 9 个主入口在手机端固定排成 3 × 3。 */
