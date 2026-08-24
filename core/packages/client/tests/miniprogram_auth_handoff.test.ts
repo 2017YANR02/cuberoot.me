@@ -41,7 +41,7 @@ describe('Mini Program web session handoff', () => {
   });
 
   it('deduplicates a StrictMode-style exchange for the same one-time ticket', async () => {
-    const session = { token: 't'.repeat(20), user: { uid: 7, wcaId: null, name: 'CubeRoot' } };
+    const session = { token: 't'.repeat(20), user: { uid: 7, wcaId: null, name: 'CubeRoot', avatar: '' } };
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => session });
     vi.stubGlobal('fetch', fetchMock);
     const { exchangeMiniProgramWebSession } = await import('../lib/miniprogram-auth-handoff');
@@ -53,7 +53,7 @@ describe('Mini Program web session handoff', () => {
   });
 
   it('clears a failed exchange so the user can retry', async () => {
-    const session = { token: 't'.repeat(20), user: { wcaId: '2026TEST01', name: 'CubeRoot', avatar: '' } };
+    const session = { token: 't'.repeat(20), user: { uid: 7, wcaId: '2026TEST01', name: 'CubeRoot', avatar: '' } };
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: false, json: async () => ({}) })
       .mockResolvedValueOnce({ ok: true, json: async () => session });
@@ -83,7 +83,7 @@ describe('Mini Program web session handoff', () => {
   });
 
   it('does not reuse a successful exchange after its pending request settles', async () => {
-    const session = { token: 't'.repeat(20), user: { uid: 7, wcaId: null, name: 'CubeRoot' } };
+    const session = { token: 't'.repeat(20), user: { uid: 7, wcaId: null, name: 'CubeRoot', avatar: '' } };
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: true, json: async () => session })
       .mockResolvedValueOnce({ ok: false, json: async () => ({}) });
@@ -98,7 +98,7 @@ describe('Mini Program web session handoff', () => {
   it('rejects an invalid user payload returned by the exchange endpoint', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ token: 't'.repeat(20), user: { uid: 0, wcaId: null, name: 'CubeRoot' } }),
+      json: async () => ({ token: 't'.repeat(20), user: { uid: 0, wcaId: null, name: 'CubeRoot', avatar: '' } }),
     });
     vi.stubGlobal('fetch', fetchMock);
     const { exchangeMiniProgramWebSession } = await import('../lib/miniprogram-auth-handoff');

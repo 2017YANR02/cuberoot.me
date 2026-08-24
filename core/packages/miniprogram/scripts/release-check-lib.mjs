@@ -479,7 +479,12 @@ export function collectReleaseFailures({
     );
   }
 
-  if (!buildState || buildState.version !== BUILD_STATE_VERSION) {
+  if (
+    !buildState
+    || buildState.version !== BUILD_STATE_VERSION
+    || !Array.isArray(buildState.buildGraphInputs)
+    || buildState.buildGraphInputs.length === 0
+  ) {
     failures.push('缺少有效的小程序构建状态，请重新运行 build。');
   } else {
     if (

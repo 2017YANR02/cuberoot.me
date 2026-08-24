@@ -9,6 +9,7 @@
  */
 import { Hono } from 'hono';
 import type { Context } from 'hono';
+import type { WebSession } from '@cuberoot/shared/auth/web-session';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { checkRateLimit } from '../utils/recon_helpers.js';
@@ -139,7 +140,8 @@ accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
 
   const { user, isNew } = await loginWithIdentity('wechat', wechatSession.unionid, { name: '' });
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
-  return c.json({ token, user: publicUser(user), isNew });
+  const session: WebSession = { token, user: publicUser(user) };
+  return c.json({ ...session, isNew });
 });
 
 // ── 小程序原生会话 → web-view 网站会话 ──
@@ -163,7 +165,8 @@ accountAuthRoutes.post('/auth/web-session/exchange', async (c) => {
   const user = await getUserById(uid);
   if (!user) return c.json({ error: 'invalid web session ticket' }, 401);
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
-  return c.json({ token, user: publicUser(user) });
+  const session: WebSession = { token, user: publicUser(user) };
+  return c.json(session);
 });
 
 // ── 国内三方绑定(登录态,把该身份加到当前账号)──

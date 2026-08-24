@@ -4,7 +4,7 @@
 
 Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59`，工作树无未提交改动；本批文档、测试守卫及跟踪文件自身造成的前进不视为基线漂移。每个后续实施批次开始前仍必须重新记录当时的 `HEAD` 和工作树重叠情况。
 
-状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 初版 `8dc5b6ee6b` 的 Test `32687424019` 与 Deploy Next `32687424110` 成功，Deploy Core `32687424077` 因新 CubeOpt store 尚未 provision 而在 release 切换前安全失败；第一次修正 `9c5690464b` 的 Test `32689984414` 与 Deploy Next `32689984458` 成功，Deploy Core `32689984444` 又因迁移工具错误假设生产遗留资产为 opt5、实际为 opt6 而在切换前安全失败。两次均保留旧生产版本。当前第二次修正已将 opt5/h5 与 opt6/h6 建模为严格双 variant 契约，并以 wrapper 引用、WASM 内嵌标记和精确表大小阻断改名伪装；variant 查找只接受注册表自有键，current/manifest 只接受普通文件以阻断符号链接或目录联接绕过。CubeOpt 40/40、Server 全量 318/318、workflow 与架构定向 14/14、边界审计 319/335/13、Client/Server typecheck、Server bundle 和 diff-check 均已通过，正在等待最终独立复核、再次发布和生产 smoke。因此 BND-02/03/06 与 PKG-02 继续保持进行中。BND-04 仍待下一个独立 Codex 会话的项目 Hook 宿主实触发，BND-05 仍待公开 subpath 运行时属性登记。Batch 4 已完成实施前审计：不会新建万能 contracts package，也不会为当前尚未消费认证契约的 Mobile 制造占位代码；首个试点只收敛 Server、Web 与小程序的 `auth/web-session` 中性契约，并先修复首次微信用户空昵称与小程序手写构建依赖图两项真实缺口。
+状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 在两次生产前置校验安全暴露并修正 store provision 与 opt5/opt6 假设后，最终修正 `6756c599a1` 已由 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` 全绿发布。生产部署确认 `cubeopt-opt6-legacy-runtime-v1` 制品、启用态 manager 加载与 `R → R'`（1 HTM）真实请求通过，API 健康、启用/配置状态及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网 smoke 均为 200；因此 BND-02、BND-03、BND-06 和 Batch 3 的 PKG-02 最小切片已关闭。BND-04 仍待下一个独立 Codex 会话的项目 Hook 宿主实触发，BND-05 仍待公开 subpath 运行时属性登记。Batch 4 的 `auth/web-session` 中性契约试点、小程序真实构建依赖图和首次微信用户空昵称兼容已在本地完成，最终独立复核为 0 blocker、0 major、0 minor、0 nit；当前等待提交、CI、部署与线上安全 smoke，CTR-02 在发布验收前保持“发布待验”，CTR-03 的稳定错误码仍按后续兼容切片推进。
 
 > 状态校正：2026-08-22 重新打开的产品与数据迁移已按 [Platform 主站完整迁移跟踪](./platform-product-migration-tracker.md) 完成 P0-P8。P9 是迁移完成后的主站产品体验改版，不恢复独立 Platform app，也不改变本架构方案的长期边界。Batch 1 只改善入口、状态和生成物可发现性；后续源码实施仍须刷新依赖基线、完成新的独立复审并取得用户授权。
 
@@ -150,31 +150,44 @@ API     ─X─> Web 源码或 Web public
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
 | BND-01 | 生成真实系统依赖基线 | `完成` | 当前登记 319 个精确旧债指纹、335 次出现和 13 条人工契约，覆盖静态 import、动态加载、路径读取、构建复制、非 workspace 原生工具、子进程、大表、环境变量覆盖和部署目标；Batch 3 相对旧基线净消除 7 个身份并经独立逐项复核 |
-| BND-02 | 消除 API 对 Web 源码的 import | `进行中` | 本地源码边与 Server bundle 已通过；仅复制 `dist/server.bundle.js` 到不含 Client 源码的隔离目录后，健康检查及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 路由均返回 200 和真实 SVG；初版已提交，待修正版 Deploy Core 与生产四拼图路由 smoke 后关闭 |
-| BND-03 | 消除 API 对 Web public 的运行时读取 | `进行中` | API 自有 CubeOpt manifest/校验和/原子晋级已用 opt5 的 972,840,960 字节真实表和 wasm/mjs 制品完成 prepare、promote、verify，真实 daemon 就绪并通过 `R` 的 1 HTM 请求；第二次发布发现生产遗留资产实际为 opt6，当前双 variant 迁移修正和完整本地矩阵已通过，待真实部署制品清单及 `CUBEOPT_SOLVE_ENABLED=1` 的生产 manager 请求后关闭 |
+| BND-02 | 消除 API 对 Web 源码的 import | `完成` | Server→Client 源码边清零，隔离 bundle 已证明不需要 Client 目录；Deploy Core `32692270167` 成功后，生产 API 健康与 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网路由均为 200 且返回真实 SVG |
+| BND-03 | 消除 API 对 Web public 的运行时读取 | `完成` | API 自有 manifest/校验和/原子晋级支持 opt5/h5 与 opt6/h6；Deploy Core `32692270167` 确认生产 `cubeopt-opt6-legacy-runtime-v1`，启用态 manager 加载后完成 `R → R'`（1 HTM）真实 smoke，公网 readiness 同时确认 enabled/configured |
 | BND-04 | 按边类型增加跨 app 依赖守卫 | `进行中` | runtime、build、test、artifact 和 subprocess baseline 已进入 CI；任何新增、重复或陈旧基线都会失败，旧债减少必须经过审核并显式刷新 manifest；write adapter 已实测，项目 Hook 仍待下一个独立 Codex 会话宿主实触发 |
 | BND-05 | 收口 package 公开 exports | `进行中` | 已冻结 `@cuberoot/shared` 裸根新增并按任意 workspace package 的 `exports` 拦私有 deep import；公开 subpath 运行时属性尚未全部登记，未来无 `exports["."]` 的 package 还须增加裸根拒绝验收 |
-| BND-06 | 收窄部署触发边界 | `进行中` | Test 的 push/PR 与 Deploy Core/Next 已从 workspace package.json 依赖递归生成精确路径矩阵，本地契约测试通过，未来新增的直接或传递 workspace 依赖会自动进入闭包；初版 Test 与 Deploy Next 已按矩阵触发成功，待修正版 Test/Deploy Core 实跑与排除侧证据后关闭 |
+| BND-06 | 收窄部署触发边界 | `完成` | Test 的 push/PR 与 Deploy Core/Next 由 workspace package.json 依赖递归生成精确路径矩阵；触发/排除矩阵定向测试通过，相关路径推送真实触发并通过 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` |
 
 ### C. 多端 API 与领域契约
 
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
-| CTR-01 | 建立 endpoint/transport 级真实消费者矩阵 | `进行中` | 实施前审计已确认首个真实消费者为 Server、Web 与小程序；Mobile 当前没有认证消费者，不造占位代码。还需把 endpoint、发布节奏和版本要求固化为可审查矩阵 |
-| CTR-02 | 以 `auth/web-session` 建立中性契约 subpath 试点 | `进行中` | 收敛 Server、Web 与小程序重复的 ticket、DTO 和 decoder；公开 subpath 的静态及动态运行时 import graph 不得含 React、DOM、Next、Capacitor、微信 API、Node-only 模块或 axios |
-| CTR-03 | 建立运行时 schema 与稳定错误码 | `进行中` | 先让 wire schema 接受服务端真实的首次微信用户空昵称并补生产者 fixture；错误码后续兼容新增 `{ code, message }`，迁移期保留旧 `{ error }`，不在试点里一次性改完全部 endpoint |
-| CTR-04 | 确定已发布客户端支持政策和跨版本 fixture | `进行中` | 公开的客户端支持窗口与首个 auth 试点的兼容 fixture 分开制定；本批只证明旧 auth 请求可被新服务接受、新 auth 响应可被受支持旧 decoder 解析，不把 WebSocket 与离线 schema 强塞进同一改动 |
+| CTR-01 | 建立 endpoint/transport 级真实消费者矩阵 | `完成` | 已按 endpoint、认证传输、wire shape、真实消费者和发布节奏登记首个 auth 试点；Mobile 当前没有认证消费者，不造占位代码 |
+| CTR-02 | 以 `auth/web-session` 建立中性契约 subpath 试点 | `本地完成，发布待验` | Server、Web 与小程序复用显式 `@cuberoot/shared/auth/web-session` 的 ticket、DTO 和 decoder；边界审计验证该 subpath 的静态及动态运行时闭包不含 React、DOM、Next、Capacitor、微信 API、Node-only 模块或 axios |
+| CTR-03 | 建立运行时 schema 与稳定错误码 | `进行中（schema 切片完成）` | wire schema 已接受服务端真实的首次微信用户空昵称，producer/consumer fixture 覆盖 required uid/avatar、opaque token 和 ticket；稳定错误码仍按兼容扩展新增 `{ code, message }`、迁移期保留旧 `{ error }`，不在试点里一次性改完全部 endpoint |
+| CTR-04 | 确定已发布客户端支持政策和跨版本 fixture | `完成` | 当前小程序仍在 P0 上线阻塞期，Mobile 也尚无 auth 消费者，因此不存在可声称受支持的历史发布版；首个正式发布版才建立 v1 基线。此后支持当前版与上一正式版且不少于 90 天，服务端遵循 expand → migrate → contract；本批 fixture 锁定旧请求、新响应、额外字段和本地旧会话读取 |
 | CTR-05 | 决定是否建立独立 contracts package | `完成` | 当前不建；现有 `@cuberoot/shared` 的显式中性 subpath 足够，只有出现独立生命周期、原生代码生成或 shared 无法保持中性时才重新立项 |
 | CTR-06 | 决定是否启用 codegen | `完成` | 当前不启用；没有 Swift/Kotlin 消费者、对外 SDK 或 schema 单一事实源需求，手写窄 schema 与 fixture 的成本和可审查性更合适 |
 
-契约发布顺序固定为：服务端先做兼容扩展，客户端逐步采用，支持窗口结束后再删除旧契约。`timer` 与 `smart-cube` 是已有正确共享范本，不重新提取。
+首个 `auth/web-session` 试点矩阵：
+
+| Endpoint | 传输与 wire shape | 真实消费者 | 发布/兼容要求 |
+| --- | --- | --- | --- |
+| `GET /v1/auth/me` | Bearer JWT → `WebSessionUserEnvelope` | Web 启动校验、小程序原生会话校验 | 服务端先兼容；required 字段由真实 producer fixture 锁定 |
+| `POST /v1/auth/refresh` | Bearer JWT → `WebSession` | Web token 刷新 | Web 与 API 可近同步，但响应仍先过运行时 decoder |
+| `POST /v1/auth/exchange` | WCA access token → `WebSession` | Web WCA callback | 必须落地服务端返回的 canonical user，不保留临时 WCA profile |
+| `POST /v1/auth/wechat/miniprogram` | 微信一次性 code → `WebSession + isNew` | 小程序原生登录 | 空 `name` 是首次账号的合法 wire 值；额外 `isNew` 不改变基础 session decoder |
+| `POST /v1/auth/web-session/ticket` | Bearer JWT → `WebSessionTicketEnvelope` | 小程序打开受控 web-view | 43 字符 base64url 单次 ticket，长期 JWT 不进入 URL |
+| `POST /v1/auth/web-session/exchange` | 单次 ticket → `WebSession` | Web 小程序 handoff | ticket 原子核销；Web 只接受完整 canonical session |
+
+邮箱、手机、Google 和国内三方登录仍由 Web 的 `account-api` 消费，并复用同一 `WebSession` 静态类型；带 `ok`、`identities` 的绑定、解绑与资料更新属于扩展 envelope，不伪装成基础 session endpoint。Mobile 当前没有 auth 调用方，等出现真实 Swift/Kotlin 消费者后再增加其 adapter 或 schema 生成，不预建占位层。
+
+契约发布顺序固定为：服务端先做兼容扩展，客户端逐步采用，支持窗口结束后再删除旧契约。小程序首版发布前没有历史版本兼容承诺；首版之后任何删除或收紧都必须记录最低版本/能力信号和观察起止日期，不能只凭源码已升级判定旧端消失。`timer` 与 `smart-cube` 是已有正确共享范本，不重新提取。
 
 ### D. 共享逻辑治理
 
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
 | PKG-01 | 形成候选模块清单 | `完成` | 每项已列出消费者、边界信号、运行时、依赖闭包、测试和不提取的替代方案；清单见 [`architecture-package-candidates.md`](architecture-package-candidates.md)，独立复审 PASS |
-| PKG-02 | 优先提取纯记号、状态、验证或格式化逻辑 | `进行中（仅 Batch 3 最小切片）` | 初版已提交 `shared/alg-transform` 与四拼图窄无头 `puzzle-render-core`，未搬运 DOM、Worker 或交互层；待修正版发布验证后关闭本切片，后续候选仍逐域审核 |
+| PKG-02 | 优先提取纯记号、状态、验证或格式化逻辑 | `进行中（Batch 3 切片完成）` | `shared/alg-transform` 与四拼图窄无头 `puzzle-render-core` 已发布并经生产路由验证，未搬运 DOM、Worker 或交互层；Batch 5 只继续逐域审核候选，不据此批量建 package |
 | PKG-03 | UI 共享采用显式例外 | `排队中` | 只有设计系统和交互契约一致时共享 React UI；小程序不套 React DOM 抽象 |
 
 ### E. 根目录 PowerShell 脚本
@@ -239,6 +252,8 @@ G 阶段不再阻塞架构规划。RET-01/03 的完成只代表运行责任已�
 范围：CTR-01 至 CTR-06。
 
 特点：消费者矩阵 → `auth/web-session` 试点 → 跨版本 fixture → 再决定独立 package 和 codegen，不一次性重写全部 API。
+
+本地实施与最终复核已通过：Shared、Server、Web 和小程序共用显式 `@cuberoot/shared/auth/web-session` subpath；真实 producer、六端点 wire shape、WCA canonical session 覆盖与非法响应 fallback 均由可执行测试锁定。小程序从 esbuild metafile 派生完整输入图，构建状态包含新增 Shared auth 输入并拒绝 virtual 与任意 workspace package 的 `dist/.tmp` 生成目录。独立 Reviewer 复跑 Mini 25 文件 311 测试及真实 build、Client 2 文件 9 测试、Server 3 文件 9 测试、双方 typecheck、Shared build、Node 条件 export、边界审计、LF 与 diff-check，最终为 0 blocker、0 major、0 minor、0 nit。发布与线上安全 smoke 尚未完成。
 
 ### 批次 5：其余共享模块
 
@@ -313,8 +328,9 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | Batch 3 CubeOpt 与部署原子性复核 | `review_cubeopt_artifacts` | `本地 PASS，发布待验` | prepare/promote/verify 共用可导入实现，不以测试子进程制造新债；release symlink 原子切换、失败回滚、boot/solve 独立 timeout、严格 smoke 与 fsync 语义通过 23 项定向测试。随后用真实 opt5 大表与 wasm/mjs 制品完成 prepare/promote/verify 和 daemon 求解；尚缺生产部署制品清单与启用状态下的 manager smoke |
 | Batch 3 workflow 与 tracker 复核 | `review_workflows_tracker` | `本地 PASS，发布待验` | workflow 契约 6/6、架构定向合计 14/14、边界审计 319/335/13 和 diff-check 通过；Test 两事件、nginx 触发、Platform 排除、workspace 依赖推导与 stack 已按实际输入核对。人工契约的 file+substring 仅作 reviewer evidence，不代替运行证明 |
 | Batch 3 首次生产资产迁移修正 | `review_cubeopt_artifacts`、`review_workflows_tracker` | `已发布，假设被生产证伪` | 首次 Deploy Core 在 release 切换前因启用态缺少新 `CUBEOPT_ARTIFACT_DIR` 安全失败，旧版本未被替换。部署期幂等 provision 经共用 prepare/promote/verify 原子登记持久 store；本地 31/31 与完整验证通过后以 `9c5690464b` 重发，但工具把遗留 module/WASM/table 写死为 opt5，未覆盖生产实际 opt6，因此不能再记为“无 major”或发布待验 |
-| Batch 3 第二次生产资产迁移修正 | `review_cubeopt_artifacts` | `本地 PASS，重发待验` | 第二次 Deploy Core `32689984444` 在 release 切换前发现生产遗留 module 为 `cube48opt6.mjs`，旧生产版本仍未被替换。当前由注册表按 module basename 派生 opt5/opt6，同 variant 约束 module、WASM、h5/h6 table、bundle、精确表大小、wrapper 引用与 WASM 内嵌标记；已覆盖双向混配、未知 opt7、改名重哈希、两 variant provision/retry、原型链键名与 current/manifest 链接绕过。CubeOpt 40/40、Server 全量 318/318、workflow 与架构定向 14/14、边界审计 319/335/13、Client/Server typecheck、bundle 和 diff-check 通过；尚需最终独立复核、再次发布及生产 manager smoke |
+| Batch 3 第二次生产资产迁移修正 | `review_cubeopt_artifacts` | `PASS，已发布验收` | Reviewer 最终结论为 0 blocker/major/minor/nit，并独立复跑 CubeOpt 44/44、Server 318/318、workflow 与架构 14/14、边界审计 319/335/13。`6756c599a1` 的三条工作流全绿；Deploy Core `32692270167` 确认 opt6 bundle、启用态 manager 与 1 HTM 请求，公网健康、readiness 和四拼图 iso SVG smoke 通过 |
 | Batch 4 多端契约实施前审计 | `review_shared_boundaries`、`review_workflows_tracker` | `试点可实施` | 首个共享边界只覆盖 Server、Web 与小程序的 `auth/web-session`；Mobile 当前没有认证消费者，不建占位层，不新建万能 contracts package，不启用 codegen。审计确认首次微信用户的服务端真实 `name: ""` 会被小程序 decoder 错拒为 502，且小程序构建 fingerprint/watch 手工枚举 shared/smart_cube 会漏掉新增 auth 依赖；实施必须补 producer/consumer fixture，并由 esbuild resolved graph/metafile 派生构建依赖 |
+| Batch 4 多端契约最终复核 | `batch4_final_review` | `本地 PASS，发布待验` | 初审先阻断伪造跨包路径 fixture 和 WCA callback 源码字符串自证；修正后真实 Hono `/auth/exchange`、Web decoder/`applySession`/localStorage fallback、首次微信 producer、小程序 resolved graph 与 freshness 均有可执行证据。Reviewer 最终结论为 0 blocker/major/minor/nit；CTR-02 仍待发布，CTR-03 稳定错误码与 BND-05 不提前关闭 |
 
 审核要求：
 
@@ -324,12 +340,14 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 4. 不得因追求目录标准化而忽略现有 workflow、构建产物和部署路径。
 5. 审核只读，不编辑文件；由主 Agent 统一合并结论。
 
-2026-08-21 的三名 Reviewer 曾确认当时的总体架构路线成立；随后 Platform 大迁移显著改变了依赖图，所以旧 PASS 只保留为历史审查证据，不能直接授权当前实施。2026-08-23 的 Batch 1 先做三路只读初审，再做变更后的定点复审：DOC-01 至 DOC-04 均 PASS，DOC-05 因三类已公开的不可复现缺口保持 PARTIAL。Batch 2 再以当前 workspace、workflow、exports、真实路径和子进程调用重建基线；机器守卫与 package 方案已复审通过，项目 Hook 的宿主级验收因配置不热加载明确留到下一独立会话。Batch 3 实施后再由三路 Agent 分别审核共享源码边界、CubeOpt 制品与原子部署、workflow 与跟踪一致性；首次发布暴露 store provision 缺口，第一次修正重发又暴露生产 opt6 与本地 opt5 假设不一致，均在 release 切换前安全停止。第二次修正的双 variant 完整本地复验已通过，正在等待最终独立复核与再次发布。Batch 4 的实施前契约审计已完成，但发布、生产功能和 BND-04/05、DOC-05 的保留项不因本地 PASS 提前关闭。
+2026-08-21 的三名 Reviewer 曾确认当时的总体架构路线成立；随后 Platform 大迁移显著改变了依赖图，所以旧 PASS 只保留为历史审查证据，不能直接授权当前实施。2026-08-23 的 Batch 1 先做三路只读初审，再做变更后的定点复审：DOC-01 至 DOC-04 均 PASS，DOC-05 因三类已公开的不可复现缺口保持 PARTIAL。Batch 2 再以当前 workspace、workflow、exports、真实路径和子进程调用重建基线；机器守卫与 package 方案已复审通过，项目 Hook 的宿主级验收因配置不热加载明确留到下一独立会话。Batch 3 实施后由三路 Agent 分别审核共享源码边界、CubeOpt 制品与原子部署、workflow 与跟踪一致性；两次生产前置校验暴露的 store 与 variant 假设均安全修正，最终独立复核与 `6756c599a1` 的三条工作流、生产 manager 及公网路由 smoke 已全部通过。Batch 4 实施后 Reviewer 先后阻断测试伪依赖和源码字符串自证；两项改为真实依赖图与可执行 route/session 回归后最终复核 PASS，发布验收仍待完成。BND-04/05 与 DOC-05 的保留项不因 Batch 3/4 的局部完成而提前关闭。
 
 ## 13. 变更记录
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-23 | Batch 4 本地实施与最终独立复核完成，等待提交发布 | Shared `auth/web-session` 中性 subpath、Server/Web/小程序真实 producer/consumer fixture、WCA canonical session 可执行回归和 esbuild resolved graph 构建状态完成；Mini 311/311 与真实 build、Client 9/9、Server 9/9、双方 typecheck、Shared build、Node export、边界审计、LF、diff-check 全绿。Reviewer 为 0 blocker/major/minor/nit |
+| 2026-08-23 | Batch 3 最终修正发布验收完成，关闭 BND-02、BND-03、BND-06 与本批 PKG-02 最小切片 | `6756c599a1`；Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` 均成功。生产识别并登记 `cubeopt-opt6-legacy-runtime-v1`，manager 返回 `R'`（1 HTM）后激活 release；公网 API health、enabled/configured readiness 与四种非三阶 iso SVG 均为 200 |
 | 2026-08-23 | Batch 3 第一次迁移修正重发后暴露 opt5 假设错误；第二次修正改为严格支持 opt5/h5 与 opt6/h6，完整本地复验通过，等待最终独立复核与再次发布 | `9c5690464b` 的 Test `32689984414`、Deploy Next `32689984458` 成功；Deploy Core `32689984444` 在 release 切换前识别出生产遗留 module 为 opt6 并安全失败，旧生产 release 未切换。双 variant 修正新增 WASM 内嵌 variant 标记校验，避免改名重哈希伪通过；注册表查找拒绝原型链键名，current/manifest 拒绝符号链接或目录联接。CubeOpt 40/40、Server 全量 318/318、workflow 与架构定向 14/14、边界审计 319/335/13、Client/Server typecheck、bundle 和 diff-check 通过 |
 | 2026-08-23 | Batch 3 首次发布暴露 CubeOpt 新 store 尚未 provision；前端部署成功，后端在切换 release 前安全失败。部署期一次性幂等迁移完成独立复核后重发 | 失败点为启用态 verify 缺少 store 参数/环境值；旧生产 release 未切换。`provision-cubeopt-artifact.mjs` 只在部署期读取旧制品路径，复用 prepare/promote/verify，成功后原子写 env；重发前 CubeOpt 定向 31/31、Server 全量 305/305、workflow 6/6、Client/Server typecheck、bundle、边界审计和 diff-check 通过 |
 | 2026-08-23 | Batch 4 实施前审计完成，确认窄契约试点和两个必须先修的真实缺口 | `auth/web-session` 复用现有 Shared 显式 subpath，不建新万能 package或 codegen；首次微信用户空昵称需进入 wire schema/fixture，小程序构建 fingerprint/watch 需从 esbuild resolved graph/metafile 派生；Mobile 当前不消费认证契约 |

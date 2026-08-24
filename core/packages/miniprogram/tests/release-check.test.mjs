@@ -112,6 +112,7 @@ const validInput = {
   builtFileSizes: sizesFor(validBuiltFiles),
   buildState: {
     version: BUILD_STATE_VERSION,
+    buildGraphInputs: ['src/app.ts'],
     sourceFingerprint: 'current-source',
     outputFingerprint: 'current-output',
   },
@@ -124,7 +125,9 @@ describe('mini program release check', () => {
     expect(BUILD_ASSETS).toHaveLength(1);
     expect(BUILD_ASSETS[0].output).toBe('assets/share-cover.png');
     const packageRoot = resolve(import.meta.dirname, '..');
-    const buildInputs = await collectBuildInputFiles(packageRoot);
+    const buildInputs = await collectBuildInputFiles(packageRoot, [
+      resolve(packageRoot, '..', 'shared', 'src', 'smart_cube', 'relay.ts'),
+    ]);
     expect(buildInputs).toContain(BUILD_ASSETS[0].source);
     expect(buildInputs.some((file) => file.replaceAll('\\', '/').endsWith(
       '/packages/shared/src/smart_cube/relay.ts',
@@ -397,6 +400,14 @@ describe('mini program release check', () => {
     expect(collectReleaseFailures({
       ...validInput,
       buildState: null,
+    })).toContain('缺少有效的小程序构建状态，请重新运行 build。');
+
+    expect(collectReleaseFailures({
+      ...validInput,
+      buildState: {
+        ...validInput.buildState,
+        buildGraphInputs: [],
+      },
     })).toContain('缺少有效的小程序构建状态，请重新运行 build。');
 
     expect(collectReleaseFailures({
