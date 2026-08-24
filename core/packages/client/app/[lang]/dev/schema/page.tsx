@@ -430,7 +430,7 @@ const TABLES: Table[] = [
     { name: 'content_revision', note: { zh: '每次中文保存递增，阻止旧翻译覆盖更新后的中文', en: 'increments on each Chinese save to stop stale translations from overwriting newer content' } },
   ] },
   { name: 'ops_commands', domain: 'community', origin: '0010', evolved: [11], purpose: { zh: '/dev/ops runbook 命令 + 提示词模板', en: 'Commands + prompts behind the /dev/ops runbook' } },
-  { name: 'page_notices', domain: 'community', origin: '0073', purpose: { zh: '每页顶部管理员通知条(维护中/WIP/bug),按路径匹配', en: 'Per-page admin notice bars (maintenance/WIP/bug), matched by path' } },
+  { name: 'page_notices', domain: 'community', origin: '0073', purpose: { zh: '按路径与展示位管理顶部通知、首页焦点新闻及其生效时间窗', en: 'Manage top notices and homepage featured news by path and placement, including active windows' } },
   { name: 'pattern_examples', domain: 'community', origin: '0091', purpose: { zh: '/scramble/pattern/search 的示例预设:管理员在页面上摆好图案就能存一条,q 存的就是可分享的 ?q= 编码', en: 'Example presets for /scramble/pattern/search: an admin lays out a pattern and saves it; q holds the same shareable ?q= encoding the page uses' }, cols: [
     { name: 'position, name_zh, name_en' }, { name: 'q', note: { zh: '45 位色类 + 5×2 位面分配掩码', en: '45 class digits + 5 two-hex face masks' } }, { name: 'continuous' },
   ] },
@@ -614,6 +614,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 166, slug: 'timer_boot_events', desc: { zh: '新增匿名计时器启动统计：按单次打开去重，只保留粗粒度运行环境分桶，并自动清理 90 天前数据。', en: 'Add anonymous timer startup telemetry deduplicated per opening, retaining only coarse runtime buckets and pruning data older than 90 days.' } },
   { n: 167, slug: 'platform_core', desc: { zh: '新增主站 Platform 的目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等 PostgreSQL 底座；复用统一账号，不恢复旧 SQLite 双写。', en: 'Add the main-site Platform PostgreSQL foundation for catalog, learning, commerce, content, instructors, QR, privacy, audit, outbox, and idempotency on canonical accounts, without restoring legacy SQLite dual-write.' } },
   { n: 168, slug: 'platform_account_deletion', desc: { zh: '以账号删除触发器原子覆盖 Platform 的 48 张直接关联表：删除私有数据、擦除个人资料，并在 12 张只追加版本、账本和审计表中保留不可伪造的墓碑证据。', en: 'Atomically cover all 48 directly linked Platform tables from an account-delete trigger: purge private data, erase personal information, and retain unforgeable tombstoned evidence across 12 append-only revision, ledger, and audit tables.' } },
+  { n: 169, slug: 'page_notice_placements', desc: { zh: 'page_notices 增加展示位、目标链接与生效时间窗，使同一路径可同时承载顶部运维通知和首页焦点新闻；并预置 WCA 4-pad 计时公告。', en: 'Add placement, target-link, and active-window fields to page_notices so one path can carry both a top operational notice and homepage featured news; seed the WCA 4-pad timing announcement.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

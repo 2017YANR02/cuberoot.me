@@ -174,6 +174,56 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     max-width: 1100px;
     margin-bottom: 3rem;
 }
+
+/* 搜索框下方的首页焦点新闻。数据复用 page_notices；整行是真链接，便于中键新开。 */
+.landing-page .landing-search:has(+ .landing-featured-news) {
+    margin-bottom: 0.7rem;
+}
+.landing-page .landing-featured-news {
+    --home-news-color: var(--accent);
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto 2.5rem;
+    padding: 0.7rem 0.85rem;
+    color: var(--foreground);
+    background: color-mix(in srgb, var(--home-news-color) 10%, var(--background));
+    border-left: 3px solid var(--home-news-color);
+    border-radius: 0 10px 10px 0;
+    line-height: 1.45;
+    transition: background 0.15s ease;
+}
+.landing-page .landing-featured-news:hover {
+    background: color-mix(in srgb, var(--home-news-color) 16%, var(--background));
+}
+.landing-page .landing-featured-news:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+}
+.landing-page .landing-featured-news-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--home-news-color);
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.landing-page .landing-featured-news-body {
+    min-width: 0;
+    font-size: 0.86rem;
+    color: var(--text-sub);
+}
+.landing-page .landing-featured-news-arrow {
+    color: var(--home-news-color);
+    transition: transform 0.15s ease;
+}
+.landing-page .landing-featured-news:hover .landing-featured-news-arrow {
+    transform: translateX(2px);
+}
 .landing-page .primary-hero-grid,
 .landing-page .wca-hero-grid {
     display: contents;
@@ -223,6 +273,24 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     }
 }
 @media (max-width: 640px) {
+    .landing-page .landing-featured-news {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.25rem 0.55rem;
+        margin-bottom: 1.75rem;
+        padding: 0.65rem 0.75rem;
+    }
+    .landing-page .landing-featured-news-label {
+        grid-column: 1;
+    }
+    .landing-page .landing-featured-news-body {
+        grid-column: 1;
+        font-size: 0.8rem;
+    }
+    .landing-page .landing-featured-news-arrow {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        align-self: center;
+    }
     /* 9 个主入口在手机端固定排成 3 × 3。 */
     .landing-page .hero-grids {
         grid-template-columns: repeat(3, minmax(0, 1fr));

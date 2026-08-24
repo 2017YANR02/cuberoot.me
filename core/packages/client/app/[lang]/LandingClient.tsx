@@ -1,10 +1,10 @@
 'use client';
 
 /** Site entrypoint — Landing page. */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { Heart, Radio, Trophy, ListOrdered, LogIn, Search, User, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Heart, Radio, Trophy, ListOrdered, LogIn, Search, User, type LucideIcon } from 'lucide-react';
 import Link from '@/components/AppLink';
 import LangToggle from '@/components/LangToggle';
 import { useTranslation } from 'react-i18next';
@@ -39,6 +39,8 @@ import { useEffectiveTheme } from '@/lib/theme';
 import '../landing.css';
 import { tr } from '@/i18n/tr';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
+import { fetchPageNotices, type PageNotice } from '@/lib/page-notices-api';
+import { colorFor, iconFor } from '@/lib/page-notice-visuals';
 
 // 原单张「WCA 统计」hero 拆成四张直达卡;统计卡保留 WCA 标志作品牌锚点,其余用 lucide 图标。
 const WCA_ENTRIES: { href: string; zh: string; en: string; Icon?: LucideIcon; img?: string }[] = [
@@ -67,6 +69,18 @@ export default function LandingPage() {
   }, []);
 
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
+  const [featuredNotice, setFeaturedNotice] = useState<PageNotice | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetchPageNotices()
+      .then((rows) => {
+        if (!active) return;
+        setFeaturedNotice(rows.find((row) => row.placement === 'home_featured' && row.path === '/') ?? null);
+      })
+      .catch(() => { /* 焦点新闻不可阻断首页 */ });
+    return () => { active = false; };
+  }, []);
 
   const t = useCallback((key: keyof typeof TEXTS) => TEXTS[key][lang], [lang]);
 
@@ -120,6 +134,36 @@ export default function LandingPage() {
         <span className="brand-name">{t('brand')}</span>
       </div>
       <LandingSearch cards={searchCards} lang={lang} />
+      {featuredNotice && featuredNotice.href && (() => {
+        const FeaturedIcon = iconFor(featuredNotice);
+        const body = tr({
+          zh: featuredNotice.bodyZh || featuredNotice.bodyEn,
+          en: featuredNotice.bodyEn || featuredNotice.bodyZh,
+        });
+        const inner = (
+          <>
+            <span className="landing-featured-news-label">
+              <FeaturedIcon size={15} aria-hidden="true" />
+              {tr({ zh: '重磅新闻', en: 'Breaking news' })}
+            </span>
+            <span className="landing-featured-news-body">{body}</span>
+            <ArrowRight className="landing-featured-news-arrow" size={16} aria-hidden="true" />
+          </>
+        );
+        const style = { '--home-news-color': colorFor(featuredNotice) } as CSSProperties;
+        return featuredNotice.href.startsWith('/') && !featuredNotice.href.startsWith('//')
+          ? (
+              <Link href={featuredNotice.href} className="landing-featured-news" style={style} prefetch={false}>
+                {inner}
+              </Link>
+            )
+          : (
+              <a href={featuredNotice.href} className="landing-featured-news" style={style}
+                target="_blank" rel="noopener noreferrer">
+                {inner}
+              </a>
+            );
+      })()}
 
       {/* 两行 hero 的共同外壳。桌面是 5 + 4 两个独立网格;手机端外壳自己变成 3 列网格、
           两个子网格 display:contents,9 张卡直接排成 3 行 3 个(见 landing.css)。 */}

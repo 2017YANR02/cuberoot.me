@@ -59,7 +59,7 @@ export default function RegulationNews() {
         <div className="news-list">
 
           {/* ───────────── 4-pad 计时(2026-08)───────────── */}
-          <article className="news-item">
+          <article className="news-item" id="4-pad-2027">
             <div className="news-meta">
               <span className="news-date">2026-08-23</span>
               <SourceLink href={POST_4_PAD} label={t('官方原文', 'Official post')} />

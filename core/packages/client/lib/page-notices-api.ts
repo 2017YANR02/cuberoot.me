@@ -4,29 +4,39 @@ import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
 export type NoticeLevel = 'info' | 'warning' | 'maintenance';
+export type NoticePlacement = 'page_top' | 'home_featured';
 
 export interface PageNotice {
   id: number;
   path: string;
+  placement?: NoticePlacement; // 0169 前的后端未返回时按 page_top 兼容
   level: NoticeLevel;
   icon?: string;       // lucide 图标 key(空 = 按 level 回退);老后端可能不返回,故可选
   color?: string;      // 横幅颜色 key(空 = 按 level 回退);老后端可能不返回,故可选
   bodyEn: string;
   bodyZh: string;
+  href?: string;
   enabled: boolean;
   dismissible: boolean;
+  startsAt?: string | null;
+  endsAt?: string | null;
   updatedAt: string;
 }
 
 export interface PageNoticeInput {
+  id?: number;
   path: string;
+  placement: NoticePlacement;
   level: NoticeLevel;
   icon: string;
   color: string;
   bodyEn: string;
   bodyZh: string;
+  href: string;
   enabled: boolean;
   dismissible: boolean;
+  startsAt: string | null;
+  endsAt: string | null;
 }
 
 /** enabled 通知(全站访客用,60s 浏览器缓存)。 */
@@ -89,6 +99,6 @@ export function noticeSpecificity(pattern: string): number {
 /** 选出匹配当前 key 的通知,按特异度降序(最贴合本页的排最前)。 */
 export function matchNotices(notices: PageNotice[], key: string): PageNotice[] {
   return notices
-    .filter((n) => noticeMatches(n.path, key))
+    .filter((n) => (n.placement ?? 'page_top') === 'page_top' && noticeMatches(n.path, key))
     .sort((a, b) => noticeSpecificity(b.path) - noticeSpecificity(a.path));
 }
