@@ -17,7 +17,7 @@ import AppLink from '@/components/AppLink';
 import { useIsAdmin } from '@/lib/auth-store';
 import { fetchAllPageNotices, type PageNotice } from '@/lib/page-notices-api';
 import { colorFor, iconFor } from '@/lib/page-notice-visuals';
-import { tr, useLang } from '@/i18n/tr';
+import { tr } from '@/i18n/tr';
 import './page-notices-admin.css';
 
 /** 通知的 path 模式 → 可跳的站内地址;全站模式没有对应页面,返回 null。 */
@@ -29,7 +29,6 @@ function hrefFor(path: string): string | null {
 
 export default function PageNoticesAdmin() {
   const isAdmin = useIsAdmin();
-  const lang = useLang();
   const [items, setItems] = useState<PageNotice[] | null>(null);
 
   const load = useCallback(async () => {
@@ -72,13 +71,18 @@ export default function PageNoticesAdmin() {
         <ul className="pna-list">
           {items.map((n) => {
             const Icon = iconFor(n);
-            const href = hrefFor(n.path);
-            const body = (lang === 'en' ? (n.bodyEn || n.bodyZh) : (n.bodyZh || n.bodyEn));
+            const href = n.placement === 'home_featured' && n.href ? n.href : hrefFor(n.path);
+            const isInternal = href?.startsWith('/') && !href.startsWith('//');
+            const body = tr({ zh: n.bodyZh || n.bodyEn, en: n.bodyEn || n.bodyZh });
             const inner = (
               <>
                 <Icon size={14} className="pna-row-icon" />
                 <code className="pna-row-path">
-                  {n.path === '/*' ? tr({ zh: '全站', en: 'Whole site' }) : n.path}
+                  {n.placement === 'home_featured'
+                    ? tr({ zh: '首页焦点', en: 'Homepage feature' })
+                    : n.path === '/*'
+                      ? tr({ zh: '全站', en: 'Whole site' })
+                      : n.path}
                 </code>
                 <span className="pna-row-body">{body}</span>
                 {!n.enabled && (
@@ -93,7 +97,9 @@ export default function PageNoticesAdmin() {
             return (
               <li key={n.id} className="pna-item" style={{ '--pna-c': colorFor(n) } as React.CSSProperties}>
                 {href
-                  ? <AppLink href={href} className="pna-row" prefetch={false}>{inner}</AppLink>
+                  ? isInternal
+                    ? <AppLink href={href} className="pna-row" prefetch={false}>{inner}</AppLink>
+                    : <a href={href} className="pna-row" target="_blank" rel="noopener noreferrer">{inner}</a>
                   : <div className="pna-row is-static">{inner}</div>}
               </li>
             );
