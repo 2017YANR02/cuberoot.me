@@ -689,7 +689,7 @@ export default function Cube3Solver() {
   const CLOUD_MAX = 5;
   const HTM_TOKEN = /^[URFDLB][2']?$/;
 
-  // Cloud solve: stream optimal solutions from api.cuberoot.me (server opt5 table).
+  // Cloud solve: stream optimal solutions from api.cuberoot.me (server opt6 table).
   // Each solution is written to the Logs box in the same `求解:… (Nh*)` format as
   // the local worker + fast Kociemba paths, so all solve sources read identically.
   const cloudSolve = async (explicitLines?: string[]) => {
