@@ -12,24 +12,15 @@
   max-width: 1040px;
 }
 
-.notation-index {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 18px;
+.notation-project-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   margin-top: 22px;
 }
 
-.notation-index a {
-  min-block-size: 32px;
+.notation-project-picker > span {
   font-size: 13px;
-  line-height: 32px;
-  text-decoration: none;
-}
-
-.notation-index a:hover,
-.notation-index a:focus-visible {
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 .notation-catalog-section {

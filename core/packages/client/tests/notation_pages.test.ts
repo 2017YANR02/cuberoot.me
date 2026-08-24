@@ -14,6 +14,10 @@ describe('notation route scopes', () => {
     expect(completePage).toContain("formatAlgNotation(alg, 'dumb')");
     expect(completePage).toContain('CUBE_ALL_MOVES');
     expect(completePage).toContain('FTO_FACE_MOVES');
+    expect(completePage).toContain("from '@/components/PuzzlePicker/PuzzlePicker'");
+    expect(completePage).toContain('groups={pickerGroups}');
+    expect(completePage).toContain("useQueryState(\n    'puzzle'");
+    expect(completePage).not.toContain('className="notation-index"');
   });
 
   it('limits the regulation page demos to Article 12 catalogs', () => {
