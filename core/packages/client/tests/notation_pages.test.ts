@@ -10,13 +10,13 @@ describe('notation route scopes', () => {
     expect(existsSync(new URL('../app/[lang]/alg/3x3/notation/page.tsx', import.meta.url))).toBe(false);
     expect(algSetRoute).toContain('export const dynamicParams = false');
     expect(algSetRoute).toContain('if (!knownSet) notFound()');
-    expect(completePage).toContain("formatAlgNotation(alg, 'zh-compact')");
-    expect(completePage).toContain("formatAlgNotation(alg, 'dumb')");
+    expect(completePage).toContain("formatAlgNotation(move, 'zh-compact')");
     expect(completePage).toContain('CUBE_ALL_MOVES');
     expect(completePage).toContain('FTO_FACE_MOVES');
     expect(completePage).toContain("from '@/components/PuzzlePicker/PuzzlePicker'");
     expect(completePage).toContain('groups={pickerGroups}');
     expect(completePage).toContain("useQueryState(\n    'puzzle'");
+    expect(completePage).not.toContain('alg-notation-modes');
     expect(completePage).not.toContain('className="notation-index"');
   });
 

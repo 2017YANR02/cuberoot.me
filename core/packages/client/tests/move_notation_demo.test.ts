@@ -245,6 +245,23 @@ describe('MoveNotationDemo player lifecycle', () => {
 
     expect(host.querySelector('.move-notation-standard')?.textContent).toBe("R3'");
     expect(host.querySelector('.move-notation-alias')?.textContent).toBe("右3'");
+    expect(Array.from(host.querySelectorAll('.move-notation-columns span')).map(node => node.textContent)).toEqual([
+      '标准',
+      '紧凑',
+      '傻瓜',
+    ]);
+  });
+
+  it('omits three-column headings when a puzzle has no compact aliases', async () => {
+    await act(async () => {
+      root.render(createElement(MoveNotationDemo, {
+        puzzle: 'skewb',
+        moves: [{ move: 'R', caption: '右转' }],
+        variant: 'compact',
+      }));
+    });
+
+    expect(host.querySelector('.move-notation-columns')).toBeNull();
   });
 
   it('visually groups suffix variants of the same base move', async () => {
