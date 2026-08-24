@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  decodeWebSessionError,
   decodeWebSession,
   decodeWebSessionUserEnvelope,
 } from '@cuberoot/shared/auth/web-session';
@@ -129,7 +130,13 @@ describe('auth public user ID', () => {
     });
 
     expect(response.status).toBe(401);
-    expect(await response.json()).toEqual({ error: 'Invalid or expired WCA token' });
+    const body = await response.json();
+    expect(body).toEqual({
+      code: 'INVALID_WCA_TOKEN',
+      message: 'Invalid or expired WCA token',
+      error: 'Invalid or expired WCA token',
+    });
+    expect(decodeWebSessionError(body)).toEqual(body);
     expect(mocks.loginWithIdentity).not.toHaveBeenCalled();
     expect(mocks.signSession).not.toHaveBeenCalled();
   });
@@ -145,7 +152,54 @@ describe('auth public user ID', () => {
     });
 
     expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({ error: 'accessToken is required' });
+    const body = await response.json();
+    expect(body).toEqual({
+      code: 'INVALID_REQUEST',
+      message: 'accessToken is required',
+      error: 'accessToken is required',
+    });
+    expect(decodeWebSessionError(body)).toEqual(body);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['malformed JSON', '{'],
+    ['null JSON', 'null'],
+    ['a non-string access token', JSON.stringify({ accessToken: 123 })],
+  ])('rejects %s through the stable invalid-request contract', async (_label, requestBody) => {
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await authRoutes.request('/auth/exchange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: requestBody,
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      code: 'INVALID_REQUEST',
+      message: 'accessToken is required',
+      error: 'accessToken is required',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('returns stable compatible errors for missing /auth/me and /auth/refresh sessions', async () => {
+    const meResponse = await authRoutes.request('/auth/me');
+    const refreshResponse = await authRoutes.request('/auth/refresh', { method: 'POST' });
+
+    expect(meResponse.status).toBe(401);
+    expect(await meResponse.json()).toEqual({
+      code: 'UNAUTHENTICATED',
+      message: 'No token provided',
+      error: 'No token provided',
+    });
+    expect(refreshResponse.status).toBe(401);
+    expect(await refreshResponse.json()).toEqual({
+      code: 'UNAUTHENTICATED',
+      message: 'unauthorized',
+      error: 'unauthorized',
+    });
   });
 });

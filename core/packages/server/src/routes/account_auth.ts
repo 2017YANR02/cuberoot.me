@@ -9,7 +9,7 @@
  */
 import { Hono } from 'hono';
 import type { Context } from 'hono';
-import type { WebSession } from '@cuberoot/shared/auth/web-session';
+import { webSessionError, type WebSession } from '@cuberoot/shared/auth/web-session';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { checkRateLimit } from '../utils/recon_helpers.js';
@@ -53,6 +53,18 @@ function langOf(c: Context): 'zh' | 'en' {
 function emailGrant(c: Context): boolean {
   const h = c.req.header('Authorization');
   return h?.startsWith('Bearer ') ? hasFreshEmailGrant(h.slice(7)) : false;
+}
+
+/** Keep the six auth contract endpoints on a stable error wire shape. */
+function authRateLimitResponse(c: Context): Response | null {
+  try {
+    checkRateLimit(getIp(c));
+    return null;
+  } catch (error) {
+    if (!(error instanceof Error) || error.message !== 'Rate limit exceeded') throw error;
+    c.header('Retry-After', '5');
+    return c.json(webSessionError('RATE_LIMITED', error.message), 429);
+  }
 }
 
 // ── 可用登录方式(供前端隐藏未配置的 tab;env 未配 email/sms 时对应值 false)──
@@ -108,13 +120,16 @@ accountAuthRoutes.post('/auth/social/:provider', async (c) => {
 // UnionID 缺失时绝不退回 openid:两者命名空间不同,回退会给同一个人创建第二个账号。
 accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
   c.header('Cache-Control', 'no-store');
-  checkRateLimit(getIp(c));
+  const rateLimited = authRateLimitResponse(c);
+  if (rateLimited) return rateLimited;
   if (!wechatMiniProgramConfigured()) {
-    return c.json({ error: 'wechat miniprogram not configured' }, 503);
+    return c.json(webSessionError('WECHAT_NOT_CONFIGURED', 'wechat miniprogram not configured'), 503);
   }
   const body = await c.req.json<{ code?: unknown }>().catch(() => ({ code: undefined }));
   const code = typeof body.code === 'string' ? body.code.trim() : '';
-  if (!code || code.length > 512) return c.json({ error: 'invalid code' }, 400);
+  if (!code || code.length > 512) {
+    return c.json(webSessionError('INVALID_REQUEST', 'invalid code'), 400);
+  }
 
   let wechatSession;
   try {
@@ -122,20 +137,20 @@ accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
   } catch (error) {
     if (error instanceof WechatMiniProgramError) {
       if (error.code === 'invalid-code') {
-        return c.json({ error: 'invalid wechat code' }, 401);
+        return c.json(webSessionError('INVALID_WECHAT_CODE', 'invalid wechat code'), 401);
       }
       if (error.code === 'rate-limited') {
-        return c.json({ error: 'wechat login rate limited' }, 429);
+        return c.json(webSessionError('RATE_LIMITED', 'wechat login rate limited'), 429);
       }
       if (error.code === 'blocked-user') {
-        return c.json({ error: 'wechat login blocked' }, 403);
+        return c.json(webSessionError('ACCOUNT_BLOCKED', 'wechat login blocked'), 403);
       }
     }
     console.error('[auth] wechat miniprogram exchange failed:', error instanceof Error ? error.message : error);
-    return c.json({ error: 'wechat service unavailable' }, 502);
+    return c.json(webSessionError('WECHAT_UNAVAILABLE', 'wechat service unavailable'), 502);
   }
   if (!wechatSession.unionid) {
-    return c.json({ error: 'wechat unionid required' }, 409);
+    return c.json(webSessionError('WECHAT_UNIONID_REQUIRED', 'wechat unionid required'), 409);
   }
 
   const { user, isNew } = await loginWithIdentity('wechat', wechatSession.unionid, { name: '' });
@@ -149,21 +164,38 @@ accountAuthRoutes.post('/auth/wechat/miniprogram', async (c) => {
 // 服务端原子核销后重签常规会话。网页最终仍走现有 applySession/localStorage 契约。
 accountAuthRoutes.post('/auth/web-session/ticket', async (c) => {
   c.header('Cache-Control', 'no-store');
-  checkRateLimit(getIp(c));
-  const uid = await requireAppUserId(c);
+  const rateLimited = authRateLimitResponse(c);
+  if (rateLimited) return rateLimited;
+  let uid: number;
+  try {
+    uid = await requireAppUserId(c);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Authentication required') {
+      return c.json(webSessionError('UNAUTHENTICATED', error.message), 401);
+    }
+    if (error instanceof Error && error.message.includes('suspended')) {
+      return c.json(webSessionError('ACCOUNT_BLOCKED', error.message), 403);
+    }
+    throw error;
+  }
   return c.json(await issueWebSessionTicket(uid));
 });
 
 accountAuthRoutes.post('/auth/web-session/exchange', async (c) => {
   c.header('Cache-Control', 'no-store');
-  checkRateLimit(getIp(c));
+  const rateLimited = authRateLimitResponse(c);
+  if (rateLimited) return rateLimited;
   const body = await c.req.json<{ ticket?: unknown }>().catch(() => ({ ticket: undefined }));
   const ticket = typeof body.ticket === 'string' ? body.ticket.trim() : '';
   const uid = await consumeWebSessionTicket(ticket);
-  if (!uid) return c.json({ error: 'invalid web session ticket' }, 401);
+  if (!uid) {
+    return c.json(webSessionError('INVALID_WEB_SESSION_TICKET', 'invalid web session ticket'), 401);
+  }
 
   const user = await getUserById(uid);
-  if (!user) return c.json({ error: 'invalid web session ticket' }, 401);
+  if (!user) {
+    return c.json(webSessionError('INVALID_WEB_SESSION_TICKET', 'invalid web session ticket'), 401);
+  }
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   const session: WebSession = { token, user: publicUser(user) };
   return c.json(session);

@@ -3,6 +3,7 @@ import type {
   WebSession,
   WebSessionUserEnvelope,
 } from '@cuberoot/shared/auth/web-session';
+import { webSessionError } from '@cuberoot/shared/auth/web-session';
 import { query } from '../db/connection.js';
 import { signSession, verifySession } from '../utils/session.js';
 import { loginWithIdentity, findUserByWcaId, getUserById, publicUser } from '../utils/account.js';
@@ -105,7 +106,7 @@ authRoutes.get('/auth/callback', async (c) => {
 authRoutes.get('/auth/me', async (c) => {
   const authHeader = c.req.header('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
-    return c.json({ error: 'No token provided' }, 401);
+    return c.json(webSessionError('UNAUTHENTICATED', 'No token provided'), 401);
   }
 
   try {
@@ -115,22 +116,32 @@ authRoutes.get('/auth/me', async (c) => {
       : payload.wcaId
         ? await findUserByWcaId(payload.wcaId)
         : null;
-    if (!account) return c.json({ error: 'Invalid token' }, 401);
+    if (!account) return c.json(webSessionError('INVALID_SESSION', 'Invalid token'), 401);
     const response: WebSessionUserEnvelope = { user: publicUser(account) };
     return c.json(response);
   } catch {
-    return c.json({ error: 'Invalid token' }, 401);
+    return c.json(webSessionError('INVALID_SESSION', 'Invalid token'), 401);
   }
 });
 
 // WCA access_token → 自签 JWT（365 天有效期）
 // NOTE: WCA Implicit Grant 的 token 2 小时过期，用此端点换取长效 JWT
 authRoutes.post('/auth/exchange', async (c) => {
-  const body = await c.req.json<{ accessToken?: string }>();
-  const accessToken = body.accessToken;
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json(webSessionError('INVALID_REQUEST', 'accessToken is required'), 400);
+  }
+  const accessToken = typeof body === 'object'
+    && body !== null
+    && 'accessToken' in body
+    && typeof body.accessToken === 'string'
+    ? body.accessToken
+    : '';
 
   if (!accessToken) {
-    return c.json({ error: 'accessToken is required' }, 400);
+    return c.json(webSessionError('INVALID_REQUEST', 'accessToken is required'), 400);
   }
 
   // 用 WCA access_token 验证用户身份
@@ -140,7 +151,7 @@ authRoutes.post('/auth/exchange', async (c) => {
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) {
-      return c.json({ error: 'Invalid or expired WCA token' }, 401);
+      return c.json(webSessionError('INVALID_WCA_TOKEN', 'Invalid or expired WCA token'), 401);
     }
 
     const data = await res.json() as {
@@ -148,7 +159,7 @@ authRoutes.post('/auth/exchange', async (c) => {
     };
     const user = data.me;
     if (!user?.wca_id) {
-      return c.json({ error: 'Failed to get user info' }, 401);
+      return c.json(webSessionError('INVALID_WCA_TOKEN', 'Failed to get user info'), 401);
     }
 
     // 缓存用户信息到数据库
@@ -175,7 +186,7 @@ authRoutes.post('/auth/exchange', async (c) => {
     const session: WebSession = { token: jwtToken, user: publicUser(account) };
     return c.json(session);
   } catch {
-    return c.json({ error: 'WCA API unavailable' }, 502);
+    return c.json(webSessionError('WCA_UNAVAILABLE', 'WCA API unavailable'), 502);
   }
 });
 
@@ -185,7 +196,7 @@ authRoutes.post('/auth/exchange', async (c) => {
 authRoutes.post('/auth/refresh', async (c) => {
   const authHeader = c.req.header('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
-    return c.json({ error: 'unauthorized' }, 401);
+    return c.json(webSessionError('UNAUTHENTICATED', 'unauthorized'), 401);
   }
   const token = authHeader.slice(7);
   try {
@@ -196,15 +207,15 @@ authRoutes.post('/auth/refresh', async (c) => {
       const u = await findUserByWcaId(payload.wcaId);
       if (u) uid = u.id;
     }
-    if (uid == null) return c.json({ error: 'unauthorized' }, 401);
+    if (uid == null) return c.json(webSessionError('UNAUTHENTICATED', 'unauthorized'), 401);
     // 按账号最新态续签(可能刚绑了新的 wca / 改了名)。查不到账号 → 强制重登。
     const u = await getUserById(uid);
-    if (!u) return c.json({ error: 'unauthorized' }, 401);
+    if (!u) return c.json(webSessionError('UNAUTHENTICATED', 'unauthorized'), 401);
     const fresh = signSession({ uid: u.id, wcaId: u.wca_id, name: u.display_name || (payload.name ?? '') });
     const session: WebSession = { token: fresh, user: publicUser(u) };
     return c.json(session);
   } catch {
     // 过期或非法 JWT — 不续签,前端回退到重新登录。
-    return c.json({ error: 'unauthorized' }, 401);
+    return c.json(webSessionError('UNAUTHENTICATED', 'unauthorized'), 401);
   }
 });
