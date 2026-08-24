@@ -2,7 +2,7 @@
 
 审计日期：2026-08-21
 
-状态说明（2026-08-23）：本文是 2026-08-21 起形成的审计快照，架构证据仍可用于后续现代化调查。Platform P0-P8 技术迁移与发布验收现已完成，P9 主站产品体验改版待发布和线上角色态复验，旧资产观察至少持续至 2026-09-21。Platform 当前边界以[架构现代化跟踪](./architecture-modernization-tracker.md)和[主站完整迁移跟踪](./platform-product-migration-tracker.md)为准；迁移后的源码实施仍须刷新依赖基线、重新复审并取得用户授权。
+状态说明（2026-08-24）：本文是 2026-08-21 起形成的审计快照，架构证据仍可用于后续现代化调查。Platform P0-P8 技术迁移与发布验收现已完成；P9 主站产品体验改版的代码与发布已验收，Test、Deploy Next、Deploy Core 全绿，线上真实角色态仍待复验。旧资产观察至少持续至 2026-09-21。Platform 当前边界以[架构现代化跟踪](./architecture-modernization-tracker.md)和[主站完整迁移跟踪](./platform-product-migration-tracker.md)为准；迁移后的源码实施仍须刷新依赖基线、重新复审并取得用户授权。
 
 审计范围：仓库顶层、`core/` workspace、Web、API、Platform、Mobile、小程序、共享包、构建任务、上游同步脚本和已跟踪静态数据。本次只做静态审计，不修改实现，不以单个文件长度代替架构判断。
 
@@ -295,11 +295,11 @@ core/
 
 活跃 Platform 产品现在位于主站 `packages/client`、`packages/server`、`packages/shared` 与 PostgreSQL；`/platform/*` 复用 `/org/*`、`/learn/*`、教师、论坛、公式、计时和通知等权威实现。独立 Platform 前端不是待恢复应用，也不是未来新端的共享后端，更不应再做一套“前后端分离”或移动到 `apps/platform-web`。
 
-2026-08-22 的补充复核曾确认旧站与主仓归档的并集大于最初盘点，因此迁移按 95 个页面、13 个 Route Handler、34 个 Server Action 文件和 4 个 metadata route 重新做守恒。P0-P8 现已完成技术迁移与发布验收；P9 是迁移完成后的角色化产品入口改版，本地实现和复审已完成但尚待发布。`packages/platform` 与旧本地仓继续作为历史归档；独立 test/deploy workflow 与 service unit 已删除，旧域名保持 410。
+2026-08-22 的补充复核曾确认旧站与主仓归档的并集大于最初盘点，因此迁移按 95 个页面、13 个 Route Handler、34 个 Server Action 文件和 4 个 metadata route 重新做守恒。P0-P8 现已完成技术迁移与发布验收；P9 是迁移完成后的角色化产品入口改版，代码与发布已验收，Test、Deploy Next、Deploy Core 全绿，只剩线上真实角色态复验。`packages/platform` 与旧本地仓继续作为历史归档；独立 test/deploy workflow 与 service unit 已删除，旧域名保持 410。
 
 后续 Platform 工作以[主站完整迁移跟踪](./platform-product-migration-tracker.md)为准，当前只剩：
 
-1. 发布 P9，并完成线上 CI、部署、smoke 与真实角色态复验。
+1. 完成 P9 的线上真实登录角色态复验；CI、部署与无登录 smoke 已完成，不重复执行已验收的发布步骤。
 2. 观察旧资产至少至 2026-09-21，确认没有旧写入、回调或唯一资产依赖。
 3. 源码、数据库、媒体、凭据和最终配置分别满足删除或保留门槛后，再由仓库所有者逐项决定。
 
@@ -390,7 +390,7 @@ miniprogram                  -X-> React DOM modules
 
 - P0-P8 已完成旧 surface、SQLite、媒体、身份、交易与运行退役责任的逐项处置和保管责任验收，主站是唯一运行前端。
 - P9 产品入口改版与旧资产观察继续走独立跟踪，不恢复独立前端，也不进入 `apps/*`。
-- 迁移后的依赖图已经变化；任何架构源码实施仍先重建基线并重新授权，与 Platform 热点重叠的改动另等 P9 发布验收。
+- 迁移后的依赖图已经变化；任何架构源码实施仍先重建基线并重新授权，与 Platform 角色态复验重叠的改动需单独协调，不得把无登录 smoke 冒充角色态验收。
 
 验收：P0-P8 发布验收和三路复审已有记录；旧资产观察至少至 2026-09-21，永久处置仍待用户单独授权。
 
