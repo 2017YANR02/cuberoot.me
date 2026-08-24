@@ -1,7 +1,7 @@
 // BLDDB(nbwzx/blddb)人工整理公式集的读取层 —— 给 /alg/3bld/lookup 用。
 //
 // 数据是 fork 同步下来的那份(`tools/blddb/data/*Manmade.json` + `data/bigbld/*`,由
-// _sync_blddb.ps1 落地),不入 client bundle,运行时按需拉。穷举生成的 Nightmare 全集
+// scripts/upstream/sync-blddb.ps1 落地),不入 client bundle,运行时按需拉。穷举生成的 Nightmare 全集
 // (37MB)不在这里,那套只在 iframe 版 /blddb 里。
 //
 // ── 库键是怎么编的 ─────────────────────────────────────────────────────────

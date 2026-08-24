@@ -17,7 +17,7 @@
 #>
 param(
     [string]$RecordRanksDir = 'D:\cube\RecordRanks',
-    [string]$ProjectDir = $PSScriptRoot,
+    [string]$ProjectDir = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..')),
     [switch]$SkipPull,
     [switch]$DryRun,
     [switch]$SkipInstall,
@@ -26,13 +26,14 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$defaultRepoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $syncBootstrapRoot = if ($RepoRoot) { [IO.Path]::GetFullPath($RepoRoot) } else { [IO.Path]::GetFullPath($ProjectDir) }
 . (Join-Path $syncBootstrapRoot '.sync\sync_utils.ps1')
-$ProjectDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $ProjectDir -ScriptRoot $PSScriptRoot
+$ProjectDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $ProjectDir -ScriptRoot $defaultRepoRoot
 Assert-SyncInternalFiles -RepoRoot $ProjectDir -RelativePaths @(
-    '_sync_recordranks.ps1'
+    'scripts/upstream/sync-recordranks.ps1'
     '.sync/sync_utils.ps1'
-) -PowerShellScripts @('_sync_recordranks.ps1')
+) -PowerShellScripts @('scripts/upstream/sync-recordranks.ps1')
 if ($ValidateOnly)
 {
     Write-Host "RecordRanks 同步脚本校验通过：$ProjectDir" -ForegroundColor Green

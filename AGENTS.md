@@ -36,7 +36,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | Solver | `/solver` | 根目录静态(Vercel 走 `tools/[...slug]` 反代) | fork of or18/RubiksSolverDemo | ❌ |
 | Alg Trainer | `/alg-trainers` | 同上 | fork of mihlefeld/Alg-Trainers | ❌ |
 | csTimer | `/cstimer` | iframe → `/tools/cstimer/` | cs0x7f/cstimer | ❌ |
-| BLDDB | `/blddb` | iframe → `/tools/blddb/`(next build 静态导出,`_sync_blddb.ps1`) | nbwzx/blddb v2 | ❌ |
+| BLDDB | `/blddb` | iframe → `/tools/blddb/`(next build 静态导出,`scripts/upstream/sync-blddb.ps1`;根 `_sync_blddb.ps1` 兼容旧调用) | nbwzx/blddb v2 | ❌ |
 | 盲拧公式查询 | `/alg/3bld/lookup` | client,吃 `tools/blddb/data/*Manmade.json`(三阶六套) | 自有 UI + blddb 数据 | ✅ |
 | WCA Stats | `/wca` | `packages/stats-build` | jonatanklosko/wca_statistics TS 重写 | ⚠️ 管道重写,UI 自有 |
 | Score Calculator | `/calc` | client `app/[lang]/calc/` | ported from carykh/hthgrapher | ✅ |

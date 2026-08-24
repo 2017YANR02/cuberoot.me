@@ -197,7 +197,7 @@ API     ─X─> Web 源码或 Web public
 | PS1-01 | 盘点根脚本调用图和仓库外调用者 | `完成` | 7 个脚本、互调、文档、生成标记和仓库外 BLDDB 固定路径已登记；workflow、计划任务、快捷方式与 profile 的当前机器扫描均无调用，无法核验的外部调用保持未知 |
 | PS1-02 | 统一 RepoRoot 与无副作用检查模式 | `完成` | 7 个入口均支持显式 `-RepoRoot` 与真正早返回的 `-ValidateOnly`；任意 cwd、默认/显式/旧根参数、非法根和缺失内部依赖均有无副作用实证 |
 | PS1-03 | 冻结并测试公开 CLI 契约 | `完成` | 参数名称、类型、顺序、退出码与调用方式已冻结；`Only` 选择及每个子入口收到的 `RepoRoot`、`SkipPull`、`DryRun` 均有逐脚本行为测试 |
-| PS1-04 | 保留根入口并移动私有实现 | `排队中` | 严格在 PS1-01 → 02 → 03 后执行；根入口稳定，shim 原样转发 `@PSBoundParameters` 和显式 RepoRoot |
+| PS1-04 | 保留根入口并移动私有实现 | `本地完成，待发布验收` | 根目录只保留统一入口与 BLDDB 兼容 shim；7 个私有实现统一进入 `scripts/upstream/`，默认根、显式参数、旧参数和失败退出均由跨平台合同锁定 |
 
 ### F. 可选物理目录整理
 
@@ -287,11 +287,13 @@ PS1-01 事实快照（2026-08-24）：根目录共有 7 个 tracked `.ps1`、1,6
 
 本机仓库外核查覆盖 221 个计划任务、223 个任务动作、4 个标准桌面/开始菜单根下递归发现的 432 个快捷方式和 2 个现存 PowerShell profile：未发现脚本名调用；`D:\cube` 文本扫描确认 `D:\cube\blddb\AGENTS.md` 是真实的旧根路径说明，因此 `_sync_blddb.ps1` 在迁移时必须保留兼容 shim。未挂载磁盘、其他机器、未纳入扫描的个人脚本和远端手工流程无法由仓库证明，继续标记为未知；六个子脚本的旧参数在 PS1-03 冻结，只有 BLDDB 有证据要求继续保留旧根路径，不为纯假设给其余 5 个实现保留长期 root shim。
 
-CI 事实：当前 Test、Deploy Next、Deploy Core、sync toolkit 与 contest deploy 的 path filter 均不覆盖根 `*.ps1` 或未来 `scripts/upstream/**`；如果只移动文件，可能没有任何 CI 运行。PS1-03 必须先加入脚本 CLI/无副作用契约测试及对应触发路径，PS1-04 才能获准移动。
+PS1-03 前的 CI 事实：Test、Deploy Next、Deploy Core、sync toolkit 与 contest deploy 的 path filter 均不覆盖根 `*.ps1` 或未来 `scripts/upstream/**`；如果只移动文件，可能没有任何 CI 运行。PS1-03 因此先加入脚本 CLI/无副作用合同和 Test 触发路径，PS1-04 才获准移动。
 
 PS1-02 实施证据（2026-08-24）：7 个入口统一解析显式 `RepoRoot`，Solver 与 Alg-Trainers 的旧 `LocalDir`、其余子入口的旧 `ProjectDir` 继续兼容；`ValidateOnly` 在任何 clone、git、安装、构建、临时补丁或产物写入前返回。编排器先统一处理 pull，再对两个 csTimer 子入口显式传 `SkipPull`；RecordRanks 的预览在 merge/push/部署 SHA 写入前返回。native 命令统一检查退出码，stash 仅恢复本轮创建且仍位于栈顶的提交。两套不同路径的有效仓库 fixture 已分别证明默认、显式和旧根参数确实生效，并对两套沙箱做前后 fingerprint。
 
 PS1-03 实施证据（2026-08-24）：`scripts/upstream/tests/upstream-sync-contract.ps1` 以 PowerShell AST 严格冻结 7 个入口的参数名称、类型与顺序，并逐一覆盖现有 legacy/canonical 候选路径、任意 cwd、默认/显式/旧根参数、非法 `RepoRoot`、非法 `Only`、缺失子脚本、真实 git stash guard、native 失败、RecordRanks DryRun、子入口 flag 和编排器逐子脚本转发。Test workflow 已纳入根入口、`.sync/**` 与 `scripts/upstream/**` 触发及 sparse checkout；路径矩阵 7/7、Windows PowerShell 合同和 Linux Alpine PowerShell + git 合同均通过，两个独立 Reviewer 均给出 PS1-04 GO。
+
+PS1-04 实施证据（2026-08-24）：7 个私有实现以 `git mv` 进入 `scripts/upstream/`，canonical 默认根统一为脚本位置向上两级；仓库根仅保留参数兼容的 `sync_upstream.ps1` 与 `_sync_blddb.ps1` 两个 shim，后者继续兼容仓外已确认的旧 `ProjectDir` 调用。Test workflow 以根级 `*.ps1` 捕获任何新增或恢复的根脚本，并 sparse checkout 全部根 PS1，避免目录门禁被绕过；合同同时锁定根脚本精确集合、7 个 canonical 文件、旧私有路径消失、真实 shim 转发、任意 cwd、无副作用 fingerprint 和精确 native 退出码。当前本地 AST 10/10、Windows 完整合同、Linux PowerShell + git 合同、workflow 路径 7/7 与 diff check 均通过。
 
 ### 批次 7：可选目录整理
 
@@ -362,9 +364,9 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | Batch 5 Clock 测试与运行时证明 | `batch5_clock_test_audit` | `GO，已发布验收` | 初审发现常规 CI 缺独立 oracle 后已阻断发布；精确加入 `test:solvers clock_solver` 并由 workflow 契约锁定，独立复跑 package/workflow 10/10 和 oracle 18/18 后转 GO；真实 Test 全绿，Browser Web Worker 不是当前消费者，不为测试制造假依赖 |
 | Batch 6 根脚本职责与复用点 | `batch6_ps1_inventory_audit` | `PS1-01 PASS，移动 HOLD` | 7 个脚本与 `.sync/sync_utils.ps1` 均 AST 通过；脚本应进 `scripts/upstream` 而非 package，两个 csTimer 职责不同且不应强并；RepoRoot、ValidateOnly、CLI 测试完成前不得移动 |
 | Batch 6 仓内外调用与发布触发 | `batch6_ps1_callers_audit` | `PS1-01 PASS，移动 HOLD` | 当前机器计划任务、快捷方式、profile 均无命中，只有 BLDDB 仓外文档确认依赖旧绝对路径；其他外部调用保持未知。现有 workflow 不覆盖根脚本或未来目录，PS1-03 必须补路径触发和契约测试 |
-| Batch 6 CLI、副作用与退出码 | `batch6_ps1_cli_audit` | `PS1-02 PASS，PS1-04 路径门禁已列明` | 显式/默认/旧根模式、早返回 ValidateOnly、csTimer `SkipPull`、RecordRanks DryRun、native 失败退出与本轮 stash guard 已落实；迁移后实现必须从 `scripts/upstream` 向上两级解析默认根，根只保留统一入口和 BLDDB 兼容 shim |
-| Batch 6 CLI 契约复审 | `batch6_review_cli` | `GO PS1-04` | 严格参数顺序、三种根模式、子入口真实 flag 行为、编排器 `Only` 与逐子脚本转发通过；审查发现的临时 fixture 多余删除已移除，Windows 与 Linux 合同均通过 |
-| Batch 6 测试与 workflow 复审 | `batch6_review_tests` | `GO PS1-04` | 初审先阻断全局 flag 子串和同值 root fixture 两处假绿；改为逐子脚本精确整行与第二有效仓库后复审通过。workflow 触发、sparse checkout、7/7 路径矩阵、Linux PowerShell + git 合同和运行时预算均通过 |
+| Batch 6 CLI、副作用、拓扑与文档终审 | `batch6_ps1_cli_audit` | `GO PS1-04，0 Blocker / 0 Major / 0 Minor` | 根精确 2 个 shim、canonical 精确 7 个；两层 RepoRoot、`.sync` bootstrap、任意 cwd、BLDDB legacy、native 退出码、文档和 tracker 均一致。终审提出的 `.sync` 旧“根目录脚本”注释已修正 |
+| Batch 6 CLI 契约与提交面终审 | `batch6_review_cli` | `GO PS1-04，0 Blocker / 0 Major / 0 Minor` | 参数顺序、三种根模式、真实 `pwsh -File`、子入口 flag 与编排转发通过；终审发现两个 shim 未入 index 后先阻断，显式纳入提交并再次完成 Windows 合同和 7/7 路径复验后转 GO |
+| Batch 6 测试与 workflow 终审 | `batch6_review_tests` | `GO PS1-04，0 Blocker / 0 Major` | 先阻断全局 flag 子串、同值 root fixture、根脚本白名单触发和弱退出码断言；修为真实行为、双仓库、根级 `*.ps1` 触发、`/*.ps1` sparse 与精确“退出码 23”后，Windows、Linux 只读合同及路径矩阵 7/7 均通过 |
 
 审核要求：
 
@@ -374,12 +376,13 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 4. 不得因追求目录标准化而忽略现有 workflow、构建产物和部署路径。
 5. 审核只读，不编辑文件；由主 Agent 统一合并结论。
 
-2026-08-21 的三名 Reviewer 曾确认当时的总体架构路线成立；随后 Platform 大迁移显著改变了依赖图，所以旧 PASS 只保留为历史审查证据，不能直接授权当前实施。2026-08-23 的 Batch 1 先做三路只读初审，再做变更后的定点复审：DOC-01 至 DOC-04 均 PASS，DOC-05 因三类已公开的不可复现缺口保持 PARTIAL。Batch 2 再以当前 workspace、workflow、exports、真实路径和子进程调用重建基线；机器守卫与 package 方案已复审通过，项目 Hook 的宿主级验收因配置不热加载明确留到下一独立会话。Batch 3 实施后由三路 Agent 分别审核共享源码边界、CubeOpt 制品与原子部署、workflow 与跟踪一致性；两次生产前置校验暴露的 store 与 variant 假设均安全修正，最终独立复核与 `6756c599a1` 的三条工作流、生产 manager 及公网路由 smoke 已全部通过。Batch 4 实施后 Reviewer 先后阻断测试伪依赖和源码字符串自证；两项改为真实依赖图与可执行 route/session 回归后最终复核 PASS，`ba22fd81e1` 的三条工作流和生产安全边界 smoke 也已通过。Batch 5 开工前由三名 Reviewer 分别复核纯核心边界、条件导出和 workflow、测试与 Worker 运行证明；实施后测试 Reviewer 阻断了“同模型自证但独立 oracle 未进 CI”的缺口，改为常规 CI 精确执行 `clock_solver` 后三路代码复核均转 GO。`1db7804111` 随后通过隔离工作树、Test、Deploy Next、Deploy Core、API 健康和中英文 `/sim` 公网 smoke，Clock 切片正式关闭。Batch 6 的三路只读审计关闭 PS1-01；PS1-02/03 实施后复审又先后阻断全局 flag 子串与同值 root fixture 两处假绿，修为逐子脚本精确断言和双仓库路径后 Windows、Linux 与 workflow 契约均通过，PS1-04 获准按两层 RepoRoot 与双 shim 门禁实施。BND-04/05 与 DOC-05 的保留项不因 Batch 3/4/5/6 的局部推进而提前关闭。
+2026-08-21 的三名 Reviewer 曾确认当时的总体架构路线成立；随后 Platform 大迁移显著改变了依赖图，所以旧 PASS 只保留为历史审查证据，不能直接授权当前实施。2026-08-23 的 Batch 1 先做三路只读初审，再做变更后的定点复审：DOC-01 至 DOC-04 均 PASS，DOC-05 因三类已公开的不可复现缺口保持 PARTIAL。Batch 2 再以当前 workspace、workflow、exports、真实路径和子进程调用重建基线；机器守卫与 package 方案已复审通过，项目 Hook 的宿主级验收因配置不热加载明确留到下一独立会话。Batch 3 实施后由三路 Agent 分别审核共享源码边界、CubeOpt 制品与原子部署、workflow 与跟踪一致性；两次生产前置校验暴露的 store 与 variant 假设均安全修正，最终独立复核与 `6756c599a1` 的三条工作流、生产 manager 及公网路由 smoke 已全部通过。Batch 4 实施后 Reviewer 先后阻断测试伪依赖和源码字符串自证；两项改为真实依赖图与可执行 route/session 回归后最终复核 PASS，`ba22fd81e1` 的三条工作流和生产安全边界 smoke 也已通过。Batch 5 开工前由三名 Reviewer 分别复核纯核心边界、条件导出和 workflow、测试与 Worker 运行证明；实施后测试 Reviewer 阻断了“同模型自证但独立 oracle 未进 CI”的缺口，改为常规 CI 精确执行 `clock_solver` 后三路代码复核均转 GO。`1db7804111` 随后通过隔离工作树、Test、Deploy Next、Deploy Core、API 健康和中英文 `/sim` 公网 smoke，Clock 切片正式关闭。Batch 6 的三路只读审计关闭 PS1-01；PS1-02/03 实施后先后堵住全局 flag 子串和同值 root fixture 两处假绿，PS1-04 终审再发现 shim 未入 index、Test 根脚本白名单和弱退出码断言三处问题。全部修正后，根目录精确双 shim、7 个 canonical 实现、Windows/Linux 只读合同和 workflow 路径矩阵均由三路 Reviewer 最终 GO。BND-04/05 与 DOC-05 的保留项不因 Batch 3/4/5/6 的局部推进而提前关闭。
 
 ## 13. 变更记录
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-24 | Batch 6 PS1-04 本地实施与三路终审完成，等待提交和发布验收 | 根目录只保留统一入口和 BLDDB 兼容 shim，7 个私有实现进入 `scripts/upstream/`；Test 以根级 `*.ps1` 和完整 sparse checkout 守住拓扑。AST 10/10、Windows/Linux 完整合同、workflow 路径 7/7、LF 与 diff check 通过，三路 Reviewer 最终 GO |
 | 2026-08-24 | Batch 6 PS1-03 CLI 与 CI 契约关闭，PS1-04 获准按迁移门禁实施 | AST 严格冻结 7 个入口参数面；双仓库锁定三种根模式，编排 probe 逐子脚本锁定 `Only/RepoRoot/SkipPull/DryRun`。Test workflow 路径矩阵 7/7，Windows 与 Linux 完整合同通过；两名独立 Reviewer 最终 GO |
 | 2026-08-24 | Batch 6 PS1-02 关闭，统一根解析、无副作用校验与失败退出 | 7 个入口支持 `RepoRoot`/`ValidateOnly`；不同路径的双仓库 fixture 锁定默认、显式与旧根参数，clone/git/install/build/write 均由副作用探针和 fingerprint 守卫；PowerShell AST 9/9 与完整 Windows 合同通过 |
 | 2026-08-24 | Batch 6 PS1-01 调用图与仓外调用者调查关闭，PS1-04 继续 HOLD | 7 个根脚本、互调、文档、生成标记、221 个计划任务、223 个任务动作、432 个快捷方式与 2 个 profile 已登记；仅 BLDDB 仓外文档确认固定旧路径。三路 Reviewer 同时确认 RepoRoot、副作用、退出码和 CI 触发缺口必须先在 PS1-02/03 关闭 |

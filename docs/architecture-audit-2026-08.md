@@ -199,12 +199,13 @@ server/src/domains/teaching/
 
 ### P2：根目录 PowerShell 脚本应该收，但先消除“脚本位置就是仓库根”的契约
 
-根目录当前有 7 个 tracked `.ps1`，合计约 1,694 行。好消息是已经存在统一入口 `sync_upstream.ps1`；坏消息是它仍直接调度 6 个根级实现脚本，部分文档也仍指导用户直接运行私有脚本。
+审计基线是根目录 7 个 tracked `.ps1`、约 1,694 行，统一入口仍调度 6 个根级实现。PS1-01 至 PS1-04 已按调用盘点、CLI 加固、契约冻结、最后迁移的顺序执行；当前根目录只保留统一入口和一个有真实仓外调用证据的 BLDDB 兼容 shim，7 个实现集中在 `scripts/upstream/`。
 
-长期建议结构：
+当前落地结构：
 
 ```text
-sync_upstream.ps1                 # 根目录唯一入口，做薄 wrapper
+sync_upstream.ps1                 # 稳定统一入口，薄 wrapper
+_sync_blddb.ps1                   # 已确认仓外旧路径的兼容 shim
 
 scripts/
   upstream/
@@ -215,26 +216,19 @@ scripts/
     sync-alg-trainers.ps1
     sync-blddb.ps1
     sync-recordranks.ps1
-    lib/
-      sync-utils.ps1
-    config/
-      ...                         # .sync 稳定后再分批迁移
-    postprocess/
-      blddb.mjs
-  data-build/
-    ...                           # 现 2x2、pyraminx 数据生成与验证脚本
+.sync/                            # 运行时库、配置、模板和后处理暂时原位保留
 ```
 
-不能直接照这个树 `git mv`。多个脚本把 `$PSScriptRoot` 当仓库根，另一些又硬编码本机绝对路径；现在移动会把输出写到错误目录、找不到 `.sync`，或者只在作者机器上碰巧成功。
+迁移前多个脚本把 `$PSScriptRoot` 当仓库根，直接 `git mv` 会把输出写到错误目录或找不到 `.sync`。因此先消除了脚本位置即仓库根的隐式契约，再移动实现。
 
-最低风险顺序是：
+实际执行顺序是：
 
 1. 先统一显式 `RepoRoot`，由稳定根入口传入，并断言 `.git`、`core`、`tools`、`ops` 等哨兵路径。
 2. 新增真正无副作用的路径校验模式；现有 `-DryRun` 若未同时 `-SkipPull`，仍可能对外部上游执行 stash、pull、stash pop，不能当迁移验收。
-3. 单独提交，只移动私有 PS1；根 `sync_upstream.ps1` 长期作为普通 wrapper 保留，并以 `@PSBoundParameters` 转发相同参数。
+3. 单独移动私有 PS1；根 `sync_upstream.ps1` 长期作为普通 wrapper 保留，并从 `PSBoundParameters` 转发显式参数。
 4. `.sync` 仍先留在原位。运行时库、配置、模板和 Node 后处理器以后按类别分别迁移，每次只改变一个路径维度。
 
-当前未发现 GitHub workflow 直接调用这些根级私有脚本，但仓库 grep 无法证明 Windows 任务计划、桌面快捷方式、PowerShell profile 或个人脚本没有使用旧路径。移动前应审计仓库外入口；有真实调用时，旧名 shim 至少保留一个发布周期。
+仓库与当前机器的 workflow、计划任务、快捷方式和 PowerShell profile 均未发现旧私有入口调用；仓库外 BLDDB 文档确认依赖旧根路径，因此只保留 `_sync_blddb.ps1`。未挂载磁盘、其他机器和未纳入扫描的个人脚本仍不可由仓库证明。
 
 ### P2：大文件很多，但不能按行数机械拆
 
@@ -400,14 +394,14 @@ miniprogram                  -X-> React DOM modules
 
 验收：P0-P8 发布验收和三路复审已有记录；旧资产观察至少至 2026-09-21，永久处置仍待用户单独授权。
 
-### 阶段 3A：安全收根目录 PS1
+### 阶段 3A：安全收根目录 PS1 已完成
 
-- 先统一显式 `RepoRoot`、路径断言和真正无副作用的路径校验模式。
-- 根统一入口负责传参；另用 `-DryRun -SkipPull` 验证现有流程，不把普通 `-DryRun` 误认为无副作用。
-- 下一次独立提交只 `git mv` 私有 PS1，根入口不动；`.sync` 再按库、配置和后处理分批迁移。
-- 移动前盘点仓库外任务计划、快捷方式和个人脚本，必要时保留旧名 shim 一个发布周期。
+- 7 个实现先统一显式 `RepoRoot`、路径断言和真正无副作用的 `ValidateOnly`，再冻结公开参数与退出码。
+- 根目录只保留统一入口 `sync_upstream.ps1` 和有仓外证据的 `_sync_blddb.ps1` 兼容 shim；7 个私有实现统一归入 `scripts/upstream/`。
+- 两个 shim 原样转发显式参数，BLDDB shim 将旧 `ProjectDir` 映射为 `RepoRoot`；canonical 实现从自身位置向上两级解析默认仓库根。
+- `.sync` 继续作为共享同步库与后处理目录，本批次不为目录外观继续搬动。
 
-验收：从任意工作目录执行路径校验都解析到同一 RepoRoot；移动提交不改同步逻辑，产物路径与移动前一致。
+验收：任意工作目录、默认/显式/旧根参数和真实 `pwsh -File` 均解析到同一 RepoRoot；Windows、Linux、workflow 路径与无副作用合同通过，移动未改变产物位置和同步职责。
 
 ### 阶段 3B：有收益时才逐个整理 app 或 job 目录
 
