@@ -4,6 +4,72 @@
   padding: 28px 24px 52px;
 }
 
+.notation-page {
+  min-height: 100vh;
+}
+
+.notation-shell {
+  max-width: 1040px;
+}
+
+.notation-index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 22px;
+}
+
+.notation-index a {
+  min-block-size: 32px;
+  font-size: 13px;
+  line-height: 32px;
+  text-decoration: none;
+}
+
+.notation-index a:hover,
+.notation-index a:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.notation-catalog-section {
+  margin-top: 52px;
+  scroll-margin-top: 20px;
+}
+
+.notation-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 7px 14px;
+}
+
+.notation-section-heading h2 {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 28px);
+  line-height: 1.2;
+}
+
+.notation-section-heading span {
+  font-size: 12px;
+}
+
+.notation-section-copy {
+  max-width: 780px;
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.notation-subheading {
+  margin: 34px 0 0;
+  font-size: 17px;
+}
+
+.notation-clock-codes {
+  max-width: 520px;
+}
+
 .alg-notation-hero {
   display: flex;
   flex-wrap: wrap;
@@ -53,7 +119,8 @@
   min-width: 0;
 }
 
-.alg-notation-modes h2 {
+.alg-notation-modes h2,
+.alg-notation-modes h3 {
   margin: 0;
   color: var(--accent);
   font-size: 17px;
@@ -389,6 +456,10 @@
 
   .alg-fto-macro-rule {
     grid-column: auto;
+  }
+
+  .notation-catalog-section {
+    margin-top: 42px;
   }
 }
 

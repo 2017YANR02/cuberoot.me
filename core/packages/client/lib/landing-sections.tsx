@@ -53,6 +53,7 @@ export const TEXTS: Record<string, { en: string; zh: string
   spreadsheets:    { en: 'Sheets', zh: '表格' },
   algdb:           { en: 'Algorithms', zh: '公式' },
   wiki:            { en: 'Wiki', zh: 'Wiki' },
+  notation:        { en: 'Notation', zh: '记号' },
   quiz:            { en: 'Quiz', zh: '问答' },
   sitesDirectory:  { en: 'Web', zh: '网站'
 },
@@ -190,6 +191,7 @@ export const SECTIONS: Section[] = [
       { id: 'quiz',     href: '/quiz',     internal: true, tier: 'medium', Icon: CircleQuestionMark, nameKey: 'quiz' },
       { id: 'wiki',     href: '/wiki',     internal: true, tier: 'medium', Icon: BookA,      nameKey: 'wiki' },
       { id: 'regulation', href: '/regulation', internal: true, tier: 'medium', Icon: Scale, nameKey: 'regulation' },
+      { id: 'notation', href: '/notation', internal: true, tier: 'medium', Icon: FileText, nameKey: 'notation' },
       { id: 'math-hub', href: '/math', internal: true, tier: 'medium', Icon: Sigma, nameKey: 'theoryGroup' },
       { id: 'why-cube', href: '/why-cube', internal: true, tier: 'medium', Icon: Sprout, nameKey: 'whyCube' },
     ],

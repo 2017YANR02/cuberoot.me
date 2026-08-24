@@ -181,11 +181,11 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Drill every supported puzzle and algorithm set continuously in a custom order using diagrams only, with subset practice and signed-in sync.',
     },
   },
-  'alg/3x3/notation': {
-    title: { zh: '三阶中文转动记号', en: 'Chinese 3×3 Move Notation' },
+  'notation': {
+    title: { zh: '转动记号大全', en: 'Complete Move Notation Guide' },
     description: {
-      zh: '三阶魔方傻瓜和紧凑中文转动记号速查，可直接切换并播放每种转动的模拟动画。',
-      en: 'A visual guide to foolproof and compact Chinese 3×3 move notation, with an inline animated simulator for every move.',
+      zh: '集中查看 WCA 正式记号、常用公式扩展与非 WCA 魔方记号，并直接播放每一种转动。',
+      en: 'A visual guide to official WCA notation, common algorithm extensions, and non-WCA puzzle notation, with animated moves.',
     },
   },
   'alg/fto/notation': {
