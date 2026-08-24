@@ -195,7 +195,7 @@ API     ─X─> Web 源码或 Web public
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
 | PS1-01 | 盘点根脚本调用图和仓库外调用者 | `完成` | 7 个脚本、互调、文档、生成标记和仓库外 BLDDB 固定路径已登记；workflow、计划任务、快捷方式与 profile 的当前机器扫描均无调用，无法核验的外部调用保持未知 |
-| PS1-02 | 统一 RepoRoot 与无副作用检查模式 | `排队中` | 从任意 cwd 解析到同一仓库；新增 `-ValidateOnly` 或等价模式，不联网、不 pull、不 stash、不生成、不写入 |
+| PS1-02 | 统一 RepoRoot 与无副作用检查模式 | `完成` | 7 个入口均支持显式 `-RepoRoot` 与真正早返回的 `-ValidateOnly`；任意 cwd、默认/显式/旧根参数、非法根和缺失内部依赖均有无副作用实证 |
 | PS1-03 | 冻结并测试公开 CLI 契约 | `排队中` | 记录根入口与各直调脚本的参数、退出码和调用方式；`-Only`、`-SkipPull`、`-DryRun` 均有兼容测试 |
 | PS1-04 | 保留根入口并移动私有实现 | `排队中` | 严格在 PS1-01 → 02 → 03 后执行；根入口稳定，shim 原样转发 `@PSBoundParameters` 和显式 RepoRoot |
 
@@ -289,6 +289,8 @@ PS1-01 事实快照（2026-08-24）：根目录共有 7 个 tracked `.ps1`、1,6
 
 CI 事实：当前 Test、Deploy Next、Deploy Core、sync toolkit 与 contest deploy 的 path filter 均不覆盖根 `*.ps1` 或未来 `scripts/upstream/**`；如果只移动文件，可能没有任何 CI 运行。PS1-03 必须先加入脚本 CLI/无副作用契约测试及对应触发路径，PS1-04 才能获准移动。
 
+PS1-02 实施证据（2026-08-24）：7 个入口统一解析显式 `RepoRoot`，Solver 与 Alg-Trainers 的旧 `LocalDir`、其余子入口的旧 `ProjectDir` 继续兼容；`ValidateOnly` 在任何 clone、git、安装、构建、临时补丁或产物写入前返回。编排器先统一处理 pull，再对两个 csTimer 子入口显式传 `SkipPull`；RecordRanks 的预览在 merge/push/部署 SHA 写入前返回。native 命令统一检查退出码，stash 仅恢复本轮创建且仍位于栈顶的提交。两套不同路径的有效仓库 fixture 已分别证明默认、显式和旧根参数确实生效，并对两套沙箱做前后 fingerprint。
+
 ### 批次 7：可选目录整理
 
 范围：LYT 工作包。
@@ -358,7 +360,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | Batch 5 Clock 测试与运行时证明 | `batch5_clock_test_audit` | `GO，已发布验收` | 初审发现常规 CI 缺独立 oracle 后已阻断发布；精确加入 `test:solvers clock_solver` 并由 workflow 契约锁定，独立复跑 package/workflow 10/10 和 oracle 18/18 后转 GO；真实 Test 全绿，Browser Web Worker 不是当前消费者，不为测试制造假依赖 |
 | Batch 6 根脚本职责与复用点 | `batch6_ps1_inventory_audit` | `PS1-01 PASS，移动 HOLD` | 7 个脚本与 `.sync/sync_utils.ps1` 均 AST 通过；脚本应进 `scripts/upstream` 而非 package，两个 csTimer 职责不同且不应强并；RepoRoot、ValidateOnly、CLI 测试完成前不得移动 |
 | Batch 6 仓内外调用与发布触发 | `batch6_ps1_callers_audit` | `PS1-01 PASS，移动 HOLD` | 当前机器计划任务、快捷方式、profile 均无命中，只有 BLDDB 仓外文档确认依赖旧绝对路径；其他外部调用保持未知。现有 workflow 不覆盖根脚本或未来目录，PS1-03 必须补路径触发和契约测试 |
-| Batch 6 CLI、副作用与退出码 | `batch6_ps1_cli_audit` | `PS1-01 PASS，移动 HOLD` | `-SkipPull` 对 csTimer 失效、`-DryRun` 仍会 pull/fetch、部分 native 失败可能继续使用旧产物；必须先落显式 RepoRoot、真正早返回的 ValidateOnly 和统一失败退出，再冻结 CLI |
+| Batch 6 CLI、副作用与退出码 | `batch6_ps1_cli_audit` | `PS1-02 PASS，PS1-04 路径门禁已列明` | 显式/默认/旧根模式、早返回 ValidateOnly、csTimer `SkipPull`、RecordRanks DryRun、native 失败退出与本轮 stash guard 已落实；迁移后实现必须从 `scripts/upstream` 向上两级解析默认根，根只保留统一入口和 BLDDB 兼容 shim |
 
 审核要求：
 
@@ -374,6 +376,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-24 | Batch 6 PS1-02 关闭，统一根解析、无副作用校验与失败退出 | 7 个入口支持 `RepoRoot`/`ValidateOnly`；不同路径的双仓库 fixture 锁定默认、显式与旧根参数，clone/git/install/build/write 均由副作用探针和 fingerprint 守卫；PowerShell AST 9/9 与完整 Windows 合同通过 |
 | 2026-08-24 | Batch 6 PS1-01 调用图与仓外调用者调查关闭，PS1-04 继续 HOLD | 7 个根脚本、互调、文档、生成标记、221 个计划任务、223 个任务动作、432 个快捷方式与 2 个 profile 已登记；仅 BLDDB 仓外文档确认固定旧路径。三路 Reviewer 同时确认 RepoRoot、副作用、退出码和 CI 触发缺口必须先在 PS1-02/03 关闭 |
 | 2026-08-24 | Batch 5 Clock 窄 package 完成发布验收，本切片关闭 | `1db7804111`；隔离干净工作树复验全绿，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 均成功。API 健康为 200 且 DB connected，中英文 `/sim` 为 200，响应中无模块解析错误 |
 | 2026-08-24 | Batch 5 Clock 窄 package 本地实施完成，三路代码复核转 GO，等待字面提交与发布验收 | 只公开 `@cuberoot/puzzle-solvers/clock`；13 个消费者与两条离线旧债已收口，独立 oracle 明确进入 CI。package 11/11、精确强测 18/18、package/workflow 10/10、analyzer、Sim、typecheck、Knip、分布重算和 317/333/13 边界审计通过；隔离工作树、真实 Test、Deploy Next、Deploy Core 与线上 smoke 尚待执行 |

@@ -7,22 +7,44 @@
 .PARAMETER UpstreamDir
     上游仓库路径（默认 D:\cube\mihlefeld-alg-trainers）
 .PARAMETER LocalDir
-    本地项目路径（默认 D:\cube\cuberoot.me）
+    本地项目路径（默认本脚本所在仓库根）
 .PARAMETER DryRun
     只预览变更，不实际写入文件
+.PARAMETER RepoRoot
+    显式 cuberoot.me 仓库根；保留 LocalDir 作为旧参数别名。
+.PARAMETER ValidateOnly
+    只读校验仓库和脚本内部依赖后退出。
 #>
 param(
     [string]$UpstreamDir = "D:\cube\mihlefeld-alg-trainers",
-    [string]$LocalDir = "D:\cube\cuberoot.me",
-    [switch]$DryRun
+    [string]$LocalDir = $PSScriptRoot,
+    [switch]$DryRun,
+    [string]$RepoRoot,
+    [switch]$ValidateOnly
 )
 
 $ErrorActionPreference = "Stop"
-$syncDir = Join-Path $LocalDir ".sync"
-$destBase = Join-Path $LocalDir "tools" "alg_trainers"
-
 # NOTE: 引入公共工具函数（Sync-FileIfChanged / Sync-Directory / Get-GaInlineCode / Read-Utf8File / Write-Utf8File）
-. (Join-Path $syncDir "sync_utils.ps1")
+$syncBootstrapRoot = if ($RepoRoot) { [IO.Path]::GetFullPath($RepoRoot) } else { [IO.Path]::GetFullPath($LocalDir) }
+. (Join-Path $syncBootstrapRoot '.sync\sync_utils.ps1')
+$LocalDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $LocalDir -ScriptRoot $PSScriptRoot
+$syncDir = Join-Path $LocalDir '.sync'
+$destBase = Join-Path $LocalDir 'tools' 'alg_trainers'
+Assert-SyncInternalFiles -RepoRoot $LocalDir -RelativePaths @(
+    'sync_alg_trainers.ps1'
+    '.sync/sync_utils.ps1'
+    '.sync/alg_trainers_config.json'
+) -PowerShellScripts @('sync_alg_trainers.ps1')
+if ($ValidateOnly)
+{
+    Write-Host "Alg-Trainers 同步脚本校验通过：$LocalDir" -ForegroundColor Green
+    return
+}
+
+if (-not (Test-Path -LiteralPath (Join-Path $UpstreamDir '.git')))
+{
+    throw "$UpstreamDir 不是 Alg-Trainers clone"
+}
 
 # ===== 加载配置 =====
 $config = Get-Content (Join-Path $syncDir "alg_trainers_config.json") -Raw | ConvertFrom-Json

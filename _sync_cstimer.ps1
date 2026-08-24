@@ -1,13 +1,41 @@
 <#
 .SYNOPSIS
-    从 D:\cube\cstimer 上游拉取更新，重新构建并复制到项目，最后自动提交。
+    从 D:\cube\cstimer 上游拉取更新，重新构建并复制到项目，不自动提交。
+.PARAMETER SkipPull
+    跳过 git pull；编排器调用时会显式传入。
+.PARAMETER RepoRoot
+    cuberoot.me 仓库根目录；保留 ProjectDir 作为旧参数别名。
+.PARAMETER ValidateOnly
+    只读校验仓库和脚本内部依赖后退出。
 .NOTES
     前置：Java 21、PHP 8.3（winget 安装），Git for Windows（含 bash/cp/sed）
 #>
 param(
     [string]$CstimerDir = "D:\cube\cstimer",
-    [string]$ProjectDir = $PSScriptRoot
+    [string]$ProjectDir = $PSScriptRoot,
+    [switch]$SkipPull,
+    [string]$RepoRoot,
+    [switch]$ValidateOnly
 )
+
+$ErrorActionPreference = 'Stop'
+$syncBootstrapRoot = if ($RepoRoot) { [IO.Path]::GetFullPath($RepoRoot) } else { [IO.Path]::GetFullPath($ProjectDir) }
+. (Join-Path $syncBootstrapRoot '.sync\sync_utils.ps1')
+$ProjectDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $ProjectDir -ScriptRoot $PSScriptRoot
+Assert-SyncInternalFiles -RepoRoot $ProjectDir -RelativePaths @(
+    '_sync_cstimer.ps1'
+    '.sync/sync_utils.ps1'
+) -PowerShellScripts @('_sync_cstimer.ps1')
+if ($ValidateOnly)
+{
+    Write-Host "csTimer 构建同步脚本校验通过：$ProjectDir" -ForegroundColor Green
+    return
+}
+
+if (-not (Test-Path -LiteralPath (Join-Path $CstimerDir '.git')))
+{
+    throw "$CstimerDir 不是 csTimer clone"
+}
 
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
             [System.Environment]::GetEnvironmentVariable("Path","User")
@@ -18,16 +46,29 @@ $bash = "C:\Program Files\Git\bin\bash.exe"
 $csUnix = "/" + $CstimerDir.Substring(0,1).ToLower() + $CstimerDir.Substring(2).Replace('\','/')
 
 Write-Host "[1/4] git pull csTimer..." -ForegroundColor Cyan
-git -C $CstimerDir pull origin master
+if ($SkipPull)
+{
+    Write-Host "  --SkipPull，跳过" -ForegroundColor DarkGray
+}
+else
+{
+    [void](Invoke-CheckedNativeCommand -FilePath 'git' -ArgumentList @(
+        '-C', $CstimerDir, 'pull', '--ff-only', 'origin', 'master'
+    ) -FailureMessage 'csTimer git pull 失败')
+}
 
 # NOTE: 在 bash 中把 mingw64 加入 PATH（mingw32-make 所在位置）
 $bashInit = "export PATH=`"/c/mingw64/bin:`$PATH`""
 
 Write-Host "[2/4] 构建 cstimer.js + twisty.js + index.html..." -ForegroundColor Cyan
-& $bash -c "$bashInit && cd '$csUnix' && mingw32-make local"
+Invoke-CheckedNativeCommand -FilePath $bash -ArgumentList @(
+    '-c', "$bashInit && cd '$csUnix' && mingw32-make local"
+) -FailureMessage 'csTimer local 构建失败'
 
 Write-Host "[3/4] 构建 scramble_module.js（无 IIFE，供 /timer 双人模式用）..." -ForegroundColor Cyan
-& $bash -c "$bashInit && cd '$csUnix' && mingw32-make battle_module"
+Invoke-CheckedNativeCommand -FilePath $bash -ArgumentList @(
+    '-c', "$bashInit && cd '$csUnix' && mingw32-make battle_module"
+) -FailureMessage 'csTimer battle_module 构建失败'
 
 Write-Host "[4/6] 复制构建产物..." -ForegroundColor Cyan
 Copy-Item -Path "$CstimerDir\dist\local\*" -Destination "$ProjectDir\tools\cstimer\" -Recurse -Force
@@ -77,5 +118,7 @@ if ($html.Contains($anchor)) {
 }
 
 # NOTE: 不自动 commit —— 统一由 sync_upstream.ps1 跑完全部上游后由人工审 diff 再提交。
-$version = git -C $CstimerDir describe --tags --always 2>$null
+$version = Get-CheckedNativeText -FilePath 'git' -ArgumentList @(
+    '-C', $CstimerDir, 'describe', '--tags', '--always'
+)
 Write-Host "完成！csTimer $version（未提交，自行 git diff 后 commit）" -ForegroundColor Green
