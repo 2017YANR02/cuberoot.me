@@ -10,6 +10,7 @@ import './move-notation-demo.css';
 
 export interface MoveNotationOption {
   move: string;
+  /** Optional localized alias shown beside the canonical move notation. */
   symbol?: ReactNode;
   /** Omit for cube notation to use the shared foolproof description. */
   caption?: ReactNode;
@@ -70,7 +71,12 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
                 setPlayRequest(request => request + 1);
               }}
             >
-              <code>{option.symbol ?? option.move}</code>
+              <code>
+                <span className="move-notation-standard">{option.move}</span>
+                {option.symbol != null && (
+                  <span className="move-notation-alias">{option.symbol}</span>
+                )}
+              </code>
               <span>{caption}</span>
             </button>
           );
