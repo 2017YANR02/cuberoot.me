@@ -7,6 +7,7 @@
  * 合成键以小写 `u` 打头,WCA id 全大写(^\d{4}[A-Z]{4}\d{2}$),两者天然不可能相撞。
  */
 import crypto from 'node:crypto';
+import type { WebSessionUser } from '@cuberoot/shared/auth/web-session';
 import { query, sql } from '../db/connection.js';
 import { JWT_SECRET } from './session.js';
 
@@ -446,12 +447,7 @@ export async function removeIdentity(
 }
 
 /** 组装给前端的用户对象(与客户端 WcaUser 对齐:wcaId 可空 + uid)。 */
-export function publicUser(user: AppUser): {
-  uid: number;
-  wcaId: string | null;
-  name: string;
-  avatar: string;
-} {
+export function publicUser(user: AppUser): WebSessionUser {
   return {
     uid: user.id,
     wcaId: user.wca_id,

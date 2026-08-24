@@ -1,4 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  decodeWebSession,
+  decodeWebSessionUserEnvelope,
+} from '@cuberoot/shared/auth/web-session';
 
 const mocks = vi.hoisted(() => ({
   query: vi.fn(),
@@ -38,7 +42,11 @@ describe('auth public user ID', () => {
     mocks.findUserByWcaId.mockResolvedValue(account);
     mocks.getUserById.mockResolvedValue(account);
     mocks.publicUser.mockReturnValue(publicAccount);
-    mocks.signSession.mockReturnValue('upgraded-token');
+    mocks.signSession.mockReturnValue('u'.repeat(20));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('resolves a legacy WCA-only /auth/me session to its numeric account ID', async () => {
@@ -49,7 +57,9 @@ describe('auth public user ID', () => {
     });
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ user: publicAccount });
+    const body = await response.json();
+    expect(body).toEqual({ user: publicAccount });
+    expect(decodeWebSessionUserEnvelope(body)).toEqual(body);
     expect(mocks.findUserByWcaId).toHaveBeenCalledWith('2017YANR02');
   });
 
@@ -62,10 +72,80 @@ describe('auth public user ID', () => {
     });
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ token: 'upgraded-token', user: publicAccount });
+    const body = await response.json();
+    expect(body).toEqual({ token: 'u'.repeat(20), user: publicAccount });
+    expect(decodeWebSession(body)).toEqual(body);
     expect(mocks.getUserById).toHaveBeenCalledWith(66);
     expect(mocks.signSession).toHaveBeenCalledWith({
       uid: 66, wcaId: '2017YANR02', name: '颜瑞民',
     });
+  });
+
+  it('executes /auth/exchange and returns the canonical account session for a valid WCA token', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({
+      me: {
+        id: 123,
+        wca_id: '2017YANR02',
+        name: 'Provisional WCA Name',
+        avatar: { url: 'wca-avatar.png' },
+      },
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    mocks.loginWithIdentity.mockResolvedValue({ user: account, isNew: false });
+
+    const response = await authRoutes.request('/auth/exchange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken: 'valid-wca-token' }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({ token: 'u'.repeat(20), user: publicAccount });
+    expect(decodeWebSession(body)).toEqual(body);
+    expect(mocks.loginWithIdentity).toHaveBeenCalledWith('wca', '2017YANR02', {
+      name: 'Provisional WCA Name',
+      avatar: 'wca-avatar.png',
+      wcaId: '2017YANR02',
+    });
+    expect(mocks.signSession).toHaveBeenCalledWith({
+      uid: 66,
+      wcaId: '2017YANR02',
+      name: '颜瑞民',
+    });
+  });
+
+  it('rejects an invalid WCA token through the real /auth/exchange route', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await authRoutes.request('/auth/exchange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken: 'expired-wca-token' }),
+    });
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: 'Invalid or expired WCA token' });
+    expect(mocks.loginWithIdentity).not.toHaveBeenCalled();
+    expect(mocks.signSession).not.toHaveBeenCalled();
+  });
+
+  it('rejects a missing WCA token without calling the upstream API', async () => {
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await authRoutes.request('/auth/exchange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'accessToken is required' });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

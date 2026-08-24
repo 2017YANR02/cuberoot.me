@@ -1,4 +1,8 @@
 import { Hono } from 'hono';
+import type {
+  WebSession,
+  WebSessionUserEnvelope,
+} from '@cuberoot/shared/auth/web-session';
 import { query } from '../db/connection.js';
 import { signSession, verifySession } from '../utils/session.js';
 import { loginWithIdentity, findUserByWcaId, getUserById, publicUser } from '../utils/account.js';
@@ -112,7 +116,8 @@ authRoutes.get('/auth/me', async (c) => {
         ? await findUserByWcaId(payload.wcaId)
         : null;
     if (!account) return c.json({ error: 'Invalid token' }, 401);
-    return c.json({ user: publicUser(account) });
+    const response: WebSessionUserEnvelope = { user: publicUser(account) };
+    return c.json(response);
   } catch {
     return c.json({ error: 'Invalid token' }, 401);
   }
@@ -167,7 +172,8 @@ authRoutes.post('/auth/exchange', async (c) => {
     });
     const jwtToken = signSession({ uid: account.id, wcaId: account.wca_id, name: account.display_name });
 
-    return c.json({ token: jwtToken, user: publicUser(account) });
+    const session: WebSession = { token: jwtToken, user: publicUser(account) };
+    return c.json(session);
   } catch {
     return c.json({ error: 'WCA API unavailable' }, 502);
   }
@@ -195,7 +201,8 @@ authRoutes.post('/auth/refresh', async (c) => {
     const u = await getUserById(uid);
     if (!u) return c.json({ error: 'unauthorized' }, 401);
     const fresh = signSession({ uid: u.id, wcaId: u.wca_id, name: u.display_name || (payload.name ?? '') });
-    return c.json({ token: fresh, user: publicUser(u) });
+    const session: WebSession = { token: fresh, user: publicUser(u) };
+    return c.json(session);
   } catch {
     // 过期或非法 JWT — 不续签,前端回退到重新登录。
     return c.json({ error: 'unauthorized' }, 401);

@@ -1,18 +1,17 @@
 import { createHash, randomBytes } from 'node:crypto';
+import {
+  isWebSessionTicket,
+  type WebSessionTicketEnvelope,
+} from '@cuberoot/shared/auth/web-session';
 import { query } from '../db/connection.js';
 
 export const WEB_SESSION_TICKET_TTL_SECONDS = 90;
-
-const TICKET_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
 function hashTicket(ticket: string): string {
   return createHash('sha256').update(ticket).digest('hex');
 }
 
-export async function issueWebSessionTicket(userId: number): Promise<{
-  ticket: string;
-  expiresIn: number;
-}> {
+export async function issueWebSessionTicket(userId: number): Promise<WebSessionTicketEnvelope> {
   if (!Number.isSafeInteger(userId) || userId <= 0) {
     throw new RangeError('userId must be a positive safe integer');
   }
@@ -30,7 +29,7 @@ export async function issueWebSessionTicket(userId: number): Promise<{
 
 /** 原子删除并返回归属账号；过期、格式错误或已经消费均返回 null。 */
 export async function consumeWebSessionTicket(ticket: string): Promise<number | null> {
-  if (!TICKET_PATTERN.test(ticket)) return null;
+  if (!isWebSessionTicket(ticket)) return null;
 
   const rows = await query<{ user_id: number }>(
     `DELETE FROM auth_web_session_tickets

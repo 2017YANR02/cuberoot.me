@@ -64,6 +64,10 @@
       "node": "./dist/account.js",
       "default": "./src/account.ts"
     },
+    "./auth/web-session": {
+      "node": "./dist/auth/web_session.js",
+      "default": "./src/auth/web_session.ts"
+    },
     "./result-penalty": {
       "node": "./dist/result_penalty.js",
       "default": "./src/result_penalty.ts"

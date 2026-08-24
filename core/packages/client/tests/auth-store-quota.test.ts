@@ -108,7 +108,7 @@ describe('applySession', () => {
     expect(persistAuthItem('cuberoot_jwt', 'old-token')).toBe(true);
     useAuthStore.getState().refresh();
 
-    const nextUser = { uid: 8, wcaId: null, name: 'Next User' };
+    const nextUser = { uid: 8, wcaId: null, name: 'Next User', avatar: '' };
     expect(applySession('n'.repeat(220), nextUser)).toBe(false);
     expect(localStorage.getItem('cuberoot_jwt')).toBe('old-token');
     expect(JSON.parse(localStorage.getItem('wca_user') ?? 'null')).toEqual(previousUser);
@@ -132,7 +132,7 @@ describe('ensureFreshToken legacy session upgrade', () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        token: 'upgraded-token',
+        token: 'u'.repeat(20),
         user: { uid: 66, wcaId: '2017YANR02', name: '颜瑞民', avatar: '' },
       }),
     });
@@ -141,7 +141,7 @@ describe('ensureFreshToken legacy session upgrade', () => {
     await ensureFreshToken();
 
     expect(fetchMock).toHaveBeenCalledOnce();
-    expect(localStorage.getItem('cuberoot_jwt')).toBe('upgraded-token');
+    expect(localStorage.getItem('cuberoot_jwt')).toBe('u'.repeat(20));
     expect(JSON.parse(localStorage.getItem('wca_user') ?? 'null')).toMatchObject({ uid: 66 });
     expect(useAuthStore.getState().user?.uid).toBe(66);
   });

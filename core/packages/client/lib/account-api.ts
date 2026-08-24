@@ -3,16 +3,10 @@
 // 内部账号 API 客户端(邮箱/手机验证码登录 + 绑定/解绑)。全走 apiUrl(),别硬编码 origin。
 import { apiUrl } from './api-base';
 import { getSessionToken } from './auth-store';
+import type { WebSession, WebSessionUser } from '@cuberoot/shared/auth/web-session';
 
-export interface SessionUser {
-  uid?: number;
-  wcaId: string | null;
-  name: string;
-  avatar?: string;
-}
-export interface SessionResp {
-  token: string;
-  user: SessionUser;
+export type SessionUser = WebSessionUser;
+export interface SessionResp extends WebSession {
   /** 这次是「注册」而非「登录」(登录/注册合流,只有服务端知道账号是不是刚建的)。
    *  新人才做「有 WCA ID 吗」的引导 —— 老用户每次登录都被问一遍会很烦。 */
   isNew?: boolean;

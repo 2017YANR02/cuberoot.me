@@ -7,6 +7,7 @@ import {
   normalizedRelativePath,
   outputFingerprint,
   readBuildState,
+  restoreBuildGraphInputs,
   walkFiles,
 } from './build-state.mjs';
 import {
@@ -45,6 +46,16 @@ async function runReleaseCheck() {
       }),
     ]);
   const buildState = await readBuildState(packageRoot);
+  let currentSourceFingerprint = null;
+  try {
+    const graphInputFiles = restoreBuildGraphInputs(
+      packageRoot,
+      buildState?.buildGraphInputs,
+    );
+    currentSourceFingerprint = await buildInputFingerprint(packageRoot, graphInputFiles);
+  } catch {
+    // The release audit reports a stale or invalid build state below.
+  }
   const sourceFiles = [];
   for (const file of await walkFiles(sourceRoot)) {
     const path = normalizedRelativePath(packageRoot, file);
@@ -80,7 +91,7 @@ async function runReleaseCheck() {
     builtFiles: outputFiles.map((file) => normalizedRelativePath(outputRoot, file)),
     builtFileSizes,
     buildState,
-    currentSourceFingerprint: await buildInputFingerprint(packageRoot),
+    currentSourceFingerprint,
     currentOutputFingerprint: await outputFingerprint(packageRoot, outputRoot),
   });
 

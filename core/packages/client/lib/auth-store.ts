@@ -8,6 +8,10 @@ import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
+import {
+  decodeWebSession,
+  type WebSessionUser,
+} from '@cuberoot/shared/auth/web-session';
 import { apiUrl } from './api-base';
 import { persistItem } from './safe-storage';
 
@@ -143,7 +147,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
  */
 export function applySession(
   token: string,
-  user: { uid?: number; wcaId: string | null; name: string; avatar?: string },
+  user: WebSessionUser,
 ): boolean {
   if (typeof window === 'undefined') return false;
 
@@ -200,6 +204,25 @@ export function applySession(
 
   useAuthStore.getState().refresh();
   return true;
+}
+
+/**
+ * 把 WCA 的短效 access token 换成站内 canonical session，并原子覆盖临时 WCA 会话。
+ * 返回 false 表示后端拒绝或响应不符合共享契约；调用方可继续保留短效会话兜底。
+ */
+export async function exchangeWcaSession(
+  accessToken: string,
+  fetcher: typeof fetch = fetch,
+): Promise<boolean> {
+  const response = await fetcher(apiUrl('/v1/auth/exchange'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accessToken }),
+  });
+  if (!response.ok) return false;
+
+  const session = decodeWebSession(await response.json());
+  return session ? applySession(session.token, session.user) : false;
 }
 
 // ── 新人「绑定 WCA」引导的待办标记 ──
@@ -322,12 +345,8 @@ export async function ensureFreshToken(): Promise<void> {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!r.ok) return;
-    const data = (await r.json()) as { token?: string; user?: WcaUser };
-    if (data.token && data.user) {
-      applySession(data.token, data.user);
-    } else if (data.token) {
-      persistItem(JWT_KEY, data.token);
-    }
+    const session = decodeWebSession(await r.json());
+    if (session) applySession(session.token, session.user);
   } catch {
     // 网络/后端不可用 — 保留旧 token,下次启动再试。
   }

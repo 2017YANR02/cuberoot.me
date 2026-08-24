@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  decodeWebSession,
+  decodeWebSessionTicketEnvelope,
+  decodeWebSessionUserEnvelope,
   isSafeWebSessionDestination,
   isWebSessionTicket,
 } from '../src/lib/web-session-contract';
@@ -15,6 +18,62 @@ describe('mini program web session contract', () => {
     expect(isWebSessionTicket(`${'A'.repeat(42)}+`)).toBe(false);
     expect(isWebSessionTicket(`${'A'.repeat(42)}/`)).toBe(false);
     expect(isWebSessionTicket(null)).toBe(false);
+  });
+
+  it('decodes the canonical auth route envelopes, including an unnamed first-time WeChat user', () => {
+    const user = { uid: 12, wcaId: null, name: '', avatar: '' };
+    expect(decodeWebSessionUserEnvelope({ user })).toEqual({ user });
+    expect(decodeWebSession({ token: 't'.repeat(20), user, isNew: true })).toEqual({
+      token: 't'.repeat(20),
+      user,
+    });
+    expect(decodeWebSessionTicketEnvelope({ ticket: 'A'.repeat(43), expiresIn: 90 })).toEqual({
+      ticket: 'A'.repeat(43),
+      expiresIn: 90,
+    });
+  });
+
+  it('rejects incomplete or unsafe public session users', () => {
+    const validUser = { uid: 12, wcaId: null, name: '', avatar: '' };
+    expect(decodeWebSession({ token: 't'.repeat(20), user: validUser })).not.toBeNull();
+
+    const invalidUsers = [
+      { ...validUser, uid: 0 },
+      { ...validUser, uid: Number.MAX_SAFE_INTEGER + 1 },
+      { uid: 12, wcaId: null, name: '' },
+      { ...validUser, wcaId: 'W'.repeat(21) },
+      { ...validUser, wcaId: '2026\tROOT01' },
+      { ...validUser, wcaId: '\t2026ROOT01' },
+      { ...validUser, name: 'N'.repeat(201) },
+      { ...validUser, name: 'Cube\nRoot' },
+      { ...validUser, avatar: 'a'.repeat(2049) },
+      { ...validUser, avatar: 'https://example.test/\ravatar' },
+    ];
+    for (const user of invalidUsers) {
+      expect(decodeWebSession({ token: 't'.repeat(20), user })).toBeNull();
+    }
+
+    for (const token of [
+      't'.repeat(19),
+      't'.repeat(4097),
+      `${'t'.repeat(20)}\nheader`,
+      `\t${'t'.repeat(20)}`,
+      ` ${'t'.repeat(20)}`,
+      `${'t'.repeat(20)} `,
+      `${'t'.repeat(20)}${' '.repeat(4077)}`,
+    ]) {
+      expect(decodeWebSession({ token, user: validUser })).toBeNull();
+    }
+  });
+
+  it('rejects malformed ticket envelopes and expiry values', () => {
+    expect(decodeWebSessionTicketEnvelope({ ticket: 'A'.repeat(42), expiresIn: 90 })).toBeNull();
+    expect(decodeWebSessionTicketEnvelope({ ticket: 'A'.repeat(43), expiresIn: 0 })).toBeNull();
+    expect(decodeWebSessionTicketEnvelope({ ticket: 'A'.repeat(43), expiresIn: 1.5 })).toBeNull();
+    expect(decodeWebSessionTicketEnvelope({
+      ticket: 'A'.repeat(43),
+      expiresIn: Number.MAX_SAFE_INTEGER + 1,
+    })).toBeNull();
   });
 
   it('accepts only same-site path destinations', () => {
