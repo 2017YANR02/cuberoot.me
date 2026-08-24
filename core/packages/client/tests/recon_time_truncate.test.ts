@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { truncateCs, formatTime } from '@/lib/recon-utils';
+import { truncateCs, formatTime, hasMethodOnlyReconStats } from '@/lib/recon-utils';
 import { computeAllStats } from '@/lib/recon-stats';
 
 // 回归:裸 Math.floor(s*100)/100 因浮点误差把 5.02 截成 5.01(5.02*100 = 501.9999…),
@@ -31,5 +31,14 @@ describe('computeAllStats TPS uses float-safe truncation', () => {
     const stats = computeAllStats(solution, 5.02, '3x3');
     expect(stats?.stm).toBe(52);
     expect(stats?.tps).toBe(10.36);
+  });
+});
+
+describe('recon detail stats by event', () => {
+  it('shows only the method for 2x2 without changing other events', () => {
+    expect(hasMethodOnlyReconStats('2x2')).toBe(true);
+    expect(hasMethodOnlyReconStats('3x3')).toBe(false);
+    expect(hasMethodOnlyReconStats('oh')).toBe(false);
+    expect(hasMethodOnlyReconStats('sq1')).toBe(false);
   });
 });
