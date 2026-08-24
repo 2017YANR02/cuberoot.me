@@ -378,9 +378,9 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
       : displayCuberName(solve.reconer, isZh) === displayCuberName(solve.addedBy, isZh));
 
   // 复盘者 / 添加者的 id 是归属键 ownerKey,不一定是 WCA id —— 出链判定收敛在 AuthorName。
-  const renderContributor = (name: string, id?: string, userId?: number | null) => (
+  const renderContributor = (name: string, id?: string) => (
     <span className="detail-meta-value">
-      <AuthorName id={id} name={name} userId={userId} />
+      <AuthorName id={id} name={name} />
     </span>
   );
 
@@ -461,7 +461,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           {sameContributor ? (
             <div className="detail-meta-item">
               <span className="detail-meta-label detail-meta-label-dual"><PenLine size={16} /><UserPlus size={16} /></span>
-              {renderContributor(solve.reconer!, solve.reconerId || solve.addedById, solve.addedByUserId)}
+              {renderContributor(solve.reconer!, solve.reconerId || solve.addedById)}
             </div>
           ) : solve.reconer && (
             <div className="detail-meta-item">
@@ -478,7 +478,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           {!sameContributor && solve.addedBy && (
             <div className="detail-meta-item">
               <span className="detail-meta-label"><UserPlus size={16} /></span>
-              {renderContributor(solve.addedBy, solve.addedById, solve.addedByUserId)}
+              {renderContributor(solve.addedBy, solve.addedById)}
             </div>
           )}
         </div>
