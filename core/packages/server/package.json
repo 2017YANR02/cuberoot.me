@@ -8,7 +8,7 @@
     "dev:local": "pwsh -NoProfile -File scripts/dev-local.ps1",
     "seed:local": "pwsh -NoProfile -File scripts/seed-local.ps1",
     "seed:local-alg": "pwsh -NoProfile -File scripts/seed-local.ps1 alg_sets alg_cases",
-    "build:bundle": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/server.bundle.js --sourcemap --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\" && esbuild src/cubeopt/solve-daemon.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/solve-daemon.mjs && esbuild scripts/verify-cubeopt-artifact.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/verify.mjs && esbuild src/tools/cubeopt_smoke.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/smoke.mjs",
+    "build:bundle": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/server.bundle.js --sourcemap --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\" && esbuild src/cubeopt/solve-daemon.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/solve-daemon.mjs && esbuild scripts/provision-cubeopt-artifact.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/provision.mjs && esbuild scripts/verify-cubeopt-artifact.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/verify.mjs && esbuild src/tools/cubeopt_smoke.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/smoke.mjs",
     "start": "node dist/server.bundle.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
@@ -16,6 +16,7 @@
     "gen-glossary": "tsx scripts/gen-glossary.ts",
     "gen-wiki-backfill": "tsx scripts/gen-wiki-backfill.ts",
     "cubeopt:prepare": "node scripts/prepare-cubeopt-artifact.mjs",
+    "cubeopt:provision": "node scripts/provision-cubeopt-artifact.mjs",
     "cubeopt:verify": "node scripts/verify-cubeopt-artifact.mjs",
     "cubeopt:promote": "node scripts/promote-cubeopt-artifact.mjs",
     "cubeopt:smoke": "node scripts/smoke-cubeopt-daemon.mjs"
