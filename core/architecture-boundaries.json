@@ -2604,14 +2604,6 @@
       "target": "client"
     },
     {
-      "file": "packages/scramble-stats-build/src/build_puzzle_examples.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/clock-solver",
-      "target": "client"
-    },
-    {
       "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
       "mechanism": "path-literal",
       "rule": "cross-package-path",
@@ -2737,14 +2729,6 @@
       "rule": "cross-package-path",
       "sourceKind": "build",
       "specifier": "../../client/lib/sia222-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/clock_analyzer.mts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/clock-solver",
       "target": "client"
     },
     {

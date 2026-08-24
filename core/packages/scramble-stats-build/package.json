@@ -15,13 +15,16 @@
     "build:recent-scrambles-events": "tsx src/build_recent_scrambles_events.ts",
     "build:scramble-steps": "tsx src/build_scramble_steps.ts",
     "build:puzzle-dist": "tsx src/build_puzzle_dist.ts",
+    "build:puzzle-examples": "pnpm --filter @cuberoot/puzzle-solvers build && tsx src/build_puzzle_examples.ts",
     "build:puzzle-sampled-dist": "tsx src/build_puzzle_sampled_dist.ts",
+    "test:clock": "vitest run tests/clock_analyzer.test.ts",
     "build:bic-table": "tsx src/build_bic_table.ts",
     "build:sia123-table": "tsx src/build_sia123_table.ts",
     "build:sia222-table": "tsx src/build_sia222_table.ts",
     "scrape:algdb": "tsx bin/scrape_speedcubedb.ts"
   },
   "dependencies": {
+    "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
     "yaml": "^2.6.0"
   },
@@ -29,6 +32,7 @@
     "@types/node": "^25.5.0",
     "cheerio": "^1.2.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.6"
   }
 }

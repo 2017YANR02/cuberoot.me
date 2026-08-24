@@ -972,7 +972,7 @@ if($runPuzzles){
   if($LASTEXITCODE -ne 0){ throw 'update_puzzle_stats.ps1 失败' }
   Push-Location (Join-Path $RepoRoot 'core\packages\scramble-stats-build')
   try {
-    pnpm exec tsx src/build_puzzle_examples.ts
+    pnpm run build:puzzle-examples
     if($LASTEXITCODE -ne 0){ throw 'build_puzzle_examples 失败' }
     # puzzle 整解步数「首次出现」时间线(puzzle_first_appearance.json):每步数 bin 最早一条比赛打乱
     pnpm exec tsx src/build_puzzle_first_appearance.ts

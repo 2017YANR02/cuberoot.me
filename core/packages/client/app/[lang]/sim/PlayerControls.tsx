@@ -78,7 +78,7 @@ import { parseFtoEifMoveGroups } from './engine/fto/ftoEifMoves';
 import {
   parseClockSteps, clockStepsToString, invertClockSteps, type ClockStep,
 } from './engine/clock/clockBoard';
-import { reduceClockAlg, randomClockScramble } from '@/lib/clock-solver';
+import { reduceClockAlg, randomClockScramble } from '@cuberoot/puzzle-solvers/clock';
 
 /** Random Ivy scramble: ~9 R/L/D/B turns, no immediate axis repeat. */
 function randomIvyScramble(): string {

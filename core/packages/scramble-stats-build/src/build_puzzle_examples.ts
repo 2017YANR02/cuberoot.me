@@ -2,6 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
+import {
+  clockMovesToString, invertClockMoves, parseClockMoves,
+} from '@cuberoot/puzzle-solvers/clock';
 import YAML from 'yaml';
 import { dateDisplay } from './comp_date';
 import { buildCubeshapeTable, cubeshapeSlashes } from './sq1_cubeshape';
@@ -71,25 +74,15 @@ function invertAlg(s: string): string {
     .join(' ');
 }
 
-// 魔表记号(`UR3+` / `ALL5-` / `y2`)不吃上面那套撇号规则 → 走求解器自己的取逆算子当单一源。
-// 跨包动态 import(与 build_puzzle_sampled_dist / clock_analyzer 同一套 default-interop:client
-// 的 .ts 在无 "type":"module" 的包里被 tsx 当 CJS 加载,具名 import 不绑定)。
-const CLOCK_SOLVER_REL = '../../client/lib/clock-solver';
-interface ClockAlgOps {
-  parseClockMoves(alg: string): unknown[];
-  invertClockMoves(moves: readonly unknown[]): unknown[];
-  clockMovesToString(moves: readonly unknown[]): string;
-}
-async function clockInverter(): Promise<(s: string) => string> {
-  const m = (await import(CLOCK_SOLVER_REL)) as { default?: ClockAlgOps } & ClockAlgOps;
-  const c = (m.default && typeof m.default === 'object' ? m.default : m) as ClockAlgOps;
+// 魔表记号(`UR3+` / `ALL5-` / `y2`)不吃上面那套撇号规则 → 走共享求解器的取逆算子当单一源。
+function clockInverter(): (s: string) => string {
   // 阿贝尔群 + 规范形:取逆 = 每步幅度取反,顺序与那个 y2 的位置都不用动。
-  return (s: string) => c.clockMovesToString(c.invertClockMoves(c.parseClockMoves(s)));
+  return (s: string) => clockMovesToString(invertClockMoves(parseClockMoves(s)));
 }
 
 /** 该 puzzle 的「解法 → 最优等价打乱」反演器(魔表另一套记号)。 */
 async function inverterFor(key: string): Promise<(s: string) => string> {
-  return key === 'clock' ? await clockInverter() : invertAlg;
+  return key === 'clock' ? clockInverter() : invertAlg;
 }
 
 // 流式读 <key>.csv 的 soln 列(analyzer 开 PUZZLE_EMIT_SOLN 时产),仅取被采样 id,

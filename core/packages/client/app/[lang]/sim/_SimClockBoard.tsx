@@ -17,7 +17,7 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import InteractiveClock, { type ClockBoardMode } from '@/components/InteractiveClock';
 import { useT } from '@/hooks/useT';
-import { type ClockMove, type ClockState } from '@/lib/clock-solver';
+import { type ClockMove, type ClockState } from '@cuberoot/puzzle-solvers/clock';
 import { clockGestureToken } from './engine/clock/clockBoard';
 import type World from './engine/world';
 import type ClockBoard from './engine/clock/clockBoard';

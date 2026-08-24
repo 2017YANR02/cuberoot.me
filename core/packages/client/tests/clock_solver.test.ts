@@ -16,7 +16,7 @@ import {
   SOLVED_CLOCK,
   solveClock,
   type ClockState,
-} from '@/lib/clock-solver';
+} from '@cuberoot/puzzle-solvers/clock';
 import { applyClockScramble } from '@/app/[lang]/scramble/gen/_svg/clock_svg';
 
 // ─── 口径 ────────────────────────────────────────────────────────────────────

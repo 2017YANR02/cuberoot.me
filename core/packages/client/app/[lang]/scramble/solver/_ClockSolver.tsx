@@ -8,7 +8,7 @@
  *   ?view=scramble 打乱框(SolvePanel,含批量 + 统计)
  *   ?view=recon    复盘:输入一段解法,取逆同步到画板
  *
- * 解由 `lib/clock-solver` 现场算,**可证最优**(不是近似):纯 TS、零下载表、零 worker,
+ * 解由 `@cuberoot/puzzle-solvers/clock` 现场算,**可证最优**(不是近似):纯 TS、零下载表、零 worker,
  * 约 17 ms/次。同时给出 WCA 规范 14 步分解 —— 那是 tnoodle 打乱串的形式,恒 ≤ 14 步但通常不最优。
  */
 
@@ -23,7 +23,7 @@ import {
   SOLVED_CLOCK, applyClockMoves, canonicalClockMoves, clockMovesToString,
   clockScrambleForState, clockStateFromAlg, invertClockMoves, isClockSolved,
   parseClockMoves, randomClockState, solveClock, type ClockState,
-} from '@/lib/clock-solver';
+} from '@cuberoot/puzzle-solvers/clock';
 import SolveTabs from '../_components/SolveTabs';
 import { SolvePanel, type BatchSpec } from '../_components/BatchSolvePanel';
 import '../_components/puzzle_optimal_solver.css';

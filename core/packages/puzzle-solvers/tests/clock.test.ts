@@ -12,7 +12,37 @@
 import { describe, expect, it } from 'vitest';
 import {
   CLOCK_GODS_NUMBER, CLOCK_LENGTH_DISTRIBUTION, CLOCK_MEAN_LENGTH, CLOCK_STATE_COUNT,
-} from '@/lib/clock-solver';
+  SOLVED_CLOCK, applyClockMoves, clockMovesToString, clockStateFromAlg, isClockSolved,
+  parseClockMoves, solveClock,
+} from '@cuberoot/puzzle-solvers/clock';
+
+describe('Clock solver fast contract', () => {
+  it('solves the solved state without adding moves', () => {
+    const solution = solveClock(SOLVED_CLOCK());
+    expect(solution).toEqual({ moves: [], length: 0, notation: '' });
+  });
+
+  it.each([
+    'UR3+ DR2- DL1+ UL4- U2+ R1- D3+ L2- ALL5+ y2 U1- R2+ D3- L4+ ALL6+',
+    'UR2+ y2 DL3-',
+  ])('solves a representative state within God\'s number: %s', (alg) => {
+    const state = clockStateFromAlg(alg);
+    const solution = solveClock(state);
+    expect(solution.length).toBeLessThanOrEqual(CLOCK_GODS_NUMBER);
+    expect(isClockSolved(applyClockMoves(state, solution.moves))).toBe(true);
+  });
+
+  it('round-trips normalized move notation including y2', () => {
+    const alg = 'UR3+ DR2- y2 U4+ ALL1-';
+    expect(clockMovesToString(parseClockMoves(alg))).toBe(alg);
+  });
+
+  it('rejects a state whose paired corner dials disagree', () => {
+    const state = SOLVED_CLOCK();
+    state.posit[0] = 1;
+    expect(() => solveClock(state)).toThrow(/illegal clock state/);
+  });
+});
 
 describe('魔表全空间距离分布', () => {
   it('逐档求和 == 12^14(誊抄错一位就炸)', () => {

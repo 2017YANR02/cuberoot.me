@@ -211,6 +211,7 @@ describe('deployment workflow path contracts', () => {
       [packagePath('visualcube', 'src', 'index.ts'), true],
       [packagePath('vendor-sr-puzzlegen', 'src', 'index.ts'), true],
       [packagePath('puzzle-render-core', 'src', 'index.ts'), true],
+      [packagePath('puzzle-solvers', 'src', 'clock.ts'), false],
       [corePath('cube555-daemon', 'Daemon.java'), true],
       [corePath('package.json'), true],
       [corePath('pnpm-lock.yaml'), true],
@@ -241,6 +242,7 @@ describe('deployment workflow path contracts', () => {
       [packagePath('stack-kernel', 'pkg', 'stack_kernel_bg.wasm'), true],
       [packagePath('stack-kernel', 'src', 'lib.rs'), false],
       [packagePath('puzzle-render-core', 'src', 'index.ts'), true],
+      [packagePath('puzzle-solvers', 'src', 'clock.ts'), true],
       [corePath('package.json'), true],
       [corePath('pnpm-lock.yaml'), true],
       [corePath('pnpm-workspace.yaml'), true],
@@ -279,9 +281,25 @@ describe('deployment workflow path contracts', () => {
   });
 
   it('builds every workspace package consumed through Node exports in clean CI', () => {
-    const buildCommand = 'pnpm --filter @cuberoot/puzzle-render-core build';
-    expect(readStepRun('test.yml', 'Build shared deps').split('\n')).toContain(buildCommand);
-    expect(readStepRun('deploy_core.yml', 'Build shared deps').split('\n')).toContain(buildCommand);
+    const renderBuild = 'pnpm --filter @cuberoot/puzzle-render-core build';
+    const solverBuild = 'pnpm --filter @cuberoot/puzzle-solvers build';
+    const testBuilds = readStepRun('test.yml', 'Build shared deps').split('\n');
+    const coreBuilds = readStepRun('deploy_core.yml', 'Build shared deps').split('\n');
+
+    expect(testBuilds).toContain(renderBuild);
+    expect(testBuilds).toContain(solverBuild);
+    expect(coreBuilds).toContain(renderBuild);
+    expect(coreBuilds).not.toContain(solverBuild);
+  });
+
+  it('runs the package and analyzer gates explicitly in CI', () => {
+    const packageGate = readStepRun('test.yml', 'Verify puzzle solvers package');
+    expect(packageGate).toContain('pnpm --filter @cuberoot/puzzle-solvers typecheck');
+    expect(packageGate).toContain('pnpm --filter @cuberoot/puzzle-solvers test');
+    expect(packageGate).toContain('pnpm --filter @cuberoot/client test:solvers clock_solver');
+    expect(readStepRun('test.yml', 'Verify Clock analyzer runtime')).toBe(
+      'pnpm --filter @cuberoot/scramble-stats-build test:clock',
+    );
   });
 
   it('atomically deploys CubeOpt with the same dotenv gate and rollback contract', () => {

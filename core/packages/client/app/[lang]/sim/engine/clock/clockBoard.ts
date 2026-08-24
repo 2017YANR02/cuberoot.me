@@ -12,7 +12,7 @@
  * 走的是全站同一个 tweener(速度滑块、mp4 离线导出逐帧 tick 一并白拿)。
  *
  * ── 坐标帧(唯一容易搞错的地方) ────────────────────────────────────────────
- * `lib/clock-solver` 的约定:`posit[0..8]` 恒为**当前朝己**那一面,`y2` 把两个 9 元块对调。
+ * `@cuberoot/puzzle-solvers/clock` 的约定:`posit[0..8]` 恒为**当前朝己**那一面,`y2` 把两个 9 元块对调。
  * 但 `parseClockMoves` 把 y2 折成了每步招式的绝对 `side`(= 此前 y2 的奇偶),它索引的是
  * **起手帧**的两个半区。两者要同时成立,只能像 `clockStateFromAlg` 那样:整段按起手帧算,
  * 末了再按翻面与否对调一次。
@@ -31,7 +31,7 @@ import {
   CLOCK_BACK_CORNER_DIAL, CLOCK_BACK_QUAD, CLOCK_FRONT_CORNER_DIAL, CLOCK_FRONT_QUAD,
   SOLVED_CLOCK, clockMovesToString, parseClockMoves, withClockFlipParity,
   type ClockMove, type ClockState,
-} from '@/lib/clock-solver';
+} from '@cuberoot/puzzle-solvers/clock';
 
 const mod12 = (x: number) => ((x % 12) + 12) % 12;
 const DIALS = 18;
