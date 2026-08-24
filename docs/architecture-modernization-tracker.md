@@ -4,7 +4,7 @@
 
 Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59`，工作树无未提交改动；本批文档、测试守卫及跟踪文件自身造成的前进不视为基线漂移。每个后续实施批次开始前仍必须重新记录当时的 `HEAD` 和工作树重叠情况。
 
-状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 在两次生产前置校验安全暴露并修正 store provision 与 opt5/opt6 假设后，最终修正 `6756c599a1` 已由 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` 全绿发布。生产部署确认 `cubeopt-opt6-legacy-runtime-v1` 制品、启用态 manager 加载与 `R → R'`（1 HTM）真实请求通过，API 健康、启用/配置状态及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网 smoke 均为 200；因此 BND-02、BND-03、BND-06 和 Batch 3 的 PKG-02 最小切片已关闭。BND-04 仍待下一个独立 Codex 会话的项目 Hook 宿主实触发，BND-05 仍待公开 subpath 运行时属性登记。Batch 4 的 `auth/web-session` 中性契约试点、小程序真实构建依赖图和首次微信用户空昵称兼容已随 `ba22fd81e1` 发布；Test `32697884591`、Deploy Next `32697884578`、Deploy Core `32697884597` 全部成功，API 健康、缺失 WCA token、畸形票据、未登录取票和 Web 回调壳安全 smoke 均符合预期，CTR-02 已关闭。真实账号登录成功链路没有用生产凭据手工执行，其 producer/consumer 正向路径由可执行 route/session fixture 证明；CTR-03 的稳定错误码仍按后续兼容切片推进。Batch 5 的 Clock 窄切片已随 `1db7804111` 发布；隔离干净工作树、本地门槛与三路独立复核通过，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 全部成功，API 健康及中英文 `/sim` 公网 smoke 为 200 且无模块解析错误，本切片已关闭。
+状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 在两次生产前置校验安全暴露并修正 store provision 与 opt5/opt6 假设后，最终修正 `6756c599a1` 已由 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` 全绿发布。生产部署确认 `cubeopt-opt6-legacy-runtime-v1` 制品、启用态 manager 加载与 `R → R'`（1 HTM）真实请求通过，API 健康、启用/配置状态及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网 smoke 均为 200；因此 BND-02、BND-03、BND-06 和 Batch 3 的 PKG-02 最小切片已关闭。BND-04 仍待下一个独立 Codex 会话的项目 Hook 宿主实触发，BND-05 仍待公开 subpath 运行时属性登记。Batch 4 的 `auth/web-session` 中性契约试点、小程序真实构建依赖图和首次微信用户空昵称兼容已随 `ba22fd81e1` 发布；Test `32697884591`、Deploy Next `32697884578`、Deploy Core `32697884597` 全部成功，API 健康、缺失 WCA token、畸形票据、未登录取票和 Web 回调壳安全 smoke 均符合预期，CTR-02 已关闭。真实账号登录成功链路没有用生产凭据手工执行，其 producer/consumer 正向路径由可执行 route/session fixture 证明；CTR-03 的稳定错误码仍按后续兼容切片推进。Batch 5 的 Clock 窄切片已随 `1db7804111` 发布；隔离干净工作树、本地门槛与三路独立复核通过，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 全部成功，API 健康及中英文 `/sim` 公网 smoke 为 200 且无模块解析错误，本切片已关闭。Batch 6 的根 PowerShell 治理已随 `b02005a50e` 发布；三路终审、本地与 Linux 合同、Test、Deploy Next、静态工具同步及五条公网 smoke 全绿，PS1-01 至 PS1-04 已关闭。
 
 > 状态校正：2026-08-22 重新打开的产品与数据迁移已按 [Platform 主站完整迁移跟踪](./platform-product-migration-tracker.md) 完成 P0-P8。P9 是迁移完成后的主站产品体验改版，不恢复独立 Platform app，也不改变本架构方案的长期边界。Batch 1 只改善入口、状态和生成物可发现性；后续源码实施仍须刷新依赖基线、完成新的独立复审并取得用户授权。
 
@@ -197,7 +197,8 @@ API     ─X─> Web 源码或 Web public
 | PS1-01 | 盘点根脚本调用图和仓库外调用者 | `完成` | 7 个脚本、互调、文档、生成标记和仓库外 BLDDB 固定路径已登记；workflow、计划任务、快捷方式与 profile 的当前机器扫描均无调用，无法核验的外部调用保持未知 |
 | PS1-02 | 统一 RepoRoot 与无副作用检查模式 | `完成` | 7 个入口均支持显式 `-RepoRoot` 与真正早返回的 `-ValidateOnly`；任意 cwd、默认/显式/旧根参数、非法根和缺失内部依赖均有无副作用实证 |
 | PS1-03 | 冻结并测试公开 CLI 契约 | `完成` | 参数名称、类型、顺序、退出码与调用方式已冻结；`Only` 选择及每个子入口收到的 `RepoRoot`、`SkipPull`、`DryRun` 均有逐脚本行为测试 |
-| PS1-04 | 保留根入口并移动私有实现 | `本地完成，待发布验收` | 根目录只保留统一入口与 BLDDB 兼容 shim；7 个私有实现统一进入 `scripts/upstream/`，默认根、显式参数、旧参数和失败退出均由跨平台合同锁定 |
+| PS1-04 | 保留根入口并移动私有实现 | `完成` | 根目录只保留统一入口与 BLDDB 兼容 shim；7 个私有实现统一进入 `scripts/upstream/`，默认根、显式参数、旧参数和失败退出均由跨平台合同锁定；本地、CI、部署与公网 smoke 均通过 |
+| PS1-05 | 迁移仓外 BLDDB 调用并退役兼容 shim | `排队中` | 先把 `D:\cube\blddb` 的固定旧路径调用迁到统一入口并实跑，再删除 `_sync_blddb.ps1`；删除前不得牺牲已确认调用者来换目录观感 |
 
 ### F. 可选物理目录整理
 
@@ -293,7 +294,7 @@ PS1-02 实施证据（2026-08-24）：7 个入口统一解析显式 `RepoRoot`�
 
 PS1-03 实施证据（2026-08-24）：`scripts/upstream/tests/upstream-sync-contract.ps1` 以 PowerShell AST 严格冻结 7 个入口的参数名称、类型与顺序，并逐一覆盖现有 legacy/canonical 候选路径、任意 cwd、默认/显式/旧根参数、非法 `RepoRoot`、非法 `Only`、缺失子脚本、真实 git stash guard、native 失败、RecordRanks DryRun、子入口 flag 和编排器逐子脚本转发。Test workflow 已纳入根入口、`.sync/**` 与 `scripts/upstream/**` 触发及 sparse checkout；路径矩阵 7/7、Windows PowerShell 合同和 Linux Alpine PowerShell + git 合同均通过，两个独立 Reviewer 均给出 PS1-04 GO。
 
-PS1-04 实施证据（2026-08-24）：7 个私有实现以 `git mv` 进入 `scripts/upstream/`，canonical 默认根统一为脚本位置向上两级；仓库根仅保留参数兼容的 `sync_upstream.ps1` 与 `_sync_blddb.ps1` 两个 shim，后者继续兼容仓外已确认的旧 `ProjectDir` 调用。Test workflow 以根级 `*.ps1` 捕获任何新增或恢复的根脚本，并 sparse checkout 全部根 PS1，避免目录门禁被绕过；合同同时锁定根脚本精确集合、7 个 canonical 文件、旧私有路径消失、真实 shim 转发、任意 cwd、无副作用 fingerprint 和精确 native 退出码。当前本地 AST 10/10、Windows 完整合同、Linux PowerShell + git 合同、workflow 路径 7/7 与 diff check 均通过。
+PS1-04 实施与发布证据（2026-08-24）：7 个私有实现以 `git mv` 进入 `scripts/upstream/`，canonical 默认根统一为脚本位置向上两级；仓库根仅保留参数兼容的 `sync_upstream.ps1` 与 `_sync_blddb.ps1` 两个 shim，后者继续兼容仓外已确认的旧 `ProjectDir` 调用。Test workflow 以根级 `*.ps1` 捕获任何新增或恢复的根脚本，并 sparse checkout 全部根 PS1，避免目录门禁被绕过；合同同时锁定根脚本精确集合、7 个 canonical 文件、旧私有路径消失、真实 shim 转发、任意 cwd、无副作用 fingerprint 和精确 native 退出码。本地 AST 10/10、Windows 完整合同、Linux PowerShell + git 合同、workflow 路径 7/7 与 diff check 均通过；`b02005a50e` 的 Test `32730444612`、Deploy Next `32730444571`、Sync static toolkit `32730444528` 全部成功，Deploy Core 未被本批路径触发。主域中英文首页、主域中英文 `/sim` 与 Next 直连入口均为 200，响应无模块解析或应用错误标记。三路终审最终均为 GO，PS1-04 关闭；`_sync_blddb.ps1` 的退役单列 PS1-05，以仓外调用迁移和实跑为删除门槛。
 
 ### 批次 7：可选目录整理
 
@@ -382,7 +383,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
-| 2026-08-24 | Batch 6 PS1-04 本地实施与三路终审完成，等待提交和发布验收 | 根目录只保留统一入口和 BLDDB 兼容 shim，7 个私有实现进入 `scripts/upstream/`；Test 以根级 `*.ps1` 和完整 sparse checkout 守住拓扑。AST 10/10、Windows/Linux 完整合同、workflow 路径 7/7、LF 与 diff check 通过，三路 Reviewer 最终 GO |
+| 2026-08-24 | Batch 6 PS1-04 完成发布验收，PS1-01 至 PS1-04 关闭 | `b02005a50e`；根目录只保留统一入口和 BLDDB 兼容 shim，7 个私有实现进入 `scripts/upstream/`。三路 Reviewer 最终 GO；Test `32730444612`、Deploy Next `32730444571`、Sync static toolkit `32730444528` 全绿，五条公网 smoke 为 200 且无错误标记；兼容 shim 的有序退役进入 PS1-05 |
 | 2026-08-24 | Batch 6 PS1-03 CLI 与 CI 契约关闭，PS1-04 获准按迁移门禁实施 | AST 严格冻结 7 个入口参数面；双仓库锁定三种根模式，编排 probe 逐子脚本锁定 `Only/RepoRoot/SkipPull/DryRun`。Test workflow 路径矩阵 7/7，Windows 与 Linux 完整合同通过；两名独立 Reviewer 最终 GO |
 | 2026-08-24 | Batch 6 PS1-02 关闭，统一根解析、无副作用校验与失败退出 | 7 个入口支持 `RepoRoot`/`ValidateOnly`；不同路径的双仓库 fixture 锁定默认、显式与旧根参数，clone/git/install/build/write 均由副作用探针和 fingerprint 守卫；PowerShell AST 9/9 与完整 Windows 合同通过 |
 | 2026-08-24 | Batch 6 PS1-01 调用图与仓外调用者调查关闭，PS1-04 继续 HOLD | 7 个根脚本、互调、文档、生成标记、221 个计划任务、223 个任务动作、432 个快捷方式与 2 个 profile 已登记；仅 BLDDB 仓外文档确认固定旧路径。三路 Reviewer 同时确认 RepoRoot、副作用、退出码和 CI 触发缺口必须先在 PS1-02/03 关闭 |
