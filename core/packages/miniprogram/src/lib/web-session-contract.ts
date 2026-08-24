@@ -1,4 +1,5 @@
 export {
+  decodeWebSessionError,
   decodeWebSession,
   decodeWebSessionTicketEnvelope,
   decodeWebSessionUserEnvelope,

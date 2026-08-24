@@ -251,6 +251,39 @@ describe('mini program authentication', () => {
     expect(loginErrorMessage(new Error('unknown'))).toBe('登录失败，请稍后重试');
   });
 
+  it('prefers a stable wire auth code over a legacy HTTP-status mapping', async () => {
+    vi.stubGlobal('wx', {
+      login(options: { success(result: { code: string }): void }) {
+        options.success({ code: 'login-code' });
+      },
+      request(options: { success(result: { statusCode: number; data: unknown }): void }) {
+        options.success({
+          statusCode: 503,
+          data: {
+            code: 'INVALID_WECHAT_CODE',
+            message: 'invalid wechat code',
+            error: 'invalid wechat code',
+          },
+        });
+      },
+    });
+
+    let caught: unknown;
+    try {
+      await loginWithWechat();
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBeInstanceOf(ApiError);
+    expect(caught).toMatchObject({
+      status: 503,
+      code: 'INVALID_WECHAT_CODE',
+      message: 'invalid wechat code',
+    });
+    expect(loginErrorMessage(caught)).toContain('登录码已失效');
+  });
+
   it('does not claim login succeeded when the session cannot be persisted', async () => {
     vi.stubGlobal('wx', {
       login(options: { success(result: { code: string }): void }) {
