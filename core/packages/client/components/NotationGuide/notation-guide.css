@@ -145,6 +145,142 @@
   white-space: nowrap;
 }
 
+.notation-trainer {
+  margin-top: 44px;
+}
+
+.notation-trainer-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+}
+
+.notation-trainer-header h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.notation-trainer-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  align-items: center;
+  gap: 24px 40px;
+  margin-top: 18px;
+}
+
+.notation-trainer-stage {
+  min-width: 0;
+}
+
+.notation-trainer-question {
+  min-width: 0;
+  max-width: 540px;
+}
+
+.notation-trainer-kicker,
+.notation-trainer-hint,
+.notation-trainer-progress {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.notation-trainer-prompt {
+  margin-top: 10px;
+  color: var(--foreground);
+  font-size: clamp(24px, 4vw, 34px);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.notation-trainer-prompt code {
+  color: var(--accent);
+  font: inherit;
+  font-family: var(--font-mono);
+}
+
+.notation-trainer-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.notation-trainer-choice {
+  display: flex;
+  min-width: 0;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 11px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.notation-trainer-choice:hover,
+.notation-trainer-choice:focus-visible,
+.notation-trainer-choice.is-selected {
+  border-color: var(--accent);
+}
+
+.notation-trainer-choice.is-correct {
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  color: var(--accent);
+}
+
+.notation-trainer-choice code {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.notation-trainer-choice span {
+  overflow-wrap: anywhere;
+}
+
+.notation-trainer-hint {
+  margin-top: 14px;
+}
+
+.notation-trainer-result {
+  min-height: 24px;
+  margin-top: 8px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 24px;
+}
+
+.notation-trainer-next {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.notation-trainer-next:hover,
+.notation-trainer-next:focus-visible {
+  background: color-mix(in srgb, var(--primary) 88%, var(--background));
+}
+
 .alg-mnemonic-shell {
   max-width: 1040px;
 }
@@ -402,8 +538,22 @@
   .alg-mnemonic-sections,
   .alg-mnemonic-rules,
   .notation-rule-grid,
-  .alg-fto-notation-rules {
+  .alg-fto-notation-rules,
+  .notation-trainer-layout {
     grid-template-columns: 1fr;
+  }
+
+  .notation-trainer-layout {
+    gap: 8px;
+  }
+
+  .notation-trainer-stage,
+  .notation-trainer-question {
+    width: 100%;
+  }
+
+  .notation-trainer-stage .alg-sim-player {
+    align-items: flex-start;
   }
 
   .alg-mnemonic-sections {
@@ -431,5 +581,9 @@
 @media (max-width: 380px) {
   .alg-notation-shell {
     padding-inline: 12px;
+  }
+
+  .notation-trainer-choices {
+    grid-template-columns: 1fr;
   }
 }

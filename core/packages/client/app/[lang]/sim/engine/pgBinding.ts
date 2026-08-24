@@ -46,8 +46,11 @@ export interface MoveBridge<M> {
    *  rather than all of PG's move ops. Set when PG's cut exposes extra slices that aren't
    *  standard puzzle moves (megaminx: 6 deep 2-layer slices inflate |G| 60×). Default false. */
   readonly factsOverEngineGens?: boolean;
-  /** Generator names to show in the panel when `factsOverEngineGens` (e.g. the 12 face
-   *  names), indexed like `engineGens`. */
+  /** Use only the first N engine generators for displayed facts. Live mirroring may need
+   *  additional notation-only generators that do not belong in the canonical group facts. */
+  readonly factsGeneratorCount?: number;
+  /** Generator names to show in the panel when `factsOverEngineGens`, indexed like the
+   *  selected facts generators. */
   readonly factsMoveNames?: readonly string[];
 }
 
@@ -181,7 +184,7 @@ export class PgEngineBinding<M> implements GroupKernel {
           console.warn(`[pgFacts] no precomputed facts for "${this.bridge.pgName}" — computing live (freezes UI). Regenerate tests/gen_pg_facts.gen.test.ts`);
         }
         this.cachedFacts = this.bridge.factsOverEngineGens
-          ? this.backbone.factsOver(this.gens, this.bridge.factsMoveNames)
+          ? this.backbone.factsOver(this.factsGens(), this.bridge.factsMoveNames)
           : this.backbone.facts();
       }
     }
@@ -192,8 +195,13 @@ export class PgEngineBinding<M> implements GroupKernel {
    *  to (re)build the baked table. Do not call from UI (may freeze). */
   computeFactsLive(): PgGroupFacts {
     return this.bridge.factsOverEngineGens
-      ? this.backbone.factsOver(this.gens, this.bridge.factsMoveNames)
+      ? this.backbone.factsOver(this.factsGens(), this.bridge.factsMoveNames)
       : this.backbone.facts();
+  }
+
+  private factsGens(): PGTransform[] {
+    const count = this.bridge.factsGeneratorCount;
+    return count === undefined ? this.gens : this.gens.slice(0, count);
   }
 
   private wordToMoves(word: WordStep[]): M[] {

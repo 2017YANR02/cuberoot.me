@@ -1,6 +1,7 @@
 /**
  * MegaminxCube — three.js Group rendering a megaminx (face-turning dodecahedron: 20
- * corners, 30 edges, 12 fixed centers).
+ * corners, 30 edges, 12 centers). Ordinary face turns keep centers fixed; WCA deep
+ * turns rotate every layer except one outer face and therefore move centers too.
  *
  * Each piece is a pivot at the origin; a turn of face f rotates that face's 11 pivots
  * (its center + the 5 corners + 5 edges currently on it) by ±72° about the face normal —
@@ -17,7 +18,7 @@ import { makeAnim, type PieceAnim } from '../pieceAnim';
 import type { TweenCube } from '../TweenTwister';
 import MegaminxTwister from './MegaminxTwister';
 import {
-  FACE_NORMAL, CORNER_DIR, FACE_CORNERS, FACE_EDGES,
+  FACE_NORMAL, CORNER_DIR, EDGE_DIR, FACE_CORNERS,
   solvedMega, applyMegaMove, isSolved, megaMoveToString,
   type MegaMove, type MegaState,
 } from './megaState';
@@ -43,6 +44,8 @@ export default class MegaminxCube extends THREE.Group implements TweenCube<MegaM
   centers: PieceEntry[] = [];
   /** Discrete state: corner perm+twist (cp/co), edge perm+flip (ep/eo). */
   state: MegaState = solvedMega();
+  /** Deep WCA turns permute centers, which the compact face-turn state omits. */
+  private stateKnown = true;
 
   private readonly axes: THREE.Vector3[];
   /** Per-face rotation sense for dir +1 (about +faceNormal), auto-aligned to the state
@@ -55,9 +58,9 @@ export default class MegaminxCube extends THREE.Group implements TweenCube<MegaM
     // Pick the rotation sense (about +normal) whose +72° carries the piece at ring slot 0
     // to ring slot 1 — so the visual turn matches the discrete cycle (skill: auto-determine
     // the sign, don't hand-guess).
-    this.turnSign = FACE_CORNERS.map((r, f) => {
-      const a = new THREE.Vector3(...CORNER_DIR[r[0]]);
-      const b = new THREE.Vector3(...CORNER_DIR[r[1]]);
+    this.turnSign = FACE_CORNERS.map((ring, f) => {
+      const a = new THREE.Vector3(...CORNER_DIR[ring[0]]);
+      const b = new THREE.Vector3(...CORNER_DIR[ring[1]]);
       const plus = a.clone().applyAxisAngle(this.axes[f], TURN).distanceTo(b);
       const minus = a.clone().applyAxisAngle(this.axes[f], -TURN).distanceTo(b);
       return plus < minus ? 1 : -1;
@@ -71,26 +74,81 @@ export default class MegaminxCube extends THREE.Group implements TweenCube<MegaM
     this.twister = new MegaminxTwister(this);
   }
 
-  /** The 11 pivots a face turn rotates: the face's center + the corner/edge pieces
-   *  CURRENTLY in its 5 corner slots and 5 edge slots (read off the live perm). */
+  private rankPieceIds(
+    directions: ReadonlyArray<readonly [number, number, number]>,
+    pieces: PieceEntry[],
+    face: number,
+    count: number,
+  ): number[] {
+    const axis = this.axes[face];
+    return pieces
+      .map(piece => ({
+        id: piece.pieceId,
+        score: new THREE.Vector3(...directions[piece.pieceId])
+          .applyQuaternion(piece.pivot.quaternion)
+          .dot(axis),
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, count)
+      .map(entry => entry.id);
+  }
+
+  /** Current face slots occupied by a stable piece id. Used by the shared `/sim`
+   *  picker after deep turns, when the fixed-center discrete state is intentionally
+   *  unavailable. */
+  cornerFaces(pieceId: number): number[] {
+    const direction = new THREE.Vector3(...CORNER_DIR[pieceId])
+      .applyQuaternion(this.corners[pieceId].pivot.quaternion);
+    return this.axes
+      .map((axis, face) => ({ face, score: direction.dot(axis) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map(entry => entry.face);
+  }
+
+  edgeFaces(pieceId: number): number[] {
+    const direction = new THREE.Vector3(...EDGE_DIR[pieceId])
+      .applyQuaternion(this.edges[pieceId].pivot.quaternion);
+    return this.axes
+      .map((axis, face) => ({ face, score: direction.dot(axis) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 2)
+      .map(entry => entry.face);
+  }
+
+  centerFace(pieceId: number): number {
+    const direction = new THREE.Vector3(...FACE_NORMAL[pieceId])
+      .applyQuaternion(this.centers[pieceId].pivot.quaternion);
+    return this.axes
+      .map((axis, face) => ({ face, score: direction.dot(axis) }))
+      .sort((a, b) => b.score - a.score)[0].face;
+  }
+
+  /** The 11 pivots of a shallow face turn, or their complement for a WCA deep turn.
+   *  Geometry is the source of truth so selection remains correct after centers move. */
   private pivotsForMove(move: MegaMove): THREE.Object3D[] {
     const f = move.face;
-    const out: THREE.Object3D[] = [this.centers[f].pivot];
-    for (const s of FACE_CORNERS[f]) out.push(this.corners[this.state.cp[s]].pivot);
-    for (const s of FACE_EDGES[f]) out.push(this.edges[this.state.ep[s]].pivot);
-    return out;
+    const shallow = new Set<THREE.Object3D>();
+    shallow.add(this.centers[this.rankPieceIds(FACE_NORMAL, this.centers, f, 1)[0]].pivot);
+    for (const id of this.rankPieceIds(CORNER_DIR, this.corners, f, 5)) shallow.add(this.corners[id].pivot);
+    for (const id of this.rankPieceIds(EDGE_DIR, this.edges, f, 5)) shallow.add(this.edges[id].pivot);
+    if (!move.deep) return [...shallow];
+    return [...this.centers, ...this.corners, ...this.edges]
+      .map(piece => piece.pivot)
+      .filter(pivot => !shallow.has(pivot));
   }
 
   beginMove(move: MegaMove): PieceAnim[] {
     const axis = this.axes[move.face];
-    const angle = move.dir * this.turnSign[move.face] * TURN;
+    const angle = move.dir * this.turnSign[move.face] * TURN * (move.deep ? 2 : 1);
     const delta = new THREE.Quaternion().setFromAxisAngle(axis, angle);
     return this.pivotsForMove(move).map((pivot) => makeAnim(pivot, delta, axis, angle));
   }
 
   finishMove(anims: PieceAnim[], move: MegaMove): void {
     for (const a of anims) a.pivot.quaternion.copy(a.endQuat);
-    this.state = applyMegaMove(this.state, move);
+    if (this.stateKnown && !move.deep) this.state = applyMegaMove(this.state, move);
+    else if (move.deep) this.stateKnown = false;
     this.history.record(megaMoveToString(move));
     this.dirty = true;
     for (const cb of this.callbacks) cb();
@@ -109,7 +167,8 @@ export default class MegaminxCube extends THREE.Group implements TweenCube<MegaM
   applyMoveSilent(move: MegaMove): void {
     const anims = this.beginMove(move);
     for (const a of anims) a.pivot.quaternion.copy(a.endQuat);
-    this.state = applyMegaMove(this.state, move);
+    if (this.stateKnown && !move.deep) this.state = applyMegaMove(this.state, move);
+    else if (move.deep) this.stateKnown = false;
     this.dirty = true;
   }
 
@@ -117,6 +176,7 @@ export default class MegaminxCube extends THREE.Group implements TweenCube<MegaM
    *  moves from solved (applyMovesInstant), keeping orientations exact. */
   applyStateInstant(state: MegaState): void {
     this.state = { cp: state.cp.slice(), co: state.co.slice(), ep: state.ep.slice(), eo: state.eo.slice() };
+    this.stateKnown = true;
     for (const p of this.corners) { p.pivot.quaternion.identity(); p.pivot.position.set(0, 0, 0); }
     for (const p of this.edges) { p.pivot.quaternion.identity(); p.pivot.position.set(0, 0, 0); }
     for (const p of this.centers) { p.pivot.quaternion.identity(); p.pivot.position.set(0, 0, 0); }
@@ -141,7 +201,12 @@ export default class MegaminxCube extends THREE.Group implements TweenCube<MegaM
     this.dirty = true;
   }
 
-  get complete(): boolean { return isSolved(this.state); }
+  get complete(): boolean {
+    if (this.stateKnown) return isSolved(this.state);
+    return [...this.corners, ...this.edges, ...this.centers].every(({ pivot }) => (
+      Math.abs(pivot.quaternion.w) > 1 - 1e-8
+    ));
+  }
 
   dispose(): void {
     this.traverse((obj) => {
