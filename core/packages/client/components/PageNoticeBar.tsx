@@ -13,7 +13,7 @@ import { tr, T, useLang } from '@/i18n/tr';
 import BoolToggle from './BoolToggle';
 import { persistItem } from '@/lib/safe-storage';
 import {
-  type PageNotice, type NoticeLevel, type PageNoticeInput,
+  type PageNotice, type NoticeLevel, type NoticePlacement, type PageNoticeInput,
   fetchPageNotices, fetchAllPageNotices, savePageNotice, deletePageNotice,
   pageKeyFromPathname, matchNotices,
 } from '@/lib/page-notices-api';
@@ -115,13 +115,43 @@ function linkifyText(text: string): ReactNode {
 interface FormState {
   id: number | null;   // null = 新建
   path: string;
+  placement: NoticePlacement;
   level: NoticeLevel;
   icon: string;        // '' = 按 level 回退
   color: string;       // '' = 按 level 回退
   bodyZh: string;
   bodyEn: string;
+  href: string;
   enabled: boolean;
   dismissible: boolean;
+  startsAt: string;
+  endsAt: string;
+}
+
+function dateTimeInputValue(value: string | null | undefined): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return '';
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
+function formForNotice(n: PageNotice): FormState {
+  return {
+    id: n.id,
+    path: n.path,
+    placement: n.placement ?? 'page_top',
+    level: n.level,
+    icon: n.icon ?? '',
+    color: n.color ?? '',
+    bodyZh: n.bodyZh,
+    bodyEn: n.bodyEn,
+    href: n.href ?? '',
+    enabled: n.enabled,
+    dismissible: n.dismissible,
+    startsAt: dateTimeInputValue(n.startsAt),
+    endsAt: dateTimeInputValue(n.endsAt),
+  };
 }
 
 export default function PageNoticeBar() {
@@ -152,7 +182,9 @@ export default function PageNoticeBar() {
   // 写操作后用返回行就地更新(避开公开 GET 的 60s 缓存,改动即时可见)。
   const applyResult = (row: PageNotice) => {
     setNotices((prev) => {
-      const rest = prev.filter((n) => n.id !== row.id && n.path !== row.path);
+      const rest = prev.filter((n) => n.id !== row.id && !(
+        n.path === row.path && (n.placement ?? 'page_top') === (row.placement ?? 'page_top')
+      ));
       return row.enabled ? [...rest, row] : rest;
     });
   };
@@ -170,16 +202,31 @@ export default function PageNoticeBar() {
     // 拉 manage(含 disabled)看本页 key 是否已有被关掉的通知,有则预填避免重复。
     let existing: PageNotice | undefined;
     try {
-      existing = (await fetchAllPageNotices()).find((n) => n.path === key);
+      existing = (await fetchAllPageNotices()).find(
+        (n) => n.path === key && (n.placement ?? 'page_top') === 'page_top',
+      );
     } catch { /* 拿不到就当全新 */ }
     setForm(existing
-      ? { id: existing.id, path: existing.path, level: existing.level, icon: existing.icon ?? '', color: existing.color ?? '', bodyZh: existing.bodyZh, bodyEn: existing.bodyEn, enabled: existing.enabled, dismissible: existing.dismissible }
-      : { id: null, path: key, level: 'info', icon: '', color: '', bodyZh: '', bodyEn: '', enabled: true, dismissible: true });
+      ? formForNotice(existing)
+      : { id: null, path: key, placement: 'page_top', level: 'info', icon: '', color: '', bodyZh: '', bodyEn: '', href: '', enabled: true, dismissible: true, startsAt: '', endsAt: '' });
+  };
+
+  const openFeatured = async () => {
+    setErr(null);
+    let existing: PageNotice | undefined;
+    try {
+      existing = (await fetchAllPageNotices()).find(
+        (n) => n.path === '/' && n.placement === 'home_featured',
+      );
+    } catch { /* 拿不到就当全新 */ }
+    setForm(existing
+      ? formForNotice(existing)
+      : { id: null, path: '/', placement: 'home_featured', level: 'info', icon: 'megaphone', color: 'terracotta', bodyZh: '', bodyEn: '', href: '', enabled: true, dismissible: false, startsAt: '', endsAt: '' });
   };
 
   const openEdit = (n: PageNotice) => {
     setErr(null);
-    setForm({ id: n.id, path: n.path, level: n.level, icon: n.icon ?? '', color: n.color ?? '', bodyZh: n.bodyZh, bodyEn: n.bodyEn, enabled: n.enabled, dismissible: n.dismissible });
+    setForm(formForNotice(n));
   };
 
   const save = async () => {
@@ -188,14 +235,19 @@ export default function PageNoticeBar() {
     setErr(null);
     try {
       const body: PageNoticeInput = {
+        id: form.id ?? undefined,
         path: form.path.trim(),
+        placement: form.placement,
         level: form.level,
         icon: form.icon,
         color: form.color,
         bodyZh: form.bodyZh.trim(),
         bodyEn: form.bodyEn.trim(),
+        href: form.href.trim(),
         enabled: form.enabled,
-        dismissible: form.dismissible,
+        dismissible: form.placement === 'home_featured' ? false : form.dismissible,
+        startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : null,
+        endsAt: form.endsAt ? new Date(form.endsAt).toISOString() : null,
       };
       applyResult(await savePageNotice(body));
       setForm(null);
@@ -226,7 +278,9 @@ export default function PageNoticeBar() {
 
   const matched = matchNotices(notices, key);
   const visible = matched.filter((n) => isAdmin || !(n.dismissible && dismissed[n.id] === n.updatedAt));
-  const hasExact = notices.some((n) => n.path === key); // 本页是否已有精确通知 → 决定显 编辑 还是 添加
+  const hasExact = notices.some(
+    (n) => n.path === key && (n.placement ?? 'page_top') === 'page_top',
+  ); // 本页是否已有精确顶部通知 → 决定显 编辑 还是 添加
 
   const renders = isAdmin || visible.length > 0;
 
@@ -246,7 +300,10 @@ export default function PageNoticeBar() {
 
   if (!renders) return null;
 
-  const canSave = form != null && form.path.trim() !== '' && (form.bodyZh.trim() !== '' || form.bodyEn.trim() !== '');
+  const canSave = form != null
+    && form.path.trim() !== ''
+    && (form.bodyZh.trim() !== '' || form.bodyEn.trim() !== '')
+    && (form.placement !== 'home_featured' || form.href.trim() !== '');
 
   return (
     <div className="page-notice-wrap" ref={wrapRef}>
@@ -283,16 +340,61 @@ export default function PageNoticeBar() {
               <T en="Add notice for this page" zh="添加本页通知" />
             </button>
           )}
+          {key === '/' && (
+            <button type="button" className="page-notice-add" onClick={openFeatured}>
+              <Pencil size={13} aria-hidden />
+              <T en="Homepage feature" zh="首页焦点" />
+            </button>
+          )}
           <EnvSwitch />
         </div>
       )}
 
       {isAdmin && form && (
         <div className="page-notice-editor">
+          <div className="page-notice-editor-row">
+            <label className="page-notice-field">
+              <span><T en="Placement" zh="展示位" /></span>
+              <select className="page-notice-input" value={form.placement}
+                onChange={(e) => {
+                  const placement = e.target.value as NoticePlacement;
+                  setForm({
+                    ...form,
+                    placement,
+                    path: placement === 'home_featured' ? '/' : form.path,
+                    dismissible: placement === 'home_featured' ? false : form.dismissible,
+                  });
+                }}>
+                <option value="page_top">{tr({ en: 'Page top', zh: '页面顶部' })}</option>
+                <option value="home_featured">{tr({ en: 'Homepage feature', zh: '首页焦点' })}</option>
+              </select>
+            </label>
+          </div>
           <label className="page-notice-field">
             <span><T en="Applies to path (use /* for whole site)" zh="作用路径(填 /* 覆盖全站)" /></span>
-            <input className="page-notice-input" value={form.path} onChange={(e) => setForm({ ...form, path: e.target.value })} placeholder="/scramble/stats" />
+            <input className="page-notice-input" value={form.path} disabled={form.placement === 'home_featured'}
+              onChange={(e) => setForm({ ...form, path: e.target.value })} placeholder="/scramble/stats" />
           </label>
+
+          <label className="page-notice-field">
+            <span><T en="Target link (required for homepage feature)" zh="目标链接(首页焦点必填)" /></span>
+            <input className="page-notice-input" value={form.href}
+              onChange={(e) => setForm({ ...form, href: e.target.value })}
+              placeholder="/regulation/news#4-pad-2027" />
+          </label>
+
+          <div className="page-notice-editor-row">
+            <label className="page-notice-field">
+              <span><T en="Starts (optional)" zh="开始时间(可选)" /></span>
+              <input type="datetime-local" className="page-notice-input" value={form.startsAt}
+                onChange={(e) => setForm({ ...form, startsAt: e.target.value })} />
+            </label>
+            <label className="page-notice-field">
+              <span><T en="Ends (optional)" zh="结束时间(可选)" /></span>
+              <input type="datetime-local" className="page-notice-input" value={form.endsAt}
+                onChange={(e) => setForm({ ...form, endsAt: e.target.value })} />
+            </label>
+          </div>
 
           <div className="page-notice-editor-row">
             <label className="page-notice-field">
@@ -305,8 +407,10 @@ export default function PageNoticeBar() {
             </label>
             <BoolToggle value={form.enabled} onChange={(v) => setForm({ ...form, enabled: v })}
               label={<T en="Enabled" zh="启用" />} ariaLabel={tr({ en: 'Enabled', zh: '启用' })} />
-            <BoolToggle value={form.dismissible} onChange={(v) => setForm({ ...form, dismissible: v })}
-              label={<T en="Dismissible" zh="可关闭" />} ariaLabel={tr({ en: 'Dismissible', zh: '可关闭' })} />
+            {form.placement === 'page_top' && (
+              <BoolToggle value={form.dismissible} onChange={(v) => setForm({ ...form, dismissible: v })}
+                label={<T en="Dismissible" zh="可关闭" />} ariaLabel={tr({ en: 'Dismissible', zh: '可关闭' })} />
+            )}
           </div>
 
           <div className="page-notice-field">
@@ -359,10 +463,14 @@ export default function PageNoticeBar() {
           </div>
 
           <p className="page-notice-hint">
-            <T
-              en="Enabled: whether this notice shows at all (off = saved but hidden from everyone). Dismissible: whether visitors can click × to close it (off = always shown, cannot be dismissed)."
-              zh="启用:这条通知是否显示(关掉则保存但不展示给任何人)。可关闭:访客能否点 × 关掉它(关掉则常驻,访客无法关闭)。"
-            />
+            {form.placement === 'home_featured'
+              ? <T en="Enabled: whether this feature is shown during its active window." zh="启用:这条焦点新闻是否在生效时间窗内展示。" />
+              : (
+                  <T
+                    en="Enabled: whether this notice shows at all (off = saved but hidden from everyone). Dismissible: whether visitors can click × to close it (off = always shown, cannot be dismissed)."
+                    zh="启用:这条通知是否显示(关掉则保存但不展示给任何人)。可关闭:访客能否点 × 关掉它(关掉则常驻,访客无法关闭)。"
+                  />
+                )}
           </p>
 
           <div className="page-notice-field">
