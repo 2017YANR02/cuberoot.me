@@ -1198,7 +1198,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               <option value="dumb">{tr({ zh: '傻瓜', en: 'Foolproof' })}</option>
             </select>
             {displayedNotationStyle !== 'standard' && (
-              <Link href="/alg/3x3/notation" prefetch={false} className="alg-back">
+              <Link href="/notation" prefetch={false} className="alg-back">
                 <HelpCircle size={15} aria-hidden="true" />
                 {tr({ zh: '记号说明', en: 'Notation guide' })}
               </Link>

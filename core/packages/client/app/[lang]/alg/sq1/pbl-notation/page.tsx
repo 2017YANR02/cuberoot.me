@@ -10,7 +10,7 @@ import {
   type Sq1PblMnemonicGroup,
 } from '@/lib/sq1-pbl-mnemonics';
 import '../../alg.css';
-import '../../notation-guide.css';
+import '@/components/NotationGuide/notation-guide.css';
 
 function MnemonicTable({ group }: { group: Sq1PblMnemonicGroup }) {
   const t = useT();

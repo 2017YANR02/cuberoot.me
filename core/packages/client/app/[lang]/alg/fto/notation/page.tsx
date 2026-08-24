@@ -17,7 +17,7 @@ import {
   FTO_WIDE_ROOTS,
 } from '@/lib/move-notation-catalog';
 import '../../alg.css';
-import '../../notation-guide.css';
+import '@/components/NotationGuide/notation-guide.css';
 
 export default function FtoNotationPage() {
   const t = useT();

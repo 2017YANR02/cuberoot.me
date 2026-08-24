@@ -4,7 +4,8 @@
  * beside the shared AlgPlayer.
  */
 
-const CUBE_DEMO_SUFFIXES = ['', "'", '2', "2'"] as const;
+const WCA_CUBE_SUFFIXES = ['', "'", '2'] as const;
+const CUBE_DEMO_SUFFIXES = [...WCA_CUBE_SUFFIXES, "2'"] as const;
 const CUBE_LR_SUFFIXES = [...CUBE_DEMO_SUFFIXES, '3', "3'"] as const;
 const ORDER_THREE_SUFFIXES = ['', "'"] as const;
 const ORDER_FOUR_SUFFIXES = ['', "'", '2'] as const;
@@ -24,6 +25,11 @@ export const CUBE_WIDE_ROOTS = ['Uw', 'Dw', 'Lw', 'Rw', 'Fw', 'Bw'] as const;
 export const CUBE_SLICE_ROOTS = ['E', 'M', 'S'] as const;
 export const CUBE_ROTATION_ROOTS = ['x', 'y', 'z'] as const;
 
+/** Exact NxN move families defined by WCA Regulations Article 12a. */
+export const CUBE_WCA_FACE_MOVES = expandRoots(CUBE_FACE_ROOTS, WCA_CUBE_SUFFIXES);
+export const CUBE_WCA_WIDE_MOVES = expandRoots(CUBE_WIDE_ROOTS, WCA_CUBE_SUFFIXES);
+export const CUBE_WCA_ROTATION_MOVES = expandRoots(CUBE_ROTATION_ROOTS, WCA_CUBE_SUFFIXES);
+
 export const CUBE_FACE_MOVES = CUBE_FACE_ROOTS.flatMap(root =>
   expandRoots([root], root === 'L' || root === 'R' ? CUBE_LR_SUFFIXES : CUBE_DEMO_SUFFIXES));
 export const CUBE_WIDE_MOVES = expandRoots(CUBE_WIDE_ROOTS, CUBE_DEMO_SUFFIXES);
@@ -38,6 +44,8 @@ export const CUBE_ALL_MOVES = [
 
 const BIG_CUBE_INNER_ROOTS = ['2U', '2D', '2L', '2R', '2F', '2B'] as const;
 const BIG_CUBE_THREE_WIDE_ROOTS = ['3Uw', '3Dw', '3Lw', '3Rw', '3Fw', '3Bw'] as const;
+/** 3-layer outer-block turns are the numeric-prefix example valid on 4x4 and larger. */
+export const BIG_CUBE_WCA_MOVES = expandRoots(BIG_CUBE_THREE_WIDE_ROOTS, WCA_CUBE_SUFFIXES);
 export const BIG_CUBE_MOVES = [
   ...expandRoots(BIG_CUBE_INNER_ROOTS, CUBE_DEMO_SUFFIXES),
   ...expandRoots(BIG_CUBE_THREE_WIDE_ROOTS, CUBE_DEMO_SUFFIXES),
@@ -68,6 +76,8 @@ export const SQUARE1_MOVES = [
     .map(bottom => `(${top},${bottom})`)),
   '/',
 ];
+
+export const MEGAMINX_WCA_MOVES = ['R++', 'R--', 'D++', 'D--', 'U', "U'"] as const;
 
 export const FTO_FACE_ROOTS = ['U', 'F', 'R', 'L', 'D', 'Bl', 'Br', 'B'] as const;
 export const FTO_WIDE_ROOTS = ['Uw', 'Fw', 'Rw', 'Lw', 'Dw', 'Blw', 'Brw', 'Bw'] as const;
