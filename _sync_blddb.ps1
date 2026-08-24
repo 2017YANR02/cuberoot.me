@@ -12,6 +12,10 @@
     跳过 git pull，用当前 clone 的工作区重新构建。
 .PARAMETER SkipInstall
     跳过 npm 依赖检查（lock 没动时可省十几秒）。
+.PARAMETER RepoRoot
+    cuberoot.me 仓库根目录；保留 ProjectDir 作为旧参数别名。
+.PARAMETER ValidateOnly
+    只读校验仓库和脚本内部依赖后退出。
 .NOTES
     上游 license: GPL-3.0
     前置：Node + npm（上游是 npm 工程，禁 pnpm —— 它自带 package-lock.json）
@@ -20,11 +24,25 @@ param(
     [string]$BlddbDir = "D:\cube\blddb",
     [string]$ProjectDir = $PSScriptRoot,
     [switch]$SkipPull,
-    [switch]$SkipInstall
+    [switch]$SkipInstall,
+    [string]$RepoRoot,
+    [switch]$ValidateOnly
 )
 
 $ErrorActionPreference = 'Stop'
-. (Join-Path $ProjectDir ".sync\sync_utils.ps1")
+$syncBootstrapRoot = if ($RepoRoot) { [IO.Path]::GetFullPath($RepoRoot) } else { [IO.Path]::GetFullPath($ProjectDir) }
+. (Join-Path $syncBootstrapRoot '.sync\sync_utils.ps1')
+$ProjectDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $ProjectDir -ScriptRoot $PSScriptRoot
+Assert-SyncInternalFiles -RepoRoot $ProjectDir -RelativePaths @(
+    '_sync_blddb.ps1'
+    '.sync/sync_utils.ps1'
+    '.sync/blddb_postprocess.mjs'
+) -PowerShellScripts @('_sync_blddb.ps1')
+if ($ValidateOnly)
+{
+    Write-Host "BLDDB 同步脚本校验通过：$ProjectDir" -ForegroundColor Green
+    return
+}
 
 $dst = "$ProjectDir\tools\blddb"
 $out = "$BlddbDir\out"
@@ -44,10 +62,11 @@ if ($SkipPull)
 else
 {
     Write-Host "[1/6] git pull blddb..." -ForegroundColor Cyan
-    $before = git -C $BlddbDir rev-parse --short HEAD
-    git -C $BlddbDir pull --ff-only origin v2
-    if ($LASTEXITCODE -ne 0) { throw "git pull 失败 —— 多半是上次同步没还原补丁，去 $BlddbDir 看 git status。" }
-    $after = git -C $BlddbDir rev-parse --short HEAD
+    $before = Get-CheckedNativeText -FilePath 'git' -ArgumentList @('-C', $BlddbDir, 'rev-parse', '--short', 'HEAD')
+    [void](Invoke-CheckedNativeCommand -FilePath 'git' -ArgumentList @(
+        '-C', $BlddbDir, 'pull', '--ff-only', 'origin', 'v2'
+    ) -FailureMessage "git pull 失败 —— 多半是上次同步没还原补丁，去 $BlddbDir 看 git status。")
+    $after = Get-CheckedNativeText -FilePath 'git' -ArgumentList @('-C', $BlddbDir, 'rev-parse', '--short', 'HEAD')
     if ($before -eq $after) { Write-Host "  已是最新 ($after)" -ForegroundColor DarkGray }
     else { Write-Host "  $before -> $after" -ForegroundColor Green }
 }
@@ -63,8 +82,7 @@ else
     Push-Location $BlddbDir
     try
     {
-        & npm install --no-audit --no-fund
-        if ($LASTEXITCODE -ne 0) { throw "npm install 失败" }
+        Invoke-CheckedNativeCommand -FilePath 'npm' -ArgumentList @('install', '--no-audit', '--no-fund') -FailureMessage 'npm install 失败'
     }
     finally { Pop-Location }
 }
@@ -164,8 +182,7 @@ try
     Push-Location $BlddbDir
     try
     {
-        & npm run build
-        if ($LASTEXITCODE -ne 0) { throw "next build 失败" }
+        Invoke-CheckedNativeCommand -FilePath 'npm' -ArgumentList @('run', 'build') -FailureMessage 'next build 失败'
     }
     finally { Pop-Location }
 }
@@ -289,11 +306,12 @@ Invoke-WithFileRetry { Copy-Item "$BlddbDir\LICENSE" "$dst\LICENSE" -Force }
 # NOTE: 起手位置（上游 GPL 的 finger.ts，构建期跑，只把结果写进数据）+ Nightmare 推荐解
 #       + Nightmare 速查表。详见脚本头注。顺带把 JSON 压掉缩进，manmade 那批小一半。
 Write-Host "[7/7] 后处理 data/（起手位置 + Nightmare 速查表）..." -ForegroundColor Cyan
-& node (Join-Path $ProjectDir '.sync\blddb_postprocess.mjs') --upstream $BlddbDir --repo $ProjectDir
-if ($LASTEXITCODE -ne 0) { throw "blddb_postprocess.mjs 失败 —— /alg/3bld/lookup 的起手列和 /alg/3bld/tables 会缺数据。" }
+[void](Invoke-CheckedNativeCommand -FilePath 'node' -ArgumentList @(
+    (Join-Path $ProjectDir '.sync\blddb_postprocess.mjs'), '--upstream', $BlddbDir, '--repo', $ProjectDir
+) -FailureMessage 'blddb_postprocess.mjs 失败 —— /alg/3bld/lookup 的起手列和 /alg/3bld/tables 会缺数据。')
 
-$sha = git -C $BlddbDir rev-parse --short HEAD
-$date = git -C $BlddbDir log -1 --format="%ai"
+$sha = Get-CheckedNativeText -FilePath 'git' -ArgumentList @('-C', $BlddbDir, 'rev-parse', '--short', 'HEAD')
+$date = Get-CheckedNativeText -FilePath 'git' -ArgumentList @('-C', $BlddbDir, 'log', '-1', '--format=%ai')
 $txt = @"
 Vendored from https://github.com/nbwzx/blddb (branch v2)
 Commit:  $sha
@@ -327,5 +345,7 @@ $sizeMB = [math]::Round((Get-ChildItem $dst -Recurse -File | Measure-Object Leng
 $fileCount = (Get-ChildItem $dst -Recurse -File).Count
 Write-Host "  tools/blddb/：$fileCount 个文件，${sizeMB}MB" -ForegroundColor Gray
 
-git -C $ProjectDir status --short tools/blddb | Select-Object -First 20
+Invoke-CheckedNativeCommand -FilePath 'git' -ArgumentList @(
+    '-C', $ProjectDir, 'status', '--short', 'tools/blddb'
+) | Select-Object -First 20
 Write-Host "完成。改动未提交。" -ForegroundColor Green

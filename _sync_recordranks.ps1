@@ -10,49 +10,56 @@
     只 fetch 并报告待同步 commit，不 merge、不验证、不 push、不改部署 SHA。
 .PARAMETER SkipInstall
     跳过 pnpm install --frozen-lockfile；仅确认依赖已经同步时使用。
+.PARAMETER RepoRoot
+    cuberoot.me 仓库根目录；保留 ProjectDir 作为旧参数别名。
+.PARAMETER ValidateOnly
+    只读校验仓库和脚本内部依赖后退出。
 #>
 param(
     [string]$RecordRanksDir = 'D:\cube\RecordRanks',
     [string]$ProjectDir = $PSScriptRoot,
     [switch]$SkipPull,
     [switch]$DryRun,
-    [switch]$SkipInstall
+    [switch]$SkipInstall,
+    [string]$RepoRoot,
+    [switch]$ValidateOnly
 )
 
 $ErrorActionPreference = 'Stop'
+$syncBootstrapRoot = if ($RepoRoot) { [IO.Path]::GetFullPath($RepoRoot) } else { [IO.Path]::GetFullPath($ProjectDir) }
+. (Join-Path $syncBootstrapRoot '.sync\sync_utils.ps1')
+$ProjectDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $ProjectDir -ScriptRoot $PSScriptRoot
+Assert-SyncInternalFiles -RepoRoot $ProjectDir -RelativePaths @(
+    '_sync_recordranks.ps1'
+    '.sync/sync_utils.ps1'
+) -PowerShellScripts @('_sync_recordranks.ps1')
+if ($ValidateOnly)
+{
+    Write-Host "RecordRanks 同步脚本校验通过：$ProjectDir" -ForegroundColor Green
+    return
+}
 
 function Invoke-Git
 {
     param([string[]]$GitArgs)
 
-    & git -C $RecordRanksDir @GitArgs
-    if ($LASTEXITCODE -ne 0)
-    {
-        throw "git $($GitArgs -join ' ') 失败"
-    }
+    $arguments = @('-C', $RecordRanksDir) + $GitArgs
+    Invoke-CheckedNativeCommand -FilePath 'git' -ArgumentList $arguments
 }
 
 function Get-GitText
 {
     param([string[]]$GitArgs)
 
-    $output = & git -C $RecordRanksDir @GitArgs 2>&1
-    if ($LASTEXITCODE -ne 0)
-    {
-        throw "git $($GitArgs -join ' ') 失败：$($output -join "`n")"
-    }
-    return ($output -join "`n").Trim()
+    $arguments = @('-C', $RecordRanksDir) + $GitArgs
+    return Get-CheckedNativeText -FilePath 'git' -ArgumentList $arguments
 }
 
 function Invoke-Pnpm
 {
     param([string[]]$PnpmArgs)
 
-    & pnpm @PnpmArgs
-    if ($LASTEXITCODE -ne 0)
-    {
-        throw "pnpm $($PnpmArgs -join ' ') 失败"
-    }
+    Invoke-CheckedNativeCommand -FilePath 'pnpm' -ArgumentList $PnpmArgs
 }
 
 if (-not (Test-Path -LiteralPath (Join-Path $RecordRanksDir '.git')))
@@ -103,16 +110,23 @@ if (-not $SkipPull)
     Invoke-Git @('fetch', '--prune', 'origin', 'main')
     Invoke-Git @('fetch', '--prune', 'upstream', 'main')
 
-    & git -C $RecordRanksDir merge-base --is-ancestor origin/main HEAD
-    $originIsAncestor = $LASTEXITCODE -eq 0
-    & git -C $RecordRanksDir merge-base --is-ancestor HEAD origin/main
-    $headIsOriginAncestor = $LASTEXITCODE -eq 0
+    $originIsAncestor = Test-CheckedGitAncestor -WorkingDirectory $RecordRanksDir -Ancestor 'origin/main' -Descendant 'HEAD'
+    $headIsOriginAncestor = Test-CheckedGitAncestor -WorkingDirectory $RecordRanksDir -Ancestor 'HEAD' -Descendant 'origin/main'
 
+    $comparisonHead = 'HEAD'
     if (-not $originIsAncestor)
     {
         if ($headIsOriginAncestor)
         {
-            Invoke-Git @('merge', '--ff-only', 'origin/main')
+            if ($DryRun)
+            {
+                $comparisonHead = 'origin/main'
+                Write-Host 'RecordRanks 本地 main 落后 origin/main；DryRun 不移动分支。' -ForegroundColor Yellow
+            }
+            else
+            {
+                Invoke-Git @('merge', '--ff-only', 'origin/main')
+            }
         }
         else
         {
@@ -120,7 +134,8 @@ if (-not $SkipPull)
         }
     }
 
-    $pending = [int](Get-GitText @('rev-list', '--count', 'HEAD..upstream/main'))
+    $pendingRange = "${comparisonHead}..upstream/main"
+    $pending = [int](Get-GitText @('rev-list', '--count', $pendingRange))
     if ($DryRun)
     {
         if ($pending -eq 0)
@@ -130,7 +145,7 @@ if (-not $SkipPull)
         else
         {
             Write-Host "RecordRanks 有 $pending 个上游 commit 待合并：" -ForegroundColor Yellow
-            Invoke-Git @('log', '--oneline', '--decorate', 'HEAD..upstream/main')
+            Invoke-Git @('log', '--oneline', '--decorate', $pendingRange)
         }
         return
     }
@@ -142,11 +157,22 @@ if (-not $SkipPull)
     else
     {
         Write-Host "  合并 $pending 个上游 commit..." -ForegroundColor Green
-        & git -C $RecordRanksDir merge --no-edit upstream/main
-        if ($LASTEXITCODE -ne 0)
+        try
         {
-            & git -C $RecordRanksDir merge --abort 2>$null
-            throw '上游合并发生冲突，已中止合并；请手工核对兼容补丁。'
+            Invoke-Git @('merge', '--no-edit', 'upstream/main')
+        }
+        catch
+        {
+            $mergeFailure = $_.Exception.Message
+            try
+            {
+                Invoke-Git @('merge', '--abort')
+            }
+            catch
+            {
+                throw "上游合并失败，自动中止也失败；请立即检查仓库状态。`n合并：$mergeFailure`n中止：$($_.Exception.Message)"
+            }
+            throw "上游合并失败，已自动中止；请手工核对兼容补丁。`n$mergeFailure"
         }
     }
 }
@@ -323,5 +349,7 @@ else
 }
 
 Write-Host "`nRecordRanks $shortRevision 同步完成。CubeRoot 改动未提交：" -ForegroundColor Green
-& git -C $ProjectDir status --short -- 'ops/contests/recordranks-ref.txt'
+Invoke-CheckedNativeCommand -FilePath 'git' -ArgumentList @(
+    '-C', $ProjectDir, 'status', '--short', '--', 'ops/contests/recordranks-ref.txt'
+)
 Write-Host '审完后只提交 recordranks-ref.txt；push CubeRoot 才会部署。' -ForegroundColor DarkGray

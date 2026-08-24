@@ -18,6 +18,10 @@
     跳过 git pull，只用当前 clone 的工作区重新生成产物。
 .PARAMETER DryRun
     传给支持预览的子脚本（solver / algtrainers / recordranks）；其余构建会被跳过。
+.PARAMETER RepoRoot
+    cuberoot.me 仓库根目录；默认为本脚本所在目录。
+.PARAMETER ValidateOnly
+    只读校验仓库标记、脚本图和内部依赖，不访问上游 clone，不运行原生命令。
 .NOTES
     前置：Java 21 + PHP 8.3 + C:\mingw64\bin\mingw32-make.exe（仅 csTimer 构建需要）。
 #>
@@ -25,11 +29,38 @@ param(
     [ValidateSet('cstimer', 'solver', 'algtrainers', 'blddb', 'recordranks')]
     [string[]]$Only,
     [switch]$SkipPull,
-    [switch]$DryRun
+    [switch]$DryRun,
+    [string]$RepoRoot = $PSScriptRoot,
+    [switch]$ValidateOnly
 )
 
 $ErrorActionPreference = 'Stop'
-$root = $PSScriptRoot
+. (Join-Path $PSScriptRoot '.sync\sync_utils.ps1')
+$root = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -ScriptRoot $PSScriptRoot
+
+$syncScripts = @(
+    'sync_upstream.ps1'
+    '_sync_cstimer.ps1'
+    '_sync_cstimer_scramble.ps1'
+    '_sync_RubiksSolverDemo.ps1'
+    'sync_alg_trainers.ps1'
+    '_sync_blddb.ps1'
+    '_sync_recordranks.ps1'
+)
+Assert-SyncInternalFiles -RepoRoot $root -RelativePaths @(
+    $syncScripts
+    '.sync/sync_utils.ps1'
+    '.sync/page_config.json'
+    '.sync/menu_template.html'
+    '.sync/alg_trainers_config.json'
+    '.sync/blddb_postprocess.mjs'
+) -PowerShellScripts $syncScripts
+
+if ($ValidateOnly)
+{
+    Write-Host "同步脚本图与仓库内依赖校验通过：$root" -ForegroundColor Green
+    return
+}
 
 # NOTE: 上游 clone 都在仓库外的 D:\cube\ 下，只本机有；缺哪个就跳过哪个并提示 clone 命令。
 $upstreams = @(
@@ -71,24 +102,33 @@ foreach ($u in $upstreams)
         continue
     }
 
-    $before = git -C $u.Dir rev-parse --short HEAD
+    $before = Get-CheckedNativeText -FilePath 'git' -ArgumentList @('-C', $u.Dir, 'rev-parse', '--short', 'HEAD')
 
     # NOTE: 上游 clone 的工作区常有两类改动：
     #       ① 我们自己打的补丁（如 cstimer Makefile 的 battle_module 目标）—— 必须保住；
     #       ② 纯 CRLF 噪音和构建产物 —— 无所谓。
     #       一律 stash 再 pop，让 git 自己合；冲突就停下来交给人处理。
-    $dirty = (git -C $u.Dir status --porcelain).Length -gt 0
-    if ($dirty) { git -C $u.Dir stash push -q -m 'sync_upstream: local patches' }
+    $createdStash = Push-SyncWorkingTreeStash -WorkingDirectory $u.Dir -Message 'sync_upstream: local patches'
 
-    git -C $u.Dir pull --ff-only $u.Repo $($u.Branch) 2>&1 | Select-Object -Last 1 | Out-Null
-    $after = git -C $u.Dir rev-parse --short HEAD
-
-    if ($dirty)
+    try
     {
-        git -C $u.Dir stash pop 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0)
+        [void](Invoke-CheckedNativeCommand -FilePath 'git' -ArgumentList @(
+            '-C', $u.Dir, 'pull', '--ff-only', $u.Repo, $u.Branch
+        ) -FailureMessage "$($u.Key): git pull 失败")
+        $after = Get-CheckedNativeText -FilePath 'git' -ArgumentList @('-C', $u.Dir, 'rev-parse', '--short', 'HEAD')
+    }
+    finally
+    {
+        if ($createdStash)
         {
-            throw "$($u.Key): stash pop 冲突，本地补丁没自动合上。到 $($u.Dir) 手工解决后重跑。"
+            try
+            {
+                Restore-SyncWorkingTreeStash -WorkingDirectory $u.Dir -StashCommit $createdStash
+            }
+            catch
+            {
+                throw "$($u.Key): stash pop 冲突，本地补丁没自动合上。到 $($u.Dir) 手工解决后重跑。`n$($_.Exception.Message)"
+            }
         }
     }
 
@@ -99,7 +139,9 @@ foreach ($u in $upstreams)
     }
     else
     {
-        $n = (git -C $u.Dir log --oneline "$before..$after").Count
+        $n = @(Invoke-CheckedNativeCommand -FilePath 'git' -ArgumentList @(
+            '-C', $u.Dir, 'log', '--oneline', "$before..$after"
+        )).Count
         Write-Host "  [PULL] $($u.Key): $before -> $after (+$n commits)" -ForegroundColor Green
         $summary[$u.Key] = "$before -> $after (+$n)"
     }
@@ -108,7 +150,7 @@ foreach ($u in $upstreams)
 # ===== Step 2: 跑同步脚本 =====
 Write-Section 'Step 2 / 2  同步到仓库'
 
-# NOTE: 子脚本自己也会 git pull 一次（可单独运行），此处已拉过，重复调用是空转。
+# NOTE: 子脚本可单独 pull；由编排器调用时上游已在 Step 1 处理，统一传 SkipPull。
 $dry = if ($DryRun) { @{ DryRun = $true } } else { @{} }
 
 if ($targets -contains 'cstimer')
@@ -120,22 +162,22 @@ if ($targets -contains 'cstimer')
     else
     {
         Write-Host "`n--- csTimer（构建，需 Java/PHP/make，最慢）---" -ForegroundColor Cyan
-        & (Join-Path $root '_sync_cstimer.ps1')
+        & (Join-Path $root '_sync_cstimer.ps1') -RepoRoot $root -SkipPull
         Write-Host "`n--- csTimer 打乱源码 ---" -ForegroundColor Cyan
-        & (Join-Path $root '_sync_cstimer_scramble.ps1')
+        & (Join-Path $root '_sync_cstimer_scramble.ps1') -RepoRoot $root -SkipPull
     }
 }
 
 if ($targets -contains 'solver')
 {
     Write-Host "`n--- RubiksSolverDemo ---" -ForegroundColor Cyan
-    & (Join-Path $root '_sync_RubiksSolverDemo.ps1') @dry
+    & (Join-Path $root '_sync_RubiksSolverDemo.ps1') -RepoRoot $root @dry
 }
 
 if ($targets -contains 'algtrainers')
 {
     Write-Host "`n--- Alg-Trainers ---" -ForegroundColor Cyan
-    & (Join-Path $root 'sync_alg_trainers.ps1') @dry
+    & (Join-Path $root 'sync_alg_trainers.ps1') -RepoRoot $root @dry
 }
 
 if ($targets -contains 'blddb')
@@ -148,14 +190,14 @@ if ($targets -contains 'blddb')
     {
         # NOTE: 上游是 Next 应用,这里是真 build(npm install + next build 静态导出),不是拷文件。
         Write-Host "`n--- BLDDB（构建，需 Node/npm）---" -ForegroundColor Cyan
-        & (Join-Path $root '_sync_blddb.ps1') -SkipPull
+        & (Join-Path $root '_sync_blddb.ps1') -RepoRoot $root -SkipPull
     }
 }
 
 if ($targets -contains 'recordranks')
 {
     Write-Host "`n--- RecordRanks（合并上游、检查、构建、推 fork、更新部署 SHA）---" -ForegroundColor Cyan
-    $recordRanksArgs = @{}
+    $recordRanksArgs = @{ RepoRoot = $root }
     if ($SkipPull) { $recordRanksArgs.SkipPull = $true }
     if ($DryRun) { $recordRanksArgs.DryRun = $true }
     & (Join-Path $root '_sync_recordranks.ps1') @recordRanksArgs

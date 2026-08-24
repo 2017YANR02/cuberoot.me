@@ -3,8 +3,194 @@
     同步脚本公共工具函数
 .DESCRIPTION
     提供文件/目录同步、GA 代码生成、UTF-8 字节级读写等工具函数，
-    供 _sync_RubiksSolverDemo.ps1 和 sync_alg_trainers.ps1 共用。
+    供根目录上游同步脚本共用。
 #>
+
+function Resolve-CubeRootRepoRoot
+{
+    <#
+    .SYNOPSIS
+        将显式 RepoRoot（或旧参数的仓库路径）解析为经校验的绝对路径。
+    #>
+    param(
+        [string]$RepoRoot,
+        [string]$LegacyRoot,
+        [string]$ScriptRoot
+    )
+
+    $candidate = if ($RepoRoot) { $RepoRoot } elseif ($LegacyRoot) { $LegacyRoot } else { $ScriptRoot }
+    if (-not $candidate)
+    {
+        throw 'RepoRoot 不能为空。'
+    }
+
+    $absolute = [System.IO.Path]::GetFullPath($candidate)
+    $required = @(
+        '.git'
+        'core/pnpm-workspace.yaml'
+        'tools'
+        'ops'
+        '.sync'
+    )
+    $missing = @($required | Where-Object { -not (Test-Path -LiteralPath (Join-Path $absolute $_)) })
+    if ($missing.Count -gt 0)
+    {
+        throw "RepoRoot 不是完整的 cuberoot.me 仓库：$absolute；缺少 $($missing -join ', ')"
+    }
+
+    return $absolute.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+}
+
+function Assert-SyncInternalFiles
+{
+    <#
+    .SYNOPSIS
+        只读校验同步脚本图和必需的仓库内依赖。
+    #>
+    param(
+        [string]$RepoRoot,
+        [string[]]$RelativePaths,
+        [string[]]$PowerShellScripts = @()
+    )
+
+    $missing = @($RelativePaths | Where-Object { -not (Test-Path -LiteralPath (Join-Path $RepoRoot $_)) })
+    if ($missing.Count -gt 0)
+    {
+        throw "同步脚本的仓库内依赖不完整：$($missing -join ', ')"
+    }
+
+    foreach ($relativePath in $PowerShellScripts)
+    {
+        $scriptPath = Join-Path $RepoRoot $relativePath
+        $tokens = $null
+        $parseErrors = $null
+        [void][System.Management.Automation.Language.Parser]::ParseFile(
+            $scriptPath,
+            [ref]$tokens,
+            [ref]$parseErrors
+        )
+        if ($parseErrors.Count -gt 0)
+        {
+            $details = $parseErrors | ForEach-Object { "$($_.Extent.StartLineNumber): $($_.Message)" }
+            throw "PowerShell 脚本语法错误：$relativePath`n$($details -join "`n")"
+        }
+    }
+}
+
+function Invoke-CheckedNativeCommand
+{
+    <#
+    .SYNOPSIS
+        执行原生命令，任何非零退出码都立即抛错。
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [string]$FilePath,
+        [string[]]$ArgumentList = @(),
+        [string]$FailureMessage
+    )
+
+    & $FilePath @ArgumentList
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -ne 0)
+    {
+        $message = if ($FailureMessage) { $FailureMessage } else { "$FilePath $($ArgumentList -join ' ') 失败" }
+        throw "$message（退出码 $exitCode）"
+    }
+}
+
+function Get-CheckedNativeText
+{
+    param(
+        [Parameter(Mandatory)]
+        [string]$FilePath,
+        [string[]]$ArgumentList = @(),
+        [string]$FailureMessage
+    )
+
+    $output = Invoke-CheckedNativeCommand -FilePath $FilePath -ArgumentList $ArgumentList -FailureMessage $FailureMessage
+    return (($output | ForEach-Object { "$_" }) -join "`n").Trim()
+}
+
+function Test-CheckedGitAncestor
+{
+    <#
+    .SYNOPSIS
+        git merge-base --is-ancestor 的 0/1 是 true/false，>1 是命令错误。
+    #>
+    param(
+        [string]$WorkingDirectory,
+        [string]$Ancestor,
+        [string]$Descendant
+    )
+
+    $output = & git -C $WorkingDirectory merge-base --is-ancestor $Ancestor $Descendant 2>&1
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -eq 0) { return $true }
+    if ($exitCode -eq 1) { return $false }
+
+    $details = ($output | ForEach-Object { "$_" }) -join "`n"
+    throw "git merge-base --is-ancestor $Ancestor $Descendant 失败（退出码 $exitCode）：`n$details"
+}
+
+function Push-SyncWorkingTreeStash
+{
+    <#
+    .SYNOPSIS
+        暂存 tracked 与 untracked 改动，并返回本次新建 stash 的 commit。
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [string]$WorkingDirectory,
+        [string]$Message = 'upstream sync: local changes'
+    )
+
+    $status = Get-CheckedNativeText -FilePath 'git' -ArgumentList @(
+        '-C', $WorkingDirectory, 'status', '--porcelain'
+    )
+    if ([string]::IsNullOrWhiteSpace($status)) { return $null }
+
+    $previousStash = Get-CheckedNativeText -FilePath 'git' -ArgumentList @(
+        '-C', $WorkingDirectory, 'stash', 'list', '-1', '--format=%H'
+    )
+    [void](Invoke-CheckedNativeCommand -FilePath 'git' -ArgumentList @(
+        '-C', $WorkingDirectory, 'stash', 'push', '--include-untracked', '-q', '-m', $Message
+    ))
+    $createdStash = Get-CheckedNativeText -FilePath 'git' -ArgumentList @(
+        '-C', $WorkingDirectory, 'stash', 'list', '-1', '--format=%H'
+    )
+    if ([string]::IsNullOrWhiteSpace($createdStash) -or $createdStash -eq $previousStash)
+    {
+        throw '工作区有改动，但 git stash 没有创建新条目；已停止以避免误恢复历史 stash。'
+    }
+
+    return $createdStash
+}
+
+function Restore-SyncWorkingTreeStash
+{
+    <#
+    .SYNOPSIS
+        仅在目标仍为栈顶时恢复本轮创建的 stash，避免误弹出其他条目。
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [string]$WorkingDirectory,
+        [Parameter(Mandatory)]
+        [string]$StashCommit
+    )
+
+    $latestStash = Get-CheckedNativeText -FilePath 'git' -ArgumentList @(
+        '-C', $WorkingDirectory, 'stash', 'list', '-1', '--format=%H'
+    )
+    if ($latestStash -ne $StashCommit)
+    {
+        throw "stash 栈在同步期间发生变化；本轮改动仍保留在 stash $StashCommit。"
+    }
+    [void](Invoke-CheckedNativeCommand -FilePath 'git' -ArgumentList @(
+        '-C', $WorkingDirectory, 'stash', 'pop'
+    ))
+}
 
 function Invoke-WithFileRetry
 {
