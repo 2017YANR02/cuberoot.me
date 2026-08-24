@@ -4,12 +4,17 @@ import { parsePyraMoves } from '@/app/[lang]/sim/engine/pyra/pyraState';
 import { parseSkewbMoves } from '@/app/[lang]/sim/engine/skewb/skewbState';
 import { parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
 import {
+  BIG_CUBE_WCA_MOVES,
   CUBE_ALL_MOVES,
+  CUBE_WCA_FACE_MOVES,
+  CUBE_WCA_ROTATION_MOVES,
+  CUBE_WCA_WIDE_MOVES,
   FTO_FACE_MOVES,
   FTO_MACRO_MOVES,
   FTO_ROTATION_MOVES,
   FTO_SLICE_MOVES,
   FTO_WIDE_MOVES,
+  MEGAMINX_WCA_MOVES,
   PYRAMINX_EXTENSION_MOVES,
   PYRAMINX_WCA_MOVES,
   SKEWB_EXTENSION_MOVES,
@@ -27,6 +32,25 @@ describe('shared move notation catalog', () => {
     expect(CUBE_ALL_MOVES.filter(move => /3'?$/.test(move))).toEqual([
       'L3', "L3'", 'R3', "R3'",
     ]);
+  });
+
+  it('keeps the WCA Article 12 cube catalog free of common extensions', () => {
+    const wcaMoves = [
+      ...CUBE_WCA_FACE_MOVES,
+      ...CUBE_WCA_WIDE_MOVES,
+      ...CUBE_WCA_ROTATION_MOVES,
+    ];
+
+    expect(wcaMoves).toHaveLength(45);
+    expect(wcaMoves).toContain('U2');
+    expect(wcaMoves).toContain("x'");
+    expect(wcaMoves).not.toEqual(expect.arrayContaining([
+      'E', 'M', 'S', "U2'", 'R3', 'r', '2R',
+    ]));
+    expect(BIG_CUBE_WCA_MOVES).toHaveLength(18);
+    expect(BIG_CUBE_WCA_MOVES).toContain('3Rw2');
+    expect(BIG_CUBE_WCA_MOVES).not.toContain('2R');
+    expect(MEGAMINX_WCA_MOVES).toEqual(['R++', 'R--', 'D++', 'D--', 'U', "U'"]);
   });
 
   it('contains every valid Square-1 pair in the WCA numeric range plus slash', () => {
