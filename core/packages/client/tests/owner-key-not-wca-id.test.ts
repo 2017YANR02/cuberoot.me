@@ -83,6 +83,15 @@ describe('ownerKey is not a WCA id', () => {
       .toMatch(/isWcaIdFormat\s*\(\s*id\s*\)\s*\?/);
   });
 
+  it('recon detail contributor metadata does not expose the internal user id', () => {
+    const src = readFileSync(join(ROOT, 'app', '[lang]', 'recon', '[id]', 'ReconDetailClient.tsx'), 'utf8');
+    const renderContributor = src.match(
+      /const renderContributor = [\s\S]*?\n  \);/,
+    )?.[0] ?? '';
+    expect(renderContributor).toContain('<AuthorName');
+    expect(renderContributor).not.toContain('userId=');
+  });
+
   it('wcaPersonUrl is only called where the id is guaranteed to be a real WCA id', () => {
     const callers: string[] = [];
     for (const file of files) {
