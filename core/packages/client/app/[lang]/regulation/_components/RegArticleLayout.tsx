@@ -15,7 +15,7 @@ import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import { useLang, tr } from '@/i18n/tr';
 import JsonLd, { articleJsonLd, SITE_URL } from '@/components/JsonLd';
-import { articleBySlug, regNav, type RegArticle } from '../_data/articles';
+import { articleBySlug, regArticleHref, regNav, type RegArticle } from '../_data/articles';
 import { useRegText } from './reg-text';
 import '../regulation.css';
 
@@ -26,7 +26,7 @@ function PrevNextCard({ a, dir }: { a: RegArticle; dir: 'prev' | 'next' }) {
   const t = useT();
   const { badge, title } = useRegText();
   return (
-    <Link href={`/regulation/${a.slug}`} className={`reg-pn reg-pn-${dir}`}>
+    <Link href={regArticleHref(a)} className={`reg-pn reg-pn-${dir}`}>
       <span className="reg-pn-dir">
         {dir === 'prev' ? <ArrowLeft size={15} /> : null}
         {t(dir === 'prev' ? '上一章' : '下一章', dir === 'prev' ? 'Previous' : 'Next')}
@@ -63,7 +63,7 @@ export default function RegArticleLayout({ slug, children }: { slug: string; chi
         data={articleJsonLd({
           headline: `${tr({ zh: 'WCA 规则:', en: 'WCA Regulations: ' })}${title(a)}`,
           description: tagline(a),
-          url: `${SITE_URL}${tr({ zh: '/zh', en: '' })}/regulation/${a.slug}`,
+          url: `${SITE_URL}${tr({ zh: '/zh', en: '' })}${regArticleHref(a)}`,
           lang,
           partOfName: tr({ zh: 'WCA 规则图解', en: 'The WCA Regulations, illustrated' }),
           partOfUrl: `${SITE_URL}${tr({ zh: '/zh', en: '' })}/regulation`,

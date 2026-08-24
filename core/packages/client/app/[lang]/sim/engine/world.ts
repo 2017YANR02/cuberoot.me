@@ -35,7 +35,7 @@ export interface SmplxBodyAsset { geometry: THREE.BufferGeometry; heightM: numbe
  *
  *  `clock` is the odd one out: it has **no 3D form at all** (Rubik's Clock is a flat
  *  two-sided board — cubing.js and twizzle both hard-code it to 2D). Its ClockBoard is a
- *  mesh-less Group; the picture comes from the DOM overlay `_SimClockBoard`. It still
+ *  mesh-less Group; the picture comes from the DOM overlay `SimClockBoard`. It still
  *  lives here so `world.cube` / the twister contract hold and the player controls drive
  *  it unchanged. */
 export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'clock';
@@ -327,7 +327,7 @@ export default class World {
         this.clockBoard.callbacks.push(this.callback);
       }
       this.cube = this.clockBoard;
-      // 魔表没有 3D:这个 Group 里没有 mesh,画面由 DOM 层的 _SimClockBoard 出。NxN
+      // 魔表没有 3D:这个 Group 里没有 mesh,画面由 DOM 层的 SimClockBoard 出。NxN
       // Controller 的空白拖转视角对一张平面板毫无意义 → 关掉;灯光也不必装(没东西可照)。
       if (this.controller) this.controller.disable = true;
       this._removeSq1Lights();

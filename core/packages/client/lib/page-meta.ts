@@ -184,8 +184,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'notation': {
     title: { zh: '转动记号大全', en: 'Complete Move Notation Guide' },
     description: {
-      zh: '集中查看 WCA 正式记号、常用公式扩展与非 WCA 魔方记号，并直接播放每一种转动。',
-      en: 'A visual guide to official WCA notation, common algorithm extensions, and non-WCA puzzle notation, with animated moves.',
+      zh: '集中查看 WCA 第 12 条的正式记号、图解说明、常用公式扩展与非 WCA 魔方记号，并直接播放每一种转动。',
+      en: 'An illustrated guide to WCA Article 12 notation, common algorithm extensions, and non-WCA puzzle notation, with animated moves.',
     },
   },
   'alg/fto/notation': {

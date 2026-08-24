@@ -40,6 +40,9 @@ import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar'
 import CountryShareBar from '@/components/CountryShareBar/CountryShareBar';
 import { VARIANT_ORDER } from '@/lib/scramble-variants';
 import NumberCommitInput from '@/components/NumberCommitInput';
+import NxNOrderInput from '@/components/NxNOrderInput';
+import AlgNotationStyleSelect from '@/components/AlgNotationStyleSelect';
+import type { AlgNotationStyle } from '@/lib/alg-notation-display';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
@@ -317,6 +320,16 @@ function PlaybackBarDemo() {
 function NumberCommitDemo() {
   const [n, setN] = useState(5);
   return <NumberCommitInput value={n} min={1} max={20} onCommit={setN} className="cg-input cg-num" aria-label="count" />;
+}
+
+function NxNOrderDemo() {
+  const [order, setOrder] = useState(3);
+  return <NxNOrderInput value={order} onCommit={setOrder} aria-label="cube order" />;
+}
+
+function AlgNotationStyleDemo() {
+  const [style, setStyle] = useState<AlgNotationStyle>('standard');
+  return <AlgNotationStyleSelect value={style} onChange={setStyle} />;
 }
 
 function StackedBarDemo() {
@@ -1023,6 +1036,24 @@ export const CATALOG: ComponentEntry[] = [
     en: 'A number input that lets you clear and type freely, committing the clamped value only on blur / Enter — no per-keystroke snap-back.',
     usage: '<NumberCommitInput value={n} min={1} max={20} onCommit={setN} />',
     Demo: NumberCommitDemo,
+  },
+  {
+    name: 'NxNOrderInput',
+    import: "import NxNOrderInput from '@/components/NxNOrderInput';",
+    category: 'input',
+    zh: 'NxN 阶数输入:复用数字提交输入，并统一模拟器与记号页的 1–400 边界、尺寸和键盘行为。',
+    en: 'NxN order input: reuses the committed number field and unifies the 1–400 bounds, sizing and keyboard behavior across the simulator and notation guide.',
+    usage: '<NxNOrderInput value={order} onCommit={setOrder} aria-label="cube order" />',
+    Demo: NxNOrderDemo,
+  },
+  {
+    name: 'AlgNotationStyleSelect',
+    import: "import AlgNotationStyleSelect from '@/components/AlgNotationStyleSelect';",
+    category: 'input',
+    zh: '公式页与记号页共用的英文、紧凑、傻瓜记号选择器。',
+    en: 'Shared English, compact and foolproof notation selector for algorithm and notation pages.',
+    usage: '<AlgNotationStyleSelect value={style} onChange={setStyle} />',
+    Demo: AlgNotationStyleDemo,
   },
   {
     name: 'SearchInput',

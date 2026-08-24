@@ -2,6 +2,14 @@ import type { AlgPuzzle } from '@cuberoot/shared';
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import { invertFtoEifAlgorithm } from '@/lib/fto-eif-image';
 import { invertSq1Alg, parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
+import {
+  clockStepsToString,
+  invertClockSteps,
+  parseClockSteps,
+} from '@/lib/clock-notation';
+
+/** Puzzles the shared player can render, including /sim-only teaching previews. */
+export type AlgPlayerPuzzle = AlgPuzzle | 'clock';
 
 /** 公式动画和记号教学共用 1 STM/s 的默认节奏。 */
 export const DEFAULT_ALG_MOVE_DURATION_MS = 1000;
@@ -9,7 +17,8 @@ export const DEFAULT_PREVIEW_TIMING = { frames: 60, stepMs: DEFAULT_ALG_MOVE_DUR
 const SIM_FRAMES_PER_SECOND = 60;
 
 /** `/sim` 播放器的一步一项。SQ1 的 `(t, b)` 内含空格，不能按空白切。 */
-export function resolveSimPreviewMoves(puzzle: AlgPuzzle, alg: string): string[] {
+export function resolveSimPreviewMoves(puzzle: AlgPlayerPuzzle, alg: string): string[] {
+  if (puzzle === 'clock') return alg.trim().split(/\s+/).filter(Boolean);
   const normalized = normalizeAlgForTwisty(puzzle, alg);
   if (puzzle === 'sq1') {
     return parseSq1Tokens(normalized).map(token =>
@@ -19,7 +28,7 @@ export function resolveSimPreviewMoves(puzzle: AlgPuzzle, alg: string): string[]
   return normalized.split(/\s+/).filter(Boolean);
 }
 
-export function resolveSimMoveDurationScale(puzzle: AlgPuzzle, move: string): number {
+export function resolveSimMoveDurationScale(puzzle: AlgPlayerPuzzle, move: string): number {
   const token = move.trim();
   if (!token || /\s/.test(token)) return 1;
 
@@ -86,12 +95,16 @@ export function resolveTwistyTempoScale(moveDurationMs?: number, move = ''): num
 
 /** Resolve the preview's initial state without duplicating the rule across renderers. */
 export function resolvePlayerSetup(
-  puzzle: AlgPuzzle,
+  puzzle: AlgPlayerPuzzle,
   alg: string,
   setup: string | undefined,
   startSolved: boolean,
 ): string {
   if (startSolved) return '';
+  if (puzzle === 'clock') {
+    if (setup?.trim()) return setup.trim();
+    return clockStepsToString(invertClockSteps(parseClockSteps(alg)));
+  }
   if (setup?.trim()) return normalizeAlgForTwisty(puzzle, setup);
   if (puzzle === 'fto') return invertFtoEifAlgorithm(alg);
   if (puzzle === 'sq1') return invertSq1Alg(alg);

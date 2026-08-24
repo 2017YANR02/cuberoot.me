@@ -14,12 +14,18 @@
 
 .notation-project-picker {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   margin-top: 22px;
 }
 
-.notation-project-picker > span {
+.notation-project-picker .alg-notation-style-select {
+  height: 32px;
+}
+
+.notation-project-picker > .bool-toggle {
+  margin-inline-start: 8px;
   font-size: 13px;
 }
 
@@ -97,6 +103,46 @@
 
 .alg-notation-demo-section {
   margin-top: 24px;
+}
+
+.notation-rule-notes {
+  max-width: 860px;
+  margin-top: 38px;
+}
+
+.notation-rule-notes > h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.notation-rule-notes p {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.notation-rule-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 34px;
+  margin-top: 22px;
+}
+
+.notation-rule-grid h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.notation-rule-summary {
+  margin-top: 22px !important;
+  font-weight: 600;
+}
+
+.notation-key {
+  font-family: var(--font-mono);
+  font-weight: 650;
+  white-space: nowrap;
 }
 
 .alg-mnemonic-shell {
@@ -355,6 +401,7 @@
 
   .alg-mnemonic-sections,
   .alg-mnemonic-rules,
+  .notation-rule-grid,
   .alg-fto-notation-rules {
     grid-template-columns: 1fr;
   }

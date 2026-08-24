@@ -187,10 +187,10 @@ export default function FewestMovesChapter() {
 
         <Callout tone="info" label={t('记号怎么写', 'Which notation to use')} icon={<Cuboid size={17} />}>
           {<T zh={<>
-                                                                        解法只能用<Link href="/regulation/notation">规则 12a(转动表示方法)</Link>里为三阶定义的记号:面字母、撇号、<K>2</K>、宽层、以及 <K>x/y/z</K> 整体旋转。只有数字、字母和撇号计入解法,其它符号被忽略(E2c4)。<br />
+                                                                        解法只能用<Link href="/notation?wca=true&amp;puzzle=333">规则 12a(转动表示方法)</Link>里为三阶定义的记号:面字母、撇号、<K>2</K>、宽层、以及 <K>x/y/z</K> 整体旋转。只有数字、字母和撇号计入解法,其它符号被忽略(E2c4)。<br />
                                                                         旧的方括号写法(如 <K>[r]</K>)已废止,只保留 <K>x/y/z</K> 转体(E2c2++)。
                                                                       </>} en={<>
-                                                                                      Solutions may only use the 3×3×3 notation from <Link href="/regulation/notation">Article 12a (Notation)</Link>: face letters, primes, <K>2</K>, wide turns and <K>x/y/z</K> rotations. Only numbers, letters and apostrophes count toward the solution; other symbols are ignored (E2c4).<br />
+                                                                                      Solutions may only use the 3×3×3 notation from <Link href="/notation?wca=true&amp;puzzle=333">Article 12a (Notation)</Link>: face letters, primes, <K>2</K>, wide turns and <K>x/y/z</K> rotations. Only numbers, letters and apostrophes count toward the solution; other symbols are ignored (E2c4).<br />
                                                                                       The old bracket notation (e.g. <K>[r]</K>) is gone — only <K>x/y/z</K> rotations remain (E2c2++).
                                                                                     </>} />}
         </Callout>

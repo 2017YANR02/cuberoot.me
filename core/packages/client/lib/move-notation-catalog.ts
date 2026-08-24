@@ -14,10 +14,13 @@ function expandRoots(roots: readonly string[], suffixes: readonly string[]): str
   return roots.flatMap(root => suffixes.map(suffix => `${root}${suffix}`));
 }
 
-/** Visual group key: U/U'/U2/U2' stay together without puzzle-specific UI code. */
+/** Visual group key: suffix variants and matching face/wide turns stay together. */
 export function notationMoveGroup(move: string): string {
   if (move.endsWith('++') || move.endsWith('--')) return move.slice(0, -2);
-  return move.replace(/(?:[23]'?|')$/, '');
+  const clockRoot = /^([A-Z]+)\d+[+-]$/.exec(move)?.[1];
+  if (clockRoot) return clockRoot;
+  const root = move.replace(/(?:[23]'?|')$/, '');
+  return root.match(/^\d*([UDLRFB])w?$/)?.[1] ?? root;
 }
 
 export const CUBE_FACE_ROOTS = ['U', 'D', 'L', 'R', 'F', 'B'] as const;
@@ -41,6 +44,32 @@ export const CUBE_ALL_MOVES = [
   ...CUBE_SLICE_MOVES,
   ...CUBE_ROTATION_MOVES,
 ];
+
+/** Order-aware display inventory, grouped by face direction for one shared player. */
+export function cubeMovesForOrder(order: number): readonly string[] {
+  const faceAndWideMoves = CUBE_FACE_ROOTS.flatMap(root => [
+    ...expandRoots(
+      [root],
+      order === 3 && (root === 'L' || root === 'R') ? CUBE_LR_SUFFIXES : CUBE_DEMO_SUFFIXES,
+    ),
+    ...expandRoots([`${root}w`], CUBE_DEMO_SUFFIXES),
+    ...(order > 3 ? [
+      ...expandRoots([`2${root}`], CUBE_DEMO_SUFFIXES),
+      ...expandRoots([`3${root}w`], CUBE_DEMO_SUFFIXES),
+    ] : []),
+  ]);
+  return [...faceAndWideMoves, ...CUBE_SLICE_MOVES, ...CUBE_ROTATION_MOVES];
+}
+
+/** Order-aware subset explicitly defined by WCA Regulations Article 12a. */
+export function cubeWcaMovesForOrder(order: number): readonly string[] {
+  const faceAndWideMoves = CUBE_FACE_ROOTS.flatMap(root => [
+    ...expandRoots([root], WCA_CUBE_SUFFIXES),
+    ...expandRoots([`${root}w`], WCA_CUBE_SUFFIXES),
+    ...(order > 3 ? expandRoots([`3${root}w`], WCA_CUBE_SUFFIXES) : []),
+  ]);
+  return [...faceAndWideMoves, ...CUBE_WCA_ROTATION_MOVES];
+}
 
 const BIG_CUBE_INNER_ROOTS = ['2U', '2D', '2L', '2R', '2F', '2B'] as const;
 const BIG_CUBE_THREE_WIDE_ROOTS = ['3Uw', '3Dw', '3Lw', '3Rw', '3Fw', '3Bw'] as const;
@@ -78,6 +107,13 @@ export const SQUARE1_MOVES = [
 ];
 
 export const MEGAMINX_WCA_MOVES = ['R++', 'R--', 'D++', 'D--', 'U', "U'"] as const;
+
+/** One-hour examples cover every WCA Clock pin pattern; y2 demonstrates flipping. */
+export const CLOCK_WCA_MOVES = [
+  'UR1+', 'UR1-', 'DR1+', 'DR1-', 'DL1+', 'DL1-', 'UL1+', 'UL1-',
+  'U1+', 'U1-', 'R1+', 'R1-', 'D1+', 'D1-', 'L1+', 'L1-',
+  'ALL1+', 'ALL1-', 'y2',
+] as const;
 
 export const FTO_FACE_ROOTS = ['U', 'F', 'R', 'L', 'D', 'Bl', 'Br', 'B'] as const;
 export const FTO_WIDE_ROOTS = ['Uw', 'Fw', 'Rw', 'Lw', 'Dw', 'Blw', 'Brw', 'Bw'] as const;
