@@ -286,23 +286,37 @@ describe('deployment workflow path contracts', () => {
 
   it('atomically deploys CubeOpt with the same dotenv gate and rollback contract', () => {
     const run = readStepRun('deploy_core.yml', 'Deploy server');
+    const enabledBranch = run.match(/if node --env-file=\.env -e '[^']+'; then([\s\S]*?)\n\s*else/)?.[1] ?? '';
+    const provisionArtifact = packagePath('server', 'dist', 'cubeopt', 'provision.mjs');
     const verifyArtifact = packagePath('server', 'dist', 'cubeopt', 'verify.mjs');
-    const copied = run.indexOf(verifyArtifact);
-    const verified = run.indexOf('node --env-file=.env "$staging/dist/cubeopt/verify.mjs"');
+    const provisionCopied = run.indexOf(provisionArtifact);
+    const verifyCopied = run.indexOf(verifyArtifact);
+    const provisioned = run.indexOf('node --env-file=.env "$staging/dist/cubeopt/provision.mjs"');
+    const verified = run.indexOf('node --env-file=.env "$staging/dist/cubeopt/verify.mjs"', provisioned);
     const immutable = run.indexOf('chmod -R a-w "$final"', verified);
     const switched = run.indexOf('mv -Tf "$pending_link" dist', immutable);
     const reloaded = run.indexOf('reload_core', switched);
     const healthy = run.indexOf('curl -fsS http://127.0.0.1:3001/v1/health', reloaded);
     const smoked = run.indexOf('node --env-file=.env dist/cubeopt/smoke.mjs', healthy);
 
-    expect(copied).toBeGreaterThan(-1);
-    expect(verified).toBeGreaterThan(copied);
+    expect(provisionCopied).toBeGreaterThan(-1);
+    expect(verifyCopied).toBeGreaterThan(provisionCopied);
+    expect(provisioned).toBeGreaterThan(verifyCopied);
+    expect(verified).toBeGreaterThan(provisioned);
     expect(immutable).toBeGreaterThan(verified);
     expect(switched).toBeGreaterThan(immutable);
     expect(reloaded).toBeGreaterThan(switched);
     expect(healthy).toBeGreaterThan(reloaded);
     expect(smoked).toBeGreaterThan(healthy);
     expect(run).toContain('node --env-file=.env -e \'process.exit(process.env.CUBEOPT_SOLVE_ENABLED === "1" ? 0 : 1)\'');
+    expect(enabledBranch).toContain('node --env-file=.env "$staging/dist/cubeopt/provision.mjs"');
+    expect(enabledBranch).toContain('--env-file /root/core-api/.env');
+    expect(enabledBranch).toContain('--default-store /root/core-api/artifacts/cubeopt');
+    expect(enabledBranch).toContain('--bundle cubeopt-opt5-legacy-runtime-v1');
+    expect(enabledBranch).toContain('--source-url legacy-runtime://cubeopt-opt5');
+    expect(enabledBranch).toContain('--source-revision pre-api-artifact-store');
+    expect(enabledBranch).toContain('--source-build-command "byte-for-byte migration from legacy production paths"');
+    expect(enabledBranch).toContain('node --env-file=.env "$staging/dist/cubeopt/verify.mjs"');
     expect(run).not.toMatch(/CUBEOPT_ENABLED=.*sed/);
     expect(run).toContain('rollback_link=".dist.rollback.${release_id}.$$"');
     expect(run).toContain('mv -Tf "$rollback_link" dist');
