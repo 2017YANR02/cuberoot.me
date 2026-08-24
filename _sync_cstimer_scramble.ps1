@@ -10,15 +10,41 @@
       ours   = 仓库里当前的文件（= 上次的上游 + 我们的补丁）
       theirs = 上游最新文件
     冲突就停下来报文件名，人工合完再重跑。
+.PARAMETER SkipPull
+    跳过 git pull；编排器调用时会显式传入。
+.PARAMETER RepoRoot
+    cuberoot.me 仓库根目录；保留 ProjectDir 作为旧参数别名。
+.PARAMETER ValidateOnly
+    只读校验仓库和脚本内部依赖后退出。
 .NOTES
     上游 license: GPLv3
 #>
 param(
     [string]$CstimerDir = "D:\cube\cstimer",
-    [string]$ProjectDir = $PSScriptRoot
+    [string]$ProjectDir = $PSScriptRoot,
+    [switch]$SkipPull,
+    [string]$RepoRoot,
+    [switch]$ValidateOnly
 )
 
 $ErrorActionPreference = 'Stop'
+$syncBootstrapRoot = if ($RepoRoot) { [IO.Path]::GetFullPath($RepoRoot) } else { [IO.Path]::GetFullPath($ProjectDir) }
+. (Join-Path $syncBootstrapRoot '.sync\sync_utils.ps1')
+$ProjectDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $ProjectDir -ScriptRoot $PSScriptRoot
+Assert-SyncInternalFiles -RepoRoot $ProjectDir -RelativePaths @(
+    '_sync_cstimer_scramble.ps1'
+    '.sync/sync_utils.ps1'
+) -PowerShellScripts @('_sync_cstimer_scramble.ps1')
+if ($ValidateOnly)
+{
+    Write-Host "csTimer 打乱源码同步脚本校验通过：$ProjectDir" -ForegroundColor Green
+    return
+}
+
+if (-not (Test-Path -LiteralPath (Join-Path $CstimerDir '.git')))
+{
+    throw "$CstimerDir 不是 csTimer clone"
+}
 $dst = "$ProjectDir\tools\cstimer-scramble"
 
 function Write-LfFile
@@ -29,7 +55,16 @@ function Write-LfFile
 }
 
 Write-Host "[1/4] git pull csTimer..." -ForegroundColor Cyan
-git -C $CstimerDir pull origin master
+if ($SkipPull)
+{
+    Write-Host "  --SkipPull，跳过" -ForegroundColor DarkGray
+}
+else
+{
+    [void](Invoke-CheckedNativeCommand -FilePath 'git' -ArgumentList @(
+        '-C', $CstimerDir, 'pull', '--ff-only', 'origin', 'master'
+    ) -FailureMessage 'csTimer git pull 失败')
+}
 
 # ===== base commit：上次同步到哪一版 =====
 $upstreamTxt = "$dst\UPSTREAM.txt"
@@ -42,6 +77,11 @@ if (Test-Path $upstreamTxt)
 if (-not $baseSha)
 {
     throw "UPSTREAM.txt 里读不到上次同步的 commit —— 没有 base 就没法三方合并，先手工确认 $dst 的来源版本。"
+}
+$baseType = Get-CheckedNativeText -FilePath 'git' -ArgumentList @('-C', $CstimerDir, 'cat-file', '-t', $baseSha)
+if ($baseType -ne 'commit')
+{
+    throw "UPSTREAM.txt 的 base 不是有效 commit：$baseSha"
 }
 Write-Host "[2/4] 三方合并（base = $baseSha）..." -ForegroundColor Cyan
 
@@ -79,15 +119,20 @@ try
             continue
         }
 
-        # base 取不到（上游那时还没这个文件）→ 退化成覆盖。
-        $baseText = git -C $CstimerDir show "${baseSha}:$($p.Upstream)" 2>$null
-        if ($LASTEXITCODE -ne 0)
+        # base 里没有这个路径（上游当时还没加）→ 退化成覆盖；其他 git 错误必须中止。
+        $baseEntry = Get-CheckedNativeText -FilePath 'git' -ArgumentList @(
+            '-C', $CstimerDir, 'ls-tree', '--name-only', $baseSha, '--', $p.Upstream
+        )
+        if ([string]::IsNullOrWhiteSpace($baseEntry))
         {
             Copy-Item $theirs $p.Local -Force
             $copied++
             Write-Host "  [COPY] $($p.Upstream) (base 缺失)" -ForegroundColor DarkGray
             continue
         }
+        $baseText = Get-CheckedNativeText -FilePath 'git' -ArgumentList @(
+            '-C', $CstimerDir, 'show', "${baseSha}:$($p.Upstream)"
+        )
 
         $name = Split-Path $p.Local -Leaf
         $oursTmp = Join-Path $tmp "$name.ours"
@@ -101,12 +146,13 @@ try
         Write-LfFile $theirsTmp ([System.IO.File]::ReadAllText($theirs))
 
         # merge-file 把结果写回第一个参数；退出码 = 冲突数（<0 是出错）。
-        git merge-file -L 'cuberoot.me' -L 'upstream (last sync)' -L 'upstream (new)' $oursTmp $baseTmp $theirsTmp | Out-Null
+        $mergeOutput = & git merge-file -L 'cuberoot.me' -L 'upstream (last sync)' -L 'upstream (new)' $oursTmp $baseTmp $theirsTmp 2>&1
         $rc = $LASTEXITCODE
 
-        if ($rc -lt 0)
+        # NOTE: git merge-file 最多返回 127 个冲突；底层 -1 在 Unix 进程退出码里表现为 255。
+        if ($rc -lt 0 -or $rc -gt 127)
         {
-            throw "git merge-file 失败：$($p.Upstream)"
+            throw "git merge-file 失败：$($p.Upstream)（退出码 $rc）`n$($mergeOutput -join "`n")"
         }
         if ($rc -gt 0)
         {
@@ -161,8 +207,8 @@ if ($missing.Count -gt 0)
 Write-Host "  自加导出齐全" -ForegroundColor Gray
 
 # 更新 UPSTREAM.txt 的 commit / date（下次同步的 merge base）
-$sha  = git -C $CstimerDir rev-parse --short HEAD
-$date = git -C $CstimerDir log -1 --format="%ai"
+$sha = Get-CheckedNativeText -FilePath 'git' -ArgumentList @('-C', $CstimerDir, 'rev-parse', '--short', 'HEAD')
+$date = Get-CheckedNativeText -FilePath 'git' -ArgumentList @('-C', $CstimerDir, 'log', '-1', '--format=%ai')
 $txt = @"
 Vendored from https://github.com/cs0x7f/cstimer
 Commit:  $sha
@@ -181,6 +227,8 @@ Used by:  core/packages/client/lib/cstimer-scramble.ts
 Set-Content -Path $upstreamTxt -Value $txt -Encoding UTF8
 
 Write-Host "[4/4] git status..." -ForegroundColor Cyan
-git -C $ProjectDir status --short tools/cstimer-scramble
+Invoke-CheckedNativeCommand -FilePath 'git' -ArgumentList @(
+    '-C', $ProjectDir, 'status', '--short', 'tools/cstimer-scramble'
+)
 
 Write-Host "完成。改动未提交。" -ForegroundColor Green

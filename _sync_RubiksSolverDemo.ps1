@@ -7,21 +7,44 @@
 .PARAMETER UpstreamDir
     上游仓库路径（默认 D:\cube\RubiksSolverDemo）
 .PARAMETER LocalDir
-    本地项目路径（默认 D:\cube\cuberoot.me）
+    本地项目路径（默认本脚本所在仓库根）
 .PARAMETER DryRun
     只预览变更，不实际写入文件
+.PARAMETER RepoRoot
+    显式 cuberoot.me 仓库根；保留 LocalDir 作为旧参数别名。
+.PARAMETER ValidateOnly
+    只读校验仓库和脚本内部依赖后退出。
 #>
 param(
     [string]$UpstreamDir = "D:\cube\RubiksSolverDemo",
-    [string]$LocalDir = "D:\cube\cuberoot.me",
-    [switch]$DryRun
+    [string]$LocalDir = $PSScriptRoot,
+    [switch]$DryRun,
+    [string]$RepoRoot,
+    [switch]$ValidateOnly
 )
 
 $ErrorActionPreference = "Stop"
-$syncDir = Join-Path $LocalDir ".sync"
-
 # NOTE: 引入公共工具函数（Sync-FileIfChanged / Sync-Directory / Get-GaInlineCode / Read-Utf8File / Write-Utf8File）
-. (Join-Path $syncDir "sync_utils.ps1")
+$syncBootstrapRoot = if ($RepoRoot) { [IO.Path]::GetFullPath($RepoRoot) } else { [IO.Path]::GetFullPath($LocalDir) }
+. (Join-Path $syncBootstrapRoot '.sync\sync_utils.ps1')
+$LocalDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $LocalDir -ScriptRoot $PSScriptRoot
+$syncDir = Join-Path $LocalDir '.sync'
+Assert-SyncInternalFiles -RepoRoot $LocalDir -RelativePaths @(
+    '_sync_RubiksSolverDemo.ps1'
+    '.sync/sync_utils.ps1'
+    '.sync/page_config.json'
+    '.sync/menu_template.html'
+) -PowerShellScripts @('_sync_RubiksSolverDemo.ps1')
+if ($ValidateOnly)
+{
+    Write-Host "RubiksSolverDemo 同步脚本校验通过：$LocalDir" -ForegroundColor Green
+    return
+}
+
+if (-not (Test-Path -LiteralPath (Join-Path $UpstreamDir '.git')))
+{
+    throw "$UpstreamDir 不是 RubiksSolverDemo clone"
+}
 
 # ===== 加载配置 =====
 $config = Get-Content (Join-Path $syncDir "page_config.json") -Raw | ConvertFrom-Json
