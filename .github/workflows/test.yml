@@ -1,5 +1,5 @@
 # 前端测试 — vitest 单元 + 算法回归
-# 触发：PR 打开/更新,或推 main 时源码、架构文档、nginx 契约或相关 workflow 有改动
+# 触发：PR 打开/更新,或推 main 时源码、同步脚本、架构文档、nginx 契约或相关 workflow 有改动
 name: Test
 
 on:
@@ -10,6 +10,15 @@ on:
       - '!core/packages/platform/**'
       - 'docs/platform-capability-manifest.json'
       - 'docs/platform-unification-plan.md'
+      - 'sync_upstream.ps1'
+      - '_sync_blddb.ps1'
+      - '_sync_cstimer.ps1'
+      - '_sync_cstimer_scramble.ps1'
+      - '_sync_recordranks.ps1'
+      - '_sync_RubiksSolverDemo.ps1'
+      - 'sync_alg_trainers.ps1'
+      - '.sync/**'
+      - 'scripts/upstream/**'
       - 'ops/nginx/**'
       - '.github/workflows/deploy_core.yml'
       - '.github/workflows/deploy_next.yml'
@@ -21,6 +30,15 @@ on:
       - '!core/packages/platform/**'
       - 'docs/platform-capability-manifest.json'
       - 'docs/platform-unification-plan.md'
+      - 'sync_upstream.ps1'
+      - '_sync_blddb.ps1'
+      - '_sync_cstimer.ps1'
+      - '_sync_cstimer_scramble.ps1'
+      - '_sync_recordranks.ps1'
+      - '_sync_RubiksSolverDemo.ps1'
+      - 'sync_alg_trainers.ps1'
+      - '.sync/**'
+      - 'scripts/upstream/**'
       - 'ops/nginx/**'
       - '.github/workflows/deploy_core.yml'
       - '.github/workflows/deploy_next.yml'
@@ -72,6 +90,15 @@ jobs:
             /core/
             /docs/platform-capability-manifest.json
             /docs/platform-unification-plan.md
+            /sync_upstream.ps1
+            /_sync_blddb.ps1
+            /_sync_cstimer.ps1
+            /_sync_cstimer_scramble.ps1
+            /_sync_recordranks.ps1
+            /_sync_RubiksSolverDemo.ps1
+            /sync_alg_trainers.ps1
+            /.sync/
+            /scripts/upstream/
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
             /tools/cstimer-scramble/
@@ -97,6 +124,9 @@ jobs:
             # scramble_exact_dist.test.ts 拿它当「WCA 那套菜单」的真源逐项比对(420KB)。
             /stats/scramble/distribution.json
           filter: blob:none
+
+      - name: Verify upstream sync PowerShell contract
+        run: pwsh -NoProfile -File ./scripts/upstream/tests/upstream-sync-contract.ps1
 
       - uses: pnpm/action-setup@v6
         with:
