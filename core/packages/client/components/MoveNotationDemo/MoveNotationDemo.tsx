@@ -28,6 +28,7 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
   const [selectedMove, setSelectedMove] = useState(moves[0]?.move ?? '');
   const [playRequest, setPlayRequest] = useState(0);
   const selected = moves.find(option => option.move === selectedMove) ?? moves[0];
+  const hasAliases = moves.some(option => option.symbol != null);
   const groupCounts = new Map<string, number>();
   for (const option of moves) {
     const group = notationMoveGroup(option.move);
@@ -51,6 +52,13 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
       </div>
 
       <div className="move-notation-options alg-player-list-options" aria-label={t('选择要演示的记号', 'Choose a move to demonstrate')}>
+        {hasAliases && (
+          <div className="move-notation-columns">
+            <span>{t('标准', 'Standard')}</span>
+            <span>{t('紧凑', 'Compact')}</span>
+            <span>{t('傻瓜', 'Foolproof')}</span>
+          </div>
+        )}
         {moves.map((option, index) => {
           const active = option.move === selected.move;
           const group = notationMoveGroup(option.move);

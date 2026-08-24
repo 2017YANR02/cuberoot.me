@@ -31,7 +31,6 @@ import {
 import { eventDisplayName } from '@/lib/wca-events';
 import '@/components/NotationGuide/notation-guide.css';
 
-const MODE_EXAMPLES = ['R', "U'", 'Rw', 'F2', "U2'", 'R3', "R3'", 'x', 'E'];
 const NOTATION_PUZZLES = ['333', 'minx', 'pyram', 'skewb', 'sq1', 'clock', 'fto'] as const;
 type NotationPuzzle = (typeof NOTATION_PUZZLES)[number];
 
@@ -120,34 +119,6 @@ export default function NotationPage() {
           </p>
           <div className="alg-notation-demo-section">
             <MoveNotationDemo puzzle="3x3" moves={compactDemoOptions()} variant="compact" />
-          </div>
-
-          <div className="alg-notation-modes">
-            <section aria-labelledby="compact-rule-title">
-              <h3 id="compact-rule-title">{t('紧凑', 'Compact')}</h3>
-              <p>{t(
-                '顺转不加符号，逆转加撇号，180度加 2。',
-                'No suffix for clockwise, a prime for counter-clockwise, and 2 for 180 degrees.',
-              )}</p>
-              <div className="alg-notation-examples">
-                {MODE_EXAMPLES.map(alg => (
-                  <span key={alg}><code>{alg}</code><b>→</b><strong>{formatAlgNotation(alg, 'zh-compact')}</strong></span>
-                ))}
-              </div>
-            </section>
-
-            <section aria-labelledby="foolproof-rule-title">
-              <h3 id="foolproof-rule-title">{t('傻瓜', 'Foolproof')}</h3>
-              <p>{t(
-                '直接写出面、层、方向和角度；面转、宽层、中层与整体转体使用同一套说明。',
-                'Write the face, layer, direction, and angle in full; face, wide, slice, and rotation moves use one description system.',
-              )}</p>
-              <div className="alg-notation-long-examples">
-                {MODE_EXAMPLES.map(alg => (
-                  <span key={alg}><code>{alg}</code><b>→</b><strong>{formatAlgNotation(alg, 'dumb')}</strong></span>
-                ))}
-              </div>
-            </section>
           </div>
 
           <h3 className="notation-subheading">{t('大方块扩展', 'Big-cube extensions')}</h3>

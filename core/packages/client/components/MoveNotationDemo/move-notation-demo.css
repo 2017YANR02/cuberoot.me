@@ -13,6 +13,21 @@
   scrollbar-gutter: stable;
 }
 
+.move-notation-columns {
+  display: grid;
+  grid-template-columns: 38px 49px minmax(0, 1fr);
+  gap: 5px;
+  padding-bottom: 5px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.move-notation-columns span:last-child {
+  padding-left: 3px;
+}
+
 .move-notation-option {
   display: flex;
   gap: 8px;
