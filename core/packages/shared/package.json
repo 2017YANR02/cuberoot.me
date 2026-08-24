@@ -28,6 +28,10 @@
       "node": "./dist/alg_notation.js",
       "default": "./src/alg_notation.ts"
     },
+    "./alg-transform": {
+      "node": "./dist/alg_transform.js",
+      "default": "./src/alg_transform.ts"
+    },
     "./alg-mirror": {
       "node": "./dist/alg_mirror.js",
       "default": "./src/alg_mirror.ts"
@@ -144,7 +148,11 @@
     "./smart-cube/gan-v3": "./src/smart_cube/gan_v3.ts",
     "./smart-cube/gan-v4": "./src/smart_cube/gan_v4.ts",
     "./smart-cube/relay": "./src/smart_cube/relay.ts",
-    "./data/*.json": "./data/*.json"
+    "./data/oll_scrambles.json": "./data/oll_scrambles.json",
+    "./data/oll.json": "./data/oll.json",
+    "./data/pll.json": "./data/pll.json",
+    "./data/zbll.json": "./data/zbll.json",
+    "./data/zbls.json": "./data/zbls.json"
   },
   "scripts": {
     "build": "tsc -b",

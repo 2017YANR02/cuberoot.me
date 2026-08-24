@@ -1,6 +1,6 @@
 /**
  * Phase 4 本地验收(PLAN-sr-retirement):engine_render 渲 4 拼图 × solved/alg,
- * 落盘 SVG 到 client/.tmp/png/engine-render/ 供肉眼对照。
+ * 落盘 SVG 到仓库根 `.tmp/png/engine-render/` 供肉眼对照。
  *
  *   pnpm -F @cuberoot/server exec tsx src/tools/engine_render_smoke.ts
  *
@@ -8,10 +8,10 @@
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
-import { renderEngineIsoSVG } from '../routes/engine_render.js';
+import { renderPuzzleIsoSvg } from '@cuberoot/puzzle-render-core/iso-svg';
 
 // cwd 基准(从 server 包目录跑;esbuild bundle 后 import.meta.url 会变位,别用它)。
-const OUT = path.resolve(process.cwd(), '../client/.tmp/png/engine-render');
+const OUT = path.resolve(process.cwd(), '../../../.tmp/png/engine-render');
 mkdirSync(OUT, { recursive: true });
 
 const CASES: Array<[string, 'sq1' | 'megaminx' | 'pyraminx' | 'skewb', string]> = [
@@ -28,7 +28,7 @@ const CASES: Array<[string, 'sq1' | 'megaminx' | 'pyraminx' | 'skewb', string]> 
 let pass = 0;
 for (const [name, puzzle, alg] of CASES) {
   const t0 = performance.now();
-  const svg = renderEngineIsoSVG(puzzle, alg, undefined, 256);
+  const svg = renderPuzzleIsoSvg(puzzle, alg, undefined, 256);
   const ms = (performance.now() - t0).toFixed(0);
   if (!svg || !svg.includes('<svg')) {
     console.log(`FAIL ${name} -> ${svg === null ? 'null' : 'no <svg>'}`);

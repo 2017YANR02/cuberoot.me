@@ -11,9 +11,8 @@
  *
  * WHY A PLAIN FUNCTION, NOT A HOOK:
  *   - hooks/ is a closed directory — every export there must be registered in
- *     the /dev catalog and is React-only. This has to stay callable from the
- *     non-React path too (components/EnginePuzzleSVG.tsx builds a shared World
- *     at module scope, outside any component).
+ *     the /dev catalog and is React-only. This lifecycle is also useful to
+ *     imperative non-React embedders.
  *   - The lifecycle is imperative and effect-shaped anyway; a hook would only
  *     add a ref dance around it.
  *
@@ -22,12 +21,9 @@
  * through `await import('@/components/sim-embed/mountSimWorld')` — which is
  * exactly what every existing embed already does with three itself.
  *
- * NOTE (2026-07-24): shipped as an extraction only. The four existing embeds —
- * components/recon/ReconPlayerBase.tsx, app/[lang]/scramble/solver/
- * _Interactive3DCube.tsx, components/PllPerformerOverlay.tsx and
- * components/EnginePuzzleSVG.tsx — still carry their own copies. Migrating them
- * one at a time is follow-up work, kept separate so a regression in any of them
- * can't be blamed on this file.
+ * NOTE (2026-08-23): interactive WebGL embedders share this lifecycle.
+ * EnginePuzzleSVG is not an embedder: it calls the headless SVG renderer from
+ * @cuberoot/puzzle-render-core and owns no World/render lifecycle.
  */
 
 import * as THREE from 'three';

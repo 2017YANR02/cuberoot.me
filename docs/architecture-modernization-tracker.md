@@ -4,7 +4,7 @@
 
 Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59`，工作树无未提交改动；本批文档、测试守卫及跟踪文件自身造成的前进不视为基线漂移。每个后续实施批次开始前仍必须重新记录当时的 `HEAD` 和工作树重叠情况。
 
-状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1 已提交并发布；Batch 2 的依赖基线、候选清单和“只拦新增违规”机器守卫已以 `b52d27a514`、`5bca2cbdac` 提交并发布，本地验证、独立复审、Test、Deploy Next、Deploy Core 和线上 smoke 均通过。BND-04 仍待下一个独立 Codex 会话的项目 Hook 宿主实触发，BND-05 仍待公开 subpath 运行时属性登记；两项都不因本批发布而提前标记完成。本批不移动目录、不改业务运行时。
+状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役，归档资产观察至少持续至 2026-09-21。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 已完成本地实现、三路独立复审、真实 CubeOpt 制品/daemon smoke 和不含 Client 源码的 Server bundle 隔离路由 smoke：四拼图无头 SVG 已收口到窄共享包，Server 已消除 Client 源码与 public 资产读取，CubeOpt 已改为 API 自有可校验原子制品，workflow 触发按真实 workspace 依赖闭包收窄；尚未提交发布，因此 BND-02/03/06 与 PKG-02 继续保持进行中，必须等真实 Test、Deploy Next、Deploy Core 和生产 smoke 后才能关闭。BND-04 仍待下一个独立 Codex 会话的项目 Hook 宿主实触发，BND-05 仍待公开 subpath 运行时属性登记。
 
 > 状态校正：2026-08-22 重新打开的产品与数据迁移已按 [Platform 主站完整迁移跟踪](./platform-product-migration-tracker.md) 完成 P0-P8。P9 是迁移完成后的主站产品体验改版，不恢复独立 Platform app，也不改变本架构方案的长期边界。Batch 1 只改善入口、状态和生成物可发现性；后续源码实施仍须刷新依赖基线、完成新的独立复审并取得用户授权。
 
@@ -148,12 +148,12 @@ API     ─X─> Web 源码或 Web public
 
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
-| BND-01 | 生成真实系统依赖基线 | `完成` | 已登记 326 个精确旧债指纹、342 次出现和 15 条人工契约，覆盖静态 import、动态加载、路径读取、构建复制、非 workspace 原生工具、子进程、大表、环境变量覆盖和部署目标；独立复审 PASS |
-| BND-02 | 消除 API 对 Web 源码的 import | `待授权` | `packages/server` 不再 import `packages/client` 源文件，相关测试和部署通过 |
-| BND-03 | 消除 API 对 Web public 的运行时读取 | `待授权` | 资产归 API、自有构建产物或合格共享包；从真实部署产物启用功能并执行一次 daemon 请求，Web 目录不存在时仍可用 |
-| BND-04 | 按边类型增加跨 app 依赖守卫 | `进行中` | runtime、build、test、artifact 和 subprocess baseline 已进入 CI，新增和重复违规会失败、旧债减少可通过；write adapter 已实测，项目 Hook 因当前宿主不热加载配置，仍待下一个独立 Codex 会话实触发 |
+| BND-01 | 生成真实系统依赖基线 | `完成` | 当前登记 319 个精确旧债指纹、335 次出现和 13 条人工契约，覆盖静态 import、动态加载、路径读取、构建复制、非 workspace 原生工具、子进程、大表、环境变量覆盖和部署目标；Batch 3 相对旧基线净消除 7 个身份并经独立逐项复核 |
+| BND-02 | 消除 API 对 Web 源码的 import | `进行中` | 本地源码边与 Server bundle 已通过；仅复制 `dist/server.bundle.js` 到不含 Client 源码的隔离目录后，健康检查及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 路由均返回 200 和真实 SVG；待提交发布、Deploy Core 与生产四拼图路由 smoke 后关闭 |
+| BND-03 | 消除 API 对 Web public 的运行时读取 | `进行中` | API 自有 CubeOpt manifest/校验和/原子晋级已用 972,840,960 字节真实表和 wasm/mjs 制品完成 prepare、promote、verify；真实 daemon 就绪并通过 `R` 的 1 HTM 请求；待真实部署制品清单及 `CUBEOPT_SOLVE_ENABLED=1` 的生产 manager 请求后关闭 |
+| BND-04 | 按边类型增加跨 app 依赖守卫 | `进行中` | runtime、build、test、artifact 和 subprocess baseline 已进入 CI；任何新增、重复或陈旧基线都会失败，旧债减少必须经过审核并显式刷新 manifest；write adapter 已实测，项目 Hook 仍待下一个独立 Codex 会话宿主实触发 |
 | BND-05 | 收口 package 公开 exports | `进行中` | 已冻结 `@cuberoot/shared` 裸根新增并按任意 workspace package 的 `exports` 拦私有 deep import；公开 subpath 运行时属性尚未全部登记，未来无 `exports["."]` 的 package 还须增加裸根拒绝验收 |
-| BND-06 | 收窄部署触发边界 | `待授权` | 纯 Web、Mobile、小程序变更不再误触发 API 部署；shared、server 与真实依赖变化仍能触发 |
+| BND-06 | 收窄部署触发边界 | `进行中` | Test 的 push/PR 与 Deploy Core/Next 已从 workspace package.json 依赖递归生成精确路径矩阵，本地契约测试通过，未来新增的直接或传递 workspace 依赖会自动进入闭包；待推送后用真实 workflow run 证明触发与排除两侧 |
 
 ### C. 多端 API 与领域契约
 
@@ -173,7 +173,7 @@ API     ─X─> Web 源码或 Web public
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
 | PKG-01 | 形成候选模块清单 | `完成` | 每项已列出消费者、边界信号、运行时、依赖闭包、测试和不提取的替代方案；清单见 [`architecture-package-candidates.md`](architecture-package-candidates.md)，独立复审 PASS |
-| PKG-02 | 优先提取纯记号、状态、验证或格式化逻辑 | `待授权` | 只处理满足第 7 节门槛的模块，一次一个领域 |
+| PKG-02 | 优先提取纯记号、状态、验证或格式化逻辑 | `进行中（仅 Batch 3 最小切片）` | 本地已提取 `shared/alg-transform` 与四拼图窄无头 `puzzle-render-core`，未搬运 DOM、Worker 或交互层；待发布验证后关闭本切片，后续候选仍逐域审核 |
 | PKG-03 | UI 共享采用显式例外 | `待授权` | 只有设计系统和交互契约一致时共享 React UI；小程序不套 React DOM 抽象 |
 
 ### E. 根目录 PowerShell 脚本
@@ -209,7 +209,7 @@ G 阶段不再阻塞架构规划。RET-01/03 的完成只代表运行责任已�
 
 ## 9. 推荐实施批次
 
-批次 1 已完成；批次 2 已获得用户授权，基于 `f6eebfcec9f218ba770504b003215dcf196815c6` 的工作树快照实施，并以 `b52d27a514`、`5bca2cbdac` 发布。实施期间同步了无重叠的 WCA 统计和文档提交，未改变扫描范围；批次 3 至 7 仍未授权。Batch 2 未扩张成业务源码、目录或部署改造。
+批次 1、2 已完成。用户随后明确要求提交并推送现有改动、继续渐进式重构并使用 Agent 复审，因此批次 3 已授权，基于 `44db0d1da7bc8515fc6221624f0aca6c4b00b0fd` 的干净基线执行；批次 4 至 7 仍按顺序推进，不以本授权扩大 Batch 3 范围。Batch 2 未扩张成业务源码、目录或部署改造。
 
 ### 批次 1：文档与入口
 
@@ -230,6 +230,8 @@ G 阶段不再阻塞架构规划。RET-01/03 的完成只代表运行责任已�
 范围：BND-02、BND-03、BND-06，以及仅为这三项所必需的最小 PKG-02 切片。
 
 特点：分别处理源码 import、运行时资产和部署触发；每一项都要求 API 在没有 Web 目录时从真实部署产物验证，不借机提取万能 package。
+
+实施前审计结论：BND-02 只抽取 Server 实际使用的 SQ1、Megaminx、Pyraminx、Skewb 四种拼图无头 SVG 边界，完整 Web `World`、DOM、Worker、交互控制与其余拼图继续归 Client；`invertAlg` 保留 cubing.js 的交换子、共轭及非法输入语义并进入 Shared 明确 subpath。BND-03 采用带 manifest、校验和与原子晋级的 API 自有 CubeOpt 资产束，不把大表塞进常规部署。BND-06 必须在前两项真实依赖移除后才收窄，并用代表路径矩阵验证触发与不触发两侧。
 
 ### 批次 4：多端契约
 
@@ -303,6 +305,12 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | Batch 2 package 与多端目录判断 | `batch1_generated_ai` | `复审 PASS` | 不建 `webapp/`、不拆仓、不立即迁 `apps/*`；Clock 为首个条件候选，bicube/sia222 先拆纯核心与 Web loader；当前 blocker 和 major 均为 0 |
 | Batch 2 Hook 与 CI 闭环 | `batch1_doc_audit` | `复审 PARTIAL` | 共用扫描器、write adapter、CI 和定向测试通过；当前 Codex 宿主不会热加载新写入的 Hook 配置，因此不能在同一会话宣称项目级实触发完成 |
 | Batch 2 项目 Hook 宿主探针 | `batch2_hook_probe` | `待新会话复验` | 同一线程树的独立 Agent 仍未加载新配置，违规探针未被宿主 deny；探针已移入回收站且工作树无残留，下一个独立 Codex 会话必须真实触发后才能关闭 BND-04 |
+| Batch 3 Server→Client 源码闭包 | `batch1_baseline` | `实施前 HOLD` | 4 条直接源码边仍在；完整 renderer 闭包含 87 个 Client 文件和 DOM/Worker 分支，必须改为四拼图窄无头边界，不得整体搬运 Web `World` |
+| Batch 3 CubeOpt 运行时资产 | `batch1_generated_ai` | `实施前 HOLD` | 当前 daemon 仍默认读取 Web public 与本机大表，且 opt5/opt6 声明漂移；必须建立 API 自有、manifest 驱动、可校验和原子晋级的资产束并完成真实请求 smoke |
+| Batch 3 部署触发与 Hook 探针 | `batch2_hook_probe` | `实施前 HOLD` | Deploy Core 需在 BND-02/03 后按真实输入收窄并配路径矩阵；当前新会话 Agent 仍未被项目 Hook 宿主 deny，BND-04 继续保持进行中 |
+| Batch 3 共享边界实施后复核 | `review_shared_boundaries` | `本地 PASS` | Server→Client 源码边已清零；Client/Server 复用 `puzzle-render-core/iso-svg`，旧 Client 路径均为薄 re-export；package build、Server bundle、类型检查、Node 四拼图 smoke 与 19 项定向测试通过。通用 `PuzzleImage` 的显式 sr fallback 仍属 Phase 5，不误记为全仓 renderer 已唯一化 |
+| Batch 3 CubeOpt 与部署原子性复核 | `review_cubeopt_artifacts` | `本地 PASS，发布待验` | prepare/promote/verify 共用可导入实现，不以测试子进程制造新债；release symlink 原子切换、失败回滚、boot/solve 独立 timeout、严格 smoke 与 fsync 语义通过 23 项定向测试。随后用真实 opt5 大表与 wasm/mjs 制品完成 prepare/promote/verify 和 daemon 求解；尚缺生产部署制品清单与启用状态下的 manager smoke |
+| Batch 3 workflow 与 tracker 复核 | `review_workflows_tracker` | `本地 PASS，发布待验` | workflow 契约 6/6、架构定向合计 14/14、边界审计 319/335/13 和 diff-check 通过；Test 两事件、nginx 触发、Platform 排除、workspace 依赖推导与 stack 已按实际输入核对。人工契约的 file+substring 仅作 reviewer evidence，不代替运行证明 |
 
 审核要求：
 
@@ -312,12 +320,15 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 4. 不得因追求目录标准化而忽略现有 workflow、构建产物和部署路径。
 5. 审核只读，不编辑文件；由主 Agent 统一合并结论。
 
-2026-08-21 的三名 Reviewer 曾确认当时的总体架构路线成立；随后 Platform 大迁移显著改变了依赖图，所以旧 PASS 只保留为历史审查证据，不能直接授权当前实施。2026-08-23 的 Batch 1 先做三路只读初审，再做变更后的定点复审：DOC-01 至 DOC-04 均 PASS，DOC-05 因三类已公开的不可复现缺口保持 PARTIAL。Batch 2 再以当前 workspace、workflow、exports、真实路径和子进程调用重建基线；机器守卫与 package 方案已复审通过，项目 Hook 的宿主级验收因配置不热加载明确留到下一独立会话。
+2026-08-21 的三名 Reviewer 曾确认当时的总体架构路线成立；随后 Platform 大迁移显著改变了依赖图，所以旧 PASS 只保留为历史审查证据，不能直接授权当前实施。2026-08-23 的 Batch 1 先做三路只读初审，再做变更后的定点复审：DOC-01 至 DOC-04 均 PASS，DOC-05 因三类已公开的不可复现缺口保持 PARTIAL。Batch 2 再以当前 workspace、workflow、exports、真实路径和子进程调用重建基线；机器守卫与 package 方案已复审通过，项目 Hook 的宿主级验收因配置不热加载明确留到下一独立会话。Batch 3 实施后再由三路 Agent 分别审核共享源码边界、CubeOpt 制品与原子部署、workflow 与跟踪一致性；当前本地阻断项已清零，但发布、生产功能和 BND-04/05、DOC-05 的保留项不因本地 PASS 提前关闭。
 
 ## 13. 变更记录
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-23 | Batch 3 发布前真实制品与隔离产物验收通过；临时制品测试目录已移入回收站 | CubeOpt 真实 972,840,960 字节表加 wasm/mjs 完成 immutable prepare/promote/verify，daemon 返回 `R'`（1 HTM）；仅含 `dist/server.bundle.js` 的隔离目录中 `/v1/health` 与四拼图 iso SVG 均为 200，未读取 Client 源码 |
+| 2026-08-23 | Batch 3 本地实现完成并经三路独立复核；保持渐进式交付，未把 SR Phase 5 或 Batch 4-7 混入本提交，也未提前标记发布完成 | 边界审计 319 identities/335 occurrences/13 contracts；workflow 与架构定向测试、四拼图 Node smoke、package/Server bundle、Client/Server typecheck、CubeOpt 23 项定向测试均通过。提交、Test/Deploy 实跑与生产 smoke 仍待执行 |
+| 2026-08-23 | 用户明确要求提交并推送现有改动后继续渐进式重构；Batch 3 以 `44db0d1da7bc8515fc6221624f0aca6c4b00b0fd` 为干净基线启动，三路只读审计均给出带前置条件的 HOLD | Server→Client 完整 import 闭包、CubeOpt daemon/资产/部署闭包、Deploy Core/Next 路径与项目 Hook 宿主实触发审计；本行只登记授权与约束，不把实施前 HOLD 记为完成 |
 | 2026-08-23 | Batch 2 以 `b52d27a514`、`5bca2cbdac` 提交并发布；建立依赖旧债多重集、JSON Schema、人工产物契约、共用 Hook/CI 扫描器与 package 候选清单，不移动源码、不改业务运行时 | `audit:boundaries` 通过：326 个精确旧债指纹、342 次出现、15 条人工契约；定向 Vitest 3 文件 29 测试、client typecheck、recon ground-truth 4 测试和 diff-check 通过；两路定点复审 PASS。首次 Test `32673128886` 暴露 sparse checkout 未检出 workflow 契约证据，修复后 Test `32673340650`、Deploy Next `32673128910`、Deploy Core `32673128957` 全绿；主页、`/zh/dev/guards`、`/zh/platform`、`/v1/health` 线上 smoke 均为 200，守卫页展示 326/342 基线；Hook 宿主实触发留待新会话 |
 | 2026-08-23 | Batch 1 以 `ebf0240cb0`、`dc4f3e8d50` 提交并推送；系统地图、README/局部入口、文档状态、Platform 退役墓碑和生成物登记落地 | 三路变更后复审：DOC-01/02 PASS、DOC-03/04 PASS、DOC-05 PARTIAL；PG facts 实际重建 1/1、定向测试 7/7、client typecheck、LF 与 diff-check 通过；Test `32668704812`、Deploy Next `32668704815`、Deploy Core `32668704776` 全绿；主站、`/zh/platform`、`/v1/health` 线上 smoke 通过 |
 | 2026-08-23 | 用户授权 Batch 1；以 `3c6b7a8b838697e4adfc04156ca5769c3ed8da59` 为干净基线开始系统地图、README、文档状态、Platform 墓碑和生成物登记 | `batch1_baseline`、`batch1_doc_audit`、`batch1_generated_ai` 三路只读初审 |

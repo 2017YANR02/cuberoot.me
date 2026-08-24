@@ -93,6 +93,9 @@ importers:
       '@codemirror/view':
         specifier: ^6.43.0
         version: 6.43.0
+      '@cuberoot/puzzle-render-core':
+        specifier: workspace:*
+        version: link:../puzzle-render-core
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../shared
@@ -490,6 +493,25 @@ importers:
         specifier: ^4.1.6
         version: 4.1.6(@types/node@25.5.0)(happy-dom@20.11.2)(jsdom@30.0.1)(vite@8.0.1(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
 
+  packages/puzzle-render-core:
+    dependencies:
+      '@cuberoot/shared':
+        specifier: workspace:*
+        version: link:../shared
+      three:
+        specifier: ^0.183.2
+        version: 0.183.2
+    devDependencies:
+      '@types/three':
+        specifier: ^0.183.1
+        version: 0.183.1
+      esbuild:
+        specifier: ^0.27.4
+        version: 0.27.4
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
   packages/scramble-stats-build:
     dependencies:
       '@cuberoot/shared':
@@ -514,6 +536,9 @@ importers:
 
   packages/server:
     dependencies:
+      '@cuberoot/puzzle-render-core':
+        specifier: workspace:*
+        version: link:../puzzle-render-core
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../shared

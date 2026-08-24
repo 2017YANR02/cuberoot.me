@@ -1,5 +1,5 @@
 # 后端部署（云服务器 Hono API）
-# 仅当 core/ 源码有变更时触发
+# 仅当 API 产物的真实输入有变更时触发
 # 构建 server bundle → rsync 到 云服务器 → apply_migrations + pm2 reload
 name: Deploy Core
 
@@ -8,13 +8,25 @@ on:
   push:
     branches: [main]
     paths:
-      - 'core/**'
-      - '!core/packages/platform/**'
-      - '!_assets/**'
+      - 'core/packages/server/**'
+      - 'core/packages/puzzle-render-core/**'
+      - 'core/packages/shared/**'
+      - 'core/packages/vendor-sr-puzzlegen/**'
+      - 'core/packages/visualcube/**'
+      - 'core/cube555-daemon/Daemon.java'
+      - 'core/package.json'
+      - 'core/pnpm-lock.yaml'
+      - 'core/pnpm-workspace.yaml'
+      - 'core/tsconfig.base.json'
+      - 'core/patches/**'
       - '.github/workflows/deploy_core.yml'
 
 permissions:
   contents: write
+
+concurrency:
+  group: deploy-core-production
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -45,23 +57,18 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
-      # @cuberoot/shared + @cuberoot/visualcube 必须在 server bundle 之前 build:
-      # server.bundle.js (esbuild --bundle) 走 @cuberoot/shared subpath + visualcube 的 node→dist/*.js 条件,
-      # 需要 dist/ 已存在。
+      # Node 条件 exports 指向 dist,必须在 server bundle 前全部 build。
       - name: Build shared deps
         working-directory: core
         run: |
           pnpm --filter @cuberoot/shared build
           pnpm --filter @cuberoot/visualcube build
           pnpm --filter @cuberoot/vendor-sr-puzzlegen build
+          pnpm --filter @cuberoot/puzzle-render-core build
 
       - name: Test server
         working-directory: core
         run: pnpm --filter @cuberoot/server test
-
-      - name: Verify Mini Program
-        working-directory: core
-        run: pnpm --filter @cuberoot/miniprogram check
 
       # esbuild --bundle 把 server src + 全部 deps (含写得烂的 sr-puzzlegen,
       # 无扩展名 ESM)打成单个 dist/server.bundle.js,Node 严格模式直接跑。
@@ -140,20 +147,46 @@ jobs:
 
       - name: Deploy server
         run: |
-          # bundle 自包含 → 只需要 scp 单文件 + sourcemap + migrations。
+          # bundle 自包含 → 每次发布写入独立 release；dist 只做稳定入口。
           # 旧 node_modules 树已退役;留在远端无害但下次清理可以删
           # (`ssh root@cuberoot 'rm -rf /root/core-api/node_modules'`)。
+          RELEASE_ID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA}"
+          STAGING_RELEASE="/root/core-api/releases/.${RELEASE_ID}.staging"
 
-          # 先确保远端目录存在
+          # 新版本先完整写入不可见 staging，绝不覆盖当前 dist。
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
-            'mkdir -p /root/core-api/dist'
+            "test ! -e '${STAGING_RELEASE}' && mkdir -p '${STAGING_RELEASE}/dist/cubeopt'"
 
           # server.bundle.js + sourcemap
           rsync -ltz --chmod=F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             core/packages/server/dist/server.bundle.js \
             core/packages/server/dist/server.bundle.js.map \
-            "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/dist/"
+            "root@${{ secrets.DEPLOY_HOST }}:${STAGING_RELEASE}/dist/"
+
+          # CubeOpt 子进程和生产管理器冒烟入口与主 bundle 同版本部署；大表由
+          # 独立、可校验的 API artifact store 管理，不进入常规 rsync。
+          rsync -ltz --chmod=F644 \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            core/packages/server/dist/cubeopt/solve-daemon.mjs \
+            core/packages/server/dist/cubeopt/verify.mjs \
+            core/packages/server/dist/cubeopt/smoke.mjs \
+            "root@${{ secrets.DEPLOY_HOST }}:${STAGING_RELEASE}/dist/cubeopt/"
+
+          # 在任何远端可变状态前校验 API-owned store。Node 负责读取 .env，
+          # 因而 quoted/unquoted 的启用值与实际 server 完全一致。
+          ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+            -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "root@${{ secrets.DEPLOY_HOST }}" bash -s -- "$STAGING_RELEASE" <<'CUBEOPT_PREFLIGHT'
+          set -euo pipefail
+          staging="$1"
+          cd /root/core-api
+          if node --env-file=.env -e 'process.exit(process.env.CUBEOPT_SOLVE_ENABLED === "1" ? 0 : 1)'; then
+            node --env-file=.env "$staging/dist/cubeopt/verify.mjs"
+          else
+            echo "CubeOpt disabled; artifact preflight skipped"
+          fi
+          CUBEOPT_PREFLIGHT
 
           # migrations/ — schema 改动放这里,apply_migrations.sh 自动跑没跑过的
           # 必须在 pm2 restart 之前!否则新代码部上去查不到列 → /api/* 全 500
@@ -177,11 +210,124 @@ jobs:
             "root@${{ secrets.DEPLOY_HOST }}" \
             '/usr/local/bin/apply_migrations.sh /root/core-api/migrations'
 
-          # pm2 reload — 给老 worker drain 时间再杀,比 restart 平滑;首次部署
-          # 走 fallback 直接 start。entry 现在固定 dist/server.bundle.js,不再
-          # 需要 delete + start 这种粗暴换 entry 的写法。
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
-            'cd /root/core-api && (pm2 reload core-api --update-env 2>/dev/null || pm2 start dist/server.bundle.js --name core-api --node-args="--env-file=.env") && pm2 save'
+          # 同一远端事务完成原子 symlink 切换 → reload → health/smoke。
+          # health 或 smoke 失败时先切回旧 release，再 reload 旧版本并让任务失败。
+          ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+            -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "root@${{ secrets.DEPLOY_HOST }}" bash -s -- "$RELEASE_ID" <<'REMOTE'
+          set -Eeuo pipefail
+          release_id="$1"
+          case "$release_id" in
+            ''|*[!0-9A-Fa-f_-]*) echo "ERROR: invalid release id"; exit 1 ;;
+          esac
+
+          root=/root/core-api
+          releases="$root/releases"
+          staging="$releases/.${release_id}.staging"
+          final="$releases/$release_id"
+          previous_dist=''
+          pending_link=''
+          legacy_moved=''
+          switched=0
+
+          reload_core() {
+            pm2 reload core-api --update-env 2>/dev/null || \
+              pm2 start dist/server.bundle.js --name core-api --node-args="--env-file=.env"
+          }
+
+          rollback() {
+            status=$?
+            trap - ERR
+            if [ -n "$pending_link" ] && [ -L "$pending_link" ]; then
+              unlink "$pending_link" || true
+            fi
+            if [ -n "$legacy_moved" ]; then
+              if [ ! -e dist ] && [ ! -L dist ] && mv "$legacy_moved" dist; then
+                echo "restored the pre-symlink dist directory"
+              else
+                echo "ERROR: one-time dist migration could not be reverted"
+              fi
+            fi
+            if [ "$switched" = 1 ] && [ -n "$previous_dist" ]; then
+              echo "ERROR: release validation failed; restoring previous dist"
+              rollback_link=".dist.rollback.${release_id}.$$"
+              ln -s "$previous_dist" "$rollback_link"
+              mv -Tf "$rollback_link" dist
+              if reload_core; then
+                pm2 save || true
+              else
+                echo "ERROR: previous release was restored but could not be reloaded"
+              fi
+            fi
+            exit "$status"
+          }
+          trap rollback ERR
+
+          cd "$root"
+          test -f "$staging/dist/server.bundle.js"
+          test -f "$staging/dist/cubeopt/verify.mjs"
+          test -f "$staging/dist/cubeopt/solve-daemon.mjs"
+          test -f "$staging/dist/cubeopt/smoke.mjs"
+          test ! -e "$final"
+
+          mv "$staging" "$final"
+
+          # One-time migration: preserve the old real dist directory as the
+          # rollback release. The running process remains alive during this
+          # bounded directory-to-symlink conversion.
+          if [ -L dist ]; then
+            previous_dist="$(readlink -f -- dist)"
+          elif [ -d dist ]; then
+            legacy_release="$releases/legacy-$(date -u +%Y%m%dT%H%M%SZ)-$$"
+            mkdir "$legacy_release"
+            pending_link=".dist.legacy.$$"
+            ln -s "$legacy_release/dist" "$pending_link"
+            mv dist "$legacy_release/dist"
+            legacy_moved="$legacy_release/dist"
+            mv -Tf "$pending_link" dist
+            pending_link=''
+            legacy_moved=''
+            previous_dist="$legacy_release/dist"
+          elif [ -e dist ]; then
+            echo "ERROR: dist exists but is neither a directory nor a symlink"
+            exit 1
+          else
+            echo "ERROR: current dist is missing; refusing a switch without rollback state"
+            exit 1
+          fi
+          test -f "$previous_dist/server.bundle.js"
+
+          chmod -R a-w "$final"
+
+          next_link=".dist.next.${release_id}.$$"
+          pending_link="$next_link"
+          ln -s "$final/dist" "$pending_link"
+          mv -Tf "$pending_link" dist
+          pending_link=''
+          switched=1
+
+          reload_core
+
+          healthy=0
+          for attempt in 1 2 3 4 5 6; do
+            if curl -fsS http://127.0.0.1:3001/v1/health | node -e 'let s="";process.stdin.on("data",c=>s+=c).on("end",()=>{const x=JSON.parse(s);process.exit(x.status==="ok"?0:1)})'; then
+              healthy=1
+              break
+            fi
+            sleep 2
+          done
+          test "$healthy" = 1 || { echo "ERROR: core API health check failed"; false; }
+
+          if node --env-file=.env -e 'process.exit(process.env.CUBEOPT_SOLVE_ENABLED === "1" ? 0 : 1)'; then
+            node --env-file=.env dist/cubeopt/smoke.mjs --boot-timeout-ms 300000 --solve-timeout-ms 180000
+          else
+            echo "CubeOpt disabled; production manager smoke skipped"
+          fi
+
+          pm2 save
+          trap - ERR
+          echo "activated release $release_id"
+          REMOTE
 
           # nginx api_cache 24h TTL,server schema/SQL 一改老响应顽固活着 → 部署后清空
           # (memory: reference_nginx_proxy_cache.md)

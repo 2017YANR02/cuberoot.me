@@ -270,7 +270,7 @@ loadNemesizerDataset().catch(err => {
   console.error('[nemesizer] startup load failed, routes will keep returning 503:', err);
 });
 
-// cube555 5x5 daemon is now LAZY (was boot-spawned). It and the cube48 opt6 table
+// cube555 5x5 daemon is now LAZY (was boot-spawned). It and the CubeOpt table
 // are the two heavy in-process tenants on the small box; the memory arbiter
 // (mem-arbiter.ts) keeps only one resident, so we spawn cube555 on the first
 // /v1/scramble/555-rs request and let it idle-unload. First request pays the JVM
