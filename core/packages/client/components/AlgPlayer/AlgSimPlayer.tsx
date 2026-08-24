@@ -11,9 +11,8 @@
  *    `twister.setup(exp)`(先复位再整体重放,瞬时)和 `twister.push(exp)`(排队播动画)。
  *    所以 NxN 前后单步用 push 播动画,其余(拖进度条 / 首尾跳转 / 换公式)一律
  *    整条 setup 重来;不支持倒播的拼图后退也走 setup。同一套取舍见 `/sim` 播放器。
- * 2. **拖拽只转视角,不转层**。`paintMode` + `dragEmpty='view'` 把每一次拖都判成看视角,
- *    再配 `orbitSceneFree`(只转场景,不折成整体转体)—— 折成转体会改动魔方本身的状态,
- *    那是画板要的,预览不要。
+ * 2. **默认拖拽只转视角**。记号训练显式切到 `interactionMode='turn'` 时，才复用
+ *    `/sim` 的贴块选择和转层手势；空白处仍走 `orbitSceneFree` 调整视角。
  * 3. **转速是引擎的模块级全局**(`timing.frames`),用完必须还回去,否则会漏给整站其它嵌入点。
  *
  * 顶层遮罩(F2L 灰顶、ZBLS 只亮该看的那些)复用 `/sim` 自己的阶段遮罩,名字与 cubing.js
@@ -29,7 +28,7 @@ import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type Sq1Cube from '@/app/[lang]/sim/engine/sq1/Sq1Cube';
 import type { PuzzleKind } from '@/app/[lang]/sim/engine/world';
 import SimClockBoard from '@/components/sim-embed/SimClockBoard';
-import type { AlgPlayerControlMode, AlgPlayerHandle } from './AlgPlayer';
+import type { AlgPlayerControlMode, AlgPlayerHandle, AlgPlayerInteractionMode } from './AlgPlayer';
 import { pickStickering } from './stickering';
 import {
   resolvePlayerSetup,
@@ -54,6 +53,7 @@ export const NXN_ORDER: Partial<Record<AlgPlayerPuzzle, number>> = {
 const SIM_PUZZLE: Partial<Record<AlgPlayerPuzzle, PuzzleKind>> = {
   ...NXN_ORDER,
   sq1: 'sq1',
+  megaminx: 'megaminx',
   pyraminx: 'pyraminx',
   skewb: 'skewb',
   clock: 'clock',
@@ -65,20 +65,19 @@ type PreviewTwister = {
 };
 
 async function preloadEngine() {
-  const [embed, view, timingMod, stickering, toucherMod] = await Promise.all([
+  const [embed, interaction, timingMod, stickering, viewControls] = await Promise.all([
     import('@/components/sim-embed/mountSimWorld'),
-    import('@/app/[lang]/sim/engine/viewControls'),
+    import('@/components/sim-embed/attachEmbeddedSimInteraction'),
     import('@/app/[lang]/sim/engine/tweenTiming'),
     import('@/app/[lang]/sim/engine/nxn/stickering'),
-    import('@/app/[lang]/sim/Toucher'),
+    import('@/app/[lang]/sim/engine/viewControls'),
   ]);
   return {
     mountSimWorld: embed.mountSimWorld,
-    orbitSceneFree: view.orbitSceneFree,
-    ORBIT_K: view.ORBIT_K,
+    attachEmbeddedSimInteraction: interaction.attachEmbeddedSimInteraction,
     timing: timingMod.timing,
     stickeringMaskFn: stickering.stickeringMaskFn,
-    Toucher: toucherMod.default,
+    resetSceneView: viewControls.resetSceneView,
   };
 }
 
@@ -94,12 +93,14 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   playRequest?: number;
   loop?: boolean;
   controlMode?: AlgPlayerControlMode;
+  interactionMode?: AlgPlayerInteractionMode;
+  onUserMove?: (move: string) => void;
   moveDurationMs?: number;
   size?: number;
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
   fillPane?: boolean;
 }>(function AlgSimPlayer({
-  alg, puzzle, puzzleOrder, set, setup, orientation = '', startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false,
+  alg, puzzle, puzzleOrder, set, setup, orientation = '', startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', interactionMode = 'view', onUserMove, moveDurationMs, size = 260, fillPane = false,
 }, ref) {
   const t = useT();
   const canonicalPuzzleKind = SIM_PUZZLE[puzzle] ?? NXN_ORDER_DEFAULT;
@@ -172,7 +173,13 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   );
   useImperativeHandle(ref, () => ({ getPlayer: () => seekPlayer }), [seekPlayer]);
   const mountRef = useRef<SimMount | null>(null);
+  const resetViewRef = useRef<(() => void) | null>(null);
   const clockUserMoveRef = useRef<((action: string) => void) | null>(null);
+  const onUserMoveRef = useRef(onUserMove);
+  onUserMoveRef.current = onUserMove;
+  clockUserMoveRef.current = interactionMode === 'turn'
+    ? move => onUserMoveRef.current?.(move)
+    : null;
   const getWorld = useCallback(() => mountRef.current?.world ?? null, []);
   const orientationRef = useRef(orientation);
   orientationRef.current = orientation;
@@ -192,21 +199,24 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
 
   const mount = useCallback(async (host: HTMLElement) => {
     const {
-      mountSimWorld, orbitSceneFree, ORBIT_K, timing, stickeringMaskFn, Toucher,
+      mountSimWorld, attachEmbeddedSimInteraction, timing, stickeringMaskFn, resetSceneView,
     } = await preloadEngine();
 
     const m = mountSimWorld({ host, puzzle: puzzleKind, interactive: true });
     mountRef.current = m;
     const world = m.world;
     const cube = world.cube;
+    resetViewRef.current = () => {
+      resetSceneView(world);
+      m.invalidate();
+    };
 
-    // 拖 = 看视角。paintMode 关掉「拖层」那条路,dragEmpty 让空处拖也算看视角;
-    // orbitSceneFree 只转场景,不把超出的角度折成整体转体(那会改魔方状态)。
-    const toucher = new Toucher();
-    toucher.init(m.renderer.domElement, world.controller.touch);
-    world.controller.paintMode = true;
-    world.controller.dragEmpty = 'view';
-    world.controller.onOrbit = (dx, dy) => orbitSceneFree(world, dx, dy, ORBIT_K);
+    const detachInteraction = attachEmbeddedSimInteraction({
+      world,
+      dom: m.renderer.domElement,
+      mode: interactionMode,
+      onUserMove: move => onUserMoveRef.current?.(move),
+    });
 
     const order = typeof puzzleKind === 'number' ? puzzleKind : undefined;
     const name = puzzle === 'clock' ? undefined : pickStickering(puzzle, set, 'sim');
@@ -225,13 +235,16 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
 
     return () => {
       timing.frames = prevFrames;
-      toucher.destroy();
+      detachInteraction();
       m.dispose();
       mountRef.current = null;
+      resetViewRef.current = null;
       lastRef.current = null;
       instantStepRef.current = null;
     };
-  }, [puzzleKind, puzzle, set, previewTiming.frames]);
+  }, [puzzleKind, puzzle, set, previewTiming.frames, interactionMode]);
+
+  const resetView = useCallback(() => resetViewRef.current?.(), []);
 
   /** 菜单切换只重贴当前预览的颜色，不重建 world，也不改变 case 状态。 */
   useEffect(() => {
@@ -317,6 +330,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
         size={size}
         mount={mount}
         onReady={() => setReady(true)}
+        onResetView={resetView}
         busyLabel={t('正在加载魔方', 'Loading the cube')}
       >
         {puzzle === 'clock' && (
@@ -324,7 +338,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
             getWorld={getWorld}
             worldTick={ready ? 1 : 0}
             userMoveRef={clockUserMoveRef}
-            pointerTurns={false}
+            pointerTurns={interactionMode === 'turn'}
             showLockedMessage={false}
           />
         )}

@@ -12,7 +12,7 @@
  */
 import * as THREE from 'three';
 import type MegaminxCube from './MegaminxCube';
-import { FACE_NORMAL, CORNER_FACES, EDGE_FACES, type MegaMove } from './megaState';
+import { FACE_NORMAL, type MegaMove } from './megaState';
 import { scoreCornerTwist } from '../cuberDrag';
 
 export { applyPartial as megaApplyPartial, snapBack as megaSnapBack } from '../cuberDrag';
@@ -51,15 +51,13 @@ export function megaPickHit(
   while (obj && obj !== cube) {
     const d = obj.userData;
     if (typeof d?.megaCornerId === 'number') {
-      const slot = cube.state.cp.indexOf(d.megaCornerId as number);
-      return { point, candidates: [...CORNER_FACES[slot]] };
+      return { point, candidates: cube.cornerFaces(d.megaCornerId as number) };
     }
     if (typeof d?.megaEdgeId === 'number') {
-      const slot = cube.state.ep.indexOf(d.megaEdgeId as number);
-      return { point, candidates: [...EDGE_FACES[slot]] };
+      return { point, candidates: cube.edgeFaces(d.megaEdgeId as number) };
     }
     if (typeof d?.megaCenterFace === 'number') {
-      return { point, candidates: [d.megaCenterFace as number] };
+      return { point, candidates: [cube.centerFace(d.megaCenterFace as number)] };
     }
     obj = obj.parent;
   }
@@ -74,6 +72,34 @@ export interface MegaLivePlan {
   tangentY: number;
 }
 
+function resolveLiveForAxes(
+  cube: MegaminxCube,
+  hit: MegaPickHit,
+  axes: readonly number[],
+  deepForAxis: (face: number) => boolean,
+  scene: THREE.Scene, camera: THREE.Camera,
+  dxPx: number, dyPx: number, width: number, height: number,
+): MegaLivePlan | null {
+  scene.updateMatrixWorld();
+  const originWorld = new THREE.Vector3().setFromMatrixPosition(cube.matrixWorld);
+  const score = scoreCornerTwist(
+    axes,
+    (face) => {
+      const a = FACE_NORMAL[face];
+      return _axis.set(a[0], a[1], a[2]).normalize().transformDirection(scene.matrixWorld);
+    },
+    hit.point, originWorld, dxPx, dyPx, camera, width, height, 0.2,
+  );
+  if (!score) return null;
+  const dir = (score.dir * cube.turnSign[score.corner]) as 1 | -1;
+  const deep = deepForAxis(score.corner);
+  return {
+    move: { face: score.corner, dir, ...(deep ? { deep: true } : {}) },
+    tangentX: score.tangentX,
+    tangentY: score.tangentY,
+  };
+}
+
 /**
  * Resolve a pick + the screen drag vector (dx,dy in CSS px, y down) into the face move AND
  * the drag-aligned screen tangent (see cuberDrag.scoreCornerTwist). Null if no candidate
@@ -85,21 +111,13 @@ export function megaResolveLive(
   scene: THREE.Scene, camera: THREE.Camera,
   dxPx: number, dyPx: number, width: number, height: number,
 ): MegaLivePlan | null {
-  scene.updateMatrixWorld();
-  const originWorld = new THREE.Vector3().setFromMatrixPosition(cube.matrixWorld);
-  const score = scoreCornerTwist(
+  return resolveLiveForAxes(
+    cube,
+    hit,
     hit.candidates,
-    (face) => {
-      const a = FACE_NORMAL[face];
-      return _axis.set(a[0], a[1], a[2]).normalize().transformDirection(scene.matrixWorld);
-    },
-    hit.point, originWorld, dxPx, dyPx, camera, width, height, 0.2,
+    () => false,
+    scene, camera, dxPx, dyPx, width, height,
   );
-  if (!score) return null;
-  // score.dir is relative to +rotation about +faceNormal; map it to the engine's move.dir
-  // via the face's turn sense so the cube turns the way the user dragged.
-  const dir = (score.dir * cube.turnSign[score.corner]) as 1 | -1;
-  return { move: { face: score.corner, dir }, tangentX: score.tangentX, tangentY: score.tangentY };
 }
 
 /** Back-compat discrete-fire path: just the move (no live tracking). */
@@ -110,4 +128,36 @@ export function megaResolveMove(
   dxPx: number, dyPx: number, width: number, height: number,
 ): MegaMove | null {
   return megaResolveLive(cube, hit, scene, camera, dxPx, dyPx, width, height)?.move ?? null;
+}
+
+/**
+ * WCA Megaminx training exposes only U/U' plus the Pochmann R++/R-- and D++/D--
+ * turns. A sticker on the stationary U cap selects shallow U; any other sticker can
+ * select deep D. Deep R is available everywhere except the stationary L cap. The
+ * drag scorer and animation remain the canonical `/sim` implementations.
+ */
+export function megaResolveWcaLive(
+  cube: MegaminxCube,
+  hit: MegaPickHit,
+  scene: THREE.Scene, camera: THREE.Camera,
+  dxPx: number, dyPx: number, width: number, height: number,
+): MegaLivePlan | null {
+  const axes = [0];
+  if (!hit.candidates.includes(2)) axes.push(2);
+  return resolveLiveForAxes(
+    cube,
+    hit,
+    axes,
+    face => face === 2 || (face === 0 && !hit.candidates.includes(0)),
+    scene, camera, dxPx, dyPx, width, height,
+  );
+}
+
+export function megaResolveWcaMove(
+  cube: MegaminxCube,
+  hit: MegaPickHit,
+  scene: THREE.Scene, camera: THREE.Camera,
+  dxPx: number, dyPx: number, width: number, height: number,
+): MegaMove | null {
+  return megaResolveWcaLive(cube, hit, scene, camera, dxPx, dyPx, width, height)?.move ?? null;
 }

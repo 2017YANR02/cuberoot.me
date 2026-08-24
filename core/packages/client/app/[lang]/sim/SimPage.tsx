@@ -50,7 +50,6 @@ import Toucher from './Toucher';
 import { TwistAction } from './engine/nxn/twister';
 import CubeGroup from './engine/nxn/group';
 import Sq1Cube from './engine/sq1/Sq1Cube';
-import DinoCube from './engine/dino/DinoCube';
 import tweener, { type Tween } from './engine/tweener';
 import {
   sq1DragStart, sq1DragDelta, sq1DragApply, sq1DragCommit, sq1DragSnapBack,
@@ -58,43 +57,14 @@ import {
   type Sq1DragStart, type Sq1TurnDrag, type Sq1SliceLive,
 } from './engine/sq1/sq1Drag';
 import { moveToString as sq1MoveToString, isSlashValid as sq1SlashValid } from './engine/sq1/sq1State';
-import IvyCube, { type IvyMove } from './engine/ivy/IvyCube';
-import {
-  ivyPickHit, ivyResolveMove, ivyResolveLive, type IvyHit,
-} from './engine/ivy/ivyDrag';
-import { dinoPickHit, dinoResolveMove, dinoResolveLive, type DinoPickHit } from './engine/dino/dinoDrag';
-import { dinoMoveToString, type DinoMove } from './engine/dino/dinoState';
-import RediCube from './engine/redi/RediCube';
-import { rediPickHit, rediResolveMove, rediResolveLive, type RediPickHit } from './engine/redi/rediDrag';
-import { rediMoveToString, type RediMove } from './engine/redi/rediState';
-import RexCube from './engine/rex/RexCube';
-import { rexPickHit, rexResolveMove, rexResolveLive, type RexPickHit } from './engine/rex/rexDrag';
-import { rexMoveToString, type RexMove } from './engine/rex/rexState';
-import HeliCube from './engine/heli/HeliCube';
-import { heliPickHit, heliResolveMove, heliResolveLive, type HeliPickHit } from './engine/heli/heliDrag';
-import { heliMoveToString, type HeliMove } from './engine/heli/heliState';
 import GearCube from './engine/gear/GearCube';
-import { gearPickHit, gearResolveMove, gearResolveLive, type GearPickHit } from './engine/gear/gearDrag';
-import { gearMoveToString, parseGearMoves, type GearMove } from './engine/gear/gearState';
-import SkewbCube from './engine/skewb/SkewbCube';
-import { skewbPickHit, skewbResolveMove, skewbResolveLive, type SkewbPickHit } from './engine/skewb/skewbDrag';
-import { skewbMoveToString, type SkewbMove } from './engine/skewb/skewbState';
-import PyraCube from './engine/pyra/PyraCube';
-import { pyraPickHit, pyraResolveMove, pyraResolveLive, type PyraPickHit } from './engine/pyra/pyraDrag';
-import { pyraMoveToString, type PyraMove } from './engine/pyra/pyraState';
-import MegaminxCube from './engine/mega/MegaminxCube';
-import { megaPickHit, megaResolveMove, megaResolveLive, type MegaPickHit } from './engine/mega/megaDrag';
-import { megaMoveToString, type MegaMove } from './engine/mega/megaState';
-import FtoCube from './engine/fto/FtoCube';
-import { ftoPickHit, ftoResolveMove, ftoResolveLive, type FtoPickHit } from './engine/fto/ftoDrag';
-import { ftoMoveToString, type FtoMove } from './engine/fto/ftoState';
+import { gearMoveToString, parseGearMoves } from './engine/gear/gearState';
 import {
   orbitScene, orbitSceneFree, orbitSceneAutoRotate, foldViewIntoTurns, snapViewToQuadrant,
   type BodyTurn, type ViewTurns,
 } from './engine/viewControls';
-import {
-  CornerTurnGesture, type CornerGestureCtx, type CornerGestureHandle, type CornerTurnAdapter,
-} from './engine/cornerTurnGesture';
+import type { CornerGestureCtx } from './engine/cornerTurnGesture';
+import { createCornerGestureResolver } from './engine/cornerGestureRegistry';
 import { FACE } from './engine/define';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import TwistySection from '@/components/TwistySection';
@@ -955,82 +925,7 @@ export default function SimPage() {
       clearPartialFreeze,
       setPartialSnapBack: (fn) => { partialSnapBackRef.current = fn; },
     };
-    const ivyAdapter: CornerTurnAdapter<IvyCube, IvyMove, IvyHit> = {
-      match: (c): c is IvyCube => c instanceof IvyCube,
-      pickHit: ivyPickHit, resolveLive: ivyResolveLive, resolveMove: ivyResolveMove,
-      beginMove: (c, m) => c.beginMove(m), moveToString: (m) => m.name,
-      fullPx: 150, threshold: 6,
-    };
-    const dinoAdapter: CornerTurnAdapter<DinoCube, DinoMove, DinoPickHit> = {
-      match: (c): c is DinoCube => c instanceof DinoCube,
-      pickHit: dinoPickHit, resolveLive: dinoResolveLive, resolveMove: dinoResolveMove,
-      beginMove: (c, m) => c.beginMove(m), moveToString: dinoMoveToString,
-      fullPx: 150, threshold: 6,
-    };
-    const rediAdapter: CornerTurnAdapter<RediCube, RediMove, RediPickHit> = {
-      match: (c): c is RediCube => c instanceof RediCube,
-      pickHit: rediPickHit, resolveLive: rediResolveLive, resolveMove: rediResolveMove,
-      beginMove: (c, m) => c.beginMove(m), moveToString: rediMoveToString,
-      fullPx: 150, threshold: 6,
-    };
-    const rexAdapter: CornerTurnAdapter<RexCube, RexMove, RexPickHit> = {
-      match: (c): c is RexCube => c instanceof RexCube,
-      pickHit: rexPickHit, resolveLive: rexResolveLive, resolveMove: rexResolveMove,
-      beginMove: (c, m) => c.beginMove(m), moveToString: rexMoveToString,
-      fullPx: 150, threshold: 6,
-    };
-    const heliAdapter: CornerTurnAdapter<HeliCube, HeliMove, HeliPickHit> = {
-      match: (c): c is HeliCube => c instanceof HeliCube,
-      pickHit: heliPickHit, resolveLive: heliResolveLive, resolveMove: heliResolveMove,
-      beginMove: (c, m, dir) => c.beginMove(m, dir), moveToString: heliMoveToString,
-      fullPx: 200, threshold: 6,
-    };
-    const gearAdapter: CornerTurnAdapter<GearCube, GearMove, GearPickHit> = {
-      match: (c): c is GearCube => c instanceof GearCube,
-      pickHit: gearPickHit, resolveLive: gearResolveLive, resolveMove: gearResolveMove,
-      beginMove: (c, m) => c.beginMove(m), moveToString: gearMoveToString,
-      fullPx: 260, threshold: 6, // one flip = 180° face + 90° middle — a long sweep
-    };
-    const skewbAdapter: CornerTurnAdapter<SkewbCube, SkewbMove, SkewbPickHit> = {
-      match: (c): c is SkewbCube => c instanceof SkewbCube,
-      pickHit: skewbPickHit, resolveLive: skewbResolveLive, resolveMove: skewbResolveMove,
-      beginMove: (c, m) => c.beginMove(m), moveToString: skewbMoveToString,
-      fullPx: 150, threshold: 6,
-    };
-    const pyraAdapter: CornerTurnAdapter<PyraCube, PyraMove, PyraPickHit> = {
-      match: (c): c is PyraCube => c instanceof PyraCube,
-      pickHit: pyraPickHit, resolveLive: pyraResolveLive, resolveMove: pyraResolveMove,
-      beginMove: (c, m) => c.beginMove(m), moveToString: pyraMoveToString,
-      fullPx: 150, threshold: 6,
-    };
-    const megaAdapter: CornerTurnAdapter<MegaminxCube, MegaMove, MegaPickHit> = {
-      match: (c): c is MegaminxCube => c instanceof MegaminxCube,
-      pickHit: megaPickHit, resolveLive: megaResolveLive, resolveMove: megaResolveMove,
-      beginMove: (c, m) => c.beginMove(m), moveToString: megaMoveToString,
-      fullPx: 130, threshold: 6,
-    };
-    const ftoAdapter: CornerTurnAdapter<FtoCube, FtoMove, FtoPickHit> = {
-      match: (c): c is FtoCube => c instanceof FtoCube,
-      pickHit: ftoPickHit, resolveLive: ftoResolveLive, resolveMove: ftoResolveMove,
-      beginMove: (c, m) => c.beginMove(m), moveToString: ftoMoveToString,
-      fullPx: 140, threshold: 6,
-    };
-    const cornerGestures = {
-      ivy: new CornerTurnGesture(ivyAdapter, cornerCtx),
-      dino: new CornerTurnGesture(dinoAdapter, cornerCtx),
-      redi: new CornerTurnGesture(rediAdapter, cornerCtx),
-      rex: new CornerTurnGesture(rexAdapter, cornerCtx),
-      heli: new CornerTurnGesture(heliAdapter, cornerCtx),
-      gear: new CornerTurnGesture(gearAdapter, cornerCtx),
-      skewb: new CornerTurnGesture(skewbAdapter, cornerCtx),
-      pyraminx: new CornerTurnGesture(pyraAdapter, cornerCtx),
-      megaminx: new CornerTurnGesture(megaAdapter, cornerCtx),
-      fto: new CornerTurnGesture(ftoAdapter, cornerCtx),
-    };
-    const cornerGestureFor = (pk: unknown): CornerGestureHandle | null =>
-      typeof pk === 'string' && Object.prototype.hasOwnProperty.call(cornerGestures, pk)
-        ? cornerGestures[pk as keyof typeof cornerGestures]
-        : null;
+    const cornerGestureFor = createCornerGestureResolver(cornerCtx);
     const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
 

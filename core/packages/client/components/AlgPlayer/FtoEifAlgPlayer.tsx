@@ -8,7 +8,7 @@ import { invertFtoEifAlgorithm } from '@/lib/fto-eif-image';
 import type FtoTwister from '@/app/[lang]/sim/engine/fto/FtoTwister';
 import { invertFtoAnimationMoves } from '@/app/[lang]/sim/engine/fto/ftoAnimation';
 import { parseFtoEifMoveGroups } from '@/app/[lang]/sim/engine/fto/ftoEifMoves';
-import type { AlgPlayerControlMode, AlgPlayerHandle } from './AlgPlayer';
+import type { AlgPlayerControlMode, AlgPlayerHandle, AlgPlayerInteractionMode } from './AlgPlayer';
 import AlgPlaybackControls from './AlgPlaybackControls';
 import { resolvePreviewStepTransition, resolvePreviewTiming } from './player-setup';
 import { createStepSeekPlayer } from './step-seek-player';
@@ -19,18 +19,17 @@ const LOOP_PAUSE_MS = 900;
 export const createFtoSeekPlayer = createStepSeekPlayer;
 
 async function preloadFtoPlayerEngine() {
-  const [embed, view, timingMod, toucherMod] = await Promise.all([
+  const [embed, interaction, timingMod, viewControls] = await Promise.all([
     import('@/components/sim-embed/mountSimWorld'),
-    import('@/app/[lang]/sim/engine/viewControls'),
+    import('@/components/sim-embed/attachEmbeddedSimInteraction'),
     import('@/app/[lang]/sim/engine/tweenTiming'),
-    import('@/app/[lang]/sim/Toucher'),
+    import('@/app/[lang]/sim/engine/viewControls'),
   ]);
   return {
     mountSimWorld: embed.mountSimWorld,
-    orbitSceneFree: view.orbitSceneFree,
-    ORBIT_K: view.ORBIT_K,
+    attachEmbeddedSimInteraction: interaction.attachEmbeddedSimInteraction,
     timing: timingMod.timing,
-    Toucher: toucherMod.default,
+    resetSceneView: viewControls.resetSceneView,
   };
 }
 
@@ -42,6 +41,8 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
   playRequest?: number;
   loop?: boolean;
   controlMode?: AlgPlayerControlMode;
+  interactionMode?: AlgPlayerInteractionMode;
+  onUserMove?: (move: string) => void;
   moveDurationMs?: number;
   size?: number;
   fillPane?: boolean;
@@ -53,6 +54,8 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
   playRequest = 0,
   loop = false,
   controlMode = 'full',
+  interactionMode = 'view',
+  onUserMove,
   moveDurationMs = 320,
   size = 260,
   fillPane = false,
@@ -77,6 +80,9 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
   stepRef.current = step;
   const instantStepRef = useRef<number | null>(null);
   const mountRef = useRef<SimMount | null>(null);
+  const resetViewRef = useRef<(() => void) | null>(null);
+  const onUserMoveRef = useRef(onUserMove);
+  onUserMoveRef.current = onUserMove;
   const lastRef = useRef<{ setupAlg: string; step: number } | null>(null);
 
   const jumpToStep = useCallback((next: number) => {
@@ -122,15 +128,22 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
   }, [ready, alg, autoPlay, playRequest, setupAlg, parsedAlg.groups.length, jumpToStep]);
 
   const mount = useCallback(async (host: HTMLElement) => {
-    const { mountSimWorld, orbitSceneFree, ORBIT_K, timing, Toucher } = await preloadFtoPlayerEngine();
+    const {
+      mountSimWorld, attachEmbeddedSimInteraction, timing, resetSceneView,
+    } = await preloadFtoPlayerEngine();
     const mounted = mountSimWorld({ host, puzzle: 'fto', interactive: true });
     mountRef.current = mounted;
     const world = mounted.world;
-    const toucher = new Toucher();
-    toucher.init(mounted.renderer.domElement, world.controller.touch);
-    world.controller.paintMode = true;
-    world.controller.dragEmpty = 'view';
-    world.controller.onOrbit = (dx, dy) => orbitSceneFree(world, dx, dy, ORBIT_K);
+    resetViewRef.current = () => {
+      resetSceneView(world);
+      mounted.invalidate();
+    };
+    const detachInteraction = attachEmbeddedSimInteraction({
+      world,
+      dom: mounted.renderer.domElement,
+      mode: interactionMode,
+      onUserMove: move => onUserMoveRef.current?.(move),
+    });
     host.setAttribute('role', 'img');
     host.setAttribute('aria-label', t('FTO 公式动画', 'FTO algorithm animation'));
 
@@ -138,13 +151,16 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
     timing.frames = previewTiming.frames;
     return () => {
       timing.frames = previousFrames;
-      toucher.destroy();
+      detachInteraction();
       mounted.dispose();
       mountRef.current = null;
+      resetViewRef.current = null;
       lastRef.current = null;
       instantStepRef.current = null;
     };
-  }, [previewTiming.frames, t]);
+  }, [interactionMode, previewTiming.frames, t]);
+
+  const resetView = useCallback(() => resetViewRef.current?.(), []);
 
   useEffect(() => {
     const mounted = mountRef.current;
@@ -209,6 +225,7 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
         size={size}
         mount={mount}
         onReady={() => setReady(true)}
+        onResetView={resetView}
         busyLabel={t('正在加载 FTO', 'Loading the FTO')}
       />
       {invalid.length > 0 && (

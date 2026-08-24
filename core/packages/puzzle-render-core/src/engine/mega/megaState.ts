@@ -111,6 +111,10 @@ export interface MegaMove {
    *  +1 is fixed by the engine's rotation in MegaminxCube; the bridge pins how it maps to
    *  PG's move direction.) */
   dir: 1 | -1;
+  /** WCA Pochmann deep turn: rotate every layer except the named face layer by 144°.
+   *  `R++/R--` use face L and `D++/D--` use face U, matching puzzle-geometry's
+   *  `2-3L` / `2-3U` mapping. */
+  deep?: boolean;
 }
 
 /** Full discrete state: corner perm+twist (20), edge perm+flip (30). */
@@ -127,6 +131,11 @@ export function solvedMega(): MegaState {
 
 /** Apply one face turn, returning a new state. dir +1 advances each ring i→i+1. */
 export function applyMegaMove(s: MegaState, m: MegaMove): MegaState {
+  // The compact state tracks corners/edges only and assumes fixed centers. Deep WCA
+  // turns permute centers, so the renderer tracks those sequences geometrically.
+  if (m.deep) {
+    return { cp: s.cp.slice(), co: s.co.slice(), ep: s.ep.slice(), eo: s.eo.slice() };
+  }
   const o: MegaState = { cp: s.cp.slice(), co: s.co.slice(), ep: s.ep.slice(), eo: s.eo.slice() };
   const cc = FACE_CORNERS[m.face], tw = CORNER_TWIST[m.face];
   const ec = FACE_EDGES[m.face], fl = EDGE_FLIP[m.face];
@@ -190,6 +199,14 @@ export function parseMegaMoves(text: string): MegaMove[] {
   const out: MegaMove[] = [];
   for (const tok of text.trim().split(/\s+/)) {
     if (!tok) continue;
+    if (tok === 'R++' || tok === 'R--') {
+      out.push({ face: 2, dir: tok === 'R++' ? 1 : -1, deep: true });
+      continue;
+    }
+    if (tok === 'D++' || tok === 'D--') {
+      out.push({ face: 0, dir: tok === 'D++' ? 1 : -1, deep: true });
+      continue;
+    }
     const m = TOKEN_RE.exec(tok);
     if (!m) continue;
     const face = NAME_INDEX.get(m[1]);
@@ -201,6 +218,8 @@ export function parseMegaMoves(text: string): MegaMove[] {
 
 /** One move → its canonical token (bare = dir +1, primed = dir −1). Inverse of parse. */
 export function megaMoveToString(m: MegaMove): string {
+  if (m.deep && m.face === 2) return m.dir === 1 ? 'R++' : 'R--';
+  if (m.deep && m.face === 0) return m.dir === 1 ? 'D++' : 'D--';
   return FACE_NAME[m.face] + (m.dir === -1 ? "'" : '');
 }
 
@@ -211,6 +230,9 @@ export function megaMovesToString(moves: MegaMove[]): string {
 /** Collapse consecutive same-face turns mod 5 (order-5). Net 0 cancels; 1→bare, 4→prime,
  *  2→bare bare, 3→prime prime. Shortens a typed alg before replay. */
 export function reduceMegaMoves(moves: MegaMove[]): MegaMove[] {
+  // Deep and shallow turns share an axis but not a layer set; keeping the authored
+  // sequence is safer than folding unlike moves into one another.
+  if (moves.some(move => move.deep)) return moves.slice();
   const out: MegaMove[] = [];
   let i = 0;
   while (i < moves.length) {
@@ -232,5 +254,9 @@ export function reduceMegaAlg(text: string): string {
 }
 
 export function invertMegaMoves(moves: MegaMove[]): MegaMove[] {
-  return moves.slice().reverse().map((m) => ({ face: m.face, dir: (m.dir === 1 ? -1 : 1) as 1 | -1 }));
+  return moves.slice().reverse().map((m) => ({
+    face: m.face,
+    dir: (m.dir === 1 ? -1 : 1) as 1 | -1,
+    ...(m.deep ? { deep: true } : {}),
+  }));
 }
