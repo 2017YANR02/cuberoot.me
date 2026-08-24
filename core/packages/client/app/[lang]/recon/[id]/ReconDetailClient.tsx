@@ -26,7 +26,7 @@ import {
 } from '@/lib/recon-api';
 import { revalidateRecon } from '../revalidate-action';
 import {
-  formatTime, isBldEvent,
+  formatTime, isBldEvent, hasMethodOnlyReconStats,
   buildExternalLinks, FACE_COLORS, attemptsPerRound, localizeRound,
   formatReconSingle,
 } from '@/lib/recon-utils';
@@ -577,12 +577,14 @@ const CROSS_LABELS: Record<number, string> = { 0: 'cross', 1: 'xcross', 2: 'xxcr
 
 function StatsGrid({ solve }: { solve: ReconSolve }) {
   const { t } = useTranslation();
+  const methodOnly = hasMethodOnlyReconStats(solve.event);
   const computed = useMemo(() => {
+    if (methodOnly) return null;
     const text = solve.solution || solve.recon || '';
     if (!text) return null;
     const time = (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0;
     return computeAllStats(text, time, solve.event);
-  }, [solve.solution, solve.recon, solve.rawTime, solve.execTime, solve.event]);
+  }, [methodOnly, solve.solution, solve.recon, solve.rawTime, solve.execTime, solve.event]);
   const crossStm = computed ? computed.crossStm : solve.crossStm;
   const f2l = computed ? computed.f2l : solve.f2l;
   const ll = computed ? computed.ll : solve.ll;
@@ -599,8 +601,9 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
   const isBld = isBldEvent(solve.event);
   // SQ1 没有 CFOP 分步概念(Cross/F2L/顶层/OLL/PLL 等),这些字段对它没有意义,全隐藏。
   const isSq1 = solve.event === 'sq1';
-  const items: [string, React.ReactNode | undefined][] = [
-    [t('recon.method'), solve.method],
+  const methodItem: [string, React.ReactNode | undefined] = [t('recon.method'), solve.method];
+  const items: [string, React.ReactNode | undefined][] = methodOnly ? [methodItem] : [
+    methodItem,
     [t('recon.memo'), isBld && solve.memoTime != null ? Number(solve.memoTime).toFixed(2) : undefined],
     [t('recon.exec'), isBld && solve.execTime != null ? Number(solve.execTime).toFixed(2) : undefined],
     ['Cross', !isBld && !isSq1 && crossStm != null ? `${crossStm}` : undefined],
