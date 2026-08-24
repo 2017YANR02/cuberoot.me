@@ -6,7 +6,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiUrl } from '@/lib/api-base';
-import { persistAuthItem, useAuthStore, applySession } from '@/lib/auth-store';
+import {
+  applySession,
+  exchangeWcaSession,
+  persistAuthItem,
+  useAuthStore,
+} from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 import { AuthCallbackStatus } from '../_components/AuthCallbackStatus';
 
@@ -98,15 +103,7 @@ export default function AuthCallbackPage() {
 
       // Best effort: exchange short-lived WCA token for long-lived (365d) JWT.
       try {
-        const exchangeRes = await fetch(apiUrl('/v1/auth/exchange'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ accessToken }),
-        });
-        if (exchangeRes.ok) {
-          const { token: jwtToken } = await exchangeRes.json();
-          persistAuthItem('cuberoot_jwt', jwtToken);
-        }
+        await exchangeWcaSession(accessToken);
       } catch {
         // Non-fatal — fall back to raw WCA token (2h).
       }

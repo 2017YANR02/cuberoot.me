@@ -38,6 +38,7 @@ const storedSession = {
     uid: 42,
     name: 'CubeRoot 用户',
     wcaId: null,
+    avatar: '',
   },
 };
 

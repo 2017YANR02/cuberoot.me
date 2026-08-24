@@ -8,10 +8,12 @@ import { build } from 'esbuild';
 import { BUILD_ASSETS } from './build-assets.mjs';
 import { resolveProjectConfig } from './build-config.mjs';
 import {
+  buildGraphInputFiles,
   buildInputFingerprint,
+  collectExternalGraphWatchFiles,
   normalizedRelativePath,
   outputFingerprint,
-  sharedSmartCubeSourceRoot,
+  serializeBuildGraphInputs,
   walkFiles,
   writeBuildState,
 } from './build-state.mjs';
@@ -25,6 +27,22 @@ const stagingRoot = join(packageRoot, '.tmp', 'dist-next');
 const backupRoot = join(packageRoot, '.tmp', 'dist-previous');
 const projectConfigPath = join(packageRoot, 'project.config.json');
 const watch = process.argv.includes('--watch');
+
+function watchExactFiles(files, onChange) {
+  const filenamesByDirectory = new Map();
+  for (const file of files) {
+    const directory = dirname(file);
+    const filenames = filenamesByDirectory.get(directory) ?? new Set();
+    filenames.add(basename(file));
+    filenamesByDirectory.set(directory, filenames);
+  }
+  return [...filenamesByDirectory].map(([directory, filenames]) => (
+    watchSource(directory, (_eventType, filename) => {
+      if (filename && !filenames.has(String(filename))) return;
+      onChange();
+    })
+  ));
+}
 
 async function prepareOutput(sourceFiles) {
   await rm(stagingRoot, { force: true, recursive: true });
@@ -69,11 +87,13 @@ async function buildProject() {
     labelForPath: (file) => normalizedRelativePath(packageRoot, file),
   });
   await prepareOutput(sourceFiles);
-  await build({
+  const buildResult = await build({
+    absWorkingDir: packageRoot,
     bundle: true,
     entryPoints: entryPoints(sourceFiles),
     format: 'iife',
     logLevel: 'info',
+    metafile: true,
     minifySyntax: !watch,
     minifyWhitespace: !watch,
     outbase: sourceRoot,
@@ -82,6 +102,7 @@ async function buildProject() {
     sourcemap: watch,
     target: 'chrome91',
   });
+  const graphInputFiles = buildGraphInputFiles(packageRoot, buildResult.metafile);
   await writeFile(
     projectConfigPath,
     `${JSON.stringify(config, null, 2)}\n`,
@@ -93,19 +114,29 @@ async function buildProject() {
     backupPath: backupRoot,
   });
   await writeBuildState(packageRoot, {
-    sourceFingerprint: await buildInputFingerprint(packageRoot),
+    buildGraphInputs: serializeBuildGraphInputs(packageRoot, graphInputFiles),
+    sourceFingerprint: await buildInputFingerprint(packageRoot, graphInputFiles),
     outputFingerprint: await outputFingerprint(packageRoot, outputRoot),
   });
+  return collectExternalGraphWatchFiles(packageRoot, graphInputFiles);
 }
 
 if (!watch) {
   await buildProject();
 } else {
-  await buildProject();
+  const initialExternalInputs = await buildProject();
 
   let debounceTimer;
   let rebuilding = false;
   let rebuildQueued = false;
+  let externalInputWatchers = [];
+
+  function replaceExternalInputWatchers(files) {
+    const nextWatchers = watchExactFiles(files, queueRebuild);
+    const previousWatchers = externalInputWatchers;
+    externalInputWatchers = nextWatchers;
+    for (const watcher of previousWatchers) watcher.close();
+  }
 
   function queueRebuild() {
     clearTimeout(debounceTimer);
@@ -120,7 +151,7 @@ if (!watch) {
 
     rebuilding = true;
     try {
-      await buildProject();
+      replaceExternalInputWatchers(await buildProject());
       console.log(`[${new Date().toLocaleTimeString()}] Mini program rebuilt.`);
     } catch (error) {
       console.error(error);
@@ -134,35 +165,20 @@ if (!watch) {
   }
 
   const sourceWatcher = watchSource(sourceRoot, { recursive: true }, queueRebuild);
-  const sharedSourceWatcher = watchSource(
-    sharedSmartCubeSourceRoot(packageRoot),
-    { recursive: true },
+  replaceExternalInputWatchers(initialExternalInputs);
+  const assetWatchers = watchExactFiles(
+    BUILD_ASSETS.map((asset) => asset.source),
     queueRebuild,
   );
-  const sharedPackageWatcher = watchSource(
-    resolve(packageRoot, '..', 'shared', 'package.json'),
-    queueRebuild,
-  );
-  const assetDirectories = [...new Set(BUILD_ASSETS.map((asset) => dirname(asset.source)))];
-  const assetWatchers = assetDirectories.map((directory) => {
-    const filenames = new Set(BUILD_ASSETS
-      .filter((asset) => dirname(asset.source) === directory)
-      .map((asset) => basename(asset.source)));
-    return watchSource(directory, (_eventType, filename) => {
-      if (filename && !filenames.has(String(filename))) return;
-      queueRebuild();
-    });
-  });
 
   const stopWatching = () => {
     clearTimeout(debounceTimer);
     sourceWatcher.close();
-    sharedSourceWatcher.close();
-    sharedPackageWatcher.close();
+    for (const inputWatcher of externalInputWatchers) inputWatcher.close();
     for (const assetWatcher of assetWatchers) assetWatcher.close();
     process.exit(0);
   };
   process.once('SIGINT', stopWatching);
   process.once('SIGTERM', stopWatching);
-  console.log('Watching mini program and shared smart-cube source files.');
+  console.log('Watching mini program source and resolved external build inputs.');
 }

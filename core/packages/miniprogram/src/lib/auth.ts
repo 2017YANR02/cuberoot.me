@@ -1,10 +1,15 @@
 import { API_ORIGIN } from './runtime-config';
 import {
+  decodeWebSession,
+  decodeWebSessionTicketEnvelope,
+  decodeWebSessionUserEnvelope,
+  type WebSessionTicketEnvelope,
+} from '@cuberoot/shared/auth/web-session';
+import {
   clearRuntimeTimeout,
   scheduleRuntimeTimeout,
   type RuntimeTimer,
 } from './runtime-timers';
-import { isWebSessionTicket } from './web-session-contract';
 
 const SESSION_STORAGE_KEY = 'cuberoot:session';
 const MAX_AVATAR_LENGTH = 2048;
@@ -38,10 +43,7 @@ export interface LoginResult extends SessionData {
   isNew: boolean;
 }
 
-export interface WebSessionTicket {
-  ticket: string;
-  expiresIn: number;
-}
+export type WebSessionTicket = WebSessionTicketEnvelope;
 
 export class ApiError extends Error {
   constructor(
@@ -57,7 +59,8 @@ export function isSessionStorageError(error: unknown): boolean {
   return error instanceof ApiError && error.status === STORAGE_ERROR_STATUS;
 }
 
-function decodeSessionUser(value: unknown): SessionUser | null {
+/** Compatibility decoder for persisted sessions written before uid/avatar became wire-required. */
+function decodeStoredSessionUser(value: unknown): SessionUser | null {
   if (value === null || typeof value !== 'object') return null;
   const user = value as Record<string, unknown>;
   if (user.uid !== undefined
@@ -73,7 +76,6 @@ function decodeSessionUser(value: unknown): SessionUser | null {
 
   const wcaId = user.wcaId?.trim() || null;
   const name = user.name.trim();
-  if (!name) return null;
   if (CONTROL_CHARACTER_PATTERN.test(name)) return null;
   if (wcaId && (wcaId.length > MAX_WCA_ID_LENGTH || CONTROL_CHARACTER_PATTERN.test(wcaId))) {
     return null;
@@ -86,11 +88,11 @@ function decodeSessionUser(value: unknown): SessionUser | null {
   };
 }
 
-function decodeSession(value: unknown): SessionData | null {
+function decodeStoredSession(value: unknown): SessionData | null {
   if (value === null || typeof value !== 'object') return null;
   const session = value as Record<string, unknown>;
   const token = typeof session.token === 'string' ? session.token.trim() : '';
-  const user = decodeSessionUser(session.user);
+  const user = decodeStoredSessionUser(session.user);
   if (token.length < 20
     || token.length > MAX_SESSION_TOKEN_LENGTH
     || CONTROL_CHARACTER_PATTERN.test(token)
@@ -261,7 +263,7 @@ export function getStoredSessionSnapshot(): StoredSessionSnapshot {
   if (value === '' || value === null || value === undefined) {
     return { status: 'available', session: null };
   }
-  const session = decodeSession(value);
+  const session = decodeStoredSession(value);
   if (!session && !removeStoredSessionValue()) {
     return { status: 'unavailable', session: null };
   }
@@ -278,8 +280,8 @@ export async function loginWithWechat(): Promise<LoginResult> {
     method: 'POST',
     body: { code },
   });
-  const session = decodeSession(response);
-  if (!session || session.user.uid === undefined) {
+  const session = decodeWebSession(response);
+  if (!session) {
     throw new ApiError(502, 'invalid session response');
   }
   if (!writeStoredSessionValue(session)) {
@@ -295,17 +297,15 @@ export async function loginWithWechat(): Promise<LoginResult> {
 
 export async function validateStoredSession(session: SessionData): Promise<SessionData> {
   const response = await requestJson<unknown>('/auth/me', { token: session.token });
-  if (response === null || typeof response !== 'object') {
-    throw new ApiError(502, 'invalid user response');
-  }
-  const user = decodeSessionUser((response as Record<string, unknown>).user);
-  if (!user || user.uid === undefined) throw new ApiError(502, 'invalid user response');
+  const envelope = decodeWebSessionUserEnvelope(response);
+  if (!envelope) throw new ApiError(502, 'invalid user response');
+  const { user } = envelope;
   if (session.user.uid !== undefined && session.user.uid !== user.uid) {
     throw new ApiError(401, 'session identity mismatch');
   }
   const next = { ...session, user: { ...session.user, ...user } };
   const stored = readStoredSessionValue();
-  const current = stored.available ? decodeSession(stored.value) : null;
+  const current = stored.available ? decodeStoredSession(stored.value) : null;
   if (current?.token === session.token && !writeStoredSessionValue(next)) {
     throw new ApiError(STORAGE_ERROR_STATUS, 'session storage unavailable');
   }
@@ -318,17 +318,11 @@ export async function createWebSessionTicket(session: SessionData): Promise<WebS
     timeoutMs: WEB_SESSION_REQUEST_TIMEOUT_MS,
     token: session.token,
   });
-  if (response === null || typeof response !== 'object') {
+  const ticket = decodeWebSessionTicketEnvelope(response);
+  if (!ticket) {
     throw new ApiError(502, 'invalid web session ticket response');
   }
-  const ticket = response as Record<string, unknown>;
-  if (!isWebSessionTicket(ticket.ticket)
-    || typeof ticket.expiresIn !== 'number'
-    || !Number.isSafeInteger(ticket.expiresIn)
-    || ticket.expiresIn <= 0) {
-    throw new ApiError(502, 'invalid web session ticket response');
-  }
-  return { ticket: ticket.ticket, expiresIn: ticket.expiresIn };
+  return ticket;
 }
 
 export function loginErrorMessage(error: unknown): string {

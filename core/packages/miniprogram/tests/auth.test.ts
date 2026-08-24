@@ -108,7 +108,7 @@ describe('mini program authentication', () => {
           statusCode: 200,
           data: {
             token: 't'.repeat(20),
-            user: { uid: 12, name: 'CubeRoot', wcaId: null },
+            user: { uid: 12, name: 'CubeRoot', wcaId: null, avatar: '' },
             isNew: true,
           },
         });
@@ -121,7 +121,37 @@ describe('mini program authentication', () => {
     expect(session.isNew).toBe(true);
     expect(setStorageSync).toHaveBeenCalledWith('cuberoot:session', {
       token: 't'.repeat(20),
-      user: { uid: 12, name: 'CubeRoot', wcaId: null },
+      user: { uid: 12, name: 'CubeRoot', wcaId: null, avatar: '' },
+    });
+  });
+
+  it('accepts and persists the real first-time WeChat user response with an empty name', async () => {
+    const setStorageSync = vi.fn();
+    vi.stubGlobal('wx', {
+      login(options: { success(result: { code: string }): void }) {
+        options.success({ code: 'login-code' });
+      },
+      request(options: { success(result: { statusCode: number; data: unknown }): void }) {
+        options.success({
+          statusCode: 200,
+          data: {
+            token: 't'.repeat(20),
+            user: { uid: 12, name: '', wcaId: null, avatar: '' },
+            isNew: true,
+          },
+        });
+      },
+      setStorageSync,
+    });
+
+    await expect(loginWithWechat()).resolves.toEqual({
+      token: 't'.repeat(20),
+      user: { uid: 12, name: '', wcaId: null, avatar: '' },
+      isNew: true,
+    });
+    expect(setStorageSync).toHaveBeenCalledWith('cuberoot:session', {
+      token: 't'.repeat(20),
+      user: { uid: 12, name: '', wcaId: null, avatar: '' },
     });
   });
 
@@ -180,7 +210,7 @@ describe('mini program authentication', () => {
     expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
   });
 
-  it('rejects a stored identity without a visible display name', () => {
+  it('keeps an unnamed legacy stored identity valid', () => {
     const removeStorageSync = vi.fn();
     vi.stubGlobal('wx', {
       getStorageSync: () => ({
@@ -190,8 +220,11 @@ describe('mini program authentication', () => {
       removeStorageSync,
     });
 
-    expect(getStoredSession()).toBeNull();
-    expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
+    expect(getStoredSession()).toEqual({
+      token: 't'.repeat(20),
+      user: { name: '', wcaId: null },
+    });
+    expect(removeStorageSync).not.toHaveBeenCalled();
   });
 
   it('rejects stored identity fields containing control characters', () => {
@@ -228,7 +261,7 @@ describe('mini program authentication', () => {
           statusCode: 200,
           data: {
             token: 't'.repeat(20),
-            user: { uid: 12, name: 'CubeRoot', wcaId: null },
+            user: { uid: 12, name: 'CubeRoot', wcaId: null, avatar: '' },
           },
         });
       },
@@ -254,7 +287,7 @@ describe('mini program authentication', () => {
           statusCode: 200,
           data: {
             token: `${'t'.repeat(20)}\nInjected: true`,
-            user: { uid: 12, name: 'CubeRoot', wcaId: null },
+            user: { uid: 12, name: 'CubeRoot', wcaId: null, avatar: '' },
           },
         });
       },
@@ -279,7 +312,7 @@ describe('mini program authentication', () => {
           statusCode: 200,
           data: {
             token: 't'.repeat(20),
-            user: { uid: 12, name: '\t', wcaId: null },
+            user: { uid: 12, name: '\t', wcaId: null, avatar: '' },
           },
         });
       },
@@ -304,7 +337,7 @@ describe('mini program authentication', () => {
           statusCode: 200,
           data: {
             token: 't'.repeat(20),
-            user: { uid: 12, name: 'CubeRoot', wcaId: '2026\tROOT01' },
+            user: { uid: 12, name: 'CubeRoot', wcaId: '2026\tROOT01', avatar: '' },
           },
         });
       },
@@ -404,7 +437,7 @@ describe('mini program authentication', () => {
           statusCode: 200,
           data: {
             token: 't'.repeat(20),
-            user: { uid: 12, name: 'CubeRoot', wcaId: null },
+            user: { uid: 12, name: 'CubeRoot', wcaId: null, avatar: '' },
             isNew: false,
           },
         });
@@ -508,7 +541,7 @@ describe('mini program authentication', () => {
       }) {
         options.success({
           statusCode: 200,
-          data: { user: { uid: 12, name: 'New name', wcaId: '2026-ROOT01' } },
+          data: { user: { uid: 12, name: 'New name', wcaId: '2026-ROOT01', avatar: '' } },
         });
       },
       setStorageSync,
@@ -533,7 +566,7 @@ describe('mini program authentication', () => {
       }) {
         options.success({
           statusCode: 200,
-          data: { user: { uid: 12, name: 'New name', wcaId: null } },
+          data: { user: { uid: 12, name: 'New name', wcaId: null, avatar: '' } },
         });
       },
       setStorageSync,
@@ -541,11 +574,11 @@ describe('mini program authentication', () => {
 
     await expect(validateStoredSession(session)).resolves.toEqual({
       token: session.token,
-      user: { uid: 12, name: 'New name', wcaId: null },
+      user: { uid: 12, name: 'New name', wcaId: null, avatar: '' },
     });
     expect(setStorageSync).toHaveBeenCalledWith('cuberoot:session', {
       token: session.token,
-      user: { uid: 12, name: 'New name', wcaId: null },
+      user: { uid: 12, name: 'New name', wcaId: null, avatar: '' },
     });
   });
 
@@ -561,7 +594,7 @@ describe('mini program authentication', () => {
       }) {
         options.success({
           statusCode: 200,
-          data: { user: { uid: 12, name: 'New name', wcaId: null } },
+          data: { user: { uid: 12, name: 'New name', wcaId: null, avatar: '' } },
         });
       },
       setStorageSync() {
@@ -588,7 +621,7 @@ describe('mini program authentication', () => {
       }) {
         options.success({
           statusCode: 200,
-          data: { user: { uid: 13, name: 'Other account', wcaId: null } },
+          data: { user: { uid: 13, name: 'Other account', wcaId: null, avatar: '' } },
         });
       },
       setStorageSync,

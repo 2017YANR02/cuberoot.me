@@ -13,6 +13,7 @@ pnpm --filter @cuberoot/miniprogram check
 
 微信开发者工具导入本目录，工具会读取 `dist/`。开发监听会处理 TS、WXML、WXSS 和 JSON 的变化。
 构建会先验证本机项目配置和全部源码 JSON，并在 `.tmp` 生成完整候选产物后再替换 `dist/`；配置或编译失败时保留上一份可用产物和小程序身份。
+跨包源码依赖由 esbuild 的实际解析图统一驱动构建指纹和开发监听；新增 `@cuberoot/shared` 子路径后不需要维护额外文件清单。
 
 首次构建可用 `WECHAT_MINI_APP_ID` 生成本机 `project.config.json`；后续构建会保留已有正式 AppID 和明确的数字基础库。没有配置时才使用游客 AppID。开发时可以使用测试身份，但 `release:check` 只接受 CubeRoot 官方小程序 AppID，避免把正式包上传到其他账号。
 
