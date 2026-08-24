@@ -52,7 +52,8 @@ Association. WCA competition data is derived from the WCA's public export.
   Regulations rewritten with diagrams and 3D examples, one page per article.
 - [Full official text](${BASE}/regulation/full): the complete regulations
   verbatim, for citation.
-- Per-article pages include [Notation](${BASE}/regulation/notation),
+- The illustrated Article 12 content is part of the [Move notation guide](${BASE}/notation).
+  Other per-article pages include
   [Scrambling](${BASE}/regulation/scrambling), [Events](${BASE}/regulation/events),
   [Solved state](${BASE}/regulation/solved-state),
   [Blindfolded](${BASE}/regulation/blindfolded),

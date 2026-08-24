@@ -77,7 +77,7 @@ import {
 import { parseFtoEifMoveGroups } from './engine/fto/ftoEifMoves';
 import {
   parseClockSteps, clockStepsToString, invertClockSteps, type ClockStep,
-} from './engine/clock/clockBoard';
+} from '@/lib/clock-notation';
 import { reduceClockAlg, randomClockScramble } from '@cuberoot/puzzle-solvers/clock';
 
 /** Random Ivy scramble: ~9 R/L/D/B turns, no immediate axis repeat. */
@@ -156,6 +156,7 @@ import { simSpeedToTps, simTpsToSpeed } from '@/lib/sim_timing';
 import AlgInput from '@/components/AlgInput';
 import PlaybackBar from '@/components/PlaybackBar';
 import BoolToggle from '@/components/BoolToggle';
+import NxNOrderInput from '@/components/NxNOrderInput';
 import './player-controls.css';
 
 /**
@@ -3622,28 +3623,6 @@ function PuzzleSettings({
       `Taken over by the image panel's trans (x-ray) view: silver core at ${transCore.coreOpacity}% opacity. Switch to another view to unlock`)
     : undefined;
 
-  const orderInputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    const input = orderInputRef.current;
-    if (input && document.activeElement !== input) input.value = String(order);
-  }, [order]);
-
-  const commitOrderInput = (value: string) => {
-    const input = orderInputRef.current;
-    if (!value.trim()) {
-      if (input) input.value = String(order);
-      return;
-    }
-    const raw = Number(value);
-    if (!Number.isFinite(raw)) {
-      if (input) input.value = String(order);
-      return;
-    }
-    const n = Math.max(1, Math.min(400, Math.floor(raw)));
-    if (input) input.value = String(n);
-    if (n !== order) onOrderChange(n);
-  };
-
   const set = <K extends keyof SimSettings>(key: K, value: SimSettings[K]) => {
     onSettingsChange({ ...settings, [key]: value });
   };
@@ -3734,24 +3713,12 @@ function PuzzleSettings({
             </div>
             {isNxNLocal && (
               <div className="sim-puzzle-section">
-                <div className="sim-puzzle-order-control">
-                  <input
-                    type="text"
-                    ref={orderInputRef}
-                    className="sim-puzzle-order-input"
-                    aria-label={t('阶数', 'Order')}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    enterKeyHint="done"
-                    defaultValue={order}
-                    onBlur={(e) => commitOrderInput(e.currentTarget.value)}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
-                      else if (e.key === 'Escape') { e.currentTarget.value = String(order); e.currentTarget.blur(); }
-                    }}
-                  />
-                </div>
+                <NxNOrderInput
+                  value={order}
+                  onCommit={onOrderChange}
+                  aria-label={t('阶数', 'Order')}
+                  onMouseDown={(e) => e.stopPropagation()}
+                />
               </div>
             )}
             {/* Renderer choice: cubing.js ↔ 群论内核 (= the in-house engine + a live group

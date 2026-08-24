@@ -566,6 +566,7 @@ html[data-theme=dark] .alg-root {
     justify-content: center;
   }
   .alg-cat-header .alg-header-select,
+  .alg-cat-header .alg-notation-style-select,
   .alg-pdf-menu-item {
     min-block-size: 44px;
   }

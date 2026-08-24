@@ -43,3 +43,28 @@ export function formatMegaminxMoveDescription(move: string, t: NotationTranslato
   const description = descriptions[move];
   return description ? t(...description) : move;
 }
+
+export function formatClockMoveDescription(move: string, t: NotationTranslator): string {
+  if (move === 'y2') return t('翻到背面', 'Flip to the back face');
+  const match = /^(UR|DR|DL|UL|U|R|D|L|ALL)(\d+)([+-])$/.exec(move);
+  if (!match) return move;
+  const pinNames: Record<string, [string, string]> = {
+    UR: ['抬起右上立柱', 'Raise the upper-right pin'],
+    DR: ['抬起右下立柱', 'Raise the lower-right pin'],
+    DL: ['抬起左下立柱', 'Raise the lower-left pin'],
+    UL: ['抬起左上立柱', 'Raise the upper-left pin'],
+    U: ['抬起上方两根立柱', 'Raise both upper pins'],
+    R: ['抬起右侧两根立柱', 'Raise both right pins'],
+    D: ['抬起下方两根立柱', 'Raise both lower pins'],
+    L: ['抬起左侧两根立柱', 'Raise both left pins'],
+    ALL: ['抬起四根立柱', 'Raise all four pins'],
+  };
+  const pins = pinNames[match[1]];
+  const direction = match[3] === '+'
+    ? t('顺时针', 'clockwise')
+    : t('逆时针', 'counter-clockwise');
+  return t(
+    `${pins[0]}，表盘${direction}转${match[2]}小时`,
+    `${pins[1]}, turn the dial ${match[2]} hour ${direction}`,
+  );
+}

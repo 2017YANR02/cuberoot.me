@@ -17,6 +17,7 @@ import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
 import HomeLink from '@/components/HomeLink';
 import { persistItem } from '@/lib/safe-storage';
+import { NXN_ORDER_DEFAULT, NXN_ORDER_MAX, NXN_ORDER_MIN } from '@/lib/nxn-order';
 // THREE is type-only at module scope — runtime instance is dynamically imported
 // inside the world-init effect so the ~1.2MB three bundle doesn't ship with
 // pyraminx/skewb/megaminx (which use cubing.js TwistyPlayer, not THREE).
@@ -130,7 +131,7 @@ import { useSimMasks } from './useSimMasks';
 import { resolveEngineArrows } from './engine/nxn/vcArrowBridge';
 import { resolveCaps } from './simCaps';
 import SimCubeNet from './_SimCubeNet';
-import SimClockBoard from './_SimClockBoard';
+import SimClockBoard from '@/components/sim-embed/SimClockBoard';
 import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
 } from './keymap';
@@ -332,7 +333,7 @@ export default function SimPage() {
   const puzzleParam: SimPuzzle = useMemo(() => {
     if (imageMode) return 'fto';
     const raw = query.puzzle;
-    if (!raw) return 3;
+    if (!raw) return NXN_ORDER_DEFAULT;
     if (raw === 'sq1') return 'sq1';
     if (raw === 'ivy') return 'ivy';
     if (raw === 'dino') return 'dino';
@@ -347,7 +348,7 @@ export default function SimPage() {
     if (raw === 'clock') return 'clock';
     if (isPgPuzzleId(raw)) return raw as SimPuzzle;
     const n = parseInt(raw, 10);
-    if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
+    if (!Number.isFinite(n) || n < NXN_ORDER_MIN || n > NXN_ORDER_MAX) return NXN_ORDER_DEFAULT;
     return n;
   }, [imageMode, query.puzzle]);
 

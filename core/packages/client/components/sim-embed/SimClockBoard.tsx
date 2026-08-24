@@ -5,7 +5,7 @@
  *
  * 魔表没有立体形态,所以它是 /sim 里唯一一个**不走 Three.js 画面**的拼图 —— 与 NxN 的
  * 「平面图」(`_SimCubeNet`)同一套路子:SVG 盖在画布容器上,状态从 world 里那个引擎对象
- * (`engine/clock/clockBoard`)读,靠 `callbacks` 订阅重画。渲染本体直接复用求解页那份
+ * (Clock 引擎)读,靠 `callbacks` 订阅重画。渲染本体直接复用求解页那份
  * `components/InteractiveClock`,一份 SVG 两处用。
  *
  * 三条数据流:
@@ -18,29 +18,41 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import InteractiveClock, { type ClockBoardMode } from '@/components/InteractiveClock';
 import { useT } from '@/hooks/useT';
 import { type ClockMove, type ClockState } from '@cuberoot/puzzle-solvers/clock';
-import { clockGestureToken } from './engine/clock/clockBoard';
-import type World from './engine/world';
-import type ClockBoard from './engine/clock/clockBoard';
-import type { TwistAction } from './engine/nxn/twister';
-import './sim_clock_board.css';
+import { clockGestureToken } from '@/lib/clock-notation';
+import './sim-clock-board.css';
+
+interface ClockBoardView {
+  state: ClockState;
+  callbacks: (() => void)[];
+  animating: boolean;
+  animOffset(dial: number): number;
+  setState(next: ClockState): void;
+}
+
+interface ClockWorldView {
+  puzzleKind: unknown;
+  cube: unknown;
+}
 
 interface Props {
-  getWorld: () => World | null;
+  getWorld: () => ClockWorldView | null;
   /** Bumps when the world is (re)created — re-subscribe to the live board. */
   worldTick: number;
-  userMoveRef: RefObject<((action: TwistAction | string) => void) | null>;
+  userMoveRef: RefObject<((action: string) => void) | null>;
   /** 手拧(设置面板):false = 只看不动(涂色 / 拧都停掉)。 */
   pointerTurns?: boolean;
+  /** Embedded read-only previews can hide the /sim settings hint. */
+  showLockedMessage?: boolean;
   coreOpacity?: number;
 }
 
-function clockBoardOf(world: World | null): ClockBoard | null {
+function clockBoardOf(world: ClockWorldView | null): ClockBoardView | null {
   if (!world || world.puzzleKind !== 'clock') return null;
-  return world.cube as ClockBoard;
+  return world.cube as ClockBoardView;
 }
 
 export default function SimClockBoard({
-  getWorld, worldTick, userMoveRef, pointerTurns = true, coreOpacity = 100,
+  getWorld, worldTick, userMoveRef, pointerTurns = true, showLockedMessage = true, coreOpacity = 100,
 }: Props) {
   const t = useT();
   const [, force] = useState(0);
@@ -77,7 +89,7 @@ export default function SimClockBoard({
       else rafRef.current = 0;
     };
     const kick = () => { if (alive && !rafRef.current) rafRef.current = requestAnimationFrame(tick); };
-    // 每次状态变更都探一次:push/twist 之后动画才开始,回调恰好是它的前沿。
+    // 动画编排在 tween 建立后发一次开始通知；落定、setup、reset 仍沿用同一 callbacks 通道。
     board.callbacks.push(kick);
     kick();
     return () => {
@@ -97,7 +109,7 @@ export default function SimClockBoard({
   /**
    * 转动模式:把这一步追加到解法框,由 SimPage 的重放把引擎带过去(与其它拼图的手势同一
    * 条路)。记号规则(左半区裸写 / 右半区成对 `y2 X y2`)在引擎里单一源 + 有测试锁,
-   * 这里只管把它接到解法框上。嫌 `y2 X y2` 啰嗦按「消步」会收成规范形。
+   * 条路)。记号规则在 `lib/clock-notation` 保持单一源,这里只管把它接到解法框上。
    */
   const handleMove = useCallback((move: ClockMove) => {
     userMoveRef.current?.(clockGestureToken(move));
@@ -119,7 +131,7 @@ export default function SimClockBoard({
         maxWidth={520}
         className="sim-clock-svg"
       />
-      {!pointerTurns && (
+      {!pointerTurns && showLockedMessage && (
         <p className="sim-clock-locked">{t('手拧已关闭', 'Pointer turns are off')}</p>
       )}
     </div>

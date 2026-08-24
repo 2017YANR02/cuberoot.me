@@ -37,6 +37,7 @@ import {
 } from '@/lib/alg_thumb_plan';
 import AlgCard from '@/components/AlgCard';
 import CommunityAlgs from '@/components/CommunityAlgs';
+import AlgNotationStyleSelect from '@/components/AlgNotationStyleSelect';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
 import type { AlgInvalidMark } from '@/components/AlgEditor';
 import ValidationReportModal from '@/components/ValidationReportModal';
@@ -1187,16 +1188,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         )}
         {isZh && data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && puzzleParam === '3x3' && (
           <>
-            <select
-              className="alg-header-select"
+            <AlgNotationStyleSelect
               value={notationStyle}
-              onChange={e => setNotationStyle(e.target.value as AlgNotationStyle)}
-              aria-label={tr({ zh: '转动记号', en: 'Move notation' })}
-            >
-              <option value="standard">{tr({ zh: '英文', en: 'English' })}</option>
-              <option value="zh-compact">{tr({ zh: '紧凑', en: 'Compact' })}</option>
-              <option value="dumb">{tr({ zh: '傻瓜', en: 'Foolproof' })}</option>
-            </select>
+              onChange={value => void setNotationStyle(value)}
+            />
             {displayedNotationStyle !== 'standard' && (
               <Link href="/notation" prefetch={false} className="alg-back">
                 <HelpCircle size={15} aria-hidden="true" />

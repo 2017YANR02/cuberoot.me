@@ -1,0 +1,27 @@
+.nxn-order-input {
+  box-sizing: border-box;
+  width: 72px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  outline: none;
+  appearance: textfield;
+}
+
+.nxn-order-input::-webkit-inner-spin-button,
+.nxn-order-input::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.nxn-order-input:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: -1px;
+  border-color: var(--ring);
+}
