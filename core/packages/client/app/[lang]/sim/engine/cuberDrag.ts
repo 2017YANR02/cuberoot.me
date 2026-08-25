@@ -76,7 +76,7 @@ const _tmp = new THREE.Vector3();
  * vector is read immediately, so the caller may reuse a scratch vector for it.
  */
 export function scoreCornerTwist(
-  candidates: number[],
+  candidates: readonly number[],
   axisWorldOf: (corner: number) => THREE.Vector3,
   pointWorld: THREE.Vector3,
   originWorld: THREE.Vector3,
