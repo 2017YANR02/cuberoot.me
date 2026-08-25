@@ -3,6 +3,13 @@
   "version": "1.0.4",
   "private": true,
   "type": "module",
+  "cuberoot": {
+    "kind": "library",
+    "runtime": {
+      ".": "browser",
+      "./*": "mixed"
+    }
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
