@@ -145,7 +145,7 @@ jobs:
       # 它 import workspace Node exports 的产物;server 也直接消费
       # puzzle-render-core 的 node export,干净 CI 必须先产出对应 dist。
       # tsc 启动校验它们的 dist/.d.ts 必须存在(TS6305)。所以先 build 再 typecheck。
-      # skewb-notation 测试也走 shared 的 node 导出(dist),Clock 的 Node/worker 测试走
+      # skewb-notation 测试也走 shared 的 node 导出(dist),Clock/SQ2 的 Node 测试走
       # puzzle-solvers 的 node 导出,同样都要先 build。
       - name: Build shared deps
         working-directory: core
@@ -167,6 +167,31 @@ jobs:
         working-directory: core
         run: |
           pnpm --filter @cuberoot/scramble-stats-build test:clock
+
+      - name: Verify SQ2 sampled builder runtime
+        working-directory: core
+        env:
+          SCRAMBLE_STATS_OUT_DIR: ${{ runner.temp }}/cuberoot-sq2-sampled
+          SCRAMBLE_STATS_STAMP: 2000-01-01T00:00:00.000Z
+        run: |
+          pnpm --filter @cuberoot/scramble-stats-build exec tsx src/build_puzzle_sampled_dist.ts sq2 1
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          const outPath = join(process.env.SCRAMBLE_STATS_OUT_DIR, 'dist_sq2.json');
+          const data = JSON.parse(readFileSync(outPath, 'utf8'));
+          const expected = {
+            event: 'sq2',
+            sampleCount: 1,
+            generated_at: process.env.SCRAMBLE_STATS_STAMP,
+          };
+          for (const [key, value] of Object.entries(expected)) {
+            if (data[key] !== value) {
+              throw new Error(`Unexpected ${key}: ${JSON.stringify(data[key])}`);
+            }
+          }
+          NODE
+          git diff --exit-code -- ../stats/scramble/dist_sq2.json
 
       - name: Typecheck client
         working-directory: core

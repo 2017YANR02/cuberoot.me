@@ -41,7 +41,7 @@
  *      scramble RETURNS — there is no "too-deep". The result is honest near-optimal ("valid + bounded"),
  *      NOT provably optimal; SQ2_MAX_LENGTH is the validated worst-case tuple length over a high sample.
  *
- * tests/sq2_solver.test.ts re-derives the move permutations INDEPENDENTLY from this model and round-trips
+ * tests/sq2.test.ts re-derives the move permutations INDEPENDENTLY from this model and round-trips
  * real cstimer scrambles (scramble ∘ solution = solved) — that is the validity oracle.
  *
  * METRIC: solution length is counted in cstimer-style "(u,d)/" TUPLES (a run of top/bot turns then a slice
@@ -229,7 +229,7 @@ export interface Sq2Solution {
  * Honest upper bound on the solver's solution length, in "(u,d)/" tuples. The constructive cycle-reduction
  * produces near-optimal-ish but NOT optimal solutions; over a 3,000-scramble random sample the measured
  * mean is ~70 and the max ~95 (see test) — this bound (130) carries comfortable margin and is asserted in
- * tests/sq2_solver.test.ts so it can never be silently violated.
+ * tests/sq2.test.ts so it can never be silently violated.
  */
 export const SQ2_MAX_LENGTH = 130;
 export const SQ2_STATE_COUNT_STR = '76,828,484,468,736,000';

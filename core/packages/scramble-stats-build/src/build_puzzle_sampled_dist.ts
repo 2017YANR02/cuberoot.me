@@ -5,18 +5,18 @@
 // 页面只 `statsUrl()` fetch + 渲染 —— **严禁浏览器进页现场求解采样**(开 分布 tab 不准解任何打乱)。
 //
 // 这是 build_puzzle_dist.ts(CSV 聚合,222/pyraminx/skewb/sq1 真题管道)之外的**另一条线**:这些 puzzle
-// 没有 Rust analyzer / 真题语料,求解器是 packages/client/lib/<puzzle>-solver.ts 的纯 TS 实现。本脚本直接
-// import 该求解器,用它**自带的 cstimer 同款随机打乱生成器**采 N 条、逐条求解、把返回解步数分桶。
+// 没有 Rust analyzer / 真题语料。已迁移的纯核心走公开 package Node export；遗留求解器仍按需加载
+// packages/client/lib/<puzzle>-solver.ts。本脚本用其**自带的 cstimer 同款随机打乱生成器**逐条采样求解。
 //
 // 复用性:加新 C/D 单元 = 在 REGISTRY 加一行(event / solver 路径 / 导出名 / 打乱长度 / 默认 N / 质量桶)。
 // 之后退役各 DistView 的现场采样、改成 fetch dist_<event>.json,是机械活。
 //
 // 单进程、低内存(只攒一个直方图 Map + 一小撮样本)。重活由 ps1 包装设 BelowNormal 优先级 + 让出 CPU。
 //
-// 运行:
+// 运行(package script 会先 build @cuberoot/puzzle-solvers,clean checkout 也用这个入口):
 //   pnpm --filter @cuberoot/scramble-stats-build build:puzzle-sampled-dist 335            # 默认 N
 //   pnpm --filter @cuberoot/scramble-stats-build build:puzzle-sampled-dist 335 3000       # 指定 N
-//   DIST_N=3000 pnpm exec tsx src/build_puzzle_sampled_dist.ts 335                        # 或经 env
+//   DIST_N=3000 pnpm --filter @cuberoot/scramble-stats-build build:puzzle-sampled-dist 335 # 或经 env
 //
 // 数据契约(stats/scramble/dist_<event>.json):
 //   {
@@ -34,6 +34,12 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import {
+  randomSq2Scramble,
+  solveSq2,
+  SQ2_MAX_LENGTH,
+  SQ2_STATE_COUNT_STR,
+} from '@cuberoot/puzzle-solvers/sq2';
 
 const require = createRequire(import.meta.url);
 
@@ -241,15 +247,13 @@ const REGISTRY: PuzzleDistSpec[] = [
     // 构造式 3-循环约简:有效 + 有界(实测 20000 样本 mean≈70、max 95、bound 130),非近最优(§0.0 #3 诚实记)。
     quality: 'sampled-bounded',
     load: async () => {
-      const m = await mod('../../client/lib/sq2-solver');
-      const solveSq2 = m.solveSq2 as (s: string) => { length: number; optimal?: boolean };
       return {
         // randomSq2Scramble 忠实镜像 cstimer 的 (u,d)/ 元组生成器(u,d∈[-5,6],不同时为 0)。
-        scramble: m.randomSq2Scramble as SolverAdapter['scramble'],
+        scramble: randomSq2Scramble,
         // 约简法有效+有界(非可证最优)→ optimal 取求解器返回值(一般 false)。
         solve: (s: string) => { const o = solveSq2(s); return { length: o.length, optimal: o.optimal ?? false }; },
-        maxBound: m.SQ2_MAX_LENGTH as number,
-        stateCountStr: m.SQ2_STATE_COUNT_STR as string,
+        maxBound: SQ2_MAX_LENGTH,
+        stateCountStr: SQ2_STATE_COUNT_STR,
       };
     },
   },
@@ -509,7 +513,9 @@ const SAMPLES_PER_BUCKET = 12; // CSV 下载样本:每个步数桶最多留几�
 async function buildOne(spec: PuzzleDistSpec, n: number): Promise<void> {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const repoRoot = path.resolve(here, '..', '..', '..', '..'); // src → pkg → packages → core → repo
-  const outDir = path.join(repoRoot, 'stats', 'scramble');
+  const outDir = process.env.SCRAMBLE_STATS_OUT_DIR
+    ? path.resolve(process.cwd(), process.env.SCRAMBLE_STATS_OUT_DIR)
+    : path.join(repoRoot, 'stats', 'scramble');
   fs.mkdirSync(outDir, { recursive: true });
   const outPath = path.join(outDir, `dist_${spec.event}.json`);
 
