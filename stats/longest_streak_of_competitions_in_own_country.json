@@ -185,24 +185,24 @@
       null
     ],
     [
-      43,
-      "[Anders Berggren](https://www.worldcubeassociation.org/persons/2011BERG02)",
-      "Sweden",
-      "[Swedish Championship 2012](https://www.worldcubeassociation.org/competitions/SwedishChampionship2012)",
-      null
-    ],
-    [
-      43,
+      44,
       "[Jernej Omulec](https://www.worldcubeassociation.org/persons/2010OMUL01)",
       "Slovenia",
       "[Slovenian Open 2010](https://www.worldcubeassociation.org/competitions/SlovenianOpen2010)",
       null
     ],
     [
-      43,
+      44,
       "[Matic Omulec](https://www.worldcubeassociation.org/persons/2010OMUL02)",
       "Slovenia",
       "[Slovenian Open 2010](https://www.worldcubeassociation.org/competitions/SlovenianOpen2010)",
+      null
+    ],
+    [
+      43,
+      "[Anders Berggren](https://www.worldcubeassociation.org/persons/2011BERG02)",
+      "Sweden",
+      "[Swedish Championship 2012](https://www.worldcubeassociation.org/competitions/SwedishChampionship2012)",
       null
     ],
     [
@@ -452,6 +452,13 @@
     ],
     [
       30,
+      "[Carmen Teo Bin Jie (张斌婕)](https://www.worldcubeassociation.org/persons/2012JIET01)",
+      "Singapore",
+      "[Singapore Megaland July 2025](https://www.worldcubeassociation.org/competitions/SingaporeMegalandJuly2025)",
+      null
+    ],
+    [
+      30,
       "[Natán Riggenbach](https://www.worldcubeassociation.org/persons/2011RIGG03)",
       "Peru",
       "[Peru Open 2011](https://www.worldcubeassociation.org/competitions/PeruOpen2011)",
@@ -483,13 +490,6 @@
       "[Anukun Supcharoenkun (อนุกูล ทรัพย์เจริญกุล)](https://www.worldcubeassociation.org/persons/2009SUPC01)",
       "Thailand",
       "[MYHM Zeer Rangsit Cubing 2025](https://www.worldcubeassociation.org/competitions/MYHMZeerRangsitCubing2025)",
-      null
-    ],
-    [
-      29,
-      "[Carmen Teo Bin Jie (张斌婕)](https://www.worldcubeassociation.org/persons/2012JIET01)",
-      "Singapore",
-      "[Singapore Megaland July 2025](https://www.worldcubeassociation.org/competitions/SingaporeMegalandJuly2025)",
       null
     ],
     [
@@ -732,9 +732,9 @@
     ],
     [
       24,
-      "[Claudio Matias Cancino Bruna](https://www.worldcubeassociation.org/persons/2019BRUN02)",
-      "Chile",
-      "[Curicó al Cubo 2024](https://www.worldcubeassociation.org/competitions/CuricoalCubo2024)",
+      "[Uku Kruusamägi](https://www.worldcubeassociation.org/persons/2009KRUU01)",
+      "Estonia",
+      "[Estonian Open 2009](https://www.worldcubeassociation.org/competitions/EstonianOpen2009)",
       null
     ]
   ]

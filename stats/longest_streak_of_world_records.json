@@ -48,7 +48,7 @@
   ],
   "rows": [
     [
-      "8.57",
+      "8.58",
       9,
       "6x6x6 Cube",
       "Single",
@@ -57,7 +57,7 @@
       "Still active"
     ],
     [
-      "8.36",
+      "8.37",
       9,
       "7x7x7 Cube",
       "Average",
@@ -102,7 +102,7 @@
       "[OCSEF 2017](https://www.worldcubeassociation.org/competitions/OCSEFOpen2017)"
     ],
     [
-      "7.12",
+      "7.13",
       7,
       "4x4x4 Blindfolded",
       "Average",
@@ -372,7 +372,7 @@
       "[US Nationals 2006](https://www.worldcubeassociation.org/competitions/US2006)"
     ],
     [
-      "2.86",
+      "2.87",
       5,
       "5x5x5 Blindfolded",
       "Single",
@@ -679,21 +679,21 @@
     ],
     [
       "1.91",
-      4,
-      "Pyraminx",
-      "Average",
-      "[Drew Brads](https://www.worldcubeassociation.org/persons/2010BRAD01)",
-      "[Indiana 2014](https://www.worldcubeassociation.org/competitions/Indiana2014)",
-      "[Czech Open 2016](https://www.worldcubeassociation.org/competitions/CzechOpen2016)"
-    ],
-    [
-      "1.91",
       3,
       "5x5x5 Cube",
       "Single",
       "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
       "[DuPage Fall 2024](https://www.worldcubeassociation.org/competitions/DuPageFall2024)",
       "Still active"
+    ],
+    [
+      "1.91",
+      4,
+      "Pyraminx",
+      "Average",
+      "[Drew Brads](https://www.worldcubeassociation.org/persons/2010BRAD01)",
+      "[Indiana 2014](https://www.worldcubeassociation.org/competitions/Indiana2014)",
+      "[Czech Open 2016](https://www.worldcubeassociation.org/competitions/CzechOpen2016)"
     ],
     [
       "1.90",
@@ -1164,7 +1164,7 @@
       "[Chalmers Open 2006](https://www.worldcubeassociation.org/competitions/ChalmersOpen2006)"
     ],
     [
-      "1.14",
+      "1.15",
       2,
       "5x5x5 Cube",
       "Average",
@@ -1459,6 +1459,15 @@
       "[Mats Valk](https://www.worldcubeassociation.org/persons/2007VALK01)",
       "[Dutch Nationals 2011](https://www.worldcubeassociation.org/competitions/DutchNationals2011)",
       "[Australian Nationals 2012](https://www.worldcubeassociation.org/competitions/AustralianNationals2012)"
+    ],
+    [
+      "0.70",
+      2,
+      "2x2x2 Cube",
+      "Average",
+      "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+      "[Kids America Christmas OH 2025](https://www.worldcubeassociation.org/competitions/KidsAmericaChristmasOH2025)",
+      "Still active"
     ],
     [
       "0.69",

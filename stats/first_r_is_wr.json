@@ -141,15 +141,6 @@
     ],
     [
       11,
-      "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
-      "2x2x2 Cube",
-      "Average",
-      "10.87",
-      "2004-11-27",
-      "[Swedish CubeDay 2004](https://www.worldcubeassociation.org/competitions/Sweden2004)"
-    ],
-    [
-      12,
       "[Micael Hellberg](https://www.worldcubeassociation.org/persons/2004HELL01)",
       "2x2x2 Cube",
       "Single",
@@ -158,7 +149,25 @@
       "[Swedish CubeDay 2004](https://www.worldcubeassociation.org/competitions/Sweden2004)"
     ],
     [
+      12,
+      "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+      "2x2x2 Cube",
+      "Average",
+      "10.87",
+      "2004-11-27",
+      "[Swedish CubeDay 2004](https://www.worldcubeassociation.org/competitions/Sweden2004)"
+    ],
+    [
       13,
+      "[Will Arnold](https://www.worldcubeassociation.org/persons/2005ARNO01)",
+      "3x3x3 With Feet",
+      "Single",
+      "4:06.68",
+      "2005-04-16",
+      "[Caltech Spring 2005](https://www.worldcubeassociation.org/competitions/CaltechSpring2005)"
+    ],
+    [
+      14,
       "[Ryan Patricio](https://www.worldcubeassociation.org/persons/2004PATR01)",
       "3x3x3 One-Handed",
       "Average",
@@ -167,20 +176,11 @@
       "[Caltech Spring 2005](https://www.worldcubeassociation.org/competitions/CaltechSpring2005)"
     ],
     [
-      14,
-      "[Will Arnold](https://www.worldcubeassociation.org/persons/2005ARNO01)",
-      "3x3x3 With Feet",
-      "Average",
-      "4:25.10",
-      "2005-04-16",
-      "[Caltech Spring 2005](https://www.worldcubeassociation.org/competitions/CaltechSpring2005)"
-    ],
-    [
       15,
       "[Yuki Hayashi (林祐樹)](https://www.worldcubeassociation.org/persons/2005HAYA01)",
       "4x4x4 Cube",
-      "Average",
-      "1:04.97",
+      "Single",
+      "1:00.38",
       "2005-07-10",
       "[Kyoto 2005](https://www.worldcubeassociation.org/competitions/Kyoto2005)"
     ],
@@ -330,19 +330,19 @@
     ],
     [
       32,
-      "[Tong Jiang (蒋彤)](https://www.worldcubeassociation.org/persons/2009JIAN03)",
-      "3x3x3 Multi-Blind",
+      "[Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13)",
+      "Rubik's Magic",
       "Single",
-      "15/15 52:01",
+      "0.83",
       "2009-08-16",
       "[Beijing Summer Open 2009](https://www.worldcubeassociation.org/competitions/BeijingSummerOpen2009)"
     ],
     [
       33,
-      "[Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13)",
-      "Rubik's Magic",
+      "[Tong Jiang (蒋彤)](https://www.worldcubeassociation.org/persons/2009JIAN03)",
+      "3x3x3 Multi-Blind",
       "Single",
-      "0.83",
+      "15/15 52:01",
       "2009-08-16",
       "[Beijing Summer Open 2009](https://www.worldcubeassociation.org/competitions/BeijingSummerOpen2009)"
     ],
@@ -429,15 +429,6 @@
     ],
     [
       43,
-      "[Jonathan Irvin Gunawan](https://www.worldcubeassociation.org/persons/2011GUNA02)",
-      "Rubik's Clock",
-      "Average",
-      "7.09",
-      "2012-05-26",
-      "[Bandung Open 2012](https://www.worldcubeassociation.org/competitions/BandungOpen2012)"
-    ],
-    [
-      44,
       "[Nevins Chan Pak Hoong (陈百鸿)](https://www.worldcubeassociation.org/persons/2010CHAN20)",
       "5x5x5 Blindfolded",
       "Average",
@@ -446,7 +437,7 @@
       "[Leicester Open 2013](https://www.worldcubeassociation.org/competitions/Leicester2013)"
     ],
     [
-      45,
+      44,
       "[Sameer Mahmood](https://www.worldcubeassociation.org/persons/2013MAHM02)",
       "2x2x2 Cube",
       "Average",
@@ -455,7 +446,7 @@
       "[Guildford Open 2013](https://www.worldcubeassociation.org/competitions/GuildfordOpen2013)"
     ],
     [
-      46,
+      45,
       "[Santosh Tantravahi](https://www.worldcubeassociation.org/persons/2013TANT02)",
       "Skewb",
       "Single",
@@ -464,7 +455,7 @@
       "[Telesis Open 2014](https://www.worldcubeassociation.org/competitions/TelesisOpen2014)"
     ],
     [
-      47,
+      46,
       "[Abhishek Sathyanarayanan](https://www.worldcubeassociation.org/persons/2012SATH01)",
       "Skewb",
       "Average",
@@ -473,7 +464,7 @@
       "[Telesis Open 2014](https://www.worldcubeassociation.org/competitions/TelesisOpen2014)"
     ],
     [
-      48,
+      47,
       "[Walker Welch](https://www.worldcubeassociation.org/persons/2011WELC01)",
       "Skewb",
       "Single",
@@ -482,13 +473,22 @@
       "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)"
     ],
     [
-      49,
+      48,
       "[John Brechon](https://www.worldcubeassociation.org/persons/2010BREC01)",
       "Skewb",
       "Average",
       "7.46",
       "2014-01-11",
       "[Blizzard Town 2014](https://www.worldcubeassociation.org/competitions/BlizzardTown2014)"
+    ],
+    [
+      49,
+      "[Brandon Harnish](https://www.worldcubeassociation.org/persons/2009HARN01)",
+      "Skewb",
+      "Average",
+      "6.21",
+      "2014-02-01",
+      "[Berkeley Winter 2014](https://www.worldcubeassociation.org/competitions/BerkeleyWinter2014)"
     ],
     [
       50,
@@ -600,21 +600,21 @@
     ],
     [
       62,
-      "[Szymon Jeziorski](https://www.worldcubeassociation.org/persons/2013JEZI01)",
-      "3x3x3 Fewest Moves",
-      "Single",
-      "19",
-      "2018-10-26",
-      "[Polish Championship 2018](https://www.worldcubeassociation.org/competitions/PolishChampionship2018)"
-    ],
-    [
-      63,
       "[Chad Batten](https://www.worldcubeassociation.org/persons/2009BATT01)",
       "3x3x3 Fewest Moves",
       "Single",
       "18",
       "2018-10-26",
       "[GA Cubers Mountain Trip 2018](https://www.worldcubeassociation.org/competitions/GACubersMountainTrip2018)"
+    ],
+    [
+      63,
+      "[Szymon Jeziorski](https://www.worldcubeassociation.org/persons/2013JEZI01)",
+      "3x3x3 Fewest Moves",
+      "Single",
+      "19",
+      "2018-10-26",
+      "[Polish Championship 2018](https://www.worldcubeassociation.org/competitions/PolishChampionship2018)"
     ],
     [
       64,

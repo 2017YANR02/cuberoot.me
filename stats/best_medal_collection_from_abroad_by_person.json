@@ -80,6 +80,13 @@
       "304"
     ],
     [
+      "[Sebastian Weyer](https://www.worldcubeassociation.org/persons/2010WEYE02)",
+      "**241**",
+      "71",
+      "36",
+      "348"
+    ],
+    [
       "[Antonie Paterakis](https://www.worldcubeassociation.org/persons/2012PATE01)",
       "**240**",
       "186",
@@ -87,18 +94,11 @@
       "568"
     ],
     [
-      "[Sebastian Weyer](https://www.worldcubeassociation.org/persons/2010WEYE02)",
-      "**239**",
-      "70",
-      "36",
-      "345"
-    ],
-    [
       "[Andrey Che](https://www.worldcubeassociation.org/persons/2015CHEA01)",
-      "**219**",
-      "131",
+      "**221**",
+      "134",
       "61",
-      "411"
+      "416"
     ],
     [
       "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
@@ -165,10 +165,10 @@
     ],
     [
       "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
-      "**126**",
-      "43",
-      "24",
-      "193"
+      "**134**",
+      "44",
+      "25",
+      "203"
     ],
     [
       "[Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01)",
@@ -185,18 +185,18 @@
       "324"
     ],
     [
+      "[Oliver Fritz](https://www.worldcubeassociation.org/persons/2014FRIT02)",
+      "**119**",
+      "120",
+      "119",
+      "358"
+    ],
+    [
       "[István Kocza](https://www.worldcubeassociation.org/persons/2005KOCZ01)",
       "**116**",
       "107",
       "101",
       "324"
-    ],
-    [
-      "[Oliver Fritz](https://www.worldcubeassociation.org/persons/2014FRIT02)",
-      "**113**",
-      "119",
-      "117",
-      "349"
     ],
     [
       "[Oleg Gritsenko](https://www.worldcubeassociation.org/persons/2011GRIT01)",
@@ -276,6 +276,13 @@
       "285"
     ],
     [
+      "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
+      "**94**",
+      "62",
+      "58",
+      "214"
+    ],
+    [
       "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
       "**94**",
       "36",
@@ -288,13 +295,6 @@
       "34",
       "27",
       "155"
-    ],
-    [
-      "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
-      "**93**",
-      "61",
-      "58",
-      "212"
     ],
     [
       "[Hunor Bózsing](https://www.worldcubeassociation.org/persons/2009BOZS01)",
@@ -319,10 +319,10 @@
     ],
     [
       "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-      "**86**",
+      "**87**",
       "22",
       "6",
-      "114"
+      "115"
     ],
     [
       "[Anto Kam (甘浩東)](https://www.worldcubeassociation.org/persons/2017TUNG13)",
@@ -426,8 +426,8 @@
       "[Ng Jia Quan (黄佳铨)](https://www.worldcubeassociation.org/persons/2015QUAN03)",
       "**62**",
       "87",
-      "77",
-      "226"
+      "78",
+      "227"
     ],
     [
       "[Philipp Weyer](https://www.worldcubeassociation.org/persons/2010WEYE01)",
@@ -531,8 +531,8 @@
       "[Oscar Roth Andersen](https://www.worldcubeassociation.org/persons/2008ANDE02)",
       "**54**",
       "24",
-      "18",
-      "96"
+      "19",
+      "97"
     ],
     [
       "[Anthony Brooks](https://www.worldcubeassociation.org/persons/2008SEAR01)",
@@ -657,8 +657,8 @@
       "[Ihor Sukhovatenko (Ігор Суховатенко)](https://www.worldcubeassociation.org/persons/2017SUKH02)",
       "**48**",
       "39",
-      "30",
-      "117"
+      "31",
+      "118"
     ],
     [
       "[Lir Ukaj](https://www.worldcubeassociation.org/persons/2016UKAJ01)",
@@ -733,9 +733,9 @@
     [
       "[Szabolcs Szántai](https://www.worldcubeassociation.org/persons/2016SZAN01)",
       "**44**",
-      "62",
+      "63",
       "71",
-      "177"
+      "178"
     ]
   ]
 }
