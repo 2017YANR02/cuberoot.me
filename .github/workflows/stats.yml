@@ -5,6 +5,8 @@ on:
   push:
     paths:
       - 'core/packages/stats-build/src/**/*.ts'
+      - 'core/jobs/stats-build/src/**/*.ts'
+      - 'core/scripts/resolve-workspace-path.mjs'
   schedule:
     # UTC 每天 20:00 — WCA dump 上游天更
     - cron: '0 20 * * *'
@@ -45,12 +47,19 @@ jobs:
           # 版本单一源:core/package.json 的 packageManager(别在这里写 version,两处会打架)
           package_json_file: core/package.json
 
+      - name: Resolve workspace layout
+        id: workspace
+        working-directory: core
+        run: |
+          stats="$(node scripts/resolve-workspace-path.mjs @cuberoot/stats-build)"
+          echo "stats=$stats" >> "$GITHUB_OUTPUT"
+
       - name: Install stats-build dependencies
         working-directory: core
         run: pnpm install --frozen-lockfile
 
       - name: TypeScript compile check
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsc --noEmit
 
   # 定时/手动触发时才跑完整计算（~2h）
@@ -91,6 +100,13 @@ jobs:
           # 版本单一源:core/package.json 的 packageManager(别在这里写 version,两处会打架)
           package_json_file: core/package.json
 
+      - name: Resolve workspace layout
+        id: workspace
+        working-directory: core
+        run: |
+          stats="$(node scripts/resolve-workspace-path.mjs @cuberoot/stats-build)"
+          echo "stats=$stats" >> "$GITHUB_OUTPUT"
+
       - name: Install stats-build dependencies
         working-directory: core
         run: pnpm install --frozen-lockfile
@@ -108,23 +124,23 @@ jobs:
       # NOTE: 写入 CI 专用数据库配置（TS database.ts 从此文件读取凭据）
       - name: Setup database config
         run: |
-          printf 'database: "wca_developer_database"\nusername: "root"\npassword: "root"\nhost: "127.0.0.1"' > core/packages/stats-build/database.yml
+          printf 'database: "wca_developer_database"\nusername: "root"\npassword: "root"\nhost: "127.0.0.1"' > "core/${{ steps.workspace.outputs.stats }}/database.yml"
 
       # NOTE: TS 管线——完全替代 Ruby
       - name: Download and import WCA database
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsx src/bin/update_database.ts
 
       # NOTE: 前置 EXPLAIN 校验所有 stat SQL —— 任何语法错(MySQL 保留字/列名错等)
       # 在几秒内 fail-fast，避免等 compute_all 跑到中途才发现
       - name: Validate stat queries (EXPLAIN preflight)
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsx src/bin/validate_queries.ts
 
       - name: Compute all statistics
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         env:
           STATS_FILTER: ${{ github.event.inputs.stats_filter || '' }}
           NODE_OPTIONS: '--expose-gc --max-old-space-size=6144'
@@ -132,49 +148,49 @@ jobs:
 
       - name: Generate WR IDs for calc page
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsx src/bin/gen_wr_ids.ts
 
       - name: Generate persons search index
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsx src/bin/gen_persons_search.ts
 
       - name: Generate nemesizer dataset
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         env:
           NODE_OPTIONS: '--expose-gc --max-old-space-size=6144'
         run: npx tsx src/bin/nemesizer.ts
 
       - name: Compute index
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsx src/bin/compute_index.ts
 
       - name: Generate all past competitions JSON
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsx src/bin/gen_all_comps.ts
 
       - name: Build compact homepage competition window
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsx src/bin/build_landing_comps.ts
 
       - name: Generate /wca/prediction historical trends JSON
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsx src/bin/prediction_build.ts
 
       - name: Generate 3x3 WR history JSON
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsx src/bin/wr333_history_build.ts
 
       - name: Generate competition records JSON
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: |
           npx tsx src/bin/gen_comp_records.ts
           npx tsx src/bin/gen_record_places.ts
@@ -183,30 +199,30 @@ jobs:
       # Streams the `scrambles` table (added to REQUIRED_TABLES) — no extra download.
       - name: Generate scramble length distribution JSON
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsx src/bin/build_scramble_lengths.ts
 
       - name: Generate lookup data (person_countries + comp_countries)
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsx src/bin/gen_lookup_data.ts
 
       - name: Build historical records JSON (WR/CR/NR)
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsx src/bin/records_build.ts
 
       # 非官方多盲平均(333mbf/333mbo Mo3)的区域纪录标签 → stats/records/mbld_avg_records.json
       # (WCA 不追踪多盲平均;选手页平均列用它上 WR/大洲/NR 角标)。随下面 git add -A stats/ 一起提交+同步。
       - name: Build unofficial MBLD-average records JSON
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: npx tsx src/bin/mbld_avg_records_build.ts
 
       # 性别(女子/男子)历史纪录进程 — /wca/records 性别下拉数据源(world + 6 大洲)
       - name: Build gendered historical records JSON (women/men)
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
         run: npx tsx src/bin/records_gender_build.ts
@@ -220,7 +236,7 @@ jobs:
       # ── 历史排名 snapshot:复用上面已经导入的 MySQL,算完 scp + ssh 灌进 prod PG ──
       - name: Build historical ranks snapshot
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         env:
           NODE_OPTIONS: '--expose-gc --max-old-space-size=12288'
         run: npx tsx src/bin/historical_ranks_build.ts
@@ -230,7 +246,7 @@ jobs:
       # 产出,故 SKIP_RACE_FILES=1 跳过年级 race/index 写盘(避免撞路径).
       - name: Build SOR best-rank (yearly; race files skipped)
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
           SKIP_RACE_FILES: '1'
@@ -240,7 +256,7 @@ jobs:
       # stats/sor_over_time/*.json + sor_over_time.json 索引(逐比赛日帧,order 去重,commit).~15-20min.
       - name: Build SOR over-time DAILY race JSON
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
         run: npx tsx src/bin/sor_over_time_daily_build.ts
@@ -260,7 +276,7 @@ jobs:
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-        working-directory: core/packages/stats-build/output/historical_ranks
+        working-directory: core/${{ steps.workspace.outputs.stats }}/output/historical_ranks
         run: |
           ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'mkdir -p /tmp/wca_import && rm -rf /tmp/wca_import/*'
           scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id load.sql wca_continents.copy.tsv wca_countries.copy.tsv wca_persons.copy.tsv \
@@ -303,15 +319,15 @@ jobs:
         run: |
           ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id \
             "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/dump_fingerprints.sh' \
-            > "$GITHUB_WORKSPACE/core/packages/stats-build/prev_fp.tsv" 2>/dev/null || true
-          echo "fetched $(wc -l < "$GITHUB_WORKSPACE/core/packages/stats-build/prev_fp.tsv" 2>/dev/null || echo 0) fingerprint rows"
+            > "$GITHUB_WORKSPACE/core/${{ steps.workspace.outputs.stats }}/prev_fp.tsv" 2>/dev/null || true
+          echo "fetched $(wc -l < "$GITHUB_WORKSPACE/core/${{ steps.workspace.outputs.stats }}/prev_fp.tsv" 2>/dev/null || echo 0) fingerprint rows"
 
       - name: Build WCA stats extra
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         env:
           NODE_OPTIONS: '--expose-gc --max-old-space-size=12288'
           # builder 清空 output/ 目录,故旧指纹放在 package 根而非 output 内.缺此文件 → 全量模式.
-          PREV_FINGERPRINTS: ${{ github.workspace }}/core/packages/stats-build/prev_fp.tsv
+          PREV_FINGERPRINTS: ${{ github.workspace }}/core/${{ steps.workspace.outputs.stats }}/prev_fp.tsv
           # 选手页全量成绩表:平时跟 flat 一样只灌 delta;首次上线 / 改行规则后手动跑一次全量.
           WPR_FULL: ${{ inputs.person_results_full && '1' || '' }}
         run: npx tsx src/bin/wca_stats_extra_build.ts
@@ -320,7 +336,7 @@ jobs:
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-        working-directory: core/packages/stats-build/output/wca_stats_extra
+        working-directory: core/${{ steps.workspace.outputs.stats }}/output/wca_stats_extra
         # scp 整个 output 目录:增量 / 全量产出的文件集不同；新派生表 TSV（含 wca_kinch）自动随目录上传。
         # (全量含 wca_results_flat.copy.tsv;增量含 wca_results_flat_delta.tsv + wca_results_flat_del.txt).
         run: |

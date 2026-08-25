@@ -37,9 +37,16 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
+      - name: Resolve workspace layout
+        id: workspace
+        working-directory: core
+        run: |
+          stats="$(node scripts/resolve-workspace-path.mjs @cuberoot/stats-build)"
+          echo "stats=$stats" >> "$GITHUB_OUTPUT"
+
       - name: Backfill elevations
         id: backfill
-        working-directory: core/packages/stats-build
+        working-directory: core/${{ steps.workspace.outputs.stats }}
         run: |
           set -o pipefail
           npx tsx src/bin/backfill_comp_elevations.ts | tee /tmp/elev.log

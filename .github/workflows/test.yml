@@ -14,9 +14,17 @@ on:
       - '.sync/**'
       - 'scripts/upstream/**'
       - 'ops/nginx/**'
+      - '.github/workflows/backup_recon.yml'
+      - '.github/workflows/best2x2_drift.yml'
       - '.github/workflows/deploy_core.yml'
       - '.github/workflows/deploy_next.yml'
+      - '.github/workflows/elev_backfill.yml'
+      - '.github/workflows/icons_drift.yml'
+      - '.github/workflows/regulation_drift.yml'
+      - '.github/workflows/sq1_pbl_drift.yml'
+      - '.github/workflows/stats.yml'
       - '.github/workflows/test.yml'
+      - '.github/workflows/update_upcoming.yml'
   push:
     branches: [main]
     paths:
@@ -28,9 +36,17 @@ on:
       - '.sync/**'
       - 'scripts/upstream/**'
       - 'ops/nginx/**'
+      - '.github/workflows/backup_recon.yml'
+      - '.github/workflows/best2x2_drift.yml'
       - '.github/workflows/deploy_core.yml'
       - '.github/workflows/deploy_next.yml'
+      - '.github/workflows/elev_backfill.yml'
+      - '.github/workflows/icons_drift.yml'
+      - '.github/workflows/regulation_drift.yml'
+      - '.github/workflows/sq1_pbl_drift.yml'
+      - '.github/workflows/stats.yml'
       - '.github/workflows/test.yml'
+      - '.github/workflows/update_upcoming.yml'
 
 jobs:
   test:
@@ -125,18 +141,27 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
+      - name: Resolve workspace layout
+        id: workspace
+        working-directory: core
+        run: |
+          api="$(node scripts/resolve-workspace-path.mjs @cuberoot/server)"
+          echo "api=$api" >> "$GITHUB_OUTPUT"
+          web="$(node scripts/resolve-workspace-path.mjs @cuberoot/client)"
+          echo "web=$web" >> "$GITHUB_OUTPUT"
+
       - name: Architecture boundary guard
         working-directory: core
         run: pnpm audit:boundaries
 
       - name: PostgreSQL 13 final schema snapshot
-        working-directory: core/packages/server
+        working-directory: core/${{ steps.workspace.outputs.api }}
         env:
           PGPASSWORD: postgres
         run: psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d cuberoot_test -f src/db/schema.pg.sql
 
       - name: Platform account deletion PostgreSQL 13 upgrade regression
-        working-directory: core/packages/server
+        working-directory: core/${{ steps.workspace.outputs.api }}
         env:
           PGPASSWORD: postgres
         run: psql -h 127.0.0.1 -U postgres -d cuberoot_test -f tests/fixtures/platform_account_deletion_pg.sql
@@ -255,6 +280,15 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
+      - name: Resolve workspace layout
+        id: workspace
+        working-directory: core
+        run: |
+          mobile="$(node scripts/resolve-workspace-path.mjs @cuberoot/mobile)"
+          echo "mobile=$mobile" >> "$GITHUB_OUTPUT"
+          web="$(node scripts/resolve-workspace-path.mjs @cuberoot/client)"
+          echo "web=$web" >> "$GITHUB_OUTPUT"
+
       - name: Build shared timer core
         working-directory: core
         run: pnpm --filter @cuberoot/shared build
@@ -263,8 +297,10 @@ jobs:
         working-directory: core
         run: |
           pnpm --filter @cuberoot/mobile assets:android
-          git diff --exit-code -- packages/client/public/icons packages/mobile/android/app/src/main/res
-          if [[ -n "$(git ls-files --others --exclude-standard -- packages/client/public/icons packages/mobile/android/app/src/main/res)" ]]; then
+          WEB_DIR="${{ steps.workspace.outputs.web }}"
+          MOBILE_DIR="${{ steps.workspace.outputs.mobile }}"
+          git diff --exit-code -- "$WEB_DIR/public/icons" "$MOBILE_DIR/android/app/src/main/res"
+          if [[ -n "$(git ls-files --others --exclude-standard -- "$WEB_DIR/public/icons" "$MOBILE_DIR/android/app/src/main/res")" ]]; then
             echo "Asset generation produced untracked files"
             exit 1
           fi
@@ -286,7 +322,7 @@ jobs:
           keytool -genkeypair -v -keystore "$RUNNER_TEMP/mobile-ci.jks" -storepass ci-mobile-store -keypass ci-mobile-store -alias ci-upload -keyalg RSA -keysize 2048 -validity 1 -dname "CN=CI, OU=Mobile, O=CubeRoot, L=CI, ST=CI, C=US"
 
       - name: Compile Android APK and signed release AAB
-        working-directory: core/packages/mobile/android
+        working-directory: core/${{ steps.workspace.outputs.mobile }}/android
         env:
           MOBILE_REQUIRE_RELEASE_SIGNING: 'true'
           MOBILE_UPLOAD_KEYSTORE_FILE: ${{ runner.temp }}/mobile-ci.jks
