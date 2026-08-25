@@ -195,8 +195,8 @@ export default function NotationPage() {
   const viewMode: NotationViewMode = training ? trainingMode : 'learn';
   const viewModeItems: readonly CompactSelectItem<NotationViewMode>[] = [
     { value: 'learn', label: t('学习', 'Learn') },
-    { value: 'perform', label: t('训练:转魔方', 'Train: turn puzzle') },
-    { value: 'identify', label: t('训练:选转动', 'Train: choose move') },
+    { value: 'perform', label: t('练转动', 'Train: turn puzzle') },
+    { value: 'identify', label: t('练记号', 'Train: choose move') },
   ];
   const setViewMode = (next: NotationViewMode) => {
     if (next === 'learn') {
