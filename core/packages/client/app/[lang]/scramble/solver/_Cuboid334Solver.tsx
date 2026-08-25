@@ -11,7 +11,7 @@
  * setTimeout 异步执行,期间显示「求解中」spinner。打乱来源复用 cstimer 桥,记号与 cstimer 完全一致
  *(U U' U2 u u' u2 R2 L2 M2 F2 B2 S2)。
  */
-import { randomCuboid334Scramble, solveCuboid334, CUBOID334_STATE_COUNT_STR, CUBOID334_GROUP_ORDER_STR, type Cuboid334Solution } from '@/lib/cuboid334-solver';
+import { randomCuboid334Scramble, solveCuboid334, CUBOID334_STATE_COUNT_STR, CUBOID334_GROUP_ORDER_STR, type Cuboid334Solution } from '@cuberoot/puzzle-solvers/cuboid334';
 import PuzzleSolverPage, {
   type SolverSpec, METRIC_TERNARY_OPTIMAL_NEAR, CAVEAT_TITLE_OPTIMAL,
 } from './_components/PuzzleSolverPage';

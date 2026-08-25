@@ -13,7 +13,7 @@ import {
   CUBOID334_MAX_LENGTH,
   CUBOID334_STATE_COUNT_STR,
   CUBOID334_GROUP_ORDER_STR,
-} from '@/lib/cuboid334-solver';
+} from '@cuberoot/puzzle-solvers/cuboid334';
 import { renderCuboid334ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/cuboid334_svg';
 
 // ── INDEPENDENT geometric re-derivation of the 334 move model ─────────────────────

@@ -10,7 +10,7 @@
  * 记号与 cstimer 完全一致(6 个顶点轴 × {"", "2", "'", "2'"} = 24 个 token,每个 = 一次 72° 顶点转)。
  */
 import { cstimerScramble } from '@/lib/cstimer-scramble';
-import { solveCtico, CTICO_MAX_LENGTH, CTICO_MOVE_NAMES } from '@/lib/ctico-solver';
+import { solveCtico, CTICO_MAX_LENGTH, CTICO_MOVE_NAMES } from '@cuberoot/puzzle-solvers/ctico';
 import PuzzleSolverPage, {
   type SolverSpec, METRIC_FIXED_BOUNDED, badgeCap, CAVEAT_TITLE_BOUNDED,
 } from './_components/PuzzleSolverPage';

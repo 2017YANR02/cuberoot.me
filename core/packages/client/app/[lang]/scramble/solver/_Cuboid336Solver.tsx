@@ -11,7 +11,7 @@
  * 每条真打乱都能解出。求解放进 setTimeout 异步执行,期间显示「求解中」spinner。打乱来源复用 cstimer 桥,记号与
  * cstimer 完全一致(U U' U2 u u' u2 3u 3u' 3u2 R2 L2 M2 F2 B2 S2)。
  */
-import { randomCuboid336Scramble, solveCuboid336, CUBOID336_STATE_COUNT_STR, CUBOID336_GROUP_ORDER_STR, type Cuboid336Solution } from '@/lib/cuboid336-solver';
+import { randomCuboid336Scramble, solveCuboid336, CUBOID336_STATE_COUNT_STR, CUBOID336_GROUP_ORDER_STR, type Cuboid336Solution } from '@cuberoot/puzzle-solvers/cuboid336';
 import PuzzleSolverPage, {
   type SolverSpec, METRIC_TERNARY_OPTIMAL_NEAR, CAVEAT_TITLE_OPTIMAL,
 } from './_components/PuzzleSolverPage';

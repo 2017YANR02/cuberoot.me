@@ -12,7 +12,7 @@
  * the solver (closure of {RX,RY,RZ} from I3), so index `i` is the identical physical rotation; single
  * source of move truth = cm3Apply.
  */
-import { cm3Apply, CM3_SOLVED } from '@/lib/cm3-solver';
+import { cm3Apply, CM3_SOLVED } from '@cuberoot/puzzle-solvers/cm3';
 
 // 6 sticker colors (data colors), indexed by original face 0..5 = +X,−X,+Y,−Y,+Z,−Z (standard cube:
 // right=red, left=orange, up=white, down=yellow, front=green, back=blue).

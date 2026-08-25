@@ -11,7 +11,7 @@
  * 记号与 cstimer 完全一致(与直升机相同的 12 个棱名,每个 = 一次 180° 棱转),保证生成的打乱被正确求解。
  */
 import { cstimerScramble } from '@/lib/cstimer-scramble';
-import { solveHelicv, HELICV_MAX_LENGTH, HELICV_MOVE_NAMES } from '@/lib/helicv-solver';
+import { solveHelicv, HELICV_MAX_LENGTH, HELICV_MOVE_NAMES } from '@cuberoot/puzzle-solvers/helicv';
 import PuzzleSolverPage, {
   type SolverSpec, METRIC_FIXED_BOUNDED, badgeCap, CAVEAT_TITLE_BOUNDED,
 } from './_components/PuzzleSolverPage';

@@ -43,7 +43,7 @@
 import {
   type CubieState, MOVE_OPS, NUM_MOVES, applyMoveState, solvedState, isSolvedState,
   STM_MOVE_NAMES, MOVE_BASE, parseStmScramble,
-} from './stm-cube';
+} from './stm-cube.js';
 
 // ── factorials / combinatorial primitives ───────────────────────────────────────────
 const FACT: number[] = (() => { const f = [1]; for (let i = 1; i <= 12; i++) f[i] = f[i - 1] * i; return f; })();

@@ -6,21 +6,99 @@
   "cuberoot": {
     "kind": "library",
     "runtime": {
+      "./bsq": "runtime-neutral",
+      "./cm3": "runtime-neutral",
       "./clock": "runtime-neutral",
-      "./sq2": "runtime-neutral"
+      "./ctico": "runtime-neutral",
+      "./cuboid233": "runtime-neutral",
+      "./cuboid334": "runtime-neutral",
+      "./cuboid335": "runtime-neutral",
+      "./cuboid336": "runtime-neutral",
+      "./cuboid337": "runtime-neutral",
+      "./heli": "runtime-neutral",
+      "./helicv": "runtime-neutral",
+      "./ssq1": "runtime-neutral",
+      "./sq2": "runtime-neutral",
+      "./stm": "runtime-neutral",
+      "./stm-cube": "runtime-neutral"
     }
   },
   "sideEffects": false,
   "exports": {
+    "./bsq": {
+      "types": "./src/bsq.ts",
+      "node": "./dist/bsq.js",
+      "default": "./src/bsq.ts"
+    },
+    "./cm3": {
+      "types": "./src/cm3.ts",
+      "node": "./dist/cm3.js",
+      "default": "./src/cm3.ts"
+    },
     "./clock": {
       "types": "./src/clock.ts",
       "node": "./dist/clock.js",
       "default": "./src/clock.ts"
     },
+    "./ctico": {
+      "types": "./src/ctico.ts",
+      "node": "./dist/ctico.js",
+      "default": "./src/ctico.ts"
+    },
+    "./cuboid233": {
+      "types": "./src/cuboid233.ts",
+      "node": "./dist/cuboid233.js",
+      "default": "./src/cuboid233.ts"
+    },
+    "./cuboid334": {
+      "types": "./src/cuboid334.ts",
+      "node": "./dist/cuboid334.js",
+      "default": "./src/cuboid334.ts"
+    },
+    "./cuboid335": {
+      "types": "./src/cuboid335.ts",
+      "node": "./dist/cuboid335.js",
+      "default": "./src/cuboid335.ts"
+    },
+    "./cuboid336": {
+      "types": "./src/cuboid336.ts",
+      "node": "./dist/cuboid336.js",
+      "default": "./src/cuboid336.ts"
+    },
+    "./cuboid337": {
+      "types": "./src/cuboid337.ts",
+      "node": "./dist/cuboid337.js",
+      "default": "./src/cuboid337.ts"
+    },
+    "./heli": {
+      "types": "./src/heli.ts",
+      "node": "./dist/heli.js",
+      "default": "./src/heli.ts"
+    },
+    "./helicv": {
+      "types": "./src/helicv.ts",
+      "node": "./dist/helicv.js",
+      "default": "./src/helicv.ts"
+    },
+    "./ssq1": {
+      "types": "./src/ssq1.ts",
+      "node": "./dist/ssq1.js",
+      "default": "./src/ssq1.ts"
+    },
     "./sq2": {
       "types": "./src/sq2.ts",
       "node": "./dist/sq2.js",
       "default": "./src/sq2.ts"
+    },
+    "./stm": {
+      "types": "./src/stm-solver.ts",
+      "node": "./dist/stm-solver.js",
+      "default": "./src/stm-solver.ts"
+    },
+    "./stm-cube": {
+      "types": "./src/stm-cube.ts",
+      "node": "./dist/stm-cube.js",
+      "default": "./src/stm-cube.ts"
     }
   },
   "scripts": {

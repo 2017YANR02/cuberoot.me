@@ -11,7 +11,7 @@
  *
  * 记号 = cstimer 同款 `(x,0) /`:顶层转 x·30°,`/` 同时切上下两层;长度按 cstimer 的「切片数」口径计步。
  */
-import { randomBsqScramble, solveBsq, BSQ_STATE_COUNT_STR, type BsqSolution } from '@/lib/bsq-solver';
+import { randomBsqScramble, solveBsq, BSQ_STATE_COUNT_STR, type BsqSolution } from '@cuberoot/puzzle-solvers/bsq';
 import PuzzleSolverPage, {
   type SolverSpec, METRIC_TERNARY_OPTIMAL_BOUNDED, CAVEAT_TITLE_OPTIMAL,
 } from './_components/PuzzleSolverPage';

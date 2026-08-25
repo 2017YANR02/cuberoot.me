@@ -11,7 +11,7 @@
  * 正确求解。
  */
 import { cstimerScramble } from '@/lib/cstimer-scramble';
-import { solveCm3, CM3_MAX_LENGTH } from '@/lib/cm3-solver';
+import { solveCm3, CM3_MAX_LENGTH } from '@cuberoot/puzzle-solvers/cm3';
 import PuzzleSolverPage, {
   type SolverSpec, METRIC_FIXED_BOUNDED, badgeCap, CAVEAT_TITLE_BOUNDED,
 } from './_components/PuzzleSolverPage';

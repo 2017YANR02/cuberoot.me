@@ -15,7 +15,7 @@ import {
   CM3_SOLVED,
   CM3_STATE_COUNT_STR,
   CM3_ROTATION_COUNT,
-} from '@/lib/cm3-solver';
+} from '@cuberoot/puzzle-solvers/cm3';
 import { renderCm3ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/cm3_svg';
 
 // ── Independent geometric re-derivation (move-model fidelity anchor) ───────────

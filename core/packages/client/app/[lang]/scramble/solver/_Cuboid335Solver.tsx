@@ -13,7 +13,7 @@
  * 后半段 333 的 90° 侧转在 3×3×5 上几何不可行(侧面是 3×5 长方形,90° 会把块转出盒外),是 cstimer 的
  * 人类速记、无刚体实现 —— 解析到 " / " 即止,只解前半段刚体打乱。
  */
-import { randomCuboid335Scramble, solveCuboid335, CUBOID335_STATE_COUNT_STR, CUBOID335_ORBIT_PRODUCT_STR, type Cuboid335Solution } from '@/lib/cuboid335-solver';
+import { randomCuboid335Scramble, solveCuboid335, CUBOID335_STATE_COUNT_STR, CUBOID335_ORBIT_PRODUCT_STR, type Cuboid335Solution } from '@cuberoot/puzzle-solvers/cuboid335';
 import PuzzleSolverPage, {
   type SolverSpec, METRIC_TERNARY_OPTIMAL_NEAR, CAVEAT_TITLE_OPTIMAL,
 } from './_components/PuzzleSolverPage';

@@ -16,7 +16,7 @@
  * Colors: U white, D yellow, F green, B blue, R red, L orange. Notation matches cstimer 334 exactly
  * (U U' U2 u u' u2 R2 L2 M2 F2 B2 S2) — same parser as lib/cuboid334-solver.
  */
-import { cuboid334Apply } from '@/lib/cuboid334-solver';
+import { cuboid334Apply } from '@cuberoot/puzzle-solvers/cuboid334';
 
 // face codes U D R L F B = 0..5 (same order as the solver's FACE_CODE)
 export const CUBOID334_DEFAULT_COLORS: string[] = [

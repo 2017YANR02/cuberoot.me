@@ -16,7 +16,7 @@ import {
   HELI_SOLVED,
   HELI_STATE_COUNT_STR,
   HELI_FACE_OF,
-} from '@/lib/heli-solver';
+} from '@cuberoot/puzzle-solvers/heli';
 import { renderHeliScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/heli_svg';
 
 // ── Independent oracle: cstimer's poly3dlib heli moveTable, loaded via node:vm ───────────────────────

@@ -10,7 +10,7 @@
  * renders a SINGLE solid color — a self-proving render. Any scramble recolors faithfully; single source
  * of move truth = helicvApply (via helicvFaceletColors).
  */
-import { helicvFaceletColors, HELICV_FACE_OF } from '@/lib/helicv-solver';
+import { helicvFaceletColors, HELICV_FACE_OF } from '@cuberoot/puzzle-solvers/helicv';
 
 // 6 sticker colors indexed by face 0..5 = U R F D L B (standard cube: U white, R red, F green, D yellow,
 // L orange, B blue).
