@@ -1876,6 +1876,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [bluetoothTimerOpen, setBluetoothTimerOpen] = useState(false);
   const [bluetoothTimerConnectAttempt, setBluetoothTimerConnectAttempt] = useState<Promise<void> | null>(null);
   const [stackmatOpen, setStackmatOpen] = useState(false);
+  const [stackmatConnectAttempt, setStackmatConnectAttempt] = useState<Promise<void> | null>(null);
+  const stackmatConnectingRef = useRef(false);
   const [trainerSubsetOpen, setTrainerSubsetOpen] = useState<'oll' | 'pll' | null>(null);
   const [statsModalOpen, setStatsModalOpen] = useState(false);
   const [manualEntryOpen, setManualEntryOpen] = useState(false);
@@ -1937,6 +1939,21 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     bluetoothCube,
     bluetoothTimer,
   ]);
+
+  const connectStackmat = useCallback(() => {
+    setStackmatOpen(true);
+    if (stackmat.status.listening || stackmatConnectingRef.current) return;
+
+    // Match the Bluetooth capsule: the first click starts the browser-owned
+    // permission flow directly. The modal only observes this attempt and
+    // becomes the status / input-device / retry surface.
+    stackmatConnectingRef.current = true;
+    const attempt = stackmat.start();
+    setStackmatConnectAttempt(attempt);
+    void attempt.finally(() => {
+      stackmatConnectingRef.current = false;
+    }).catch(() => undefined);
+  }, [stackmat]);
 
   // ── Fullscreen ──────────────────────────────────────────────────
   const [fullscreen, setFullscreen] = useState(false);
@@ -2796,7 +2813,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <button
             type="button"
             className={`shell-stackmat-connect${stackmat.status.listening ? ' is-active' : ''}`}
-            onClick={() => setStackmatOpen(true)}
+            onClick={connectStackmat}
             title={tr({ zh: '连接 Stackmat 麦克风计时器', en: 'Connect Stackmat microphone timer' })}
             aria-label={tr({ zh: '连接 Stackmat 麦克风计时器', en: 'Connect Stackmat microphone timer' })}
           >
@@ -2960,7 +2977,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       )}
 
       {stackmatOpen && (
-        <StackmatModal stackmat={stackmat} onClose={() => setStackmatOpen(false)} />
+        <StackmatModal
+          stackmat={stackmat}
+          connectAttempt={stackmatConnectAttempt}
+          onClose={() => {
+            setStackmatOpen(false);
+            setStackmatConnectAttempt(null);
+          }}
+        />
       )}
 
       {bluetoothTimerOpen && (

@@ -21,6 +21,12 @@ import type { StackmatHandle, StackmatInputDevice } from '../_lib/stackmat';
 interface Props {
   stackmat: StackmatHandle;
   onClose: () => void;
+  /**
+   * A connection already started by the bottom microphone button. Keeping
+   * getUserMedia() in that click makes the permission prompt immediate; this
+   * modal observes the same promise so it can own progress and failure UI.
+   */
+  connectAttempt?: Promise<void> | null;
 }
 
 /** Level below which we call the input silent. */
@@ -61,7 +67,22 @@ function phaseLabel(phase: StackmatHandle['status']['phase']): string {
   }
 }
 
-export default function StackmatModal({ stackmat, onClose }: Props) {
+function micErrorMessage(err: unknown): string {
+  const detail = typeof err === 'object' && err !== null
+    ? err as { name?: unknown; message?: unknown }
+    : null;
+  const name = typeof detail?.name === 'string' ? detail.name : '';
+  const message = typeof detail?.message === 'string' ? detail.message : String(err);
+  return name === 'NotAllowedError'
+    ? tr({ zh: '浏览器拒绝了麦克风权限。请在地址栏的权限设置里允许后重试。', en: 'The browser denied microphone access. Allow it in the site permissions and retry.' })
+    : name === 'NotFoundError'
+      ? tr({ zh: '没有找到音频输入设备。', en: 'No audio input device found.' })
+      : message === 'mic-not-supported'
+        ? tr({ zh: '当前浏览器不支持麦克风采集（需要 HTTPS）。', en: 'This browser cannot capture microphone audio (HTTPS required).' })
+        : tr({ zh: `麦克风启用失败：${message}`, en: `Mic error: ${message}` });
+}
+
+export default function StackmatModal({ stackmat, onClose, connectAttempt }: Props) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile(480);
@@ -92,20 +113,31 @@ export default function StackmatModal({ stackmat, onClose }: Props) {
     dialogRef.current?.querySelector<HTMLElement>('button, select')?.focus();
   }, []);
 
+  useEffect(() => {
+    if (!connectAttempt) return;
+    let active = true;
+    setBusy(true);
+    setError('');
+    void connectAttempt.then(
+      () => {
+        if (active) setBusy(false);
+      },
+      (err: unknown) => {
+        if (!active) return;
+        setError(micErrorMessage(err));
+        setBusy(false);
+      },
+    );
+    return () => { active = false; };
+  }, [connectAttempt]);
+
   const begin = useCallback(async (deviceId?: string) => {
     setBusy(true);
     setError('');
     try {
       await start(deviceId);
     } catch (err) {
-      const e = err as Error;
-      setError(e.name === 'NotAllowedError'
-        ? tr({ zh: '浏览器拒绝了麦克风权限。请在地址栏的权限设置里允许后重试。', en: 'The browser denied microphone access. Allow it in the site permissions and retry.' })
-        : e.name === 'NotFoundError'
-          ? tr({ zh: '没有找到音频输入设备。', en: 'No audio input device found.' })
-          : e.message === 'mic-not-supported'
-            ? tr({ zh: '当前浏览器不支持麦克风采集（需要 HTTPS）。', en: 'This browser cannot capture microphone audio (HTTPS required).' })
-            : tr({ zh: `麦克风启用失败：${e.message}`, en: `Mic error: ${e.message}` }));
+      setError(micErrorMessage(err));
     } finally {
       setBusy(false);
     }
