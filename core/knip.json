@@ -32,7 +32,7 @@
       "ignoreDependencies": ["@types/mdx"]
     },
     "packages/puzzle-solvers": {
-      "entry": ["src/clock.ts", "tests/**/*.test.ts"]
+      "entry": ["src/clock.ts", "src/sq2.ts", "tests/**/*.test.ts"]
     },
     "packages/vendor-sr-puzzlegen": {
       "entry": ["src/index.ts"]

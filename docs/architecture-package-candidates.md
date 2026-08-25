@@ -1,10 +1,10 @@
 # CubeRoot package 候选清单
 
-状态：`ACTIVE / Batch 5`。本清单记录候选判定与已验证结果；实际迁移仍以架构跟踪表的批次门禁为准。当前事实基线见 [`core/architecture-boundaries.json`](../core/architecture-boundaries.json)，机器扫描器见 [`core/scripts/check-architecture-boundaries.mjs`](../core/scripts/check-architecture-boundaries.mjs)。
+状态：`COMPLETE / Batch 8 snapshot`。本清单冻结已验证的代表性提取、条件候选和重开门槛；它不是“把所有相似文件搬进 package”的永久 backlog。当前事实基线见 [`core/architecture-boundaries.json`](../core/architecture-boundaries.json)，机器扫描器见 [`core/scripts/check-architecture-boundaries.mjs`](../core/scripts/check-architecture-boundaries.mjs)。
 
 ## 结论
 
-CubeRoot 需要收紧的是运行时和部署边界，不是把“看起来能复用”的每段代码都做成 package。当前最值得提取的只有两组：Web 与离线任务共同使用的纯求解器，以及 API 正在直接 import 的 headless 模拟器内核。其余多数情况应先用现有 package 的显式 subpath、领域内纯模块或 artifact contract 解决。
+CubeRoot 需要收紧的是运行时和部署边界，不是把“看起来能复用”的每段代码都做成 package。`shared/alg-transform`、`shared/auth/web-session`、四拼图窄 `puzzle-render-core` 以及 `puzzle-solvers` 的 Clock/SQ2 已证明这套判据可执行；其余多数情况继续用现有 package 的显式 subpath、领域内纯模块或 artifact contract 解决。
 
 不新建 `webapp/`，不拆前后端仓库，也不立即把目录改成 `apps/*`。Web、API、Mobile（当前 Android，未来由同一 React 应用支持 iOS）和小程序属于不同运行边界；下一步是让它们只通过公开 package、API contract 和受管产物通信。
 
@@ -12,11 +12,11 @@ CubeRoot 需要收紧的是运行时和部署边界，不是把“看起来能�
 
 | 候选 | 当前消费者与边界信号 | 依赖闭包与验证 | 决定 | 不提取时的替代方案 |
 | --- | --- | --- | --- | --- |
-| 纯 puzzle solver 家族，首个切片为 Clock | Web UI、Web 测试和 `scramble-stats-build` 已统一使用公开入口 `@cuberoot/puzzle-solvers/clock`，不再跨 app import 私有源码 | Clock 是纯 TypeScript、无 DOM、无 React、无下载表；独立 package build/typecheck/quick test、Node/Worker import、浏览器 bundle、analyzer 单线程与 Worker fixture 均有门禁。bicube、sia222 等现有文件仍含 `statsUrl`/fetch 等 Web loader，不能整文件视为纯核心 | `已落地 / Batch 5`。package 只开放 `./clock`，不设根 barrel；机器测试明确拒绝裸根 import。其他 solver 必须先拆开纯核心与 Web loader，再逐个评估，禁止一次搬完 | 其他 solver 继续留在 client 私有模块，直到分别满足纯度、真实多消费者和独立验证门槛 |
-| Headless simulator core | API 的 `engine_render.ts` 通过 server 的 `@/*` alias import 三个 Web 私有模块；Web 同时运行同一引擎 | 已有 Node headless gate 和渲染 smoke，但闭包约 90 个文件，仍需证明无 DOM、WebGL renderer、客户端 worker 和私有 `@/lib` 值依赖 | `Batch 3 条件候选`。只抽状态、几何、场景组装和 schematic SVG；交互、手势、人体、WebGL 生命周期留在 Web。先生成闭包清单再移动 | 暂时保留 3 条 alias 旧债；不能把 tsconfig alias 当长期公开 API |
-| Cubeopt 模块、WASM 与大表 | API daemon 和离线统计读取 Web public 下的模块，同时读取 repo 外大表 | Node 子进程、WASM/JS 模块和约 972M 表具有独立部署生命周期；代码 package 不能自动解决产物归属 | `不是普通 TS package`。在 Batch 3 建 API 自有 artifact bundle、版本清单、环境覆盖和“无 Web 目录”smoke | 继续把关系登记为 runtime-file/subprocess 契约，但不得增加新的 Web public 读取者 |
-| `invertAlg` 等小型纯 helper | API 当前只为一个 helper import `client/lib/cube3`；仓库内已有多个不同语义的同名实现 | 单函数不足以形成独立生命周期，且不同 puzzle/notation 的逆操作不能盲目合并 | `不建新 package`。先确认语义，再放入现有 `@cuberoot/shared` 的明确 notation subpath，并配 fixture | API 保留一条 client alias 旧债，直到 Batch 3 最小迁移 |
-| Auth 与多端 DTO | Web、Mobile、小程序、API 会共享请求/响应和错误语义 | 必须保持无 React、DOM、Next、Capacitor、微信 API、Node-only 和 axios；还要有跨版本 decoder fixture | `先用 shared 显式 subpath`。以 `auth/web-session` 为试点；只有出现独立发布、原生 codegen 或 shared 无法中性化时才建 contracts package | 每端保留 adapter，但 schema 和稳定错误码仍必须单一来源 |
+| 纯 puzzle solver 家族，已落地 Clock 与 SQ2 窄切片 | Web UI、Web 测试和离线任务统一使用公开入口 `@cuberoot/puzzle-solvers/clock`；SQ2 的 Web UI、SVG 与 sampled builder 使用 `@cuberoot/puzzle-solvers/sq2`，不再由 build 跨 app 加载私有源码 | 两者均为纯 TypeScript、无 DOM、无 React、无下载表；package oracle 覆盖 Node/浏览器公开出口，Clock 另有 Worker/analyzer，SQ2 保留独立 cstimer oracle，并以临时输出目录执行 N=1 sampled smoke | `完成 / Batch 5 + Batch 8`。package 只开放 `./clock` 与 `./sq2`，不设根 barrel、wildcard 或 shim；这两个代表性切片与 BND-04 的递减守卫足以关闭当前治理任务 | 其他 solver 继续留在 client 私有模块；只有命中下方重开条件时才逐域提取 |
+| Headless simulator core | API 与 Web 曾共享四种拼图的状态和 schematic SVG | 完整 Web 闭包含 DOM、WebGL、Worker 和交互；真正中性的四拼图窄闭包已具 Node smoke 与渲染 fixture | `已按窄边界完成`。复用 `@cuberoot/puzzle-render-core`，不搬完整 Web `World` | 交互、手势、人体和 WebGL 生命周期留在 Web |
+| Cubeopt 模块、WASM 与大表 | API daemon、离线统计与本机大表具有独立部署生命周期 | 代码 package 不能表达大表、校验和、原子晋级和启用态验证 | `不是普通 TS package，已由 artifact contract 完成治理`。API 自有 bundle、manifest、环境覆盖和无 Web 目录 smoke 已落地 | 关系继续登记为 runtime-file/subprocess 契约 |
+| `invertAlg` 等小型纯 helper | 多端需要相同但明确的记号语义，仓库内也存在不同 puzzle 的近似实现 | 单函数不足以形成独立 package 生命周期，盲目合并会混淆语义 | `已用现有 shared 明确 subpath 处理`。`alg-transform` 是范本，不建 helper package | 新 helper 先确认语义，再进入已有领域 subpath 并配 fixture |
+| Auth 与多端 DTO | Web、小程序与 API 共享 session/error 语义；Mobile 当前没有认证消费者 | 中性 schema 保持无 React、DOM、Next、Capacitor、微信 API、Node-only 和 axios，并有 producer/consumer fixture | `试点完成`。复用 `shared/auth/web-session`；只有独立发布、原生 codegen 或 shared 无法中性化时才建 contracts package | 每端保留 adapter，schema 和稳定错误码保持单一来源 |
 | 品牌图标生成 | Mobile 构建动态 import Web 图标生成器，并读取 Web public 图标 | 这是构建期单一品牌源，不是跨端运行时 UI | `暂不建 package`。第二个独立生成消费者出现时再提取 brand-assets build package | 保持已登记 build-import 契约和生成物 drift test |
 
 ## 明确排除
@@ -31,4 +31,14 @@ CubeRoot 需要收紧的是运行时和部署边界，不是把“看起来能�
 
 任何候选进入 PKG-02 前必须同时给出：消费者清单、完整 import 闭包、浏览器/Node 运行时矩阵、公开 exports、原测试迁移方案、独立 build 或 smoke、构建体积影响和可回滚提交。若 package 不声明 `exports["."]`，机器守卫必须实测拒绝裸根 import；若提取后仍需要 import 某个 app 的源码或 public，候选直接退回。
 
-推荐顺序：Clock solver 单切片 → API 的 `invertAlg` 最小 subpath → headless simulator core → 其余 solver 逐项评估。目录改名和批量移动不进入这条流水线。
+## Solver 后续候选快照
+
+| 分类 | 候选 | 当前结论与最低前置动作 |
+| --- | --- | --- |
+| 条件可提取 | `ssq1`、`cuboid233`、`cuboid336`、`cuboid337`、`bsq`、`cm3`、`heli`、`helicv`、`ctico` | 当前源码是零宿主 import 的纯 TS，并有 Web 与 sampled builder 消费者；本轮只登记，不实施。未来选中时每个 puzzle 独立迁 source、oracle 和直接消费者，并复用 SQ2 的 Node、Browser、N=1 与边界门禁 |
+| 先拆宿主配置 | `cuboid334`、`cuboid335` | `process`、`window` 或环境探测仍在 solver 内；先把调参与环境读取改成注入 adapter，再谈纯 core |
+| 先拆 Web loader | `bicube`、`sia123`、`sia222` | fetch、`statsUrl`、Blob/Response/解压或 PDB loader 仍与纯状态逻辑混合；先拆纯 core/codec/consts 与 browser loader |
+| 先建立中性依赖 | `crz3a` | 仍依赖 Client 私有 Kociemba 模块；先建立公开的中性 Kociemba core 边界 |
+| 先决定生成任务归属 | `stm` | 当前 PDB 脚本未进入 package、workflow 或文档契约，且入口不能作为干净 Node 任务直接运行；先决定退役或修成受管生成任务 |
+
+PKG-02 关闭后只在以下情况重开：新增或变更真实跨 app 消费者；现有旧债开始阻塞构建、部署或独立运行；用户明确授权某个 solver 域。普通文件相似、目录观感或“以后也许会复用”不构成重开理由。目录改名和批量移动不进入这条流水线。

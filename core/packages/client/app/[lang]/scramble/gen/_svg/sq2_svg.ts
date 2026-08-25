@@ -1,6 +1,6 @@
 /**
  * Square-2 (sq2) state preview SVG — a flat two-disk net whose 24 wedge colours come straight from the
- * solver's own 24-slot model (lib/sq2-solver `sq2Apply`), so the move semantics have a single source of
+ * solver's own 24-slot model (`@cuberoot/puzzle-solvers/sq2` `sq2Apply`), so the move semantics have a single source of
  * truth and the SOLVED puzzle renders as a clean, self-proving net.
  *
  * A Square-2 is a Square-1 whose 8 corner pieces are each split in half, so every one of the 12 top and
@@ -13,7 +13,7 @@
  * unambiguous net. This is a STATE-DERIVED net (not a fixed colour table): if `sq2Apply` were wrong the
  * solved render would not be uniform, which the test guards.
  */
-import { sq2Apply } from '@/lib/sq2-solver';
+import { sq2Apply } from '@cuberoot/puzzle-solvers/sq2';
 
 const RADIUS = 32;
 const RADIUS_MULTIPLIER = Math.SQRT2 * Math.cos((Math.PI * 15) / 180);

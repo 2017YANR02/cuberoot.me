@@ -324,14 +324,20 @@ try {
 # ---- 4. TIER C/D 离线采样分布 (stats/scramble/dist_<event>.json) ----
 # 铁律(solver/NONWCA_PUZZLE_LOOP.md §0.0 #6): TIER C/D(335 等大状态长方体/扭转/滑块)分布无法整图枚举,
 # 必须**离线**采样预计算成静态 JSON,页面只 fetch+渲染,严禁浏览器现场求解采样。这些 puzzle 没有 Rust
-# analyzer / 真题语料,求解器是 packages/client/lib/<puzzle>-solver.ts 的纯 TS 实现; build_puzzle_sampled_dist.ts
-# 直接 import 它、用它自带的 cstimer 同款随机生成器采样。每条求解 ~0.2-0.4s,N 默认几百~两千 → 单 event 几分钟。
+# analyzer / 真题语料。已迁移纯核心走公开 package Node export,遗留求解器仍按需加载 client 私有模块;
+# build_puzzle_sampled_dist.ts 用各自 cstimer 同款随机生成器采样。每条求解 ~0.2-0.4s,N 默认几百~两千 → 单 event 几分钟。
 # 新接入一个 C/D 采样分布 = 在 build_puzzle_sampled_dist.ts 的 REGISTRY 加一行 + 此处 $SAMPLED_DIST_EVENTS 加 event。
 $SAMPLED_DIST_EVENTS = @('335', '336', '337', '233', '334', 'crz3a', 'mpyrso', 'dino', 'sq2', 'ssq1', 'bsq', 'cm3', 'heli', 'helicv', 'ctico', 'sia222')   # 已离线采样的 TIER C/D event(随后续 wave 退役各 DistView 现场采样而增长;15p / sia123 求解器太慢未接入)
 $evToBuild = if ($SampledEvents -and $SampledEvents.Count -gt 0) { $SampledEvents } else { $SAMPLED_DIST_EVENTS }
 if (-not $Sampled) {
   Write-Host '  [采样] 非 WCA 项目 TIER C/D 离线采样分布默认停用 (用户要求; 显式 -Sampled 才跑)。' -ForegroundColor DarkGray
 } elseif ($evToBuild.Count -gt 0) {
+  Step '[采样] 构建 @cuberoot/puzzle-solvers Node 产物'
+  Push-Location (Join-Path $PkgDir '..\..')
+  try {
+    pnpm --filter @cuberoot/puzzle-solvers build
+    if ($LASTEXITCODE -ne 0) { throw '@cuberoot/puzzle-solvers build 失败' }
+  } finally { Pop-Location }
   Step "build_puzzle_sampled_dist (TIER C/D 离线采样: $($evToBuild -join ', '))"
   Push-Location $PkgDir
   # crz3a/15p 的求解器 import client 端 `@/` 别名(kociemba 等),tsx 需指向 client tsconfig 才能解析;

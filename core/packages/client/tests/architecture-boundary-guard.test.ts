@@ -43,7 +43,7 @@ function rules(file: string, content: string): string[] {
 
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
-    expect(MANIFEST.legacyFindings).toHaveLength(314);
+    expect(MANIFEST.legacyFindings).toHaveLength(313);
     expect(compareFindings(CURRENT, MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
     expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(172);
@@ -100,6 +100,8 @@ describe('architecture boundary guard', () => {
     expect(rules(CLIENT_PROBE, "import { cubeSVG } from '@cuberoot/visualcube';"))
       .toEqual([]);
     expect(rules(CLIENT_PROBE, "import { solveClock } from '@cuberoot/puzzle-solvers/clock';"))
+      .toEqual([]);
+    expect(rules(CLIENT_PROBE, "import { solveSq2 } from '@cuberoot/puzzle-solvers/sq2';"))
       .toEqual([]);
     expect(rules(CLIENT_TEST_PROBE, "import x from '../../components/Probe';"))
       .toEqual([]);
