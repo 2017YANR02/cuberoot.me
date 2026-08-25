@@ -199,13 +199,12 @@ server/src/domains/teaching/
 
 ### P2：根目录 PowerShell 脚本应该收，但先消除“脚本位置就是仓库根”的契约
 
-审计基线是根目录 7 个 tracked `.ps1`、约 1,694 行，统一入口仍调度 6 个根级实现。PS1-01 至 PS1-04 已按调用盘点、CLI 加固、契约冻结、最后迁移的顺序执行；当前根目录只保留统一入口和一个有真实仓外调用证据的 BLDDB 兼容 shim，7 个实现集中在 `scripts/upstream/`。
+审计基线是根目录 7 个 tracked `.ps1`、约 1,694 行，统一入口仍调度 6 个根级实现。PS1-01 至 PS1-05 已按调用盘点、CLI 加固、契约冻结、实现迁移、最后迁移仓外调用的顺序执行；当前根目录只保留统一入口，7 个实现集中在 `scripts/upstream/`。
 
 当前落地结构：
 
 ```text
 sync_upstream.ps1                 # 稳定统一入口，薄 wrapper
-_sync_blddb.ps1                   # 已确认仓外旧路径的兼容 shim
 
 scripts/
   upstream/
@@ -228,7 +227,7 @@ scripts/
 3. 单独移动私有 PS1；根 `sync_upstream.ps1` 长期作为普通 wrapper 保留，并从 `PSBoundParameters` 转发显式参数。
 4. `.sync` 仍先留在原位。运行时库、配置、模板和 Node 后处理器以后按类别分别迁移，每次只改变一个路径维度。
 
-仓库与当前机器的 workflow、计划任务、快捷方式和 PowerShell profile 均未发现旧私有入口调用；仓库外 BLDDB 文档确认依赖旧根路径，因此只保留 `_sync_blddb.ps1`。未挂载磁盘、其他机器和未纳入扫描的个人脚本仍不可由仓库证明。
+仓库与当前机器的 workflow、计划任务、快捷方式和 PowerShell profile 均未发现旧私有入口调用；仓库外 BLDDB 文档曾确认依赖旧根路径，现已获用户授权迁移到统一入口并退役最后一个兼容 shim。未挂载磁盘、其他机器和未纳入扫描的个人脚本仍不可由仓库证明。
 
 ### P2：大文件很多，但不能按行数机械拆
 
@@ -397,8 +396,8 @@ miniprogram                  -X-> React DOM modules
 ### 阶段 3A：安全收根目录 PS1 已完成
 
 - 7 个实现先统一显式 `RepoRoot`、路径断言和真正无副作用的 `ValidateOnly`，再冻结公开参数与退出码。
-- 根目录只保留统一入口 `sync_upstream.ps1` 和有仓外证据的 `_sync_blddb.ps1` 兼容 shim；7 个私有实现统一归入 `scripts/upstream/`。
-- 两个 shim 原样转发显式参数，BLDDB shim 将旧 `ProjectDir` 映射为 `RepoRoot`；canonical 实现从自身位置向上两级解析默认仓库根。
+- 根目录只保留统一入口 `sync_upstream.ps1`；7 个私有实现统一归入 `scripts/upstream/`。
+- 根 wrapper 原样转发显式参数；canonical 实现从自身位置向上两级解析默认仓库根。
 - `.sync` 继续作为共享同步库与后处理目录，本批次不为目录外观继续搬动。
 
 验收：任意工作目录、默认/显式/旧根参数和真实 `pwsh -File` 均解析到同一 RepoRoot；Windows、Linux、workflow 路径与无副作用合同通过，移动未改变产物位置和同步职责。

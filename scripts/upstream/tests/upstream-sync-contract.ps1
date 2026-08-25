@@ -38,7 +38,7 @@ $contracts = @(
     }
     [ordered]@{
         Id = 'blddb'
-        Candidates = @('_sync_blddb.ps1', 'scripts/upstream/sync-blddb.ps1')
+        Candidates = @('scripts/upstream/sync-blddb.ps1')
         Parameters = @('BlddbDir', 'ProjectDir', 'SkipPull', 'SkipInstall', 'RepoRoot', 'ValidateOnly')
     }
     [ordered]@{
@@ -257,7 +257,7 @@ function Assert-ParameterSurface
 
 function Assert-RepositoryTopology
 {
-    $expectedRootScripts = @('_sync_blddb.ps1', 'sync_upstream.ps1')
+    $expectedRootScripts = @('sync_upstream.ps1')
     $actualRootScripts = @(
         Get-ChildItem -LiteralPath $RepoRoot -Filter '*.ps1' -File |
             ForEach-Object { $_.Name } |
@@ -282,6 +282,7 @@ function Assert-RepositoryTopology
     foreach ($legacyPath in @(
         '_sync_cstimer.ps1'
         '_sync_cstimer_scramble.ps1'
+        '_sync_blddb.ps1'
         '_sync_RubiksSolverDemo.ps1'
         '_sync_recordranks.ps1'
         'sync_alg_trainers.ps1'
@@ -292,7 +293,6 @@ function Assert-RepositoryTopology
 
     $shimTargets = [ordered]@{
         'sync_upstream.ps1' = 'scripts/upstream/sync-all.ps1'
-        '_sync_blddb.ps1' = 'scripts/upstream/sync-blddb.ps1'
     }
     foreach ($shimName in $shimTargets.Keys)
     {
@@ -1092,59 +1092,6 @@ try
     Assert-True (($fileEntryResult.Stdout + $fileEntryResult.Stderr).Contains($fileEntryFixture.Root)) "$fileEntryFailure`n根入口没有从任意 cwd 使用显式 RepoRoot。"
     $afterFileEntry = @(Get-TreeFingerprint -Root $fileEntryFixture.Sandbox)
     Assert-True (($beforeFileEntry -join "`n") -ceq ($afterFileEntry -join "`n")) '真实 -File 根入口改写了测试沙箱。'
-
-    $blddbShimFixture = New-FixtureRepo
-    $blddbProbePath = Join-Path $blddbShimFixture.Root 'scripts/upstream/sync-blddb.ps1'
-    Set-Content -LiteralPath $blddbProbePath -NoNewline -Value @'
-param(
-    [string]$BlddbDir,
-    [string]$ProjectDir,
-    [switch]$SkipPull,
-    [switch]$SkipInstall,
-    [string]$RepoRoot,
-    [switch]$ValidateOnly
-)
-[ordered]@{
-    BlddbDir = $BlddbDir
-    ProjectDir = $ProjectDir
-    SkipPull = [bool]$SkipPull
-    SkipInstall = [bool]$SkipInstall
-    RepoRoot = $RepoRoot
-    ValidateOnly = [bool]$ValidateOnly
-} | ConvertTo-Json -Compress
-'@
-    $blddbShim = Join-Path $blddbShimFixture.Root '_sync_blddb.ps1'
-    $explicitBlddbDir = Join-Path $blddbShimFixture.External 'blddb explicit'
-    $explicitProjectDir = Join-Path $blddbShimFixture.External 'project explicit'
-    $explicitRepoRoot = Join-Path $blddbShimFixture.External 'repo explicit'
-    $explicitForward = Invoke-IsolatedFile -Script $blddbShim -WorkingDirectory $blddbShimFixture.Cwd -Description 'BLDDB shim explicit forwarding' -Arguments @(
-        '-BlddbDir', $explicitBlddbDir,
-        '-ProjectDir', $explicitProjectDir,
-        '-SkipPull',
-        '-SkipInstall',
-        '-RepoRoot', $explicitRepoRoot,
-        '-ValidateOnly'
-    )
-    $explicitForwardFailure = Format-ProcessFailure -Id 'blddb-shim-explicit-forwarding' -Result $explicitForward
-    Assert-True ($explicitForward.ExitCode -eq 0) $explicitForwardFailure
-    $explicitPayload = $explicitForward.Stdout.Trim() | ConvertFrom-Json
-    Assert-True ($explicitPayload.BlddbDir -ceq $explicitBlddbDir) 'BLDDB shim 丢失 BlddbDir。'
-    Assert-True ($explicitPayload.ProjectDir -ceq $explicitProjectDir) 'BLDDB shim 丢失 ProjectDir。'
-    Assert-True ($explicitPayload.SkipPull -eq $true) 'BLDDB shim 丢失 SkipPull。'
-    Assert-True ($explicitPayload.SkipInstall -eq $true) 'BLDDB shim 丢失 SkipInstall。'
-    Assert-True ($explicitPayload.RepoRoot -ceq $explicitRepoRoot) 'BLDDB shim 丢失显式 RepoRoot。'
-    Assert-True ($explicitPayload.ValidateOnly -eq $true) 'BLDDB shim 丢失 ValidateOnly。'
-
-    $legacyProjectDir = Join-Path $blddbShimFixture.External 'legacy project root'
-    $legacyForward = Invoke-IsolatedFile -Script $blddbShim -WorkingDirectory $blddbShimFixture.Cwd -Description 'BLDDB shim legacy root forwarding' -Arguments @(
-        '-ProjectDir', $legacyProjectDir,
-        '-ValidateOnly'
-    )
-    $legacyForwardFailure = Format-ProcessFailure -Id 'blddb-shim-legacy-root-forwarding' -Result $legacyForward
-    Assert-True ($legacyForward.ExitCode -eq 0) $legacyForwardFailure
-    $legacyPayload = $legacyForward.Stdout.Trim() | ConvertFrom-Json
-    Assert-True ($legacyPayload.ProjectDir -ceq $legacyProjectDir) 'BLDDB shim 丢失旧 ProjectDir。'
-    Assert-True ($legacyPayload.RepoRoot -ceq $legacyProjectDir) 'BLDDB shim 必须把旧 ProjectDir 映射为 RepoRoot。'
 
     $nativeFailureFixture = New-FixtureRepo
     $nativeFailureUpstream = Join-Path $nativeFailureFixture.External 'cstimer'

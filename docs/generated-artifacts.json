@@ -239,7 +239,7 @@
       "verification": [
         "pwsh -NoProfile -File scripts/upstream/sync-blddb.ps1 -ValidateOnly"
       ],
-      "driftPolicy": "The root _sync_blddb.ps1 is only a compatibility shim for a confirmed external caller; sync through the canonical owner, record HEAD, and review post-processing and license."
+      "driftPolicy": "Sync through sync_upstream.ps1 -Only blddb; record the locked origin/v2 commit and review post-processing and license."
     },
     {
       "id": "deploy.recordranks",
