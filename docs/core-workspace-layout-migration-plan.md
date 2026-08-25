@@ -2,7 +2,7 @@
 
 最后更新：2026-08-25
 
-状态：`实施中`。仓库所有者已于 2026-08-25 明确授权开始；当前先实施双布局基础，尚未移动 Web/API 源码目录。
+状态：`实施中`。仓库所有者已于 2026-08-25 明确授权开始；LAY2-01 双布局基础与 LAY2-02 双路径发布合同已完成，尚未移动任何 app 源码目录。
 
 主执行入口：[架构现代化跟踪](./architecture-modernization-tracker.md)。
 
@@ -99,9 +99,15 @@ Next、API、stats、Android 以及 workflow path-contract 都硬编码了旧路
 
 仓外构建平台的 Root Directory、Build Command 和 Ignored Build Step 也要记录旧值与回切值，不能假设仓库内配置代表全部事实。远端运行目录和服务名保持不变，减少无关风险。
 
+LAY2-02 实测配置快照：仓外 Web 项目当前 Root Directory 为 `core/packages/client`，目标值为 `core/apps/web`，回切值仍为 `core/packages/client`；Framework、Build、Output 与 Install 均使用平台的 Next.js 默认值，没有自定义 Ignored Build Step。仓外平台一次只能使用一个 Root Directory，因此本批不提前切换；LAY2-10 移动 Web 时必须在同一发布窗口改为目标值，回滚源码提交时同步恢复旧值。
+
+仓内发布合同通过 `core/scripts/resolve-workspace-path.mjs` 按 package name 查找当前 workspace，并在找不到或同时找到两份时直接失败。Deploy Next、Deploy Core、Stats 与其调用的定时/手动 workflow 已使用该解析结果；三个 push filter 同时接受旧、新源码路径，也把 resolver 自身列为生产输入。
+
 ### 5.3 架构守卫不能换目录后失明
 
 架构审计、结构化边界清单和多个写入钩子仍按 `packages/client`、`packages/server` 判断 owner。先建立不依赖物理路径的 workspace registry，以 package name、`cuberoot.kind` 和 root 为身份，再搬源码。
+
+LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为 manifest 身份；其他只服务具体 app/job 的本地钩子仍按旧物理路径工作。它们不是 LAY2-02 发布合同的一部分，但必须在对应单元移动前统一改用 resolver 或旧新双候选，禁止搬完后静默失明。
 
 当前 legacy baseline 也把 file/target 写成路径。迁移前必须用 old→new 映射证明现有 313 个 identity、329 个 occurrence 和 13 个 manual contract 在语义上相同或递减，不能用一次盲目的 snapshot 把漏检或新增债务合法化。
 
@@ -148,8 +154,8 @@ Next、API、stats、Android 以及 workflow path-contract 都硬编码了旧路
 | ID | 批次 | 工作 | 状态 | 完成门槛 |
 | --- | --- | --- | --- | --- |
 | LAY2-00 | 决策与基线 | 建立本文，保存旧裁决与新决策，刷新路径、workflow、仓外配置和依赖清单 | `完成` | 三路审核入表，blocker 有明确 owner |
-| LAY2-01 | 双布局基础 | workspace 同时接受 apps/packages/jobs；边界审计和钩子按 manifest 身份识别；Knip 接受新旧路径；生成物清册仍保留可审核的物理证据并随各批同步；补 `workspace-undeclared-import` | `完成` | 14 个 workspace 唯一；313/329/13 语义同集；真实未声明依赖探针被写入钩子拒绝且未落盘 |
-| LAY2-02 | 双路径发布合同 | workflow、path-contract 和仓外构建配置先接受旧/新路径，不移动 app | `实施中` | 新旧路径触发合同可执行，回切值已记录 |
+| LAY2-01 | 双布局基础 | workspace 同时接受 apps/packages/jobs；架构扫描器与未声明依赖写入钩子按 manifest 身份识别；Knip 接受新旧路径；生成物清册仍保留可审核的物理证据并随各批同步 | `完成` | 14 个 workspace 唯一；313/329/13 语义同集；真实未声明依赖探针被写入钩子拒绝且未落盘 |
+| LAY2-02 | 双路径发布合同 | workflow、path-contract 和仓外构建配置先接受旧/新路径，不移动 app | `完成` | Web/API/stats 旧新路径与 resolver 均进入触发矩阵；执行路径按 package identity 解析；仓外 Web 旧值、目标值和回切时机已记录 |
 | LAY2-03 | `wb-build` | 移至 `jobs/wb-build` | `已授权，待前置` | package 解析、最小 dry run、边界和生成物检查通过 |
 | LAY2-04 | `alg-build` | 移至 `jobs/alg-build` | `已授权，待前置` | migration 输出、API 消费和清册一致，不改正式 DB |
 | LAY2-05 | `stats-build` | 移至 `jobs/stats-build` | `已授权，待前置` | build/upload/load 三段合同一致，不重算正式统计 |
@@ -244,5 +250,6 @@ Next、API、stats、Android 以及 workflow path-contract 都硬编码了旧路
 | 2026-08-25 | CI、部署、PowerShell 和路径调用方 | `HOLD：禁止一步到位` | 已采纳：双布局先行、单单元原子迁移、旧新 workflow filter 过渡、仓外配置回切、正式统计不重算 |
 | 2026-08-25 | workspace 归类和目标树 | `GO：分类无歧义；立即执行 HOLD` | 已采纳：4 app、6 library、4 job；Platform 留在原地并排除；`wb-build` 首迁，Web 末迁 |
 | 2026-08-25 | package 边界、跨 app 依赖和 AI 可读性 | `条件 GO：先补 3 个 blocker` | 已采纳：path-independent registry 与旧新基线同集证明、workflow 正负触发矩阵、未声明 workspace import 守卫；采用 `apps/web`、`apps/api` 并暂时保留 package 名 |
+| 2026-08-25 | LAY2-02 workflow、stats 与发布合同复审 | `GO：可进入首个 job 移动` | 已采纳：统一 resolver fail closed；Web/API/stats 双路径 filter；resolver 变化触发对应生产 workflow；定时/手动 workflow 工作目录去物理路径；Web 仓外 Root Directory 随 LAY2-10 原子切换 |
 
 这里的 `HOLD` 只否决“一步到位执行”，不否决渐进方案。未解决的 blocker 必须成为对应批次的前置门槛，不能靠口头承诺跳过。

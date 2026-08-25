@@ -27,16 +27,23 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Resolve workspace layout
+        id: workspace
+        working-directory: core
+        run: |
+          web="$(node scripts/resolve-workspace-path.mjs @cuberoot/client)"
+          echo "web=$web" >> "$GITHUB_OUTPUT"
+
       - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
 
       - name: Check spreadsheet drift
         id: check
-        working-directory: core
+        working-directory: core/${{ steps.workspace.outputs.web }}
         run: |
           set +e
-          node packages/client/scripts/sq1-pbl-check.mjs --report "$RUNNER_TEMP/sq1-pbl-drift-report.md"
+          node scripts/sq1-pbl-check.mjs --report "$RUNNER_TEMP/sq1-pbl-drift-report.md"
           echo "code=$?" >> "$GITHUB_OUTPUT"
 
       - name: Fail on detector error
