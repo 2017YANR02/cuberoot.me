@@ -7,7 +7,7 @@ import {
   normalizeWcaId,
   parseTeacherLookupEvents,
   parseTeacherLookupIds,
-} from '../../server/src/utils/wca_teachers';
+} from '../src/utils/wca_teachers';
 
 describe('WCA teacher input boundaries', () => {
   it('normalizes valid WCA IDs and rejects malformed or non-string input', () => {

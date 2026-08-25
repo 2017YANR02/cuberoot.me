@@ -9,7 +9,7 @@
 最终不保留独立 Platform 前端。教学系统作为主站的一部分运行:
 
 - `core/packages/client` 是唯一 Web 前端,教职员工入口使用 `/org/*`,学员/监护人入口使用 `/learn/*`。
-- `core/packages/server` 提供全部多机构教学 API,PostgreSQL 是教学业务唯一事实来源。
+- `core/apps/api` 提供全部多机构教学 API,PostgreSQL 是教学业务唯一事实来源。
 - `core/packages/shared` 保存前后端共享契约,不放第二套业务实现。
 - `core/packages/platform` 只作为历史归档来源,停止新增、测试和部署产品能力;仅允许必要的数据导出与取证。
 - `/timer`、`/predict`、`/alg`、`/sim` 始终复用主站实现,教学页面只生成带任务上下文的真链接。
@@ -25,7 +25,7 @@
 | 机构与教师后台 | `packages/client/app/[lang]/org` | 独立后台布局,仍属于主站应用 |
 | 学员与监护人门户 | `packages/client/app/[lang]/learn` | 复用主站账号、教学 API 与中性教学组件 |
 | 登录与账号 | 主站现有账号体系 | 不再保留 `cube_user` 独立 Cookie 或跨站身份桥接 |
-| 教学 API | `packages/server` | 统一鉴权、租户权限、审计和幂等 |
+| 教学 API | `apps/api` | 统一鉴权、租户权限、审计和幂等 |
 | 教学数据 | PostgreSQL | 机构、课包、课堂、作业、证据和反馈均以此为准 |
 | 共享契约 | `packages/shared` | DTO、权限、状态、严格 parser 与 registry |
 | 旧 Platform SQLite | 离线归档 | 不迁移计时历史,不再承载教学业务或线上写入 |

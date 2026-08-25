@@ -1,9 +1,9 @@
 // Drift guards for the two hardcoded-snapshot /dev pages whose source of truth
-// lives in packages/server. Both pages hand-mirror server state, so they silently
+// lives in apps/api. Both pages hand-mirror server state, so they silently
 // rot as the backend grows. These pure read-only tests turn CI red the moment the
 // snapshot falls behind — no codegen to maintain.
 //
-//   /dev/schema  — its MIGRATIONS ledger must list every packages/server/migrations
+//   /dev/schema  — its MIGRATIONS ledger must list every apps/api/migrations
 //                   file. Add migration 0062 without a ledger row → red.
 //                   Fix: add a `{ n, slug, desc }` row to MIGRATIONS in
 //                   app/[lang]/dev/schema/page.tsx.
@@ -18,9 +18,10 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
-const SERVER = join(ROOT, '..', 'server');
+const SERVER = workspaceFixturePath('@cuberoot/server');
 
 const migDir = join(SERVER, 'migrations');
 const indexTs = join(SERVER, 'src', 'index.ts');

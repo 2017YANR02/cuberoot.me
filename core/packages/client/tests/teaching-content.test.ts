@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import sitemap from '../app/sitemap';
 import {
   courseLessons,
@@ -13,6 +12,7 @@ import { OLL_ORDER, PLL_LABELS, ZBLL_CASE_COUNTS } from '../app/[lang]/courses/_
 import { ADVANCED_COURSE_FALLBACK } from '../app/[lang]/courses/_data/advanced-course-fallback';
 import { mergeTrialLessonOverrides } from '../app/[lang]/courses/_data/trial-overrides';
 import { SECTIONS, TEXTS } from '../lib/landing-sections';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 describe('teaching course plan', () => {
   it('keeps the three-course lesson structure and duration baseline', () => {
@@ -107,7 +107,10 @@ describe('teaching course plan', () => {
   });
 
   it('keeps trial writes administrator-only and stores JSON arrays without double encoding', () => {
-    const route = readFileSync(join(import.meta.dirname, '../../server/src/routes/teaching.ts'), 'utf8');
+    const route = readFileSync(
+      workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'teaching.ts'),
+      'utf8',
+    );
     expect(route).toMatch(/put\('\/teaching\/trial\/:lessonId'[\s\S]*?requireAdminOrApiKey\(c\)/);
     expect(route).toMatch(/put\('\/teaching\/trial\/:lessonId\/english'[\s\S]*?requireAdminOrApiKey\(c\)/);
     expect(route).toMatch(/shots_zh = EXCLUDED\.shots_zh/);
@@ -153,7 +156,7 @@ describe('teaching course plan', () => {
     }
 
     const migration = readFileSync(
-      join(import.meta.dirname, '../../server/migrations/0127_teaching_advanced_lessons.sql'),
+      workspaceFixturePath('@cuberoot/server', 'migrations', '0127_teaching_advanced_lessons.sql'),
       'utf8',
     );
     const seeded = [...migration.matchAll(/^\s*\('(333|222)',\s*(\d+),\s*'([^']*)',\s*'([^']*)'\)[,;]$/gm)]

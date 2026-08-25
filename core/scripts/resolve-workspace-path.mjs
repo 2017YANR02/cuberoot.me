@@ -5,11 +5,11 @@ import { fileURLToPath } from 'node:url';
 const CORE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WORKSPACE_CONTAINERS = ['apps', 'packages', 'jobs'];
 
-export function resolveWorkspacePath(packageName) {
+export function resolveWorkspacePath(packageName, coreRoot = CORE_ROOT) {
   const matches = [];
 
   for (const container of WORKSPACE_CONTAINERS) {
-    const containerRoot = join(CORE_ROOT, container);
+    const containerRoot = join(coreRoot, container);
     if (!existsSync(containerRoot)) continue;
 
     for (const entry of readdirSync(containerRoot, { withFileTypes: true })) {
@@ -27,7 +27,7 @@ export function resolveWorkspacePath(packageName) {
     throw new Error(`Expected exactly one workspace named ${packageName}, found ${matches.length}`);
   }
 
-  return relative(CORE_ROOT, matches[0]).replaceAll('\\', '/');
+  return relative(coreRoot, matches[0]).replaceAll('\\', '/');
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

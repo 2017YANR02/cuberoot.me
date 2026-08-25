@@ -1,7 +1,7 @@
 /**
  * cube555 random-state 5x5 scramble daemon (cuberoot.me).
  *
- * Long-lived JVM child process spawned by Hono (packages/server) to serve
+ * Long-lived JVM child process spawned by Hono (apps/api) to serve
  * /v1/scramble/555-rs. Talks line-based stdin/stdout protocol — we picked
  * stdio over a local HTTP server because (a) cube555's solver has no
  * built-in concurrency safety beyond per-Search instances, so we manage

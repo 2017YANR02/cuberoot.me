@@ -9,7 +9,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | 路径 | 责任与边界 |
 | --- | --- |
 | `core/packages/client` | 唯一 Web 前端，包含 `/platform/*` 产品入口及其复用的 `/org/*`、`/learn/*` 深链 |
-| `core/packages/server` | Hono API + PostgreSQL，独立运行和部署；对 Web 源码与 `client/public` 的旧耦合是待治理债务，不得扩大 |
+| `core/apps/api` | Hono API + PostgreSQL，独立运行和部署；对 Web 源码与 `client/public` 的旧耦合是待治理债务，不得扩大 |
 | `core/apps/mobile` | React + Capacitor 应用，当前 Android，未来 iOS 默认复用同一 React 应用 |
 | `core/apps/miniprogram` | 微信小程序独立运行时，不复用 React DOM UI |
 | `core/packages/shared` | 稳定契约、纯规则与跨端数据模型；公式数据以 PG `alg_sets/alg_cases` 为准 |
@@ -96,7 +96,7 @@ pnpm --filter @cuberoot/client lint
 - 磁盘不够先 `df -h` 告诉我,别静默换方案。
 - 凭据:给用户服务器/DB 命令时从 `.password.md`(gitignored)读真实密码嵌入,不写 `<password>` 占位;命令不 commit。
 - 本地 PG:docker `pg13`(5433,pwd `dev`,db `cuberoot_db`);schema/load.sql 先本地验。
-- 本地改某域 DB 数据并预览:`seed:local <表>` 拉那域的表进 pg13 + `dev:local` 跑本地 API + `$env:LOCAL_DOMAINS='<域>'` 起前端(只该域走本地,登录/别的域/WCA 大表仍反代线上);禁默认全局连本地。范本 alg,详 `packages/server/scripts/README.md`。
+- 本地改某域 DB 数据并预览:`seed:local <表>` 拉那域的表进 pg13 + `dev:local` 跑本地 API + `$env:LOCAL_DOMAINS='<域>'` 起前端(只该域走本地,登录/别的域/WCA 大表仍反代线上);禁默认全局连本地。范本 alg,详 `apps/api/scripts/README.md`。
 
 ## 测试
 

@@ -1,14 +1,13 @@
 /**
- * server 端镜像同步(`server/src/utils/alg_mirror.ts`)的库层行为。
+ * API 端镜像同步(`src/utils/alg_mirror.ts`)的库层行为。
  *
  * 纯重写规则在 `alg_mirror_rewrite.test.ts` 里钉过了,这里只管「读哪几行、写哪几行」:
  * 自镜像走不走伙伴查询、链断了会不会把孤儿留下、没变的行会不会被白写一遍。
  *
- * 库用假的 —— 这个模块只发两种 SQL(按 id 取一行 / 按 id 改 algs),假一个够了。server 包本身
- * 没有测试集(见 server-cache-headers.test.ts 的注释),跨包引源码是这个仓库既有的做法。
+ * 库用假的 —— 这个模块只发两种 SQL(按 id 取一行 / 按 id 改 algs),假一个够了。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { AlgEntry } from '@cuberoot/shared';
+import type { AlgEntry } from '@cuberoot/shared/alg-mirror';
 
 interface Row {
   id: number;
@@ -35,7 +34,7 @@ function asJsonb<T>(v: T): T {
   return v;
 }
 
-vi.mock('../../server/src/db/connection.js', () => ({
+vi.mock('../src/db/connection.js', () => ({
   query: async (text: string, params: unknown[] = []) => {
     if (text.startsWith('SELECT')) {
       const [id, puzzle, set] = params as [number, string, string];
@@ -53,7 +52,7 @@ vi.mock('../../server/src/db/connection.js', () => ({
   },
 }));
 
-const { syncMirrorForCase, mirrorAlgSyncEnabled } = await import('../../server/src/utils/alg_mirror.js');
+const { syncMirrorForCase, mirrorAlgSyncEnabled } = await import('../src/utils/alg_mirror.js');
 
 const views = (fr: string[], fl: string[] = [], bl: string[] = [], br: string[] = []): AlgEntry[][] =>
   [fr, fl, bl, br].map(v => v.map(alg => ({ alg })));

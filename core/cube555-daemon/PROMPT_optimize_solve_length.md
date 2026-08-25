@@ -247,7 +247,7 @@ function sendNext() {
 ## 不动的东西
 
 - `core/packages/client/**`(那是前端,跟 solver 步数无关)
-- `core/packages/server/src/**`(那是 Hono spawn 逻辑)
+- `core/apps/api/src/**`(那是 Hono spawn 逻辑)
 - `D:\cube\cube555\src\*.java`(上游 cube555,不是本仓库的)
 - `Phase*.j*data` 剪枝表(BFS 算的,跟当前任务无关)
 - `core/cube555-daemon/native-image/`(GraalVM 元数据,本地不用)

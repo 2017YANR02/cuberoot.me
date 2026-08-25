@@ -1,4 +1,4 @@
-// 守卫:「忘记密码」授权窗口(server/src/utils/session.ts 的 amr=email_code + 15 分钟)。
+// 守卫:「忘记密码」授权窗口(src/utils/session.ts 的 amr=email_code + 15 分钟)。
 //
 // 这条规矩撑着两个相反方向的安全不变量,任何一边破了都是真事故:
 //   ① 能收邮件的人必须能重设密码 —— 否则忘了密码的账号永久锁死(本次修复前就是这样:
@@ -6,13 +6,10 @@
 //   ② 除此之外的任何会话都不得免旧密码改密码 —— 偷到 localStorage 里 token 的人若能直接
 //      换密码,就等于接管账号。故密码登录 / WCA / Google / 三方签出的会话一律没有 grant,
 //      邮箱验证码签出的会话也只在 15 分钟内有效。
-//
-// 注:测试文件在 client 包下,不能直接 import 'jsonwebtoken'(它是 server 的依赖,解析不到);
-//     要把会话「放旧」就用 fake timer 拨钟 —— jwt 的 iat / 本模块的判定都读 Date.now()。
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   signSession, hasFreshEmailGrant, EMAIL_GRANT_TTL_S,
-} from '../../server/src/utils/session';
+} from '../src/utils/session';
 
 const T0 = new Date('2026-07-13T00:00:00Z').getTime();
 

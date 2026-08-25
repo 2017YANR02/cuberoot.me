@@ -11,7 +11,7 @@ pnpm install
 pnpm --filter @cuberoot/client dev
 ```
 
-本地地址为 `http://127.0.0.1:3000/`。开发环境的 `/v1/*` 请求由 `next.config.ts` rewrites 代理；需要只让某个 API 域走本地 Hono 时，按 `packages/server/scripts/README.md` 使用 `LOCAL_DOMAINS`。
+本地地址为 `http://127.0.0.1:3000/`。开发环境的 `/v1/*` 请求由 `next.config.ts` rewrites 代理；需要只让某个 API 域走本地 Hono 时，按 `apps/api/scripts/README.md` 使用 `LOCAL_DOMAINS`。
 
 ## 验证
 

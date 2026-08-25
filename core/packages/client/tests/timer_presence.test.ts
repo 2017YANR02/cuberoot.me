@@ -1,10 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
+import { pathToFileURL } from 'node:url';
 import {
   battlePresenceMix,
   sendTimerPresenceHeartbeat,
   type TimerPresenceReport,
 } from '@/app/[lang]/timer/_lib/presence';
-import { createTimerPresenceRoutes, TIMER_PRESENCE_TTL_MS } from '../../server/src/routes/timer_presence';
+import { workspaceFixturePath } from './workspace-fixture-path';
+
+const { createTimerPresenceRoutes, TIMER_PRESENCE_TTL_MS } = await import(
+  pathToFileURL(
+    workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'timer_presence.ts'),
+  ).href,
+);
 
 const IDS = [
   '11111111-1111-4111-8111-111111111111',

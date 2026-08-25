@@ -1,24 +1,12 @@
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { canonicalize3x3AlgFile, type AlgFile } from '@cuberoot/shared';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
-const migration = readFileSync(fileURLToPath(new URL(
-  '../../server/migrations/0135_alg_3x3_lowercase_wide.sql',
-  import.meta.url,
-)), 'utf8');
-const schema = readFileSync(fileURLToPath(new URL(
-  '../../server/src/db/schema.pg.sql',
-  import.meta.url,
-)), 'utf8');
-const canonicalRoute = readFileSync(fileURLToPath(new URL(
-  '../../server/src/routes/alg_sets.ts',
-  import.meta.url,
-)), 'utf8');
-const submissionRoute = readFileSync(fileURLToPath(new URL(
-  '../../server/src/routes/alg.ts',
-  import.meta.url,
-)), 'utf8');
+const migration = readFileSync(workspaceFixturePath('@cuberoot/server', 'migrations', '0135_alg_3x3_lowercase_wide.sql'), 'utf8');
+const schema = readFileSync(workspaceFixturePath('@cuberoot/server', 'src', 'db', 'schema.pg.sql'), 'utf8');
+const canonicalRoute = readFileSync(workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'alg_sets.ts'), 'utf8');
+const submissionRoute = readFileSync(workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'alg.ts'), 'utf8');
 
 function fixture(puzzle: string): AlgFile {
   return {

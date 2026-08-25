@@ -45,7 +45,7 @@ async function main() {
   const out = `-- 0080_wiki_backfill_bilingual.sql
 -- 一次性回填:把 seed 词条的中英混排 head/body 拆进 0079 新增的
 -- head_en/head_zh/body_en/body_zh 结构化列。原 head/body 原样保留(搜索/slug/兜底)。
--- 由 packages/server/scripts/gen-wiki-backfill.ts 从 DB 自身 combined 值生成,勿手改。
+-- 由 apps/api/scripts/gen-wiki-backfill.ts 从 DB 自身 combined 值生成,勿手改。
 -- 拆分规则见 scripts/lib/wiki-bilingual.mjs(首汉字切分,实测 713 条零误拆)。
 
 ${updates.join('\n')}

@@ -431,7 +431,7 @@ export function validateLedger(ledger, { root = repoRoot } = {}) {
     }
     if (best2x2Migration.source?.locator !== '.tmp/best2x2/import.json'
         || best2x2Migration.sourcePipeline
-        || best2x2Migration.outputs?.some((output) => !output.startsWith('core/packages/server/migrations/'))) {
+        || best2x2Migration.outputs?.some((output) => !output.startsWith('core/apps/api/migrations/'))) {
       fail('migration.best2x2 must consume the reviewed import and own only immutable migration outputs');
     }
   }

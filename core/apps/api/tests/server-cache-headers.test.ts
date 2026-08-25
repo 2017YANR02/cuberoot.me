@@ -8,14 +8,14 @@
 // 正确写法:`max-age=300, s-maxage=86400`(nginx 1.26 认 s-maxage,共享层保持 24h,stats.yml 重灌后全清);
 // 空/暂态 payload 发 `no-store`;改响应 shape 必须 bump URL `v=` 参数。
 //
-// CI 跑 vitest(server 包无测试集),故跨包扫源码当红灯;新端点想长缓存 → 进 allowlist 留下 review 信号。
+// API 测试集直接扫描自身源码;新端点想长缓存 → 进 allowlist 留下 review 信号。
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 
-const ROUTES_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'server', 'src', 'routes');
+const ROUTES_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'routes');
 // 1h 内的浏览器缓存自愈快,允许;> 1h(实务上就是 86400 一族)才是「钉死一天」事故类
 const BROWSER_MAX_AGE_LIMIT = 3600;
 

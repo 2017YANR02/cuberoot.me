@@ -4,15 +4,30 @@
 // 过得了前端却被后端拒("Validation failed")。两端任一改动都要让对方同步,否则这里红灯。
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
-import {
+import { workspaceFixturePath } from './workspace-fixture-path';
+
+type ReconUser = { wcaId: string; name?: string };
+type VisibilityFilter = { clause: string; params: string[] };
+type ReconHelpersModule = {
+  jsonToRow: (json: Record<string, unknown>) => Record<string, unknown>;
+  rowToJson: (row: Record<string, unknown>) => Record<string, unknown>;
+  validateRow: (row: Record<string, unknown>) => string[];
+  visibilityDiscoverFilter: (me: ReconUser | null, visCol?: string) => VisibilityFilter;
+  visibilityOwnerFilter: (me: ReconUser | null, visCol?: string, ownerCol?: string) => VisibilityFilter;
+  ADMIN_WCA_IDS: readonly string[];
+};
+
+const {
   jsonToRow, rowToJson, validateRow, visibilityDiscoverFilter, visibilityOwnerFilter, ADMIN_WCA_IDS,
-} from '../../server/src/utils/recon_helpers';
+} = await import(pathToFileURL(
+  workspaceFixturePath('@cuberoot/server', 'src', 'utils', 'recon_helpers.ts'),
+).href) as ReconHelpersModule;
 
 const here = dirname(fileURLToPath(import.meta.url));
 const CLIENT = join(here, '..', 'lib', 'recon-alg-utils.ts');
-const SERVER = join(here, '..', '..', 'server', 'src', 'utils', 'recon_helpers.ts');
+const SERVER = workspaceFixturePath('@cuberoot/server', 'src', 'utils', 'recon_helpers.ts');
 
 function chars(s: string): Set<string> {
   return new Set([...s]);

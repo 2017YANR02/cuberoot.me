@@ -2,7 +2,7 @@
 // 这是 POST/PUT「重复需说明原因」+ check-duplicate 预警的同一份逻辑,口径一变两端齐变。
 // 占位打乱('?' 等)必须豁免:同一选手可合法有多条「打乱未知」的复盘(各为不同把)。
 import { describe, it, expect } from 'vitest';
-import { buildDuplicateQuery, isRealScramble, validateRow } from '../../server/src/utils/recon_helpers';
+import { buildDuplicateQuery, isRealScramble, validateRow } from '../src/utils/recon_helpers';
 
 const SCR = "R U R' U' F2 L2 B";      // 真打乱(够长)
 const SCR2 = "L U L' U' D2 R F";      // 另一条真打乱

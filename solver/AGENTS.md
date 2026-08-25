@@ -124,7 +124,7 @@ cargo test --release -- --ignored     # 8 个 ignored(中表 + e2e XCross + pseu
 - 表:`solver/tables/h48/h48prun31h{5,6,9}.dat`(972M / 1.95G / **15.6G**,gitignored,本机已有)
 - 管道 + 实测成本:**`solver/333opt/README.md`**(断点续跑、崩溃自重启、进度行都在里面)
 - 操作入口:skill **`update-scramble-stats` §C**(`update_cross_stats.ps1 -Jobs 333opt`)
-- 服务端封装:`core/packages/server/src/cubeopt/`(daemon + mem-arbiter,与 cube555 互斥)
+- 服务端封装:`core/apps/api/src/cubeopt/`(daemon + mem-arbiter,与 cube555 互斥)
 
 实测:opt9 15.6G 表 **~250ms/解**(12 线程,~4 解/s),对象是 18 步随机态 —— 最难的一档。
 opt5 972M 表要 ~43s/解,差 170 倍:**这类问题的成败在表大小,不在代码。**

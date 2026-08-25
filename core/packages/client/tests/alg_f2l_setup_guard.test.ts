@@ -1,21 +1,18 @@
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { ALG_3X3_SETUP_REQUIRED_SETS, requires3x3AlgCaseSetup } from '@cuberoot/shared';
-import { validateRequiredAlgCaseSetup } from '../../server/src/utils/alg_case_setup';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
-const migration = readFileSync(fileURLToPath(new URL(
-  '../../server/migrations/0136_alg_f2l_setup_required.sql',
-  import.meta.url,
-)), 'utf8');
-const schema = readFileSync(fileURLToPath(new URL(
-  '../../server/src/db/schema.pg.sql',
-  import.meta.url,
-)), 'utf8');
-const route = readFileSync(fileURLToPath(new URL(
-  '../../server/src/routes/alg_sets.ts',
-  import.meta.url,
-)), 'utf8');
+const { validateRequiredAlgCaseSetup } = await import(pathToFileURL(workspaceFixturePath(
+  '@cuberoot/server', 'src', 'utils', 'alg_case_setup.ts',
+)).href) as {
+  validateRequiredAlgCaseSetup: (puzzle: string, setSlug: string, setup: string) => Promise<string | null>;
+};
+
+const migration = readFileSync(workspaceFixturePath('@cuberoot/server', 'migrations', '0136_alg_f2l_setup_required.sql'), 'utf8');
+const schema = readFileSync(workspaceFixturePath('@cuberoot/server', 'src', 'db', 'schema.pg.sql'), 'utf8');
+const route = readFileSync(workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'alg_sets.ts'), 'utf8');
 const thumbPlan = readFileSync(fileURLToPath(new URL(
   '../lib/alg_thumb_plan.ts',
   import.meta.url,

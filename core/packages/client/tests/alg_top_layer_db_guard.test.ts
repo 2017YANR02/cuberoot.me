@@ -1,16 +1,10 @@
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { ALG_3X3_TOP_LAYER_SET } from '@cuberoot/shared';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
-const migration = readFileSync(fileURLToPath(new URL(
-  '../../server/migrations/0132_alg_top_layer_no_leading_y.sql',
-  import.meta.url,
-)), 'utf8');
-const schema = readFileSync(fileURLToPath(new URL(
-  '../../server/src/db/schema.pg.sql',
-  import.meta.url,
-)), 'utf8');
+const migration = readFileSync(workspaceFixturePath('@cuberoot/server', 'migrations', '0132_alg_top_layer_no_leading_y.sql'), 'utf8');
+const schema = readFileSync(workspaceFixturePath('@cuberoot/server', 'src', 'db', 'schema.pg.sql'), 'utf8');
 
 function sqlTopLayerSets(source: string): string[] {
   const block = source.match(

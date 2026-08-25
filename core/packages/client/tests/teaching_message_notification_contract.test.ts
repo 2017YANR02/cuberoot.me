@@ -2,11 +2,14 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { NotificationKind } from '@/lib/notifications-api';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 const CLIENT = join(__dirname, '..');
-const SERVER = join(__dirname, '../../server');
 const PAGE = readFileSync(join(CLIENT, 'app/[lang]/notifications/page.tsx'), 'utf8');
-const SERVER_NOTIFY = readFileSync(join(SERVER, 'src/utils/notify.ts'), 'utf8');
+const SERVER_NOTIFY = readFileSync(
+  workspaceFixturePath('@cuberoot/server', 'src', 'utils', 'notify.ts'),
+  'utf8',
+);
 
 describe('teaching message notification wire contract', () => {
   it('keeps teaching_message in the client wire union', () => {

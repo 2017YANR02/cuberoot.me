@@ -34,8 +34,8 @@
    Stripe / Paddle / Lago 对中国大陆主体都不可用,不考虑。
 
 4. **薄自研计费层,不上 Lago/Kill Bill。** 三张表(plans / orders / memberships)+ provider 适配层,贴合现有 Hono + PG 栈。
-   provider 文件:`packages/server/src/payment/alipay.ts`(官方支付宝,公钥模式 RSA2)、
-   `packages/server/src/payment/wechat.ts`(官方微信 APIv3,SHA256-RSA2048 + AEAD_AES_256_GCM 回调解密);
+   provider 文件:`apps/api/src/payment/alipay.ts`(官方支付宝,公钥模式 RSA2)、
+   `apps/api/src/payment/wechat.ts`(官方微信 APIv3,SHA256-RSA2048 + AEAD_AES_256_GCM 回调解密);
    虎皮椒签名仍在 `routes/membership.ts` + `@cuberoot/shared/payment`。
 
 ## 数据模型
@@ -45,7 +45,7 @@
 - `membership_orders` — 每次下单一条(`out_trade_no` 我方单号;status pending→paid;raw_notify 审计)。
 - `memberships` — 每用户一行(plan_slug / expires_at / source / 选填 contact)。生效判定不存 status,读时算:`expires_at IS NULL 或 > now()`。
 
-## 后端 `/v1/membership/*`(`packages/server/src/routes/membership.ts`)
+## 后端 `/v1/membership/*`(`apps/api/src/routes/membership.ts`)
 
 | 端点 | 鉴权 | 说明 |
 |---|---|---|

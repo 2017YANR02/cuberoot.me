@@ -5,6 +5,7 @@ import { puzzles } from 'cubing/puzzles';
 import { ftoEifState, isFtoEifSolved, parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
 import { normalizeAlg } from '@/lib/alg_normalize';
 import { FTO_PF_TARGET_SETUP, FTO_TL_TARGET_SETUP } from '@/lib/alg_validation';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 interface MigrationAlgorithm {
   alg: string;
@@ -20,15 +21,15 @@ interface MigrationCase {
 }
 
 const SQL = readFileSync(
-  new URL('../../server/migrations/0121_lowcubes_fto_megaminx.sql', import.meta.url),
+  workspaceFixturePath('@cuberoot/server', 'migrations', '0121_lowcubes_fto_megaminx.sql'),
   'utf8',
 );
 const PF_FIX_SQL = readFileSync(
-  new URL('../../server/migrations/0157_fix_fto_pair_formation_setups.sql', import.meta.url),
+  workspaceFixturePath('@cuberoot/server', 'migrations', '0157_fix_fto_pair_formation_setups.sql'),
   'utf8',
 );
 const TL_FIX_SQL = readFileSync(
-  new URL('../../server/migrations/0159_fix_fto_top_layer_setups.sql', import.meta.url),
+  workspaceFixturePath('@cuberoot/server', 'migrations', '0159_fix_fto_top_layer_setups.sql'),
   'utf8',
 );
 

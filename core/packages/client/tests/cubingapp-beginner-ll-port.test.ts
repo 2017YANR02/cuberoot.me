@@ -1,5 +1,4 @@
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { AlgCase, AlgEntry } from '@cuberoot/shared';
 import { ALG_CATALOG } from '@cuberoot/shared';
@@ -14,10 +13,10 @@ type ImportedRow = Pick<AlgCase, 'name' | 'subgroup' | 'setup' | 'sticker' | 'al
 type ParityRow = { position: number; name: string; existing: boolean; canonicalKey: string; algs: AlgEntry[][] };
 type ParityBaselineRow = { position: number; name: string; algs: string[] };
 
-const migration = readFileSync(resolve(
-  import.meta.dirname,
-  '..', '..', 'server', 'migrations', '0109_cubingapp_beginner_ll.sql',
-), 'utf8');
+const migration = readFileSync(
+  workspaceFixturePath('@cuberoot/server', 'migrations', '0109_cubingapp_beginner_ll.sql'),
+  'utf8',
+);
 
 function jsonBlock<T>(tag: string): T {
   const match = migration.match(new RegExp(`\\$${tag}\\$([\\s\\S]*?)\\$${tag}\\$`));

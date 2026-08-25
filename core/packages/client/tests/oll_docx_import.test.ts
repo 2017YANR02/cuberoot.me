@@ -14,6 +14,7 @@ import { normalizeAlg } from '@/lib/alg_normalize';
 import { checkSetupPrecondition } from '@/lib/alg_precondition';
 import { validateAlgCase } from '@/lib/alg_validation';
 import ollDbSetups from './fixtures/oll_db_setups.json';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 type MetricRow = {
   etm: number;
@@ -35,7 +36,7 @@ type ImportedCase = {
 };
 
 const SQL = readFileSync(
-  new URL('../../server/migrations/0153_oll_docx_import.sql', import.meta.url),
+  workspaceFixturePath('@cuberoot/server', 'migrations', '0153_oll_docx_import.sql'),
   'utf8',
 );
 const payloadMatch = SQL.match(/\$payload\$([\s\S]*?)\$payload\$/);

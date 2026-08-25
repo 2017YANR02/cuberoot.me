@@ -12,7 +12,8 @@
  */
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { Mic, X } from 'lucide-react';
+import { Mic } from 'lucide-react';
+import { ClearButton } from '@/components/ClearButton';
 import { tr } from '@/i18n/tr';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { formatMs } from '../_lib/stats';
@@ -154,11 +155,11 @@ export default function StackmatModal({ stackmat, onClose, connectAttempt }: Pro
     <div className="timer-modal-overlay" style={isMobile ? { padding: 8 } : undefined} onClick={onClose}>
       <div
         ref={dialogRef}
-        className="timer-modal"
+        className="timer-modal stackmat-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        style={isMobile ? { padding: 14, maxWidth: '100%', maxHeight: '90dvh' } : undefined}
+        style={isMobile ? { padding: 14, maxWidth: '100%' } : undefined}
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id={titleId}>
@@ -182,7 +183,7 @@ export default function StackmatModal({ stackmat, onClose, connectAttempt }: Pro
         </div>
 
         <div className="modal-section">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div className="stackmat-health-summary" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span
               aria-hidden
               style={{
@@ -233,39 +234,42 @@ export default function StackmatModal({ stackmat, onClose, connectAttempt }: Pro
                 <dd style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>
                   {status.signalPresent ? formatMs(status.ms) : '—'}
                 </dd>
-                {status.unit !== 0 && (
-                  <>
-                    <dt style={{ color: 'var(--muted-foreground)' }}>{tr({ zh: '精度', en: 'Resolution' })}</dt>
-                    <dd style={{ margin: 0 }}>
-                      {status.unit === 1
-                        ? tr({ zh: '毫秒（Gen 4）', en: 'milliseconds (Gen 4)' })
-                        : tr({ zh: '百分秒（Gen 3）', en: 'centiseconds (Gen 3)' })}
-                    </dd>
-                  </>
-                )}
+                <dt
+                  aria-hidden={status.unit === 0}
+                  style={{ color: 'var(--muted-foreground)', visibility: status.unit === 0 ? 'hidden' : undefined }}
+                >
+                  {tr({ zh: '精度', en: 'Resolution' })}
+                </dt>
+                <dd
+                  aria-hidden={status.unit === 0}
+                  style={{ margin: 0, visibility: status.unit === 0 ? 'hidden' : undefined }}
+                >
+                  {status.unit === 1
+                    ? tr({ zh: '毫秒（Gen 4）', en: 'milliseconds (Gen 4)' })
+                    : tr({ zh: '百分秒（Gen 3）', en: 'centiseconds (Gen 3)' })}
+                </dd>
               </dl>
             </>
           )}
 
-          {health === 'wrong-signal' && (
-            <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '8px 0 0' }}>
-              {tr({
-                zh: '听到的多半是内置麦克风。在下面选中计时器所接的那个输入设备。',
-                en: 'That is probably the built-in microphone. Pick the input the timer is plugged into below.',
-              })}
-            </p>
-          )}
-          {health === 'silent' && (
-            <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '8px 0 0' }}>
-              {tr({
-                zh: '检查：线是否插在麦克风/输入口（不是耳机口）、计时器是否开机、系统输入音量是否为 0。',
-                en: 'Check: cable in the mic/line input (not the headphone jack), timer powered on, and system input volume above zero.',
-              })}
+          {listening && (
+            <p className="stackmat-health-guidance" style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '8px 0 0' }}>
+              {health === 'wrong-signal'
+                ? tr({
+                    zh: '听到的多半是内置麦克风。在下面选中计时器所接的那个输入设备。',
+                    en: 'That is probably the built-in microphone. Pick the input the timer is plugged into below.',
+                  })
+                : health === 'silent'
+                  ? tr({
+                      zh: '检查：线是否插在麦克风/输入口（不是耳机口）、计时器是否开机、系统输入音量是否为 0。',
+                      en: 'Check: cable in the mic/line input (not the headphone jack), timer powered on, and system input volume above zero.',
+                    })
+                  : '\u00a0'}
             </p>
           )}
         </div>
 
-        {listening && devices.length > 0 && (
+        {listening && (
           <div className="modal-section">
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>
@@ -302,10 +306,11 @@ export default function StackmatModal({ stackmat, onClose, connectAttempt }: Pro
               {busy ? tr({ zh: '正在启用…', en: 'Starting…' }) : tr({ zh: '开始监听', en: 'Start listening' })}
             </button>
           )}
-          <button className="modal-action-btn" onClick={onClose}>
-            <X size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-            {tr({ zh: '关闭', en: 'Close' })}
-          </button>
+          <ClearButton
+            variant="standalone"
+            ariaLabel={tr({ zh: '关闭', en: 'Close' })}
+            onClick={onClose}
+          />
         </div>
       </div>
     </div>

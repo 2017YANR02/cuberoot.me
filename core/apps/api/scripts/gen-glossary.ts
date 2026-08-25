@@ -16,9 +16,11 @@ import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { query, sql } from '../src/db/connection.js';
+import { resolveWorkspacePath } from '../../../scripts/resolve-workspace-path.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const OUT = join(HERE, '../../client/app/[lang]/wiki/glossary.json');
+const CORE_ROOT = join(HERE, '../../..');
+const OUT = join(CORE_ROOT, resolveWorkspacePath('@cuberoot/client'), 'app/[lang]/wiki/glossary.json');
 
 interface Row {
   letter: string;

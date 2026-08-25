@@ -1,5 +1,5 @@
 // /scramble/stats 难度页「查看全部」用:按 (方法,阶段,子集,步数) 列举全部 WCA 真题(+ 比赛名/日期筛选 + 分页)。
-// 后端 GET /v1/wca/scrambles/by-difficulty(packages/server),数据来自 wca_scramble_steps(逐底色步数索引)
+// 后端 GET /v1/wca/scrambles/by-difficulty(apps/api),数据来自 wca_scramble_steps(逐底色步数索引)
 // JOIN wca_scrambles(文本)+ wca_scramble_optimal(最优打乱)+ wca_competitions(比赛名/日期)。
 import { apiUrl } from '@/lib/api-base';
 

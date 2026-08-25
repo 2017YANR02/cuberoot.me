@@ -124,7 +124,7 @@ describe('Codex hook payload adapters', () => {
     const patch = [
       '*** Begin Patch',
       ...files,
-      '*** Add File: core/packages/server/src/late-architecture-probe.ts',
+      '*** Add File: core/apps/api/src/late-architecture-probe.ts',
       "+import '@/components/AppLink';",
       '*** End Patch',
     ].join('\n');

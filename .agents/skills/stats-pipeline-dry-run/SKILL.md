@@ -49,7 +49,7 @@ WCA Stats Extra 管道同模式,把上面三处替换:
    - 写 TSV 流(`createWriteStream` + `.write(...)`)
    - load.sql heredoc 里加 `TRUNCATE` + `\\copy ... FROM 'xxx.copy.tsv'`
 2. **`.github/workflows/stats.yml`**: 对应 pipeline 的 `scp -i ~/.ssh/hr_id ...` 清单加文件名
-3. **server schema**(可选): 是否要加新 PG 表 / 索引?改 `core/packages/server/src/db/schema_*.pg.sql`,先在云服务器 ALTER 再 push(参考 `server-deploy` skill)
+3. **server schema**(可选): 是否要加新 PG 表 / 索引?改 `core/apps/api/src/db/schema_*.pg.sql`,先在云服务器 ALTER 再 push(参考 `server-deploy` skill)
 
 ## 服务器侧 apply 脚本
 
