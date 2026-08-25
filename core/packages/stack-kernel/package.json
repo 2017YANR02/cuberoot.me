@@ -2,6 +2,13 @@
   "name": "@cuberoot/stack-kernel",
   "private": true,
   "version": "0.0.0",
+  "cuberoot": {
+    "kind": "library",
+    "runtime": {
+      ".": "browser",
+      "./wasm": "asset"
+    }
+  },
   "type": "module",
   "main": "pkg/stack_kernel.js",
   "types": "pkg/stack_kernel.d.ts",

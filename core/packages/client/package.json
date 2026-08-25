@@ -2,6 +2,9 @@
   "name": "@cuberoot/client",
   "version": "0.1.0",
   "private": true,
+  "cuberoot": {
+    "kind": "app"
+  },
   "browserslist": [
     "chrome 111",
     "edge 111",

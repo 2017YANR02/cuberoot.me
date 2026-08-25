@@ -2,6 +2,9 @@
   "name": "@cuberoot/alg-build",
   "version": "0.1.0",
   "private": true,
+  "cuberoot": {
+    "kind": "job"
+  },
   "type": "module",
   "scripts": {
     "build": "tsx src/cli.ts",

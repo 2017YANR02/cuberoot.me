@@ -2,6 +2,9 @@
   "name": "@cuberoot/stats-build",
   "version": "0.1.0",
   "private": true,
+  "cuberoot": {
+    "kind": "job"
+  },
   "type": "module",
   "scripts": {
     "compute": "tsx src/bin/compute.ts",

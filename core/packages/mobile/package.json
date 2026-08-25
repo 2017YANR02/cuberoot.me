@@ -2,6 +2,9 @@
   "name": "@cuberoot/mobile",
   "version": "0.1.0",
   "private": true,
+  "cuberoot": {
+    "kind": "app"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",

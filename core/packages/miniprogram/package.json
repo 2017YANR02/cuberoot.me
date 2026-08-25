@@ -2,6 +2,9 @@
   "name": "@cuberoot/miniprogram",
   "version": "0.1.0",
   "private": true,
+  "cuberoot": {
+    "kind": "app"
+  },
   "type": "module",
   "dependencies": {
     "@cuberoot/shared": "workspace:*"
