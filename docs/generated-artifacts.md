@@ -1,6 +1,6 @@
 # CubeRoot 生成物登记
 
-状态：`MAINTAINED`。最后更新：2026-08-24。
+状态：`MAINTAINED`。最后更新：2026-08-25。
 
 [generated-artifacts.json](./generated-artifacts.json) 是本仓库受治理生成物、上游快照和数据迁移族的唯一事实源（single source of truth）。artifact ID、来源与 ref、license 证据、生成或同步 owner、patch owner、命令、输出、版本记录和验证入口只在该文件维护，本页不复制清单。
 

@@ -45,7 +45,7 @@
       "evidence": [
         { "file": "core/packages/server/src/cubeopt/daemon.ts", "contains": "proc = spawn(process.execPath, [DAEMON_SCRIPT]" },
         { "file": "core/packages/server/src/tools/cubeopt_smoke.ts", "contains": "const { solveOptimal } = await import('../cubeopt/daemon.js');" },
-        { "file": ".github/workflows/deploy_core.yml", "contains": "core/packages/server/dist/cubeopt/solve-daemon.mjs" }
+        { "file": ".github/workflows/deploy_core.yml", "contains": "$API_DIR/dist/cubeopt/solve-daemon.mjs" }
       ]
     },
     {
