@@ -157,7 +157,7 @@
     },
     {
       "id": "alg-build-server-migrations",
-      "from": "packages/alg-build",
+      "from": "jobs/alg-build",
       "to": "packages/server/migrations",
       "phase": "generated-artifact",
       "mechanism": "deterministic SQL generator writes a server migration",
@@ -165,7 +165,7 @@
       "rationale": "Curated algorithm import tooling intentionally produces backend schema/data migrations.",
       "replacement": "Keep the generated migration reviewed and committed; do not turn the generator into a server runtime dependency.",
       "evidence": [
-        { "file": "core/packages/alg-build/gen_psf2l_sql.mts", "contains": "resolve(HERE, '../server/migrations/0116_psf2l.sql')" }
+        { "file": "core/jobs/alg-build/server-migration-path.mts", "contains": "resolveWorkspacePath('@cuberoot/server')" }
       ]
     },
     {
@@ -249,46 +249,6 @@
       "rule": "cross-package-path",
       "sourceKind": "build",
       "specifier": "core/packages/server/migrations/0104_best_2x2_algs.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/alg-build/gen_cubingapp_beginner_ll_sql.mts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../server/migrations/0109_cubingapp_beginner_ll.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/alg-build/gen_cubingapp_roux_pyraminx_sql.mts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../server/migrations/0110_cubingapp_roux_pyraminx.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/alg-build/gen_cubingapp_sq1_sql.mts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../server/migrations/0107_sq1_cubingapp_csp.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/alg-build/gen_cubingapp_sq1_stages_sql.mts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../server/migrations/0108_sq1_cubingapp_stages.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/alg-build/gen_psf2l_sql.mts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../server/migrations/0116_psf2l.sql",
       "target": "server"
     },
     {
@@ -2011,14 +1971,6 @@
       "specifier": "@cuberoot/shared",
       "rule": "shared-root-import",
       "target": "shared"
-    },
-    {
-      "file": "packages/client/tests/i18n-cubing-term-blacklist.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../alg-build",
-      "target": "alg-build"
     },
     {
       "file": "packages/client/tests/landing_comps.test.ts",

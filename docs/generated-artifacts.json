@@ -643,9 +643,9 @@
         "lineage": "client.best2x2-import produces the reviewed import JSON from client.best2x2-source"
       },
       "license": { "spdx": "NOASSERTION", "evidence": "credits_data.json records the authorized data merge; no public license is asserted" },
-      "owner": ["core/packages/alg-build/gen_best2x2_sql.mjs", "core/packages/server/migrations"],
+      "owner": ["core/jobs/alg-build/gen_best2x2_sql.mjs", "core/packages/server/migrations"],
       "workingDirectory": "core",
-      "command": "node packages/alg-build/gen_best2x2_sql.mjs .tmp/best2x2/import.json core/packages/server/migrations/<new-id>_best_2x2_algs.sql",
+      "command": "node jobs/alg-build/gen_best2x2_sql.mjs .tmp/best2x2/import.json core/packages/server/migrations/<new-id>_best_2x2_algs.sql",
       "outputs": ["core/packages/server/migrations/0104_best_2x2_algs.sql"],
       "verification": [
         "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .tmp/best2x2/import.json",
@@ -664,13 +664,13 @@
       },
       "license": { "spdx": "MIT", "evidence": "CubingApp checkout LICENSE at the recorded commit" },
       "owner": [
-        "core/packages/alg-build/gen_cubingapp_sq1_sql.mts",
-        "core/packages/alg-build/gen_cubingapp_sq1_stages_sql.mts",
-        "core/packages/alg-build/gen_cubingapp_beginner_ll_sql.mts",
-        "core/packages/alg-build/gen_cubingapp_roux_pyraminx_sql.mts"
+        "core/jobs/alg-build/gen_cubingapp_sq1_sql.mts",
+        "core/jobs/alg-build/gen_cubingapp_sq1_stages_sql.mts",
+        "core/jobs/alg-build/gen_cubingapp_beginner_ll_sql.mts",
+        "core/jobs/alg-build/gen_cubingapp_roux_pyraminx_sql.mts"
       ],
       "workingDirectory": "core",
-      "command": "pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_<family>_sql.mts <cubingapp-checkout> packages/server/migrations/<new-id>.sql",
+      "command": "pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_<family>_sql.mts <cubingapp-checkout> <new-id>.sql",
       "commands": [
         "pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_sq1_sql.mts <cubingapp-checkout> <new-migration>",
         "pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_sq1_stages_sql.mts <cubingapp-checkout> <new-migration>",
@@ -695,12 +695,12 @@
       "source": {
         "type": "private-reviewed-document",
         "locator": "site-owner PSF2L.docx reference",
-        "snapshot": "the reviewed 33-entry DOCX transcription in core/packages/alg-build/gen_psf2l_sql.mts"
+        "snapshot": "the reviewed 33-entry DOCX transcription in core/jobs/alg-build/gen_psf2l_sql.mts"
       },
       "license": { "spdx": "NOASSERTION", "evidence": "site-owner supplied reference; no external license applies" },
-      "owner": "core/packages/alg-build/gen_psf2l_sql.mts",
+      "owner": "core/jobs/alg-build/gen_psf2l_sql.mts",
       "workingDirectory": "core",
-      "command": "pnpm --filter @cuberoot/alg-build exec tsx gen_psf2l_sql.mts packages/server/migrations/<new-id>_psf2l.sql",
+      "command": "pnpm --filter @cuberoot/alg-build exec tsx gen_psf2l_sql.mts <new-id>_psf2l.sql",
       "outputs": [
         "core/packages/server/migrations/0116_psf2l.sql",
         "core/packages/server/migrations/0117_psf2l_f2l_names.sql"
@@ -738,19 +738,19 @@
         "design": "docs/1lll-migration.md"
       },
       "license": { "spdx": "NOASSERTION", "evidence": "site-owner maintained sheet; no external license is asserted" },
-      "owner": "core/packages/alg-build/import_1lll.mjs",
+      "owner": "core/jobs/alg-build/import_1lll.mjs",
       "workingDirectory": "core",
-      "command": "node packages/alg-build/import_1lll.mjs",
+      "command": "node jobs/alg-build/import_1lll.mjs",
       "commands": [
-        "node packages/alg-build/import_1lll.mjs",
-        "node packages/alg-build/fix_1lll_meta_assignment.mjs"
+        "node jobs/alg-build/import_1lll.mjs",
+        "node jobs/alg-build/fix_1lll_meta_assignment.mjs"
       ],
       "outputs": [
         "core/packages/server/migrations/0102_fix_1lll_meta_assignment.sql"
       ],
       "transientOutputs": [".tmp/phase4/import_1lll.sql"],
       "verification": [
-        "node packages/alg-build/fix_1lll_meta_assignment.mjs --dry",
+        "node jobs/alg-build/fix_1lll_meta_assignment.mjs --dry",
         "pnpm --filter @cuberoot/alg-build exec tsx verify_meta_pointers.mjs --with-sql <new-migration>",
         "docs/1lll-migration.md"
       ],

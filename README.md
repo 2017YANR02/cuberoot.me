@@ -25,6 +25,7 @@ cuberoot.me/
 │   │   ├── platform/      Retired read-only archive; its product surfaces now live under client /platform
 │   │   └── ...            Shared libraries and the remaining jobs awaiting migration
 │   └── jobs/
+│       ├── alg-build/     Offline algorithm data and SQL generators
 │       └── wb-build/      Offline unofficial world-best dataset generator
 ├── solver/                Rust solving engines — native analyzers and WebAssembly builds
 ├── reconer/               Automated reconstruction from speedsolving video

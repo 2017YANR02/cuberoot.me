@@ -47,7 +47,7 @@ p();
 p('机器扫出来的,**每条都跑过 cubing.js**,不是猜的。判据 = §3 的 16 折轨道');
 p('(`U^a · A · U^b` 解同一个 case,所以「备选公式写在别的 U 朝向下」**不算错**)。');
 p();
-p('> 生成:`core/packages/alg-build/phase2_validate.mjs`。');
+p('> 生成:`core/jobs/alg-build/phase2_validate.mjs`。');
 p('> 背景和理论见 [`1lll-migration.md`](./1lll-migration.md),进度见 [`1lll-worklog.md`](./1lll-worklog.md)。');
 p();
 p(`扫了 **${rep.统计.total}** 条公式(3915 行的 \`Self alg\` 全部,含备选),**${rep.统计.ok}** 条正确。`);

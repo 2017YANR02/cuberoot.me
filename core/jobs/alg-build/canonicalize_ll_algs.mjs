@@ -203,7 +203,7 @@ console.log('\n完整变更报告 → .tmp/canonicalize_ll_algs_report.json');
 if (process.argv.includes('--sql')) {
   const sql = [
     '-- 9 个顶层集合的公式规范化:起手 y → U(body 不变)+ 补齐收尾 AUF',
-    '-- 生成:core/packages/alg-build/canonicalize_ll_algs.mjs',
+    '-- 生成:core/jobs/alg-build/canonicalize_ll_algs.mjs',
     `-- 改 ${report.changed.length} 条公式(y→U ${total['y→U']},补收尾 AUF ${total['补收尾AUF']}),`
       + `跳过 ${total['跳过']} 条,涉及 ${sqlUpdates.length} 个 case`,
     '',
