@@ -109,7 +109,7 @@ LAY2-02 实测配置快照：仓外 Web 项目当前 Root Directory 为 `core/pa
 
 LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为 manifest 身份；其他只服务具体 app/job 的本地钩子仍按旧物理路径工作。它们不是 LAY2-02 发布合同的一部分，但必须在对应单元移动前统一改用 resolver 或旧新双候选，禁止搬完后静默失明。
 
-初始 legacy baseline 为 313 个 identity、329 个 occurrence 和 13 个 manual contract；完成前三个 job 移动后为 303/319/14，新合同显式登记 Web H2H 测试读取 stats job 源码的边；完成 LAY2-06 后为 279/295/13，Web 私有 solver 路径债务与临时 test-contract 已消除。每批必须用 old→new 映射证明语义上相同或递减，不能用一次盲目的 snapshot 把漏检或新增债务合法化。
+初始 legacy baseline 为 313 个 identity、329 个 occurrence 和 13 个 manual contract；完成前三个 job 移动后为 303/319/14，新合同显式登记 Web H2H 测试读取 stats job 源码的边；完成 LAY2-06 后为 279/295/13，Web 私有 solver 路径债务与临时 test-contract 已消除；完成 LAY2-07 后为 274/290/13，跨 app 品牌资产读取归零，小程序只读检查 Web 路由存在性的边改为按 package identity 定位并登记显式 test-contract。每批必须用 old→new 映射证明语义上相同或递减，不能用一次盲目的 snapshot 把漏检或新增债务合法化。
 
 迁移后的机器约束：
 
@@ -161,7 +161,7 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 | LAY2-05 | `stats-build` | 移至 `jobs/stats-build` | `完成` | 144 个原 job 文件完整移动，两个 producer 测试归位并接入 Test workflow；Web H2H 读取登记显式合同，package resolver、lockfile、生成物清册和活动文档同步，build/upload/load 静态合同保持一致；边界为 303/319/14，未在本地运行统计、数据库、测试或 build |
 | LAY2-06 | solver 边界与 `scramble-stats-build` | 先消除 Web 私有 solver import，再移至 jobs | `完成` | 纯 solver 统一经 `@cuberoot/puzzle-solvers` 公开出口消费；job、lockfile、resolver、生成物清册、runbook 与活动文档同步到新路径；边界降至 279/295/13；按用户要求未运行 fixture、dry run、测试、build 或数据生成 |
 | LAY2-07 | Miniprogram | 移至 `apps/miniprogram` | `完成` | package 身份不变；shared 输入与 Web 路由合同不再假设 sibling 布局；无 React DOM 依赖；按用户要求未运行测试或 build |
-| LAY2-08 | 资产边界与 Mobile | 先提取图标生成入口，再移至 `apps/mobile` | `前置完成，待移动` | 中性品牌源和生成入口已完成；仍需移动 Mobile 并同步原生路径合同 |
+| LAY2-08 | 资产边界与 Mobile | 先提取图标生成入口，再移至 `apps/mobile` | `完成` | 中性品牌源和生成入口已完成；Mobile、Android/Capacitor 路径合同、lockfile、生成物清册和活动文档已同步；按用户要求未运行测试或 build |
 | LAY2-09 | 测试归属与 API | 先处理 Web→API 私有测试读取，再移至 `apps/api` | `已授权，待前置` | API typecheck/test/bundle、migration 和部署制品通过 |
 | LAY2-10 | Web | 移至 `apps/web` | `已授权，待前置` | typecheck、隔离 Next build、standalone 启动和关键路由 smoke 通过 |
 | LAY2-11 | 收尾 | 删除旧路径兼容，刷新文档、清册和历史 allowlist | `已授权，待前置` | 旧活动引用归零，4 app/6 package/4 job 唯一归类 |
@@ -256,5 +256,6 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 | 2026-08-25 | LAY2-05 `stats-build` 移动复审 | `GO：第三个 job 移动闭环` | 初审发现的脚本硬编码、lockfile、忽略项、生成物清册和活动文档路径已修复；终审发现的 producer 测试 CI 覆盖与 Web→stats test-contract 缺口也已关闭，最终无 blocker/major |
 | 2026-08-25 | LAY2-06 solver 边界与 `scramble-stats-build` 移动复审 | `GO：第四个 job 移动闭环` | Web 私有 solver 已提取到公开、运行时中性的 package 出口；job 及其脚本、lockfile、resolver、生成物清册、runbook 和活动文档同步，静态边界为 279/295/13；按用户要求未运行测试、build、dry run 或数据生成 |
 | 2026-08-25 | LAY2-07 小程序移动与品牌资产前置复审 | `条件 GO：暂存边界与测试合同修正后提交` | 终审发现的半暂存状态、无关删除、Web 私有路由测试边和过时品牌说明已处理；路由存在性检查按 package identity 定位并登记显式 test-contract，Web、Mobile、小程序只读取中性品牌事实源；按用户要求未运行测试或 build |
+| 2026-08-25 | LAY2-08 Mobile 移动复审 | `GO：Mobile 物理移动闭环` | 两路复审确认 Android/Capacitor 内部相对层级不变；初审指出的 lockfile、生成物清册、README、Gradle 文案、路线图和 Mobile Skill 旧路径已全部同步；按用户要求未运行测试或 build |
 
 这里的 `HOLD` 只否决“一步到位执行”，不否决渐进方案。未解决的 blocker 必须成为对应批次的前置门槛，不能靠口头承诺跳过。

@@ -5,7 +5,7 @@ apply plugin: 'com.android.application'
 def mobilePackage = new JsonSlurper().parse(file('../../package.json'))
 def versionParts = mobilePackage.version.toString().tokenize('.')
 if (versionParts.size() != 3 || !versionParts.every { part -> part ==~ /\d+/ }) {
-    throw new GradleException("packages/mobile/package.json must use numeric major.minor.patch versioning")
+    throw new GradleException("apps/mobile/package.json must use numeric major.minor.patch versioning")
 }
 def versionNumbers = versionParts.collect { it.toLong() }
 if (versionNumbers[1] > 999 || versionNumbers[2] > 999) {
