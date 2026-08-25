@@ -9,7 +9,7 @@
 ## 一键
 
 ```pwsh
-pwsh core/packages/scramble-stats-build/update_cross_stats.ps1
+pwsh core/jobs/scramble-stats-build/update_cross_stats.ps1
 ```
 
 下载最新 results export → 挑出未处理的新打乱 → std_analyzer 全 5 阶段 → 追加 master → 默认再跟 std 锁步补全 6 变体 eo/pseudo/pseudo_pair/pair/f2leo/pseudo_f2leo(按 id 缺补,分块可续)→ 重算 JSON → commit & push + scp static。任一步失败即停。
@@ -78,5 +78,5 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1
 ## 可选:定时
 
 用户选了手动一键。若要无人值守,Windows 任务计划程序加一条每周触发:
-`pwsh -NoProfile -File D:\cube\cuberoot.me\core\packages\scramble-stats-build\update_cross_stats.ps1`
+`pwsh -NoProfile -File D:\cube\cuberoot.me\core\jobs\scramble-stats-build\update_cross_stats.ps1`
 (机器需开机 + 已登录态;失败会非零退出,可在任务里配重试/告警。)

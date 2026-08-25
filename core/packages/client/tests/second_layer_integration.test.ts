@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { workspaceFixturePath } from './workspace-fixture-path';
 import { METHOD_KEYS } from '@/components/StageSolver';
 import { TABLE_SETS } from '@/lib/rust-cross-client';
 import {
@@ -19,6 +20,10 @@ import { FIRST_LAYER_SOLVED_SECOND_LAYER_EXAMPLES } from '@/app/[lang]/scramble/
 
 const ROOT = path.resolve(__dirname, '../../../..');
 const read = (p: string) => readFileSync(path.join(ROOT, p), 'utf8');
+const readScrambleJob = (p: string) => readFileSync(
+  workspaceFixturePath('@cuberoot/scramble-stats-build', p),
+  'utf8',
+);
 
 describe('第一层已还原条件下的第二层分布', () => {
   it('离线直方图覆盖全部 26,880 个条件状态', () => {
@@ -135,9 +140,9 @@ describe('第一层已还原条件下的第二层分布', () => {
     expect(page).toContain('normalizeVariantDataRef(currentSet.variants, variant, stage)');
     expect(page).toContain('value={sourceStage}');
 
-    const variants = read('core/packages/scramble-stats-build/src/variants.ts');
-    const recent = read('core/packages/scramble-stats-build/src/build_recent_scrambles.ts');
-    const compSteps = read('core/packages/scramble-stats-build/src/build_comp_steps.ts');
+    const variants = readScrambleJob('src/variants.ts');
+    const recent = readScrambleJob('src/build_recent_scrambles.ts');
+    const compSteps = readScrambleJob('src/build_comp_steps.ts');
     expect(variants).not.toMatch(/key:\s*['"]second_layer['"]/);
     expect(recent).not.toMatch(/key:\s*['"]second_layer['"]/);
     expect(compSteps).not.toMatch(/second_layer\.csv/);

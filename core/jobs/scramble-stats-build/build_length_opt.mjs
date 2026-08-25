@@ -10,7 +10,7 @@
 // 产出 stats/scramble/event_length_examples_opt.json = { meta, byText: { "<打乱文本>": "<最优打乱>" } }。
 // 同一文本(面转字母表互不冲突)→ 同一最优,故全局 byText 足够;前端按样例文本查表。
 //
-// 用法: node build_length_opt.mjs   (从 core/packages/scramble-stats-build/ 或任意 CWD,路径自解析)
+// 用法: node build_length_opt.mjs   (从 core/jobs/scramble-stats-build/ 或任意 CWD,路径自解析)
 import {
   readFileSync, writeFileSync, existsSync, openSync, readSync, closeSync, fstatSync, statSync, mkdtempSync, rmSync,
 } from 'node:fs';

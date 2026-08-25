@@ -18,11 +18,11 @@ description: "用户要更新 /scramble/stats(打乱难度 / 步数分布)的数
 | `puzzles` | 非3x3(二阶/金字塔/斜转/SQ1) | `update_puzzle_stats.ps1` + `build_puzzle_examples.ts` + `build_puzzle_first_appearance.ts` | `puzzle_distribution.json` + `puzzle_examples.json` + `puzzle_first_appearance.json`(时间线) |
 
 ```pwsh
-pwsh core/packages/scramble-stats-build/update_cross_stats.ps1                 # = -Jobs all,全跑 + 发布
-pwsh core/packages/scramble-stats-build/update_cross_stats.ps1 -Jobs 333opt    # 只跑某作业
-pwsh core/packages/scramble-stats-build/update_cross_stats.ps1 -Jobs stages,puzzles   # 跑多个
-pwsh core/packages/scramble-stats-build/update_cross_stats.ps1 -Jobs puzzles -Puzzles sq1   # 选 puzzle
-pwsh core/packages/scramble-stats-build/update_cross_stats.ps1 -NoPublish      # 只本地不发布
+pwsh core/jobs/scramble-stats-build/update_cross_stats.ps1                 # = -Jobs all,全跑 + 发布
+pwsh core/jobs/scramble-stats-build/update_cross_stats.ps1 -Jobs 333opt    # 只跑某作业
+pwsh core/jobs/scramble-stats-build/update_cross_stats.ps1 -Jobs stages,puzzles   # 跑多个
+pwsh core/jobs/scramble-stats-build/update_cross_stats.ps1 -Jobs puzzles -Puzzles sq1   # 选 puzzle
+pwsh core/jobs/scramble-stats-build/update_cross_stats.ps1 -NoPublish      # 只本地不发布
 ```
 
 **NL 映射**(AI 按用户话传 flag):"更新统计"=`-Jobs all`;"只跑333"=`-Jobs 333opt`;"跑 X/Y"=`-Jobs X,Y`;"不跑 X"=去掉 X 后的列表;"不跑 eo" 等**变体级**=`-Variants <去掉eo的列表>`(仅 stages 内,见 A)。
@@ -58,7 +58,7 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1 -NoPublish      #
 一键(脚本名留 `cross` 是历史:十字是主阶段,实跑全阶段):
 
 ```pwsh
-pwsh core/packages/scramble-stats-build/update_cross_stats.ps1
+pwsh core/jobs/scramble-stats-build/update_cross_stats.ps1
 ```
 
 下 results export → 增量挑新打乱 → std_analyzer 全 5 阶段 → 追加 std.csv → 默认再跟 std 锁步补全 6 变体 eo/pseudo/pseudo_pair/pair/f2leo/pseudo_f2leo(按 id 缺补,分块可续)→ 重算 distribution/wca_cross/comp_steps → git push + scp static。
@@ -68,14 +68,14 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1
 - 先 `-DryRun` 看新增规模(只读);落后多就大补、solver 跑几小时。
 - **pair / f2leo / pseudo_f2leo 已入默认**(2026-06-09);增量只补 delta。瓶颈始终是 eo ~0.9/s。想快跑显式 `-Variants eo,pseudo,pseudo_pair` 跳过三重型项。
 - f2leo/pseudo_f2leo 走大表快路径(`CUBE_ALLOW_HUGE_TABLES=1` 已默认;f2leo huge ~31/s、pseudo_f2leo huge ~81/s)。
-- 想本地看不发布:`-NoPublish`。细节/开关/排错:`core/packages/scramble-stats-build/RUNBOOK.md`。
+- 想本地看不发布:`-NoPublish`。细节/开关/排错:`core/jobs/scramble-stats-build/RUNBOOK.md`。
 
 ### 第二套数据集:xcross_2_col_10f(双色底 10f xcross)
 
 `/scramble/stats` 三阶有**两个 set**(`config.yml`):`wca`(全 7 变体,走上面)+ `xcross_2_col_10f`(静态 1,271,727 条难打乱,数据在 `D:\cube\scramble\xcross_2_col_10f\stat\`,master=同目录 `scrambles.txt`)。后者**只缺 f2leo/pseudo_f2leo**,与 update_cross_stats **解耦**,走独立脚本:
 
 ```pwsh
-pwsh core/packages/scramble-stats-build/backfill_xcross_variant.ps1 -Variant pseudo_f2leo -Hours 5 -Threads 10
+pwsh core/jobs/scramble-stats-build/backfill_xcross_variant.ps1 -Variant pseudo_f2leo -Hours 5 -Threads 10
 ```
 
 - 限时(`-Hours`,到点 chunk 边界停 + 末块裁剪;省略=补满)/ 限线程 / 分块可续。两变体都要补:`-Variant pseudo_f2leo`(暖态 ~21/s,全集 ~17h)、`-Variant f2leo`(暖态 ~40/s,全集 ~8.8h,但 20GB pair huge 表冷启慢)。
@@ -90,10 +90,10 @@ pwsh core/packages/scramble-stats-build/backfill_xcross_variant.ps1 -Variant pse
 
 ```pwsh
 # 全部已注册 puzzle(增量补满,含 sq1)
-pwsh core/packages/scramble-stats-build/update_puzzle_stats.ps1 -Puzzles pocket,pyraminx,skewb,sq1
+pwsh core/jobs/scramble-stats-build/update_puzzle_stats.ps1 -Puzzles pocket,pyraminx,skewb,sq1
 
 # 再产示例 reservoir(每步数 bin 取 20 条真实比赛打乱 + 比赛名/轮次)
-cd core/packages/scramble-stats-build; pnpm exec tsx src/build_puzzle_examples.ts
+cd core/jobs/scramble-stats-build; pnpm exec tsx src/build_puzzle_examples.ts
 ```
 
 - 语料自动从三阶管道抽好的 `incremental/tsv/Scrambles.tsv` 按 event_id 过滤(`222`/`pyram`/`skewb`/`sq1`),增量落 `D:\cube\scramble\puzzle\<key>\`。`-MaxNew N` 限量验形,`-BuildOnly` 只重算 JSON。
@@ -112,8 +112,8 @@ cd core/packages/scramble-stats-build; pnpm exec tsx src/build_puzzle_examples.t
   - **WCA 怪物三层**(2026-06-18):① 大部分 = `inject_sq1_wca_exact.ps1` 带超时正常解;② 批量啃 = `grind_sq1_monsters.ps1`(默认 4 线程/10min·条);③ 单条死磕 = `grind ... -Threads 1` / `-Split 2`(吃满全核, 数十分钟·条)。**① + ② 已自动接进一条龙**:`update_puzzle_stats.ps1` 的「SQ1 块」inject 后若出现新 `id,M` 怪物(历史积压已清零=0),自动 gated 跑 ② 批量啃(10min cap, 不会挂死), 啃完才让 slash 重判歧义; ② 没啃下的硬尾留 `id,M` 并**告警提示手动 ③**。
   - **「跑SQ1怪物」= 手动 ③ 死磕**(用户说"跑SQ1怪物 / 啃怪物"时执行, 用于 ② 没啃下的 brutal 尾或大积压):`grind_sq1_monsters.ps1` 拿 `sq1_wca_monsters.csv`、把 `sq1_wca_exact.csv` 的 `id,M` 行**原地替换**成真值。
     ```pwsh
-    pwsh core/packages/scramble-stats-build/grind_sq1_monsters.ps1                 # 默认 4 线程/240M TT/关超时,一次啃完
-    pwsh core/packages/scramble-stats-build/grind_sq1_monsters.ps1 -Threads 1      # 最硬的尾巴:单线程独占全部 TT
+    pwsh core/jobs/scramble-stats-build/grind_sq1_monsters.ps1                 # 默认 4 线程/240M TT/关超时,一次啃完
+    pwsh core/jobs/scramble-stats-build/grind_sq1_monsters.ps1 -Threads 1      # 最硬的尾巴:单线程独占全部 TT
     ```
     - **为什么一定能最优**:IDA* 完备+可采纳,TT 满了只少剪枝不出错 ⇒ 给够时间必收敛。怪物是速度问题非正确性问题。
     - **关键约束**:① **严禁与主 inject run 并跑**(两个 13GB 表 = OOM;脚本检测到 `sq1_analyzer` 在跑会拒绝)⇒ 先等主 run 完;② RAM 上限 13GB 表 + TT + OS < 32GB ⇒ TtBudget ≲300M(默认 240M 安全);③ **少线程比大 TT 更治硬态**(TT 全局共享,线程少 ⇒ 每条独占更多,复刻 217111 单线程 125M 成功的条件)。

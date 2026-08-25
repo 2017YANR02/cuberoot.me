@@ -38,7 +38,7 @@ slash 精确求解器(`Sq1Solver`)对深态(s=11/12)**很慢**(~秒级~分钟级
 
 **已接进一条龙(2026-06-18,增量自动)**:`update_puzzle_stats.ps1` 的「SQ1 块」(sq1 不在 `$PUZZLE` 注册表,单独处理)增量抽 sq1 语料 → 有新打乱且 13GB `sq1_wca_jsqfull.bin` 在场时,依次跑 `inject_sq1_wca_exact.ps1`(WCA 12c4 精确)+ `inject_sq1_slash_exact.ps1`(slash 最优),两者都只解 delta;无新打乱跳过,表缺失告警跳过。⇒ 用户敲「更新统计」(`update_cross_stats.ps1 -Jobs puzzles`/`all`)即自动刷新 + 发布。**全量历史 backfill 是一次性后台**(下面的手动跑),完成后日常只走增量。
 
-`core/packages/scramble-stats-build/inject_sq1_slash_exact.ps1`(镜像 `inject_sq1_wca_exact.ps1`):
+`core/jobs/scramble-stats-build/inject_sq1_slash_exact.ps1`(镜像 `inject_sq1_wca_exact.ps1`):
 1. 读 `sq1_wca_exact.csv` 分出歧义态(W=2s−1)。
 2. 只对歧义态跑 analyzer(`SQ1_EXACT=1 SQ1_SLASH_SOLN=1`,默认 `-TimeoutSecs 30`,分块可续,怪物追踪)→ `sq1_slash_ambiguous.csv`。
 3. **合并** → `sq1_slash_exact.csv`(全量 `id,slash_exact,opt_scramble`):证明态派生 t=s + WCA 最优打乱;歧义态用精确解 / 怪物回退 t=s。
@@ -66,13 +66,13 @@ slash 精确求解器(`Sq1Solver`)对深态(s=11/12)**很慢**(~秒级~分钟级
 cargo build --release --bin sq1_analyzer -j 14   # solver/
 
 # 1. 跑歧义态 + 合并(默认 30s 超时,~3h 上限,可续)
-pwsh core/packages/scramble-stats-build/inject_sq1_slash_exact.ps1 -TimeoutSecs 30
+pwsh core/jobs/scramble-stats-build/inject_sq1_slash_exact.ps1 -TimeoutSecs 30
 
 # 2. 想消更多歧义怪物:加大超时续跑(只解未决)
-pwsh core/packages/scramble-stats-build/inject_sq1_slash_exact.ps1 -TimeoutSecs 120
+pwsh core/jobs/scramble-stats-build/inject_sq1_slash_exact.ps1 -TimeoutSecs 120
 
 # 3. 重生统计 JSON + 发布
-cd core/packages/scramble-stats-build
+cd core/jobs/scramble-stats-build
 pnpm exec tsx src/build_puzzle_dist.ts
 pnpm exec tsx src/build_puzzle_examples.ts
 # 发布:update_cross_stats.ps1 -Jobs puzzles(或手动 scp 两个 json 到 static.cuberoot.me)

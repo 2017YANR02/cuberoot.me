@@ -1,7 +1,7 @@
 // Offline builder for the 3×3×3 STM (Slice Turn Metric) OPTIMAL solver's pattern databases.
 //
-// Builds the three Korf-style PDBs rebuilt over the 27 STM generators (see core/packages/client/lib/
-// stm-solver.ts for the math + admissibility proof) and writes them gzip-packed:
+// Builds the three Korf-style PDBs rebuilt over the 27 STM generators (see the public
+// @cuberoot/puzzle-solvers/stm core for the math + admissibility proof) and writes them gzip-packed:
 //   stats/scramble/stm/corner.bin.gz   — 8 corners (perm 8! × orient 3⁷ = 88,179,840 bytes)
 //   stats/scramble/stm/edgeA.bin.gz    — edges UR UF UL UB DR DF (12P6 × 2⁶ = 42,577,920 bytes)
 //   stats/scramble/stm/edgeB.bin.gz    — edges DL DB FR FL BL BR (same size)

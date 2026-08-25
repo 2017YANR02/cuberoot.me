@@ -970,7 +970,7 @@ if($runPuzzles){
   # (跨进程 -File 模式数组被拆成散 token, 余项落到位置参数 -MaxNew[int] 报错)。
   & (Join-Path $PSScriptRoot 'update_puzzle_stats.ps1') -Puzzles $Puzzles
   if($LASTEXITCODE -ne 0){ throw 'update_puzzle_stats.ps1 失败' }
-  Push-Location (Join-Path $RepoRoot 'core\packages\scramble-stats-build')
+  Push-Location $PSScriptRoot
   try {
     pnpm run build:puzzle-examples
     if($LASTEXITCODE -ne 0){ throw 'build_puzzle_examples 失败' }
@@ -1115,7 +1115,7 @@ if($nNew -gt 0 -or $variantChanged -or $optChanged){
 # 增量(跳过已解),依赖本地 opt 表 + analyzer;缺则脚本内部自动跳过对应类。
 if($runStages -or $runPuzzles){
   Step '5c 长度 tab 最优 overlay — node build_length_opt.mjs (增量)'
-  Push-Location (Join-Path $RepoRoot 'core\packages\scramble-stats-build')
+  Push-Location $PSScriptRoot
   try {
     node build_length_opt.mjs
     if($LASTEXITCODE -ne 0){ Write-Host '[length-opt] 失败(非致命, 跳过)' -ForegroundColor Yellow }
@@ -1125,7 +1125,7 @@ if($runStages -or $runPuzzles){
 # ---- 5d. 难度 tab「下载全部」全量语料 gz (bundles/;依赖 std.csv,故跟 stages) ----
 if($runStages){
   Step '5d 全量语料下载包 — node build_scramble_bundle.mjs (~30MB/阶段, gitignored 只 scp)'
-  Push-Location (Join-Path $RepoRoot 'core\packages\scramble-stats-build')
+  Push-Location $PSScriptRoot
   try {
     node --max-old-space-size=3072 build_scramble_bundle.mjs
     if($LASTEXITCODE -ne 0){ Write-Host '[bundle] 失败(非致命, 跳过)' -ForegroundColor Yellow }
@@ -1216,7 +1216,7 @@ if($NoPublish){
     Load-OptimalToPg (Join-Path $SolverDir '333opt\wca_optimal.csv') '333' "'333','333oh','333ft','333fm'"
   }
   if($puzzleChanged){
-    Load-OptimalToPg (Join-Path $RepoRoot 'core\packages\scramble-stats-build\wca_optimal_puzzle.csv') 'puzzle' "'222','pyram','skewb'"
+    Load-OptimalToPg (Join-Path $PSScriptRoot 'wca_optimal_puzzle.csv') 'puzzle' "'222','pyram','skewb'"
   }
 }
 

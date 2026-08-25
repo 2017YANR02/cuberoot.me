@@ -5,8 +5,8 @@
 // 页面只 `statsUrl()` fetch + 渲染 —— **严禁浏览器进页现场求解采样**(开 分布 tab 不准解任何打乱)。
 //
 // 这是 build_puzzle_dist.ts(CSV 聚合,222/pyraminx/skewb/sq1 真题管道)之外的**另一条线**:这些 puzzle
-// 没有 Rust analyzer / 真题语料。已迁移的纯核心走公开 package Node export；遗留求解器仍按需加载
-// packages/client/lib/<puzzle>-solver.ts。本脚本用其**自带的 cstimer 同款随机打乱生成器**逐条采样求解。
+// 没有 Rust analyzer / 真题语料。纯核心统一走公开 package Node export，并使用各核心
+// **自带的 cstimer 同款随机打乱生成器**逐条采样求解。
 //
 // 复用性:加新 C/D 单元 = 在 REGISTRY 加一行(event / solver 路径 / 导出名 / 打乱长度 / 默认 N / 质量桶)。
 // 之后退役各 DistView 的现场采样、改成 fetch dist_<event>.json,是机械活。
@@ -162,9 +162,10 @@ const REGISTRY: PuzzleDistSpec[] = [
     quality: 'sampled-near-optimal',
     load: async () => {
       const m = await mod('@cuberoot/puzzle-solvers/cuboid335');
+      const solveCuboid335 = m.solveCuboid335 as (s: string, options: { optimalBudget: number; optimalDepthCap: number }) => { length: number; optimal?: boolean };
       return {
         scramble: m.randomCuboid335Scramble as SolverAdapter['scramble'],
-        solve: m.solveCuboid335 as SolverAdapter['solve'],
+        solve: (s: string) => solveCuboid335(s, { optimalBudget: 50_000_000, optimalDepthCap: 20 }),
         maxBound: m.CUBOID335_MAX_LENGTH as number,
         stateCountStr: m.CUBOID335_STATE_COUNT_STR as string,
       };
