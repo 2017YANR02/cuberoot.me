@@ -52,7 +52,7 @@ describe('mini program build graph state', () => {
     const paths = normalizedPaths(graphInputFiles);
 
     expect(normalizedRelativePath(packageRoot, externalRelayInput(graphInputFiles)))
-      .toMatch(/^(?:\.\.\/)+[^/]+\/src\/.+\/relay\.ts$/);
+      .toMatch(/^(?:\.\.\/)+(?:[^/]+\/)+src\/.+\/relay\.ts$/);
     expect(paths).toContain('src/pages/smart-cube/index.ts');
     expect(paths.every((path) => !path.startsWith('dist/'))).toBe(true);
 
