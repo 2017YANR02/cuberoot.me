@@ -25,7 +25,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useQueryState, parseAsStringEnum, parseAsInteger, parseAsString, parseAsBoolean } from 'nuqs';
-import { Check, X, Eye, ArrowRight, ExternalLink } from 'lucide-react';
+import { Check, Eye, ArrowRight, ExternalLink } from 'lucide-react';
 import AlgInput from '@/components/AlgInput';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -43,6 +43,7 @@ import {
   submitTrainingEvidence,
 } from '@/lib/training-evidence';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
+import TrainingFeedbackOverlay from '@/components/TrainingFeedbackOverlay';
 import {
   PREDICT_FILL, PREDICT_ON_FILL, PREDICT_COLOR_NAMES, IDENTITY_COLORS,
   type PredictColor,
@@ -584,18 +585,11 @@ function PredictPageInner() {
             viewResetSeq={viewResetSeq}
           />
           <div className="predict-clock" aria-live="off">{clock(elapsed)}</div>
-          {feedback?.kind === 'wrong' && (
-            <div className="predict-feedback predict-wrong" role="alert">
-              <X size={120} strokeWidth={3} aria-hidden="true" />
-              <span className="predict-sr">{tr({ zh: '点错了', en: 'Wrong square' })}</span>
-            </div>
-          )}
-          {feedback?.kind === 'correct' && (
-            <div className="predict-feedback predict-correct" role="status">
-              <Check size={120} strokeWidth={3} aria-hidden="true" />
-              <span className="predict-sr">{tr({ zh: '点对了', en: 'Correct square' })}</span>
-            </div>
-          )}
+          <TrainingFeedbackOverlay
+            kind={feedback?.kind ?? null}
+            correctLabel={tr({ zh: '点对了', en: 'Correct square' })}
+            wrongLabel={tr({ zh: '点错了', en: 'Wrong square' })}
+          />
         </div>
 
         <div className="predict-replay">
