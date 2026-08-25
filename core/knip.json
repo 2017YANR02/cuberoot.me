@@ -3,6 +3,7 @@
   "ignore": [
     "cube555-daemon/**",
     "**/pkg/*_bg.wasm.d.ts",
+    "scripts/resolve-workspace-path.d.mts",
     "{packages/miniprogram,apps/miniprogram}/scripts/release-check-lib.d.mts"
   ],
   "ignoreBinaries": ["netstat", "wasm-pack", "pwsh"],
