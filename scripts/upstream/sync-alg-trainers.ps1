@@ -35,6 +35,7 @@ Assert-SyncInternalFiles -RepoRoot $LocalDir -RelativePaths @(
     'scripts/upstream/sync-alg-trainers.ps1'
     '.sync/sync_utils.ps1'
     '.sync/alg_trainers_config.json'
+    'docs/generated-artifacts.json'
 ) -PowerShellScripts @('scripts/upstream/sync-alg-trainers.ps1')
 if ($ValidateOnly)
 {
@@ -290,5 +291,6 @@ if ($DryRun)
 }
 else
 {
+    Write-UpstreamVersionRecord -RepoRoot $LocalDir -ArtifactId 'tools.alg-trainers' -WorkingDirectory $UpstreamDir
     Write-Host "`nRun 'git diff' to review changes." -ForegroundColor Green
 }

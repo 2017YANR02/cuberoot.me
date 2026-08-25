@@ -327,3 +327,107 @@ function Write-Utf8File
     $outBytes = [System.Text.Encoding]::UTF8.GetBytes($Content)
     Invoke-WithFileRetry { [System.IO.File]::WriteAllBytes($Path, $outBytes) }
 }
+
+function Write-UpstreamVersionRecord
+{
+    <#
+    .SYNOPSIS
+        从真实上游 clone 的 HEAD 生成统一版本记录。
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [string]$RepoRoot,
+        [Parameter(Mandatory)]
+        [string]$ArtifactId,
+        [Parameter(Mandatory)]
+        [string]$WorkingDirectory
+    )
+
+    $ledgerPath = Join-Path $RepoRoot 'docs\generated-artifacts.json'
+    if (-not (Test-Path -LiteralPath $ledgerPath))
+    {
+        throw "生成物事实源不存在：$ledgerPath"
+    }
+    if (-not (Test-Path -LiteralPath (Join-Path $WorkingDirectory '.git')))
+    {
+        throw "版本记录来源不是 git clone：$WorkingDirectory"
+    }
+
+    $ledger = Get-Content -LiteralPath $ledgerPath -Raw | ConvertFrom-Json
+    $matches = @($ledger.artifacts | Where-Object { $_.id -eq $ArtifactId })
+    if ($matches.Count -ne 1)
+    {
+        throw "生成物事实源必须且只能有一个 $ArtifactId 条目，实际 $($matches.Count) 个。"
+    }
+
+    $artifact = $matches[0]
+    if (-not $artifact.versionRecord.path -or -not $artifact.source.url -or
+        -not $artifact.source.ref.type -or -not $artifact.source.ref.value -or
+        -not $artifact.license.spdx)
+    {
+        throw "生成物事实源中的 $ArtifactId 缺少版本记录所需字段。"
+    }
+    if ($artifact.versionRecord.format -ne 'structured-v1')
+    {
+        throw "生成物事实源中的 $ArtifactId 不是 structured-v1 版本记录。"
+    }
+
+    $originUrl = Get-CheckedNativeText -FilePath 'git' -ArgumentList @(
+        '-C', $WorkingDirectory, 'remote', 'get-url', 'origin'
+    ) -FailureMessage "$ArtifactId 读取 origin 失败"
+    $normaliseGitUrl = {
+        param([string]$Url)
+        return ($Url.Trim().TrimEnd('/') -replace '\.git$', '').ToLowerInvariant()
+    }
+    if ((& $normaliseGitUrl $originUrl) -ne (& $normaliseGitUrl $artifact.source.url))
+    {
+        throw "$ArtifactId 的 clone origin 与事实源不符：$originUrl"
+    }
+
+    $sha = Get-CheckedNativeText -FilePath 'git' -ArgumentList @(
+        '-C', $WorkingDirectory, 'rev-parse', '--verify', 'HEAD'
+    ) -FailureMessage "$ArtifactId 读取 HEAD 失败"
+    if ($sha -notmatch '^[0-9a-fA-F]{40}$')
+    {
+        throw "$ArtifactId 的 HEAD 不是完整 40 位 commit：$sha"
+    }
+    $date = Get-CheckedNativeText -FilePath 'git' -ArgumentList @(
+        '-C', $WorkingDirectory, 'show', '-s', '--format=%cI', 'HEAD'
+    ) -FailureMessage "$ArtifactId 读取 commit 日期失败"
+
+    $lines = @(
+        '# Generated from docs/generated-artifacts.json. Do not edit.'
+        "Artifact: $ArtifactId"
+        "Source: $($artifact.source.url)"
+        "Ref: $($artifact.source.ref.type) $($artifact.source.ref.value)"
+        "Commit: $sha"
+        "Date: $date"
+        "License: $($artifact.license.spdx)"
+        'Patch owners:'
+    )
+    $lines += @($artifact.patchOwner | ForEach-Object { "- $_" })
+    $lines += 'Outputs:'
+    $lines += @($artifact.outputs | ForEach-Object { "- $_" })
+
+    $resolvedRepoRoot = [System.IO.Path]::GetFullPath($RepoRoot)
+    $recordRelativePath = [string]$artifact.versionRecord.path
+    if ([System.IO.Path]::IsPathRooted($recordRelativePath))
+    {
+        throw "$ArtifactId 的版本记录路径必须是仓库相对路径：$recordRelativePath"
+    }
+    $recordPath = [System.IO.Path]::GetFullPath((Join-Path $resolvedRepoRoot $recordRelativePath))
+    $repoPrefix = $resolvedRepoRoot.TrimEnd(
+        [System.IO.Path]::DirectorySeparatorChar,
+        [System.IO.Path]::AltDirectorySeparatorChar
+    ) + [System.IO.Path]::DirectorySeparatorChar
+    if (-not $recordPath.StartsWith($repoPrefix, [System.StringComparison]::OrdinalIgnoreCase))
+    {
+        throw "$ArtifactId 的版本记录路径越出仓库：$recordRelativePath"
+    }
+    $recordDirectory = Split-Path $recordPath -Parent
+    if (-not (Test-Path -LiteralPath $recordDirectory))
+    {
+        New-Item -ItemType Directory -Path $recordDirectory -Force | Out-Null
+    }
+    Write-Utf8File -Path $recordPath -Content (($lines -join "`n") + "`n")
+}

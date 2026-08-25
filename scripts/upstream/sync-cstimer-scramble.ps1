@@ -35,6 +35,7 @@ $ProjectDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $ProjectD
 Assert-SyncInternalFiles -RepoRoot $ProjectDir -RelativePaths @(
     'scripts/upstream/sync-cstimer-scramble.ps1'
     '.sync/sync_utils.ps1'
+    'docs/generated-artifacts.json'
 ) -PowerShellScripts @('scripts/upstream/sync-cstimer-scramble.ps1')
 if ($ValidateOnly)
 {
@@ -207,25 +208,8 @@ if ($missing.Count -gt 0)
 }
 Write-Host "  自加导出齐全" -ForegroundColor Gray
 
-# 更新 UPSTREAM.txt 的 commit / date（下次同步的 merge base）
-$sha = Get-CheckedNativeText -FilePath 'git' -ArgumentList @('-C', $CstimerDir, 'rev-parse', '--short', 'HEAD')
-$date = Get-CheckedNativeText -FilePath 'git' -ArgumentList @('-C', $CstimerDir, 'log', '-1', '--format=%ai')
-$txt = @"
-Vendored from https://github.com/cs0x7f/cstimer
-Commit:  $sha
-Date:    $date
-License: GPLv3 (see ./LICENSE)
-
-Files in lib/ and scramble/ are copied from upstream src/js/lib/ and
-src/js/scramble/. A few of them (scramble_sq1_new.js / pyraminx.js / redi.js)
-carry cuberoot.me additions — the `solveScramble` exports. Do not hand-edit for
-upstream changes; resync via scripts/upstream/sync-cstimer-scramble.ps1, which
-three-way merges against the commit recorded above.
-
-Used by:  core/packages/client/lib/cstimer-scramble.ts
-          (worker bridge at tools/cstimer-scramble/scrambler.worker.js)
-"@
-Set-Content -Path $upstreamTxt -Value $txt -Encoding UTF8
+# 更新 UPSTREAM.txt（下次同步的 merge base），commit 直接取真实 clone HEAD。
+Write-UpstreamVersionRecord -RepoRoot $ProjectDir -ArtifactId 'tools.cstimer-scramble' -WorkingDirectory $CstimerDir
 
 Write-Host "[4/4] git status..." -ForegroundColor Cyan
 Invoke-CheckedNativeCommand -FilePath 'git' -ArgumentList @(
