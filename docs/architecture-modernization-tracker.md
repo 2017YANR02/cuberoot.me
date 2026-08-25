@@ -201,7 +201,7 @@ API     ─X─> Web 源码或 Web public
 | PS1-02 | 统一 RepoRoot 与无副作用检查模式 | `完成` | 7 个入口均支持显式 `-RepoRoot` 与真正早返回的 `-ValidateOnly`；任意 cwd、默认/显式/旧根参数、非法根和缺失内部依赖均有无副作用实证 |
 | PS1-03 | 冻结并测试公开 CLI 契约 | `完成` | 参数名称、类型、顺序、退出码与调用方式已冻结；`Only` 选择及每个子入口收到的 `RepoRoot`、`SkipPull`、`DryRun` 均有逐脚本行为测试 |
 | PS1-04 | 保留根入口并移动私有实现 | `完成` | 根目录只保留统一入口与 BLDDB 兼容 shim；7 个私有实现统一进入 `scripts/upstream/`，默认根、显式参数、旧参数和失败退出均由跨平台合同锁定；本地、CI、部署与公网 smoke 均通过 |
-| PS1-05 | 迁移仓外 BLDDB 调用并退役兼容 shim | `排队中` | 先把 `D:\cube\blddb` 的固定旧路径调用迁到统一入口并实跑，再删除 `_sync_blddb.ps1`；删除前不得牺牲已确认调用者来换目录观感 |
+| PS1-05 | 迁移仓外 BLDDB 调用并退役兼容 shim | `进行中（安全同步完成，待仓外授权）` | canonical 入口已从隔离的 `origin/v2` detached worktree 完成真实同步并原子发布，主 clone 的 HEAD、工作树与 stash 保持不变；待用户明确授权修改 `D:\cube\blddb\AGENTS.md` 的固定旧路径后，才删除 `_sync_blddb.ps1` |
 
 ### F. 可选物理目录整理
 
@@ -299,6 +299,8 @@ PS1-03 实施证据（2026-08-24）：`scripts/upstream/tests/upstream-sync-cont
 
 PS1-04 实施与发布证据（2026-08-24）：7 个私有实现以 `git mv` 进入 `scripts/upstream/`，canonical 默认根统一为脚本位置向上两级；仓库根仅保留参数兼容的 `sync_upstream.ps1` 与 `_sync_blddb.ps1` 两个 shim，后者继续兼容仓外已确认的旧 `ProjectDir` 调用。Test workflow 以根级 `*.ps1` 捕获任何新增或恢复的根脚本，并 sparse checkout 全部根 PS1，避免目录门禁被绕过；合同同时锁定根脚本精确集合、7 个 canonical 文件、旧私有路径消失、真实 shim 转发、任意 cwd、无副作用 fingerprint 和精确 native 退出码。本地 AST 10/10、Windows 完整合同、Linux PowerShell + git 合同、workflow 路径 7/7 与 diff check 均通过；`b02005a50e` 的 Test `32730444612`、Deploy Next `32730444571`、Sync static toolkit `32730444528` 全部成功，Deploy Core 未被本批路径触发。主域中英文首页、主域中英文 `/sim` 与 Next 直连入口均为 200，响应无模块解析或应用错误标记。三路终审最终均为 GO，PS1-04 关闭；`_sync_blddb.ps1` 的退役单列 PS1-05，以仓外调用迁移和实跑为删除门槛。
 
+PS1-05 阶段证据（2026-08-24）：统一入口 `sync_upstream.ps1 -Only blddb` 不再对含私有说明提交的 BLDDB 主 clone 执行 pull/build，而是 fetch 后锁定完整 `origin/v2` SHA，在仓库 `.tmp/upstream` 建 detached worktree；补丁、依赖、构建、后处理和版本记录都绑定同一来源。候选目录全部成功后才同卷替换现役 `tools/blddb`，失败路径保留旧目录并回滚。真实同步从 `90e9689` 前进到 `0f55b3acd2e734786b644f52571c87fd3db06ef6`，Next 静态导出 32 页，发布 373 个文件；结构化 provenance、目标文件、零临时残留、主 clone HEAD/工作树/stash 不变均已核验。PowerShell AST、定向同步合同、ValidateOnly、生成物清册检查和独立双向审计通过。仓外 `D:\cube\blddb\AGENTS.md` 明文要求修改前先询问用户，因此兼容 shim 在获得明确授权并迁移该调用前继续保留，PS1-05 不提前关闭。
+
 ### 批次 7：可选目录整理
 
 范围：LYT 工作包。
@@ -380,6 +382,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | Batch 7 CTR-03 稳定错误码终审 | `batch6_review_tests` | `GO，0 Blocker / 0 Major / 0 Minor` | 六个试点端点的 producer、shared 严格 decoder、小程序 code-first 映射与旧 `error`/HTTP status 兼容边界一致；Reviewer 以真实 `wx.request → requestJson → ApiError.code → loginErrorMessage` 冲突 fixture 证明 code 优先，并覆盖服务端七类微信失败分支，未把试点夸大成全 API 迁移 |
 | Batch 8 SQ2 纯逻辑终审 | `batch14_sq2_rereview` | `GO，0 Blocker / 0 Major / 0 Minor / 0 Nit` | 初审阻断 clean checkout 入口、重复 build、临时输出弱断言和暂存态风险；修正后独立复跑 SQ2 N=1 临时输出并确认 event、样本数、固定时间戳、直方图和值域及仓库统计零污染，package/workflow 合同 10/10，公开出口和三个真实消费者一致 |
 | Batch 8 PKG-02 有限闭环审计 | `remaining_tracker_audit`、`batch14_pkg02_docs_review` | `GO，0 Blocker / 0 Major / 0 Minor` | Clock、SQ2、`alg-transform` 与 `puzzle-render-core` 已覆盖本任务要求的代表性纯逻辑边界；后续 solver 只登记条件候选和前置拆分，不构成无限迁移 backlog。终审以当前暂存内容复跑 3 个定向合同 27/27，确认完整 rename、`../stats` 临时输出门禁和零未暂存差异；除 PS1-05、受日期与逐项授权约束的 RET-04 及 Platform 产品跟踪表的 P9 外，无其他当前未完成编号项 |
+| Batch 9 PS1-05 安全同步审计 | `ps1_05_caller_audit`、`ps1_05_contract_audit` | `GO，0 Blocker` | BLDDB 改为锁定公开 `origin/v2` 的 detached worktree，全流程来源一致、候选先成型、发布可回滚且主 clone 不变；真实同步证明远端已前进。唯一剩余门槛是仓外 AGENTS 的明确修改授权，未以删除 shim 换目录观感 |
 
 审核要求：
 
@@ -399,6 +402,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-24 | Batch 9 PS1-05 安全同步完成，兼容入口等待仓外授权 | 统一入口真实同步锁定 `origin/v2` 完整 SHA，以 detached worktree 完成 32 页构建、后处理和 373 文件原子发布；主 clone HEAD/工作树/stash 不变，临时目录零残留，结构化 provenance 与生成物清册通过。两名独立 Reviewer GO；仓外 AGENTS 尚未获明确修改授权，故 `_sync_blddb.ps1` 暂不删除 |
 | 2026-08-24 | Batch 8 SQ2 窄切片与 PKG-02 有限闭环完成 | 仅新增 `@cuberoot/puzzle-solvers/sq2` 显式公开出口并迁移原 oracle；Web UI、SVG 与 sampled builder 改用该入口，无根 barrel、wildcard 或 shim。SQ2 9/9、package/workflow/边界定向合同 27/27、N=1 临时输出 smoke、PowerShell AST、313/329/13 边界审计与 diff-check 通过；独立 Reviewer 最终 GO，未改提交态统计数据，未搬其他 solver，本地提交但不宣称发布验收 |
 | 2026-08-24 | Batch 7 BND-05 package 公开边界关闭 | 14 个活跃 workspace package 完成 kind/runtime/subpath 属性登记；守卫覆盖私有 deep import、无根 export、非法 export key、宿主全局及 `imports` alias 运行时闭包。定向测试 17/17、边界审计 314/330/13 与 diff-check 通过；独立 Reviewer 最终 GO，0 blocker/major/minor/nit |
 | 2026-08-24 | Batch 7 DOC-05 工程生成物清册关闭 | 结构化 JSON 清册覆盖 33 类 artifact，schema 驱动 checker、ownership 变异探针、真实 TNoodle 26 locale/23 FMC key 确定性检查与精确 diff-check 通过；5 类 vendored 旧 provenance 在下次成功同步前保持诚实 pending，公开 credits 事实源不变；独立 Reviewer 最终 GO，0 blocker/major/minor |

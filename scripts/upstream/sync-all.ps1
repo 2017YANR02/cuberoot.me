@@ -15,7 +15,7 @@
 .PARAMETER Only
     只同步部分上游：cstimer / solver / algtrainers / blddb / recordranks（可多选）。默认全同步。
 .PARAMETER SkipPull
-    跳过 git pull，只用当前 clone 的工作区重新生成产物。
+    跳过远端更新；BLDDB 使用缓存的 origin/v2，其余任务使用当前 clone。
 .PARAMETER DryRun
     传给支持预览的子脚本（solver / algtrainers / recordranks）；其余构建会被跳过。
 .PARAMETER RepoRoot
@@ -100,6 +100,14 @@ foreach ($u in $upstreams)
         continue
     }
 
+    # BLDDB 主 clone 含本地 AGENTS.md 提交；canonical 脚本会 fetch 后从 origin/v2
+    # 建 detached worktree，禁止在这里 pull/merge/stash 主 clone。
+    if ($u.Key -eq 'blddb')
+    {
+        Write-Host "  [DEFER] blddb: 由 canonical 脚本锁定 origin/v2" -ForegroundColor DarkGray
+        continue
+    }
+
     if ($SkipPull)
     {
         Write-Host "  [SKIP] $($u.Key): --SkipPull" -ForegroundColor DarkGray
@@ -154,7 +162,7 @@ foreach ($u in $upstreams)
 # ===== Step 2: 跑同步脚本 =====
 Write-Section 'Step 2 / 2  同步到仓库'
 
-# NOTE: 子脚本可单独 pull；由编排器调用时上游已在 Step 1 处理，统一传 SkipPull。
+# NOTE: 普通子脚本由 Step 1 拉取后传 SkipPull；BLDDB 自己锁定 origin/v2，不走主 clone pull。
 $dry = if ($DryRun) { @{ DryRun = $true } } else { @{} }
 
 if ($targets -contains 'cstimer')
@@ -194,7 +202,9 @@ if ($targets -contains 'blddb')
     {
         # NOTE: 上游是 Next 应用,这里是真 build(npm install + next build 静态导出),不是拷文件。
         Write-Host "`n--- BLDDB（构建，需 Node/npm）---" -ForegroundColor Cyan
-        & (Join-Path $root 'scripts\upstream\sync-blddb.ps1') -RepoRoot $root -SkipPull
+        $blddbArgs = @{ RepoRoot = $root }
+        if ($SkipPull) { $blddbArgs.SkipPull = $true }
+        & (Join-Path $root 'scripts\upstream\sync-blddb.ps1') @blddbArgs
     }
 }
 
