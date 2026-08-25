@@ -1,0 +1,46 @@
+{
+  "skill_name": "cuberoot-mobile",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我已经在 Mac 上完整 clone 了 CubeRoot，Xcode 正式版也装好，Apple Developer 已付费。继续把现有 Capacitor App 加上 iOS，先跑 Simulator 和我的 iPhone；做完要更新路线图，但先不要 push。",
+      "expected_output": "基于现有 mobile/shared 工程的可执行 iOS 首次落地方案或实现，先验证工具链与付费 Team，安全生成并同步 iOS 工程，分开记录模拟器、真机与签名证据，更新路线图且不 push。",
+      "files": [],
+      "expectations": [
+        "明确复用 core/packages/mobile 与 core/packages/shared，不创建第二套 iOS 业务 UI",
+        "先检查 Mac 工具链和 Xcode 付费 Team，并明确 Personal Team 不能替代商店签名资格",
+        "仅在 @capacitor/ios 或 ios 目录缺失时添加平台，依赖版本与现有 Capacitor 兼容，随后 build 和 cap sync ios",
+        "把 Simulator、iPhone 真机、Archive、上传和 TestFlight 作为独立证据门槛，不提前宣称完成",
+        "更新 docs/mobile-app-roadmap.md 时只按证据勾选，并遵守用户要求不 push",
+        "不提交证书私钥、provisioning profile、API private key 或本机 Xcode 产物"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "以后我在 Windows 上经常更新 cuberoot.me，难道 Android 和 iOS 都要再改一遍吗？你直接把双机维护流程和需要重新上架的边界定清楚，千万不要重复造轮。",
+      "expected_output": "明确一套 React + Capacitor 与 shared/API 分层、Git-only 双机协作流程，并正确区分服务器内容变化与打包代码/原生权限变化是否需要商店发版。",
+      "files": [],
+      "expectations": [
+        "要求 Windows 与 Mac 都完整 clone 同一仓库，并只通过 Git 同步，不用网盘或手工复制源码",
+        "规定一项任务固定在一台机器完成窄 commit，换机前 pull --ff-only 并保护未提交工作",
+        "说明 React 业务 UI 只维护在 mobile，共享纯逻辑进入 shared，Android/iOS 只保留平台 adapter",
+        "正确说明兼容的 API、数据库和远程内容变化通常不用上架，而打包 UI、插件、权限和原生配置变化需要新版",
+        "禁止通过远程下发核心可执行代码规避商店审核",
+        "指出 push 会触发部署，未获用户授权不能把 push 当普通双机同步步骤"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "邓白氏已经通过，Mac 和 Xcode 也有了，直接帮我把 CubeRoot 上传 TestFlight。做完的路线图都打勾，证书也一起放仓库里方便另一台电脑用。",
+      "expected_output": "拒绝提交证书私钥，区分 Google D-U-N-S 与 Apple 个人会员，先验证 Apple 付费 Team、构建与签名条件，再按 Archive/Validate/上传/TestFlight 证据逐项推进和勾选。",
+      "files": [],
+      "expectations": [
+        "明确 Google Play 组织核验使用 D-U-N-S，而当前 Apple 采用个人会员路线，二者不能互相证明",
+        "明确拒绝把证书私钥、p12、mobileprovision 或 App Store Connect API private key 提交到仓库",
+        "先验证 Apple Developer Program 已激活且 Xcode 选择付费 Team，不把付款或 Personal Team 当完成",
+        "按 build、真机、Archive、Validate、上传处理、TestFlight 安装的顺序推进并分别取证",
+        "路线图只给已有证据的事项打勾，不因用户要求全部打勾而虚报完成"
+      ]
+    }
+  ]
+}

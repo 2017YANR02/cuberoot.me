@@ -2,7 +2,7 @@
 
 > 状态：执行中
 >
-> 更新日期：2026-08-12
+> 更新日期：2026-08-25
 >
 > 目标：以最低长期维护成本，把 CubeRoot 的高频能力发布到 Google Play 和 Apple App Store，并逐步覆盖全球可用地区。
 >
@@ -19,7 +19,8 @@
 - [x] 公开支持邮箱暂定 `yrmfxc@gmail.com`，App 内已提供邮件入口；隐私政策 URL 定为 `/privacy` 和 `/zh/privacy`。
 - [ ] 确定公开开发者名称、地址和联系电话。（需要所有者确认公开资料）
 - [ ] 注册并完成 Google Play Console 组织账号验证。（需要所有者操作账号、付款和身份验证）
-- [ ] 核对 D-U-N-S 并完成 Apple Developer Program 组织账号验证。（需要所有者操作账号和组织验证）
+- [x] Google Play 组织核验所需的 D-U-N-S 已由邓白氏门户核验通过。（所有者提供门户结果）
+- [ ] 核对 Apple Developer Program 个人会员已激活，并在 Xcode 选择付费 Team。（个人独资企业当前走 Apple 个人路线，不把 Google 的 D-U-N-S 当作 Apple 组织验证）
 - [ ] 建立 Android 真机和测试者名单。（组织账号不预设个人账号的 12 人/14 天门槛；质量测试仍建议 15 到 20 人）
 - [ ] 建立发布账号 2FA、恢复方式、密码管理和签名密钥备份规则。（需要账号所有者参与）
 - [x] 完成当前本地 MVP 的数据与 SDK 清单：本地计时数据、网络状态、Capacitor Browser/Network；无广告、分析或敏感权限。
@@ -149,7 +150,8 @@
 
 ### 阶段 9：iOS 移植与 TestFlight
 
-- [ ] 准备受支持的 Mac/Xcode、Apple 组织账号和 iPhone 真机。（目前已有 iPhone，缺 Mac 和已验证开发者账号）
+- [x] 已准备 Mac、Xcode 27 正式版和 iPhone 真机。（设备与安装由所有者确认；尚未作为构建/签名证据）
+- [ ] 确认 Apple Developer Program 付费个人会员已激活，且 Xcode 显示可用于发布的付费 Team。
 - [ ] iOS 工程、签名、Core Bluetooth、Keychain、Universal Links 和分享完成。
 - [ ] iOS 权限、后台、系统中断、安全区、动态字体和 VoiceOver 验证通过。
 - [ ] Sign in with Apple/登录合规、TestFlight 和 App Store 审核资料完成。
@@ -157,6 +159,7 @@
 
 ### 阶段 10：全球发布和长期维护
 
+- [x] 建立仓库内 `cuberoot-mobile` Codex skill，统一单代码库、双机交接、iOS 发版与签名安全流程。（结构校验、成对 eval 和独立审计通过）
 - [ ] 按地区和质量指标逐步扩大可用范围。
 - [ ] 发布 runbook、版本支持矩阵、政策/证书日历和质量看板完成。
 - [ ] 建立每月发版、季度兼容测试、半年隐私复核和年度账号维护节奏。
@@ -658,7 +661,7 @@ iOS v1 原则上与已稳定的 Android v1 同功能，不在移植阶段额外�
 1. 确定发布者身份：个人或组织。
 2. 确定公开开发者名称、支持邮箱、地址和联系电话。
 3. 注册 Google Play Console，完成 25 美元付费和身份验证。
-4. 如果已有法律实体，申请或核对 D-U-N-S，准备 Apple 组织账号；否则记录未来 Apple 个人账号姓名展示的接受程度。
+4. Google Play 组织路线申请或核对 D-U-N-S；Apple 按法律实体类型单独判断。当前个人独资企业采用 Apple 个人会员路线，不混用 Google 的组织核验结果。
 5. 建立覆盖多种 Android 版本和机型的测试名单，质量测试建议 15 到 20 人；只有控制台明确要求时才把 12 人/14 天当作发布门槛。
 6. 暂定不可变标识：Android application ID / Apple Bundle ID 推荐 `me.cuberoot.app`，最终创建前再核对。
 7. 确定产品名 CubeRoot、默认语言英文、第二语言简体中文。
