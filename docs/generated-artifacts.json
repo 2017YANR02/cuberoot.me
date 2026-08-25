@@ -498,14 +498,19 @@
       "id": "mobile.android-assets",
       "kind": "checked-in-generated",
       "source": {
-        "locator": "CubeRoot brand SVGs and the Android asset generator",
-        "paths": ["core/packages/mobile/scripts/gen-android-assets.mjs"]
+        "locator": "neutral CubeRoot brand source and shared asset generators",
+        "paths": [
+          "core/assets/brand/CubeRoot-mark.svg",
+          "core/scripts/gen-brand-assets.mjs",
+          "core/packages/mobile/scripts/gen-android-assets.mjs"
+        ]
       },
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
-      "owner": "core/packages/mobile/scripts/gen-android-assets.mjs",
+      "owner": ["core/scripts/gen-brand-assets.mjs", "core/packages/mobile/scripts/gen-android-assets.mjs"],
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/mobile assets:android",
       "outputs": [
+        "core/assets/brand/*.png",
         "core/packages/client/public/icons/**",
         "core/packages/mobile/android/app/src/main/res/mipmap-mdpi/**",
         "core/packages/mobile/android/app/src/main/res/mipmap-hdpi/**",
@@ -564,16 +569,16 @@
       "source": {
         "locator": "mini-program source and project configuration",
         "paths": [
-          "core/packages/miniprogram/src/**",
-          "core/packages/miniprogram/project.config.json",
-          "core/packages/miniprogram/scripts/release-check.mjs"
+          "core/apps/miniprogram/src/**",
+          "core/apps/miniprogram/project.config.json",
+          "core/apps/miniprogram/scripts/release-check.mjs"
         ]
       },
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and dependency licenses" },
-      "owner": "core/packages/miniprogram",
+      "owner": "core/apps/miniprogram",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/miniprogram release:check",
-      "transientOutputs": ["core/packages/miniprogram/dist/**"],
+      "transientOutputs": ["core/apps/miniprogram/dist/**"],
       "verification": ["release:check validates build state and source fingerprint consistency"],
       "driftPolicy": "dist is build output and not a hand-edited source. Release checks must prove that its fingerprint matches the current source."
     },

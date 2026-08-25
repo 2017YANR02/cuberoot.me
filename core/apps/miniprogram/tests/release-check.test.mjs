@@ -3,6 +3,8 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { resolveWorkspacePath } from '../../../scripts/resolve-workspace-path.mjs';
+
 import { BUILD_ASSETS } from '../scripts/build-assets.mjs';
 import {
   BUILD_STATE_VERSION,
@@ -125,8 +127,10 @@ describe('mini program release check', () => {
     expect(BUILD_ASSETS).toHaveLength(1);
     expect(BUILD_ASSETS[0].output).toBe('assets/share-cover.png');
     const packageRoot = resolve(import.meta.dirname, '..');
+    const coreRoot = resolve(packageRoot, '..', '..');
+    const sharedRoot = resolve(coreRoot, resolveWorkspacePath('@cuberoot/shared'));
     const buildInputs = await collectBuildInputFiles(packageRoot, [
-      resolve(packageRoot, '..', 'shared', 'src', 'smart_cube', 'relay.ts'),
+      resolve(sharedRoot, 'src', 'smart_cube', 'relay.ts'),
     ]);
     expect(buildInputs).toContain(BUILD_ASSETS[0].source);
     expect(buildInputs.some((file) => file.replaceAll('\\', '/').endsWith(
