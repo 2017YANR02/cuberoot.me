@@ -2,7 +2,7 @@
 
 最后更新：2026-08-25
 
-状态：`待授权`。本文已经建立，但尚未移动任何源码目录。
+状态：`实施中`。仓库所有者已于 2026-08-25 明确授权开始；当前先实施双布局基础，尚未移动 Web/API 源码目录。
 
 主执行入口：[架构现代化跟踪](./architecture-modernization-tracker.md)。
 
@@ -10,7 +10,7 @@
 
 CubeRoot 采用 `core/apps/* + core/packages/* + core/jobs/*` 的物理分层，但必须渐进迁移，禁止一次搬完。
 
-这次迁移解决的是长期多端开发和 AI 导航时的归属不清，不改变产品功能、运行时、网址、API、数据库、npm package 名称或远端部署目录。它本身不会改善依赖边界；边界改善只能由公开 exports、依赖声明和消除私有源码引用来证明。旧 Platform 归档不在范围内，由仓库所有者自行处理。
+这次迁移解决的是长期多端开发和 AI 导航时的归属不清，不改变产品功能、运行时、网址、API、数据库或远端部署目录。物理路径迁移期间不改 npm package 名称；全部路径稳定后，再用独立批次把 Web/API 身份改为 `@cuberoot/web` 与 `@cuberoot/api`。它本身不会改善依赖边界；边界改善只能由公开 exports、依赖声明和消除私有源码引用来证明。旧 Platform 归档不在范围内，由仓库所有者自行处理。
 
 这不是所有公司的唯一标准，而是适合当前 CubeRoot 的常见 monorepo 结构：仓库已经真实存在四个 app、六个 library 和四个离线 job，目录应直接表达这三类不同生命周期。
 
@@ -51,19 +51,19 @@ core/
 
 ### 精确映射
 
-| 当前路径 | 目标路径 | 类型 | package 名称 |
-| --- | --- | --- | --- |
-| `core/packages/client` | `core/apps/web` | app | 暂时保留 `@cuberoot/client` |
-| `core/packages/server` | `core/apps/api` | app | 暂时保留 `@cuberoot/server` |
-| `core/packages/mobile` | `core/apps/mobile` | app | 保留原名 |
-| `core/packages/miniprogram` | `core/apps/miniprogram` | app | 保留原名 |
-| `core/packages/alg-build` | `core/jobs/alg-build` | job | 保留原名 |
-| `core/packages/scramble-stats-build` | `core/jobs/scramble-stats-build` | job | 保留原名 |
-| `core/packages/stats-build` | `core/jobs/stats-build` | job | 保留原名 |
-| `core/packages/wb-build` | `core/jobs/wb-build` | job | 保留原名 |
-| 六个 `kind=library` workspace | 继续留在 `core/packages/*` | package | 不变 |
+| 当前路径 | 目标路径 | 类型 | 路径迁移期间 | 最终 package 名称 |
+| --- | --- | --- | --- | --- |
+| `core/packages/client` | `core/apps/web` | app | `@cuberoot/client` | `@cuberoot/web` |
+| `core/packages/server` | `core/apps/api` | app | `@cuberoot/server` | `@cuberoot/api` |
+| `core/packages/mobile` | `core/apps/mobile` | app | 原名 | 原名 |
+| `core/packages/miniprogram` | `core/apps/miniprogram` | app | 原名 | 原名 |
+| `core/packages/alg-build` | `core/jobs/alg-build` | job | 原名 | 原名 |
+| `core/packages/scramble-stats-build` | `core/jobs/scramble-stats-build` | job | 原名 | 原名 |
+| `core/packages/stats-build` | `core/jobs/stats-build` | job | 原名 | 原名 |
+| `core/packages/wb-build` | `core/jobs/wb-build` | job | 原名 | 原名 |
+| 六个 `kind=library` workspace | 继续留在 `core/packages/*` | package | 原名 | 原名 |
 
-目录名和 npm package 名不是一回事。本轮不同时把 `@cuberoot/client` 改为 `@cuberoot/web`，也不把 `@cuberoot/server` 改为 `@cuberoot/api`。否则路径、依赖身份和发布配置三种迁移会叠在一起。是否改 package 名，待目录迁移全部稳定后另案评估。
+目录名和 npm package 名不是一回事。路径移动时先保留 `@cuberoot/client` 和 `@cuberoot/server`，避免把路径、依赖身份和发布配置三种迁移叠在一起。所有目录与发布合同稳定后，再单独改为更准确的 `@cuberoot/web` 和 `@cuberoot/api`；其余十二个 package 名不改。
 
 不建含义模糊的 `webapp/`。`apps/web`、`apps/api`、`apps/mobile` 和 `apps/miniprogram` 分别表达四个产品运行时；Android 与未来 iOS 继续共用同一个 Mobile React 应用，小程序不与 React DOM UI 强行合并。
 
@@ -147,18 +147,19 @@ Next、API、stats、Android 以及 workflow path-contract 都硬编码了旧路
 
 | ID | 批次 | 工作 | 状态 | 完成门槛 |
 | --- | --- | --- | --- | --- |
-| LAY2-00 | 决策与基线 | 建立本文，保存旧裁决与新决策，刷新路径、workflow、仓外配置和依赖清单 | `待授权` | 三路审核入表，blocker 有明确 owner |
-| LAY2-01 | 双布局基础 | workspace 同时接受 apps/packages/jobs；建立 path-independent registry；边界审计、钩子、Knip、生成物 checker 改为按 manifest 识别；补 `workspace-undeclared-import` | `待授权` | 14 个 workspace 唯一；313/329/13 语义同集或递减；真实违规和未声明依赖探针均拒绝 |
-| LAY2-02 | 双路径发布合同 | workflow、path-contract 和仓外构建配置先接受旧/新路径，不移动 app | `待授权` | 新旧路径触发合同可执行，回切值已记录 |
-| LAY2-03 | `wb-build` | 移至 `jobs/wb-build` | `待授权` | package 解析、最小 dry run、边界和生成物检查通过 |
-| LAY2-04 | `alg-build` | 移至 `jobs/alg-build` | `待授权` | migration 输出、API 消费和清册一致，不改正式 DB |
-| LAY2-05 | `stats-build` | 移至 `jobs/stats-build` | `待授权` | build/upload/load 三段合同一致，不重算正式统计 |
-| LAY2-06 | solver 边界与 `scramble-stats-build` | 先消除 Web 私有 solver import，再移至 jobs | `待授权` | job 只依赖公开 package，最小 fixture/dry run 通过 |
-| LAY2-07 | Miniprogram | 移至 `apps/miniprogram` | `待授权` | 独立构建、shared 合同、Web 路由合同通过，无 React DOM 依赖 |
-| LAY2-08 | 资产边界与 Mobile | 先提取图标生成入口，再移至 `apps/mobile` | `待授权` | typecheck/build、Android 资产和原生路径通过 |
-| LAY2-09 | 测试归属与 API | 先处理 Web→API 私有测试读取，再移至 `apps/api` | `待授权` | API typecheck/test/bundle、migration 和部署制品通过 |
-| LAY2-10 | Web | 移至 `apps/web` | `待授权` | typecheck、隔离 Next build、standalone 启动和关键路由 smoke 通过 |
-| LAY2-11 | 收尾 | 删除旧路径兼容，刷新文档、清册和历史 allowlist | `待授权` | 旧活动引用归零，4 app/6 package/4 job 唯一归类 |
+| LAY2-00 | 决策与基线 | 建立本文，保存旧裁决与新决策，刷新路径、workflow、仓外配置和依赖清单 | `完成` | 三路审核入表，blocker 有明确 owner |
+| LAY2-01 | 双布局基础 | workspace 同时接受 apps/packages/jobs；边界审计和钩子按 manifest 身份识别；Knip 接受新旧路径；生成物清册仍保留可审核的物理证据并随各批同步；补 `workspace-undeclared-import` | `完成` | 14 个 workspace 唯一；313/329/13 语义同集；真实未声明依赖探针被写入钩子拒绝且未落盘 |
+| LAY2-02 | 双路径发布合同 | workflow、path-contract 和仓外构建配置先接受旧/新路径，不移动 app | `实施中` | 新旧路径触发合同可执行，回切值已记录 |
+| LAY2-03 | `wb-build` | 移至 `jobs/wb-build` | `已授权，待前置` | package 解析、最小 dry run、边界和生成物检查通过 |
+| LAY2-04 | `alg-build` | 移至 `jobs/alg-build` | `已授权，待前置` | migration 输出、API 消费和清册一致，不改正式 DB |
+| LAY2-05 | `stats-build` | 移至 `jobs/stats-build` | `已授权，待前置` | build/upload/load 三段合同一致，不重算正式统计 |
+| LAY2-06 | solver 边界与 `scramble-stats-build` | 先消除 Web 私有 solver import，再移至 jobs | `已授权，待前置` | job 只依赖公开 package，最小 fixture/dry run 通过 |
+| LAY2-07 | Miniprogram | 移至 `apps/miniprogram` | `已授权，待前置` | 独立构建、shared 合同、Web 路由合同通过，无 React DOM 依赖 |
+| LAY2-08 | 资产边界与 Mobile | 先提取图标生成入口，再移至 `apps/mobile` | `已授权，待前置` | typecheck/build、Android 资产和原生路径通过 |
+| LAY2-09 | 测试归属与 API | 先处理 Web→API 私有测试读取，再移至 `apps/api` | `已授权，待前置` | API typecheck/test/bundle、migration 和部署制品通过 |
+| LAY2-10 | Web | 移至 `apps/web` | `已授权，待前置` | typecheck、隔离 Next build、standalone 启动和关键路由 smoke 通过 |
+| LAY2-11 | 收尾 | 删除旧路径兼容，刷新文档、清册和历史 allowlist | `已授权，待前置` | 旧活动引用归零，4 app/6 package/4 job 唯一归类 |
+| LAY2-12 | package 身份收口 | 独立把 `@cuberoot/client` / `@cuberoot/server` 改为 `@cuberoot/web` / `@cuberoot/api` | `已授权，待前置` | manifests、lockfile、filters、脚本、文档和发布合同无旧活动名称 |
 
 默认不交换顺序。确需调整时，先证明目标批不依赖未完成的前置项，并把理由写入本文。
 
@@ -228,7 +229,8 @@ Next、API、stats、Android 以及 workflow path-contract 都硬编码了旧路
 - `core/apps` 恰好四个现役 app。
 - `core/packages` 恰好六个活跃 library，另有显式排除且未触碰的 Platform archive。
 - `core/jobs` 恰好四个 job。
-- 14 个 workspace 各发现一次，package 名和依赖图稳定。
+- 14 个 workspace 各发现一次；除计划内的 Web/API 最终改名外，package 身份和依赖图稳定。
+- Web/API 最终 package 名分别为 `@cuberoot/web` 与 `@cuberoot/api`，活动配置不再使用旧名。
 - 活跃源码没有 app→app、job→app 私有源码导入。
 - CI、部署、生成物和仓外构建均使用新路径，旧兼容已删除。
 - 每个 app 和 job 都有与风险匹配的验证证据。

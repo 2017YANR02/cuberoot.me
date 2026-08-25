@@ -78,6 +78,7 @@
               "workspace-app-root-import",
               "workspace-unexported-import",
               "workspace-wildcard-import",
+              "workspace-undeclared-import",
               "cross-package-path",
               "subprocess-call",
               "cross-package-alias-definition"
