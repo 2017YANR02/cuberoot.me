@@ -191,6 +191,7 @@ catalog:
       json: { dependencies: {} },
       name: '@cuberoot/conditional-probe',
       root: CORE_ROOT,
+      workspacePath: 'packages/conditional-probe',
     }])).toEqual([]);
     for (const exports of [[], { '.': null }, { browser: null, default: null }]) {
       expect(validatePackageMetadata([{
@@ -200,6 +201,7 @@ catalog:
         json: { dependencies: {} },
         name: '@cuberoot/empty-export-probe',
         root: CORE_ROOT,
+        workspacePath: 'packages/empty-export-probe',
       }])).toContain('empty-export-probe: library must declare at least one usable public export');
     }
     expect(validatePackageMetadata([{
@@ -209,6 +211,7 @@ catalog:
       json: { dependencies: {} },
       name: '@cuberoot/invalid-export-key-probe',
       root: CORE_ROOT,
+      workspacePath: 'packages/invalid-export-key-probe',
     }])).not.toEqual([]);
   });
 
@@ -424,6 +427,7 @@ catalog:
         },
         name: '@cuberoot/architecture-imports-probe',
         root,
+        workspacePath: 'packages/architecture-imports-probe',
       }];
       const findings = validateRuntimeNeutralExports(packages);
       expect(findings).toContainEqual(expect.objectContaining({
