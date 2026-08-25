@@ -6,7 +6,8 @@
   "cuberoot": {
     "kind": "library",
     "runtime": {
-      "./clock": "runtime-neutral"
+      "./clock": "runtime-neutral",
+      "./sq2": "runtime-neutral"
     }
   },
   "sideEffects": false,
@@ -15,6 +16,11 @@
       "types": "./src/clock.ts",
       "node": "./dist/clock.js",
       "default": "./src/clock.ts"
+    },
+    "./sq2": {
+      "types": "./src/sq2.ts",
+      "node": "./dist/sq2.js",
+      "default": "./src/sq2.ts"
     }
   },
   "scripts": {

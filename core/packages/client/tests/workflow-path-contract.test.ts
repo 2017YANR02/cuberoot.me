@@ -21,7 +21,7 @@ function readWorkflow(workflowName: string): string {
   return readFileSync(join(REPO_ROOT, '.github', 'workflows', workflowName), 'utf8');
 }
 
-function readStepRun(workflowName: string, stepName: string): string {
+function readStepLines(workflowName: string, stepName: string): { lines: string[]; stepIndent: number } {
   const lines = readWorkflow(workflowName).split(/\r?\n/);
   const header = `- name: ${stepName}`;
   const stepStart = lines.findIndex((line) => line.trim() === header);
@@ -33,18 +33,42 @@ function readStepRun(workflowName: string, stepName: string): string {
     && indentation(line) <= stepIndent
   ));
   const end = stepEnd < 0 ? lines.length : stepEnd;
-  const run = lines.findIndex((line, index) => (
-    index > stepStart
-    && index < end
-    && indentation(line) === stepIndent + 2
+  return { lines: lines.slice(stepStart + 1, end), stepIndent };
+}
+
+function readStepRun(workflowName: string, stepName: string): string {
+  const { lines, stepIndent } = readStepLines(workflowName, stepName);
+  const run = lines.findIndex((line) => (
+    indentation(line) === stepIndent + 2
     && line.trim() === 'run: |'
   ));
   if (run < 0) throw new Error(`Missing run block for ${stepName} in ${workflowName}`);
   const runIndent = indentation(lines[run]);
-  return lines.slice(run + 1, end)
+  return lines.slice(run + 1)
     .filter((line) => line.trim() && !line.trimStart().startsWith('#'))
     .map((line) => line.slice(Math.min(line.length, runIndent + 2)))
     .join('\n');
+}
+
+function readStepEnv(workflowName: string, stepName: string): Record<string, string> {
+  const { lines, stepIndent } = readStepLines(workflowName, stepName);
+  const envStart = lines.findIndex((line) => (
+    indentation(line) === stepIndent + 2
+    && line.trim() === 'env:'
+  ));
+  if (envStart < 0) throw new Error(`Missing env block for ${stepName} in ${workflowName}`);
+  const envIndent = indentation(lines[envStart]);
+  const envEndOffset = lines.slice(envStart + 1).findIndex((line) => (
+    line.trim() && indentation(line) <= envIndent
+  ));
+  const envEnd = envEndOffset < 0 ? lines.length : envStart + 1 + envEndOffset;
+  return Object.fromEntries(lines.slice(envStart + 1, envEnd)
+    .filter((line) => line.trim())
+    .map((line) => {
+      const entry = line.trim().match(/^([A-Z0-9_]+):\s*(.+)$/);
+      if (!entry) throw new Error(`Unsupported env YAML for ${stepName}: ${line.trim()}`);
+      return [entry[1], entry[2]];
+    }));
 }
 
 const WORKSPACE_INPUT_OVERRIDES: Readonly<Record<string, readonly string[]>> = {
@@ -215,6 +239,7 @@ describe('deployment workflow path contracts', () => {
       [packagePath('vendor-sr-puzzlegen', 'src', 'index.ts'), true],
       [packagePath('puzzle-render-core', 'src', 'index.ts'), true],
       [packagePath('puzzle-solvers', 'src', 'clock.ts'), false],
+      [packagePath('puzzle-solvers', 'src', 'sq2.ts'), false],
       [corePath('cube555-daemon', 'Daemon.java'), true],
       [corePath('package.json'), true],
       [corePath('pnpm-lock.yaml'), true],
@@ -246,6 +271,7 @@ describe('deployment workflow path contracts', () => {
       [packagePath('stack-kernel', 'src', 'lib.rs'), false],
       [packagePath('puzzle-render-core', 'src', 'index.ts'), true],
       [packagePath('puzzle-solvers', 'src', 'clock.ts'), true],
+      [packagePath('puzzle-solvers', 'src', 'sq2.ts'), true],
       [corePath('package.json'), true],
       [corePath('pnpm-lock.yaml'), true],
       [corePath('pnpm-workspace.yaml'), true],
@@ -309,6 +335,20 @@ describe('deployment workflow path contracts', () => {
     expect(readStepRun('test.yml', 'Verify Clock analyzer runtime')).toBe(
       'pnpm --filter @cuberoot/scramble-stats-build test:clock',
     );
+    const sq2Step = 'Verify SQ2 sampled builder runtime';
+    expect(readStepEnv('test.yml', sq2Step)).toEqual({
+      SCRAMBLE_STATS_OUT_DIR: '${{ runner.temp }}/cuberoot-sq2-sampled',
+      SCRAMBLE_STATS_STAMP: '2000-01-01T00:00:00.000Z',
+    });
+    const sq2Run = readStepRun('test.yml', sq2Step);
+    expect(sq2Run).toContain(
+      'pnpm --filter @cuberoot/scramble-stats-build exec tsx src/build_puzzle_sampled_dist.ts sq2 1',
+    );
+    expect(sq2Run).toContain("node --input-type=module <<'NODE'");
+    expect(sq2Run).toMatch(
+      /dist_sq2\.json[\s\S]*event:\s*'sq2'[\s\S]*sampleCount:\s*1[\s\S]*generated_at:\s*process\.env\.SCRAMBLE_STATS_STAMP/,
+    );
+    expect(sq2Run).toContain('git diff --exit-code -- ../stats/scramble/dist_sq2.json');
   });
 
   it('atomically deploys CubeOpt with the same dotenv gate and rollback contract', () => {

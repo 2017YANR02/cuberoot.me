@@ -152,7 +152,7 @@ API     ─X─> Web 源码或 Web public
 
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
-| BND-01 | 生成真实系统依赖基线 | `完成` | 当前登记 314 个精确旧债指纹、330 次出现和 13 条人工契约，覆盖静态 import、动态加载、路径读取、构建复制、非 workspace 原生工具、子进程、大表、环境变量覆盖和部署目标；Batch 3 相对旧基线净消除 7 个身份，Batch 5 Clock 再消除 2 个跨 app 私有路径身份，本次统一转动记号演示再消除 3 个 Shared 裸根类型导入身份，均经精确守卫复核 |
+| BND-01 | 生成真实系统依赖基线 | `完成` | 当前登记 313 个精确旧债指纹、329 次出现和 13 条人工契约，覆盖静态 import、动态加载、路径读取、构建复制、非 workspace 原生工具、子进程、大表、环境变量覆盖和部署目标；Batch 3 相对旧基线净消除 7 个身份，Batch 5 Clock 再消除 2 个跨 app 私有路径身份，统一转动记号演示再消除 3 个 Shared 裸根类型导入身份，Batch 8 SQ2 再消除 1 个 build→client 私有路径身份，均经精确守卫复核 |
 | BND-02 | 消除 API 对 Web 源码的 import | `完成` | Server→Client 源码边清零，隔离 bundle 已证明不需要 Client 目录；Deploy Core `32692270167` 成功后，生产 API 健康与 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网路由均为 200 且返回真实 SVG |
 | BND-03 | 消除 API 对 Web public 的运行时读取 | `完成` | API 自有 manifest/校验和/原子晋级支持 opt5/h5 与 opt6/h6；Deploy Core `32692270167` 确认生产 `cubeopt-opt6-legacy-runtime-v1`，启用态 manager 加载后完成 `R → R'`（1 HTM）真实 smoke，公网 readiness 同时确认 enabled/configured |
 | BND-04 | 按边类型增加跨 app 依赖守卫 | `完成` | runtime、build、test、artifact 和 subprocess baseline 已进入 CI；任何新增、重复或陈旧基线都会失败。写入 adapter 先把同一 patch 的全部 writes 一次性交给架构检测器，再逐文件执行一般守卫；真实五文件 `tools.apply_patch` 探针在末尾放置跨 app import，宿主约 6 秒内 deny 且五文件均未落盘；CI 全文件扫描仍为权威兜底 |
@@ -190,7 +190,7 @@ API     ─X─> Web 源码或 Web public
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
 | PKG-01 | 形成候选模块清单 | `完成` | 每项已列出消费者、边界信号、运行时、依赖闭包、测试和不提取的替代方案；清单见 [`architecture-package-candidates.md`](architecture-package-candidates.md)，独立复审 PASS |
-| PKG-02 | 优先提取纯记号、状态、验证或格式化逻辑 | `进行中（Batch 5 Clock 切片已关闭）` | `shared/alg-transform`、四拼图窄无头 `puzzle-render-core` 与只公开 `@cuberoot/puzzle-solvers/clock` 的 Clock 纯核心均已发布；Clock 不搬其他 solver，已通过隔离工作树、独立 oracle、Node/Worker/Browser bundle、analyzer、边界、CI、部署与生产 smoke，后续仍按单域窄切片继续 |
+| PKG-02 | 优先提取纯记号、状态、验证或格式化逻辑 | `完成（代表性窄切片与重开门槛已落地）` | `shared/alg-transform`、四拼图窄无头 `puzzle-render-core`、Clock 与 SQ2 纯核心已经形成可执行范本；SQ2 的 Web UI、SVG 和 sampled builder 统一使用 `@cuberoot/puzzle-solvers/sq2`，package 仍无根 barrel、wildcard 或 shim。SQ2 oracle 9/9、package/workflow/边界定向合同 27/27、N=1 临时输出 smoke、PowerShell AST、313/329/13 边界审计与独立终审均通过；其他 solver 保持原位，仅在新增真实跨 app 消费者、旧债阻塞独立运行或用户明确授权某个域时重开 |
 | PKG-03 | UI 共享采用显式触发政策 | `完成（当前不建包）` | 当前没有真实跨端 React UI 消费者，不为潜在复用造包；只有至少 2 个 React app 同时复用且设计、交互与无障碍契约一致时重开。小程序不运行 React DOM，不计入消费者 |
 
 ### E. 根目录 PowerShell 脚本
@@ -378,6 +378,8 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | Batch 7 BND-04 宿主探针 | `root`、`batch6_review_cli` | `GO，0 Blocker / 0 Major / 0 Minor` | 首次真实探针因逐文件串行一般守卫先耗尽 30 秒而 fail-open；修复后同一 patch 的全部 writes 先经单次架构扫描，再进入一般守卫。四个普通文件后追加跨 app import 的真实五文件探针约 6 秒内被 `cross-package-alias-import` deny，五文件均不存在；两文件定向测试 26/26、client typecheck、边界审计和 diff-check 通过 |
 | Batch 7 目录布局与跨端 UI package 裁决 | `batch6_review_tests` | `GO，评估后不执行` | 14 个 package workspace；快照 `4418bea0bc` 的 6 个部署敏感目录有 357 次 tracked path 匹配，另有 8 个相关 workflow，均未显示可量化迁移收益；关闭物理重排，不建 `webapp/`、不搬 Platform 归档。PKG-03 只在至少两个 React app 真实共享设计、交互与无障碍契约时重开，小程序不计入 React DOM 消费者 |
 | Batch 7 CTR-03 稳定错误码终审 | `batch6_review_tests` | `GO，0 Blocker / 0 Major / 0 Minor` | 六个试点端点的 producer、shared 严格 decoder、小程序 code-first 映射与旧 `error`/HTTP status 兼容边界一致；Reviewer 以真实 `wx.request → requestJson → ApiError.code → loginErrorMessage` 冲突 fixture 证明 code 优先，并覆盖服务端七类微信失败分支，未把试点夸大成全 API 迁移 |
+| Batch 8 SQ2 纯逻辑终审 | `batch14_sq2_rereview` | `GO，0 Blocker / 0 Major / 0 Minor / 0 Nit` | 初审阻断 clean checkout 入口、重复 build、临时输出弱断言和暂存态风险；修正后独立复跑 SQ2 N=1 临时输出并确认 event、样本数、固定时间戳、直方图和值域及仓库统计零污染，package/workflow 合同 10/10，公开出口和三个真实消费者一致 |
+| Batch 8 PKG-02 有限闭环审计 | `remaining_tracker_audit`、`batch14_pkg02_docs_review` | `GO，0 Blocker / 0 Major / 0 Minor` | Clock、SQ2、`alg-transform` 与 `puzzle-render-core` 已覆盖本任务要求的代表性纯逻辑边界；后续 solver 只登记条件候选和前置拆分，不构成无限迁移 backlog。终审以当前暂存内容复跑 3 个定向合同 27/27，确认完整 rename、`../stats` 临时输出门禁和零未暂存差异；除 PS1-05、受日期与逐项授权约束的 RET-04 及 Platform 产品跟踪表的 P9 外，无其他当前未完成编号项 |
 
 审核要求：
 
@@ -391,10 +393,13 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 > Batch 7 校正：上一段末尾“BND-04/05 保留”只适用于 Batch 6 结束时；真实多文件宿主探针与独立复核通过后，BND-04 已关闭；随后结构化工程生成物清册、确定性 TNoodle generator、vendored provenance 状态与 owner/验证闭环完成独立终审，DOC-05 关闭；14 个活跃 package 的运行时属性与 fail-closed 边界守卫也完成独立终审，BND-05 关闭。
 
+> Batch 8 校正：SQ2 纯核心、原 oracle 与三个真实消费者已迁入显式 `@cuberoot/puzzle-solvers/sq2` 边界，并在修正初审发现的四项门禁缺口后通过独立复审。PKG-02 以“代表性窄切片 + 条件候选快照 + 精确重开门槛”有限关闭，不把所有 solver 的潜在提取误写成当前 backlog。
+
 ## 13. 变更记录
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-24 | Batch 8 SQ2 窄切片与 PKG-02 有限闭环完成 | 仅新增 `@cuberoot/puzzle-solvers/sq2` 显式公开出口并迁移原 oracle；Web UI、SVG 与 sampled builder 改用该入口，无根 barrel、wildcard 或 shim。SQ2 9/9、package/workflow/边界定向合同 27/27、N=1 临时输出 smoke、PowerShell AST、313/329/13 边界审计与 diff-check 通过；独立 Reviewer 最终 GO，未改提交态统计数据，未搬其他 solver，本地提交但不宣称发布验收 |
 | 2026-08-24 | Batch 7 BND-05 package 公开边界关闭 | 14 个活跃 workspace package 完成 kind/runtime/subpath 属性登记；守卫覆盖私有 deep import、无根 export、非法 export key、宿主全局及 `imports` alias 运行时闭包。定向测试 17/17、边界审计 314/330/13 与 diff-check 通过；独立 Reviewer 最终 GO，0 blocker/major/minor/nit |
 | 2026-08-24 | Batch 7 DOC-05 工程生成物清册关闭 | 结构化 JSON 清册覆盖 33 类 artifact，schema 驱动 checker、ownership 变异探针、真实 TNoodle 26 locale/23 FMC key 确定性检查与精确 diff-check 通过；5 类 vendored 旧 provenance 在下次成功同步前保持诚实 pending，公开 credits 事实源不变；独立 Reviewer 最终 GO，0 blocker/major/minor |
 | 2026-08-24 | 校正 RET-02 与 RET-04 的状态边界 | RET-02 的 39 张业务表、1,157 行处置、来源/恢复 integrity、双哈希、逐表行数及 41 组关系检查证据已闭环，清册标记完成；RET-04 仍受 2026-09-21 观察期、无旧依赖实证与逐对象所有者授权约束，本次不删除或处置任何资产 |

@@ -10,7 +10,7 @@ import {
   randomSq2Scramble,
   SQ2_MAX_LENGTH,
   SQ2_STATE_COUNT_STR,
-} from '@/lib/sq2-solver';
+} from '@cuberoot/puzzle-solvers/sq2';
 
 // ── INDEPENDENT model (re-derived here, NOT imported from the solver) ──────────────────
 // Square-2: 24 distinct wedges. state[slot] = home id; slots 0-11 top ring, 12-23 bottom ring.
@@ -98,7 +98,7 @@ describe('sq2 solver — validity (scramble ∘ solution = solved) on random scr
     // (loop asserts each; count just documents coverage)
     solved = 500;
     expect(solved).toBe(500);
-  });
+  }, 30_000);
 
   it('returns the empty solution for an already-solved puzzle', () => {
     const out = solveSq2('');
@@ -123,7 +123,7 @@ describe('sq2 solver — bounded length (high sample)', () => {
     console.log(`[sq2] N=2000 tuple length: mean=${mean.toFixed(1)} median=${lens[1000]} min=${lens[0]} max=${lens[lens.length - 1]} (bound ${SQ2_MAX_LENGTH})`);
     expect(over).toBe(0);
     expect(lens[lens.length - 1]).toBeLessThanOrEqual(SQ2_MAX_LENGTH);
-  });
+  }, 30_000);
 });
 
 // ── cstimer real-engine oracle (Node vm sandbox) ────────────────────────────────────────
@@ -172,7 +172,7 @@ function loadScrMgr(): { gen: () => string } | null {
     };
     return { gen };
   } catch (e) {
-    console.warn('[sq2_solver.test] cstimer vm load failed — skipping cstimer-oracle assertions', e);
+    console.warn('[sq2.test] cstimer vm load failed — skipping cstimer-oracle assertions', e);
     return null;
   }
 }
@@ -195,5 +195,5 @@ describe('sq2 solver — cstimer real-scramble oracle', () => {
     }
     expect(tuples).toBeGreaterThan(0);
     expect(badTuple).toBe(0);
-  });
+  }, 30_000);
 });

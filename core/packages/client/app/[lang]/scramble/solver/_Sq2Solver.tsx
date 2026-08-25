@@ -10,7 +10,7 @@
  *
  * 记号 = cstimer 同款 (u,d)/ 元组(u,d ∈ [-5,6],不同时为 0);每个 (u,d)/ 元组计 1 步。
  */
-import { randomSq2Scramble, solveSq2, SQ2_STATE_COUNT_STR, type Sq2Solution } from '@/lib/sq2-solver';
+import { randomSq2Scramble, solveSq2, SQ2_STATE_COUNT_STR, type Sq2Solution } from '@cuberoot/puzzle-solvers/sq2';
 import PuzzleSolverPage, {
   type SolverSpec, METRIC_TERNARY_OPTIMAL_BOUNDED, CAVEAT_TITLE_OPTIMAL,
 } from './_components/PuzzleSolverPage';

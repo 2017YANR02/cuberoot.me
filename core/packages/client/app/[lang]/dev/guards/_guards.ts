@@ -19,9 +19,9 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     scope: 'project',
     hook: 'block-architecture-boundaries.ps1 → check-architecture-boundaries.mjs',
     test: 'architecture-boundary-guard.test.ts + codex_hook_adapters.test.ts',
-    baseline: '326 个旧债指纹（342 次出现）+ 15 条人工契约',
-    zh: { title: '架构边界与公开入口', desc: '活跃 workspace 的运行时、构建、测试、产物、子进程和部署关系由 manifest 统一登记。326 个旧债指纹共出现 342 次,允许删除或减少,禁止新增、替换或复制同类违规。项目 Hook 在新会话中对新增片段里可见的 shared 根入口、跨 app 私有源码、未公开 subpath 和完整子进程调用提供即时反馈;CI 用同一 AST 扫描器做权威全文件复核。' },
-    en: { title: 'Architecture boundaries and public entry points', desc: 'One manifest records runtime, build, test, artifact, subprocess, and deployment relationships across active workspaces. The 326 legacy identities occur 342 times: removal and reduction are allowed, while additions, substitutions, and duplicate violations fail. In a new session, the project hook gives immediate feedback for visible shared root imports, private cross-app source imports, unexported subpaths, and complete subprocess calls in the added fragment; CI is the authoritative full-file check using the same AST scanner.' },
+    baseline: '313 个旧债指纹（329 次出现）+ 13 条人工契约',
+    zh: { title: '架构边界与公开入口', desc: '活跃 workspace 的运行时、构建、测试、产物、子进程和部署关系由 manifest 统一登记。313 个旧债指纹共出现 329 次,允许删除或减少,禁止新增、替换或复制同类违规。项目 Hook 在新会话中对新增片段里可见的 shared 根入口、跨 app 私有源码、未公开 subpath 和完整子进程调用提供即时反馈;CI 用同一 AST 扫描器做权威全文件复核。' },
+    en: { title: 'Architecture boundaries and public entry points', desc: 'One manifest records runtime, build, test, artifact, subprocess, and deployment relationships across active workspaces. The 313 legacy identities occur 329 times: removal and reduction are allowed, while additions, substitutions, and duplicate violations fail. In a new session, the project hook gives immediate feedback for visible shared root imports, private cross-app source imports, unexported subpaths, and complete subprocess calls in the added fragment; CI is the authoritative full-file check using the same AST scanner.' },
   },
   {
     id: 'browser-regexp-lookbehind',
