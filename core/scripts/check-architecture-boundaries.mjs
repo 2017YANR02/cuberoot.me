@@ -150,6 +150,9 @@ function workspacePackageRoots(patterns, coreRoot) {
     } catch (error) {
       throw new Error(`invalid workspace package pattern ${JSON.stringify(rawPattern)}: ${error.message}`);
     }
+    if (!negative && matches.length === 0) {
+      throw new Error(`include pattern matched no paths: ${JSON.stringify(rawPattern)}`);
+    }
     for (const match of matches) {
       const absolute = resolve(coreRoot, match);
       if (!`${absolute}${sep}`.toLowerCase().startsWith(`${resolve(coreRoot)}${sep}`.toLowerCase())) {
@@ -246,10 +249,12 @@ function exportEntries(exportsField) {
   return Object.entries(exportsField);
 }
 
-export function validatePackageMetadata(packages = activePackages()) {
+export function validatePackageMetadata(packages = activePackages(), { enforceWorkspaceInventory = false } = {}) {
   const errors = [];
   const workspaceByName = new Map(packages.map((pkg) => [pkg.name, pkg]));
-  if (packages.length !== 14) errors.push(`expected 14 active workspaces, found ${packages.length}`);
+  if (enforceWorkspaceInventory && packages.length !== 14) {
+    errors.push(`expected 14 active workspaces, found ${packages.length}`);
+  }
   const kindCounts = new Map([...PACKAGE_KINDS].map((kind) => [kind, 0]));
   for (const pkg of packages) {
     const metadata = pkg.cuberoot;
@@ -332,9 +337,11 @@ export function validatePackageMetadata(packages = activePackages()) {
       }
     }
   }
-  for (const [kind, expected] of [['app', 4], ['job', 4], ['library', 6]]) {
-    const actual = kindCounts.get(kind);
-    if (actual !== expected) errors.push(`expected ${expected} ${kind} workspaces, found ${actual}`);
+  if (enforceWorkspaceInventory) {
+    for (const [kind, expected] of [['app', 4], ['job', 4], ['library', 6]]) {
+      const actual = kindCounts.get(kind);
+      if (actual !== expected) errors.push(`expected ${expected} ${kind} workspaces, found ${actual}`);
+    }
   }
   return errors.sort();
 }
@@ -1322,7 +1329,7 @@ async function runHook() {
 
 function run() {
   const packages = activePackages();
-  const packageMetadataErrors = validatePackageMetadata(packages);
+  const packageMetadataErrors = validatePackageMetadata(packages, { enforceWorkspaceInventory: true });
   for (const error of packageMetadataErrors) process.stderr.write(`Package metadata error: ${error}\n`);
   if (packageMetadataErrors.length) {
     process.exitCode = 1;

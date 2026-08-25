@@ -11,10 +11,15 @@ import { execSync } from 'node:child_process';
 
 const RASTER = /\.(png|jpe?g|webp|gif|bmp|avif)$/i;
 const ANDROID_GENERATED_RESOURCE =
-  /^core\/packages\/mobile\/android\/app\/src\/main\/res\/(?:drawable(?:-land|-port)?-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/splash|drawable\/splash|drawable(?:-night)?\/splash_icon|mipmap-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/ic_launcher(?:_foreground|_round)?)\.png$/;
+  /^core\/apps\/mobile\/android\/app\/src\/main\/res\/(?:drawable(?:-land|-port)?-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/splash|drawable\/splash|drawable(?:-night)?\/splash_icon|mipmap-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/ic_launcher(?:_foreground|_round)?)\.png$/;
 
-// 整路径豁免(确属必须随仓库、又不能进 public/ 的图;目前为空)。
-const ALLOWLIST = new Set<string>([]);
+// 整路径豁免(跨端品牌图标的生成源,由 core/scripts/gen-brand-assets.mjs 统一维护)。
+const ALLOWLIST = new Set<string>([
+  'core/assets/brand/apple-touch-icon.png',
+  'core/assets/brand/icon-192.png',
+  'core/assets/brand/icon-512.png',
+  'core/assets/brand/icon-maskable-512.png',
+]);
 
 function trackedFiles(): string[] {
   // git ls-files 读 index(全部已跟踪路径),CI sparse-checkout 下也能拿到 core/ 全量;

@@ -13,6 +13,7 @@ export const PLACE_CITY_ZH: Record<string, string> = {
   "PL:aleksandrowodzki": "罗兹地区亚历山德鲁夫",
   "BD:jhenaidah": "切尼达",
   "SE:helsingborg": "赫尔辛堡",
+  "CH:versoix": "韦尔苏瓦",
   "PH:cityofsanjosedelmonte": "圣何塞德尔蒙特市",
   "FR:meaux": "莫城",
   "FR:saintsaturnin": "圣萨蒂尔南",

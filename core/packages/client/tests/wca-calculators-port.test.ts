@@ -116,7 +116,7 @@ describe('wca_kinch stats deploy contract', () => {
   });
 
   it('uploads the complete stats-extra output directory', () => {
-    expect(workflow).toMatch(/working-directory: core\/packages\/stats-build\/output\/wca_stats_extra[\s\S]+?scp[^\n]+\.\/\*/);
+    expect(workflow).toMatch(/name: Upload WCA stats extra TSVs to server[\s\S]+?working-directory: core\/\$\{\{ steps\.workspace\.outputs\.stats \}\}\/output\/wca_stats_extra[\s\S]+?scp[^\n]+\.\/\*/);
   });
 
   it('can bootstrap stats-extra without duplicating or waiting for the full daily pipeline', () => {
