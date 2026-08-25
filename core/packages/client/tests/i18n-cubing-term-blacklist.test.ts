@@ -13,6 +13,7 @@ import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const SRC_DIRS = ['app', 'components', 'lib', 'hooks'];
@@ -58,7 +59,7 @@ function sourceFiles(): string[] {
 
 function sexyDataFiles(): string[] {
   const out = [join(ROOT, 'app/[lang]/wiki/glossary.json')];
-  const algBuild = join(ROOT, '../alg-build');
+  const algBuild = workspaceFixturePath('@cuberoot/alg-build');
   for (const e of readdirSync(algBuild, { recursive: true, withFileTypes: true })) {
     if (!e.isFile() || !/\.(?:mts|json)$/.test(e.name) || e.parentPath.includes('node_modules')) continue;
     out.push(join(e.parentPath, e.name));

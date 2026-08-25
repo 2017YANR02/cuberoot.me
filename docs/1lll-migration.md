@@ -350,7 +350,7 @@ DELETE_AUF  剥掉起手 U-family 转
 计步管线**顺序有讲究**:首行 → 剥署名 → `DELETE_AUF` → `EXPANDALG` → tokenize → 计步。
 `DELETE_AUF` 必须在 `EXPANDALG` **之前**,否则 `(U R …)2` 里的那个 U 会被当成起手 AUF 剥掉。
 
-#### 全量验收(`core/packages/alg-build/verify_sheet_metrics.mjs`)
+#### 全量验收(`core/jobs/alg-build/verify_sheet_metrics.mjs`)
 
 | | 结果 |
 |---|---|
@@ -514,8 +514,8 @@ U^lead + body + U^trail
 真·整还原的 5 个集合总能取到"精确还原"的 trail(顺手补上缺的收尾 AUF);
 `oll`/`coll`/`cmll`/`ollcp` 的替代公式压根不整还原,自动退回"状态保持",原样等价。
 
-脚本:`core/packages/alg-build/canonicalize_ll_algs.mjs`(`--sql` 出 SQL)
-本地验证:`core/packages/alg-build/dryrun_ll_algs.mjs`(灌 pg13 → 套 SQL → 读回来逐条验)
+脚本:`core/jobs/alg-build/canonicalize_ll_algs.mjs`(`--sql` 出 SQL)
+本地验证:`core/jobs/alg-build/dryrun_ll_algs.mjs`(灌 pg13 → 套 SQL → 读回来逐条验)
 
 ### 变更量(9 个 LL 集合,7808 条公式;数字为**修完 4 条坏数据之后**重跑的)
 
@@ -545,7 +545,7 @@ U^lead + body + U^trail
 
 ### ★ 顺带揪出的既有数据 bug(改写没造成 —— 是新不变式把它们照出来了)
 
-四条**全部已修并灌入生产**(`core/packages/alg-build/fix_bad_ll_cases.mjs`,`--dryrun` 走 pg13)。
+四条**全部已修并灌入生产**(`core/jobs/alg-build/fix_bad_ll_cases.mjs`,`--dryrun` 走 pg13)。
 坏 case 的 `setup` / `sticker` / `alg` 是**从同一份坏公式互推出来的**(setup = inverse(坏 alg)),
 三者自洽地一起错 —— **库内没有独立判据**,所以每条都得找**库外**的判据,不许同源自证:
 
@@ -638,7 +638,7 @@ Phase 0 的态-轨道 join 会把它们对上。
 >    一条就能把整个 OLL 组的桶带偏 —— 实测 `L+` / `O-` / `T2` 三组各 72 个**整组丢失**,
 >    被误报成「站上没有」。每个朝向类有 ~72 行,一两条坏的翻不了盘。
 
-脚本:`core/packages/alg-build/{ll_ident,sheet_notation,phase0_join}.mjs`
+脚本:`core/jobs/alg-build/{ll_ident,sheet_notation,phase0_join}.mjs`
 产出:`.tmp/phase0/mapping.json`(matched / newCases / badAlgs / 各判据的失败清单)
 
 ### case 身份 = 16 折轨道(不是 4 折)★
@@ -778,7 +778,7 @@ INV / MIRROR / IM 三个关系的**残差为零**。
 | ~~**1**~~ | 记号 lib(`sheet_notation.mjs` 已有解析器;还要从 `PlayerControls.tsx` 提出 `stripGripMarks`/`stripPushMarks`/`stripHandMarks` → 共享 lib)+ ROTATE / **MIRROR** / HTM / QTM / GEN / DELETE_AUF + **修 `mirrorAlg` bug 并补测试** | 计步器逐行复现表里 3915 个 `SH`/`SQ`;镜像通过 LL-valid 校验;**用修好的 MIRROR 重算 §6'' 那批经镜像传染的坏公式** |
 | **2** | 全量校验 + 问题公式的逐条报告(§6'' 已产出 19 条**首条**公式的坏行;还要扫备选公式) | 交站长过目 |
 | **3** | Schema:`alg_cases.meta` migration + `AlgEntry` 扩字段 | typecheck + 现有测试全绿 |
-| **4** | 导入:直连 PG 生成 `BEGIN…COMMIT` SQL(范本 `core/packages/alg-build/gen_zbls_sql.mjs`) | 本地 pg13 先跑;计数 3915 |
+| **4** | 导入:直连 PG 生成 `BEGIN…COMMIT` SQL(范本 `core/jobs/alg-build/gen_zbls_sql.mjs`) | 本地 pg13 先跑;计数 3915 |
 | **5** | UI:OLLCP 主名 + 富元数据弹窗 + 标签筛选 | ✅ **已上线**(2026-07-13)。顺带把 1lll 的组名也换成字母制 OLL(`1LLL 06` → `O-`) |
 | **6** | Trainer:打乱类型选择器(`Inv case`/`SH*`/`SQ*`/`H*`/`Q*`/`COEP`) | ✅ **已上线**。做这一期时才发现**打乱列本身有 113 条打错 case** —— 导入时只给公式立了判据、没给打乱立,见 §9.2 |
 | **7**(后置) | 学习进度追踪(按用户存,绑账号) | ⏸ 本轮不做 |

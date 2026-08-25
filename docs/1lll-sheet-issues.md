@@ -3,7 +3,7 @@
 机器扫出来的,**每条都跑过 cubing.js**,不是猜的。判据 = §3 的 16 折轨道
 (`U^a · A · U^b` 解同一个 case,所以「备选公式写在别的 U 朝向下」**不算错**)。
 
-> 生成:`core/packages/alg-build/phase2_validate.mjs`。
+> 生成:`core/jobs/alg-build/phase2_validate.mjs`。
 > 背景和理论见 [`1lll-migration.md`](./1lll-migration.md),进度见 [`1lll-worklog.md`](./1lll-worklog.md)。
 
 扫了 **5059** 条公式(3915 行的 `Self alg` 全部,含备选),**5034** 条正确。
@@ -178,7 +178,7 @@ trainer 出题用的每一条打乱都是真的 —— 但**表里那 113 条还
 
 ⚠ **上面三条只是闭合性,不是正确性。** 把 A↔B、C↔D 整体换成 A↔D、C↔B,这张表照样 100% 通过 ——
 它压根没问「B 到底是不是 A 的**逆态**」。补上那一问(拿 16 折轨道判状态,
-`core/packages/alg-build/verify_meta_pointers.mjs`)之后,2026-08-04 扫出残差:
+`core/jobs/alg-build/verify_meta_pointers.mjs`)之后,2026-08-04 扫出残差:
 `inv` 12 条、`mirror` 12 条、`im` 4 条、`CP` 4 条。
 
 **责任在库不在表。** phase0 的 row→case 是状态轨道 join,而 §2 那 19 行里有 7 行**一条对的公式都没有**,

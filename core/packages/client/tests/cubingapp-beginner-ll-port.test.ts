@@ -8,6 +8,7 @@ import { puzzles } from 'cubing/puzzles';
 import { goalOf, reachesGoal } from '@/lib/alg_goals';
 import { caseThumbPlan } from '@/lib/alg_thumb_plan';
 import { setupForCase, validateAlgCase } from '@/lib/alg_validation';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 type ImportedRow = Pick<AlgCase, 'name' | 'subgroup' | 'setup' | 'sticker' | 'algs'> & { position: number };
 type ParityRow = { position: number; name: string; existing: boolean; canonicalKey: string; algs: AlgEntry[][] };
@@ -27,10 +28,10 @@ function jsonBlock<T>(tag: string): T {
 const oll = jsonBlock<ImportedRow[]>('cubingapp_2look_oll');
 const pll = jsonBlock<ImportedRow[]>('cubingapp_2look_pll');
 const parity = jsonBlock<ParityRow[]>('cubingapp_4x4_pll_parity');
-const parityBaseline = JSON.parse(readFileSync(resolve(
-  import.meta.dirname,
-  '..', '..', 'alg-build', 'fixtures', '4x4-pll-parity-baseline.json',
-), 'utf8')) as ParityBaselineRow[];
+const parityBaseline = JSON.parse(readFileSync(
+  workspaceFixturePath('@cuberoot/alg-build', 'fixtures', '4x4-pll-parity-baseline.json'),
+  'utf8',
+)) as ParityBaselineRow[];
 const parityBaselineByName = new Map(parityBaseline.map(item => [item.name, item]));
 
 describe('CubingApp beginner LL port', () => {

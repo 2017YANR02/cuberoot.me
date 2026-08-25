@@ -229,14 +229,14 @@ if (process.argv.includes('--dry')) { console.log('\n--dry:不写文件'); proce
 const q = (s) => `'${String(s).replace(/'/g, "''")}'`;
 const out = [
   '-- 0102_fix_1lll_meta_assignment.sql — 8 张 1lll case 的 meta 挂错了行(生成脚本:',
-  '-- packages/alg-build/fix_1lll_meta_assignment.mjs,推导与证据写在该文件头)。',
+  '-- jobs/alg-build/fix_1lll_meta_assignment.mjs,推导与证据写在该文件头)。',
   '--',
   '-- phase0 的 row→case 是状态轨道 join,但有 7 行「一条对的公式都没有」(docs/1lll-sheet-issues.md §2),',
   '-- 只能靠组内消去 + CP 约束 + 多数派投票落位,下面这 8 张落错 —— 表现为 12 张 case 页顶上的',
   '-- 「逆」「镜像」缩略图指错人,外加这 8 张的 OLLCP 名 / 角换 / 最优步数 / 出现概率全是别人的。',
   '--',
   '-- 站长那张表本身是对的:改完之后 Mirror / Inv / IM 三列在状态判据下残差为零,',
-  '-- CP 标签在每个 (朝向类, 角置换类) 里唯一。守卫:packages/alg-build/verify_meta_pointers.mjs。',
+  '-- CP 标签在每个 (朝向类, 角置换类) 里唯一。守卫:jobs/alg-build/verify_meta_pointers.mjs。',
   '--',
   '-- 搬 meta 时 `gen` 保留原值(它是本 case 首条公式的转动集合,跟着 case 不跟着行),',
   '-- 每条打乱按新态重过一遍轨道判据,验不过的已在下面的 JSON 里剔除。',

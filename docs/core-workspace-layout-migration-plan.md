@@ -2,7 +2,7 @@
 
 最后更新：2026-08-25
 
-状态：`实施中`。仓库所有者已于 2026-08-25 明确授权开始；LAY2-01 双布局基础、LAY2-02 双路径发布合同与 LAY2-03 首个 job 移动已完成，尚未移动任何 app 源码目录。
+状态：`实施中`。仓库所有者已于 2026-08-25 明确授权开始；LAY2-01 双布局基础、LAY2-02 双路径发布合同、LAY2-03 `wb-build` 与 LAY2-04 `alg-build` 移动已完成，尚未移动任何 app 源码目录。
 
 主执行入口：[架构现代化跟踪](./architecture-modernization-tracker.md)。
 
@@ -157,7 +157,7 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 | LAY2-01 | 双布局基础 | workspace 同时接受 apps/packages/jobs；架构扫描器与未声明依赖写入钩子按 manifest 身份识别；Knip 接受新旧路径；生成物清册仍保留可审核的物理证据并随各批同步 | `完成` | 14 个 workspace 唯一；313/329/13 语义同集；真实未声明依赖探针被写入钩子拒绝且未落盘 |
 | LAY2-02 | 双路径发布合同 | workflow、path-contract 和仓外构建配置先接受旧/新路径，不移动 app | `完成` | Web/API/stats 旧新路径与 resolver 均进入触发矩阵；执行路径按 package identity 解析；仓外 Web 旧值、目标值和回切时机已记录 |
 | LAY2-03 | `wb-build` | 移至 `jobs/wb-build` | `完成` | package 唯一解析、5 个源码文件完整 rename、输出路径静态确认、边界和生成物归属检查通过；未运行联网抓取 |
-| LAY2-04 | `alg-build` | 移至 `jobs/alg-build` | `已授权，待前置` | migration 输出、API 消费和清册一致，不改正式 DB |
+| LAY2-04 | `alg-build` | 移至 `jobs/alg-build` | `完成` | 52 个 tracked 文件完整 rename；package 名与 job 身份不变；API migration 输出和客户端 fixture 统一按 package 名解析；清册、lockfile 和活动文档同步；未运行生成器、数据库、测试或 build |
 | LAY2-05 | `stats-build` | 移至 `jobs/stats-build` | `已授权，待前置` | build/upload/load 三段合同一致，不重算正式统计 |
 | LAY2-06 | solver 边界与 `scramble-stats-build` | 先消除 Web 私有 solver import，再移至 jobs | `已授权，待前置` | job 只依赖公开 package，最小 fixture/dry run 通过 |
 | LAY2-07 | Miniprogram | 移至 `apps/miniprogram` | `已授权，待前置` | 独立构建、shared 合同、Web 路由合同通过，无 React DOM 依赖 |
@@ -252,5 +252,6 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 | 2026-08-25 | package 边界、跨 app 依赖和 AI 可读性 | `条件 GO：先补 3 个 blocker` | 已采纳：path-independent registry 与旧新基线同集证明、workflow 正负触发矩阵、未声明 workspace import 守卫；采用 `apps/web`、`apps/api` 并暂时保留 package 名 |
 | 2026-08-25 | LAY2-02 workflow、stats 与发布合同复审 | `GO：可进入首个 job 移动` | 已采纳：统一 resolver fail closed；Web/API/stats 双路径 filter；resolver 变化触发对应生产 workflow；定时/手动 workflow 工作目录去物理路径；Web 仓外 Root Directory 随 LAY2-10 原子切换 |
 | 2026-08-25 | LAY2-03 `wb-build` 移动复审 | `GO：首个 job 移动闭环` | 已采纳：5 个源码文件完整 rename；package 名与 job 身份不变；lockfile importer、生成物 owner 和客户端镜像注释同步；静态确认输出仍为仓库 `stats/world_bests.json`，未运行联网抓取或覆盖正式数据 |
+| 2026-08-25 | LAY2-04 `alg-build` 移动复审 | `GO：第二个 job 移动闭环` | 初审发现的显式 migration 输出受 package cwd 影响和边界基线计数漂移已修复；5 个 generator 统一按 `@cuberoot/server` 解析输出，fixture 按 `@cuberoot/alg-build` 解析，未运行生成器、数据库、测试或 build |
 
 这里的 `HOLD` 只否决“一步到位执行”，不否决渐进方案。未解决的 blocker 必须成为对应批次的前置门槛，不能靠口头承诺跳过。

@@ -8,6 +8,7 @@ import { cubeThumbParams } from '@/lib/alg_thumb_plan';
 import { displayAlg } from '@/lib/alg_display';
 import { validateAlgCase } from '@/lib/alg_validation';
 import { EOLR_GOAL_ALGS } from '@/lib/roux/eolr-goal';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 type ImportedAlg = { alg: string; source: string; note?: { en: string; zh: string } };
 type ImportedCase = {
@@ -43,7 +44,7 @@ const eoNew = jsonBlock<ImportedCase[]>('cubingapp_lse_eo_new');
 const l4eSupplement = jsonBlock<Supplement[]>('cubingapp_pyraminx_l4e_supplement');
 const l4eNew = jsonBlock<ImportedCase[]>('cubingapp_pyraminx_l4e_new');
 const baselineCases = JSON.parse(readFileSync(
-  join(clientRoot, '..', 'alg-build', 'fixtures', 'cubingapp-roux-pyraminx-baseline.json'),
+  workspaceFixturePath('@cuberoot/alg-build', 'fixtures', 'cubingapp-roux-pyraminx-baseline.json'),
   'utf8',
 )) as BaselineCase[];
 const baselineByKey = new Map(baselineCases.map(item => [
@@ -51,7 +52,7 @@ const baselineByKey = new Map(baselineCases.map(item => [
   item,
 ]));
 const l3eOverlap = JSON.parse(readFileSync(
-  join(clientRoot, '..', 'alg-build', 'fixtures', 'cubingapp-pyraminx-last-layer-overlap.json'),
+  workspaceFixturePath('@cuberoot/alg-build', 'fixtures', 'cubingapp-pyraminx-last-layer-overlap.json'),
   'utf8',
 )) as L3eOverlap[];
 
