@@ -16,7 +16,7 @@ import {
   HELICV_SOLVED,
   HELICV_STATE_COUNT_STR,
   HELICV_FACE_OF,
-} from '@/lib/helicv-solver';
+} from '@cuberoot/puzzle-solvers/helicv';
 import { renderHelicvScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/helicv_svg';
 
 // ── Independent oracle: cstimer's poly3dlib helicv moveTable, loaded via node:vm ─────────────────────

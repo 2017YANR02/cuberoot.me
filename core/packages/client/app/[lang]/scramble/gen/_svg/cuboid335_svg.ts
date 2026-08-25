@@ -18,7 +18,7 @@
  * (U U' U2 D D' D2 R2 L2 F2 B2) — same parser as lib/cuboid335-solver (the cstimer /333 suffix has no
  * rigid realisation and is ignored).
  */
-import { cuboid335Apply } from '@/lib/cuboid335-solver';
+import { cuboid335Apply } from '@cuberoot/puzzle-solvers/cuboid335';
 
 // face codes U D R L F B = 0..5 (same order as the solver's FACE_CODE)
 export const CUBOID335_DEFAULT_COLORS: string[] = [

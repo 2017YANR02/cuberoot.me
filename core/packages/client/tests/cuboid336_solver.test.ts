@@ -14,7 +14,7 @@ import {
   CUBOID336_STATE_COUNT_STR,
   CUBOID336_ORBIT_PRODUCT_STR,
   CUBOID336_GROUP_ORDER_STR,
-} from '@/lib/cuboid336-solver';
+} from '@cuberoot/puzzle-solvers/cuboid336';
 import { renderCuboid336ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/cuboid336_svg';
 
 // ── INDEPENDENT geometric re-derivation of the 336 move model ─────────────────────

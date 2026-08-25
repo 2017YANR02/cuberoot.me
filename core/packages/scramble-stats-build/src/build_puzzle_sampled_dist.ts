@@ -160,7 +160,7 @@ const REGISTRY: PuzzleDistSpec[] = [
     defaultN: 2000,           // ~217ms/solve 单进程 → ~7min(N 越大尾部越平滑,几分钟为度)
     quality: 'sampled-near-optimal',
     load: async () => {
-      const m = await mod('../../client/lib/cuboid335-solver');
+      const m = await mod('@cuberoot/puzzle-solvers/cuboid335');
       return {
         scramble: m.randomCuboid335Scramble as SolverAdapter['scramble'],
         solve: m.solveCuboid335 as SolverAdapter['solve'],
@@ -176,7 +176,7 @@ const REGISTRY: PuzzleDistSpec[] = [
     defaultN: 2000,           // 抄 335 的 N;336 两阶段每条数十~数百 ms,单进程跑几分钟为度(慢则用 -SampledN 调小)
     quality: 'sampled-near-optimal',
     load: async () => {
-      const m = await mod('../../client/lib/cuboid336-solver');
+      const m = await mod('@cuberoot/puzzle-solvers/cuboid336');
       return {
         scramble: m.randomCuboid336Scramble as SolverAdapter['scramble'],
         solve: m.solveCuboid336 as SolverAdapter['solve'],
@@ -195,7 +195,7 @@ const REGISTRY: PuzzleDistSpec[] = [
     defaultN: 700,
     quality: 'sampled-near-optimal',
     load: async () => {
-      const m = await mod('../../client/lib/cuboid337-solver');
+      const m = await mod('@cuberoot/puzzle-solvers/cuboid337');
       return {
         scramble: m.randomCuboid337Scramble as SolverAdapter['scramble'],
         solve: m.solveCuboid337 as SolverAdapter['solve'],
@@ -211,7 +211,7 @@ const REGISTRY: PuzzleDistSpec[] = [
     defaultN: 2000,           // solveCuboid233 毫秒级,2000 条单进程几十秒
     quality: 'sampled-optimal',
     load: async () => {
-      const m = await mod('../../client/lib/cuboid233-solver');
+      const m = await mod('@cuberoot/puzzle-solvers/cuboid233');
       const solveCuboid233 = m.solveCuboid233 as (s: string) => { length: number };
       return {
         // randomCuboid233Scramble 忠实镜像 cstimer mega 的 233 生成器(同 7 token 字母表+无重复规则)。
@@ -229,7 +229,7 @@ const REGISTRY: PuzzleDistSpec[] = [
     defaultN: 300,            // 实测含 warmup/方差约 ~1.5-1.6s/solve(两阶段)→ 300 条单进程 ~6-7min(N=400 超 500s)
     quality: 'sampled-near-optimal',
     load: async () => {
-      const m = await mod('../../client/lib/cuboid334-solver');
+      const m = await mod('@cuberoot/puzzle-solvers/cuboid334');
       return {
         scramble: m.randomCuboid334Scramble as SolverAdapter['scramble'],
         solve: m.solveCuboid334 as SolverAdapter['solve'],
@@ -266,7 +266,7 @@ const REGISTRY: PuzzleDistSpec[] = [
     // 长度随打乱难度变化(真分布,非单柱),非最优(§0.0 #3 诚实记)。
     quality: 'sampled-bounded',
     load: async () => {
-      const m = await mod('../../client/lib/ssq1-solver');
+      const m = await mod('@cuberoot/puzzle-solvers/ssq1');
       const solveSsq1 = m.solveSsq1 as (s: string) => { length: number; optimal?: boolean };
       return {
         // randomSsq1Scramble 忠实镜像 cstimer 的 ssq1t (a,b,c,d)/ 生成器(两个独立 sq1_getseq 织成 4 元组)。
@@ -290,7 +290,7 @@ const REGISTRY: PuzzleDistSpec[] = [
     // 已核实不可平滑(见 lib/bsq-solver.ts 头注「DISTRIBUTION SHAPE」)。
     quality: 'sampled-bounded',
     load: async () => {
-      const m = await mod('../../client/lib/bsq-solver');
+      const m = await mod('@cuberoot/puzzle-solvers/bsq');
       const solveBsq = m.solveBsq as (s: string) => { length: number; optimal?: boolean };
       return {
         // randomBsqScramble 忠实镜像 cstimer 的 bsq 生成器(sq1_getseq(1,2,len),y 恒 0 → (x,0) 顶转 + /)。
@@ -312,7 +312,7 @@ const REGISTRY: PuzzleDistSpec[] = [
     // 非最优(§0.0 #3 诚实记)。
     quality: 'sampled-bounded',
     load: async () => {
-      const m = await mod('../../client/lib/cm3-solver');
+      const m = await mod('@cuberoot/puzzle-solvers/cm3');
       const solveCm3 = m.solveCm3 as (s: string) => { length: number; optimal?: boolean };
       return {
         // randomCm3Scramble 忠实镜像 cstimer 的 mega cm3 生成器(2 轴 × 3 组 × 3 幂 + 无重复规则)。
@@ -334,7 +334,7 @@ const REGISTRY: PuzzleDistSpec[] = [
     // 非最优(§0.0 #3 诚实记)。
     quality: 'sampled-bounded',
     load: async () => {
-      const m = await mod('../../client/lib/heli-solver');
+      const m = await mod('@cuberoot/puzzle-solvers/heli');
       const solveHeli = m.solveHeli as (s: string) => { length: number; optimal?: boolean };
       return {
         // randomHeliScramble 忠实镜像 cstimer 的 adjScramble heli 生成器(12 棱名 + adj 掩码无重复规则)。
@@ -356,7 +356,7 @@ const REGISTRY: PuzzleDistSpec[] = [
     // bound 400),长度随打乱难度变化(平滑单峰,非单柱),非最优(§0.0 #3 诚实记)。
     quality: 'sampled-bounded',
     load: async () => {
-      const m = await mod('../../client/lib/helicv-solver');
+      const m = await mod('@cuberoot/puzzle-solvers/helicv');
       const solveHelicv = m.solveHelicv as (s: string) => { length: number; optimal?: boolean };
       return {
         // randomHelicvScramble 忠实镜像 cstimer 的 adjScramble helicv 生成器(与 heli 同一调用)。
@@ -378,7 +378,7 @@ const REGISTRY: PuzzleDistSpec[] = [
     // bound 2000),长度随打乱难度变化(平滑单峰),非最优(§0.0 #3 诚实记)。
     quality: 'sampled-bounded',
     load: async () => {
-      const m = await mod('../../client/lib/ctico-solver');
+      const m = await mod('@cuberoot/puzzle-solvers/ctico');
       const solveCtico = m.solveCtico as (s: string) => { length: number; optimal?: boolean };
       return {
         // randomCticoScramble 忠实镜像 cstimer 的 adjScramble ctico 生成器(6 顶点轴 × minxsuff 4 power,adj 全 0x3f)。

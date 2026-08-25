@@ -6,7 +6,7 @@ import {
   parseHeliMoves, heliMoveToString, heliMovesToString, randomHeliScrambleMoves,
   type HeliMove,
 } from '@/app/[lang]/sim/engine/heli/heliState';
-import { heliApply, HELI_MOVE_NAMES, HELI_WING_FACELETS, HELI_FACE_OF } from '@/lib/heli-solver';
+import { heliApply, HELI_MOVE_NAMES, HELI_WING_FACELETS, HELI_FACE_OF } from '@cuberoot/puzzle-solvers/heli';
 import { WING_EDGES } from '@/app/[lang]/sim/engine/heli/heliGeometry';
 
 // ── /sim heli state model is the SAME as the verified solver's ─────────────────────

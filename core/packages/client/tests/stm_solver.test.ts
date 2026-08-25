@@ -4,11 +4,11 @@ import * as path from 'node:path';
 import {
   applyMoveState, solvedState, isSolvedState, parseStmScramble, stmApply,
   STM_MOVE_NAMES, NUM_MOVES, INVERSE_MOVE, MOVE_BASE,
-} from '@/lib/stm-cube';
+} from '@cuberoot/puzzle-solvers/stm-cube';
 import {
   solveStmBruteBFS, solveStmOptimal, buildCornerPdb, buildEdge6Pdb, EDGE_GROUP_A, EDGE_GROUP_B,
   type StmTables,
-} from '@/lib/stm-solver';
+} from '@cuberoot/puzzle-solvers/stm';
 
 // ─────────────────────────────────────────────────────────────────────────────────────
 // INDEPENDENT geometry re-derivation of the 3×3×3 STM model (54 stickers), built here from

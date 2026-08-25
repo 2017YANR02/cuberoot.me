@@ -10,7 +10,7 @@
  * move truth = cticoApply (via cticoFaceletColors). The 20 face colors are distinct hues (icosahedron has
  * 20 faces); the palette is generated from an even hue wheel so adjacent faces stay distinguishable.
  */
-import { cticoFaceletColors, CTICO_FACE_OF } from '@/lib/ctico-solver';
+import { cticoFaceletColors, CTICO_FACE_OF } from '@cuberoot/puzzle-solvers/ctico';
 
 // 20 distinct face colors (icosahedron). Evenly-spaced hues, mid saturation/lightness for clarity.
 export const CTICO_FACE_COLORS: string[] = Array.from({ length: 20 }, (_, i) => {
@@ -74,7 +74,7 @@ function facePolys(corners: [number, number][]): { center: string; cornersP: str
 // each face's 4 facelets to [corner0, corner1, corner2, center] in a stable order. The ids within a face are
 // the 4 facelets with CTICO_FACE_OF === face, in ascending id; the radius-1.0 (center) one is identified by
 // being the single FACECENTER facelet of that face. We precompute per-face [c0,c1,c2,centerId].
-import { CTICO_FACECENTER_FACELETS } from '@/lib/ctico-solver';
+import { CTICO_FACECENTER_FACELETS } from '@cuberoot/puzzle-solvers/ctico';
 const FACE_FACELETS: number[][] = (() => {
   const centerSet = new Set(CTICO_FACECENTER_FACELETS);
   const byFace: number[][] = Array.from({ length: 20 }, () => []);

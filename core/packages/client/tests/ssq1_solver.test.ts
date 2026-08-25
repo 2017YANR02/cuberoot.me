@@ -10,7 +10,7 @@ import {
   randomSsq1Scramble,
   SSQ1_MAX_LENGTH,
   SSQ1_STATE_COUNT_STR,
-} from '@/lib/ssq1-solver';
+} from '@cuberoot/puzzle-solvers/ssq1';
 
 // ── INDEPENDENT model (re-derived here, NOT imported from the solver) ──────────────────
 // Super Square-1 = TWO independent Square-1 sides P0, P1. Each side = 24 thirty-degree slots

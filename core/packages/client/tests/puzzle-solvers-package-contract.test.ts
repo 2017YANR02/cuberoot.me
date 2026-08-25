@@ -11,7 +11,29 @@ const CLIENT_ROOT = resolve(HERE, '..');
 const PACKAGE_NAME = '@cuberoot/puzzle-solvers';
 const require = createRequire(import.meta.url);
 
-function resolvedExport(subpath: 'clock' | 'sq2'): string {
+const PUBLIC_SUBPATHS = [
+  'bsq',
+  'cm3',
+  'clock',
+  'ctico',
+  'cuboid233',
+  'cuboid334',
+  'cuboid335',
+  'cuboid336',
+  'cuboid337',
+  'heli',
+  'helicv',
+  'ssq1',
+  'sq2',
+  'stm',
+  'stm-cube',
+] as const;
+
+const SOURCE_BASENAME: Partial<Record<typeof PUBLIC_SUBPATHS[number], string>> = {
+  stm: 'stm-solver',
+};
+
+function resolvedExport(subpath: typeof PUBLIC_SUBPATHS[number]): string {
   return require.resolve(`${PACKAGE_NAME}/${subpath}`);
 }
 
@@ -26,28 +48,27 @@ function workerMessage(worker: Worker): Promise<unknown> {
 }
 
 describe('@cuberoot/puzzle-solvers package contract', () => {
-  it('publishes only the explicit Clock and SQ2 subpaths and keeps the root private', () => {
+  it('publishes only explicit solver subpaths and keeps the root private', () => {
     const resolved = resolvedExport('clock');
     const packageJsonPath = resolve(dirname(resolved), '..', 'package.json');
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as Record<string, unknown>;
-    expect(packageJson.exports).toEqual({
-      './clock': {
-        types: './src/clock.ts',
-        node: './dist/clock.js',
-        default: './src/clock.ts',
+    expect(packageJson.exports).toEqual(Object.fromEntries(PUBLIC_SUBPATHS.map((subpath) => [
+      `./${subpath}`,
+      {
+        types: `./src/${SOURCE_BASENAME[subpath] ?? subpath}.ts`,
+        node: `./dist/${SOURCE_BASENAME[subpath] ?? subpath}.js`,
+        default: `./src/${SOURCE_BASENAME[subpath] ?? subpath}.ts`,
       },
-      './sq2': {
-        types: './src/sq2.ts',
-        node: './dist/sq2.js',
-        default: './src/sq2.ts',
-      },
-    });
+    ])));
     expect(packageJson).not.toHaveProperty('main');
     expect(packageJson).not.toHaveProperty('types');
     expect(packageJson).not.toHaveProperty('dependencies');
     expect(packageJson.sideEffects).toBe(false);
-    expect(resolved.replaceAll('\\', '/')).toMatch(/puzzle-solvers\/dist\/clock\.js$/);
-    expect(resolvedExport('sq2').replaceAll('\\', '/')).toMatch(/puzzle-solvers\/dist\/sq2\.js$/);
+    for (const subpath of PUBLIC_SUBPATHS) {
+      expect(resolvedExport(subpath).replaceAll('\\', '/')).toMatch(
+        new RegExp(`puzzle-solvers/dist/${SOURCE_BASENAME[subpath] ?? subpath}\\.js$`),
+      );
+    }
 
     let rootError: NodeJS.ErrnoException | undefined;
     try {

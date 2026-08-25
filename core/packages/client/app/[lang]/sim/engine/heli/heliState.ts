@@ -18,7 +18,7 @@
  * The 12 edge names + order match lib/heli-solver exactly (UF UR UB UL FR BR BL FL DF
  * DR DB DL), so a /sim move string round-trips through the solver's renderer / solver.
  */
-import { randomHeliScramble } from '@/lib/heli-solver';
+import { randomHeliScramble } from '@cuberoot/puzzle-solvers/heli';
 
 /** The 12 edge tokens, in generator order (matches lib/heli-solver HELI_MOVE_NAMES). */
 export const HELI_EDGE_NAMES = [

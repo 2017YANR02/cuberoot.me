@@ -11,7 +11,7 @@
  * 记号 = cstimer 同款 (a,b,c,d)/ 4 元组:a=外层顶转,b=内层顶转,c=内层底转,d=外层底转,/ 同时切两层;
  * 每个 (a,b,c,d)/ 元组计 1 步。
  */
-import { randomSsq1Scramble, solveSsq1, SSQ1_STATE_COUNT_STR, type Ssq1Solution } from '@/lib/ssq1-solver';
+import { randomSsq1Scramble, solveSsq1, SSQ1_STATE_COUNT_STR, type Ssq1Solution } from '@cuberoot/puzzle-solvers/ssq1';
 import PuzzleSolverPage, {
   type SolverSpec, METRIC_TERNARY_OPTIMAL_BOUNDED, CAVEAT_TITLE_OPTIMAL,
 } from './_components/PuzzleSolverPage';
