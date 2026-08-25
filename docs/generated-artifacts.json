@@ -502,23 +502,23 @@
         "paths": [
           "core/assets/brand/CubeRoot-mark.svg",
           "core/scripts/gen-brand-assets.mjs",
-          "core/packages/mobile/scripts/gen-android-assets.mjs"
+          "core/apps/mobile/scripts/gen-android-assets.mjs"
         ]
       },
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
-      "owner": ["core/scripts/gen-brand-assets.mjs", "core/packages/mobile/scripts/gen-android-assets.mjs"],
+      "owner": ["core/scripts/gen-brand-assets.mjs", "core/apps/mobile/scripts/gen-android-assets.mjs"],
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/mobile assets:android",
       "outputs": [
         "core/assets/brand/*.png",
         "core/packages/client/public/icons/**",
-        "core/packages/mobile/android/app/src/main/res/mipmap-mdpi/**",
-        "core/packages/mobile/android/app/src/main/res/mipmap-hdpi/**",
-        "core/packages/mobile/android/app/src/main/res/mipmap-xhdpi/**",
-        "core/packages/mobile/android/app/src/main/res/mipmap-xxhdpi/**",
-        "core/packages/mobile/android/app/src/main/res/mipmap-xxxhdpi/**",
-        "core/packages/mobile/android/app/src/main/res/drawable/splash_icon.png",
-        "core/packages/mobile/android/app/src/main/res/drawable-night/splash_icon.png"
+        "core/apps/mobile/android/app/src/main/res/mipmap-mdpi/**",
+        "core/apps/mobile/android/app/src/main/res/mipmap-hdpi/**",
+        "core/apps/mobile/android/app/src/main/res/mipmap-xhdpi/**",
+        "core/apps/mobile/android/app/src/main/res/mipmap-xxhdpi/**",
+        "core/apps/mobile/android/app/src/main/res/mipmap-xxxhdpi/**",
+        "core/apps/mobile/android/app/src/main/res/drawable/splash_icon.png",
+        "core/apps/mobile/android/app/src/main/res/drawable-night/splash_icon.png"
       ],
       "verification": ["the Test workflow regenerates assets and fails on tracked or untracked diff"],
       "driftPolicy": "Regeneration plus a clean diff is the authoritative guard for PWA icons, Android density assets, and splash assets."
@@ -528,15 +528,15 @@
       "kind": "tool-managed-source-tree",
       "source": {
         "locator": "Capacitor configuration, dependencies, and CLI",
-        "paths": ["core/packages/mobile/capacitor.config.ts", "core/packages/mobile/package.json"]
+        "paths": ["core/apps/mobile/capacitor.config.ts", "core/apps/mobile/package.json"]
       },
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and dependency licenses" },
-      "owner": "core/packages/mobile",
+      "owner": "core/apps/mobile",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/mobile cap:sync",
       "outputs": [
-        "core/packages/mobile/android/capacitor.settings.gradle",
-        "core/packages/mobile/android/app/capacitor.build.gradle"
+        "core/apps/mobile/android/capacitor.settings.gradle",
+        "core/apps/mobile/android/app/capacitor.build.gradle"
       ],
       "verification": ["review every tracked Android Gradle and configuration change emitted by cap:sync"],
       "driftPolicy": "Files marked DO NOT EDIT are updated through Capacitor. Review and commit only necessary tracked changes; they are tool-managed source, not disposable build output."
@@ -546,19 +546,19 @@
       "kind": "build-output",
       "source": {
         "locator": "mobile Web source and the tracked Android project",
-        "paths": ["core/packages/mobile/src/**", "core/packages/mobile/android/**"]
+        "paths": ["core/apps/mobile/src/**", "core/apps/mobile/android/**"]
       },
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and dependency licenses" },
-      "owner": "core/packages/mobile",
+      "owner": "core/apps/mobile",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/mobile build; run the selected Gradle task from the Android project",
       "transientOutputs": [
-        "core/packages/mobile/dist/**",
-        "core/packages/mobile/android/.gradle/**",
-        "core/packages/mobile/android/build/**",
-        "core/packages/mobile/android/app/build/**",
-        "core/packages/mobile/android/capacitor-cordova-android-plugins/build/**",
-        "core/packages/mobile/android/local.properties"
+        "core/apps/mobile/dist/**",
+        "core/apps/mobile/android/.gradle/**",
+        "core/apps/mobile/android/build/**",
+        "core/apps/mobile/android/app/build/**",
+        "core/apps/mobile/android/capacitor-cordova-android-plugins/build/**",
+        "core/apps/mobile/android/local.properties"
       ],
       "verification": ["the Web build and selected Android Gradle build complete from tracked sources"],
       "driftPolicy": "These outputs and local configuration are gitignored and never become editable source or tracked generated artifacts."

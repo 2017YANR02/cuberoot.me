@@ -6,7 +6,7 @@
 
 1. 核对 `node --version`、`pnpm --version`、`xcodebuild -version`、`xcode-select -p` 和 Xcode 中可用的付费 Team。
 2. 从 `core/` 安装 workspace 依赖并先跑 mobile test、typecheck、build。
-3. 检查 `@capacitor/ios` 和 `core/packages/mobile/ios/`；缺少时使用与 `@capacitor/core` 兼容的版本并只运行一次 `cap add ios`，已有时不重复生成。
+3. 检查 `@capacitor/ios` 和 `core/apps/mobile/ios/`；缺少时使用与 `@capacitor/core` 兼容的版本并只运行一次 `cap add ios`，已有时不重复生成。
 4. 增加平台明确的 Android/iOS sync 与 iOS open scripts，保留现有入口兼容性。
 5. build + `cap sync ios` 后打开 Xcode。提交可复现的 iOS project/workspace，让其他 Mac/CI 不必重新 `cap add`。
 6. 使用 Automatic Signing，保持 Capacitor 配置中的 Bundle ID，选择付费 Team；`Personal Team` 不能替代商店发布资格。

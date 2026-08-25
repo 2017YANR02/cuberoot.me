@@ -47,7 +47,7 @@ Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b
 | --- | --- | --- |
 | 主 Web | `core/packages/client`，Next.js 16 + React 19 | 当前保持原位；是否迁到 `apps/web` 最后决定 |
 | API | `core/packages/server`，Hono + PostgreSQL | 运行进程和部署产物已与 Web 分离；源码、资产和部署触发仍需解耦 |
-| Mobile | `core/packages/mobile`，React + Capacitor | 当前只有 Android 原生工程；iOS 计划以后在 macOS 上加入并复用同一 React 应用，尚未落库 |
+| Mobile | `core/apps/mobile`，React + Capacitor | 当前只有 Android 原生工程；iOS 计划以后在 macOS 上加入并复用同一 React 应用，尚未落库 |
 | 小程序 | `core/apps/miniprogram`，独立运行时 | 保持独立 app，不与 React DOM UI 强行共享 |
 | Platform | 活跃产品已迁入 `client`、`server`、`shared` 并完成 P0-P8 发布验收；P9 的 Test 与两个部署 workflow 已全绿，线上角色态待验收。`core/packages/platform` 是 workspace 外历史归档，不测试、不部署、不新增产品功能 | 不建 `apps/platform-web`；RET-04 非仓库资产处置已完成，仓库删除由所有者自行执行，不阻塞无重叠的架构调查与规划 |
 | 共享能力 | `shared`、`visualcube`、`stack-kernel` 等已有边界 | 先治理公开入口，再按真实边界信号决定是否拆包 |
@@ -408,6 +408,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | --- | --- | --- |
 | 2026-08-25 | LAY2-06 solver 边界与 `scramble-stats-build` 移动完成 | Web 私有纯 solver 已提取到 `@cuberoot/puzzle-solvers` 公开出口，`scramble-stats-build` 从 `core/packages` 完整移至 `core/jobs`；脚本、lockfile、resolver、生成物清册、runbook 与活动文档同步，旧私有 solver 路径和临时 test-contract 从基线删除。静态架构守卫通过，边界为 279/295/13；按用户要求未运行 fixture、dry run、测试、build 或数据生成 |
 | 2026-08-25 | LAY2-07 小程序移动与品牌资产前置完成 | `@cuberoot/miniprogram` 完整移至 `core/apps/miniprogram`，package 身份不变；Web 路由测试改为按 workspace identity 做文件合同检查，Shared 构建输入不再假设 sibling 布局。品牌源与生成入口提到 `core/assets/brand`、`core/scripts/gen-brand-assets.mjs`，Web、Mobile、小程序不再互读 app 私有图标；lockfile、边界清单、生成物清册和活动文档同步。按用户要求未运行测试或 build |
+| 2026-08-25 | LAY2-08 Mobile 移动完成 | `@cuberoot/mobile` 完整移至 `core/apps/mobile`，package 身份不变；Android、Capacitor、品牌资产生成、lockfile、生成物清册和活动文档同步到新位置。按用户要求未运行测试或 build |
 | 2026-08-25 | LAY2-05 `stats-build` 移动完成 | 144 个原 job 文件从 `core/packages/stats-build` 完整移至 `core/jobs/stats-build`，两个 producer 测试归位并接入 Test workflow；Web H2H 读取以显式 test-contract 登记，运行脚本、lockfile、忽略项、生成物清册和活动文档均改用新路径或 package resolver。build/upload/load 静态合同、workspace resolver、边界、生成物和 diff-check 通过，边界为 303/319/14；独立终审最终 GO、无 blocker/major，未在本地运行统计、数据库、测试或 build |
 | 2026-08-25 | LAY2-04 `alg-build` 移动完成 | 52 个 tracked 文件从 `core/packages/alg-build` 完整 rename 到 `core/jobs/alg-build`，`@cuberoot/alg-build` 与 `cuberoot.kind=job` 不变；API migration 输出和客户端 fixture 改为按 package 名解析，lockfile、生成物清册与活动文档同步。workspace resolver、边界、生成物和 diff-check 通过，独立复审 GO；未运行生成器、数据库、测试或 build |
 | 2026-08-25 | LAY2-03 首个 job `wb-build` 移动完成 | 5 个源码文件从 `core/packages/wb-build` 完整 rename 到 `core/jobs/wb-build`，`@cuberoot/wb-build` 与 `cuberoot.kind=job` 不变；lockfile 仅迁移 importer，生成物清册明确 `stats/world_bests.json` 的唯一 owner，静态确认输出路径不变。resolver、边界与生成物检查通过；未运行联网抓取、未改正式数据，独立复审 GO |

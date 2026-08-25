@@ -39,7 +39,7 @@ pnpm --filter @cuberoot/mobile android:open
 
 `package.json` is the single `versionName` source. Gradle derives `versionCode` as `major * 1,000,000 + minor * 1,000 + patch`; set `MOBILE_VERSION_CODE` only when Play requires a higher monotonic code without changing the public version.
 
-Keep the real upload keystore and passwords outside the repository. From `core/packages/mobile/android/`, set all four variables together and require signing:
+Keep the real upload keystore and passwords outside the repository. From `core/apps/mobile/android/`, set all four variables together and require signing:
 
 ```powershell
 $env:MOBILE_UPLOAD_KEYSTORE_FILE = 'C:\secure\cuberoot-upload.jks'

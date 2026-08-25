@@ -282,7 +282,7 @@ function validatePatternEngine(fail) {
   const probes = [
     ['stats/*.json', 'stats/upcoming_comps.json', true],
     ['records/**', 'records/world/333.json', true],
-    ['**/build/**', 'core/packages/mobile/android/app/build/output.apk', true],
+    ['**/build/**', 'core/apps/mobile/android/app/build/output.apk', true],
     ['solver/pkg-*', 'solver/pkg-web', true],
     ['stats/*.json', 'stats/scramble/distribution.json', false],
     ['tools/cstimer/**', 'tools/cstimer-scramble/**', false],

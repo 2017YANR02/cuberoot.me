@@ -7,7 +7,7 @@
       "expected_output": "基于现有 mobile/shared 工程的可执行 iOS 首次落地方案或实现，先验证工具链与付费 Team，安全生成并同步 iOS 工程，分开记录模拟器、真机与签名证据，更新路线图且不 push。",
       "files": [],
       "expectations": [
-        "明确复用 core/packages/mobile 与 core/packages/shared，不创建第二套 iOS 业务 UI",
+        "明确复用 core/apps/mobile 与 core/packages/shared，不创建第二套 iOS 业务 UI",
         "先检查 Mac 工具链和 Xcode 付费 Team，并明确 Personal Team 不能替代商店签名资格",
         "仅在 @capacitor/ios 或 ios 目录缺失时添加平台，依赖版本与现有 Capacitor 兼容，随后 build 和 cap sync ios",
         "把 Simulator、iPhone 真机、Archive、上传和 TestFlight 作为独立证据门槛，不提前宣称完成",

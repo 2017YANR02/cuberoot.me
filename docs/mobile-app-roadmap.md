@@ -31,7 +31,7 @@
 ### 阶段 1：技术验证
 
 - [x] Windows 上的 Android SDK、JDK、adb 和 Gradle 构建链可用。
-- [x] 已建立 `core/packages/mobile` React + Vite + Capacitor workspace，Web 资源从本地 `dist` 打包。
+- [x] 已建立 `core/apps/mobile` React + Vite + Capacitor workspace，Web 资源从本地 `dist` 打包。
 - [x] Debug 使用独立 application ID `me.cuberoot.app.debug`，Release 保留 `me.cuberoot.app`。
 - [x] 已构建并在 MuMu 模拟器安装 Debug APK，验证启动、横屏布局和 Android 返回键。
 - [x] 已验证 HTTPS 网络访问；当前远程网站入口仅为过渡验证，不计作正式 App 核心体验。
@@ -51,7 +51,7 @@
 - 三路审计修复提交：`8eaeacabd2`。
 - MuMu 实测完成一次 `6.93` 计时，修改为 `+2` 后显示 `8.93`，添加备注后杀进程重启，记录数和最佳成绩均保留。
 - MuMu 已实测桌面启动图标；Android 12 系统启动页已完成原生主题迁移并通过构建。录屏只能确认背景和交接过程，未把系统图标层作为已验证证据。
-- Debug APK：`core/packages/mobile/android/app/build/outputs/apk/debug/app-debug.apk`。
+- Debug APK：`core/apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk`。
 
 ### 阶段 2：共享核心边界
 
@@ -692,7 +692,7 @@ iOS v1 原则上与已稳定的 Android v1 同功能，不在移植阶段额外�
 任务：
 
 1. 安装 Android Studio、Android SDK、JDK 和 adb。
-2. 在 `core/packages/mobile` 创建最小 React + Vite + Capacitor workspace。
+2. 在 `core/apps/mobile` 创建最小 React + Vite + Capacitor workspace。
 3. 使用临时开发 application ID 构建 debug APK；正式 ID 锁定后再创建 release app。
 4. 真机安装，验证启动、热重载、日志和返回键。
 5. 验证主题、安全区、键盘、触摸和横竖屏策略。
@@ -1398,7 +1398,7 @@ Primary v1 value: offline timer + native smart-cube BLE + algorithm training
 - 已建立 Android 真机测试名单；如控制台有最低测试者要求，名单已有冗余。
 - 已保存 App 身份草案，但尚未在不确定时草率锁死正式 ID。
 
-完成后，下一步才是安装 Android Studio，并在 `core/packages/mobile` 做一个只验证启动和 BLE 扫描的技术壳。不要第一天就搬计时器全功能。
+完成后，下一步才是安装 Android Studio，并在 `core/apps/mobile` 做一个只验证启动和 BLE 扫描的技术壳。不要第一天就搬计时器全功能。
 
 ## 19. 阶段 1 的 Windows 开发准备预览
 
