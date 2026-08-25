@@ -28,10 +28,10 @@ import {
   solvedCubie,
   isSolvedCubie,
   formatMoves,
-} from './kociemba/cube.js';
-import { buildMoveTables, type MoveTables } from './kociemba/movetables.js';
-import { buildPruneTables, type PruneTables } from './kociemba/prune.js';
-import { solveCube } from './kociemba/search.js';
+} from '@cuberoot/puzzle-solvers/kociemba/cube';
+import { buildMoveTables, type MoveTables } from '@cuberoot/puzzle-solvers/kociemba/movetables';
+import { buildPruneTables, type PruneTables } from '@cuberoot/puzzle-solvers/kociemba/prune';
+import { solveCube } from '@cuberoot/puzzle-solvers/kociemba/search';
 
 /**
  * kociemba two-phase defaults to maxTotalLen 23 (phase-1 ≤12 + phase-2 ≤18 with a

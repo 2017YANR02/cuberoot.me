@@ -23,7 +23,7 @@ import {
   cloneCubie,
   invertSequence,
   type CubieCube,
-} from './cube.js';
+} from '@cuberoot/puzzle-solvers/kociemba/cube';
 import {
   coTwistOf,
   eoFlipOf,
@@ -31,15 +31,15 @@ import {
   cpermOf,
   epermOf,
   spermOf,
-} from './coords.js';
-import type { MoveTables } from './movetables.js';
+} from '@cuberoot/puzzle-solvers/kociemba/coords';
+import type { MoveTables } from '@cuberoot/puzzle-solvers/kociemba/movetables';
 import {
   lookupTwistSlice,
   lookupFlipSlice,
   lookupCpermSperm,
   lookupEpermSperm,
   type PruneTables,
-} from './prune.js';
+} from '@cuberoot/puzzle-solvers/kociemba/prune';
 
 const N_PHASE1_MOVES = 18;
 const N_PHASE2_MOVES = 10;

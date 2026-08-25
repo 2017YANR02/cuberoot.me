@@ -13,7 +13,7 @@
  * states (the /12 accounts for the 3 sub-constraints: CO sum, EO sum, parity).
  */
 
-import { type CubieCube } from './cube.js';
+import { type CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
 
 function fisherYates(n: number, rng: () => number): number[] {
   const a = new Array<number>(n);
