@@ -402,24 +402,18 @@ describe('solveCuboid334 — phase-1/phase-2 completeness + bounded-time (regres
     // deterministic scrambles exercises the phase-1 IDDFS + phase-2 closed-set A* — exactly the code paths
     // that used to throw / hang. Each must RETURN (no throw, no unbounded hang), round-trip via independent
     // geometry, stay within the hard length bound, and never undercut the admissible optimal lower bound.
-    const prev = process.env.CUBOID334_OPT_BUDGET;
-    process.env.CUBOID334_OPT_BUDGET = '1';
-    try {
-      const rnd = mulberry32(0x334dee9);
-      let solved = 0;
-      for (let trial = 0; trial < 300; trial++) {
-        const scramble = randomRefScramble(40, rnd); // near-diameter ⇒ always two-phase under budget 1
-        const res = solveCuboid334(scramble); // must NOT throw / hang
-        expect(res.optimal, `deep state must use two-phase: ${scramble}`).toBe(false);
-        const after = refApply(`${scramble} ${res.solution}`);
-        expect(keyOf(after), `round-trip: ${scramble}`).toBe(REF_SOLVED_KEY);
-        expect(res.length, `bounded: ${scramble}`).toBeLessThanOrEqual(CUBOID334_MAX_LENGTH);
-        if (res.length > 0) expect(cuboid334Heuristic(scramble)).toBeLessThanOrEqual(res.length);
-        solved++;
-      }
-      expect(solved).toBe(300);
-    } finally {
-      if (prev === undefined) delete process.env.CUBOID334_OPT_BUDGET; else process.env.CUBOID334_OPT_BUDGET = prev;
+    const rnd = mulberry32(0x334dee9);
+    let solved = 0;
+    for (let trial = 0; trial < 300; trial++) {
+      const scramble = randomRefScramble(40, rnd); // near-diameter ⇒ always two-phase under budget 1
+      const res = solveCuboid334(scramble, { optimalBudget: 1 }); // must NOT throw / hang
+      expect(res.optimal, `deep state must use two-phase: ${scramble}`).toBe(false);
+      const after = refApply(`${scramble} ${res.solution}`);
+      expect(keyOf(after), `round-trip: ${scramble}`).toBe(REF_SOLVED_KEY);
+      expect(res.length, `bounded: ${scramble}`).toBeLessThanOrEqual(CUBOID334_MAX_LENGTH);
+      if (res.length > 0) expect(cuboid334Heuristic(scramble)).toBeLessThanOrEqual(res.length);
+      solved++;
     }
+    expect(solved).toBe(300);
   }, 180000);
 });

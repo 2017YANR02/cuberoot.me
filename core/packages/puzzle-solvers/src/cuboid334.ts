@@ -168,15 +168,10 @@ export const CUBOID334_STATE_COUNT_STR = '165,181,768,335,360,000';
 export const CUBOID334_GROUP_ORDER_STR = '2,642,908,293,365,760,000';
 /** Hard upper bound on a returned two-phase solution length (phase-1 diam + phase-2 diam ≪ this). */
 export const CUBOID334_MAX_LENGTH = 40;
-// Optimal-shortcut node budget / depth cap. Read at CALL time (not module load) so an env override is
-// honoured even when set after import — e.g. a test can drop the budget to 1 to force the two-phase path
-// in isolation without a file-wide env. A shallow state solved optimally below the budget is returned as
-// optimal; beyond the depth cap the two-phase answer is used.
-const envNum = (name: string): number | undefined => {
-  try { const v = typeof process !== 'undefined' ? process?.env?.[name] : undefined; if (v == null || v === '') return undefined; const n = Number(v); return Number.isFinite(n) ? n : undefined; } catch { return undefined; }
-};
-const optShortcutBudget = (): number => envNum('CUBOID334_OPT_BUDGET') ?? 800_000;
-const optShortcutDepthCap = (): number => envNum('CUBOID334_OPT_CAP') ?? 12;
+export interface Cuboid334SolveOptions {
+  optimalBudget?: number;
+  optimalDepthCap?: number;
+}
 
 function applyMove(state: Uint8Array, mi: number): Uint8Array<ArrayBuffer> {
   const p = MOVE_PERM[mi];
@@ -670,7 +665,7 @@ function solveTwoPhase(start: Uint8Array, D: OrbitDb[]): number[] {
 }
 
 // ── optional optimal shortcut for shallow states (all 12 moves, admissible PDB, small budget) ─
-function solveOptimalShallow(start: Uint8Array, D: OrbitDb[]): number[] | null {
+function solveOptimalShallow(start: Uint8Array, D: OrbitDb[], options: Cuboid334SolveOptions): number[] | null {
   // admissible heuristic = max over orbits of the exact per-orbit optimal distance to solved (optDist).
   // Pure IDA* (f = g + h); a small node budget + depth cap keep it cheap, so it only succeeds on shallow
   // states and returns a PROVABLY OPTIMAL solution there.
@@ -683,7 +678,7 @@ function solveOptimalShallow(start: Uint8Array, D: OrbitDb[]): number[] | null {
   let budgetHit = false;
   const h = (tuple: Int32Array): number => { let m = 0; for (let i = 0; i < NORB; i++) { const d = D[i].optDist[tuple[i]]; if (d > m) m = d; } return m; };
   const solvedTuple = (tuple: Int32Array): boolean => { for (let i = 0; i < NORB; i++) if (D[i].optDist[tuple[i]] !== 0) return false; return true; };
-  const budget = optShortcutBudget();
+  const budget = options.optimalBudget ?? 800_000;
 
   function dfs(tuple: Int32Array, g: number, bound: number, last: number, depth: number): number {
     const f = g + h(tuple);
@@ -708,7 +703,7 @@ function solveOptimalShallow(start: Uint8Array, D: OrbitDb[]): number[] | null {
   }
 
   let bound = h(t0);
-  const depthCap = optShortcutDepthCap();
+  const depthCap = options.optimalDepthCap ?? 12;
   while (bound <= depthCap) {
     const r = dfs(t0, 0, bound, -1, 0);
     if (found) {
@@ -729,7 +724,7 @@ function solveOptimalShallow(start: Uint8Array, D: OrbitDb[]): number[] | null {
  *   • otherwise a near-optimal two-phase reduction → `optimal: false`.
  * Throws Error('bad: …') only on an unparseable token. There is no "too-deep".
  */
-export function solveCuboid334(scramble: string): Cuboid334Solution {
+export function solveCuboid334(scramble: string, options: Cuboid334SolveOptions = {}): Cuboid334Solution {
   const D = dbs();
   const start = cuboid334Apply(scramble);
   if (isSolvedColors(start)) return { solution: '', length: 0, optimal: true };
@@ -737,7 +732,7 @@ export function solveCuboid334(scramble: string): Cuboid334Solution {
   // A shallow state is solved PROVABLY OPTIMALLY by the budgeted IDA* shortcut; that result is shortest,
   // so two-phase can't beat it → return immediately (and skip the two-phase cost). Deeper states fall
   // through to the always-terminating, bounded near-optimal two-phase reduction.
-  const opt = solveOptimalShallow(start, D);
+  const opt = solveOptimalShallow(start, D, options);
   if (opt) return { solution: opt.map((m) => MOVES[m].name).join(' '), length: opt.length, optimal: true };
 
   const two = solveTwoPhase(start, D);

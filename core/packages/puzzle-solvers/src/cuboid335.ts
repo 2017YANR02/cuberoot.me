@@ -176,28 +176,13 @@ export const CUBOID335_MAX_LENGTH = 45;
 //   • In the browser the single solve runs synchronously on the main thread (see _Cuboid335Solver.tsx), so
 //     a multi-second IDA* would freeze the tab. A modest budget keeps the worst real solve ≲ ~0.7 s and
 //     still fills the 13..14 peak; the rare harder state (true-opt ≥ ~15) falls back to two-phase.
-//   • Offline (Node — the dist-build sampler / tests) there is no UI to freeze, so a large budget lets the
+//   • Offline the dist-build sampler passes a larger explicit budget, so the
 //     EXACT solver finish for ~99% of states (worst ≈ 7 s), yielding the correct unimodal histogram. Both
-//     regimes are overridable via env for tuning (CUBOID335_OPT_BUDGET / CUBOID335_OPT_CAP).
-const IS_NODE = typeof process !== 'undefined' && !!(process as { versions?: { node?: string } }).versions?.node
-  && typeof (globalThis as { window?: unknown }).window === 'undefined';
-const envNum = (name: string): number | undefined => {
-  try {
-    const v = typeof process !== 'undefined' ? (process as { env?: Record<string, string | undefined> }).env?.[name] : undefined;
-    if (v == null) return undefined;
-    const n = Number(v);
-    return Number.isFinite(n) && n > 0 ? n : undefined;
-  } catch { return undefined; }
-};
-/** Optimal-shortcut node budget: a shallow state solved optimally below this is returned as optimal. */
-// Offline 50M ⇒ ~98% of real states return their provable optimum (worst single solve ≈ 5–7 s, occasionally
-// more on a pathological deep state — acceptable for the manual offline dist build); browser 3M keeps the
-// synchronous main-thread solve ≲ ~0.7 s while still filling the true 13..14 peak.
-// Read at CALL time (not module load) so the env override is honoured even when set after import — e.g. a
-// test can drop the budget to 1 to force the fast two-phase path, in isolation, without a file-wide env.
-const optShortcutBudget = (): number => envNum('CUBOID335_OPT_BUDGET') ?? (IS_NODE ? 50_000_000 : 3_000_000);
-/** Largest length the optimal shortcut will claim; beyond this the two-phase answer is used. */
-const optShortcutDepthCap = (): number => envNum('CUBOID335_OPT_CAP') ?? (IS_NODE ? 20 : 16);
+//     regimes are selected explicitly by the caller, keeping this core runtime-neutral.
+export interface Cuboid335SolveOptions {
+  optimalBudget?: number;
+  optimalDepthCap?: number;
+}
 
 function applyMove(state: Uint8Array, mi: number): Uint8Array<ArrayBuffer> {
   const p = MOVE_PERM[mi];
@@ -595,7 +580,7 @@ function solveTwoPhase(start: Uint8Array, D: OrbitDb[]): number[] {
 }
 
 // ── optional optimal shortcut for shallow states (all 10 moves, admissible PDB, small budget) ─
-function solveOptimalShallow(start: Uint8Array, D: OrbitDb[]): number[] | null {
+function solveOptimalShallow(start: Uint8Array, D: OrbitDb[], options: Cuboid335SolveOptions): number[] | null {
   const t0 = tupleOf(start, D);
   if (isSolvedColors(start)) return [];
   const tupBuf: Int32Array[] = Array.from({ length: 48 }, () => new Int32Array(NORB));
@@ -605,7 +590,7 @@ function solveOptimalShallow(start: Uint8Array, D: OrbitDb[]): number[] | null {
   let budgetHit = false;
   const h = (tuple: Int32Array): number => { let m = 0; for (let i = 0; i < NORB; i++) { const d = D[i].optDist[tuple[i]]; if (d > m) m = d; } return m; };
   const solvedTuple = (tuple: Int32Array): boolean => { for (let i = 0; i < NORB; i++) if (D[i].optDist[tuple[i]] !== 0) return false; return true; };
-  const budget = optShortcutBudget();
+  const budget = options.optimalBudget ?? 3_000_000;
 
   function dfs(tuple: Int32Array, g: number, bound: number, last: number, depth: number): number {
     const f = g + h(tuple);
@@ -630,7 +615,7 @@ function solveOptimalShallow(start: Uint8Array, D: OrbitDb[]): number[] | null {
   }
 
   let bound = h(t0);
-  const depthCap = optShortcutDepthCap();
+  const depthCap = options.optimalDepthCap ?? 16;
   while (bound <= depthCap) {
     const r = dfs(t0, 0, bound, -1, 0);
     if (found) {
@@ -651,12 +636,12 @@ function solveOptimalShallow(start: Uint8Array, D: OrbitDb[]): number[] | null {
  *   • otherwise a near-optimal two-phase reduction → `optimal: false`.
  * Throws Error('bad: …') only on an unparseable token in the cuboid part. There is no "too-deep".
  */
-export function solveCuboid335(scramble: string): Cuboid335Solution {
+export function solveCuboid335(scramble: string, options: Cuboid335SolveOptions = {}): Cuboid335Solution {
   const D = dbs();
   const start = cuboid335Apply(scramble);
   if (isSolvedColors(start)) return { solution: '', length: 0, optimal: true };
 
-  const opt = solveOptimalShallow(start, D);
+  const opt = solveOptimalShallow(start, D, options);
   if (opt) return { solution: opt.map((m) => MOVES[m].name).join(' '), length: opt.length, optimal: true };
 
   const two = solveTwoPhase(start, D);

@@ -246,30 +246,23 @@ describe('solveCuboid335 — phase-1 completeness regression (no "phase-1 unreac
   it('a deterministic 5000-scramble sweep (fixed seed) NEVER throws and every solution round-trips', () => {
     // The bug lived in phase-1 (the reduction search that ran AFTER the optimal-shortcut bailed). To prove
     // phase-1 never throws across many states WITHOUT paying the multi-second optimal-shortcut IDA* per
-    // state, drop the shortcut budget to 1 for THIS test only (env read at call time, restored in the
-    // finally) so every state takes the fast two-phase path that exercises phase-1. Each solve still goes
+    // state, pass the shortcut budget 1 so every state takes the fast two-phase path that exercises
+    // phase-1. Each solve still goes
     // through the full public solveCuboid335 → solveTwoPhase → solvePhase1, so a phase-1 failure WOULD throw.
-    const prevBudget = process.env.CUBOID335_OPT_BUDGET;
-    process.env.CUBOID335_OPT_BUDGET = '1';
-    try {
-      const rnd = mulberry32(0x335f1c); // FIXED seed → deterministic
-      const N = 5000;
-      let solved = 0, maxLen = 0;
-      for (let i = 0; i < N; i++) {
-        const scramble = randomCuboid335Scramble(40, rnd);
-        const res = solveCuboid335(scramble); // MUST NOT throw for ANY state — the prime requirement
-        const after = refApply(`${scramble} ${res.solution}`);
-        expect(keyOf(after), `round-trip #${i}: ${scramble}`).toBe(REF_SOLVED_KEY);
-        expect(res.length, `bounded #${i}`).toBeLessThanOrEqual(CUBOID335_MAX_LENGTH);
-        if (res.length > maxLen) maxLen = res.length;
-        solved++;
-      }
-      expect(solved).toBe(N); // ZERO throws over 5000 random legal states — real post-fix failure rate = 0
-      expect(maxLen).toBeLessThanOrEqual(CUBOID335_MAX_LENGTH);
-    } finally {
-      if (prevBudget === undefined) delete process.env.CUBOID335_OPT_BUDGET;
-      else process.env.CUBOID335_OPT_BUDGET = prevBudget;
+    const rnd = mulberry32(0x335f1c); // FIXED seed → deterministic
+    const N = 5000;
+    let solved = 0, maxLen = 0;
+    for (let i = 0; i < N; i++) {
+      const scramble = randomCuboid335Scramble(40, rnd);
+      const res = solveCuboid335(scramble, { optimalBudget: 1 }); // MUST NOT throw for ANY state — the prime requirement
+      const after = refApply(`${scramble} ${res.solution}`);
+      expect(keyOf(after), `round-trip #${i}: ${scramble}`).toBe(REF_SOLVED_KEY);
+      expect(res.length, `bounded #${i}`).toBeLessThanOrEqual(CUBOID335_MAX_LENGTH);
+      if (res.length > maxLen) maxLen = res.length;
+      solved++;
     }
+    expect(solved).toBe(N); // ZERO throws over 5000 random legal states — real post-fix failure rate = 0
+    expect(maxLen).toBeLessThanOrEqual(CUBOID335_MAX_LENGTH);
   }, 300_000);
 });
 

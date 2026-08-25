@@ -1,6 +1,6 @@
 # LSLL 最优解 → PG(表 lsll_cases,migration 0094)。
 #
-# 照 `core/packages/scramble-stats-build/update_cross_stats.ps1` 的 Load-*ToPg 那套:
+# 照 `core/jobs/scramble-stats-build/update_cross_stats.ps1` 的 Load-*ToPg 那套:
 # 本地照常导出**全量** CSV(本地算力不计成本),灌库时只 UPSERT 内容真变的行 + DELETE 已消失的键
 # (复用同一个 `pg_incremental_diff.mjs`,自然键 = 第 1 个逗号字段 = canonical_key)。
 # manifest 落在 incremental/,**仅在灌库成功后**才落盘(失败不更新,下次重试)。
@@ -32,7 +32,10 @@ $Csv       = Join-Path $Root 'lsll_cases.csv'
 # 两个库,会让先灌过本地的那批在灌线上时被当成「无变化」跳过,线上永远缺那几行(踩过)。
 $ManifestName = if($Local){ 'pg_lsll_manifest_local.tsv' } else { 'pg_lsll_manifest.tsv' }
 $Manifest  = Join-Path $IncrDir $ManifestName
-$DiffTool  = Join-Path $RepoRoot 'core/packages/scramble-stats-build/pg_incremental_diff.mjs'
+$CoreRoot  = Join-Path $RepoRoot 'core'
+$JobRel    = & node (Join-Path $CoreRoot 'scripts/resolve-workspace-path.mjs') '@cuberoot/scramble-stats-build'
+if($LASTEXITCODE -ne 0){ throw '无法解析 @cuberoot/scramble-stats-build workspace' }
+$DiffTool  = Join-Path (Join-Path $CoreRoot $JobRel) 'pg_incremental_diff.mjs'
 $RemoteHost = 'cuberoot'
 New-Item -ItemType Directory -Force $IncrDir | Out-Null
 

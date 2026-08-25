@@ -24,7 +24,7 @@
 
 ## 步骤
 
-> **标准入口(2026-06-25 起)**:`core/packages/scramble-stats-build/update_cross_stats.ps1 -Jobs 333opt` 已集成 **5a 求解(solve_loop 续跑补齐)→ 5b inject → export**。直接跑 ps1 即可端到端;`-SkipSolve333` 只 inject 不求解。下面的手动分步仍可单独跑(调试/分阶段)。
+> **标准入口(2026-06-25 起)**:`core/jobs/scramble-stats-build/update_cross_stats.ps1 -Jobs 333opt` 已集成 **5a 求解(solve_loop 续跑补齐)→ 5b inject → export**。直接跑 ps1 即可端到端;`-SkipSolve333` 只 inject 不求解。下面的手动分步仍可单独跑(调试/分阶段)。
 
 ```bash
 # CWD = solver/333opt/ —— 默认即生产:opt9 15G + in-proc 12 线程 + 按 id 续跑
@@ -67,7 +67,7 @@ node export_optimal.mjs --verify   # 导出 /timer 最优打乱数据 wca_optima
 
 `inject.mjs` 把 example bin 写成 `[真实WCA id, scramble, '']`,并把这些 id 的比赛/轮次 merge 进
 `examples.json` 的 `sets.wca.{comps, idMeta}`(源 `wca_scrambles_split_mbf.csv` + `competitions.tsv`,
-列序与口径同 `core/packages/scramble-stats-build/src/build.ts` 的 `buildExampleCompMeta`)。前端据 idMeta
+列序与口径同 `core/jobs/scramble-stats-build/src/build.ts` 的 `buildExampleCompMeta`)。前端据 idMeta
 解析出「比赛名 + 初赛E组#4」。⚠️ 管道 A(`update_cross_stats.ps1`)重跑会**重写 examples.json 丢掉 '333' 变体**,
 故 A 跑完要**补跑 `node inject.mjs`** 把 333 加回。
 

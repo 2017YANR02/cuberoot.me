@@ -28,7 +28,7 @@
  * scrambles this solves each half in ≤~50ms with provably shortest solutions.
  *
  * TIER B / TABLE — the three PDBs are too slow to build in a browser tab (~40–100s) and total ~18.8MB dense, so
- * they are built OFFLINE (packages/scramble-stats-build/src/build_sia222_table.ts) and shipped as a single gzip
+ * they are built OFFLINE (jobs/scramble-stats-build/src/build_sia222_table.ts) and shipped as a single gzip
  * (~3.0MB, > the 2MB repo limit → PUBLISHED to static.cuberoot.me, fetched via statsUrl — see §3 MANUAL queue,
  * like opt_bic but published not committed). The browser fetches + inflates once (DecompressionStream) into
  * resident Uint8Array distance tables (~18.8MB) and solves by IDA*. Provably optimal (the PDBs hold exact

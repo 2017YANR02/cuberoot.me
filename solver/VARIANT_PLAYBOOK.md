@@ -109,7 +109,7 @@ COEP 注意:analyzer 页用 classic worker、**不发 COOP/COEP**;别把新页�
    `Push-Location <数据目录>; "<master文件名>`nexit" | & block222_analyzer.exe` 跑完
    把 `<master名>_<v>.csv` move 成 `stats\<v>.csv`。env:`CUBE_TABLE_DIR=solver\tables`、
    `RAYON_NUM_THREADS=14`(全局限核)。慢变体(IDA* 搜索类)别一把梭,用第 3 步脚本分块。
-2. **注册增量管道** `core/packages/scramble-stats-build/update_cross_stats.ps1` 五处:
+2. **注册增量管道** `core/jobs/scramble-stats-build/update_cross_stats.ps1` 五处:
    `$VARIANT_EXE` / `$VARIANT_CHUNK` / `$VARIANT_RATE`(实测)/ 默认 `-Variants` 数组 / 向导 `$order`。
    **数字开头的变体名(如 222)hashtable 键必须加引号**,否则 int 键查 string 查不到。
 3. **xcross 集**:`backfill_xcross_variant.ps1` 的 `ValidateSet` + `$EXE` 两处;快变体直接

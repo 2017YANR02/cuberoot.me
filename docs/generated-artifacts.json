@@ -82,10 +82,10 @@
       "kind": "local-heavy-artifact",
       "source": {
         "locator": "scramble-stats-build source plus local solver tables and samples",
-        "paths": ["core/packages/scramble-stats-build/src/**", "solver/**"]
+        "paths": ["core/jobs/scramble-stats-build/src/**", "solver/**"]
       },
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
-      "owner": ["core/packages/scramble-stats-build", "solver"],
+      "owner": ["core/jobs/scramble-stats-build", "solver"],
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/scramble-stats-build build:<target>; use the matching runbook or skill for the complete heavy pipeline",
       "outputs": ["stats/scramble/**"],
