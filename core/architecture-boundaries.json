@@ -5,7 +5,7 @@
     "capturedAt": "2026-08-23",
     "sourceCommit": "f6eebfcec9f218ba770504b003215dcf196815c6",
     "scanner": "scripts/check-architecture-boundaries.mjs",
-    "scope": "active core/packages workspaces; packages/platform excluded"
+    "scope": "active core apps/packages/jobs workspaces; packages/platform excluded"
   },
   "policy": {
     "activeWorkspaceSource": "pnpm-workspace.yaml",

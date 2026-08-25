@@ -14,8 +14,11 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export const CORE_ROOT = resolve(HERE, '..');
 export const REPO_ROOT = resolve(CORE_ROOT, '..');
 export const MANIFEST_PATH = join(CORE_ROOT, 'architecture-boundaries.json');
-const requireFromClient = createRequire(join(CORE_ROOT, 'packages/client/package.json'));
-const ts = requireFromClient('typescript');
+const typescriptWorkspace = activePackages()
+  .find((pkg) => ['@cuberoot/client', '@cuberoot/web'].includes(pkg.name));
+if (!typescriptWorkspace) throw new Error('active Web workspace is required by the architecture scanner');
+const requireFromWeb = createRequire(join(typescriptWorkspace.root, 'package.json'));
+const ts = requireFromWeb('typescript');
 
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs']);
 const SKIP_DIRS = new Set([
@@ -147,9 +150,6 @@ function workspacePackageRoots(patterns, coreRoot) {
     } catch (error) {
       throw new Error(`invalid workspace package pattern ${JSON.stringify(rawPattern)}: ${error.message}`);
     }
-    if (!negative && matches.length === 0) {
-      throw new Error(`workspace include pattern matched no paths: ${JSON.stringify(rawPattern)}`);
-    }
     for (const match of matches) {
       const absolute = resolve(coreRoot, match);
       if (!`${absolute}${sep}`.toLowerCase().startsWith(`${resolve(coreRoot)}${sep}`.toLowerCase())) {
@@ -173,23 +173,28 @@ export function activePackages({
   workspaceSource = readFileSync(join(coreRoot, 'pnpm-workspace.yaml'), 'utf8'),
 } = {}) {
   const roots = workspacePackageRoots(parseWorkspacePackagePatterns(workspaceSource), coreRoot);
-  const packagesRoot = join(coreRoot, 'packages');
   const result = roots.map((root) => {
     const json = readJson(join(root, 'package.json'));
-    const relativeDir = slash(relative(packagesRoot, root));
+    const workspacePath = slash(relative(coreRoot, root));
+    const scopedName = typeof json.name === 'string' ? json.name.match(/^@cuberoot\/([a-z0-9-]+)$/) : null;
+    const identity = scopedName?.[1] ?? workspacePath.split('/').at(-1);
     return {
       cuberoot: json.cuberoot ?? null,
-      dir: relativeDir.startsWith('../') ? slash(relative(coreRoot, root)) : relativeDir,
+      dir: identity,
       json,
-      name: json.name ?? relativeDir,
+      name: json.name ?? identity,
       root,
       exports: json.exports ?? null,
+      workspacePath,
     };
   });
   const names = new Set();
+  const identities = new Set();
   for (const pkg of result) {
     if (names.has(pkg.name)) throw new Error(`duplicate workspace package name: ${pkg.name}`);
+    if (identities.has(pkg.dir)) throw new Error(`duplicate workspace package identity: ${pkg.dir}`);
     names.add(pkg.name);
+    identities.add(pkg.dir);
   }
   return result.sort((a, b) => a.dir.localeCompare(b.dir));
 }
@@ -244,6 +249,8 @@ function exportEntries(exportsField) {
 export function validatePackageMetadata(packages = activePackages()) {
   const errors = [];
   const workspaceByName = new Map(packages.map((pkg) => [pkg.name, pkg]));
+  if (packages.length !== 14) errors.push(`expected 14 active workspaces, found ${packages.length}`);
+  const kindCounts = new Map([...PACKAGE_KINDS].map((kind) => [kind, 0]));
   for (const pkg of packages) {
     const metadata = pkg.cuberoot;
     if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
@@ -253,6 +260,15 @@ export function validatePackageMetadata(packages = activePackages()) {
     if (!PACKAGE_KINDS.has(metadata.kind)) {
       errors.push(`${pkg.dir}: unknown cuberoot.kind ${JSON.stringify(metadata.kind)}`);
       continue;
+    }
+    kindCounts.set(metadata.kind, kindCounts.get(metadata.kind) + 1);
+    const workspaceGroup = pkg.workspacePath?.split('/')[0];
+    if (workspaceGroup === 'apps' && metadata.kind !== 'app') {
+      errors.push(`${pkg.dir}: apps workspace must declare cuberoot.kind app`);
+    } else if (workspaceGroup === 'jobs' && metadata.kind !== 'job') {
+      errors.push(`${pkg.dir}: jobs workspace must declare cuberoot.kind job`);
+    } else if (workspaceGroup && !['apps', 'jobs', 'packages'].includes(workspaceGroup)) {
+      errors.push(`${pkg.dir}: workspace must live under apps, packages or jobs`);
     }
     const dependencies = productionDependencies(pkg);
     const dependencyTargets = new Map();
@@ -316,6 +332,10 @@ export function validatePackageMetadata(packages = activePackages()) {
       }
     }
   }
+  for (const [kind, expected] of [['app', 4], ['job', 4], ['library', 6]]) {
+    const actual = kindCounts.get(kind);
+    if (actual !== expected) errors.push(`expected ${expected} ${kind} workspaces, found ${actual}`);
+  }
   return errors.sort();
 }
 
@@ -336,7 +356,8 @@ function filesUnder(root) {
 function sourceKind(owner, file) {
   const normalized = slash(file);
   if (/\/(?:tests?|__tests__)\/|\.(?:test|spec)\.[cm]?[jt]sx?$/.test(normalized)) return 'test';
-  if (owner.cuberoot?.kind === 'job' || /\/scripts?\/|\/(?:build|gen|generate|sync|update)[^/]*\.[cm]?[jt]s$/.test(normalized)) return 'build';
+  if (owner.cuberoot?.kind === 'job'
+      || /\/scripts?\/|\/[^/]+\.config\.[cm]?[jt]s$|\/(?:build|gen|generate|sync|update)[^/]*\.[cm]?[jt]s$/.test(normalized)) return 'build';
   return 'runtime';
 }
 
@@ -505,18 +526,26 @@ function calleeName(expression) {
 function targetPackageFromPathLiteral(packages, owner, file, text) {
   const normalized = slash(text);
   if (/\s|^https?:\/\//i.test(normalized)) return null;
-  const explicit = normalized.match(/(?:^|\/)packages\/([a-z0-9-]+)(?:\/|$)/i)?.[1];
-  if (explicit) {
-    if (explicit === owner.dir) return null;
-    return packages.find((item) => item.dir === explicit) ?? null;
+  const explicitPath = normalized.match(/(?:^|\/)((?:apps|packages|jobs)\/[a-z0-9-]+)(?:\/|$)/i)?.[1];
+  if (explicitPath) {
+    const target = packages.find((item) => item.workspacePath.toLowerCase() === explicitPath.toLowerCase()) ?? null;
+    if (target?.dir === owner.dir) return null;
+    if (target) return target;
   }
-  if (!/^(?:\.\.?\/|\/?(?:core\/)?packages\/)/.test(normalized)) return null;
+  if (!/^(?:\.\.?\/|\/?(?:core\/)?(?:apps|packages|jobs)\/)/.test(normalized)) return null;
   const candidate = resolve(dirname(file), text);
   const resolved = packageForPath(packages, candidate);
   if (resolved && resolved.dir !== owner.dir) return resolved;
-  const segment = normalized.match(/(?:^|\/)(client|server|mobile|miniprogram|shared|visualcube|stack-kernel|vendor-sr-puzzlegen|alg-build|scramble-stats-build|stats-build|wb-build)(?:\/|$)/)?.[1];
-  if (!segment || segment === owner.dir) return null;
-  return packages.find((item) => item.dir === segment) ?? null;
+  const segments = new Set(normalized.toLowerCase().split('/'));
+  return packages.find((item) => item.dir !== owner.dir
+    && (segments.has(item.dir.toLowerCase()) || segments.has(item.workspacePath.split('/').at(-1).toLowerCase()))) ?? null;
+}
+
+function declaresWorkspaceDependency(owner, target, sourceType) {
+  const production = productionDependencies(owner);
+  if (production.has(target.name)) return true;
+  if (sourceType === 'runtime') return false;
+  return Object.hasOwn(owner.json.devDependencies ?? {}, target.name);
 }
 
 function moduleFinding(packages, owner, file, specifier, kind, mechanism) {
@@ -557,6 +586,9 @@ function moduleFinding(packages, owner, file, specifier, kind, mechanism) {
   }
   if (resolvedExport.wildcard) {
     return { ...common, rule: 'workspace-wildcard-import', target: target.dir };
+  }
+  if (target.dir !== owner.dir && !declaresWorkspaceDependency(owner, target, common.sourceKind)) {
+    return { ...common, rule: 'workspace-undeclared-import', target: target.dir };
   }
   return null;
 }
@@ -1180,8 +1212,17 @@ export function collectFindings(packages = activePackages()) {
 }
 
 export function compareFindings(current, baseline) {
-  const currentKeys = new Map(current.map((finding) => [findingIdentity(finding), finding]));
-  const baselineKeys = new Map(baseline.map((finding) => [findingIdentity(finding), finding]));
+  const packages = activePackages();
+  const comparableIdentity = (finding) => {
+    if (!finding.file) return findingIdentity(finding);
+    const normalized = slash(finding.file);
+    const owner = packages.find((pkg) => normalized === pkg.workspacePath || normalized.startsWith(`${pkg.workspacePath}/`));
+    if (!owner) return findingIdentity(finding);
+    const suffix = normalized.slice(owner.workspacePath.length);
+    return findingIdentity({ ...finding, file: `packages/${owner.dir}${suffix}` });
+  };
+  const currentKeys = new Map(current.map((finding) => [comparableIdentity(finding), finding]));
+  const baselineKeys = new Map(baseline.map((finding) => [comparableIdentity(finding), finding]));
   return {
     additions: [...currentKeys.entries()]
       .filter(([key, finding]) => !baselineKeys.has(key)
@@ -1229,10 +1270,9 @@ export function validateManualContracts(contracts) {
   return errors;
 }
 
-export function violationsFromHookPayload(payload) {
+export function violationsFromHookPayload(payload, packages = activePackages()) {
   const input = payload?.tool_input;
   if (!input || typeof input !== 'object') return [];
-  const packages = activePackages();
   const writes = Array.isArray(input.writes) ? input.writes : [input];
   const violations = [];
   for (const write of writes) {
