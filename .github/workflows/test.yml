@@ -92,6 +92,7 @@ jobs:
           # .bin.gz,整目录拉进来会拖垮 checkout。
           sparse-checkout: |
             /core/
+            /docs/generated-artifacts.json
             /docs/platform-capability-manifest.json
             /docs/platform-unification-plan.md
             /*.ps1

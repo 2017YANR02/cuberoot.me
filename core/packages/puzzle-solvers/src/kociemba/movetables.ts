@@ -11,7 +11,7 @@ import {
   PHASE2_MOVES,
   solvedCubie,
   type CubieCube,
-} from './cube.js';
+} from '@cuberoot/puzzle-solvers/kociemba/cube';
 import {
   N_TWIST,
   N_FLIP,
@@ -32,8 +32,8 @@ import {
   epermSet,
   spermOf,
   spermSet,
-} from './coords.js';
-import { N_SLICE_RAW as N_SLICE_RAW_IMPORT } from './coords.js';
+} from '@cuberoot/puzzle-solvers/kociemba/coords';
+import { N_SLICE_RAW as N_SLICE_RAW_IMPORT } from '@cuberoot/puzzle-solvers/kociemba/coords';
 
 export const N_SLICE_RAW = N_SLICE_RAW_IMPORT;
 

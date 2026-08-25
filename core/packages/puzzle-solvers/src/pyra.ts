@@ -24,7 +24,7 @@
  * "2" amount because 2× a 120° move equals "'".
  */
 
-import { GSolver, matches } from './cstimer-gsolver.js';
+import { GSolver, matches } from '@cuberoot/puzzle-solvers/cstimer-gsolver';
 
 // 24-char state: F R L D, 6 stickers each.
 export const SOLVED_PYRA = 'FFFFFFRRRRRRLLLLLLDDDDDD';
