@@ -5,3 +5,8 @@ android/**/build/
 android/local.properties
 *.jks
 *.keystore
+*.p12
+*.mobileprovision
+AuthKey_*.p8
+ios/**/xcuserdata/
+ios/**/DerivedData/
