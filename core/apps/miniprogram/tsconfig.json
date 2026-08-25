@@ -5,7 +5,7 @@
     "declarationMap": false,
     "lib": ["ES2022"],
     "noEmit": true,
-    "types": ["miniprogram-api-typings"]
+    "types": ["miniprogram-api-typings", "node"]
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"]
 }
