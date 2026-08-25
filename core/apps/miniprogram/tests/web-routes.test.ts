@@ -1,4 +1,9 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
+
+import { resolveWorkspacePath } from '../../../scripts/resolve-workspace-path.mjs';
 
 import {
   WEB_ROUTES,
@@ -11,17 +16,9 @@ import {
 } from '../src/lib/web-routes';
 
 const TICKET = 'A'.repeat(43);
-const websitePageFiles = import.meta.glob('../../client/app/**/page.tsx', {
-  eager: true,
-  import: 'default',
-  query: '?raw',
-});
-const websiteConfigFiles = import.meta.glob('../../client/next.config.ts', {
-  eager: true,
-  import: 'default',
-  query: '?raw',
-});
-const websiteConfigSource = websiteConfigFiles['../../client/next.config.ts'];
+const coreRoot = resolve(import.meta.dirname, '..', '..', '..');
+const websiteRoot = resolve(coreRoot, resolveWorkspacePath('@cuberoot/client'));
+const websiteConfigSource = readFileSync(join(websiteRoot, 'next.config.ts'), 'utf8');
 
 describe('mini program web routes', () => {
   it('resolves the website timer route', () => {
@@ -125,16 +122,13 @@ describe('mini program web routes', () => {
     for (const [key, route] of Object.entries(WEB_ROUTES)) {
       if (key === 'logout') {
         expect(route.path).toBe('/auth/miniprogram#action=logout&next=%2Fzh%2Faccount');
-        expect(websitePageFiles).toHaveProperty('../../client/app/auth/miniprogram/page.tsx');
+        expect(existsSync(join(websiteRoot, 'app', 'auth', 'miniprogram', 'page.tsx'))).toBe(true);
         continue;
       }
       expect(route.path, key).toMatch(/^\/zh\//);
       const relativePagePath = route.path.replace(/^\/zh\//, '');
       const unlocalizedPath = route.path.replace(/^\/zh/, '');
-      const hasPage = Object.hasOwn(
-        websitePageFiles,
-        `../../client/app/[lang]/${relativePagePath}/page.tsx`,
-      );
+      const hasPage = existsSync(join(websiteRoot, 'app', '[lang]', relativePagePath, 'page.tsx'));
       const hasRedirect = websiteConfigSource.includes(`source: "${unlocalizedPath}"`)
         || websiteConfigSource.includes(`source: '${unlocalizedPath}'`);
       expect(

@@ -1,8 +1,8 @@
-// 生成主屏 / PWA 图标集(public/icons/{apple-touch-icon,icon-192,icon-512,icon-maskable-512}.png)。
+// 从中性品牌源生成 Web/PWA 图标，并同步 Web 的部署副本。
 //
-//   node packages/client/scripts/gen-app-icons.mjs
+//   node scripts/gen-brand-assets.mjs
 //
-// 单一来源是 public/icons/CubeRoot-mark.svg —— 改 logo 后重跑这个脚本,别手动 PS 导图。
+// 单一来源是 assets/brand/CubeRoot-mark.svg —— 改 logo 后重跑这个脚本,别手动导图。
 //
 // 两条硬约束(踩过):
 //   1) **必须不透明**。iOS 把带 alpha 的 apple-touch-icon 合成到黑底上,透明底 logo 会
@@ -11,17 +11,21 @@
 //      占中间 80%。
 //
 // sharp 是 core 根工具依赖,由 pnpm-lock.yaml 锁定,不扫描 pnpm 私有目录。
-import { readFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
+import { resolveWorkspacePath } from './resolve-workspace-path.mjs';
+
 const HERE = dirname(fileURLToPath(import.meta.url));
-const ICONS = join(HERE, '..', 'public', 'icons');
+const CORE_ROOT = join(HERE, '..');
+const BRAND_ASSETS = join(CORE_ROOT, 'assets', 'brand');
+const WEB_ICONS = join(CORE_ROOT, resolveWorkspacePath('@cuberoot/client'), 'public', 'icons');
 
 const BG = '#ffffff';
 
-const raw = readFileSync(join(ICONS, 'CubeRoot-mark.svg'), 'utf8');
+const raw = readFileSync(join(BRAND_ASSETS, 'CubeRoot-mark.svg'), 'utf8');
 const markViewBox = raw.match(/<svg[^>]*\bviewBox="([^"]+)"/)?.[1];
 if (!markViewBox) throw new Error('CubeRoot-mark.svg must declare a viewBox');
 const inner = raw.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
@@ -48,6 +52,11 @@ for (const [name, size, pad] of JOBS) {
     .resize(size, size)
     .flatten({ background: BG })
     .png({ compressionLevel: 9 })
-    .toFile(join(ICONS, name));
+    .toFile(join(BRAND_ASSETS, name));
   console.log('wrote', name, `${size}×${size}`);
+}
+
+mkdirSync(WEB_ICONS, { recursive: true });
+for (const name of ['CubeRoot-mark.svg', ...JOBS.map(([file]) => file)]) {
+  copyFileSync(join(BRAND_ASSETS, name), join(WEB_ICONS, name));
 }

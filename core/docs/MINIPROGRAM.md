@@ -17,22 +17,22 @@
 
 | 改动 | 唯一入口 | 约束 |
 |---|---|---|
-| 网站入口、标题、说明、顺序 | `packages/miniprogram/src/lib/web-routes.ts` | 不在 WXML 里再写一份列表 |
-| 网站和 API 域名 | `packages/miniprogram/src/lib/runtime-config.ts` | 只使用已在小程序后台配置的 HTTPS 域名 |
-| `web-view` 加载、换票超时、失败和重试 | `packages/miniprogram/src/lib/web-view-page.ts` | 计时页和通用网页共用，不各自补丁 |
-| `web-view` 加载与错误界面 | `packages/miniprogram/src/templates/web-route-view.wxml` + `app.wxss` | 页面只传状态，不复制 WXML 或页面级样式 |
-| 登录、会话和错误文案 | `packages/miniprogram/src/lib/auth.ts` | AppSecret 永远只在服务端 |
+| 网站入口、标题、说明、顺序 | `apps/miniprogram/src/lib/web-routes.ts` | 不在 WXML 里再写一份列表 |
+| 网站和 API 域名 | `apps/miniprogram/src/lib/runtime-config.ts` | 只使用已在小程序后台配置的 HTTPS 域名 |
+| `web-view` 加载、换票超时、失败和重试 | `apps/miniprogram/src/lib/web-view-page.ts` | 计时页和通用网页共用，不各自补丁 |
+| `web-view` 加载与错误界面 | `apps/miniprogram/src/templates/web-route-view.wxml` + `app.wxss` | 页面只传状态，不复制 WXML 或页面级样式 |
+| 登录、会话和错误文案 | `apps/miniprogram/src/lib/auth.ts` | AppSecret 永远只在服务端 |
 | 跨端登录与退出落地 | 网站 `lib/auth-store.ts` + `app/auth/miniprogram/page.tsx` | 小程序只发起受控跳转，不复制网页存储键和清理规则 |
 | 移动端与小程序隐私政策 | `packages/client/app/[lang]/privacy/page.tsx` | App、小程序和网页共用一份真实声明 |
-| 构建与上传前自动检查 | `packages/miniprogram/scripts/build-state.mjs` + `release-check.mjs` + `release-check-lib.mjs` | 只允许上传当前源码生成且内容未变的完整 `dist`；新增隐私敏感能力时先阻断上传 |
+| 构建与上传前自动检查 | `apps/miniprogram/scripts/build-state.mjs` + `release-check.mjs` + `release-check-lib.mjs` | 只允许上传当前源码生成且内容未变的完整 `dist`；新增隐私敏感能力时先阻断上传 |
 | 跨端计时数据类型和纯逻辑 | `@cuberoot/shared/timer` | 不复制网站计时器 UI |
 | GAN v2/v3/v4 协议、解密与魔方状态解码 | `@cuberoot/shared/smart-cube/gan-v2` + `gan-v3` + `gan-v4` + `gan-crypto` + `gan-move-sync` + `cubie` | 网站 Web Bluetooth 和小程序微信 BLE 共用同一解析与状态逻辑 |
 | GoCube/Rubik's Connected 协议字节解析 | `@cuberoot/shared/smart-cube/gocube` | 两端只维护各自传输适配器，不复制帧解析、转动映射或命令常量 |
 | Giiker/米家协议状态与转动解析 | `@cuberoot/shared/smart-cube/giiker` | 网站与小程序复用同一解析器，传输层分别使用 Web Bluetooth 与微信 BLE |
 | MoYu AI MHC 旧协议转动解析 | `@cuberoot/shared/smart-cube/moyu` | 网站与小程序复用同一 UUID、设备名匹配和转动累积解析，传输层各自维护平台生命周期 |
 | 智能魔方短时中继协议 | `@cuberoot/shared/smart-cube/relay` | 原生 BLE 只作为数据源，网站计时器只作为数据接收方；不把会话数据写入数据库 |
-| 小程序智能魔方连接生命周期 | `packages/miniprogram/src/lib/smart-cube/session.ts` | 页面只展示状态和发起操作，不直接管理 socket、BLE 连接或竞态 |
-| 全局视觉变量和通用按钮 | `packages/miniprogram/src/app.wxss` | 页面只写自身布局 |
+| 小程序智能魔方连接生命周期 | `apps/miniprogram/src/lib/smart-cube/session.ts` | 页面只展示状态和发起操作，不直接管理 socket、BLE 连接或竞态 |
+| 全局视觉变量和通用按钮 | `apps/miniprogram/src/app.wxss` | 页面只写自身布局 |
 | 账号落库 | 服务端 `account_auth.ts` + `wechat_miniprogram.ts` | 网站和小程序都只用 UnionID |
 
 新增一个网站工具入口时，只改路由表并补测试。新增原生功能前，先在本文件写清楚为什么不能继续复用网站。
@@ -59,7 +59,7 @@
 
 ### 工程能力
 
-- [x] 微信开发者工具可导入 `packages/miniprogram/`，产物目录为 `dist/`。
+- [x] 微信开发者工具可导入 `apps/miniprogram/`，产物目录为 `dist/`。
 - [x] 计时器通过 `web-view` 复用网站，并已在真机正常打开。
 - [x] 公式库、WCA 比赛、魔方百科和课程使用统一路由表打开网站。
 - [x] 原生微信登录已接入后端 `/v1/auth/wechat/miniprogram`。
@@ -125,7 +125,7 @@ pnpm --filter @cuberoot/miniprogram release:check
 
 `build` 会保留已有正式 AppID 和明确的数字基础库；不会把已选好的本地版本重置回 `trial`。构建成功后会在被忽略的 `.tmp/` 写入源码和产物指纹，不进入上传包。`release:check` 会先运行类型检查和全部小程序回归测试，再拒绝缺页、源码变化后的旧 `dist`、构建后被改动的 `dist`，并要求每次上传显式确认稳定版本、密钥轮换、socket 合法域名、基础信息审核、备案、后台隐私指引、双平台真机和已支持设备的全链路回归。环境变量只是防遗忘闸门，不能代替真实操作。
 
-微信开发者工具导入 `core/packages/miniprogram`，不是 `dist`。`project.config.json` 和 `project.private.config.json` 是本机配置，不提交 AppID 之外的任何凭据。
+微信开发者工具导入 `core/apps/miniprogram`，不是 `dist`。`project.config.json` 和 `project.private.config.json` 是本机配置，不提交 AppID 之外的任何凭据。
 
 每轮完成定义：
 
@@ -769,7 +769,7 @@ pnpm --filter @cuberoot/miniprogram release:check
 ### 2026-08-16：分享卡片不截取计时成绩
 
 - 公开计时器和工具页统一指定固定分享图，微信不再把当前 `web-view` 画面截图放进分享卡片，避免最近成绩或账号画面被意外带出。
-- 分享图复用网站唯一品牌图标 `client/public/icons/icon-512.png`；构建时复制到上传包，不在小程序源码再保存一份图片。
+- 分享图复用中性品牌事实源 `assets/brand/icon-512.png`；构建时复制到上传包，不在小程序源码再保存一份图片。
 - 外部品牌图已进入构建指纹和开发监听，也是发布闸门的必需上传文件；网站换图后会自动同步，缺图或旧产物都不能上传。
 
 ### 2026-08-16：弱网恢复跟随页面可见状态

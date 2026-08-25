@@ -1,6 +1,5 @@
-// Generate Android launcher and splash assets from the website's existing
-// CubeRoot icon set. The brand SVG remains the single source of truth; this
-// command refreshes the website/PWA icons before deriving Android assets.
+// Generate Android launcher and splash assets from CubeRoot's neutral brand
+// source. The same command refreshes the website/PWA deployment copies.
 //
 //   pnpm --filter @cuberoot/mobile assets:android
 
@@ -9,10 +8,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
-await import('../../client/scripts/gen-app-icons.mjs');
+await import('../../../scripts/gen-brand-assets.mjs');
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const BRAND_ICONS = join(HERE, '..', '..', 'client', 'public', 'icons');
+const BRAND_ICONS = join(HERE, '..', '..', '..', 'assets', 'brand');
 const RES = join(HERE, '..', 'android', 'app', 'src', 'main', 'res');
 const regularIcon = join(BRAND_ICONS, 'icon-512.png');
 const safeIcon = join(BRAND_ICONS, 'icon-maskable-512.png');

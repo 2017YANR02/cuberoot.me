@@ -48,7 +48,7 @@ describe('CubeRoot brand SVG assets', () => {
 
   // 主屏图标(iOS「添加到主屏幕」)。之前根本没发 apple-touch-icon,Safari 就截了张页面
   // 缩略图当图标 —— 用户看到的是一张网页截图,不是 logo。两条都得守:link 在,PNG 不透明
-  // (iOS 会把 alpha 合成到黑底)。重生成走 scripts/gen-app-icons.mjs。
+  // (iOS 会把 alpha 合成到黑底)。重生成走 core/scripts/gen-brand-assets.mjs。
   describe('主屏 / PWA 图标', () => {
     /** PNG IHDR:宽、高、colorType(4 和 6 带 alpha)。 */
     const ihdr = (f: string) => {
