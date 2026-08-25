@@ -23,9 +23,10 @@ cuberoot.me/
 │   │   ├── mobile/        React + Capacitor — Android now, reusable for a future iOS target
 │   │   ├── miniprogram/   WeChat Mini Program — independent native runtime
 │   │   ├── platform/      Retired read-only archive; its product surfaces now live under client /platform
-│   │   └── ...            Shared libraries and the remaining jobs awaiting migration
+│   │   └── ...            Shared libraries and the remaining apps awaiting migration
 │   └── jobs/
 │       ├── alg-build/     Offline algorithm data and SQL generators
+│       ├── stats-build/   Offline WCA statistics and database-load pipeline
 │       └── wb-build/      Offline unofficial world-best dataset generator
 ├── solver/                Rust solving engines — native analyzers and WebAssembly builds
 ├── reconer/               Automated reconstruction from speedsolving video

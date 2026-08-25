@@ -5,7 +5,7 @@ import {
   tiedTopThreeQuery,
   tiedTopThreeNotes,
   type TopThreeResultRow,
-} from '../../stats-build/src/statistics/tied_podium_results_core';
+} from '../src/statistics/tied_podium_results_core';
 
 describe('tied top-three query scope', () => {
   it('selects valid top threes from every round instead of filtering to finals', () => {

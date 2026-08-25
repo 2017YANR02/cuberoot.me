@@ -5,12 +5,12 @@ description: "Use when regenerating WCA statistics JSONs under `stats/` — 80+ 
 
 # Stats Build
 
-WCA 统计数据生成管道：`core/packages/stats-build/` —— 基于 `jonatanklosko/wca_statistics` 的 TypeScript 重写。
+WCA 统计数据生成管道：`core/jobs/stats-build/` —— 基于 `jonatanklosko/wca_statistics` 的 TypeScript 重写。
 
 ## 本地运行
 
 ```pwsh
-cd core/packages/stats-build
+cd core/jobs/stats-build
 $env:NODE_OPTIONS='--expose-gc --max-old-space-size=6144'
 npx tsx src/bin/compute.ts <stat_name>     # 单个统计
 npx tsx src/bin/compute_all.ts             # 全量（~30min，会很耗内存）
@@ -21,12 +21,12 @@ npx tsx src/bin/compute_all.ts             # 全量（~30min，会很耗内存�
 本机已装 MySQL 8 并导入 WCA dump，**默认就能跑**：
 - MySQL 数据目录：`E:\mysql_data\wca_developer_database\`（database = `wca_developer_database`）
 - 监听：`127.0.0.1:3306`
-- 凭据文件：`packages/stats-build/database.yml`（已 .gitignore，本机有）
+- 凭据文件：`jobs/stats-build/database.yml`（已 .gitignore，本机有）
 - `--expose-gc` 让基类里的显式 `global.gc()` 生效，避免 OOM
 
 跑不通先按以下顺序自查（**pwsh 命令，不是 bash**）：
 ```pwsh
-ls packages/stats-build/database.yml          # 凭据文件在不在
+ls jobs/stats-build/database.yml          # 凭据文件在不在
 netstat -an | Select-String ':3306'           # MySQL 在听吗
 Get-Service | Where-Object Name -match mysql  # 服务状态
 ```
@@ -96,9 +96,9 @@ pnpm --filter @cuberoot/stats-build run validate-queries
 
 ### 排查"跑不了"前必须先验证
 
-本仓库**默认有本地 MySQL + WCA dump**，配置在 `packages/stats-build/database.yml`（已 .gitignore）。如果 validator 报连接错，按这个顺序核查，不要直接下结论"没 DB":
+本仓库**默认有本地 MySQL + WCA dump**，配置在 `jobs/stats-build/database.yml`（已 .gitignore）。如果 validator 报连接错，按这个顺序核查，不要直接下结论"没 DB":
 
-1. `ls packages/stats-build/database.yml` —— 看文件在不在（注意:CWD 是 `core/`，**不是** `core/packages/...`）
+1. `ls jobs/stats-build/database.yml` —— 看文件在不在（注意:CWD 是 `core/`）
 2. `netstat -an | Select-String ':3306'` —— 看 MySQL 是否在听（**pwsh,不是 bash 的 grep**）
 3. 都有却连不上 —— 才向用户求助
 

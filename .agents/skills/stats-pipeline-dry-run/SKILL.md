@@ -5,7 +5,7 @@ description: "Use when 改 stats-build → server PG 数据流 (新 .copy.tsv / 
 
 # Stats Pipeline Dry-Run
 
-`core/packages/stats-build/` 的两条 deploy 管道都是**三段式**:
+`core/jobs/stats-build/` 的两条 deploy 管道都是**三段式**:
 
 ```
 builder.ts                  →   stats.yml (scp)             →   server load.sql (\copy)
@@ -23,14 +23,14 @@ wca_stats_extra_build.ts        scp wca_stats_extra_*            \copy wca_grand
 ```bash
 # Historical Ranks 管道
 echo "=== HR builder writes ==="
-grep -oE "[a-z_]+\.copy\.tsv" core/packages/stats-build/src/bin/historical_ranks_build.ts | sort -u
+grep -oE "[a-z_]+\.copy\.tsv" core/jobs/stats-build/src/bin/historical_ranks_build.ts | sort -u
 
 echo "=== HR scp uploads ==="
 awk '/scp.*hr_id.*load\.sql wca_continents/,/wca_import\/"/' .github/workflows/stats.yml \
   | grep -oE "[a-z_]+\.copy\.tsv" | sort -u
 
 echo "=== HR load.sql \\copy refs ==="
-grep -oE "FROM '[a-z_]+\.copy\.tsv'" core/packages/stats-build/src/bin/historical_ranks_build.ts \
+grep -oE "FROM '[a-z_]+\.copy\.tsv'" core/jobs/stats-build/src/bin/historical_ranks_build.ts \
   | grep -oE "[a-z_]+\.copy\.tsv" | sort -u
 ```
 

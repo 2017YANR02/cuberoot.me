@@ -11,7 +11,7 @@
 ## 本地发布（无需等待 CI）
 
 ```powershell
-cd core/packages/stats-build
+cd core/jobs/stats-build
 $env:NODE_OPTIONS='--expose-gc --max-old-space-size=6144'
 
 # 单个/多个统计
@@ -27,7 +27,7 @@ git push
 
 ## 计算架构
 
-88 个统计串行执行（`core/packages/stats-build/src/bin/compute_all.ts`）：
+88 个统计串行执行（`core/jobs/stats-build/src/bin/compute_all.ts`）：
 
 | 类别 | 数量 | 说明 |
 |------|------|------|
@@ -55,7 +55,7 @@ git push
 ## 添加新统计（TypeScript）
 
 ```typescript
-// core/packages/stats-build/src/statistics/my_new_stat.ts
+// core/jobs/stats-build/src/statistics/my_new_stat.ts
 import { Statistic } from '../core/statistic.js';
 
 export class MyNewStat extends Statistic {
@@ -82,7 +82,7 @@ export class MyNewStat extends Statistic {
 追踪 434 名顶尖选手的近期 WCA 比赛。
 
 ```powershell
-cd core/packages/stats-build
+cd core/jobs/stats-build
 npx tsx src/bin/fetch_upcoming_comps.ts          # 使用缓存（~5 秒）
 npx tsx src/bin/fetch_upcoming_comps.ts --refresh  # 强制刷新（~15 分钟）
 ```
@@ -102,4 +102,4 @@ npx tsx src/bin/fetch_upcoming_comps.ts --refresh  # 强制刷新（~15 分钟�
 
 ### 中文比赛名
 
-`core/packages/stats-build/src/bin/fetch_comp_names_zh.ts` 生成 `comp_names_zh.json`，CI 每天凌晨 4:00 自动更新。
+`core/jobs/stats-build/src/bin/fetch_comp_names_zh.ts` 生成 `comp_names_zh.json`，CI 每天凌晨 4:00 自动更新。

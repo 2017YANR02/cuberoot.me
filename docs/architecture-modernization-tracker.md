@@ -6,7 +6,7 @@ Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b
 
 状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役；仓库所有者于 2026-08-25 明确豁免 RET-04 原定观察等待，非仓库资产处置已完成，仓库删除保留给所有者自行执行。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 在两次生产前置校验安全暴露并修正 store provision 与 opt5/opt6 假设后，最终修正 `6756c599a1` 已由 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` 全绿发布。生产部署确认 `cubeopt-opt6-legacy-runtime-v1` 制品、启用态 manager 加载与 `R → R'`（1 HTM）真实请求通过，API 健康、启用/配置状态及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网 smoke 均为 200；因此 BND-02、BND-03、BND-04、BND-06 和 Batch 3 的 PKG-02 最小切片已关闭。BND-04 的共用 AST 检测器置于写入钩子链首后，当前 Codex 宿主已真实拒绝违规跨 app import 且探针未落盘；BND-05 已完成 14 个活跃 package 的运行时属性登记和 fail-closed 守卫并通过独立终审。Batch 4 的 `auth/web-session` 中性契约试点、小程序真实构建依赖图和首次微信用户空昵称兼容已随 `ba22fd81e1` 发布；Test `32697884591`、Deploy Next `32697884578`、Deploy Core `32697884597` 全部成功，API 健康、缺失 WCA token、畸形票据、未登录取票和 Web 回调壳安全 smoke 均符合预期，CTR-02 已关闭。真实账号登录成功链路没有用生产凭据手工执行，其 producer/consumer 正向路径由可执行 route/session fixture 证明；CTR-03 已在六个认证端点完成稳定错误码兼容切片并通过独立复审，迁移期继续保留旧 `error` 字段，不扩张为全 API 一次性改造。Batch 5 的 Clock 窄切片已随 `1db7804111` 发布；隔离干净工作树、本地门槛与三路独立复核通过，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 全部成功，API 健康及中英文 `/sim` 公网 smoke 为 200 且无模块解析错误，本切片已关闭。Batch 6 的根 PowerShell 治理已随 `b02005a50e` 发布；三路终审、本地与 Linux 合同、Test、Deploy Next、静态工具同步及五条公网 smoke 全绿，PS1-01 至 PS1-04 已关闭。Batch 7 的物理目录整理已完成收益评估并决定不执行；PKG-03 已以条件触发政策关闭，当前不新建跨端 React UI package。
 
-> Batch 8 决策更新：Batch 7 的“不执行物理目录整理”保留为当时的历史裁决。仓库所有者现基于四端长期演进和 AI 可发现性明确重开并授权目录迁移，目标采用 `core/apps/* + core/packages/* + core/jobs/*`；只允许按 [Core 工作区目录迁移方案](./core-workspace-layout-migration-plan.md) 渐进实施。LAY2-00/01/02/03/04 已完成：workspace、边界守卫与 Knip 接受双布局，Web/API/stats 发布合同按 package identity 解析并覆盖旧新触发路径，`wb-build` 与 `alg-build` 已移至 `core/jobs`；当前尚未移动任何 app 源码目录。
+> Batch 8 决策更新：Batch 7 的“不执行物理目录整理”保留为当时的历史裁决。仓库所有者现基于四端长期演进和 AI 可发现性明确重开并授权目录迁移，目标采用 `core/apps/* + core/packages/* + core/jobs/*`；只允许按 [Core 工作区目录迁移方案](./core-workspace-layout-migration-plan.md) 渐进实施。LAY2-00 至 LAY2-05 已完成：workspace、边界守卫与 Knip 接受双布局，Web/API/stats 发布合同按 package identity 解析并覆盖旧新触发路径，`wb-build`、`alg-build` 与 `stats-build` 已移至 `core/jobs`；当前尚未移动任何 app 源码目录。
 >
 > Batch 8 三路预审：目标分类无歧义，`apps/web`、`apps/api`、`apps/mobile`、`apps/miniprogram` 的命名获得支持；所有 reviewer 均否决一步到位。实施前必须先建立不依赖路径的 workspace registry、旧新边界基线同集证明、workflow 正负触发矩阵和未声明 workspace import 守卫。仓库所有者已授权按这些门槛实施，不能跳过。
 >
@@ -156,7 +156,7 @@ API     ─X─> Web 源码或 Web public
 
 | ID | 任务 | 状态 | 验收 |
 | --- | --- | --- | --- |
-| BND-01 | 生成真实系统依赖基线 | `完成` | 当前登记 313 个精确旧债指纹、329 次出现和 13 条人工契约，覆盖静态 import、动态加载、路径读取、构建复制、非 workspace 原生工具、子进程、大表、环境变量覆盖和部署目标；Batch 3 相对旧基线净消除 7 个身份，Batch 5 Clock 再消除 2 个跨 app 私有路径身份，统一转动记号演示再消除 3 个 Shared 裸根类型导入身份，Batch 8 SQ2 再消除 1 个 build→client 私有路径身份，均经精确守卫复核 |
+| BND-01 | 生成真实系统依赖基线 | `完成` | 初始登记 313 个精确旧债指纹、329 次出现和 13 条人工契约；LAY2-05 完成后为 303/319/14，其中本批通过测试归属与 package resolver 再消除 4 个身份和 4 次出现，并显式登记 Web H2H 测试读取 stats job 源码的合同。清单覆盖静态 import、动态加载、路径读取、构建复制、非 workspace 原生工具、子进程、大表、环境变量覆盖和部署目标，均经精确守卫复核 |
 | BND-02 | 消除 API 对 Web 源码的 import | `完成` | Server→Client 源码边清零，隔离 bundle 已证明不需要 Client 目录；Deploy Core `32692270167` 成功后，生产 API 健康与 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网路由均为 200 且返回真实 SVG |
 | BND-03 | 消除 API 对 Web public 的运行时读取 | `完成` | API 自有 manifest/校验和/原子晋级支持 opt5/h5 与 opt6/h6；Deploy Core `32692270167` 确认生产 `cubeopt-opt6-legacy-runtime-v1`，启用态 manager 加载后完成 `R → R'`（1 HTM）真实 smoke，公网 readiness 同时确认 enabled/configured |
 | BND-04 | 按边类型增加跨 app 依赖守卫 | `完成` | runtime、build、test、artifact 和 subprocess baseline 已进入 CI；任何新增、重复或陈旧基线都会失败。写入 adapter 先把同一 patch 的全部 writes 一次性交给架构检测器，再逐文件执行一般守卫；真实五文件 `tools.apply_patch` 探针在末尾放置跨 app import，宿主约 6 秒内 deny 且五文件均未落盘；CI 全文件扫描仍为权威兜底 |
@@ -406,6 +406,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-25 | LAY2-05 `stats-build` 移动完成 | 144 个原 job 文件从 `core/packages/stats-build` 完整移至 `core/jobs/stats-build`，两个 producer 测试归位并接入 Test workflow；Web H2H 读取以显式 test-contract 登记，运行脚本、lockfile、忽略项、生成物清册和活动文档均改用新路径或 package resolver。build/upload/load 静态合同、workspace resolver、边界、生成物和 diff-check 通过，边界为 303/319/14；独立终审最终 GO、无 blocker/major，未在本地运行统计、数据库、测试或 build |
 | 2026-08-25 | LAY2-04 `alg-build` 移动完成 | 52 个 tracked 文件从 `core/packages/alg-build` 完整 rename 到 `core/jobs/alg-build`，`@cuberoot/alg-build` 与 `cuberoot.kind=job` 不变；API migration 输出和客户端 fixture 改为按 package 名解析，lockfile、生成物清册与活动文档同步。workspace resolver、边界、生成物和 diff-check 通过，独立复审 GO；未运行生成器、数据库、测试或 build |
 | 2026-08-25 | LAY2-03 首个 job `wb-build` 移动完成 | 5 个源码文件从 `core/packages/wb-build` 完整 rename 到 `core/jobs/wb-build`，`@cuberoot/wb-build` 与 `cuberoot.kind=job` 不变；lockfile 仅迁移 importer，生成物清册明确 `stats/world_bests.json` 的唯一 owner，静态确认输出路径不变。resolver、边界与生成物检查通过；未运行联网抓取、未改正式数据，独立复审 GO |
 | 2026-08-25 | LAY2-02 双路径发布合同完成 | Web、API、stats 的 push filter 同时覆盖旧新路径与统一 resolver；11 个 workflow 的执行目录改由 package name 唯一解析，重复或缺失 workspace 会 fail closed。仓外 Web Root Directory 的旧值、目标值与回切时机已记录，实际切换留在 LAY2-10 发布窗口；三路只读复审确认首个 job 可以开始移动，本批未移动 app/job，也未运行构建或统计计算 |

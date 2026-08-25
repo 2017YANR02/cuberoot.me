@@ -38,7 +38,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | csTimer | `/cstimer` | iframe → `/tools/cstimer/` | cs0x7f/cstimer | ❌ |
 | BLDDB | `/blddb` | iframe → `/tools/blddb/`(next build 静态导出,统一入口 `sync_upstream.ps1 -Only blddb`) | nbwzx/blddb v2 | ❌ |
 | 盲拧公式查询 | `/alg/3bld/lookup` | client,吃 `tools/blddb/data/*Manmade.json`(三阶六套) | 自有 UI + blddb 数据 | ✅ |
-| WCA Stats | `/wca` | `packages/stats-build` | jonatanklosko/wca_statistics TS 重写 | ⚠️ 管道重写,UI 自有 |
+| WCA Stats | `/wca` | `jobs/stats-build` | jonatanklosko/wca_statistics TS 重写 | ⚠️ 管道重写,UI 自有 |
 | Score Calculator | `/calc` | client `app/[lang]/calc/` | ported from carykh/hthgrapher | ✅ |
 | 1v1 Battle | `/timer` 双人模式(旧 `/battle` 已退役,引擎在 `timer/_battle/`) | client | ported from MatteoColombo/cube_challenge_timer | ✅ |
 | Recon | `/recon` | client | 自有 | ✅ |
