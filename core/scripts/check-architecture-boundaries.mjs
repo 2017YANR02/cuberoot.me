@@ -475,7 +475,11 @@ function wildcardReplacement(key, requested) {
   return requested.slice(prefix.length, requested.length - suffix.length);
 }
 
-export function resolvePackageExport(exportsField, requested = '.', { includeTypes = false, conditions = null } = {}) {
+export function resolvePackageExport(
+  exportsField,
+  requested = '.',
+  { includeTypes = false, conditions = /** @type {string[] | null} */ (null) } = {},
+) {
   const entries = exportEntries(exportsField);
   const conditionSet = conditions ? new Set(conditions) : null;
   if (entries === null) return { status: 'invalid', key: null, targets: [], wildcard: false };
