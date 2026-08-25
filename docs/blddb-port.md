@@ -90,7 +90,7 @@
 pwsh -NoProfile -File .\sync_upstream.ps1 -Only blddb  # 拉上游 → next build 静态导出 → 拷 tools/blddb/ → 第 7 步后处理
 ```
 
-根 `_sync_blddb.ps1` 仅为已确认的仓库外旧调用保留兼容，新的人工入口统一使用 `sync_upstream.ps1`。
+人工和仓库外调用统一使用 `sync_upstream.ps1 -Only blddb`，canonical 实现在 `scripts/upstream/sync-blddb.ps1`。
 
 第 7 步 `.sync/blddb_postprocess.mjs` 干四件事,幂等:
 
@@ -171,7 +171,7 @@ pwsh -NoProfile -File .\sync_upstream.ps1 -Only blddb  # 拉上游 → next buil
 
 | 干什么 | 在哪 |
 |---|---|
-| 同步 | `scripts/upstream/sync-blddb.ps1`、`.sync/blddb_postprocess.mjs`；根 `_sync_blddb.ps1` 是兼容 shim |
+| 同步 | 根 `sync_upstream.ps1 -Only blddb`；canonical 实现为 `scripts/upstream/sync-blddb.ps1`，后处理为 `.sync/blddb_postprocess.mjs` |
 | 编码 / 取数 | `core/packages/client/app/[lang]/alg/3bld/_lib/blddb.ts` |
 | 页面 | 同目录 `lookup/`、`tables/`、`sheets/` |
 | 显示偏好 | `_store/blddb-prefs-store.ts`、`_components/BlddbOptions.tsx` |
