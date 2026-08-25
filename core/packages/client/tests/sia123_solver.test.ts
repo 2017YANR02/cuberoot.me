@@ -4,8 +4,10 @@ import {
   sia123Model, sia123ModelB, sia123SolvedVec, sia123ApplyToken, sia123IsSolved,
   sia123CenterRank,
   SIA123_CORNER_ORBIT, SIA123_CENTER_ORBIT,
-} from '@/lib/sia123-solver';
-import { buildCornerPdb, buildCenterPdb, idaSolve } from '@/lib/restricted-cube-solver';
+  sia123BuildCornerPdb as buildCornerPdb,
+  sia123BuildCenterPdb as buildCenterPdb,
+  sia123IdaSolve as idaSolve,
+} from '@cuberoot/puzzle-solvers/sia123';
 
 /*
  * sia123 — engine + geometry correctness tests (CI-SAFE: no full edge PDB build, no deep IDA* solves).

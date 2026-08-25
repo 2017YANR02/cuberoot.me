@@ -2,7 +2,7 @@
  * build_puzzle_metrics — precompute per-scramble "by move-count" metrics over the WCA-real scramble
  * corpus, so BOTH the /scramble distribution panel (难度 metric selector) and the timer's "按步数"
  * WCA filter read one static precomputed source instead of sampling live (rare ranges become instant
- * + reliable). Reuses the shipped timer solvers (lib/cube222-metric, timer/_lib/solver/pyra) verbatim
+ * + reliable). Reuses the shared puzzle solver cores verbatim
  * — no metric logic is reimplemented here.
  *
  * These solver modules compile to CJS under tsx, so they're pulled in via default-import interop
@@ -18,13 +18,13 @@
  * — the full 440k corpus takes ~1min single-process; the tables are only built when there are new
  * rows. Pyraminx solves per-scramble (~1000/s), fine for incremental deltas.
  *
- * Run: pnpm --filter @cuberoot/client exec tsx scripts/build_puzzle_metrics.mts [222|pyraminx ...]
+ * Run: pnpm --filter @cuberoot/scramble-stats-build exec tsx src/build_puzzle_metrics.mts [222|pyraminx ...]
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import cube222Mod from '../lib/cube222-metric.ts';
-import pyraMod from '../app/[lang]/timer/_lib/solver/pyra.ts';
+import * as cube222Mod from '@cuberoot/puzzle-solvers/cube222';
+import * as pyraMod from '@cuberoot/puzzle-solvers/pyra';
 
 const { create222MetricEvaluator, cube222StateFlagsOfScramble, CUBE222_STATE_TYPES } = cube222Mod as {
   create222MetricEvaluator: () => (s: string) => { face: number; layer: number; htm: number; qtm: number } | null;

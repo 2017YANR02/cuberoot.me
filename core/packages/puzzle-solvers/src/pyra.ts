@@ -24,8 +24,7 @@
  * "2" amount because 2× a 120° move equals "'".
  */
 
-import { GSolver, matches } from '@/lib/cstimer-gsolver';
-import { parseScramble } from '../cube/moves';
+import { GSolver, matches } from './cstimer-gsolver.js';
 
 // 24-char state: F R L D, 6 stickers each.
 export const SOLVED_PYRA = 'FFFFFFRRRRRRLLLLLLDDDDDD';
@@ -131,11 +130,6 @@ function parsePyraScramble(scramble: string): ParsedPyra {
       body.push(head + (prime ? "'" : ' '));
     }
   }
-  // Also accept lowercase via parseScramble's tip path? Our parseScramble
-  // skips Pyra tokens (returns empty). So the above is the source of truth.
-  // But for completeness, run parseScramble too in case the user passed
-  // something weird (it'll be a no-op for pyra strings).
-  void parseScramble;
   return { body, tips };
 }
 

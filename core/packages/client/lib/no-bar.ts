@@ -14,7 +14,7 @@
  */
 
 import { cubieToFacelet } from '@/lib/cube-facelet';
-import type { CubieCube } from '@/app/[lang]/scramble/solver/_kociemba/cube';
+import type { CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
 
 /** 面内正交相邻的 12 对下标(每面)。 */
 export const FACE_ORTHO_PAIRS: readonly [number, number][] = (() => {

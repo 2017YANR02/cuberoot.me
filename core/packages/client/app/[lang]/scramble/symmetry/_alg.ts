@@ -15,7 +15,7 @@
 
 import {
   type CubieCube, BASIC_MOVES, multiply, solvedCubie,
-} from '../solver/_kociemba/cube';
+} from '@cuberoot/puzzle-solvers/kociemba/cube';
 
 /** 面在 URFDLB 里的下标。 */
 const FACE_IDX: Record<string, number> = { U: 0, R: 1, F: 2, D: 3, L: 4, B: 5 };

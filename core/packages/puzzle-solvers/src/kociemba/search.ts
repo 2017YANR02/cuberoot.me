@@ -23,7 +23,7 @@ import {
   cloneCubie,
   invertSequence,
   type CubieCube,
-} from './cube';
+} from './cube.js';
 import {
   coTwistOf,
   eoFlipOf,
@@ -31,15 +31,15 @@ import {
   cpermOf,
   epermOf,
   spermOf,
-} from './coords';
-import type { MoveTables } from './movetables';
+} from './coords.js';
+import type { MoveTables } from './movetables.js';
 import {
   lookupTwistSlice,
   lookupFlipSlice,
   lookupCpermSperm,
   lookupEpermSperm,
   type PruneTables,
-} from './prune';
+} from './prune.js';
 
 const N_PHASE1_MOVES = 18;
 const N_PHASE2_MOVES = 10;

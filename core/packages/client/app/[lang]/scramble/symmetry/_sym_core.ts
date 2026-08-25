@@ -16,7 +16,7 @@
  */
 
 import { CORNER_FACELET, EDGE_FACELET } from '@/lib/cube-facelet';
-import type { CubieCube } from '../solver/_kociemba/cube';
+import type { CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
 
 export const N_SYM = 48;
 

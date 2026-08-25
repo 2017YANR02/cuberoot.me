@@ -10,7 +10,7 @@
  */
 import { useEffect, useState } from 'react';
 import { persistItem } from './safe-storage';
-import { CUBE222_STATE_TYPES, type Cube222StateType } from './cube222-metric';
+import { CUBE222_STATE_TYPES, type Cube222StateType } from '@cuberoot/puzzle-solvers/cube222';
 
 export type Scramble222Mode = 'wca' | 'optimal';
 

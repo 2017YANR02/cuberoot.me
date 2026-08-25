@@ -115,8 +115,11 @@ function Append-Lines($master, $src, $skipHeader){
   } finally { $sw.Close() }
 }
 
-if (-not $BuildOnly -and $RegPuzzles -contains 'clock') {
-  Step '[clock] 构建 @cuberoot/puzzle-solvers Node 产物'
+$needsPuzzleSolvers = $Sampled -or $RebuildTierB -or @($RegPuzzles | Where-Object {
+  $_ -eq 'clock' -or $_ -eq '222' -or $_ -eq 'pyraminx'
+}).Count -gt 0
+if ($needsPuzzleSolvers) {
+  Step '构建 @cuberoot/puzzle-solvers Node 产物'
   Push-Location (Join-Path $PkgDir '..\..')
   try {
     pnpm --filter @cuberoot/puzzle-solvers build
@@ -298,16 +301,16 @@ if ($Sq1Requested -and -not $BuildOnly) {
 }
 
 # ---- 2.9 「按步数」多口径度量预算 (2x2 底面/底层/魔方/QTM、金字塔 V/魔方) ----
-# client 端 build_puzzle_metrics.mts 复用计时器求解器 (lib/cube222-metric、timer/_lib/solver/pyra),
+# build_puzzle_metrics.mts 复用 @cuberoot/puzzle-solvers 的 2x2 与金字塔纯逻辑,
 # 增量补算 <key>_metrics.csv (只算 scrambles.txt 里尚未在 CSV 的新打乱)。build_puzzle_dist /
 # build_puzzle_examples 读它产多口径分布与示例。2x2 走全态查表 (3.67M 态 BFS 一次 ~10s,查 O(1)),
 # 全量 44 万条也只 ~1min;金字塔逐条求解 (~1000/s,增量 delta 秒级)。-BuildOnly 也跑 (无新打乱即 no-op)。
 $metricPuzzles = @($Puzzles | Where-Object { $_ -eq '222' -or $_ -eq 'pyraminx' })
 if ($metricPuzzles.Count -gt 0) {
   Step "按步数度量预算 build_puzzle_metrics ($($metricPuzzles -join ', '))"
-  Push-Location (Join-Path $PkgDir '..\client')
+  Push-Location $PkgDir
   try {
-    pnpm exec tsx scripts/build_puzzle_metrics.mts @metricPuzzles
+    pnpm exec tsx src/build_puzzle_metrics.mts @metricPuzzles
     if ($LASTEXITCODE -ne 0) { throw 'build_puzzle_metrics 失败' }
   } finally { Pop-Location }
 }
@@ -332,18 +335,8 @@ $evToBuild = if ($SampledEvents -and $SampledEvents.Count -gt 0) { $SampledEvent
 if (-not $Sampled) {
   Write-Host '  [采样] 非 WCA 项目 TIER C/D 离线采样分布默认停用 (用户要求; 显式 -Sampled 才跑)。' -ForegroundColor DarkGray
 } elseif ($evToBuild.Count -gt 0) {
-  Step '[采样] 构建 @cuberoot/puzzle-solvers Node 产物'
-  Push-Location (Join-Path $PkgDir '..\..')
-  try {
-    pnpm --filter @cuberoot/puzzle-solvers build
-    if ($LASTEXITCODE -ne 0) { throw '@cuberoot/puzzle-solvers build 失败' }
-  } finally { Pop-Location }
   Step "build_puzzle_sampled_dist (TIER C/D 离线采样: $($evToBuild -join ', '))"
   Push-Location $PkgDir
-  # crz3a/15p 的求解器 import client 端 `@/` 别名(kociemba 等),tsx 需指向 client tsconfig 才能解析;
-  # 对不用别名的 event(335/336/337/233/334/mpyrso/dino)无害。mpyrso/dino 走 cstimer-vm 原生引擎(不 import client lib)。
-  $prevTsconfig = $env:TSX_TSCONFIG_PATH
-  $env:TSX_TSCONFIG_PATH = (Resolve-Path (Join-Path $PkgDir '..\client\tsconfig.json')).Path
   try {
     foreach ($ev in $evToBuild) {
       $sampledArgs = @('exec', 'tsx', 'src/build_puzzle_sampled_dist.ts', $ev)
@@ -352,7 +345,7 @@ if (-not $Sampled) {
       pnpm @sampledArgs
       if ($LASTEXITCODE -ne 0) { throw "build_puzzle_sampled_dist 失败 (event=$ev)" }
     }
-  } finally { $env:TSX_TSCONFIG_PATH = $prevTsconfig; Pop-Location }
+  } finally { Pop-Location }
 }
 
 # ---- 5. TIER B 离线精确距离表 (stats/scramble/opt_<p>.bin.gz) ----

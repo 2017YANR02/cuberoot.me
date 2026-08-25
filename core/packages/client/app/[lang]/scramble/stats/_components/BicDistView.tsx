@@ -1,7 +1,7 @@
 'use client';
 
 // Bicube(联体魔方)整解最优步数分布 —— 理论全空间(全 1,108,800 态,精确枚举,非抽样)。
-// 分布数据 = lib/bicube-solver 的 BIC_DIST_HISTOGRAM(与求解器页同一份精确直方图,由整图 BFS 锁定;
+// 分布数据 = @cuberoot/puzzle-solvers/bicube 的 BIC_DIST_HISTOGRAM(与求解器页同一份精确直方图,由整图 BFS 锁定;
 // 这是烘焙常量,进页即画,不触发任何 BFS / 表加载)。
 // 示例 / 下载用 TIER B 离线精确距离表:进页后 loadBicTable() 一次(fetch ~1.8MB opt_bic.bin.gz + inflate
 // → 常驻 ~10MB 类型化数组),再从表枚举每档真实状态、梯度下降反推最短打乱(Bicube 不是 WCA 项目,无比赛
@@ -12,11 +12,12 @@ import { Download } from 'lucide-react';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
+import { loadBicTable } from '@/lib/bicube-solver';
 import {
   BIC_DIST_HISTOGRAM,
-  loadBicTable, bicExamplesByLengthFromTable, streamBicScramblesFromTable, bicScramblesForLengthFromTable,
+  bicExamplesByLengthFromTable, streamBicScramblesFromTable, bicScramblesForLengthFromTable,
   type BicTable,
-} from '@/lib/bicube-solver';
+} from '@cuberoot/puzzle-solvers/bicube';
 import { tr } from '@/i18n/tr';
 
 const BIC_COLOR = '#8338ec'; // 联体异形紫(数据色,非 UI 灰阶)

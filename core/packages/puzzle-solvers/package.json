@@ -6,10 +6,14 @@
   "cuberoot": {
     "kind": "library",
     "runtime": {
+      "./bicube": "runtime-neutral",
       "./bsq": "runtime-neutral",
       "./cm3": "runtime-neutral",
       "./clock": "runtime-neutral",
+      "./crz3a": "runtime-neutral",
       "./ctico": "runtime-neutral",
+      "./cstimer-gsolver": "runtime-neutral",
+      "./cube222": "runtime-neutral",
       "./cuboid233": "runtime-neutral",
       "./cuboid334": "runtime-neutral",
       "./cuboid335": "runtime-neutral",
@@ -17,6 +21,15 @@
       "./cuboid337": "runtime-neutral",
       "./heli": "runtime-neutral",
       "./helicv": "runtime-neutral",
+      "./kociemba/cube": "runtime-neutral",
+      "./kociemba/coords": "runtime-neutral",
+      "./kociemba/movetables": "runtime-neutral",
+      "./kociemba/prune": "runtime-neutral",
+      "./kociemba/randomstate": "runtime-neutral",
+      "./kociemba/search": "runtime-neutral",
+      "./pyra": "runtime-neutral",
+      "./sia123": "runtime-neutral",
+      "./sia222": "runtime-neutral",
       "./ssq1": "runtime-neutral",
       "./sq2": "runtime-neutral",
       "./stm": "runtime-neutral",
@@ -25,6 +38,11 @@
   },
   "sideEffects": false,
   "exports": {
+    "./bicube": {
+      "types": "./src/bicube.ts",
+      "node": "./dist/bicube.js",
+      "default": "./src/bicube.ts"
+    },
     "./bsq": {
       "types": "./src/bsq.ts",
       "node": "./dist/bsq.js",
@@ -40,10 +58,25 @@
       "node": "./dist/clock.js",
       "default": "./src/clock.ts"
     },
+    "./crz3a": {
+      "types": "./src/crz3a.ts",
+      "node": "./dist/crz3a.js",
+      "default": "./src/crz3a.ts"
+    },
     "./ctico": {
       "types": "./src/ctico.ts",
       "node": "./dist/ctico.js",
       "default": "./src/ctico.ts"
+    },
+    "./cstimer-gsolver": {
+      "types": "./src/cstimer-gsolver.ts",
+      "node": "./dist/cstimer-gsolver.js",
+      "default": "./src/cstimer-gsolver.ts"
+    },
+    "./cube222": {
+      "types": "./src/cube222.ts",
+      "node": "./dist/cube222.js",
+      "default": "./src/cube222.ts"
     },
     "./cuboid233": {
       "types": "./src/cuboid233.ts",
@@ -79,6 +112,51 @@
       "types": "./src/helicv.ts",
       "node": "./dist/helicv.js",
       "default": "./src/helicv.ts"
+    },
+    "./kociemba/cube": {
+      "types": "./src/kociemba/cube.ts",
+      "node": "./dist/kociemba/cube.js",
+      "default": "./src/kociemba/cube.ts"
+    },
+    "./kociemba/coords": {
+      "types": "./src/kociemba/coords.ts",
+      "node": "./dist/kociemba/coords.js",
+      "default": "./src/kociemba/coords.ts"
+    },
+    "./kociemba/movetables": {
+      "types": "./src/kociemba/movetables.ts",
+      "node": "./dist/kociemba/movetables.js",
+      "default": "./src/kociemba/movetables.ts"
+    },
+    "./kociemba/prune": {
+      "types": "./src/kociemba/prune.ts",
+      "node": "./dist/kociemba/prune.js",
+      "default": "./src/kociemba/prune.ts"
+    },
+    "./kociemba/randomstate": {
+      "types": "./src/kociemba/randomstate.ts",
+      "node": "./dist/kociemba/randomstate.js",
+      "default": "./src/kociemba/randomstate.ts"
+    },
+    "./kociemba/search": {
+      "types": "./src/kociemba/search.ts",
+      "node": "./dist/kociemba/search.js",
+      "default": "./src/kociemba/search.ts"
+    },
+    "./pyra": {
+      "types": "./src/pyra.ts",
+      "node": "./dist/pyra.js",
+      "default": "./src/pyra.ts"
+    },
+    "./sia123": {
+      "types": "./src/sia123.ts",
+      "node": "./dist/sia123.js",
+      "default": "./src/sia123.ts"
+    },
+    "./sia222": {
+      "types": "./src/sia222.ts",
+      "node": "./dist/sia222.js",
+      "default": "./src/sia222.ts"
     },
     "./ssq1": {
       "types": "./src/ssq1.ts",

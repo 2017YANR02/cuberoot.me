@@ -15,7 +15,7 @@ import {
   type PocketFace,
 } from '@/lib/pocket-facelet';
 import { CORNER_FACELET } from '@/lib/cube-facelet';
-import { cube222MetricOfScramble, _test as m222 } from '@/lib/cube222-metric';
+import { cube222MetricOfScramble, _test as m222 } from '@cuberoot/puzzle-solvers/cube222';
 import { optimalPocketScramble } from '@/lib/pocket-scramble';
 
 function rng(seed: number): () => number {
