@@ -422,7 +422,7 @@ describe('mini program authentication', () => {
     vi.stubGlobal('wx', { login });
     const timer = vi.spyOn(globalThis, 'setTimeout').mockImplementation((callback) => {
       if (typeof callback === 'function') callback();
-      return 1 as ReturnType<typeof setTimeout>;
+      return 1 as unknown as ReturnType<typeof setTimeout>;
     });
 
     try {
