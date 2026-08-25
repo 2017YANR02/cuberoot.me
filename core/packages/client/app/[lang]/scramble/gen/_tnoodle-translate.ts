@@ -1,8 +1,8 @@
 // TNoodle-style translation lookup + locale metadata.
 // Mirrors tnoodle's `Translate(key, locale, substitutions)` and Font.fontForLocale().
 //
-// Translation data is generated from upstream tnoodle YAMLs by
-// `scripts/build_tnoodle_i18n.mjs`. See `tnoodle_i18n.ts`.
+// Translation data is generated from upstream TNoodle YAMLs by
+// `core/packages/client/scripts/build-tnoodle-i18n.mjs`. See `_tnoodle-i18n.ts`.
 
 import { TNOODLE_I18N, TNOODLE_LOCALES, type TnoodleLocale, type TnoodleTranslations } from './_tnoodle-i18n';
 

@@ -322,6 +322,7 @@ function New-FixtureRepo
         (Join-Path $fixtureRoot 'core'),
         (Join-Path $fixtureRoot 'core\packages\client\public'),
         (Join-Path $fixtureRoot 'tools'),
+        (Join-Path $fixtureRoot 'docs'),
         (Join-Path $fixtureRoot 'ops'),
         (Join-Path $fixtureRoot 'ops\contests'),
         $arbitraryCwd,
@@ -332,6 +333,7 @@ function New-FixtureRepo
     }
 
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'core\pnpm-workspace.yaml') -Destination (Join-Path $fixtureRoot 'core\pnpm-workspace.yaml')
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'docs\generated-artifacts.json') -Destination (Join-Path $fixtureRoot 'docs\generated-artifacts.json')
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.sync') -Destination (Join-Path $fixtureRoot '.sync') -Recurse
     $upstreamScripts = Join-Path $RepoRoot 'scripts\upstream'
     if (Test-Path -LiteralPath $upstreamScripts -PathType Container)
@@ -671,6 +673,171 @@ function Assert-GitStashGuard
     Assert-True ($stashCommits -contains $guardedStash) '拒绝 pop 后必须保留本轮 stash。'
 }
 
+function Assert-UpstreamVersionRecordContract
+{
+    param([pscustomobject]$Fixture)
+
+    . (Join-Path $Fixture.Root '.sync\sync_utils.ps1')
+
+    $sourceRepo = Join-Path $Fixture.External 'version-source'
+    New-Item -ItemType Directory -Path $sourceRepo -Force | Out-Null
+    Invoke-TestGit -WorkingDirectory $sourceRepo -Arguments @('init', '--quiet')
+    Invoke-TestGit -WorkingDirectory $sourceRepo -Arguments @('config', 'user.name', 'CubeRoot Contract Test')
+    Invoke-TestGit -WorkingDirectory $sourceRepo -Arguments @('config', 'user.email', 'contract-test@invalid.example')
+    Set-Content -LiteralPath (Join-Path $sourceRepo 'fixture.txt') -Value 'upstream fixture' -NoNewline
+    Invoke-TestGit -WorkingDirectory $sourceRepo -Arguments @('add', 'fixture.txt')
+    Invoke-TestGit -WorkingDirectory $sourceRepo -Arguments @('commit', '--quiet', '-m', 'fixture upstream')
+    Invoke-TestGit -WorkingDirectory $sourceRepo -Arguments @(
+        'remote', 'add', 'origin', 'https://github.com/cs0x7f/cstimer.git'
+    )
+
+    $ledgerPath = Join-Path $Fixture.Root 'docs\generated-artifacts.json'
+    $originalLedger = Get-Content -LiteralPath $ledgerPath -Raw
+    $ledger = $originalLedger | ConvertFrom-Json
+    $artifact = @($ledger.artifacts | Where-Object { $_.id -eq 'tools.cstimer' })
+    Assert-True ($artifact.Count -eq 1) '版本记录 fixture 必须只有一个 tools.cstimer 条目。'
+
+    Write-UpstreamVersionRecord -RepoRoot $Fixture.Root -ArtifactId 'tools.cstimer' -WorkingDirectory $sourceRepo
+    $recordPath = Join-Path $Fixture.Root $artifact[0].versionRecord.path
+    Assert-True (Test-Path -LiteralPath $recordPath -PathType Leaf) '版本记录 writer 没有写入 ledger 指定路径。'
+    $record = Get-Content -LiteralPath $recordPath -Raw
+    $sha = Get-TestGitText -WorkingDirectory $sourceRepo -Arguments @('rev-parse', '--verify', 'HEAD')
+    $date = Get-TestGitText -WorkingDirectory $sourceRepo -Arguments @('show', '-s', '--format=%cI', 'HEAD')
+    Assert-True ($record.StartsWith('# Generated from docs/generated-artifacts.json. Do not edit.')) '版本记录缺少结构化生成头。'
+    Assert-True ($record.Contains("Artifact: tools.cstimer")) '版本记录缺少 artifact id。'
+    Assert-True ($record.Contains("Source: https://github.com/cs0x7f/cstimer")) '版本记录没有使用 ledger source。'
+    Assert-True ($record.Contains("Ref: branch master")) '版本记录没有使用 ledger ref。'
+    Assert-True ($record.Contains("Commit: $sha")) '版本记录没有使用真实 40 位 HEAD。'
+    Assert-True ($record.Contains("Date: $date")) '版本记录没有使用真实 commit 日期。'
+    Assert-True ($record.Contains("License: GPL-3.0-only")) '版本记录没有使用 ledger license。'
+    Assert-True (-not $record.Contains("`r")) '版本记录必须保持 LF。'
+
+    $artifact[0].versionRecord.format = 'sha40'
+    [System.IO.File]::WriteAllText(
+        $ledgerPath,
+        (($ledger | ConvertTo-Json -Depth 100) -replace "`r`n", "`n") + "`n",
+        [System.Text.UTF8Encoding]::new($false)
+    )
+    $formatRejected = $false
+    try
+    {
+        Write-UpstreamVersionRecord -RepoRoot $Fixture.Root -ArtifactId 'tools.cstimer' -WorkingDirectory $sourceRepo
+    }
+    catch
+    {
+        $formatRejected = $_.Exception.Message -match 'structured-v1'
+    }
+    Assert-True $formatRejected '版本记录 writer 必须拒绝非 structured-v1 ledger 配置。'
+
+    $ledger = $originalLedger | ConvertFrom-Json
+    $artifact = @($ledger.artifacts | Where-Object { $_.id -eq 'tools.cstimer' })
+    $artifact[0].versionRecord.path = '../escaped-version.txt'
+    [System.IO.File]::WriteAllText(
+        $ledgerPath,
+        (($ledger | ConvertTo-Json -Depth 100) -replace "`r`n", "`n") + "`n",
+        [System.Text.UTF8Encoding]::new($false)
+    )
+    $escapedPath = [System.IO.Path]::GetFullPath((Join-Path $Fixture.Root '../escaped-version.txt'))
+    $pathRejected = $false
+    try
+    {
+        Write-UpstreamVersionRecord -RepoRoot $Fixture.Root -ArtifactId 'tools.cstimer' -WorkingDirectory $sourceRepo
+    }
+    catch
+    {
+        $pathRejected = $_.Exception.Message -match '越出仓库'
+    }
+    Assert-True $pathRejected '版本记录 writer 必须拒绝越出仓库的相对路径。'
+    Assert-True (-not (Test-Path -LiteralPath $escapedPath)) '版本记录路径拒绝后不得在仓库外落盘。'
+}
+
+function Assert-VersionRecordWriterPlacement
+{
+    $specs = @(
+        [pscustomobject]@{ File = 'sync-cstimer.ps1'; Artifact = 'tools.cstimer' }
+        [pscustomobject]@{ File = 'sync-cstimer-scramble.ps1'; Artifact = 'tools.cstimer-scramble' }
+        [pscustomobject]@{ File = 'sync-rubiks-solver-demo.ps1'; Artifact = 'tools.rubiks-solver-demo' }
+        [pscustomobject]@{ File = 'sync-alg-trainers.ps1'; Artifact = 'tools.alg-trainers' }
+        [pscustomobject]@{ File = 'sync-blddb.ps1'; Artifact = 'tools.blddb' }
+    )
+
+    foreach ($spec in $specs)
+    {
+        $path = Join-Path $RepoRoot "scripts/upstream/$($spec.File)"
+        $ast = Get-ScriptAst -Path $path
+        $writers = @($ast.FindAll({
+            param($node)
+            $node -is [System.Management.Automation.Language.CommandAst] -and
+                $node.GetCommandName() -eq 'Write-UpstreamVersionRecord'
+        }, $true))
+        Assert-True ($writers.Count -eq 1) "$($spec.File) 必须且只能推进一次版本记录。"
+        Assert-True ($writers[0].Extent.Text.Contains("'$($spec.Artifact)'")) "$($spec.File) 写入了错误的 artifact id。"
+    }
+
+    $cstimerPath = Join-Path $RepoRoot 'scripts/upstream/sync-cstimer.ps1'
+    $cstimerAst = Get-ScriptAst -Path $cstimerPath
+    $langGuards = @($cstimerAst.FindAll({
+        param($node)
+        $node -is [System.Management.Automation.Language.IfStatementAst] -and
+            $node.Clauses.Count -eq 1 -and
+            $node.Clauses[0].Item1.Extent.Text -match '\$html\.Contains\(\$anchor\)'
+    }, $true))
+    Assert-True ($langGuards.Count -eq 1) 'csTimer 必须有唯一 LANG_CUR 注入成功门禁。'
+    $langThrows = @($langGuards[0].ElseClause.FindAll({
+        param($node)
+        $node -is [System.Management.Automation.Language.ThrowStatementAst]
+    }, $true))
+    Assert-True ($langThrows.Count -gt 0) 'csTimer 缺少 LANG_CUR 锚点时必须 throw。'
+    $cstimerWriter = @($cstimerAst.FindAll({
+        param($node)
+        $node -is [System.Management.Automation.Language.CommandAst] -and
+            $node.GetCommandName() -eq 'Write-UpstreamVersionRecord'
+    }, $true))[0]
+    Assert-True ($cstimerWriter.Extent.StartOffset -gt $langGuards[0].Extent.EndOffset) 'csTimer 必须在 LANG_CUR 补丁成功后才推进版本记录。'
+
+    $scramblePath = Join-Path $RepoRoot 'scripts/upstream/sync-cstimer-scramble.ps1'
+    $scrambleAst = Get-ScriptAst -Path $scramblePath
+    $exportGuards = @($scrambleAst.FindAll({
+        param($node)
+        $node -is [System.Management.Automation.Language.IfStatementAst] -and
+            $node.Clauses.Count -eq 1 -and
+            $node.Clauses[0].Item1.Extent.Text -match '\$missing\.Count\s+-gt\s+0'
+    }, $true))
+    Assert-True ($exportGuards.Count -eq 1) 'csTimer scramble 必须有唯一自加导出完整性门禁。'
+    $scrambleWriter = @($scrambleAst.FindAll({
+        param($node)
+        $node -is [System.Management.Automation.Language.CommandAst] -and
+            $node.GetCommandName() -eq 'Write-UpstreamVersionRecord'
+    }, $true))[0]
+    Assert-True ($scrambleWriter.Extent.StartOffset -gt $exportGuards[0].Extent.EndOffset) 'csTimer scramble 必须在自加导出通过后才推进版本记录。'
+
+    foreach ($file in @('sync-rubiks-solver-demo.ps1', 'sync-alg-trainers.ps1'))
+    {
+        $path = Join-Path $RepoRoot "scripts/upstream/$file"
+        $ast = Get-ScriptAst -Path $path
+        $dryRunGuards = @($ast.FindAll({
+            param($node)
+            $node -is [System.Management.Automation.Language.IfStatementAst] -and
+                $node.Clauses.Count -eq 1 -and
+                $node.Clauses[0].Item1.Extent.Text -match '^\s*\$DryRun\s*$' -and
+                $null -ne $node.ElseClause
+        }, $true))
+        Assert-True ($dryRunGuards.Count -eq 1) "$file 必须有唯一 DryRun/真实写入终态分支。"
+        $elseWriters = @($dryRunGuards[0].ElseClause.FindAll({
+            param($node)
+            $node -is [System.Management.Automation.Language.CommandAst] -and
+                $node.GetCommandName() -eq 'Write-UpstreamVersionRecord'
+        }, $true))
+        Assert-True ($elseWriters.Count -eq 1) "$file 只能在非 DryRun 分支推进版本记录。"
+    }
+
+    $blddbPath = Join-Path $RepoRoot 'scripts/upstream/sync-blddb.ps1'
+    $blddbSource = Get-Content -LiteralPath $blddbPath -Raw
+    $postprocessOffset = $blddbSource.LastIndexOf('blddb_postprocess.mjs', [System.StringComparison]::Ordinal)
+    $writerOffset = $blddbSource.IndexOf('Write-UpstreamVersionRecord', [System.StringComparison]::Ordinal)
+    Assert-True ($postprocessOffset -ge 0 -and $writerOffset -gt $postprocessOffset) 'BLDDB 必须在后处理成功后才推进版本记录。'
+}
+
 try
 {
     Assert-RepositoryTopology
@@ -684,8 +851,10 @@ try
     }
 
     Assert-GitStashGuard
+    Assert-VersionRecordWriterPlacement
 
     $fixture = New-FixtureRepo
+    Assert-UpstreamVersionRecordContract -Fixture $fixture
     $alternateFixture = New-FixtureRepo
     foreach ($contract in $contracts)
     {

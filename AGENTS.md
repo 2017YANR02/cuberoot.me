@@ -21,7 +21,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | `tools/` / `stats/` | `static.cuberoot.me` 服务的混合 upstream/static 树与已提交数据生成物，本轮不迁仓 |
 | `ops/` / `docs/` / `.github/workflows` | 运维、状态/设计记录和 CI/部署契约 |
 
-事实源按优先级核对：`core/pnpm-workspace.yaml` 与各 `package.json` 定义 workspace/命令；源码路由、shared schema 和 migration 定义运行契约；`.github/workflows` 与 `ops/` 定义发布边界；`docs/generated-artifacts.md` 定义生成物；`docs/architecture-modernization-tracker.md` 是架构执行入口。
+事实源按优先级核对：`core/pnpm-workspace.yaml` 与各 `package.json` 定义 workspace/命令；源码路由、shared schema 和 migration 定义运行契约；`.github/workflows` 与 `ops/` 定义发布边界；`docs/generated-artifacts.json` 定义生成物，`docs/generated-artifacts.md` 解释维护方式；`docs/architecture-modernization-tracker.md` 是架构执行入口。
 
 新代码归属：页面和平台适配留在所属 app；稳定、运行时中性且有真实多端消费者的契约/纯逻辑才进共享 package；只因两份文件相似不拆 package。
 
