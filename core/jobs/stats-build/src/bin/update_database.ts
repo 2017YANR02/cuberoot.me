@@ -324,8 +324,7 @@ async function postImport(exportTimestamp: Date): Promise<void> {
 
 async function main() {
   // NOTE: 确保 database.yml 存在（位于 stats-build/ 包根目录）
-  const repoRoot = resolve(__dirname, '../../../../..');
-  const statsPackageDir = resolve(repoRoot, 'core/packages/stats-build');
+  const statsPackageDir = resolve(__dirname, '../..');
   const templatePath = resolve(statsPackageDir, 'database.yml.example');
   const configDest = resolve(statsPackageDir, 'database.yml');
   if (existsSync(templatePath) && !existsSync(configDest)) {

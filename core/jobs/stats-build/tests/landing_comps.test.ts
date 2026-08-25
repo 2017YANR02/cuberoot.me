@@ -3,7 +3,7 @@ import {
   buildLandingPastComps,
   LANDING_HISTORY_DAYS,
   type LandingCompRecord,
-} from '../../stats-build/src/landing_comps';
+} from '../src/landing_comps';
 
 const NOW = Date.UTC(2026, 7, 13, 12);
 const comp = (id: string, start: string, end = start, extra: Record<string, unknown> = {}): LandingCompRecord => ({

@@ -121,7 +121,7 @@
     },
     {
       "id": "stats-build-root-artifacts",
-      "from": "packages/stats-build",
+      "from": "jobs/stats-build",
       "to": "repo stats and deployed PostgreSQL derived tables",
       "phase": "generated-artifact",
       "mechanism": "JSON/TSV generation, workflow upload and database load",
@@ -129,13 +129,13 @@
       "rationale": "The daily job publishes static JSON and separately loads derived database tables.",
       "replacement": "Preserve builder, upload and load manifests as one reviewed contract; use the existing pipeline dry-run guard for changes.",
       "evidence": [
-        { "file": "core/packages/stats-build/src/bin/compute.ts", "contains": "const outputPath = resolve(outputDir, `${statId}.json`)" },
+        { "file": "core/jobs/stats-build/src/bin/compute.ts", "contains": "const outputPath = resolve(outputDir, `${statId}.json`)" },
         { "file": ".github/workflows/stats.yml", "contains": "historical_ranks_snapshot.copy.tsv" }
       ]
     },
     {
       "id": "nemesizer-generated-runtime-artifacts",
-      "from": "packages/stats-build nemesizer job",
+      "from": "jobs/stats-build nemesizer job",
       "to": "repo stats/nemesizer and packages/server runtime loader",
       "phase": "generated-artifact",
       "mechanism": "workflow-generated binary files consumed through NEMESIZER_DATA_DIR",
@@ -143,7 +143,7 @@
       "rationale": "The producer writes compressed binary datasets outside core, while the API reads the deployed artifact directory at runtime.",
       "replacement": "Keep producer, workflow publication and server loader paths as one versioned artifact contract with parity fixtures.",
       "evidence": [
-        { "file": "core/packages/stats-build/src/bin/nemesizer.ts", "contains": "const OUTPUT_DIR = resolve(__dirname, '../../../../../stats/nemesizer')" },
+        { "file": "core/jobs/stats-build/src/bin/nemesizer.ts", "contains": "const OUTPUT_DIR = resolve(__dirname, '../../../../../stats/nemesizer')" },
         { "file": ".github/workflows/stats.yml", "contains": "Generate nemesizer dataset" },
         { "file": ".github/workflows/stats.yml", "contains": "git add -A stats/" },
         { "file": ".github/workflows/stats.yml", "contains": "gh workflow run sync_toolkit.yml" },
@@ -180,6 +180,20 @@
       "evidence": [
         { "file": "core/packages/client/tests/account_delete.test.ts", "contains": "from '../../server/src/utils/account_delete';" },
         { "file": "core/packages/client/tests/alg_3x3_wide_notation.test.ts", "contains": "../../server/src/db/schema.pg.sql" }
+      ]
+    },
+    {
+      "id": "client-stats-build-contract-tests",
+      "from": "packages/client tests",
+      "to": "jobs/stats-build source generators",
+      "phase": "test-contract",
+      "mechanism": "workspace package resolution plus direct source reads",
+      "owner": "client tests and stats-build",
+      "rationale": "The Web H2H regression verifies that both competition JSON generators retain official head-to-head format data.",
+      "replacement": "Keep the source reads package-location independent; extract a neutral fixture only if another consumer needs the same contract.",
+      "evidence": [
+        { "file": "core/packages/client/tests/wca_comp_h2h_filter.test.ts", "contains": "workspaceFixturePath('@cuberoot/stats-build'" },
+        { "file": ".github/workflows/test.yml", "contains": "pnpm --filter @cuberoot/stats-build test" }
       ]
     },
     {
@@ -1973,15 +1987,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/tests/landing_comps.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../stats-build/src/landing_comps",
-      "rule": "cross-package-relative-module",
-      "target": "stats-build"
-    },
-    {
       "file": "packages/client/tests/ll_optimal_dist.test.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
@@ -2291,15 +2296,6 @@
       "target": "server"
     },
     {
-      "file": "packages/client/tests/tied_podium_results.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../stats-build/src/statistics/tied_podium_results_core",
-      "rule": "cross-package-relative-module",
-      "target": "stats-build"
-    },
-    {
       "file": "packages/client/tests/timer_presence.test.ts",
       "importKind": "runtime",
       "mechanism": "static-import",
@@ -2378,22 +2374,6 @@
       "sourceKind": "test",
       "specifier": "../../shared/src/api/comps_json.ts",
       "target": "shared"
-    },
-    {
-      "file": "packages/client/tests/wca_comp_h2h_filter.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../stats-build/src/bin/fetch_upcoming_comps.ts",
-      "target": "stats-build"
-    },
-    {
-      "file": "packages/client/tests/wca_comp_h2h_filter.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../stats-build/src/bin/gen_all_comps.ts",
-      "target": "stats-build"
     },
     {
       "file": "packages/client/tests/wca_link_onboarding.test.ts",

@@ -8,7 +8,7 @@
  *   - ssh root@cuberoot 免密
  *
  * 跑法:
- *   cd core/packages/stats-build
+ *   cd core/jobs/stats-build
  *   npx tsx src/bin/seed_comp_dump_state.ts
  *
  * 之后首次 dump_comps 跑只会 redump "本地 bootstrap 后 WCA 改过" 的比赛(小数量)。

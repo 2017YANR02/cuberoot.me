@@ -11,10 +11,10 @@
       "kind": "checked-in-generated",
       "source": {
         "locator": "WCA developer export plus the stats-build source tree",
-        "paths": ["core/packages/stats-build/src/**"]
+        "paths": ["core/jobs/stats-build/src/**"]
       },
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and the upstream terms of the WCA developer export" },
-      "owner": ["core/packages/stats-build", ".github/workflows/stats.yml"],
+      "owner": ["core/jobs/stats-build", ".github/workflows/stats.yml"],
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/stats-build compute <stat-id>; run the complete compute_all.ts, transfer, and load sequence only through .github/workflows/stats.yml",
       "outputs": [
@@ -32,8 +32,8 @@
         "stats/world_bests.json"
       ],
       "transientOutputs": [
-        "core/packages/stats-build/output/**/*.tsv",
-        "core/packages/stats-build/output/**/load.sql"
+        "core/jobs/stats-build/output/**/*.tsv",
+        "core/jobs/stats-build/output/**/load.sql"
       ],
       "verification": [
         ".github/workflows/stats.yml generation and validation steps",

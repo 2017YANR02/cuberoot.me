@@ -9,15 +9,15 @@
 | 数据目录 | `E:\mysql_data\` |
 | 数据库 | `wca_developer_database`（121 张表） |
 | Dump 文件 | `E:\mysql_data\wca-developer-database-dump.sql` |
-| 连接凭据 | `core/packages/stats-build/database.yml`（已在 `.gitignore`） |
+| 连接凭据 | `core/jobs/stats-build/database.yml`（已在 `.gitignore`） |
 
-**统计管线只用到 12 张表**，列定义见 [`MIGRATION_PLAN.md`](../core/packages/stats-build/MIGRATION_PLAN.md)。
+**统计管线只用到 12 张表**，清单见 [`database.ts`](../core/jobs/stats-build/src/core/database.ts) 的 `REQUIRED_TABLES`。
 
 ### 导入数据库
 
 ```powershell
 # TypeScript 版一键导入（下载 + 解压 + 过滤导入 + 建索引）
-npx tsx core/packages/stats-build/src/bin/update_database.ts
+npx tsx core/jobs/stats-build/src/bin/update_database.ts
 ```
 
 > **关键优化**：`innodb_flush_log_at_trx_commit = 0` 导入（9 小时 → ~10 分钟），完毕后自动恢复为 1。

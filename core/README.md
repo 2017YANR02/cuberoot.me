@@ -14,11 +14,11 @@ core/packages/
 ├── mobile/         # React + Capacitor Android app，未来增加 iOS target
 ├── miniprogram/     # 微信小程序独立运行时
 ├── shared/         # 共享类型与通用数据
-├── visualcube/     # 自有 NxN SVG 渲染器
-└── stats-build/    # 待后续批次迁移的 WCA 统计 job
+└── visualcube/     # 自有 NxN SVG 渲染器
 
 core/jobs/
 ├── alg-build/      # 公式数据与 SQL 生成 job
+├── stats-build/    # WCA 统计与数据库装载 job
 └── wb-build/       # 非官方世界最好成绩数据 job
 ```
 

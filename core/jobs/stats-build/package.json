@@ -12,7 +12,8 @@
     "nemesizer": "tsx src/bin/nemesizer.ts",
     "gen-persons-search": "tsx src/bin/gen_persons_search.ts",
     "build:scramble-lengths": "tsx src/bin/build_scramble_lengths.ts",
-    "typecheck": "tsgo --noEmit"
+    "typecheck": "tsgo --noEmit",
+    "test": "vitest run tests"
   },
   "dependencies": {
     "@cuberoot/shared": "workspace:*",
@@ -23,6 +24,7 @@
     "@types/node": "^25.5.0",
     "@typescript/native-preview": "7.0.0-dev.20260517.1",
     "tsx": "^4.19.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.6"
   }
 }

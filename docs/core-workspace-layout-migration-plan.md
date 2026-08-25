@@ -2,7 +2,7 @@
 
 最后更新：2026-08-25
 
-状态：`实施中`。仓库所有者已于 2026-08-25 明确授权开始；LAY2-01 双布局基础、LAY2-02 双路径发布合同、LAY2-03 `wb-build` 与 LAY2-04 `alg-build` 移动已完成，尚未移动任何 app 源码目录。
+状态：`实施中`。仓库所有者已于 2026-08-25 明确授权开始；LAY2-01 至 LAY2-05 已完成，`wb-build`、`alg-build` 与 `stats-build` 已移至 `core/jobs`，尚未移动任何 app 源码目录。
 
 主执行入口：[架构现代化跟踪](./architecture-modernization-tracker.md)。
 
@@ -109,7 +109,7 @@ LAY2-02 实测配置快照：仓外 Web 项目当前 Root Directory 为 `core/pa
 
 LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为 manifest 身份；其他只服务具体 app/job 的本地钩子仍按旧物理路径工作。它们不是 LAY2-02 发布合同的一部分，但必须在对应单元移动前统一改用 resolver 或旧新双候选，禁止搬完后静默失明。
 
-当前 legacy baseline 也把 file/target 写成路径。迁移前必须用 old→new 映射证明现有 313 个 identity、329 个 occurrence 和 13 个 manual contract 在语义上相同或递减，不能用一次盲目的 snapshot 把漏检或新增债务合法化。
+初始 legacy baseline 为 313 个 identity、329 个 occurrence 和 13 个 manual contract；完成前三个 job 移动后为 303/319/14，新合同显式登记 Web H2H 测试读取 stats job 源码的边。每批必须用 old→new 映射证明语义上相同或递减，不能用一次盲目的 snapshot 把漏检或新增债务合法化。
 
 迁移后的机器约束：
 
@@ -158,7 +158,7 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 | LAY2-02 | 双路径发布合同 | workflow、path-contract 和仓外构建配置先接受旧/新路径，不移动 app | `完成` | Web/API/stats 旧新路径与 resolver 均进入触发矩阵；执行路径按 package identity 解析；仓外 Web 旧值、目标值和回切时机已记录 |
 | LAY2-03 | `wb-build` | 移至 `jobs/wb-build` | `完成` | package 唯一解析、5 个源码文件完整 rename、输出路径静态确认、边界和生成物归属检查通过；未运行联网抓取 |
 | LAY2-04 | `alg-build` | 移至 `jobs/alg-build` | `完成` | 52 个 tracked 文件完整 rename；package 名与 job 身份不变；API migration 输出和客户端 fixture 统一按 package 名解析；清册、lockfile 和活动文档同步；未运行生成器、数据库、测试或 build |
-| LAY2-05 | `stats-build` | 移至 `jobs/stats-build` | `已授权，待前置` | build/upload/load 三段合同一致，不重算正式统计 |
+| LAY2-05 | `stats-build` | 移至 `jobs/stats-build` | `完成` | 144 个原 job 文件完整移动，两个 producer 测试归位并接入 Test workflow；Web H2H 读取登记显式合同，package resolver、lockfile、生成物清册和活动文档同步，build/upload/load 静态合同保持一致；边界为 303/319/14，未在本地运行统计、数据库、测试或 build |
 | LAY2-06 | solver 边界与 `scramble-stats-build` | 先消除 Web 私有 solver import，再移至 jobs | `已授权，待前置` | job 只依赖公开 package，最小 fixture/dry run 通过 |
 | LAY2-07 | Miniprogram | 移至 `apps/miniprogram` | `已授权，待前置` | 独立构建、shared 合同、Web 路由合同通过，无 React DOM 依赖 |
 | LAY2-08 | 资产边界与 Mobile | 先提取图标生成入口，再移至 `apps/mobile` | `已授权，待前置` | typecheck/build、Android 资产和原生路径通过 |
@@ -253,5 +253,6 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 | 2026-08-25 | LAY2-02 workflow、stats 与发布合同复审 | `GO：可进入首个 job 移动` | 已采纳：统一 resolver fail closed；Web/API/stats 双路径 filter；resolver 变化触发对应生产 workflow；定时/手动 workflow 工作目录去物理路径；Web 仓外 Root Directory 随 LAY2-10 原子切换 |
 | 2026-08-25 | LAY2-03 `wb-build` 移动复审 | `GO：首个 job 移动闭环` | 已采纳：5 个源码文件完整 rename；package 名与 job 身份不变；lockfile importer、生成物 owner 和客户端镜像注释同步；静态确认输出仍为仓库 `stats/world_bests.json`，未运行联网抓取或覆盖正式数据 |
 | 2026-08-25 | LAY2-04 `alg-build` 移动复审 | `GO：第二个 job 移动闭环` | 初审发现的显式 migration 输出受 package cwd 影响和边界基线计数漂移已修复；5 个 generator 统一按 `@cuberoot/server` 解析输出，fixture 按 `@cuberoot/alg-build` 解析，未运行生成器、数据库、测试或 build |
+| 2026-08-25 | LAY2-05 `stats-build` 移动复审 | `GO：第三个 job 移动闭环` | 初审发现的脚本硬编码、lockfile、忽略项、生成物清册和活动文档路径已修复；终审发现的 producer 测试 CI 覆盖与 Web→stats test-contract 缺口也已关闭，最终无 blocker/major |
 
 这里的 `HOLD` 只否决“一步到位执行”，不否决渐进方案。未解决的 blocker 必须成为对应批次的前置门槛，不能靠口头承诺跳过。
