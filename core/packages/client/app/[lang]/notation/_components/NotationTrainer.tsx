@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import type { AlgPlayerPuzzle } from '@/components/AlgPlayer/player-setup';
 import type { MoveNotationOption } from '@/components/MoveNotationDemo/MoveNotationDemo';
+import TrainingFeedbackOverlay, { type TrainingFeedbackKind } from '@/components/TrainingFeedbackOverlay';
 import { useT } from '@/hooks/useT';
 import { formatAlgNotation, formatCubeMoveDescription, type AlgNotationStyle } from '@/lib/alg-notation-display';
 
@@ -95,6 +96,7 @@ export default function NotationTrainer({
   const [round, setRound] = useState(0);
   const [attempt, setAttempt] = useState(0);
   const [feedback, setFeedback] = useState<Feedback>('idle');
+  const [feedbackPulse, setFeedbackPulse] = useState<{ kind: TrainingFeedbackKind } | null>(null);
   const [selectedMove, setSelectedMove] = useState('');
   const [performedSteps, setPerformedSteps] = useState(0);
   const lockedRef = useRef(false);
@@ -113,6 +115,18 @@ export default function NotationTrainer({
 
   useEffect(() => () => {
     if (wrongTimerRef.current !== null) window.clearTimeout(wrongTimerRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!feedbackPulse) return;
+    const id = window.setTimeout(() => setFeedbackPulse(null), 1200);
+    return () => window.clearTimeout(id);
+  }, [feedbackPulse]);
+
+  const showFeedback = useCallback((kind: TrainingFeedbackKind) => {
+    setFeedback(kind);
+    // A fresh object restarts the shared 1.2 s signal after every answer.
+    setFeedbackPulse({ kind });
   }, []);
 
   const labelFor = (option: MoveNotationOption): ReactNode => {
@@ -142,6 +156,7 @@ export default function NotationTrainer({
     setRound(current => current + 1);
     setAttempt(current => current + 1);
     setFeedback('idle');
+    setFeedbackPulse(null);
     setSelectedMove('');
     setPerformedSteps(0);
     performedStepsRef.current = 0;
@@ -149,7 +164,7 @@ export default function NotationTrainer({
   }, [questionMoves.length]);
 
   const markWrong = useCallback(() => {
-    setFeedback('wrong');
+    showFeedback('wrong');
     if (wrongTimerRef.current !== null) window.clearTimeout(wrongTimerRef.current);
     wrongTimerRef.current = window.setTimeout(() => {
       setAttempt(current => current + 1);
@@ -160,7 +175,7 @@ export default function NotationTrainer({
       lockedRef.current = false;
       wrongTimerRef.current = null;
     }, 650);
-  }, []);
+  }, [showFeedback]);
 
   const judgeMove = useCallback((move: string) => {
     if (!target || lockedRef.current) return;
@@ -178,18 +193,18 @@ export default function NotationTrainer({
     setPerformedSteps(next);
     if (next === expectedSteps.length) {
       lockedRef.current = true;
-      setFeedback('correct');
+      showFeedback('correct');
     }
-  }, [expectedSteps, markWrong, puzzle, target]);
+  }, [expectedSteps, markWrong, puzzle, showFeedback, target]);
 
   const chooseAnswer = (option: MoveNotationOption) => {
     if (!target || feedback === 'correct') return;
     setSelectedMove(option.move);
     if (option.move.replace(/\s+/g, '') === target.move.replace(/\s+/g, '')) {
-      setFeedback('correct');
+      showFeedback('correct');
       return;
     }
-    setFeedback('wrong');
+    showFeedback('wrong');
   };
 
   if (!target) return null;
@@ -210,6 +225,11 @@ export default function NotationTrainer({
             interactionMode={mode === 'perform' ? 'turn' : 'view'}
             onUserMove={mode === 'perform' ? judgeMove : undefined}
             size={300}
+          />
+          <TrainingFeedbackOverlay
+            kind={feedbackPulse?.kind ?? null}
+            correctLabel={t('做对了', 'Correct move')}
+            wrongLabel={t('做错了', 'Wrong move')}
           />
         </div>
 
