@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -15,6 +15,14 @@ function corePath(...segments: string[]): string {
 
 function packagePath(packageName: string, ...segments: string[]): string {
   return corePath('packages', packageName, ...segments);
+}
+
+function appPath(appName: string, ...segments: string[]): string {
+  return corePath('apps', appName, ...segments);
+}
+
+function jobPath(jobName: string, ...segments: string[]): string {
+  return corePath('jobs', jobName, ...segments);
 }
 
 function readWorkflow(workflowName: string): string {
@@ -78,11 +86,33 @@ const WORKSPACE_INPUT_OVERRIDES: Readonly<Record<string, readonly string[]>> = {
   ],
 };
 
-function workspaceDependencyInputs(consumer: 'client' | 'server'): string[] {
-  const packageJson = JSON.parse(readFileSync(join(REPO_ROOT, 'core', 'packages', consumer, 'package.json'), 'utf8')) as {
+const CONSUMER_WORKSPACE_ROOTS = {
+  client: [packagePath('client'), appPath('web')],
+  server: [packagePath('server'), appPath('api')],
+} as const;
+
+function readConsumerPackageJson(consumer: keyof typeof CONSUMER_WORKSPACE_ROOTS): {
+  dependencies?: Record<string, string>;
+} {
+  const expectedName = `@cuberoot/${consumer}`;
+  const matches = CONSUMER_WORKSPACE_ROOTS[consumer].filter((root) => {
+    const manifestPath = join(REPO_ROOT, ...root.split('/'), 'package.json');
+    if (!existsSync(manifestPath)) return false;
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { name?: string };
+    return manifest.name === expectedName;
+  });
+  if (matches.length !== 1) {
+    throw new Error(`Expected exactly one ${expectedName} workspace, found ${matches.length}`);
+  }
+  const workspaceRoot = matches[0];
+  if (!workspaceRoot) throw new Error(`Missing ${expectedName} workspace after validation`);
+  return JSON.parse(readFileSync(join(REPO_ROOT, ...workspaceRoot.split('/'), 'package.json'), 'utf8')) as {
     dependencies?: Record<string, string>;
   };
-  return Object.entries(packageJson.dependencies ?? {})
+}
+
+function workspaceDependencyInputs(consumer: keyof typeof CONSUMER_WORKSPACE_ROOTS): string[] {
+  return Object.entries(readConsumerPackageJson(consumer).dependencies ?? {})
     .filter(([name, version]) => name.startsWith('@cuberoot/') && version.startsWith('workspace:'))
     .sort(([left], [right]) => left.localeCompare(right))
     .flatMap(([name]) => WORKSPACE_INPUT_OVERRIDES[name] ?? [packagePath(name.slice('@cuberoot/'.length), '**')]);
@@ -90,6 +120,7 @@ function workspaceDependencyInputs(consumer: 'client' | 'server'): string[] {
 
 const CORE_PATHS = [
   packagePath('server', '**'),
+  appPath('api', '**'),
   ...workspaceDependencyInputs('server'),
   corePath('cube555-daemon', 'Daemon.java'),
   corePath('package.json'),
@@ -97,19 +128,28 @@ const CORE_PATHS = [
   corePath('pnpm-workspace.yaml'),
   corePath('tsconfig.base.json'),
   corePath('patches', '**'),
+  corePath('scripts', 'resolve-workspace-path.mjs'),
   repoPath('.github', 'workflows', 'deploy_core.yml'),
 ] as const;
 
 const NEXT_PATHS = [
   packagePath('client', '**'),
+  appPath('web', '**'),
   ...workspaceDependencyInputs('client'),
   corePath('package.json'),
   corePath('pnpm-lock.yaml'),
   corePath('pnpm-workspace.yaml'),
   corePath('tsconfig.base.json'),
   corePath('patches', '**'),
+  corePath('scripts', 'resolve-workspace-path.mjs'),
   repoPath('ops', 'systemd', 'cuberoot-next.service'),
   repoPath('.github', 'workflows', 'deploy_next.yml'),
+] as const;
+
+const STATS_PATHS = [
+  packagePath('stats-build', 'src', '**', '*.ts'),
+  jobPath('stats-build', 'src', '**', '*.ts'),
+  corePath('scripts', 'resolve-workspace-path.mjs'),
 ] as const;
 
 const TEST_PATHS = [
@@ -121,9 +161,17 @@ const TEST_PATHS = [
   repoPath('.sync', '**'),
   repoPath('scripts', 'upstream', '**'),
   repoPath('ops', 'nginx', '**'),
+  repoPath('.github', 'workflows', 'backup_recon.yml'),
+  repoPath('.github', 'workflows', 'best2x2_drift.yml'),
   repoPath('.github', 'workflows', 'deploy_core.yml'),
   repoPath('.github', 'workflows', 'deploy_next.yml'),
+  repoPath('.github', 'workflows', 'elev_backfill.yml'),
+  repoPath('.github', 'workflows', 'icons_drift.yml'),
+  repoPath('.github', 'workflows', 'regulation_drift.yml'),
+  repoPath('.github', 'workflows', 'sq1_pbl_drift.yml'),
+  repoPath('.github', 'workflows', 'stats.yml'),
   repoPath('.github', 'workflows', 'test.yml'),
+  repoPath('.github', 'workflows', 'update_upcoming.yml'),
 ] as const;
 
 function indentation(line: string): number {
@@ -194,8 +242,13 @@ function globPattern(pattern: string): RegExp {
   for (let index = 0; index < pattern.length; index += 1) {
     const char = pattern[index];
     if (char === '*' && pattern[index + 1] === '*') {
-      source += '.*';
-      index += 1;
+      if (pattern[index + 2] === '/') {
+        source += '(?:.*/)?';
+        index += 2;
+      } else {
+        source += '.*';
+        index += 1;
+      }
     } else if (char === '*') {
       source += '[^/]*';
     } else if (char === '?') {
@@ -226,6 +279,7 @@ function workflowTriggers(patterns: string[], changedPaths: string[]): boolean {
 describe('deployment workflow path contracts', () => {
   const corePaths = readEventPaths('deploy_core.yml', 'push');
   const nextPaths = readEventPaths('deploy_next.yml', 'push');
+  const statsPaths = readEventPaths('stats.yml', 'push');
   const testPushPaths = readEventPaths('test.yml', 'push');
   const testPullRequestPaths = readEventPaths('test.yml', 'pull_request');
 
@@ -234,6 +288,7 @@ describe('deployment workflow path contracts', () => {
 
     const cases = [
       [packagePath('server', 'src', 'index.ts'), true],
+      [appPath('api', 'src', 'index.ts'), true],
       [packagePath('shared', 'src', 'account.ts'), true],
       [packagePath('visualcube', 'src', 'index.ts'), true],
       [packagePath('vendor-sr-puzzlegen', 'src', 'index.ts'), true],
@@ -246,10 +301,14 @@ describe('deployment workflow path contracts', () => {
       [corePath('pnpm-workspace.yaml'), true],
       [corePath('tsconfig.base.json'), true],
       [corePath('patches', 'cubing@0.63.3.patch'), true],
+      [corePath('scripts', 'resolve-workspace-path.mjs'), true],
       [repoPath('.github', 'workflows', 'deploy_core.yml'), true],
       [packagePath('client', 'app', '[lang]', 'page.tsx'), false],
+      [appPath('web', 'app', '[lang]', 'page.tsx'), false],
       [packagePath('mobile', 'src', 'App.tsx'), false],
+      [appPath('mobile', 'src', 'App.tsx'), false],
       [packagePath('miniprogram', 'src', 'app.ts'), false],
+      [appPath('miniprogram', 'src', 'app.ts'), false],
       [packagePath('stack-kernel', 'src', 'lib.rs'), false],
       [repoPath('ops', 'nginx', 'api.cuberoot.me.conf'), false],
     ] as const;
@@ -264,6 +323,7 @@ describe('deployment workflow path contracts', () => {
 
     const cases = [
       [packagePath('client', 'app', '[lang]', 'page.tsx'), true],
+      [appPath('web', 'app', '[lang]', 'page.tsx'), true],
       [packagePath('shared', 'src', 'account.ts'), true],
       [packagePath('visualcube', 'src', 'index.ts'), true],
       [packagePath('vendor-sr-puzzlegen', 'src', 'index.ts'), true],
@@ -277,16 +337,71 @@ describe('deployment workflow path contracts', () => {
       [corePath('pnpm-workspace.yaml'), true],
       [corePath('tsconfig.base.json'), true],
       [corePath('patches', 'cubing@0.63.3.patch'), true],
+      [corePath('scripts', 'resolve-workspace-path.mjs'), true],
       [repoPath('ops', 'systemd', 'cuberoot-next.service'), true],
       [repoPath('.github', 'workflows', 'deploy_next.yml'), true],
       [packagePath('server', 'src', 'index.ts'), false],
+      [appPath('api', 'src', 'index.ts'), false],
       [packagePath('mobile', 'src', 'App.tsx'), false],
+      [appPath('mobile', 'src', 'App.tsx'), false],
       [packagePath('miniprogram', 'src', 'app.ts'), false],
+      [appPath('miniprogram', 'src', 'app.ts'), false],
       [repoPath('ops', 'nginx', 'www.cuberoot.me.conf'), false],
     ] as const;
 
     for (const [path, expected] of cases) {
       expect(workflowTriggers(nextPaths, [path]), path).toBe(expected);
+    }
+  });
+
+  it('keeps the stats workflow limited to stats-build source changes in either layout', () => {
+    expect(statsPaths).toEqual(STATS_PATHS);
+
+    const cases = [
+      [packagePath('stats-build', 'src', 'elevation.ts'), true],
+      [packagePath('stats-build', 'src', 'bin', 'compute.ts'), true],
+      [jobPath('stats-build', 'src', 'elevation.ts'), true],
+      [jobPath('stats-build', 'src', 'bin', 'compute.ts'), true],
+      [corePath('scripts', 'resolve-workspace-path.mjs'), true],
+      [jobPath('wb-build', 'src', 'index.ts'), false],
+      [jobPath('alg-build', 'src', 'index.ts'), false],
+      [appPath('web', 'app', '[lang]', 'page.tsx'), false],
+      [appPath('api', 'src', 'index.ts'), false],
+    ] as const;
+
+    for (const [path, expected] of cases) {
+      expect(workflowTriggers(statsPaths, [path]), path).toBe(expected);
+    }
+  });
+
+  it('fails workspace resolution before publishing an empty workflow output', () => {
+    const expectedResolverCalls = {
+      'backup_recon.yml': 1,
+      'best2x2_drift.yml': 1,
+      'deploy_core.yml': 1,
+      'deploy_next.yml': 1,
+      'elev_backfill.yml': 1,
+      'icons_drift.yml': 1,
+      'regulation_drift.yml': 1,
+      'sq1_pbl_drift.yml': 1,
+      'stats.yml': 2,
+      'test.yml': 4,
+      'update_upcoming.yml': 1,
+    } as const;
+
+    for (const [workflowName, expectedCalls] of Object.entries(expectedResolverCalls)) {
+      const workflow = readWorkflow(workflowName);
+      expect(workflow).not.toMatch(
+        /echo\s+"(?:api|mobile|stats|web)=\$\(node scripts\/resolve-workspace-path\.mjs/,
+      );
+      const assignments = [...workflow.matchAll(
+        /^[ \t]+(api|mobile|stats|web)="\$\(node scripts\/resolve-workspace-path\.mjs (@cuberoot\/[^)]+)\)"$/gm,
+      )];
+      expect(assignments, workflowName).toHaveLength(expectedCalls);
+      const assignmentOutputPairs = [...workflow.matchAll(
+        /^[ \t]+(api|mobile|stats|web)="\$\(node scripts\/resolve-workspace-path\.mjs @cuberoot\/[^)]+\)"\n[ \t]+echo "\1=\$\1" >> "\$GITHUB_OUTPUT"$/gm,
+      )];
+      expect(assignmentOutputPairs, workflowName).toHaveLength(expectedCalls);
     }
   });
 
@@ -296,6 +411,7 @@ describe('deployment workflow path contracts', () => {
     for (const paths of [testPushPaths, testPullRequestPaths]) {
       expect(workflowTriggers(paths, [repoPath('ops', 'nginx', 'www.cuberoot.me.conf')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('ops', 'nginx', 'api.cuberoot.me.conf')])).toBe(true);
+      expect(workflowTriggers(paths, [repoPath('.github', 'workflows', 'stats.yml')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('sync_upstream.ps1')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('_sync_blddb.ps1')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('_sync_cstimer.ps1')])).toBe(true);
@@ -353,9 +469,12 @@ describe('deployment workflow path contracts', () => {
 
   it('atomically deploys CubeOpt with the same dotenv gate and rollback contract', () => {
     const run = readStepRun('deploy_core.yml', 'Deploy server');
+    expect(readStepEnv('deploy_core.yml', 'Deploy server')).toEqual({
+      API_DIR: 'core/${{ steps.workspace.outputs.api }}',
+    });
     const enabledBranch = run.match(/if node --env-file=\.env -e '[^']+'; then([\s\S]*?)\n\s*else/)?.[1] ?? '';
-    const provisionArtifact = packagePath('server', 'dist', 'cubeopt', 'provision.mjs');
-    const verifyArtifact = packagePath('server', 'dist', 'cubeopt', 'verify.mjs');
+    const provisionArtifact = '$API_DIR/dist/cubeopt/provision.mjs';
+    const verifyArtifact = '$API_DIR/dist/cubeopt/verify.mjs';
     const provisionCopied = run.indexOf(provisionArtifact);
     const verifyCopied = run.indexOf(verifyArtifact);
     const provisioned = run.indexOf('node --env-file=.env "$staging/dist/cubeopt/provision.mjs"');

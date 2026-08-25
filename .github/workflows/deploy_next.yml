@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - 'core/packages/client/**'
+      - 'core/apps/web/**'
       - 'core/packages/puzzle-render-core/**'
       - 'core/packages/puzzle-solvers/**'
       - 'core/packages/shared/**'
@@ -21,6 +22,7 @@ on:
       - 'core/pnpm-workspace.yaml'
       - 'core/tsconfig.base.json'
       - 'core/patches/**'
+      - 'core/scripts/resolve-workspace-path.mjs'
       - 'ops/systemd/cuberoot-next.service'
       - '.github/workflows/deploy_next.yml'
 
@@ -57,6 +59,13 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: core/pnpm-lock.yaml
 
+      - name: Resolve workspace layout
+        id: workspace
+        working-directory: core
+        run: |
+          web="$(node scripts/resolve-workspace-path.mjs @cuberoot/client)"
+          echo "web=$web" >> "$GITHUB_OUTPUT"
+
       - name: Install dependencies
         working-directory: core
         run: pnpm install --frozen-lockfile
@@ -72,14 +81,12 @@ jobs:
           NODE_ENV: production
         run: pnpm --filter @cuberoot/client build
 
-      # standalone output layout (with outputFileTracingRoot=monorepo root):
-      #   .next/standalone/core/packages/client/server.js  ← entry
-      #   .next/standalone/core/packages/client/.next/server/...
+      # standalone output layout follows the current workspace root under core/.
       #   .next/standalone/node_modules/... (hoisted shared deps)
       # static/ + public/ must be copied INTO the standalone tree manually
       # (Next docs https://nextjs.org/docs/app/api-reference/config/next-config-js/output#automatically-copying-traced-files).
       - name: Assemble deploy bundle
-        working-directory: core/packages/client
+        working-directory: core/${{ steps.workspace.outputs.web }}
         run: |
           # Inspect actual layout — Next standalone path varies by config
           echo "--- .next/standalone layout ---"

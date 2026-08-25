@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - 'core/packages/server/**'
+      - 'core/apps/api/**'
       - 'core/packages/puzzle-render-core/**'
       - 'core/packages/shared/**'
       - 'core/packages/vendor-sr-puzzlegen/**'
@@ -19,6 +20,7 @@ on:
       - 'core/pnpm-workspace.yaml'
       - 'core/tsconfig.base.json'
       - 'core/patches/**'
+      - 'core/scripts/resolve-workspace-path.mjs'
       - '.github/workflows/deploy_core.yml'
 
 permissions:
@@ -51,6 +53,13 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
           cache-dependency-path: core/pnpm-lock.yaml
+
+      - name: Resolve workspace layout
+        id: workspace
+        working-directory: core
+        run: |
+          api="$(node scripts/resolve-workspace-path.mjs @cuberoot/server)"
+          echo "api=$api" >> "$GITHUB_OUTPUT"
 
       # 安装依赖
       - name: Install dependencies
@@ -129,6 +138,7 @@ jobs:
 
       - name: Sync Platform private-data secrets
         env:
+          API_DIR: core/${{ steps.workspace.outputs.api }}
           PLATFORM_DATA_ENCRYPTION_KEY_V1: ${{ secrets.PLATFORM_DATA_ENCRYPTION_KEY_V1 }}
           PLATFORM_MEDIA_SIGNING_SECRET: ${{ secrets.PLATFORM_MEDIA_SIGNING_SECRET }}
         run: |
@@ -137,7 +147,7 @@ jobs:
           node -e 'const value=process.env.PLATFORM_DATA_ENCRYPTION_KEY_V1||""; const bytes=Buffer.from(value,"base64"); if(bytes.length!==32||bytes.toString("base64").replace(/=+$/,"")!==value.replace(/=+$/, "")) process.exit(1)'
           test "${#PLATFORM_MEDIA_SIGNING_SECRET}" -ge 32 || { echo "ERROR: PLATFORM_MEDIA_SIGNING_SECRET must be at least 32 characters"; exit 1; }
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            core/packages/server/scripts/sync-platform-private-secrets.sh \
+            "$API_DIR/scripts/sync-platform-private-secrets.sh" \
             "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/.sync-platform-private-secrets.sh"
           printf '%s\n%s\n' "$PLATFORM_DATA_ENCRYPTION_KEY_V1" "$PLATFORM_MEDIA_SIGNING_SECRET" | \
             ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
@@ -146,6 +156,8 @@ jobs:
               'sh /root/core-api/.sync-platform-private-secrets.sh /root/core-api/.env'
 
       - name: Deploy server
+        env:
+          API_DIR: core/${{ steps.workspace.outputs.api }}
         run: |
           # bundle 自包含 → 每次发布写入独立 release；dist 只做稳定入口。
           # 旧 node_modules 树已退役;留在远端无害但下次清理可以删
@@ -160,18 +172,18 @@ jobs:
           # server.bundle.js + sourcemap
           rsync -ltz --chmod=F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            core/packages/server/dist/server.bundle.js \
-            core/packages/server/dist/server.bundle.js.map \
+            "$API_DIR/dist/server.bundle.js" \
+            "$API_DIR/dist/server.bundle.js.map" \
             "root@${{ secrets.DEPLOY_HOST }}:${STAGING_RELEASE}/dist/"
 
           # CubeOpt 子进程和生产管理器冒烟入口与主 bundle 同版本部署；大表由
           # 独立、可校验的 API artifact store 管理，不进入常规 rsync。
           rsync -ltz --chmod=F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            core/packages/server/dist/cubeopt/solve-daemon.mjs \
-            core/packages/server/dist/cubeopt/provision.mjs \
-            core/packages/server/dist/cubeopt/verify.mjs \
-            core/packages/server/dist/cubeopt/smoke.mjs \
+            "$API_DIR/dist/cubeopt/solve-daemon.mjs" \
+            "$API_DIR/dist/cubeopt/provision.mjs" \
+            "$API_DIR/dist/cubeopt/verify.mjs" \
+            "$API_DIR/dist/cubeopt/smoke.mjs" \
             "root@${{ secrets.DEPLOY_HOST }}:${STAGING_RELEASE}/dist/cubeopt/"
 
           # 在 migrations 与 release 切换前校验 API-owned store。Node 负责读取 .env，
@@ -200,7 +212,7 @@ jobs:
           # 必须在 pm2 restart 之前!否则新代码部上去查不到列 → /api/* 全 500
           rsync -rltz --delete --chmod=D755,F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            core/packages/server/migrations/ "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/migrations/"
+            "$API_DIR/migrations/" "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/migrations/"
 
           # cube555-daemon/Daemon.java — Java 子进程的胶水代码,跟 server.bundle.js
           # 同步更新,然后 javac 重编;pm2 reload 自然让 Hono 再 spawn,新 .class 接上。
