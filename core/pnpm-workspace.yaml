@@ -1,5 +1,7 @@
 packages:
+  - 'apps/*'
   - 'packages/*'
+  - 'jobs/*'
   - '!packages/platform'
 allowBuilds:
   better-sqlite3: true

@@ -3,12 +3,12 @@
   "ignore": [
     "cube555-daemon/**",
     "**/pkg/*_bg.wasm.d.ts",
-    "packages/miniprogram/scripts/release-check-lib.d.mts"
+    "{packages/miniprogram,apps/miniprogram}/scripts/release-check-lib.d.mts"
   ],
   "ignoreBinaries": ["netstat", "wasm-pack", "pwsh"],
   "ignoreDependencies": ["tsx"],
   "workspaces": {
-    "packages/client": {
+    "{packages/client,apps/web}": {
       "entry": [
         "postcss.config.{js,mjs}",
         "app/**/{page,layout,template,loading,error,not-found,route,default,global-error,sitemap,robots,manifest,opengraph-image,twitter-image,icon,apple-icon}.{ts,tsx}",
@@ -37,7 +37,7 @@
     "packages/vendor-sr-puzzlegen": {
       "entry": ["src/index.ts"]
     },
-    "packages/server": {
+    "{packages/server,apps/api}": {
       "entry": [
         "scripts/**/*.{ts,mjs}",
         "tests/fixtures/**/*_pg.ts",
@@ -46,16 +46,16 @@
         "src/**/*-daemon.{ts,mjs}"
       ]
     },
-    "packages/alg-build": {
+    "{packages/alg-build,jobs/alg-build}": {
       "entry": ["*.{mjs,mts,ts}", "src/**/*.{mjs,mts,ts}"]
     },
-    "packages/scramble-stats-build": {
+    "{packages/scramble-stats-build,jobs/scramble-stats-build}": {
       "entry": ["*.{mjs,ts,mts}", "src/**/*.{mjs,ts,mts}", "tests/**/*.test.ts"]
     },
-    "packages/wb-build": {
+    "{packages/wb-build,jobs/wb-build}": {
       "entry": ["src/**/*.{mjs,ts}"]
     },
-    "packages/stats-build": {
+    "{packages/stats-build,jobs/stats-build}": {
       "entry": ["src/**/*.{mjs,ts}", "scripts/**/*.{mjs,ts}"]
     }
   }
