@@ -6,6 +6,10 @@ Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b
 
 状态：Platform P0-P8 技术迁移与发布验收已完成；P9 的陈旧测试守卫已修复，Test、Deploy Next、Deploy Core 全绿，线上角色态仍待验收。旧 Platform 运行时保持退役；仓库所有者于 2026-08-25 明确豁免 RET-04 原定观察等待，非仓库资产处置已完成，仓库删除保留给所有者自行执行。Batch 1、2 已提交发布并完成本地、CI、部署与线上 smoke 验收。Batch 3 在两次生产前置校验安全暴露并修正 store provision 与 opt5/opt6 假设后，最终修正 `6756c599a1` 已由 Test `32692270145`、Deploy Next `32692270141`、Deploy Core `32692270167` 全绿发布。生产部署确认 `cubeopt-opt6-legacy-runtime-v1` 制品、启用态 manager 加载与 `R → R'`（1 HTM）真实请求通过，API 健康、启用/配置状态及 SQ1、Megaminx、Pyraminx、Skewb 四条 iso SVG 公网 smoke 均为 200；因此 BND-02、BND-03、BND-04、BND-06 和 Batch 3 的 PKG-02 最小切片已关闭。BND-04 的共用 AST 检测器置于写入钩子链首后，当前 Codex 宿主已真实拒绝违规跨 app import 且探针未落盘；BND-05 已完成 14 个活跃 package 的运行时属性登记和 fail-closed 守卫并通过独立终审。Batch 4 的 `auth/web-session` 中性契约试点、小程序真实构建依赖图和首次微信用户空昵称兼容已随 `ba22fd81e1` 发布；Test `32697884591`、Deploy Next `32697884578`、Deploy Core `32697884597` 全部成功，API 健康、缺失 WCA token、畸形票据、未登录取票和 Web 回调壳安全 smoke 均符合预期，CTR-02 已关闭。真实账号登录成功链路没有用生产凭据手工执行，其 producer/consumer 正向路径由可执行 route/session fixture 证明；CTR-03 已在六个认证端点完成稳定错误码兼容切片并通过独立复审，迁移期继续保留旧 `error` 字段，不扩张为全 API 一次性改造。Batch 5 的 Clock 窄切片已随 `1db7804111` 发布；隔离干净工作树、本地门槛与三路独立复核通过，Test `32710563280`、Deploy Next `32710563234`、Deploy Core `32710563241` 全部成功，API 健康及中英文 `/sim` 公网 smoke 为 200 且无模块解析错误，本切片已关闭。Batch 6 的根 PowerShell 治理已随 `b02005a50e` 发布；三路终审、本地与 Linux 合同、Test、Deploy Next、静态工具同步及五条公网 smoke 全绿，PS1-01 至 PS1-04 已关闭。Batch 7 的物理目录整理已完成收益评估并决定不执行；PKG-03 已以条件触发政策关闭，当前不新建跨端 React UI package。
 
+> Batch 8 决策更新：Batch 7 的“不执行物理目录整理”保留为当时的历史裁决。仓库所有者现基于四端长期演进和 AI 可发现性明确重开目录迁移，目标采用 `core/apps/* + core/packages/* + core/jobs/*`；只允许按 [Core 工作区目录迁移方案](./core-workspace-layout-migration-plan.md) 渐进实施，当前尚未移动任何源码目录。
+>
+> Batch 8 三路预审：目标分类无歧义，`apps/web`、`apps/api`、`apps/mobile`、`apps/miniprogram` 的命名获得支持；所有 reviewer 均否决一步到位。实施前必须先建立不依赖路径的 workspace registry、旧新边界基线同集证明、workflow 正负触发矩阵和未声明 workspace import 守卫。当前状态仍为待授权。
+>
 > BND-04 证据校正：仅把架构守卫移到链首仍会被多文件 patch 的逐文件一般守卫拖入 30 秒超时。最终实现先把同一 patch 的全部 writes 一次性交给架构检测器，再执行一般守卫；末尾才出现违规的真实五文件探针约 6 秒内被 deny，五文件均未落盘。
 >
 > 状态校正：2026-08-22 重新打开的产品与数据迁移已按 [Platform 主站完整迁移跟踪](./platform-product-migration-tracker.md) 完成 P0-P8。P9 是迁移完成后的主站产品体验改版，不恢复独立 Platform app，也不改变本架构方案的长期边界。Batch 1 只改善入口、状态和生成物可发现性；后续源码实施仍须刷新依赖基线、完成新的独立复审并取得用户授权。
@@ -63,7 +67,7 @@ Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b
 6. 微信小程序保持独立 app。
 7. 跨平台优先共享事实、契约和纯规则，不强行共享各平台 UI。
 8. 不因为两个文件相似就新建 package。
-9. 不为目录观感进行一次性大搬家。
+9. 不为目录观感进行一次性大搬家；Batch 8 只按独立审核、单单元提交和完整回滚边界渐进迁移到 `apps/* + packages/* + jobs/*`。
 10. 不在本轮移动 `stats/`、`tools/`、`solver/` 或 `reconer/`。
 
 ## 5. App、package 和 job 的定义
