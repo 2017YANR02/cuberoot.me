@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import type { AlgPlayerPuzzle } from '@/components/AlgPlayer/player-setup';
 import type { MoveNotationOption } from '@/components/MoveNotationDemo/MoveNotationDemo';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { useT } from '@/hooks/useT';
 import { formatAlgNotation, formatCubeMoveDescription, type AlgNotationStyle } from '@/lib/alg-notation-display';
 
@@ -17,7 +16,6 @@ interface NotationTrainerProps {
   moves: readonly MoveNotationOption[];
   notationStyle: AlgNotationStyle;
   mode: NotationTrainingMode;
-  onModeChange: (mode: NotationTrainingMode) => void;
 }
 
 type Feedback = 'idle' | 'correct' | 'wrong';
@@ -86,7 +84,6 @@ export default function NotationTrainer({
   moves,
   notationStyle,
   mode,
-  onModeChange,
 }: NotationTrainerProps) {
   const t = useT();
   const performMoves = useMemo(
@@ -198,18 +195,7 @@ export default function NotationTrainer({
   if (!target) return null;
 
   return (
-    <section className="notation-trainer" aria-labelledby="notation-trainer-title">
-      <div className="notation-trainer-header">
-        <h2 id="notation-trainer-title">{t('记号训练', 'Notation training')}</h2>
-        <PillToggle
-          value={mode === 'identify'}
-          onChange={identify => onModeChange(identify ? 'identify' : 'perform')}
-          offLabel={t('看记号手拧', 'Perform the move')}
-          onLabel={t('看转动选记号', 'Name the move')}
-          ariaLabel={t('选择记号训练方式', 'Choose a notation training mode')}
-        />
-      </div>
-
+    <section className="notation-trainer">
       <div className="notation-trainer-layout">
         <div className="notation-trainer-stage">
           <AlgPlayer

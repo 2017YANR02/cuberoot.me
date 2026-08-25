@@ -6,6 +6,7 @@ import { parseAsBoolean, parseAsInteger, parseAsStringEnum, useQueryState } from
 import Link from '@/components/AppLink';
 import AlgNotationStyleSelect from '@/components/AlgNotationStyleSelect';
 import BoolToggle from '@/components/BoolToggle';
+import { CompactSelect, type CompactSelectItem } from '@/components/CompactSelect';
 import MoveNotationDemo, { type MoveNotationOption } from '@/components/MoveNotationDemo/MoveNotationDemo';
 import NxNOrderInput from '@/components/NxNOrderInput';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
@@ -49,6 +50,7 @@ import '@/components/NotationGuide/notation-guide.css';
 
 const NOTATION_PUZZLES = ['333', 'minx', 'pyram', 'skewb', 'sq1', 'clock', 'fto'] as const;
 type NotationPuzzle = (typeof NOTATION_PUZZLES)[number];
+type NotationViewMode = 'learn' | NotationTrainingMode;
 
 function K({ children }: { children: ReactNode }) {
   return <code className="notation-key">{children}</code>;
@@ -190,6 +192,20 @@ export default function NotationPage() {
     : activePuzzle === 'minx' ? 'megaminx'
       : activePuzzle === 'pyram' ? 'pyraminx'
         : activePuzzle;
+  const viewMode: NotationViewMode = training ? trainingMode : 'learn';
+  const viewModeItems: readonly CompactSelectItem<NotationViewMode>[] = [
+    { value: 'learn', label: t('学习', 'Learn') },
+    { value: 'perform', label: t('训练:转魔方', 'Train: turn puzzle') },
+    { value: 'identify', label: t('训练:选转动', 'Train: choose move') },
+  ];
+  const setViewMode = (next: NotationViewMode) => {
+    if (next === 'learn') {
+      void setTraining(false);
+      return;
+    }
+    void setTrainingMode(next);
+    void setTraining(true);
+  };
 
   return (
     <main className="notation-page">
@@ -233,10 +249,13 @@ export default function NotationPage() {
             onChange={next => void setWcaOnly(next)}
             label={t('仅 WCA 记号', 'WCA notation only')}
           />
-          <BoolToggle
-            value={training}
-            onChange={next => void setTraining(next)}
-            label={t('训练模式', 'Training mode')}
+          <CompactSelect
+            className="notation-mode-select"
+            label={viewModeItems.find(item => item.value === viewMode)?.label}
+            items={viewModeItems}
+            value={viewMode}
+            onChange={setViewMode}
+            ariaLabel={t('学习与训练模式', 'Learning and training mode')}
           />
         </nav>
 
@@ -248,7 +267,6 @@ export default function NotationPage() {
             moves={activeOptions}
             notationStyle={activePuzzle === 'sq1' ? 'standard' : notationStyle}
             mode={trainingMode}
-            onModeChange={next => void setTrainingMode(next)}
           />
         )}
 
