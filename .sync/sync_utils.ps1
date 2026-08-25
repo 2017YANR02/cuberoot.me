@@ -340,7 +340,8 @@ function Write-UpstreamVersionRecord
         [Parameter(Mandatory)]
         [string]$ArtifactId,
         [Parameter(Mandatory)]
-        [string]$WorkingDirectory
+        [string]$WorkingDirectory,
+        [string]$OutputPath
     )
 
     $ledgerPath = Join-Path $RepoRoot 'docs\generated-artifacts.json'
@@ -415,14 +416,21 @@ function Write-UpstreamVersionRecord
     {
         throw "$ArtifactId 的版本记录路径必须是仓库相对路径：$recordRelativePath"
     }
-    $recordPath = [System.IO.Path]::GetFullPath((Join-Path $resolvedRepoRoot $recordRelativePath))
+    $recordPath = if ($OutputPath)
+    {
+        [System.IO.Path]::GetFullPath($OutputPath)
+    }
+    else
+    {
+        [System.IO.Path]::GetFullPath((Join-Path $resolvedRepoRoot $recordRelativePath))
+    }
     $repoPrefix = $resolvedRepoRoot.TrimEnd(
         [System.IO.Path]::DirectorySeparatorChar,
         [System.IO.Path]::AltDirectorySeparatorChar
     ) + [System.IO.Path]::DirectorySeparatorChar
     if (-not $recordPath.StartsWith($repoPrefix, [System.StringComparison]::OrdinalIgnoreCase))
     {
-        throw "$ArtifactId 的版本记录路径越出仓库：$recordRelativePath"
+        throw "$ArtifactId 的版本记录路径越出仓库：$recordPath"
     }
     $recordDirectory = Split-Path $recordPath -Parent
     if (-not (Test-Path -LiteralPath $recordDirectory))

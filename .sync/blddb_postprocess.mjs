@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // BLDDB 同步的后处理 —— 由 scripts/upstream/sync-blddb.ps1 在拷贝完 out/ 之后调用，也可以单独跑。
 //
-//   node .sync/blddb_postprocess.mjs [--upstream D:\cube\blddb] [--repo <仓库根>]
+//   node .sync/blddb_postprocess.mjs [--upstream D:\cube\blddb] [--repo <仓库根>] [--data-dir <候选 data 目录>]
 //
 // 干四件事，全部写进 tools/blddb/data/（那份 JSON 只有本站原生页面在吃，iframe 版
 // 是编译期把数据内联进 chunk 的，改这里动不到它）：
@@ -41,7 +41,7 @@ function arg(name, fallback) {
 
 const UPSTREAM = path.resolve(arg('upstream', 'D:/cube/blddb'));
 const REPO = path.resolve(arg('repo', path.join(HERE, '..')));
-const DATA = path.join(REPO, 'tools', 'blddb', 'data');
+const DATA = path.resolve(arg('data-dir', path.join(REPO, 'tools', 'blddb', 'data')));
 const UP_DATA = path.join(UPSTREAM, 'public', 'data');
 
 for (const [label, p] of [['上游 clone', UPSTREAM], ['上游 public/data', UP_DATA], ['tools/blddb/data', DATA]]) {

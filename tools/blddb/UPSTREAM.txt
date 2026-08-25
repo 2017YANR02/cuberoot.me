@@ -1,17 +1,12 @@
-Vendored from https://github.com/nbwzx/blddb (branch v2)
-Commit:  90e9689
-Date:    2026-07-29 14:31:24 +0800
-License: GPL-3.0 (see ./LICENSE)
-
-Static export of the upstream Next.js app, built by scripts/upstream/sync-blddb.ps1.
-Do NOT hand-edit anything here — it is generated. Patches (static-export config +
-i18n cookies() removal) live in that script; invoke it through sync_upstream.ps1 -Only blddb.
-
-data/ keeps only the hand-curated "manmade" JSON. Upstream imports all of it at build
-time (so the iframe app already has it inside the _next chunks); this copy exists for
-OUR native page at /alg/3bld/3style, which fetches it at runtime via lib/blddb-data.ts.
-The Nightmare sets (~37MB of exhaustively generated cases) are dropped — only the
-iframe app uses those, and it has them inlined.
-
-Served at: /tools/blddb/  (basePath baked into the bundle — moving the path needs a rebuild)
-Wrapped by: core/packages/client/app/[lang]/blddb/page.tsx
+# Generated from docs/generated-artifacts.json. Do not edit.
+Artifact: tools.blddb
+Source: https://github.com/nbwzx/blddb
+Ref: branch v2
+Commit: 0f55b3acd2e734786b644f52571c87fd3db06ef6
+Date: 2026-08-24T02:44:46Z
+License: GPL-3.0-only
+Patch owners:
+- scripts/upstream/sync-blddb.ps1
+- .sync/blddb_postprocess.mjs
+Outputs:
+- tools/blddb/**

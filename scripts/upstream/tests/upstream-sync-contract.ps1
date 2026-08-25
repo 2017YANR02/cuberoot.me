@@ -836,6 +836,13 @@ function Assert-VersionRecordWriterPlacement
     $postprocessOffset = $blddbSource.LastIndexOf('blddb_postprocess.mjs', [System.StringComparison]::Ordinal)
     $writerOffset = $blddbSource.IndexOf('Write-UpstreamVersionRecord', [System.StringComparison]::Ordinal)
     Assert-True ($postprocessOffset -ge 0 -and $writerOffset -gt $postprocessOffset) 'BLDDB 必须在后处理成功后才推进版本记录。'
+    Assert-True ($blddbSource.Contains("'worktree', 'add', '--detach'")) 'BLDDB 必须从锁定 commit 建 detached worktree。'
+    Assert-True ($blddbSource.Contains('-WorkingDirectory $sourceDir')) 'BLDDB provenance 必须来自实际构建 worktree。'
+    Assert-True ($blddbSource.Contains("'--data-dir', (Join-Path `$candidate 'data')")) 'BLDDB 后处理必须先写候选目录。'
+    Assert-True ($blddbSource.Contains('Move-Item -LiteralPath $dst -Destination $previous')) 'BLDDB 发布必须先保留旧目录。'
+    Assert-True ($blddbSource.Contains('Move-Item -LiteralPath $previous -Destination $dst')) 'BLDDB 发布失败必须恢复旧目录。'
+    Assert-True (-not $blddbSource.Contains('Remove-Item $dst')) 'BLDDB 禁止先删除现役目录。'
+    Assert-True (-not $blddbSource.Contains("'pull', '--ff-only'")) 'BLDDB canonical 禁止 pull/merge 主 clone。'
 }
 
 try
@@ -937,17 +944,6 @@ try
             Arguments = @{ RepoRoot = $fixture.Root; UpstreamDir = $algTrainersFixture; DryRun = $true }
             Expected = 'FLAG_CONTRACT_RETURNED'
             RequiredOutput = @('[DRY RUN] No files were modified.')
-        }
-        [pscustomobject]@{
-            Id = 'blddb'
-            Arguments = @{
-                RepoRoot = $fixture.Root
-                BlddbDir = $blddbFixture
-                SkipPull = $true
-                SkipInstall = $true
-            }
-            Expected = 'FLAG_CONTRACT_STOPPED'
-            RequiredOutput = @('--SkipPull', '--SkipInstall')
         }
     )
     foreach ($flagContract in $flagContracts)
@@ -1182,7 +1178,9 @@ param(
     Assert-True ($cstimerBranchSource -match '(?m)^\s*&[^\r\n]*sync-cstimer-scramble\.ps1[^\r\n]*-RepoRoot\s+\$root[^\r\n]*-SkipPull') 'csTimer 分支必须调用 canonical 打乱同步任务，并显式传 RepoRoot 和 SkipPull。'
     Assert-True ($orchestrationSource -match '(?m)^\s*&[^\r\n]*sync-rubiks-solver-demo\.ps1[^\r\n]*-RepoRoot\s+\$root[^\r\n]*@dry') 'Solver 调用必须显式传 RepoRoot 和 DryRun 参数集。'
     Assert-True ($orchestrationSource -match '(?m)^\s*&[^\r\n]*sync-alg-trainers\.ps1[^\r\n]*-RepoRoot\s+\$root[^\r\n]*@dry') 'Alg-Trainers 调用必须显式传 RepoRoot 和 DryRun 参数集。'
-    Assert-True ($orchestrationSource -match '(?m)^\s*&[^\r\n]*sync-blddb\.ps1[^\r\n]*-RepoRoot\s+\$root[^\r\n]*-SkipPull') 'BLDDB 调用必须显式传 RepoRoot 和 SkipPull。'
+    Assert-True ($orchestrationSource -match '\$blddbArgs\s*=\s*@\{\s*RepoRoot\s*=\s*\$root\s*\}') 'BLDDB 参数集必须显式包含 RepoRoot。'
+    Assert-True ($orchestrationSource -match 'if\s*\(\$SkipPull\)\s*\{\s*\$blddbArgs\.SkipPull\s*=\s*\$true\s*\}') 'BLDDB 必须按需转发 SkipPull。'
+    Assert-True ($orchestrationSource -match '(?m)^\s*&[^\r\n]*sync-blddb\.ps1[^\r\n]*@blddbArgs') 'BLDDB canonical 调用必须使用受测参数集。'
     Assert-True ($orchestrationSource -match '\$dry\s*=\s*if\s*\(\$DryRun\)\s*\{\s*@\{\s*DryRun\s*=\s*\$true\s*\}') 'DryRun 参数集必须继续由总入口转发。'
     Assert-True ($orchestrationSource -match '\$recordRanksArgs\s*=\s*@\{\s*RepoRoot\s*=\s*\$root\s*\}') 'RecordRanks 参数集必须显式包含 RepoRoot。'
     Assert-True ($orchestrationSource -match 'if\s*\(\$SkipPull\)\s*\{\s*\$recordRanksArgs\.SkipPull\s*=\s*\$true\s*\}') 'RecordRanks 必须转发 SkipPull。'
