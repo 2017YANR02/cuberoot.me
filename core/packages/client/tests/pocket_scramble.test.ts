@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { wcaPocketScramble, optimalPocketScramble } from '@/lib/pocket-scramble';
 import { pocketCost } from '@/lib/pocket-cost';
-import { create222MetricEvaluator } from '@/lib/cube222-metric';
+import { create222MetricEvaluator } from '@cuberoot/puzzle-solvers/cube222';
 
 function rng(seed: number): () => number {
   let a = seed >>> 0;

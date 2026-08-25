@@ -11,7 +11,8 @@
  * 受 bandaging 门控)。上帝之数 28(面转计步;出处 jaapsch.net)。
  */
 import { cstimerScramble } from '@/lib/cstimer-scramble';
-import { solveBic, BIC_GODS_NUMBER, type BicSolution } from '@/lib/bicube-solver';
+import { solveBic } from '@/lib/bicube-solver';
+import { BIC_GODS_NUMBER, type BicSolution } from '@cuberoot/puzzle-solvers/bicube';
 import PuzzleSolverPage, {
   type SolverSpec, METRIC_FIXED_OPTIMAL, badgeGodsNumber, CAVEAT_TITLE_OPTIMAL,
 } from './_components/PuzzleSolverPage';

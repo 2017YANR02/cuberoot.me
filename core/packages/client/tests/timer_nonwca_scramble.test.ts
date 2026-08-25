@@ -40,7 +40,7 @@ import { NON_WCA_EVENT_IDS, cstimerKeyForEvent } from '@/app/[lang]/timer/_lib/s
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import { pocketFaceletFromMoves } from '@/lib/pocket-facelet';
 import { SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, cstimer222Spec } from '@/lib/scramble-222-mode';
-import { CUBE222_STATE_TYPES, cube222StateTypeMatchesScramble } from '@/lib/cube222-metric';
+import { CUBE222_STATE_TYPES, cube222StateTypeMatchesScramble } from '@cuberoot/puzzle-solvers/cube222';
 
 const BUNDLE = path.join(
   path.dirname(fileURLToPath(import.meta.url)),

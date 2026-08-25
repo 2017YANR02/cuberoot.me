@@ -12,7 +12,7 @@
  * strips them), so a generated scramble's random tips never affect V/H.
  */
 
-import { solvePyra, solvePyraV } from '../solver/pyra';
+import { solvePyra, solvePyraV } from '@cuberoot/puzzle-solvers/pyra';
 import { scramblePyra } from './others';
 
 export type PyramMetric = 'v' | 'cube';

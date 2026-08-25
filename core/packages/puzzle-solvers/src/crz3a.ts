@@ -5,10 +5,10 @@
  * `"crz3a": [[["U","D"],["R","L"],["F","B"]],cubesuff]`, cubesuff = ["","2","'"]):
  * the "crazy" is purely presentation, the underlying mechanism is an ordinary
  * Rubik's cube with ~4.3×10¹⁹ states. There is nothing event-specific to solve —
- * so instead of a new engine/table we REUSE the site's own client-side kociemba
- * two-phase solver (app/[lang]/scramble/solver/_kociemba/*, the same code path the
- * 3×3 "derive scramble" flow uses; NON-COEP, runnable in a plain Node/vitest
- * context). `solveCrz3a(scramble)` parses the scramble, applies it to a solved
+ * so instead of a new engine/table we REUSE the shared kociemba two-phase solver
+ * (puzzle-solvers/src/kociemba/*, the same code path the 3×3 "derive scramble"
+ * flow uses; NON-COEP, runnable in a plain Node/vitest context).
+ * `solveCrz3a(scramble)` parses the scramble, applies it to a solved
  * cube, and runs the two-phase IDA* search → a SOLUTION (not a scramble).
  *
  * NEAR-OPTIMAL: ~4.3×10¹⁹ states is far too many for a full BFS / God's-number
@@ -28,10 +28,10 @@ import {
   solvedCubie,
   isSolvedCubie,
   formatMoves,
-} from '@/app/[lang]/scramble/solver/_kociemba/cube';
-import { buildMoveTables, type MoveTables } from '@/app/[lang]/scramble/solver/_kociemba/movetables';
-import { buildPruneTables, type PruneTables } from '@/app/[lang]/scramble/solver/_kociemba/prune';
-import { solveCube } from '@/app/[lang]/scramble/solver/_kociemba/search';
+} from './kociemba/cube.js';
+import { buildMoveTables, type MoveTables } from './kociemba/movetables.js';
+import { buildPruneTables, type PruneTables } from './kociemba/prune.js';
+import { solveCube } from './kociemba/search.js';
 
 /**
  * kociemba two-phase defaults to maxTotalLen 23 (phase-1 ≤12 + phase-2 ≤18 with a

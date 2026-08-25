@@ -12,7 +12,7 @@
 // static.cuberoot.me,不进 repo**,同 sia222;§3 MANUAL scp)。浏览器 fetch+inflate(DecompressionStream)→
 // 常驻 Uint8Array → IDA*。无 Date.now/Math.random → 确定可复现。
 //
-// 复用求解器逻辑:直接 import packages/client/lib/sia123-solver 的 sia123BuildPdbs() / serializeSia123Pdbs() /
+// 复用求解器逻辑:直接 import @cuberoot/puzzle-solvers/sia123 的 sia123BuildPdbs() / serializeSia123Pdbs() /
 // deserializeSia123Pdbs()。注意(实测):CUBE B = CUBE A 被 z2 共轭后, 投影距离-按-rank 与 CUBE A **不一致**
 // (z2 重排 piece-id / 取向约定, 不像 sia222 的 z2 y 能共享), 故 A/B **各存一份**(两半 PDB 块串进同一张 gz)。
 // 运行:
@@ -24,7 +24,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
-// client 求解器 .ts 在无 "type":"module" 的包里,tsx 当 CJS 加载 → 命名 import 不绑定;default-import 整模块再取属性。
+// 兼容 tsx 将模块以 CJS 形态加载的情况:default-import 整模块再取属性。
 async function mod(rel: string): Promise<Record<string, unknown>> {
   const m = (await import(rel)) as { default?: Record<string, unknown> } & Record<string, unknown>;
   const inner = (m.default && typeof m.default === 'object') ? m.default : m;
@@ -43,7 +43,7 @@ async function main(): Promise<void> {
   const outPath = path.join(outDir, 'opt_sia123.bin.gz');
 
   console.log('[sia123] loading solver + BFS-ing BOTH halves: corner (29,160) + two 6-edge + center PDBs each…');
-  const m = await mod('../../client/lib/sia123-solver');
+  const m = await mod('@cuberoot/puzzle-solvers/sia123');
   const sia123BuildPdbs = m.sia123BuildPdbs as () => Sia123Pdbs;
   const serializeSia123Pdbs = m.serializeSia123Pdbs as (p: Sia123Pdbs) => Uint8Array;
   const deserializeSia123Pdbs = m.deserializeSia123Pdbs as (b: Uint8Array) => Sia123Pdbs;

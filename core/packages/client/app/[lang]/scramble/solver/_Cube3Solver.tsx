@@ -8,8 +8,8 @@
  * Changes vs the Vite original:
  *   - react-router useSearchParams → next/navigation useSearchParams (wrapped in <Suspense>).
  *   - Vite `?worker` import → `new Worker(new URL('./_kociemba/kociemba.worker.ts', import.meta.url), { type: 'module' })`.
- *   - Kociemba helpers + facelet validation copied into ./_kociemba/ and ./facelet.ts so this
- *     page doesn't depend on /timer/* (owned by a different subagent).
+ *   - Kociemba helpers live in @cuberoot/puzzle-solvers; the page-local worker stays in
+ *     ./_kociemba/ and facelet validation stays in ./facelet.ts.
  *   - InteractiveCubeNet + CubingPreview vendored as ./_InteractiveCubeNet.tsx and
  *     ./_CubingPreview2D.tsx (smaller versions sufficient for 3x3 solver).
  *   - cubeopt-wasm assets live verbatim at /public/cubeopt/ (wasm-worker.js + cube48opt[1-9].{mjs,wasm}).
@@ -35,7 +35,7 @@ import {
   applySequence,
   isSolvedCubie,
   solvedCubie,
-} from './_kociemba/cube';
+} from '@cuberoot/puzzle-solvers/kociemba/cube';
 import InteractiveCubeNet, { EMPTY_FACELET, type PaintColor } from './_InteractiveCubeNet';
 import Interactive3DCube, { useIdlePreloadPaintEngine } from './_Interactive3DCube';
 import PhotoScanner from './_PhotoScanner';

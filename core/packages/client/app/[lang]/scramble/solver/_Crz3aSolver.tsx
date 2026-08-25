@@ -5,10 +5,9 @@
  *
  * The Crazy 3×3 is mechanically an ORDINARY 3×3 cube (cstimer crz3a uses the standard U/D/L/R/F/B move set;
  * the "crazy" is purely presentation), with ~4.3×10¹⁹ states — far too many for a full BFS / God's-number
- * table. So, like the other TIER D puzzles, this is NOT solved provably-optimally: we REUSE the site's own
- * client-side kociemba two-phase solver (app/[lang]/scramble/solver/_kociemba/*) as a near-optimal engine
- * via lib/crz3a-solver → solveCrz3a. The result is provably valid (scramble∘solution = solved) but not
- * guaranteed shortest; typical solutions are ~18-23 HTM.
+ * table. So, like the other TIER D puzzles, this is NOT solved provably-optimally: we REUSE the shared
+ * kociemba two-phase solver via @cuberoot/puzzle-solvers/crz3a → solveCrz3a. The result is provably valid
+ * (scramble∘solution = solved) but not guaranteed shortest; typical solutions are ~18-23 HTM.
  *
  * Solving is ASYNC (a one-time prune-table build on the first call + the IDA* search), so the UI shows a
  * "solving" spinner. Notation is the standard 3×3 HTM set: U D L R F B, each with an optional 2 or '.
@@ -16,7 +15,7 @@
  * 1 move (HTM); near-optimal, NOT provably shortest.
  */
 import { cstimerScramble } from '@/lib/cstimer-scramble';
-import { solveCrz3a, type Crz3aSolution } from '@/lib/crz3a-solver';
+import { solveCrz3a, type Crz3aSolution } from '@cuberoot/puzzle-solvers/crz3a';
 import PuzzleSolverPage, {
   type SolverSpec, METRIC_FIXED_NEAR_OPTIMAL, CAVEAT_TITLE_NEAR_OPTIMAL,
 } from './_components/PuzzleSolverPage';

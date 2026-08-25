@@ -17,7 +17,7 @@
  *     sperm  ∈ [0, 4!)         = 24      permutation of slice edges
  */
 
-import type { CubieCube } from './cube';
+import type { CubieCube } from './cube.js';
 
 /* ────────────────────────── helpers ────────────────────────── */
 

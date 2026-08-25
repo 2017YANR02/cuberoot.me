@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { applyAlgExtended } from '@/app/[lang]/scramble/symmetry/_alg';
 import { SYM_EXAMPLES, SUPERFLIP } from '@/app/[lang]/scramble/symmetry/_examples';
 import { SYM_TYPES, classifyCube } from '@/app/[lang]/scramble/symmetry/_sym_core';
-import { solvedCubie, parseMoves, applySequence } from '@/app/[lang]/scramble/solver/_kociemba/cube';
+import { solvedCubie, parseMoves, applySequence } from '@cuberoot/puzzle-solvers/kociemba/cube';
 import { cubieToFacelet } from '@/lib/cube-facelet';
 
 const basic = (alg: string) => applySequence(solvedCubie(), parseMoves(alg));

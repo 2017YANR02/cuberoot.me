@@ -14,7 +14,7 @@
  * Megaminx / Clock remain random-move (separate problem).
  */
 
-import { solvePyra } from '../solver/pyra';
+import { solvePyra } from '@cuberoot/puzzle-solvers/pyra';
 import { solveSkewb } from '@/lib/skewb-face-solver';
 import { scrambleSq1RandomState } from './sq1_rs';
 

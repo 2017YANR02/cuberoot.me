@@ -22,7 +22,7 @@ import { fetchByDifficulty } from '@/lib/scramble-by-difficulty';
 import { groupIdxOf } from '@/lib/wca-scramble-group';
 import { LENGTH_VARIANT } from '@/lib/scramble-variants';
 import { fetchPuzzleExamples, type PuzzleExampleSample, type PuzzleExamplesJson } from '@/lib/puzzle-examples';
-import { cube222StateTypeMatchesScramble, type Cube222StateType } from '@/lib/cube222-metric';
+import { cube222StateTypeMatchesScramble, type Cube222StateType } from '@cuberoot/puzzle-solvers/cube222';
 import { scrambleStepMetric } from './gen-by-steps';
 import type { EventId } from '../types';
 

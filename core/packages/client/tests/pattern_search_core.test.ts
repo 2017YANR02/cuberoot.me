@@ -19,7 +19,7 @@ import {
   type SearchOptions,
 } from '@/app/[lang]/scramble/pattern/search/_pattern_core';
 import { faceletToCubie, SOLVED_FACELET } from '@/lib/cube-facelet';
-import { applySequence, parseMoves, solvedCubie } from '@/app/[lang]/scramble/solver/_kociemba/cube';
+import { applySequence, parseMoves, solvedCubie } from '@cuberoot/puzzle-solvers/kociemba/cube';
 import { cubieToFacelet } from '@/lib/cube-facelet';
 
 const ALL_FACES = [true, true, true, true, true, true];
@@ -152,10 +152,10 @@ describe('搜索', () => {
   });
 
   it('生成公式往返:two-phase 解 → 逆序列从复原态重放 = 原状态', async () => {
-    const { buildMoveTables } = await import('@/app/[lang]/scramble/solver/_kociemba/movetables');
-    const { buildPruneTables } = await import('@/app/[lang]/scramble/solver/_kociemba/prune');
-    const { solveCube } = await import('@/app/[lang]/scramble/solver/_kociemba/search');
-    const { formatMoves, invertSequence } = await import('@/app/[lang]/scramble/solver/_kociemba/cube');
+    const { buildMoveTables } = await import('@cuberoot/puzzle-solvers/kociemba/movetables');
+    const { buildPruneTables } = await import('@cuberoot/puzzle-solvers/kociemba/prune');
+    const { solveCube } = await import('@cuberoot/puzzle-solvers/kociemba/search');
+    const { formatMoves, invertSequence } = await import('@cuberoot/puzzle-solvers/kociemba/cube');
     const mt = buildMoveTables();
     const pt = buildPruneTables(mt);
     const checker: PatternFace = [0, 1, 0, 1, 0, 1, 0, 1, 0];

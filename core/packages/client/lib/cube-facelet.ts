@@ -13,7 +13,7 @@
  *
  * `CubieCube` 在这里自己声明,不从任一份 kociemba 拷贝里引:
  * `app/[lang]/timer/_lib/scramble/kociemba/cube.ts` 与
- * `app/[lang]/scramble/solver/_kociemba/cube.ts` 的形状逐字段相同,
+ * `@cuberoot/puzzle-solvers/kociemba/cube` 的形状逐字段相同,
  * TS 结构化类型让两边都能直接互传。
  */
 

@@ -1,7 +1,7 @@
 // lib/cube-photo —— 拍照识别的纯逻辑层:取样 / 网格旋转 / 带容量指派 / 六面配色判定。
 //
 // 判据是外部的,不自证:
-//   · 真值 facelet 由**独立**的模型生成(三阶 _kociemba/cube 的 applySequence,二阶
+//   · 真值 facelet 由**独立**的模型生成(三阶共享 kociemba/cube 的 applySequence,二阶
 //     lib/pocket-facelet 的 pocketFaceletFromMoves),照着 SCAN_STEPS 逆着摆成「拍到的样子」
 //     再喂进去 —— 于是 SCAN_STEPS 的 face/rot 表只要错一处,整个面就还原不回来。
 //   · 颜色由一套**不同于** CANONICAL_RGB 的贴纸色板渲染,再叠上每张照片各自的曝光 + 色温 +
@@ -12,7 +12,7 @@ import {
   PHOTO_FACES, SCAN_STEPS, classifyScan, hungarian, rotateGrid, sampleGridColors, srgbToLab,
   type PhotoFace, type RGB,
 } from '@/lib/cube-photo';
-import { applySequence, solvedCubie, MOVE_NAMES, parseMoves } from '@/app/[lang]/scramble/solver/_kociemba/cube';
+import { applySequence, solvedCubie, MOVE_NAMES, parseMoves } from '@cuberoot/puzzle-solvers/kociemba/cube';
 import { cubieToFacelet, validateFacelet } from '@/lib/cube-facelet';
 import { pocketFaceletFromMoves, validatePocketFacelet } from '@/lib/pocket-facelet';
 

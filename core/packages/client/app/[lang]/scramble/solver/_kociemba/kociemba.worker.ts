@@ -21,11 +21,11 @@ import {
   formatMoves,
   invertSequence,
   type CubieCube,
-} from './cube';
-import { buildMoveTables, type MoveTables } from './movetables';
-import { buildPruneTables, type PruneTables } from './prune';
-import { solveCube } from './search';
-import { randomCubie } from './randomstate';
+} from '@cuberoot/puzzle-solvers/kociemba/cube';
+import { buildMoveTables, type MoveTables } from '@cuberoot/puzzle-solvers/kociemba/movetables';
+import { buildPruneTables, type PruneTables } from '@cuberoot/puzzle-solvers/kociemba/prune';
+import { randomCubie } from '@cuberoot/puzzle-solvers/kociemba/randomstate';
+import { solveCube } from '@cuberoot/puzzle-solvers/kociemba/search';
 
 let mt: MoveTables | null = null;
 let pt: PruneTables | null = null;

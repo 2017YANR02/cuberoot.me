@@ -9,10 +9,10 @@
  * 这里同时锁住两件事:超时真的生效,以及超时用的模块级状态不会漏给下一次调用。
  */
 import { describe, it, expect } from 'vitest';
-import { applySequence, parseMoves, solvedCubie } from '@/app/[lang]/scramble/solver/_kociemba/cube';
-import { buildMoveTables } from '@/app/[lang]/scramble/solver/_kociemba/movetables';
-import { buildPruneTables } from '@/app/[lang]/scramble/solver/_kociemba/prune';
-import { solveCube } from '@/app/[lang]/scramble/solver/_kociemba/search';
+import { applySequence, parseMoves, solvedCubie } from '@cuberoot/puzzle-solvers/kociemba/cube';
+import { buildMoveTables } from '@cuberoot/puzzle-solvers/kociemba/movetables';
+import { buildPruneTables } from '@cuberoot/puzzle-solvers/kociemba/prune';
+import { solveCube } from '@cuberoot/puzzle-solvers/kociemba/search';
 
 const SCRAMBLE = "D2 R' D' F2 B D R2 D2 R' F2 D' F2 U' B2 L2 U2 D R2 U";
 

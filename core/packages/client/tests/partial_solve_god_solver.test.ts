@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { N_SYM, canonicalKey } from '@/app/[lang]/scramble/symmetry/_sym_core';
-import type { CubieCube } from '@/app/[lang]/scramble/solver/_kociemba/cube';
+import type { CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
 import { familyById } from '@/lib/partial-solve-god';
 
 /**
