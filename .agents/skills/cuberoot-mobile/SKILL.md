@@ -1,17 +1,17 @@
 ---
 name: cuberoot-mobile
-description: "Use for CubeRoot native App work rooted at core/packages/mobile: Capacitor Android/iOS implementation, Windows-Mac handoff, Xcode/TestFlight/App Store or Google Play release, or deciding whether a CubeRoot website/mobile change requires a store release. Do not use for ordinary responsive web work or unrelated Mac setup."
+description: "Use for CubeRoot native App work rooted at core/apps/mobile: Capacitor Android/iOS implementation, Windows-Mac handoff, Xcode/TestFlight/App Store or Google Play release, or deciding whether a CubeRoot website/mobile change requires a store release. Do not use for ordinary responsive web work or unrelated Mac setup."
 ---
 
 # CubeRoot 移动端开发与发布
 
-维护 `core/packages/mobile` 时遵循本流程，让 Android 和 iOS 共用一套 React 业务代码，并让 Windows、Mac 上的 Codex 从同一仓库事实继续工作。
+维护 `core/apps/mobile` 时遵循本流程，让 Android 和 iOS 共用一套 React 业务代码，并让 Windows、Mac 上的 Codex 从同一仓库事实继续工作。
 
 ## 按任务读取事实源
 
 先读仓库根 `AGENTS.md`，再只加载本次需要的资料：
 
-- 日常实现：`core/packages/mobile/README.md`、`package.json`、`capacitor.config.ts` 和相关源码。
+- 日常实现：`core/apps/mobile/README.md`、`package.json`、`capacitor.config.ts` 和相关源码。
 - 账号、上架或进度：再读 `docs/mobile-app-roadmap.md` 与 `docs/mobile-store-submission.md`。
 - 修改共享契约：再读 `core/packages/shared` 中相关入口与消费者。
 - iOS 首次接入、签名或 TestFlight：读 [references/ios-release.md](references/ios-release.md)。
@@ -20,7 +20,7 @@ description: "Use for CubeRoot native App work rooted at core/packages/mobile: C
 
 ## 守住唯一架构
 
-- 唯一移动 App 是 `core/packages/mobile` 的 React + Vite + Capacitor 工程；Android 和 iOS 不各写一套业务 UI。
+- 唯一移动 App 是 `core/apps/mobile` 的 React + Vite + Capacitor 工程；Android 和 iOS 不各写一套业务 UI。
 - 稳定、无运行时依赖且已有多端消费者的数据模型、校验、算法、状态机放 `core/packages/shared`；不要从网站或 Android 复制到 iOS。
 - 网站专属 Next 路由、SEO、服务端组件留在 client；移动导航、离线仓储和原生桥留在 mobile。
 - Android/iOS 只分别实现权限、BLE transport、Keychain/Keystore、通知、深链、分享等平台适配；协议解析和业务规则尽量共享。
@@ -44,7 +44,7 @@ description: "Use for CubeRoot native App work rooted at core/packages/mobile: C
 |---|---|
 | API、数据库、公式、统计、公告等服务器数据，且旧 App 契约兼容 | 否 |
 | App 运行时通过版本化 API/静态数据读取的内容 | 否 |
-| `core/packages/mobile/src` 中打包的 React/TS/CSS、离线内置数据 | 是 |
+| `core/apps/mobile/src` 中打包的 React/TS/CSS、离线内置数据 | 是 |
 | Capacitor 插件、原生权限、Android/iOS 原生配置和代码 | 是 |
 | 图标、启动图、隐私行为、SDK、登录、支付 | 是，并重新核对商店资料 |
 

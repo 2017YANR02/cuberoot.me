@@ -10,7 +10,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | --- | --- |
 | `core/packages/client` | 唯一 Web 前端，包含 `/platform/*` 产品入口及其复用的 `/org/*`、`/learn/*` 深链 |
 | `core/packages/server` | Hono API + PostgreSQL，独立运行和部署；对 Web 源码与 `client/public` 的旧耦合是待治理债务，不得扩大 |
-| `core/packages/mobile` | React + Capacitor 应用，当前 Android，未来 iOS 默认复用同一 React 应用 |
+| `core/apps/mobile` | React + Capacitor 应用，当前 Android，未来 iOS 默认复用同一 React 应用 |
 | `core/apps/miniprogram` | 微信小程序独立运行时，不复用 React DOM UI |
 | `core/packages/shared` | 稳定契约、纯规则与跨端数据模型；公式数据以 PG `alg_sets/alg_cases` 为准 |
 | `core/packages/visualcube` 等 | 有明确构建或运行时边界的共享 package |
