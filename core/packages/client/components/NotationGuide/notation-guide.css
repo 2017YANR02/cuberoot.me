@@ -166,6 +166,9 @@
 }
 
 .notation-trainer-stage {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
   min-width: 0;
 }
 
@@ -542,7 +545,6 @@
     gap: 8px;
   }
 
-  .notation-trainer-stage,
   .notation-trainer-question {
     width: 100%;
   }

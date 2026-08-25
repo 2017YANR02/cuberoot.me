@@ -1823,6 +1823,14 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `需登录态、submissions 数据和 onPatch 回写,由 AlgCategoryView 按 case 切分喂入,无法独立渲染。`, en: `Needs auth login, submissions data and an onPatch writer; fed per-case by AlgCategoryView, not standalone.` },
   },
   {
+    name: 'TrainingFeedbackOverlay',
+    import: "import TrainingFeedbackOverlay from '@/components/TrainingFeedbackOverlay';",
+    category: 'display',
+    zh: '魔方训练舞台共用的答题反馈层：答对显示绿色对勾，答错显示错号，不拦截指针交互。',
+    en: 'Shared answer overlay for puzzle-training stages: a green check for correct answers and an X for wrong answers, without intercepting pointer input.',
+    usage: '<TrainingFeedbackOverlay kind={result} correctLabel="Correct" wrongLabel="Wrong" />',
+  },
+  {
     name: 'AlgPlayer',
     import: "import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';",
     category: 'more',
