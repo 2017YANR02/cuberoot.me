@@ -303,8 +303,8 @@ jobs:
           pnpm --filter @cuberoot/mobile assets:android
           WEB_DIR="${{ steps.workspace.outputs.web }}"
           MOBILE_DIR="${{ steps.workspace.outputs.mobile }}"
-          git diff --exit-code -- "$WEB_DIR/public/icons" "$MOBILE_DIR/android/app/src/main/res"
-          if [[ -n "$(git ls-files --others --exclude-standard -- "$WEB_DIR/public/icons" "$MOBILE_DIR/android/app/src/main/res")" ]]; then
+          git diff --exit-code -- "assets/brand" "$WEB_DIR/public/icons" "$MOBILE_DIR/android/app/src/main/res"
+          if [[ -n "$(git ls-files --others --exclude-standard -- "assets/brand" "$WEB_DIR/public/icons" "$MOBILE_DIR/android/app/src/main/res")" ]]; then
             echo "Asset generation produced untracked files"
             exit 1
           fi

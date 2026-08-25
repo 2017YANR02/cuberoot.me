@@ -134,7 +134,7 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 
 | 当前耦合 | 正确处理 | 移动门槛 |
 | --- | --- | --- |
-| Mobile 调用 Web 的图标生成脚本 | 提取唯一的中性品牌资产生成入口，Web 和 Mobile 共同调用 | 未完成前不移动 Mobile |
+| Mobile 调用 Web 的图标生成脚本 | 已提取 `core/scripts/gen-brand-assets.mjs` 与 `core/assets/brand` 中性入口，Web、Mobile、小程序共用 | `完成` |
 | `scramble-stats-build` 动态导入 Web 私有 solver | 将已证明为纯逻辑的 solver core 逐个移入 `puzzle-solvers` 并公开 export | 未完成前不移动该 job |
 | Web 测试读取 API 私有源码和 fixture | 纯 API 测试归 API；真正的消费合同使用中性 fixture 或公开契约；不复制测试 | 未分类完成前不移动 API/Web |
 
@@ -160,8 +160,8 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 | LAY2-04 | `alg-build` | 移至 `jobs/alg-build` | `完成` | 52 个 tracked 文件完整 rename；package 名与 job 身份不变；API migration 输出和客户端 fixture 统一按 package 名解析；清册、lockfile 和活动文档同步；未运行生成器、数据库、测试或 build |
 | LAY2-05 | `stats-build` | 移至 `jobs/stats-build` | `完成` | 144 个原 job 文件完整移动，两个 producer 测试归位并接入 Test workflow；Web H2H 读取登记显式合同，package resolver、lockfile、生成物清册和活动文档同步，build/upload/load 静态合同保持一致；边界为 303/319/14，未在本地运行统计、数据库、测试或 build |
 | LAY2-06 | solver 边界与 `scramble-stats-build` | 先消除 Web 私有 solver import，再移至 jobs | `完成` | 纯 solver 统一经 `@cuberoot/puzzle-solvers` 公开出口消费；job、lockfile、resolver、生成物清册、runbook 与活动文档同步到新路径；边界降至 279/295/13；按用户要求未运行 fixture、dry run、测试、build 或数据生成 |
-| LAY2-07 | Miniprogram | 移至 `apps/miniprogram` | `已授权，待前置` | 独立构建、shared 合同、Web 路由合同通过，无 React DOM 依赖 |
-| LAY2-08 | 资产边界与 Mobile | 先提取图标生成入口，再移至 `apps/mobile` | `已授权，待前置` | typecheck/build、Android 资产和原生路径通过 |
+| LAY2-07 | Miniprogram | 移至 `apps/miniprogram` | `完成` | package 身份不变；shared 输入与 Web 路由合同不再假设 sibling 布局；无 React DOM 依赖；按用户要求未运行测试或 build |
+| LAY2-08 | 资产边界与 Mobile | 先提取图标生成入口，再移至 `apps/mobile` | `前置完成，待移动` | 中性品牌源和生成入口已完成；仍需移动 Mobile 并同步原生路径合同 |
 | LAY2-09 | 测试归属与 API | 先处理 Web→API 私有测试读取，再移至 `apps/api` | `已授权，待前置` | API typecheck/test/bundle、migration 和部署制品通过 |
 | LAY2-10 | Web | 移至 `apps/web` | `已授权，待前置` | typecheck、隔离 Next build、standalone 启动和关键路由 smoke 通过 |
 | LAY2-11 | 收尾 | 删除旧路径兼容，刷新文档、清册和历史 allowlist | `已授权，待前置` | 旧活动引用归零，4 app/6 package/4 job 唯一归类 |
@@ -255,5 +255,6 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 | 2026-08-25 | LAY2-04 `alg-build` 移动复审 | `GO：第二个 job 移动闭环` | 初审发现的显式 migration 输出受 package cwd 影响和边界基线计数漂移已修复；5 个 generator 统一按 `@cuberoot/server` 解析输出，fixture 按 `@cuberoot/alg-build` 解析，未运行生成器、数据库、测试或 build |
 | 2026-08-25 | LAY2-05 `stats-build` 移动复审 | `GO：第三个 job 移动闭环` | 初审发现的脚本硬编码、lockfile、忽略项、生成物清册和活动文档路径已修复；终审发现的 producer 测试 CI 覆盖与 Web→stats test-contract 缺口也已关闭，最终无 blocker/major |
 | 2026-08-25 | LAY2-06 solver 边界与 `scramble-stats-build` 移动复审 | `GO：第四个 job 移动闭环` | Web 私有 solver 已提取到公开、运行时中性的 package 出口；job 及其脚本、lockfile、resolver、生成物清册、runbook 和活动文档同步，静态边界为 279/295/13；按用户要求未运行测试、build、dry run 或数据生成 |
+| 2026-08-25 | LAY2-07 小程序移动与品牌资产前置复审 | `条件 GO：暂存边界与测试合同修正后提交` | 终审发现的半暂存状态、无关删除、Web 私有路由测试边和过时品牌说明已处理；路由存在性检查按 package identity 定位并登记显式 test-contract，Web、Mobile、小程序只读取中性品牌事实源；按用户要求未运行测试或 build |
 
 这里的 `HOLD` 只否决“一步到位执行”，不否决渐进方案。未解决的 blocker 必须成为对应批次的前置门槛，不能靠口头承诺跳过。

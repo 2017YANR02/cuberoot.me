@@ -78,20 +78,6 @@
       ]
     },
     {
-      "id": "mobile-client-brand-assets",
-      "from": "packages/mobile build",
-      "to": "packages/client icon generator and public icons",
-      "phase": "build-import",
-      "mechanism": "dynamic import plus filesystem reads during Android asset generation",
-      "owner": "mobile",
-      "rationale": "Android assets intentionally derive from the website brand source of truth.",
-      "replacement": "If another consumer appears, extract a brand-assets build package; do not share runtime UI.",
-      "evidence": [
-        { "file": "core/packages/mobile/scripts/gen-android-assets.mjs", "contains": "await import('../../client/scripts/gen-app-icons.mjs');" },
-        { "file": ".github/workflows/test.yml", "contains": "Verify Android brand assets" }
-      ]
-    },
-    {
       "id": "scramble-build-root-artifacts",
       "from": "jobs/scramble-stats-build",
       "to": "repo stats/scramble and solver native analyzers/tables",
@@ -180,6 +166,20 @@
       "evidence": [
         { "file": "core/packages/client/tests/wca_comp_h2h_filter.test.ts", "contains": "workspaceFixturePath('@cuberoot/stats-build'" },
         { "file": ".github/workflows/test.yml", "contains": "pnpm --filter @cuberoot/stats-build test" }
+      ]
+    },
+    {
+      "id": "miniprogram-web-route-contract-tests",
+      "from": "apps/miniprogram tests",
+      "to": "packages/client route files and redirect config",
+      "phase": "test-contract",
+      "mechanism": "workspace package resolution plus read-only route existence checks",
+      "owner": "miniprogram and client",
+      "rationale": "The Mini Program route registry must not publish a Web destination that has no matching page or redirect.",
+      "replacement": "Keep the check package-location independent; replace it with a neutral exported route manifest if another consumer needs the same contract.",
+      "evidence": [
+        { "file": "core/apps/miniprogram/tests/web-routes.test.ts", "contains": "resolveWorkspacePath('@cuberoot/client')" },
+        { "file": "core/apps/miniprogram/tests/web-routes.test.ts", "contains": "only registers destinations backed by canonical website pages or redirects" }
       ]
     },
     {
@@ -2349,7 +2349,7 @@
       "target": "<dynamic>"
     },
     {
-      "file": "packages/miniprogram/tests/release-check.test.mjs",
+      "file": "apps/miniprogram/tests/release-check.test.mjs",
       "mechanism": "path-literal",
       "rule": "cross-package-path",
       "sourceKind": "test",
@@ -2357,55 +2357,12 @@
       "target": "shared"
     },
     {
-      "file": "packages/miniprogram/tests/release-check.test.mjs",
+      "file": "apps/miniprogram/tests/release-check.test.mjs",
       "mechanism": "path-literal",
       "rule": "cross-package-path",
       "sourceKind": "test",
       "specifier": "/packages/shared/src/smart_cube/relay.ts",
       "target": "shared"
-    },
-    {
-      "file": "packages/miniprogram/tests/web-routes.test.ts",
-      "importKind": "runtime",
-      "mechanism": "import.meta.glob",
-      "sourceKind": "test",
-      "specifier": "../../client/app/**/page.tsx",
-      "rule": "cross-package-relative-module",
-      "target": "client"
-    },
-    {
-      "file": "packages/miniprogram/tests/web-routes.test.ts",
-      "importKind": "runtime",
-      "mechanism": "import.meta.glob",
-      "sourceKind": "test",
-      "specifier": "../../client/next.config.ts",
-      "rule": "cross-package-relative-module",
-      "target": "client"
-    },
-    {
-      "file": "packages/miniprogram/tests/web-routes.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../client/app/auth/miniprogram/page.tsx",
-      "target": "client"
-    },
-    {
-      "file": "packages/miniprogram/tests/web-routes.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../client/next.config.ts",
-      "target": "client"
-    },
-    {
-      "file": "packages/mobile/scripts/gen-android-assets.mjs",
-      "importKind": "runtime",
-      "mechanism": "dynamic-import",
-      "sourceKind": "build",
-      "specifier": "../../client/scripts/gen-app-icons.mjs",
-      "rule": "cross-package-relative-module",
-      "target": "client"
     },
     {
       "file": "jobs/scramble-stats-build/build_length_opt.mjs",
