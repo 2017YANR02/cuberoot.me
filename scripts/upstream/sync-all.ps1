@@ -42,7 +42,6 @@ $root = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -ScriptRoot $defaultRepoRoo
 
 $syncScripts = @(
     'sync_upstream.ps1'
-    '_sync_blddb.ps1'
     'scripts/upstream/sync-all.ps1'
     'scripts/upstream/sync-cstimer.ps1'
     'scripts/upstream/sync-cstimer-scramble.ps1'
