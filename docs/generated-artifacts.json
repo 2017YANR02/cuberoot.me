@@ -232,10 +232,9 @@
       "versionRecord": {
         "path": "tools/blddb/UPSTREAM.txt",
         "writer": "scripts/upstream/sync-blddb.ps1",
-        "mechanism": "Write-UpstreamVersionRecord reads git rev-parse HEAD after export and post-processing",
+        "mechanism": "Write-UpstreamVersionRecord records the detached origin/v2 commit after candidate export and post-processing succeed",
         "format": "structured-v1",
-        "state": "pending-next-successful-sync",
-        "pendingReason": "The checked-in legacy record contains only a seven-character commit; the next reviewed successful export and post-processing run must replace it with the structured full-commit record."
+        "state": "verified"
       },
       "verification": [
         "pwsh -NoProfile -File scripts/upstream/sync-blddb.ps1 -ValidateOnly"
