@@ -3,12 +3,13 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { isH2hActivity } from '@/lib/comp-schedule';
 import type { RoundInfo } from '@/lib/comp-schedule';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 const read = (url: URL) => readFileSync(fileURLToPath(url), 'utf8');
 const page = read(new URL('../app/[lang]/wca/comp/page.tsx', import.meta.url));
 const sharedContract = read(new URL('../../shared/src/api/comps_json.ts', import.meta.url));
-const pastGenerator = read(new URL('../../stats-build/src/bin/gen_all_comps.ts', import.meta.url));
-const upcomingGenerator = read(new URL('../../stats-build/src/bin/fetch_upcoming_comps.ts', import.meta.url));
+const pastGenerator = readFileSync(workspaceFixturePath('@cuberoot/stats-build', 'src/bin/gen_all_comps.ts'), 'utf8');
+const upcomingGenerator = readFileSync(workspaceFixturePath('@cuberoot/stats-build', 'src/bin/fetch_upcoming_comps.ts'), 'utf8');
 const compDetailPage = read(new URL('../app/[lang]/wca/comp/[slug]/CompDetailPage.tsx', import.meta.url));
 const scheduleView = read(new URL('../app/[lang]/wca/comp/[slug]/ScheduleView.tsx', import.meta.url));
 const scheduleCalendar = read(new URL('../app/[lang]/wca/comp/[slug]/ScheduleCalendar.tsx', import.meta.url));

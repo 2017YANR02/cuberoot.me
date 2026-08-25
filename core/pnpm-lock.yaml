@@ -79,6 +79,34 @@ importers:
         specifier: ^5.8.0
         version: 5.9.3
 
+  jobs/stats-build:
+    dependencies:
+      '@cuberoot/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      mysql2:
+        specifier: ^3.11.0
+        version: 3.20.0(@types/node@25.5.0)
+      yaml:
+        specifier: ^2.6.0
+        version: 2.9.0
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      '@typescript/native-preview':
+        specifier: 7.0.0-dev.20260517.1
+        version: 7.0.0-dev.20260517.1
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.6
+        version: 4.1.6(@types/node@25.5.0)(happy-dom@20.11.2)(jsdom@30.0.1)(vite@8.0.1(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
+
   jobs/wb-build:
     dependencies:
       cheerio:
@@ -694,31 +722,6 @@ importers:
         version: 5.7.3
 
   packages/stack-kernel: {}
-
-  packages/stats-build:
-    dependencies:
-      '@cuberoot/shared':
-        specifier: workspace:*
-        version: link:../shared
-      mysql2:
-        specifier: ^3.11.0
-        version: 3.20.0(@types/node@25.5.0)
-      yaml:
-        specifier: ^2.6.0
-        version: 2.8.3
-    devDependencies:
-      '@types/node':
-        specifier: ^25.5.0
-        version: 25.5.0
-      '@typescript/native-preview':
-        specifier: 7.0.0-dev.20260517.1
-        version: 7.0.0-dev.20260517.1
-      tsx:
-        specifier: ^4.19.0
-        version: 4.21.0
-      typescript:
-        specifier: ^5.8.0
-        version: 5.9.3
 
   packages/vendor-sr-puzzlegen:
     devDependencies:
@@ -4251,10 +4254,6 @@ packages:
   picomatch@2.3.2:
     resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
     engines: {node: '>=8.6'}
-
-  picomatch@4.0.3:
-    resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
-    engines: {node: '>=12'}
 
   picomatch@4.0.4:
     resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
@@ -8880,8 +8879,6 @@ snapshots:
 
   picomatch@2.3.2: {}
 
-  picomatch@4.0.3: {}
-
   picomatch@4.0.4: {}
 
   pinyin-pro@3.28.1: {}
@@ -9700,11 +9697,11 @@ snapshots:
       magic-string: 0.30.21
       obug: 2.1.1
       pathe: 2.0.3
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       std-env: 4.1.0
       tinybench: 2.9.0
       tinyexec: 1.1.2
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
       vite: 8.0.1(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@20.19.41)(esbuild@0.27.4)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0)
       why-is-node-running: 2.3.0
@@ -9729,11 +9726,11 @@ snapshots:
       magic-string: 0.30.21
       obug: 2.1.1
       pathe: 2.0.3
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       std-env: 4.1.0
       tinybench: 2.9.0
       tinyexec: 1.1.2
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
       vite: 8.0.1(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@22.19.15)(esbuild@0.27.4)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0)
       why-is-node-running: 2.3.0
@@ -9758,11 +9755,11 @@ snapshots:
       magic-string: 0.30.21
       obug: 2.1.1
       pathe: 2.0.3
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       std-env: 4.1.0
       tinybench: 2.9.0
       tinyexec: 1.1.2
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
       vite: 8.0.1(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.8.3)
       why-is-node-running: 2.3.0
@@ -9787,11 +9784,11 @@ snapshots:
       magic-string: 0.30.21
       obug: 2.1.1
       pathe: 2.0.3
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       std-env: 4.1.0
       tinybench: 2.9.0
       tinyexec: 1.1.2
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
       vite: 8.0.1(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0)
       why-is-node-running: 2.3.0

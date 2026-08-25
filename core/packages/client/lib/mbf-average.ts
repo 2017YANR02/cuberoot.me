@@ -2,7 +2,7 @@
 // MBLD 有两套编码,按数值大小分流(旧 ≥ 1e9、新 < 1e9),不是按 event id —— 333mbf 永远新编码,
 // 333mbo 历史里两套都有,甚至同一轮 attempts 混用。先把每把解到统一的三段(DD/TTTTT/MM),
 // 各取 3 次均值(四舍五入)再拼回(均值 DD ≤ 99 用新编码,否则用旧编码),可直接喂 formatWcaResult。
-// 算法与 packages/stats-build/src/core/mbf_average.ts 保持一致。
+// 算法与 jobs/stats-build/src/core/mbf_average.ts 保持一致。
 
 const OLD_FORMAT_MIN = 1_000_000_000; // 旧编码 1SSAATTTTT ≥ 1e9
 const UNKNOWN_TIME = 99_999;          // TTTTT==99999 表示无时间记录(旧多盲多数无)

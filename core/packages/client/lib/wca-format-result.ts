@@ -58,7 +58,7 @@ function formatTimeCs(cs: number): string {
 // notably mixes both across its history — so decode by value, never by event id.
 //   old: 1SSAATTTTT → solved = 99 - SS, attempted = AA, time = TTTTT seconds
 //   new:  DDTTTTTMM → diff = 99 - DD, missed = MM, solved = diff + missed, attempted = solved + missed
-// Mirrors packages/stats-build/src/core/solve_time.ts SolveTime.decode.
+// Mirrors jobs/stats-build/src/core/solve_time.ts SolveTime.decode.
 function formatMbld(value: number): string {
   let v = value;
   let solved: number;

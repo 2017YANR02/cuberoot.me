@@ -18,7 +18,7 @@ description: "Use when regenerating `stats/comp_names_zh.json`, debugging Chines
 
 ## 数据：`stats/comp_names_zh.json`
 
-由 `core/packages/stats-build/src/bin/fetch_comp_names_zh.ts` 生成（在 `core/packages/stats-build` 下跑）。
+由 `core/jobs/stats-build/src/bin/fetch_comp_names_zh.ts` 生成（在 `core/jobs/stats-build` 下跑）。
 
 ```bash
 npx tsx src/bin/fetch_comp_names_zh.ts           # 全量

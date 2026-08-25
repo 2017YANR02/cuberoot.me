@@ -6,10 +6,11 @@ import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveWorkspacePath } from '../../core/scripts/resolve-workspace-path.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '../..');
-const statsBuild = resolve(repoRoot, 'core/packages/stats-build');
+const statsBuild = resolve(repoRoot, 'core', resolveWorkspacePath('@cuberoot/stats-build'));
 
 const require = createRequire(resolve(statsBuild, 'package.json'));
 const mysql = require('mysql2/promise');

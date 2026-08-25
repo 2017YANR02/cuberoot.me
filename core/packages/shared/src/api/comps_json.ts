@@ -1,7 +1,7 @@
 // NOTE: 预生成 JSON 的前端类型契约
 // 产出方：
 //   - all_upcoming_comps.json ← stats-build/src/bin/fetch_upcoming_comps.ts 的 buildAllUpcomingComps()
-//   - all_past_comps.json     ← core/packages/stats-build/src/bin/gen_all_comps.ts
+//   - all_past_comps.json     ← core/jobs/stats-build/src/bin/gen_all_comps.ts
 
 import { statsUrl } from './stats-base';
 

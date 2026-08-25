@@ -181,6 +181,10 @@ jobs:
           pnpm --filter @cuberoot/puzzle-render-core build
           pnpm --filter @cuberoot/puzzle-solvers build
 
+      - name: Verify stats-build producer contracts
+        working-directory: core
+        run: pnpm --filter @cuberoot/stats-build test
+
       - name: Verify puzzle solvers package
         working-directory: core
         run: |

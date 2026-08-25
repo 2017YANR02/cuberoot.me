@@ -15,7 +15,7 @@
 // 用法(CI,builder 之后):
 //   npx tsx src/bin/sor_over_time_build.ts
 // 本地:
-//   SNAP_TSV=.tmp/sor-feature/sor_snap.tsv OUT_DIR=packages/stats-build/output/historical_ranks \
+//   SNAP_TSV=.tmp/sor-feature/sor_snap.tsv OUT_DIR=jobs/stats-build/output/historical_ranks \
 //     npx tsx src/bin/sor_over_time_build.ts
 
 import { createReadStream, createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync, appendFileSync, existsSync } from 'fs';

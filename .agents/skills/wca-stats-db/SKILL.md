@@ -5,7 +5,7 @@ description: "Use when writing SQL against local wca_developer_database MySQL du
 
 # WCA Statistics DB
 
-本仓库本地的 WCA dump:MySQL 库名 `wca_developer_database` (datadir `E:\mysql_data\wca_developer_database\`),连接配置在 `core/packages/stats-build/database.yml`。**写 SQL 前先看这个文件**,凭对 WCA 公开 TSV 的肌肉记忆会踩坑。
+本仓库本地的 WCA dump:MySQL 库名 `wca_developer_database` (datadir `E:\mysql_data\wca_developer_database\`),连接配置在 `core/jobs/stats-build/database.yml`。**写 SQL 前先看这个文件**,凭对 WCA 公开 TSV 的肌肉记忆会踩坑。
 
 ## 从 WCA 官网刷新 dump
 
@@ -15,7 +15,7 @@ CWD `core/`,一键(下载 ~2GB + 解压 + drop & rebuild + 建索引):
 pnpm --filter @cuberoot/stats-build exec tsx src/bin/update_database.ts
 ```
 
-脚本 `packages/stats-build/src/bin/update_database.ts`,源 `https://www.worldcubeassociation.org/wst/wca-developer-database-dump.zip`。只导 `REQUIRED_TABLES`(见下),磁盘留 ~10GB,需要 `mysql` CLI 在 PATH。export timestamp 写进 metadata 表。
+脚本 `jobs/stats-build/src/bin/update_database.ts`,源 `https://www.worldcubeassociation.org/wst/wca-developer-database-dump.zip`。只导 `REQUIRED_TABLES`(见下),磁盘留 ~10GB,需要 `mysql` CLI 在 PATH。export timestamp 写进 metadata 表。
 
 已解压过 .sql 不想再下:`$env:WCA_DUMP_SQL_PATH = 'path/to/dump.sql'` 跳过下载+解压。
 
@@ -46,7 +46,7 @@ round_types, scrambles, users
 
 **本地能 join 到的 `competition_events` / `rounds` / `rounds_*` / `championships_*` 关联表 / `posts` / 任何 `_metadata` 表 → CI 没有。**
 
-写新 SQL（stats、bin 脚本、validate）前必须确认所用表在 `REQUIRED_TABLES`（`core/packages/stats-build/src/core/database.ts`）。要新增表就同时改 `REQUIRED_TABLES`，否则本地通过 / CI 红。
+写新 SQL（stats、bin 脚本、validate）前必须确认所用表在 `REQUIRED_TABLES`（`core/jobs/stats-build/src/core/database.ts`）。要新增表就同时改 `REQUIRED_TABLES`，否则本地通过 / CI 红。
 
 ## 命名约定（最常见的坑）
 
