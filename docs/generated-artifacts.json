@@ -28,7 +28,8 @@
         "stats/all_upcoming_comps.json",
         "stats/cn_upcoming_registrations.json",
         "stats/comp_names_zh.json",
-        "stats/comp_elevations.json"
+        "stats/comp_elevations.json",
+        "stats/world_bests.json"
       ],
       "transientOutputs": [
         "core/packages/stats-build/output/**/*.tsv",
@@ -60,6 +61,21 @@
       ],
       "verification": ["the daily update_upcoming workflow regenerates and commits all five files"],
       "driftPolicy": "This daily pipeline is intentionally separate from stats.wca; do not move these outputs into the main statistics owner."
+    },
+    {
+      "id": "stats.world-bests",
+      "kind": "checked-in-generated",
+      "source": {
+        "url": "https://www.speedsolving.com/wiki/index.php?title=List_of_Unofficial_World_Records",
+        "paths": ["core/jobs/wb-build/src/**"]
+      },
+      "license": { "spdx": "NOASSERTION", "evidence": "the external wiki retains its own terms; repository code is covered by LICENSE" },
+      "owner": "core/jobs/wb-build",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/wb-build scrape",
+      "outputs": ["stats/world_bests.json"],
+      "verification": ["resolve @cuberoot/wb-build uniquely, run the generated-artifact ownership check, and review any generated JSON diff only when the network-backed scraper is explicitly run"],
+      "driftPolicy": "This network-backed dataset is regenerated only through its owner. Ordinary CI checks ownership and paths without fetching or overwriting the checked-in output."
     },
     {
       "id": "stats.scramble",

@@ -1,4 +1,4 @@
-// Mirror of core/packages/wb-build/src/types.ts (kept in sync manually).
+// Mirror of core/jobs/wb-build/src/types.ts (kept in sync manually).
 export type WbTabId = 'standard' | 'oh' | 'wf' | 'bld' | 'fm' | 'virtual' | 'team' | 'other';
 
 export interface WbBilingual { en: string; zh: string;
