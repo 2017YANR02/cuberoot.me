@@ -595,13 +595,13 @@
                 [
                   3,
                   "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
-                  "1:08.43",
+                  "1:08.25",
                   "China",
-                  "2026-04-11",
-                  "[Xuzhou Zenith 2026](https://www.worldcubeassociation.org/competitions/XuzhouZenith2026)",
+                  "2026-08-22",
+                  "[Xi'an Open 2026](https://www.worldcubeassociation.org/competitions/XianOpen2026)",
                   {
                     "_type": "solves",
-                    "csv": "1:08.43"
+                    "csv": "1:08.25"
                   }
                 ],
                 [
@@ -708,6 +708,18 @@
                 ],
                 [
                   2,
+                  "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
+                  "1:41.78",
+                  "China",
+                  "2026-08-22",
+                  "[Xi'an Open 2026](https://www.worldcubeassociation.org/competitions/XianOpen2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "1:41.78"
+                  }
+                ],
+                [
+                  3,
                   "[Omar Ellabban](https://www.worldcubeassociation.org/persons/2018ELLA01)",
                   "1:43.53",
                   "Canada",
@@ -719,7 +731,7 @@
                   }
                 ],
                 [
-                  3,
+                  4,
                   "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
                   "1:44.00",
                   "Russia",
@@ -731,7 +743,7 @@
                   }
                 ],
                 [
-                  4,
+                  5,
                   "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
                   "1:44.31",
                   "Korea",
@@ -743,7 +755,7 @@
                   }
                 ],
                 [
-                  5,
+                  6,
                   "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
                   "1:44.46",
                   "Malaysia",
@@ -752,18 +764,6 @@
                   {
                     "_type": "solves",
                     "csv": "1:44.46"
-                  }
-                ],
-                [
-                  6,
-                  "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
-                  "1:46.60",
-                  "China",
-                  "2025-02-08",
-                  "[Chengdu Spring Open 2025](https://www.worldcubeassociation.org/competitions/ChengduSpringOpen2025)",
-                  {
-                    "_type": "solves",
-                    "csv": "1:46.60"
                   }
                 ],
                 [
@@ -1110,6 +1110,18 @@
                 ],
                 [
                   4,
+                  "[Eden Robinson-Rechavi](https://www.worldcubeassociation.org/persons/2022ROBI05)",
+                  "8.52",
+                  "Switzerland",
+                  "2026-08-19",
+                  "[Luzern Sunset Solves 2026](https://www.worldcubeassociation.org/competitions/LuzernSunsetSolves2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "8.52"
+                  }
+                ],
+                [
+                  5,
                   "[Radosław Marcinek](https://www.worldcubeassociation.org/persons/2022MARC05)",
                   "8.55",
                   "Poland",
@@ -1121,7 +1133,7 @@
                   }
                 ],
                 [
-                  5,
+                  6,
                   "[Igor Gładysz](https://www.worldcubeassociation.org/persons/2022GLAD01)",
                   "8.59",
                   "Poland",
@@ -1133,7 +1145,7 @@
                   }
                 ],
                 [
-                  6,
+                  7,
                   "[Sean Patrick Villanueva](https://www.worldcubeassociation.org/persons/2017VILL41)",
                   "8.69",
                   "Philippines",
@@ -1145,7 +1157,7 @@
                   }
                 ],
                 [
-                  7,
+                  8,
                   "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
                   "8.81",
                   "Brazil",
@@ -1157,7 +1169,7 @@
                   }
                 ],
                 [
-                  8,
+                  9,
                   "[Patrick Ponce](https://www.worldcubeassociation.org/persons/2012PONC02)",
                   "8.86",
                   "USA",
@@ -1169,24 +1181,12 @@
                   }
                 ],
                 [
-                  9,
+                  10,
                   "[Andrey Che](https://www.worldcubeassociation.org/persons/2015CHEA01)",
                   "8.88",
                   "Russia",
                   "2026-05-09",
                   "[Früehligswürfelä Rootchrüüz 2026](https://www.worldcubeassociation.org/competitions/Fruehligswurfelazrootchruuz2026)",
-                  {
-                    "_type": "solves",
-                    "csv": "8.88"
-                  }
-                ],
-                [
-                  10,
-                  "[Alexey Tsvetkov](https://www.worldcubeassociation.org/persons/2017TSVE02)",
-                  "8.88",
-                  "Russia",
-                  "2026-01-24",
-                  "[Battle for Belgrade 2026](https://www.worldcubeassociation.org/competitions/BattleforBelgrade2026)",
                   {
                     "_type": "solves",
                     "csv": "8.88"
@@ -1788,6 +1788,18 @@
                 ],
                 [
                   8,
+                  "[Szymon Ciepiela](https://www.worldcubeassociation.org/persons/2022CIEP01)",
+                  "6.02",
+                  "Poland",
+                  "2026-08-22",
+                  "[Dragon Cubing XII 2026](https://www.worldcubeassociation.org/competitions/DragonCubingXII2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "6.02"
+                  }
+                ],
+                [
+                  9,
                   "[Daniel Karnaukh](https://www.worldcubeassociation.org/persons/2014KARN02)",
                   "6.04",
                   "USA",
@@ -1799,7 +1811,7 @@
                   }
                 ],
                 [
-                  9,
+                  10,
                   "[Vicenzo Guerino Cecchini](https://www.worldcubeassociation.org/persons/2015CECC01)",
                   "6.22",
                   "Brazil",
@@ -1808,18 +1820,6 @@
                   {
                     "_type": "solves",
                     "csv": "6.22"
-                  }
-                ],
-                [
-                  10,
-                  "[David Epstein](https://www.worldcubeassociation.org/persons/2016EPST02)",
-                  "6.25",
-                  "Australia",
-                  "2023-06-03",
-                  "[Side N Blind Narre Warren 2023](https://www.worldcubeassociation.org/competitions/SideNBlindNarreWarren2023)",
-                  {
-                    "_type": "solves",
-                    "csv": "6.25"
                   }
                 ]
               ]
@@ -2512,7 +2512,7 @@
                 [
                   "0.89",
                   "29.9%",
-                  "406",
+                  "407",
                   "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
                   "2025-07-15",
                   "[HIT - Kāhala Open 2025](https://www.worldcubeassociation.org/competitions/HawaiianIslandTourKahala2025)",
@@ -2926,7 +2926,7 @@
                 [
                   "4.11",
                   "23.2%",
-                  "366",
+                  "367",
                   "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
                   "2025-08-24",
                   "[Zhengzhou Summer III 2025](https://www.worldcubeassociation.org/competitions/ZhengzhouSummerIII2025)",
@@ -3520,7 +3520,7 @@
                 [
                   "19.94",
                   "5.1%",
-                  "878",
+                  "879",
                   "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
                   "2024-03-30",
                   "[Los Angeles Newcomers 2024](https://www.worldcubeassociation.org/competitions/LosAngelesNewcomers2024)",
@@ -3946,7 +3946,7 @@
                 [
                   "36.98",
                   "0.5%",
-                  "199",
+                  "200",
                   "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
                   "2026-02-07",
                   "[Ansan Favorites 2026](https://www.worldcubeassociation.org/competitions/AnsanFavorites2026)",
@@ -4492,7 +4492,7 @@
                 [
                   "1:06.07",
                   "0.5%",
-                  "486",
+                  "487",
                   "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
                   "2025-04-26",
                   "[Burbank Big Cubes 2025](https://www.worldcubeassociation.org/competitions/BurbankBigCubes2025)",
@@ -4894,7 +4894,7 @@
                 [
                   "1:37.97",
                   "1.8%",
-                  "143",
+                  "144",
                   "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
                   "2026-04-04",
                   "[UCSD TritoNxN 2026](https://www.worldcubeassociation.org/competitions/UCSDTritoNxN2026)",
@@ -5488,7 +5488,7 @@
                 [
                   "15.05",
                   "11.7%",
-                  "1221",
+                  "1222",
                   "[Elliott Kobelansky](https://www.worldcubeassociation.org/persons/2019KOBE03)",
                   "2023-04-22",
                   "[Panthers Cube Day 2023](https://www.worldcubeassociation.org/competitions/PanthersCubeDay2023)",
@@ -5770,7 +5770,7 @@
                 [
                   "19.67",
                   "1.7%",
-                  "542",
+                  "543",
                   "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
                   "2025-03-01",
                   "[5BLD Masters Opole 2025](https://www.worldcubeassociation.org/competitions/5BLDMastersOpole2025)",
@@ -6028,7 +6028,7 @@
                 [
                   "7.72",
                   "3.6%",
-                  "31",
+                  "32",
                   "[Crimson Arradaza](https://www.worldcubeassociation.org/persons/2023ARRA01)",
                   "2026-07-25",
                   "[GAN Tarlac Speedcubing Open 2026](https://www.worldcubeassociation.org/competitions/TarlacSpeedcubingOpen2026)",
@@ -6706,7 +6706,7 @@
                 [
                   "25.67",
                   "2.6%",
-                  "479",
+                  "480",
                   "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
                   "2025-05-03",
                   "[Chimehuin al Cubo 2025](https://www.worldcubeassociation.org/competitions/ChimehuinalCubo2025)",
@@ -7072,7 +7072,7 @@
                 [
                   "1.55",
                   "8.8%",
-                  "479",
+                  "480",
                   "[Andrew Mao](https://www.worldcubeassociation.org/persons/2022MAOA01)",
                   "2025-05-03",
                   "[Pickering Favourites Spring 2025](https://www.worldcubeassociation.org/competitions/PickeringFavouritesSpring2025)",
@@ -7438,7 +7438,7 @@
                 [
                   "2.26",
                   "20.1%",
-                  "374",
+                  "375",
                   "[Lachlan Gibson](https://www.worldcubeassociation.org/persons/2022GIBS04)",
                   "2025-08-16",
                   "[2x2 in Tāmaki Makaurau 2025](https://www.worldcubeassociation.org/competitions/2x2inTamakiMakaurau2025)",
@@ -7804,7 +7804,7 @@
                 [
                   "1.61",
                   "13.4%",
-                  "514",
+                  "515",
                   "[Dominic Redisi](https://www.worldcubeassociation.org/persons/2019REDI02)",
                   "2025-03-29",
                   "[Southern Indiana Qualifier 2025](https://www.worldcubeassociation.org/competitions/SouthernIndianaQualifier2025)",
@@ -8374,7 +8374,7 @@
                 [
                   "4.69",
                   "7.5%",
-                  "493",
+                  "494",
                   "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
                   "2025-04-19",
                   "[Aldergrove Clock Fest 2025](https://www.worldcubeassociation.org/competitions/AldergroveClockFest2025)",
@@ -8956,7 +8956,7 @@
                 [
                   "1:01.62",
                   "1.1%",
-                  "332",
+                  "333",
                   "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
                   "2025-09-27",
                   "[SacQuiet Fall 2025](https://www.worldcubeassociation.org/competitions/SacQuietFall2025)",
@@ -9130,7 +9130,7 @@
                 [
                   "2:27.63",
                   "19.4%",
-                  "2445",
+                  "2446",
                   "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
                   "2019-12-15",
                   "[MCC Epsilon 2019](https://www.worldcubeassociation.org/competitions/MichiganCubingClubEpsilon2019)",
@@ -9244,7 +9244,7 @@
                 [
                   "21.36",
                   "0.7%",
-                  "2475",
+                  "2476",
                   "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
                   "2019-11-15",
                   "[Thailand Championship 2019](https://www.worldcubeassociation.org/competitions/ThailandChampionship2019)",
@@ -9478,7 +9478,7 @@
                 [
                   "0.76",
                   "3.8%",
-                  "5504",
+                  "5505",
                   "[Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13)",
                   "2011-07-31",
                   "[Beijing Summer Open 2011](https://www.worldcubeassociation.org/competitions/BeijingSummer2011)",
@@ -9784,7 +9784,7 @@
                 [
                   "1.93",
                   "1.0%",
-                  "5203",
+                  "5204",
                   "[Haokun Wang (王皓琨)](https://www.worldcubeassociation.org/persons/2010WANG52)",
                   "2012-05-27",
                   "[Tianjin Open 2012](https://www.worldcubeassociation.org/competitions/TianjinOpen2012)",
@@ -10141,6 +10141,18 @@
                 ],
                 [
                   3,
+                  "[Yi Shen (沈懿)](https://www.worldcubeassociation.org/persons/2026SHEN01)",
+                  "4.76",
+                  "China",
+                  "2026-08-22",
+                  "[Beihai Open 2026](https://www.worldcubeassociation.org/competitions/BeihaiOpen2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "5.06,4.46"
+                  }
+                ],
+                [
+                  4,
                   "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
                   "5.02",
                   "Poland",
@@ -10152,19 +10164,19 @@
                   }
                 ],
                 [
-                  4,
-                  "[Yi Shen (沈懿)](https://www.worldcubeassociation.org/persons/2026SHEN01)",
-                  "5.34",
+                  5,
+                  "[Bofan Zhang (张博藩)](https://www.worldcubeassociation.org/persons/2021ZHAN01)",
+                  "5.20",
                   "China",
-                  "2026-08-08",
-                  "[Maoming Open 2026](https://www.worldcubeassociation.org/competitions/MaomingOpen2026)",
+                  "2026-08-22",
+                  "[Beihai Open 2026](https://www.worldcubeassociation.org/competitions/BeihaiOpen2026)",
                   {
                     "_type": "solves",
-                    "csv": "5.10,5.57"
+                    "csv": "5.35,5.04"
                   }
                 ],
                 [
-                  5,
+                  6,
                   "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
                   "5.42",
                   "USA",
@@ -10176,7 +10188,7 @@
                   }
                 ],
                 [
-                  6,
+                  7,
                   "[Matty Hiroto Inaba](https://www.worldcubeassociation.org/persons/2016INAB01)",
                   "5.43",
                   "USA",
@@ -10188,7 +10200,7 @@
                   }
                 ],
                 [
-                  7,
+                  8,
                   "[Zhaokun Li (李昭昆)](https://www.worldcubeassociation.org/persons/2024LIZH03)",
                   "5.54",
                   "China",
@@ -10200,7 +10212,7 @@
                   }
                 ],
                 [
-                  8,
+                  9,
                   "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
                   "5.67",
                   "USA",
@@ -10212,7 +10224,7 @@
                   }
                 ],
                 [
-                  9,
+                  10,
                   "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
                   "5.69",
                   "Brazil",
@@ -10221,18 +10233,6 @@
                   {
                     "_type": "solves",
                     "csv": "5.61,5.77"
-                  }
-                ],
-                [
-                  10,
-                  "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-                  "5.75",
-                  "USA",
-                  "2023-05-06",
-                  "[Gonna Need a Bigger Cube SD 2023](https://www.worldcubeassociation.org/competitions/GonnaNeedaBiggerCubeSD2023)",
-                  {
-                    "_type": "solves",
-                    "csv": "5.66,5.84"
                   }
                 ]
               ]
@@ -10495,6 +10495,18 @@
               "rows": [
                 [
                   1,
+                  "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+                  "1:05.50",
+                  "Russia",
+                  "2026-08-22",
+                  "[Kuala Lumpur CC 2026](https://www.worldcubeassociation.org/competitions/KualaLumpurCC2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "1:07.36,1:03.63"
+                  }
+                ],
+                [
+                  2,
                   "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
                   "1:06.67",
                   "USA",
@@ -10503,18 +10515,6 @@
                   {
                     "_type": "solves",
                     "csv": "1:08.30,1:05.04"
-                  }
-                ],
-                [
-                  2,
-                  "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
-                  "1:07.62",
-                  "Russia",
-                  "2026-03-21",
-                  "[MYHM HaNxNoi 2026](https://www.worldcubeassociation.org/competitions/MYHMHaNxNoi2026)",
-                  {
-                    "_type": "solves",
-                    "csv": "1:08.87,1:06.37"
                   }
                 ],
                 [
@@ -10621,6 +10621,18 @@
               "rows": [
                 [
                   1,
+                  "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+                  "1:39.12",
+                  "Russia",
+                  "2026-08-22",
+                  "[Kuala Lumpur CC 2026](https://www.worldcubeassociation.org/competitions/KualaLumpurCC2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "1:38.08,1:40.15"
+                  }
+                ],
+                [
+                  2,
                   "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
                   "1:41.55",
                   "USA",
@@ -10632,7 +10644,7 @@
                   }
                 ],
                 [
-                  2,
+                  3,
                   "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
                   "1:41.89",
                   "Poland",
@@ -10644,7 +10656,7 @@
                   }
                 ],
                 [
-                  3,
+                  4,
                   "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
                   "1:42.23",
                   "China",
@@ -10656,7 +10668,7 @@
                   }
                 ],
                 [
-                  4,
+                  5,
                   "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
                   "1:43.21",
                   "Malaysia",
@@ -10665,18 +10677,6 @@
                   {
                     "_type": "solves",
                     "csv": "1:44.43,1:41.99"
-                  }
-                ],
-                [
-                  5,
-                  "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
-                  "1:43.51",
-                  "Russia",
-                  "2026-08-14",
-                  "[Vietnam Championship 2026](https://www.worldcubeassociation.org/competitions/VietnamChampionship2026)",
-                  {
-                    "_type": "solves",
-                    "csv": "1:43.01,1:44.01"
                   }
                 ],
                 [
@@ -11125,6 +11125,18 @@
               "rows": [
                 [
                   1,
+                  "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+                  "24.20",
+                  "Russia",
+                  "2026-08-22",
+                  "[Kuala Lumpur CC 2026](https://www.worldcubeassociation.org/competitions/KualaLumpurCC2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "23.40,25.00"
+                  }
+                ],
+                [
+                  2,
                   "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
                   "24.82",
                   "China",
@@ -11133,18 +11145,6 @@
                   {
                     "_type": "solves",
                     "csv": "24.87,24.76"
-                  }
-                ],
-                [
-                  2,
-                  "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
-                  "25.12",
-                  "Russia",
-                  "2025-12-06",
-                  "[Tashkent Open 2025](https://www.worldcubeassociation.org/competitions/TashkentOpen2025)",
-                  {
-                    "_type": "solves",
-                    "csv": "24.38,25.86"
                   }
                 ],
                 [
@@ -12353,7 +12353,7 @@
                 [
                   "0.97",
                   "6.3%",
-                  "898",
+                  "899",
                   "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
                   "2024-03-10",
                   "[Luoyang Spring 2024](https://www.worldcubeassociation.org/competitions/LuoyangSpring2024)",
@@ -12827,7 +12827,7 @@
                 [
                   "4.02",
                   "5.2%",
-                  "17",
+                  "18",
                   "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
                   "2026-08-08",
                   "[Maoming Open 2026](https://www.worldcubeassociation.org/competitions/MaomingOpen2026)",
@@ -13313,7 +13313,7 @@
                 [
                   "19.82",
                   "0.5%",
-                  "431",
+                  "432",
                   "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
                   "2025-06-20",
                   "[Oslo Open 2025](https://www.worldcubeassociation.org/competitions/OsloOpen2025)",
@@ -13979,7 +13979,7 @@
                 [
                   "34.84",
                   "0.0%",
-                  "10",
+                  "11",
                   "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
                   "2026-08-15",
                   "[Winding Down in Willetton 2026](https://www.worldcubeassociation.org/competitions/WindingDowninWilletton2026)",
@@ -14571,9 +14571,21 @@
               "titleZh": "六阶魔方",
               "rows": [
                 [
+                  "1:05.50",
+                  "1.8%",
+                  "4",
+                  "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+                  "2026-08-22",
+                  "[Kuala Lumpur CC 2026](https://www.worldcubeassociation.org/competitions/KualaLumpurCC2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "1:07.36,1:03.63"
+                  }
+                ],
+                [
                   "1:06.67",
                   "2.6%",
-                  "325",
+                  "322",
                   "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
                   "2025-10-04",
                   "[Nub Open Trabuco Hills Fall 2025](https://www.worldcubeassociation.org/competitions/NubOpenTrabucoHillsFall2025)",
@@ -14985,9 +14997,21 @@
               "titleZh": "七阶魔方",
               "rows": [
                 [
+                  "1:39.12",
+                  "2.4%",
+                  "4",
+                  "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+                  "2026-08-22",
+                  "[Kuala Lumpur CC 2026](https://www.worldcubeassociation.org/competitions/KualaLumpurCC2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "1:38.08,1:40.15"
+                  }
+                ],
+                [
                   "1:41.55",
                   "0.7%",
-                  "94",
+                  "91",
                   "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
                   "2026-05-23",
                   "[Western Championship 2026](https://www.worldcubeassociation.org/competitions/WesternChampionship2026)",
@@ -15437,7 +15461,7 @@
                 [
                   "14.46",
                   "5.7%",
-                  "10",
+                  "11",
                   "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
                   "2026-08-15",
                   "[Hefei August Open 2026](https://www.worldcubeassociation.org/competitions/HefeiAugustOpen2026)",
@@ -15671,7 +15695,7 @@
                 [
                   "20.67",
                   "0.8%",
-                  "156",
+                  "157",
                   "[Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01)",
                   "2026-03-22",
                   "[FMCanton Haizhu 2026](https://www.worldcubeassociation.org/competitions/FMCantonHaizhu2026)",
@@ -15881,7 +15905,7 @@
                 [
                   "7.49",
                   "11.2%",
-                  "31",
+                  "32",
                   "[Zhen Chen (陈震)](https://www.worldcubeassociation.org/persons/2023CHEN30)",
                   "2026-07-25",
                   "[Wuhu Open 2026](https://www.worldcubeassociation.org/competitions/WuhuOpen2026)",
@@ -16509,9 +16533,21 @@
               "titleZh": "五魔",
               "rows": [
                 [
+                  "24.20",
+                  "2.5%",
+                  "4",
+                  "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+                  "2026-08-22",
+                  "[Kuala Lumpur CC 2026](https://www.worldcubeassociation.org/competitions/KualaLumpurCC2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "23.40,25.00"
+                  }
+                ],
+                [
                   "24.82",
                   "3.3%",
-                  "290",
+                  "287",
                   "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
                   "2025-11-08",
                   "[Guangzhou Special 2025](https://www.worldcubeassociation.org/competitions/GuangzhouSpecial2025)",
@@ -17021,7 +17057,7 @@
                 [
                   "1.35",
                   "1.5%",
-                  "618",
+                  "619",
                   "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
                   "2024-12-15",
                   "[Hangzhou Open 2024](https://www.worldcubeassociation.org/competitions/HangzhouOpen2024)",
@@ -17351,7 +17387,7 @@
                 [
                   "2.23",
                   "5.9%",
-                  "46",
+                  "47",
                   "[Lachlan Gibson](https://www.worldcubeassociation.org/persons/2022GIBS04)",
                   "2026-07-10",
                   "[GAN New Zealand Nationals 2026](https://www.worldcubeassociation.org/competitions/NewZealandNationals2026)",
@@ -17885,7 +17921,7 @@
                 [
                   "1.57",
                   "9.5%",
-                  "269",
+                  "270",
                   "[Kaixi Guo (郭铠希)](https://www.worldcubeassociation.org/persons/2023GUOK01)",
                   "2025-11-29",
                   "[Hangzhou Winter 2025](https://www.worldcubeassociation.org/competitions/HangzhouWinter2025)",
@@ -18551,7 +18587,7 @@
                 [
                   "5.10",
                   "0.3%",
-                  "346",
+                  "347",
                   "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
                   "2025-09-13",
                   "[ Bellevue Cubing Afternoon 2025](https://www.worldcubeassociation.org/competitions/BellevueCubingAfternoon2025)",
@@ -19037,7 +19073,7 @@
                 [
                   "1:02.00",
                   "44.5%",
-                  "438",
+                  "439",
                   "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
                   "2025-06-13",
                   "[New York Multimate PBQ II 2025](https://www.worldcubeassociation.org/competitions/NewYorkMultimatePBQII2025)",
@@ -19103,7 +19139,7 @@
                 [
                   "11:31.50",
                   "34.1%",
-                  "542",
+                  "543",
                   "[Jan Bentlage](https://www.worldcubeassociation.org/persons/2010BENT01)",
                   "2025-03-01",
                   "[Glasgow Spring - SBO 2025](https://www.worldcubeassociation.org/competitions/GlasgowSpringSBO2025)",
@@ -19133,7 +19169,7 @@
                 [
                   "22.05",
                   "4.7%",
-                  "2509",
+                  "2510",
                   "[Daniel Rose-Levine](https://www.worldcubeassociation.org/persons/2015ROSE01)",
                   "2019-10-12",
                   "[Brooklyn Fall 2019](https://www.worldcubeassociation.org/competitions/BrooklynFall2019)",
@@ -19331,7 +19367,7 @@
                 [
                   "0.86",
                   "3.9%",
-                  "5952",
+                  "5953",
                   "[Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13)",
                   "2010-05-09",
                   "[BUAA Open 2010](https://www.worldcubeassociation.org/competitions/BUAAOpen2010)",
@@ -19517,7 +19553,7 @@
                 [
                   "2.01",
                   "9.5%",
-                  "5492",
+                  "5493",
                   "[Ernie Pulchny](https://www.worldcubeassociation.org/persons/2010PULC01)",
                   "2011-08-12",
                   "[US Nationals 2011](https://www.worldcubeassociation.org/competitions/USNationals2011)",
@@ -20678,6 +20714,18 @@
                 ],
                 [
                   6,
+                  "[Tino Joksch](https://www.worldcubeassociation.org/persons/2022JOKS01)",
+                  "22.78",
+                  "Austria",
+                  "2026-08-22",
+                  "[Slovenian FMC Nationals 2026](https://www.worldcubeassociation.org/competitions/SlovenianFMCNationals2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "23.33,23.33,21.67"
+                  }
+                ],
+                [
+                  7,
                   "[Jibo Zhao (赵吉波)](https://www.worldcubeassociation.org/persons/2010ZHAO11)",
                   "22.78",
                   "China",
@@ -20689,7 +20737,7 @@
                   }
                 ],
                 [
-                  7,
+                  8,
                   "[Dewei Tan (譚得唯)](https://www.worldcubeassociation.org/persons/2024TAND01)",
                   "22.89",
                   "Hong Kong",
@@ -20701,7 +20749,19 @@
                   }
                 ],
                 [
-                  8,
+                  9,
+                  "[Jan Riedl](https://www.worldcubeassociation.org/persons/2019RIED01)",
+                  "22.89",
+                  "Czech Republic",
+                  "2026-08-22",
+                  "[Slovenian FMC Nationals 2026](https://www.worldcubeassociation.org/competitions/SlovenianFMCNationals2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "22.67,22.67,23.33"
+                  }
+                ],
+                [
+                  10,
                   "[Firstian Fushada (符逢城)](https://www.worldcubeassociation.org/persons/2015FUSH01)",
                   "23.11",
                   "Indonesia",
@@ -20710,30 +20770,6 @@
                   {
                     "_type": "solves",
                     "csv": "23.67,22.33,23.33"
-                  }
-                ],
-                [
-                  9,
-                  "[Qijun Miao (缪其隽)](https://www.worldcubeassociation.org/persons/2014MIAO02)",
-                  "23.11",
-                  "China",
-                  "2026-06-06",
-                  "[More Than One Cube Shanghai 2026](https://www.worldcubeassociation.org/competitions/MoreThanOneCubeShanghai2026)",
-                  {
-                    "_type": "solves",
-                    "csv": "23.00,25.00,21.33"
-                  }
-                ],
-                [
-                  10,
-                  "[Yongqiang Peng (彭永强)](https://www.worldcubeassociation.org/persons/2013PENG02)",
-                  "23.11",
-                  "China",
-                  "2026-06-06",
-                  "[More Than One Cube Shanghai 2026](https://www.worldcubeassociation.org/competitions/MoreThanOneCubeShanghai2026)",
-                  {
-                    "_type": "solves",
-                    "csv": "23.00,23.33,23.00"
                   }
                 ]
               ]
@@ -21930,7 +21966,7 @@
                 [
                   "1.01",
                   "1.9%",
-                  "136",
+                  "137",
                   "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
                   "2026-04-11",
                   "[Xuzhou Zenith 2026](https://www.worldcubeassociation.org/competitions/XuzhouZenith2026)",
@@ -22548,7 +22584,7 @@
                 [
                   "4.04",
                   "2.7%",
-                  "69",
+                  "70",
                   "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
                   "2026-06-17",
                   "[Hefei Cubing League 3x3 III 2026](https://www.worldcubeassociation.org/competitions/HefeiCubingLeague3x3III2026)",
@@ -23358,7 +23394,7 @@
                 [
                   "19.79",
                   "0.6%",
-                  "40",
+                  "41",
                   "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
                   "2026-07-16",
                   "[WCA European Championship 2026](https://www.worldcubeassociation.org/competitions/Euro2026)",
@@ -23964,7 +24000,7 @@
                 [
                   "35.33",
                   "3.3%",
-                  "418",
+                  "419",
                   "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
                   "2025-07-03",
                   "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)",
@@ -24306,7 +24342,7 @@
                 [
                   "1:09.35",
                   "2.4%",
-                  "529",
+                  "530",
                   "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
                   "2025-03-14",
                   "[Baja Spring 2025](https://www.worldcubeassociation.org/competitions/BajaSpring2025)",
@@ -24552,7 +24588,7 @@
                 [
                   "1:43.13",
                   "1.2%",
-                  "107",
+                  "108",
                   "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
                   "2026-05-10",
                   "[UniKL MIAT Cube Open 2026](https://www.worldcubeassociation.org/competitions/UniKLMIATCubeOpen2026)",
@@ -24786,7 +24822,7 @@
                 [
                   "18.35",
                   "11.2%",
-                  "1005",
+                  "1006",
                   "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
                   "2023-11-24",
                   "[Mountain View Multi Madness 2023](https://www.worldcubeassociation.org/competitions/MountainViewMultiMadness2023)",
@@ -24852,7 +24888,7 @@
                 [
                   "21.22",
                   "1.5%",
-                  "374",
+                  "375",
                   "[Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01)",
                   "2025-08-16",
                   "[FMC Bukit Jalil 2025](https://www.worldcubeassociation.org/competitions/FMCBukitJalil2025)",
@@ -25021,12 +25057,12 @@
                   "29.56",
                   "13.3%",
                   "0",
-                  "[Walker Welch](https://www.worldcubeassociation.org/persons/2011WELC01)",
+                  "[Tim Reynolds](https://www.worldcubeassociation.org/persons/2005REYN01)",
                   "2018-10-26",
                   "[GA Cubers Mountain Trip 2018](https://www.worldcubeassociation.org/competitions/GACubersMountainTrip2018)",
                   {
                     "_type": "solves",
-                    "csv": "32.00,24.67,32.00"
+                    "csv": "30.33,27.67,30.67"
                   }
                 ],
                 [
@@ -25050,7 +25086,7 @@
                 [
                   "8.27",
                   "4.3%",
-                  "368",
+                  "369",
                   "[Nicholas Archer](https://www.worldcubeassociation.org/persons/2020ARCH01)",
                   "2025-08-22",
                   "[Rubik's UK Championship 2025](https://www.worldcubeassociation.org/competitions/RubiksUKChampionship2025)",
@@ -25584,7 +25620,7 @@
                 [
                   "26.35",
                   "4.2%",
-                  "563",
+                  "564",
                   "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
                   "2025-02-08",
                   "[Central Asian Tour Astana 2025](https://www.worldcubeassociation.org/competitions/CentralAsianTourAstana2025)",
@@ -25998,7 +26034,7 @@
                 [
                   "1.44",
                   "2.7%",
-                  "136",
+                  "137",
                   "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
                   "2026-04-11",
                   "[Xuzhou Zenith 2026](https://www.worldcubeassociation.org/competitions/XuzhouZenith2026)",
@@ -26388,7 +26424,7 @@
                 [
                   "2.45",
                   "12.9%",
-                  "500",
+                  "501",
                   "[Lachlan Gibson](https://www.worldcubeassociation.org/persons/2022GIBS04)",
                   "2025-04-12",
                   "[Auckland Autumn 2025](https://www.worldcubeassociation.org/competitions/AucklandAutumn2025)",
@@ -26766,7 +26802,7 @@
                 [
                   "1.64",
                   "4.3%",
-                  "31",
+                  "32",
                   "[Vojtěch Grohmann](https://www.worldcubeassociation.org/persons/2021GROH01)",
                   "2026-07-25",
                   "[Czech Open 2026](https://www.worldcubeassociation.org/competitions/CzechOpen2026)",
@@ -27204,7 +27240,7 @@
                 [
                   "5.20",
                   "2.9%",
-                  "768",
+                  "769",
                   "[Dylan Baumbach](https://www.worldcubeassociation.org/persons/2019BAUM02)",
                   "2024-07-18",
                   "[NAC 2024](https://www.worldcubeassociation.org/competitions/NAC2024)",
@@ -27510,7 +27546,7 @@
                 [
                   "22.62",
                   "14.0%",
-                  "2535",
+                  "2536",
                   "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
                   "2019-09-16",
                   "[Merdeka Mind Games 2019](https://www.worldcubeassociation.org/competitions/MerdekaMindGames2019)",
@@ -27636,7 +27672,7 @@
                 [
                   "0.97",
                   "4.9%",
-                  "5022",
+                  "5023",
                   "[Jakub Kipa](https://www.worldcubeassociation.org/persons/2010KIPA01)",
                   "2012-11-24",
                   "[Warszawa Open 2012](https://www.worldcubeassociation.org/competitions/WarszawaOpen2012)",
@@ -27798,7 +27834,7 @@
                 [
                   "2.39",
                   "6.4%",
-                  "5133",
+                  "5134",
                   "[Mo Ji (季默)](https://www.worldcubeassociation.org/persons/2010JIMO01)",
                   "2012-08-05",
                   "[Hefei Summer 2012](https://www.worldcubeassociation.org/competitions/HefeiSummer2012)",
@@ -29227,7 +29263,7 @@
                 [
                   "1.18",
                   "10.3%",
-                  "1165",
+                  "1166",
                   "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
                   "2023-06-17",
                   "[Mid-Atlantic Championship 2023](https://www.worldcubeassociation.org/competitions/MidAtlanticChampionship2023)",
@@ -29569,7 +29605,7 @@
                 [
                   "4.21",
                   "0.6%",
-                  "116",
+                  "117",
                   "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
                   "2026-05-01",
                   "[Start of Summer Beijing 2026](https://www.worldcubeassociation.org/competitions/StartofSummerBeijing2026)",
@@ -30223,7 +30259,7 @@
                 [
                   "21.85",
                   "6.2%",
-                  "1488",
+                  "1489",
                   "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
                   "2022-07-29",
                   "[Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022)",
@@ -30625,7 +30661,7 @@
                 [
                   "46.04",
                   "2.8%",
-                  "1165",
+                  "1166",
                   "[Patrick Ponce](https://www.worldcubeassociation.org/persons/2012PONC02)",
                   "2023-06-17",
                   "[Mid-Atlantic Championship 2023](https://www.worldcubeassociation.org/competitions/MidAtlanticChampionship2023)",
@@ -31003,7 +31039,7 @@
                 [
                   "9.31",
                   "7.2%",
-                  "289",
+                  "290",
                   "[Zhen Chen (陈震)](https://www.worldcubeassociation.org/persons/2023CHEN30)",
                   "2025-11-09",
                   "[Guangzhou Small Cubes 2025](https://www.worldcubeassociation.org/competitions/GuangzhouSmallCubes2025)",
@@ -31393,7 +31429,7 @@
                 [
                   "1.94",
                   "5.3%",
-                  "256",
+                  "257",
                   "[Jasper Murray](https://www.worldcubeassociation.org/persons/2018MURR03)",
                   "2025-12-12",
                   "[New Zealand Nationals 2025](https://www.worldcubeassociation.org/competitions/NewZealandNationals2025)",
@@ -31651,7 +31687,7 @@
                 [
                   "3.86",
                   "1.6%",
-                  "788",
+                  "789",
                   "[Fiona Bao](https://www.worldcubeassociation.org/persons/2022BAOF01)",
                   "2024-06-28",
                   "[Southeast Championship 2024](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2024)",
@@ -31849,7 +31885,7 @@
                 [
                   "2.01",
                   "26.8%",
-                  "1165",
+                  "1166",
                   "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
                   "2023-06-17",
                   "[Mid-Atlantic Championship 2023](https://www.worldcubeassociation.org/competitions/MidAtlanticChampionship2023)",
@@ -32107,7 +32143,7 @@
                 [
                   "6.00",
                   "9.6%",
-                  "1551",
+                  "1552",
                   "[Max Siauw](https://www.worldcubeassociation.org/persons/2017SIAU02)",
                   "2022-05-27",
                   "[Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)",

@@ -259,17 +259,6 @@
           "1.24"
         ],
         [
-          "[Great Lakes Championship 2026](https://www.worldcubeassociation.org/competitions/GreatLakesChampionship2026/results/all#e222_1)",
-          "First round",
-          "3.43",
-          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-          "0.94",
-          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-          "1.01",
-          "[Thamaneeswar Sathesh Kumar](https://www.worldcubeassociation.org/persons/2022KUMA30)",
-          "1.48"
-        ],
-        [
           "[Yancheng Open 2025](https://www.worldcubeassociation.org/competitions/YanchengOpen2025/results/all#e222_d)",
           "First round",
           "3.43",
@@ -279,6 +268,17 @@
           "1.08",
           "[Jack Pan (潘杰康)](https://www.worldcubeassociation.org/persons/2012PANJ02)",
           "1.35"
+        ],
+        [
+          "[Great Lakes Championship 2026](https://www.worldcubeassociation.org/competitions/GreatLakesChampionship2026/results/all#e222_1)",
+          "First round",
+          "3.43",
+          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+          "0.94",
+          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+          "1.01",
+          "[Thamaneeswar Sathesh Kumar](https://www.worldcubeassociation.org/persons/2022KUMA30)",
+          "1.48"
         ],
         [
           "[Zibo Open 2025](https://www.worldcubeassociation.org/competitions/ZiboOpen2025/results/all#e222_d)",
@@ -916,9 +916,9 @@
           "1:02.00",
           "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
           "20.00",
-          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
+          "[Louis-Marie Ratto](https://www.worldcubeassociation.org/persons/2019RATT02)",
           "21.00",
-          "[Jaye Sloan](https://www.worldcubeassociation.org/persons/2022SLOA01)",
+          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
           "21.00"
         ],
         [
@@ -1229,9 +1229,9 @@
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#epyram_2)",
           "Second round",
           "4.64",
-          "[Parker Trager](https://www.worldcubeassociation.org/persons/2016TRAG01)",
-          "1.52",
           "[Sebastian Lee](https://www.worldcubeassociation.org/persons/2021LEES01)",
+          "1.52",
+          "[Parker Trager](https://www.worldcubeassociation.org/persons/2016TRAG01)",
           "1.52",
           "[Michael Nielsen](https://www.worldcubeassociation.org/persons/2017NIEL03)",
           "1.60"
@@ -1353,17 +1353,6 @@
           "2.89"
         ],
         [
-          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#eclock_1)",
-          "First round",
-          "8.47",
-          "[Caleb Wolf Dunn](https://www.worldcubeassociation.org/persons/2022DUNN03)",
-          "2.68",
-          "[Eryk Kasperek](https://www.worldcubeassociation.org/persons/2021KASP01)",
-          "2.87",
-          "[Carter Thomas](https://www.worldcubeassociation.org/persons/2018THOM29)",
-          "2.92"
-        ],
-        [
           "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#eclock_1)",
           "First round",
           "8.47",
@@ -1373,6 +1362,17 @@
           "2.73",
           "[Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01)",
           "3.05"
+        ],
+        [
+          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#eclock_1)",
+          "First round",
+          "8.47",
+          "[Caleb Wolf Dunn](https://www.worldcubeassociation.org/persons/2022DUNN03)",
+          "2.68",
+          "[Eryk Kasperek](https://www.worldcubeassociation.org/persons/2021KASP01)",
+          "2.87",
+          "[Carter Thomas](https://www.worldcubeassociation.org/persons/2018THOM29)",
+          "2.92"
         ],
         [
           "[WCA European Championship 2026](https://www.worldcubeassociation.org/competitions/Euro2026/results/all#eclock_1)",
