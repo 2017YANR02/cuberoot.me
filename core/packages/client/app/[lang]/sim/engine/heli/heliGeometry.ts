@@ -24,7 +24,7 @@
 import * as THREE from 'three';
 import { SIZE } from '../define';
 import { CUBE_FILL } from '@/lib/cube-colors';
-import { HELI_CORNERS, HELI_FACE_OF } from '@/lib/heli-solver';
+import { HELI_CORNERS, HELI_FACE_OF } from '@cuberoot/puzzle-solvers/heli';
 import { EDGE_AXIS, EDGE_MID } from './heliState';
 import { roundedSolid, type Plane } from '../polytopeCut';
 import { makeSticker } from '../stickerGeom';

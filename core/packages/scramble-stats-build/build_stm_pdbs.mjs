@@ -36,7 +36,7 @@ if (!existsSync(OUT_DIR)) mkdirSync(OUT_DIR, { recursive: true });
 
 // client solver lib lives in a package without "type":"module" → tsx loads it as CJS; default-import.
 async function loadSolver() {
-  const m = await import('../../client/lib/stm-solver.ts');
+  const m = await import('@cuberoot/puzzle-solvers/stm');
   const inner = (m.default && typeof m.default === 'object') ? m.default : m;
   return inner;
 }

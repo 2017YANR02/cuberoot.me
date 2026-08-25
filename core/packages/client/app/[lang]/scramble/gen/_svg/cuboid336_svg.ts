@@ -18,7 +18,7 @@
  * Colors: U white, D yellow, F green, B blue, R red, L orange. Notation matches cstimer 336 exactly
  * (U U' U2 u u' u2 3u 3u' 3u2 R2 L2 M2 F2 B2 S2) — same parser as lib/cuboid336-solver.
  */
-import { cuboid336Apply } from '@/lib/cuboid336-solver';
+import { cuboid336Apply } from '@cuberoot/puzzle-solvers/cuboid336';
 
 // face codes U D R L F B = 0..5 (same order as the solver's FACE_CODE)
 export const CUBOID336_DEFAULT_COLORS: string[] = [

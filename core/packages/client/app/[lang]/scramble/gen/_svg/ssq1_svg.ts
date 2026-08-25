@@ -13,7 +13,7 @@
  * Geometry reuses the Square-1/Square-2 wedge disk; we just stack four rings (P0 top, P1 top, P1 bot,
  * P0 bot) so both mechanisms are visible at once. (Preview is a soft requirement — a clean schematic.)
  */
-import { ssq1Apply } from '@/lib/ssq1-solver';
+import { ssq1Apply } from '@cuberoot/puzzle-solvers/ssq1';
 
 const RADIUS = 28;
 const RADIUS_MULTIPLIER = Math.SQRT2 * Math.cos((Math.PI * 15) / 180);

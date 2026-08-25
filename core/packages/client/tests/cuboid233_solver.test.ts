@@ -11,7 +11,7 @@ import {
   randomCuboid233Scramble,
   CUBOID233_MOVE_NAMES,
   CUBOID233_SAMPLED_MAX_LENGTH,
-} from '@/lib/cuboid233-solver';
+} from '@cuberoot/puzzle-solvers/cuboid233';
 import { renderCuboid233ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/cuboid233_svg';
 
 // ── INDEPENDENT geometric re-derivation of the 233 move model ─────────────────────

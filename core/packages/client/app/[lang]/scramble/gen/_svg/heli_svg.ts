@@ -10,7 +10,7 @@
  * renders a SINGLE solid color — a self-proving render. Any scramble recolors faithfully; single source
  * of move truth = heliApply (via heliFaceletColors).
  */
-import { heliFaceletColors, HELI_FACE_OF } from '@/lib/heli-solver';
+import { heliFaceletColors, HELI_FACE_OF } from '@cuberoot/puzzle-solvers/heli';
 
 // 6 sticker colors indexed by face 0..5 = U R F D L B (standard cube: U white, R red, F green, D yellow,
 // L orange, B blue).

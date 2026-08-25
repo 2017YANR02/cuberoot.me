@@ -10,7 +10,7 @@ import {
   randomBsqScramble,
   BSQ_MAX_LENGTH,
   BSQ_STATE_COUNT_STR,
-} from '@/lib/bsq-solver';
+} from '@cuberoot/puzzle-solvers/bsq';
 
 // ── INDEPENDENT model (re-derived here, NOT imported from the solver) ──────────────────
 // Bandaged Square-1 = ONE Square-1 whose move set is < / , (1,0) >: the TOP layer may turn `(x,0)`, the

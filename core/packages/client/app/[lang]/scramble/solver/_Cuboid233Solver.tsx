@@ -11,7 +11,7 @@
  * 桥(cstimerScramble('233')),记号与 cstimer 完全一致(U U' U2 R2 L2 F2 B2),保证它生成的打乱被正确求解。
  */
 import { cstimerScramble } from '@/lib/cstimer-scramble';
-import { solveCuboid233, type Cuboid233Solution } from '@/lib/cuboid233-solver';
+import { solveCuboid233, type Cuboid233Solution } from '@cuberoot/puzzle-solvers/cuboid233';
 import PuzzleSolverPage, {
   type SolverSpec, METRIC_FIXED_OPTIMAL, CAVEAT_TITLE_OPTIMAL,
 } from './_components/PuzzleSolverPage';

@@ -13,7 +13,7 @@ import {
   CUBOID337_MAX_LENGTH,
   CUBOID337_STATE_COUNT_STR,
   CUBOID337_ORBIT_PRODUCT_STR,
-} from '@/lib/cuboid337-solver';
+} from '@cuberoot/puzzle-solvers/cuboid337';
 import { renderCuboid337ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/cuboid337_svg';
 
 // ── INDEPENDENT geometric re-derivation of the 337 move model ─────────────────────

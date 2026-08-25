@@ -16,7 +16,7 @@ import {
   CTICO_SOLVED,
   CTICO_STATE_COUNT_STR,
   CTICO_FACE_OF,
-} from '@/lib/ctico-solver';
+} from '@cuberoot/puzzle-solvers/ctico';
 import { renderCticoScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/ctico_svg';
 
 // ── Independent oracle: cstimer's poly3dlib ctico moveTable, loaded via node:vm ──────────────────────
