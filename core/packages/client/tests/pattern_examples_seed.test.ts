@@ -7,21 +7,14 @@
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { join, dirname } from 'node:path';
 import {
   DEFAULT_Q, Q_RE, decodeQ, encodeQ, miniCells, defaultPatterns, defaultAssign,
 } from '@/app/[lang]/scramble/pattern/search/_q';
 import { GRAY, isEmptyPattern } from '@/app/[lang]/scramble/pattern/search/_pattern_core';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
-const MIGRATION = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '..', '..', 'server', 'migrations', '0091_pattern_examples.sql',
-);
-const ROUTE = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '..', '..', 'server', 'src', 'routes', 'pattern_examples.ts',
-);
+const MIGRATION = workspaceFixturePath('@cuberoot/server', 'migrations', '0091_pattern_examples.sql');
+const ROUTE = workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'pattern_examples.ts');
 
 /** 迁移里 INSERT ... VALUES 的每一行:(position, '中文名', 'English', 'q', bool) */
 function seededRows() {

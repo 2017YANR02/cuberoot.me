@@ -99,7 +99,7 @@ if($Local){
   Step "灌本地 pg13 · $what"
   # 本机没装 psql 客户端,一律走容器内的(同 scripts/seed-local.ps1)。所以 CSV 先 docker cp 进去,
   # `\copy` 的路径是**容器内**路径。表没建就先把 migration 0094 灌进去(幂等 IF NOT EXISTS)。
-  docker cp (Join-Path $RepoRoot 'core/packages/server/migrations/0094_lsll_cases.sql') pg13:/tmp/0094.sql | Out-Null
+  docker cp (Join-Path $RepoRoot 'core/apps/api/migrations/0094_lsll_cases.sql') pg13:/tmp/0094.sql | Out-Null
   docker exec pg13 psql -U postgres -d cuberoot_db -v ON_ERROR_STOP=1 -q -f /tmp/0094.sql
   if($LASTEXITCODE -ne 0){ throw '本地建表失败(pg13 起了吗?)' }
   docker cp $src pg13:/tmp/lsll_src.csv | Out-Null

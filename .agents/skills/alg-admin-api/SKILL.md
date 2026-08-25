@@ -14,7 +14,7 @@ DB 表 `alg_cases` / `alg_sets` 是公式库 source of truth。普通用户提�
 | WCA OAuth + `ADMIN_WCA_IDS` | 浏览器 admin 用户 | 走 `requireAuth` + `ADMIN_WCA_IDS` 检查 |
 | `X-Admin-Key` header | AI / 脚本 / curl | 走 `requireAdminOrApiKey`,匹配 server `.env` 的 `ADMIN_API_KEY` 即视为 admin |
 
-helper:`packages/server/src/utils/recon_helpers.ts` 的 `requireAdminOrApiKey(c)`。仅 `routes/alg_sets.ts` 4 个 admin 端点用此 helper(create/update/delete case + reorder)。
+helper:`apps/api/src/utils/recon_helpers.ts` 的 `requireAdminOrApiKey(c)`。仅 `routes/alg_sets.ts` 4 个 admin 端点用此 helper(create/update/delete case + reorder)。
 
 key 在 **`.password.md`**(本地 gitignored) + 云 `/root/core-api/.env`。AI 自己读:
 

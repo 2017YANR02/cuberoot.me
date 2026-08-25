@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 async function read(relativePath: string): Promise<string> {
   return readFile(new URL(relativePath, `${new URL('.', import.meta.url).href}`), 'utf8');
@@ -91,7 +92,7 @@ describe('main-site Platform PostgreSQL schema', () => {
       read('../migrations/0168_platform_account_deletion.sql'),
       read('../src/db/schema.pg.sql'),
       read('../migrations/README.md'),
-      read('../../client/app/[lang]/dev/schema/page.tsx'),
+      readFile(workspaceFixturePath('@cuberoot/client', 'app/[lang]/dev/schema/page.tsx'), 'utf8'),
       read('../src/utils/account_delete.ts'),
       read('../src/routes/platform_learning.ts'),
       read('./fixtures/platform_account_deletion_pg.sql'),
@@ -150,7 +151,7 @@ describe('main-site Platform PostgreSQL schema', () => {
       read('../migrations/0167_platform_core.sql'),
       read('../src/db/schema.pg.sql'),
       read('../migrations/README.md'),
-      read('../../client/app/[lang]/dev/schema/page.tsx'),
+      readFile(workspaceFixturePath('@cuberoot/client', 'app/[lang]/dev/schema/page.tsx'), 'utf8'),
     ]);
 
     expect(migration).not.toMatch(/^(?:BEGIN|COMMIT)\s*;/im);

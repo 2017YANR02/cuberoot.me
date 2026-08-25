@@ -25,7 +25,7 @@ type L3eOverlap = { sourceName: string; targetName: string; existingAlg: string 
 
 const clientRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const migration = readFileSync(
-  join(clientRoot, '..', 'server', 'migrations', '0110_cubingapp_roux_pyraminx.sql'),
+  workspaceFixturePath('@cuberoot/server', 'migrations', '0110_cubingapp_roux_pyraminx.sql'),
   'utf8',
 );
 

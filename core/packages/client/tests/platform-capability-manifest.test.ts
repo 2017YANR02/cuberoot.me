@@ -2,11 +2,12 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const MANIFEST_PATH = join(REPO, 'docs', 'platform-capability-manifest.json');
-const CLIENT_TESTS = join(REPO, 'core', 'packages', 'client', 'tests');
-const SERVER_TESTS = join(REPO, 'core', 'packages', 'server', 'tests');
+const CLIENT_TESTS = workspaceFixturePath('@cuberoot/client', 'tests');
+const SERVER_TESTS = workspaceFixturePath('@cuberoot/server', 'tests');
 const PLATFORM_ROUTE_FILES = new Map([
   ['platform_catalog.ts', '/v1'],
   ['platform_content.ts', '/v1'],
@@ -42,7 +43,7 @@ const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as PlatformMani
 
 const platformApiPaths = [...PLATFORM_ROUTE_FILES]
   .flatMap(([file, mount]) => {
-    const source = readFileSync(join(REPO, 'core', 'packages', 'server', 'src', 'routes', file), 'utf8');
+    const source = readFileSync(workspaceFixturePath('@cuberoot/server', 'src', 'routes', file), 'utf8');
     return [...source.matchAll(/Routes\.(?:get|post|put|patch|delete)\(\s*'([^']+)'/g)]
       .map((match) => `${mount}${match[1]}`);
   });

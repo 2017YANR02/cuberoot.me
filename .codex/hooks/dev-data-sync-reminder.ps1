@@ -15,13 +15,13 @@ $normalized = $rawInput -replace '\\','/'
 $content = $rawInput
 
 $msg = $null
-if ($normalized -match 'packages/server/migrations/[0-9]{4}_.*\.sql') {
+if ($normalized -match 'apps/api/migrations/[0-9]{4}_.*\.sql') {
   $msg = "你刚动了 server migration。同步 /dev/schema 的账本:在 packages/client/app/[lang]/dev/schema/page.tsx 的 MIGRATIONS 数组加一行 { n: <编号>, slug, desc };新表顺手加进 TABLES。CI 守卫 tests/dev-schema-api-drift.test.ts 会卡漏改。"
 }
-elseif ($normalized -match 'packages/server/src/index\.ts' -and $content -match 'app\.route\(') {
+elseif ($normalized -match 'apps/api/src/index\.ts' -and $content -match 'app\.route\(') {
   $msg = "你刚改了 index.ts 的路由挂载。若新挂了 route,同步 /dev/api:在 packages/client/app/[lang]/dev/api/page.tsx 的 covers-routes 清单加文件名 + 在 ENDPOINTS 补端点。CI 守卫 tests/dev-schema-api-drift.test.ts 会卡漏改。"
 }
-elseif ($normalized -match 'packages/server/src/routes/[a-z0-9_]+\.ts' -and $content -match '\.(get|post|put|patch|delete)\(') {
+elseif ($normalized -match 'apps/api/src/routes/[a-z0-9_]+\.ts' -and $content -match '\.(get|post|put|patch|delete)\(') {
   $msg = "你刚改了 server route 文件(含端点定义)。若增删了对外端点,同步 /dev/api 的 ENDPOINTS(packages/client/app/[lang]/dev/api/page.tsx);新 route 文件还要进 covers-routes 清单。CI 守卫 tests/dev-schema-api-drift.test.ts 会卡新挂载的 route。"
 }
 

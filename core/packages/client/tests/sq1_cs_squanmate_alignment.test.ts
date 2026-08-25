@@ -1,5 +1,4 @@
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   applySq1Scramble,
@@ -19,6 +18,7 @@ import {
 } from '@/lib/sq1-cs-storage';
 import { scanLocalOverview } from '@/lib/trainer-marks';
 import { scanLocalSrsOverview } from '@/lib/alg-srs-store';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 type AlgEntry = { alg: string };
 type AlignmentRow = {
@@ -34,10 +34,10 @@ type AlignmentRow = {
   a: AlgEntry[][];
 };
 
-const migration = readFileSync(fileURLToPath(new URL(
-  '../../server/migrations/0137_sq1_cs_squanmate_alignment.sql',
-  import.meta.url,
-)), 'utf8');
+const migration = readFileSync(
+  workspaceFixturePath('@cuberoot/server', 'migrations', '0137_sq1_cs_squanmate_alignment.sql'),
+  'utf8',
+);
 const payloadMatch = migration.match(/\$sq1_cs\$\s*([\s\S]*?)\s*\$sq1_cs\$::jsonb/);
 if (!payloadMatch) throw new Error('Missing SQ1 CS alignment payload');
 const rows = JSON.parse(payloadMatch[1]!) as AlignmentRow[];

@@ -587,10 +587,10 @@
       "kind": "local-heavy-artifact",
       "source": {
         "locator": "a reviewed variant-consistent CubeOpt opt5/h5 or opt6/h6 build",
-        "paths": ["core/packages/server/CUBEOPT_ARTIFACT.md", "core/packages/server/scripts/*cubeopt-artifact.mjs"]
+        "paths": ["core/apps/api/CUBEOPT_ARTIFACT.md", "core/apps/api/scripts/*cubeopt-artifact.mjs"]
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "core/packages/server/CUBEOPT_ARTIFACT.md and the selected CubeOpt source license" },
-      "owner": ["core/packages/server", "core/packages/server/CUBEOPT_ARTIFACT.md"],
+      "license": { "spdx": "NOASSERTION", "evidence": "core/apps/api/CUBEOPT_ARTIFACT.md and the selected CubeOpt source license" },
+      "owner": ["core/apps/api", "core/apps/api/CUBEOPT_ARTIFACT.md"],
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/server cubeopt:prepare -- --store <store> <args>; pnpm --filter @cuberoot/server cubeopt:promote -- --store <store> --bundle <id>; pnpm --filter @cuberoot/server cubeopt:verify -- <store>; pnpm --filter @cuberoot/server cubeopt:smoke -- --store <store>",
       "runtimeOutputs": [
@@ -648,10 +648,10 @@
         "lineage": "client.best2x2-import produces the reviewed import JSON from client.best2x2-source"
       },
       "license": { "spdx": "NOASSERTION", "evidence": "credits_data.json records the authorized data merge; no public license is asserted" },
-      "owner": ["core/jobs/alg-build/gen_best2x2_sql.mjs", "core/packages/server/migrations"],
+      "owner": ["core/jobs/alg-build/gen_best2x2_sql.mjs", "core/apps/api/migrations"],
       "workingDirectory": "core",
-      "command": "node jobs/alg-build/gen_best2x2_sql.mjs .tmp/best2x2/import.json core/packages/server/migrations/<new-id>_best_2x2_algs.sql",
-      "outputs": ["core/packages/server/migrations/0104_best_2x2_algs.sql"],
+      "command": "node jobs/alg-build/gen_best2x2_sql.mjs .tmp/best2x2/import.json core/apps/api/migrations/<new-id>_best_2x2_algs.sql",
+      "outputs": ["core/apps/api/migrations/0104_best_2x2_algs.sql"],
       "verification": [
         "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .tmp/best2x2/import.json",
         "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-finder.mts .tmp/best2x2/import.json",
@@ -683,10 +683,10 @@
         "pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_roux_pyraminx_sql.mts <cubingapp-checkout> <new-migration>"
       ],
       "outputs": [
-        "core/packages/server/migrations/0107_sq1_cubingapp_csp.sql",
-        "core/packages/server/migrations/0108_sq1_cubingapp_stages.sql",
-        "core/packages/server/migrations/0109_cubingapp_beginner_ll.sql",
-        "core/packages/server/migrations/0110_cubingapp_roux_pyraminx.sql"
+        "core/apps/api/migrations/0107_sq1_cubingapp_csp.sql",
+        "core/apps/api/migrations/0108_sq1_cubingapp_stages.sql",
+        "core/apps/api/migrations/0109_cubingapp_beginner_ll.sql",
+        "core/apps/api/migrations/0110_cubingapp_roux_pyraminx.sql"
       ],
       "verification": [
         "generator invariants lock source case and formula counts",
@@ -707,8 +707,8 @@
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/alg-build exec tsx gen_psf2l_sql.mts <new-id>_psf2l.sql",
       "outputs": [
-        "core/packages/server/migrations/0116_psf2l.sql",
-        "core/packages/server/migrations/0117_psf2l_f2l_names.sql"
+        "core/apps/api/migrations/0116_psf2l.sql",
+        "core/apps/api/migrations/0117_psf2l_f2l_names.sql"
       ],
       "verification": [
         "generator invariants require exactly 33 unique cases and algorithms",
@@ -727,7 +727,7 @@
       "owner": "core/packages/client/scripts/sq1-pbl/build-alg-migration.mjs",
       "workingDirectory": "core",
       "command": "node packages/client/scripts/sq1-pbl/build-alg-migration.mjs --write",
-      "outputs": ["core/packages/server/migrations/0140_sq1_pbl.sql"],
+      "outputs": ["core/apps/api/migrations/0140_sq1_pbl.sql"],
       "verification": [
         "node packages/client/scripts/sq1-pbl/build-alg-migration.mjs --check",
         "node packages/client/scripts/sq1-pbl-check.mjs"
@@ -751,7 +751,7 @@
         "node jobs/alg-build/fix_1lll_meta_assignment.mjs"
       ],
       "outputs": [
-        "core/packages/server/migrations/0102_fix_1lll_meta_assignment.sql"
+        "core/apps/api/migrations/0102_fix_1lll_meta_assignment.sql"
       ],
       "transientOutputs": [".tmp/phase4/import_1lll.sql"],
       "verification": [

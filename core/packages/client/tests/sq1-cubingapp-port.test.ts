@@ -1,9 +1,8 @@
 import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { applySq1Scramble, invertSq1Alg, parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
 import { DEFAULT_SQ1_COLORS, renderSq1ScrambleSvg } from '@/lib/sq1-svg';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 type ImportedAlg = { alg: string; source: string };
 type ImportedCase = {
@@ -15,9 +14,10 @@ type ImportedCase = {
   algs: ImportedAlg[][];
 };
 
-const migrationPath = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '..', '..', 'server', 'migrations', '0107_sq1_cubingapp_csp.sql',
+const migrationPath = workspaceFixturePath(
+  '@cuberoot/server',
+  'migrations',
+  '0107_sq1_cubingapp_csp.sql',
 );
 const migration = readFileSync(migrationPath, 'utf8');
 

@@ -892,6 +892,21 @@
   font-size: 13px;
   color: var(--foreground);
 }
+/* 麦克风环境音会让诊断提示在一行和两行间频繁切换。固定 Stackmat
+   弹窗外框与提示槽高度，避免居中位置和底部操作跟着上下跳动。 */
+.timer-modal.stackmat-modal {
+  --stackmat-modal-height: min(430px, calc(100dvh - 40px));
+  height: var(--stackmat-modal-height);
+  min-height: var(--stackmat-modal-height);
+  max-height: var(--stackmat-modal-height);
+  display: flex;
+  flex-direction: column;
+}
+.timer-modal.stackmat-modal h2 { margin-bottom: 8px; }
+.timer-modal.stackmat-modal .modal-section { margin-bottom: 8px; }
+.timer-modal .stackmat-health-summary { height: 1.5em; }
+.timer-modal .stackmat-health-guidance { height: 3em; }
+.timer-modal.stackmat-modal .modal-actions { margin-top: auto; }
 .timer-modal .modal-section .scramble-text {
   font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
   background: var(--background);
@@ -1675,6 +1690,9 @@
     border-radius: 6px;
     padding: 14px;
   }
+  .timer-modal.stackmat-modal {
+    --stackmat-modal-height: min(450px, calc(100dvh - 16px));
+  }
   /* .settings-row flex-wrap override lives in _components/wca-source.css */
 
   /* Wider tap target on history rows. */
@@ -1682,6 +1700,11 @@
 }
 
 @media (max-width: 480px) {
+  .timer-modal.stackmat-modal {
+    --stackmat-modal-height: min(550px, calc(100dvh - 16px));
+  }
+  .timer-modal .stackmat-health-guidance { height: 4.5em; }
+
   /* Live smart-cube state stays VISIBLE on phones — it owns the box the
      scramble preview would otherwise be in, so hiding it would leave a hole.
      What phones don't get is WebGL: LiveCubeState checks this same 480px

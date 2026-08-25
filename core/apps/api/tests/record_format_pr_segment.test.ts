@@ -12,7 +12,7 @@ import {
   formatCombinedRecords,
   type RecordEvent,
   type RankFn,
-} from '../../server/src/utils/record_format';
+} from '../src/utils/record_format';
 
 const COMP = {
   comp_name: '北美魔方锦标赛 2026',

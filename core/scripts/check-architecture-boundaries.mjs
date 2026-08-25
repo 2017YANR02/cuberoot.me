@@ -1280,6 +1280,7 @@ export function violationsFromHookPayload(payload, packages = activePackages()) 
     const filePath = slash(write.file_path ?? '');
     const source = String(write.content ?? '');
     const absoluteFile = resolve(REPO_ROOT, filePath);
+    if (!SOURCE_EXTENSIONS.has(extname(absoluteFile))) continue;
     const owner = packageForPath(packages, absoluteFile);
     if (!owner) continue;
     violations.push(...scanSourceText(packages, owner, absoluteFile, source));

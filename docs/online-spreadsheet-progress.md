@@ -86,7 +86,7 @@
 - `core/packages/client/lib/spreadsheet-model.ts`
 - `core/packages/client/lib/spreadsheet-export.ts`
 - `core/packages/client/components/collaboration/`
-- `core/packages/server/src/routes/documents.ts`
-- `core/packages/server/migrations/0123_collaborative_resource_kinds.sql`
+- `core/apps/api/src/routes/documents.ts`
+- `core/apps/api/migrations/0123_collaborative_resource_kinds.sql`
 
 每完成一次验证就在本文件勾选，并在发现限制或遗留问题时追加到“已知边界”。

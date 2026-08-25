@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { normalizeLiveScriptContent } from '@/lib/teacher-live-scripts-api';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
-const CLIENT_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SERVER_ROOT = join(CLIENT_ROOT, '..', 'server');
+const SERVER_ROOT = workspaceFixturePath('@cuberoot/server');
 
 describe('teacher livestream scripts', () => {
   it('normalizes malformed content without inventing unsupported cue types', () => {

@@ -3,13 +3,13 @@
  *
  * 背景:世界排名分母是周更快照(wca_results_flat),不含刚结束的比赛。overlay 用 WCA Live 近期
  * 纪录补上跨赛事滞后,但必须按每人快照 PB 去重(快照已计入的选手不重复 +1)。见
- * server/src/utils/wca_live_overlay.ts。
+ * src/utils/wca_live_overlay.ts。
  *
  * 真实触发场景:郭铠希 1.52 斜转平均在快照里 WR3,但 Grohmann 已在刚结束的 Euro 2026 跑出 1.47
  * (快照未收录)→ 真实应为 WR4。
  */
 import { describe, it, expect } from 'vitest';
-import { overlayDeltaPure, type OverlayEntry } from '../../server/src/utils/wca_live_overlay';
+import { overlayDeltaPure, type OverlayEntry } from '../src/utils/wca_live_overlay';
 
 const e = (wcaId: string, value: number, compId: string, iso2 = 'CN'): OverlayEntry => ({
   wcaId, value, compId, iso2,

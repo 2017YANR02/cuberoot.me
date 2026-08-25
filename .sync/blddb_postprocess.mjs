@@ -31,6 +31,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveWorkspacePath } from '../core/scripts/resolve-workspace-path.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -49,7 +50,12 @@ for (const [label, p] of [['上游 clone', UPSTREAM], ['上游 public/data', UP_
 }
 
 // esbuild 装在 core 的 workspace 里（server 包用它打 bundle），从那儿解析。
-const require_ = createRequire(path.join(REPO, 'core', 'packages', 'server', 'package.json'));
+const require_ = createRequire(path.join(
+  REPO,
+  'core',
+  resolveWorkspacePath('@cuberoot/server', path.join(REPO, 'core')),
+  'package.json',
+));
 const esbuild = require_('esbuild');
 
 const TMP = path.join(tmpdir(), 'blddb-postprocess');

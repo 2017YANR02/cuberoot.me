@@ -11,8 +11,9 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
-const SERVER = join(__dirname, '../../server');
+const SERVER = workspaceFixturePath('@cuberoot/server');
 const CLIENT = join(__dirname, '..');
 
 /** 三层共用的契约串。改任何一条 = 三处一起改,这张表就是提醒。 */

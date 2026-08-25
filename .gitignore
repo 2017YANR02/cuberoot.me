@@ -78,9 +78,9 @@ core/jobs/scramble-stats-build/.lenopt.log
 *.stackdump
 
 # video-title 工具(gen_title TS,在 server 包 src/tools/)的本地缓存(WCA 排名 / 本地名,缺了会自动重拉)
-core/packages/server/src/tools/rankings_cache.json
-core/packages/server/src/tools/wca_local_names_cache.json
-core/packages/server/src/tools/test_output.txt
+core/apps/api/src/tools/rankings_cache.json
+core/apps/api/src/tools/wca_local_names_cache.json
+core/apps/api/src/tools/test_output.txt
 
 .cc-connect/
 

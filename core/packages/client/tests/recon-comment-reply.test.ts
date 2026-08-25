@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const clientSource = readFileSync(
@@ -9,7 +10,7 @@ const clientSource = readFileSync(
   'utf8',
 );
 const serverSource = readFileSync(
-  join(here, '..', '..', 'server', 'src', 'routes', 'recon.ts'),
+  workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'recon.ts'),
   'utf8',
 );
 
@@ -46,7 +47,7 @@ describe('recon comment replies', () => {
     expect(serverSource).toContain("kind: 'recon_reply', recipients: [parentAuthor]");
 
     const notifySource = readFileSync(
-      join(here, '..', '..', 'server', 'src', 'utils', 'notify.ts'),
+      workspaceFixturePath('@cuberoot/server', 'src', 'utils', 'notify.ts'),
       'utf8',
     );
     expect(notifySource).toContain('INSERT INTO notifications');

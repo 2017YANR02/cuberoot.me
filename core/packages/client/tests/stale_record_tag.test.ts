@@ -13,13 +13,18 @@
  * 都在今天之前,不需要日期)是同一规则的两份实现,改一处必须同步另一处。
  */
 import { describe, it, expect } from 'vitest';
-import { refutesTag as serverRefutes, type CurrentRecords } from '../../server/src/utils/current_records';
+import { pathToFileURL } from 'node:url';
 import { refutesTag as clientRefutes, type RecordsSnapshot } from '@/lib/record-tag';
+import { workspaceFixturePath } from './workspace-fixture-path';
+
+const { refutesTag: serverRefutes } = await import(pathToFileURL(
+  workspaceFixturePath('@cuberoot/server', 'src', 'utils', 'current_records.ts'),
+).href);
 
 const CN = { region: 'China', countryId: 'China', continentId: '_Asia' };
 
 // 单手平均:WR/AsR/CN NR 都是陈震 2026-07-25 芜湖的 6.99;单次 5.66 是更早的别人。
-const recs: CurrentRecords = {
+const recs = {
   wr: new Map([['333oh|1', 699], ['333oh|0', 566]]),
   cr: new Map([['333oh|1|_Asia', 699]]),
   nr: new Map([['333oh|1|China', 699]]),

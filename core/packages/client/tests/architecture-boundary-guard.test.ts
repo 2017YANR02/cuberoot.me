@@ -26,7 +26,7 @@ const MANIFEST = JSON.parse(readFileSync(join(CORE_ROOT, 'architecture-boundarie
 const CURRENT = collectFindings();
 const CLIENT_PROBE = ['core', 'packages', 'client/lib/probe.ts'].join('/');
 const CLIENT_TEST_PROBE = ['core', 'packages', 'client/tests/probe.test.ts'].join('/');
-const SERVER_PROBE = ['core', 'packages', 'server/src/probe.ts'].join('/');
+const SERVER_PROBE = ['core', 'apps', 'api/src/probe.ts'].join('/');
 
 function payload(file: string, content: string) {
   return {
@@ -43,7 +43,7 @@ function rules(file: string, content: string): string[] {
 
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
-    expect(MANIFEST.legacyFindings).toHaveLength(279);
+    expect(MANIFEST.legacyFindings).toHaveLength(223);
     expect(compareFindings(CURRENT, MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
     expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(172);
@@ -65,7 +65,7 @@ describe('architecture boundary guard', () => {
       .toContain('shared-root-import');
     expect(rules(SERVER_PROBE, "import World from '@/app/[lang]/sim/engine/world';"))
       .toContain('cross-package-alias-import');
-    expect(rules(CLIENT_TEST_PROBE, "import x from '../../server/src/index';"))
+    expect(rules(CLIENT_TEST_PROBE, "import x from '../../../apps/api/src/index';"))
       .toContain('cross-package-relative-module');
     expect(rules(CLIENT_PROBE, "import x from '@cuberoot/vendor-sr-puzzlegen/private';"))
       .toContain('workspace-wildcard-import');
@@ -87,9 +87,9 @@ describe('architecture boundary guard', () => {
       .toContain('subprocess-call');
     expect(rules(SERVER_PROBE, "import { execFile } from 'node:child_process'; import { promisify } from 'node:util'; const run = promisify(execFile); run('probe');"))
       .toContain('subprocess-call');
-    expect(rules(CLIENT_PROBE, "const source = join('..', '..', 'server', 'src');"))
+    expect(rules(CLIENT_PROBE, "const source = join('..', '..', '..', 'apps', 'api', 'src');"))
       .toContain('cross-package-path');
-    const absoluteServerPath = ['D:', 'cube', 'cuberoot.me', 'core', 'packages', 'server', 'src', 'index.ts'].join('/');
+    const absoluteServerPath = ['D:', 'cube', 'cuberoot.me', 'core', 'apps', 'api', 'src', 'index.ts'].join('/');
     expect(rules(CLIENT_PROBE, `readFileSync('${absoluteServerPath}');`))
       .toContain('cross-package-path');
   });
@@ -105,7 +105,7 @@ describe('architecture boundary guard', () => {
       .toEqual([]);
     expect(rules(CLIENT_TEST_PROBE, "import x from '../../components/Probe';"))
       .toEqual([]);
-    expect(rules(CLIENT_PROBE, "// docs: import from '@cuberoot/shared' or packages/server/src"))
+    expect(rules(CLIENT_PROBE, "// docs: import from '@cuberoot/shared' or apps/api/src"))
       .toEqual([]);
   });
 

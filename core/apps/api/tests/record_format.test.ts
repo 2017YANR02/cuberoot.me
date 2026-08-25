@@ -22,7 +22,7 @@ import {
   formatCombinedRecords,
   type RecordEvent,
   type RankFn,
-} from '../../server/src/utils/record_format';
+} from '../src/utils/record_format';
 
 interface GoldenCase {
   name: string;

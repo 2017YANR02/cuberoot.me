@@ -88,7 +88,7 @@ $env:NODE_USE_ENV_PROXY='1'
 pnpm -F @cuberoot/client exec tsx scripts/best2x2/fetch.mts
 pnpm -F @cuberoot/client exec tsx scripts/best2x2/report.mts --site-dir .tmp/best2x2 --json .tmp/best2x2/derived-site.json
 pnpm -F @cuberoot/client exec tsx scripts/best2x2/build-import.mts .tmp/best2x2/derived-site.json .tmp/best2x2 .tmp/best2x2/import.json
-node packages/alg-build/gen_best2x2_sql.mjs .tmp/best2x2/import.json core/packages/server/migrations/0104_best_2x2_algs.sql
+node packages/alg-build/gen_best2x2_sql.mjs .tmp/best2x2/import.json core/apps/api/migrations/0104_best_2x2_algs.sql
 pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .tmp/best2x2/import.json
 pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-finder.mts .tmp/best2x2/import.json
 node packages/client/scripts/best2x2-check.mjs
@@ -98,7 +98,7 @@ node packages/client/scripts/best2x2-check.mjs
 
 ```pwsh
 pnpm --filter @cuberoot/server seed:local-alg
-Get-Content packages/server/migrations/0104_best_2x2_algs.sql | docker exec -i pg13 psql -U postgres -d cuberoot_db -v ON_ERROR_STOP=1
+Get-Content apps/api/migrations/0104_best_2x2_algs.sql | docker exec -i pg13 psql -U postgres -d cuberoot_db -v ON_ERROR_STOP=1
 ```
 
 ## 上线状态

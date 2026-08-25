@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 async function read(relativePath: string): Promise<string> {
   return readFile(new URL(relativePath, `${new URL('.', import.meta.url).href}`), 'utf8');
@@ -83,7 +84,7 @@ describe('teaching Stage 2 schema', () => {
   });
 
   it('publishes the bigint-safe shared ledger and adjustment feed contract', async () => {
-    const shared = await read('../../shared/src/teaching.ts');
+    const shared = await readFile(workspaceFixturePath('@cuberoot/shared', 'src/teaching.ts'), 'utf8');
     expect(shared).toContain("export const TEACHING_CREDIT_LEDGER_ENTRY_TYPES = [");
     for (const type of ['purchase', 'grant', 'consume', 'refund', 'adjustment', 'expiration', 'reversal']) {
       expect(shared).toContain(`'${type}'`);

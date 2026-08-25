@@ -8,6 +8,7 @@ import {
   parseSq1Tokens,
 } from '@cuberoot/shared/sq1-notation';
 import { setupForCase, validateAlgCase } from '@/lib/alg_validation';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 type SourceCase = {
   key: string;
@@ -30,7 +31,7 @@ const source = JSON.parse(readFileSync(
   'utf8',
 )) as { cases: SourceCase[] };
 const migration = readFileSync(
-  new URL('../../server/migrations/0140_sq1_pbl.sql', import.meta.url),
+  workspaceFixturePath('@cuberoot/server', 'migrations', '0140_sq1_pbl.sql'),
   'utf8',
 );
 const payloadMatch = migration.match(/\$sq1_pbl_cases\$([\s\S]*?)\$sq1_pbl_cases\$/);

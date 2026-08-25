@@ -1,12 +1,16 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { SQ1_TOKEN_RE, canonicalSq1Alg, parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
+import { resolveWorkspacePath } from '../../../../scripts/resolve-workspace-path.mjs';
 
 const SOURCE_URL = 'https://docs.google.com/spreadsheets/d/1VQNYNwdOLqqBkacHcfYtEBst22FOVhH9EAhTOYOZTgo/edit';
 const EXPECTED_UNUSED = ['Ga/Gd', 'Ga/Jb', 'Gb/Gc', 'Gb/Jb'];
 const EXPECTED_M_DB = '(1, 0) / (-3, 0) / (3, 0) / (-1, 2) / (0, 3) / (-3, -3) / (4, -2) / (-1, 0)';
 const DATA_URL = new URL('../../data/sq1-pbl/cases.json', import.meta.url);
-const OUTPUT_URL = new URL('../../../server/migrations/0140_sq1_pbl.sql', import.meta.url);
+const OUTPUT_URL = new URL(
+  `../../../../${resolveWorkspacePath('@cuberoot/server')}/migrations/0140_sq1_pbl.sql`,
+  import.meta.url,
+);
 
 function fail(message) {
   throw new Error(`SQ1 PBL migration: ${message}`);

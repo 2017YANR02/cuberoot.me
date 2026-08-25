@@ -5,7 +5,7 @@
  * 这份清单唯一的价值是**准**:少列一条就等于静默删,多列一条就等于吓唬人。所以这里钉的
  * 全是「到底哪几条、落在谁的哪个视角」,而不是数量对不对。
  *
- * 重写规则本身在 `alg_mirror_rewrite.test.ts`,入库同步在 `alg_mirror_sync.test.ts`,
+ * 重写规则本身在 `alg_mirror_rewrite.test.ts`,入库同步由 API 测试集覆盖,
  * 这里不重复那两层。
  */
 import { describe, it, expect } from 'vitest';

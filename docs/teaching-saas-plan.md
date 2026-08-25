@@ -38,7 +38,7 @@
 ### 应用边界
 
 - `core/packages/client`:教学 SaaS 唯一前端。`/org/*` 服务教职员工,`/learn/*` 服务学员与监护人,并继续拥有 `/timer`、`/predict`、`/alg` 等训练引擎。
-- `core/packages/server`:新教学域 API、PostgreSQL 数据、权限策略、训练证据入口和审计。
+- `core/apps/api`:新教学域 API、PostgreSQL 数据、权限策略、训练证据入口和审计。
 - `core/packages/shared`:跨应用的 DTO、枚举、事件版本和校验 schema。
 - `core/packages/platform`:只保留迁移期旧内容、商城与历史数据兼容,不再建设新的教学前端。
 

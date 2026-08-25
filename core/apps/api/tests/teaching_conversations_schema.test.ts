@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
+import { workspaceFixturePath } from './workspace-fixture-path';
 import {
   hasTeachingPermission,
   TEACHING_CONVERSATION_ACTOR_ROLES,
@@ -24,8 +25,8 @@ describe('teaching conversations schema and repository contract', () => {
       read('../migrations/0158_teaching_conversations.sql'),
       read('../src/db/schema.pg.sql'),
       read('../migrations/README.md'),
-      read('../../client/app/[lang]/dev/schema/page.tsx'),
-      read('../../client/app/[lang]/dev/api/page.tsx'),
+      readFile(workspaceFixturePath('@cuberoot/client', 'app/[lang]/dev/schema/page.tsx'), 'utf8'),
+      readFile(workspaceFixturePath('@cuberoot/client', 'app/[lang]/dev/api/page.tsx'), 'utf8'),
     ]);
     expect(migration).not.toMatch(/\b(?:BEGIN|COMMIT)\s*;/i);
     expect(schema).toContain(

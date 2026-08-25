@@ -8,16 +8,29 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import {
-  PURGE_TABLES, ANONYMIZE_TABLES, PLATFORM_ACCOUNT_DELETE_TABLES,
-  NOT_USER_OWNED, AccountOwnsOrganizationError,
-} from '../../server/src/utils/account_delete';
+import { pathToFileURL } from 'node:url';
 import {
   deletedOwnerKey, isDeletedOwner, primaryHandle, ownerKey,
 } from '@cuberoot/shared/account';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
-const SERVER = join(__dirname, '../../server');
+type PurgeTable = readonly [string, string];
+type AnonymizeTable = { table: string; idCol: string; nameCol?: string };
+const {
+  PURGE_TABLES, ANONYMIZE_TABLES, PLATFORM_ACCOUNT_DELETE_TABLES,
+  NOT_USER_OWNED, AccountOwnsOrganizationError,
+} = await import(pathToFileURL(workspaceFixturePath(
+  '@cuberoot/server', 'src', 'utils', 'account_delete.ts',
+)).href) as {
+  PURGE_TABLES: readonly PurgeTable[];
+  ANONYMIZE_TABLES: readonly AnonymizeTable[];
+  PLATFORM_ACCOUNT_DELETE_TABLES: readonly string[];
+  NOT_USER_OWNED: Readonly<Record<string, string>>;
+  AccountOwnsOrganizationError: { prototype: Error };
+};
+
+const SERVER = workspaceFixturePath('@cuberoot/server');
 const CLIENT = join(__dirname, '..');
 
 const ROUTE = readFileSync(join(SERVER, 'src/routes/account_auth.ts'), 'utf8');

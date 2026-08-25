@@ -122,7 +122,7 @@ export const OBSIDIAN: StackTool = {
   cuberoot: {
     zh: (
       <>
-        <p><strong>明确写在前面: cuberoot.me 当前代码库不依赖 Obsidian。</strong> 整个 monorepo (<code>packages/client</code> / <code>packages/server</code> / <code>packages/shared</code> / <code>jobs/stats-build</code>) 跑起来不需要 vault 存在, 也没有任何运行时 / 构建时调用 vault。把这页放在 /dev/stack 是因为它即将进入 owner 的个人工作流, 跟代码库形成 "笔记 ↔ commit ↔ 设计文档" 闭环 —— 写在 /dev/stack 比藏在 /timeline 里诚实。</p>
+        <p><strong>明确写在前面: cuberoot.me 当前代码库不依赖 Obsidian。</strong> 整个 monorepo (<code>packages/client</code> / <code>apps/api</code> / <code>packages/shared</code> / <code>jobs/stats-build</code>) 跑起来不需要 vault 存在, 也没有任何运行时 / 构建时调用 vault。把这页放在 /dev/stack 是因为它即将进入 owner 的个人工作流, 跟代码库形成 "笔记 ↔ commit ↔ 设计文档" 闭环 —— 写在 /dev/stack 比藏在 /timeline 里诚实。</p>
         <p>下一年 (2026-05 至 2027-05) 的迁移计划大致四步:</p>
         <p>1. <strong>整理 D:\cube 下散乱的 markdown 进一个 vault。</strong> 现在 SKILL 文件 / 设计决策 / 调研笔记 / failed experiment 散在 <code>D:\cube\</code>, <code>D:\cube\cuberoot.me\</code>, <code>D:\cube\solver\</code>, <code>.agents\skills\</code> 各处。第一步是把它们按"项目 / 概念 / 日记 / 决策" 四类整合进同一个 vault。<br/>
         2. <strong>把 Codex 的 AGENTS.md / skill / memory 文件视作 vault 的子集。</strong> 这些本质上都是 markdown, 跟 Obsidian 天然兼容。让 Codex 直接读 vault 里的设计 doc 跟读 AGENTS.md 是同一件事。<br/>
@@ -134,7 +134,7 @@ export const OBSIDIAN: StackTool = {
     ),
     en: (
       <>
-        <p><strong>To be explicit up front: cuberoot.me's codebase does not depend on Obsidian today.</strong> The whole monorepo (<code>packages/client</code> / <code>packages/server</code> / <code>packages/shared</code> / <code>jobs/stats-build</code>) runs without a vault — no runtime, no build-time call into one. This page sits in /dev/stack because Obsidian is about to enter the owner's personal workflow, closing a "notes ↔ commits ↔ design docs" loop with the codebase. Putting it in /dev/stack is more honest than burying it in /timeline.</p>
+        <p><strong>To be explicit up front: cuberoot.me's codebase does not depend on Obsidian today.</strong> The whole monorepo (<code>packages/client</code> / <code>apps/api</code> / <code>packages/shared</code> / <code>jobs/stats-build</code>) runs without a vault — no runtime, no build-time call into one. This page sits in /dev/stack because Obsidian is about to enter the owner's personal workflow, closing a "notes ↔ commits ↔ design docs" loop with the codebase. Putting it in /dev/stack is more honest than burying it in /timeline.</p>
         <p>The migration plan for the next year (2026-05 → 2027-05) is roughly four steps:</p>
         <p>1. <strong>Consolidate the scattered markdown under D:\cube into one vault.</strong> SKILL files / design decisions / research notes / failed experiments are currently spread across <code>D:\cube\</code>, <code>D:\cube\cuberoot.me\</code>, <code>D:\cube\solver\</code>, <code>.agents\skills\</code>, and more. Step one is to organize them into a single vault by "project / concept / journal / decision."<br/>
         2. <strong>Treat Codex's AGENTS.md / skill / memory files as a vault subset.</strong> They are all markdown — natively compatible with Obsidian. Letting Codex read a design doc in the vault is the same operation as reading AGENTS.md.<br/>
