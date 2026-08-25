@@ -26,6 +26,7 @@ $ProjectDir = Resolve-CubeRootRepoRoot -RepoRoot $RepoRoot -LegacyRoot $ProjectD
 Assert-SyncInternalFiles -RepoRoot $ProjectDir -RelativePaths @(
     'scripts/upstream/sync-cstimer.ps1'
     '.sync/sync_utils.ps1'
+    'docs/generated-artifacts.json'
 ) -PowerShellScripts @('scripts/upstream/sync-cstimer.ps1')
 if ($ValidateOnly)
 {
@@ -115,8 +116,11 @@ if ($html.Contains($anchor)) {
     [System.IO.File]::WriteAllBytes($indexPath, $newBytes)
     Write-Host "  语言引导脚本注入成功" -ForegroundColor Gray
 } else {
-    Write-Host "  警告：未找到 LANG_CUR 锚点，跳过注入" -ForegroundColor Yellow
+    throw "csTimer 必要站点补丁失败：未找到 LANG_CUR 锚点；拒绝发布未完成产物或推进版本记录。"
 }
+
+# NOTE: 必须在构建、复制和站点补丁全部成功后，才记录真实 clone HEAD。
+Write-UpstreamVersionRecord -RepoRoot $ProjectDir -ArtifactId 'tools.cstimer' -WorkingDirectory $CstimerDir
 
 # NOTE: 不自动 commit —— 统一由根目录 sync_upstream.ps1 跑完全部上游后由人工审 diff 再提交。
 $version = Get-CheckedNativeText -FilePath 'git' -ArgumentList @(

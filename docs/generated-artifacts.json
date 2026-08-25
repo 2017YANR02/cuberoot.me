@@ -1,0 +1,745 @@
+{
+  "schemaVersion": 1,
+  "policy": {
+    "repositoryRoot": "..",
+    "generatedFilesAreEditedThroughOwners": true,
+    "publishedMigrationsAreImmutable": true
+  },
+  "artifacts": [
+    {
+      "id": "stats.wca",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "WCA developer export plus the stats-build source tree",
+        "paths": ["core/packages/stats-build/src/**"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and the upstream terms of the WCA developer export" },
+      "owner": ["core/packages/stats-build", ".github/workflows/stats.yml"],
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/stats-build compute <stat-id>; run the complete compute_all.ts, transfer, and load sequence only through .github/workflows/stats.yml",
+      "outputs": [
+        "stats/*.json",
+        "stats/records/**",
+        "stats/historical/**",
+        "stats/sor_over_time/**"
+      ],
+      "outputExclusions": [
+        "stats/upcoming_comps.json",
+        "stats/all_upcoming_comps.json",
+        "stats/cn_upcoming_registrations.json",
+        "stats/comp_names_zh.json",
+        "stats/comp_elevations.json"
+      ],
+      "transientOutputs": [
+        "core/packages/stats-build/output/**/*.tsv",
+        "core/packages/stats-build/output/**/load.sql"
+      ],
+      "verification": [
+        ".github/workflows/stats.yml generation and validation steps",
+        "keep builder output, workflow transfer inventory, and load SQL synchronized"
+      ],
+      "driftPolicy": "The workflow generates, validates, commits, transfers, and loads this family. It excludes stats/scramble, stats/tutorial, and the separately owned upcoming files; generated values are never edited by hand."
+    },
+    {
+      "id": "stats.upcoming",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "WCA and WCIF feeds plus competition-name localization data",
+        "paths": [".github/workflows/update_upcoming.yml"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and the upstream terms of the WCA data feeds" },
+      "owner": ".github/workflows/update_upcoming.yml",
+      "workingDirectory": ".",
+      "command": "run .github/workflows/update_upcoming.yml",
+      "outputs": [
+        "stats/upcoming_comps.json",
+        "stats/all_upcoming_comps.json",
+        "stats/cn_upcoming_registrations.json",
+        "stats/comp_names_zh.json",
+        "stats/comp_elevations.json"
+      ],
+      "verification": ["the daily update_upcoming workflow regenerates and commits all five files"],
+      "driftPolicy": "This daily pipeline is intentionally separate from stats.wca; do not move these outputs into the main statistics owner."
+    },
+    {
+      "id": "stats.scramble",
+      "kind": "local-heavy-artifact",
+      "source": {
+        "locator": "scramble-stats-build source plus local solver tables and samples",
+        "paths": ["core/packages/scramble-stats-build/src/**", "solver/**"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "owner": ["core/packages/scramble-stats-build", "solver"],
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/scramble-stats-build build:<target>; use the matching runbook or skill for the complete heavy pipeline",
+      "outputs": ["stats/scramble/**"],
+      "verification": ["fixture, schema, numeric-baseline, and committed-result tests for the selected target"],
+      "driftPolicy": "Ordinary CI does not recompute local heavy tables. Verify schema and exact numeric baselines, and never hand-edit generated numbers."
+    },
+    {
+      "id": "tools.cstimer",
+      "kind": "vendored-sync",
+      "source": {
+        "url": "https://github.com/cs0x7f/cstimer",
+        "ref": { "type": "branch", "value": "master" }
+      },
+      "license": { "spdx": "GPL-3.0-only", "evidence": "https://github.com/cs0x7f/cstimer/blob/master/LICENSE" },
+      "owner": "scripts/upstream/sync-cstimer.ps1",
+      "patchOwner": ["scripts/upstream/sync-cstimer.ps1"],
+      "workingDirectory": ".",
+      "command": "pwsh -NoProfile -File .\\sync_upstream.ps1 -Only cstimer",
+      "outputs": [
+        "tools/cstimer/**",
+        "core/packages/client/public/scramble_module.js"
+      ],
+      "versionRecord": {
+        "path": "tools/cstimer/UPSTREAM.txt",
+        "writer": "scripts/upstream/sync-cstimer.ps1",
+        "mechanism": "Write-UpstreamVersionRecord reads git rev-parse HEAD after a successful sync",
+        "format": "structured-v1",
+        "state": "pending-next-successful-sync",
+        "pendingReason": "The current vendored tree predates the structured record and has no trustworthy full-commit provenance; the next reviewed successful sync must create it."
+      },
+      "verification": [
+        "pwsh -NoProfile -File scripts/upstream/sync-cstimer.ps1 -ValidateOnly"
+      ],
+      "driftPolicy": "Sync only through the owner, record the real clone HEAD, then review the vendored diff, local integration, and license before publication."
+    },
+    {
+      "id": "tools.cstimer-scramble",
+      "kind": "vendored-sync",
+      "source": {
+        "url": "https://github.com/cs0x7f/cstimer",
+        "ref": { "type": "branch", "value": "master" }
+      },
+      "license": { "spdx": "GPL-3.0-only", "evidence": "tools/cstimer-scramble/LICENSE" },
+      "owner": "scripts/upstream/sync-cstimer-scramble.ps1",
+      "patchOwner": ["scripts/upstream/sync-cstimer-scramble.ps1"],
+      "workingDirectory": ".",
+      "command": "pwsh -NoProfile -File .\\sync_upstream.ps1 -Only cstimer",
+      "outputs": ["tools/cstimer-scramble/**"],
+      "versionRecord": {
+        "path": "tools/cstimer-scramble/UPSTREAM.txt",
+        "writer": "scripts/upstream/sync-cstimer-scramble.ps1",
+        "mechanism": "Write-UpstreamVersionRecord reads git rev-parse HEAD after a successful three-way merge",
+        "format": "structured-v1",
+        "state": "pending-next-successful-sync",
+        "pendingReason": "The checked-in legacy record contains only a seven-character commit; the next reviewed successful three-way sync must replace it with the structured full-commit record."
+      },
+      "verification": [
+        "pwsh -NoProfile -File scripts/upstream/sync-cstimer-scramble.ps1 -ValidateOnly"
+      ],
+      "driftPolicy": "Sync only through the owner, record the real clone HEAD, then review the site integration contract before publication."
+    },
+    {
+      "id": "tools.rubiks-solver-demo",
+      "kind": "vendored-sync",
+      "source": {
+        "url": "https://github.com/or18/RubiksSolverDemo",
+        "ref": { "type": "branch", "value": "main" }
+      },
+      "license": { "spdx": "GPL-3.0-only", "evidence": "https://github.com/or18/RubiksSolverDemo/blob/main/LICENSE" },
+      "owner": "scripts/upstream/sync-rubiks-solver-demo.ps1",
+      "patchOwner": [
+        "scripts/upstream/sync-rubiks-solver-demo.ps1",
+        ".sync/page_config.json",
+        ".sync/menu_template.html"
+      ],
+      "workingDirectory": ".",
+      "command": "pwsh -NoProfile -File .\\sync_upstream.ps1 -Only solver",
+      "outputs": [
+        "tools/RUBIKS_SOLVER_UPSTREAM.txt",
+        "tools/src/**",
+        "tools/url_params_compressor_simple.js",
+        "tools/sw-register.js",
+        "tools/sw.js",
+        "tools/manifest.json",
+        "tools/icons/**",
+        "tools/documents/**",
+        "tools/screenshots/**",
+        "tools/solver/**",
+        "tools/2x2x2/**",
+        "tools/documentation/**",
+        "tools/cross_trainer/**",
+        "tools/xcross_trainer/**",
+        "tools/xxcross_trainer/**",
+        "tools/xcross_pairing_trainer/**",
+        "tools/pairing_trainer/**",
+        "tools/pseudo_xcross_trainer/**",
+        "tools/pseudo_pairing_trainer/**",
+        "tools/eocross_trainer/**",
+        "tools/algTrainer/**",
+        "tools/jsonEditor/**"
+      ],
+      "versionRecord": {
+        "path": "tools/RUBIKS_SOLVER_UPSTREAM.txt",
+        "writer": "scripts/upstream/sync-rubiks-solver-demo.ps1",
+        "mechanism": "Write-UpstreamVersionRecord reads git rev-parse HEAD only outside DryRun",
+        "format": "structured-v1",
+        "state": "pending-next-successful-sync",
+        "pendingReason": "The current vendored tree predates the structured record and has no trustworthy full-commit provenance; the next reviewed successful non-DryRun sync must create it."
+      },
+      "verification": [
+        "pwsh -NoProfile -File scripts/upstream/sync-rubiks-solver-demo.ps1 -ValidateOnly"
+      ],
+      "driftPolicy": "Sync through the owner and review every local wrapper and patch owner after recording the real clone HEAD."
+    },
+    {
+      "id": "tools.alg-trainers",
+      "kind": "vendored-sync",
+      "source": {
+        "url": "https://github.com/mihlefeld/Alg-Trainers",
+        "ref": { "type": "branch", "value": "master" }
+      },
+      "license": { "spdx": "GPL-3.0-only", "evidence": "https://github.com/mihlefeld/Alg-Trainers/blob/master/LICENSE" },
+      "owner": "scripts/upstream/sync-alg-trainers.ps1",
+      "patchOwner": [
+        "scripts/upstream/sync-alg-trainers.ps1",
+        ".sync/alg_trainers_config.json"
+      ],
+      "workingDirectory": ".",
+      "command": "pwsh -NoProfile -File .\\sync_upstream.ps1 -Only algtrainers",
+      "outputs": ["tools/alg_trainers/**"],
+      "versionRecord": {
+        "path": "tools/alg_trainers/UPSTREAM.txt",
+        "writer": "scripts/upstream/sync-alg-trainers.ps1",
+        "mechanism": "Write-UpstreamVersionRecord reads git rev-parse HEAD only outside DryRun",
+        "format": "structured-v1",
+        "state": "pending-next-successful-sync",
+        "pendingReason": "The current vendored tree predates the structured record and has no trustworthy full-commit provenance; the next reviewed successful non-DryRun sync must create it."
+      },
+      "verification": [
+        "pwsh -NoProfile -File scripts/upstream/sync-alg-trainers.ps1 -ValidateOnly"
+      ],
+      "driftPolicy": "Sync through the owner and review the configured local patches after recording the real clone HEAD."
+    },
+    {
+      "id": "tools.blddb",
+      "kind": "vendored-sync",
+      "source": {
+        "url": "https://github.com/nbwzx/blddb",
+        "ref": { "type": "branch", "value": "v2" }
+      },
+      "license": { "spdx": "GPL-3.0-only", "evidence": "tools/blddb/LICENSE" },
+      "owner": "scripts/upstream/sync-blddb.ps1",
+      "patchOwner": [
+        "scripts/upstream/sync-blddb.ps1",
+        ".sync/blddb_postprocess.mjs"
+      ],
+      "workingDirectory": ".",
+      "command": "pwsh -NoProfile -File .\\sync_upstream.ps1 -Only blddb",
+      "outputs": ["tools/blddb/**"],
+      "versionRecord": {
+        "path": "tools/blddb/UPSTREAM.txt",
+        "writer": "scripts/upstream/sync-blddb.ps1",
+        "mechanism": "Write-UpstreamVersionRecord reads git rev-parse HEAD after export and post-processing",
+        "format": "structured-v1",
+        "state": "pending-next-successful-sync",
+        "pendingReason": "The checked-in legacy record contains only a seven-character commit; the next reviewed successful export and post-processing run must replace it with the structured full-commit record."
+      },
+      "verification": [
+        "pwsh -NoProfile -File scripts/upstream/sync-blddb.ps1 -ValidateOnly"
+      ],
+      "driftPolicy": "The root _sync_blddb.ps1 is only a compatibility shim for a confirmed external caller; sync through the canonical owner, record HEAD, and review post-processing and license."
+    },
+    {
+      "id": "deploy.recordranks",
+      "kind": "upstream-fork-deploy",
+      "source": {
+        "url": "https://github.com/mintydev789/RecordRanks",
+        "ref": { "type": "branch", "value": "main" },
+        "forkUrl": "https://github.com/2017YANR02/RecordRanks"
+      },
+      "license": { "spdx": "AGPL-3.0-only", "evidence": "https://github.com/mintydev789/RecordRanks/blob/main/LICENSE" },
+      "owner": "scripts/upstream/sync-recordranks.ps1",
+      "patchOwner": ["the 2017YANR02/RecordRanks fork", "scripts/upstream/sync-recordranks.ps1 compatibility assertions"],
+      "workingDirectory": ".",
+      "command": "pwsh -NoProfile -File .\\sync_upstream.ps1 -Only recordranks",
+      "outputs": ["ops/contests/recordranks-ref.txt"],
+      "versionRecord": {
+        "path": "ops/contests/recordranks-ref.txt",
+        "writer": "scripts/upstream/sync-recordranks.ps1",
+        "mechanism": "the script writes the verified clone HEAD after pushing the fork and checking origin/main",
+        "format": "sha40",
+        "state": "verified"
+      },
+      "verification": [
+        "pwsh -NoProfile -File scripts/upstream/sync-recordranks.ps1 -ValidateOnly"
+      ],
+      "driftPolicy": "The owner verifies and pushes the maintained fork, then records the verified origin/main clone HEAD; fork patches remain owned outside this repository."
+    },
+    {
+      "id": "client.regulation-verbatim",
+      "kind": "upstream-snapshot",
+      "source": {
+        "url": "https://www.worldcubeassociation.org/regulations/",
+        "paths": [
+          "core/packages/client/scripts/reg-check.mjs",
+          "core/packages/client/scripts/build-reg-clauses.mjs"
+        ]
+      },
+      "license": { "spdx": "NOASSERTION", "evidence": "the official WCA Regulations source governs the verbatim snapshot" },
+      "owner": ["core/packages/client/scripts/reg-check.mjs", "core/packages/client/scripts/build-reg-clauses.mjs", ".github/workflows/regulation_drift.yml"],
+      "workingDirectory": "core",
+      "command": "node packages/client/scripts/reg-check.mjs --write; node packages/client/scripts/build-reg-clauses.mjs",
+      "outputs": [
+        "core/packages/client/app/[lang]/regulation/_data/reg-source.snapshot.md",
+        "core/packages/client/app/[lang]/regulation/_data/reg-source.hashes.json",
+        "core/packages/client/app/[lang]/regulation/_data/reg-clauses/_full.json"
+      ],
+      "verification": [".github/workflows/regulation_drift.yml detects source drift, rebuilds the verbatim mirror, and opens a review PR"],
+      "driftPolicy": "The workflow may rebuild only the verbatim snapshot family. Review upstream changes and generated diffs before merging."
+    },
+    {
+      "id": "client.regulation-illustrated",
+      "kind": "human-authored-derivative",
+      "source": {
+        "url": "https://www.worldcubeassociation.org/regulations/",
+        "paths": ["core/packages/client/app/[lang]/regulation/**"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE; the official regulations remain the cited reference" },
+      "owner": "core/packages/client/app/[lang]/regulation",
+      "workingDirectory": "core",
+      "command": "follow the update-regulation review process and edit the affected regulation chapter sources",
+      "outputs": ["core/packages/client/app/[lang]/regulation/*/page.tsx"],
+      "verification": ["manual bilingual, citation, route, and illustrated-content review for each affected chapter"],
+      "driftPolicy": "regulation_drift.yml may open or update an issue but never generates this authored explanation; do not describe it as automatic output."
+    },
+    {
+      "id": "client.event-icons",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "reviewed EventIcon SVG source set",
+        "paths": ["core/packages/client/components/EventIcon/svg/**"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and the source-specific public credit registry" },
+      "owner": "core/packages/client/components/EventIcon",
+      "workingDirectory": "core/packages/client/components/EventIcon",
+      "command": "node gen-svg-map.mjs",
+      "outputs": [
+        "core/packages/client/components/EventIcon/svg-map.ts",
+        "core/packages/client/components/EventIcon/svg-map-penalty.ts"
+      ],
+      "verification": ["node gen-svg-map.mjs and review the generated map diff", ".github/workflows/icons_drift.yml compares upstream and local SVGs"],
+      "driftPolicy": "icons_drift.yml does not prove svg-map freshness. Until a cheap generator-diff guard is added, explicitly regenerate and review both maps after SVG changes."
+    },
+    {
+      "id": "client.place-zh",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "WCA city data, GeoNames data, and the reviewed localization tail",
+        "paths": [
+          "core/packages/client/scripts/gen-place-zh.mjs",
+          "core/packages/client/scripts/merge-place-zh.mjs",
+          "core/packages/client/scripts/place-tail-zh.json"
+        ]
+      },
+      "license": { "spdx": "NOASSERTION", "evidence": "each external input retains its own terms; repository code is covered by LICENSE" },
+      "owner": "core/packages/client",
+      "workingDirectory": "core/packages/client",
+      "command": "node scripts/gen-place-zh.mjs; node scripts/merge-place-zh.mjs",
+      "outputs": ["core/packages/client/lib/data/place-zh.ts"],
+      "verification": ["the place localization coverage test checks newly observed cities"],
+      "driftPolicy": "External inputs and the manually reviewed tail are sources. Update them and rerun both generators instead of editing the output directly."
+    },
+    {
+      "id": "client.cn-region",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "cubingchina data.sql supplied explicitly or by the documented local convenience path",
+        "paths": ["core/packages/client/scripts/gen-cn-region.mjs"]
+      },
+      "license": { "spdx": "NOASSERTION", "evidence": "the external data source retains its own terms; repository code is covered by LICENSE" },
+      "owner": "core/packages/client",
+      "workingDirectory": "core",
+      "command": "node packages/client/scripts/gen-cn-region.mjs [data.sql]",
+      "outputs": ["core/packages/client/lib/data/cn-region.ts"],
+      "verification": ["review the deterministic generated diff from the explicitly selected data.sql input"],
+      "driftPolicy": "The generated header forbids hand edits. The default machine path is only a local convenience and CI must not claim to possess the external source."
+    },
+    {
+      "id": "client.pg-facts",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "simulator engine and its generator fixture",
+        "paths": [
+          "core/packages/client/app/[lang]/sim/engine/**",
+          "core/packages/client/tests/gen_pg_facts.gen.test.ts"
+        ]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "owner": "core/packages/client/app/[lang]/sim/engine",
+      "workingDirectory": "core",
+      "command": "$env:GEN_PG_FACTS='1'; pnpm --filter @cuberoot/client exec vitest run tests/gen_pg_facts.gen.test.ts",
+      "outputs": ["core/packages/client/app/[lang]/sim/engine/pgFacts.generated.ts"],
+      "verification": ["explicitly run the generator test and review the exact diff after bridge or generator changes"],
+      "driftPolicy": "The output path is derived from the test location and is clone-independent. Generation is slow and skipped by ordinary tests, so relevant engine changes require explicit regeneration."
+    },
+    {
+      "id": "client.sq1-pbl",
+      "kind": "upstream-snapshot",
+      "source": {
+        "url": "https://docs.google.com/spreadsheets/d/1VQNYNwdOLqqBkacHcfYtEBst22FOVhH9EAhTOYOZTgo/edit",
+        "paths": ["core/packages/client/scripts/sq1-pbl/**"]
+      },
+      "license": { "spdx": "NOASSERTION", "evidence": "public access does not establish a reuse license; public credit remains in credits_data.json" },
+      "owner": ["core/packages/client/scripts/sq1-pbl-check.mjs", ".github/workflows/sq1_pbl_drift.yml"],
+      "workingDirectory": "core",
+      "command": "node packages/client/scripts/sq1-pbl-check.mjs [--write]",
+      "outputs": ["core/packages/client/data/sq1-pbl/**"],
+      "verification": ["node packages/client/scripts/sq1-pbl-check.mjs", ".github/workflows/sq1_pbl_drift.yml reports upstream drift"],
+      "driftPolicy": "The scheduled workflow reports drift only. After human review, --write updates the checked-in snapshot; publication is separately owned by migration.sq1-pbl."
+    },
+    {
+      "id": "client.best2x2-source",
+      "kind": "upstream-snapshot",
+      "source": {
+        "url": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
+        "paths": ["core/packages/client/scripts/best2x2/sheets.mjs"]
+      },
+      "license": { "spdx": "NOASSERTION", "evidence": "authorized data merge is publicly credited in credits_data.json; no public license is asserted" },
+      "owner": ["core/packages/client/scripts/best2x2-check.mjs", ".github/workflows/best2x2_drift.yml"],
+      "workingDirectory": "core",
+      "command": "node packages/client/scripts/best2x2-check.mjs [--write]",
+      "outputs": [
+        "core/packages/client/scripts/best2x2/source-snapshot/**",
+        "core/packages/client/scripts/best2x2/source.hashes.json"
+      ],
+      "verification": ["node packages/client/scripts/best2x2-check.mjs", ".github/workflows/best2x2_drift.yml checks all 21 sheet hashes"],
+      "driftPolicy": "The scheduled check detects the 21-sheet source drift. Use --write only after review; this owner stops at the checked-in snapshot and never owns import or migration output."
+    },
+    {
+      "id": "client.best2x2-import",
+      "kind": "local-intermediate",
+      "source": {
+        "locator": "client.best2x2-source snapshot or an explicitly reviewed fresh fetch",
+        "paths": [
+          "core/packages/client/scripts/best2x2/fetch.mts",
+          "core/packages/client/scripts/best2x2/report.mts",
+          "core/packages/client/scripts/best2x2/build-import.mts"
+        ]
+      },
+      "license": { "spdx": "NOASSERTION", "evidence": "inherits the reviewed input terms recorded by client.best2x2-source" },
+      "owner": ["core/packages/client/scripts/best2x2", "core/docs/best-2x2-algs-port.md"],
+      "workingDirectory": "core",
+      "command": "follow core/docs/best-2x2-algs-port.md through fetch, report, build-import, verify-import, and verify-finder",
+      "transientOutputs": [".tmp/best2x2/**"],
+      "verification": [
+        "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .tmp/best2x2/import.json",
+        "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-finder.mts .tmp/best2x2/import.json"
+      ],
+      "driftPolicy": ".tmp is gitignored and disposable. This lifecycle ends at the reviewed import JSON; it neither owns the source snapshot nor an immutable migration."
+    },
+    {
+      "id": "client.tnoodle-i18n",
+      "kind": "checked-in-generated",
+      "source": {
+        "url": "https://github.com/thewca/tnoodle",
+        "ref": { "type": "branch", "value": "master" },
+        "input": "explicit path to server/src/main/resources/i18n in a TNoodle clone"
+      },
+      "license": { "spdx": "AGPL-3.0-only", "evidence": "https://github.com/thewca/tnoodle/blob/master/LICENSE" },
+      "owner": "core/packages/client/scripts/build-tnoodle-i18n.mjs",
+      "patchOwner": [],
+      "workingDirectory": "core",
+      "command": "node packages/client/scripts/build-tnoodle-i18n.mjs --input <tnoodle-i18n-dir> --write",
+      "outputs": ["core/packages/client/app/[lang]/scramble/gen/_tnoodle-i18n.ts"],
+      "verification": [
+        "node packages/client/scripts/build-tnoodle-i18n.mjs --input <tnoodle-i18n-dir> --check"
+      ],
+      "driftPolicy": "The generator requires an explicit TNoodle i18n directory and --write or --check. Generated headers remain repository-relative and must never record a machine-local checkout path."
+    },
+    {
+      "id": "client.cubing-worker",
+      "kind": "build-output",
+      "source": {
+        "locator": "the installed cubing dependency and the worker bundler",
+        "paths": ["core/packages/client/scripts/build-cubing-worker.mjs"]
+      },
+      "license": { "spdx": "NOASSERTION", "evidence": "dependency licenses and LICENSE" },
+      "owner": "core/packages/client/scripts/build-cubing-worker.mjs",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/client build",
+      "transientOutputs": ["core/packages/client/public/cubing-chunks/**"],
+      "verification": ["the client production build and bundle smoke checks"],
+      "driftPolicy": "The bundle directory is gitignored build output. Regenerate it through the client build and never commit or edit it as source."
+    },
+    {
+      "id": "client.deskpet-cube",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "DeskPet cubing generator sources",
+        "paths": ["core/packages/client/scripts/deskpet-cube/**"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "owner": "core/packages/client/scripts/deskpet-cube",
+      "workingDirectory": "core/packages/client",
+      "command": "node scripts/deskpet-cube/build-cubing.mjs",
+      "outputs": ["core/packages/client/public/deskpet/cubing/**"],
+      "verification": ["rerun the builder and review the generated diff"],
+      "driftPolicy": "Generated headers forbid hand edits. There is currently no cheap stale-output CI guard, so relevant source changes require explicit regeneration and diff review."
+    },
+    {
+      "id": "mobile.android-assets",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "CubeRoot brand SVGs and the Android asset generator",
+        "paths": ["core/packages/mobile/scripts/gen-android-assets.mjs"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "owner": "core/packages/mobile/scripts/gen-android-assets.mjs",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/mobile assets:android",
+      "outputs": [
+        "core/packages/client/public/icons/**",
+        "core/packages/mobile/android/app/src/main/res/mipmap-mdpi/**",
+        "core/packages/mobile/android/app/src/main/res/mipmap-hdpi/**",
+        "core/packages/mobile/android/app/src/main/res/mipmap-xhdpi/**",
+        "core/packages/mobile/android/app/src/main/res/mipmap-xxhdpi/**",
+        "core/packages/mobile/android/app/src/main/res/mipmap-xxxhdpi/**",
+        "core/packages/mobile/android/app/src/main/res/drawable/splash_icon.png",
+        "core/packages/mobile/android/app/src/main/res/drawable-night/splash_icon.png"
+      ],
+      "verification": ["the Test workflow regenerates assets and fails on tracked or untracked diff"],
+      "driftPolicy": "Regeneration plus a clean diff is the authoritative guard for PWA icons, Android density assets, and splash assets."
+    },
+    {
+      "id": "mobile.capacitor-tracked",
+      "kind": "tool-managed-source-tree",
+      "source": {
+        "locator": "Capacitor configuration, dependencies, and CLI",
+        "paths": ["core/packages/mobile/capacitor.config.ts", "core/packages/mobile/package.json"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and dependency licenses" },
+      "owner": "core/packages/mobile",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/mobile cap:sync",
+      "outputs": [
+        "core/packages/mobile/android/capacitor.settings.gradle",
+        "core/packages/mobile/android/app/capacitor.build.gradle"
+      ],
+      "verification": ["review every tracked Android Gradle and configuration change emitted by cap:sync"],
+      "driftPolicy": "Files marked DO NOT EDIT are updated through Capacitor. Review and commit only necessary tracked changes; they are tool-managed source, not disposable build output."
+    },
+    {
+      "id": "mobile.capacitor-build",
+      "kind": "build-output",
+      "source": {
+        "locator": "mobile Web source and the tracked Android project",
+        "paths": ["core/packages/mobile/src/**", "core/packages/mobile/android/**"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and dependency licenses" },
+      "owner": "core/packages/mobile",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/mobile build; run the selected Gradle task from the Android project",
+      "transientOutputs": [
+        "core/packages/mobile/dist/**",
+        "core/packages/mobile/android/.gradle/**",
+        "core/packages/mobile/android/build/**",
+        "core/packages/mobile/android/app/build/**",
+        "core/packages/mobile/android/capacitor-cordova-android-plugins/build/**",
+        "core/packages/mobile/android/local.properties"
+      ],
+      "verification": ["the Web build and selected Android Gradle build complete from tracked sources"],
+      "driftPolicy": "These outputs and local configuration are gitignored and never become editable source or tracked generated artifacts."
+    },
+    {
+      "id": "miniprogram.dist",
+      "kind": "build-output",
+      "source": {
+        "locator": "mini-program source and project configuration",
+        "paths": [
+          "core/packages/miniprogram/src/**",
+          "core/packages/miniprogram/project.config.json",
+          "core/packages/miniprogram/scripts/release-check.mjs"
+        ]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and dependency licenses" },
+      "owner": "core/packages/miniprogram",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/miniprogram release:check",
+      "transientOutputs": ["core/packages/miniprogram/dist/**"],
+      "verification": ["release:check validates build state and source fingerprint consistency"],
+      "driftPolicy": "dist is build output and not a hand-edited source. Release checks must prove that its fingerprint matches the current source."
+    },
+    {
+      "id": "server.cubeopt-runtime",
+      "kind": "local-heavy-artifact",
+      "source": {
+        "locator": "a reviewed variant-consistent CubeOpt opt5/h5 or opt6/h6 build",
+        "paths": ["core/packages/server/CUBEOPT_ARTIFACT.md", "core/packages/server/scripts/*cubeopt-artifact.mjs"]
+      },
+      "license": { "spdx": "NOASSERTION", "evidence": "core/packages/server/CUBEOPT_ARTIFACT.md and the selected CubeOpt source license" },
+      "owner": ["core/packages/server", "core/packages/server/CUBEOPT_ARTIFACT.md"],
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/server cubeopt:prepare -- --store <store> <args>; pnpm --filter @cuberoot/server cubeopt:promote -- --store <store> --bundle <id>; pnpm --filter @cuberoot/server cubeopt:verify -- <store>; pnpm --filter @cuberoot/server cubeopt:smoke -- --store <store>",
+      "runtimeOutputs": [
+        "CUBEOPT_ARTIFACT_DIR/current.json",
+        "CUBEOPT_ARTIFACT_DIR/bundles/<bundle>/manifest.json",
+        "CUBEOPT_ARTIFACT_DIR/bundles/<bundle>/module",
+        "CUBEOPT_ARTIFACT_DIR/bundles/<bundle>/wasm",
+        "CUBEOPT_ARTIFACT_DIR/bundles/<bundle>/table"
+      ],
+      "schema": {
+        "manifestLocks": ["schema", "bundle", "variant", "protocol", "fixed filenames", "source", "bytes", "SHA-256"]
+      },
+      "verification": [
+        "prepare, promote, verify, and post-release daemon smoke commands",
+        "ordinary tests use opt5 and opt6 small fixtures to verify the contract and absence of a Web-path fallback"
+      ],
+      "driftPolicy": "Bundles and tables stay out of Git and ordinary CI. Prepare validates in same-filesystem staging before atomic immutable-bundle rename; promote atomically replaces current.json only after validation. Provision derives the true variant, requires matching WASM and table, and migrates idempotently. Verification locks wrapper references and the embedded WASM variant; renaming or rehashing cannot impersonate another variant. Runtime has no legacy fallback, and module, WASM, or table must never be overwritten independently."
+    },
+    {
+      "id": "deploy.next-start",
+      "kind": "runtime-generated",
+      "source": {
+        "locator": "the start.sh template step in the Next deployment workflow",
+        "paths": [".github/workflows/deploy_next.yml"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "owner": ".github/workflows/deploy_next.yml",
+      "workingDirectory": ".",
+      "command": "run .github/workflows/deploy_next.yml",
+      "runtimeOutputs": ["<release>/start.sh"],
+      "verification": ["the workflow generates start.sh into the release package and verifies the assembled artifact"],
+      "driftPolicy": "The file is generated during packaging and is not duplicated or hand-maintained in the source tree."
+    },
+    {
+      "id": "solver.tables-wasm",
+      "kind": "local-heavy-artifact",
+      "source": {
+        "locator": "solver Rust sources, table generators, and local tables",
+        "paths": ["solver/**"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and solver-specific upstream terms" },
+      "owner": "solver",
+      "workingDirectory": "solver",
+      "command": "follow the matching solver loop or runbook with computation capped at 14 threads",
+      "transientOutputs": ["solver/target/**", "solver/tables/**", "solver/pkg-*/**"],
+      "versioning": "record the implementation version plus table size and hash for each generated family",
+      "verification": ["exact fixtures, recorded table size and hash, and smoke checks in each target native or WASM runtime"],
+      "driftPolicy": "Large tables and build output remain local and untracked. Ordinary CI checks small deterministic fixtures and contracts rather than recomputing the heavy artifacts."
+    },
+    {
+      "id": "migration.best2x2",
+      "kind": "immutable-migration-family",
+      "source": {
+        "locator": ".tmp/best2x2/import.json",
+        "lineage": "client.best2x2-import produces the reviewed import JSON from client.best2x2-source"
+      },
+      "license": { "spdx": "NOASSERTION", "evidence": "credits_data.json records the authorized data merge; no public license is asserted" },
+      "owner": ["core/packages/alg-build/gen_best2x2_sql.mjs", "core/packages/server/migrations"],
+      "workingDirectory": "core",
+      "command": "node packages/alg-build/gen_best2x2_sql.mjs .tmp/best2x2/import.json core/packages/server/migrations/<new-id>_best_2x2_algs.sql",
+      "outputs": ["core/packages/server/migrations/0104_best_2x2_algs.sql"],
+      "verification": [
+        "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .tmp/best2x2/import.json",
+        "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-finder.mts .tmp/best2x2/import.json",
+        "core/docs/best-2x2-algs-port.md"
+      ],
+      "driftPolicy": "This owner starts at the reviewed import JSON and owns only the immutable published migration. Never rewrite 0104 after publication; changed data requires a newly numbered migration."
+    },
+    {
+      "id": "migration.cubingapp",
+      "kind": "immutable-migration-family",
+      "source": {
+        "url": "https://github.com/spencerchubb/cubingapp",
+        "ref": { "type": "commit", "value": "613a49885dc618023368e5f0c2a25024b8c7e9a5" },
+        "input": "explicit CubingApp checkout path"
+      },
+      "license": { "spdx": "MIT", "evidence": "CubingApp checkout LICENSE at the recorded commit" },
+      "owner": [
+        "core/packages/alg-build/gen_cubingapp_sq1_sql.mts",
+        "core/packages/alg-build/gen_cubingapp_sq1_stages_sql.mts",
+        "core/packages/alg-build/gen_cubingapp_beginner_ll_sql.mts",
+        "core/packages/alg-build/gen_cubingapp_roux_pyraminx_sql.mts"
+      ],
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_<family>_sql.mts <cubingapp-checkout> packages/server/migrations/<new-id>.sql",
+      "commands": [
+        "pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_sq1_sql.mts <cubingapp-checkout> <new-migration>",
+        "pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_sq1_stages_sql.mts <cubingapp-checkout> <new-migration>",
+        "pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_beginner_ll_sql.mts <cubingapp-checkout> <new-migration>",
+        "pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_roux_pyraminx_sql.mts <cubingapp-checkout> <new-migration>"
+      ],
+      "outputs": [
+        "core/packages/server/migrations/0107_sq1_cubingapp_csp.sql",
+        "core/packages/server/migrations/0108_sq1_cubingapp_stages.sql",
+        "core/packages/server/migrations/0109_cubingapp_beginner_ll.sql",
+        "core/packages/server/migrations/0110_cubingapp_roux_pyraminx.sql"
+      ],
+      "verification": [
+        "generator invariants lock source case and formula counts",
+        "apply the new migration to a local PG13 fresh and upgrade database"
+      ],
+      "driftPolicy": "The recorded CubingApp commit and generator invariants define each family. Published migrations are immutable; source or mapping changes require a new migration."
+    },
+    {
+      "id": "migration.psf2l",
+      "kind": "immutable-migration-family",
+      "source": {
+        "type": "private-reviewed-document",
+        "locator": "site-owner PSF2L.docx reference",
+        "snapshot": "the reviewed 33-entry DOCX transcription in core/packages/alg-build/gen_psf2l_sql.mts"
+      },
+      "license": { "spdx": "NOASSERTION", "evidence": "site-owner supplied reference; no external license applies" },
+      "owner": "core/packages/alg-build/gen_psf2l_sql.mts",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/alg-build exec tsx gen_psf2l_sql.mts packages/server/migrations/<new-id>_psf2l.sql",
+      "outputs": [
+        "core/packages/server/migrations/0116_psf2l.sql",
+        "core/packages/server/migrations/0117_psf2l_f2l_names.sql"
+      ],
+      "verification": [
+        "generator invariants require exactly 33 unique cases and algorithms",
+        "apply the new migration to a local PG13 fresh and upgrade database"
+      ],
+      "driftPolicy": "The reviewed 33-entry transcription is the generator input. Published migrations are immutable; fixes require a newly numbered migration."
+    },
+    {
+      "id": "migration.sq1-pbl",
+      "kind": "immutable-migration-family",
+      "source": {
+        "locator": "client.sq1-pbl checked-in reviewed snapshot",
+        "paths": ["core/packages/client/data/sq1-pbl/**"]
+      },
+      "license": { "spdx": "NOASSERTION", "evidence": "public access does not establish a reuse license; see credits_data.json" },
+      "owner": "core/packages/client/scripts/sq1-pbl/build-alg-migration.mjs",
+      "workingDirectory": "core",
+      "command": "node packages/client/scripts/sq1-pbl/build-alg-migration.mjs --write",
+      "outputs": ["core/packages/server/migrations/0140_sq1_pbl.sql"],
+      "verification": [
+        "node packages/client/scripts/sq1-pbl/build-alg-migration.mjs --check",
+        "node packages/client/scripts/sq1-pbl-check.mjs"
+      ],
+      "driftPolicy": "client.sq1-pbl owns source drift and snapshot updates. This owner publishes only a new immutable migration and never rewrites 0140 after release."
+    },
+    {
+      "id": "migration.1lll",
+      "kind": "immutable-migration-family",
+      "source": {
+        "url": "https://docs.google.com/spreadsheets/d/1I2McWXVQZxGRVmrVEJDub9r_NPTNdPs6C7jriodyG1E",
+        "intermediate": ".tmp/phase0/sheet_1lll.json",
+        "design": "docs/1lll-migration.md"
+      },
+      "license": { "spdx": "NOASSERTION", "evidence": "site-owner maintained sheet; no external license is asserted" },
+      "owner": "core/packages/alg-build/import_1lll.mjs",
+      "workingDirectory": "core",
+      "command": "node packages/alg-build/import_1lll.mjs",
+      "commands": [
+        "node packages/alg-build/import_1lll.mjs",
+        "node packages/alg-build/fix_1lll_meta_assignment.mjs"
+      ],
+      "outputs": [
+        "core/packages/server/migrations/0102_fix_1lll_meta_assignment.sql"
+      ],
+      "transientOutputs": [".tmp/phase4/import_1lll.sql"],
+      "verification": [
+        "node packages/alg-build/fix_1lll_meta_assignment.mjs --dry",
+        "pnpm --filter @cuberoot/alg-build exec tsx verify_meta_pointers.mjs --with-sql <new-migration>",
+        "docs/1lll-migration.md"
+      ],
+      "driftPolicy": "The import SQL is a disposable intermediate. The published corrective migration is immutable; sheet, mapping, or metadata changes require explicit re-import review and a newly numbered migration."
+    }
+  ]
+}

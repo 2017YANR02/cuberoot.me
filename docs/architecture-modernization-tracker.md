@@ -146,7 +146,7 @@ API     ─X─> Web 源码或 Web public
 | DOC-02 | 修正根 README 的真实工作目录和首条命令 | `完成` | 新环境按 README 进入 `core/` 后可执行安装与最小验证，不再从仓库根直接运行 pnpm；变更后独立复审 PASS |
 | DOC-03 | 为 client、server、mobile、miniprogram 增加或校准极短局部说明 | `完成` | 每份只写局部差异，不复制根规则；AI 能在目标目录获得正确命令和边界；变更后独立复审 PASS |
 | DOC-04 | 建立文档状态约定并标记 Platform 遗留目录 | `完成` | 活跃计划、已完成记录、历史文档和退役说明可被明确区分；归档入口不再把失效命令写成活跃开发入口；变更后独立复审 PASS |
-| DOC-05 | 登记生成物 | `进行中` | 已建立 `REFERENCE / PARTIAL` 登记并纠正 PG facts 跨 clone 路径与 stack metadata 伪生成声明；vendored 矩阵、TNoodle i18n generator、migration 数据族 owner 尚未闭环，独立复审结论为 PARTIAL |
+| DOC-05 | 登记生成物 | `完成` | 33 类工程生成物已由结构化 JSON 清册登记 owner、输入、输出、再生入口、验证与生命周期；5 类 vendored 来源在下次成功同步前诚实保持 pending，TNoodle 26 locale/23 FMC key 快照可确定性复现，运行时 locator 与仓库输出分离，公开署名仍唯一归 `credits_data.json`；独立终审 GO |
 
 ### B. 真实依赖边界
 
@@ -351,6 +351,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 | Batch 1 系统地图与边界事实 | `batch1_baseline` | `复审 PASS` | API 独立产物与现存 Web 耦合、活跃 app/package/job、Platform workspace 排除和宽部署触发均已准确表达；无 blocker/major/minor 遗留 |
 | Batch 1 README/归档状态 | `batch1_doc_audit` | `复审 PASS` | client/server/mobile/miniprogram 局部入口、中央文档状态和 Platform 退役墓碑与当前仓库一致；DOC-03/04 通过 |
 | Batch 1 生成物与 AI 可用性 | `batch1_generated_ai` | `复审 PARTIAL` | pgFacts 跨 clone 生成与 stack_meta 人工 source 重分类通过；vendored 矩阵、TNoodle i18n generator、migration 数据族 owner 仍是 DOC-05 blocker，EventIcon/DeskPet drift 守卫为后续 major |
+| Batch 7 生成物清册终审 | `batch12_doc05_final` | `复审 PASS` | 33 类 artifact 的 schema、ownership、路径与生命周期闭环；5 个 vendored provenance 诚实 pending，TNoodle 真实上游 26 locale/23 FMC key 确定性检查通过，公开 credits 事实源未被工程 ledger 替代；0 blocker/major/minor |
 | Batch 2 依赖扫描与精确旧债基线 | `batch1_baseline` | `复审 PASS` | occurrence 多重集、workspace 动态发现、TS import-equals、路径组合、子进程、schema 和完整 Nemesizer 产物链均有实证；326 个指纹、342 次出现、15 条人工契约通过 |
 | Batch 2 package 与多端目录判断 | `batch1_generated_ai` | `复审 PASS` | 不建 `webapp/`、不拆仓、不立即迁 `apps/*`；Clock 为首个条件候选，bicube/sia222 先拆纯核心与 Web loader；当前 blocker 和 major 均为 0 |
 | Batch 2 Hook 与 CI 闭环 | `batch1_doc_audit` | `复审 PARTIAL` | 共用扫描器、write adapter、CI 和定向测试通过；当前 Codex 宿主不会热加载新写入的 Hook 配置，因此不能在同一会话宣称项目级实触发完成 |
@@ -387,12 +388,13 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 2026-08-21 的三名 Reviewer 曾确认当时的总体架构路线成立；随后 Platform 大迁移显著改变了依赖图，所以旧 PASS 只保留为历史审查证据，不能直接授权当前实施。2026-08-23 的 Batch 1 先做三路只读初审，再做变更后的定点复审：DOC-01 至 DOC-04 均 PASS，DOC-05 因三类已公开的不可复现缺口保持 PARTIAL。Batch 2 再以当前 workspace、workflow、exports、真实路径和子进程调用重建基线；机器守卫与 package 方案已复审通过，项目 Hook 的宿主级验收因配置不热加载明确留到下一独立会话。Batch 3 实施后由三路 Agent 分别审核共享源码边界、CubeOpt 制品与原子部署、workflow 与跟踪一致性；两次生产前置校验暴露的 store 与 variant 假设均安全修正，最终独立复核与 `6756c599a1` 的三条工作流、生产 manager 及公网路由 smoke 已全部通过。Batch 4 实施后 Reviewer 先后阻断测试伪依赖和源码字符串自证；两项改为真实依赖图与可执行 route/session 回归后最终复核 PASS，`ba22fd81e1` 的三条工作流和生产安全边界 smoke 也已通过。Batch 5 开工前由三名 Reviewer 分别复核纯核心边界、条件导出和 workflow、测试与 Worker 运行证明；实施后测试 Reviewer 阻断了“同模型自证但独立 oracle 未进 CI”的缺口，改为常规 CI 精确执行 `clock_solver` 后三路代码复核均转 GO。`1db7804111` 随后通过隔离工作树、Test、Deploy Next、Deploy Core、API 健康和中英文 `/sim` 公网 smoke，Clock 切片正式关闭。Batch 6 的三路只读审计关闭 PS1-01；PS1-02/03 实施后先后堵住全局 flag 子串和同值 root fixture 两处假绿，PS1-04 终审再发现 shim 未入 index、Test 根脚本白名单和弱退出码断言三处问题。全部修正后，根目录精确双 shim、7 个 canonical 实现、Windows/Linux 只读合同和 workflow 路径矩阵均由三路 Reviewer 最终 GO。BND-04/05 与 DOC-05 的保留项不因 Batch 3/4/5/6 的局部推进而提前关闭。
 
-> Batch 7 校正：上一段末尾“BND-04/05 保留”只适用于 Batch 6 结束时；本次真实多文件宿主探针与独立复核通过后，BND-04 已关闭，BND-05 与 DOC-05 继续保留。
+> Batch 7 校正：上一段末尾“BND-04/05 保留”只适用于 Batch 6 结束时；真实多文件宿主探针与独立复核通过后，BND-04 已关闭；随后结构化工程生成物清册、确定性 TNoodle generator、vendored provenance 状态与 owner/验证闭环完成独立终审，DOC-05 关闭。BND-05 继续保留至其独立提交收口。
 
 ## 13. 变更记录
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-24 | Batch 7 DOC-05 工程生成物清册关闭 | 结构化 JSON 清册覆盖 33 类 artifact，schema 驱动 checker、ownership 变异探针、真实 TNoodle 26 locale/23 FMC key 确定性检查与精确 diff-check 通过；5 类 vendored 旧 provenance 在下次成功同步前保持诚实 pending，公开 credits 事实源不变；独立 Reviewer 最终 GO，0 blocker/major/minor |
 | 2026-08-24 | 校正 RET-02 与 RET-04 的状态边界 | RET-02 的 39 张业务表、1,157 行处置、来源/恢复 integrity、双哈希、逐表行数及 41 组关系检查证据已闭环，清册标记完成；RET-04 仍受 2026-09-21 观察期、无旧依赖实证与逐对象所有者授权约束，本次不删除或处置任何资产 |
 | 2026-08-24 | Batch 7 CTR-03 稳定错误码兼容切片关闭 | 六个 auth 试点端点统一稳定 `{ code, message, error }` envelope，迁移期保留旧字段；小程序 code-first 且保留旧 status fallback。独立 Reviewer 最终 GO，Mini auth 32/32、Server wire contract 15/15 与 diff-check 通过；本地提交，不提前声称发布验收 |
 | 2026-08-24 | Batch 7 物理目录整理评估关闭，PKG-03 改为条件触发政策 | 14 个 package workspace；实施前快照 `4418bea0bc` 的 6 个部署敏感目录有 357 次 tracked path 匹配，另有 8 个相关 workflow；审计未发现可量化收益。LYT-01 以“不执行”完成，LYT-02 至 LYT-04 取消/不适用。不建 `webapp/`、不搬 Platform 归档，当前不造跨端 React UI package |

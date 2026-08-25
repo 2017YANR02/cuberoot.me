@@ -35,6 +35,7 @@ Assert-SyncInternalFiles -RepoRoot $LocalDir -RelativePaths @(
     '.sync/sync_utils.ps1'
     '.sync/page_config.json'
     '.sync/menu_template.html'
+    'docs/generated-artifacts.json'
 ) -PowerShellScripts @('scripts/upstream/sync-rubiks-solver-demo.ps1')
 if ($ValidateOnly)
 {
@@ -345,6 +346,7 @@ if ($DryRun)
 }
 else
 {
+    Write-UpstreamVersionRecord -RepoRoot $LocalDir -ArtifactId 'tools.rubiks-solver-demo' -WorkingDirectory $UpstreamDir
     Write-Host "`nRun 'git diff' to review changes." -ForegroundColor Green
     Write-Host "Then test with: python -m http.server 8080" -ForegroundColor Green
 }

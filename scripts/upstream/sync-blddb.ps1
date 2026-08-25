@@ -38,6 +38,7 @@ Assert-SyncInternalFiles -RepoRoot $ProjectDir -RelativePaths @(
     'scripts/upstream/sync-blddb.ps1'
     '.sync/sync_utils.ps1'
     '.sync/blddb_postprocess.mjs'
+    'docs/generated-artifacts.json'
 ) -PowerShellScripts @('scripts/upstream/sync-blddb.ps1')
 if ($ValidateOnly)
 {
@@ -311,36 +312,7 @@ Write-Host "[7/7] 后处理 data/（起手位置 + Nightmare 速查表）..." -F
     (Join-Path $ProjectDir '.sync\blddb_postprocess.mjs'), '--upstream', $BlddbDir, '--repo', $ProjectDir
 ) -FailureMessage 'blddb_postprocess.mjs 失败 —— /alg/3bld/lookup 的起手列和 /alg/3bld/tables 会缺数据。')
 
-$sha = Get-CheckedNativeText -FilePath 'git' -ArgumentList @('-C', $BlddbDir, 'rev-parse', '--short', 'HEAD')
-$date = Get-CheckedNativeText -FilePath 'git' -ArgumentList @('-C', $BlddbDir, 'log', '-1', '--format=%ai')
-$txt = @"
-Vendored from https://github.com/nbwzx/blddb (branch v2)
-Commit:  $sha
-Date:    $date
-License: GPL-3.0 (see ./LICENSE)
-
-Static export of the upstream Next.js app, built by scripts/upstream/sync-blddb.ps1.
-Do NOT hand-edit anything here — it is generated. Patches (static-export config +
-i18n cookies() removal) live in that script; upstream notes in D:\cube\blddb\CLAUDE.md.
-
-data/ is post-processed by .sync/blddb_postprocess.mjs and is NOT a byte copy of
-upstream's public/data. Upstream imports all its JSON at build time (so the iframe app
-already has it inside the _next chunks); this copy exists for OUR native pages under
-/alg/3bld/, which fetch it at runtime via app/[lang]/alg/3bld/_lib/blddb.ts. It keeps:
-  * <type>Manmade.json      — hand-curated sets, minified, every record normalised to
-                              [algs[], users[], commutators[]|null, thumbPositions[]].
-                              The thumb position is computed at build time by running
-                              upstream's own finger.ts, so none of that GPL code ends
-                              up in our client bundle.
-  * <type>NightmareSelected.json + nightmare/*.json — the 235KB of cheat-sheet tables
-                              behind /alg/3bld/tables.
-The exhaustive Nightmare sets (~37MB) are dropped — only the iframe app uses those,
-and it has them inlined.
-
-Served at: /tools/blddb/  (basePath baked into the bundle — moving the path needs a rebuild)
-Wrapped by: core/packages/client/app/[lang]/blddb/page.tsx
-"@
-Set-Content -Path "$dst\UPSTREAM.txt" -Value $txt -Encoding UTF8
+Write-UpstreamVersionRecord -RepoRoot $ProjectDir -ArtifactId 'tools.blddb' -WorkingDirectory $BlddbDir
 
 $sizeMB = [math]::Round((Get-ChildItem $dst -Recurse -File | Measure-Object Length -Sum).Sum / 1MB, 1)
 $fileCount = (Get-ChildItem $dst -Recurse -File).Count
