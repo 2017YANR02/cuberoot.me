@@ -92,22 +92,8 @@
       ]
     },
     {
-      "id": "scramble-build-client-solvers",
-      "from": "packages/scramble-stats-build",
-      "to": "packages/client private solver modules",
-      "phase": "build-import",
-      "mechanism": "pathToFileURL dynamic imports from the offline puzzle registry",
-      "owner": "scramble-stats-build",
-      "rationale": "The offline registry imports Web-private solver modules with mixed dependency closures; Clock is proven pure, while modules such as bicube and sia222 still include Web data-loading concerns.",
-      "replacement": "PKG-02 candidate: extract one proven pure core at a time, splitting any Web loader before the module can join a runtime-neutral solver package.",
-      "evidence": [
-        { "file": "core/packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts", "contains": "await mod('../../client/lib/cuboid335-solver')" },
-        { "file": "core/packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts", "contains": "await mod('../../client/lib/sia222-solver')" }
-      ]
-    },
-    {
       "id": "scramble-build-root-artifacts",
-      "from": "packages/scramble-stats-build",
+      "from": "jobs/scramble-stats-build",
       "to": "repo stats/scramble and solver native analyzers/tables",
       "phase": "build-artifact",
       "mechanism": "PowerShell orchestration plus JSON/binary artifact generation",
@@ -115,8 +101,8 @@
       "rationale": "The offline job consumes non-workspace solver binaries and publishes versioned static data outside core.",
       "replacement": "Keep the job boundary explicit; PS1-01 must map callers before any script relocation.",
       "evidence": [
-        { "file": "core/packages/scramble-stats-build/update_cross_stats.ps1", "contains": "$SolverDir   = 'D:\\cube\\cuberoot.me\\solver'" },
-        { "file": "core/packages/scramble-stats-build/update_cross_stats.ps1", "contains": "$env:CUBE_TABLE_DIR = Join-Path $SolverDir 'tables'" }
+        { "file": "core/jobs/scramble-stats-build/update_cross_stats.ps1", "contains": "$SolverDir   = 'D:\\cube\\cuberoot.me\\solver'" },
+        { "file": "core/jobs/scramble-stats-build/update_cross_stats.ps1", "contains": "$env:CUBE_TABLE_DIR = Join-Path $SolverDir 'tables'" }
       ]
     },
     {
@@ -1938,46 +1924,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/tests/first_layer_integration.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/packages/scramble-stats-build/backfill_xcross_variant.ps1",
-      "target": "scramble-stats-build"
-    },
-    {
-      "file": "packages/client/tests/first_layer_integration.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/packages/scramble-stats-build/src/build_comp_steps.ts",
-      "target": "scramble-stats-build"
-    },
-    {
-      "file": "packages/client/tests/first_layer_integration.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/packages/scramble-stats-build/src/build_recent_scrambles.ts",
-      "target": "scramble-stats-build"
-    },
-    {
-      "file": "packages/client/tests/first_layer_integration.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/packages/scramble-stats-build/src/variants.ts",
-      "target": "scramble-stats-build"
-    },
-    {
-      "file": "packages/client/tests/first_layer_integration.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/packages/scramble-stats-build/update_cross_stats.ps1",
-      "target": "scramble-stats-build"
-    },
-    {
       "file": "packages/client/tests/fto_eif_image.test.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
@@ -2212,30 +2158,6 @@
       "specifier": "../../server/src/utils/record_format",
       "rule": "cross-package-relative-module",
       "target": "server"
-    },
-    {
-      "file": "packages/client/tests/second_layer_integration.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/packages/scramble-stats-build/src/build_comp_steps.ts",
-      "target": "scramble-stats-build"
-    },
-    {
-      "file": "packages/client/tests/second_layer_integration.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/packages/scramble-stats-build/src/build_recent_scrambles.ts",
-      "target": "scramble-stats-build"
-    },
-    {
-      "file": "packages/client/tests/second_layer_integration.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/packages/scramble-stats-build/src/variants.ts",
-      "target": "scramble-stats-build"
     },
     {
       "file": "packages/client/tests/sq1_cs_squanmate_alignment.test.ts",
@@ -2486,7 +2408,7 @@
       "target": "client"
     },
     {
-      "file": "packages/scramble-stats-build/build_length_opt.mjs",
+      "file": "jobs/scramble-stats-build/build_length_opt.mjs",
       "mechanism": "path-literal",
       "rule": "cross-package-path",
       "sourceKind": "build",
@@ -2494,139 +2416,11 @@
       "target": "client"
     },
     {
-      "file": "packages/scramble-stats-build/build_length_opt.mjs",
+      "file": "jobs/scramble-stats-build/build_length_opt.mjs",
       "mechanism": "spawnSync",
       "rule": "subprocess-call",
       "sourceKind": "subprocess",
       "target": "<dynamic>"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_bic_table.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/bicube-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/bsq-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/cm3-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/crz3a-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/ctico-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/cuboid233-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/cuboid334-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/cuboid335-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/cuboid336-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/cuboid337-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/heli-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/helicv-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/sia222-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/ssq1-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_sia123_table.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/sia123-solver",
-      "target": "client"
-    },
-    {
-      "file": "packages/scramble-stats-build/src/build_sia222_table.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/lib/sia222-solver",
-      "target": "client"
     },
     {
       "file": "packages/server/scripts/gen-glossary.ts",

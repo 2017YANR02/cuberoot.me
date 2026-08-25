@@ -32,7 +32,7 @@
  * cube B). Heuristic = max(corner PDB, two complementary 6-edge PDBs, center-position PDB) — the standard Korf
  * pattern-database approach (R.E. Korf, AAAI 1997). Solves each half optimally in ≤~1s.
  *
- * TIER B / TABLE — the PDBs are built OFFLINE (packages/scramble-stats-build/src/build_sia123_table.ts): a full
+ * TIER B / TABLE — the PDBs are built OFFLINE (jobs/scramble-stats-build/src/build_sia123_table.ts): a full
  * corner PDB (dense 6!·3⁶, ~512KB), two complementary 6-edge PDBs (~3.7MB each), a tiny 5! center PDB. Cube B's
  * PDBs are byte-checked against cube A's at build time: the projection distances are invariant under the z2
  * isomorphism so the cube-B tables are byte-identical and SHARED (verified — like sia222). The whole set is
