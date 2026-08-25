@@ -16,17 +16,16 @@ Solvers, trainers, analytics, and statistics for the Rubik's Cube — all in the
 
 ```
 cuberoot.me/
-├── core/                  pnpm + Turbo monorepo — active product apps and shared packages
-│   └── packages/
-│       ├── client/        React 19 + Next.js 16 (App Router) — the site itself
-│       ├── platform/      Retired read-only archive; its product surfaces now live under client /platform
-│       ├── server/        Hono + PostgreSQL 13 — WCA OAuth, reconstructions, algorithm library
-│       ├── mobile/        React + Capacitor — Android now, reusable for a future iOS target
-│       ├── miniprogram/   WeChat Mini Program — independent native runtime
-│       ├── shared/        Stable contracts and runtime-neutral logic shared across consumers
-│       ├── visualcube/    In-house NxN cube SVG renderer
-│       ├── stats-build/   WCA statistics pipeline, refreshed daily by CI
-│       └── ...            alg-build, scramble-stats-build, wb-build, stack-kernel
+├── core/                  pnpm + Turbo monorepo — active apps, shared packages, and offline jobs
+│   ├── packages/          Current apps plus reusable packages during the gradual layout migration
+│   │   ├── client/        React 19 + Next.js 16 (App Router) — the site itself
+│   │   ├── server/        Hono + PostgreSQL 13 — WCA OAuth, reconstructions, algorithm library
+│   │   ├── mobile/        React + Capacitor — Android now, reusable for a future iOS target
+│   │   ├── miniprogram/   WeChat Mini Program — independent native runtime
+│   │   ├── platform/      Retired read-only archive; its product surfaces now live under client /platform
+│   │   └── ...            Shared libraries and the remaining jobs awaiting migration
+│   └── jobs/
+│       └── wb-build/      Offline unofficial world-best dataset generator
 ├── solver/                Rust solving engines — native analyzers and WebAssembly builds
 ├── reconer/               Automated reconstruction from speedsolving video
 ├── tools/                 Upstream forks, served from static.cuberoot.me

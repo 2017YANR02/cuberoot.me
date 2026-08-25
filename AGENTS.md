@@ -14,7 +14,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | `core/packages/miniprogram` | 微信小程序独立运行时，不复用 React DOM UI |
 | `core/packages/shared` | 稳定契约、纯规则与跨端数据模型；公式数据以 PG `alg_sets/alg_cases` 为准 |
 | `core/packages/visualcube` 等 | 有明确构建或运行时边界的共享 package |
-| `core/packages/*-build` | 离线 job，输出统计、数据或迁移生成物，不是在线 app |
+| `core/jobs/*` 与尚待迁移的 `core/packages/*-build` | 离线 job，输出统计、数据或迁移生成物，不是在线 app |
 | `core/packages/platform` | workspace 外的退役历史归档，不测试、不构建、不部署、不引入新功能 |
 | `solver/` | workspace 外 Rust 求解引擎，产 native 分析器和 WASM；`target/`、`tables/`、`pkg-*` 仅本机有 |
 | `reconer/` | workspace 外速拧视频自动复盘；进入前读 `reconer/AGENTS.md` 和 `roadmap.md` |
