@@ -274,7 +274,7 @@ describe('对上游页面实测', () => {
     {
       type: 'corner', speffz: 'CAV', chichu: 'JDX', key: 'JDX',
       positions: ['UFR', 'UBL', 'DFR'],
-      alg: "R2 U R2 D R2 D' R2 U' R2 D R2 D'", users: 26, comm: "R2:[U,R2 D R2 D' R2]",
+      alg: "R2 U R2 D R2 D' R2 U' R2 D R2 D'", users: 27, comm: "R2:[U,R2 D R2 D' R2]",
     },
     {
       type: 'parity', speffz: 'CDDA', chichu: 'ACAD', key: 'ACAD',

@@ -96,12 +96,17 @@ describe('algorithm player placement', () => {
 
   it('binds the shared sim pointer bridge so dragging the cube changes only the view', () => {
     const player = read('components/AlgPlayer/AlgSimPlayer.tsx');
+    const interaction = read('components/sim-embed/attachEmbeddedSimInteraction.ts');
 
-    expect(player).toContain("import('@/app/[lang]/sim/Toucher')");
-    expect(player).toContain('toucher.init(m.renderer.domElement, world.controller.touch)');
-    expect(player).toContain("world.controller.dragEmpty = 'view'");
-    expect(player).toContain('world.controller.onOrbit = (dx, dy) => orbitSceneFree(world, dx, dy, ORBIT_K)');
-    expect(player).toContain('toucher.destroy()');
+    expect(player).toContain("import('@/components/sim-embed/attachEmbeddedSimInteraction')");
+    expect(player).toContain('const detachInteraction = attachEmbeddedSimInteraction({');
+    expect(player).toContain('mode: interactionMode');
+    expect(player).toContain('detachInteraction()');
+    expect(interaction).toContain("import Toucher from '@/app/[lang]/sim/Toucher'");
+    expect(interaction).toContain('toucher.init(dom, world.controller.touch)');
+    expect(interaction).toContain("world.controller.dragEmpty = 'view'");
+    expect(interaction).toContain('world.controller.onOrbit = orbit');
+    expect(interaction).toContain('toucher.destroy()');
   });
 
   it('routes every /alg animation surface through the shared /sim-backed AlgPlayer', () => {

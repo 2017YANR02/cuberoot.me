@@ -9,8 +9,9 @@
 //        // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 //      must have its filename listed somewhere in _guards.ts (PAIRED_GUARDS.test or
 //      CI_GUARDS_*.test — compound entries like "a.test.ts + b.test.ts" are split).
-//   2. Every test filename listed in _guards.ts must exist in tests/ AND carry that
-//      marker — a typo'd or stale filename goes red immediately.
+//   2. Every test filename listed in _guards.ts must exist in exactly one registered
+//      workspace test root AND carry that marker — a typo, duplicate or stale filename
+//      goes red immediately.
 //
 // Fix when red:
 //   - new convention-guard test, not yet listed → add a `// guard-registry: ...`
@@ -27,6 +28,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 import { PAIRED_GUARDS, PROCESS_GUARDS, CI_GUARDS_UI, CI_GUARDS_DRIFT, CI_GUARDS_API } from '@/app/[lang]/dev/guards/_guards';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 const HERE = dirname(fileURLToPath(import.meta.url)); // packages/client/tests
 const ROOT = join(HERE, '..'); // packages/client
@@ -36,6 +38,7 @@ const CODEX_HOOKS = join(REPO_ROOT, '.codex', 'hooks.json');
 const GIT_PRE_COMMIT = join(REPO_ROOT, '.githooks', 'pre-commit');
 
 const MARKER = '// guard-registry: tracked at /dev/guards';
+const TEST_ROOTS = [HERE, workspaceFixturePath('@cuberoot/server', 'tests')];
 
 // _guards.ts `test` fields can be compound ("a.test.ts + b.test.ts" for one hook
 // guarding two conventions at once) — split on the separator.
@@ -52,9 +55,13 @@ const REGISTERED = new Set<string>([
 
 function markedTestFiles(): Set<string> {
   const out = new Set<string>();
-  for (const name of readdirSync(HERE)) {
-    if (!/\.test\.ts$/.test(name)) continue;
-    if (readFileSync(join(HERE, name), 'utf8').includes(MARKER)) out.add(name);
+  for (const root of TEST_ROOTS) {
+    for (const name of readdirSync(root)) {
+      if (!/\.test\.ts$/.test(name)) continue;
+      if (!readFileSync(join(root, name), 'utf8').includes(MARKER)) continue;
+      if (out.has(name)) throw new Error(`duplicate guard-registry test filename: ${name}`);
+      out.add(name);
+    }
   }
   return out;
 }
@@ -78,8 +85,9 @@ describe('/dev/guards stays in sync with guard-registry-marked tests', () => {
     const marked = markedTestFiles();
     const missing: string[] = [];
     for (const f of REGISTERED) {
-      const p = join(HERE, f);
-      if (!existsSync(p)) { missing.push(`${f} (file does not exist)`); continue; }
+      const paths = TEST_ROOTS.map((root) => join(root, f)).filter((path) => existsSync(path));
+      if (paths.length === 0) { missing.push(`${f} (file does not exist)`); continue; }
+      if (paths.length > 1) { missing.push(`${f} (ambiguous across workspace test roots)`); continue; }
       if (!marked.has(f)) missing.push(`${f} (exists but missing the guard-registry marker comment)`);
     }
     expect(

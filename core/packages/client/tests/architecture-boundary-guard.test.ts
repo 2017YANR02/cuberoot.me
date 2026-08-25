@@ -46,7 +46,7 @@ describe('architecture boundary guard', () => {
     expect(MANIFEST.legacyFindings).toHaveLength(223);
     expect(compareFindings(CURRENT, MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
     expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length);
-    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(172);
+    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(171);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
@@ -55,7 +55,7 @@ describe('architecture boundary guard', () => {
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([
-      'runtime-file', 'build-import', 'build-artifact', 'test-contract',
+      'runtime-file', 'build-artifact', 'test-contract',
       'subprocess-native', 'generated-artifact', 'deploy-target',
     ]));
   });
@@ -254,11 +254,12 @@ catalog:
     expect(validatePackageMetadata(dependencyOnApp))
       .toContain('client: production dependency @cuberoot/server targets app workspace server');
 
+    const serverWorkspacePath = ['..', '..', 'apps', 'api'].join('/');
     for (const [dependency, specifier] of [
-      ['server-file-alias', 'file:../server'],
-      ['server-link-alias', 'link:../server'],
+      ['server-file-alias', `file:${serverWorkspacePath}`],
+      ['server-link-alias', `link:${serverWorkspacePath}`],
       ['server-workspace-alias', 'workspace:@cuberoot/server@*'],
-      ['server-workspace-path-alias', 'workspace:../server'],
+      ['server-workspace-path-alias', `workspace:${serverWorkspacePath}`],
     ]) {
       const dependencyAlias = structuredClone(activePackages());
       const aliasClient = dependencyAlias.find((pkg: { dir: string }) => pkg.dir === 'client')!;
