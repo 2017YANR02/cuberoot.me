@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { CUBE222_STATE_TYPES, cube222StateTypeMatchesScramble } from '@/lib/cube222-metric';
+import { CUBE222_STATE_TYPES, cube222StateTypeMatchesScramble } from '@cuberoot/puzzle-solvers/cube222';
 import type { WcaSourceSpec } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
 
 const NO_BAR = "R' U' F U F R' U2 F U2";

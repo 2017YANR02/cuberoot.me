@@ -6,7 +6,7 @@ import {
   CRZ3A_MOVE_NAMES,
   CRZ3A_SOLUTION_LENGTH_BOUND,
   solveCrz3a,
-} from '@/lib/crz3a-solver';
+} from '@cuberoot/puzzle-solvers/crz3a';
 // Independent 3×3 oracle: the kociemba cube model. We re-apply scramble∘solution to
 // a FRESH solved cube and assert it returns to solved — a check independent of the
 // solver's own internal state (the solver also uses this model, but the round-trip
@@ -16,14 +16,14 @@ import {
   applySequence,
   solvedCubie,
   isSolvedCubie,
-} from '@/app/[lang]/scramble/solver/_kociemba/cube';
+} from '@cuberoot/puzzle-solvers/kociemba/cube';
 
 /*
  * D1b — Crazy 3×3 (crz3a) NEAR-OPTIMAL solver test.
  *
  * crz3a is mechanically an ORDINARY 3×3 cube (cstimer megascramble.js:27 uses the standard U/D/L/R/F/B move
  * set; the "crazy" is purely cosmetic), with ~4.3×10¹⁹ states — far too many for a full BFS / God's-number
- * table. So we REUSE the site's own client-side kociemba two-phase solver (lib/crz3a-solver → solveCrz3a).
+ * table. So we REUSE the shared kociemba two-phase solver (@cuberoot/puzzle-solvers/crz3a → solveCrz3a).
  * This test:
  *   (1) generates N real `crz3a` scrambles with cstimer's own generator (via node:vm),
  *   (2) solves each with solveCrz3a (the kociemba two-phase engine, run directly — no worker/DOM),

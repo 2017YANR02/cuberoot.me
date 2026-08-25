@@ -19,7 +19,7 @@
  * variants for the face solver; we don't need them for the full solve.
  */
 
-import { GSolver } from './cstimer-gsolver';
+import { GSolver } from '@cuberoot/puzzle-solvers/cstimer-gsolver';
 import {
   SKEWB_MOVE_NAMES,
   SOLVED_SKEWB_FACELET,

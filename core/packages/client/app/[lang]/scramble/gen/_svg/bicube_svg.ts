@@ -1,6 +1,6 @@
 /**
  * Bicube (bic) state preview — a 2D net of the four faces cstimer models (U / F / L / R), colored
- * ENTIRELY from the solver's exact 23-element sticker state (lib/bicube-solver). The Bicube is a
+ * ENTIRELY from the solver core's exact 23-element sticker state (@cuberoot/puzzle-solvers/bicube). The Bicube is a
  * bandaged 3×3×3 cube; cstimer only exposes these four faces (9 stickers each). We lay them out as a
  * partial unfolded net — U on top, then L · F · R in a row — and paint every one of the 9 cells per face
  * with the data-color of its current sticker. Bandaged 2×1×1 blocks just show up as adjacent same-colored
@@ -9,7 +9,7 @@
  *
  * The 12 color labels (0..11; label 0 = the single "hinge" sticker) map to 12 distinct data colors.
  */
-import { bicApply, BIC_SOLVED } from '@/lib/bicube-solver';
+import { bicApply, BIC_SOLVED } from '@cuberoot/puzzle-solvers/bicube';
 
 // 12 distinct sticker data-colors, indexed by color label 0..11. Label 0 (hinge) gets a neutral dark so
 // it reads as the "pivot"; the rest are clear, well-separated hues (puzzle sticker hex, like skewb/cm2).

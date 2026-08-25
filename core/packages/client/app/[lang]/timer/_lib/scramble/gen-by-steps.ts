@@ -5,7 +5,7 @@
  * SoloView just takes the pool.
  */
 
-import { generate222ByMetric, cube222MetricOfScramble, type Cube222Metric } from '@/lib/cube222-metric';
+import { generate222ByMetric, cube222MetricOfScramble, type Cube222Metric } from '@cuberoot/puzzle-solvers/cube222';
 import { generateGearByDistance, gearDistanceOfScramble } from '@/lib/gear-solver';
 import { generateIvyByDistance, ivyDistanceOfScramble } from '@/lib/ivy-solver';
 import { generateSkewbByDistance, skewbDistanceOfScramble } from '@/lib/skewb-solver';

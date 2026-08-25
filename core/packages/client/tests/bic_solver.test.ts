@@ -24,7 +24,7 @@ import {
   BIC_RANK_SPACE,
   BIC_SOLVED,
   type BicTable,
-} from '@/lib/bicube-solver';
+} from '@cuberoot/puzzle-solvers/bicube';
 import { renderBicScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/bicube_svg';
 
 // ── Independent move-model re-derivation (fidelity anchor) ─────────────────────

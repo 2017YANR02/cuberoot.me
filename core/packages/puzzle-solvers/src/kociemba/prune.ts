@@ -21,8 +21,8 @@ import {
   N_CPERM,
   N_EPERM,
   N_SPERM,
-} from './coords';
-import { N_SLICE_RAW, type MoveTables } from './movetables';
+} from './coords.js';
+import { N_SLICE_RAW, type MoveTables } from './movetables.js';
 
 const N_PHASE1_MOVES = 18;
 const N_PHASE2_MOVES = 10;

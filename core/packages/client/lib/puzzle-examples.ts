@@ -1,7 +1,7 @@
 // 非 3x3 puzzle 难度分布页「点某步数 → 看该步数真实比赛打乱」示例 — 数据契约 + 加载路径。
 // 生产端:scramble-stats-build/src/build_puzzle_examples.ts(改 shape 必须两处同步 + bump V)。
 import { statsUrl } from '@/lib/stats-base';
-import type { Cube222StateType } from '@/lib/cube222-metric';
+import type { Cube222StateType } from '@cuberoot/puzzle-solvers/cube222';
 
 export type PuzzleExampleSample = [string, string, string?]; // [id, scramble, optScramble?]
 // [compId, eventId, scrambleNum, roundType, group, isExtra(0|1)] — 与 3x3 ExampleCompMeta 对齐

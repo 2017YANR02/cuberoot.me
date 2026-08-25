@@ -8,7 +8,7 @@
 // gz ~3.0MB > 2MB 仓库上限 → **不进 repo**,发布到 static.cuberoot.me(§3 MANUAL scp,同 opt_bic 但发布而非提交)。
 // 浏览器 fetch+inflate(DecompressionStream)→ 常驻 Uint8Array → IDA*。无 Date.now/Math.random → 确定可复现。
 //
-// 复用求解器逻辑:直接 import packages/client/lib/sia222-solver 的 sia222BuildPdbs() / serializeSia222Pdbs() /
+// 复用求解器逻辑:直接 import @cuberoot/puzzle-solvers/sia222 的 sia222BuildPdbs() / serializeSia222Pdbs() /
 // deserializeSia222Pdbs()(同一份 BFS + 字节格式)。运行:
 //   pnpm --filter @cuberoot/scramble-stats-build build:sia222-table
 // 由 update_puzzle_stats.ps1 的「TIER B 离线表」步骤调用。
@@ -18,7 +18,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
-// client 求解器 .ts 在无 "type":"module" 的包里,tsx 当 CJS 加载 → 命名 import 不绑定;default-import 整模块再取属性。
+// 兼容 tsx 将模块以 CJS 形态加载的情况:default-import 整模块再取属性。
 async function mod(rel: string): Promise<Record<string, unknown>> {
   const m = (await import(rel)) as { default?: Record<string, unknown> } & Record<string, unknown>;
   const inner = (m.default && typeof m.default === 'object') ? m.default : m;
@@ -36,7 +36,7 @@ async function main(): Promise<void> {
   const outPath = path.join(outDir, 'opt_sia222.bin.gz');
 
   console.log('[sia222] loading solver + BFS-ing the corner (3,674,160) + two 6-edge (3,870,720) PDBs…');
-  const m = await mod('../../client/lib/sia222-solver');
+  const m = await mod('@cuberoot/puzzle-solvers/sia222');
   const sia222BuildPdbs = m.sia222BuildPdbs as () => Sia222Pdbs;
   const serializeSia222Pdbs = m.serializeSia222Pdbs as (p: Sia222Pdbs) => Uint8Array;
   const deserializeSia222Pdbs = m.deserializeSia222Pdbs as (b: Uint8Array) => Sia222Pdbs;

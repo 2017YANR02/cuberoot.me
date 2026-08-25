@@ -10,9 +10,9 @@ import {
   randomSia222Scramble, solveSia222Length,
   SIA222_CORNER_ORBIT, SIA222_MAX_LENGTH,
   sia222SolvedVec, sia222ApplyToken, sia222IsSolved, sia222CornerRank, sia222EdgeRank,
+  sia222IdaSolve as idaSolve,
   type Sia222Pdbs,
-} from '@/lib/sia222-solver';
-import { idaSolve } from '@/lib/restricted-cube-solver';
+} from '@cuberoot/puzzle-solvers/sia222';
 
 /*
  * INDEPENDENT GEOMETRY ORACLE — we re-derive the entire sia222 bonded move model FROM 3D-rotation geometry

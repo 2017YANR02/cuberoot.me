@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { _test, generate222ByMetric, create222MetricEvaluator, type Cube222Metric } from '@/lib/cube222-metric';
+import { _test, generate222ByMetric, create222MetricEvaluator, type Cube222Metric } from '@cuberoot/puzzle-solvers/cube222';
 
 const casesPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../stats/scramble/2x2_essential_cases.json');
 // stats/scramble/*.json 不在 CI 的稀疏检出内(test.yml 只拉 core/),缺失时跳过 oracle 对比用例;

@@ -151,7 +151,8 @@ async function mod(rel: string): Promise<Record<string, unknown>> {
   return inner as Record<string, unknown>;
 }
 
-// 新 C/D 单元:加一行。solver 路径相对本文件(src/),逐字段照各 DistView 现场采样口径。
+// 新 C/D 单元:加一行。solver 用公开 package specifier 或相对本文件(src/)的路径,
+// 逐字段照各 DistView 现场采样口径。
 const REGISTRY: PuzzleDistSpec[] = [
   {
     event: '335',
@@ -402,7 +403,7 @@ const REGISTRY: PuzzleDistSpec[] = [
       const sb = cstimerSandbox();
       if (!sb) throw new Error('cstimer sandbox unavailable for crz3a scramble generation');
       const scrMgr = sb.scrMgr as Parameters<typeof cstimerGen>[0];
-      const m = await mod('../../client/lib/crz3a-solver');
+      const m = await mod('@cuberoot/puzzle-solvers/crz3a');
       const solveCrz3a = m.solveCrz3a as (s: string) => Promise<{ length: number; optimal?: boolean }>;
       return {
         sampleOne: async () => {
@@ -477,7 +478,7 @@ const REGISTRY: PuzzleDistSpec[] = [
     // per-half 最优拼接 = 全局最优(直积结构),故 sampled-OPTIMAL(不同于长方体的 near-optimal)。
     quality: 'sampled-optimal',
     load: async () => {
-      const m = await mod('../../client/lib/sia222-solver');
+      const m = await mod('@cuberoot/puzzle-solvers/sia222');
       const sia222BuildPdbs = m.sia222BuildPdbs as () => unknown;
       const solveSia222Length = m.solveSia222Length as (pdbs: unknown, s: string) => { length: number; optimal: boolean };
       // build the PDBs ONCE here; reuse across all samples.
