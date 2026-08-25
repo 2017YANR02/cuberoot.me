@@ -1,10 +1,10 @@
 # CubeRoot Core
 
-pnpm + Turbo monorepo，承载现役产品 app、共享 package 和离线 builder；仓库外的 `solver/` 与 `reconer/` 有独立生命周期。
+pnpm + Turbo monorepo，承载现役产品 app、共享 package 和离线 job；仓库外的 `solver/` 与 `reconer/` 有独立生命周期。
 
 本文的所有 pnpm 命令都从 `core/` 执行；活跃应用是 client、server、mobile 和 miniprogram，`packages/platform` 只是 workspace 外归档。`solver/` 和 `reconer/` 另有独立生命周期。
 
-## 包
+## 工作区
 
 ```
 core/packages/
@@ -15,8 +15,11 @@ core/packages/
 ├── miniprogram/     # 微信小程序独立运行时
 ├── shared/         # 共享类型与通用数据
 ├── visualcube/     # 自有 NxN SVG 渲染器
-├── stats-build/    # WCA 统计生成管道
-└── *-build/        # 其他有独立 artifact contract 的离线 builder
+└── stats-build/    # 待后续批次迁移的 WCA 统计 job
+
+core/jobs/
+├── alg-build/      # 公式数据与 SQL 生成 job
+└── wb-build/       # 非官方世界最好成绩数据 job
 ```
 
 每个源文件头部 TSDoc `@module` 注释说明职责。

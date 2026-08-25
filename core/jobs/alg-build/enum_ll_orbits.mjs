@@ -329,7 +329,7 @@ for (const [oc, list] of classOrbits) {
 }
 const doc = {
   meta: {
-    generatedBy: 'core/packages/alg-build/enum_ll_orbits.mjs',
+    generatedBy: 'core/jobs/alg-build/enum_ll_orbits.mjs',
     generatedAt: new Date().toISOString(),
     topCornerSlots: TOP_CORNERS,
     topEdgeSlots: TOP_EDGES,

@@ -257,7 +257,7 @@ mkdirSync('../../../.tmp', { recursive: true });
 const q = (s) => `'${String(s).replace(/'/g, "''")}'`;
 const sql = [
   '-- 修 4 条既有坏数据(与 canonicalize 无关;是"setup + alg 必须精确还原"这条新不变式照出来的)',
-  '-- 生成:core/packages/alg-build/fix_bad_ll_cases.mjs',
+  '-- 生成:core/jobs/alg-build/fix_bad_ll_cases.mjs',
   '',
   'BEGIN;',
   '',
