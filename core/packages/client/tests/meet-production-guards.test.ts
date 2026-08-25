@@ -6,10 +6,11 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLIENT = join(HERE, '..');
-const SERVER = join(CLIENT, '..', 'server', 'src', 'routes', 'video_rooms.ts');
+const SERVER = workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'video_rooms.ts');
 const MEET = join(CLIENT, 'app', '[lang]', 'meet');
 
 const server = readFileSync(SERVER, 'utf8');

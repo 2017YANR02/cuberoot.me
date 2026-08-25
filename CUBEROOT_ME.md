@@ -178,7 +178,7 @@ Phase F 之前(panel 路径下)的历史 `.bak` 已归档至 `/root/archive/ngin
 | **用户** | `recon_user`(仅限 localhost) |
 | **数据目录** | `/var/lib/pgsql/data/` |
 | **服务** | `systemctl {start,stop,restart} postgresql` |
-| **Schema** | `core/packages/server/src/db/schema.pg.sql`(repo,11 张表) |
+| **Schema** | `core/apps/api/src/db/schema.pg.sql`(repo,11 张表) |
 
 **ALTER 顺序**:先在云服务器跑 ALTER → 再 push 代码。反过来部署上去 SELECT 新列直接 500。
 

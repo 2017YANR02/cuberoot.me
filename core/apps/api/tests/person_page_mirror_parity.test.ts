@@ -19,7 +19,7 @@ import { fileURLToPath } from 'url';
 import {
   RANK_EVENTS, buildPersonalRecords, countMedals, ranksByEvent,
   type MirrorResultRow,
-} from '../../server/src/utils/person_page';
+} from '../src/utils/person_page';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

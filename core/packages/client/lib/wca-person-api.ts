@@ -317,7 +317,7 @@ export interface WcaCompetition {
 
 // ── Server endpoints (历史排名快照) ──────────────────────────────────────
 // /v1/wca/person-best-ranks 与 /v1/wca/person-rank-history 由本仓库的
-// core/packages/server/src/routes/wca_stats_extra.ts 提供,数据源是
+// core/apps/api/src/routes/wca_stats_extra.ts 提供,数据源是
 // historical_ranks_snapshot 表(每天 GH Actions 灌一次,nginx 1d cache).
 
 export interface PersonBestRankCell {

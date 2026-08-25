@@ -30,11 +30,11 @@
 
 | 层 | 文件 | 作用 |
 |---|---|---|
-| 后端路由 | `packages/server/src/routes/membership.ts` | `/v1/membership/*` 全部端点 + 下单派发 + notify 入账 + admin |
-| 支付宝 provider | `packages/server/src/payment/alipay.ts` | RSA2 公钥模式:下单串签名 / notify 验签 / 查单 |
-| 微信 provider | `packages/server/src/payment/wechat.ts` | APIv3:Native / H5 下单 / 回调 GCM 解密 / 查单 |
+| 后端路由 | `apps/api/src/routes/membership.ts` | `/v1/membership/*` 全部端点 + 下单派发 + notify 入账 + admin |
+| 支付宝 provider | `apps/api/src/payment/alipay.ts` | RSA2 公钥模式:下单串签名 / notify 验签 / 查单 |
+| 微信 provider | `apps/api/src/payment/wechat.ts` | APIv3:Native / H5 下单 / 回调 GCM 解密 / 查单 |
 | 待签串(纯函数) | `packages/shared/src/payment.ts` | 虎皮椒 / 支付宝 / 微信 v3 的待签名串构造(浏览器安全,有单测) |
-| 数据库 | `packages/server/migrations/0046_membership.sql` | `membership_plans` / `membership_orders` / `memberships` 三表 |
+| 数据库 | `apps/api/migrations/0046_membership.sql` | `membership_plans` / `membership_orders` / `memberships` 三表 |
 | 前端页 | `packages/client/app/[lang]/membership/{page,PayModal,AdminPanel,MemberContact}.tsx` | 套餐页 / 支付弹窗 / 管理面板 / 联系方式 |
 | 前端 API | `packages/client/lib/membership-api.ts` | 调用封装 + `membershipExpiry()` 到期纯函数 |
 | 到期提醒 | `packages/client/components/MembershipReminder.tsx` | 全局到期提醒条(挂 root layout) |
@@ -53,7 +53,7 @@
 
 ## 2. 环境变量(服务器 `/root/core-api/.env`)
 
-完整模板见 `packages/server/.env.example`。改完执行:`pm2 restart core-api --update-env`(SSH:`ssh root@cuberoot`)。
+完整模板见 `apps/api/.env.example`。改完执行:`pm2 restart core-api --update-env`(SSH:`ssh root@cuberoot`)。
 
 ```ini
 # 对外地址(notify / return 用,必须公网可达)

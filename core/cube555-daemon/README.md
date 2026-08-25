@@ -62,7 +62,7 @@ $env:LOCAL_DOMAINS='scramble'; pnpm --filter @cuberoot/client dev
 
 ## 配置环境变量
 
-`core/packages/server` 启动时读:
+`core/apps/api` 启动时读:
 
 | 变量 | 默认 | 含义 |
 |------|------|------|
@@ -93,7 +93,7 @@ CUBE555_NATIVE_BIN=/opt/cube555/cube555-daemon
 ## 协议
 
 见 `Daemon.java` 顶部注释。Hono 客户端实现在
-`core/packages/server/src/cube555/daemon.ts`。
+`core/apps/api/src/cube555/daemon.ts`。
 
 ## 致谢
 

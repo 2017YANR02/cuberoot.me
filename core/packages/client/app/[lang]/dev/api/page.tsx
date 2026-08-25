@@ -53,11 +53,11 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'system', zh: '系统与渲染', en: 'System & render' },
 ];
 
-// 全部对外端点,前缀 /v1。method / path 据 packages/server/src/routes/* 真实定义抽取;
+// 全部对外端点,前缀 /v1。method / path 据 apps/api/src/routes/* 真实定义抽取;
 // 鉴权门据 requireAuth / requireAdmin(X-Admin-Key)/ 支付回调签名判定。
 // ─ covers-routes-start ─ DRIFT-GUARD: route files documented by this catalog.
 //   tests/dev-schema-api-drift.test.ts asserts (tokens here ∩ on-disk route files)
-//   equals the set mounted via app.route('/v1', …) in packages/server/src/index.ts.
+//   equals the set mounted via app.route('/v1', …) in apps/api/src/index.ts.
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps article auth battle_rooms calendar cn_comp_names colpi

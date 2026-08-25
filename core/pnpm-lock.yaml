@@ -596,20 +596,20 @@ importers:
         specifier: ^4.1.6
         version: 4.1.6(@types/node@25.5.0)(happy-dom@20.11.2)(jsdom@30.0.1)(vite@8.0.1(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.8.3))
 
-  packages/server:
+  apps/api:
     dependencies:
       '@cuberoot/puzzle-render-core':
         specifier: workspace:*
-        version: link:../puzzle-render-core
+        version: link:../../packages/puzzle-render-core
       '@cuberoot/shared':
         specifier: workspace:*
-        version: link:../shared
+        version: link:../../packages/shared
       '@cuberoot/vendor-sr-puzzlegen':
         specifier: workspace:*
-        version: link:../vendor-sr-puzzlegen
+        version: link:../../packages/vendor-sr-puzzlegen
       '@cuberoot/visualcube':
         specifier: workspace:*
-        version: link:../visualcube
+        version: link:../../packages/visualcube
       '@hocuspocus/extension-database':
         specifier: ^4.6.0
         version: 4.6.0(y-protocols@1.0.7(yjs@13.6.32))(yjs@13.6.32)

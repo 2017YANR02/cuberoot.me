@@ -1,14 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   averageKinchScoreX100,
   calculateKinchEvent,
   multiBlindKinchPoints,
 } from '@cuberoot/shared/kinch';
 import { calculatePersonalRecordStreak } from '@cuberoot/shared/pr-streak';
-import { buildWcaPersonNameFilter } from '../../server/src/utils/wca_name_filter';
+import { workspaceFixturePath } from './workspace-fixture-path';
+
+const { buildWcaPersonNameFilter } = await import(
+  pathToFileURL(
+    workspaceFixturePath('@cuberoot/server', 'src', 'utils', 'wca_name_filter.ts'),
+  ).href,
+);
 
 const CLIENT_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CORE_ROOT = join(CLIENT_ROOT, '..', '..');
@@ -98,10 +104,10 @@ describe('Name Ranks matching', () => {
 });
 
 describe('wca_kinch stats deploy contract', () => {
-  const builder = readFileSync(join(CORE_ROOT, 'packages', 'stats-build', 'src', 'bin', 'wca_stats_extra_build.ts'), 'utf8');
+  const builder = readFileSync(workspaceFixturePath('@cuberoot/stats-build', 'src', 'bin', 'wca_stats_extra_build.ts'), 'utf8');
   const workflow = readFileSync(join(REPO_ROOT, '.github', 'workflows', 'stats.yml'), 'utf8');
-  const serverRoute = readFileSync(join(CORE_ROOT, 'packages', 'server', 'src', 'routes', 'wca_stats_extra.ts'), 'utf8');
-  const migration = readFileSync(join(CORE_ROOT, 'packages', 'server', 'migrations', '0111_wca_kinch.sql'), 'utf8');
+  const serverRoute = readFileSync(workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'wca_stats_extra.ts'), 'utf8');
+  const migration = readFileSync(workspaceFixturePath('@cuberoot/server', 'migrations', '0111_wca_kinch.sql'), 'utf8');
 
   it('writes and loads the same Kinch TSV', () => {
     expect(builder).toContain("createWriteStream(resolve(outDir, 'wca_kinch.copy.tsv'))");

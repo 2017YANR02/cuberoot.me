@@ -9,13 +9,22 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
-const SERVER = join(__dirname, '../../server');
 const CLIENT = join(__dirname, '..');
 
-const account = readFileSync(join(SERVER, 'src/utils/account.ts'), 'utf8');
-const route = readFileSync(join(SERVER, 'src/routes/account_auth.ts'), 'utf8');
-const verifiedNameMigration = readFileSync(join(SERVER, 'migrations/0151_wca_verified_display_names.sql'), 'utf8');
+const account = readFileSync(
+  workspaceFixturePath('@cuberoot/server', 'src', 'utils', 'account.ts'),
+  'utf8',
+);
+const route = readFileSync(
+  workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'account_auth.ts'),
+  'utf8',
+);
+const verifiedNameMigration = readFileSync(
+  workspaceFixturePath('@cuberoot/server', 'migrations', '0151_wca_verified_display_names.sql'),
+  'utf8',
+);
 const panel = readFileSync(join(CLIENT, 'components/AuthPanel.tsx'), 'utf8');
 const page = readFileSync(join(CLIENT, 'app/[lang]/account/page.tsx'), 'utf8');
 const socialCb = readFileSync(join(CLIENT, 'app/auth/social/callback/page.tsx'), 'utf8');

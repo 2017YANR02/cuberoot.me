@@ -16,10 +16,10 @@
   - 与 `dump_fingerprints.sh` 不同:SQL 失败必须非零退出(CI fail-fast),不吞错
 
 - `apply_migrations.sh` — schema migration runner,接受 `<migrations_dir>` 一个参数。
-  - `deploy_core.yml` 在 pm2 restart **之前** 调用,跑 `core/packages/server/migrations/*.sql` 里没跑过的
+  - `deploy_core.yml` 在 pm2 restart **之前** 调用,跑 `core/apps/api/migrations/*.sql` 里没跑过的
   - `_schema_migrations` ledger 表跳过已应用;每个 migration 一个 `BEGIN/COMMIT` 事务 + `ON_ERROR_STOP=1`
   - 文件命名 `NNNN_short_desc.sql`,migration 文件不要写 BEGIN/COMMIT(runner 包)
-  - 详细规则见 `core/packages/server/migrations/README.md`
+  - 详细规则见 `core/apps/api/migrations/README.md`
 
 ## 部署流程
 

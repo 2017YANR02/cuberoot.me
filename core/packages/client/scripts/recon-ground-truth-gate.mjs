@@ -28,9 +28,9 @@ const EXACT_GUARDED_PATHS = new Set([
   'core/packages/client/tests/recon_ground_truth.test.ts',
   'core/packages/shared/src/recon_ground_truth.ts',
   'core/packages/shared/src/recon_slice.ts',
-  'core/packages/server/src/routes/recon_ground_truth.ts',
-  'core/packages/server/migrations/0105_recon_ground_truth.sql',
-  'core/packages/server/migrations/0106_recon_ground_truth_candidates.sql',
+  'core/apps/api/src/routes/recon_ground_truth.ts',
+  'core/apps/api/migrations/0105_recon_ground_truth.sql',
+  'core/apps/api/migrations/0106_recon_ground_truth_candidates.sql',
   'core/packages/client/app/[lang]/timer/_lib/bluetooth/gyro_track.ts',
   'core/packages/client/app/[lang]/timer/_lib/bluetooth/orientation.ts',
   'core/packages/client/app/[lang]/timer/_lib/share/decode.ts',
@@ -42,6 +42,13 @@ const GUARDED_PREFIXES = [
   'core/packages/client/tests/fixtures/recon',
 ];
 
+const POLICY_PATHS = new Set([
+  '.codex/hooks/recon-ground-truth-gate.ps1',
+  '.codex/hooks.json',
+  '.githooks/pre-commit',
+  'core/packages/client/scripts/recon-ground-truth-gate.mjs',
+]);
+
 function normalizeRepoPath(path) {
   return path.replaceAll('\\', '/').replace(/^\.\//, '');
 }
@@ -50,6 +57,11 @@ export function isGuardedRepoPath(path) {
   const normalized = normalizeRepoPath(path);
   return EXACT_GUARDED_PATHS.has(normalized)
     || GUARDED_PREFIXES.some((prefix) => normalized.startsWith(prefix));
+}
+
+function isGroundTruthInputRepoPath(path) {
+  const normalized = normalizeRepoPath(path);
+  return isGuardedRepoPath(normalized) && !POLICY_PATHS.has(normalized);
 }
 
 function walkFiles(path, out) {
@@ -114,10 +126,21 @@ function readStamp() {
 }
 
 function checkStaged() {
-  const staged = gitLines(['diff', '--cached', '--name-only', '--diff-filter=ACMRD']);
+  const staged = gitLines([
+    'diff', '--cached', '--name-status', '--find-renames=100%', '--diff-filter=ACMRD',
+  ]);
   if (staged === null) return 0; // Git unavailable or not a worktree: fail open; CI is the fallback.
 
-  const guardedStaged = staged.filter(isGuardedRepoPath);
+  const guardedStaged = staged.flatMap((line) => {
+    const [status, ...paths] = line.split('\t');
+    const isExactMoveIntoGuardedScope = status === 'R100'
+      && paths.length === 2
+      && !isGroundTruthInputRepoPath(paths[0])
+      && isGroundTruthInputRepoPath(paths[1])
+      && paths[0].split('/').at(-1) === paths[1].split('/').at(-1);
+    if (isExactMoveIntoGuardedScope) return [];
+    return paths.filter(isGroundTruthInputRepoPath);
+  });
   if (guardedStaged.length === 0) return 0;
 
   const unstaged = gitLines(['diff', '--name-only']);

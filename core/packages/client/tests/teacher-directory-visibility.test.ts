@@ -1,16 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import {
   mergeTeacherDirectoryEntries,
   normalizeDirectoryContacts,
   normalizeDirectoryImages,
   type TeacherDirectoryEntry,
 } from '@/lib/teacher-directory-api';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
-const CLIENT_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SERVER_ROOT = join(CLIENT_ROOT, '..', 'server');
+const SERVER_ROOT = workspaceFixturePath('@cuberoot/server');
 
 function entry(id: number, isVisible: boolean, nameZh: string): TeacherDirectoryEntry {
   return {

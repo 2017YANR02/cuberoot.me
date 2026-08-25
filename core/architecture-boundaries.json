@@ -20,7 +20,7 @@
   "manualContracts": [
     {
       "id": "server-cubeopt-artifact-store",
-      "from": "packages/server CubeOpt manager and child",
+      "from": "apps/api CubeOpt manager and child",
       "to": "API-owned immutable artifact store",
       "phase": "runtime-file",
       "mechanism": "CUBEOPT_ARTIFACT_DIR current pointer plus verified immutable bundle manifest",
@@ -28,14 +28,14 @@
       "rationale": "The large CubeOpt module, WASM and pruning table have an independent lifecycle and must not come from Web source or public assets.",
       "replacement": "Retain prepare, verify and atomic promote commands; deploy only the daemon code through the ordinary API workflow.",
       "evidence": [
-        { "file": "core/packages/server/src/cubeopt/artifact.mjs", "contains": "const currentPath = resolve(store, 'current.json')" },
-        { "file": "core/packages/server/src/cubeopt/config.ts", "contains": "CUBEOPT_ARTIFACT_DIR is required" },
-        { "file": "core/packages/server/CUBEOPT_ARTIFACT.md", "contains": "CubeOpt API artifact store" }
+        {"file":"core/apps/api/src/cubeopt/artifact.mjs","contains":"const currentPath = resolve(store, 'current.json')"},
+        {"file":"core/apps/api/src/cubeopt/config.ts","contains":"CUBEOPT_ARTIFACT_DIR is required"},
+        {"file":"core/apps/api/CUBEOPT_ARTIFACT.md","contains":"CubeOpt API artifact store"}
       ]
     },
     {
       "id": "server-cubeopt-subprocess",
-      "from": "packages/server",
+      "from": "apps/api",
       "to": "cubeopt Node child and WASM/table assets",
       "phase": "subprocess-native",
       "mechanism": "spawn built solve-daemon.mjs with the verified artifact-store environment",
@@ -43,14 +43,14 @@
       "rationale": "The child owns a large table and has independent lifecycle, queue and failure semantics.",
       "replacement": "Keep one production daemon manager and validate it through the bundled smoke entry; do not duplicate its stdio protocol.",
       "evidence": [
-        { "file": "core/packages/server/src/cubeopt/daemon.ts", "contains": "proc = spawn(process.execPath, [DAEMON_SCRIPT]" },
-        { "file": "core/packages/server/src/tools/cubeopt_smoke.ts", "contains": "const { solveOptimal } = await import('../cubeopt/daemon.js');" },
-        { "file": ".github/workflows/deploy_core.yml", "contains": "$API_DIR/dist/cubeopt/solve-daemon.mjs" }
+        {"file":"core/apps/api/src/cubeopt/daemon.ts","contains":"proc = spawn(process.execPath, [DAEMON_SCRIPT]"},
+        {"file":"core/apps/api/src/tools/cubeopt_smoke.ts","contains":"const { solveOptimal } = await import('../cubeopt/daemon.js');"},
+        {"file":".github/workflows/deploy_core.yml","contains":"$API_DIR/dist/cubeopt/solve-daemon.mjs"}
       ]
     },
     {
       "id": "server-cube555-subprocess",
-      "from": "packages/server",
+      "from": "apps/api",
       "to": "cube555 native or Java daemon",
       "phase": "subprocess-native",
       "mechanism": "spawn with CUBE555_NATIVE_BIN, JAVA_BIN and CUBE555_HOME",
@@ -58,13 +58,13 @@
       "rationale": "The 5x5 solver is a separately installed native/Java runtime selected by environment.",
       "replacement": "Retain the explicit daemon adapter and deployment smoke; do not model it as a TypeScript import.",
       "evidence": [
-        { "file": "core/packages/server/src/cube555/daemon.ts", "contains": "const NATIVE_BIN = process.env.CUBE555_NATIVE_BIN;" },
-        { "file": ".github/workflows/deploy_core.yml", "contains": "core/cube555-daemon/Daemon.java" }
+        {"file":"core/apps/api/src/cube555/daemon.ts","contains":"const NATIVE_BIN = process.env.CUBE555_NATIVE_BIN;"},
+        {"file":".github/workflows/deploy_core.yml","contains":"core/cube555-daemon/Daemon.java"}
       ]
     },
     {
       "id": "server-geoip-subprocess",
-      "from": "packages/server",
+      "from": "apps/api",
       "to": "mmdblookup executable and city database",
       "phase": "subprocess-native",
       "mechanism": "GEOIP_LOOKUP_BIN and GEOIP_CITY_DB_PATH environment contract",
@@ -72,9 +72,9 @@
       "rationale": "IP geolocation depends on a host executable and database outside the workspace.",
       "replacement": "Keep environment overrides and server tests; any replacement must preserve the same failure behavior.",
       "evidence": [
-        { "file": "core/packages/server/src/utils/ip_geolocation.ts", "contains": "process.env.GEOIP_LOOKUP_BIN || 'mmdblookup'" },
-        { "file": "core/packages/server/src/utils/ip_geolocation.ts", "contains": "process.env.GEOIP_CITY_DB_PATH || DEFAULT_DB_PATH" },
-        { "file": "core/packages/server/src/utils/ip_geolocation.ts", "contains": "execFileAsync(" }
+        {"file":"core/apps/api/src/utils/ip_geolocation.ts","contains":"process.env.GEOIP_LOOKUP_BIN || 'mmdblookup'"},
+        {"file":"core/apps/api/src/utils/ip_geolocation.ts","contains":"process.env.GEOIP_CITY_DB_PATH || DEFAULT_DB_PATH"},
+        {"file":"core/apps/api/src/utils/ip_geolocation.ts","contains":"execFileAsync("}
       ]
     },
     {
@@ -87,8 +87,8 @@
       "rationale": "The offline job consumes non-workspace solver binaries and publishes versioned static data outside core.",
       "replacement": "Keep the job boundary explicit; PS1-01 must map callers before any script relocation.",
       "evidence": [
-        { "file": "core/jobs/scramble-stats-build/update_cross_stats.ps1", "contains": "$SolverDir   = 'D:\\cube\\cuberoot.me\\solver'" },
-        { "file": "core/jobs/scramble-stats-build/update_cross_stats.ps1", "contains": "$env:CUBE_TABLE_DIR = Join-Path $SolverDir 'tables'" }
+        {"file":"core/jobs/scramble-stats-build/update_cross_stats.ps1","contains":"$SolverDir   = 'D:\\cube\\cuberoot.me\\solver'"},
+        {"file":"core/jobs/scramble-stats-build/update_cross_stats.ps1","contains":"$env:CUBE_TABLE_DIR = Join-Path $SolverDir 'tables'"}
       ]
     },
     {
@@ -101,57 +101,59 @@
       "rationale": "The daily job publishes static JSON and separately loads derived database tables.",
       "replacement": "Preserve builder, upload and load manifests as one reviewed contract; use the existing pipeline dry-run guard for changes.",
       "evidence": [
-        { "file": "core/jobs/stats-build/src/bin/compute.ts", "contains": "const outputPath = resolve(outputDir, `${statId}.json`)" },
-        { "file": ".github/workflows/stats.yml", "contains": "historical_ranks_snapshot.copy.tsv" }
+        {"file":"core/jobs/stats-build/src/bin/compute.ts","contains":"const outputPath = resolve(outputDir, `${statId}.json`)"},
+        {"file":".github/workflows/stats.yml","contains":"historical_ranks_snapshot.copy.tsv"}
       ]
     },
     {
       "id": "nemesizer-generated-runtime-artifacts",
       "from": "jobs/stats-build nemesizer job",
-      "to": "repo stats/nemesizer and packages/server runtime loader",
+      "to": "repo stats/nemesizer and apps/api runtime loader",
       "phase": "generated-artifact",
       "mechanism": "workflow-generated binary files consumed through NEMESIZER_DATA_DIR",
       "owner": "stats-build and server",
       "rationale": "The producer writes compressed binary datasets outside core, while the API reads the deployed artifact directory at runtime.",
       "replacement": "Keep producer, workflow publication and server loader paths as one versioned artifact contract with parity fixtures.",
       "evidence": [
-        { "file": "core/jobs/stats-build/src/bin/nemesizer.ts", "contains": "const OUTPUT_DIR = resolve(__dirname, '../../../../../stats/nemesizer')" },
-        { "file": ".github/workflows/stats.yml", "contains": "Generate nemesizer dataset" },
-        { "file": ".github/workflows/stats.yml", "contains": "git add -A stats/" },
-        { "file": ".github/workflows/stats.yml", "contains": "gh workflow run sync_toolkit.yml" },
-        { "file": ".github/workflows/sync_toolkit.yml", "contains": "REMOTE=/www/wwwroot/toolkit" },
-        { "file": ".github/workflows/sync_toolkit.yml", "contains": "for dir in tools stats; do" },
-        { "file": ".github/workflows/sync_toolkit.yml", "contains": "\"$dir/\" \"${USER}@${HOST}:${REMOTE}/${dir}/\"" },
-        { "file": "core/packages/server/src/nemesizer/loader.ts", "contains": "process.env.NEMESIZER_DATA_DIR" },
-        { "file": "core/packages/server/src/nemesizer/loader.ts", "contains": "'/www/wwwroot/toolkit/stats/nemesizer'" },
-        { "file": "core/packages/server/src/nemesizer/loader.ts", "contains": "readFile(path.join(DATA_DIR, 'persons.bin.gz'))" }
+        {"file":"core/jobs/stats-build/src/bin/nemesizer.ts","contains":"const OUTPUT_DIR = resolve(__dirname, '../../../../../stats/nemesizer')"},
+        {"file":".github/workflows/stats.yml","contains":"Generate nemesizer dataset"},
+        {"file":".github/workflows/stats.yml","contains":"git add -A stats/"},
+        {"file":".github/workflows/stats.yml","contains":"gh workflow run sync_toolkit.yml"},
+        {"file":".github/workflows/sync_toolkit.yml","contains":"REMOTE=/www/wwwroot/toolkit"},
+        {"file":".github/workflows/sync_toolkit.yml","contains":"for dir in tools stats; do"},
+        {"file":".github/workflows/sync_toolkit.yml","contains":"\"$dir/\" \"${USER}@${HOST}:${REMOTE}/${dir}/\""},
+        {"file":"core/apps/api/src/nemesizer/loader.ts","contains":"process.env.NEMESIZER_DATA_DIR"},
+        {"file":"core/apps/api/src/nemesizer/loader.ts","contains":"'/www/wwwroot/toolkit/stats/nemesizer'"},
+        {"file":"core/apps/api/src/nemesizer/loader.ts","contains":"readFile(path.join(DATA_DIR, 'persons.bin.gz'))"}
       ]
     },
     {
       "id": "alg-build-server-migrations",
       "from": "jobs/alg-build",
-      "to": "packages/server/migrations",
+      "to": "apps/api/migrations",
       "phase": "generated-artifact",
       "mechanism": "deterministic SQL generator writes a server migration",
       "owner": "alg-build",
       "rationale": "Curated algorithm import tooling intentionally produces backend schema/data migrations.",
       "replacement": "Keep the generated migration reviewed and committed; do not turn the generator into a server runtime dependency.",
       "evidence": [
-        { "file": "core/jobs/alg-build/server-migration-path.mts", "contains": "resolveWorkspacePath('@cuberoot/server')" }
+        {"file":"core/jobs/alg-build/server-migration-path.mts","contains":"resolveWorkspacePath('@cuberoot/server')"}
       ]
     },
     {
       "id": "client-server-contract-tests",
       "from": "packages/client tests",
-      "to": "packages/server private utilities, routes, schema and migrations",
+      "to": "apps/api private utilities, routes, schema and migrations",
       "phase": "test-contract",
-      "mechanism": "relative imports and direct fixture/source reads",
+      "mechanism": "workspace package resolution plus direct source reads and dynamic test-only imports",
       "owner": "client tests",
       "rationale": "Integration guards currently verify cross-layer behavior from the client test suite.",
       "replacement": "Move reusable contract fixtures to a neutral test boundary when the corresponding domain is refactored.",
       "evidence": [
-        { "file": "core/packages/client/tests/account_delete.test.ts", "contains": "from '../../server/src/utils/account_delete';" },
-        { "file": "core/packages/client/tests/alg_3x3_wide_notation.test.ts", "contains": "../../server/src/db/schema.pg.sql" }
+        {"file":"core/packages/client/tests/teaching_message_notification_contract.test.ts","contains":"workspaceFixturePath('@cuberoot/server'"},
+        {"file":"core/packages/client/tests/timer_presence.test.ts","contains":"workspaceFixturePath('@cuberoot/server'"},
+        {"file":"core/packages/client/tests/wca-calculators-port.test.ts","contains":"workspaceFixturePath('@cuberoot/server'"},
+        {"file":"core/packages/client/tests/wca_link_onboarding.test.ts","contains":"workspaceFixturePath('@cuberoot/server'"}
       ]
     },
     {
@@ -164,8 +166,8 @@
       "rationale": "The Web H2H regression verifies that both competition JSON generators retain official head-to-head format data.",
       "replacement": "Keep the source reads package-location independent; extract a neutral fixture only if another consumer needs the same contract.",
       "evidence": [
-        { "file": "core/packages/client/tests/wca_comp_h2h_filter.test.ts", "contains": "workspaceFixturePath('@cuberoot/stats-build'" },
-        { "file": ".github/workflows/test.yml", "contains": "pnpm --filter @cuberoot/stats-build test" }
+        {"file":"core/packages/client/tests/wca_comp_h2h_filter.test.ts","contains":"workspaceFixturePath('@cuberoot/stats-build'"},
+        {"file":".github/workflows/test.yml","contains":"pnpm --filter @cuberoot/stats-build test"}
       ]
     },
     {
@@ -178,13 +180,13 @@
       "rationale": "The Mini Program route registry must not publish a Web destination that has no matching page or redirect.",
       "replacement": "Keep the check package-location independent; replace it with a neutral exported route manifest if another consumer needs the same contract.",
       "evidence": [
-        { "file": "core/apps/miniprogram/tests/web-routes.test.ts", "contains": "resolveWorkspacePath('@cuberoot/client')" },
-        { "file": "core/apps/miniprogram/tests/web-routes.test.ts", "contains": "only registers destinations backed by canonical website pages or redirects" }
+        {"file":"core/apps/miniprogram/tests/web-routes.test.ts","contains":"resolveWorkspacePath('@cuberoot/client')"},
+        {"file":"core/apps/miniprogram/tests/web-routes.test.ts","contains":"only registers destinations backed by canonical website pages or redirects"}
       ]
     },
     {
       "id": "deploy-core-target",
-      "from": "packages/server plus declared build and runtime inputs",
+      "from": "apps/api plus declared build and runtime inputs",
       "to": "independent API deployment",
       "phase": "deploy-target",
       "mechanism": "filtered workflow build and explicit server, daemon and migration artifacts",
@@ -192,9 +194,9 @@
       "rationale": "The API deploy must react to its real package inputs without being coupled to unrelated Web, Mobile or Mini Program changes.",
       "replacement": "Keep the workflow-path contract matrix aligned whenever a Server workspace dependency or deployment artifact changes.",
       "evidence": [
-        { "file": ".github/workflows/deploy_core.yml", "contains": "- 'core/packages/server/**'" },
-        { "file": ".github/workflows/deploy_core.yml", "contains": "- 'core/packages/puzzle-render-core/**'" },
-        { "file": "core/packages/client/tests/workflow-path-contract.test.ts", "contains": "keeps the Core deploy boundary limited to real API production inputs" }
+        {"file":".github/workflows/deploy_core.yml","contains":"- 'core/apps/api/**'"},
+        {"file":".github/workflows/deploy_core.yml","contains":"- 'core/packages/puzzle-render-core/**'"},
+        {"file":"core/packages/client/tests/workflow-path-contract.test.ts","contains":"keeps the Core deploy boundary limited to real API production inputs"}
       ]
     },
     {
@@ -207,70 +209,221 @@
       "rationale": "The Web app already has an independently built and deployed runtime artifact.",
       "replacement": "Keep this deployment independent; a future physical directory move must update the trigger and sparse checkout atomically.",
       "evidence": [
-        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/client/**'" },
-        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/shared/**'" },
-        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/visualcube/**'" },
-        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/vendor-sr-puzzlegen/**'" },
-        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/stack-kernel/package.json'" },
-        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/stack-kernel/pkg/**'" },
-        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/packages/puzzle-render-core/**'" },
-        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'core/package.json'" },
-        { "file": ".github/workflows/deploy_next.yml", "contains": "- 'ops/systemd/cuberoot-next.service'" },
-        { "file": "core/packages/client/tests/workflow-path-contract.test.ts", "contains": "keeps the Next deploy boundary aligned with its build and runtime inputs" }
+        {"file":".github/workflows/deploy_next.yml","contains":"- 'core/packages/client/**'"},
+        {"file":".github/workflows/deploy_next.yml","contains":"- 'core/packages/shared/**'"},
+        {"file":".github/workflows/deploy_next.yml","contains":"- 'core/packages/visualcube/**'"},
+        {"file":".github/workflows/deploy_next.yml","contains":"- 'core/packages/vendor-sr-puzzlegen/**'"},
+        {"file":".github/workflows/deploy_next.yml","contains":"- 'core/packages/stack-kernel/package.json'"},
+        {"file":".github/workflows/deploy_next.yml","contains":"- 'core/packages/stack-kernel/pkg/**'"},
+        {"file":".github/workflows/deploy_next.yml","contains":"- 'core/packages/puzzle-render-core/**'"},
+        {"file":".github/workflows/deploy_next.yml","contains":"- 'core/package.json'"},
+        {"file":".github/workflows/deploy_next.yml","contains":"- 'ops/systemd/cuberoot-next.service'"},
+        {"file":"core/packages/client/tests/workflow-path-contract.test.ts","contains":"keeps the Next deploy boundary aligned with its build and runtime inputs"}
       ]
     }
   ],
   "legacyFindings": [
     {
-      "file": "packages/alg-build/dryrun_ll_algs.mjs",
+      "file": "apps/api/src/calc/live_relay.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "apps/api/src/cube555/daemon.ts",
+      "mechanism": "spawn",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "apps/api/src/cubeopt/daemon.ts",
+      "mechanism": "spawn",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "apps/api/src/routes/alg_sets.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "apps/api/src/routes/alg.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "apps/api/src/routes/cubing_live.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "apps/api/src/tools/run_tests.ts",
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "apps/api/src/utils/alg_case_setup.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "runtime",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "apps/api/src/utils/ip_geolocation.ts",
+      "mechanism": "execFileAsync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "apps/api/tests/calc_live_relay.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "apps/api/tests/teaching_saas_repository.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "sourceKind": "test",
+      "specifier": "@cuberoot/shared",
+      "rule": "shared-root-import",
+      "target": "shared"
+    },
+    {
+      "file": "apps/miniprogram/tests/release-check.test.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "/packages/shared/package.json",
+      "target": "shared"
+    },
+    {
+      "file": "apps/miniprogram/tests/release-check.test.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "/packages/shared/src/smart_cube/relay.ts",
+      "target": "shared"
+    },
+    {
+      "file": "jobs/alg-build/dryrun_ll_algs.mjs",
       "mechanism": "execFileSync",
       "rule": "subprocess-call",
       "sourceKind": "subprocess",
       "target": "docker"
     },
     {
-      "file": "packages/alg-build/fix_1lll_meta_assignment.mjs",
+      "file": "jobs/alg-build/fix_1lll_meta_assignment.mjs",
       "mechanism": "path-literal",
       "rule": "cross-package-path",
       "sourceKind": "build",
-      "specifier": "core/packages/server/migrations/0102_fix_1lll_meta_assignment.sql",
+      "specifier": "core/apps/api/migrations/0102_fix_1lll_meta_assignment.sql",
       "target": "server"
     },
     {
-      "file": "packages/alg-build/fix_bad_ll_cases.mjs",
+      "file": "jobs/alg-build/fix_bad_ll_cases.mjs",
       "mechanism": "execFileSync",
       "rule": "subprocess-call",
       "sourceKind": "subprocess",
       "target": "docker"
     },
     {
-      "file": "packages/alg-build/gen_best2x2_sql.mjs",
+      "file": "jobs/alg-build/gen_best2x2_sql.mjs",
       "mechanism": "path-literal",
       "rule": "cross-package-path",
       "sourceKind": "build",
-      "specifier": "core/packages/server/migrations/0104_best_2x2_algs.sql",
+      "specifier": "core/apps/api/migrations/0104_best_2x2_algs.sql",
       "target": "server"
     },
     {
-      "file": "packages/alg-build/phase4_verify.mjs",
+      "file": "jobs/alg-build/phase4_verify.mjs",
       "mechanism": "execFileSync",
       "rule": "subprocess-call",
       "sourceKind": "subprocess",
       "target": "docker"
     },
     {
-      "file": "packages/alg-build/phase4_verify.mjs",
+      "file": "jobs/alg-build/phase4_verify.mjs",
       "mechanism": "execFileSync",
       "rule": "subprocess-call",
       "sourceKind": "subprocess",
       "target": "ssh"
     },
     {
-      "file": "packages/alg-build/verify_alt_scrambles.mjs",
+      "file": "jobs/alg-build/verify_alt_scrambles.mjs",
       "mechanism": "execFileSync",
       "rule": "subprocess-call",
       "sourceKind": "subprocess",
       "target": "ssh"
+    },
+    {
+      "file": "jobs/scramble-stats-build/build_length_opt.mjs",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "build",
+      "specifier": "core/packages/client/public/cubeopt/cube48opt5.mjs",
+      "target": "client"
+    },
+    {
+      "file": "jobs/scramble-stats-build/build_length_opt.mjs",
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "jobs/stats-build/src/bin/compute_all.ts",
+      "mechanism": "fork",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "jobs/stats-build/src/bin/seed_comp_dump_state.ts",
+      "mechanism": "execFileSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "ssh"
+    },
+    {
+      "file": "jobs/stats-build/src/bin/seed_comp_dump_state.ts",
+      "mechanism": "execSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
+    },
+    {
+      "file": "jobs/stats-build/src/bin/update_database.ts",
+      "mechanism": "execSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>",
+      "occurrences": 12
     },
     {
       "file": "packages/client/app/[lang]/2x2x2/_TwoToolsPage.tsx",
@@ -1310,10 +1463,10 @@
     {
       "file": "packages/client/scripts/dev-safe.mjs",
       "mechanism": "execSync",
-      "occurrences": 3,
       "rule": "subprocess-call",
       "sourceKind": "subprocess",
-      "target": "<dynamic>"
+      "target": "<dynamic>",
+      "occurrences": 3
     },
     {
       "file": "packages/client/scripts/dev-safe.mjs",
@@ -1361,10 +1514,10 @@
     {
       "file": "packages/client/scripts/predev-clean.mjs",
       "mechanism": "execSync",
-      "occurrences": 2,
       "rule": "subprocess-call",
       "sourceKind": "subprocess",
-      "target": "<dynamic>"
+      "target": "<dynamic>",
+      "occurrences": 2
     },
     {
       "file": "packages/client/scripts/predev-clean.mjs",
@@ -1378,7 +1531,7 @@
       "mechanism": "path-literal",
       "rule": "cross-package-path",
       "sourceKind": "build",
-      "specifier": "core/packages/server/migrations/0105_recon_ground_truth.sql",
+      "specifier": "core/apps/api/migrations/0105_recon_ground_truth.sql",
       "target": "server"
     },
     {
@@ -1386,7 +1539,7 @@
       "mechanism": "path-literal",
       "rule": "cross-package-path",
       "sourceKind": "build",
-      "specifier": "core/packages/server/migrations/0106_recon_ground_truth_candidates.sql",
+      "specifier": "core/apps/api/migrations/0106_recon_ground_truth_candidates.sql",
       "target": "server"
     },
     {
@@ -1394,7 +1547,7 @@
       "mechanism": "path-literal",
       "rule": "cross-package-path",
       "sourceKind": "build",
-      "specifier": "core/packages/server/src/routes/recon_ground_truth.ts",
+      "specifier": "core/apps/api/src/routes/recon_ground_truth.ts",
       "target": "server"
     },
     {
@@ -1416,10 +1569,10 @@
     {
       "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
       "mechanism": "spawnSync",
-      "occurrences": 2,
       "rule": "subprocess-call",
       "sourceKind": "subprocess",
-      "target": "<dynamic>"
+      "target": "<dynamic>",
+      "occurrences": 2
     },
     {
       "file": "packages/client/scripts/recon-ground-truth-gate.mjs",
@@ -1434,14 +1587,6 @@
       "rule": "subprocess-call",
       "sourceKind": "subprocess",
       "target": "<dynamic>"
-    },
-    {
-      "file": "packages/client/scripts/sq1-pbl/build-alg-migration.mjs",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../../server/migrations/0140_sq1_pbl.sql",
-      "target": "server"
     },
     {
       "file": "packages/client/scripts/sq1-pbl/export-finder-jar.mjs",
@@ -1499,32 +1644,6 @@
       "target": "vendor-sr-puzzlegen"
     },
     {
-      "file": "packages/client/tests/account_delete.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/utils/account_delete",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/account_delete.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/account_password_reset.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/utils/session",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
       "file": "packages/client/tests/alg_3x3_wide_notation.test.ts",
       "importKind": "runtime",
       "mechanism": "static-import",
@@ -1532,38 +1651,6 @@
       "specifier": "@cuberoot/shared",
       "rule": "shared-root-import",
       "target": "shared"
-    },
-    {
-      "file": "packages/client/tests/alg_3x3_wide_notation.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/migrations/0135_alg_3x3_lowercase_wide.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/alg_3x3_wide_notation.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/src/db/schema.pg.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/alg_3x3_wide_notation.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/src/routes/alg_sets.ts",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/alg_3x3_wide_notation.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/src/routes/alg.ts",
-      "target": "server"
     },
     {
       "file": "packages/client/tests/alg_case_display.test.ts",
@@ -1597,42 +1684,9 @@
       "importKind": "runtime",
       "mechanism": "static-import",
       "sourceKind": "test",
-      "specifier": "../../server/src/utils/alg_case_setup",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/alg_f2l_setup_guard.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
       "specifier": "@cuberoot/shared",
       "rule": "shared-root-import",
       "target": "shared"
-    },
-    {
-      "file": "packages/client/tests/alg_f2l_setup_guard.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/migrations/0136_alg_f2l_setup_required.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/alg_f2l_setup_guard.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/src/db/schema.pg.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/alg_f2l_setup_guard.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/src/routes/alg_sets.ts",
-      "target": "server"
     },
     {
       "file": "packages/client/tests/alg_goal_coverage.test.ts",
@@ -1672,33 +1726,6 @@
     },
     {
       "file": "packages/client/tests/alg_mirror_rewrite.test.ts",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/tests/alg_mirror_sync.test.ts",
-      "importKind": "runtime",
-      "mechanism": "dynamic-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/utils/alg_mirror.js",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/alg_mirror_sync.test.ts",
-      "importKind": "runtime",
-      "mechanism": "vi.mock",
-      "sourceKind": "test",
-      "specifier": "../../server/src/db/connection.js",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/alg_mirror_sync.test.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
       "sourceKind": "test",
@@ -1777,22 +1804,6 @@
       "specifier": "@cuberoot/shared",
       "rule": "shared-root-import",
       "target": "shared"
-    },
-    {
-      "file": "packages/client/tests/alg_top_layer_db_guard.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/migrations/0132_alg_top_layer_no_leading_y.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/alg_top_layer_db_guard.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/src/db/schema.pg.sql",
-      "target": "server"
     },
     {
       "file": "packages/client/tests/alg-load-cache-version.test.ts",
@@ -1888,15 +1899,6 @@
       "target": "<dynamic>"
     },
     {
-      "file": "packages/client/tests/comp-trim.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/utils/comp_trim",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
       "file": "packages/client/tests/cubingapp-beginner-ll-port.test.ts",
       "importKind": "runtime",
       "mechanism": "static-import",
@@ -1942,30 +1944,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/tests/lowcubes_migration_integrity.test.ts",
-      "mechanism": "readFileSync",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/migrations/0121_lowcubes_fto_megaminx.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/lowcubes_migration_integrity.test.ts",
-      "mechanism": "readFileSync",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/migrations/0157_fix_fto_pair_formation_setups.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/lowcubes_migration_integrity.test.ts",
-      "mechanism": "readFileSync",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/migrations/0159_fix_fto_top_layer_setups.sql",
-      "target": "server"
-    },
-    {
       "file": "packages/client/tests/lsll_rounds.test.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
@@ -2007,31 +1985,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/tests/oll_docx_import.test.ts",
-      "mechanism": "readFileSync",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/migrations/0153_oll_docx_import.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/one_credential_per_account.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/person_page_mirror_parity.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/utils/person_page",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
       "file": "packages/client/tests/plan-hide-grey-sides.test.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
@@ -2059,15 +2012,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/tests/recent_records_feed_tag.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/utils/current_records",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
       "file": "packages/client/tests/recognize_sets.test.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
@@ -2077,15 +2021,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/tests/recon_completion.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/utils/recon_completion",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
       "file": "packages/client/tests/recon_ground_truth.test.ts",
       "mechanism": "spawnSync",
       "rule": "subprocess-call",
@@ -2093,12 +2028,11 @@
       "target": "<dynamic>"
     },
     {
-      "file": "packages/client/tests/recon-duplicate-query.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
+      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
       "sourceKind": "test",
-      "specifier": "../../server/src/utils/recon_helpers",
-      "rule": "cross-package-relative-module",
+      "specifier": "core/apps/api/migrations/0106_recon_ground_truth_candidates.sql",
       "target": "server"
     },
     {
@@ -2106,15 +2040,7 @@
       "mechanism": "path-literal",
       "rule": "cross-package-path",
       "sourceKind": "test",
-      "specifier": "core/packages/server/migrations/0106_recon_ground_truth_candidates.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/packages/server/src/routes/recon_ground_truth.ts",
+      "specifier": "core/apps/api/src/routes/recon_ground_truth.ts",
       "target": "server"
     },
     {
@@ -2133,41 +2059,6 @@
       "target": "<dynamic>"
     },
     {
-      "file": "packages/client/tests/recon-server-validation.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/utils/recon_helpers",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/record_format_pr_segment.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/utils/record_format",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/record_format.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/utils/record_format",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/sq1_cs_squanmate_alignment.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/migrations/0137_sq1_cs_squanmate_alignment.sql",
-      "target": "server"
-    },
-    {
       "file": "packages/client/tests/sq1_pbl_alg_library.test.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
@@ -2175,56 +2066,6 @@
       "specifier": "@cuberoot/shared",
       "rule": "shared-root-import",
       "target": "shared"
-    },
-    {
-      "file": "packages/client/tests/sq1_pbl_alg_library.test.ts",
-      "mechanism": "readFileSync",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/migrations/0140_sq1_pbl.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/stale_record_tag.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/utils/current_records",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/teaching_message_notification_contract.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/teaching-content.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/migrations/0127_teaching_advanced_lessons.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/teaching-content.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server/src/routes/teaching.ts",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/timer_presence.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/routes/timer_presence",
-      "rule": "cross-package-relative-module",
-      "target": "server"
     },
     {
       "file": "packages/client/tests/trainer-f2l-scramble.test.ts",
@@ -2298,32 +2139,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/tests/wca_link_onboarding.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../server",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/wca_live_overlay.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/utils/wca_live_overlay",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/wca-calculators-port.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/utils/wca_name_filter",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
       "file": "packages/client/tests/wca-person-picker-free-text.test.ts",
       "importKind": "runtime",
       "mechanism": "vi.mock",
@@ -2333,249 +2148,8 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/tests/wca-teachers.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "../../server/src/utils/wca_teachers",
-      "rule": "cross-package-relative-module",
-      "target": "server"
-    },
-    {
       "file": "packages/client/tests/workspace-reparse-links-guard.test.ts",
       "mechanism": "spawnSync",
-      "rule": "subprocess-call",
-      "sourceKind": "subprocess",
-      "target": "<dynamic>"
-    },
-    {
-      "file": "apps/miniprogram/tests/release-check.test.mjs",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "/packages/shared/package.json",
-      "target": "shared"
-    },
-    {
-      "file": "apps/miniprogram/tests/release-check.test.mjs",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "/packages/shared/src/smart_cube/relay.ts",
-      "target": "shared"
-    },
-    {
-      "file": "jobs/scramble-stats-build/build_length_opt.mjs",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "core/packages/client/public/cubeopt/cube48opt5.mjs",
-      "target": "client"
-    },
-    {
-      "file": "jobs/scramble-stats-build/build_length_opt.mjs",
-      "mechanism": "spawnSync",
-      "rule": "subprocess-call",
-      "sourceKind": "subprocess",
-      "target": "<dynamic>"
-    },
-    {
-      "file": "packages/server/scripts/gen-glossary.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "../../client/app/[lang]/wiki/glossary.json",
-      "target": "client"
-    },
-    {
-      "file": "packages/server/src/calc/live_relay.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/server/src/cube555/daemon.ts",
-      "mechanism": "spawn",
-      "rule": "subprocess-call",
-      "sourceKind": "subprocess",
-      "target": "<dynamic>"
-    },
-    {
-      "file": "packages/server/src/cubeopt/daemon.ts",
-      "mechanism": "spawn",
-      "rule": "subprocess-call",
-      "sourceKind": "subprocess",
-      "target": "<dynamic>"
-    },
-    {
-      "file": "packages/server/src/routes/alg_sets.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/server/src/routes/alg.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/server/src/routes/cubing_live.ts",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/server/src/tools/run_tests.ts",
-      "mechanism": "spawnSync",
-      "rule": "subprocess-call",
-      "sourceKind": "subprocess",
-      "target": "<dynamic>"
-    },
-    {
-      "file": "packages/server/src/utils/alg_case_setup.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/server/src/utils/ip_geolocation.ts",
-      "mechanism": "execFileAsync",
-      "rule": "subprocess-call",
-      "sourceKind": "subprocess",
-      "target": "<dynamic>"
-    },
-    {
-      "file": "packages/server/tests/calc_live_relay.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/server/tests/platform_core_schema.test.ts",
-      "mechanism": "read",
-      "occurrences": 2,
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../client/app/[lang]/dev/schema/page.tsx",
-      "target": "client"
-    },
-    {
-      "file": "packages/server/tests/teaching_conversations_schema.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../client/app/[lang]/dev/api/page.tsx",
-      "target": "client"
-    },
-    {
-      "file": "packages/server/tests/teaching_conversations_schema.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../client/app/[lang]/dev/schema/page.tsx",
-      "target": "client"
-    },
-    {
-      "file": "packages/server/tests/teaching_learner_portal_schema.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../client/app/[lang]/dev/api/page.tsx",
-      "target": "client"
-    },
-    {
-      "file": "packages/server/tests/teaching_learner_portal_schema.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../client/app/[lang]/dev/schema/page.tsx",
-      "target": "client"
-    },
-    {
-      "file": "packages/server/tests/teaching_saas_repository.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/server/tests/teaching_stage2_schema.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../shared/src/teaching.ts",
-      "target": "shared"
-    },
-    {
-      "file": "packages/server/tests/teaching_stage3_foundation_schema.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../client/app/[lang]/dev/schema/page.tsx",
-      "target": "client"
-    },
-    {
-      "file": "packages/server/tests/teaching_weekly_reports_schema.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../client/app/[lang]/dev/api/page.tsx",
-      "target": "client"
-    },
-    {
-      "file": "packages/server/tests/teaching_weekly_reports_schema.test.ts",
-      "mechanism": "read",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "../../client/app/[lang]/dev/schema/page.tsx",
-      "target": "client"
-    },
-    {
-      "file": "packages/stats-build/src/bin/compute_all.ts",
-      "mechanism": "fork",
-      "rule": "subprocess-call",
-      "sourceKind": "subprocess",
-      "target": "<dynamic>"
-    },
-    {
-      "file": "packages/stats-build/src/bin/seed_comp_dump_state.ts",
-      "mechanism": "execFileSync",
-      "rule": "subprocess-call",
-      "sourceKind": "subprocess",
-      "target": "ssh"
-    },
-    {
-      "file": "packages/stats-build/src/bin/seed_comp_dump_state.ts",
-      "mechanism": "execSync",
-      "rule": "subprocess-call",
-      "sourceKind": "subprocess",
-      "target": "<dynamic>"
-    },
-    {
-      "file": "packages/stats-build/src/bin/update_database.ts",
-      "mechanism": "execSync",
-      "occurrences": 12,
       "rule": "subprocess-call",
       "sourceKind": "subprocess",
       "target": "<dynamic>"

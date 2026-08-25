@@ -5,17 +5,15 @@
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { join, dirname } from 'node:path';
 import {
   MEET_CODE_ALPHABET,
   MEET_CODE_LEN,
   isMeetCode,
   normalizeMeetCode,
 } from '@/lib/video-room-api';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
-const HERE = dirname(fileURLToPath(import.meta.url)); // packages/client/tests
-const SERVER_ROUTE = join(HERE, '..', '..', 'server', 'src', 'routes', 'video_rooms.ts');
+const SERVER_ROUTE = workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'video_rooms.ts');
 
 /** 服务端那条正则,从源码里抠出来重建 —— 免得两边各自维护一份「说明」而不是同一个事实。 */
 function serverRegex(): RegExp {

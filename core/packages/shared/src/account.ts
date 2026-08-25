@@ -1,5 +1,5 @@
 // 内部账号相关的纯逻辑(无 DB / 无 crypto 依赖),前后端共用 + 可单测。
-// 后端 packages/server/src/utils/account.ts 从这里再导出,前端可直接 import 校验输入。
+// 后端 apps/api/src/utils/account.ts 从这里再导出,前端可直接 import 校验输入。
 
 /**
  * 归属键:业务表主键 / 所有权判定用它。绑了 WCA = 真实 wca_id(现有数据零迁移);

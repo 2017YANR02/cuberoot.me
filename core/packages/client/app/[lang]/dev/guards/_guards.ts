@@ -285,8 +285,8 @@ export const CI_GUARDS_DRIFT: CiGuard[] = [
   {
     id: 'schema-api-drift',
     test: 'dev-schema-api-drift.test.ts',
-    zh: { title: '/dev/schema + /dev/api 快照漂移', desc: '/dev/schema 的迁移台账须列全 packages/server/migrations 下每个文件;/dev/api 的路由清单须等于 server/src/index.ts 里 app.route(‘/v1’, …) 实际挂载的路由。各自漏一条都红。' },
-    en: { title: '/dev/schema + /dev/api snapshot drift', desc: '/dev/schema’s migration ledger must list every file in packages/server/migrations; /dev/api’s manifest must equal the routes actually mounted via app.route(‘/v1’, …) in server/src/index.ts. Missing either turns CI red.' },
+    zh: { title: '/dev/schema + /dev/api 快照漂移', desc: '/dev/schema 的迁移台账须列全 apps/api/migrations 下每个文件;/dev/api 的路由清单须等于 server/src/index.ts 里 app.route(‘/v1’, …) 实际挂载的路由。各自漏一条都红。' },
+    en: { title: '/dev/schema + /dev/api snapshot drift', desc: '/dev/schema’s migration ledger must list every file in apps/api/migrations; /dev/api’s manifest must equal the routes actually mounted via app.route(‘/v1’, …) in server/src/index.ts. Missing either turns CI red.' },
   },
   {
     id: 'solvers-fleet-sync',

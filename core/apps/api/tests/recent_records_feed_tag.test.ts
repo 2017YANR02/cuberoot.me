@@ -5,14 +5,14 @@
  * 打出 7.72 单手平均,WCA Live feed 标 WR —— feed 只看自家平台,看不到同日跑在 cubing.com
  * 上的芜湖公开赛,陈震在那里打出 6.99。比赛页走 judgeByDay 判 NR,首页却照抄 feed 的 WR。
  *
- * 判定规则(server/src/utils/current_records.ts resolveFeedTag):只降级不升级 ——
+ * 判定规则(src/utils/current_records.ts resolveFeedTag):只降级不升级 ——
  * 升级要信 wca_results_flat 周更 dump 基线,会把已被超越的成绩误升;降级只依赖
  * 「同日有更快的」这个本地事实。
  *
  * 同日裁决本身的用例在 keatoned_record_tag.test.ts。
  */
 import { describe, it, expect } from 'vitest';
-import { resolveFeedTag, recordLevelRank, type KeatonedInfo } from '../../server/src/utils/current_records';
+import { resolveFeedTag, recordLevelRank, type KeatonedInfo } from '../src/utils/current_records';
 
 const maskedByChen: KeatonedInfo = {
   level: 'WR',

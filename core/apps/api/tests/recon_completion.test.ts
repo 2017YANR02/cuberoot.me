@@ -9,7 +9,7 @@ import {
 import {
   hasUnsolvedReason,
   normalizeReconScrambleRow,
-} from '../../server/src/utils/recon_completion';
+} from '../src/utils/recon_completion';
 
 describe('reconstruction completion validation', () => {
   it('uses optimal, then WCA real, then generic scramble as the reconstruction state', () => {

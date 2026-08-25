@@ -1,5 +1,5 @@
 # PreToolUse hook: block reads of the client-forgeable X-Forwarded-For header as an IP
-# source in server source writes (core/packages/server/src/*.ts). Request IP must come
+# source in server source writes (core/apps/api/src/*.ts). Request IP must come
 # from getIp(c) (utils/analytics_helpers.ts) — the single source, which reads only nginx's
 # trusted x-real-ip. XFF is client-set → IP/visitor_id/country spoofing, rate-limit bypass.
 # Registered by .codex/hooks.json PreToolUse;stdin = {tool_name, tool_input}.

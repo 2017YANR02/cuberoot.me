@@ -1,6 +1,6 @@
 ---
 name: server-deploy
-description: "Use when 改 Hono server routes (`core/packages/server/**`) 或 PG schema (ALTER/新表/新列)。GH Actions 部署,pm2 进程。Triggers: \"cuberoot_db\", \"core-api\", \"deploy server\", \"ALTER TABLE\", \"pm2 restart\", \"server 部署\", \"加列\", 改 server 路由."
+description: "Use when 改 Hono server routes (`core/apps/api/**`) 或 PG schema (ALTER/新表/新列)。GH Actions 部署,pm2 进程。Triggers: \"cuberoot_db\", \"core-api\", \"deploy server\", \"ALTER TABLE\", \"pm2 restart\", \"server 部署\", \"加列\", 改 server 路由."
 ---
 
 # Recon server / DB 部署
@@ -30,12 +30,12 @@ ssh root@cuberoot 'set -a; . /root/core-api/.env; set +a; : "${DB_PASS:?database
 
 **新流程**(2026-05-10 起):
 
-1. 写 `core/packages/server/migrations/NNNN_short_desc.sql`(纯 ALTER/CREATE,不要包 BEGIN/COMMIT — runner 自己包)
+1. 写 `core/apps/api/migrations/NNNN_short_desc.sql`(纯 ALTER/CREATE,不要包 BEGIN/COMMIT — runner 自己包)
 2. 同步改 `src/db/schema.pg.sql`(人读快照 — 必须自觉同步,不然两份脱节)
 3. 改业务代码(server 路由 / 类型)
 4. `git push`
 
-`deploy_core.yml` 在 pm2 restart **之前** ssh 跑 `apply_migrations.sh`,扫 `migrations/*.sql` 跑没跑过的;每个 migration 一个事务 + `ON_ERROR_STOP=1`,失败 abort + 后续不跑。详细规则见 `core/packages/server/migrations/README.md`。
+`deploy_core.yml` 在 pm2 restart **之前** ssh 跑 `apply_migrations.sh`,扫 `migrations/*.sql` 跑没跑过的;每个 migration 一个事务 + `ON_ERROR_STOP=1`,失败 abort + 后续不跑。详细规则见 `core/apps/api/migrations/README.md`。
 
 **已应用的 migration 不可改** — runner 校验 sha256,改了已 push 过的 migration 文件 = abort + 报错。要回滚或修正请写新 migration 反向操作。
 
@@ -77,7 +77,7 @@ ssh root@cuberoot 'set -a; . /root/core-api/.env; set +a; : "${DB_PASS:?database
 - push `main` 且 `core/**` 有变更 → `deploy_core.yml` 自动跑
 - 文件 >300(path filter trap)或想强制重跑 → `gh workflow run deploy_core.yml`
 
-`deploy_core.yml` 已经包含 server:build → rsync `core/packages/server/dist/` → SSH `pm2 restart core-api`。
+`deploy_core.yml` 已经包含 server:build → rsync `core/apps/api/dist/` → SSH `pm2 restart core-api`。
 
 ## 云服务器关键路径
 
@@ -89,7 +89,7 @@ ssh root@cuberoot 'set -a; . /root/core-api/.env; set +a; : "${DB_PASS:?database
 | `.env` | `/root/core-api/.env`(DB_HOST=127.0.0.1, DB_PORT=5432, DB_USER=recon_user, DB_PASS=`<secret>`, DB_NAME=cuberoot_db, JWT_SECRET, PORT) |
 | PG 数据目录 | `/var/lib/pgsql/data/` |
 | PG 服务 | `systemctl {start,stop,reload,restart} postgresql` |
-| Schema 文件 | `core/packages/server/src/db/schema.pg.sql`(repo,11 张表) |
+| Schema 文件 | `core/apps/api/src/db/schema.pg.sql`(repo,11 张表) |
 
 部完看日志:`pm2 logs core-api --lines 30`。
 

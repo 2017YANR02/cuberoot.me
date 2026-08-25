@@ -249,6 +249,6 @@ for (const p of patches) {
   out.push(`UPDATE alg_cases SET meta = ${q(JSON.stringify(p.to))}::jsonb`
     + ` WHERE puzzle = '3x3' AND set_slug = '1lll' AND name = ${q(p.name)};`);
 }
-const file = path.join(ROOT, 'core/packages/server/migrations/0102_fix_1lll_meta_assignment.sql');
+const file = path.join(ROOT, 'core/apps/api/migrations/0102_fix_1lll_meta_assignment.sql');
 writeFileSync(file, out.join('\n') + '\n', 'utf8');
 console.log(`→ ${path.relative(ROOT, file)}`);

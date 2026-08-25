@@ -1,9 +1,9 @@
-// /v1/cubing-live 的 ?only= 首屏分片(server/src/utils/comp_trim.ts)。
+// /v1/cubing-live 的 ?only= 首屏分片(src/utils/comp_trim.ts)。
 // 比赛页首屏只渲染当前项目 —— 分片必须:①带上该项目「全部」轮次(双轮合并榜要两轮都在);
 // ②users / personalRecords 同步收窄;③events 元数据整份保留(项目栏、轮次切换靠它);
 // ④打上 partial 标记(客户端据此再拉全量);⑤认不出的 only 一律返回 null → 调用方发全量。
 import { describe, it, expect } from 'vitest';
-import { hasCompResults, trimToRounds, eventRoundKeys, resolveOnlyKeys, type TrimmableComp } from '../../server/src/utils/comp_trim';
+import { hasCompResults, trimToRounds, eventRoundKeys, resolveOnlyKeys, type TrimmableComp } from '../src/utils/comp_trim';
 
 const COMP: TrimmableComp = {
   events: [

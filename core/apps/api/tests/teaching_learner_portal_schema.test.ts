@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 async function read(relativePath: string): Promise<string> {
   return readFile(new URL(relativePath, `${new URL('.', import.meta.url).href}`), 'utf8');
@@ -19,8 +20,8 @@ describe('teaching learner portal schema and repository contract', () => {
       read('../migrations/0156_teaching_learner_portal.sql'),
       read('../src/db/schema.pg.sql'),
       read('../migrations/README.md'),
-      read('../../client/app/[lang]/dev/schema/page.tsx'),
-      read('../../client/app/[lang]/dev/api/page.tsx'),
+      readFile(workspaceFixturePath('@cuberoot/client', 'app/[lang]/dev/schema/page.tsx'), 'utf8'),
+      readFile(workspaceFixturePath('@cuberoot/client', 'app/[lang]/dev/api/page.tsx'), 'utf8'),
     ]);
     expect(migration).not.toMatch(/\b(?:BEGIN|COMMIT)\s*;/i);
     expect(schema).toContain(

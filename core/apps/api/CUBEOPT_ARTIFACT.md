@@ -57,11 +57,11 @@ prepare 先复制到 store 同文件系统的 staging 目录，完整校验后 r
 `pnpm --filter @cuberoot/server build:bundle` 同时生成：
 
 ```text
-packages/server/dist/server.bundle.js
-packages/server/dist/cubeopt/solve-daemon.mjs
-packages/server/dist/cubeopt/provision.mjs
-packages/server/dist/cubeopt/verify.mjs
-packages/server/dist/cubeopt/smoke.mjs
+apps/api/dist/server.bundle.js
+apps/api/dist/cubeopt/solve-daemon.mjs
+apps/api/dist/cubeopt/provision.mjs
+apps/api/dist/cubeopt/verify.mjs
+apps/api/dist/cubeopt/smoke.mjs
 ```
 
 部署单元必须同时带上这些文件，并把已验证的 artifact store 放在 API 管理的持久位置。发布环境只配置：
