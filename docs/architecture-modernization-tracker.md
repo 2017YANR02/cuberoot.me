@@ -8,7 +8,7 @@ Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b
 
 > Batch 8 决策更新：Batch 7 的“不执行物理目录整理”保留为当时的历史裁决。仓库所有者现基于四端长期演进和 AI 可发现性明确重开并授权目录迁移，目标采用 `core/apps/* + core/packages/* + core/jobs/*`；只允许按 [Core 工作区目录迁移方案](./core-workspace-layout-migration-plan.md) 渐进实施。LAY2-00 至 LAY2-09 已完成：workspace、边界守卫与 Knip 接受双布局，Web/API/stats 发布合同按 package identity 解析并覆盖旧新触发路径，四个离线 job 均已移至 `core/jobs`，小程序、Mobile 和 API 已移至 `core/apps`，Web 私有 solver 与跨 app 品牌资产依赖均已收口到中性入口。API 的 npm 身份暂保留 `@cuberoot/server`，留待 LAY2-12 独立改名。
 >
-> LAY2-13 已完成源码迁移，等待发布验收：仓库所有者已单独授权把根目录 `fmc/` 归位到 `core/apps/fmc-solver/`。它是独立部署的 Cargo app，不伪造 npm package 身份，不改变现有 14 个 pnpm workspace；本批只迁移物理路径并同步专用 workflow、忽略项、系统地图和运行说明，线上 `/v1/fmc/*` 与部署目标保持不变。
+> LAY2-13 已完成源码迁移与发布验收：仓库所有者已单独授权把根目录 `fmc/` 归位到 `core/apps/fmc-solver/`。它是独立部署的 Cargo app，不伪造 npm package 身份，不改变现有 14 个 pnpm workspace；本批只迁移物理路径并同步专用 workflow、忽略项、系统地图和运行说明，线上 `/v1/fmc/*` 与部署目标保持不变。Test、Deploy Next 与 Deploy FMC solver 均已成功，FMC 工作流内健康检查通过。
 >
 > Batch 8 三路预审：目标分类无歧义，`apps/web`、`apps/api`、`apps/mobile`、`apps/miniprogram` 的命名获得支持；所有 reviewer 均否决一步到位。实施前必须先建立不依赖路径的 workspace registry、旧新边界基线同集证明、workflow 正负触发矩阵和未声明 workspace import 守卫。仓库所有者已授权按这些门槛实施，不能跳过。
 >
@@ -218,7 +218,7 @@ API     ─X─> Web 源码或 Web public
 | LYT-02 | 让工具链先做到路径可迁移 | `取消/不适用` | LYT-01 未证明移动有收益，因此不为未发生的目录迁移改 workspace、Turbo、workflow、Docker、standalone 或运行时资源路径 |
 | LYT-03 | 一次只移动一个 app 或 job | `取消/不适用` | 不建立 `webapp/`，不移动现有 app/job，也不把 workspace 外的 Platform 历史归档搬入活动目录树 |
 | LYT-04 | 验证路径迁移的触发、产物与运行 | `取消/不适用` | 没有路径迁移，不制造新的 workflow 触发、部署产物或 smoke 验收面；如未来出现量化收益，必须从 LYT-01 重新评估 |
-| LAY2-13 | FMC Cargo app 归位 | `完成，待发布验收` | `fmc/` 的 72 个 tracked 文件完整迁至 `core/apps/fmc-solver/`；Cargo workspace、专用部署 workflow、线上 API 路径与运行目标语义不变；14 个 pnpm workspace 不增不减；本地不运行重计算或测试，由发布 CI 验收 |
+| LAY2-13 | FMC Cargo app 归位 | `完成` | `fmc/` 的 72 个 tracked 文件完整迁至 `core/apps/fmc-solver/`；Cargo workspace、专用部署 workflow、线上 API 路径与运行目标语义不变；14 个 pnpm workspace 不增不减；Test、Deploy Next 与 Deploy FMC solver 均成功，FMC 健康检查通过；首次发布暴露浮动 nightly 漂移后已锁定最后验证版本并由 workflow 单一读取 |
 
 Platform 不进入 F 阶段，也不以归档名义移动到 `apps/platform-web` 或其他活动 app 目录。
 
@@ -410,7 +410,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
-| 2026-08-25 | LAY2-13 FMC Cargo app 归位完成，等待发布验收 | 根 `fmc/` 的 72 个 tracked 文件完整迁至 `core/apps/fmc-solver/`；专用 workflow 的触发、稀疏检出、工作目录和制品路径同步，忽略项、系统地图与运行说明更新。Cargo workspace、线上 `/v1/fmc/*` 和远端运行目标不变，14 个 pnpm workspace 不增不减；按用户要求未在本地运行重计算或测试 |
+| 2026-08-25 | LAY2-13 FMC Cargo app 归位及发布验收完成 | 根 `fmc/` 的 72 个 tracked 文件完整迁至 `core/apps/fmc-solver/`；专用 workflow 的触发、稀疏检出、工作目录和制品路径同步，忽略项、系统地图与运行说明更新。Cargo workspace、线上 `/v1/fmc/*` 和远端运行目标不变，14 个 pnpm workspace 不增不减；浮动 nightly 漂移已改为锁定验证版本，Test、Deploy Next、Deploy FMC solver 与服务健康检查全部成功；本地未运行重计算或测试 |
 | 2026-08-25 | Reconer 独立研发项目归位 | 经单独授权将根目录 `reconer/` 完整迁至 `research/reconer/`；项目仍保留自己的 Node、uv、测试与本地素材边界，不纳入 Core workspace，也未改算法或运行视频计算。根系统地图、README、Core onboarding 与迁移历史同步到新路径 |
 | 2026-08-25 | LAY2-06 solver 边界与 `scramble-stats-build` 移动完成 | Web 私有纯 solver 已提取到 `@cuberoot/puzzle-solvers` 公开出口，`scramble-stats-build` 从 `core/packages` 完整移至 `core/jobs`；脚本、lockfile、resolver、生成物清册、runbook 与活动文档同步，旧私有 solver 路径和临时 test-contract 从基线删除。静态架构守卫通过，边界为 279/295/13；按用户要求未运行 fixture、dry run、测试、build 或数据生成 |
 | 2026-08-25 | LAY2-07 小程序移动与品牌资产前置完成 | `@cuberoot/miniprogram` 完整移至 `core/apps/miniprogram`，package 身份不变；Web 路由测试改为按 workspace identity 做文件合同检查，Shared 构建输入不再假设 sibling 布局。品牌源与生成入口提到 `core/assets/brand`、`core/scripts/gen-brand-assets.mjs`，Web、Mobile、小程序不再互读 app 私有图标；lockfile、边界清单、生成物清册和活动文档同步。按用户要求未运行测试或 build |
