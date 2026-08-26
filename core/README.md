@@ -1,8 +1,8 @@
 # CubeRoot Core
 
-pnpm + Turbo monorepo，承载现役产品 app、共享 package 和离线 job；仓库外的 `solver/` 与 `reconer/` 有独立生命周期。
+pnpm + Turbo monorepo，承载现役产品 app、共享 package 和离线 job；Core workspace 外的 `solver/` 与 `research/reconer/` 有独立生命周期。
 
-本文的所有 pnpm 命令都从 `core/` 执行；活跃应用是 client、server、mobile 和 miniprogram，`packages/platform` 只是 workspace 外归档。`solver/` 和 `reconer/` 另有独立生命周期。
+本文的所有 pnpm 命令都从 `core/` 执行；活跃应用是 client、server、mobile 和 miniprogram，`packages/platform` 只是 workspace 外归档。`solver/` 和 `research/reconer/` 另有独立生命周期。
 
 ## 工作区
 
