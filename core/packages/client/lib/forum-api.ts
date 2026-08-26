@@ -186,6 +186,7 @@ export interface ForumFeedThread extends LatestThread {
   imageUrls: string[];
   videos: ForumVideo[];
   reactions: PostReaction[];
+  myReaction: ReactionKind | null;
   author: PostAuthor;
 }
 
