@@ -1,6 +1,6 @@
 # FMC solver — benchmarks & parity (mine vs upstream mallard)
 
-**Same engine, same architecture.** `fmc/cubelib/` is a verbatim copy of
+**Same engine, same architecture.** `core/apps/fmc-solver/cubelib/` is a verbatim copy of
 [Jobarion/cubelib](https://github.com/Jobarion/cubelib), the solver behind
 https://joba.me/mallard. The deployed mallard is **not** browser WASM: its
 frontend ships `default = ["backend"]` and POSTs to

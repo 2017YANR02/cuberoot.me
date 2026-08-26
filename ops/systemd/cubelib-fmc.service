@@ -1,5 +1,5 @@
 [Unit]
-Description=cubelib FMC solver (mallard engine, vendored fmc/cubelib)
+Description=cubelib FMC solver (mallard engine, vendored core/apps/fmc-solver/cubelib)
 After=network.target
 
 [Service]
