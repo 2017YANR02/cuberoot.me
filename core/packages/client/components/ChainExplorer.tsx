@@ -4,7 +4,7 @@
  * ChainExplorer — mallard 式 FMC 分步还原链(analyzer 底部挂载)。
  *
  * 引擎 = 自有服务器跑的 cubelib(joba.me/mallard 同款,经作者授权 vendoring 进
- * `fmc/`)。与上游同构:mallard 生产版也是后端求解(POST joba.me/cubeapi),
+ * `core/apps/fmc-solver/`)。与上游同构:mallard 生产版也是后端求解(POST joba.me/cubeapi),
  * 这里走 `GET /v1/fmc/solve_stream`(NDJSON 流式,服务端按 2^5..2^19 step-limit
  * 倍增搜索,每出现更短解推一行)。默认请求与部署版 mallard 抓包逐字段一致
  * (relative min/max + quality=10000 + 默认 DR triggers),所以解收敛到相同长度,

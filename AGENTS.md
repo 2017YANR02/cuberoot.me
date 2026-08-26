@@ -12,6 +12,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | `core/apps/api` | Hono API + PostgreSQL，独立运行和部署；对 Web 源码与 `client/public` 的旧耦合是待治理债务，不得扩大 |
 | `core/apps/mobile` | React + Capacitor 应用，当前 Android，未来 iOS 默认复用同一 React 应用 |
 | `core/apps/miniprogram` | 微信小程序独立运行时，不复用 React DOM UI |
+| `core/apps/fmc-solver` | vendored cubelib Cargo workspace 与独立 HTTP 服务；专用 workflow 构建部署，线上入口保持 `/v1/fmc/*` |
 | `core/packages/shared` | 稳定契约、纯规则与跨端数据模型；公式数据以 PG `alg_sets/alg_cases` 为准 |
 | `core/packages/visualcube` 等 | 有明确构建或运行时边界的共享 package |
 | `core/jobs/*` | 离线 job，输出统计、数据或迁移生成物，不是在线 app |
@@ -21,13 +22,13 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | `tools/` / `stats/` | `static.cuberoot.me` 服务的混合 upstream/static 树与已提交数据生成物，本轮不迁仓 |
 | `ops/` / `docs/` / `.github/workflows` | 运维、状态/设计记录和 CI/部署契约 |
 
-事实源按优先级核对：`core/pnpm-workspace.yaml` 与各 `package.json` 定义 workspace/命令；源码路由、shared schema 和 migration 定义运行契约；`.github/workflows` 与 `ops/` 定义发布边界；`docs/generated-artifacts.json` 定义生成物，`docs/generated-artifacts.md` 解释维护方式；`docs/architecture-modernization-tracker.md` 是架构执行入口。
+事实源按优先级核对：`core/pnpm-workspace.yaml` 与各 `package.json` 定义 pnpm workspace/命令，Cargo app 由自身 `Cargo.toml` 定义；源码路由、shared schema 和 migration 定义运行契约；`.github/workflows` 与 `ops/` 定义发布边界；`docs/generated-artifacts.json` 定义生成物，`docs/generated-artifacts.md` 解释维护方式；`docs/architecture-modernization-tracker.md` 是架构执行入口。
 
 新代码归属：页面和平台适配留在所属 app；稳定、运行时中性且有真实多端消费者的契约/纯逻辑才进共享 package；只因两份文件相似不拆 package。
 
 新增生产依赖禁止 `package -> app`、`app A -> app B 源码`、`server -> client/client public`、`miniprogram -> React DOM/Next`、跨包 deep import 和任何现役包对 `packages/platform` 的引用；已有违规在架构跟踪表里递减，不得扩大。
 
-所有 core pnpm 命令先进入 `core/`；验证使用目标 package 的 `typecheck`/`test`/`build`；当前 API 部署仍对广泛 `core/**` 变更敏感，push 前必须按 workflow path filter 核对实际触发和运行产物。
+所有 core pnpm 命令先进入 `core/`；Cargo app 进入自身目录运行 `cargo`；验证使用目标单元的 `typecheck`/`test`/`build`；当前 API 部署仍对广泛 `core/**` 变更敏感，push 前必须按 workflow path filter 核对实际触发和运行产物。
 
 ## 模块归属(fork 不能改)
 

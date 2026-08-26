@@ -1,23 +1,27 @@
 # CubeRoot Core
 
-pnpm + Turbo monorepo，承载现役产品 app、共享 package 和离线 job；Core workspace 外的 `solver/` 与 `research/reconer/` 有独立生命周期。
+pnpm + Turbo monorepo，承载现役产品 app、共享 package 和离线 job；`apps/fmc-solver` 是同目录下独立部署的 Cargo app，不属于 pnpm workspace。Core 外的 `solver/` 与 `research/reconer/` 有独立生命周期。
 
-本文的所有 pnpm 命令都从 `core/` 执行；活跃应用是 client、server、mobile 和 miniprogram，`packages/platform` 只是 workspace 外归档。`solver/` 和 `research/reconer/` 另有独立生命周期。
+本文的所有 pnpm 命令都从 `core/` 执行；当前有 api、mobile、miniprogram 三个已归位的 pnpm app，Web 暂在 `packages/client`，另有 Cargo app `apps/fmc-solver`。`packages/platform` 只是 workspace 外归档。
 
 ## 工作区
 
 ```
-core/packages/
-├── client/         # React 19 + Next.js 16 主站训练 / 工具前端
-├── platform/       # 已退役的 Platform 源码与 SQLite migration 归档
-├── server/         # Hono + PostgreSQL 13(WCA OAuth + recon + alg + 训练数据)
-├── mobile/         # React + Capacitor Android app，未来增加 iOS target
+core/apps/
+├── api/             # Hono + PostgreSQL 13(WCA OAuth + recon + alg + 训练数据)
+├── mobile/          # React + Capacitor Android app，未来增加 iOS target
 ├── miniprogram/     # 微信小程序独立运行时
-├── shared/         # 共享类型与通用数据
-└── visualcube/     # 自有 NxN SVG 渲染器
+└── fmc-solver/      # cubelib Rust 服务，独立 Cargo workspace 与部署
+
+core/packages/
+├── client/          # React 19 + Next.js 16 主站训练 / 工具前端，待迁 apps/web
+├── platform/        # 已退役的 Platform 源码与 SQLite migration 归档
+├── shared/          # 共享类型与通用数据
+└── visualcube/      # 自有 NxN SVG 渲染器
 
 core/jobs/
 ├── alg-build/      # 公式数据与 SQL 生成 job
+├── scramble-stats-build/ # 打乱分析生成 job
 ├── stats-build/    # WCA 统计与数据库装载 job
 └── wb-build/       # 非官方世界最好成绩数据 job
 ```
@@ -45,6 +49,9 @@ pnpm --filter @cuberoot/client dev          # 前端 dev,127.0.0.1:3000
 pnpm --filter @cuberoot/client typecheck     # tsgo
 pnpm --filter @cuberoot/client build
 pnpm --filter @cuberoot/server typecheck
+
+cd apps/fmc-solver
+cargo test -p cubelib-server
 ```
 
 > Recon API 通过 Next rewrites 转到 `api.cuberoot.me`,**本地不需要起 Hono 后端**。

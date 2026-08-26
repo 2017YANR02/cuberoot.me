@@ -17,15 +17,18 @@ Solvers, trainers, analytics, and statistics for the Rubik's Cube — all in the
 ```
 cuberoot.me/
 ├── core/                  pnpm + Turbo monorepo — active apps, shared packages, and offline jobs
-│   ├── packages/          Current apps plus reusable packages during the gradual layout migration
-│   │   ├── client/        React 19 + Next.js 16 (App Router) — the site itself
-│   │   ├── server/        Hono + PostgreSQL 13 — WCA OAuth, reconstructions, algorithm library
+│   ├── apps/
+│   │   ├── api/           Hono + PostgreSQL 13 — WCA OAuth, reconstructions, algorithm library
 │   │   ├── mobile/        React + Capacitor — Android now, reusable for a future iOS target
 │   │   ├── miniprogram/   WeChat Mini Program — independent native runtime
+│   │   └── fmc-solver/    Rust FMC solver service — independent Cargo workspace and deployment
+│   ├── packages/
+│   │   ├── client/        React 19 + Next.js 16 (App Router) — awaiting its final apps/web move
 │   │   ├── platform/      Retired read-only archive; its product surfaces now live under client /platform
-│   │   └── ...            Shared libraries and the remaining apps awaiting migration
+│   │   └── ...            Reusable libraries with public package boundaries
 │   └── jobs/
 │       ├── alg-build/     Offline algorithm data and SQL generators
+│       ├── scramble-stats-build/ Offline scramble analysis generators
 │       ├── stats-build/   Offline WCA statistics and database-load pipeline
 │       └── wb-build/      Offline unofficial world-best dataset generator
 ├── solver/                Rust solving engines — native analyzers and WebAssembly builds
@@ -40,7 +43,7 @@ cuberoot.me/
 **Frontend** React 19, Next.js 16 with Turbopack, TypeScript.
 **Backend** Hono on PostgreSQL 13, behind nginx.
 **Pipelines** TypeScript jobs over the WCA MySQL export, run by GitHub Actions.
-**Solving** Rust engines, compiled natively for the statistics pipelines and to WebAssembly for the browser.
+**Solving** Rust engines, compiled natively for services and statistics pipelines or to WebAssembly for the browser.
 **Hosting** A self-hosted server and Vercel, split by DNS.
 
 ---
