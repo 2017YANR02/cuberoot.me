@@ -34,6 +34,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'scramble', zh: '打乱与求解', en: 'Scramble & solve' },
   { key: 'recon', zh: '复盘', en: 'Recon' },
   { key: 'comp', zh: '比赛', en: 'Competitions' },
+  { key: 'pb', zh: '个人纪录', en: 'Personal bests' },
   { key: 'nemesizer', zh: '宿敌分析', en: 'Nemesizer' },
   { key: 'live', zh: '实时成绩', en: 'Live results' },
   { key: 'alg', zh: '公式库与训练', en: 'Algs & training' },
@@ -61,7 +62,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps article auth battle_rooms calendar cn_comp_names colpi
-//   comp_follows cube cubeopt_solve cubing_live documents feedback forum health historical_ranks
+//   comp_follows cube cubeopt_solve cubing_live documents feedback forum health historical_ranks pb
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
@@ -224,6 +225,14 @@ const ENDPOINTS: Ep[] = [
   { d: 'comp', m: 'GET', p: '/v1/comp/follows', g: 'login', zh: '我关注的比赛', en: 'My followed comps' },
   { d: 'comp', m: 'PUT', p: '/v1/comp/follows/:compId', g: 'login', zh: '关注比赛', en: 'Follow a comp' },
   { d: 'comp', m: 'DELETE', p: '/v1/comp/follows/:compId', g: 'login', zh: '取消关注', en: 'Unfollow' },
+
+  // ---- PB ----
+  { d: 'pb', m: 'GET', p: '/v1/pb/me', g: 'login', c: 'no-store', zh: '我的 PB 主页与完整历史', en: 'My PB profile and full history' },
+  { d: 'pb', m: 'GET', p: '/v1/pb/profile/:userId', g: 'public', c: 'no-store', zh: '公开 PB 主页', en: 'Public PB profile' },
+  { d: 'pb', m: 'GET', p: '/v1/pb/leaderboard', g: 'public', c: 'no-store', zh: '当前 PB 排行榜', en: 'Current-PB leaderboard' },
+  { d: 'pb', m: 'PUT', p: '/v1/pb/profile', g: 'login', c: 'no-store', zh: '修改 PB 公开设置', en: 'Update PB visibility' },
+  { d: 'pb', m: 'POST', p: '/v1/pb/records', g: 'login', c: 'no-store', zh: '记录新的 PB', en: 'Record a new PB' },
+  { d: 'pb', m: 'DELETE', p: '/v1/pb/records/:id', g: 'login', c: 'no-store', zh: '删除 PB 历史纪录', en: 'Delete a PB history record' },
 
   // ---- nemesizer ----
   { d: 'nemesizer', m: 'GET', p: '/v1/nemesizer/meta', g: 'public', zh: '数据集元信息', en: 'Dataset meta' },
