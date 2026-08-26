@@ -168,7 +168,7 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 | LAY2-10 | Web | 移至 `apps/web` | `已授权，待前置` | typecheck、隔离 Next build、standalone 启动和关键路由 smoke 通过 |
 | LAY2-11 | 收尾 | 删除旧路径兼容，刷新文档、清册和历史 allowlist | `已授权，待前置` | 旧活动引用归零，4 个 pnpm app、1 个 Cargo app、6 个 package、4 个 job 唯一归类 |
 | LAY2-12 | package 身份收口 | 独立把 `@cuberoot/client` / `@cuberoot/server` 改为 `@cuberoot/web` / `@cuberoot/api` | `已授权，待前置` | manifests、lockfile、filters、脚本、文档和发布合同无旧活动名称 |
-| LAY2-13 | FMC Cargo app 归位 | 根 `fmc/` 移至 `apps/fmc-solver`，同步专用发布合同 | `完成，待发布验收` | 72 个 tracked 文件完整 rename；Cargo workspace、线上 API 与部署目标不变；专用 workflow 改用新路径；14 个 pnpm workspace 不变；未在本地运行重计算或测试，交由发布 CI 验收 |
+| LAY2-13 | FMC Cargo app 归位 | 根 `fmc/` 移至 `apps/fmc-solver`，同步专用发布合同 | `完成` | 72 个 tracked 文件完整 rename；Cargo workspace、线上 API 与部署目标不变；专用 workflow 改用新路径；14 个 pnpm workspace 不变；浮动 nightly 已锁定到验证版本，Test、Deploy Next、Deploy FMC solver 与服务健康检查全部成功 |
 
 默认不交换顺序。LAY2-13 是经单独授权的例外：它不属于 pnpm workspace，也不依赖 Web 迁移，专用 workflow 和回滚边界完整，因此可先于 LAY2-10 完成。其他调整仍须先证明不依赖未完成的前置项，并把理由写入本文。
 
@@ -262,6 +262,6 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 | 2026-08-25 | LAY2-07 小程序移动与品牌资产前置复审 | `条件 GO：暂存边界与测试合同修正后提交` | 终审发现的半暂存状态、无关删除、Web 私有路由测试边和过时品牌说明已处理；路由存在性检查按 package identity 定位并登记显式 test-contract，Web、Mobile、小程序只读取中性品牌事实源；按用户要求未运行测试或 build |
 | 2026-08-25 | LAY2-08 Mobile 移动复审 | `GO：Mobile 物理移动闭环` | 两路复审确认 Android/Capacitor 内部相对层级不变；初审指出的 lockfile、生成物清册、README、Gradle 文案、路线图和 Mobile Skill 旧路径已全部同步；按用户要求未运行测试或 build |
 | 2026-08-25 | LAY2-09 API 移动复审 | `三路 GO，等待发布验收` | 三路终审发现并已修复逻辑 package 身份误写、历史 migration 校验和漂移、Web 测试硬编码旧 API 路径、生成物检查与 BLDDB 脚本旧路径；纯 API 守卫已移入 API，自身 package 名暂保留 `@cuberoot/server`；按用户要求未在本地运行测试或 build |
-| 2026-08-25 | LAY2-13 FMC Cargo app 归位 | `GO，等待发布验收` | 根 `fmc/` 的 72 个 tracked 文件完整移至 `core/apps/fmc-solver/`；专用 workflow、忽略项、系统地图与运行说明同步，Cargo workspace、线上 `/v1/fmc/*` 和部署目标不变；14 个 pnpm workspace 不增不减 |
+| 2026-08-25 | LAY2-13 FMC Cargo app 归位 | `GO，发布验收通过` | 根 `fmc/` 的 72 个 tracked 文件完整移至 `core/apps/fmc-solver/`；专用 workflow、忽略项、系统地图与运行说明同步，Cargo workspace、线上 `/v1/fmc/*` 和部署目标不变；14 个 pnpm workspace 不增不减；Test、Deploy Next、Deploy FMC solver 与服务健康检查全部成功 |
 
 这里的 `HOLD` 只否决“一步到位执行”，不否决渐进方案。未解决的 blocker 必须成为对应批次的前置门槛，不能靠口头承诺跳过。
