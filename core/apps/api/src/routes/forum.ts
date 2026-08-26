@@ -178,6 +178,19 @@ async function reactionsFor(postIds: number[]): Promise<Map<number, { kind: stri
   return map;
 }
 
+/** 当前用户在指定帖子上的反应；未登录时由调用方跳过。 */
+async function reactionsByAuthor(postIds: number[], authorId: string): Promise<Map<number, string>> {
+  const result = new Map<number, string>();
+  if (postIds.length === 0) return result;
+  const rows = await query<{ post_id: string; kind: string }>(
+    `SELECT post_id, kind FROM forum_reactions
+     WHERE author_id = ? AND post_id IN (${postIds.map(() => '?').join(',')})`,
+    [authorId, ...postIds],
+  );
+  for (const row of rows) result.set(Number(row.post_id), row.kind);
+  return result;
+}
+
 interface ForumVideoRow {
   id: number | string;
   post_id?: number | string;
@@ -613,15 +626,7 @@ forumRoutes.get('/forum/t/:id', async (c) => {
   const threadUserIds = await publicUserIdsForOwnerKeys([t.author_id, t.last_post_author_id]);
 
   // 可选鉴权(viewer 已在上面取):游客照常读,登录者多拿自己的反应
-  const myReactions: Record<number, string> = {};
-  if (viewer && postIds.length > 0) {
-    const ph = postIds.map(() => '?').join(',');
-    const rows = await query<{ post_id: string; kind: string }>(
-      `SELECT post_id, kind FROM forum_reactions WHERE author_id = ? AND post_id IN (${ph})`,
-      [viewer.wcaId, ...postIds],
-    );
-    for (const r of rows) myReactions[Number(r.post_id)] = r.kind;
-  }
+  const myReactions = viewer ? Object.fromEntries(await reactionsByAuthor(postIds, viewer.wcaId)) : {};
 
   return c.json({
     thread: { ...threadJson(t, threadUserIds), forumId: Number(t.forum_id), reviewNote: t.review_note },
@@ -1044,6 +1049,8 @@ forumRoutes.get('/forum/feed', async (c) => {
   const videos = await videosForPosts(postIds);
   const authors = await authorProfilesFor(new Map(rows.map((r) => [r.author_id, r.author_name])));
   const userIds = await publicUserIdsForOwnerKeys(rows.flatMap((row) => [row.author_id, row.last_post_author_id]));
+  const viewer = await authenticateUser(c.req.header('Authorization')).catch(() => null);
+  const myReactions = viewer ? await reactionsByAuthor(postIds, viewer.wcaId) : new Map<number, string>();
 
   return c.json({
     threads: rows.map((r) => ({
@@ -1056,6 +1063,7 @@ forumRoutes.get('/forum/feed', async (c) => {
       imageUrls: imageUrlsFromMarkdown(r.first_post_content),
       videos: videos.get(Number(r.first_post_id)) ?? [],
       reactions: reactions.get(Number(r.first_post_id)) ?? [],
+      myReaction: myReactions.get(Number(r.first_post_id)) ?? null,
       author: authors[r.author_id],
     })),
     total: totals[0]?.n ?? 0,

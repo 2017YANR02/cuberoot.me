@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { queryMock } = vi.hoisted(() => ({ queryMock: vi.fn() }));
+const { queryMock, authenticateUserMock } = vi.hoisted(() => ({
+  queryMock: vi.fn(),
+  authenticateUserMock: vi.fn(),
+}));
 
 vi.mock('../src/db/connection.js', () => ({ query: queryMock }));
 vi.mock('../src/utils/analytics_helpers.js', () => ({ getIp: vi.fn(() => '127.0.0.1') }));
 vi.mock('../src/utils/recon_helpers.js', () => ({
   requireAuth: vi.fn(),
-  authenticateUser: vi.fn(),
+  authenticateUser: authenticateUserMock,
   checkRateLimit: vi.fn(),
   ADMIN_WCA_IDS: ['2017TEST01'],
 }));
@@ -37,7 +40,11 @@ const threadRow = {
 };
 
 describe('forum activity feed', () => {
-  beforeEach(() => queryMock.mockReset());
+  beforeEach(() => {
+    queryMock.mockReset();
+    authenticateUserMock.mockReset();
+    authenticateUserMock.mockResolvedValue(null);
+  });
 
   it('returns first-post excerpts, reactions, and canonical author profiles', async () => {
     queryMock
@@ -93,6 +100,7 @@ describe('forum activity feed', () => {
           durationMs: 19000,
         }],
         reactions: [{ kind: 'like', count: 2, names: ['A', 'B'] }],
+        myReaction: null,
         author: {
           name: 'Canonical User',
           avatarUrl: 'https://example.com/avatar.png',
@@ -103,6 +111,28 @@ describe('forum activity feed', () => {
         },
       }],
     });
+  });
+
+  it('returns the signed-in viewer reaction for direct feed toggles', async () => {
+    authenticateUserMock.mockResolvedValueOnce({ wcaId: '2020VIEW01', name: 'Viewer' });
+    queryMock
+      .mockResolvedValueOnce([{ n: 1 }])
+      .mockResolvedValueOnce([threadRow])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ author_id: '2017TEST01', n: 1 }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ post_id: '21', kind: 'love' }]);
+
+    const response = await forumRoutes.request('/forum/feed', {
+      headers: { Authorization: 'Bearer test' },
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(queryMock.mock.calls.at(-1)?.[1]).toEqual(['2020VIEW01', 21]);
+    expect(body.threads[0].myReaction).toBe('love');
   });
 
   it('orders the latest view by thread creation time', async () => {

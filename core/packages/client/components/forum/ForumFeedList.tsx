@@ -1,12 +1,20 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Eye, MessageCircle } from 'lucide-react';
 import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';
+import { useAuthStore, useAuthUser } from '@/lib/auth-store';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { formatCount, formatRelativeTime } from '@/lib/forum-format';
-import { REACTION_EMOJI, type ForumFeedThread } from '@/lib/forum-api';
+import {
+  reactToPost,
+  REACTION_EMOJI,
+  type ForumFeedThread,
+  type PostReaction,
+  type ReactionKind,
+} from '@/lib/forum-api';
 import { ForumVideoPlayer } from './ForumVideoPlayer';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import './forum-feed.css';
@@ -14,12 +22,54 @@ import './forum-feed.css';
 export function ForumFeedList({ threads, compact = false }: { threads: ForumFeedThread[]; compact?: boolean }) {
   const lang = useLang();
   const zh = lang === 'zh';
+  const user = useAuthUser();
+  const [busyPostId, setBusyPostId] = useState<number | null>(null);
+  const [reactionState, setReactionState] = useState<Record<number, {
+    reactions: PostReaction[];
+    myReaction: ReactionKind | null;
+  }>>({});
+
+  useEffect(() => {
+    setReactionState(Object.fromEntries(threads.map((thread) => [thread.id, {
+      reactions: thread.reactions,
+      myReaction: thread.myReaction ?? null,
+    }])));
+  }, [threads]);
+
+  const toggleReaction = async (thread: ForumFeedThread) => {
+    if (!user) {
+      useAuthStore.getState().login();
+      return;
+    }
+    if (busyPostId !== null) return;
+    const current = reactionState[thread.id] ?? {
+      reactions: thread.reactions,
+      myReaction: thread.myReaction ?? null,
+    };
+    const nextReaction = current.myReaction ? null : 'like';
+    setBusyPostId(thread.firstPostId);
+    try {
+      const result = await reactToPost(thread.firstPostId, nextReaction);
+      setReactionState((previous) => ({
+        ...previous,
+        [thread.id]: { reactions: result.reactions, myReaction: nextReaction },
+      }));
+    } catch (error) {
+      alert((error as Error).message);
+    } finally {
+      setBusyPostId(null);
+    }
+  };
 
   return (
     <div className={`community-feed-list${compact ? ' is-compact' : ''}`}>
       {threads.map((thread) => {
         const displayName = ownerDisplayName(thread.authorId, thread.author.name || thread.authorName, zh);
-        const reactionCount = thread.reactions.reduce((sum, reaction) => sum + reaction.count, 0);
+        const currentReaction = reactionState[thread.id] ?? {
+          reactions: thread.reactions,
+          myReaction: thread.myReaction ?? null,
+        };
+        const reactionCount = currentReaction.reactions.reduce((sum, reaction) => sum + reaction.count, 0);
         const imageUrls = thread.imageUrls ?? [];
         const videos = thread.videos ?? [];
         return (
@@ -56,14 +106,42 @@ export function ForumFeedList({ threads, compact = false }: { threads: ForumFeed
               )}
               {!compact && videos.map((video) => <ForumVideoPlayer key={video.id} video={video} />)}
               <div className="community-feed-meta">
-                <span title={tr({ zh: `${reactionCount} 个反应`, en: `${reactionCount} reactions` })}>
+                <button
+                  type="button"
+                  className={`community-feed-meta-action${currentReaction.myReaction ? ' is-mine' : ''}`}
+                  aria-label={tr({
+                    zh: currentReaction.myReaction ? '取消回应' : '点赞',
+                    en: currentReaction.myReaction ? 'Remove reaction' : 'Like',
+                  })}
+                  title={tr({
+                    zh: currentReaction.myReaction ? '取消回应' : '点赞',
+                    en: currentReaction.myReaction ? 'Remove reaction' : 'Like',
+                  })}
+                  aria-pressed={currentReaction.myReaction !== null}
+                  onClick={() => void toggleReaction(thread)}
+                  disabled={busyPostId !== null}
+                >
                   <span className="community-feed-reactions" aria-hidden="true">
-                    {thread.reactions.slice(0, 3).map((reaction) => REACTION_EMOJI[reaction.kind]).join('') || '♡'}
+                    {currentReaction.reactions.slice(0, 3).map((reaction) => REACTION_EMOJI[reaction.kind]).join('') || '♡'}
                   </span>
                   {formatCount(reactionCount, lang)}
-                </span>
-                <span><MessageCircle size={14} aria-hidden="true" />{formatCount(thread.replyCount, lang)}</span>
-                <span><Eye size={14} aria-hidden="true" />{formatCount(thread.viewCount, lang)}</span>
+                </button>
+                <Link
+                  href={`/forum/t/${thread.id}`}
+                  prefetch={false}
+                  className="community-feed-meta-action"
+                  aria-label={tr({ zh: `查看 ${thread.replyCount} 条回复`, en: `View ${thread.replyCount} replies` })}
+                >
+                  <MessageCircle size={14} aria-hidden="true" />{formatCount(thread.replyCount, lang)}
+                </Link>
+                <Link
+                  href={`/forum/t/${thread.id}`}
+                  prefetch={false}
+                  className="community-feed-meta-action"
+                  aria-label={tr({ zh: `查看主题，已有 ${thread.viewCount} 次浏览`, en: `View thread with ${thread.viewCount} views` })}
+                >
+                  <Eye size={14} aria-hidden="true" />{formatCount(thread.viewCount, lang)}
+                </Link>
                 {thread.lastPostAt !== thread.createdAt && (
                   <span className="community-feed-active">
                     {tr({ zh: `活跃于 ${formatRelativeTime(thread.lastPostAt, lang)}`, en: `active ${formatRelativeTime(thread.lastPostAt, lang)}` })}
