@@ -222,7 +222,7 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
 .landing-page .wca-hero-grid {
     display: contents;
 }
-.landing-page .hero-card {
+.landing-page .landing-card {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -235,12 +235,18 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     text-decoration: none;
     color: var(--text);
     transition: border-color 0.18s ease, transform 0.18s ease;
+    overflow: hidden;
+    box-sizing: border-box;
 }
-.landing-page .hero-card:hover {
+.landing-page .landing-card:hover {
     border-color: var(--accent);
     transform: translateY(-1px);
 }
-.landing-page .hero-card-icon {
+.landing-page .landing-card:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+}
+.landing-page .landing-card-icon {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -248,13 +254,17 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     height: 34px;
     color: var(--accent);
 }
-.landing-page .hero-card-logo {
+.landing-page .landing-card-logo {
     width: 34px;
     height: 34px;
     border-radius: 9px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
 }
-.landing-page .hero-card-name {
+.landing-page .landing-card-name {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
     font-family: var(--font-serif);
     font-size: 1.2rem;
     font-weight: 500;
@@ -285,12 +295,15 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
         gap: 0.45rem;
         margin-bottom: 2rem;
     }
-    .landing-page .hero-card {
+    .landing-page .landing-card {
         gap: 0.45rem;
         padding: 1rem 0.25rem;
     }
-    .landing-page .hero-card-name {
+    .landing-page .landing-card-name {
         font-size: clamp(0.82rem, 3.5vw, 1rem);
+        text-align: center;
+    }
+    .landing-page .hero-grids .landing-card-name {
         white-space: nowrap;
     }
 }
@@ -355,6 +368,13 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     grid-auto-rows: minmax(72px, auto);
     gap: 0.75rem;
     width: 100%;
+}
+
+/* 首页分区与顶部入口共用五列节奏；tier 只保留为数据语义。 */
+.landing-page .cards-section .cards-container {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-auto-rows: auto;
+    gap: 1rem;
 }
 
 /* Tier 分配 */
@@ -428,22 +448,27 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
 .landing-page .card.tier-utility .card-name { font-size: 0.95rem; }
 
 /* ── 即将上线：灰显，不可点击 ── */
-.landing-page .card.is-disabled {
+.landing-page .card.is-disabled,
+.landing-page .landing-card.is-disabled {
     position: relative;
     cursor: not-allowed;
     opacity: 0.55;
     background: var(--surface);
 }
-.landing-page .card.is-disabled:hover {
+.landing-page .card.is-disabled:hover,
+.landing-page .landing-card.is-disabled:hover {
     border-color: var(--border);
     background: var(--surface);
     transform: none;
 }
 .landing-page .card.is-disabled:hover .card-icon,
-.landing-page .card.is-disabled:hover .card-name {
+.landing-page .card.is-disabled:hover .card-name,
+.landing-page .landing-card.is-disabled:hover .landing-card-icon,
+.landing-page .landing-card.is-disabled:hover .landing-card-name {
     color: var(--text);
 }
-.landing-page .card .coming-soon-badge {
+.landing-page .card .coming-soon-badge,
+.landing-page .landing-card .coming-soon-badge {
     position: absolute;
     top: 8px;
     right: 8px;
@@ -478,12 +503,22 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     .landing-page .card.tier-utility { grid-column: span 12; }
 }
 
+@media (max-width: 820px) {
+    .landing-page .cards-section .cards-container {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
 @media (max-width: 640px) {
     .landing-page {
         padding: 3rem 1rem 1.5rem;
     }
     .landing-page .cards-container {
         grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem;
+    }
+    .landing-page .cards-section .cards-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.6rem;
     }
     .landing-page .card.tier-medium,
@@ -495,22 +530,6 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
         flex-direction: row;
         justify-content: center;
         padding: 0.85rem 0.6rem;
-    }
-    /* 7 张「其他」卡按 2 + 2 + 3 排,避免末行只剩一张。 */
-    .landing-page #section-other .cards-container {
-        grid-template-columns: repeat(6, 1fr);
-    }
-    .landing-page #section-other .card {
-        grid-column: span 3;
-    }
-    .landing-page #section-other .card:nth-last-child(-n + 3) {
-        grid-column: span 2;
-        flex-direction: column;
-        gap: 0.3rem;
-    }
-    .landing-page #section-other .card:nth-last-child(-n + 3) .card-name {
-        font-size: clamp(0.72rem, 3.6vw, 1rem);
-        text-align: center;
     }
 }
 

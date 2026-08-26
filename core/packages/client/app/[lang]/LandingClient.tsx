@@ -50,6 +50,33 @@ const WCA_ENTRIES: { href: string; zh: string; en: string; Icon?: LucideIcon; im
   { href: '/wca',             zh: '统计', en: 'Statistics',   img: '/icons/wca.svg' },
 ];
 
+interface LandingCardContentProps {
+  label: string;
+  Icon?: LucideIcon;
+  iconImg?: string;
+  locked?: boolean;
+}
+
+function LandingCardContent({ label, Icon, iconImg, locked = false }: LandingCardContentProps) {
+  return (
+    <>
+      {(iconImg || Icon) && (
+        <div className="landing-card-icon">
+          {iconImg
+            ? <img src={iconImg} alt="" className="landing-card-logo" aria-hidden="true" />
+            : Icon
+              ? <Icon size={30} strokeWidth={1.5} />
+              : null}
+        </div>
+      )}
+      <div className="landing-card-name">
+        <span>{label}</span>
+        {locked && <Lock size={16} strokeWidth={1.7} aria-hidden="true" />}
+      </div>
+    </>
+  );
+}
+
 export default function LandingPage() {
   // Title is owned by page.tsx's generateMetadata (lib/page-meta.ts, key '').
   // The useDocumentTitle('', '') call that used to live here forced the tab back
@@ -168,11 +195,9 @@ export default function LandingPage() {
         {/* 主入口 — 标语正下方,五张最常用直达卡(计时器 / 公式 / 模拟 / 复盘 / 打乱) */}
         <div className="primary-hero-grid">
           {PRIMARY_CARDS.map((c) => (
-            <Link key={c.id} href={c.href} className="hero-card" id={`card-${c.id}`} prefetch={false}>
-              <div className="hero-card-icon">
-                {c.Icon ? <c.Icon size={30} strokeWidth={1.5} /> : null}
-              </div>
-              <div className="hero-card-name">{t(c.nameKey)}</div>
+            <Link key={c.id} href={c.href} className="landing-card" id={`card-${c.id}`} prefetch={false}>
+              {/* allow-nested-link: LandingCardContent only renders an icon and label. */}
+              <LandingCardContent label={t(c.nameKey)} Icon={c.Icon} iconImg={c.iconImg} />
             </Link>
           ))}
         </div>
@@ -180,15 +205,9 @@ export default function LandingPage() {
         {/* WCA 入口 — 紧接主入口,原单张「WCA 统计」hero 拆成四张直达卡:比赛 / 纪录 / 排名 / 统计 */}
         <div className="wca-hero-grid">
           {WCA_ENTRIES.map((e) => (
-            <Link key={e.href} href={e.href} className="hero-card" prefetch={false}>
-              <div className="hero-card-icon">
-                {e.img
-                  ? <img src={e.img} alt="WCA" className="hero-card-logo" />
-                  : e.Icon
-                    ? <e.Icon size={30} strokeWidth={1.5} />
-                    : null}
-              </div>
-              <div className="hero-card-name">{tr({ zh: e.zh, en: e.en })}</div>
+            <Link key={e.href} href={e.href} className="landing-card" prefetch={false}>
+              {/* allow-nested-link: LandingCardContent only renders an icon and label. */}
+              <LandingCardContent label={tr({ zh: e.zh, en: e.en })} Icon={e.Icon} iconImg={e.img} />
             </Link>
           ))}
         </div>
@@ -219,28 +238,18 @@ export default function LandingPage() {
             </div>
             <div className="cards-container">
               {sec.cards.map((card) => {
-                const iconSize = card.tier === 'medium' ? 28
-                  : card.tier === 'utility' ? 20
-                  : 26;
                 if (card.adminOnly && !isAdmin) return null;
                 const isLocked = Boolean(card.lockedForNonAdmin && !isAdmin);
                 const content = (
-                  <>
-                    {(card.iconImg || card.Icon) && (
-                      <div className="card-icon">
-                        {card.iconImg
-                          ? <img src={card.iconImg} alt={`${t(card.nameKey)} Logo`} className="card-logo" />
-                          : card.Icon
-                            ? <card.Icon size={iconSize} strokeWidth={1.5} />
-                            : null}
-                      </div>
-                    )}
-                    <div className="card-name">{t(card.nameKey)}</div>
-                    {isLocked && <Lock size={18} strokeWidth={1.7} aria-hidden="true" />}
-                  </>
+                  <LandingCardContent
+                    label={t(card.nameKey)}
+                    Icon={card.Icon}
+                    iconImg={card.iconImg}
+                    locked={isLocked}
+                  />
                 );
                 const isDisabled = Boolean(card.comingSoon || isLocked);
-                const className = `card tier-${card.tier}${isDisabled ? ' is-disabled' : ''}`;
+                const className = `landing-card tier-${card.tier}${isDisabled ? ' is-disabled' : ''}`;
                 if (isDisabled) {
                   return (
                     <div key={card.id} className={className} id={`card-${card.id}`}
