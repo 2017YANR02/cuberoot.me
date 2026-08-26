@@ -35,8 +35,9 @@
 .fbm-card.fbm-status-new { border-left-color: var(--accent); }
 .fbm-card.fbm-status-triaged { border-left-color: var(--signal-warning); }
 .fbm-card.fbm-status-done { border-left-color: var(--signal-success); }
+.fbm-card-top { display: flex; align-items: center; gap: 9px; }
 .fbm-card-head {
-  display: flex; align-items: center; gap: 9px; width: 100%;
+  display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0;
   background: none; border: 0; padding: 0; cursor: pointer; text-align: left;
 }
 .fbm-kind { display: inline-flex; color: var(--muted-foreground); }
@@ -55,6 +56,11 @@
 }
 .fbm-chev { margin-left: auto; color: var(--muted-foreground); transition: transform .18s; flex-shrink: 0; }
 .fbm-chev.is-open { transform: rotate(180deg); }
+.fbm-permalink {
+  display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0;
+  color: var(--muted-foreground); font-size: 12px; text-decoration: none;
+}
+.fbm-permalink:hover { color: var(--accent); text-decoration: underline; }
 
 .fbm-body { margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: var(--foreground);
   white-space: pre-wrap; word-break: break-word; }

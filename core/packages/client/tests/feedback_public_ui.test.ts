@@ -22,6 +22,15 @@ describe('public feedback UI contract', () => {
     expect(page).not.toContain('fetchMyFeedback');
   });
 
+  it('gives every feedback item a stable deep link and opens that thread directly', () => {
+    const page = read('app/[lang]/feedback/page.tsx');
+    expect(page).toContain("'id', parseAsInteger.withOptions({ history: 'push' })");
+    expect(page).toContain('fetchFeedbackThread(safeSelectedId)');
+    expect(page).toContain('href={`/feedback?id=${it.id}`}');
+    expect(page).toContain('prefetch={false}');
+    expect(page).toContain('setOpen(new Set([safeSelectedId]))');
+  });
+
   it('shows public threads anonymously and asks for login only when replying', () => {
     const conversation = read('components/FeedbackConversation.tsx');
     const api = read('lib/feedback-api.ts');
