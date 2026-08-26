@@ -28,6 +28,7 @@
       "./sr-rotations": "runtime-neutral",
       "./admin": "runtime-neutral",
       "./account": "runtime-neutral",
+      "./account-avatar": "runtime-neutral",
       "./auth/web-session": "runtime-neutral",
       "./result-penalty": "runtime-neutral",
       "./recon-ground-truth": "runtime-neutral",
@@ -131,6 +132,7 @@
       "node": "./dist/account.js",
       "default": "./src/account.ts"
     },
+    "./account-avatar": "./src/account_avatar.ts",
     "./auth/web-session": {
       "node": "./dist/auth/web_session.js",
       "default": "./src/auth/web_session.ts"

@@ -111,7 +111,7 @@ describe('引导只给 OAuth 一条路', () => {
 
 describe('WCA 实名锁定用户名', () => {
   it('绑定 WCA 时用授权资料里的官方姓名覆盖展示名', () => {
-    expect(route).toContain("addIdentity(uid, 'wca', me.wca_id, me.wca_id, verifiedName)");
+    expect(route).toContain("addIdentity(uid, 'wca', me.wca_id, me.wca_id, verifiedName, me.avatar?.url ?? null)");
     expect(account).toMatch(/provider === 'wca'[\s\S]{0,500}?display_name = \$\{verifiedDisplayName \?\? ''\}/);
   });
 

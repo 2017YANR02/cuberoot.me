@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { Bell, BookOpen, Building2, ChevronLeft, ChevronRight, HeartHandshake, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, UserRound } from 'lucide-react';
+import { Bell, BookOpen, Building2, ChevronLeft, ChevronRight, HeartHandshake, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, Upload, UserRound } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
@@ -23,10 +23,119 @@ import { AccountPanel, LoginForm, WcaLinkPrompt, DeleteAccountPanel, type Signed
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import { DISPLAY_NAME_MAX_LENGTH, isValidDisplayName, normalizeDisplayName } from '@cuberoot/shared/account';
-import { updateDisplayName } from '@/lib/account-api';
+import { CLAWD_AVATAR_PRESETS, DEFAULT_CLAWD_AVATAR_PRESET, type ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
+import { updateAvatar, updateDisplayName, type AvatarChoice } from '@/lib/account-api';
+import { clawdAvatarUrl } from '@/lib/account-avatar';
+import { prepareImageUpload, uploadImageBlob } from '@/lib/image-upload';
 import { ADMIN_WCA_IDS, applySession, useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
 import { tr, useLang } from '@/i18n/tr';
 import './account.css';
+
+function AvatarEditor() {
+  const t = useT();
+  const user = useAuthStore((s) => s.user);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const saveChoice = async (choice: AvatarChoice) => {
+    setSaving(true);
+    setError(null);
+    try {
+      const session = await updateAvatar(choice);
+      if (!applySession(session.token, session.user)) throw new Error('session persistence failed');
+    } catch {
+      setError(t('头像保存失败，请稍后重试。', 'Could not save the avatar. Try again later.'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const upload = async (file: File | undefined) => {
+    if (!file) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const prepared = await prepareImageUpload(file, 512);
+      const image = await uploadImageBlob(prepared.dataB64, prepared.mime);
+      const session = await updateAvatar({ kind: 'upload', imageId: image.id });
+      if (!applySession(session.token, session.user)) throw new Error('session persistence failed');
+    } catch (uploadError) {
+      setError((uploadError as Error).message === 'unsupported_image_type'
+        ? t('请选择 PNG、JPEG 或 WebP 图片。', 'Choose a PNG, JPEG, or WebP image.')
+        : t('头像上传失败，请稍后重试。', 'Could not upload the avatar. Try again later.'));
+    } finally {
+      if (fileRef.current) fileRef.current.value = '';
+      setSaving(false);
+    }
+  };
+
+  if (!user) return null;
+  const selectedPreset = user.avatarPreset ?? DEFAULT_CLAWD_AVATAR_PRESET;
+  const usingWcaAvatar = user.avatarSource === 'auto' && Boolean(user.wcaId);
+  const usingDefaultClawd = user.avatarSource === 'clawd'
+    || (user.avatarSource === 'auto' && !user.wcaId);
+
+  return (
+    <div className="account-avatar-editor">
+      <div className={`account-avatar-preview${usingDefaultClawd ? ' is-clawd' : ''}`}>
+        <img src={user.avatar} alt="" />
+      </div>
+      <div className="account-avatar-controls">
+        <span className="account-avatar-label">{t('头像', 'Avatar')}</span>
+        <div className="account-avatar-actions">
+          <button type="button" className="auth-link" disabled={saving} onClick={() => fileRef.current?.click()}>
+            <Upload size={13} aria-hidden="true" />
+            {t('上传图片', 'Upload image')}
+          </button>
+          <input
+            ref={fileRef}
+            className="account-avatar-file"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(event) => void upload(event.target.files?.[0])}
+          />
+          {saving && <Loader2 size={14} className="auth-spin" aria-label={t('正在保存', 'Saving')} />}
+        </div>
+      </div>
+      <details className="account-avatar-picker">
+        <summary>{t('选择 Clawd 头像', 'Choose a Clawd avatar')}</summary>
+        {user.wcaId && (
+          <button
+            type="button"
+            className={`account-wca-avatar-choice${usingWcaAvatar ? ' is-selected' : ''}`}
+            aria-pressed={usingWcaAvatar}
+            disabled={saving}
+            onClick={() => void saveChoice({ kind: 'wca' })}
+          >
+            {t('使用 WCA 官方头像', 'Use official WCA avatar')}
+          </button>
+        )}
+        <div className="account-clawd-grid">
+          {CLAWD_AVATAR_PRESETS.map((preset) => {
+            const selected = usingDefaultClawd && selectedPreset === preset.id;
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                className={`account-clawd-choice${selected ? ' is-selected' : ''}`}
+                aria-label={t(preset.zh, preset.en)}
+                aria-pressed={selected}
+                title={t(preset.zh, preset.en)}
+                disabled={saving}
+                onClick={() => void saveChoice({ kind: 'clawd', preset: preset.id as ClawdAvatarPresetId })}
+              >
+                <span className="account-clawd-image"><img src={clawdAvatarUrl(preset.id)} alt="" /></span>
+                <span>{t(preset.zh, preset.en)}</span>
+              </button>
+            );
+          })}
+        </div>
+      </details>
+      {error && <p className="auth-error" role="alert">{error}</p>}
+    </div>
+  );
+}
 
 function DisplayNameEditor() {
   const t = useT();
@@ -86,6 +195,7 @@ function DisplayNameEditor() {
   return (
     <div className="account-profile-editor">
       <h2 className="account-creds-title">{t('个人资料', 'Profile')}</h2>
+      <AvatarEditor />
       <div className="auth-idrow">
         <span className="auth-idicon"><UserRound size={16} /></span>
         <span className="auth-idprov">{t('用户名', 'Username')}</span>

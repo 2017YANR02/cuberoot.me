@@ -155,7 +155,7 @@ const TABLES: Table[] = [
   { name: 'wca_users', domain: 'comp', origin: 'snapshot', purpose: { zh: 'WCA OAuth 登录用户(身份 / 头像 / admin)', en: 'WCA OAuth users (identity, avatar, admin flag)' } },
 
   // ── accounts & auth ────────────────────────────────────
-  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
+  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
   { name: 'auth_identities', domain: 'account', origin: '0064', evolved: [78, 103], purpose: { zh: '账号与外部身份的唯一映射；微信小程序与网站扫码登录共用 UnionID', en: 'Unique account-to-provider identity mappings; Mini Program and website QR sign-in share the Weixin UnionID' } },
   { name: 'auth_codes', domain: 'account', origin: '0064', purpose: { zh: '邮箱与手机登录、绑定使用的短时验证码及核销状态', en: 'Short-lived email and phone verification codes with consumption state' } },
   { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', purpose: { zh: '小程序原生会话换取网页会话的 90 秒单次票据，只保存 SHA-256', en: '90-second single-use tickets that bridge Mini Program sessions into website sessions; only SHA-256 hashes are stored' } },
@@ -626,6 +626,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 169, slug: 'page_notice_placements', desc: { zh: 'page_notices 增加展示位、目标链接与生效时间窗，使同一路径可同时承载顶部运维通知和首页焦点新闻；并预置 WCA 4-pad 计时公告。', en: 'Add placement, target-link, and active-window fields to page_notices so one path can carry both a top operational notice and homepage featured news; seed the WCA 4-pad timing announcement.' } },
   { n: 170, slug: 'nav_sites_github', desc: { zh: 'nav_sites 增加 GitHub 链接', en: 'Add GitHub links to nav sites' } },
   { n: 171, slug: 'cube_pb', desc: { zh: '新增 CubePB 个人纪录主页、进步历史、公开分享设置与当前纪录排行榜。', en: 'Add CubePB personal-best profiles, improvement history, public sharing settings, and current-record leaderboards.' } },
+  { n: 172, slug: 'account_avatars', desc: { zh: '新增账号头像来源契约，支持 Clawd 预设、自有上传与 WCA 官方头像自动刷新。', en: 'Add the account-avatar source contract for Clawd presets, owned uploads, and automatic WCA profile-photo refreshes.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

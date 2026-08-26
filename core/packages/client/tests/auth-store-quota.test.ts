@@ -82,7 +82,14 @@ describe('applySession', () => {
   });
 
   it('persists the matching user and token together', () => {
-    const user = { uid: 7, wcaId: null, name: 'Mini User', avatar: 'mini.png' };
+    const user = {
+      uid: 7,
+      wcaId: null,
+      name: 'Mini User',
+      avatar: 'mini.png',
+      avatarSource: 'auto' as const,
+      avatarPreset: null,
+    };
 
     expect(applySession('mini-token', user)).toBe(true);
     expect(localStorage.getItem('cuberoot_jwt')).toBe('mini-token');
@@ -91,6 +98,8 @@ describe('applySession', () => {
       wcaId: '',
       name: 'Mini User',
       avatar: 'mini.png',
+      avatarSource: 'auto',
+      avatarPreset: null,
       country: '',
     });
     expect(useAuthStore.getState().user?.name).toBe('Mini User');
@@ -108,11 +117,23 @@ describe('applySession', () => {
     expect(persistAuthItem('cuberoot_jwt', 'old-token')).toBe(true);
     useAuthStore.getState().refresh();
 
-    const nextUser = { uid: 8, wcaId: null, name: 'Next User', avatar: '' };
+    const nextUser = {
+      uid: 8,
+      wcaId: null,
+      name: 'Next User',
+      avatar: '',
+      avatarSource: 'auto' as const,
+      avatarPreset: null,
+    };
     expect(applySession('n'.repeat(220), nextUser)).toBe(false);
     expect(localStorage.getItem('cuberoot_jwt')).toBe('old-token');
     expect(JSON.parse(localStorage.getItem('wca_user') ?? 'null')).toEqual(previousUser);
-    expect(useAuthStore.getState().user).toEqual(previousUser);
+    expect(useAuthStore.getState().user).toEqual({
+      ...previousUser,
+      avatar: '/deskpet/clawd-idle-look.svg',
+      avatarSource: 'auto',
+      avatarPreset: null,
+    });
   });
 });
 

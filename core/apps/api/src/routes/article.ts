@@ -18,6 +18,7 @@ import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { bodyLimit } from 'hono/body-limit';
 import { query } from '../db/connection.js';
+import { apiOrigin } from '../utils/api_origin.js';
 import {
   requireAuth,
   requireAdmin,
@@ -117,21 +118,6 @@ function normalizeSubtitle(s: unknown): string | null {
   if (typeof s !== 'string') throw new Error('Validation: subtitle must be a string');
   const v = s.trim();
   return v ? v : null;
-}
-
-/** 公开服务的 API origin,用于拼图片 URL。优先 nginx 转发头,回退请求 URL。 */
-function apiOrigin(c: { req: { header: (name: string) => string | undefined; url: string } }): string {
-  // 只信任反代设置的 X-Forwarded-Host(prod nginx 必设);裸 Host 头攻击者可控,不作回退。
-  const host = c.req.header('X-Forwarded-Host');
-  if (host) {
-    const proto = c.req.header('X-Forwarded-Proto') ?? 'https';
-    return `${proto}://${host}`;
-  }
-  try {
-    return new URL(c.req.url).origin;
-  } catch {
-    return '';
-  }
 }
 
 // GET /v1/article — 列表。默认仅已发布;?mine=1 (authed) 返回自己的草稿+发布。

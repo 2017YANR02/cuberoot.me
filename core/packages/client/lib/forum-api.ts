@@ -1,6 +1,7 @@
 // /forum API client — typed fetch helpers for /v1/forum/*.
 // Same shape as lib/recon-api.ts: API_BASE + authHeaders/handleApi.
 
+import type { ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 import { API_ORIGIN } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
@@ -137,6 +138,7 @@ export interface ForumPost {
 export interface PostAuthor {
   name: string;
   avatarUrl: string | null;
+  avatarPreset: ClawdAvatarPresetId | null;
   joinedAt: string | null;
   postCount: number;
   wcaId: string | null;

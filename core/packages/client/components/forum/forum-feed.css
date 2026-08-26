@@ -43,6 +43,10 @@
   height: 100%;
   object-fit: cover;
 }
+.community-feed-avatar.is-clawd img {
+  transform: scale(1.85);
+  transform-origin: center 82%;
+}
 
 .community-feed-main { min-width: 0; }
 
