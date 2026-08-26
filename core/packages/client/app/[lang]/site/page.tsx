@@ -9,7 +9,7 @@
  * URL state (?g group, ?q query) is managed via nuqs (history: 'replace').
  */
 import { Suspense, useMemo, useCallback, useState, useEffect } from 'react';
-import { useQueryStates, parseAsString } from 'nuqs';
+import { useQueryStates, parseAsArrayOf, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { Search, AlertTriangle, Pencil, Trash2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
 import Fuse from 'fuse.js';
@@ -19,7 +19,11 @@ import type { GroupId, Site } from './data/types';
 import { isAdmin } from '@/lib/auth-store';
 import { firstGlyph } from '@/lib/first-glyph';
 import BackHome from '@/components/BackHome';
+import { ClearButton } from '@/components/ClearButton';
 import PersonLink from '@/components/PersonLink';
+import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
+import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
+import { eventDisplayName } from '@/lib/wca-events';
 import { listSites, deleteSite, reorderGroup } from './nav_sites_api';
 import SiteEditor from './SiteEditor';
 import './sites.css';
@@ -52,6 +56,12 @@ const GROUP_COLOR: Record<GroupId, string> = {
 const TEXTS = {
   title:       { en: 'Web Directory', zh: '魔方导航'
 },
+  topics:      { en: 'Topics',        zh: '话题' },
+  topicResult: { en: 'Topic',         zh: '话题' },
+  projects:    { en: 'Events',        zh: '项目' },
+  wcaProjects: { en: 'WCA events',    zh: 'WCA 项目' },
+  otherProjects: { en: 'Non-WCA events', zh: '非 WCA 项目' },
+  clearProjects: { en: 'Clear events', zh: '清除项目' },
   searchPh:    { en: 'Search name / description / URL…', zh: '搜索名称 / 描述 / 网址…'
 },
   sites:       { en: 'sites',            zh: '个站点'
@@ -77,6 +87,56 @@ const TEXTS = {
   confirmDel:  { en: 'Delete this site?', zh: '确认删除此站点?'
 },
 } as const;
+
+const ACTIVE_WCA_EVENT_IDS = ALL_EVENT_IDS.filter((id) => !CANCELLED_EVENT_IDS.has(id));
+const NON_WCA_SITE_PROJECT_IDS = ['fto'] as const;
+const SITE_PROJECT_IDS = [...ACTIVE_WCA_EVENT_IDS, ...NON_WCA_SITE_PROJECT_IDS];
+const SITE_PROJECTS = new Set<string>(SITE_PROJECT_IDS);
+
+/** 网址目录的规范标签与项目之间的精确映射;这些标签只进项目菜单,不再重复显示为话题。 */
+const SITE_EVENT_TAGS: Record<string, readonly string[]> = {
+  '333': ['3x3 三阶'],
+  '222': ['2x2 二阶'],
+  '444': ['4x4 四阶'],
+  '555': ['5x5 五阶'],
+  '666': ['6x6 六阶'],
+  '777': ['7x7 七阶'],
+  '333bf': ['BLD 盲拧'],
+  '333fm': ['FMC 最少步'],
+  '333oh': ['OH 单手'],
+  minx: ['Megaminx 五魔方'],
+  pyram: ['Pyraminx 金字塔'],
+  clock: ['Clock 魔表'],
+  skewb: ['Skewb 斜转'],
+  sq1: ['Square-1', 'SQ1'],
+  fto: ['FTO'],
+};
+
+const PROJECT_TOPIC_TAGS = new Set(
+  Object.values(SITE_EVENT_TAGS).flat().map((tag) => tag.toLowerCase()),
+);
+
+/** 目录没有为高阶盲拧/多盲单列标签,只在名称与简介里按这些明确别名补充匹配。 */
+const SITE_EVENT_TEXT_ALIASES: Record<string, readonly string[]> = {
+  '444bf': ['4bld', '444bf', '四阶盲拧', '四盲'],
+  '555bf': ['5bld', '555bf', '五阶盲拧', '五盲'],
+  '333mbf': ['mbld', '333mbf', 'multi-blind', 'multiblind', '多盲'],
+};
+
+function siteMatchesEvent(site: Site, eventId: string): boolean {
+  const acceptedTags = SITE_EVENT_TAGS[eventId];
+  if (acceptedTags) {
+    const normalized = new Set((site.tags ?? []).map((tag) => tag.trim().toLowerCase()));
+    if (acceptedTags.some((tag) => normalized.has(tag.toLowerCase()))) return true;
+  }
+  const aliases = SITE_EVENT_TEXT_ALIASES[eventId];
+  if (!aliases) return false;
+  const text = [site.name, site.name_zh, site.name_en, site.desc_zh, site.desc_en, ...(site.tags ?? [])]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  return aliases.some((alias) => text.includes(alias));
+}
 
 function splitLangTag(s: string): { en: string; zh: string
  } {
@@ -117,7 +177,7 @@ function LetterAvatar({ name, group }: { name: string; group: GroupId }) {
 function matchTier(s: Site, lowerQuery: string): number {
   const has = (v?: string | null) => !!v && v.toLowerCase().includes(lowerQuery);
   if (has(s.name) || has(s.name_zh) || has(s.name_en)) return 0;
-  if (has(s.author) || has(s.url) || (s.alt_urls ?? []).some(has) || (s.tags ?? []).some(has)) return 1;
+  if (has(s.author) || has(s.url) || has(s.github) || (s.alt_urls ?? []).some(has) || (s.tags ?? []).some(has)) return 1;
   if (has(s.desc_zh) || has(s.desc_en)) return 2;
   return 3;
 }
@@ -140,9 +200,11 @@ function SiteRow({ site, lang, admin, reorderable, canMoveUp, canMoveDown, onEdi
   const desc = lang === 'zh' ? site.desc_zh || site.desc_en : site.desc_en || site.desc_zh;
   const dead = site.status === 'dead';
   const wcaAuthor = site.author ? WCA_AUTHOR_BY_CREDIT[site.author] : undefined;
+  const hasExternalLinks = Boolean(site.youtube || site.github);
+  const hasMultipleExternalLinks = Boolean(site.youtube && site.github);
 
   return (
-    <div className={`site-row${dead ? ' is-dead' : ''}${admin ? ' is-admin' : ''}`}>
+    <div className={`site-row${dead ? ' is-dead' : ''}${admin ? ' is-admin' : ''}${hasExternalLinks ? ' has-external-links' : ''}${hasMultipleExternalLinks ? ' has-multiple-external-links' : ''}`}>
       <div className="site-row-main">
         <a
           href={site.url}
@@ -170,10 +232,21 @@ function SiteRow({ site, lang, admin, reorderable, canMoveUp, canMoveDown, onEdi
         <div className="site-row-desc" title={desc || ''}>{desc || ''}</div>
       </div>
 
-      {site.youtube && (
-        <a href={site.youtube} target="_blank" rel="noopener noreferrer" className="site-row-yt" title="YouTube" onClick={(e) => e.stopPropagation()}>
-          <YouTubeBadge />
-        </a>
+      {hasExternalLinks && (
+        <div className="site-row-external-links">
+          {site.youtube && (
+            // allow-nested-link: sibling of the row overlay anchor
+            <a href={site.youtube} target="_blank" rel="noopener noreferrer" className="site-row-external-link" title="YouTube" aria-label="YouTube">
+              <YouTubeBadge />
+            </a>
+          )}
+          {site.github && (
+            // allow-nested-link: sibling of the row overlay anchor
+            <a href={site.github} target="_blank" rel="noopener noreferrer" className="site-row-external-link" title="GitHub" aria-label="GitHub">
+              <span className="site-row-github-label">GitHub</span>
+            </a>
+          )}
+        </div>
       )}
 
       {admin && (
@@ -211,11 +284,22 @@ function SitesPageInner() {
   const admin = mounted && isAdmin();
 
   const [params, setQuery] = useQueryStates(
-    { g: parseAsString, q: parseAsString },
+    {
+      g: parseAsString,
+      q: parseAsString,
+      topic: parseAsString,
+      events: parseAsArrayOf(parseAsString).withDefault([]),
+    },
     { history: 'replace', scroll: false },
   );
   const group = ((params.g as GroupId) || DEFAULT_GROUP) as GroupFilter;
   const query = params.q || '';
+  const selectedTopic = params.topic || '';
+  const selectedEventIds = useMemo(
+    () => params.events.filter((id) => SITE_PROJECTS.has(id)),
+    [params.events],
+  );
+  const selectedEvents = useMemo(() => new Set(selectedEventIds), [selectedEventIds]);
 
   const [sites, setSites] = useState<Site[] | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
@@ -232,7 +316,7 @@ function SitesPageInner() {
 
   const setGroup = useCallback(
     (g: GroupFilter) => {
-      void setQuery({ g: g === DEFAULT_GROUP ? null : g });
+      void setQuery({ g: g === DEFAULT_GROUP ? null : g, topic: null, events: [] });
     },
     [setQuery],
   );
@@ -248,7 +332,7 @@ function SitesPageInner() {
     if (inputValue === query) return;
     if (composing) return;
     const t = setTimeout(() => {
-      void setQuery({ q: inputValue || null });
+      void setQuery({ q: inputValue || null, topic: null });
     }, 150);
     return () => clearTimeout(t);
   }, [inputValue, composing, query, setQuery]);
@@ -258,6 +342,63 @@ function SitesPageInner() {
     if (sites) for (const s of sites) c[s.group] = (c[s.group] || 0) + 1;
     return c;
   }, [sites]);
+
+  const topics = useMemo(() => {
+    const byLabel = new Map<string, { label: string; count: number; firstSeen: number }>();
+    let firstSeen = 0;
+    for (const site of sites ?? []) {
+      const seenForSite = new Set<string>();
+      for (const rawTag of site.tags ?? []) {
+        if (PROJECT_TOPIC_TAGS.has(rawTag.trim().toLowerCase())) continue;
+        const label = splitLangTag(rawTag)[lang].trim();
+        if (!label) continue;
+        const key = label.toLocaleLowerCase(lang === 'zh' ? 'zh-Hans' : 'en');
+        if (seenForSite.has(key)) continue;
+        seenForSite.add(key);
+        const existing = byLabel.get(key);
+        if (existing) {
+          existing.count += 1;
+        } else {
+          byLabel.set(key, { label, count: 1, firstSeen });
+          firstSeen += 1;
+        }
+      }
+    }
+    return [...byLabel.values()].sort((a, b) => b.count - a.count || a.firstSeen - b.firstSeen);
+  }, [sites, lang]);
+
+  const toggleTopic = useCallback((label: string) => {
+    const next = selectedTopic.toLocaleLowerCase(lang === 'zh' ? 'zh-Hans' : 'en') === label.toLocaleLowerCase(lang === 'zh' ? 'zh-Hans' : 'en')
+      ? ''
+      : label;
+    setInputValue('');
+    void setQuery({ q: null, topic: next || null });
+  }, [selectedTopic, lang, setQuery]);
+
+  const eventPickerGroups = useMemo<readonly PuzzlePickerGroup[]>(() => [
+    {
+      id: 'wca',
+      label: TEXTS.wcaProjects[lang],
+      items: ACTIVE_WCA_EVENT_IDS.map((id) => ({
+        id,
+        label: eventDisplayName(id, lang === 'zh'),
+        iconClass: `event-${id}`,
+      })),
+    },
+    {
+      id: 'non-wca',
+      label: TEXTS.otherProjects[lang],
+      items: [{ id: 'fto', label: 'FTO', iconClass: 'unofficial-fto' }],
+    },
+  ], [lang]);
+
+  const toggleEvent = useCallback((eventId: string) => {
+    if (!SITE_PROJECTS.has(eventId)) return;
+    const next = new Set(selectedEvents);
+    if (next.has(eventId)) next.delete(eventId);
+    else next.add(eventId);
+    void setQuery({ events: SITE_PROJECT_IDS.filter((id) => next.has(id)) });
+  }, [selectedEvents, setQuery]);
 
   const fuse = useMemo(
     () =>
@@ -279,6 +420,7 @@ function SitesPageInner() {
               }),
           },
           { name: 'url', weight: 0.05 },
+          { name: 'github', weight: 0.05 },
         ],
         threshold: 0.35,
         minMatchCharLength: 2,
@@ -289,25 +431,44 @@ function SitesPageInner() {
 
   const filtered = useMemo(() => {
     if (!sites) return [];
+    const locale = lang === 'zh' ? 'zh-Hans' : 'en';
+    const topicKey = selectedTopic.toLocaleLowerCase(locale);
+    const topicCandidates = topicKey
+      ? sites.filter((site) => (site.tags ?? []).some((rawTag) => (
+        splitLangTag(rawTag)[lang].trim().toLocaleLowerCase(locale) === topicKey
+      )))
+      : sites;
+    const candidates = selectedEventIds.length > 0
+      ? topicCandidates.filter((site) => selectedEventIds.some((eventId) => siteMatchesEvent(site, eventId)))
+      : topicCandidates;
     const q = query.trim();
-    if (!q) return sites.filter((s) => s.group === group);
+    if (!q) return topicKey || selectedEventIds.length > 0
+      ? candidates
+      : candidates.filter((s) => s.group === group);
     // 先只认精确子串(不区分大小写),按命中字段分层排序 —— 搜 "MCC" 就该给含 MCC 的,
     // 而不是被 Fuse 判成「像 FMC」的一大片噪音(3 字母缩写编辑距离 2 就命中)。
     // 精确匹配独立于 Fuse 算,不受 threshold 影响,不会漏。
     const lower = q.toLowerCase();
-    const exact = sites
+    const exact = candidates
       .map((site, i) => ({ site, i, tier: matchTier(site, lower) }))
       .filter((r) => r.tier < 3)
       .sort((a, b) => a.tier - b.tier || a.i - b.i)
       .map((r) => r.site);
     if (exact.length) return exact;
     // 一条精确的都没有(拼错 / 记岔了)才降级到 Fuse 模糊,保住容错。
-    return fuse.search(q).map((r) => r.item);
-  }, [sites, query, group, fuse]);
+    const candidateIds = new Set(candidates.map((site) => site.id));
+    return fuse.search(q).map((r) => r.item).filter((site) => candidateIds.has(site.id));
+  }, [sites, query, selectedTopic, selectedEventIds, group, lang, fuse]);
 
-  const headerLabel = query.trim()
-    ? `${TEXTS.resultsFor[lang]} "${query.trim()}"`
-    : GROUPS.find((g) => g.id === group)?.[lang === 'zh' ? 'label_zh' : 'label_en'] || group;
+  const selectedEventNames = selectedEventIds.map((id) => eventDisplayName(id, lang === 'zh'));
+  const filterLabels = [
+    selectedTopic ? `${TEXTS.topicResult[lang]} "${selectedTopic}"` : '',
+    selectedEventNames.length > 0 ? `${TEXTS.projects[lang]}: ${selectedEventNames.join(', ')}` : '',
+    query.trim() ? `${TEXTS.resultsFor[lang]} "${query.trim()}"` : '',
+  ].filter(Boolean);
+  const headerLabel = filterLabels.join(' / ')
+    || GROUPS.find((g) => g.id === group)?.[lang === 'zh' ? 'label_zh' : 'label_en']
+    || group;
 
   function applySaved(saved: Site) {
     setSites((prev) => {
@@ -375,6 +536,15 @@ function SitesPageInner() {
               setInputValue((e.target as HTMLInputElement).value);
             }}
           />
+          {inputValue && (
+            <ClearButton
+              onClick={() => {
+                setInputValue('');
+                void setQuery({ q: null });
+              }}
+              preserveFocus
+            />
+          )}
         </div>
 
         <nav className="sites-nav">
@@ -392,6 +562,47 @@ function SitesPageInner() {
       </aside>
 
       <main className="sites-main">
+        {sites && (
+          <div className="sites-project-filter" aria-label={TEXTS.projects[lang]}>
+            <PuzzlePicker
+              isZh={lang === 'zh'}
+              groups={eventPickerGroups}
+              selectedEvents={selectedEvents}
+              onToggle={toggleEvent}
+            />
+            {selectedEventIds.length > 0 && (
+              <ClearButton
+                variant="standalone"
+                ariaLabel={TEXTS.clearProjects[lang]}
+                onClick={() => void setQuery({ events: [] })}
+              />
+            )}
+          </div>
+        )}
+
+        {sites && topics.length > 0 && (
+          <section className="sites-topics" aria-labelledby="sites-topics-title">
+            <h2 id="sites-topics-title">{TEXTS.topics[lang]}</h2>
+            <div className="sites-topic-list">
+              {topics.map((topic) => {
+                const active = selectedTopic.toLocaleLowerCase(lang === 'zh' ? 'zh-Hans' : 'en')
+                  === topic.label.toLocaleLowerCase(lang === 'zh' ? 'zh-Hans' : 'en');
+                return (
+                  <button
+                    key={topic.label}
+                    type="button"
+                    className={`sites-topic${active ? ' is-active' : ''}`}
+                    aria-pressed={active}
+                    onClick={() => toggleTopic(topic.label)}
+                  >
+                    {topic.label}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         <header className="sites-main-header">
           <h1>{headerLabel}</h1>
           <span className="sites-main-count">
@@ -428,7 +639,7 @@ function SitesPageInner() {
                 site={s}
                 lang={lang}
                 admin={admin}
-                reorderable={!query.trim()}
+                reorderable={!query.trim() && !selectedTopic && selectedEventIds.length === 0}
                 canMoveUp={i > 0 && filtered[i - 1].group === s.group}
                 canMoveDown={i < filtered.length - 1 && filtered[i + 1].group === s.group}
                 onEdit={setEditing}

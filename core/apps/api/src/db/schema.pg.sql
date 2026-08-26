@@ -2837,6 +2837,7 @@ CREATE TABLE nav_sites (
   desc_en     TEXT,
   desc_zh     TEXT,
   youtube     TEXT,
+  github      TEXT,
   tags        JSONB,
   status      VARCHAR(20),
   updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()

@@ -6,7 +6,7 @@
  *   - DELETE /v1/nav/sites/:id          — admin 删
  *   - PUT    /v1/nav/sites/reorder      — admin 重排,body { groupId, ids: number[] }
  *
- * Schema 见 migrations/0001_nav_sites.sql。
+ * Schema 见 migrations/0001_nav_sites.sql 与 0170_nav_sites_github.sql。
  */
 import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
@@ -28,6 +28,7 @@ interface NavSiteRow {
   desc_en: string | null;
   desc_zh: string | null;
   youtube: string | null;
+  github: string | null;
   tags: unknown;
   status: string | null;
   updated_at: string | Date;
@@ -48,6 +49,7 @@ function rowToJson(r: NavSiteRow): Record<string, unknown> {
   if (r.desc_en) o.desc_en = r.desc_en;
   if (r.desc_zh) o.desc_zh = r.desc_zh;
   if (r.youtube) o.youtube = r.youtube;
+  if (r.github) o.github = r.github;
   if (r.tags) o.tags = r.tags;
   if (r.status) o.status = r.status;
   return o;
@@ -68,6 +70,7 @@ interface NavSiteInput {
   desc_en?: string | null;
   desc_zh?: string | null;
   youtube?: string | null;
+  github?: string | null;
   tags?: unknown;
   status?: string | null;
 }
@@ -78,10 +81,11 @@ function validate(b: NavSiteInput): { error?: string } {
   if (b.name.length > NAME_MAX) return { error: 'name too long' };
   if (typeof b.url !== 'string' || !b.url.trim()) return { error: 'url required' };
   if (b.url.length > URL_MAX) return { error: 'url too long' };
-  for (const k of ['name_en', 'name_zh', 'author', 'youtube', 'status'] as const) {
+  for (const k of ['name_en', 'name_zh', 'author', 'youtube', 'github', 'status'] as const) {
     const v = b[k];
     if (v !== undefined && v !== null && typeof v !== 'string') return { error: `${k} must be string or null` };
   }
+  if (typeof b.github === 'string' && b.github.length > URL_MAX) return { error: 'github too long' };
   for (const k of ['desc_en', 'desc_zh'] as const) {
     const v = b[k];
     if (v !== undefined && v !== null) {
@@ -101,7 +105,7 @@ function validate(b: NavSiteInput): { error?: string } {
 function normalize(b: NavSiteInput): {
   name: string; name_en: string | null; name_zh: string | null;
   url: string; alt_urls: string[] | null; author: string | null;
-  desc_en: string | null; desc_zh: string | null; youtube: string | null;
+  desc_en: string | null; desc_zh: string | null; youtube: string | null; github: string | null;
   tags: string[] | null; status: string | null;
 } {
   const empty = (s: string | null | undefined) => (s == null || s === '' ? null : s);
@@ -120,6 +124,7 @@ function normalize(b: NavSiteInput): {
     desc_en: empty(b.desc_en ?? null),
     desc_zh: empty(b.desc_zh ?? null),
     youtube: empty(b.youtube ?? null),
+    github: empty(b.github ?? null),
     tags: arr(b.tags),
     status: empty(b.status ?? null),
   };
@@ -154,12 +159,12 @@ navSitesRoutes.post('/nav/sites', async (c) => {
   const inserted = await query<NavSiteRow>(
     `INSERT INTO nav_sites (
        group_id, position, name, name_en, name_zh, url, alt_urls,
-       author, desc_en, desc_zh, youtube, tags, status
-     ) VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?::jsonb, ?)
+       author, desc_en, desc_zh, youtube, github, tags, status
+     ) VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?, ?::jsonb, ?)
      RETURNING *`,
     [
       body.group, nextPos, f.name, f.name_en, f.name_zh, f.url, f.alt_urls,
-      f.author, f.desc_en, f.desc_zh, f.youtube, f.tags, f.status,
+      f.author, f.desc_en, f.desc_zh, f.youtube, f.github, f.tags, f.status,
     ],
   );
   return c.json(rowToJson(inserted[0]));
@@ -245,13 +250,13 @@ navSitesRoutes.put('/nav/sites/:id', async (c) => {
     `UPDATE nav_sites SET
        group_id = ?, position = ?,
        name = ?, name_en = ?, name_zh = ?, url = ?, alt_urls = ?::jsonb,
-       author = ?, desc_en = ?, desc_zh = ?, youtube = ?, tags = ?::jsonb, status = ?
+       author = ?, desc_en = ?, desc_zh = ?, youtube = ?, github = ?, tags = ?::jsonb, status = ?
      WHERE id = ?
      RETURNING *`,
     [
       body.group, newPos,
       f.name, f.name_en, f.name_zh, f.url, f.alt_urls,
-      f.author, f.desc_en, f.desc_zh, f.youtube, f.tags, f.status,
+      f.author, f.desc_en, f.desc_zh, f.youtube, f.github, f.tags, f.status,
       id,
     ],
   );
