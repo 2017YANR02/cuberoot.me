@@ -4,14 +4,14 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { ArrowRight, Heart, Radio, Trophy, ListOrdered, LogIn, Search, User, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Heart, Radio, Trophy, ListOrdered, Lock, LogIn, Search, User, type LucideIcon } from 'lucide-react';
 import Link from '@/components/AppLink';
 import LangToggle from '@/components/LangToggle';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import LandingSearch from '@/components/LandingSearch';
 import LazyVisible from '@/components/LazyVisible';
-import { TEXTS, SECTIONS, PRIMARY_CARDS, SEARCH_CARDS } from '@/lib/landing-sections';
+import { TEXTS, SECTIONS, PRIMARY_CARDS, SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
 
 // Below-the-fold widgets — dynamic to defer client hydrate / chunk fetch.
 // The dynamic fallback and viewport placeholder use the same measured height,
@@ -89,7 +89,7 @@ export default function LandingPage() {
   const user = useAuthUser();
   const isAdmin = isAdminWcaId(user?.wcaId);
   const searchCards = useMemo(
-    () => SEARCH_CARDS.filter((card) => !card.adminOnly || isAdmin),
+    () => SEARCH_CARDS.filter((card) => isLandingSearchCardVisible(card, isAdmin)),
     [isAdmin],
   );
   const pathname = usePathname();
@@ -222,6 +222,8 @@ export default function LandingPage() {
                 const iconSize = card.tier === 'medium' ? 28
                   : card.tier === 'utility' ? 20
                   : 26;
+                if (card.adminOnly && !isAdmin) return null;
+                const isLocked = Boolean(card.lockedForNonAdmin && !isAdmin);
                 const content = (
                   <>
                     {(card.iconImg || card.Icon) && (
@@ -234,17 +236,20 @@ export default function LandingPage() {
                       </div>
                     )}
                     <div className="card-name">{t(card.nameKey)}</div>
+                    {isLocked && <Lock size={18} strokeWidth={1.7} aria-hidden="true" />}
                   </>
                 );
-                if (card.adminOnly && !isAdmin) return null;
-                const isDisabled = Boolean(card.comingSoon);
+                const isDisabled = Boolean(card.comingSoon || isLocked);
                 const className = `card tier-${card.tier}${isDisabled ? ' is-disabled' : ''}`;
                 if (isDisabled) {
                   return (
                     <div key={card.id} className={className} id={`card-${card.id}`}
-                      title={t('comingSoon')} aria-disabled="true" role="link">
+                      title={isLocked
+                        ? tr({ zh: '教程维护中', en: 'Tutorials under maintenance' })
+                        : t('comingSoon')}
+                      aria-disabled="true" role="link">
                       {content}
-                      <span className="coming-soon-badge">{t('comingSoon')}</span>
+                      {card.comingSoon && <span className="coming-soon-badge">{t('comingSoon')}</span>}
                     </div>
                   );
                 }

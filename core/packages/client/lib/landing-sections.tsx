@@ -114,6 +114,7 @@ export interface CardConfig {
   nameKey: keyof typeof TEXTS;
   comingSoon?: boolean;
   adminOnly?: boolean;
+  lockedForNonAdmin?: boolean;
 }
 
 type I18n = { en: string; zh: string; };
@@ -187,7 +188,7 @@ export const SECTIONS: Section[] = [
       { id: 'meet', href: '/meet', internal: true, tier: 'medium', Icon: Video, nameKey: 'meet' },
       { id: 'documents', href: '/docs', internal: true, tier: 'medium', Icon: FileText, nameKey: 'documents' },
       { id: 'spreadsheets', href: '/sheets', internal: true, tier: 'medium', Icon: Table2, nameKey: 'spreadsheets' },
-      { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg' },
+      { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg', lockedForNonAdmin: true },
       { id: 'quiz',     href: '/quiz',     internal: true, tier: 'medium', Icon: CircleQuestionMark, nameKey: 'quiz' },
       { id: 'wiki',     href: '/wiki',     internal: true, tier: 'medium', Icon: BookA,      nameKey: 'wiki' },
       { id: 'regulation', href: '/regulation', internal: true, tier: 'medium', Icon: Scale, nameKey: 'regulation' },
@@ -236,6 +237,7 @@ export const SEARCH_CARDS: LandingSearchCard[] = [
         href: c.href,
         internal: c.internal,
         adminOnly: c.adminOnly,
+        lockedForNonAdmin: c.lockedForNonAdmin,
         nameEn: TEXTS[c.nameKey].en,
         nameZh: TEXTS[c.nameKey].zh,
         sectionTitleEn: sec.eyebrow.en,
@@ -249,3 +251,7 @@ export const SEARCH_CARDS: LandingSearchCard[] = [
   { id: 'dev-llm', href: '/dev/llm', internal: true, nameEn: 'Large Language Models', nameZh: '大模型', sectionTitleEn: 'Dev', sectionTitleZh: '开发' },
   { id: 'fable', href: '/dev/llm/fable', internal: true, nameEn: 'Claude Fable 5', nameZh: 'Claude Fable 5', sectionTitleEn: 'Dev', sectionTitleZh: '开发' },
 ];
+
+export function isLandingSearchCardVisible(card: LandingSearchCard, isAdmin: boolean): boolean {
+  return isAdmin || (!card.adminOnly && !card.lockedForNonAdmin);
+}
