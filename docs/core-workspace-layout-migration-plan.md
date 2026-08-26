@@ -2,7 +2,7 @@
 
 最后更新：2026-08-25
 
-状态：`实施中`。仓库所有者已于 2026-08-25 明确授权开始；LAY2-01 至 LAY2-09 已完成，四个离线 job、Miniprogram、Mobile 和 API 已分别移至 `core/jobs` 与 `core/apps`，下一批为 Web。
+状态：`实施中`。仓库所有者已于 2026-08-25 明确授权开始；LAY2-01 至 LAY2-09 与独立的 LAY2-13 已完成，四个离线 job、Miniprogram、Mobile、API 和 FMC Cargo app 已分别归位到 `core/jobs` 与 `core/apps`，下一批为 Web。
 
 主执行入口：[架构现代化跟踪](./architecture-modernization-tracker.md)。
 
@@ -12,7 +12,7 @@ CubeRoot 采用 `core/apps/* + core/packages/* + core/jobs/*` 的物理分层，
 
 这次迁移解决的是长期多端开发和 AI 导航时的归属不清，不改变产品功能、运行时、网址、API、数据库或远端部署目录。物理路径迁移期间不改 npm package 名称；全部路径稳定后，再用独立批次把 Web/API 身份改为 `@cuberoot/web` 与 `@cuberoot/api`。它本身不会改善依赖边界；边界改善只能由公开 exports、依赖声明和消除私有源码引用来证明。旧 Platform 归档不在范围内，由仓库所有者自行处理。
 
-这不是所有公司的唯一标准，而是适合当前 CubeRoot 的常见 monorepo 结构：仓库已经真实存在四个 app、六个 library 和四个离线 job，目录应直接表达这三类不同生命周期。
+这不是所有公司的唯一标准，而是适合当前 CubeRoot 的常见 monorepo 结构：仓库已有四个 pnpm app workspace、一个独立 Cargo app、六个 library 和四个离线 job，目录应直接表达这些不同生命周期。
 
 ## 2. 为什么重开旧决定
 
@@ -33,7 +33,8 @@ core/
 │   ├── web/                 # Next.js 主站
 │   ├── api/                 # Hono API
 │   ├── mobile/              # Capacitor，共用 Android 与未来 iOS
-│   └── miniprogram/         # 微信小程序独立运行时
+│   ├── miniprogram/         # 微信小程序独立运行时
+│   └── fmc-solver/          # cubelib Rust 服务，独立 Cargo workspace
 ├── packages/
 │   ├── shared/
 │   ├── puzzle-render-core/
@@ -57,22 +58,23 @@ core/
 | `core/packages/server` | `core/apps/api` | app | `@cuberoot/server` | `@cuberoot/api` |
 | `core/packages/mobile` | `core/apps/mobile` | app | 原名 | 原名 |
 | `core/packages/miniprogram` | `core/apps/miniprogram` | app | 原名 | 原名 |
+| `fmc` | `core/apps/fmc-solver` | Cargo app | 无 npm 身份 | 无 npm 身份 |
 | `core/packages/alg-build` | `core/jobs/alg-build` | job | 原名 | 原名 |
 | `core/packages/scramble-stats-build` | `core/jobs/scramble-stats-build` | job | 原名 | 原名 |
 | `core/packages/stats-build` | `core/jobs/stats-build` | job | 原名 | 原名 |
 | `core/packages/wb-build` | `core/jobs/wb-build` | job | 原名 | 原名 |
 | 六个 `kind=library` workspace | 继续留在 `core/packages/*` | package | 原名 | 原名 |
 
-目录名和 npm package 名不是一回事。路径移动时先保留 `@cuberoot/client` 和 `@cuberoot/server`，避免把路径、依赖身份和发布配置三种迁移叠在一起。所有目录与发布合同稳定后，再单独改为更准确的 `@cuberoot/web` 和 `@cuberoot/api`；其余十二个 package 名不改。
+目录名和 npm package 名不是一回事。pnpm 路径移动时先保留 `@cuberoot/client` 和 `@cuberoot/server`，避免把路径、依赖身份和发布配置三种迁移叠在一起。所有目录与发布合同稳定后，再单独改为更准确的 `@cuberoot/web` 和 `@cuberoot/api`；其余十二个 package 名不改。FMC 是 Cargo workspace，不为迁入 `apps` 伪造 npm package。
 
-不建含义模糊的 `webapp/`。`apps/web`、`apps/api`、`apps/mobile` 和 `apps/miniprogram` 分别表达四个产品运行时；Android 与未来 iOS 继续共用同一个 Mobile React 应用，小程序不与 React DOM UI 强行合并。
+不建含义模糊的 `webapp/`。`apps/web`、`apps/api`、`apps/mobile`、`apps/miniprogram` 和 `apps/fmc-solver` 分别表达五个产品运行时；Android 与未来 iOS 继续共用同一个 Mobile React 应用，小程序不与 React DOM UI 强行合并。
 
 ## 4. 不做什么
 
 1. 不拆多个 Git 仓库。
 2. 不重写业务代码，不改变 URL、API、数据库、认证或部署拓扑。
 3. 不新建万能 UI package；真实出现两个 React app 的稳定共同消费者后再评估。
-4. 本轮不移动根目录的 `solver/`、`reconer/`、`tools/`、`stats/`、`ops/`；`reconer/` 后续经单独授权迁至 `research/reconer/`，仍不进入 Core workspace。
+4. 根目录的 `solver/`、`tools/`、`stats/`、`ops/` 保持原位；`reconer/` 与 `fmc/` 后来分别取得单独授权，已迁至 `research/reconer/` 与 `core/apps/fmc-solver/`，前者仍不进入 Core workspace。
 5. 不移动、删除或恢复 `core/packages/platform`。
 6. 不在目录迁移提交里夹带命名、格式化或业务重构。
 7. 不运行正式统计重算；job 只做最小 dry run 和临时输出验证。
@@ -113,7 +115,7 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 
 迁移后的机器约束：
 
-- `apps/*` 必须声明 `kind=app`。
+- pnpm `apps/*` 必须声明 `kind=app`；Cargo app 以 `Cargo.toml` 为入口且不得伪造 `package.json`。
 - `jobs/*` 必须声明 `kind=job`。
 - 活跃的 `packages/*` 必须声明 `kind=library`。
 - `packages/platform` 只能作为显式排除的 archive。
@@ -164,10 +166,11 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 | LAY2-08 | 资产边界与 Mobile | 先提取图标生成入口，再移至 `apps/mobile` | `完成` | 中性品牌源和生成入口已完成；Mobile、Android/Capacitor 路径合同、lockfile、生成物清册和活动文档已同步；按用户要求未运行测试或 build |
 | LAY2-09 | 测试归属与 API | 先处理 Web→API 私有测试读取，再移至 `apps/api` | `完成，待发布验收` | API 完整移至 `apps/api`；纯 API 守卫归位，混合合同按 package identity 定位；migration、lockfile、workflow、生成物和边界清单同步；本地未按用户要求运行测试或 build，交由本次发布 CI 验收 |
 | LAY2-10 | Web | 移至 `apps/web` | `已授权，待前置` | typecheck、隔离 Next build、standalone 启动和关键路由 smoke 通过 |
-| LAY2-11 | 收尾 | 删除旧路径兼容，刷新文档、清册和历史 allowlist | `已授权，待前置` | 旧活动引用归零，4 app/6 package/4 job 唯一归类 |
+| LAY2-11 | 收尾 | 删除旧路径兼容，刷新文档、清册和历史 allowlist | `已授权，待前置` | 旧活动引用归零，4 个 pnpm app、1 个 Cargo app、6 个 package、4 个 job 唯一归类 |
 | LAY2-12 | package 身份收口 | 独立把 `@cuberoot/client` / `@cuberoot/server` 改为 `@cuberoot/web` / `@cuberoot/api` | `已授权，待前置` | manifests、lockfile、filters、脚本、文档和发布合同无旧活动名称 |
+| LAY2-13 | FMC Cargo app 归位 | 根 `fmc/` 移至 `apps/fmc-solver`，同步专用发布合同 | `完成，待发布验收` | 72 个 tracked 文件完整 rename；Cargo workspace、线上 API 与部署目标不变；专用 workflow 改用新路径；14 个 pnpm workspace 不变；未在本地运行重计算或测试，交由发布 CI 验收 |
 
-默认不交换顺序。确需调整时，先证明目标批不依赖未完成的前置项，并把理由写入本文。
+默认不交换顺序。LAY2-13 是经单独授权的例外：它不属于 pnpm workspace，也不依赖 Web 迁移，专用 workflow 和回滚边界完整，因此可先于 LAY2-10 完成。其他调整仍须先证明不依赖未完成的前置项，并把理由写入本文。
 
 ## 8. 每批固定流程
 
@@ -201,6 +204,7 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 - Mobile：验证资产解耦、Capacitor build 和 Android 原生路径；未建立 iOS 工程时不宣称 iOS 已验证。
 - API：验证 bundle、migration、source map 和运行时文件清单。
 - Web：本机 dev 运行时禁止共用 `.next` 做 production build；用隔离干净 worktree 或 CI 检查 standalone 并启动 smoke。
+- Cargo app：验证 workspace metadata、专用 workflow 的触发/工作目录/制品路径，并由发布 CI 运行原生测试和构建。
 - 发布：workflow 要覆盖“新路径正确触发、旧路径收尾后不触发、非消费者不误触发”三类矩阵；源码 CI、Deploy Next、Deploy Core 和仓外构建分别记录，不能互相替代。
 
 ## 10. 停止和回滚
@@ -220,19 +224,19 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 
 ## 11. AI 友好的完成标准
 
-1. `package.json.cuberoot.kind` 是 app/library/job 分类事实源，目录是它的物理表现。
+1. `package.json.cuberoot.kind` 是 pnpm app/library/job 的分类事实源；Cargo app 以 `Cargo.toml` 为事实源，目录是其物理表现。
 2. `pnpm-workspace.yaml` 是 workspace 发现事实源，不另造手工 package 清单。
 3. 根 `AGENTS.md` 保存唯一完整系统地图；`core/README.md` 和 docs 索引只做短说明并链接事实源。`core/apps`、`core/packages`、`core/jobs` 各放一份极短的 scoped `AGENTS.md`，只写归属、禁止边和验证命令，不复制根规则；同步修正 API README 中已经过时的 Web 耦合描述。
 4. 架构清单记录允许的非标准边，AI 不必猜相对路径。
 5. 生成物清单记录每个 job 的输入、输出、owner 和生命周期。
-6. 所有单元可通过 package 名运行命令，不要求 AI 记住 cwd。
+6. pnpm 单元可通过 package 名运行命令；Cargo app 在系统地图中给出唯一目录和 `cargo` 入口，不要求 AI 猜路径。
 7. CI 拒绝目录类型与 kind 不符、app 读取 app 私有源码、job 读取 app 私有源码。
 8. 旧路径只允许出现在明确标注的历史记录中，避免 AI 复制过期命令。
 9. 使用不继承历史上下文的新 AI 会话做四个导航探针，确认它能正确回答“功能放哪、能否共享、运行哪个命令、由哪个 workflow 发布”。
 
 ## 12. 最终验收
 
-- `core/apps` 恰好四个现役 app。
+- `core/apps` 恰好四个 pnpm app 与一个 Cargo app。
 - `core/packages` 恰好六个活跃 library，另有显式排除且未触碰的 Platform archive。
 - `core/jobs` 恰好四个 job。
 - 14 个 workspace 各发现一次；除计划内的 Web/API 最终改名外，package 身份和依赖图稳定。
@@ -258,5 +262,6 @@ LAY2-01 已把架构扫描器和未声明 workspace import 的写入守卫改为
 | 2026-08-25 | LAY2-07 小程序移动与品牌资产前置复审 | `条件 GO：暂存边界与测试合同修正后提交` | 终审发现的半暂存状态、无关删除、Web 私有路由测试边和过时品牌说明已处理；路由存在性检查按 package identity 定位并登记显式 test-contract，Web、Mobile、小程序只读取中性品牌事实源；按用户要求未运行测试或 build |
 | 2026-08-25 | LAY2-08 Mobile 移动复审 | `GO：Mobile 物理移动闭环` | 两路复审确认 Android/Capacitor 内部相对层级不变；初审指出的 lockfile、生成物清册、README、Gradle 文案、路线图和 Mobile Skill 旧路径已全部同步；按用户要求未运行测试或 build |
 | 2026-08-25 | LAY2-09 API 移动复审 | `三路 GO，等待发布验收` | 三路终审发现并已修复逻辑 package 身份误写、历史 migration 校验和漂移、Web 测试硬编码旧 API 路径、生成物检查与 BLDDB 脚本旧路径；纯 API 守卫已移入 API，自身 package 名暂保留 `@cuberoot/server`；按用户要求未在本地运行测试或 build |
+| 2026-08-25 | LAY2-13 FMC Cargo app 归位 | `GO，等待发布验收` | 根 `fmc/` 的 72 个 tracked 文件完整移至 `core/apps/fmc-solver/`；专用 workflow、忽略项、系统地图与运行说明同步，Cargo workspace、线上 `/v1/fmc/*` 和部署目标不变；14 个 pnpm workspace 不增不减 |
 
 这里的 `HOLD` 只否决“一步到位执行”，不否决渐进方案。未解决的 blocker 必须成为对应批次的前置门槛，不能靠口头承诺跳过。

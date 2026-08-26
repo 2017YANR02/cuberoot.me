@@ -85,8 +85,8 @@ core/apps/api/src/tools/test_output.txt
 .cc-connect/
 
 # vendored cubelib FMC solver build output
-fmc/target/
-fmc/**/target/
+core/apps/fmc-solver/target/
+core/apps/fmc-solver/**/target/
 
 .vercel
 
