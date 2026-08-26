@@ -53,9 +53,7 @@ const GROUP_COLOR: Record<GroupId, string> = {
 
 const TEXTS = {
   title:       { en: 'Web Directory', zh: '魔方导航' },
-  allSites:    { en: 'All sites',     zh: '全部网站' },
   topics:      { en: 'Topics',        zh: '话题' },
-  topicResult: { en: 'Topic',         zh: '话题' },
   projects:    { en: 'Events',        zh: '项目' },
   wcaProjects: { en: 'WCA events',    zh: 'WCA 项目' },
   otherProjects: { en: 'Non-WCA events', zh: '非 WCA 项目' },
@@ -461,11 +459,10 @@ function SitesPageInner() {
 
   const selectedEventNames = selectedEventIds.map((id) => eventDisplayName(id, lang === 'zh'));
   const filterLabels = [
-    selectedTopics.length > 0 ? `${TEXTS.topicResult[lang]}: ${selectedTopics.join(', ')}` : '',
     selectedEventNames.length > 0 ? `${TEXTS.projects[lang]}: ${selectedEventNames.join(', ')}` : '',
     query.trim() ? `${TEXTS.resultsFor[lang]} "${query.trim()}"` : '',
   ].filter(Boolean);
-  const headerLabel = filterLabels.join(' / ') || TEXTS.allSites[lang];
+  const headerLabel = filterLabels.join(' / ');
 
   function applySaved(saved: Site) {
     setSites((prev) => {
@@ -586,7 +583,7 @@ function SitesPageInner() {
         )}
 
         <header className="sites-main-header">
-          <h2>{headerLabel}</h2>
+          {headerLabel && <h2>{headerLabel}</h2>}
           <span className="sites-main-count">
             {filtered.length} {TEXTS.sites[lang]}
           </span>
