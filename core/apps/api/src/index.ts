@@ -279,7 +279,7 @@ loadNemesizerDataset().catch(err => {
 // cube48opt optimal-solve daemon: lazy by default — it holds a multi-GB table
 // resident, and boot is the peak-memory window (current-records full scan +
 // nemesizer + cubing-live prewarm all warm at once), so we do NOT want to add
-// ~2GB here. The daemon spawns on the first /v1/scramble/optimal-solve request
+// the selected table here. The daemon spawns on the first /v1/scramble/optimal-solve request
 // instead (idle-unload + memory watchdog manage it thereafter). Set
 // CUBEOPT_WARM_ON_BOOT=1 to pre-warm anyway when the selected table fits safely.
 if (cubeoptEnabled() && process.env.CUBEOPT_WARM_ON_BOOT === '1') {

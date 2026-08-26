@@ -123,7 +123,7 @@ describe('CubeOpt artifact bundle', () => {
     expect(config.configError).toMatch(/CUBEOPT_ARTIFACT_DIR is required/);
   });
 
-  it.each(['opt5', 'opt6'])('resolves all %s runtime files through one verified current pointer', async (variant) => {
+  it.each(['opt5', 'opt6', 'opt8'])('resolves all %s runtime files through one verified current pointer', async (variant) => {
     const { root, store, bundle } = await makeFixture({ variant });
     await promoteCubeoptBundle(store, bundle, { allowFixtureSizes: true });
     const artifact = await loadCubeoptArtifact(store, { allowFixtureSizes: true });
@@ -211,7 +211,7 @@ describe('CubeOpt artifact bundle', () => {
     await writeManifest(root, manifest);
 
     await expect(verifyCubeoptBundle(root, { allowFixtureSizes: true }))
-      .rejects.toThrow(/unsupported variant "opt7"; expected opt5 or opt6/);
+      .rejects.toThrow(/unsupported variant "opt7"; expected opt5, opt6, opt8/);
   });
 
   it.each(['toString', 'constructor'])('rejects inherited object key %s as a variant', (variant) => {
@@ -237,6 +237,7 @@ describe('CubeOpt artifact bundle', () => {
   it.each([
     ['opt5', 972_840_960],
     ['opt6', 1_945_681_920],
+    ['opt8', 7_782_727_680],
   ])('rejects fixture-sized %s tables under the production contract', async (variant, tableBytes) => {
     const { root } = await makeFixture({ variant });
     await expect(verifyCubeoptBundle(root))
@@ -405,6 +406,8 @@ describe('CubeOpt artifact bundle', () => {
   it.each([
     ['opt5', 'opt6'],
     ['opt6', 'opt5'],
+    ['opt8', 'opt6'],
+    ['opt6', 'opt8'],
   ])('rejects a legacy source set that mixes %s module and wasm with a %s table', async (moduleVariant, tableVariant) => {
     const moduleSource = await makeFixture({
       variant: moduleVariant,
@@ -459,11 +462,11 @@ describe('CubeOpt artifact bundle', () => {
       sourceRevision: 'test-only',
       sourceBuildCommand: 'copy fixture bytes',
       allowFixtureSizes: true,
-    })).rejects.toThrow(/unsupported module filename.*expected cube48opt5\.mjs or cube48opt6\.mjs/);
+    })).rejects.toThrow(/unsupported module filename.*expected cube48opt5\.mjs or cube48opt6\.mjs or cube48opt8\.mjs/);
     expect(await readFile(envFile, 'utf8')).toBe(originalEnv);
   });
 
-  it.each(['opt5', 'opt6'])(
+  it.each(['opt5', 'opt6', 'opt8'])(
     'resumes an %s migration after prepare completed before the current pointer was promoted',
     async (variant) => {
     const contract = CUBEOPT_VARIANTS[variant];

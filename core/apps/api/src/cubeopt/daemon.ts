@@ -2,7 +2,7 @@
  * cube48opt optimal-solve daemon manager.
  *
  * Spawns a long-lived Node child (./solve-daemon.mjs) that holds ONE cubeopt
- * manifest-verified opt5/h5 or opt6/h6 artifact bundle in its wasm heap and solves 3x3 scrambles
+ * manifest-verified opt5/h5, opt6/h6, or opt8/h8 artifact bundle in its wasm heap and solves 3x3 scrambles
  * to god's-number optimal over line-based stdio. Same shape as cube555/daemon.ts.
  *
  * Concurrency: the child's solve_scramble() is synchronous, so it processes
@@ -11,7 +11,7 @@
  * out (kill + respawn the child if a single solve hangs past the deadline).
  *
  * Env:
- *   CUBEOPT_SOLVE_ENABLED=1   enable (default OFF — the selected opt5/opt6
+ *   CUBEOPT_SOLVE_ENABLED=1   enable (default OFF — the selected CubeOpt
  *                             table must be on disk first; otherwise 503)
  *   CUBEOPT_ARTIFACT_DIR      required API-owned store root. current.json
  *                             selects one verified immutable bundle.
@@ -60,7 +60,7 @@ function positiveIntegerEnv(name: string, fallback: number): number {
 // active), not when it's enqueued — so time spent waiting behind another solve
 // never counts against it, and never triggers a daemon kill.
 const SOLVE_TIMEOUT_MS = positiveIntegerEnv('CUBEOPT_TIMEOUT_MS', 180_000);
-// Loading and hashing the up-to-2GB artifact is a separate lifecycle phase. A
+// Loading and hashing the up-to-8GB artifact is a separate lifecycle phase. A
 // hash-valid but unusable wrapper must not leave API requests awaiting READY
 // forever; this deadline recycles the child before any solve is queued.
 const BOOT_TIMEOUT_MS = positiveIntegerEnv('CUBEOPT_BOOT_TIMEOUT_MS', 300_000);
@@ -70,7 +70,7 @@ const QUEUE_WAIT_MS = Number(process.env.CUBEOPT_QUEUE_WAIT_MS) || 120_000;
 // Max in-flight requests (active + queued) before we shed load immediately.
 const MAX_QUEUE = Number(process.env.CUBEOPT_MAX_QUEUE) || 6;
 
-// ── Memory safety (the table is up to ~2GB resident on a 3.5GB box) ───────────
+// ── Memory safety (the selected table may be up to ~8GB resident) ─────────────
 // Three layers, weakest→strongest:
 //   1. idle-unload — drop the table after IDLE_MS of no solves (steady-state win).
 //   2. memory watchdog — poll /proc/meminfo; if MemAvailable falls below the
@@ -81,7 +81,7 @@ const IDLE_MS = Number(process.env.CUBEOPT_IDLE_MS) || 10 * 60_000;
 const MEM_FLOOR_MB = Number(process.env.CUBEOPT_MEM_FLOOR_MB) || 200;
 const MEM_POLL_MS = Number(process.env.CUBEOPT_MEM_POLL_MS) || 1000;
 // After a low-memory drop, refuse to reload for this long so we don't thrash
-// (drop → reload 2GB → drop) while the pressure that triggered it is still there.
+// (drop → reload a multi-GB table → drop) while the pressure is still there.
 const COOLDOWN_MS = Number(process.env.CUBEOPT_COOLDOWN_MS) || 15_000;
 
 export interface SolveResult {
@@ -267,7 +267,7 @@ export function ensureDaemon(): Promise<void> {
   }
   if (bootPromise) return bootPromise;
   startMonitors();
-  // Free the other heavy solver (cube555 JVM) before loading our ~2GB table.
+  // Free the other heavy solver (cube555 JVM) before loading our multi-GB table.
   // 3x3 optimal takes priority: evict cube555 even if it's mid-scramble (cheap,
   // retryable, and has a client fallback).
   claimMemory('cubeopt', { evictBusy: true });
@@ -294,7 +294,7 @@ function startMonitors(): void {
   process.once('exit', () => { if (child) { try { child.kill('SIGKILL'); } catch { /* gone */ } } });
 
   // Layer 1: idle-unload — drop the resident table once nobody has solved for a
-  // while, returning ~2GB to the box for the 95% of the time it's not in use.
+  // while, returning the table's memory when it is not in use.
   setInterval(() => {
     if (!child || !ready || inFlight()) return;
     if (Date.now() - lastActivity > IDLE_MS) {
@@ -307,7 +307,7 @@ function startMonitors(): void {
   // consecutive reads while the table is loaded, drop it pre-emptively (and
   // cool down) before the kernel is forced to OOM-kill something.
   //
-  // Only while `ready`: loading a ~2GB table transiently pushes MemAvailable
+  // Only while `ready`: loading a multi-GB table transiently pushes MemAvailable
   // down (the file fills page cache while the wasm heap grows), which would make
   // the watchdog kill its OWN load. During load we instead rely on Layer 3
   // (oom_score_adj) — if it genuinely can't fit, the kernel sacrifices this
@@ -354,7 +354,7 @@ function recycleChild(): void {
   }
 }
 
-// Memory arbiter: dropping our table (recycleChild) frees ~2GB for cube555. We
+// Memory arbiter: dropping our table (recycleChild) frees its memory for cube555. We
 // count as "busy" while solving/queued AND during the multi-second cold load
 // (bootPromise pending, not yet ready) — otherwise a 5x5 request racing our load
 // would see inFlight()===false and evict the table we're still loading.

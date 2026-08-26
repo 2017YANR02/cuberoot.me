@@ -11,6 +11,7 @@
  * PaintColor) are kept stable for /visualcube + _Cube3Solver.
  */
 
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   FACES, COLOR_HEX, CUBE3_PAINT, EMPTY_COLOR_HEX, faceletIdx, usePainter,
@@ -48,7 +49,7 @@ export interface InteractiveCubeNetProps {
   secondaryActionLabel?: { zh: string; en: string };
   secondaryActionTitle?: { zh: string; en: string };
   secondaryBusy?: boolean;
-  optimalToggle?: { value: boolean; onChange: (v: boolean) => void };
+  optimalToggle?: { value: boolean; onChange: (v: boolean) => void; trailing?: ReactNode };
   hideSolve?: boolean;
   plainSolve?: boolean;
 }

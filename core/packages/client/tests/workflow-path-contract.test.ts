@@ -475,8 +475,12 @@ describe('deployment workflow path contracts', () => {
     const enabledBranch = run.match(/if node --env-file=\.env -e '[^']+'; then([\s\S]*?)\n\s*else/)?.[1] ?? '';
     const provisionArtifact = '$API_DIR/dist/cubeopt/provision.mjs';
     const verifyArtifact = '$API_DIR/dist/cubeopt/verify.mjs';
+    const prepareArtifact = '$API_DIR/dist/cubeopt/prepare.mjs';
+    const promoteArtifact = '$API_DIR/dist/cubeopt/promote.mjs';
+    const prepareCopied = run.indexOf(prepareArtifact);
     const provisionCopied = run.indexOf(provisionArtifact);
     const verifyCopied = run.indexOf(verifyArtifact);
+    const promoteCopied = run.indexOf(promoteArtifact);
     const provisioned = run.indexOf('node --env-file=.env "$staging/dist/cubeopt/provision.mjs"');
     const verified = run.indexOf('node --env-file=.env "$staging/dist/cubeopt/verify.mjs"', provisioned);
     const immutable = run.indexOf('chmod -R a-w "$final"', verified);
@@ -485,9 +489,11 @@ describe('deployment workflow path contracts', () => {
     const healthy = run.indexOf('curl -fsS http://127.0.0.1:3001/v1/health', reloaded);
     const smoked = run.indexOf('node --env-file=.env dist/cubeopt/smoke.mjs', healthy);
 
-    expect(provisionCopied).toBeGreaterThan(-1);
+    expect(prepareCopied).toBeGreaterThan(-1);
+    expect(provisionCopied).toBeGreaterThan(prepareCopied);
     expect(verifyCopied).toBeGreaterThan(provisionCopied);
-    expect(provisioned).toBeGreaterThan(verifyCopied);
+    expect(promoteCopied).toBeGreaterThan(verifyCopied);
+    expect(provisioned).toBeGreaterThan(promoteCopied);
     expect(verified).toBeGreaterThan(provisioned);
     expect(immutable).toBeGreaterThan(verified);
     expect(switched).toBeGreaterThan(immutable);

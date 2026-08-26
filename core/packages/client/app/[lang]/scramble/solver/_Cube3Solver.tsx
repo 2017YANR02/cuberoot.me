@@ -689,7 +689,7 @@ export default function Cube3Solver() {
   const CLOUD_MAX = 5;
   const HTM_TOKEN = /^[URFDLB][2']?$/;
 
-  // Cloud solve: stream optimal solutions from api.cuberoot.me (server opt6 table).
+  // Cloud solve: stream optimal solutions from api.cuberoot.me (server opt8 table).
   // Each solution is written to the Logs box in the same `求解:… (Nh*)` format as
   // the local worker + fast Kociemba paths, so all solve sources read identically.
   const cloudSolve = async (explicitLines?: string[]) => {
@@ -713,8 +713,8 @@ export default function Cube3Solver() {
     // inactivity check: the server sends a 10s heartbeat ping while loading /
     // queued / mid-solve, so any healthy request keeps resetting lastActivity.
     // Threshold is 60s (not 45s): the heartbeat runs on the server's main event
-    // loop, which can be blocked ~20s at a time by in-process warm builds, so a
-    // healthy stream can still show a ~30-50s gap. nginx's read timeout for this
+    // loop, which can briefly be blocked by in-process warm builds, so a healthy
+    // stream can still show a long gap. nginx's read timeout for this
     // endpoint is 200s (> server's 180s solve cap), so 60s here is the binding,
     // intentional "is it actually dead" detector; 230s total is the outer bound.
     let lastActivity = Date.now();
@@ -762,7 +762,7 @@ export default function Cube3Solver() {
           if (!data) continue;
           const obj = JSON.parse(data) as { i?: number; htm?: number; solution?: string; error?: string; ok?: number; fail?: number; warm?: boolean; loadMs?: number; ahead?: number; phase?: string };
           if (ev === 'loading') {
-            setCloudStatus(t('正在把求解表载入服务器内存(首次约 20 秒)…', 'Loading the solver table into server memory (first time ~20s)…'));
+            setCloudStatus(t('正在把约 8 GB 的求解表载入服务器内存(首次会较久)…', 'Loading the ~8 GB solver table into server memory (cold start takes longer)…'));
           } else if (ev === 'ready') {
             warm = obj.warm !== false;
             loadMs = typeof obj.loadMs === 'number' ? obj.loadMs : 0;
@@ -867,6 +867,28 @@ export default function Cube3Solver() {
 
   const cloudMode = solveSource === 'cloud';
   const busy = cloudMode ? cloudBusy : readyState === 'busy';
+  const solveSourceControl = paintOptimal ? (
+    <span className="solve-source-control">
+      <PillToggle
+        value={cloudMode}
+        onChange={(value) => setSolveSource(value ? 'cloud' : 'local')}
+        onLabel={t('云端', 'Cloud')}
+        offLabel={t('本地', 'Local')}
+        ariaLabel={t('求解来源', 'Solve via')}
+        disabled={busy}
+      />
+      <InfoTooltip
+        icon={HelpCircle}
+        content={cloudMode ? t(
+          '云端用服务器的 opt8 表(约 7.8 GB)求最优解，解和本地各档完全一样，只是免你下载多 GB 的表。一次最多 5 条，串行排队；每个 IP 每 5 分钟最多 30 次，管理员不限。',
+          'The server solves with its opt8 table (~7.8 GB). The solution is identical to every local tier; this saves you the multi-GB download. Up to 5 scrambles are processed in a serial queue. Each IP gets up to 30 requests per 5 minutes; admins are exempt.'
+        ) : t(
+          '本地在浏览器里生成或下载一份求解表(30 MB~15 GB，视下面 Solver 档位而定)，存到本机，不用登录、条数不限；下次打开可直接上传复用。',
+          'Local mode generates or downloads a 30 MB–15 GB solver table in your browser, depending on the Solver tier below. It is stored on your device, requires no login, has no scramble-count limit, and can be uploaded again next time.'
+        )}
+      />
+    </span>
+  ) : null;
 
   return (
     <div className="cubeopt-page">
@@ -937,7 +959,7 @@ export default function Cube3Solver() {
                 ? { zh: '求最优解(cubeopt/云端):先从画的状态反推打乱,再求最少步解', en: 'Optimal solve (cubeopt/cloud): derive a scramble from the painted state, then find the fewest-move solution' }
                 : { zh: '从上面画的状态求出把它解开的步骤(打乱的逆)', en: 'Derive the moves that solve the painted state (inverse of the scramble)' }}
               secondaryBusy={paintOptimal && (solveSource === 'cloud' ? cloudBusy : readyState === 'busy')}
-              optimalToggle={{ value: paintOptimal, onChange: setPaintOptimal }}
+              optimalToggle={{ value: paintOptimal, onChange: setPaintOptimal, trailing: solveSourceControl }}
             />
           ) : viewMode === 'net' ? (
             <InteractiveCubeNet
@@ -955,7 +977,7 @@ export default function Cube3Solver() {
                 ? { zh: '求最优解(cubeopt/云端):先从画的状态反推打乱,再求最少步解', en: 'Optimal solve (cubeopt/cloud): derive a scramble from the painted state, then find the fewest-move solution' }
                 : { zh: '从上面画的状态求出把它解开的步骤(打乱的逆)', en: 'Derive the moves that solve the painted state (inverse of the scramble)' }}
               secondaryBusy={paintOptimal && (solveSource === 'cloud' ? cloudBusy : readyState === 'busy')}
-              optimalToggle={{ value: paintOptimal, onChange: setPaintOptimal }}
+              optimalToggle={{ value: paintOptimal, onChange: setPaintOptimal, trailing: solveSourceControl }}
             />
           ) : viewMode === 'photo' ? (
             <PhotoScanner
@@ -986,6 +1008,7 @@ export default function Cube3Solver() {
               ) : null}
               <div className="move-input-actions">
                 <BoolToggle value={paintOptimal} onChange={setPaintOptimal} label={t('最优', 'Optimal')} />
+                {solveSourceControl}
                 {scrambleLines.length > 1 ? (
                   <button
                     className="btn"
@@ -1041,6 +1064,7 @@ export default function Cube3Solver() {
               ) : null}
               <div className="move-input-actions">
                 <BoolToggle value={paintOptimal} onChange={setPaintOptimal} label={t('最优', 'Optimal')} />
+                {solveSourceControl}
                 <button
                   className="btn"
                   disabled={!reconState.facelet || kociembaBusy || busy}
@@ -1094,29 +1118,11 @@ export default function Cube3Solver() {
         </div>
       )}
 
-      {paintOptimal && (
+      {paintOptimal && !cloudMode && (
       <section className="cubeopt-card cubeopt-advanced">
         <>
             <div className="row">
-              <PillToggle
-                value={cloudMode}
-                onChange={(v) => setSolveSource(v ? 'cloud' : 'local')}
-                onLabel={t('云端', 'Cloud')}
-                offLabel={t('本地', 'Local')}
-                ariaLabel={t('求解来源', 'Solve via')}
-                disabled={busy}
-              />
-              <InfoTooltip
-                icon={HelpCircle}
-                content={cloudMode ? t(
-                  '云端用服务器的 opt6 表(1.9G)求最优解,解和本地各档完全一样,只是免你下载多 GB 的表。一次最多 5 条;多数几秒出解,最难的打乱(19-20 步最优)在 2 核服务器上可能要 1 分钟左右,串行排队。每个 IP 每 5 分钟最多 30 次,管理员不限。',
-                  'The server solves with its opt6 table (1.9G). The solution is identical to every local table — this just saves you the multi-GB download. Up to 5 scrambles at once; most finish in seconds, but the hardest scrambles (19-20 move optimal) can take ~1 min on the 2-core server, processed in a serial queue. Each IP gets up to 30 requests per 5 min; admins are exempt.'
-                ) : t(
-                  '本地在浏览器里生成或下载一份求解表(30M~15G,存到本机,视下面 Solver 档位而定),不用登录、条数不限;下次打开可直接上传复用,免重新生成。同时求解:几个打乱一起攻,每个能分到的线程数=线程数÷此值;设为 1 最快但一次只出一个解,调大可同时出多个解但单个会变慢。',
-                  'Local generates or downloads a solver table in your browser (30M~15G depending on the Solver tier below), stored on your machine — no login, no scramble-count limit; re-upload it next time to skip regenerating. Parallel solves: scrambles are attacked together, each getting (threads ÷ this value) threads — 1 is fastest per cube; raising it solves several at once but each one is slower.'
-                )}
-              />
-              {!cloudMode && (<>
+              <>
                 <span className="lbl">Solver</span>
                 <select className="ctl" value={solverName} disabled={readyState === 'busy'}
                   onChange={(e) => setSolverName(e.target.value)}>
@@ -1155,8 +1161,8 @@ export default function Cube3Solver() {
                 <select className="ctl-sm" value={nGroup} onChange={(e) => setNGroup(parseInt(e.target.value, 10))}>
                   {nGroupOptions.map(n => <option key={n} value={n}>{n}</option>)}
                 </select>
-              </>)}
-              {!cloudMode && busy && (
+              </>
+              {busy && (
                 <button className="btn-cancel" onClick={cancelCubeopt} title={
                   t('终止当前任务。会重建 wasm,prun 表会丢失需重新生成或上传。',
                     'Abort current task. Wasm will be reset; prun table is lost and must be re-generated or uploaded.')}>
@@ -1164,7 +1170,7 @@ export default function Cube3Solver() {
                 </button>
               )}
             </div>
-            {!cloudMode && progress >= 0 && (
+            {progress >= 0 && (
               <div className="progress">
                 <div className="progress-bar" style={{ width: `${Math.round(progress * 100)}%` }} />
               </div>
@@ -1315,6 +1321,9 @@ const INLINE_CSS = `
 .move-input-err { font-size: 0.82rem; color: #ff8866; line-height: 1.4; }
 .move-input-actions {
   display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+}
+.solve-source-control {
+  display: inline-flex; align-items: center; gap: 0.25rem;
 }
 .auto-dl {
   display: inline-flex; align-items: center; gap: 0.35rem;
