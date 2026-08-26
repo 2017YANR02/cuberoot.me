@@ -348,13 +348,13 @@ export default function PbPage() {
           </a>
         </div>
         <nav className="pb-tabs" aria-label={tr({ zh: '个人纪录页面', en: 'Personal best views' })}>
-          <button type="button" className={view === 'card' ? 'is-active' : ''} onClick={() => void setView('card')}>
+          <button type="button" className={`pb-tab-button${view === 'card' ? ' is-active' : ''}`} onClick={() => void setView('card')}>
             <IdCard size={17} /> {tr({ zh: '成绩卡', en: 'PB card' })}
           </button>
-          <button type="button" className={view === 'leaderboard' ? 'is-active' : ''} onClick={() => void setView('leaderboard')}>
+          <button type="button" className={`pb-tab-button${view === 'leaderboard' ? ' is-active' : ''}`} onClick={() => void setView('leaderboard')}>
             <BarChart3 size={17} /> {tr({ zh: '排行榜', en: 'Leaderboard' })}
           </button>
-          <button type="button" className={view === 'manage' ? 'is-active' : ''} onClick={() => void setView('manage')}>
+          <button type="button" className={`pb-tab-button${view === 'manage' ? ' is-active' : ''}`} onClick={() => void setView('manage')}>
             <ListPlus size={17} /> {tr({ zh: '维护记录', en: 'Manage' })}
           </button>
         </nav>
@@ -492,6 +492,7 @@ export default function PbPage() {
                     <span>{tr({ zh: '成绩', en: 'Result' })}</span>
                     <span className="pb-input-wrap">
                       <input
+                        className="pb-form-control pb-clearable-control"
                         value={resultInput}
                         onChange={(event) => setResultInput(event.target.value)}
                         placeholder={inputHint(eventId, selectedOption.recordType)}
@@ -503,19 +504,19 @@ export default function PbPage() {
                   </label>
                   <label>
                     <span>{tr({ zh: '日期', en: 'Date' })}</span>
-                    <input type="date" value={dateInput} max={today} onChange={(event) => setDateInput(event.target.value)} required />
+                    <input className="pb-form-control" type="date" value={dateInput} max={today} onChange={(event) => setDateInput(event.target.value)} required />
                   </label>
                   <label>
                     <span>{tr({ zh: '魔方或产品', en: 'Cube or product' })}</span>
                     <span className="pb-input-wrap">
-                      <input value={cubeName} onChange={(event) => setCubeName(event.target.value)} maxLength={120} />
+                      <input className="pb-form-control pb-clearable-control" value={cubeName} onChange={(event) => setCubeName(event.target.value)} maxLength={120} />
                       {cubeName && <ClearButton onClick={() => setCubeName('')} preserveFocus />}
                     </span>
                   </label>
                   <label className="pb-comments-field">
                     <span>{tr({ zh: '备注', en: 'Comments' })}</span>
                     <span className="pb-input-wrap">
-                      <textarea value={comments} onChange={(event) => setComments(event.target.value)} maxLength={1000} rows={3} />
+                      <textarea className="pb-form-control pb-form-textarea pb-clearable-control" value={comments} onChange={(event) => setComments(event.target.value)} maxLength={1000} rows={3} />
                       {comments && <ClearButton onClick={() => setComments('')} preserveFocus />}
                     </span>
                   </label>
