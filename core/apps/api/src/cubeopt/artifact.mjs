@@ -23,6 +23,14 @@ export const CUBEOPT_VARIANTS = Object.freeze({
     }),
     tableBytes: 1_945_681_920,
   }),
+  opt8: Object.freeze({
+    files: Object.freeze({
+      module: 'cube48opt8.mjs',
+      wasm: 'cube48opt8.wasm',
+      table: 'h48prun31h8.dat',
+    }),
+    tableBytes: 7_782_727_680,
+  }),
 });
 
 const BUNDLE_ID = /^cubeopt-([A-Za-z0-9]+)-[A-Za-z0-9._-]+$/;
@@ -43,7 +51,7 @@ function requireNonEmptyString(value, field) {
 export function cubeoptVariantContract(rawVariant) {
   const variant = requireNonEmptyString(rawVariant, 'variant');
   if (!Object.hasOwn(CUBEOPT_VARIANTS, variant)) {
-    throw artifactError(`unsupported variant ${JSON.stringify(variant)}; expected opt5 or opt6`);
+    throw artifactError(`unsupported variant ${JSON.stringify(variant)}; expected ${Object.keys(CUBEOPT_VARIANTS).join(', ')}`);
   }
   const contract = CUBEOPT_VARIANTS[variant];
   return Object.freeze({ variant, ...contract });

@@ -8,7 +8,7 @@
  *   - PaintActions: Empty/Clean/Random/Solve + the validity error / reject flash.
  */
 
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import BoolToggle from '@/components/BoolToggle';
@@ -80,8 +80,8 @@ export interface PaintActionsProps {
   secondaryActionTitle?: { zh: string; en: string };
   /** Whether the secondary action is currently running (disables its button). */
   secondaryBusy?: boolean;
-  /** Optional "optimal?" switch rendered after the secondary button. */
-  optimalToggle?: { value: boolean; onChange: (v: boolean) => void };
+  /** Optional "optimal?" switch, plus a control that must stay directly after it. */
+  optimalToggle?: { value: boolean; onChange: (v: boolean) => void; trailing?: ReactNode };
   /** Transient per-piece reject message (from usePainter), shown as a flash. */
   rejectMsg?: string | null;
   /** Hide the Solve button — the host renders its own (e.g. next to the solver's Solve). */
@@ -133,13 +133,14 @@ export function PaintActions({
         <button type="button" className="vc-paint-btn" onClick={() => onChange(spec.randomLegal())} title={t('随机合法状态', 'Random legal state')}>
           <span>{t('随机', 'Random')}</span>
         </button>
-        {optimalToggle && (
+        {optimalToggle && (<>
           <BoolToggle
             value={optimalToggle.value}
             onChange={optimalToggle.onChange}
             label={t('最优', 'Optimal')}
           />
-        )}
+          {optimalToggle.trailing}
+        </>)}
         {!hideSolve && (
           <button
             type="button"

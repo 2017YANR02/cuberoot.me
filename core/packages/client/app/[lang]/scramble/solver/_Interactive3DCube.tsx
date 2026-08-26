@@ -29,7 +29,7 @@
  * 排到第一帧之后,而不是从 mount 直接 await。
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type Toucher from '@/app/[lang]/sim/Toucher';
@@ -108,7 +108,7 @@ export interface Interactive3DCubeProps {
   secondaryActionLabel?: { zh: string; en: string };
   secondaryActionTitle?: { zh: string; en: string };
   secondaryBusy?: boolean;
-  optimalToggle?: { value: boolean; onChange: (v: boolean) => void };
+  optimalToggle?: { value: boolean; onChange: (v: boolean) => void; trailing?: ReactNode };
   hideSolve?: boolean;
   plainSolve?: boolean;
 }
