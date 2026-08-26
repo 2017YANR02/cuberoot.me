@@ -194,7 +194,6 @@
 .forum-feed-preview {
   width: 100%;
   max-width: 1100px;
-  min-height: 460px;
   margin: 0 auto 3.5rem;
 }
 
@@ -227,5 +226,5 @@
   .community-feed-meta { gap: 11px; }
   .community-feed-images { border-radius: 8px; }
   .community-feed-active { flex-basis: 100%; }
-  .forum-feed-preview { min-height: 500px; margin-bottom: 2.5rem; }
+  .forum-feed-preview { margin-bottom: 2.5rem; }
 }
