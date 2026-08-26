@@ -13,38 +13,30 @@
 }
 
 .sites-page {
-  display: grid;
-  grid-template-columns: 260px 1fr;
   min-height: 100vh;
   background: var(--sites-bg);
   color: var(--sites-text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', Roboto, sans-serif;
 }
 
-/* ── Sidebar ─────────────────────────────────────────── */
-.sites-sidebar {
-  position: sticky;
-  top: 0;
-  align-self: start;
-  height: 100vh;
-  border-right: 1px solid var(--sites-border);
-  padding: 18px 14px;
+/* ── Page header ─────────────────────────────────────── */
+.sites-page-header {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  background: var(--sites-bg-alt);
-  overflow-y: auto;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .sites-title {
+  margin: 0;
   font-size: 18px;
   font-weight: 600;
-  margin: 4px 0 6px;
 }
 
 .sites-search {
   position: relative;
-  margin-bottom: 4px;
+  width: min(100%, 420px);
 }
 .sites-search-icon {
   position: absolute;
@@ -69,40 +61,11 @@
   box-shadow: 0 0 0 2px var(--sites-accent-soft);
 }
 
-.sites-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  margin-top: 4px;
-}
-.sites-nav-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 7px 10px;
-  border: 0;
-  background: transparent;
-  color: var(--sites-text);
-  border-radius: 5px;
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-}
-.sites-nav-item:hover { background: var(--sites-accent-soft); }
-.sites-nav-item.is-active {
-  background: var(--sites-accent-soft);
-  color: var(--sites-accent);
-  font-weight: 600;
-}
-.sites-nav-count {
-  color: var(--sites-text-faint);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-.sites-nav-item.is-active .sites-nav-count { color: var(--sites-accent); }
-
 /* ── Main ────────────────────────────────────────────── */
 .sites-main {
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
   padding: 20px 28px 48px;
   min-width: 0;
 }
@@ -161,7 +124,7 @@
   padding-bottom: 10px;
   margin-bottom: 12px;
 }
-.sites-main-header h1 {
+.sites-main-header h2 {
   font-size: 20px;
   font-weight: 600;
   margin: 0;
@@ -553,85 +516,22 @@
 
 /* ── Responsive ─────────────────────────────────────── */
 @media (max-width: 720px) {
-  .sites-page {
-    /* minmax(0,…):裸 1fr 最小尺寸是 auto,底下横滚的分组 chip 行会把整页撑得比视口宽 */
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  /* sidebar 变顶部紧凑 header，不 sticky（手机滚动体验更流畅） */
-  .sites-sidebar {
-    position: relative;
-    height: auto;
-    min-width: 0;
-    border-right: 0;
-    border-bottom: 1px solid var(--sites-border);
-    padding: 10px 12px 8px;
-    gap: 8px;
-    overflow: visible;
-  }
-
   .sites-title {
-    margin: 0;
     font-size: 16px;
-    padding-right: 60px;  /* 给右上角语言按钮让位 */
   }
 
-  .sites-search { margin: 0; }
   .sites-search-input { font-size: 14px; padding: 8px 34px 8px 30px; }
-
-  /* 分组按钮横向单行滚动，保持紧凑 */
-  .sites-nav {
-    flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 6px;
-    min-width: 0;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 2px;
-    margin: 0 -12px;          /* 让横滚延伸到屏幕边缘 */
-    padding-left: 12px;
-    padding-right: 12px;
-    scrollbar-width: none;
-  }
-  .sites-nav::-webkit-scrollbar { display: none; }
-
-  .sites-nav-item {
-    flex: 0 0 auto;
-    padding: 5px 10px;
-    gap: 6px;
-    border: 1px solid var(--sites-border);
-    background: var(--sites-bg);
-    border-radius: 14px;
-    font-size: 12px;
-    white-space: nowrap;
-  }
-  .sites-nav-item.is-active {
-    background: var(--sites-accent);
-    color: #fff;
-    border-color: var(--sites-accent);
-  }
-  .sites-nav-item.is-active .sites-nav-count { color: #fff; }
-
-  /* 语言按钮钉到右上角 */
-  .sites-sidebar .sites-lang {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    margin: 0;
-    padding: 4px 10px;
-    font-size: 11px;
-  }
 
   .sites-back { font-size: 12px; }
 
   /* 主区域 */
   .sites-main { padding: 12px 14px 40px; min-height: 50vh; }
+  .sites-page-header { margin-bottom: 10px; }
   .sites-topics { margin-bottom: 14px; }
   .sites-topic-list { gap: 5px; }
   .sites-topic { padding: 4px 8px; }
   .sites-main-header { padding-bottom: 8px; margin-bottom: 8px; }
-  .sites-main-header h1 { font-size: 16px; }
+  .sites-main-header h2 { font-size: 16px; }
   .sites-main-count { font-size: 12px; }
 
   /* 列头隐藏（窄屏恢复卡片式布局） */

@@ -2,18 +2,17 @@
 
 /**
  * /site — 魔方网址导航页
- * sidebar 分组 + 右侧单行密集列表;搜索用 Fuse.js;数据源 /v1/nav/sites。
- * admin 看到行内 ✏️/🗑/⬆⬇ 按钮 + 每个 group 顶端 + Add。
+ * 顶部话题/项目筛选 + 单行密集列表;搜索用 Fuse.js;数据源 /v1/nav/sites。
+ * admin 看到行内 ✏️/🗑/⬆⬇ 按钮 + Add。
  *
  * 1:1 port from packages/client-vite/src/pages/sites/SitesPage.tsx (Vite SPA).
- * URL state (?g group, ?q query) is managed via nuqs (history: 'replace').
+ * URL state (?q query, ?topic topics, ?events events) is managed via nuqs (history: 'replace').
  */
 import { Suspense, useMemo, useCallback, useState, useEffect } from 'react';
 import { useQueryStates, parseAsArrayOf, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { Search, AlertTriangle, Pencil, Trash2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
 import Fuse from 'fuse.js';
-import { GROUPS } from './data/categories';
 import { WCA_AUTHOR_BY_CREDIT } from './data/wca-authors';
 import type { GroupId, Site } from './data/types';
 import { isAdmin } from '@/lib/auth-store';
@@ -37,7 +36,6 @@ function YouTubeBadge() {
   );
 }
 
-type GroupFilter = GroupId;
 const DEFAULT_GROUP: GroupId = 'competition';
 
 const GROUP_COLOR: Record<GroupId, string> = {
@@ -54,8 +52,8 @@ const GROUP_COLOR: Record<GroupId, string> = {
 };
 
 const TEXTS = {
-  title:       { en: 'Web Directory', zh: '魔方导航'
-},
+  title:       { en: 'Web Directory', zh: '魔方导航' },
+  allSites:    { en: 'All sites',     zh: '全部网站' },
   topics:      { en: 'Topics',        zh: '话题' },
   topicResult: { en: 'Topic',         zh: '话题' },
   projects:    { en: 'Events',        zh: '项目' },
@@ -144,6 +142,10 @@ function splitLangTag(s: string): { en: string; zh: string
   if (idx < 0) return { en: s, zh: s };
   if (idx === 0) return { en: s, zh: s };
   return { en: s.slice(0, idx).trim(), zh: s.slice(idx).trim() };
+}
+
+function topicKey(label: string, lang: 'en' | 'zh'): string {
+  return label.trim().toLocaleLowerCase(lang === 'zh' ? 'zh-Hans' : 'en');
 }
 
 function hostOf(url: string): string {
@@ -285,16 +287,29 @@ function SitesPageInner() {
 
   const [params, setQuery] = useQueryStates(
     {
-      g: parseAsString,
       q: parseAsString,
-      topic: parseAsString,
+      topic: parseAsArrayOf(parseAsString).withDefault([]),
       events: parseAsArrayOf(parseAsString).withDefault([]),
     },
     { history: 'replace', scroll: false },
   );
-  const group = ((params.g as GroupId) || DEFAULT_GROUP) as GroupFilter;
   const query = params.q || '';
-  const selectedTopic = params.topic || '';
+  const selectedTopics = useMemo(() => {
+    const seen = new Set<string>();
+    return params.topic
+      .map((label) => label.trim())
+      .filter(Boolean)
+      .filter((label) => {
+        const key = topicKey(label, lang);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }, [params.topic, lang]);
+  const selectedTopicKeys = useMemo(
+    () => new Set(selectedTopics.map((label) => topicKey(label, lang))),
+    [selectedTopics, lang],
+  );
   const selectedEventIds = useMemo(
     () => params.events.filter((id) => SITE_PROJECTS.has(id)),
     [params.events],
@@ -314,13 +329,6 @@ function SitesPageInner() {
     return () => { cancel = true; };
   }, []);
 
-  const setGroup = useCallback(
-    (g: GroupFilter) => {
-      void setQuery({ g: g === DEFAULT_GROUP ? null : g, topic: null, events: [] });
-    },
-    [setQuery],
-  );
-
   const [inputValue, setInputValue] = useState(query);
   const [composing, setComposing] = useState(false);
 
@@ -332,16 +340,10 @@ function SitesPageInner() {
     if (inputValue === query) return;
     if (composing) return;
     const t = setTimeout(() => {
-      void setQuery({ q: inputValue || null, topic: null });
+      void setQuery({ q: inputValue || null });
     }, 150);
     return () => clearTimeout(t);
   }, [inputValue, composing, query, setQuery]);
-
-  const counts = useMemo(() => {
-    const c: Record<string, number> = {};
-    if (sites) for (const s of sites) c[s.group] = (c[s.group] || 0) + 1;
-    return c;
-  }, [sites]);
 
   const topics = useMemo(() => {
     const byLabel = new Map<string, { label: string; count: number; firstSeen: number }>();
@@ -368,12 +370,12 @@ function SitesPageInner() {
   }, [sites, lang]);
 
   const toggleTopic = useCallback((label: string) => {
-    const next = selectedTopic.toLocaleLowerCase(lang === 'zh' ? 'zh-Hans' : 'en') === label.toLocaleLowerCase(lang === 'zh' ? 'zh-Hans' : 'en')
-      ? ''
-      : label;
-    setInputValue('');
-    void setQuery({ q: null, topic: next || null });
-  }, [selectedTopic, lang, setQuery]);
+    const key = topicKey(label, lang);
+    const next = selectedTopicKeys.has(key)
+      ? selectedTopics.filter((topic) => topicKey(topic, lang) !== key)
+      : [...selectedTopics, label];
+    void setQuery({ topic: next.length > 0 ? next : null });
+  }, [selectedTopics, selectedTopicKeys, lang, setQuery]);
 
   const eventPickerGroups = useMemo<readonly PuzzlePickerGroup[]>(() => [
     {
@@ -432,19 +434,16 @@ function SitesPageInner() {
   const filtered = useMemo(() => {
     if (!sites) return [];
     const locale = lang === 'zh' ? 'zh-Hans' : 'en';
-    const topicKey = selectedTopic.toLocaleLowerCase(locale);
-    const topicCandidates = topicKey
+    const topicCandidates = selectedTopicKeys.size > 0
       ? sites.filter((site) => (site.tags ?? []).some((rawTag) => (
-        splitLangTag(rawTag)[lang].trim().toLocaleLowerCase(locale) === topicKey
+        selectedTopicKeys.has(splitLangTag(rawTag)[lang].trim().toLocaleLowerCase(locale))
       )))
       : sites;
     const candidates = selectedEventIds.length > 0
       ? topicCandidates.filter((site) => selectedEventIds.some((eventId) => siteMatchesEvent(site, eventId)))
       : topicCandidates;
     const q = query.trim();
-    if (!q) return topicKey || selectedEventIds.length > 0
-      ? candidates
-      : candidates.filter((s) => s.group === group);
+    if (!q) return candidates;
     // 先只认精确子串(不区分大小写),按命中字段分层排序 —— 搜 "MCC" 就该给含 MCC 的,
     // 而不是被 Fuse 判成「像 FMC」的一大片噪音(3 字母缩写编辑距离 2 就命中)。
     // 精确匹配独立于 Fuse 算,不受 threshold 影响,不会漏。
@@ -458,17 +457,15 @@ function SitesPageInner() {
     // 一条精确的都没有(拼错 / 记岔了)才降级到 Fuse 模糊,保住容错。
     const candidateIds = new Set(candidates.map((site) => site.id));
     return fuse.search(q).map((r) => r.item).filter((site) => candidateIds.has(site.id));
-  }, [sites, query, selectedTopic, selectedEventIds, group, lang, fuse]);
+  }, [sites, query, selectedTopicKeys, selectedEventIds, lang, fuse]);
 
   const selectedEventNames = selectedEventIds.map((id) => eventDisplayName(id, lang === 'zh'));
   const filterLabels = [
-    selectedTopic ? `${TEXTS.topicResult[lang]} "${selectedTopic}"` : '',
+    selectedTopics.length > 0 ? `${TEXTS.topicResult[lang]}: ${selectedTopics.join(', ')}` : '',
     selectedEventNames.length > 0 ? `${TEXTS.projects[lang]}: ${selectedEventNames.join(', ')}` : '',
     query.trim() ? `${TEXTS.resultsFor[lang]} "${query.trim()}"` : '',
   ].filter(Boolean);
-  const headerLabel = filterLabels.join(' / ')
-    || GROUPS.find((g) => g.id === group)?.[lang === 'zh' ? 'label_zh' : 'label_en']
-    || group;
+  const headerLabel = filterLabels.join(' / ') || TEXTS.allSites[lang];
 
   function applySaved(saved: Site) {
     setSites((prev) => {
@@ -519,49 +516,35 @@ function SitesPageInner() {
 
   return (
     <div className="sites-page">
-      <aside className="sites-sidebar">
-        <BackHome className="sites-back" />
-        <div className="sites-title">{TEXTS.title[lang]}</div>
-
-        <div className="sites-search">
-          <Search size={14} className="sites-search-icon" />
-          <input
-            className="sites-search-input"
-            placeholder={TEXTS.searchPh[lang]}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onCompositionStart={() => setComposing(true)}
-            onCompositionEnd={(e) => {
-              setComposing(false);
-              setInputValue((e.target as HTMLInputElement).value);
-            }}
-          />
-          {inputValue && (
-            <ClearButton
-              onClick={() => {
-                setInputValue('');
-                void setQuery({ q: null });
-              }}
-              preserveFocus
-            />
-          )}
-        </div>
-
-        <nav className="sites-nav">
-          {GROUPS.map((g) => (
-            <button
-              key={g.id}
-              className={`sites-nav-item${group === g.id ? ' is-active' : ''}`}
-              onClick={() => setGroup(g.id)}
-            >
-              <span>{lang === 'zh' ? g.label_zh : g.label_en}</span>
-              <span className="sites-nav-count">{counts[g.id] || 0}</span>
-            </button>
-          ))}
-        </nav>
-      </aside>
-
       <main className="sites-main">
+        <header className="sites-page-header">
+          <BackHome className="sites-back" />
+          <h1 className="sites-title">{TEXTS.title[lang]}</h1>
+          <div className="sites-search">
+            <Search size={14} className="sites-search-icon" />
+            <input
+              className="sites-search-input"
+              placeholder={TEXTS.searchPh[lang]}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onCompositionStart={() => setComposing(true)}
+              onCompositionEnd={(e) => {
+                setComposing(false);
+                setInputValue((e.target as HTMLInputElement).value);
+              }}
+            />
+            {inputValue && (
+              <ClearButton
+                onClick={() => {
+                  setInputValue('');
+                  void setQuery({ q: null });
+                }}
+                preserveFocus
+              />
+            )}
+          </div>
+        </header>
+
         {sites && (
           <div className="sites-project-filter" aria-label={TEXTS.projects[lang]}>
             <PuzzlePicker
@@ -585,8 +568,7 @@ function SitesPageInner() {
             <h2 id="sites-topics-title">{TEXTS.topics[lang]}</h2>
             <div className="sites-topic-list">
               {topics.map((topic) => {
-                const active = selectedTopic.toLocaleLowerCase(lang === 'zh' ? 'zh-Hans' : 'en')
-                  === topic.label.toLocaleLowerCase(lang === 'zh' ? 'zh-Hans' : 'en');
+                const active = selectedTopicKeys.has(topicKey(topic.label, lang));
                 return (
                   <button
                     key={topic.label}
@@ -604,7 +586,7 @@ function SitesPageInner() {
         )}
 
         <header className="sites-main-header">
-          <h1>{headerLabel}</h1>
+          <h2>{headerLabel}</h2>
           <span className="sites-main-count">
             {filtered.length} {TEXTS.sites[lang]}
           </span>
@@ -639,7 +621,7 @@ function SitesPageInner() {
                 site={s}
                 lang={lang}
                 admin={admin}
-                reorderable={!query.trim() && !selectedTopic && selectedEventIds.length === 0}
+                reorderable={!query.trim() && selectedTopics.length === 0 && selectedEventIds.length === 0}
                 canMoveUp={i > 0 && filtered[i - 1].group === s.group}
                 canMoveDown={i < filtered.length - 1 && filtered[i + 1].group === s.group}
                 onEdit={setEditing}
@@ -654,7 +636,7 @@ function SitesPageInner() {
       {(editing || creating) && (
         <SiteEditor
           initial={editing}
-          defaultGroup={group}
+          defaultGroup={DEFAULT_GROUP}
           lang={lang}
           onClose={() => { setEditing(null); setCreating(false); }}
           onSaved={applySaved}
