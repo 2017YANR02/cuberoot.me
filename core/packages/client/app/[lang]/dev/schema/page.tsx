@@ -401,7 +401,7 @@ const TABLES: Table[] = [
     { name: 'kind', note: { zh: 'recon_alt / recon_comment / recon_reply', en: 'recon_alt / recon_comment / recon_reply' } },
     { name: 'actor_key, actor_name' }, { name: 'title, excerpt, link' }, { name: 'created_at, read_at' },
   ] },
-  { name: 'nav_sites', domain: 'community', origin: '0001', evolved: [2], purpose: { zh: '/site 网址导航(group_id 避 SQL 关键字)', en: 'The /site link directory' } },
+  { name: 'nav_sites', domain: 'community', origin: '0001', evolved: [2, 170], purpose: { zh: '/site 网址导航(group_id 避 SQL 关键字)', en: 'The /site link directory' } },
   { name: 'teacher_directory_entries', domain: 'community', origin: '0126', purpose: { zh: '/teachers 魔方老师与培训机构目录;登录用户维护自己的资料,管理员维护全部资料', en: 'The /teachers cube teacher and training-school directory; signed-in users maintain their own profiles and admins maintain all profiles' }, cols: [
     { name: 'kind', note: { zh: 'teacher / organization', en: 'teacher / organization' } },
     { name: 'name_zh / name_en, location_zh / location_en, description_zh / description_en' },
@@ -615,6 +615,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 167, slug: 'platform_core', desc: { zh: '新增主站 Platform 的目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等 PostgreSQL 底座；复用统一账号，不恢复旧 SQLite 双写。', en: 'Add the main-site Platform PostgreSQL foundation for catalog, learning, commerce, content, instructors, QR, privacy, audit, outbox, and idempotency on canonical accounts, without restoring legacy SQLite dual-write.' } },
   { n: 168, slug: 'platform_account_deletion', desc: { zh: '以账号删除触发器原子覆盖 Platform 的 48 张直接关联表：删除私有数据、擦除个人资料，并在 12 张只追加版本、账本和审计表中保留不可伪造的墓碑证据。', en: 'Atomically cover all 48 directly linked Platform tables from an account-delete trigger: purge private data, erase personal information, and retain unforgeable tombstoned evidence across 12 append-only revision, ledger, and audit tables.' } },
   { n: 169, slug: 'page_notice_placements', desc: { zh: 'page_notices 增加展示位、目标链接与生效时间窗，使同一路径可同时承载顶部运维通知和首页焦点新闻；并预置 WCA 4-pad 计时公告。', en: 'Add placement, target-link, and active-window fields to page_notices so one path can carry both a top operational notice and homepage featured news; seed the WCA 4-pad timing announcement.' } },
+  { n: 170, slug: 'nav_sites_github', desc: { zh: 'nav_sites 增加 GitHub 链接', en: 'Add GitHub links to nav sites' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

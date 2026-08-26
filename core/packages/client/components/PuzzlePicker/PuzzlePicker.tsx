@@ -11,6 +11,7 @@
  *
  * 契约:
  *   - selectedEvent:当前选中(命中则触发器高亮,收起态只显示其图标 + 箭头)。
+ *   - selectedEvents + onToggle:多选模式,点击项目只切换选中态,弹层保持打开。
  *   - linkFor(id):链接模式,返回 { href, hard? } → 渲染真实 <a>/AppLink(中键/Ctrl 新开;
  *     跨 COEP 边界 hard=原生 <a> 整页加载)。/scramble/solver 用。
  *   - onSelect(id):回调模式(无 linkFor 时),渲染 <button>。/scramble/stats 用。
@@ -50,12 +51,16 @@ export interface PuzzlePickerGroup {
 interface Props {
   isZh?: boolean;
   selectedEvent?: string;
+  /** 多选模式的当前项目;与 onToggle 配套使用。 */
+  selectedEvents?: ReadonlySet<string>;
   /** WCA 项目(置顶分组,按 ALL_EVENT_IDS 顺序);省略 = 不列 WCA。 */
   wcaEvents?: ReadonlySet<string>;
   /** 限定可选的非 WCA id(交集);省略 = 全部 solvable。 */
   availableEvents?: ReadonlySet<string>;
   /** 回调模式(无 linkFor 时用);分布页传 setEvent。 */
   onSelect?: (id: string) => void;
+  /** 多选模式回调;点击后不关闭弹层。 */
+  onToggle?: (id: string) => void;
   /** 链接模式;求解页传(跨 COEP 边界 hard=原生 <a>)。返回 null = 退回 button。 */
   linkFor?: (id: string) => { href: string; hard?: boolean } | null;
   /** 页面自己的项目 catalog。传入后不再生成默认 WCA + csTimer 家族分组。 */
@@ -68,7 +73,7 @@ interface Props {
 const nameOf = (e: CstimerEvent, isZh: boolean): string => [e.en, e.zh][Number(isZh)];
 
 export default function PuzzlePicker({
-  isZh = false, selectedEvent, wcaEvents, availableEvents, onSelect, linkFor,
+  isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
   groups: suppliedGroups, dataNoTimer,
 }: Props) {
   const params = useParams();
@@ -111,8 +116,13 @@ export default function PuzzlePicker({
     return out;
   }, [suppliedGroups, wcaIds, cstimerGroups, isZh]);
 
-  // 选中项落在本下拉里 → 触发器高亮 + 显示其图标/名;否则显示占位。
-  const selectedItem = groups.flatMap((group) => group.items).find((item) => item.id === selectedEvent) ?? null;
+  const isMulti = selectedEvents !== undefined && onToggle !== undefined;
+  const selectedItems = groups
+    .flatMap((group) => group.items)
+    .filter((item) => isMulti ? selectedEvents?.has(item.id) : item.id === selectedEvent);
+  // 单选或仅选一个项目时显示具体图标;多选多个时保留通用项目图标,避免误指其中一个。
+  const selectedItem = selectedItems.length === 1 ? selectedItems[0] : null;
+  const hasSelection = selectedItems.length > 0;
   const placeholder = wcaEvents ? tr({ zh: '项目', en: 'Puzzle' }) : tr({ zh: '更多', en: 'More' });
   const triggerLabel = selectedItem?.label ?? (suppliedGroups ? tr({ zh: '项目', en: 'Puzzle' }) : placeholder);
 
@@ -148,7 +158,7 @@ export default function PuzzlePicker({
   };
 
   const renderItem = (item: PuzzlePickerItem) => {
-    const active = item.id === selectedEvent;
+    const active = isMulti ? Boolean(selectedEvents?.has(item.id)) : item.id === selectedEvent;
     const cls = `pp-item${active ? ' pp-item--active' : ''}`;
     const inner = (
       <>
@@ -172,9 +182,13 @@ export default function PuzzlePicker({
     }
     return (
       <button
-        key={item.id} type="button" className={cls} role="menuitem"
-        aria-current={active ? 'page' : undefined}
-        onClick={() => { onSelect?.(item.id); close(true); }}
+        key={item.id} type="button" className={cls} role={isMulti ? 'menuitemcheckbox' : 'menuitem'}
+        aria-checked={isMulti ? active : undefined}
+        aria-current={!isMulti && active ? 'page' : undefined}
+        onClick={() => {
+          if (isMulti) onToggle?.(item.id);
+          else { onSelect?.(item.id); close(true); }
+        }}
       >{inner}</button>
     );
   };
@@ -184,7 +198,7 @@ export default function PuzzlePicker({
       <button
         ref={triggerRef}
         type="button"
-        className={`pp-trigger${selectedItem ? ' pp-trigger--active' : ''}`}
+        className={`pp-trigger${hasSelection ? ' pp-trigger--active' : ''}`}
         aria-label={triggerLabel}
         aria-expanded={open}
         aria-haspopup="menu"

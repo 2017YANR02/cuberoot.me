@@ -21,12 +21,13 @@ export interface SiteInput {
   desc_en?: string | null;
   desc_zh?: string | null;
   youtube?: string | null;
+  github?: string | null;
   tags?: string[] | null;
   status?: 'dead' | null;
 }
 
 export async function listSites(): Promise<Site[]> {
-  return handleApi<Site[]>(await fetch(BASE));
+  return handleApi<Site[]>(await fetch(`${BASE}?v=2`));
 }
 export async function createSite(body: SiteInput): Promise<Site> {
   return handleApi<Site>(await fetch(BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));
