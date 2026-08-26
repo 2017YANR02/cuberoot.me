@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseAsInteger, useQueryState } from 'nuqs';
-import { ChevronDown, ChevronLeft, Lightbulb, Bug, MessageSquare, Plus } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Lightbulb, Bug, Link2, MessageSquare, Plus } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -19,8 +19,10 @@ import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import {
   feedbackMediaUrl,
+  fetchFeedbackThread,
   fetchPublicFeedback,
   type FeedbackKind,
+  type PublicFeedbackItem,
   type PublicFeedbackPage,
 } from '@/lib/feedback-api';
 import './feedback.css';
@@ -40,9 +42,16 @@ export default function FeedbackPage() {
     'page', parseAsInteger.withDefault(1).withOptions({ history: 'push' }),
   );
   const [size, setSize] = useQueryState('size', parseAsInteger.withDefault(20));
+  const [selectedId] = useQueryState(
+    'id', parseAsInteger.withOptions({ history: 'push' }),
+  );
   const safePage = Math.max(1, page);
   const safeSize = PAGE_SIZES.includes(size) ? size : 20;
+  const safeSelectedId = selectedId != null && Number.isSafeInteger(selectedId) && selectedId > 0
+    ? selectedId
+    : null;
   const [data, setData] = useState<PublicFeedbackPage | null>(null);
+  const [selectedItem, setSelectedItem] = useState<PublicFeedbackItem | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [open, setOpen] = useState<Set<number>>(new Set());
   const [composeOpen, setComposeOpen] = useState(false);
@@ -51,12 +60,18 @@ export default function FeedbackPage() {
 
   const load = useCallback(() => {
     setErr(null);
+    if (safeSelectedId != null) {
+      return fetchFeedbackThread(safeSelectedId)
+        .then((thread) => setSelectedItem(thread.feedback))
+        .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
+    }
     return fetchPublicFeedback(safePage, safeSize)
       .then(setData)
       .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
-  }, [safePage, safeSize]);
+  }, [safePage, safeSelectedId, safeSize]);
 
   useEffect(() => {
+    if (safeSelectedId != null) return;
     let cancelled = false;
     setData(null);
     setErr(null);
@@ -64,7 +79,25 @@ export default function FeedbackPage() {
       .then((next) => { if (!cancelled) setData(next); })
       .catch((e) => { if (!cancelled) setErr(e instanceof Error ? e.message : String(e)); });
     return () => { cancelled = true; };
-  }, [safePage, safeSize]);
+  }, [safePage, safeSelectedId, safeSize]);
+
+  useEffect(() => {
+    if (safeSelectedId == null) {
+      setSelectedItem(null);
+      return;
+    }
+    let cancelled = false;
+    setSelectedItem(null);
+    setErr(null);
+    fetchFeedbackThread(safeSelectedId)
+      .then((thread) => { if (!cancelled) setSelectedItem(thread.feedback); })
+      .catch((e) => { if (!cancelled) setErr(e instanceof Error ? e.message : String(e)); });
+    return () => { cancelled = true; };
+  }, [safeSelectedId]);
+
+  useEffect(() => {
+    if (safeSelectedId != null) setOpen(new Set([safeSelectedId]));
+  }, [safeSelectedId]);
 
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / safeSize));
   useEffect(() => {
@@ -85,6 +118,11 @@ export default function FeedbackPage() {
     else login();
   }
 
+  const visibleItems = safeSelectedId != null
+    ? (selectedItem ? [selectedItem] : [])
+    : (data?.items ?? []);
+  const loading = safeSelectedId != null ? !selectedItem : !data;
+
   return (
     <div className="fbm-page">
       <header className="fbm-header">
@@ -104,8 +142,8 @@ export default function FeedbackPage() {
       </div>
 
       {err && <div className="fbm-error">{err}</div>}
-      {!data && !err && <div className="fbm-empty">{t('加载中…', 'Loading…')}</div>}
-      {data && data.items.length === 0 && (
+      {loading && !err && <div className="fbm-empty">{t('加载中…', 'Loading…')}</div>}
+      {safeSelectedId == null && data && data.items.length === 0 && (
         <div className="fbm-empty">
           <p>{t('还没有反馈。', 'No feedback yet.')}</p>
           <button type="button" className="fbm-new" onClick={startFeedback}>
@@ -115,25 +153,37 @@ export default function FeedbackPage() {
       )}
 
       <div className="fbm-list">
-        {data?.items.map((it) => {
+        {visibleItems.map((it) => {
           const Icon = KIND_ICON[it.kind];
           const expanded = open.has(it.id);
           const author = displayCuberName(it.wcaName, isZh) || it.wcaId;
           return (
             <article key={it.id} className={`fbm-card fbm-status-${it.status}`}>
-              <button type="button" className="fbm-card-head" onClick={() => toggle(it.id)} aria-expanded={expanded}>
-                <span className="fbm-kind"><Icon size={14} /></span>
-                <span className="fbm-author">{author}</span>
-                <UserIdLabel userId={it.userId} />
-                <span className="fbm-when">{String(it.createdAt).slice(0, 10)}</span>
-                <span className={`fbm-badge fbm-badge-${it.status}`}>
-                  {it.status === 'new' ? t('新', 'New') : it.status === 'triaged' ? t('处理中', 'In progress') : t('已完成', 'Done')}
-                </span>
-                {it.replyCount > 0 && (
-                  <span className="fbm-replies"><MessageSquare size={12} /> {it.replyCount}</span>
-                )}
-                <ChevronDown size={16} className={`fbm-chev${expanded ? ' is-open' : ''}`} />
-              </button>
+              <div className="fbm-card-top">
+                <button type="button" className="fbm-card-head" onClick={() => toggle(it.id)} aria-expanded={expanded}>
+                  <span className="fbm-kind"><Icon size={14} /></span>
+                  <span className="fbm-author">{author}</span>
+                  <UserIdLabel userId={it.userId} />
+                  <span className="fbm-when">{String(it.createdAt).slice(0, 10)}</span>
+                  <span className={`fbm-badge fbm-badge-${it.status}`}>
+                    {it.status === 'new' ? t('新', 'New') : it.status === 'triaged' ? t('处理中', 'In progress') : t('已完成', 'Done')}
+                  </span>
+                  {it.replyCount > 0 && (
+                    <span className="fbm-replies"><MessageSquare size={12} /> {it.replyCount}</span>
+                  )}
+                  <ChevronDown size={16} className={`fbm-chev${expanded ? ' is-open' : ''}`} />
+                </button>
+                <AppLink
+                  href={`/feedback?id=${it.id}`}
+                  prefetch={false}
+                  className="fbm-permalink"
+                  title={t(`打开反馈 #${it.id} 的独立链接`, `Open permalink for feedback #${it.id}`)}
+                  aria-label={t(`打开反馈 #${it.id} 的独立链接`, `Open permalink for feedback #${it.id}`)}
+                >
+                  <Link2 size={13} aria-hidden="true" />
+                  <span>#{it.id}</span>
+                </AppLink>
+              </div>
 
               <p className="fbm-body">{it.body}</p>
 
@@ -157,7 +207,7 @@ export default function FeedbackPage() {
         })}
       </div>
 
-      {data && data.total > 0 && (
+      {safeSelectedId == null && data && data.total > 0 && (
         <Paginator
           page={Math.min(safePage, totalPages)}
           totalPages={totalPages}
