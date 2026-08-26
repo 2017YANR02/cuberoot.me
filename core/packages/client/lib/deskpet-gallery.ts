@@ -3,6 +3,8 @@
 // Files live under public/deskpet/<base>; the gallery renders them as plain <img>,
 // so states the runtime state-machine doesn't drive yet still preview here.
 
+import { CLAWD_AVATAR_PRESETS } from '@cuberoot/shared/account-avatar';
+
 export interface PetAnim {
   file: string;
   zh: string;
@@ -140,41 +142,7 @@ export const PET_GALLERY: PetGalleryGroup[] = [
   },
   {
     id: 'clawd', zh: '螃蟹 Clawd', en: 'Clawd', base: '/deskpet/', scale: 1.85, scaleOrigin: 'center 82%',
-    anims: [
-      { file: 'clawd-idle-look.svg', zh: '待机', en: 'Idle'
-    },
-      { file: 'clawd-idle-bubble.svg', zh: '冒泡', en: 'Thought Bubble' },
-      { file: 'clawd-working-thinking.svg', zh: '思考', en: 'Thinking' },
-      { file: 'clawd-working-typing.svg', zh: '打字', en: 'Typing' },
-      { file: 'clawd-working-building.svg', zh: '搭建', en: 'Building' },
-      { file: 'clawd-headphones-groove.svg', zh: '戴耳机', en: 'Groove'
-    },
-      { file: 'clawd-working-juggling.svg', zh: '抛接', en: 'Juggling'
-    },
-      { file: 'clawd-working-sweeping.svg', zh: '打扫', en: 'Sweeping'
-    },
-      { file: 'clawd-working-carrying.svg', zh: '搬运', en: 'Carrying'
-    },
-      { file: 'clawd-working-debugger.svg', zh: '调试', en: 'Debugger'
-    },
-      { file: 'clawd-working-wizard.svg', zh: '施法', en: 'Wizard' },
-      { file: 'clawd-working-ultrathink.svg', zh: '深度思考', en: 'Ultrathink' },
-      { file: 'clawd-working-typing-boss.svg', zh: '老板模式', en: 'Boss'
-    },
-      { file: 'clawd-happy.svg', zh: '开心', en: 'Happy'
-    },
-      { file: 'clawd-error.svg', zh: '出错', en: 'Error'
-    },
-      { file: 'clawd-notification.svg', zh: '提醒', en: 'Notification' },
-      { file: 'clawd-idle-reading.svg', zh: '阅读', en: 'Reading'
-    },
-      { file: 'clawd-idle-yawn.svg', zh: '打哈欠', en: 'Yawn' },
-      { file: 'clawd-idle-doze.svg', zh: '打盹', en: 'Doze' },
-      { file: 'clawd-sleeping.svg', zh: '睡觉', en: 'Sleeping'
-    },
-      { file: 'clawd-wake.svg', zh: '醒来', en: 'Waking'
-    },
-    ],
+    anims: CLAWD_AVATAR_PRESETS.map(({ file, zh, en }) => ({ file, zh, en })),
   },
   {
     id: 'calico', zh: '三花猫 Calico', en: 'Calico', base: '/deskpet/calico/',

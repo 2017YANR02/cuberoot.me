@@ -285,6 +285,7 @@ async function serveForumVideo(c: Context, headOnly: boolean): Promise<Response>
 interface ForumAuthorProfile {
   name: string;
   avatarUrl: string | null;
+  avatarPreset: string | null;
   joinedAt: Date | null;
   postCount: number;
   wcaId: string | null;
@@ -311,17 +312,17 @@ async function authorProfilesFor(authorNames: Map<string, string>): Promise<Reco
 
   const wcaKeys = authorIds.filter((a) => !/^u\d+$/.test(a));
   const uidKeys = authorIds.filter((a) => /^u\d+$/.test(a));
-  const profile = new Map<string, { id: string; avatar_url: string | null; created_at: Date; display_name: string }>();
+  const profile = new Map<string, { id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string }>();
   if (wcaKeys.length > 0) {
-    const rows = await query<{ id: string; wca_id: string; avatar_url: string | null; created_at: Date; display_name: string }>(
-      `SELECT id, wca_id, avatar_url, created_at, display_name FROM app_users WHERE wca_id IN (${wcaKeys.map(() => '?').join(',')})`,
+    const rows = await query<{ id: string; wca_id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string }>(
+      `SELECT id, wca_id, avatar_url, avatar_preset, created_at, display_name FROM app_users WHERE wca_id IN (${wcaKeys.map(() => '?').join(',')})`,
       wcaKeys,
     );
     for (const r of rows) profile.set(r.wca_id, r);
   }
   if (uidKeys.length > 0) {
-    const rows = await query<{ id: string; avatar_url: string | null; created_at: Date; display_name: string }>(
-      `SELECT id, avatar_url, created_at, display_name FROM app_users WHERE id IN (${uidKeys.map(() => '?').join(',')})`,
+    const rows = await query<{ id: string; avatar_url: string | null; avatar_preset: string | null; created_at: Date; display_name: string }>(
+      `SELECT id, avatar_url, avatar_preset, created_at, display_name FROM app_users WHERE id IN (${uidKeys.map(() => '?').join(',')})`,
       uidKeys.map((a) => Number(a.slice(1))),
     );
     for (const r of rows) profile.set(`u${r.id}`, r);
@@ -332,6 +333,7 @@ async function authorProfilesFor(authorNames: Map<string, string>): Promise<Reco
     authors[authorId] = {
       name: p?.display_name || authorNames.get(authorId) || '',
       avatarUrl: p?.avatar_url ?? null,
+      avatarPreset: p?.avatar_preset ?? null,
       joinedAt: p?.created_at ?? null,
       postCount: postCounts.get(authorId) ?? 0,
       wcaId: /^u\d+$/.test(authorId) ? null : authorId,

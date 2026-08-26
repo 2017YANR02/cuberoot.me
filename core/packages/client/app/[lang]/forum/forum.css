@@ -467,17 +467,11 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  object-fit: cover;
-}
-.forum-post-avatar-fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: var(--accent);
+  overflow: hidden;
   background: var(--accent-soft);
 }
+.forum-post-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.forum-post-avatar.is-clawd img { transform: scale(1.85); transform-origin: center 82%; }
 
 .forum-post-author-meta {
   display: flex;
@@ -856,7 +850,6 @@ a.forum-post-author-name:hover { color: var(--accent); }
     align-items: center;
   }
   .forum-post-avatar { width: 36px; height: 36px; }
-  .forum-post-avatar-fallback { font-size: 0.95rem; }
   .forum-post-author-stats { flex-direction: row; gap: 10px; }
 
   .forum-thread-row { grid-template-columns: minmax(0, 1fr) auto; }

@@ -7,6 +7,7 @@ import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
+import { resolveAccountAvatar } from '@/lib/account-avatar';
 import { formatCount, formatRelativeTime } from '@/lib/forum-format';
 import {
   reactToPost,
@@ -64,6 +65,7 @@ export function ForumFeedList({ threads, compact = false }: { threads: ForumFeed
     <div className={`community-feed-list${compact ? ' is-compact' : ''}`}>
       {threads.map((thread) => {
         const displayName = ownerDisplayName(thread.authorId, thread.author.name || thread.authorName, zh);
+        const avatar = resolveAccountAvatar(thread.author.avatarUrl, thread.author.avatarPreset);
         const currentReaction = reactionState[thread.id] ?? {
           reactions: thread.reactions,
           myReaction: thread.myReaction ?? null,
@@ -73,10 +75,8 @@ export function ForumFeedList({ threads, compact = false }: { threads: ForumFeed
         const videos = thread.videos ?? [];
         return (
           <article className="community-feed-item" key={thread.id}>
-            <div className="community-feed-avatar" aria-hidden="true">
-              {thread.author.avatarUrl
-                ? <img src={thread.author.avatarUrl} alt="" />
-                : <span>{displayName.slice(0, 1).toUpperCase()}</span>}
+            <div className={`community-feed-avatar${avatar.isClawd ? ' is-clawd' : ''}`} aria-hidden="true">
+              <img src={avatar.src} alt="" />
             </div>
             <div className="community-feed-main">
               <div className="community-feed-byline">

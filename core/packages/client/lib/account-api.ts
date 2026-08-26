@@ -4,6 +4,7 @@
 import { apiUrl } from './api-base';
 import { getSessionToken } from './auth-store';
 import type { WebSession, WebSessionUser } from '@cuberoot/shared/auth/web-session';
+import type { ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 
 export type SessionUser = WebSessionUser;
 export interface SessionResp extends WebSession {
@@ -50,6 +51,12 @@ export const deleteAccount = (confirm: string, password?: string) =>
 // 修改站内用户名后同时换发带新名字的 JWT,供本机登录态原子刷新。
 export const updateDisplayName = (name: string) =>
   post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/profile', { name }, true);
+export type AvatarChoice =
+  | { kind: 'clawd'; preset: ClawdAvatarPresetId }
+  | { kind: 'upload'; imageId: number }
+  | { kind: 'wca' };
+export const updateAvatar = (avatar: AvatarChoice) =>
+  post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/profile', { avatar }, true);
 export const sendPhoneCode = (phone: string) => post<{ ok: true }>('/v1/auth/phone/send', { phone });
 export const verifyPhoneCode = (phone: string, code: string) => post<SessionResp>('/v1/auth/phone/verify', { phone, code });
 

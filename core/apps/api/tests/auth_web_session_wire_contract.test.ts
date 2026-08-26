@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   publicUser: vi.fn(),
   requireAppUserId: vi.fn(),
   signSession: vi.fn(),
+  updateClawdAvatar: vi.fn(),
   wechatMiniProgramConfigured: vi.fn(),
 }));
 
@@ -29,6 +30,7 @@ vi.mock('../src/utils/account.js', () => ({
   getUserById: mocks.getUserById,
   loginWithIdentity: mocks.loginWithIdentity,
   publicUser: mocks.publicUser,
+  updateClawdAvatar: mocks.updateClawdAvatar,
 }));
 vi.mock('../src/utils/wechat_miniprogram.js', () => ({
   exchangeWechatMiniProgramCode: mocks.exchangeWechatMiniProgramCode,
@@ -55,7 +57,14 @@ const account = {
   display_name: '',
   avatar_url: null,
 };
-const publicAccount = { uid: 42, wcaId: null, name: '', avatar: '' };
+const publicAccount = {
+  uid: 42,
+  wcaId: null,
+  name: '',
+  avatar: '',
+  avatarSource: 'auto' as const,
+  avatarPreset: null,
+};
 const token = 's'.repeat(20);
 const ticket = 'A'.repeat(43);
 
@@ -119,6 +128,42 @@ describe('auth route wire contracts', () => {
     expect(body).toEqual({ token, user: publicAccount });
     expect(decodeWebSession(body)).toEqual(body);
     expect(mocks.consumeWebSessionTicket).toHaveBeenCalledWith(ticket);
+  });
+
+  it('rejects an unknown Clawd preset before touching account storage', async () => {
+    mocks.requireAppUserId.mockResolvedValue(42);
+
+    const response = await accountAuthRoutes.request('/auth/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ avatar: { kind: 'clawd', preset: 'invented' } }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(mocks.updateClawdAvatar).not.toHaveBeenCalled();
+  });
+
+  it('returns a refreshed canonical session after choosing a Clawd preset', async () => {
+    const clawdUser = { ...account, avatar_source: 'clawd', avatar_preset: 'typing' };
+    const clawdPublicAccount = {
+      ...publicAccount,
+      avatarSource: 'clawd' as const,
+      avatarPreset: 'typing' as const,
+    };
+    mocks.requireAppUserId.mockResolvedValue(42);
+    mocks.updateClawdAvatar.mockResolvedValue(clawdUser);
+    mocks.publicUser.mockReturnValue(clawdPublicAccount);
+
+    const response = await accountAuthRoutes.request('/auth/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ avatar: { kind: 'clawd', preset: 'typing' } }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(decodeWebSession(body)).toEqual({ token, user: clawdPublicAccount });
+    expect(mocks.updateClawdAvatar).toHaveBeenCalledWith(42, 'typing');
   });
 
   it('returns a stable compatible WeChat configuration error', async () => {
