@@ -6,13 +6,15 @@
  * admin 看到行内 ✏️/🗑/⬆⬇ 按钮 + Add。
  *
  * 1:1 port from packages/client-vite/src/pages/sites/SitesPage.tsx (Vite SPA).
- * URL state (?q query, ?topic topics, ?events events) is managed via nuqs (history: 'replace').
+ * URL state (?q query, ?topic topics, ?events events, ?sets alg sets, ?methods methods)
+ * is managed via nuqs (history: 'replace').
  */
 import { Suspense, useMemo, useCallback, useState, useEffect } from 'react';
 import { useQueryStates, parseAsArrayOf, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { Search, AlertTriangle, Pencil, Trash2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
+import { Search, AlertTriangle, Pencil, Trash2, ArrowUp, ArrowDown, Plus, Route, Sigma } from 'lucide-react';
 import Fuse from 'fuse.js';
+import { ALG_CATALOG } from '@cuberoot/shared/alg';
 import { WCA_AUTHOR_BY_CREDIT } from './data/wca-authors';
 import type { GroupId, Site } from './data/types';
 import { isAdmin } from '@/lib/auth-store';
@@ -55,9 +57,13 @@ const TEXTS = {
   title:       { en: 'Web Directory', zh: '魔方导航' },
   topics:      { en: 'Topics',        zh: '话题' },
   projects:    { en: 'Events',        zh: '项目' },
+  algSets:     { en: 'Algorithm sets', zh: '公式集' },
+  methods:     { en: 'Methods',        zh: '方法' },
   wcaProjects: { en: 'WCA events',    zh: 'WCA 项目' },
   otherProjects: { en: 'Non-WCA events', zh: '非 WCA 项目' },
   clearProjects: { en: 'Clear events', zh: '清除项目' },
+  clearAlgSets: { en: 'Clear algorithm sets', zh: '清除公式集' },
+  clearMethods: { en: 'Clear methods', zh: '清除方法' },
   searchPh:    { en: 'Search name / description / URL…', zh: '搜索名称 / 描述 / 网址…'
 },
   sites:       { en: 'sites',            zh: '个站点'
@@ -112,6 +118,55 @@ const PROJECT_TOPIC_TAGS = new Set(
   Object.values(SITE_EVENT_TAGS).flat().map((tag) => tag.toLowerCase()),
 );
 
+interface SiteFilterOption {
+  id: string;
+  label: { en: string; zh: string };
+  aliases: readonly string[];
+}
+
+const normalizeFilterValue = (value: string): string => value.trim().toLowerCase();
+
+/** 目录现有的解法标签;精确别名避免把一般教程词误判为方法。 */
+const SITE_METHOD_OPTIONS: readonly SiteFilterOption[] = [
+  { id: 'cfop', label: { en: 'CFOP', zh: 'CFOP' }, aliases: ['CFOP'] },
+  { id: 'roux', label: { en: 'Roux', zh: '桥式' }, aliases: ['Roux', '桥式', 'Roux 桥式'] },
+  { id: 'zz', label: { en: 'ZZ', zh: 'ZZ' }, aliases: ['ZZ'] },
+  { id: 'petrus', label: { en: 'Petrus', zh: 'Petrus' }, aliases: ['Petrus'] },
+  { id: 'lbl', label: { en: 'LBL', zh: '层先' }, aliases: ['LBL', '层先', 'LBL 层先'] },
+];
+
+const SITE_METHOD_BY_ALIAS = new Map<string, SiteFilterOption>();
+for (const option of SITE_METHOD_OPTIONS) {
+  SITE_METHOD_BY_ALIAS.set(option.id, option);
+  for (const alias of option.aliases) SITE_METHOD_BY_ALIAS.set(normalizeFilterValue(alias), option);
+}
+
+/** 公式集名称来自共享 ALG_CATALOG;目录只显示当前站点数据实际使用到的集合。 */
+const SITE_ALG_SET_OPTIONS: SiteFilterOption[] = [];
+const SITE_ALG_SET_BY_ID = new Map<string, SiteFilterOption>();
+const SITE_ALG_SET_BY_ALIAS = new Map<string, SiteFilterOption>();
+for (const sets of Object.values(ALG_CATALOG)) {
+  for (const meta of sets) {
+    const canonicalLabel = meta.short || meta.en;
+    const id = normalizeFilterValue(canonicalLabel);
+    let option = SITE_ALG_SET_BY_ID.get(id);
+    if (!option) {
+      option = { id, label: { en: canonicalLabel, zh: canonicalLabel }, aliases: [] };
+      SITE_ALG_SET_BY_ID.set(id, option);
+      SITE_ALG_SET_OPTIONS.push(option);
+    }
+    for (const alias of [meta.short, meta.scd, meta.en, meta.zh]) {
+      if (!alias) continue;
+      const key = normalizeFilterValue(alias);
+      if (!SITE_ALG_SET_BY_ALIAS.has(key)) SITE_ALG_SET_BY_ALIAS.set(key, option);
+    }
+  }
+}
+
+// 兼容旧话题链接与目录数据中的简称;共享目录使用“棱块朝向”。
+const eoOption = SITE_ALG_SET_BY_ID.get('eo');
+if (eoOption) SITE_ALG_SET_BY_ALIAS.set(normalizeFilterValue('棱朝向'), eoOption);
+
 /** 目录没有为高阶盲拧/多盲单列标签,只在名称与简介里按这些明确别名补充匹配。 */
 const SITE_EVENT_TEXT_ALIASES: Record<string, readonly string[]> = {
   '444bf': ['4bld', '444bf', '四阶盲拧', '四盲'],
@@ -140,6 +195,25 @@ function splitLangTag(s: string): { en: string; zh: string
   if (idx < 0) return { en: s, zh: s };
   if (idx === 0) return { en: s, zh: s };
   return { en: s.slice(0, idx).trim(), zh: s.slice(idx).trim() };
+}
+
+function optionForTag(rawTag: string, byAlias: ReadonlyMap<string, SiteFilterOption>): SiteFilterOption | undefined {
+  const { en, zh } = splitLangTag(rawTag);
+  for (const value of [rawTag, en, zh]) {
+    const option = byAlias.get(normalizeFilterValue(value));
+    if (option) return option;
+  }
+  return undefined;
+}
+
+function methodForTag(rawTag: string): SiteFilterOption | undefined {
+  return optionForTag(rawTag, SITE_METHOD_BY_ALIAS);
+}
+
+function algSetForTag(rawTag: string): SiteFilterOption | undefined {
+  // 解法标签优先,避免未来公式目录出现同名集合时在两个菜单重复。
+  if (methodForTag(rawTag)) return undefined;
+  return optionForTag(rawTag, SITE_ALG_SET_BY_ALIAS);
 }
 
 function topicKey(label: string, lang: 'en' | 'zh'): string {
@@ -288,6 +362,8 @@ function SitesPageInner() {
       q: parseAsString,
       topic: parseAsArrayOf(parseAsString).withDefault([]),
       events: parseAsArrayOf(parseAsString).withDefault([]),
+      sets: parseAsArrayOf(parseAsString).withDefault([]),
+      methods: parseAsArrayOf(parseAsString).withDefault([]),
     },
     { history: 'replace', scroll: false },
   );
@@ -297,6 +373,7 @@ function SitesPageInner() {
     return params.topic
       .map((label) => label.trim())
       .filter(Boolean)
+      .filter((label) => !algSetForTag(label) && !methodForTag(label))
       .filter((label) => {
         const key = topicKey(label, lang);
         if (seen.has(key)) return false;
@@ -308,6 +385,16 @@ function SitesPageInner() {
     () => new Set(selectedTopics.map((label) => topicKey(label, lang))),
     [selectedTopics, lang],
   );
+  const requestedAlgSetIds = useMemo(() => {
+    const legacyIds = params.topic.map((label) => algSetForTag(label)?.id).filter((id): id is string => Boolean(id));
+    return [...new Set([...params.sets.map(normalizeFilterValue), ...legacyIds])]
+      .filter((id) => SITE_ALG_SET_BY_ID.has(id));
+  }, [params.sets, params.topic]);
+  const requestedMethodIds = useMemo(() => {
+    const legacyIds = params.topic.map((label) => methodForTag(label)?.id).filter((id): id is string => Boolean(id));
+    return [...new Set([...params.methods.map(normalizeFilterValue), ...legacyIds])]
+      .filter((id) => SITE_METHOD_OPTIONS.some((option) => option.id === id));
+  }, [params.methods, params.topic]);
   const selectedEventIds = useMemo(
     () => params.events.filter((id) => SITE_PROJECTS.has(id)),
     [params.events],
@@ -343,6 +430,37 @@ function SitesPageInner() {
     return () => clearTimeout(t);
   }, [inputValue, composing, query, setQuery]);
 
+  const algSetOptions = useMemo(() => {
+    const present = new Set<string>();
+    for (const site of sites ?? []) {
+      for (const rawTag of site.tags ?? []) {
+        const option = algSetForTag(rawTag);
+        if (option) present.add(option.id);
+      }
+    }
+    return SITE_ALG_SET_OPTIONS.filter((option) => present.has(option.id));
+  }, [sites]);
+  const methodOptions = useMemo(() => {
+    const present = new Set<string>();
+    for (const site of sites ?? []) {
+      for (const rawTag of site.tags ?? []) {
+        const option = methodForTag(rawTag);
+        if (option) present.add(option.id);
+      }
+    }
+    return SITE_METHOD_OPTIONS.filter((option) => present.has(option.id));
+  }, [sites]);
+  const selectedAlgSetIds = useMemo(() => {
+    const available = new Set(algSetOptions.map((option) => option.id));
+    return requestedAlgSetIds.filter((id) => available.has(id));
+  }, [algSetOptions, requestedAlgSetIds]);
+  const selectedAlgSets = useMemo(() => new Set(selectedAlgSetIds), [selectedAlgSetIds]);
+  const selectedMethodIds = useMemo(() => {
+    const available = new Set(methodOptions.map((option) => option.id));
+    return requestedMethodIds.filter((id) => available.has(id));
+  }, [methodOptions, requestedMethodIds]);
+  const selectedMethods = useMemo(() => new Set(selectedMethodIds), [selectedMethodIds]);
+
   const topics = useMemo(() => {
     const byLabel = new Map<string, { label: string; count: number; firstSeen: number }>();
     let firstSeen = 0;
@@ -350,6 +468,7 @@ function SitesPageInner() {
       const seenForSite = new Set<string>();
       for (const rawTag of site.tags ?? []) {
         if (PROJECT_TOPIC_TAGS.has(rawTag.trim().toLowerCase())) continue;
+        if (algSetForTag(rawTag) || methodForTag(rawTag)) continue;
         const label = splitLangTag(rawTag)[lang].trim();
         if (!label) continue;
         const key = label.toLocaleLowerCase(lang === 'zh' ? 'zh-Hans' : 'en');
@@ -372,8 +491,12 @@ function SitesPageInner() {
     const next = selectedTopicKeys.has(key)
       ? selectedTopics.filter((topic) => topicKey(topic, lang) !== key)
       : [...selectedTopics, label];
-    void setQuery({ topic: next.length > 0 ? next : null });
-  }, [selectedTopics, selectedTopicKeys, lang, setQuery]);
+    void setQuery({
+      topic: next.length > 0 ? next : null,
+      sets: selectedAlgSetIds.length > 0 ? selectedAlgSetIds : null,
+      methods: selectedMethodIds.length > 0 ? selectedMethodIds : null,
+    });
+  }, [selectedTopics, selectedTopicKeys, selectedAlgSetIds, selectedMethodIds, lang, setQuery]);
 
   const eventPickerGroups = useMemo<readonly PuzzlePickerGroup[]>(() => [
     {
@@ -391,6 +514,44 @@ function SitesPageInner() {
       items: [{ id: 'fto', label: 'FTO', iconClass: 'unofficial-fto' }],
     },
   ], [lang]);
+
+  const algSetPickerGroups = useMemo<readonly PuzzlePickerGroup[]>(() => [{
+    id: 'alg-sets',
+    label: TEXTS.algSets[lang],
+    items: algSetOptions.map((option) => ({ id: option.id, label: option.label[lang] })),
+  }], [algSetOptions, lang]);
+
+  const methodPickerGroups = useMemo<readonly PuzzlePickerGroup[]>(() => [{
+    id: 'methods',
+    label: TEXTS.methods[lang],
+    items: methodOptions.map((option) => ({ id: option.id, label: option.label[lang] })),
+  }], [methodOptions, lang]);
+
+  const toggleAlgSet = useCallback((id: string) => {
+    if (!algSetOptions.some((option) => option.id === id)) return;
+    const next = new Set(selectedAlgSets);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    const ordered = algSetOptions.map((option) => option.id).filter((optionId) => next.has(optionId));
+    void setQuery({
+      sets: ordered.length > 0 ? ordered : null,
+      methods: selectedMethodIds.length > 0 ? selectedMethodIds : null,
+      topic: selectedTopics.length > 0 ? selectedTopics : null,
+    });
+  }, [algSetOptions, selectedAlgSets, selectedMethodIds, selectedTopics, setQuery]);
+
+  const toggleMethod = useCallback((id: string) => {
+    if (!methodOptions.some((option) => option.id === id)) return;
+    const next = new Set(selectedMethods);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    const ordered = methodOptions.map((option) => option.id).filter((optionId) => next.has(optionId));
+    void setQuery({
+      methods: ordered.length > 0 ? ordered : null,
+      sets: selectedAlgSetIds.length > 0 ? selectedAlgSetIds : null,
+      topic: selectedTopics.length > 0 ? selectedTopics : null,
+    });
+  }, [methodOptions, selectedMethods, selectedAlgSetIds, selectedTopics, setQuery]);
 
   const toggleEvent = useCallback((eventId: string) => {
     if (!SITE_PROJECTS.has(eventId)) return;
@@ -437,9 +598,21 @@ function SitesPageInner() {
         selectedTopicKeys.has(splitLangTag(rawTag)[lang].trim().toLocaleLowerCase(locale))
       )))
       : sites;
-    const candidates = selectedEventIds.length > 0
-      ? topicCandidates.filter((site) => selectedEventIds.some((eventId) => siteMatchesEvent(site, eventId)))
+    const algSetCandidates = selectedAlgSetIds.length > 0
+      ? topicCandidates.filter((site) => (site.tags ?? []).some((rawTag) => {
+        const option = algSetForTag(rawTag);
+        return option ? selectedAlgSets.has(option.id) : false;
+      }))
       : topicCandidates;
+    const methodCandidates = selectedMethodIds.length > 0
+      ? algSetCandidates.filter((site) => (site.tags ?? []).some((rawTag) => {
+        const option = methodForTag(rawTag);
+        return option ? selectedMethods.has(option.id) : false;
+      }))
+      : algSetCandidates;
+    const candidates = selectedEventIds.length > 0
+      ? methodCandidates.filter((site) => selectedEventIds.some((eventId) => siteMatchesEvent(site, eventId)))
+      : methodCandidates;
     const q = query.trim();
     if (!q) return candidates;
     // 先只认精确子串(不区分大小写),按命中字段分层排序 —— 搜 "MCC" 就该给含 MCC 的,
@@ -455,7 +628,10 @@ function SitesPageInner() {
     // 一条精确的都没有(拼错 / 记岔了)才降级到 Fuse 模糊,保住容错。
     const candidateIds = new Set(candidates.map((site) => site.id));
     return fuse.search(q).map((r) => r.item).filter((site) => candidateIds.has(site.id));
-  }, [sites, query, selectedTopicKeys, selectedEventIds, lang, fuse]);
+  }, [
+    sites, query, selectedTopicKeys, selectedAlgSetIds, selectedAlgSets,
+    selectedMethodIds, selectedMethods, selectedEventIds, lang, fuse,
+  ]);
 
   const selectedEventNames = selectedEventIds.map((id) => eventDisplayName(id, lang === 'zh'));
   const filterLabels = [
@@ -543,19 +719,69 @@ function SitesPageInner() {
         </header>
 
         {sites && (
-          <div className="sites-project-filter" aria-label={TEXTS.projects[lang]}>
-            <PuzzlePicker
-              isZh={lang === 'zh'}
-              groups={eventPickerGroups}
-              selectedEvents={selectedEvents}
-              onToggle={toggleEvent}
-            />
-            {selectedEventIds.length > 0 && (
-              <ClearButton
-                variant="standalone"
-                ariaLabel={TEXTS.clearProjects[lang]}
-                onClick={() => void setQuery({ events: [] })}
+          <div className="sites-filter-row">
+            <div className="sites-filter-control" aria-label={TEXTS.projects[lang]}>
+              <PuzzlePicker
+                isZh={lang === 'zh'}
+                groups={eventPickerGroups}
+                selectedEvents={selectedEvents}
+                onToggle={toggleEvent}
               />
+              {selectedEventIds.length > 0 && (
+                <ClearButton
+                  variant="standalone"
+                  ariaLabel={TEXTS.clearProjects[lang]}
+                  onClick={() => void setQuery({ events: [] })}
+                />
+              )}
+            </div>
+            {algSetOptions.length > 0 && (
+              <div className="sites-filter-control" aria-label={TEXTS.algSets[lang]}>
+                <PuzzlePicker
+                  isZh={lang === 'zh'}
+                  groups={algSetPickerGroups}
+                  placeholderLabel={TEXTS.algSets[lang]}
+                  triggerIcon={<Sigma size={15} className="pp-trigger-icon" />}
+                  showItemIcons={false}
+                  selectedEvents={selectedAlgSets}
+                  onToggle={toggleAlgSet}
+                />
+                {selectedAlgSetIds.length > 0 && (
+                  <ClearButton
+                    variant="standalone"
+                    ariaLabel={TEXTS.clearAlgSets[lang]}
+                    onClick={() => void setQuery({
+                      sets: null,
+                      methods: selectedMethodIds.length > 0 ? selectedMethodIds : null,
+                      topic: selectedTopics.length > 0 ? selectedTopics : null,
+                    })}
+                  />
+                )}
+              </div>
+            )}
+            {methodOptions.length > 0 && (
+              <div className="sites-filter-control" aria-label={TEXTS.methods[lang]}>
+                <PuzzlePicker
+                  isZh={lang === 'zh'}
+                  groups={methodPickerGroups}
+                  placeholderLabel={TEXTS.methods[lang]}
+                  triggerIcon={<Route size={15} className="pp-trigger-icon" />}
+                  showItemIcons={false}
+                  selectedEvents={selectedMethods}
+                  onToggle={toggleMethod}
+                />
+                {selectedMethodIds.length > 0 && (
+                  <ClearButton
+                    variant="standalone"
+                    ariaLabel={TEXTS.clearMethods[lang]}
+                    onClick={() => void setQuery({
+                      methods: null,
+                      sets: selectedAlgSetIds.length > 0 ? selectedAlgSetIds : null,
+                      topic: selectedTopics.length > 0 ? selectedTopics : null,
+                    })}
+                  />
+                )}
+              </div>
             )}
           </div>
         )}
@@ -618,7 +844,13 @@ function SitesPageInner() {
                 site={s}
                 lang={lang}
                 admin={admin}
-                reorderable={!query.trim() && selectedTopics.length === 0 && selectedEventIds.length === 0}
+                reorderable={
+                  !query.trim()
+                  && selectedTopics.length === 0
+                  && selectedEventIds.length === 0
+                  && selectedAlgSetIds.length === 0
+                  && selectedMethodIds.length === 0
+                }
                 canMoveUp={i > 0 && filtered[i - 1].group === s.group}
                 canMoveDown={i < filtered.length - 1 && filtered[i + 1].group === s.group}
                 onEdit={setEditing}
