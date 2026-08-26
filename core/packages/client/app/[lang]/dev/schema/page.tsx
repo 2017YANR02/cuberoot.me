@@ -92,6 +92,15 @@ const TABLES: Table[] = [
     { name: 'wca_id, name, country' }, { name: 'competition_id, event_id, round_type_id', note: { zh: '六元自然键,无 FK', en: 'six-part natural key, no FK' } },
   ] },
 
+  // ── personal bests ─────────────────────────────────────
+  { name: 'pb_profiles', domain: 'studio', origin: '0171', naturalKey: true, purpose: { zh: 'CubePB 个人主页公开设置', en: 'CubePB public-profile settings' }, cols: [
+    { name: 'owner_key (PK)' }, { name: 'is_public' }, { name: 'created_at, updated_at' },
+  ] },
+  { name: 'pb_records', domain: 'studio', origin: '0171', purpose: { zh: '个人纪录当前值与完整进步历史', en: 'Current personal bests and complete improvement history' }, cols: [
+    { name: 'owner_key, event_id' }, { name: 'record_type, set_size', note: { zh: 'Single / Mo3 / Ao5、12、50、100、1000', en: 'Single / Mo3 / Ao5, 12, 50, 100, 1000' } },
+    { name: 'result_value', note: { zh: 'WCA 原始成绩编码', en: 'Raw WCA result encoding' } }, { name: 'happened_on, cube_name, comments, is_current' },
+  ] },
+
   // ── recon & result changes ──────────────────────────────
   { name: 'recons', domain: 'recon', origin: 'snapshot', evolved: [5, 29, 32], purpose: { zh: '复盘库:打乱 + 解法 + 视频 + 署名', en: 'Solve reconstructions: scramble + solution + video + credit' }, cols: [
     { name: 'id, official, event, method, date' }, { name: 'comp, comp_wca_id, country, city, round' }, { name: 'person, person_id, co_persons', note: { zh: '合作还原署名', en: 'co-solver credit' } }, { name: 'raw_time' },
@@ -616,6 +625,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 168, slug: 'platform_account_deletion', desc: { zh: '以账号删除触发器原子覆盖 Platform 的 48 张直接关联表：删除私有数据、擦除个人资料，并在 12 张只追加版本、账本和审计表中保留不可伪造的墓碑证据。', en: 'Atomically cover all 48 directly linked Platform tables from an account-delete trigger: purge private data, erase personal information, and retain unforgeable tombstoned evidence across 12 append-only revision, ledger, and audit tables.' } },
   { n: 169, slug: 'page_notice_placements', desc: { zh: 'page_notices 增加展示位、目标链接与生效时间窗，使同一路径可同时承载顶部运维通知和首页焦点新闻；并预置 WCA 4-pad 计时公告。', en: 'Add placement, target-link, and active-window fields to page_notices so one path can carry both a top operational notice and homepage featured news; seed the WCA 4-pad timing announcement.' } },
   { n: 170, slug: 'nav_sites_github', desc: { zh: 'nav_sites 增加 GitHub 链接', en: 'Add GitHub links to nav sites' } },
+  { n: 171, slug: 'cube_pb', desc: { zh: '新增 CubePB 个人纪录主页、进步历史、公开分享设置与当前纪录排行榜。', en: 'Add CubePB personal-best profiles, improvement history, public sharing settings, and current-record leaderboards.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
