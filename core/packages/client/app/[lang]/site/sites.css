@@ -70,11 +70,18 @@
   min-width: 0;
 }
 
-.sites-project-filter {
+.sites-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.sites-filter-control {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-bottom: 8px;
 }
 
 .sites-topics {

@@ -20,7 +20,7 @@
  * catalog 时传 groups;组件仍统一负责触发器、图标 + 名称、弹层、关闭/焦点与窄屏布局。
  */
 
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useParams } from 'next/navigation';
 import { ChevronDown, Boxes } from 'lucide-react';
 import AppLink from '../AppLink';
@@ -65,6 +65,12 @@ interface Props {
   linkFor?: (id: string) => { href: string; hard?: boolean } | null;
   /** 页面自己的项目 catalog。传入后不再生成默认 WCA + csTimer 家族分组。 */
   groups?: readonly PuzzlePickerGroup[];
+  /** 自定义 catalog 的收起态名称;省略时保持项目选择器原有名称。 */
+  placeholderLabel?: string;
+  /** 自定义 catalog 的收起态图标;省略时使用通用项目图标。 */
+  triggerIcon?: ReactNode;
+  /** 是否显示每项的图标/文字徽标;纯文本 catalog 可关闭。 */
+  showItemIcons?: boolean;
   /** 计时表面用:让整个弹层都跳过空格/指针计时手势。 */
   dataNoTimer?: boolean;
 }
@@ -74,7 +80,7 @@ const nameOf = (e: CstimerEvent, isZh: boolean): string => [e.en, e.zh][Number(i
 
 export default function PuzzlePicker({
   isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
-  groups: suppliedGroups, dataNoTimer,
+  groups: suppliedGroups, placeholderLabel, triggerIcon, showItemIcons = true, dataNoTimer,
 }: Props) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -124,7 +130,9 @@ export default function PuzzlePicker({
   const selectedItem = selectedItems.length === 1 ? selectedItems[0] : null;
   const hasSelection = selectedItems.length > 0;
   const placeholder = wcaEvents ? tr({ zh: '项目', en: 'Puzzle' }) : tr({ zh: '更多', en: 'More' });
-  const triggerLabel = selectedItem?.label ?? (suppliedGroups ? tr({ zh: '项目', en: 'Puzzle' }) : placeholder);
+  const triggerLabel = selectedItem?.label
+    ?? placeholderLabel
+    ?? (suppliedGroups ? tr({ zh: '项目', en: 'Puzzle' }) : placeholder);
 
   const close = (restoreFocus = false) => {
     setOpen(false);
@@ -162,7 +170,7 @@ export default function PuzzlePicker({
     const cls = `pp-item${active ? ' pp-item--active' : ''}`;
     const inner = (
       <>
-        {iconFor(item)}
+        {showItemIcons && iconFor(item)}
         <span className="pp-item-label">{item.label}</span>
       </>
     );
@@ -205,8 +213,11 @@ export default function PuzzlePicker({
         aria-controls={open ? popupId : undefined}
         onClick={() => setOpen((o) => !o)}
       >
-        {selectedItem ? iconFor(selectedItem, true) : <Boxes size={15} className="pp-trigger-icon" />}
+        {selectedItem && showItemIcons
+          ? iconFor(selectedItem, true)
+          : (triggerIcon ?? <Boxes size={15} className="pp-trigger-icon" />)}
         {!selectedItem && <span className="pp-trigger-label">{triggerLabel}</span>}
+        {selectedItem && !showItemIcons && <span className="pp-trigger-label">{triggerLabel}</span>}
         <ChevronDown size={14} className="pp-trigger-chevron" />
       </button>
       {open && (
