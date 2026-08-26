@@ -9,7 +9,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 
 $threads = 14
 $memoryFloorGiB = 1.25
-$expectedBytes = 7_782_727_680L
+$expectedBytes = [long]7782727680
 $pollSeconds = 5
 $reportSeconds = 30
 $scriptDir = $PSScriptRoot
