@@ -82,7 +82,7 @@
   border-bottom: 1px solid var(--border-default);
 }
 
-.pb-tabs button {
+.pb-tab-button {
   min-height: 44px;
   margin-bottom: -1px;
   padding: 0 11px;
@@ -100,24 +100,23 @@
   white-space: nowrap;
 }
 
-.pb-tabs button:hover,
-.pb-tabs button:focus-visible,
-.pb-tabs button.is-active {
+.pb-tab-button:hover,
+.pb-tab-button:focus-visible,
+.pb-tab-button.is-active {
   color: var(--foreground);
 }
 
-.pb-tabs button.is-active {
+.pb-tab-button.is-active {
   border-bottom-color: var(--accent);
 }
 
-.pb-tabs button:focus-visible,
+.pb-tab-button:focus-visible,
 .pb-primary-link:focus-visible,
 .pb-primary-button:focus-visible,
 .pb-secondary-button:focus-visible,
 .pb-delete-button:focus-visible,
 .pb-source:focus-visible,
-.pb-form-grid input:focus-visible,
-.pb-form-grid textarea:focus-visible {
+.pb-form-control:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
@@ -404,8 +403,7 @@
   font-weight: 650;
 }
 
-.pb-form-grid input,
-.pb-form-grid textarea {
+.pb-form-control {
   width: 100%;
   border: 1px solid var(--input);
   border-radius: 5px;
@@ -416,17 +414,16 @@
   font-weight: 450;
 }
 
-.pb-form-grid input {
+.pb-form-control {
   min-height: 43px;
 }
 
-.pb-form-grid textarea {
+.pb-form-textarea {
   min-height: 84px;
   resize: vertical;
 }
 
-.pb-form-grid input:focus-visible,
-.pb-form-grid textarea:focus-visible {
+.pb-form-control:focus-visible {
   border-color: var(--accent);
 }
 
@@ -436,8 +433,7 @@
   display: block;
 }
 
-.pb-input-wrap input,
-.pb-input-wrap textarea {
+.pb-clearable-control {
   padding-right: 38px;
 }
 
@@ -579,7 +575,7 @@
     display: none;
   }
 
-  .pb-tabs button {
+  .pb-tab-button {
     flex: none;
     gap: 5px;
     padding-inline: 4px;
