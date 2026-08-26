@@ -26,8 +26,9 @@ jobs:
 
       - name: Install Rust nightly + musl target
         run: |
-          rustup toolchain install nightly --profile minimal
-          rustup target add x86_64-unknown-linux-musl --toolchain nightly
+          TOOLCHAIN=$(sed -n 's/^channel = "\([^"]*\)"/\1/p' core/apps/fmc-solver/rust-toolchain.toml)
+          test -n "$TOOLCHAIN"
+          rustup toolchain install "$TOOLCHAIN" --profile minimal --target x86_64-unknown-linux-musl
           # runner 镜像里 sources.list.d/azure-cli.list、mssql-release.list 签名过期,
           # 全量 apt-get update 会因这两个无关源报错(exit 100)。只删这两个,别限制
           # sourcelist 到主文件——24.04 镜像自己的 main/universe/restricted/multiverse
