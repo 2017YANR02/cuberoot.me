@@ -1,7 +1,7 @@
 // Long-lived cube48opt optimal-solve daemon (Node child process).
 //
 // Loads ONE manifest-verified cubeopt prune table into the wasm heap once
-// (the manifest selects a strictly matched opt5/h5 or opt6/h6 bundle),
+// (the manifest selects a strictly matched opt5/h5, opt6/h6, or opt8/h8 bundle),
 // then serves solve requests over line-based stdio — exactly the cube555 daemon
 // shape (see ../cube555/daemon.ts), but for 3x3 god's-number optimal solving.
 //

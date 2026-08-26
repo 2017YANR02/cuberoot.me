@@ -3,7 +3,7 @@
  *
  * Backs the "云端求解" option on /scramble/solver for users who don't want to
  * download the large cubeopt prune table. The executable contract supports a
- * manifest-selected opt5/h5 or opt6/h6 bundle, not independent module/table
+ * manifest-selected opt5/h5, opt6/h6, or opt8/h8 bundle, not independent module/table
  * environment overrides. The
  * daemon runs under memory guards in cubeopt/daemon.ts.
  *

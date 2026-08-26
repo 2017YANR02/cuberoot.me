@@ -181,8 +181,10 @@ jobs:
           rsync -ltz --chmod=F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             "$API_DIR/dist/cubeopt/solve-daemon.mjs" \
+            "$API_DIR/dist/cubeopt/prepare.mjs" \
             "$API_DIR/dist/cubeopt/provision.mjs" \
             "$API_DIR/dist/cubeopt/verify.mjs" \
+            "$API_DIR/dist/cubeopt/promote.mjs" \
             "$API_DIR/dist/cubeopt/smoke.mjs" \
             "root@${{ secrets.DEPLOY_HOST }}:${STAGING_RELEASE}/dist/cubeopt/"
 
@@ -285,8 +287,10 @@ jobs:
 
           cd "$root"
           test -f "$staging/dist/server.bundle.js"
+          test -f "$staging/dist/cubeopt/prepare.mjs"
           test -f "$staging/dist/cubeopt/provision.mjs"
           test -f "$staging/dist/cubeopt/verify.mjs"
+          test -f "$staging/dist/cubeopt/promote.mjs"
           test -f "$staging/dist/cubeopt/solve-daemon.mjs"
           test -f "$staging/dist/cubeopt/smoke.mjs"
           test ! -e "$final"
