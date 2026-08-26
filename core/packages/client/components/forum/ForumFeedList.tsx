@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Eye, MessageCircle } from 'lucide-react';
+import { Eye, Heart, MessageCircle } from 'lucide-react';
 import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';
@@ -10,7 +10,6 @@ import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { formatCount, formatRelativeTime } from '@/lib/forum-format';
 import {
   reactToPost,
-  REACTION_EMOJI,
   type ForumFeedThread,
   type PostReaction,
   type ReactionKind,
@@ -108,7 +107,7 @@ export function ForumFeedList({ threads, compact = false }: { threads: ForumFeed
               <div className="community-feed-meta">
                 <button
                   type="button"
-                  className={`community-feed-meta-action${currentReaction.myReaction ? ' is-mine' : ''}`}
+                  className={`community-feed-meta-action community-feed-reaction-action${currentReaction.myReaction ? ' is-mine' : ''}`}
                   aria-label={tr({
                     zh: currentReaction.myReaction ? '取消回应' : '点赞',
                     en: currentReaction.myReaction ? 'Remove reaction' : 'Like',
@@ -121,9 +120,7 @@ export function ForumFeedList({ threads, compact = false }: { threads: ForumFeed
                   onClick={() => void toggleReaction(thread)}
                   disabled={busyPostId !== null}
                 >
-                  <span className="community-feed-reactions" aria-hidden="true">
-                    {currentReaction.reactions.slice(0, 3).map((reaction) => REACTION_EMOJI[reaction.kind]).join('') || '♡'}
-                  </span>
+                  <Heart className="community-feed-heart" size={14} aria-hidden="true" />
                   {formatCount(reactionCount, lang)}
                 </button>
                 <Link
