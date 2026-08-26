@@ -150,12 +150,40 @@
   font-size: 0.74rem;
 }
 
-.community-feed-meta > span {
+.community-feed-meta > span,
+.community-feed-meta-action {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   white-space: nowrap;
 }
+
+.community-feed-meta-action {
+  min-height: 32px;
+  margin: -7px -5px;
+  padding: 7px 5px;
+  border: 0;
+  border-radius: 5px;
+  color: inherit;
+  background: none;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  appearance: none;
+}
+
+.community-feed-meta-action:hover,
+.community-feed-meta-action.is-mine {
+  color: var(--accent);
+}
+
+.community-feed-meta-action:focus-visible {
+  color: var(--accent);
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.community-feed-meta-action:disabled { cursor: wait; opacity: 0.65; }
 
 .community-feed-reactions { letter-spacing: -0.18em; padding-right: 0.18em; }
 .community-feed-active { color: var(--muted-foreground); }
@@ -172,9 +200,6 @@
 
 .forum-feed-preview-header {
   display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: 12px;
   margin-bottom: 4px;
 }
 
@@ -185,30 +210,13 @@
   font-weight: 500;
 }
 
-.forum-feed-preview-kicker {
-  color: var(--accent);
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-}
-
-.forum-feed-preview-links {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-size: 0.8rem;
-}
-
-.forum-feed-preview-links a {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  color: var(--muted-foreground);
+.forum-feed-preview-title-link {
+  color: inherit;
   text-decoration: none;
 }
 
-.forum-feed-preview-links a:hover { color: var(--accent); }
+.forum-feed-preview-title-link:hover,
+.forum-feed-preview-title-link:focus-visible { color: var(--accent); }
 
 @media (max-width: 480px) {
   .community-feed-list::before { inset-inline-start: 15px; }
@@ -220,5 +228,4 @@
   .community-feed-images { border-radius: 8px; }
   .community-feed-active { flex-basis: 100%; }
   .forum-feed-preview { min-height: 500px; margin-bottom: 2.5rem; }
-  .forum-feed-preview-header { align-items: flex-start; flex-direction: column; }
 }
