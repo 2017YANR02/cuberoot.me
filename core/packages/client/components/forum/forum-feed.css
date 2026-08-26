@@ -172,9 +172,18 @@
   appearance: none;
 }
 
-.community-feed-meta-action:hover,
-.community-feed-meta-action.is-mine {
+.community-feed-meta-action:hover {
   color: var(--accent);
+}
+
+.community-feed-reaction-action.is-mine,
+.community-feed-reaction-action.is-mine:hover,
+.community-feed-reaction-action.is-mine:focus-visible {
+  color: var(--destructive);
+}
+
+.community-feed-reaction-action.is-mine .community-feed-heart {
+  fill: currentColor;
 }
 
 .community-feed-meta-action:focus-visible {
@@ -185,7 +194,6 @@
 
 .community-feed-meta-action:disabled { cursor: wait; opacity: 0.65; }
 
-.community-feed-reactions { letter-spacing: -0.18em; padding-right: 0.18em; }
 .community-feed-active { color: var(--muted-foreground); }
 
 .community-feed-list.is-compact .community-feed-item { padding: 12px 0; }
