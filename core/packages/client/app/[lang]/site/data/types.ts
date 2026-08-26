@@ -22,6 +22,7 @@ export interface Site {
   desc_en?: string;
   desc_zh?: string;
   youtube?: string;
+  github?: string;
   group: GroupId;
   tags?: string[];
   status?: 'dead';

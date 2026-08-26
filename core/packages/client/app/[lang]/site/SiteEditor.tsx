@@ -45,6 +45,7 @@ const TXT = {
 },
   youtube:     { en: 'YouTube link', zh: 'YouTube 链接'
 },
+  github:      { en: 'GitHub link',  zh: 'GitHub 链接' },
   tags:        { en: 'Tags (comma)', zh: '标签（逗号分隔）'
 },
   status:      { en: 'Offline?',    zh: '是否失效' },
@@ -65,6 +66,7 @@ function emptyDraft(group: GroupId) {
     desc_en: '',
     desc_zh: '',
     youtube: '',
+    github: '',
     tags_text: '',
     dead: false,
   };
@@ -82,6 +84,7 @@ function siteToDraft(s: Site) {
     desc_en: s.desc_en ?? '',
     desc_zh: s.desc_zh ?? '',
     youtube: s.youtube ?? '',
+    github: s.github ?? '',
     tags_text: (s.tags ?? []).join(', '),
     dead: s.status === 'dead',
   };
@@ -115,6 +118,7 @@ export default function SiteEditor({ initial, defaultGroup, lang, onClose, onSav
       desc_en: draft.desc_en.trim() || null,
       desc_zh: draft.desc_zh.trim() || null,
       youtube: draft.youtube.trim() || null,
+      github: draft.github.trim() || null,
       tags: draft.tags_text.split(/[,，]/).map((s) => s.trim()).filter(Boolean),
       status: draft.dead ? 'dead' : null,
     };
@@ -188,6 +192,10 @@ export default function SiteEditor({ initial, defaultGroup, lang, onClose, onSav
           <label className="site-editor-row">
             <span>{TXT.youtube[lang]}</span>
             <input className="site-editor-input" value={draft.youtube} onChange={(e) => set('youtube', e.target.value)} />
+          </label>
+          <label className="site-editor-row">
+            <span>{TXT.github[lang]}</span>
+            <input className="site-editor-input" value={draft.github} onChange={(e) => set('github', e.target.value)} />
           </label>
           <label className="site-editor-row">
             <span>{TXT.tags[lang]}</span>
