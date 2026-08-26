@@ -68,7 +68,7 @@ Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b
 7. 跨平台优先共享事实、契约和纯规则，不强行共享各平台 UI。
 8. 不因为两个文件相似就新建 package。
 9. 不为目录观感进行一次性大搬家；Batch 8 只按独立审核、单单元提交和完整回滚边界渐进迁移到 `apps/* + packages/* + jobs/*`。
-10. 不在本轮移动 `stats/`、`tools/`、`solver/` 或 `reconer/`。
+10. 本轮不移动 `stats/`、`tools/` 或 `solver/`；`reconer/` 后续经单独授权迁至 `research/reconer/`，保持独立生命周期且不进入 Core workspace。
 
 ## 5. App、package 和 job 的定义
 
@@ -406,6 +406,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-08-25 | Reconer 独立研发项目归位 | 经单独授权将根目录 `reconer/` 完整迁至 `research/reconer/`；项目仍保留自己的 Node、uv、测试与本地素材边界，不纳入 Core workspace，也未改算法或运行视频计算。根系统地图、README、Core onboarding 与迁移历史同步到新路径 |
 | 2026-08-25 | LAY2-06 solver 边界与 `scramble-stats-build` 移动完成 | Web 私有纯 solver 已提取到 `@cuberoot/puzzle-solvers` 公开出口，`scramble-stats-build` 从 `core/packages` 完整移至 `core/jobs`；脚本、lockfile、resolver、生成物清册、runbook 与活动文档同步，旧私有 solver 路径和临时 test-contract 从基线删除。静态架构守卫通过，边界为 279/295/13；按用户要求未运行 fixture、dry run、测试、build 或数据生成 |
 | 2026-08-25 | LAY2-07 小程序移动与品牌资产前置完成 | `@cuberoot/miniprogram` 完整移至 `core/apps/miniprogram`，package 身份不变；Web 路由测试改为按 workspace identity 做文件合同检查，Shared 构建输入不再假设 sibling 布局。品牌源与生成入口提到 `core/assets/brand`、`core/scripts/gen-brand-assets.mjs`，Web、Mobile、小程序不再互读 app 私有图标；lockfile、边界清单、生成物清册和活动文档同步。按用户要求未运行测试或 build |
 | 2026-08-25 | LAY2-08 Mobile 移动完成 | `@cuberoot/mobile` 完整移至 `core/apps/mobile`，package 身份不变；Android、Capacitor、品牌资产生成、lockfile、生成物清册和活动文档同步到新位置。按用户要求未运行测试或 build |

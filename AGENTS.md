@@ -17,7 +17,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | `core/jobs/*` | 离线 job，输出统计、数据或迁移生成物，不是在线 app |
 | `core/packages/platform` | workspace 外的退役历史归档，不测试、不构建、不部署、不引入新功能 |
 | `solver/` | workspace 外 Rust 求解引擎，产 native 分析器和 WASM；`target/`、`tables/`、`pkg-*` 仅本机有 |
-| `reconer/` | workspace 外速拧视频自动复盘；进入前读 `reconer/AGENTS.md` 和 `roadmap.md` |
+| `research/reconer/` | workspace 外速拧视频自动复盘研发；进入前读 `research/reconer/AGENTS.md`、`roadmap.md`、`plan.md` 和 `human.md` |
 | `tools/` / `stats/` | `static.cuberoot.me` 服务的混合 upstream/static 树与已提交数据生成物，本轮不迁仓 |
 | `ops/` / `docs/` / `.github/workflows` | 运维、状态/设计记录和 CI/部署契约 |
 

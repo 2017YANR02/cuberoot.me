@@ -18,7 +18,7 @@
  *
  * 用法: npx tsx scripts/prior-sim.ts [--dump <obs-dump.json>] [--algs <dir>]
  *       [--video 3] [--synth 200] [--seed 42] [--spanalign|--rotalign|--freealign]
- *   默认输入在 reconer/.tmp/ (gitignored), 重建:
+ *   默认输入在本项目 .tmp/ (gitignored), 重建:
  *     obs-dump.json: npx tsx scripts/real-eval.ts --dumpobs .tmp/obs-dump.json
  *     zbll.json / pll.json: https://api.cuberoot.me/v1/alg/sets/3x3/{zbll,pll} 快照
  */
