@@ -21,6 +21,7 @@ export interface SiteSearchCard {
   href: string;
   internal: boolean;
   adminOnly?: boolean;
+  lockedForNonAdmin?: boolean;
   nameEn: string;
   nameZh: string;
   sectionTitleEn: string;

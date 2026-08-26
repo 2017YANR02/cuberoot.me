@@ -15,7 +15,7 @@ import DonateModal from '@/components/DonateModal';
 import FeedbackModal from '@/components/FeedbackModal';
 import DeskPetGallery from '@/components/DeskPetGallery';
 import { MobilePageShareModal, WeChatPcShareModal } from '@/components/WeChatPcShareModal';
-import { SEARCH_CARDS } from '@/lib/landing-sections';
+import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
 import { isAdmin } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
 import { isInWeChat } from '@/lib/wechat-share';
@@ -115,7 +115,7 @@ export default function DeskPetSearch({
   metronomeOpen: boolean;
   onToggleMetronome: () => void;
 }) {
-  const searchCards = SEARCH_CARDS.filter((card) => !card.adminOnly || isAdmin());
+  const searchCards = SEARCH_CARDS.filter((card) => isLandingSearchCardVisible(card, isAdmin()));
   const backdropRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const [donateOpen, setDonateOpen] = useState(false);
