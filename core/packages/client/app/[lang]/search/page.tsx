@@ -6,14 +6,16 @@ import BackHome from '@/components/BackHome';
 import LandingSearch from '@/components/LandingSearch';
 import { tr, useLang } from '@/i18n/tr';
 import { useAuthUser } from '@/lib/auth-store';
-import { SEARCH_CARDS } from '@/lib/landing-sections';
+import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
 import './search.css';
 
 export default function SearchPage() {
   const lang = useLang() === 'en' ? 'en' : 'zh';
   const user = useAuthUser();
   const [query, setQuery] = useQueryState('q', parseAsString.withDefault(''));
-  const cards = SEARCH_CARDS.filter((card) => !card.adminOnly || isAdminWcaId(user?.wcaId));
+  const cards = SEARCH_CARDS.filter((card) => (
+    isLandingSearchCardVisible(card, isAdminWcaId(user?.wcaId))
+  ));
 
   return (
     <main className="site-search-page">
