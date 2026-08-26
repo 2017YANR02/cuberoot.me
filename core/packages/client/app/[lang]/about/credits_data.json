@@ -312,6 +312,13 @@
     "long_en": "lookahead challenge concept, game modes, F2L insertion pool"
   },
   {
+    "name": "cubing/CubePB (James Chang)",
+    "url": "https://github.com/cubing/CubePB",
+    "zh": "/pb 个人纪录卡、历史记录与排行榜的产品流程来源；经作者许可复刻，并用 CubeRoot 现有账号、WCA 项目和成绩格式能力重新实现",
+    "en": "Product flow behind /pb personal-best cards, history and leaderboards; reproduced with the author's permission and reimplemented with CubeRoot's account, WCA event and result-formatting infrastructure",
+    "long_en": "CubePB established the personal-best profile, history and public leaderboard workflow. CubeRoot's implementation is an authorized, clean integration built on its existing authentication, WCA event selection, raw result encoding, bilingual UI and PostgreSQL API. Original project licensed under GPL-3.0."
+  },
+  {
     "name": "Your Next PR — Competition Simulator",
     "url": "https://yournextpr.shop/comp-sim/",
     "zh": "/comp-sim 比赛现场模拟的产品流程、交互与训练理念来源；经作者授权复刻，CubeRoot 复用本站 WCA 数据、轮次与计时基础设施重新实现",

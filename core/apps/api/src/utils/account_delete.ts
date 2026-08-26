@@ -35,6 +35,8 @@ export const PURGE_TABLES: readonly (readonly [string, string])[] = [
   ['recon_videos', 'owner_wca_id'],      // 未提交的复盘视频上传
   ['train_results', 'user_id'],          // 训练成绩
   ['paint_drawings', 'wca_id'],          // 画板作品(仅本人可见)
+  ['pb_records', 'owner_key'],            // CubePB 个人纪录历史
+  ['pb_profiles', 'owner_key'],           // CubePB 公开设置
   ['notifications', 'user_key'],         // 我的收件箱
   ['feedback', 'wca_id'],                // 反馈会话(feedback_media / feedback_messages 见下)
   ['feedback_messages', 'wca_id'],

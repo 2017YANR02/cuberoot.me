@@ -41,6 +41,7 @@
       "./wca-round": "runtime-neutral",
       "./kinch": "runtime-neutral",
       "./pr-streak": "runtime-neutral",
+      "./pb": "runtime-neutral",
       "./payment": "runtime-neutral",
       "./teaching": "runtime-neutral",
       "./quiz": "runtime-neutral",
@@ -172,6 +173,10 @@
     "./pr-streak": {
       "node": "./dist/pr_streak.js",
       "default": "./src/pr_streak.ts"
+    },
+    "./pb": {
+      "node": "./dist/pb.js",
+      "default": "./src/pb.ts"
     },
     "./payment": {
       "node": "./dist/payment.js",
