@@ -8,12 +8,14 @@ import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
+import type { AvatarSource, ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 import {
   decodeWebSession,
   type WebSessionUser,
 } from '@cuberoot/shared/auth/web-session';
 import { apiUrl } from './api-base';
 import { persistItem } from './safe-storage';
+import { resolveAccountAvatar } from './account-avatar';
 
 export { ADMIN_WCA_IDS };
 export { safeNext } from './safe-next';
@@ -23,6 +25,8 @@ export interface WcaUser {
   wcaId: string;
   name: string;
   avatar: string;
+  avatarSource: AvatarSource;
+  avatarPreset: ClawdAvatarPresetId | null;
   country: string;
   /** 内部账号 id(邮箱/手机账号必有;老的纯 WCA 会话可能没有,续签后补上)。 */
   uid?: number;
@@ -56,7 +60,16 @@ function readUser(): WcaUser | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const user = JSON.parse(raw) as WcaUser;
+    const avatarSource = user.avatarSource ?? 'auto';
+    const avatarPreset = user.avatarPreset ?? null;
+    return {
+      ...user,
+      avatar: resolveAccountAvatar(user.avatar, avatarPreset, avatarSource).src,
+      avatarSource,
+      avatarPreset,
+    };
   } catch {
     return null;
   }
@@ -160,10 +173,13 @@ export function applySession(
     return false;
   }
 
+  const avatar = resolveAccountAvatar(user.avatar, user.avatarPreset, user.avatarSource);
   const wu: WcaUser = {
     wcaId: user.wcaId ?? '',
     name: user.name,
-    avatar: user.avatar ?? '',
+    avatar: avatar.src,
+    avatarSource: user.avatarSource,
+    avatarPreset: user.avatarPreset,
     country: '',
     uid: user.uid,
   };

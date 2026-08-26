@@ -48,6 +48,7 @@ const THREAD: ForumFeedThread = {
   author: {
     name: '测试用户',
     avatarUrl: null,
+    avatarPreset: null,
     joinedAt: null,
     postCount: 1,
     wcaId: null,

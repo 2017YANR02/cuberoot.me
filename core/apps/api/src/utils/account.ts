@@ -7,6 +7,7 @@
  * 合成键以小写 `u` 打头,WCA id 全大写(^\d{4}[A-Z]{4}\d{2}$),两者天然不可能相撞。
  */
 import crypto from 'node:crypto';
+import type { AvatarSource, ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 import type { WebSessionUser } from '@cuberoot/shared/auth/web-session';
 import { query, sql } from '../db/connection.js';
 import { JWT_SECRET } from './session.js';
@@ -26,6 +27,8 @@ export interface AppUser {
   id: number;
   display_name: string;
   avatar_url: string | null;
+  avatar_source: AvatarSource;
+  avatar_preset: ClawdAvatarPresetId | null;
   wca_id: string | null;
 }
 
@@ -190,7 +193,7 @@ export async function clearPassword(userId: number): Promise<void> {
  */
 export async function loginWithPassword(email: string, pw: string): Promise<AppUser | null> {
   const rows = await query<AppUser & { password_hash: string | null }>(
-    `SELECT u.id, u.display_name, u.avatar_url, u.wca_id, u.password_hash
+    `SELECT u.id, u.display_name, u.avatar_url, u.avatar_source, u.avatar_preset, u.wca_id, u.password_hash
      FROM auth_identities i JOIN app_users u ON u.id = i.user_id
      WHERE i.provider = 'email' AND i.provider_uid = ?`,
     [email],
@@ -198,13 +201,20 @@ export async function loginWithPassword(email: string, pw: string): Promise<AppU
   const row = rows[0];
   const ok = await verifyPassword(pw, row?.password_hash ?? DUMMY_PASSWORD_HASH);
   if (!row || !row.password_hash || !ok) return null;
-  return { id: row.id, display_name: row.display_name, avatar_url: row.avatar_url, wca_id: row.wca_id };
+  return {
+    id: row.id,
+    display_name: row.display_name,
+    avatar_url: row.avatar_url,
+    avatar_source: row.avatar_source,
+    avatar_preset: row.avatar_preset,
+    wca_id: row.wca_id,
+  };
 }
 
 // ── 账号 / 身份 ──
 export async function getUserById(id: number): Promise<AppUser | null> {
   const rows = await query<AppUser>(
-    'SELECT id, display_name, avatar_url, wca_id FROM app_users WHERE id = ?',
+    'SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id FROM app_users WHERE id = ?',
     [id],
   );
   return rows[0] ?? null;
@@ -217,15 +227,66 @@ export async function getUserById(id: number): Promise<AppUser | null> {
 export async function updateDisplayName(id: number, displayName: string): Promise<AppUser | null> {
   const rows = await query<AppUser>(
     `UPDATE app_users SET display_name = ? WHERE id = ? AND wca_id IS NULL
-     RETURNING id, display_name, avatar_url, wca_id`,
+     RETURNING id, display_name, avatar_url, avatar_source, avatar_preset, wca_id`,
     [displayName, id],
+  );
+  return rows[0] ?? null;
+}
+
+export async function updateClawdAvatar(
+  id: number,
+  preset: ClawdAvatarPresetId,
+): Promise<AppUser | null> {
+  const rows = await query<AppUser>(
+    `UPDATE app_users
+     SET avatar_source = 'clawd', avatar_preset = ?, avatar_url = NULL
+     WHERE id = ?
+     RETURNING id, display_name, avatar_url, avatar_source, avatar_preset, wca_id`,
+    [preset, id],
+  );
+  return rows[0] ?? null;
+}
+
+export async function updateUploadedAvatar(
+  id: number,
+  ownershipKey: string,
+  imageId: number,
+  avatarUrl: string,
+): Promise<AppUser | null> {
+  const rows = await query<AppUser>(
+    `UPDATE app_users AS app
+     SET avatar_source = 'upload', avatar_preset = NULL, avatar_url = ?
+     WHERE app.id = ?
+       AND EXISTS (
+         SELECT 1 FROM article_image AS image
+         WHERE image.id = ? AND image.owner_wca_id = ?
+       )
+     RETURNING app.id, app.display_name, app.avatar_url,
+               app.avatar_source, app.avatar_preset, app.wca_id`,
+    [avatarUrl, id, imageId, ownershipKey],
+  );
+  return rows[0] ?? null;
+}
+
+export async function resetAvatarToWca(id: number): Promise<AppUser | null> {
+  const rows = await query<AppUser>(
+    `UPDATE app_users AS app
+     SET avatar_source = 'auto',
+         avatar_preset = NULL,
+         avatar_url = (
+           SELECT wca.avatar_url FROM wca_users AS wca WHERE wca.wca_id = app.wca_id
+         )
+     WHERE app.id = ? AND app.wca_id IS NOT NULL
+     RETURNING app.id, app.display_name, app.avatar_url,
+               app.avatar_source, app.avatar_preset, app.wca_id`,
+    [id],
   );
   return rows[0] ?? null;
 }
 
 export async function findUserByWcaId(wcaId: string): Promise<AppUser | null> {
   const rows = await query<AppUser>(
-    'SELECT id, display_name, avatar_url, wca_id FROM app_users WHERE wca_id = ?',
+    'SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id FROM app_users WHERE wca_id = ?',
     [wcaId],
   );
   return rows[0] ?? null;
@@ -233,7 +294,7 @@ export async function findUserByWcaId(wcaId: string): Promise<AppUser | null> {
 
 export async function findUserByIdentity(provider: Provider, providerUid: string): Promise<AppUser | null> {
   const rows = await query<AppUser>(
-    `SELECT u.id, u.display_name, u.avatar_url, u.wca_id
+    `SELECT u.id, u.display_name, u.avatar_url, u.avatar_source, u.avatar_preset, u.wca_id
      FROM auth_identities i JOIN app_users u ON u.id = i.user_id
      WHERE i.provider = ? AND i.provider_uid = ?`,
     [provider, providerUid],
@@ -257,13 +318,13 @@ export async function loginWithIdentity(
   const existing = await findUserByIdentity(provider, providerUid);
   if (existing) {
     // WCA 姓名是实名认证来源,每次 WCA 登录都刷新;其它来源仍只机会式回填空展示名。
-    if ((provider === 'wca' && profile.name) || (!existing.display_name && profile.name) || (!existing.avatar_url && profile.avatar)) {
+    if ((provider === 'wca' && profile.name) || (!existing.display_name && profile.name)) {
       await query(
         `UPDATE app_users SET
            display_name = CASE WHEN ? = 'wca' THEN ? WHEN display_name = '' THEN ? ELSE display_name END,
-           avatar_url   = COALESCE(avatar_url, ?)
+           avatar_url = CASE WHEN ? = 'wca' AND avatar_source = 'auto' THEN ? ELSE avatar_url END
          WHERE id = ?`,
-        [provider, profile.name ?? '', profile.name ?? '', profile.avatar ?? null, existing.id],
+        [provider, profile.name ?? '', profile.name ?? '', provider, profile.avatar ?? null, existing.id],
       );
     }
     return { user: (await getUserById(existing.id)) ?? existing, isNew: false };
@@ -271,9 +332,15 @@ export async function loginWithIdentity(
   try {
     const created = await sql.begin(async (tx) => {
       const rows = await tx`
-        INSERT INTO app_users (display_name, avatar_url, wca_id)
-        VALUES (${profile.name ?? ''}, ${profile.avatar ?? null}, ${profile.wcaId ?? null})
-        RETURNING id, display_name, avatar_url, wca_id`;
+        INSERT INTO app_users (display_name, avatar_url, avatar_source, avatar_preset, wca_id)
+        VALUES (
+          ${profile.name ?? ''},
+          ${provider === 'wca' ? profile.avatar ?? null : null},
+          'auto',
+          NULL,
+          ${profile.wcaId ?? null}
+        )
+        RETURNING id, display_name, avatar_url, avatar_source, avatar_preset, wca_id`;
       const u = rows[0] as unknown as AppUser;
       await tx`
         INSERT INTO auth_identities (user_id, provider, provider_uid, verified_at)
@@ -308,6 +375,7 @@ export async function addIdentity(
   providerUid: string,
   wcaMirror?: string | null,
   verifiedDisplayName?: string | null,
+  verifiedAvatarUrl?: string | null,
 ): Promise<'ok' | 'conflict' | `has-${SingleProvider}`> {
   const owner = await findUserByIdentity(provider, providerUid);
   if (owner) {
@@ -315,8 +383,12 @@ export async function addIdentity(
     // 幂等重绑也要刷新 WCA 官方姓名,不能让旧自定义名继续留在实名账号上。
     if (provider === 'wca' && verifiedDisplayName) {
       await query(
-        'UPDATE app_users SET wca_id = ?, display_name = ? WHERE id = ?',
-        [wcaMirror ?? providerUid, verifiedDisplayName, userId],
+        `UPDATE app_users SET
+           wca_id = ?,
+           display_name = ?,
+           avatar_url = CASE WHEN avatar_source = 'auto' THEN ? ELSE avatar_url END
+         WHERE id = ?`,
+        [wcaMirror ?? providerUid, verifiedDisplayName, verifiedAvatarUrl ?? null, userId],
       );
     }
     return 'ok';
@@ -329,7 +401,11 @@ export async function addIdentity(
         const upd = await tx`
           UPDATE app_users SET
             wca_id = ${wcaMirror ?? providerUid},
-            display_name = ${verifiedDisplayName ?? ''}
+            display_name = ${verifiedDisplayName ?? ''},
+            avatar_url = CASE
+              WHEN avatar_source = 'auto' THEN ${verifiedAvatarUrl ?? null}
+              ELSE avatar_url
+            END
           WHERE id = ${userId} AND wca_id IS NULL`;
         if (upd.count === 0) return 'conflict';
       }
@@ -439,7 +515,11 @@ export async function removeIdentity(
         (r) => r.provider === 'wca' && !toRemove.some((t) => t.provider_uid === r.provider_uid),
       );
       if (!wcaLeft) {
-        await tx`UPDATE app_users SET wca_id = NULL WHERE id = ${userId}`;
+        await tx`
+          UPDATE app_users SET
+            wca_id = NULL,
+            avatar_url = CASE WHEN avatar_source = 'auto' THEN NULL ELSE avatar_url END
+          WHERE id = ${userId}`;
       }
     }
     return 'ok';
@@ -453,6 +533,8 @@ export function publicUser(user: AppUser): WebSessionUser {
     wcaId: user.wca_id,
     name: user.display_name,
     avatar: user.avatar_url ?? '',
+    avatarSource: user.avatar_source,
+    avatarPreset: user.avatar_preset,
   };
 }
 

@@ -9,6 +9,7 @@
  */
 import { Hono } from 'hono';
 import type { Context } from 'hono';
+import { isClawdAvatarPreset } from '@cuberoot/shared/account-avatar';
 import { webSessionError, type WebSession } from '@cuberoot/shared/auth/web-session';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
@@ -19,6 +20,7 @@ import {
   getIdentities, getUserById, publicUser,
   normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   normalizeDisplayName, isValidDisplayName, updateDisplayName,
+  updateClawdAvatar, updateUploadedAvatar, resetAvatarToWca,
   loginWithPassword, setPassword, clearPassword, getPasswordHash, verifyPassword,
   ownerKey, primaryHandle,
   type Provider,
@@ -38,6 +40,7 @@ import {
 } from '../utils/wechat_miniprogram.js';
 import { consumeWebSessionTicket, issueWebSessionTicket } from '../utils/web_session_ticket.js';
 import { requireAppUserId } from '../utils/app_user_auth.js';
+import { apiOrigin } from '../utils/api_origin.js';
 
 export const accountAuthRoutes = new Hono();
 
@@ -468,7 +471,7 @@ accountAuthRoutes.post('/auth/link/wca', async (c) => {
   if (!me.wca_id) return c.json({ error: 'this WCA account has no WCA ID (never competed)' }, 400);
   const verifiedName = me.name?.normalize('NFC').trim();
   if (!verifiedName) return c.json({ error: 'WCA profile has no verified name' }, 502);
-  const r = await addIdentity(uid, 'wca', me.wca_id, me.wca_id, verifiedName);
+  const r = await addIdentity(uid, 'wca', me.wca_id, me.wca_id, verifiedName, me.avatar?.url ?? null);
   if (r === 'conflict') return c.json({ error: 'WCA account already linked elsewhere' }, 409);
   // 同步 wca_users 缓存(供其它路径复用),与 /auth/exchange 一致。
   await query(
@@ -542,22 +545,59 @@ accountAuthRoutes.post('/auth/unlink', async (c) => {
   return c.json({ ok: true, token, user: user ? publicUser(user) : undefined, identities: await getIdentities(uid) });
 });
 
-// ── 站内用户名(展示名,不要求唯一、不参与登录)──
+// ── 站内资料(展示名 + 头像)──
 accountAuthRoutes.post('/auth/profile', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   const uid = await requireAppUserId(c);
-  const { name: rawName } = await c.req.json<{ name?: unknown }>().catch(() => ({ name: undefined }));
-  if (typeof rawName !== 'string') return c.json({ error: 'invalid display name' }, 400);
-  const name = normalizeDisplayName(rawName);
-  if (!isValidDisplayName(name)) return c.json({ error: 'invalid display name' }, 400);
+  const body: { name?: unknown; avatar?: unknown } = await c.req
+    .json<{ name?: unknown; avatar?: unknown }>()
+    .catch(() => ({}));
+  const hasName = body.name !== undefined;
+  const hasAvatar = body.avatar !== undefined;
+  if (hasName === hasAvatar) return c.json({ error: 'provide exactly one profile field' }, 400);
 
-  const user = await updateDisplayName(uid, name);
-  if (!user) {
-    const current = await getUserById(uid);
-    if (!current) return c.json({ error: 'account not found' }, 404);
-    return c.json({ error: 'WCA-linked accounts use their verified WCA name' }, 409);
+  let user = null;
+  if (hasName) {
+    if (typeof body.name !== 'string') return c.json({ error: 'invalid display name' }, 400);
+    const name = normalizeDisplayName(body.name);
+    if (!isValidDisplayName(name)) return c.json({ error: 'invalid display name' }, 400);
+    user = await updateDisplayName(uid, name);
+    if (!user) {
+      const current = await getUserById(uid);
+      if (!current) return c.json({ error: 'account not found' }, 404);
+      return c.json({ error: 'WCA-linked accounts use their verified WCA name' }, 409);
+    }
+  } else {
+    const avatar = body.avatar !== null && typeof body.avatar === 'object'
+      ? body.avatar as Record<string, unknown>
+      : null;
+    if (!avatar || typeof avatar.kind !== 'string') return c.json({ error: 'invalid avatar choice' }, 400);
+
+    if (avatar.kind === 'clawd') {
+      if (!isClawdAvatarPreset(avatar.preset)) return c.json({ error: 'invalid Clawd avatar preset' }, 400);
+      user = await updateClawdAvatar(uid, avatar.preset);
+    } else if (avatar.kind === 'upload') {
+      if (typeof avatar.imageId !== 'number'
+        || !Number.isSafeInteger(avatar.imageId)
+        || avatar.imageId <= 0) {
+        return c.json({ error: 'invalid avatar image' }, 400);
+      }
+      const current = await getUserById(uid);
+      if (!current) return c.json({ error: 'account not found' }, 404);
+      const ownershipKey = ownerKey(current.id, current.wca_id);
+      const avatarUrl = `${apiOrigin(c)}/v1/article/img/${avatar.imageId}`;
+      user = await updateUploadedAvatar(uid, ownershipKey, avatar.imageId, avatarUrl);
+      if (!user) return c.json({ error: 'avatar image is not owned by this account' }, 403);
+    } else if (avatar.kind === 'wca') {
+      user = await resetAvatarToWca(uid);
+      if (!user) return c.json({ error: 'WCA account is not linked' }, 409);
+    } else {
+      return c.json({ error: 'invalid avatar choice' }, 400);
+    }
   }
+
+  if (!user) return c.json({ error: 'account not found' }, 404);
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   return c.json({ ok: true, token, user: publicUser(user) });
 });

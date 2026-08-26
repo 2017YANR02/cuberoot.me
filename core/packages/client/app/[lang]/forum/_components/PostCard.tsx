@@ -9,6 +9,7 @@ import { Link2, Quote, Pencil, Trash2, Check, Flag, ShieldCheck, Hourglass, Circ
 import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
+import { resolveAccountAvatar } from '@/lib/account-avatar';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
 import type { ForumPost, PostAuthor, ReactionKind } from '@/lib/forum-api';
 import { formatRelativeTime, formatJoinedDate, formatCount } from '@/lib/forum-format';
@@ -44,6 +45,7 @@ export function PostCard({
   const zh = lang === 'zh';
   const [copied, setCopied] = useState(false);
   const name = ownerDisplayName(post.authorId, author?.name || post.authorName, zh);
+  const avatar = resolveAccountAvatar(author?.avatarUrl, author?.avatarPreset);
 
   const copyPermalink = async () => {
     try {
@@ -81,13 +83,9 @@ export function PostCard({
   return (
     <article className="forum-post" id={`post-${post.id}`}>
       <aside className="forum-post-author">
-        {author?.avatarUrl ? (
-          <img src={author.avatarUrl} alt="" className="forum-post-avatar" />
-        ) : (
-          <div className="forum-post-avatar forum-post-avatar-fallback" aria-hidden="true">
-            {name[0]?.toUpperCase() || '?'}
-          </div>
-        )}
+        <div className={`forum-post-avatar${avatar.isClawd ? ' is-clawd' : ''}`} aria-hidden="true">
+          <img src={avatar.src} alt="" />
+        </div>
         <div className="forum-post-author-meta">
           {author?.wcaId ? (
             <PersonLink wcaId={author.wcaId} className="forum-post-author-name">

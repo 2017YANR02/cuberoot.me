@@ -35,7 +35,14 @@ const account = {
   display_name: '颜瑞民',
   avatar_url: null,
 };
-const publicAccount = { uid: 66, wcaId: '2017YANR02', name: '颜瑞民', avatar: '' };
+const publicAccount = {
+  uid: 66,
+  wcaId: '2017YANR02',
+  name: '颜瑞民',
+  avatar: '',
+  avatarSource: 'auto' as const,
+  avatarPreset: null,
+};
 
 describe('auth public user ID', () => {
   beforeEach(() => {

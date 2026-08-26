@@ -141,6 +141,89 @@
 }
 
 .account-profile-editor { margin-bottom: 28px; }
+.account-avatar-editor {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 10px 12px;
+  margin-bottom: 18px;
+}
+.account-avatar-preview {
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--accent-soft);
+}
+.account-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+.account-avatar-preview.is-clawd img {
+  transform: scale(1.85);
+  transform-origin: center 82%;
+}
+.account-avatar-controls { align-self: center; min-width: 0; }
+.account-avatar-label { display: block; color: var(--foreground); font-size: 0.88rem; }
+.account-avatar-actions { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+.account-avatar-actions .auth-link { display: inline-flex; align-items: center; gap: 4px; }
+.account-avatar-file { display: none; }
+.account-avatar-picker { grid-column: 1 / -1; }
+.account-avatar-picker summary {
+  width: fit-content;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.account-wca-avatar-choice {
+  display: block;
+  margin: 10px 0 6px;
+  padding: 6px 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.account-wca-avatar-choice.is-selected {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.account-clawd-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+}
+.account-clawd-choice {
+  min-width: 0;
+  padding: 4px 2px 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+.account-clawd-choice:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
+.account-clawd-choice.is-selected {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.account-clawd-image {
+  display: block;
+  height: 48px;
+  overflow: hidden;
+}
+.account-clawd-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: scale(1.85);
+  transform-origin: center 82%;
+}
+.account-avatar-editor > .auth-error { grid-column: 1 / -1; margin: 0; }
 .account-name-lock-hint { margin-top: 7px; }
 .account-name-form {
   display: flex;

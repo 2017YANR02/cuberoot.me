@@ -1,3 +1,10 @@
+import {
+  isAvatarSource,
+  isClawdAvatarPreset,
+  type AvatarSource,
+  type ClawdAvatarPresetId,
+} from '../account_avatar';
+
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001F\u007F]/;
 const WEB_SESSION_TICKET_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
@@ -41,6 +48,8 @@ export interface WebSessionUser {
   /** A newly-created WeChat account has no profile name yet, so the empty string is valid. */
   name: string;
   avatar: string;
+  avatarSource: AvatarSource;
+  avatarPreset: ClawdAvatarPresetId | null;
 }
 
 export interface WebSession {
@@ -102,6 +111,14 @@ export function decodeWebSessionUser(value: unknown): WebSessionUser | null {
   if (user.wcaId !== null && typeof user.wcaId !== 'string') return null;
   if (typeof user.name !== 'string' || user.name.length > MAX_DISPLAY_NAME_LENGTH) return null;
   if (typeof user.avatar !== 'string' || user.avatar.length > MAX_AVATAR_LENGTH) return null;
+  const avatarSource = user.avatarSource === undefined ? 'auto' : user.avatarSource;
+  const avatarPreset = user.avatarPreset === undefined ? null : user.avatarPreset;
+  if (!isAvatarSource(avatarSource)) return null;
+  if (avatarSource === 'clawd') {
+    if (!isClawdAvatarPreset(avatarPreset)) return null;
+  } else if (avatarPreset !== null) {
+    return null;
+  }
   if (CONTROL_CHARACTER_PATTERN.test(user.name)
     || CONTROL_CHARACTER_PATTERN.test(user.avatar)
     || (typeof user.wcaId === 'string'
@@ -116,6 +133,8 @@ export function decodeWebSessionUser(value: unknown): WebSessionUser | null {
     wcaId,
     name: user.name.trim(),
     avatar: user.avatar,
+    avatarSource,
+    avatarPreset,
   };
 }
 
