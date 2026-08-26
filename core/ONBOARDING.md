@@ -5,7 +5,7 @@
 Codex is the project's active AI development environment. Claude Code is no longer used.
 
 The repository rules are loaded from the root `AGENTS.md` plus scoped `solver/AGENTS.md`
-and `reconer/AGENTS.md`. Reusable project skills live under `.agents/skills/`; global and
+and `research/reconer/AGENTS.md`. Reusable project skills live under `.agents/skills/`; global and
 project hooks live in `~/.codex/hooks.json` and `.codex/hooks.json`.
 
 ## Your Setup Checklist

@@ -29,7 +29,8 @@ cuberoot.me/
 │       ├── stats-build/   Offline WCA statistics and database-load pipeline
 │       └── wb-build/      Offline unofficial world-best dataset generator
 ├── solver/                Rust solving engines — native analyzers and WebAssembly builds
-├── reconer/               Automated reconstruction from speedsolving video
+├── research/              Independent research projects
+│   └── reconer/           Automated reconstruction from speedsolving video
 ├── tools/                 Upstream forks, served from static.cuberoot.me
 ├── stats/                 Generated statistics JSON (committed)
 ├── ops/                   nginx vhosts, systemd units, deployment scripts

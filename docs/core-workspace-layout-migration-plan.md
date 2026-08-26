@@ -72,7 +72,7 @@ core/
 1. 不拆多个 Git 仓库。
 2. 不重写业务代码，不改变 URL、API、数据库、认证或部署拓扑。
 3. 不新建万能 UI package；真实出现两个 React app 的稳定共同消费者后再评估。
-4. 不移动根目录的 `solver/`、`reconer/`、`tools/`、`stats/`、`ops/`。
+4. 本轮不移动根目录的 `solver/`、`reconer/`、`tools/`、`stats/`、`ops/`；`reconer/` 后续经单独授权迁至 `research/reconer/`，仍不进入 Core workspace。
 5. 不移动、删除或恢复 `core/packages/platform`。
 6. 不在目录迁移提交里夹带命名、格式化或业务重构。
 7. 不运行正式统计重算；job 只做最小 dry run 和临时输出验证。
