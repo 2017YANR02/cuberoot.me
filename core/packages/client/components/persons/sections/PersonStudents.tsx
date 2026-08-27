@@ -4,7 +4,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import PersonLink from '@/components/PersonLink';
-import { WcaTeacherCell, useWcaTeachers, wcaTeacherRelationKey } from '@/components/WcaTeacherCell';
+import {
+  canAddWcaTeacherStudent,
+  WcaStudentAdder,
+  WcaTeacherCell,
+  useWcaTeachers,
+  wcaTeacherRelationKey,
+} from '@/components/WcaTeacherCell';
 import { useT } from '@/hooks/useT';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -27,6 +33,7 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
   const t = useT();
   const [relations, setRelations] = useState<WcaTeacher[] | null>(null);
   const [studentMeta, setStudentMeta] = useState<Map<string, StudentMeta>>(() => new Map());
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,7 +42,7 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
       .then((next) => { if (!cancelled) setRelations(next); })
       .catch(() => { if (!cancelled) setRelations([]); });
     return () => { cancelled = true; };
-  }, [teacherWcaId]);
+  }, [reloadKey, teacherWcaId]);
 
   const studentSeeds = useMemo<StudentSeed[]>(() => {
     if (!relations) return [];
@@ -107,7 +114,9 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
     }];
   }), [studentMeta, studentSeeds, teacherDirectory.ready, teacherDirectory.teachers, teacherWcaId]);
 
-  if (students.length === 0) return null;
+  const canAddStudents = canAddWcaTeacherStudent(teacherWcaId, teacherDirectory);
+
+  if (students.length === 0 && !canAddStudents) return null;
 
   return (
     <section className="wp-card wp-students-card" aria-label={t('学生', 'Students')}>
@@ -115,11 +124,26 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
         <table className="wp-pr-table wp-students-table">
           <thead>
             <tr>
-              <th className="wp-th-student">{t('学生', 'Student')}</th>
+              <th className="wp-th-student">
+                <span className="wp-student-heading">
+                  {t('学生', 'Student')}
+                  <WcaStudentAdder
+                    teacherWcaId={teacherWcaId}
+                    directory={teacherDirectory}
+                    isZh={isZh}
+                    onSaved={() => setReloadKey((current) => current + 1)}
+                  />
+                </span>
+              </th>
               <th className="wp-th-student-events">{t('项目', 'Events')}</th>
             </tr>
           </thead>
           <tbody>
+            {students.length === 0 && (
+              <tr>
+                <td className="wp-students-empty" colSpan={2}>{t('暂无学生', 'No students yet')}</td>
+              </tr>
+            )}
             {students.map((student) => (
               <tr key={student.wcaId}>
                 <td className="wp-cell-student">
