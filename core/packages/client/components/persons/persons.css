@@ -381,6 +381,8 @@ html[data-theme=dark] .wp-page {
 .wp-student-identity { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .wp-student-link { color: var(--wp-text); font-weight: 500; text-decoration: none; }
 .wp-student-link:hover { color: var(--wp-accent); text-decoration: underline; }
+.wp-student-unregistered-name { color: var(--wp-text); font-weight: 500; }
+.wp-student-unregistered { color: var(--wp-text-mute); font-size: 0.72rem; white-space: nowrap; }
 .wp-student-event-list { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .wp-student-event-overview,
 .wp-student-event-state,

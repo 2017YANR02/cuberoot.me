@@ -8,12 +8,17 @@ import { EventIcon } from '@/components/EventIcon';
 import PersonLink from '@/components/PersonLink';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
+import { ClearButton } from '@/components/ClearButton';
 import { useAuthUser } from '@/lib/auth-store';
 import { getMyMembership } from '@/lib/membership-api';
 import {
+  createWcaNamedStudent,
   listWcaTeachers,
+  removeWcaNamedStudent,
   removeWcaTeacher,
   setWcaTeacher,
+  updateWcaNamedStudent,
+  type WcaNamedStudent,
   type WcaTeacher,
 } from '@/lib/wca-teachers-api';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -180,6 +185,7 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
 }) {
   const [editing, setEditing] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<WcaPersonLite | null>(null);
+  const [namedStudentName, setNamedStudentName] = useState('');
   const [availableEventIds, setAvailableEventIds] = useState<string[]>([]);
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(() => new Set());
   const [showAllEvents, setShowAllEvents] = useState(false);
@@ -234,6 +240,7 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
   const close = () => {
     setEditing(false);
     setSelectedStudent(null);
+    setNamedStudentName('');
     setAvailableEventIds([]);
     setSelectedEventIds(new Set());
     setShowAllEvents(false);
@@ -248,14 +255,19 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
     });
   };
   const save = async () => {
-    if (!selectedStudent || selectedEventIds.size === 0 || saving) return;
+    const freeTextName = namedStudentName.replace(/\s+/g, ' ').trim();
+    if ((!selectedStudent && !freeTextName) || selectedEventIds.size === 0 || saving) return;
     setSaving(true);
     setError('');
     try {
-      const teacherId = directory.isAdmin ? teacherWcaId : undefined;
-      await Promise.all([...selectedEventIds].map((eventId) => (
-        directory.save(selectedStudent.id, eventId, teacherId)
-      )));
+      if (selectedStudent) {
+        const teacherId = directory.isAdmin ? teacherWcaId : undefined;
+        await Promise.all([...selectedEventIds].map((eventId) => (
+          directory.save(selectedStudent.id, eventId, teacherId)
+        )));
+      } else {
+        await createWcaNamedStudent(teacherWcaId, freeTextName, [...selectedEventIds]);
+      }
       onSaved();
       close();
     } catch (caught) {
@@ -288,7 +300,15 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
               <h2 id={titleId}>{tr({ zh: '添加学生', en: 'Add student' })}</h2>
               <WcaPersonPicker
                 value={selectedStudent}
-                onChange={setSelectedStudent}
+                onChange={(student) => {
+                  setSelectedStudent(student);
+                  setNamedStudentName('');
+                }}
+                onQueryChange={(value) => {
+                  setNamedStudentName(value);
+                  if (value.trim()) setShowAllEvents(true);
+                }}
+                allowFreeText
                 isZh={isZh}
                 placeholder={tr({ zh: '姓名或 WCA ID', en: 'Name or WCA ID' })}
               />
@@ -296,7 +316,7 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
             {selectedStudent && loadingEvents && (
               <p className="wca-teacher-dialog-status">{tr({ zh: '正在读取项目…', en: 'Loading events…' })}</p>
             )}
-            {selectedStudent && !loadingEvents && (
+            {(selectedStudent || namedStudentName.trim()) && !loadingEvents && (
               <>
                 <WcaEventSelector
                   availableEvents={visibleEventSet}
@@ -324,7 +344,7 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
               <button
                 type="button"
                 className="wca-teacher-dialog-action wca-teacher-dialog-primary"
-                disabled={!selectedStudent || selectedEventIds.size === 0 || loadingEvents || saving}
+                disabled={(!selectedStudent && !namedStudentName.trim()) || selectedEventIds.size === 0 || loadingEvents || saving}
                 onClick={() => void save()}
               >
                 {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存', en: 'Save' })}
@@ -338,6 +358,122 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
         document.body,
       )}
     </>
+  );
+}
+
+export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, onSaved }: {
+  student: WcaNamedStudent;
+  teacherWcaId: string;
+  directory: WcaTeacherDirectory;
+  isZh: boolean;
+  onSaved: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(() => new Set(student.eventIds));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const canManage = directory.isAdmin || directory.userWcaId === teacherWcaId;
+  const changed = student.eventIds.length !== selectedEventIds.size
+    || student.eventIds.some((eventId) => !selectedEventIds.has(eventId));
+  const titleId = `named-student-title-${student.id}`;
+
+  if (!canManage) return null;
+
+  const open = () => {
+    setSelectedEventIds(new Set(student.eventIds));
+    setError('');
+    setEditing(true);
+  };
+  const toggleEvent = (eventId: string) => {
+    setSelectedEventIds((current) => {
+      const next = new Set(current);
+      if (next.has(eventId)) next.delete(eventId);
+      else next.add(eventId);
+      return next;
+    });
+  };
+  const save = async () => {
+    if (!changed || selectedEventIds.size === 0 || saving) return;
+    setSaving(true);
+    setError('');
+    try {
+      await updateWcaNamedStudent(teacherWcaId, student.id, student.studentName, [...selectedEventIds]);
+      setEditing(false);
+      onSaved();
+    } catch (caught) {
+      setError(teacherErrorMessage(caught));
+    } finally {
+      setSaving(false);
+    }
+  };
+  const remove = async () => {
+    if (saving) return;
+    setSaving(true);
+    setError('');
+    try {
+      await removeWcaNamedStudent(teacherWcaId, student.id);
+      setEditing(false);
+      onSaved();
+    } catch (caught) {
+      setError(teacherErrorMessage(caught));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="wca-teacher-cell">
+      <button type="button" className="wca-teacher-action" onClick={open}>
+        {tr({ zh: '编辑', en: 'Edit' })}
+      </button>
+      {editing && typeof document !== 'undefined' && createPortal(
+        <div className="wca-teacher-dialog-layer">
+          <dialog
+            className="wca-teacher-dialog"
+            open
+            aria-modal="true"
+            aria-labelledby={titleId}
+            onKeyDown={(event) => { if (event.key === 'Escape' && !saving) setEditing(false); }}
+          >
+            <div className="wca-teacher-dialog-heading">
+              <h2 id={titleId}>{tr({ zh: '编辑学生', en: 'Edit student' })}</h2>
+              <div className="cuber-search wca-named-student-chip">
+                <div className="cuber-search-chip">
+                  <span className="cuber-search-chip-name">{student.studentName}</span>
+                  <ClearButton
+                    onClick={() => void remove()}
+                    isZh={isZh}
+                    ariaLabel={tr({ zh: '移除学生', en: 'Remove student' })}
+                  />
+                </div>
+              </div>
+            </div>
+            <WcaEventSelector
+              availableEvents={new Set(ALL_EVENT_IDS)}
+              selectedEvents={selectedEventIds}
+              onToggle={toggleEvent}
+              isZh={isZh}
+              onlyAvailable
+            />
+            {error && <p className="wca-teacher-dialog-error" role="alert">{error}</p>}
+            <div className="wca-teacher-dialog-actions">
+              <button
+                type="button"
+                className="wca-teacher-dialog-action wca-teacher-dialog-primary"
+                disabled={!changed || selectedEventIds.size === 0 || saving}
+                onClick={() => void save()}
+              >
+                {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存', en: 'Save' })}
+              </button>
+              <button type="button" className="wca-teacher-dialog-action wca-teacher-dialog-cancel" disabled={saving} onClick={() => setEditing(false)}>
+                {tr({ zh: '取消', en: 'Cancel' })}
+              </button>
+            </div>
+          </dialog>
+        </div>,
+        document.body,
+      )}
+    </div>
   );
 }
 
