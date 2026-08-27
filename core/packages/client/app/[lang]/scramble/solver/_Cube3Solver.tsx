@@ -165,10 +165,10 @@ export default function Cube3Solver() {
   // Explicit scramble to solve once the table finishes generating (need-init path),
   // so a paint-triggered optimal solve doesn't read stale textarea state.
   const pendingSolveScrambleRef = useRef<string | undefined>(undefined);
-  // When true, the current optimal solve was triggered by 求打乱 (optimal): on
-  // completion, invert its optimal solution back into the scramble box so the box
-  // shows the *optimal* scramble (fewest moves reaching the painted state).
-  const optimalScrambleRef = useRef(false);
+  // cubeopt always returns solutions. 求打乱 inverts every returned solution so
+  // single-state and batch inputs both receive equivalent optimal scrambles.
+  const optimalResultKindRef = useRef<'scramble' | 'solution'>('solution');
+  const optimalScrambleLinesRef = useRef<string[]>([]);
   const [autoDownloadTable, setAutoDownloadTable] = useState(true);
   // Optional save folder (File System Access API). When set, generated tables
   // are written straight into it instead of the browser's default Downloads.
@@ -295,7 +295,11 @@ export default function Cube3Solver() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function runKociembaForState(facelet: string, mode: 'scramble' | 'solution' = 'scramble'): Promise<string | null> {
+  async function runKociembaForState(
+    facelet: string,
+    mode: 'scramble' | 'solution' = 'scramble',
+    writeBack = true,
+  ): Promise<string | null> {
     const errMsg = validateFacelet(facelet);
     if (errMsg) {
       setStateInfo(t(`非法状态:${errMsg}`, `Invalid state: ${errMsg}`));
@@ -304,7 +308,7 @@ export default function Cube3Solver() {
     const state = faceletToCubie(facelet);
     if (isSolvedCubie(state)) {
       setStateInfo(t('状态已是还原态,无需打乱。', 'State is already solved.'));
-      setScrambles('');
+      if (writeBack) setScrambles('');
       return null;
     }
     setStateInfo(t('状态合法,Kociemba 求解中(首次需 ~3s 建表)…', 'State valid, solving with Kociemba (first call needs ~3s to build tables)…'));
@@ -343,7 +347,7 @@ export default function Cube3Solver() {
         w.postMessage({ id, op: 'solve', state });
       });
       const out = mode === 'solution' ? formatMoves(invertSequence(parseMoves(sol))) : sol;
-      setScrambles(out);
+      if (writeBack) setScrambles(out);
       // The derived maneuver + its step count now live in the Logs box, so clear
       // the transient "solving…" line instead of showing a redundant result line.
       setStateInfo(null);
@@ -400,7 +404,8 @@ export default function Cube3Solver() {
       return;
     }
     if (!scr) return; // invalid or already solved — stateInfo already set
-    optimalScrambleRef.current = true;
+    optimalResultKindRef.current = 'scramble';
+    optimalScrambleLinesRef.current = [];
     if (solveSource === 'cloud') await cloudSolve([scr]);
     else startSolve(scr);
   };
@@ -431,7 +436,8 @@ export default function Cube3Solver() {
       return;
     }
     if (!scr) return; // invalid or already solved — stateInfo already set
-    optimalScrambleRef.current = false; // this path shows the solution, not a scramble
+    optimalResultKindRef.current = 'solution';
+    optimalScrambleLinesRef.current = [];
     if (solveSource === 'cloud') await cloudSolve([scr]);
     else startSolve(scr);
   };
@@ -469,14 +475,10 @@ export default function Cube3Solver() {
           const idx = parseInt(finMatch[1], 10);
           const alg = pendingSolutionsRef.current.shift();
           if (alg !== undefined) {
-            // 求打乱(最优): show the optimal *scramble* (inverse of the solution).
-            if (optimalScrambleRef.current && idx === 1) {
-              optimalScrambleRef.current = false;
+            if (optimalResultKindRef.current === 'scramble') {
               const optScr = formatMoves(invertSequence(parseMoves(alg)));
-              setScrambles(optScr);
-              const n = optScr.trim().split(/\s+/).filter(Boolean).length;
+              optimalScrambleLinesRef.current[idx - 1] = optScr;
               logResultLine('scramble', optScr, true);
-              setStateInfo(t(`已求出 ${n} 步最优打乱。`, `Optimal scramble: ${n} moves.`));
             } else {
               logResultLine('solution', alg, true);
             }
@@ -519,6 +521,11 @@ export default function Cube3Solver() {
         }
         setProgress(-1);
       } else if (d.cmd === 'start solve') {
+        if (d.code === 0 && optimalResultKindRef.current === 'scramble') {
+          setScrambles(optimalScrambleLinesRef.current.join('\n'));
+        }
+        optimalResultKindRef.current = 'solution';
+        optimalScrambleLinesRef.current = [];
         setReadyState('ready');
         setProgress(-1);
       } else if (d.cmd === 'download table') {
@@ -550,6 +557,8 @@ export default function Cube3Solver() {
     workerRef.current.terminate();
     pendingSolveRef.current = false;
     justGeneratedRef.current = false;
+    optimalResultKindRef.current = 'solution';
+    optimalScrambleLinesRef.current = [];
     setProgress(-1);
     setLogs((prev) => prev + '[cancelled by user]\n');
     const w = new Worker('/cubeopt/wasm-worker.js');
@@ -656,13 +665,17 @@ export default function Cube3Solver() {
   };
 
   const doSolveNow = (explicit?: string) => {
-    const cleaned = (explicit ?? scrambles)
-      .split('\n').map(s => s.trim()).filter(s => s.length > 0).join('\n');
-    if (!cleaned) { alert(t('打乱不能为空', 'No scrambles')); return; }
+    const cleanedLines = (explicit ?? scrambles)
+      .split('\n').map(s => s.trim()).filter(s => s.length > 0);
+    if (!cleanedLines.length) { alert(t('打乱不能为空', 'No scrambles')); return; }
+    const cleaned = cleanedLines.join('\n');
     setScrambles(cleaned);
     setReadyState('busy');
     setLogs('');
     pendingSolutionsRef.current = [];
+    optimalScrambleLinesRef.current = optimalResultKindRef.current === 'scramble'
+      ? Array(cleanedLines.length).fill('')
+      : [];
     workerRef.current?.postMessage({
       cmd: 'start solve',
       scramble: cleaned,
@@ -704,6 +717,9 @@ export default function Cube3Solver() {
     setCloudBusy(true);
     setCloudStatus(t('连接云端求解…', 'Connecting…'));
     setLogs('');
+    optimalScrambleLinesRef.current = optimalResultKindRef.current === 'scramble'
+      ? Array(lines.length).fill('')
+      : [];
     const ac = new AbortController();
     cloudAbortRef.current = ac;
     let done = 0;
@@ -776,7 +792,7 @@ export default function Cube3Solver() {
             setCloudStatus(t(`排队中(前面 ${ahead} 个在算)…`, `Queued (${ahead} ahead)…`));
           } else if (ev === 'solving') {
             startPhaseTimer(); // ticker now shows actual solve time
-            setCloudStatus(t(`求解中 ${done}/${lines.length}…`, `Solving ${done}/${lines.length}…`));
+            setCloudStatus(`${done}/${lines.length}`);
           } else if (ev === 'error') {
             if (obj.i === -1 || obj.phase === 'load') {
               setCloudStatus(t(`求解表加载失败:${obj.error ?? ''}`, `Table load failed: ${obj.error ?? ''}`));
@@ -789,25 +805,24 @@ export default function Cube3Solver() {
             const solveSecs = Math.round((Date.now() - cloudPhaseStartRef.current) / 1000);
             const okN = obj.ok ?? 0;
             const failN = obj.fail ?? 0;
-            const loadSecs = Math.round(loadMs / 1000);
-            const zh = `云端求解完成(成功 ${okN}${failN ? `,失败 ${failN}` : ''}${warm ? `,耗时 ${solveSecs}s` : `,载表 ${loadSecs}s + 求解 ${solveSecs}s`})`;
-            const en = `Done (ok ${okN}${failN ? `, failed ${failN}` : ''}${warm ? `, ${solveSecs}s` : `, load ${loadSecs}s + solve ${solveSecs}s`})`;
-            setCloudStatus(t(zh, en));
+            const completed = Math.min(lines.length, Math.max(done, okN + failN));
+            if (optimalResultKindRef.current === 'scramble') {
+              setScrambles(optimalScrambleLinesRef.current.join('\n'));
+            }
+            optimalResultKindRef.current = 'solution';
+            optimalScrambleLinesRef.current = [];
+            setCloudStatus(`${completed}/${lines.length} ${solveSecs}s`);
           } else if (typeof obj.i === 'number' && typeof obj.solution === 'string') {
             const sol = obj.solution;
             done++;
-            // 求打乱(最优): show the optimal *scramble* (inverse of the solution).
-            if (optimalScrambleRef.current && obj.i === 0) {
-              optimalScrambleRef.current = false;
+            if (optimalResultKindRef.current === 'scramble') {
               const optScr = formatMoves(invertSequence(parseMoves(sol)));
-              setScrambles(optScr);
-              const n = optScr.trim().split(/\s+/).filter(Boolean).length;
+              optimalScrambleLinesRef.current[obj.i] = optScr;
               logResultLine('scramble', optScr, true);
-              setStateInfo(t(`已求出 ${n} 步最优打乱。`, `Optimal scramble: ${n} moves.`));
             } else {
               logResultLine('solution', sol, true);
             }
-            setCloudStatus(t(`求解中 ${done}/${lines.length}…`, `Solving ${done}/${lines.length}…`));
+            setCloudStatus(`${done}/${lines.length}`);
           }
         }
       }
@@ -822,12 +837,41 @@ export default function Cube3Solver() {
       clearInterval(noRespTimer);
       clearTimeout(overallTimer);
       if (cloudTimerRef.current) { clearInterval(cloudTimerRef.current); cloudTimerRef.current = null; }
+      optimalResultKindRef.current = 'solution';
+      optimalScrambleLinesRef.current = [];
       setCloudBusy(false);
       cloudAbortRef.current = null;
     }
   };
 
   const cancelCloud = () => { cloudAbortRef.current?.abort(); };
+
+  const handleScrambleAction = async (kind: 'scramble' | 'solution') => {
+    if (!scrambleLines.length || scrambleState.err || kociembaBusy || busy) return;
+    if (paintOptimal) {
+      optimalResultKindRef.current = kind;
+      optimalScrambleLinesRef.current = [];
+      if (cloudMode) await cloudSolve();
+      else startSolve();
+      return;
+    }
+
+    const sourceLines = [...scrambleLines];
+    const derivedScrambles: string[] = [];
+    setLogs('');
+    try {
+      for (const line of sourceLines) {
+        const facelet = cubieToFacelet(applySequence(solvedCubie(), parseMoves(line)));
+        const out = await runKociembaForState(facelet, kind, false);
+        derivedScrambles.push(out ?? '');
+        if (out) logResultLine(kind, out, false);
+      }
+      if (kind === 'scramble') setScrambles(derivedScrambles.join('\n'));
+      setStateInfo(null);
+    } catch (e) {
+      setStateInfo(t(`从状态求解失败:${(e as Error).message}`, `Solve from state failed: ${(e as Error).message}`));
+    }
+  };
 
   useEffect(() => {
     if (readyState !== 'ready') return;
@@ -889,6 +933,43 @@ export default function Cube3Solver() {
       />
     </span>
   ) : null;
+
+  const renderStateActions = (
+    facelet: string | null,
+    beforeAction?: (facelet: string) => void,
+  ) => {
+    const invalid = !facelet || !!validateFacelet(facelet);
+    const run = (kind: 'scramble' | 'solution') => {
+      if (!facelet || invalid) return;
+      beforeAction?.(facelet);
+      if (kind === 'scramble') void handlePaintSolve(facelet);
+      else void (paintOptimal ? handlePaintSolveOptimal : handlePaintDeriveSolution)(facelet);
+    };
+    return (
+      <div className="move-input-actions">
+        <BoolToggle value={paintOptimal} onChange={setPaintOptimal} label={t('最优', 'Optimal')} />
+        {solveSourceControl}
+        <button
+          className="btn"
+          disabled={invalid || kociembaBusy || busy}
+          onClick={() => run('scramble')}
+          title={t('求出到达该状态的打乱(最优开启时求最少步打乱)', 'Derive the scramble reaching this state (fewest-move when Optimal is on)')}
+        >
+          {t('求打乱', 'Scramble')}
+        </button>
+        <button
+          className="btn"
+          disabled={invalid || kociembaBusy || busy}
+          onClick={() => run('solution')}
+          title={paintOptimal
+            ? t('求最优解(cubeopt/云端)', 'Optimal solve (cubeopt/cloud)')
+            : t('求出把它解开的步骤(打乱的逆)', 'Derive the moves that solve this state (inverse of the scramble)')}
+        >
+          {t('求解法', 'Solve')}
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="cubeopt-page">
@@ -984,6 +1065,7 @@ export default function Cube3Solver() {
               spec={CUBE3_PAINT}
               pixelSize={paintCanvasSize}
               onApply={(fc) => { setPaintFacelet(fc); void setViewMode('net'); }}
+              resultActions={(fc) => renderStateActions(fc, setPaintFacelet)}
             />
           ) : viewMode === 'scramble' ? (
             <div className="move-input">
@@ -1009,40 +1091,26 @@ export default function Cube3Solver() {
               <div className="move-input-actions">
                 <BoolToggle value={paintOptimal} onChange={setPaintOptimal} label={t('最优', 'Optimal')} />
                 {solveSourceControl}
-                {scrambleLines.length > 1 ? (
-                  <button
-                    className="btn"
-                    disabled={!paintOptimal || !!scrambleState.err || busy}
-                    onClick={() => { if (cloudMode) void cloudSolve(); else startSolve(); }}
-                    title={!paintOptimal
-                      ? t('多条打乱仅支持「最优」批量求解(cubeopt/云端)', 'Multiple scrambles require Optimal (cubeopt/cloud) batch solving')
-                      : t('批量求最优解(cubeopt/云端)', 'Batch optimal solve (cubeopt/cloud)')}
-                  >
-                    {t('求解法', 'Solve')}
-                  </button>
-                ) : (<>
-                  <button
-                    className="btn"
-                    disabled={!scrambleState.facelet || kociembaBusy || busy}
-                    onClick={() => scrambleState.facelet && handlePaintSolve(scrambleState.facelet)}
-                    title={t('求出到达该状态的打乱(最优开启时求最少步打乱)', 'Derive the scramble reaching this state (fewest-move when Optimal is on)')}
-                  >
-                    {t('求打乱', 'Scramble')}
-                  </button>
-                  <button
-                    className="btn"
-                    disabled={!scrambleState.facelet || kociembaBusy || busy}
-                    onClick={() => {
-                      if (!scrambleState.facelet) return;
-                      (paintOptimal ? handlePaintSolveOptimal : handlePaintDeriveSolution)(scrambleState.facelet);
-                    }}
-                    title={paintOptimal
-                      ? t('求最优解(cubeopt/云端)', 'Optimal solve (cubeopt/cloud)')
-                      : t('求出把它解开的步骤(打乱的逆)', 'Derive the moves that solve this state (inverse of the scramble)')}
-                  >
-                    {t('求解法', 'Solve')}
-                  </button>
-                </>)}
+                <button
+                  className="btn"
+                  disabled={!scrambleLines.length || !!scrambleState.err || kociembaBusy || busy}
+                  onClick={() => void handleScrambleAction('scramble')}
+                  title={paintOptimal
+                    ? t('逐条求等价的最优打乱(cubeopt/云端)', 'Find an equivalent optimal scramble for each line (cubeopt/cloud)')
+                    : t('逐条求到达同一状态的打乱', 'Derive a scramble reaching the same state for each line')}
+                >
+                  {t('求打乱', 'Scramble')}
+                </button>
+                <button
+                  className="btn"
+                  disabled={!scrambleLines.length || !!scrambleState.err || kociembaBusy || busy}
+                  onClick={() => void handleScrambleAction('solution')}
+                  title={paintOptimal
+                    ? t('逐条求最优解(cubeopt/云端)', 'Find the optimal solution for each line (cubeopt/cloud)')
+                    : t('逐条求解', 'Solve each line')}
+                >
+                  {t('求解法', 'Solve')}
+                </button>
               </div>
             </div>
           ) : (
@@ -1062,31 +1130,7 @@ export default function Cube3Solver() {
                   {t(`${reconState.moves} 步复盘 → 打乱取逆 · 已同步到方块`, `${reconState.moves}-move reconstruction → scramble is its inverse · synced to the cube`)}
                 </div>
               ) : null}
-              <div className="move-input-actions">
-                <BoolToggle value={paintOptimal} onChange={setPaintOptimal} label={t('最优', 'Optimal')} />
-                {solveSourceControl}
-                <button
-                  className="btn"
-                  disabled={!reconState.facelet || kociembaBusy || busy}
-                  onClick={() => reconState.facelet && handlePaintSolve(reconState.facelet)}
-                  title={t('求出到达该状态的打乱(最优开启时求最少步打乱)', 'Derive the scramble reaching this state (fewest-move when Optimal is on)')}
-                >
-                  {t('求打乱', 'Scramble')}
-                </button>
-                <button
-                  className="btn"
-                  disabled={!reconState.facelet || kociembaBusy || busy}
-                  onClick={() => {
-                    if (!reconState.facelet) return;
-                    (paintOptimal ? handlePaintSolveOptimal : handlePaintDeriveSolution)(reconState.facelet);
-                  }}
-                  title={paintOptimal
-                    ? t('求最优解(cubeopt/云端)', 'Optimal solve (cubeopt/cloud)')
-                    : t('求出把它解开的步骤(打乱的逆)', 'Derive the moves that solve this state (inverse of the scramble)')}
-                >
-                  {t('求解法', 'Solve')}
-                </button>
-              </div>
+              {renderStateActions(reconState.facelet)}
             </div>
           )}
         </div>
