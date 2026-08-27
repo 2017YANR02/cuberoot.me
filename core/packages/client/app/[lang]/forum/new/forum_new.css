@@ -16,10 +16,16 @@
 }
 
 .forum-new-meta-row {
+  --forum-new-control-height: 42px;
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   align-items: end;
   gap: 12px;
+}
+
+.forum-new-meta-row :is(.forum-sort-select, .forum-title-input) {
+  box-sizing: border-box;
+  height: var(--forum-new-control-height);
 }
 
 .forum-new-label {

@@ -60,7 +60,7 @@ import { applyHijack, makeHijack, type StateHijack } from './state_hijack';
 import { toFaceletString, fromFaceletString } from '../cube/state';
 import { stepSolved, type CubeStep } from '../cube/steps';
 import { watchAdvertisementsMac, savedMac, saveMac, clearMac, parseMacFromName, normalizeMac } from './mac';
-import { BluetoothConnectError, atStage, isNoDeviceSelected } from './connect_error';
+import { BluetoothConnectError, atStage, describeError, isNoDeviceSelected } from './connect_error';
 import type { BluetoothCubeStatus } from './types';
 import {
   connectMiniProgramCubeBridge,
@@ -125,6 +125,32 @@ export const CUBE_DRIVERS: readonly CubeDriver[] = DRIVERS;
 function pickDriver(device: BluetoothDevice): CubeDriver | null {
   for (const d of DRIVERS) if (d.matches(device)) return d;
   return null;
+}
+
+function isTransientGattDisconnect(error: unknown): boolean {
+  const raw = error instanceof BluetoothConnectError ? error.raw : error;
+  return /GATT Server is disconnected|\bcode 19\b/i.test(describeError(raw));
+}
+
+/**
+ * Pick a single previously-authorised cube that can reconnect without any
+ * chooser or MAC prompt. Ambiguity deliberately falls back to the normal
+ * user-driven picker instead of guessing which physical cube to claim.
+ */
+export function grantedCubeForPreconnect(
+  devices: readonly BluetoothDevice[],
+): BluetoothDevice | null {
+  const candidates = devices.filter((device) => {
+    const driver = pickDriver(device);
+    if (!driver) return false;
+    if (!driver.needsMac) return true;
+    return Boolean(
+      savedMac(device.name)
+      ?? parseMacFromName(device.name)
+      ?? driver.defaultMac?.(device),
+    );
+  });
+  return candidates.length === 1 ? candidates[0] : null;
 }
 
 /**
@@ -395,6 +421,8 @@ export interface BluetoothCubeHandle {
   connect(pick?: ConnectPickOptions): Promise<void>;
   /** Connect a device already returned by a shared Web Bluetooth chooser. */
   connectDevice(device: BluetoothDevice): Promise<void>;
+  /** Reconnect one unambiguous, previously-authorised cube without a chooser. */
+  preconnectGrantedDevice(): Promise<boolean>;
   /** Disconnect + cleanup. */
   disconnect(): void;
   /** Reset internal cube state to "solved" (after the user resets the cube physically). */
@@ -554,8 +582,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   const trackerRef = useRef<CubeStateTracker>(new CubeStateTracker());
   const deviceRef = useRef<BluetoothDevice | null>(null);
   const macRef = useRef<string | null>(null);
-  // MAC pending persistence — only written once a real move decodes, so a
-  // wrong MAC the user typed never poisons storage.
+  // MAC pending persistence — only written once a real move or a validated
+  // state decodes, so a wrong MAC the user typed never poisons storage.
   const pendingSaveMacRef = useRef<{ name: string | null; mac: string } | null>(null);
   const driverRef = useRef<CubeDriver | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
@@ -680,6 +708,11 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
    */
   const handleCubeState = useCallback((facelets: string) => {
     if (!trackerRef.current.adoptFacelets(facelets)) return;
+    // GAN reports an encrypted, validated state during its initial handshake.
+    // That proves the MAC just as strongly as a decoded move and lets a user
+    // reconnect quickly even if they only inspected diagnostics before leaving.
+    const ps = pendingSaveMacRef.current;
+    if (ps) { saveMac(ps.name, ps.mac); pendingSaveMacRef.current = null; }
     publishState(facelets);
   }, [publishState]);
 
@@ -1027,9 +1060,14 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     // Wire up the disconnect listener BEFORE start() so we don't miss races.
     // On unexpected drop, fire the connection event then schedule the first
     // reconnect attempt with zero-index backoff (1s).
+    let readyForReconnect = false;
     const onDisc = (): void => {
       if (!isCurrentSession()) return;
       if (intentionalDisconnectRef.current) return;
+      // During the initial handshake, the owning connectDevice() call must
+      // handle failure. Scheduling an independent reconnect here would race a
+      // user retry while the modal is already reporting that handshake error.
+      if (!readyForReconnect) return;
       if (reconnectInFlightRef.current) return;
       // Tear down the live subscriptions but keep deviceRef/driverRef so
       // the reconnect path can reuse them.
@@ -1095,6 +1133,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         discardAttachedAttempt(started);
         return;
       }
+      readyForReconnect = true;
       cleanupRef.current = started.cleanup;
       setGyroRef.current = started.setGyro ?? null;
       setStatus({
@@ -1210,7 +1249,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     setAdvertisementDiagnostic((current) => current
       ? { ...current, phase: 'gatt', totalElapsedMs: advertisementMs, advertisementMs }
       : null);
-    await attachToDevice(device, advMac, generation, (phase, completedPhaseMs) => {
+    const reportPhase = (phase: 'discovery' | 'handshake' | 'connected', completedPhaseMs: number) => {
       if (connectionGenerationRef.current !== generation) return;
       setAdvertisementDiagnostic((current) => {
         if (!current) return null;
@@ -1226,7 +1265,20 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
           totalElapsedMs: Math.max(0, Math.round(performance.now() - connectionStartedAt)),
         };
       });
-    });
+    };
+    try {
+      await attachToDevice(device, advMac, generation, reportPhase);
+    } catch (error) {
+      if (connectionGenerationRef.current !== generation || !isTransientGattDisconnect(error)) {
+        throw error;
+      }
+      // Windows/Chrome can finish service discovery just as the peripheral
+      // drops the first GATT link (DOMException code 19). Retry that known
+      // transient once on the same authorised device; never reopen the picker
+      // or repeat advertisement/MAC recovery, and never loop indefinitely.
+      cancelPendingReconnect();
+      await attachToDevice(device, advMac, generation, reportPhase);
+    }
   }, [attachToDevice, cancelPendingReconnect]);
 
   const connect = useCallback(async (pick?: ConnectPickOptions): Promise<void> => {
@@ -1330,6 +1382,24 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     publishState,
   ]);
 
+  const preconnectGrantedDevice = useCallback(async (): Promise<boolean> => {
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return false;
+    if (mayUseMiniProgramBridge()) return false;
+    const bluetooth = typeof navigator === 'undefined' ? undefined : navigator.bluetooth;
+    if (!bluetooth?.getDevices) return false;
+
+    let devices: BluetoothDevice[];
+    try {
+      devices = await bluetooth.getDevices();
+    } catch {
+      return false;
+    }
+    const device = grantedCubeForPreconnect(devices);
+    if (!device) return false;
+    await connectDevice(device);
+    return true;
+  }, [connectDevice]);
+
   // Tear down on unmount so we don't leak GATT subscriptions.
   useEffect(() => {
     return () => {
@@ -1385,6 +1455,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     facelets,
     connect,
     connectDevice,
+    preconnectGrantedDevice,
     disconnect,
     resetState,
     getFaces,
