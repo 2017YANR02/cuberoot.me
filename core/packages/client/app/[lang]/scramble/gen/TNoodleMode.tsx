@@ -13,7 +13,7 @@ import Link from '@/components/AppLink';
 import { RefreshCw, Download, X, Edit3, Image as ImageIcon, ImageOff, Dices } from 'lucide-react';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { EventIcon } from '@/components/EventIcon';
-import WcaEventSelector from '@/components/WcaEventSelector';
+import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import NumberCommitInput from '@/components/NumberCommitInput';
 import Scramble555ModePicker from '@/components/Scramble555ModePicker';
 import Scramble333ModePicker from '@/components/Scramble333ModePicker';
@@ -39,8 +39,8 @@ import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnood
 import { CSTIMER_NONWCA_APPEND, CSTIMER_EVENT_IDS, CSTIMER_EVENTS, cstimerScramble, isCstimerEvent } from '@/lib/cstimer-scramble';
 import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEvent, shapeModSourceEvent } from '@/lib/shape-mod-scramble';
 
-// 给 selector 当 availableEvents 用,涵盖 WCA + 非 WCA。
-const TNOODLE_EVENT_SET = new Set<string>([...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS, ...CSTIMER_EVENT_IDS, ...SHAPE_MOD_EVENT_IDS]);
+// 配置菜单的完整项目顺序:WCA + twizzle 非 WCA + cstimer + shape-mod。
+const TNOODLE_EVENT_IDS = [...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS, ...CSTIMER_EVENT_IDS, ...SHAPE_MOD_EVENT_IDS];
 const TN_APPEND_EVENTS = [...TWIZZLE_NONWCA_APPEND, ...CSTIMER_NONWCA_APPEND, ...SHAPE_MOD_APPEND];
 const CSTIMER_EVENT_ORDER: ReadonlyArray<string> = CSTIMER_EVENTS.map((e) => e.id);
 const SHAPE_MOD_EVENT_ORDER: ReadonlyArray<string> = SHAPE_MOD_EVENTS.map((e) => e.id);
@@ -52,6 +52,8 @@ import {
 import type { RoundSheetInput } from './_tnoodle-pdf';
 import ClockColorPicker from './ClockColorPicker';
 import ProgressButton from './ProgressButton';
+import CopyAllScramblesButton from './CopyAllScramblesButton';
+import { scrambleEventPickerGroups } from './_event-picker';
 import TranslationsPicker from './TranslationsPicker';
 import SheetView, { type AttemptScramble, type RoundSheet } from './SheetView';
 import CompCrossAnalysis, { type CrossFilter, type Metric, METRIC_OFFSET } from './CompCrossAnalysis';
@@ -392,6 +394,10 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     ],
     [events, customNxN],
   );
+  const configPickerGroups = useMemo(
+    () => scrambleEventPickerGroups([...TNOODLE_EVENT_IDS, ...customNxN], TN_APPEND_EVENTS, isZh),
+    [customNxN, isZh],
+  );
 
   const toggleEvent = (e: string) => {
     setEvents((prev) => {
@@ -410,9 +416,6 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       return { ...prev, [id]: defaultEventConfig(id) };
     });
   };
-  // 「其他」展开态:控制高阶 NxN 输入框的显隐(view 模式自身已隐藏整块)。
-  const [otherExpanded, setOtherExpanded] = useState(false);
-
   const setRoundCount = (e: string, count: number) => {
     setEvents((prev) => {
       const cfg = prev[e];
@@ -807,6 +810,10 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     () => Array.from(new Set((sheets ?? []).map((s) => s.event))),
     [sheets],
   );
+  const viewPickerGroups = useMemo(
+    () => scrambleEventPickerGroups(eventsInSheets, TN_APPEND_EVENTS, isZh),
+    [eventsInSheets, isZh],
+  );
   // 某事件在 sheets 中的有序 roundIdx 列表(升序;roundIdx=ROUND_TYPE_INDEX 槽位,与轮次先后单调)。
   const roundIdxsForEvent = useCallback(
     (ev: string): number[] =>
@@ -1089,10 +1096,14 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     },
     [sq1Compact, optimalActive],
   );
-  // icon 角标:多轮时显示当前轮次的位置编号 (1/2/3/…),与 URL round= 一致,提示再次点击会循环。
-  const roundBadges = activeView && roundIdxsInEvent.length > 1 && activeRoundIdx !== null
-    ? { [activeView]: `${roundNumOf(activeView, activeRoundIdx)}` }
-    : undefined;
+  // 全部项目、轮次、组和备打一起复制;不受当前项目/轮次视图或分析筛选影响。
+  // 文本与屏幕记号一致:SQ1 尊重简写开关,最优等态模式开启时复制展示值。
+  const allScramblesText = useMemo(
+    () => (sheets ?? []).flatMap((sh) => convSheet(sh).attempts
+      .map((attempt) => attempt.displayScramble ?? attempt.scramble)
+      .filter(Boolean)).join('\n'),
+    [sheets, convSheet],
+  );
   // 切事件:重置轮次到该事件第一轮(位置=1)、清掉选中把,并把 URL 同步到 event。
   const selectEvent = (ev: string) => {
     setViewedEvent(ev);
@@ -1305,6 +1316,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
           >
             {showPreview ? <ImageIcon size={14} /> : <ImageOff size={14} />}
           </button>
+          {loaded && <CopyAllScramblesButton text={allScramblesText} t={t} />}
           {loaded && (
             <ProgressButton
               icon={<Download size={14} className={pdfBuilding ? 'gen-spin' : ''} />}
@@ -1365,64 +1377,46 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       {error && <div className="gen-tn-empty" style={{ color: 'var(--gen-accent)' }}>{error}</div>}
 
       {loaded ? (
-        // ── 视图模式:已生成/加载,顶端 selector 单选,只能切视图 ──
-        // sheets 里可能同时有 WCA + 非 WCA(cubing.js twizzleEvents),
-        // 通过 appendEvents 同行 flex-wrap,不分两段。
-        <WcaEventSelector
-          availableEvents={new Set(eventsInSheets)}
-          selectedEvent={activeView ?? undefined}
-          onSelect={onEventIconClick}
-          badges={roundBadges}
-          appendEvents={TN_APPEND_EVENTS}
-          collapsibleAppend
-          onlyAvailable
-          isZh={isZh}
-        />
+        // ── 视图模式:已生成/加载,复用首页项目下拉切换当前 sheet ──
+        <div className="gen-view-picker">
+          <PuzzlePicker
+            groups={viewPickerGroups}
+            selectedEvent={activeView ?? undefined}
+            onSelect={onEventIconClick}
+            isZh={isZh}
+          />
+        </div>
       ) : forcedCompId ? (
         // 内嵌模式未加载完:不渲染配置选择器(占位/加载提示在下方 event-list 槽)。
         null
       ) : (
-        // ── 配置模式:多选 toggle + 点击循环轮数(只有 mock 路径走到这里) ──
-        <WcaEventSelector
-          availableEvents={TNOODLE_EVENT_SET}
-          onlyAvailable
-          collapsibleAppend
-          searchable
-          onExpandedChange={setOtherExpanded}
-          selectedEvents={new Set(Object.keys(events))}
-          badges={Object.fromEntries(Object.entries(events).map(([ev, cfg]) => [ev, cfg.rounds.length]))}
-          onToggle={(ev) => {
-            if (!events[ev]) {
-              toggleEvent(ev);
-            } else {
-              const cur = events[ev].rounds.length;
-              if (cur >= 4) toggleEvent(ev);
-              else setRoundCount(ev, cur + 1);
-            }
-          }}
-          onRemove={toggleEvent}
-          appendEvents={TN_APPEND_EVENTS}
-          isZh={isZh}
-        />
+        <>
+          {!compHeaderSlot && <div className="gen-tn-controls">{compPickerNode}</div>}
+          <div className="gen-config-toolbar">
+            {/* 配置模式:复用首页项目下拉,多选时菜单保持打开。 */}
+            <PuzzlePicker
+              groups={configPickerGroups}
+              selectedEvents={new Set(Object.keys(events))}
+              onToggle={toggleEvent}
+              isZh={isZh}
+              showTriggerIcon={false}
+            />
+            <div className="gen-config-toolbar-scroll">
+              <div className="gen-tn-config-row">
+                <HighOrderNxNInput isZh={isZh} onAdd={addHighNxN} />
+                <Scramble555ModePicker active555={!!events['555']} isZh={isZh} />
+                <Scramble333ModePicker active333={!!events['333']} isZh={isZh} />
+                <Scramble222ModePicker active222={!!events['222']} />
+                {sq1FormatNode}
+              </div>
+              <div className="gen-tn-controls">{actionsNode}</div>
+            </div>
+          </div>
+        </>
       )}
 
-      {/* 配置条:高阶 NxN(随「其他」展开) + 5x5 打乱模式(选了 5x5 才显),view 模式隐藏整块 */}
-      {!loaded && !forcedCompId && (
-        <div className="gen-tn-config-row">
-          {otherExpanded && (
-            <HighOrderNxNInput isZh={isZh} onAdd={addHighNxN} />
-          )}
-          <Scramble555ModePicker active555={!!events['555']} isZh={isZh} />
-          <Scramble333ModePicker active333={!!events['333']} isZh={isZh} />
-          <Scramble222ModePicker active222={!!events['222']} />
-        </div>
-      )}
-
-      {/* 生成 / 预览 / 清空 按钮行 — 放在 selector + config 之后,events 列表之前 */}
-      {controlsNode}
-
-      {/* SQ1 记号开关:仅未加载(配置态)显示这一独立行;已加载后随每张 sq1 sheet 卡片标题左侧出现。 */}
-      {sq1FormatNode}
+      {/* 已加载或内嵌时维持原有正文 controls;配置态已并入单行工具栏。 */}
+      {(loaded || forcedCompId) && controlsNode}
 
       {loaded ? null : forcedCompId ? (
         // 内嵌模式:加载中 / 加载失败(error 已在上方渲染)的占位。
@@ -1432,7 +1426,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
           </div>
         ) : null
       ) : enabledEvents.length === 0 ? (
-        <div className="gen-tn-empty">{t('点击上方图标添加项目', 'Tap an event icon above to add it')}</div>
+        <div className="gen-tn-empty">{t('从项目菜单添加项目', 'Add an event from the puzzle menu')}</div>
       ) : (
         <div className="gen-tn-event-list">
           {enabledEvents.map((ev) => {
@@ -1442,6 +1436,16 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 <div className="gen-tn-event-header gen-tn-event-header--static">
                   <EventIcon event={ev} />
                   <span className="gen-tn-event-name">{eventDisplayName(ev, isZh)}</span>
+                  <label className="gen-tn-mini-num">
+                    <span>{t('轮数', 'Rounds')}</span>
+                    <NumberCommitInput
+                      className="gen-tn-mini-num-input"
+                      min={1}
+                      max={4}
+                      value={cfg.rounds.length}
+                      onCommit={(count) => setRoundCount(ev, count)}
+                    />
+                  </label>
                   <button
                     type="button"
                     className="gen-tn-event-remove"

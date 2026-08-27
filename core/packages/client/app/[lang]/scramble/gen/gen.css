@@ -128,7 +128,53 @@
     align-items: center;
 }
 
-/* 高阶 NxN + 5x5 模式 一行容器,窄屏 wrap 成两行 */
+/* 配置态保持一条工具栏:项目与数量下拉固定,其余控件在窄屏横向滑动。 */
+.gen-config-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    margin: 0 0 1rem;
+}
+.gen-config-toolbar > .pp,
+.gen-config-toolbar > .gen-count-row {
+    flex: 0 0 auto;
+}
+.gen-config-toolbar-scroll {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+}
+.gen-config-toolbar-scroll::-webkit-scrollbar {
+    display: none;
+}
+.gen-config-toolbar-scroll > .gen-tn-config-row,
+.gen-config-toolbar-scroll > .gen-tn-controls {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    margin: 0;
+}
+.gen-config-toolbar-scroll > .gen-tn-config-row {
+    gap: 12px;
+}
+.gen-config-toolbar-scroll .gen-control-actions,
+.gen-config-toolbar-scroll .gen-tn-config-group,
+.gen-config-toolbar-scroll .scramble-mode-row {
+    flex-wrap: nowrap;
+}
+.gen-config-toolbar-scroll .gen-tn-controls .gen-btn:not(.gen-btn-primary) {
+    border-color: transparent;
+    background: transparent;
+}
+.gen-config-toolbar-scroll .gen-tn-controls .gen-btn:not(.gen-btn-primary):hover:not(:disabled) {
+    background: var(--gen-accent-soft);
+}
+
+/* 高阶 NxN + 各项目打乱模式容器 */
 .gen-tn-config-row {
     margin: 12px 0 20px;
     display: flex;
@@ -138,6 +184,15 @@
 }
 .gen-tn-config-row:empty {
     margin: 0;
+}
+
+@media (max-width: 480px) {
+    .gen-config-toolbar {
+        gap: 8px;
+    }
+    .gen-config-toolbar-scroll > .gen-tn-controls {
+        order: -1;
+    }
 }
 
 /* SQ1 记号开关(简写 / 完整)— 配置条内 + 比赛模式 controls 后各一处 */
@@ -284,6 +339,10 @@
 }
 
 .gen-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.gen-copy-all.is-copied { color: var(--signal-success); }
+
+.gen-view-picker { margin: 12px 0; }
 
 .gen-btn-primary {
     background: var(--gen-accent);
