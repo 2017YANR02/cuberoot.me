@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PRIMARY_CARDS, SECTIONS } from '@/lib/landing-sections';
+import { CREATOR_PROFILE } from '@/lib/creator-profile';
 
 describe('homepage card order', () => {
   it('places competition simulation immediately to the right of competition system', () => {
@@ -25,6 +26,16 @@ describe('homepage card order', () => {
     expect(otherCards).toContainEqual(expect.objectContaining({
       id: 'wechat-groups',
       href: '/wechat-groups',
+      internal: true,
+    }));
+  });
+
+  it('links the homepage directly to the creator profile', () => {
+    const otherCards = SECTIONS.find(({ id }) => id === 'other')?.cards;
+
+    expect(otherCards).toContainEqual(expect.objectContaining({
+      id: 'creator',
+      href: CREATOR_PROFILE.href,
       internal: true,
     }));
   });

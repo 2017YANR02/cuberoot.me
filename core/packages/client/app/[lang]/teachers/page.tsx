@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
-import { BadgeCheck, ExternalLink, EyeOff, GraduationCap, MapPin, Mic2, Pencil, Plus } from 'lucide-react';
+import { BadgeCheck, ExternalLink, EyeOff, GraduationCap, MapPin, Mic2, Pencil, Plus, UserRound } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import PersonLink from '@/components/PersonLink';
@@ -12,6 +12,7 @@ import { nextQuery, useAuthUser, useIsAdmin, useOwnerKey } from '@/lib/auth-stor
 import { tr } from '@/i18n/tr';
 import { fetchMyTeacherDirectory, fetchTeacherDirectory, mergeTeacherDirectoryEntries, type TeacherDirectoryEntry } from '@/lib/teacher-directory-api';
 import { fetchTeacherLiveScripts, type TeacherLiveScript } from '@/lib/teacher-live-scripts-api';
+import { creatorProfileHrefForWcaId } from '@/lib/creator-profile';
 import { CONTACT_FIELDS, DIRECTORY_KINDS, URL_CONTACT_KEYS, directoryContactHref, directoryKindLabel, directoryModeLabel, directoryWebsiteLabel, localDirectoryTags, localDirectoryText } from './directory-data';
 
 function DirectoryEntry({ entry, canEdit, scripts }: { entry: TeacherDirectoryEntry; canEdit: boolean; scripts: TeacherLiveScript[] }) {
@@ -25,6 +26,7 @@ function DirectoryEntry({ entry, canEdit, scripts }: { entry: TeacherDirectoryEn
   });
   const cover = entry.images.find((image) => image.kind === 'portrait') ?? entry.images[0];
   const gallery = entry.images.filter((image) => image.id !== cover?.id);
+  const profileHref = creatorProfileHrefForWcaId(entry.wcaId);
 
   return (
     <article className="directory-entry">
@@ -34,7 +36,7 @@ function DirectoryEntry({ entry, canEdit, scripts }: { entry: TeacherDirectoryEn
           {entry.isCurated && <span className="directory-curated"><BadgeCheck size={14} />{tr({ zh: '站方录入', en: 'Curated' })}</span>}
           {!entry.isVisible && <span className="directory-curated"><EyeOff size={14} />{tr({ zh: '仅自己可见', en: 'Only visible to you' })}</span>}
         </div>
-        <h2>{name}</h2>
+        <h2>{profileHref ? <AppLink className="directory-profile-name" href={profileHref}>{name}</AppLink> : name}</h2>
         {alternateName && <p className="directory-alt-name">{alternateName}</p>}
         {location && <p className="directory-location"><MapPin size={15} />{location}</p>}
         {canEdit && <div className="directory-owner-actions"><AppLink href={`/teachers/edit?id=${entry.id}`} prefetch={false} className="directory-edit-button"><Pencil size={15} />{tr({ zh: '编辑资料', en: 'Edit profile' })}</AppLink><AppLink href={`/teachers/scripts/manage?teacher=${entry.id}`} prefetch={false} className="directory-edit-button"><Mic2 size={15} />{tr({ zh: '管理话术', en: 'Manage scripts' })}</AppLink></div>}
@@ -44,7 +46,7 @@ function DirectoryEntry({ entry, canEdit, scripts }: { entry: TeacherDirectoryEn
         <p className="directory-description">{localDirectoryText(entry.descriptionZh, entry.descriptionEn)}</p>
         {tags.length > 0 && <div className="directory-tags" aria-label={tr({ zh: '擅长方向', en: 'Specialties' })}>{tags.map((tag) => <span key={tag}>{tag}</span>)}</div>}
         {scripts.length > 0 && <div className="directory-scripts"><p>{tr({ zh: '直播话术', en: 'Livestream scripts' })}</p>{scripts.slice(0, 2).map((script) => <AppLink key={script.id} href={`/teachers/scripts/${script.id}`} prefetch={false}><Mic2 size={14} /><span>{localDirectoryText(script.titleZh, script.titleEn)}</span></AppLink>)}</div>}
-        <div className="directory-facts"><span><GraduationCap size={16} />{directoryModeLabel(entry.teachingMode)}</span>{entry.wcaId && <PersonLink wcaId={entry.wcaId} className="directory-link">WCA {entry.wcaId}</PersonLink>}{entry.website && <a className="directory-link" href={entry.website} target="_blank" rel="noreferrer">{directoryWebsiteLabel(entry.website)}<ExternalLink size={14} /></a>}</div>
+        <div className="directory-facts"><span><GraduationCap size={16} />{directoryModeLabel(entry.teachingMode)}</span>{profileHref && <AppLink href={profileHref} className="directory-link"><UserRound size={15} />{tr({ zh: '完整个人介绍', en: 'Full profile' })}</AppLink>}{entry.wcaId && <PersonLink wcaId={entry.wcaId} className="directory-link">WCA {entry.wcaId}</PersonLink>}{entry.website && <a className="directory-link" href={entry.website} target="_blank" rel="noreferrer">{directoryWebsiteLabel(entry.website)}<ExternalLink size={14} /></a>}</div>
         {contacts.length > 0 && <div className="directory-contacts"><div className="directory-contact-list">{contacts.map(({ key, label, value, href }) => href ? <a key={key} className="directory-contact-item directory-link" href={href} target={URL_CONTACT_KEYS.has(key) ? '_blank' : undefined} rel={URL_CONTACT_KEYS.has(key) ? 'noreferrer' : undefined}><span className="directory-contact-label">{tr(label)}</span><span>{value}</span>{URL_CONTACT_KEYS.has(key) && <ExternalLink size={13} />}</a> : <span key={key} className="directory-contact-item"><span className="directory-contact-label">{tr(label)}</span><span>{value}</span></span>)}</div></div>}
         {gallery.length > 0 && <div className="directory-gallery">{gallery.map((image) => <figure key={image.id}><img src={image.url} alt={localDirectoryText(image.captionZh, image.captionEn) || name} />{localDirectoryText(image.captionZh, image.captionEn) && <figcaption>{localDirectoryText(image.captionZh, image.captionEn)}</figcaption>}</figure>)}</div>}
       </div>
