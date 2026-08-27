@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import PersonLink from '@/components/PersonLink';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { SortArrow } from '@/components/SortArrow';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import {
@@ -26,8 +25,6 @@ import { listWcaTeacherStudents, type WcaTeacher } from '@/lib/wca-teachers-api'
 import { eventDisplayName } from '@/lib/wca-events';
 import { formatWcaResult, type ResultKind } from '@/lib/wca-format-result';
 
-const EVENTS_WITHOUT_AVERAGE = new Set(['333mbf', '333mbo']);
-
 interface StudentSeed {
   wcaId: string;
   name?: string;
@@ -46,8 +43,10 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
   const [studentMeta, setStudentMeta] = useState<Map<string, StudentMeta>>(() => new Map());
   const [reloadKey, setReloadKey] = useState(0);
   const [selectedEventId, setSelectedEventId] = useState('');
-  const [resultKind, setResultKind] = useState<ResultKind>('single');
-  const [resultSortDir, setResultSortDir] = useState<'asc' | 'desc'>('asc');
+  const [resultSort, setResultSort] = useState<{ kind: ResultKind; dir: 'asc' | 'desc' }>({
+    kind: 'single',
+    dir: 'asc',
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -143,30 +142,36 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
     ));
   }, [taughtEventIds]);
 
-  const eventHasAverage = !EVENTS_WITHOUT_AVERAGE.has(selectedEventId);
-  useEffect(() => {
-    if (!eventHasAverage) setResultKind('single');
-  }, [eventHasAverage]);
-
   const visibleStudents = useMemo(() => students
     .filter((student) => !selectedEventId || student.eventIds.includes(selectedEventId))
     .map((student) => ({
       ...student,
-      resultValue: selectedEventId
-        ? student.personalRecords?.[selectedEventId]?.[resultKind]?.best ?? null
+      singleValue: selectedEventId
+        ? student.personalRecords?.[selectedEventId]?.single?.best ?? null
+        : null,
+      averageValue: selectedEventId
+        ? student.personalRecords?.[selectedEventId]?.average?.best ?? null
         : null,
     }))
     .sort((a, b) => {
-      const aMissing = a.resultValue === null || a.resultValue <= 0;
-      const bMissing = b.resultValue === null || b.resultValue <= 0;
+      const aValue = resultSort.kind === 'single' ? a.singleValue : a.averageValue;
+      const bValue = resultSort.kind === 'single' ? b.singleValue : b.averageValue;
+      const aMissing = aValue === null || aValue <= 0;
+      const bMissing = bValue === null || bValue <= 0;
       if (aMissing !== bMissing) return aMissing ? 1 : -1;
-      if (a.resultValue !== null && b.resultValue !== null && a.resultValue !== b.resultValue) {
-        return (a.resultValue - b.resultValue) * (resultSortDir === 'asc' ? 1 : -1);
+      if (aValue !== null && bValue !== null && aValue !== bValue) {
+        return (aValue - bValue) * (resultSort.dir === 'asc' ? 1 : -1);
       }
       return displayCuberName(a.name ?? a.wcaId, isZh).localeCompare(
         displayCuberName(b.name ?? b.wcaId, isZh),
       );
-    }), [isZh, resultKind, resultSortDir, selectedEventId, students]);
+    }), [isZh, resultSort, selectedEventId, students]);
+
+  const toggleResultSort = (kind: ResultKind) => setResultSort((current) => (
+    current.kind === kind
+      ? { kind, dir: current.dir === 'asc' ? 'desc' : 'asc' }
+      : { kind, dir: 'asc' }
+  ));
 
   const canAddStudents = canAddWcaTeacherStudent(teacherWcaId, teacherDirectory);
 
@@ -183,14 +188,6 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
             isZh={isZh}
             onlyAvailable
             containerClassName="wca-stats-event-selector wp-student-event-filter"
-          />
-          <PillToggle
-            value={resultKind === 'average'}
-            onChange={(average) => setResultKind(average ? 'average' : 'single')}
-            offLabel={t('单次', 'Single')}
-            onLabel={t('平均', 'Average')}
-            ariaLabel={t('成绩类型', 'Result type')}
-            disabled={!eventHasAverage}
           />
         </div>
       )}
@@ -213,12 +210,23 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
               <th className="wp-th-student-result">
                 <button
                   type="button"
-                  className="wp-sort-th is-active"
-                  onClick={() => setResultSortDir((current) => current === 'asc' ? 'desc' : 'asc')}
-                  aria-label={t('按成绩排序', 'Sort by result')}
+                  className={`wp-sort-th${resultSort.kind === 'single' ? ' is-active' : ''}`}
+                  onClick={() => toggleResultSort('single')}
+                  aria-label={t('按单次排序', 'Sort by single')}
                 >
-                  {resultKind === 'single' ? t('单次', 'Single') : t('平均', 'Average')}
-                  <SortArrow active dir={resultSortDir} />
+                  {t('单次', 'Single')}
+                  <SortArrow active={resultSort.kind === 'single'} dir={resultSort.dir} />
+                </button>
+              </th>
+              <th className="wp-th-student-result">
+                <button
+                  type="button"
+                  className={`wp-sort-th${resultSort.kind === 'average' ? ' is-active' : ''}`}
+                  onClick={() => toggleResultSort('average')}
+                  aria-label={t('按平均排序', 'Sort by average')}
+                >
+                  {t('平均', 'Average')}
+                  <SortArrow active={resultSort.kind === 'average'} dir={resultSort.dir} />
                 </button>
               </th>
             </tr>
@@ -226,7 +234,7 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
           <tbody>
             {students.length === 0 && (
               <tr>
-                <td className="wp-students-empty" colSpan={3}>{t('暂无学生', 'No students yet')}</td>
+                <td className="wp-students-empty" colSpan={4}>{t('暂无学生', 'No students yet')}</td>
               </tr>
             )}
             {visibleStudents.map((student) => (
@@ -269,8 +277,13 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
                   </span>
                 </td>
                 <td className="wp-cell-student-result">
-                  {student.resultValue !== null && student.resultValue > 0 && selectedEventId
-                    ? formatWcaResult(student.resultValue, selectedEventId, resultKind)
+                  {student.singleValue !== null && student.singleValue > 0 && selectedEventId
+                    ? formatWcaResult(student.singleValue, selectedEventId, 'single')
+                    : '—'}
+                </td>
+                <td className="wp-cell-student-result">
+                  {student.averageValue !== null && student.averageValue > 0 && selectedEventId
+                    ? formatWcaResult(student.averageValue, selectedEventId, 'average')
                     : '—'}
                 </td>
               </tr>
