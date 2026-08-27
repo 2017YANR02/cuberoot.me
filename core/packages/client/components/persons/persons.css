@@ -371,14 +371,18 @@ html[data-theme=dark] .wp-page {
 .wp-students-table { width: auto; min-width: min(100%, 320px); }
 .wp-students-table .wp-th-student,
 .wp-students-table .wp-th-student-events,
+.wp-students-table .wp-th-student-result,
 .wp-students-table tbody td { text-align: left; }
 .wp-students-table .wp-th-student,
 .wp-students-table .wp-cell-student { width: 1px; padding-left: 16px; }
+.wp-student-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0 16px 4px; }
+.wp-student-event-filter { --evsel-margin: 4px 0; }
 .wp-student-heading { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .wp-student-identity { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .wp-student-link { color: var(--wp-text); font-weight: 500; text-decoration: none; }
 .wp-student-link:hover { color: var(--wp-accent); text-decoration: underline; }
 .wp-student-event-list { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.wp-cell-student-result { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
 .wp-students-empty { color: var(--wp-text-mute); }
 /* flex 放内层 span,th 保持 table-cell 才能跟整行做行高对齐(否则分隔线错位) */
 .wp-event-inner { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
