@@ -435,12 +435,20 @@ export interface BluetoothCubeHandle {
 }
 
 export interface BluetoothAdvertisementDiagnostic {
+  /** The connection step currently responsible for the wait. */
+  phase: 'advertisement' | 'gatt' | 'discovery' | 'handshake' | 'connected';
   /** 1-based received event number; 0 while waiting for the first event. */
   eventNumber: number;
   /** Milliseconds from starting the listener to the most recent event. */
   elapsedMs: number;
   /** Whether that event supplied the complete manufacturer data needed for MAC recovery. */
   complete: boolean;
+  /** Total time since `connectDevice` began, updated at each phase boundary. */
+  totalElapsedMs: number;
+  advertisementMs: number | null;
+  gattMs: number | null;
+  discoveryMs: number | null;
+  handshakeMs: number | null;
 }
 
 interface UseBluetoothCubeOpts {
@@ -930,12 +938,17 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     device: BluetoothDevice,
     advMac: string | null,
     generation: number,
+    onPhase?: (
+      phase: 'discovery' | 'handshake' | 'connected',
+      completedPhaseMs: number,
+    ) => void,
   ): Promise<void> => {
     const isCurrentSession = (): boolean => connectionGenerationRef.current === generation;
     if (!device.gatt) {
       throw new BluetoothConnectError('gatt', 'Selected device does not expose a GATT server.');
     }
     let server: BluetoothRemoteGATTServer;
+    let phaseStartedAt = performance.now();
     try {
       server = await device.gatt.connect();
     } catch (err) {
@@ -945,11 +958,13 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       try { server.disconnect(); } catch { /* ignore */ }
       return;
     }
+    onPhase?.('discovery', Math.max(0, Math.round(performance.now() - phaseStartedAt)));
 
     // Pick the driver by which GATT service the cube actually exposes (GAN
     // v2/v3/v4 share no service, so this is unambiguous); fall back to name.
     let driver: CubeDriver | null = null;
     let uuids: Set<string> | null = null;
+    phaseStartedAt = performance.now();
     try {
       const services = await server.getPrimaryServices();
       const discoveredUuids = new Set(services.map(s => s.uuid.toLowerCase()));
@@ -1129,6 +1144,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       })();
     }
 
+    onPhase?.('handshake', Math.max(0, Math.round(performance.now() - phaseStartedAt)));
+    phaseStartedAt = performance.now();
     try {
       await activate(mac);
     } catch (err) {
@@ -1136,9 +1153,11 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       if (!isCurrentSession()) return;
       throw atStage('handshake', err);
     }
+    onPhase?.('connected', Math.max(0, Math.round(performance.now() - phaseStartedAt)));
   }, [handleMove, handleCubeState, cancelPendingReconnect, internalDisconnect]);
 
   const connectDevice = useCallback(async (device: BluetoothDevice): Promise<void> => {
+    const connectionStartedAt = performance.now();
     const generation = connectionGenerationRef.current + 1;
     connectionGenerationRef.current = generation;
     intentionalDisconnectRef.current = false;
@@ -1159,19 +1178,55 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     const shouldWatchMac = nameDriver === null
       || (nameDriver.needsMac === true && reusableMac === null);
     setAdvertisementDiagnostic(shouldWatchMac
-      ? { eventNumber: 0, elapsedMs: 0, complete: false }
+      ? {
+          phase: 'advertisement',
+          eventNumber: 0,
+          elapsedMs: 0,
+          complete: false,
+          totalElapsedMs: 0,
+          advertisementMs: null,
+          gattMs: null,
+          discoveryMs: null,
+          handshakeMs: null,
+        }
       : null);
     const advMac = shouldWatchMac
       ? await watchAdvertisementsMac(device, {
           onAdvertisement: (observation) => {
             if (connectionGenerationRef.current === generation) {
-              setAdvertisementDiagnostic(observation);
+              setAdvertisementDiagnostic((current) => current
+                ? {
+                    ...current,
+                    ...observation,
+                    totalElapsedMs: Math.max(0, Math.round(performance.now() - connectionStartedAt)),
+                  }
+                : null);
             }
           },
         }).catch((err: unknown) => { throw atStage('advertisement', err); })
       : null;
     if (connectionGenerationRef.current !== generation) return;
-    await attachToDevice(device, advMac, generation);
+    const advertisementMs = Math.max(0, Math.round(performance.now() - connectionStartedAt));
+    setAdvertisementDiagnostic((current) => current
+      ? { ...current, phase: 'gatt', totalElapsedMs: advertisementMs, advertisementMs }
+      : null);
+    await attachToDevice(device, advMac, generation, (phase, completedPhaseMs) => {
+      if (connectionGenerationRef.current !== generation) return;
+      setAdvertisementDiagnostic((current) => {
+        if (!current) return null;
+        const timing = phase === 'discovery'
+          ? { gattMs: completedPhaseMs }
+          : phase === 'handshake'
+            ? { discoveryMs: completedPhaseMs }
+            : { handshakeMs: completedPhaseMs };
+        return {
+          ...current,
+          ...timing,
+          phase,
+          totalElapsedMs: Math.max(0, Math.round(performance.now() - connectionStartedAt)),
+        };
+      });
+    });
   }, [attachToDevice, cancelPendingReconnect]);
 
   const connect = useCallback(async (pick?: ConnectPickOptions): Promise<void> => {
