@@ -18,7 +18,7 @@
   margin-bottom: 26px;
 }
 
-.friends-tabs button,
+.friends-tab,
 .friends-action {
   appearance: none;
   display: inline-flex;
@@ -34,9 +34,9 @@
   cursor: pointer;
 }
 
-.friends-tabs button { padding: 7px 10px; }
-.friends-tabs button:hover { color: var(--foreground); }
-.friends-tabs button[aria-selected='true'] {
+.friends-tab { padding: 7px 10px; }
+.friends-tab:hover { color: var(--foreground); }
+.friends-tab[aria-selected='true'] {
   background: var(--accent-soft);
   color: var(--foreground);
   font-weight: 600;
@@ -180,7 +180,7 @@ a.friends-identity:hover strong { color: var(--accent); }
 
 @media (max-width: 480px) {
   .friends-tabs { overflow-x: auto; }
-  .friends-tabs button { white-space: nowrap; }
+  .friends-tab { white-space: nowrap; }
   .friends-user-row { align-items: flex-start; flex-wrap: wrap; }
   .friends-identity { width: 100%; }
   .friends-actions { margin-left: 48px; }
