@@ -7,10 +7,11 @@ import {
   Compass, Grid2x2, Trophy, Timer as TimerIcon, Code as CodeIcon,
   Brain, Box, Sigma, Scale, Sprout, Brush, MessageCircle, MessagesSquare, Shapes, Blocks, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School, Building2,
-  FileText, Table2, Award, Medal, Radio, PanelsTopLeft, UsersRound,
+  FileText, Table2, Award, Medal, Radio, PanelsTopLeft, UserRound, UsersRound,
   type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
+import { CREATOR_PROFILE } from '@/lib/creator-profile';
 
 // i18n text map — bilingual mirror of the Vite original's TEXTS table.
 export const TEXTS: Record<string, { en: string; zh: string
@@ -98,6 +99,7 @@ export const TEXTS: Record<string, { en: string; zh: string
   feedback:        { en: 'Feedback', zh: '反馈' },
   meet:            { en: 'Meeting', zh: '会议' },
   achievements:    { en: 'Achievements', zh: '成就' },
+  creator:         { en: 'Ruimin Yan', zh: '颜瑞民' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线'
 },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢'
@@ -205,7 +207,7 @@ export const SECTIONS: Section[] = [
     eyebrow: { en: 'OTHER', zh: '其他' },
     title:   { en: 'Read, build, explore.', zh: '阅读、开发、探索。'
     },
-    sub:     { en: 'Forum, WeChat groups, public feedback, code notes, blog, link directory and unofficial world records.', zh: '论坛、微信群、公开反馈、代码笔记、博客、站点导航与非官方纪录。'
+    sub:     { en: 'Forum, WeChat groups, public feedback, code notes, blog, link directory, unofficial world records and the person behind CubeRoot.', zh: '论坛、微信群、公开反馈、代码笔记、博客、站点导航、非官方纪录与 CubeRoot 的创作者。'
     },
     cards: [
       { id: 'forum', href: '/forum', internal: true, tier: 'medium', Icon: MessagesSquare, nameKey: 'forum' },
@@ -216,6 +218,7 @@ export const SECTIONS: Section[] = [
       { id: 'site', href: '/site',  internal: true,  tier: 'medium', Icon: Compass,  nameKey: 'sitesDirectory' },
       { id: 'wb',   href: '/wb',    internal: true,  tier: 'medium', Icon: Trophy,   nameKey: 'worldBests' },
       { id: 'achievements', href: '/achievements', internal: true, tier: 'medium', Icon: Award, nameKey: 'achievements' },
+      { id: 'creator', href: CREATOR_PROFILE.href, internal: true, tier: 'medium', Icon: UserRound, nameKey: 'creator' },
     ],
   },
 ];

@@ -155,6 +155,12 @@ const nextConfig: NextConfig = {
         source: "/assets/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
       },
+      // High-resolution certificate photographs are content-stable. Filenames
+      // change if a scan is replaced, so they can be cached immutably.
+      {
+        source: "/images/ruimin/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
       // Big content-stable wasm served straight from public/ defaulted to
       // max-age=0 → every /frame-count load 304-revalidated (billable edge
       // request) and risked re-downloading the whole file on a validation miss.

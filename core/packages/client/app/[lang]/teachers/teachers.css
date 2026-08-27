@@ -107,6 +107,13 @@
   font-weight: 600;
   line-height: 1.15;
 }
+.directory-profile-name {
+  color: inherit;
+  text-decoration-color: var(--border-default);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+.directory-profile-name:hover { color: var(--accent); }
 .directory-entry-labels,
 .directory-curated,
 .directory-location,
