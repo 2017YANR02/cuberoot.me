@@ -107,4 +107,5 @@ describe('smart-cube GATT write compatibility', () => {
     expect(gatt.writes.every((write) => write.kind === 'plain')).toBe(true);
     session.cleanup();
   });
+
 });

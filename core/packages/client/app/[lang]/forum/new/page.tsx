@@ -144,7 +144,6 @@ export default function ForumNewThreadPage() {
                   value={title}
                   maxLength={MAX_TITLE_LEN}
                   onChange={e => setTitle(e.target.value)}
-                  placeholder={tr({ zh: '一句话说清主题', en: 'Sum up your topic in one line' })}
                 />
                 {title.length >= MAX_TITLE_LEN - 40 && (
                   <span className="forum-new-title-count">{title.length}/{MAX_TITLE_LEN}</span>
@@ -153,17 +152,14 @@ export default function ForumNewThreadPage() {
             </label>
           </div>
 
-          <div className="forum-new-field">
-            <span className="forum-new-label"><T zh="内容与媒体" en="Content and media" /></span>
-            <ForumMarkdownEditor
-              value={content}
-              onChange={setContent}
-              video={video}
-              onVideoChange={setVideo}
-              onUploadStateChange={setMediaBusy}
-              placeholder={tr({ zh: '写点文字，或直接上传图片 / 视频…', en: 'Write something, or upload images / video…' })}
-            />
-          </div>
+          <ForumMarkdownEditor
+            value={content}
+            onChange={setContent}
+            video={video}
+            onVideoChange={setVideo}
+            onUploadStateChange={setMediaBusy}
+            placeholder={tr({ zh: '写点文字，或直接上传图片 / 视频…', en: 'Write something, or upload images / video…' })}
+          />
 
           <div className="forum-new-actions">
             <button

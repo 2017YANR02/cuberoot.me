@@ -123,6 +123,7 @@ declare global {
 
   interface Bluetooth extends EventTarget {
     requestDevice(options?: RequestDeviceOptions): Promise<BluetoothDevice>;
+    getDevices?(): Promise<BluetoothDevice[]>;
     getAvailability?(): Promise<boolean>;
   }
 

@@ -4,12 +4,14 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  grantedCubeForPreconnect,
   useBluetoothCube,
   type BluetoothConnectionEvent,
   type BluetoothCubeHandle,
 } from '@/app/[lang]/timer/_lib/bluetooth';
 import { ganV4Driver } from '@/app/[lang]/timer/_lib/bluetooth/gan_v4';
 import { gocubeDriver } from '@/app/[lang]/timer/_lib/bluetooth/gocube';
+import { clearMac, savedMac, saveMac } from '@/app/[lang]/timer/_lib/bluetooth/mac';
 import { applyMoves, solved, toFaceletString } from '@/app/[lang]/timer/_lib/cube/state';
 import { parseScramble } from '@/app/[lang]/timer/_lib/cube/moves';
 
@@ -135,6 +137,99 @@ describe('smart-cube reconnect ownership', () => {
     expect(rig.disconnect).toHaveBeenCalledTimes(1);
     expect(cube.status.connected).toBe(false);
     expect(events.some((event) => event.kind === 'reconnected')).toBe(false);
+  });
+
+  it('preconnects exactly one previously authorised supported cube without a chooser', async () => {
+    const rig = fakeGattRig('granted');
+    const getDevices = vi.fn(async () => [rig.device]);
+    Object.defineProperty(navigator, 'bluetooth', {
+      configurable: true,
+      value: { getDevices },
+    });
+    const start = vi.spyOn(gocubeDriver, 'start').mockResolvedValue({
+      battery: async () => null,
+      cleanup: vi.fn(),
+    });
+
+    let connected = false;
+    await act(async () => { connected = await cube.preconnectGrantedDevice(); });
+
+    expect(connected).toBe(true);
+    expect(getDevices).toHaveBeenCalledTimes(1);
+    expect(rig.connect).toHaveBeenCalledTimes(1);
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(cube.status.connected).toBe(true);
+  });
+
+  it('does not guess when more than one supported cube was authorised', async () => {
+    const first = fakeGattRig('first');
+    const second = fakeGattRig('second');
+    Object.defineProperty(navigator, 'bluetooth', {
+      configurable: true,
+      value: { getDevices: vi.fn(async () => [first.device, second.device]) },
+    });
+
+    let connected = true;
+    await act(async () => { connected = await cube.preconnectGrantedDevice(); });
+
+    expect(connected).toBe(false);
+    expect(first.connect).not.toHaveBeenCalled();
+    expect(second.connect).not.toHaveBeenCalled();
+  });
+
+  it('requires a reusable MAC before preconnecting a GAN cube', () => {
+    const device = { name: 'GAN16ui_PRECONNECT_TEST' } as BluetoothDevice;
+    clearMac(device.name);
+    expect(grantedCubeForPreconnect([device])).toBeNull();
+
+    saveMac(device.name, '11:22:33:44:55:66');
+    expect(grantedCubeForPreconnect([device])).toBe(device);
+    clearMac(device.name);
+  });
+
+  it('retries one transient code-19 handshake without reopening the picker', async () => {
+    const rig = fakeGattRig('transient');
+    const transient = {
+      name: 'NetworkError',
+      message: 'GATT Server is disconnected. Cannot retrieve services.',
+      code: 19,
+    };
+    const start = vi.spyOn(gocubeDriver, 'start')
+      .mockImplementationOnce(async () => {
+        rig.drop();
+        throw transient;
+      })
+      .mockResolvedValueOnce({ battery: async () => null, cleanup: vi.fn() });
+
+    await act(async () => { await cube.connectDevice(rig.device); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_000); });
+
+    expect(rig.connect).toHaveBeenCalledTimes(2);
+    expect(start).toHaveBeenCalledTimes(2);
+    expect(cube.status.connected).toBe(true);
+  });
+
+  it('persists a GAN MAC after a valid initial state, before the first move', async () => {
+    const rig = fakeGattRig('gan-state');
+    Object.defineProperty(rig.device, 'name', {
+      configurable: true,
+      value: 'GAN16ui_STATE_SAVE_TEST',
+    });
+    (rig.server.getPrimaryServices as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { uuid: ganV4Driver.service } as BluetoothRemoteGATTService,
+    ]);
+    saveMac(rig.device.name, '11:22:33:44:55:66');
+    const start = vi.spyOn(ganV4Driver, 'start').mockImplementation(async (_server, _onMove, ctx) => {
+      clearMac(rig.device.name);
+      ctx?.onState?.(SCRAMBLED);
+      return { battery: async () => null, cleanup: vi.fn() };
+    });
+
+    await act(async () => { await cube.connectDevice(rig.device); });
+
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(savedMac(rig.device.name)).toBe('11:22:33:44:55:66');
+    clearMac(rig.device.name);
   });
 
   it('does not let an initial handshake finish after manual disconnect', async () => {

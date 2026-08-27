@@ -1995,6 +1995,20 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [bldHelperOpen, setBldHelperOpen] = useState(false);
   const [showCrossSession, setShowCrossSession] = useState(false);
 
+  useEffect(() => {
+    // Defer one task so React Strict Mode can cancel its test mount before any
+    // Bluetooth side effect begins. The real mount then starts exactly once.
+    const timer = window.setTimeout(() => {
+      bluetoothConnectingRef.current = true;
+      const attempt = bluetoothCube.preconnectGrantedDevice().then(() => undefined);
+      setBluetoothConnectAttempt(attempt);
+      void attempt.finally(() => {
+        bluetoothConnectingRef.current = false;
+      }).catch(() => undefined);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [bluetoothCube.preconnectGrantedDevice]);
+
   const connectExternalBluetooth = useCallback(() => {
     if (bluetoothCube.status.connected) {
       setBluetoothOpen(true);
@@ -2004,7 +2018,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       setBluetoothTimerOpen(true);
       return;
     }
-    if (bluetoothConnectingRef.current) return;
+    if (bluetoothConnectingRef.current) {
+      setBluetoothOpen(true);
+      return;
+    }
 
     // Exactly one requestDevice() starts from this click. After the user picks
     // a device, its registry/service signature routes it to the matching
