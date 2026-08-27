@@ -3385,6 +3385,39 @@ CREATE INDEX idx_wca_teachers_teacher ON wca_teachers(teacher_wca_id, event_id);
 CREATE TRIGGER wca_teachers_updated_at BEFORE UPDATE ON wca_teachers
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
+-- 尚无 WCA ID 的学生名册(0174)。身份与授课项目分表，避免伪造 WCA ID；老师自然键不建外键。
+CREATE TABLE wca_teacher_named_students (
+  id             UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_wca_id VARCHAR(20)  NOT NULL,
+  student_name   VARCHAR(160) NOT NULL,
+  created_by     VARCHAR(20)  NOT NULL,
+  updated_by     VARCHAR(20)  NOT NULL,
+  created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  CHECK (length(trim(student_name)) BETWEEN 1 AND 160)
+);
+CREATE INDEX idx_wca_teacher_named_students_teacher
+  ON wca_teacher_named_students(teacher_wca_id, student_name, id);
+CREATE TRIGGER wca_teacher_named_students_updated_at
+  BEFORE UPDATE ON wca_teacher_named_students
+  FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
+
+CREATE TABLE wca_teacher_named_student_events (
+  student_id UUID        NOT NULL REFERENCES wca_teacher_named_students(id) ON DELETE CASCADE,
+  event_id   VARCHAR(20) NOT NULL,
+  created_by VARCHAR(20) NOT NULL,
+  updated_by VARCHAR(20) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (student_id, event_id),
+  CHECK (length(trim(event_id)) > 0)
+);
+CREATE INDEX idx_wca_teacher_named_student_events_event
+  ON wca_teacher_named_student_events(event_id, student_id);
+CREATE TRIGGER wca_teacher_named_student_events_updated_at
+  BEFORE UPDATE ON wca_teacher_named_student_events
+  FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
+
 -- 通用实时协作文档(0122)。正文以 Yjs update 存储，成员表独立控制读写权限。
 CREATE TABLE collaborative_documents (
   id           UUID         PRIMARY KEY DEFAULT gen_random_uuid(),

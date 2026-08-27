@@ -3,10 +3,13 @@ import {
   MAX_TEACHER_LOOKUP_EVENTS,
   MAX_TEACHER_LOOKUP_IDS,
   mayReplaceTeacher,
+  normalizeNamedStudentId,
+  normalizeNamedStudentName,
   normalizeWcaEventId,
   normalizeWcaId,
   parseTeacherLookupEvents,
   parseTeacherLookupIds,
+  parseTeacherEventIds,
 } from '../src/utils/wca_teachers';
 
 describe('WCA teacher input boundaries', () => {
@@ -44,6 +47,19 @@ describe('WCA teacher input boundaries', () => {
     expect(parseTeacherLookupEvents('333,bad event')).toBeNull();
     const oversized = Array.from({ length: MAX_TEACHER_LOOKUP_EVENTS + 1 }, () => '333').join(',');
     expect(parseTeacherLookupEvents(oversized)).toBeNull();
+  });
+
+  it('normalizes named students and validates their event list', () => {
+    expect(normalizeNamedStudentName('  小明\n 同学  ')).toBe('小明 同学');
+    expect(normalizeNamedStudentName('   ')).toBeNull();
+    expect(normalizeNamedStudentName('x'.repeat(161))).toBeNull();
+    expect(normalizeNamedStudentId('550E8400-E29B-41D4-A716-446655440000')).toBe(
+      '550e8400-e29b-41d4-a716-446655440000',
+    );
+    expect(normalizeNamedStudentId('not-a-uuid')).toBeNull();
+    expect(parseTeacherEventIds(['333', '333OH', '333'])).toEqual(['333', '333oh']);
+    expect(parseTeacherEventIds([])).toBeNull();
+    expect(parseTeacherEventIds(['333', 'not-an-event'])).toBeNull();
   });
 });
 

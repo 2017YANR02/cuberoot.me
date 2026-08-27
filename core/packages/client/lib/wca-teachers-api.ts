@@ -12,6 +12,13 @@ export interface WcaTeacher {
   teacherName: string;
 }
 
+export interface WcaNamedStudent {
+  id: string;
+  teacherWcaId: string;
+  studentName: string;
+  eventIds: string[];
+}
+
 export async function listWcaTeacherStudents(teacherWcaId: string): Promise<WcaTeacher[]> {
   const qs = new URLSearchParams({
     teachers: teacherWcaId,
@@ -20,6 +27,54 @@ export async function listWcaTeacherStudents(teacherWcaId: string): Promise<WcaT
   });
   const data = await handleApi<{ teachers: WcaTeacher[] }>(await fetch(`${BASE}?${qs.toString()}`, { cache: 'no-store' }));
   return data.teachers;
+}
+
+export async function listWcaNamedStudents(teacherWcaId: string): Promise<WcaNamedStudent[]> {
+  const data = await handleApi<{ students: WcaNamedStudent[] }>(await fetch(
+    `${BASE}/${encodeURIComponent(teacherWcaId)}/named-students?v=${RESPONSE_VERSION}&refresh=${Date.now()}`,
+    { cache: 'no-store' },
+  ));
+  return data.students;
+}
+
+export async function createWcaNamedStudent(
+  teacherWcaId: string,
+  studentName: string,
+  eventIds: string[],
+): Promise<WcaNamedStudent> {
+  const data = await handleApi<{ student: WcaNamedStudent }>(await fetch(
+    `${BASE}/${encodeURIComponent(teacherWcaId)}/named-students`,
+    {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ studentName, eventIds }),
+    },
+  ));
+  return data.student;
+}
+
+export async function updateWcaNamedStudent(
+  teacherWcaId: string,
+  studentId: string,
+  studentName: string,
+  eventIds: string[],
+): Promise<WcaNamedStudent> {
+  const data = await handleApi<{ student: WcaNamedStudent }>(await fetch(
+    `${BASE}/${encodeURIComponent(teacherWcaId)}/named-students/${encodeURIComponent(studentId)}`,
+    {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify({ studentName, eventIds }),
+    },
+  ));
+  return data.student;
+}
+
+export async function removeWcaNamedStudent(teacherWcaId: string, studentId: string): Promise<void> {
+  await handleApi<{ ok: true }>(await fetch(
+    `${BASE}/${encodeURIComponent(teacherWcaId)}/named-students/${encodeURIComponent(studentId)}`,
+    { method: 'DELETE', headers: authHeaders(false) },
+  ));
 }
 
 export async function listWcaTeachers(studentWcaIds: string[], eventIds: string[]): Promise<WcaTeacher[]> {
