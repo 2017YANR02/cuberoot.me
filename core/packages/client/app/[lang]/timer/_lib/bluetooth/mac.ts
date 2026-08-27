@@ -199,6 +199,18 @@ export interface MacWatchOptions {
   specs?: readonly MacAdvSpec[];
   /** Give up after this long. cstimer waits 10s. */
   timeoutMs?: number;
+  /** Observe each advertisement without exposing its manufacturer payload. */
+  onAdvertisement?: (observation: MacAdvertisementObservation) => void;
+}
+
+/** User-safe progress for diagnosing how many advertisements MAC recovery needs. */
+export interface MacAdvertisementObservation {
+  /** 1-based position among advertisement events delivered to this page. */
+  eventNumber: number;
+  /** Time since `watchAdvertisementsMac` started listening. */
+  elapsedMs: number;
+  /** This event carried enough recognized manufacturer data to recover a MAC. */
+  complete: boolean;
 }
 
 /**
@@ -218,6 +230,8 @@ export function watchAdvertisementsMac(
   if (typeof device.watchAdvertisements !== 'function') return Promise.resolve(null);
   return new Promise<string | null>((resolve) => {
     const abort = new AbortController();
+    const startedAt = performance.now();
+    let eventNumber = 0;
     let done = false;
     const finish = (mac: string | null): void => {
       if (done) return;
@@ -232,7 +246,13 @@ export function watchAdvertisementsMac(
       // cube's manufacturer payload, followed shortly by a complete one. An
       // empty first event is not evidence that this device has no MAC: keep
       // listening until a recognizable payload arrives or the timeout fires.
+      eventNumber += 1;
       const mac = extractMacFromManufacturerData(ev.manufacturerData, specs);
+      opts.onAdvertisement?.({
+        eventNumber,
+        elapsedMs: Math.max(0, Math.round(performance.now() - startedAt)),
+        complete: mac !== null,
+      });
       if (mac) finish(mac);
     };
     const timer = setTimeout(() => finish(null), timeoutMs);

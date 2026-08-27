@@ -286,6 +286,7 @@ describe('smart-cube reconnect ownership', () => {
     expect(handshakeMac).toBe('AA:BB:CC:DD:EE:FF');
     expect(cube.status.connected).toBe(true);
     expect(cube.status.brand).toBe('gan-v4');
+    expect(cube.advertisementDiagnostic).toMatchObject({ eventNumber: 1, complete: true });
 
     await act(async () => cube.disconnect());
     order.length = 0;
@@ -294,6 +295,7 @@ describe('smart-cube reconnect ownership', () => {
     expect(device.watchAdvertisements).toHaveBeenCalledOnce();
     expect(order).toEqual(['connect']);
     expect(handshakeMac).toBe('AA:BB:CC:DD:EE:FF');
+    expect(cube.advertisementDiagnostic).toBeNull();
   });
 
   it('disconnects the reconnect server when the driver handshake fails', async () => {
