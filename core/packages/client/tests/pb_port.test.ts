@@ -5,6 +5,7 @@ import {
   PB_RECORD_OPTIONS,
   isPbRecordKey,
   isValidPbResultValue,
+  pbRecordOptionLabel,
   parsePbResultInput,
 } from '@cuberoot/shared/pb';
 import { workspaceFixturePath } from './workspace-fixture-path';
@@ -13,13 +14,33 @@ const migration = readFileSync(
   workspaceFixturePath('@cuberoot/server', 'migrations', '0171_cube_pb.sql'),
   'utf8',
 );
+const ao10000Migration = readFileSync(
+  workspaceFixturePath('@cuberoot/server', 'migrations', '0173_pb_ao10000.sql'),
+  'utf8',
+);
 const schema = readFileSync(
   workspaceFixturePath('@cuberoot/server', 'src', 'db', 'schema.pg.sql'),
   'utf8',
 );
+const pbRoute = readFileSync(
+  workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'pb.ts'),
+  'utf8',
+);
+const personPbTable = readFileSync(
+  workspaceFixturePath('@cuberoot/client', 'components', 'persons', 'sections', 'PersonPbTable.tsx'),
+  'utf8',
+);
+const personDetail = readFileSync(
+  workspaceFixturePath('@cuberoot/client', 'app', '[lang]', 'wca', 'persons', '[wcaId]', 'PersonDetailClient.tsx'),
+  'utf8',
+);
+const personHero = readFileSync(
+  workspaceFixturePath('@cuberoot/client', 'components', 'persons', 'sections', 'PersonHero.tsx'),
+  'utf8',
+);
 
 describe('CubePB shared result contract', () => {
-  it('keeps the authorized source event and set-size scope exact', () => {
+  it('keeps the supported event and set-size scope exact', () => {
     expect(PB_EVENT_IDS).toHaveLength(17);
     expect(PB_RECORD_OPTIONS).toEqual([
       { recordType: 'single', setSize: 1 },
@@ -29,11 +50,17 @@ describe('CubePB shared result contract', () => {
       { recordType: 'average', setSize: 50 },
       { recordType: 'average', setSize: 100 },
       { recordType: 'average', setSize: 1000 },
+      { recordType: 'average', setSize: 10000 },
     ]);
     expect(isPbRecordKey('333', 'average', 1000)).toBe(true);
+    expect(isPbRecordKey('333', 'average', 10000)).toBe(true);
+    expect(isPbRecordKey('333', 'average', 10001)).toBe(false);
     expect(isPbRecordKey('333', 'mean', 5)).toBe(false);
     expect(isPbRecordKey('333mbf', 'average', 5)).toBe(false);
     expect(isPbRecordKey('unknown', 'single', 1)).toBe(false);
+    expect(pbRecordOptionLabel('single', 1, 'Single')).toBe('Single');
+    expect(pbRecordOptionLabel('mean', 3, 'Single')).toBe('Mo3');
+    expect(pbRecordOptionLabel('average', 10000, 'Single')).toBe('Ao10000');
   });
 
   it('parses time results into WCA centiseconds and rejects malformed values', () => {
@@ -54,6 +81,32 @@ describe('CubePB shared result contract', () => {
   });
 });
 
+describe('CubePB WCA person integration', () => {
+  it('only exposes current records from public profiles through the WCA ID route', () => {
+    expect(pbRoute).toContain("pbRoutes.get('/pb/person/:wcaId'");
+    expect(pbRoute).toContain('if (!account || !account.is_public)');
+    expect(pbRoute).toContain('WHERE owner_key = ? AND is_current = TRUE');
+  });
+
+  it('uses the shared event and record-option contracts for the person table', () => {
+    expect(personPbTable).toContain('PB_EVENT_IDS.map');
+    expect(personPbTable).toContain('if (!collection) return null');
+    expect(personPbTable).toContain('PB_RECORD_OPTIONS.map');
+    expect(personPbTable).toContain('fetchMyPbs(controller.signal)');
+    expect(personPbTable).toContain('formatWcaResult');
+    expect(personPbTable).toContain('<EventIcon event={eventId} />');
+  });
+
+  it('defaults to PR and switches among PR, historical ranks, and PB', () => {
+    expect(personDetail).toContain("parseAsStringEnum<'pr' | 'historical' | 'pb'>(['pr', 'historical', 'pb'])");
+    expect(personDetail).toContain(".withDefault('pr')");
+    expect(personDetail).toContain("withOptions({ history: 'push' })");
+    expect(personDetail).toContain("resultView === 'pb'");
+    expect(personHero).toContain('<CompactSelect');
+    expect(personHero).toContain("{ value: 'historical'");
+  });
+});
+
 describe('CubePB persistence contract', () => {
   it('keeps the migration and schema snapshot constraints aligned', () => {
     for (const sql of [migration, schema]) {
@@ -64,5 +117,8 @@ describe('CubePB persistence contract', () => {
       expect(sql).toContain('CREATE UNIQUE INDEX uq_pb_records_current');
       for (const eventId of PB_EVENT_IDS) expect(sql).toContain(`'${eventId}'`);
     }
+    expect(ao10000Migration).toContain('pb_records_set_size_check');
+    expect(ao10000Migration).toContain('10000');
+    expect(schema).toContain('5, 12, 50, 100, 1000, 10000');
   });
 });

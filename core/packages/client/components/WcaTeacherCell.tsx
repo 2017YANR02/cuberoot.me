@@ -254,8 +254,13 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
 
   return (
     <>
-      <button type="button" className="wca-teacher-action" onClick={() => setEditing(true)}>
-        {tr({ zh: '添加学生', en: 'Add student' })}
+      <button
+        type="button"
+        className="wca-teacher-action wca-student-add-action"
+        aria-label={tr({ zh: '添加学生', en: 'Add student' })}
+        onClick={() => setEditing(true)}
+      >
+        +
       </button>
       {editing && typeof document !== 'undefined' && createPortal(
         <div className="wca-teacher-dialog-layer">

@@ -19,13 +19,23 @@ export const PB_RECORD_OPTIONS: readonly PbRecordOption[] = [
   { recordType: 'average', setSize: 50 },
   { recordType: 'average', setSize: 100 },
   { recordType: 'average', setSize: 1000 },
+  { recordType: 'average', setSize: 10000 },
 ] as const;
+
+export function pbRecordOptionLabel(
+  recordType: PbRecordType,
+  setSize: number,
+  singleLabel: string,
+): string {
+  if (recordType === 'single') return singleLabel;
+  return `${recordType === 'mean' ? 'Mo' : 'Ao'}${setSize}`;
+}
 
 const EVENT_IDS = new Set<string>(PB_EVENT_IDS);
 const VALID_SIZES: Record<PbRecordType, ReadonlySet<number>> = {
   single: new Set([1]),
   mean: new Set([3]),
-  average: new Set([5, 12, 50, 100, 1000]),
+  average: new Set([5, 12, 50, 100, 1000, 10000]),
 };
 
 export function isPbRecordKey(
