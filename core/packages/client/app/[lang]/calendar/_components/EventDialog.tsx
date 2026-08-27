@@ -10,6 +10,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, Clock, MapPin, Palette, Repeat, Text, Trash2, Users, X, Globe } from 'lucide-react';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
+import { DateInput } from '@/components/DateInput';
 import { ListSelect } from '@/components/ListSelect';
 import BoolToggle from '@/components/BoolToggle';
 import { tr, useLang } from '@/i18n/tr';
@@ -157,12 +158,11 @@ export default function EventDialog(props: Props) {
             <Clock size={16} className="cal-field-icon" aria-hidden />
             <div className="cal-field-main">
               <div className="cal-time-row">
-                <input
-                  type="date"
-                  className="cal-date"
+                <DateInput
+                  className="cal-date-field"
                   value={startIn.date}
                   readOnly={readOnly}
-                  onChange={(e) => setStart(fromInputs(e.target.value, d.allDay ? '00:00' : startIn.time, d.tz, d.start))}
+                  onChange={(value) => setStart(fromInputs(value, d.allDay ? '00:00' : startIn.time, d.tz, d.start))}
                 />
                 {!d.allDay && (
                   <input
@@ -183,13 +183,12 @@ export default function EventDialog(props: Props) {
                     onChange={(e) => setEnd(fromInputs(endIn.date, e.target.value, d.tz, d.end))}
                   />
                 )}
-                <input
-                  type="date"
-                  className="cal-date"
+                <DateInput
+                  className="cal-date-field"
                   value={endIn.date}
                   readOnly={readOnly}
-                  onChange={(e) => {
-                    const base = fromInputs(e.target.value, d.allDay ? '00:00' : endIn.time, d.tz, d.end);
+                  onChange={(value) => {
+                    const base = fromInputs(value, d.allDay ? '00:00' : endIn.time, d.tz, d.end);
                     setEnd(d.allDay ? base + 86_400_000 : base);
                   }}
                 />

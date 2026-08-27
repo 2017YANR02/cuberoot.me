@@ -2057,7 +2057,6 @@ function ExamplesPanel({
           <FullScrambleFilterBar
             expanded={showAll}
             onExpandedChange={onExpanded}
-            isZh={isZh}
           />
         )}
         {selectedDownloadable && (

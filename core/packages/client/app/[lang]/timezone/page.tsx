@@ -24,6 +24,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryState, parseAsString, parseAsInteger } from 'nuqs';
 import { Check, Copy, Plus, RotateCcw, X } from 'lucide-react';
 import BackHome from '@/components/BackHome';
+import { DateInput } from '@/components/DateInput';
 import HeaderToggles from '@/components/HeaderToggles';
 import { Flag } from '@/components/Flag';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
@@ -268,12 +269,10 @@ function TimezonePage() {
 
         <label className="tz-field">
           <span className="tz-field-label">{tr({ zh: '日期', en: 'Date' })}</span>
-          <input
-            type="date"
-            className="tz-input"
+          <DateInput
             value={dateKey(homeWall)}
-            onChange={(e) => {
-              const p = parseDateTime(e.target.value, timeKey(homeWall));
+            onChange={(value) => {
+              const p = parseDateTime(value, timeKey(homeWall));
               if (p) pinAt(p);
             }}
           />

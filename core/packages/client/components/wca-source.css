@@ -59,16 +59,7 @@
 .wca-src-config {
   margin: 4px 0 10px;
 }
-.wca-src-dates { gap: 6px; }
-.wca-src-dates input[type="date"] {
-  background: var(--background);
-  color: var(--foreground);
-  border: 1px solid var(--input);
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 13px;
-}
-.wca-src-dash { color: var(--muted-foreground); }
+.wca-src-dates { flex: 0 1 310px; gap: 6px; }
 .wca-src-hint {
   margin: 2px 0 0;
   font-size: 12px;

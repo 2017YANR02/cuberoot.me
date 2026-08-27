@@ -249,6 +249,10 @@
   font-size: 0.82rem;
 }
 
+.date-range-input.recon-range-filter {
+  width: min(290px, 100%);
+}
+
 .recon-range-filter .recon-range-input {
   flex: 1;
   width: 0;
@@ -264,11 +268,6 @@
 .recon-range-filter .recon-range-input:focus {
   outline: none;
   border-color: color-mix(in srgb, var(--accent) 50%, transparent);
-}
-
-.recon-range-sep {
-  color: var(--faint-foreground);
-  font-size: 0.75rem;
 }
 
 /* 单输入框范围 filter 旁边的 ~ 按钮 (iOS Safari decimal 键盘缺 ~) */
