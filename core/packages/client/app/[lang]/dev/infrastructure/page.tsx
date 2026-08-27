@@ -245,12 +245,14 @@ export default function InfrastructurePage() {
           </dl>
           <div className="infra-expense-total">
             <span>{localize(lang, { zh: '年度固定支出', en: 'Annual recurring total' })}</span>
-            <strong>¥4,588 + US$2,640</strong>
+            <strong>
+              {localize(lang, { zh: '约 ¥22,498/年', en: 'Approx. CN¥22,498/year' })}
+            </strong>
           </div>
           <p className="infra-expense-note">
             {localize(lang, {
-              zh: '两种币种分别汇总，不按浮动汇率换算；不含用量计费、税费与一次性支出。',
-              en: 'Currencies are totaled separately without a floating exchange-rate conversion. Usage charges, taxes, and one-time costs are excluded.',
+              zh: '美元支出按 2026-08-27 人民币汇率中间价 1 美元 = 6.7840 元换算；实际支出会随汇率变动，不含用量计费、税费与一次性支出。',
+              en: 'USD costs use the 2026-08-27 RMB central parity rate of US$1 = CN¥6.7840. Actual costs vary with exchange rates; usage charges, taxes, and one-time costs are excluded.',
             })}
           </p>
         </section>
