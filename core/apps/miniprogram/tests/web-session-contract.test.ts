@@ -23,10 +23,15 @@ describe('mini program web session contract', () => {
 
   it('decodes the canonical auth route envelopes, including an unnamed first-time WeChat user', () => {
     const user = { uid: 12, wcaId: null, name: '', avatar: '' };
-    expect(decodeWebSessionUserEnvelope({ user })).toEqual({ user });
+    const normalizedUser = {
+      ...user,
+      avatarSource: 'auto',
+      avatarPreset: null,
+    };
+    expect(decodeWebSessionUserEnvelope({ user })).toEqual({ user: normalizedUser });
     expect(decodeWebSession({ token: 't'.repeat(20), user, isNew: true })).toEqual({
       token: 't'.repeat(20),
-      user,
+      user: normalizedUser,
     });
     expect(decodeWebSessionTicketEnvelope({ ticket: 'A'.repeat(43), expiresIn: 90 })).toEqual({
       ticket: 'A'.repeat(43),
