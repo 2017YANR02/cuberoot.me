@@ -156,6 +156,8 @@ const TABLES: Table[] = [
 
   // ── accounts & auth ────────────────────────────────────
   { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
+  { name: 'user_friendships', domain: 'account', origin: '0175', purpose: { zh: '好友申请与已接受的双向好友关系；每对账号只保留一条规范记录', en: 'Pending requests and accepted two-way friendships, with one canonical row per account pair' } },
+  { name: 'user_blocks', domain: 'account', origin: '0175', purpose: { zh: '单向黑名单；拉黑时同步切断好友关系与待处理申请', en: 'Directed blocks; blocking also removes friendships and pending requests' } },
   { name: 'auth_identities', domain: 'account', origin: '0064', evolved: [78, 103], purpose: { zh: '账号与外部身份的唯一映射；微信小程序与网站扫码登录共用 UnionID', en: 'Unique account-to-provider identity mappings; Mini Program and website QR sign-in share the Weixin UnionID' } },
   { name: 'auth_codes', domain: 'account', origin: '0064', purpose: { zh: '邮箱与手机登录、绑定使用的短时验证码及核销状态', en: 'Short-lived email and phone verification codes with consumption state' } },
   { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', purpose: { zh: '小程序原生会话换取网页会话的 90 秒单次票据，只保存 SHA-256', en: '90-second single-use tickets that bridge Mini Program sessions into website sessions; only SHA-256 hashes are stored' } },
@@ -408,9 +410,9 @@ const TABLES: Table[] = [
     { name: 'accept', note: { zh: '问答题的判对关键词。作者自己的参考答案必须能被它判对(shared/quiz 校验)', en: 'Short-answer keywords — the author’s own reference answer must be accepted by them (validated in shared/quiz)' } },
   ] },
   { name: 'quiz_question_reports', domain: 'community', origin: '0100', purpose: { zh: '社区题举报(一人一题一条,resolved_at 空 = 待处理,同 forum_reports)', en: 'Community-question reports (one per user per question, null resolved_at = open, same shape as forum_reports)' } },
-  { name: 'notifications', domain: 'community', origin: '0070', purpose: { zh: '站内通知(recon 另解 / 评论 / 回复 → 管理员 + 被回复者;read_at 空 = 未读)', en: 'Site notifications (recon alternatives / comments / replies → admins + the person replied to; null read_at = unread)' }, cols: [
+  { name: 'notifications', domain: 'community', origin: '0070', purpose: { zh: '站内通知（社区互动、好友申请与系统消息；read_at 空 = 未读）', en: 'Site notifications for community activity, friend requests, and system messages; null read_at means unread' }, cols: [
     { name: 'id (PK)' }, { name: 'user_key', note: { zh: '收件人 ownerKey,同 comments.author_id 语义', en: 'recipient ownerKey, same semantics as comments.author_id' } },
-    { name: 'kind', note: { zh: 'recon_alt / recon_comment / recon_reply', en: 'recon_alt / recon_comment / recon_reply' } },
+    { name: 'kind', note: { zh: '复盘、论坛、好友、日程等通知类型', en: 'Notification kind for recon, forum, friends, calendar, and other domains' } },
     { name: 'actor_key, actor_name' }, { name: 'title, excerpt, link' }, { name: 'created_at, read_at' },
   ] },
   { name: 'nav_sites', domain: 'community', origin: '0001', evolved: [2, 170], purpose: { zh: '/site 网址导航(group_id 避 SQL 关键字)', en: 'The /site link directory' } },
@@ -632,6 +634,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 172, slug: 'account_avatars', desc: { zh: '新增账号头像来源契约，支持 Clawd 预设、自有上传与 WCA 官方头像自动刷新。', en: 'Add the account-avatar source contract for Clawd presets, owned uploads, and automatic WCA profile-photo refreshes.' } },
   { n: 173, slug: 'pb_ao10000', desc: { zh: '个人纪录新增 Ao10000 档位，并统一平均成绩的 Mo/Ao 简写。', en: 'Add the Ao10000 personal-best tier and standardize mean/average labels as Mo/Ao.' } },
   { n: 174, slug: 'wca_teacher_named_students', desc: { zh: '新增无 WCA ID 学生名册，老师或管理员可按姓名和授课项目登记，且不伪造 WCA 参赛身份。', en: 'Add teacher rosters for students without WCA IDs, stored by name and taught events without fabricating a WCA competition identity.' } },
+  { n: 175, slug: 'friends', desc: { zh: '新增好友申请、双向好友和单向黑名单；拉黑会原子清理双方现有关系。', en: 'Add friend requests, two-way friendships, and directed blocks; blocking atomically clears the pair relationship.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

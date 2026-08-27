@@ -54,6 +54,8 @@ PostgreSQL schema 变更的 source of truth。`apply_migrations.sh` 会在部署
 
 Platform 账号注销增量 `0168_platform_account_deletion.sql` 由 `app_users` 的 `BEFORE DELETE` 触发器原子覆盖 48 张直接关联表：删除私有和短期数据，擦除订单、报名、测验、证书、讲师及提现资料中的 PII，保留并墓碑化交易、同意、版本、账本和审计证据。12 张只追加表仅接受该嵌套删除事务的精确字段变更，直接伪造事务变量仍会拒绝；真实 PostgreSQL 事务夹具在测试 workflow 中逐次验证。
 
+好友系统增量 `0175_friends.sql` 新增每对账号唯一的待处理/已接受好友关系与有方向的黑名单；拉黑时由 API 事务同步删除双方现有好友或申请，账号删除时由外键级联清理。
+
 ## 已应用 migration 不能改
 
 `apply_migrations.sh` 会把每个文件的 SHA-256 写入 ledger。已应用文件的摘要发生变化时会终止执行。修正已上线结构只能新增 migration；需要恢复数据时使用已验证的备份。
