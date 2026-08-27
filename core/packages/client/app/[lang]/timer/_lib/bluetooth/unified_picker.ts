@@ -76,7 +76,6 @@ export async function classifyUnifiedBluetoothDevice(
     if (timerMatches.some((driver) => driver.kind === 'gan-timer')) {
       try {
         await server.getPrimaryService(GAN_V1_DEVICE_INFORMATION_SERVICE);
-        server.disconnect();
         return 'smart-cube';
       } catch {
         // No 180A: continue with the direct smart-timer service probe.
@@ -104,7 +103,11 @@ export async function classifyUnifiedBluetoothDevice(
       throw directProbeError;
     }
 
-    server.disconnect();
+    // Keep the classifier's GATT connection alive for the selected connector.
+    // Chrome may still be settling disconnect() when an immediate connect()
+    // resolves, leaving a server that looks connected but rejects the first
+    // getPrimaryService() with code 19. The cube and timer connectors already
+    // reuse an open GATT server and own cleanup after this hand-off.
     return 'smart-cube';
   } catch (error) {
     try { server.disconnect(); } catch { /* ignore cleanup errors */ }

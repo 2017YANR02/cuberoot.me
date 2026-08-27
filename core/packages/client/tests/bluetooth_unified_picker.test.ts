@@ -15,19 +15,43 @@ import {
 function fakeDevice(
   name: string,
   serviceUuids: string[] = [],
-  options: { rejectEnumeration?: boolean } = {},
+  options: {
+    rejectEnumeration?: boolean;
+    disconnectPoisonsNextConnect?: boolean;
+  } = {},
 ) {
-  const disconnect = vi.fn();
+  let connected = false;
+  let poisoned = false;
+  const disconnect = vi.fn(() => {
+    connected = false;
+    if (options.disconnectPoisonsNextConnect) poisoned = true;
+  });
   const server = {
-    connected: true,
-    connect: vi.fn(async () => server),
+    get connected() { return connected; },
+    connect: vi.fn(async () => {
+      if (poisoned) {
+        poisoned = false;
+        return server;
+      }
+      connected = true;
+      return server;
+    }),
     disconnect,
     getPrimaryService: vi.fn(async (uuid: string | number) => {
+      if (!connected) {
+        throw new DOMException(
+          'GATT Server is disconnected. Cannot retrieve services. (Re)connect first with device.gatt.connect. (code 19)',
+          'NetworkError',
+        );
+      }
       const matched = serviceUuids.find((serviceUuid) => serviceUuid === uuid);
       if (matched) return { uuid: matched };
       throw new DOMException(`Service ${String(uuid)} was not found.`, 'NotFoundError');
     }),
     getPrimaryServices: vi.fn(async () => {
+      if (!connected) {
+        throw new DOMException('GATT Server is disconnected.', 'NetworkError');
+      }
       if (options.rejectEnumeration) {
         throw new DOMException('Service enumeration is unavailable.', 'NotSupportedError');
       }
@@ -96,7 +120,25 @@ describe('unified Bluetooth picker', () => {
     const cube = fakeDevice('GAN16ui_C296', ['6e400001-b5a3-f393-e0a9-e50e24dc4179']);
     await expect(classifyUnifiedBluetoothDevice(cube.device)).resolves.toBe('smart-cube');
     expect(cube.server.connect).toHaveBeenCalledOnce();
-    expect(cube.disconnect).toHaveBeenCalledOnce();
+    expect(cube.disconnect).not.toHaveBeenCalled();
+  });
+
+  it('hands a GAN cube to its connector without an immediate disconnect/reconnect race', async () => {
+    const cubeService = '6e400001-b5a3-f393-e0a9-e50e24dc4179';
+    const cube = fakeDevice('GAN16ui_C296', [cubeService], {
+      disconnectPoisonsNextConnect: true,
+    });
+
+    await expect(classifyUnifiedBluetoothDevice(cube.device)).resolves.toBe('smart-cube');
+
+    // The real connector calls connect() again. When GATT is already open this
+    // is harmless and returns the same stable server. A classifier disconnect
+    // would poison this immediate reconnect and reproduce Chrome's code 19.
+    const handedOffServer = await cube.device.gatt!.connect();
+    await expect(handedOffServer.getPrimaryService(cubeService)).resolves.toMatchObject({
+      uuid: cubeService,
+    });
+    expect(cube.disconnect).not.toHaveBeenCalled();
   });
 
   it('routes a GAN timer when the Bluetooth bridge cannot enumerate services', async () => {
@@ -121,6 +163,6 @@ describe('unified Bluetooth picker', () => {
     );
     expect(cube.server.getPrimaryService).not.toHaveBeenCalledWith(GAN_TIMER_SERVICE);
     expect(cube.server.getPrimaryServices).not.toHaveBeenCalled();
-    expect(cube.disconnect).toHaveBeenCalledOnce();
+    expect(cube.disconnect).not.toHaveBeenCalled();
   });
 });
