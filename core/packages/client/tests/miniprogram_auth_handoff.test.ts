@@ -42,18 +42,26 @@ describe('Mini Program web session handoff', () => {
 
   it('deduplicates a StrictMode-style exchange for the same one-time ticket', async () => {
     const session = { token: 't'.repeat(20), user: { uid: 7, wcaId: null, name: 'CubeRoot', avatar: '' } };
+    const normalizedSession = {
+      ...session,
+      user: { ...session.user, avatarSource: 'auto', avatarPreset: null },
+    };
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => session });
     vi.stubGlobal('fetch', fetchMock);
     const { exchangeMiniProgramWebSession } = await import('../lib/miniprogram-auth-handoff');
 
     const first = exchangeMiniProgramWebSession(TICKET);
     const second = exchangeMiniProgramWebSession(TICKET);
-    await expect(Promise.all([first, second])).resolves.toEqual([session, session]);
+    await expect(Promise.all([first, second])).resolves.toEqual([normalizedSession, normalizedSession]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('clears a failed exchange so the user can retry', async () => {
     const session = { token: 't'.repeat(20), user: { uid: 7, wcaId: '2026TEST01', name: 'CubeRoot', avatar: '' } };
+    const normalizedSession = {
+      ...session,
+      user: { ...session.user, avatarSource: 'auto', avatarPreset: null },
+    };
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: false, json: async () => ({}) })
       .mockResolvedValueOnce({ ok: true, json: async () => session });
@@ -61,7 +69,7 @@ describe('Mini Program web session handoff', () => {
     const { exchangeMiniProgramWebSession } = await import('../lib/miniprogram-auth-handoff');
 
     await expect(exchangeMiniProgramWebSession(TICKET)).rejects.toThrow('web session exchange failed');
-    await expect(exchangeMiniProgramWebSession(TICKET)).resolves.toEqual(session);
+    await expect(exchangeMiniProgramWebSession(TICKET)).resolves.toEqual(normalizedSession);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -84,13 +92,17 @@ describe('Mini Program web session handoff', () => {
 
   it('does not reuse a successful exchange after its pending request settles', async () => {
     const session = { token: 't'.repeat(20), user: { uid: 7, wcaId: null, name: 'CubeRoot', avatar: '' } };
+    const normalizedSession = {
+      ...session,
+      user: { ...session.user, avatarSource: 'auto', avatarPreset: null },
+    };
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: true, json: async () => session })
       .mockResolvedValueOnce({ ok: false, json: async () => ({}) });
     vi.stubGlobal('fetch', fetchMock);
     const { exchangeMiniProgramWebSession } = await import('../lib/miniprogram-auth-handoff');
 
-    await expect(exchangeMiniProgramWebSession(TICKET)).resolves.toEqual(session);
+    await expect(exchangeMiniProgramWebSession(TICKET)).resolves.toEqual(normalizedSession);
     await expect(exchangeMiniProgramWebSession(TICKET)).rejects.toThrow('web session exchange failed');
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });

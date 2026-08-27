@@ -10,6 +10,11 @@ const provisionalUser = {
   country: 'CN',
 };
 
+const defaultAvatarSelection = {
+  avatarSource: 'auto',
+  avatarPreset: null,
+} as const;
+
 function installProvisionalSession() {
   localStorage.setItem('wca_user', JSON.stringify(provisionalUser));
   localStorage.setItem('wca_access_token', 'short-lived-wca-token');
@@ -48,8 +53,13 @@ describe('WCA callback canonical session', () => {
     expect(JSON.parse(localStorage.getItem('wca_user') ?? 'null')).toEqual({
       ...canonicalUser,
       country: '',
+      ...defaultAvatarSelection,
     });
-    expect(useAuthStore.getState().user).toEqual({ ...canonicalUser, country: '' });
+    expect(useAuthStore.getState().user).toEqual({
+      ...canonicalUser,
+      country: '',
+      ...defaultAvatarSelection,
+    });
   });
 
   it('keeps the provisional WCA fallback when the exchange response is invalid', async () => {
@@ -65,6 +75,9 @@ describe('WCA callback canonical session', () => {
 
     expect(localStorage.getItem('cuberoot_jwt')).toBeNull();
     expect(JSON.parse(localStorage.getItem('wca_user') ?? 'null')).toEqual(provisionalUser);
-    expect(useAuthStore.getState().user).toEqual(provisionalUser);
+    expect(useAuthStore.getState().user).toEqual({
+      ...provisionalUser,
+      ...defaultAvatarSelection,
+    });
   });
 });
