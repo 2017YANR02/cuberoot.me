@@ -111,7 +111,7 @@ describe('unified Bluetooth picker', () => {
     expect(server.connect).not.toHaveBeenCalled();
   });
 
-  it('uses the primary service to distinguish a GAN timer from GAN cubes', async () => {
+  it('probes a generic GAN timer but routes a model-specific GAN cube before GATT', async () => {
     const timer = fakeDevice('GAN-Timer', [GAN_TIMER_SERVICE]);
     await expect(classifyUnifiedBluetoothDevice(timer.device)).resolves.toBe('smart-timer');
     expect(timer.server.connect).toHaveBeenCalledOnce();
@@ -119,13 +119,13 @@ describe('unified Bluetooth picker', () => {
 
     const cube = fakeDevice('GAN16ui_C296', ['6e400001-b5a3-f393-e0a9-e50e24dc4179']);
     await expect(classifyUnifiedBluetoothDevice(cube.device)).resolves.toBe('smart-cube');
-    expect(cube.server.connect).toHaveBeenCalledOnce();
+    expect(cube.server.connect).not.toHaveBeenCalled();
     expect(cube.disconnect).not.toHaveBeenCalled();
   });
 
-  it('hands a GAN cube to its connector without an immediate disconnect/reconnect race', async () => {
+  it('hands an ambiguous GAN v2 cube to its connector without a disconnect/reconnect race', async () => {
     const cubeService = '6e400001-b5a3-f393-e0a9-e50e24dc4179';
-    const cube = fakeDevice('GAN16ui_C296', [cubeService], {
+    const cube = fakeDevice('GAN-X', [cubeService], {
       disconnectPoisonsNextConnect: true,
     });
 
@@ -150,7 +150,7 @@ describe('unified Bluetooth picker', () => {
     expect(timer.disconnect).not.toHaveBeenCalled();
   });
 
-  it('does not misroute a legacy GAN v1 cube with FFF0 + 180A as a GAN timer', async () => {
+  it('routes a specifically named legacy GAN v1 cube without opening GATT', async () => {
     const cube = fakeDevice(
       'GAN-i',
       [GAN_TIMER_SERVICE, GAN_V1_DEVICE_INFORMATION_SERVICE],
@@ -158,10 +158,8 @@ describe('unified Bluetooth picker', () => {
     );
 
     await expect(classifyUnifiedBluetoothDevice(cube.device)).resolves.toBe('smart-cube');
-    expect(cube.server.getPrimaryService).toHaveBeenCalledWith(
-      GAN_V1_DEVICE_INFORMATION_SERVICE,
-    );
-    expect(cube.server.getPrimaryService).not.toHaveBeenCalledWith(GAN_TIMER_SERVICE);
+    expect(cube.server.connect).not.toHaveBeenCalled();
+    expect(cube.server.getPrimaryService).not.toHaveBeenCalled();
     expect(cube.server.getPrimaryServices).not.toHaveBeenCalled();
     expect(cube.disconnect).not.toHaveBeenCalled();
   });

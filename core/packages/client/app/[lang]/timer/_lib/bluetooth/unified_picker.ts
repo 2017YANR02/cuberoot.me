@@ -51,13 +51,22 @@ export function requestUnifiedBluetoothDevice(): Promise<BluetoothDevice | null>
 export async function classifyUnifiedBluetoothDevice(
   device: BluetoothDevice,
 ): Promise<UnifiedBluetoothDeviceKind> {
-  const cubeMatch = CUBE_DRIVERS.some((driver) => driver.matches(device));
+  const cubeMatches = CUBE_DRIVERS.filter((driver) => driver.matches(device));
+  const cubeMatch = cubeMatches.length > 0;
   const timerMatches = BLUETOOTH_TIMER_DRIVERS.filter((driver) => driver.matches(device));
 
   if (timerMatches.length === 0) {
     // A cube may enter through a service filter even when a firmware revision
     // uses an unknown name. The cube connection path performs the final driver
     // check after service discovery and will report a useful error if needed.
+    return 'smart-cube';
+  }
+  // GAN's timer filter intentionally accepts every `GAN*` name, while the v3
+  // and v4 cube matchers recognise concrete model families such as GAN356,
+  // GAN12 and GAN16. Those precise cube names need no GATT classification.
+  // Route them before connecting so connectDevice() can recover the MAC from
+  // advertisements; a GAN cube stops advertising once GATT is open.
+  if (cubeMatches.some((driver) => driver.brand === 'gan-v3' || driver.brand === 'gan-v4')) {
     return 'smart-cube';
   }
   if (!cubeMatch) return 'smart-timer';
