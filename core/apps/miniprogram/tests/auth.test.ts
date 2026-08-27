@@ -121,7 +121,14 @@ describe('mini program authentication', () => {
     expect(session.isNew).toBe(true);
     expect(setStorageSync).toHaveBeenCalledWith('cuberoot:session', {
       token: 't'.repeat(20),
-      user: { uid: 12, name: 'CubeRoot', wcaId: null, avatar: '' },
+      user: {
+        uid: 12,
+        name: 'CubeRoot',
+        wcaId: null,
+        avatar: '',
+        avatarSource: 'auto',
+        avatarPreset: null,
+      },
     });
   });
 
@@ -146,12 +153,26 @@ describe('mini program authentication', () => {
 
     await expect(loginWithWechat()).resolves.toEqual({
       token: 't'.repeat(20),
-      user: { uid: 12, name: '', wcaId: null, avatar: '' },
+      user: {
+        uid: 12,
+        name: '',
+        wcaId: null,
+        avatar: '',
+        avatarSource: 'auto',
+        avatarPreset: null,
+      },
       isNew: true,
     });
     expect(setStorageSync).toHaveBeenCalledWith('cuberoot:session', {
       token: 't'.repeat(20),
-      user: { uid: 12, name: '', wcaId: null, avatar: '' },
+      user: {
+        uid: 12,
+        name: '',
+        wcaId: null,
+        avatar: '',
+        avatarSource: 'auto',
+        avatarPreset: null,
+      },
     });
   });
 
@@ -607,11 +628,25 @@ describe('mini program authentication', () => {
 
     await expect(validateStoredSession(session)).resolves.toEqual({
       token: session.token,
-      user: { uid: 12, name: 'New name', wcaId: null, avatar: '' },
+      user: {
+        uid: 12,
+        name: 'New name',
+        wcaId: null,
+        avatar: '',
+        avatarSource: 'auto',
+        avatarPreset: null,
+      },
     });
     expect(setStorageSync).toHaveBeenCalledWith('cuberoot:session', {
       token: session.token,
-      user: { uid: 12, name: 'New name', wcaId: null, avatar: '' },
+      user: {
+        uid: 12,
+        name: 'New name',
+        wcaId: null,
+        avatar: '',
+        avatarSource: 'auto',
+        avatarPreset: null,
+      },
     });
   });
 
