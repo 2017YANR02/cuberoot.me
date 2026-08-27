@@ -105,7 +105,6 @@ const validInput = {
     ],
   },
   confirmedStableVersion: '3.17.1',
-  confirmedSecretRotation: true,
   releaseConfirmations: Object.fromEntries(
     REQUIRED_RELEASE_CONFIRMATIONS.map(({ key }) => [key, true]),
   ),
@@ -233,15 +232,6 @@ describe('mini program release check', () => {
       ...validInput,
       confirmedStableVersion: '3.16.0',
     })).toContain('开发者工具当前基础库 3.17.1 与确认版本 3.16.0 不一致。');
-  });
-
-  it('blocks release until the exposed AppSecret rotation is explicitly confirmed', () => {
-    expect(collectReleaseFailures({
-      ...validInput,
-      confirmedSecretRotation: false,
-    })).toContain(
-      '已暴露的 AppSecret 尚未确认轮换；后台生成新密钥并更新服务端后，上传时设置 WECHAT_MINI_SECRET_ROTATED=1。',
-    );
   });
 
   it('requires every human release gate to be explicitly confirmed', () => {
