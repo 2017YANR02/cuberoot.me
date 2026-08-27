@@ -269,7 +269,7 @@ describe('对上游页面实测', () => {
     {
       type: 'edge', speffz: 'CAM', chichu: 'AEH', key: 'GBF',
       positions: ['UF', 'UB', 'RU'],
-      alg: "S U' S R2 S' R2 U S'", users: 34, comm: "S U':[S,R2]",
+      alg: "S U' S R2 S' R2 U S'", users: 35, comm: "S U':[S,R2]",
     },
     {
       type: 'corner', speffz: 'CAV', chichu: 'JDX', key: 'JDX',
