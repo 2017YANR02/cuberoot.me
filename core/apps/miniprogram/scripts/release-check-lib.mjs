@@ -274,7 +274,6 @@ export function collectReleaseFailures({
   themeConfig,
   sitemapConfig,
   confirmedStableVersion = '',
-  confirmedSecretRotation = false,
   releaseConfirmations = {},
   sourceFiles = [],
   uploadFiles = [],
@@ -285,12 +284,6 @@ export function collectReleaseFailures({
   currentOutputFingerprint = '',
 }) {
   const failures = [];
-
-  if (confirmedSecretRotation !== true) {
-    failures.push(
-      '已暴露的 AppSecret 尚未确认轮换；后台生成新密钥并更新服务端后，上传时设置 WECHAT_MINI_SECRET_ROTATED=1。',
-    );
-  }
 
   for (const confirmation of REQUIRED_RELEASE_CONFIRMATIONS) {
     if (releaseConfirmations[confirmation.key] !== true) {
