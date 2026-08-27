@@ -382,6 +382,11 @@ html[data-theme=dark] .wp-page {
 .wp-student-link { color: var(--wp-text); font-weight: 500; text-decoration: none; }
 .wp-student-link:hover { color: var(--wp-accent); text-decoration: underline; }
 .wp-student-event-list { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.wp-student-event-overview,
+.wp-student-event-state,
+.wp-student-result-only-group { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.wp-student-result-only { color: var(--wp-text-mute); font-size: 0.72rem; white-space: nowrap; }
+.wp-event-icon-result-only { color: var(--wp-text-sub); }
 .wp-cell-student-result { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
 .wp-students-empty { color: var(--wp-text-mute); }
 /* flex 放内层 span,th 保持 table-cell 才能跟整行做行高对齐(否则分隔线错位) */
