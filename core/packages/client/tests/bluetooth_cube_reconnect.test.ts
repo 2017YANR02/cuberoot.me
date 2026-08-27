@@ -8,6 +8,7 @@ import {
   type BluetoothConnectionEvent,
   type BluetoothCubeHandle,
 } from '@/app/[lang]/timer/_lib/bluetooth';
+import { ganV4Driver } from '@/app/[lang]/timer/_lib/bluetooth/gan_v4';
 import { gocubeDriver } from '@/app/[lang]/timer/_lib/bluetooth/gocube';
 import { applyMoves, solved, toFaceletString } from '@/app/[lang]/timer/_lib/cube/state';
 import { parseScramble } from '@/app/[lang]/timer/_lib/cube/moves';
@@ -236,6 +237,63 @@ describe('smart-cube reconnect ownership', () => {
     });
 
     expect(rig.connect).not.toHaveBeenCalled();
+  });
+
+  it('reads a fresh GAN16 advertisement before GATT and reuses its verified MAC', async () => {
+    const target = new EventTarget();
+    const order: string[] = [];
+    let connected = false;
+    let server!: BluetoothRemoteGATTServer;
+    const connect = vi.fn(async () => {
+      order.push('connect');
+      connected = true;
+      return server;
+    });
+    const device = Object.assign(target, {
+      id: 'gan16',
+      name: 'GAN16ui_C296',
+      watchAdvertisements: vi.fn(async () => {
+        order.push('watch');
+        const payload = new Uint8Array([0, 0, 0, 0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa]);
+        const event = Object.assign(new Event('advertisementreceived'), {
+          manufacturerData: new Map([[0x0001, new DataView(payload.buffer)]]),
+        });
+        queueMicrotask(() => target.dispatchEvent(event));
+      }),
+    }) as BluetoothDevice;
+    server = {
+      device,
+      get connected() { return connected; },
+      connect,
+      disconnect: vi.fn(() => { connected = false; }),
+      getPrimaryService: vi.fn(),
+      getPrimaryServices: vi.fn(async () => [
+        { uuid: ganV4Driver.service } as BluetoothRemoteGATTService,
+      ]),
+    } as BluetoothRemoteGATTServer;
+    Object.defineProperty(device, 'gatt', { configurable: true, value: server });
+
+    let handshakeMac: string | null | undefined;
+    vi.spyOn(ganV4Driver, 'start').mockImplementation(async (_server, onMove, ctx) => {
+      handshakeMac = ctx?.mac;
+      onMove('R', performance.now());
+      return { battery: async () => null, cleanup: vi.fn() };
+    });
+
+    await act(async () => { await cube.connectDevice(device); });
+
+    expect(order).toEqual(['watch', 'connect']);
+    expect(handshakeMac).toBe('AA:BB:CC:DD:EE:FF');
+    expect(cube.status.connected).toBe(true);
+    expect(cube.status.brand).toBe('gan-v4');
+
+    await act(async () => cube.disconnect());
+    order.length = 0;
+    await act(async () => { await cube.connectDevice(device); });
+
+    expect(device.watchAdvertisements).toHaveBeenCalledOnce();
+    expect(order).toEqual(['connect']);
+    expect(handshakeMac).toBe('AA:BB:CC:DD:EE:FF');
   });
 
   it('disconnects the reconnect server when the driver handshake fails', async () => {
