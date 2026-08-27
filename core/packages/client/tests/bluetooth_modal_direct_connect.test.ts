@@ -204,7 +204,7 @@ describe('BluetoothModal direct connection attempt', () => {
     expect(content).toContain('72%');
     expect(content).toContain('solved');
     expect(content).toContain("R'");
-    expect(content).toContain('4.32 seconds after device selection');
+    expect(content).toContain('4.32s after device selection');
     expect(content).toContain('advertisement 3');
     expect(content).toContain('GATT 2.48s');
     expect(content).toContain('automatically stops the timer');
