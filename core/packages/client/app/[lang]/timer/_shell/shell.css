@@ -47,7 +47,9 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  /* PageNoticeBar is a sibling above the timer and publishes its live height.
+     Subtract it so bottom controls stay inside the visible viewport. */
+  min-height: calc(100dvh - var(--page-notice-h, 0px));
   background: var(--background);
   color: var(--foreground);
   overflow: hidden;
@@ -1108,7 +1110,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    吃掉)。复盘展开时必须钉成正好一屏,否则「不足」这个前提不成立,下面的
    flex-shrink 永远不触发 —— 实测就是整页多出 105px 滚动条,复盘的下半截落在屏外。
    只在有复盘时钉,不动其它形态。 */
-.timer-shell:has(.shell-recap) { height: 100dvh; }
+.timer-shell:has(.shell-recap) { height: calc(100dvh - var(--page-notice-h, 0px)); }
 .shell-recap {
   /* 收缩允许:上面的计时区(读数 + 打乱 + 魔方)有它压不动的最小高度,矮屏上该让的
      是复盘 —— 反正它自己会滚,少一格是少看两行,不是丢内容。 */
@@ -1551,7 +1553,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   /* 面板打开时把壳限制在视口内，右栏内容才会在 .shell-panel-body 内形成
      独立滚动条，而不是继续把整页往下撑长。 */
   .timer-shell.panel-open {
-    height: 100dvh;
+    height: calc(100dvh - var(--page-notice-h, 0px));
     grid-template-columns: 1fr 360px;
   }
   .shell-topbar { grid-area: topbar; }
