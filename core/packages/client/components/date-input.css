@@ -1,0 +1,140 @@
+.date-input {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  width: 100%;
+  color: var(--foreground);
+}
+
+.date-input--compact {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.date-input__display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 34px 8px 11px;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  line-height: 1.25;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.date-input--compact .date-input__display {
+  min-height: 34px;
+  padding-block: 5px;
+}
+
+.date-input:not(.date-input--clearable) .date-input__display {
+  padding-right: 11px;
+}
+
+.date-input:focus-within .date-input__display {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 20%, transparent);
+}
+
+.date-input[data-disabled] .date-input__display,
+.date-input[data-readonly] .date-input__display {
+  background: color-mix(in srgb, var(--foreground) 4%, var(--background));
+}
+
+.date-input[data-disabled] {
+  opacity: 0.6;
+}
+
+.date-input__icon {
+  flex: 0 0 auto;
+  color: var(--muted-foreground);
+}
+
+.date-input__value,
+.date-input__placeholder {
+  min-width: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.date-input__placeholder {
+  color: var(--faint-foreground);
+}
+
+.date-input__native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.date-input__native:disabled,
+.date-input__native:read-only {
+  cursor: default;
+}
+
+.date-input--clearable .date-input__native {
+  right: 32px;
+  width: calc(100% - 32px);
+}
+
+.date-input__clear,
+.date-range-input__clear {
+  z-index: 1;
+}
+
+.date-range-input {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 7px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.date-range-input > .date-input,
+.date-range-input__field {
+  flex: 1 1 9rem;
+  min-width: 0;
+}
+
+.date-range-input__field {
+  display: grid;
+  gap: 5px;
+}
+
+.date-range-input__label {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.date-range-input__separator {
+  align-self: center;
+  color: var(--muted-foreground);
+}
+
+.date-range-input__field + .date-range-input__separator,
+.date-range-input__separator:has(+ .date-range-input__field) {
+  margin-bottom: 10px;
+}
+
+.date-range-input--compact .date-range-input__field + .date-range-input__separator,
+.date-range-input--compact .date-range-input__separator:has(+ .date-range-input__field) {
+  margin-bottom: 7px;
+}
+
+@media (max-width: 479px) {
+  .date-range-input {
+    width: 100%;
+  }
+}

@@ -7,6 +7,7 @@
 import { useMemo, useState } from 'react';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthStore } from '@/lib/auth-store';
+import { DateInput } from '@/components/DateInput';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { computeWcaBestAverage, canRecompute } from '@/lib/wca-compute';
 import { tr } from '@/i18n/tr';
@@ -314,7 +315,7 @@ export function ResultChangeEditor({ target, existingChanges, onClose, onSaved }
               </label>
               <label className="wp-rce-field">
                 <span>{tr({ zh: '发生日期', en: 'Effective date' })}</span>
-                <input className="wp-rce-field-input" type="date" value={form.effectiveAt} onChange={(e) => set({ effectiveAt: e.target.value })} />
+                <DateInput value={form.effectiveAt} onChange={(effectiveAt) => set({ effectiveAt })} />
               </label>
               <label className="wp-rce-field wp-rce-field-wide">
                 <span>{tr({ zh: '原因', en: 'Reason' })}</span>

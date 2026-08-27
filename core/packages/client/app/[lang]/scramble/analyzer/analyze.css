@@ -292,7 +292,7 @@
 .analyze-wca-src .settings-row-label { color: var(--az-text-sub); }
 .analyze-wca-src .settings-row-control input[type='number'],
 .analyze-wca-src .settings-row-control-select,
-.analyze-wca-src .wca-src-dates input[type='date'],
+.analyze-wca-src .wca-src-dates .date-input__display,
 .analyze-wca-src .wca-src-comppick .comp-picker-input {
     background: var(--az-surface);
     color: var(--az-text);
@@ -300,8 +300,7 @@
     color-scheme: light dark;
 }
 .analyze-wca-src .settings-row-control .hint,
-.analyze-wca-src .wca-src-hint,
-.analyze-wca-src .wca-src-dash { color: var(--az-text-sub); }
+.analyze-wca-src .wca-src-hint { color: var(--az-text-sub); }
 .analyze-wca-src .settings-row-control .hint-btn { border-color: var(--az-border-strong); color: var(--az-text-sub); }
 .analyze-wca-src .settings-row-control .hint-btn:hover { background: var(--az-accent-soft); color: var(--az-accent); }
 .analyze-wca-src .wca-src-config { border-left-color: var(--az-border); }

@@ -33,6 +33,7 @@ import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import { RecordSelect } from '@/components/RecordSelect';
 import { EventIcon } from '@/components/EventIcon';
 import { ColFilter, ColFilterCloseContext } from '@/components/ColFilter/ColFilter';
+import { DateRangeInput } from '@/components/DateRangeInput';
 import { SearchInput } from '@/components/SearchInput';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import './recon.css';
@@ -186,11 +187,13 @@ interface DateRangeFilterProps {
 
 function DateRangeFilter({ min, max, onChange }: DateRangeFilterProps) {
   return (
-    <div className="recon-range-filter">
-      <input className="recon-range-input" type="date" value={min} onChange={(e) => onChange(e.target.value, max)} />
-      <span className="recon-range-sep">~</span>
-      <input className="recon-range-input" type="date" value={max} onChange={(e) => onChange(min, e.target.value)} />
-    </div>
+    <DateRangeInput
+      className="recon-range-filter"
+      from={min}
+      to={max}
+      onChange={onChange}
+      size="compact"
+    />
   );
 }
 
