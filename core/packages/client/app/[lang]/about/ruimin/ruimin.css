@@ -1,0 +1,381 @@
+.ruimin-page {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  padding: 24px 24px 96px;
+}
+
+.ruimin-shell {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.ruimin-topbar {
+  min-height: 34px;
+}
+
+.ruimin-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.75fr);
+  gap: clamp(40px, 8vw, 96px);
+  align-items: end;
+  padding: clamp(64px, 10vw, 118px) 0 58px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.ruimin-kicker,
+.ruimin-section-label > p,
+.ruimin-award-date,
+.ruimin-award-group > header > p,
+.ruimin-education-period {
+  margin: 0;
+  color: var(--accent);
+  font-family: ui-monospace, 'Cascadia Code', 'SFMono-Regular', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.ruimin-hero h1 {
+  margin: 24px 0 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
+}
+
+.ruimin-name-zh,
+.ruimin-name-en {
+  display: block;
+}
+
+.ruimin-name-zh {
+  font-size: clamp(4.8rem, 11vw, 9rem);
+  letter-spacing: -0.08em;
+  line-height: 0.88;
+}
+
+.ruimin-name-en {
+  margin-top: 19px;
+  color: var(--muted-foreground);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: clamp(0.92rem, 1.7vw, 1.2rem);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.ruimin-hero-lead {
+  max-width: 690px;
+  margin: 30px 0 0;
+  color: var(--muted-foreground);
+  font-size: clamp(1rem, 1.45vw, 1.14rem);
+  line-height: 1.85;
+}
+
+.ruimin-identity-index {
+  margin: 0;
+  border-top: 1px solid var(--border-default);
+}
+
+.ruimin-identity-index > div {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 22px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.ruimin-identity-index dt {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ruimin-identity-index dd {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.ruimin-identity-index a,
+.ruimin-profile-links a {
+  color: inherit;
+  text-decoration-color: var(--border-default);
+  text-underline-offset: 4px;
+}
+
+.ruimin-identity-index a:hover,
+.ruimin-profile-links a:hover {
+  color: var(--accent);
+}
+
+.ruimin-profile-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.ruimin-profile-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.ruimin-story,
+.ruimin-education,
+.ruimin-awards-intro {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.38fr) minmax(0, 1.62fr);
+  gap: clamp(32px, 7vw, 92px);
+}
+
+.ruimin-story,
+.ruimin-education {
+  padding: clamp(64px, 9vw, 104px) 0;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.ruimin-section-label h2 {
+  margin: 8px 0 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.35rem, 2.3vw, 1.8rem);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.ruimin-story-copy {
+  max-width: 790px;
+}
+
+.ruimin-story-copy > p {
+  margin: 0 0 1.2em;
+  font-size: clamp(1rem, 1.45vw, 1.12rem);
+  line-height: 2;
+}
+
+.ruimin-specialties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 18px;
+  padding: 12px 0 0;
+  margin: 0;
+  color: var(--muted-foreground);
+  list-style: none;
+  font-size: 0.82rem;
+}
+
+.ruimin-specialties li {
+  padding-top: 8px;
+  border-top: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+
+.ruimin-education-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.ruimin-education-list li {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: clamp(22px, 4vw, 48px);
+  padding: 0 0 30px;
+}
+
+.ruimin-education-list li + li {
+  padding-top: 30px;
+  border-top: 1px solid var(--border-default);
+}
+
+.ruimin-education-list h3 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.08rem;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.ruimin-education-list li > div > p {
+  margin: 7px 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.ruimin-education-list .ruimin-education-note {
+  color: var(--foreground);
+}
+
+.ruimin-awards {
+  padding-top: clamp(64px, 9vw, 104px);
+}
+
+.ruimin-awards-intro {
+  align-items: end;
+  padding-bottom: 56px;
+}
+
+.ruimin-awards-intro > p {
+  max-width: 730px;
+  margin: 0;
+  color: var(--muted-foreground);
+  line-height: 1.8;
+}
+
+.ruimin-award-group {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.38fr) minmax(0, 1.62fr);
+  gap: clamp(32px, 7vw, 92px);
+  padding: 42px 0 78px;
+  border-top: 1px solid var(--border-default);
+}
+
+.ruimin-award-group > header h3 {
+  margin: 9px 0 0;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.ruimin-award-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 56px clamp(24px, 4vw, 48px);
+}
+
+.ruimin-award {
+  min-width: 0;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-default);
+}
+
+.ruimin-award h3 {
+  margin: 10px 0 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1rem, 1.5vw, 1.18rem);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.ruimin-award-detail {
+  margin: 6px 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.ruimin-award-image-link {
+  display: block;
+  margin-top: 18px;
+  color: inherit;
+  overflow: hidden;
+  text-decoration: none;
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--foreground) 12%, transparent);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.ruimin-award-image-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 48px color-mix(in srgb, var(--foreground) 17%, transparent);
+}
+
+.ruimin-award-image-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.ruimin-award-image-link img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ruimin-closing {
+  max-width: 820px;
+  margin: 36px 0 0 auto;
+  padding: 36px 0 0;
+  border: 0;
+  border-top: 1px solid var(--border-default);
+  font-family: var(--font-serif);
+  font-size: clamp(1.35rem, 3vw, 2.25rem);
+  line-height: 1.6;
+}
+
+@media (max-width: 820px) {
+  .ruimin-hero {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .ruimin-identity-index {
+    max-width: 620px;
+  }
+
+  .ruimin-story,
+  .ruimin-education,
+  .ruimin-awards-intro,
+  .ruimin-award-group {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .ruimin-award-group {
+    gap: 40px;
+  }
+}
+
+@media (max-width: 560px) {
+  .ruimin-page {
+    padding: 18px 18px 72px;
+  }
+
+  .ruimin-hero {
+    gap: 44px;
+    padding: 58px 0 42px;
+  }
+
+  .ruimin-name-zh {
+    font-size: clamp(4.4rem, 24vw, 6.6rem);
+  }
+
+  .ruimin-identity-index > div,
+  .ruimin-education-list li {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .ruimin-story,
+  .ruimin-education {
+    padding: 62px 0;
+  }
+
+  .ruimin-awards-intro {
+    padding-bottom: 42px;
+  }
+
+  .ruimin-award-group {
+    padding: 34px 0 64px;
+  }
+
+  .ruimin-award-grid {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+
+  .ruimin-closing {
+    margin-top: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ruimin-award-image-link {
+    transition: none;
+  }
+}

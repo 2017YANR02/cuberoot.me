@@ -65,6 +65,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'About CubeRoot — what this site is, who maintains it, and where the data comes from.',
     },
   },
+  'about/ruimin': {
+    title: { zh: '颜瑞民', en: 'Ruimin Yan' },
+    description: {
+      zh: 'CubeRoot 创始人颜瑞民的个人介绍、教育经历、魔方与数学工作，以及高中与大学阶段的获奖档案。',
+      en: 'A profile of CubeRoot founder Ruimin Yan, including his education, work in cubing and mathematics, and an archive of high-school and university awards.',
+    },
+  },
   'achievements': {
     title: { zh: '成就', en: 'Achievements' },
     description: {
