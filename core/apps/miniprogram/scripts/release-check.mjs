@@ -84,7 +84,6 @@ async function runReleaseCheck() {
     themeConfig,
     sitemapConfig,
     confirmedStableVersion: process.env.WECHAT_MINI_LIB_VERSION ?? '',
-    confirmedSecretRotation: process.env.WECHAT_MINI_SECRET_ROTATED === '1',
     releaseConfirmations: releaseConfirmationsFromEnv(process.env),
     sourceFiles,
     uploadFiles,
