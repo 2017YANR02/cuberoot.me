@@ -142,6 +142,8 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   app_users: '账号本体,最后整行删',
   auth_identities: '身份行,随 app_users 级联删',
   auth_web_session_tickets: '网页登录短时单次票据随 app_users 级联删',
+  user_friendships: '好友关系的三个账号外键都随 app_users 级联删',
+  user_blocks: '黑名单关系的双向账号外键都随 app_users 级联删',
   organizations: '机构主体独立保留,创建者外键随账号删除置空',
   organization_members: '机构成员关系随账号删除级联,但最后一位有效 owner 会被事务拒绝',
   student_profiles: '学员档案属于机构,关联站内账号随账号删除置空',

@@ -228,13 +228,13 @@ export default function FriendsPage() {
       ) : (
         <>
           <div className="friends-tabs" role="tablist" aria-label={t('好友视图', 'Friends view')}>
-            <button type="button" role="tab" aria-selected={view === 'friends'} onClick={() => void setView('friends')}>
+            <button className="friends-tab" type="button" role="tab" aria-selected={view === 'friends'} onClick={() => void setView('friends')}>
               <Users size={15} />{t('好友', 'Friends')}
             </button>
-            <button type="button" role="tab" aria-selected={view === 'requests'} onClick={() => void setView('requests')}>
+            <button className="friends-tab" type="button" role="tab" aria-selected={view === 'requests'} onClick={() => void setView('requests')}>
               <UserPlus size={15} />{t('申请', 'Requests')}
             </button>
-            <button type="button" role="tab" aria-selected={view === 'blocked'} onClick={() => void setView('blocked')}>
+            <button className="friends-tab" type="button" role="tab" aria-selected={view === 'blocked'} onClick={() => void setView('blocked')}>
               <Ban size={15} />{t('黑名单', 'Blocked')}
             </button>
           </div>
