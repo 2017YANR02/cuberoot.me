@@ -485,9 +485,11 @@ describe('deployment workflow path contracts', () => {
     const verified = run.indexOf('node --env-file=.env "$staging/dist/cubeopt/verify.mjs"', provisioned);
     const immutable = run.indexOf('chmod -R a-w "$final"', verified);
     const switched = run.indexOf('mv -Tf "$pending_link" dist', immutable);
-    const reloaded = run.indexOf('reload_core', switched);
+    const reloaded = run.indexOf('reload_core_without_cubeopt_warm', switched);
     const healthy = run.indexOf('curl -fsS http://127.0.0.1:3001/v1/health', reloaded);
     const smoked = run.indexOf('node --env-file=.env dist/cubeopt/smoke.mjs', healthy);
+    const residentReloaded = run.indexOf('reload_core_with_cubeopt_warm', smoked);
+    const residentReady = run.indexOf('/v1/scramble/optimal-solve/ready', residentReloaded);
 
     expect(prepareCopied).toBeGreaterThan(-1);
     expect(provisionCopied).toBeGreaterThan(prepareCopied);
@@ -500,6 +502,10 @@ describe('deployment workflow path contracts', () => {
     expect(reloaded).toBeGreaterThan(switched);
     expect(healthy).toBeGreaterThan(reloaded);
     expect(smoked).toBeGreaterThan(healthy);
+    expect(residentReloaded).toBeGreaterThan(smoked);
+    expect(residentReady).toBeGreaterThan(residentReloaded);
+    expect(run).toContain('CUBEOPT_WARM_ON_BOOT=0 pm2 reload core-api --update-env');
+    expect(run).toContain('CUBEOPT_WARM_ON_BOOT="$cubeopt_warm_on_boot" pm2 reload core-api --update-env');
     expect(run).toContain('node --env-file=.env -e \'process.exit(process.env.CUBEOPT_SOLVE_ENABLED === "1" ? 0 : 1)\'');
     expect(enabledBranch).toContain('node --env-file=.env "$staging/dist/cubeopt/provision.mjs"');
     expect(enabledBranch).toContain('--env-file /root/core-api/.env');

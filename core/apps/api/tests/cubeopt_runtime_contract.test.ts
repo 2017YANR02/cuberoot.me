@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createBootDeadline } from '../src/cubeopt/boot-deadline.js';
+import { DEFAULT_CUBEOPT_IDLE_MS, resolveCubeoptIdleMs } from '../src/cubeopt/config.js';
 import { assertCubeoptSmokeResult } from '../src/cubeopt/smoke-contract.js';
 
 afterEach(() => {
@@ -9,6 +10,16 @@ afterEach(() => {
 });
 
 describe('CubeOpt runtime contracts', () => {
+  it('allows zero to disable idle unload without accepting invalid delays', () => {
+    expect(resolveCubeoptIdleMs(undefined)).toBe(DEFAULT_CUBEOPT_IDLE_MS);
+    expect(resolveCubeoptIdleMs('')).toBe(DEFAULT_CUBEOPT_IDLE_MS);
+    expect(resolveCubeoptIdleMs('0')).toBe(0);
+    expect(resolveCubeoptIdleMs(' 30000 ')).toBe(30_000);
+    expect(resolveCubeoptIdleMs('-1')).toBe(DEFAULT_CUBEOPT_IDLE_MS);
+    expect(resolveCubeoptIdleMs('1.5')).toBe(DEFAULT_CUBEOPT_IDLE_MS);
+    expect(resolveCubeoptIdleMs('forever')).toBe(DEFAULT_CUBEOPT_IDLE_MS);
+  });
+
   it('enforces one spawn-to-READY deadline and settles it exactly once', () => {
     vi.useFakeTimers();
     const timedOut = vi.fn();

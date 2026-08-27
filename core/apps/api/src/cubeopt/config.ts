@@ -6,6 +6,18 @@ export const CUBEOPT_LEGACY_ENV = [
   'CUBEOPT_TABLE',
 ] as const;
 
+export const DEFAULT_CUBEOPT_IDLE_MS = 10 * 60_000;
+
+/** Zero disables idle unload; invalid values retain the safe default. */
+export function resolveCubeoptIdleMs(raw: string | undefined): number {
+  const normalized = raw?.trim();
+  if (!normalized) return DEFAULT_CUBEOPT_IDLE_MS;
+  const parsed = Number(normalized);
+  return Number.isSafeInteger(parsed) && parsed >= 0
+    ? parsed
+    : DEFAULT_CUBEOPT_IDLE_MS;
+}
+
 export function resolveCubeoptArtifactConfig(env: NodeJS.ProcessEnv) {
   const enabled = env.CUBEOPT_SOLVE_ENABLED === '1';
   const artifactStore = env.CUBEOPT_ARTIFACT_DIR?.trim()
