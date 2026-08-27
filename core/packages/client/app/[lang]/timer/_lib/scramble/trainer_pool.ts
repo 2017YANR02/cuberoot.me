@@ -146,6 +146,12 @@ export function trainerMetaFor(scramble: string): TrainerMeta | null {
   return metaByScramble.get(scramble) ?? null;
 }
 
+/** Preserve the generated case metadata when another notation reaches the same state. */
+export function aliasTrainerMeta(sourceScramble: string, equivalentScramble: string): void {
+  const meta = metaByScramble.get(sourceScramble);
+  if (meta) rememberMeta(equivalentScramble, meta);
+}
+
 /** An optimal solution of the stage, plus which colour/slot it solves. Computed on demand. */
 export async function solveTrainerCase(
   scramble: string, isZh: boolean,

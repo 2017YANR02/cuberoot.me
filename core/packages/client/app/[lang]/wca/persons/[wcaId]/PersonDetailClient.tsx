@@ -11,6 +11,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { parseAsStringEnum, useQueryState } from 'nuqs';
 import {
   fetchWcaPerson, fetchWcaPersonResults, fetchWcaPersonCompetitions, fetchWcaPersonLiveResults,
   fetchWcaPersonFormer, fetchWcaPersonAvatar,
@@ -21,6 +22,7 @@ import { listRecons } from '@/lib/recon-api';
 import { buildReconAttemptMap, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import PersonHero from '@/components/persons/sections/PersonHero';
 import PersonPRTable from '@/components/persons/sections/PersonPRTable';
+import PersonPbTable from '@/components/persons/sections/PersonPbTable';
 import PersonStudents from '@/components/persons/sections/PersonStudents';
 import PersonBestCombos from '@/components/persons/sections/PersonBestCombos';
 import PersonResultChanges from '@/components/persons/sections/PersonResultChanges';
@@ -58,8 +60,13 @@ export default function PersonDetailClient() {
   const [error, setError] = useState<string | null>(null);
   // 「废止项」口径开关:Σ 名次和行(PR 表底部)与「最优项目组合」共用一份状态
   const [inclCancelled, setInclCancelled] = useState(false);
-  // 当前 / 历史最佳排名:控件展示在 hero,数据视图由 PR 表消费。
-  const [rankMode, setRankMode] = useState<'current' | 'historical'>('current');
+  // PR / 历史最佳排名 / PB 是整张表的视图切换:进 URL 以支持返回 / 前进和直链;无参数默认 PR。
+  const [resultView, setResultView] = useQueryState(
+    'records',
+    parseAsStringEnum<'pr' | 'historical' | 'pb'>(['pr', 'historical', 'pb'])
+      .withDefault('pr')
+      .withOptions({ history: 'push' }),
+  );
   // 自家库 + 官网两条路都断了才会有 error;重试按钮 bump 它重跑整个加载 effect
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -148,13 +155,23 @@ export default function PersonDetailClient() {
           results={results}
           former={former}
           isZh={isZh}
-          rankMode={rankMode}
-          onRankModeChange={setRankMode}
+          resultView={resultView}
+          onResultViewChange={(view) => { void setResultView(view); }}
           inclCancelled={inclCancelled}
           onInclCancelledChange={setInclCancelled}
         />
         <PersonStudents teacherWcaId={profile.person.wca_id} isZh={isZh} />
-        <PersonPRTable profile={profile} results={results} isZh={isZh} inclCancelled={inclCancelled} mode={rankMode} />
+        {resultView === 'pb' ? (
+          <PersonPbTable wcaId={profile.person.wca_id} isZh={isZh} />
+        ) : (
+          <PersonPRTable
+            profile={profile}
+            results={results}
+            isZh={isZh}
+            inclCancelled={inclCancelled}
+            mode={resultView === 'historical' ? 'historical' : 'current'}
+          />
+        )}
         <PersonBestCombos wcaId={profile.person.wca_id} isZh={isZh} inclCancelled={inclCancelled} />
         <PersonResultChanges wcaId={profile.person.wca_id} isZh={isZh} />
         <PersonTabs profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} />

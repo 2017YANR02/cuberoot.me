@@ -37,12 +37,9 @@
  * 触发,文档才会拿到/卸掉 COEP;非 333 之间(222↔pyram↔skewb↔sq1)是同一个无 COEP 文档,
  * 软导航即可。各求解器 next/dynamic 懒载,保持分包(进 222 不拉 cubeopt 大 bundle)。
  *
- * URL 与分布完全对称(分布现已合并到本页下半区);裸 /scramble/solver = 默认 3×3(向后兼容旧链接)。
- *
- * 求解 / 分布合页(2026-06-21):本页 = 求解区(上)+ 分布区(下,懒挂载)同一滚动页,
- * 顶层「求解/分布」tab 已废除。分布区复用 /scramble/stats 的 ScrambleStatsPage(embedded 模式:
- * 隐藏它自带的项目选择器,URL 键加 d 前缀避撞,跟随顶部 SolveTabs 的共享 ?event)。它由
- * LazyVisible 包裹 —— 只在滚到折叠线下方才挂载,首屏永不触发分布里那些「现场求解采样」的卡顿。
+ * 裸 /scramble/solver = 默认 3×3(向后兼容旧链接)。三阶分布是最优解右侧的独立子标签,
+ * ?event=333&tool=distribution 复用 /scramble/stats 的 ScrambleStatsPage(embedded 模式,
+ * URL 键加 d 前缀避撞)。非三阶项目没有这排子标签,仍保留页底懒挂载的分布区。
  */
 
 import { Suspense } from 'react';
@@ -51,6 +48,7 @@ import dynamic from 'next/dynamic';
 import { SPEC_BY_EVENT } from './_puzzle-specs';
 import LazyVisible from '@/components/LazyVisible';
 import { ClientLoadStatus } from '@/components/StartupStatus';
+import SolveTabs from '../_components/SolveTabs';
 
 const Loading = () => <ClientLoadStatus />;
 
@@ -97,8 +95,7 @@ const PuzzleOptimalSolver = dynamic(
   { ssr: false, loading: Loading },
 );
 
-function SolverDispatch() {
-  const event = useSearchParams().get('event') ?? '333';
+function SolverDispatch({ event }: { event: string }) {
   if (event === '222') return <Cube2Solver />;
   if (event === 'sq1') return <Sq1Solver />;
   if (event === 'sq2') return <Sq2Solver />;
@@ -139,14 +136,36 @@ function SolverDispatch() {
   return <Cube3Solver />;
 }
 
+function SolverPageContent() {
+  const searchParams = useSearchParams();
+  const event = searchParams.get('event') ?? '333';
+  const distributionActive = event === '333' && searchParams.get('tool') === 'distribution';
+
+  if (distributionActive) {
+    return (
+      <div className="scramble-dist-embed scramble-dist-tab">
+        <SolveTabs puzzle="3x3" mode="solve" sub="distribution" />
+        <ScrambleStatsPage embedded />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <SolverDispatch event={event} />
+      {event !== '333' && (
+        <LazyVisible className="scramble-dist-embed">
+          <ScrambleStatsPage embedded />
+        </LazyVisible>
+      )}
+    </>
+  );
+}
+
 export default function ScrambleSolverPage() {
   return (
     <Suspense fallback={<Loading />}>
-      <SolverDispatch />
-      {/* 分布区:同一滚动页,求解区下方;懒挂载(滚到才渲染 + 才加载 chunk),首屏零分布开销。 */}
-      <LazyVisible className="scramble-dist-embed">
-        <ScrambleStatsPage embedded />
-      </LazyVisible>
+      <SolverPageContent />
     </Suspense>
   );
 }

@@ -47,6 +47,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import { reanalyzeAll } from '../_lib/storage/reanalyze';
 import { EVENTS, eventInfo, isBldEvent, type EventId } from '../_lib/types';
 import { wcaEventId, WCA_OPTIMAL_EVENTS } from '../_lib/scramble/wca_pool';
+import { canUseRandomOptimal333 } from '../_lib/scramble/optimal333_pool';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import { useMetronome, setMetronome, tapTempo, bpmToTps, BPM_MIN, BPM_MAX } from '@/lib/metronome';
 import { CountryInput } from '@/components/CountryInput';
@@ -105,6 +106,7 @@ function SettingsSection({ category, activeCategory, title, children, headerCont
 
 export default function SettingsPanel({ onClose, event, onDataReplaced }: Props) {
   const s = useSettings();
+  const optimalUser = useAuthStore((st) => st.user);
   const metro = useMetronome();
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>('timer');
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -169,9 +171,13 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
   // Keep draft in sync when the active seed changes externally (e.g. settings reset).
   useEffect(() => { setSeedDraft(s.syncSeed ?? ''); }, [s.syncSeed]);
 
-  // 「最优打乱」只对同态项目(WCA_OPTIMAL_EVENTS)有意义,判据同 WcaSourceConfig。
+  // WCA 真题沿用各项目既有的同态最优能力；随机状态只接三阶云端最优表。
+  // 偏好本身不清空，切回可用来源/项目时自动恢复。
   const wev = wcaEventId(event);
   const hasOptimal = !!wev && WCA_OPTIMAL_EVENTS.has(wev);
+  const optimalAvailable = s.scrambleSource === 'wca'
+    ? hasOptimal
+    : canUseRandomOptimal333(event, s.scrambleSource, !!optimalUser, s.syncSeed);
   const supportsStageSplits = ['222', '333', '444', '555', '666', '777', '333oh', '333fm'].includes(event);
   const supportsColorNeutral = ['333', '333oh', '333fm', '333bld', '333ni', '333mbld'].includes(event);
 
@@ -919,14 +925,22 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           activeCategory={activeCategory}
           title={tr({ zh: '规则与朝向', en: 'Rules and orientation' })}
         >
-          {/* 2x2 的「最优」已挪到打乱条上的口径 picker(Scramble222ModePicker,随机状态与真题统一),
-              这里只保留其余同态项目(斜转/金字塔/3x3 族)。 */}
-          {hasOptimal && event !== '222' && (
+          {/* 2x2 的「最优」已挪到打乱条上的口径 picker(Scramble222ModePicker,随机状态与真题统一)。
+              其余项目保留同一行：当前来源不支持时置灰，切项目后布局不会跳。 */}
+          {event !== '222' && (
             <BooleanRow
               label={tr({ zh: '最优打乱', en: 'Optimal scramble' })}
-              value={s.wcaUseOptimal}
+              value={optimalAvailable ? s.wcaUseOptimal : false}
               onChange={(v) => updateSettings({ wcaUseOptimal: v })}
-            />
+              disabled={!optimalAvailable}
+            >
+              {s.scrambleSource === 'random' && event === '333' && !optimalUser && (
+                <span className="hint">{tr({ zh: '登录后可用', en: 'Sign in to use' })}</span>
+              )}
+              {s.scrambleSource === 'random' && event === '333' && !!optimalUser && !!s.syncSeed && (
+                <span className="hint">{tr({ zh: '同步种子开启时不可用', en: 'Unavailable with a sync seed' })}</span>
+              )}
+            </BooleanRow>
           )}
           {s.scrambleSource === 'wca' && (
             <BooleanRow

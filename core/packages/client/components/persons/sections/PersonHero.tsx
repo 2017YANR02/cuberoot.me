@@ -2,6 +2,7 @@
 // 头像居中,国旗在名字左侧,WCA ID 左缘与名字左缘对齐.
 
 import { Mars, Venus } from 'lucide-react';
+import { CompactSelect } from '@/components/CompactSelect';
 import { Flag } from '@/components/Flag';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { useT } from '@/hooks/useT';
@@ -13,8 +14,8 @@ interface Props {
   results: WcaResultRow[] | null;
   former?: WcaFormerIdentity[];
   isZh: boolean;
-  rankMode: 'current' | 'historical';
-  onRankModeChange: (mode: 'current' | 'historical') => void;
+  resultView: 'pr' | 'historical' | 'pb';
+  onResultViewChange: (view: 'pr' | 'historical' | 'pb') => void;
   inclCancelled: boolean;
   onInclCancelledChange: (value: boolean) => void;
 }
@@ -24,8 +25,8 @@ export default function PersonHero({
   results,
   former,
   isZh,
-  rankMode,
-  onRankModeChange,
+  resultView,
+  onResultViewChange,
   inclCancelled,
   onInclCancelledChange,
 }: Props) {
@@ -35,6 +36,12 @@ export default function PersonHero({
   const wcaUrl = `https://www.worldcubeassociation.org/persons/${p.wca_id}`;
   const avatarUrl = p.avatar?.thumb_url || p.avatar?.url;
   const t = useT();
+  const resultViewItems = [
+    { value: 'pr', label: 'PR' },
+    { value: 'historical', label: t('历史最佳排名', 'Historical Best') },
+    { value: 'pb', label: 'PB' },
+  ] as const;
+  const resultViewLabel = resultViewItems.find((item) => item.value === resultView)?.label ?? 'PR';
 
   const collections = [
     {
@@ -147,18 +154,13 @@ export default function PersonHero({
       </div>
 
       <div className="wp-hero-rank-controls">
-        <div className="wp-toggle-group">
-          <button
-            type="button"
-            className={`wp-toggle-btn ${rankMode === 'current' ? 'is-active' : ''}`}
-            onClick={() => onRankModeChange('current')}
-          >{t('当前', 'Current')}</button>
-          <button
-            type="button"
-            className={`wp-toggle-btn ${rankMode === 'historical' ? 'is-active' : ''}`}
-            onClick={() => onRankModeChange('historical')}
-          >{t('历史最佳排名', 'Historical Best')}</button>
-        </div>
+        <CompactSelect
+          value={resultView}
+          label={resultViewLabel}
+          items={resultViewItems}
+          onChange={onResultViewChange}
+          ariaLabel={t('成绩视图', 'Results view')}
+        />
         <PillToggle
           value={inclCancelled}
           onChange={onInclCancelledChange}

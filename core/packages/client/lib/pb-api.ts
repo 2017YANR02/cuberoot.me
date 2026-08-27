@@ -57,6 +57,13 @@ export async function fetchPbProfile(userId: number, signal?: AbortSignal): Prom
   return handleApi(await fetch(apiUrl(`/v1/pb/profile/${userId}`), { cache: 'no-store', signal }));
 }
 
+export async function fetchPbPerson(wcaId: string, signal?: AbortSignal): Promise<PbCollection> {
+  return handleApi(await fetch(apiUrl(`/v1/pb/person/${encodeURIComponent(wcaId)}`), {
+    cache: 'no-store',
+    signal,
+  }));
+}
+
 export async function fetchPbLeaderboard(
   eventId: string,
   recordType: PbRecordType,

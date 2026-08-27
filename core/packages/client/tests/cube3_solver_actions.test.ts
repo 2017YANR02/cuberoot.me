@@ -12,6 +12,10 @@ const photoSource = readFileSync(
   join(ROOT, 'app', '[lang]', 'scramble', 'solver', '_PhotoScanner.tsx'),
   'utf8',
 );
+const toolbarSource = readFileSync(
+  join(ROOT, 'app', '[lang]', 'scramble', 'solver', '_PaintToolbar.tsx'),
+  'utf8',
+);
 
 describe('3x3 solver input actions', () => {
   it('offers scramble and solve actions in every input mode', () => {
@@ -31,6 +35,8 @@ describe('3x3 solver input actions', () => {
     expect(solverSource).toContain("handleScrambleAction('scramble')");
     expect(solverSource).toContain("handleScrambleAction('solution')");
     expect(solverSource).toContain('{renderStateActions(reconState.facelet)}');
+    expect(solverSource).not.toContain('已同步到方块(预览第 1 条)');
+    expect(solverSource).not.toContain('synced to the cube (previewing #1)');
   });
 
   it('prompts signed-out cloud users with a return-to-page sign-in link', () => {
@@ -43,5 +49,23 @@ describe('3x3 solver input actions', () => {
     expect(solverSource).toContain('setCloudStatus(`${done}/${lines.length}`)');
     expect(solverSource).toContain('setCloudStatus(`${completed}/${lines.length} ${solveSecs}s`)');
     expect(solverSource).not.toContain('云端求解完成');
+  });
+
+  it('keeps cloud progress directly after the solve action', () => {
+    expect(solverSource).toContain('const cloudProgressInline = cloudMode && cloudStatus ? (');
+    expect(solverSource.match(/actionsTrailing=\{cloudProgressInline\}/g)).toHaveLength(2);
+    expect(solverSource).toContain("{t('求解法', 'Solve')}\n        </button>\n        {cloudProgressInline}");
+    expect(solverSource).toContain("{t('求解法', 'Solve')}\n                </button>\n                {cloudProgressInline}");
+    expect(toolbarSource).toContain('{actionsTrailing}');
+    expect(solverSource).not.toContain('(stateInfo || (cloudMode && cloudStatus))');
+  });
+
+  it('never rewrites the scramble input with a solver result', () => {
+    // URL hydration supplies the initial value; after that, only textarea input may change it.
+    expect(solverSource.match(/setScrambles\(/g)).toHaveLength(2);
+    expect(solverSource).toContain("setScrambles(scrParam.replace(");
+    expect(solverSource).toContain('onChange={(e) => setScrambles(e.target.value)}');
+    expect(solverSource).not.toContain('setScrambles(cleaned)');
+    expect(solverSource).not.toContain("setScrambles(optimalScrambleLinesRef.current.join('\\n'))");
   });
 });

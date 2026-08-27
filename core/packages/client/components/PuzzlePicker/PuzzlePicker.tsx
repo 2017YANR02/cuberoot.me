@@ -20,7 +20,7 @@
  * catalog 时传 groups;组件仍统一负责触发器、图标 + 名称、弹层、关闭/焦点与窄屏布局。
  */
 
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { ChevronDown, Boxes } from 'lucide-react';
 import AppLink from '../AppLink';
@@ -67,8 +67,8 @@ interface Props {
   groups?: readonly PuzzlePickerGroup[];
   /** 自定义 catalog 的收起态名称;省略时保持项目选择器原有名称。 */
   placeholderLabel?: string;
-  /** 自定义 catalog 的收起态图标;省略时使用通用项目图标。 */
-  triggerIcon?: ReactNode;
+  /** 是否显示收起态图标;纯文本触发器可关闭。 */
+  showTriggerIcon?: boolean;
   /** 是否显示每项的图标/文字徽标;纯文本 catalog 可关闭。 */
   showItemIcons?: boolean;
   /** 计时表面用:让整个弹层都跳过空格/指针计时手势。 */
@@ -80,7 +80,7 @@ const nameOf = (e: CstimerEvent, isZh: boolean): string => [e.en, e.zh][Number(i
 
 export default function PuzzlePicker({
   isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
-  groups: suppliedGroups, placeholderLabel, triggerIcon, showItemIcons = true, dataNoTimer,
+  groups: suppliedGroups, placeholderLabel, showTriggerIcon = true, showItemIcons = true, dataNoTimer,
 }: Props) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -213,11 +213,12 @@ export default function PuzzlePicker({
         aria-controls={open ? popupId : undefined}
         onClick={() => setOpen((o) => !o)}
       >
-        {selectedItem && showItemIcons
+        {showTriggerIcon && (selectedItem && showItemIcons
           ? iconFor(selectedItem, true)
-          : (triggerIcon ?? <Boxes size={15} className="pp-trigger-icon" />)}
-        {!selectedItem && <span className="pp-trigger-label">{triggerLabel}</span>}
-        {selectedItem && !showItemIcons && <span className="pp-trigger-label">{triggerLabel}</span>}
+          : <Boxes size={15} className="pp-trigger-icon" />)}
+        {(!selectedItem || !showItemIcons || !showTriggerIcon) && (
+          <span className="pp-trigger-label">{triggerLabel}</span>
+        )}
         <ChevronDown size={14} className="pp-trigger-chevron" />
       </button>
       {open && (

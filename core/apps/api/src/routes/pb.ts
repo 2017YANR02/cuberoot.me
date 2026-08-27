@@ -1,4 +1,5 @@
 import { Hono, type Context } from 'hono';
+import { isWcaIdFormat } from '@cuberoot/shared/account';
 import {
   isPbRecordKey,
   isValidPbResultValue,
@@ -128,6 +129,17 @@ async function accountForOwner(ownerKey: string): Promise<AccountRow | null> {
   return rows[0] ?? null;
 }
 
+async function currentRecordsForOwner(ownerKey: string): Promise<PbRow[]> {
+  return query<PbRow>(
+    `SELECT id, event_id, record_type, set_size, result_value, happened_on,
+            cube_name, comments, is_current, created_at, updated_at
+       FROM pb_records
+      WHERE owner_key = ? AND is_current = TRUE
+      ORDER BY event_id, record_type, set_size`,
+    [ownerKey],
+  );
+}
+
 pbRoutes.get('/pb/me', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
@@ -162,14 +174,18 @@ pbRoutes.get('/pb/profile/:userId', async (c) => {
   const account = accounts[0];
   if (!account || !account.is_public) return c.json({ error: 'profile not found' }, 404);
   const ownerKey = account.wca_id || `u${account.user_id}`;
-  const records = await query<PbRow>(
-    `SELECT id, event_id, record_type, set_size, result_value, happened_on,
-            cube_name, comments, is_current, created_at, updated_at
-       FROM pb_records
-      WHERE owner_key = ? AND is_current = TRUE
-      ORDER BY event_id, record_type, set_size`,
-    [ownerKey],
-  );
+  const records = await currentRecordsForOwner(ownerKey);
+  return c.json({ profile: toProfile(account), records: records.map(toRecord) });
+});
+
+pbRoutes.get('/pb/person/:wcaId', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c));
+  const wcaId = c.req.param('wcaId').toUpperCase();
+  if (!isWcaIdFormat(wcaId)) return c.json({ error: 'invalid WCA ID' }, 400);
+  const account = await accountForOwner(wcaId);
+  if (!account || !account.is_public) return c.json({ error: 'profile not found' }, 404);
+  const records = await currentRecordsForOwner(wcaId);
   return c.json({ profile: toProfile(account), records: records.map(toRecord) });
 });
 

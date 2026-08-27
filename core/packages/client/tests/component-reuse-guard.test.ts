@@ -134,13 +134,17 @@ describe('component reuse rule registry', () => {
     }
   });
 
-  it('keeps the shared selected-puzzle trigger icon-only and frameless', () => {
+  it('keeps the shared selected-puzzle trigger icon-only by default and frameless', () => {
     const source = readFileSync(join(ROOT, 'components', 'PuzzlePicker', 'PuzzlePicker.tsx'), 'utf8');
+    const siteSource = readFileSync(join(ROOT, 'app', '[lang]', 'site', 'page.tsx'), 'utf8');
     const css = readFileSync(join(ROOT, 'components', 'PuzzlePicker', 'puzzle_picker.css'), 'utf8');
     const triggerRule = css.match(/\.pp-trigger\s*\{([\s\S]*?)\}/)?.[1] ?? '';
     const activeRule = css.match(/\.pp-trigger--active\s*\{([\s\S]*?)\}/)?.[1] ?? '';
 
-    expect(source).toContain('{!selectedItem && <span className="pp-trigger-label">');
+    expect(source).toContain('showTriggerIcon = true');
+    expect(source).toContain('{showTriggerIcon && (selectedItem && showItemIcons');
+    expect(source).toContain('(!selectedItem || !showItemIcons || !showTriggerIcon)');
+    expect(siteSource.match(/showTriggerIcon=\{false\}/g)).toHaveLength(4);
     expect(source).not.toContain('iconOnlyTrigger');
     expect(triggerRule).toContain('border: 1px solid transparent');
     expect(triggerRule).toContain('background: transparent');

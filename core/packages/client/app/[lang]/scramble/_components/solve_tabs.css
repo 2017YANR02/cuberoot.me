@@ -1,8 +1,8 @@
-/* 统一「求解」中心两行(+3×3 子标签行)标签导航。下划线式,不加外框。 */
+/* 统一「求解」中心标签导航。项目选择器与 3×3 子标签同排,下划线式,不加外框。 */
 .solve-tabs {
   display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  align-items: stretch;
+  gap: 0.25rem;
   margin: 0 0 1.25rem;
 }
 .solve-tab-row {
@@ -32,15 +32,17 @@
 /* 项目行:单个 PuzzlePicker 下拉(WCA 组 + 非 WCA 家族组)。 */
 .solve-tab-evrow {
   display: flex;
+  flex: 0 0 auto;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem 0.6rem;
 }
 
-/* 3×3 子标签(最优解 / 阶段 / CFOP / DR)— 更小;带下分隔线分隔标签头与内容 */
+/* 3×3 子标签(最优解 / 分布 / 阶段 / CFOP / DR)— 更小;带下分隔线分隔标签头与内容 */
 .solve-tab-subs {
+  flex: 1 1 auto;
+  min-width: 0;
   gap: 0.1rem;
-  margin-top: 0.1rem;
   border-bottom: 1px solid var(--border-default);
 }
 .solve-tab-sub { font-size: 0.85rem; padding: 0.3rem 0.55rem; }
