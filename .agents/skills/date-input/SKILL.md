@@ -7,6 +7,7 @@ description: Use when adding or editing date-only inputs or date ranges in CubeR
 
 - Date-only values use valid `yyyy-mm-dd` strings without timezone conversion.
 - One date uses `components/DateInput`; a range uses `components/DateRangeInput`.
+- DateInput owns the bilingual calendar; do not call the browser native picker or add a page-local calendar.
 - Today uses `toLocalIsoDate()`; imported API values use `normalizeIsoDate()`.
 - Do not add raw `type="date"` or text inputs with a `yyyy-mm-dd` placeholder outside `DateInput`.
 - Keep `time` and `datetime-local` controls separate.

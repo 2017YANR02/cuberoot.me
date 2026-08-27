@@ -93,6 +93,135 @@
   z-index: 1;
 }
 
+.date-input__calendar {
+  /* anchored-panel: clamped (body portal + fixed viewport positioning in DateInput) */
+  position: fixed;
+  visibility: hidden;
+  z-index: 300;
+  width: min(292px, calc(100vw - 16px));
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--foreground) 22%, transparent);
+}
+
+.date-input__calendar-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.date-input__calendar-nav,
+.date-input__calendar-today,
+.date-input__calendar-day {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.date-input__calendar-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+}
+
+.date-input__calendar-nav:hover,
+.date-input__calendar-today:hover,
+.date-input__calendar-day:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.date-input__calendar-nav:focus-visible,
+.date-input__calendar-today:focus-visible,
+.date-input__calendar-day:focus-visible,
+.date-input__calendar-select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ring) 65%, transparent);
+  outline-offset: 1px;
+}
+
+.date-input__calendar-nav:disabled,
+.date-input__calendar-today:disabled,
+.date-input__calendar-day:disabled {
+  color: var(--faint-foreground);
+  cursor: not-allowed;
+}
+
+.date-input__calendar-select {
+  min-width: 0;
+  height: 30px;
+  padding: 3px 5px;
+  border: 1px solid var(--input);
+  border-radius: 7px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.date-input__calendar-select:nth-of-type(1) {
+  flex: 1 1 82px;
+}
+
+.date-input__calendar-select:nth-of-type(2) {
+  flex: 1 1 70px;
+}
+
+.date-input__calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.date-input__calendar-weekday {
+  padding-block: 5px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.date-input__calendar-day {
+  aspect-ratio: 1;
+  min-width: 0;
+  border-radius: 7px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.date-input__calendar-day.is-today {
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.date-input__calendar-day.is-selected {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 600;
+}
+
+.date-input__calendar-day.is-selected:hover {
+  background: color-mix(in srgb, var(--primary) 88%, var(--foreground));
+}
+
+.date-input__calendar-today {
+  margin-top: 8px;
+  padding: 6px 9px;
+  border-radius: 7px;
+  color: var(--accent);
+  font-size: 13px;
+}
+
 .date-range-input {
   display: inline-flex;
   align-items: flex-end;
