@@ -2332,7 +2332,7 @@ export default function PlayerControls({
             className="sim-player-count"
             aria-label={t(`解法步数:${algStm} STM`, `Solution length: ${algStm} STM`)}
           >
-            ({algStm} STM)
+            {algStm} STM
           </output>
         )}
         {puzzleKind === 'skewb' && skewbNotation && onSkewbNotationChange && (
