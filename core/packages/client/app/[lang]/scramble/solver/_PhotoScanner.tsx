@@ -9,11 +9,11 @@
  * 取景几何是**所见即所取**的:容器钉成正方形 + video/img 走 object-fit:cover,于是画面正中那块
  * 边长 min(源宽,源高)·BOX_RATIO 的正方形,恰好就是屏幕上白框圈住的那块 —— 取样直接按这个源区域裁。
  *
- * 认完不直接开求解:写回画板(调用方切到平面视图)让用户核一眼再求解 —— 拍歪一格就是另一个状态,
- * 静默求解只会给出一条对不上的解法。
+ * 默认先写回画板核对;调用方也可给识别结果附加明确的求解操作。拍歪一格就是另一个状态,
+ * 所以不会在识别完成时静默开算。
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Camera, Images, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useT } from '@/hooks/useT';
@@ -43,10 +43,12 @@ export interface PhotoScannerProps {
   spec: PaintSpec;
   /** 认出来的 facelet(未必物理合法)→ 写进画板。 */
   onApply: (facelet: string) => void;
+  /** 可选的结果操作;只在六面识别完成后渲染。 */
+  resultActions?: (facelet: string) => ReactNode;
   pixelSize: number;
 }
 
-export default function PhotoScanner({ spec, onApply, pixelSize }: PhotoScannerProps) {
+export default function PhotoScanner({ spec, onApply, resultActions, pixelSize }: PhotoScannerProps) {
   const t = useT();
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -302,6 +304,7 @@ export default function PhotoScanner({ spec, onApply, pixelSize }: PhotoScannerP
             </button>
             <button type="button" className="ps-btn" onClick={reset}>{t('全部重拍', 'Start over')}</button>
           </div>
+          {result && resultActions?.(result.facelet)}
         </div>
       )}
 
