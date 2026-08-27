@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw, Download, Image as ImageIcon, ImageOff, ChevronDown, Check } from 'lucide-react';
-import WcaEventSelector from '@/components/WcaEventSelector';
+import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import NumberCommitInput from '@/components/NumberCommitInput';
 import Scramble555ModePicker from '@/components/Scramble555ModePicker';
 import Scramble333ModePicker from '@/components/Scramble333ModePicker';
@@ -23,14 +23,16 @@ import { CSTIMER_NONWCA_APPEND, CSTIMER_EVENT_IDS, CSTIMER_EVENTS, cstimerScramb
 import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEvent, shapeModSourceEvent } from '@/lib/shape-mod-scramble';
 import type { RoundSheetInput } from './_tnoodle-pdf';
 import ProgressButton from './ProgressButton';
+import CopyAllScramblesButton from './CopyAllScramblesButton';
+import { scrambleEventPickerGroups } from './_event-picker';
 import ScrambleLines from './ScrambleLines';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { displaySq1ForEvent } from '@cuberoot/shared/sq1-notation';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
-// `onlyAvailable` 模式下 selector 用这个 set 过滤;含 WCA + twizzle 非 WCA + cstimer + shape-mod 四套。
-const TNOODLE_EVENT_SET = new Set<string>([...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS, ...CSTIMER_EVENT_IDS, ...SHAPE_MOD_EVENT_IDS]);
+// 配置菜单的完整项目顺序:WCA + twizzle 非 WCA + cstimer + shape-mod。
+const TNOODLE_EVENT_IDS = [...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS, ...CSTIMER_EVENT_IDS, ...SHAPE_MOD_EVENT_IDS];
 const APPEND_EVENTS = [...TWIZZLE_NONWCA_APPEND, ...CSTIMER_NONWCA_APPEND, ...SHAPE_MOD_APPEND];
 const CSTIMER_EVENT_ORDER: ReadonlyArray<string> = CSTIMER_EVENTS.map((e) => e.id);
 const SHAPE_MOD_EVENT_ORDER: ReadonlyArray<string> = SHAPE_MOD_EVENTS.map((e) => e.id);
@@ -122,6 +124,14 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
   );
   const eventsKey = eventsOrdered.join(',');
   const activeView = activeEventOf(viewedEvent, eventsOrdered);
+  const viewPickerGroups = useMemo(
+    () => scrambleEventPickerGroups(eventsOrdered, APPEND_EVENTS, isZh),
+    [eventsOrdered, isZh],
+  );
+  const configPickerGroups = useMemo(
+    () => scrambleEventPickerGroups([...TNOODLE_EVENT_IDS, ...customNxN], APPEND_EVENTS, isZh),
+    [customNxN, isZh],
+  );
 
   const toggleEvent = (id: string) => {
     setEvents((prev) => {
@@ -132,9 +142,6 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
     });
   };
 
-  // 「其他」展开态由 WcaEventSelector 回调;控制高阶 NxN 输入框的显隐。
-  // 已有 customNxN chip 时也保持显示(否则用户看不到已选的高阶项无法移除)。
-  const [otherExpanded, setOtherExpanded] = useState(false);
   const addHighNxN = (n: number) => {
     const id = `nxn${n}`;
     setEvents((prev) => {
@@ -285,6 +292,12 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
     () => Object.values(scramblesByEvent).reduce((sum, arr) => sum + arr.length, 0),
     [scramblesByEvent],
   );
+  // 复制范围是本批次的全部已选项目,不是当前切到屏幕上的单个项目。
+  // 每条打乱一行,不混入项目名/序号,便于直接粘进计时器或表格。
+  const allScramblesText = useMemo(
+    () => eventsOrdered.flatMap((ev) => scramblesByEvent[ev] ?? []).join('\n'),
+    [eventsOrdered, scramblesByEvent],
+  );
 
   const downloadPdf = async () => {
     if (totalScrambles === 0) return;
@@ -345,36 +358,69 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
 
   return (
     <>
-      <WcaEventSelector
-        availableEvents={TNOODLE_EVENT_SET}
-        selectedEvents={events}
-        onToggle={toggleEvent}
-        onRemove={toggleEvent}
-        appendEvents={APPEND_EVENTS}
-        collapsibleAppend
-        onExpandedChange={setOtherExpanded}
-        isZh={isZh}
-        onlyAvailable
-        searchable
-      />
-
-      {/* 配置条:高阶 NxN(随「其他」展开) + 5x5 打乱模式(选了 5x5 才显) */}
-      <div className="gen-tn-config-row">
-        {(otherExpanded || customNxN.length > 0) && (
-          <HighOrderNxNInput isZh={isZh} onAdd={addHighNxN}>
-            {customNxN.map((id) => (
+      <div className="gen-config-toolbar">
+        <PuzzlePicker
+          groups={configPickerGroups}
+          selectedEvents={events}
+          onToggle={toggleEvent}
+          isZh={isZh}
+          showTriggerIcon={false}
+        />
+        {subMode === 'batch' && (
+          <div className="gen-count-row">
+            <div ref={countComboRef} className="gen-count-combo">
+              <NumberCommitInput
+                min={1}
+                max={COUNT_MAX}
+                value={count}
+                onCommit={setCount}
+                className="gen-count-input gen-count-input--combo"
+                aria-label={t('每项打乱数', 'Scrambles per event')}
+              />
               <button
-                key={id}
                 type="button"
-                onClick={() => toggleEvent(id)}
-                className="gen-count-chip is-active"
-                title={t('点击移除', 'Click to remove')}
+                className="gen-count-combo-trigger"
+                onClick={() => setCountOpen((o) => !o)}
+                aria-label={t('打开预设', 'Open presets')}
+                aria-expanded={countOpen}
               >
-                {eventDisplayName(id, isZh)}
+                <ChevronDown size={14} />
               </button>
-            ))}
-          </HighOrderNxNInput>
+              {countOpen && (
+                <ul className="gen-count-combo-list" role="listbox">
+                  {COUNT_PRESETS.map((n) => (
+                    <li
+                      key={n}
+                      role="option"
+                      aria-selected={count === n}
+                      className={`gen-count-combo-option${count === n ? ' is-active' : ''}`}
+                      onClick={() => { setCount(n); setCountOpen(false); }}
+                    >
+                      {n}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         )}
+        <div className="gen-config-toolbar-scroll">
+
+      {/* 配置条:高阶 NxN + 5x5 打乱模式(选了 5x5 才显) */}
+      <div className="gen-tn-config-row">
+        <HighOrderNxNInput isZh={isZh} onAdd={addHighNxN}>
+          {customNxN.map((id) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => toggleEvent(id)}
+              className="gen-count-chip is-active"
+              title={t('点击移除', 'Click to remove')}
+            >
+              {eventDisplayName(id, isZh)}
+            </button>
+          ))}
+        </HighOrderNxNInput>
         <Scramble555ModePicker active555={events.has('555')} isZh={isZh} />
         <Scramble333ModePicker active333={events.has('333')} isZh={isZh} />
         <Scramble222ModePicker active222={events.has('222')} />
@@ -392,47 +438,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
         )}
       </div>
 
-      <div className="gen-tn-controls" style={{ marginTop: '8px' }}>
-        <div className="gen-control-group gen-control-actions">
-          {subMode === 'batch' ? (
-            <div className="gen-count-row">
-              <div ref={countComboRef} className="gen-count-combo">
-                <NumberCommitInput
-                  min={1}
-                  max={COUNT_MAX}
-                  value={count}
-                  onCommit={setCount}
-                  className="gen-count-input gen-count-input--combo"
-                  aria-label={t('每项打乱数', 'Scrambles per event')}
-                />
-                <button
-                  type="button"
-                  className="gen-count-combo-trigger"
-                  onClick={() => setCountOpen((o) => !o)}
-                  aria-label={t('打开预设', 'Open presets')}
-                  aria-expanded={countOpen}
-                >
-                  <ChevronDown size={14} />
-                </button>
-                {countOpen && (
-                  <ul className="gen-count-combo-list" role="listbox">
-                    {COUNT_PRESETS.map((n) => (
-                      <li
-                        key={n}
-                        role="option"
-                        aria-selected={count === n}
-                        className={`gen-count-combo-option${count === n ? ' is-active' : ''}`}
-                        onClick={() => { setCount(n); setCountOpen(false); }}
-                      >
-                        {n}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          ) : null /* paste 模式的提示语已合并到 textarea placeholder */}
-        </div>
+      <div className="gen-tn-controls">
         <div className="gen-control-group gen-control-actions">
           {subMode === 'batch' && (
             <ProgressButton
@@ -457,6 +463,9 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
           >
             {showPreview ? <ImageIcon size={14} /> : <ImageOff size={14} />}
           </button>
+          {subMode === 'batch' && totalScrambles > 0 && (
+            <CopyAllScramblesButton text={allScramblesText} t={t} />
+          )}
           {totalScrambles > 0 && (
             <ProgressButton
               icon={<Download size={14} className={pdfBuilding ? 'gen-spin' : ''} />}
@@ -471,17 +480,19 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
           )}
         </div>
       </div>
+        </div>
+      </div>
 
       {/* 多项目时,view-selector 同比赛模式 — 切换当前展示哪个 sheet/paste 块 */}
       {eventsOrdered.length >= 2 && activeView && (
-        <WcaEventSelector
-          availableEvents={new Set(eventsOrdered)}
-          selectedEvent={activeView}
-          onSelect={setViewedEvent}
-          appendEvents={APPEND_EVENTS}
-          onlyAvailable
-          isZh={isZh}
-        />
+        <div className="gen-view-picker">
+          <PuzzlePicker
+            groups={viewPickerGroups}
+            selectedEvent={activeView}
+            onSelect={setViewedEvent}
+            isZh={isZh}
+          />
+        </div>
       )}
 
       {/* text 模式:每个选中项目一块输入区(只渲染 activeView 那块) */}
