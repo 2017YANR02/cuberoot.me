@@ -45,7 +45,8 @@ export type NotificationKind =
   | 'document_change'
   | 'quiz_report' | 'quiz_hidden'
   | 'cal_reminder' | 'cal_invite' | 'cal_rsvp'
-  | 'teaching_message';
+  | 'teaching_message'
+  | 'friend_request' | 'friend_accepted';
 
 /** 邮件语言。站点只有 en / zh-Hans 两种。 */
 export type MailLang = 'zh' | 'en';
@@ -89,6 +90,8 @@ const KIND_TEXT: Record<NotificationKind, Record<MailLang, string>> = {
   cal_invite: { zh: '邀请你参加日程', en: 'invited you to an event' },
   cal_rsvp: { zh: '回应了你的日程邀请', en: 'responded to your invitation' },
   teaching_message: { zh: '发送了教学消息', en: 'sent a teaching message' },
+  friend_request: { zh: '申请添加你为好友', en: 'sent you a friend request' },
+  friend_accepted: { zh: '接受了你的好友申请', en: 'accepted your friend request' },
 };
 
 /** 邮件里的固定文案。 */

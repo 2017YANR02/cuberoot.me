@@ -43,6 +43,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'membership', zh: '会员', en: 'Membership' },
   { key: 'feedback', zh: '反馈', en: 'Feedback' },
   { key: 'notification', zh: '通知', en: 'Notifications' },
+  { key: 'friend', zh: '好友', en: 'Friends' },
   { key: 'forum', zh: '论坛', en: 'Forum' },
   { key: 'documents', zh: '协作文档与表格', en: 'Collaborative docs & sheets' },
   { key: 'quiz', zh: '知识问答', en: 'Quiz' },
@@ -62,7 +63,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps article auth battle_rooms calendar cn_comp_names colpi
-//   comp_follows cube cubeopt_solve cubing_live documents feedback forum health historical_ranks pb
+//   comp_follows cube cubeopt_solve cubing_live documents feedback forum friends health historical_ranks pb
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
@@ -589,6 +590,16 @@ const ENDPOINTS: Ep[] = [
   { d: 'notification', m: 'PUT', p: '/v1/notifications/prefs', g: 'login', zh: '开 / 关邮件通知', en: 'Toggle email notifications' },
   { d: 'notification', m: 'GET', p: '/v1/notifications/unsubscribe', g: 'public', zh: '邮件退订(签名令牌,免登录,回确认页)', en: 'Unsubscribe via signed token (no login, HTML page)' },
   { d: 'notification', m: 'POST', p: '/v1/notifications/unsubscribe', g: 'public', zh: '一键退订(RFC 8058,邮件客户端调)', en: 'One-click unsubscribe (RFC 8058)' },
+
+  // ---- friend ----
+  { d: 'friend', m: 'GET', p: '/v1/friends', g: 'login', c: 'no-store', zh: '好友、收到 / 发出的申请与黑名单总览', en: 'Friends, incoming/outgoing requests, and blocked-user overview' },
+  { d: 'friend', m: 'GET', p: '/v1/friends/search', g: 'login', c: 'no-store', zh: '按用户名、CubeRoot ID 或 WCA ID 搜索可见账号', en: 'Search visible accounts by username, CubeRoot ID, or WCA ID' },
+  { d: 'friend', m: 'POST', p: '/v1/friends/requests', g: 'login', c: 'no-store', zh: '发送好友申请；遇到对方已有申请时直接接受', en: 'Send a friend request; accept automatically when the other user already requested' },
+  { d: 'friend', m: 'POST', p: '/v1/friends/requests/:userId/accept', g: 'login', c: 'no-store', zh: '接受收到的好友申请', en: 'Accept an incoming friend request' },
+  { d: 'friend', m: 'DELETE', p: '/v1/friends/requests/:userId', g: 'login', c: 'no-store', zh: '拒绝收到的申请或撤回已发申请', en: 'Decline an incoming request or cancel an outgoing one' },
+  { d: 'friend', m: 'DELETE', p: '/v1/friends/:userId', g: 'login', c: 'no-store', zh: '删除好友', en: 'Remove a friend' },
+  { d: 'friend', m: 'POST', p: '/v1/friends/blocks', g: 'login', c: 'no-store', zh: '拉黑用户并清理双方好友 / 申请关系', en: 'Block a user and clear friendship/request state for the pair' },
+  { d: 'friend', m: 'DELETE', p: '/v1/friends/blocks/:userId', g: 'login', c: 'no-store', zh: '解除拉黑', en: 'Unblock a user' },
 
   // ---- forum ----
   { d: 'forum', m: 'GET', p: '/v1/forum/index', g: 'public', zh: '论坛首页:分类 → 子版 + 全站统计', en: 'Forum index: categories, boards, site stats' },

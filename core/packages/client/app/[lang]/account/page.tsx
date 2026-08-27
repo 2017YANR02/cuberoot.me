@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { Bell, BookOpen, Building2, ChevronLeft, ChevronRight, HeartHandshake, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, Upload, UserRound } from 'lucide-react';
+import { Bell, BookOpen, Building2, ChevronLeft, ChevronRight, HeartHandshake, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, Upload, UserRound, Users } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
@@ -360,6 +360,12 @@ export default function AccountPage() {
       icon: <HeartHandshake size={22} className="account-card-icon" />,
       title: tr({ zh: '会员', en: 'Membership' }),
       desc: tr({ zh: '查看会员方案和当前权益', en: 'View plans and your current benefits' }),
+    },
+    {
+      key: 'friends',
+      href: '/friends',
+      icon: <Users size={22} className="account-card-icon" />,
+      title: tr({ zh: '好友', en: 'Friends' }),
     },
     {
       key: 'notifications',

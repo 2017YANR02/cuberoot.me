@@ -9,7 +9,8 @@ export type NotificationKind =
   | 'comp_reg'
   | 'document_change'
   | 'cal_reminder' | 'cal_invite' | 'cal_rsvp'
-  | 'teaching_message';
+  | 'teaching_message'
+  | 'friend_request' | 'friend_accepted';
 
 export interface SiteNotification {
   id: number;

@@ -436,6 +436,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'nemesizer': { title: { zh: '宿敌', en: 'Nemesizer' } },
   'nemesizer-about': { title: { zh: 'Nemesizer 说明', en: 'Nemesizer Guide' } },
   'notifications': { title: { zh: '消息', en: 'Notifications' } },
+  'friends': {
+    title: { zh: '好友', en: 'Friends' },
+    description: {
+      zh: '在 CubeRoot 添加好友、处理好友申请，并管理黑名单。',
+      en: 'Add friends, handle friend requests, and manage blocked users on CubeRoot.',
+    },
+  },
   'paint': {
     title: { zh: '魔方图示绘制', en: 'Cube Diagram Editor' },
     description: {
