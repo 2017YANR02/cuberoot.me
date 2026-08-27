@@ -378,6 +378,8 @@ export async function requestBluetoothDevice(
 
 export interface BluetoothCubeHandle {
   status: BluetoothCubeStatus;
+  /** Advertisement count/timing from the current connection's MAC scan. */
+  advertisementDiagnostic: BluetoothAdvertisementDiagnostic | null;
   /** Most recent move (face notation). null until first move arrives. */
   lastMove: string | null;
   /** Current solved state (true = solved). */
@@ -430,6 +432,15 @@ export interface BluetoothCubeHandle {
   clearHijack(): void;
   /** True while a hijack is in effect. */
   hijacked: boolean;
+}
+
+export interface BluetoothAdvertisementDiagnostic {
+  /** 1-based received event number; 0 while waiting for the first event. */
+  eventNumber: number;
+  /** Milliseconds from starting the listener to the most recent event. */
+  elapsedMs: number;
+  /** Whether that event supplied the complete manufacturer data needed for MAC recovery. */
+  complete: boolean;
 }
 
 interface UseBluetoothCubeOpts {
@@ -501,6 +512,7 @@ function prettyDeviceName(device: BluetoothDevice): string {
 
 export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCubeHandle {
   const [status, setStatus] = useState<BluetoothCubeStatus>(INITIAL_STATUS);
+  const [advertisementDiagnostic, setAdvertisementDiagnostic] = useState<BluetoothAdvertisementDiagnostic | null>(null);
   const [lastMove, setLastMove] = useState<string | null>(null);
   const [solved, setSolved] = useState<boolean>(true);
   /**
@@ -1146,9 +1158,17 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       : null;
     const shouldWatchMac = nameDriver === null
       || (nameDriver.needsMac === true && reusableMac === null);
+    setAdvertisementDiagnostic(shouldWatchMac
+      ? { eventNumber: 0, elapsedMs: 0, complete: false }
+      : null);
     const advMac = shouldWatchMac
-      ? await watchAdvertisementsMac(device)
-        .catch((err: unknown) => { throw atStage('advertisement', err); })
+      ? await watchAdvertisementsMac(device, {
+          onAdvertisement: (observation) => {
+            if (connectionGenerationRef.current === generation) {
+              setAdvertisementDiagnostic(observation);
+            }
+          },
+        }).catch((err: unknown) => { throw atStage('advertisement', err); })
       : null;
     if (connectionGenerationRef.current !== generation) return;
     await attachToDevice(device, advMac, generation);
@@ -1304,6 +1324,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
 
   return {
     status,
+    advertisementDiagnostic,
     lastMove,
     solved,
     facelets,
