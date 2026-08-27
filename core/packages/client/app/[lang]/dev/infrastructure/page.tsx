@@ -72,6 +72,37 @@ const PUBLIC_SPECS = [
   { label: { zh: '网络上限', en: 'Network ceiling' }, value: { zh: '200 Mbps', en: '200 Mbps' } },
 ] as const;
 
+const EXPENSES = [
+  {
+    name: { zh: '阿里云服务器', en: 'Alibaba Cloud server' },
+    amount: { zh: '¥300/月', en: 'CN¥300/month' },
+    purpose: { zh: '主站、API 与数据服务', en: 'Primary web, API, and data services' },
+  },
+  {
+    name: { zh: 'Codex Pro', en: 'Codex Pro' },
+    amount: { zh: 'US$200/月', en: 'US$200/month' },
+    purpose: { zh: 'AI 开发工具', en: 'AI development tooling' },
+  },
+  {
+    name: { zh: 'Apple 开发者计划', en: 'Apple Developer Program' },
+    amount: { zh: '¥688/年', en: 'CN¥688/year' },
+    purpose: { zh: 'iOS App 签名与发布', en: 'iOS app signing and distribution' },
+  },
+  {
+    name: { zh: 'Vercel Pro', en: 'Vercel Pro' },
+    amount: { zh: 'US$20/月', en: 'US$20/month' },
+    purpose: { zh: 'Web 构建与托管', en: 'Web builds and hosting' },
+  },
+  {
+    name: { zh: '微信开放平台认证', en: 'WeChat Open Platform verification' },
+    amount: { zh: '¥300/年', en: 'CN¥300/year' },
+    purpose: {
+      zh: '维持网站应用的微信扫码登录与电脑端直发微信能力',
+      en: 'Maintains WeChat QR sign-in and direct desktop sharing for the Website App',
+    },
+  },
+] as const;
+
 const OPERATIONS = [
   {
     zh: {
@@ -188,9 +219,45 @@ export default function InfrastructurePage() {
           </p>
         </section>
 
-        <section className="infra-section" aria-labelledby="infra-path-title">
+        <section className="infra-section" aria-labelledby="infra-expenses-title">
           <div className="infra-section-heading">
             <span>02</span>
+            <div>
+              <h2 id="infra-expenses-title">{localize(lang, { zh: '固定支出', en: 'Recurring expenses' })}</h2>
+              <p>
+                {localize(lang, {
+                  zh: '当前已知的服务器、开发工具、应用发布与平台认证费用。',
+                  en: 'Known recurring costs for servers, development tooling, app distribution, and platform verification.',
+                })}
+              </p>
+            </div>
+          </div>
+          <dl className="infra-expenses">
+            {EXPENSES.map((expense) => (
+              <div key={expense.name.en}>
+                <dt>
+                  <span>{localize(lang, expense.name)}</span>
+                  <small>{localize(lang, expense.purpose)}</small>
+                </dt>
+                <dd>{localize(lang, expense.amount)}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="infra-expense-total">
+            <span>{localize(lang, { zh: '年度固定支出', en: 'Annual recurring total' })}</span>
+            <strong>¥4,588 + US$2,640</strong>
+          </div>
+          <p className="infra-expense-note">
+            {localize(lang, {
+              zh: '两种币种分别汇总，不按浮动汇率换算；不含用量计费、税费与一次性支出。',
+              en: 'Currencies are totaled separately without a floating exchange-rate conversion. Usage charges, taxes, and one-time costs are excluded.',
+            })}
+          </p>
+        </section>
+
+        <section className="infra-section" aria-labelledby="infra-path-title">
+          <div className="infra-section-heading">
+            <span>03</span>
             <div>
               <h2 id="infra-path-title">{localize(lang, { zh: '一次请求经过哪里', en: 'The request path' })}</h2>
               <p>
@@ -219,7 +286,7 @@ export default function InfrastructurePage() {
 
         <section className="infra-section" aria-labelledby="infra-ops-title">
           <div className="infra-section-heading">
-            <span>03</span>
+            <span>04</span>
             <div>
               <h2 id="infra-ops-title">{localize(lang, { zh: '怎样保持可恢复', en: 'How recovery works' })}</h2>
               <p>
@@ -248,7 +315,7 @@ export default function InfrastructurePage() {
 
         <section className="infra-section infra-disclosure" aria-labelledby="infra-disclosure-title">
           <div className="infra-section-heading">
-            <span>04</span>
+            <span>05</span>
             <div>
               <h2 id="infra-disclosure-title">{localize(lang, { zh: '公开边界', en: 'Disclosure boundary' })}</h2>
               <p>
