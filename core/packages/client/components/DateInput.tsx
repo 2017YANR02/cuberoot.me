@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type InputHTMLAttributes } from 'react';
+import { useRef, useState, type InputHTMLAttributes } from 'react';
 import { Calendar } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import { ClearButton } from '@/components/ClearButton';
@@ -31,8 +31,10 @@ export function DateInput({
   clearAriaLabel,
   disabled,
   readOnly,
+  onClick,
   ...inputProps
 }: DateInputProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const controlled = value !== undefined;
   const [internalValue, setInternalValue] = useState(defaultValue);
   const currentValue = controlled ? value : internalValue;
@@ -61,12 +63,18 @@ export function DateInput({
       </span>
       <input
         {...inputProps}
+        ref={inputRef}
         className="date-input__native"
         type="date"
         value={currentValue}
         disabled={disabled}
         readOnly={readOnly}
         onChange={(event) => setValue(event.target.value)}
+        onClick={(event) => {
+          onClick?.(event);
+          if (event.defaultPrevented || disabled || readOnly) return;
+          try { inputRef.current?.showPicker?.(); } catch { /* browser owns picker availability */ }
+        }}
       />
       {canClear && (
         <ClearButton
