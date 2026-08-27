@@ -121,6 +121,12 @@
   font-size: 0.86rem;
 }
 
+.wca-teacher-dialog-status {
+  margin: 0 0 12px;
+  color: var(--muted-foreground);
+  font-size: 0.86rem;
+}
+
 .wca-teacher-dialog .wca-stats-event-selector {
   margin-bottom: 14px;
 }

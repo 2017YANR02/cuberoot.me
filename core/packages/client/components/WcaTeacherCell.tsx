@@ -18,6 +18,8 @@ import {
 } from '@/lib/wca-teachers-api';
 import { eventDisplayName } from '@/lib/wca-events';
 import { tr } from '@/i18n/tr';
+import { ALL_EVENT_IDS } from '@/lib/event-constants';
+import { fetchWcaPerson } from '@/lib/wca-person-api';
 import './wca-teacher-cell.css';
 
 const LOOKUP_CHUNK_SIZE = 100;
@@ -48,6 +50,15 @@ export interface WcaTeacherDirectory {
   canSelfAssign: boolean;
   save: (studentWcaId: string, eventId: string, teacherWcaId?: string) => Promise<void>;
   remove: (studentWcaId: string, eventId: string) => Promise<void>;
+}
+
+export function canAddWcaTeacherStudent(
+  teacherWcaId: string,
+  directory: Pick<WcaTeacherDirectory, 'ready' | 'loadFailed' | 'userWcaId' | 'isAdmin' | 'canSelfAssign'>,
+): boolean {
+  return directory.ready
+    && !directory.loadFailed
+    && (directory.isAdmin || (directory.canSelfAssign && directory.userWcaId === teacherWcaId));
 }
 
 export function useWcaTeachers(studentWcaIds: string[], eventIds: string[]): WcaTeacherDirectory {
@@ -158,6 +169,148 @@ export function WcaTeacherNote() {
         en: 'Teachers are registered separately for each event. Active members can add themselves; admins can edit on their behalf.',
       })}
     </p>
+  );
+}
+
+export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
+  teacherWcaId: string;
+  directory: WcaTeacherDirectory;
+  isZh: boolean;
+  onSaved: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<WcaPersonLite | null>(null);
+  const [availableEventIds, setAvailableEventIds] = useState<string[]>([]);
+  const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(() => new Set());
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const canAdd = canAddWcaTeacherStudent(teacherWcaId, directory);
+  const availableEventSet = useMemo(() => new Set(availableEventIds), [availableEventIds]);
+  const titleId = `add-student-title-${teacherWcaId}`;
+
+  useEffect(() => {
+    let cancelled = false;
+    setAvailableEventIds([]);
+    setSelectedEventIds(new Set());
+    setError('');
+    if (!selectedStudent) {
+      setLoadingEvents(false);
+      return;
+    }
+    if (selectedStudent.id === teacherWcaId) {
+      setLoadingEvents(false);
+      setError(tr({ zh: '不能把老师本人添加为学生', en: 'A teacher cannot be added as their own student' }));
+      return;
+    }
+    setLoadingEvents(true);
+    fetchWcaPerson(selectedStudent.id)
+      .then((profile) => {
+        if (cancelled) return;
+        const personalRecordEvents = new Set(Object.keys(profile.personal_records));
+        setAvailableEventIds(ALL_EVENT_IDS.filter((eventId) => personalRecordEvents.has(eventId)));
+      })
+      .catch(() => {
+        if (!cancelled) setError(tr({ zh: '无法读取该选手的项目，请稍后重试', en: 'Could not load this cuber\'s events. Please try again.' }));
+      })
+      .finally(() => { if (!cancelled) setLoadingEvents(false); });
+    return () => { cancelled = true; };
+  }, [selectedStudent, teacherWcaId]);
+
+  if (!canAdd) return null;
+
+  const close = () => {
+    setEditing(false);
+    setSelectedStudent(null);
+    setAvailableEventIds([]);
+    setSelectedEventIds(new Set());
+    setError('');
+  };
+  const toggleEvent = (eventId: string) => {
+    setSelectedEventIds((current) => {
+      const next = new Set(current);
+      if (next.has(eventId)) next.delete(eventId);
+      else next.add(eventId);
+      return next;
+    });
+  };
+  const save = async () => {
+    if (!selectedStudent || selectedEventIds.size === 0 || saving) return;
+    setSaving(true);
+    setError('');
+    try {
+      const teacherId = directory.isAdmin ? teacherWcaId : undefined;
+      await Promise.all([...selectedEventIds].map((eventId) => (
+        directory.save(selectedStudent.id, eventId, teacherId)
+      )));
+      onSaved();
+      close();
+    } catch (caught) {
+      setError(teacherErrorMessage(caught));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <button type="button" className="wca-teacher-action" onClick={() => setEditing(true)}>
+        {tr({ zh: '添加学生', en: 'Add student' })}
+      </button>
+      {editing && typeof document !== 'undefined' && createPortal(
+        <div className="wca-teacher-dialog-layer">
+          <dialog
+            className="wca-teacher-dialog"
+            open
+            aria-modal="true"
+            aria-labelledby={titleId}
+            onKeyDown={(event) => { if (event.key === 'Escape' && !saving) close(); }}
+          >
+            <div className="wca-teacher-dialog-heading">
+              <h2 id={titleId}>{tr({ zh: '添加学生', en: 'Add student' })}</h2>
+              <WcaPersonPicker
+                value={selectedStudent}
+                onChange={setSelectedStudent}
+                isZh={isZh}
+                placeholder={tr({ zh: '姓名或 WCA ID', en: 'Name or WCA ID' })}
+              />
+            </div>
+            {selectedStudent && loadingEvents && (
+              <p className="wca-teacher-dialog-status">{tr({ zh: '正在读取项目…', en: 'Loading events…' })}</p>
+            )}
+            {selectedStudent && !loadingEvents && availableEventIds.length > 0 && (
+              <WcaEventSelector
+                availableEvents={availableEventSet}
+                selectedEvents={selectedEventIds}
+                onToggle={toggleEvent}
+                isZh={isZh}
+                onlyAvailable
+              />
+            )}
+            {selectedStudent && !loadingEvents && availableEventIds.length === 0 && !error && (
+              <p className="wca-teacher-dialog-status">
+                {tr({ zh: '该选手暂无可登记项目', en: 'This cuber has no eligible events' })}
+              </p>
+            )}
+            {error && <p className="wca-teacher-dialog-error" role="alert">{error}</p>}
+            <div className="wca-teacher-dialog-actions">
+              <button
+                type="button"
+                className="wca-teacher-dialog-action wca-teacher-dialog-primary"
+                disabled={!selectedStudent || selectedEventIds.size === 0 || loadingEvents || saving}
+                onClick={() => void save()}
+              >
+                {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存', en: 'Save' })}
+              </button>
+              <button type="button" className="wca-teacher-dialog-action wca-teacher-dialog-cancel" disabled={saving} onClick={close}>
+                {tr({ zh: '取消', en: 'Cancel' })}
+              </button>
+            </div>
+          </dialog>
+        </div>,
+        document.body,
+      )}
+    </>
   );
 }
 
