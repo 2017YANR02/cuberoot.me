@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ChevronLeft, MessageSquare, Reply, GitBranch, LogIn, Check, MessagesSquare, Flag,
   Hourglass, CircleCheck, CircleX, Plane, BellRing, CalendarPlus, CalendarCheck,
-  FilePenLine,
+  FilePenLine, UserPlus, UserCheck,
 } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
@@ -40,6 +40,8 @@ const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
   cal_invite: CalendarPlus,
   cal_rsvp: CalendarCheck,
   teaching_message: MessagesSquare,
+  friend_request: UserPlus,
+  friend_accepted: UserCheck,
 };
 
 /** TIMESTAMPTZ → 本地 `yyyy-mm-dd hh:mm`。 */
@@ -78,6 +80,8 @@ export default function NotificationsPage() {
     cal_invite: t('邀请你参加日程', 'invited you to an event'),
     cal_rsvp: t('回应了你的日程邀请', 'responded to your invitation'),
     teaching_message: t('发送了教学消息', 'sent a teaching message'),
+    friend_request: t('申请添加你为好友', 'sent you a friend request'),
+    friend_accepted: t('接受了你的好友申请', 'accepted your friend request'),
   }[k]);
 
   const load = useCallback(() => {
@@ -124,8 +128,8 @@ export default function NotificationsPage() {
       {!user ? (
         <div className="ntf-login">
           <p className="ntf-login-hint">
-            {t('登录后即可看到别人对你的复盘评论、另解,以及论坛主题的回复。',
-              'Sign in to see comments, alternative solutions and forum replies addressed to you.')}
+            {t('登录后即可看到好友申请、复盘互动和论坛回复。',
+              'Sign in to see friend requests, reconstruction activity, and forum replies.')}
           </p>
           <button type="button" className="ntf-login-btn" onClick={login}>
             <LogIn size={15} /> {t('登录', 'Sign in')}
