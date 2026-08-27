@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
+import { DateInput } from '@/components/DateInput';
 import { useT } from '@/hooks/useT';
 import { apiUrl } from '@/lib/api-base';
 import { useAuthUser } from '@/lib/auth-store';
@@ -386,6 +387,13 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction }: {
                 </select>
               ) : item.kind === 'textarea' || item.kind === 'lines' || item.kind === 'json' ? (
                 <textarea className="platform-field-control platform-field-textarea" value={String(value)} rows={item.rows ?? 4} required={item.required} onChange={(event) => setValues((current) => ({ ...current, [item.key]: event.target.value }))} />
+              ) : item.kind === 'date' ? (
+                <DateInput
+                  value={String(value)}
+                  required={item.required}
+                  aria-label={label}
+                  onChange={(nextValue) => setValues((current) => ({ ...current, [item.key]: nextValue }))}
+                />
               ) : (
                 <input
                   className="platform-field-control"

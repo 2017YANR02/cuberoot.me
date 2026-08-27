@@ -598,7 +598,6 @@ html:root[data-theme=dark]:has(.cal-page) {
 
 .cal-textarea { resize: vertical; }
 
-.cal-date,
 .cal-time,
 .cal-num {
   padding: 6px 8px;
@@ -612,13 +611,11 @@ html:root[data-theme=dark]:has(.cal-page) {
 
 .cal-text-input:hover,
 .cal-textarea:hover,
-.cal-date:hover,
 .cal-time:hover,
 .cal-num:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); }
 
 .cal-text-input:focus,
 .cal-textarea:focus,
-.cal-date:focus,
 .cal-time:focus,
 .cal-num:focus {
   outline: none;
@@ -627,19 +624,18 @@ html:root[data-theme=dark]:has(.cal-page) {
 }
 
 /* 原生日期 / 时间控件的小图标在暗色下是黑的,得反过来 */
-.cal-date::-webkit-calendar-picker-indicator,
 .cal-time::-webkit-calendar-picker-indicator {
   cursor: pointer;
   opacity: 0.55;
   filter: invert(var(--cal-picker-invert, 0));
 }
 
-.cal-date:hover::-webkit-calendar-picker-indicator,
 .cal-time:hover::-webkit-calendar-picker-indicator { opacity: 1; }
 
 .cal-num { width: 68px; }
 
 .cal-time-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cal-date-field { flex: 0 1 148px; width: 148px; max-width: 100%; }
 .cal-time-dash { color: var(--muted-foreground); }
 .cal-time-opts { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
@@ -1231,5 +1227,5 @@ html:root[data-theme=dark]:has(.cal-page) {
   .cal-modal-body { padding: 4px 12px 12px; }
   .cal-time-row { gap: 4px; }
   /* 时间那行在窄屏上必须能换行,不然日期 + 时间 + 破折号 + 日期一定溢出 */
-  .cal-date, .cal-time { flex: 0 1 auto; }
+  .cal-date-field, .cal-time { flex: 0 1 auto; }
 }

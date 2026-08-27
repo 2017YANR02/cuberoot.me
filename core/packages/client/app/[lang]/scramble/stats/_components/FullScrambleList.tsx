@@ -10,9 +10,8 @@ import Link from '@/components/AppLink';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
-import { ClearButton } from '@/components/ClearButton';
+import { DateRangeInput } from '@/components/DateRangeInput';
 import { SearchInput } from '@/components/SearchInput';
-import { Calendar } from 'lucide-react';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compFlagIso2, compNamesByZhSubstring, loadFlagData } from '@/lib/country-flags';
@@ -38,50 +37,15 @@ function bottomColor(cols: number[], subsetKey: string): ColorLetter | null {
   return best;
 }
 
-// ISO 日期字段:始终以 yyyy-mm-dd 文案显示(跟列表里的比赛日期一致),点开仍是原生日历。
-// 原生 <input type=date> 的显示格式跟浏览器/系统区域走、不认 lang 属性,所以把它透明铺在上层
-// 只借用日历(showPicker),底下盖一层我们自己的 ISO 文字。
-function IsoDateField({ value, onChange, min, max, ariaLabel, placeholder }: {
-  value: string;
-  onChange: (v: string) => void;
-  min?: string;
-  max?: string;
-  ariaLabel: string;
-  placeholder: string;
-}) {
-  const ref = useRef<HTMLInputElement>(null);
-  return (
-    <span className="scramble-stats-isodate">
-      <span className={`scramble-stats-isodate-text${value ? '' : ' is-placeholder'}`}>
-        <Calendar size={12} aria-hidden="true" />
-        {value || placeholder}
-      </span>
-      <input
-        ref={ref}
-        type="date"
-        className="scramble-stats-isodate-native"
-        value={value}
-        min={min}
-        max={max}
-        aria-label={ariaLabel}
-        onChange={(e) => onChange(e.target.value)}
-        onClick={() => { try { ref.current?.showPicker?.(); } catch { /* ignore */ } }}
-      />
-    </span>
-  );
-}
-
 // 筛选栏(搜索比赛名 + 日期范围 + 查看全部/收起)。与下方 FullScrambleList 共享同一组 nuqs
 // URL 键(fq/ffrom/fto),因此可渲染进示例面板标题行、跟国家筛选并成一行,列表在下方读同一状态。
-export function FullScrambleFilterBar({ expanded, onExpandedChange, isZh }: {
+export function FullScrambleFilterBar({ expanded, onExpandedChange }: {
   expanded: boolean;
   onExpandedChange: (v: boolean) => void;
-  isZh: boolean;
 }) {
   const [q, setQ] = useQueryState('fq', parseAsString.withDefault(''));
   const [from, setFrom] = useQueryState('ffrom', parseAsString.withDefault(''));
   const [to, setTo] = useQueryState('fto', parseAsString.withDefault(''));
-  const hasDate = !!(from || to);
   // 收起态下一搜索 / 选日期就自动展开(静态预览没法按筛选过滤)。
   useEffect(() => {
     if (!expanded && (q || from || to)) onExpandedChange(true);
@@ -98,32 +62,15 @@ export function FullScrambleFilterBar({ expanded, onExpandedChange, isZh }: {
         className="scramble-stats-fulllist-search"
         inputClassName="scramble-stats-fulllist-input"
       />
-      {/* 日期范围:ISO 显示(yyyy-mm-dd,跟列表里的比赛日期一致),两框收紧成一段。 */}
-      <div className="scramble-stats-fulllist-daterange">
-        <IsoDateField
-          value={from}
-          max={to || undefined}
-          onChange={(v) => void setFrom(v)}
-          ariaLabel={tr({ zh: '起始日期', en: 'From date' })}
-          placeholder={tr({ zh: '起始', en: 'From' })}
-        />
-        <span className="scramble-stats-fulllist-dash" aria-hidden="true">~</span>
-        <IsoDateField
-          value={to}
-          min={from || undefined}
-          onChange={(v) => void setTo(v)}
-          ariaLabel={tr({ zh: '结束日期', en: 'To date' })}
-          placeholder={tr({ zh: '结束', en: 'To' })}
-        />
-        {hasDate && (
-          <ClearButton
-            onClick={() => { void setFrom(''); void setTo(''); }}
-            isZh={isZh}
-            variant="standalone"
-            ariaLabel={tr({ zh: '清除日期', en: 'Clear dates' })}
-          />
-        )}
-      </div>
+      <DateRangeInput
+        className="scramble-stats-fulllist-daterange"
+        from={from}
+        to={to}
+        size="compact"
+        onChange={(nextFrom, nextTo) => {
+          void Promise.all([setFrom(nextFrom), setTo(nextTo)]);
+        }}
+      />
       <button
         type="button"
         className="scramble-stats-fulllist-close"

@@ -316,6 +316,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Compact date range; same-month collapses to the end day.',
   },
   {
+    name: 'ISO date helpers',
+    sig: 'isValidIsoDate(value: string): boolean; toLocalIsoDate(date?: Date): string; normalizeIsoDate(value?: string | null): string',
+    imp: "import { isValidIsoDate, toLocalIsoDate, normalizeIsoDate } from '@/lib/iso-date';",
+    usage: 'const today = toLocalIsoDate();',
+    category: 'format',
+    zh: '日期控件的数据契约:严格校验 yyyy-mm-dd,按本地日历生成今天,并把 API 日期归一化为无时区的日期值。',
+    en: 'The date-input value contract: validate yyyy-mm-dd strictly, derive today from the local calendar, and normalize API dates into timezone-free date values.',
+  },
+  {
     name: 'parseTimerEntry',
     sig: 'parseTimerEntry(input: string): { ms: number; penalty: Penalty } | null',
     imp: "import { parseTimerEntry } from '@cuberoot/shared/timer';",

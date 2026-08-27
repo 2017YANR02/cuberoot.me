@@ -5,6 +5,7 @@
 // @cuberoot/shared/recur,这里只做人话 ↔ 规则的双向翻译。
 
 import { useMemo, useState } from 'react';
+import { DateInput } from '@/components/DateInput';
 import { ListSelect } from '@/components/ListSelect';
 import { tr } from '@/i18n/tr';
 import {
@@ -267,12 +268,11 @@ export default function RepeatEditor({ value, onChange, start, tz }: Props) {
               }}
             />
             {endMode === 'until' && (
-              <input
-                type="date"
-                className="cal-date"
+              <DateInput
+                className="cal-date-field"
                 value={untilKey}
-                onChange={(e) => {
-                  const [y, mo, d] = e.target.value.split('-').map(Number);
+                onChange={(value) => {
+                  const [y, mo, d] = value.split('-').map(Number);
                   if (!y || !mo || !d) return;
                   // UNTIL 取当天 23:59:59Z,保证那天的最后一次也算在内。
                   patch({ count: 0, until: Date.UTC(y, mo - 1, d, 23, 59, 59) });

@@ -845,58 +845,12 @@ a.scramble-timeline-scramble:hover {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
-/* 日期范围:两个 ISO 日期框收紧成一段(from ~ to + 清除) */
+/* 日期范围复用共享 DateRangeInput,这里只管筛选栏里的占位。 */
 .scramble-stats-fulllist-daterange {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
   flex: 0 0 auto;
 }
-/* ISO 日期字段:自绘 yyyy-mm-dd 文案 + 透明原生日期框铺在上层(只借日历 picker) */
-.scramble-stats-isodate {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-.scramble-stats-isodate-text {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  min-width: 6.4rem;
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.28rem 0.5rem;
-  font: inherit;
-  font-size: 0.76rem;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-.scramble-stats-isodate-text.is-placeholder {
-  color: var(--text-sub);
-}
-.scramble-stats-isodate-text svg {
-  flex: 0 0 auto;
-  color: var(--text-sub);
-}
-.scramble-stats-isodate-native {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-.scramble-stats-isodate-native::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-}
-.scramble-stats-fulllist-dash {
-  color: var(--text-sub);
-  font-size: 0.76rem;
+.scramble-stats-fulllist-daterange > .date-input {
+  flex-basis: 8.4rem;
 }
 .scramble-stats-fulllist-bar .scramble-stats-fulllist-close {
   margin-left: auto;

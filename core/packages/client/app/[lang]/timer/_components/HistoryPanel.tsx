@@ -18,6 +18,7 @@ import { computeAllTags, TAG_DEFS, ALL_TAG_IDS } from '../_lib/storage/auto_tag'
 import { dayKeyOf } from '../_lib/stats_buckets';
 import type { TagId } from '../_lib/storage/auto_tag';
 import { ClearButton } from '@/components/ClearButton';
+import { DateRangeInput } from '@/components/DateRangeInput';
 import { RecordBadge } from '@/components/RecordBadge';
 import { tr } from '@/i18n/tr';
 
@@ -835,26 +836,17 @@ export default function HistoryPanel({
         </div>
         {filtersExpanded && (
           <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              <div>
-                <label style={labelStyle}>{tr({ zh: '日期 起', en: 'Date from' })}</label>
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>{tr({ zh: '日期 止', en: 'Date to' })}</label>
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
-            </div>
+            <DateRangeInput
+              from={dateFrom}
+              to={dateTo}
+              onChange={(nextFrom, nextTo) => {
+                setDateFrom(nextFrom);
+                setDateTo(nextTo);
+              }}
+              fromLabel={tr({ zh: '日期 起', en: 'Date from' })}
+              toLabel={tr({ zh: '日期 止', en: 'Date to' })}
+              size="compact"
+            />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               <div>
                 <label style={labelStyle}>{tr({ zh: '最短 (秒)', en: 'Min (s)' })}</label>

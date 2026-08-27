@@ -15,6 +15,7 @@ import BackHome from '@/components/BackHome';
 import BoolToggle from '@/components/BoolToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { CompactSelect } from '@/components/CompactSelect';
+import { DateInput } from '@/components/DateInput';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import HeaderToggles from '@/components/HeaderToggles';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
@@ -23,6 +24,7 @@ import { useAuthUser } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { eventDisplayName } from '@/lib/wca-events';
 import { formatWcaResult } from '@/lib/wca-format-result';
+import { toLocalIsoDate } from '@/lib/iso-date';
 import {
   createPbRecord,
   deletePbRecord,
@@ -152,7 +154,7 @@ export default function PbPage() {
   const [saving, setSaving] = useState(false);
 
   const [resultInput, setResultInput] = useState('');
-  const today = new Date().toISOString().slice(0, 10);
+  const today = toLocalIsoDate();
   const [dateInput, setDateInput] = useState(today);
   const [cubeName, setCubeName] = useState('');
   const [comments, setComments] = useState('');
@@ -504,7 +506,7 @@ export default function PbPage() {
                   </label>
                   <label>
                     <span>{tr({ zh: '日期', en: 'Date' })}</span>
-                    <input className="pb-form-control" type="date" value={dateInput} max={today} onChange={(event) => setDateInput(event.target.value)} required />
+                    <DateInput value={dateInput} max={today} onChange={setDateInput} required />
                   </label>
                   <label>
                     <span>{tr({ zh: '魔方或产品', en: 'Cube or product' })}</span>

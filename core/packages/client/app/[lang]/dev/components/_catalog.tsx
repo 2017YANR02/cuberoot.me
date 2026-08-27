@@ -991,6 +991,23 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: '别再写一份局部 .xxx-clear CSS,全站统一走这个。', en: 'Don’t write another local .xxx-clear CSS — everything routes through this.' },
   },
   {
+    name: 'DateInput',
+    import: "import { DateInput } from '@/components/DateInput';",
+    category: 'input',
+    zh: '日期单值输入。固定显示 yyyy-mm-dd,点击仍调用浏览器原生日历,非空时复用 ClearButton 清除。值始终是无时区的日历日期字符串。',
+    en: 'Canonical date-only input. It always displays yyyy-mm-dd, keeps the browser’s native picker, and reuses ClearButton when populated. Values remain timezone-free calendar-date strings.',
+    usage: '<DateInput value={date} onChange={setDate} max={toLocalIsoDate()} />',
+    note: { zh: '不要再写裸 type="date" 或用 text + yyyy-mm-dd 冒充日期控件。', en: 'Do not add another raw type="date" or imitate one with a text input and yyyy-mm-dd placeholder.' },
+  },
+  {
+    name: 'DateRangeInput',
+    import: "import { DateRangeInput } from '@/components/DateRangeInput';",
+    category: 'input',
+    zh: '由两个 DateInput 组成的日期范围。自动互锁开始 / 结束上下限,统一范围清除,可选紧凑模式和可见标签。',
+    en: 'A date range composed from two DateInput controls, with coupled start/end bounds, one range clear action, compact sizing, and optional visible labels.',
+    usage: '<DateRangeInput from={from} to={to} onChange={(nextFrom, nextTo) => setRange([nextFrom, nextTo])} />',
+  },
+  {
     name: 'ListSelect',
     import: "import { ListSelect } from '@/components/ListSelect';",
     category: 'input',

@@ -9,6 +9,7 @@ import {
   type TeachingWeeklyReport,
 } from '@cuberoot/shared/teaching';
 import AppLink from '@/components/AppLink';
+import { DateInput } from '@/components/DateInput';
 import { useT } from '@/hooks/useT';
 import {
   generateTeachingWeeklyReport,
@@ -163,7 +164,7 @@ function ReportsContent({ orgSlug, page, role }: { orgSlug: string; page: number
                   {students.map((student) => <option value={student.id} key={student.id}>{student.displayName}</option>)}
                 </select>
               </label>
-              <label>{t('周开始日期', 'Week start date')}<input className="org-form-control" name="weekStart" type="date" required /></label>
+              <label>{t('周开始日期', 'Week start date')}<DateInput name="weekStart" required /></label>
               <div className="org-form-actions">
                 <button className="org-form-button" type="submit">{submitting ? t('生成中…', 'Generating…') : t('生成报告', 'Generate report')}</button>
               </div>

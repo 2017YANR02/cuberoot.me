@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CompPicker } from '@/components/CompPicker';
 import { ClearButton } from '@/components/ClearButton';
+import { DateRangeInput } from '@/components/DateRangeInput';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { HelpCircle } from 'lucide-react';
@@ -29,6 +30,7 @@ import { useSubsetSelection, SubsetColorPicker } from '@/components/SubsetColorP
 import { stageLabel, LENGTH_VARIANT, WHOLE_VARIANT, usesStepsIndex, uiVariantOf, uiVariantOptions, uiStagesOf, dataVariantOfStage, variantDataRef } from '@/lib/scramble-variants';
 import { statsUrl } from '@/lib/stats-base';
 import { tr } from '@/i18n/tr';
+import { toLocalIsoDate } from '@/lib/iso-date';
 import './wca-source.css';
 
 // WCA history floor (WC1982) — see AGENTS.md. No scrambles exist before it.
@@ -101,7 +103,7 @@ export default function WcaSourceConfig({
 }: Props) {
   const wev = wcaEventId(event);
   const mode = settings.wcaScrambleMode;
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const today = useMemo(() => toLocalIsoDate(), []);
 
   // comp mode: fetch the picked comp's scrambles (cached) → which rounds / groups
   // exist for the *current* event. evRows = null until loaded; [] = no such event.
@@ -411,25 +413,15 @@ export default function WcaSourceConfig({
           </select>
         </span>
         {mode === 'date' && (
-          <span className="settings-row-control wca-src-dates">
-            <input
-              type="date"
-              value={settings.wcaDateFrom}
-              min={WCA_MIN_DATE}
-              max={settings.wcaDateTo || today}
-              onChange={(e) => updateSettings({ wcaDateFrom: e.target.value })}
-              aria-label={tr({ zh: '起始日期', en: 'From date' })}
-            />
-            <span className="wca-src-dash">–</span>
-            <input
-              type="date"
-              value={settings.wcaDateTo}
-              min={settings.wcaDateFrom || WCA_MIN_DATE}
-              max={today}
-              onChange={(e) => updateSettings({ wcaDateTo: e.target.value })}
-              aria-label={tr({ zh: '结束日期', en: 'To date' })}
-            />
-          </span>
+          <DateRangeInput
+            className="settings-row-control wca-src-dates"
+            from={settings.wcaDateFrom}
+            to={settings.wcaDateTo}
+            min={WCA_MIN_DATE}
+            max={today}
+            size="compact"
+            onChange={(wcaDateFrom, wcaDateTo) => updateSettings({ wcaDateFrom, wcaDateTo })}
+          />
         )}
         {mode === 'comp' && (
           // 已选中一场:短名不撑满行(不留大片空白把「难度」推到行尾);未选中(搜索框态)仍占满可用宽度。

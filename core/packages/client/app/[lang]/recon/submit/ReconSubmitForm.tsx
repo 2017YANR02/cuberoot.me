@@ -25,6 +25,7 @@ import AppLink from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { Flag } from '@/components/Flag';
 import { ClearButton } from '@/components/ClearButton';
+import { DateInput } from '@/components/DateInput';
 import { CompPicker } from '@/components/CompPicker';
 import { CountryInput } from '@/components/CountryInput/CountryInput';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
@@ -50,6 +51,7 @@ import {
   attemptsPerRound, localizeRound, isBldEvent, truncateCs,
 } from '@/lib/recon-utils';
 import { computeAllStats } from '@/lib/recon-stats';
+import { normalizeIsoDate } from '@/lib/iso-date';
 import { revalidateRecon } from '../revalidate-action';
 import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchScrambles, fetchOptimalScrambles, fetchScrambleGroups, matchRoundType } from '@/lib/wca-results-api';
 import { fetchAttemptPrRank } from '@/lib/recon-attempt-pr-rank';
@@ -136,8 +138,8 @@ function buildReuseMeta(src: Partial<ReconSolve>): Partial<ReconSolve> {
     const v = (src as Record<string, unknown>)[k];
     if (v != null) meta[k] = v;
   }
-  if (typeof meta.date === 'string') meta.date = toDateInput(meta.date);
-  if (typeof meta.reconDate === 'string') meta.reconDate = toDateInput(meta.reconDate);
+  if (typeof meta.date === 'string') meta.date = normalizeIsoDate(meta.date);
+  if (typeof meta.reconDate === 'string') meta.reconDate = normalizeIsoDate(meta.reconDate);
   return meta as Partial<ReconSolve>;
 }
 
@@ -149,15 +151,6 @@ function roundsForCount(n: number): string[] {
   for (let i = 1; i < n; i++) arr.push(String(i));
   arr.push('f');
   return arr;
-}
-
-function toDateInput(val: string | null | undefined): string {
-  if (!val) return '';
-  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
-  if (val.length >= 10 && val[4] === '-') return val.slice(0, 10);
-  const d = new Date(val);
-  if (isNaN(d.getTime())) return '';
-  return d.toISOString().slice(0, 10);
 }
 
 export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
@@ -388,8 +381,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     getRecon(Number(editId)).then(solve => {
       const normalized = {
         ...solve,
-        date: toDateInput(solve.date),
-        reconDate: toDateInput(solve.reconDate),
+        date: normalizeIsoDate(solve.date),
+        reconDate: normalizeIsoDate(solve.reconDate),
         wcaScramble: normalizeReconScrambleSpacing(solve.event, solve.wcaScramble || ''),
         optimalScramble: normalizeReconScrambleSpacing(solve.event, solve.optimalScramble || ''),
         scramble: normalizeReconScrambleSpacing(solve.event, solve.scramble || ''),
@@ -440,12 +433,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         country: src.country,
         round: src.round,
         groupId: src.groupId,
-        date: toDateInput(src.date),
+        date: normalizeIsoDate(src.date),
         average: src.average,
         regionalAverageRecord: src.regionalAverageRecord,
         reconer: authUser?.name ?? src.reconer,
         reconerId: authUser?.wcaId ?? src.reconerId,
-        reconDate: toDateInput(src.reconDate),
+        reconDate: normalizeIsoDate(src.reconDate),
         solveNum: targetSolveNum ?? prev.solveNum,
         cube: src.cube,
         videoUrl: src.videoUrl,
@@ -545,7 +538,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       country: searchParams?.get('country') || prev.country,
       round: round || prev.round,
       solveNum: !isNaN(sn) ? sn : prev.solveNum,
-      date: dateRaw ? toDateInput(dateRaw) : prev.date,
+      date: dateRaw ? normalizeIsoDate(dateRaw) : prev.date,
       reconer: authUser?.name ?? prev.reconer,
       reconerId: authUser?.wcaId ?? prev.reconerId,
       // 成绩弹窗里填好的比赛视频链接(多行)→ 预填视频字段。
@@ -1481,8 +1474,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       const data: Partial<ReconSolve> = {
         ...form,
         solution,
-        date: toDateInput(form.date),
-        reconDate: toDateInput(form.reconDate),
+        date: normalizeIsoDate(form.date),
+        reconDate: normalizeIsoDate(form.reconDate),
         reconer: form.reconer?.trim() ?? '',
         reconerId: form.reconerId?.trim() ?? '',
         wcaScramble,
@@ -1897,8 +1890,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </label>
                 <label className={`submit-field${reusedCls('date')}`}>
                   <span className="submit-label">{t('recon.date')}</span>
-                  <input className="submit-field-input" type="text" value={form.date || ''} onChange={e => setField('date', e.target.value)}
-                    placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
+                  <DateInput value={form.date || ''} onChange={(value) => setField('date', value)} />
                 </label>
               </div>
 
@@ -2324,8 +2316,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </div>
                 <label className={`submit-field${reusedCls('reconDate')}`}>
                   <span className="submit-label">{t('recon.reconDate')}</span>
-                  <input className="submit-field-input" type="text" value={form.reconDate || ''} onChange={e => setField('reconDate', e.target.value)}
-                    placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
+                  <DateInput value={form.reconDate || ''} onChange={(value) => setField('reconDate', value)} />
                 </label>
               </div>
 
