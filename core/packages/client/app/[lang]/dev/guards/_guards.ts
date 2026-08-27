@@ -56,8 +56,8 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     hook: 'block-raw-date-input.ps1',
     test: 'date-input-reuse-guard.test.ts',
     baseline: '0（18→0）',
-    zh: { title: '日期输入重复造轮', desc: '日期单值统一走 DateInput,日期范围统一走 DateRangeInput,固定显示 yyyy-mm-dd 并保留原生日历。Codex 写入即拦裸 type="date" 和 text + yyyy-mm-dd 冒充控件,CI 全量扫描。' },
-    en: { title: 'Date-input reimplementations', desc: 'Date-only values use DateInput and ranges use DateRangeInput, with fixed yyyy-mm-dd display and the native picker preserved. Codex blocks raw type="date" and text lookalikes at write time; CI scans all app code.' },
+    zh: { title: '日期输入重复造轮', desc: '日期单值统一走 DateInput,日期范围统一走 DateRangeInput,固定显示 yyyy-mm-dd 并使用站内双语日历。Codex 写入即拦裸 type="date" 和 text + yyyy-mm-dd 冒充控件,CI 全量扫描。' },
+    en: { title: 'Date-input reimplementations', desc: 'Date-only values use DateInput and ranges use DateRangeInput, with fixed yyyy-mm-dd display and the site-localized calendar. Codex blocks raw type="date" and text lookalikes at write time; CI scans all app code.' },
   },
   {
     id: 'component-reimplementation',
