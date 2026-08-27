@@ -227,6 +227,9 @@ export interface TimerSettings {
    */
   bluetoothAutoReady: 'off' | 'still' | 'double-flick' | 'scrambled';
 
+  /** One-shot migration marker for the default changing from off to scrambled. */
+  bluetoothAutoReadyMigrated?: boolean;
+
   /**
    * How the live smart-cube mirror (which takes over the picture under the
    * digits once a cube is connected) renders.
@@ -376,6 +379,7 @@ export const DEFAULTS: TimerSettings = {
   syncSeedCounter: 0,
   autoBackupEvery: 10,
   bluetoothAutoReady: 'scrambled',
+  bluetoothAutoReadyMigrated: true,
   liveCubeView: '3d',
   recordGyro: true,
   keymap: {},
@@ -480,6 +484,15 @@ function load(): TimerSettings {
     if (!merged.recordGyroMigrated) {
       merged.recordGyro = true;
       merged.recordGyroMigrated = true;
+      dirty = true;
+    }
+    // Existing profiles persisted the old `off` default. New profiles already use
+    // `scrambled`, so only stored settings without the marker need this migration.
+    if (parsed.bluetoothAutoReadyMigrated !== true) {
+      if (parsed.bluetoothAutoReady === 'off') {
+        merged.bluetoothAutoReady = 'scrambled';
+      }
+      merged.bluetoothAutoReadyMigrated = true;
       dirty = true;
     }
     // ao-only columns predate mo3 support. Preserve the user's chosen windows,

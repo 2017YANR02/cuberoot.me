@@ -81,6 +81,48 @@ describe('录姿态:老存档里的 false 要翻过来', () => {
   });
 });
 
+describe('智能魔方自动预备:老存档里的 off 要翻过来', () => {
+  beforeEach(() => { vi.unstubAllGlobals(); });
+
+  it('老存档升级为打乱正确即预备,并且落盘标记', async () => {
+    const mem = installStorage({
+      [KEY]: JSON.stringify({
+        bluetoothAutoReady: 'off',
+        scrambleClickMigrated: true,
+        recordGyroMigrated: true,
+      }),
+    });
+
+    const { getSettings } = await freshSettings();
+    expect(getSettings().bluetoothAutoReady).toBe('scrambled');
+    const saved = JSON.parse(mem.get(KEY) as string);
+    expect(saved.bluetoothAutoReady).toBe('scrambled');
+    expect(saved.bluetoothAutoReadyMigrated).toBe(true);
+  });
+
+  it('迁移后用户手动关闭,刷新后仍然保持关闭', async () => {
+    installStorage();
+    let settings = await freshSettings();
+    settings.updateSettings({ bluetoothAutoReady: 'off' });
+
+    settings = await freshSettings();
+    expect(settings.getSettings().bluetoothAutoReady).toBe('off');
+  });
+
+  it('保留老用户选过的其他预备方式', async () => {
+    installStorage({
+      [KEY]: JSON.stringify({
+        bluetoothAutoReady: 'still',
+        scrambleClickMigrated: true,
+        recordGyroMigrated: true,
+      }),
+    });
+
+    const { getSettings } = await freshSettings();
+    expect(getSettings().bluetoothAutoReady).toBe('still');
+  });
+});
+
 describe('计时器每次进入的打乱默认值', () => {
   beforeEach(() => { vi.unstubAllGlobals(); });
 
