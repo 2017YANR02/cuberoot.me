@@ -14,7 +14,7 @@ import {
 import { useT } from '@/hooks/useT';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { displayCuberName } from '@/lib/cuber-name-display';
-import { fetchWcaPerson } from '@/lib/wca-person-api';
+import { fetchWcaPerson, fetchWcaPersonResults } from '@/lib/wca-person-api';
 import { listWcaTeacherStudents, type WcaTeacher } from '@/lib/wca-teachers-api';
 import { eventDisplayName } from '@/lib/wca-events';
 
@@ -26,7 +26,7 @@ interface StudentSeed {
 
 interface StudentMeta {
   countryIso2: string;
-  eventIds: string[];
+  competedEventIds: string[];
 }
 
 export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: string; isZh: boolean }) {
@@ -81,11 +81,14 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
     if (ids.length === 0) return;
     Promise.all(ids.map(async (wcaId) => {
       try {
-        const profile = await fetchWcaPerson(wcaId);
-        const available = new Set(Object.keys(profile.personal_records));
+        const [profile, results] = await Promise.all([
+          fetchWcaPerson(wcaId),
+          fetchWcaPersonResults(wcaId),
+        ]);
+        const competedEvents = new Set(results.map((result) => result.event_id));
         return [wcaId, {
           countryIso2: profile.person.country_iso2,
-          eventIds: ALL_EVENT_IDS.filter((eventId) => available.has(eventId)),
+          competedEventIds: ALL_EVENT_IDS.filter((eventId) => competedEvents.has(eventId)),
         }] as const;
       } catch {
         return [wcaId, null] as const;
@@ -109,7 +112,8 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
     return [{
       ...student,
       eventIds: currentEventIds,
-      editableEventIds: meta?.eventIds.length ? meta.eventIds : student.eventIds,
+      editableEventIds: [...new Set([...(meta?.competedEventIds ?? []), ...student.eventIds])],
+      competedEventIds: meta?.competedEventIds,
       countryIso2: meta?.countryIso2 ?? '',
     }];
   }), [studentMeta, studentSeeds, teacherDirectory.ready, teacherDirectory.teachers, teacherWcaId]);
@@ -126,13 +130,13 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
             <tr>
               <th className="wp-th-student">
                 <span className="wp-student-heading">
-                  {t('学生', 'Student')}
                   <WcaStudentAdder
                     teacherWcaId={teacherWcaId}
                     directory={teacherDirectory}
                     isZh={isZh}
                     onSaved={() => setReloadKey((current) => current + 1)}
                   />
+                  {t('学生', 'Student')}
                 </span>
               </th>
               <th className="wp-th-student-events">{t('项目', 'Events')}</th>
@@ -148,6 +152,14 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
               <tr key={student.wcaId}>
                 <td className="wp-cell-student">
                   <span className="wp-student-identity">
+                    <WcaTeacherCell
+                      studentWcaId={student.wcaId}
+                      eventIds={student.eventIds}
+                      editableEventIds={student.editableEventIds}
+                      directory={teacherDirectory}
+                      isZh={isZh}
+                      editorOnly
+                    />
                     {student.countryIso2 && (
                       <Flag
                         iso2={student.countryIso2}
@@ -161,14 +173,6 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
                       isZh={isZh}
                       className="wp-student-link"
                     />
-                    <WcaTeacherCell
-                      studentWcaId={student.wcaId}
-                      eventIds={student.eventIds}
-                      editableEventIds={student.editableEventIds}
-                      directory={teacherDirectory}
-                      isZh={isZh}
-                      editorOnly
-                    />
                   </span>
                 </td>
                 <td className="wp-cell-student-events">
@@ -177,7 +181,7 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
                       <EventIcon
                         key={eventId}
                         event={eventId}
-                        className="wp-event-icon"
+                        className={`wp-event-icon${student.competedEventIds?.includes(eventId) === false ? ' wp-event-icon-uncompeted' : ''}`}
                         title={eventDisplayName(eventId, isZh)}
                       />
                     ))}
