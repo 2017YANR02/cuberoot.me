@@ -238,7 +238,7 @@ export default function Cube3Solver() {
   }, [viewMode, reconState.facelet]);
   // Solve source in URL (?via): 'local' = download/generate the prun table
   // in-browser, 'cloud' = POST scrambles to api.cuberoot.me which solves with the
-  // server-side opt6 table (no download, login-gated). Same optimal solution.
+  // server-side opt8 table (no download, login-gated). Same optimal solution.
   const [solveSource, setSolveSource] = useQueryState(
     'via',
     parseAsStringEnum<'local' | 'cloud'>(['local', 'cloud']).withDefault('cloud'),
