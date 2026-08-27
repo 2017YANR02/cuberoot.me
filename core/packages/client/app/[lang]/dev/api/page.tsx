@@ -150,7 +150,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'wca-data', m: 'GET', p: '/v1/wca/historical-ranks/countries', g: 'public', c: 'cdn', zh: '国家列表', en: 'Country list' },
   { d: 'wca-data', m: 'GET', p: '/v1/wca/historical-ranks/meta', g: 'public', c: 'cdn', zh: '时间线元信息', en: 'Timeline meta' },
   { d: 'wca-data', m: 'GET', p: '/v1/wca/recent-records', g: 'public', zh: '近期纪录(WCA Live 轮询)', en: 'Recent records (WCA Live poll)' },
-  { d: 'wca-data', m: 'GET', p: '/v1/wca/teachers', g: 'public', c: 'cdn', zh: '按选手与项目批量读取老师', en: 'Batch-read teachers by cuber and event' },
+  { d: 'wca-data', m: 'GET', p: '/v1/wca/teachers', g: 'public', c: 'cdn', zh: '按选手与项目批量读取老师，或按老师反查学生', en: 'Batch-read teachers by cuber and event, or students by teacher' },
   { d: 'wca-data', m: 'PUT', p: '/v1/wca/teachers/:studentId/:eventId', g: 'login', zh: '有效会员按项目登记自己；管理员可代填', en: 'Active member self-registration per event; admin assignment' },
   { d: 'wca-data', m: 'DELETE', p: '/v1/wca/teachers/:studentId/:eventId', g: 'login', zh: '老师本人或管理员按项目撤销关系', en: 'Teacher or admin removes an event relation' },
   { d: 'wca-data', m: 'GET', p: '/v1/wca/comp/:id/schedule', g: 'public', c: 'cdn', zh: '比赛赛程(服务端缓存)', en: 'Competition schedule (cached)' },

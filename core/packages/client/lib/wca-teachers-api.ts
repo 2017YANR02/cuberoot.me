@@ -2,12 +2,20 @@ import { API_ORIGIN } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 
 const BASE = API_ORIGIN + '/v1/wca/teachers';
+const RESPONSE_VERSION = '2';
 
 export interface WcaTeacher {
   studentWcaId: string;
+  studentName?: string;
   eventId: string;
   teacherWcaId: string;
   teacherName: string;
+}
+
+export async function listWcaTeacherStudents(teacherWcaId: string): Promise<WcaTeacher[]> {
+  const qs = new URLSearchParams({ teachers: teacherWcaId, v: RESPONSE_VERSION });
+  const data = await handleApi<{ teachers: WcaTeacher[] }>(await fetch(`${BASE}?${qs.toString()}`));
+  return data.teachers;
 }
 
 export async function listWcaTeachers(studentWcaIds: string[], eventIds: string[]): Promise<WcaTeacher[]> {
@@ -15,6 +23,7 @@ export async function listWcaTeachers(studentWcaIds: string[], eventIds: string[
   const qs = new URLSearchParams({
     students: studentWcaIds.join(','),
     events: eventIds.join(','),
+    v: RESPONSE_VERSION,
   });
   const data = await handleApi<{ teachers: WcaTeacher[] }>(await fetch(`${BASE}?${qs.toString()}`));
   return data.teachers;
