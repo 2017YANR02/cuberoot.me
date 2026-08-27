@@ -60,7 +60,7 @@ export function DateInput({
   defaultValue = '',
   onChange,
   className,
-  placeholder = 'yyyy-mm-dd',
+  placeholder = '',
   size = 'default',
   clearable = true,
   clearAriaLabel,
