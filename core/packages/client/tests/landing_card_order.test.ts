@@ -18,4 +18,14 @@ describe('homepage card order', () => {
       internal: true,
     }));
   });
+
+  it('links the homepage to the WeChat group directory', () => {
+    const otherCards = SECTIONS.find(({ id }) => id === 'other')?.cards;
+
+    expect(otherCards).toContainEqual(expect.objectContaining({
+      id: 'wechat-groups',
+      href: '/wechat-groups',
+      internal: true,
+    }));
+  });
 });

@@ -348,6 +348,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'feedback/admin': { title: { zh: '反馈审核', en: 'Feedback' } },
+  'wechat-groups': {
+    title: { zh: '微信群', en: 'WeChat Groups' },
+    description: {
+      zh: '查看 CubeRoot 相关地区群、项目群、方法阶段群和魔方根群，添加微信 mofanggen 申请进群。',
+      en: 'Browse CubeRoot regional, event, method-stage and community WeChat groups, then add mofanggen on WeChat to request an invitation.',
+    },
+  },
   'forum': {
     title: { zh: '论坛', en: 'Forum' },
     description: {

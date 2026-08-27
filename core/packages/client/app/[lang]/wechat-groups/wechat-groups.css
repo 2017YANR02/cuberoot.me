@@ -1,0 +1,205 @@
+.wechat-groups-page {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  padding: 28px max(20px, env(safe-area-inset-right)) 64px max(20px, env(safe-area-inset-left));
+}
+
+.wechat-groups-header,
+.wechat-groups-join,
+.wechat-groups-directory {
+  width: min(100%, 920px);
+  margin-inline: auto;
+}
+
+.wechat-groups-header .back-home {
+  margin-bottom: 54px;
+}
+
+.wechat-groups-eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 760;
+  letter-spacing: 0.14em;
+}
+
+.wechat-groups-header h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 8vw, 5.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.055em;
+}
+
+.wechat-groups-intro {
+  max-width: 660px;
+  margin: 22px 0 0;
+  color: var(--muted-foreground);
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  line-height: 1.75;
+}
+
+.wechat-groups-join {
+  margin-top: 48px;
+  padding-left: 18px;
+  border-left: 3px solid var(--accent);
+}
+
+.wechat-groups-join h2 {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+}
+
+.wechat-groups-join p {
+  margin: 0;
+  font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+  line-height: 1.65;
+}
+
+.wechat-groups-join strong {
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: 0.02em;
+}
+
+.wechat-groups-directory {
+  margin-top: 58px;
+}
+
+.wechat-groups-section {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.6fr);
+  gap: 32px 54px;
+  padding: 38px 0 42px;
+  border-top: 1px solid var(--border-default);
+}
+
+.wechat-groups-section-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+}
+
+.wechat-groups-section-heading > span {
+  flex: 0 0 auto;
+  padding-top: 4px;
+  color: var(--accent);
+  font: 700 0.72rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.wechat-groups-section-heading h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  line-height: 1.2;
+}
+
+.wechat-groups-section-heading p {
+  margin: 10px 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.91rem;
+  line-height: 1.65;
+}
+
+.wechat-groups-blocks {
+  display: grid;
+  gap: 28px;
+  min-width: 0;
+}
+
+.wechat-groups-block h3 {
+  margin: 0 0 13px;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.wechat-groups-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wechat-groups-list li {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 100%;
+  font-size: 0.98rem;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+.wechat-groups-list li::before {
+  width: 4px;
+  height: 4px;
+  flex: 0 0 auto;
+  margin-top: 0.58em;
+  border-radius: 50%;
+  background: var(--accent);
+  content: '';
+}
+
+.wechat-groups-list li > span {
+  white-space: normal;
+}
+
+.wechat-groups-list small {
+  display: block;
+  color: var(--faint-foreground);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .wechat-groups-page {
+    padding-top: 20px;
+    padding-bottom: 48px;
+  }
+
+  .wechat-groups-header .back-home {
+    margin-bottom: 38px;
+  }
+
+  .wechat-groups-intro {
+    margin-top: 17px;
+  }
+
+  .wechat-groups-join {
+    margin-top: 36px;
+  }
+
+  .wechat-groups-directory {
+    margin-top: 42px;
+  }
+
+  .wechat-groups-section {
+    grid-template-columns: 1fr;
+    gap: 26px;
+    padding: 30px 0 34px;
+  }
+
+  .wechat-groups-section-heading p {
+    max-width: 520px;
+  }
+
+  .wechat-groups-list {
+    gap: 10px 18px;
+  }
+}
+
+@media (max-width: 380px) {
+  .wechat-groups-page {
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-left: max(16px, env(safe-area-inset-left));
+  }
+
+  .wechat-groups-list {
+    gap-inline: 14px;
+  }
+}
