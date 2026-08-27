@@ -492,9 +492,11 @@ describe('QiYi timer MAC discovery', () => {
     });
 
     let settled = false;
+    const observations: Array<{ eventNumber: number; elapsedMs: number; complete: boolean }> = [];
     const pending = watchAdvertisementsMac(device, {
       specs: [QIYI_MAC_ADV],
       timeoutMs: 1000,
+      onAdvertisement: (observation) => observations.push(observation),
     }).then((mac) => {
       settled = true;
       return mac;
@@ -516,6 +518,11 @@ describe('QiYi timer MAC discovery', () => {
     device.dispatchEvent(complete);
 
     expect(await pending).toBe('CC:A1:00:00:8F:2A');
+    expect(observations.map(({ eventNumber, complete: isComplete }) => ({ eventNumber, complete: isComplete }))).toEqual([
+      { eventNumber: 1, complete: false },
+      { eventNumber: 2, complete: true },
+    ]);
+    expect(observations.every(({ elapsedMs }) => elapsedMs >= 0)).toBe(true);
   });
 
   it('derives the fallback MAC from the device name', () => {

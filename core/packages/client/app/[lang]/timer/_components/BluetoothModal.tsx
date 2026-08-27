@@ -256,6 +256,7 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
   const canConnect = miniProgramBridge || env === 'available' || env === 'available-bluefy';
   const inBluefy = env === 'available-bluefy';
   const connected = cube.status.connected;
+  const advertisementDiagnostic = cube.advertisementDiagnostic;
 
   const overlayStyle = isMobile ? { padding: 8 } : undefined;
   const modalStyle = isMobile
@@ -427,6 +428,19 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
                 ? tr({ zh: '连接中…', en: 'Connecting…' })
                 : tr({ zh: '搜索并连接', en: 'Search & connect' })}</span>
             </button>
+            {advertisementDiagnostic && (
+              <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '8px 0 0' }}>
+                {advertisementDiagnostic.complete
+                  ? tr({
+                      zh: `第 ${advertisementDiagnostic.eventNumber} 条广播包含完整信息，用时 ${(advertisementDiagnostic.elapsedMs / 1000).toFixed(2)} 秒。`,
+                      en: `Advertisement ${advertisementDiagnostic.eventNumber} contained the complete data after ${(advertisementDiagnostic.elapsedMs / 1000).toFixed(2)} seconds.`,
+                    })
+                  : tr({
+                      zh: `已收到 ${advertisementDiagnostic.eventNumber} 条广播，正在等待完整信息。`,
+                      en: `${advertisementDiagnostic.eventNumber} advertisements received; waiting for complete data.`,
+                    })}
+              </p>
+            )}
             {connectError && (
               <ConnectFailure
                 failure={connectError}
@@ -469,6 +483,14 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
                 en: 'Out of sync? Solve, then reset. Solving automatically stops the timer.',
               })}
             </p>
+            {advertisementDiagnostic?.complete && (
+              <p className="modal-section bt-connected-help">
+                {tr({
+                  zh: `连接诊断：第 ${advertisementDiagnostic.eventNumber} 条广播拿到完整信息，用时 ${(advertisementDiagnostic.elapsedMs / 1000).toFixed(2)} 秒。`,
+                  en: `Connection diagnostic: complete data arrived in advertisement ${advertisementDiagnostic.eventNumber} after ${(advertisementDiagnostic.elapsedMs / 1000).toFixed(2)} seconds.`,
+                })}
+              </p>
+            )}
           </>
         )}
 

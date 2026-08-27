@@ -14,6 +14,7 @@ const disconnectedCube = {
     deviceName: '',
     hasGyro: false,
   },
+  advertisementDiagnostic: null,
   lastMove: null,
   solved: false,
   facelets: null,
@@ -172,6 +173,7 @@ describe('BluetoothModal direct connection attempt', () => {
       },
       solved: true,
       lastMove: "R'",
+      advertisementDiagnostic: { eventNumber: 3, elapsedMs: 1260, complete: true },
       resetState: vi.fn(),
       disconnect: vi.fn(),
     } as BluetoothCubeHandle;
@@ -192,6 +194,7 @@ describe('BluetoothModal direct connection attempt', () => {
     expect(content).toContain('72%');
     expect(content).toContain('solved');
     expect(content).toContain("R'");
+    expect(content).toContain('advertisement 3 after 1.26 seconds');
     expect(content).toContain('automatically stops the timer');
     expect(content).toContain('Reset state');
     expect(content).toContain('Disconnect');
