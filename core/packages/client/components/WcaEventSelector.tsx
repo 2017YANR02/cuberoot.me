@@ -17,6 +17,7 @@ interface WcaEventSelectorProps {
   availableEvents: Set<string>;
   isZh: boolean;
   allowAll?: boolean;
+  allLabel?: string;
   selectedEvent?: string;
   onSelect?: (id: string) => void;
   selectedEvents?: ReadonlySet<string>;
@@ -50,7 +51,7 @@ interface WcaEventSelectorProps {
 type AppendItem = { id: string; iconClass: string; label?: string; textLabel?: string };
 
 export default function WcaEventSelector({
-  availableEvents, selectedEvent, onSelect, isZh, allowAll,
+  availableEvents, selectedEvent, onSelect, isZh, allowAll, allLabel,
   selectedEvents, onToggle, badges, topBadges, onlyAvailable, onRemove, appendEvents,
   collapsibleAppend, onExpandedChange, linkFor, searchable,
   containerClassName = 'wca-stats-event-selector',
@@ -109,6 +110,7 @@ export default function WcaEventSelector({
               })
       : tr({ zh: '已废止项目', en: 'Former events'
               });
+  const renderedAllLabel = allLabel ?? tr({ zh: '全部', en: 'All' });
 
   const removeBtn = (id: string, isActive: boolean) => (isMulti && isActive && onRemove ? (
     <span
@@ -222,11 +224,13 @@ export default function WcaEventSelector({
     <>
       {allowAll && !isMulti && (
         <button
+          type="button"
           className={`event-btn event-btn-all${selectedEvent === '' ? ' active' : ''}`}
-          data-tooltip={tr({ zh: '全部', en: 'All' })}
+          data-tooltip={renderedAllLabel}
+          aria-label={renderedAllLabel}
           onClick={() => onSelect?.('')}
         >
-          <span className="event-all-label">{tr({ zh: '全部', en: 'All' })}</span>
+          <span className="event-all-label">{renderedAllLabel}</span>
         </button>
       )}
       {officialIds.map(renderWcaButton)}
