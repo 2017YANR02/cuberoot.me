@@ -21,6 +21,7 @@ import { listRecons } from '@/lib/recon-api';
 import { buildReconAttemptMap, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import PersonHero from '@/components/persons/sections/PersonHero';
 import PersonPRTable from '@/components/persons/sections/PersonPRTable';
+import PersonStudents from '@/components/persons/sections/PersonStudents';
 import PersonBestCombos from '@/components/persons/sections/PersonBestCombos';
 import PersonResultChanges from '@/components/persons/sections/PersonResultChanges';
 import PersonTabs from '@/components/persons/sections/PersonTabs';
@@ -152,6 +153,7 @@ export default function PersonDetailClient() {
           inclCancelled={inclCancelled}
           onInclCancelledChange={setInclCancelled}
         />
+        <PersonStudents teacherWcaId={profile.person.wca_id} isZh={isZh} />
         <PersonPRTable profile={profile} results={results} isZh={isZh} inclCancelled={inclCancelled} mode={rankMode} />
         <PersonBestCombos wcaId={profile.person.wca_id} isZh={isZh} inclCancelled={inclCancelled} />
         <PersonResultChanges wcaId={profile.person.wca_id} isZh={isZh} />

@@ -1,7 +1,8 @@
 /**
  * WCA 选手按项目登记老师关系。
  *
- *   GET    /v1/wca/teachers?students=...&events=... — 公开批量读取
+ *   GET    /v1/wca/teachers?students=...&events=... — 按学生与项目公开批量读取
+ *   GET    /v1/wca/teachers?teachers=...             — 按老师公开反查学生
  *   PUT    /v1/wca/teachers/:studentId/:eventId    — 有效会员登记自己；管理员可指定任意老师
  *   DELETE /v1/wca/teachers/:studentId/:eventId    — 老师本人撤销；管理员可撤销任意关系
  */
@@ -21,6 +22,7 @@ export const wcaTeacherRoutes = new Hono();
 
 interface TeacherRow {
   student_wca_id: string;
+  student_name: string;
   event_id: string;
   teacher_wca_id: string;
   teacher_name: string;
@@ -29,6 +31,7 @@ interface TeacherRow {
 function toJson(row: TeacherRow) {
   return {
     studentWcaId: row.student_wca_id,
+    studentName: row.student_name,
     eventId: row.event_id,
     teacherWcaId: row.teacher_wca_id,
     teacherName: row.teacher_name,
@@ -40,19 +43,31 @@ function realActorWcaId(user: { wcaId: string; realWcaId?: string }): string | n
 }
 
 wcaTeacherRoutes.get('/wca/teachers', async (c) => {
-  const ids = parseTeacherLookupIds(c.req.query('students'));
+  const studentIds = parseTeacherLookupIds(c.req.query('students'));
+  const teacherIds = parseTeacherLookupIds(c.req.query('teachers'));
   const events = parseTeacherLookupEvents(c.req.query('events'));
-  if (ids == null) return c.json({ error: 'invalid students' }, 400);
+  if (studentIds == null) return c.json({ error: 'invalid students' }, 400);
+  if (teacherIds == null) return c.json({ error: 'invalid teachers' }, 400);
   if (events == null) return c.json({ error: 'invalid events' }, 400);
-  if (ids.length === 0 || events.length === 0) return c.json({ teachers: [] });
+  if (studentIds.length > 0 && teacherIds.length > 0) {
+    return c.json({ error: 'use either students or teachers' }, 400);
+  }
+  if (studentIds.length === 0 && teacherIds.length === 0) return c.json({ teachers: [] });
+  if (studentIds.length > 0 && events.length === 0) return c.json({ teachers: [] });
 
-  const studentPlaceholders = ids.map(() => '?').join(', ');
-  const eventPlaceholders = events.map(() => '?').join(', ');
+  const ids = studentIds.length > 0 ? studentIds : teacherIds;
+  const idColumn = studentIds.length > 0 ? 'wt.student_wca_id' : 'wt.teacher_wca_id';
+  const idPlaceholders = ids.map(() => '?').join(', ');
+  const eventFilter = events.length > 0
+    ? ` AND wt.event_id IN (${events.map(() => '?').join(', ')})`
+    : '';
   const rows = await query<TeacherRow>(
-    `SELECT student_wca_id, event_id, teacher_wca_id, teacher_name
-       FROM wca_teachers
-      WHERE student_wca_id IN (${studentPlaceholders})
-        AND event_id IN (${eventPlaceholders})`,
+    `SELECT wt.student_wca_id, student.name AS student_name,
+            wt.event_id, wt.teacher_wca_id, wt.teacher_name
+       FROM wca_teachers wt
+       JOIN wca_persons student ON student.wca_id = wt.student_wca_id
+      WHERE ${idColumn} IN (${idPlaceholders})${eventFilter}
+      ORDER BY wt.student_wca_id, wt.event_id`,
     [...ids, ...events],
   );
   c.header('Cache-Control', 'public, max-age=60, s-maxage=300');
