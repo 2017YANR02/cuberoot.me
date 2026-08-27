@@ -22,7 +22,7 @@ import './wca-teacher-cell.css';
 
 const LOOKUP_CHUNK_SIZE = 100;
 
-function teacherRelationKey(studentWcaId: string, eventId: string): string {
+export function wcaTeacherRelationKey(studentWcaId: string, eventId: string): string {
   return `${studentWcaId}:${eventId}`;
 }
 
@@ -41,6 +41,7 @@ function teacherErrorMessage(caught: unknown): string {
 export interface WcaTeacherDirectory {
   teachers: ReadonlyMap<string, WcaTeacher>;
   loading: boolean;
+  ready: boolean;
   loadFailed: boolean;
   userWcaId: string;
   isAdmin: boolean;
@@ -54,6 +55,7 @@ export function useWcaTeachers(studentWcaIds: string[], eventIds: string[]): Wca
   const isAdmin = isAdminWcaId(user?.wcaId);
   const [teachers, setTeachers] = useState<Map<string, WcaTeacher>>(() => new Map());
   const [loadState, setLoadState] = useState<'ready' | 'loading' | 'error'>('ready');
+  const [resolvedLookupKey, setResolvedLookupKey] = useState('');
   const [activeMembership, setActiveMembership] = useState(false);
   const idsKey = useMemo(
     () => [...new Set(studentWcaIds.filter(Boolean))].sort().join(','),
@@ -71,6 +73,7 @@ export function useWcaTeachers(studentWcaIds: string[], eventIds: string[]): Wca
     if (ids.length === 0 || events.length === 0) {
       setTeachers(new Map());
       setLoadState('ready');
+      setResolvedLookupKey(`${idsKey}|${eventsKey}`);
       return;
     }
     setLoadState('loading');
@@ -82,10 +85,11 @@ export function useWcaTeachers(studentWcaIds: string[], eventIds: string[]): Wca
       .then((groups) => {
         if (cancelled) return;
         setTeachers(new Map(groups.flat().map((teacher) => [
-          teacherRelationKey(teacher.studentWcaId, teacher.eventId),
+          wcaTeacherRelationKey(teacher.studentWcaId, teacher.eventId),
           teacher,
         ])));
         setLoadState('ready');
+        setResolvedLookupKey(`${idsKey}|${eventsKey}`);
       })
       .catch(() => {
         if (!cancelled) {
@@ -110,14 +114,14 @@ export function useWcaTeachers(studentWcaIds: string[], eventIds: string[]): Wca
 
   const save = useCallback(async (studentWcaId: string, eventId: string, teacherWcaId?: string) => {
     const teacher = await setWcaTeacher(studentWcaId, eventId, teacherWcaId);
-    setTeachers((current) => new Map(current).set(teacherRelationKey(studentWcaId, eventId), teacher));
+    setTeachers((current) => new Map(current).set(wcaTeacherRelationKey(studentWcaId, eventId), teacher));
   }, []);
 
   const remove = useCallback(async (studentWcaId: string, eventId: string) => {
     await removeWcaTeacher(studentWcaId, eventId);
     setTeachers((current) => {
       const next = new Map(current);
-      next.delete(teacherRelationKey(studentWcaId, eventId));
+      next.delete(wcaTeacherRelationKey(studentWcaId, eventId));
       return next;
     });
   }, []);
@@ -125,6 +129,7 @@ export function useWcaTeachers(studentWcaIds: string[], eventIds: string[]): Wca
   return {
     teachers,
     loading: loadState === 'loading',
+    ready: loadState === 'ready' && resolvedLookupKey === `${idsKey}|${eventsKey}`,
     loadFailed: loadState === 'error',
     userWcaId: user?.wcaId ?? '',
     isAdmin,
@@ -156,7 +161,7 @@ export function WcaTeacherNote() {
   );
 }
 
-export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = eventIds, defaultEditEventId, directory, isZh, showEventNames = false, emptyLabel = '—' }: {
+export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = eventIds, defaultEditEventId, directory, isZh, showEventNames = false, emptyLabel = '—', editorOnly = false }: {
   studentWcaId: string;
   eventIds: readonly string[];
   editableEventIds?: readonly string[];
@@ -165,6 +170,7 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
   isZh: boolean;
   showEventNames?: boolean;
   emptyLabel?: string;
+  editorOnly?: boolean;
 }) {
   const eventIdsKey = eventIds.join(',');
   const normalizedEventIds = useMemo(
@@ -178,7 +184,7 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
   );
   const availableEventSet = useMemo(() => new Set(normalizedEditableEventIds), [normalizedEditableEventIds]);
   const relations = normalizedEventIds.flatMap((eventId) => {
-    const teacher = directory.teachers.get(teacherRelationKey(studentWcaId, eventId));
+    const teacher = directory.teachers.get(wcaTeacherRelationKey(studentWcaId, eventId));
     return teacher ? [{ eventId, teacher }] : [];
   });
   const [editing, setEditing] = useState(false);
@@ -189,24 +195,24 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const editableRelations = normalizedEditableEventIds.flatMap((eventId) => {
-    const teacher = directory.teachers.get(teacherRelationKey(studentWcaId, eventId));
+    const teacher = directory.teachers.get(wcaTeacherRelationKey(studentWcaId, eventId));
     return teacher ? [{ eventId, teacher }] : [];
   });
   const hasOwnRelation = editableRelations.some(({ teacher: relation }) => relation.teacherWcaId === directory.userWcaId);
-  const teacherDataReady = !directory.loading && !directory.loadFailed;
+  const teacherDataReady = directory.ready && !directory.loadFailed;
   const canOpenEditor = teacherDataReady && (directory.isAdmin || directory.canSelfAssign || hasOwnRelation);
   const isMultiDisplay = normalizedEventIds.length > 1;
   const isMultiEditor = normalizedEditableEventIds.length > 1;
   const selectedIds = normalizedEditableEventIds.filter((eventId) => selectedEventIds.has(eventId));
   const selectedRelations = selectedIds.flatMap((eventId) => {
-    const relation = directory.teachers.get(teacherRelationKey(studentWcaId, eventId));
+    const relation = directory.teachers.get(wcaTeacherRelationKey(studentWcaId, eventId));
     return relation ? [{ eventId, relation }] : [];
   });
   const selfAssignableIds = selectedIds.filter(
-    (eventId) => !directory.teachers.has(teacherRelationKey(studentWcaId, eventId)),
+    (eventId) => !directory.teachers.has(wcaTeacherRelationKey(studentWcaId, eventId)),
   );
   const removableIds = selectedIds.filter((eventId) => {
-    const relation = directory.teachers.get(teacherRelationKey(studentWcaId, eventId));
+    const relation = directory.teachers.get(wcaTeacherRelationKey(studentWcaId, eventId));
     return !!relation && (directory.isAdmin || relation.teacherWcaId === directory.userWcaId);
   });
   const singleSelectedTeacher = selectedIds.length === 1 ? selectedRelations[0]?.relation : undefined;
@@ -246,7 +252,7 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
     const selectedTeacherId = selected?.id;
     const matchingEventIds = selectedTeacherId
       ? selectedIds.filter((eventId) => (
-        directory.teachers.get(teacherRelationKey(studentWcaId, eventId))?.teacherWcaId === selectedTeacherId
+        directory.teachers.get(wcaTeacherRelationKey(studentWcaId, eventId))?.teacherWcaId === selectedTeacherId
       ))
       : [];
 
@@ -271,7 +277,7 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
   const openEditor = (eventId = defaultEditEventId ?? normalizedEditableEventIds[0] ?? '') => {
     setSelectedEventIds(new Set(eventId ? [eventId] : []));
     const relation = eventId
-      ? directory.teachers.get(teacherRelationKey(studentWcaId, eventId))
+      ? directory.teachers.get(wcaTeacherRelationKey(studentWcaId, eventId))
       : undefined;
     setSelected(relation ? { id: relation.teacherWcaId, name: relation.teacherName, country_iso2: '' } : null);
     setError('');
@@ -288,30 +294,36 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
 
   return (
     <div className="wca-teacher-cell">
-      <span className={`wca-teacher-value${isMultiDisplay ? ' wca-teacher-value-multi' : ''}`}>
-        {relations.length > 0
-          ? relations.map(({ eventId, teacher: relation }) => (
-            <span key={eventId} className="wca-teacher-relation">
-              {(isMultiDisplay || showEventNames) && <EventIcon event={eventId} title={eventDisplayName(eventId, isZh)} />}
-              {showEventNames && <span className="wca-teacher-event-name">{eventDisplayName(eventId, isZh)}:</span>}
-              <PersonLink wcaId={relation.teacherWcaId} name={relation.teacherName} isZh={isZh} />
-            </span>
-          ))
-          : <span className="wca-teacher-empty">{emptyLabel}</span>}
-      </span>
-      {directory.isAdmin && teacherDataReady ? (
+      {!editorOnly && (
+        <span className={`wca-teacher-value${isMultiDisplay ? ' wca-teacher-value-multi' : ''}`}>
+          {relations.length > 0
+            ? relations.map(({ eventId, teacher: relation }) => (
+              <span key={eventId} className="wca-teacher-relation">
+                {(isMultiDisplay || showEventNames) && <EventIcon event={eventId} title={eventDisplayName(eventId, isZh)} />}
+                {showEventNames && <span className="wca-teacher-event-name">{eventDisplayName(eventId, isZh)}:</span>}
+                <PersonLink wcaId={relation.teacherWcaId} name={relation.teacherName} isZh={isZh} />
+              </span>
+            ))
+            : <span className="wca-teacher-empty">{emptyLabel}</span>}
+        </span>
+      )}
+      {editorOnly && canOpenEditor ? (
+        <button type="button" className="wca-teacher-action" onClick={() => openEditor()}>
+          {tr({ zh: '编辑', en: 'Edit' })}
+        </button>
+      ) : !editorOnly && directory.isAdmin && teacherDataReady ? (
         <button type="button" className="wca-teacher-action" onClick={() => openEditor()}>
           {relations.length > 0 ? tr({ zh: '编辑', en: 'Edit' }) : tr({ zh: '填写', en: 'Add' })}
         </button>
-      ) : isMultiEditor && canOpenEditor ? (
+      ) : !editorOnly && isMultiEditor && canOpenEditor ? (
         <button type="button" className="wca-teacher-action" onClick={() => openEditor()}>
           {tr({ zh: '管理', en: 'Manage' })}
         </button>
-      ) : teacherDataReady && !singleSelectedTeacher && directory.canSelfAssign ? (
+      ) : !editorOnly && teacherDataReady && !singleSelectedTeacher && directory.canSelfAssign ? (
         <button type="button" className="wca-teacher-action" disabled={saving} onClick={selfAssign}>
           {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '登记自己', en: 'Add myself' })}
         </button>
-      ) : teacherDataReady && singleSelectedTeacher?.teacherWcaId === directory.userWcaId ? (
+      ) : !editorOnly && teacherDataReady && singleSelectedTeacher?.teacherWcaId === directory.userWcaId ? (
         <button type="button" className="wca-teacher-action" disabled={saving} onClick={remove}>
           {saving ? tr({ zh: '撤销中…', en: 'Removing…' }) : tr({ zh: '撤销', en: 'Remove' })}
         </button>
