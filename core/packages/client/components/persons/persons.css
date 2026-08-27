@@ -383,6 +383,7 @@ html[data-theme=dark] .wp-page {
 /* flex 放内层 span,th 保持 table-cell 才能跟整行做行高对齐(否则分隔线错位) */
 .wp-event-inner { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
 .wp-event-icon { font-size: 1.05rem; color: var(--wp-text); }
+.wp-event-icon-uncompeted { color: var(--faint-foreground); }
 .wp-event-icon-sm { font-size: 0.95rem; color: var(--wp-text); }
 .wp-event-icon-md { font-size: 1.4rem; color: var(--wp-text); }
 .wp-event-icon-xs { font-size: 0.85rem; color: var(--wp-text); margin-right: 4px; }

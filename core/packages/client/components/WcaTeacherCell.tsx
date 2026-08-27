@@ -182,17 +182,22 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
   const [selectedStudent, setSelectedStudent] = useState<WcaPersonLite | null>(null);
   const [availableEventIds, setAvailableEventIds] = useState<string[]>([]);
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(() => new Set());
+  const [showAllEvents, setShowAllEvents] = useState(false);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const canAdd = canAddWcaTeacherStudent(teacherWcaId, directory);
-  const availableEventSet = useMemo(() => new Set(availableEventIds), [availableEventIds]);
+  const visibleEventSet = useMemo(() => new Set(showAllEvents
+    ? ALL_EVENT_IDS
+    : [...availableEventIds, ...selectedEventIds]), [availableEventIds, selectedEventIds, showAllEvents]);
+  const hasOtherEvents = availableEventIds.length > 0 && availableEventIds.length < ALL_EVENT_IDS.length;
   const titleId = `add-student-title-${teacherWcaId}`;
 
   useEffect(() => {
     let cancelled = false;
     setAvailableEventIds([]);
     setSelectedEventIds(new Set());
+    setShowAllEvents(false);
     setError('');
     if (!selectedStudent) {
       setLoadingEvents(false);
@@ -208,10 +213,17 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
       .then((profile) => {
         if (cancelled) return;
         const personalRecordEvents = new Set(Object.keys(profile.personal_records));
-        setAvailableEventIds(ALL_EVENT_IDS.filter((eventId) => personalRecordEvents.has(eventId)));
+        const nextAvailableEventIds = ALL_EVENT_IDS.filter((eventId) => personalRecordEvents.has(eventId));
+        setAvailableEventIds(nextAvailableEventIds);
+        setShowAllEvents(nextAvailableEventIds.length === 0);
       })
       .catch(() => {
-        if (!cancelled) setError(tr({ zh: '无法读取该选手的项目，请稍后重试', en: 'Could not load this cuber\'s events. Please try again.' }));
+        if (cancelled) return;
+        setShowAllEvents(true);
+        setError(tr({
+          zh: '无法读取参赛项目，仍可从全部项目中选择',
+          en: 'Competition events could not be loaded. You can still choose from all events.',
+        }));
       })
       .finally(() => { if (!cancelled) setLoadingEvents(false); });
     return () => { cancelled = true; };
@@ -224,6 +236,7 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
     setSelectedStudent(null);
     setAvailableEventIds([]);
     setSelectedEventIds(new Set());
+    setShowAllEvents(false);
     setError('');
   };
   const toggleEvent = (eventId: string) => {
@@ -283,19 +296,28 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
             {selectedStudent && loadingEvents && (
               <p className="wca-teacher-dialog-status">{tr({ zh: '正在读取项目…', en: 'Loading events…' })}</p>
             )}
-            {selectedStudent && !loadingEvents && availableEventIds.length > 0 && (
-              <WcaEventSelector
-                availableEvents={availableEventSet}
-                selectedEvents={selectedEventIds}
-                onToggle={toggleEvent}
-                isZh={isZh}
-                onlyAvailable
-              />
-            )}
-            {selectedStudent && !loadingEvents && availableEventIds.length === 0 && !error && (
-              <p className="wca-teacher-dialog-status">
-                {tr({ zh: '该选手暂无可登记项目', en: 'This cuber has no eligible events' })}
-              </p>
+            {selectedStudent && !loadingEvents && (
+              <>
+                <WcaEventSelector
+                  availableEvents={visibleEventSet}
+                  selectedEvents={selectedEventIds}
+                  onToggle={toggleEvent}
+                  isZh={isZh}
+                  onlyAvailable
+                />
+                {hasOtherEvents && (
+                  <button
+                    type="button"
+                    className="wca-teacher-action"
+                    aria-expanded={showAllEvents}
+                    onClick={() => setShowAllEvents((current) => !current)}
+                  >
+                    {showAllEvents
+                      ? tr({ zh: '只看参赛项目', en: 'Show competition events only' })
+                      : tr({ zh: '更多项目', en: 'More events' })}
+                  </button>
+                )}
+              </>
             )}
             {error && <p className="wca-teacher-dialog-error" role="alert">{error}</p>}
             <div className="wca-teacher-dialog-actions">
