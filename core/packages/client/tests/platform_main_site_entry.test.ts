@@ -20,12 +20,13 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(sitemap).toMatch(/EXCLUDE = new Set\(\[[^\]]*'search'/s);
   });
 
-  it('keeps homepage and account links as real AppLink entrypoints', () => {
+  it('keeps homepage account links real and avoids a duplicate search trigger', () => {
     const landing = read('app/[lang]/LandingClient.tsx');
     const sections = read('lib/landing-sections.tsx');
     const account = read('app/[lang]/account/page.tsx');
 
-    expect(landing).toMatch(/<Link\s+href="\/search"[\s\S]*?prefetch=\{false\}/);
+    expect(landing).not.toMatch(/<Link\s+href="\/search"/);
+    expect(landing).toContain('<LandingSearch cards={searchCards} lang={lang} />');
     expect(sections).toMatch(/\{ id: 'platform', href: '\/platform', internal: true,[^}]+\}/);
     expect(sections.match(/\{ id: 'platform', href: '\/platform'[^}]+\}/)?.[0]).not.toContain('adminOnly');
     expect(sections).toMatch(/\{ id: 'teaching', href: '\/courses', internal: true,[^}]+\}/);
