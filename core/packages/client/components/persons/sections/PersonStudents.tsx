@@ -132,20 +132,26 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
     }];
   }), [studentMeta, studentSeeds, teacherDirectory.ready, teacherDirectory.teachers, teacherWcaId]);
 
-  const taughtEventIds = useMemo(() => ALL_EVENT_IDS.filter((eventId) => (
-    students.some((student) => student.eventIds.includes(eventId))
+  const availableEventIds = useMemo(() => ALL_EVENT_IDS.filter((eventId) => (
+    students.some((student) => (
+      student.eventIds.includes(eventId) || student.competedEventIds?.includes(eventId)
+    ))
   )), [students]);
 
   useEffect(() => {
     setSelectedEventId((current) => (
-      taughtEventIds.includes(current) ? current : (taughtEventIds[0] ?? '')
+      !current || availableEventIds.includes(current) ? current : ''
     ));
-  }, [taughtEventIds]);
+  }, [availableEventIds]);
 
   const visibleStudents = useMemo(() => students
-    .filter((student) => !selectedEventId || student.eventIds.includes(selectedEventId))
+    .filter((student) => !selectedEventId || (
+      student.eventIds.includes(selectedEventId)
+      || student.competedEventIds?.includes(selectedEventId)
+    ))
     .map((student) => ({
       ...student,
+      taughtSelectedEvent: selectedEventId ? student.eventIds.includes(selectedEventId) : false,
       singleValue: selectedEventId
         ? student.personalRecords?.[selectedEventId]?.single?.best ?? null
         : null,
@@ -182,10 +188,12 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
       {students.length > 0 && (
         <div className="wp-student-controls">
           <WcaEventSelector
-            availableEvents={new Set(taughtEventIds)}
+            availableEvents={new Set(availableEventIds)}
             selectedEvent={selectedEventId}
             onSelect={setSelectedEventId}
             isZh={isZh}
+            allowAll
+            allLabel={t('总览', 'Overview')}
             onlyAvailable
             containerClassName="wca-stats-event-selector wp-student-event-filter"
           />
@@ -207,34 +215,38 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
                 </span>
               </th>
               <th className="wp-th-student-events">{t('项目', 'Events')}</th>
-              <th className="wp-th-student-result">
-                <button
-                  type="button"
-                  className={`wp-sort-th${resultSort.kind === 'single' ? ' is-active' : ''}`}
-                  onClick={() => toggleResultSort('single')}
-                  aria-label={t('按单次排序', 'Sort by single')}
-                >
-                  {t('单次', 'Single')}
-                  <SortArrow active={resultSort.kind === 'single'} dir={resultSort.dir} />
-                </button>
-              </th>
-              <th className="wp-th-student-result">
-                <button
-                  type="button"
-                  className={`wp-sort-th${resultSort.kind === 'average' ? ' is-active' : ''}`}
-                  onClick={() => toggleResultSort('average')}
-                  aria-label={t('按平均排序', 'Sort by average')}
-                >
-                  {t('平均', 'Average')}
-                  <SortArrow active={resultSort.kind === 'average'} dir={resultSort.dir} />
-                </button>
-              </th>
+              {selectedEventId && (
+                <>
+                  <th className="wp-th-student-result">
+                    <button
+                      type="button"
+                      className={`wp-sort-th${resultSort.kind === 'single' ? ' is-active' : ''}`}
+                      onClick={() => toggleResultSort('single')}
+                      aria-label={t('按单次排序', 'Sort by single')}
+                    >
+                      {t('单次', 'Single')}
+                      <SortArrow active={resultSort.kind === 'single'} dir={resultSort.dir} />
+                    </button>
+                  </th>
+                  <th className="wp-th-student-result">
+                    <button
+                      type="button"
+                      className={`wp-sort-th${resultSort.kind === 'average' ? ' is-active' : ''}`}
+                      onClick={() => toggleResultSort('average')}
+                      aria-label={t('按平均排序', 'Sort by average')}
+                    >
+                      {t('平均', 'Average')}
+                      <SortArrow active={resultSort.kind === 'average'} dir={resultSort.dir} />
+                    </button>
+                  </th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody>
             {students.length === 0 && (
               <tr>
-                <td className="wp-students-empty" colSpan={4}>{t('暂无学生', 'No students yet')}</td>
+                <td className="wp-students-empty" colSpan={selectedEventId ? 4 : 2}>{t('暂无学生', 'No students yet')}</td>
               </tr>
             )}
             {visibleStudents.map((student) => (
@@ -266,26 +278,68 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
                   </span>
                 </td>
                 <td className="wp-cell-student-events">
-                  <span className="wp-student-event-list">
-                    {selectedEventId && (
+                  {selectedEventId ? (
+                    <span className="wp-student-event-state">
                       <EventIcon
                         event={selectedEventId}
-                        className={`wp-event-icon${student.competedEventIds?.includes(selectedEventId) === false ? ' wp-event-icon-uncompeted' : ''}`}
-                        title={eventDisplayName(selectedEventId, isZh)}
+                        className={`wp-event-icon${student.taughtSelectedEvent && student.competedEventIds?.includes(selectedEventId) === false ? ' wp-event-icon-uncompeted' : ''}`}
+                        title={student.taughtSelectedEvent
+                          ? eventDisplayName(selectedEventId, isZh)
+                          : t('仅显示该项目成绩，不是该老师教授', 'Result only; not taught by this teacher')}
                       />
-                    )}
-                  </span>
+                      {!student.taughtSelectedEvent && (
+                        <span className="wp-student-result-only">{t('仅成绩', 'Result only')}</span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="wp-student-event-overview">
+                      <span className="wp-student-event-list">
+                        {student.eventIds.map((eventId) => (
+                          <EventIcon
+                            key={eventId}
+                            event={eventId}
+                            className={`wp-event-icon${student.competedEventIds?.includes(eventId) === false ? ' wp-event-icon-uncompeted' : ''}`}
+                            title={eventDisplayName(eventId, isZh)}
+                          />
+                        ))}
+                      </span>
+                      {(student.competedEventIds ?? []).some((eventId) => !student.eventIds.includes(eventId)) && (
+                        <span className="wp-student-result-only-group">
+                          <span className="wp-student-result-only">{t('仅成绩', 'Result only')}</span>
+                          <span className="wp-student-event-list">
+                            {(student.competedEventIds ?? [])
+                              .filter((eventId) => !student.eventIds.includes(eventId))
+                              .map((eventId) => (
+                                <EventIcon
+                                  key={eventId}
+                                  event={eventId}
+                                  className="wp-event-icon wp-event-icon-result-only"
+                                  title={t(
+                                    `${eventDisplayName(eventId, true)}：仅成绩，不是该老师教授`,
+                                    `${eventDisplayName(eventId, false)}: result only; not taught by this teacher`,
+                                  )}
+                                />
+                              ))}
+                          </span>
+                        </span>
+                      )}
+                    </span>
+                  )}
                 </td>
-                <td className="wp-cell-student-result">
-                  {student.singleValue !== null && student.singleValue > 0 && selectedEventId
-                    ? formatWcaResult(student.singleValue, selectedEventId, 'single')
-                    : '—'}
-                </td>
-                <td className="wp-cell-student-result">
-                  {student.averageValue !== null && student.averageValue > 0 && selectedEventId
-                    ? formatWcaResult(student.averageValue, selectedEventId, 'average')
-                    : '—'}
-                </td>
+                {selectedEventId && (
+                  <>
+                    <td className="wp-cell-student-result">
+                      {student.singleValue !== null && student.singleValue > 0
+                        ? formatWcaResult(student.singleValue, selectedEventId, 'single')
+                        : '—'}
+                    </td>
+                    <td className="wp-cell-student-result">
+                      {student.averageValue !== null && student.averageValue > 0
+                        ? formatWcaResult(student.averageValue, selectedEventId, 'average')
+                        : '—'}
+                    </td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
