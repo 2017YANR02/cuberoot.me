@@ -153,6 +153,72 @@
   line-height: 1.75;
 }
 
+.infra-expenses {
+  max-width: 880px;
+  margin: 0 0 0 66px;
+}
+
+.infra-expenses > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  gap: 24px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border-default);
+}
+
+.infra-expenses dt {
+  min-width: 0;
+}
+
+.infra-expenses dt > span {
+  display: block;
+  font-weight: 680;
+}
+
+.infra-expenses small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.infra-expenses dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.94rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  line-height: 1.55;
+  white-space: nowrap;
+}
+
+.infra-expense-total {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  max-width: 880px;
+  margin: 30px 0 0 66px;
+  font-size: 0.92rem;
+}
+
+.infra-expense-total span {
+  color: var(--muted-foreground);
+}
+
+.infra-expense-total strong {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.infra-expense-note {
+  max-width: 780px;
+  margin: 14px 0 0 66px;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  line-height: 1.65;
+}
+
 .infra-flow {
   position: relative;
   max-width: 850px;
@@ -284,6 +350,9 @@
   }
 
   .infra-capacity-note,
+  .infra-expenses,
+  .infra-expense-total,
+  .infra-expense-note,
   .infra-flow,
   .infra-operations,
   .infra-disclosure ul,
@@ -317,6 +386,11 @@
 
   .infra-specs dd {
     font-size: 1.15rem;
+  }
+
+  .infra-expenses > div {
+    grid-template-columns: 1fr;
+    gap: 9px;
   }
 
   .infra-flow li {
