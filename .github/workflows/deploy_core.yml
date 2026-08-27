@@ -251,10 +251,16 @@ jobs:
           pending_link=''
           legacy_moved=''
           switched=0
+          cubeopt_warm_on_boot="$(node --env-file="$root/.env" -p 'process.env.CUBEOPT_SOLVE_ENABLED === "1" && process.env.CUBEOPT_WARM_ON_BOOT === "1" ? "1" : "0"')"
 
-          reload_core() {
-            pm2 reload core-api --update-env 2>/dev/null || \
-              pm2 start dist/server.bundle.js --name core-api --node-args="--env-file=.env"
+          reload_core_with_cubeopt_warm() {
+            CUBEOPT_WARM_ON_BOOT="$cubeopt_warm_on_boot" pm2 reload core-api --update-env 2>/dev/null || \
+              CUBEOPT_WARM_ON_BOOT="$cubeopt_warm_on_boot" pm2 start dist/server.bundle.js --name core-api --node-args="--env-file=.env"
+          }
+
+          reload_core_without_cubeopt_warm() {
+            CUBEOPT_WARM_ON_BOOT=0 pm2 reload core-api --update-env 2>/dev/null || \
+              CUBEOPT_WARM_ON_BOOT=0 pm2 start dist/server.bundle.js --name core-api --node-args="--env-file=.env"
           }
 
           rollback() {
@@ -275,7 +281,7 @@ jobs:
               rollback_link=".dist.rollback.${release_id}.$$"
               ln -s "$previous_dist" "$rollback_link"
               mv -Tf "$rollback_link" dist
-              if reload_core; then
+              if reload_core_with_cubeopt_warm; then
                 pm2 save || true
               else
                 echo "ERROR: previous release was restored but could not be reloaded"
@@ -331,7 +337,10 @@ jobs:
           pending_link=''
           switched=1
 
-          reload_core
+          # Keep the API copy cold until the standalone production smoke exits;
+          # otherwise an 8 GB warm-on-boot table and the smoke's second copy can
+          # overlap and exhaust a 16 GB host.
+          reload_core_without_cubeopt_warm
 
           healthy=0
           for attempt in 1 2 3 4 5 6; do
@@ -347,6 +356,19 @@ jobs:
             node --env-file=.env dist/cubeopt/smoke.mjs --boot-timeout-ms 300000 --solve-timeout-ms 180000
           else
             echo "CubeOpt disabled; production manager smoke skipped"
+          fi
+
+          if [ "$cubeopt_warm_on_boot" = 1 ]; then
+            reload_core_with_cubeopt_warm
+            cubeopt_ready=0
+            for attempt in $(seq 1 180); do
+              if curl -fsS http://127.0.0.1:3001/v1/scramble/optimal-solve/ready | node -e 'let s="";process.stdin.on("data",c=>s+=c).on("end",()=>{const x=JSON.parse(s);process.exit(x.ready===true?0:1)})'; then
+                cubeopt_ready=1
+                break
+              fi
+              sleep 2
+            done
+            test "$cubeopt_ready" = 1 || { echo "ERROR: resident CubeOpt daemon did not become ready"; false; }
           fi
 
           pm2 save
