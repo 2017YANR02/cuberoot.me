@@ -74,7 +74,7 @@ const BROWSER: BrowserSolver[] = [
   { key: 'pseudo', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '~5s', enLatency: '~5s' },
   { key: 'pseudo_pair', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '深阶段 数十秒', enLatency: 'deep stages tens of seconds' },
   { key: 'f2leo / pseudo_f2leo', zhEngine: '只下 pt_cross (gz 50KB), mt_* 现场生成', enEngine: 'downloads only pt_cross (50KB gz), mt_* generated in-WASM', zhLatency: 'cross ~2.8s', enLatency: 'cross ~2.8s' },
-  { key: '333 整解最优 (h48)', zhEngine: 'cube48opt[1-9] WASM (/scramble/solver, .dat 表用户自备)', enEngine: 'cube48opt[1-9] WASM (/scramble/solver, user-supplied .dat)', zhLatency: '默认桌面 opt3 243M / 手机 opt1 30M; 表越大搜得越快; 整解 God 数最优', enLatency: 'default desktop opt3 243M / mobile opt1 30M; bigger table = faster search; whole-cube God\'s-number optimal' },
+  { key: '333 整解最优 (h48)', zhEngine: 'cube48opt[1-9] WASM (/scramble/solver):本地 .dat 用户自备,云端托管 opt8 7.8GB 表', enEngine: 'cube48opt[1-9] WASM (/scramble/solver): user-supplied local .dat, with a hosted 7.8GB opt8 table in cloud mode', zhLatency: '云端 opt8 用 14 线程;本地默认桌面 opt3 243M / 手机 opt1 30M;整解 God 数最优', enLatency: 'cloud opt8 uses 14 threads; local defaults are opt3 243M on desktop / opt1 30M on mobile; whole-cube God\'s-number optimal' },
   { key: '2x2x2 block', zhEngine: 'Block222SolverWasm (零下载, ~0.7MB 现场生成)', enEngine: 'Block222SolverWasm (zero download, ~0.7MB generated in-WASM)', zhLatency: '全 6 视角即时', enLatency: 'all 6 views instant' },
   { key: '1x2x3 / 2x2x3', zhEngine: 'Roux223SolverWasm (零下载, ~0.8MB 现场生成)', enEngine: 'Roux223SolverWasm (zero download, ~0.8MB generated in-WASM)', zhLatency: '方块/2x2x2 即时; 1x2x3 与 2x2x3 首算建表 ~秒级', enLatency: 'square/2x2x2 instant; 1x2x3 & 2x2x3 build tables on first solve (~seconds)' },
   { key: '1x2x3 ×2', zhEngine: 'Roux223SolverWasm 轻档 (免 2.68G 大表)', enEngine: 'Roux223SolverWasm light tier (no 2.68G table)', zhLatency: '单格 毫秒~秒级; 解法枚举 数秒~数十秒', enLatency: 'per-cell ms–seconds; solution enumeration seconds to tens of seconds' },
@@ -174,8 +174,8 @@ const TABLES: Record<string, SolverTbls> = {
   '333': {
     move: [],
     prune: [{ n: 'h48prun31h9', b: 15565455360 }],
-    builtZh: 'Tronto cube48opt 最优解器 (h48 坐标, God 数 HTM 整解): 15G 剪枝表分 64MB 块拷入 emscripten 堆 (非 Rust mmap), in-proc 起 12 解线程; 同一 cube48opt[1-9] 引擎也服 /scramble/solver 在线最优 (浏览器选 30M~972M 小表)',
-    builtEn: 'Tronto cube48opt optimal solver (h48 coordinate, God\'s-number HTM whole solve): the 15G prune table is copied into the emscripten heap in 64MB chunks (not a Rust mmap), starting 12 solve threads in-proc; the same cube48opt[1-9] engine also powers /scramble/solver online optimal (browser picks 30M–972M smaller tables)'
+    builtZh: 'Tronto cube48opt 最优解器 (h48 坐标, God 数 HTM 整解):离线统计用 15G opt9 表和 12 解线程; /scramble/solver 云端用托管的 7.8GB opt8 表和 14 线程,本地模式可选 30M~15G 各档表',
+    builtEn: 'Tronto cube48opt optimal solver (h48 coordinate, God\'s-number HTM whole solve): offline statistics use the 15G opt9 table with 12 solve threads; /scramble/solver cloud mode uses a hosted 7.8GB opt8 table with 14 threads, while local mode offers 30M–15G tiers'
   },
   '222': {
     move: [{ n: 'mt_edge3', b: 760332 }, { n: 'mt_corn', b: 1740 }],
@@ -259,8 +259,8 @@ const TABLES: Record<string, SolverTbls> = {
 
 // 内存档共享文案 (原「内存与剪枝表」三卡: huge / small / mid + 并行约束).
 const MEM_HUGE = {
-  zh: 'mmap GB 级联合/电池剪枝表 (CEE/CCE/C4C5C6 / pair huge / E0E1E2 等)。eo 工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap。f2leo 复用 std 的 pair huge 表 (各 ~10GB);pseudo_f2leo 用 pseudo 电池 (corner3 862MB + edge3 1GB 等), 各仅多叶子自由棱 EO 门控。333 整解最优是例外:Tronto h48 15G 表分块拷入 emscripten 堆 (非 mmap 共享), 与 Rust 表互不相干。sq1 用 13G jsq_full + 双 283MB 投影磁盘表 (slash 口径另零盘 ~43MB 现场建)。',
-  en: 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. eo peaks ~24GB working set but only ~0.1GB private — read-only shared mmap. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating. 333 whole-cube optimal is the exception: its Tronto h48 15G table is copied into the emscripten heap in chunks (not a shared mmap), independent of the Rust tables. sq1 uses a 13G jsq_full + two 283MB projection disk tables (the slash metric is a separate ~43MB zero-disk in-RAM build).',
+  zh: 'mmap GB 级联合/电池剪枝表 (CEE/CCE/C4C5C6 / pair huge / E0E1E2 等)。eo 工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap。f2leo 复用 std 的 pair huge 表 (各 ~10GB);pseudo_f2leo 用 pseudo 电池 (corner3 862MB + edge3 1GB 等), 各仅多叶子自由棱 EO 门控。333 整解最优是例外:离线统计的 Tronto h48 opt9 15G 表分块拷入 emscripten 堆 (非 mmap 共享);16GB 线上服务另驻留 opt8 7.8GB 表,两者都与 Rust 表无关。sq1 用 13G jsq_full + 双 283MB 投影磁盘表 (slash 口径另零盘 ~43MB 现场建)。',
+  en: 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. eo peaks ~24GB working set but only ~0.1GB private — read-only shared mmap. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating. 333 whole-cube optimal is the exception: offline statistics copy the Tronto h48 opt9 15G table into the emscripten heap in chunks (not a shared mmap); the 16GB online service separately keeps the 7.8GB opt8 table resident. Both are independent of the Rust tables. sq1 uses a 13G jsq_full + two 283MB projection disk tables (the slash metric is a separate ~43MB zero-disk in-RAM build).',
 };
 const MEM_SMALL = {
   zh: '333-daisy 与 333-first_layer 的 native 分析器复用 mt_edge4 (17.4MB)并现场建距离/PDB；first_layer 实测稳定约 107MiB、建表峰值约 258MiB。浏览器 first_layer 另拉 26.3MiB gzip 的预构建 bundle（54.7MiB 解压,4-bit PDB）,零现场 BFS。333-222/333-123/333-223 仅微移动表；其余 small 变体按各自微表现场建。无 GB 级依赖,可与任意 huge 变体并发。',
