@@ -73,6 +73,15 @@ CUBEOPT_SOLVE_ENABLED=1
 CUBEOPT_ARTIFACT_DIR=<absolute artifact store>
 ```
 
+若机器要让已选大表从 API 启动后持续驻留内存，可另外设置：
+
+```text
+CUBEOPT_WARM_ON_BOOT=1
+CUBEOPT_IDLE_MS=0
+```
+
+`CUBEOPT_IDLE_MS=0` 只关闭空闲卸载；低内存看门狗和 OOM 优先牺牲 CubeOpt 子进程的保护仍然生效。若保护层因真实内存压力卸载表，后续请求会在冷却期结束后重新加载。
+
 首次发布会在切换 release 前运行 `provision.mjs`。若 store 已有有效 `current.json`，它只做校验；若 store 尚不存在，它才从旧部署环境的 `CUBEOPT_MODULE` 和 `CUBEOPT_TABLE` 读取现有真实字节，从 module 文件名识别 opt5/opt6/opt8，派生同目录同 variant wasm，并拒绝任何 module、WASM、table 混配。随后调用同一套 prepare/promote 实现建立逻辑不可变 bundle，并原子写入 `CUBEOPT_ARTIFACT_DIR`。固定 suffix 让工具按真实 variant 派生稳定 bundle ID；prepare 成功而后续步骤失败的重跑可以复用已校验 bundle，不重复复制大表。复用前还会核对旧部署源的三份真实字节未变化。env 仅在 current 完整校验后原子更新。
 
 这条路径只存在于部署工具，不在 Server runtime 内。运行时若旧 `CUBEOPT_DAEMON_SCRIPT`、`CUBEOPT_MODULE` 或 `CUBEOPT_TABLE` 仍存在，只要 `CUBEOPT_ARTIFACT_DIR` 已配置就会显式 warning 并忽略旧值；未配置 store 则 hard-fail，不会进入 legacy fallback。部署 artifact 后执行真实 daemon smoke；它加载并校验真实大表，再用单步打乱验证协议和求解结果：

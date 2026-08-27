@@ -17,6 +17,7 @@
  *                             selects one verified immutable bundle.
  *   CUBEOPT_THREADS           forwarded to the child (default 2)
  *   CUBEOPT_BOOT_TIMEOUT_MS   spawn-to-READY deadline (default 300000)
+ *   CUBEOPT_IDLE_MS           idle unload delay (default 600000; 0 disables)
  */
 import { spawn, type ChildProcess } from 'node:child_process';
 import { createInterface } from 'node:readline';
@@ -25,7 +26,7 @@ import { basename, dirname, resolve } from 'node:path';
 import { existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { registerTenant, claimMemory } from '../mem-arbiter.js';
 import { createBootDeadline } from './boot-deadline.js';
-import { cubeoptChildEnv, resolveCubeoptArtifactConfig } from './config.js';
+import { cubeoptChildEnv, resolveCubeoptArtifactConfig, resolveCubeoptIdleMs } from './config.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -77,7 +78,8 @@ const MAX_QUEUE = Number(process.env.CUBEOPT_MAX_QUEUE) || 6;
 //      floor for 2 reads, drop the table BEFORE the kernel has to OOM anything.
 //   3. oom_score_adj=1000 on the child — if a spike beats the poll, the kernel
 //      kills THIS process first, never core-api/postgres (set at spawn below).
-const IDLE_MS = Number(process.env.CUBEOPT_IDLE_MS) || 10 * 60_000;
+// Zero keeps the table resident while leaving the low-memory watchdog enabled.
+const IDLE_MS = resolveCubeoptIdleMs(process.env.CUBEOPT_IDLE_MS);
 const MEM_FLOOR_MB = Number(process.env.CUBEOPT_MEM_FLOOR_MB) || 200;
 const MEM_POLL_MS = Number(process.env.CUBEOPT_MEM_POLL_MS) || 1000;
 // After a low-memory drop, refuse to reload for this long so we don't thrash
@@ -294,14 +296,16 @@ function startMonitors(): void {
   process.once('exit', () => { if (child) { try { child.kill('SIGKILL'); } catch { /* gone */ } } });
 
   // Layer 1: idle-unload — drop the resident table once nobody has solved for a
-  // while, returning the table's memory when it is not in use.
-  setInterval(() => {
-    if (!child || !ready || inFlight()) return;
-    if (Date.now() - lastActivity > IDLE_MS) {
-      console.log('[cubeopt] idle — dropping table to free memory');
-      recycleChild();
-    }
-  }, 30_000).unref();
+  // while, returning the table's memory when it is not in use. Zero opts out.
+  if (IDLE_MS > 0) {
+    setInterval(() => {
+      if (!child || !ready || inFlight()) return;
+      if (Date.now() - lastActivity > IDLE_MS) {
+        console.log('[cubeopt] idle — dropping table to free memory');
+        recycleChild();
+      }
+    }, 30_000).unref();
+  }
 
   // Layer 2: memory watchdog — if MemAvailable dips below the floor for two
   // consecutive reads while the table is loaded, drop it pre-emptively (and
