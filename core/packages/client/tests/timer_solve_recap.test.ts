@@ -127,10 +127,13 @@ describe('计时中那颗智能魔方留在屏幕上', () => {
 describe('复盘那一格不许把计时区挤出视口', () => {
   const css = read(SHELL_CSS);
 
-  it('展开时外壳钉成正好一屏', () => {
-    // 平时外壳是 min-height:100dvh(可被内容撑高)。不钉死,「空间不足」这个前提就
-    // 不成立,flex-shrink 永远不触发 —— 实测是整页多出 105px 滚动条。
-    expect(css).toMatch(/\.timer-shell:has\(\.shell-recap\)\s*\{[^}]*height:\s*100dvh/);
+  it('普通态、复盘态和桌面侧栏态都扣除页面通知栏高度', () => {
+    // PageNoticeBar 是计时器前面的兄弟节点。直接占 100dvh 会把底部连接胶囊推出视口；
+    // 复盘或侧栏展开时也必须沿用同一可见高度，不能退回完整视口高。
+    const visibleHeight = String.raw`calc\(100dvh - var\(--page-notice-h,\s*0px\)\)`;
+    expect(css).toMatch(new RegExp(String.raw`\.timer-shell\s*\{[^}]*min-height:\s*${visibleHeight}`));
+    expect(css).toMatch(new RegExp(String.raw`\.timer-shell:has\(\.shell-recap\)\s*\{[^}]*height:\s*${visibleHeight}`));
+    expect(css).toMatch(new RegExp(String.raw`\.timer-shell\.panel-open\s*\{[^}]*height:\s*${visibleHeight}`));
   });
 
   it('那一格自己可收缩,让位给计时区压不动的部分', () => {
