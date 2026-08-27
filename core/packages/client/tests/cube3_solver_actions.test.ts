@@ -15,6 +15,7 @@ const photoSource = readFileSync(
 
 describe('3x3 solver input actions', () => {
   it('offers scramble and solve actions in every input mode', () => {
+    expect(solverSource).toContain('const [paintOptimal, setPaintOptimal] = useState(true);');
     expect(solverSource).toContain("{ value: 'cube', label: t('立体', '3D') }");
     expect(solverSource).toContain("{ value: 'net', label: t('平面', '2D') }");
     expect(solverSource).toContain("{ value: 'photo', label: t('拍照', 'Photo') }");
@@ -30,6 +31,12 @@ describe('3x3 solver input actions', () => {
     expect(solverSource).toContain("handleScrambleAction('scramble')");
     expect(solverSource).toContain("handleScrambleAction('solution')");
     expect(solverSource).toContain('{renderStateActions(reconState.facelet)}');
+  });
+
+  it('prompts signed-out cloud users with a return-to-page sign-in link', () => {
+    expect(solverSource).toContain('{paintOptimal && cloudMode && mounted && !user && (');
+    expect(solverSource).toContain('href={`/account${nextQuery(pathname)}`}');
+    expect(solverSource).toContain("t('云端最优求解需要登录。', 'Sign in to use cloud optimal solving.')");
   });
 
   it('keeps cloud success status to progress and elapsed time', () => {

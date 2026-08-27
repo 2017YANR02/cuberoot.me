@@ -18,7 +18,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { Download, X, HelpCircle } from 'lucide-react';
 import { Spinner } from '@/components/Spinner/Spinner';
@@ -26,7 +26,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { streamApiUrl } from '@/lib/api-base';
 import { persistItem } from '@/lib/safe-storage';
 import { authHeaders } from '@/lib/admin-api';
-import { useAuthStore } from '@/lib/auth-store';
+import { nextQuery, useAuthStore } from '@/lib/auth-store';
 import { faceletToCubie, validateFacelet, cubieToFacelet } from '@/lib/cube-facelet';
 import {
   formatMoves,
@@ -46,6 +46,7 @@ import { ListSelect } from '@/components/ListSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { ClearButton } from '@/components/ClearButton';
+import AppLink from '@/components/AppLink';
 import SolveTabs from "../_components/SolveTabs";
 
 interface SolverInfo {
@@ -86,6 +87,7 @@ export default function Cube3Solver() {
   useDocumentTitle('求解器', 'Solver');
   const t = useT();
 
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   // mounted flag: anything reading localStorage / navigator must wait until after
@@ -190,7 +192,7 @@ export default function Cube3Solver() {
   const [reconInput, setReconInput] = useState('');
   // Paint-row secondary action: false → fast Kociemba solution (求解法),
   // true → optimal solve of the painted state via cubeopt/cloud (最优求解).
-  const [paintOptimal, setPaintOptimal] = useState(false);
+  const [paintOptimal, setPaintOptimal] = useState(true);
 
   const badTokenMsg = (tok: string) => t(
     `无法识别「${tok}」— 只支持面转 U R F D L B(可加 2 或 '),不支持宽块/转体/中层。`,
@@ -251,7 +253,6 @@ export default function Cube3Solver() {
   const cloudPhaseStartRef = useRef(0);
   const cloudTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const user = useAuthStore((s) => s.user);
-  const login = useAuthStore((s) => s.login);
   // Tidy the live timer if we unmount mid-solve.
   useEffect(() => () => { if (cloudTimerRef.current) clearInterval(cloudTimerRef.current); }, []);
 
@@ -712,7 +713,7 @@ export default function Cube3Solver() {
     const bad = lines.find(l => l.split(/\s+/).some(tok => !HTM_TOKEN.test(tok)));
     if (bad) { alert(t('云端只支持纯面转打乱(U R F D L B,带 2 或 \'),不支持宽块/转体/中层。', 'Cloud solve only takes plain face-turn scrambles (U R F D L B with 2 or \').')); return; }
     if (lines.length > CLOUD_MAX) { alert(t(`云端一次最多 ${CLOUD_MAX} 条(本地下载表则不限)。`, `Cloud solve takes at most ${CLOUD_MAX} scrambles at once (local mode is unlimited).`)); return; }
-    if (!user) { setCloudStatus(t('云端求解需登录(用右上角 WCA 登录)。', 'Cloud solve requires login (WCA, top-right).')); return; }
+    if (!user) { setCloudStatus(t('云端最优求解需要登录,请使用上方登录入口。', 'Cloud optimal solving requires sign-in. Use the sign-in link above.')); return; }
 
     setCloudBusy(true);
     setCloudStatus(t('连接云端求解…', 'Connecting…'));
@@ -1000,10 +1001,12 @@ export default function Cube3Solver() {
         </div>
       )}
 
-      {cloudMode && mounted && !user && (
+      {paintOptimal && cloudMode && mounted && !user && (
         <div className="cubeopt-info">
-          <span>{t('云端求解需登录(用你的 WCA 账号)。', 'Cloud solve requires login (your WCA account).')}</span>
-          <button className="btn" onClick={login}>{t('登录', 'Log in')}</button>
+          <span>{t('云端最优求解需要登录。', 'Sign in to use cloud optimal solving.')}</span>
+          <AppLink className="btn" href={`/account${nextQuery(pathname)}`} prefetch={false}>
+            {t('登录', 'Sign in')}
+          </AppLink>
         </div>
       )}
 
