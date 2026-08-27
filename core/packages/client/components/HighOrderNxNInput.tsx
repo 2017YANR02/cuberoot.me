@@ -41,7 +41,7 @@ export default function HighOrderNxNInput({ onAdd, children }: Props) {
         onKeyDown={(e) => { if (e.key === 'Enter') commit(); }}
         onBlur={() => { if (input) commit(); }}
         className="gen-count-input"
-        style={{ width: '72px' }}
+        style={{ width: '88px' }}
       />
       {children}
     </div>
