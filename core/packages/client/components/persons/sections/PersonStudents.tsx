@@ -2,22 +2,31 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
+import { Flag } from '@/components/Flag';
 import PersonLink from '@/components/PersonLink';
+import { WcaTeacherCell, useWcaTeachers, wcaTeacherRelationKey } from '@/components/WcaTeacherCell';
 import { useT } from '@/hooks/useT';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import { fetchWcaPerson } from '@/lib/wca-person-api';
 import { listWcaTeacherStudents, type WcaTeacher } from '@/lib/wca-teachers-api';
 import { eventDisplayName } from '@/lib/wca-events';
 
-interface StudentRow {
+interface StudentSeed {
   wcaId: string;
   name?: string;
+  eventIds: string[];
+}
+
+interface StudentMeta {
+  countryIso2: string;
   eventIds: string[];
 }
 
 export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: string; isZh: boolean }) {
   const t = useT();
   const [relations, setRelations] = useState<WcaTeacher[] | null>(null);
+  const [studentMeta, setStudentMeta] = useState<Map<string, StudentMeta>>(() => new Map());
 
   useEffect(() => {
     let cancelled = false;
@@ -28,9 +37,9 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
     return () => { cancelled = true; };
   }, [teacherWcaId]);
 
-  const students = useMemo<StudentRow[]>(() => {
+  const studentSeeds = useMemo<StudentSeed[]>(() => {
     if (!relations) return [];
-    const byStudent = new Map<string, StudentRow>();
+    const byStudent = new Map<string, StudentSeed>();
     for (const relation of relations) {
       const current = byStudent.get(relation.studentWcaId);
       if (current) {
@@ -54,6 +63,50 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
       ));
   }, [isZh, relations]);
 
+  const studentIds = useMemo(() => studentSeeds.map((student) => student.wcaId), [studentSeeds]);
+  const studentIdsKey = studentIds.join(',');
+  const teacherDirectory = useWcaTeachers(studentIds, ALL_EVENT_IDS);
+
+  useEffect(() => {
+    const ids = studentIdsKey ? studentIdsKey.split(',') : [];
+    let cancelled = false;
+    setStudentMeta(new Map());
+    if (ids.length === 0) return;
+    Promise.all(ids.map(async (wcaId) => {
+      try {
+        const profile = await fetchWcaPerson(wcaId);
+        const available = new Set(Object.keys(profile.personal_records));
+        return [wcaId, {
+          countryIso2: profile.person.country_iso2,
+          eventIds: ALL_EVENT_IDS.filter((eventId) => available.has(eventId)),
+        }] as const;
+      } catch {
+        return [wcaId, null] as const;
+      }
+    })).then((entries) => {
+      if (cancelled) return;
+      setStudentMeta(new Map(entries.filter((entry): entry is readonly [string, StudentMeta] => entry[1] !== null)));
+    });
+    return () => { cancelled = true; };
+  }, [studentIdsKey]);
+
+  const students = useMemo(() => studentSeeds.flatMap((student) => {
+    const currentEventIds = teacherDirectory.ready
+      ? ALL_EVENT_IDS.filter((eventId) => {
+        const relation = teacherDirectory.teachers.get(wcaTeacherRelationKey(student.wcaId, eventId));
+        return relation?.teacherWcaId === teacherWcaId;
+      })
+      : student.eventIds;
+    if (currentEventIds.length === 0) return [];
+    const meta = studentMeta.get(student.wcaId);
+    return [{
+      ...student,
+      eventIds: currentEventIds,
+      editableEventIds: meta?.eventIds.length ? meta.eventIds : student.eventIds,
+      countryIso2: meta?.countryIso2 ?? '',
+    }];
+  }), [studentMeta, studentSeeds, teacherDirectory.ready, teacherDirectory.teachers, teacherWcaId]);
+
   if (students.length === 0) return null;
 
   return (
@@ -70,12 +123,29 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
             {students.map((student) => (
               <tr key={student.wcaId}>
                 <td className="wp-cell-student">
-                  <PersonLink
-                    wcaId={student.wcaId}
-                    name={student.name}
-                    isZh={isZh}
-                    className="wp-student-link"
-                  />
+                  <span className="wp-student-identity">
+                    {student.countryIso2 && (
+                      <Flag
+                        iso2={student.countryIso2}
+                        spanClassName="country-flag"
+                        imgClassName="country-flag-ct"
+                      />
+                    )}
+                    <PersonLink
+                      wcaId={student.wcaId}
+                      name={student.name}
+                      isZh={isZh}
+                      className="wp-student-link"
+                    />
+                    <WcaTeacherCell
+                      studentWcaId={student.wcaId}
+                      eventIds={student.eventIds}
+                      editableEventIds={student.editableEventIds}
+                      directory={teacherDirectory}
+                      isZh={isZh}
+                      editorOnly
+                    />
+                  </span>
                 </td>
                 <td className="wp-cell-student-events">
                   <span className="wp-student-event-list">

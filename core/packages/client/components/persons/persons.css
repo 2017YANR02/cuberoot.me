@@ -395,6 +395,7 @@ html[data-theme=dark] .wp-page {
 .wp-students-table tbody td { text-align: left; }
 .wp-students-table .wp-th-student,
 .wp-students-table .wp-cell-student { width: 1px; padding-left: 16px; }
+.wp-student-identity { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .wp-student-link { color: var(--wp-text); font-weight: 500; text-decoration: none; }
 .wp-student-link:hover { color: var(--wp-accent); text-decoration: underline; }
 .wp-student-event-list { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 12px; }
