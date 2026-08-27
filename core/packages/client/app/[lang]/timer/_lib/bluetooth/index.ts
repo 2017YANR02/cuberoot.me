@@ -1132,13 +1132,20 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     intentionalDisconnectRef.current = false;
     cancelPendingReconnect();
 
-    // Recover the MAC from BLE advertisements BEFORE connecting. Known
-    // non-MAC drivers skip this entirely; MAC-keyed and name-unknown devices
-    // keep listening until a usable payload arrives or the bounded watch
-    // times out. This avoids both Bluefy's incomplete-first-event race and a
-    // needless delay for GoCube / Giiker / legacy MoYu.
+    // Recover the MAC from BLE advertisements BEFORE connecting, but only
+    // when no reusable value is already available. A MAC is persisted after
+    // the first decoded move, so returning cubes can skip the advertisement
+    // wait. The handshake's key-error path clears a stale value and asks the
+    // user again if the cube identity or key ever changes.
     const nameDriver = pickDriver(device);
-    const shouldWatchMac = nameDriver === null || nameDriver.needsMac === true;
+    const reusableMac = nameDriver?.needsMac
+      ? savedMac(device.name)
+        ?? parseMacFromName(device.name)
+        ?? nameDriver.defaultMac?.(device)
+        ?? null
+      : null;
+    const shouldWatchMac = nameDriver === null
+      || (nameDriver.needsMac === true && reusableMac === null);
     const advMac = shouldWatchMac
       ? await watchAdvertisementsMac(device)
         .catch((err: unknown) => { throw atStage('advertisement', err); })
