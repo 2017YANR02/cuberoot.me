@@ -117,39 +117,41 @@ export default function ForumNewThreadPage() {
         </button>
       ) : (
         <div className="forum-new-form">
-          <label className="forum-new-field">
-            <span className="forum-new-label"><T zh="版块" en="Forum" /></span>
-            <select
-              className="forum-sort-select"
-              value={selected}
-              onChange={e => setForumSlug(e.target.value || null)}
-            >
-              <option value="" disabled>{tr({ zh: '选择版块…', en: 'Pick a forum…' })}</option>
-              {categories.map(cat => (
-                <optgroup key={cat.id} label={zh ? cat.nameZh : cat.nameEn}>
-                  {cat.forums.map(f => (
-                    <option key={f.id} value={f.slug}>{zh ? f.nameZh : f.nameEn}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </label>
+          <div className="forum-new-meta-row">
+            <label className="forum-new-field">
+              <span className="forum-new-label"><T zh="版块" en="Forum" /></span>
+              <select
+                className="forum-sort-select"
+                value={selected}
+                onChange={e => setForumSlug(e.target.value || null)}
+              >
+                <option value="" disabled>{tr({ zh: '选择版块…', en: 'Pick a forum…' })}</option>
+                {categories.map(cat => (
+                  <optgroup key={cat.id} label={zh ? cat.nameZh : cat.nameEn}>
+                    {cat.forums.map(f => (
+                      <option key={f.id} value={f.slug}>{zh ? f.nameZh : f.nameEn}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </label>
 
-          <label className="forum-new-field">
-            <span className="forum-new-label"><T zh="标题" en="Title" /></span>
-            <div className="forum-new-title-wrap">
-              <input
-                className="forum-title-input"
-                value={title}
-                maxLength={MAX_TITLE_LEN}
-                onChange={e => setTitle(e.target.value)}
-                placeholder={tr({ zh: '一句话说清主题', en: 'Sum up your topic in one line' })}
-              />
-              {title.length >= MAX_TITLE_LEN - 40 && (
-                <span className="forum-new-title-count">{title.length}/{MAX_TITLE_LEN}</span>
-              )}
-            </div>
-          </label>
+            <label className="forum-new-field">
+              <span className="forum-new-label"><T zh="标题" en="Title" /></span>
+              <div className="forum-new-title-wrap">
+                <input
+                  className="forum-title-input"
+                  value={title}
+                  maxLength={MAX_TITLE_LEN}
+                  onChange={e => setTitle(e.target.value)}
+                  placeholder={tr({ zh: '一句话说清主题', en: 'Sum up your topic in one line' })}
+                />
+                {title.length >= MAX_TITLE_LEN - 40 && (
+                  <span className="forum-new-title-count">{title.length}/{MAX_TITLE_LEN}</span>
+                )}
+              </div>
+            </label>
+          </div>
 
           <div className="forum-new-field">
             <span className="forum-new-label"><T zh="内容与媒体" en="Content and media" /></span>
