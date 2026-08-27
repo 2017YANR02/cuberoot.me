@@ -13,8 +13,12 @@ export interface WcaTeacher {
 }
 
 export async function listWcaTeacherStudents(teacherWcaId: string): Promise<WcaTeacher[]> {
-  const qs = new URLSearchParams({ teachers: teacherWcaId, v: RESPONSE_VERSION });
-  const data = await handleApi<{ teachers: WcaTeacher[] }>(await fetch(`${BASE}?${qs.toString()}`));
+  const qs = new URLSearchParams({
+    teachers: teacherWcaId,
+    v: RESPONSE_VERSION,
+    refresh: Date.now().toString(),
+  });
+  const data = await handleApi<{ teachers: WcaTeacher[] }>(await fetch(`${BASE}?${qs.toString()}`, { cache: 'no-store' }));
   return data.teachers;
 }
 

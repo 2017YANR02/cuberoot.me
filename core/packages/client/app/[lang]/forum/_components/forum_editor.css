@@ -17,10 +17,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 4px;
-  padding: 6px;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  background: var(--card);
 }
 .forum-editor-tool {
   display: inline-flex;
