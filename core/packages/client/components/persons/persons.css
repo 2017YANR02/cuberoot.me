@@ -315,32 +315,11 @@ html[data-theme=dark] .wp-page {
 
 /* ── PR table ──────────────────────────────────────────────────────── */
 .wp-pr-card { padding: 16px; }
-.wp-toggle-group {
-    display: inline-flex;
-    border: 1px solid var(--wp-border);
-    border-radius: 8px;
-    padding: 2px;
-    gap: 2px;
-    background: var(--wp-bg);
-}
-.wp-toggle-btn {
-    padding: 6px 12px;
-    border: none; background: transparent;
-    color: var(--wp-text-sub);
-    font-size: 0.82rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-.wp-toggle-btn:hover { color: var(--wp-text); }
-.wp-toggle-btn.is-active {
-    background: var(--wp-surface);
-    color: var(--wp-blue);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-    font-weight: 600;
-}
-
 .wp-table-scroll { overflow-x: auto; }
+
+.wp-pb-card { display: flex; flex-direction: column; gap: 10px; }
+.wp-pb-title { margin: 0; font-size: 1rem; font-weight: 600; }
+.wp-pb-table { width: max-content; min-width: 100%; }
 
 .wp-pr-table {
     width: 100%;

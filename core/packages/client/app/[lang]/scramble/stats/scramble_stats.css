@@ -920,8 +920,16 @@ a.scramble-timeline-scramble:hover {
 .scramble-dist-embed .scramble-stats-header {
   margin-bottom: 1rem;
 }
+.scramble-dist-tab {
+  margin-top: 0;
+  border-top: 0;
+}
+.scramble-dist-tab .scramble-stats-page {
+  padding-top: 0;
+}
 @media (max-width: 480px) {
   .scramble-dist-embed { padding: 0 0.75rem; margin-top: 1.5rem; }
+  .scramble-dist-tab { margin-top: 0; }
 }
 /* 「分布」小标题:点明下半区是分布,克制不抢眼。 */
 .scramble-stats-embed-title {

@@ -82,6 +82,8 @@ export interface PaintActionsProps {
   secondaryBusy?: boolean;
   /** Optional "optimal?" switch, plus a control that must stay directly after it. */
   optimalToggle?: { value: boolean; onChange: (v: boolean) => void; trailing?: ReactNode };
+  /** Content placed directly after the final action button. */
+  actionsTrailing?: ReactNode;
   /** Transient per-piece reject message (from usePainter), shown as a flash. */
   rejectMsg?: string | null;
   /** Hide the Solve button — the host renders its own (e.g. next to the solver's Solve). */
@@ -92,7 +94,7 @@ export interface PaintActionsProps {
 
 export function PaintActions({
   facelet, spec = CUBE3_PAINT, onChange, onSolve, solveLabel, solveTitle, onSecondaryAction, secondaryActionLabel, secondaryActionTitle,
-  secondaryBusy, optimalToggle, rejectMsg, hideSolve, plainSolve,
+  secondaryBusy, optimalToggle, actionsTrailing, rejectMsg, hideSolve, plainSolve,
 }: PaintActionsProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -167,6 +169,7 @@ export function PaintActions({
             <span>{secondaryActionLabel ? tr(secondaryActionLabel) : t('求解法', 'Derive solution')}</span>
           </button>
         )}
+        {actionsTrailing}
       </div>
 
       {rejectMsg && (

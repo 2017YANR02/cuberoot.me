@@ -229,6 +229,7 @@ const ENDPOINTS: Ep[] = [
   // ---- PB ----
   { d: 'pb', m: 'GET', p: '/v1/pb/me', g: 'login', c: 'no-store', zh: '我的 PB 主页与完整历史', en: 'My PB profile and full history' },
   { d: 'pb', m: 'GET', p: '/v1/pb/profile/:userId', g: 'public', c: 'no-store', zh: '公开 PB 主页', en: 'Public PB profile' },
+  { d: 'pb', m: 'GET', p: '/v1/pb/person/:wcaId', g: 'public', c: 'no-store', zh: '按 WCA ID 获取公开 PB', en: 'Public PBs by WCA ID' },
   { d: 'pb', m: 'GET', p: '/v1/pb/leaderboard', g: 'public', c: 'no-store', zh: '当前 PB 排行榜', en: 'Current-PB leaderboard' },
   { d: 'pb', m: 'PUT', p: '/v1/pb/profile', g: 'login', c: 'no-store', zh: '修改 PB 公开设置', en: 'Update PB visibility' },
   { d: 'pb', m: 'POST', p: '/v1/pb/records', g: 'login', c: 'no-store', zh: '记录新的 PB', en: 'Record a new PB' },

@@ -97,7 +97,7 @@ const TABLES: Table[] = [
     { name: 'owner_key (PK)' }, { name: 'is_public' }, { name: 'created_at, updated_at' },
   ] },
   { name: 'pb_records', domain: 'studio', origin: '0171', purpose: { zh: '个人纪录当前值与完整进步历史', en: 'Current personal bests and complete improvement history' }, cols: [
-    { name: 'owner_key, event_id' }, { name: 'record_type, set_size', note: { zh: 'Single / Mo3 / Ao5、12、50、100、1000', en: 'Single / Mo3 / Ao5, 12, 50, 100, 1000' } },
+    { name: 'owner_key, event_id' }, { name: 'record_type, set_size', note: { zh: 'Single / Mo3 / Ao5、Ao12、Ao50、Ao100、Ao1000、Ao10000', en: 'Single / Mo3 / Ao5, Ao12, Ao50, Ao100, Ao1000, Ao10000' } },
     { name: 'result_value', note: { zh: 'WCA 原始成绩编码', en: 'Raw WCA result encoding' } }, { name: 'happened_on, cube_name, comments, is_current' },
   ] },
 
@@ -627,6 +627,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 170, slug: 'nav_sites_github', desc: { zh: 'nav_sites 增加 GitHub 链接', en: 'Add GitHub links to nav sites' } },
   { n: 171, slug: 'cube_pb', desc: { zh: '新增 CubePB 个人纪录主页、进步历史、公开分享设置与当前纪录排行榜。', en: 'Add CubePB personal-best profiles, improvement history, public sharing settings, and current-record leaderboards.' } },
   { n: 172, slug: 'account_avatars', desc: { zh: '新增账号头像来源契约，支持 Clawd 预设、自有上传与 WCA 官方头像自动刷新。', en: 'Add the account-avatar source contract for Clawd presets, owned uploads, and automatic WCA profile-photo refreshes.' } },
+  { n: 173, slug: 'pb_ao10000', desc: { zh: '个人纪录新增 Ao10000 档位，并统一平均成绩的 Mo/Ao 简写。', en: 'Add the Ao10000 personal-best tier and standardize mean/average labels as Mo/Ao.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

@@ -109,13 +109,14 @@ export interface Interactive3DCubeProps {
   secondaryActionTitle?: { zh: string; en: string };
   secondaryBusy?: boolean;
   optimalToggle?: { value: boolean; onChange: (v: boolean) => void; trailing?: ReactNode };
+  actionsTrailing?: ReactNode;
   hideSolve?: boolean;
   plainSolve?: boolean;
 }
 
 export default function Interactive3DCube({
   facelet, spec = CUBE3_PAINT, onChange, activeColor, onActiveColorChange, pixelSize, onSolve, solveLabel, solveTitle,
-  onSecondaryAction, secondaryActionLabel, secondaryActionTitle, secondaryBusy, optimalToggle, hideSolve, plainSolve,
+  onSecondaryAction, secondaryActionLabel, secondaryActionTitle, secondaryBusy, optimalToggle, actionsTrailing, hideSolve, plainSolve,
 }: Interactive3DCubeProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -236,6 +237,7 @@ export default function Interactive3DCube({
         secondaryActionTitle={secondaryActionTitle}
         secondaryBusy={secondaryBusy}
         optimalToggle={optimalToggle}
+        actionsTrailing={actionsTrailing}
         rejectMsg={rejectMsg}
         hideSolve={hideSolve}
         plainSolve={plainSolve}

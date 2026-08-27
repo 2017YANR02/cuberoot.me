@@ -3,11 +3,9 @@
 /**
  * 统一「求解」中心的标签导航(/scramble 各魔方求解 + 子工具入口)。
  *
- * 「求解 / 分布」顶层切换已废除(2026-06-21):求解与分布合并到同一滚动页(求解在上、
- * 分布在下,分布懒挂载),不再分两个 tab。本组件现在只剩**项目行 + 3×3 子标签行**。
- *
  * 项目行 = 单个 PuzzlePicker 下拉(2026-07-12 由「WCA 图标行 + 更多下拉」两件套收成一个):
- * WCA 组 + 非 WCA 家族组同在一个弹层;项目=3×3 时再出一行子标签(最优解 / 阶段 / CFOP / DR)。
+ * WCA 组 + 非 WCA 家族组同在一个弹层;项目=3×3 时再出一行子标签
+ * (最优解 / 分布 / 阶段 / CFOP / DR)。
  *
  * 关键:5 个项目共用一个路由 /scramble/solver?event=<id>(按 event 分发求解器),但只有
  * 3×3(event=333,cubeopt 要 SharedArrayBuffer)是发 COOP/COEP 的文档;其余 event 是普通
@@ -32,7 +30,7 @@ import { useT } from '@/hooks/useT';
 import './solve_tabs.css';
 
 export type SolvePuzzle = '3x3' | '2x2x2' | 'pyraminx' | 'skewb' | 'sq1' | 'sq2' | 'ssq1' | 'bsq' | 'clock' | 'ivy' | '133' | '223' | '233' | '334' | '335' | '336' | '337' | '8p' | '15p' | 'sfl' | 'ufo' | 'cm2' | 'cm3' | 'heli' | 'helicv' | 'ctico' | 'dmd' | 'gear' | 'mpyrso' | 'dino' | 'crz3a' | 'bic' | 'sia123' | 'sia222';
-export type SolveSub = 'optimal' | 'stage' | 'cfop' | 'fmc';
+export type SolveSub = 'optimal' | 'distribution' | 'stage' | 'cfop' | 'fmc';
 
 interface SolveTabsProps {
   /** 当前项目;dist 模式落在 4 项目之外的事件时传 null(项目行不高亮) */
@@ -98,10 +96,11 @@ const withEvent = (href: string, eventId: string) =>
   `${href}${href.includes('?') ? '&' : '?'}event=${eventId}`;
 const solveHrefFor = (p: SolvePuzzle) => withEvent(SOLVE_BASE, EVENT_ID[p]);
 
-// 3×3 子标签:最优解 = 统一路由的 event=333;阶段/CFOP/DR 是另一个工具 /scramble/analyzer
-// (非 COEP),均属 333 带 event=333。
+// 3×3 子标签:最优解 / 分布同属 solver 的 COEP 文档;阶段/CFOP/DR 是另一个工具
+// /scramble/analyzer(非 COEP),均属 333 带 event=333。
 const SUB_ROUTE: Record<SolveSub, string> = {
   optimal: '/scramble/solver?event=333',
+  distribution: '/scramble/solver?event=333&tool=distribution',
   stage: '/scramble/analyzer?tool=stage&event=333',
   cfop: '/scramble/analyzer?tool=cfop&event=333',
   fmc: '/scramble/analyzer?tool=fmc&event=333',
@@ -123,8 +122,10 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
   const prefix = lang === 'zh' ? '/zh' : '';
   const t = useT();
 
-  // 当前是不是 COEP 的 3×3 最优解文档
-  const currentIsSolver = mode === 'solve' && puzzle === '3x3' && sub === 'optimal';
+  // 当前是不是 COEP 的 3×3 solver 文档(最优解 / 分布之间可软切换)。
+  const currentIsSolver = mode === 'solve'
+    && puzzle === '3x3'
+    && (sub === 'optimal' || sub === 'distribution');
 
   // 跨 solver 边界 → 硬导航(原生 a),否则软导航(AppLink)
   const tab = (key: string, href: string, active: boolean, content: React.ReactNode, extraClass = '') => {
@@ -166,10 +167,11 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
         </div>
       )}
 
-      {/* 子标签(仅 3×3):最优解 / 阶段 / CFOP / DR */}
+      {/* 子标签(仅 3×3):最优解 / 分布 / 阶段 / CFOP / DR */}
       {puzzle === '3x3' && (
         <div className="solve-tab-row solve-tab-subs">
           {tab('optimal', SUB_ROUTE.optimal, sub === 'optimal', t('最优解', 'Optimal'), 'solve-tab-sub')}
+          {tab('distribution', SUB_ROUTE.distribution, sub === 'distribution', t('分布', 'Distribution'), 'solve-tab-sub')}
           {tab('stage', SUB_ROUTE.stage, sub === 'stage', t('阶段', 'Stage'), 'solve-tab-sub')}
           {tab('cfop', SUB_ROUTE.cfop, sub === 'cfop', 'CFOP', 'solve-tab-sub')}
           {tab('fmc', SUB_ROUTE.fmc, sub === 'fmc', 'DR', 'solve-tab-sub')}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import MonthGrid from '@/components/MonthGrid';
 import { useLang } from '../../_lib/Lang';
 import type { Lang } from '../../_lib/Lang';
@@ -31,30 +31,70 @@ const CAL_MONTHS = SORTED_DATES.length
 
 function Timeline() {
   const [open, setOpen] = useState<number | null>(null);
+  const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(() => new Set());
+  const months = useMemo(() => {
+    const groups = new Map<string, Array<{ entry: (typeof TIMELINE)[number]; index: number }>>();
+    TIMELINE.forEach((entry, index) => {
+      const month = entry.date.slice(0, 7);
+      const entries = groups.get(month) ?? [];
+      entries.push({ entry, index });
+      groups.set(month, entries);
+    });
+    return [...groups.entries()];
+  }, []);
+
+  const toggleMonth = (month: string) => {
+    setCollapsedMonths((current) => {
+      const next = new Set(current);
+      if (next.has(month)) next.delete(month);
+      else next.add(month);
+      return next;
+    });
+  };
+
   return (
     <ol className="timeline">
-      {TIMELINE.map((e, i) => {
-        const t = tr(e);
-        const isOpen = open === i;
+      {months.map(([month, entries]) => {
+        const isCollapsed = collapsedMonths.has(month);
         return (
-          <li key={i} className={`tl-entry tl-${e.tag}${isOpen ? ' open' : ''}`}>
+          <li key={month} className={`tl-month${isCollapsed ? ' collapsed' : ''}`}>
             <button
               type="button"
-              className="tl-trigger"
-              aria-expanded={isOpen}
-              onClick={() => setOpen(isOpen ? null : i)}
+              className="tl-month-trigger"
+              aria-expanded={!isCollapsed}
+              aria-controls={`timeline-month-${month}`}
+              onClick={() => toggleMonth(month)}
             >
-              <div className="tl-date">{e.date}</div>
-              <div className="tl-body">
-                <div className="tl-head-line">
-                  <span className={`tl-tag tl-tag-${e.tag}`}>{e.tag}</span>
-                  <h4 className="tl-title">{t.title}</h4>
-                  <span className={`tl-chev${isOpen ? ' open' : ''}`} aria-hidden>▸</span>
-                </div>
-                <p className="tl-summary">{t.body}</p>
-                {isOpen && <p className="tl-expand">{t.expand}</p>}
-              </div>
+              <ChevronDown className="tl-month-chevron" size={17} strokeWidth={1.8} aria-hidden />
+              <span>{month}</span>
             </button>
+            <ol id={`timeline-month-${month}`} className="tl-month-entries" hidden={isCollapsed}>
+              {entries.map(({ entry: e, index: i }) => {
+                const t = tr(e);
+                const isOpen = open === i;
+                return (
+                  <li key={i} className={`tl-entry tl-${e.tag}${isOpen ? ' open' : ''}`}>
+                    <button
+                      type="button"
+                      className="tl-trigger"
+                      aria-expanded={isOpen}
+                      onClick={() => setOpen(isOpen ? null : i)}
+                    >
+                      <div className="tl-date">{e.date.slice(5)}</div>
+                      <div className="tl-body">
+                        <div className="tl-head-line">
+                          <span className={`tl-tag tl-tag-${e.tag}`}>{e.tag}</span>
+                          <h4 className="tl-title">{t.title}</h4>
+                          <span className={`tl-chev${isOpen ? ' open' : ''}`} aria-hidden>▸</span>
+                        </div>
+                        <p className="tl-summary">{t.body}</p>
+                        {isOpen && <p className="tl-expand">{t.expand}</p>}
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
           </li>
         );
       })}

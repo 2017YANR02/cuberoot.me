@@ -903,5 +903,55 @@
     "date": "2026-08-16",
     "zh": "微信小程序 MVP 复用网站计时器并完成域名与开发工具接入 + WCA 纪录地点页加入搜索、分页和项目筛选 + 计时器统计选择器收敛为表头菜单 + SQ1 形状与 Squanmate 对齐 + 开发入口由 /code 改为 /dev",
     "en": "A WeChat Mini Program MVP reuses the web timer and completes domain and developer-tool integration + WCA record-place pages gain search, pagination and event filters + the timer statistic picker moves into table headers + Square-1 shapes align with Squanmate + the development hub moves from /code to /dev"
+  },
+  {
+    "date": "2026-08-17",
+    "zh": "教学平台加入组织、校区、班级、课包、课次与训练证据流程 + /achievements 成果展示页上线 + 师资资料支持履历与多图 + 微信小程序接入 GAN、GoCube、Giiker 与魔域智能魔方 + PSF2L 训练支持槽位选择与 XXCross 安全打乱",
+    "en": "The teaching platform adds organizations, campuses, groups, lesson packages, sessions and training evidence + the /achievements showcase launches + teacher profiles gain resume details and multiple photos + the WeChat Mini Program connects GAN, GoCube, Giiker and MoYu smart cubes + PSF2L training adds slot selection and XXCross-safe scrambles"
+  },
+  {
+    "date": "2026-08-18",
+    "zh": "教学管理与学员训练流程接入主站 + 公式库导入审定 OLL 与右手 PLL 并加入单手筛选 + 智能魔方按末步时间停表并降低画面延迟 + 账号支持编辑显示名且锁定 WCA 认证名 + 复盘将独立 AUF 合并到前一阶段",
+    "en": "Teaching management and student training workflows join the main site + the algorithm library imports reviewed OLL and right-handed PLL sets with one-handed filters + smart-cube solves stop at the final move and reduce visual lag + accounts allow display-name edits while locking verified WCA names + reconstruction folds standalone AUF into the preceding stage"
+  },
+  {
+    "date": "2026-08-19",
+    "zh": "老师直播脚本库上线 + 学员中心加入周报与家校沟通 + WCA 并列领奖台统计与 H2H 比赛发现上线 + 公式与模拟器统一回放控件并支持 FTO EIF 动画 + 桌面微信分享与计时器城市位置上线",
+    "en": "The teacher livestream script library launches + the learner portal adds weekly reports and family conversations + WCA tied-podium statistics and H2H competition discovery launch + algorithms and the simulator share playback controls with FTO EIF animation + desktop WeChat sharing and timer city locations launch"
+  },
+  {
+    "date": "2026-08-20",
+    "zh": "教学管理加入请假补课、课时退回冲正、经营概览与审计 + WCA 比赛模拟器上线 + 社区动态、短视频帖子与公开反馈流上线 + 复盘支持会员上传视频与完整 FTO 记号回放 + 斜转第一层精确求解器上线",
+    "en": "Teaching management adds leave and makeup handling, credit refunds and reversals, an operations overview and auditing + the WCA competition simulator launches + community activity, short-video posts and the public feedback feed launch + reconstruction supports member video uploads and complete FTO notation playback + the exact Skewb first-layer solver launches"
+  },
+  {
+    "date": "2026-08-21",
+    "zh": "计算器支持分享成绩直播 + 计时器一键导入 csTimer 与 dcTimer 并加入二阶特殊打乱和小魔方精确难度 + 对色与邻色测试上线 + 手机首页主卡片固定为 3×3",
+    "en": "The calculator supports shareable live results + the timer imports csTimer and dcTimer in one step and adds special 2x2 scrambles and exact small-puzzle difficulty + color and adjacent-color quizzes launch + primary home-page cards use a fixed 3×3 mobile grid"
+  },
+  {
+    "date": "2026-08-22",
+    "zh": "教学 Platform 完整并入主站并退役独立前端 + 比赛成绩可带选手资料进入计算器 + 在线房间改用四位数字加入码 + 中国比赛搜索支持省份",
+    "en": "The teaching Platform moves fully into the main site and retires its standalone front end + competition results open the calculator with competitor details + online rooms adopt four-digit join codes + Chinese competition search supports provinces"
+  },
+  {
+    "date": "2026-08-23",
+    "zh": "统一魔方转动记号指南上线 + API 运行时与 Web 前端解耦并加入架构边界守卫 + WCA 四垫计时规则解读上线 + 全站支持保持屏幕常亮 + 智能设备蓝牙生命周期加固",
+    "en": "The unified puzzle move-notation guide launches + the API runtime is decoupled from the web front end with architecture boundary checks + the WCA four-pad timing guide launches + the site can keep the screen awake + smart-device Bluetooth lifecycle handling is hardened"
+  },
+  {
+    "date": "2026-08-24",
+    "zh": "统一记号指南加入模拟器驱动的交互训练 + 公开基础设施说明页上线 + Clock 与 SQ2 求解核心提取为共享包 + Stackmat 在麦克风授权手势中直接监听 + 复盘卡片显示打乱公式",
+    "en": "The unified notation guide adds simulator-driven interactive drills + the public infrastructure profile launches + Clock and Square-2 solver cores become shared packages + Stackmat starts listening during the microphone permission gesture + reconstruction cards show scramble algorithms"
+  },
+  {
+    "date": "2026-08-25",
+    "zh": "核心工作区按 apps、packages 与 jobs 重组 + 云端三阶最优求解器升级 opt8 并显示制表进度 + 站点目录加入主题与魔方项目筛选 + FMC 求解服务与自动复盘研究归入独立运行边界",
+    "en": "The core workspace is reorganized into apps, packages and jobs + the cloud optimal 3x3 solver upgrades to opt8 with table-generation progress + the site directory adds topic and puzzle filters + the FMC solver service and automated reconstruction research move into independent runtime boundaries"
+  },
+  {
+    "date": "2026-08-26",
+    "zh": "站点目录改为主题优先筛选 + 公开反馈支持固定链接 + 论坛动态统计可直接进入对应内容 + 教程维护期间锁定页面 + 首页卡片改用共享布局并修正中等宽度网格",
+    "en": "The site directory adopts topic-first filtering + public feedback gains permalinks + forum activity statistics link directly to matching content + tutorial pages lock during maintenance + home-page cards share one layout with corrected medium-width grids"
   }
 ]

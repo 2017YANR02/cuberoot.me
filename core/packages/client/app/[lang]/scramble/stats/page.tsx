@@ -1278,9 +1278,9 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         {toggleInfoTooltip}
         </div>
       </div>
-      {/* SolveTabs 在 dist 模式下只剩 3×3 子标签(最优解 / 阶段 / CFOP / DR);项目行由上面那个
+      {/* SolveTabs 在 dist 模式下只剩 3×3 子标签(最优解 / 分布 / 阶段 / CFOP / DR);项目行由上面那个
           PuzzlePicker 承担,不重复渲染,故非 3×3 时它是空的 —— 直接不挂。 */}
-      {!embedded && distPuzzle === '3x3' && <SolveTabs puzzle={distPuzzle} mode="dist" />}
+      {!embedded && distPuzzle === '3x3' && <SolveTabs puzzle={distPuzzle} mode="dist" sub="distribution" />}
     </div>
   );
 

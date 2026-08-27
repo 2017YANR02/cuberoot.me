@@ -6,6 +6,7 @@ import { BarChart3, IdCard, ListPlus, Share2, Trash2 } from 'lucide-react';
 import {
   PB_EVENT_IDS,
   PB_RECORD_OPTIONS,
+  pbRecordOptionLabel,
   parsePbResultInput,
   type PbRecordOption,
   type PbRecordType,
@@ -55,9 +56,7 @@ function optionFromKey(key: OptionKey): PbRecordOption {
 }
 
 function optionLabel(recordType: PbRecordType, setSize: number): string {
-  if (recordType === 'single') return tr({ zh: '单次', en: 'Single' });
-  if (recordType === 'mean') return tr({ zh: '三次平均', en: 'Mean of 3' });
-  return tr({ zh: `${setSize} 次平均`, en: `Average of ${setSize}` });
+  return pbRecordOptionLabel(recordType, setSize, tr({ zh: '单次', en: 'Single' }));
 }
 
 function formatRecord(record: PbRecord): string {

@@ -167,10 +167,9 @@ export default function Cube3Solver() {
   // Explicit scramble to solve once the table finishes generating (need-init path),
   // so a paint-triggered optimal solve doesn't read stale textarea state.
   const pendingSolveScrambleRef = useRef<string | undefined>(undefined);
-  // cubeopt always returns solutions. 求打乱 inverts every returned solution so
-  // single-state and batch inputs both receive equivalent optimal scrambles.
+  // cubeopt always returns solutions. 求打乱 inverts every returned solution for
+  // display in the result log, without mutating the user's input.
   const optimalResultKindRef = useRef<'scramble' | 'solution'>('solution');
-  const optimalScrambleLinesRef = useRef<string[]>([]);
   const [autoDownloadTable, setAutoDownloadTable] = useState(true);
   // Optional save folder (File System Access API). When set, generated tables
   // are written straight into it instead of the browser's default Downloads.
@@ -299,7 +298,6 @@ export default function Cube3Solver() {
   async function runKociembaForState(
     facelet: string,
     mode: 'scramble' | 'solution' = 'scramble',
-    writeBack = true,
   ): Promise<string | null> {
     const errMsg = validateFacelet(facelet);
     if (errMsg) {
@@ -309,7 +307,6 @@ export default function Cube3Solver() {
     const state = faceletToCubie(facelet);
     if (isSolvedCubie(state)) {
       setStateInfo(t('状态已是还原态,无需打乱。', 'State is already solved.'));
-      if (writeBack) setScrambles('');
       return null;
     }
     setStateInfo(t('状态合法,Kociemba 求解中(首次需 ~3s 建表)…', 'State valid, solving with Kociemba (first call needs ~3s to build tables)…'));
@@ -348,7 +345,6 @@ export default function Cube3Solver() {
         w.postMessage({ id, op: 'solve', state });
       });
       const out = mode === 'solution' ? formatMoves(invertSequence(parseMoves(sol))) : sol;
-      if (writeBack) setScrambles(out);
       // The derived maneuver + its step count now live in the Logs box, so clear
       // the transient "solving…" line instead of showing a redundant result line.
       setStateInfo(null);
@@ -391,9 +387,9 @@ export default function Cube3Solver() {
     }
   };
 
-  // Optimal 求打乱: derive a scramble (Kociemba, into the box), solve it optimally
-  // (cubeopt/cloud), then invert the optimal solution back into the box — that
-  // inverse is the fewest-move scramble reaching the painted state.
+  // Optimal 求打乱: derive a scramble with Kociemba, solve it optimally via
+  // cubeopt/cloud, then log the inverse as the fewest-move scramble reaching the
+  // painted state. The user's text input remains untouched.
   const handlePaintDeriveOptimalScramble = async (fc: string) => {
     const optBusy = solveSource === 'cloud' ? cloudBusy : readyState === 'busy';
     if (kociembaBusy || optBusy) return;
@@ -406,7 +402,6 @@ export default function Cube3Solver() {
     }
     if (!scr) return; // invalid or already solved — stateInfo already set
     optimalResultKindRef.current = 'scramble';
-    optimalScrambleLinesRef.current = [];
     if (solveSource === 'cloud') await cloudSolve([scr]);
     else startSolve(scr);
   };
@@ -424,7 +419,7 @@ export default function Cube3Solver() {
   };
 
   // Optimal variant of the above: derive a scramble reaching the painted state
-  // (Kociemba, into the box) then hand it to the optimal solver (cubeopt/cloud).
+  // with Kociemba, then hand it to the optimal solver (cubeopt/cloud).
   // The optimal solution lands in the solutions panel / logs like any other solve.
   const handlePaintSolveOptimal = async (fc: string) => {
     const optBusy = solveSource === 'cloud' ? cloudBusy : readyState === 'busy';
@@ -438,7 +433,6 @@ export default function Cube3Solver() {
     }
     if (!scr) return; // invalid or already solved — stateInfo already set
     optimalResultKindRef.current = 'solution';
-    optimalScrambleLinesRef.current = [];
     if (solveSource === 'cloud') await cloudSolve([scr]);
     else startSolve(scr);
   };
@@ -473,12 +467,10 @@ export default function Cube3Solver() {
         }
         const finMatch = /^Cube(\d+)\s+finished\s+in\s/i.exec(line);
         if (finMatch) {
-          const idx = parseInt(finMatch[1], 10);
           const alg = pendingSolutionsRef.current.shift();
           if (alg !== undefined) {
             if (optimalResultKindRef.current === 'scramble') {
               const optScr = formatMoves(invertSequence(parseMoves(alg)));
-              optimalScrambleLinesRef.current[idx - 1] = optScr;
               logResultLine('scramble', optScr, true);
             } else {
               logResultLine('solution', alg, true);
@@ -522,11 +514,7 @@ export default function Cube3Solver() {
         }
         setProgress(-1);
       } else if (d.cmd === 'start solve') {
-        if (d.code === 0 && optimalResultKindRef.current === 'scramble') {
-          setScrambles(optimalScrambleLinesRef.current.join('\n'));
-        }
         optimalResultKindRef.current = 'solution';
-        optimalScrambleLinesRef.current = [];
         setReadyState('ready');
         setProgress(-1);
       } else if (d.cmd === 'download table') {
@@ -559,7 +547,6 @@ export default function Cube3Solver() {
     pendingSolveRef.current = false;
     justGeneratedRef.current = false;
     optimalResultKindRef.current = 'solution';
-    optimalScrambleLinesRef.current = [];
     setProgress(-1);
     setLogs((prev) => prev + '[cancelled by user]\n');
     const w = new Worker('/cubeopt/wasm-worker.js');
@@ -670,13 +657,9 @@ export default function Cube3Solver() {
       .split('\n').map(s => s.trim()).filter(s => s.length > 0);
     if (!cleanedLines.length) { alert(t('打乱不能为空', 'No scrambles')); return; }
     const cleaned = cleanedLines.join('\n');
-    setScrambles(cleaned);
     setReadyState('busy');
     setLogs('');
     pendingSolutionsRef.current = [];
-    optimalScrambleLinesRef.current = optimalResultKindRef.current === 'scramble'
-      ? Array(cleanedLines.length).fill('')
-      : [];
     workerRef.current?.postMessage({
       cmd: 'start solve',
       scramble: cleaned,
@@ -718,9 +701,6 @@ export default function Cube3Solver() {
     setCloudBusy(true);
     setCloudStatus(t('连接云端求解…', 'Connecting…'));
     setLogs('');
-    optimalScrambleLinesRef.current = optimalResultKindRef.current === 'scramble'
-      ? Array(lines.length).fill('')
-      : [];
     const ac = new AbortController();
     cloudAbortRef.current = ac;
     let done = 0;
@@ -807,18 +787,13 @@ export default function Cube3Solver() {
             const okN = obj.ok ?? 0;
             const failN = obj.fail ?? 0;
             const completed = Math.min(lines.length, Math.max(done, okN + failN));
-            if (optimalResultKindRef.current === 'scramble') {
-              setScrambles(optimalScrambleLinesRef.current.join('\n'));
-            }
             optimalResultKindRef.current = 'solution';
-            optimalScrambleLinesRef.current = [];
             setCloudStatus(`${completed}/${lines.length} ${solveSecs}s`);
           } else if (typeof obj.i === 'number' && typeof obj.solution === 'string') {
             const sol = obj.solution;
             done++;
             if (optimalResultKindRef.current === 'scramble') {
               const optScr = formatMoves(invertSequence(parseMoves(sol)));
-              optimalScrambleLinesRef.current[obj.i] = optScr;
               logResultLine('scramble', optScr, true);
             } else {
               logResultLine('solution', sol, true);
@@ -839,7 +814,6 @@ export default function Cube3Solver() {
       clearTimeout(overallTimer);
       if (cloudTimerRef.current) { clearInterval(cloudTimerRef.current); cloudTimerRef.current = null; }
       optimalResultKindRef.current = 'solution';
-      optimalScrambleLinesRef.current = [];
       setCloudBusy(false);
       cloudAbortRef.current = null;
     }
@@ -851,23 +825,19 @@ export default function Cube3Solver() {
     if (!scrambleLines.length || scrambleState.err || kociembaBusy || busy) return;
     if (paintOptimal) {
       optimalResultKindRef.current = kind;
-      optimalScrambleLinesRef.current = [];
       if (cloudMode) await cloudSolve();
       else startSolve();
       return;
     }
 
     const sourceLines = [...scrambleLines];
-    const derivedScrambles: string[] = [];
     setLogs('');
     try {
       for (const line of sourceLines) {
         const facelet = cubieToFacelet(applySequence(solvedCubie(), parseMoves(line)));
-        const out = await runKociembaForState(facelet, kind, false);
-        derivedScrambles.push(out ?? '');
+        const out = await runKociembaForState(facelet, kind);
         if (out) logResultLine(kind, out, false);
       }
-      if (kind === 'scramble') setScrambles(derivedScrambles.join('\n'));
       setStateInfo(null);
     } catch (e) {
       setStateInfo(t(`从状态求解失败:${(e as Error).message}`, `Solve from state failed: ${(e as Error).message}`));
@@ -899,9 +869,9 @@ export default function Cube3Solver() {
 
   // Mirror the first scramble line onto the painted canvas: applying it to a
   // solved cube IS the state being solved, so the top net doubles as a live
-  // preview. Painting diverges the canvas freely; 求打乱 writes back a scramble
-  // whose state equals what's painted (worker inverts the solution), so the
-  // round-trip causes no visual jump. Empty / partial lines leave the canvas.
+  // preview. Painting diverges the canvas freely, while solve actions only append
+  // results to the log and never write back into this input. Empty / partial lines
+  // leave the canvas unchanged.
   useEffect(() => {
     const first = scrambles.split('\n').map(s => s.trim()).find(Boolean);
     if (!first) return;
@@ -925,13 +895,24 @@ export default function Cube3Solver() {
       <InfoTooltip
         icon={HelpCircle}
         content={cloudMode ? t(
-          '云端用服务器的 opt8 表(约 7.8 GB)求最优解，解和本地各档完全一样，只是免你下载多 GB 的表。一次最多 5 条，串行排队；每个 IP 每 5 分钟最多 30 次，管理员不限。',
-          'The server solves with its opt8 table (~7.8 GB). The solution is identical to every local tier; this saves you the multi-GB download. Up to 5 scrambles are processed in a serial queue. Each IP gets up to 30 requests per 5 minutes; admins are exempt.'
+          '云端用服务器的 opt8 表(约 7.8 GB)求最优解。一次最多 5 条，串行排队；每个 IP 每 5 分钟最多 30 次，管理员不限。',
+          'The server solves with its opt8 table (~7.8 GB). Up to 5 scrambles are processed in a serial queue. Each IP gets up to 30 requests per 5 minutes; admins are exempt.'
         ) : t(
           '本地在浏览器里生成或下载一份求解表(30 MB~15 GB，视下面 Solver 档位而定)，存到本机，不用登录、条数不限；下次打开可直接上传复用。',
           'Local mode generates or downloads a 30 MB–15 GB solver table in your browser, depending on the Solver tier below. It is stored on your device, requires no login, has no scramble-count limit, and can be uploaded again next time.'
         )}
       />
+    </span>
+  ) : null;
+  const cloudProgressInline = cloudMode && cloudStatus ? (
+    <span className="cubeopt-info cloud-progress-inline" role="status">
+      {cloudBusy && <Spinner size={14} />}
+      <span className="ci-msg">{cloudStatus}</span>
+      {cloudBusy && <span className="cloud-timer">{Math.floor(cloudLiveMs / 1000)}s</span>}
+      {cloudBusy && (
+        <ClearButton variant="standalone" onClick={cancelCloud}
+          ariaLabel={t('取消', 'Cancel')} title={t('取消', 'Cancel')} />
+      )}
     </span>
   ) : null;
 
@@ -968,6 +949,7 @@ export default function Cube3Solver() {
         >
           {t('求解法', 'Solve')}
         </button>
+        {cloudProgressInline}
       </div>
     );
   };
@@ -1044,6 +1026,7 @@ export default function Cube3Solver() {
                 : { zh: '从上面画的状态求出把它解开的步骤(打乱的逆)', en: 'Derive the moves that solve the painted state (inverse of the scramble)' }}
               secondaryBusy={paintOptimal && (solveSource === 'cloud' ? cloudBusy : readyState === 'busy')}
               optimalToggle={{ value: paintOptimal, onChange: setPaintOptimal, trailing: solveSourceControl }}
+              actionsTrailing={cloudProgressInline}
             />
           ) : viewMode === 'net' ? (
             <InteractiveCubeNet
@@ -1062,6 +1045,7 @@ export default function Cube3Solver() {
                 : { zh: '从上面画的状态求出把它解开的步骤(打乱的逆)', en: 'Derive the moves that solve the painted state (inverse of the scramble)' }}
               secondaryBusy={paintOptimal && (solveSource === 'cloud' ? cloudBusy : readyState === 'busy')}
               optimalToggle={{ value: paintOptimal, onChange: setPaintOptimal, trailing: solveSourceControl }}
+              actionsTrailing={cloudProgressInline}
             />
           ) : viewMode === 'photo' ? (
             <PhotoScanner
@@ -1082,14 +1066,6 @@ export default function Cube3Solver() {
               />
               {scrambleState.err ? (
                 <div className="move-input-err">{scrambleState.err}</div>
-              ) : scrambleLines.length > 1 ? (
-                <div className="move-input-hint">
-                  {t(`${scrambleLines.length} 条打乱 · 已同步到方块(预览第 1 条)`, `${scrambleLines.length} scrambles · synced to the cube (previewing #1)`)}
-                </div>
-              ) : scrambleState.moves > 0 ? (
-                <div className="move-input-hint">
-                  {t(`${scrambleState.moves} 步打乱 · 已同步到方块`, `${scrambleState.moves}-move scramble · synced to the cube`)}
-                </div>
               ) : null}
               <div className="move-input-actions">
                 <BoolToggle value={paintOptimal} onChange={setPaintOptimal} label={t('最优', 'Optimal')} />
@@ -1114,6 +1090,7 @@ export default function Cube3Solver() {
                 >
                   {t('求解法', 'Solve')}
                 </button>
+                {cloudProgressInline}
               </div>
             </div>
           ) : (
@@ -1139,29 +1116,16 @@ export default function Cube3Solver() {
         </div>
       </section>
 
-      {(stateInfo || (cloudMode && cloudStatus)) && (
+      {stateInfo && (
         <div className="cubeopt-info cubeopt-info-stack">
-          {stateInfo && (
-            <div className="ci-line">
-              {kociembaBusy && <Spinner size={14} />}
-              <span className="ci-msg">{stateInfo}</span>
-              {kociembaBusy && (
-                <ClearButton variant="standalone" onClick={cancelKociemba}
-                  ariaLabel={t('取消', 'Cancel')} title={t('取消', 'Cancel')} />
-              )}
-            </div>
-          )}
-          {cloudMode && cloudStatus && (
-            <div className="ci-line">
-              {cloudBusy && <Spinner size={14} />}
-              <span className="ci-msg">{cloudStatus}</span>
-              {cloudBusy && <span className="cloud-timer">{Math.floor(cloudLiveMs / 1000)}s</span>}
-              {cloudBusy && (
-                <ClearButton variant="standalone" onClick={cancelCloud}
-                  ariaLabel={t('取消', 'Cancel')} title={t('取消', 'Cancel')} />
-              )}
-            </div>
-          )}
+          <div className="ci-line">
+            {kociembaBusy && <Spinner size={14} />}
+            <span className="ci-msg">{stateInfo}</span>
+            {kociembaBusy && (
+              <ClearButton variant="standalone" onClick={cancelKociemba}
+                ariaLabel={t('取消', 'Cancel')} title={t('取消', 'Cancel')} />
+            )}
+          </div>
         </div>
       )}
 
@@ -1270,6 +1234,11 @@ const INLINE_CSS = `
 .cubeopt-info-stack { flex-direction: column; align-items: stretch; gap: 0.4rem; }
 .cubeopt-info-stack .ci-line { display: flex; align-items: center; gap: 0.5rem; }
 .cubeopt-info-stack .ci-msg { flex: 1; }
+.cloud-progress-inline {
+  display: inline-flex; width: fit-content; margin-bottom: 0; padding: 0.35rem 0.55rem;
+  white-space: nowrap;
+}
+.cloud-progress-inline .ci-msg { flex: 0 1 auto; }
 .btn-cancel {
   display: inline-flex; align-items: center; gap: 0.3rem;
   background: #4a1f1f; border: 1px solid #8a3a3a; color: #ffaaaa;

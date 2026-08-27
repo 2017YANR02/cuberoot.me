@@ -1251,6 +1251,41 @@ html[data-theme=dark] .arch-page { --accent: #6B8FCE; }
   width: 2px;
   background: var(--rule);
 }
+.tl-month {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tl-month + .tl-month { margin-top: 24px; }
+.tl-month-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px 148px;
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.tl-month-trigger:hover { color: var(--foreground); }
+.tl-month-trigger:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.tl-month-chevron {
+  flex: 0 0 auto;
+  transition: transform .18s;
+}
+.tl-month.collapsed .tl-month-chevron { transform: rotate(-90deg); }
+.tl-month-entries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 .tl-entry { margin: 0 0 12px; position: relative; }
 .tl-trigger {
   display: flex;
@@ -1379,6 +1414,7 @@ html[data-theme=dark] .arch-page { --accent: #6B8FCE; }
 
 @media (max-width: 720px) {
   .timeline::before { left: 64px; }
+  .tl-month-trigger { margin-left: 80px; }
   .tl-trigger { gap: 16px; }
   .tl-date { width: 56px; font-size: 11px; padding: 14px 0; line-height: 1.3; }
   .tl-date::after { right: -22px; width: 10px; height: 10px; top: 22px; }

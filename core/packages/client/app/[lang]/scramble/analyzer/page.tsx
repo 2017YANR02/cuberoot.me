@@ -13,7 +13,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useQueryState, useQueryStates, parseAsString, parseAsInteger, parseAsStringEnum } from 'nuqs';
-import dynamic from 'next/dynamic';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Copy, Check } from 'lucide-react';
@@ -48,16 +47,7 @@ import { compSourceLine } from '@/lib/comp-schedule';
 import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { variantLabel, stageLabel, variantDataRef } from '@/lib/scramble-variants';
 import SolveTabs from '../_components/SolveTabs';
-import LazyVisible from '@/components/LazyVisible';
 import './analyze.css';
-
-// 分布区(下半区)懒载:求解/分布合页后,analyzer(3×3 阶段/CFOP/DR)下方接同一份分布。
-// embedded 模式 → 分布的 URL 键加 d 前缀,避开 analyzer 自己的 scramble/variant/stage/colors/tool。
-// ssr:false + LazyVisible 滚入才挂,首屏不拉 chunk、不跑分布现场求解。
-const ScrambleStatsPage = dynamic(() => import('../stats/page'), {
-  ssr: false,
-  loading: () => <div style={{ padding: 16 }}>Loading…</div>,
-});
 
 const DEFAULT_SCRAMBLE = "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'";
 
@@ -785,10 +775,6 @@ export default function AnalyzePage() {
   return (
     <Suspense fallback={<div style={{ padding: 16 }}>Loading…</div>}>
       <AnalyzePageInner />
-      {/* 分布区:同一滚动页,求解(阶段/CFOP/DR)下方;懒挂载,首屏零分布开销。 */}
-      <LazyVisible className="scramble-dist-embed">
-        <ScrambleStatsPage embedded />
-      </LazyVisible>
     </Suspense>
   );
 }

@@ -46,7 +46,16 @@ import { applyOrientationPrefix } from '@/lib/cube-orientation';
 import { cstimer222Spec, isCube222StateType, use222Mode, use222Type } from '@/lib/scramble-222-mode';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
 import { trainerSpecOf, trainerSig } from '../_lib/scramble/trainer-source';
-import { peekTrainer, awaitTrainer, prefetchTrainer, releaseTrainer, retryTrainer } from '../_lib/scramble/trainer_pool';
+import { aliasTrainerMeta, peekTrainer, awaitTrainer, prefetchTrainer, releaseTrainer, retryTrainer } from '../_lib/scramble/trainer_pool';
+import {
+  awaitOptimal333,
+  peekOptimal333,
+  prefetchOptimal333,
+  releaseOptimal333,
+  retryOptimal333,
+  shouldUseRandomOptimal333,
+  type Optimal333Source,
+} from '../_lib/scramble/optimal333_pool';
 import TrainerCaseBar from '../_components/TrainerCaseBar';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { Flag } from '@/components/Flag';
@@ -55,11 +64,12 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { usesStepsIndex, variantDataRef } from '@/lib/scramble-variants';
 import { useAuthStore } from '@/lib/auth-store';
+import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchMarks, addMark, markKey, type ScrambleMark } from '../_lib/marks';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
-import { warmup333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';
+import { warmup333, randomState333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';
 import { useTimer, type TimerPhase } from '../_shared/useTimer';
 import { formatInspectionDisplay, inspectionPenalty } from '../_shared/inspection';
 import { formatMs, bestSingle, bestAverageOfN, bestMbldSolve, compareMbld, summarize } from '../_lib/stats';
@@ -292,6 +302,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const settings = useSettings();
+  const authUser = useAuthStore((st) => st.user);
   const rankCountry = useRankCountry();
 
   const isMobile = useMediaQuery('(max-width: 480px)');
@@ -518,6 +529,46 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   trainerSpecRef.current = trainerSpec;
   const trainerSigVal = settings.scrambleSource === 'random' ? trainerSig(event, settings) : '';
 
+  // 云端大表只服务三阶随机状态。同步种子要求严格按消费顺序推进，后台预生成会破坏该契约，
+  // 因而设置行会同步置灰。难度/专项状态仍先照原规则生成，再求同一状态的最短打乱。
+  const randomOptimalRequested = shouldUseRandomOptimal333(
+    settings.wcaUseOptimal,
+    event,
+    settings.scrambleSource,
+    !!authUser,
+    settings.syncSeed,
+  );
+  const randomOptimalOwner = authUser ? computeOwnerKey(authUser.uid, authUser.wcaId) : '';
+  const randomOptimalKey = randomOptimalRequested
+    ? `${randomOptimalOwner}|${trainerSigVal}|${drillTarget ? `${drillTarget.type}:${drillTarget.id}` : ''}`
+    : '';
+  const randomOptimalSource: Optimal333Source | null = randomOptimalRequested
+    ? {
+        key: randomOptimalKey,
+        generateBase: async () => {
+          if (drillTarget && drillAllowed) {
+            const drill = generateDrillScramble(drillTarget.type, drillTarget.id);
+            if (drill) return drill.scramble;
+          }
+          const spec = trainerSpecRef.current;
+          if (spec) {
+            prefetchTrainer(spec);
+            const status = await awaitTrainer(spec);
+            if (status === 'ready') {
+              const generated = peekTrainer(spec);
+              if (generated) return generated;
+            }
+            throw new Error('trainer state unavailable');
+          }
+          return randomState333();
+        },
+        optimize: async (base, signal) => (await cloudOptimalScramble(base, undefined, signal)).scramble,
+        onOptimized: aliasTrainerMeta,
+      }
+    : null;
+  const randomOptimalSourceRef = useRef(randomOptimalSource);
+  randomOptimalSourceRef.current = randomOptimalSource;
+
   // 手动输入队列:每行一条打乱(去空行);source==='manual' 时按游标顺序取用(走完循环回队首),
   // ←/→ 仍走 scrambleHist 历史。队列内容变了即重置打乱历史(经 genScramble 身份变化)+ 游标。
   const manualQueue = useMemo(
@@ -554,6 +605,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       manualCursorRef.current += 1;
       return s;
     }
+    // Buffered async path: a ready optimal scramble is instant; '' is filled by
+    // the effect below while the pool keeps the next three states warm.
+    if (randomOptimalRequested) {
+      const source = randomOptimalSourceRef.current;
+      return source ? peekOptimal333(source) : '';
+    }
     if (drillTarget && drillAllowed) {
       const ds = generateDrillScramble(drillTarget.type, drillTarget.id);
       if (ds) return ds.scramble;
@@ -584,7 +641,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (isNonWcaEvent(event)) return generateScramble(event);
     return takeScramble(`${event}|${s.cnMode}|${event === '222' ? mode222 : ''}`, () => generateScramble(event), canGenScramble);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, special222Sig, genStepsSig, trainerSigVal, manualSig, canGenScramble, mode222]);
+  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, special222Sig, genStepsSig, trainerSigVal, manualSig, canGenScramble, mode222, randomOptimalRequested, randomOptimalKey]);
 
   const [scrambleHist, setScrambleHist] = useState<{ list: string[]; idx: number }>(
     () => ({ list: [genScramble()], idx: 0 }),
@@ -602,6 +659,59 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     scramble,
     preScrambleFor(event, settings.preScr, settings.preScrT),
   );
+
+  const [randomOptimalLoading, setRandomOptimalLoading] = useState(false);
+  const [randomOptimalFailed, setRandomOptimalFailed] = useState(false);
+  const [randomOptimalRetry, setRandomOptimalRetry] = useState(0);
+
+  // Own the pool lifecycle separately from the current slot: changing history
+  // must not abort the background fill, but leaving this exact generation
+  // context must immediately cancel its in-flight cloud solve and drop stale rows.
+  useEffect(() => {
+    const source = randomOptimalSourceRef.current;
+    if (!randomOptimalRequested || !source) {
+      releaseOptimal333();
+      return;
+    }
+    prefetchOptimal333(source);
+    return () => releaseOptimal333();
+  }, [randomOptimalRequested, randomOptimalKey]);
+
+  // A dry optimal buffer uses the same empty-history-slot contract as WCA and
+  // worker sources. Fill only the still-current empty slot so navigation or a
+  // settings change can never overwrite a newer scramble.
+  useEffect(() => {
+    const source = randomOptimalSourceRef.current;
+    if (!randomOptimalRequested || !source || scramble !== '') {
+      setRandomOptimalLoading(false);
+      setRandomOptimalFailed(false);
+      return;
+    }
+    let cancelled = false;
+    setRandomOptimalLoading(true);
+    setRandomOptimalFailed(false);
+    void awaitOptimal333(source).then((status) => {
+      if (cancelled) return;
+      if (status === 'error') {
+        setRandomOptimalLoading(false);
+        setRandomOptimalFailed(true);
+        return;
+      }
+      if (status !== 'ready') return;
+      const cur = scrambleHistRef.current;
+      if (cur.list[cur.idx] !== '') {
+        setRandomOptimalLoading(false);
+        return;
+      }
+      const optimal = peekOptimal333(source);
+      if (!optimal) return;
+      const list = [...cur.list];
+      list[cur.idx] = optimal;
+      setRandomOptimalLoading(false);
+      applyScrambleHist({ list, idx: cur.idx });
+    });
+    return () => { cancelled = true; };
+  }, [scramble, randomOptimalRequested, randomOptimalKey, randomOptimalRetry, applyScrambleHist]);
 
   // WCA mode: an empty slot means the pool was momentarily dry — fetch a real
   // scramble and fill it in, showing a loading state until it lands. We never
@@ -761,7 +871,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // ── 打卡:当前真实打乱的公开标记(谁做过这条打乱,纯展示)──────────
   // 标记由「做完自动打卡」负责(下方 effect);这里只读 + 弹层看名单。
   // 列表按 markKey 缓存(同会话内重看同一条不重拉)。
-  const authUser = useAuthStore((st) => st.user);
   const [marksOpen, setMarksOpen] = useState(false);
   const [marksCache, setMarksCache] = useState<Record<string, { count: number; marks: ScrambleMark[] }>>({});
   const marksBoxRef = useRef<HTMLSpanElement | null>(null);
@@ -2492,13 +2601,30 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                   : tr({ zh: '点击换一个打乱', en: 'Click to refresh'
                                       })}
             >
-              <span className="scramble-text">{scrambleLoading || cstimerLoading || trainerLoading
+              <span className="scramble-text">{randomOptimalLoading || scrambleLoading || cstimerLoading || trainerLoading
                 // 转圈取代了原来的「加载真实打乱…」文字,所以它是唯一的加载提示 → 传 label 供读屏。
                 // 原来包在外面的 .scramble-loading 没有任何 CSS 规则也没有别的消费者,一并去掉。
-                ? <Spinner size={22} label={cstimerLoading || trainerLoading
-                    ? tr({ zh: '生成打乱', en: 'Generating scramble' })
-                    : tr({ zh: '加载真实打乱', en: 'Loading real scramble' })} />
-                : trainerMiss
+                ? <Spinner size={22} label={randomOptimalLoading
+                    ? tr({ zh: '生成最优打乱', en: 'Generating optimal scramble' })
+                    : cstimerLoading || trainerLoading
+                      ? tr({ zh: '生成打乱', en: 'Generating scramble' })
+                      : tr({ zh: '加载真实打乱', en: 'Loading real scramble' })} />
+                : randomOptimalFailed
+                  ? <span className="scramble-empty">{tr({
+                      zh: '最优打乱生成失败。',
+                      en: 'Could not generate an optimal scramble.',
+                    })}{' '}<button
+                      type="button"
+                      className="scramble-empty-retry"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const source = randomOptimalSourceRef.current;
+                        if (!source) return;
+                        retryOptimal333(source);
+                        setRandomOptimalRetry((n) => n + 1);
+                      }}
+                    >{tr({ zh: '再试一次', en: 'Try again' })}</button></span>
+                  : trainerMiss
                   ? <span className="scramble-empty">{trainerMiss === 'empty'
                       ? tr({
                           zh: '没有任何打乱是这个难度,把步数范围放宽一点',
@@ -2610,7 +2736,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                     </span>
                   )}
               {/* 「按难度生成」的打乱 + 答案(只在该来源下有 meta 时出现)。 */}
-              {!scrambleLoading && !trainerLoading && <TrainerCaseBar scramble={scramble} isZh={isZh} />}
+              {!randomOptimalLoading && !scrambleLoading && !trainerLoading && <TrainerCaseBar scramble={scramble} isZh={isZh} />}
               {wcaSrcDisplay && (
                 <div className="scramble-src-row">
                 <a

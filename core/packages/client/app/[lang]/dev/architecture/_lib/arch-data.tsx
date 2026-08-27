@@ -230,16 +230,242 @@ export const TRACER_PATTERNS: Pattern[] = [
 },
 ];
 
-// 写作约定(列表 TIMELINE + 日历 timeline_commits.json 同此): 内容面向访客(速拧玩家 / 普通访客),
-// 不是开发日志。极简——title 点明用户能感知的变化, body 一句话, expand 两句内;
+// 写作约定(列表 TIMELINE + 日历 timeline_commits.json 同此): 日期只写单个完整 YYYY-MM-DD, 禁用范围或月份;
+// 内容面向访客(速拧玩家 / 普通访客), 不是开发日志。极简——title 点明用户能感知的变化, body 一句话, expand 两句内;
 // 禁路由路径当主标识 / 行数 / 内部组件名 / 缩写黑话。
+type TimelineDate = `${number}-${number}-${number}`;
+
 export interface TLEntry {
-  date: string;
+  date: TimelineDate;
   tag: 'migration' | 'dx' | 'feature' | 'infra';
   zh: { title: string; body: string; expand: string };
   en: { title: string; body: string; expand: string };
 }
-export const TIMELINE: TLEntry[] = [
+export const TIMELINE: TLEntry[] = ([
+  {
+    date: '2026-08-25',
+    tag: 'migration',
+    zh: {
+      title: '核心工作区按运行边界重组',
+      body: 'API、移动应用、小程序、求解服务与离线任务分别归入应用、共享包和任务目录。',
+      expand: '部署流程、构建路径与边界守卫同步调整，前端、服务端和生成任务不再借用彼此的源码入口。',
+    },
+    en: {
+      title: 'The core workspace is reorganized by runtime boundary',
+      body: 'The API, mobile app, Mini Program, solver service and offline jobs now live under dedicated app, package and job areas.',
+      expand: 'Deployment workflows, build paths and boundary checks move with them so the front end, server and generated jobs no longer borrow one another\'s source entry points.',
+    },
+  },
+  {
+    date: '2026-08-25',
+    tag: 'feature',
+    zh: {
+      title: '云端三阶最优求解升级至 opt8',
+      body: '云端使用约 7.8 GB 的 opt8 表求最少步解，用户无需在本机下载大表。',
+      expand: '制表进度会实时显示，任务完成后仍沿用原有队列、结果与分享流程。',
+    },
+    en: {
+      title: 'Cloud optimal 3x3 solving upgrades to opt8',
+      body: 'The cloud service uses an approximately 7.8 GB opt8 table for fewest-move solutions without requiring a local table download.',
+      expand: 'Table-generation progress is shown live, while completed jobs retain the existing queue, result and sharing flow.',
+    },
+  },
+  {
+    date: '2026-08-26',
+    tag: 'feature',
+    zh: {
+      title: '站点目录改为主题优先筛选',
+      body: '网站导航先按内容主题归类，再用魔方项目与关键词缩小工具和资料范围。',
+      expand: '主题、项目和搜索条件共享同一套筛选状态，链接打开后可直接还原当前视图。',
+    },
+    en: {
+      title: 'The site directory adopts topic-first filtering',
+      body: 'Navigation groups resources by topic first, then narrows tools and references by puzzle event and keyword.',
+      expand: 'Topics, events and search share one filter state so opening a link can restore the same view.',
+    },
+  },
+  {
+    date: '2026-08-24',
+    tag: 'infra',
+    zh: {
+      title: '公开基础设施说明页上线',
+      body: '网站、API、静态资源、移动端与离线任务的运行边界集中公开说明。',
+      expand: '页面同时梳理部署路径、缓存职责和生成物来源，便于核对每项能力由哪个运行单元负责。',
+    },
+    en: {
+      title: 'A public infrastructure profile launches',
+      body: 'The runtime boundaries for the website, API, static assets, mobile apps and offline jobs are documented in one place.',
+      expand: 'It also maps deployment paths, cache responsibilities and generated-data sources to the runtime unit that owns each capability.',
+    },
+  },
+  {
+    date: '2026-08-23',
+    tag: 'feature',
+    zh: {
+      title: '统一魔方转动记号指南上线',
+      body: '不同魔方的转动符号、读法与示例集中到同一套双语指南。',
+      expand: '指南继续加入模拟器驱动的交互训练与共享钟表盘，让阅读、演示和练习使用同一套动作语义。',
+    },
+    en: {
+      title: 'A unified puzzle move-notation guide launches',
+      body: 'Move symbols, readings and examples for different puzzles are collected in one bilingual guide.',
+      expand: 'Simulator-driven drills and a shared clock board then let reading, demonstrations and practice use the same move semantics.',
+    },
+  },
+  {
+    date: '2026-08-22',
+    tag: 'migration',
+    zh: {
+      title: '教学 Platform 完整并入主站',
+      body: '组织、课程、学员和运营工作台统一进入主站，独立前端停止承担现役功能。',
+      expand: '搜索、登录态、语言与深链一并复用主站能力，减少两套前端之间的重复维护。',
+    },
+    en: {
+      title: 'The teaching Platform moves fully into the main site',
+      body: 'Organization, course, learner and operations workspaces now live in the main site, retiring the standalone front end from active use.',
+      expand: 'Search, identity, language and deep links reuse the main-site foundation, reducing duplicate maintenance across two front ends.',
+    },
+  },
+  {
+    date: '2026-08-21',
+    tag: 'feature',
+    zh: {
+      title: '成绩计算器支持分享直播',
+      body: '房主分享链接后，观众可只读查看比赛成绩，并在房主继续录入时收到后续更新。',
+      expand: '比赛成绩与选手资料也能直接带入计算器，直播、核分和赛后查看使用同一份结果。',
+    },
+    en: {
+      title: 'The score calculator supports shareable live results',
+      body: 'After a host shares a link, viewers can follow results read-only and receive later scores as the host enters them.',
+      expand: 'Competition results and competitor details can also open directly in the calculator so live scoring, verification and review use the same result set.',
+    },
+  },
+  {
+    date: '2026-08-21',
+    tag: 'feature',
+    zh: {
+      title: '对色与邻色测试上线',
+      body: '训练者可独立练习中心色对应关系与相邻色方向判断。',
+      expand: '题目、作答反馈和连续训练流程复用站内训练框架，手机端也保持紧凑操作。',
+    },
+    en: {
+      title: 'Color and adjacent-color quizzes launch',
+      body: 'Solvers can practise opposite-center relationships and adjacent-color orientation as focused drills.',
+      expand: 'Questions, answer feedback and continuous practice reuse the site training framework with compact mobile controls.',
+    },
+  },
+  {
+    date: '2026-08-20',
+    tag: 'feature',
+    zh: {
+      title: 'WCA 比赛模拟器上线',
+      body: '用户可按比赛项目、轮次和赛制模拟晋级过程与最终排名。',
+      expand: '模拟结果沿用真实比赛的成绩格式与晋级规则，适合赛前预演和赛制理解。',
+    },
+    en: {
+      title: 'The WCA competition simulator launches',
+      body: 'Users can simulate advancement and final standings by event, round and competition format.',
+      expand: 'Results follow real competition formatting and advancement rules for pre-event rehearsal and format exploration.',
+    },
+  },
+  {
+    date: '2026-08-20',
+    tag: 'feature',
+    zh: {
+      title: '社区动态与公开反馈流上线',
+      body: '论坛帖子、短视频和公开反馈可在统一信息流中浏览。',
+      expand: '固定链接与可交互统计随后接入，用户能从汇总直接进入对应内容。',
+    },
+    en: {
+      title: 'Community activity and the public feedback feed launch',
+      body: 'Forum posts, short videos and public feedback can be browsed in unified activity feeds.',
+      expand: 'Permalinks and interactive statistics then connect summaries directly to their matching content.',
+    },
+  },
+  {
+    date: '2026-08-19',
+    tag: 'feature',
+    zh: {
+      title: '老师直播脚本库上线',
+      body: '老师可保存、整理并复用自己的结构化直播脚本。',
+      expand: '公开脚本页保留分段结构与作者归属，方便课前准备、直播展示和课后分享。',
+    },
+    en: {
+      title: 'The teacher livestream script library launches',
+      body: 'Teachers can save, organize and reuse their own structured livestream scripts.',
+      expand: 'Public script pages preserve section structure and authorship for preparation, live presentation and later sharing.',
+    },
+  },
+  {
+    date: '2026-08-19',
+    tag: 'feature',
+    zh: {
+      title: 'WCA 并列领奖台与 H2H 查询上线',
+      body: '统计页可查看单次和平均并列领奖台，比赛中心也能发现采用 H2H 赛制的比赛。',
+      expand: '统计覆盖所有符合条件的轮次，H2H 标识复用项目图标体系展示在比赛信息中。',
+    },
+    en: {
+      title: 'WCA tied podiums and H2H discovery launch',
+      body: 'Statistics show tied single and average podiums, while the competition center can discover events using the H2H format.',
+      expand: 'The statistics cover every eligible round, and H2H status appears in competition details through the shared event-icon system.',
+    },
+  },
+  {
+    date: '2026-08-17',
+    tag: 'feature',
+    zh: {
+      title: '教学管理形成完整工作流',
+      body: '组织、校区、班级、课包、课次、训练与证据记录在主站串联起来。',
+      expand: '随后加入请假补课、课时退回与冲正、周报、家校沟通、经营概览和审计记录。',
+    },
+    en: {
+      title: 'Teaching management becomes an end-to-end workflow',
+      body: 'Organizations, campuses, groups, lesson packages, sessions, training and evidence records connect across the main site.',
+      expand: 'Leave and makeup handling, credit refunds and reversals, weekly reports, family conversations, operations summaries and audit records follow.',
+    },
+  },
+  {
+    date: '2026-08-17',
+    tag: 'feature',
+    zh: {
+      title: '成果展示页上线',
+      body: '求解器、模拟器、复盘、统计与原创研究成果在双语页面集中呈现。',
+      expand: '每项成果都连接到可验证的产品页面或数据证据，首页也提供统一入口。',
+    },
+    en: {
+      title: 'The achievements showcase launches',
+      body: 'Solvers, simulators, reconstruction, statistics and original research are collected in one bilingual showcase.',
+      expand: 'Each achievement links to verifiable product or data evidence, with a shared entry point from the home page.',
+    },
+  },
+  {
+    date: '2026-08-17',
+    tag: 'feature',
+    zh: {
+      title: '师资资料支持履历与多图展示',
+      body: '老师可在独立编辑页维护履历、分类照片、排序与公开状态。',
+      expand: '公开目录使用封面与图库呈现资料，并在上传和展示两端校验图片归属。',
+    },
+    en: {
+      title: 'Teacher profiles gain resume and multi-photo presentation',
+      body: 'Teachers can manage resume details, categorized photos, ordering and visibility on a dedicated editor page.',
+      expand: 'The public directory presents a cover and gallery while validating image ownership during upload and display.',
+    },
+  },
+  {
+    date: '2026-08-17',
+    tag: 'feature',
+    zh: {
+      title: '微信小程序接入多品牌智能魔方',
+      body: '小程序计时器支持 GAN、GoCube、Giiker 与魔域设备的蓝牙连接。',
+      expand: '共享协议与原生桥接覆盖扫描、配对、状态同步和断线恢复，使网页与小程序沿用一致的设备语义。',
+    },
+    en: {
+      title: 'The WeChat Mini Program connects multiple smart-cube brands',
+      body: 'Its timer supports Bluetooth connections for GAN, GoCube, Giiker and MoYu devices.',
+      expand: 'Shared protocols and the native bridge cover scanning, pairing, state sync and reconnection so web and Mini Program clients use consistent device semantics.',
+    },
+  },
   {
     date: '2026-08-16',
     tag: 'migration',
@@ -283,7 +509,7 @@ export const TIMELINE: TLEntry[] = [
     },
   },
   {
-    date: '2026-08-07 ~ 08-15',
+    date: '2026-08-07',
     tag: 'feature',
     zh: {
       title: '比赛与排名工具连续扩展',
@@ -297,7 +523,7 @@ export const TIMELINE: TLEntry[] = [
     },
   },
   {
-    date: '2026-08-13 ~ 08-14',
+    date: '2026-08-13',
     tag: 'feature',
     zh: {
       title: '课程平台与师资目录上线',
@@ -325,7 +551,7 @@ export const TIMELINE: TLEntry[] = [
     },
   },
   {
-    date: '2026-08-11 ~ 08-13',
+    date: '2026-08-11',
     tag: 'feature',
     zh: {
       title: '公式学习加入识别指南、记号页与计时挑战',
@@ -367,7 +593,7 @@ export const TIMELINE: TLEntry[] = [
     },
   },
   {
-    date: '2026-07-31 ~ 08-03',
+    date: '2026-07-31',
     tag: 'feature',
     zh: {
       title: '魔方知识问答上线',
@@ -381,7 +607,7 @@ export const TIMELINE: TLEntry[] = [
     },
   },
   {
-    date: '2026-08-01 ~ 08-03',
+    date: '2026-08-01',
     tag: 'feature',
     zh: {
       title: '日历与时区工具上线',
@@ -395,7 +621,7 @@ export const TIMELINE: TLEntry[] = [
     },
   },
   {
-    date: '2026-07-31 ~ 08-01',
+    date: '2026-07-31',
     tag: 'feature',
     zh: {
       title: '盲拧公式工具集中上线',
@@ -437,7 +663,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-07-26 ~ 07-28',
+    date: '2026-07-26',
     tag: 'feature',
     zh: {
       title: '/predict 预判训练器上线',
@@ -465,7 +691,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-07-26 ~ 07-27',
+    date: '2026-07-26',
     tag: 'feature',
     zh: {
       title: '十字与 XCross 精确穷举分布上线',
@@ -479,7 +705,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-07-24 ~ 07-26',
+    date: '2026-07-24',
     tag: 'feature',
     zh: {
       title: '涂色求解扩展到二阶、斜转、金字塔与 SQ1',
@@ -493,7 +719,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-07-27 ~ 07-28',
+    date: '2026-07-27',
     tag: 'infra',
     zh: {
       title: '全站加载优化与页面标题补齐',
@@ -507,7 +733,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-07-23 ~ 07-28',
+    date: '2026-07-23',
     tag: 'feature',
     zh: {
       title: 'LSLL 公式库上线，全部 583,284 个状态附最优解',
@@ -619,7 +845,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-07-21 ~ 07-22',
+    date: '2026-07-21',
     tag: 'migration',
     zh: {
       title: '/sim 伴图改由自有引擎矢量导出',
@@ -703,7 +929,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-07-14 ~ 07-15',
+    date: '2026-07-14',
     tag: 'feature',
     zh: {
       title: '站内通知系统上线',
@@ -787,7 +1013,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-07-04 ~ 07-06',
+    date: '2026-07-04',
     tag: 'feature',
     zh: {
       title: '上线内部账号系统与第三方登录',
@@ -801,7 +1027,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-07-04 ~ 07-10',
+    date: '2026-07-04',
     tag: 'feature',
     zh: {
       title: '/sim 加可开关的写实指法手模',
@@ -815,7 +1041,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-06-23 ~ 06-29',
+    date: '2026-06-23',
     tag: 'feature',
     zh: {
       title: '/sim 重做渲染：群论内核驱动，新增镜面魔方等多种类型',
@@ -829,7 +1055,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-06-24 ~ 06-29',
+    date: '2026-06-24',
     tag: 'feature',
     zh: {
       title: 'WCA 规则页加官方全文逐字镜像和更新动态',
@@ -843,7 +1069,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-06-20 ~ 06-23',
+    date: '2026-06-20',
     tag: 'feature',
     zh: {
       title: '非 WCA 异形魔方求解器批量上线',
@@ -857,7 +1083,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-06-22 ~ 06-30',
+    date: '2026-06-22',
     tag: 'dx',
     zh: {
       title: '开发者板块 /dev 扩充：协议、API、数据库、约束守卫',
@@ -885,7 +1111,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-06-16 ~ 06-19',
+    date: '2026-06-16',
     tag: 'feature',
     zh: {
       title: 'Square-1 接入按 WCA 计步的整解最优求解器',
@@ -927,7 +1153,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-06-12 ~ 06-13',
+    date: '2026-06-12',
     tag: 'feature',
     zh: {
       title: '赞助墙 /support 和会员订阅 /membership 上线',
@@ -955,7 +1181,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-06-09 ~ 06-10',
+    date: '2026-06-09',
     tag: 'feature',
     zh: {
       title: '名次和可拆分到各项目；计时器接入真实 WCA 打乱',
@@ -1025,7 +1251,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-05-28 ~ 05-31',
+    date: '2026-05-28',
     tag: 'feature',
     zh: {
       title: '全站桌宠、Rust 网页版求解器；求解引擎并入主仓库',
@@ -1081,7 +1307,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-05-15 ~ 05-24',
+    date: '2026-05-15',
     tag: 'feature',
     zh: {
       title: '比赛实时直播、深度预测长文、虚拟魔方覆盖全项目、手机 App',
@@ -1179,7 +1405,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-04-30 ~ 05-01',
+    date: '2026-04-30',
     tag: 'feature',
     zh: {
       title: '项目理论极限预测页、公式查询库上线；比赛日历加列表视图',
@@ -1193,7 +1419,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-04-26 ~ 27',
+    date: '2026-04-26',
     tag: 'feature',
     zh: {
       title: '速拧计时器重写上线（TypeScript），次日补齐盲拧 / 蓝牙 / 3D',
@@ -1207,7 +1433,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-04-24 ~ 25',
+    date: '2026-04-24',
     tag: 'feature',
     zh: {
       title: '克星查询、马赛克生成器、WCA 选手主页上线',
@@ -1249,7 +1475,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-04-16 ~ 18',
+    date: '2026-04-16',
     tag: 'feature',
     zh: {
       title: '3D 地球上的全球比赛地图，同日重写首页',
@@ -1263,7 +1489,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-04-06 ~ 16',
+    date: '2026-04-06',
     tag: 'feature',
     zh: {
       title: '视频数帧工具上线：帮裁判和选手精确数到哪一帧',
@@ -1277,7 +1503,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-04',
+    date: '2026-04-20',
     tag: 'dx',
     zh: {
       title: '类型检查修好了：以前 typo 一直能通过检查',
@@ -1333,7 +1559,7 @@ export const TIMELINE: TLEntry[] = [
     }
 },
   {
-    date: '2026-03-12 ~ 15',
+    date: '2026-03-12',
     tag: 'feature',
     zh: {
       title: '第一波工具集成：成绩对比、公式训练器、csTimer、1v1 对战',
@@ -1430,4 +1656,4 @@ export const TIMELINE: TLEntry[] = [
       expand: 'No tools, no backend, no data at first — just a shell. The first two months slowly added forked tool pages; the first feature with real data didn\'t arrive until 2026-02-17.',
     }
 },
-];
+] satisfies TLEntry[]).sort((a, b) => b.date.localeCompare(a.date));

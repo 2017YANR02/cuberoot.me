@@ -389,10 +389,10 @@ CREATE TABLE pb_records (
   is_current    BOOLEAN NOT NULL DEFAULT TRUE,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CHECK (
+  CONSTRAINT pb_records_set_size_check CHECK (
     (record_type = 'single' AND set_size = 1) OR
     (record_type = 'mean' AND set_size = 3) OR
-    (record_type = 'average' AND set_size IN (5, 12, 50, 100, 1000))
+    (record_type = 'average' AND set_size IN (5, 12, 50, 100, 1000, 10000))
   ),
   CHECK (event_id <> '333mbf' OR (record_type = 'single' AND set_size = 1))
 );
