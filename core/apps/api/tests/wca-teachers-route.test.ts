@@ -1,9 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 
-const mocks = vi.hoisted(() => ({ query: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  query: vi.fn(),
+  requireAuth: vi.fn(),
+  hasActiveMembership: vi.fn(),
+}));
 
 vi.mock('../src/db/connection.js', () => ({ query: mocks.query }));
+vi.mock('../src/utils/recon_helpers.js', () => ({
+  ADMIN_WCA_IDS: ['2017YANR02'],
+  requireAuth: mocks.requireAuth,
+}));
+vi.mock('../src/utils/membership.js', () => ({
+  hasActiveMembership: mocks.hasActiveMembership,
+}));
 
 import { wcaTeacherRoutes } from '../src/routes/wca_teachers';
 
@@ -58,6 +69,96 @@ describe('GET /v1/wca/teachers', () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'use either students or teachers' });
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+});
+
+describe('GET /v1/wca/teachers/:teacherId/named-students', () => {
+  beforeEach(() => mocks.query.mockReset());
+
+  it('returns roster students without fabricating WCA IDs', async () => {
+    mocks.query.mockResolvedValueOnce([{
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      teacher_wca_id: '2017YANR02',
+      student_name: '小明',
+      event_ids: ['333', 'pyram'],
+    }]);
+
+    const response = await app.request('/v1/wca/teachers/2017yanr02/named-students');
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ students: [{
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      teacherWcaId: '2017YANR02',
+      studentName: '小明',
+      eventIds: ['333', 'pyram'],
+    }] });
+    expect(mocks.query).toHaveBeenCalledWith(
+      expect.stringContaining('FROM wca_teacher_named_students student'),
+      ['2017YANR02'],
+    );
+  });
+
+  it('rejects an invalid teacher ID before querying the roster', async () => {
+    const response = await app.request('/v1/wca/teachers/not-an-id/named-students');
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'invalid teacher WCA ID' });
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /v1/wca/teachers/:teacherId/named-students', () => {
+  beforeEach(() => {
+    mocks.query.mockReset();
+    mocks.requireAuth.mockReset();
+    mocks.hasActiveMembership.mockReset();
+  });
+
+  it('lets an administrator add a named student for any teacher', async () => {
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02' });
+    mocks.query
+      .mockResolvedValueOnce([{ wca_id: '2020TENG01' }])
+      .mockResolvedValueOnce([{
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        teacher_wca_id: '2020TENG01',
+        student_name: '小明',
+        event_ids: ['333', 'pyram'],
+      }]);
+
+    const response = await app.request('/v1/wca/teachers/2020teng01/named-students', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ studentName: '  小明  ', eventIds: ['333', 'pyram'] }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual({ student: {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      teacherWcaId: '2020TENG01',
+      studentName: '小明',
+      eventIds: ['333', 'pyram'],
+    } });
+    expect(mocks.hasActiveMembership).not.toHaveBeenCalled();
+    expect(mocks.query).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('INSERT INTO wca_teacher_named_students'),
+      expect.arrayContaining(['2020TENG01', '小明', '2017YANR02', '333', 'pyram']),
+    );
+  });
+
+  it('prevents a member from adding students to another teacher roster', async () => {
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2020TENG01' });
+
+    const response = await app.request('/v1/wca/teachers/2017yanr02/named-students', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ studentName: '小明', eventIds: ['333'] }),
+    });
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: 'only the teacher can manage this roster' });
+    expect(mocks.hasActiveMembership).not.toHaveBeenCalled();
     expect(mocks.query).not.toHaveBeenCalled();
   });
 });

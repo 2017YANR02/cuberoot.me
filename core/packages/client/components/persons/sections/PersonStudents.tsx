@@ -8,6 +8,7 @@ import { SortArrow } from '@/components/SortArrow';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import {
   canAddWcaTeacherStudent,
+  WcaNamedStudentCell,
   WcaStudentAdder,
   WcaTeacherCell,
   useWcaTeachers,
@@ -21,12 +22,19 @@ import {
   fetchWcaPersonResults,
   type WcaPersonProfile,
 } from '@/lib/wca-person-api';
-import { listWcaTeacherStudents, type WcaTeacher } from '@/lib/wca-teachers-api';
+import {
+  listWcaNamedStudents,
+  listWcaTeacherStudents,
+  type WcaNamedStudent,
+  type WcaTeacher,
+} from '@/lib/wca-teachers-api';
 import { eventDisplayName } from '@/lib/wca-events';
 import { formatWcaResult, type ResultKind } from '@/lib/wca-format-result';
 
 interface StudentSeed {
-  wcaId: string;
+  key: string;
+  wcaId?: string;
+  namedStudent?: WcaNamedStudent;
   name?: string;
   eventIds: string[];
 }
@@ -40,6 +48,7 @@ interface StudentMeta {
 export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: string; isZh: boolean }) {
   const t = useT();
   const [relations, setRelations] = useState<WcaTeacher[] | null>(null);
+  const [namedStudents, setNamedStudents] = useState<WcaNamedStudent[] | null>(null);
   const [studentMeta, setStudentMeta] = useState<Map<string, StudentMeta>>(() => new Map());
   const [reloadKey, setReloadKey] = useState(0);
   const [selectedEventId, setSelectedEventId] = useState('');
@@ -51,14 +60,21 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
   useEffect(() => {
     let cancelled = false;
     setRelations(null);
-    listWcaTeacherStudents(teacherWcaId)
-      .then((next) => { if (!cancelled) setRelations(next); })
-      .catch(() => { if (!cancelled) setRelations([]); });
+    setNamedStudents(null);
+    Promise.all([
+      listWcaTeacherStudents(teacherWcaId).catch(() => []),
+      listWcaNamedStudents(teacherWcaId).catch(() => []),
+    ])
+      .then(([nextRelations, nextNamedStudents]) => {
+        if (cancelled) return;
+        setRelations(nextRelations);
+        setNamedStudents(nextNamedStudents);
+      });
     return () => { cancelled = true; };
   }, [reloadKey, teacherWcaId]);
 
   const studentSeeds = useMemo<StudentSeed[]>(() => {
-    if (!relations) return [];
+    if (!relations || !namedStudents) return [];
     const byStudent = new Map<string, StudentSeed>();
     for (const relation of relations) {
       const current = byStudent.get(relation.studentWcaId);
@@ -66,11 +82,20 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
         if (!current.eventIds.includes(relation.eventId)) current.eventIds.push(relation.eventId);
       } else {
         byStudent.set(relation.studentWcaId, {
+          key: `wca:${relation.studentWcaId}`,
           wcaId: relation.studentWcaId,
           name: relation.studentName,
           eventIds: [relation.eventId],
         });
       }
+    }
+    for (const student of namedStudents) {
+      byStudent.set(`named:${student.id}`, {
+        key: `named:${student.id}`,
+        namedStudent: student,
+        name: student.studentName,
+        eventIds: [...student.eventIds],
+      });
     }
     const eventOrder = new Map(ALL_EVENT_IDS.map((eventId, index) => [eventId, index]));
     return [...byStudent.values()]
@@ -78,12 +103,12 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
         ...student,
         eventIds: student.eventIds.sort((a, b) => (eventOrder.get(a) ?? 999) - (eventOrder.get(b) ?? 999)),
       }))
-      .sort((a, b) => displayCuberName(a.name ?? a.wcaId, isZh).localeCompare(
-        displayCuberName(b.name ?? b.wcaId, isZh),
+      .sort((a, b) => displayCuberName(a.name ?? a.wcaId ?? '', isZh).localeCompare(
+        displayCuberName(b.name ?? b.wcaId ?? '', isZh),
       ));
-  }, [isZh, relations]);
+  }, [isZh, namedStudents, relations]);
 
-  const studentIds = useMemo(() => studentSeeds.map((student) => student.wcaId), [studentSeeds]);
+  const studentIds = useMemo(() => studentSeeds.flatMap((student) => student.wcaId ? [student.wcaId] : []), [studentSeeds]);
   const studentIdsKey = studentIds.join(',');
   const teacherDirectory = useWcaTeachers(studentIds, ALL_EVENT_IDS);
 
@@ -115,18 +140,18 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
   }, [studentIdsKey]);
 
   const students = useMemo(() => studentSeeds.flatMap((student) => {
-    const currentEventIds = teacherDirectory.ready
+    const currentEventIds = student.wcaId && teacherDirectory.ready
       ? ALL_EVENT_IDS.filter((eventId) => {
-        const relation = teacherDirectory.teachers.get(wcaTeacherRelationKey(student.wcaId, eventId));
+        const relation = teacherDirectory.teachers.get(wcaTeacherRelationKey(student.wcaId!, eventId));
         return relation?.teacherWcaId === teacherWcaId;
       })
       : student.eventIds;
     if (currentEventIds.length === 0) return [];
-    const meta = studentMeta.get(student.wcaId);
+    const meta = student.wcaId ? studentMeta.get(student.wcaId) : undefined;
     return [{
       ...student,
       eventIds: currentEventIds,
-      competedEventIds: meta?.competedEventIds,
+      competedEventIds: student.wcaId ? meta?.competedEventIds : [],
       countryIso2: meta?.countryIso2 ?? '',
       personalRecords: meta?.personalRecords,
     }];
@@ -168,8 +193,8 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
       if (aValue !== null && bValue !== null && aValue !== bValue) {
         return (aValue - bValue) * (resultSort.dir === 'asc' ? 1 : -1);
       }
-      return displayCuberName(a.name ?? a.wcaId, isZh).localeCompare(
-        displayCuberName(b.name ?? b.wcaId, isZh),
+      return displayCuberName(a.name ?? a.wcaId ?? '', isZh).localeCompare(
+        displayCuberName(b.name ?? b.wcaId ?? '', isZh),
       );
     }), [isZh, resultSort, selectedEventId, students]);
 
@@ -250,18 +275,28 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
               </tr>
             )}
             {visibleStudents.map((student) => (
-              <tr key={student.wcaId}>
+              <tr key={student.key}>
                 <td className="wp-cell-student">
                   <span className="wp-student-identity">
-                    <WcaTeacherCell
-                      studentWcaId={student.wcaId}
-                      eventIds={student.eventIds}
-                      editableEventIds={ALL_EVENT_IDS}
-                      directory={teacherDirectory}
-                      isZh={isZh}
-                      editorOnly
-                      managedTeacherWcaId={teacherWcaId}
-                    />
+                    {student.wcaId ? (
+                      <WcaTeacherCell
+                        studentWcaId={student.wcaId}
+                        eventIds={student.eventIds}
+                        editableEventIds={ALL_EVENT_IDS}
+                        directory={teacherDirectory}
+                        isZh={isZh}
+                        editorOnly
+                        managedTeacherWcaId={teacherWcaId}
+                      />
+                    ) : student.namedStudent ? (
+                      <WcaNamedStudentCell
+                        student={student.namedStudent}
+                        teacherWcaId={teacherWcaId}
+                        directory={teacherDirectory}
+                        isZh={isZh}
+                        onSaved={() => setReloadKey((current) => current + 1)}
+                      />
+                    ) : null}
                     {student.countryIso2 && (
                       <Flag
                         iso2={student.countryIso2}
@@ -269,12 +304,19 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
                         imgClassName="country-flag-ct"
                       />
                     )}
-                    <PersonLink
-                      wcaId={student.wcaId}
-                      name={student.name}
-                      isZh={isZh}
-                      className="wp-student-link"
-                    />
+                    {student.wcaId ? (
+                      <PersonLink
+                        wcaId={student.wcaId}
+                        name={student.name}
+                        isZh={isZh}
+                        className="wp-student-link"
+                      />
+                    ) : (
+                      <>
+                        <span className="wp-student-unregistered-name">{student.name}</span>
+                        <span className="wp-student-unregistered">{t('未参赛', 'Not competed')}</span>
+                      </>
+                    )}
                   </span>
                 </td>
                 <td className="wp-cell-student-events">

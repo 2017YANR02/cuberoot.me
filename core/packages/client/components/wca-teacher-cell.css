@@ -120,6 +120,10 @@
   max-width: none;
 }
 
+.wca-teacher-dialog-heading .wca-named-student-chip {
+  width: auto;
+}
+
 .wca-teacher-dialog-event {
   margin: 0 0 12px;
   color: var(--muted-foreground);
