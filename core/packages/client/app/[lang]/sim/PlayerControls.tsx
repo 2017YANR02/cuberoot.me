@@ -142,7 +142,7 @@ import { resolveCaps } from './simCaps';
 import StickeringSelect from './StickeringSelect';
 import type { PickGrain, CustomTreatment } from './engine/nxn/customStickering';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
-import { stripGripMarks } from '@cuberoot/shared/alg-notation';
+import { stm, stripGripMarks } from '@cuberoot/shared/alg-notation';
 import {
   canonicalFtoEifAlgorithm,
   invertFtoEifAlgorithm,
@@ -1055,6 +1055,7 @@ export default function PlayerControls({
   const authLogin = useAuthStore((s) => s.login);
 
   const [algDraft, setAlgDraft] = useState(alg);
+  const algStm = useMemo(() => (is3x3 ? stm(algDraft) : 0), [algDraft, is3x3]);
   const [setupDraft, setSetupDraft] = useState(setup ?? '');
   const [sq1Format, setSq1Format] = useState<'compact' | 'wca'>('compact');
   const [step, setStep] = useState(0);
@@ -2326,6 +2327,14 @@ export default function PlayerControls({
             onCaretChange={handleCaretSync}
           />
         </div>
+        {is3x3 && algStm > 0 && (
+          <output
+            className="sim-player-count"
+            aria-label={t(`解法步数:${algStm} STM`, `Solution length: ${algStm} STM`)}
+          >
+            ({algStm} STM)
+          </output>
+        )}
         {puzzleKind === 'skewb' && skewbNotation && onSkewbNotationChange && (
           <select
             className="sim-player-mode"
