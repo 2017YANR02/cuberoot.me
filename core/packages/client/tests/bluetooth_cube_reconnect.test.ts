@@ -286,7 +286,16 @@ describe('smart-cube reconnect ownership', () => {
     expect(handshakeMac).toBe('AA:BB:CC:DD:EE:FF');
     expect(cube.status.connected).toBe(true);
     expect(cube.status.brand).toBe('gan-v4');
-    expect(cube.advertisementDiagnostic).toMatchObject({ eventNumber: 1, complete: true });
+    expect(cube.advertisementDiagnostic).toMatchObject({
+      phase: 'connected',
+      eventNumber: 1,
+      complete: true,
+      advertisementMs: expect.any(Number),
+      gattMs: expect.any(Number),
+      discoveryMs: expect.any(Number),
+      handshakeMs: expect.any(Number),
+      totalElapsedMs: expect.any(Number),
+    });
 
     await act(async () => cube.disconnect());
     order.length = 0;

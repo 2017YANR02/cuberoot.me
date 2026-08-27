@@ -173,7 +173,17 @@ describe('BluetoothModal direct connection attempt', () => {
       },
       solved: true,
       lastMove: "R'",
-      advertisementDiagnostic: { eventNumber: 3, elapsedMs: 1260, complete: true },
+      advertisementDiagnostic: {
+        phase: 'connected',
+        eventNumber: 3,
+        elapsedMs: 1260,
+        complete: true,
+        totalElapsedMs: 4320,
+        advertisementMs: 1260,
+        gattMs: 2480,
+        discoveryMs: 380,
+        handshakeMs: 200,
+      },
       resetState: vi.fn(),
       disconnect: vi.fn(),
     } as BluetoothCubeHandle;
@@ -194,7 +204,9 @@ describe('BluetoothModal direct connection attempt', () => {
     expect(content).toContain('72%');
     expect(content).toContain('solved');
     expect(content).toContain("R'");
-    expect(content).toContain('advertisement 3 after 1.26 seconds');
+    expect(content).toContain('4.32 seconds after device selection');
+    expect(content).toContain('advertisement 3');
+    expect(content).toContain('GATT 2.48s');
     expect(content).toContain('automatically stops the timer');
     expect(content).toContain('Reset state');
     expect(content).toContain('Disconnect');
