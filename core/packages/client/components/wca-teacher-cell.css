@@ -159,7 +159,7 @@
   overscroll-behavior: contain;
 }
 
-.wca-student-batch-names textarea {
+.wca-student-batch-input {
   box-sizing: border-box;
   width: 100%;
   min-height: 104px;
@@ -173,12 +173,12 @@
   line-height: 1.5;
 }
 
-.wca-student-batch-names textarea:focus-visible {
+.wca-student-batch-input:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 1px;
 }
 
-.wca-student-batch-names textarea::placeholder {
+.wca-student-batch-input::placeholder {
   color: var(--faint-foreground);
 }
 
@@ -281,7 +281,7 @@
     padding: 18px;
   }
 
-  .wca-student-batch-names textarea {
+  .wca-student-batch-input {
     min-height: 84px;
   }
 
