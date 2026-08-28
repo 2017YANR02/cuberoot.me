@@ -24,7 +24,7 @@ import {
   TimingSurface,
 } from '@cuberoot/timer-ui';
 import { renderFromSimpleQuery } from '@cuberoot/visualcube';
-import { ChevronDown, MoreHorizontal, Settings as SettingsIcon } from 'lucide-react';
+import { ChevronDown, MoreHorizontal, Settings as SettingsIcon, X } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -64,6 +64,10 @@ function siteUrl(language: SupportedLanguage): string {
 
 function privacyUrl(language: SupportedLanguage): string {
   return language === 'zh' ? `${SITE_ORIGIN}/zh/privacy` : `${SITE_ORIGIN}/privacy`;
+}
+
+function timerUrl(language: SupportedLanguage): string {
+  return language === 'zh' ? `${SITE_ORIGIN}/zh/timer` : `${SITE_ORIGIN}/timer`;
 }
 
 function applyPreferences(settings: TimerStoreSettings): void {
@@ -189,7 +193,10 @@ export function App() {
   const [realLoading, setRealLoading] = useState(initialRealPool.length === 0);
   const [scramble, setScramble] = useState(() => initialRealPool[0]?.scramble ?? scramble333(Math.random));
   const [toast, setToast] = useState('');
+  const [moreOpen, setMoreOpen] = useState(false);
   const [canUndoImport, setCanUndoImport] = useState(false);
+  const moreDialogRef = useRef<HTMLDialogElement>(null);
+  const moreImportInputRef = useRef<HTMLInputElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
   const fallbackLanguage = preferredLanguage();
   const language = store?.settings.language ?? fallbackLanguage;
@@ -257,6 +264,13 @@ export function App() {
     setToast(message);
     window.setTimeout(() => setToast((current) => current === message ? '' : current), 3000);
   }, []);
+
+  useEffect(() => {
+    const dialog = moreDialogRef.current;
+    if (!dialog) return;
+    if (moreOpen && !dialog.open) dialog.showModal();
+    if (!moreOpen && dialog.open) dialog.close();
+  }, [moreOpen]);
 
   useEffect(() => {
     let active = true;
@@ -369,6 +383,7 @@ export function App() {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    setMoreOpen(false);
     if (file.size > MAX_TIMER_BACKUP_BYTES) {
       announce(copy.importTooLarge);
       return;
@@ -423,7 +438,7 @@ export function App() {
   return (
     <main className="app-shell">
       <header className="app-titlebar">
-        <strong>{copy.timer}</strong>
+        <strong>{copy.timerTitle}</strong>
         <span
           aria-label={connection === 'checking' ? copy.checking : connection === 'online' ? copy.online : copy.offline}
           className={`network network--${connection}`}
@@ -442,7 +457,7 @@ export function App() {
                     aria-label={copy.more}
                     className="timer-toolbar-icon"
                     data-no-timer
-                    onClick={() => setView('history')}
+                    onClick={() => setMoreOpen(true)}
                     type="button"
                   ><MoreHorizontal aria-hidden="true" size={18} /></button>
                   <button
@@ -474,13 +489,14 @@ export function App() {
                     </select>
                     <ChevronDown aria-hidden="true" size={13} />
                   </label>
-                  <span className="timer-toolbar-muted">{copy.difficulty}</span>
                 </>
               )}
             />
             <div className="timer-solution-row">{copy.solution}</div>
             <div className="timer-source-bar" data-no-timer>
-              <span className="timer-source-kind">{copy.competition}<ChevronDown aria-hidden="true" size={14} /></span>
+              <span className="timer-source-kind">
+                {currentReal && scrambleSource === 'real' ? copy.competition : copy.random}
+              </span>
               <span className="timer-source-name">
                 {currentReal?.competitionName
                   ?? (realLoading && scrambleSource === 'real' ? copy.loadingReal : copy.localRandom)}
@@ -653,6 +669,55 @@ export function App() {
           </section>
         )}
       </div>
+
+      <dialog
+        aria-labelledby="more-title"
+        className="more-dialog"
+        onClick={(event) => {
+          if (event.target === event.currentTarget) setMoreOpen(false);
+        }}
+        onClose={() => setMoreOpen(false)}
+        ref={moreDialogRef}
+      >
+        <div className="more-sheet">
+          <header className="more-sheet-header">
+            <h2 id="more-title">{copy.more}</h2>
+            <button aria-label={copy.close} onClick={() => setMoreOpen(false)} type="button">
+              <X aria-hidden="true" size={20} />
+            </button>
+          </header>
+          <div className="more-sheet-actions">
+            <button
+              onClick={() => {
+                setMoreOpen(false);
+                setView('history');
+              }}
+              type="button"
+            >{copy.history}</button>
+            <button onClick={() => {
+              setMoreOpen(false);
+              exportData();
+            }} type="button">{copy.exportData}</button>
+            <button onClick={() => moreImportInputRef.current?.click()} type="button">{copy.importData}</button>
+            <input
+              accept="application/json,.json"
+              hidden
+              onChange={importData}
+              ref={moreImportInputRef}
+              type="file"
+            />
+            <a
+              href={timerUrl(language)}
+              onClick={(event) => {
+                setMoreOpen(false);
+                openExternal(event);
+              }}
+              rel="noreferrer"
+              target="_blank"
+            >{copy.openFullTimer}</a>
+          </div>
+        </div>
+      </dialog>
 
       <nav className="bottom-nav" aria-label={copy.title}>
         {([

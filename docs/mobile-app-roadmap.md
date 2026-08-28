@@ -170,6 +170,7 @@
 
 - `xcodebuild` 使用 Xcode 26.6、iOS Simulator SDK 26.5 完成 Debug 构建；`simctl install` 和 `simctl launch` 对 `me.cuberoot.app` 成功。
 - iOS 原生工程只承载 Capacitor 壳，计时 UI、项目图标和魔方展开图分别复用 `@cuberoot/timer-ui`、`@cuberoot/event-icon` 和 `@cuberoot/visualcube`；架构边界守卫与相关定向测试通过。
+- 小程序的计时页已确认只是指向网站 `/zh/timer` 的 WebView；移动 App 以该真实网站界面为视觉参照，但不跨 app 导入小程序源码。本轮在共享移动端 React 界面中补齐了真实“更多”菜单，并移除尚无对应能力的难度占位和假下拉提示，避免为追求外观一致而复制或伪造功能。
 - Apple Developer 账号当前登录异常，所有者计划联系 Apple；因此会员 Active、付费 Team、真机签名、Archive 和 TestFlight 均保持未勾选。
 
 ### 阶段 10：全球发布和长期维护

@@ -11,6 +11,7 @@
   --accent-foreground: #ffffff;
   --accent-soft: color-mix(in srgb, var(--accent) 13%, transparent);
   --border-default: color-mix(in srgb, var(--foreground) 13%, transparent);
+  --modal-overlay: #000000;
   --shell-divider: color-mix(in srgb, var(--foreground) 8%, transparent);
   --shell-hover: color-mix(in srgb, var(--foreground) 6%, transparent);
   --success: #39724f;
@@ -167,8 +168,7 @@ button {
 }
 
 .timer-toolbar-control,
-.timer-source-select,
-.timer-toolbar-muted {
+.timer-source-select {
   display: inline-flex;
   min-height: 32px;
   align-items: center;
@@ -191,10 +191,6 @@ button {
   appearance: none;
   background: transparent;
   font-weight: 650;
-}
-
-.timer-toolbar-muted {
-  color: var(--muted-foreground);
 }
 
 .timer-toolbar-icon {
@@ -580,6 +576,69 @@ button {
 
 .settings-meta .site-link {
   color: var(--muted-foreground);
+}
+
+.more-dialog {
+  width: min(100%, 620px);
+  max-width: none;
+  margin: auto auto 0;
+  padding: 0;
+  border: 0;
+  border-radius: 18px 18px 0 0;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.more-dialog::backdrop {
+  background: color-mix(in srgb, var(--modal-overlay) 42%, transparent);
+}
+
+.more-sheet {
+  padding: 14px max(18px, env(safe-area-inset-right)) max(18px, calc(env(safe-area-inset-bottom) + 12px)) max(18px, env(safe-area-inset-left));
+}
+
+.more-sheet-header {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.more-sheet-header h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.more-sheet-header button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.more-sheet-actions {
+  display: grid;
+}
+
+.more-sheet-actions button,
+.more-sheet-actions a {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  border-bottom: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  font-weight: 650;
+  text-align: left;
+  text-decoration: none;
+}
+
+.more-sheet-actions > :last-child {
+  border-bottom: 0;
 }
 
 .bottom-nav {
