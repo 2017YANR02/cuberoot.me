@@ -19,6 +19,7 @@ const CERT_SERIAL = process.env.WECHAT_CERT_SERIAL || '';
 const PRIVATE_KEY = normalizePem(process.env.WECHAT_PRIVATE_KEY || '', 'PRIVATE KEY');
 const PLATFORM_PUBKEY_ID = process.env.WECHAT_PLATFORM_PUBKEY_ID || '';
 const PLATFORM_PUBKEY = normalizePem(process.env.WECHAT_PLATFORM_PUBKEY || '', 'PUBLIC KEY');
+const H5_ENABLED = process.env.WECHAT_H5_ENABLED === 'true';
 const MAX_SIGNATURE_AGE_SECONDS = 300;
 
 export function wechatConfigured(): boolean {
@@ -31,6 +32,11 @@ export function wechatConfigured(): boolean {
     && PLATFORM_PUBKEY_ID.startsWith('PUB_KEY_ID_')
     && PLATFORM_PUBKEY,
   );
+}
+
+/** H5 是独立签约产品，只有商户平台已开通并显式启用时才可下单。 */
+export function wechatH5Configured(): boolean {
+  return wechatConfigured() && H5_ENABLED;
 }
 
 function normalizePem(raw: string, type: 'PRIVATE KEY' | 'PUBLIC KEY'): string {
@@ -63,6 +69,7 @@ async function apiRequest(
     method,
     headers: {
       Authorization: authToken(method, urlPath, body),
+      'Wechatpay-Serial': PLATFORM_PUBKEY_ID,
       Accept: 'application/json',
       'Content-Type': 'application/json',
       'User-Agent': 'cuberoot-membership/1.0',

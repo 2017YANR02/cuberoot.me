@@ -28,7 +28,9 @@ interface Props {
 export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Props) {
   const isMobile = useIsMobile();
   const showAlipay = channels?.alipay !== false;
-  const showWechat = channels?.wechat !== false;
+  const showWechat = isMobile
+    ? (channels?.wechatH5 ?? channels?.wechat) !== false
+    : (channels?.wechatNative ?? channels?.wechat) !== false;
   const [channel, setChannel] = useState<Channel | null>(null);
   const [order, setOrder] = useState<OrderInfo | null>(null);
   const [creating, setCreating] = useState(false);
