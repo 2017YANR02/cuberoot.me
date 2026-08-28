@@ -23,6 +23,21 @@ describe('canonical app user authentication', () => {
     expect(findUserByWcaIdMock).not.toHaveBeenCalled();
   });
 
+  it('normalizes a legacy BIGINT string uid before relationship comparisons', async () => {
+    requireAuthMock.mockResolvedValue({ uid: '66', realWcaId: '2017YANR02' });
+
+    await expect(requireAppUserId({} as never)).resolves.toBe(66);
+    expect(findUserByWcaIdMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the linked WCA identity when a session uid is invalid', async () => {
+    requireAuthMock.mockResolvedValue({ uid: 'not-a-user-id', realWcaId: '2020TEST01' });
+    findUserByWcaIdMock.mockResolvedValue({ id: 73 });
+
+    await expect(requireAppUserId({} as never)).resolves.toBe(73);
+    expect(findUserByWcaIdMock).toHaveBeenCalledWith('2020TEST01');
+  });
+
   it('resolves legacy WCA-only sessions to app_users.id', async () => {
     requireAuthMock.mockResolvedValue({ realWcaId: '2020TEST01' });
     findUserByWcaIdMock.mockResolvedValue({ id: 73 });

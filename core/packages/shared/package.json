@@ -39,6 +39,7 @@
       "./comp-series": "runtime-neutral",
       "./comp-city-identity": "runtime-neutral",
       "./record-places": "runtime-neutral",
+      "./persons-index": "runtime-neutral",
       "./wca-round": "runtime-neutral",
       "./kinch": "runtime-neutral",
       "./pr-streak": "runtime-neutral",
@@ -164,6 +165,7 @@
     "./comp-series": "./src/comp_series.ts",
     "./comp-city-identity": "./src/comp_city_identity.ts",
     "./record-places": "./src/record_places.ts",
+    "./persons-index": "./src/api/persons_index.ts",
     "./wca-round": {
       "node": "./dist/wca_round.js",
       "default": "./src/wca_round.ts"

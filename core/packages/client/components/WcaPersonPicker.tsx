@@ -28,6 +28,10 @@ interface Props {
   /** 输入框的初始文字。改名 / 回填场景用:框里先摆着当前用的名字,不用让人重打一遍。
    *  只取挂载那一次(之后归输入框自己管),换初值请给组件换 key。 */
   defaultQuery?: string;
+  /** 挂载后立即聚焦并展开候选。编辑已有姓名时使用。 */
+  autoOpen?: boolean;
+  /** 外层需要保留自己的删除动作时，可隐藏搜索框内置的清除按钮。 */
+  showClearButton?: boolean;
 }
 
 const DEBOUNCE_MS = 300;
@@ -50,10 +54,10 @@ function localScore(p: WcaPersonLite, ql: string): number {
 
 export function WcaPersonPicker({
   value, onChange, staticCubers = [], matchCount, placeholder, isZh, className,
-  onQueryChange, allowFreeText = false, defaultQuery,
+  onQueryChange, allowFreeText = false, defaultQuery, autoOpen = false, showClearButton = true,
 }: Props) {
   const [query, setQuery] = useState(defaultQuery ?? '');
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
   const [apiResults, setApiResults] = useState<WcaPersonLite[]>([]);
   const [loading, setLoading] = useState(false);
   const [indexReady, setIndexReady] = useState(() => isPersonsIndexReady());
@@ -162,7 +166,7 @@ export function WcaPersonPicker({
               {(isZh ? `${matchCount} 场` : `${matchCount} ${matchCount === 1 ? 'comp' : 'comps'}`)}
             </span>
           )}
-          <ClearButton onClick={handleClear} isZh={isZh} />
+          {showClearButton && <ClearButton onClick={handleClear} isZh={isZh} />}
         </div>
       </div>
     );
@@ -179,10 +183,11 @@ export function WcaPersonPicker({
         onChange={e => { setQuery(e.target.value); setOpen(true); onQueryChange?.(e.target.value); }}
         onFocus={() => setOpen(true)}
         placeholder={placeholder}
+        autoFocus={autoOpen}
         autoComplete="off"
         spellCheck={false}
       />
-      {query && (
+      {query && showClearButton && (
         <ClearButton
           onClick={() => { setQuery(''); setApiResults([]); onQueryChange?.(''); inputRef.current?.focus(); }}
           isZh={isZh}

@@ -289,10 +289,13 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     .landing-page .landing-featured-news-arrow {
         align-self: center;
     }
-    /* 9 个主入口在手机端固定排成 3 × 3。 */
-    .landing-page .hero-grids {
+    /* 手机端所有首页入口复用同一套三列网格。 */
+    .landing-page .hero-grids,
+    .landing-page .cards-section .cards-container {
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0.45rem;
+    }
+    .landing-page .hero-grids {
         margin-bottom: 2rem;
     }
     .landing-page .landing-card {
@@ -515,10 +518,6 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     }
     .landing-page .cards-container {
         grid-template-columns: repeat(2, 1fr);
-        gap: 0.6rem;
-    }
-    .landing-page .cards-section .cards-container {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.6rem;
     }
     .landing-page .card.tier-medium,
