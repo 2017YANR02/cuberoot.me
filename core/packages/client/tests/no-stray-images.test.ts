@@ -12,6 +12,8 @@ import { execSync } from 'node:child_process';
 const RASTER = /\.(png|jpe?g|webp|gif|bmp|avif)$/i;
 const ANDROID_GENERATED_RESOURCE =
   /^core\/apps\/mobile\/android\/app\/src\/main\/res\/(?:drawable(?:-land|-port)?-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/splash|drawable\/splash|drawable(?:-night)?\/splash_icon|mipmap-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/ic_launcher(?:_foreground|_round)?)\.png$/;
+const MINIPROGRAM_RUNTIME_ASSET =
+  /^core\/apps\/miniprogram\/src\/assets\/[^/]+\.(?:png|jpe?g|webp|gif|bmp|avif)$/i;
 
 // 整路径豁免(跨端品牌图标的生成源,由 core/scripts/gen-brand-assets.mjs 统一维护)。
 const ALLOWLIST = new Set<string>([
@@ -45,6 +47,7 @@ describe('No stray raster images under core/ (debug-image guard)', () => {
         RASTER.test(f) &&
         !f.includes('/public/') &&
         !ANDROID_GENERATED_RESOURCE.test(f) &&
+        !MINIPROGRAM_RUNTIME_ASSET.test(f) &&
         !ALLOWLIST.has(f),
     );
     expect(
