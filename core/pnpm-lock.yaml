@@ -163,12 +163,24 @@ importers:
       '@capacitor/core':
         specifier: 8.5.0
         version: 8.5.0
+      '@capacitor/ios':
+        specifier: 8.5.0
+        version: 8.5.0(@capacitor/core@8.5.0)
       '@capacitor/network':
         specifier: 8.0.1
         version: 8.0.1(@capacitor/core@8.5.0)
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@cuberoot/timer-ui':
+        specifier: workspace:*
+        version: link:../../packages/timer-ui
+      '@cuberoot/visualcube':
+        specifier: workspace:*
+        version: link:../../packages/visualcube
+      lucide-react:
+        specifier: 1.8.0
+        version: 1.8.0(react@19.2.4)
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -348,6 +360,9 @@ importers:
       '@cuberoot/stack-kernel':
         specifier: workspace:*
         version: link:../stack-kernel
+      '@cuberoot/timer-ui':
+        specifier: workspace:*
+        version: link:../timer-ui
       '@cuberoot/vendor-sr-puzzlegen':
         specifier: workspace:*
         version: link:../vendor-sr-puzzlegen
@@ -726,6 +741,22 @@ importers:
 
   packages/stack-kernel: {}
 
+  packages/timer-ui:
+    dependencies:
+      react:
+        specifier: 19.2.4
+        version: 19.2.4
+    devDependencies:
+      '@types/react':
+        specifier: ^19
+        version: 19.2.14
+      lucide-react:
+        specifier: 1.8.0
+        version: 1.8.0(react@19.2.4)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
   packages/vendor-sr-puzzlegen:
     devDependencies:
       typescript:
@@ -783,6 +814,11 @@ packages:
 
   '@capacitor/core@8.5.0':
     resolution: {integrity: sha512-Ca4krtqH1hothjtBIwf2J2TW7IhYq1ujp8QeItTiJohNsqij8ja2DYYH3DU0l8RmxCWaBAFTGA2TgOgOMCSNsQ==}
+
+  '@capacitor/ios@8.5.0':
+    resolution: {integrity: sha512-7k1TfohJu5BzRXc1F3g04Q8QQ0fyQgms6h1AvhnHb04VaNr9EdHOx03hL8O+OigEKMQnyJd1ZOjTPPNHCqL5Yw==}
+    peerDependencies:
+      '@capacitor/core': ^8.5.0
 
   '@capacitor/network@8.0.1':
     resolution: {integrity: sha512-9xK/FHFmzKGanB6BdoSZOzXk8vF0OFVQSQ4PAsIrzAzLuXHryO317qy8dcHVpgxYeuZq2noI0My9z1DvVDi/9w==}
@@ -5320,6 +5356,10 @@ snapshots:
   '@capacitor/core@8.5.0':
     dependencies:
       tslib: 2.8.1
+
+  '@capacitor/ios@8.5.0(@capacitor/core@8.5.0)':
+    dependencies:
+      '@capacitor/core': 8.5.0
 
   '@capacitor/network@8.0.1(@capacitor/core@8.5.0)':
     dependencies:

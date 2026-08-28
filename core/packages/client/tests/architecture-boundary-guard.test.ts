@@ -128,11 +128,11 @@ describe('architecture boundary guard', () => {
 
   it('derives every active workspace role and library export runtime from package metadata', () => {
     const packages = activePackages();
-    expect(packages).toHaveLength(14);
+    expect(packages).toHaveLength(15);
     expect(packages.reduce((counts: Record<string, number>, pkg: { cuberoot: { kind: string } }) => {
       counts[pkg.cuberoot.kind] = (counts[pkg.cuberoot.kind] ?? 0) + 1;
       return counts;
-    }, {})).toEqual({ app: 4, job: 4, library: 6 });
+    }, {})).toEqual({ app: 4, job: 4, library: 7 });
     expect(validatePackageMetadata(packages)).toEqual([]);
     expect(validateRuntimeNeutralExports(packages)).toEqual([]);
   });

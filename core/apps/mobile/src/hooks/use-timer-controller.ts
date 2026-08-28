@@ -23,13 +23,14 @@ interface TimerControllerOptions {
 export interface TimerController {
   machine: TimerMachineState;
   nowMs: number;
-  pointerCancel(event: ReactPointerEvent<HTMLButtonElement>): void;
-  pointerDown(event: ReactPointerEvent<HTMLButtonElement>): void;
-  pointerUp(event: ReactPointerEvent<HTMLButtonElement>): void;
+  pointerCancel(event: ReactPointerEvent<HTMLDivElement>): void;
+  pointerDown(event: ReactPointerEvent<HTMLDivElement>): void;
+  pointerUp(event: ReactPointerEvent<HTMLDivElement>): void;
 }
 
 function eventTargetsControl(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
+  if (target.closest('[data-no-timer]')) return true;
   if (target.closest('[data-timer-pad]')) return false;
   return target.closest('a, button, input, select, textarea, [contenteditable="true"]') !== null;
 }
@@ -116,21 +117,21 @@ export function useTimerController({
     };
   }, [apply, clearHoldTimeout]);
 
-  const pointerDown = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (event.button !== 0) return;
+  const pointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || eventTargetsControl(event.target)) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     apply({ type: 'press-down', nowMs: performance.now() });
   }, [apply]);
 
-  const pointerUp = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (event.button !== 0) return;
+  const pointerUp = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || eventTargetsControl(event.target)) return;
     event.preventDefault();
     clearHoldTimeout();
     apply({ type: 'press-up', nowMs: performance.now() });
   }, [apply, clearHoldTimeout]);
 
-  const pointerCancel = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
+  const pointerCancel = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     event.preventDefault();
     clearHoldTimeout();
     apply({ type: 'cancel-press' });

@@ -1,6 +1,6 @@
 # CubeRoot Mobile
 
-React + Vite + Capacitor 8 app. Android is the first native target; iOS can be added from macOS later without duplicating the React UI.
+React + Vite + Capacitor 8 app. Android and iOS use the same React UI and shared business logic.
 
 Status: active native app. `package.json`, `capacitor.config.ts`, `android/` and this README are its local sources of truth; the website is not its source tree.
 
@@ -24,10 +24,15 @@ pnpm --filter @cuberoot/mobile typecheck
 pnpm --filter @cuberoot/mobile build
 pnpm --filter @cuberoot/mobile assets:android
 pnpm --filter @cuberoot/mobile cap:sync
+pnpm --filter @cuberoot/mobile cap:sync:android
+pnpm --filter @cuberoot/mobile cap:sync:ios
 pnpm --filter @cuberoot/mobile android:open
+pnpm --filter @cuberoot/mobile ios:open
 ```
 
-`cap:sync` builds the web app and copies it into the native Android project. Run it after changing React code and before making a native build.
+`cap:sync` remains the Android-compatible entry point. The platform-specific sync commands build the same web app and copy it into the selected native project. Run the matching command after changing React or shared code and before making a native build.
+
+On macOS, use `cap:sync:ios`, then `ios:open` to work in the checked-in Xcode project. Keep Automatic Signing enabled and select the paid Apple Developer team locally; Xcode account state, signing credentials, provisioning profiles, DerivedData and `xcuserdata` must never be committed.
 
 `assets:android` first regenerates the website/PWA icons, then derives every Android launcher density and the light/dark Android system splash. The brand SVG and one locked `sharp` dependency are the only sources, so there is no second hand-maintained image set. CI reruns the generator and fails on tracked or untracked drift.
 

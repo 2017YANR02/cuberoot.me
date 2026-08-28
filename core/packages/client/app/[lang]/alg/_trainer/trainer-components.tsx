@@ -8,7 +8,7 @@ import Link from '@/components/AppLink';
 import { CaseThumb } from '@/components/CaseThumb';
 import { LEVEL2_PICKER_MASK } from '@/lib/alg_thumb_plan';
 import { VisualCube } from '@/components/VisualCube';
-import { SegmentTime } from '@/components/SegmentTime';
+import { SegmentTime } from '@cuberoot/timer-ui';
 import { TimerState } from '@/lib/trainer-store';
 import type { TrainerSolve, TrainerPenalty, TrainerHistEntry } from '@/lib/trainer-store';
 import type { ScrambleHist } from '@/lib/scramble-history';
