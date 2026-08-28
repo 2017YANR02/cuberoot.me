@@ -104,7 +104,7 @@ const SECTIONS: GroupSection[] = [
           group('桥式', 'Roux'),
           group('ZZ,Petrus', 'ZZ and Petrus'),
           group('Mehta', 'Mehta'),
-          group('S流（内层转动）', 'S-flow (inner-layer turns)'),
+          group('S流', 'S-flow'),
           group('调试', 'Debugging'),
           group('Sub12', 'Sub-12'),
           group('Sub20', 'Sub-20'),
