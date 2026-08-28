@@ -69,6 +69,7 @@ function signedHeaders(body: string, serial = publicKeyId) {
 describe('official WeChat payment verification', () => {
   it('requires a complete merchant and WeChat Pay public-key configuration', () => {
     expect(wechat.wechatConfigured()).toBe(true);
+    expect(wechat.wechatH5Configured()).toBe(false);
   });
 
   it('accepts a correctly signed and encrypted callback', () => {

@@ -56,17 +56,27 @@ const XHP_ALIPAY: XhpCreds | null = process.env.XUNHUPAY_ALIPAY_APPID
 
 const xunhupayConfigured = () => Boolean(XHP_PRIMARY.appid && XHP_PRIMARY.secret);
 
-// 一个渠道下单走哪个 provider:官方优先(支付宝 → alipay,微信 → wechat),否则虎皮椒兜底,都没配则 null。
+// 一个渠道下单走哪个 provider:官方优先(支付宝 → alipay,微信按终端区分 Native/H5),
+// 否则虎皮椒兜底,都没配则 null。
 type Provider = 'alipay' | 'wechat' | 'xunhupay';
-function providerForChannel(channel: 'alipay' | 'wechat'): Provider | null {
+function providerForChannel(channel: 'alipay' | 'wechat', clientType: 'pc' | 'wap'): Provider | null {
   if (channel === 'alipay' && alipay.alipayConfigured()) return 'alipay';
-  if (channel === 'wechat' && wechat.wechatConfigured()) return 'wechat';
+  if (channel === 'wechat' && clientType === 'pc' && wechat.wechatConfigured()) return 'wechat';
+  if (channel === 'wechat' && clientType === 'wap' && wechat.wechatH5Configured()) return 'wechat';
   if (xunhupayConfigured()) return 'xunhupay';
   return null;
 }
 // 前端据此只显示可用渠道按钮。
 function channelAvailability() {
-  return { alipay: providerForChannel('alipay') != null, wechat: providerForChannel('wechat') != null };
+  const alipayAvailable = providerForChannel('alipay', 'pc') != null;
+  const wechatNative = providerForChannel('wechat', 'pc') != null;
+  const wechatH5 = providerForChannel('wechat', 'wap') != null;
+  return {
+    alipay: alipayAvailable,
+    wechat: wechatNative || wechatH5,
+    wechatNative,
+    wechatH5,
+  };
 }
 const paymentConfigured = () =>
   alipay.alipayConfigured() || wechat.wechatConfigured() || xunhupayConfigured();
@@ -289,7 +299,7 @@ membershipRoutes.post('/membership/orders', async (c) => {
 
   const channel: 'alipay' | 'wechat' = b.channel === 'wechat' ? 'wechat' : 'alipay';
   const clientType: 'pc' | 'wap' = b.clientType === 'wap' ? 'wap' : 'pc';
-  const provider = providerForChannel(channel);
+  const provider = providerForChannel(channel, clientType);
   if (!provider) {
     // 该渠道未配置(官方/虎皮椒都没开):不下单,提示走打赏 + 联系站长手动开通。
     return c.json({ error: 'payment not configured', payEnabled: false }, 503);

@@ -73,6 +73,8 @@ export interface OrderInfo {
 export interface PayChannels {
   alipay: boolean;
   wechat: boolean;
+  wechatNative?: boolean;
+  wechatH5?: boolean;
 }
 
 export interface AdminOrder {
