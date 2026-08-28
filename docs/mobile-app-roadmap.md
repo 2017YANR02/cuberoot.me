@@ -2,7 +2,7 @@
 
 > 状态：执行中
 >
-> 更新日期：2026-08-27
+> 更新日期：2026-08-28
 >
 > 目标：以最低长期维护成本，把 CubeRoot 的高频能力发布到 Google Play 和 Apple App Store，并逐步覆盖全球可用地区。
 >
@@ -153,9 +153,22 @@
 - [x] 已准备 Mac、Xcode 26.6 正式版和 iPhone 真机。（本机实测 Xcode 26.6 build 17F113、iOS SDK 26.5；设备由所有者确认，尚未作为真机构建/签名证据）
 - [ ] 确认 Apple Developer Program 付费个人会员已激活，且 Xcode 显示可用于发布的付费 Team。
 - [ ] iOS 工程、签名、Core Bluetooth、Keychain、Universal Links 和分享完成。
+- [x] 已在同一个 React + Vite + Capacitor 8 App 中加入并维护 iOS 工程；`@capacitor/ios` 与 Core/CLI/Android 同为 `8.5.0`，App ID 为 `me.cuberoot.app`，未另写 iOS 业务 UI。
+- [x] 已完成 mobile 测试、typecheck、production build、`cap sync ios`、无签名 iOS Simulator 编译、安装和启动验证；iOS 26.5 的 iPhone 模拟器可见并运行 CubeRoot。
+- [x] iOS 模拟器已验证真实比赛打乱在线获取、共享项目图标、共享七段计时界面和共享展开魔方图。
+- [x] 真实比赛打乱采用 50 条、固定抓取时间起算 7 天的有界缓存；缓存过期、去重以及错误项目/记号过滤由移动端测试覆盖，不把 130 万条比赛打乱打进安装包。冷离线本地生成兜底已实现，但实际断网取证仍见下一项。
+- [ ] 在 iOS 模拟器实际执行一次无缓存断网冷启动并保存取证。（当前只有在线模拟器画面和自动化测试证据）
+- [x] Xcode 工程当前保持 Automatic Signing，Debug/Release Bundle ID 均为 `me.cuberoot.app`；付费 Team 尚未选择，不能作为签名成功证据。
+- [x] 同一移动端 Web 构建已重新同步 Android，并在本机用 JDK 21 完成 `assembleDebug`，生成 4.0 MB Debug APK，未发现本轮 iOS/共享 UI 引入的 Android 编译回归。
 - [ ] iOS 权限、后台、系统中断、安全区、动态字体和 VoiceOver 验证通过。
 - [ ] Sign in with Apple/登录合规、TestFlight 和 App Store 审核资料完成。
 - [ ] App Store 审核通过，且业务逻辑未复制为 iOS 专属实现。
+
+当前 iOS 证据与阻塞：
+
+- `xcodebuild` 使用 Xcode 26.6、iOS Simulator SDK 26.5 完成 Debug 构建；`simctl install` 和 `simctl launch` 对 `me.cuberoot.app` 成功。
+- iOS 原生工程只承载 Capacitor 壳，计时 UI、项目图标和魔方展开图分别复用 `@cuberoot/timer-ui`、`@cuberoot/event-icon` 和 `@cuberoot/visualcube`；架构边界守卫与相关定向测试通过。
+- Apple Developer 账号当前登录异常，所有者计划联系 Apple；因此会员 Active、付费 Team、真机签名、Archive 和 TestFlight 均保持未勾选。
 
 ### 阶段 10：全球发布和长期维护
 

@@ -1,6 +1,7 @@
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
+import { EventIcon } from '@cuberoot/event-icon/event';
 import {
   MAX_TIMER_BACKUP_BYTES,
   activeTimerSolves,
@@ -23,7 +24,7 @@ import {
   TimingSurface,
 } from '@cuberoot/timer-ui';
 import { renderFromSimpleQuery } from '@cuberoot/visualcube';
-import { ChevronDown, Grid3X3, MoreHorizontal, Settings as SettingsIcon } from 'lucide-react';
+import { ChevronDown, MoreHorizontal, Settings as SettingsIcon } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -80,7 +81,7 @@ function downloadBackup(text: string): void {
 }
 
 function ScrambleCube({ alt, scramble }: { alt: string; scramble: string }) {
-  const svg = useMemo(() => renderFromSimpleQuery({ setup: scramble, size: 132, view: 'iso' }), [scramble]);
+  const svg = useMemo(() => renderFromSimpleQuery({ setup: scramble, cubeSize: 3, view: 'net' }), [scramble]);
   return (
     <span
       aria-label={alt}
@@ -214,7 +215,7 @@ export function App() {
       }
       writeRealScrambleCache(currentRealRef.current
         ? [currentRealRef.current, ...realPoolRef.current]
-        : realPoolRef.current);
+        : realPoolRef.current, localStorage, Date.now());
     }).catch(() => {
       // Cached real scrambles remain available; a cold offline launch uses the local generator.
     }).finally(() => {
@@ -453,8 +454,8 @@ export function App() {
               )}
               controls={(
                 <>
-                  <span className="timer-toolbar-control">{copy.onePlayer}<ChevronDown aria-hidden="true" size={13} /></span>
-                  <span className="timer-toolbar-control timer-toolbar-event"><Grid3X3 aria-hidden="true" size={19} />3×3<ChevronDown aria-hidden="true" size={13} /></span>
+                  <span className="timer-toolbar-control">{copy.onePlayer}</span>
+                  <span className="timer-toolbar-control timer-toolbar-event"><EventIcon ariaLabel={copy.threeByThree} event="333" />3×3</span>
                   <label className="timer-source-select">
                     <span className="sr-only">{copy.scrambleSource}</span>
                     <select
@@ -518,7 +519,7 @@ export function App() {
                 )}
                 surfaceRef={surfaceRef}
               >
-                <span className="timer-instruction">{timerInstruction}</span>
+                <span aria-live="polite" className="sr-only">{timerInstruction}</span>
               </TimingSurface>
               <TimerStatRail
                 emptyLabel={copy.times}

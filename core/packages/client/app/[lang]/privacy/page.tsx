@@ -9,7 +9,7 @@ export default function PrivacyPage() {
   return (
     <main className="privacy-page">
       <h1>{t('CubeRoot 移动端与小程序隐私政策', 'CubeRoot Mobile and Mini Program Privacy Policy')}</h1>
-      <p className="privacy-updated">{t('生效日期:2026-08-16', 'Effective date: August 16, 2026')}</p>
+      <p className="privacy-updated">{t('生效日期:2026-08-28', 'Effective date: August 28, 2026')}</p>
       <p>
         {t(
           '本政策适用于 CubeRoot 官方 Android、iOS App 与微信小程序。App 的核心计时功能可离线使用;小程序的公开内容可不登录浏览,只有在你主动选择微信登录时才会创建或识别 CubeRoot 账号。',
@@ -20,7 +20,13 @@ export default function PrivacyPage() {
       <h2>{t('App 处理的数据', 'Data handled by the app')}</h2>
       <ul>
         <li>{t('计时记录、打乱、罚时、备注和偏好设置只保存在设备本地。', 'Solve times, scrambles, penalties, comments, and preferences are stored only on your device.')}</li>
-        <li>{t('App 会读取网络连接状态,仅用于显示在线或离线状态。', 'The app reads network connection status only to show whether the device is online or offline.')}</li>
+        <li>{t('App 会读取网络连接状态,用于显示在线或离线状态以及安排比赛打乱刷新。', 'The app reads network connection status to show whether the device is online or offline and to schedule competition-scramble refreshes.')}</li>
+        <li>
+          {t(
+            'App 会自动从 CubeRoot API 下载公开的三阶比赛打乱,并在设备上最多缓存 50 条、最长 7 天。请求不会包含你的计时记录、备注或设置;服务器会处理并记录 IP 地址、设备或客户端类型等标准请求信息,用于提供服务、安全防护和故障诊断。',
+            'The app automatically downloads public 3×3 competition scrambles from the CubeRoot API and caches at most 50 on the device for up to seven days. Requests do not include your solve times, comments, or settings. The server processes and logs standard request information such as IP address and device or client type to deliver the service, protect it, and diagnose failures.',
+          )}
+        </li>
         <li>{t('App 不包含广告或分析 SDK,也不使用摄像头、麦克风或定位权限。', 'The app contains no advertising or analytics SDK and does not use camera, microphone, or location permissions.')}</li>
       </ul>
 

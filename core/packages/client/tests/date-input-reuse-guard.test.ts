@@ -51,7 +51,7 @@ describe('date-only controls reuse DateInput / DateRangeInput', () => {
   it('registers the hook for Unix and Windows command fields', () => {
     const config = JSON.parse(readFileSync(join(REPO_ROOT, '.codex/hooks.json'), 'utf8'));
     const group = config.hooks.PreToolUse.find((entry: { matcher?: string }) => entry.matcher === 'apply_patch');
-    expect(group.hooks.some((entry: { command?: string }) => entry.command?.includes('block-raw-date-input.ps1'))).toBe(true);
-    expect(group.hooks.some((entry: { commandWindows?: string }) => entry.commandWindows?.includes('block-raw-date-input.ps1'))).toBe(true);
+    expect(group.hooks.some((entry: { command?: string }) => entry.command?.includes('hook-detect-raw-date-input.mjs'))).toBe(true);
+    expect(group.hooks.some((entry: { commandWindows?: string }) => entry.commandWindows?.includes('hook-detect-raw-date-input.mjs'))).toBe(true);
   });
 });

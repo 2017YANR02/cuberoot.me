@@ -163,12 +163,18 @@ importers:
       '@capacitor/core':
         specifier: 8.5.0
         version: 8.5.0
+      '@capacitor/haptics':
+        specifier: 8.0.2
+        version: 8.0.2(@capacitor/core@8.5.0)
       '@capacitor/ios':
         specifier: 8.5.0
         version: 8.5.0(@capacitor/core@8.5.0)
       '@capacitor/network':
         specifier: 8.0.1
         version: 8.0.1(@capacitor/core@8.5.0)
+      '@cuberoot/event-icon':
+        specifier: workspace:*
+        version: link:../../packages/event-icon
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -351,6 +357,9 @@ importers:
       '@codemirror/view':
         specifier: ^6.43.0
         version: 6.43.0
+      '@cuberoot/event-icon':
+        specifier: workspace:*
+        version: link:../event-icon
       '@cuberoot/puzzle-render-core':
         specifier: workspace:*
         version: link:../puzzle-render-core
@@ -689,6 +698,19 @@ importers:
         specifier: ^4.1.6
         version: 4.1.6(@types/node@20.19.41)(happy-dom@20.11.2)(jsdom@30.0.1)(vite@8.0.1(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@20.19.41)(esbuild@0.27.4)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
 
+  packages/event-icon:
+    dependencies:
+      react:
+        specifier: 19.2.4
+        version: 19.2.4
+    devDependencies:
+      '@types/react':
+        specifier: ^19
+        version: 19.2.14
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
   packages/puzzle-render-core:
     dependencies:
       '@cuberoot/shared':
@@ -767,6 +789,10 @@ importers:
         version: 5.7.3
 
   packages/visualcube:
+    dependencies:
+      '@cuberoot/shared':
+        specifier: workspace:*
+        version: link:../shared
     devDependencies:
       esbuild:
         specifier: ^0.27.4
@@ -823,6 +849,11 @@ packages:
 
   '@capacitor/core@8.5.0':
     resolution: {integrity: sha512-Ca4krtqH1hothjtBIwf2J2TW7IhYq1ujp8QeItTiJohNsqij8ja2DYYH3DU0l8RmxCWaBAFTGA2TgOgOMCSNsQ==}
+
+  '@capacitor/haptics@8.0.2':
+    resolution: {integrity: sha512-c2hZzRR5Fk1tbTvhG1jhh2XBAf3EhnIerMIb2sl7Mt41Gxx1fhBJFDa0/BI1IbY4loVepyyuqNC9820/GZuoWQ==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@capacitor/ios@8.5.0':
     resolution: {integrity: sha512-7k1TfohJu5BzRXc1F3g04Q8QQ0fyQgms6h1AvhnHb04VaNr9EdHOx03hL8O+OigEKMQnyJd1ZOjTPPNHCqL5Yw==}
@@ -5371,6 +5402,10 @@ snapshots:
   '@capacitor/core@8.5.0':
     dependencies:
       tslib: 2.8.1
+
+  '@capacitor/haptics@8.0.2(@capacitor/core@8.5.0)':
+    dependencies:
+      '@capacitor/core': 8.5.0
 
   '@capacitor/ios@8.5.0(@capacitor/core@8.5.0)':
     dependencies:

@@ -1,5 +1,5 @@
 // Puzzle-image preview/export must never replace live state with a plausible static image.
-// Paired hook: .codex/hooks/block-puzzle-image-state-parity.ps1.
+// Paired hook: core/packages/client/scripts/hook-detect-puzzle-image-state-parity.mjs.
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
@@ -51,8 +51,8 @@ describe('puzzle-image state parity guard', () => {
   });
 
   it('the write hook exists and is registered for both command fields', () => {
-    const hookName = 'block-puzzle-image-state-parity.ps1';
-    expect(existsSync(join(REPO_ROOT, '.codex', 'hooks', hookName))).toBe(true);
+    const hookName = 'hook-detect-puzzle-image-state-parity.mjs';
+    expect(existsSync(join(REPO_ROOT, 'core', 'packages', 'client', 'scripts', hookName))).toBe(true);
     const config = JSON.parse(readFileSync(join(REPO_ROOT, '.codex', 'hooks.json'), 'utf8'));
     const writeGroup = config.hooks.PreToolUse.find((group: { matcher: string }) => group.matcher === 'apply_patch');
     expect(writeGroup.hooks.some((hook: { command?: string }) => hook.command?.includes(hookName))).toBe(true);

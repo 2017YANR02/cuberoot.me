@@ -179,8 +179,9 @@ button {
   white-space: nowrap;
 }
 
-.timer-toolbar-event > svg:first-child {
+.timer-toolbar-event > .cubing-icon {
   color: var(--accent);
+  font-size: 1.05rem;
 }
 
 .timer-source-select select {
@@ -260,7 +261,7 @@ button {
 .mobile-timer-stage {
   position: relative;
   display: flex;
-  min-height: 590px;
+  min-height: 520px;
   flex: 1;
   overflow: hidden;
 }
@@ -277,8 +278,8 @@ button {
   max-width: 32rem;
   margin: 0;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: clamp(1.15rem, 5.1vw, 1.75rem);
-  line-height: 1.65;
+  font-size: clamp(1.05rem, 4.7vw, 1.55rem);
+  line-height: 1.48;
   text-align: center;
 }
 
@@ -298,7 +299,7 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .mobile-scramble-source {
@@ -324,8 +325,8 @@ button {
 
 .mobile-cube-preview {
   display: inline-flex;
-  width: 132px;
-  height: 132px;
+  width: 152px;
+  height: 114px;
 }
 
 .mobile-cube-preview svg {
@@ -343,16 +344,17 @@ button {
   min-height: 0;
   flex: 1;
   margin: 0;
-  padding: 20px 0 142px;
+  padding: 12px 0 132px;
   background: transparent;
   outline: none;
 }
 
-.timer-instruction {
-  margin-top: 10px;
-  color: var(--muted-foreground);
-  font-size: 0.92rem;
-  font-weight: 650;
+.mobile-timer-stage .timing-surface-core {
+  gap: 10px;
+}
+
+.mobile-timer-stage .timing-surface-sub {
+  gap: 8px;
 }
 
 .timer-view .timing-surface-scramble {

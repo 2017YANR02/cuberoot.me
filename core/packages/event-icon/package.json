@@ -1,0 +1,34 @@
+{
+  "name": "@cuberoot/event-icon",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "cuberoot": {
+    "kind": "library",
+    "externalRuntime": {
+      "react": "react-dom"
+    },
+    "runtime": {
+      ".": "react-dom",
+      "./event": "react-dom",
+      "./maps": "runtime-neutral"
+    }
+  },
+  "exports": {
+    ".": "./src/index.tsx",
+    "./event": "./src/event.tsx",
+    "./maps": "./src/maps.ts"
+  },
+  "sideEffects": true,
+  "scripts": {
+    "generate": "node gen-svg-map.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "typescript": "^5"
+  }
+}

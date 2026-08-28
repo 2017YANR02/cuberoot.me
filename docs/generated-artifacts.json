@@ -321,22 +321,23 @@
       "driftPolicy": "regulation_drift.yml may open or update an issue but never generates this authored explanation; do not describe it as automatic output."
     },
     {
-      "id": "client.event-icons",
+      "id": "event-icon.maps",
       "kind": "checked-in-generated",
       "source": {
         "locator": "reviewed EventIcon SVG source set",
-        "paths": ["core/packages/client/components/EventIcon/svg/**"]
+        "paths": ["core/packages/event-icon/svg/**"]
       },
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and the source-specific public credit registry" },
-      "owner": "core/packages/client/components/EventIcon",
-      "workingDirectory": "core/packages/client/components/EventIcon",
-      "command": "node gen-svg-map.mjs",
+      "owner": "core/packages/event-icon",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/event-icon generate",
       "outputs": [
-        "core/packages/client/components/EventIcon/svg-map.ts",
-        "core/packages/client/components/EventIcon/svg-map-penalty.ts"
+        "core/packages/event-icon/src/svg-map-event.ts",
+        "core/packages/event-icon/src/svg-map-unofficial.ts",
+        "core/packages/event-icon/src/svg-map-penalty.ts"
       ],
-      "verification": ["node gen-svg-map.mjs and review the generated map diff", ".github/workflows/icons_drift.yml compares upstream and local SVGs"],
-      "driftPolicy": "icons_drift.yml does not prove svg-map freshness. Until a cheap generator-diff guard is added, explicitly regenerate and review both maps after SVG changes."
+      "verification": ["pnpm --filter @cuberoot/event-icon generate and review the generated map diff", ".github/workflows/icons_drift.yml compares upstream and local SVGs"],
+      "driftPolicy": "icons_drift.yml does not prove SVG-map freshness. Until a cheap generator-diff guard is added, explicitly regenerate and review all three category maps after SVG changes."
     },
     {
       "id": "client.place-zh",

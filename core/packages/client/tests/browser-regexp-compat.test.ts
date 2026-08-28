@@ -11,7 +11,7 @@ const CLIENT = resolve(HERE, '..');
 const REPO_ROOT = resolve(HERE, '../../../..');
 const PLATFORM = join(REPO_ROOT, 'core/packages/platform');
 const WRITE_ADAPTER = join(REPO_ROOT, '.codex/hooks/adapt-codex-write-payload.mjs');
-const HOOK = join(REPO_ROOT, '.codex/hooks/block-browser-regexp-lookbehind.ps1');
+const HOOK = join(REPO_ROOT, '.codex/hooks/block-browser-regexp-lookbehind.mjs');
 const HOOK_CONFIG = join(REPO_ROOT, '.codex/hooks.json');
 const FORBIDDEN = ['(?<' + '=', '(?<' + '!'];
 const SOURCE_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.mts', '.cts']);
@@ -77,7 +77,7 @@ describe('browser regexp compatibility guard', () => {
   });
 
   it('registers the write-time hook beside the CI guard', () => {
-    expect(readFileSync(HOOK_CONFIG, 'utf8')).toContain('block-browser-regexp-lookbehind.ps1');
+    expect(readFileSync(HOOK_CONFIG, 'utf8')).toContain('block-browser-regexp-lookbehind.mjs');
   });
 
   it('denies the syntax in browser source and ignores test fixtures', () => {

@@ -7,8 +7,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/check-guards-drift-session.ps1\"",
-            "commandWindows": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/check-guards-drift-session.ps1\"",
+            "command": "node -e \"const c=require('node:child_process'),p=require('node:path'),a=process.argv.slice(1),g=c.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'});if(g.status!==0||!g.stdout)process.exit(0);const r=g.stdout.trim(),v=a.map(x=>p.resolve(r,x)),h=c.spawnSync(process.execPath,v,{stdio:'inherit'});process.exit(h.status??0)\" .codex/hooks/check-guards-drift-session.mjs",
+            "commandWindows": "node -e \"const c=require('node:child_process'),p=require('node:path'),a=process.argv.slice(1),g=c.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'});if(g.status!==0||!g.stdout)process.exit(0);const r=g.stdout.trim(),v=a.map(x=>p.resolve(r,x)),h=c.spawnSync(process.execPath,v,{stdio:'inherit'});process.exit(h.status??0)\" .codex/hooks/check-guards-drift-session.mjs",
             "timeout": 15,
             "statusMessage": "Checking guard documentation drift"
           }
@@ -21,8 +21,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/adapt-codex-command-payload.mjs\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-workspace-reparse-links.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/recon-ground-truth-gate.ps1\"",
-            "commandWindows": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/adapt-codex-command-payload.mjs\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-workspace-reparse-links.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/recon-ground-truth-gate.ps1\"",
+            "command": "node -e \"const c=require('node:child_process'),p=require('node:path'),a=process.argv.slice(1),g=c.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'});if(g.status!==0||!g.stdout)process.exit(0);const r=g.stdout.trim(),v=a.map(x=>p.resolve(r,x)),h=c.spawnSync(process.execPath,v,{stdio:'inherit'});process.exit(h.status??0)\" .codex/hooks/adapt-codex-command-payload.mjs .codex/hooks/block-workspace-reparse-links.mjs .codex/hooks/recon-ground-truth-gate.mjs",
+            "commandWindows": "node -e \"const c=require('node:child_process'),p=require('node:path'),a=process.argv.slice(1),g=c.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'});if(g.status!==0||!g.stdout)process.exit(0);const r=g.stdout.trim(),v=a.map(x=>p.resolve(r,x)),h=c.spawnSync(process.execPath,v,{stdio:'inherit'});process.exit(h.status??0)\" .codex/hooks/adapt-codex-command-payload.mjs .codex/hooks/block-workspace-reparse-links.mjs .codex/hooks/recon-ground-truth-gate.mjs",
             "timeout": 30,
             "statusMessage": "Checking Codex command guards"
           }
@@ -33,8 +33,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/adapt-codex-write-payload.mjs\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-architecture-boundaries.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-component-reimplementation.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-puzzle-image-state-parity.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-nested-links.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-raw-checkbox.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-raw-date-input.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-unclamped-anchored-panel.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-handwritten-trad.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-server-forwarded-for.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-comp-name-year-regex.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-browser-regexp-lookbehind.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-banned-words.ps1\"",
-            "commandWindows": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/adapt-codex-write-payload.mjs\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-architecture-boundaries.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-component-reimplementation.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-puzzle-image-state-parity.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-nested-links.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-raw-checkbox.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-raw-date-input.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-unclamped-anchored-panel.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-handwritten-trad.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-server-forwarded-for.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-comp-name-year-regex.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-browser-regexp-lookbehind.ps1\" \"$(git rev-parse --show-toplevel)/.codex/hooks/block-banned-words.ps1\"",
+            "command": "node -e \"const c=require('node:child_process'),p=require('node:path'),a=process.argv.slice(1),g=c.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'});if(g.status!==0||!g.stdout)process.exit(0);const r=g.stdout.trim(),v=a.map(x=>p.resolve(r,x)),h=c.spawnSync(process.execPath,v,{stdio:'inherit'});process.exit(h.status??0)\" .codex/hooks/adapt-codex-write-payload.mjs core/scripts/check-architecture-boundaries.mjs core/packages/client/scripts/hook-detect-component-reimplementation.mjs core/packages/client/scripts/hook-detect-puzzle-image-state-parity.mjs core/packages/client/scripts/hook-detect-nested-links.mjs core/packages/client/scripts/hook-detect-raw-checkbox.mjs core/packages/client/scripts/hook-detect-raw-date-input.mjs core/packages/client/scripts/hook-detect-unclamped-anchored-panel.mjs core/packages/client/scripts/hook-detect-traditional.mjs core/packages/client/scripts/hook-detect-server-forwarded-for.mjs core/packages/client/scripts/hook-detect-comp-year-regex.mjs .codex/hooks/block-browser-regexp-lookbehind.mjs .codex/hooks/block-banned-words.mjs",
+            "commandWindows": "node -e \"const c=require('node:child_process'),p=require('node:path'),a=process.argv.slice(1),g=c.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'});if(g.status!==0||!g.stdout)process.exit(0);const r=g.stdout.trim(),v=a.map(x=>p.resolve(r,x)),h=c.spawnSync(process.execPath,v,{stdio:'inherit'});process.exit(h.status??0)\" .codex/hooks/adapt-codex-write-payload.mjs core/scripts/check-architecture-boundaries.mjs core/packages/client/scripts/hook-detect-component-reimplementation.mjs core/packages/client/scripts/hook-detect-puzzle-image-state-parity.mjs core/packages/client/scripts/hook-detect-nested-links.mjs core/packages/client/scripts/hook-detect-raw-checkbox.mjs core/packages/client/scripts/hook-detect-raw-date-input.mjs core/packages/client/scripts/hook-detect-unclamped-anchored-panel.mjs core/packages/client/scripts/hook-detect-traditional.mjs core/packages/client/scripts/hook-detect-server-forwarded-for.mjs core/packages/client/scripts/hook-detect-comp-year-regex.mjs .codex/hooks/block-browser-regexp-lookbehind.mjs .codex/hooks/block-banned-words.mjs",
             "timeout": 30,
             "statusMessage": "Checking Codex write guards"
           }
@@ -47,15 +47,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/calc-test-reminder.ps1\"",
-            "commandWindows": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/calc-test-reminder.ps1\"",
+            "command": "node -e \"const c=require('node:child_process'),p=require('node:path'),a=process.argv.slice(1),g=c.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'});if(g.status!==0||!g.stdout)process.exit(0);const r=g.stdout.trim(),v=a.map(x=>p.resolve(r,x)),h=c.spawnSync(process.execPath,v,{stdio:'inherit'});process.exit(h.status??0)\" .codex/hooks/calc-test-reminder.mjs",
+            "commandWindows": "node -e \"const c=require('node:child_process'),p=require('node:path'),a=process.argv.slice(1),g=c.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'});if(g.status!==0||!g.stdout)process.exit(0);const r=g.stdout.trim(),v=a.map(x=>p.resolve(r,x)),h=c.spawnSync(process.execPath,v,{stdio:'inherit'});process.exit(h.status??0)\" .codex/hooks/calc-test-reminder.mjs",
             "timeout": 15,
             "statusMessage": "Checking calculator test reminder"
           },
           {
             "type": "command",
-            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/dev-data-sync-reminder.ps1\"",
-            "commandWindows": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.codex/hooks/dev-data-sync-reminder.ps1\"",
+            "command": "node -e \"const c=require('node:child_process'),p=require('node:path'),a=process.argv.slice(1),g=c.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'});if(g.status!==0||!g.stdout)process.exit(0);const r=g.stdout.trim(),v=a.map(x=>p.resolve(r,x)),h=c.spawnSync(process.execPath,v,{stdio:'inherit'});process.exit(h.status??0)\" .codex/hooks/dev-data-sync-reminder.mjs",
+            "commandWindows": "node -e \"const c=require('node:child_process'),p=require('node:path'),a=process.argv.slice(1),g=c.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'});if(g.status!==0||!g.stdout)process.exit(0);const r=g.stdout.trim(),v=a.map(x=>p.resolve(r,x)),h=c.spawnSync(process.execPath,v,{stdio:'inherit'});process.exit(h.status??0)\" .codex/hooks/dev-data-sync-reminder.mjs",
             "timeout": 15,
             "statusMessage": "Checking code documentation sync"
           }

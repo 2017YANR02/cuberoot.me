@@ -6,6 +6,7 @@
  * Not the full PHP query API (no `arw`/`fd`/...). For those, build `ICubeOptions` directly.
  */
 import { Face, Masking } from './cube/constants.js';
+import { renderUnfoldedSvg } from '@cuberoot/shared/cube-unfolded-svg';
 import type { ICubeOptions } from './cube/options.js';
 import { renderCubeSVG } from './index.js';
 import { parseColorScheme } from './cube/parsing/colorScheme.js';
@@ -55,7 +56,7 @@ export interface SimpleVisualCubeQuery {
   /** Alias of `alg` — forward apply. Kept as a separate name for code-level clarity when the
    *  source of the string is a clean case-setup scramble (e.g. speedcubedb's `setup` field). */
   setup?: string;
-  /** iso | plan | f2l | oll | pll | pll-iso | trans */
+  /** iso | net | plan | f2l | oll | pll | pll-iso | trans */
   view?: string;
   /** Explicit Masking enum value; overrides the view-implied mask. */
   mask?: string;
@@ -180,5 +181,15 @@ export function buildSimpleOptions(q: SimpleVisualCubeQuery): ICubeOptions {
 
 /** End-to-end: simple query → final SVG string. */
 export function renderFromSimpleQuery(q: SimpleVisualCubeQuery): string {
+  if (q.view === 'net') {
+    if (q.case !== undefined || q.fc !== undefined) {
+      throw new Error('The net view accepts forward alg/setup input only');
+    }
+    const requestedSize = intParam(q.cubeSize) ?? intParam(q.pzl) ?? 3;
+    const cubeSize = requestedSize < PUZZLE_SIZE_MIN || requestedSize > PUZZLE_SIZE_MAX
+      ? 3
+      : requestedSize;
+    return renderUnfoldedSvg(cubeSize, q.setup ?? q.alg ?? DEFAULT_ALG);
+  }
   return renderCubeSVG(buildSimpleOptions(q));
 }

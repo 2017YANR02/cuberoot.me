@@ -26,14 +26,13 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { join, dirname } from 'node:path';
+import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { PAIRED_GUARDS, PROCESS_GUARDS, CI_GUARDS_UI, CI_GUARDS_DRIFT, CI_GUARDS_API } from '@/app/[lang]/dev/guards/_guards';
 import { workspaceFixturePath } from './workspace-fixture-path';
 
 const HERE = dirname(fileURLToPath(import.meta.url)); // packages/client/tests
 const ROOT = join(HERE, '..'); // packages/client
 const REPO_ROOT = join(ROOT, '..', '..', '..'); // packages/client -> packages -> core -> repo root
-const HOOKS_DIR = join(REPO_ROOT, '.codex', 'hooks');
 const CODEX_HOOKS = join(REPO_ROOT, '.codex', 'hooks.json');
 const GIT_PRE_COMMIT = join(REPO_ROOT, '.githooks', 'pre-commit');
 
@@ -64,6 +63,23 @@ function markedTestFiles(): Set<string> {
     }
   }
   return out;
+}
+
+function registeredHookTargets(field: 'command' | 'commandWindows'): Map<string, string> {
+  const config = JSON.parse(readFileSync(CODEX_HOOKS, 'utf8'));
+  const targets = new Map<string, string>();
+  for (const group of config.hooks.PreToolUse) {
+    for (const hook of group.hooks) {
+      const command = String(hook[field] ?? '');
+      for (const match of command.matchAll(/(?:^|\s)(?:"([^"]+\.(?:ps1|mjs|cjs))"|'([^']+\.(?:ps1|mjs|cjs))'|([^\s"']+\.(?:ps1|mjs|cjs)))/g)) {
+        const target = match[1] ?? match[2] ?? match[3];
+        const name = basename(target.replaceAll('\\', '/'));
+        if (name.startsWith('adapt-codex-')) continue;
+        targets.set(name, isAbsolute(target) ? target : resolve(REPO_ROOT, target));
+      }
+    }
+  }
+  return targets;
 }
 
 describe('/dev/guards stays in sync with guard-registry-marked tests', () => {
@@ -97,32 +113,24 @@ describe('/dev/guards stays in sync with guard-registry-marked tests', () => {
     ).toEqual([]);
   });
 
-  it('the project-scoped guard hooks still exist on disk', () => {
+  it('the project-scoped guard hooks still exist at their registered paths', () => {
     const projectHooks = new Set([
       ...PAIRED_GUARDS.filter(({ scope }) => scope === 'project').map(({ hook }) => hook.split('→')[0].trim()),
       ...PROCESS_GUARDS.filter(({ scope }) => scope === 'project').map(({ hook }) => hook),
     ]);
-    const missing = [...projectHooks].filter((hook) => !existsSync(join(HOOKS_DIR, hook)));
-    expect(missing, `Missing project-scoped hook file(s) in .codex/hooks/:\n${missing.join('\n')}`).toEqual([]);
+    const targets = registeredHookTargets('command');
+    const missing = [...projectHooks].filter((hook) => {
+      const target = targets.get(hook);
+      return !target || !existsSync(target);
+    });
+    expect(missing, `Missing project-scoped hook file(s) at paths registered in hooks.json:\n${missing.join('\n')}`).toEqual([]);
     expect(existsSync(CODEX_HOOKS), 'Missing project-scoped Codex hooks.json').toBe(true);
     expect(existsSync(GIT_PRE_COMMIT), 'Missing repository pre-commit hook').toBe(true);
   });
 
   it('every documented write/process hook is registered for Codex', () => {
-    const config = JSON.parse(readFileSync(CODEX_HOOKS, 'utf8'));
-    const registeredFor = (field: 'command' | 'commandWindows') => {
-      const registered = new Set<string>();
-      for (const group of config.hooks.PreToolUse) {
-        for (const hook of group.hooks) {
-          for (const match of String(hook[field] ?? '').matchAll(/[\w-]+\.(?:ps1|mjs|cjs)/g)) {
-            if (!match[0].startsWith('adapt-codex-')) registered.add(match[0]);
-          }
-        }
-      }
-      return registered;
-    };
-    const registered = registeredFor('command');
-    const registeredWindows = registeredFor('commandWindows');
+    const registered = new Set(registeredHookTargets('command').keys());
+    const registeredWindows = new Set(registeredHookTargets('commandWindows').keys());
     expect([...registeredWindows].sort(), 'commandWindows hook targets drifted from command').toEqual([...registered].sort());
     const documented = new Set([
       ...PAIRED_GUARDS.filter(({ scope }) => scope === 'project').map((guard) => guard.hook.split('→')[0].trim()),

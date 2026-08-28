@@ -1,5 +1,5 @@
 // Site-owned icons for the /icon gallery that are NOT part of the vendored
-// cubing/icons set (SVG_BY_KEY). Kept here — not in components/EventIcon/svg/ —
+// cubing/icons set (SVG_BY_KEY). Kept here — not in packages/event-icon/svg/ —
 // so they stay gallery-only and never leak into <EventIcon> / the /sim picker.
 // Each entry declares `before`: the SVG_BY_KEY key it is inserted ahead of in
 // its category (append if absent). Fill-less so they flip with the theme.

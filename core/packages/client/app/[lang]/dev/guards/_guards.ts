@@ -17,7 +17,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'architecture-boundaries',
     scope: 'project',
-    hook: 'block-architecture-boundaries.ps1 → check-architecture-boundaries.mjs',
+    hook: 'check-architecture-boundaries.mjs',
     test: 'architecture-boundary-guard.test.ts + codex_hook_adapters.test.ts',
     baseline: '223 个旧债指纹（238 次出现）+ 13 条人工契约',
     zh: { title: '架构边界与公开入口', desc: '活跃 workspace 的运行时、构建、测试、产物、子进程和部署关系由 manifest 统一登记。223 个旧债指纹共出现 238 次,允许删除或减少,禁止新增、替换或复制同类违规。项目 Hook 在新会话中对新增片段里可见的 shared 根入口、跨 app 私有源码、未公开 subpath 和完整子进程调用提供即时反馈;CI 用同一 AST 扫描器做权威全文件复核。' },
@@ -26,7 +26,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'browser-regexp-lookbehind',
     scope: 'project',
-    hook: 'block-browser-regexp-lookbehind.ps1',
+    hook: 'block-browser-regexp-lookbehind.mjs',
     test: 'browser-regexp-compat.test.ts',
     baseline: '0（6→0）',
     zh: { title: '浏览器端正则后行断言', desc: '浏览器会执行的 client、platform、shared、visualcube 源码禁用正则后行断言,避免 iOS 16.4 之前的 WebKit 在解析 chunk 时整页启动失败。改用捕获边界或显式前字符判断;Codex 写入即拦,CI 全量扫描。' },
@@ -35,7 +35,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'workspace-reparse-links',
     scope: 'project',
-    hook: 'block-workspace-reparse-links.ps1',
+    hook: 'block-workspace-reparse-links.mjs',
     test: 'workspace-reparse-links-guard.test.ts',
     baseline: '0',
     zh: { title: '临时目录链接正式工作区', desc: '临时验证目录和 worktree 禁止通过 Junction 或 SymbolicLink 复用正式 node_modules / packages。每个验证树独立 pnpm install --offline --frozen-lockfile,由 pnpm store 安全去重;Codex 命令写入前拦截,CI 锁定危险命令与安全替代路径。' },
@@ -44,7 +44,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'checkbox',
     scope: 'project',
-    hook: 'block-raw-checkbox.ps1',
+    hook: 'hook-detect-raw-checkbox.mjs',
     test: 'no-raw-checkbox.test.ts',
     baseline: '0（113→0）',
     zh: { title: '裸 checkbox', desc: '禁 <input type="checkbox">,布尔开关统一走 BoolToggle（左滑钮 + 右文字）。多选网格/列表例外,行内 allow-checkbox 豁免。' },
@@ -53,7 +53,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'date-input',
     scope: 'project',
-    hook: 'block-raw-date-input.ps1',
+    hook: 'hook-detect-raw-date-input.mjs',
     test: 'date-input-reuse-guard.test.ts',
     baseline: '0（18→0）',
     zh: { title: '日期输入重复造轮', desc: '日期单值统一走 DateInput,日期范围统一走 DateRangeInput,固定显示 yyyy-mm-dd 并使用站内双语日历。Codex 写入即拦裸 type="date" 和 text + yyyy-mm-dd 冒充控件,CI 全量扫描。' },
@@ -62,7 +62,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'component-reimplementation',
     scope: 'project',
-    hook: 'block-component-reimplementation.ps1 → hook-detect-component-reimplementation.mjs',
+    hook: 'hook-detect-component-reimplementation.mjs',
     test: 'component-reuse-guard.test.ts',
     baseline: '关闭按钮 79 ↓;项目选择器 0;BackHome 根节点 14 ↓',
     zh: { title: '组件复用与放置契约', desc: '规则表拦高置信度的重复造轮子和错误放置。手写关闭/清除叉号统一复用 ClearButton;页面内项目选择统一复用 PuzzlePicker(/wca 展开式项目行用 WcaEventSelector);BackHome 必须位于与正文同宽的 header/topbar/wrap。Codex apply_patch 写入即拦,CI 对零存量规则保持为零、对旧存量只降不升;确有例外时行内写 allow-component-reimplementation 和理由。' },
@@ -71,7 +71,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'puzzle-image-state-parity',
     scope: 'project',
-    hook: 'block-puzzle-image-state-parity.ps1 → hook-detect-puzzle-image-state-parity.mjs',
+    hook: 'hook-detect-puzzle-image-state-parity.mjs',
     test: 'puzzle-image-state-parity-guard.test.ts',
     baseline: '0',
     zh: { title: '魔方图状态一致性', desc: '实时预览与 SVG/PNG 导出必须来自能完整表达当前状态的同一来源。PuzzleImageStudio 宿主显式声明 staticFallbackExact;静态渲染器无法表达阶段、遮罩或实时局面时等待 engineSvg,禁止冷启动静默退回完整魔方。Codex 写入即拦,CI 扫全站宿主和核心回退顺序。' },
@@ -80,7 +80,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'nested-links',
     scope: 'project',
-    hook: 'block-nested-links.ps1 → hook-detect-nested-links.mjs',
+    hook: 'hook-detect-nested-links.mjs',
     test: 'no-nested-links.test.ts',
     baseline: '0',
     zh: { title: '链接嵌套链接', desc: '禁 <a> / Link / AppLink / PersonLink 互相嵌套；浏览器会生成非法 <a> 套 <a>，React 只在运行时抛 hydration error，而 typecheck 仍会绿。hook 在内存中还原待写文件即时拦截，CI 用同一 AST 检测器全量兜底。' },
@@ -125,7 +125,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'anchored-panel',
     scope: 'project',
-    hook: 'block-unclamped-anchored-panel.ps1 → hook-detect-unclamped-anchored-panel.mjs',
+    hook: 'hook-detect-unclamped-anchored-panel.mjs',
     test: 'anchored-panel-clamp.test.ts',
     baseline: '21 ↓',
     zh: { title: '锚定下拉面板未钳视口', desc: '挂在触发钮下方的浮层(position:absolute + top:~100%)在触发钮靠右时右缘越出视口被裁(issue #29 首页两个 picker 手机端被切)。新面板必须挂 usePanelClamp 并在 CSS 注明 anchored-panel: clamped,或确证安全注明 anchored-panel: safe;两侧钉死 / width:100% 的形态自动豁免。运行时实测走 audit:overflow 的 popup pass。' },
@@ -143,7 +143,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'traditional',
     scope: 'project',
-    hook: 'block-handwritten-trad.ps1 → hook-detect-traditional.mjs',
+    hook: 'hook-detect-traditional.mjs',
     test: 'i18n-removal-guard.test.ts + i18n-no-isz-text-ternary.test.ts',
     baseline: '0（419→0）',
     zh: { title: '手写繁体 / 内联语言三元', desc: '全站只服 en + 简体。禁手敲繁体字(繁体走 OpenCC 生成器),禁残留 zh-Hant 标识符,禁新写 isZh 驱动的内联中英文案三元(一边中文一边英文那种写法)—— 一律 tr() / <T> / useT() / t() 收口。' },
@@ -152,7 +152,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'forwarded-for',
     scope: 'project',
-    hook: 'block-server-forwarded-for.ps1 → hook-detect-server-forwarded-for.mjs',
+    hook: 'hook-detect-server-forwarded-for.mjs',
     test: 'server-no-forwarded-for.test.ts',
     baseline: '0（21→0）',
     zh: { title: '可伪造 X-Forwarded-For 作 IP', desc: '禁在 server 源码读取 X-Forwarded-For 头作请求 IP 来源 —— XFF 由客户端自填,谁都能伪造 → IP / visitor_id / 国家 spoofing、绕限流、污染统计。请求 IP 统一走 getIp(c)(utils/analytics_helpers.ts 单一源,只读 nginx 写入的可信 x-real-ip);原来 21 个 route 各抄一份带 XFF 回退的本地 getIp,已收敛成这一份。确有正当用途(仅记录原始 XFF 链、绝不用于身份判定)行内 allow-forwarded-for 豁免。' },
@@ -161,7 +161,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'comp-name-year',
     scope: 'project',
-    hook: 'block-comp-name-year-regex.ps1 → hook-detect-comp-year-regex.mjs',
+    hook: 'hook-detect-comp-year-regex.mjs',
     test: 'comp-year-single-source.test.ts',
     baseline: '0（3 份手抄 → 1 份）',
     zh: { title: '比赛名年号各剥各的', desc: '全站规则:比赛年份已经写在页面上(同行日期列 / 卡片日期 / 年份分组标题)时,比赛名里不再重复年号 —— 人物页成绩表原先是「夹江公开赛2026」压着「2026-07-25」(issue #65)。这条规则曾被三处各抄一份正则实现(CompCard、OngoingComps、CompDetailPage),口径互不相同还漏了人物页。现在唯一实现是 lib/comp-localize.ts 的 stripCompYear,调用点走 localizeCompName(…, { date }) 或 <CompCell date={…} />;CompCell 的 date 是必填(string | null),逼每个调用点表态 —— 页面没显示年份的地方(搜索下拉、无日期列的榜单)传 null 保留年号。再手搓「尾部四位年」正则直接红。' },
@@ -170,7 +170,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'recon-ground-truth',
     scope: 'project',
-    hook: 'recon-ground-truth-gate.ps1 → recon-ground-truth-gate.mjs',
+    hook: 'recon-ground-truth-gate.mjs',
     test: 'recon-ground-truth-gate.test.ts + recon_ground_truth.test.ts',
     baseline: '当前集合全量',
     zh: { title: '复盘 Ground Truth 未验证', desc: '管理员管理器是唯一手工入口，测试命令从公开导出生成供 Git 和 AI 审查的 JSON。Codex 命令 hook 与 Git pre-commit 两层拦截：提交复盘算法、陀螺仪、转体处理或 ground-truth 管道前，当前内容指纹必须对应一次全部 confirmed 样本测试通过记录；管理器新增样本并同步后，旧凭证立即失效。' },
@@ -387,7 +387,7 @@ export const PROCESS_GUARDS: ProcessGuard[] = [
   {
     id: 'banned-words',
     scope: 'project',
-    hook: 'block-banned-words.ps1',
+    hook: 'block-banned-words.mjs',
     matcher: 'apply_patch',
     zh: { title: '站内违禁词', desc: 'Codex 新增文本命中 .codex/banned-words.json 时立即拦截,并给出统一替代词;确有必要时用行内 allow-banned-word 说明原因。' },
     en: { title: 'Site-banned wording', desc: 'Codex writes are blocked when newly added text matches .codex/banned-words.json, with the approved replacement shown; genuine exceptions require an inline allow-banned-word reason.' },
