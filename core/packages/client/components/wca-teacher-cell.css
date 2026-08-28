@@ -162,6 +162,10 @@
   margin: 10px 0 0;
 }
 
+.wca-teacher-dialog-country-error {
+  margin: -6px 0 14px;
+}
+
 .wca-teacher-dialog-actions {
   margin-top: 18px;
 }
