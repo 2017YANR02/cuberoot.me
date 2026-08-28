@@ -1,7 +1,7 @@
 // High-confidence component reuse guard. This is intentionally rule-based rather
 // than a vague similarity score: every rule points to one canonical catalog entry,
 // has fixtures, a write-time hook, and a ratchet over existing source.
-// Paired hook: .codex/hooks/block-component-reimplementation.ps1.
+// Paired hook: core/packages/client/scripts/hook-detect-component-reimplementation.mjs.
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -301,9 +301,9 @@ describe('component reuse rule registry', () => {
     expect(preTool.some((group: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
       group.matcher === 'apply_patch'
       && group.hooks?.some((hook) => hook.command?.includes('adapt-codex-write-payload.mjs')
-        && hook.command.includes('block-component-reimplementation.ps1')),
+        && hook.command.includes('hook-detect-component-reimplementation.mjs')),
     ), 'missing adapted component-reuse hook for apply_patch').toBe(true);
-    expect(existsSync(join(REPO_ROOT, '.codex', 'hooks', 'block-component-reimplementation.ps1'))).toBe(true);
+    expect(existsSync(join(REPO_ROOT, 'core', 'packages', 'client', 'scripts', 'hook-detect-component-reimplementation.mjs'))).toBe(true);
 
     const catalog = readFileSync(join(ROOT, 'app', '[lang]', 'dev', 'components', '_catalog.tsx'), 'utf8');
     expect(catalog).toContain("name: 'ClearButton'");

@@ -1,11 +1,11 @@
 // One-shot generator: walks svg/{event,unofficial,penalty}/*.svg and emits the
 // literal-string Record<string,string> maps. Replaces Vite's
 // import.meta.glob('./svg/{...}/*.svg', { query: '?raw', eager: true }).
-// Re-run via: node packages/client/components/EventIcon/gen-svg-map.mjs
+// Re-run via: pnpm --filter @cuberoot/event-icon generate
 //
-// TWO maps, on purpose:
-//  · svg-map.ts (event + unofficial, ~85KB) — what <CubingIcon>/<EventIcon> reads,
-//    so it rides along on every page that shows a single cube icon.
+// THREE maps, on purpose:
+//  · svg-map-event.ts — WCA projects, independently importable by native apps.
+//  · svg-map-unofficial.ts — non-WCA projects, loaded by generic <CubingIcon>.
 //  · svg-map-penalty.ts (penalty, ~168KB) — the regulation penalty illustrations
 //    are 20-27KB each (full drawings, not glyphs) and nothing renders them through
 //    CubingIcon; only the /icon gallery enumerates them. Keeping them in the main
@@ -43,11 +43,13 @@ function emit(file, exportName, kinds, note) {
     }
   }
   out.push('};', '');
-  fs.writeFileSync(path.join(here, file), out.join('\n'));
+  fs.writeFileSync(path.join(here, 'src', file), out.join('\n'));
   console.log(`wrote ${file}`);
 }
 
-emit('svg-map.ts', 'SVG_BY_KEY', ['event', 'unofficial'],
-  'Always-loaded set — read by <CubingIcon> / <EventIcon>.');
+emit('svg-map-event.ts', 'EVENT_SVG_BY_KEY', ['event'],
+  'WCA event set — read by the narrow <EventIcon> entry.');
+emit('svg-map-unofficial.ts', 'UNOFFICIAL_SVG_BY_KEY', ['unofficial'],
+  'Unofficial event set — read by the generic <CubingIcon> entry.');
 emit('svg-map-penalty.ts', 'PENALTY_SVG_BY_KEY', ['penalty'],
   'Regulation penalty illustrations — import only where they are actually drawn (/icon).');

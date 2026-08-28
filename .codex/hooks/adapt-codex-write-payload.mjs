@@ -89,12 +89,13 @@ export function writesFromPayload(payload) {
 }
 
 function targetCommand(target) {
-  if (/\.ps1$/i.test(target)) return { command: 'pwsh', args: ['-NoProfile', '-File', target] };
-  return { command: process.execPath, args: [target] };
+  const args = [target];
+  if (isArchitectureTarget(target)) args.push('--hook');
+  return { command: process.execPath, args };
 }
 
 function isArchitectureTarget(target) {
-  return normalizePath(target).toLowerCase().endsWith('/block-architecture-boundaries.ps1');
+  return normalizePath(target).toLowerCase().endsWith('/check-architecture-boundaries.mjs');
 }
 
 function runTarget(target, payload, cwd) {

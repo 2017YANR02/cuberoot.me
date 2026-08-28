@@ -32,7 +32,6 @@ export function commandsFromPayload(payload) {
 }
 
 function targetCommand(target) {
-  if (/\.ps1$/i.test(target)) return { command: 'pwsh', args: ['-NoProfile', '-File', target] };
   return { command: process.execPath, args: [target] };
 }
 
@@ -64,7 +63,7 @@ function run() {
     for (const command of commands) {
       const adapted = JSON.stringify({
         ...payload,
-        tool_name: 'PowerShell',
+        tool_name: 'Bash',
         tool_input: { command, cwd, workdir: cwd },
       });
       for (const target of targets) {

@@ -1,40 +1,17 @@
 /**
  * WCA / cubing 项目图标 — 内联 SVG. Ported from packages/client-vite/src/components/EventIcon.
- * SVGs sources still in ./svg/{event,unofficial,penalty}/ (cubing/icons LICENSE
- * preserved). Vite's `import.meta.glob('./svg/...*.svg', { eager, ?raw })` is
- * replaced by the explicit map in ./svg-map.ts produced by gen-svg-map.mjs.
+ * The shared renderer and vendored SVG sources live in @cuberoot/event-icon so
+ * the website and native App consume the same project artwork.
  */
+import { CubingIcon } from '@cuberoot/event-icon';
 import { toWcaEventId } from '@/lib/wca-events';
 import { TWIZZLE_NONWCA_APPEND } from '@/lib/non-wca-events';
-import { SVG_BY_KEY } from './svg-map';
-import './EventIcon.css';
+
+export { CubingIcon } from '@cuberoot/event-icon';
 
 const UNOFFICIAL_ICON_CLASS: Record<string, string> = Object.fromEntries(
   TWIZZLE_NONWCA_APPEND.map(({ id, iconClass }) => [id, iconClass]),
 );
-
-interface CubingIconProps {
-  /** cubing-icons class key, e.g. 'event-333' / 'unofficial-fto'. The `penalty-*`
-   *  illustrations are NOT in this map (see gen-svg-map.mjs) — an unknown key
-   *  renders the bare class-only span, same as it always has. */
-  icon: string;
-  className?: string;
-  title?: string;
-  ariaLabel?: string;
-}
-
-export function CubingIcon({ icon, className, title, ariaLabel }: CubingIconProps) {
-  const svg = SVG_BY_KEY[icon];
-  const cls = `cubing-icon ${icon}${className ? ` ${className}` : ''}`;
-  return (
-    <span
-      className={cls}
-      title={title}
-      aria-label={ariaLabel ?? icon}
-      {...(svg ? { dangerouslySetInnerHTML: { __html: svg } } : {})}
-    />
-  );
-}
 
 interface EventIconProps {
   event: string;

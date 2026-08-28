@@ -2,9 +2,9 @@
 // cubing/icons upstream drift detector.
 //
 // The site vendors https://github.com/cubing/icons src/svg verbatim into
-// components/EventIcon/svg/{event,unofficial,penalty}/ (single source for
+// packages/event-icon/svg/{event,unofficial,penalty}/ (single source for
 // <CubingIcon>/<EventIcon>, the /sim picker and the /icon gallery, via
-// gen-svg-map.mjs → svg-map.ts). This script asks the GitHub trees API for the
+// gen-svg-map.mjs → three category-specific SVG maps). This script asks the GitHub trees API for the
 // upstream file list + blob SHAs (one request), hashes the vendored files the
 // same way git does, and reports added / changed / removed SVGs so the drift
 // workflow can open an issue for an AI to vendor the new icons.
@@ -20,7 +20,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SVG_DIR = path.resolve(__dirname, '../components/EventIcon/svg');
+const SVG_DIR = path.resolve(__dirname, 'svg');
 const TREE_URL = 'https://api.github.com/repos/cubing/icons/git/trees/main?recursive=1';
 const UPSTREAM_BLOB = 'https://github.com/cubing/icons/blob/main/src/svg';
 
@@ -118,8 +118,8 @@ function main(upstream, local) {
   section('上游已删除(本地仍保留)', removed);
   if (drift) {
     lines.push('## 处理方法(给 AI)', '');
-    lines.push('1. 把上面每个新增/变更的 SVG 原样下载到 `core/packages/client/components/EventIcon/svg/<同路径>`(上游 `src/svg/` 下的相对路径不变;若出现全新目录,还需把目录名加进 `gen-svg-map.mjs` 的 kind 列表和 `/icon` 的 `_catalog.ts` 分类)。');
-    lines.push('2. 运行 `node core/packages/client/components/EventIcon/gen-svg-map.mjs` 重新生成 svg-map.ts。');
+    lines.push('1. 把上面每个新增/变更的 SVG 原样下载到 `core/packages/event-icon/svg/<同路径>`(上游 `src/svg/` 下的相对路径不变;若出现全新目录,还需把目录名加进 `gen-svg-map.mjs` 的 kind 列表和 `/icon` 的 `_catalog.ts` 分类)。');
+    lines.push('2. 在 `core/` 运行 `pnpm --filter @cuberoot/event-icon generate` 重新生成三份分类 SVG map。');
     lines.push('3. 打开 `/icon` 页确认新图标渲染正常(明暗两主题),然后 typecheck + commit。');
     lines.push('4. 「上游已删除」的条目默认保留不动(站内可能还在用),除非确认无引用。');
     lines.push('');

@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '../../../..');
 const ADAPTER = join(REPO_ROOT, '.codex/hooks/adapt-codex-command-payload.mjs');
-const GUARD = join(REPO_ROOT, '.codex/hooks/block-workspace-reparse-links.ps1');
+const GUARD = join(REPO_ROOT, '.codex/hooks/block-workspace-reparse-links.mjs');
 
 function runGuard(command: string) {
   return spawnSync(process.execPath, [ADAPTER, GUARD], {
