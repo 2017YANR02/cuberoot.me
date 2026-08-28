@@ -16,11 +16,18 @@ export interface FriendSearchUser extends FriendUser {
   relationship: FriendRelationship;
 }
 
+export interface WcaFriendContact {
+  wcaId: string;
+  name: string;
+  countryIso2: string;
+}
+
 export interface FriendsOverview {
   friends: FriendUser[];
   incoming: FriendUser[];
   outgoing: FriendUser[];
   blocked: FriendUser[];
+  wcaContacts: WcaFriendContact[];
 }
 
 async function write(path: string, method: 'POST' | 'DELETE', body?: unknown): Promise<void> {
@@ -49,9 +56,20 @@ export async function searchFriendUsers(q: string): Promise<FriendSearchUser[]> 
   return result.users;
 }
 
+export async function saveWcaFriendContact(contact: WcaFriendContact): Promise<'wca-contact' | 'outgoing' | 'friends'> {
+  const response = await fetch(apiUrl('/v1/friends/wca-contacts'), {
+    method: 'POST',
+    headers: authHeaders(true),
+    body: JSON.stringify(contact),
+  });
+  const result = await handleApi<{ ok: boolean; relationship: 'wca-contact' | 'outgoing' | 'friends' }>(response);
+  return result.relationship;
+}
+
 export const sendFriendRequest = (userId: number) => write('/v1/friends/requests', 'POST', { userId });
 export const acceptFriendRequest = (userId: number) => write(`/v1/friends/requests/${userId}/accept`, 'POST');
 export const deleteFriendRequest = (userId: number) => write(`/v1/friends/requests/${userId}`, 'DELETE');
 export const removeFriend = (userId: number) => write(`/v1/friends/${userId}`, 'DELETE');
 export const blockUser = (userId: number) => write('/v1/friends/blocks', 'POST', { userId });
 export const unblockUser = (userId: number) => write(`/v1/friends/blocks/${userId}`, 'DELETE');
+export const removeWcaFriendContact = (wcaId: string) => write(`/v1/friends/wca-contacts/${encodeURIComponent(wcaId)}`, 'DELETE');

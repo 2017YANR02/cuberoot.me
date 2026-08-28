@@ -158,6 +158,7 @@ const TABLES: Table[] = [
   { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
   { name: 'user_friendships', domain: 'account', origin: '0175', purpose: { zh: '好友申请与已接受的双向好友关系；每对账号只保留一条规范记录', en: 'Pending requests and accepted two-way friendships, with one canonical row per account pair' } },
   { name: 'user_blocks', domain: 'account', origin: '0175', purpose: { zh: '单向黑名单；拉黑时同步切断好友关系与待处理申请', en: 'Directed blocks; blocking also removes friendships and pending requests' } },
+  { name: 'user_wca_friend_contacts', domain: 'account', origin: '0178', purpose: { zh: '账号私有的 WCA 好友条目；对方未注册时只保存在本人列表，不代表双向好友或已发送申请', en: 'Account-private WCA friend entries; an unregistered person is only saved to the owner\'s list and does not imply a mutual friendship or delivered request' } },
   { name: 'auth_identities', domain: 'account', origin: '0064', evolved: [78, 103], purpose: { zh: '账号与外部身份的唯一映射；微信小程序与网站扫码登录共用 UnionID', en: 'Unique account-to-provider identity mappings; Mini Program and website QR sign-in share the Weixin UnionID' } },
   { name: 'auth_codes', domain: 'account', origin: '0064', purpose: { zh: '邮箱与手机登录、绑定使用的短时验证码及核销状态', en: 'Short-lived email and phone verification codes with consumption state' } },
   { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', purpose: { zh: '小程序原生会话换取网页会话的 90 秒单次票据，只保存 SHA-256', en: '90-second single-use tickets that bridge Mini Program sessions into website sessions; only SHA-256 hashes are stored' } },
@@ -642,6 +643,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 175, slug: 'friends', desc: { zh: '新增好友申请、双向好友和单向黑名单；拉黑会原子清理双方现有关系。', en: 'Add friend requests, two-way friendships, and directed blocks; blocking atomically clears the pair relationship.' } },
   { n: 176, slug: 'creator_gallery_captions', desc: { zh: '新增颜瑞民个人页图库的双语说明表，由管理员直接在前端维护。', en: 'Add bilingual captions for Ruimin Yan’s profile gallery, maintained by an admin directly in the frontend.' } },
   { n: 177, slug: 'named_student_nationality', desc: { zh: '无 WCA ID 学生名册增加必填国籍，以老师的 WCA 国籍回填已有记录，并阻止同一老师重复添加同名学生。', en: 'Require nationality for named student rosters, backfill existing entries from each teacher’s WCA nationality, and prevent duplicate names within one teacher’s roster.' } },
+  { n: 178, slug: 'wca_friend_contacts', desc: { zh: '好友列表可保存尚未注册 CubeRoot 的 WCA 选手，并明确区分私有条目与双向好友关系。', en: 'Allow friend lists to save WCA cubers who have not registered for CubeRoot, while clearly separating private entries from mutual friendships.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
