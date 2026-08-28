@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
 import {
   Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
-  Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer,
+  BarChart3, Plus, Wrench, ListPlus, Printer,
   AlertTriangle, Target, Crosshair, Link2, Globe,
   Brain, X, Check, CheckCircle2, Footprints, Repeat,
 } from 'lucide-react';
@@ -137,9 +137,14 @@ import HourChart from '../_components/charts/HourChart';
 import PracticeHeatmap from '../_components/charts/PracticeHeatmap';
 import { CubePreview } from '../_lib/cube';
 import LiveCubeState from '../_components/LiveCubeState';
-import TimingSurface from './TimingSurface';
+import {
+  SegmentTime,
+  TimerDeviceActions,
+  TimerStatRail,
+  TimerTopbar,
+  TimingSurface,
+} from '@cuberoot/timer-ui';
 import GestureWheel from '@/components/GestureWheel';
-import { SegmentTime } from '@/components/SegmentTime';
 import { useGestureWheel } from '@/hooks/useGestureWheel';
 import { histBack, histForward, histPush } from '@/lib/scramble-history';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
@@ -2519,9 +2524,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       </div>
 
       {/* ── Topbar ──────────────────────────────────────────── */}
-      <header className="shell-topbar surface-chrome">
-        <CubeRootLogo className="shell-topbar-brand" />
-        <div className="shell-topbar-left">
+      <TimerTopbar
+        brand={<CubeRootLogo className="shell-topbar-brand" />}
+        controls={(
+          <>
           {playersControl}
           <PuzzlePicker
             isZh={isZh}
@@ -2557,8 +2563,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           {/* 解法提示(手机形态)。桌面同一个组件挂在右侧 .shell-rail 里(见下),
               这里是二选一 —— 两处同时挂就有两个实例抢同一个 ?hints。 */}
           {!isDesktop && solverHintPanel}
-        </div>
-        <div className="shell-topbar-right">
+          </>
+        )}
+        actions={(
+          <>
           {presenceControl}
           {stageTrainingAllowed && (
             <button
@@ -2578,8 +2586,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         })}>
             <SettingsIcon size={14} />
           </button>
-        </div>
-      </header>
+          </>
+        )}
+      />
 
       {/* ── Main column ─────────────────────────────────────── */}
       <div className="shell-main">
@@ -2942,27 +2951,15 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} event={event} /></div>
         )}
 
-        <div className={`shell-device-actions surface-chrome${deviceActive ? ' is-active' : ''}`} data-no-timer>
-          <button
-            type="button"
-            className="shell-device-connect"
-            onClick={connectExternalBluetooth}
-            title={tr({ zh: '连接蓝牙设备', en: 'Connect Bluetooth device' })}
-            aria-label={tr({ zh: '连接蓝牙设备', en: 'Connect Bluetooth device' })}
-          >
-            <Bluetooth size={16} />
-            <span>{tr({ zh: '连接', en: 'Connect' })}</span>
-          </button>
-          <button
-            type="button"
-            className={`shell-stackmat-connect${stackmat.status.listening ? ' is-active' : ''}`}
-            onClick={connectStackmat}
-            title={tr({ zh: '连接 Stackmat 麦克风计时器', en: 'Connect Stackmat microphone timer' })}
-            aria-label={tr({ zh: '连接 Stackmat 麦克风计时器', en: 'Connect Stackmat microphone timer' })}
-          >
-            <Mic size={15} />
-          </button>
-        </div>
+        <TimerDeviceActions
+          active={deviceActive}
+          connectAriaLabel={tr({ zh: '连接蓝牙设备', en: 'Connect Bluetooth device' })}
+          connectLabel={tr({ zh: '连接', en: 'Connect' })}
+          microphoneActive={stackmat.status.listening}
+          microphoneAriaLabel={tr({ zh: '连接 Stackmat 麦克风计时器', en: 'Connect Stackmat microphone timer' })}
+          onConnect={connectExternalBluetooth}
+          onMicrophone={connectStackmat}
+        />
 
         {/* 右侧配置栏:解法提示(仅 333,逐阶段最优 + 分步解法)常驻可折叠面板 ——
             桌面收成主区右侧竖栏。手机上这颗 pill 挂在顶栏(见上),不再落在打乱图下方。
@@ -2975,27 +2972,20 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             也是成绩 / 图表面板的唯一入口(底部导航条撤掉了),所以是真 <button>。
             还没有成绩时不摆一排破折号,只留「成绩」两个字 —— 面板里有会话切换器,
             当前会话空着的时候恰恰最需要能点进去换会话。 */}
-        <button
-          type="button"
-          className="shell-stat-rail surface-chrome"
+        <TimerStatRail
+          ariaExpanded={panelTab != null}
+          emptyLabel={tr({ zh: '成绩', en: 'Times' })}
+          items={solves.length > 0 ? [
+            { label: tr({ zh: '成功', en: 'solved' }), value: `${stats.solved}/${stats.count}` },
+            { label: 'mean', value: stats.mean },
+            { label: tr({ zh: '最佳', en: 'best' }), value: stats.best },
+            { label: 'mo3', value: stats.mo3 },
+            { label: 'ao5', value: stats.ao5 },
+            { label: 'ao12', value: stats.ao12 },
+          ] : []}
           onClick={() => setPanelTab(t => (t ? null : 'times'))}
-          aria-expanded={panelTab != null}
           title={tr({ zh: '打开成绩 / 图表 / 统计', en: 'Open times / chart / stats' })}
-        >
-          {solves.length > 0 ? (
-            <>
-              {/* 「次数」单独一行去掉了 —— 总次数已含在下面「成功」的分母(solved/count)里,不用重复占一行。 */}
-              <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '成功', en: 'solved' })}</span> <span className="shell-stat-val">{stats.solved}/{stats.count}</span></span>
-              <span className="shell-stat"><span className="shell-stat-lbl">mean</span> <span className="shell-stat-val">{stats.mean}</span></span>
-              <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '最佳', en: 'best' })}</span> <span className="shell-stat-val">{stats.best}</span></span>
-              <span className="shell-stat"><span className="shell-stat-lbl">mo3</span> <span className="shell-stat-val">{stats.mo3}</span></span>
-              <span className="shell-stat"><span className="shell-stat-lbl">ao5</span> <span className="shell-stat-val">{stats.ao5}</span></span>
-              <span className="shell-stat"><span className="shell-stat-lbl">ao12</span> <span className="shell-stat-val">{stats.ao12}</span></span>
-            </>
-          ) : (
-            <span className="shell-stat"><span className="shell-stat-val">{tr({ zh: '成绩', en: 'Times' })}</span></span>
-          )}
-        </button>
+        />
 
       </div>
 

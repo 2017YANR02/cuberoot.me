@@ -45,7 +45,7 @@ const nextConfig: NextConfig = {
   // Pages without slashes still work because the [...slug] route handler accepts either.
   skipTrailingSlashRedirect: true,
 
-  transpilePackages: ["mp4box", "mediainfo.js"],
+  transpilePackages: ["mp4box", "mediainfo.js", "@cuberoot/timer-ui"],
   // esbuild ships native binaries + README — Turbopack chokes on .md files.
   // Mark it external so the route handler can require() it at runtime.
   serverExternalPackages: ["esbuild"],
