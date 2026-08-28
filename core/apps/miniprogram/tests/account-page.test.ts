@@ -8,6 +8,8 @@ interface AccountPage {
   login(): Promise<void>;
   onHide(): void;
   onPullDownRefresh(): void;
+  onShareAppMessage(): WechatMiniprogram.Page.ICustomShareContent;
+  onShareTimeline(): WechatMiniprogram.Page.ICustomTimelineContent;
   onShow(): void;
   onUnload(): void;
   refreshAccount(): Promise<void>;
@@ -51,6 +53,29 @@ describe('mini program account page', () => {
 
   it('enables native pull-down refresh for account reconciliation', () => {
     expect(accountConfig.enablePullDownRefresh).toBe(true);
+  });
+
+  it('shares a neutral account entry without user identity or session data', async () => {
+    const showShareMenu = vi.fn();
+    const page = await loadPage({
+      getStorageSync: () => null,
+      showShareMenu,
+    });
+
+    page.onShow();
+
+    expect(showShareMenu).toHaveBeenCalledWith({
+      menus: ['shareAppMessage', 'shareTimeline'],
+    });
+    expect(page.onShareAppMessage()).toEqual({
+      imageUrl: '/assets/share-cover.png',
+      title: 'CubeRoot 魔方根',
+      path: '/pages/account/index',
+    });
+    expect(page.onShareTimeline()).toEqual({
+      imageUrl: '/assets/share-cover.png',
+      title: 'CubeRoot 魔方根',
+    });
   });
 
   it('reuses account validation and stops pull-down feedback after it settles', async () => {
