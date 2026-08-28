@@ -160,7 +160,11 @@ export default function PersonDetailClient() {
           inclCancelled={inclCancelled}
           onInclCancelledChange={setInclCancelled}
         />
-        <PersonStudents teacherWcaId={profile.person.wca_id} isZh={isZh} />
+        <PersonStudents
+          teacherWcaId={profile.person.wca_id}
+          teacherCountryIso2={profile.person.country_iso2}
+          isZh={isZh}
+        />
         {resultView === 'pb' ? (
           <PersonPbTable wcaId={profile.person.wca_id} isZh={isZh} />
         ) : (

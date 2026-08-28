@@ -45,7 +45,11 @@ interface StudentMeta {
   personalRecords: WcaPersonProfile['personal_records'];
 }
 
-export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: string; isZh: boolean }) {
+export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh }: {
+  teacherWcaId: string;
+  teacherCountryIso2: string;
+  isZh: boolean;
+}) {
   const t = useT();
   const [relations, setRelations] = useState<WcaTeacher[] | null>(null);
   const [namedStudents, setNamedStudents] = useState<WcaNamedStudent[] | null>(null);
@@ -152,7 +156,7 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
       ...student,
       eventIds: currentEventIds,
       competedEventIds: student.wcaId ? meta?.competedEventIds : [],
-      countryIso2: meta?.countryIso2 ?? '',
+      countryIso2: student.namedStudent?.countryIso2 ?? meta?.countryIso2 ?? '',
       personalRecords: meta?.personalRecords,
     }];
   }), [studentMeta, studentSeeds, teacherDirectory.ready, teacherDirectory.teachers, teacherWcaId]);
@@ -232,6 +236,7 @@ export default function PersonStudents({ teacherWcaId, isZh }: { teacherWcaId: s
                 <span className="wp-student-heading">
                   <WcaStudentAdder
                     teacherWcaId={teacherWcaId}
+                    teacherCountryIso2={teacherCountryIso2}
                     directory={teacherDirectory}
                     isZh={isZh}
                     onSaved={() => setReloadKey((current) => current + 1)}

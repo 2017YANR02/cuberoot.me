@@ -136,6 +136,20 @@
   font-size: 0.86rem;
 }
 
+.wca-named-student-country {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.wca-named-student-country .country-input {
+  width: min(280px, 100%);
+}
+
 .wca-teacher-dialog .wca-stats-event-selector {
   margin-bottom: 14px;
 }
@@ -170,5 +184,11 @@
 
   .wca-teacher-cell {
     max-width: 190px;
+  }
+
+  .wca-named-student-country {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
   }
 }

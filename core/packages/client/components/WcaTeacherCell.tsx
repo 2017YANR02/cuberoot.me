@@ -8,6 +8,7 @@ import { EventIcon } from '@/components/EventIcon';
 import PersonLink from '@/components/PersonLink';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
+import { CountryInput } from '@/components/CountryInput/CountryInput';
 import { ClearButton } from '@/components/ClearButton';
 import { useAuthUser } from '@/lib/auth-store';
 import { getMyMembership } from '@/lib/membership-api';
@@ -41,6 +42,7 @@ function teacherErrorMessage(caught: unknown): string {
     'a person cannot be their own teacher': { zh: '不能把选手本人设为老师', en: 'A cuber cannot be their own teacher' },
     'student not found': { zh: '未找到这位选手', en: 'Cuber not found' },
     'teacher not found': { zh: '未找到这位老师', en: 'Teacher not found' },
+    'invalid country': { zh: '请选择有效国籍', en: 'Select a valid nationality' },
   };
   return tr(known[message] ?? { zh: '保存失败，请稍后重试', en: 'Save failed. Please try again.' });
 }
@@ -177,8 +179,9 @@ export function WcaTeacherNote() {
   );
 }
 
-export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
+export function WcaStudentAdder({ teacherWcaId, teacherCountryIso2, directory, isZh, onSaved }: {
   teacherWcaId: string;
+  teacherCountryIso2: string;
   directory: WcaTeacherDirectory;
   isZh: boolean;
   onSaved: () => void;
@@ -186,6 +189,7 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
   const [editing, setEditing] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<WcaPersonLite | null>(null);
   const [namedStudentName, setNamedStudentName] = useState('');
+  const [namedStudentCountryIso2, setNamedStudentCountryIso2] = useState(() => teacherCountryIso2.toLowerCase());
   const [availableEventIds, setAvailableEventIds] = useState<string[]>([]);
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(() => new Set());
   const [showAllEvents, setShowAllEvents] = useState(false);
@@ -241,6 +245,7 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
     setEditing(false);
     setSelectedStudent(null);
     setNamedStudentName('');
+    setNamedStudentCountryIso2(teacherCountryIso2.toLowerCase());
     setAvailableEventIds([]);
     setSelectedEventIds(new Set());
     setShowAllEvents(false);
@@ -256,7 +261,7 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
   };
   const save = async () => {
     const freeTextName = namedStudentName.replace(/\s+/g, ' ').trim();
-    if ((!selectedStudent && !freeTextName) || selectedEventIds.size === 0 || saving) return;
+    if ((!selectedStudent && (!freeTextName || !namedStudentCountryIso2)) || selectedEventIds.size === 0 || saving) return;
     setSaving(true);
     setError('');
     try {
@@ -266,7 +271,7 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
           directory.save(selectedStudent.id, eventId, teacherId)
         )));
       } else {
-        await createWcaNamedStudent(teacherWcaId, freeTextName, [...selectedEventIds]);
+        await createWcaNamedStudent(teacherWcaId, freeTextName, namedStudentCountryIso2, [...selectedEventIds]);
       }
       onSaved();
       close();
@@ -283,7 +288,10 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
         type="button"
         className="wca-teacher-action wca-student-add-action"
         aria-label={tr({ zh: '添加学生', en: 'Add student' })}
-        onClick={() => setEditing(true)}
+        onClick={() => {
+          setNamedStudentCountryIso2(teacherCountryIso2.toLowerCase());
+          setEditing(true);
+        }}
       >
         +
       </button>
@@ -313,6 +321,16 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
                 placeholder={tr({ zh: '姓名或 WCA ID', en: 'Name or WCA ID' })}
               />
             </div>
+            {!selectedStudent && namedStudentName.trim() && (
+              <label className="wca-named-student-country">
+                <span>{tr({ zh: '国籍', en: 'Nationality' })}</span>
+                <CountryInput
+                  value={namedStudentCountryIso2}
+                  onChange={setNamedStudentCountryIso2}
+                  placeholder={tr({ zh: '选择国籍', en: 'Select nationality' })}
+                />
+              </label>
+            )}
             {selectedStudent && loadingEvents && (
               <p className="wca-teacher-dialog-status">{tr({ zh: '正在读取项目…', en: 'Loading events…' })}</p>
             )}
@@ -344,7 +362,7 @@ export function WcaStudentAdder({ teacherWcaId, directory, isZh, onSaved }: {
               <button
                 type="button"
                 className="wca-teacher-dialog-action wca-teacher-dialog-primary"
-                disabled={(!selectedStudent && !namedStudentName.trim()) || selectedEventIds.size === 0 || loadingEvents || saving}
+                disabled={(!selectedStudent && (!namedStudentName.trim() || !namedStudentCountryIso2)) || selectedEventIds.size === 0 || loadingEvents || saving}
                 onClick={() => void save()}
               >
                 {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存', en: 'Save' })}
@@ -370,17 +388,20 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
 }) {
   const [editing, setEditing] = useState(false);
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(() => new Set(student.eventIds));
+  const [countryIso2, setCountryIso2] = useState(() => student.countryIso2?.toLowerCase() ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const canManage = directory.isAdmin || directory.userWcaId === teacherWcaId;
   const changed = student.eventIds.length !== selectedEventIds.size
-    || student.eventIds.some((eventId) => !selectedEventIds.has(eventId));
+    || student.eventIds.some((eventId) => !selectedEventIds.has(eventId))
+    || (student.countryIso2?.toLowerCase() ?? '') !== countryIso2.toLowerCase();
   const titleId = `named-student-title-${student.id}`;
 
   if (!canManage) return null;
 
   const open = () => {
     setSelectedEventIds(new Set(student.eventIds));
+    setCountryIso2(student.countryIso2?.toLowerCase() ?? '');
     setError('');
     setEditing(true);
   };
@@ -393,11 +414,11 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
     });
   };
   const save = async () => {
-    if (!changed || selectedEventIds.size === 0 || saving) return;
+    if (!changed || !countryIso2 || selectedEventIds.size === 0 || saving) return;
     setSaving(true);
     setError('');
     try {
-      await updateWcaNamedStudent(teacherWcaId, student.id, student.studentName, [...selectedEventIds]);
+      await updateWcaNamedStudent(teacherWcaId, student.id, student.studentName, countryIso2, [...selectedEventIds]);
       setEditing(false);
       onSaved();
     } catch (caught) {
@@ -448,6 +469,14 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
                 </div>
               </div>
             </div>
+            <label className="wca-named-student-country">
+              <span>{tr({ zh: '国籍', en: 'Nationality' })}</span>
+              <CountryInput
+                value={countryIso2}
+                onChange={setCountryIso2}
+                placeholder={tr({ zh: '选择国籍', en: 'Select nationality' })}
+              />
+            </label>
             <WcaEventSelector
               availableEvents={new Set(ALL_EVENT_IDS)}
               selectedEvents={selectedEventIds}
@@ -460,7 +489,7 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
               <button
                 type="button"
                 className="wca-teacher-dialog-action wca-teacher-dialog-primary"
-                disabled={!changed || selectedEventIds.size === 0 || saving}
+                disabled={!changed || !countryIso2 || selectedEventIds.size === 0 || saving}
                 onClick={() => void save()}
               >
                 {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存', en: 'Save' })}

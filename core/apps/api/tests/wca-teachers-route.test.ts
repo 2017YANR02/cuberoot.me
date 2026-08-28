@@ -81,6 +81,7 @@ describe('GET /v1/wca/teachers/:teacherId/named-students', () => {
       id: '550e8400-e29b-41d4-a716-446655440000',
       teacher_wca_id: '2017YANR02',
       student_name: '小明',
+      country_iso2: 'CN',
       event_ids: ['333', 'pyram'],
     }]);
 
@@ -91,6 +92,7 @@ describe('GET /v1/wca/teachers/:teacherId/named-students', () => {
       id: '550e8400-e29b-41d4-a716-446655440000',
       teacherWcaId: '2017YANR02',
       studentName: '小明',
+      countryIso2: 'CN',
       eventIds: ['333', 'pyram'],
     }] });
     expect(mocks.query).toHaveBeenCalledWith(
@@ -118,18 +120,19 @@ describe('POST /v1/wca/teachers/:teacherId/named-students', () => {
   it('lets an administrator add a named student for any teacher', async () => {
     mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02' });
     mocks.query
-      .mockResolvedValueOnce([{ wca_id: '2020TENG01' }])
+      .mockResolvedValueOnce([{ wca_id: '2020TENG01', country_exists: true }])
       .mockResolvedValueOnce([{
         id: '550e8400-e29b-41d4-a716-446655440000',
         teacher_wca_id: '2020TENG01',
         student_name: '小明',
+        country_iso2: 'CN',
         event_ids: ['333', 'pyram'],
       }]);
 
     const response = await app.request('/v1/wca/teachers/2020teng01/named-students', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ studentName: '  小明  ', eventIds: ['333', 'pyram'] }),
+      body: JSON.stringify({ studentName: '  小明  ', countryIso2: 'cn', eventIds: ['333', 'pyram'] }),
     });
 
     expect(response.status).toBe(201);
@@ -137,14 +140,35 @@ describe('POST /v1/wca/teachers/:teacherId/named-students', () => {
       id: '550e8400-e29b-41d4-a716-446655440000',
       teacherWcaId: '2020TENG01',
       studentName: '小明',
+      countryIso2: 'CN',
       eventIds: ['333', 'pyram'],
     } });
     expect(mocks.hasActiveMembership).not.toHaveBeenCalled();
     expect(mocks.query).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('EXISTS (SELECT 1 FROM wca_countries'),
+      ['CN', '2020TENG01'],
+    );
+    expect(mocks.query).toHaveBeenNthCalledWith(
       2,
       expect.stringContaining('INSERT INTO wca_teacher_named_students'),
-      expect.arrayContaining(['2020TENG01', '小明', '2017YANR02', '333', 'pyram']),
+      expect.arrayContaining(['2020TENG01', '小明', 'CN', '2017YANR02', '333', 'pyram']),
     );
+  });
+
+  it('rejects a country code that is not in the WCA country list', async () => {
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02' });
+    mocks.query.mockResolvedValueOnce([{ wca_id: '2020TENG01', country_exists: false }]);
+
+    const response = await app.request('/v1/wca/teachers/2020teng01/named-students', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ studentName: '小明', countryIso2: 'ZZ', eventIds: ['333'] }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'invalid country' });
+    expect(mocks.query).toHaveBeenCalledTimes(1);
   });
 
   it('prevents a member from adding students to another teacher roster', async () => {
@@ -153,12 +177,50 @@ describe('POST /v1/wca/teachers/:teacherId/named-students', () => {
     const response = await app.request('/v1/wca/teachers/2017yanr02/named-students', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ studentName: '小明', eventIds: ['333'] }),
+      body: JSON.stringify({ studentName: '小明', countryIso2: 'CN', eventIds: ['333'] }),
     });
 
     expect(response.status).toBe(403);
     expect(await response.json()).toEqual({ error: 'only the teacher can manage this roster' });
     expect(mocks.hasActiveMembership).not.toHaveBeenCalled();
     expect(mocks.query).not.toHaveBeenCalled();
+  });
+});
+
+describe('PUT /v1/wca/teachers/:teacherId/named-students/:namedStudentId', () => {
+  beforeEach(() => {
+    mocks.query.mockReset();
+    mocks.requireAuth.mockReset();
+    mocks.hasActiveMembership.mockReset();
+  });
+
+  it('updates a named student nationality together with taught events', async () => {
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02' });
+    mocks.query
+      .mockResolvedValueOnce([{ id: '550e8400-e29b-41d4-a716-446655440000', country_exists: true }])
+      .mockResolvedValueOnce([]);
+
+    const response = await app.request(
+      '/v1/wca/teachers/2020teng01/named-students/550e8400-e29b-41d4-a716-446655440000',
+      {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ studentName: '小明', countryIso2: 'de', eventIds: ['333'] }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ student: {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      teacherWcaId: '2020TENG01',
+      studentName: '小明',
+      countryIso2: 'DE',
+      eventIds: ['333'],
+    } });
+    expect(mocks.query).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('country_iso2 = ?'),
+      expect.arrayContaining(['小明', 'DE', '2017YANR02', '333']),
+    );
   });
 });
