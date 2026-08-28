@@ -19,10 +19,14 @@ load_db_password() {
       echo "database credentials unavailable: set PGPASSWORD or DB_PASS, or provide readable CUBEROOT_DB_ENV_FILE" >&2
       exit 1
     }
-    set -a
-    # shellcheck disable=SC1090
-    . "$DB_ENV_FILE"
-    set +a
+    command -v node >/dev/null 2>&1 || {
+      echo "database credentials unavailable: node is required to read CUBEROOT_DB_ENV_FILE" >&2
+      exit 1
+    }
+    # Node's dotenv parser accepts the same unquoted values (including spaces)
+    # as the API runtime without executing the env file as shell code.
+    DB_PASS="$(env -u DB_PASS node --env-file="$DB_ENV_FILE" \
+      -e 'process.stdout.write(process.env.DB_PASS || "")')"
   fi
   [ -n "${DB_PASS:-}" ] || { echo "database credentials unavailable: DB_PASS is empty" >&2; exit 1; }
   export PGPASSWORD="$DB_PASS"
