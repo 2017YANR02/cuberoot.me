@@ -452,6 +452,7 @@ membershipRoutes.post('/membership/notify/wechat', async (c) => {
     return c.json({ code: 'FAIL', message: 'not configured' }, 500);
   }
   const result = wechat.handleWechatCallback(rawBody, {
+    serial: c.req.header('Wechatpay-Serial'),
     timestamp: c.req.header('Wechatpay-Timestamp'),
     nonce: c.req.header('Wechatpay-Nonce'),
     signature: c.req.header('Wechatpay-Signature'),

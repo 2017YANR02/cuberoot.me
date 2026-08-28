@@ -130,6 +130,7 @@ async function verifyWechatNotification(c: Context): Promise<VerifiedPaymentEven
   }
   const rawBody = await c.req.text();
   const result = wechat.handleWechatCallback(rawBody, {
+    serial: c.req.header('Wechatpay-Serial'),
     timestamp: c.req.header('Wechatpay-Timestamp'),
     nonce: c.req.header('Wechatpay-Nonce'),
     signature: c.req.header('Wechatpay-Signature'),
