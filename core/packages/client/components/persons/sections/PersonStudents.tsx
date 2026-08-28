@@ -113,6 +113,9 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh 
   }, [isZh, namedStudents, relations]);
 
   const studentIds = useMemo(() => studentSeeds.flatMap((student) => student.wcaId ? [student.wcaId] : []), [studentSeeds]);
+  const existingWcaStudentEvents = useMemo(() => new Map(studentSeeds.flatMap((student) => (
+    student.wcaId ? [[student.wcaId, student.eventIds] as const] : []
+  ))), [studentSeeds]);
   const studentIdsKey = studentIds.join(',');
   const teacherDirectory = useWcaTeachers(studentIds, ALL_EVENT_IDS);
 
@@ -237,6 +240,8 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh 
                   <WcaStudentAdder
                     teacherWcaId={teacherWcaId}
                     teacherCountryIso2={teacherCountryIso2}
+                    existingWcaStudentEvents={existingWcaStudentEvents}
+                    existingNamedStudents={namedStudents ?? []}
                     directory={teacherDirectory}
                     isZh={isZh}
                     onSaved={() => setReloadKey((current) => current + 1)}
