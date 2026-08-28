@@ -84,7 +84,7 @@
       "[Western Championship 2018](https://www.worldcubeassociation.org/competitions/WesternChampionship2018)"
     ],
     [
-      "7.33",
+      "7.34",
       8,
       "4x4x4 Blindfolded",
       "Single",
@@ -813,6 +813,15 @@
       "[Pabianice Open 2008](https://www.worldcubeassociation.org/competitions/PabianiceOpen2008)"
     ],
     [
+      "1.63",
+      2,
+      "Square-1",
+      "Average",
+      "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
+      "[Gem City Ohio Showdown 2025](https://www.worldcubeassociation.org/competitions/GemCityOhioShowdown2025)",
+      "Still active"
+    ],
+    [
       "1.62",
       2,
       "3x3x3 Blindfolded",
@@ -820,15 +829,6 @@
       "[Alexander Yu](https://www.worldcubeassociation.org/persons/2007YUAL01)",
       "[Kearny Kardinal 2008](https://www.worldcubeassociation.org/competitions/KearnyKardinal2008)",
       "[Guangdong Open 2009](https://www.worldcubeassociation.org/competitions/GuangdongOpen2009)"
-    ],
-    [
-      "1.62",
-      2,
-      "Square-1",
-      "Average",
-      "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
-      "[Gem City Ohio Showdown 2025](https://www.worldcubeassociation.org/competitions/GemCityOhioShowdown2025)",
-      "Still active"
     ],
     [
       "1.61",
@@ -1157,20 +1157,20 @@
     [
       "1.15",
       2,
-      "2x2x2 Cube",
-      "Average",
-      "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
-      "[Caltech Spring 2005](https://www.worldcubeassociation.org/competitions/CaltechSpring2005)",
-      "[Chalmers Open 2006](https://www.worldcubeassociation.org/competitions/ChalmersOpen2006)"
-    ],
-    [
-      "1.15",
-      2,
       "5x5x5 Cube",
       "Average",
       "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)",
       "Still active"
+    ],
+    [
+      "1.15",
+      2,
+      "2x2x2 Cube",
+      "Average",
+      "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+      "[Caltech Spring 2005](https://www.worldcubeassociation.org/competitions/CaltechSpring2005)",
+      "[Chalmers Open 2006](https://www.worldcubeassociation.org/competitions/ChalmersOpen2006)"
     ],
     [
       "1.11",
@@ -1452,6 +1452,15 @@
       "[Maitland Spring 2024](https://www.worldcubeassociation.org/competitions/MaitlandSpring2024)"
     ],
     [
+      "0.73",
+      2,
+      "Megaminx",
+      "Average",
+      "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+      "[Tashkent Open 2025](https://www.worldcubeassociation.org/competitions/TashkentOpen2025)",
+      "Still active"
+    ],
+    [
       "0.71",
       2,
       "4x4x4 Cube",
@@ -1461,7 +1470,7 @@
       "[Australian Nationals 2012](https://www.worldcubeassociation.org/competitions/AustralianNationals2012)"
     ],
     [
-      "0.70",
+      "0.71",
       2,
       "2x2x2 Cube",
       "Average",
@@ -1974,7 +1983,7 @@
       "[Osaka Open 2008](https://www.worldcubeassociation.org/competitions/OsakaOpen2008)"
     ],
     [
-      "0.26",
+      "0.27",
       2,
       "7x7x7 Cube",
       "Single",

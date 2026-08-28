@@ -207,6 +207,13 @@
     ],
     [
       42,
+      "[Ben Timmons](https://www.worldcubeassociation.org/persons/2017TIMM01)",
+      "Ireland",
+      "[Dublin Summer Solving 2024](https://www.worldcubeassociation.org/competitions/DublinSummerSolving2024)",
+      null
+    ],
+    [
+      42,
       "[Vako Marchilashvili (ვაკო მარჩილაშვილი)](https://www.worldcubeassociation.org/persons/2013MARC05)",
       "Georgia",
       "[Georgian Open 2013](https://www.worldcubeassociation.org/competitions/GeorgianOpen2013)",
@@ -217,13 +224,6 @@
       "[Sinpei Araki (荒木慎平)](https://www.worldcubeassociation.org/persons/2006ARAK01)",
       "Japan",
       "[JRCA Kansai Summer 2009](https://www.worldcubeassociation.org/competitions/JRCAKansaiSummer2009)",
-      null
-    ],
-    [
-      41,
-      "[Ben Timmons](https://www.worldcubeassociation.org/persons/2017TIMM01)",
-      "Ireland",
-      "[Dublin Summer Solving 2024](https://www.worldcubeassociation.org/competitions/DublinSummerSolving2024)",
       null
     ],
     [
@@ -297,17 +297,17 @@
       null
     ],
     [
-      35,
-      "[Asia Konvittayayotin (เอเชีย กรวิทยโยธิน)](https://www.worldcubeassociation.org/persons/2009KONV01)",
-      "Thailand",
-      "[Thailand Open 2009](https://www.worldcubeassociation.org/competitions/ThailandOpen2009)",
+      36,
+      "[Kevin Timmons](https://www.worldcubeassociation.org/persons/2019TIMM01)",
+      "Ireland",
+      "[Dublin Winter Solving 2025](https://www.worldcubeassociation.org/competitions/DublinWinterSolving2025)",
       null
     ],
     [
       35,
-      "[Kevin Timmons](https://www.worldcubeassociation.org/persons/2019TIMM01)",
-      "Ireland",
-      "[Dublin Winter Solving 2025](https://www.worldcubeassociation.org/competitions/DublinWinterSolving2025)",
+      "[Asia Konvittayayotin (เอเชีย กรวิทยโยธิน)](https://www.worldcubeassociation.org/persons/2009KONV01)",
+      "Thailand",
+      "[Thailand Open 2009](https://www.worldcubeassociation.org/competitions/ThailandOpen2009)",
       null
     ],
     [
@@ -627,6 +627,13 @@
     ],
     [
       26,
+      "[Lucas Patrick Dowling](https://www.worldcubeassociation.org/persons/2023DOWL01)",
+      "Ireland",
+      "[Dublin Summer Solving 2025](https://www.worldcubeassociation.org/competitions/DublinSummerSolving2025)",
+      null
+    ],
+    [
+      26,
       "[Jānis Zirnis](https://www.worldcubeassociation.org/persons/2013ZIRN01)",
       "Latvia",
       "[Sigulda Open 2023](https://www.worldcubeassociation.org/competitions/SiguldaOpen2023)",
@@ -644,13 +651,6 @@
       "[Rafael de Andrade Cinoto](https://www.worldcubeassociation.org/persons/2007CINO01)",
       "Brazil",
       "[Torneio DRACO 2012](https://www.worldcubeassociation.org/competitions/TorneioDraco2012)",
-      null
-    ],
-    [
-      25,
-      "[Lucas Patrick Dowling](https://www.worldcubeassociation.org/persons/2023DOWL01)",
-      "Ireland",
-      "[Dublin Summer Solving 2025](https://www.worldcubeassociation.org/competitions/DublinSummerSolving2025)",
       null
     ],
     [
@@ -732,9 +732,9 @@
     ],
     [
       24,
-      "[Uku Kruusamägi](https://www.worldcubeassociation.org/persons/2009KRUU01)",
-      "Estonia",
-      "[Estonian Open 2009](https://www.worldcubeassociation.org/competitions/EstonianOpen2009)",
+      "[Claudio Matias Cancino Bruna](https://www.worldcubeassociation.org/persons/2019BRUN02)",
+      "Chile",
+      "[Curicó al Cubo 2024](https://www.worldcubeassociation.org/competitions/CuricoalCubo2024)",
       null
     ]
   ]

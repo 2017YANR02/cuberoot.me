@@ -878,6 +878,13 @@
       "titleZh": "斜转",
       "rows": [
         [
+          "0.02",
+          "[Yanbo Liu (刘彦博)](https://www.worldcubeassociation.org/persons/2023LIUY14)",
+          "2.37",
+          "2.39",
+          "[Beijing Autumn Begins 2026](https://www.worldcubeassociation.org/competitions/BeijingAutumnBegins2026/results/by_person#2023LIUY14)"
+        ],
+        [
           "0.03",
           "[Oskar Hanuszkiewicz](https://www.worldcubeassociation.org/persons/2018HANU02)",
           "1.96",
@@ -928,13 +935,6 @@
         ],
         [
           "0.04",
-          "[Coral Yuxin Cai (蔡羽欣)](https://www.worldcubeassociation.org/persons/2016CAIY03)",
-          "2.90",
-          "2.94",
-          "[You May Open 2018](https://www.worldcubeassociation.org/competitions/YouMayOpen2018/results/by_person#2016CAIY03)"
-        ],
-        [
-          "0.04",
           "[Alessandro Calzoni](https://www.worldcubeassociation.org/persons/2021CALZ01)",
           "2.90",
           "2.94",
@@ -942,10 +942,10 @@
         ],
         [
           "0.04",
-          "[Szymon Zastawny](https://www.worldcubeassociation.org/persons/2023ZAST01)",
-          "3.36",
-          "3.40",
-          "[CFL Final Łódź 2025](https://www.worldcubeassociation.org/competitions/CFLFinalLodz2025/results/by_person#2023ZAST01)"
+          "[Coral Yuxin Cai (蔡羽欣)](https://www.worldcubeassociation.org/persons/2016CAIY03)",
+          "2.90",
+          "2.94",
+          "[You May Open 2018](https://www.worldcubeassociation.org/competitions/YouMayOpen2018/results/by_person#2016CAIY03)"
         ]
       ]
     },
@@ -1308,17 +1308,17 @@
         ],
         [
           "0.01",
-          "[Quentin Lefebvre](https://www.worldcubeassociation.org/persons/2009LEFE01)",
-          "1.16",
-          "1.17",
-          "[Toulouse Open 2010](https://www.worldcubeassociation.org/competitions/ToulouseOpen2010/results/by_person#2009LEFE01)"
-        ],
-        [
-          "0.01",
           "[Justin Badua](https://www.worldcubeassociation.org/persons/2010BADU01)",
           "1.16",
           "1.17",
           "[Dixon Open 2012](https://www.worldcubeassociation.org/competitions/DixonOpen2012/results/by_person#2010BADU01)"
+        ],
+        [
+          "0.01",
+          "[Quentin Lefebvre](https://www.worldcubeassociation.org/persons/2009LEFE01)",
+          "1.16",
+          "1.17",
+          "[Toulouse Open 2010](https://www.worldcubeassociation.org/competitions/ToulouseOpen2010/results/by_person#2009LEFE01)"
         ],
         [
           "0.01",

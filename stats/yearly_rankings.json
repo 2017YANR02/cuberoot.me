@@ -250,18 +250,18 @@
           "0.52 3.34 3.28 1.52 2.09"
         ],
         [
+          "[Leland Pak](https://www.worldcubeassociation.org/persons/2023PAKL02)",
+          "**0.52**",
+          "United States",
+          "[Mid-Atlantic Championship 2026](https://www.worldcubeassociation.org/competitions/MidAtlanticChampionship2026)",
+          "0.52 3.93 3.71 4.22 4.56"
+        ],
+        [
           "[Isaac Corker](https://www.worldcubeassociation.org/persons/2024CORK01)",
           "**0.53**",
           "United Kingdom",
           "[Sheffield Spring 2026](https://www.worldcubeassociation.org/competitions/SheffieldSpring2026)",
           "1.35 0.53 2.99 2.12 3.51"
-        ],
-        [
-          "[Jack Pan (潘杰康)](https://www.worldcubeassociation.org/persons/2012PANJ02)",
-          "**0.54**",
-          "China",
-          "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
-          "0.54 1.26 2.10 DNF 1.53"
         ]
       ]
     },
@@ -809,6 +809,13 @@
           "1:44.78 1:44.92 1:30.59"
         ],
         [
+          "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+          "**1:32.69**",
+          "Poland",
+          "[Elmsford Extravaganza III 2026](https://www.worldcubeassociation.org/competitions/ElmsfordExtravaganzaIII2026)",
+          "1:46.63 1:32.69 1:44.96"
+        ],
+        [
           "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
           "**1:32.92**",
           "Malaysia",
@@ -821,13 +828,6 @@
           "China",
           "[Guangzhou Big Cubes 2026](https://www.worldcubeassociation.org/competitions/GuangzhouBigCubes2026)",
           "1:51.40 1:33.72 1:43.81"
-        ],
-        [
-          "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-          "**1:34.32**",
-          "Poland",
-          "[NxN in Jura 2026](https://www.worldcubeassociation.org/competitions/NxNinJura2026)",
-          "1:51.35 1:40.86 1:34.32"
         ],
         [
           "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
@@ -907,10 +907,10 @@
         ],
         [
           "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-          "**1:41.64**",
+          "**1:41.43**",
           "Poland",
-          "[WCA European Championship 2026](https://www.worldcubeassociation.org/competitions/Euro2026)",
-          "1:44.09 1:39.94 1:40.90"
+          "[Elmsford Extravaganza III 2026](https://www.worldcubeassociation.org/competitions/ElmsfordExtravaganzaIII2026)",
+          "1:46.63 1:32.69 1:44.96"
         ],
         [
           "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
@@ -1258,11 +1258,25 @@
       "titleZh": "3x3x3 One-Handed - Single",
       "rows": [
         [
+          "[Patrick Ponce](https://www.worldcubeassociation.org/persons/2012PONC02)",
+          "**5.62**",
+          "United States",
+          "[Mid-Atlantic Championship 2026](https://www.worldcubeassociation.org/competitions/MidAtlanticChampionship2026)",
+          "10.79 13.99 5.62 8.46 16.35"
+        ],
+        [
           "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
           "**5.85**",
           "China",
           "[Zhanjiang Open 2026](https://www.worldcubeassociation.org/competitions/ZhanjiangOpen2026)",
           "9.84 9.45 5.85 9.60 8.81"
+        ],
+        [
+          "[Crimson Arradaza](https://www.worldcubeassociation.org/persons/2023ARRA01)",
+          "**5.96**",
+          "Philippines",
+          "[Makati Heroes Speedcubing 2026](https://www.worldcubeassociation.org/competitions/MakatiHeroesSpeedcubing2026)",
+          "5.96 7.81 7.14 8.15 7.98"
         ],
         [
           "[Zhen Chen (陈震)](https://www.worldcubeassociation.org/persons/2023CHEN30)",
@@ -1284,13 +1298,6 @@
           "Poland",
           "[Żory Open 2026](https://www.worldcubeassociation.org/competitions/ZoryOpen2026)",
           "14.20 10.38 9.28 11.80 6.29"
-        ],
-        [
-          "[Crimson Arradaza](https://www.worldcubeassociation.org/persons/2023ARRA01)",
-          "**6.31**",
-          "Philippines",
-          "[MnM CaMaNaVa Majors 2026](https://www.worldcubeassociation.org/competitions/MnMCaMaNaVaMajors2026)",
-          "9.68 10.68 8.91 6.31 8.06"
         ],
         [
           "[Radosław Marcinek](https://www.worldcubeassociation.org/persons/2022MARC05)",
@@ -1319,13 +1326,6 @@
           "Russia",
           "[Selangor Cube Open 2026](https://www.worldcubeassociation.org/competitions/SelangorCubeOpen2026)",
           "15.88 10.91 6.59 15.58 12.12"
-        ],
-        [
-          "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
-          "**6.62**",
-          "United States",
-          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026)",
-          "10.14 9.50 14.58 6.62 11.22"
         ]
       ]
     },
@@ -1342,10 +1342,10 @@
         ],
         [
           "[Crimson Arradaza](https://www.worldcubeassociation.org/persons/2023ARRA01)",
-          "**7.72**",
+          "**7.64**",
           "Philippines",
-          "[GAN Tarlac Speedcubing Open 2026](https://www.worldcubeassociation.org/competitions/TarlacSpeedcubingOpen2026)",
-          "8.18 7.97 8.02 7.16 6.82"
+          "[Makati Heroes Speedcubing 2026](https://www.worldcubeassociation.org/competitions/MakatiHeroesSpeedcubing2026)",
+          "5.96 7.81 7.14 8.15 7.98"
         ],
         [
           "[Nicholas Archer](https://www.worldcubeassociation.org/persons/2020ARCH01)",
@@ -1853,11 +1853,11 @@
           "2.29 2.79 2.47 2.96 2.48"
         ],
         [
-          "[Jonathan Wang (王嘉洺)](https://www.worldcubeassociation.org/persons/2022WANG23)",
-          "**2.66**",
-          "Canada",
-          "[Wasaga Beach Spring 2026](https://www.worldcubeassociation.org/competitions/WasagaBeachSpring2026)",
-          "2.70 2.89 2.90 2.31 2.40"
+          "[Adhiyan Kumaresan](https://www.worldcubeassociation.org/persons/2022KUMA05)",
+          "**2.65**",
+          "United States",
+          "[Northwest Championship 2026](https://www.worldcubeassociation.org/competitions/NorthwestChampionship2026)",
+          "3.16 2.91 2.59 2.44 2.35"
         ]
       ]
     },
@@ -1894,6 +1894,13 @@
           "2.40 4.81 3.58 0.96 4.24"
         ],
         [
+          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+          "**0.96**",
+          "United States",
+          "[Mid-Atlantic Championship 2026](https://www.worldcubeassociation.org/competitions/MidAtlanticChampionship2026)",
+          "0.96 2.14 1.36 3.49 2.07"
+        ],
+        [
           "[Oskar Hanuszkiewicz](https://www.worldcubeassociation.org/persons/2018HANU02)",
           "**0.96**",
           "Poland",
@@ -1927,13 +1934,6 @@
           "Poland",
           "[Beskidy Cubing Days 2026](https://www.worldcubeassociation.org/competitions/BeskidyCubingDays2026)",
           "2.98 3.54 4.43 0.98 3.60"
-        ],
-        [
-          "[Coral Yuxin Cai (蔡羽欣)](https://www.worldcubeassociation.org/persons/2016CAIY03)",
-          "**0.98**",
-          "China",
-          "[Singapore Skewby March 2026](https://www.worldcubeassociation.org/competitions/SingaporeSkewbyMarch2026)",
-          "0.98 3.39 3.07 3.54 1.77"
         ]
       ]
     },
@@ -2032,6 +2032,13 @@
           "7.11 5.98 3.40 8.61 7.70"
         ],
         [
+          "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
+          "**3.61**",
+          "United States",
+          "[Northwest Championship 2026](https://www.worldcubeassociation.org/competitions/NorthwestChampionship2026)",
+          "4.61 7.44 3.61 5.23 5.53"
+        ],
+        [
           "[Rasmus Stub Detlefsen](https://www.worldcubeassociation.org/persons/2014DETL01)",
           "**3.70**",
           "Denmark",
@@ -2074,13 +2081,6 @@
           "8.82 9.64 4.29 9.69 10.66"
         ],
         [
-          "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
-          "**4.31**",
-          "United States",
-          "[Lakewood Spring 2026](https://www.worldcubeassociation.org/competitions/LakewoodSpring2026)",
-          "4.78 8.20 4.31 6.08 10.24"
-        ],
-        [
           "[Maksym Wingert](https://www.worldcubeassociation.org/persons/2024WING02)",
           "**4.36**",
           "Poland",
@@ -2099,6 +2099,13 @@
           "United States",
           "[Redhawk Slow Summer OH 2026](https://www.worldcubeassociation.org/competitions/RedhawkSlowSummerOH2026)",
           "6.05 4.69 4.98 4.40 4.32"
+        ],
+        [
+          "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
+          "**5.12**",
+          "United States",
+          "[Northwest Championship 2026](https://www.worldcubeassociation.org/competitions/NorthwestChampionship2026)",
+          "4.61 7.44 3.61 5.23 5.53"
         ],
         [
           "[Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01)",
@@ -2155,13 +2162,6 @@
           "China",
           "[Maoming Open 2026](https://www.worldcubeassociation.org/competitions/MaomingOpen2026)",
           "5.16 5.46 6.52 5.98 7.62"
-        ],
-        [
-          "[Szymon Ciepiela](https://www.worldcubeassociation.org/persons/2022CIEP01)",
-          "**6.02**",
-          "Poland",
-          "[Dragon Cubing XII 2026](https://www.worldcubeassociation.org/competitions/DragonCubingXII2026)",
-          "5.31 7.26 6.96 5.80 5.21"
         ]
       ]
     },
