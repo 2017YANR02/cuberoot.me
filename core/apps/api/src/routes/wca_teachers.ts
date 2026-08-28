@@ -39,7 +39,7 @@ interface NamedStudentRow {
   id: string;
   teacher_wca_id: string;
   student_name: string;
-  country_iso2: string | null;
+  country_iso2: string;
   event_ids: string[];
 }
 
@@ -62,7 +62,7 @@ function namedStudentToJson(row: NamedStudentRow) {
     id: row.id,
     teacherWcaId: row.teacher_wca_id,
     studentName: row.student_name,
-    countryIso2: row.country_iso2 ?? '',
+    countryIso2: row.country_iso2,
     eventIds: row.event_ids,
   };
 }
@@ -167,6 +167,7 @@ wcaTeacherRoutes.post('/wca/teachers/:teacherId/named-students', async (c) => {
        INSERT INTO wca_teacher_named_students
          (teacher_wca_id, student_name, country_iso2, created_by, updated_by)
        VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT DO NOTHING
        RETURNING id, teacher_wca_id, student_name, country_iso2
      ), inserted_events AS (
        INSERT INTO wca_teacher_named_student_events
@@ -178,6 +179,7 @@ wcaTeacherRoutes.post('/wca/teachers/:teacherId/named-students', async (c) => {
      SELECT id, teacher_wca_id, student_name, country_iso2 FROM inserted_student`,
     [teacherWcaId, studentName, countryIso2, actorWcaId, actorWcaId, actorWcaId, actorWcaId, ...eventIds],
   );
+  if (!rows.length) return c.json({ error: 'student already exists' }, 409);
   return c.json({ student: namedStudentToJson({ ...rows[0], event_ids: eventIds }) }, 201);
 });
 

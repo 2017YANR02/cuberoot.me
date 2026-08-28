@@ -151,9 +151,25 @@ describe('POST /v1/wca/teachers/:teacherId/named-students', () => {
     );
     expect(mocks.query).toHaveBeenNthCalledWith(
       2,
-      expect.stringContaining('INSERT INTO wca_teacher_named_students'),
+      expect.stringMatching(/INSERT INTO wca_teacher_named_students[\s\S]+ON CONFLICT DO NOTHING/),
       expect.arrayContaining(['2020TENG01', '小明', 'CN', '2017YANR02', '333', 'pyram']),
     );
+  });
+
+  it('returns a conflict when the named student is already on the roster', async () => {
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02' });
+    mocks.query
+      .mockResolvedValueOnce([{ wca_id: '2020TENG01', country_exists: true }])
+      .mockResolvedValueOnce([]);
+
+    const response = await app.request('/v1/wca/teachers/2020teng01/named-students', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ studentName: '小明', countryIso2: 'CN', eventIds: ['333'] }),
+    });
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: 'student already exists' });
   });
 
   it('rejects a country code that is not in the WCA country list', async () => {

@@ -25,7 +25,7 @@ import {
 import { eventDisplayName } from '@/lib/wca-events';
 import { tr } from '@/i18n/tr';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
-import { fetchWcaPerson } from '@/lib/wca-person-api';
+import { fetchWcaPersonResults } from '@/lib/wca-person-api';
 import './wca-teacher-cell.css';
 
 const LOOKUP_CHUNK_SIZE = 100;
@@ -43,8 +43,17 @@ function teacherErrorMessage(caught: unknown): string {
     'student not found': { zh: '未找到这位选手', en: 'Cuber not found' },
     'teacher not found': { zh: '未找到这位老师', en: 'Teacher not found' },
     'invalid country': { zh: '请选择有效国籍', en: 'Select a valid nationality' },
+    'student already exists': { zh: '这位学生已在名单中，可直接修改', en: 'This student is already on the roster and can be updated' },
   };
   return tr(known[message] ?? { zh: '保存失败，请稍后重试', en: 'Save failed. Please try again.' });
+}
+
+function normalizeRosterName(value: string): string {
+  return value.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function sameEvents(left: readonly string[], right: ReadonlySet<string>): boolean {
+  return left.length === right.size && left.every((eventId) => right.has(eventId));
 }
 
 export interface WcaTeacherDirectory {
@@ -179,9 +188,19 @@ export function WcaTeacherNote() {
   );
 }
 
-export function WcaStudentAdder({ teacherWcaId, teacherCountryIso2, directory, isZh, onSaved }: {
+export function WcaStudentAdder({
+  teacherWcaId,
+  teacherCountryIso2,
+  existingWcaStudentEvents,
+  existingNamedStudents,
+  directory,
+  isZh,
+  onSaved,
+}: {
   teacherWcaId: string;
   teacherCountryIso2: string;
+  existingWcaStudentEvents: ReadonlyMap<string, readonly string[]>;
+  existingNamedStudents: readonly WcaNamedStudent[];
   directory: WcaTeacherDirectory;
   isZh: boolean;
   onSaved: () => void;
@@ -197,6 +216,21 @@ export function WcaStudentAdder({ teacherWcaId, teacherCountryIso2, directory, i
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const canAdd = canAddWcaTeacherStudent(teacherWcaId, directory);
+  const existingWcaEventIds = selectedStudent
+    ? existingWcaStudentEvents.get(selectedStudent.id) ?? []
+    : [];
+  const normalizedNamedStudentName = normalizeRosterName(namedStudentName);
+  const existingNamedStudent = normalizedNamedStudentName
+    ? existingNamedStudents.find((student) => normalizeRosterName(student.studentName) === normalizedNamedStudentName)
+    : undefined;
+  const isExistingStudent = existingWcaEventIds.length > 0 || !!existingNamedStudent;
+  const changed = selectedStudent
+    ? !sameEvents(existingWcaEventIds, selectedEventIds)
+    : existingNamedStudent
+      ? !sameEvents(existingNamedStudent.eventIds, selectedEventIds)
+        || existingNamedStudent.countryIso2.toLowerCase() !== namedStudentCountryIso2.toLowerCase()
+        || existingNamedStudent.studentName.replace(/\s+/g, ' ').trim() !== namedStudentName.replace(/\s+/g, ' ').trim()
+      : true;
   const visibleEventSet = useMemo(() => new Set(showAllEvents
     ? ALL_EVENT_IDS
     : [...availableEventIds, ...selectedEventIds]), [availableEventIds, selectedEventIds, showAllEvents]);
@@ -206,7 +240,7 @@ export function WcaStudentAdder({ teacherWcaId, teacherCountryIso2, directory, i
   useEffect(() => {
     let cancelled = false;
     setAvailableEventIds([]);
-    setSelectedEventIds(new Set());
+    setSelectedEventIds(new Set(existingWcaStudentEvents.get(selectedStudent?.id ?? '') ?? []));
     setShowAllEvents(false);
     setError('');
     if (!selectedStudent) {
@@ -219,13 +253,16 @@ export function WcaStudentAdder({ teacherWcaId, teacherCountryIso2, directory, i
       return;
     }
     setLoadingEvents(true);
-    fetchWcaPerson(selectedStudent.id)
-      .then((profile) => {
+    fetchWcaPersonResults(selectedStudent.id)
+      .then((results) => {
         if (cancelled) return;
-        const personalRecordEvents = new Set(Object.keys(profile.personal_records));
-        const nextAvailableEventIds = ALL_EVENT_IDS.filter((eventId) => personalRecordEvents.has(eventId));
+        const competedEvents = new Set(results.map((result) => result.event_id));
+        const nextAvailableEventIds = ALL_EVENT_IDS.filter((eventId) => competedEvents.has(eventId));
         setAvailableEventIds(nextAvailableEventIds);
         setShowAllEvents(nextAvailableEventIds.length === 0);
+        if (!existingWcaStudentEvents.has(selectedStudent.id) && nextAvailableEventIds.length === 1) {
+          setSelectedEventIds(new Set(nextAvailableEventIds));
+        }
       })
       .catch(() => {
         if (cancelled) return;
@@ -237,7 +274,7 @@ export function WcaStudentAdder({ teacherWcaId, teacherCountryIso2, directory, i
       })
       .finally(() => { if (!cancelled) setLoadingEvents(false); });
     return () => { cancelled = true; };
-  }, [selectedStudent, teacherWcaId]);
+  }, [existingWcaStudentEvents, selectedStudent, teacherWcaId]);
 
   if (!canAdd) return null;
 
@@ -267,9 +304,23 @@ export function WcaStudentAdder({ teacherWcaId, teacherCountryIso2, directory, i
     try {
       if (selectedStudent) {
         const teacherId = directory.isAdmin ? teacherWcaId : undefined;
-        await Promise.all([...selectedEventIds].map((eventId) => (
-          directory.save(selectedStudent.id, eventId, teacherId)
-        )));
+        const previousEventIds = new Set(existingWcaEventIds);
+        await Promise.all([
+          ...[...selectedEventIds]
+            .filter((eventId) => !previousEventIds.has(eventId))
+            .map((eventId) => directory.save(selectedStudent.id, eventId, teacherId)),
+          ...existingWcaEventIds
+            .filter((eventId) => !selectedEventIds.has(eventId))
+            .map((eventId) => directory.remove(selectedStudent.id, eventId)),
+        ]);
+      } else if (existingNamedStudent) {
+        await updateWcaNamedStudent(
+          teacherWcaId,
+          existingNamedStudent.id,
+          freeTextName,
+          namedStudentCountryIso2,
+          [...selectedEventIds],
+        );
       } else {
         await createWcaNamedStudent(teacherWcaId, freeTextName, namedStudentCountryIso2, [...selectedEventIds]);
       }
@@ -305,16 +356,29 @@ export function WcaStudentAdder({ teacherWcaId, teacherCountryIso2, directory, i
             onKeyDown={(event) => { if (event.key === 'Escape' && !saving) close(); }}
           >
             <div className="wca-teacher-dialog-heading">
-              <h2 id={titleId}>{tr({ zh: '添加学生', en: 'Add student' })}</h2>
+              <h2 id={titleId}>{isExistingStudent
+                ? tr({ zh: '修改学生', en: 'Edit student' })
+                : tr({ zh: '添加学生', en: 'Add student' })}</h2>
               <WcaPersonPicker
                 value={selectedStudent}
                 onChange={(student) => {
                   setSelectedStudent(student);
                   setNamedStudentName('');
+                  setSelectedEventIds(new Set(student ? existingWcaStudentEvents.get(student.id) ?? [] : []));
+                  setShowAllEvents(false);
+                  setError('');
                 }}
                 onQueryChange={(value) => {
                   setNamedStudentName(value);
-                  if (value.trim()) setShowAllEvents(true);
+                  const duplicate = existingNamedStudents.find((student) => (
+                    normalizeRosterName(student.studentName) === normalizeRosterName(value)
+                  ));
+                  setNamedStudentCountryIso2(
+                    duplicate?.countryIso2.toLowerCase() ?? teacherCountryIso2.toLowerCase(),
+                  );
+                  setSelectedEventIds(new Set(duplicate?.eventIds ?? []));
+                  setShowAllEvents(!!value.trim());
+                  setError('');
                 }}
                 allowFreeText
                 isZh={isZh}
@@ -322,14 +386,29 @@ export function WcaStudentAdder({ teacherWcaId, teacherCountryIso2, directory, i
               />
             </div>
             {!selectedStudent && namedStudentName.trim() && (
-              <label className="wca-named-student-country">
-                <span>{tr({ zh: '国籍', en: 'Nationality' })}</span>
-                <CountryInput
-                  value={namedStudentCountryIso2}
-                  onChange={setNamedStudentCountryIso2}
-                  placeholder={tr({ zh: '选择国籍', en: 'Select nationality' })}
-                />
-              </label>
+              <>
+                <label className="wca-named-student-country">
+                  <span>{tr({ zh: '国籍（必填）', en: 'Nationality (required)' })}</span>
+                  <CountryInput
+                    value={namedStudentCountryIso2}
+                    onChange={setNamedStudentCountryIso2}
+                    placeholder={tr({ zh: '选择国籍', en: 'Select nationality' })}
+                  />
+                </label>
+                {!namedStudentCountryIso2 && (
+                  <p className="wca-teacher-dialog-error wca-teacher-dialog-country-error" role="status">
+                    {tr({ zh: '请选择国籍后保存', en: 'Select a nationality before saving' })}
+                  </p>
+                )}
+              </>
+            )}
+            {isExistingStudent && (
+              <p className="wca-teacher-dialog-status" role="status">
+                {tr({
+                  zh: '该学生已在名单中，可在这里修改国籍或授课项目',
+                  en: 'This student is already on the roster. You can update their nationality or taught events here.',
+                })}
+              </p>
             )}
             {selectedStudent && loadingEvents && (
               <p className="wca-teacher-dialog-status">{tr({ zh: '正在读取项目…', en: 'Loading events…' })}</p>
@@ -362,10 +441,14 @@ export function WcaStudentAdder({ teacherWcaId, teacherCountryIso2, directory, i
               <button
                 type="button"
                 className="wca-teacher-dialog-action wca-teacher-dialog-primary"
-                disabled={(!selectedStudent && (!namedStudentName.trim() || !namedStudentCountryIso2)) || selectedEventIds.size === 0 || loadingEvents || saving}
+                disabled={(!selectedStudent && (!namedStudentName.trim() || !namedStudentCountryIso2)) || selectedEventIds.size === 0 || loadingEvents || saving || (isExistingStudent && !changed)}
                 onClick={() => void save()}
               >
-                {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存', en: 'Save' })}
+                {saving
+                  ? tr({ zh: '保存中…', en: 'Saving…' })
+                  : isExistingStudent
+                    ? tr({ zh: '保存修改', en: 'Save changes' })
+                    : tr({ zh: '保存', en: 'Save' })}
               </button>
               <button type="button" className="wca-teacher-dialog-action wca-teacher-dialog-cancel" disabled={saving} onClick={close}>
                 {tr({ zh: '取消', en: 'Cancel' })}
@@ -470,13 +553,18 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
               </div>
             </div>
             <label className="wca-named-student-country">
-              <span>{tr({ zh: '国籍', en: 'Nationality' })}</span>
+              <span>{tr({ zh: '国籍（必填）', en: 'Nationality (required)' })}</span>
               <CountryInput
                 value={countryIso2}
                 onChange={setCountryIso2}
                 placeholder={tr({ zh: '选择国籍', en: 'Select nationality' })}
               />
             </label>
+            {!countryIso2 && (
+              <p className="wca-teacher-dialog-error wca-teacher-dialog-country-error" role="status">
+                {tr({ zh: '请选择国籍后保存', en: 'Select a nationality before saving' })}
+              </p>
+            )}
             <WcaEventSelector
               availableEvents={new Set(ALL_EVENT_IDS)}
               selectedEvents={selectedEventIds}
