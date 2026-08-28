@@ -16,6 +16,7 @@ import {
   createPlatformActionGuard,
   PLATFORM_INTERACTION_LOCK_TIMEOUT_MS,
 } from '../../lib/platform-action-guard';
+import { SITE_HOST } from '../../lib/runtime-config';
 import { resolveAccountPageShare } from '../../lib/web-routes';
 import { showPublicShareMenu, toTimelineShare } from '../../lib/share';
 
@@ -69,6 +70,7 @@ Page({
     loggedIn: false,
     status: '',
     statusError: false,
+    siteHost: SITE_HOST,
     syncLabel: '',
     syncState: '',
     storageUnavailable: false,
@@ -227,7 +229,11 @@ Page({
     this.openWebsiteAction('account', '账号页暂时无法打开');
   },
 
-  openWebsiteAction(key: 'account' | 'logout' | 'privacy', failureMessage: string) {
+  openSupport() {
+    this.openWebsiteAction('support', '网站暂时无法打开');
+  },
+
+  openWebsiteAction(key: 'account' | 'logout' | 'privacy' | 'support', failureMessage: string) {
     this.setData({ actionStatus: '' });
     openWebsitePageOnce(this, key, {
       failureMessage,

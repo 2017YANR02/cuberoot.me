@@ -36,6 +36,11 @@ export const WEB_ROUTES = {
     description: '管理 WCA 账号与登录方式',
     path: '/zh/account',
   },
+  support: {
+    title: '联系与支持',
+    description: '查看网站与联系方式',
+    path: '/zh/support',
+  },
   privacy: {
     title: '隐私说明',
     description: '查看数据、登录与删除说明',
