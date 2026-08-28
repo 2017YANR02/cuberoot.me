@@ -39,7 +39,7 @@
       "./comp-series": "runtime-neutral",
       "./comp-city-identity": "runtime-neutral",
       "./record-places": "runtime-neutral",
-      "./persons-index": "runtime-neutral",
+      "./persons-index": "mixed",
       "./wca-round": "runtime-neutral",
       "./kinch": "runtime-neutral",
       "./pr-streak": "runtime-neutral",
