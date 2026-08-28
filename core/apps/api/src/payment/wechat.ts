@@ -5,8 +5,8 @@
  * 资质:营业执照(个人独资企业可开),无对公账户可用法人本人银行卡走认证。appid 须与商户号绑定。
  * 待签消息体构造在 @cuberoot/shared/payment(纯函数,有单测);本模块只做 node:crypto + HTTP。
  *
- * 安全:回调用对称 APIv3 密钥做 AEAD 解密 —— 解密成功本身即证明报文来自微信(密钥仅商户与微信持有,
- * 无法伪造),这是入账的硬门槛;若另配了平台公钥 (WECHAT_PLATFORM_PUBKEY) 则再验非对称应答签名(纵深防御)。
+ * 安全:API 应答与回调都必须用 Wechatpay-Serial 对应的微信支付公钥验签;
+ * 回调验签通过后再用 APIv3 密钥做 AEAD 解密。
  */
 import { createSign, createVerify, createDecipheriv, randomUUID } from 'node:crypto';
 import { buildWechatV3Message, buildWechatV3VerifyMessage } from '@cuberoot/shared/payment';
@@ -17,10 +17,20 @@ const MCHID = process.env.WECHAT_MCHID || '';
 const API_V3_KEY = process.env.WECHAT_API_V3_KEY || ''; // 32 字节
 const CERT_SERIAL = process.env.WECHAT_CERT_SERIAL || '';
 const PRIVATE_KEY = normalizePem(process.env.WECHAT_PRIVATE_KEY || '', 'PRIVATE KEY');
-const PLATFORM_PUBKEY = normalizePem(process.env.WECHAT_PLATFORM_PUBKEY || '', 'PUBLIC KEY'); // 选填
+const PLATFORM_PUBKEY_ID = process.env.WECHAT_PLATFORM_PUBKEY_ID || '';
+const PLATFORM_PUBKEY = normalizePem(process.env.WECHAT_PLATFORM_PUBKEY || '', 'PUBLIC KEY');
+const MAX_SIGNATURE_AGE_SECONDS = 300;
 
 export function wechatConfigured(): boolean {
-  return Boolean(APPID && MCHID && API_V3_KEY.length === 32 && CERT_SERIAL && PRIVATE_KEY);
+  return Boolean(
+    APPID
+    && MCHID
+    && API_V3_KEY.length === 32
+    && CERT_SERIAL
+    && PRIVATE_KEY
+    && PLATFORM_PUBKEY_ID.startsWith('PUB_KEY_ID_')
+    && PLATFORM_PUBKEY,
+  );
 }
 
 function normalizePem(raw: string, type: 'PRIVATE KEY' | 'PUBLIC KEY'): string {
@@ -61,6 +71,13 @@ async function apiRequest(
     signal: AbortSignal.timeout(15000),
   });
   const text = await res.text();
+  const signatureOk = verifyWechatSignature({
+    serial: res.headers.get('Wechatpay-Serial') ?? undefined,
+    timestamp: res.headers.get('Wechatpay-Timestamp') ?? undefined,
+    nonce: res.headers.get('Wechatpay-Nonce') ?? undefined,
+    signature: res.headers.get('Wechatpay-Signature') ?? undefined,
+  }, text);
+  if (!signatureOk) throw new Error(`wechat response signature verification failed (${res.status})`);
   let json: Record<string, unknown> = {};
   try { json = text ? (JSON.parse(text) as Record<string, unknown>) : {}; } catch { /* 非 JSON */ }
   return { status: res.status, json };
@@ -142,14 +159,24 @@ function decryptResource(res: WechatResource): string {
   return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
 }
 
-/** 选配:用平台公钥验回调应答签名(配了才验;没配靠 GCM 解密鉴权)。 */
-function verifyCallbackSignature(
-  headers: { timestamp?: string; nonce?: string; signature?: string },
+interface WechatSignatureHeaders {
+  serial?: string;
+  timestamp?: string;
+  nonce?: string;
+  signature?: string;
+}
+
+/** 用 Wechatpay-Serial 对应的微信支付公钥验 API 应答或回调签名。 */
+export function verifyWechatSignature(
+  headers: WechatSignatureHeaders,
   rawBody: string,
 ): boolean {
-  if (!PLATFORM_PUBKEY) return true; // 未配平台公钥 → 跳过(GCM 解密是硬门槛)
-  const { timestamp, nonce, signature } = headers;
+  const { serial, timestamp, nonce, signature } = headers;
+  if (!PLATFORM_PUBKEY || !PLATFORM_PUBKEY_ID || serial !== PLATFORM_PUBKEY_ID) return false;
   if (!timestamp || !nonce || !signature) return false;
+  const timestampNumber = Number(timestamp);
+  if (!Number.isInteger(timestampNumber)) return false;
+  if (Math.abs(Math.floor(Date.now() / 1000) - timestampNumber) > MAX_SIGNATURE_AGE_SECONDS) return false;
   const message = buildWechatV3VerifyMessage({ timestamp, nonce, body: rawBody });
   try {
     return createVerify('RSA-SHA256').update(message, 'utf8').verify(PLATFORM_PUBKEY, signature, 'base64');
@@ -164,9 +191,9 @@ function verifyCallbackSignature(
  */
 export function handleWechatCallback(
   rawBody: string,
-  headers: { timestamp?: string; nonce?: string; signature?: string },
+  headers: WechatSignatureHeaders,
 ): { ok: boolean; outTradeNo?: string; paid?: boolean; txn?: string; raw?: unknown } {
-  if (!verifyCallbackSignature(headers, rawBody)) return { ok: false };
+  if (!verifyWechatSignature(headers, rawBody)) return { ok: false };
   let envelope: { resource?: WechatResource };
   try { envelope = JSON.parse(rawBody) as { resource?: WechatResource }; } catch { return { ok: false }; }
   if (!envelope.resource?.ciphertext) return { ok: false };
