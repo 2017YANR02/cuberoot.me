@@ -1,8 +1,9 @@
 'use client';
 
 import BackHome from '@/components/BackHome';
+import AppLink from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
-import './wechat-groups.css';
+import './contact.css';
 
 type Bi = { zh: string; en: string };
 
@@ -206,21 +207,40 @@ function GroupName({ name }: { name: Bi }) {
   );
 }
 
-export default function WeChatGroupsPage() {
+export default function ContactPage() {
   return (
-    <main className="wechat-groups-page">
-      <header className="wechat-groups-header">
+    <main className="contact-page">
+      <header className="contact-header">
         <BackHome />
-        <p className="wechat-groups-eyebrow">{tr({ zh: '魔方社区', en: 'CUBING COMMUNITY' })}</p>
-        <h1>{tr({ zh: '微信群', en: 'WeChat Groups' })}</h1>
-        <p className="wechat-groups-intro">{tr({
-          zh: '从地区、项目和方法训练，到二手交易、教学与兴趣交流，在这里找到适合你的群。',
-          en: 'Find a group for your region, puzzle, training method, trading, teaching or other interests.',
+        <p className="contact-eyebrow">{tr({ zh: '联系与社群', en: 'CONTACT & COMMUNITY' })}</p>
+        <h1>{tr({ zh: '联系方式', en: 'Contact' })}</h1>
+        <p className="contact-intro">{tr({
+          zh: '添加我的微信，或从地区、项目和方法训练等分类中找到适合你的群。',
+          en: 'Add me on WeChat, or find a group for your region, puzzle, training method or other interests.',
         })}</p>
       </header>
 
-      <section className="wechat-groups-join" aria-labelledby="wechat-groups-join-title">
-        <h2 id="wechat-groups-join-title">{tr({ zh: '进群方法', en: 'How to join' })}</h2>
+      <section className="contact-profile" aria-labelledby="contact-profile-title">
+        <div className="contact-profile-copy">
+          <h2 id="contact-profile-title">{tr({ zh: '联系我', en: 'Contact me' })}</h2>
+          <p>{tr({
+            zh: '微信扫码添加我，也可以通过 CubeRoot 网站找到我。',
+            en: 'Scan the QR code to add me on WeChat, or find me through the CubeRoot website.',
+          })}</p>
+          <span className="contact-site-label">{tr({ zh: '网站', en: 'Website' })}</span>
+          <AppLink href="/" className="contact-site">cuberoot.me</AppLink>
+        </div>
+        <img
+          className="contact-qr"
+          src="/contact/ruimin-wechat-qr.jpg"
+          alt={tr({ zh: '魔方根微信二维码', en: 'WeChat QR code for Ruimin Yan' })}
+          loading="lazy"
+          decoding="async"
+        />
+      </section>
+
+      <section className="contact-join" aria-labelledby="contact-join-title">
+        <h2 id="contact-join-title">{tr({ zh: '进群方法', en: 'How to join' })}</h2>
         <p>
           <T
             zh={<>添加微信 <strong>mofanggen</strong>，回复你想要进的群。</>}
@@ -229,10 +249,10 @@ export default function WeChatGroupsPage() {
         </p>
       </section>
 
-      <div className="wechat-groups-directory">
+      <div className="contact-directory">
         {SECTIONS.map((section, sectionIndex) => (
-          <section className="wechat-groups-section" aria-labelledby={section.id} key={section.id}>
-            <div className="wechat-groups-section-heading">
+          <section className="contact-section" aria-labelledby={section.id} key={section.id}>
+            <div className="contact-section-heading">
               <span aria-hidden>{String(sectionIndex + 1).padStart(2, '0')}</span>
               <div>
                 <h2 id={section.id}>{tr(section.title)}</h2>
@@ -240,11 +260,11 @@ export default function WeChatGroupsPage() {
               </div>
             </div>
 
-            <div className="wechat-groups-blocks">
+            <div className="contact-blocks">
               {section.blocks.map((block) => (
-                <div className="wechat-groups-block" key={block.title.zh}>
+                <div className="contact-block" key={block.title.zh}>
                   <h3>{tr(block.title)}</h3>
-                  <ul className="wechat-groups-list">
+                  <ul className="contact-list">
                     {block.groups.map((name) => <GroupName name={name} key={name.zh} />)}
                   </ul>
                 </div>

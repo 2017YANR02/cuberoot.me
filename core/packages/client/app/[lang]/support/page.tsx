@@ -288,31 +288,6 @@ export default function SupportPage() {
         </div>
       </header>
 
-      <section className="support-contact" aria-labelledby="support-contact-title">
-        <div className="support-contact-copy">
-          <h2 id="support-contact-title">
-            {tr({ zh: '联系我', en: 'Contact me' })}
-          </h2>
-          <p>
-            {tr({
-              zh: '微信扫码添加我，也可以通过 CubeRoot 网站找到我。',
-              en: 'Scan the QR code to add me on WeChat, or find me through the CubeRoot website.',
-            })}
-          </p>
-          <span className="support-contact-site-label">
-            {tr({ zh: '网站', en: 'Website' })}
-          </span>
-          <AppLink href="/" className="support-contact-site">cuberoot.me</AppLink>
-        </div>
-        <img
-          className="support-contact-qr"
-          src="/contact/ruimin-wechat-qr.jpg"
-          alt={tr({ zh: '魔方根微信二维码', en: 'WeChat QR code for Ruimin Yan' })}
-          loading="lazy"
-          decoding="async"
-        />
-      </section>
-
       {loadErr ? (
         <div className="support-empty">{tr({ zh: '加载失败', en: 'Failed to load'
         })}: {loadErr}</div>

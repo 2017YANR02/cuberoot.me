@@ -20,12 +20,12 @@ describe('homepage card order', () => {
     }));
   });
 
-  it('links the homepage to the WeChat group directory', () => {
+  it('links the homepage to the contact page', () => {
     const otherCards = SECTIONS.find(({ id }) => id === 'other')?.cards;
 
     expect(otherCards).toContainEqual(expect.objectContaining({
-      id: 'wechat-groups',
-      href: '/wechat-groups',
+      id: 'contact',
+      href: '/contact',
       internal: true,
     }));
   });
