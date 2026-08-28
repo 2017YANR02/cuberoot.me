@@ -138,6 +138,7 @@ export default function CreatorGallery() {
                   <label>
                     <span>{tr({ zh: '中文说明', en: 'Chinese caption' })}</span>
                     <textarea
+                      className="ruimin-gallery-caption-input"
                       value={draftCaption?.captionZh ?? ''}
                       maxLength={800}
                       rows={3}
@@ -147,6 +148,7 @@ export default function CreatorGallery() {
                   <label>
                     <span>{tr({ zh: '英文说明', en: 'English caption' })}</span>
                     <textarea
+                      className="ruimin-gallery-caption-input"
                       value={draftCaption?.captionEn ?? ''}
                       maxLength={800}
                       rows={3}
@@ -167,12 +169,22 @@ export default function CreatorGallery() {
 
       {editing && isAdmin && (
         <div className="ruimin-gallery-actions">
-          <button type="button" onClick={save} disabled={saving}>
+          <button
+            className="ruimin-gallery-action ruimin-gallery-action-primary"
+            type="button"
+            onClick={save}
+            disabled={saving}
+          >
             {saving
               ? tr({ zh: '保存中…', en: 'Saving…' })
               : tr({ zh: '保存说明', en: 'Save captions' })}
           </button>
-          <button type="button" onClick={cancelEditing} disabled={saving}>
+          <button
+            className="ruimin-gallery-action"
+            type="button"
+            onClick={cancelEditing}
+            disabled={saving}
+          >
             {tr({ zh: '取消', en: 'Cancel' })}
           </button>
           {saveError && (

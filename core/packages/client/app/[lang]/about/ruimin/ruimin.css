@@ -395,7 +395,7 @@
   font-size: 0.76rem;
 }
 
-.ruimin-gallery-caption-editor textarea {
+.ruimin-gallery-caption-input {
   width: 100%;
   min-height: 78px;
   resize: vertical;
@@ -409,7 +409,7 @@
   line-height: 1.55;
 }
 
-.ruimin-gallery-caption-editor textarea:focus-visible {
+.ruimin-gallery-caption-input:focus-visible {
   border-color: var(--accent);
   outline: 1px solid var(--accent);
 }
@@ -422,7 +422,7 @@
   margin-top: 36px;
 }
 
-.ruimin-gallery-actions button {
+.ruimin-gallery-action {
   padding: 8px 14px;
   border: 1px solid var(--border-default);
   border-radius: 4px;
@@ -433,13 +433,13 @@
   font-size: 0.84rem;
 }
 
-.ruimin-gallery-actions button:first-child {
+.ruimin-gallery-action-primary {
   border-color: var(--accent);
   background: var(--accent);
   color: var(--accent-foreground);
 }
 
-.ruimin-gallery-actions button:disabled {
+.ruimin-gallery-action:disabled {
   cursor: wait;
   opacity: 0.6;
 }
