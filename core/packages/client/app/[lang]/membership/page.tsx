@@ -7,7 +7,7 @@
  * 在线支付未开通时引导走打赏 + 联系站长手动开通。admin 登录后见管理面板。
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Crown, Check, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Crown, Check, RefreshCw, AlertTriangle, CalendarClock } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
@@ -23,6 +23,7 @@ import {
 import PayModal from './PayModal';
 import AdminPanel from './AdminPanel';
 import MemberContact from './MemberContact';
+import AutoRenewModal from './AutoRenewModal';
 import './membership.css';
 
 const PERK_LABEL: Record<string, { zh: string; en: string }> = {
@@ -65,6 +66,7 @@ export default function MembershipPage() {
   const [justPaid, setJustPaid] = useState(false);
   const [paid, setPaid] = useQueryState('paid');
   const [renew, setRenew] = useQueryState('renew');
+  const [autoRenewOpen, setAutoRenewOpen] = useState(false);
 
   const refreshMembership = useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -141,6 +143,8 @@ export default function MembershipPage() {
   }, [renew, mounted, plans, membership]);
 
   const sortedPlans = useMemo(() => plans ?? [], [plans]);
+  const monthlyPlan = sortedPlans.find((plan) => plan.period === 'month');
+  const showAutoRenew = !!monthlyPlan;
 
   return (
     <div className="mem-page">
@@ -209,6 +213,24 @@ export default function MembershipPage() {
         })}</div>
       ) : (
         <div className="mem-plans">
+          {showAutoRenew && monthlyPlan && (
+            <div className="mem-plan is-autorenew">
+              <span className="mem-plan-tag">{tr({ zh: '自动续费', en: 'Auto-renew' })}</span>
+              <div className="mem-plan-name">{tr({ zh: '连续包月', en: 'Monthly auto-renewal' })}</div>
+              <div className="mem-plan-price">
+                <span className="mem-plan-amount">{fmtPrice(monthlyPlan.priceCents, monthlyPlan.currency)}</span>
+                <span className="mem-plan-unit">/ {tr({ zh: '月', en: 'month' })}</span>
+              </div>
+              <ul className="mem-plan-perks">
+                <li><CalendarClock size={13} /> {tr({ zh: '每月自动延长会员', en: 'Membership renews monthly' })}</li>
+                <li><Check size={13} /> {tr({ zh: '扣费前发送通知', en: 'Notice before every charge' })}</li>
+                <li><Check size={13} /> {tr({ zh: '可随时关闭自动续费', en: 'Cancel anytime' })}</li>
+              </ul>
+              <button className="mem-plan-cta" onClick={() => setAutoRenewOpen(true)}>
+                {tr({ zh: '开通连续包月', en: 'Start auto-renewal' })}
+              </button>
+            </div>
+          )}
           {sortedPlans.map((plan) => {
             const current = activeMember && membership?.planSlug === plan.slug && !membership.lifetime;
             return (
@@ -259,10 +281,15 @@ export default function MembershipPage() {
       )}
 
       <p className="mem-foot-note">
-        {tr({
-          zh: '会员为按周期一次性付款,不会自动扣款。到期前我们会提醒你,一键即可续费。',
-          en: "Membership is a one-time payment per period — no auto-charge. We'll remind you before it expires, and renewing takes one click."
-        })}
+        {showAutoRenew
+          ? tr({
+              zh: '单次套餐不会自动扣款；连续包月将在扣费前通知，并支持随时关闭。',
+              en: 'One-time plans never auto-charge. Monthly auto-renewal includes notice before charging and can be cancelled anytime.'
+            })
+          : tr({
+              zh: '会员为按周期一次性付款,不会自动扣款。到期前我们会提醒你,一键即可续费。',
+              en: "Membership is a one-time payment per period — no auto-charge. We'll remind you before it expires, and renewing takes one click."
+            })}
         {' '}
         <AppLink href="/support">{tr({ zh: '查看致谢名单 →', en: 'See supporters →'
         })}</AppLink>
@@ -286,6 +313,12 @@ export default function MembershipPage() {
         />
       )}
       {donateOpen && <DonateModal lang={isZh ? 'zh' : 'en'} onClose={() => setDonateOpen(false)} />}
+      {autoRenewOpen && monthlyPlan && (
+        <AutoRenewModal
+          price={fmtPrice(monthlyPlan.priceCents, monthlyPlan.currency)}
+          onClose={() => setAutoRenewOpen(false)}
+        />
+      )}
     </div>
   );
 }

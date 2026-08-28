@@ -48,6 +48,13 @@
   margin: 0 0 28px;
 }
 
+.friends-search-section {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 420px);
+  align-items: start;
+  column-gap: 10px;
+}
+
 .friends-search-section h2,
 .friends-main-list h2,
 .friends-request-groups h2 {
@@ -56,9 +63,9 @@
   font-weight: 600;
 }
 
-.friends-search {
-  width: min(100%, 420px);
-  margin-bottom: 10px;
+.friends-search-section h2 {
+  margin: 0;
+  line-height: 40px;
 }
 
 .friends-search-group {
@@ -68,35 +75,9 @@
   margin-bottom: 18px;
 }
 
-.friends-search-label {
-  margin-bottom: 7px;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
 .friends-wca-picker {
   width: min(100%, 420px);
   max-width: 420px;
-}
-
-.friends-search-input {
-  width: 100%;
-  min-width: 0;
-  padding: 9px 34px 9px 11px;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  background: var(--input);
-  color: var(--foreground);
-  font: inherit;
-  font-size: 14px;
-  outline: none;
-}
-
-.friends-search-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .friends-list { display: flex; flex-direction: column; }
@@ -107,6 +88,11 @@
   gap: 12px;
   padding: 11px 0;
   border-bottom: 1px solid var(--border-default);
+}
+
+.friends-user-row.is-outgoing {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
 }
 
 .friends-identity {
@@ -227,4 +213,5 @@ a.friends-identity:hover strong { color: var(--accent); }
   .friends-user-row { align-items: flex-start; flex-wrap: wrap; }
   .friends-identity { width: 100%; }
   .friends-actions { margin-left: 48px; }
+  .friends-user-row.is-outgoing .friends-actions { margin-left: 0; }
 }

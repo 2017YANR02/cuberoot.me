@@ -3,6 +3,7 @@
 // 内部账号 API 客户端(邮箱/手机验证码登录 + 绑定/解绑)。全走 apiUrl(),别硬编码 origin。
 import { apiUrl } from './api-base';
 import { getSessionToken } from './auth-store';
+import { authHeaders, handleApi } from './admin-api';
 import type { WebSession, WebSessionUser } from '@cuberoot/shared/auth/web-session';
 import type { ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 
@@ -51,6 +52,21 @@ export const deleteAccount = (confirm: string, password?: string) =>
 // 修改站内用户名后同时换发带新名字的 JWT,供本机登录态原子刷新。
 export const updateDisplayName = (name: string) =>
   post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/profile', { name }, true);
+export async function fetchAdminUser(userId: number): Promise<SessionUser> {
+  const response = await fetch(apiUrl(`/v1/auth/admin/users/${userId}`), {
+    headers: authHeaders(false),
+    cache: 'no-store',
+  });
+  return (await handleApi<{ user: SessionUser }>(response)).user;
+}
+export async function updateAdminDisplayName(userId: number, name: string): Promise<SessionUser> {
+  const response = await fetch(apiUrl(`/v1/auth/admin/users/${userId}/profile`), {
+    method: 'POST',
+    headers: authHeaders(true),
+    body: JSON.stringify({ name }),
+  });
+  return (await handleApi<{ ok: true; user: SessionUser }>(response)).user;
+}
 export type AvatarChoice =
   | { kind: 'clawd'; preset: ClawdAvatarPresetId }
   | { kind: 'upload'; imageId: number }

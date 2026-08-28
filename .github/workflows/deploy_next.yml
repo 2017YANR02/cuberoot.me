@@ -15,6 +15,7 @@ on:
       - 'core/packages/shared/**'
       - 'core/packages/stack-kernel/package.json'
       - 'core/packages/stack-kernel/pkg/**'
+      - 'core/packages/timer-ui/**'
       - 'core/packages/vendor-sr-puzzlegen/**'
       - 'core/packages/visualcube/**'
       - 'core/package.json'
