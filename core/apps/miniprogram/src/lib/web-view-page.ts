@@ -11,6 +11,7 @@ import {
   WEB_ROUTE_SHARE_IMAGE,
   type WebRouteKey,
 } from './web-routes';
+import { showPublicShareMenu, toTimelineShare } from './share';
 import {
   clearRuntimeTimeout,
   scheduleRuntimeTimeout,
@@ -159,7 +160,7 @@ function updateNavigationTitle(title: string): void {
 function updateShareMenu(key: unknown): void {
   try {
     if (resolveWebRouteShare(key)) {
-      wx.showShareMenu({ menus: ['shareAppMessage'] });
+      showPublicShareMenu();
       return;
     }
     wx.hideShareMenu({ menus: ['shareAppMessage', 'shareTimeline'] });
@@ -372,6 +373,14 @@ export function createWebViewPageOptions(
         title: 'CubeRoot 魔方根',
         path: '/pages/timer/index',
       };
+    },
+
+    onShareTimeline() {
+      return toTimelineShare(resolveWebRouteShare(this.data.routeKey) ?? {
+        imageUrl: WEB_ROUTE_SHARE_IMAGE,
+        title: 'CubeRoot 魔方根',
+        path: '/pages/timer/index',
+      });
     },
 
     handleWebViewError(event) {

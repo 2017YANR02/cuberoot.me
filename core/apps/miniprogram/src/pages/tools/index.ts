@@ -3,11 +3,16 @@ import {
   openWebsitePageOnce,
 } from '../../lib/navigation';
 import { listWebTools, resolveToolsPageShare } from '../../lib/web-routes';
+import { showPublicShareMenu, toTimelineShare } from '../../lib/share';
 
 Page({
   data: {
     status: '',
     tools: listWebTools(),
+  },
+
+  onShow() {
+    showPublicShareMenu();
   },
 
   onHide() {
@@ -20,6 +25,10 @@ Page({
 
   onShareAppMessage() {
     return resolveToolsPageShare();
+  },
+
+  onShareTimeline() {
+    return toTimelineShare(resolveToolsPageShare());
   },
 
   openTool(event: WechatMiniprogram.TouchEvent) {

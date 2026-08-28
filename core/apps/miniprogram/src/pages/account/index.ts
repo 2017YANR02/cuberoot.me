@@ -16,6 +16,8 @@ import {
   createPlatformActionGuard,
   PLATFORM_INTERACTION_LOCK_TIMEOUT_MS,
 } from '../../lib/platform-action-guard';
+import { resolveAccountPageShare } from '../../lib/web-routes';
+import { showPublicShareMenu, toTimelineShare } from '../../lib/share';
 
 const activePages = new WeakSet<object>();
 const activeLogins = new WeakSet<object>();
@@ -74,7 +76,16 @@ Page({
   },
 
   onShow() {
+    showPublicShareMenu();
     void this.refreshAccount();
+  },
+
+  onShareAppMessage() {
+    return resolveAccountPageShare();
+  },
+
+  onShareTimeline() {
+    return toTimelineShare(resolveAccountPageShare());
   },
 
   async refreshAccount() {

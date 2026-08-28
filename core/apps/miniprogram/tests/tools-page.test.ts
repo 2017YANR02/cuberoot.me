@@ -3,8 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 interface ToolsPage {
   data: Record<string, unknown>;
   onHide(): void;
+  onShow(): void;
   onUnload(): void;
   onShareAppMessage(): WechatMiniprogram.Page.ICustomShareContent;
+  onShareTimeline(): WechatMiniprogram.Page.ICustomTimelineContent;
   openTool(event: { currentTarget: { dataset: { key?: unknown } } }): void;
   setData(data: Record<string, unknown>): void;
 }
@@ -45,12 +47,23 @@ describe('mini program tools page', () => {
   });
 
   it('shares the public tools entry with the canonical brand image', async () => {
-    const page = await loadPage({});
+    const showShareMenu = vi.fn();
+    const page = await loadPage({ showShareMenu });
+
+    page.onShow();
+
+    expect(showShareMenu).toHaveBeenCalledWith({
+      menus: ['shareAppMessage', 'shareTimeline'],
+    });
 
     expect(page.onShareAppMessage()).toEqual({
       imageUrl: '/assets/share-cover.png',
       title: 'CubeRoot 魔方根：魔方工具',
       path: '/pages/tools/index',
+    });
+    expect(page.onShareTimeline()).toEqual({
+      imageUrl: '/assets/share-cover.png',
+      title: 'CubeRoot 魔方根：魔方工具',
     });
   });
 
