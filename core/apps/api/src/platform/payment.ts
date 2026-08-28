@@ -53,6 +53,9 @@ export async function createProviderPayment(input: {
     throw new PlatformApiError('PAYMENT_NOT_CONFIGURED', 503, 'WeChat Pay is not configured');
   }
   if (input.clientType === 'wap') {
+    if (!wechat.wechatH5Configured()) {
+      throw new PlatformApiError('PAYMENT_NOT_CONFIGURED', 503, 'WeChat H5 Pay is not configured');
+    }
     return {
       checkoutUrl: await wechat.createWechatH5({
         outTradeNo: input.orderNo,
