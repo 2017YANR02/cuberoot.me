@@ -32,6 +32,36 @@ export interface AppUser {
   wca_id: string | null;
 }
 
+type AppUserRow = Omit<AppUser, 'id'> & { id: unknown };
+
+/** PostgreSQL BIGINT 默认以字符串返回；在账号数据边界统一收窄为前端契约要求的安全整数。 */
+function appUserId(rawId: unknown): number {
+  const id = typeof rawId === 'bigint'
+    ? Number(rawId)
+    : typeof rawId === 'string' && /^[1-9]\d*$/.test(rawId)
+      ? Number(rawId)
+      : rawId;
+  if (typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0) {
+    throw new RangeError('app user id must be a positive safe integer');
+  }
+  return id;
+}
+
+function appUserFromRow(row: AppUserRow): AppUser {
+  return {
+    id: appUserId(row.id),
+    display_name: row.display_name,
+    avatar_url: row.avatar_url,
+    avatar_source: row.avatar_source,
+    avatar_preset: row.avatar_preset,
+    wca_id: row.wca_id,
+  };
+}
+
+function firstAppUser(rows: AppUserRow[]): AppUser | null {
+  return rows[0] ? appUserFromRow(rows[0]) : null;
+}
+
 const CODE_TTL_MS = 10 * 60 * 1000;      // 验证码有效期 10 分钟
 const CODE_MAX_ATTEMPTS = 5;             // 单码最多校验 5 次,超限作废(防爆破)
 const SEND_COOLDOWN_MS = 60 * 1000;      // 同一 target 两次发码最小间隔 60s
@@ -192,7 +222,7 @@ export async function clearPassword(userId: number): Promise<void> {
  * (统一走一次 scrypt,含假哈希兜底,不泄露具体失败原因 + 无时序侧信道)。
  */
 export async function loginWithPassword(email: string, pw: string): Promise<AppUser | null> {
-  const rows = await query<AppUser & { password_hash: string | null }>(
+  const rows = await query<AppUserRow & { password_hash: string | null }>(
     `SELECT u.id, u.display_name, u.avatar_url, u.avatar_source, u.avatar_preset, u.wca_id, u.password_hash
      FROM auth_identities i JOIN app_users u ON u.id = i.user_id
      WHERE i.provider = 'email' AND i.provider_uid = ?`,
@@ -201,23 +231,16 @@ export async function loginWithPassword(email: string, pw: string): Promise<AppU
   const row = rows[0];
   const ok = await verifyPassword(pw, row?.password_hash ?? DUMMY_PASSWORD_HASH);
   if (!row || !row.password_hash || !ok) return null;
-  return {
-    id: row.id,
-    display_name: row.display_name,
-    avatar_url: row.avatar_url,
-    avatar_source: row.avatar_source,
-    avatar_preset: row.avatar_preset,
-    wca_id: row.wca_id,
-  };
+  return appUserFromRow(row);
 }
 
 // ── 账号 / 身份 ──
 export async function getUserById(id: number): Promise<AppUser | null> {
-  const rows = await query<AppUser>(
+  const rows = await query<AppUserRow>(
     'SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id FROM app_users WHERE id = ?',
     [id],
   );
-  return rows[0] ?? null;
+  return firstAppUser(rows);
 }
 
 /**
@@ -225,26 +248,26 @@ export async function getUserById(id: number): Promise<AppUser | null> {
  * wca_id 条件是最终写入闸门:即使改名与绑定 WCA 并发,也不能在实名绑定后落入自定义名。
  */
 export async function updateDisplayName(id: number, displayName: string): Promise<AppUser | null> {
-  const rows = await query<AppUser>(
+  const rows = await query<AppUserRow>(
     `UPDATE app_users SET display_name = ? WHERE id = ? AND wca_id IS NULL
      RETURNING id, display_name, avatar_url, avatar_source, avatar_preset, wca_id`,
     [displayName, id],
   );
-  return rows[0] ?? null;
+  return firstAppUser(rows);
 }
 
 export async function updateClawdAvatar(
   id: number,
   preset: ClawdAvatarPresetId,
 ): Promise<AppUser | null> {
-  const rows = await query<AppUser>(
+  const rows = await query<AppUserRow>(
     `UPDATE app_users
      SET avatar_source = 'clawd', avatar_preset = ?, avatar_url = NULL
      WHERE id = ?
      RETURNING id, display_name, avatar_url, avatar_source, avatar_preset, wca_id`,
     [preset, id],
   );
-  return rows[0] ?? null;
+  return firstAppUser(rows);
 }
 
 export async function updateUploadedAvatar(
@@ -253,7 +276,7 @@ export async function updateUploadedAvatar(
   imageId: number,
   avatarUrl: string,
 ): Promise<AppUser | null> {
-  const rows = await query<AppUser>(
+  const rows = await query<AppUserRow>(
     `UPDATE app_users AS app
      SET avatar_source = 'upload', avatar_preset = NULL, avatar_url = ?
      WHERE app.id = ?
@@ -265,11 +288,11 @@ export async function updateUploadedAvatar(
                app.avatar_source, app.avatar_preset, app.wca_id`,
     [avatarUrl, id, imageId, ownershipKey],
   );
-  return rows[0] ?? null;
+  return firstAppUser(rows);
 }
 
 export async function resetAvatarToWca(id: number): Promise<AppUser | null> {
-  const rows = await query<AppUser>(
+  const rows = await query<AppUserRow>(
     `UPDATE app_users AS app
      SET avatar_source = 'auto',
          avatar_preset = NULL,
@@ -281,25 +304,25 @@ export async function resetAvatarToWca(id: number): Promise<AppUser | null> {
                app.avatar_source, app.avatar_preset, app.wca_id`,
     [id],
   );
-  return rows[0] ?? null;
+  return firstAppUser(rows);
 }
 
 export async function findUserByWcaId(wcaId: string): Promise<AppUser | null> {
-  const rows = await query<AppUser>(
+  const rows = await query<AppUserRow>(
     'SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id FROM app_users WHERE wca_id = ?',
     [wcaId],
   );
-  return rows[0] ?? null;
+  return firstAppUser(rows);
 }
 
 export async function findUserByIdentity(provider: Provider, providerUid: string): Promise<AppUser | null> {
-  const rows = await query<AppUser>(
+  const rows = await query<AppUserRow>(
     `SELECT u.id, u.display_name, u.avatar_url, u.avatar_source, u.avatar_preset, u.wca_id
      FROM auth_identities i JOIN app_users u ON u.id = i.user_id
      WHERE i.provider = ? AND i.provider_uid = ?`,
     [provider, providerUid],
   );
-  return rows[0] ?? null;
+  return firstAppUser(rows);
 }
 
 /**
@@ -341,13 +364,15 @@ export async function loginWithIdentity(
           ${profile.wcaId ?? null}
         )
         RETURNING id, display_name, avatar_url, avatar_source, avatar_preset, wca_id`;
-      const u = rows[0] as unknown as AppUser;
+      const row = rows[0] as unknown as AppUserRow | undefined;
+      if (!row) throw new Error('account creation returned no user');
+      const u = appUserFromRow(row);
       await tx`
         INSERT INTO auth_identities (user_id, provider, provider_uid, verified_at)
         VALUES (${u.id}, ${provider}, ${providerUid}, NOW())`;
       return u;
     });
-    return { user: created as AppUser, isNew: true };
+    return { user: created, isNew: true };
   } catch {
     // 并发下另一个请求已创建同一身份(唯一约束触发,事务回滚无孤儿)→ 重查返回。
     // 账号确实是这一瞬间建的,但建它的是另一个请求,本次不认领 isNew(引导只做一次)。
@@ -529,7 +554,7 @@ export async function removeIdentity(
 /** 组装给前端的用户对象(与客户端 WcaUser 对齐:wcaId 可空 + uid)。 */
 export function publicUser(user: AppUser): WebSessionUser {
   return {
-    uid: user.id,
+    uid: appUserId(user.id),
     wcaId: user.wca_id,
     name: user.display_name,
     avatar: user.avatar_url ?? '',
@@ -559,14 +584,14 @@ export async function publicUserIdsForOwnerKeys(
       `SELECT id, wca_id FROM app_users WHERE wca_id IN (${wcaKeys.map(() => '?').join(',')})`,
       wcaKeys,
     );
-    for (const row of rows) result.set(row.wca_id, Number(row.id));
+    for (const row of rows) result.set(row.wca_id, appUserId(row.id));
   }
   if (uidKeys.length > 0) {
     const rows = await query<{ id: number | string }>(
       `SELECT id FROM app_users WHERE id IN (${uidKeys.map(() => '?').join(',')})`,
       uidKeys,
     );
-    for (const row of rows) result.set(`u${row.id}`, Number(row.id));
+    for (const row of rows) result.set(`u${row.id}`, appUserId(row.id));
   }
 
   return result;
