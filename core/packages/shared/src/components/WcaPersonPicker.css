@@ -5,7 +5,7 @@
 .wca-pp-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: color-mix(in srgb, var(--foreground) 45%, transparent);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   z-index: 1000;
@@ -23,10 +23,11 @@
 
 /* ── 搜索面板 ── */
 .wca-pp-panel {
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--popover);
+  color: var(--popover-foreground);
   backdrop-filter: blur(12px);
   border-radius: 14px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 32px color-mix(in srgb, var(--foreground) 18%, transparent);
   width: 380px;
   max-width: 92vw;
   max-height: 70vh;
@@ -44,29 +45,7 @@
 /* ── 搜索输入框 ── */
 .wca-pp-input-wrap {
   padding: 14px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.wca-pp-input {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 15px;
-  color: #333;
-  background: #fff;
-  outline: none;
-  transition: border-color 0.2s;
-  box-sizing: border-box;
-}
-
-.wca-pp-input::placeholder {
-  color: #999;
-}
-
-.wca-pp-input:focus {
-  border-color: #4a90d9;
-  box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.15);
+  border-bottom: 1px solid var(--border-default);
 }
 
 /* ── 搜索结果列表 ── */
@@ -89,10 +68,11 @@
   text-align: left;
   font-family: inherit;
   font-size: inherit;
+  color: var(--popover-foreground);
 }
 
 .wca-pp-item:hover {
-  background: rgba(74, 144, 217, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 /* ── 头像 ── */
@@ -101,7 +81,7 @@
   height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  background: #eee;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
   flex-shrink: 0;
 }
 
@@ -116,7 +96,7 @@
 .wca-pp-name {
   font-weight: 600;
   font-size: 14px;
-  color: #333;
+  color: var(--popover-foreground);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -124,7 +104,7 @@
 
 .wca-pp-id {
   font-size: 12px;
-  color: #888;
+  color: var(--muted-foreground);
 }
 
 /* ── 国旗 ── */
@@ -139,7 +119,7 @@
 .wca-pp-status {
   padding: 20px 14px;
   text-align: center;
-  color: #999;
+  color: var(--muted-foreground);
   font-size: 14px;
 }
 
@@ -148,8 +128,8 @@
   display: inline-block;
   width: 20px;
   height: 20px;
-  border: 2px solid #ddd;
-  border-top-color: #4a90d9;
+  border: 2px solid var(--border-default);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: wca-pp-spin 0.6s linear infinite;
 }
@@ -169,7 +149,7 @@
   left: 0;
   z-index: 100;
   width: 320px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--foreground) 15%, transparent);
 }
 
 .wca-pp-inline .wca-pp-results {

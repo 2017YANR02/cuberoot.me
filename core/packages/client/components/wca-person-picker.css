@@ -5,16 +5,8 @@
   max-width: 320px;
 }
 
-.cuber-search > .cuber-search-input {
-  width: 100%;
-}
-
 @media (max-width: 768px) {
   .cuber-search { min-width: 100%; max-width: none; }
-}
-
-.cuber-search-input--with-clear {
-  padding-right: 30px;
 }
 
 .cuber-search-chip {
@@ -22,12 +14,12 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  background: var(--surface);
+  background: var(--background);
   border: 1px solid var(--accent);
   border-radius: 8px;
   padding: 0.5rem 32px 0.5rem 0.75rem;
   font-size: 0.85rem;
-  color: var(--text);
+  color: var(--foreground);
   position: relative;
   box-sizing: border-box;
 }
@@ -58,7 +50,7 @@
 .cuber-search-chip-count {
   margin-left: auto;
   font-size: 0.72rem;
-  color: #8f8f8f;
+  color: var(--faint-foreground);
   white-space: nowrap;
 }
 
@@ -71,16 +63,16 @@
   max-width: min(480px, calc(100vw - 32px));
   max-height: 360px;
   overflow-y: auto;
-  background: #1d1d1d;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--popover);
+  border: 1px solid var(--border-default);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 18%, transparent);
   z-index: 200;
   padding: 4px 0;
 }
 
 .cuber-search-section + .cuber-search-section {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--border-default);
   margin-top: 4px;
   padding-top: 4px;
 }
@@ -88,7 +80,7 @@
 .cuber-search-section-label {
   padding: 4px 12px 2px;
   font-size: 0.68rem;
-  color: #6b6b6b;
+  color: var(--faint-foreground);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -101,7 +93,7 @@
   padding: 7px 12px;
   background: none;
   border: none;
-  color: #d4d4d4;
+  color: var(--popover-foreground);
   font-size: 0.85rem;
   cursor: pointer;
   text-align: left;
@@ -109,7 +101,7 @@
 }
 
 .cuber-search-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--popover-foreground) 6%, transparent);
 }
 
 .cuber-search-item-main {
@@ -135,6 +127,6 @@
 .cuber-search-status {
   padding: 10px 12px;
   font-size: 0.78rem;
-  color: #8f8f8f;
+  color: var(--muted-foreground);
   text-align: center;
 }

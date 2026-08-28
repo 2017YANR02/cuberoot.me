@@ -87,8 +87,6 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
 
         {!order ? (
           <>
-            <p className="mem-pay-hint">{tr({ zh: '选择支付方式', en: 'Choose a payment method'
-            })}</p>
             <div className="mem-pay-channels">
               {showAlipay && (
                 <button className="mem-pay-ch mem-pay-ch-alipay" disabled={creating} onClick={() => start('alipay')}>

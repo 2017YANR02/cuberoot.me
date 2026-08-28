@@ -32,6 +32,8 @@ interface Props {
   autoOpen?: boolean;
   /** 外层需要保留自己的删除动作时，可隐藏搜索框内置的清除按钮。 */
   showClearButton?: boolean;
+  /** Hide WCA people already represented by another result source in a combined search. */
+  excludeIds?: readonly string[];
 }
 
 const DEBOUNCE_MS = 300;
@@ -55,6 +57,7 @@ function localScore(p: WcaPersonLite, ql: string): number {
 export function WcaPersonPicker({
   value, onChange, staticCubers = [], matchCount, placeholder, isZh, className,
   onQueryChange, allowFreeText = false, defaultQuery, autoOpen = false, showClearButton = true,
+  excludeIds = [],
 }: Props) {
   const [query, setQuery] = useState(defaultQuery ?? '');
   const [open, setOpen] = useState(autoOpen);
@@ -136,8 +139,9 @@ export function WcaPersonPicker({
 
   const apiFiltered = useMemo(() => {
     const staticIds = new Set(staticMatches.map(c => c.id));
-    return apiResults.filter(c => !staticIds.has(c.id));
-  }, [apiResults, staticMatches]);
+    const excludedIds = new Set(excludeIds.map(id => id.toUpperCase()));
+    return apiResults.filter(c => !staticIds.has(c.id) && !excludedIds.has(c.id.toUpperCase()));
+  }, [apiResults, excludeIds, staticMatches]);
 
   const handlePick = (cuber: WcaPersonLite) => {
     onChange(cuber);
@@ -178,7 +182,7 @@ export function WcaPersonPicker({
       <input
         ref={inputRef}
         type="text"
-        className={`search-box cuber-search-input${query ? ' cuber-search-input--with-clear' : ''}`}
+        className={`search-control cuber-search-input${query && showClearButton ? ' search-control--with-clear' : ''}`}
         value={query}
         onChange={e => { setQuery(e.target.value); setOpen(true); onQueryChange?.(e.target.value); }}
         onFocus={() => setOpen(true)}

@@ -419,6 +419,7 @@ export default function Sq1PblFinder() {
                 value={auxiliarySearch}
                 onChange={value => void setAuxiliarySearch(value)}
                 className={styles.inputWithClear}
+                inputClassName={styles.searchInput}
                 placeholder={tr({ zh: '名称或记号', en: 'Name or notation' })}
                 ariaLabel={tr({ zh: '筛选辅助公式', en: 'Filter auxiliary algorithms' })}
               />
