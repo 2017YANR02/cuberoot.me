@@ -378,6 +378,13 @@ html[data-theme=dark] .wp-page {
 .wp-student-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0 16px 4px; }
 .wp-student-event-filter { --evsel-margin: 4px 0; }
 .wp-student-heading { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.wp-student-manage-link {
+    color: var(--wp-accent);
+    font-size: 0.78rem;
+    font-weight: 500;
+    text-decoration: none;
+}
+.wp-student-manage-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .wp-student-identity { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .wp-student-link { color: var(--wp-text); font-weight: 500; text-decoration: none; }
 .wp-student-link:hover { color: var(--wp-accent); text-decoration: underline; }
@@ -391,6 +398,19 @@ html[data-theme=dark] .wp-page {
 .wp-event-icon-result-only { color: var(--wp-text-sub); }
 .wp-cell-student-result { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
 .wp-students-empty { color: var(--wp-text-mute); }
+.wp-student-manager-head {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+}
+.wp-student-manager-title { margin: 0; font-size: 1.25rem; line-height: 1.35; }
+.wp-student-manager-person {
+    color: var(--wp-text-sub);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+.wp-student-manager-person:hover { color: var(--wp-accent); text-decoration: underline; text-underline-offset: 3px; }
 /* flex 放内层 span,th 保持 table-cell 才能跟整行做行高对齐(否则分隔线错位) */
 .wp-event-inner { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
 .wp-event-icon { font-size: 1.05rem; color: var(--wp-text); }

@@ -423,6 +423,11 @@ const TABLES: Table[] = [
     { name: 'is_curated, is_visible', note: { zh: '管理员认证与作者控制的公开状态', en: 'admin curation and owner-controlled public visibility' } },
     { name: 'owner_key, owner_name', note: { zh: '作者身份与显示名;公开列表不返回 owner_key', en: 'author identity and display name; the public list omits owner_key' } },
   ] },
+  { name: 'creator_gallery_captions', domain: 'community', origin: '0176', purpose: { zh: '/about/ruimin 个人图库的双语照片说明;图片本体作为前端静态资源保存', en: 'Bilingual captions for the /about/ruimin personal gallery; image files remain frontend static assets' }, cols: [
+    { name: 'image_key', note: { zh: '固定对应 photo-01 至 photo-08', en: 'Fixed to photo-01 through photo-08' } },
+    { name: 'caption_zh, caption_en' },
+    { name: 'updated_at' },
+  ] },
   { name: 'teacher_live_scripts', domain: 'community', origin: '0160', purpose: { zh: '老师与培训机构名下的结构化直播话术;公开读取同时受话术和资料可见性控制', en: 'Structured livestream scripts owned by teacher and school profiles; public reads require both the script and profile to be visible' }, cols: [
     { name: 'teacher_entry_id', note: { zh: '关联 teacher_directory_entries,删除资料时级联删除', en: 'References teacher_directory_entries and cascades when the profile is deleted' } },
     { name: 'title_zh / title_en, summary_zh / summary_en, duration_minutes' },
@@ -635,6 +640,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 173, slug: 'pb_ao10000', desc: { zh: '个人纪录新增 Ao10000 档位，并统一平均成绩的 Mo/Ao 简写。', en: 'Add the Ao10000 personal-best tier and standardize mean/average labels as Mo/Ao.' } },
   { n: 174, slug: 'wca_teacher_named_students', desc: { zh: '新增无 WCA ID 学生名册，老师或管理员可按姓名和授课项目登记，且不伪造 WCA 参赛身份。', en: 'Add teacher rosters for students without WCA IDs, stored by name and taught events without fabricating a WCA competition identity.' } },
   { n: 175, slug: 'friends', desc: { zh: '新增好友申请、双向好友和单向黑名单；拉黑会原子清理双方现有关系。', en: 'Add friend requests, two-way friendships, and directed blocks; blocking atomically clears the pair relationship.' } },
+  { n: 176, slug: 'creator_gallery_captions', desc: { zh: '新增颜瑞民个人页图库的双语说明表，由管理员直接在前端维护。', en: 'Add bilingual captions for Ruimin Yan’s profile gallery, maintained by an admin directly in the frontend.' } },
   { n: 177, slug: 'named_student_nationality', desc: { zh: '无 WCA ID 学生名册增加必填国籍，以老师的 WCA 国籍回填已有记录，并阻止同一老师重复添加同名学生。', en: 'Require nationality for named student rosters, backfill existing entries from each teacher’s WCA nationality, and prevent duplicate names within one teacher’s roster.' } },
 ];
 

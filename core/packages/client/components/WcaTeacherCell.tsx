@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
+import { loadPersonsIndex } from '@cuberoot/shared/persons-index';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import { EventIcon } from '@/components/EventIcon';
 import PersonLink from '@/components/PersonLink';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { CountryInput } from '@/components/CountryInput/CountryInput';
-import { ClearButton } from '@/components/ClearButton';
 import { useAuthUser } from '@/lib/auth-store';
 import { getMyMembership } from '@/lib/membership-api';
 import {
@@ -26,9 +26,26 @@ import { eventDisplayName } from '@/lib/wca-events';
 import { tr } from '@/i18n/tr';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { fetchWcaPersonResults } from '@/lib/wca-person-api';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import './wca-teacher-cell.css';
 
 const LOOKUP_CHUNK_SIZE = 100;
+const MAX_BATCH_STUDENTS = 100;
+const MAX_NAMED_STUDENT_NAME_LENGTH = 160;
+
+interface BatchStudentMatch {
+  inputName: string;
+  candidates: WcaPersonLite[];
+  selected: WcaPersonLite | null;
+}
+
+interface BatchUndoSnapshot {
+  teacherWcaId: string;
+  wcaAdded: Array<{ studentWcaId: string; eventId: string }>;
+  namedCreated: Array<{ id: string }>;
+  namedUpdated: WcaNamedStudent[];
+  namedRemoved: WcaNamedStudent[];
+}
 
 export function wcaTeacherRelationKey(studentWcaId: string, eventId: string): string {
   return `${studentWcaId}:${eventId}`;
@@ -50,6 +67,75 @@ function teacherErrorMessage(caught: unknown): string {
 
 function normalizeRosterName(value: string): string {
   return value.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function parseBatchStudentNames(value: string): string[] {
+  const names: string[] = [];
+  const seen = new Set<string>();
+  for (const line of value.split(/\r?\n/)) {
+    const name = line.replace(/\s+/g, ' ').trim();
+    const normalized = normalizeRosterName(name);
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    names.push(name);
+  }
+  return names;
+}
+
+function wcaPersonNameKeys(rawName: string): Set<string> {
+  return new Set([
+    normalizeRosterName(rawName),
+    normalizeRosterName(displayCuberName(rawName, false)),
+    normalizeRosterName(displayCuberName(rawName, true)),
+  ].filter(Boolean));
+}
+
+async function matchBatchStudentNames(names: readonly string[]): Promise<BatchStudentMatch[]> {
+  const index = await loadPersonsIndex();
+  const targetKeys = new Set(names.map(normalizeRosterName));
+  const candidatesByKey = new Map<string, WcaPersonLite[]>();
+
+  for (const [wcaId, rawName, iso2] of index.records) {
+    const matchingKeys = new Set([normalizeRosterName(wcaId), ...wcaPersonNameKeys(rawName)]);
+    for (const key of matchingKeys) {
+      if (!targetKeys.has(key)) continue;
+      const candidates = candidatesByKey.get(key) ?? [];
+      candidates.push({ id: wcaId, name: rawName, country_iso2: iso2 });
+      candidatesByKey.set(key, candidates);
+    }
+  }
+
+  return names.map((inputName) => {
+    const candidates = candidatesByKey.get(normalizeRosterName(inputName)) ?? [];
+    return {
+      inputName,
+      candidates,
+      selected: candidates.length === 1 ? candidates[0] : null,
+    };
+  });
+}
+
+function hasBatchUndoActions(snapshot: BatchUndoSnapshot): boolean {
+  return snapshot.wcaAdded.length > 0
+    || snapshot.namedCreated.length > 0
+    || snapshot.namedUpdated.length > 0
+    || snapshot.namedRemoved.length > 0;
+}
+
+function batchUndoStorageKey(teacherWcaId: string): string {
+  return `wca-teacher-batch-undo:${teacherWcaId}`;
+}
+
+function readBatchUndo(teacherWcaId: string): BatchUndoSnapshot | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const value = window.sessionStorage.getItem(batchUndoStorageKey(teacherWcaId));
+    if (!value) return null;
+    const snapshot = JSON.parse(value) as BatchUndoSnapshot;
+    return snapshot.teacherWcaId === teacherWcaId && hasBatchUndoActions(snapshot) ? snapshot : null;
+  } catch {
+    return null;
+  }
 }
 
 function sameEvents(left: readonly string[], right: ReadonlySet<string>): boolean {
@@ -215,6 +301,17 @@ export function WcaStudentAdder({
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [batchEditing, setBatchEditing] = useState(false);
+  const [batchNamesText, setBatchNamesText] = useState('');
+  const [batchCountryIso2, setBatchCountryIso2] = useState(() => teacherCountryIso2.toLowerCase());
+  const [batchEventIds, setBatchEventIds] = useState<Set<string>>(() => new Set());
+  const [batchMatches, setBatchMatches] = useState<BatchStudentMatch[] | null>(null);
+  const [batchMatching, setBatchMatching] = useState(false);
+  const [batchSaving, setBatchSaving] = useState(false);
+  const [batchRemoveConfirmed, setBatchRemoveConfirmed] = useState(false);
+  const [batchError, setBatchError] = useState('');
+  const [batchUndo, setBatchUndo] = useState<BatchUndoSnapshot | null>(null);
+  const [batchUndoing, setBatchUndoing] = useState(false);
   const canAdd = canAddWcaTeacherStudent(teacherWcaId, directory);
   const existingWcaEventIds = selectedStudent
     ? existingWcaStudentEvents.get(selectedStudent.id) ?? []
@@ -236,6 +333,22 @@ export function WcaStudentAdder({
     : [...availableEventIds, ...selectedEventIds]), [availableEventIds, selectedEventIds, showAllEvents]);
   const hasOtherEvents = availableEventIds.length > 0 && availableEventIds.length < ALL_EVENT_IDS.length;
   const titleId = `add-student-title-${teacherWcaId}`;
+  const batchTitleId = `batch-add-student-title-${teacherWcaId}`;
+  const batchStudentNames = useMemo(() => parseBatchStudentNames(batchNamesText), [batchNamesText]);
+  const batchExistingNamedStudents = useMemo(() => {
+    const pastedNames = new Set(batchStudentNames.map(normalizeRosterName));
+    return existingNamedStudents.filter((student) => pastedNames.has(normalizeRosterName(student.studentName)));
+  }, [batchStudentNames, existingNamedStudents]);
+  const batchExistingCount = batchExistingNamedStudents.length;
+  const batchNameTooLong = batchStudentNames.some((name) => name.length > MAX_NAMED_STUDENT_NAME_LENGTH);
+  const batchAutoMatchCount = batchMatches?.filter((match) => match.candidates.length === 1).length ?? 0;
+  const batchUnmatchedCount = batchMatches?.filter((match) => match.candidates.length === 0).length ?? 0;
+  const batchAmbiguousCount = batchMatches?.filter((match) => match.candidates.length > 1).length ?? 0;
+  const batchUnresolvedCount = batchMatches?.filter((match) => match.candidates.length > 1 && !match.selected).length ?? 0;
+
+  useEffect(() => {
+    setBatchUndo(readBatchUndo(teacherWcaId));
+  }, [teacherWcaId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -296,6 +409,261 @@ export function WcaStudentAdder({
       return next;
     });
   };
+  const closeBatch = () => {
+    setBatchEditing(false);
+    setBatchNamesText('');
+    setBatchCountryIso2(teacherCountryIso2.toLowerCase());
+    setBatchEventIds(new Set());
+    setBatchMatches(null);
+    setBatchRemoveConfirmed(false);
+    setBatchError('');
+  };
+  const toggleBatchEvent = (eventId: string) => {
+    setBatchEventIds((current) => {
+      const next = new Set(current);
+      if (next.has(eventId)) next.delete(eventId);
+      else next.add(eventId);
+      return next;
+    });
+  };
+  const persistBatchUndo = (snapshot: BatchUndoSnapshot | null) => {
+    setBatchUndo(snapshot);
+    try {
+      if (snapshot && hasBatchUndoActions(snapshot)) {
+        window.sessionStorage.setItem(batchUndoStorageKey(teacherWcaId), JSON.stringify(snapshot));
+      } else {
+        window.sessionStorage.removeItem(batchUndoStorageKey(teacherWcaId));
+      }
+    } catch {
+      // Undo remains available for this page session even when browser storage is unavailable.
+    }
+  };
+  const prepareBatchMatches = async () => {
+    if (batchMatching || batchStudentNames.length === 0 || batchStudentNames.length > MAX_BATCH_STUDENTS || batchNameTooLong) return;
+    setBatchMatching(true);
+    setBatchError('');
+    try {
+      setBatchMatches(await matchBatchStudentNames(batchStudentNames));
+    } catch {
+      setBatchError(tr({
+        zh: '无法读取 WCA 选手名单，请稍后重试',
+        en: 'The WCA person index could not be loaded. Please try again.',
+      }));
+    } finally {
+      setBatchMatching(false);
+    }
+  };
+  const saveBatch = async () => {
+    if (batchSaving
+      || !batchMatches
+      || batchUnresolvedCount > 0
+      || batchStudentNames.length === 0
+      || (batchUnmatchedCount > 0 && !batchCountryIso2)
+      || batchEventIds.size === 0) return;
+    if (batchStudentNames.length > MAX_BATCH_STUDENTS) {
+      setBatchError(tr({
+        zh: `一次最多添加 ${MAX_BATCH_STUDENTS} 名学生`,
+        en: `Add no more than ${MAX_BATCH_STUDENTS} students at a time`,
+      }));
+      return;
+    }
+    if (batchNameTooLong) {
+      setBatchError(tr({
+        zh: `每个姓名不能超过 ${MAX_NAMED_STUDENT_NAME_LENGTH} 个字符`,
+        en: `Each name must be no longer than ${MAX_NAMED_STUDENT_NAME_LENGTH} characters`,
+      }));
+      return;
+    }
+
+    setBatchSaving(true);
+    setBatchError('');
+    const existingByName = new Map(existingNamedStudents.map((student) => [
+      normalizeRosterName(student.studentName),
+      student,
+    ]));
+    const failedNames: string[] = [];
+    const defaultEventIds = [...batchEventIds];
+    const workingWcaEvents = new Map<string, Set<string>>();
+    let undoSnapshot: BatchUndoSnapshot = {
+      teacherWcaId,
+      wcaAdded: [],
+      namedCreated: [],
+      namedUpdated: [],
+      namedRemoved: [],
+    };
+    let savedCount = 0;
+
+    const recordUndo = (next: BatchUndoSnapshot) => {
+      undoSnapshot = next;
+      persistBatchUndo(next);
+    };
+
+    for (const match of batchMatches) {
+      const studentName = match.inputName;
+      try {
+        const existing = existingByName.get(normalizeRosterName(studentName));
+        if (match.selected) {
+          if (match.selected.id === teacherWcaId) {
+            throw new Error('teacher cannot be their own student');
+          }
+          let existingEvents = workingWcaEvents.get(match.selected.id);
+          if (!existingEvents) {
+            existingEvents = new Set(existingWcaStudentEvents.get(match.selected.id) ?? []);
+            workingWcaEvents.set(match.selected.id, existingEvents);
+          }
+          for (const eventId of defaultEventIds) {
+            if (existingEvents.has(eventId)) continue;
+            await directory.save(match.selected.id, eventId, directory.isAdmin ? teacherWcaId : undefined);
+            existingEvents.add(eventId);
+            recordUndo({
+              ...undoSnapshot,
+              wcaAdded: [...undoSnapshot.wcaAdded, { studentWcaId: match.selected.id, eventId }],
+            });
+          }
+          if (existing) {
+            await removeWcaNamedStudent(teacherWcaId, existing.id);
+            recordUndo({ ...undoSnapshot, namedRemoved: [...undoSnapshot.namedRemoved, existing] });
+          }
+        } else if (existing) {
+          const mergedEventIds = new Set([...existing.eventIds, ...defaultEventIds]);
+          if (!sameEvents(existing.eventIds, mergedEventIds)) {
+            await updateWcaNamedStudent(
+              teacherWcaId,
+              existing.id,
+              existing.studentName,
+              existing.countryIso2,
+              [...mergedEventIds],
+            );
+            recordUndo({ ...undoSnapshot, namedUpdated: [...undoSnapshot.namedUpdated, existing] });
+          }
+        } else {
+          const created = await createWcaNamedStudent(teacherWcaId, studentName, batchCountryIso2, defaultEventIds);
+          recordUndo({ ...undoSnapshot, namedCreated: [...undoSnapshot.namedCreated, { id: created.id }] });
+        }
+        savedCount += 1;
+      } catch {
+        failedNames.push(studentName);
+      }
+    }
+
+    if (savedCount > 0) onSaved();
+    setBatchSaving(false);
+    if (failedNames.length > 0) {
+      setBatchNamesText(failedNames.join('\n'));
+      setBatchMatches(null);
+      setBatchError(tr({
+        zh: `已保存 ${savedCount} 人，另有 ${failedNames.length} 人失败，请重试`,
+        en: `${savedCount} saved; ${failedNames.length} failed. Please try again.`,
+      }));
+      return;
+    }
+    closeBatch();
+  };
+  const removePastedNamedStudents = async () => {
+    if (batchSaving || batchExistingNamedStudents.length === 0) return;
+    if (!batchRemoveConfirmed) {
+      setBatchRemoveConfirmed(true);
+      setBatchError('');
+      return;
+    }
+
+    setBatchSaving(true);
+    setBatchError('');
+    const failedNames: string[] = [];
+    let removedCount = 0;
+    let undoSnapshot: BatchUndoSnapshot = {
+      teacherWcaId,
+      wcaAdded: [],
+      namedCreated: [],
+      namedUpdated: [],
+      namedRemoved: [],
+    };
+    for (const student of batchExistingNamedStudents) {
+      try {
+        await removeWcaNamedStudent(teacherWcaId, student.id);
+        removedCount += 1;
+        undoSnapshot = {
+          ...undoSnapshot,
+          namedRemoved: [...undoSnapshot.namedRemoved, student],
+        };
+        persistBatchUndo(undoSnapshot);
+      } catch {
+        failedNames.push(student.studentName);
+      }
+    }
+    if (removedCount > 0) onSaved();
+    setBatchSaving(false);
+    if (failedNames.length > 0) {
+      setBatchNamesText(failedNames.join('\n'));
+      setBatchRemoveConfirmed(false);
+      setBatchError(tr({
+        zh: `已撤回 ${removedCount} 人，另有 ${failedNames.length} 人失败，请重试`,
+        en: `${removedCount} removed; ${failedNames.length} failed. Please try again.`,
+      }));
+      return;
+    }
+    closeBatch();
+  };
+  const undoLastBatch = async () => {
+    if (!batchUndo || batchUndoing) return;
+    setBatchUndoing(true);
+    setBatchError('');
+    let remaining: BatchUndoSnapshot = {
+      ...batchUndo,
+      wcaAdded: [...batchUndo.wcaAdded],
+      namedCreated: [...batchUndo.namedCreated],
+      namedUpdated: [...batchUndo.namedUpdated],
+      namedRemoved: [...batchUndo.namedRemoved],
+    };
+    const storeRemaining = () => persistBatchUndo(hasBatchUndoActions(remaining) ? remaining : null);
+    try {
+      while (remaining.wcaAdded.length > 0) {
+        const relation = remaining.wcaAdded.at(-1)!;
+        await directory.remove(relation.studentWcaId, relation.eventId);
+        remaining = { ...remaining, wcaAdded: remaining.wcaAdded.slice(0, -1) };
+        storeRemaining();
+      }
+      while (remaining.namedCreated.length > 0) {
+        const student = remaining.namedCreated.at(-1)!;
+        await removeWcaNamedStudent(teacherWcaId, student.id);
+        remaining = { ...remaining, namedCreated: remaining.namedCreated.slice(0, -1) };
+        storeRemaining();
+      }
+      while (remaining.namedUpdated.length > 0) {
+        const student = remaining.namedUpdated.at(-1)!;
+        await updateWcaNamedStudent(
+          teacherWcaId,
+          student.id,
+          student.studentName,
+          student.countryIso2,
+          student.eventIds,
+        );
+        remaining = { ...remaining, namedUpdated: remaining.namedUpdated.slice(0, -1) };
+        storeRemaining();
+      }
+      while (remaining.namedRemoved.length > 0) {
+        const student = remaining.namedRemoved.at(-1)!;
+        await createWcaNamedStudent(
+          teacherWcaId,
+          student.studentName,
+          student.countryIso2,
+          student.eventIds,
+        );
+        remaining = { ...remaining, namedRemoved: remaining.namedRemoved.slice(0, -1) };
+        storeRemaining();
+      }
+      onSaved();
+    } catch {
+      onSaved();
+      setBatchEditing(true);
+      setBatchError(tr({
+        zh: '只撤销了部分变更，请再次点击撤销继续',
+        en: 'Only part of the batch was undone. Select undo again to continue.',
+      }));
+    } finally {
+      setBatchUndoing(false);
+    }
+  };
   const save = async () => {
     const freeTextName = namedStudentName.replace(/\s+/g, ' ').trim();
     if ((!selectedStudent && (!freeTextName || !namedStudentCountryIso2)) || selectedEventIds.size === 0 || saving) return;
@@ -335,17 +703,42 @@ export function WcaStudentAdder({
 
   return (
     <>
-      <button
-        type="button"
-        className="wca-teacher-action wca-student-add-action"
-        aria-label={tr({ zh: '添加学生', en: 'Add student' })}
-        onClick={() => {
-          setNamedStudentCountryIso2(teacherCountryIso2.toLowerCase());
-          setEditing(true);
-        }}
-      >
-        +
-      </button>
+      <span className="wca-student-add-actions">
+        <button
+          type="button"
+          className="wca-teacher-action wca-student-add-action"
+          aria-label={tr({ zh: '添加学生', en: 'Add student' })}
+          onClick={() => {
+            setNamedStudentCountryIso2(teacherCountryIso2.toLowerCase());
+            setEditing(true);
+          }}
+        >
+          +
+        </button>
+        <button
+          type="button"
+          className="wca-teacher-action wca-student-batch-add-action"
+          onClick={() => {
+            setBatchCountryIso2(teacherCountryIso2.toLowerCase());
+            setBatchError('');
+            setBatchEditing(true);
+          }}
+        >
+          {tr({ zh: '批量', en: 'Batch' })}
+        </button>
+        {batchUndo && (
+          <button
+            type="button"
+            className="wca-teacher-action wca-student-batch-undo-action"
+            disabled={batchUndoing}
+            onClick={() => void undoLastBatch()}
+          >
+            {batchUndoing
+              ? tr({ zh: '撤销中…', en: 'Undoing…' })
+              : tr({ zh: '撤销', en: 'Undo' })}
+          </button>
+        )}
+      </span>
       {editing && typeof document !== 'undefined' && createPortal(
         <div className="wca-teacher-dialog-layer">
           <dialog
@@ -396,7 +789,7 @@ export function WcaStudentAdder({
                   />
                 </label>
                 {!namedStudentCountryIso2 && (
-                  <p className="wca-teacher-dialog-error wca-teacher-dialog-country-error" role="status">
+                  <p className="wca-teacher-dialog-error wca-teacher-dialog-validation-error" role="status">
                     {tr({ zh: '请选择国籍后保存', en: 'Select a nationality before saving' })}
                   </p>
                 )}
@@ -436,6 +829,11 @@ export function WcaStudentAdder({
                 )}
               </>
             )}
+            {(selectedStudent || namedStudentName.trim()) && !loadingEvents && selectedEventIds.size === 0 && (
+              <p className="wca-teacher-dialog-error wca-teacher-dialog-validation-error" role="status">
+                {tr({ zh: '请选择至少一个授课项目后保存', en: 'Select at least one taught event before saving' })}
+              </p>
+            )}
             {error && <p className="wca-teacher-dialog-error" role="alert">{error}</p>}
             <div className="wca-teacher-dialog-actions">
               <button
@@ -458,6 +856,174 @@ export function WcaStudentAdder({
         </div>,
         document.body,
       )}
+      {batchEditing && typeof document !== 'undefined' && createPortal(
+        <div className="wca-teacher-dialog-layer">
+          <dialog
+            className="wca-teacher-dialog wca-student-batch-dialog"
+            open
+            aria-modal="true"
+            aria-labelledby={batchTitleId}
+            onKeyDown={(event) => { if (event.key === 'Escape' && !batchSaving) closeBatch(); }}
+          >
+            <div className="wca-teacher-dialog-heading">
+              <h2 id={batchTitleId}>{tr({ zh: '批量添加学生', en: 'Add students in bulk' })}</h2>
+            </div>
+            <label className="wca-student-batch-names">
+              <span>{tr({ zh: '学生名单', en: 'Student list' })}</span>
+              <textarea
+                value={batchNamesText}
+                rows={4}
+                maxLength={20_000}
+                placeholder={tr({ zh: '一行一个姓名', en: 'One name per line' })}
+                onChange={(event) => {
+                  setBatchNamesText(event.target.value);
+                  setBatchMatches(null);
+                  setBatchRemoveConfirmed(false);
+                  setBatchError('');
+                }}
+              />
+            </label>
+            <p className="wca-teacher-dialog-status">
+              {batchMatches
+                ? tr({
+                  zh: `自动对应 WCA ID ${batchAutoMatchCount} 人，未参赛 ${batchUnmatchedCount} 人，重名 ${batchAmbiguousCount} 人`,
+                  en: `${batchAutoMatchCount} matched automatically, ${batchUnmatchedCount} not competed, ${batchAmbiguousCount} duplicate-name matches`,
+                })
+                : batchStudentNames.length > 0
+                ? tr({
+                  zh: `已识别 ${batchStudentNames.length} 人${batchExistingCount > 0 ? `，名单中已有 ${batchExistingCount} 人` : ''}`,
+                  en: `${batchStudentNames.length} recognized${batchExistingCount > 0 ? `; ${batchExistingCount} already exist in the roster` : ''}`,
+                })
+                : tr({
+                  zh: `空行和重复姓名会自动忽略，一次最多 ${MAX_BATCH_STUDENTS} 人`,
+                  en: `Blank and duplicate lines are ignored; up to ${MAX_BATCH_STUDENTS} students at a time`,
+                })}
+            </p>
+            {batchMatches && batchUnmatchedCount > 0 && (
+              <p className="wca-student-batch-unmatched" role="status">
+                <span>{tr({ zh: '按未参赛保存：', en: 'Save as not competed: ' })}</span>
+                {batchMatches
+                  .filter((match) => match.candidates.length === 0)
+                  .map((match) => match.inputName)
+                  .join(tr({ zh: '、', en: ', ' }))}
+              </p>
+            )}
+            {batchMatches && batchAmbiguousCount > 0 && (
+              <div className="wca-student-batch-ambiguous">
+                <p className="wca-teacher-dialog-field-label">
+                  {tr({ zh: '以下姓名有重名，请选择正确的 WCA 选手', en: 'Choose the correct WCA person for each duplicate name' })}
+                </p>
+                {batchMatches.map((match, index) => match.candidates.length > 1 && (
+                  <div className="wca-student-batch-match" key={match.inputName}>
+                    <span>{match.inputName}</span>
+                    <WcaPersonPicker
+                      key={`${match.inputName}-${match.selected?.id ?? 'unresolved'}`}
+                      value={match.selected}
+                      onChange={(person) => setBatchMatches((current) => current?.map((entry, entryIndex) => (
+                        entryIndex === index ? { ...entry, selected: person } : entry
+                      )) ?? null)}
+                      staticCubers={match.candidates}
+                      defaultQuery={match.inputName}
+                      isZh={isZh}
+                      placeholder={tr({ zh: '选择 WCA 选手', en: 'Choose a WCA person' })}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            {batchStudentNames.length > MAX_BATCH_STUDENTS && (
+              <p className="wca-teacher-dialog-error wca-teacher-dialog-validation-error" role="status">
+                {tr({
+                  zh: `一次最多添加 ${MAX_BATCH_STUDENTS} 名学生，请删减后保存`,
+                  en: `Add no more than ${MAX_BATCH_STUDENTS} students at a time`,
+                })}
+              </p>
+            )}
+            {batchNameTooLong && (
+              <p className="wca-teacher-dialog-error wca-teacher-dialog-validation-error" role="status">
+                {tr({
+                  zh: `每个姓名不能超过 ${MAX_NAMED_STUDENT_NAME_LENGTH} 个字符`,
+                  en: `Each name must be no longer than ${MAX_NAMED_STUDENT_NAME_LENGTH} characters`,
+                })}
+              </p>
+            )}
+            {(!batchMatches || batchUnmatchedCount > 0) && (
+              <>
+                <label className="wca-named-student-country">
+                  <span>{tr({ zh: '未参赛学生默认国籍（必填）', en: 'Default nationality for non-competitors (required)' })}</span>
+                  <CountryInput
+                    value={batchCountryIso2}
+                    onChange={setBatchCountryIso2}
+                    placeholder={tr({ zh: '选择默认国籍', en: 'Select default nationality' })}
+                  />
+                </label>
+                {!batchCountryIso2 && (
+                  <p className="wca-teacher-dialog-error wca-teacher-dialog-validation-error" role="status">
+                    {tr({ zh: '请选择默认国籍后保存', en: 'Select a default nationality before saving' })}
+                  </p>
+                )}
+              </>
+            )}
+            <p className="wca-teacher-dialog-field-label">
+              {tr({ zh: '默认项目（必选）', en: 'Default events (required)' })}
+            </p>
+            <WcaEventSelector
+              availableEvents={new Set(ALL_EVENT_IDS)}
+              selectedEvents={batchEventIds}
+              onToggle={toggleBatchEvent}
+              isZh={isZh}
+              onlyAvailable
+            />
+            {batchEventIds.size === 0 && (
+              <p className="wca-teacher-dialog-error wca-teacher-dialog-validation-error" role="status">
+                {tr({ zh: '请选择至少一个默认项目后保存', en: 'Select at least one default event before saving' })}
+              </p>
+            )}
+            {batchError && <p className="wca-teacher-dialog-error" role="alert">{batchError}</p>}
+            <div className="wca-teacher-dialog-actions">
+              {!batchMatches && batchExistingCount > 0 && (
+                <button
+                  type="button"
+                  className="wca-teacher-dialog-action wca-teacher-dialog-remove"
+                  disabled={batchSaving || batchMatching}
+                  onClick={() => void removePastedNamedStudents()}
+                >
+                  {batchSaving
+                    ? tr({ zh: '撤回中…', en: 'Removing…' })
+                    : batchRemoveConfirmed
+                      ? tr({ zh: `确认撤回 ${batchExistingCount} 人`, en: `Confirm removal of ${batchExistingCount}` })
+                      : tr({ zh: '撤回这份旧名单', en: 'Remove this previous list' })}
+                </button>
+              )}
+              <button
+                type="button"
+                className="wca-teacher-dialog-action wca-teacher-dialog-primary"
+                disabled={batchStudentNames.length === 0
+                  || batchStudentNames.length > MAX_BATCH_STUDENTS
+                  || batchNameTooLong
+                  || batchMatching
+                  || batchSaving
+                  || (!!batchMatches && batchUnresolvedCount > 0)
+                  || (!!batchMatches && batchUnmatchedCount > 0 && !batchCountryIso2)
+                  || (!!batchMatches && batchEventIds.size === 0)}
+                onClick={() => void (batchMatches ? saveBatch() : prepareBatchMatches())}
+              >
+                {batchMatching
+                  ? tr({ zh: '匹配中…', en: 'Matching…' })
+                  : batchSaving
+                    ? tr({ zh: '保存中…', en: 'Saving…' })
+                    : batchMatches
+                      ? tr({ zh: '确认保存', en: 'Confirm and save' })
+                      : tr({ zh: '匹配 WCA 选手', en: 'Match WCA people' })}
+              </button>
+              <button type="button" className="wca-teacher-dialog-action wca-teacher-dialog-cancel" disabled={batchSaving} onClick={closeBatch}>
+                {tr({ zh: '取消', en: 'Cancel' })}
+              </button>
+            </div>
+          </dialog>
+        </div>,
+        document.body,
+      )}
     </>
   );
 }
@@ -470,19 +1036,49 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
   onSaved: () => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<WcaPersonLite | null>(null);
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(() => new Set(student.eventIds));
+  const [competedEventIds, setCompetedEventIds] = useState<Set<string>>(() => new Set());
+  const [competitionEventState, setCompetitionEventState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [countryIso2, setCountryIso2] = useState(() => student.countryIso2?.toLowerCase() ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const canManage = directory.isAdmin || directory.userWcaId === teacherWcaId;
-  const changed = student.eventIds.length !== selectedEventIds.size
-    || student.eventIds.some((eventId) => !selectedEventIds.has(eventId))
-    || (student.countryIso2?.toLowerCase() ?? '') !== countryIso2.toLowerCase();
+  const selectedTeacherSelf = selectedStudent?.id === teacherWcaId;
+  const canSave = selectedEventIds.size > 0
+    && !selectedTeacherSelf
+    && (!!selectedStudent || !!countryIso2);
+  const notCompetedEventIds = useMemo(() => new Set(
+    ALL_EVENT_IDS.filter((eventId) => !competedEventIds.has(eventId)),
+  ), [competedEventIds]);
   const titleId = `named-student-title-${student.id}`;
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!selectedStudent) {
+      setCompetedEventIds(new Set());
+      setCompetitionEventState('idle');
+      return;
+    }
+    setCompetitionEventState('loading');
+    fetchWcaPersonResults(selectedStudent.id)
+      .then((results) => {
+        if (cancelled) return;
+        setCompetedEventIds(new Set(results.map((result) => result.event_id)));
+        setCompetitionEventState('ready');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setCompetedEventIds(new Set());
+        setCompetitionEventState('error');
+      });
+    return () => { cancelled = true; };
+  }, [selectedStudent]);
 
   if (!canManage) return null;
 
   const open = () => {
+    setSelectedStudent(null);
     setSelectedEventIds(new Set(student.eventIds));
     setCountryIso2(student.countryIso2?.toLowerCase() ?? '');
     setError('');
@@ -497,11 +1093,18 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
     });
   };
   const save = async () => {
-    if (!changed || !countryIso2 || selectedEventIds.size === 0 || saving) return;
+    if (!canSave || saving) return;
     setSaving(true);
     setError('');
     try {
-      await updateWcaNamedStudent(teacherWcaId, student.id, student.studentName, countryIso2, [...selectedEventIds]);
+      if (selectedStudent) {
+        for (const eventId of selectedEventIds) {
+          await directory.save(selectedStudent.id, eventId, directory.isAdmin ? teacherWcaId : undefined);
+        }
+        await removeWcaNamedStudent(teacherWcaId, student.id);
+      } else {
+        await updateWcaNamedStudent(teacherWcaId, student.id, student.studentName, countryIso2, [...selectedEventIds]);
+      }
       setEditing(false);
       onSaved();
     } catch (caught) {
@@ -541,46 +1144,120 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
           >
             <div className="wca-teacher-dialog-heading">
               <h2 id={titleId}>{tr({ zh: '编辑学生', en: 'Edit student' })}</h2>
-              <div className="cuber-search wca-named-student-chip">
-                <div className="cuber-search-chip">
-                  <span className="cuber-search-chip-name">{student.studentName}</span>
-                  <ClearButton
-                    onClick={() => void remove()}
-                    isZh={isZh}
-                    ariaLabel={tr({ zh: '移除学生', en: 'Remove student' })}
-                  />
-                </div>
+              <div className="wca-named-student-picker">
+                <WcaPersonPicker
+                  value={selectedStudent}
+                  onChange={(person) => {
+                    setSelectedStudent(person);
+                    setError(person?.id === teacherWcaId
+                      ? tr({ zh: '不能把老师本人添加为学生', en: 'A teacher cannot be added as their own student' })
+                      : '');
+                  }}
+                  defaultQuery={student.studentName}
+                  autoOpen
+                  isZh={isZh}
+                  placeholder={tr({ zh: '姓名或 WCA ID', en: 'Name or WCA ID' })}
+                />
               </div>
             </div>
-            <label className="wca-named-student-country">
-              <span>{tr({ zh: '国籍（必填）', en: 'Nationality (required)' })}</span>
-              <CountryInput
-                value={countryIso2}
-                onChange={setCountryIso2}
-                placeholder={tr({ zh: '选择国籍', en: 'Select nationality' })}
-              />
-            </label>
-            {!countryIso2 && (
-              <p className="wca-teacher-dialog-error wca-teacher-dialog-country-error" role="status">
-                {tr({ zh: '请选择国籍后保存', en: 'Select a nationality before saving' })}
+            {!selectedStudent && (
+              <>
+                <label className="wca-named-student-country">
+                  <span>{tr({ zh: '国籍（必填）', en: 'Nationality (required)' })}</span>
+                  <CountryInput
+                    value={countryIso2}
+                    onChange={setCountryIso2}
+                    placeholder={tr({ zh: '选择国籍', en: 'Select nationality' })}
+                  />
+                </label>
+                {!countryIso2 && (
+                  <p className="wca-teacher-dialog-error wca-teacher-dialog-validation-error" role="status">
+                    {tr({ zh: '请选择国籍后保存', en: 'Select a nationality before saving' })}
+                  </p>
+                )}
+              </>
+            )}
+            {!selectedStudent && (
+              <p className="wca-teacher-dialog-status" role="status">
+                {tr({
+                  zh: '选择 WCA 选手后，可区分已参赛和未参赛项目',
+                  en: 'Choose a WCA person to distinguish competed and not-competed events.',
+                })}
               </p>
             )}
-            <WcaEventSelector
-              availableEvents={new Set(ALL_EVENT_IDS)}
-              selectedEvents={selectedEventIds}
-              onToggle={toggleEvent}
-              isZh={isZh}
-              onlyAvailable
-            />
+            {selectedStudent && competitionEventState === 'loading' && (
+              <p className="wca-teacher-dialog-status" role="status">
+                {tr({ zh: '正在读取参赛项目…', en: 'Loading competition events…' })}
+              </p>
+            )}
+            {selectedStudent && competitionEventState === 'error' && (
+              <p className="wca-teacher-dialog-error" role="status">
+                {tr({
+                  zh: '无法读取参赛项目，暂时按全部项目显示',
+                  en: 'Competition events could not be loaded. Showing all events together.',
+                })}
+              </p>
+            )}
+            {selectedStudent && competitionEventState === 'ready' ? (
+              <>
+                <p className="wca-teacher-dialog-field-label">
+                  {tr({ zh: '已参加比赛', en: 'Competed events' })}
+                </p>
+                {competedEventIds.size > 0 ? (
+                  <WcaEventSelector
+                    availableEvents={competedEventIds}
+                    selectedEvents={selectedEventIds}
+                    onToggle={toggleEvent}
+                    isZh={isZh}
+                    onlyAvailable
+                  />
+                ) : (
+                  <p className="wca-teacher-dialog-status">
+                    {tr({ zh: '暂无参赛项目', en: 'No competed events' })}
+                  </p>
+                )}
+                <p className="wca-teacher-dialog-field-label">
+                  {tr({ zh: '未参加比赛', en: 'Not-competed events' })}
+                </p>
+                <WcaEventSelector
+                  availableEvents={notCompetedEventIds}
+                  selectedEvents={selectedEventIds}
+                  onToggle={toggleEvent}
+                  isZh={isZh}
+                  onlyAvailable
+                />
+              </>
+            ) : (
+              <WcaEventSelector
+                availableEvents={new Set(ALL_EVENT_IDS)}
+                selectedEvents={selectedEventIds}
+                onToggle={toggleEvent}
+                isZh={isZh}
+                onlyAvailable
+              />
+            )}
+            {selectedEventIds.size === 0 && (
+              <p className="wca-teacher-dialog-error wca-teacher-dialog-validation-error" role="status">
+                {tr({ zh: '请选择至少一个授课项目后保存', en: 'Select at least one taught event before saving' })}
+              </p>
+            )}
             {error && <p className="wca-teacher-dialog-error" role="alert">{error}</p>}
             <div className="wca-teacher-dialog-actions">
               <button
                 type="button"
                 className="wca-teacher-dialog-action wca-teacher-dialog-primary"
-                disabled={!changed || !countryIso2 || selectedEventIds.size === 0 || saving}
+                disabled={!canSave || saving}
                 onClick={() => void save()}
               >
                 {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存', en: 'Save' })}
+              </button>
+              <button
+                type="button"
+                className="wca-teacher-dialog-action wca-teacher-dialog-remove"
+                disabled={saving}
+                onClick={() => void remove()}
+              >
+                {tr({ zh: '删除', en: 'Delete' })}
               </button>
               <button type="button" className="wca-teacher-dialog-action wca-teacher-dialog-cancel" disabled={saving} onClick={() => setEditing(false)}>
                 {tr({ zh: '取消', en: 'Cancel' })}

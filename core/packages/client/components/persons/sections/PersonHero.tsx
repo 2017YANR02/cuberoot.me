@@ -2,11 +2,13 @@
 // 头像居中,国旗在名字左侧,WCA ID 左缘与名字左缘对齐.
 
 import { Mars, Venus } from 'lucide-react';
+import AppLink from '@/components/AppLink';
 import { CompactSelect } from '@/components/CompactSelect';
 import { Flag } from '@/components/Flag';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { useT } from '@/hooks/useT';
 import { countryName } from '@/lib/country-name';
+import { creatorProfileHrefForWcaId } from '@/lib/creator-profile';
 import type { WcaPersonProfile, WcaResultRow, WcaFormerIdentity } from '@/lib/wca-person-api';
 
 interface Props {
@@ -34,6 +36,7 @@ export default function PersonHero({
   // 选手主页展示完整 WCA 名(拉丁名 + 括号内本地名),中英文一致;与 WCA 官网对齐。
   const displayName = p.name;
   const wcaUrl = `https://www.worldcubeassociation.org/persons/${p.wca_id}`;
+  const creatorProfileHref = creatorProfileHrefForWcaId(p.wca_id);
   const avatarUrl = p.avatar?.thumb_url || p.avatar?.url;
   const t = useT();
   const resultViewItems = [
@@ -115,6 +118,14 @@ export default function PersonHero({
           </span>
           <div className="wp-hero-id">
             <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-id-link" title="WCA">{p.wca_id}</a>
+            {creatorProfileHref && (
+              <>
+                <span aria-hidden="true">|</span>
+                <AppLink href={creatorProfileHref} prefetch={false} className="wp-hero-id-link">
+                  {t('个人介绍', 'Personal profile')}
+                </AppLink>
+              </>
+            )}
           </div>
         </div>
       </div>
