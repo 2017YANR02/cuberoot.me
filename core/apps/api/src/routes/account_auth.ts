@@ -13,7 +13,7 @@ import { isClawdAvatarPreset } from '@cuberoot/shared/account-avatar';
 import { webSessionError, type WebSession } from '@cuberoot/shared/auth/web-session';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
-import { checkRateLimit } from '../utils/recon_helpers.js';
+import { checkRateLimit, requireAdmin } from '../utils/recon_helpers.js';
 import { signSession, hasFreshEmailGrant } from '../utils/session.js';
 import {
   issueCode, verifyCode, loginWithIdentity, addIdentity, removeIdentity, replaceCredentialIdentity,
@@ -600,6 +600,41 @@ accountAuthRoutes.post('/auth/profile', async (c) => {
   if (!user) return c.json({ error: 'account not found' }, 404);
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   return c.json({ ok: true, token, user: publicUser(user) });
+});
+
+// ── 管理员编辑账号资料 ──
+accountAuthRoutes.get('/auth/admin/users/:userId', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  await requireAdmin(c);
+  const userId = Number(c.req.param('userId'));
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    return c.json({ error: 'invalid user id' }, 400);
+  }
+  const user = await getUserById(userId);
+  if (!user) return c.json({ error: 'account not found' }, 404);
+  return c.json({ user: publicUser(user) });
+});
+
+accountAuthRoutes.post('/auth/admin/users/:userId/profile', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  await requireAdmin(c);
+  const userId = Number(c.req.param('userId'));
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    return c.json({ error: 'invalid user id' }, 400);
+  }
+  const body = await c.req.json<{ name?: unknown }>().catch((): { name?: unknown } => ({}));
+  if (typeof body.name !== 'string') return c.json({ error: 'invalid display name' }, 400);
+  const name = normalizeDisplayName(body.name);
+  if (!isValidDisplayName(name)) return c.json({ error: 'invalid display name' }, 400);
+
+  const user = await updateDisplayName(userId, name);
+  if (!user) {
+    const current = await getUserById(userId);
+    if (!current) return c.json({ error: 'account not found' }, 404);
+    return c.json({ error: 'WCA-linked accounts use their verified WCA name' }, 409);
+  }
+  return c.json({ ok: true, user: publicUser(user) });
 });
 
 /**

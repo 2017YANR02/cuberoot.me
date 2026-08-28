@@ -143,11 +143,7 @@
   flex-direction: column;
   gap: 6px;
 }
-/* WcaPersonPicker 的输入框外观由宿主页提供(.search-box 只在 /wca/comp 定义过),
-   联机大厅得自己套上,否则「选手」那栏渲染成一条没边框没内边距的裸文字,根本不像
-   输入框 —— 直接套 .net-input 的同一套外观,不另起风格。 */
-.net-input,
-.net-field .cuber-search-input {
+.net-input {
   padding: 7px 10px;
   font-size: 14px;
   color: var(--foreground);
@@ -162,8 +158,7 @@
   max-width: 100%;
 }
 .net-field .cuber-search { align-self: flex-start; width: 260px; max-width: 100%; }
-.net-input:focus,
-.net-field .cuber-search-input:focus { border-color: var(--ring); }
+.net-input:focus { border-color: var(--ring); }
 /* 登录用户身份行(不填昵称,直接显示 WCA 姓名+ID) */
 .net-identity-me {
   display: inline-flex;

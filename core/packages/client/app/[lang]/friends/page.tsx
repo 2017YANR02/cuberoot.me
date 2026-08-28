@@ -1,19 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import {
   Ban, Check, Loader2, LogIn, Search, UserMinus, UserPlus, Users, X,
 } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { Flag } from '@/components/Flag';
-import { SearchInput } from '@/components/SearchInput';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { resolveAccountAvatar } from '@/lib/account-avatar';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore, useIsAdmin } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import {
   acceptFriendRequest,
@@ -43,6 +42,7 @@ type WcaCandidate = {
 
 function UserIdentity({ user }: { user: FriendUser }) {
   const t = useT();
+  const isAdmin = useIsAdmin();
   const avatar = resolveAccountAvatar(user.avatarUrl, user.avatarPreset, user.avatarSource);
   const name = user.name || t('未命名用户', 'Unnamed user');
   const content = (
@@ -59,7 +59,11 @@ function UserIdentity({ user }: { user: FriendUser }) {
       </span>
     </>
   );
-  return user.wcaId ? (
+  return isAdmin ? (
+    <AppLink href={`/account?view=user&user=${user.userId}`} className="friends-identity" prefetch={false}>
+      {content}
+    </AppLink>
+  ) : user.wcaId ? (
     <AppLink href={`/wca/persons/${user.wcaId}`} className="friends-identity" prefetch={false}>
       {content}
     </AppLink>
@@ -82,7 +86,7 @@ function UserRow({
     if (window.confirm(message)) onAction(action);
   };
   return (
-    <div className="friends-user-row">
+    <div className={`friends-user-row is-${relationship}`}>
       <UserIdentity user={user} />
       <div className="friends-actions">
         {busy ? <Loader2 className="friends-spin" size={16} aria-label={t('处理中', 'Working')} /> : (
@@ -114,7 +118,7 @@ function UserRow({
                   className="friends-action"
                   onClick={() => confirmAction(t('确定要删除这位好友吗？', 'Remove this friend?'), 'remove')}
                 >
-                  <UserMinus size={14} />{t('删除好友', 'Remove')}
+                  <UserMinus size={14} />{t('删除', 'Remove')}
                 </button>
                 <button
                   type="button"
@@ -179,7 +183,7 @@ function WcaContactRow({
         </div>
       </div>
       <p className="friends-wca-notice">
-        {t('WCA 选手，仅保存在你的列表中；对方尚未建立 CubeRoot 好友关系。', 'WCA competitor saved only to your list; no CubeRoot friendship has been established.')}
+        {t('待选手关联 CubeRoot 账号。', 'Waiting for the competitor to link a CubeRoot account.')}
       </p>
     </div>
   );
@@ -188,18 +192,18 @@ function WcaContactRow({
 function RegisteredWcaNotice({ relationship }: { relationship: FriendRelationship }) {
   const t = useT();
   if (relationship === 'friends') {
-    return <>{t('该选手已注册 CubeRoot，并且已经是你的好友。', 'This competitor has registered with CubeRoot and is already your friend.')}</>;
+    return <>{t('该选手已关联 CubeRoot 账号，并且已经是你的好友。', 'This competitor has linked a CubeRoot account and is already your friend.')}</>;
   }
   if (relationship === 'incoming') {
-    return <>{t('该选手已注册 CubeRoot，并且已经向你发送好友申请。', 'This competitor has registered with CubeRoot and has sent you a friend request.')}</>;
+    return <>{t('该选手已关联 CubeRoot 账号，并且已经向你发送好友申请。', 'This competitor has linked a CubeRoot account and has sent you a friend request.')}</>;
   }
   if (relationship === 'outgoing') {
-    return <>{t('该选手已注册 CubeRoot，你的好友申请正在等待回应。', 'This competitor has registered with CubeRoot, and your friend request is awaiting a response.')}</>;
+    return <>{t('该选手已关联 CubeRoot 账号，你的好友申请正在等待回应。', 'This competitor has linked a CubeRoot account, and your friend request is awaiting a response.')}</>;
   }
   if (relationship === 'blocked') {
-    return <>{t('该选手已注册 CubeRoot，但目前在你的黑名单中。', 'This competitor has registered with CubeRoot but is currently blocked by you.')}</>;
+    return <>{t('该选手已关联 CubeRoot 账号，但目前在你的黑名单中。', 'This competitor has linked a CubeRoot account but is currently blocked by you.')}</>;
   }
-  return <>{t('该选手已注册 CubeRoot，添加后会发送好友申请。', 'This competitor has registered with CubeRoot. Adding them sends a friend request.')}</>;
+  return <>{t('该选手已关联 CubeRoot 账号，添加后会发送好友申请。', 'This competitor has linked a CubeRoot account. Adding them sends a friend request.')}</>;
 }
 
 export default function FriendsPage() {
@@ -224,6 +228,10 @@ export default function FriendsPage() {
   const [q, setQ] = useQueryState(
     'q',
     parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }),
+  );
+  const registeredWcaIds = useMemo(
+    () => results?.flatMap((item) => item.wcaId ? [item.wcaId] : []) ?? [],
+    [results],
   );
 
   useEffect(() => { setMounted(true); }, []);
@@ -275,6 +283,8 @@ export default function FriendsPage() {
       setWcaCandidate(null);
       return;
     }
+    void setQ('');
+    setResults(null);
     if (user?.wcaId && user.wcaId.toUpperCase() === person.id.toUpperCase()) {
       setWcaCandidate(null);
       setError(t('不能添加自己为好友。', 'You cannot add yourself as a friend.'));
@@ -383,17 +393,17 @@ export default function FriendsPage() {
 
           {view === 'friends' && (
             <section className="friends-search-section">
-              <h2>{t('添加好友', 'Add friends')}</h2>
+              <h2>{t('+', '+')}</h2>
               <div className="friends-search-group">
-                <span className="friends-search-label">{t('CubeRoot 用户', 'CubeRoot users')}</span>
-                <SearchInput
-                  value={q}
-                  onChange={(value) => void setQ(value)}
-                  className="friends-search"
-                  inputClassName="friends-search-input"
-                  placeholder={t('搜索用户名或 CubeRoot ID', 'Search username or CubeRoot ID')}
-                  ariaLabel={t('搜索 CubeRoot 用户', 'Search CubeRoot users')}
-                  autoComplete="off"
+                <WcaPersonPicker
+                  value={wcaCandidate?.person ?? null}
+                  onChange={(person) => void selectWcaPerson(person)}
+                  onQueryChange={(value) => void setQ(value)}
+                  defaultQuery={q}
+                  excludeIds={registeredWcaIds}
+                  placeholder={t('搜索用户名、CubeRoot ID、姓名或 WCA ID', 'Search username, CubeRoot ID, name, or WCA ID')}
+                  isZh={isZh}
+                  className="friends-wca-picker"
                 />
                 {q.trim() && results === null && <p className="friends-muted"><Search size={14} />{t('正在搜索…', 'Searching…')}</p>}
                 {results && results.length === 0 && <p className="friends-muted">{t('没有找到已注册用户。', 'No registered users found.')}</p>}
@@ -410,17 +420,6 @@ export default function FriendsPage() {
                     ))}
                   </div>
                 )}
-              </div>
-
-              <div className="friends-search-group">
-                <span className="friends-search-label">{t('WCA 选手', 'WCA competitors')}</span>
-                <WcaPersonPicker
-                  value={wcaCandidate?.person ?? null}
-                  onChange={(person) => void selectWcaPerson(person)}
-                  placeholder={t('搜索 WCA 姓名或 WCA ID', 'Search WCA name or WCA ID')}
-                  isZh={isZh}
-                  className="friends-wca-picker"
-                />
                 {wcaCandidate && wcaCandidate.registered === undefined && (
                   <p className="friends-muted"><Loader2 className="friends-spin" size={14} />{t('正在确认注册状态…', 'Checking registration…')}</p>
                 )}
@@ -459,7 +458,7 @@ export default function FriendsPage() {
                       </div>
                     </div>
                     <p className="friends-wca-notice">
-                      {t('该选手尚未注册 CubeRoot。添加后只会保存在你的列表中；对方不会收到申请，也暂时无法与你互动。', 'This competitor has not registered with CubeRoot. They will only be saved to your list and will not receive a request or be able to interact yet.')}
+                      {t('待选手关联 CubeRoot 账号。', 'Waiting for the competitor to link a CubeRoot account.')}
                     </p>
                   </div>
                 )}
@@ -473,15 +472,15 @@ export default function FriendsPage() {
           {view === 'requests' && overview && (
             <div className="friends-request-groups">
               <section>
-                <h2>{t('收到的申请', 'Received')}</h2>
+                <h2>{t('收到', 'Received')}</h2>
                 {overview.incoming.length === 0 ? (
-                  <p className="friends-muted">{t('没有待处理的好友申请。', 'No pending friend requests.')}</p>
+                  <p className="friends-muted">{t('无', 'None')}</p>
                 ) : <div className="friends-list">{overview.incoming.map((item) => (
                   <UserRow key={item.userId} user={item} relationship="incoming" busy={busyId === item.userId} onAction={(action) => void act(item, action)} />
                 ))}</div>}
               </section>
               <section>
-                <h2>{t('已发送的申请', 'Sent')}</h2>
+                <h2>{t('已发送', 'Sent')}</h2>
                 {overview.outgoing.length === 0 ? (
                   <p className="friends-muted">{t('没有等待回应的申请。', 'No requests awaiting a response.')}</p>
                 ) : <div className="friends-list">{overview.outgoing.map((item) => (
@@ -493,10 +492,10 @@ export default function FriendsPage() {
 
           {view !== 'requests' && overview && list && (
             <section className="friends-main-list">
-              <h2>{view === 'blocked' ? t('黑名单', 'Blocked users') : t('我的好友', 'My friends')}</h2>
+              {view === 'blocked' && <h2>{t('黑名单', 'Blocked users')}</h2>}
               {!hasMainItems ? (
                 <p className="friends-muted">
-                  {view === 'blocked' ? t('黑名单是空的。', 'Your blocked list is empty.') : t('还没有好友，可以从上方搜索添加。', 'No friends yet. Search above to add someone.')}
+                  {view === 'blocked' ? t('无', 'None') : t('还没有好友，可以从上方搜索添加。', 'No friends yet. Search above to add someone.')}
                 </p>
               ) : (
                 <div className="friends-list">

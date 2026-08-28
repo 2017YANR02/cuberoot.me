@@ -108,6 +108,17 @@
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 6%, var(--card));
 }
+.mem-plan.is-autorenew {
+  border-color: var(--signal-success);
+  background: color-mix(in srgb, var(--signal-success) 6%, var(--card));
+}
+.mem-plan.is-autorenew .mem-plan-tag,
+.mem-plan.is-autorenew .mem-plan-cta {
+  background: var(--signal-success);
+}
+.mem-plan.is-autorenew .mem-plan-cta:hover {
+  background: color-mix(in srgb, var(--signal-success) 88%, black);
+}
 .mem-plan-tag {
   position: absolute;
   top: -10px;
@@ -218,7 +229,11 @@
 .mem-pay-title { font-size: 18px; font-weight: 700; margin: 0 0 4px; color: var(--foreground); }
 .mem-pay-price { font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 18px; }
 .mem-pay-hint { font-size: 14px; color: var(--muted-foreground); margin: 0 0 14px; }
-.mem-pay-channels { display: flex; flex-direction: column; gap: 10px; }
+.mem-pay-channels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
 .mem-pay-ch {
   display: inline-flex;
   align-items: center;
@@ -295,6 +310,63 @@
   margin: 8px 0 0;
   font-size: 12px;
   color: var(--faint-foreground);
+}
+
+/* ── auto-renew ── */
+.mem-autorenew-modal { max-width: 420px; }
+.mem-autorenew-wechat { color: var(--signal-success); margin-bottom: 10px; }
+.mem-autorenew-price-unit { margin-left: 4px; font-size: 13px; color: var(--muted-foreground); }
+.mem-autorenew-rules {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0;
+  margin: 4px 0 20px;
+  text-align: left;
+}
+.mem-autorenew-rules li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+.mem-autorenew-rules svg { flex-shrink: 0; margin-top: 2px; color: var(--signal-success); }
+.mem-autorenew-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 14px;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--foreground);
+  cursor: pointer;
+}
+.mem-autorenew-consent-input { margin: 3px 0 0; accent-color: var(--signal-success); }
+.mem-autorenew-sign {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--signal-success);
+  color: var(--primary-foreground);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mem-autorenew-sign:disabled { opacity: 0.45; cursor: default; }
+.mem-autorenew-caption {
+  margin: 10px 0 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 /* ── member contact ── */

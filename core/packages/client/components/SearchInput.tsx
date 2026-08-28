@@ -54,7 +54,11 @@ export function SearchInput({
         onCompositionEnd={(e) => { composing.current = false; commit(e.currentTarget.value); }}
         placeholder={placeholder}
         aria-label={ariaLabel ?? placeholder}
-        className={inputClassName}
+        className={[
+          'search-control',
+          clearable && text ? 'search-control--with-clear' : '',
+          inputClassName,
+        ].filter(Boolean).join(' ')}
         spellCheck={spellCheck}
         autoComplete={autoComplete}
         autoCapitalize={autoCapitalize}

@@ -132,7 +132,7 @@ describe('WCA 实名锁定用户名', () => {
   });
 
   it('前端对 WCA 用户隐藏修改入口并说明实名来源', () => {
-    expect(page).toContain('const wcaLocked = Boolean(user?.wcaId)');
+    expect(page).toContain('const wcaLocked = Boolean(profile.wcaId)');
     expect(page).toContain('!editing && !wcaLocked');
     expect(page).toContain('已绑定 WCA，用户名使用 WCA 实名。');
   });

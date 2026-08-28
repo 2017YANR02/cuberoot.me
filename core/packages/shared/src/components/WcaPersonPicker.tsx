@@ -184,7 +184,7 @@ export function WcaPersonPicker({
       <div className="wca-pp-input-wrap">
         <input
           ref={inputRef}
-          className="wca-pp-input"
+          className="search-control wca-pp-input"
           type="text"
           value={query}
           onChange={onInputChange}

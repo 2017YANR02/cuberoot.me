@@ -1,15 +1,15 @@
 'use client';
 
 /**
- * /account —— 「我的」页,全站唯一。地址里**不带 wcaId**:这是当前登录者的页面,不接受
- * 「看谁的」参数,所以没有 isSelf 分支。别人的东西各归各页(选手档案 /wca/persons/:id、
- * 选手复盘 /recon/person/:id),这里只放属于我的:账号凭据、学习进度、关注的比赛、登出。
+ * /account —— 「我的」页,全站唯一。默认只展示当前登录者的数据；管理员可通过受保护的
+ * user 视图编辑 CubeRoot 用户资料。公开资料仍各归各页(选手档案 /wca/persons/:id、
+ * 选手复盘 /recon/person/:id),普通用户这里只放属于我的:账号凭据、学习进度、关注的比赛、登出。
  * 也没有登录弹层:未登录就直接渲染登录表单,登录后按 next 回到来处。一次性绑定令牌只从
  * fragment 续接,不能进入 query、服务端日志或 Referer。
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import { Bell, BookOpen, Building2, ChevronLeft, ChevronRight, HeartHandshake, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, Upload, UserRound, Users } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
@@ -24,7 +24,14 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import { DISPLAY_NAME_MAX_LENGTH, isValidDisplayName, normalizeDisplayName } from '@cuberoot/shared/account';
 import { CLAWD_AVATAR_PRESETS, DEFAULT_CLAWD_AVATAR_PRESET, type ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
-import { updateAvatar, updateDisplayName, type AvatarChoice } from '@/lib/account-api';
+import {
+  fetchAdminUser,
+  updateAdminDisplayName,
+  updateAvatar,
+  updateDisplayName,
+  type AvatarChoice,
+  type SessionUser,
+} from '@/lib/account-api';
 import { clawdAvatarUrl } from '@/lib/account-avatar';
 import { prepareImageUpload, uploadImageBlob } from '@/lib/image-upload';
 import { ADMIN_WCA_IDS, applySession, useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
@@ -137,26 +144,31 @@ function AvatarEditor() {
   );
 }
 
-function DisplayNameEditor() {
+function DisplayNameField({
+  profile,
+  onSave,
+}: {
+  profile: Pick<SessionUser, 'name' | 'wcaId'>;
+  onSave: (name: string) => Promise<void>;
+}) {
   const t = useT();
-  const user = useAuthStore((s) => s.user);
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(user?.name ?? '');
+  const [name, setName] = useState(profile.name);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const wcaLocked = Boolean(user?.wcaId);
+  const wcaLocked = Boolean(profile.wcaId);
 
   useEffect(() => {
-    if (!editing) setName(user?.name ?? '');
-  }, [editing, user?.name]);
+    if (!editing) setName(profile.name);
+  }, [editing, profile.name]);
 
   useEffect(() => {
     if (editing) inputRef.current?.focus();
   }, [editing]);
 
   const cancel = () => {
-    setName(user?.name ?? '');
+    setName(profile.name);
     setError(null);
     setEditing(false);
   };
@@ -173,17 +185,14 @@ function DisplayNameEditor() {
       setError(t(`请输入 1–${DISPLAY_NAME_MAX_LENGTH} 个字符的用户名，不能包含换行或控制字符。`, `Enter a username of 1–${DISPLAY_NAME_MAX_LENGTH} characters without line breaks or control characters.`));
       return;
     }
-    if (normalized === user?.name) {
+    if (normalized === profile.name) {
       setEditing(false);
       return;
     }
 
     setSaving(true);
     try {
-      const session = await updateDisplayName(normalized);
-      if (!applySession(session.token, session.user)) {
-        throw new Error('session persistence failed');
-      }
+      await onSave(normalized);
       setEditing(false);
     } catch {
       setError(t('用户名保存失败，请稍后重试。', 'Could not save the username. Try again later.'));
@@ -193,17 +202,15 @@ function DisplayNameEditor() {
   };
 
   return (
-    <div className="account-profile-editor">
-      <h2 className="account-creds-title">{t('个人资料', 'Profile')}</h2>
-      <AvatarEditor />
+    <>
       <div className="auth-idrow">
         <span className="auth-idicon"><UserRound size={16} /></span>
         <span className="auth-idprov">{t('用户名', 'Username')}</span>
-        <span className="auth-iduid">{user?.name || t('未设置', 'Not set')}</span>
+        <span className="auth-iduid">{profile.name || t('未设置', 'Not set')}</span>
         {!editing && !wcaLocked && (
           <div className="auth-idactions">
             <button type="button" className="auth-link" onClick={() => { setError(null); setEditing(true); }}>
-              {user?.name ? t('修改', 'Edit') : t('设置', 'Set')}
+              {profile.name ? t('修改', 'Edit') : t('设置', 'Set')}
             </button>
           </div>
         )}
@@ -247,7 +254,65 @@ function DisplayNameEditor() {
           </div>
         </form>
       )}
+    </>
+  );
+}
+
+function DisplayNameEditor() {
+  const t = useT();
+  const user = useAuthStore((s) => s.user);
+  if (!user) return null;
+  const save = async (name: string) => {
+    const session = await updateDisplayName(name);
+    if (!applySession(session.token, session.user)) throw new Error('session persistence failed');
+  };
+  return (
+    <div className="account-profile-editor">
+      <h2 className="account-creds-title">{t('个人资料', 'Profile')}</h2>
+      <AvatarEditor />
+      <DisplayNameField
+        profile={{ name: user.name, wcaId: user.wcaId || null }}
+        onSave={save}
+      />
     </div>
+  );
+}
+
+function AdminUserEditor({ userId }: { userId: number }) {
+  const t = useT();
+  const [profile, setProfile] = useState<SessionUser | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setProfile(null);
+    setError(null);
+    let cancelled = false;
+    fetchAdminUser(userId)
+      .then((nextProfile) => { if (!cancelled) setProfile(nextProfile); })
+      .catch(() => { if (!cancelled) setError(t('用户资料加载失败，请稍后重试。', 'Could not load the user profile. Try again later.')); });
+    return () => { cancelled = true; };
+  }, [t, userId]);
+
+  if (error) return <p className="auth-error" role="alert">{error}</p>;
+  if (!profile) return <p className="auth-hint"><Loader2 size={14} className="auth-spin" />{t('加载中…', 'Loading…')}</p>;
+
+  return (
+    <>
+      <div className="account-id-row">
+        <h1 className="account-name">{profile.name || t('未命名', 'Unnamed')}</h1>
+        <UserIdLabel userId={profile.uid} full copyable />
+        {profile.wcaId && <div className="account-wid">{profile.wcaId}</div>}
+      </div>
+      <section className="account-creds">
+        <div className="account-profile-editor">
+          <h2 className="account-creds-title">{t('个人资料', 'Profile')}</h2>
+          <DisplayNameField
+            profile={profile}
+            onSave={async (name) => setProfile(await updateAdminDisplayName(userId, name))}
+          />
+        </div>
+      </section>
+    </>
   );
 }
 
@@ -263,8 +328,9 @@ export default function AccountPage() {
   // 跟着 URL 走;push 进历史,浏览器后退能层层退回。setter 只用来在登出时清掉参数。
   const [view, setView] = useQueryState(
     'view',
-    parseAsStringEnum<'main' | 'signin' | 'delete' | 'submissions'>(['main', 'signin', 'delete', 'submissions']).withDefault('main').withOptions({ history: 'push' }),
+    parseAsStringEnum<'main' | 'signin' | 'delete' | 'submissions' | 'user'>(['main', 'signin', 'delete', 'submissions', 'user']).withDefault('main').withOptions({ history: 'push' }),
   );
+  const [managedUserId] = useQueryState('user', parseAsInteger);
 
   // 'wait' = 还没判定(SSR / 正在跳走)—— auth-store 从 localStorage 同步初始化,服务端恒为
   // null,所以判定只能在挂载后做,渲染前固定空壳避免 hydration 错配。
@@ -273,8 +339,8 @@ export default function AccountPage() {
   const next = useRef<string | null>(null);
 
   useDocumentTitle(
-    mode !== 'me' ? '登录' : view === 'delete' ? '注销账号' : view === 'submissions' ? '公式投稿' : '我的',
-    mode !== 'me' ? 'Sign in' : view === 'delete' ? 'Delete account' : view === 'submissions' ? 'Algorithm submissions' : 'My account',
+    mode !== 'me' ? '登录' : view === 'delete' ? '注销账号' : view === 'submissions' ? '公式投稿' : view === 'user' ? '编辑用户' : '我的',
+    mode !== 'me' ? 'Sign in' : view === 'delete' ? 'Delete account' : view === 'submissions' ? 'Algorithm submissions' : view === 'user' ? 'Edit user' : 'My account',
   );
 
   /** 拿到会话后该去哪:有回跳就回去,否则留在本页。 */
@@ -387,7 +453,12 @@ export default function AccountPage() {
         {/* 面包屑往上一层:设置视图回「我的」,主视图回首页。设置视图里**不再放齿轮** ——
             人已经在里面了,亮着的齿轮长得像入口却干着出口的活,没人读得出来。
             一个方向一个入口:进设置靠齿轮,出设置靠这条面包屑。 */}
-        {view === 'signin' || view === 'submissions' ? (
+        {view === 'user' ? (
+          <AppLink href="/friends" className="account-back" prefetch={false}>
+            <ChevronLeft size={16} />
+            <span>{t('好友', 'Friends')}</span>
+          </AppLink>
+        ) : view === 'signin' || view === 'submissions' ? (
           <AppLink href="/account" className="account-back" prefetch={false}>
             <ChevronLeft size={16} />
             <span>{t('我的', 'My account')}</span>
@@ -427,6 +498,10 @@ export default function AccountPage() {
         /* 同理,注销这一屏也只有它自己:名字和入口卡片留在这儿,读起来像「你的东西都还在」,
            正好和这一屏要说的话相反。 */
         <DeleteAccountPanel backHref="/account?view=signin" />
+      ) : view === 'user' ? (
+        isAdmin && managedUserId && managedUserId > 0
+          ? <AdminUserEditor userId={managedUserId} />
+          : <p className="auth-error" role="alert">{t('只有管理员可以编辑用户资料。', 'Only administrators can edit user profiles.')}</p>
       ) : (
         <>
           <div className="account-id-row">
