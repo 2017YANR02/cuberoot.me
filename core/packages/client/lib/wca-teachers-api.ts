@@ -2,7 +2,7 @@ import { API_ORIGIN } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 
 const BASE = API_ORIGIN + '/v1/wca/teachers';
-const RESPONSE_VERSION = '2';
+const RESPONSE_VERSION = '3';
 
 export interface WcaTeacher {
   studentWcaId: string;
@@ -16,6 +16,7 @@ export interface WcaNamedStudent {
   id: string;
   teacherWcaId: string;
   studentName: string;
+  countryIso2: string;
   eventIds: string[];
 }
 
@@ -40,6 +41,7 @@ export async function listWcaNamedStudents(teacherWcaId: string): Promise<WcaNam
 export async function createWcaNamedStudent(
   teacherWcaId: string,
   studentName: string,
+  countryIso2: string,
   eventIds: string[],
 ): Promise<WcaNamedStudent> {
   const data = await handleApi<{ student: WcaNamedStudent }>(await fetch(
@@ -47,7 +49,7 @@ export async function createWcaNamedStudent(
     {
       method: 'POST',
       headers: authHeaders(),
-      body: JSON.stringify({ studentName, eventIds }),
+      body: JSON.stringify({ studentName, countryIso2, eventIds }),
     },
   ));
   return data.student;
@@ -57,6 +59,7 @@ export async function updateWcaNamedStudent(
   teacherWcaId: string,
   studentId: string,
   studentName: string,
+  countryIso2: string,
   eventIds: string[],
 ): Promise<WcaNamedStudent> {
   const data = await handleApi<{ student: WcaNamedStudent }>(await fetch(
@@ -64,7 +67,7 @@ export async function updateWcaNamedStudent(
     {
       method: 'PUT',
       headers: authHeaders(),
-      body: JSON.stringify({ studentName, eventIds }),
+      body: JSON.stringify({ studentName, countryIso2, eventIds }),
     },
   ));
   return data.student;
