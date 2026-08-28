@@ -39,6 +39,7 @@ interface NamedStudentRow {
   id: string;
   teacher_wca_id: string;
   student_name: string;
+  country_iso2: string | null;
   event_ids: string[];
 }
 
@@ -61,8 +62,15 @@ function namedStudentToJson(row: NamedStudentRow) {
     id: row.id,
     teacherWcaId: row.teacher_wca_id,
     studentName: row.student_name,
+    countryIso2: row.country_iso2 ?? '',
     eventIds: row.event_ids,
   };
+}
+
+function normalizeCountryIso2(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const countryIso2 = value.trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(countryIso2) ? countryIso2 : null;
 }
 
 async function checkRosterWritePermission(
@@ -111,12 +119,12 @@ wcaTeacherRoutes.get('/wca/teachers/:teacherId/named-students', async (c) => {
   const teacherWcaId = normalizeWcaId(c.req.param('teacherId'));
   if (!teacherWcaId) return c.json({ error: 'invalid teacher WCA ID' }, 400);
   const rows = await query<NamedStudentRow>(
-    `SELECT student.id, student.teacher_wca_id, student.student_name,
+    `SELECT student.id, student.teacher_wca_id, student.student_name, student.country_iso2,
             array_agg(event.event_id ORDER BY event.event_id) AS event_ids
        FROM wca_teacher_named_students student
        JOIN wca_teacher_named_student_events event ON event.student_id = student.id
       WHERE student.teacher_wca_id = ?
-      GROUP BY student.id, student.teacher_wca_id, student.student_name
+      GROUP BY student.id, student.teacher_wca_id, student.student_name, student.country_iso2
       ORDER BY student.student_name, student.id`,
     [teacherWcaId],
   );
@@ -136,21 +144,30 @@ wcaTeacherRoutes.post('/wca/teachers/:teacherId/named-students', async (c) => {
   if (permission === 'forbidden') return c.json({ error: 'only the teacher can manage this roster' }, 403);
   if (permission === 'membership') return c.json({ error: 'active membership required' }, 403);
 
-  const body: { studentName?: unknown; eventIds?: unknown } = await c.req.json().catch(() => ({}));
+  const body: { studentName?: unknown; countryIso2?: unknown; eventIds?: unknown } = await c.req.json().catch(() => ({}));
   const studentName = normalizeNamedStudentName(body.studentName);
   if (!studentName) return c.json({ error: 'invalid student name' }, 400);
+  const countryIso2 = normalizeCountryIso2(body.countryIso2);
+  if (!countryIso2) return c.json({ error: 'invalid country' }, 400);
   const eventIds = parseTeacherEventIds(body.eventIds);
   if (!eventIds) return c.json({ error: 'invalid event IDs' }, 400);
 
-  const teacher = await query<{ wca_id: string }>('SELECT wca_id FROM wca_persons WHERE wca_id = ?', [teacherWcaId]);
+  const teacher = await query<{ wca_id: string; country_exists: boolean }>(
+    `SELECT teacher.wca_id,
+            EXISTS (SELECT 1 FROM wca_countries country WHERE country.iso2 = ?) AS country_exists
+       FROM wca_persons teacher
+      WHERE teacher.wca_id = ?`,
+    [countryIso2, teacherWcaId],
+  );
   if (!teacher.length) return c.json({ error: 'teacher not found' }, 404);
+  if (!teacher[0].country_exists) return c.json({ error: 'invalid country' }, 400);
   const eventValues = eventIds.map(() => '(?)').join(', ');
   const rows = await query<Omit<NamedStudentRow, 'event_ids'>>(
     `WITH inserted_student AS (
        INSERT INTO wca_teacher_named_students
-         (teacher_wca_id, student_name, created_by, updated_by)
-       VALUES (?, ?, ?, ?)
-       RETURNING id, teacher_wca_id, student_name
+         (teacher_wca_id, student_name, country_iso2, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?)
+       RETURNING id, teacher_wca_id, student_name, country_iso2
      ), inserted_events AS (
        INSERT INTO wca_teacher_named_student_events
          (student_id, event_id, created_by, updated_by)
@@ -158,8 +175,8 @@ wcaTeacherRoutes.post('/wca/teachers/:teacherId/named-students', async (c) => {
          FROM inserted_student
          CROSS JOIN (VALUES ${eventValues}) AS selected(event_id)
      )
-     SELECT id, teacher_wca_id, student_name FROM inserted_student`,
-    [teacherWcaId, studentName, actorWcaId, actorWcaId, actorWcaId, actorWcaId, ...eventIds],
+     SELECT id, teacher_wca_id, student_name, country_iso2 FROM inserted_student`,
+    [teacherWcaId, studentName, countryIso2, actorWcaId, actorWcaId, actorWcaId, actorWcaId, ...eventIds],
   );
   return c.json({ student: namedStudentToJson({ ...rows[0], event_ids: eventIds }) }, 201);
 });
@@ -178,23 +195,29 @@ wcaTeacherRoutes.put('/wca/teachers/:teacherId/named-students/:namedStudentId', 
   if (permission === 'forbidden') return c.json({ error: 'only the teacher can manage this roster' }, 403);
   if (permission === 'membership') return c.json({ error: 'active membership required' }, 403);
 
-  const body: { studentName?: unknown; eventIds?: unknown } = await c.req.json().catch(() => ({}));
+  const body: { studentName?: unknown; countryIso2?: unknown; eventIds?: unknown } = await c.req.json().catch(() => ({}));
   const studentName = normalizeNamedStudentName(body.studentName);
   if (!studentName) return c.json({ error: 'invalid student name' }, 400);
+  const countryIso2 = normalizeCountryIso2(body.countryIso2);
+  if (!countryIso2) return c.json({ error: 'invalid country' }, 400);
   const eventIds = parseTeacherEventIds(body.eventIds);
   if (!eventIds) return c.json({ error: 'invalid event IDs' }, 400);
-  const existing = await query<{ id: string }>(
-    'SELECT id FROM wca_teacher_named_students WHERE id = ? AND teacher_wca_id = ?',
-    [namedStudentId, teacherWcaId],
+  const existing = await query<{ id: string; country_exists: boolean }>(
+    `SELECT student.id,
+            EXISTS (SELECT 1 FROM wca_countries country WHERE country.iso2 = ?) AS country_exists
+       FROM wca_teacher_named_students student
+      WHERE student.id = ? AND student.teacher_wca_id = ?`,
+    [countryIso2, namedStudentId, teacherWcaId],
   );
   if (!existing.length) return c.json({ error: 'student not found' }, 404);
+  if (!existing[0].country_exists) return c.json({ error: 'invalid country' }, 400);
 
   const eventValues = eventIds.map(() => '(?)').join(', ');
   const selectedPlaceholders = eventIds.map(() => '?').join(', ');
   await query(
     `WITH updated_student AS (
        UPDATE wca_teacher_named_students
-          SET student_name = ?, updated_by = ?
+          SET student_name = ?, country_iso2 = ?, updated_by = ?
         WHERE id = ? AND teacher_wca_id = ?
        RETURNING id
      ), deleted_events AS (
@@ -208,12 +231,13 @@ wcaTeacherRoutes.put('/wca/teachers/:teacherId/named-students/:namedStudentId', 
        FROM updated_student
        CROSS JOIN (VALUES ${eventValues}) AS selected(event_id)
      ON CONFLICT (student_id, event_id) DO UPDATE SET updated_by = EXCLUDED.updated_by`,
-    [studentName, actorWcaId, namedStudentId, teacherWcaId, ...eventIds, actorWcaId, actorWcaId, ...eventIds],
+    [studentName, countryIso2, actorWcaId, namedStudentId, teacherWcaId, ...eventIds, actorWcaId, actorWcaId, ...eventIds],
   );
   return c.json({ student: namedStudentToJson({
     id: namedStudentId,
     teacher_wca_id: teacherWcaId,
     student_name: studentName,
+    country_iso2: countryIso2,
     event_ids: eventIds,
   }) });
 });
