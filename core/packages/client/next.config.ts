@@ -236,11 +236,11 @@ const nextConfig: NextConfig = {
         // Internal rewrite (not redirect) so the URL bar stays /callback.html and
         // WCA's exact redirect_uri match still passes. Same page as /auth/callback.
         { source: "/callback.html", destination: "/auth/callback" },
-        // Person detail: unbounded wcaId space backed by ONE prerendered static
-        // shell (app/[lang]/wca/persons/[wcaId] generates only the "_" sentinel).
-        // Route every real id to that shell so the page never SSRs per request;
-        // the client reads the real id from window.location. URL bar is unchanged
-        // (rewrite, not redirect). See persons/[wcaId]/page.tsx.
+        // Person detail + student management: unbounded wcaId space backed by
+        // ONE prerendered static shell per route. Keep the more specific nested
+        // route before the generic person route so /students is not swallowed as
+        // a WCA ID. Clients read the real id from window.location.
+        { source: "/:lang(en|zh)/wca/persons/:wcaId/students", destination: "/:lang/wca/persons/_/students" },
         { source: "/:lang(en|zh)/wca/persons/:wcaId", destination: "/:lang/wca/persons/_" },
         // Teacher/organization livestream scripts are DB-backed and unbounded.
         // One static shell reads the real numeric id from window.location.

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import AppLink from '@/components/AppLink';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import PersonLink from '@/components/PersonLink';
@@ -45,10 +46,11 @@ interface StudentMeta {
   personalRecords: WcaPersonProfile['personal_records'];
 }
 
-export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh }: {
+export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh, mode = 'overview' }: {
   teacherWcaId: string;
   teacherCountryIso2: string;
   isZh: boolean;
+  mode?: 'overview' | 'manage';
 }) {
   const t = useT();
   const [relations, setRelations] = useState<WcaTeacher[] | null>(null);
@@ -212,11 +214,15 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh 
   ));
 
   const canAddStudents = canAddWcaTeacherStudent(teacherWcaId, teacherDirectory);
+  const isManagement = mode === 'manage';
 
-  if (students.length === 0 && !canAddStudents) return null;
+  if (students.length === 0 && !canAddStudents && !isManagement) return null;
 
   return (
-    <section className="wp-card wp-students-card" aria-label={t('学生', 'Students')}>
+    <section
+      className={`wp-card wp-students-card${isManagement ? ' wp-students-card--manage' : ''}`}
+      aria-label={isManagement ? t('学生管理', 'Student management') : t('学生', 'Students')}
+    >
       {students.length > 0 && (
         <div className="wp-student-controls">
           <WcaEventSelector
@@ -237,16 +243,27 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh 
             <tr>
               <th className="wp-th-student">
                 <span className="wp-student-heading">
-                  <WcaStudentAdder
-                    teacherWcaId={teacherWcaId}
-                    teacherCountryIso2={teacherCountryIso2}
-                    existingWcaStudentEvents={existingWcaStudentEvents}
-                    existingNamedStudents={namedStudents ?? []}
-                    directory={teacherDirectory}
-                    isZh={isZh}
-                    onSaved={() => setReloadKey((current) => current + 1)}
-                  />
+                  {isManagement && (
+                    <WcaStudentAdder
+                      teacherWcaId={teacherWcaId}
+                      teacherCountryIso2={teacherCountryIso2}
+                      existingWcaStudentEvents={existingWcaStudentEvents}
+                      existingNamedStudents={namedStudents ?? []}
+                      directory={teacherDirectory}
+                      isZh={isZh}
+                      onSaved={() => setReloadKey((current) => current + 1)}
+                    />
+                  )}
                   {t('学生', 'Student')}
+                  {!isManagement && canAddStudents && (
+                    <AppLink
+                      href={`/wca/persons/${teacherWcaId}/students`}
+                      className="wp-student-manage-link"
+                      prefetch={false}
+                    >
+                      {t('管理', 'Manage')}
+                    </AppLink>
+                  )}
                 </span>
               </th>
               <th className="wp-th-student-events">{t('项目', 'Events')}</th>
@@ -288,7 +305,7 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh 
               <tr key={student.key}>
                 <td className="wp-cell-student">
                   <span className="wp-student-identity">
-                    {student.wcaId ? (
+                    {isManagement && student.wcaId ? (
                       <WcaTeacherCell
                         studentWcaId={student.wcaId}
                         eventIds={student.eventIds}
@@ -298,7 +315,7 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh 
                         editorOnly
                         managedTeacherWcaId={teacherWcaId}
                       />
-                    ) : student.namedStudent ? (
+                    ) : isManagement && student.namedStudent ? (
                       <WcaNamedStudentCell
                         student={student.namedStudent}
                         teacherWcaId={teacherWcaId}

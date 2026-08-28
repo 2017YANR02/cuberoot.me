@@ -70,6 +70,20 @@
   line-height: 1;
 }
 
+.wca-student-add-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wca-student-batch-add-action {
+  font-size: 0.76rem;
+}
+
+.wca-student-batch-undo-action {
+  font-size: 0.76rem;
+}
+
 .wca-teacher-error,
 .wca-teacher-dialog-error {
   color: var(--destructive);
@@ -120,8 +134,89 @@
   max-width: none;
 }
 
-.wca-teacher-dialog-heading .wca-named-student-chip {
-  width: auto;
+.wca-named-student-picker {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.wca-named-student-picker .cuber-search {
+  min-width: 0;
+  max-width: none;
+}
+
+.wca-student-batch-names {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+}
+
+.wca-student-batch-dialog {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.wca-student-batch-names textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 104px;
+  resize: vertical;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  line-height: 1.5;
+}
+
+.wca-student-batch-names textarea:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.wca-student-batch-names textarea::placeholder {
+  color: var(--faint-foreground);
+}
+
+.wca-student-batch-unmatched {
+  margin: -4px 0 12px;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.wca-student-batch-ambiguous {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.wca-student-batch-match {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.wca-student-batch-match > span {
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.wca-student-batch-match .cuber-search {
+  min-width: 0;
+  max-width: none;
+}
+
+.wca-teacher-dialog-field-label {
+  margin: 0 0 8px;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
 }
 
 .wca-teacher-dialog-event {
@@ -162,7 +257,7 @@
   margin: 10px 0 0;
 }
 
-.wca-teacher-dialog-country-error {
+.wca-teacher-dialog-validation-error {
   margin: -6px 0 14px;
 }
 
@@ -184,6 +279,15 @@
 @media (max-width: 479px) {
   .wca-teacher-dialog {
     padding: 18px;
+  }
+
+  .wca-student-batch-names textarea {
+    min-height: 84px;
+  }
+
+  .wca-student-batch-match {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
   }
 
   .wca-teacher-cell {

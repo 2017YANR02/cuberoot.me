@@ -22,6 +22,62 @@ const group = (zh: string, en: string): Bi => ({ zh, en });
 
 const SECTIONS: GroupSection[] = [
   {
+    id: 'official-group',
+    title: group('官方群', 'Official group'),
+    description: group('魔方根网站交流群。', 'The official CubeRoot community group.'),
+    blocks: [
+      {
+        title: group('网站交流群', 'Website community'),
+        groups: [
+          group('cuberoot.me群', 'cuberoot.me group'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'cuberoot-groups',
+    title: group('魔方根群', 'CubeRoot groups'),
+    description: group('魔方根主群、高级群与兴趣交流子群。', 'CubeRoot main, advanced and interest groups.'),
+    blocks: [
+      {
+        title: group('主群与高级群', 'Main and advanced groups'),
+        groups: [
+          group('VIP群 (付费)', 'VIP group (paid)'),
+          group('换位子群 (高级群)', 'Commutator group (advanced)'),
+          group('基本群 (1群)', 'Trivial group (Group 1)'),
+          group('自由群 (2群)', 'Free group (Group 2)'),
+          group('正规群 (3群)', 'Normal group (Group 3)'),
+          group('拓扑群 (4群)', 'Topological group (Group 4)'),
+          group('有限单群 (5群)', 'Finite simple group (Group 5)'),
+          group('庞加莱群 (6群)', 'Poincaré group (Group 6)'),
+          group('李群 (7群)', 'Lie group (Group 7)'),
+          group('阿贝尔群 (8群)', 'Abelian group (Group 8)'),
+          group('魔群 (9群)', 'Magic group (Group 9)'),
+          group('魔群 (10群)', 'Magic group (Group 10)'),
+          group('b群 (11群)', 'b group (Group 11)'),
+          group('12群 (12群)', 'Group 12'),
+          group('13群 (13群)', 'Group 13'),
+        ],
+      },
+      {
+        title: group('兴趣与生活', 'Interests and life'),
+        groups: [
+          group('韭菜', 'Chives'),
+          group('编程', 'Programming'),
+          group('摄影', 'Photography'),
+          group('航空', 'Aviation'),
+          group('外语', 'Languages'),
+          group('小学初中', 'Primary and middle school'),
+          group('高中大学', 'High school and university'),
+          group('游戏', 'Gaming'),
+          group('双拼', 'Double Pinyin'),
+          group('电影音乐棋牌', 'Movies, music and games'),
+          group('气象', 'Meteorology'),
+        ],
+      },
+    ],
+  },
+  {
     id: 'regional-groups',
     title: group('地区群', 'Regional groups'),
     description: group('按大区、城市与海外地区寻找身边的魔友。', 'Find nearby cubers by region, city or overseas area.'),
@@ -68,10 +124,10 @@ const SECTIONS: GroupSection[] = [
   {
     id: 'event-groups',
     title: group('项目群', 'Event groups'),
-    description: group('按魔方项目、比赛形式与玩法交流。', 'Talk by puzzle, competition format or style.'),
+    description: group('按魔方项目、比赛形式与方法交流。', 'Talk by puzzle, competition format or method.'),
     blocks: [
       {
-        title: group('项目与玩法', 'Events and styles'),
+        title: group('项目与方法', 'Events and methods'),
         groups: [
           group('二阶', '2×2'),
           group('五魔', 'Megaminx'),
@@ -120,12 +176,11 @@ const SECTIONS: GroupSection[] = [
   {
     id: 'community-groups',
     title: group('其他群', 'Other groups'),
-    description: group('反馈、交易、内容平台、老师与不同阶段魔友的交流群。', 'Groups for feedback, trading, content platforms, teachers and cubers at different stages.'),
+    description: group('交易、内容平台、老师与不同阶段魔友的交流群。', 'Groups for trading, content platforms, teachers and cubers at different stages.'),
     blocks: [
       {
         title: group('社区', 'Community'),
         groups: [
-          group('cuberoot.me反馈群', 'cuberoot.me feedback'),
           group('表情包', 'Stickers and memes'),
           group('二手1', 'Secondhand 1'),
           group('二手2', 'Secondhand 2'),
@@ -134,49 +189,6 @@ const SECTIONS: GroupSection[] = [
           group('全国魔方老师总群', 'National cube teachers'),
           group('抖音', 'Douyin'),
           group('B站', 'Bilibili'),
-        ],
-      },
-    ],
-  },
-  {
-    id: 'cuberoot-groups',
-    title: group('魔方根群', 'CubeRoot groups'),
-    description: group('魔方根主群、高级群与兴趣交流子群。', 'CubeRoot main, advanced and interest groups.'),
-    blocks: [
-      {
-        title: group('主群与高级群', 'Main and advanced groups'),
-        groups: [
-          group('VIP群 (付费)', 'VIP group (paid)'),
-          group('换位子群 (高级群)', 'Commutator group (advanced)'),
-          group('基本群 (1群)', 'Trivial group (Group 1)'),
-          group('自由群 (2群)', 'Free group (Group 2)'),
-          group('正规群 (3群)', 'Normal group (Group 3)'),
-          group('拓扑群 (4群)', 'Topological group (Group 4)'),
-          group('有限单群 (5群)', 'Finite simple group (Group 5)'),
-          group('庞加莱群 (6群)', 'Poincaré group (Group 6)'),
-          group('李群 (7群)', 'Lie group (Group 7)'),
-          group('阿贝尔群 (8群)', 'Abelian group (Group 8)'),
-          group('魔群 (9群)', 'Magic group (Group 9)'),
-          group('魔群 (10群)', 'Magic group (Group 10)'),
-          group('b群 (11群)', 'b group (Group 11)'),
-          group('12群 (12群)', 'Group 12'),
-          group('13群 (13群)', 'Group 13'),
-        ],
-      },
-      {
-        title: group('兴趣与生活', 'Interests and life'),
-        groups: [
-          group('韭菜', 'Chives'),
-          group('编程', 'Programming'),
-          group('摄影', 'Photography'),
-          group('航空', 'Aviation'),
-          group('外语', 'Languages'),
-          group('小学初中', 'Primary and middle school'),
-          group('高中大学', 'High school and university'),
-          group('游戏', 'Gaming'),
-          group('双拼', 'Double Pinyin'),
-          group('电影音乐棋牌', 'Movies, music and games'),
-          group('气象', 'Meteorology'),
         ],
       },
     ],

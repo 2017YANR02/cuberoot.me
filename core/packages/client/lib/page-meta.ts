@@ -694,6 +694,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'wca/prediction-about': { title: { zh: '速拧极限预测说明', en: 'Speedcubing Prediction Guide' } },
   'wca/prediction/333': { title: { zh: '三阶成绩预测', en: '3×3 Prediction' } },
   'wca/prediction/lucky': { title: { zh: '幸运极限', en: 'Lucky Limit' } },
+  'wca/persons/students': {
+    title: { zh: '学生管理', en: 'Student Management' },
+    description: {
+      zh: '集中管理老师的学生名单、教授项目与批量导入。',
+      en: 'Manage a teacher roster, taught events and batch imports in one place.',
+    },
+  },
   'wca/records': { title: { zh: '纪录', en: 'Records' } },
   'wca/result-watch': { title: { zh: '成绩变更监控', en: 'Result Change Monitor' } },
   'wca/results': { title: { zh: '排名', en: 'Rankings' } },

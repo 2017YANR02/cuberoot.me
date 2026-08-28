@@ -3023,6 +3023,23 @@ CREATE INDEX idx_page_notices_enabled ON page_notices(enabled) WHERE enabled;
 CREATE TRIGGER page_notices_updated_at BEFORE UPDATE ON page_notices
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
+-- ── 22c. creator_gallery_captions (/about/ruimin 图库说明) ──
+-- migration 0176。图片文件在 client/public，数据库只存管理员维护的双语说明。
+CREATE TABLE creator_gallery_captions (
+  image_key   VARCHAR(16)  PRIMARY KEY,
+  caption_zh  VARCHAR(800) NOT NULL DEFAULT '',
+  caption_en  VARCHAR(800) NOT NULL DEFAULT '',
+  updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  CHECK (image_key IN (
+    'photo-01', 'photo-02', 'photo-03', 'photo-04',
+    'photo-05', 'photo-06', 'photo-07', 'photo-08'
+  )),
+  CHECK (caption_zh = BTRIM(caption_zh)),
+  CHECK (caption_en = BTRIM(caption_en))
+);
+CREATE TRIGGER creator_gallery_captions_updated_at BEFORE UPDATE ON creator_gallery_captions
+  FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
+
 -- ── 23. article (/article 社区长文;markdown+指令正文,untrusted,渲染时净化) ──
 -- migration 0026_article.sql。published_at NULL = 草稿;软删 deleted_at。
 CREATE TABLE article (

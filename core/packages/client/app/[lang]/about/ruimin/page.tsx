@@ -6,6 +6,7 @@ import PersonLink from '@/components/PersonLink';
 import { tr } from '@/i18n/tr';
 import { CREATOR_PROFILE } from '@/lib/creator-profile';
 import { AWARD_GROUPS, EDUCATION, type AwardEntry } from './profile-data';
+import CreatorGallery from './CreatorGallery';
 import './ruimin.css';
 
 function AwardArchiveEntry({ award }: { award: AwardEntry }) {
@@ -137,7 +138,6 @@ export default function RuiminProfilePage() {
                 <p>03</p>
                 <h2 id="ruimin-awards-heading">{tr({ zh: '获奖档案', en: 'Award archive' })}</h2>
               </div>
-              <p>{tr({ zh: '本页先收录高中与大学阶段的 10 份证书照片。所有图片都存放在 CubeRoot 项目内，点击可查看高清大图；其他经历会继续补充。', en: 'This first archive contains ten certificate photographs from high school and university. Every image is stored directly in the CubeRoot project and opens at high resolution; more of the record will be added over time.' })}</p>
             </div>
 
             {AWARD_GROUPS.map((group) => (
@@ -152,6 +152,8 @@ export default function RuiminProfilePage() {
               </section>
             ))}
           </section>
+
+          <CreatorGallery />
 
           <blockquote className="ruimin-closing">
             {tr({ zh: '希望以魔方和群论为入口，帮助孩子提升手眼协调、记忆与空间想象能力。', en: 'Use the cube and group theory as an entry point to help children develop hand-eye coordination, memory, and spatial reasoning.' })}
