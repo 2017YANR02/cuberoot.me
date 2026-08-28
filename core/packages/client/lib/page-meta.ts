@@ -355,11 +355,11 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'feedback/admin': { title: { zh: '反馈审核', en: 'Feedback' } },
-  'wechat-groups': {
-    title: { zh: '微信群', en: 'WeChat Groups' },
+  'contact': {
+    title: { zh: '联系方式', en: 'Contact' },
     description: {
-      zh: '查看 CubeRoot 相关地区群、项目群、方法阶段群和魔方根群，添加微信 mofanggen 申请进群。',
-      en: 'Browse CubeRoot regional, event, method-stage and community WeChat groups, then add mofanggen on WeChat to request an invitation.',
+      zh: '添加魔方根微信，查看 CubeRoot 相关地区群、项目群、方法阶段群和魔方根群。',
+      en: 'Add CubeRoot on WeChat and browse regional, event, method-stage and community groups.',
     },
   },
   'forum': {

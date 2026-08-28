@@ -95,7 +95,7 @@ export const TEXTS: Record<string, { en: string; zh: string
   whyCube:         { en: 'Why Cube', zh: '为何学魔方'
 },
   forum:           { en: 'Forum', zh: '论坛' },
-  wechatGroups:    { en: 'WeChat Groups', zh: '微信群' },
+  contact:         { en: 'Contact', zh: '联系' },
   feedback:        { en: 'Feedback', zh: '反馈' },
   meet:            { en: 'Meeting', zh: '会议' },
   achievements:    { en: 'Achievements', zh: '成就' },
@@ -207,11 +207,11 @@ export const SECTIONS: Section[] = [
     eyebrow: { en: 'OTHER', zh: '其他' },
     title:   { en: 'Read, build, explore.', zh: '阅读、开发、探索。'
     },
-    sub:     { en: 'Forum, WeChat groups, public feedback, code notes, blog, link directory, unofficial world records and the person behind CubeRoot.', zh: '论坛、微信群、公开反馈、代码笔记、博客、站点导航、非官方纪录与 CubeRoot 的创作者。'
+    sub:     { en: 'Forum, contact details, public feedback, code notes, blog, link directory, unofficial world records and the person behind CubeRoot.', zh: '论坛、联系方式、公开反馈、代码笔记、博客、站点导航、非官方纪录与 CubeRoot 的创作者。'
     },
     cards: [
       { id: 'forum', href: '/forum', internal: true, tier: 'medium', Icon: MessagesSquare, nameKey: 'forum' },
-      { id: 'wechat-groups', href: '/wechat-groups', internal: true, tier: 'medium', Icon: UsersRound, nameKey: 'wechatGroups' },
+      { id: 'contact', href: '/contact', internal: true, tier: 'medium', Icon: UsersRound, nameKey: 'contact' },
       { id: 'feedback', href: '/feedback', internal: true, tier: 'medium', Icon: MessageCircle, nameKey: 'feedback' },
       { id: 'dev', href: '/dev', internal: true, tier: 'medium', Icon: CodeIcon, nameKey: 'dev' },
       { id: 'blog', href: '/blog/', internal: false, tier: 'medium', Icon: BookOpen, nameKey: 'blog' },

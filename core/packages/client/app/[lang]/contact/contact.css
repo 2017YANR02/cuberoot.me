@@ -1,22 +1,23 @@
-.wechat-groups-page {
+.contact-page {
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
   padding: 28px max(20px, env(safe-area-inset-right)) 64px max(20px, env(safe-area-inset-left));
 }
 
-.wechat-groups-header,
-.wechat-groups-join,
-.wechat-groups-directory {
+.contact-header,
+.contact-profile,
+.contact-join,
+.contact-directory {
   width: min(100%, 920px);
   margin-inline: auto;
 }
 
-.wechat-groups-header .back-home {
+.contact-header .back-home {
   margin-bottom: 54px;
 }
 
-.wechat-groups-eyebrow {
+.contact-eyebrow {
   margin: 0 0 10px;
   color: var(--accent);
   font-size: 0.76rem;
@@ -24,14 +25,14 @@
   letter-spacing: 0.14em;
 }
 
-.wechat-groups-header h1 {
+.contact-header h1 {
   margin: 0;
   font-size: clamp(2.5rem, 8vw, 5.5rem);
   line-height: 0.96;
   letter-spacing: -0.055em;
 }
 
-.wechat-groups-intro {
+.contact-intro {
   max-width: 660px;
   margin: 22px 0 0;
   color: var(--muted-foreground);
@@ -39,35 +40,83 @@
   line-height: 1.75;
 }
 
-.wechat-groups-join {
+.contact-profile {
+  align-items: center;
+  display: flex;
+  gap: 2.5rem;
+  justify-content: center;
+  margin-top: 48px;
+}
+
+.contact-profile-copy {
+  max-width: 18rem;
+}
+
+.contact-profile-copy h2 {
+  margin: 0 0 0.55rem;
+  font-size: 1.15rem;
+  font-weight: 650;
+}
+
+.contact-profile-copy p {
+  margin: 0 0 0.9rem;
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.contact-site-label {
+  margin-right: 0.45rem;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+
+.contact-site {
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.contact-site:hover {
+  text-decoration: underline;
+}
+
+.contact-qr {
+  display: block;
+  width: min(260px, 44vw);
+  height: auto;
+}
+
+.contact-join {
   margin-top: 48px;
   padding-left: 18px;
   border-left: 3px solid var(--accent);
 }
 
-.wechat-groups-join h2 {
+.contact-join h2 {
   margin: 0 0 6px;
   font-size: 0.8rem;
   letter-spacing: 0.08em;
 }
 
-.wechat-groups-join p {
+.contact-join p {
   margin: 0;
   font-size: clamp(1.05rem, 2.4vw, 1.35rem);
   line-height: 1.65;
 }
 
-.wechat-groups-join strong {
+.contact-join strong {
   color: var(--accent);
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   letter-spacing: 0.02em;
 }
 
-.wechat-groups-directory {
+.contact-directory {
   margin-top: 58px;
 }
 
-.wechat-groups-section {
+.contact-section {
   display: grid;
   grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.6fr);
   gap: 32px 54px;
@@ -75,39 +124,39 @@
   border-top: 1px solid var(--border-default);
 }
 
-.wechat-groups-section-heading {
+.contact-section-heading {
   display: flex;
   align-items: flex-start;
   gap: 13px;
 }
 
-.wechat-groups-section-heading > span {
+.contact-section-heading > span {
   flex: 0 0 auto;
   padding-top: 4px;
   color: var(--accent);
   font: 700 0.72rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
-.wechat-groups-section-heading h2 {
+.contact-section-heading h2 {
   margin: 0;
   font-size: clamp(1.35rem, 3vw, 1.75rem);
   line-height: 1.2;
 }
 
-.wechat-groups-section-heading p {
+.contact-section-heading p {
   margin: 10px 0 0;
   color: var(--muted-foreground);
   font-size: 0.91rem;
   line-height: 1.65;
 }
 
-.wechat-groups-blocks {
+.contact-blocks {
   display: grid;
   gap: 28px;
   min-width: 0;
 }
 
-.wechat-groups-block h3 {
+.contact-block h3 {
   margin: 0 0 13px;
   color: var(--muted-foreground);
   font-size: 0.78rem;
@@ -115,7 +164,7 @@
   letter-spacing: 0.06em;
 }
 
-.wechat-groups-list {
+.contact-list {
   display: flex;
   flex-wrap: wrap;
   gap: 10px 22px;
@@ -124,7 +173,7 @@
   list-style: none;
 }
 
-.wechat-groups-list li {
+.contact-list li {
   display: inline-flex;
   align-items: flex-start;
   gap: 8px;
@@ -134,7 +183,7 @@
   white-space: nowrap;
 }
 
-.wechat-groups-list li::before {
+.contact-list li::before {
   width: 4px;
   height: 4px;
   flex: 0 0 auto;
@@ -144,11 +193,11 @@
   content: '';
 }
 
-.wechat-groups-list li > span {
+.contact-list li > span {
   white-space: normal;
 }
 
-.wechat-groups-list small {
+.contact-list small {
   display: block;
   color: var(--faint-foreground);
   font-size: 0.76rem;
@@ -157,49 +206,63 @@
 }
 
 @media (max-width: 700px) {
-  .wechat-groups-page {
+  .contact-page {
     padding-top: 20px;
     padding-bottom: 48px;
   }
 
-  .wechat-groups-header .back-home {
+  .contact-header .back-home {
     margin-bottom: 38px;
   }
 
-  .wechat-groups-intro {
+  .contact-intro {
     margin-top: 17px;
   }
 
-  .wechat-groups-join {
+  .contact-profile {
+    flex-direction: column;
+    gap: 1.25rem;
+    text-align: center;
+  }
+
+  .contact-profile-copy {
+    max-width: 20rem;
+  }
+
+  .contact-qr {
+    width: min(280px, 82vw);
+  }
+
+  .contact-join {
     margin-top: 36px;
   }
 
-  .wechat-groups-directory {
+  .contact-directory {
     margin-top: 42px;
   }
 
-  .wechat-groups-section {
+  .contact-section {
     grid-template-columns: 1fr;
     gap: 26px;
     padding: 30px 0 34px;
   }
 
-  .wechat-groups-section-heading p {
+  .contact-section-heading p {
     max-width: 520px;
   }
 
-  .wechat-groups-list {
+  .contact-list {
     gap: 10px 18px;
   }
 }
 
 @media (max-width: 380px) {
-  .wechat-groups-page {
+  .contact-page {
     padding-right: max(16px, env(safe-area-inset-right));
     padding-left: max(16px, env(safe-area-inset-left));
   }
 
-  .wechat-groups-list {
+  .contact-list {
     gap-inline: 14px;
   }
 }
