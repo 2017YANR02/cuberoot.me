@@ -294,9 +294,11 @@ jobs:
           web="$(node scripts/resolve-workspace-path.mjs @cuberoot/client)"
           echo "web=$web" >> "$GITHUB_OUTPUT"
 
-      - name: Build shared timer core
+      - name: Build mobile workspace dependencies
         working-directory: core
-        run: pnpm --filter @cuberoot/shared build
+        run: |
+          pnpm --filter @cuberoot/shared build
+          pnpm --filter @cuberoot/visualcube build
 
       - name: Verify Android brand assets
         working-directory: core
