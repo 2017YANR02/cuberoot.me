@@ -1,5 +1,5 @@
 .account-page {
-  padding-top: 56rpx;
+  padding-top: 48rpx;
 }
 
 .account-intro {
@@ -25,8 +25,8 @@
 .identity {
   align-items: center;
   display: flex;
-  gap: 28rpx;
-  margin-top: 64rpx;
+  gap: 24rpx;
+  margin-top: 48rpx;
 }
 
 .identity-copy {
@@ -40,11 +40,11 @@
   color: var(--cr-accent);
   display: flex;
   flex: none;
-  font-size: 40rpx;
+  font-size: 36rpx;
   font-weight: 720;
-  height: 104rpx;
+  height: 92rpx;
   justify-content: center;
-  width: 104rpx;
+  width: 92rpx;
 }
 
 .identity-name,
@@ -53,104 +53,35 @@
 }
 
 .identity-name {
-  font-size: 38rpx;
+  font-size: 36rpx;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
 
 .identity-wca {
   color: var(--cr-muted);
-  font-size: 25rpx;
-  margin-top: 10rpx;
-  overflow-wrap: anywhere;
-}
-
-.account-sync {
-  margin-top: 64rpx;
-}
-
-.account-sync-heading {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx;
-}
-
-.account-sync-title {
-  font-size: 29rpx;
-  font-weight: 680;
-  white-space: nowrap;
-}
-
-.account-sync-state {
-  align-items: center;
-  color: var(--cr-muted);
-  display: flex;
-  font-size: 23rpx;
-  font-weight: 620;
-  gap: 10rpx;
-  white-space: nowrap;
-}
-
-.account-sync-state--ready {
-  color: var(--cr-ready);
-}
-
-.account-sync-state--error {
-  color: var(--cr-danger);
-}
-
-.account-sync-dot {
-  background: currentColor;
-  border-radius: 50%;
-  height: 10rpx;
-  width: 10rpx;
-}
-
-.account-sync-copy {
-  color: var(--cr-muted);
-  display: block;
-  font-size: 25rpx;
-  line-height: 1.65;
-  margin-top: 14rpx;
-  max-width: 620rpx;
+  font-size: 24rpx;
+  margin-top: 8rpx;
   overflow-wrap: anywhere;
 }
 
 .account-link {
   align-items: center;
   border-bottom: 1rpx solid var(--cr-line);
-  border-top: 1rpx solid var(--cr-line);
   display: flex;
-  gap: 24rpx;
-  margin-top: 42rpx;
-  min-height: 118rpx;
+  gap: 16rpx;
+  margin-top: 44rpx;
+  min-height: 92rpx;
   text-align: left;
   width: 100%;
 }
 
-.account-link-copy {
-  flex: 1;
-  min-width: 0;
-}
-
-.account-link-title,
-.account-link-description {
-  display: block;
-}
-
 .account-link-title {
+  flex: 1;
   font-size: 28rpx;
   font-weight: 650;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-.account-link-description {
-  color: var(--cr-muted);
-  font-size: 23rpx;
-  line-height: 1.45;
-  margin-top: 6rpx;
+  line-height: 1.4;
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 
@@ -162,18 +93,80 @@
   line-height: 1;
 }
 
-.logout-button {
-  margin-top: 34rpx;
+.account-contact {
+  margin-top: 42rpx;
 }
 
-.account-action-status--stacked {
+.account-contact-title,
+.account-contact-copy {
+  display: block;
+}
+
+.account-contact-title {
+  font-size: 30rpx;
+  font-weight: 680;
+}
+
+.account-contact-copy {
+  color: var(--cr-muted);
+  font-size: 25rpx;
+  line-height: 1.5;
   margin-top: 10rpx;
+}
+
+.account-contact-site {
+  align-items: center;
+  border-bottom: 1rpx solid var(--cr-line);
+  display: flex;
+  font-size: 27rpx;
+  font-weight: 620;
+  gap: 16rpx;
+  margin-top: 14rpx;
+  min-height: 88rpx;
+  text-align: left;
+  width: 100%;
+}
+
+.account-contact-site > text:first-child {
+  flex: 1;
+}
+
+.account-contact-qr {
+  display: block;
+  margin-top: 28rpx;
+  width: 460rpx;
+}
+
+.account-utility-row {
+  align-items: center;
+  display: grid;
+  gap: 24rpx;
+  grid-auto-columns: max-content;
+  grid-auto-flow: column;
+  justify-content: start;
+  margin-top: 18rpx;
+  overflow-x: auto;
+}
+
+.account-utility-action {
+  margin: 0;
+  min-height: 68rpx;
+  padding: 0;
+  white-space: nowrap;
+  width: auto;
+}
+
+.account-utility-status {
+  color: var(--cr-muted);
+  font-size: 25rpx;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.account-action-status {
+  margin-top: 8rpx;
 }
 
 .sync-retry-button {
   margin-top: 4rpx;
-}
-
-.privacy-button {
-  margin-top: 28rpx;
 }

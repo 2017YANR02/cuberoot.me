@@ -26,6 +26,8 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 新代码归属：页面和平台适配留在所属 app；稳定、运行时中性且有真实多端消费者的契约/纯逻辑才进共享 package；只因两份文件相似不拆 package。
 
+改 `core/apps/miniprogram/src/` 后必须在 `core/` 运行 `pnpm --filter @cuberoot/miniprogram build` 刷新开发者工具读取的 `dist/`；该命令不跑测试。
+
 新增生产依赖禁止 `package -> app`、`app A -> app B 源码`、`server -> client/client public`、`miniprogram -> React DOM/Next`、跨包 deep import 和任何现役包对 `packages/platform` 的引用；已有违规在架构跟踪表里递减，不得扩大。
 
 所有 core pnpm 命令先进入 `core/`；Cargo app 进入自身目录运行 `cargo`；验证使用目标单元的 `typecheck`/`test`/`build`；当前 API 部署仍对广泛 `core/**` 变更敏感，push 前必须按 workflow path filter 核对实际触发和运行产物。

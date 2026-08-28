@@ -16,6 +16,7 @@ interface AccountPage {
   logout(): void;
   openAccount(): void;
   openPrivacy(): void;
+  openSupport(): void;
   retrySync(): void;
   setData(data: Record<string, unknown>): void;
 }
@@ -205,6 +206,16 @@ describe('mini program account page', () => {
 
     expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({
       url: '/pages/web/index?key=account',
+    }));
+  });
+
+  it('opens the allowlisted website support destination', async () => {
+    const navigateTo = vi.fn();
+    const page = await loadPage({ navigateTo });
+    page.openSupport();
+
+    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({
+      url: '/pages/web/index?key=support',
     }));
   });
 

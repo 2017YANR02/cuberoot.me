@@ -73,6 +73,55 @@
   white-space: nowrap;
 }
 
+.support-contact {
+  align-items: center;
+  display: flex;
+  gap: 2.5rem;
+  justify-content: center;
+  margin: 0 auto 3rem;
+}
+
+.support-contact-copy {
+  max-width: 18rem;
+}
+
+.support-contact-copy h2 {
+  color: var(--foreground);
+  font-size: 1.15rem;
+  font-weight: 650;
+  margin: 0 0 0.55rem;
+}
+
+.support-contact-copy p {
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+  line-height: 1.65;
+  margin: 0 0 0.9rem;
+}
+
+.support-contact-site-label {
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  margin-right: 0.45rem;
+}
+
+.support-contact-site {
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.support-contact-site:hover {
+  text-decoration: underline;
+}
+
+.support-contact-qr {
+  display: block;
+  height: auto;
+  width: min(260px, 44vw);
+}
+
 .support-count {
   display: flex;
   align-items: center;
@@ -487,6 +536,9 @@
 
 @media (max-width: 480px) {
   .support-page { padding: 1.75rem 0.75rem 3rem; }
+  .support-contact { flex-direction: column; gap: 1.25rem; text-align: center; }
+  .support-contact-copy { max-width: 20rem; }
+  .support-contact-qr { width: min(280px, 82vw); }
   .support-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 1.4rem 0.6rem; }
   .sponsor-avatar { width: 52px; height: 52px; }
 }

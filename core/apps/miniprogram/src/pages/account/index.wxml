@@ -1,5 +1,4 @@
 <view class="page account-page">
-  <text class="eyebrow">ACCOUNT</text>
   <text class="page-title">我的</text>
 
   <block wx:if="{{storageUnavailable && !loggedIn}}">
@@ -16,37 +15,15 @@
       </view>
     </view>
 
-    <view class="account-sync">
-      <view class="account-sync-heading">
-        <text class="account-sync-title">跨端账号</text>
-        <view
-          class="account-sync-state account-sync-state--{{syncState}}"
-          aria-role="status"
-          aria-live="polite"
-          aria-atomic="true"
-          aria-busy="{{syncState === 'checking'}}"
-        >
-          <view class="account-sync-dot" aria-hidden="true"></view>
-          <text>{{syncLabel}}</text>
-        </view>
-      </view>
-      <text class="account-sync-copy">打开 CubeRoot 网站时，会用当前小程序账号安全登录。</text>
-    </view>
-
     <button
       class="account-link"
       hover-class="press-feedback"
       bindtap="openAccount"
-      aria-label="管理账号与登录方式，绑定 WCA 账号，查看其他登录方式"
+      aria-label="账号与登录"
     >
-      <view class="account-link-copy">
-        <text class="account-link-title">管理账号与登录方式</text>
-        <text class="account-link-description">绑定 WCA 账号，查看其他登录方式</text>
-      </view>
+      <text class="account-link-title">账号与登录</text>
       <text class="account-link-arrow" aria-hidden="true">›</text>
     </button>
-
-    <button class="text-button logout-button" hover-class="press-feedback" bindtap="logout">退出登录</button>
   </block>
 
   <block wx:else>
@@ -64,15 +41,28 @@
     <text class="union-note">不会读取你的微信昵称或手机号。无法取得 UnionID 时会停止登录，避免创建重复账号。</text>
   </block>
 
+  <view class="account-utility-row">
+    <button
+      class="text-button account-utility-action"
+      hover-class="press-feedback"
+      wx:if="{{loggedIn}}"
+      bindtap="logout"
+    >退出登录</button>
+    <text
+      class="account-utility-status {{statusError ? 'status-text--error' : ''}}"
+      wx:if="{{status}}"
+      aria-role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >{{status}}</text>
+    <button
+      class="text-button account-utility-action"
+      hover-class="press-feedback"
+      bindtap="openPrivacy"
+    >隐私说明</button>
+  </view>
   <text
-    class="status-text {{statusError ? 'status-text--error' : ''}}"
-    wx:if="{{status}}"
-    aria-role="status"
-    aria-live="polite"
-    aria-atomic="true"
-  >{{status}}</text>
-  <text
-    class="status-text status-text--error {{status ? 'account-action-status--stacked' : ''}}"
+    class="status-text status-text--error account-action-status"
     wx:if="{{actionStatus}}"
     aria-role="status"
     aria-live="polite"
@@ -85,5 +75,25 @@
     bindtap="retrySync"
     aria-label="{{storageUnavailable ? '重新读取设备登录状态' : '重新确认账号状态'}}"
   >{{storageUnavailable ? '重新读取' : '重新确认'}}</button>
-  <button class="text-button privacy-button" hover-class="press-feedback" bindtap="openPrivacy">隐私说明</button>
+
+  <view class="account-contact">
+    <text class="account-contact-title">联系我</text>
+    <text class="account-contact-copy">微信：扫描二维码添加我</text>
+    <button
+      class="account-contact-site"
+      hover-class="press-feedback"
+      bindtap="openSupport"
+      aria-label="打开 CubeRoot 网站"
+    >
+      <text>网站：{{siteHost}}</text>
+      <text class="account-link-arrow" aria-hidden="true">›</text>
+    </button>
+    <image
+      class="account-contact-qr"
+      src="/assets/ruimin-wechat-qr.jpg"
+      mode="widthFix"
+      show-menu-by-longpress="{{true}}"
+      aria-label="微信二维码：魔方根"
+    />
+  </view>
 </view>
