@@ -2,7 +2,7 @@
 
 > 状态：执行中
 >
-> 更新日期：2026-08-25
+> 更新日期：2026-08-27
 >
 > 目标：以最低长期维护成本，把 CubeRoot 的高频能力发布到 Google Play 和 Apple App Store，并逐步覆盖全球可用地区。
 >
@@ -150,7 +150,7 @@
 
 ### 阶段 9：iOS 移植与 TestFlight
 
-- [x] 已准备 Mac、Xcode 27 正式版和 iPhone 真机。（设备与安装由所有者确认；尚未作为构建/签名证据）
+- [x] 已准备 Mac、Xcode 26.6 正式版和 iPhone 真机。（本机实测 Xcode 26.6 build 17F113、iOS SDK 26.5；设备由所有者确认，尚未作为真机构建/签名证据）
 - [ ] 确认 Apple Developer Program 付费个人会员已激活，且 Xcode 显示可用于发布的付费 Team。
 - [ ] iOS 工程、签名、Core Bluetooth、Keychain、Universal Links 和分享完成。
 - [ ] iOS 权限、后台、系统中断、安全区、动态字体和 VoiceOver 验证通过。

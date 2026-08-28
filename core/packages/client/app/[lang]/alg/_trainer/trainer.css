@@ -3,17 +3,6 @@
    Dual-theme: follows ThemeToggle (no longer dark-locked). Theme tokens only,
    no hard-coded greys. Mobile (<480) collapses sidebar below timer. */
 
-/* Same 7-segment LED display as /timer (browser dedupes the shared face).
-   .trainer-timer below requests font-weight:700 — declare the face AT 700 so the
-   browser skips faux-bold synthesis, which corrupts this font's near-touching
-   segment joints (worst on "4") — issue #9. */
-@font-face {
-  font-family: 'Segment7Standard';
-  src: url('/fonts/Segment7Standard.otf') format('opentype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
 /* Same scramble font as /timer & /scramble/gen sheet rows (计时字体选项之一) */
 @font-face {
   font-family: 'LiberationMono';
@@ -489,7 +478,7 @@
 .trainer-timer.is-idle     { color: var(--foreground); }
 .trainer-timer.is-dnf      { color: var(--faint-foreground); }
 
-/* 分钟冒号统一走 components/SegmentTime + globals.css 的 .timer-colon(与 /timer 共用)。 */
+/* 分钟冒号统一走 @cuberoot/timer-ui 的 SegmentTime + CSS(与 /timer 共用)。 */
 
 /* ─── 单设备双人分屏 ───
    只服务平板 / 桌面:两条题道必须始终并排,手机不把它压成上下两张伪分屏。 */

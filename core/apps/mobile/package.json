@@ -13,16 +13,24 @@
     "typecheck": "tsgo --noEmit",
     "assets:android": "node scripts/gen-android-assets.mjs",
     "cap:add:android": "cap add android",
-    "cap:sync": "pnpm build && cap sync android",
+    "cap:sync": "pnpm cap:sync:android",
+    "cap:sync:android": "pnpm build && cap sync android",
+    "cap:sync:ios": "pnpm build && cap sync ios",
     "android:open": "cap open android",
-    "android:run": "pnpm cap:sync && cap run android"
+    "android:run": "pnpm cap:sync:android && cap run android",
+    "ios:open": "cap open ios",
+    "ios:run": "pnpm cap:sync:ios && cap run ios"
   },
   "dependencies": {
     "@capacitor/android": "8.5.0",
     "@capacitor/browser": "8.0.4",
     "@capacitor/core": "8.5.0",
+    "@capacitor/ios": "8.5.0",
     "@capacitor/network": "8.0.1",
     "@cuberoot/shared": "workspace:*",
+    "@cuberoot/timer-ui": "workspace:*",
+    "@cuberoot/visualcube": "workspace:*",
+    "lucide-react": "1.8.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },

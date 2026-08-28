@@ -32,7 +32,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useQueryState } from 'nuqs';
 import { Copy, Check, LogOut, Swords, Trophy, History, X, ShieldCheck, UserMinus, Bluetooth, QrCode } from 'lucide-react';
 
-import TimingSurface from './TimingSurface';
+import { SegmentTime, TimingSurface } from '@cuberoot/timer-ui';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
 import BluetoothModal from '../_components/BluetoothModal';
 import { useBluetoothCube } from '../_lib/bluetooth';
@@ -51,7 +51,6 @@ import { formatMs } from '../_lib/stats';
 import { generateScramble } from '../_lib/scramble';
 import type { EventId, Solve } from '../_lib/types';
 import { CubePreview } from '../_lib/cube';
-import { SegmentTime } from '@/components/SegmentTime';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { EventSelect } from '@/components/EventSelect';
 import { RoomCodeInput } from '@/components/RoomCodeInput';

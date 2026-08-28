@@ -3,18 +3,6 @@
    设计目标：单屏、无干扰、键盘/触摸两套交互无缝。
    ============================================================= */
 
-@font-face {
-  font-family: 'Segment7Standard';
-  src: url('/fonts/Segment7Standard.otf') format('opentype');
-  /* .timer-display below requests font-weight:700 — declare the face AT 700 (not
-     normal) so the browser uses the file's real outlines instead of synthesizing
-     faux-bold. Faux-bold on this font's near-touching segment joints (worst on
-     "4", whose F/G segments meet at a point) corrupts the glyph shape in WebKit
-     (issue #9: last digit "4" rendering with a merged/stray extra stroke). */
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
 /* Same scramble font as /scramble/gen sheet rows */
 @font-face {
   font-family: 'LiberationMono';
@@ -409,7 +397,7 @@
 .timer-display {
   font-size: clamp(64px, 14vw, 192px);
 }
-/* 分钟冒号(Segment7 的 ':' 是横杠)统一走 components/SegmentTime + globals.css 的
+/* 分钟冒号(Segment7 的 ':' 是横杠)统一走 @cuberoot/timer-ui 的 SegmentTime + CSS,
    .timer-colon —— /timer 与训练器共用一份,不再各存一份。 */
 
 /* 检查计时进入 +2 档的闪烁:shell.css 只负责换颜色,动画留在这里。 */
