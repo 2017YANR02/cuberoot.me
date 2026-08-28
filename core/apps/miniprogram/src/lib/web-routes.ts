@@ -84,6 +84,14 @@ export function resolveToolsPageShare(): WebRouteShare {
   };
 }
 
+export function resolveAccountPageShare(): WebRouteShare {
+  return {
+    imageUrl: WEB_ROUTE_SHARE_IMAGE,
+    title: 'CubeRoot 魔方根',
+    path: '/pages/account/index',
+  };
+}
+
 export function resolveWebRouteShare(key: unknown): WebRouteShare | null {
   if (typeof key !== 'string' || !Object.prototype.hasOwnProperty.call(WEB_ROUTES, key)) {
     return null;
