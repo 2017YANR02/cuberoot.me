@@ -97,7 +97,8 @@
 - [ ] 公式集拉取、离线缓存和训练闭环。
 - [ ] 英文/简体中文、深浅主题、保亮、震动、分享和深链闭环。
   - [x] 英文、简体中文、系统/浅色/深色主题和 JSON 文件导入导出已完成。
-  - [ ] 系统文件分享仍需 Android 真机实测；保亮、震动和深链尚未完成。
+  - [x] 观察和计时阶段已接入标准屏幕保亮，停止后立即释放；ready/stop 已接入官方 Capacitor Haptics，并有状态策略测试与 Android 构建证据。
+  - [ ] 系统文件分享、保亮和震动仍需 Android 真机实测；深链尚未完成。
 - [ ] API client 的超时、认证、错误和版本头统一。
 - [ ] TalkBack、动态字号、对比度和触摸目标基础检查通过。
 - [ ] 生成并验证 Android 内部测试 AAB。
@@ -110,6 +111,7 @@
 - 本地 MVP 提交：`68955879ba`；中断按压修复：`1c2b57edcb`。
 - 移动端仓储 10 项测试、网站计时/迁移/元数据/品牌资源 47 项定向测试、共享包构建、网站与移动端 typecheck 全部通过。
 - `cap:sync`、`assembleDebug`、`assembleRelease` 和 `bundleRelease` 已通过；本地签名 AAB 经 `jarsigner` 验证。
+- JDK 21、Android API 36、Gradle 8.14.3 与硬件加速模拟器已在 macOS 命令行复核；保亮/震动增量通过移动端测试、typecheck、Capacitor Android sync 与 Debug APK 构建。Pixel API 36 模拟器实测运行时持有 App 的 `SCREEN_BRIGHT_WAKE_LOCK`，停表后释放；`dumpsys vibrator_manager` 记录到 `me.cuberoot.app.debug` 的 ready/stop 触觉事件。
 - Release 元数据实测为 `versionName 0.1.0`、`versionCode 1000`、`targetSdk 36`；合并 manifest 只有网络访问、网络状态和应用签名级动态 receiver 权限，没有相机、麦克风或定位权限。
 - MuMu 冷启动约 1.25 秒；杀进程后的记录、语言和主题仍保留，设置页可见隐私、支持和版本入口。
 - 品牌资源由网站现有图标生成，CI 会重新生成并检查差异，避免维护第二套手工图片。

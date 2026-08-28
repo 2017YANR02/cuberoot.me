@@ -79,6 +79,7 @@ Google 要求所有已发布 App 完成 Data safety 表并提供隐私政策，�
 
 - `android.permission.INTERNET`
 - `android.permission.ACCESS_NETWORK_STATE`
+- `android.permission.VIBRATE`（普通权限，用于计时器 ready/stop 触觉反馈，不弹运行时授权框）
 - Capacitor 生成的应用签名级动态 receiver 权限
 - 没有相机、麦克风、定位、蓝牙、通讯录、存储或通知权限
 - `android:allowBackup="false"`
@@ -90,6 +91,7 @@ Google 要求所有已发布 App 完成 Data safety 表并提供隐私政策，�
 - `@capacitor/core` / `@capacitor/android`：官方原生容器
 - `@capacitor/browser`：只在用户点击时打开完整网站或隐私政策
 - `@capacitor/network`：只显示设备在线/离线状态
+- `@capacitor/haptics`：只在计时器 ready 和停止时提供设备触觉反馈，不读取或上传数据
 - React / React DOM：本地界面渲染
 - `@cuberoot/shared`：网站与 App 共用的计时数据模型、迁移和打乱逻辑
 - `@cuberoot/timer-ui`：网站与 App 共用的计时界面组件和七段字体

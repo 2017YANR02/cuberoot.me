@@ -6,6 +6,8 @@ Status: active native app. `package.json`, `capacitor.config.ts`, `android/` and
 
 The bundled app is local-first: timing, statistics, settings and history work from the packaged `dist/` without a network connection. Real competition scrambles use a bounded online/cache hybrid (50 entries, seven-day TTL); a cold offline launch falls back to the shared local scramble generator instead of bundling the 1.3 million-entry corpus. The full website is an explicit secondary link, never the app's runtime or automatic start screen.
 
+During inspection and an active solve, the shared mobile UI requests the standard screen wake lock and releases it immediately afterward. The official Capacitor Haptics plugin provides ready/stop feedback when supported; unsupported devices keep the timer functional without a second platform-specific timing implementation.
+
 ## Maintenance rule
 
 - Keep framework-free timer, scramble, validation, statistics and serialization logic in `@cuberoot/shared` so the website and app import the same implementation.
