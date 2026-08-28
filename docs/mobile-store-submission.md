@@ -1,6 +1,6 @@
 # CubeRoot 移动端商店提交资料
 
-最后核对：2026-08-12
+最后核对：2026-08-28
 适用构建：`@cuberoot/mobile` `0.1.0`，Android `versionCode 1000`
 应用标识：`me.cuberoot.app`
 
@@ -11,7 +11,7 @@
 - `[已核对]`：已从当前源码、依赖或签名构建中验证。
 - `[提交前复核]`：内容已有草稿，但必须针对最终上传包再核对。
 - `[所有者填写]`：需要公司、账号或市场决策，代码无法替代。
-- `[未来 iOS]`：只能在 macOS/Xcode 构建完成后确认。
+- `[iOS 待签名]`：已在 macOS/Xcode 完成本地模拟器构建，但必须等付费 Team、真机签名或 archive 后才能确认。
 
 ## 1. 当前可直接复用的应用事实
 
@@ -30,20 +30,20 @@
 | 广告 | 无 | 已核对 |
 | 付费/订阅 | 无 | 已核对 |
 | 用户生成内容/聊天 | 无 | 已核对 |
-| 核心功能 | 本地离线计时、三阶 WCA 风格打乱、历史记录、罚时、备注、best/ao5/ao12、JSON 备份与恢复 | 已核对 |
+| 核心功能 | 本地离线计时、真实三阶比赛打乱的有界在线缓存与冷离线生成兜底、历史记录、罚时、备注、best/ao5/ao12、JSON 备份与恢复 | 已核对 |
 
-当前 App 不是网站 WebView 套壳。计时器、打乱、历史、统计和 IndexedDB 存储均打进安装包；只有用户主动点击“完整网站”或“隐私政策”时，才由官方 Capacitor Browser 插件打开系统浏览器。
+当前 App 不是网站 WebView 套壳。计时器、历史、统计和 IndexedDB 存储均打进安装包；App 会自动调用 CubeRoot API 下载公开比赛打乱并在本机保存最多 50 条、最长 7 天，冷启动无缓存且断网时使用本地生成器。只有用户主动点击“完整网站”或“隐私政策”时，才由官方 Capacitor Browser 插件打开系统浏览器。
 
 ## 2. Google Play Data safety 草稿
 
-Google 将“收集”定义为把数据从设备传给开发者或第三方。当前版本的计时记录与设置只在设备本地处理；用户主动导出 JSON 属于用户发起的本地文件/系统分享流程，App 不会自动上传。依据：[Google Play Data safety 填写说明](https://support.google.com/googleplay/android-developer/answer/10787469?hl=en)。
+Google 将“收集”定义为把数据从设备传给开发者或第三方。当前版本的计时记录与设置只在设备本地处理；用户主动导出 JSON 属于用户发起的本地文件/系统分享流程，App 不会自动上传。App 会向 CubeRoot API 请求公开比赛打乱，服务器会处理并记录 IP 地址、设备或客户端类型等标准网络信息，因此最终问卷不能继续按“没有远程 API”直接回答 No。依据：[Google Play Data safety 填写说明](https://support.google.com/googleplay/android-developer/answer/10787469?hl=en)。
 
 针对当前 `0.1.0`：
 
 | 控制台问题 | 草稿答案 | 依据 |
 |---|---|---|
-| App 是否收集或分享需要声明的用户数据 | No | 没有账号、远程 API、分析、广告或崩溃上报；计时数据不离开设备 |
-| 数据是否在传输中加密 | 按控制台对“No data collected”的实际后续字段填写 | 当前没有 App 数据上传，不虚构传输流程 |
+| App 是否收集或分享需要声明的用户数据 | 提交前复核，不能预填 No | 比赛打乱请求会让自有服务器处理并记录 IP 与客户端类型；计时数据、备注和设置不上传，且没有分析、广告或崩溃上报 |
+| 数据是否在传输中加密 | Yes（提交前以最终包和控制台字段复核） | 比赛打乱请求使用 `https://api.cuberoot.me`；不得把 HTTPS 等同于“不收集数据” |
 | 是否提供账号创建 | No | App 无注册或登录 |
 | 是否允许用户请求删除数据 | 本地数据可删除；不声称存在服务器账号删除 | 单条记录可删除；清除 App 存储或卸载可删除全部数据 |
 | 是否经过独立安全审查 | No | 当前没有第三方认证，不得误填 |
@@ -92,6 +92,9 @@ Google 要求所有已发布 App 完成 Data safety 表并提供隐私政策，�
 - `@capacitor/network`：只显示设备在线/离线状态
 - React / React DOM：本地界面渲染
 - `@cuberoot/shared`：网站与 App 共用的计时数据模型、迁移和打乱逻辑
+- `@cuberoot/timer-ui`：网站与 App 共用的计时界面组件和七段字体
+- `@cuberoot/event-icon`：网站与 App 共用的项目图标资产和渲染组件
+- `@cuberoot/visualcube`：网站与 App 共用的魔方状态 SVG 渲染器
 
 当前没有 Firebase、广告、分析、崩溃上报、推送、社交登录、支付或第三方用户画像 SDK。
 
@@ -223,9 +226,13 @@ CubeRoot 走组织账号路线，不把新个人账号的 12 人/14 天要求自
 
 ## 9. Apple App Store 预备草稿
 
-这是未来 iOS 版本的起点，不代表已经完成 App Store 提交：
+这是 iOS 本地技术验证后的起点，不代表已经完成 App Store 提交：
 
-- 如果 iOS 版本保持与当前 Android 相同的数据行为，App Privacy 可从“Data Not Collected”开始填写。
+- `[已核对]` iOS 与 Android 使用同一个 React + Vite + Capacitor 8 App；`@capacitor/ios` 为 `8.5.0`，Bundle ID 为 `me.cuberoot.app`。
+- `[已核对]` Xcode 26.6（build 17F113）已完成 iOS 26.5 Simulator Debug 构建、安装和启动；Automatic Signing 已启用。
+- `[iOS 待签名]` Apple Developer 账号登录异常，尚未验证会员 Active、付费 Team、iPhone 真机签名、Archive、上传和 TestFlight。
+
+- iOS 与 Android 都会请求公开比赛打乱，服务器会处理并记录标准网络信息；App Privacy 必须针对最终构建重新判断 IP/客户端信息的类别、用途、关联性和保留方式，不能预填“Data Not Collected”。计时记录、备注和设置仍只保存在设备本地。
 - 必须在最终 iOS archive 中重新检查 Apple 或第三方 SDK 的隐私清单、诊断、分析、账号和网络行为。
 - App Store 的隐私回答要包含第三方伙伴代码的数据实践，不能只看 CubeRoot 自己写的代码。依据：[Apple App Privacy Details](https://developer.apple.com/app-store/app-privacy-details/)。
 - 支持 URL 和隐私 URL 可沿用公开网页；截图、设备尺寸、年龄评级和出口合规要在 App Store Connect 中按最终构建填写。

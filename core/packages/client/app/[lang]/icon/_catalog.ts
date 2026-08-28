@@ -1,6 +1,6 @@
 // /icon gallery data — grouped view over the SINGLE source of truth for every
-// cube icon on the site: components/EventIcon/svg-map*.ts. Those maps are
-// generated from components/EventIcon/svg/{event,unofficial,penalty}/*.svg,
+// cube icon on the site: @cuberoot/event-icon. Those maps are generated from
+// packages/event-icon/svg/{event,unofficial,penalty}/*.svg,
 // a verbatim vendored copy of https://github.com/cubing/icons (src/svg). The
 // same keys drive <CubingIcon> / <EventIcon> and the /sim puzzle picker, so
 // adding/removing an icon there updates /sim, EventIcon AND this gallery at once
@@ -10,8 +10,7 @@
 // nothing renders them through CubingIcon — this gallery is their only consumer,
 // so it is also the only place that pays for them. See gen-svg-map.mjs.
 
-import { SVG_BY_KEY } from '@/components/EventIcon/svg-map';
-import { PENALTY_SVG_BY_KEY } from '@/components/EventIcon/svg-map-penalty';
+import { PENALTY_SVG_BY_KEY, SVG_BY_KEY } from '@cuberoot/event-icon/maps';
 import { SITE_ICONS } from './_site-icons';
 
 export type IconCategory = 'event' | 'unofficial' | 'penalty';

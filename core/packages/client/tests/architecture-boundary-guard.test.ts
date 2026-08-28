@@ -128,11 +128,11 @@ describe('architecture boundary guard', () => {
 
   it('derives every active workspace role and library export runtime from package metadata', () => {
     const packages = activePackages();
-    expect(packages).toHaveLength(15);
+    expect(packages).toHaveLength(16);
     expect(packages.reduce((counts: Record<string, number>, pkg: { cuberoot: { kind: string } }) => {
       counts[pkg.cuberoot.kind] = (counts[pkg.cuberoot.kind] ?? 0) + 1;
       return counts;
-    }, {})).toEqual({ app: 4, job: 4, library: 7 });
+    }, {})).toEqual({ app: 4, job: 4, library: 8 });
     expect(validatePackageMetadata(packages)).toEqual([]);
     expect(validateRuntimeNeutralExports(packages)).toEqual([]);
   });
@@ -483,6 +483,6 @@ catalog:
 
   it('registers the write-time hook alongside the CI scanner', () => {
     const config = readFileSync(join(REPO_ROOT, '.codex/hooks.json'), 'utf8');
-    expect(config).toContain('block-architecture-boundaries.ps1');
+    expect(config).toContain('check-architecture-boundaries.mjs');
   });
 });

@@ -8,24 +8,102 @@ import { describe, expect, it } from 'vitest';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '../../../..');
+const CORE_ROOT = join(REPO_ROOT, 'core');
 const WRITE_ADAPTER = join(REPO_ROOT, '.codex/hooks/adapt-codex-write-payload.mjs');
 const COMMAND_ADAPTER = join(REPO_ROOT, '.codex/hooks/adapt-codex-command-payload.mjs');
 const HOOK_CONFIG = join(REPO_ROOT, '.codex/hooks.json');
+const HOOKS = join(REPO_ROOT, '.codex', 'hooks');
 const DELETE_FIXTURE = join(HERE, 'fixtures/block-rm-use-trash-fixture.mjs');
 const WEBKIT_FIXTURE = join(HERE, 'fixtures/block-webkit-no-webrtc-fixture.mjs');
-const ARCHITECTURE_HOOK = join(REPO_ROOT, '.codex/hooks/block-architecture-boundaries.ps1');
-const RAW_CHECKBOX_HOOK = join(REPO_ROOT, '.codex/hooks/block-raw-checkbox.ps1');
+const ARCHITECTURE_HOOK = join(REPO_ROOT, 'core/scripts/check-architecture-boundaries.mjs');
+const RAW_CHECKBOX_HOOK = join(REPO_ROOT, 'core/packages/client/scripts/hook-detect-raw-checkbox.mjs');
 
-function runAdapter(adapter: string, target: string | string[], payload: object) {
-  return spawnSync(process.execPath, [adapter, ...(Array.isArray(target) ? target : [target])], {
-    cwd: REPO_ROOT,
-    input: JSON.stringify(payload),
+function runProcess(command: string, args: string[], cwd: string, input: string, shell = false) {
+  return spawnSync(command, args, {
+    cwd,
+    input,
     encoding: 'utf8',
+    shell,
     windowsHide: true,
   });
 }
 
+function runAdapter(adapter: string, target: string | string[], payload: object) {
+  return runProcess(
+    process.execPath,
+    [adapter, ...(Array.isArray(target) ? target : [target])],
+    REPO_ROOT,
+    JSON.stringify(payload),
+  );
+}
+
 describe('Codex hook payload adapters', () => {
+  it('registers only cross-platform Node hooks', () => {
+    const config = JSON.parse(readFileSync(HOOK_CONFIG, 'utf8')) as {
+      hooks: Record<string, Array<{ hooks: Array<{ command: string; commandWindows: string }> }>>;
+    };
+    const commands: string[] = [];
+    for (const groups of Object.values(config.hooks)) {
+      for (const group of groups) {
+        for (const hook of group.hooks) {
+          expect(hook.commandWindows).toBe(hook.command);
+          commands.push(hook.command);
+        }
+      }
+    }
+
+    expect(commands.join('\n')).not.toMatch(/(?:pwsh|powershell|\.ps1)/i);
+    expect(commands.join('\n')).not.toContain('$(');
+  });
+
+  it.each([REPO_ROOT, CORE_ROOT])('runs every configured hook independently of cwd: %s', (cwd) => {
+    const config = JSON.parse(readFileSync(HOOK_CONFIG, 'utf8')) as {
+      hooks: Record<string, Array<{ hooks: Array<{ command: string }> }>>;
+    };
+    for (const [event, groups] of Object.entries(config.hooks)) {
+      for (const group of groups) {
+        for (const hook of group.hooks) {
+          const result = runProcess(hook.command, [], cwd, '{}', true);
+          expect(result.status, `${event} failed from ${cwd}: ${result.stderr}`).toBe(0);
+        }
+      }
+    }
+  });
+
+  it('emits both PostToolUse reminders through Node', () => {
+    const calc = runAdapter(join(HOOKS, 'calc-test-reminder.mjs'), [], {
+      tool_input: { command: '*** Update File: core/packages/client/app/[lang]/calc/page.tsx' },
+    });
+    const migration = runAdapter(join(HOOKS, 'dev-data-sync-reminder.mjs'), [], {
+      tool_input: { command: '*** Add File: core/apps/api/migrations/9999_probe.sql' },
+    });
+
+    expect(JSON.parse(calc.stdout).hookSpecificOutput.additionalContext).toContain('/zh/calc');
+    expect(JSON.parse(migration.stdout).hookSpecificOutput.additionalContext).toContain('/dev/schema');
+  });
+
+  it('keeps the banned-word decision contract without embedding a banned term', () => {
+    const list = JSON.parse(readFileSync(join(REPO_ROOT, '.codex', 'banned-words.json'), 'utf8')) as {
+      words: Array<{ word: string }>;
+    };
+    const result = runAdapter(join(HOOKS, 'block-banned-words.mjs'), [], {
+      tool_input: {
+        file_path: join(REPO_ROOT, 'core/packages/client/app/probe/page.tsx'),
+        content: String(list.words[0].word),
+      },
+    });
+
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision).toBe('deny');
+  });
+
+  it('reports no SessionStart guard-documentation drift', () => {
+    const result = runAdapter(join(HOOKS, 'check-guards-drift-session.mjs'), [], {});
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe('');
+  });
+
   it('uses Codex canonical hook matcher names', () => {
     const config = JSON.parse(readFileSync(HOOK_CONFIG, 'utf8')) as {
       hooks: { PreToolUse: Array<{ matcher: string }> };
@@ -52,14 +130,14 @@ describe('Codex hook payload adapters', () => {
 
     expect(writeHook?.commandWindows).toBe(writeHook?.command);
     for (const command of [writeHook?.command ?? '', writeHook?.commandWindows ?? '']) {
-      expect(command.indexOf('block-architecture-boundaries.ps1')).toBeGreaterThanOrEqual(0);
-      expect(command.indexOf('block-architecture-boundaries.ps1'))
-        .toBeLessThan(command.indexOf('block-component-reimplementation.ps1'));
+      expect(command.indexOf('check-architecture-boundaries.mjs')).toBeGreaterThanOrEqual(0);
+      expect(command.indexOf('check-architecture-boundaries.mjs'))
+        .toBeLessThan(command.indexOf('hook-detect-component-reimplementation.mjs'));
     }
   });
 
   it('extracts an embedded apply_patch and preserves the affected file path', () => {
-    const target = join(REPO_ROOT, '.codex/hooks/block-raw-checkbox.ps1');
+    const target = RAW_CHECKBOX_HOOK;
     const patch = [
       '*** Begin Patch',
       '*** Add File: core/packages/client/app/probe/page.tsx',
@@ -79,7 +157,7 @@ describe('Codex hook payload adapters', () => {
   });
 
   it('passes harmless patches without hook output', () => {
-    const target = join(REPO_ROOT, '.codex/hooks/block-raw-checkbox.ps1');
+    const target = RAW_CHECKBOX_HOOK;
     const patch = [
       '*** Begin Patch',
       '*** Add File: core/packages/client/app/probe/page.tsx',
@@ -198,7 +276,7 @@ describe('Codex hook payload adapters', () => {
   });
 
   it('does not drop added content that begins with two plus signs', () => {
-    const target = join(REPO_ROOT, '.codex/hooks/block-raw-checkbox.ps1');
+    const target = RAW_CHECKBOX_HOOK;
     const patch = [
       '*** Begin Patch',
       '*** Add File: core/packages/client/app/probe/page.tsx',
@@ -216,7 +294,7 @@ describe('Codex hook payload adapters', () => {
   });
 
   it('checks moved files using the destination path', () => {
-    const target = join(REPO_ROOT, '.codex/hooks/block-raw-checkbox.ps1');
+    const target = RAW_CHECKBOX_HOOK;
     const patch = [
       '*** Begin Patch',
       '*** Update File: probe.txt',
@@ -237,7 +315,7 @@ describe('Codex hook payload adapters', () => {
   });
 
   it('checks the existing source content for a move without hunks', () => {
-    const target = join(REPO_ROOT, '.codex/hooks/block-raw-checkbox.ps1');
+    const target = RAW_CHECKBOX_HOOK;
     const patch = [
       '*** Begin Patch',
       '*** Update File: core/packages/client/tests/codex_hook_adapters.test.ts',
