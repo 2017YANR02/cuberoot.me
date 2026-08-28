@@ -592,9 +592,11 @@ const ENDPOINTS: Ep[] = [
   { d: 'notification', m: 'POST', p: '/v1/notifications/unsubscribe', g: 'public', zh: '一键退订(RFC 8058,邮件客户端调)', en: 'One-click unsubscribe (RFC 8058)' },
 
   // ---- friend ----
-  { d: 'friend', m: 'GET', p: '/v1/friends', g: 'login', c: 'no-store', zh: '好友、收到 / 发出的申请与黑名单总览', en: 'Friends, incoming/outgoing requests, and blocked-user overview' },
+  { d: 'friend', m: 'GET', p: '/v1/friends', g: 'login', c: 'no-store', zh: '好友、WCA 好友条目、收到 / 发出的申请与黑名单总览', en: 'Friends, saved WCA friend entries, incoming/outgoing requests, and blocked-user overview' },
   { d: 'friend', m: 'GET', p: '/v1/friends/search', g: 'login', c: 'no-store', zh: '按用户名、CubeRoot ID 或 WCA ID 搜索可见账号', en: 'Search visible accounts by username, CubeRoot ID, or WCA ID' },
   { d: 'friend', m: 'POST', p: '/v1/friends/requests', g: 'login', c: 'no-store', zh: '发送好友申请；遇到对方已有申请时直接接受', en: 'Send a friend request; accept automatically when the other user already requested' },
+  { d: 'friend', m: 'POST', p: '/v1/friends/wca-contacts', g: 'login', c: 'no-store', zh: '保存未注册 CubeRoot 的 WCA 选手；若已注册则原子转为正常好友申请', en: 'Save an unregistered WCA cuber; atomically use the normal friend-request flow if already registered' },
+  { d: 'friend', m: 'DELETE', p: '/v1/friends/wca-contacts/:wcaId', g: 'login', c: 'no-store', zh: '删除私有 WCA 好友条目', en: 'Remove a private WCA friend entry' },
   { d: 'friend', m: 'POST', p: '/v1/friends/requests/:userId/accept', g: 'login', c: 'no-store', zh: '接受收到的好友申请', en: 'Accept an incoming friend request' },
   { d: 'friend', m: 'DELETE', p: '/v1/friends/requests/:userId', g: 'login', c: 'no-store', zh: '拒绝收到的申请或撤回已发申请', en: 'Decline an incoming request or cancel an outgoing one' },
   { d: 'friend', m: 'DELETE', p: '/v1/friends/:userId', g: 'login', c: 'no-store', zh: '删除好友', en: 'Remove a friend' },
