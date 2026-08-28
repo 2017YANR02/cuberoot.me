@@ -242,8 +242,14 @@
   font-size: 13px;
   color: var(--destructive);
 }
-.mem-pay-qr { margin: 0 0 12px; }
+.mem-pay-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 0 12px;
+}
 .mem-pay-qr img {
+  display: block;
   width: 220px;
   height: 220px;
   border-radius: 10px;
