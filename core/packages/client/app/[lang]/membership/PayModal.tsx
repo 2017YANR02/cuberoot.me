@@ -8,6 +8,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { X, Smartphone, Check } from 'lucide-react';
+import { SiAlipay, SiWechat } from 'react-icons/si';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -91,14 +92,18 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
             <div className="mem-pay-channels">
               {showAlipay && (
                 <button className="mem-pay-ch mem-pay-ch-alipay" disabled={creating} onClick={() => start('alipay')}>
-                  {creating && channel === 'alipay' ? <Spinner size={16} /> : null}
+                  {creating && channel === 'alipay'
+                    ? <Spinner size={16} />
+                    : <SiAlipay size={18} aria-hidden="true" />}
                   {tr({ zh: '支付宝', en: 'Alipay'
                   })}
                 </button>
               )}
               {showWechat && (
                 <button className="mem-pay-ch mem-pay-ch-wechat" disabled={creating} onClick={() => start('wechat')}>
-                  {creating && channel === 'wechat' ? <Spinner size={16} /> : null}
+                  {creating && channel === 'wechat'
+                    ? <Spinner size={16} />
+                    : <SiWechat size={18} aria-hidden="true" />}
                   {tr({ zh: '微信支付', en: 'WeChat Pay' })}
                 </button>
               )}
