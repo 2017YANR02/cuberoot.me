@@ -47,6 +47,7 @@ import {
   writeRealScrambleCache,
   type RealScramble,
 } from './data/real-scramble-pool';
+import { useNativeTimerEffects } from './hooks/use-native-timer-effects';
 import { useTimerController } from './hooks/use-timer-controller';
 import packageInfo from '../package.json';
 
@@ -310,6 +311,7 @@ export function App() {
     inspectionSec: store?.settings.inspectionSec ?? 0,
     onComplete: completeSolve,
   });
+  useNativeTimerEffects(timer.machine.phase);
 
   const displayMs = timer.machine.phase === 'running'
     ? Math.max(0, timer.nowMs - (timer.machine.startedAtMs ?? timer.nowMs))
