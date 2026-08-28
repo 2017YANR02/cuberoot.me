@@ -366,6 +366,11 @@
       "titleZh": "三盲",
       "rows": [
         [
+          100,
+          "[Patryk Milewczyk](https://www.worldcubeassociation.org/persons/2014MILE01)",
+          "[Koszalin Open 2026](https://www.worldcubeassociation.org/competitions/KoszalinOpen2026)"
+        ],
+        [
           87,
           "[Jesús Lindo García](https://www.worldcubeassociation.org/persons/2013GARC08)",
           "[Camino de Santiago Open 2025](https://www.worldcubeassociation.org/competitions/CaminodeSantiagoOpen2025)"
@@ -409,11 +414,6 @@
           67,
           "[Luis Kleinheinz](https://www.worldcubeassociation.org/persons/2017KLEI02)",
           "[Rahn Education Advent Open 2025](https://www.worldcubeassociation.org/competitions/RahnEducationAdventOpen2025)"
-        ],
-        [
-          66,
-          "[Jan Bentlage](https://www.worldcubeassociation.org/persons/2010BENT01)",
-          "[Hessen Open 2015](https://www.worldcubeassociation.org/competitions/HessenOpen2015)"
         ]
       ]
     },

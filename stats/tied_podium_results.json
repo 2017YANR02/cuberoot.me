@@ -2,8 +2,8 @@
   "id": "tied_podium_results",
   "title": "Identical Top-Three Round Results",
   "titleZh": "同轮前三名同分",
-  "note": "Across all WCA rounds, the official 1st, 2nd and 3rd places had an identical valid average 7 times and an identical valid single 2 times. Fewest Moves is excluded. Data uses the WCA export dated 2026-08-25.",
-  "noteZh": "WCA 任意轮次官方第 1、2、3 名三人的有效成绩完全相同：平均 7 次，单次 2 次。不含最少步。数据使用 2026-08-25 的 WCA 导出。",
+  "note": "Across all WCA rounds, the official 1st, 2nd and 3rd places had an identical valid average 7 times and an identical valid single 2 times. Fewest Moves is excluded. Data uses the WCA export dated 2026-08-28.",
+  "noteZh": "WCA 任意轮次官方第 1、2、3 名三人的有效成绩完全相同：平均 7 次，单次 2 次。不含最少步。数据使用 2026-08-28 的 WCA 导出。",
   "header": [
     {
       "key": "result",
