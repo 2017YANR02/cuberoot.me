@@ -27,21 +27,36 @@ function isContrastLevel(v: string | null | undefined): v is ContrastLevel {
   return v === 'normal' || v === 'soft';
 }
 
-type DocumentWithViewTransition = Document & {
-  startViewTransition?: (cb: () => void) => unknown;
+type ViewTransitionHandle = {
+  finished?: Promise<unknown>;
+  skipTransition?: () => void;
 };
+
+type DocumentWithViewTransition = Document & {
+  startViewTransition?: (cb: () => void) => ViewTransitionHandle;
+};
+
+let activeThemeTransition: ViewTransitionHandle | null = null;
 
 function prefersReducedMotion(): boolean {
   return typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-// 用户主动切换且浏览器支持时,用 View Transitions 让整页旧→新交叉淡出(晕染);
+// 外观切换且浏览器支持时,用 View Transitions 让整页旧→新交叉淡出(晕染);
 // 否则(首屏恢复 / 不支持 / reduced-motion)直接瞬切。
 function runTransition(commit: () => void, animate: boolean) {
   const doc = document as DocumentWithViewTransition;
   if (animate && typeof doc.startViewTransition === 'function' && !prefersReducedMotion()) {
-    doc.startViewTransition(commit);
+    activeThemeTransition?.skipTransition?.();
+    const transition = doc.startViewTransition(commit);
+    activeThemeTransition = transition;
+    const clear = () => {
+      if (activeThemeTransition === transition) activeThemeTransition = null;
+    };
+    void transition.finished?.then(clear, clear);
   } else {
+    activeThemeTransition?.skipTransition?.();
+    activeThemeTransition = null;
     commit();
   }
 }
@@ -129,23 +144,25 @@ export function applyContrast(level: ContrastLevel, animate = false) {
 
 // 外观菜单 hover/focus 预览:只改当前文档,不写 localStorage。
 export function previewTheme(theme: 'light' | 'dark') {
-  applyThemeRoot(theme, true);
+  runTransition(() => applyThemeRoot(theme, true), true);
 }
 
 export function previewPalette(id: PaletteId) {
-  applyPaletteRoot(id);
+  runTransition(() => applyPaletteRoot(id), true);
 }
 
 export function previewContrast(level: ContrastLevel) {
-  applyContrastRoot(level);
+  runTransition(() => applyContrastRoot(level), true);
 }
 
 export function restorePersistedAppearance() {
-  const palette = readPalette();
-  if (palette) applyPaletteRoot(palette);
-  else applyThemeRoot(readTheme(), true);
-  applyContrastRoot(readContrast());
-  applyFavicon();
+  runTransition(() => {
+    const palette = readPalette();
+    if (palette) applyPaletteRoot(palette);
+    else applyThemeRoot(readTheme(), true);
+    applyContrastRoot(readContrast());
+    applyFavicon();
+  }, true);
 }
 
 export function readContrast(): ContrastLevel {
