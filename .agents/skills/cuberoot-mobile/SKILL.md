@@ -31,9 +31,11 @@ description: "Use for CubeRoot native App work rooted at core/apps/mobile: Capac
 
 ## Windows 与 Mac
 
-- 两台电脑都完整 clone 同一仓库；不要只复制 mobile、用网盘/iCloud 同步源码或维护两个长期分叉目录。
-- 一项任务固定在一台机器完成并形成窄 commit，再由另一台 `git pull --ff-only`；冲突时停下核对。
-- CubeRoot 的 push 会触发部署，“同步到 Mac”不自动授权 push；遵守用户当次授权。
+- 两台电脑各自完整 clone 同一仓库，并通过 Git 同步源码。
+- 两台电脑可同时在 `main` 开发，每项任务形成窄 commit。
+- 每次 push 前固定执行 `git fetch origin`、`git rebase origin/main`、`git push origin main`。
+- rebase 出现冲突时逐项核对并解决，完成相关验证后继续 rebase；push 因远端更新被拒时重复上述流程。
+- CubeRoot 的 push 会触发部署，是否 push 以用户当次授权为准。
 - Mac 拉到本 skill 后重新打开仓库或新开会话，即可自动发现 `cuberoot-mobile`。
 
 ## 变更是否需要商店发版
