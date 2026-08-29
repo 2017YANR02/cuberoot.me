@@ -150,6 +150,7 @@ pub struct EOXCrossSolver {
     mt_edge6: Arc<MoveTable>,
     mt_corn2: Arc<MoveTable>,
     mt_ep4: Arc<MoveTable>,
+    mt_ep5_high_memory: Option<Arc<MoveTable>>,
     mt_eo12_alt: Arc<MoveTable>,
     pt_ep4eo12: Arc<PackedPruneTable>,
     pt_cross_c4e0: Arc<PackedPruneTable>,
@@ -160,6 +161,7 @@ pub struct EOXCrossSolver {
     pt_cross_c4c5c6: Arc<PackedPruneTable>,
     pt_cross_c4c5e0e1: Arc<PackedPruneTable>,
     pt_cross_c4c6e0e2: Option<Arc<PackedPruneTable>>,
+    pt_eo_xcross_high_memory: Option<[Arc<PackedPruneTable>; 4]>,
 
     // 解决态索引
     idx_solved_e6_nb: u32,
@@ -175,6 +177,8 @@ struct SlotState {
     i3: u32, // Edge
     idep: u32,
     ieo: u32,
+    iep5_high_memory: u32,
+    icorner_high_memory: u32,
     e_trk: [u32; 3],
     c_trk: [u32; 3],
     i_e6_nb: u32,
@@ -215,6 +219,12 @@ impl EOXCrossSolver {
         } else {
             None
         };
+        let high_memory_profile = std::env::var("CUBE_TABLE_PROFILE")
+            .map(|v| v == "high-memory")
+            .unwrap_or(false);
+        let mt_ep5_high_memory = high_memory_profile.then(|| mtm.ensure_ep5_high_memory());
+        let pt_eo_xcross_high_memory = high_memory_profile
+            .then(|| std::array::from_fn(|slot| ptm.ensure_pt_eo_xcross_high_memory(slot)));
 
         EOXCrossSolver {
             mt_edge4: mtm.ensure_edge4(),
@@ -223,6 +233,7 @@ impl EOXCrossSolver {
             mt_edge6: mtm.ensure_edge6(),
             mt_corn2: mtm.ensure_corn2(),
             mt_ep4: mtm.ensure_ep4(),
+            mt_ep5_high_memory,
             mt_eo12_alt: mtm.ensure_eo12_alt(),
             pt_ep4eo12: ptm.ensure_pt_ep4eo12(),
             pt_cross_c4e0: ptm.ensure_pt_cross_c4e0(),
@@ -239,6 +250,7 @@ impl EOXCrossSolver {
             pt_cross_c4c5c6: ptm.ensure_pt_cross_c4c5c6(),
             pt_cross_c4c5e0e1: ptm.ensure_pt_cross_c4c5e0e1(),
             pt_cross_c4c6e0e2,
+            pt_eo_xcross_high_memory,
             idx_solved_e6_nb: array_to_index(&v_e6_nb, 6, 2, 12) as u32,
             idx_solved_e6_dg: array_to_index(&v_e6_dg, 6, 2, 12) as u32,
             idx_solved_c2_nb: array_to_index(&v_c2_nb, 2, 3, 8) as u32,
@@ -253,6 +265,7 @@ impl EOXCrossSolver {
         let mt_e6 = self.mt_edge6.as_u32();
         let mt_c2 = self.mt_corn2.as_u32();
         let mt_ep4 = self.mt_ep4.as_u32();
+        let mt_ep5 = self.mt_ep5_high_memory.as_ref().map(|table| table.as_u32());
         let mt_eo = self.mt_eo12_alt.as_u32();
         let sm = sym_moves_flat();
         let cj = conj_moves_flat();
@@ -262,6 +275,15 @@ impl EOXCrossSolver {
         let mut i3: u32 = 0; // SOLVED_EDGE
         let mut idep: u32 = state_space::EP4_SOLVED as u32;
         let mut ieo: u32 = 0;
+        // EP5 is position-only; the corresponding single-edge coordinates
+        // elsewhere in this solver are doubled because they also encode flip.
+        let target_ep5 = [8, 9, 10, 11, [0, 1, 2, 3][slot_idx]];
+        let mut iep5_high_memory = if mt_ep5.is_some() {
+            array_to_index(&target_ep5, 5, 1, 12) as u32
+        } else {
+            0
+        };
+        let mut icorner_high_memory = [12u32, 15, 18, 21][slot_idx];
 
         let mut e_trk: [u32; 3] = [2, 4, 6];
         let mut c_trk: [u32; 3] = [15, 18, 21];
@@ -280,6 +302,11 @@ impl EOXCrossSolver {
 
             idep = mt_ep4[(idep as usize) * 18 + m_global];
             ieo = mt_eo[(ieo as usize) * 18 + m_global];
+            if let Some(mt_ep5) = mt_ep5 {
+                iep5_high_memory = mt_ep5[(iep5_high_memory as usize) * 18 + m_global];
+                icorner_high_memory =
+                    mt_c[(icorner_high_memory as usize) * 18 + m_global];
+            }
 
             for k in 0..3 {
                 e_trk[k] = mt_e[(e_trk[k] as usize) * 18 + m_slot];
@@ -297,6 +324,8 @@ impl EOXCrossSolver {
             i3,
             idep,
             ieo,
+            iep5_high_memory,
+            icorner_high_memory,
             e_trk,
             c_trk,
             i_e6_nb: e6_nb,
@@ -328,6 +357,59 @@ impl EOXCrossSolver {
         (table.get(idx) as u32 >= depth, n_e6, n_c2)
     }
 
+    #[inline]
+    fn high_memory_eo_distance(
+        table: Option<&PackedPruneTable>,
+        ep5: u32,
+        corner: u32,
+        eo: u32,
+    ) -> u32 {
+        match table {
+            Some(table) => {
+                let idx = (ep5 as u64 * state_space::CORNER as u64 + corner as u64)
+                    * state_space::EO12 as u64
+                    + eo as u64;
+                table.get(idx) as u32
+            }
+            None => 0,
+        }
+    }
+
+    #[inline]
+    fn high_memory_eo_check(
+        &self,
+        table: Option<&PackedPruneTable>,
+        ep5: u32,
+        corner: u32,
+        eo: u32,
+        m: usize,
+        depth: u32,
+    ) -> (bool, u32, u32, u32) {
+        let table = match table {
+            Some(table) => table,
+            None => return (false, 0, 0, 0),
+        };
+        let next_ep5 = self
+            .mt_ep5_high_memory
+            .as_ref()
+            .expect("high-memory move table")
+            .as_u32()[(ep5 as usize) * 18 + m];
+        let next_corner = self.mt_corn.as_u32()[(corner as usize) * 18 + m];
+        let next_eo = self.mt_eo12_alt.as_u32()[(eo as usize) * 18 + m];
+        let distance =
+            Self::high_memory_eo_distance(Some(table), next_ep5, next_corner, next_eo);
+        (distance >= depth, next_ep5, next_corner, next_eo)
+    }
+
+    #[inline]
+    fn high_memory_table(&self, slot: usize) -> Option<&PackedPruneTable> {
+        // These are physical-slot tables. Search moves are therefore applied in
+        // the current global symmetry frame, unlike the virtual-slot C4E view.
+        self.pt_eo_xcross_high_memory
+            .as_ref()
+            .map(|tables| tables[slot].as_ref())
+    }
+
     // --- search_1: XCross+EO single slot ---
     #[allow(clippy::too_many_arguments)]
     fn search_1(
@@ -341,6 +423,10 @@ impl EOXCrossSolver {
         prev: u8,
         slot: usize,
         bound: u32,
+        p_high_memory: Option<&PackedPruneTable>,
+        i_high_ep5: u32,
+        i_high_corner: u32,
+        i_high_eo: u32,
     ) -> bool {
         if depth > bound {
             return false;
@@ -365,6 +451,18 @@ impl EOXCrossSolver {
             if self.pt_ep4eo12.get(idx_de) as u32 >= depth {
                 continue;
             }
+            let (pr_high, n_high_ep5, n_high_corner, n_high_eo) = self
+                .high_memory_eo_check(
+                    p_high_memory,
+                    i_high_ep5,
+                    i_high_corner,
+                    i_high_eo,
+                    m,
+                    depth,
+                );
+            if pr_high {
+                continue;
+            }
             let m_slot = cj[m][slot] as usize;
             let n1 = mt_e4[i1 + m_slot] as usize;
             let n2 = mt_c[i2 + m_slot] as usize;
@@ -387,6 +485,10 @@ impl EOXCrossSolver {
                 m as u8,
                 slot,
                 bound,
+                p_high_memory,
+                n_high_ep5,
+                n_high_corner,
+                n_high_eo,
             ) {
                 bump_node_count(local);
                 return true;
@@ -421,8 +523,12 @@ impl EOXCrossSolver {
         cb_rel: u32,
         v_huge: i32,
         p_huge: Option<&PackedPruneTable>,
+        p_high_memory: Option<&PackedPruneTable>,
         i_e6: u32,
         i_c2: u32,
+        i_high_ep5: u32,
+        i_high_corner: u32,
+        i_high_eo: u32,
     ) -> bool {
         if depth > bound {
             return false;
@@ -451,6 +557,17 @@ impl EOXCrossSolver {
             let neo = mt_eo[i_eo + m] as usize;
             let idx_de: u64 = nd as u64 * state_space::EO12 as u64 + neo as u64;
             if self.pt_ep4eo12.get(idx_de) as u32 >= depth {
+                continue;
+            }
+            let (pr_high, n_high_ep5, n_high_corner, n_high_eo) = self.high_memory_eo_check(
+                p_high_memory,
+                i_high_ep5,
+                i_high_corner,
+                i_high_eo,
+                m,
+                depth,
+            );
+            if pr_high {
                 continue;
             }
             // View A
@@ -515,8 +632,12 @@ impl EOXCrossSolver {
                 n_cb_rel,
                 v_huge,
                 p_huge,
+                p_high_memory,
                 ne6,
                 nc2,
+                n_high_ep5,
+                n_high_corner,
+                n_high_eo,
             ) {
                 bump_node_count(local);
                 return true;
@@ -539,8 +660,12 @@ impl EOXCrossSolver {
         bound: u32,
         v_huge: i32,
         p_huge: Option<&PackedPruneTable>,
+        p_high_memory: Option<&PackedPruneTable>,
         i_e6: u32,
         i_c2: u32,
+        i_high_ep5: u32,
+        i_high_corner: u32,
+        i_high_eo: u32,
     ) -> bool {
         if depth > bound {
             return false;
@@ -567,6 +692,17 @@ impl EOXCrossSolver {
             let neo = mt_eo[i_eo + m] as usize;
             let idx_de: u64 = nd as u64 * state_space::EO12 as u64 + neo as u64;
             if self.pt_ep4eo12.get(idx_de) as u32 >= depth {
+                continue;
+            }
+            let (pr_high, n_high_ep5, n_high_corner, n_high_eo) = self.high_memory_eo_check(
+                p_high_memory,
+                i_high_ep5,
+                i_high_corner,
+                i_high_eo,
+                m,
+                depth,
+            );
+            if pr_high {
                 continue;
             }
 
@@ -648,8 +784,12 @@ impl EOXCrossSolver {
                 bound,
                 v_huge,
                 p_huge,
+                p_high_memory,
                 ne6,
                 nc2,
+                n_high_ep5,
+                n_high_corner,
+                n_high_eo,
             ) {
                 bump_node_count(local);
                 return true;
@@ -672,8 +812,12 @@ impl EOXCrossSolver {
         bound: u32,
         v_huge: i32,
         p_huge: Option<&PackedPruneTable>,
+        p_high_memory: Option<&PackedPruneTable>,
         i_e6: u32,
         i_c2: u32,
+        i_high_ep5: u32,
+        i_high_corner: u32,
+        i_high_eo: u32,
     ) -> bool {
         if depth > bound {
             return false;
@@ -700,6 +844,17 @@ impl EOXCrossSolver {
             let neo = mt_eo[i_eo + m] as usize;
             let idx_de: u64 = nd as u64 * state_space::EO12 as u64 + neo as u64;
             if self.pt_ep4eo12.get(idx_de) as u32 >= depth {
+                continue;
+            }
+            let (pr_high, n_high_ep5, n_high_corner, n_high_eo) = self.high_memory_eo_check(
+                p_high_memory,
+                i_high_ep5,
+                i_high_corner,
+                i_high_eo,
+                m,
+                depth,
+            );
+            if pr_high {
                 continue;
             }
 
@@ -771,8 +926,12 @@ impl EOXCrossSolver {
                 bound,
                 v_huge,
                 p_huge,
+                p_high_memory,
                 ne6,
                 nc2,
+                n_high_ep5,
+                n_high_corner,
+                n_high_eo,
             ) {
                 bump_node_count(local);
                 return true;
@@ -782,7 +941,7 @@ impl EOXCrossSolver {
         false
     }
 
-    /// 计算指定 huge 表的 (v_huge, p_huge, init_e6, init_c2)。
+    /// 计算指定 pair view 的现有 huge 表和各初始坐标。
     /// 优先用 Neighbor 视角(s1,s2),否则用 Diagonal(若开启)。
     fn pick_huge(
         &self,
@@ -804,7 +963,12 @@ impl EOXCrossSolver {
             let v_dg = get_diagonal_view(s1 as i32, s2 as i32);
             if v_dg != -1 {
                 let st_v = &st[v_dg as usize];
-                return (v_dg, Some(pt_dg), st_v.i_e6_dg, st_v.i_c2_dg);
+                return (
+                    v_dg,
+                    Some(pt_dg),
+                    st_v.i_e6_dg,
+                    st_v.i_c2_dg,
+                );
             }
         }
         (-1, None, 0, 0)
@@ -830,7 +994,13 @@ impl EOXCrossSolver {
                         .pt_ep4eo12
                         .get(st[s].idep as u64 * state_space::EO12 as u64 + st[s].ieo as u64)
                         as u32;
-                    (pr_xc.max(pr_de), s)
+                    let pr_high = Self::high_memory_eo_distance(
+                        self.high_memory_table(s),
+                        st[s].iep5_high_memory,
+                        st[s].icorner_high_memory,
+                        st[s].ieo,
+                    );
+                    (pr_xc.max(pr_de).max(pr_high), s)
                 })
                 .collect();
             tasks.sort();
@@ -857,6 +1027,10 @@ impl EOXCrossSolver {
                         18,
                         s,
                         best - 1,
+                        self.high_memory_table(s),
+                        st[s].iep5_high_memory,
+                        st[s].icorner_high_memory,
+                        st[s].ieo,
                     ) {
                         best = d;
                         break;
@@ -898,7 +1072,14 @@ impl EOXCrossSolver {
                         .pt_ep4eo12
                         .get(st[s1].idep as u64 * state_space::EO12 as u64 + st[s1].ieo as u64)
                         as u32;
-                    let h = [h1, h1_pe, h1_pc, h2, h2_pe, h2_pc, h_de]
+                    let p_high = self.high_memory_table(s1);
+                    let h_high = Self::high_memory_eo_distance(
+                        p_high,
+                        st[s1].iep5_high_memory,
+                        st[s1].icorner_high_memory,
+                        st[s1].ieo,
+                    );
+                    let h = [h1, h1_pe, h1_pc, h2, h2_pe, h2_pc, h_de, h_high]
                         .iter()
                         .copied()
                         .max()
@@ -927,6 +1108,7 @@ impl EOXCrossSolver {
                     let start_d = std::cmp::max(h, best);
                     let max_d = std::cmp::min(20, best_xx.saturating_sub(1));
                     let (v_huge, p_huge, init_e6, init_c2) = self.pick_huge(s1, s2, &st);
+                    let p_high = self.high_memory_table(s1);
                     for d in start_d..=max_d {
                         if self.search_2(
                             st[s1].i1 as usize,
@@ -950,8 +1132,12 @@ impl EOXCrossSolver {
                             st[s2].c_trk[t_ba],
                             v_huge,
                             p_huge,
+                            p_high,
                             init_e6,
                             init_c2,
+                            st[s1].iep5_high_memory,
+                            st[s1].icorner_high_memory,
+                            st[s1].ieo,
                         ) {
                             best_xx = d;
                             break;
@@ -1044,7 +1230,18 @@ impl EOXCrossSolver {
                         .pt_ep4eo12
                         .get(st[s1].idep as u64 * state_space::EO12 as u64 + st[s1].ieo as u64)
                         as u32;
-                    let h = [h1, h2, h3, pr_de, d_3c].iter().copied().max().unwrap();
+                    let p_high = self.high_memory_table(s1);
+                    let h_high = Self::high_memory_eo_distance(
+                        p_high,
+                        st[s1].iep5_high_memory,
+                        st[s1].icorner_high_memory,
+                        st[s1].ieo,
+                    );
+                    let h = [h1, h2, h3, pr_de, d_3c, h_high]
+                        .iter()
+                        .copied()
+                        .max()
+                        .unwrap();
                     tasks_xxx.push((h, tr));
                 }
                 tasks_xxx.sort();
@@ -1140,6 +1337,7 @@ impl EOXCrossSolver {
                     view_order.sort_by(|a, b| vh[*b].cmp(&vh[*a]));
 
                     let (v_huge, p_huge, init_e6, init_c2) = self.pick_huge(s1, s2, &st);
+                    let p_high = self.high_memory_table(s1);
                     let start_d = std::cmp::max(h, best_xx);
                     let max_d = std::cmp::min(20, best_xxx.saturating_sub(1));
                     for d in start_d..=max_d {
@@ -1153,8 +1351,12 @@ impl EOXCrossSolver {
                             best_xxx - 1,
                             v_huge,
                             p_huge,
+                            p_high,
                             init_e6,
                             init_c2,
+                            st[s1].iep5_high_memory,
+                            st[s1].icorner_high_memory,
+                            st[s1].ieo,
                         ) {
                             best_xxx = d;
                             break;
@@ -1203,13 +1405,19 @@ impl EOXCrossSolver {
                     .pt_ep4eo12
                     .get(st[0].idep as u64 * state_space::EO12 as u64 + st[0].ieo as u64)
                     as u32;
-                let h_max = [h_de, view_h[0], view_h[1], view_h[2], view_h[3]]
+                let (v_huge, p_huge, init_e6, init_c2) = self.pick_huge(0, 1, &st);
+                let p_high = self.high_memory_table(0);
+                let h_high = Self::high_memory_eo_distance(
+                    p_high,
+                    st[0].iep5_high_memory,
+                    st[0].icorner_high_memory,
+                    st[0].ieo,
+                );
+                let h_max = [h_de, view_h[0], view_h[1], view_h[2], view_h[3], h_high]
                     .iter()
                     .copied()
                     .max()
                     .unwrap();
-
-                let (v_huge, p_huge, init_e6, init_c2) = self.pick_huge(0, 1, &st);
 
                 let mut best_xxxx = if (sym & 1) != 0 {
                     res[36 + sym - 1]
@@ -1232,8 +1440,12 @@ impl EOXCrossSolver {
                             best_xxxx - 1,
                             v_huge,
                             p_huge,
+                            p_high,
                             init_e6,
                             init_c2,
+                            st[0].iep5_high_memory,
+                            st[0].icorner_high_memory,
+                            st[0].ieo,
                         ) {
                             best_xxxx = d;
                             break;

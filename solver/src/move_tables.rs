@@ -1,4 +1,4 @@
-//! move_tables: 12 张 mt_*.bin 的懒加载/生成/释放管理。
+//! move_tables: 默认 12 张 + 可选 high-memory profile 表的懒加载/生成/释放管理。
 //!
 //! 移植自 C++ MoveTableManager (`move_tables.{h,cpp}`)。
 //!
@@ -21,6 +21,7 @@
 //!   - mt_eo12_alt   147468 B  (~144 KB)
 //!   - mt_ep1        876 B     (12 * 18,         <1 KB)
 //!   - mt_ep4        855372 B  (11880 * 18,      ~835 KB)
+//!   - mt_ep5_high_memory 6842892 B (95040 * 18, ~6.5 MB, high-memory only)
 
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
@@ -158,7 +159,7 @@ impl MoveTable {
 mod manager {
     use super::*;
 
-    const N_TABLES: usize = 12;
+    const N_TABLES: usize = 13;
 
     #[derive(Copy, Clone, Debug)]
     #[repr(usize)]
@@ -175,6 +176,7 @@ mod manager {
         Eo12Alt = 9,
         Ep1 = 10,
         Ep4 = 11,
+        Ep5HighMemory = 12,
     }
 
     const TABLE_FILES: [&str; N_TABLES] = [
@@ -190,6 +192,7 @@ mod manager {
         "mt_eo12_alt.bin",
         "mt_ep1.bin",
         "mt_ep4.bin",
+        "mt_ep5_high_memory.bin",
     ];
 
     // ---------- Manager ----------
@@ -315,6 +318,29 @@ mod manager {
         state_space::EP4 as u32,
         18
     );
+
+    impl MoveTableManager {
+        pub fn ensure_ep5_high_memory(&self) -> Arc<MoveTable> {
+            let enabled = std::env::var("CUBE_TABLE_PROFILE")
+                .map(|v| v == "high-memory")
+                .unwrap_or(false);
+            if !enabled {
+                panic!(
+                    "mt_ep5_high_memory.bin belongs to the optional high-memory profile; set CUBE_TABLE_PROFILE=high-memory to opt in"
+                );
+            }
+            self.ensure_with(
+                TableId::Ep5HighMemory as usize,
+                state_space::EP5 as u32,
+                18,
+                gen_mt_ep5,
+            )
+        }
+
+        pub fn release_ep5_high_memory(&self) {
+            self.release_slot(TableId::Ep5HighMemory as usize);
+        }
+    }
 
     // edge6 单独处理(默认 panic)
     impl MoveTableManager {
@@ -534,6 +560,15 @@ mod manager {
         let ep1 = mgr.ensure_ep1();
         let basic = as_i32(ep1.as_u32());
         create_multi_move_table(4, 1, 12, state_space::EP4 as i32, &basic)
+            .into_iter()
+            .map(|x| x as u32)
+            .collect()
+    }
+
+    fn gen_mt_ep5(mgr: &MoveTableManager) -> Vec<u32> {
+        let ep1 = mgr.ensure_ep1();
+        let basic = as_i32(ep1.as_u32());
+        create_multi_move_table(5, 1, 12, state_space::EP5 as i32, &basic)
             .into_iter()
             .map(|x| x as u32)
             .collect()

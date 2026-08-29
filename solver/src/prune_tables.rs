@@ -213,7 +213,7 @@ impl PackedPruneTable {
 mod manager {
     use super::*;
 
-    const N_TABLES: usize = 47;
+    const N_TABLES: usize = 51;
 
     #[derive(Copy, Clone, Debug)]
     #[repr(usize)]
@@ -281,11 +281,15 @@ mod manager {
         CrossC4C5C6 = 44, // ~1.22 GB
 
         // --- PseudoPair Pair (16 张 296B) ---
-        // 不单独 enum:用 PspairCE 槽放 16 张
+        // 实际存于独立 pspair_slots；这里仅保留旧编号占位，不占 slots[45..=60]。
         PspairCEStart = 45,
-        // 45..=60 (16 slots)
-        // _PspairCE15 = 60,
-        _Last = 46, // 占位,使 N_TABLES 准确
+        _Last = 46, // 占位
+
+        // --- 显式 high-memory profile（默认生成/加载路径绝不触碰）---
+        EoXcrossSlot0HighMemory = 47,
+        EoXcrossSlot1HighMemory = 48,
+        EoXcrossSlot2HighMemory = 49,
+        EoXcrossSlot3HighMemory = 50,
     }
 
     const TABLE_FILES: [&str; N_TABLES] = [
@@ -336,6 +340,10 @@ mod manager {
         "pt_cross_C4C5C6.bin",           // 44
         "_pspair_ce_placeholder_45.bin", // 45 (实际由 pspair_ce 数组覆盖)
         "_unused_46.bin",                // 46
+        "pt_eo_xcross_slot0_high_memory.bin", // 47
+        "pt_eo_xcross_slot1_high_memory.bin", // 48
+        "pt_eo_xcross_slot2_high_memory.bin", // 49
+        "pt_eo_xcross_slot3_high_memory.bin", // 50
     ];
 
     // PspairCE 单独用一组槽位(16 张 296B 表)
@@ -407,6 +415,12 @@ mod manager {
                 cr * cn
             }
             x if x == I::Ep4Eo12 as usize => ep4 * eo,
+            x if (I::EoXcrossSlot0HighMemory as usize
+                ..=I::EoXcrossSlot3HighMemory as usize)
+                .contains(&x) =>
+            {
+                state_space::EP5 as u64 * cn * eo
+            }
             x if x == I::CrossC4E0E1 as usize
                 || x == I::CrossC4E0E2 as usize
                 || x == I::CrossC4E0E3 as usize =>
@@ -444,6 +458,18 @@ mod manager {
             panic!(
                 "{} generation disabled (entry_count={}); set CUBE_ALLOW_HUGE_TABLES=1 to opt in",
                 TABLE_FILES[id], expected_entries
+            );
+        }
+    }
+
+    fn high_memory_profile_check(id: usize) {
+        let enabled = std::env::var("CUBE_TABLE_PROFILE")
+            .map(|v| v == "high-memory")
+            .unwrap_or(false);
+        if !enabled {
+            panic!(
+                "{} belongs to the optional high-memory profile; set CUBE_TABLE_PROFILE=high-memory to opt in",
+                TABLE_FILES[id]
             );
         }
     }
@@ -695,6 +721,30 @@ mod manager {
         PtId::Ep4Eo12,
         pc::gen_pt_ep4eo12
     );
+
+    impl PruneTableManager {
+        pub fn ensure_pt_eo_xcross_high_memory(
+            &self,
+            slot: usize,
+        ) -> Arc<PackedPruneTable> {
+            assert!(slot < 4, "EO XCross slot out of range");
+            let id = PtId::EoXcrossSlot0HighMemory as usize + slot;
+            high_memory_profile_check(id);
+            let generators: [fn(&PruneTableManager) -> (u64, Vec<u8>); 4] = [
+                pc::gen_pt_eo_xcross_slot0_high_memory,
+                pc::gen_pt_eo_xcross_slot1_high_memory,
+                pc::gen_pt_eo_xcross_slot2_high_memory,
+                pc::gen_pt_eo_xcross_slot3_high_memory,
+            ];
+            let gen = generators[slot];
+            self.ensure_with(id, gen)
+        }
+
+        pub fn release_pt_eo_xcross_high_memory(&self, slot: usize) {
+            assert!(slot < 4, "EO XCross slot out of range");
+            self.release_slot(PtId::EoXcrossSlot0HighMemory as usize + slot);
+        }
+    }
 
     pt_ensure_release!(
         ensure_pt_cross_c4e0e1,
