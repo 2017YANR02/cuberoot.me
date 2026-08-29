@@ -9,12 +9,24 @@ import { tr } from '@/i18n/tr';
 
 interface Props {
   price: string;
+  period: 'month' | 'year';
   onClose: () => void;
 }
 
-export default function AutoRenewModal({ price, onClose }: Props) {
+export default function AutoRenewModal({ price, period, onClose }: Props) {
   const [agreed, setAgreed] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
+  const copy = period === 'year'
+    ? {
+        title: { zh: '开通连续包年', en: 'Start annual auto-renewal' },
+        unit: { zh: '年', en: 'year' },
+        firstCharge: { zh: '开通时支付首年费用，之后每年自动续费', en: 'Pay for the first year now, then renew automatically each year' },
+      }
+    : {
+        title: { zh: '开通连续包月', en: 'Start monthly auto-renewal' },
+        unit: { zh: '月', en: 'month' },
+        firstCharge: { zh: '开通时支付首月费用，之后每月自动续费', en: 'Pay for the first month now, then renew automatically each month' },
+      };
 
   useModalDismiss(onClose);
 
@@ -29,11 +41,11 @@ export default function AutoRenewModal({ price, onClose }: Props) {
         />
 
         <SiWechat className="mem-autorenew-wechat" size={28} aria-hidden="true" />
-        <h2 className="mem-pay-title">{tr({ zh: '开通连续包月', en: 'Start monthly auto-renewal' })}</h2>
-        <div className="mem-pay-price">{price}<span className="mem-autorenew-price-unit">/{tr({ zh: '月', en: 'month' })}</span></div>
+        <h2 className="mem-pay-title">{tr(copy.title)}</h2>
+        <div className="mem-pay-price">{price}<span className="mem-autorenew-price-unit">/{tr(copy.unit)}</span></div>
 
         <ul className="mem-autorenew-rules">
-          <li><CalendarClock size={16} /><span>{tr({ zh: '开通时支付首月费用，之后每月自动续费', en: 'Pay the first month now, then renew automatically each month' })}</span></li>
+          <li><CalendarClock size={16} /><span>{tr(copy.firstCharge)}</span></li>
           <li><Bell size={16} /><span>{tr({ zh: '每次续费扣款前将发送通知', en: 'You will be notified before every renewal charge' })}</span></li>
           <li><ShieldCheck size={16} /><span>{tr({ zh: '可随时取消，取消后不再产生续费扣款', en: 'Cancel anytime to stop future renewal charges' })}</span></li>
         </ul>
