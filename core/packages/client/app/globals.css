@@ -385,6 +385,23 @@ html[data-theme=dark] {
   --input: #353026;
 }
 
+/* 局部配色预览要在子层挂 .contrast-scope 才能继续响应全站柔和度。
+   这里先快照各自的原始 token；混色与 body 共用下方唯一一套派生规则。 */
+.palette-scope {
+  --base-background: var(--background);
+  --base-card: var(--card);
+  --base-popover: var(--popover);
+  --base-muted: var(--muted);
+  --base-secondary: var(--secondary);
+  --base-foreground: var(--foreground);
+  --base-card-foreground: var(--card-foreground);
+  --base-popover-foreground: var(--popover-foreground);
+  --base-secondary-foreground: var(--secondary-foreground);
+  --base-primary: var(--primary);
+  --base-muted-foreground: var(--muted-foreground);
+  --base-faint-foreground: var(--faint-foreground);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -456,8 +473,9 @@ html[data-contrast=soft] {
   --base-faint-foreground: var(--faint-foreground);
   background: color-mix(in oklab, var(--base-background), var(--base-muted-foreground) var(--soften-bg));
 }
-/* 第二层(body):真正的柔化,全站后代都吃到。 */
-html[data-contrast=soft] body {
+/* 第二层(body / 局部配色的 .contrast-scope):真正的柔化,后代都吃到。 */
+html[data-contrast=soft] body,
+html[data-contrast=soft] .contrast-scope {
   --background: color-mix(in oklab, var(--base-background), var(--base-muted-foreground) var(--soften-bg));
   --card: color-mix(in oklab, var(--base-card), var(--base-muted-foreground) var(--soften-bg));
   --popover: color-mix(in oklab, var(--base-popover), var(--base-muted-foreground) var(--soften-bg));
