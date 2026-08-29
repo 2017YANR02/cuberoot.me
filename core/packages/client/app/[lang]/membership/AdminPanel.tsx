@@ -18,9 +18,13 @@ import {
   type MembershipPlan, type Membership,
 } from '@/lib/membership-api';
 
-interface Props { plans: MembershipPlan[]; isZh: boolean; }
+interface Props {
+  plans: MembershipPlan[];
+  isZh: boolean;
+  onPlanUpdated: (plan: MembershipPlan) => void;
+}
 
-export default function AdminPanel({ plans, isZh }: Props) {
+export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
   const [picked, setPicked] = useState<WcaPersonLite | null>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
   const [grantPlan, setGrantPlan] = useState(plans[0]?.slug ?? '');
@@ -73,7 +77,8 @@ export default function AdminPanel({ plans, isZh }: Props) {
     const yuan = Number(priceDraft[p.slug]);
     if (!Number.isFinite(yuan) || yuan < 0) return;
     try {
-      await adminUpdatePlan(p.slug, { priceCents: Math.round(yuan * 100) });
+      const updatedPlan = await adminUpdatePlan(p.slug, { priceCents: Math.round(yuan * 100) });
+      onPlanUpdated(updatedPlan);
       setPlanSaved(p.slug);
       window.setTimeout(() => setPlanSaved((s) => (s === p.slug ? null : s)), 1500);
     } catch (e) { window.alert(e instanceof Error ? e.message : String(e)); }
@@ -114,7 +119,7 @@ export default function AdminPanel({ plans, isZh }: Props) {
           <div key={p.slug} className="mem-admin-planrow">
             <span className="mem-admin-planname">{isZh ? p.nameZh : p.nameEn}</span>
             <input
-              type="number" min="0" step="1"
+              type="number" min="0" step="0.01"
               className="mem-admin-priceinput"
               value={priceDraft[p.slug] ?? ''}
               onChange={(e) => setPriceDraft((d) => ({ ...d, [p.slug]: e.target.value }))}
