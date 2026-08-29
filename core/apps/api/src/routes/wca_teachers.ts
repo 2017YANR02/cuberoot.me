@@ -7,8 +7,8 @@
  *   POST   /v1/wca/teachers/:teacherId/named-students — 老师本人或管理员添加
  *   PUT    /v1/wca/teachers/:teacherId/named-students/:id — 老师本人或管理员编辑
  *   DELETE /v1/wca/teachers/:teacherId/named-students/:id — 老师本人或管理员移除
- *   PUT    /v1/wca/teachers/:studentId/:eventId    — 有效会员登记自己；管理员可指定任意老师
- *   DELETE /v1/wca/teachers/:studentId/:eventId    — 老师本人撤销；管理员可撤销任意关系
+ *   PUT    /v1/wca/teachers/:studentId/:eventId    — 有效会员老师登记自己，或有效会员学生填写本人老师；管理员可指定任意老师
+ *   DELETE /v1/wca/teachers/:studentId/:eventId    — 老师本人、有效会员学生本人或管理员撤销
  */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
@@ -277,7 +277,8 @@ wcaTeacherRoutes.put('/wca/teachers/:studentId/:eventId', async (c) => {
   const eventId = normalizeWcaEventId(c.req.param('eventId'));
   if (!eventId) return c.json({ error: 'invalid event ID' }, 400);
   const body: { teacherWcaId?: unknown } = await c.req.json<{ teacherWcaId?: unknown }>().catch(() => ({}));
-  const teacherWcaId = isAdmin
+  const studentManagesOwnTeacher = actorWcaId === studentWcaId;
+  const teacherWcaId = isAdmin || studentManagesOwnTeacher
     ? normalizeWcaId(body.teacherWcaId)
     : actorWcaId;
   if (!teacherWcaId) return c.json({ error: 'invalid teacher WCA ID' }, 400);
@@ -302,12 +303,13 @@ wcaTeacherRoutes.put('/wca/teachers/:studentId/:eventId', async (c) => {
     'SELECT teacher_wca_id FROM wca_teachers WHERE student_wca_id = ? AND event_id = ?',
     [studentWcaId, eventId],
   );
-  if (!mayReplaceTeacher(isAdmin, actorWcaId, existing[0]?.teacher_wca_id ?? null)) {
+  if (!mayReplaceTeacher(isAdmin || studentManagesOwnTeacher, actorWcaId, existing[0]?.teacher_wca_id ?? null)) {
     return c.json({ error: 'teacher already set' }, 409);
   }
 
-  // 普通会员的冲突更新只允许命中自己，避免两位老师并发看见空值后互相覆盖。
-  const conflictGuard = isAdmin
+  // 老师登记自己的冲突更新只允许命中自己，避免两位老师并发看见空值后互相覆盖。
+  // 学生管理本人老师时允许明确更换老师。
+  const conflictGuard = isAdmin || studentManagesOwnTeacher
     ? ''
     : 'WHERE wca_teachers.teacher_wca_id = EXCLUDED.teacher_wca_id';
   const rows = await query<TeacherRow>(
@@ -342,7 +344,11 @@ wcaTeacherRoutes.delete('/wca/teachers/:studentId/:eventId', async (c) => {
     [studentWcaId, eventId],
   );
   if (!rows.length) return c.json({ error: 'teacher not found' }, 404);
-  if (!isAdmin && rows[0].teacher_wca_id !== actorWcaId) {
+  const studentRemovesOwnTeacher = actorWcaId === studentWcaId;
+  if (studentRemovesOwnTeacher && !isAdmin && !(await hasActiveMembership(actorWcaId))) {
+    return c.json({ error: 'active membership required' }, 403);
+  }
+  if (!isAdmin && !studentRemovesOwnTeacher && rows[0].teacher_wca_id !== actorWcaId) {
     return c.json({ error: 'only the teacher can remove this relation' }, 403);
   }
   await query(
