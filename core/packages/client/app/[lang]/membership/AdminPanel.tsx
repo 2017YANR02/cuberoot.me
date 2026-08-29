@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash2, Check } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
+import BoolToggle from '@/components/BoolToggle';
 import { fetchPersonCard, type WcaPersonLite } from '@/lib/wca-api';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fmtDate } from '@/lib/membership-format';
@@ -32,16 +33,35 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
   const [err, setErr] = useState<string | null>(null);
 
   const [members, setMembers] = useState<Membership[]>([]);
+  const [adminPlans, setAdminPlans] = useState<MembershipPlan[]>(plans);
   const [priceDraft, setPriceDraft] = useState<Record<string, string>>({});
   const [planSaved, setPlanSaved] = useState<string | null>(null);
+  const [planUpdating, setPlanUpdating] = useState<string | null>(null);
 
-  useEffect(() => { if (!grantPlan && plans[0]) setGrantPlan(plans[0].slug); }, [plans, grantPlan]);
   useEffect(() => {
-    setPriceDraft(Object.fromEntries(plans.map((p) => [p.slug, String(p.priceCents / 100)])));
-  }, [plans]);
+    if (!plans.some((plan) => plan.slug === grantPlan)) setGrantPlan(plans[0]?.slug ?? '');
+  }, [plans, grantPlan]);
+  useEffect(() => {
+    if (adminPlans.length === 0 && plans.length > 0) setAdminPlans(plans);
+  }, [adminPlans.length, plans]);
 
-  function loadList() { adminList().then((r) => setMembers(r.members)).catch(() => {}); }
+  function loadList() {
+    adminList().then((r) => {
+      setMembers(r.members);
+      const listedPlans = r.plans ?? plans;
+      setAdminPlans(listedPlans);
+      setPriceDraft(Object.fromEntries(listedPlans.map((p) => [p.slug, String(p.priceCents / 100)])));
+    }).catch(() => {});
+  }
   useEffect(() => { loadList(); }, []);
+
+  function applyPlanUpdate(updatedPlan: MembershipPlan) {
+    setAdminPlans((current) => current
+      .map((plan) => plan.slug === updatedPlan.slug ? updatedPlan : plan)
+      .sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0) || a.priceCents - b.priceCents));
+    setPriceDraft((current) => ({ ...current, [updatedPlan.slug]: String(updatedPlan.priceCents / 100) }));
+    onPlanUpdated(updatedPlan);
+  }
 
   async function handlePick(c: WcaPersonLite | null) {
     setPicked(c);
@@ -76,12 +96,29 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
   async function savePlan(p: MembershipPlan) {
     const yuan = Number(priceDraft[p.slug]);
     if (!Number.isFinite(yuan) || yuan < 0) return;
+    setPlanUpdating(p.slug);
     try {
       const updatedPlan = await adminUpdatePlan(p.slug, { priceCents: Math.round(yuan * 100) });
-      onPlanUpdated(updatedPlan);
+      applyPlanUpdate({ ...p, ...updatedPlan, active: updatedPlan.active ?? p.active ?? true });
       setPlanSaved(p.slug);
       window.setTimeout(() => setPlanSaved((s) => (s === p.slug ? null : s)), 1500);
-    } catch (e) { window.alert(e instanceof Error ? e.message : String(e)); }
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPlanUpdating((slug) => slug === p.slug ? null : slug);
+    }
+  }
+
+  async function updateVisibility(p: MembershipPlan, active: boolean) {
+    setPlanUpdating(p.slug);
+    try {
+      const updatedPlan = await adminUpdatePlan(p.slug, { active });
+      applyPlanUpdate({ ...p, ...updatedPlan, active });
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPlanUpdating((slug) => slug === p.slug ? null : slug);
+    }
   }
 
   return (
@@ -115,7 +152,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
       <div className="mem-admin-block">
         <div className="mem-admin-subtitle">{tr({ zh: '套餐价格(元)', en: 'Plan prices (yuan)'
         })}</div>
-        {plans.map((p) => (
+        {adminPlans.map((p) => (
           <div key={p.slug} className="mem-admin-planrow">
             <span className="mem-admin-planname">{isZh ? p.nameZh : p.nameEn}</span>
             <input
@@ -124,10 +161,16 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
               value={priceDraft[p.slug] ?? ''}
               onChange={(e) => setPriceDraft((d) => ({ ...d, [p.slug]: e.target.value }))}
             />
-            <button className="mem-admin-plansave" onClick={() => void savePlan(p)}>
+            <button className="mem-admin-plansave" onClick={() => void savePlan(p)} disabled={planUpdating === p.slug}>
               {planSaved === p.slug ? <Check size={13} /> : tr({ zh: '保存', en: 'Save'
             })}
             </button>
+            <BoolToggle
+              value={p.active !== false}
+              onChange={(active) => void updateVisibility(p, active)}
+              label={tr({ zh: '公开显示', en: 'Show publicly' })}
+              disabled={planUpdating === p.slug}
+            />
           </div>
         ))}
       </div>
