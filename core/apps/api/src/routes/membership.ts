@@ -63,6 +63,7 @@ const xunhupayConfigured = () => Boolean(XHP_PRIMARY.appid && XHP_PRIMARY.secret
 // 否则虎皮椒兜底,都没配则 null。
 type PayChannel = 'alipay' | 'wechat' | 'card_cn' | 'card_global';
 type Provider = 'alipay' | 'wechat' | 'xunhupay' | 'airwallex';
+const AUTO_RENEW_PLAN_SLUG = 'monthly_auto_renew';
 const PAY_CHANNELS = new Set<PayChannel>(['alipay', 'wechat', 'card_cn', 'card_global']);
 function providerForChannel(channel: PayChannel, clientType: 'pc' | 'wap'): Provider | null {
   if ((channel === 'card_cn' || channel === 'card_global') && airwallex.airwallexChannelEnabled(channel)) {
@@ -303,6 +304,9 @@ membershipRoutes.post('/membership/orders', async (c) => {
 
   const planSlug = String(b.plan || '');
   if (!PLAN_SLUG_RE.test(planSlug)) return c.json({ error: 'invalid plan' }, 400);
+  if (planSlug === AUTO_RENEW_PLAN_SLUG) {
+    return c.json({ error: 'automatic renewal is not available' }, 503);
+  }
   const plans = await query<PlanRow>('SELECT * FROM membership_plans WHERE slug = ? AND active = TRUE', [planSlug]);
   if (!plans.length) return c.json({ error: 'unknown plan' }, 400);
   const plan = plans[0];
@@ -667,6 +671,7 @@ membershipRoutes.post('/membership/admin/grant', async (c) => {
   if (!/^\d{4}[A-Z]{4}\d{2}$/.test(wcaId)) return c.json({ error: 'invalid WCA ID' }, 400);
   const planSlug = String(b.plan || '');
   if (!PLAN_SLUG_RE.test(planSlug)) return c.json({ error: 'invalid plan' }, 400);
+  if (planSlug === AUTO_RENEW_PLAN_SLUG) return c.json({ error: 'automatic renewal is not available' }, 400);
   const plans = await query<PlanRow>('SELECT * FROM membership_plans WHERE slug = ?', [planSlug]);
   if (!plans.length) return c.json({ error: 'unknown plan' }, 400);
 

@@ -10,6 +10,8 @@ const BASE = API_ORIGIN + '/v1/membership';
 
 export type MembershipPeriod = 'month' | 'year' | 'week' | 'day' | 'lifetime';
 
+export const AUTO_RENEW_PLAN_SLUG = 'monthly_auto_renew';
+
 export interface MembershipPlan {
   slug: string;
   nameZh: string;
