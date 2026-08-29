@@ -244,6 +244,7 @@
   border: none;
   font-size: 15px;
   font-weight: 600;
+  white-space: nowrap;
   color: #fff;
   cursor: pointer;
 }
@@ -251,6 +252,7 @@
 /* 支付宝 / 微信 品牌色(同打赏弹窗,固定品牌识别色) */
 .mem-pay-ch-alipay { background: #1677ff; }
 .mem-pay-ch-wechat { background: #07c160; }
+.mem-pay-ch-card { background: var(--primary); color: var(--primary-foreground); }
 
 .mem-pay-err {
   margin-top: 12px;
@@ -452,6 +454,7 @@
 .mem-admin-empty { font-size: 13px; color: var(--faint-foreground); }
 
 @media (max-width: 480px) {
+  .mem-pay-channels { grid-template-columns: 1fr; }
   .mem-page { padding: 24px 14px 64px; }
   .mem-title { font-size: 22px; }
   .mem-plans { grid-template-columns: 1fr; }

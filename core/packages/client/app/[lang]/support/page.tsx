@@ -259,12 +259,12 @@ export default function SupportPage() {
   return (
     <div className="support-page">
       <header className="support-head">
-        <h1 className="support-title">{tr({ zh: '致谢', en: 'Acknowledgments'
+        <h1 className="support-title">{tr({ zh: '赞助', en: 'Sponsorship'
         })}</h1>
         <p className="support-sub">
           {tr({
-            zh: '所有赞助将全部用于服务器购买与日常维护。感谢每一位支持 CubeRoot 的朋友。',
-            en: 'Every donation goes entirely toward server costs and upkeep. Thank you to everyone who supports CubeRoot.'
+            zh: '所有赞助将全部用于服务器购买与日常维护。',
+            en: 'Every donation goes entirely toward server costs and upkeep.'
         })}
         </p>
         <div className="support-cta-row">
@@ -339,12 +339,6 @@ export default function SupportPage() {
         <section className="support-contrib">
           <h2 className="support-contrib-title">{tr({ zh: '贡献者', en: 'Contributors'
           })}</h2>
-          <p className="support-sub">
-            {tr({
-              zh: '感谢每一位提交反馈、建议与 bug 的朋友，数字是贡献次数。',
-              en: 'Thanks to everyone who filed feedback, ideas and bug reports — the number is their contribution count.'
-          })}
-          </p>
           {admin && (
             <div className="support-count">
               <button className="support-add" onClick={() => setEditorTarget({ kind: 'contributor', initial: null })}>

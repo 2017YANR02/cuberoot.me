@@ -3,6 +3,7 @@
 import BackHome from '@/components/BackHome';
 import AppLink from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
+import ContactDetails from './ContactDetails';
 import './contact.css';
 
 type Bi = { zh: string; en: string };
@@ -229,6 +230,7 @@ export default function ContactPage() {
           })}</p>
           <span className="contact-site-label">{tr({ zh: '网站', en: 'Website' })}</span>
           <AppLink href="/" className="contact-site">cuberoot.me</AppLink>
+          <ContactDetails />
         </div>
         <img
           className="contact-qr"

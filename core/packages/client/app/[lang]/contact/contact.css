@@ -82,6 +82,101 @@
   text-decoration: underline;
 }
 
+.contact-details {
+  display: grid;
+  gap: 0.55rem;
+  margin: 1.35rem 0 0;
+  font-size: 0.84rem;
+  text-align: left;
+}
+
+.contact-details-row {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.contact-details-row dt,
+.contact-details-link-row a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--muted-foreground);
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.contact-details-row dt {
+  margin: 0;
+}
+
+.contact-details-row dd {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  margin: 0;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+
+.contact-details-icon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-details-row code {
+  color: var(--foreground);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.8rem;
+}
+
+.contact-details-row a {
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+
+.contact-details-row a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.contact-copy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 5px;
+  border: 1px solid var(--border-default);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.contact-copy-button:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--accent);
+}
+
+.contact-copy-button:active {
+  transform: translateY(1px);
+}
+
+.contact-details-link-row {
+  grid-template-columns: 1fr;
+}
+
+.contact-details-link-row a {
+  width: fit-content;
+}
+
 .contact-qr {
   display: block;
   width: min(260px, 44vw);

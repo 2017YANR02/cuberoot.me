@@ -32,13 +32,14 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@airwallex/components-sdk": "^1.35.1",
     "@codemirror/lang-markdown": "^6.5.0",
     "@codemirror/language": "^6.12.3",
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.43.0",
-    "@cuberoot/shared": "workspace:*",
     "@cuberoot/puzzle-render-core": "workspace:*",
     "@cuberoot/puzzle-solvers": "workspace:*",
+    "@cuberoot/shared": "workspace:*",
     "@cuberoot/stack-kernel": "workspace:*",
     "@cuberoot/timer-ui": "workspace:*",
     "@cuberoot/vendor-sr-puzzlegen": "workspace:*",

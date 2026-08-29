@@ -613,7 +613,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Stroop test — name the ink colour instead of reading the word, and time the patch card against the conflict card to measure your own interference.',
     },
   },
-  'support': { title: { zh: '致谢', en: 'Acknowledgments' } },
+  'support': { title: { zh: '赞助', en: 'Sponsorship' } },
   'timer': {
     title: { zh: '计时器', en: 'Timer' },
     description: {

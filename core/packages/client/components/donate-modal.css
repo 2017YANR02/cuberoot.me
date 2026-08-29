@@ -28,31 +28,6 @@
     color: var(--text);
 }
 
-.donate-member-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    margin: 0 0 1.1rem;
-    padding: 9px 14px;
-    border-radius: 10px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
-    text-decoration: none;
-}
-.donate-member-link:hover {
-    background: color-mix(in srgb, var(--accent) 18%, transparent);
-}
-/* 会员入口只对 admin 渲染,小字提醒这条普通访客看不到 */
-.donate-admin-note {
-    font-size: 0.72rem;
-    font-weight: 400;
-    color: var(--faint-foreground);
-    white-space: nowrap;
-}
-
 .donate-close {
     position: absolute;
     top: 10px;
@@ -91,10 +66,6 @@
     margin: 0;
     flex: 1 1 0;
     max-width: 220px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
 }
 
 .donate-qr img {
@@ -104,11 +75,6 @@
     border: 1px solid var(--border-dark);
     background: #fff;
     display: block;
-}
-
-.donate-qr figcaption {
-    font-size: 0.8rem;
-    color: var(--text-sub);
 }
 
 .donate-qr-note {
@@ -131,113 +97,6 @@
     color: var(--accent);
 }
 
-.donate-contact {
-    margin: 1rem 0 0;
-    padding: 0.85rem 1rem;
-    border: 1px solid var(--border-dark);
-    border-radius: 10px;
-    background: var(--accent-soft);
-    font-size: 0.8rem;
-    display: grid;
-    gap: 0.35rem;
-}
-
-.donate-contact-row {
-    display: grid;
-    grid-template-columns: 6em 1fr;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.donate-contact dt {
-    margin: 0;
-    color: var(--text-sub);
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.donate-contact-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 14px;
-    height: 14px;
-    color: var(--text-sub);
-    flex: 0 0 auto;
-}
-
-
-.donate-contact dd {
-    margin: 0;
-    color: var(--text);
-    overflow-wrap: anywhere;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.donate-copy-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: 1px solid var(--border-dark);
-    border-radius: 5px;
-    padding: 2px 5px;
-    color: var(--text-sub);
-    cursor: pointer;
-    transition: color 0.15s, border-color 0.15s, background 0.15s;
-}
-
-.donate-copy-btn:hover {
-    color: var(--accent);
-    border-color: var(--accent);
-    background: var(--surface);
-}
-
-.donate-copy-btn:active {
-    transform: translateY(1px);
-}
-
-/* Link-only rows (YouTube / Bilibili): icon-label clickable, no value column */
-.donate-contact-row-link-wrap {
-    grid-template-columns: 1fr;
-}
-
-.donate-contact-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-sub);
-    font-weight: 500;
-    text-decoration: none;
-    transition: color 0.15s;
-    width: fit-content;
-}
-
-.donate-contact-link:hover {
-    color: var(--accent);
-    text-decoration: none;
-}
-
-.donate-contact code {
-    font-family: 'SF Mono', Menlo, Consolas, monospace;
-    font-size: 0.78rem;
-    color: var(--text);
-}
-
-.donate-contact a {
-    color: var(--text-sub);
-    text-decoration: none;
-}
-
-.donate-contact a:hover {
-    text-decoration: underline;
-}
-
 .donate-credits {
     margin-top: 0.9rem;
     text-align: center;
@@ -254,13 +113,6 @@
 .donate-credits a:hover {
     color: color-mix(in srgb, var(--accent) 88%, black);
     text-decoration: underline;
-}
-
-.donate-thanks {
-    margin-top: 0.6rem;
-    text-align: center;
-    font-size: 0.78rem;
-    color: var(--text-sub);
 }
 
 @media (max-width: 600px) {
