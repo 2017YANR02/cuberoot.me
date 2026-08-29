@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { RustCrossPool } from '@/lib/rust-cross-client';
-import { solveStageQuestion } from '@/app/[lang]/timer/_lib/stage-training-engine';
-import type { StageTrainingConfig } from '@/app/[lang]/timer/_lib/stage-training';
+import { solveStageQuestion } from '@/app/[lang]/alg/3x3/cross/_lib/stage-training-engine';
+import type { StageTrainingConfig } from '@/app/[lang]/alg/3x3/cross/_lib/stage-training';
 
 const config = (patch: Partial<StageTrainingConfig> = {}): StageTrainingConfig => ({
   stage: 'cross',

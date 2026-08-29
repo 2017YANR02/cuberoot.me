@@ -1,18 +1,19 @@
 'use client';
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import BoolToggle from '@/components/BoolToggle';
+import { ClearButton } from '@/components/ClearButton';
 import CuberReconPlayer from '@/components/CuberReconPlayer';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { SubsetColorPicker, COLOR_NAME, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { tr } from '@/i18n/tr';
 import { applyOrientationPrefix } from '@/lib/cube-orientation';
 import { persistItem } from '@/lib/safe-storage';
-import type { BluetoothCubeHandle } from '../_lib/bluetooth';
-import { applyScramble, facesEqual, isSolvedFaces, toFaceletString, type CubeFaces } from '../_lib/cube/state';
-import { countExecutedHtm } from '../_lib/reconstruct/htm';
-import { generateStageQuestion } from '../_lib/stage-training-engine';
+import { useBluetoothCube } from '../../../timer/_lib/bluetooth';
+import { applyScramble, facesEqual, isSolvedFaces, toFaceletString, type CubeFaces } from '../../../timer/_lib/cube/state';
+import { countExecutedHtm } from '../../../timer/_lib/reconstruct/htm';
+import { generateStageQuestion } from './_lib/stage-training-engine';
 import {
   STAGE_FIXED_LENGTH,
   STAGE_ORDER,
@@ -32,15 +33,8 @@ import {
   type StageTrainingConfig,
   type StageTrainingMode,
   type StageTrainingStage,
-} from '../_lib/stage-training';
-import './stage-training.css';
-
-interface Props {
-  isZh: boolean;
-  cube: BluetoothCubeHandle;
-  onMoveSubscriber: (cb: (move: string, timestamp: number) => void) => () => void;
-  onClose: () => void;
-}
+} from './_lib/stage-training';
+import './cross-training.css';
 
 interface TrainingResult {
   correct: boolean;
@@ -97,9 +91,27 @@ function saveStats(stats: StatsStore): void {
   persistItem(STATS_KEY, JSON.stringify(stats));
 }
 
-export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClose }: Props) {
-  const titleId = useId();
-  const closeRef = useRef<HTMLButtonElement>(null);
+export default function CrossTrainingClient() {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language.startsWith('zh');
+  const moveHandlerRef = useRef<(move: string, timestamp: number) => void>(() => {});
+  const macResolverRef = useRef<((mac: string | null) => void) | null>(null);
+  const [macPrompt, setMacPrompt] = useState<{ deviceName: string; isWrongKey?: boolean } | null>(null);
+  const [macInput, setMacInput] = useState('');
+  const requestMac = useCallback((deviceName: string, isWrongKey?: boolean) => new Promise<string | null>((resolve) => {
+    macResolverRef.current = resolve;
+    setMacPrompt({ deviceName, isWrongKey });
+  }), []);
+  const resolveMac = useCallback((mac: string | null) => {
+    macResolverRef.current?.(mac);
+    macResolverRef.current = null;
+    setMacPrompt(null);
+    setMacInput('');
+  }, []);
+  const cube = useBluetoothCube({
+    onMove: (move, timestamp) => moveHandlerRef.current(move, timestamp),
+    onNeedMac: requestMac,
+  });
   const colors = useSubsetSelection('single', 'Y');
   const [stage, setStage] = useState<StageTrainingStage>('cross');
   const [slot, setSlot] = useState<StageSlot>('best');
@@ -209,16 +221,11 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
     return () => { requestRef.current++; };
   }, [newQuestion]);
 
-  useEffect(() => {
-    closeRef.current?.focus();
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   useEffect(() => () => cubeRef.current.clearHijack(), []);
+  useEffect(() => () => {
+    macResolverRef.current?.(null);
+    macResolverRef.current = null;
+  }, []);
 
   // Arm the chosen smart-cube flow whenever a fresh question or connection arrives.
   useEffect(() => {
@@ -245,40 +252,43 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
     setPhase(physical && isSolvedFaces(physical) ? 'scrambling' : 'needs-solved');
   }, [cube.status.connected, mode, question, smartMode, target, setPhase]);
 
-  useEffect(() => onMoveSubscriber((move, timestamp) => {
-    if (mode !== 'smart' || !question || !target || answeredRef.current) return;
-    const faces = cubeRef.current.getFaces();
-    if (!faces) return;
+  useEffect(() => {
+    moveHandlerRef.current = (move, timestamp) => {
+      if (mode !== 'smart' || !question || !target || answeredRef.current) return;
+      const faces = cubeRef.current.getFaces();
+      if (!faces) return;
 
-    if (smartMode === 'physical') {
-      if (phaseRef.current === 'needs-solved') {
-        if (isSolvedFaces(faces)) setPhase('scrambling');
-        return;
-      }
-      if (phaseRef.current === 'scrambling') {
-        if (facesEqual(faces, target)) {
-          movesRef.current = [];
-          setSmartMoveCount(0);
-          setSmartMoves([]);
-          setPhase('solving');
+      if (smartMode === 'physical') {
+        if (phaseRef.current === 'needs-solved') {
+          if (isSolvedFaces(faces)) setPhase('scrambling');
+          return;
         }
-        return;
+        if (phaseRef.current === 'scrambling') {
+          if (facesEqual(faces, target)) {
+            movesRef.current = [];
+            setSmartMoveCount(0);
+            setSmartMoves([]);
+            setPhase('solving');
+          }
+          return;
+        }
       }
-    }
 
-    if (phaseRef.current !== 'solving') return;
-    movesRef.current.push({ m: move, ts: timestamp });
-    setSmartMoves(movesRef.current.map(({ m }) => m));
-    const moveCount = countExecutedHtm(movesRef.current);
-    setSmartMoveCount(moveCount);
-    if (!isStageTrainingSolved(toFaceletString(faces), config)) return;
+      if (phaseRef.current !== 'solving') return;
+      movesRef.current.push({ m: move, ts: timestamp });
+      setSmartMoves(movesRef.current.map(({ m }) => m));
+      const moveCount = countExecutedHtm(movesRef.current);
+      setSmartMoveCount(moveCount);
+      if (!isStageTrainingSolved(toFaceletString(faces), config)) return;
 
-    answeredRef.current = true;
-    const correct = moveCount === question.optimal;
-    setResult({ correct, moves: moveCount });
-    recordResult(correct);
-    setPhase('result');
-  }), [config, mode, onMoveSubscriber, question, recordResult, setPhase, smartMode, target]);
+      answeredRef.current = true;
+      const correct = moveCount === question.optimal;
+      setResult({ correct, moves: moveCount });
+      recordResult(correct);
+      setPhase('result');
+    };
+    return () => { moveHandlerRef.current = () => {}; };
+  }, [config, mode, question, recordResult, setPhase, smartMode, target]);
 
   const answerGuess = (answer: number) => {
     if (!question || result) return;
@@ -344,19 +354,10 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
   const accuracy = currentStats.total ? Math.round(currentStats.correct / currentStats.total * 100) : 0;
 
   return (
-    <div className="timer-modal-overlay" onClick={onClose}>
-      <div
-        className="timer-modal stage-training-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        onClick={(event) => event.stopPropagation()}
-      >
+    <main className="cross-training-page">
+      <div className="cross-training-main">
         <div className="stage-training-head">
-          <h2 id={titleId}>{tr({ zh: '阶段最优训练', en: 'Optimal stage training' })}</h2>
-          <button ref={closeRef} type="button" className="stage-training-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}>
-            <X size={18} />
-          </button>
+          <h1>{tr({ zh: '阶段最优训练', en: 'Optimal stage training' })}</h1>
         </div>
 
         <div className="stage-training-controls" data-no-timer>
@@ -509,6 +510,38 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
                     <span>{tr({ zh: '连接智能魔方后即可开始。', en: 'Connect a smart cube to begin.' })}</span>
                     <button type="button" className="stage-training-primary" onClick={connect}>{tr({ zh: '连接智能魔方', en: 'Connect smart cube' })}</button>
                     {connectError && <span className="stage-training-error-text">{connectError}</span>}
+                    {macPrompt && (
+                      <div className="stage-training-mac">
+                        <label htmlFor="cross-training-mac">
+                          {macPrompt.isWrongKey
+                            ? tr({ zh: '这个 MAC 无法解密，请重新输入', en: 'That MAC could not decrypt the cube. Try another.' })
+                            : tr({ zh: `请输入 ${macPrompt.deviceName} 的 MAC`, en: `Enter the MAC for ${macPrompt.deviceName}` })}
+                        </label>
+                        <span className="stage-training-mac-input">
+                          <input
+                            id="cross-training-mac"
+                            type="text"
+                            value={macInput}
+                            onChange={(event) => setMacInput(event.target.value)}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' && macInput.trim()) resolveMac(macInput.trim());
+                            }}
+                            placeholder="AB:CD:EF:12:34:56"
+                            autoComplete="off"
+                            spellCheck={false}
+                          />
+                          {macInput && <ClearButton onClick={() => setMacInput('')} preserveFocus />}
+                        </span>
+                        <div className="stage-training-mac-actions">
+                          <button type="button" className="stage-training-primary" disabled={!macInput.trim()} onClick={() => resolveMac(macInput.trim())}>
+                            {tr({ zh: '确认', en: 'Confirm' })}
+                          </button>
+                          <button type="button" className="stage-training-button" onClick={() => resolveMac(null)}>
+                            {tr({ zh: '取消', en: 'Cancel' })}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 {smartPhase === 'needs-solved' && <p>{tr({ zh: '请先把智能魔方完整还原，再按题目打乱。', en: 'Solve the smart cube fully before applying the scramble.' })}</p>}
@@ -536,6 +569,6 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
           </>
         )}
       </div>
-    </div>
+    </main>
   );
 }

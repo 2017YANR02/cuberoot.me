@@ -1380,24 +1380,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 }
 .shell-topbar .tb-btn:hover { background: var(--shell-hover); color: var(--foreground); }
 .shell-topbar .tb-btn.connected { color: var(--signal-success); }
-.shell-topbar .shell-stage-training-btn {
-  width: auto;
-  gap: 5px;
-  padding: 0 9px;
-  color: var(--accent);
-  white-space: nowrap;
-}
-.shell-topbar .shell-stage-training-btn:hover {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-.shell-stage-training-label { font-size: 12px; font-weight: 600; }
-
-@media (max-width: 480px) {
-  .shell-topbar .shell-stage-training-btn { width: 30px; padding: 0; }
-  .shell-stage-training-label { display: none; }
-}
-
 /* Keyboard focus ring — the shell had none, so tab-focus fell back to the
    near-invisible UA outline on the dark surface. Token-only, both themes. */
 .shell-topbar .tb-btn:focus-visible,
