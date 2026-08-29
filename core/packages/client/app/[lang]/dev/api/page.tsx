@@ -563,6 +563,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'membership', m: 'GET', p: '/v1/membership/orders/:no', g: 'login', zh: '查订单状态', en: 'Order status' },
   { d: 'membership', m: 'POST', p: '/v1/membership/notify/alipay', g: 'webhook', c: 'no-store', zh: '支付宝异步回调(验签)', en: 'Alipay notify (signed)' },
   { d: 'membership', m: 'POST', p: '/v1/membership/notify/wechat', g: 'webhook', c: 'no-store', zh: '微信支付回调(验签)', en: 'WeChat Pay notify (signed)' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/notify/airwallex', g: 'webhook', c: 'no-store', zh: '银行卡支付回调(验签)', en: 'Card payment notify (signed)' },
   { d: 'membership', m: 'POST', p: '/v1/membership/notify/xunhupay', g: 'webhook', c: 'no-store', zh: '虎皮椒回调(验签)', en: 'Xunhupay notify (signed)' },
   { d: 'membership', m: 'POST', p: '/v1/membership/admin/grant', g: 'admin', zh: '手动开通会员', en: 'Manually grant membership' },
   { d: 'membership', m: 'GET', p: '/v1/membership/admin/list', g: 'admin', zh: '会员列表', en: 'Member list' },

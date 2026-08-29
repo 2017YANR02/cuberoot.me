@@ -16,6 +16,7 @@
 | **支付宝 · 电脑网站支付** | ✅ 已上线已验证 | ¥0.01 真扫,notify 正常入账 |
 | **支付宝 · 手机网站支付** | ✅ 已上线已验证 | 2026-06-18 签约 + 手机 ¥0.01 验过;代码按 `clientType` pc/wap 自动分流 |
 | **微信 · 普通支付(扫码 Native + H5)** | 🟡 代码就绪,待开商户号 | 开微信商户号 + 绑 APPID + 填 5 个 env 即可,**无需改代码** |
+| **银行卡 · 中国银联卡 / 国际卡** | 🟡 代码就绪,默认隐藏 | Airwallex 托管收银台;两条轨道分别审核、配置并验证后才打开 |
 | **支付宝 · 自动续费(周期扣款)** | ⛔ 当前拿不到 | 卡「近 90 天活跃用户 ≥ 300」 |
 | **微信 · 自动续费(委托代扣)** | ⛔ 当前拿不到 | 官方明写主体类型不含**个人独资企业**(本站主体) |
 | **虎皮椒 xunhupay(聚合兜底)** | ⚪ 未配置 | 任一官方渠道没配时才回落;个人凭身份证+银行卡可开,作过渡 |
@@ -33,6 +34,7 @@
 | 后端路由 | `apps/api/src/routes/membership.ts` | `/v1/membership/*` 全部端点 + 下单派发 + notify 入账 + admin |
 | 支付宝 provider | `apps/api/src/payment/alipay.ts` | RSA2 公钥模式:下单串签名 / notify 验签 / 查单 |
 | 微信 provider | `apps/api/src/payment/wechat.ts` | APIv3:Native / H5 下单 / 回调 GCM 解密 / 查单 |
+| 银行卡 provider | `apps/api/src/payment/airwallex.ts` | PaymentIntent / 托管收银台 / HMAC webhook / 主动查单 |
 | 待签串(纯函数) | `packages/shared/src/payment.ts` | 虎皮椒 / 支付宝 / 微信 v3 的待签名串构造(浏览器安全,有单测) |
 | 数据库 | `apps/api/migrations/0046_membership.sql` | `membership_plans` / `membership_orders` / `memberships` 三表 |
 | 前端页 | `packages/client/app/[lang]/membership/{page,PayModal,AdminPanel,MemberContact}.tsx` | 套餐页 / 支付弹窗 / 管理面板 / 联系方式 |
@@ -40,11 +42,12 @@
 | 到期提醒 | `packages/client/components/MembershipReminder.tsx` | 全局到期提醒条(挂 root layout) |
 | 单测 | `packages/client/tests/membership-expiry.test.ts`、`official_pay_sign.test.ts`、`xunhupay_sign.test.ts` | 到期逻辑 + 各渠道签名/解密 round-trip |
 
-**渠道择优逻辑**(`providerForChannel`):支付宝渠道 → 官方支付宝;微信渠道 → 官方微信;任一未配 → 虎皮椒兜底;都没配 → 该渠道按钮在前端隐藏(`/plans` 的 `channels` 暴露可用性)。
+**渠道择优逻辑**(`providerForChannel`):支付宝/微信优先走各自官方渠道,未配置时才回落虎皮椒;银行卡只走 Airwallex,没有凭据或对应轨道开关未启用时不回落。不可用渠道会由 `/plans` 的 `channels` 隐藏。
 
 **notify 地址**(平台后台填这些,走现有 nginx 反代,无需额外配置):
 - 支付宝:`https://api.cuberoot.me/v1/membership/notify/alipay`
 - 微信:`https://api.cuberoot.me/v1/membership/notify/wechat`
+- 银行卡:`https://api.cuberoot.me/v1/membership/notify/airwallex`
 - 虎皮椒:`https://api.cuberoot.me/v1/membership/notify/xunhupay`
 
 > 实际上支付宝/微信的 notify_url 是**每笔下单时由代码传**的(不依赖后台「应用网关」之类),后台无需单独配 notify。
@@ -74,12 +77,22 @@ WECHAT_CERT_SERIAL=    # 商户 API 证书序列号
 WECHAT_PRIVATE_KEY=    # apiclient_key.pem 内容(单行或 PEM)
 # WECHAT_PLATFORM_PUBKEY=   # 选填,配了则额外验回调签名(纵深防御)
 
+# Airwallex 托管银行卡收银台 —— 审核和验证完成前保持两个 ENABLED=0
+AIRWALLEX_ENV=demo          # 沙盒 demo;生产改 prod
+AIRWALLEX_CLIENT_ID=
+AIRWALLEX_API_KEY=
+AIRWALLEX_ACCOUNT_ID=       # webhook 归属校验
+AIRWALLEX_LOGIN_AS=         # 仅平台/多账户场景按后台要求填写
+AIRWALLEX_WEBHOOK_SECRET=
+AIRWALLEX_CARD_CN_ENABLED=0
+AIRWALLEX_CARD_GLOBAL_ENABLED=0
+
 # 虎皮椒兜底 —— 选填
 XUNHUPAY_APPID=
 XUNHUPAY_APPSECRET=
 ```
 
-`paymentConfigured()` = 支付宝 OR 微信 OR 虎皮椒任一配齐;全空 = 支付关闭,退化为「仅 admin 手动开通」。
+`paymentConfigured()` = 支付宝、微信、虎皮椒或已显式启用的银行卡轨道任一可用;全空 = 支付关闭,退化为「仅 admin 手动开通」。
 
 **凭据安全铁律**:私钥 / APIv3 密钥**绝不贴进聊天、绝不进 git**。由站长放到本机或服务器,AI 走 SSH 直接写 `.env`,改完不 commit 那条命令。
 
@@ -105,7 +118,7 @@ XUNHUPAY_APPSECRET=
 
 需要**两样**:① 微信支付商户号(MCHID);② 一个绑定到商户号的 APPID。
 
-**坎:对公账户。** 微信对企业主体基本要求**企业对公账户**(支付宝那次宽松,微信更严)。个人独资企业可开对公户,但本站**目前还没有对公账户 → 微信普通支付暂缓,等开了对公户再走**。
+**对公账户。** 用户已确认 CubeRoot 具备招商银行对公账户；开户时仍需核对账户名与签约主体完全一致，并以微信实际审核结论为准。
 
 **开户流程**(等有对公户后):
 1. 入口 [pay.weixin.qq.com](https://pay.weixin.qq.com/) → 「商户接入」,**用长期微信号扫码**(该号成超级管理员)。官方图文:[企业接入指引](https://pay.weixin.qq.com/static/applyment_guide/applyment_detail_qiye.shtml)。
@@ -124,6 +137,12 @@ XUNHUPAY_APPSECRET=
 ### 3.3 虎皮椒(可选兜底)
 
 [xunhupay.com](https://www.xunhupay.com) 注册(个人凭身份证+银行卡)→ 拿 `XUNHUPAY_APPID` / `XUNHUPAY_APPSECRET` 填 `.env`。任一官方渠道没配时自动回落它。有官方后可不用。
+
+### 3.4 银行卡托管收银台(代码就绪,待商户审批)
+
+当前 provider 为 Airwallex，前端通过 `@airwallex/components-sdk` 跳转托管页面，CubeRoot 不接收卡号、有效期或 CVC。`card_cn` 只请求 UnionPay，`card_global` 请求 Visa、Mastercard、American Express 和 JCB；最终能否展示和交易以商户后台实际获批能力为准。
+
+后台完成开户后：创建 API 凭据，配置 `payment_intent.succeeded` webhook 到上面的银行卡回调地址，复制 webhook secret，再填写 §2 的环境变量。先用 `AIRWALLEX_ENV=demo` 分别验证两条轨道；某轨道闭环成功后才把对应 `AIRWALLEX_CARD_*_ENABLED` 改成 `1`。中国大陆主体和招商银行对公账户的准入、币种与结算路径不能仅依据产品宣传推断，必须保留服务商书面确认。
 
 ---
 

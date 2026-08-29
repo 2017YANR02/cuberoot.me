@@ -2,7 +2,7 @@
 
 `/membership` 会员订阅功能。2026-06-13 实现。本文是「为什么这么设计」+「上线前你要做什么」。
 
-> **支付渠道对接 / 上线 / 续接(支付宝、微信普通支付、自动续费政策结论)总手册见 [`PAYMENT_SETUP.md`](./PAYMENT_SETUP.md)。** 要对接支付先看那份。
+> **支付渠道对接 / 上线 / 续接(支付宝、微信、银行卡、自动续费政策结论)总手册见 [`PAYMENT_SETUP.md`](./PAYMENT_SETUP.md)。** 网站银行卡与 Android/iOS 跨端支付路线见 [`../../docs/MEMBERSHIP.md`](../../docs/MEMBERSHIP.md)。
 
 ## 调研结论(为什么这样设计)
 

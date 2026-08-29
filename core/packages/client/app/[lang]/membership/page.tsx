@@ -154,12 +154,6 @@ export default function MembershipPage() {
           {tr({ zh: '成为 CubeRoot 会员', en: 'Become a CubeRoot member'
         })}
         </h1>
-        <p className="mem-sub">
-          {tr({
-            zh: '所有工具始终免费。开通会员是为了支持本站的服务器与日常维护,并解锁一些专属权益。',
-            en: 'All tools stay free. Membership supports the servers and upkeep, and unlocks a few member-only perks.'
-        })}
-        </p>
       </header>
 
       {/* 当前会员状态 / 到期提醒 */}
