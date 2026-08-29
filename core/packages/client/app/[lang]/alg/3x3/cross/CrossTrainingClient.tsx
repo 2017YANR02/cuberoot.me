@@ -518,6 +518,7 @@ export default function CrossTrainingClient() {
                             <span className="stage-training-mac-input">
                               <input
                                 id="cross-training-mac"
+                                className="stage-training-mac-field"
                                 type="text"
                                 value={macInput}
                                 onChange={(event) => setMacInput(event.target.value)}
