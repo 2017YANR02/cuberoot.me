@@ -240,3 +240,104 @@ describe('PUT /v1/wca/teachers/:teacherId/named-students/:namedStudentId', () =>
     );
   });
 });
+
+describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
+  beforeEach(() => {
+    mocks.query.mockReset();
+    mocks.requireAuth.mockReset();
+    mocks.hasActiveMembership.mockReset();
+  });
+
+  it('allows an active member student to choose and replace their own teacher', async () => {
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02' });
+    mocks.hasActiveMembership.mockResolvedValueOnce(true);
+    mocks.query
+      .mockResolvedValueOnce([
+        { wca_id: '2026GANR02', name: 'Student' },
+        { wca_id: '2017YANR02', name: 'Teacher' },
+      ])
+      .mockResolvedValueOnce([{ teacher_wca_id: '2020TENG01' }])
+      .mockResolvedValueOnce([{
+        student_wca_id: '2026GANR02',
+        student_name: 'Student',
+        event_id: '333',
+        teacher_wca_id: '2017YANR02',
+        teacher_name: 'Teacher',
+      }]);
+
+    const response = await app.request('/v1/wca/teachers/2026ganr02/333', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ teacherWcaId: '2017yanr02' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ teacher: {
+      studentWcaId: '2026GANR02',
+      studentName: 'Student',
+      eventId: '333',
+      teacherWcaId: '2017YANR02',
+      teacherName: 'Teacher',
+    } });
+    expect(mocks.hasActiveMembership).toHaveBeenCalledWith('2026GANR02');
+    expect(mocks.query).toHaveBeenNthCalledWith(
+      3,
+      expect.not.stringContaining('WHERE wca_teachers.teacher_wca_id = EXCLUDED.teacher_wca_id'),
+      expect.arrayContaining(['2026GANR02', '333', '2017YANR02']),
+    );
+  });
+
+  it('rejects a non-member student before changing their own teacher', async () => {
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02' });
+    mocks.hasActiveMembership.mockResolvedValueOnce(false);
+
+    const response = await app.request('/v1/wca/teachers/2026ganr02/333', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ teacherWcaId: '2017yanr02' }),
+    });
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: 'active membership required' });
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+});
+
+describe('DELETE /v1/wca/teachers/:studentId/:eventId', () => {
+  beforeEach(() => {
+    mocks.query.mockReset();
+    mocks.requireAuth.mockReset();
+    mocks.hasActiveMembership.mockReset();
+  });
+
+  it('allows an active member student to remove their own teacher relation', async () => {
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02' });
+    mocks.hasActiveMembership.mockResolvedValueOnce(true);
+    mocks.query
+      .mockResolvedValueOnce([{ teacher_wca_id: '2017YANR02' }])
+      .mockResolvedValueOnce([]);
+
+    const response = await app.request('/v1/wca/teachers/2026ganr02/333', { method: 'DELETE' });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true });
+    expect(mocks.hasActiveMembership).toHaveBeenCalledWith('2026GANR02');
+    expect(mocks.query).toHaveBeenNthCalledWith(
+      2,
+      'DELETE FROM wca_teachers WHERE student_wca_id = ? AND event_id = ?',
+      ['2026GANR02', '333'],
+    );
+  });
+
+  it('keeps removal of a student-owned relation behind membership', async () => {
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02' });
+    mocks.hasActiveMembership.mockResolvedValueOnce(false);
+    mocks.query.mockResolvedValueOnce([{ teacher_wca_id: '2017YANR02' }]);
+
+    const response = await app.request('/v1/wca/teachers/2026ganr02/333', { method: 'DELETE' });
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: 'active membership required' });
+    expect(mocks.query).toHaveBeenCalledTimes(1);
+  });
+});
