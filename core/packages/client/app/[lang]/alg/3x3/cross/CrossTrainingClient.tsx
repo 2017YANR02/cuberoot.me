@@ -112,7 +112,7 @@ export default function CrossTrainingClient() {
     onMove: (move, timestamp) => moveHandlerRef.current(move, timestamp),
     onNeedMac: requestMac,
   });
-  const colors = useSubsetSelection('single', 'Y');
+  const colors = useSubsetSelection('single', 'W');
   const [stage, setStage] = useState<StageTrainingStage>('cross');
   const [slot, setSlot] = useState<StageSlot>('best');
   const [mode, setMode] = useState<StageTrainingMode>('plan');
