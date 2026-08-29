@@ -13,7 +13,7 @@ import { CUBE_COLOR_LETTER_FOR_FACE, type CubeColorLetter } from '@/lib/cube-col
 import { orientedFaceColors } from '@/lib/cube-orientation';
 import { orientationXform } from '@/app/[lang]/sim/engine/nxn/stickering';
 import { FACE_EDGES, FACE_LETTERS, f2lSlots, type FaceIdx } from '@/lib/cross-trainer/model';
-import { conjugateSequence, facePermFor } from './reconstruct/orient';
+import { conjugateSequence, facePermFor } from '../../../../timer/_lib/reconstruct/orient';
 
 export type StageTrainingStage = 'cross' | 'xcross' | 'xxcross' | 'xxxcross';
 export type StageTrainingMode = 'plan' | 'guess' | 'smart';
