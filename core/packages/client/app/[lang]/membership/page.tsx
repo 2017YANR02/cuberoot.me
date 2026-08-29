@@ -18,7 +18,7 @@ import MembershipBadge from '@/components/MembershipBadge';
 import { Spinner } from '@/components/Spinner/Spinner';
 import {
   listPlans, getMyMembership, getOrderStatus, membershipExpiry,
-  reconcileVisiblePlan,
+  reconcileVisiblePlan, AUTO_RENEW_PLAN_SLUG,
   type MembershipPlan, type Membership, type PayChannels,
 } from '@/lib/membership-api';
 import PayModal from './PayModal';
@@ -127,7 +127,7 @@ export default function MembershipPage() {
   const renewMembership = useCallback(() => {
     if (!loggedIn) { login(); return; }
     if (!payEnabled) { setDonateOpen(true); return; }
-    const list = plans ?? [];
+    const list = (plans ?? []).filter((plan) => plan.slug !== AUTO_RENEW_PLAN_SLUG);
     const target =
       list.find((p) => p.slug === membership?.planSlug) ??
       list.find((p) => p.period === 'month') ??
@@ -144,8 +144,9 @@ export default function MembershipPage() {
   }, [renew, mounted, plans, membership]);
 
   const sortedPlans = useMemo(() => plans ?? [], [plans]);
-  const monthlyPlan = sortedPlans.find((plan) => plan.period === 'month');
-  const showAutoRenew = !!monthlyPlan;
+  const autoRenewPlan = sortedPlans.find((plan) => plan.slug === AUTO_RENEW_PLAN_SLUG);
+  const oneTimePlans = sortedPlans.filter((plan) => plan.slug !== AUTO_RENEW_PLAN_SLUG);
+  const showAutoRenew = !!autoRenewPlan;
 
   const handlePlanUpdated = useCallback((updatedPlan: MembershipPlan) => {
     setPlans((current) => current ? reconcileVisiblePlan(current, updatedPlan) : current);
@@ -212,12 +213,12 @@ export default function MembershipPage() {
         })}</div>
       ) : (
         <div className="mem-plans">
-          {showAutoRenew && monthlyPlan && (
+          {showAutoRenew && autoRenewPlan && (
             <div className="mem-plan is-autorenew">
               <span className="mem-plan-tag">{tr({ zh: '自动续费', en: 'Auto-renew' })}</span>
               <div className="mem-plan-name">{tr({ zh: '连续包月', en: 'Monthly auto-renewal' })}</div>
               <div className="mem-plan-price">
-                <span className="mem-plan-amount">{fmtPrice(monthlyPlan.priceCents, monthlyPlan.currency)}</span>
+                <span className="mem-plan-amount">{fmtPrice(autoRenewPlan.priceCents, autoRenewPlan.currency)}</span>
                 <span className="mem-plan-unit">/ {tr({ zh: '月', en: 'month' })}</span>
               </div>
               <ul className="mem-plan-perks">
@@ -230,7 +231,7 @@ export default function MembershipPage() {
               </button>
             </div>
           )}
-          {sortedPlans.map((plan) => {
+          {oneTimePlans.map((plan) => {
             const current = activeMember && membership?.planSlug === plan.slug && !membership.lifetime;
             return (
               <div key={plan.slug} className={`mem-plan${plan.period === 'lifetime' ? ' is-feature' : ''}`}>
@@ -312,9 +313,9 @@ export default function MembershipPage() {
         />
       )}
       {donateOpen && <DonateModal lang={isZh ? 'zh' : 'en'} onClose={() => setDonateOpen(false)} />}
-      {autoRenewOpen && monthlyPlan && (
+      {autoRenewOpen && autoRenewPlan && (
         <AutoRenewModal
-          price={fmtPrice(monthlyPlan.priceCents, monthlyPlan.currency)}
+          price={fmtPrice(autoRenewPlan.priceCents, autoRenewPlan.currency)}
           onClose={() => setAutoRenewOpen(false)}
         />
       )}

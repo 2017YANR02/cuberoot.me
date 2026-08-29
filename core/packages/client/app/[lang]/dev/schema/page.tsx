@@ -645,6 +645,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 177, slug: 'named_student_nationality', desc: { zh: '无 WCA ID 学生名册增加必填国籍，以老师的 WCA 国籍回填已有记录，并阻止同一老师重复添加同名学生。', en: 'Require nationality for named student rosters, backfill existing entries from each teacher’s WCA nationality, and prevent duplicate names within one teacher’s roster.' } },
   { n: 178, slug: 'wca_friend_contacts', desc: { zh: '好友列表可保存尚未注册 CubeRoot 的 WCA 选手，并明确区分私有条目与双向好友关系。', en: 'Allow friend lists to save WCA cubers who have not registered for CubeRoot, while clearly separating private entries from mutual friendships.' } },
   { n: 179, slug: 'mobile_auth_pkce', desc: { zh: '复用短时单次票据表，为 Android/iOS 系统浏览器登录增加用途隔离与 PKCE challenge 绑定。', en: 'Reuse the short-lived ticket table for Android/iOS browser sign-in with purpose isolation and PKCE challenge binding.' } },
+  { n: 180, slug: 'membership_auto_renew_plan', desc: { zh: '把尚未上线的连续包月登记为独立套餐，默认不公开并复用会员后台的显示开关。', en: 'Register the unreleased monthly auto-renewal offer as a separate hidden plan controlled by the membership admin visibility toggle.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

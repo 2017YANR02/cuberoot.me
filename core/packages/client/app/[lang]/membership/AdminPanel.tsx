@@ -6,7 +6,7 @@
  *  - 会员列表:当前会员 + 到期,可撤销。
  *  - 套餐:改价格(元)/ 启用,免动 migration。
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus, Trash2, Check } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
@@ -16,6 +16,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { fmtDate } from '@/lib/membership-format';
 import {
   adminGrant, adminList, adminRevoke, adminUpdatePlan,
+  AUTO_RENEW_PLAN_SLUG,
   type MembershipPlan, type Membership,
 } from '@/lib/membership-api';
 
@@ -26,9 +27,13 @@ interface Props {
 }
 
 export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
+  const grantablePlans = useMemo(
+    () => plans.filter((plan) => plan.slug !== AUTO_RENEW_PLAN_SLUG),
+    [plans],
+  );
   const [picked, setPicked] = useState<WcaPersonLite | null>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
-  const [grantPlan, setGrantPlan] = useState(plans[0]?.slug ?? '');
+  const [grantPlan, setGrantPlan] = useState(grantablePlans[0]?.slug ?? '');
   const [granting, setGranting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -39,8 +44,8 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
   const [planUpdating, setPlanUpdating] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!plans.some((plan) => plan.slug === grantPlan)) setGrantPlan(plans[0]?.slug ?? '');
-  }, [plans, grantPlan]);
+    if (!grantablePlans.some((plan) => plan.slug === grantPlan)) setGrantPlan(grantablePlans[0]?.slug ?? '');
+  }, [grantablePlans, grantPlan]);
   useEffect(() => {
     if (adminPlans.length === 0 && plans.length > 0) setAdminPlans(plans);
   }, [adminPlans.length, plans]);
@@ -138,7 +143,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
             })}
           />
           <select value={grantPlan} onChange={(e) => setGrantPlan(e.target.value)} className="mem-admin-plansel">
-            {plans.map((p) => <option key={p.slug} value={p.slug}>{isZh ? p.nameZh : p.nameEn}</option>)}
+            {grantablePlans.map((p) => <option key={p.slug} value={p.slug}>{isZh ? p.nameZh : p.nameEn}</option>)}
           </select>
           <button className="mem-admin-grant-btn" onClick={() => void grant()} disabled={!picked?.id || granting}>
             <Plus size={14} /> {granting ? '…' : tr({ zh: '开通', en: 'Grant'
@@ -168,7 +173,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
             <BoolToggle
               value={p.active !== false}
               onChange={(active) => void updateVisibility(p, active)}
-              label={tr({ zh: '公开显示', en: 'Show publicly' })}
+              label={tr({ zh: '公开', en: 'Public' })}
               disabled={planUpdating === p.slug}
             />
           </div>
