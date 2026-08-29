@@ -40,8 +40,10 @@
 
 ## 数据模型
 
-`migrations/0046_membership.sql` + `migrations/0180_membership_auto_renew_plan.sql` + `migrations/0181_enterprise_membership_plans.sql`:
+`migrations/0046_membership.sql` + `migrations/0180_membership_auto_renew_plan.sql` + `migrations/0181_enterprise_membership_plans.sql` + `migrations/0182_membership_plan_perks.sql`:
 - `membership_plans` — 套餐(slug / period / period_count / price_cents / perks)。个人月度/年度和永久是当前一次性套餐；连续包月/包年是默认不公开的未来自动续费套餐；企业月度/年度沿用当前单账号会员开通流程。价格和公开状态都由后台控制。
+- 个人权益 — 不限量三阶云端最少步快速求解、每月 10 把高手解法复盘、专属会员徽章、新功能抢先体验、致谢名单署名；永久会员另含永久有效说明。
+- 企业权益 — 包含全部个人权益，另含师生主页与排名页展示、企业专属介绍页、教程/图文/视频云端存储和企业课程方案定制。
 - `membership_orders` — 每次下单一条(`out_trade_no` 我方单号;status pending→paid;raw_notify 审计)。
 - `memberships` — 每用户一行(plan_slug / expires_at / source / 选填 contact)。生效判定不存 status,读时算:`expires_at IS NULL 或 > now()`。
 
