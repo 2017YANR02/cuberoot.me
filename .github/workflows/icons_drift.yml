@@ -21,12 +21,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          sparse-checkout: core
+          sparse-checkout: |
+            core
+            .node-version
           filter: blob:none
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version-file: '.node-version'
 
       - name: Resolve workspace layout
         id: workspace

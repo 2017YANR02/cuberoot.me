@@ -8,6 +8,7 @@ on:
   push:
     branches: [main]
     paths:
+      - '.node-version'
       - 'core/packages/server/**'
       - 'core/apps/api/**'
       - 'core/packages/puzzle-render-core/**'
@@ -39,6 +40,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
+            .node-version
             core
             ops/nginx
           filter: blob:none
@@ -50,7 +52,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: '.node-version'
           cache: 'pnpm'
           cache-dependency-path: core/pnpm-lock.yaml
 

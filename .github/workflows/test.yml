@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - '.node-version'
       - 'core/**'
       - '!core/packages/platform/**'
       - 'docs/platform-capability-manifest.json'
@@ -28,6 +29,7 @@ on:
   push:
     branches: [main]
     paths:
+      - '.node-version'
       - 'core/**'
       - '!core/packages/platform/**'
       - 'docs/platform-capability-manifest.json'
@@ -92,6 +94,7 @@ jobs:
           # worker ↔ TABLE_SETS 契约)。**只列这一个文件** —— 同目录 tables/ 是 30MB+ 的
           # .bin.gz,整目录拉进来会拖垮 checkout。
           sparse-checkout: |
+            /.node-version
             /core/
             /docs/generated-artifacts.json
             /docs/platform-capability-manifest.json
@@ -136,7 +139,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version-file: '.node-version'
           cache: 'pnpm'
           cache-dependency-path: core/pnpm-lock.yaml
 
@@ -263,6 +266,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           sparse-checkout: |
+            .node-version
             core
           filter: blob:none
 
@@ -272,7 +276,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version-file: '.node-version'
           cache: 'pnpm'
           cache-dependency-path: core/pnpm-lock.yaml
 
@@ -385,6 +389,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           sparse-checkout: |
+            .node-version
             core
           filter: blob:none
 
@@ -394,7 +399,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version-file: '.node-version'
           cache: 'pnpm'
           cache-dependency-path: core/pnpm-lock.yaml
 
