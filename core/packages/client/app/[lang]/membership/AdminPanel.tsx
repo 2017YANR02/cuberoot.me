@@ -16,7 +16,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { fmtDate } from '@/lib/membership-format';
 import {
   adminGrant, adminList, adminRevoke, adminUpdatePlan,
-  AUTO_RENEW_PLAN_SLUG,
+  isAutoRenewPlanSlug,
   type MembershipPlan, type Membership,
 } from '@/lib/membership-api';
 
@@ -28,7 +28,7 @@ interface Props {
 
 export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
   const grantablePlans = useMemo(
-    () => plans.filter((plan) => plan.slug !== AUTO_RENEW_PLAN_SLUG),
+    () => plans.filter((plan) => !isAutoRenewPlanSlug(plan.slug)),
     [plans],
   );
   const [picked, setPicked] = useState<WcaPersonLite | null>(null);

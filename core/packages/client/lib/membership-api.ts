@@ -10,7 +10,12 @@ const BASE = API_ORIGIN + '/v1/membership';
 
 export type MembershipPeriod = 'month' | 'year' | 'week' | 'day' | 'lifetime';
 
-export const AUTO_RENEW_PLAN_SLUG = 'monthly_auto_renew';
+export const AUTO_RENEW_PLAN_SLUGS = ['monthly_auto_renew', 'yearly_auto_renew'] as const;
+const AUTO_RENEW_PLAN_SLUG_SET = new Set<string>(AUTO_RENEW_PLAN_SLUGS);
+
+export function isAutoRenewPlanSlug(slug: string): boolean {
+  return AUTO_RENEW_PLAN_SLUG_SET.has(slug);
+}
 
 export interface MembershipPlan {
   slug: string;
