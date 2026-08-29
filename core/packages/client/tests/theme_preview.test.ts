@@ -19,7 +19,44 @@ describe('appearance preview', () => {
     document.documentElement.removeAttribute('data-palette-scheme');
     document.documentElement.removeAttribute('data-contrast');
     document.documentElement.style.colorScheme = '';
+    Object.defineProperty(document, 'startViewTransition', {
+      configurable: true,
+      value: undefined,
+    });
     vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  });
+
+  it('handles the expected ready rejection when rapid previews skip a transition', () => {
+    const firstReadyCatch = vi.fn(() => Promise.resolve());
+    const secondReadyCatch = vi.fn(() => Promise.resolve());
+    const firstSkip = vi.fn();
+    const transitions = [
+      {
+        ready: { catch: firstReadyCatch } as unknown as Promise<unknown>,
+        finished: new Promise<unknown>(() => undefined),
+        skipTransition: firstSkip,
+      },
+      {
+        ready: { catch: secondReadyCatch } as unknown as Promise<unknown>,
+        finished: Promise.resolve(),
+        skipTransition: vi.fn(),
+      },
+    ];
+    Object.defineProperty(document, 'startViewTransition', {
+      configurable: true,
+      value: vi.fn((update: () => void) => {
+        update();
+        return transitions.shift();
+      }),
+    });
+
+    previewPalette('hantan');
+    previewPalette('xinhuang');
+
+    expect(firstSkip).toHaveBeenCalledOnce();
+    expect(firstReadyCatch).toHaveBeenCalledOnce();
+    expect(secondReadyCatch).toHaveBeenCalledOnce();
+    expect(document.documentElement.dataset.palette).toBe('xinhuang');
   });
 
   it('previews a palette without changing the saved appearance', () => {
