@@ -40,8 +40,8 @@
 
 ## 数据模型
 
-`migrations/0046_membership.sql` + `migrations/0180_membership_auto_renew_plan.sql`:
-- `membership_plans` — 套餐(slug / period / period_count / price_cents / perks)。月/年/永久是当前一次性套餐；连续包月/包年是默认不公开的未来自动续费套餐，价格和公开状态都由后台控制。
+`migrations/0046_membership.sql` + `migrations/0180_membership_auto_renew_plan.sql` + `migrations/0181_enterprise_membership_plans.sql`:
+- `membership_plans` — 套餐(slug / period / period_count / price_cents / perks)。个人月度/年度和永久是当前一次性套餐；连续包月/包年是默认不公开的未来自动续费套餐；企业月度/年度沿用当前单账号会员开通流程。价格和公开状态都由后台控制。
 - `membership_orders` — 每次下单一条(`out_trade_no` 我方单号;status pending→paid;raw_notify 审计)。
 - `memberships` — 每用户一行(plan_slug / expires_at / source / 选填 contact)。生效判定不存 status,读时算:`expires_at IS NULL 或 > now()`。
 
