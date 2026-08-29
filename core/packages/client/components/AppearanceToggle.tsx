@@ -174,6 +174,9 @@ export default function AppearanceToggle({ className }: { className?: string }) 
       <button
         type="button"
         className={cls}
+        onPointerEnter={(event) => {
+          if (event.pointerType !== 'touch') setOpen(true);
+        }}
         onClick={() => {
           if (open) endPreview();
           setOpen((v) => !v);
