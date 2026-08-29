@@ -1,6 +1,6 @@
 ---
 name: admin-api-client
-description: "Use when writing a client-side helper for a public-GET plus admin-write Hono route. Reuse authHeaders and handleApi from utils/admin_api instead of duplicating token or response handling."
+description: "Use when adding a client API helper for a public-GET plus admin-write Hono route, especially requests mentioning admin API, X-Admin-Key, authHeaders, handleApi, or 新 API util. Reuse utils/admin_api instead of duplicating token and response handling."
 ---
 
 # Admin API client (复用 helper)

@@ -1,6 +1,6 @@
 ---
 name: deploy-public-asset
-description: "Use when adding site images, fonts, GeoJSON, textures, WASM, or other static assets. Next assets belong in client/public; shared fork and statistics assets remain in tools or stats."
+description: "Use when adding or debugging public/static assets such as images, fonts, GeoJSON, textures, or WASM, including public/ and asset 404 requests. Next assets belong in client/public; shared fork and statistics assets remain in tools or stats."
 ---
 
 # 新增 public / 静态资源

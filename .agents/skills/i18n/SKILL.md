@@ -1,6 +1,6 @@
 ---
 name: i18n
-description: "Use when adding or editing user-visible text in the React client. Supports only English and Simplified Chinese through tr, T, useT, or locale JSON; never use inline isZh language ternaries."
+description: "Use for any new or edited user-visible React text, 中英双语、翻译、i18n, locale JSON, language/theme controls, or HeaderToggles. Support only English and Simplified Chinese through tr, T, useT, or locale JSON; never use inline isZh language ternaries."
 ---
 
 # i18n（core/packages/client，主工作区）

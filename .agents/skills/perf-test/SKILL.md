@@ -1,6 +1,6 @@
 ---
 name: perf-test
-description: "Use when measuring, diagnosing, or optimizing page-load performance, including regional slowness, Web Vitals, TTFB, bundles, rendering, and lazy loading in the Next.js client."
+description: "Use when measuring, diagnosing, or optimizing page-load performance: regional slowness, LCP/FCP/INP, TTFB, Web Vitals, PageSpeed, WebPageTest, bundles, first paint, or lazy loading. Applies to the Next.js client and its regional/browser evidence workflow."
 ---
 
 # Performance diagnosis

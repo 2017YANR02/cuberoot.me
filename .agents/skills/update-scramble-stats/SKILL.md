@@ -1,6 +1,6 @@
 ---
 name: update-scramble-stats
-description: "更新 /scramble/stats 数据时使用，包括三阶阶段难度、非 3x3 整解最优步数、333 HTM、SQ1 精确分布及 xcross 等回填。管道只能在具备本地 solver 表的环境运行。"
+description: "用户说更新打乱统计、更新十字/阶段难度、更新 puzzle 或 SQ1 分布、333 HTM/333opt、补 xcross、backfill_xcross_variant 或 pseudo_f2leo 回填时使用。执行 /scramble/stats 的本地增量管道；只能在具备 solver、cubeopt 等本地大表的环境运行。"
 ---
 
 # 更新打乱统计

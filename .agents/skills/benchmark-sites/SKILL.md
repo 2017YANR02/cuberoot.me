@@ -1,6 +1,6 @@
 ---
 name: benchmark-sites
-description: "Use when comparing how mainstream sites or major companies handle a UX, i18n, SEO, routing, pricing, or product pattern. Verify 6–10 relevant sites across major and adjacent products before concluding."
+description: "Use when the user asks 主流网站、大厂、业界怎么做、对标, or how other products handle UX, i18n, SEO, routing, pricing, or a feature. Verify 6–10 major and adjacent products with web research before concluding; do not answer from memory."
 ---
 
 # 主流网站对标

@@ -1,6 +1,6 @@
 ---
 name: sim-add-puzzle
-description: "给 /sim 增加新魔方类型时使用，覆盖 Three.js 3D 渲染、转角动画、拖拽转动及招式接入。只处理模拟器交互集成；新求解器引擎走 new-substep-solver。"
+description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型、X cube simulator 或拖拽转动时使用。覆盖 Three.js 3D 渲染、转角动画、raycast 拖拽及招式接入；只处理模拟器交互，新求解器引擎走 new-substep-solver。"
 ---
 
 # sim-add-puzzle

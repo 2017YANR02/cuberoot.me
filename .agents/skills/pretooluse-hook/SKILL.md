@@ -1,6 +1,6 @@
 ---
 name: pretooluse-hook
-description: "写、改或排查 Codex PreToolUse 拦截钩子时使用。覆盖 pwsh 和 Node JSON deny、scope 与豁免、fail-open、exit 0 要求，以及必须通过真实工具调用验证。"
+description: "用户说写 hook、改 hook、PreToolUse、拦截钩子、写入即拦、permissionDecision，或 hook 不生效/没拦住时使用。覆盖 pwsh 和 Node JSON deny、scope 与豁免、fail-open、exit 0，以及真实工具调用验证。"
 ---
 
 # 写 Codex 拦截钩子(PreToolUse）

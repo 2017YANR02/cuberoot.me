@@ -1,6 +1,6 @@
 ---
 name: theme-tokens
-description: "Use when editing CSS colors, backgrounds, borders, text colors, or light/dark theme behavior. Reuse the site's theme tokens and color-mix rules, including dark-locked pages."
+description: "Use whenever editing 颜色、background、border、text color、dark/light mode, theme tokens, color-mix, hex, rgba, or hard-coded grays such as #888. Reuse the site's token system and dark-locked page rules."
 ---
 
 # Theme tokens — Codex 风 hex + color-mix
