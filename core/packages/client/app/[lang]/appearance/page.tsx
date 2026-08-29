@@ -116,29 +116,31 @@ export default function AppearancePage() {
                 </span>
               </span>
 
-              <span className="palette-scope ac-preview" data-palette={c.scope}>
-                <span className="ac-pv-top">
-                  <span className="ac-pv-dot" />
-                  <span className="ac-pv-title">魔方 Cube</span>
-                  <span className="ac-pv-faint">Ao5 12.34</span>
-                </span>
-                <span className="ac-pv-sub">Solve. Train. Analyze.</span>
-                <span className="ac-pv-panel">
-                  <span className="ac-pv-mono">R U R&#39; U&#39; R&#39; F R F&#39;</span>
-                </span>
-                <span className="ac-pv-actions">
-                  <span className="ac-pv-btn">{tr({ zh: '应用', en: 'Apply'
-                })}</span>
-                  <span className="ac-pv-btn-primary" aria-hidden="true"><Play size={12} /></span>
-                  <span className="ac-pv-btn-secondary" aria-hidden="true"><RotateCcw size={12} /></span>
-                </span>
-                <span className="ac-pv-chips">
-                  <span className="ac-pv-chip">OLL</span>
-                  <span className="ac-pv-chip-muted">F2L</span>
-                </span>
-                <span className="ac-pv-pop">
-                  <span className="ac-pv-pop-label">CFOP</span>
-                  <Check size={13} className="ac-pv-pop-check" />
+              <span className="palette-scope ac-preview-scope" data-palette={c.scope}>
+                <span className="ac-preview contrast-scope">
+                  <span className="ac-pv-top">
+                    <span className="ac-pv-dot" />
+                    <span className="ac-pv-title">魔方 Cube</span>
+                    <span className="ac-pv-faint">Ao5 12.34</span>
+                  </span>
+                  <span className="ac-pv-sub">Solve. Train. Analyze.</span>
+                  <span className="ac-pv-panel">
+                    <span className="ac-pv-mono">R U R&#39; U&#39; R&#39; F R F&#39;</span>
+                  </span>
+                  <span className="ac-pv-actions">
+                    <span className="ac-pv-btn">{tr({ zh: '应用', en: 'Apply'
+                  })}</span>
+                    <span className="ac-pv-btn-primary" aria-hidden="true"><Play size={12} /></span>
+                    <span className="ac-pv-btn-secondary" aria-hidden="true"><RotateCcw size={12} /></span>
+                  </span>
+                  <span className="ac-pv-chips">
+                    <span className="ac-pv-chip">OLL</span>
+                    <span className="ac-pv-chip-muted">F2L</span>
+                  </span>
+                  <span className="ac-pv-pop">
+                    <span className="ac-pv-pop-label">CFOP</span>
+                    <Check size={13} className="ac-pv-pop-check" />
+                  </span>
                 </span>
               </span>
             </button>
