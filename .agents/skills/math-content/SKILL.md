@@ -1,6 +1,6 @@
 ---
 name: math-content
-description: "Use when adding content under /math/* — 给数学板块补内容。两种模式:(A) 给已有长篇\"书\"页(如 /math/group 魔方与群论,62 节;/math/god)加新一节;(B) 加一个全新 /math 顶层主题页。全在 client (Next 16 App Router, app/[lang]/math/*)。覆盖自包含 section 文件 + dynamic 懒加载 + slug 路由 + 双语 + 手写交互 SVG。Triggers: \"/math\", \"math/group\", \"math/god\", \"群论\", \"加群论章节\", \"加一节\", \"math subpage\", \"加数学页\", \"数学长文\", \"扩充 /math\", \"add math section\", \"new math page\", \"math hub\", \"对称群\", \"群论可视化\"."
+description: "Use when adding content under /math, either a section in an existing long-form page such as /math/group or /math/god, or a new top-level math topic page in the Next client."
 ---
 
 # /math/* 加内容

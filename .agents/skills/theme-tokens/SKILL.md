@@ -1,6 +1,6 @@
 ---
 name: theme-tokens
-description: "Use when writing/editing CSS color values, backgrounds, borders, text colors, or dark/light theme behavior. shadcn-style token system + color-mix derivations + dark-locked page list. Triggers: \"颜色\", \"color\", \"background\", \"background-color\", \"border\", \"text color\", \"--background\", \"--foreground\", \"--muted\", \"--accent\", \"dark mode\", \"light mode\", \"theme\", \"主题\", \"暗色\", \"深色\", \"dark/light\", \"shadcn\", \"hex\", \"rgba\", \"color-mix\", \"#888\", \"#aaa\", \"#fff\", \"prefers-color-scheme\", \"data-theme\"."
+description: "Use when editing CSS colors, backgrounds, borders, text colors, or light/dark theme behavior. Reuse the site's theme tokens and color-mix rules, including dark-locked pages."
 ---
 
 # Theme tokens — Codex 风 hex + color-mix

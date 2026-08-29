@@ -1,6 +1,6 @@
 ---
 name: pretooluse-hook
-description: "写 / 改 Codex 拦截钩子(PreToolUse guard hook)时用 —— 写入或命令执行那一刻拦违规(裸 history、button 当导航、手写繁体、危险命令、自启浏览器等)。给出 JSON-deny 模板(pwsh + node)、scope/豁免/fail-open 约定、以及必须真触发验证的方法。本环境 auto 权限模式会静默忽略 exit 2,务必照此写。Triggers: \"写 hook\", \"加 hook\", \"改 hook\", \"PreToolUse\", \"拦截钩子\", \"写入即拦\", \"guard hook\", \"block-button-navigation\", \"block-raw-history\", \"block-handwritten-trad\", \"block-next-build\", \"guard-browser-launch\", \"permissionDecision\", \"hook 不生效\", \"hook 没拦住\", \"settings.json hooks\", \"write a hook\", \"pretooluse hook\"."
+description: "写、改或排查 Codex PreToolUse 拦截钩子时使用。覆盖 pwsh 和 Node JSON deny、scope 与豁免、fail-open、exit 0 要求，以及必须通过真实工具调用验证。"
 ---
 
 # 写 Codex 拦截钩子(PreToolUse）
