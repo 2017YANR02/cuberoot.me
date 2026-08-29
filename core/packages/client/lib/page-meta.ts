@@ -207,6 +207,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'alg/lsll/route': { title: { zh: 'LSLL 路线详情', en: 'LSLL Route Detail' } },
   'alg/progress': { title: { zh: '学习进度', en: 'Progress' } },
   'alg/progress/cases': { title: { zh: '公式清单', en: 'Algorithm List' } },
+  'alg/3x3/cross': {
+    title: { zh: '十字最优训练', en: 'Optimal Cross Training' },
+    description: {
+      zh: '三阶十字、XCross、XXCross 与 XXXCross 的最优解、最优步数和智能魔方训练。',
+      en: 'Optimal-solution, move-count and smart-cube training for 3x3 Cross, XCross, XXCross and XXXCross.',
+    },
+  },
   'alg/3x3/zbll/simple': {
     title: { zh: '简单 ZBLL', en: 'Simple ZBLL' },
     description: {

@@ -3,7 +3,7 @@
 import { normalizeScramble } from '@/lib/cross-solver';
 import { getRustCrossPool, poolSizeForDevice } from '@/lib/rust-cross-pool';
 import type { MovesTimed, RustCrossPool } from '@/lib/rust-cross-client';
-import { randomState333 } from './scramble/kociemba/random_state';
+import { randomState333 } from '../../../../timer/_lib/scramble/kociemba/random_state';
 import {
   STAGE_FIXED_LENGTH,
   STAGE_ORDER,

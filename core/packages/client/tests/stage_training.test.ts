@@ -18,7 +18,7 @@ import {
   stageTrainingMask,
   stageTrainingMasks,
   type StageTrainingConfig,
-} from '@/app/[lang]/timer/_lib/stage-training';
+} from '@/app/[lang]/alg/3x3/cross/_lib/stage-training';
 
 const faceletsAfter = (scramble: string) => toFaceletString(applyScramble(3, scramble));
 

@@ -338,6 +338,23 @@ export default function AlgPuzzleClient() {
 
       {regularSets.length > 0 && (
         <div className="alg-bento">
+          {puzzle === '3x3' && !picking && (
+            <AlgCard
+              href="/alg/3x3/cross"
+              prefetch={false}
+              thumb={(
+                <VisualCube
+                  setup=""
+                  view="iso"
+                  mask="cross_full"
+                  size={thumbSize}
+                  alt={tr({ zh: '十字训练', en: 'Cross training' })}
+                  local
+                />
+              )}
+              title={tr({ zh: '十字', en: 'Cross' })}
+            />
+          )}
           {regularSets.map(renderSetCard)}
         </div>
       )}

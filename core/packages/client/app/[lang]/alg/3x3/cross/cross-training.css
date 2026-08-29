@@ -1,36 +1,24 @@
-.stage-training-modal {
-  max-width: 760px;
+.cross-training-page {
+  min-height: 100%;
+  color: var(--foreground);
+}
+
+.cross-training-main {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: 24px 20px 40px;
 }
 
 .stage-training-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   margin-bottom: 14px;
 }
 
-.stage-training-head h2 {
+.stage-training-head h1 {
   margin: 0;
-}
-
-.stage-training-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-}
-
-.stage-training-close:hover {
-  background: var(--shell-hover);
-  color: var(--foreground);
+  font-size: 28px;
 }
 
 .stage-training-controls {
@@ -94,7 +82,7 @@
   padding: 7px 12px;
   border: 1px solid var(--border-default);
   border-radius: 6px;
-  background: var(--shell-chip);
+  background: var(--secondary);
   color: var(--foreground);
   font-size: 13px;
   cursor: pointer;
@@ -214,7 +202,7 @@
 
 .stage-training-number-button:hover:not(:disabled) {
   border-color: var(--border-strong);
-  background: var(--shell-hover);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .stage-training-number-button:disabled {
@@ -229,6 +217,49 @@
   line-height: 1.6;
 }
 
+.stage-training-mac {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 8px;
+  width: min(100%, 360px);
+}
+
+.stage-training-mac label {
+  color: var(--muted-foreground);
+}
+
+.stage-training-mac-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.stage-training-mac-input input {
+  min-width: 0;
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 30px 7px 9px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+}
+
+.stage-training-mac-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stage-training-primary:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
 .stage-training-actions {
   display: flex;
   align-items: center;
@@ -238,18 +269,12 @@
 }
 
 @media (max-width: 479px) {
-  .timer-modal-overlay:has(.stage-training-modal) {
-    align-items: stretch;
-    padding: 0;
+  .cross-training-main {
+    padding: 16px 14px 32px;
   }
 
-  .stage-training-modal {
-    max-width: none;
-    max-height: 100dvh;
-    min-height: 100dvh;
-    border: 0;
-    border-radius: 0;
-    padding: 16px;
+  .stage-training-head h1 {
+    font-size: 24px;
   }
 
   .stage-training-controls {
