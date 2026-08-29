@@ -41,6 +41,7 @@ pub mod state_space {
     pub const CROSS: usize = 190080;
     pub const EDGE6: usize = 42577920;
     pub const EP4: usize = 11880;
+    pub const EP5: usize = 95040;
     pub const EO12: usize = 2048;
 
     pub const CROSS_SOLVED: usize = 187520;
