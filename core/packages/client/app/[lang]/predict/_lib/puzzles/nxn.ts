@@ -17,6 +17,7 @@ import {
 } from '@cuberoot/shared/nnn-sim';
 import { cubeStickerIdFromPosit } from '@cuberoot/shared/cube-unfolded-svg';
 import { cubeOnly, expandGroups, tokenizeMoves } from '@cuberoot/shared/alg-notation';
+import { randomFaceMoves } from '@cuberoot/shared/timer';
 import { PIECE_GROUPS } from '@/lib/puzzle-image/puzzle-mask';
 import {
   CUSTOM_MOVES_MAX, groupsFromSids, normalizeQuotes,
@@ -40,8 +41,6 @@ const FACE_NAME = {
 } as const;
 
 const FACE_COLOR = { U: 'U', R: 'R', F: 'F', D: 'D', L: 'L', B: 'B' } as const;
-
-const TURN_SUFFIXES = ['', "'", '2'] as const;
 
 /** 一步拆成若干「(cstimer 面, 层深)」+ 四分之一圈数;认不出返回 null。 */
 interface Slice { face: number; depths: number[]; q: number }
@@ -97,16 +96,12 @@ export function makeNxnPuzzle(N: number): PredictPuzzle {
   /** 随机题面公式。宽转层数最多到 N/2 —— 再宽就等于反面的窄转,只是换个写法。 */
   const randomMoves = (count: number, rnd: () => number): string[] => {
     const maxWidth = Math.max(1, Math.floor(N / 2));
-    const out: string[] = [];
-    let last: string | null = null;
-    for (let i = 0; i < count; i++) {
-      let face: string;
-      do { face = FACES[Math.floor(rnd() * FACES.length)]; } while (face === last);
-      last = face;
+    return randomFaceMoves(count, rnd).map((turn) => {
+      const face = turn[0];
+      const suffix = turn.slice(1);
       const width = 1 + Math.floor(rnd() * maxWidth);
-      out.push(renderTurn(face, width, TURN_SUFFIXES[Math.floor(rnd() * TURN_SUFFIXES.length)]));
-    }
-    return out;
+      return renderTurn(face, width, suffix);
+    });
   };
 
   return {

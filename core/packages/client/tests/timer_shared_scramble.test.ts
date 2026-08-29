@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { scramble333 } from '@cuberoot/shared/timer';
+import { randomFaceMoves, scramble333 } from '@cuberoot/shared/timer';
 import { scramble333 as websiteScramble333 } from '@/app/[lang]/timer/_lib/scramble/nxnxn';
 
 const AXIS: Record<string, number> = {
@@ -47,5 +47,12 @@ describe('shared 3x3 scramble generator', () => {
     for (const value of [0, 1, -1, Number.NaN]) {
       assertValid(scramble333(() => value));
     }
+  });
+
+  it('shares canonical variable-length sequences with bounded count handling', () => {
+    expect(randomFaceMoves(6, () => 0)).toHaveLength(6);
+    expect(randomFaceMoves(3.9, () => 0)).toHaveLength(3);
+    expect(randomFaceMoves(-1, () => 0)).toEqual([]);
+    expect(randomFaceMoves(Number.POSITIVE_INFINITY, () => 0)).toEqual([]);
   });
 });
