@@ -20,6 +20,10 @@ import {
   applyTheme,
   applyPalette,
   applyContrast,
+  previewTheme,
+  previewPalette,
+  previewContrast,
+  restorePersistedAppearance,
   readContrast,
   readPalette,
   useEffectiveTheme,
@@ -65,7 +69,34 @@ export default function AppearanceToggle({ className }: { className?: string }) 
   const [contrast, setContrast] = useState<ContrastLevel>('normal');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const previewingRef = useRef(false);
   const eff = useEffectiveTheme();
+
+  const endPreview = () => {
+    if (!previewingRef.current) return;
+    previewingRef.current = false;
+    restorePersistedAppearance();
+  };
+
+  const closeMenu = () => {
+    endPreview();
+    setOpen(false);
+  };
+
+  const showThemePreview = (choice: 'light' | 'dark') => {
+    previewingRef.current = true;
+    previewTheme(choice);
+  };
+
+  const showPalettePreview = (id: PaletteId) => {
+    previewingRef.current = true;
+    previewPalette(id);
+  };
+
+  const showContrastPreview = (level: ContrastLevel) => {
+    previewingRef.current = true;
+    previewContrast(level);
+  };
 
   useEffect(() => {
     const readState = () => {
@@ -85,10 +116,10 @@ export default function AppearanceToggle({ className }: { className?: string }) 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) closeMenu();
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') closeMenu();
     };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
@@ -98,8 +129,13 @@ export default function AppearanceToggle({ className }: { className?: string }) 
     };
   }, [open]);
 
+  useEffect(() => () => {
+    if (previewingRef.current) restorePersistedAppearance();
+  }, []);
+
   // 选明暗:清掉配色回经典明暗(在同一次淡出里清),并持久化 theme。
   const pickTheme = (choice: 'light' | 'dark') => {
+    previewingRef.current = false;
     setOpen(false);
     persistItem(THEME_KEY, choice);
     applyTheme(choice, true, true);
@@ -108,12 +144,14 @@ export default function AppearanceToggle({ className }: { className?: string }) 
 
   // 选配色:覆盖明暗(applyPalette 内部已 dispatch theme-change)。
   const pickPalette = (id: PaletteId) => {
+    previewingRef.current = false;
     setOpen(false);
     applyPalette(id, true);
   };
 
   // 选柔和度:正交于明暗 / 配色,菜单不关,让用户原地连点三档看效果。
   const pickContrast = (level: ContrastLevel) => {
+    previewingRef.current = false;
     setContrast(level);
     applyContrast(level, true);
   };
@@ -136,7 +174,10 @@ export default function AppearanceToggle({ className }: { className?: string }) 
       <button
         type="button"
         className={cls}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (open) endPreview();
+          setOpen((v) => !v);
+        }}
         title={L.title}
         aria-label={L.title}
         aria-haspopup="menu"
@@ -145,7 +186,14 @@ export default function AppearanceToggle({ className }: { className?: string }) 
         <ButtonIcon size={14} />
       </button>
       {open && (
-        <div className="lang-menu palette-menu appearance-menu" role="menu">
+        <div
+          className="lang-menu palette-menu appearance-menu"
+          role="menu"
+          onPointerLeave={endPreview}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) endPreview();
+          }}
+        >
           <div className="appearance-sec-label">{L.scheme}</div>
 
           <button
@@ -153,6 +201,9 @@ export default function AppearanceToggle({ className }: { className?: string }) 
             role="menuitemradio"
             aria-checked={onScheme && eff === 'dark'}
             className={`lang-menu-item${onScheme && eff === 'dark' ? ' is-active' : ''}`}
+            onPointerEnter={() => showThemePreview('dark')}
+            onPointerLeave={endPreview}
+            onFocus={() => showThemePreview('dark')}
             onClick={() => pickTheme('dark')}
           >
             <span className="lang-menu-check">{onScheme && eff === 'dark' && <Check size={13} />}</span>
@@ -165,6 +216,9 @@ export default function AppearanceToggle({ className }: { className?: string }) 
             role="menuitemradio"
             aria-checked={onScheme && eff === 'light'}
             className={`lang-menu-item${onScheme && eff === 'light' ? ' is-active' : ''}`}
+            onPointerEnter={() => showThemePreview('light')}
+            onPointerLeave={endPreview}
+            onFocus={() => showThemePreview('light')}
             onClick={() => pickTheme('light')}
           >
             <span className="lang-menu-check">{onScheme && eff === 'light' && <Check size={13} />}</span>
@@ -183,6 +237,9 @@ export default function AppearanceToggle({ className }: { className?: string }) 
                 role="menuitemradio"
                 aria-checked={on}
                 className={`lang-menu-item${on ? ' is-active' : ''}`}
+                onPointerEnter={() => showPalettePreview(p.id)}
+                onPointerLeave={endPreview}
+                onFocus={() => showPalettePreview(p.id)}
                 onClick={() => pickPalette(p.id)}
               >
                 <span className="lang-menu-check">{on && <Check size={13} />}</span>
@@ -203,6 +260,9 @@ export default function AppearanceToggle({ className }: { className?: string }) 
                   role="menuitemradio"
                   aria-checked={on}
                   className={`appearance-chip${on ? ' is-active' : ''}`}
+                  onPointerEnter={() => showContrastPreview(c.id)}
+                  onPointerLeave={endPreview}
+                  onFocus={() => showContrastPreview(c.id)}
                   onClick={() => pickContrast(c.id)}
                 >
                   {nameOf(c)}
@@ -212,7 +272,13 @@ export default function AppearanceToggle({ className }: { className?: string }) 
           </div>
           <div className="appearance-hint">{L.softenHint}</div>
 
-          <AppLink href="/appearance" className="palette-menu-more" onClick={() => setOpen(false)}>
+          <AppLink
+            href="/appearance"
+            className="palette-menu-more"
+            onPointerEnter={endPreview}
+            onFocus={endPreview}
+            onClick={closeMenu}
+          >
             {L.more} →
           </AppLink>
         </div>
