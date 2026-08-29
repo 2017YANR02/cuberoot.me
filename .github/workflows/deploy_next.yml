@@ -8,6 +8,7 @@ on:
   push:
     branches: [main]
     paths:
+      - '.node-version'
       - 'core/packages/client/**'
       - 'core/apps/web/**'
       - 'core/packages/event-icon/**'
@@ -46,6 +47,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
+            .node-version
             core
             ops
           filter: blob:none
@@ -57,7 +59,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: '.node-version'
           cache: 'pnpm'
           cache-dependency-path: core/pnpm-lock.yaml
 
