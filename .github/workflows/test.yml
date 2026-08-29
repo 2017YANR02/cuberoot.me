@@ -365,6 +365,7 @@ jobs:
           expected_permissions=$(printf '%s\n' \
             'android.permission.ACCESS_NETWORK_STATE' \
             'android.permission.INTERNET' \
+            'android.permission.VIBRATE' \
             'me.cuberoot.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION' | sort)
           echo "$permissions"
           if [[ "$permissions" != "$expected_permissions" ]]; then
