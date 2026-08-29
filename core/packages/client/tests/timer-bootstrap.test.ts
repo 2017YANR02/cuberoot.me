@@ -124,6 +124,7 @@ describe('TimerBootstrap', () => {
     });
 
     expect(host.textContent).toContain(TIMER_BOOT_COPY.outdatedWechatMessage.en);
+    expect(host.textContent).toContain('minimum supported Chromium version is 111');
     expect(host.textContent).toContain('merely choosing “Open in system browser” may not help');
     expect(host.textContent).not.toContain(TIMER_BOOT_COPY.message.en);
   });
@@ -141,7 +142,9 @@ describe('TimerBootstrap', () => {
     });
 
     expect(host.textContent).toContain(TIMER_BOOT_COPY.outdatedIosMessage.en);
-    expect(host.textContent).toContain('switching browsers on the same device may not help');
+    expect(host.textContent).toContain('minimum supported iOS/iPadOS version is 16.4');
+    expect(host.textContent).toContain('latest version available for the device');
+    expect(host.textContent).toContain('Switching browsers on the same device may not help');
     expect(host.textContent).not.toContain(TIMER_BOOT_COPY.message.en);
   });
 
@@ -158,6 +161,7 @@ describe('TimerBootstrap', () => {
     });
 
     expect(host.textContent).toContain(TIMER_BOOT_COPY.outdatedBrowserMessage.en);
+    expect(host.textContent).toContain('minimum supported versions are Chrome, Edge, and Firefox 111 or Safari 16.4');
     expect(host.textContent).not.toContain(TIMER_BOOT_COPY.outdatedWechatMessage.en);
   });
 
@@ -345,6 +349,8 @@ describe('app bootstrap early guard', () => {
     vi.advanceTimersByTime(0);
 
     expect(shell.textContent).toContain(TIMER_BOOT_COPY.outdatedIosMessage.zh);
+    expect(shell.textContent).toContain('最低支持 iOS/iPadOS 16.4');
+    expect(shell.textContent).toContain('升级到设备可用的最新版本');
     expect(shell.textContent).toContain('同一台设备上更换浏览器可能无效');
     expect(shell.textContent).not.toContain(TIMER_BOOT_COPY.message.zh);
   });
