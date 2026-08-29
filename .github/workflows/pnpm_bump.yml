@@ -29,6 +29,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           sparse-checkout: |
+            .node-version
             core
             .codex/hooks
           filter: blob:none
@@ -73,7 +74,7 @@ jobs:
       - uses: actions/setup-node@v6
         if: steps.check.outputs.changed == 'true' && steps.setup.outcome == 'success'
         with:
-          node-version: '22'
+          node-version-file: '.node-version'
           cache: 'pnpm'
           cache-dependency-path: core/pnpm-lock.yaml
 
