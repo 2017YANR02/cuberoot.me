@@ -147,9 +147,10 @@ body {
    :root:has() lifts tokens to root so body bg flips with the container; without
    this, max-width pages leak light bg on the sides. These pages don't
    participate in ThemeToggle — always dark, by design.
-   NOTE: Battle, Trainer (.trainer-root / .bld-trainer-root) and Recon
-   (.recon-page) are NO LONGER dark-locked — they follow the user's chosen theme
-   via the :root token set (chrome fully tokenized in their own CSS).
+   NOTE: Battle, Trainer (.trainer-root / .bld-trainer-root), Recon
+   (.recon-page), and WCA person pages (.wp-page) are NO LONGER dark-locked —
+   they follow the user's chosen theme via the :root token set (chrome fully
+   tokenized in their own CSS).
    `:not([data-palette-scheme=dark])` 让这些数据密集页只在「暗色」配色主题(寒潭/乌金)
    下放行——此时选择器不匹配,改由 :root[data-palette=x] (0,2,0) 整套上色;无配色 / 选
    「浅色」配色(克劳德/新篁/砚青/丹霞)时本块以 (0,3,1) 命中,把这些页钉回经典暗(浅色
@@ -157,7 +158,6 @@ body {
    由 lib/theme.ts + theme-bootstrap.ts 写,源在 lib/palettes.ts 的 scheme 字段)。 */
 html:root:not([data-palette-scheme=dark]):has(.wca-stats-page),
 html:root:not([data-palette-scheme=dark]):has(.wse-page),
-html:root:not([data-palette-scheme=dark]):has(.wp-page),
 html:root:not([data-palette-scheme=dark]):has(.records-page),
 html:root:not([data-palette-scheme=dark]):has(.nemesizer-page),
 html:root:not([data-palette-scheme=dark]):has(.fun-stats),
