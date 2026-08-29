@@ -39,6 +39,88 @@ type DocumentWithViewTransition = Document & {
 
 let activeThemeTransition: ViewTransitionHandle | null = null;
 
+const APPEARANCE_PREVIEW_DURATION_MS = 280;
+const APPEARANCE_PREVIEW_TOKENS = [
+  '--background',
+  '--foreground',
+  '--card',
+  '--card-foreground',
+  '--popover',
+  '--popover-foreground',
+  '--primary',
+  '--primary-foreground',
+  '--secondary',
+  '--secondary-foreground',
+  '--muted',
+  '--muted-foreground',
+  '--faint-foreground',
+  '--accent',
+  '--accent-foreground',
+  '--border-default',
+  '--border-strong',
+  '--input',
+  '--toggle-on',
+  '--article-red',
+  '--article-blue',
+  '--calc-a',
+  '--calc-b',
+  '--calc-target',
+] as const;
+
+type CssWithRegisterProperty = typeof CSS & {
+  registerProperty?: (definition: {
+    name: string;
+    syntax: string;
+    inherits: boolean;
+    initialValue: string;
+  }) => void;
+};
+
+let previewTokensRegistered = false;
+let previewCleanupTimer: ReturnType<typeof setTimeout> | null = null;
+
+function registerPreviewTokens() {
+  if (previewTokensRegistered || typeof CSS === 'undefined') return;
+  previewTokensRegistered = true;
+  const css = CSS as CssWithRegisterProperty;
+  if (typeof css.registerProperty !== 'function') return;
+  for (const name of APPEARANCE_PREVIEW_TOKENS) {
+    try {
+      css.registerProperty({
+        name,
+        syntax: '<color>',
+        inherits: true,
+        initialValue: 'transparent',
+      });
+    } catch {
+      // Another bundle or hot reload may already have registered the property.
+    }
+  }
+}
+
+// Hover previews must keep pointer hit-testing live. Registered color tokens animate
+// without the full-page snapshot that View Transitions creates.
+export function beginAppearancePreview() {
+  registerPreviewTokens();
+  if (previewCleanupTimer) clearTimeout(previewCleanupTimer);
+  previewCleanupTimer = null;
+  document.documentElement.setAttribute('data-appearance-preview', '');
+}
+
+export function endAppearancePreview(afterTransition = false) {
+  if (previewCleanupTimer) clearTimeout(previewCleanupTimer);
+  previewCleanupTimer = null;
+  const clear = () => {
+    document.documentElement.removeAttribute('data-appearance-preview');
+    previewCleanupTimer = null;
+  };
+  if (afterTransition && !prefersReducedMotion()) {
+    previewCleanupTimer = setTimeout(clear, APPEARANCE_PREVIEW_DURATION_MS);
+  } else {
+    clear();
+  }
+}
+
 function prefersReducedMotion(): boolean {
   return typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
@@ -147,25 +229,23 @@ export function applyContrast(level: ContrastLevel, animate = false) {
 
 // 外观菜单 hover/focus 预览:只改当前文档,不写 localStorage。
 export function previewTheme(theme: 'light' | 'dark') {
-  runTransition(() => applyThemeRoot(theme, true), true);
+  applyThemeRoot(theme, true);
 }
 
 export function previewPalette(id: PaletteId) {
-  runTransition(() => applyPaletteRoot(id), true);
+  applyPaletteRoot(id);
 }
 
 export function previewContrast(level: ContrastLevel) {
-  runTransition(() => applyContrastRoot(level), true);
+  applyContrastRoot(level);
 }
 
 export function restorePersistedAppearance() {
-  runTransition(() => {
-    const palette = readPalette();
-    if (palette) applyPaletteRoot(palette);
-    else applyThemeRoot(readTheme(), true);
-    applyContrastRoot(readContrast());
-    applyFavicon();
-  }, true);
+  const palette = readPalette();
+  if (palette) applyPaletteRoot(palette);
+  else applyThemeRoot(readTheme(), true);
+  applyContrastRoot(readContrast());
+  applyFavicon();
 }
 
 export function readContrast(): ContrastLevel {
