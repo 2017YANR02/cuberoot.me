@@ -16,8 +16,8 @@
      (用户量门槛反而友好:<20 用户也能开,情形三结算 T+14 —— 但主体类型不过则无意义)。残留不确定:微信商户号实际把个人独资归为哪类
      需向微信商户客服按真实商户号确认;H5 纯签约场景本身支持(非必须公众号/小程序,但需绑定一个 APPID)。
    - 支付宝「周期扣款 / 商家扣款」要求 **近 90 天活跃用户 ≥ 300**,新站达不到(可打 4007585858 问特殊通道)。
-   - 结论:auto-renew 当前两边都拿不到 → 模型是一次性买 月/年/永久,存 `expires_at`,**到期提醒 + 便捷续费**,手动再买。永久会员 `expires_at = NULL`。
-     真要自动续费,现实路径是改主体为有限责任公司(微信)或攒够 300 活跃(支付宝),届时再接入。
+   - 当前生产模型仍是一次性买 月/年/永久,存 `expires_at`,**到期提醒 + 便捷续费**,手动再买。永久会员 `expires_at = NULL`。
+     微信自动续费审核期间,连续包月和连续包年作为独立套餐默认不公开；审核通过并完成签约、扣款、通知和取消闭环后，后台公开这两项并关闭现有过渡套餐。
 
    **到期提醒 + 便捷续费(2026-06-18 已建,client-only):** `lib/membership-api.ts` 的纯函数 `membershipExpiry()`
    (lifetime/active/expired/daysLeft/expiringSoon,阈值 `EXPIRE_SOON_DAYS=7`,有单测 `tests/membership-expiry.test.ts`);
@@ -40,8 +40,8 @@
 
 ## 数据模型
 
-`migrations/0046_membership.sql`:
-- `membership_plans` — 套餐(slug / period / period_count / price_cents / perks)。seed 了 月(¥10)/年(¥99)/永久(¥299),**价格是占位,上线前改**。
+`migrations/0046_membership.sql` + `migrations/0180_membership_auto_renew_plan.sql`:
+- `membership_plans` — 套餐(slug / period / period_count / price_cents / perks)。月/年/永久是当前一次性套餐；连续包月/包年是默认不公开的未来自动续费套餐，价格和公开状态都由后台控制。
 - `membership_orders` — 每次下单一条(`out_trade_no` 我方单号;status pending→paid;raw_notify 审计)。
 - `memberships` — 每用户一行(plan_slug / expires_at / source / 选填 contact)。生效判定不存 status,读时算:`expires_at IS NULL 或 > now()`。
 
