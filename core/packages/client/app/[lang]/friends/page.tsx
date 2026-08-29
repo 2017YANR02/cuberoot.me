@@ -494,9 +494,7 @@ export default function FriendsPage() {
             <section className="friends-main-list">
               {view === 'blocked' && <h2>{t('黑名单', 'Blocked users')}</h2>}
               {!hasMainItems ? (
-                <p className="friends-muted">
-                  {view === 'blocked' ? t('无', 'None') : t('还没有好友，可以从上方搜索添加。', 'No friends yet. Search above to add someone.')}
-                </p>
+                view === 'blocked' ? <p className="friends-muted">{t('无', 'None')}</p> : null
               ) : (
                 <div className="friends-list">
                   {list.map((item) => (

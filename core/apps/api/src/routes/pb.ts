@@ -7,7 +7,7 @@ import {
 } from '@cuberoot/shared/pb';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query, sql } from '../db/connection.js';
-import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
+import { ADMIN_WCA_IDS, checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
 
 export const pbRoutes = new Hono();
 
@@ -56,6 +56,18 @@ function noStore(c: Context): void {
 function parsePositiveInt(raw: string | undefined): number | null {
   const value = Number(raw);
   return Number.isSafeInteger(value) && value > 0 ? value : null;
+}
+
+function managedOwnerKey(actorWcaId: string, requestedWcaId: string | undefined): {
+  ownerKey: string;
+  isAdminTarget: boolean;
+} | null {
+  const actorKey = actorWcaId.trim().toUpperCase();
+  const ownerKey = requestedWcaId?.trim().toUpperCase() || actorKey;
+  if (!isWcaIdFormat(ownerKey)) return null;
+  const isAdminTarget = ownerKey !== actorKey;
+  if (isAdminTarget && !ADMIN_WCA_IDS.includes(actorKey)) return null;
+  return { ownerKey, isAdminTarget };
 }
 
 function parseRecordKey(eventRaw: unknown, typeRaw: unknown, sizeRaw: unknown): {
@@ -129,6 +141,23 @@ async function accountForOwner(ownerKey: string): Promise<AccountRow | null> {
   return rows[0] ?? null;
 }
 
+async function personProfileForOwner(ownerKey: string): Promise<AccountRow | null> {
+  const account = await accountForOwner(ownerKey);
+  if (account) return account;
+  const profiles = await query<{ is_public: boolean }>(
+    'SELECT is_public FROM pb_profiles WHERE owner_key = ?',
+    [ownerKey],
+  );
+  if (!profiles[0]) return null;
+  return {
+    user_id: 0,
+    display_name: ownerKey,
+    avatar_url: null,
+    wca_id: ownerKey,
+    is_public: Boolean(profiles[0].is_public),
+  };
+}
+
 async function currentRecordsForOwner(ownerKey: string): Promise<PbRow[]> {
   return query<PbRow>(
     `SELECT id, event_id, record_type, set_size, result_value, happened_on,
@@ -183,9 +212,33 @@ pbRoutes.get('/pb/person/:wcaId', async (c) => {
   checkRateLimit(getIp(c));
   const wcaId = c.req.param('wcaId').toUpperCase();
   if (!isWcaIdFormat(wcaId)) return c.json({ error: 'invalid WCA ID' }, 400);
-  const account = await accountForOwner(wcaId);
+  const account = await personProfileForOwner(wcaId);
   if (!account || !account.is_public) return c.json({ error: 'profile not found' }, 404);
   const records = await currentRecordsForOwner(wcaId);
+  return c.json({ profile: toProfile(account), records: records.map(toRecord) });
+});
+
+pbRoutes.get('/pb/manage/:wcaId', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c));
+  const authUser = await requireAuth(c);
+  const access = managedOwnerKey(authUser.wcaId, c.req.param('wcaId'));
+  if (!access) return c.json({ error: 'forbidden' }, 403);
+  const account = await personProfileForOwner(access.ownerKey) ?? {
+    user_id: 0,
+    display_name: access.ownerKey,
+    avatar_url: null,
+    wca_id: access.ownerKey,
+    is_public: true,
+  };
+  const records = await query<PbRow>(
+    `SELECT id, event_id, record_type, set_size, result_value, happened_on,
+            cube_name, comments, is_current, created_at, updated_at
+       FROM pb_records
+      WHERE owner_key = ?
+      ORDER BY event_id, record_type, set_size, happened_on DESC, id DESC`,
+    [access.ownerKey],
+  );
   return c.json({ profile: toProfile(account), records: records.map(toRecord) });
 });
 
@@ -226,6 +279,8 @@ pbRoutes.put('/pb/profile', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
+  const access = managedOwnerKey(authUser.wcaId, c.req.query('owner'));
+  if (!access) return c.json({ error: 'forbidden' }, 403);
   let body: { isPublic?: unknown };
   try {
     body = await c.req.json();
@@ -233,13 +288,13 @@ pbRoutes.put('/pb/profile', async (c) => {
     return c.json({ error: 'invalid json' }, 400);
   }
   if (typeof body.isPublic !== 'boolean') return c.json({ error: 'isPublic must be boolean' }, 400);
-  const account = await accountForOwner(authUser.wcaId);
-  if (!account) return c.json({ error: 'account not found; sign in again' }, 409);
+  const account = await accountForOwner(access.ownerKey);
+  if (!account && !access.isAdminTarget) return c.json({ error: 'account not found; sign in again' }, 409);
   await query(
     `INSERT INTO pb_profiles (owner_key, is_public)
      VALUES (?, ?)
      ON CONFLICT (owner_key) DO UPDATE SET is_public = EXCLUDED.is_public`,
-    [authUser.wcaId, body.isPublic],
+    [access.ownerKey, body.isPublic],
   );
   return c.json({ ok: true, isPublic: body.isPublic });
 });
@@ -248,6 +303,8 @@ pbRoutes.post('/pb/records', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
+  const access = managedOwnerKey(authUser.wcaId, c.req.query('owner'));
+  if (!access) return c.json({ error: 'forbidden' }, 403);
   let raw: Record<string, unknown>;
   try {
     raw = await c.req.json();
@@ -256,23 +313,23 @@ pbRoutes.post('/pb/records', async (c) => {
   }
   const body = parsePbRecordBody(raw);
   if (!body) return c.json({ error: 'invalid PB record' }, 400);
-  const account = await accountForOwner(authUser.wcaId);
-  if (!account) return c.json({ error: 'account not found; sign in again' }, 409);
+  const account = await accountForOwner(access.ownerKey);
+  if (!account && !access.isAdminTarget) return c.json({ error: 'account not found; sign in again' }, 409);
   const countRows = await query<{ n: number }>(
     'SELECT COUNT(*)::int AS n FROM pb_records WHERE owner_key = ?',
-    [authUser.wcaId],
+    [access.ownerKey],
   );
   if ((countRows[0]?.n ?? 0) >= MAX_RECORDS_PER_USER) {
     return c.json({ error: 'PB record limit reached' }, 409);
   }
 
   const inserted = await sql.begin(async (tx) => {
-    await tx`INSERT INTO pb_profiles (owner_key) VALUES (${authUser.wcaId}) ON CONFLICT DO NOTHING`;
-    await tx`SELECT pg_advisory_xact_lock(hashtext(${`${authUser.wcaId}:${body.eventId}:${body.recordType}:${body.setSize}`}))`;
+    await tx`INSERT INTO pb_profiles (owner_key) VALUES (${access.ownerKey}) ON CONFLICT DO NOTHING`;
+    await tx`SELECT pg_advisory_xact_lock(hashtext(${`${access.ownerKey}:${body.eventId}:${body.recordType}:${body.setSize}`}))`;
     const current = await tx<{ id: number; result_value: number; happened_on: string }[]>`
       SELECT id, result_value, happened_on
         FROM pb_records
-       WHERE owner_key = ${authUser.wcaId}
+       WHERE owner_key = ${access.ownerKey}
          AND event_id = ${body.eventId}
          AND record_type = ${body.recordType}
          AND set_size = ${body.setSize}
@@ -280,7 +337,7 @@ pbRoutes.post('/pb/records', async (c) => {
        FOR UPDATE`;
     const previous = current[0];
     if (previous && (
-      body.resultValue >= Number(previous.result_value)
+      body.resultValue > Number(previous.result_value)
       || body.happenedOn < String(previous.happened_on)
     )) return null;
     if (previous) await tx`UPDATE pb_records SET is_current = FALSE WHERE id = ${previous.id}`;
@@ -289,7 +346,7 @@ pbRoutes.post('/pb/records', async (c) => {
         owner_key, event_id, record_type, set_size, result_value, happened_on,
         cube_name, comments, is_current
       ) VALUES (
-        ${authUser.wcaId}, ${body.eventId}, ${body.recordType}, ${body.setSize},
+        ${access.ownerKey}, ${body.eventId}, ${body.recordType}, ${body.setSize},
         ${body.resultValue}, ${body.happenedOn}, ${body.cubeName}, ${body.comments}, TRUE
       )
       RETURNING id, event_id, record_type, set_size, result_value, happened_on,
@@ -297,21 +354,84 @@ pbRoutes.post('/pb/records', async (c) => {
     return rows[0] ?? null;
   });
   if (!inserted) {
-    return c.json({ error: 'new PB must improve the current result without moving the date backwards' }, 409);
+    return c.json({ error: 'new PB cannot be worse than the current result or move the date backwards' }, 409);
   }
   return c.json({ record: toRecord(inserted) }, 201);
+});
+
+pbRoutes.put('/pb/records/:id', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c));
+  const authUser = await requireAuth(c);
+  const access = managedOwnerKey(authUser.wcaId, c.req.query('owner'));
+  if (!access) return c.json({ error: 'forbidden' }, 403);
+  const id = parsePositiveInt(c.req.param('id'));
+  if (!id) return c.json({ error: 'invalid id' }, 400);
+  let raw: Record<string, unknown>;
+  try {
+    raw = await c.req.json();
+  } catch {
+    return c.json({ error: 'invalid json' }, 400);
+  }
+  const body = parsePbRecordBody(raw);
+  if (!body) return c.json({ error: 'invalid PB record' }, 400);
+
+  const updated = await sql.begin(async (tx) => {
+    const targets = await tx<PbRow[]>`
+      SELECT id, event_id, record_type, set_size, result_value, happened_on,
+             cube_name, comments, is_current, created_at, updated_at
+        FROM pb_records
+       WHERE id = ${id} AND owner_key = ${access.ownerKey}
+       FOR UPDATE`;
+    const target = targets[0];
+    if (!target || !target.is_current) return null;
+    if (
+      target.event_id !== body.eventId
+      || target.record_type !== body.recordType
+      || Number(target.set_size) !== body.setSize
+    ) return null;
+
+    const predecessors = await tx<Pick<PbRow, 'result_value' | 'happened_on'>[]>`
+      SELECT result_value, happened_on
+        FROM pb_records
+       WHERE owner_key = ${access.ownerKey}
+         AND event_id = ${body.eventId}
+         AND record_type = ${body.recordType}
+         AND set_size = ${body.setSize}
+         AND id <> ${id}
+       FOR UPDATE`;
+    if (predecessors.some((record) => (
+      body.resultValue > Number(record.result_value)
+      || body.happenedOn < String(record.happened_on)
+    ))) return null;
+
+    const rows = await tx<PbRow[]>`
+      UPDATE pb_records
+         SET result_value = ${body.resultValue}, happened_on = ${body.happenedOn},
+             cube_name = ${body.cubeName}, comments = ${body.comments}
+       WHERE id = ${id} AND owner_key = ${access.ownerKey}
+       RETURNING id, event_id, record_type, set_size, result_value, happened_on,
+                 cube_name, comments, is_current, created_at, updated_at`;
+    return rows[0] ?? null;
+  });
+  if (!updated) {
+    return c.json({ error: 'only the current PB can be edited and it cannot become worse or earlier than its history' }, 409);
+  }
+  return c.json({ record: toRecord(updated) });
 });
 
 pbRoutes.delete('/pb/records/:id', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
+  const access = managedOwnerKey(authUser.wcaId, c.req.query('owner'));
+  if (!access) return c.json({ error: 'forbidden' }, 403);
   const id = parsePositiveInt(c.req.param('id'));
   if (!id) return c.json({ error: 'invalid id' }, 400);
   const deleted = await sql.begin(async (tx) => {
     const rows = await tx<Pick<PbRow, 'id' | 'event_id' | 'record_type' | 'set_size' | 'is_current'>[]>`
       DELETE FROM pb_records
-       WHERE id = ${id} AND owner_key = ${authUser.wcaId}
+       WHERE id = ${id} AND owner_key = ${access.ownerKey}
        RETURNING id, event_id, record_type, set_size, is_current`;
     const row = rows[0];
     if (!row) return null;
@@ -320,7 +440,7 @@ pbRoutes.delete('/pb/records/:id', async (c) => {
         UPDATE pb_records SET is_current = TRUE
          WHERE id = (
            SELECT id FROM pb_records
-            WHERE owner_key = ${authUser.wcaId}
+             WHERE owner_key = ${access.ownerKey}
               AND event_id = ${row.event_id}
               AND record_type = ${row.record_type}
               AND set_size = ${row.set_size}

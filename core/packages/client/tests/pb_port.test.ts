@@ -38,7 +38,6 @@ const personHero = readFileSync(
   workspaceFixturePath('@cuberoot/client', 'components', 'persons', 'sections', 'PersonHero.tsx'),
   'utf8',
 );
-
 describe('CubePB shared result contract', () => {
   it('keeps the supported event and set-size scope exact', () => {
     expect(PB_EVENT_IDS).toHaveLength(17);
@@ -88,13 +87,20 @@ describe('CubePB WCA person integration', () => {
     expect(pbRoute).toContain('WHERE owner_key = ? AND is_current = TRUE');
   });
 
-  it('uses the shared event and record-option contracts for the person table', () => {
+  it('uses the shared contracts and owns PB management on the person page', () => {
     expect(personPbTable).toContain('PB_EVENT_IDS.map');
-    expect(personPbTable).toContain('if (!collection) return null');
     expect(personPbTable).toContain('PB_RECORD_OPTIONS.map');
-    expect(personPbTable).toContain('fetchMyPbs(controller.signal)');
+    expect(personPbTable).toContain('await fetchMyPbs(signal)');
+    expect(personPbTable).toContain('await fetchManagedPbs(wcaId, signal)');
     expect(personPbTable).toContain('formatWcaResult');
-    expect(personPbTable).toContain('<EventIcon event={eventId} />');
+    expect(personPbTable).toContain('<EventIcon event={currentEventId} />');
+    expect(personPbTable).toContain('createPbRecord(input, wcaId)');
+    expect(personPbTable).toContain('updatePbRecord(editingRecord.id, input, wcaId)');
+    expect(personPbTable).toContain('updatePbVisibility(isPublic, wcaId)');
+    expect(personPbTable).toContain('deletePbRecord(record.id, wcaId)');
+    expect(personPbTable).toContain('const canManage = isOwner || isAdmin');
+    expect(pbRoute).toContain("pbRoutes.get('/pb/manage/:wcaId'");
+    expect(pbRoute).toContain("pbRoutes.put('/pb/records/:id'");
   });
 
   it('defaults to PR and switches among PR, historical ranks, and PB', () => {
@@ -102,8 +108,10 @@ describe('CubePB WCA person integration', () => {
     expect(personDetail).toContain(".withDefault('pr')");
     expect(personDetail).toContain("withOptions({ history: 'push' })");
     expect(personDetail).toContain("resultView === 'pb'");
+    expect(personDetail).toContain('<PersonPbTable wcaId={profile.person.wca_id} isZh={isZh} />');
     expect(personHero).toContain('<CompactSelect');
     expect(personHero).toContain("{ value: 'historical'");
+    expect(personHero).toContain("resultView !== 'pb'");
   });
 });
 

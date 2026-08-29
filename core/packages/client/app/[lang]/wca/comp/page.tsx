@@ -55,7 +55,8 @@ import { fetchCompRounds, fetchCompWcif, fetchCubingZh } from '@/lib/comp-wcif';
 import { statsUrl } from '@/lib/stats-base';
 import { ClearButton } from '@/components/ClearButton';
 import { CubingIcon } from '@/components/EventIcon';
-import { fetchUserUpcoming, type WcaPersonLite } from '@/lib/wca-api';
+import type { WcaPersonLite } from '@/lib/wca-api';
+import { fetchPersonUpcomingCompetitionIds } from '@/lib/person-upcoming';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { CompCuberPicker } from '@/components/CompCuberPicker';
@@ -1695,7 +1696,7 @@ function CalendarPageInner() {
     const staticHit = personCompIndex.get(selectedCuber.id);
     setSelectedCuberCompIds(staticHit && staticHit.size > 0 ? new Set(staticHit) : new Set());
     let cancelled = false;
-    fetchUserUpcoming(selectedCuber.id).then((ids) => {
+    fetchPersonUpcomingCompetitionIds(selectedCuber.id).then((ids) => {
       if (cancelled || ids.length === 0) return;
       setSelectedCuberCompIds((prev) => {
         const next = new Set(prev ?? []);

@@ -21,6 +21,7 @@ import { loadFlagData } from '@/lib/country-flags';
 import { listRecons } from '@/lib/recon-api';
 import { buildReconAttemptMap, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import PersonHero from '@/components/persons/sections/PersonHero';
+import PersonUpcomingComps from '@/components/persons/sections/PersonUpcomingComps';
 import PersonPRTable from '@/components/persons/sections/PersonPRTable';
 import PersonPbTable from '@/components/persons/sections/PersonPbTable';
 import PersonStudents from '@/components/persons/sections/PersonStudents';
@@ -160,25 +161,28 @@ export default function PersonDetailClient() {
           inclCancelled={inclCancelled}
           onInclCancelledChange={setInclCancelled}
         />
-        <PersonStudents
-          teacherWcaId={profile.person.wca_id}
-          teacherCountryIso2={profile.person.country_iso2}
-          isZh={isZh}
-        />
         {resultView === 'pb' ? (
           <PersonPbTable wcaId={profile.person.wca_id} isZh={isZh} />
         ) : (
-          <PersonPRTable
-            profile={profile}
-            results={results}
-            isZh={isZh}
-            inclCancelled={inclCancelled}
-            mode={resultView === 'historical' ? 'historical' : 'current'}
-          />
+          <>
+            <PersonUpcomingComps wcaId={profile.person.wca_id} isZh={isZh} />
+            <PersonStudents
+              teacherWcaId={profile.person.wca_id}
+              teacherCountryIso2={profile.person.country_iso2}
+              isZh={isZh}
+            />
+            <PersonPRTable
+              profile={profile}
+              results={results}
+              isZh={isZh}
+              inclCancelled={inclCancelled}
+              mode={resultView === 'historical' ? 'historical' : 'current'}
+            />
+            <PersonBestCombos wcaId={profile.person.wca_id} isZh={isZh} inclCancelled={inclCancelled} />
+            <PersonResultChanges wcaId={profile.person.wca_id} isZh={isZh} />
+            <PersonTabs profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} />
+          </>
         )}
-        <PersonBestCombos wcaId={profile.person.wca_id} isZh={isZh} inclCancelled={inclCancelled} />
-        <PersonResultChanges wcaId={profile.person.wca_id} isZh={isZh} />
-        <PersonTabs profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} />
       </main>
     </div>
   );
