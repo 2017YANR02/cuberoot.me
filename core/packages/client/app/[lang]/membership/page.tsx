@@ -146,6 +146,12 @@ export default function MembershipPage() {
   const monthlyPlan = sortedPlans.find((plan) => plan.period === 'month');
   const showAutoRenew = !!monthlyPlan;
 
+  const handlePlanUpdated = useCallback((updatedPlan: MembershipPlan) => {
+    setPlans((current) => current?.map((plan) => (
+      plan.slug === updatedPlan.slug ? updatedPlan : plan
+    )) ?? current);
+  }, []);
+
   return (
     <div className="mem-page">
       <header className="mem-head">
@@ -295,7 +301,7 @@ export default function MembershipPage() {
       )}
 
       {/* admin 面板 */}
-      {admin && <AdminPanel plans={plans ?? []} isZh={isZh} />}
+      {admin && <AdminPanel plans={plans ?? []} isZh={isZh} onPlanUpdated={handlePlanUpdated} />}
 
       {buyPlan && (
         <PayModal
