@@ -1,6 +1,6 @@
 ---
 name: new-substep-solver
-description: "用户要造一个新求解器时用。**先分流**:3x3 子阶段 / 大状态空间(需 Rust+WASM+大表+真题统计管道)= 范本 block222,完整流程 solver/VARIANT_PLAYBOOK.md;非 WCA 小状态整解(可整枚举,如枫叶 Ivy 29,160 态)= 纯 TS 全 BFS,**不碰 Rust/WASM/管道**,范本 packages/client/lib/ivy-solver.ts(见正文 §0)。Triggers: \"造个 X 求解器\", \"新求解器\", \"枫叶魔方求解器\", \"ivy 求解器\", \"非 wca 求解器\", \"小魔方求解器\", \"roux s1 求解器\", \"eoline 求解器\", \"petrus 求解器\", \"new substep solver\", \"加一个 step solver\", \"块求解器\", \"新变体\", \"new variant solver\"."
+description: "造新求解器时使用。先分流：3x3 子阶段或大状态空间走 Rust、WASM 和表管道；可整枚举的非 WCA 小魔方整解走纯 TypeScript BFS，不引入 Rust。"
 ---
 
 # 新求解器

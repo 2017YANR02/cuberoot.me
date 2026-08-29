@@ -1,6 +1,6 @@
 ---
 name: update-scramble-stats
-description: "用户要更新 /scramble/stats(打乱难度 / 步数分布)的数据时执行本地手动增量刷新管道(按需触发,非定时)。覆盖三阶阶段难度(十字/F2L/EO/DR 等)+ 非 3x3 整解最优步数(二阶/金字塔/斜转/SQ1)+ 三阶整解最优 HTM(333 方法,cubeopt WASM,solver/333opt)三条管道。只能本地跑(三阶需 solver 34GB 表 / 333 需 cubeopt 表)。Triggers: \"更新统计\", \"更新打乱统计\", \"重跑打乱统计\", \"更新打乱分布\", \"更新打乱难度\", \"update scramble stats\", \"全部刷新统计\", \"更新十字统计\", \"重跑十字统计\", \"跑十字管道\", \"更新 puzzle 统计\", \"更新二阶/金字塔/斜转统计\", \"更新 sq1 统计\", \"更新 SQ1 统计\", \"更新 sq1 分布\", \"刷新 sq1 精确分布\", \"sq1 精确分布\", \"sq1 精确档\", \"跑SQ1怪物\", \"跑 sq1 怪物\", \"啃怪物\", \"啃 sq1 怪物\", \"sq1 怪物\", \"grind sq1 monsters\", \"补 xcross 变体\", \"双色底 10f xcross\", \"backfill_xcross_variant\", \"pseudo_f2leo 回填\", \"难打乱补变体\", \"更新333统计\", \"更新 333 统计\", \"更新 333 整解统计\", \"333 整解最优\", \"333 HTM 分布\", \"333opt\"."
+description: "更新 /scramble/stats 数据时使用，包括三阶阶段难度、非 3x3 整解最优步数、333 HTM、SQ1 精确分布及 xcross 等回填。管道只能在具备本地 solver 表的环境运行。"
 ---
 
 # 更新打乱统计

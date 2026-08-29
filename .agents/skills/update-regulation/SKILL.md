@@ -1,6 +1,6 @@
 ---
 name: update-regulation
-description: "Use when the user wants to add, rewrite, or refresh a chapter of the illustrated WCA Regulations guide at /regulation (hub + one page per chapter), OR when acting on a `regulation-drift` GitHub issue / the monthly drift check (official WCA regs changed). The user typically says \"更新规则\" then names the chapter(s) (e.g. 第十二章 转动表示方法 / 第四章 打乱 / Article 9 Events / Appendix B 盲拧). Covers: the sync/drift system (reg:check snapshot diff + the regulation_drift CI issue), the per-chapter full-clause data layer (reg:clauses + FullClauses), locating the chapter slug, fetching + paraphrasing the official article bilingually, building the page on the shared scaffold, the visualization toolkit, and the strict zh-Hant generator recipe. Triggers: \"更新规则\", \"更新規則\", \"/update-regulation\", \"加规则章节\", \"刷新规则页\", \"改规则页\", \"WCA 规则页\", \"regulation 章节\", \"第N章规则\", \"规则漂移\", \"regulation-drift\", \"reg:check\", \"reg:clauses\", \"完整条款\", \"update regulation\", \"add regulation chapter\", \"regulation page\", \"/regulation\"."
+description: "Use when adding or refreshing a /regulation chapter, or handling regulation-drift, reg:check, or reg:clauses. Covers official WCA changes, bilingual clause data, shared page scaffolds, and visualizations."
 ---
 
 # 更新 /regulation(WCA 竞赛规则图解)

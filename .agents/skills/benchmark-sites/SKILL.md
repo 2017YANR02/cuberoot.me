@@ -1,6 +1,6 @@
 ---
 name: benchmark-sites
-description: "Use when user asks how mainstream/major sites or '业界/大厂' handle something (i18n、SEO/路由、定价、某 UX 模式、某功能) and expects AI to already know which sites to check. 按用途从下表挑 6-10 个,跨「巨头 + 本站近邻(开发者工具/SaaS/AI)」两类,然后亲自 WebFetch/WebSearch 核实再下结论,禁凭记忆。Triggers: \"主流网站\", \"大厂\", \"业界怎么做\", \"别的网站怎么做\", \"对标\", \"benchmark\", \"mainstream sites\", \"how do big sites\", \"industry standard\"."
+description: "Use when comparing how mainstream sites or major companies handle a UX, i18n, SEO, routing, pricing, or product pattern. Verify 6–10 relevant sites across major and adjacent products before concluding."
 ---
 
 # 主流网站对标
