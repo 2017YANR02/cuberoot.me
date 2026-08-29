@@ -17,7 +17,7 @@
  *   POST   /v1/membership/notify/airwallex       — 公开 webhook:Airwallex HMAC 回调入账
  *   POST   /v1/membership/notify/xunhupay       — 公开 webhook:虎皮椒异步回调入账
  *   POST   /v1/membership/admin/grant           — admin:手动开通/续期
- *   GET    /v1/membership/admin/list            — admin:会员 + 最近订单
+ *   GET    /v1/membership/admin/list            — admin:会员 + 最近订单 + 全部套餐
  *   DELETE /v1/membership/admin/member/:wcaId   — admin:撤销会员
  *   PUT    /v1/membership/admin/plans/:slug     — admin:改套餐(价格/启用/文案/perks)
  *
@@ -167,6 +167,8 @@ function planToJson(p: PlanRow) {
     priceCents: Number(p.price_cents),
     currency: p.currency,
     perks: Array.isArray(p.perks) ? p.perks : [],
+    active: p.active !== false,
+    sort: Number(p.sort ?? 0),
   };
 }
 
@@ -249,9 +251,9 @@ async function grantMembership(opts: {
 
 // ─────────────────────────── 公开:套餐 ───────────────────────────
 membershipRoutes.get('/membership/plans', async (c) => {
-  c.header('Cache-Control', 'public, max-age=3600');
+  c.header('Cache-Control', 'no-store');
   const rows = await query<PlanRow>(
-    `SELECT slug, name_zh, name_en, period, period_count, price_cents, currency, perks, sort
+    `SELECT slug, name_zh, name_en, period, period_count, price_cents, currency, perks, active, sort
        FROM membership_plans WHERE active = TRUE ORDER BY sort, price_cents`,
   );
   return c.json({ plans: rows.map(planToJson), payEnabled: paymentConfigured(), channels: channelAvailability() });
@@ -681,7 +683,7 @@ membershipRoutes.post('/membership/admin/grant', async (c) => {
   return c.json({ membership: membershipToJson(m) });
 });
 
-// 会员 + 最近订单(简单分页)。
+// 会员 + 最近订单(简单分页)+ 全部套餐(含隐藏项,供管理员恢复显示)。
 membershipRoutes.get('/membership/admin/list', async (c) => {
   c.header('Cache-Control', 'no-store');
   await requireAdmin(c);
@@ -689,8 +691,10 @@ membershipRoutes.get('/membership/admin/list', async (c) => {
   const orders = await query<OrderRow>(
     'SELECT out_trade_no, wca_id, name, plan_slug, amount_cents, provider, pay_channel, status, created_at, paid_at FROM membership_orders ORDER BY created_at DESC LIMIT 200',
   );
+  const plans = await query<PlanRow>('SELECT * FROM membership_plans ORDER BY sort, price_cents');
   return c.json({
     members: members.map(membershipToJson),
+    plans: plans.map(planToJson),
     orders: orders.map((o) => ({
       outTradeNo: o.out_trade_no, wcaId: o.wca_id, name: o.name, planSlug: o.plan_slug,
       amountCents: Number(o.amount_cents), provider: o.provider, payChannel: o.pay_channel,

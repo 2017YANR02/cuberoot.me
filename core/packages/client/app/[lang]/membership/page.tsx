@@ -18,6 +18,7 @@ import MembershipBadge from '@/components/MembershipBadge';
 import { Spinner } from '@/components/Spinner/Spinner';
 import {
   listPlans, getMyMembership, getOrderStatus, membershipExpiry,
+  reconcileVisiblePlan,
   type MembershipPlan, type Membership, type PayChannels,
 } from '@/lib/membership-api';
 import PayModal from './PayModal';
@@ -147,9 +148,7 @@ export default function MembershipPage() {
   const showAutoRenew = !!monthlyPlan;
 
   const handlePlanUpdated = useCallback((updatedPlan: MembershipPlan) => {
-    setPlans((current) => current?.map((plan) => (
-      plan.slug === updatedPlan.slug ? updatedPlan : plan
-    )) ?? current);
+    setPlans((current) => current ? reconcileVisiblePlan(current, updatedPlan) : current);
   }, []);
 
   return (

@@ -19,6 +19,16 @@ export interface MembershipPlan {
   priceCents: number;
   currency: string;
   perks: string[];
+  /** 旧 API 响应可能暂缺；缺失按公开显示处理，兼容前后端滚动部署。 */
+  active?: boolean;
+  sort?: number;
+}
+
+/** 把管理员更新结果同步到公开套餐列表:隐藏则移除,恢复则按服务端顺序插回。 */
+export function reconcileVisiblePlan(plans: MembershipPlan[], updated: MembershipPlan): MembershipPlan[] {
+  const next = plans.filter((plan) => plan.slug !== updated.slug);
+  if (updated.active !== false) next.push(updated);
+  return next.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0) || a.priceCents - b.priceCents);
 }
 
 export interface Membership {
@@ -140,7 +150,7 @@ export async function adminGrant(body: { wcaId: string; plan: string; name?: str
   return handleApi(await fetch(`${BASE}/admin/grant`, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));
 }
 
-export async function adminList(): Promise<{ members: Membership[]; orders: AdminOrder[] }> {
+export async function adminList(): Promise<{ members: Membership[]; plans?: MembershipPlan[]; orders: AdminOrder[] }> {
   return handleApi(await fetch(`${BASE}/admin/list`, { headers: authHeaders(false) }));
 }
 
