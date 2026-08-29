@@ -3,6 +3,7 @@
 
 import { apiUrl } from './api-base';
 import { persistItem } from './safe-storage';
+import { toWcaEventId } from './wca-events';
 
 const WCIF_URL = (id: string) =>
   `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(id)}/wcif/public`;
@@ -157,9 +158,38 @@ interface WcifPersonRegistrationRaw {
   } | null;
 }
 
+interface CompLivePersonRaw {
+  wcaid?: unknown;
+  eventIds?: unknown;
+}
+
 const personEventsInflight = new Map<string, Promise<string[]>>();
 
-/** 读取公共 WCIF 中某位选手已接受报名的项目。 */
+function normalizePersonEventIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value
+    .filter((eventId): eventId is string => typeof eventId === 'string')
+    .map(toWcaEventId)
+    .filter(Boolean))];
+}
+
+/** 读取比赛详情心理表所用名单；null 表示该来源无法确认项目。 */
+async function fetchCompLivePersonEventIds(compId: string, wcaId: string): Promise<string[] | null> {
+  try {
+    const response = await fetch(`/api/comp/${encodeURIComponent(compId)}`);
+    if (!response.ok) return null;
+    const data = await response.json() as { users?: Record<string, CompLivePersonRaw> };
+    const person = Object.values(data.users ?? {}).find((candidate) => (
+      typeof candidate.wcaid === 'string' && candidate.wcaid.toUpperCase() === wcaId
+    ));
+    if (!person || !Array.isArray(person.eventIds)) return null;
+    return normalizePersonEventIds(person.eventIds);
+  } catch {
+    return null;
+  }
+}
+
+/** 优先复用比赛详情心理表的报名项目，缺失时回退 WCA 公共 WCIF。 */
 export function fetchCompPersonEventIds(compId: string, wcaId: string): Promise<string[]> {
   const normalizedCompId = compId.trim();
   const normalizedWcaId = wcaId.trim().toUpperCase();
@@ -169,18 +199,22 @@ export function fetchCompPersonEventIds(compId: string, wcaId: string): Promise<
   const existing = personEventsInflight.get(key);
   if (existing) return existing;
 
-  const request = fetch(WCIF_URL(normalizedCompId))
-    .then(async (response) => {
+  const request = (async () => {
+    const liveEventIds = await fetchCompLivePersonEventIds(normalizedCompId, normalizedWcaId);
+    if (liveEventIds !== null) return liveEventIds;
+
+    try {
+      const response = await fetch(WCIF_URL(normalizedCompId));
       if (!response.ok) return [];
       const data = await response.json() as { persons?: WcifPersonRegistrationRaw[] };
       const person = data.persons?.find((candidate) => candidate.wcaId?.toUpperCase() === normalizedWcaId);
       const registration = person?.registration;
       if (!registration || registration.isCompeting === false || registration.status === 'deleted') return [];
-      return Array.isArray(registration.eventIds)
-        ? registration.eventIds.filter((eventId): eventId is string => typeof eventId === 'string' && !!eventId)
-        : [];
-    })
-    .catch(() => [] as string[])
+      return normalizePersonEventIds(registration.eventIds);
+    } catch {
+      return [];
+    }
+  })()
     .finally(() => personEventsInflight.delete(key));
 
   personEventsInflight.set(key, request);
