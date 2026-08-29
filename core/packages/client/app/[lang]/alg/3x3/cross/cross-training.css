@@ -112,7 +112,7 @@
 .stage-training-question {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
-  align-items: center;
+  align-items: start;
   gap: 20px;
   margin: 6px 0 16px;
 }

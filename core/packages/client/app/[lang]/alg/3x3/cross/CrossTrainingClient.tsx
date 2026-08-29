@@ -467,105 +467,105 @@ export default function CrossTrainingClient() {
                 <div className="stage-training-meta">
                   <span>{tr({ zh: `打乱 ${question.scrambleLength} HTM`, en: `${question.scrambleLength} HTM scramble` })}</span>
                 </div>
-              </div>
-            </div>
 
-            {mode === 'plan' && (
-              <div className="stage-training-answer-area">
-                <div className="stage-training-answer">
-                  <strong>{tr({ zh: `最优步数：${question.optimal} HTM`, en: `Optimal: ${question.optimal} HTM` })}</strong>
-                  {!revealed ? (
-                    <button type="button" className="stage-training-primary" onClick={() => setRevealed(true)}>{tr({ zh: '显示最优答案', en: 'Reveal optimal answer' })}</button>
-                  ) : (
-                    <>
-                      <span>{frameText}</span>
-                      <code>{displaySolution || tr({ zh: '已完成', en: 'Already solved' })}</code>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {mode === 'guess' && (
-              <div className="stage-training-answer-area">
-                <div className="stage-training-number-grid" aria-label={tr({ zh: '选择最优步数', en: 'Choose the optimal length' })}>
-                  {Array.from({ length: STAGE_FIXED_LENGTH[stage] }, (_, index) => index + 1).map((answer) => (
-                    <button key={answer} type="button" className="stage-training-number-button" disabled={!!result} onClick={() => answerGuess(answer)}>{answer}</button>
-                  ))}
-                </div>
-                {result && (
-                  <div className={`stage-training-feedback ${result.correct ? 'is-correct' : 'is-wrong'}`} role="status">
-                    <strong>{result.correct ? tr({ zh: '回答正确', en: 'Correct' }) : tr({ zh: '回答错误', en: 'Incorrect' })}</strong>
-                    <span>{tr({ zh: `最优是 ${question.optimal} HTM`, en: `Optimal is ${question.optimal} HTM` })}</span>
-                    <code>{displaySolution}</code>
+                {mode === 'plan' && (
+                  <div className="stage-training-answer-area">
+                    <div className="stage-training-answer">
+                      <strong>{tr({ zh: `最优步数：${question.optimal} HTM`, en: `Optimal: ${question.optimal} HTM` })}</strong>
+                      {!revealed ? (
+                        <button type="button" className="stage-training-primary" onClick={() => setRevealed(true)}>{tr({ zh: '显示最优答案', en: 'Reveal optimal answer' })}</button>
+                      ) : (
+                        <>
+                          <span>{frameText}</span>
+                          <code>{displaySolution || tr({ zh: '已完成', en: 'Already solved' })}</code>
+                        </>
+                      )}
+                    </div>
                   </div>
                 )}
-              </div>
-            )}
 
-            {mode === 'smart' && (
-              <div className="stage-training-smart">
-                {smartPhase === 'disconnected' && (
-                  <div className="stage-training-connect">
-                    <span>{tr({ zh: '连接智能魔方后即可开始。', en: 'Connect a smart cube to begin.' })}</span>
-                    <button type="button" className="stage-training-primary" onClick={connect}>{tr({ zh: '连接智能魔方', en: 'Connect smart cube' })}</button>
-                    {connectError && <span className="stage-training-error-text">{connectError}</span>}
-                    {macPrompt && (
-                      <div className="stage-training-mac">
-                        <label htmlFor="cross-training-mac">
-                          {macPrompt.isWrongKey
-                            ? tr({ zh: '这个 MAC 无法解密，请重新输入', en: 'That MAC could not decrypt the cube. Try another.' })
-                            : tr({ zh: `请输入 ${macPrompt.deviceName} 的 MAC`, en: `Enter the MAC for ${macPrompt.deviceName}` })}
-                        </label>
-                        <span className="stage-training-mac-input">
-                          <input
-                            id="cross-training-mac"
-                            type="text"
-                            value={macInput}
-                            onChange={(event) => setMacInput(event.target.value)}
-                            onKeyDown={(event) => {
-                              if (event.key === 'Enter' && macInput.trim()) resolveMac(macInput.trim());
-                            }}
-                            placeholder="AB:CD:EF:12:34:56"
-                            autoComplete="off"
-                            spellCheck={false}
-                          />
-                          {macInput && <ClearButton onClick={() => setMacInput('')} preserveFocus />}
-                        </span>
-                        <div className="stage-training-mac-actions">
-                          <button type="button" className="stage-training-primary" disabled={!macInput.trim()} onClick={() => resolveMac(macInput.trim())}>
-                            {tr({ zh: '确认', en: 'Confirm' })}
-                          </button>
-                          <button type="button" className="stage-training-button" onClick={() => resolveMac(null)}>
-                            {tr({ zh: '取消', en: 'Cancel' })}
-                          </button>
-                        </div>
+                {mode === 'guess' && (
+                  <div className="stage-training-answer-area">
+                    <div className="stage-training-number-grid" aria-label={tr({ zh: '选择最优步数', en: 'Choose the optimal length' })}>
+                      {Array.from({ length: STAGE_FIXED_LENGTH[stage] }, (_, index) => index + 1).map((answer) => (
+                        <button key={answer} type="button" className="stage-training-number-button" disabled={!!result} onClick={() => answerGuess(answer)}>{answer}</button>
+                      ))}
+                    </div>
+                    {result && (
+                      <div className={`stage-training-feedback ${result.correct ? 'is-correct' : 'is-wrong'}`} role="status">
+                        <strong>{result.correct ? tr({ zh: '回答正确', en: 'Correct' }) : tr({ zh: '回答错误', en: 'Incorrect' })}</strong>
+                        <span>{tr({ zh: `最优是 ${question.optimal} HTM`, en: `Optimal is ${question.optimal} HTM` })}</span>
+                        <code>{displaySolution}</code>
                       </div>
                     )}
                   </div>
                 )}
-                {smartPhase === 'needs-solved' && <p>{tr({ zh: '请先把智能魔方完整还原，再按题目打乱。', en: 'Solve the smart cube fully before applying the scramble.' })}</p>}
-                {smartPhase === 'scrambling' && <p>{tr({ zh: '请在智能魔方上完成上方打乱；匹配后自动开始记录解法。', en: 'Apply the scramble on the smart cube. Recording starts automatically when it matches.' })}</p>}
-                {smartPhase === 'solving' && (
-                  <p>{smartMode === 'virtual'
-                    ? tr({ zh: `虚拟打乱已就绪，直接还原 ${stageName(stage)}。当前 ${smartMoveCount} HTM。`, en: `Virtual scramble ready. Solve ${stageName(stage)} directly. ${smartMoveCount} HTM so far.` })
-                    : tr({ zh: `打乱已匹配，开始还原 ${stageName(stage)}。当前 ${smartMoveCount} HTM。`, en: `Scramble matched. Solve ${stageName(stage)}. ${smartMoveCount} HTM so far.` })}</p>
+
+                {mode === 'smart' && (
+                  <div className="stage-training-smart">
+                    {smartPhase === 'disconnected' && (
+                      <div className="stage-training-connect">
+                        <span>{tr({ zh: '连接智能魔方后即可开始。', en: 'Connect a smart cube to begin.' })}</span>
+                        <button type="button" className="stage-training-primary" onClick={connect}>{tr({ zh: '连接智能魔方', en: 'Connect smart cube' })}</button>
+                        {connectError && <span className="stage-training-error-text">{connectError}</span>}
+                        {macPrompt && (
+                          <div className="stage-training-mac">
+                            <label htmlFor="cross-training-mac">
+                              {macPrompt.isWrongKey
+                                ? tr({ zh: '这个 MAC 无法解密，请重新输入', en: 'That MAC could not decrypt the cube. Try another.' })
+                                : tr({ zh: `请输入 ${macPrompt.deviceName} 的 MAC`, en: `Enter the MAC for ${macPrompt.deviceName}` })}
+                            </label>
+                            <span className="stage-training-mac-input">
+                              <input
+                                id="cross-training-mac"
+                                type="text"
+                                value={macInput}
+                                onChange={(event) => setMacInput(event.target.value)}
+                                onKeyDown={(event) => {
+                                  if (event.key === 'Enter' && macInput.trim()) resolveMac(macInput.trim());
+                                }}
+                                placeholder="AB:CD:EF:12:34:56"
+                                autoComplete="off"
+                                spellCheck={false}
+                              />
+                              {macInput && <ClearButton onClick={() => setMacInput('')} preserveFocus />}
+                            </span>
+                            <div className="stage-training-mac-actions">
+                              <button type="button" className="stage-training-primary" disabled={!macInput.trim()} onClick={() => resolveMac(macInput.trim())}>
+                                {tr({ zh: '确认', en: 'Confirm' })}
+                              </button>
+                              <button type="button" className="stage-training-button" onClick={() => resolveMac(null)}>
+                                {tr({ zh: '取消', en: 'Cancel' })}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {smartPhase === 'needs-solved' && <p>{tr({ zh: '请先把智能魔方完整还原，再按题目打乱。', en: 'Solve the smart cube fully before applying the scramble.' })}</p>}
+                    {smartPhase === 'scrambling' && <p>{tr({ zh: '请在智能魔方上完成上方打乱；匹配后自动开始记录解法。', en: 'Apply the scramble on the smart cube. Recording starts automatically when it matches.' })}</p>}
+                    {smartPhase === 'solving' && (
+                      <p>{smartMode === 'virtual'
+                        ? tr({ zh: `虚拟打乱已就绪，直接还原 ${stageName(stage)}。当前 ${smartMoveCount} HTM。`, en: `Virtual scramble ready. Solve ${stageName(stage)} directly. ${smartMoveCount} HTM so far.` })
+                        : tr({ zh: `打乱已匹配，开始还原 ${stageName(stage)}。当前 ${smartMoveCount} HTM。`, en: `Scramble matched. Solve ${stageName(stage)}. ${smartMoveCount} HTM so far.` })}</p>
+                    )}
+                    {smartPhase === 'result' && result && (
+                      <div className={`stage-training-feedback ${result.correct ? 'is-correct' : 'is-wrong'}`} role="status">
+                        <strong>{result.correct ? tr({ zh: '最优，回答正确', en: 'Optimal — correct' }) : tr({ zh: '已完成，但不是最优', en: 'Completed, but not optimal' })}</strong>
+                        <span>{tr({ zh: `你的解法 ${result.moves} HTM；最优 ${question.optimal} HTM`, en: `Your solution: ${result.moves} HTM; optimal: ${question.optimal} HTM` })}</span>
+                        <code>{displaySolution}</code>
+                      </div>
+                    )}
+                  </div>
                 )}
-                {smartPhase === 'result' && result && (
-                  <div className={`stage-training-feedback ${result.correct ? 'is-correct' : 'is-wrong'}`} role="status">
-                    <strong>{result.correct ? tr({ zh: '最优，回答正确', en: 'Optimal — correct' }) : tr({ zh: '已完成，但不是最优', en: 'Completed, but not optimal' })}</strong>
-                    <span>{tr({ zh: `你的解法 ${result.moves} HTM；最优 ${question.optimal} HTM`, en: `Your solution: ${result.moves} HTM; optimal: ${question.optimal} HTM` })}</span>
-                    <code>{displaySolution}</code>
+
+                {(mode === 'plan' ? revealed : !!result) && (
+                  <div className="stage-training-actions">
+                    <button type="button" className="stage-training-primary" onClick={newQuestion}>{tr({ zh: '下一题', en: 'Next question' })}</button>
                   </div>
                 )}
               </div>
-            )}
-
-            {(mode === 'plan' ? revealed : !!result) && (
-              <div className="stage-training-actions">
-                <button type="button" className="stage-training-primary" onClick={newQuestion}>{tr({ zh: '下一题', en: 'Next question' })}</button>
-              </div>
-            )}
+            </div>
           </>
         )}
       </div>
