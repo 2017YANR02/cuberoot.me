@@ -2672,12 +2672,20 @@ CREATE TABLE auth_codes (
 );
 CREATE INDEX idx_auth_codes_lookup ON auth_codes(channel, target, created_at DESC);
 
--- 小程序原生登录态换取网页登录态的短时单次票据。只保存 SHA-256，不落明文。
+-- 小程序与原生 App 跨运行时换取会话的短时单次票据。只保存票据 SHA-256；
+-- App 方向额外绑定 PKCE challenge，verifier 不进入浏览器 URL 或数据库。
 CREATE TABLE auth_web_session_tickets (
   ticket_hash CHAR(64) PRIMARY KEY,
   user_id     BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  purpose     VARCHAR(16) NOT NULL DEFAULT 'web',
+  code_challenge CHAR(43),
   expires_at  TIMESTAMPTZ NOT NULL,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT chk_auth_web_session_ticket_purpose CHECK (
+    (purpose = 'web' AND code_challenge IS NULL)
+    OR
+    (purpose = 'mobile' AND code_challenge ~ '^[A-Za-z0-9_-]{43}$')
+  )
 );
 CREATE INDEX idx_auth_web_session_tickets_expires ON auth_web_session_tickets(expires_at);
 

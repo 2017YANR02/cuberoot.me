@@ -48,6 +48,7 @@ import {
   type RealScramble,
 } from './data/real-scramble-pool';
 import { useNativeTimerEffects } from './hooks/use-native-timer-effects';
+import { useMobileAuth } from './hooks/use-mobile-auth';
 import { useTimerController } from './hooks/use-timer-controller';
 import packageInfo from '../package.json';
 
@@ -64,6 +65,11 @@ function siteUrl(language: SupportedLanguage): string {
 
 function privacyUrl(language: SupportedLanguage): string {
   return language === 'zh' ? `${SITE_ORIGIN}/zh/privacy` : `${SITE_ORIGIN}/privacy`;
+}
+
+function accountUrl(language: SupportedLanguage, view?: 'delete'): string {
+  const path = language === 'zh' ? `${SITE_ORIGIN}/zh/account` : `${SITE_ORIGIN}/account`;
+  return view ? `${path}?view=${view}` : path;
 }
 
 function timerUrl(language: SupportedLanguage): string {
@@ -201,6 +207,7 @@ export function App() {
   const fallbackLanguage = preferredLanguage();
   const language = store?.settings.language ?? fallbackLanguage;
   const copy = COPY[language];
+  const auth = useMobileAuth(language);
   const solves = store ? activeTimerSolves(store, '333') : [];
   const stats = useMemo(() => summarize(solves, '333'), [solves]);
 
@@ -634,6 +641,56 @@ export function App() {
                   <option value="700">700 ms</option>
                 </select>
               </label>
+            </div>
+
+            <div className="settings-section">
+              <h2>{copy.account}</h2>
+              {auth.loading ? <p>{copy.checking}</p> : auth.session ? (
+                <>
+                  <p>
+                    {copy.signedInAs}: <strong>{auth.session.user.name || `#${auth.session.user.uid}`}</strong>
+                    {auth.session.user.wcaId ? ` · ${auth.session.user.wcaId}` : ''}
+                  </p>
+                  <p>{copy.localDataNotSynced}</p>
+                  <div className="action-row">
+                    <a
+                      className="site-link"
+                      href={accountUrl(language)}
+                      onClick={openExternal}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      {copy.manageAccount}<span aria-hidden="true">↗</span>
+                    </a>
+                    <a
+                      className="site-link"
+                      href={accountUrl(language, 'delete')}
+                      onClick={openExternal}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      {copy.deleteAccount}<span aria-hidden="true">↗</span>
+                    </a>
+                    <button
+                      className="secondary-action"
+                      disabled={auth.busy}
+                      onClick={() => void auth.logout()}
+                      type="button"
+                    >{copy.signOut}</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p>{copy.accountDetail}</p>
+                  <button
+                    className="primary-action"
+                    disabled={auth.busy}
+                    onClick={() => void auth.login()}
+                    type="button"
+                  >{auth.busy ? copy.signingIn : copy.signIn}</button>
+                </>
+              )}
+              {auth.error ? <p role="alert">{copy.authError}</p> : null}
             </div>
 
             <div className="settings-section">

@@ -161,7 +161,7 @@ const TABLES: Table[] = [
   { name: 'user_wca_friend_contacts', domain: 'account', origin: '0178', purpose: { zh: '账号私有的 WCA 好友条目；对方未注册时只保存在本人列表，不代表双向好友或已发送申请', en: 'Account-private WCA friend entries; an unregistered person is only saved to the owner\'s list and does not imply a mutual friendship or delivered request' } },
   { name: 'auth_identities', domain: 'account', origin: '0064', evolved: [78, 103], purpose: { zh: '账号与外部身份的唯一映射；微信小程序与网站扫码登录共用 UnionID', en: 'Unique account-to-provider identity mappings; Mini Program and website QR sign-in share the Weixin UnionID' } },
   { name: 'auth_codes', domain: 'account', origin: '0064', purpose: { zh: '邮箱与手机登录、绑定使用的短时验证码及核销状态', en: 'Short-lived email and phone verification codes with consumption state' } },
-  { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', purpose: { zh: '小程序原生会话换取网页会话的 90 秒单次票据，只保存 SHA-256', en: '90-second single-use tickets that bridge Mini Program sessions into website sessions; only SHA-256 hashes are stored' } },
+  { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', evolved: [179], purpose: { zh: '小程序与原生 App 跨运行时换取会话的 90 秒单次票据；只存票据 SHA-256，移动端另绑 PKCE challenge', en: '90-second single-use cross-runtime session tickets; ticket hashes only, with mobile tickets additionally bound to a PKCE challenge' } },
 
   // ── teaching SaaS ──────────────────────────────────────
   { name: 'organizations', domain: 'teaching', origin: '0142', purpose: { zh: '机构租户根节点，保存唯一 slug、状态、时区与版本', en: 'Tenant root with a unique slug, lifecycle status, timezone, and version' }, cols: [
@@ -644,6 +644,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 176, slug: 'creator_gallery_captions', desc: { zh: '新增颜瑞民个人页图库的双语说明表，由管理员直接在前端维护。', en: 'Add bilingual captions for Ruimin Yan’s profile gallery, maintained by an admin directly in the frontend.' } },
   { n: 177, slug: 'named_student_nationality', desc: { zh: '无 WCA ID 学生名册增加必填国籍，以老师的 WCA 国籍回填已有记录，并阻止同一老师重复添加同名学生。', en: 'Require nationality for named student rosters, backfill existing entries from each teacher’s WCA nationality, and prevent duplicate names within one teacher’s roster.' } },
   { n: 178, slug: 'wca_friend_contacts', desc: { zh: '好友列表可保存尚未注册 CubeRoot 的 WCA 选手，并明确区分私有条目与双向好友关系。', en: 'Allow friend lists to save WCA cubers who have not registered for CubeRoot, while clearly separating private entries from mutual friendships.' } },
+  { n: 179, slug: 'mobile_auth_pkce', desc: { zh: '复用短时单次票据表，为 Android/iOS 系统浏览器登录增加用途隔离与 PKCE challenge 绑定。', en: 'Reuse the short-lived ticket table for Android/iOS browser sign-in with purpose isolation and PKCE challenge binding.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

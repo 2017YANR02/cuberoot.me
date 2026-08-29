@@ -78,6 +78,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'POST', p: '/v1/auth/wechat/miniprogram', g: 'public', zh: '用小程序登录码换取 UnionID 并签发 JWT', en: 'Exchange a Mini Program login code for UnionID and issue a JWT' },
   { d: 'auth', m: 'POST', p: '/v1/auth/web-session/ticket', g: 'login', zh: '为小程序 web-view 签发 90 秒单次网页登录票据', en: 'Issue a 90-second single-use web session ticket for a Mini Program web-view' },
   { d: 'auth', m: 'POST', p: '/v1/auth/web-session/exchange', g: 'public', zh: '原子核销单次票据并签发网站 JWT', en: 'Atomically consume a single-use ticket and issue a website JWT' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/mobile-session/ticket', g: 'login', c: 'no-store', zh: '网站登录态签发绑定 PKCE 的 90 秒移动端票据', en: 'Issue a 90-second PKCE-bound mobile ticket from a website session' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/mobile-session/exchange', g: 'public', c: 'no-store', zh: '原生 App 用 PKCE verifier 原子核销票据并换取 JWT', en: 'Atomically exchange a mobile ticket and PKCE verifier for a JWT' },
 
   // ---- account (邮箱 / 手机验证码登录 + 多身份绑定) ----
   { d: 'auth', m: 'GET', p: '/v1/auth/providers', g: 'public', zh: '已配置的登录方式(前端隐藏未开放 tab)', en: 'Configured login methods (client hides unavailable tabs)' },

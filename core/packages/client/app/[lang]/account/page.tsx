@@ -336,6 +336,7 @@ export default function AccountPage() {
   // null,所以判定只能在挂载后做,渲染前固定空壳避免 hydration 错配。
   // 'onboard' = 刚注册完的那一步「你有 WCA ID 吗」,挡在回跳 next 之前。
   const [mode, setMode] = useState<'wait' | 'login' | 'onboard' | 'me'>('wait');
+  const [mobileAuth, setMobileAuth] = useState(false);
   const next = useRef<string | null>(null);
 
   useDocumentTitle(
@@ -354,15 +355,18 @@ export default function AccountPage() {
    * 一遍会很烦,用 WCA 注册的人本来就有。问不问都不拦路:引导那步随时可跳过。
    */
   const settle = useCallback((info?: SignedIn) => {
+    if (mobileAuth) { leave(); return; }
     if (info?.isNew && !info.hasWca) { setMode('onboard'); return; }
     leave();
-  }, [leave]);
+  }, [leave, mobileAuth]);
 
   // 只在挂载时判一次。**不能**改成盯着 user 变化自动跳:忘记密码流在验证码通过时就已经登录,
   // 但人还得留在表单里设新密码 —— 一盯 user 就会把那一步抽走。何时算完成由表单的 onDone 说了算。
   useEffect(() => {
+    const search = new URLSearchParams(window.location.search);
+    setMobileAuth(search.get('auth') === 'mobile');
     const fragmentNext = new URLSearchParams(window.location.hash.slice(1)).get('next');
-    next.current = safeNext(fragmentNext) ?? safeNext(new URLSearchParams(window.location.search).get('next'));
+    next.current = safeNext(fragmentNext) ?? safeNext(search.get('next'));
     const u = useAuthStore.getState().user;
     if (!u) { setMode('login'); return; }
     // 三方(微信/QQ/支付宝)注册那条路:授权是整页跳走再回来的,回来时人已不在 LoginForm 里,
@@ -489,7 +493,7 @@ export default function AccountPage() {
       </header>
 
       {mode === 'login' ? (
-        <LoginForm onDone={settle} />
+        <LoginForm firstPartyOnly={mobileAuth} onDone={settle} />
       ) : mode === 'onboard' ? (
         /* 注册流程的最后一步。这里不渲染账号页本体(名字、卡片)—— 人还在「注册」这件事里,
            把「我的」摊开会让人以为已经结束了,而这一步恰恰要他做个选择。 */
