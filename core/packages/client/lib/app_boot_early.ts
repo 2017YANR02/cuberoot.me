@@ -12,6 +12,21 @@ export const MIN_SUPPORTED_SAFARI_MINOR = 4;
 export const TIMER_BOOT_TELEMETRY_PATH = '/v1/timer/boot-events';
 const APP_BOOT_GRACE_MS = 5_000;
 
+const MINIMUM_VERSION_COPY = {
+  chromium: {
+    zh: `最低支持 Chromium ${MIN_SUPPORTED_CHROMIUM_MAJOR}。`,
+    en: `The minimum supported Chromium version is ${MIN_SUPPORTED_CHROMIUM_MAJOR}.`,
+  },
+  browser: {
+    zh: `最低支持 Chrome、Edge、Firefox ${MIN_SUPPORTED_CHROMIUM_MAJOR} 或 Safari ${MIN_SUPPORTED_SAFARI_MAJOR}.${MIN_SUPPORTED_SAFARI_MINOR}。`,
+    en: `The minimum supported versions are Chrome, Edge, and Firefox ${MIN_SUPPORTED_CHROMIUM_MAJOR} or Safari ${MIN_SUPPORTED_SAFARI_MAJOR}.${MIN_SUPPORTED_SAFARI_MINOR}.`,
+  },
+  ios: {
+    zh: `最低支持 iOS/iPadOS ${MIN_SUPPORTED_SAFARI_MAJOR}.${MIN_SUPPORTED_SAFARI_MINOR}。`,
+    en: `The minimum supported iOS/iPadOS version is ${MIN_SUPPORTED_SAFARI_MAJOR}.${MIN_SUPPORTED_SAFARI_MINOR}.`,
+  },
+} as const;
+
 export type TimerBootTelemetryOutcome = 'attempt' | 'success' | 'failure';
 export type TimerBootTelemetryFailureKind =
   | 'network'
@@ -42,16 +57,16 @@ export const APP_BOOT_COPY = {
     en: 'Check your connection and retry. If it still fails, send us the diagnostic information below.',
   },
   outdatedWechatMessage: {
-    zh: '当前微信内置浏览器内核过旧，无法打开此页面。请改用并确认已更新的现代浏览器；仅选择“在系统浏览器打开”不一定有效。无法更新浏览器时，请暂用另一台设备。',
-    en: 'This WeChat browser engine is too old to open the page. Use a modern browser that is actually up to date; merely choosing “Open in system browser” may not help. If no browser can be updated, use another device.',
+    zh: `${MINIMUM_VERSION_COPY.chromium.zh}当前微信内置浏览器内核过旧，无法打开此页面。请改用并确认已更新的现代浏览器；仅选择“在系统浏览器打开”不一定有效。无法更新浏览器时，请暂用另一台设备。`,
+    en: `${MINIMUM_VERSION_COPY.chromium.en} This WeChat browser engine is too old to open the page. Use a modern browser that is actually up to date; merely choosing “Open in system browser” may not help. If no browser can be updated, use another device.`,
   },
   outdatedBrowserMessage: {
-    zh: '当前浏览器内核过旧，无法打开此页面。请更新或改用现代浏览器；手机自带浏览器即使显示最新版，内核也可能仍然过旧。无法更新时，请暂用另一台设备。',
-    en: 'This browser engine is too old to open the page. Update it or use a modern browser; a built-in browser may still have an old engine even when it reports that it is current. If it cannot be updated, use another device.',
+    zh: `${MINIMUM_VERSION_COPY.browser.zh}当前浏览器内核过旧，无法打开此页面。请更新或改用现代浏览器；手机自带浏览器即使显示最新版，内核也可能仍然过旧。无法更新时，请暂用另一台设备。`,
+    en: `${MINIMUM_VERSION_COPY.browser.en} This browser engine is too old to open the page. Update it or use a modern browser; a built-in browser may still have an old engine even when it reports that it is current. If it cannot be updated, use another device.`,
   },
   outdatedIosMessage: {
-    zh: '当前 iPhone 或 iPad 的系统浏览器内核过旧，无法打开此页面。请升级 iOS 或 iPadOS 后重试；仅在同一台设备上更换浏览器可能无效。设备无法升级时，请暂用另一台设备。',
-    en: 'This iPhone or iPad system browser engine is too old to open the page. Update iOS or iPadOS; switching browsers on the same device may not help. If the device cannot be updated, use another device.',
+    zh: `${MINIMUM_VERSION_COPY.ios.zh}当前 iPhone 或 iPad 的系统浏览器内核过旧，无法打开此页面。请将 iOS 或 iPadOS 升级到设备可用的最新版本后重试；如果设备最高只能升级到低于 ${MIN_SUPPORTED_SAFARI_MAJOR}.${MIN_SUPPORTED_SAFARI_MINOR} 的版本，请暂用另一台设备。仅在同一台设备上更换浏览器可能无效。`,
+    en: `${MINIMUM_VERSION_COPY.ios.en} This iPhone or iPad system browser engine is too old to open the page. Update iOS or iPadOS to the latest version available for the device, then retry. If the device cannot update to ${MIN_SUPPORTED_SAFARI_MAJOR}.${MIN_SUPPORTED_SAFARI_MINOR} or later, use another device. Switching browsers on the same device may not help.`,
   },
   diagnosticCode: { zh: '诊断编号', en: 'Diagnostic code' },
   retry: { zh: '重试', en: 'Retry' },
@@ -67,16 +82,16 @@ export const TIMER_BOOT_COPY = {
     en: 'Check your connection and retry. If it still fails, send us the diagnostic information below.',
   },
   outdatedWechatMessage: {
-    zh: '当前微信内置浏览器内核过旧，无法启动计时器。请改用并确认已更新的现代浏览器；仅选择“在系统浏览器打开”不一定有效。无法更新浏览器时，请暂用另一台设备。',
-    en: 'This WeChat browser engine is too old to start the timer. Use a modern browser that is actually up to date; merely choosing “Open in system browser” may not help. If no browser can be updated, use another device.',
+    zh: `${MINIMUM_VERSION_COPY.chromium.zh}当前微信内置浏览器内核过旧，无法启动计时器。请改用并确认已更新的现代浏览器；仅选择“在系统浏览器打开”不一定有效。无法更新浏览器时，请暂用另一台设备。`,
+    en: `${MINIMUM_VERSION_COPY.chromium.en} This WeChat browser engine is too old to start the timer. Use a modern browser that is actually up to date; merely choosing “Open in system browser” may not help. If no browser can be updated, use another device.`,
   },
   outdatedBrowserMessage: {
-    zh: '当前浏览器内核过旧，无法启动计时器。请更新或改用现代浏览器；手机自带浏览器即使显示最新版，内核也可能仍然过旧。无法更新时，请暂用另一台设备。',
-    en: 'This browser engine is too old to start the timer. Update it or use a modern browser; a built-in browser may still have an old engine even when it reports that it is current. If it cannot be updated, use another device.',
+    zh: `${MINIMUM_VERSION_COPY.browser.zh}当前浏览器内核过旧，无法启动计时器。请更新或改用现代浏览器；手机自带浏览器即使显示最新版，内核也可能仍然过旧。无法更新时，请暂用另一台设备。`,
+    en: `${MINIMUM_VERSION_COPY.browser.en} This browser engine is too old to start the timer. Update it or use a modern browser; a built-in browser may still have an old engine even when it reports that it is current. If it cannot be updated, use another device.`,
   },
   outdatedIosMessage: {
-    zh: '当前 iPhone 或 iPad 的系统浏览器内核过旧，无法启动计时器。请升级 iOS 或 iPadOS 后重试；仅在同一台设备上更换浏览器可能无效。设备无法升级时，请暂用另一台设备。',
-    en: 'This iPhone or iPad system browser engine is too old to start the timer. Update iOS or iPadOS; switching browsers on the same device may not help. If the device cannot be updated, use another device.',
+    zh: `${MINIMUM_VERSION_COPY.ios.zh}当前 iPhone 或 iPad 的系统浏览器内核过旧，无法启动计时器。请将 iOS 或 iPadOS 升级到设备可用的最新版本后重试；如果设备最高只能升级到低于 ${MIN_SUPPORTED_SAFARI_MAJOR}.${MIN_SUPPORTED_SAFARI_MINOR} 的版本，请暂用另一台设备。仅在同一台设备上更换浏览器可能无效。`,
+    en: `${MINIMUM_VERSION_COPY.ios.en} This iPhone or iPad system browser engine is too old to start the timer. Update iOS or iPadOS to the latest version available for the device, then retry. If the device cannot update to ${MIN_SUPPORTED_SAFARI_MAJOR}.${MIN_SUPPORTED_SAFARI_MINOR} or later, use another device. Switching browsers on the same device may not help.`,
   },
   diagnosticCode: { zh: '诊断编号', en: 'Diagnostic code' },
   retry: { zh: '重试', en: 'Retry' },
