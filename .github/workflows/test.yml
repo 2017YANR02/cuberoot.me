@@ -71,7 +71,8 @@ jobs:
       # 例外:tools/cstimer-scramble(519K)是非 WCA 求解器测试的打乱 oracle,必须拉进来,
       # 否则 bic/cm3/heli/helicv/ctico/sia222 的 "≥200 real cstimer scrambles" 全 0 条变红.
       # 例外:仓库级守卫入口 —— code-guards-drift / recon-ground-truth-gate 会同时断言
-      # .codex/hooks、.codex/hooks.json、.githooks/pre-commit 存在,三处必须一起拉取。
+      # .codex/hooks、.codex/hooks.json、.codex/banned-words.json、.githooks/pre-commit
+      # 存在,四处必须一起拉取。
       # 例外:tools/blddb/data/*Manmade.json —— blddb_lookup.test.ts 拿真实库验十套 case
       # 的编码契约(代表元唯一 / 覆盖完整)。角(1.1MB)+ 奇偶 / 翻角 / 翻棱 / 奇偶带翻
       # (四套合计 ~450KB)都点名;只有棱那套 1.6MB 留给本地 —— 同样的不变量角已经能证,
@@ -111,6 +112,7 @@ jobs:
             /tools/blddb/data/bigbld/midgeManmade.json
             /.codex/hooks/
             /.codex/hooks.json
+            /.codex/banned-words.json
             # architecture-boundaries.json 把部署和产物流水线当作人工契约证据；
             # 必须检出整个 workflow 目录，否则 sparse CI 会把“未检出”误报为“文件缺失”。
             /.github/workflows/
