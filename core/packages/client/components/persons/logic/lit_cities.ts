@@ -29,15 +29,16 @@ export interface LitCountry {
 export function buildLitFromComps(
   attended: WcaCompetition[],
   geo: CompGeoIndex | null,
+  canonicalCityByCompId: ReadonlyMap<string, string> | null = null,
 ): { cities: LitCity[]; countries: LitCountry[] } {
   // 先按 (iso2, city) 聚合
   const byCity = new Map<string, { iso2: string; city: string; count: number; lats: number[]; lngs: number[] }>();
   const byCountry = new Map<string, { iso2: string; count: number; lats: number[]; lngs: number[] }>();
 
   for (const c of attended) {
-    const iso2 = c.country_iso2 || '';
-    const city = c.city || '';
     const g = geo?.index.get(c.id);
+    const iso2 = (g?.country_iso2 || c.country_iso2 || '').trim().toUpperCase();
+    const city = (canonicalCityByCompId?.get(c.id) || g?.city || c.city || '').trim();
     const lat = g?.lat ?? Number.NaN;
     const lng = g?.lng ?? Number.NaN;
 
