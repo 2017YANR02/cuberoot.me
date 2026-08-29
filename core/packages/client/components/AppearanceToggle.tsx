@@ -20,6 +20,8 @@ import {
   applyTheme,
   applyPalette,
   applyContrast,
+  beginAppearancePreview,
+  endAppearancePreview,
   previewTheme,
   previewPalette,
   previewContrast,
@@ -80,6 +82,7 @@ export default function AppearanceToggle({ className }: { className?: string }) 
 
   const closeMenu = () => {
     endPreview();
+    endAppearancePreview(true);
     setOpen(false);
   };
 
@@ -131,11 +134,13 @@ export default function AppearanceToggle({ className }: { className?: string }) 
 
   useEffect(() => () => {
     if (previewingRef.current) restorePersistedAppearance();
+    endAppearancePreview(true);
   }, []);
 
   // 选明暗:清掉配色回经典明暗(在同一次淡出里清),并持久化 theme。
   const pickTheme = (choice: 'light' | 'dark') => {
     previewingRef.current = false;
+    endAppearancePreview();
     setOpen(false);
     persistItem(THEME_KEY, choice);
     applyTheme(choice, true, true);
@@ -145,6 +150,7 @@ export default function AppearanceToggle({ className }: { className?: string }) 
   // 选配色:覆盖明暗(applyPalette 内部已 dispatch theme-change)。
   const pickPalette = (id: PaletteId) => {
     previewingRef.current = false;
+    endAppearancePreview();
     setOpen(false);
     applyPalette(id, true);
   };
@@ -153,7 +159,7 @@ export default function AppearanceToggle({ className }: { className?: string }) 
   const pickContrast = (level: ContrastLevel) => {
     previewingRef.current = false;
     setContrast(level);
-    applyContrast(level, true);
+    applyContrast(level);
   };
 
   const cls = ['theme-toggle-inline', className].filter(Boolean).join(' ');
@@ -175,11 +181,17 @@ export default function AppearanceToggle({ className }: { className?: string }) 
         type="button"
         className={cls}
         onPointerEnter={(event) => {
-          if (event.pointerType !== 'touch') setOpen(true);
+          if (event.pointerType !== 'touch') {
+            beginAppearancePreview();
+            setOpen(true);
+          }
         }}
         onClick={() => {
-          if (open) endPreview();
-          setOpen((v) => !v);
+          if (open) closeMenu();
+          else {
+            beginAppearancePreview();
+            setOpen(true);
+          }
         }}
         title={L.title}
         aria-label={L.title}
@@ -205,7 +217,6 @@ export default function AppearanceToggle({ className }: { className?: string }) 
             aria-checked={onScheme && eff === 'dark'}
             className={`lang-menu-item${onScheme && eff === 'dark' ? ' is-active' : ''}`}
             onPointerEnter={() => showThemePreview('dark')}
-            onPointerLeave={endPreview}
             onFocus={() => showThemePreview('dark')}
             onClick={() => pickTheme('dark')}
           >
@@ -220,7 +231,6 @@ export default function AppearanceToggle({ className }: { className?: string }) 
             aria-checked={onScheme && eff === 'light'}
             className={`lang-menu-item${onScheme && eff === 'light' ? ' is-active' : ''}`}
             onPointerEnter={() => showThemePreview('light')}
-            onPointerLeave={endPreview}
             onFocus={() => showThemePreview('light')}
             onClick={() => pickTheme('light')}
           >
@@ -241,7 +251,6 @@ export default function AppearanceToggle({ className }: { className?: string }) 
                 aria-checked={on}
                 className={`lang-menu-item${on ? ' is-active' : ''}`}
                 onPointerEnter={() => showPalettePreview(p.id)}
-                onPointerLeave={endPreview}
                 onFocus={() => showPalettePreview(p.id)}
                 onClick={() => pickPalette(p.id)}
               >
@@ -264,7 +273,6 @@ export default function AppearanceToggle({ className }: { className?: string }) 
                   aria-checked={on}
                   className={`appearance-chip${on ? ' is-active' : ''}`}
                   onPointerEnter={() => showContrastPreview(c.id)}
-                  onPointerLeave={endPreview}
                   onFocus={() => showContrastPreview(c.id)}
                   onClick={() => pickContrast(c.id)}
                 >

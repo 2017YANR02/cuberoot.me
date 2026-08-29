@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   CONTRAST_KEY,
   THEME_KEY,
+  applyPalette,
+  beginAppearancePreview,
+  endAppearancePreview,
   previewContrast,
   previewPalette,
   previewTheme,
@@ -18,6 +21,7 @@ describe('appearance preview', () => {
     document.documentElement.removeAttribute('data-palette');
     document.documentElement.removeAttribute('data-palette-scheme');
     document.documentElement.removeAttribute('data-contrast');
+    document.documentElement.removeAttribute('data-appearance-preview');
     document.documentElement.style.colorScheme = '';
     Object.defineProperty(document, 'startViewTransition', {
       configurable: true,
@@ -26,7 +30,7 @@ describe('appearance preview', () => {
     vi.stubGlobal('matchMedia', () => ({ matches: false }));
   });
 
-  it('handles the expected ready rejection when rapid previews skip a transition', () => {
+  it('handles the expected ready rejection when persisted transitions overlap', () => {
     const firstReadyCatch = vi.fn(() => Promise.resolve());
     const secondReadyCatch = vi.fn(() => Promise.resolve());
     const firstSkip = vi.fn();
@@ -50,13 +54,32 @@ describe('appearance preview', () => {
       }),
     });
 
-    previewPalette('hantan');
-    previewPalette('xinhuang');
+    applyPalette('hantan', true);
+    applyPalette('xinhuang', true);
 
     expect(firstSkip).toHaveBeenCalledOnce();
     expect(firstReadyCatch).toHaveBeenCalledOnce();
     expect(secondReadyCatch).toHaveBeenCalledOnce();
     expect(document.documentElement.dataset.palette).toBe('xinhuang');
+  });
+
+  it('keeps rapid previews out of the full-page transition layer', () => {
+    const startViewTransition = vi.fn();
+    Object.defineProperty(document, 'startViewTransition', {
+      configurable: true,
+      value: startViewTransition,
+    });
+
+    beginAppearancePreview();
+    previewPalette('hantan');
+    previewPalette('xinhuang');
+
+    expect(startViewTransition).not.toHaveBeenCalled();
+    expect(document.documentElement.hasAttribute('data-appearance-preview')).toBe(true);
+    expect(document.documentElement.dataset.palette).toBe('xinhuang');
+
+    endAppearancePreview();
+    expect(document.documentElement.hasAttribute('data-appearance-preview')).toBe(false);
   });
 
   it('previews a palette without changing the saved appearance', () => {
