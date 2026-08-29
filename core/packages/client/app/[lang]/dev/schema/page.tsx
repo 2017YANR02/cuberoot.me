@@ -646,6 +646,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 178, slug: 'wca_friend_contacts', desc: { zh: '好友列表可保存尚未注册 CubeRoot 的 WCA 选手，并明确区分私有条目与双向好友关系。', en: 'Allow friend lists to save WCA cubers who have not registered for CubeRoot, while clearly separating private entries from mutual friendships.' } },
   { n: 179, slug: 'mobile_auth_pkce', desc: { zh: '复用短时单次票据表，为 Android/iOS 系统浏览器登录增加用途隔离与 PKCE challenge 绑定。', en: 'Reuse the short-lived ticket table for Android/iOS browser sign-in with purpose isolation and PKCE challenge binding.' } },
   { n: 180, slug: 'membership_auto_renew_plan', desc: { zh: '把尚未上线的连续包月和连续包年登记为独立套餐，默认不公开并复用会员后台的公开开关。', en: 'Register the unreleased monthly and annual auto-renewal offers as separate hidden plans controlled by the membership admin visibility toggles.' } },
+  { n: 181, slug: 'enterprise_membership_plans', desc: { zh: '把现有月度和年度套餐标为个人用户，并增加沿用单账号开通流程的企业用户月度和年度套餐。', en: 'Label the existing monthly and annual offers as individual plans, then add enterprise plans using the single-account membership checkout.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
