@@ -236,7 +236,7 @@
   width: 100%;
 }
 
-.stage-training-mac-input input {
+.stage-training-mac-field {
   min-width: 0;
   width: 100%;
   min-height: 38px;
