@@ -1,6 +1,6 @@
 ---
 name: code-subpage
-description: "Use when adding a long-form software, language, algorithm, or concept page under /dev/stack, /dev/language, or /dev/algorithms. Applies to the active Next client, not the retired Vite client."
+description: "Use when adding or replicating a long-form 软件、语言、算法或概念介绍页 under /dev/stack, /dev/language, or /dev/algorithms. Covers stack data entries and slug pages in the active Next client; never target the retired Vite client."
 ---
 
 # /dev/* 加新介绍页

@@ -1,6 +1,6 @@
 ---
 name: math-content
-description: "Use when adding content under /math, either a section in an existing long-form page such as /math/group or /math/god, or a new top-level math topic page in the Next client."
+description: "Use when adding 数学内容 under /math: a new section in a long-form page such as /math/group or /math/god, or a new top-level math topic page. Covers bilingual sections, lazy loading, slug routing, and interactive SVG in the active Next client."
 ---
 
 # /math/* 加内容

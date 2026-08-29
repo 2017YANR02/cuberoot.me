@@ -1,6 +1,6 @@
 ---
 name: import-alg-docx
-description: Import or synchronize curated 3x3 algorithm tables from DOCX while preserving order, notation, classifications, tags, scramble links, metrics, diagrams, and left/right-hand formula relationships.
+description: Use when importing, migrating, or synchronizing curated 3x3 algorithm DOCX tables, especially OLL-style tables with diagrams, colored annotations, formula-type icons, or left-hand formulas. Preserve order, notation, classifications, tags, links, metrics, and right-hand derivations.
 ---
 
 # Import algorithm DOCX
