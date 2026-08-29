@@ -1,6 +1,6 @@
 ---
 name: wca-stats-db
-description: "Use when writing SQL against local wca_developer_database MySQL dump, or refreshing it from WCA developer export. Covers snake_case schema, key tables, join idioms (sub_id=1/rank<900), value encodings (DNF=-1/DNS=-2/FMC/MBLD), records markers, refresh script. Triggers: \"WCA SQL\", \"WCA dump\", \"WCA schema\", \"results 表\", \"competitions 表\", \"event_id\", \"person_id\", \"result_attempts\", \"regional_single_record\", \"sub_id\", \"更新 WCA dump\", \"刷新 WCA\", \"wca export\", \"wca-developer-database-dump\", \"update_database\"."
+description: "Use when writing SQL against the local WCA developer MySQL dump or refreshing it from the WCA export. Covers its snake_case schema, joins, result encodings, record markers, and refresh workflow."
 ---
 
 # WCA Statistics DB

@@ -1,6 +1,6 @@
 ---
 name: sim-add-puzzle
-description: 给 /sim 加一个新魔方「模拟器」=站内 3D 渲染 + 转角动画 + 拖拽转动的新「类型」(不是一次性 HTML 页面)。当用户说"造某某魔方模拟器""给 /sim 加 X 魔方""新魔方类型""X cube simulator"时用。覆盖 SQ1/Ivy 模板契约、必改文件、Three.js 几何、拖拽转动(raycast+方向)、招式对接 solver、必踩的坑。区分:造"求解器"引擎走 skill new-substep-solver;本 skill 只管 /sim 的渲染+动画+交互集成。Triggers "造魔方模拟器", "造X魔方模拟器", "枫叶魔方模拟器", "给 /sim 加魔方", "sim 加魔方", "新魔方类型", "add puzzle to sim", "X cube simulator", "/sim 新增魔方", "魔方模拟器", "sim 拖拽转动".
+description: "给 /sim 增加新魔方类型时使用，覆盖 Three.js 3D 渲染、转角动画、拖拽转动及招式接入。只处理模拟器交互集成；新求解器引擎走 new-substep-solver。"
 ---
 
 # sim-add-puzzle

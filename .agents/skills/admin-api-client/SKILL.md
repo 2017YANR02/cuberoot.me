@@ -1,6 +1,6 @@
 ---
 name: admin-api-client
-description: "Use when writing a new client-side API helper for any 'public GET + admin write' Hono route (alg_sets / wiki / ops / nav_sites 模式). 强制从 utils/admin_api 复用 authHeaders + handleApi, 不要每个新 file 再 paste 一份 getToken/authHeaders/handle. Triggers: \"client api helper\", \"admin api\", \"authHeaders\", \"handleApi\", \"X-Admin-Key\", \"wiki_api\", \"alg_sets_api\", \"ops_api\", \"加新 api util\"."
+description: "Use when writing a client-side helper for a public-GET plus admin-write Hono route. Reuse authHeaders and handleApi from utils/admin_api instead of duplicating token or response handling."
 ---
 
 # Admin API client (复用 helper)

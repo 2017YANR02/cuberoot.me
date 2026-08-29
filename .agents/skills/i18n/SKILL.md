@@ -1,6 +1,6 @@
 ---
 name: i18n
-description: "Use when adding/editing user-visible text in the React client (core/packages/client). 站点只服 en + zh-Hans(简体);繁体已移除。文案统一走 tr({en,zh}) / <T en zh /> / useT() 的 t(zh,en) / t('ns.key')+en.json/zh.json。禁内联 isZh/i18n.language 文案三元(CI ratchet + PreToolUse hook 双守)。右上角 lang+theme 用 <HeaderToggles />。Triggers: \"中英双语\", \"双语\", \"i18n\", \"translate\", \"翻译\", \"add Chinese/English\", \"isZh\", \"tr(\", \"useT\", \"LangToggle\", \"HeaderToggles\", \"主题切换\", \"右上角\", \"en.json\", \"zh.json\", \"useTranslation\", new page, new user-facing string."
+description: "Use when adding or editing user-visible text in the React client. Supports only English and Simplified Chinese through tr, T, useT, or locale JSON; never use inline isZh language ternaries."
 ---
 
 # i18n（core/packages/client，主工作区）

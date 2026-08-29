@@ -1,6 +1,6 @@
 ---
 name: comp-names-zh
-description: "Use when regenerating `stats/comp_names_zh.json`, debugging Chinese comp names, or rendering a competition name anywhere in the UI (must go through `lib/comp-localize.ts`, never raw `c.name`; the year in the name must not duplicate a date shown next to it). Triggers: \"中国比赛中文\", \"localizeCompName\", \"comp_names_zh\", \"fetch_comp_names_zh\", \"比赛名本地化\", \"stripWcaPrefix\", \"CompCell\", \"比赛名年份\", \"比赛名重复年份\", \"stripCompYear\", \"localizeCity\", \"CITY_ZH\"."
+description: "Use when regenerating comp_names_zh.json, debugging Chinese competition names, or rendering competition names. Always use comp-localize.ts, never raw c.name, and avoid duplicating the year beside dates."
 ---
 
 # 中国比赛名中文化

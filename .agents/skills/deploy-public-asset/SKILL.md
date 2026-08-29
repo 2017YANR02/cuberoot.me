@@ -1,6 +1,6 @@
 ---
 name: deploy-public-asset
-description: "Use when adding new public/static files to the site — images, fonts, geojson, textures, WASM modules. Live site is Next.js: assets go in client/public/ (no repo-root copy, no whitelist). Shared fork/stats static lives in tools/ + stats/ served by static.cuberoot.me. Triggers: \"new public asset\", \"404\", \"public/\", \"textures/\", \"加静态资源\", \"static asset\", \"public 资源\"."
+description: "Use when adding site images, fonts, GeoJSON, textures, WASM, or other static assets. Next assets belong in client/public; shared fork and statistics assets remain in tools or stats."
 ---
 
 # 新增 public / 静态资源

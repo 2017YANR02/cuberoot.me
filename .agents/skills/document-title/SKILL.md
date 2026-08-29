@@ -1,6 +1,6 @@
 ---
 name: document-title
-description: "Use when adding/changing a page's browser tab title (the `<title>` / `document.title` text shown in Chrome tab strip and history). Single entry point: `useDocumentTitle(zh, en)` hook in `utils/useDocumentTitle.ts`. Subpages show only the page name; the landing page is `CubeRoot`. NEVER write `document.title = ...` in new code. Triggers: \"tab 名\", \"tab 标题\", \"浏览器标题\", \"页面标题\", \"document.title\", \"document title\", \"tab title\", \"browser title\", \"网页标题\", \"useDocumentTitle\"."
+description: "Use when adding or changing a page's browser tab title. Use the canonical useDocumentTitle hook, keep subpage titles unbranded, and never assign document.title directly."
 ---
 
 # 浏览器 tab 标题(document.title)

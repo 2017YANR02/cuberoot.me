@@ -1,6 +1,6 @@
 ---
 name: import-alg-docx
-description: Import curated speedcubing algorithm tables from DOCX into CubeRoot while preserving document order, exact notation, classifications, formula tags, scramble links, and metric metadata. Use when a user asks to import, migrate, or synchronize a 3x3 algorithm DOCX, especially OLL-style tables with diagrams, colored annotations, embedded formula-type icons, or left-hand formulas that also need the site's existing right-hand derivation.
+description: Import or synchronize curated 3x3 algorithm tables from DOCX while preserving order, notation, classifications, tags, scramble links, metrics, diagrams, and left/right-hand formula relationships.
 ---
 
 # Import algorithm DOCX

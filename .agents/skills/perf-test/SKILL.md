@@ -1,6 +1,6 @@
 ---
 name: perf-test
-description: "Use when measuring, diagnosing, or optimizing page-load performance, including regional slowness, LCP, FCP, INP, TTFB, large bundles, slow first paint, Web Vitals, PageSpeed, WebPageTest, chunk size, lazy loading, and bottlenecks. For this repo's Next.js 16 App Router client, combine CrUX or PSI field data, regional HTTP probes, Playwright resource timing, and Turbopack experimental-analyze."
+description: "Use when measuring, diagnosing, or optimizing page-load performance, including regional slowness, Web Vitals, TTFB, bundles, rendering, and lazy loading in the Next.js client."
 ---
 
 # Performance diagnosis

@@ -1,6 +1,6 @@
 ---
 name: solvers-tables
-description: "改 solver/ 引擎的表(新增/删/改大小/改某分析器加载哪些表, 尤其优化 f2leo/pseudo_f2leo 加大表)后必须同步 /dev/solvers 页的 TABLES 常量。该数据是硬编码快照(*.bin 在 solver/tables/ gitignored, repo/CI/线上都没有 → 无法 build/runtime 自动拉, 只能手维护)。Triggers: \"solvers 页\", \"求解器看板\", \"/dev/solvers\", \"优化 f2leo\", \"f2leo 性能\", \"pseudo_f2leo\", \"加大表\", \"新增剪枝表/移动表\", \"改 solver 表\", \"table_generator\", \"analyzer 加载表\"."
+description: "修改 solver 表的集合、大小或分析器加载关系时使用，并同步 /dev/solvers 的 TABLES 快照。表文件被 gitignore，无法由仓库、CI 或线上运行时自动推导。"
 ---
 
 # Solvers 看板表数据同步

@@ -1,6 +1,6 @@
 ---
 name: code-subpage
-description: "Use when adding a long-form intro page under /dev/* — 一件软件/语言/算法/概念“一页一篇”。全在 client (Next App Router, app/[lang]/dev/*),不是退役的 Vite client。覆盖 /dev/stack/* (数据驱动,3 文件)、/dev/language/* + /dev/algorithms/* (各自 <slug>/page.tsx 路由),结构同构 (hero / history / concepts / why / adopters / outlook / cuberoot 用法 / links)。Triggers: \"/dev\", \"/dev/stack\", \"/dev/language\", \"/dev/algorithms\", \"stack_tools\", \"STACK_TOOLS\", \"加 stack 工具\", \"add code subpage\", \"新建语言介绍\", \"介绍 github\", \"介绍 curl\", \"介绍 vscode\", \"复刻 git.tsx\", \"复刻 ts/page.tsx\"."
+description: "Use when adding a long-form software, language, algorithm, or concept page under /dev/stack, /dev/language, or /dev/algorithms. Applies to the active Next client, not the retired Vite client."
 ---
 
 # /dev/* 加新介绍页
