@@ -18,17 +18,18 @@ function randomIndex(length: number, rng: () => number): number {
 }
 
 /**
- * Generates the lightweight 20-move 3x3 scramble used by CubeRoot's timer.
+ * Generates a canonical random-move face-turn sequence of the requested length.
  *
  * The candidate set is filtered before sampling, so even a deterministic or
  * stuck RNG cannot emit the same face twice or three moves on one axis.
  */
-export function scramble333(rng: () => number): string {
+export function randomFaceMoves(count: number, rng: () => number): string[] {
+  const target = Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0;
   const moves: string[] = [];
   let lastFace: (typeof FACES)[number] | undefined;
   let previousAxisFace: (typeof FACES)[number] | undefined;
 
-  for (let index = 0; index < 20; index++) {
+  for (let index = 0; index < target; index++) {
     const candidates = FACES.filter((face) => (
       face !== lastFace
       && !(lastFace !== undefined && AXIS[face] === AXIS[lastFace] && face === previousAxisFace)
@@ -42,5 +43,10 @@ export function scramble333(rng: () => number): string {
     lastFace = face;
   }
 
-  return moves.join(' ');
+  return moves;
+}
+
+/** Generates the lightweight 20-move 3x3 scramble used by CubeRoot's timer. */
+export function scramble333(rng: () => number): string {
+  return randomFaceMoves(20, rng).join(' ');
 }

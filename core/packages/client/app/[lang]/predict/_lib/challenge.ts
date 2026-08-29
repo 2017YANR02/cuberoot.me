@@ -19,6 +19,7 @@ import {
   CORNER_COLORS, EDGE_COLORS, type Cube333,
 } from '@/lib/lsll/cube333';
 import { cubeOnly, expandGroups, tokenizeMoves } from '@cuberoot/shared/alg-notation';
+import { randomFaceMoves } from '@cuberoot/shared/timer';
 import type { CubeFace } from '@/lib/cube-colors';
 import { orientedFaceColors, faceShowingColor } from '@/lib/cube-orientation';
 import { CUSTOM_MOVES_MAX } from './puzzles/types';
@@ -43,9 +44,6 @@ export { CUSTOM_MOVES_MAX } from './puzzles/types';
 
 /** 目标块被甩到起点位置用的隐藏乱转步数(与被复刻的原站一致)。 */
 const PLACEMENT_MOVES = 15;
-
-const TURN_FACES = ['R', 'L', 'U', 'D', 'F', 'B'] as const;
-const TURN_SUFFIXES = ['', "'", '2'] as const;
 
 export interface PredictTarget {
   kind: 'corner' | 'edge';
@@ -141,16 +139,9 @@ const cornerColorsOf = (piece: number): readonly number[] => CORNER_COLORS[piece
 const edgeColorsOf = (piece: number): readonly number[] => EDGE_COLORS[piece];
 
 /** 随机招式:相邻两步不同面(与被复刻的原站同规则)。 */
+/** 复用计时器的正规面转序列,同时排除可合并的同轴三连。 */
 export function randomMoves(count: number, rnd: () => number): string[] {
-  const out: string[] = [];
-  let last: string | null = null;
-  for (let i = 0; i < count; i++) {
-    let face: string;
-    do { face = pick(TURN_FACES, rnd); } while (face === last);
-    last = face;
-    out.push(face + pick(TURN_SUFFIXES, rnd));
-  }
-  return out;
+  return randomFaceMoves(count, rnd);
 }
 
 /** 公式输入的判定结果 —— 与别的拼图共用一份(`./puzzles/types`),页面只认这一个形状。 */
