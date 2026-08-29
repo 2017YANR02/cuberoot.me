@@ -1,7 +1,7 @@
 // JSX links may not contain another link. React reports <a> inside <a> only at
 // runtime as a hydration error; tsgo stays green. This AST guard covers native
 // anchors plus the shared/framework components known to render anchors.
-// Paired hook: .codex/hooks/block-nested-links.ps1.
+// Paired hook: the shared Node apply_patch guard registered in .codex/hooks.json.
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -92,8 +92,8 @@ describe('nested link guard', () => {
     expect(preTool.some((group: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
       group.matcher?.includes('apply_patch')
       && group.hooks?.some((hook) => hook.command?.includes('adapt-codex-write-payload.mjs')
-        && hook.command.includes('block-nested-links.ps1')),
+        && hook.command.includes('hook-detect-nested-links.mjs')),
     )).toBe(true);
-    expect(existsSync(join(REPO_ROOT, '.codex', 'hooks', 'block-nested-links.ps1'))).toBe(true);
+    expect(existsSync(join(ROOT, 'scripts', 'hook-detect-nested-links.mjs'))).toBe(true);
   });
 });

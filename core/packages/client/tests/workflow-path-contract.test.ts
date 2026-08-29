@@ -392,14 +392,14 @@ describe('deployment workflow path contracts', () => {
     for (const [workflowName, expectedCalls] of Object.entries(expectedResolverCalls)) {
       const workflow = readWorkflow(workflowName);
       expect(workflow).not.toMatch(
-        /echo\s+"(?:api|mobile|stats|web)=\$\(node scripts\/resolve-workspace-path\.mjs/,
+        /echo\s+"(?:api|icons|mobile|stats|web)=\$\(node scripts\/resolve-workspace-path\.mjs/,
       );
       const assignments = [...workflow.matchAll(
-        /^[ \t]+(api|mobile|stats|web)="\$\(node scripts\/resolve-workspace-path\.mjs (@cuberoot\/[^)]+)\)"$/gm,
+        /^[ \t]+(api|icons|mobile|stats|web)="\$\(node scripts\/resolve-workspace-path\.mjs (@cuberoot\/[^)]+)\)"$/gm,
       )];
       expect(assignments, workflowName).toHaveLength(expectedCalls);
       const assignmentOutputPairs = [...workflow.matchAll(
-        /^[ \t]+(api|mobile|stats|web)="\$\(node scripts\/resolve-workspace-path\.mjs @cuberoot\/[^)]+\)"\n[ \t]+echo "\1=\$\1" >> "\$GITHUB_OUTPUT"$/gm,
+        /^[ \t]+(api|icons|mobile|stats|web)="\$\(node scripts\/resolve-workspace-path\.mjs @cuberoot\/[^)]+\)"\n[ \t]+echo "\1=\$\1" >> "\$GITHUB_OUTPUT"$/gm,
       )];
       expect(assignmentOutputPairs, workflowName).toHaveLength(expectedCalls);
     }

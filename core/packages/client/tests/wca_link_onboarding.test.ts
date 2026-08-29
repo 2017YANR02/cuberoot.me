@@ -48,11 +48,12 @@ describe('server:谁是新注册,只有服务端知道', () => {
 
   it('五条「登录/注册」合流的路都把 isNew 发出来', () => {
     // 邮箱码 / 手机码 / Google / 国内三方 / 微信小程序 —— 少一条,那条路上的新人就不会被引导。
-    // 另外两条会话响应来自纯密码登录和小程序票据换 web 会话:账号天然已存在,不带 isNew。
+    // 另外三条会话响应来自纯密码登录、小程序票据换 web 会话和 mobile ticket 核销:
+    // 账号天然已存在,不带 isNew。
     const directSessions = route.match(/c\.json\(\{\s*token,\s*user: publicUser\(user\)[^)]*\}\)/g) ?? [];
     const typedSessions = route.match(/const session: WebSession = \{\s*token,\s*user: publicUser\(user\)\s*\};\s*return c\.json\([^;]+\);/g) ?? [];
     const sessions = [...directSessions, ...typedSessions];
-    expect(sessions.length).toBe(7);
+    expect(sessions.length).toBe(8);
     expect(sessions.filter((s) => s.includes('isNew')).length).toBe(5);
 
     const pwAt = route.indexOf("'/auth/email/password'");
@@ -62,6 +63,10 @@ describe('server:谁是新注册,只有服务端知道', () => {
     const exchangeAt = route.indexOf("'/auth/web-session/exchange'");
     expect(exchangeAt).toBeGreaterThan(-1);
     expect(route.slice(exchangeAt, route.indexOf('accountAuthRoutes.', exchangeAt + 1))).not.toContain('isNew');
+
+    const mobileExchangeAt = route.indexOf("'/auth/mobile-session/exchange'");
+    expect(mobileExchangeAt).toBeGreaterThan(-1);
+    expect(route.slice(mobileExchangeAt, route.indexOf('accountAuthRoutes.', mobileExchangeAt + 1))).not.toContain('isNew');
   });
 
   it('isNew 不进 JWT', () => {
