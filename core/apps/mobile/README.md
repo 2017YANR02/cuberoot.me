@@ -29,6 +29,7 @@ pnpm --filter @cuberoot/mobile cap:sync
 pnpm --filter @cuberoot/mobile cap:sync:android
 pnpm --filter @cuberoot/mobile cap:sync:ios
 pnpm --filter @cuberoot/mobile android:open
+pnpm --filter @cuberoot/mobile android:run
 pnpm --filter @cuberoot/mobile ios:doctor
 pnpm --filter @cuberoot/mobile ios:build
 pnpm --filter @cuberoot/mobile ios:open
@@ -36,6 +37,34 @@ pnpm --filter @cuberoot/mobile ios:run
 ```
 
 `cap:sync` remains the Android-compatible entry point. The platform-specific sync commands build the same web app and copy it into the selected native project. Run the matching command after changing React or shared code and before making a native build.
+
+## Android emulator on macOS
+
+An Android phone is not required for ordinary UI development. Use the official Android Studio AVD for installation, startup, layout, timing, persistence and basic lifecycle checks. From Android Studio, open **Tools > Device Manager**, start an available virtual device, then run this from `core/`:
+
+```powershell
+pnpm --filter @cuberoot/mobile android:run
+```
+
+For command-line diagnosis, discover the current SDK and AVD instead of assuming a machine-specific name or path:
+
+```bash
+"$ANDROID_HOME/emulator/emulator" -list-avds
+adb devices
+"$ANDROID_HOME/emulator/emulator" -avd <AVD_NAME> -gpu host
+```
+
+The first full boot can take more than two minutes. If `adb devices` temporarily reports `offline`, wait for the boot before reinstalling; if it remains stuck, restart ADB and cold-boot without loading a stale snapshot:
+
+```bash
+adb kill-server
+adb start-server
+"$ANDROID_HOME/emulator/emulator" -avd <AVD_NAME> -gpu host -no-snapshot-load
+```
+
+Read the emulator log before changing settings. On the current 16 GB development Mac, the API 36 AVD allocates about 2.5 GB itself and the GUI reported needing about 5 GB of host memory available; keeping 6–8 GB available is a practical target when Android Studio is also open. Close memory-heavy apps if the emulator falls back to slow software graphics. Do not use `-wipe-data` unless losing all data inside that AVD is explicitly acceptable.
+
+An emulator does not close the physical-device gates. BLE smart-cube transport, real haptic feel, OEM permission behavior, background/power behavior, sharing and release installation still require an Android phone before their roadmap items can be checked off.
 
 On macOS, run `ios:doctor` first, use `ios:build` for a repeatable unsigned Simulator build, and use `ios:open` for signing or device work in the checked-in Xcode project. If `ios:doctor` cannot find `simctl`, open Xcode > Settings > Locations > Command Line Tools and select the installed Xcode. A shell-scoped `DEVELOPER_DIR` or `sudo xcode-select --switch <Xcode.app>/Contents/Developer` is also valid; no personal Xcode path is stored in the repository. Keep Automatic Signing enabled and select the paid Apple Developer team locally; Xcode account state, signing credentials, provisioning profiles, DerivedData and `xcuserdata` must never be committed.
 

@@ -53,7 +53,10 @@ description: "Use for CubeRoot native App work rooted at core/apps/mobile: Capac
 ## 平台与账号边界
 
 - 先检测操作系统和工具链；Windows 不执行 Xcode，Mac 不重写 Android 业务层。
-- Android 复用现有 scripts；MuMu 只算基础验证，BLE、分享、后台、权限和发布体验保留真机门槛。
+- Android 复用 `core/apps/mobile/package.json` 的现有 scripts；先从 `core/` 运行 build/sync/run，不手写第二套构建流程。
+- 没有 Android 真机时，优先使用 Android Studio Device Manager 的官方 AVD 验证安装、启动、布局、计时、存储和基础生命周期；AVD 名称、SDK 版本和本机路径必须现场探测，不能写死旧对话中的值。
+- 模拟器或 MuMu 只算基础验证。BLE、真实震感、厂商权限差异、后台/功耗、分享和发布安装体验保留真机门槛；模拟器证据不得把路线图中的真机项目勾为完成。
+- macOS 图形模拟器若因内存压力退回软件渲染，先读取 emulator 日志并释放内存；可在当前机器支持时用 `-gpu host` 重试。过期快照可用非破坏性的 `-no-snapshot-load` 冷启动，未经用户授权不要用会清空 AVD 数据的 `-wipe-data`。
 - Google Play 当前走组织账号，D-U-N-S 只证明 Google 组织核验；Apple 当前走个人会员路线，须另验会员 Active 和 Xcode 付费 Team。
 - `.p12`、`.mobileprovision`、`AuthKey_*.p8`、Android keystore、私钥、密码和本机 Xcode 状态绝不进 Git；缺少 ignore 时先补规则。
 
