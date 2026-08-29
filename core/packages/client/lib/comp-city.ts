@@ -7,6 +7,11 @@ import type { CompCityIndex, SeriesComp } from '@cuberoot/shared/comp-series';
 const EMPTY: CompCityIndex = {};
 const byCountry = new Map<string, Promise<CompCityIndex>>();
 
+export interface CompCityLookup {
+  id: string;
+  country: string;
+}
+
 /** 某国的同城市索引,按 ISO2 memoize(拉不到 / 该国无 ≥2 场的城市 → 空对象)。 */
 function loadCountryCities(iso2: string): Promise<CompCityIndex> {
   const cc = iso2.toUpperCase();
@@ -18,6 +23,37 @@ function loadCountryCities(iso2: string): Promise<CompCityIndex> {
     byCountry.set(cc, p);
   }
   return p;
+}
+
+/**
+ * 批量查比赛所属的规范城市名。只拉输入实际涉及的国家分片；查不到的比赛不进 Map，
+ * 调用方继续使用 WCA 原始 city（刚公示、尚未进入周更索引的比赛会走这个兜底）。
+ */
+export async function getCanonicalCompCityLabels(
+  comps: Iterable<CompCityLookup>,
+): Promise<Map<string, string>> {
+  const idsByCountry = new Map<string, Set<string>>();
+  for (const comp of comps) {
+    const id = comp.id.trim();
+    const country = comp.country.trim().toUpperCase();
+    if (!id || !/^[A-Z]{2}$/.test(country)) continue;
+    const ids = idsByCountry.get(country) ?? new Set<string>();
+    ids.add(id);
+    idsByCountry.set(country, ids);
+  }
+
+  const matches = await Promise.all([...idsByCountry].map(async ([country, wantedIds]) => {
+    const index = await loadCountryCities(country);
+    const found: Array<[string, string]> = [];
+    for (const [city, cityComps] of Object.entries(index)) {
+      for (const [id] of cityComps) {
+        if (wantedIds.has(id)) found.push([id, city]);
+      }
+    }
+    return found;
+  }));
+
+  return new Map(matches.flat());
 }
 
 /**

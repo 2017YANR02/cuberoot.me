@@ -2,12 +2,13 @@
 // 点亮城市 tab:列表 + 跳到 /globe(maplibre 矢量地球,已支持 ?wcaId= 进入 cuber 模式).
 // 之前内嵌 react-globe.gl 的 3D 球已废弃 — 体验和 /globe 重复且贴图丑.
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { Globe2 } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { countryName } from '@/lib/country-name';
 import { localizeCityName } from '@/lib/cn-city-name';
+import { getCanonicalCompCityLabels } from '@/lib/comp-city';
 import { buildLitFromComps } from '../logic/lit_cities';
 import type { WcaCompetition, WcaPersonProfile } from '@/lib/wca-person-api';
 
@@ -19,10 +20,33 @@ interface Props {
 
 export default function LitCitiesTab({ profile, comps, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
+  const [canonicalCities, setCanonicalCities] = useState<{
+    comps: WcaCompetition[];
+    labels: Map<string, string>;
+  } | null>(null);
 
-  const lit = useMemo(() => comps ? buildLitFromComps(comps, null) : null, [comps]);
+  useEffect(() => {
+    let cancelled = false;
+    if (!comps) return () => { cancelled = true; };
+    void getCanonicalCompCityLabels(comps.map((comp) => ({
+      id: comp.id,
+      country: comp.country_iso2,
+    }))).then((labels) => {
+      if (!cancelled) setCanonicalCities({ comps, labels });
+    });
+    return () => { cancelled = true; };
+  }, [comps]);
 
-  if (!comps) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
+  const lit = useMemo(
+    () => comps && canonicalCities?.comps === comps
+      ? buildLitFromComps(comps, null, canonicalCities.labels)
+      : null,
+    [canonicalCities, comps],
+  );
+
+  if (!comps || canonicalCities?.comps !== comps) {
+    return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
+  }
   if (lit && lit.cities.length === 0) {
     return <div className="wp-empty">{t('暂无比赛足迹', 'No competition footprint')}</div>;
   }
