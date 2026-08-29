@@ -25,7 +25,7 @@
 }
 
 .compact-select-trigger:hover {
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  background: color-mix(in srgb, var(--foreground) 8%, var(--popover));
 }
 
 .compact-select-trigger:focus-visible {

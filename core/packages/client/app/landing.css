@@ -46,6 +46,17 @@
     align-items: center;
     gap: 0.5rem;
 }
+.landing-page .landing-auth .lang-toggle {
+    width: 28px;
+    height: 28px;
+    justify-content: center;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+}
+.landing-page .landing-auth .lang-toggle:hover,
+.landing-page .landing-auth .lang-toggle:focus-visible {
+    background: var(--muted);
+}
 /* 三行合一(issue #41):有通知条时把语言/头像上提、覆盖到通知条那一行,而不是被挤到下面。
    通知条实际高度由 PageNoticeBar 写入 --page-notice-h;本容器覆盖那一行(top = -通知条高度、
    min-height = 通知条高度)+ align-items:center → 行内垂直居中,不依赖具体像素。

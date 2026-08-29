@@ -172,12 +172,14 @@ export default function PersonHero({
           onChange={onResultViewChange}
           ariaLabel={t('成绩视图', 'Results view')}
         />
-        <PillToggle
-          value={inclCancelled}
-          onChange={onInclCancelledChange}
-          onLabel={t('废止项', 'Cancelled')}
-          offLabel={t('废止项', 'Cancelled')}
-        />
+        {resultView !== 'pb' && (
+          <PillToggle
+            value={inclCancelled}
+            onChange={onInclCancelledChange}
+            onLabel={t('废止项', 'Cancelled')}
+            offLabel={t('废止项', 'Cancelled')}
+          />
+        )}
       </div>
     </section>
   );

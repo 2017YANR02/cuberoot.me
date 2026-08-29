@@ -314,9 +314,9 @@
   {
     "name": "cubing/CubePB (James Chang)",
     "url": "https://github.com/cubing/CubePB",
-    "zh": "/pb 个人纪录卡、历史记录与排行榜的产品流程来源；经作者许可复刻，并用 CubeRoot 现有账号、WCA 项目和成绩格式能力重新实现",
-    "en": "Product flow behind /pb personal-best cards, history and leaderboards; reproduced with the author's permission and reimplemented with CubeRoot's account, WCA event and result-formatting infrastructure",
-    "long_en": "CubePB established the personal-best profile, history and public leaderboard workflow. CubeRoot's implementation is an authorized, clean integration built on its existing authentication, WCA event selection, raw result encoding, bilingual UI and PostgreSQL API. Original project licensed under GPL-3.0."
+    "zh": "WCA 选手页个人 PB、历史记录与编辑流程来源；经作者许可复刻，并用 CubeRoot 现有账号、WCA 项目和成绩格式能力重新实现",
+    "en": "Product flow behind personal PBs, history and editing on WCA person pages; reproduced with the author's permission and reimplemented with CubeRoot's account, WCA event and result-formatting infrastructure",
+    "long_en": "CubePB established the personal-best profile, history and editing workflow. CubeRoot's implementation is an authorized, clean integration on WCA person pages, built on its existing authentication, WCA event selection, raw result encoding, bilingual UI and PostgreSQL API. Original project licensed under GPL-3.0."
   },
   {
     "name": "Your Next PR — Competition Simulator",

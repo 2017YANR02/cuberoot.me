@@ -603,13 +603,6 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Rehearse a real WCA competition with authentic rounds, competitors, scrambles, call-ups, inspection, results, rankings and advancement.',
     },
   },
-  'pb': {
-    title: { zh: '个人纪录', en: 'Personal Bests' },
-    description: {
-      zh: '记录各项目的单次、平均与大样本个人最佳，生成公开成绩卡并查看排行榜。',
-      en: 'Track single, average and large-set personal bests, share a public PB card and browse leaderboards.',
-    },
-  },
   'sim/stages': { title: { zh: '阶段遮罩速查', en: 'Stage Masks' } },
   'site': { title: { zh: '网站导航', en: 'Sites Directory' } },
   'solver': { title: { zh: '求解器', en: 'Solver' } },

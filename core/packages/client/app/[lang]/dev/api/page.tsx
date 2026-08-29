@@ -232,12 +232,14 @@ const ENDPOINTS: Ep[] = [
   { d: 'comp', m: 'DELETE', p: '/v1/comp/follows/:compId', g: 'login', zh: '取消关注', en: 'Unfollow' },
 
   // ---- PB ----
-  { d: 'pb', m: 'GET', p: '/v1/pb/me', g: 'login', c: 'no-store', zh: '我的 PB 主页与完整历史', en: 'My PB profile and full history' },
+  { d: 'pb', m: 'GET', p: '/v1/pb/me', g: 'login', c: 'no-store', zh: '我的完整 PB 历史', en: 'My complete PB history' },
   { d: 'pb', m: 'GET', p: '/v1/pb/profile/:userId', g: 'public', c: 'no-store', zh: '公开 PB 主页', en: 'Public PB profile' },
   { d: 'pb', m: 'GET', p: '/v1/pb/person/:wcaId', g: 'public', c: 'no-store', zh: '按 WCA ID 获取公开 PB', en: 'Public PBs by WCA ID' },
+  { d: 'pb', m: 'GET', p: '/v1/pb/manage/:wcaId', g: 'login', c: 'no-store', zh: '本人或管理员读取选手完整 PB 历史', en: 'Owner or admin access to a person’s complete PB history' },
   { d: 'pb', m: 'GET', p: '/v1/pb/leaderboard', g: 'public', c: 'no-store', zh: '当前 PB 排行榜', en: 'Current-PB leaderboard' },
   { d: 'pb', m: 'PUT', p: '/v1/pb/profile', g: 'login', c: 'no-store', zh: '修改 PB 公开设置', en: 'Update PB visibility' },
   { d: 'pb', m: 'POST', p: '/v1/pb/records', g: 'login', c: 'no-store', zh: '记录新的 PB', en: 'Record a new PB' },
+  { d: 'pb', m: 'PUT', p: '/v1/pb/records/:id', g: 'login', c: 'no-store', zh: '修改当前 PB', en: 'Update the current PB' },
   { d: 'pb', m: 'DELETE', p: '/v1/pb/records/:id', g: 'login', c: 'no-store', zh: '删除 PB 历史纪录', en: 'Delete a PB history record' },
 
   // ---- nemesizer ----

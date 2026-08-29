@@ -6,6 +6,7 @@ import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { loadPersonsIndex } from '@cuberoot/shared/persons-index';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import { EventIcon } from '@/components/EventIcon';
+import { Flag } from '@/components/Flag';
 import PersonLink from '@/components/PersonLink';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
@@ -1453,6 +1454,13 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
               <span key={eventId} className="wca-teacher-relation">
                 {(isMultiDisplay || showEventNames) && <EventIcon event={eventId} title={eventDisplayName(eventId, isZh)} />}
                 {showEventNames && <span className="wca-teacher-event-name">{eventDisplayName(eventId, isZh)}:</span>}
+                {relation.teacherCountryIso2 && (
+                  <Flag
+                    iso2={relation.teacherCountryIso2}
+                    spanClassName="country-flag"
+                    imgClassName="country-flag-ct"
+                  />
+                )}
                 <PersonLink wcaId={relation.teacherWcaId} name={relation.teacherName} isZh={isZh} />
               </span>
             ))

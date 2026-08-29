@@ -273,11 +273,22 @@ export default function SupportPage() {
             {tr({ zh: '支持本站', en: 'Support this site'
           })}
           </button>
-          <AppLink href="/membership" className="support-member-link">
-            <Crown size={14} />
-            {tr({ zh: '成为会员', en: 'Become a member'
-            })}
-          </AppLink>
+          {admin ? (
+            <AppLink href="/membership" className="support-member-link">
+              <Crown size={14} />
+              {tr({ zh: '成为会员', en: 'Become a member'
+              })}
+            </AppLink>
+          ) : (
+            <span className="support-member-disabled" aria-disabled="true">
+              <span className="support-member-label">
+                <Crown size={14} />
+                {tr({ zh: '成为会员', en: 'Become a member'
+                })}
+              </span>
+              <small>{tr({ zh: '即将上线', en: 'Coming soon' })}</small>
+            </span>
+          )}
         </div>
       </header>
 

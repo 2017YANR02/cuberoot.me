@@ -33,6 +33,14 @@ interface TeacherRow {
   event_id: string;
   teacher_wca_id: string;
   teacher_name: string;
+  teacher_country_iso2: string;
+}
+
+interface TeacherWriteRow {
+  student_wca_id: string;
+  event_id: string;
+  teacher_wca_id: string;
+  teacher_name: string;
 }
 
 interface NamedStudentRow {
@@ -50,6 +58,7 @@ function toJson(row: TeacherRow) {
     eventId: row.event_id,
     teacherWcaId: row.teacher_wca_id,
     teacherName: row.teacher_name,
+    teacherCountryIso2: row.teacher_country_iso2,
   };
 }
 
@@ -104,9 +113,11 @@ wcaTeacherRoutes.get('/wca/teachers', async (c) => {
     : '';
   const rows = await query<TeacherRow>(
     `SELECT wt.student_wca_id, student.name AS student_name,
-            wt.event_id, wt.teacher_wca_id, wt.teacher_name
+            wt.event_id, wt.teacher_wca_id, wt.teacher_name,
+            teacher.country_iso2 AS teacher_country_iso2
        FROM wca_teachers wt
        JOIN wca_persons student ON student.wca_id = wt.student_wca_id
+       JOIN wca_persons teacher ON teacher.wca_id = wt.teacher_wca_id
       WHERE ${idColumn} IN (${idPlaceholders})${eventFilter}
       ORDER BY wt.student_wca_id, wt.event_id`,
     [...ids, ...events],
@@ -290,14 +301,15 @@ wcaTeacherRoutes.put('/wca/teachers/:studentId/:eventId', async (c) => {
     }
   }
 
-  const people = await query<{ wca_id: string; name: string }>(
-    `SELECT wca_id, name FROM wca_persons WHERE wca_id IN (?, ?)`,
+  const people = await query<{ wca_id: string; name: string; country_iso2: string }>(
+    `SELECT wca_id, name, country_iso2 FROM wca_persons WHERE wca_id IN (?, ?)`,
     [studentWcaId, teacherWcaId],
   );
-  const personById = new Map(people.map((person) => [person.wca_id, person.name]));
-  if (!personById.has(studentWcaId)) return c.json({ error: 'student not found' }, 404);
-  const teacherName = personById.get(teacherWcaId);
-  if (!teacherName) return c.json({ error: 'teacher not found' }, 404);
+  const personById = new Map(people.map((person) => [person.wca_id, person]));
+  const student = personById.get(studentWcaId);
+  if (!student) return c.json({ error: 'student not found' }, 404);
+  const teacher = personById.get(teacherWcaId);
+  if (!teacher) return c.json({ error: 'teacher not found' }, 404);
 
   const existing = await query<{ teacher_wca_id: string }>(
     'SELECT teacher_wca_id FROM wca_teachers WHERE student_wca_id = ? AND event_id = ?',
@@ -312,7 +324,7 @@ wcaTeacherRoutes.put('/wca/teachers/:studentId/:eventId', async (c) => {
   const conflictGuard = isAdmin || studentManagesOwnTeacher
     ? ''
     : 'WHERE wca_teachers.teacher_wca_id = EXCLUDED.teacher_wca_id';
-  const rows = await query<TeacherRow>(
+  const rows = await query<TeacherWriteRow>(
     `INSERT INTO wca_teachers
        (student_wca_id, event_id, teacher_wca_id, teacher_name, created_by, updated_by)
      VALUES (?, ?, ?, ?, ?, ?)
@@ -322,10 +334,14 @@ wcaTeacherRoutes.put('/wca/teachers/:studentId/:eventId', async (c) => {
        updated_by = EXCLUDED.updated_by
      ${conflictGuard}
      RETURNING student_wca_id, event_id, teacher_wca_id, teacher_name`,
-    [studentWcaId, eventId, teacherWcaId, teacherName, actorWcaId, actorWcaId],
+    [studentWcaId, eventId, teacherWcaId, teacher.name, actorWcaId, actorWcaId],
   );
   if (!rows.length) return c.json({ error: 'teacher already set' }, 409);
-  return c.json({ teacher: toJson(rows[0]) });
+  return c.json({ teacher: toJson({
+    ...rows[0],
+    student_name: student.name,
+    teacher_country_iso2: teacher.country_iso2,
+  }) });
 });
 
 wcaTeacherRoutes.delete('/wca/teachers/:studentId/:eventId', async (c) => {
