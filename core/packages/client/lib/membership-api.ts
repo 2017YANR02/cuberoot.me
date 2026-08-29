@@ -1,7 +1,7 @@
 /**
  * /v1/membership — 会员订阅 API。
  * server 实现 routes/membership.ts。公开 GET 套餐;其余走 WCA OAuth Bearer(authHeaders)。
- * 支付:聚合支付(虎皮椒)异步入账,前端下单拿支付链接/二维码后轮询查单。
+ * 支付:支付宝、微信、虎皮椒或银行卡托管收银台异步入账,前端下单后轮询查单。
  */
 import { API_ORIGIN } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
@@ -63,10 +63,24 @@ export function membershipExpiry(m: Membership | null): MembershipExpiry | null 
 
 export interface OrderInfo {
   outTradeNo: string;
-  channel: string;
-  provider?: string; // 'alipay' | 'wechat' | 'xunhupay'
+  channel: PaymentChannel;
+  provider?: string; // 'alipay' | 'wechat' | 'xunhupay' | 'airwallex'
   url?: string;      // 收银台跳转链接(支付宝 / 微信 H5 / 虎皮椒手机端)
   qrcode?: string;   // 扫码图(微信 Native code_url 转 PNG / 虎皮椒二维码图)
+  hostedCheckout?: HostedCardCheckout;
+}
+
+export type PaymentChannel = 'alipay' | 'wechat' | 'card_cn' | 'card_global';
+
+export interface HostedCardCheckout {
+  provider: 'airwallex';
+  env: 'demo' | 'prod';
+  intentId: string;
+  clientSecret: string;
+  currency: string;
+  successUrl: string;
+  countryCode?: string;
+  allowedCardNetworks: Array<'visa' | 'mastercard' | 'maestro' | 'unionpay' | 'amex' | 'jcb' | 'diners' | 'discover'>;
 }
 
 // 渠道可用性:某渠道官方或虎皮椒任一配置了即 true,前端据此显隐按钮。
@@ -75,6 +89,8 @@ export interface PayChannels {
   wechat: boolean;
   wechatNative?: boolean;
   wechatH5?: boolean;
+  cardCn?: boolean;
+  cardGlobal?: boolean;
 }
 
 export interface AdminOrder {
@@ -102,8 +118,17 @@ export async function setMyContact(body: { contact: string | null; contactKind: 
   return handleApi(await fetch(`${BASE}/me/contact`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }));
 }
 
-export async function createOrder(plan: string, channel: 'alipay' | 'wechat', clientType: 'pc' | 'wap'): Promise<OrderInfo> {
-  return handleApi(await fetch(`${BASE}/orders`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ plan, channel, clientType }) }));
+export async function createOrder(
+  plan: string,
+  channel: PaymentChannel,
+  clientType: 'pc' | 'wap',
+  language: 'zh' | 'en',
+): Promise<OrderInfo> {
+  return handleApi(await fetch(`${BASE}/orders`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ plan, channel, clientType, language }),
+  }));
 }
 
 export async function getOrderStatus(outTradeNo: string): Promise<{ status: string; planSlug: string; payChannel: string | null }> {

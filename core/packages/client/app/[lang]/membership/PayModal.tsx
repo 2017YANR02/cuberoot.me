@@ -1,22 +1,27 @@
 'use client';
 
 /**
- * 支付弹窗。选渠道(支付宝 / 微信)→ 下单。
+ * 支付弹窗。选渠道(支付宝 / 微信 / 银行卡)→ 下单。
  * 返回收银台 url 且无二维码(支付宝 电脑/手机网站支付、微信 H5)→ 点一次即整页直跳收银台,
  * 付完经 return_url 回 /membership?paid= 由页面自动确认;
  * 返回二维码(微信 Native / 虎皮椒 PC)→ 弹窗内扫码 + 轮询查单,成功 onPaid()。
  */
 import { useEffect, useRef, useState } from 'react';
-import { X, Smartphone, Check } from 'lucide-react';
+import { X, Smartphone, Check, CreditCard } from 'lucide-react';
 import { SiAlipay, SiWechat } from 'react-icons/si';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
-import { createOrder, getOrderStatus, type MembershipPlan, type OrderInfo, type PayChannels } from '@/lib/membership-api';
+import {
+  createOrder,
+  getOrderStatus,
+  type MembershipPlan,
+  type OrderInfo,
+  type PayChannels,
+  type PaymentChannel,
+} from '@/lib/membership-api';
 import { fmtPrice } from '@/lib/membership-format';
-
-type Channel = 'alipay' | 'wechat';
 
 interface Props {
   plan: MembershipPlan;
@@ -32,7 +37,9 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
   const showWechat = isMobile
     ? (channels?.wechatH5 ?? channels?.wechat) !== false
     : (channels?.wechatNative ?? channels?.wechat) !== false;
-  const [channel, setChannel] = useState<Channel | null>(null);
+  const showCardCn = channels?.cardCn === true;
+  const showCardGlobal = channels?.cardGlobal === true;
+  const [channel, setChannel] = useState<PaymentChannel | null>(null);
   const [order, setOrder] = useState<OrderInfo | null>(null);
   const [creating, setCreating] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -42,12 +49,38 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
   // Stop the pending查单 poll when the modal unmounts (its own concern, not part of dismiss).
   useEffect(() => () => { if (pollRef.current !== null) window.clearTimeout(pollRef.current); }, []);
 
-  async function start(ch: Channel) {
+  async function start(ch: PaymentChannel) {
     setChannel(ch);
     setErr(null);
     setCreating(true);
     try {
-      const info = await createOrder(plan.slug, ch, isMobile ? 'wap' : 'pc');
+      const info = await createOrder(plan.slug, ch, isMobile ? 'wap' : 'pc', isZh ? 'zh' : 'en');
+      if (info.hostedCheckout) {
+        const checkout = info.hostedCheckout;
+        const { init } = await import('@airwallex/components-sdk');
+        const { payments } = await init({
+          env: checkout.env,
+          enabledElements: ['payments'],
+          locale: isZh ? 'zh' : 'en',
+        });
+        if (!payments) {
+          throw new Error(tr({ zh: '银行卡收银台初始化失败', en: 'Card checkout failed to initialize' }));
+        }
+        const checkoutUrl = payments.redirectToCheckout({
+          env: checkout.env,
+          mode: 'payment',
+          intent_id: checkout.intentId,
+          client_secret: checkout.clientSecret,
+          currency: checkout.currency,
+          country_code: checkout.countryCode,
+          methods: ['card'],
+          allowedCardNetworks: checkout.allowedCardNetworks,
+          successUrl: checkout.successUrl,
+          locale: isZh ? 'zh' : 'en',
+        });
+        if (typeof checkoutUrl === 'string' && checkoutUrl) window.location.href = checkoutUrl;
+        return;
+      }
       // 有收银台 url 且无二维码(支付宝 电脑/手机网站支付、微信 H5)→ 点一次即整页直跳收银台,
       // 省掉「前往支付」中转;付完 return_url 回 /membership?paid= 由页面自动确认。
       if (info.url && !info.qrcode) {
@@ -103,6 +136,22 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
                     ? <Spinner size={16} />
                     : <SiWechat size={18} aria-hidden="true" />}
                   {tr({ zh: '微信支付', en: 'WeChat Pay' })}
+                </button>
+              )}
+              {showCardCn && (
+                <button className="mem-pay-ch mem-pay-ch-card" disabled={creating} onClick={() => start('card_cn')}>
+                  {creating && channel === 'card_cn'
+                    ? <Spinner size={16} />
+                    : <CreditCard size={18} aria-hidden="true" />}
+                  {tr({ zh: '中国银行卡（银联）', en: 'China cards (UnionPay)' })}
+                </button>
+              )}
+              {showCardGlobal && (
+                <button className="mem-pay-ch mem-pay-ch-card" disabled={creating} onClick={() => start('card_global')}>
+                  {creating && channel === 'card_global'
+                    ? <Spinner size={16} />
+                    : <CreditCard size={18} aria-hidden="true" />}
+                  {tr({ zh: '国际银行卡', en: 'International cards' })}
                 </button>
               )}
             </div>

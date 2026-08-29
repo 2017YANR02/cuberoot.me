@@ -4,6 +4,7 @@
  * 身份沿用 WCA OAuth(wca_id),不建本站账号。按周期一次性付款(月/年/永久)+ 手动续费;
  * 国内个人/聚合支付拿不到自动代扣,故无 auto-renew(见 docs/MEMBERSHIP.md)。
  * 支付多 provider:官方支付宝 / 官方微信支付(有营业执照 + 备案)优先,虎皮椒聚合支付兜底;
+ * 银行卡使用 Airwallex 托管收银台,中国银联卡和国际卡各自独立开关;
  * 异步 notify 验签后入账;都未配置时 admin 仍可手动开通。渠道可用性由 /plans 的 channels 暴露。
  *
  *   GET    /v1/membership/plans                 — 公开:在售套餐 + payEnabled + channels
@@ -13,6 +14,7 @@
  *   GET    /v1/membership/orders/:no            — 登录(本人):查单(供前端轮询)
  *   POST   /v1/membership/notify/alipay         — 公开 webhook:官方支付宝异步回调入账
  *   POST   /v1/membership/notify/wechat         — 公开 webhook:官方微信支付 APIv3 回调入账
+ *   POST   /v1/membership/notify/airwallex       — 公开 webhook:Airwallex HMAC 回调入账
  *   POST   /v1/membership/notify/xunhupay       — 公开 webhook:虎皮椒异步回调入账
  *   POST   /v1/membership/admin/grant           — admin:手动开通/续期
  *   GET    /v1/membership/admin/list            — admin:会员 + 最近订单
@@ -32,6 +34,7 @@ import { signXunhupay, verifyXunhupaySign, type SignParams } from '@cuberoot/sha
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import * as alipay from '../payment/alipay.js';
 import * as wechat from '../payment/wechat.js';
+import * as airwallex from '../payment/airwallex.js';
 
 export const membershipRoutes = new Hono();
 
@@ -58,12 +61,17 @@ const xunhupayConfigured = () => Boolean(XHP_PRIMARY.appid && XHP_PRIMARY.secret
 
 // 一个渠道下单走哪个 provider:官方优先(支付宝 → alipay,微信按终端区分 Native/H5),
 // 否则虎皮椒兜底,都没配则 null。
-type Provider = 'alipay' | 'wechat' | 'xunhupay';
-function providerForChannel(channel: 'alipay' | 'wechat', clientType: 'pc' | 'wap'): Provider | null {
+type PayChannel = 'alipay' | 'wechat' | 'card_cn' | 'card_global';
+type Provider = 'alipay' | 'wechat' | 'xunhupay' | 'airwallex';
+const PAY_CHANNELS = new Set<PayChannel>(['alipay', 'wechat', 'card_cn', 'card_global']);
+function providerForChannel(channel: PayChannel, clientType: 'pc' | 'wap'): Provider | null {
+  if ((channel === 'card_cn' || channel === 'card_global') && airwallex.airwallexChannelEnabled(channel)) {
+    return 'airwallex';
+  }
   if (channel === 'alipay' && alipay.alipayConfigured()) return 'alipay';
   if (channel === 'wechat' && clientType === 'pc' && wechat.wechatConfigured()) return 'wechat';
   if (channel === 'wechat' && clientType === 'wap' && wechat.wechatH5Configured()) return 'wechat';
-  if (xunhupayConfigured()) return 'xunhupay';
+  if ((channel === 'alipay' || channel === 'wechat') && xunhupayConfigured()) return 'xunhupay';
   return null;
 }
 // 前端据此只显示可用渠道按钮。
@@ -76,10 +84,16 @@ function channelAvailability() {
     wechat: wechatNative || wechatH5,
     wechatNative,
     wechatH5,
+    cardCn: providerForChannel('card_cn', 'pc') != null,
+    cardGlobal: providerForChannel('card_global', 'pc') != null,
   };
 }
 const paymentConfigured = () =>
-  alipay.alipayConfigured() || wechat.wechatConfigured() || xunhupayConfigured();
+  alipay.alipayConfigured()
+  || wechat.wechatConfigured()
+  || xunhupayConfigured()
+  || airwallex.airwallexChannelEnabled('card_cn')
+  || airwallex.airwallexChannelEnabled('card_global');
 
 function credsFor(channel: string): XhpCreds {
   if (channel === 'wechat' && XHP_WECHAT?.appid) return XHP_WECHAT;
@@ -283,7 +297,7 @@ membershipRoutes.post('/membership/orders', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   const user = await requireAuth(c);
-  const b = await c.req.json<{ plan?: string; channel?: string; clientType?: string }>();
+  const b = await c.req.json<{ plan?: string; channel?: string; clientType?: string; language?: string }>();
 
   const planSlug = String(b.plan || '');
   if (!PLAN_SLUG_RE.test(planSlug)) return c.json({ error: 'invalid plan' }, 400);
@@ -297,8 +311,11 @@ membershipRoutes.post('/membership/orders', async (c) => {
     return c.json({ error: 'already lifetime member' }, 409);
   }
 
-  const channel: 'alipay' | 'wechat' = b.channel === 'wechat' ? 'wechat' : 'alipay';
+  const rawChannel = String(b.channel || '');
+  if (!PAY_CHANNELS.has(rawChannel as PayChannel)) return c.json({ error: 'invalid channel' }, 400);
+  const channel = rawChannel as PayChannel;
   const clientType: 'pc' | 'wap' = b.clientType === 'wap' ? 'wap' : 'pc';
+  const language: 'zh' | 'en' = b.language === 'zh' ? 'zh' : 'en';
   const provider = providerForChannel(channel, clientType);
   if (!provider) {
     // 该渠道未配置(官方/虎皮椒都没开):不下单,提示走打赏 + 联系站长手动开通。
@@ -313,7 +330,13 @@ membershipRoutes.post('/membership/orders', async (c) => {
   );
 
   try {
-    const pay = await createPaymentOrder({ provider, channel, clientType, outTradeNo, plan, ip: getIp(c) });
+    const pay = await createPaymentOrder({ provider, channel, clientType, language, outTradeNo, plan, ip: getIp(c) });
+    if (pay.hostedCheckout?.intentId) {
+      await query(
+        `UPDATE membership_orders SET provider_txn = ? WHERE out_trade_no = ? AND status = 'pending'`,
+        [pay.hostedCheckout.intentId, outTradeNo],
+      );
+    }
     return c.json({ outTradeNo, channel, provider, ...pay });
   } catch (e) {
     await query(`UPDATE membership_orders SET status = 'failed' WHERE out_trade_no = ?`, [outTradeNo]);
@@ -322,21 +345,35 @@ membershipRoutes.post('/membership/orders', async (c) => {
   }
 });
 
-// 按 provider 派发下单。返回 { url?, qrcode? }:
+interface HostedCardCheckout {
+  provider: 'airwallex';
+  env: airwallex.AirwallexEnvironment;
+  intentId: string;
+  clientSecret: string;
+  currency: string;
+  successUrl: string;
+  countryCode?: string;
+  allowedCardNetworks: airwallex.AirwallexCardNetwork[];
+}
+
+// 按 provider 派发下单。返回 { url?, qrcode?, hostedCheckout? }:
 //   - 支付宝官方:收银台 GET url(PC 新窗口打开 + 轮询,移动端直接跳转);
 //   - 微信官方:PC 走 Native(code_url → 服务端生成二维码 PNG data-url),移动端走 H5(h5_url);
-//   - 虎皮椒:收银台 url + 二维码图 url。
+//   - 虎皮椒:收银台 url + 二维码图 url;
+//   - Airwallex:只返回短期 PaymentIntent client secret,由前端 SDK 跳托管收银台。
 async function createPaymentOrder(opts: {
   provider: Provider;
-  channel: 'alipay' | 'wechat';
+  channel: PayChannel;
   clientType: 'pc' | 'wap';
+  language: 'zh' | 'en';
   outTradeNo: string;
   plan: PlanRow;
   ip: string;
-}): Promise<{ url?: string; qrcode?: string }> {
+}): Promise<{ url?: string; qrcode?: string; hostedCheckout?: HostedCardCheckout }> {
   const title = `CubeRoot ${opts.plan.name_zh}`;
   const notifyBase = `${PUBLIC_API_ORIGIN}/v1/membership/notify`;
-  const returnUrl = `${SITE_ORIGIN}/membership?paid=${opts.outTradeNo}`;
+  const membershipPath = opts.language === 'zh' ? '/zh/membership' : '/membership';
+  const returnUrl = `${SITE_ORIGIN}${membershipPath}?paid=${opts.outTradeNo}`;
 
   if (opts.provider === 'alipay') {
     const url = alipay.createAlipayCheckoutUrl({
@@ -366,11 +403,40 @@ async function createPaymentOrder(opts: {
     return { qrcode };
   }
 
-  // xunhupay
+  if (opts.provider === 'airwallex') {
+    if (opts.channel !== 'card_cn' && opts.channel !== 'card_global') {
+      throw new Error('Airwallex requires a card channel');
+    }
+    const env = airwallex.airwallexEnvironment();
+    if (!env) throw new Error('Airwallex environment is invalid');
+    const intent = await airwallex.createAirwallexPaymentIntent({
+      outTradeNo: opts.outTradeNo,
+      amountCents: opts.plan.price_cents,
+      currency: opts.plan.currency,
+      returnUrl,
+      channel: opts.channel,
+    });
+    return {
+      hostedCheckout: {
+        provider: 'airwallex',
+        env,
+        intentId: intent.id,
+        clientSecret: intent.client_secret,
+        currency: intent.currency,
+        successUrl: returnUrl,
+        countryCode: opts.channel === 'card_cn' ? 'CN' : undefined,
+        allowedCardNetworks: airwallex.allowedCardNetworks(opts.channel),
+      },
+    };
+  }
+
+  if (opts.channel !== 'alipay' && opts.channel !== 'wechat') {
+    throw new Error('Xunhupay requires Alipay or WeChat Pay');
+  }
   return createXunhupayOrder({ outTradeNo: opts.outTradeNo, amountCents: opts.plan.price_cents, title, channel: opts.channel });
 }
 
-// 查单(本人):前端轮询;仍 pending 且商户已配置时主动向 xunhupay 查一次补偿。
+// 查单(本人):前端轮询;仍 pending 且商户已配置时主动向对应 provider 查一次补偿。
 membershipRoutes.get('/membership/orders/:no', async (c) => {
   c.header('Cache-Control', 'no-store');
   const user = await requireAuth(c);
@@ -381,10 +447,15 @@ membershipRoutes.get('/membership/orders/:no', async (c) => {
 
   if (order.status === 'pending' && paymentConfigured()) {
     try {
-      const remote =
-        order.provider === 'alipay' ? await alipay.queryAlipayTrade(no)
-        : order.provider === 'wechat' ? await wechat.queryWechatOrder(no)
-        : await queryXunhupayOrder(no, order.pay_channel || 'alipay');
+      const remote = order.provider === 'alipay'
+        ? await alipay.queryAlipayTrade(no)
+        : order.provider === 'wechat'
+          ? await wechat.queryWechatOrder(no)
+          : order.provider === 'airwallex' && order.provider_txn
+            ? airwallexResult(await airwallex.retrieveAirwallexPaymentIntent(order.provider_txn), order)
+            : order.provider === 'xunhupay'
+              ? await queryXunhupayOrder(no, order.pay_channel || 'alipay')
+              : null;
       if (remote?.paid) {
         await settlePaidOrder(no, { provider_txn: remote.txn, raw: remote.raw });
         const fresh = await query<OrderRow>('SELECT * FROM membership_orders WHERE out_trade_no = ?', [no]);
@@ -477,6 +548,76 @@ membershipRoutes.post('/membership/notify/wechat', async (c) => {
   // 微信要求 2xx + {code:'SUCCESS'},否则会重试。
   return c.json({ code: 'SUCCESS' });
 });
+
+// ─────────────── 公开 webhook:Airwallex 托管银行卡支付(HMAC-SHA256)───────────────
+membershipRoutes.post('/membership/notify/airwallex', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const rawBody = await c.req.text();
+  const timestamp = c.req.header('x-timestamp') || '';
+  const signature = c.req.header('x-signature') || '';
+
+  if (!airwallex.verifyAirwallexWebhook(rawBody, timestamp, signature)) {
+    console.error('[membership] airwallex webhook bad signature or stale timestamp');
+    return c.json({ error: 'invalid signature' }, 401);
+  }
+
+  let event: airwallex.AirwallexWebhookEvent;
+  try {
+    event = JSON.parse(rawBody) as airwallex.AirwallexWebhookEvent;
+  } catch {
+    return c.json({ error: 'invalid JSON' }, 400);
+  }
+  if (event.account_id !== airwallex.airwallexAccountId()) {
+    console.error('[membership] airwallex webhook account mismatch');
+    return c.json({ error: 'account mismatch' }, 401);
+  }
+  if (event.name !== 'payment_intent.succeeded') return c.json({ ok: true });
+
+  const intent = event.data?.object;
+  if (!intent?.id || !intent.merchant_order_id) return c.json({ error: 'missing PaymentIntent' }, 400);
+  if (!intent.merchant_order_id.startsWith('M')) return c.json({ ok: true });
+  const rows = await query<OrderRow>(
+    'SELECT * FROM membership_orders WHERE out_trade_no = ?',
+    [intent.merchant_order_id],
+  );
+  const order = rows[0];
+  if (!order) return c.json({ ok: true });
+  if (order.provider !== 'airwallex' || !airwallexPaymentMatchesOrder(intent, order)) {
+    console.error('[membership] airwallex webhook order mismatch');
+    return c.json({ error: 'order mismatch' }, 409);
+  }
+
+  await settlePaidOrder(order.out_trade_no, {
+    provider_txn: intent.id,
+    raw: airwallex.sanitizeAirwallexWebhook(event),
+  });
+  return c.json({ ok: true });
+});
+
+function airwallexPaymentMatchesOrder(intent: airwallex.AirwallexPaymentIntent, order: OrderRow): boolean {
+  if (
+    typeof intent.status !== 'string'
+    || typeof intent.merchant_order_id !== 'string'
+    || typeof intent.currency !== 'string'
+  ) return false;
+  const amountCents = Math.round(Number(intent.amount) * 100);
+  return intent.status.toUpperCase() === 'SUCCEEDED'
+    && intent.merchant_order_id === order.out_trade_no
+    && Number.isFinite(amountCents)
+    && amountCents === Number(order.amount_cents)
+    && intent.currency.toUpperCase() === order.currency.toUpperCase();
+}
+
+function airwallexResult(
+  intent: airwallex.AirwallexPaymentIntent,
+  order: OrderRow,
+): { paid: boolean; txn?: string; raw: unknown } {
+  return {
+    paid: airwallexPaymentMatchesOrder(intent, order),
+    txn: intent.id,
+    raw: airwallex.sanitizeAirwallexWebhook({ name: 'active_query', data: { object: intent } }),
+  };
+}
 
 /**
  * 订单 pending → paid 的唯一翻转点(幂等)。
