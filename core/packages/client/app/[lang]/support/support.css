@@ -51,13 +51,32 @@
   gap: 12px;
   flex-wrap: wrap;
 }
+.support-member-disabled,
+.support-member-label {
+  display: inline-flex;
+  align-items: center;
+}
+.support-member-disabled {
+  gap: 7px;
+  color: var(--faint-foreground);
+}
+.support-member-label {
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 550;
+}
+.support-member-disabled small {
+  font-size: 0.72rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
 .support-member-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  color: var(--accent);
   font-size: 0.88rem;
   font-weight: 550;
-  color: var(--accent);
   text-decoration: none;
 }
 .support-member-link:hover { text-decoration: underline; }

@@ -2,7 +2,7 @@ import { API_ORIGIN } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 
 const BASE = API_ORIGIN + '/v1/wca/teachers';
-const RESPONSE_VERSION = '3';
+const RESPONSE_VERSION = '4';
 
 export interface WcaTeacher {
   studentWcaId: string;
@@ -10,6 +10,7 @@ export interface WcaTeacher {
   eventId: string;
   teacherWcaId: string;
   teacherName: string;
+  teacherCountryIso2: string;
 }
 
 export interface WcaNamedStudent {

@@ -7,7 +7,7 @@ import {
   Compass, Grid2x2, Trophy, Timer as TimerIcon, Code as CodeIcon,
   Brain, Box, Sigma, Scale, Sprout, Brush, MessageCircle, MessagesSquare, Shapes, Blocks, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School, Building2,
-  FileText, Table2, Award, Medal, Radio, PanelsTopLeft, UserRound, UsersRound,
+  FileText, Table2, Award, Radio, PanelsTopLeft, UserRound, UsersRound,
   type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
@@ -83,7 +83,6 @@ export const TEXTS: Record<string, { en: string; zh: string
   sim:             { en: 'Sim', zh: '模拟'
 },
   compSim:         { en: 'Comp Sim', zh: '比赛模拟' },
-  pb:              { en: 'Personal Bests', zh: '个人纪录' },
   icon:            { en: 'Icons', zh: '图标'
 },
   comp:            { en: 'Comp', zh: '比赛'
@@ -161,12 +160,11 @@ export const SECTIONS: Section[] = [
     eyebrow: { en: 'TOOL', zh: '工具' },
     title:   { en: 'Solve, count, make.', zh: '求解、数帧、创作。'
     },
-    sub:     { en: 'A solver for any scramble and frame-accurate timing, plus personal-best tracking, competition management, cube mosaics, vector drawings, event icons, time zone conversion and a shareable calendar.', zh: '把任意打乱交给求解器、逐帧核对成绩,也能记录个人最佳、管理比赛、拼马赛克、画矢量图、生成项目图标、换算时区和分享日历。'
+    sub:     { en: 'A solver for any scramble and frame-accurate timing, plus competition management, cube mosaics, vector drawings, event icons, time zone conversion and a shareable calendar.', zh: '把任意打乱交给求解器、逐帧核对成绩,也能管理比赛、拼马赛克、画矢量图、生成项目图标、换算时区和分享日历。'
     },
     cards: [
       { id: 'contests',     href: '/contests',    internal: true, tier: 'medium', iconImg: '/icons/upstream/recordranks.png', nameKey: 'contests' },
       { id: 'comp-sim',    href: '/comp-sim',    internal: true, tier: 'medium', Icon: Radio,      nameKey: 'compSim' },
-      { id: 'pb',          href: '/pb',          internal: true, tier: 'medium', Icon: Medal,      nameKey: 'pb' },
       { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', Icon: Film,       nameKey: 'frameCount' },
       { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', iconImg: '/icons/upstream/solver.png', nameKey: 'solver' },
       { id: 'mosaic',      href: '/mosaic',      internal: true, tier: 'medium', Icon: Grid2x2,    nameKey: 'mosaic' },

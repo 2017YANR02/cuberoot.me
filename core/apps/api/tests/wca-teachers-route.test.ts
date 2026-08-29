@@ -30,6 +30,7 @@ describe('GET /v1/wca/teachers', () => {
       event_id: '333',
       teacher_wca_id: '2017YANR02',
       teacher_name: 'Ruimin Yan (颜瑞民)',
+      teacher_country_iso2: 'CN',
     }]);
 
     const response = await app.request('/v1/wca/teachers?teachers=2017yanr02');
@@ -41,6 +42,7 @@ describe('GET /v1/wca/teachers', () => {
       eventId: '333',
       teacherWcaId: '2017YANR02',
       teacherName: 'Ruimin Yan (颜瑞民)',
+      teacherCountryIso2: 'CN',
     }] });
     expect(mocks.query).toHaveBeenCalledWith(
       expect.stringContaining('WHERE wt.teacher_wca_id IN (?)'),
@@ -253,8 +255,8 @@ describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
     mocks.hasActiveMembership.mockResolvedValueOnce(true);
     mocks.query
       .mockResolvedValueOnce([
-        { wca_id: '2026GANR02', name: 'Student' },
-        { wca_id: '2017YANR02', name: 'Teacher' },
+        { wca_id: '2026GANR02', name: 'Student', country_iso2: 'AU' },
+        { wca_id: '2017YANR02', name: 'Teacher', country_iso2: 'CN' },
       ])
       .mockResolvedValueOnce([{ teacher_wca_id: '2020TENG01' }])
       .mockResolvedValueOnce([{
@@ -278,6 +280,7 @@ describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
       eventId: '333',
       teacherWcaId: '2017YANR02',
       teacherName: 'Teacher',
+      teacherCountryIso2: 'CN',
     } });
     expect(mocks.hasActiveMembership).toHaveBeenCalledWith('2026GANR02');
     expect(mocks.query).toHaveBeenNthCalledWith(

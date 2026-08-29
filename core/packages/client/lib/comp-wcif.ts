@@ -148,6 +148,45 @@ export async function fetchCompName(compId: string): Promise<string | null> {
   return info?.name ?? null;
 }
 
+interface WcifPersonRegistrationRaw {
+  wcaId?: string | null;
+  registration?: {
+    eventIds?: string[];
+    isCompeting?: boolean;
+    status?: string;
+  } | null;
+}
+
+const personEventsInflight = new Map<string, Promise<string[]>>();
+
+/** 读取公共 WCIF 中某位选手已接受报名的项目。 */
+export function fetchCompPersonEventIds(compId: string, wcaId: string): Promise<string[]> {
+  const normalizedCompId = compId.trim();
+  const normalizedWcaId = wcaId.trim().toUpperCase();
+  if (!normalizedCompId || !normalizedWcaId) return Promise.resolve([]);
+
+  const key = `${normalizedCompId}|${normalizedWcaId}`;
+  const existing = personEventsInflight.get(key);
+  if (existing) return existing;
+
+  const request = fetch(WCIF_URL(normalizedCompId))
+    .then(async (response) => {
+      if (!response.ok) return [];
+      const data = await response.json() as { persons?: WcifPersonRegistrationRaw[] };
+      const person = data.persons?.find((candidate) => candidate.wcaId?.toUpperCase() === normalizedWcaId);
+      const registration = person?.registration;
+      if (!registration || registration.isCompeting === false || registration.status === 'deleted') return [];
+      return Array.isArray(registration.eventIds)
+        ? registration.eventIds.filter((eventId): eventId is string => typeof eventId === 'string' && !!eventId)
+        : [];
+    })
+    .catch(() => [] as string[])
+    .finally(() => personEventsInflight.delete(key));
+
+  personEventsInflight.set(key, request);
+  return request;
+}
+
 // ── cubing.com Chinese metadata for CN comps ───────────────────────
 
 export interface CubingZhMeta {
