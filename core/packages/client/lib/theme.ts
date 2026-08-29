@@ -7,7 +7,7 @@
 //   - Favicon swap kept but operates on whatever <link id="app-favicon"> exists.
 
 import { useEffect, useState } from 'react';
-import { PALETTE_KEY, isPaletteId, paletteScheme } from './palettes';
+import { PALETTE_KEY, isPaletteId, paletteScheme, type PaletteId } from './palettes';
 import { persistItem } from './safe-storage';
 
 export type Theme = 'system' | 'light' | 'dark';
@@ -46,27 +46,56 @@ function runTransition(commit: () => void, animate: boolean) {
   }
 }
 
+function readTheme(): Theme {
+  try {
+    const value = localStorage.getItem(THEME_KEY);
+    return value === 'light' || value === 'dark' || value === 'system' ? value : 'system';
+  } catch {
+    return 'system';
+  }
+}
+
+function applyThemeRoot(theme: Theme, clearPalette: boolean) {
+  const root = document.documentElement;
+  if (clearPalette) {
+    root.removeAttribute('data-palette');
+    root.removeAttribute('data-palette-scheme');
+  }
+  if (theme === 'light' || theme === 'dark') {
+    root.setAttribute('data-theme', theme);
+    root.style.colorScheme = theme;
+  } else {
+    root.removeAttribute('data-theme');
+    root.style.colorScheme = '';
+  }
+}
+
+function applyPaletteRoot(id: string | null) {
+  const root = document.documentElement;
+  const scheme = paletteScheme(id);
+  if (isPaletteId(id) && scheme) {
+    root.setAttribute('data-palette', id);
+    root.setAttribute('data-palette-scheme', scheme);
+    root.setAttribute('data-theme', scheme);
+    root.style.colorScheme = scheme;
+  } else {
+    applyThemeRoot(readTheme(), true);
+  }
+}
+
+function applyContrastRoot(level: ContrastLevel) {
+  const root = document.documentElement;
+  if (level === 'normal') root.removeAttribute('data-contrast');
+  else root.setAttribute('data-contrast', level);
+}
+
 // clearPalette: 用户点 light/dark 开关时退出配色主题,回到经典明暗。
 export function applyTheme(theme: Theme, animate = false, clearPalette = false) {
-  const root = document.documentElement;
   const commit = () => {
     if (clearPalette) {
-      root.removeAttribute('data-palette');
-      root.removeAttribute('data-palette-scheme');
       try { localStorage.removeItem(PALETTE_KEY); } catch { /* ignore */ }
     }
-    if (theme === 'light' || theme === 'dark') {
-      root.setAttribute('data-theme', theme);
-      // Pin the browser-level color-scheme to the chosen theme. Without this the
-      // page keeps `color-scheme: light dark` (follows OS), so an explicit dark
-      // theme on an OS-light machine paints embedded <object>/<iframe> docs (the
-      // cloudling gallery) with an opaque white canvas backdrop.
-      root.style.colorScheme = theme;
-    } else {
-      // system: follow OS for both tokens and color-scheme
-      root.removeAttribute('data-theme');
-      root.style.colorScheme = '';
-    }
+    applyThemeRoot(theme, clearPalette);
     applyFavicon();
   };
   runTransition(commit, animate);
@@ -74,34 +103,13 @@ export function applyTheme(theme: Theme, animate = false, clearPalette = false) 
 
 // 选 / 清配色主题。id=null → 回到经典(移除 data-palette,恢复 theme 的 color-scheme)。
 export function applyPalette(id: string | null, animate = false) {
-  const root = document.documentElement;
   if (isPaletteId(id)) {
     persistItem(PALETTE_KEY, id);
   } else {
     try { localStorage.removeItem(PALETTE_KEY); } catch { /* ignore */ }
   }
   const commit = () => {
-    const scheme = paletteScheme(id);
-    if (isPaletteId(id) && scheme) {
-      root.setAttribute('data-palette', id);
-      // data-palette-scheme = light|dark 让 dark-/light-lock 页面只在「同明暗」配色下放行
-      // (暗页跟暗配色、亮页跟亮配色),globals.css 的 :not([data-palette-scheme=...]) 用它。
-      root.setAttribute('data-palette-scheme', scheme);
-      // 关键:配色也驱动 data-theme=明/暗。页面级 CSS 普遍用 html[data-theme=dark] /
-      // @media(prefers-dark) html:not([data-theme=light]) 切明暗色,这些规则原本无视配色
-      // (跟 OS prefers-color-scheme 走),导致「OS 暗 + 选浅配色」时暗色文字规则照样生效 →
-      // 白字落浅底看不清。让配色把 data-theme 设成自己的明暗,这些规则就自动跟配色翻。
-      root.setAttribute('data-theme', scheme);
-      root.style.colorScheme = scheme;
-    } else {
-      root.removeAttribute('data-palette');
-      root.removeAttribute('data-palette-scheme');
-      const t = (localStorage.getItem(THEME_KEY) as Theme | null) || 'system';
-      // 清配色 → data-theme 恢复用户存的明暗(system 则移除跟 OS)。
-      if (t === 'light' || t === 'dark') root.setAttribute('data-theme', t);
-      else root.removeAttribute('data-theme');
-      root.style.colorScheme = t === 'light' || t === 'dark' ? t : '';
-    }
+    applyPaletteRoot(id);
     applyFavicon();
   };
   runTransition(commit, animate);
@@ -110,17 +118,34 @@ export function applyPalette(id: string | null, animate = false) {
 
 // 选柔和度。与明暗 / 配色互不干扰:只调 token 的对比强度,不换色相。
 export function applyContrast(level: ContrastLevel, animate = false) {
-  const root = document.documentElement;
   if (level === 'normal') {
     try { localStorage.removeItem(CONTRAST_KEY); } catch { /* ignore */ }
   } else {
     persistItem(CONTRAST_KEY, level);
   }
-  runTransition(() => {
-    if (level === 'normal') root.removeAttribute('data-contrast');
-    else root.setAttribute('data-contrast', level);
-  }, animate);
+  runTransition(() => applyContrastRoot(level), animate);
   window.dispatchEvent(new Event('theme-change'));
+}
+
+// 外观菜单 hover/focus 预览:只改当前文档,不写 localStorage。
+export function previewTheme(theme: 'light' | 'dark') {
+  applyThemeRoot(theme, true);
+}
+
+export function previewPalette(id: PaletteId) {
+  applyPaletteRoot(id);
+}
+
+export function previewContrast(level: ContrastLevel) {
+  applyContrastRoot(level);
+}
+
+export function restorePersistedAppearance() {
+  const palette = readPalette();
+  if (palette) applyPaletteRoot(palette);
+  else applyThemeRoot(readTheme(), true);
+  applyContrastRoot(readContrast());
+  applyFavicon();
 }
 
 export function readContrast(): ContrastLevel {
@@ -154,7 +179,7 @@ export function readEffective(): EffectiveTheme {
   // 配色主题优先:它自带明/暗,决定 favicon / theme-color。
   const palScheme = paletteScheme(readPalette());
   if (palScheme) return palScheme;
-  const saved = (localStorage.getItem(THEME_KEY) as Theme | null) || 'system';
+  const saved = readTheme();
   if (saved === 'light' || saved === 'dark') return saved;
   return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
