@@ -130,9 +130,9 @@ describe('CubeOpt artifact bundle', () => {
     const contract = CUBEOPT_VARIANTS[variant];
 
     expect(artifact.manifest.variant).toBe(variant);
-    expect(artifact.modulePath).toBe(join(root, contract.files.module));
-    expect(artifact.wasmPath).toBe(join(root, contract.files.wasm));
-    expect(artifact.tablePath).toBe(join(root, contract.files.table));
+    expect(artifact.modulePath).toBe(join(artifact.root, contract.files.module));
+    expect(artifact.wasmPath).toBe(join(artifact.root, contract.files.wasm));
+    expect(artifact.tablePath).toBe(join(artifact.root, contract.files.table));
     expect(JSON.parse(await readFile(join(store, 'current.json'), 'utf8'))).toEqual({
       schema: CUBEOPT_POINTER_SCHEMA,
       bundle,

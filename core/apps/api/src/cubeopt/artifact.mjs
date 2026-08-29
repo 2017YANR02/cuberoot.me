@@ -218,7 +218,7 @@ export async function verifyCubeoptBundle(bundleDir, { allowFixtureSizes = false
   }
   if (!rootInfo.isDirectory()) throw artifactError('bundle path must be a real directory, not a symlink');
   const canonicalRoot = await realpath(root);
-  const manifestPath = resolve(root, 'manifest.json');
+  const manifestPath = resolve(canonicalRoot, 'manifest.json');
   const manifestSource = await readRegularUtf8(manifestPath, 'manifest.json');
   let manifest;
   try {
@@ -231,7 +231,7 @@ export async function verifyCubeoptBundle(bundleDir, { allowFixtureSizes = false
 
   const paths = {};
   for (const [role, expectedPath] of Object.entries(contract.files)) {
-    const path = resolve(root, expectedPath);
+    const path = resolve(canonicalRoot, expectedPath);
     let info;
     try {
       info = await lstat(path);

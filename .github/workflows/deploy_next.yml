@@ -10,6 +10,7 @@ on:
     paths:
       - 'core/packages/client/**'
       - 'core/apps/web/**'
+      - 'core/packages/event-icon/**'
       - 'core/packages/puzzle-render-core/**'
       - 'core/packages/puzzle-solvers/**'
       - 'core/packages/shared/**'

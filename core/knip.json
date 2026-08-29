@@ -6,7 +6,7 @@
     "scripts/resolve-workspace-path.d.mts",
     "{packages/miniprogram,apps/miniprogram}/scripts/release-check-lib.d.mts"
   ],
-  "ignoreBinaries": ["netstat", "wasm-pack", "pwsh"],
+  "ignoreBinaries": ["netstat", "wasm-pack", "pwsh", "xcrun"],
   "ignoreDependencies": ["tsx"],
   "workspaces": {
     "{packages/client,apps/web}": {
@@ -22,6 +22,16 @@
         "**/sim/**"
       ],
       "ignoreDependencies": ["playwright"]
+    },
+    "apps/mobile": {
+      "ignore": [
+        "android/app/build/**",
+        "android/app/src/main/assets/public/**",
+        "ios/App/App/public/**"
+      ]
+    },
+    "packages/event-icon": {
+      "entry": ["*.mjs"]
     },
     "packages/platform": {
       "entry": [
