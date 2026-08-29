@@ -24,7 +24,9 @@
     "ios:run": "pnpm ios:doctor && pnpm cap:sync:ios && cap run ios"
   },
   "dependencies": {
+    "@aparajita/capacitor-secure-storage": "8.0.0",
     "@capacitor/android": "8.5.0",
+    "@capacitor/app": "8.1.1",
     "@capacitor/browser": "8.0.4",
     "@capacitor/core": "8.5.0",
     "@capacitor/haptics": "8.0.2",

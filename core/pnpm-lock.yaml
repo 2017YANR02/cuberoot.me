@@ -154,9 +154,15 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@aparajita/capacitor-secure-storage':
+        specifier: 8.0.0
+        version: 8.0.0
       '@capacitor/android':
         specifier: 8.5.0
         version: 8.5.0(@capacitor/core@8.5.0)
+      '@capacitor/app':
+        specifier: 8.1.1
+        version: 8.1.1(@capacitor/core@8.5.0)
       '@capacitor/browser':
         specifier: 8.0.4
         version: 8.0.4(@capacitor/core@8.5.0)
@@ -813,6 +819,10 @@ packages:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
 
+  '@aparajita/capacitor-secure-storage@8.0.0':
+    resolution: {integrity: sha512-oYnwSjdIh23aRNgz8982+TmFvQH/2yZkEdw1iIg+H2ziFJoOVELPTc7u6Ez2HwOuDIW5AGqBX75GvrzQ+D70Qg==}
+    engines: {node: '>=20.0.0'}
+
   '@asamuzakjp/css-color@6.0.5':
     resolution: {integrity: sha512-mbhpPMmnw/kwW19aRNmSUl1QzLbdGo1SCuE49BT98MNwqF6zaHb3o2owssFc/PEO/4t2UjqtCNwocuDtJornzA==}
     engines: {node: ^22.13.0 || >=24.0.0}
@@ -837,6 +847,11 @@ packages:
     peerDependencies:
       '@capacitor/core': ^8.5.0
 
+  '@capacitor/app@8.1.1':
+    resolution: {integrity: sha512-xM2ZTX5jK60tFtmjsmJv+Cdj1Qsb6NcavkqmdEnCPQBeya9oKhamZJxYOnQNj1ZvcJM7sWfG6BEtSLx42pisbA==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
   '@capacitor/browser@8.0.4':
     resolution: {integrity: sha512-ORZ4u/y+7aMuu6yVuk6SP529fUZyqcbnuHB1q5McpA3o2SYfVoi28iB8rsQjI2ad1qlKJd29ZUuGtspXLBDlWg==}
     peerDependencies:
@@ -859,6 +874,11 @@ packages:
     resolution: {integrity: sha512-7k1TfohJu5BzRXc1F3g04Q8QQ0fyQgms6h1AvhnHb04VaNr9EdHOx03hL8O+OigEKMQnyJd1ZOjTPPNHCqL5Yw==}
     peerDependencies:
       '@capacitor/core': ^8.5.0
+
+  '@capacitor/keyboard@8.0.5':
+    resolution: {integrity: sha512-oFXygC4eKYA5l2MdpTR06L2M/4x6e2SLD5yS1T9+UBDKTkzyvhWKEhbYLUaTIBPpLKqlfGudJw1X73S1H9eUzQ==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@capacitor/network@8.0.1':
     resolution: {integrity: sha512-9xK/FHFmzKGanB6BdoSZOzXk8vF0OFVQSQ4PAsIrzAzLuXHryO317qy8dcHVpgxYeuZq2noI0My9z1DvVDi/9w==}
@@ -5345,6 +5365,14 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
+  '@aparajita/capacitor-secure-storage@8.0.0':
+    dependencies:
+      '@capacitor/android': 8.5.0(@capacitor/core@8.5.0)
+      '@capacitor/app': 8.1.1(@capacitor/core@8.5.0)
+      '@capacitor/core': 8.5.0
+      '@capacitor/ios': 8.5.0(@capacitor/core@8.5.0)
+      '@capacitor/keyboard': 8.0.5(@capacitor/core@8.5.0)
+
   '@asamuzakjp/css-color@6.0.5':
     dependencies:
       '@csstools/css-calc': 3.3.0(@csstools/css-parser-algorithms@4.0.0(@csstools/css-tokenizer@4.0.0))(@csstools/css-tokenizer@4.0.0)
@@ -5369,6 +5397,10 @@ snapshots:
   '@bufbuild/protobuf@1.10.1': {}
 
   '@capacitor/android@8.5.0(@capacitor/core@8.5.0)':
+    dependencies:
+      '@capacitor/core': 8.5.0
+
+  '@capacitor/app@8.1.1(@capacitor/core@8.5.0)':
     dependencies:
       '@capacitor/core': 8.5.0
 
@@ -5408,6 +5440,10 @@ snapshots:
       '@capacitor/core': 8.5.0
 
   '@capacitor/ios@8.5.0(@capacitor/core@8.5.0)':
+    dependencies:
+      '@capacitor/core': 8.5.0
+
+  '@capacitor/keyboard@8.0.5(@capacitor/core@8.5.0)':
     dependencies:
       '@capacitor/core': 8.5.0
 

@@ -7,9 +7,11 @@ import {
 
 const mocks = vi.hoisted(() => ({
   checkRateLimit: vi.fn(),
+  consumeMobileSessionTicket: vi.fn(),
   consumeWebSessionTicket: vi.fn(),
   exchangeWechatMiniProgramCode: vi.fn(),
   getUserById: vi.fn(),
+  issueMobileSessionTicket: vi.fn(),
   issueWebSessionTicket: vi.fn(),
   loginWithIdentity: vi.fn(),
   publicUser: vi.fn(),
@@ -43,7 +45,9 @@ vi.mock('../src/utils/wechat_miniprogram.js', () => ({
   wechatMiniProgramConfigured: mocks.wechatMiniProgramConfigured,
 }));
 vi.mock('../src/utils/web_session_ticket.js', () => ({
+  consumeMobileSessionTicket: mocks.consumeMobileSessionTicket,
   consumeWebSessionTicket: mocks.consumeWebSessionTicket,
+  issueMobileSessionTicket: mocks.issueMobileSessionTicket,
   issueWebSessionTicket: mocks.issueWebSessionTicket,
 }));
 vi.mock('../src/utils/app_user_auth.js', () => ({ requireAppUserId: mocks.requireAppUserId }));
@@ -67,6 +71,8 @@ const publicAccount = {
 };
 const token = 's'.repeat(20);
 const ticket = 'A'.repeat(43);
+const codeChallenge = 'C'.repeat(43);
+const codeVerifier = 'V'.repeat(43);
 
 describe('auth route wire contracts', () => {
   beforeEach(() => {
@@ -128,6 +134,67 @@ describe('auth route wire contracts', () => {
     expect(body).toEqual({ token, user: publicAccount });
     expect(decodeWebSession(body)).toEqual(body);
     expect(mocks.consumeWebSessionTicket).toHaveBeenCalledWith(ticket);
+  });
+
+  it('issues a PKCE-bound mobile ticket from the canonical website session', async () => {
+    mocks.requireAppUserId.mockResolvedValue(42);
+    mocks.issueMobileSessionTicket.mockResolvedValue({ ticket, expiresIn: 90 });
+
+    const response = await accountAuthRoutes.request('/auth/mobile-session/ticket', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ codeChallenge }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(decodeWebSessionTicketEnvelope(await response.json())).toEqual({ ticket, expiresIn: 90 });
+    expect(mocks.issueMobileSessionTicket).toHaveBeenCalledWith(42, codeChallenge);
+  });
+
+  it('returns a canonical mobile session only after PKCE ticket consumption', async () => {
+    mocks.consumeMobileSessionTicket.mockResolvedValue(42);
+    mocks.getUserById.mockResolvedValue(account);
+
+    const response = await accountAuthRoutes.request('/auth/mobile-session/exchange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticket, codeVerifier }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(decodeWebSession(await response.json())).toEqual({ token, user: publicAccount });
+    expect(mocks.consumeMobileSessionTicket).toHaveBeenCalledWith(ticket, codeVerifier);
+  });
+
+  it('rejects malformed mobile challenges before issuing a ticket', async () => {
+    mocks.requireAppUserId.mockResolvedValue(42);
+
+    const response = await accountAuthRoutes.request('/auth/mobile-session/ticket', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ codeChallenge: 'short' }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(mocks.issueMobileSessionTicket).not.toHaveBeenCalled();
+    expect(decodeWebSessionError(await response.json())?.code).toBe('INVALID_REQUEST');
+  });
+
+  it('returns a stable error for a rejected mobile ticket or verifier', async () => {
+    mocks.consumeMobileSessionTicket.mockResolvedValue(null);
+
+    const response = await accountAuthRoutes.request('/auth/mobile-session/exchange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticket, codeVerifier }),
+    });
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({
+      code: 'INVALID_MOBILE_SESSION_TICKET',
+      message: 'invalid mobile session ticket',
+      error: 'invalid mobile session ticket',
+    });
   });
 
   it('rejects an unknown Clawd preset before touching account storage', async () => {

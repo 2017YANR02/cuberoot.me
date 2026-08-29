@@ -26,13 +26,13 @@
 | 组织法定名称、地址、电话 | 待所有者提供，并与商店公开资料一致 | 提交前阻塞 |
 | 英文隐私政策 | `https://cuberoot.me/privacy` | 源码已完成，推送部署后复核 |
 | 中文隐私政策 | `https://cuberoot.me/zh/privacy` | 源码已完成，推送部署后复核 |
-| 登录要求 | 不需要账号 | 已核对 |
+| 登录要求 | 核心计时无需账号；设置中可选登录同一 CubeRoot 网站账号 | 已核对 |
 | 广告 | 无 | 已核对 |
 | 付费/订阅 | 无 | 已核对 |
 | 用户生成内容/聊天 | 无 | 已核对 |
-| 核心功能 | 本地离线计时、真实三阶比赛打乱的有界在线缓存与冷离线生成兜底、历史记录、罚时、备注、best/ao5/ao12、JSON 备份与恢复 | 已核对 |
+| 核心功能 | 本地离线计时、真实三阶比赛打乱的有界在线缓存与冷离线生成兜底、历史记录、罚时、备注、best/ao5/ao12、JSON 备份与恢复；可选统一账号登录但暂不上传计时数据 | 已核对 |
 
-当前 App 不是网站 WebView 套壳。计时器、历史、统计和 IndexedDB 存储均打进安装包；App 会自动调用 CubeRoot API 下载公开比赛打乱并在本机保存最多 50 条、最长 7 天，冷启动无缓存且断网时使用本地生成器。只有用户主动点击“完整网站”或“隐私政策”时，才由官方 Capacitor Browser 插件打开系统浏览器。
+当前 App 不是网站 WebView 套壳。计时器、历史、统计和 IndexedDB 存储均打进安装包；App 会自动调用 CubeRoot API 下载公开比赛打乱并在本机保存最多 50 条、最长 7 天，冷启动无缓存且断网时使用本地生成器。只有用户主动点击登录、账号管理、“完整网站”或“隐私政策”时，才由官方 Capacitor Browser 插件打开系统浏览器。登录复用网站统一账号，但当前计时记录、备注和设置仍只保存在本机。
 
 ## 2. Google Play Data safety 草稿
 
@@ -44,8 +44,8 @@ Google 将“收集”定义为把数据从设备传给开发者或第三方。�
 |---|---|---|
 | App 是否收集或分享需要声明的用户数据 | 提交前复核，不能预填 No | 比赛打乱请求会让自有服务器处理并记录 IP 与客户端类型；计时数据、备注和设置不上传，且没有分析、广告或崩溃上报 |
 | 数据是否在传输中加密 | Yes（提交前以最终包和控制台字段复核） | 比赛打乱请求使用 `https://api.cuberoot.me`；不得把 HTTPS 等同于“不收集数据” |
-| 是否提供账号创建 | No | App 无注册或登录 |
-| 是否允许用户请求删除数据 | 本地数据可删除；不声称存在服务器账号删除 | 单条记录可删除；清除 App 存储或卸载可删除全部数据 |
+| 是否提供账号创建 | Yes | 可选登录在系统浏览器复用网站邮箱/手机号登录/注册；App 核心功能不要求账号 |
+| 是否允许用户请求删除数据 | Yes | App 内提供网站统一账号注销入口；单条记录可删除，清除 App 存储或卸载可删除全部本地数据。最终控制台填写公开删除 URL |
 | 是否经过独立安全审查 | No | 当前没有第三方认证，不得误填 |
 
 提交前必须重新执行：
@@ -61,7 +61,7 @@ Google 要求所有已发布 App 完成 Data safety 表并提供隐私政策，�
 
 | 项目 | 草稿 | 状态 |
 |---|---|---|
-| App access | 所有功能无需账号、邀请码或付费；审核员可直接进入 | 已核对 |
+| App access | 核心计时、历史、设置、备份无需账号；可选账号区走公开邮箱/手机号登录。提交前按控制台要求准备可用审核账号或说明 | 提交前复核 |
 | Ads | No | 已核对 |
 | Content rating | 无暴力、色情、赌博、受控物质、粗俗语言、聊天或 UGC；在问卷中逐项如实选 No，由控制台计算评级 | 提交前复核 |
 | Target audience | 不默认选择儿童年龄段；由所有者根据实际营销对象选择 | 所有者填写 |
@@ -69,9 +69,9 @@ Google 要求所有已发布 App 完成 Data safety 表并提供隐私政策，�
 | Government app | No | 已核对 |
 | Financial features | None | 已核对 |
 | Health features | None | 已核对 |
-| Data deletion URL | 当前无 App 账号，不填写虚假的账号删除 URL；若控制台要求解释，引用隐私政策的本地删除章节 | 提交前复核 |
+| Data deletion URL | `https://cuberoot.me/account?view=delete`（中文入口可用 `/zh/account?view=delete`） | 源码入口已完成，部署后复核 |
 
-如果以后 App 内允许创建账号，必须同时提供 App 内注销入口和可公开访问的网页删除入口，再重新回答 User Data/Account deletion 表。依据：[Google Play User Data 政策](https://support.google.com/googleplay/android-developer/answer/10144311)。
+App 已允许通过系统浏览器创建同一网站账号，并提供 App 内可达的网站注销入口；提交前必须验证公开删除 URL、真实账号注销和控制台 User Data/Account deletion 回答一致。依据：[Google Play User Data 政策](https://support.google.com/googleplay/android-developer/answer/10144311)。
 
 ## 4. Android 权限与 SDK 清单
 
@@ -89,16 +89,18 @@ Google 要求所有已发布 App 完成 Data safety 表并提供隐私政策，�
 ### 4.2 当前运行时依赖
 
 - `@capacitor/core` / `@capacitor/android`：官方原生容器
-- `@capacitor/browser`：只在用户点击时打开完整网站或隐私政策
+- `@capacitor/browser`：只在用户点击时打开登录、账号管理、账号注销、完整网站或隐私政策
+- `@capacitor/app`：接收系统浏览器登录后的 App deep link，并读取 App 标识
 - `@capacitor/network`：只显示设备在线/离线状态
 - `@capacitor/haptics`：只在计时器 ready 和停止时提供设备触觉反馈，不读取或上传数据
+- `@aparajita/capacitor-secure-storage`：将 CubeRoot 会话保存在 iOS Keychain 或 Android Keystore 保护的加密存储中；禁用 iCloud 同步
 - React / React DOM：本地界面渲染
 - `@cuberoot/shared`：网站与 App 共用的计时数据模型、迁移和打乱逻辑
 - `@cuberoot/timer-ui`：网站与 App 共用的计时界面组件和七段字体
 - `@cuberoot/event-icon`：网站与 App 共用的项目图标资产和渲染组件
 - `@cuberoot/visualcube`：网站与 App 共用的魔方状态 SVG 渲染器
 
-当前没有 Firebase、广告、分析、崩溃上报、推送、社交登录、支付或第三方用户画像 SDK。
+当前没有 Firebase、广告、分析、崩溃上报、推送、社交登录、支付或第三方用户画像 SDK。登录 UI 复用 CubeRoot 网站邮箱/手机号流程，App 未集成第三方身份 SDK。
 
 ## 5. Google Play 商店文案
 
@@ -129,7 +131,7 @@ CubeRoot is a focused speedcubing timer that works offline and keeps your solves
 • Export and import a versioned JSON backup
 • Choose English or Simplified Chinese and follow the system light or dark theme
 
-No account is required. The app contains no ads or analytics SDKs. Your timer history is stored locally and is not uploaded automatically.
+No account is required for timing. You may optionally sign in with the same CubeRoot email or phone account used on the website. The app contains no ads or analytics SDKs. Your timer history remains local and is not uploaded automatically.
 
 For CubeRoot's complete collection of speedcubing tools, use the Full website link in Settings.
 ```
@@ -167,7 +169,7 @@ CubeRoot 是一款专注的速拧计时器，可离线使用，计时记录只�
 • 导入和导出带版本信息的 JSON 备份
 • 支持英文、简体中文及跟随系统的深浅主题
 
-无需注册账号。App 不包含广告或分析 SDK，也不会自动上传你的计时记录。
+计时无需账号；你也可以选择使用网站相同的 CubeRoot 邮箱或手机号登录。App 不包含广告或分析 SDK，也不会自动上传你的计时记录。
 
 需要更多魔方工具时，可在设置中打开 CubeRoot 完整网站。
 ```
@@ -183,11 +185,11 @@ CubeRoot 是一款专注的速拧计时器，可离线使用，计时记录只�
 可直接粘贴并按最终构建调整：
 
 ```text
-CubeRoot requires no account, credentials, subscription, or special setup. All bundled timer features are available immediately and work offline.
+CubeRoot requires no account, subscription, or special setup for its bundled timer. Timer features are available immediately and work offline. Optional account sign-in in Settings opens CubeRoot's email/phone flow in the system browser; timer records remain local and are not uploaded by signing in.
 
 To test: hold the main timer area until it turns ready, release to start, then tap to stop. History, penalties, comments, backup/import, language, theme, privacy, support, and version are available from the bottom navigation and Settings.
 
-The Full website and Privacy policy controls intentionally open the system browser. Timer records and preferences remain local to the app and are not uploaded automatically.
+Sign-in, account management, account deletion, Full website, and Privacy policy intentionally open the system browser. Timer records and preferences remain local to the app and are not uploaded automatically.
 ```
 
 ## 7. 截图和素材拍摄表
@@ -234,7 +236,7 @@ CubeRoot 走组织账号路线，不把新个人账号的 12 人/14 天要求自
 - `[已核对]` Xcode 26.6（build 17F113）已完成 iOS 26.5 Simulator Debug 构建、安装和启动；Automatic Signing 已启用。
 - `[iOS 待签名]` Apple Developer 账号登录异常，尚未验证会员 Active、付费 Team、iPhone 真机签名、Archive、上传和 TestFlight。
 
-- iOS 与 Android 都会请求公开比赛打乱，服务器会处理并记录标准网络信息；App Privacy 必须针对最终构建重新判断 IP/客户端信息的类别、用途、关联性和保留方式，不能预填“Data Not Collected”。计时记录、备注和设置仍只保存在设备本地。
+- iOS 与 Android 都会请求公开比赛打乱；可选登录还会处理邮箱或手机号对应的 CubeRoot 账号、显示名、WCA ID、会话凭证与标准网络信息。App Privacy 必须针对最终构建重新判断联系人信息、用户 ID、IP/客户端信息的类别、用途、关联性和保留方式，不能预填“Data Not Collected”。计时记录、备注和设置仍只保存在设备本地。
 - 必须在最终 iOS archive 中重新检查 Apple 或第三方 SDK 的隐私清单、诊断、分析、账号和网络行为。
 - App Store 的隐私回答要包含第三方伙伴代码的数据实践，不能只看 CubeRoot 自己写的代码。依据：[Apple App Privacy Details](https://developer.apple.com/app-store/app-privacy-details/)。
 - 支持 URL 和隐私 URL 可沿用公开网页；截图、设备尺寸、年龄评级和出口合规要在 App Store Connect 中按最终构建填写。

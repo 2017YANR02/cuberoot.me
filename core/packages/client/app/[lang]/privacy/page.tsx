@@ -12,8 +12,8 @@ export default function PrivacyPage() {
       <p className="privacy-updated">{t('生效日期:2026-08-28', 'Effective date: August 28, 2026')}</p>
       <p>
         {t(
-          '本政策适用于 CubeRoot 官方 Android、iOS App 与微信小程序。App 的核心计时功能可离线使用;小程序的公开内容可不登录浏览,只有在你主动选择微信登录时才会创建或识别 CubeRoot 账号。',
-          'This policy applies to the official CubeRoot Android and iOS apps and the WeChat Mini Program. Core app timer features work offline, and public Mini Program content can be viewed without signing in. A CubeRoot account is created or recognized only when you actively choose WeChat sign-in.',
+          '本政策适用于 CubeRoot 官方 Android、iOS App 与微信小程序。App 的核心计时功能可离线且无需登录使用;App 登录和小程序微信登录均由你主动选择,用于识别网站已有的同一个 CubeRoot 账号。',
+          'This policy applies to the official CubeRoot Android and iOS apps and the WeChat Mini Program. Core app timer features work offline without sign-in. App sign-in and Mini Program WeChat sign-in are optional actions you choose to identify the same CubeRoot account used on the website.',
         )}
       </p>
 
@@ -30,8 +30,20 @@ export default function PrivacyPage() {
         <li>{t('App 不包含广告或分析 SDK,也不使用摄像头、麦克风或定位权限。', 'The app contains no advertising or analytics SDK and does not use camera, microphone, or location permissions.')}</li>
       </ul>
 
-      <h2>{t('小程序与账号数据', 'Mini Program and account data')}</h2>
+      <h2>{t('App、小程序与账号数据', 'App, Mini Program, and account data')}</h2>
       <ul>
+        <li>
+          {t(
+            '只有在你点击 App 登录后,App 才会在系统浏览器打开 CubeRoot 网站的统一邮箱或手机号登录页。浏览器返回短时、单次使用且与本次 App 请求绑定的换票;长期会话凭证不会放入网址。',
+            'Only after you tap sign in does the app open CubeRoot’s shared email or phone sign-in page in the system browser. The browser returns a short-lived, single-use handoff ticket bound to that app request; the long-lived session token is never placed in the URL.',
+          )}
+        </li>
+        <li>
+          {t(
+            '登录后,App 将 CubeRoot 会话凭证和账号资料保存在 iOS Keychain 或 Android Keystore 保护的安全存储中,用于保持登录状态和显示账号信息。App 会向 CubeRoot API 校验账号状态并在需要时刷新凭证;当前不会上传或跨设备同步计时记录、备注和设置。',
+            'After sign-in, the app stores the CubeRoot session token and account profile in secure storage protected by iOS Keychain or Android Keystore. It contacts the CubeRoot API to validate the account and refresh the token when needed. Solve times, comments, and settings are not currently uploaded or synchronized across devices.',
+          )}
+        </li>
         <li>
           {t(
             '只有在你点击“微信登录”后,小程序才会调用微信登录能力,并将一次性登录凭证发送到 CubeRoot 服务器。服务器与微信交换账号标识,用同一开放平台下的 UnionID 识别你在网站与小程序中的同一账号。',
@@ -85,16 +97,16 @@ export default function PrivacyPage() {
       <h2>{t('安全、退出与删除', 'Security, sign-out, and deletion')}</h2>
       <p>
         {t(
-          'App 使用操作系统提供的应用隔离存储,并在导入或保存前校验数据结构和大小。你可以在小程序“我的”页退出登录并清除小程序本地会话;账号绑定与账号删除继续使用网站的统一账号管理页,不在小程序内复制第二套流程。CubeRoot 无法控制设备本身、系统备份或你导出文件的安全性;请为设备设置锁屏并谨慎选择备份接收方。',
-          'The app uses operating-system app-isolated storage and validates data structure and size before importing or saving it. You can sign out on the Mini Program Account page to clear its local session. Account links and account deletion continue to use the website’s single account management page rather than a duplicate Mini Program flow. CubeRoot cannot control the security of your device, operating-system backups, or exported files; use a device lock and choose backup recipients carefully.',
+          'App 使用操作系统提供的应用隔离存储,并在导入或保存前校验数据结构和大小。你可以在 App 设置或小程序“我的”页退出并清除对应设备的本地会话;App 还提供网站统一账号管理与注销入口,不复制第二套账号删除流程。CubeRoot 无法控制设备本身、系统备份或你导出文件的安全性;请为设备设置锁屏并谨慎选择备份接收方。',
+          'The app uses operating-system app-isolated storage and validates data structure and size before importing or saving it. You can sign out in app Settings or on the Mini Program Account page to clear that device’s local session. The app also links to the website’s single account-management and deletion flows instead of duplicating account deletion. CubeRoot cannot control the security of your device, operating-system backups, or exported files; use a device lock and choose backup recipients carefully.',
         )}
       </p>
 
       <h2>{t('网站与第三方链接', 'Website and third-party links')}</h2>
       <p>
         {t(
-          'App 中的“完整网站”会在系统浏览器中打开 cuberoot.me,小程序会在微信 web-view 中打开同一网站。你主动打开的第三方链接由对应的第三方负责,请同时查看它们的隐私说明。',
-          'The app opens cuberoot.me in the system browser, while the Mini Program opens the same website in WeChat web-view. Third-party links you actively open are operated by their respective providers; review their privacy information as well.',
+          'App 登录、“完整网站”和账号管理会在系统浏览器中打开 cuberoot.me,小程序会在微信 web-view 中打开同一网站。你主动打开的第三方链接由对应的第三方负责,请同时查看它们的隐私说明。',
+          'App sign-in, Full website, and account management open cuberoot.me in the system browser, while the Mini Program opens the same website in WeChat web-view. Third-party links you actively open are operated by their respective providers; review their privacy information as well.',
         )}
       </p>
 

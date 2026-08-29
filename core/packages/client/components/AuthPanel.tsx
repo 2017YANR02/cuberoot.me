@@ -623,7 +623,13 @@ function RemovePasswordForm({ needCurrent, onDone, onCancel }: {
  * 登录 / 注册表单。`onDone(info)` 在拿到会话后触发 —— /account 用它决定去哪:新注册且没绑 WCA
  * 的先做一步引导,否则回跳 ?next=。
  */
-export function LoginForm({ onDone }: { onDone: OnSignedIn }) {
+export function LoginForm({
+  firstPartyOnly = false,
+  onDone,
+}: {
+  firstPartyOnly?: boolean;
+  onDone: OnSignedIn;
+}) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const loginWithWca = useAuthStore((s) => s.loginWithWca);
@@ -707,7 +713,7 @@ export function LoginForm({ onDone }: { onDone: OnSignedIn }) {
 
   const activeSocials = SOCIALS.filter((s) => !!avail.social[s.key]);
   const hasCred = avail.email || avail.phone;
-  const hasSso = avail.wca || googleOn || activeSocials.length > 0;
+  const hasSso = !firstPartyOnly && (avail.wca || googleOn || activeSocials.length > 0);
 
   return (
     <>
