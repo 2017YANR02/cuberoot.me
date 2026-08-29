@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Cpu, Database, Gauge, HardDrive, Globe, Layers, Boxes, CircleCheck, CircleDashed, CircleDot, X } from 'lucide-react';
 import { statsUrl } from '@/lib/stats-base';
 import { fetchPuzzleDistribution } from '@/lib/puzzle-distribution';
+import { tr } from '@/i18n/tr';
 // 纯 TS 非 WCA 求解器舰队数据 (CI 守卫 tests/dev-solvers-fleet-sync.test.ts 锁
 // NONWCA_TS 的 event 集 == CSTIMER_SOLVABLE_IDS). 数据核实自各 solver 头注 + NONWCA_PUZZLE_LOOP.md §1/§2.
 import { NONWCA_TS, NONWCA_TS_PLANNED, TS_TIER_LABEL, TS_QUALITY } from './_fleet';
@@ -103,8 +104,8 @@ const BROWSER_MAP: Record<string, BrowserSolver> = Object.fromEntries(BROWSER.ma
 // 口径 = 权威 full 全模式 (CUBE_ALLOW_HUGE_TABLES=1, 无 *_NO_DIAG / *_SKIP)。
 // cnt>1 = 同规格一组; cond = 对角剪枝表, 仅全模式载, 设 *_NO_DIAG 可跳过 (各省 ~10GB).
 interface Tbl { n: string; b: number; cnt?: number; cond?: boolean }
-interface SolverTbls { move: Tbl[]; prune: Tbl[]; builtZh?: string; builtEn?: string
- }
+interface TablePlan { profile: string; move: Tbl[]; prune: Tbl[]; note: { zh: string; en: string } }
+interface SolverTbls { move: Tbl[]; prune: Tbl[]; builtZh?: string; builtEn?: string; plan?: TablePlan }
 
 const TABLES: Record<string, SolverTbls> = {
   daisy: {
@@ -132,6 +133,20 @@ const TABLES: Record<string, SolverTbls> = {
       { n: 'pt_cross_C4C5E0', b: 1313832976 }, { n: 'pt_cross_C4C6E0', b: 1313832976 }, { n: 'pt_cross_C4C7E0', b: 1313832976 },
       { n: 'pt_cross_C4C5C6', b: 1313832976 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 },
       { n: 'pt_cross_C4C6E0E2', b: 10729635856, cond: true }],
+    plan: {
+      profile: 'high-memory',
+      move: [{ n: 'mt_ep5_high_memory', b: 6842892 }],
+      prune: [
+        { n: 'pt_eo_xcross_slot0_high_memory', b: 2335703056 },
+        { n: 'pt_eo_xcross_slot1_high_memory', b: 2335703056 },
+        { n: 'pt_eo_xcross_slot2_high_memory', b: 2335703056 },
+        { n: 'pt_eo_xcross_slot3_high_memory', b: 2335703056 },
+      ],
+      note: {
+        zh: '仅代码就绪，等待 64 GB 机器生成。默认档不探测、不加载这些文件；SHA-256、构建峰值、RSS、mmap 工作集和新吞吐量均待实测。',
+        en: 'Code only, awaiting generation on the 64 GB machine. The default tier neither probes nor loads these files; SHA-256, build peak, RSS, mmap working set, and new throughput all remain unmeasured.',
+      },
+    },
   },
   pseudo: {
     move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_corn3', b: 653196 }],
@@ -287,6 +302,13 @@ function tblTotal(t: SolverTbls): number {
   // cond 表(对角剪枝, 各 ~10GB)可选 / 可跳过, 不计入头部总和。
   const sum = (arr: Tbl[]) => arr.reduce((a, x) => a + (x.cond ? 0 : x.b * (x.cnt ?? 1)), 0);
   return sum(t.move) + sum(t.prune);
+}
+function tblFullTotal(t: SolverTbls): number {
+  const sum = (arr: Tbl[]) => arr.reduce((a, x) => a + x.b * (x.cnt ?? 1), 0);
+  return sum(t.move) + sum(t.prune);
+}
+function fmtProfileBytes(b: number): string {
+  return `${(b / 1_000_000_000).toFixed(1)} GB / ${(b / 1_073_741_824).toFixed(1)} GiB`;
 }
 
 interface Coverage { generatedAt: string; target: number; counts: Record<string, number>; }
@@ -458,6 +480,10 @@ export default function SolversPage() {
     if (!t) return null;
     const hasCond = [...t.move, ...t.prune].some((x) => x.cond);
     const total = tblTotal(t);
+    const plannedBytes = t.plan
+      ? [...t.plan.move, ...t.plan.prune].reduce((sum, x) => sum + x.b * (x.cnt ?? 1), 0)
+      : 0;
+    const plannedFullTotal = t.plan ? tblFullTotal(t) + plannedBytes : 0;
     return (
       <>
         <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '档位 / 计入总和' : 'tier / counted total'}</span><span className="solv-tbl-sz">{s.tier} · {total > 0 ? fmtBytes(total) : (zh ? '零盘 (现场建)' : 'in-RAM')}</span></div>
@@ -477,6 +503,17 @@ export default function SolversPage() {
         {hasCond && <p className="solv-tbl-note">{zh
           ? `† 对角剪枝表 (10.2GB) 可选, 未计入上方总和; 设 ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 跳过 (略损剪枝)。`
           : `† diagonal prune table (10.2GB), optional, excluded from the total above; set ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 to skip (weaker pruning).`}</p>}
+        {t.plan && (
+          <div className="solv-tbl-grp">
+            <div className="solv-tbl-grp-h">{tr({
+              zh: `计划档 ${t.plan.profile} 完整文件集: ${fmtProfileBytes(plannedFullTotal)}`,
+              en: `planned tier ${t.plan.profile}, complete file set: ${fmtProfileBytes(plannedFullTotal)}`,
+            })}</div>
+            {t.plan.move.map(tblItem)}
+            {t.plan.prune.map(tblItem)}
+            <p className="solv-tbl-note">{tr(t.plan.note)}</p>
+          </div>
+        )}
       </>
     );
   }

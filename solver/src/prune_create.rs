@@ -572,6 +572,37 @@ fn create_pt_dim2(
     (total, bytes)
 }
 
+// 8b. createPTDim3: three 18-move coordinates. Used only by the explicit
+// high-memory profile; keeping it separate prevents the default generator from
+// inheriting the much larger allocation.
+fn create_pt_dim3(
+    idx1: u64,
+    idx2: u64,
+    idx3: u64,
+    sz1: u64,
+    sz2: u64,
+    sz3: u64,
+    depth: u32,
+    t1: &[u32],
+    t2: &[u32],
+    t3: &[u32],
+) -> (u64, Vec<u8>) {
+    let total = sz1 * sz2 * sz3;
+    let seeds = [(idx1 * sz2 + idx2) * sz3 + idx3];
+    let bytes = run_bfs_and_pack(total, depth, &seeds, |i, j| {
+        let mut rem = i;
+        let i3 = (rem % sz3) as usize * 18;
+        rem /= sz3;
+        let i2 = (rem % sz2) as usize * 18;
+        let i1 = (rem / sz2) as usize * 18;
+        let n1 = t1[i1 + j] as u64;
+        let n2 = t2[i2 + j] as u64;
+        let n3 = t3[i3 + j] as u64;
+        (n1 * sz2 + n2) * sz3 + n3
+    });
+    (total, bytes)
+}
+
 // 9. createPTCrossCEX: Cross × Corner × Edge × Extra (EOCross Plus)
 fn create_pt_cross_cex(
     idx_cr: u64,
@@ -1286,6 +1317,52 @@ pub fn gen_pt_ep4eo12(_p: &PruneTableManager) -> (u64, Vec<u8>) {
         ep4.as_u32(),
         eo.as_u32(),
     )
+}
+
+fn build_pt_eo_xcross_high_memory(slot: usize) -> (u64, Vec<u8>) {
+    // Existing single-edge coordinates encode position + flip as 0,2,4,6.
+    // EP5 is position-only (c=1), so the same physical slots are 0,1,2,3.
+    const SLOT_EDGE_POS: [i32; 4] = [0, 1, 2, 3];
+    const SLOT_CORNER: [i32; 4] = [12, 15, 18, 21];
+    assert!(slot < 4, "EO XCross slot out of range");
+
+    let mtm = mt::instance();
+    let ep5 = mtm.ensure_ep5_high_memory();
+    let corner = mtm.ensure_corn();
+    let eo = mtm.ensure_eo12_alt();
+    let target_ep5 = [8, 9, 10, 11, SLOT_EDGE_POS[slot]];
+    create_pt_dim3(
+        array_to_index(&target_ep5, 5, 1, 12),
+        SLOT_CORNER[slot] as u64,
+        0,
+        state_space::EP5 as u64,
+        state_space::CORNER as u64,
+        state_space::EO12 as u64,
+        15,
+        ep5.as_u32(),
+        corner.as_u32(),
+        eo.as_u32(),
+    )
+}
+
+/// Optional high-memory EO + physical-slot XCross table. The coordinate is the
+/// already verified `eo_xcross` exact-distribution coordinate: five labelled
+/// edge positions × one corner × the full EO word. Four physical target tables
+/// avoid relying on an unproven virtual-slot symmetry.
+pub fn gen_pt_eo_xcross_slot0_high_memory(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    build_pt_eo_xcross_high_memory(0)
+}
+
+pub fn gen_pt_eo_xcross_slot1_high_memory(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    build_pt_eo_xcross_high_memory(1)
+}
+
+pub fn gen_pt_eo_xcross_slot2_high_memory(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    build_pt_eo_xcross_high_memory(2)
+}
+
+pub fn gen_pt_eo_xcross_slot3_high_memory(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    build_pt_eo_xcross_high_memory(3)
 }
 
 fn gen_pt_cross_cee(i: usize) -> (u64, Vec<u8>) {

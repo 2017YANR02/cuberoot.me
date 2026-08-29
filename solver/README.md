@@ -149,9 +149,12 @@ pwsh verify.ps1 -Inputs scramble_5.txt   # 只跑某个输入
 | `CUBE_TABLE_DIR=<path>`    | 覆盖默认表目录 `./tables/`                        |
 | `CUBE_RUN_FULL_STD=1`      | 启用 std_analyzer XCross 阶段(+52 MB)           |
 | `CUBE_ALLOW_HUGE_TABLES=1` | 解锁 ≥800 MB pt 表的生成(默认 panic);pseudo XXXCross / std XXCross+ 都需要 |
+| `CUBE_TABLE_PROFILE=high-memory` | 配合现有 huge 开关为 `eo_cross_analyzer` 显式加载 64 GB 机器档；默认路径不探测该档文件 |
 | `CUBE_PSEUDO_SKIP_XCROSS=1` | pseudo_analyzer 跳过 XCross + 下游               |
 | `CUBE_PSEUDO_SKIP_XXCROSS=1` | pseudo_analyzer 跳过 XXCross + 下游             |
 | `CUBE_PSEUDO_SKIP_XXXCROSS=1` | pseudo_analyzer 跳过 XXXCross(默认 skip 除非 huge 已开) |
+
+高内存档的背景、精确文件预算、生成命令和待验收项见 [HIGH_MEMORY_TABLE_PROFILE.md](HIGH_MEMORY_TABLE_PROFILE.md)。
 
 ## 与 C++ 版本的差异
 
