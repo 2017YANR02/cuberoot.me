@@ -114,10 +114,11 @@ wcaTeacherRoutes.get('/wca/teachers', async (c) => {
   const rows = await query<TeacherRow>(
     `SELECT wt.student_wca_id, student.name AS student_name,
             wt.event_id, wt.teacher_wca_id, wt.teacher_name,
-            teacher.country_iso2 AS teacher_country_iso2
+            teacher_country.iso2 AS teacher_country_iso2
        FROM wca_teachers wt
        JOIN wca_persons student ON student.wca_id = wt.student_wca_id
        JOIN wca_persons teacher ON teacher.wca_id = wt.teacher_wca_id
+       LEFT JOIN wca_countries teacher_country ON teacher_country.id = teacher.country_id
       WHERE ${idColumn} IN (${idPlaceholders})${eventFilter}
       ORDER BY wt.student_wca_id, wt.event_id`,
     [...ids, ...events],
@@ -302,7 +303,10 @@ wcaTeacherRoutes.put('/wca/teachers/:studentId/:eventId', async (c) => {
   }
 
   const people = await query<{ wca_id: string; name: string; country_iso2: string }>(
-    `SELECT wca_id, name, country_iso2 FROM wca_persons WHERE wca_id IN (?, ?)`,
+    `SELECT person.wca_id, person.name, country.iso2 AS country_iso2
+       FROM wca_persons person
+       LEFT JOIN wca_countries country ON country.id = person.country_id
+      WHERE person.wca_id IN (?, ?)`,
     [studentWcaId, teacherWcaId],
   );
   const personById = new Map(people.map((person) => [person.wca_id, person]));

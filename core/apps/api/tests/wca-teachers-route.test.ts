@@ -48,7 +48,13 @@ describe('GET /v1/wca/teachers', () => {
       expect.stringContaining('WHERE wt.teacher_wca_id IN (?)'),
       ['2017YANR02'],
     );
-    expect(mocks.query.mock.calls[0][0]).not.toContain('wt.event_id IN');
+    const sql = mocks.query.mock.calls[0][0];
+    expect(sql).toContain(
+      'LEFT JOIN wca_countries teacher_country ON teacher_country.id = teacher.country_id',
+    );
+    expect(sql).toContain('teacher_country.iso2 AS teacher_country_iso2');
+    expect(sql).not.toContain('teacher.country_iso2');
+    expect(sql).not.toContain('wt.event_id IN');
   });
 
   it('preserves the existing student-and-event lookup contract', async () => {
@@ -283,6 +289,10 @@ describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
       teacherCountryIso2: 'CN',
     } });
     expect(mocks.hasActiveMembership).toHaveBeenCalledWith('2026GANR02');
+    expect(mocks.query.mock.calls[0][0]).toContain(
+      'LEFT JOIN wca_countries country ON country.id = person.country_id',
+    );
+    expect(mocks.query.mock.calls[0][0]).not.toContain('FROM wca_persons WHERE');
     expect(mocks.query).toHaveBeenNthCalledWith(
       3,
       expect.not.stringContaining('WHERE wca_teachers.teacher_wca_id = EXCLUDED.teacher_wca_id'),
