@@ -647,6 +647,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 179, slug: 'mobile_auth_pkce', desc: { zh: '复用短时单次票据表，为 Android/iOS 系统浏览器登录增加用途隔离与 PKCE challenge 绑定。', en: 'Reuse the short-lived ticket table for Android/iOS browser sign-in with purpose isolation and PKCE challenge binding.' } },
   { n: 180, slug: 'membership_auto_renew_plan', desc: { zh: '把尚未上线的连续包月和连续包年登记为独立套餐，默认不公开并复用会员后台的公开开关。', en: 'Register the unreleased monthly and annual auto-renewal offers as separate hidden plans controlled by the membership admin visibility toggles.' } },
   { n: 181, slug: 'enterprise_membership_plans', desc: { zh: '把现有月度和年度套餐标为个人用户，并增加沿用单账号开通流程的企业用户月度和年度套餐。', en: 'Label the existing monthly and annual offers as individual plans, then add enterprise plans using the single-account membership checkout.' } },
+  { n: 182, slug: 'membership_plan_perks', desc: { zh: '统一个人套餐权益，并让企业套餐在个人权益基础上增加师生展示、企业介绍页、云端资料存储和课程方案定制。', en: 'Unify individual plan entitlements and add teacher-student presentation, an enterprise profile, cloud content storage, and course customization to enterprise plans.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
