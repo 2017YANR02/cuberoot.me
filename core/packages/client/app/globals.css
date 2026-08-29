@@ -544,6 +544,28 @@ a {
   animation-duration: 0.42s;
 }
 
+/* Hover 预览不能用整页 View Transition:快照层会短暂接管 hit testing,快速扫过
+   菜单时可能误触发离开/恢复。注册后的颜色 token 在根层直接插值,页面保持可交互。 */
+html[data-appearance-preview],
+html[data-appearance-preview] body {
+  transition-property:
+    --background, --foreground, --card, --card-foreground,
+    --popover, --popover-foreground, --primary, --primary-foreground,
+    --secondary, --secondary-foreground, --muted, --muted-foreground,
+    --faint-foreground, --accent, --accent-foreground,
+    --border-default, --border-strong, --input, --toggle-on,
+    --article-red, --article-blue, --calc-a, --calc-b, --calc-target;
+  transition-duration: 0.28s;
+  transition-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-appearance-preview],
+  html[data-appearance-preview] body {
+    transition-duration: 0s;
+  }
+}
+
 /* === Shared toggle / clear-button styles (from packages/client-vite/src/index.css + */
 /*     components/header_toggles.css / lang_toggle.css / theme_toggle.css) === */
 
