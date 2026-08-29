@@ -213,11 +213,22 @@ describe('generateChallenge', () => {
     }
   });
 
-  it('随机招式:相邻两步不同面', () => {
+  it('随机公式:不连续同面,也不出现 L R2 L 这类可合并的同轴三连', () => {
+    const values = [0.4, 0.1, 0.5, 0.9, 0.4, 0.1];
+    let valueIndex = 0;
+    expect(randomMoves(3, () => values[valueIndex++])).toEqual(['L', 'R2', 'D']);
+
     const rnd = seeded(11);
+    const axis: Record<string, number> = { U: 0, D: 0, L: 1, R: 1, F: 2, B: 2 };
     for (let trial = 0; trial < 50; trial++) {
       const moves = randomMoves(20, rnd);
-      for (let i = 1; i < moves.length; i++) expect(moves[i][0]).not.toBe(moves[i - 1][0]);
+      for (let i = 1; i < moves.length; i++) {
+        expect(moves[i][0]).not.toBe(moves[i - 1][0]);
+        if (i >= 2) {
+          expect(axis[moves[i][0]] === axis[moves[i - 1][0]]
+            && axis[moves[i - 1][0]] === axis[moves[i - 2][0]]).toBe(false);
+        }
+      }
     }
   });
 

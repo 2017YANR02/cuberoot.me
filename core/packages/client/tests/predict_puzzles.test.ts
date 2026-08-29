@@ -199,6 +199,21 @@ function nxnEnginePerm(cube: Cube, N: number): number[] {
 }
 
 describe('/predict NxN 模型 ≡ /sim 引擎', () => {
+  it('NxN 随机公式也排除可合并的同轴三连', () => {
+    const axis: Record<string, number> = { U: 0, D: 0, L: 1, R: 1, F: 2, B: 2 };
+    for (const N of [2, 3, 4, 5, 6, 7]) {
+      const moves = getPuzzle(String(N) as '2').randomMoves(100, seeded(N));
+      const faces = moves.map((move) => /[URFDLB]/.exec(move)?.[0] ?? '');
+      for (let i = 1; i < faces.length; i++) {
+        expect(faces[i]).not.toBe(faces[i - 1]);
+        if (i >= 2) {
+          expect(axis[faces[i]] === axis[faces[i - 1]]
+            && axis[faces[i - 1]] === axis[faces[i - 2]]).toBe(false);
+        }
+      }
+    }
+  });
+
   for (const N of [2, 3, 4, 5, 6, 7]) {
     it(`${N}x${N}:随机公式的贴纸置换逐格相同`, () => {
       const puzzle = getPuzzle(String(N) as '2');
