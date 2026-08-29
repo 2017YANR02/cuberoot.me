@@ -10,7 +10,11 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { isClawdAvatarPreset } from '@cuberoot/shared/account-avatar';
-import { webSessionError, type WebSession } from '@cuberoot/shared/auth/web-session';
+import {
+  isMobileAuthCodeChallenge,
+  webSessionError,
+  type WebSession,
+} from '@cuberoot/shared/auth/web-session';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { checkRateLimit, requireAdmin } from '../utils/recon_helpers.js';
@@ -38,7 +42,12 @@ import {
   WechatMiniProgramError,
   wechatMiniProgramConfigured,
 } from '../utils/wechat_miniprogram.js';
-import { consumeWebSessionTicket, issueWebSessionTicket } from '../utils/web_session_ticket.js';
+import {
+  consumeMobileSessionTicket,
+  consumeWebSessionTicket,
+  issueMobileSessionTicket,
+  issueWebSessionTicket,
+} from '../utils/web_session_ticket.js';
 import { requireAppUserId } from '../utils/app_user_auth.js';
 import { apiOrigin } from '../utils/api_origin.js';
 
@@ -67,6 +76,20 @@ function authRateLimitResponse(c: Context): Response | null {
     if (!(error instanceof Error) || error.message !== 'Rate limit exceeded') throw error;
     c.header('Retry-After', '5');
     return c.json(webSessionError('RATE_LIMITED', error.message), 429);
+  }
+}
+
+async function ticketApplicant(c: Context): Promise<{ uid: number } | { response: Response }> {
+  try {
+    return { uid: await requireAppUserId(c) };
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Authentication required') {
+      return { response: c.json(webSessionError('UNAUTHENTICATED', error.message), 401) };
+    }
+    if (error instanceof Error && error.message.includes('suspended')) {
+      return { response: c.json(webSessionError('ACCOUNT_BLOCKED', error.message), 403) };
+    }
+    throw error;
   }
 }
 
@@ -169,19 +192,9 @@ accountAuthRoutes.post('/auth/web-session/ticket', async (c) => {
   c.header('Cache-Control', 'no-store');
   const rateLimited = authRateLimitResponse(c);
   if (rateLimited) return rateLimited;
-  let uid: number;
-  try {
-    uid = await requireAppUserId(c);
-  } catch (error) {
-    if (error instanceof Error && error.message === 'Authentication required') {
-      return c.json(webSessionError('UNAUTHENTICATED', error.message), 401);
-    }
-    if (error instanceof Error && error.message.includes('suspended')) {
-      return c.json(webSessionError('ACCOUNT_BLOCKED', error.message), 403);
-    }
-    throw error;
-  }
-  return c.json(await issueWebSessionTicket(uid));
+  const applicant = await ticketApplicant(c);
+  if ('response' in applicant) return applicant.response;
+  return c.json(await issueWebSessionTicket(applicant.uid));
 });
 
 accountAuthRoutes.post('/auth/web-session/exchange', async (c) => {
@@ -198,6 +211,52 @@ accountAuthRoutes.post('/auth/web-session/exchange', async (c) => {
   const user = await getUserById(uid);
   if (!user) {
     return c.json(webSessionError('INVALID_WEB_SESSION_TICKET', 'invalid web session ticket'), 401);
+  }
+  const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
+  const session: WebSession = { token, user: publicUser(user) };
+  return c.json(session);
+});
+
+// ── 网站统一登录页 → Android / iOS 原生会话 ──
+// 浏览器只拿 90 秒单次 ticket；原生 App 持有的 PKCE verifier 才能核销，长期 JWT
+// 不进入 URL。Android/iOS 共用同一 Hono 契约与移动 React 客户端。
+accountAuthRoutes.post('/auth/mobile-session/ticket', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const rateLimited = authRateLimitResponse(c);
+  if (rateLimited) return rateLimited;
+  const applicant = await ticketApplicant(c);
+  if ('response' in applicant) return applicant.response;
+
+  const body = await c.req.json<{ codeChallenge?: unknown }>()
+    .catch(() => ({ codeChallenge: undefined }));
+  if (!isMobileAuthCodeChallenge(body.codeChallenge)) {
+    return c.json(webSessionError('INVALID_REQUEST', 'invalid code challenge'), 400);
+  }
+  return c.json(await issueMobileSessionTicket(applicant.uid, body.codeChallenge));
+});
+
+accountAuthRoutes.post('/auth/mobile-session/exchange', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const rateLimited = authRateLimitResponse(c);
+  if (rateLimited) return rateLimited;
+  const body = await c.req.json<{ ticket?: unknown; codeVerifier?: unknown }>()
+    .catch(() => ({ ticket: undefined, codeVerifier: undefined }));
+  const ticket = typeof body.ticket === 'string' ? body.ticket.trim() : '';
+  const codeVerifier = typeof body.codeVerifier === 'string' ? body.codeVerifier.trim() : '';
+  const uid = await consumeMobileSessionTicket(ticket, codeVerifier);
+  if (!uid) {
+    return c.json(webSessionError(
+      'INVALID_MOBILE_SESSION_TICKET',
+      'invalid mobile session ticket',
+    ), 401);
+  }
+
+  const user = await getUserById(uid);
+  if (!user) {
+    return c.json(webSessionError(
+      'INVALID_MOBILE_SESSION_TICKET',
+      'invalid mobile session ticket',
+    ), 401);
   }
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
   const session: WebSession = { token, user: publicUser(user) };

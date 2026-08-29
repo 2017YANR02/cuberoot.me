@@ -6,7 +6,9 @@ const { queryMock } = vi.hoisted(() => ({ queryMock: vi.fn() }));
 vi.mock('../src/db/connection.js', () => ({ query: queryMock }));
 
 import {
+  consumeMobileSessionTicket,
   consumeWebSessionTicket,
+  issueMobileSessionTicket,
   issueWebSessionTicket,
   WEB_SESSION_TICKET_TTL_SECONDS,
 } from '../src/utils/web_session_ticket.js';
@@ -32,7 +34,28 @@ describe('web session tickets', () => {
     expect(params[0]).toBe(createHash('sha256').update(result.ticket).digest('hex'));
     expect(params[0]).not.toContain(result.ticket);
     expect(params[1]).toBe(42);
-    expect(params[2]).toBeInstanceOf(Date);
+    expect(params[2]).toBe('web');
+    expect(params[3]).toBeNull();
+    expect(params[4]).toBeInstanceOf(Date);
+  });
+
+  it('stores a mobile PKCE challenge without storing its verifier', async () => {
+    const verifier = 'V'.repeat(43);
+    const challenge = createHash('sha256').update(verifier).digest('base64url');
+    queryMock.mockResolvedValue([]);
+
+    const result = await issueMobileSessionTicket(42, challenge);
+
+    expect(result.ticket).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    const [, params] = queryMock.mock.calls[1];
+    expect(params[2]).toBe('mobile');
+    expect(params[3]).toBe(challenge);
+    expect(params).not.toContain(verifier);
+  });
+
+  it('rejects malformed mobile challenges before touching the database', async () => {
+    await expect(issueMobileSessionTicket(42, 'invalid')).rejects.toThrow(RangeError);
+    expect(queryMock).not.toHaveBeenCalled();
   });
 
   it('rejects malformed tickets before touching the database', async () => {
@@ -49,5 +72,25 @@ describe('web session tickets', () => {
     expect(queryMock.mock.calls[0][0]).toContain('DELETE FROM auth_web_session_tickets');
     expect(queryMock.mock.calls[0][0]).toContain('expires_at > NOW()');
     expect(queryMock.mock.calls[0][0]).toContain('RETURNING user_id');
+  });
+
+  it('atomically consumes a mobile ticket only with the matching PKCE verifier', async () => {
+    const ticket = 'A'.repeat(43);
+    const verifier = 'V'.repeat(43);
+    const challenge = createHash('sha256').update(verifier).digest('base64url');
+    queryMock.mockResolvedValueOnce([{ user_id: 42 }]);
+
+    await expect(consumeMobileSessionTicket(ticket, verifier)).resolves.toBe(42);
+    expect(queryMock.mock.calls[0][0]).toContain("purpose = 'mobile'");
+    expect(queryMock.mock.calls[0][1]).toEqual([
+      createHash('sha256').update(ticket).digest('hex'),
+      challenge,
+    ]);
+  });
+
+  it('rejects malformed mobile tickets and verifiers before touching the database', async () => {
+    await expect(consumeMobileSessionTicket('invalid', 'V'.repeat(43))).resolves.toBeNull();
+    await expect(consumeMobileSessionTicket('A'.repeat(43), 'invalid')).resolves.toBeNull();
+    expect(queryMock).not.toHaveBeenCalled();
   });
 });

@@ -53,6 +53,11 @@ description: "Use for CubeRoot native App work rooted at core/apps/mobile: Capac
 ## 平台与账号边界
 
 - 先检测操作系统和工具链；Windows 不执行 Xcode，Mac 不重写 Android 业务层。
+- App 登录复用网站唯一账号和 `LoginForm`：系统浏览器 → 90 秒单次 mobile ticket → PKCE S256 + state → App deep link。长期 JWT 与 verifier 不得进入 URL；请求、回调、session 契约统一走 `@cuberoot/shared/auth/web-session`。
+- Android/iOS 共用 `apps/mobile/src/auth/mobile-auth.ts`，会话通过 `@aparajita/capacitor-secure-storage` 进入 iOS Keychain / Android Keystore 保护的存储；不要添加原生凭据表单、第二套账号表或平台各自的 token 管理。
+- 移动交接登录当前只显示网站现有邮箱/手机号。启用 WCA、Google、微信、QQ、支付宝等第三方登录前，必须重新核对当时的 Apple 4.8，并先完成需要的 Sign in with Apple 等价路径。
+- 登录与同步是两个里程碑。当前计时、备注、设置仍只在本机；没有完成匿名数据合并、冲突、删除和多设备验证前，不得把登录文案或路线图写成“已同步”。账号资料、身份绑定和账号注销继续打开网站统一管理页。
+- 修改回跳时同时核对 shared callback allowlist、Android Manifest、iOS URL Types、release/debug application ID 和冷启动 `appUrlOpen` 竞态；不得只修一个平台。
 - Android 复用 `core/apps/mobile/package.json` 的现有 scripts；先从 `core/` 运行 build/sync/run，不手写第二套构建流程。
 - 没有 Android 真机时，优先使用 Android Studio Device Manager 的官方 AVD 验证安装、启动、布局、计时、存储和基础生命周期；AVD 名称、SDK 版本和本机路径必须现场探测，不能写死旧对话中的值。
 - 模拟器或 MuMu 只算基础验证。BLE、真实震感、厂商权限差异、后台/功耗、分享和发布安装体验保留真机门槛；模拟器证据不得把路线图中的真机项目勾为完成。

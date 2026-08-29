@@ -74,6 +74,19 @@ On macOS, run `ios:doctor` first, use `ios:build` for a repeatable unsigned Simu
 
 `src/data/timer-repository.ts` is the only mobile timer storage boundary. It writes schema-versioned `TimerStoreData` with a nested canonical `TimerDatabase` from `@cuberoot/shared/timer` to IndexedDB and serializes concurrent changes. Website database v1/v2/v3 and App envelope v1/v2 use the same decoder and migration chain. Import is limited to 10 MB, previews record counts, writes an atomic recovery copy, and offers one undo; invalid data never replaces the current valid database.
 
+## Account authentication
+
+Android and iOS use one authentication client in `src/auth/mobile-auth.ts`; do not add native login forms or a second account model. Sign-in opens the system browser on the website's existing email/phone `LoginForm`, then returns a 90-second one-time ticket through the registered App callback. The ticket is bound to an App-generated PKCE S256 challenge and state; the verifier and long-lived JWT never enter the browser URL.
+
+The API reuses `auth_web_session_tickets` with separate `web` and `mobile` purposes. Cross-runtime request, callback, session, and error validation lives in `@cuberoot/shared/auth/web-session`. The canonical session is stored through `@aparajita/capacitor-secure-storage` with iCloud synchronization disabled and `whenUnlockedThisDeviceOnly`; this maps to iOS Keychain and Android Keystore-backed encryption. Startup validates `/auth/me`, refreshes expiring tokens through `/auth/refresh`, retains the last valid session during a temporary offline failure, and clears it only after an explicit unauthorized response or sign-out.
+
+Keep these boundaries:
+
+- The website remains the only credential, identity-linking, profile, and account-deletion UI. The App provides system-browser links to account management and deletion.
+- The App login page currently exposes only CubeRoot email and phone credentials. Do not enable WCA, Google, WeChat, QQ, or Alipay in the mobile handoff until the current Apple 4.8 implications and Sign in with Apple path have been implemented and verified.
+- Login does not imply cloud sync. Timer records, comments, and settings still remain local until the roadmap's merge, conflict, deletion, and multi-device sync design is implemented and tested.
+- Release and debug callbacks are `me.cuberoot.app://auth/callback` and `me.cuberoot.app.debug://auth/callback`. Keep the shared allowlist, Android manifest, iOS URL types, and Capacitor application IDs aligned.
+
 ## Android release build
 
 `package.json` is the single `versionName` source. Gradle derives `versionCode` as `major * 1,000,000 + minor * 1,000 + patch`; set `MOBILE_VERSION_CODE` only when Play requires a higher monotonic code without changing the public version.

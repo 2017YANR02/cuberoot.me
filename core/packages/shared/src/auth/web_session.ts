@@ -7,6 +7,12 @@ import {
 
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001F\u007F]/;
 const WEB_SESSION_TICKET_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+const MOBILE_AUTH_RANDOM_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+
+export const MOBILE_AUTH_CALLBACK_SCHEMES = [
+  'me.cuberoot.app',
+  'me.cuberoot.app.debug',
+] as const;
 
 const MAX_AVATAR_LENGTH = 2048;
 const MAX_DISPLAY_NAME_LENGTH = 200;
@@ -27,6 +33,7 @@ export const WEB_SESSION_ERROR_CODES = [
   'WECHAT_UNAVAILABLE',
   'WECHAT_UNIONID_REQUIRED',
   'INVALID_WEB_SESSION_TICKET',
+  'INVALID_MOBILE_SESSION_TICKET',
 ] as const;
 
 export type WebSessionErrorCode = typeof WEB_SESSION_ERROR_CODES[number];
@@ -66,6 +73,18 @@ export interface WebSessionTicketEnvelope {
   expiresIn: number;
 }
 
+export interface MobileAuthRequest {
+  codeChallenge: string;
+  state: string;
+  callbackUrl: string;
+  language: 'en' | 'zh';
+}
+
+export interface MobileAuthCallback {
+  ticket: string;
+  state: string;
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object'
     ? value as Record<string, unknown>
@@ -102,6 +121,69 @@ export function decodeWebSessionError(value: unknown): WebSessionErrorEnvelope |
 
 export function isWebSessionTicket(value: unknown): value is string {
   return typeof value === 'string' && WEB_SESSION_TICKET_PATTERN.test(value);
+}
+
+export function isMobileAuthRandomValue(value: unknown): value is string {
+  return typeof value === 'string' && MOBILE_AUTH_RANDOM_PATTERN.test(value);
+}
+
+export const isMobileAuthCodeChallenge = isMobileAuthRandomValue;
+export const isMobileAuthCodeVerifier = isMobileAuthRandomValue;
+export const isMobileAuthState = isMobileAuthRandomValue;
+
+export function isMobileAuthCallbackUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    const scheme = url.protocol.slice(0, -1);
+    return MOBILE_AUTH_CALLBACK_SCHEMES.includes(
+      scheme as typeof MOBILE_AUTH_CALLBACK_SCHEMES[number],
+    )
+      && url.hostname === 'auth'
+      && url.pathname === '/callback'
+      && url.username === ''
+      && url.password === ''
+      && url.search === ''
+      && url.hash === '';
+  } catch {
+    return false;
+  }
+}
+
+export function decodeMobileAuthRequest(search: string): MobileAuthRequest | null {
+  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
+  const codeChallenge = params.get('code_challenge')?.trim() ?? '';
+  const state = params.get('state')?.trim() ?? '';
+  const callbackUrl = params.get('callback_url')?.trim() ?? '';
+  const language = params.get('lang') === 'zh' ? 'zh' : 'en';
+  if (!isMobileAuthCodeChallenge(codeChallenge)
+    || !isMobileAuthState(state)
+    || !isMobileAuthCallbackUrl(callbackUrl)) {
+    return null;
+  }
+  return { codeChallenge, state, callbackUrl, language };
+}
+
+export function decodeMobileAuthCallback(value: string): MobileAuthCallback | null {
+  try {
+    const url = new URL(value);
+    const callbackBase = `${url.protocol}//${url.host}${url.pathname}`;
+    const keys = Array.from(url.searchParams.keys());
+    const ticket = url.searchParams.get('ticket')?.trim() ?? '';
+    const state = url.searchParams.get('state')?.trim() ?? '';
+    if (!isMobileAuthCallbackUrl(callbackBase)
+      || !isWebSessionTicket(ticket)
+      || !isMobileAuthState(state)
+      || keys.length !== 2
+      || keys.filter((key) => key === 'ticket').length !== 1
+      || keys.filter((key) => key === 'state').length !== 1
+      || url.hash !== '') {
+      return null;
+    }
+    return { ticket, state };
+  } catch {
+    return null;
+  }
 }
 
 export function decodeWebSessionUser(value: unknown): WebSessionUser | null {
