@@ -1,6 +1,6 @@
 ---
 name: solvers-tables
-description: "修改 solver 表的集合、大小或分析器加载关系时使用，并同步 /dev/solvers 的 TABLES 快照。表文件被 gitignore，无法由仓库、CI 或线上运行时自动推导。"
+description: "修改 solver 表、剪枝表、移动表、table_generator 或 analyzer 加载关系时使用，尤其是 f2leo/pseudo_f2leo 加大表；必须同步 /dev/solvers 的 TABLES 快照。表文件被 gitignore，仓库、CI 和线上无法自动推导。"
 ---
 
 # Solvers 看板表数据同步

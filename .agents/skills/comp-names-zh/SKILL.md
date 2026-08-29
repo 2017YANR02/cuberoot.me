@@ -1,6 +1,6 @@
 ---
 name: comp-names-zh
-description: "Use when regenerating comp_names_zh.json, debugging Chinese competition names, or rendering competition names. Always use comp-localize.ts, never raw c.name, and avoid duplicating the year beside dates."
+description: "Use when regenerating comp_names_zh.json, debugging 比赛名本地化, or rendering competition names through localizeCompName, CompCell, stripCompYear, or localizeCity. Always use comp-localize.ts, never raw c.name, and avoid duplicating the year beside dates."
 ---
 
 # 中国比赛名中文化

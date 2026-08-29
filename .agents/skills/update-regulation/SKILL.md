@@ -1,6 +1,6 @@
 ---
 name: update-regulation
-description: "Use when adding or refreshing a /regulation chapter, or handling regulation-drift, reg:check, or reg:clauses. Covers official WCA changes, bilingual clause data, shared page scaffolds, and visualizations."
+description: "Use when the user says 更新规则、WCA 规则页、规则章节, names an Article/Appendix, or handles regulation-drift, reg:check, reg:clauses, or 完整条款. Covers official changes, bilingual clause data, shared page scaffolds, and visualizations under /regulation."
 ---
 
 # 更新 /regulation(WCA 竞赛规则图解)

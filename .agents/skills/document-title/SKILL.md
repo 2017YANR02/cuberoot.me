@@ -1,6 +1,6 @@
 ---
 name: document-title
-description: "Use when adding or changing a page's browser tab title. Use the canonical useDocumentTitle hook, keep subpage titles unbranded, and never assign document.title directly."
+description: "Use when adding or changing a 浏览器标题、页面标题、tab title, document title, or useDocumentTitle behavior. Use the canonical hook, keep subpage titles unbranded, and never assign document.title directly."
 ---
 
 # 浏览器 tab 标题(document.title)

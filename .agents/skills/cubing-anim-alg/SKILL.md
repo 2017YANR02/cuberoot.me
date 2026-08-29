@@ -1,6 +1,6 @@
 ---
 name: cubing-anim-alg
-description: "Use when building cubing.js TwistyPlayer UI with algorithm input, virtual keyboard, or caret-driven move synchronization across alg, recon, admin, and training pages. Code uses alg, not formula."
+description: "Use when building cubing.js TwistyPlayer or AlgPlayer UI with alg input, 虚拟键盘, 光标同步, caret-driven move sync, or animation-following behavior across alg, recon, admin, and training pages. Code uses alg, not formula."
 ---
 
 ## 入口 — 选哪个

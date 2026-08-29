@@ -1,6 +1,6 @@
 ---
 name: new-substep-solver
-description: "造新求解器时使用。先分流：3x3 子阶段或大状态空间走 Rust、WASM 和表管道；可整枚举的非 WCA 小魔方整解走纯 TypeScript BFS，不引入 Rust。"
+description: "用户说造新求解器、子阶段求解器、非 WCA/小魔方求解器、new variant solver，或点名 eoline、Roux、Petrus、Ivy 等时使用。先分流：3x3 子阶段或大状态空间走 Rust、WASM 和表管道；可整枚举的小状态整解走纯 TypeScript BFS。"
 ---
 
 # 新求解器
