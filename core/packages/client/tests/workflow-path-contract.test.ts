@@ -119,6 +119,7 @@ function workspaceDependencyInputs(consumer: keyof typeof CONSUMER_WORKSPACE_ROO
 }
 
 const CORE_PATHS = [
+  repoPath('.node-version'),
   packagePath('server', '**'),
   appPath('api', '**'),
   ...workspaceDependencyInputs('server'),
@@ -133,6 +134,7 @@ const CORE_PATHS = [
 ] as const;
 
 const NEXT_PATHS = [
+  repoPath('.node-version'),
   packagePath('client', '**'),
   appPath('web', '**'),
   ...workspaceDependencyInputs('client'),
@@ -153,6 +155,7 @@ const STATS_PATHS = [
 ] as const;
 
 const TEST_PATHS = [
+  repoPath('.node-version'),
   corePath('**'),
   `!${packagePath('platform', '**')}`,
   repoPath('docs', 'platform-capability-manifest.json'),
