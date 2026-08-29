@@ -28,6 +28,7 @@ function isContrastLevel(v: string | null | undefined): v is ContrastLevel {
 }
 
 type ViewTransitionHandle = {
+  ready?: Promise<unknown>;
   finished?: Promise<unknown>;
   skipTransition?: () => void;
 };
@@ -50,6 +51,8 @@ function runTransition(commit: () => void, animate: boolean) {
     activeThemeTransition?.skipTransition?.();
     const transition = doc.startViewTransition(commit);
     activeThemeTransition = transition;
+    // skipTransition() 会按规范拒绝 ready；快速扫过选项时这是预期取消，不应冒泡到错误层。
+    void transition.ready?.catch(() => undefined);
     const clear = () => {
       if (activeThemeTransition === transition) activeThemeTransition = null;
     };
