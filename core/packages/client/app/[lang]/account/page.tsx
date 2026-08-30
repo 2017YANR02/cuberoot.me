@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
-import { Bell, BookOpen, Building2, ChevronLeft, ChevronRight, HeartHandshake, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, Upload, UserRound, Users } from 'lucide-react';
+import { Bell, BookOpen, Building2, ChevronLeft, HeartHandshake, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, Upload, UserRound, Users } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
@@ -19,6 +19,7 @@ import AlgValidationAlert from '@/components/AlgValidationAlert';
 import AdminSubmissionsPanel from '@/components/AdminSubmissionsPanel';
 import PageNoticesAdmin from '@/components/PageNoticesAdmin';
 import { UserIdLabel } from '@/components/UserIdLabel';
+import { Flag } from '@/components/Flag';
 import { AccountPanel, LoginForm, WcaLinkPrompt, DeleteAccountPanel, type SignedIn } from '@/components/AuthPanel';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
@@ -33,10 +34,39 @@ import {
   type SessionUser,
 } from '@/lib/account-api';
 import { clawdAvatarUrl } from '@/lib/account-avatar';
+import { displayCuberName } from '@/lib/cuber-name-display';
+import { loadFlagData, personFlagIso2 } from '@/lib/country-flags';
 import { prepareImageUpload, uploadImageBlob } from '@/lib/image-upload';
 import { ADMIN_WCA_IDS, applySession, useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
 import { tr, useLang } from '@/i18n/tr';
 import './account.css';
+
+function AccountName({ name, wcaId }: { name: string; wcaId?: string | null }) {
+  const t = useT();
+  const isZh = useLang() !== 'en';
+  const [iso2, setIso2] = useState(() => wcaId ? personFlagIso2(wcaId) : '');
+
+  useEffect(() => {
+    setIso2(wcaId ? personFlagIso2(wcaId) : '');
+    if (!wcaId) return;
+    let cancelled = false;
+    void loadFlagData().then(() => {
+      if (!cancelled) setIso2(personFlagIso2(wcaId));
+    });
+    return () => { cancelled = true; };
+  }, [wcaId]);
+
+  const displayName = name
+    ? (wcaId ? displayCuberName(name, isZh) : name)
+    : t('未命名', 'Unnamed');
+
+  return (
+    <h1 className="account-name">
+      {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+      <span>{displayName}</span>
+    </h1>
+  );
+}
 
 function AvatarEditor() {
   const t = useT();
@@ -299,9 +329,8 @@ function AdminUserEditor({ userId }: { userId: number }) {
   return (
     <>
       <div className="account-id-row">
-        <h1 className="account-name">{profile.name || t('未命名', 'Unnamed')}</h1>
-        <UserIdLabel userId={profile.uid} full copyable />
-        {profile.wcaId && <div className="account-wid">{profile.wcaId}</div>}
+        <AccountName name={profile.name} wcaId={profile.wcaId} />
+        <UserIdLabel userId={profile.uid} full />
       </div>
       <section className="account-creds">
         <div className="account-profile-editor">
@@ -384,16 +413,16 @@ export default function AccountPage() {
   const cards = [
     ...(wcaId ? [
       {
+        key: 'wca',
+        href: `/wca/persons/${wcaId}`,
+        icon: <IdCard size={22} className="account-card-icon" />,
+        title: tr({ zh: '成绩', en: 'Results' }),
+      },
+      {
         key: 'recon',
         href: `/recon/person/${wcaId}`,
         icon: <Rewind size={22} className="account-card-icon" />,
         title: tr({ zh: '复盘', en: 'Reconstructions' }),
-      },
-      {
-        key: 'wca',
-        href: `/wca/persons/${wcaId}`,
-        icon: <IdCard size={22} className="account-card-icon" />,
-        title: tr({ zh: 'WCA 档案', en: 'WCA Profile' }),
       },
     ] : [
       {
@@ -415,21 +444,18 @@ export default function AccountPage() {
       href: '/learn',
       icon: <BookOpen size={22} className="account-card-icon" />,
       title: tr({ zh: '学习中心', en: 'Learning Center' }),
-      desc: tr({ zh: '查看周报、课后反馈和训练任务', en: 'View reports, lesson feedback, and training assignments' }),
     },
     {
       key: 'teaching',
       href: '/org',
       icon: <Building2 size={22} className="account-card-icon" />,
       title: tr({ zh: '教学管理', en: 'Teaching' }),
-      desc: tr({ zh: '机构、学员、校区和班级', en: 'Organizations, students, campuses, and classes' }),
     },
     {
       key: 'membership',
       href: '/membership',
       icon: <HeartHandshake size={22} className="account-card-icon" />,
       title: tr({ zh: '会员', en: 'Membership' }),
-      desc: tr({ zh: '查看会员方案和当前权益', en: 'View plans and your current benefits' }),
     },
     {
       key: 'friends',
@@ -509,9 +535,8 @@ export default function AccountPage() {
       ) : (
         <>
           <div className="account-id-row">
-            <h1 className="account-name">{user?.name || t('未命名', 'Unnamed')}</h1>
-            <UserIdLabel userId={user?.uid} full copyable />
-            {wcaId && <div className="account-wid">{wcaId}</div>}
+            <AccountName name={user?.name || ''} wcaId={wcaId} />
+            <UserIdLabel userId={user?.uid} full />
           </div>
 
           {view === 'signin' ? (
@@ -540,7 +565,6 @@ export default function AccountPage() {
                       <div className="account-card-title">{title}</div>
                       {desc && <div className="account-card-desc">{desc}</div>}
                     </div>
-                    <ChevronRight size={18} className="account-card-chev" />
                   </AppLink>
                 ))}
               </nav>
