@@ -367,7 +367,7 @@ function SubgroupIndex({
   if (!inlineExpand) {
     return (
       <div className={`alg-subgroup-grid${useF2lThumb ? ' is-f2l-thumb' : ''}`}>
-        {tops.map(([topLabel, { sample, total }]) => {
+        {tops.map(([topLabel, { sample }]) => {
           const firstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
           const slug = encodeURIComponent(topLabel.toLowerCase()) || '_'; // slug 用原名(避免 "+" 进 URL)
           const dispTop = set === 'zbll' ? displayZbllToken(topLabel) : topLabel;
@@ -398,7 +398,6 @@ function SubgroupIndex({
                   )
                   : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" size={thumbSize} loading="lazy" hideGreySides />}
               title={ollName ?? (useF2lThumb ? (dispTop || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${dispTop || tr({ zh: '其他', en: 'Other' })}`)}
-              count={total}
               sub={ollName && set !== 'ollcp' ? `${set.toUpperCase()} ${dispTop}` : undefined}
             />
           );
@@ -425,9 +424,8 @@ function SubgroupIndex({
               tooltip={isCollapsed ? tr({ zh: '展开', en: 'Expand' }) : tr({ zh: '收起', en: 'Collapse' })}
               thumb={<VisualCube setup={e.sample.setup} algorithm={firstAlg} view="oll" size={thumbSize} hideGreySides />}
               title={title}
-              count={e.total}
             />
-            {!isCollapsed && Array.from(e.subs.entries()).map(([subLabel, { sample, count }]) => {
+            {!isCollapsed && Array.from(e.subs.entries()).map(([subLabel, { sample }]) => {
               const subFirstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
               const subSlug = encodeURIComponent(subLabel.toLowerCase());
               return (
@@ -436,7 +434,6 @@ function SubgroupIndex({
                   href={`/alg/${puzzle}/${set}/${subSlug}`}
                   thumb={<CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={subFirstAlg} setup={sample.setup} size={thumbSize} mask={pickerMask} loading="lazy" />}
                   title={set === 'zbll' ? displayZbllToken(subLabel) : subLabel}
-                  count={count}
                 />
               );
             })}
@@ -1340,7 +1337,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         const thumbSize = narrow ? 60 : 110; // 同 SubgroupIndex:窄屏四列,图跟着降档
         return (
           <div className="alg-subgroup-grid">
-            {subSubgroups.map(([subLabel, { sample, count }]) => {
+            {subSubgroups.map(([subLabel, { sample }]) => {
               const firstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
               const sub2Slug = encodeURIComponent(subLabel.toLowerCase());
               return (
@@ -1351,7 +1348,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                      懒加载在桌面是 no-op(整页都在 Chrome 阈值内),但手机首屏请求实测能砍掉三到五成。 */
                   thumb={<CaseThumb puzzle={puzzleParam as AlgPuzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={thumbSize} mask={pickerMask} loading="lazy" />}
                   title={set === 'zbll' ? displayZbllToken(subLabel) : subLabel}
-                  count={count}
                 />
               );
             })}

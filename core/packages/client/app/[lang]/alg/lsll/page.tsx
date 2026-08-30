@@ -22,7 +22,7 @@ import {
   LISTED_CATEGORIES, LISTED_CASES, categoryCardFacelets, locateFromScramble, decodeKey,
   type CategoryKind, type LocateResult,
 } from '@/lib/lsll/model';
-import { listedClass3Total, class3CountForFamily, phiOfState } from '@/lib/lsll/class3';
+import { listedClass3Total, phiOfState } from '@/lib/lsll/class3';
 import {
   LSLL_ROUNDS, lsllRoundScope, parseLsllScope,
 } from '@/lib/lsll/trainer-set';
@@ -208,7 +208,6 @@ export default function LsllHubPage() {
                 prefetch={false}
                 thumb={<FaceletsCube fd={categoryCardFacelets(cat.slug)} size={96} alt={cat.letter} />}
                 title={cat.letter}
-                count={(twoLook ? class3CountForFamily(cat.slug) : cat.count).toLocaleString()}
               />
             ))}
           </div>
