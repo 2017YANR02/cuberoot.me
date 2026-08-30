@@ -230,6 +230,47 @@
 .account-name-actions { display: flex; align-items: center; gap: 6px; align-self: flex-start; }
 .account-name-save { padding: 7px 12px; font-size: 13px; border-radius: 8px; }
 .account-name-actions .auth-textbtn { align-self: auto; }
+.account-basic-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 13px;
+  margin-top: 20px;
+}
+.account-basic-profile-privacy { margin: 0; }
+.account-basic-profile-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+}
+.account-basic-profile .date-input { max-width: 100%; }
+.account-basic-profile .country-input { width: 100%; }
+.account-basic-profile-select {
+  width: fit-content;
+  align-self: flex-start;
+}
+.account-basic-profile-country {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  font-size: 0.88rem;
+}
+.account-basic-profile-lock { margin: 0; }
+.account-basic-profile-save {
+  align-self: flex-start;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.account-basic-profile-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+}
 
 @media (max-width: 480px) {
   .account-page { padding: 18px 14px 48px; }

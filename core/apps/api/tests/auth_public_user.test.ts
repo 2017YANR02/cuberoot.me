@@ -25,6 +25,8 @@ vi.mock('../src/utils/account.js', () => ({
   findUserByWcaId: mocks.findUserByWcaId,
   getUserById: mocks.getUserById,
   publicUser: mocks.publicUser,
+  normalizeCountryIso2: (value: string) => value.trim().toUpperCase(),
+  isValidCountryIso2: (value: unknown) => typeof value === 'string' && /^[A-Z]{2}$/.test(value),
 }));
 
 import { authRoutes } from '../src/routes/auth.js';
@@ -95,6 +97,7 @@ describe('auth public user ID', () => {
         id: 123,
         wca_id: '2017YANR02',
         name: 'Provisional WCA Name',
+        country_iso2: 'CN',
         avatar: { url: 'wca-avatar.png' },
       },
     }), {
@@ -118,6 +121,7 @@ describe('auth public user ID', () => {
       name: 'Provisional WCA Name',
       avatar: 'wca-avatar.png',
       wcaId: '2017YANR02',
+      countryIso2: 'CN',
     });
     expect(mocks.signSession).toHaveBeenCalledWith({
       uid: 66,

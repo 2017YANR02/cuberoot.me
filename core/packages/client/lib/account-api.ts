@@ -6,6 +6,7 @@ import { getSessionToken } from './auth-store';
 import { authHeaders, handleApi } from './admin-api';
 import type { WebSession, WebSessionUser } from '@cuberoot/shared/auth/web-session';
 import type { ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
+import type { AccountBasicProfile } from '@cuberoot/shared/account';
 
 export type SessionUser = WebSessionUser;
 export interface SessionResp extends WebSession {
@@ -52,6 +53,21 @@ export const deleteAccount = (confirm: string, password?: string) =>
 // 修改站内用户名后同时换发带新名字的 JWT,供本机登录态原子刷新。
 export const updateDisplayName = (name: string) =>
   post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/profile', { name }, true);
+export async function fetchAccountBasicProfile(): Promise<AccountBasicProfile> {
+  const response = await fetch(apiUrl('/v1/auth/profile'), {
+    headers: { Authorization: `Bearer ${getSessionToken()}` },
+    cache: 'no-store',
+  });
+  const data = (await response.json().catch(() => ({}))) as {
+    profile?: AccountBasicProfile;
+    error?: string;
+  };
+  if (!response.ok || !data.profile) throw new Error(data.error || `HTTP ${response.status}`);
+  return data.profile;
+}
+export const updateAccountBasicProfile = (
+  basic: Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2'>,
+) => post<{ ok: true; profile: AccountBasicProfile }>('/v1/auth/profile', { basic }, true);
 export async function fetchAdminUser(userId: number): Promise<SessionUser> {
   const response = await fetch(apiUrl(`/v1/auth/admin/users/${userId}`), {
     headers: authHeaders(false),

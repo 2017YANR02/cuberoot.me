@@ -116,7 +116,7 @@ describe('引导只给 OAuth 一条路', () => {
 
 describe('WCA 实名锁定用户名', () => {
   it('绑定 WCA 时用授权资料里的官方姓名覆盖展示名', () => {
-    expect(route).toContain("addIdentity(uid, 'wca', me.wca_id, me.wca_id, verifiedName, me.avatar?.url ?? null)");
+    expect(route).toMatch(/addIdentity\([\s\S]{0,300}?uid,[\s\S]{0,100}?'wca',[\s\S]{0,200}?verifiedName,[\s\S]{0,100}?me\.avatar\?\.url \?\? null,[\s\S]{0,100}?verifiedCountryIso2/);
     expect(account).toMatch(/provider === 'wca'[\s\S]{0,500}?display_name = \$\{verifiedDisplayName \?\? ''\}/);
   });
 
@@ -127,8 +127,9 @@ describe('WCA 实名锁定用户名', () => {
   });
 
   it('以后每次 WCA 登录都会刷新官方姓名', () => {
-    expect(account).toContain("provider === 'wca' && profile.name");
+    expect(account).toContain("provider === 'wca' || (!existing.display_name && profile.name)");
     expect(account).toContain("CASE WHEN ? = 'wca' THEN ?");
+    expect(account).toContain("country_iso2 = CASE WHEN ? = 'wca' THEN ? ELSE country_iso2 END");
   });
 
   it('后端写入以 wca_id IS NULL 为原子闸门', () => {

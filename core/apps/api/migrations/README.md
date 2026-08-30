@@ -62,6 +62,8 @@ Platform 实体捆绑兑换码增量 `0183_platform_physical_bundle_codes.sql` �
 
 WCA 自学来源增量 `0185_wca_self_taught.sql` 允许老师关系的老师 ID 与姓名同时为空，以此明确表示该选手在对应项目自学；无关系行仍表示尚未填写，数据库约束禁止只缺其中一个老师字段。
 
+账户基本资料增量 `0186_account_basic_profile.sql` 为 `app_users` 增加出生日期、性别和国籍；已绑定 WCA 的账户优先从现有 WCA 快照回填国籍，没有快照的账户在下次 WCA 登录或绑定时刷新。
+
 ## 已应用 migration 不能改
 
 `apply_migrations.sh` 会把每个文件的 SHA-256 写入 ledger。已应用文件的摘要发生变化时会终止执行。修正已上线结构只能新增 migration；需要恢复数据时使用已验证的备份。

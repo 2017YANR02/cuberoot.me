@@ -156,7 +156,7 @@ const TABLES: Table[] = [
   { name: 'wca_users', domain: 'comp', origin: 'snapshot', purpose: { zh: 'WCA OAuth 登录用户(身份 / 头像 / admin)', en: 'WCA OAuth users (identity, avatar, admin flag)' } },
 
   // ── accounts & auth ────────────────────────────────────
-  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
+  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172, 186], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
   { name: 'user_friendships', domain: 'account', origin: '0175', purpose: { zh: '好友申请与已接受的双向好友关系；每对账号只保留一条规范记录', en: 'Pending requests and accepted two-way friendships, with one canonical row per account pair' } },
   { name: 'user_blocks', domain: 'account', origin: '0175', purpose: { zh: '单向黑名单；拉黑时同步切断好友关系与待处理申请', en: 'Directed blocks; blocking also removes friendships and pending requests' } },
   { name: 'user_wca_friend_contacts', domain: 'account', origin: '0178', purpose: { zh: '账号私有的 WCA 好友条目；对方未注册时只保存在本人列表，不代表双向好友或已发送申请', en: 'Account-private WCA friend entries; an unregistered person is only saved to the owner\'s list and does not imply a mutual friendship or delivered request' } },
@@ -663,6 +663,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 183, slug: 'platform_physical_bundle_codes', desc: { zh: '为实体商品随包课程码增加批量生成、单次兑换、外部订单绑定和售后权益撤销审计。', en: 'Add batch generation, single redemption, external order binding, and audited after-sales entitlement reversal for course codes packed with physical goods.' } },
   { n: 184, slug: 'drive', desc: { zh: '新增 20 GB 共享配额的私人网盘、访问白名单、7 天断点上传会话、回收站与磁盘对象元数据。', en: 'Add a private Drive with a shared 20 GB quota, access list, seven-day resumable uploads, Trash, and disk-object metadata.' } },
   { n: 185, slug: 'wca_self_taught', desc: { zh: 'WCA 选手可按项目明确登记为自学，并与尚未填写老师区分。', en: 'Allow WCA cubers to mark individual events as self-taught, distinct from having no learning source set.' } },
+  { n: 186, slug: 'account_basic_profile', desc: { zh: '账号增加私密生日、性别和国籍；WCA 绑定账号的国籍由认证资料同步。', en: 'Add private birth date, gender, and nationality fields, with WCA-linked nationality synced from the verified profile.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

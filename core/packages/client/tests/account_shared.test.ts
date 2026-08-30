@@ -4,6 +4,8 @@ import { describe, it, expect } from 'vitest';
 import {
   ownerKey, isWcaIdFormat, normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   DISPLAY_NAME_MAX_LENGTH, displayNameLength, normalizeDisplayName, isValidDisplayName,
+  ACCOUNT_BIRTH_DATE_MIN, isAccountGender, isValidBirthDate,
+  normalizeCountryIso2, isValidCountryIso2,
 } from '@cuberoot/shared/account';
 
 describe('ownerKey', () => {
@@ -20,6 +22,31 @@ describe('ownerKey', () => {
   it('既无 uid 又无 wcaId → 空串(未登录)', () => {
     expect(ownerKey(undefined, undefined)).toBe('');
     expect(ownerKey(null, null)).toBe('');
+  });
+});
+
+describe('账号基本资料校验', () => {
+  it('生日只接受真实日期和允许范围', () => {
+    expect(isValidBirthDate('2000-02-29', '2026-08-30')).toBe(true);
+    expect(isValidBirthDate('2001-02-29', '2026-08-30')).toBe(false);
+    expect(isValidBirthDate(ACCOUNT_BIRTH_DATE_MIN, '2026-08-30')).toBe(true);
+    expect(isValidBirthDate('1899-12-31', '2026-08-30')).toBe(false);
+    expect(isValidBirthDate('2026-08-31', '2026-08-30')).toBe(false);
+  });
+
+  it('性别只接受契约枚举', () => {
+    for (const value of ['male', 'female', 'nonbinary', 'other', 'undisclosed']) {
+      expect(isAccountGender(value)).toBe(true);
+    }
+    expect(isAccountGender('invented')).toBe(false);
+    expect(isAccountGender(null)).toBe(false);
+  });
+
+  it('国籍代码统一大写并拒绝非法格式', () => {
+    expect(normalizeCountryIso2(' cn ')).toBe('CN');
+    expect(isValidCountryIso2('CN')).toBe(true);
+    expect(isValidCountryIso2('cn')).toBe(false);
+    expect(isValidCountryIso2('CHN')).toBe(false);
   });
 });
 
