@@ -30,6 +30,7 @@ export const wcaTeacherRoutes = new Hono();
 interface TeacherRow {
   student_wca_id: string;
   student_name: string;
+  student_333_average?: number | null;
   event_id: string;
   teacher_wca_id: string;
   teacher_name: string;
@@ -55,6 +56,9 @@ function toJson(row: TeacherRow) {
   return {
     studentWcaId: row.student_wca_id,
     studentName: row.student_name,
+    ...(row.student_333_average !== undefined
+      ? { student333Average: row.student_333_average }
+      : {}),
     eventId: row.event_id,
     teacherWcaId: row.teacher_wca_id,
     teacherName: row.teacher_name,
@@ -113,12 +117,20 @@ wcaTeacherRoutes.get('/wca/teachers', async (c) => {
     : '';
   const rows = await query<TeacherRow>(
     `SELECT wt.student_wca_id, student.name AS student_name,
+            student_333.best_average AS student_333_average,
             wt.event_id, wt.teacher_wca_id, wt.teacher_name,
             teacher_country.iso2 AS teacher_country_iso2
        FROM wca_teachers wt
        JOIN wca_persons student ON student.wca_id = wt.student_wca_id
        JOIN wca_persons teacher ON teacher.wca_id = wt.teacher_wca_id
        LEFT JOIN wca_countries teacher_country ON teacher_country.id = teacher.country_id
+       LEFT JOIN LATERAL (
+         SELECT MIN(result.average) AS best_average
+           FROM wca_person_results result
+          WHERE result.wca_id = wt.student_wca_id
+            AND result.event_id = '333'
+            AND result.average > 0
+       ) student_333 ON TRUE
       WHERE ${idColumn} IN (${idPlaceholders})${eventFilter}
       ORDER BY wt.student_wca_id, wt.event_id`,
     [...ids, ...events],

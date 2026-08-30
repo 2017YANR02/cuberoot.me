@@ -2,11 +2,12 @@ import { API_ORIGIN } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 
 const BASE = API_ORIGIN + '/v1/wca/teachers';
-const RESPONSE_VERSION = '4';
+const RESPONSE_VERSION = '5';
 
 export interface WcaTeacher {
   studentWcaId: string;
   studentName?: string;
+  student333Average?: number | null;
   eventId: string;
   teacherWcaId: string;
   teacherName: string;
