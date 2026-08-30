@@ -7,7 +7,7 @@ function getToken(): string | null {
   return localStorage.getItem('cuberoot_jwt') || localStorage.getItem('wca_access_token');
 }
 
-export function authHeaders(json = true): HeadersInit {
+export function authHeaders(json = true): Record<string, string> {
   const token = getToken();
   const h: Record<string, string> = {};
   if (json) h['Content-Type'] = 'application/json';
