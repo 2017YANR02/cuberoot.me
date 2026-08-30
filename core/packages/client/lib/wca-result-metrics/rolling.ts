@@ -1,7 +1,7 @@
 // NOTE: 滚动统计计算引擎
 // 从 viz/rolling_stats.js 1:1 翻译为 TypeScript
 // 输入 singles 数组（厘秒），输出 mo3/ao12/ao25/ao50/ao100 + PB 标记
-// 供 viz 和 csv_export 共用
+// 供个人成绩表、viz 和 csv_export 共用
 
 // NOTE: WCA 标准 trimming 规则
 // mo3: 无 trim（纯均值），任一 DNF → 结果 DNF

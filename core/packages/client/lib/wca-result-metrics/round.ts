@@ -1,7 +1,7 @@
 // NOTE: 轮次衍生指标计算模块
 // 从 viz/round_metrics.js 1:1 翻译为 TypeScript
 // 对每轮的 attempts 计算 9 个指标（BAo5/WAo5/Mo5/BPA/WPA/Median/BestCounting/WorstCounting/Worst）
-// 值放在轮次第一把，其余把为 null
+// 值放在轮次第一把，其余把为 null；供个人成绩表、viz 和 csv_export 共用
 
 export interface RoundMetricConfig {
   key: string;

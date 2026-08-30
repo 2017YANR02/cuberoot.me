@@ -43,10 +43,17 @@ import { ResultChangeChain } from './ChangedResultValue';
 import { PendingProposals } from './PendingProposals';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
+import { roundChronologicalOrder } from '@cuberoot/shared/wca-round';
 import { useAuthStore } from '@/lib/auth-store';
 import { SortArrow } from '@/components/SortArrow';
+import { CompactSelect } from '@/components/CompactSelect';
 import { tr } from '@/i18n/tr';
 import { summarizeNumericValues } from '@cuberoot/shared/timer';
+import {
+  computeWcaMetricByRound,
+  WCA_RESULT_METRIC_OPTIONS,
+  type WcaResultMetricMode,
+} from '@/lib/wca-result-metrics';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -188,6 +195,7 @@ function EventRoundsList({
   // 多盲非官方平均的区域纪录(WR/大洲/NR)查表;仅本项目是多盲时拉取。
   const mbldAvgRecords = useMbldAvgRecords(isMbldEvent(eventId));
   const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
+  const [metricMode, setMetricMode] = useState<WcaResultMetricMode>('ao5');
   // 排序:点列头(单次/平均/第 N 把)切 升序→降序→取消;无效成绩(DNF/DNS/空位)永远垫底。
   // key=null → 默认按比赛日期倒序分组;key 非空 → 拉平本项目所有轮次重排,逐行显示比赛名。
   const [sort, setSort] = useState<{ key: string | null; dir: 'asc' | 'desc' }>({ key: null, dir: 'asc' });
@@ -234,6 +242,24 @@ function EventRoundsList({
       average: { count: averageValues.length, stats: summarizeNumericValues(averageValues) },
     };
   }, [effResultsForRank, eventId]);
+  const showMetricColumn = !isMbldEvent(eventId);
+  const metricValues = useMemo(() => {
+    if (!showMetricColumn) return new Map<string, number | null>();
+    return computeWcaMetricByRound(
+      effResultsForRank
+        .filter(result => result.event_id === eventId)
+        .map(result => ({
+          key: wcaResultRowKey(result),
+          competition: result.competition_id,
+          date: compById.get(result.competition_id)?.start_date ?? '',
+          roundType: result.round_type_id,
+          roundOrder: roundChronologicalOrder(result.round_type_id),
+          attempts: trimEmptyAttempts(result.attempts ?? []),
+          average: result.average,
+        })),
+      metricMode,
+    );
+  }, [showMetricColumn, effResultsForRank, eventId, compById, metricMode]);
   // PR / 名次染色只算官方成绩:直播(非官方)行不参与
   const prRank = useMemo(() => computePrRank(effResultsForRank.filter((r) => !r.live), comps), [effResultsForRank, comps]);
   // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同一口径
@@ -271,6 +297,7 @@ function EventRoundsList({
       if (key === 'pos') return r.pos;            // 名次:数字越小越好,与单次/平均同向(≤0 垫底)
       if (key === 'single') return r.best;
       if (key === 'average') return effectiveAverage(r, eventId);
+      if (key === 'metric') return metricValues.get(wcaResultRowKey(r)) ?? 0;
       return r.attempts?.[Number(key.slice(3))] ?? 0;
     };
     return baseSorted.slice().sort((a, b) => {
@@ -281,11 +308,11 @@ function EventRoundsList({
       if (ib) return -1;
       return dir === 'asc' ? va - vb : vb - va;
     });
-  }, [baseSorted, sort, eventId]);
+  }, [baseSorted, sort, eventId, metricValues]);
 
   // 渐进渲染:先挂前 N 行,其余趁 idle 补齐(顶级选手单项目可 500+ 行,一次性挂 = 单个长任务卡顿)。
   // 切项目 / 改排序 → displayRows 重排 → 重置重新渐进。
-  const { count, ensureIndex } = useProgressiveCount(displayRows.length, `${eventId}|${sort.key ?? ''}|${sort.dir}`);
+  const { count, ensureIndex } = useProgressiveCount(displayRows.length, `${eventId}|${sort.key ?? ''}|${sort.dir}|${metricMode}`);
 
   // 行级 hash 锚点(#r-{comp}-{event}-{round}):点整行 → URL 片段更新,该行黄色高亮持续到
   // 换行。reveal 处理渐进渲染——目标行还没挂到 DOM 时先 ensureIndex 纳入并返回 false,count
@@ -344,6 +371,12 @@ function EventRoundsList({
   // 列头排序按钮的方向箭头(全站统一 components/SortArrow)。
   const sortArrow = (key: string) =>
     <SortArrow active={sort.key === key} dir={sort.dir} size={11} />;
+  const metricItems = WCA_RESULT_METRIC_OPTIONS.map(option => ({
+    value: option.key,
+    label: t(option.zh, option.en),
+  }));
+  const selectedMetric = metricItems.find(item => item.value === metricMode)
+    ?? { value: 'ao5' as const, label: 'Ao5' };
 
   return (
     <>
@@ -398,6 +431,29 @@ function EventRoundsList({
                 {t('平均', 'Avg')}{isMbldEvent(eventId) && <UnofficialMark />}{sortArrow('average')}
               </button>
             </th>
+            {showMetricColumn && (
+              <th className="wp-th-metric">
+                <span className="wp-metric-th">
+                  <CompactSelect<WcaResultMetricMode>
+                    label={selectedMetric.label}
+                    items={metricItems}
+                    value={metricMode}
+                    onChange={setMetricMode}
+                    ariaLabel={t('选择统计列', 'Select statistics column')}
+                    variant="plain"
+                  />
+                  <button
+                    type="button"
+                    className={`wp-sort-th wp-metric-sort ${sort.key === 'metric' ? 'is-active' : ''}`}
+                    onClick={() => toggleSort('metric')}
+                    title={t(`按${selectedMetric.label}排序`, `Sort by ${selectedMetric.label}`)}
+                    aria-label={t(`按${selectedMetric.label}排序`, `Sort by ${selectedMetric.label}`)}
+                  >
+                    {sortArrow('metric')}
+                  </button>
+                </span>
+              </th>
+            )}
             <th className="wp-th-aoxr">
               <span className="wp-th-info">
                 AoXR
@@ -559,6 +615,11 @@ function EventRoundsList({
                     />
                   )}
                 </td>
+                {showMetricColumn && (
+                  <td className="wp-cell-metric">
+                    {formatMetricValue(metricValues.get(rowKey), eventId, metricMode)}
+                  </td>
+                )}
                 {aoxrSpans[ri] > 0 && (
                   <td className="wp-cell-aoxr" rowSpan={aoxrSpans[ri]}>
                     <AoxrValue cell={aoxrMap.get(aoxrKey(r.competition_id, eventId))} eventId={eventId} />
@@ -651,6 +712,11 @@ function EventRoundsList({
       </div>
     </>
   );
+}
+
+function formatMetricValue(value: number | null | undefined, eventId: string, mode: WcaResultMetricMode): string {
+  if (value === null || value === undefined || value <= 0) return '—';
+  return formatWcaResult(value, eventId, mode === 'avg' ? 'average' : 'single');
 }
 
 function formatResultStdDev(sd: number, eventId: string, kind: 'single' | 'average'): string {
