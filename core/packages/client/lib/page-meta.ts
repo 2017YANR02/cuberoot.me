@@ -695,10 +695,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'wca/prediction/333': { title: { zh: '三阶成绩预测', en: '3×3 Prediction' } },
   'wca/prediction/lucky': { title: { zh: '幸运极限', en: 'Lucky Limit' } },
   'wca/persons/students': {
-    title: { zh: '学生管理', en: 'Student Management' },
+    title: { zh: '学生名单', en: 'Student Roster' },
     description: {
-      zh: '集中管理老师的学生名单、教授项目与批量导入。',
-      en: 'Manage a teacher roster, taught events and batch imports in one place.',
+      zh: '查看老师的学生名单与教授项目；有权限者可在此管理名单。',
+      en: 'View a teacher roster and taught events, with management tools available to authorized users.',
     },
   },
   'wca/records': { title: { zh: '纪录', en: 'Records' } },
