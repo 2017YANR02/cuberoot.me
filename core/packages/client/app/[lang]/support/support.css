@@ -175,6 +175,30 @@
   color: var(--accent);
 }
 
+.sponsor-claimed,
+.sponsor-claim-state,
+.sponsor-claim-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-size: 0.68rem;
+}
+.sponsor-claimed { color: var(--accent); }
+.sponsor-claim-state { color: var(--muted-foreground); }
+.sponsor-claim-state-rejected,
+.sponsor-claim-state-revoked { color: var(--destructive); }
+.sponsor-claim-open {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.sponsor-claim-open:hover { text-decoration: underline; }
+
 /* 赞助者留言:名字/金额下方的一句话,最多 3 行省略,完整内容仍走 card title 悬停 */
 .sponsor-message {
   max-width: 100%;
@@ -404,6 +428,120 @@
 .sponsor-editor-save:disabled,
 .sponsor-editor-cancel:disabled { opacity: 0.6; cursor: default; }
 
+/* ── 赞助认领与审核 ── */
+.sponsor-claim-dialog { max-width: 520px; }
+.sponsor-claim-admin { max-width: 720px; }
+.sponsor-claim-subtitle {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+}
+.sponsor-claim-guide,
+.sponsor-claim-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: var(--foreground);
+}
+.sponsor-claim-guide > svg,
+.sponsor-claim-result > svg { flex: 0 0 auto; margin-top: 2px; color: var(--accent); }
+.sponsor-claim-guide p,
+.sponsor-claim-result p,
+.sponsor-claim-previous p,
+.sponsor-claim-note,
+.sponsor-claim-review-note {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.sponsor-claim-result strong,
+.sponsor-claim-previous strong { display: block; margin-bottom: 3px; font-size: 0.86rem; }
+.sponsor-claim-previous {
+  padding-left: 10px;
+  border-left: 2px solid color-mix(in srgb, var(--destructive) 55%, transparent);
+  color: var(--muted-foreground);
+}
+.sponsor-claim-note {
+  color: var(--foreground);
+  white-space: pre-wrap;
+}
+.sponsor-claim-profile-link {
+  justify-self: start;
+  color: var(--accent);
+  font-size: 0.8rem;
+}
+.sponsor-claim-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.sponsor-claim-admin-body {
+  max-height: min(72vh, 720px);
+  overflow-y: auto;
+  padding: 0 1.25rem 1rem;
+}
+.sponsor-claim-review {
+  display: grid;
+  gap: 7px;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-default);
+}
+.sponsor-claim-review:last-child { border-bottom: 0; }
+.sponsor-claim-review-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sponsor-claim-review-head strong { font-size: 0.92rem; }
+.sponsor-claim-review-profile {
+  display: flex;
+  align-items: center;
+  gap: 6px 12px;
+  flex-wrap: wrap;
+  color: var(--muted-foreground);
+  font-size: 0.74rem;
+}
+.sponsor-claim-review-note { color: var(--destructive); }
+.sponsor-claim-date { color: var(--faint-foreground); font-size: 0.68rem; }
+.sponsor-claim-review-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.sponsor-claim-review-actions .sponsor-editor-textarea {
+  flex: 1 1 260px;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.8rem;
+  resize: vertical;
+}
+.sponsor-claim-review-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 11px;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.sponsor-claim-review-actions button:hover { border-color: var(--accent); color: var(--accent); }
+.sponsor-claim-review-actions button:disabled { opacity: 0.55; cursor: default; }
+.sponsor-claim-review-actions .sponsor-claim-danger { color: var(--destructive); }
+.sponsor-claim-review-actions .sponsor-claim-danger:hover { border-color: var(--destructive); color: var(--destructive); }
+
 /* ── 编辑器里的贡献明细列表(每条一 card:日期 + 中/英文本 + 删除)── */
 .contrib-edit-list { display: grid; gap: 0.6rem; }
 .contrib-edit-item {
@@ -497,4 +635,10 @@
   .support-page { padding: 1.75rem 0.75rem 3rem; }
   .support-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 1.4rem 0.6rem; }
   .sponsor-avatar { width: 52px; height: 52px; }
+  .sponsor-claim-backdrop { align-items: flex-end; padding: 0; }
+  .sponsor-claim-dialog,
+  .sponsor-claim-admin { max-height: 92vh; border-radius: 14px 14px 0 0; }
+  .sponsor-claim-admin-body { padding-inline: 1rem; }
+  .sponsor-claim-review-actions { align-items: stretch; }
+  .sponsor-claim-review-actions .sponsor-editor-textarea { flex-basis: 100%; }
 }

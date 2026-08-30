@@ -46,7 +46,9 @@ export type NotificationKind =
   | 'quiz_report' | 'quiz_hidden'
   | 'cal_reminder' | 'cal_invite' | 'cal_rsvp'
   | 'teaching_message'
-  | 'friend_request' | 'friend_accepted';
+  | 'friend_request' | 'friend_accepted'
+  | 'sponsor_claim_pending' | 'sponsor_claim_approved'
+  | 'sponsor_claim_rejected' | 'sponsor_claim_revoked';
 
 /** 邮件语言。站点只有 en / zh-Hans 两种。 */
 export type MailLang = 'zh' | 'en';
@@ -92,6 +94,10 @@ const KIND_TEXT: Record<NotificationKind, Record<MailLang, string>> = {
   teaching_message: { zh: '发送了教学消息', en: 'sent a teaching message' },
   friend_request: { zh: '申请添加你为好友', en: 'sent you a friend request' },
   friend_accepted: { zh: '接受了你的好友申请', en: 'accepted your friend request' },
+  sponsor_claim_pending: { zh: '提交了赞助认领申请', en: 'submitted a supporter claim' },
+  sponsor_claim_approved: { zh: '通过了你的赞助认领', en: 'approved your supporter claim' },
+  sponsor_claim_rejected: { zh: '驳回了你的赞助认领', en: 'declined your supporter claim' },
+  sponsor_claim_revoked: { zh: '解除了你的赞助认领', en: 'revoked your supporter claim' },
 };
 
 /** 邮件里的固定文案。 */
