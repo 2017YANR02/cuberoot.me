@@ -62,6 +62,11 @@ export default function PersonDetailClient() {
   const [error, setError] = useState<string | null>(null);
   // 「废止项」口径开关:Σ 名次和行(PR 表底部)与「最优项目组合」共用一份状态
   const [inclCancelled, setInclCancelled] = useState(false);
+  const [pbVisibilityControl, setPbVisibilityControl] = useState<{
+    value: boolean;
+    disabled: boolean;
+    onChange: (value: boolean) => void;
+  } | null>(null);
   // PR / 历史最佳排名 / PB 是整张表的视图切换:进 URL 以支持返回 / 前进和直链;无参数默认 PR。
   const [resultView, setResultView] = useQueryState(
     'records',
@@ -161,9 +166,15 @@ export default function PersonDetailClient() {
           onResultViewChange={(view) => { void setResultView(view); }}
           inclCancelled={inclCancelled}
           onInclCancelledChange={setInclCancelled}
+          pbVisibilityControl={pbVisibilityControl}
         />
         {resultView === 'pb' ? (
-          <PersonPbTable wcaId={profile.person.wca_id} isZh={isZh} />
+          <PersonPbTable
+            key={profile.person.wca_id}
+            wcaId={profile.person.wca_id}
+            isZh={isZh}
+            onVisibilityControlChange={setPbVisibilityControl}
+          />
         ) : (
           <>
             <PersonUpcomingComps wcaId={profile.person.wca_id} isZh={isZh} />

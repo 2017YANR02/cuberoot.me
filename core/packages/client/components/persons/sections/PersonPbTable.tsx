@@ -10,7 +10,6 @@ import {
   type PbRecordOption,
   type PbRecordType,
 } from '@cuberoot/shared/pb';
-import BoolToggle from '@/components/BoolToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { CompactSelect } from '@/components/CompactSelect';
 import { DateInput } from '@/components/DateInput';
@@ -36,6 +35,11 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 interface Props {
   wcaId: string;
   isZh: boolean;
+  onVisibilityControlChange: (control: {
+    value: boolean;
+    disabled: boolean;
+    onChange: (value: boolean) => void;
+  } | null) => void;
 }
 
 type OptionKey = `${PbRecordType}:${number}`;
@@ -69,7 +73,7 @@ function PbCellContent({ record }: { record?: PbRecord }) {
   );
 }
 
-export default function PersonPbTable({ wcaId, isZh }: Props) {
+export default function PersonPbTable({ wcaId, isZh, onVisibilityControlChange }: Props) {
   const t = useT();
   const authUser = useAuthUser();
   const isAdmin = useIsAdmin();
@@ -171,13 +175,27 @@ export default function PersonPbTable({ wcaId, isZh }: Props) {
     try {
       await updatePbVisibility(isPublic, wcaId);
       setCollection({ ...collection, profile: { ...collection.profile, isPublic } });
-      setMessage(t('公开设置已保存。', 'Visibility saved.'));
     } catch {
       setError(friendlyError());
     } finally {
       setSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (!canManage || !collection) {
+      onVisibilityControlChange(null);
+      return;
+    }
+    onVisibilityControlChange({
+      value: collection.profile.isPublic,
+      disabled: saving,
+      onChange: (value) => void onVisibilityChange(value),
+    });
+    return () => onVisibilityControlChange(null);
+    // The callback intentionally tracks the current collection and save lock.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canManage, collection, onVisibilityControlChange, saving]);
 
   const beginNewPb = (nextEventId: string, option: PbRecordOption, record?: PbRecord) => {
     if (saving) return;
@@ -448,15 +466,6 @@ export default function PersonPbTable({ wcaId, isZh }: Props) {
 
       {canManage && collection && (
         <div className="wp-pb-manage">
-          <section className="wp-pb-visibility">
-            <BoolToggle
-              value={collection.profile.isPublic}
-              onChange={(value) => void onVisibilityChange(value)}
-              label={t('公开', 'Public')}
-              disabled={saving}
-            />
-          </section>
-
           <section className="wp-pb-history">
             <h3>{t('纪录历史', 'PB history')}</h3>
             {history.length === 0 ? (
