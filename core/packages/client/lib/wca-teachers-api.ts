@@ -2,16 +2,17 @@ import { API_ORIGIN } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 
 const BASE = API_ORIGIN + '/v1/wca/teachers';
-const RESPONSE_VERSION = '5';
+const RESPONSE_VERSION = '6';
 
 export interface WcaTeacher {
   studentWcaId: string;
   studentName?: string;
   student333Average?: number | null;
   eventId: string;
-  teacherWcaId: string;
-  teacherName: string;
-  teacherCountryIso2: string;
+  isSelfTaught: boolean;
+  teacherWcaId: string | null;
+  teacherName: string | null;
+  teacherCountryIso2: string | null;
 }
 
 export interface WcaNamedStudent {
@@ -93,11 +94,16 @@ export async function listWcaTeachers(studentWcaIds: string[], eventIds: string[
   return data.teachers;
 }
 
-export async function setWcaTeacher(studentWcaId: string, eventId: string, teacherWcaId?: string): Promise<WcaTeacher> {
+export async function setWcaTeacher(
+  studentWcaId: string,
+  eventId: string,
+  teacherWcaId?: string,
+  selfTaught = false,
+): Promise<WcaTeacher> {
   const data = await handleApi<{ teacher: WcaTeacher }>(await fetch(`${BASE}/${encodeURIComponent(studentWcaId)}/${encodeURIComponent(eventId)}`, {
     method: 'PUT',
     headers: authHeaders(),
-    body: JSON.stringify(teacherWcaId ? { teacherWcaId } : {}),
+    body: JSON.stringify(selfTaught ? { selfTaught: true } : teacherWcaId ? { teacherWcaId } : {}),
   }));
   return data.teacher;
 }

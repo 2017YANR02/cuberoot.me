@@ -423,7 +423,7 @@ function AllResultsPageInner() {
   const visibleTeacherName = useMemo(() => {
     if (!visibleTeacherWcaId) return '';
     for (const relation of teacherDirectory.teachers.values()) {
-      if (relation.teacherWcaId === visibleTeacherWcaId) {
+      if (relation.teacherWcaId === visibleTeacherWcaId && relation.teacherName) {
         return displayCuberName(relation.teacherName, isZh);
       }
     }

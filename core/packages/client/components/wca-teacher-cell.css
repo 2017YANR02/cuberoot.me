@@ -134,6 +134,15 @@
   max-width: none;
 }
 
+.wca-teacher-mode-picker {
+  margin-bottom: 16px;
+}
+
+.wca-teacher-mode-picker .cuber-search {
+  min-width: 0;
+  max-width: none;
+}
+
 .wca-named-student-picker {
   position: relative;
   flex: 1 1 auto;

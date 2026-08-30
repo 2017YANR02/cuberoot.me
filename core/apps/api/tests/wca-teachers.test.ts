@@ -64,13 +64,15 @@ describe('WCA teacher input boundaries', () => {
 });
 
 describe('teacher replacement permissions', () => {
-  it('lets members fill an empty relation or preserve their own relation', () => {
-    expect(mayReplaceTeacher(false, '2017YANR02', null)).toBe(true);
+  it('lets members fill an absent relation or preserve their own relation', () => {
+    expect(mayReplaceTeacher(false, '2017YANR02', undefined)).toBe(true);
     expect(mayReplaceTeacher(false, '2017YANR02', '2017YANR02')).toBe(true);
   });
 
-  it('prevents members from replacing another teacher and lets admins replace any relation', () => {
+  it('prevents members from replacing self-taught or another teacher and lets admins replace either', () => {
+    expect(mayReplaceTeacher(false, '2017YANR02', null)).toBe(false);
     expect(mayReplaceTeacher(false, '2017YANR02', '2020TENG01')).toBe(false);
+    expect(mayReplaceTeacher(true, '2017YANR02', null)).toBe(true);
     expect(mayReplaceTeacher(true, '2017YANR02', '2020TENG01')).toBe(true);
   });
 });
