@@ -6,7 +6,7 @@
 // 按 (valueColumn, targetEvents) 分组，逐 event 查询一次 MySQL，
 // 同组每个子类的 computeMetric 共享同一份数据计算排名。
 import { GroupedStatistic } from './grouped_statistic.js';
-import { EVENTS_WITH_AVERAGE, EVENTS_WITH_AO5, OFFICIAL_EVENTS_RECORD, EVENTS, headerZh, eventZh } from './events.js';
+import { EVENTS_WITH_AVERAGE, eventsEntries, headerZh, eventZh } from './events.js';
 import { SolveTime } from './solve_time.js';
 import { ATTEMPTS_SUBQUERY, query as dbQuery } from './database.js';
 import { formatDate, calcDays, filterWrHistory } from './format_date.js';
@@ -25,7 +25,7 @@ let precomputedRankings: Map<string, [string, unknown[][]][]> | null = null;
 
 // NOTE: 11 个 batchRanking=true 的子类定义
 // JS 无法自动发现子类，硬编码 import 列表
-// 所有 11 个子类都使用 (valueColumn='average', targetEvents=EVENTS_WITH_AO5)
+// 其中中位数、最差和方差覆盖 Mo3 + Ao5，其余衍生指标只覆盖 Ao5
 const BATCH_SUBCLASS_IMPORTS = [
   { name: 'WrBao5',             module: () => import('../statistics/wr_bao5.js') },
   { name: 'WrWao5',             module: () => import('../statistics/wr_wao5.js') },
@@ -143,12 +143,13 @@ export abstract class RoundMetric extends GroupedStatistic {
     precomputedRankings = new Map();
 
     // NOTE: 动态导入所有 batch 子类，实例化用于 computeMetric
-    const instances: Array<{ name: string; inst: RoundMetric }> = [];
+    const instances: Array<{ name: string; inst: RoundMetric; eventIds: Set<string> }> = [];
     for (const def of BATCH_SUBCLASS_IMPORTS) {
       const mod = await def.module();
       const Cls = Object.values(mod).find(v => typeof v === 'function') as
         new () => RoundMetric;
-      instances.push({ name: def.name, inst: new Cls() });
+      const inst = new Cls();
+      instances.push({ name: def.name, inst, eventIds: new Set(Object.keys(inst.targetEvents())) });
     }
 
     // NOTE: 初始化每个子类的结果容器
@@ -156,11 +157,11 @@ export abstract class RoundMetric extends GroupedStatistic {
       precomputedRankings.set(name, []);
     }
 
-    // NOTE: 所有 11 个 batch 子类使用相同的 (valueColumn='average', targetEvents=EVENTS_WITH_AO5)
-    // 因此只有一个分组，每个 event 只查一次
-    const events = EVENTS_WITH_AO5;
+    // NOTE: 取所有子类目标项目的并集。每个项目仍只查一次，随后仅交给支持该项目的子类。
+    const targetEventIds = new Set(instances.flatMap(({ eventIds }) => [...eventIds]));
+    const events = eventsEntries().filter(([eventId]) => targetEventIds.has(eventId));
 
-    for (const [eventId, eventName] of Object.entries(events)) {
+    for (const [eventId, eventName] of events) {
       // NOTE: 每个项目只查 MySQL 一次，11 个子类共享同一份数据
       const eventRows = await dbQuery<RowDataPacket[]>(
         `SELECT person_id, ${ATTEMPTS_SUBQUERY} AS attempts, average, best,
@@ -175,7 +176,8 @@ export abstract class RoundMetric extends GroupedStatistic {
       );
 
       // NOTE: 遍历每个子类，用各自的 computeMetric 计算排名
-      for (const { name, inst } of instances) {
+      for (const { name, inst, eventIds } of instances) {
+        if (!eventIds.has(eventId)) continue;
         const bestByPerson = new Map<string, { metric: number; row: RowDataPacket }>();
         for (const r of eventRows) {
           const values = String(r['attempts'] || '').split(',').map(Number);

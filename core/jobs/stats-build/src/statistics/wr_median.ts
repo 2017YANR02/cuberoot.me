@@ -1,6 +1,6 @@
 // NOTE: Median——一轮中的中位数
 import { RoundMetric } from '../core/round_metric.js';
-import { EVENTS_WITH_AO5 } from '../core/events.js';
+import { EVENTS_WITH_AVERAGE } from '../core/events.js';
 
 export class WrMedian extends RoundMetric {
   constructor() {
@@ -15,14 +15,15 @@ export class WrMedian extends RoundMetric {
     };
   }
 
-  targetEvents() { return EVENTS_WITH_AO5; }
+  targetEvents() { return EVENTS_WITH_AVERAGE; }
 
-  // NOTE: Median = 排序后第 3 个值（0-indexed: [2]）
-  // DNF 时中位数往后移，3 个及以上无效则 null
+  // NOTE: Mo3/Ao5 都是奇数次。DNF 视为比任意有效成绩更差，再取正中间一项。
   computeMetric(values: number[]): number | null {
-    const valid = values.filter(v => v > 0).sort((a, b) => a - b);
-    const invalidCount = values.filter(v => v <= 0).length;
-    if (invalidCount >= 3) return null;
-    return valid[2] ?? null;
+    if (values.length < 3 || values.length % 2 === 0) return null;
+    const sorted = values
+      .map(v => v > 0 ? v : Number.POSITIVE_INFINITY)
+      .sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+    return Number.isFinite(median) ? median : null;
   }
 }

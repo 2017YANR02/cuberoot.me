@@ -13,12 +13,34 @@ import { translateCellText, translatePersonLink, stripChineseParens } from '@/li
 import { rewriteWcaCompUrl, prefetchComp } from '@/lib/comp-link';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
+import { EVENT_NAME_TO_ID } from '@/lib/event-constants';
 import type { StatHeader, StatPanel, MetricPanel } from './WcaStatView.types';
 
 export function getAllPanelsFromMetric(mp: MetricPanel): StatPanel[] {
   if (mp.panels) return mp.panels;
   if (mp.sourcePanels) return mp.sourcePanels.flatMap(sp => sp.panels);
   return [];
+}
+
+function eventIdFromSectionTitle(title: string): string | undefined {
+  const direct = EVENT_NAME_TO_ID[title];
+  if (direct) return direct;
+  if (!title.includes(' - ')) return undefined;
+  return EVENT_NAME_TO_ID[title.substring(0, title.lastIndexOf(' - '))];
+}
+
+export function metricIdsWithDataForEvent(
+  metricPanels: MetricPanel[],
+  eventId?: string,
+): Set<string> {
+  if (!eventId) return new Set(metricPanels.map(mp => mp.id));
+  return new Set(
+    metricPanels
+      .filter(mp => getAllPanelsFromMetric(mp).some(panel =>
+        panel.sections.some(section => eventIdFromSectionTitle(section.title) === eventId)
+      ))
+      .map(mp => mp.id),
+  );
 }
 
 const LAZY_THRESHOLD = 12;

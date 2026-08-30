@@ -19,7 +19,7 @@ import { tr } from '@/i18n/tr';
 import type { StatHeader, StatSection, StatPanel, SourcePanel, MetricPanel, MetricGroup } from './WcaStatView.types';
 import {
   renderCell, shouldHideCountryCol, parseTimeValue, extractSolvesCell,
-  extractTextFromMdLink, dedupRows, getAllPanelsFromMetric,
+  extractTextFromMdLink, dedupRows,
 } from './WcaStatView.cells';
 
 // 超过 PAGE_SIZE 行只先渲染前 N 行 + “显示更多/全部”按钮，避免大表（最多 5202 行）
@@ -583,12 +583,13 @@ export function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent
   );
 }
 
-export function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, selectedEvent, hideSelector, activeMetric, onSetActiveMetric, onSetActivePanel, activePanel, belowTabs }: {
+export function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, selectedEvent, availableMetricIds, hideSelector, activeMetric, onSetActiveMetric, onSetActivePanel, activePanel, belowTabs }: {
   metricPanels: MetricPanel[];
   metricGroups?: MetricGroup[];
   searchTerm: string;
   isZh: boolean;
   selectedEvent?: string;
+  availableMetricIds: ReadonlySet<string>;
   hideSelector?: boolean;  // 宿主页把指标选择器提到外层(/wca/results 顶层下拉)时,隐藏内置那份避免重复
   activeMetric: number;
   onSetActiveMetric: (idx: number) => void;
@@ -596,39 +597,24 @@ export function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh,
   activePanel: number;
   belowTabs?: React.ReactNode;
 }) {
-  const metricHasData = useMemo(() => {
-    const map = new Map<number, boolean>();
-    metricPanels.forEach((mp, idx) => {
-      if (!selectedEvent) {
-        map.set(idx, true);
-        return;
-      }
-      const allPanels = getAllPanelsFromMetric(mp);
-      const hasEvent = allPanels.some(panel =>
-        panel.sections.some(sec => EVENT_NAME_TO_ID[sec.title] === selectedEvent)
-      );
-      map.set(idx, hasEvent);
-    });
-    return map;
-  }, [metricPanels, selectedEvent]);
-
   useEffect(() => {
-    if (metricHasData.get(activeMetric) === false) {
-      const singleIdx = metricPanels.findIndex((mp, i) => mp.id === 'single' && metricHasData.get(i));
+    const activeId = metricPanels[activeMetric]?.id;
+    if (activeId && !availableMetricIds.has(activeId)) {
+      const singleIdx = metricPanels.findIndex(mp => mp.id === 'single' && availableMetricIds.has(mp.id));
       if (singleIdx !== -1) { onSetActiveMetric(singleIdx); return; }
-      const avgIdx = metricPanels.findIndex((mp, i) => mp.id === 'average' && metricHasData.get(i));
+      const avgIdx = metricPanels.findIndex(mp => mp.id === 'average' && availableMetricIds.has(mp.id));
       if (avgIdx !== -1) { onSetActiveMetric(avgIdx); return; }
-      const firstValid = metricPanels.findIndex((_, i) => metricHasData.get(i));
+      const firstValid = metricPanels.findIndex(mp => availableMetricIds.has(mp.id));
       if (firstValid !== -1) onSetActiveMetric(firstValid);
     }
-  }, [metricHasData, activeMetric, metricPanels, onSetActiveMetric]);
+  }, [availableMetricIds, activeMetric, metricPanels, onSetActiveMetric]);
 
   const metric = metricPanels[activeMetric];
   const METRIC_LABEL_OVERRIDE: Record<string, string> = { 'Ao3': 'Mo3' };
   const _labelEn = metric?.labelEn ?? '';
   const currentLabel = METRIC_LABEL_OVERRIDE[_labelEn] ?? (isZh ? metric?.labelZh : _labelEn) ?? _labelEn;
 
-  const allMetricItems: Array<{ idx: number; label: string; disabled: boolean }> = useMemo(() => {
+  const allMetricItems: Array<{ idx: number; label: string }> = useMemo(() => {
     const LABEL_OVERRIDE: Record<string, string> = {
       'Ao3': 'Mo3', 'Ao5': 'Ao5', 'Ao12': 'Ao12',
       'Ao25': 'Ao25', 'Ao50': 'Ao50', 'Ao100': 'Ao100', 'Ao1000': 'Ao1000',
@@ -641,25 +627,24 @@ export function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh,
         const idx = metricPanels.findIndex(mp => mp.id === itemId);
         if (idx === -1) return null;
         const mp = metricPanels[idx];
-        return { idx, label: resolveLabel(mp), disabled: metricHasData.get(idx) === false };
-      }).filter(Boolean) as Array<{ idx: number; label: string; disabled: boolean }>;
+        if (!availableMetricIds.has(mp.id)) return null;
+        return { idx, label: resolveLabel(mp) };
+      }).filter(Boolean) as Array<{ idx: number; label: string }>;
     }
-    return metricPanels.map((mp, i) => ({
-      idx: i,
-      label: resolveLabel(mp),
-      disabled: metricHasData.get(i) === false,
-    }));
-  }, [metricGroups, metricPanels, metricHasData, isZh]);
+    return metricPanels
+      .map((mp, i) => availableMetricIds.has(mp.id) ? { idx: i, label: resolveLabel(mp) } : null)
+      .filter(Boolean) as Array<{ idx: number; label: string }>;
+  }, [metricGroups, metricPanels, availableMetricIds, isZh]);
 
   return (
     <div className="wca-stats-metric-panels">
       {!hideSelector && (allMetricItems.length < 4 ? (
         <div className="wca-stats-tab-bar">
-          {allMetricItems.map(({ idx, label, disabled }) => (
+          {allMetricItems.map(({ idx, label }) => (
             <button
               key={idx}
-              className={`wca-stats-tab${idx === activeMetric ? ' active' : ''}${disabled ? ' disabled' : ''}`}
-              onClick={disabled ? undefined : () => onSetActiveMetric(idx)}
+              className={`wca-stats-tab${idx === activeMetric ? ' active' : ''}`}
+              onClick={() => onSetActiveMetric(idx)}
             >
               {label}
             </button>
@@ -669,10 +654,9 @@ export function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh,
         <CompactSelect
           className="wca-stats-metric-select"
           label={currentLabel}
-          items={allMetricItems.map(({ idx, label, disabled }) => ({
+          items={allMetricItems.map(({ idx, label }) => ({
             value: idx,
             label,
-            disabled,
           }))}
           value={activeMetric}
           onChange={onSetActiveMetric}

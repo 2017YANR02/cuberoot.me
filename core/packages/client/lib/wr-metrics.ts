@@ -16,7 +16,7 @@ export const WR_METRICS: WrMetric[] = [
   { id: 'median', zh: '中位数', en: 'Median' },
   { id: 'bestc', zh: '最佳有效', en: 'Best Counting' },
   { id: 'worstc', zh: '最差有效', en: 'Worst Counting' },
-  { id: 'worst', zh: '轮次最差成绩', en: 'Worst' },
+  { id: 'worst', zh: '最差', en: 'Worst' },
   { id: 'variance', zh: '方差', en: 'Variance' },
   { id: 'ratio', zh: '最佳/平均比值', en: 'Best/Avg' },
 ];
