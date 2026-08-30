@@ -42,6 +42,7 @@ describe('GET /v1/wca/teachers', () => {
       studentName: 'Leede Fang',
       student333Average: 1234,
       eventId: '333',
+      isSelfTaught: false,
       teacherWcaId: '2017YANR02',
       teacherName: 'Ruimin Yan (颜瑞民)',
       teacherCountryIso2: 'CN',
@@ -72,6 +73,35 @@ describe('GET /v1/wca/teachers', () => {
     expect(mocks.query).toHaveBeenCalledWith(
       expect.stringContaining('WHERE wt.student_wca_id IN (?) AND wt.event_id IN (?)'),
       ['2026FANG02', '333'],
+    );
+  });
+
+  it('returns an explicit self-taught relation without fabricating a teacher', async () => {
+    mocks.query.mockResolvedValueOnce([{
+      student_wca_id: '2026GANR02',
+      student_name: 'Rex Gan',
+      student_333_average: null,
+      event_id: '333',
+      teacher_wca_id: null,
+      teacher_name: null,
+      teacher_country_iso2: null,
+    }]);
+
+    const response = await app.request('/v1/wca/teachers?students=2026ganr02&events=333');
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ teachers: [{
+      studentWcaId: '2026GANR02',
+      studentName: 'Rex Gan',
+      student333Average: null,
+      eventId: '333',
+      isSelfTaught: true,
+      teacherWcaId: null,
+      teacherName: null,
+      teacherCountryIso2: null,
+    }] });
+    expect(mocks.query.mock.calls[0][0]).toContain(
+      'LEFT JOIN wca_persons teacher ON teacher.wca_id = wt.teacher_wca_id',
     );
   });
 
@@ -289,6 +319,7 @@ describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
       studentWcaId: '2026GANR02',
       studentName: 'Student',
       eventId: '333',
+      isSelfTaught: false,
       teacherWcaId: '2017YANR02',
       teacherName: 'Teacher',
       teacherCountryIso2: 'CN',
@@ -303,6 +334,80 @@ describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
       expect.not.stringContaining('WHERE wca_teachers.teacher_wca_id = EXCLUDED.teacher_wca_id'),
       expect.arrayContaining(['2026GANR02', '333', '2017YANR02']),
     );
+  });
+
+  it('allows an active member student to mark an event as self-taught', async () => {
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2026GANR02' });
+    mocks.hasActiveMembership.mockResolvedValueOnce(true);
+    mocks.query
+      .mockResolvedValueOnce([
+        { wca_id: '2026GANR02', name: 'Student', country_iso2: 'AU' },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{
+        student_wca_id: '2026GANR02',
+        event_id: '333',
+        teacher_wca_id: null,
+        teacher_name: null,
+      }]);
+
+    const response = await app.request('/v1/wca/teachers/2026ganr02/333', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ selfTaught: true }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ teacher: {
+      studentWcaId: '2026GANR02',
+      studentName: 'Student',
+      eventId: '333',
+      isSelfTaught: true,
+      teacherWcaId: null,
+      teacherName: null,
+      teacherCountryIso2: null,
+    } });
+    expect(mocks.query).toHaveBeenNthCalledWith(
+      3,
+      expect.stringContaining('INSERT INTO wca_teachers'),
+      ['2026GANR02', '333', null, null, '2026GANR02', '2026GANR02'],
+    );
+  });
+
+  it('does not let a teacher mark another student as self-taught', async () => {
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2020TENG01' });
+
+    const response = await app.request('/v1/wca/teachers/2026ganr02/333', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ selfTaught: true }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'invalid learning source' });
+    expect(mocks.hasActiveMembership).not.toHaveBeenCalled();
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+
+  it('does not let a teacher replace an explicit self-taught relation', async () => {
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2020TENG01' });
+    mocks.hasActiveMembership.mockResolvedValueOnce(true);
+    mocks.query
+      .mockResolvedValueOnce([
+        { wca_id: '2026GANR02', name: 'Student', country_iso2: 'AU' },
+        { wca_id: '2020TENG01', name: 'Teacher', country_iso2: 'CN' },
+      ])
+      .mockResolvedValueOnce([{ teacher_wca_id: null }]);
+
+    const response = await app.request('/v1/wca/teachers/2026ganr02/333', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: 'teacher already set' });
+    expect(mocks.query).toHaveBeenCalledTimes(2);
   });
 
   it('rejects a non-member student before changing their own teacher', async () => {
