@@ -20,14 +20,18 @@ import { sql } from '../db/connection.js';
 import { requireAppUserId } from '../utils/app_user_auth.js';
 import { getIp } from '../utils/analytics_helpers.js';
 import { parseByteRange } from '../utils/byte_range.js';
+import {
+  DRIVE_UPLOAD_DIR,
+  drivePartPath,
+  driveStorageKey,
+  driveStoredPath,
+  safeRemoveDriveFile,
+} from '../utils/drive_storage.js';
 import { checkRateLimit, requireAdmin, requireAuth } from '../utils/recon_helpers.js';
 import { JWT_SECRET } from '../utils/session.js';
 
 export const driveRoutes = new Hono();
 
-const DRIVE_ROOT = process.env.DRIVE_STORAGE_DIR || path.join(process.cwd(), '.drive-storage');
-const UPLOAD_DIR = path.join(DRIVE_ROOT, 'uploads');
-const FILE_DIR = path.join(DRIVE_ROOT, 'files');
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MIME_PATTERN = /^[a-z0-9][a-z0-9!#$&^_.+-]*\/[a-z0-9][a-z0-9!#$&^_.+-]*$/i;
 const QUOTA_LOCK_ID = 2026082901;
@@ -150,24 +154,6 @@ async function quota(): Promise<DriveQuota> {
   };
 }
 
-function partPath(uploadId: string): string {
-  return path.join(UPLOAD_DIR, `${uploadId}.part`);
-}
-
-function storageKey(nodeId: string): string {
-  return `${nodeId.slice(0, 2)}/${nodeId}`;
-}
-
-function storedPath(key: string): string {
-  return path.join(FILE_DIR, key);
-}
-
-async function safeUnlink(filePath: string): Promise<void> {
-  await fs.unlink(filePath).catch((error: NodeJS.ErrnoException) => {
-    if (error.code !== 'ENOENT') console.error(`[drive] failed to remove ${filePath}: ${error.message}`);
-  });
-}
-
 const uploadLocks = new Map<string, Promise<void>>();
 
 async function withUploadLock<T>(uploadId: string, run: () => Promise<T>): Promise<T> {
@@ -200,8 +186,8 @@ async function cleanupExpiredUploads(userId?: number): Promise<void> {
        RETURNING node_id`;
     if (!current.length) return;
     await sql`DELETE FROM drive_nodes WHERE id = ${row.node_id} AND status = 'uploading'`;
-    await safeUnlink(partPath(row.id));
-    await safeUnlink(storedPath(storageKey(row.node_id)));
+    await safeRemoveDriveFile(drivePartPath(row.id));
+    await safeRemoveDriveFile(driveStoredPath(driveStorageKey(row.node_id)));
   })));
 }
 
@@ -401,9 +387,9 @@ driveRoutes.post('/drive/uploads', async (c) => {
   if (created === 'folder-missing') return c.json({ error: 'parent folder not found' }, 404);
   if (!created) return c.json({ error: 'Drive storage quota exceeded' }, 413);
 
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
+  await fs.mkdir(DRIVE_UPLOAD_DIR, { recursive: true });
   try {
-    const handle = await fs.open(partPath(created.id), 'wx');
+    const handle = await fs.open(drivePartPath(created.id), 'wx');
     await handle.close();
   } catch (error) {
     await sql`DELETE FROM drive_nodes WHERE id = ${created.node_id} AND owner_user_id = ${current.userId}`;
@@ -456,15 +442,15 @@ driveRoutes.patch('/drive/uploads/:id', async (c) => {
     }
     if (!c.req.raw.body) return c.json({ error: 'chunk body is required' }, 400);
 
-    await fs.mkdir(UPLOAD_DIR, { recursive: true });
-    const filePath = partPath(uploadId);
+    await fs.mkdir(DRIVE_UPLOAD_DIR, { recursive: true });
+    const filePath = drivePartPath(uploadId);
     let stat: Awaited<ReturnType<typeof fs.stat>>;
     try {
       stat = await fs.stat(filePath);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-      const key = storageKey(upload.node_id);
-      const finalPath = storedPath(key);
+      const key = driveStorageKey(upload.node_id);
+      const finalPath = driveStoredPath(key);
       const completed = await fs.stat(finalPath).catch(() => null);
       if (completed?.isFile() && completed.size === expected) {
         await sql.begin(async (tx) => {
@@ -531,8 +517,8 @@ driveRoutes.patch('/drive/uploads/:id', async (c) => {
       return c.json({ offset: nextOffset, complete: false });
     }
 
-    const key = storageKey(upload.node_id);
-    const finalPath = storedPath(key);
+    const key = driveStorageKey(upload.node_id);
+    const finalPath = driveStoredPath(key);
     await fs.mkdir(path.dirname(finalPath), { recursive: true });
     await fs.rename(filePath, finalPath);
     try {
@@ -569,8 +555,8 @@ driveRoutes.delete('/drive/uploads/:id', async (c) => {
        RETURNING node_id`;
     if (!rows.length) return c.json({ error: 'upload session not found' }, 404);
     await sql`DELETE FROM drive_nodes WHERE id = ${rows[0].node_id} AND owner_user_id = ${current.userId}`;
-    await safeUnlink(partPath(uploadId));
-    await safeUnlink(storedPath(storageKey(rows[0].node_id)));
+    await safeRemoveDriveFile(drivePartPath(uploadId));
+    await safeRemoveDriveFile(driveStoredPath(driveStorageKey(rows[0].node_id)));
     return c.json({ ok: true });
   });
 });
@@ -719,7 +705,7 @@ driveRoutes.delete('/drive/nodes/:id', async (c) => {
        AND trashed_at IS NOT NULL AND trash_root_id = id
      RETURNING id`;
   if (!deleted.length) return c.json({ error: 'trashed item not found' }, 404);
-  await Promise.all(keys.map((row) => safeUnlink(storedPath(row.storage_key))));
+  await Promise.all(keys.map((row) => safeRemoveDriveFile(driveStoredPath(row.storage_key))));
   return c.json({ ok: true });
 });
 
@@ -784,7 +770,7 @@ async function driveContent(c: Context): Promise<Response> {
   if (!file?.storage_key || (!file.drive_enabled && !isAdminWcaId(file.owner_wca_id ?? ''))) {
     return c.json({ error: 'file not found' }, 404);
   }
-  const filePath = storedPath(file.storage_key);
+  const filePath = driveStoredPath(file.storage_key);
   const size = Number(file.size_bytes);
   try {
     const stat = await fs.stat(filePath);
