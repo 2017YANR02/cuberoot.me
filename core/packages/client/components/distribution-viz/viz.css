@@ -82,7 +82,7 @@
 }
 
 /* NOTE: 数据模式下拉 — 17 种指标(原两行 chip 改下拉),宽度贴合不撑满 */
-.viz-page .mode-switcher .list-select { width: 160px; }
+.viz-page .mode-switcher .compact-select { width: 160px; }
 
 /* ─── Canvas 容器 ─── */
 .viz-page .canvas-wrapper {

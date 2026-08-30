@@ -2,11 +2,8 @@
 // 从 viz/csv_export.js + csv_columns.js 合并翻译为 TypeScript
 // 通过直接导入配置（而非全局注册中心）生成全量统计 CSV 并触发下载
 
-import { getConfigs as getRollingConfigs } from './rolling_stats';
-import { getConfigs as getRoundConfigs } from './round_metrics';
-import type { SolveEntry } from './round_metrics';
-import type { RollingResult } from './rolling_stats';
-import type { RoundMetricsResult } from './round_metrics';
+import { getConfigs as getRollingConfigs, type RollingResult } from '@/lib/wca-result-metrics/rolling';
+import { getConfigs as getRoundConfigs, type RoundMetricsResult, type SolveEntry } from '@/lib/wca-result-metrics/round';
 import { ROUND_NAMES } from './data_fetch';
 
 interface CsvGroup {
