@@ -10,13 +10,14 @@
 import { encodeUrlAlg } from './cubedb-url';
 import { cleanFtoReconAlgForPlayer } from '@cuberoot/shared/recon-completion';
 
-/** sim puzzleKind (cuber engine) — number for NxN, else a named twisty/sq1/ivy/dino/redi/rex/heli/gear/clock. */
-type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'clock';
+/** sim puzzleKind (cuber engine) — number for NxN, else a named twisty/square-family/corner-turn/clock puzzle. */
+type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'clock';
 
 /** sim puzzle → recon event id, or null when recon has no matching event.
  *  Accepts PuzzleGeometry explore ids (string) too — they have no recon event. */
 export function reconEventForSim(p: SimPuzzle | string): string | null {
   if (p === 'sq1') return 'sq1';
+  if (p === 'sq2' || p === 'sq4') return null;
   if (p === 'ivy') return null; // recon has no ivy event yet
   if (p === 'pyraminx') return 'pyra';
   if (p === 'skewb') return 'skewb';
