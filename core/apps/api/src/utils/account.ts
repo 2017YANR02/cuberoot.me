@@ -7,6 +7,7 @@
  * 合成键以小写 `u` 打头,WCA id 全大写(^\d{4}[A-Z]{4}\d{2}$),两者天然不可能相撞。
  */
 import crypto from 'node:crypto';
+import type { AccountBasicProfile, AccountGender } from '@cuberoot/shared/account';
 import type { AvatarSource, ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 import type { WebSessionUser } from '@cuberoot/shared/auth/web-session';
 import { query, sql } from '../db/connection.js';
@@ -16,6 +17,7 @@ import { JWT_SECRET } from './session.js';
 export {
   ownerKey, isWcaIdFormat, normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   normalizeDisplayName, isValidDisplayName,
+  isAccountGender, isValidBirthDate, normalizeCountryIso2, isValidCountryIso2,
   primaryHandle, deletedOwnerKey, isDeletedOwner,
 } from '@cuberoot/shared/account';
 
@@ -243,6 +245,53 @@ export async function getUserById(id: number): Promise<AppUser | null> {
   return firstAppUser(rows);
 }
 
+type AccountBasicProfileRow = {
+  birthDate: string | null;
+  gender: AccountGender | null;
+  countryIso2: string | null;
+  wcaId: string | null;
+};
+
+function basicProfileFromRow(row: AccountBasicProfileRow): AccountBasicProfile {
+  return {
+    birthDate: row.birthDate,
+    gender: row.gender,
+    countryIso2: row.countryIso2,
+    countrySource: row.wcaId ? 'wca' : 'self',
+  };
+}
+
+export async function getAccountBasicProfile(id: number): Promise<AccountBasicProfile | null> {
+  const rows = await query<AccountBasicProfileRow>(
+    `SELECT birth_date::text AS "birthDate", gender,
+            country_iso2 AS "countryIso2", wca_id AS "wcaId"
+     FROM app_users WHERE id = ?`,
+    [id],
+  );
+  return rows[0] ? basicProfileFromRow(rows[0]) : null;
+}
+
+/**
+ * 保存本人私密资料。country_iso2 的 CASE 是最终写入闸门：即使保存与绑定 WCA 并发，
+ * WCA 账号也只能保留认证资料中的国籍，不能被客户端提交覆盖。
+ */
+export async function updateAccountBasicProfile(
+  id: number,
+  profile: Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2'>,
+): Promise<AccountBasicProfile | null> {
+  const rows = await query<AccountBasicProfileRow>(
+    `UPDATE app_users SET
+       birth_date = ?,
+       gender = ?,
+       country_iso2 = CASE WHEN wca_id IS NULL THEN ? ELSE country_iso2 END
+     WHERE id = ?
+     RETURNING birth_date::text AS "birthDate", gender,
+               country_iso2 AS "countryIso2", wca_id AS "wcaId"`,
+    [profile.birthDate, profile.gender, profile.countryIso2, id],
+  );
+  return rows[0] ? basicProfileFromRow(rows[0]) : null;
+}
+
 /**
  * 修改当前账号的站内展示名。调用方负责鉴权并先做 normalize + validate。
  * wca_id 条件是最终写入闸门:即使改名与绑定 WCA 并发,也不能在实名绑定后落入自定义名。
@@ -336,18 +385,24 @@ export async function findUserByIdentity(provider: Provider, providerUid: string
 export async function loginWithIdentity(
   provider: Provider,
   providerUid: string,
-  profile: { name?: string; avatar?: string | null; wcaId?: string | null },
+  profile: { name?: string; avatar?: string | null; wcaId?: string | null; countryIso2?: string | null },
 ): Promise<{ user: AppUser; isNew: boolean }> {
   const existing = await findUserByIdentity(provider, providerUid);
   if (existing) {
     // WCA 姓名是实名认证来源,每次 WCA 登录都刷新;其它来源仍只机会式回填空展示名。
-    if ((provider === 'wca' && profile.name) || (!existing.display_name && profile.name)) {
+    if (provider === 'wca' || (!existing.display_name && profile.name)) {
       await query(
         `UPDATE app_users SET
            display_name = CASE WHEN ? = 'wca' THEN ? WHEN display_name = '' THEN ? ELSE display_name END,
-           avatar_url = CASE WHEN ? = 'wca' AND avatar_source = 'auto' THEN ? ELSE avatar_url END
+           avatar_url = CASE WHEN ? = 'wca' AND avatar_source = 'auto' THEN ? ELSE avatar_url END,
+           country_iso2 = CASE WHEN ? = 'wca' THEN ? ELSE country_iso2 END
          WHERE id = ?`,
-        [provider, profile.name ?? '', profile.name ?? '', provider, profile.avatar ?? null, existing.id],
+        [
+          provider, profile.name ?? '', profile.name ?? '',
+          provider, profile.avatar ?? null,
+          provider, profile.countryIso2 ?? null,
+          existing.id,
+        ],
       );
     }
     return { user: (await getUserById(existing.id)) ?? existing, isNew: false };
@@ -355,13 +410,14 @@ export async function loginWithIdentity(
   try {
     const created = await sql.begin(async (tx) => {
       const rows = await tx`
-        INSERT INTO app_users (display_name, avatar_url, avatar_source, avatar_preset, wca_id)
+        INSERT INTO app_users (display_name, avatar_url, avatar_source, avatar_preset, wca_id, country_iso2)
         VALUES (
           ${profile.name ?? ''},
           ${provider === 'wca' ? profile.avatar ?? null : null},
           'auto',
           NULL,
-          ${profile.wcaId ?? null}
+          ${profile.wcaId ?? null},
+          ${provider === 'wca' ? profile.countryIso2 ?? null : null}
         )
         RETURNING id, display_name, avatar_url, avatar_source, avatar_preset, wca_id`;
       const row = rows[0] as unknown as AppUserRow | undefined;
@@ -401,6 +457,7 @@ export async function addIdentity(
   wcaMirror?: string | null,
   verifiedDisplayName?: string | null,
   verifiedAvatarUrl?: string | null,
+  verifiedCountryIso2?: string | null,
 ): Promise<'ok' | 'conflict' | `has-${SingleProvider}`> {
   const owner = await findUserByIdentity(provider, providerUid);
   if (owner) {
@@ -411,9 +468,16 @@ export async function addIdentity(
         `UPDATE app_users SET
            wca_id = ?,
            display_name = ?,
-           avatar_url = CASE WHEN avatar_source = 'auto' THEN ? ELSE avatar_url END
+           avatar_url = CASE WHEN avatar_source = 'auto' THEN ? ELSE avatar_url END,
+           country_iso2 = ?
          WHERE id = ?`,
-        [wcaMirror ?? providerUid, verifiedDisplayName, verifiedAvatarUrl ?? null, userId],
+        [
+          wcaMirror ?? providerUid,
+          verifiedDisplayName,
+          verifiedAvatarUrl ?? null,
+          verifiedCountryIso2 ?? null,
+          userId,
+        ],
       );
     }
     return 'ok';
@@ -430,7 +494,8 @@ export async function addIdentity(
             avatar_url = CASE
               WHEN avatar_source = 'auto' THEN ${verifiedAvatarUrl ?? null}
               ELSE avatar_url
-            END
+            END,
+            country_iso2 = ${verifiedCountryIso2 ?? null}
           WHERE id = ${userId} AND wca_id IS NULL`;
         if (upd.count === 0) return 'conflict';
       }

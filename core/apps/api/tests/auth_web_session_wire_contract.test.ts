@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   consumeMobileSessionTicket: vi.fn(),
   consumeWebSessionTicket: vi.fn(),
   exchangeWechatMiniProgramCode: vi.fn(),
+  getAccountBasicProfile: vi.fn(),
   getUserById: vi.fn(),
   issueMobileSessionTicket: vi.fn(),
   issueWebSessionTicket: vi.fn(),
@@ -18,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   requireAppUserId: vi.fn(),
   signSession: vi.fn(),
   updateClawdAvatar: vi.fn(),
+  updateAccountBasicProfile: vi.fn(),
   wechatMiniProgramConfigured: vi.fn(),
 }));
 
@@ -30,9 +32,15 @@ vi.mock('../src/utils/session.js', () => ({
 }));
 vi.mock('../src/utils/account.js', () => ({
   getUserById: mocks.getUserById,
+  getAccountBasicProfile: mocks.getAccountBasicProfile,
   loginWithIdentity: mocks.loginWithIdentity,
   publicUser: mocks.publicUser,
   updateClawdAvatar: mocks.updateClawdAvatar,
+  updateAccountBasicProfile: mocks.updateAccountBasicProfile,
+  isAccountGender: (value: unknown) => ['male', 'female', 'nonbinary', 'other', 'undisclosed'].includes(String(value)),
+  isValidBirthDate: (value: unknown, today: string) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && value >= '1900-01-01' && value <= today,
+  normalizeCountryIso2: (value: string) => value.trim().toUpperCase(),
+  isValidCountryIso2: (value: unknown) => typeof value === 'string' && /^[A-Z]{2}$/.test(value),
 }));
 vi.mock('../src/utils/wechat_miniprogram.js', () => ({
   exchangeWechatMiniProgramCode: mocks.exchangeWechatMiniProgramCode,
@@ -231,6 +239,65 @@ describe('auth route wire contracts', () => {
     const body = await response.json();
     expect(decodeWebSession(body)).toEqual({ token, user: clawdPublicAccount });
     expect(mocks.updateClawdAvatar).toHaveBeenCalledWith(42, 'typing');
+  });
+
+  it('returns the authenticated account basic profile without adding it to the session', async () => {
+    const profile = {
+      birthDate: '2000-02-29',
+      gender: 'nonbinary',
+      countryIso2: 'CN',
+      countrySource: 'self',
+    };
+    mocks.requireAppUserId.mockResolvedValue(42);
+    mocks.getAccountBasicProfile.mockResolvedValue(profile);
+
+    const response = await accountAuthRoutes.request('/auth/profile');
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ profile });
+    expect(mocks.getAccountBasicProfile).toHaveBeenCalledWith(42);
+  });
+
+  it('normalizes and saves a complete basic profile action', async () => {
+    const profile = {
+      birthDate: '2000-02-29',
+      gender: 'female',
+      countryIso2: 'CN',
+      countrySource: 'self',
+    };
+    mocks.requireAppUserId.mockResolvedValue(42);
+    mocks.updateAccountBasicProfile.mockResolvedValue(profile);
+
+    const response = await accountAuthRoutes.request('/auth/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        basic: { birthDate: '2000-02-29', gender: 'female', countryIso2: ' cn ' },
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, profile });
+    expect(mocks.updateAccountBasicProfile).toHaveBeenCalledWith(42, {
+      birthDate: '2000-02-29',
+      gender: 'female',
+      countryIso2: 'CN',
+    });
+  });
+
+  it('rejects an impossible or future birth date before storage', async () => {
+    mocks.requireAppUserId.mockResolvedValue(42);
+
+    const response = await accountAuthRoutes.request('/auth/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        basic: { birthDate: '2099-02-29', gender: null, countryIso2: null },
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(mocks.updateAccountBasicProfile).not.toHaveBeenCalled();
   });
 
   it('returns a stable compatible WeChat configuration error', async () => {

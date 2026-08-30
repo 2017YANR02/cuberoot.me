@@ -6,7 +6,14 @@ import type {
 import { webSessionError } from '@cuberoot/shared/auth/web-session';
 import { query } from '../db/connection.js';
 import { signSession, verifySession } from '../utils/session.js';
-import { loginWithIdentity, findUserByWcaId, getUserById, publicUser } from '../utils/account.js';
+import {
+  loginWithIdentity,
+  findUserByWcaId,
+  getUserById,
+  publicUser,
+  isValidCountryIso2,
+  normalizeCountryIso2,
+} from '../utils/account.js';
 
 const WCA_CLIENT_ID = process.env.WCA_CLIENT_ID || '';
 const WCA_CLIENT_SECRET = process.env.WCA_CLIENT_SECRET || '';
@@ -68,11 +75,15 @@ authRoutes.get('/auth/callback', async (c) => {
   }
 
   const meData = await meRes.json() as {
-    me: { id: number; wca_id: string; name: string; avatar: { url: string } };
+    me: { id: number; wca_id: string; name: string; country_iso2?: string; avatar: { url: string } };
   };
 
   const user = meData.me;
   const wcaId = user.wca_id;
+  const countryIso2 = typeof user.country_iso2 === 'string'
+    ? normalizeCountryIso2(user.country_iso2)
+    : null;
+  const verifiedCountryIso2 = countryIso2 && isValidCountryIso2(countryIso2) ? countryIso2 : null;
 
   // 缓存到数据库
   await query(
@@ -93,6 +104,7 @@ authRoutes.get('/auth/callback', async (c) => {
     name: user.name,
     avatar: user.avatar?.url ?? null,
     wcaId,
+    countryIso2: verifiedCountryIso2,
   });
   const jwtToken = signSession({ uid: account.id, wcaId: account.wca_id, name: account.display_name });
 
@@ -155,12 +167,16 @@ authRoutes.post('/auth/exchange', async (c) => {
     }
 
     const data = await res.json() as {
-      me: { id: number; wca_id: string; name: string; avatar: { url: string } };
+      me: { id: number; wca_id: string; name: string; country_iso2?: string; avatar: { url: string } };
     };
     const user = data.me;
     if (!user?.wca_id) {
       return c.json(webSessionError('INVALID_WCA_TOKEN', 'Failed to get user info'), 401);
     }
+    const countryIso2 = typeof user.country_iso2 === 'string'
+      ? normalizeCountryIso2(user.country_iso2)
+      : null;
+    const verifiedCountryIso2 = countryIso2 && isValidCountryIso2(countryIso2) ? countryIso2 : null;
 
     // 缓存用户信息到数据库
     await query(
@@ -180,6 +196,7 @@ authRoutes.post('/auth/exchange', async (c) => {
       name: user.name,
       avatar: user.avatar?.url ?? null,
       wcaId: user.wca_id,
+      countryIso2: verifiedCountryIso2,
     });
     const jwtToken = signSession({ uid: account.id, wcaId: account.wca_id, name: account.display_name });
 

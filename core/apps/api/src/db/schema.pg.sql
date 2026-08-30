@@ -348,6 +348,11 @@ CREATE TABLE app_users (
                       CHECK (avatar_source IN ('auto', 'clawd', 'upload')),
   avatar_preset       VARCHAR(32),
   wca_id              VARCHAR(20),
+  birth_date          DATE CHECK (birth_date IS NULL OR birth_date >= DATE '1900-01-01'),
+  gender              VARCHAR(16)
+                      CHECK (gender IS NULL OR gender IN ('male', 'female', 'nonbinary', 'other', 'undisclosed')),
+  country_iso2        VARCHAR(2)
+                      CHECK (country_iso2 IS NULL OR country_iso2 ~ '^[A-Z]{2}$'),
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   password_hash       TEXT,
