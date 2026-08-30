@@ -11,6 +11,7 @@ import PersonLink from '@/components/PersonLink';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { CountryInput } from '@/components/CountryInput/CountryInput';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { useAuthUser } from '@/lib/auth-store';
 import { getMyMembership } from '@/lib/membership-api';
 import {
@@ -151,7 +152,7 @@ export interface WcaTeacherDirectory {
   userWcaId: string;
   isAdmin: boolean;
   canSelfAssign: boolean;
-  save: (studentWcaId: string, eventId: string, teacherWcaId?: string) => Promise<void>;
+  save: (studentWcaId: string, eventId: string, teacherWcaId?: string, selfTaught?: boolean) => Promise<void>;
   remove: (studentWcaId: string, eventId: string) => Promise<void>;
 }
 
@@ -226,8 +227,13 @@ export function useWcaTeachers(studentWcaIds: string[], eventIds: string[]): Wca
     return () => { cancelled = true; };
   }, [user?.wcaId, isAdmin]);
 
-  const save = useCallback(async (studentWcaId: string, eventId: string, teacherWcaId?: string) => {
-    const teacher = await setWcaTeacher(studentWcaId, eventId, teacherWcaId);
+  const save = useCallback(async (
+    studentWcaId: string,
+    eventId: string,
+    teacherWcaId?: string,
+    selfTaught = false,
+  ) => {
+    const teacher = await setWcaTeacher(studentWcaId, eventId, teacherWcaId, selfTaught);
     setTeachers((current) => new Map(current).set(wcaTeacherRelationKey(studentWcaId, eventId), teacher));
   }, []);
 
@@ -256,8 +262,8 @@ export function useWcaTeachers(studentWcaIds: string[], eventIds: string[]): Wca
 export function WcaTeacherColumnHeader({ className }: { className?: string } = {}) {
   return (
     <th className={className} title={tr({
-      zh: '每个项目分别登记；有效会员老师可登记自己，有效会员学生可填写本人老师，管理员可代填',
-      en: 'Active member teachers can register themselves per event; active member students can set their own teachers; admins can edit any entry',
+      zh: '每个项目分别登记；有效会员老师可登记自己，有效会员学生可填写本人老师或自学，管理员可代填',
+      en: 'Active member teachers can register themselves per event; active member students can set a teacher or self-taught status; admins can edit any entry',
     })}>
       {tr({ zh: '老师', en: 'Teacher' })}
     </th>
@@ -268,8 +274,8 @@ export function WcaTeacherNote() {
   return (
     <p className="wca-teacher-note">
       {tr({
-        zh: '老师按项目分别登记。有效会员老师可登记自己，有效会员学生可填写本人老师；管理员可代填。',
-        en: 'Teachers are registered separately for each event. Active member teachers can add themselves, active member students can set their own teachers, and admins can edit on their behalf.',
+        zh: '老师或自学按项目分别登记。有效会员老师可登记自己，有效会员学生可填写本人学习方式；管理员可代填。',
+        en: 'Teachers or self-taught status are registered per event. Active member teachers can add themselves, active member students can set their learning source, and admins can edit on their behalf.',
       })}
     </p>
   );
@@ -1316,6 +1322,7 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
     () => new Set((defaultEditEventId ? [defaultEditEventId] : normalizedEditableEventIds).slice(0, 1)),
   );
   const [selected, setSelected] = useState<WcaPersonLite | null>(null);
+  const [isSelfTaught, setIsSelfTaught] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const editableRelations = normalizedEditableEventIds.flatMap((eventId) => {
@@ -1325,6 +1332,7 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
   const hasOwnRelation = editableRelations.some(({ teacher: relation }) => relation.teacherWcaId === directory.userWcaId);
   const teacherDataReady = directory.ready && !directory.loadFailed;
   const canStudentManageOwnTeachers = directory.canSelfAssign && directory.userWcaId === studentWcaId;
+  const canChooseLearningSource = (directory.isAdmin || canStudentManageOwnTeachers) && !managedTeacherWcaId;
   const canManageTeacherStudents = !!managedTeacherWcaId && (
     directory.isAdmin
     || (directory.userWcaId === managedTeacherWcaId && (directory.canSelfAssign || managedRelationEventIds.length > 0))
@@ -1409,6 +1417,14 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
       );
     }
   };
+  const saveSelfTaught = () => {
+    if (selectedIds.length > 0) {
+      void run(
+        () => Promise.all(selectedIds.map((eventId) => directory.save(studentWcaId, eventId, undefined, true))).then(() => undefined),
+        true,
+      );
+    }
+  };
   const saveManagedTeacherStudents = () => {
     if (!managedTeacherWcaId || !managedSelectionChanged) return;
     const eventIdsToSave = selectedIds.filter((eventId) => (
@@ -1427,6 +1443,7 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
     if (managedTeacherWcaId) {
       setSelectedEventIds(new Set(managedRelationEventIds));
       setSelected(null);
+      setIsSelfTaught(false);
       setError('');
       setEditing(true);
       return;
@@ -1435,7 +1452,10 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
     const relation = eventId
       ? directory.teachers.get(wcaTeacherRelationKey(studentWcaId, eventId))
       : undefined;
-    setSelected(relation ? { id: relation.teacherWcaId, name: relation.teacherName, country_iso2: '' } : null);
+    setSelected(relation?.teacherWcaId && relation.teacherName
+      ? { id: relation.teacherWcaId, name: relation.teacherName, country_iso2: '' }
+      : null);
+    setIsSelfTaught(relation?.isSelfTaught ?? false);
     setError('');
     setEditing(true);
   };
@@ -1464,7 +1484,11 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
                     imgClassName="country-flag-ct"
                   />
                 )}
-                <PersonLink wcaId={relation.teacherWcaId} name={relation.teacherName} isZh={isZh} />
+                {relation.isSelfTaught
+                  ? <span className="wca-teacher-self-taught">{tr({ zh: '自学', en: 'Self-taught' })}</span>
+                  : relation.teacherWcaId && relation.teacherName
+                    ? <PersonLink wcaId={relation.teacherWcaId} name={relation.teacherName} isZh={isZh} />
+                    : null}
               </span>
             ))
             : <span className="wca-teacher-empty">{emptyLabel}</span>}
@@ -1513,17 +1537,30 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
               <h2 id={`teacher-title-${studentWcaId}`}>
                 {managedTeacherWcaId
                   ? tr({ zh: '编辑学生', en: 'Edit student' })
-                  : tr({ zh: '填写老师', en: 'Set teacher' })}
+                  : canChooseLearningSource
+                    ? tr({ zh: '学习方式', en: 'Learning source' })
+                    : tr({ zh: '填写老师', en: 'Set teacher' })}
               </h2>
-              {(directory.isAdmin || canStudentManageOwnTeachers) && !managedTeacherWcaId && (
+              {canChooseLearningSource && (
+                <PillToggle
+                  value={!isSelfTaught}
+                  onChange={(hasTeacher) => setIsSelfTaught(!hasTeacher)}
+                  onLabel={tr({ zh: '有老师', en: 'Teacher' })}
+                  offLabel={tr({ zh: '自学', en: 'Self-taught' })}
+                  ariaLabel={tr({ zh: '选择学习方式', en: 'Select learning source' })}
+                />
+              )}
+            </div>
+            {canChooseLearningSource && !isSelfTaught && (
+              <div className="wca-teacher-mode-picker">
                 <WcaPersonPicker
                   value={selected}
                   onChange={changeSelectedTeacher}
                   isZh={isZh}
-                  placeholder={tr({ zh: '姓名或 WCA ID', en: 'Name or WCA ID' })}
+                  placeholder={tr({ zh: '老师姓名或 WCA ID', en: 'Teacher name or WCA ID' })}
                 />
-              )}
-            </div>
+              </div>
+            )}
             {isMultiEditor && (
               <WcaEventSelector
                 availableEvents={availableEventSet}
@@ -1547,7 +1584,12 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
                 </button>
               )}
               {(directory.isAdmin || canStudentManageOwnTeachers) && !managedTeacherWcaId && (
-                <button type="button" className="wca-teacher-dialog-action wca-teacher-dialog-primary" disabled={!selected || selectedIds.length === 0 || saving} onClick={saveSelectedTeacher}>
+                <button
+                  type="button"
+                  className="wca-teacher-dialog-action wca-teacher-dialog-primary"
+                  disabled={selectedIds.length === 0 || (!isSelfTaught && !selected) || saving}
+                  onClick={isSelfTaught ? saveSelfTaught : saveSelectedTeacher}
+                >
                   {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存', en: 'Save' })}
                 </button>
               )}

@@ -83,7 +83,7 @@ export function parseTeacherEventIds(value: unknown): string[] | null {
 export function mayReplaceTeacher(
   isAdmin: boolean,
   actorWcaId: string,
-  existingTeacherWcaId: string | null,
+  existingTeacherWcaId: string | null | undefined,
 ): boolean {
-  return isAdmin || existingTeacherWcaId == null || existingTeacherWcaId === actorWcaId;
+  return isAdmin || existingTeacherWcaId === undefined || existingTeacherWcaId === actorWcaId;
 }

@@ -385,8 +385,8 @@ const TABLES: Table[] = [
   ] },
   { name: 'membership_orders', domain: 'commerce', origin: '0046', purpose: { zh: '会员订单(我方单号 + provider / channel)', en: 'Membership orders (out_trade_no + provider/channel)' } },
   { name: 'memberships', domain: 'commerce', origin: '0046', purpose: { zh: '会员有效期', en: 'Active membership validity' } },
-  { name: 'wca_teachers', domain: 'commerce', origin: '0114', naturalKey: true, purpose: { zh: '选手按项目登记老师：有效会员自报，管理员可代填', en: 'Per-event cuber-teacher relations: member self-reporting with admin override' }, cols: [
-    { name: 'student_wca_id + event_id (PK)' }, { name: 'teacher_wca_id, teacher_name' }, { name: 'created_by, updated_by' },
+  { name: 'wca_teachers', domain: 'commerce', origin: '0114', evolved: [185], naturalKey: true, purpose: { zh: '选手按项目登记老师或自学：有效会员自报，管理员可代填', en: 'Per-event teacher or self-taught learning sources with member self-reporting and admin override' }, cols: [
+    { name: 'student_wca_id + event_id (PK)' }, { name: 'teacher_wca_id, teacher_name', note: { zh: '两者同时为空表示自学', en: 'Both null means self-taught' } }, { name: 'created_by, updated_by' },
   ] },
   { name: 'wca_teacher_named_students + wca_teacher_named_student_events', domain: 'commerce', origin: '0174', evolved: [177], purpose: { zh: '尚无 WCA ID 的学生名册：姓名、必填国籍与老师教授的项目分别保存', en: 'Teacher rosters for students without WCA IDs, with names, required nationalities, and taught events stored separately' }, family: [
     'wca_teacher_named_students', 'wca_teacher_named_student_events',
@@ -662,6 +662,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 182, slug: 'membership_plan_perks', desc: { zh: '统一个人套餐权益，并让企业套餐在个人权益基础上增加师生展示、企业介绍页、云端资料存储和课程方案定制。', en: 'Unify individual plan entitlements and add teacher-student presentation, an enterprise profile, cloud content storage, and course customization to enterprise plans.' } },
   { n: 183, slug: 'platform_physical_bundle_codes', desc: { zh: '为实体商品随包课程码增加批量生成、单次兑换、外部订单绑定和售后权益撤销审计。', en: 'Add batch generation, single redemption, external order binding, and audited after-sales entitlement reversal for course codes packed with physical goods.' } },
   { n: 184, slug: 'drive', desc: { zh: '新增 20 GB 共享配额的私人网盘、访问白名单、7 天断点上传会话、回收站与磁盘对象元数据。', en: 'Add a private Drive with a shared 20 GB quota, access list, seven-day resumable uploads, Trash, and disk-object metadata.' } },
+  { n: 185, slug: 'wca_self_taught', desc: { zh: 'WCA 选手可按项目明确登记为自学，并与尚未填写老师区分。', en: 'Allow WCA cubers to mark individual events as self-taught, distinct from having no learning source set.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

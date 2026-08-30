@@ -1,5 +1,5 @@
 /**
- * WCA 选手按项目登记老师关系。
+ * WCA 选手按项目登记学习来源（老师或自学）。
  *
  *   GET    /v1/wca/teachers?students=...&events=... — 按学生与项目公开批量读取
  *   GET    /v1/wca/teachers?teachers=...             — 按老师公开反查学生
@@ -7,8 +7,8 @@
  *   POST   /v1/wca/teachers/:teacherId/named-students — 老师本人或管理员添加
  *   PUT    /v1/wca/teachers/:teacherId/named-students/:id — 老师本人或管理员编辑
  *   DELETE /v1/wca/teachers/:teacherId/named-students/:id — 老师本人或管理员移除
- *   PUT    /v1/wca/teachers/:studentId/:eventId    — 有效会员老师登记自己，或有效会员学生填写本人老师；管理员可指定任意老师
- *   DELETE /v1/wca/teachers/:studentId/:eventId    — 老师本人、有效会员学生本人或管理员撤销
+ *   PUT    /v1/wca/teachers/:studentId/:eventId    — 有效会员老师登记自己；有效会员学生或管理员可填写老师/自学
+ *   DELETE /v1/wca/teachers/:studentId/:eventId    — 老师本人、有效会员学生本人或管理员撤销学习来源
  */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
@@ -32,16 +32,16 @@ interface TeacherRow {
   student_name: string;
   student_333_average?: number | null;
   event_id: string;
-  teacher_wca_id: string;
-  teacher_name: string;
-  teacher_country_iso2: string;
+  teacher_wca_id: string | null;
+  teacher_name: string | null;
+  teacher_country_iso2: string | null;
 }
 
 interface TeacherWriteRow {
   student_wca_id: string;
   event_id: string;
-  teacher_wca_id: string;
-  teacher_name: string;
+  teacher_wca_id: string | null;
+  teacher_name: string | null;
 }
 
 interface NamedStudentRow {
@@ -60,6 +60,7 @@ function toJson(row: TeacherRow) {
       ? { student333Average: row.student_333_average }
       : {}),
     eventId: row.event_id,
+    isSelfTaught: row.teacher_wca_id == null,
     teacherWcaId: row.teacher_wca_id,
     teacherName: row.teacher_name,
     teacherCountryIso2: row.teacher_country_iso2,
@@ -122,7 +123,7 @@ wcaTeacherRoutes.get('/wca/teachers', async (c) => {
             teacher_country.iso2 AS teacher_country_iso2
        FROM wca_teachers wt
        JOIN wca_persons student ON student.wca_id = wt.student_wca_id
-       JOIN wca_persons teacher ON teacher.wca_id = wt.teacher_wca_id
+       LEFT JOIN wca_persons teacher ON teacher.wca_id = wt.teacher_wca_id
        LEFT JOIN wca_countries teacher_country ON teacher_country.id = teacher.country_id
        LEFT JOIN LATERAL (
          SELECT MIN(result.average) AS best_average
@@ -300,12 +301,25 @@ wcaTeacherRoutes.put('/wca/teachers/:studentId/:eventId', async (c) => {
   if (!studentWcaId) return c.json({ error: 'invalid student WCA ID' }, 400);
   const eventId = normalizeWcaEventId(c.req.param('eventId'));
   if (!eventId) return c.json({ error: 'invalid event ID' }, 400);
-  const body: { teacherWcaId?: unknown } = await c.req.json<{ teacherWcaId?: unknown }>().catch(() => ({}));
+  const body: { teacherWcaId?: unknown; selfTaught?: unknown } = await c.req.json<{
+    teacherWcaId?: unknown;
+    selfTaught?: unknown;
+  }>().catch(() => ({}));
   const studentManagesOwnTeacher = actorWcaId === studentWcaId;
-  const teacherWcaId = isAdmin || studentManagesOwnTeacher
-    ? normalizeWcaId(body.teacherWcaId)
-    : actorWcaId;
-  if (!teacherWcaId) return c.json({ error: 'invalid teacher WCA ID' }, 400);
+  const mayChooseLearningSource = isAdmin || studentManagesOwnTeacher;
+  const isSelfTaught = body.selfTaught === true;
+  if (body.selfTaught !== undefined && body.selfTaught !== true) {
+    return c.json({ error: 'invalid self-taught value' }, 400);
+  }
+  if (isSelfTaught && (!mayChooseLearningSource || body.teacherWcaId !== undefined)) {
+    return c.json({ error: 'invalid learning source' }, 400);
+  }
+  const teacherWcaId = isSelfTaught
+    ? null
+    : mayChooseLearningSource
+      ? normalizeWcaId(body.teacherWcaId)
+      : actorWcaId;
+  if (!isSelfTaught && !teacherWcaId) return c.json({ error: 'invalid teacher WCA ID' }, 400);
   if (studentWcaId === teacherWcaId) return c.json({ error: 'a person cannot be their own teacher' }, 400);
 
   if (!isAdmin) {
@@ -314,7 +328,7 @@ wcaTeacherRoutes.put('/wca/teachers/:studentId/:eventId', async (c) => {
     }
   }
 
-  const people = await query<{ wca_id: string; name: string; country_iso2: string }>(
+  const people = await query<{ wca_id: string; name: string; country_iso2: string | null }>(
     `SELECT person.wca_id, person.name, country.iso2 AS country_iso2
        FROM wca_persons person
        LEFT JOIN wca_countries country ON country.id = person.country_id
@@ -324,14 +338,14 @@ wcaTeacherRoutes.put('/wca/teachers/:studentId/:eventId', async (c) => {
   const personById = new Map(people.map((person) => [person.wca_id, person]));
   const student = personById.get(studentWcaId);
   if (!student) return c.json({ error: 'student not found' }, 404);
-  const teacher = personById.get(teacherWcaId);
-  if (!teacher) return c.json({ error: 'teacher not found' }, 404);
+  const teacher = teacherWcaId ? personById.get(teacherWcaId) : null;
+  if (teacherWcaId && !teacher) return c.json({ error: 'teacher not found' }, 404);
 
-  const existing = await query<{ teacher_wca_id: string }>(
+  const existing = await query<{ teacher_wca_id: string | null }>(
     'SELECT teacher_wca_id FROM wca_teachers WHERE student_wca_id = ? AND event_id = ?',
     [studentWcaId, eventId],
   );
-  if (!mayReplaceTeacher(isAdmin || studentManagesOwnTeacher, actorWcaId, existing[0]?.teacher_wca_id ?? null)) {
+  if (!mayReplaceTeacher(isAdmin || studentManagesOwnTeacher, actorWcaId, existing[0]?.teacher_wca_id)) {
     return c.json({ error: 'teacher already set' }, 409);
   }
 
@@ -350,13 +364,13 @@ wcaTeacherRoutes.put('/wca/teachers/:studentId/:eventId', async (c) => {
        updated_by = EXCLUDED.updated_by
      ${conflictGuard}
      RETURNING student_wca_id, event_id, teacher_wca_id, teacher_name`,
-    [studentWcaId, eventId, teacherWcaId, teacher.name, actorWcaId, actorWcaId],
+    [studentWcaId, eventId, teacherWcaId, teacher?.name ?? null, actorWcaId, actorWcaId],
   );
   if (!rows.length) return c.json({ error: 'teacher already set' }, 409);
   return c.json({ teacher: toJson({
     ...rows[0],
     student_name: student.name,
-    teacher_country_iso2: teacher.country_iso2,
+    teacher_country_iso2: teacher?.country_iso2 ?? null,
   }) });
 });
 
@@ -371,7 +385,7 @@ wcaTeacherRoutes.delete('/wca/teachers/:studentId/:eventId', async (c) => {
   if (!studentWcaId) return c.json({ error: 'invalid student WCA ID' }, 400);
   const eventId = normalizeWcaEventId(c.req.param('eventId'));
   if (!eventId) return c.json({ error: 'invalid event ID' }, 400);
-  const rows = await query<{ teacher_wca_id: string }>(
+  const rows = await query<{ teacher_wca_id: string | null }>(
     'SELECT teacher_wca_id FROM wca_teachers WHERE student_wca_id = ? AND event_id = ?',
     [studentWcaId, eventId],
   );
