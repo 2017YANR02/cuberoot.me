@@ -155,7 +155,7 @@ describe('mini program app structure', () => {
     expect(PUBLIC_INDEXED_PAGES).not.toContain('pages/web/index');
   });
 
-  it('keeps web-backed pages on the shared controller', () => {
+  it('keeps web-backed pages on the shared controller and account sharing native', () => {
     const timerPage = pageFiles['../src/pages/timer/index.ts'];
     const toolsPage = pageFiles['../src/pages/tools/index.ts'];
     const accountPage = pageFiles['../src/pages/account/index.ts'];
@@ -172,13 +172,14 @@ describe('mini program app structure', () => {
 
     expect(timerPage).toContain("createWebViewPageOptions('timer')");
     expect(toolsPage).toContain("createWebViewPageOptions('home')");
-    expect(accountPage).toContain("createWebViewPageOptions('account',");
-    expect(accountPage).toContain('requireMiniProgramSession: true');
+    expect(accountPage).not.toContain('createWebViewPageOptions');
+    expect(accountPage).toContain('showPublicShareMenu');
+    expect(accountPage).toContain('onShareTimeline');
     expect(genericWebPage).toContain('createWebViewPageOptions()');
     expect(timerPage).not.toMatch(/timer-store|setInterval|setTimeout/);
     expect(timerTemplate).toContain('templates/web-route-view.wxml');
     expect(toolsTemplate).toContain('templates/web-route-view.wxml');
-    expect(accountTemplate).toContain('templates/web-route-view.wxml');
+    expect(accountTemplate).not.toContain('templates/web-route-view.wxml');
     expect(genericWebTemplate).toContain('templates/web-route-view.wxml');
     expect(sharedTemplate).toContain('<web-view');
     expect(sharedTemplate).toContain('data-attempt="{{viewAttempt}}"');
@@ -188,12 +189,12 @@ describe('mini program app structure', () => {
     expect(genericWebTemplate).not.toContain('<web-view');
     expect(timerTemplate).toContain('viewAttempt: viewAttempt');
     expect(toolsTemplate).toContain('viewAttempt: viewAttempt');
-    expect(accountTemplate).toContain('viewAttempt: viewAttempt');
     expect(genericWebTemplate).toContain('viewAttempt: viewAttempt');
     expect(timerTemplate).toBe(genericWebTemplate);
     expect(toolsTemplate).toBe(genericWebTemplate);
     expect(accountTemplate).toContain('bindtap="loginWithWechat"');
-    expect(accountTemplate).toContain('wx:if="{{loginRequired}}"');
+    expect(accountTemplate).toContain('wx:if="{{isTimelineEntry}}"');
+    expect(accountTemplate).toContain('前往小程序');
     expect(accountTemplate).toContain('aria-busy="{{loginBusy}}"');
     expect(accountTemplate).toContain('aria-label="重新读取设备登录状态"');
     expect(accountTemplate).toContain('aria-role="status"');
@@ -203,17 +204,19 @@ describe('mini program app structure', () => {
     expect(genericWebStyles.trim()).toBe('');
   });
 
-  it('keeps timeline sharing on a native page outside every web view', () => {
+  it('keeps timeline sharing on the native account tab outside every web view', () => {
     const controller = sourceFiles['../src/lib/web-view-page.ts'];
-    const sharePage = pageFiles['../src/pages/share/index.ts'];
-    const shareTemplate = pageFiles['../src/pages/share/index.wxml'];
+    const accountPage = pageFiles['../src/pages/account/index.ts'];
+    const accountTemplate = pageFiles['../src/pages/account/index.wxml'];
 
     expect(controller).toContain('showFriendShareMenu');
     expect(controller).not.toContain('onShareTimeline');
-    expect(sharePage).toContain('showPublicShareMenu');
-    expect(sharePage).toContain('onShareTimeline');
-    expect(shareTemplate).not.toContain('<web-view');
-    expect(shareTemplate).toContain('分享到朋友圈');
+    expect(accountPage).toContain('showPublicShareMenu');
+    expect(accountPage).toContain('onShareTimeline');
+    expect(accountPage).toContain('TIMELINE_SCENE = 1154');
+    expect(accountTemplate).not.toContain('<web-view');
+    expect(accountTemplate).toContain('CubeRoot 登录入口');
+    expect(pageFiles['../src/pages/share/index.ts']).toBeUndefined();
   });
 
   it('starts smart-cube discovery on page load without a second search action', () => {

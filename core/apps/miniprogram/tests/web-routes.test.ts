@@ -14,7 +14,6 @@ import {
   listWebTools,
   resolveWebRoute,
   resolveWebRouteShare,
-  resolveTimelineShareRoute,
   resolveAccountPageShare,
   resolveToolsPageShare,
   resolveWebTool,
@@ -181,26 +180,6 @@ describe('mini program web routes', () => {
     expect(resolveWebRouteShare('privacy')).toBeNull();
     expect(resolveWebRouteShare('logout')).toBeNull();
     expect(resolveWebRouteShare('unknown')).toBeNull();
-  });
-
-  it('derives native timeline proxy content from the same public route', () => {
-    expect(resolveTimelineShareRoute('alg')).toEqual({
-      description: '计时、公式、模拟、复盘与打乱。',
-      key: 'alg',
-      targetShare: {
-        imageUrl: WEB_ROUTE_SHARE_IMAGE,
-        title: 'CubeRoot 魔方根：公式',
-        path: '/pages/web/index?key=alg',
-      },
-      timelineShare: {
-        imageUrl: WEB_ROUTE_SHARE_IMAGE,
-        title: 'CubeRoot 魔方根：公式',
-        path: '/pages/share/index?key=alg',
-      },
-      title: '公式',
-    });
-    expect(resolveTimelineShareRoute('account')).toBeNull();
-    expect(resolveTimelineShareRoute('unknown')).toBeNull();
   });
 
   it('only registers destinations backed by canonical website pages or redirects', () => {

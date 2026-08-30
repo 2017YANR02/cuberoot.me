@@ -1,5 +1,18 @@
-<import src="../../templates/web-route-view.wxml" />
-<view wx:if="{{loginRequired}}" class="page account-login-page">
+<view wx:if="{{isTimelineEntry}}" class="page account-entry-page">
+  <text class="eyebrow">CUBEROOT</text>
+  <text class="page-title">CubeRoot 登录入口</text>
+  <text class="page-intro">
+    使用微信登录 CubeRoot，继续使用计时、成绩、复盘与学习功能。
+  </text>
+  <view class="account-entry-guide" aria-role="status">
+    <text class="account-entry-title">微信登录</text>
+    <text class="account-entry-copy">
+      朋友圈单页不提供登录能力。微信会在页面底部提供“前往小程序”入口，进入完整小程序后可使用微信登录。
+    </text>
+  </view>
+</view>
+
+<view wx:elif="{{loginRequired}}" class="page account-login-page">
   <text class="eyebrow">ACCOUNT</text>
   <text class="page-title">我的</text>
   <text class="page-intro">
@@ -7,7 +20,7 @@
   </text>
   <button
     wx:if="{{!loginStorageUnavailable}}"
-    class="primary-button account-login-button"
+    class="primary-button account-primary-button"
     aria-busy="{{loginBusy}}"
     aria-label="{{loginBusy ? '微信登录处理中' : '微信登录'}}"
     disabled="{{loginBusy}}"
@@ -18,7 +31,7 @@
   </button>
   <button
     wx:else
-    class="primary-button account-login-button"
+    class="primary-button account-primary-button"
     aria-label="重新读取设备登录状态"
     hover-class="press-feedback"
     bindtap="retryMiniProgramSession"
@@ -32,12 +45,30 @@
     aria-live="polite"
     aria-atomic="true"
   >{{loginError}}</text>
-  <text class="account-login-note">
+  <text class="account-note">
     不会读取微信昵称或手机号。无法获得 UnionID 时会停止登录，避免创建重复账号。
   </text>
 </view>
-<template
-  wx:else
-  is="web-route-view"
-  data="{{src: src, viewAttempt: viewAttempt, loadingTitle: loadingTitle, errorTitle: errorTitle, errorMessage: errorMessage, canRetry: canRetry}}"
-/>
+
+<view wx:else class="page account-user-page">
+  <text class="eyebrow">ACCOUNT</text>
+  <text class="page-title">{{displayName}}</text>
+  <text wx:if="{{uidText}}" class="account-user-meta">CubeRoot ID {{uidText}}</text>
+  <text wx:if="{{wcaId}}" class="account-user-meta">{{wcaId}}</text>
+  <button
+    class="primary-button account-primary-button"
+    aria-label="打开 CubeRoot 账号管理"
+    hover-class="press-feedback"
+    bindtap="openAccount"
+  >
+    打开账号管理
+  </button>
+  <text
+    wx:if="{{accountError}}"
+    class="status-text status-text--error"
+    aria-role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  >{{accountError}}</text>
+  <text class="account-note">从右上角“…”可分享 CubeRoot 登录入口到朋友圈。</text>
+</view>
