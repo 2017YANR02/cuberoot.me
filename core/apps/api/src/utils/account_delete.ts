@@ -18,6 +18,7 @@
  */
 import { sql } from '../db/connection.js';
 import { deletedOwnerKey } from '@cuberoot/shared/account';
+import { removeDriveAccountFiles } from './drive_storage.js';
 
 /** 私有数据:[表, 归属列]。整行删除。 */
 export const PURGE_TABLES: readonly (readonly [string, string])[] = [
@@ -145,6 +146,9 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   user_friendships: '好友关系的三个账号外键都随 app_users 级联删',
   user_blocks: '黑名单关系的双向账号外键都随 app_users 级联删',
   user_wca_friend_contacts: '未注册 WCA 好友条目只属于账号本人,随 app_users 级联删',
+  drive_members: '网盘访问权限随 app_users 级联删',
+  drive_nodes: '私有网盘元数据随 app_users 级联删,磁盘实体文件由注销流程清理',
+  drive_uploads: '未完成上传随 app_users 级联删,临时文件由注销流程清理',
   organizations: '机构主体独立保留,创建者外键随账号删除置空',
   organization_members: '机构成员关系随账号删除级联,但最后一位有效 owner 会被事务拒绝',
   student_profiles: '学员档案属于机构,关联站内账号随账号删除置空',
@@ -222,6 +226,8 @@ export class AccountOwnsOrganizationError extends Error {
  */
 export async function deleteAccount(userId: number, key: string): Promise<void> {
   const tomb = deletedOwnerKey(userId);
+  let driveStorageKeys: string[] = [];
+  let driveUploads: { id: string; nodeId: string }[] = [];
   await sql.begin(async (tx) => {
     // 与教学沟通写事务共用 app_users 第一把锁。账号一旦进入删除流程,新消息、参与者
     // 与已读游标都必须先等待删除完成,不能在持有 conversation 锁后再反向等待账号行。
@@ -248,6 +254,14 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
       )
       FOR UPDATE OF o, own`;
     if (soleOwnerships.length > 0) throw new AccountOwnsOrganizationError();
+
+    const storedDriveFiles = await tx<{ storage_key: string }[]>`
+      SELECT storage_key FROM drive_nodes
+       WHERE owner_user_id = ${userId} AND storage_key IS NOT NULL`;
+    const pendingDriveUploads = await tx<{ id: string; node_id: string }[]>`
+      SELECT id, node_id FROM drive_uploads WHERE owner_user_id = ${userId}`;
+    driveStorageKeys = storedDriveFiles.map((row) => row.storage_key);
+    driveUploads = pendingDriveUploads.map((row) => ({ id: row.id, nodeId: row.node_id }));
 
     // 表名 / 列名走字符串插值、值一律走 $n 占位符。标识符全部来自本文件顶上那两张常量清单
     // (且有测试把它们钉在 schema 上),不接受任何外部输入 —— 注入面为零。
@@ -354,4 +368,7 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
     // 的 BEFORE DELETE trigger 在同一事务内完整清理并匿名化。
     await tx`DELETE FROM app_users WHERE id = ${userId}`;
   });
+
+  // 数据库提交后再清实体文件:事务失败时仍保留可用文件；成功后已没有账号可继续写这些路径。
+  await removeDriveAccountFiles(driveStorageKeys, driveUploads);
 }

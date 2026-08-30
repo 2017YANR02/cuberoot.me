@@ -139,9 +139,7 @@
   margin-bottom: 18px;
 }
 
-.drive-toolbar button,
-.drive-inline-form > button:not(.clear-btn),
-.drive-member-results button,
+.drive-control,
 .drive-primary {
   appearance: none;
   display: inline-flex;
@@ -160,24 +158,19 @@
   cursor: pointer;
 }
 
-.drive-toolbar button:hover,
-.drive-inline-form > button:not(.clear-btn):hover,
-.drive-member-results button:hover {
+.drive-control:hover {
   border-color: var(--border-strong);
   background: color-mix(in srgb, var(--foreground) 5%, transparent);
 }
 
-.drive-toolbar .drive-primary,
-.drive-inline-form .drive-primary,
+.drive-primary,
 .drive-gate .drive-primary {
   border-color: var(--accent);
   background: var(--accent);
   color: var(--accent-foreground);
 }
 
-.drive-toolbar button:disabled,
-.drive-inline-form button:disabled,
-.drive-member-results button:disabled,
+.drive-control:disabled,
 .drive-icon-action:disabled {
   opacity: .45;
   cursor: not-allowed;
@@ -192,7 +185,6 @@
   margin: 2px 0 18px;
 }
 
-.drive-inline-form input,
 .drive-text-control {
   min-width: 0;
   min-height: 36px;
@@ -204,11 +196,10 @@
   padding: 7px 10px;
 }
 
-.drive-inline-form input {
+.drive-inline-control {
   width: min(320px, 60vw);
 }
 
-.drive-inline-form input:focus,
 .drive-text-control:focus {
   border-color: var(--accent);
   outline: 2px solid color-mix(in srgb, var(--accent) 18%, transparent);
@@ -654,7 +645,7 @@
     flex-wrap: wrap;
   }
 
-  .drive-inline-form input {
+  .drive-inline-control {
     width: 100%;
   }
 

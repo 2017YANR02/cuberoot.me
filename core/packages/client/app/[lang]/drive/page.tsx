@@ -480,16 +480,16 @@ function DrivePageContent() {
       {view === 'files' && (
         <div className="drive-toolbar">
           <input ref={inputRef} className="drive-file-input" type="file" multiple onChange={onFilesSelected} />
-          <button type="button" className="drive-primary" onClick={() => inputRef.current?.click()}><Upload aria-hidden="true" />{t('上传文件', 'Upload files')}</button>
-          <button type="button" onClick={() => setNewFolderOpen(true)}><FolderPlus aria-hidden="true" />{t('新建文件夹', 'New folder')}</button>
-          {snapshot?.isAdmin && <button type="button" onClick={() => setMembersOpen((open) => !open)}><Users aria-hidden="true" />{t('成员', 'Members')}</button>}
+          <button type="button" className="drive-control drive-primary" onClick={() => inputRef.current?.click()}><Upload aria-hidden="true" />{t('上传文件', 'Upload files')}</button>
+          <button type="button" className="drive-control" onClick={() => setNewFolderOpen(true)}><FolderPlus aria-hidden="true" />{t('新建文件夹', 'New folder')}</button>
+          {snapshot?.isAdmin && <button type="button" className="drive-control" onClick={() => setMembersOpen((open) => !open)}><Users aria-hidden="true" />{t('成员', 'Members')}</button>}
         </div>
       )}
 
       {newFolderOpen && view === 'files' && (
         <form className="drive-inline-form" onSubmit={(event) => { event.preventDefault(); void createFolder(); }}>
-          <input autoFocus value={newFolderName} maxLength={255} onChange={(event) => setNewFolderName(event.target.value)} placeholder={t('文件夹名称', 'Folder name')} aria-label={t('文件夹名称', 'Folder name')} />
-          <button type="submit" className="drive-primary" disabled={!newFolderName.trim()}>{t('创建', 'Create')}</button>
+          <input className="drive-text-control drive-inline-control" autoFocus value={newFolderName} maxLength={255} onChange={(event) => setNewFolderName(event.target.value)} placeholder={t('文件夹名称', 'Folder name')} aria-label={t('文件夹名称', 'Folder name')} />
+          <button type="submit" className="drive-control drive-primary" disabled={!newFolderName.trim()}>{t('创建', 'Create')}</button>
           <ClearButton variant="standalone" ariaLabel={t('取消新建文件夹', 'Cancel new folder')} onClick={() => { setNewFolderOpen(false); setNewFolderName(''); }} />
         </form>
       )}
@@ -501,7 +501,7 @@ function DrivePageContent() {
           {memberResults.length > 0 && (
             <div className="drive-member-results">
               {memberResults.map((candidate) => (
-                <div key={candidate.userId}><span><strong>{candidate.name}</strong>{candidate.wcaId && <small>{candidate.wcaId}</small>}</span><button type="button" onClick={() => void addMember(candidate)} disabled={memberBusy === candidate.userId}><UserPlus aria-hidden="true" />{t('加入', 'Add')}</button></div>
+                <div key={candidate.userId}><span><strong>{candidate.name}</strong>{candidate.wcaId && <small>{candidate.wcaId}</small>}</span><button type="button" className="drive-control" onClick={() => void addMember(candidate)} disabled={memberBusy === candidate.userId}><UserPlus aria-hidden="true" />{t('加入', 'Add')}</button></div>
               ))}
             </div>
           )}
