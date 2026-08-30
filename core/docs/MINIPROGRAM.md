@@ -1,6 +1,6 @@
 # CubeRoot 微信小程序跟踪
 
-> 最后更新：2026-08-27。本文是小程序的架构约定、当前状态、上线清单和迭代记录。后续开发先更新这里，不再另建互相冲突的计划。
+> 最后更新：2026-08-30。本文是小程序的架构约定、当前状态、上线清单和迭代记录。后续开发先更新这里，不再另建互相冲突的计划。
 
 ## 1. 产品路线
 
@@ -17,7 +17,8 @@
 
 | 改动 | 唯一入口 | 约束 |
 |---|---|---|
-| 网站入口、标题、说明、顺序 | `apps/miniprogram/src/lib/web-routes.ts` | 不在 WXML 里再写一份列表 |
+| 网站首页公开入口、标题、说明、顺序 | `@cuberoot/shared/site-directory` | 网站补视觉素材，小程序补平台动作；两端不得另写第二份目录 |
+| 小程序网页白名单、搜索和分享路径 | `apps/miniprogram/src/lib/web-routes.ts` | 只从共享首页目录派生，并追加账号、隐私、退出三个私有入口 |
 | 网站和 API 域名 | `apps/miniprogram/src/lib/runtime-config.ts` | 只使用已在小程序后台配置的 HTTPS 域名 |
 | `web-view` 加载、换票超时、失败和重试 | `apps/miniprogram/src/lib/web-view-page.ts` | 计时页和通用网页共用，不各自补丁 |
 | `web-view` 加载与错误界面 | `apps/miniprogram/src/templates/web-route-view.wxml` + `app.wxss` | 页面只传状态，不复制 WXML 或页面级样式 |
@@ -35,7 +36,7 @@
 | 全局视觉变量和通用按钮 | `apps/miniprogram/src/app.wxss` | 页面只写自身布局 |
 | 账号落库 | 服务端 `account_auth.ts` + `wechat_miniprogram.ts` | 网站和小程序都只用 UnionID |
 
-新增一个网站工具入口时，只改路由表并补测试。新增原生功能前，先在本文件写清楚为什么不能继续复用网站。
+新增或调整网站首页入口时，只改共享目录并补测试；网站和小程序会同时消费。新增原生功能前，先在本文件写清楚为什么不能继续复用网站。
 
 路由测试会直接核对 `packages/client/app/[lang]` 中的真实页面或 `next.config.ts` 中的明确跳转。网站若移动入口，小程序测试必须同时失败，避免发布后才发现 `web-view` 指向失效地址。
 
@@ -50,6 +51,7 @@
 - [x] request 合法域名已配置为 `https://api.cuberoot.me`。
 - [x] socket 合法域名已配置为 `wss://api.cuberoot.me`。
 - [x] 业务域名已配置为 `https://cuberoot.me`，校验文件已部署。
+- [ ] 博客最终会跳到 `https://blog.cuberoot.me`；该子域名仍需在微信后台补充为业务域名。代码先统一从主域规范路径进入，不绕过微信域名校验。
 - [x] 服务类目 `工具 > 信息查询` 已通过并设为主类目。
 - [x] 小程序基础信息已完成。
 - [x] 小程序备案已完成。
@@ -61,7 +63,7 @@
 
 - [x] 微信开发者工具可导入 `apps/miniprogram/`，产物目录为 `dist/`。
 - [x] 计时器通过 `web-view` 复用网站，并已在真机正常打开。
-- [x] 公式库、WCA 比赛、魔方百科和课程使用统一路由表打开网站。
+- [x] 网站首页 53 个静态公开入口全部来自 `@cuberoot/shared/site-directory`；小程序按同一顺序分组、搜索并执行原生、网页、复制或维护中动作。
 - [x] 原生微信登录已接入后端 `/v1/auth/wechat/miniprogram`。
 - [x] 登录只接受 UnionID；缺失时拒绝创建账号，避免同一用户产生两个账号。
 - [x] 微信开发者工具的旧 Chromium 兼容边界固定为 Chrome 91，并有网站回归测试保护。
@@ -81,6 +83,70 @@
 - [x] 中继只保存在服务端内存，限制帧大小、频率和通道数量，不记录会话令牌或魔方实时数据。
 - [x] 初始魔方状态、连接中取消、旧连接迟到回调和计时页恢复均有竞态回归测试。
 - [ ] GAN 16 ui 的真实硬件连接、转动、状态、电量、断开和重连尚待 Android 设备验收。
+
+### 网站首页入口覆盖（2026-08-30）
+
+事实源为 `packages/shared/src/site_directory.ts`。网站首页继续使用原有卡片尺寸、图标、图片和权限展示，小程序只把同一目录转换为适合微信窄屏的分组列表；网页页面仍由网站维护，不复制 React UI、数据请求或业务规则。
+
+| 完成 | 分组 | 目录 ID | 网站入口 | 小程序动作 |
+|---|---|---|---|---|
+| [x] | 常用 | `timer` | `/timer` | 原生底栏计时页 |
+| [x] | 常用 | `algdb` | `/alg` | 网页白名单键 `alg` |
+| [x] | 常用 | `sim` | `/sim` | 网页白名单 |
+| [x] | 常用 | `recon` | `/recon` | 网页白名单 |
+| [x] | 常用 | `scramble` | `/scramble` | 网页白名单 |
+| [x] | WCA | `competitions` | `/wca/comp` | 网页白名单 |
+| [x] | WCA | `wca-records` | `/wca/records` | 网页白名单 |
+| [x] | WCA | `wca-results` | `/wca/results` | 网页白名单 |
+| [x] | WCA | `wca-stats` | `/wca` | 网页白名单 |
+| [x] | 训练 | `memo` | `/memo` | 网页白名单 |
+| [x] | 训练 | `predict` | `/predict` | 网页白名单 |
+| [x] | 训练 | `color-test` | `/color-test` | 网页白名单 |
+| [x] | 训练 | `blddb` | `/blddb` | 网页白名单 |
+| [x] | 训练 | `trainer` | `/alg-trainers` | 网页白名单 |
+| [x] | 训练 | `cstimer` | `/cstimer` | 网页白名单 |
+| [x] | 工具 | `contests` | `/contests` | 网页白名单 |
+| [x] | 工具 | `comp-sim` | `/comp-sim` | 网页白名单 |
+| [x] | 工具 | `frame-count` | `/frame-count` | 网页白名单 |
+| [x] | 工具 | `solver` | `/solver` | 网页白名单 |
+| [x] | 工具 | `mosaic` | `/mosaic` | 网页白名单 |
+| [x] | 工具 | `paint` | `/paint` | 网页白名单 |
+| [x] | 工具 | `icon` | `/icon` | 网页白名单 |
+| [x] | 工具 | `timezone` | `/timezone` | 网页白名单 |
+| [x] | 工具 | `calendar` | `/calendar` | 网页白名单 |
+| [x] | 学习 | `platform` | `/platform` | 网页白名单 |
+| [x] | 学习 | `teaching-management` | `/org` | 网页白名单 |
+| [x] | 学习 | `learning-center` | `/learn` | 网页白名单 |
+| [x] | 学习 | `teaching` | `/courses` | 网页白名单 |
+| [x] | 学习 | `teachers` | `/teachers` | 网页白名单 |
+| [x] | 学习 | `live-scripts` | `/teachers/scripts` | 网页白名单 |
+| [x] | 学习 | `meet` | `/meet` | 网页白名单 |
+| [x] | 学习 | `documents` | `/docs` | 网页白名单 |
+| [x] | 学习 | `spreadsheets` | `/sheets` | 网页白名单 |
+| [x] | 学习 | `alg` | `/tutorial` | 保留网站“管理员维护中”，禁用跳转 |
+| [x] | 学习 | `quiz` | `/quiz` | 网页白名单 |
+| [x] | 学习 | `wiki` | `/wiki` | 网页白名单 |
+| [x] | 学习 | `regulation` | `/regulation` | 网页白名单 |
+| [x] | 学习 | `notation` | `/notation` | 网页白名单 |
+| [x] | 学习 | `math-hub` | `/math` | 网页白名单 |
+| [x] | 学习 | `why-cube` | `/why-cube` | 网页白名单 |
+| [x] | 其他 | `forum` | `/forum` | 网页白名单 |
+| [x] | 其他 | `drive` | `/drive` | 网页白名单 |
+| [x] | 其他 | `contact` | `/contact` | 网页白名单 |
+| [x] | 其他 | `feedback` | `/feedback` | 网页白名单 |
+| [x] | 其他 | `dev` | `/dev` | 网页白名单 |
+| [x] | 其他 | `blog` | `/blog/` | 从主域 `/zh/blog` 进入规范跳转，不申请登录换票 |
+| [x] | 其他 | `site` | `/site` | 网页白名单 |
+| [x] | 其他 | `wb` | `/wb` | 网页白名单 |
+| [x] | 其他 | `achievements` | `/achievements` | 网页白名单 |
+| [x] | 其他 | `creator` | `/about/ruimin` | 网页白名单 |
+| [x] | 关于 | `about` | `/about` | 网页白名单 |
+| [x] | 关于 | `support` | `/support` | 网页白名单，与“我的”页复用同一路由 |
+| [x] | 关于 | `github` | 外部仓库 | 复制链接，不把任意外域交给 `web-view` |
+
+共 53 项：51 项有小程序路由键，其中计时跳原生底栏、其余 50 项打开受控网页；教程为维护中禁用项，GitHub 为复制项。测试锁定分组数量 `5 + 4 + 6 + 9 + 16 + 10 + 3`、目录 ID 唯一性、路由存在性、搜索结果和例外动作。
+
+网站首页的“最近打乱”“今日复盘”“进行中比赛”“论坛动态”是运行时数据，不是固定导航目录；它们的父入口 `scramble`、`recon`、`competitions`、`forum` 已覆盖。具体动态条目继续由打开后的网页实时提供，不在小程序包中复制。登录后的头像、管理入口和首页公告也属于用户状态或运营数据，不计入 53 个公开静态入口。
 
 ## 4. 账号方案
 
@@ -206,6 +272,16 @@ pnpm --filter @cuberoot/miniprogram release:check
 | 定位、摄像头、麦克风、相册、通讯录 | 不使用 | 后台不应声明收集 |
 
 ## 9. 迭代记录
+
+### 2026-08-30：网站首页 53 个入口单源同步
+
+- 新增运行时中性的 `@cuberoot/shared/site-directory`，完整保存网站首页七个分组、53 个固定入口、双语名称、说明、顺序与少量跨端动作元数据；网站首页和小程序不再各自维护目录。
+- 网站继续在 `landing-sections.tsx` 添加既有图标与图片，不改变原卡片结构；创作者资料也改为复用同一事实源，避免个人入口另行漂移。
+- 小程序工具页按网站分组展示全部入口，并支持中文、英文、ID 与路径搜索；没有为了扩容复制任何网站页面。
+- 51 个公开路由统一进入现有白名单、分享和会话换票流程；计时使用原生底栏，博客通过主域规范路径进入且不申请会话票据。
+- 微信后台现有业务域名只有主域；`blog.cuberoot.me` 的补充登记单独保留为发布阻塞项，登记完成前不能把主域重定向误报为真机已验收。
+- 教程保持网站的管理员维护中状态，GitHub 只复制固定链接；非法 ID 仍在平台导航前拒绝。
+- 回归测试锁定 53 个唯一 ID、七组数量、51 个公开路由、真实网站页面、搜索命中、原生计时、复制和维护中例外；小程序构建会把共享目录纳入外部依赖指纹。
 
 ### 2026-08-16：原生 BLE 与网站计时器短时中继
 

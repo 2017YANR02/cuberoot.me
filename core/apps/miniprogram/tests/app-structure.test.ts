@@ -224,8 +224,8 @@ describe('mini program app structure', () => {
     const accountTemplate = pageFiles['../src/pages/account/index.wxml'];
     const sharedTemplate = sourceFiles['../src/templates/web-route-view.wxml'];
 
-    expect(toolsTemplate).toContain('aria-label="{{item.title}}，{{item.description}}"');
-    expect(toolsTemplate).toMatch(/class="tool-arrow"\s+aria-hidden="true"/);
+    expect(toolsTemplate).toContain('aria-label="{{tool.title}}，{{tool.actionLabel}}"');
+    expect(toolsTemplate).toMatch(/class="tool-arrow"[^>]*aria-hidden="true"/);
     expect(accountTemplate).toMatch(/class="identity-mark"\s+aria-hidden="true"/);
     expect(accountTemplate).toContain('aria-label="账号与登录"');
     expect(accountTemplate).toMatch(/class="account-link-arrow"\s+aria-hidden="true"/);
@@ -239,7 +239,7 @@ describe('mini program app structure', () => {
     expect(accountTemplate.match(/aria-live="polite"/g)).toHaveLength(2);
     expect(accountTemplate.match(/aria-atomic="true"/g)).toHaveLength(2);
     expect(toolsTemplate).toMatch(
-      /class="status-text status-text--error tools-status"[^>]*aria-role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/,
+      /class="status-text tools-status[^>]*aria-role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/,
     );
     expect(sharedTemplate).toMatch(/class="web-status-spinner"[^>]*aria-hidden="true"/);
     expect(sharedTemplate).toContain('aria-role="status"');
@@ -268,7 +268,7 @@ describe('mini program app structure', () => {
     expect(accountStyles).not.toMatch(/\.login-button\s*\{[\s\S]*?\n\s*width:\s*260rpx;/);
     expect(accountStyles).toMatch(/\.account-link-title\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
     expect(toolStyles).toMatch(/\.tool-name\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
-    expect(toolStyles).toMatch(/\.tool-description\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
+    expect(toolStyles).toMatch(/\.tool-group-description\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
   });
 
   it('lets long tool labels shrink without colliding with their arrow', () => {

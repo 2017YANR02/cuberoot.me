@@ -4,14 +4,22 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { ArrowRight, Heart, Radio, Trophy, ListOrdered, Lock, LogIn, User, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Heart, Lock, LogIn, User, type LucideIcon } from 'lucide-react';
 import Link from '@/components/AppLink';
 import LangToggle from '@/components/LangToggle';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import LandingSearch from '@/components/LandingSearch';
 import LazyVisible from '@/components/LazyVisible';
-import { TEXTS, SECTIONS, PRIMARY_CARDS, SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
+import {
+  FOOTER_ENTRIES,
+  PRIMARY_CARDS,
+  SEARCH_CARDS,
+  SECTIONS,
+  TEXTS,
+  WCA_CARDS,
+  isLandingSearchCardVisible,
+} from '@/lib/landing-sections';
 
 // Below-the-fold widgets — dynamic to defer client hydrate / chunk fetch.
 // The dynamic fallback and viewport placeholder use the same measured height,
@@ -42,13 +50,9 @@ import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { fetchPageNotices, type PageNotice } from '@/lib/page-notices-api';
 import { colorFor, iconFor } from '@/lib/page-notice-visuals';
 
-// 原单张「WCA 统计」hero 拆成四张直达卡;统计卡保留 WCA 标志作品牌锚点,其余用 lucide 图标。
-const WCA_ENTRIES: { href: string; zh: string; en: string; Icon?: LucideIcon; img?: string }[] = [
-  { href: '/wca/comp',        zh: '比赛', en: 'Competitions', Icon: Radio },
-  { href: '/wca/records',     zh: '纪录', en: 'Records',      Icon: Trophy },
-  { href: '/wca/results',     zh: '排名', en: 'Rankings',     Icon: ListOrdered },
-  { href: '/wca',             zh: '统计', en: 'Statistics',   img: '/icons/wca.svg' },
-];
+const ABOUT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'about')!;
+const SUPPORT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'support')!;
+const GITHUB_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'github')!;
 
 interface LandingCardContentProps {
   label: string;
@@ -195,10 +199,10 @@ export default function LandingPage() {
 
         {/* WCA 入口 — 紧接主入口,原单张「WCA 统计」hero 拆成四张直达卡:比赛 / 纪录 / 排名 / 统计 */}
         <div className="wca-hero-grid">
-          {WCA_ENTRIES.map((e) => (
-            <Link key={e.href} href={e.href} className="landing-card" prefetch={false}>
+          {WCA_CARDS.map((card) => (
+            <Link key={card.id} href={card.href} className="landing-card" prefetch={false}>
               {/* allow-nested-link: LandingCardContent only renders an icon and label. */}
-              <LandingCardContent label={tr({ zh: e.zh, en: e.en })} Icon={e.Icon} iconImg={e.img} />
+              <LandingCardContent label={t(card.nameKey)} Icon={card.Icon} iconImg={card.iconImg} />
             </Link>
           ))}
         </div>
@@ -273,15 +277,16 @@ export default function LandingPage() {
       </div>
 
       <div className="footer">
-        <Link href="/about" className="footer-about" prefetch={false}>{tr({ zh: '关于', en: 'About'
-        })}</Link>
-        <Link href="/support" className="footer-credits" prefetch={false}>
+        {/* allow-nested-link: footer entries are sibling links with text-only contents. */}
+        <Link href={ABOUT_FOOTER_ENTRY.href} className="footer-about" prefetch={false}>
+          {t(ABOUT_FOOTER_ENTRY.nameKey)}
+        </Link>
+        <Link href={SUPPORT_FOOTER_ENTRY.href} className="footer-credits" prefetch={false}>
           <Heart size={12} aria-hidden="true" />
-          <span>{tr({ zh: '致谢', en: 'Acknowledgments'
-        })}</span>
+          <span>{t(SUPPORT_FOOTER_ENTRY.nameKey)}</span>
         </Link>
         <a
-          href="https://github.com/RuiminYan/cuberoot.me"
+          href={GITHUB_FOOTER_ENTRY.href}
           target="_blank"
           rel="noopener noreferrer"
           className="footer-github"
@@ -289,7 +294,7 @@ export default function LandingPage() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
           </svg>
-          <span>GitHub</span>
+          <span>{t(GITHUB_FOOTER_ENTRY.nameKey)}</span>
         </a>
       </div>
 
