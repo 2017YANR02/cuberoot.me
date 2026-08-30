@@ -14,6 +14,13 @@ export interface DriveAccess {
   inline: boolean;
 }
 
+interface DriveChunkResponse {
+  offset: number;
+  complete: boolean;
+  nodeId?: string;
+  error?: string;
+}
+
 async function write<T>(path: string, method: 'POST' | 'PATCH' | 'DELETE', body?: unknown): Promise<T> {
   const response = await fetch(apiUrl(path), {
     method,
@@ -59,21 +66,52 @@ export async function uploadDriveChunk(
   offset: number,
   chunk: Blob,
   signal?: AbortSignal,
-): Promise<{ offset: number; complete: boolean; nodeId?: string }> {
+  onProgress?: (uploadedBytes: number) => void,
+): Promise<DriveChunkResponse> {
   const bytes = await chunk.arrayBuffer();
   const checksum = bytesToBase64(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)));
-  const response = await fetch(directApiUrl(`/v1/drive/uploads/${encodeURIComponent(uploadId)}`), {
-    method: 'PATCH',
-    headers: {
+  if (signal?.aborted) throw new DOMException('The operation was aborted.', 'AbortError');
+
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    const abort = () => request.abort();
+    const cleanup = () => signal?.removeEventListener('abort', abort);
+    request.open('PATCH', directApiUrl(`/v1/drive/uploads/${encodeURIComponent(uploadId)}`));
+    const headers = {
       ...authHeaders(false),
       'Content-Type': 'application/offset+octet-stream',
       'Upload-Offset': String(offset),
       'Upload-Checksum': `sha256 ${checksum}`,
-    },
-    body: chunk,
-    signal,
+    };
+    Object.entries(headers).forEach(([name, value]) => request.setRequestHeader(name, value));
+    request.upload.addEventListener('progress', (event) => {
+      onProgress?.(Math.min(event.loaded, chunk.size));
+    });
+    request.addEventListener('load', () => {
+      cleanup();
+      let payload: DriveChunkResponse | null = null;
+      try {
+        payload = JSON.parse(request.responseText) as DriveChunkResponse;
+      } catch {
+        // The status text below is the useful fallback for an invalid upstream response.
+      }
+      if (request.status >= 200 && request.status < 300 && payload) {
+        resolve(payload);
+        return;
+      }
+      reject(new Error(payload?.error || request.statusText || `API error ${request.status}`));
+    });
+    request.addEventListener('error', () => {
+      cleanup();
+      reject(new TypeError('Network request failed'));
+    });
+    request.addEventListener('abort', () => {
+      cleanup();
+      reject(new DOMException('The operation was aborted.', 'AbortError'));
+    });
+    signal?.addEventListener('abort', abort, { once: true });
+    request.send(chunk);
   });
-  return handleApi<{ offset: number; complete: boolean; nodeId?: string }>(response);
 }
 
 export const cancelDriveUpload = (uploadId: string) => (
