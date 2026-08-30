@@ -415,7 +415,11 @@
   color: var(--foreground);
   font-size: 14px;
 }
-.mem-admin-priceinput { width: 100px; }
+.mem-admin-priceinput {
+  width: 100%;
+  box-sizing: border-box;
+  font-variant-numeric: tabular-nums;
+}
 .mem-admin-grant-btn, .mem-admin-plansave {
   display: inline-flex;
   align-items: center;
@@ -430,8 +434,22 @@
   cursor: pointer;
 }
 .mem-admin-grant-btn:disabled, .mem-admin-plansave:disabled { opacity: 0.5; cursor: default; }
-.mem-admin-planrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
-.mem-admin-planname { min-width: 90px; font-size: 14px; color: var(--foreground); }
+.mem-admin-planrows {
+  display: grid;
+  grid-template-columns: max-content 100px max-content max-content;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 8px;
+  width: max-content;
+  max-width: 100%;
+}
+.mem-admin-planrow { display: contents; }
+.mem-admin-planname {
+  font-size: 14px;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+.mem-admin-plansave { justify-content: center; }
 .mem-admin-list { display: flex; flex-direction: column; gap: 6px; }
 .mem-admin-member {
   display: flex;
@@ -458,4 +476,18 @@
   .mem-page { padding: 24px 14px 64px; }
   .mem-title { font-size: 22px; }
   .mem-plans { grid-template-columns: 1fr; }
+  .mem-admin-planrows {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+  }
+  .mem-admin-planrow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content max-content;
+    align-items: center;
+    gap: 8px 10px;
+  }
+  .mem-admin-planname { grid-column: 1 / -1; }
 }

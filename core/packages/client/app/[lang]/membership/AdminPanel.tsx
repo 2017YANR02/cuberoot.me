@@ -157,27 +157,29 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated }: Props) {
       <div className="mem-admin-block">
         <div className="mem-admin-subtitle">{tr({ zh: '套餐价格(元)', en: 'Plan prices (yuan)'
         })}</div>
-        {adminPlans.map((p) => (
-          <div key={p.slug} className="mem-admin-planrow">
-            <span className="mem-admin-planname">{isZh ? p.nameZh : p.nameEn}</span>
-            <input
-              type="number" min="0" step="0.01"
-              className="mem-admin-priceinput"
-              value={priceDraft[p.slug] ?? ''}
-              onChange={(e) => setPriceDraft((d) => ({ ...d, [p.slug]: e.target.value }))}
-            />
-            <button className="mem-admin-plansave" onClick={() => void savePlan(p)} disabled={planUpdating === p.slug}>
-              {planSaved === p.slug ? <Check size={13} /> : tr({ zh: '保存', en: 'Save'
-            })}
-            </button>
-            <BoolToggle
-              value={p.active !== false}
-              onChange={(active) => void updateVisibility(p, active)}
-              label={tr({ zh: '公开', en: 'Public' })}
-              disabled={planUpdating === p.slug}
-            />
-          </div>
-        ))}
+        <div className="mem-admin-planrows">
+          {adminPlans.map((p) => (
+            <div key={p.slug} className="mem-admin-planrow">
+              <span className="mem-admin-planname">{isZh ? p.nameZh : p.nameEn}</span>
+              <input
+                type="number" min="0" step="0.01"
+                className="mem-admin-priceinput"
+                value={priceDraft[p.slug] ?? ''}
+                onChange={(e) => setPriceDraft((d) => ({ ...d, [p.slug]: e.target.value }))}
+              />
+              <button className="mem-admin-plansave" onClick={() => void savePlan(p)} disabled={planUpdating === p.slug}>
+                {planSaved === p.slug ? <Check size={13} /> : tr({ zh: '保存', en: 'Save'
+              })}
+              </button>
+              <BoolToggle
+                value={p.active !== false}
+                onChange={(active) => void updateVisibility(p, active)}
+                label={tr({ zh: '公开', en: 'Public' })}
+                disabled={planUpdating === p.slug}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* 会员列表 */}
