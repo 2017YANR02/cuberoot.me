@@ -407,6 +407,62 @@ html[data-theme=dark] .alg-root {
   letter-spacing: 0;
 }
 
+.alg-ep-parity-note,
+.alg-ep-parity-section {
+  max-width: 1200px;
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: 24px;
+  padding-left: 24px;
+}
+.alg-ep-parity-note {
+  margin-top: 14px;
+  margin-bottom: 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.alg-ep-parity-section {
+  margin-top: 24px;
+}
+.alg-ep-parity-section + .alg-subgroup {
+  padding-top: 0;
+}
+.alg-ep-parity-section h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  color: var(--foreground);
+  font-size: 20px;
+  line-height: 1.3;
+}
+.alg-ep-parity-section h2 span {
+  color: var(--faint-foreground);
+  font-size: 12px;
+  font-weight: 500;
+}
+.alg-ep-parity-section p {
+  margin: 3px 0 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.alg-ep-parity-section.is-parity h2 {
+  color: var(--signal-warning);
+}
+.alg-ep-parity-badge {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid color-mix(in srgb, var(--signal-warning) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--signal-warning) 12%, transparent);
+  color: color-mix(in srgb, var(--signal-warning) 76%, var(--foreground));
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
 /* ── puzzle index (top-level /alg) ── */
 .alg-cat-title {
   display: inline-flex;
