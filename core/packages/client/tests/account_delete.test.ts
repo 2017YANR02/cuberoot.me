@@ -393,6 +393,22 @@ describe('删除动作本身', () => {
     expect(PURGE_TABLES.some(([t]) => t === 'wca_users')).toBe(true);
   });
 
+  it('网盘元数据级联删除前收集实体路径,数据库提交后再清磁盘', () => {
+    expect(Object.keys(NOT_USER_OWNED)).toEqual(expect.arrayContaining([
+      'drive_members',
+      'drive_nodes',
+      'drive_uploads',
+    ]));
+    const collectFiles = impl.indexOf('SELECT storage_key FROM drive_nodes');
+    const collectUploads = impl.indexOf('SELECT id, node_id FROM drive_uploads');
+    const deleteUser = impl.indexOf('DELETE FROM app_users');
+    const cleanFiles = impl.indexOf('removeDriveAccountFiles(driveStorageKeys, driveUploads)');
+    expect(collectFiles).toBeGreaterThan(-1);
+    expect(collectUploads).toBeGreaterThan(collectFiles);
+    expect(deleteUser).toBeGreaterThan(collectUploads);
+    expect(cleanFiles).toBeGreaterThan(deleteUser);
+  });
+
   it('名字快照跟着清空 —— 只换 id 不清名字等于没匿名', () => {
     expect(impl).toMatch(/\$\{nameCol\} = ''/);
   });
