@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { ALG_CATALOG, type AlgSticker } from '@cuberoot/shared';
+import { ALG_CATALOG, mergeOhCmll, type AlgFile, type AlgSticker } from '@cuberoot/shared/alg';
 import { puzzles } from 'cubing/puzzles';
 import { cubeThumbParams } from '@/lib/alg_thumb_plan';
 import { displayAlg } from '@/lib/alg_display';
@@ -217,13 +217,14 @@ describe('CubingApp Roux and Pyraminx port', () => {
   });
 
   it('puts every Roux set in the dedicated 3x3 section and reuses shared thumbnails', () => {
-    const rouxSlugs = ['2-look-cmll', 'cmll', 'oh-cmll', 'sbls', 'eo4a', 'lse-eolr'];
+    const rouxSlugs = ['2-look-cmll', 'cmll', 'sbls', 'eo4a', 'lse-eolr'];
     const catalogSlugs = ALG_CATALOG['3x3'].map(item => item.slug);
     for (const slug of rouxSlugs) expect(catalogSlugs).toContain(slug);
 
     const page = readFileSync(join(clientRoot, 'app', '[lang]', 'alg', '[puzzle]', 'AlgPuzzleClient.tsx'), 'utf8');
     expect(page).toContain("tr({ zh: '桥式', en: 'Roux' })");
     for (const slug of rouxSlugs) expect(page).toContain(`'${slug}'`);
+    expect(page).toContain("const HIDDEN_CATALOG_SET_SLUGS = new Set(['oh-cmll'])");
 
     const raw = { kind: 'raw' as const, tag: '', attrs: {} };
     for (const slug of ['2-look-cmll', 'oh-cmll']) {
@@ -231,6 +232,32 @@ describe('CubingApp Roux and Pyraminx port', () => {
         view: 'pll', mask: 'cmll', hideGreySides: true, puzzleSize: 3,
       });
     }
+  });
+
+  it('merges OH CMLL into the canonical cases as left-handed alternatives', () => {
+    const base = {
+      puzzle: '3x3', set: 'cmll', scrapedAt: '', source: '',
+      cases: [{
+        name: 'Pi Down Slash', subgroup: 'Pi', setup: 'BASE',
+        sticker: { kind: 'face', us: '', ub: '', uf: '', ul: '', ur: '', mask: 'cmll' },
+        algs: [[{ alg: 'R U2 R\'' }]],
+      }],
+    } satisfies AlgFile;
+    const source = {
+      puzzle: '3x3', set: 'oh-cmll', scrapedAt: '', source: '',
+      cases: [{
+        name: 'Pi Backslash', subgroup: 'Pi', setup: 'OH SETUP',
+        sticker: { kind: 'face', us: '', ub: '', uf: '', ul: '', ur: '', mask: 'cmll' },
+        algs: [[{ alg: 'R U2\' R\'' }, { alg: 'r U R\'', tags: ['ft'] }]],
+      }],
+    } satisfies AlgFile;
+
+    const merged = mergeOhCmll(base, source);
+    expect(merged.cases[0].algs[0]).toEqual([
+      { alg: 'R U2 R\'', tags: ['oh'] },
+      { alg: 'r U R\'', setup: 'OH SETUP', tags: ['ft', 'oh'] },
+    ]);
+    expect(base.cases[0].algs[0]).toEqual([{ alg: 'R U2 R\'' }]);
   });
 
   it('locks final merged counts and the pinned MIT source revision', () => {
