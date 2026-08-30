@@ -44,6 +44,7 @@ import ValidationReportModal from '@/components/ValidationReportModal';
 import SortableAlgRow from '@/components/SortableAlgRow';
 import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
 import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import AlgPdfButton from '@/components/AlgPdfButton';
 import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
 import { useCopy } from '@/hooks/useCopy';
@@ -78,7 +79,14 @@ import {
 } from '@/lib/alg-notation-display';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
-import { classifySq1EpParity, partitionSq1EpCases, type Sq1EpParity } from '@/lib/sq1-ep-parity';
+import {
+  classifySq1EpParity,
+  partitionSq1EpCases,
+  sq1EpNumericCaseName,
+  sq1EpNumericLayerName,
+  sq1EpTopLayerName,
+  type Sq1EpParity,
+} from '@/lib/sq1-ep-parity';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 import { firstAlgorithmAverageStm } from '@/lib/alg-metrics';
@@ -506,6 +514,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const setPreferred = usePreferredAlgs(state => state.setPreferred);
   const [error, setError] = useState<string | null>(null);
   const [activeOri, setActiveOri] = useState(0);
+  const [sq1EpNumericNames, setSq1EpNumericNames] = useState(false);
   const [caseOri, setCaseOri] = useState<Record<string, number>>({});
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [submissions, setSubmissions] = useState<AlgSubmission[]>([]);
@@ -924,10 +933,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     const buildGroups = (
       cases: typeof visibleCases,
       section: Sq1EpParity | 'unclassified' | null,
+      groupByTopLayer = false,
     ) => {
       const map = new Map<string, typeof visibleCases>();
       for (const c of cases) {
-        const subgroup = c.subgroup || '';
+        const subgroup = groupByTopLayer ? (sq1EpTopLayerName(c.name) ?? '') : (c.subgroup || '');
         const arr = map.get(subgroup) ?? [];
         arr.push(c);
         map.set(subgroup, arr);
@@ -946,9 +956,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
 
     const { noParity, parity, unclassified } = partitionSq1EpCases(visibleCases);
     return [
-      ...buildGroups(noParity, 'no-parity'),
-      ...buildGroups(parity, 'parity'),
-      ...buildGroups(unclassified, 'unclassified'),
+      ...buildGroups(noParity, 'no-parity', true),
+      ...buildGroups(parity, 'parity', true),
+      ...buildGroups(unclassified, 'unclassified', true),
     ];
   }, [isSq1Ep, visibleCases]);
 
@@ -1393,12 +1403,21 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       })()}
 
       {data && !showSubgroupPicker && !showSubSubgroupPicker && isSq1Ep && (
-        <p className="alg-ep-parity-note">
-          {tr({
-            zh: '“特”指棱特：上下层棱块排列的奇偶性不同。中层翻转另算。',
-            en: 'Parity means the layers have different edge-permutation parity. An equator flip is separate.',
-          })}
-        </p>
+        <div className="alg-ep-options">
+          <PillToggle
+            value={sq1EpNumericNames}
+            onChange={setSq1EpNumericNames}
+            offLabel={tr({ zh: '英文命名', en: 'English names' })}
+            onLabel={tr({ zh: '数字命名', en: 'Numeric names' })}
+            ariaLabel={tr({ zh: '切换 SQ1 EP 命名方式', en: 'Switch SQ1 EP naming system' })}
+          />
+          <p className="alg-ep-parity-note">
+            {tr({
+              zh: '“特”指棱特：上下层棱块排列的奇偶性不同。中层翻转另算。',
+              en: 'Parity means the layers have different edge-permutation parity. An equator flip is separate.',
+            })}
+          </p>
+        </div>
       )}
 
       {data && !showSubgroupPicker && !showSubSubgroupPicker && grouped.map((group) => {
@@ -1435,7 +1454,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                 tabIndex={0}
               >
                 {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-                {ollByGroup.get(subgroup) ?? subgroup ?? tr({ zh: '其他', en: 'Other' })}
+                {isSq1Ep
+                  ? (sq1EpNumericNames
+                    ? `${sq1EpNumericLayerName(subgroup) ?? subgroup}.*`
+                    : tr({ zh: `上层 ${subgroup}`, en: `Top ${subgroup}` }))
+                  : (ollByGroup.get(subgroup) ?? subgroup ?? tr({ zh: '其他', en: 'Other' }))}
                 <span className="alg-subgroup-count">{cases.length}</span>
               </h2>
             )}
@@ -1464,9 +1487,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   const orientedSetup = oriAdjustSetup(c.setup, oriIdx);
                   const primaryName = primaryCaseName(puzzleParam, set, c);
                   // LS 页首已经写明 LS1–LS9；卡片只留 Hammer 1 / PBL 2 等组内名称，避免重复套名。
-                  const cardName = puzzleParam === '2x2' && /^ls[1-9]$/.test(set)
+                  const defaultCardName = puzzleParam === '2x2' && /^ls[1-9]$/.test(set)
                     ? primaryName.replace(/^LS[1-9]\s+/, '')
                     : primaryName;
+                  const cardName = isSq1Ep && sq1EpNumericNames
+                    ? (sq1EpNumericCaseName(c.name) ?? defaultCardName)
+                    : defaultCardName;
                   return (
                     <SortableCaseCard key={c.id ?? c.name} id={c.id ?? 0} draggable={isAdmin && c.id != null}>
                     <article
