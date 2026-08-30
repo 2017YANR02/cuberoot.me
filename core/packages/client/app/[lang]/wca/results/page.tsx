@@ -517,16 +517,21 @@ function AllResultsPageInner() {
   // 顶层「类型」下拉(单次 / 平均 = 排名口径;其余派生指标 = 嵌入 wr_metric 对应指标视图)。
   // 同时是 排名 ↔ 指标 的切换入口,故各模式(单项 / 名次和 / 空态 / 指标视图)都渲染一份,保证哪都能切。
   // 各模式互斥 → 同时只挂一份,id 不重复。单项里放在「显示」右侧,其余模式作首个控件。
-  const typeSelect = (
-    <div className="wse-filter wse-filter-show">
-      <label htmlFor="wse-type-view">{tr({ zh: '类型', en: 'Type' })}</label>
-      <select id="wse-type-view" className="wse-filter-select" value={typeView} onChange={(e) => onTypeViewChange(e.target.value)}>
-        {WR_METRICS.map(m => (
-          <option key={m.id} value={m.id}>{tr({ zh: m.zh, en: m.en })}</option>
-        ))}
-      </select>
-    </div>
-  );
+  const renderTypeSelect = (availableMetricIds?: ReadonlySet<string>) => {
+    const metrics = availableMetricIds
+      ? WR_METRICS.filter(metric => availableMetricIds.has(metric.id))
+      : WR_METRICS;
+    return (
+      <div className="wse-filter wse-filter-show">
+        <label htmlFor="wse-type-view">{tr({ zh: '类型', en: 'Type' })}</label>
+        <select id="wse-type-view" className="wse-filter-select" value={typeView} onChange={(e) => onTypeViewChange(e.target.value)}>
+          {metrics.map(metric => (
+            <option key={metric.id} value={metric.id}>{tr({ zh: metric.zh, en: metric.en })}</option>
+          ))}
+        </select>
+      </div>
+    );
+  };
 
   // 性别下拉(所有 / 男 / 女)。WCA 不设性别纪录,但排名按性别筛是常见口径(对标 WCA rankings / cubing.com);
   // 名次按位置算 → 自动在性别子集内重排。默认 all 省略出 URL。
@@ -581,7 +586,9 @@ function AllResultsPageInner() {
       {view === 'metric' && (
         <WcaStatView
           statId="wr_metric" headerMode="note" urlScope="m" metricId={metricId}
-          afterEventSelector={<div className="wse-type-standalone">{typeSelect}</div>}
+          afterEventSelector={(availableMetricIds) => (
+            <div className="wse-type-standalone">{renderTypeSelect(availableMetricIds)}</div>
+          )}
         />
       )}
 
@@ -615,7 +622,7 @@ function AllResultsPageInner() {
       {/* ============ 空态:姓名分布(name_stats viz) + 名录(A-Z 平铺) ============ */}
       {mode === 'empty' && (
         <>
-          <div className="wse-type-standalone">{typeSelect}</div>
+          <div className="wse-type-standalone">{renderTypeSelect()}</div>
           {/* ── 姓名分布 ── */}
           <h2 className="wse-section-title">{tr({ zh: '姓名分布', en: 'Name distribution' })}</h2>
           <div className="wse-table-wrapper">
@@ -731,7 +738,7 @@ function AllResultsPageInner() {
                 offLabel={tr({ zh: '成绩', en: 'Results' })}
               />
             </div>
-            {typeSelect}
+            {renderTypeSelect()}
             <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
             {genderSelect}
             <div className="wse-filter wse-filter-show"
@@ -903,7 +910,7 @@ function AllResultsPageInner() {
       {mode === 'sor' && (
         <>
           <div className="wse-filters">
-            {typeSelect}
+            {renderTypeSelect()}
             <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
             {/* 单次 / 平均 由「类型」下拉统一控制(单次 / 平均 → 排名,派生指标 → 指标视图);此处仅保留「多盲平均不计入名次和」提示 */}
             {type === 'average' && selectedSet.has('333mbf') && (

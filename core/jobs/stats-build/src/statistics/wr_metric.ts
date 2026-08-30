@@ -12,7 +12,7 @@ const METRIC_DEFS = [
   { module: () => import('./wr_mo5.js'),               label: 'Mo5',           id: 'mo5' },
   { module: () => import('./wr_bpa.js'),               label: 'BPA',           id: 'bpa' },
   { module: () => import('./wr_wpa.js'),               label: 'WPA',           id: 'wpa' },
-  { module: () => import('./wr_median.js'),             label: 'Median',        id: 'median' },
+  { module: () => import('./wr_median.js'),            label: 'Median',        id: 'median' },
   { module: () => import('./wr_best_counting.js'),     label: 'Best Counting', id: 'bestc' },
   { module: () => import('./wr_worst_counting.js'),    label: 'Worst Counting',id: 'worstc' },
   { module: () => import('./wr_worst.js'),             label: 'Worst',         id: 'worst' },
@@ -32,10 +32,10 @@ export class WrMetric extends Statistic {
     super();
     this.title = 'Metric';
     this.titleZh = '指标';
-    this.note = "World record history and current rankings for various derived metrics computed from a round's 5 solves.\n"
+    this.note = "World record history and current rankings for metrics computed from a round's solves. Median, worst, and variance support both Mo3 and Ao5 events.\n"
       + 'BAo5 = best 3 of 5 averaged; WAo5 = worst 3 of 5 averaged; Mo5 = mean of all 5 (no trim); '
       + 'BPA = best possible average given the first 4 solves; WPA = worst possible average given the first 4 solves.';
-    this.noteZh = '各种从一轮 5 次还原中计算的衍生指标的世界纪录历史和当前排名。\n'
+    this.noteZh = '各种从一轮成绩中计算的指标的世界纪录历史和当前排名。中位数、最差和方差同时支持 Mo3 与 Ao5 项目。\n'
       + 'BAo5＝最佳 5 次中取 3 均值；WAo5＝最差 5 中 3 均值；Mo5＝5 次均值（不裁剪）；'
       + 'BPA＝前 4 次后最佳可能平均；WPA＝前 4 次后最差可能平均。';
   }

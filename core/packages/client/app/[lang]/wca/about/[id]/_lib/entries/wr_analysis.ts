@@ -242,7 +242,7 @@ ORDER BY r.event_id, c.start_date;`,
 };
 
 // ──── wr_metric ─────────────────────────────────────────────────────────────
-// 聚合 13 个从一轮 5 次还原中算出的衍生指标(single/avg/bao5/wao5/mo5/bpa/wpa/...)
+// 聚合 13 个从一轮成绩中算出的指标(single/avg/bao5/wao5/mo5/bpa/wpa/...)
 const wr_metric: AboutEntry = {
   id: 'wr_metric',
   titleZh: '指标 (Metric)',
@@ -250,12 +250,12 @@ const wr_metric: AboutEntry = {
   badgeZh: '世界纪录',
   badgeEn: 'World record',
   introZh: [
-    '把"从一轮 5 次还原中能算出来的所有数"打包成一个聚合页:除了官方 single / average,还有 BAo5(5 中 3 最好均值)、WAo5(5 中 3 最差)、Mo5(裁不裁尾的总均值)、BPA / WPA(只看前 4 次的最好 / 最差可能 ao5)、Median、Best/Worst Counting、Worst、Variance、Best/Avg ratio 共 13 个指标。',
-    '同一份原始数据(每轮 5 次 attempt)被反复榨干 — 选手"运气"与"稳定性"的对照在这一页上一览。前端把 13 个指标按 Basic / Composite / Distribution 三组下拉切换。',
+    '把"从一轮成绩中能算出来的数"打包成一个聚合页:除了官方 single / average,还有 BAo5(5 中 3 最好均值)、WAo5(5 中 3 最差)、Mo5(裁不裁尾的总均值)、BPA / WPA(只看前 4 次的最好 / 最差可能 ao5)、Median、Best/Worst Counting、Worst、Variance、Best/Avg ratio 共 13 个指标。',
+    '中位数、最差和方差同时支持 Mo3 与 Ao5；其余依赖 5 次结构的衍生指标只在 Ao5 项目出现。类型下拉会按当前项目实际有无数据过滤。',
   ],
   introEn: [
-    'Bundles every derivable metric from a round\'s 5 solves into one aggregator: official Single / Average plus BAo5 (best 3 of 5), WAo5 (worst 3 of 5), Mo5 (mean of all 5, no trim), BPA / WPA (best / worst possible average from the first 4), Median, Best / Worst Counting, Worst, Variance, and Best/Avg Ratio — 13 metrics in total.',
-    'One raw input (5 attempts per round) repeatedly squeezed to surface luck vs consistency. The UI groups the 13 metrics into Basic / Composite / Distribution dropdowns.',
+    'Bundles metrics derived from a round\'s solves into one aggregator: official Single / Average plus BAo5 (best 3 of 5), WAo5 (worst 3 of 5), Mo5 (mean of all 5, no trim), BPA / WPA (best / worst possible average from the first 4), Median, Best / Worst Counting, Worst, Variance, and Best/Avg Ratio — 13 metrics in total.',
+    'Median, Worst, and Variance support both Mo3 and Ao5. Metrics that depend on a five-solve structure appear only for Ao5 events, and the type dropdown filters itself to data available for the current event.',
   ],
   stats: [
     { value: '13', labelZh: '指标子类', labelEn: 'Metric subclasses', hintZh: '每个一份 RoundMetric 子类', hintEn: 'Each one a RoundMetric subclass'
@@ -264,15 +264,15 @@ const wr_metric: AboutEntry = {
     },
     { value: '2', labelZh: '视图', labelEn: 'Views', hintZh: '排名 + WR 历史', hintEn: 'Ranking + WR history'
     },
-    { value: 'EVENTS_WITH_AO5', labelZh: '覆盖项目', labelEn: 'Event scope', hintZh: '只看正式 ao5 项目(BLD/MBLD/FMC 除外)', hintEn: 'Official ao5 events only (excl. BLD / MBLD / FMC)'
+    { value: 'Mo3 + Ao5', labelZh: '覆盖项目', labelEn: 'Event scope', hintZh: '各指标按赛制适用范围出现', hintEn: 'Each metric follows its format applicability'
     },
   ],
   sourceZh: [
-    '本类自身**不查 SQL** — `query()` 返回空串。每个子类(`wr_bao5` / `wr_mo5` / `wr_bpa` / ...)各自走 `RoundMetric` 基类,基类用一份 batch SQL 把所有 ao5 项目的 attempt 拉出来共享,子类只覆写 `computeMetric(values)` 决定 5 个数怎么算。',
+    '本类自身**不查 SQL** — `query()` 返回空串。每个子类(`wr_bao5` / `wr_mo5` / `wr_bpa` / ...)各自走 `RoundMetric` 基类,基类按目标项目并集拉取 attempt，同一项目的行由所有适用子类共享；子类只覆写 `computeMetric(values)`。',
     '聚合层把 13 份 `toJson()` 结果按 id 包成 `MetricPanel[]`,再附 `metricGroups` 元数据让前端渲染分组下拉。',
   ],
   sourceEn: [
-    'This class issues **no SQL of its own** — `query()` returns ``. Each child (`wr_bao5` / `wr_mo5` / `wr_bpa` / ...) hooks into the `RoundMetric` base class, which runs one batch SQL across all ao5 events and shares the attempt rows. Each child only overrides `computeMetric(values)` to define how the 5 numbers collapse.',
+    'This class issues **no SQL of its own** — `query()` returns ``. Each child (`wr_bao5` / `wr_mo5` / `wr_bpa` / ...) hooks into the `RoundMetric` base class, which loads the union of their target events and shares each event\'s attempt rows with applicable children. Each child only overrides `computeMetric(values)`.',
     'The aggregator wraps the 13 children\'s `toJson()` outputs as `MetricPanel[]` keyed by id, and adds `metricGroups` metadata so the UI can render group dropdowns.',
   ],
   sourceCode: {
@@ -299,10 +299,10 @@ for (const def of METRIC_DEFS) {
       bodyEn: '`RoundMetric` shares one SQL across all batch-mode children — round attempts come back as a `GROUP_CONCAT` string. The cached rows feed all 11 batch children, dodging 11× redundant queries.'
     },
     {
-      titleZh: '子类定义"怎么从 5 个数得到 1 个"',
+      titleZh: '子类定义"怎么从一轮得到 1 个数"',
       titleEn: 'Each child defines `computeMetric(values)`',
-      bodyZh: '只覆写一个方法:接收一个 length-5 的数组(可能含 DNF=-1),返回一个数或 null。例如 BAo5 = 前 3 小求均值;WAo5 = 后 3 大求均值;BPA = 前 4 个的 best-3 均值。',
-      bodyEn: 'A child overrides one method: take a length-5 array (DNFs as -1), return a number or null. e.g. BAo5 = mean of the smallest 3; WAo5 = mean of the largest 3; BPA = best-3 of the first 4.'
+      bodyZh: '只覆写一个方法:接收 length-3 或 length-5 数组(可能含 DNF=-1),返回一个数或 null。例如 Mo3 的中位数取排序后第 2 项；BAo5 = 前 3 小求均值；BPA = 前 4 个的 best-3 均值。',
+      bodyEn: 'A child overrides one method: take a length-3 or length-5 array (DNFs as -1), return a number or null. For example, Mo3 median takes sorted item 2; BAo5 averages the smallest 3; BPA uses best-3 of the first 4.'
     },
     {
       titleZh: '排名:每项目 Top 10 + WR 历史',
@@ -341,16 +341,16 @@ for (const def of METRIC_DEFS) {
     },
   ],
   edgesZh: [
-    '所有指标只覆盖**有 ao5 的项目**(`EVENTS_WITH_AO5`);BLD / MBLD / FMC 没有 5 次组,这页不参与。',
+    'Median / Worst / Variance 覆盖官方 **Mo3 + Ao5** 项目；BAo5 等依赖 5 次结构的指标只覆盖 `EVENTS_WITH_AO5`。多盲没有官方平均，不参与这些轮次指标。',
     'BPA / WPA 用前 4 次,顺序敏感:第几次 attempt 由 `attempt_number` 决定,SQL 里 `GROUP_CONCAT(ORDER BY attempt_number)` 保证顺序。',
-    'Worst Counting 要求至多 1 次 DNF(否则 ao5 本身 DNF);Worst 要求 5 次全有效。',
-    'Median 计算 ≥ 3 次 DNF 时返 null(不输出),否则取排序后 index=2 — DNF 会"挤"中位数向更高有效成绩偏。',
+    'Worst Counting 要求至多 1 次 DNF(否则 ao5 本身 DNF)；Worst 在 Mo3 / Ao5 都要求全轮有效。',
+    'Median 把 DNF 视为比任意有效成绩更差，再取中间项；若中间项仍是 DNF 就不输出。',
   ],
   edgesEn: [
-    'All metrics target **ao5 events only** (`EVENTS_WITH_AO5`); BLD / MBLD / FMC have no 5-solve grouping and don\'t participate.',
+    'Median / Worst / Variance cover official **Mo3 and Ao5** events. Five-solve metrics such as BAo5 target only `EVENTS_WITH_AO5`. Multi-Blind has no official average and does not participate.',
     'BPA / WPA are order-sensitive on the first 4 attempts: ordering comes from `attempt_number`, which SQL preserves via `GROUP_CONCAT(... ORDER BY attempt_number)`.',
-    'Worst Counting tolerates at most 1 DNF (else the ao5 itself is DNF); Worst Solve requires all 5 valid.',
-    'Median returns null with ≥ 3 DNFs; otherwise picks the sorted index 2 — DNFs shift the median up to a higher valid solve.',
+    'Worst Counting tolerates at most 1 DNF (else the ao5 itself is DNF); Worst requires every solve in the Mo3 or Ao5 round to be valid.',
+    'Median treats a DNF as worse than any valid result and picks the middle item; it emits no value when that middle item is still a DNF.',
   ],
   related: [
     { id: 'wr_aoxr', titleZh: 'AoXR', titleEn: 'AoXR', hintZh: '跨轮平均(单场比赛级),对照单轮指标', hintEn: 'Cross-round average (per-comp) — companion to per-round metrics'
