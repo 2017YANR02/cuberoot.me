@@ -263,7 +263,7 @@ function useMediaQuery(query: string): boolean {
 // 工具收进顶栏 MoreMenu；齿轮只保留持久设置，避免工具动作再叠一层弹窗。
 //
 // 三档各答一个问题,名字就是答案:**成绩**是这些把本身(会话 + 那张单子),**统计**
-// 是从它们算出来的数(当前/最佳、σ/CV、阈值占比、完整统计),**图表**是画出来的。
+// 是从它们算出来的数(当前/最佳、σ、阈值占比、完整统计),**图表**是画出来的。
 // 原来成绩那一档从当前/最佳一路铺到阈值占比再到历史,要滚很久才够到自己刚拧的那把。
 type PanelTab = 'times' | 'stats' | 'chart';
 type ChartKind = 'histogram' | 'trend' | 'scatter' | 'hour' | 'heatmap';

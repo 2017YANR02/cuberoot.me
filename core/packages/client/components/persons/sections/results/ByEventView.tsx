@@ -46,7 +46,7 @@ import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthStore } from '@/lib/auth-store';
 import { SortArrow } from '@/components/SortArrow';
 import { tr } from '@/i18n/tr';
-import { formatPct, summarizeNumericValues } from '@cuberoot/shared/timer';
+import { summarizeNumericValues } from '@cuberoot/shared/timer';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -220,13 +220,19 @@ function EventRoundsList({
       average: effectiveFieldValue(chain, 'average', baseAvg),
     };
   }), [results, changeMap]);
-  const attemptStats = useMemo(() => {
+  const resultStats = useMemo(() => {
     if (isMbldEvent(eventId)) return null;
-    const values = effResultsForRank
-      .filter((result) => result.event_id === eventId)
+    const eventResults = effResultsForRank.filter((result) => result.event_id === eventId);
+    const singleValues = eventResults
       .flatMap((result) => result.attempts ?? [])
       .filter((value) => value > 0 && Number.isFinite(value));
-    return { count: values.length, stats: summarizeNumericValues(values) };
+    const averageValues = eventResults
+      .map((result) => result.average)
+      .filter((value) => value > 0 && Number.isFinite(value));
+    return {
+      single: { count: singleValues.length, stats: summarizeNumericValues(singleValues) },
+      average: { count: averageValues.length, stats: summarizeNumericValues(averageValues) },
+    };
   }, [effResultsForRank, eventId]);
   // PR / 名次染色只算官方成绩:直播(非官方)行不参与
   const prRank = useMemo(() => computePrRank(effResultsForRank.filter((r) => !r.live), comps), [effResultsForRank, comps]);
@@ -341,14 +347,25 @@ function EventRoundsList({
 
   return (
     <>
-      {attemptStats && attemptStats.count > 0 && (
+      {resultStats && (resultStats.single.count > 0 || resultStats.average.count > 0) && (
         <div
-          aria-label={tr({ zh: '逐把成绩统计', en: 'Attempt statistics' })}
+          aria-label={tr({ zh: '成绩波动统计', en: 'Result variation statistics' })}
           className="wp-attempt-stats"
         >
-          <span>σ {attemptStats.stats ? formatAttemptStdDev(attemptStats.stats.sd, eventId) : '—'}</span>
-          <span>CV {formatPct(attemptStats.stats?.cv ?? null)}</span>
-          <span>{tr({ zh: '总数', en: 'count' })} {attemptStats.count}</span>
+          {resultStats.single.count > 0 && (
+            <span>
+              {tr({ zh: '单次', en: 'single' })} σ {resultStats.single.stats
+                ? formatResultStdDev(resultStats.single.stats.sd, eventId, 'single')
+                : '—'} {tr({ zh: '总数', en: 'count' })} {resultStats.single.count}
+            </span>
+          )}
+          {resultStats.average.count > 0 && (
+            <span>
+              {tr({ zh: '平均', en: 'average' })} σ {resultStats.average.stats
+                ? formatResultStdDev(resultStats.average.stats.sd, eventId, 'average')
+                : '—'} {tr({ zh: '总数', en: 'count' })} {resultStats.average.count}
+            </span>
+          )}
         </div>
       )}
       {/* sticky 列头吸顶:复用全站共用工具(sticky-scroll + sticky-thead,见 components/sticky-table.css)。 */}
@@ -631,9 +648,10 @@ function EventRoundsList({
   );
 }
 
-function formatAttemptStdDev(sd: number, eventId: string): string {
-  if (eventId === '333fm') return sd.toFixed(2);
-  return formatWcaResult(Math.round(sd), eventId, 'single');
+function formatResultStdDev(sd: number, eventId: string, kind: 'single' | 'average'): string {
+  // FMC single values are whole moves, while FMC averages use moves × 100.
+  if (eventId === '333fm' && kind === 'single') return sd.toFixed(2);
+  return formatWcaResult(Math.round(sd), eventId, kind);
 }
 
 // ─── 最佳成绩 折线图 ─────────────────────────────────────────────────

@@ -564,7 +564,7 @@
 }
 .rolling-stats-custom-add:disabled:hover { background: var(--shell-chip); }
 
-/* σ / CV / count footer line under the table */
+/* σ / count footer line under the table */
 .stats-foot {
   display: flex;
   flex-wrap: wrap;

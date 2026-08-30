@@ -14,8 +14,6 @@ import {
   bestOfN,
   bestBestOfN,
   stdDev,
-  coefficientOfVariation,
-  formatPct,
   bpa,
   wpa,
   formatMs,
@@ -89,7 +87,6 @@ export default function StatsPanel({ solves, event }: Props) {
   // ── footer + extras ──
   const count = solves.length;
   const sd = stdDev(solves);
-  const cv = coefficientOfVariation(solves);
   const subX = useMemo(() => subXBreakdown(solves), [solves]);
 
   const extras = useMemo(() => {
@@ -140,10 +137,9 @@ export default function StatsPanel({ solves, event }: Props) {
         ))}
       </div>
 
-      {/* Footer: σ / CV / count */}
+      {/* Footer: σ / count */}
       <div className="stats-foot">
         <span>σ {sd === null ? '—' : f(Math.round(sd))}</span>
-        <span>CV {formatPct(cv)}</span>
         <span>{tr({ zh: '总数', en: 'count'
         })} {count}</span>
       </div>
