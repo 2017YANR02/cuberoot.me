@@ -12,7 +12,9 @@
 import { useEffect, useState } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { tr, useLang } from '@/i18n/tr';
+import { DateInput } from '@/components/DateInput';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
+import { toLocalIsoDate } from '@/lib/iso-date';
 import { fetchPersonCard, type WcaPersonLite } from '@/lib/wca-api';
 import {
   createSponsor, updateSponsor, type Sponsor, type SponsorInput,
@@ -86,7 +88,7 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
   }
 
   function addContrib() {
-    setContribs(list => [...list, { zh: '', en: '', date: '' }]);
+    setContribs(list => [...list, { zh: '', en: '', date: toLocalIsoDate() }]);
   }
   function removeContrib(i: number) {
     setContribs(list => list.filter((_, idx) => idx !== i));
@@ -220,11 +222,12 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
                   {contribs.map((ct, i) => (
                     <div className="contrib-edit-item" key={i}>
                       <div className="contrib-edit-item-head">
-                        <input
-                          className="sponsor-editor-input contrib-edit-date"
+                        <DateInput
+                          className="contrib-edit-date"
+                          size="compact"
                           value={ct.date ?? ''}
-                          onChange={e => setContribField(i, 'date', e.target.value)}
-                          placeholder={tr({ zh: '日期(可选,如 2026-07-16)', en: 'Date (optional, e.g. 2026-07-16)' })}
+                          onChange={value => setContribField(i, 'date', value)}
+                          aria-label={tr({ zh: '日期(可选)', en: 'Date (optional)' })}
                         />
                         <button
                           type="button"
