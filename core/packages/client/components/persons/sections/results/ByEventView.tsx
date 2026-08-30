@@ -45,6 +45,8 @@ import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEdito
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthStore } from '@/lib/auth-store';
 import { SortArrow } from '@/components/SortArrow';
+import { tr } from '@/i18n/tr';
+import { formatPct, summarizeNumericValues } from '@cuberoot/shared/timer';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -218,6 +220,14 @@ function EventRoundsList({
       average: effectiveFieldValue(chain, 'average', baseAvg),
     };
   }), [results, changeMap]);
+  const attemptStats = useMemo(() => {
+    if (isMbldEvent(eventId)) return null;
+    const values = effResultsForRank
+      .filter((result) => result.event_id === eventId)
+      .flatMap((result) => result.attempts ?? [])
+      .filter((value) => value > 0 && Number.isFinite(value));
+    return { count: values.length, stats: summarizeNumericValues(values) };
+  }, [effResultsForRank, eventId]);
   // PR / 名次染色只算官方成绩:直播(非官方)行不参与
   const prRank = useMemo(() => computePrRank(effResultsForRank.filter((r) => !r.live), comps), [effResultsForRank, comps]);
   // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同一口径
@@ -330,8 +340,19 @@ function EventRoundsList({
     <SortArrow active={sort.key === key} dir={sort.dir} size={11} />;
 
   return (
-    // sticky 列头吸顶:复用全站共用工具(sticky-scroll + sticky-thead,见 components/sticky-table.css)。
-    <div className="sticky-scroll">
+    <>
+      {attemptStats && attemptStats.count > 0 && (
+        <div
+          aria-label={tr({ zh: '逐把成绩统计', en: 'Attempt statistics' })}
+          className="wp-attempt-stats"
+        >
+          <span>σ {attemptStats.stats ? formatAttemptStdDev(attemptStats.stats.sd, eventId) : '—'}</span>
+          <span>CV {formatPct(attemptStats.stats?.cv ?? null)}</span>
+          <span>{tr({ zh: '总数', en: 'count' })} {attemptStats.count}</span>
+        </div>
+      )}
+      {/* sticky 列头吸顶:复用全站共用工具(sticky-scroll + sticky-thead,见 components/sticky-table.css)。 */}
+      <div className="sticky-scroll">
       <table className="wp-bycomp-table sticky-thead">
         <thead>
           <tr>
@@ -605,8 +626,14 @@ function EventRoundsList({
           onSaved={() => refreshChanges()}
         />
       )}
-    </div>
+      </div>
+    </>
   );
+}
+
+function formatAttemptStdDev(sd: number, eventId: string): string {
+  if (eventId === '333fm') return sd.toFixed(2);
+  return formatWcaResult(Math.round(sd), eventId, 'single');
 }
 
 // ─── 最佳成绩 折线图 ─────────────────────────────────────────────────

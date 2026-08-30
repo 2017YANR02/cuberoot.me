@@ -23,6 +23,7 @@
 export * from '../_lib/stats';
 
 import type { SolveEntry } from '@/app/[lang]/timer/_battle/engine/types';
+import { summarizeNumericValues } from '@cuberoot/shared/timer';
 
 /**
  * Effective time (ms, Infinity for DNF) from a battle history entry.
@@ -62,19 +63,9 @@ export function computeAverage(history: SolveEntry[], n: number): number | null 
 export function computeBasicStats(
   validTimes: number[]
 ): { mean: number; sd: number; cv: number } | null {
-  if (validTimes.length < 2) return null;
-  let sum = 0;
-  for (let i = 0; i < validTimes.length; i++) sum += validTimes[i];
-  const mean = sum / validTimes.length;
-  let sqSum = 0;
-  for (let j = 0; j < validTimes.length; j++) {
-    const d = validTimes[j] - mean;
-    sqSum += d * d;
-  }
-  const variance = sqSum / validTimes.length;
-  const sd = Math.sqrt(variance);
-  const cv = mean > 0 ? (sd / mean) * 100 : 0;
-  return { mean: Math.round(mean), sd, cv };
+  const stats = summarizeNumericValues(validTimes);
+  if (!stats) return null;
+  return { mean: Math.round(stats.mean), sd: stats.sd, cv: stats.cv ?? 0 };
 }
 
 /** Battle streak: longest/current run of times strictly below threshold. */
