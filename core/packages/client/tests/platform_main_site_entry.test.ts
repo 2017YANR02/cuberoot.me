@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { SITE_DIRECTORY_GROUPS } from '@cuberoot/shared/site-directory';
 import { PLATFORM_ROUTES } from '@/lib/platform-routes';
 import { PLATFORM_SITEMAP_PATHS } from '@/app/sitemap';
 
@@ -22,15 +23,17 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
 
   it('keeps homepage account links real and avoids a duplicate search trigger', () => {
     const landing = read('app/[lang]/LandingClient.tsx');
-    const sections = read('lib/landing-sections.tsx');
     const account = read('app/[lang]/account/page.tsx');
+    const learnEntries = SITE_DIRECTORY_GROUPS.find((group) => group.id === 'learn')?.entries ?? [];
+    const platformEntry = learnEntries.find((entry) => entry.id === 'platform');
+    const teachingEntry = learnEntries.find((entry) => entry.id === 'teaching');
 
     expect(landing).not.toMatch(/<Link\s+href="\/search"/);
     expect(landing).toContain('<LandingSearch cards={searchCards} lang={lang} />');
-    expect(sections).toMatch(/\{ id: 'platform', href: '\/platform', internal: true,[^}]+\}/);
-    expect(sections.match(/\{ id: 'platform', href: '\/platform'[^}]+\}/)?.[0]).not.toContain('adminOnly');
-    expect(sections).toMatch(/\{ id: 'teaching', href: '\/courses', internal: true,[^}]+\}/);
-    expect(sections.match(/\{ id: 'teaching', href: '\/courses'[^}]+\}/)?.[0]).not.toContain('adminOnly');
+    expect(platformEntry).toMatchObject({ href: '/platform', internal: true });
+    expect(platformEntry).not.toHaveProperty('adminOnly');
+    expect(teachingEntry).toMatchObject({ href: '/courses', internal: true });
+    expect(teachingEntry).not.toHaveProperty('adminOnly');
     expect(account).toContain("key: 'membership'");
     expect(account).toContain("href: '/membership'");
     expect(account).toContain("key: 'notifications'");
