@@ -473,6 +473,16 @@ export function collapseAlgGroupsByDefault(
 ): boolean {
   return caseCount > 100 && !umbrella && !(puzzle === 'sq1' && ['cs', 'csp', 'obl'].includes(set));
 }
+
+/** 分类选择页没有可见 case 列表，页头仍应显示当前 set / subgroup 的完整数量。 */
+export function categoryHeaderCaseCount(
+  scopedCaseCount: number,
+  visibleCaseCount: number,
+  showSubgroupPicker: boolean,
+): number {
+  return showSubgroupPicker ? scopedCaseCount : visibleCaseCount;
+}
+
 export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initialData, collection }: AlgCategoryViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
@@ -952,6 +962,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   }
 
   const showSubgroupPicker = !collection && !!meta.umbrella && !subgroupParam && !showAllCases;
+  const headerCaseCount = categoryHeaderCaseCount(
+    scopedCases.length,
+    visibleCases.length,
+    showSubgroupPicker,
+  );
 
   const subSubgroups = useMemo(() => {
     if (!meta.umbrella || slugLevel !== 'top') return [];
@@ -1045,13 +1060,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         {(collection || meta.short) && (
           <p className="alg-cat-intro">{collection ? tr(collection.intro) : tr(meta.intro ?? meta)}</p>
         )}
-        {data && (!showSubgroupPicker || averageFirstAlgorithmStm != null) && (
+        {data && (
           <div className="alg-cat-metrics">
-            {!showSubgroupPicker && (
-              <span className="alg-cat-metric">
-                {visibleCases.length}{tr({ zh: '个', en: ' cases' })}
-              </span>
-            )}
+            <span className="alg-cat-metric">
+              {headerCaseCount}{tr({ zh: '个', en: ' cases' })}
+            </span>
             {averageFirstAlgorithmStm != null && (
               <span className="alg-cat-metric">{averageFirstAlgorithmStm.toFixed(1)} STM</span>
             )}
