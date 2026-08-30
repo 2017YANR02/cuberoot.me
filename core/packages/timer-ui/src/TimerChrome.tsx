@@ -19,7 +19,7 @@ export function TimerTopbar({ brand, controls, actions, className }: TimerTopbar
 }
 
 export interface TimerStatItem {
-  label: string;
+  label?: string;
   value: string;
 }
 
@@ -49,9 +49,9 @@ export function TimerStatRail({
       title={title}
       type="button"
     >
-      {items.length > 0 ? items.map(({ label, value }) => (
-        <span className="shell-stat" key={label}>
-          <span className="shell-stat-lbl">{label}</span>
+      {items.length > 0 ? items.map(({ label, value }, index) => (
+        <span className="shell-stat" key={`${label ?? 'value'}-${index}`}>
+          {label && <span className="shell-stat-lbl">{label}</span>}
           <span className="shell-stat-val">{value}</span>
         </span>
       )) : (

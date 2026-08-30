@@ -2553,6 +2553,16 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           {/* 解法提示(手机形态)。桌面同一个组件挂在右侧 .shell-rail 里(见下),
               这里是二选一 —— 两处同时挂就有两个实例抢同一个 ?hints。 */}
           {!isDesktop && solverHintPanel}
+          {/* 假魔方是 dev 调试入口,跟当前打乱相关,放在常驻计时控件末尾。 */}
+          {DEV_PANEL && settings.showDevFakeCube && (
+            <DevFakeCubePanel
+              connected={bluetoothCube.status.connected}
+              deviceName={bluetoothCube.status.deviceName ?? null}
+              onConnect={bluetoothCube.connect}
+              onDisconnect={bluetoothCube.disconnect}
+              scramble={scramble}
+            />
+          )}
           </>
         )}
         actions={(
@@ -2953,7 +2963,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           ariaExpanded={panelTab != null}
           emptyLabel={tr({ zh: '成绩', en: 'Times' })}
           items={solves.length > 0 ? [
-            { label: tr({ zh: '成功', en: 'solved' }), value: `${stats.solved}/${stats.count}` },
+            { value: `${stats.solved}/${stats.count}` },
             { label: 'mean', value: stats.mean },
             { label: tr({ zh: '最佳', en: 'best' }), value: stats.best },
             { label: 'mo3', value: stats.mo3 },
@@ -3143,17 +3153,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         />
       )}
 
-      {/* 没有硬件时把假魔方从控制台搬到页面上。`DEV_PANEL` 在生产里是 false 且
-          `next/dynamic` 的那个 chunk 从没被引用过,所以整块不进生产包。 */}
-      {DEV_PANEL && (
-        <DevFakeCubePanel
-          connected={bluetoothCube.status.connected}
-          deviceName={bluetoothCube.status.deviceName ?? null}
-          onConnect={bluetoothCube.connect}
-          onDisconnect={bluetoothCube.disconnect}
-          scramble={scramble}
-        />
-      )}
     </div>
   );
 }
