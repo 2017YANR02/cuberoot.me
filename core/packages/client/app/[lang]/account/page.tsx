@@ -20,14 +20,25 @@ import AdminSubmissionsPanel from '@/components/AdminSubmissionsPanel';
 import PageNoticesAdmin from '@/components/PageNoticesAdmin';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { Flag } from '@/components/Flag';
+import { CountryInput } from '@/components/CountryInput/CountryInput';
+import { DateInput } from '@/components/DateInput';
 import { AccountPanel, LoginForm, WcaLinkPrompt, DeleteAccountPanel, type SignedIn } from '@/components/AuthPanel';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
-import { DISPLAY_NAME_MAX_LENGTH, isValidDisplayName, normalizeDisplayName } from '@cuberoot/shared/account';
+import {
+  ACCOUNT_BIRTH_DATE_MIN,
+  DISPLAY_NAME_MAX_LENGTH,
+  isValidDisplayName,
+  normalizeDisplayName,
+  type AccountBasicProfile,
+  type AccountGender,
+} from '@cuberoot/shared/account';
 import { CLAWD_AVATAR_PRESETS, DEFAULT_CLAWD_AVATAR_PRESET, type ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 import {
   fetchAdminUser,
+  fetchAccountBasicProfile,
   updateAdminDisplayName,
+  updateAccountBasicProfile,
   updateAvatar,
   updateDisplayName,
   type AvatarChoice,
@@ -36,7 +47,9 @@ import {
 import { clawdAvatarUrl } from '@/lib/account-avatar';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { loadFlagData, personFlagIso2 } from '@/lib/country-flags';
+import { countryName } from '@/lib/country-name';
 import { prepareImageUpload, uploadImageBlob } from '@/lib/image-upload';
+import { toLocalIsoDate } from '@/lib/iso-date';
 import { ADMIN_WCA_IDS, applySession, useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
 import { tr, useLang } from '@/i18n/tr';
 import './account.css';
@@ -304,7 +317,158 @@ function DisplayNameEditor() {
         profile={{ name: user.name, wcaId: user.wcaId || null }}
         onSave={save}
       />
+      <BasicProfileEditor />
     </div>
+  );
+}
+
+type EditableBasicProfile = Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2'>;
+
+function BasicProfileEditor() {
+  const t = useT();
+  const isZh = useLang() !== 'en';
+  const [profile, setProfile] = useState<AccountBasicProfile | null>(null);
+  const [draft, setDraft] = useState<EditableBasicProfile | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const today = toLocalIsoDate();
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchAccountBasicProfile()
+      .then((next) => {
+        if (cancelled) return;
+        setProfile(next);
+        setDraft({
+          birthDate: next.birthDate,
+          gender: next.gender,
+          countryIso2: next.countryIso2,
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setError(t('基本资料加载失败，请稍后重试。', 'Could not load your basic profile. Try again later.'));
+      });
+    return () => { cancelled = true; };
+  }, [t]);
+
+  if (!profile || !draft) {
+    return error
+      ? <p className="auth-error account-basic-profile-status" role="alert">{error}</p>
+      : <p className="auth-hint account-basic-profile-status"><Loader2 size={14} className="auth-spin" />{t('正在加载基本资料…', 'Loading basic profile…')}</p>;
+  }
+
+  const countryLocked = profile.countrySource === 'wca';
+  const dirty = draft.birthDate !== profile.birthDate
+    || draft.gender !== profile.gender
+    || (!countryLocked && draft.countryIso2 !== profile.countryIso2);
+  const updateDraft = (patch: Partial<EditableBasicProfile>) => {
+    setDraft((current) => current ? { ...current, ...patch } : current);
+    setSaved(false);
+    setError(null);
+  };
+  const save = async () => {
+    setSaving(true);
+    setSaved(false);
+    setError(null);
+    try {
+      const result = await updateAccountBasicProfile({
+        birthDate: draft.birthDate,
+        gender: draft.gender,
+        countryIso2: countryLocked ? profile.countryIso2 : draft.countryIso2,
+      });
+      setProfile(result.profile);
+      setDraft({
+        birthDate: result.profile.birthDate,
+        gender: result.profile.gender,
+        countryIso2: result.profile.countryIso2,
+      });
+      setSaved(true);
+    } catch {
+      setError(t('基本资料保存失败，请检查内容后重试。', 'Could not save your basic profile. Check the fields and try again.'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const genderOptions: Array<{ value: AccountGender; label: string }> = [
+    { value: 'male', label: t('男', 'Male') },
+    { value: 'female', label: t('女', 'Female') },
+    { value: 'nonbinary', label: t('非二元', 'Non-binary') },
+    { value: 'other', label: t('其他', 'Other') },
+    { value: 'undisclosed', label: t('不愿透露', 'Prefer not to say') },
+  ];
+
+  return (
+    <form className="account-basic-profile" onSubmit={(event) => { event.preventDefault(); void save(); }}>
+      <p className="auth-hint account-basic-profile-privacy">
+        {t('以下资料默认不公开，仅用于账户归属与后续认领核验。', 'These details are private by default and are used for account ownership and future claim verification.')}
+      </p>
+      <div className="account-basic-profile-field">
+        <label className="auth-label" htmlFor="account-birth-date">{t('出生日期', 'Birth date')}</label>
+        <DateInput
+          id="account-birth-date"
+          value={draft.birthDate ?? ''}
+          min={ACCOUNT_BIRTH_DATE_MIN}
+          max={today}
+          placeholder={t('未填写', 'Not set')}
+          clearAriaLabel={t('清除出生日期', 'Clear birth date')}
+          disabled={saving}
+          onChange={(value) => updateDraft({ birthDate: value || null })}
+        />
+      </div>
+      <div className="account-basic-profile-field">
+        <label className="auth-label" htmlFor="account-gender">{t('性别', 'Gender')}</label>
+        <select
+          id="account-gender"
+          className="auth-input account-basic-profile-select"
+          value={draft.gender ?? ''}
+          disabled={saving}
+          onChange={(event) => updateDraft({ gender: (event.target.value || null) as AccountGender | null })}
+        >
+          <option value="">{t('未填写', 'Not set')}</option>
+          {genderOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
+      </div>
+      <div className="account-basic-profile-field">
+        <label
+          className="auth-label"
+          id="account-country-label"
+          htmlFor={countryLocked ? undefined : 'account-country'}
+        >
+          {t('国籍', 'Nationality')}
+        </label>
+        {countryLocked ? (
+          <div className="account-basic-profile-country" aria-labelledby="account-country-label">
+            {profile.countryIso2 ? (
+              <>
+                <Flag iso2={profile.countryIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />
+                <span>{countryName(profile.countryIso2, isZh)}</span>
+              </>
+            ) : <span>{t('WCA 暂未返回国籍', 'Nationality is not yet available from WCA')}</span>}
+          </div>
+        ) : (
+          <CountryInput
+            id="account-country"
+            ariaLabel={t('搜索并选择国籍', 'Search and choose nationality')}
+            value={draft.countryIso2 ?? ''}
+            placeholder={t('搜索国家或地区', 'Search country or region')}
+            onChange={(iso2) => updateDraft({ countryIso2: iso2 ? iso2.toUpperCase() : null })}
+          />
+        )}
+        {countryLocked && (
+          <p className="auth-hint account-basic-profile-lock">
+            {t('已绑定 WCA，国籍由 WCA 资料同步。', 'WCA is linked, so nationality is synced from your WCA profile.')}
+          </p>
+        )}
+      </div>
+      {error && <p className="auth-error" role="alert">{error}</p>}
+      {saved && <p className="auth-hint" role="status">{t('基本资料已保存。', 'Basic profile saved.')}</p>}
+      <button type="submit" className="auth-primary account-basic-profile-save" disabled={saving || !dirty}>
+        {saving && <Loader2 size={14} className="auth-spin" />}
+        {t('保存基本资料', 'Save basic profile')}
+      </button>
+    </form>
   );
 }
 

@@ -10,6 +10,7 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { isClawdAvatarPreset } from '@cuberoot/shared/account-avatar';
+import type { AccountBasicProfile } from '@cuberoot/shared/account';
 import {
   isMobileAuthCodeChallenge,
   webSessionError,
@@ -24,6 +25,8 @@ import {
   getIdentities, getUserById, publicUser,
   normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   normalizeDisplayName, isValidDisplayName, updateDisplayName,
+  getAccountBasicProfile, updateAccountBasicProfile,
+  isAccountGender, isValidBirthDate, normalizeCountryIso2, isValidCountryIso2,
   updateClawdAvatar, updateUploadedAvatar, resetAvatarToWca,
   loginWithPassword, setPassword, clearPassword, getPasswordHash, verifyPassword,
   ownerKey, primaryHandle,
@@ -515,7 +518,7 @@ accountAuthRoutes.post('/auth/link/wca', async (c) => {
   const uid = await requireAppUserId(c);
   const { accessToken } = await c.req.json<{ accessToken?: string }>().catch(() => ({ accessToken: undefined }));
   if (!accessToken) return c.json({ error: 'accessToken required' }, 400);
-  let me: { wca_id?: string; name?: string; avatar?: { url?: string } };
+  let me: { wca_id?: string; name?: string; country_iso2?: string; avatar?: { url?: string } };
   try {
     const res = await fetch('https://www.worldcubeassociation.org/api/v0/me', {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -530,7 +533,19 @@ accountAuthRoutes.post('/auth/link/wca', async (c) => {
   if (!me.wca_id) return c.json({ error: 'this WCA account has no WCA ID (never competed)' }, 400);
   const verifiedName = me.name?.normalize('NFC').trim();
   if (!verifiedName) return c.json({ error: 'WCA profile has no verified name' }, 502);
-  const r = await addIdentity(uid, 'wca', me.wca_id, me.wca_id, verifiedName, me.avatar?.url ?? null);
+  const countryIso2 = typeof me.country_iso2 === 'string'
+    ? normalizeCountryIso2(me.country_iso2)
+    : null;
+  const verifiedCountryIso2 = countryIso2 && isValidCountryIso2(countryIso2) ? countryIso2 : null;
+  const r = await addIdentity(
+    uid,
+    'wca',
+    me.wca_id,
+    me.wca_id,
+    verifiedName,
+    me.avatar?.url ?? null,
+    verifiedCountryIso2,
+  );
   if (r === 'conflict') return c.json({ error: 'WCA account already linked elsewhere' }, 409);
   // 同步 wca_users 缓存(供其它路径复用),与 /auth/exchange 一致。
   await query(
@@ -604,17 +619,68 @@ accountAuthRoutes.post('/auth/unlink', async (c) => {
   return c.json({ ok: true, token, user: user ? publicUser(user) : undefined, identities: await getIdentities(uid) });
 });
 
-// ── 站内资料(展示名 + 头像)──
+// ── 站内资料(展示名 + 头像 + 本人私密基本资料)──
+accountAuthRoutes.get('/auth/profile', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const uid = await requireAppUserId(c);
+  const profile = await getAccountBasicProfile(uid);
+  if (!profile) return c.json({ error: 'account not found' }, 404);
+  return c.json({ profile });
+});
+
 accountAuthRoutes.post('/auth/profile', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   const uid = await requireAppUserId(c);
-  const body: { name?: unknown; avatar?: unknown } = await c.req
-    .json<{ name?: unknown; avatar?: unknown }>()
+  const body: { name?: unknown; avatar?: unknown; basic?: unknown } = await c.req
+    .json<{ name?: unknown; avatar?: unknown; basic?: unknown }>()
     .catch(() => ({}));
   const hasName = body.name !== undefined;
   const hasAvatar = body.avatar !== undefined;
-  if (hasName === hasAvatar) return c.json({ error: 'provide exactly one profile field' }, 400);
+  const hasBasic = body.basic !== undefined;
+  if ([hasName, hasAvatar, hasBasic].filter(Boolean).length !== 1) {
+    return c.json({ error: 'provide exactly one profile field' }, 400);
+  }
+
+  if (hasBasic) {
+    const basic = body.basic !== null && typeof body.basic === 'object'
+      ? body.basic as Record<string, unknown>
+      : null;
+    const allowedKeys = new Set(['birthDate', 'gender', 'countryIso2']);
+    if (!basic
+      || Object.keys(basic).some((key) => !allowedKeys.has(key))
+      || !Object.hasOwn(basic, 'birthDate')
+      || !Object.hasOwn(basic, 'gender')
+      || !Object.hasOwn(basic, 'countryIso2')) {
+      return c.json({ error: 'invalid basic profile' }, 400);
+    }
+
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const birthDate = basic.birthDate === null ? null : basic.birthDate;
+    if (birthDate !== null && !isValidBirthDate(birthDate, todayIso)) {
+      return c.json({ error: 'invalid birth date' }, 400);
+    }
+    const gender = basic.gender === null ? null : basic.gender;
+    if (gender !== null && !isAccountGender(gender)) {
+      return c.json({ error: 'invalid gender' }, 400);
+    }
+    const normalizedCountry = basic.countryIso2 === null
+      ? null
+      : typeof basic.countryIso2 === 'string'
+        ? normalizeCountryIso2(basic.countryIso2)
+        : basic.countryIso2;
+    if (normalizedCountry !== null && !isValidCountryIso2(normalizedCountry)) {
+      return c.json({ error: 'invalid country' }, 400);
+    }
+
+    const profile = await updateAccountBasicProfile(uid, {
+      birthDate,
+      gender,
+      countryIso2: normalizedCountry,
+    } as Pick<AccountBasicProfile, 'birthDate' | 'gender' | 'countryIso2'>);
+    if (!profile) return c.json({ error: 'account not found' }, 404);
+    return c.json({ ok: true, profile });
+  }
 
   let user = null;
   if (hasName) {

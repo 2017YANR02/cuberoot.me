@@ -88,6 +88,46 @@ export function isValidDisplayName(name: unknown): name is string {
   return length >= 1 && length <= DISPLAY_NAME_MAX_LENGTH && !DISPLAY_NAME_FORBIDDEN_RE.test(name);
 }
 
+export const ACCOUNT_GENDERS = ['male', 'female', 'nonbinary', 'other', 'undisclosed'] as const;
+export type AccountGender = (typeof ACCOUNT_GENDERS)[number];
+
+export interface AccountBasicProfile {
+  birthDate: string | null;
+  gender: AccountGender | null;
+  countryIso2: string | null;
+  countrySource: 'self' | 'wca';
+}
+
+export const ACCOUNT_BIRTH_DATE_MIN = '1900-01-01';
+
+export function isAccountGender(value: unknown): value is AccountGender {
+  return typeof value === 'string' && (ACCOUNT_GENDERS as readonly string[]).includes(value);
+}
+
+export function isValidIsoDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day;
+}
+
+export function isValidBirthDate(value: unknown, todayIso: string): value is string {
+  return isValidIsoDate(value)
+    && isValidIsoDate(todayIso)
+    && value >= ACCOUNT_BIRTH_DATE_MIN
+    && value <= todayIso;
+}
+
+export function normalizeCountryIso2(value: string): string {
+  return value.trim().toUpperCase();
+}
+
+export function isValidCountryIso2(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Z]{2}$/.test(value);
+}
+
 // 密码:仅长度约束(8..128)。不强制字符组成(NIST 800-63B:长度优先,组成规则反而降安全),
 // 前后端共用同一判据。真正的抗爆破靠服务端 scrypt 慢哈希 + 每 IP 限流。
 export function isValidPassword(pw: unknown): pw is string {

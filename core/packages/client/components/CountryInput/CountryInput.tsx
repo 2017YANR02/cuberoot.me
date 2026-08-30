@@ -13,6 +13,8 @@ import './country_input.css';
 import { tr } from '@/i18n/tr';
 
 interface SharedProps {
+  id?: string;
+  ariaLabel?: string;
   placeholder?: string;
   className?: string;
   restrictTo?: Iterable<string>;
@@ -34,7 +36,7 @@ type CountryInputProps = SingleProps | MultiProps;
 export function CountryInput(props: CountryInputProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const { restrictTo, allLabel, counts, placeholder, className } = props;
+  const { id, ariaLabel, restrictTo, allLabel, counts, placeholder, className } = props;
   const isMulti = props.multi === true;
   const selected: string[] = isMulti ? props.value : (props.value ? [props.value] : []);
   const setSelected = (next: string[]) => {
@@ -210,6 +212,8 @@ export function CountryInput(props: CountryInputProps) {
     <div ref={ref} className={`country-input ${className ?? ''}${isMulti ? ' country-input--multi' : ''}`.trim()}>
       {(showFlag || showFlagMulti) && <Flag iso2={singleSelected || selected[0]} className="country-input-flag" />}
       <input
+        id={id}
+        aria-label={ariaLabel}
         type="text"
         className={`country-input-field${(showFlag || showFlagMulti) ? ' country-input-field--with-flag' : ''}${selected.length > 0 ? ' country-input-field--with-clear' : ''}`}
         value={displayedQuery}
