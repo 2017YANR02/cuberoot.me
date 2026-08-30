@@ -39,8 +39,11 @@ const LEGACY_3X3_SLUGS = new Set(['f2l', 'adv-f2l', 'oll', 'pll']);
 
 /** Roux formula sets live in their own section below the general 3x3 library. */
 const ROUX_SET_SLUGS = new Set([
-  '2-look-cmll', 'cmll', 'oh-cmll', 'sbls', 'eo4a', 'lse-eolr',
+  '2-look-cmll', 'cmll', 'sbls', 'eo4a', 'lse-eolr',
 ]);
+
+/** Source-only sets are composed into their canonical card instead of appearing twice. */
+const HIDDEN_CATALOG_SET_SLUGS = new Set(['oh-cmll']);
 
 /**
  * 整套方法的训练器 —— 不对应任何一套公式,所以留在这层。
@@ -199,16 +202,20 @@ export default function AlgPuzzleClient() {
 
   const valid = isPuzzle(puzzle);
   const sets = useMemo(() => (valid ? ALG_CATALOG[puzzle] : []), [puzzle, valid]);
+  const visibleSets = useMemo(
+    () => sets.filter(set => !HIDDEN_CATALOG_SET_SLUGS.has(set.slug)),
+    [sets],
+  );
   const catalogSections = valid ? (ALG_CATALOG_SECTIONS[puzzle] ?? []) : [];
-  const lsSets = puzzle === '2x2' ? sets.filter(s => /^ls[1-9]$/.test(s.slug)) : [];
-  const rouxSets = puzzle === '3x3' ? sets.filter(s => ROUX_SET_SLUGS.has(s.slug)) : [];
+  const lsSets = puzzle === '2x2' ? visibleSets.filter(s => /^ls[1-9]$/.test(s.slug)) : [];
+  const rouxSets = puzzle === '3x3' ? visibleSets.filter(s => ROUX_SET_SLUGS.has(s.slug)) : [];
   const regularSets = catalogSections.length > 0
     ? []
     : puzzle === '2x2'
-    ? sets.filter(s => !/^ls[1-9]$/.test(s.slug))
+    ? visibleSets.filter(s => !/^ls[1-9]$/.test(s.slug))
     : puzzle === '3x3'
-      ? sets.filter(s => !ROUX_SET_SLUGS.has(s.slug))
-      : sets;
+      ? visibleSets.filter(s => !ROUX_SET_SLUGS.has(s.slug))
+      : visibleSets;
   const legacyRedirect = !valid && LEGACY_3X3_SLUGS.has(puzzle) ? `/alg/3x3/${puzzle}` : null;
 
   useEffect(() => {
@@ -223,7 +230,7 @@ export default function AlgPuzzleClient() {
     setCounts({});
     setFirstCases({});
     // 一套一落地,不等最慢的那一套 —— 一张卡片的封面不该被另一套的请求挡着。
-    for (const s of sets) {
+    for (const s of visibleSets) {
       loadAlg(puzzle, s.slug)
         .then(d => ({ count: d.cases.length, first: d.cases[0] ?? null as AlgCase | null }))
         .catch(() => ({ count: -1, first: null as AlgCase | null }))
@@ -234,7 +241,7 @@ export default function AlgPuzzleClient() {
         });
     }
     return () => { cancelled = true; };
-  }, [puzzle, valid, sets]);
+  }, [puzzle, valid, visibleSets]);
 
   if (legacyRedirect) {
     return <div className="alg-root"><div className="alg-empty">{tr({ zh: '跳转中…', en: 'Redirecting…'
