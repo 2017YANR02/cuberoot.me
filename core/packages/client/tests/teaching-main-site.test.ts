@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { SITE_DIRECTORY_GROUPS, SITE_DIRECTORY_TEXTS } from '@cuberoot/shared/site-directory';
 
 const CLIENT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const REPO = join(CLIENT, '..', '..', '..');
@@ -19,11 +20,11 @@ describe('main-site teaching architecture', () => {
   });
 
   it('exposes both teaching entry points on the main homepage', () => {
-    const landing = readClient('lib/landing-sections.tsx');
-    expect(landing).toContain("href: '/org'");
-    expect(landing).toContain("href: '/learn'");
-    expect(landing).toContain("teachingManagement: { en: 'Teaching', zh: '教学管理' }");
-    expect(landing).toContain("learningCenter:  { en: 'Learning Center', zh: '学习中心' }");
+    const learnEntries = SITE_DIRECTORY_GROUPS.find((group) => group.id === 'learn')?.entries ?? [];
+    expect(learnEntries.find((entry) => entry.id === 'teaching-management')).toMatchObject({ href: '/org', internal: true });
+    expect(learnEntries.find((entry) => entry.id === 'learning-center')).toMatchObject({ href: '/learn', internal: true });
+    expect(SITE_DIRECTORY_TEXTS.teachingManagement).toEqual({ en: 'Teaching', zh: '教学管理' });
+    expect(SITE_DIRECTORY_TEXTS.learningCenter).toEqual({ en: 'Learning Center', zh: '学习中心' });
   });
 
   it('keeps the retired Platform host disconnected from its legacy app', () => {
