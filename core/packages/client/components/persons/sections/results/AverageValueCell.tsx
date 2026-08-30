@@ -13,7 +13,7 @@ import { AvgDec } from '@/components/wca-results/AvgDec';
 import type { KeatonedInfo } from '@/lib/record-tag';
 
 export function AverageValueCell({
-  effAvg, attempts, eventId, averageRecord, averageRank, oldValues, note, decimalAlign, averageKeatoned,
+  effAvg, attempts, eventId, averageRecord, averageRank, oldValues, note, decimalAlign, averageKeatoned, personCountry,
 }: {
   effAvg: number;
   attempts: number[];
@@ -26,14 +26,16 @@ export function AverageValueCell({
   decimalAlign?: boolean;
   // 「日掩」:够到了该级纪录但同日别处更快(Reg 9i2)。见 lib/record-tag。
   averageKeatoned?: KeatonedInfo | null;
+  // WCA Live 的大洲纪录统一以 CR 传输,由 RecordBadge 按选手国家展开为 ER / AsR 等。
+  personCountry?: string | null;
 }) {
   const timed = eventId !== '333mbf' && eventId !== '333fm';
   const unof = effAvg === 0 && timed ? unofficialAoN(attempts) : null;
 
   const badge = averageKeatoned
-    ? <RecordBadge record={averageRecord} keatoned={averageKeatoned} keatonedEventId={eventId} keatonedIsAvg variant="inline" />
+    ? <RecordBadge record={averageRecord} iso2={personCountry} keatoned={averageKeatoned} keatonedEventId={eventId} keatonedIsAvg variant="inline" />
     : averageRecord
-      ? <RecordBadge record={averageRecord} variant="inline" />
+      ? <RecordBadge record={averageRecord} iso2={personCountry} variant="inline" />
       : averageRank
         ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
         : null;

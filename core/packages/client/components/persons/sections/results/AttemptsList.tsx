@@ -76,7 +76,7 @@ export function AttemptsList({
   };
   const rankBadge = (i: number, isBestAtt: boolean) => {
     const tag = rankTag(i, isBestAtt);
-    return tag ? <RecordBadge record={tag} variant="inline" /> : null;
+    return tag ? <RecordBadge record={tag} iso2={personCountry} variant="inline" /> : null;
   };
   return (
     <span className="wp-attempts-flow" style={{ '--att-cols': colCount } as CSSProperties}>
