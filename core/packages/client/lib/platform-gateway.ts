@@ -460,6 +460,9 @@ export async function executePlatformAction(
     case 'admin-payout-generate': return write('/v1/platform/admin/instructor-payouts/generate', 'POST', payload);
     case 'admin-payout-approve': return write(`/v1/platform/admin/instructor-payouts/${requiredId(input)}/approve`, 'POST', payload);
     case 'redeem-invite': return write('/v1/platform/invites/redeem', 'POST', payload);
+    case 'admin-invite-batch': return write('/v1/platform/admin/invites/batch', 'POST', payload);
+    case 'admin-invite-order': return write(`/v1/platform/admin/invites/${requiredId(input)}/order-reference`, 'PATCH', payload);
+    case 'admin-invite-revoke': return write(`/v1/platform/admin/invites/${requiredId(input)}/revoke`, 'POST', payload);
     case 'qr-duplicate': return write(`/v1/platform/admin/qr/${requiredId(input)}/duplicate`, 'POST', payload);
     case 'qr-card-job': return write('/v1/platform/admin/qr/card-jobs', 'POST', payload);
     case 'qr-toggle': return write(`/v1/platform/admin/qr/${requiredId(input)}/disabled`, 'PATCH', payload);
@@ -514,7 +517,10 @@ export const PLATFORM_ACTION_LABELS: Record<PlatformActionId, { zh: string; en: 
   'admin-payout': { zh: '标记已结算', en: 'Mark paid' },
   'admin-payout-generate': { zh: '生成结算单', en: 'Generate payout' },
   'admin-payout-approve': { zh: '批准结算单', en: 'Approve payout' },
-  'redeem-invite': { zh: '兑换邀请', en: 'Redeem invitation' },
+  'redeem-invite': { zh: '兑换课程码', en: 'Redeem course code' },
+  'admin-invite-batch': { zh: '批量生成兑换码', en: 'Generate code batch' },
+  'admin-invite-order': { zh: '绑定订单号', en: 'Bind order reference' },
+  'admin-invite-revoke': { zh: '撤销兑换码', en: 'Revoke code' },
   'qr-duplicate': { zh: '复制二维码', en: 'Duplicate QR code' },
   'qr-card-job': { zh: '生成卡片', en: 'Generate card' },
   'qr-toggle': { zh: '更新二维码状态', en: 'Update QR status' },
