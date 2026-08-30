@@ -15,6 +15,7 @@ export interface Sponsor {
   wcaId?: string;
   avatarUrl?: string;
   message?: string;
+  claimed: boolean;
 }
 
 export interface SponsorInput {
@@ -26,8 +27,9 @@ export interface SponsorInput {
   message?: string | null;
 }
 
-export async function listSponsors(): Promise<Sponsor[]> {
-  return handleApi<Sponsor[]>(await fetch(BASE));
+export async function listSponsors(fresh = false): Promise<Sponsor[]> {
+  const url = fresh ? `${BASE}?fresh=${Date.now()}` : BASE;
+  return handleApi<Sponsor[]>(await fetch(url, fresh ? { cache: 'no-store' } : undefined));
 }
 export async function createSponsor(body: SponsorInput): Promise<Sponsor> {
   return handleApi<Sponsor>(await fetch(BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));
@@ -37,6 +39,86 @@ export async function updateSponsor(id: number, body: SponsorInput): Promise<Spo
 }
 export async function deleteSponsor(id: number): Promise<{ ok: boolean }> {
   return handleApi<{ ok: boolean }>(await fetch(`${BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
+}
+
+// ── 赞助认领 ──
+
+export type SponsorClaimStatus = 'pending' | 'approved' | 'rejected' | 'cancelled' | 'revoked';
+
+export interface SponsorClaim {
+  id: number;
+  sponsorId: number;
+  status: SponsorClaimStatus;
+  claimantNote: string | null;
+  profileSnapshot: {
+    displayName?: string;
+    wcaId?: string | null;
+    countryIso2?: string | null;
+    profileComplete?: boolean;
+  };
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  cancelledAt: string | null;
+  revocationNote: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  sponsor: { name: string; amount: number; currency: string };
+}
+
+export class SponsorClaimError extends Error {
+  code?: string;
+
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = 'SponsorClaimError';
+    this.code = code;
+  }
+}
+
+async function handleClaimApi<T>(res: Response): Promise<T> {
+  if (res.ok) return res.json() as Promise<T>;
+  const data = await res.json().catch(() => ({})) as { error?: string; code?: string };
+  throw new SponsorClaimError(data.error || `HTTP ${res.status}`, data.code);
+}
+
+const CLAIMS_BASE = API_ORIGIN + '/v1/sponsor-claims';
+
+export async function listMySponsorClaims(): Promise<SponsorClaim[]> {
+  return handleClaimApi<SponsorClaim[]>(await fetch(`${CLAIMS_BASE}/mine`, { headers: authHeaders() }));
+}
+
+export async function createSponsorClaim(sponsorId: number, note: string): Promise<{
+  id: number; status: SponsorClaimStatus; autoApproved: boolean;
+}> {
+  return handleClaimApi(await fetch(`${BASE}/${sponsorId}/claims`, {
+    method: 'POST', headers: authHeaders(), body: JSON.stringify({ note }),
+  }));
+}
+
+export async function cancelSponsorClaim(id: number): Promise<{ ok: boolean }> {
+  return handleClaimApi(await fetch(`${CLAIMS_BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
+}
+
+export async function listSponsorClaims(status?: SponsorClaimStatus): Promise<SponsorClaim[]> {
+  const suffix = status ? `?status=${encodeURIComponent(status)}` : '';
+  return handleClaimApi<SponsorClaim[]>(await fetch(`${CLAIMS_BASE}${suffix}`, { headers: authHeaders() }));
+}
+
+export async function reviewSponsorClaim(
+  id: number,
+  decision: 'approve' | 'reject',
+  note: string,
+): Promise<{ ok: boolean; status: SponsorClaimStatus }> {
+  return handleClaimApi(await fetch(`${CLAIMS_BASE}/${id}/review`, {
+    method: 'POST', headers: authHeaders(), body: JSON.stringify({ decision, note }),
+  }));
+}
+
+export async function unclaimSponsor(id: number, note: string): Promise<{ ok: boolean }> {
+  return handleClaimApi(await fetch(`${BASE}/${id}/unclaim`, {
+    method: 'POST', headers: authHeaders(), body: JSON.stringify({ note }),
+  }));
 }
 
 // ── 贡献者(issue #28:score = 贡献次数,admin 点数字 +1)──

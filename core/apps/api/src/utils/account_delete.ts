@@ -191,7 +191,8 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   memberships: '会员权益状态:留着,同一个人重新绑 WCA 回来还认',
   membership_orders: '交易凭证,财务对账要;只有归属键,没有姓名邮箱',
   contributors: '站方手录的致谢名单,单独处理(只把 wca_id 置 NULL,名字留着)',
-  sponsors: '赞助方名录,admin 手录,与站内账号无关',
+  sponsors: '赞助名录保留,认领账号注销时解除关联',
+  sponsor_claims: '申请随认领账号级联删除,审核与解除账号删除只置空',
   watched_persons: '站方监控名单(admin 配置)',
   watched_pr_baseline: '同上,监控用的基线快照',
   comp_snapshots: 'wca_id 这里是**比赛** id,不是人',
@@ -363,6 +364,12 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
       UPDATE guardian_links
       SET guardian_user_id = NULL, account_linked_at = NULL
       WHERE guardian_user_id = ${userId}`;
+
+    // 公开赞助记录继续保留,但账号注销后不能留下“已认领”的过期状态。
+    await tx`
+      UPDATE sponsors
+      SET claimed_by_user_id = NULL, claimed_at = NULL
+      WHERE claimed_by_user_id = ${userId}`;
 
     // 最后删账号本体。auth_identities 有 ON DELETE CASCADE(0064),Platform 由 0168
     // 的 BEFORE DELETE trigger 在同一事务内完整清理并匿名化。

@@ -391,7 +391,8 @@ const TABLES: Table[] = [
   { name: 'wca_teacher_named_students + wca_teacher_named_student_events', domain: 'commerce', origin: '0174', evolved: [177], purpose: { zh: '尚无 WCA ID 的学生名册：姓名、必填国籍与老师教授的项目分别保存', en: 'Teacher rosters for students without WCA IDs, with names, required nationalities, and taught events stored separately' }, family: [
     'wca_teacher_named_students', 'wca_teacher_named_student_events',
   ] },
-  { name: 'sponsors', domain: 'commerce', origin: '0043', purpose: { zh: '/support 致谢 / 赞助墙(admin 手录)', en: 'Sponsor / support wall (admin-entered)' } },
+  { name: 'sponsors', domain: 'commerce', origin: '0043', evolved: [188], purpose: { zh: '/support 致谢 / 赞助墙及公开认领状态', en: 'Sponsor / support wall and public claim status' } },
+  { name: 'sponsor_claims', domain: 'commerce', origin: '0188', purpose: { zh: '赞助认领申请、私密资料快照与审核历史', en: 'Supporter claims, private profile snapshots, and review history' } },
   { name: 'contributors', domain: 'commerce', origin: '0075', purpose: { zh: '/support 贡献者名单:score = 贡献次数(admin 点数字 +1),contributions = 每次贡献的内容明细 [{ zh, en, date? }]', en: 'Contributor wall on /support: score = contribution count (admin clicks to +1), contributions = per-contribution content details [{ zh, en, date? }]' } },
   { name: 'feedback', domain: 'commerce', origin: '0049', evolved: [58], purpose: { zh: '桌宠反馈帖:类型 / 正文 / 环境快照', en: 'Desk-pet feedback threads: kind, body, environment' }, cols: [
     { name: 'kind', note: { zh: 'need | bug | other', en: 'need | bug | other' } }, { name: 'body, wca_id, contact' }, { name: 'page_url, lang, theme, viewport' }, { name: 'status', note: { zh: 'new | triaged | done', en: 'new | triaged | done' } },
@@ -665,6 +666,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 185, slug: 'wca_self_taught', desc: { zh: 'WCA 选手可按项目明确登记为自学，并与尚未填写老师区分。', en: 'Allow WCA cubers to mark individual events as self-taught, distinct from having no learning source set.' } },
   { n: 186, slug: 'account_basic_profile', desc: { zh: '账号增加私密生日、性别和国籍；WCA 绑定账号的国籍由认证资料同步。', en: 'Add private birth date, gender, and nationality fields, with WCA-linked nationality synced from the verified profile.' } },
   { n: 187, slug: 'sq1_ep_pkfeng_complete', desc: { zh: '补全 SQ1 EP 的 100 个 case 和来源文档中的 118 条公式，固定 50 个无特与 50 个有特，并保留已有学习进度。', en: 'Complete SQ1 EP with 100 cases and all 118 source-document algorithms, lock the 50/50 parity split, and preserve existing learning progress.' } },
+  { n: 188, slug: 'sponsor_claims', desc: { zh: '赞助记录增加账号认领、WCA 精确匹配自动通过、管理员审核与可撤销审计链。', en: 'Add account claims for supporter entries, exact-WCA auto-approval, administrator review, and a revocable audit trail.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

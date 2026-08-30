@@ -64,6 +64,8 @@ WCA 自学来源增量 `0185_wca_self_taught.sql` 允许老师关系的老师 ID
 
 账户基本资料增量 `0186_account_basic_profile.sql` 为 `app_users` 增加出生日期、性别和国籍；已绑定 WCA 的账户优先从现有 WCA 快照回填国籍，没有快照的账户在下次 WCA 登录或绑定时刷新。
 
+赞助认领增量 `0188_sponsor_claims.sql` 为公开赞助记录增加可解除的账号归属，并保存私密资料快照、付款线索、审核结论与撤销历史；WCA ID 精确匹配可自动通过，其他申请进入管理员审核。
+
 ## 已应用 migration 不能改
 
 `apply_migrations.sh` 会把每个文件的 SHA-256 写入 ledger。已应用文件的摘要发生变化时会终止执行。修正已上线结构只能新增 migration；需要恢复数据时使用已验证的备份。
