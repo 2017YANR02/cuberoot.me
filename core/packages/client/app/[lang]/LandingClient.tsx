@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { ArrowRight, Heart, Lock, LogIn, User, type LucideIcon } from 'lucide-react';
 import Link from '@/components/AppLink';
-import LangToggle from '@/components/LangToggle';
+import HeaderToggles from '@/components/HeaderToggles';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import LandingSearch from '@/components/LandingSearch';
@@ -134,7 +134,16 @@ export default function LandingPage() {
   return (
     <div className="landing-page">
       <div className="landing-auth">
-        <LangToggle />
+        <HeaderToggles />
+        <Link
+          href={SUPPORT_FOOTER_ENTRY.href}
+          className="landing-auth-icon"
+          title={t(SUPPORT_FOOTER_ENTRY.nameKey)}
+          aria-label={t(SUPPORT_FOOTER_ENTRY.nameKey)}
+          prefetch={false}
+        >
+          <Heart size={14} aria-hidden="true" />
+        </Link>
         {!user ? (
           <Link href={`/account${nextQuery(pathname)}`} className="landing-auth-btn is-login" prefetch={false}>
             <LogIn size={16} aria-hidden />

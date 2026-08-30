@@ -68,19 +68,18 @@ html[data-theme=dark] {
    仅当通知栏的下一个兄弟是 .landing-page(即首页)时生效,其它页保持「通知 + 管理员条」上下两行。
    目标:通知文字(左) + 管理员环境切换(中右) + 语言/头像(最右,由 landing.css 上提)同处一行。 */
 .page-notice-wrap:has(+ .landing-page) { position: relative; }
-/* 给通知正文右侧留出控件区(语言/登录常驻;管理员另有环境切换),避免正文和右上角那组控件
-   叠在一起 —— 之前的 6.5rem 是照「已登录 = 只有头像」(约 50px)算的,未登录时那组是
-   语言图标 + 「登录 / Log in」胶囊(zh 102px、en 114px),× 关闭键会被压在胶囊底下点不到。
-   10rem = 最宽的 114px + 与 × 的间距,再加窄屏两者右锚点之差(悬浮块 2rem 地板 vs 本条
+/* 给通知正文右侧留出控件区(语言/外观/致谢/登录常驻;管理员另有环境切换),避免正文和右上角那组控件
+   叠在一起。未登录时最宽:三个 28px 图标 + 两层 8px 间距 + 114px 登录胶囊 = 222px。
+   14.5rem = 222px + 与 × 的间距,再加窄屏两者右锚点之差(悬浮块 2rem 地板 vs 本条
    0.9rem 内边距);宽屏两个锚点重合,多出的余量无害。 */
-.page-notice-wrap:has(+ .landing-page) .page-notice { padding-right: 10rem; }
+.page-notice-wrap:has(+ .landing-page) .page-notice { padding-right: 14.5rem; }
 /* 管理员环境切换 / 添加入口:绝对定位到通知行右侧、语言/登录左边(与那组控件同一右锚点,
-   留出 8rem = 最宽 114px + 间距)。 */
+   留出 12.5rem = 最宽控件组减去右侧起点后的间距。 */
 .page-notice-wrap:has(+ .landing-page) .page-notice-adminbar {
   position: absolute;
   top: 0;
   bottom: 0;
-  right: calc(max(2rem, (100vw - var(--pn-max-w)) / 2) + 8rem);
+  right: calc(max(2rem, (100vw - var(--pn-max-w)) / 2) + 12.5rem);
   width: auto;
   max-width: none;
   margin: 0;
