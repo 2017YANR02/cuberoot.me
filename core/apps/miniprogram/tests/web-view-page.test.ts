@@ -69,7 +69,7 @@ describe('shared web-view page state', () => {
       loginStorageUnavailable: false,
       loadingTitle: '正在打开计时',
       routeKey: 'timer',
-      src: 'https://cuberoot.me/zh/timer',
+      src: 'https://cuberoot.me/zh/timer#wechat_redirect',
       viewAttempt: 1,
     });
     expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '计时' });
@@ -82,7 +82,7 @@ describe('shared web-view page state', () => {
     const context = createContext();
 
     await expect(openWebRoute(context, 'timer')).resolves.toBe(true);
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
     expect(context.data.errorTitle).toBe('');
   });
 
@@ -148,7 +148,7 @@ describe('shared web-view page state', () => {
     expect(context.data.canRetry).toBe(true);
 
     retryWebRoute(context);
-    expect(context.data.src).toBe('https://cuberoot.me/zh/alg');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/alg#wechat_redirect');
     expect(context.data.errorTitle).toBe('');
   });
 
@@ -177,7 +177,7 @@ describe('shared web-view page state', () => {
     }));
     await Promise.resolve();
 
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
     expect(context.data.errorTitle).toBe('');
     expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
   });
@@ -233,7 +233,7 @@ describe('shared web-view page state', () => {
 
     expect(getNetworkType).toHaveBeenCalledTimes(1);
     expect(networkListeners.size).toBe(1);
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
     expect(context.data.errorTitle).toBe('');
     expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
   });
@@ -270,7 +270,7 @@ describe('shared web-view page state', () => {
     await Promise.resolve();
 
     expect(getNetworkType).not.toHaveBeenCalled();
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
     expect(context.data.errorTitle).toBe('');
     expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
   });
@@ -319,7 +319,7 @@ describe('shared web-view page state', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(context.data.src).toBe(
-      `https://cuberoot.me/auth/miniprogram#ticket=${'B'.repeat(43)}&next=%2Fzh%2Ftimer`,
+      `https://cuberoot.me/auth/miniprogram#wechat_redirect&ticket=${'B'.repeat(43)}&next=%2Fzh%2Ftimer`,
     );
   });
 
@@ -346,7 +346,7 @@ describe('shared web-view page state', () => {
     markWebRouteFailed(context);
     options.retry.call(context);
 
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
     expect(context.data.errorTitle).toBe('');
   });
 
@@ -365,7 +365,7 @@ describe('shared web-view page state', () => {
 
     retryWebRoute(context);
 
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
     expect(context.data.errorTitle).toBe('');
   });
 
@@ -379,7 +379,7 @@ describe('shared web-view page state', () => {
 
     try {
       expect(() => retryWebRoute(context)).not.toThrow();
-      expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+      expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
       expect(context.data.errorTitle).toBe('');
     } finally {
       timer.mockRestore();
@@ -397,7 +397,7 @@ describe('shared web-view page state', () => {
 
     try {
       expect(() => retryWebRoute(context)).not.toThrow();
-      expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+      expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
       expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
     } finally {
       timer.mockRestore();
@@ -415,7 +415,7 @@ describe('shared web-view page state', () => {
 
     try {
       expect(() => retryWebRoute(context)).not.toThrow();
-      expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+      expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
       expect(context.data.errorTitle).toBe('');
     } finally {
       clearTimer.mockRestore();
@@ -439,7 +439,7 @@ describe('shared web-view page state', () => {
     expect(context.data.src).toBe('');
     await vi.advanceTimersByTimeAsync(100);
 
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
     expect(context.data.errorTitle).toBe('');
     expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
   });
@@ -464,7 +464,7 @@ describe('shared web-view page state', () => {
     expect(nextTickCallbacks).toHaveLength(1);
     nextTickCallbacks[0]();
     await Promise.resolve();
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
     expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
   });
 
@@ -489,7 +489,7 @@ describe('shared web-view page state', () => {
     await openWebRoute(context, 'timer');
 
     expect(context.data.src).toBe(
-      `https://cuberoot.me/auth/miniprogram#ticket=${ticket}&next=%2Fzh%2Ftimer`,
+      `https://cuberoot.me/auth/miniprogram#wechat_redirect&ticket=${ticket}&next=%2Fzh%2Ftimer`,
     );
   });
 
@@ -511,7 +511,7 @@ describe('shared web-view page state', () => {
 
     expect(request).not.toHaveBeenCalled();
     expect(context.data.src).toBe(
-      'https://cuberoot.me/auth/miniprogram#action=logout&next=%2Fzh%2Faccount',
+      'https://cuberoot.me/auth/miniprogram#wechat_redirect&action=logout&next=%2Fzh%2Faccount',
     );
   });
 
@@ -546,7 +546,7 @@ describe('shared web-view page state', () => {
     await openWebRoute(context, 'timer');
 
     expect(removeStorageSync).toHaveBeenCalledWith('cuberoot:session');
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
   });
 
   it('does not clear a newer session when an older handoff request is rejected', async () => {
@@ -587,7 +587,7 @@ describe('shared web-view page state', () => {
       token: newToken,
       user: { name: 'New account', wcaId: null },
     });
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
   });
 
   it('keeps a timed-out handoff in a retryable state instead of opening as a guest', async () => {
@@ -741,7 +741,7 @@ describe('shared web-view page state', () => {
     options.handleWebViewError.call(context, {
       currentTarget: { dataset: { attempt: oldAttempt } },
     });
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
     expect(context.data.errorTitle).toBe('');
 
     options.handleWebViewError.call(context, {
@@ -779,7 +779,7 @@ describe('shared web-view page state', () => {
     });
     await opening;
 
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
   });
 
   it('ignores a handoff result after the page has been unloaded', async () => {
@@ -880,7 +880,7 @@ describe('shared web-view page state', () => {
     runOldNextTick?.();
     await Promise.resolve();
     expect(context.data.routeKey).toBe('timer');
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
     expect(setNavigationBarTitle).toHaveBeenCalledTimes(2);
   });
 
@@ -920,7 +920,7 @@ describe('shared web-view page state', () => {
     options.onUnload.call(context);
     options.onLoad.call(context, {});
 
-    expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
+    expect(context.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
     expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '计时' });
   });
 });
