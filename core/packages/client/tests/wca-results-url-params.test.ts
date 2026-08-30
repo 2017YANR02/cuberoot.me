@@ -22,7 +22,9 @@ import { join, dirname } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const PAGE = join(ROOT, 'app', '[lang]', 'wca', 'results', 'page.tsx');
+const TEACHER_CELL = join(ROOT, 'components', 'WcaTeacherCell.tsx');
 const src = readFileSync(PAGE, 'utf8');
+const teacherCellSrc = readFileSync(TEACHER_CELL, 'utf8');
 
 /** backfill effect 托管的键 —— 从源码里现推,页面加参数时守卫自动跟着扩。 */
 function backfilledKeys(source: string): string[] {
@@ -118,5 +120,14 @@ describe('/wca/results — backfill 托管的 URL 参数一律写显式值', () 
       'update() 里的 `v || null` 会把空串折成 null —— 对 country(空 = 全部)、gender(all)、year/month(0) ' +
         '这些托管键等于把用户的选择丢回派生规则。要清除参数请由调用方显式传 null(仅限未托管的键)。',
     ).toBe(false);
+  });
+});
+
+describe('/wca/results — 老师分享视图', () => {
+  it('用 URL 保留指定老师,并在每个排名表的老师列隐藏其他老师', () => {
+    expect(src).toContain('teacher: parseAsString');
+    expect(src).toContain('setQuery({ teacher: value ? teacherDirectory.userWcaId : null })');
+    expect(src.match(/visibleTeacherWcaId=\{visibleTeacherWcaId \|\| undefined\}/g)).toHaveLength(3);
+    expect(teacherCellSrc).toContain('teacher.teacherWcaId === visibleTeacherWcaId');
   });
 });

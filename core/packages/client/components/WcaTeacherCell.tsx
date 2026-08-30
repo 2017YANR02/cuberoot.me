@@ -1273,7 +1273,7 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
   );
 }
 
-export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = eventIds, defaultEditEventId, directory, isZh, showEventNames = false, emptyLabel = '—', editorOnly = false, managedTeacherWcaId }: {
+export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = eventIds, defaultEditEventId, directory, isZh, showEventNames = false, emptyLabel = '—', editorOnly = false, managedTeacherWcaId, visibleTeacherWcaId }: {
   studentWcaId: string;
   eventIds: readonly string[];
   editableEventIds?: readonly string[];
@@ -1284,6 +1284,7 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
   emptyLabel?: string;
   editorOnly?: boolean;
   managedTeacherWcaId?: string;
+  visibleTeacherWcaId?: string;
 }) {
   const eventIdsKey = eventIds.join(',');
   const normalizedEventIds = useMemo(
@@ -1306,7 +1307,9 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
   })), [directory.canSelfAssign, directory.isAdmin, directory.teachers, managedTeacherWcaId, normalizedEditableEventIds, studentWcaId]);
   const relations = normalizedEventIds.flatMap((eventId) => {
     const teacher = directory.teachers.get(wcaTeacherRelationKey(studentWcaId, eventId));
-    return teacher ? [{ eventId, teacher }] : [];
+    return teacher && (!visibleTeacherWcaId || teacher.teacherWcaId === visibleTeacherWcaId)
+      ? [{ eventId, teacher }]
+      : [];
   });
   const [editing, setEditing] = useState(false);
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(
