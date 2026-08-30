@@ -193,22 +193,21 @@
   white-space: nowrap;
 }
 
-.infra-expense-total {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 18px;
+.infra-cost-summary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 52px;
+}
+
+.infra-cost-summary dd {
+  font-size: clamp(2rem, 5.4vw, 4rem);
+  white-space: normal;
+}
+
+.infra-expense-detail-title {
   max-width: 880px;
-  margin: 30px 0 0 66px;
-  font-size: 0.92rem;
-}
-
-.infra-expense-total span {
-  color: var(--muted-foreground);
-}
-
-.infra-expense-total strong {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
+  margin: 0 0 12px 66px;
+  font-size: 1rem;
+  font-weight: 680;
 }
 
 .infra-expense-note {
@@ -373,7 +372,7 @@
 
   .infra-capacity-note,
   .infra-expenses,
-  .infra-expense-total,
+  .infra-expense-detail-title,
   .infra-expense-note,
   .infra-equipment-groups,
   .infra-flow,
@@ -411,9 +410,17 @@
     font-size: 1.15rem;
   }
 
+  .infra-cost-summary dd {
+    font-size: clamp(2rem, 9vw, 2.5rem);
+  }
+
   .infra-expenses > div {
     grid-template-columns: 1fr;
     gap: 9px;
+  }
+
+  .infra-cost-summary {
+    grid-template-columns: 1fr;
   }
 
   .infra-flow li {

@@ -63,6 +63,10 @@ describe('shared web-view page state', () => {
       canRetry: false,
       errorMessage: '',
       errorTitle: '',
+      loginBusy: false,
+      loginError: '',
+      loginRequired: false,
+      loginStorageUnavailable: false,
       loadingTitle: '正在打开计时',
       routeKey: 'timer',
       src: 'https://cuberoot.me/zh/timer',
@@ -96,25 +100,20 @@ describe('shared web-view page state', () => {
     const options = createWebViewPageOptions() as unknown as {
       onLoad(this: WebViewPageContext, query: { key: string }): void;
       onShareAppMessage(this: WebViewPageContext): WechatMiniprogram.Page.ICustomShareContent;
-      onShareTimeline(this: WebViewPageContext): WechatMiniprogram.Page.ICustomTimelineContent;
     };
 
     options.onLoad.call(context, { key: 'alg' });
     await Promise.resolve();
 
     expect(showShareMenu).toHaveBeenCalledWith({
-      menus: ['shareAppMessage', 'shareTimeline'],
+      menus: ['shareAppMessage'],
     });
     expect(hideShareMenu).not.toHaveBeenCalled();
+    expect(options).not.toHaveProperty('onShareTimeline');
     expect(options.onShareAppMessage.call(context)).toEqual({
       imageUrl: '/assets/share-cover.png',
       title: 'CubeRoot 魔方根：公式',
       path: '/pages/web/index?key=alg',
-    });
-    expect(options.onShareTimeline.call(context)).toEqual({
-      imageUrl: '/assets/share-cover.png',
-      query: 'key=alg',
-      title: 'CubeRoot 魔方根：公式',
     });
   });
 

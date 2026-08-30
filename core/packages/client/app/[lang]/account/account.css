@@ -81,6 +81,9 @@
 
 .account-id-row { margin-bottom: 32px; }
 .account-name {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
   margin: 0;
   /* 姓名是动态任意汉字,静态子集楷体盖不全会半楷半宋,故走全覆盖系统衬线(同 /person) */
   font-family: 'Fraunces', 'Times New Roman', serif;
@@ -89,14 +92,8 @@
   letter-spacing: -0.01em;
   color: var(--foreground);
 }
-.account-wid {
-  margin-top: 2px;
-  font-size: 0.82rem;
-  color: var(--muted-foreground);
-  font-variant-numeric: tabular-nums;
-}
 
-/* 入口卡片:桌面双列,整块可点。 */
+/* 入口卡片:双列,整块可点。 */
 .account-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -125,9 +122,6 @@
   font-size: 0.82rem;
   color: var(--muted-foreground);
 }
-.account-card-chev { flex-shrink: 0; color: var(--faint-foreground); }
-.account-card:hover .account-card-chev { color: var(--accent); }
-
 /* 登录方式(绑定 / 解绑 / 密码)—— 只给标题 + 限宽,不再套一层框。 */
 .account-creds {
   margin-top: 32px;
@@ -240,6 +234,6 @@
 @media (max-width: 480px) {
   .account-page { padding: 18px 14px 48px; }
   .account-name { font-size: 1.4rem; }
-  .account-cards { grid-template-columns: 1fr; }
+  .account-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .account-card { padding: 14px 14px; gap: 12px; }
 }

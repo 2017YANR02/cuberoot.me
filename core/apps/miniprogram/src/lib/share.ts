@@ -1,5 +1,15 @@
 import type { WebRouteShare } from './web-routes';
 
+export function showFriendShareMenu(): void {
+  if (typeof wx.showShareMenu !== 'function') return;
+
+  try {
+    wx.showShareMenu({ menus: ['shareAppMessage'] });
+  } catch {
+    // Sharing is optional; page loading must survive unsupported platform APIs.
+  }
+}
+
 export function showPublicShareMenu(): void {
   if (typeof wx.showShareMenu !== 'function') return;
 

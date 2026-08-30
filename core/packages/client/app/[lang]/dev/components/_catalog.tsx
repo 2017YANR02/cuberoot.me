@@ -2110,6 +2110,14 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `电脑弹窗传 onClose;手机弹窗另传 mode="wechat" 或 mode="browser"。`, en: `The desktop dialog takes onClose; the mobile dialog also takes mode="wechat" or mode="browser".` },
   },
   {
+    name: 'MiniProgramTimelineShare',
+    import: "import MiniProgramTimelineShare from '@/components/MiniProgramTimelineShare';",
+    category: 'more',
+    zh: `仅在微信小程序 web-view 内显示的朋友圈入口；通过共享桥进入原生分享页，网站本身不复制小程序分享逻辑。`,
+    en: `A Moments affordance shown only inside the WeChat Mini Program web-view; it enters the native share page through the shared bridge without duplicating Mini Program share logic in the website.`,
+    note: { zh: `全局挂载；页面到小程序路由键由共享站点目录推导，私有页和未登记深链不显示。`, en: `Mounted globally; page-to-Mini-Program route keys derive from the shared site directory, while private pages and unregistered deep links stay hidden.` },
+  },
+  {
     name: 'DonateModal',
     import: "import DonateModal from '@/components/DonateModal';",
     category: 'more',

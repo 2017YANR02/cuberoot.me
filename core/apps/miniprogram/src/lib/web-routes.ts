@@ -48,6 +48,14 @@ export interface WebRouteShare {
   path: string;
 }
 
+export interface TimelineShareRoute {
+  description: string;
+  key: WebRouteKey;
+  targetShare: WebRouteShare;
+  timelineShare: WebRouteShare;
+  title: string;
+}
+
 export const WEB_ROUTE_SHARE_IMAGE = '/assets/share-cover.png';
 
 function directoryRouteKey(entry: SiteDirectoryEntry): DiscoveryRouteKey | null {
@@ -194,6 +202,25 @@ export function resolveWebRouteShare(key: unknown): WebRouteShare | null {
     title: `CubeRoot 魔方根：${route.title}`,
     path: route.nativeTabPath
       ?? `/pages/web/index?key=${encodeURIComponent(routeKey)}`,
+  };
+}
+
+export function resolveTimelineShareRoute(key: unknown): TimelineShareRoute | null {
+  const targetShare = resolveWebRouteShare(key);
+  if (!targetShare || typeof key !== 'string') return null;
+
+  const routeKey = key as WebRouteKey;
+  const route = WEB_ROUTES[routeKey];
+  return {
+    description: route.description,
+    key: routeKey,
+    targetShare,
+    timelineShare: {
+      imageUrl: targetShare.imageUrl,
+      title: targetShare.title,
+      path: `/pages/share/index?key=${encodeURIComponent(routeKey)}`,
+    },
+    title: route.title,
   };
 }
 
