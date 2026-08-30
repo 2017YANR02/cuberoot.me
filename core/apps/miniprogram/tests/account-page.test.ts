@@ -93,7 +93,7 @@ describe('mini program account page', () => {
 
     expect(request).toHaveBeenCalledOnce();
     expect(page.data.src).toBe(
-      `https://cuberoot.me/auth/miniprogram#ticket=${ticket}&next=%2Fzh%2Faccount`,
+      `https://cuberoot.me/auth/miniprogram#wechat_redirect&ticket=${ticket}&next=%2Fzh%2Faccount`,
     );
   });
 
@@ -172,7 +172,7 @@ describe('mini program account page', () => {
       loginBusy: false,
       loginError: '',
       loginRequired: false,
-      src: `https://cuberoot.me/auth/miniprogram#ticket=${ticket}&next=%2Fzh%2Faccount`,
+      src: `https://cuberoot.me/auth/miniprogram#wechat_redirect&ticket=${ticket}&next=%2Fzh%2Faccount`,
     });
   });
 

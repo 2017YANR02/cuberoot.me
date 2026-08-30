@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Share2 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { T, tr } from '@/i18n/tr';
-import { resolveVerifiedMiniProgramNavigationApi } from '@/lib/miniprogram-bridge';
+import {
+  navigateToMiniProgramPage,
+  resolveVerifiedMiniProgramNavigationApi,
+} from '@/lib/miniprogram-bridge';
 import { resolveMiniProgramShareRouteKey } from '@/lib/miniprogram-share';
 import type { WeChatMiniProgramApi } from '@/lib/wechat-js-sdk';
 import './miniprogram-timeline-share.css';
@@ -16,17 +19,25 @@ export default function MiniProgramTimelineShare() {
   const routeKey = resolveMiniProgramShareRouteKey(pathname);
   const [miniProgram, setMiniProgram] = useState<WeChatMiniProgramApi | null>(null);
   const [status, setStatus] = useState<OpenStatus>('idle');
+  const navigationAttemptRef = useRef(0);
 
   useEffect(() => {
     let active = true;
+    navigationAttemptRef.current += 1;
     setMiniProgram(null);
     setStatus('idle');
-    if (!routeKey) return () => { active = false; };
+    if (!routeKey) return () => {
+      active = false;
+      navigationAttemptRef.current += 1;
+    };
 
     void resolveVerifiedMiniProgramNavigationApi().then((api) => {
       if (active) setMiniProgram(api);
     });
-    return () => { active = false; };
+    return () => {
+      active = false;
+      navigationAttemptRef.current += 1;
+    };
   }, [routeKey]);
 
   if (!routeKey || !miniProgram) return null;
@@ -38,16 +49,16 @@ export default function MiniProgramTimelineShare() {
       : tr({ en: 'Share to Moments', zh: '分享到朋友圈' });
 
   const openSharePage = (): void => {
+    const attempt = ++navigationAttemptRef.current;
     setStatus('opening');
-    try {
-      miniProgram.navigateTo({
-        url: `/pages/share/index?key=${encodeURIComponent(routeKey)}`,
-        fail: () => setStatus('failed'),
-        success: () => setStatus('idle'),
-      });
-    } catch {
-      setStatus('failed');
-    }
+    void navigateToMiniProgramPage(
+      miniProgram,
+      `/pages/share/index?key=${encodeURIComponent(routeKey)}`,
+    ).then((succeeded) => {
+      if (navigationAttemptRef.current === attempt) {
+        setStatus(succeeded ? 'idle' : 'failed');
+      }
+    });
   };
 
   return (
