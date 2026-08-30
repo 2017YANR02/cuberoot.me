@@ -78,6 +78,7 @@ import {
 } from '@/lib/alg-notation-display';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
+import { classifySq1EpParity, partitionSq1EpCases, type Sq1EpParity } from '@/lib/sq1-ep-parity';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 import { firstAlgorithmAverageStm } from '@/lib/alg-metrics';
@@ -488,6 +489,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const isZh = i18n.language.startsWith('zh');
   const narrow = useIsMobile(480);
   const validPuzzle = isPuzzle(puzzleParam);
+  const isSq1Ep = puzzleParam === 'sq1' && set === 'ep';
   const meta = validPuzzle ? getAlgSetMeta(puzzleParam, set) : undefined;
   const setHeading = collection ? tr(collection.heading) : meta?.short ?? (meta ? tr(meta) : set);
   const algSetTitle = (() => {
@@ -516,16 +518,16 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   /** 点中的那张卡(黄框)。它同时是 URL 片段的来源 —— 复制地址栏就能把这张卡发给别人。 */
   const [selectedId, setSelectedId] = useState<number | null>(null);
   /**
-   * 校验不过的**公式**:`${caseId}:${oriIdx}:${algIdx}` → 原因。卡片红框由它推出来。
-   * 存到公式这一级,是因为「这张卡有问题」不够用 —— 一张卡挂四条公式,得指出是哪条。
-   * 当前 set 加载后自动校验,让所有访客在看到公式时就知道它是否匹配魔方状态。
+   * 校验不过的**公式**:`${caseId}:${oriIdx}:${algIdx}` → 原因。仅管理员扫描和查看，
+   * 普通访客不暴露内部数据校验状态。
    */
   const [invalidAlgs, setInvalidAlgs] = useState<Map<string, string>>(new Map());
   const invalidIds = useMemo(() => {
     const s = new Set<number>();
+    if (!isAdmin) return s;
     for (const k of invalidAlgs.keys()) s.add(Number(k.split(':', 1)[0]));
     return s;
-  }, [invalidAlgs]);
+  }, [invalidAlgs, isAdmin]);
   /** 某个 case 的坏行,拆回 (oi, ai) 交给编辑器。挂载那刻编辑器行号 == algs 下标。 */
   const invalidMarksOf = useCallback((caseId: number): AlgInvalidMark[] => {
     const out: AlgInvalidMark[] = [];
@@ -736,9 +738,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     }
   }, [data, loadPreferred, puzzleParam, set, validPuzzle]);
 
-  /** 当前 set 自动扫。case 改完(data 变 / validationRefreshKey)重扫,红标跟着消。 */
+  /** 管理员进入 set 时自动扫。case 改完(data 变 / validationRefreshKey)重扫,红标跟着消。 */
   useEffect(() => {
-    if (!data || !validPuzzle) { setInvalidAlgs(new Map()); return; }
+    if (!isAdmin || !data || !validPuzzle) { setInvalidAlgs(new Map()); return; }
     let cancelled = false;
     scanCases(puzzleParam, set, data.cases, { shouldCancel: () => cancelled })
       .then(fails => {
@@ -752,7 +754,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       })
       .catch(e => console.warn('[alg] validation scan failed', e));
     return () => { cancelled = true; };
-  }, [data, puzzleParam, set, validPuzzle, validationRefreshKey]);
+  }, [data, puzzleParam, set, validPuzzle, validationRefreshKey, isAdmin]);
 
   /**
    * `#<case 名>` 锚点:分享出去的链接、元数据弹窗的「在列表中打开」、个人页的校验汇总都落这儿
@@ -778,7 +780,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       const c = findCaseByHash(data?.cases ?? [], h, puzzleParam, set);
       if (c?.id == null) return;
       setSelectedId(c.id);
-      const g = c.subgroup || '';
+      const parity = isSq1Ep ? classifySq1EpParity(c.name) ?? 'unclassified' : null;
+      const g = parity ? `${parity}:${c.subgroup || ''}` : c.subgroup || '';
       if (collapsedGroups.has(g)) {
         setCollapsedGroups(prev => { const next = new Set(prev); next.delete(g); return next; });
         return false; // 组刚展开,卡还没挂 → 等 collapsedGroups 变化后重试
@@ -918,15 +921,36 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   }, [data, scopedCases, optimalFilterActive, resolvedOptimalMetric, optimalComparison, optimalMoves, effectiveView, tagFilter, availableTags, canChooseOhHand, ohHand]);
 
   const grouped = useMemo(() => {
-    const map = new Map<string, typeof visibleCases>();
-    for (const c of visibleCases) {
-      const key = c.subgroup || '';
-      const arr = map.get(key) ?? [];
-      arr.push(c);
-      map.set(key, arr);
-    }
-    return Array.from(map.entries());
-  }, [visibleCases]);
+    const buildGroups = (
+      cases: typeof visibleCases,
+      section: Sq1EpParity | 'unclassified' | null,
+    ) => {
+      const map = new Map<string, typeof visibleCases>();
+      for (const c of cases) {
+        const subgroup = c.subgroup || '';
+        const arr = map.get(subgroup) ?? [];
+        arr.push(c);
+        map.set(subgroup, arr);
+      }
+      return Array.from(map.entries()).map(([subgroup, subgroupCases], index) => ({
+        key: section ? `${section}:${subgroup}` : subgroup || '_root_',
+        subgroup,
+        cases: subgroupCases,
+        paritySection: section,
+        startsParitySection: section !== null && index === 0,
+        sectionCaseCount: cases.length,
+      }));
+    };
+
+    if (!isSq1Ep) return buildGroups(visibleCases, null);
+
+    const { noParity, parity, unclassified } = partitionSq1EpCases(visibleCases);
+    return [
+      ...buildGroups(noParity, 'no-parity'),
+      ...buildGroups(parity, 'parity'),
+      ...buildGroups(unclassified, 'unclassified'),
+    ];
+  }, [isSq1Ep, visibleCases]);
 
   /**
    * 公式行尾那个镜像入口(issue #40 T5 的 U1)。三份镜像是纯重写,**不依赖建链**,
@@ -1368,15 +1392,45 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         );
       })()}
 
-      {data && !showSubgroupPicker && !showSubSubgroupPicker && grouped.map(([subgroup, cases]) => {
-        const collapsed = collapsedGroups.has(subgroup);
+      {data && !showSubgroupPicker && !showSubSubgroupPicker && isSq1Ep && (
+        <p className="alg-ep-parity-note">
+          {tr({
+            zh: '“特”指棱特：上下层棱块排列的奇偶性不同。中层翻转另算。',
+            en: 'Parity means the layers have different edge-permutation parity. An equator flip is separate.',
+          })}
+        </p>
+      )}
+
+      {data && !showSubgroupPicker && !showSubSubgroupPicker && grouped.map((group) => {
+        const { key, subgroup, cases, paritySection, startsParitySection, sectionCaseCount } = group;
+        const collapsed = collapsedGroups.has(key);
         const showHeader = !subgroupParam && (grouped.length > 1 || subgroup !== '');
         return (
-          <section key={subgroup || '_root_'} className="alg-subgroup">
+          <Fragment key={key}>
+          {startsParitySection && (
+            <div className={`alg-ep-parity-section${paritySection === 'parity' ? ' is-parity' : ''}`}>
+              <h2>
+                {paritySection === 'no-parity'
+                  ? tr({ zh: '无特', en: 'No parity' })
+                  : paritySection === 'parity'
+                    ? tr({ zh: '有特', en: 'Parity' })
+                    : tr({ zh: '待确认', en: 'Review needed' })}
+                <span>{sectionCaseCount}</span>
+              </h2>
+              <p>
+                {paritySection === 'no-parity'
+                  ? tr({ zh: '上下层棱块排列的奇偶性相同', en: 'Both layers have the same permutation parity' })
+                  : paritySection === 'parity'
+                    ? tr({ zh: '上下层棱块排列的奇偶性不同', en: 'The layers have different permutation parity' })
+                    : tr({ zh: '名称无法自动判定，暂不误标', en: 'Names that cannot be classified are left unmarked' })}
+              </p>
+            </div>
+          )}
+          <section className="alg-subgroup">
             {showHeader && (
               <h2
                 className="alg-subgroup-title is-toggleable"
-                onClick={() => toggleGroup(subgroup)}
+                onClick={() => toggleGroup(key)}
                 role="button"
                 tabIndex={0}
               >
@@ -1416,9 +1470,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   return (
                     <SortableCaseCard key={c.id ?? c.name} id={c.id ?? 0} draggable={isAdmin && c.id != null}>
                     <article
-                      className={`alg-case${flashId === c.id ? ' is-flash' : ''}${selectedId === c.id ? ' is-selected' : ''}${c.id != null && invalidIds.has(c.id) ? ' is-invalid' : ''}`}
+                      className={`alg-case${flashId === c.id ? ' is-flash' : ''}${selectedId === c.id ? ' is-selected' : ''}${isAdmin && c.id != null && invalidIds.has(c.id) ? ' is-invalid' : ''}`}
                       id={c.id != null ? `case-${c.id}` : undefined}
-                      title={c.id != null && invalidIds.has(c.id)
+                      title={isAdmin && c.id != null && invalidIds.has(c.id)
                         ? tr({ zh: '这个 case 有公式校验不通过', en: 'This case has failing algs' })
                         : undefined}
                     >
@@ -1507,6 +1561,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         <div className="alg-case-info">
                           <div className="alg-case-name">
                             <span className="alg-case-letter">{cardName}</span>
+                            {isSq1Ep && classifySq1EpParity(c.name) === 'parity' && (
+                              <span className="alg-ep-parity-badge">{tr({ zh: '特', en: 'Parity' })}</span>
+                            )}
                             {/* 字母制主名接管之后,站上原来那个名字(`1LLL 6 7` / `ZBLL L 34`)降为副名 —— 不丢。
                                 但 PLL 的 OLLCP 名剥掉 `PLL-` 前缀后就等于站上的名字,再挂一个副名纯属重复。 */}
                             {(() => {
@@ -1550,7 +1607,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               <AlgRow
                                 entry={entry}
                                 puzzle={puzzleParam as AlgPuzzle}
-                                invalid={c.id != null && trueIdx >= 0 ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
+                                invalid={isAdmin && c.id != null && trueIdx >= 0 ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
                                 ori={oriIdx}
                                 mirror={mirrorFor(c)}
                                 notationStyle={displayedNotationStyle}
@@ -1617,6 +1674,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               </DndContext>
             )}
           </section>
+          </Fragment>
         );
       })}
 
