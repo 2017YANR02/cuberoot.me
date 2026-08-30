@@ -88,7 +88,6 @@ export default function LsllRouteBrowser({ family }: { family: string }) {
                 prefetch={false}
                 thumb={<FaceletsCube fd={zblsCardFacelets(c.id)} size={96} alt={c.code} />}
                 title={zblsName(c.code)}
-                count={ZBLL_CASE_COUNT}
               />
             ))}
           </div>

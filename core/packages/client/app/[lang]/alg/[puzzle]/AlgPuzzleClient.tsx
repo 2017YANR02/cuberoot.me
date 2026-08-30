@@ -28,7 +28,7 @@ import { useSavedMixes } from '@/lib/alg-mix-saved';
 import AlgAdminValidate from '@/components/AlgAdminValidate';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { FaceletsCube } from '@/components/FaceletsCube';
-import { TOTAL_CASES as LSLL_TOTAL, categoryCardFacelets } from '@/lib/lsll/model';
+import { categoryCardFacelets } from '@/lib/lsll/model';
 import '../alg.css';
 import { tr } from '@/i18n/tr';
 import { parseAsBoolean, useQueryState } from 'nuqs';
@@ -251,7 +251,6 @@ export default function AlgPuzzleClient() {
   }
 
   const renderSetCard = (s: (typeof sets)[number]) => {
-    const n = counts[s.slug];
     const first = firstCases[s.slug];
     const firstAlg = first?.algs.flat()[0]?.alg ?? first?.standard ?? '';
     const title = s.short ?? tr(s);
@@ -269,7 +268,6 @@ export default function AlgPuzzleClient() {
             <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={thumbSize} local sq1BlackTop={sq1BlackTop} />
           )}
           title={title}
-          count={n == null ? '…' : n < 0 ? '!' : n}
         />
         {s.slug === 'zbll' && puzzle === '3x3' && !picking && (
           <AlgCard
@@ -277,7 +275,6 @@ export default function AlgPuzzleClient() {
             prefetch={false}
             thumb={<FaceletsCube fd={categoryCardFacelets('ap')} size={thumbSize} alt="LSLL" />}
             title="LSLL"
-            count={LSLL_TOTAL.toLocaleString()}
           />
         )}
       </Fragment>
