@@ -183,6 +183,7 @@
 }
 /* method 信号色 */
 .api-chip[data-method="GET"], .api-method[data-method="GET"] { --cc: var(--signal-info); }
+.api-chip[data-method="HEAD"], .api-method[data-method="HEAD"] { --cc: var(--signal-info); }
 .api-chip[data-method="POST"], .api-method[data-method="POST"] { --cc: var(--signal-success); }
 .api-chip[data-method="PUT"], .api-method[data-method="PUT"] { --cc: var(--signal-warning); }
 .api-chip[data-method="PATCH"], .api-method[data-method="PATCH"] { --cc: var(--accent); }

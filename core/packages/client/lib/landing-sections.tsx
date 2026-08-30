@@ -7,7 +7,7 @@ import {
   Compass, Grid2x2, Trophy, Timer as TimerIcon, Code as CodeIcon,
   Brain, Box, Sigma, Scale, Sprout, Brush, MessageCircle, MessagesSquare, Shapes, Blocks, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School, Building2,
-  FileText, Table2, Award, Radio, PanelsTopLeft, UserRound, UsersRound,
+  FileText, Table2, Award, Radio, PanelsTopLeft, UserRound, UsersRound, HardDrive,
   type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
@@ -98,6 +98,7 @@ export const TEXTS: Record<string, { en: string; zh: string
   feedback:        { en: 'Feedback', zh: '反馈' },
   meet:            { en: 'Meeting', zh: '会议' },
   achievements:    { en: 'Achievements', zh: '成就' },
+  drive:           { en: 'Drive', zh: '网盘' },
   creator:         { en: 'Ruimin Yan', zh: '颜瑞民' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线'
 },
@@ -209,6 +210,7 @@ export const SECTIONS: Section[] = [
     },
     cards: [
       { id: 'forum', href: '/forum', internal: true, tier: 'medium', Icon: MessagesSquare, nameKey: 'forum' },
+      { id: 'drive', href: '/drive', internal: true, tier: 'medium', Icon: HardDrive, nameKey: 'drive' },
       { id: 'contact', href: '/contact', internal: true, tier: 'medium', Icon: UsersRound, nameKey: 'contact' },
       { id: 'feedback', href: '/feedback', internal: true, tier: 'medium', Icon: MessageCircle, nameKey: 'feedback' },
       { id: 'dev', href: '/dev', internal: true, tier: 'medium', Icon: CodeIcon, nameKey: 'dev' },

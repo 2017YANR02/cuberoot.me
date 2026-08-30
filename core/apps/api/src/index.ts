@@ -73,6 +73,7 @@ import { platformCommerceRoutes } from './routes/platform_commerce.js';
 import { platformQrRoutes } from './routes/platform_qr.js';
 import { smsReceiptRoutes } from './routes/sms_receipt.js';
 import { documentRoutes } from './routes/documents.js';
+import { driveRoutes } from './routes/drive.js';
 import { collaborativeDocuments } from './documents/realtime.js';
 import { smartCubeRelay } from './smart_cube/relay.js';
 import { calcLiveRelay } from './calc/live_relay.js';
@@ -112,6 +113,7 @@ app.use('*', cors({
     return null;
   },
   credentials: true,                      // 兼容浏览器 sendBeacon / 默认 include 的请求;server 用 Bearer 鉴权,不读 cookie
+  exposeHeaders: ['Upload-Offset', 'Upload-Length', 'Upload-Expires'],
   maxAge: 86400,
 }));
 
@@ -122,7 +124,7 @@ app.onError((err, c) => {
   // NOTE: 根据错误消息推断 HTTP 状态码
   let status: 400 | 401 | 403 | 429 | 500 = 500;
   if (msg.includes('Authentication required') || msg.includes('token')) status = 401;
-  else if (msg.includes('Admin access required') || msg.includes('Cannot edit') || msg.includes('Cannot delete') || msg.includes('suspended')) status = 403;
+  else if (msg.includes('Admin access required') || msg.includes('Drive access required') || msg.includes('Cannot edit') || msg.includes('Cannot delete') || msg.includes('suspended')) status = 403;
   else if (msg.includes('Rate limit')) status = 429;
   else if (msg.includes('Validation') || msg.includes('No valid')) status = 400;
   console.error(`[${status}] ${msg} ${c.req.method} ${c.req.path}`);
@@ -134,6 +136,7 @@ app.onError((err, c) => {
 // 注册路由 — 全部挂在 /v1 下，对外即 https://api.cuberoot.me/v1/*
 app.route('/v1', authRoutes);
 app.route('/v1', accountAuthRoutes);
+app.route('/v1', driveRoutes);
 app.route('/v1', progressRoutes);
 app.route('/v1', healthRoutes);
 app.route('/v1', reconRoutes);
