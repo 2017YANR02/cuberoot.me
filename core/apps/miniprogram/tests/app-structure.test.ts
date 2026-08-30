@@ -153,26 +153,35 @@ describe('mini program app structure', () => {
 
   it('keeps web-backed pages on the shared controller', () => {
     const timerPage = pageFiles['../src/pages/timer/index.ts'];
+    const toolsPage = pageFiles['../src/pages/tools/index.ts'];
     const genericWebPage = pageFiles['../src/pages/web/index.ts'];
     const timerTemplate = pageFiles['../src/pages/timer/index.wxml'];
+    const toolsTemplate = pageFiles['../src/pages/tools/index.wxml'];
     const genericWebTemplate = pageFiles['../src/pages/web/index.wxml'];
     const timerStyles = pageFiles['../src/pages/timer/index.wxss'];
+    const toolsStyles = pageFiles['../src/pages/tools/index.wxss'];
     const genericWebStyles = pageFiles['../src/pages/web/index.wxss'];
     const sharedTemplate = sourceFiles['../src/templates/web-route-view.wxml'];
 
     expect(timerPage).toContain("createWebViewPageOptions('timer')");
+    expect(toolsPage).toContain("createWebViewPageOptions('home')");
     expect(genericWebPage).toContain('createWebViewPageOptions()');
     expect(timerPage).not.toMatch(/timer-store|setInterval|setTimeout/);
     expect(timerTemplate).toContain('templates/web-route-view.wxml');
+    expect(toolsTemplate).toContain('templates/web-route-view.wxml');
     expect(genericWebTemplate).toContain('templates/web-route-view.wxml');
     expect(sharedTemplate).toContain('<web-view');
     expect(sharedTemplate).toContain('data-attempt="{{viewAttempt}}"');
     expect(timerTemplate).not.toContain('<web-view');
+    expect(toolsTemplate).not.toContain('<web-view');
     expect(genericWebTemplate).not.toContain('<web-view');
     expect(timerTemplate).toContain('viewAttempt: viewAttempt');
+    expect(toolsTemplate).toContain('viewAttempt: viewAttempt');
     expect(genericWebTemplate).toContain('viewAttempt: viewAttempt');
     expect(timerTemplate).toBe(genericWebTemplate);
+    expect(toolsTemplate).toBe(genericWebTemplate);
     expect(timerStyles.trim()).toBe('');
+    expect(toolsStyles.trim()).toBe('');
     expect(genericWebStyles.trim()).toBe('');
   });
 
@@ -220,12 +229,9 @@ describe('mini program app structure', () => {
   });
 
   it('gives navigation rows a readable name without exposing decorative glyphs', () => {
-    const toolsTemplate = pageFiles['../src/pages/tools/index.wxml'];
     const accountTemplate = pageFiles['../src/pages/account/index.wxml'];
     const sharedTemplate = sourceFiles['../src/templates/web-route-view.wxml'];
 
-    expect(toolsTemplate).toContain('aria-label="{{tool.title}}，{{tool.actionLabel}}"');
-    expect(toolsTemplate).toMatch(/class="tool-arrow"[^>]*aria-hidden="true"/);
     expect(accountTemplate).toMatch(/class="identity-mark"\s+aria-hidden="true"/);
     expect(accountTemplate).toContain('aria-label="账号与登录"');
     expect(accountTemplate).toMatch(/class="account-link-arrow"\s+aria-hidden="true"/);
@@ -238,9 +244,6 @@ describe('mini program app structure', () => {
     expect(accountTemplate.match(/aria-role="status"/g)).toHaveLength(2);
     expect(accountTemplate.match(/aria-live="polite"/g)).toHaveLength(2);
     expect(accountTemplate.match(/aria-atomic="true"/g)).toHaveLength(2);
-    expect(toolsTemplate).toMatch(
-      /class="status-text tools-status[^>]*aria-role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/,
-    );
     expect(sharedTemplate).toMatch(/class="web-status-spinner"[^>]*aria-hidden="true"/);
     expect(sharedTemplate).toContain('aria-role="status"');
     expect(sharedTemplate).toContain('aria-live="polite"');
@@ -258,7 +261,6 @@ describe('mini program app structure', () => {
   it('keeps native copy readable when WeChat enlarges text', () => {
     const appStyles = sourceFiles['../src/app.wxss'];
     const accountStyles = pageFiles['../src/pages/account/index.wxss'];
-    const toolStyles = pageFiles['../src/pages/tools/index.wxss'];
 
     expect(appStyles).toMatch(/page\s*\{[\s\S]*?text-size-adjust:\s*100%;/);
     expect(appStyles).toMatch(/\.page-intro\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
@@ -267,15 +269,5 @@ describe('mini program app structure', () => {
     expect(accountStyles).toMatch(/\.login-button\s*\{[\s\S]*?min-width:\s*260rpx;/);
     expect(accountStyles).not.toMatch(/\.login-button\s*\{[\s\S]*?\n\s*width:\s*260rpx;/);
     expect(accountStyles).toMatch(/\.account-link-title\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
-    expect(toolStyles).toMatch(/\.tool-name\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
-    expect(toolStyles).toMatch(/\.tool-group-description\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
-  });
-
-  it('lets long tool labels shrink without colliding with their arrow', () => {
-    const toolStyles = pageFiles['../src/pages/tools/index.wxss'];
-
-    expect(toolStyles).toMatch(/\.tool-copy\s*\{[\s\S]*?flex:\s*1;/);
-    expect(toolStyles).toMatch(/\.tool-copy\s*\{[\s\S]*?min-width:\s*0;/);
-    expect(toolStyles).not.toMatch(/\.tool-row\s*\{[\s\S]*?justify-content:\s*space-between;/);
   });
 });

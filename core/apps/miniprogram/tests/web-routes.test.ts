@@ -35,6 +35,20 @@ describe('mini program web routes', () => {
     });
   });
 
+  it('resolves the tools tab to the canonical website homepage', () => {
+    expect(resolveWebRoute('home')).toEqual({
+      title: '魔方工具',
+      path: '/zh',
+      sessionHandoff: true,
+      url: 'https://cuberoot.me/zh',
+    });
+    expect(resolveWebRouteShare('home')).toEqual({
+      imageUrl: WEB_ROUTE_SHARE_IMAGE,
+      title: 'CubeRoot 魔方根：魔方工具',
+      path: '/pages/tools/index',
+    });
+  });
+
   it('keeps account and privacy destinations outside the homepage directory', () => {
     expect(resolveWebRoute('account')).toEqual({
       title: '账号管理',
@@ -99,7 +113,7 @@ describe('mini program web routes', () => {
     expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 4, 6, 9, 16, 10, 3]);
     expect(listWebTools()).toHaveLength(53);
     expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 53);
-    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(51);
+    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(52);
     expect(resolveWebTool('algdb')).toMatchObject({ id: 'algdb', key: 'alg', action: 'web' });
     expect(resolveWebTool('timer')).toMatchObject({ id: 'timer', key: 'timer', action: 'native' });
     expect(resolveWebTool('alg')).toMatchObject({ id: 'alg', key: null, action: 'disabled' });
@@ -111,7 +125,9 @@ describe('mini program web routes', () => {
     for (const tool of listWebTools()) {
       expect(trackingSource, tool.id).toContain(`| \`${tool.id}\` |`);
     }
-    expect(trackingSource).toContain('共 53 项：51 项有小程序路由键');
+    expect(trackingSource).toContain(
+      '共 53 项：网站首页直接渲染它们，工具 tab 通过一个固定白名单路由复用整个首页',
+    );
   });
 
   it('searches Chinese, English, ids and paths while preserving groups', () => {
@@ -162,6 +178,11 @@ describe('mini program web routes', () => {
 
   it('only registers destinations backed by canonical website pages or redirects', () => {
     for (const [key, route] of Object.entries(WEB_ROUTES)) {
+      if (key === 'home') {
+        expect(route.path).toBe('/zh');
+        expect(existsSync(join(websiteRoot, 'app', '[lang]', 'page.tsx'))).toBe(true);
+        continue;
+      }
       if (key === 'logout') {
         expect(route.path).toBe('/auth/miniprogram#action=logout&next=%2Fzh%2Faccount');
         expect(existsSync(join(websiteRoot, 'app', 'auth', 'miniprogram', 'page.tsx'))).toBe(true);
