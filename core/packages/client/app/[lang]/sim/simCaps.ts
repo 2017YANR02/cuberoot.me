@@ -66,6 +66,8 @@ const TWISTY_CAPS: SimPuzzleCaps = { engine: 'never' };
  *  PG explore puzzles fall back to NXN_CAPS / TWISTY_CAPS respectively. */
 const CAPS: Record<string, SimPuzzleCaps> = {
   sq1: { engine: 'always' },
+  sq2: { engine: 'always' },
+  sq4: { engine: 'always' },
   ivy: { engine: 'always', carve: 'corner' },
   dino: { engine: 'always', carve: 'corner' },
   redi: { engine: 'always', carve: 'corner' },

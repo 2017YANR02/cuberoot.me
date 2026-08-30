@@ -38,7 +38,6 @@ function refScrambleTokens(scr: string): string[] {
     if (d !== 0) { const bb = ((d % 12) + 12) % 12; if (bb !== 0) out.push('' + -bb); }
     out.push('0');
   }
-  if (out.length > 0 && out[out.length - 1] === '0') out.pop();
   return out;
 }
 // solution "(u,d)/ … (u,d)" → atomic move tokens.
@@ -78,6 +77,10 @@ describe('sq2 model algebra', () => {
   it('the solver parser agrees with the independent parser on a real-shape scramble', () => {
     const scr = '(1,0)/ (3,-2)/ (-5,6)/ (0,4)/';
     expect(parseSq2Scramble(scr)).toEqual(refScrambleTokens(scr));
+  });
+  it('keeps a literal trailing slash as a physical slice', () => {
+    expect(parseSq2Scramble('(1,0)/')).toEqual(['1', '0']);
+    expect(Array.from(sq2Apply('(1,0)/'))).toEqual(Array.from(refSlice(refTop(REF_SOLVED, 1))));
   });
   it('state count string is exposed', () => {
     expect(SQ2_STATE_COUNT_STR).toBe('76,828,484,468,736,000');

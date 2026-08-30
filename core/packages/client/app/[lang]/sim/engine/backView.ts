@@ -120,12 +120,14 @@ export function createBackView(
       // the box at refHalf 3). NxN stays 3 — recon cuber players share this helper and are
       // always 3x3; ivy/mirror fall through to 3 too (already ~0.82). Hands keep the wide 3.9
       // frame (wrist + forearm/sleeve ring out past the cube); its near/far margins follow.
-      const isSq1 = world.puzzleKind === 'sq1';
+      const isSquare = world.puzzleKind === 'sq1'
+        || world.puzzleKind === 'sq2'
+        || world.puzzleKind === 'sq4';
       const handsOn = world.hands?.isEnabled === true && world.puzzleKind === 3;
       const k = world.puzzleKind;
       const refHalfU = handsOn ? 3.9
         : k === 'pyraminx' ? 2.45
-        : isSq1 ? 3.85
+        : isSquare ? 3.85
         : k === 'megaminx' ? 3.3
         : k === 'fto' ? 3.2
         : (k === 'dino' || k === 'redi' || k === 'rex' || k === 'heli' || k === 'gear'
@@ -140,7 +142,7 @@ export function createBackView(
       const distance = refHalf * persp;
       camera.fov = (2 * Math.atan(minv) * 180) / Math.PI;
       camera.aspect = 1;
-      camera.near = Math.max(distance - cubeletSize * (handsOn ? 13 : isSq1 ? 5 : 4), cubeletSize * 0.4);
+      camera.near = Math.max(distance - cubeletSize * (handsOn ? 13 : isSquare ? 5 : 4), cubeletSize * 0.4);
       camera.far = distance + cubeletSize * (handsOn ? 13.5 : 8);
       // Target + orbit pivot = the cube's own AT-REST centre (see captureRestCenter),
       // so a scrambled / bumpy cube (mirror pieces bulge off-centre) or shape-shifted

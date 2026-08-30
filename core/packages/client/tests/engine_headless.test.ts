@@ -9,6 +9,10 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import World from '@/app/[lang]/sim/engine/world';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
+import SquareFamilyCube from '@/app/[lang]/sim/engine/squareFamily/SquareFamilyCube';
+import { squareFamilyDragCommit } from '@/app/[lang]/sim/engine/squareFamily/squareFamilyDrag';
+import { squareTwistSlice } from '@/app/[lang]/sim/engine/squareDragRouter';
+import tweener from '@/app/[lang]/sim/engine/tweener';
 
 /** 场景里所有可见 mesh 的三角形总数(indexed 优先;InstancedMesh 按实例数乘)。 */
 function countTriangles(scene: THREE.Scene): number {
@@ -24,6 +28,33 @@ function countTriangles(scene: THREE.Scene): number {
     tris += per * inst;
   });
   return tris;
+}
+
+function commitSquareFamilyTopDrag(cube: SquareFamilyCube): THREE.Object3D[] {
+  const starts = cube.pieces
+    .filter((piece) => cube.currentProbe(piece).y > 0)
+    .map((piece) => ({
+      pivot: piece.pivot,
+      quat: piece.pivot.quaternion.clone(),
+      pos: piece.pivot.position.clone(),
+    }));
+  const pivots = starts.map((entry) => entry.pivot);
+  const move = squareFamilyDragCommit(cube, {
+    kind: 'turn',
+    layer: 'top',
+    startAngle: 0,
+    starts,
+    startEastHalf: false,
+  }, cube.spec.unitRadians);
+  expect(move).not.toBeNull();
+  return pivots;
+}
+
+function pivotPose(pivots: readonly THREE.Object3D[]): number[][] {
+  return pivots.map((pivot) => [
+    ...pivot.position.toArray(),
+    ...pivot.quaternion.toArray(),
+  ]);
 }
 
 describe('engine headless (Node, no DOM / rAF / WebGL)', () => {
@@ -65,4 +96,97 @@ describe('engine headless (Node, no DOM / rAF / WebGL)', () => {
       expect(countTriangles(world.scene)).toBeGreaterThan(0);
     }
   });
+
+  it('switches SQ1 → SQ2 → SQ4 → 4 with finite framed geometry and reuses SQ2', () => {
+    const world = new World();
+    let sq2Cube: typeof world.cube | null = null;
+
+    for (const kind of ['sq1', 'sq2', 'sq4', 4] as const) {
+      world.setPuzzle(kind);
+      expect(world.puzzleKind).toBe(kind);
+      expect(countTriangles(world.scene)).toBeGreaterThan(0);
+      expect(world.camera.projectionMatrix.elements.every(Number.isFinite)).toBe(true);
+      expect(Number.isFinite(world.camera.near)).toBe(true);
+      expect(Number.isFinite(world.camera.far)).toBe(true);
+      expect(world.camera.near).toBeGreaterThan(0);
+      expect(world.camera.far).toBeGreaterThan(world.camera.near);
+      if (kind === 'sq2') sq2Cube = world.cube;
+    }
+
+    world.setPuzzle('sq2');
+    expect(world.cube).toBe(sq2Cube);
+    expect(countTriangles(world.scene)).toBeGreaterThan(0);
+  });
+
+  it('settles an outgoing SQ2/SQ4 tween before caching the cube off-scene', () => {
+    const world = new World();
+    world.setPuzzle('sq2');
+    const sq2 = world.cube as SquareFamilyCube;
+    sq2.twister.push('(1,0) / (2,0) /');
+    expect(sq2.twister.busy).toBe(true);
+
+    world.setPuzzle('sq4');
+
+    expect(sq2.twister.busy).toBe(false);
+    const settled = JSON.stringify(sq2.state);
+    tweener.update(1_000_000);
+    expect(JSON.stringify(sq2.state)).toBe(settled);
+  });
+
+  it.each(['sq2', 'sq4'] as const)(
+    'settles queued %s playback before an equator-tap slash',
+    (kind) => {
+      tweener.finish();
+      const cube = new SquareFamilyCube(kind);
+      cube.twister.push('(1,0) / (2,0) /');
+      expect(tweener.length).toBe(1);
+      expect(cube.twister.length).toBe(3);
+
+      expect(squareTwistSlice(cube, 1)).toBe(true);
+
+      expect(tweener.length).toBe(1);
+      expect(cube.twister.length).toBe(0);
+      expect(cube.history.moves).toEqual(['(1,0)', '/', '(2,0)', '/']);
+      tweener.finish();
+      expect(cube.history.moves).toEqual(['(1,0)', '/', '(2,0)', '/', '/']);
+      cube.dispose();
+    },
+  );
+
+  it.each(['sq2', 'sq4'] as const)(
+    'settles an active %s drag snap before switching puzzles',
+    (kind) => {
+      tweener.finish();
+      const world = new World();
+      world.setPuzzle(kind);
+      const cube = world.cube as SquareFamilyCube;
+      const pivots = commitSquareFamilyTopDrag(cube);
+      expect(tweener.length).toBe(1);
+
+      world.setPuzzle(kind === 'sq2' ? 'sq4' : 'sq2');
+
+      expect(tweener.length).toBe(0);
+      const settled = pivotPose(pivots);
+      tweener.update(1_000_000);
+      expect(pivotPose(pivots)).toEqual(settled);
+      world.disposeSquareFamilyCubes();
+    },
+  );
+
+  it.each(['sq2', 'sq4'] as const)(
+    'settles an active %s drag snap before disposal',
+    (kind) => {
+      tweener.finish();
+      const cube = new SquareFamilyCube(kind);
+      const pivots = commitSquareFamilyTopDrag(cube);
+      expect(tweener.length).toBe(1);
+
+      cube.dispose();
+
+      expect(tweener.length).toBe(0);
+      const settled = pivotPose(pivots);
+      tweener.update(1_000_000);
+      expect(pivotPose(pivots)).toEqual(settled);
+    },
+  );
 });
