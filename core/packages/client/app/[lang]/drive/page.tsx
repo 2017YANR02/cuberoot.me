@@ -76,6 +76,8 @@ interface UploadTask {
   parentId: string | null;
   uploadId: string | null;
   offset: number;
+  inFlightBytes: number;
+  speedBytesPerSecond: number | null;
   state: UploadState;
   error: string | null;
 }
@@ -206,7 +208,12 @@ function DrivePageContent() {
     if (!current) return;
     const controller = new AbortController();
     controllersRef.current.set(taskId, controller);
-    updateTask(taskId, { state: 'uploading', error: null });
+    updateTask(taskId, {
+      state: 'uploading',
+      error: null,
+      inFlightBytes: 0,
+      speedBytesPerSecond: null,
+    });
     try {
       const session = await createDriveUpload(current.file, current.parentId);
       current = tasksRef.current.find((task) => task.id === taskId);
@@ -214,25 +221,63 @@ function DrivePageContent() {
         await cancelDriveUpload(session.id).catch(() => {});
         return;
       }
-      updateTask(taskId, { uploadId: session.id, offset: session.receivedBytes });
+      updateTask(taskId, {
+        uploadId: session.id,
+        offset: session.receivedBytes,
+        inFlightBytes: 0,
+      });
       let offset = session.receivedBytes;
+      const speedSamples = [{ at: performance.now(), bytes: offset }];
+      let lastProgressRender = 0;
       while (offset < current.file.size) {
         const latest = tasksRef.current.find((task) => task.id === taskId);
         if (!latest || latest.state !== 'uploading') return;
         const end = Math.min(offset + DRIVE_CHUNK_BYTES, current.file.size);
-        const result = await uploadDriveChunk(session.id, offset, current.file.slice(offset, end), controller.signal);
+        const chunkOffset = offset;
+        const chunk = current.file.slice(chunkOffset, end);
+        const result = await uploadDriveChunk(
+          session.id,
+          chunkOffset,
+          chunk,
+          controller.signal,
+          (uploadedBytes) => {
+            const now = performance.now();
+            const totalUploaded = chunkOffset + uploadedBytes;
+            speedSamples.push({ at: now, bytes: totalUploaded });
+            const cutoff = now - 3_000;
+            while (speedSamples.length > 2 && speedSamples[1].at < cutoff) speedSamples.shift();
+            const oldest = speedSamples[0];
+            const elapsedSeconds = (now - oldest.at) / 1_000;
+            const speedBytesPerSecond = elapsedSeconds > 0
+              ? Math.max(0, (totalUploaded - oldest.bytes) / elapsedSeconds)
+              : null;
+            if (now - lastProgressRender >= 100 || uploadedBytes === chunk.size) {
+              lastProgressRender = now;
+              updateTask(taskId, { inFlightBytes: uploadedBytes, speedBytesPerSecond });
+            }
+          },
+        );
         offset = result.offset;
-        updateTask(taskId, { offset });
+        updateTask(taskId, { offset, inFlightBytes: 0 });
         if (result.complete) break;
       }
-      updateTask(taskId, { state: 'done', offset: current.file.size });
+      updateTask(taskId, {
+        state: 'done',
+        offset: current.file.size,
+        inFlightBytes: 0,
+        speedBytesPerSecond: null,
+      });
       await load();
     } catch (cause) {
       if ((cause as Error).name !== 'AbortError') {
         updateTask(taskId, {
           state: 'error',
+          inFlightBytes: 0,
+          speedBytesPerSecond: null,
           error: t('上传中断，可点继续或重新选择同一文件续传。', 'Upload interrupted. Continue here or reselect the same file to resume.'),
         });
+      } else {
+        updateTask(taskId, { inFlightBytes: 0, speedBytesPerSecond: null });
       }
     } finally {
       controllersRef.current.delete(taskId);
@@ -260,6 +305,8 @@ function DrivePageContent() {
         parentId: view === 'trash' ? null : folderId,
         uploadId: null,
         offset: 0,
+        inFlightBytes: 0,
+        speedBytesPerSecond: null,
         state: 'queued',
         error: null,
       }));
@@ -519,12 +566,17 @@ function DrivePageContent() {
         <section className="drive-uploads" aria-labelledby="drive-uploads-title">
           <div className="drive-section-title"><h2 id="drive-uploads-title">{t('上传任务', 'Uploads')}</h2><span>{tasks.length + visibleRemoteUploads.length}</span></div>
           {tasks.map((task) => {
-            const progress = task.file.size ? Math.min(100, task.offset / task.file.size * 100) : 0;
+            const displayedBytes = Math.min(task.file.size, task.offset + task.inFlightBytes);
+            const progress = task.file.size ? Math.min(100, displayedBytes / task.file.size * 100) : 0;
             return (
               <div className="drive-upload-row" key={task.id}>
                 <div className="drive-upload-main">
                   <strong>{task.file.name}</strong>
-                  <span>{formatBytes(task.offset)} / {formatBytes(task.file.size)} {task.state === 'done' ? t('已完成', 'Complete') : `${progress.toFixed(0)}%`}</span>
+                  <span>
+                    {formatBytes(displayedBytes)} / {formatBytes(task.file.size)}{' '}
+                    {task.state === 'done' ? t('已完成', 'Complete') : `${progress.toFixed(0)}%`}
+                    {task.state === 'uploading' && <> {' '}{task.speedBytesPerSecond == null ? t('测速中…', 'Measuring…') : `${formatBytes(task.speedBytesPerSecond)}/s`}</>}
+                  </span>
                   <div className="drive-upload-track"><span style={{ width: `${progress}%` }} /></div>
                   {task.error && <small className="drive-danger-text">{task.error}</small>}
                 </div>
