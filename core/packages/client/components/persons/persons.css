@@ -328,31 +328,16 @@ html[data-theme=dark] .wp-page {
 .wp-pb-manage {
     display: contents;
 }
-.wp-pb-visibility { order: 1; margin-top: 12px; }
 .wp-pb-card > .wp-table-scroll { order: 2; }
 .wp-pb-history { order: 3; }
-.wp-pb-visibility,
 .wp-pb-history { padding-block: 24px; }
-.wp-pb-visibility,
 .wp-pb-history-actions {
     display: flex;
     align-items: flex-start;
     gap: 12px;
 }
-.wp-pb-visibility { flex-wrap: wrap; }
-.wp-pb-visibility > div { max-width: 620px; }
-.wp-pb-visibility h3,
-.wp-pb-history h3,
-.wp-pb-visibility p { margin: 0; }
-.wp-pb-visibility h3,
+.wp-pb-history h3 { margin: 0; }
 .wp-pb-history h3 { font-size: 1rem; }
-.wp-pb-visibility p {
-    margin-top: 6px;
-    color: var(--wp-text-sub);
-    font-size: 0.88rem;
-    line-height: 1.5;
-}
-.wp-pb-visibility .bool-toggle { flex: none; }
 .wp-pb-cell-button,
 .wp-pb-cell-display {
     min-width: 82px;
