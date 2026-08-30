@@ -14,7 +14,7 @@
 - ✅ pair_analyzer 全 4 阶段、eo_cross_analyzer 全 5 阶段:均强制 CUBE_ALLOW_HUGE_TABLES=1,**已 golden bit-exact**(前 20 scramble 对齐 D:\cube\solver\golden\scramble_1000_pair.txt / scramble_20_eo.txt,pair 25 列 / eo 31 列全匹配)
 - ✅ pseudo_pair_analyzer 全 4 阶段(强制 CUBE_ALLOW_HUGE_TABLES=1),**已 golden bit-exact**(前 20 scramble × id+24 列全匹配 scramble_100_pseudo_pair.txt,该文件只 20 行)。曾有 bug:ins_C_diff / pspair_CE 两个 16-元数组按 corner-major 构建却按 edge-major(`slot1*4+pslot1`)访问,非对角槽位读错表,已改 edge-major 构建
 - ℹ️ std XXCross+ 关键事实:C++ search_2/3/4 仅靠 huge 表(C4C5E0E1 相邻 / C4C6E0E2 对角)剪枝,逐槽 SlotView move-table 查表是重构死代码(只赋值从不剪枝),Rust 端直接省去,等价且更快
-- ✅ table_generator 独立 binary:顺序生成全 73 张表(12 mt + 61 pt),已存在跳过支持断点续跑;≥1G 状态的大表跑 C++ 式 DistributionPrinter 进度;两张 10GB huge 表原位打包峰值 ~21GB(vs C++ ~32GB)
+- 🧪 table_generator 独立 binary:默认 73 张表(12 mt + 61 pt)沿用已验收路径;总物理内存 ≥56 GiB 自动追加的 5 张 EO high-memory 表仅代码就绪,等待 64 GB 机器生成和验收;已存在跳过支持断点续跑;≥1G 状态的大表跑 C++ 式 DistributionPrinter 进度;两张 10GB huge 表原位打包峰值 ~21GB(vs C++ ~32GB)
 - ✅ dist_xcross_1col 单色底不固定槽 XCross 分布,bit-exact 对齐 golden(total=695,280,402,432,000;聚合 ~6.7s,vs C++ AVX2 6.24s)
 - ✅ dist_xcross_1col_fixed 单色底固定 BL 槽 XCross 分布,11 深度 bit-exact (total=72,990,720, 1s)
 - ✅ dist_xxcross_1col_{adj,diag} 单色底固定双槽 XXCross 13 深度分布,bit-exact (total=21,459,271,680;adj 144s vs cpp 161s,diag 132s vs cpp 178s)
@@ -41,6 +41,7 @@
 - env 开关(可选):
   - `CUBE_RUN_FULL_STD=1` 启用 std_analyzer XCross(pt_cross_C4E0 52MB)
   - `CUBE_ALLOW_HUGE_TABLES=1` 启用 mt_edge6 / pt_cross_C4C*E0E* / pt_pscross_E0E1E2 / pt_pscross_C4C5C6 等 ≥800MB 表
+  - `CUBE_TABLE_PROFILE=auto|default|high-memory` 覆盖表档位;默认 auto,总物理内存 ≥56 GiB 选 high-memory,识别失败回落 default
   - pseudo_analyzer 默认会拉 ~415 MB 表(Cross+XC+XXC),按需可用 `CUBE_PSEUDO_SKIP_X*CROSS=1` 跳过
 - 单元测试 RAM 增量 ≤ 200MB、落盘 ≤ 10MB;ignored 测试 ≤ 1GB / ≤ 100MB
 - 测试用 `target/test-tables/<name>/` 隔离 + 前后清,**禁止污染** `./tables/`
@@ -112,6 +113,7 @@ cargo test --release -- --ignored     # 8 个 ignored(中表 + e2e XCross + pseu
 | `TESTING.md` | 测试输入/golden 说明 + verify.ps1 用法 + scramble_5/100 实测耗时表 |
 | `PORTING_NOTES.md` | 5 个 phase 的设计决策、C++ 端歧义、表 magic 升级、命名差异。**改代码前必读** |
 | `README.md` | 进度表 + 上手命令 + env 清单 + 路线图 |
+| `HIGH_MEMORY_TABLE_PROFILE.md` | 333-eo 自动内存选档、55 GB 文件预算、生成命令与 64 GB 机器验收清单 |
 | `333opt/` | **不是 Rust** —— cubeopt/h48 整方最优管道(Node + WASM),详见下节 |
 | `lsll/` | 同上,LSLL 最优解管道。`corpus.txt` **579,368 个 case**(`node solve_loop.mjs`),每个展开 16 个首尾 AUF 像取最短 ⇒ 9,268,992 次求解。**算的是 case 的最优不是代表元的最优**,判据 = 解的首末招不是 U 系。详见其 README |
 

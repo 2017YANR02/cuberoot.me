@@ -321,12 +321,9 @@ mod manager {
 
     impl MoveTableManager {
         pub fn ensure_ep5_high_memory(&self) -> Arc<MoveTable> {
-            let enabled = std::env::var("CUBE_TABLE_PROFILE")
-                .map(|v| v == "high-memory")
-                .unwrap_or(false);
-            if !enabled {
+            if !crate::table_profile::high_memory_enabled() {
                 panic!(
-                    "mt_ep5_high_memory.bin belongs to the optional high-memory profile; set CUBE_TABLE_PROFILE=high-memory to opt in"
+                    "mt_ep5_high_memory.bin requires a detected 64 GB-class machine or CUBE_TABLE_PROFILE=high-memory"
                 );
             }
             self.ensure_with(

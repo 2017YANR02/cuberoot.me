@@ -1,17 +1,19 @@
 //! table_generator binary:对应 C++ `table_generator.cpp`。
 //!
-//! 顺序生成全部 move tables (12 张) + prune tables (61 张),自动启用
+//! 顺序生成默认 move tables (12 张) + prune tables (61 张),自动启用
 //! `CUBE_ALLOW_HUGE_TABLES=1`(可通过 `CUBE_DISABLE_HUGE_TABLES=1` 关闭)。
+//! 64 GB-class 机器自动追加 5 张 high-memory 表；32 GB 机器保持原表集。
 //!
 //! 已存在的表跳过(各 manager 内部 mmap reload)。
 //!
-//! 总磁盘 ~25 GB,首次生成约 1-2 小时(机器 + 磁盘 IO 决定)。
+//! 默认档总磁盘 ~25 GB；high-memory 档另加 9.35 GB，首次生成时间待 64 GB 机器实测。
 
 use std::io::Write;
 use std::time::Instant;
 
 use cube_solver::move_tables;
 use cube_solver::prune_tables;
+use cube_solver::{high_memory_tables, table_profile};
 
 fn step(name: &str, f: impl FnOnce()) {
     let t = Instant::now();
@@ -45,6 +47,7 @@ fn cleanup_tmp_files() {
 }
 
 fn main() {
+    let rayon_threads = table_profile::configure_rayon_threads(14);
     cube_solver::logo::print_logo_block();
     cleanup_tmp_files();
 
@@ -54,7 +57,7 @@ fn main() {
     if !disable_huge {
         std::env::set_var("CUBE_ALLOW_HUGE_TABLES", "1");
         eprintln!(
-            "[INFO] huge tables enabled (~25 GB total). \
+            "[INFO] huge tables enabled (~25 GB in the default profile). \
              Set CUBE_DISABLE_HUGE_TABLES=1 to skip ≥800 MB tables."
         );
     } else {
@@ -69,6 +72,18 @@ fn main() {
     let t0 = Instant::now();
     let mtm = move_tables::instance();
     let ptm = prune_tables::instance();
+    let profile = table_profile::selection();
+    let detected_memory = profile
+        .total_memory_bytes
+        .map(|bytes| format!("{:.1} GiB", bytes as f64 / 1024_f64.powi(3)))
+        .unwrap_or_else(|| "unknown".to_string());
+    eprintln!(
+        "[INFO] table profile = {} (source: {}; physical memory: {}; rayon threads: {})",
+        profile.profile.as_str(),
+        profile.source.as_str(),
+        detected_memory,
+        rayon_threads
+    );
 
     eprintln!("\n=== Move tables (12) ===");
     step("mt_edge", || {
@@ -207,6 +222,15 @@ fn main() {
         });
     } else {
         eprintln!("\n[SKIP] 5 huge prune tables");
+    }
+
+    if !disable_huge && profile.high_memory() {
+        eprintln!("\n=== High-memory profile: EO XCross (5) ===");
+        high_memory_tables::generate();
+    } else if disable_huge && profile.high_memory() {
+        eprintln!("\n[SKIP] 5 high-memory tables (CUBE_DISABLE_HUGE_TABLES=1)");
+    } else {
+        eprintln!("\n[SKIP] 5 high-memory tables (default profile)");
     }
 
     eprintln!(

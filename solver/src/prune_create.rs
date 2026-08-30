@@ -572,8 +572,8 @@ fn create_pt_dim2(
     (total, bytes)
 }
 
-// 8b. createPTDim3: three 18-move coordinates. Used only by the explicit
-// high-memory profile; keeping it separate prevents the default generator from
+// 8b. createPTDim3: three 18-move coordinates. Used only by the optional
+// high-memory profile; keeping it separate prevents the 32 GB default path from
 // inheriting the much larger allocation.
 fn create_pt_dim3(
     idx1: u64,
