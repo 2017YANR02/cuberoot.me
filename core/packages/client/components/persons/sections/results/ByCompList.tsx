@@ -210,8 +210,11 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                     const rowKey = wcaResultRowKey(r);
                     const rank = r.live ? prRankLive?.get(rowKey) : prRank.get(rowKey);
                     const liveRank = r.live ? livePrRanks.get(rowKey) : null;
-                    const singleRank = rank?.singleRank ?? liveRank?.pS ?? null;
-                    const averageRank = rank?.averageRank ?? liveRank?.pA ?? null;
+                    // 直播区域纪录异步返回前不先画 PR,否则 ER/AsR 等会短暂显示成错误的 PR。
+                    // useLivePrRanks 即使查无区域纪录也会写入空结果,届时才恢复正常 PR 兜底。
+                    const liveInfoReady = !r.live || livePrRanks.has(rowKey);
+                    const singleRank = liveInfoReady ? (rank?.singleRank ?? liveRank?.pS ?? null) : null;
+                    const averageRank = liveInfoReady ? (rank?.averageRank ?? liveRank?.pA ?? null) : null;
                     // 直播行的区域纪录(NR/WR/CR)与 /wca/comp 结果表同口径,优先于 PR 标志。
                     const singleRecord = r.regional_single_record || (liveRank?.singleTag || null);
                     // 多盲非官方平均:查站内自算的 WR/大洲/NR 标签(WCA 不记多盲平均纪录)。
@@ -289,9 +292,9 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                             <ResultChangeChain oldValues={oldBest} eventId={r.event_id} kind="single" note={chain?.[chain.length - 1]?.note} />
                             {formatWcaResult(effBest, r.event_id, 'single')}
                             {singleKeatoned
-                              ? <RecordBadge record={singleRecord} keatoned={singleKeatoned} keatonedEventId={r.event_id} variant="inline" />
+                              ? <RecordBadge record={singleRecord} iso2={personCountry} keatoned={singleKeatoned} keatonedEventId={r.event_id} variant="inline" />
                               : singleRecord
-                                ? <RecordBadge record={singleRecord} variant="inline" />
+                                ? <RecordBadge record={singleRecord} iso2={personCountry} variant="inline" />
                                 : singleRank
                                   ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
                                   : null}
@@ -307,6 +310,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                                 averageRecord={averageRecord}
                                 averageKeatoned={averageKeatoned}
                                 averageRank={averageRank}
+                                personCountry={personCountry}
                                 oldValues={oldAvg}
                                 note={chain?.[chain.length - 1]?.note}
                                 decimalAlign
@@ -322,6 +326,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                               averageRecord={averageRecord}
                               averageKeatoned={averageKeatoned}
                               averageRank={averageRank}
+                              personCountry={personCountry}
                               oldValues={oldAvg}
                               note={chain?.[chain.length - 1]?.note}
                             />
