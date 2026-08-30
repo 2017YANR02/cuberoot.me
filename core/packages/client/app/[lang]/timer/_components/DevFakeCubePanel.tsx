@@ -28,9 +28,10 @@
  * 写值:关 / 一个固定的斜姿态 / 绕竖轴匀速自转。
  */
 
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, useRef, useState, type JSX } from 'react';
 
 import BoolToggle from '@/components/BoolToggle';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { tr } from '@/i18n/tr';
 import './dev_fake_cube.css';
 
@@ -75,6 +76,8 @@ export default function DevFakeCubePanel(props: DevFakeCubePanelProps): JSX.Elem
   const [pose, setPose] = useState<Pose>('off');
   const [err, setErr] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  usePanelClamp(open, panelRef);
   // 贴纸串每次操作后重读一次。没必要跟着每一帧走 —— 它是给人核对用的。
   const [facelets, setFacelets] = useState<string | null>(null);
 
@@ -124,16 +127,21 @@ export default function DevFakeCubePanel(props: DevFakeCubePanelProps): JSX.Elem
     }
   };
 
-  if (!open) {
-    return (
-      <button type="button" className="devcube-pill" onClick={() => { setOpen(true); setFacelets(api()?.state() ?? null); }}>
+  return (
+    <div className="devcube-anchor">
+      <button
+        type="button"
+        className="devcube-pill"
+        aria-expanded={open}
+        onClick={() => {
+          setOpen((value) => !value);
+          if (!open) setFacelets(api()?.state() ?? null);
+        }}
+      >
         {tr({ zh: '假魔方', en: 'Fake cube' })}
       </button>
-    );
-  }
 
-  return (
-    <div className="devcube">
+      {open && <div ref={panelRef} className="devcube">
       <div className="devcube-head">
         <span className="devcube-title">{tr({ zh: '假魔方', en: 'Fake cube' })}</span>
         <span className="devcube-status">
@@ -219,6 +227,7 @@ export default function DevFakeCubePanel(props: DevFakeCubePanelProps): JSX.Elem
 
       {err && <p className="devcube-err">{err}</p>}
       {facelets && <p className="devcube-facelets">{facelets}</p>}
+      </div>}
     </div>
   );
 }

@@ -42,6 +42,9 @@ export interface TimerSettings {
   /** Show the cube net preview alongside the scramble. */
   showCubePreview: boolean;
 
+  /** Show the development-only fake-cube controls in the timer topbar. */
+  showDevFakeCube: boolean;
+
   /** Final-result precision: 2 = centiseconds (x.xx), 3 = milliseconds (x.xxx). */
   precision: 2 | 3;
 
@@ -325,6 +328,7 @@ export const DEFAULTS: TimerSettings = {
   autoSessionForEvent: false,
   autoEventForSession: false,
   showCubePreview: true,
+  showDevFakeCube: true,
   precision: 3,
   runningPrecision: 3,
   timerFontScale: 1,
