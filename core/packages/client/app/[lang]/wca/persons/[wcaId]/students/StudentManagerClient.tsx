@@ -65,7 +65,7 @@ export default function StudentManagerClient() {
     <div className="wp-page">
       <main className="wp-main">
         <header className="wp-student-manager-head">
-          <h1 className="wp-student-manager-title">{t('学生管理', 'Student management')}</h1>
+          <h1 className="wp-student-manager-title">{t('学生名单', 'Student roster')}</h1>
           <AppLink
             href={`/wca/persons/${profile.person.wca_id}`}
             className="wp-student-manager-person"

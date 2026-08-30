@@ -122,6 +122,10 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
   const teacherDirectory = useWcaTeachers(studentIds, ALL_EVENT_IDS);
 
   useEffect(() => {
+    if (mode !== 'manage') {
+      setStudentMeta(new Map());
+      return;
+    }
     const ids = studentIdsKey ? studentIdsKey.split(',') : [];
     let cancelled = false;
     setStudentMeta(new Map());
@@ -146,7 +150,7 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
       setStudentMeta(new Map(entries.filter((entry): entry is readonly [string, StudentMeta] => entry[1] !== null)));
     });
     return () => { cancelled = true; };
-  }, [studentIdsKey]);
+  }, [mode, studentIdsKey]);
 
   const students = useMemo(() => studentSeeds.flatMap((student) => {
     const currentEventIds = student.wcaId && teacherDirectory.ready
@@ -218,6 +222,41 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
 
   if (students.length === 0 && !canAddStudents && !isManagement) return null;
 
+  if (!isManagement) {
+    return (
+      <section className="wp-card wp-students-card wp-students-overview" aria-label={t('学生', 'Students')}>
+        <div className="wp-student-overview-head">
+          <span>{t('学生', 'Students')}</span>
+          <AppLink
+            href={`/wca/persons/${teacherWcaId}/students`}
+            className="wp-student-manage-link"
+            prefetch={false}
+          >
+            {students.length > 0 ? t('详情', 'Details') : t('管理', 'Manage')}
+          </AppLink>
+        </div>
+        {students.length > 0 && (
+          <ul className="wp-student-name-list">
+            {students.map((student) => (
+              <li key={student.key}>
+                {student.wcaId ? (
+                  <PersonLink
+                    wcaId={student.wcaId}
+                    name={student.name}
+                    isZh={isZh}
+                    className="wp-student-link"
+                  />
+                ) : (
+                  <span className="wp-student-unregistered-name">{student.name}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    );
+  }
+
   return (
     <section
       className={`wp-card wp-students-card${isManagement ? ' wp-students-card--manage' : ''}`}
@@ -255,15 +294,6 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
                     />
                   )}
                   {t('学生', 'Student')}
-                  {!isManagement && canAddStudents && (
-                    <AppLink
-                      href={`/wca/persons/${teacherWcaId}/students`}
-                      className="wp-student-manage-link"
-                      prefetch={false}
-                    >
-                      {t('管理', 'Manage')}
-                    </AppLink>
-                  )}
                 </span>
               </th>
               <th className="wp-th-student-events">{t('项目', 'Events')}</th>
