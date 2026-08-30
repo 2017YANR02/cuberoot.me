@@ -38,6 +38,12 @@ export function publicApiUrl(path: string): string {
   return (process.env.NEXT_PUBLIC_API_ORIGIN || 'https://api.cuberoot.me') + path;
 }
 
+// Large request/response bodies should bypass the Next development proxy. This
+// avoids buffering a file chunk in both Next and the API process at once.
+export function directApiUrl(path: string): string {
+  return (process.env.NEXT_PUBLIC_API_ORIGIN || 'https://api.cuberoot.me') + path;
+}
+
 // For STREAMING (SSE) endpoints, always hit the API origin directly — even in
 // dev. The Next dev rewrite proxy BUFFERS SSE (it holds every byte until the
 // upstream stream closes), so live progress events + the keep-alive heartbeat
@@ -46,7 +52,7 @@ export function publicApiUrl(path: string): string {
 // call api.cuberoot.me directly, so this is safe in dev. In prod it's identical
 // to apiUrl() (already absolute). Use this for any fetch that reads an SSE body.
 export function streamApiUrl(path: string): string {
-  return (process.env.NEXT_PUBLIC_API_ORIGIN || 'https://api.cuberoot.me') + path;
+  return directApiUrl(path);
 }
 
 /** WebSocket equivalent of streamApiUrl: always connect to the API origin directly. */

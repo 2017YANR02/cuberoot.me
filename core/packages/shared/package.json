@@ -48,6 +48,7 @@
       "./teaching": "runtime-neutral",
       "./quiz": "runtime-neutral",
       "./forum": "runtime-neutral",
+      "./drive": "runtime-neutral",
       "./platform": "runtime-neutral",
       "./cube-unfolded-svg": "runtime-neutral",
       "./nnn-sim": "runtime-neutral",
@@ -195,6 +196,7 @@
       "default": "./src/quiz.ts"
     },
     "./forum": "./src/forum.ts",
+    "./drive": "./src/drive.ts",
     "./platform": "./src/platform.ts",
     "./cube-unfolded-svg": {
       "node": "./dist/cube_unfolded_svg.js",

@@ -23,7 +23,7 @@ interface Table {
 
 type DomainKey =
   | 'mirror' | 'derived' | 'scramble' | 'recon' | 'alg'
-  | 'comp' | 'account' | 'teaching' | 'platform' | 'studio' | 'commerce' | 'community';
+  | 'comp' | 'account' | 'storage' | 'teaching' | 'platform' | 'studio' | 'commerce' | 'community';
 
 const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
   { key: 'mirror', dot: '#5BA8FF', name: { zh: 'WCA 镜像', en: 'WCA mirror' }, sub: { zh: '每日开发者导出离线重建', en: 'rebuilt offline from the daily export' } },
@@ -33,6 +33,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
   { key: 'alg', dot: '#D97757', name: { zh: '公式库', en: 'Algorithms' }, sub: { zh: 'alg_sets / alg_cases 公式', en: 'alg sets & cases' } },
   { key: 'comp', dot: '#4A90D9', name: { zh: '比赛 & 缓存 & 状态机', en: 'Comp & caches' }, sub: { zh: '关注 / 直播缓存 / dump 增量', en: 'follows, live cache, dump state' } },
   { key: 'account', dot: 'var(--accent)', name: { zh: '账号与登录', en: 'Accounts & auth' }, sub: { zh: '用户 / 身份 / 验证码 / 单次票据', en: 'users, identities, codes, single-use tickets' } },
+  { key: 'storage', dot: 'var(--signal-success)', name: { zh: '文件存储', en: 'File storage' }, sub: { zh: '私人目录 / 断点上传 / 共享配额', en: 'private trees, resumable uploads, shared quota' } },
   { key: 'teaching', dot: 'var(--signal-info)', name: { zh: '教学 SaaS', en: 'Teaching SaaS' }, sub: { zh: '机构 / 学员 / 课包 / 课堂 / 审计', en: 'organizations, students, packages, sessions, audit' } },
   { key: 'platform', dot: 'var(--signal-warning)', name: { zh: 'Platform 主站业务', en: 'Main-site Platform' }, sub: { zh: '课程 / 学习 / 交易 / 内容 / 讲师 / QR', en: 'catalog, learning, commerce, content, instructors, QR' } },
   { key: 'studio', dot: '#67C18E', name: { zh: '用户产物', en: 'User artifacts' }, sub: { zh: '计时 / 训练 / 绘图', en: 'timer, trainer, paint' } },
@@ -162,6 +163,17 @@ const TABLES: Table[] = [
   { name: 'auth_identities', domain: 'account', origin: '0064', evolved: [78, 103], purpose: { zh: '账号与外部身份的唯一映射；微信小程序与网站扫码登录共用 UnionID', en: 'Unique account-to-provider identity mappings; Mini Program and website QR sign-in share the Weixin UnionID' } },
   { name: 'auth_codes', domain: 'account', origin: '0064', purpose: { zh: '邮箱与手机登录、绑定使用的短时验证码及核销状态', en: 'Short-lived email and phone verification codes with consumption state' } },
   { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', evolved: [179], purpose: { zh: '小程序与原生 App 跨运行时换取会话的 90 秒单次票据；只存票据 SHA-256，移动端另绑 PKCE challenge', en: '90-second single-use cross-runtime session tickets; ticket hashes only, with mobile tickets additionally bound to a PKCE challenge' } },
+
+  // ── file storage ───────────────────────────────────────
+  { name: 'drive_members', domain: 'storage', origin: '0184', purpose: { zh: '管理员维护的小规模网盘访问白名单；管理员账号无需重复登记', en: 'Admin-managed access list for the small private Drive; admin accounts need no duplicate row' }, cols: [
+    { name: 'user_id (PK/FK), enabled' }, { name: 'created_by_user_id, created_at, updated_at' },
+  ] },
+  { name: 'drive_nodes', domain: 'storage', origin: '0184', purpose: { zh: '每个账号私有的文件夹树与文件元数据；回收站仍计入共享 20 GB 配额', en: 'Per-account private folder trees and file metadata; Trash still counts toward the shared 20 GB quota' }, cols: [
+    { name: 'id UUID (PK), owner_user_id, parent_id' }, { name: 'name, kind, mime_type, size_bytes' }, { name: 'storage_key, status, trashed_at, trash_root_id' },
+  ] },
+  { name: 'drive_uploads', domain: 'storage', origin: '0184', purpose: { zh: '7 天有效的顺序分块上传会话；保存已收偏移并为完整文件预留共享配额', en: 'Seven-day sequential chunk-upload sessions with persisted offsets and full-file shared-quota reservations' }, cols: [
+    { name: 'id UUID (PK), node_id (UNIQUE/FK), owner_user_id' }, { name: 'expected_bytes, received_bytes, chunk_bytes' }, { name: 'client_last_modified, expires_at, created_at, updated_at' },
+  ] },
 
   // ── teaching SaaS ──────────────────────────────────────
   { name: 'organizations', domain: 'teaching', origin: '0142', purpose: { zh: '机构租户根节点，保存唯一 slug、状态、时区与版本', en: 'Tenant root with a unique slug, lifecycle status, timezone, and version' }, cols: [
@@ -649,6 +661,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 181, slug: 'enterprise_membership_plans', desc: { zh: '把现有月度和年度套餐标为个人用户，并增加沿用单账号开通流程的企业用户月度和年度套餐。', en: 'Label the existing monthly and annual offers as individual plans, then add enterprise plans using the single-account membership checkout.' } },
   { n: 182, slug: 'membership_plan_perks', desc: { zh: '统一个人套餐权益，并让企业套餐在个人权益基础上增加师生展示、企业介绍页、云端资料存储和课程方案定制。', en: 'Unify individual plan entitlements and add teacher-student presentation, an enterprise profile, cloud content storage, and course customization to enterprise plans.' } },
   { n: 183, slug: 'platform_physical_bundle_codes', desc: { zh: '为实体商品随包课程码增加批量生成、单次兑换、外部订单绑定和售后权益撤销审计。', en: 'Add batch generation, single redemption, external order binding, and audited after-sales entitlement reversal for course codes packed with physical goods.' } },
+  { n: 184, slug: 'drive', desc: { zh: '新增 20 GB 共享配额的私人网盘、访问白名单、7 天断点上传会话、回收站与磁盘对象元数据。', en: 'Add a private Drive with a shared 20 GB quota, access list, seven-day resumable uploads, Trash, and disk-object metadata.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

@@ -11,7 +11,7 @@ import './api.css';
 const ACCENT = '#22D3EE';
 const BASE = 'api.cuberoot.me';
 
-type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+type Method = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Gate = 'public' | 'login' | 'admin' | 'webhook';
 type Cache = 'cdn' | 'short' | 'no-store';
 
@@ -44,6 +44,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'feedback', zh: '反馈', en: 'Feedback' },
   { key: 'notification', zh: '通知', en: 'Notifications' },
   { key: 'friend', zh: '好友', en: 'Friends' },
+  { key: 'drive', zh: '网盘', en: 'Drive' },
   { key: 'forum', zh: '论坛', en: 'Forum' },
   { key: 'documents', zh: '协作文档与表格', en: 'Collaborative docs & sheets' },
   { key: 'quiz', zh: '知识问答', en: 'Quiz' },
@@ -63,7 +64,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps article auth battle_rooms calendar cn_comp_names colpi
-//   comp_follows creator_gallery cube cubeopt_solve cubing_live documents feedback forum friends health historical_ranks pb
+//   comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends health historical_ranks pb
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
@@ -613,6 +614,24 @@ const ENDPOINTS: Ep[] = [
   { d: 'friend', m: 'POST', p: '/v1/friends/blocks', g: 'login', c: 'no-store', zh: '拉黑用户并清理双方好友 / 申请关系', en: 'Block a user and clear friendship/request state for the pair' },
   { d: 'friend', m: 'DELETE', p: '/v1/friends/blocks/:userId', g: 'login', c: 'no-store', zh: '解除拉黑', en: 'Unblock a user' },
 
+  // ---- drive ----
+  { d: 'drive', m: 'GET', p: '/v1/drive', g: 'login', c: 'no-store', zh: '读取当前文件夹、回收站、面包屑、未完成上传与共享 20 GB 配额', en: 'Read the current folder, Trash, breadcrumbs, incomplete uploads, and the shared 20 GB quota' },
+  { d: 'drive', m: 'POST', p: '/v1/drive/folders', g: 'login', c: 'no-store', zh: '新建私人文件夹', en: 'Create a private folder' },
+  { d: 'drive', m: 'POST', p: '/v1/drive/uploads', g: 'login', c: 'no-store', zh: '创建上传会话；同一文件指纹在 7 天内自动续传', en: 'Create an upload session; the same file fingerprint resumes automatically for seven days' },
+  { d: 'drive', m: 'HEAD', p: '/v1/drive/uploads/:id', g: 'login', c: 'no-store', zh: '查询上传偏移与过期时间', en: 'Read upload offset and expiration' },
+  { d: 'drive', m: 'PATCH', p: '/v1/drive/uploads/:id', g: 'login', c: 'no-store', zh: '按偏移追加 SHA-256 校验的 8 MB 分块并在完成后原子落盘', en: 'Append an offset-bound, SHA-256-verified 8 MB chunk and finalize atomically' },
+  { d: 'drive', m: 'DELETE', p: '/v1/drive/uploads/:id', g: 'login', c: 'no-store', zh: '取消未完成上传并释放配额', en: 'Cancel an incomplete upload and release its quota reservation' },
+  { d: 'drive', m: 'PATCH', p: '/v1/drive/nodes/:id', g: 'login', c: 'no-store', zh: '重命名或移动本人文件与文件夹', en: 'Rename or move an owned file or folder' },
+  { d: 'drive', m: 'POST', p: '/v1/drive/nodes/:id/trash', g: 'login', c: 'no-store', zh: '把本人文件或文件夹树移入回收站', en: 'Move an owned file or folder tree to Trash' },
+  { d: 'drive', m: 'POST', p: '/v1/drive/nodes/:id/restore', g: 'login', c: 'no-store', zh: '恢复一棵回收站文件树', en: 'Restore a trashed file tree' },
+  { d: 'drive', m: 'DELETE', p: '/v1/drive/nodes/:id', g: 'login', c: 'no-store', zh: '永久删除一棵回收站文件树及磁盘文件', en: 'Permanently delete a trashed file tree and its stored files' },
+  { d: 'drive', m: 'POST', p: '/v1/drive/files/:id/access', g: 'login', c: 'no-store', zh: '生成两小时有效的本人文件预览或下载票据', en: 'Create a two-hour preview or download ticket for an owned file' },
+  { d: 'drive', m: 'GET', p: '/v1/drive/content/:id', g: 'public', c: 'no-store', zh: '凭签名票据下载或 Range 读取文件', en: 'Download or range-stream a file with a signed ticket' },
+  { d: 'drive', m: 'HEAD', p: '/v1/drive/content/:id', g: 'public', c: 'no-store', zh: '凭签名票据读取文件响应头', en: 'Read file headers with a signed ticket' },
+  { d: 'drive', m: 'GET', p: '/v1/drive/members', g: 'admin', c: 'no-store', zh: '读取已授权网盘成员', en: 'List enabled Drive members' },
+  { d: 'drive', m: 'POST', p: '/v1/drive/members', g: 'admin', c: 'no-store', zh: '授权站内账号使用网盘', en: 'Grant Drive access to a site account' },
+  { d: 'drive', m: 'DELETE', p: '/v1/drive/members/:userId', g: 'admin', c: 'no-store', zh: '撤销站内账号的网盘访问权', en: 'Revoke Drive access from a site account' },
+
   // ---- forum ----
   { d: 'forum', m: 'GET', p: '/v1/forum/index', g: 'public', zh: '论坛首页:分类 → 子版 + 全站统计', en: 'Forum index: categories, boards, site stats' },
   { d: 'forum', m: 'GET', p: '/v1/forum/f/:slug', g: 'public', zh: '子版主题列表(置顶单列,分页)', en: 'Board thread list (pinned split, paged)' },
@@ -806,7 +825,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'system', m: 'GET', p: '/v1/visualcube.svg', g: 'public', c: 'cdn', zh: '服务端渲染魔方 SVG', en: 'Server-rendered cube SVG' },
 ];
 
-const METHODS: Method[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+const METHODS: Method[] = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'];
 const GATES: Gate[] = ['public', 'login', 'admin', 'webhook'];
 
 const GATE_LABEL: Record<Gate, { zh: string; en: string }> = {
