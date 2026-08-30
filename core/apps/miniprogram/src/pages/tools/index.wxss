@@ -2,17 +2,82 @@
   padding-top: 56rpx;
 }
 
+.tool-search {
+  align-items: center;
+  border-bottom: 1rpx solid var(--cr-line);
+  display: flex;
+  margin-top: 48rpx;
+  min-height: 88rpx;
+}
+
+.tool-search-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.tool-search-clear {
+  color: var(--cr-accent);
+  flex: none;
+  font-size: 26rpx;
+  min-height: 88rpx;
+  padding-left: 24rpx;
+  white-space: nowrap;
+}
+
+.tool-count {
+  color: var(--cr-muted);
+  display: block;
+  font-size: 23rpx;
+  line-height: 1.5;
+  margin-top: 18rpx;
+}
+
+.tool-group {
+  margin-top: 64rpx;
+}
+
+.tool-group-eyebrow {
+  color: var(--cr-accent);
+  display: block;
+  font-size: 22rpx;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+}
+
+.tool-group-title {
+  display: block;
+  font-size: 35rpx;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 10rpx;
+  overflow-wrap: anywhere;
+}
+
+.tool-group-description {
+  color: var(--cr-muted);
+  display: block;
+  font-size: 24rpx;
+  line-height: 1.6;
+  margin-top: 12rpx;
+  overflow-wrap: anywhere;
+}
+
 .tool-list {
-  margin-top: 58rpx;
+  margin-top: 22rpx;
 }
 
 .tool-row {
   align-items: center;
   border-bottom: 1rpx solid var(--cr-line);
   display: flex;
-  min-height: 140rpx;
+  min-height: 112rpx;
   text-align: left;
   width: 100%;
+}
+
+.tool-row[disabled] {
+  color: var(--cr-muted);
+  opacity: 0.72;
 }
 
 .tool-copy {
@@ -21,7 +86,7 @@
 }
 
 .tool-name,
-.tool-description {
+.tool-name-en {
   display: block;
 }
 
@@ -31,22 +96,58 @@
   overflow-wrap: anywhere;
 }
 
-.tool-description {
+.tool-name-en {
   color: var(--cr-muted);
-  font-size: 24rpx;
+  font-size: 22rpx;
   line-height: 1.45;
-  margin-top: 12rpx;
+  margin-top: 5rpx;
   overflow-wrap: anywhere;
+}
+
+.tool-action {
+  color: var(--cr-muted);
+  flex: none;
+  font-size: 22rpx;
+  margin-left: 24rpx;
+  max-width: 180rpx;
+  overflow-wrap: anywhere;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .tool-arrow {
   color: var(--cr-faint);
   flex: none;
-  font-size: 52rpx;
+  font-size: 44rpx;
   font-weight: 300;
-  margin-left: 28rpx;
+  margin-left: 14rpx;
+}
+
+.tool-empty {
+  margin-top: 72rpx;
+}
+
+.tool-empty-title,
+.tool-empty-copy {
+  display: block;
+}
+
+.tool-empty-title {
+  font-size: 32rpx;
+  font-weight: 680;
+}
+
+.tool-empty-copy {
+  color: var(--cr-muted);
+  font-size: 25rpx;
+  line-height: 1.6;
+  margin-top: 12rpx;
 }
 
 .tools-status {
   margin-top: 28rpx;
+}
+
+.tools-status--ready {
+  color: var(--cr-ready);
 }

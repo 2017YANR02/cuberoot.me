@@ -1,66 +1,45 @@
+import {
+  SITE_DIRECTORY_GROUPS,
+  SITE_DIRECTORY_TEXTS,
+  type SiteDirectoryEntry,
+  type SiteDirectoryEntryId,
+} from '@cuberoot/shared/site-directory';
+
 import { SITE_ORIGIN } from './runtime-config';
 import { isSafeWebSessionDestination, isWebSessionTicket } from './web-session-contract';
 
-export const WEB_ROUTES = {
-  timer: {
-    title: '计时器',
-    description: '训练、成绩与统计',
-    path: '/zh/timer',
-  },
-  alg: {
-    title: '公式库',
-    description: 'OLL、PLL、ZBLL 等公式查询与训练',
-    path: '/zh/alg',
-    showInTools: true,
-  },
-  competitions: {
-    title: 'WCA 比赛',
-    description: '查比赛、赛程与成绩',
-    path: '/zh/wca/comp',
-    showInTools: true,
-  },
-  wiki: {
-    title: '魔方百科',
-    description: '教程、术语与方法资料',
-    path: '/zh/wiki',
-    showInTools: true,
-  },
-  courses: {
-    title: '课程',
-    description: '系统学习与试学内容',
-    path: '/zh/courses',
-    showInTools: true,
-  },
-  account: {
-    title: '账号管理',
-    description: '管理 WCA 账号与登录方式',
-    path: '/zh/account',
-  },
-  support: {
-    title: '联系与支持',
-    description: '查看网站与联系方式',
-    path: '/zh/support',
-  },
-  privacy: {
-    title: '隐私说明',
-    description: '查看数据、登录与删除说明',
-    path: '/zh/privacy',
-  },
-  logout: {
-    title: '退出登录',
-    description: '清除小程序与网站登录状态',
-    path: '/auth/miniprogram#action=logout&next=%2Fzh%2Faccount',
-    sessionHandoff: false,
-    loadFailureMessage: '小程序已退出，网站退出暂未完成。请检查网络后重试。',
-  },
-} as const;
+type DiscoveryRouteKey = Exclude<SiteDirectoryEntryId, 'algdb' | 'alg' | 'github'> | 'alg';
+export type WebRouteKey = DiscoveryRouteKey | 'account' | 'privacy' | 'logout';
 
-export type WebRouteKey = keyof typeof WEB_ROUTES;
-
-export interface WebToolLink {
-  key: WebRouteKey;
+interface WebRouteDefinition {
   title: string;
   description: string;
+  path: string;
+  publicEntry: boolean;
+  nativeTabPath?: string;
+  sessionHandoff?: boolean;
+  loadFailureMessage?: string;
+}
+
+export type WebToolAction = 'web' | 'native' | 'copy' | 'disabled';
+
+export interface WebToolLink {
+  action: WebToolAction;
+  actionLabel: string;
+  disabled: boolean;
+  href: string;
+  id: SiteDirectoryEntryId;
+  key: WebRouteKey | null;
+  title: string;
+  titleEn: string;
+}
+
+export interface WebToolGroup {
+  description: string;
+  eyebrow: string;
+  id: string;
+  title: string;
+  tools: WebToolLink[];
 }
 
 export interface WebRouteShare {
@@ -71,14 +50,111 @@ export interface WebRouteShare {
 
 export const WEB_ROUTE_SHARE_IMAGE = '/assets/share-cover.png';
 
-export function listWebTools(): WebToolLink[] {
-  const tools: WebToolLink[] = [];
-  for (const key of Object.keys(WEB_ROUTES) as WebRouteKey[]) {
-    const route = WEB_ROUTES[key];
-    if (!('showInTools' in route) || route.showInTools !== true) continue;
-    tools.push({ key, title: route.title, description: route.description });
+function directoryRouteKey(entry: SiteDirectoryEntry): DiscoveryRouteKey | null {
+  if ('miniProgramAction' in entry && entry.miniProgramAction) return null;
+  return entry.id === 'algdb' ? 'alg' : entry.id as DiscoveryRouteKey;
+}
+
+function localizedWebsitePath(href: string): string {
+  const path = href.length > 1 ? href.replace(/\/$/, '') : href;
+  return `/zh${path}`;
+}
+
+function toolAction(entry: SiteDirectoryEntry): WebToolAction {
+  if ('miniProgramAction' in entry && entry.miniProgramAction) {
+    return entry.miniProgramAction;
   }
-  return tools;
+  return entry.id === 'timer' ? 'native' : 'web';
+}
+
+function toolActionLabel(entry: SiteDirectoryEntry, action: WebToolAction): string {
+  if ('miniProgramNote' in entry && entry.miniProgramNote) return entry.miniProgramNote.zh;
+  if (action === 'native') return '小程序原生功能';
+  return '打开网站页面';
+}
+
+const DIRECTORY_TOOL_GROUPS: WebToolGroup[] = SITE_DIRECTORY_GROUPS.map((group) => ({
+  id: group.id,
+  eyebrow: group.eyebrow.zh,
+  title: group.title.zh,
+  description: group.sub.zh,
+  tools: group.entries.map((entry) => {
+    const action = toolAction(entry);
+    return {
+      action,
+      actionLabel: toolActionLabel(entry, action),
+      disabled: action === 'disabled',
+      href: entry.href,
+      id: entry.id,
+      key: directoryRouteKey(entry),
+      title: SITE_DIRECTORY_TEXTS[entry.nameKey].zh,
+      titleEn: SITE_DIRECTORY_TEXTS[entry.nameKey].en,
+    };
+  }),
+}));
+
+const discoveryRoutes = {} as Record<DiscoveryRouteKey, WebRouteDefinition>;
+for (const group of SITE_DIRECTORY_GROUPS) {
+  for (const entry of group.entries) {
+    const key = directoryRouteKey(entry);
+    if (!key) continue;
+    discoveryRoutes[key] = {
+      title: SITE_DIRECTORY_TEXTS[entry.nameKey].zh,
+      description: group.sub.zh,
+      path: localizedWebsitePath(entry.href),
+      publicEntry: true,
+      ...(entry.id === 'timer' ? { nativeTabPath: '/pages/timer/index' } : {}),
+      ...(!entry.internal ? { sessionHandoff: false } : {}),
+    };
+  }
+}
+
+export const WEB_ROUTES: Record<WebRouteKey, WebRouteDefinition> = {
+  ...discoveryRoutes,
+  account: {
+    title: '账号管理',
+    description: '管理 WCA 账号与登录方式',
+    path: '/zh/account',
+    publicEntry: false,
+  },
+  privacy: {
+    title: '隐私说明',
+    description: '查看数据、登录与删除说明',
+    path: '/zh/privacy',
+    publicEntry: false,
+  },
+  logout: {
+    title: '退出登录',
+    description: '清除小程序与网站登录状态',
+    path: '/auth/miniprogram#action=logout&next=%2Fzh%2Faccount',
+    publicEntry: false,
+    sessionHandoff: false,
+    loadFailureMessage: '小程序已退出，网站退出暂未完成。请检查网络后重试。',
+  },
+};
+
+const DIRECTORY_TOOLS = DIRECTORY_TOOL_GROUPS.flatMap((group) => group.tools);
+
+export function listWebTools(): WebToolLink[] {
+  return [...DIRECTORY_TOOLS];
+}
+
+export function listWebToolGroups(query = ''): WebToolGroup[] {
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  return DIRECTORY_TOOL_GROUPS
+    .map((group) => ({
+      ...group,
+      tools: normalizedQuery
+        ? group.tools.filter((tool) => [tool.title, tool.titleEn, tool.href, tool.id]
+          .some((value) => value.toLocaleLowerCase().includes(normalizedQuery)))
+        : [...group.tools],
+    }))
+    .filter((group) => group.tools.length > 0);
+}
+
+export function resolveWebTool(id: unknown): WebToolLink | null {
+  if (typeof id !== 'string') return null;
+  return DIRECTORY_TOOLS.find((tool) => tool.id === id) ?? null;
 }
 
 export function resolveToolsPageShare(): WebRouteShare {
@@ -104,16 +180,13 @@ export function resolveWebRouteShare(key: unknown): WebRouteShare | null {
 
   const routeKey = key as WebRouteKey;
   const route = WEB_ROUTES[routeKey];
-  const isPublicEntry = routeKey === 'timer'
-    || ('showInTools' in route && route.showInTools === true);
-  if (!isPublicEntry) return null;
+  if (!route.publicEntry) return null;
 
   return {
     imageUrl: WEB_ROUTE_SHARE_IMAGE,
     title: `CubeRoot 魔方根：${route.title}`,
-    path: routeKey === 'timer'
-      ? '/pages/timer/index'
-      : `/pages/web/index?key=${encodeURIComponent(routeKey)}`,
+    path: route.nativeTabPath
+      ?? `/pages/web/index?key=${encodeURIComponent(routeKey)}`,
   };
 }
 
@@ -131,10 +204,10 @@ export function resolveWebRoute(key: unknown): {
   const resolved = {
     title: route.title,
     path: route.path,
-    sessionHandoff: !('sessionHandoff' in route) || route.sessionHandoff !== false,
+    sessionHandoff: route.sessionHandoff !== false,
     url: `${SITE_ORIGIN}${route.path}`,
   };
-  if ('loadFailureMessage' in route) {
+  if (route.loadFailureMessage) {
     return { ...resolved, loadFailureMessage: route.loadFailureMessage };
   }
   return resolved;

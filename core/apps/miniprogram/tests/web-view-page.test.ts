@@ -63,12 +63,12 @@ describe('shared web-view page state', () => {
       canRetry: false,
       errorMessage: '',
       errorTitle: '',
-      loadingTitle: '正在打开计时器',
+      loadingTitle: '正在打开计时',
       routeKey: 'timer',
       src: 'https://cuberoot.me/zh/timer',
       viewAttempt: 1,
     });
-    expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '计时器' });
+    expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '计时' });
   });
 
   it('still opens the route when the cosmetic title API throws', async () => {
@@ -108,13 +108,13 @@ describe('shared web-view page state', () => {
     expect(hideShareMenu).not.toHaveBeenCalled();
     expect(options.onShareAppMessage.call(context)).toEqual({
       imageUrl: '/assets/share-cover.png',
-      title: 'CubeRoot 魔方根：公式库',
+      title: 'CubeRoot 魔方根：公式',
       path: '/pages/web/index?key=alg',
     });
     expect(options.onShareTimeline.call(context)).toEqual({
       imageUrl: '/assets/share-cover.png',
       query: 'key=alg',
-      title: 'CubeRoot 魔方根：公式库',
+      title: 'CubeRoot 魔方根：公式',
     });
   });
 
@@ -922,6 +922,6 @@ describe('shared web-view page state', () => {
     options.onLoad.call(context, {});
 
     expect(context.data.src).toBe('https://cuberoot.me/zh/timer');
-    expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '计时器' });
+    expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '计时' });
   });
 });

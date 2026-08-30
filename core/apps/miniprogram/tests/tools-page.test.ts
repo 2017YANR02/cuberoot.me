@@ -7,7 +7,9 @@ interface ToolsPage {
   onUnload(): void;
   onShareAppMessage(): WechatMiniprogram.Page.ICustomShareContent;
   onShareTimeline(): WechatMiniprogram.Page.ICustomTimelineContent;
-  openTool(event: { currentTarget: { dataset: { key?: unknown } } }): void;
+  clearSearch(): void;
+  handleSearchInput(event: { detail: { value: unknown } }): void;
+  openTool(event: { currentTarget: { dataset: { id?: unknown } } }): void;
   setData(data: Record<string, unknown>): void;
 }
 
@@ -25,8 +27,8 @@ async function loadPage(wxApi: Record<string, unknown>): Promise<ToolsPage> {
   return page;
 }
 
-function toolEvent(key: unknown) {
-  return { currentTarget: { dataset: { key } } };
+function toolEvent(id: unknown) {
+  return { currentTarget: { dataset: { id } } };
 }
 
 describe('mini program tools page', () => {
@@ -39,11 +41,68 @@ describe('mini program tools page', () => {
     const navigateTo = vi.fn();
     const page = await loadPage({ navigateTo, showToast: vi.fn() });
 
-    page.openTool(toolEvent('alg'));
+    page.openTool(toolEvent('algdb'));
 
     expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({
       url: '/pages/web/index?key=alg',
     }));
+  });
+
+  it('shows all shared groups and filters by Chinese or English names', async () => {
+    const page = await loadPage({});
+
+    expect(page.data.totalCount).toBe(53);
+    expect(page.data.resultCount).toBe(53);
+    expect((page.data.groups as { tools: unknown[] }[]).map((group) => group.tools.length)).toEqual([
+      5, 4, 6, 9, 16, 10, 3,
+    ]);
+
+    page.handleSearchInput({ detail: { value: '纪录' } });
+    expect(page.data.query).toBe('纪录');
+    expect(page.data.resultCount).toBe(2);
+
+    page.handleSearchInput({ detail: { value: 'Ruimin' } });
+    expect(page.data.resultCount).toBe(2);
+
+    page.clearSearch();
+    expect(page.data.query).toBe('');
+    expect(page.data.resultCount).toBe(53);
+  });
+
+  it('opens the native timer tab without creating a web-view', async () => {
+    const navigateTo = vi.fn();
+    const switchTab = vi.fn();
+    const page = await loadPage({ navigateTo, switchTab });
+
+    page.openTool(toolEvent('timer'));
+
+    expect(switchTab).toHaveBeenCalledWith(expect.objectContaining({
+      url: '/pages/timer/index',
+    }));
+    expect(navigateTo).not.toHaveBeenCalled();
+  });
+
+  it('copies the external GitHub destination instead of passing it to web-view', async () => {
+    const setClipboardData = vi.fn((options: { success?(): void }) => options.success?.());
+    const page = await loadPage({ setClipboardData });
+
+    page.openTool(toolEvent('github'));
+
+    expect(setClipboardData).toHaveBeenCalledWith(expect.objectContaining({
+      data: 'https://github.com/RuiminYan/cuberoot.me',
+    }));
+    expect(page.data.status).toBe('GitHub 地址已复制');
+    expect(page.data.statusTone).toBe('ready');
+  });
+
+  it('preserves the website tutorial maintenance state', async () => {
+    const navigateTo = vi.fn();
+    const page = await loadPage({ navigateTo });
+
+    page.openTool(toolEvent('alg'));
+
+    expect(navigateTo).not.toHaveBeenCalled();
+    expect(page.data.status).toBe('管理员维护中');
   });
 
   it('shares the public tools entry with the canonical brand image', async () => {
@@ -118,7 +177,7 @@ describe('mini program tools page', () => {
 
     expect(showToast).not.toHaveBeenCalled();
     expect(page.data.status).toBe('');
-    page.openTool(toolEvent('alg'));
+    page.openTool(toolEvent('algdb'));
     expect(navigateTo).toHaveBeenCalledTimes(2);
   });
 });
