@@ -1,4 +1,5 @@
 import { WR_METRICS } from '@/lib/wr-metrics';
+import { CompetitionRankTracker } from '@/lib/competition-rank';
 import { compute as computeRolling, getConfigs as getRollingConfigs } from './rolling';
 import { compute as computeRound, getConfigs as getRoundConfigs, type SolveEntry } from './round';
 
@@ -47,17 +48,26 @@ export interface WcaMetricRound {
   average: number;
 }
 
-/** One selected metric per result row, using the same engines as DistributionViz. */
-export function computeWcaMetricByRound(
-  rounds: readonly WcaMetricRound[],
-  mode: WcaResultMetricMode,
-): Map<string, number | null> {
-  const ordered = rounds.slice().sort((a, b) =>
+export interface WcaMetricRoundStats {
+  values: Map<string, number | null>;
+  ranks: Map<string, number | null>;
+}
+
+function orderRounds(rounds: readonly WcaMetricRound[]): WcaMetricRound[] {
+  return rounds.slice().sort((a, b) =>
     a.date.localeCompare(b.date)
     || a.competition.localeCompare(b.competition)
     || a.roundOrder - b.roundOrder
     || a.key.localeCompare(b.key),
   );
+}
+
+/** One selected metric per result row, using the same engines as DistributionViz. */
+export function computeWcaMetricByRound(
+  rounds: readonly WcaMetricRound[],
+  mode: WcaResultMetricMode,
+): Map<string, number | null> {
+  const ordered = orderRounds(rounds);
   const values = new Map<string, number | null>();
 
   if (mode === 'singles' || mode === 'avg') {
@@ -107,4 +117,29 @@ export function computeWcaMetricByRound(
     if (span) values.set(round.key, metric[span.first] ?? null);
   }
   return values;
+}
+
+/** Metric values plus their frozen chronological personal ranks.
+ * Each valid round metric ranks against prior valid values of the same metric. */
+export function computeWcaMetricStatsByRound(
+  rounds: readonly WcaMetricRound[],
+  mode: WcaResultMetricMode,
+): WcaMetricRoundStats {
+  const ordered = orderRounds(rounds);
+  const values = computeWcaMetricByRound(ordered, mode);
+  const validValues = [...values.values()].filter((value): value is number => value !== null && value > 0);
+  const tracker = new CompetitionRankTracker(validValues);
+  const ranks = new Map<string, number | null>();
+
+  for (const round of ordered) {
+    const value = values.get(round.key);
+    if (value === null || value === undefined || value <= 0) {
+      ranks.set(round.key, null);
+      continue;
+    }
+    ranks.set(round.key, tracker.rank(value));
+    tracker.add(value);
+  }
+
+  return { values, ranks };
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   computeWcaMetricByRound,
+  computeWcaMetricStatsByRound,
   WCA_AVERAGE_METRIC_KEYS,
   WCA_RESULT_METRIC_OPTIONS,
   WCA_SINGLE_METRIC_KEYS,
@@ -35,6 +36,24 @@ describe('WCA result metrics', () => {
     const worstCounting = computeWcaMetricByRound(rounds, 'worstc');
     expect(bestAo5.get('earlier')).toBe(200);
     expect(worstCounting.get('earlier')).toBe(400);
+  });
+
+  it('ranks round metrics chronologically with standard competition ties', () => {
+    const tiedRounds: WcaMetricRound[] = [
+      { ...rounds[1]!, key: 'first', competition: 'First', date: '2026-01-01' },
+      { ...rounds[1]!, key: 'tie', competition: 'Tie', date: '2026-01-02' },
+      { ...rounds[1]!, key: 'better', competition: 'Better', date: '2026-01-03', attempts: [50, 100, 200, 300, 400] },
+      { ...rounds[1]!, key: 'fourth', competition: 'Fourth', date: '2026-01-04', attempts: [200, 300, 400, 500, 600] },
+      { ...rounds[1]!, key: 'invalid', competition: 'Invalid', date: '2026-01-05', attempts: [-1, -1, 0, 0, 0] },
+    ];
+
+    expect(computeWcaMetricStatsByRound(tiedRounds.reverse(), 'median').ranks).toEqual(new Map([
+      ['first', 1],
+      ['tie', 1],
+      ['better', 1],
+      ['fourth', 4],
+      ['invalid', null],
+    ]));
   });
 
   it('keeps canonical bilingual labels in the shared menu', () => {
