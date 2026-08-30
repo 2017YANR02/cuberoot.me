@@ -3,10 +3,9 @@
 // 复用 @cuberoot/shared 的 fetchResults / fetchCompetitions API
 
 import { fetchResults, fetchCompetitions } from '@cuberoot/shared';
-import { compute as computeRollingStats } from './rolling_stats';
-import { compute as computeRoundMetrics } from './round_metrics';
-import type { RollingResult } from './rolling_stats';
-import type { RoundMetricsResult, SolveEntry } from './round_metrics';
+import { compute as computeRollingStats, type RollingResult } from '@/lib/wca-result-metrics/rolling';
+import { compute as computeRoundMetrics, type RoundMetricsResult, type SolveEntry } from '@/lib/wca-result-metrics/round';
+import type { WcaResultMetricMode } from '@/lib/wca-result-metrics';
 import type { KDEPoint } from './kde';
 
 // ─── 类型定义 ───
@@ -65,10 +64,7 @@ export const KDE_POINTS = 200;
 const ROUND_ORDER: Record<string, number> = { '1': 0, 'd': 1, '2': 2, 'b': 3, '3': 4, 'c': 5, 'f': 6 };
 
 // ─── 数据模式类型 ───
-export type DataMode =
-  | 'singles'
-  | 'mo3' | 'ao5' | 'ao12' | 'ao25' | 'ao50' | 'ao100'
-  | 'avg' | 'bao5' | 'wao5' | 'mo5' | 'bpa' | 'wpa' | 'median' | 'bestc' | 'worstc' | 'worst';
+export type DataMode = WcaResultMetricMode;
 
 export type ViewMode = 'line' | 'histogram' | 'cumHist';
 export type SyncMode = 'solve' | 'date';
