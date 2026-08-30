@@ -138,6 +138,7 @@ function AllResultsPageInner() {
       q: parseAsString,
       qmode: parseAsString,   // 名字匹配:any(选手/比赛) | first | last | exact
       basis: parseAsString,
+      teacher: parseAsString, // 分享视图:只展示该 WCA ID 的老师姓名
       hidePodium: parseAsString, // 名次和:未登领奖台
       ssort: parseAsString,      // 名次和表头排序:'total'(默认) | 'best'(历史最佳名次) | 项目 id(单项名次列)
       sdir: parseAsString,       // 名次和排序方向:'asc'(默认) | 'desc'
@@ -195,6 +196,10 @@ function AllResultsPageInner() {
   const month = parseInt(query.month ?? '0', 10);
   const qFromUrl = query.q ?? '';
   const qMode = ['first', 'last', 'exact'].includes(query.qmode ?? '') ? query.qmode! : 'any';
+  const requestedTeacherWcaId = (query.teacher ?? '').trim().toUpperCase();
+  const visibleTeacherWcaId = /^\d{4}[A-Z0-9]{4}\d{2}$/.test(requestedTeacherWcaId)
+    ? requestedTeacherWcaId
+    : '';
   const page = parseInt(query.page ?? '1', 10);
   const size = parseInt(query.size ?? '100', 10);
   const hidePodium = query.hidePodium === '1';
@@ -415,6 +420,19 @@ function AllResultsPageInner() {
     return RANK_EVENTS.filter((eventId) => selectedSet.has(eventId));
   }, [view, mode, singleEvent, selectedSet]);
   const teacherDirectory = useWcaTeachers(teacherStudentIds, teacherEventIds);
+  const visibleTeacherName = useMemo(() => {
+    if (!visibleTeacherWcaId) return '';
+    for (const relation of teacherDirectory.teachers.values()) {
+      if (relation.teacherWcaId === visibleTeacherWcaId) {
+        return displayCuberName(relation.teacherName, isZh);
+      }
+    }
+    return visibleTeacherWcaId;
+  }, [isZh, teacherDirectory.teachers, visibleTeacherWcaId]);
+  const canCreateTeacherShare = Boolean(
+    teacherDirectory.userWcaId
+    && (teacherDirectory.canSelfAssign || teacherDirectory.isAdmin),
+  );
 
   // ---- 名次和工具:名人堂 + 排名演化 ----
   const [raceOpen, setRaceOpen] = useState(false);
@@ -522,6 +540,20 @@ function AllResultsPageInner() {
       </select>
     </div>
   );
+  const teacherShareToggle = (visibleTeacherWcaId || canCreateTeacherShare) ? (
+    <div className="wse-filter wse-filter-show">
+      <BoolToggle
+        value={Boolean(visibleTeacherWcaId)}
+        onChange={(value) => {
+          if (value && !canCreateTeacherShare) return;
+          setQuery({ teacher: value ? teacherDirectory.userWcaId : null });
+        }}
+        label={visibleTeacherWcaId
+          ? tr({ zh: `仅显示 ${visibleTeacherName}`, en: `Only ${visibleTeacherName}` })
+          : tr({ zh: '分享时只显示我的名字', en: 'Show only my name when sharing' })}
+      />
+    </div>
+  ) : null;
 
   return (
     <div className="wse-page">
@@ -759,6 +791,7 @@ function AllResultsPageInner() {
                 <option value="exact">{tr({ zh: '全名完全相同', en: 'Exact full name' })}</option>
               </select>
             </div>
+            {teacherShareToggle}
           </div>
 
           {/* 纪录走势 bar chart race:常显在排名表上方(方案 B)。复用 wr_metric 的 Top10HistoryPage,
@@ -804,7 +837,7 @@ function AllResultsPageInner() {
                           {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                         </td>
-                        <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} /></td>
+                        <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} /></td>
                         <td className="wse-value-col">
                           <span className="record-num-cell">
                             {formatWcaResult(r.value, singleEvent, effType)}
@@ -848,7 +881,7 @@ function AllResultsPageInner() {
                           {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                         </td>
-                        <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} /></td>
+                        <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} /></td>
                         <td className="wse-value-col">{r.value != null ? formatWcaResult(r.value, singleEvent, effType) : '—'}</td>
                         <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                         <td>{r.compId ? <Link {...compLinkProps(r.compId)}><CompCell compId={r.compId} compName={r.compName} isZh={isZh} date={r.compDate ?? null} /></Link> : ''}</td>
@@ -885,6 +918,7 @@ function AllResultsPageInner() {
                 label={tr({ zh: '未登领奖台', en: 'No podium' })}
               />
             </div>
+            {teacherShareToggle}
           </div>
 
           {/* 名人堂 */}
@@ -989,7 +1023,7 @@ function AllResultsPageInner() {
                             <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                           </span>
                         </td>
-                        <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} /></td>
+                        <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} /></td>
                         <td className="wse-value-col">{r.subsetTotal != null ? r.subsetTotal : isCountryMode ? r.totalCountryRank : r.totalWorldRank}</td>
                         {showBest && (
                           <td className="wse-value-col"
