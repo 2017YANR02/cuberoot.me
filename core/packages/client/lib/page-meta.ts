@@ -457,6 +457,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Add friends, handle friend requests, and manage blocked users on CubeRoot.',
     },
   },
+  'drive': {
+    title: { zh: '网盘', en: 'Drive' },
+    description: {
+      zh: 'CubeRoot 私有网盘，支持照片、视频和文档的断点续传、在线预览与下载。',
+      en: 'CubeRoot private Drive with resumable uploads, previews, and downloads for photos, videos, and documents.',
+    },
+  },
   'paint': {
     title: { zh: '魔方图示绘制', en: 'Cube Diagram Editor' },
     description: {
