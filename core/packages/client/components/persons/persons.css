@@ -940,12 +940,9 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 .wp-bycomp-table thead th.wp-th-narrow { text-align: right !important; }
 .wp-bycomp-table .wp-cell-pos { text-align: right; }
 .wp-bycomp-table .wp-cell-result { text-align: center; }
-.wp-bycomp-table thead th.wp-th-metric,
-.wp-bycomp-table .wp-cell-metric { text-align: center; }
 .wp-metric-th { display: inline-flex; align-items: center; gap: 2px; }
 .wp-metric-th .compact-select { width: auto; }
 .wp-metric-sort { padding: 2px; }
-.wp-cell-metric { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
 /* MBLD(多盲)单次 = 「点数 时:分:秒」复合值,居中会让各行冒号错位 → 右对齐(同 WCA)。
    .record-num-cell 固定 padding-right + badge 绝对定位不占流 → 数字右缘恒定 → 冒号逐行对齐。 */
 .wp-bycomp-table .wp-cell-result--mbld { text-align: right; }

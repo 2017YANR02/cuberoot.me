@@ -27,6 +27,14 @@ export const WCA_RESULT_METRIC_OPTIONS: readonly WcaResultMetricOption[] = [
   ...getRoundConfigs().map(config => canonicalOption(config.key as WcaResultMetricMode, config.key)),
 ];
 
+export const WCA_SINGLE_METRIC_KEYS: readonly WcaResultMetricMode[] = [
+  'singles', 'median', 'bestc', 'worstc', 'worst',
+];
+
+export const WCA_AVERAGE_METRIC_KEYS: readonly WcaResultMetricMode[] = [
+  'avg', 'mo3', 'ao5', 'ao12', 'ao25', 'ao50', 'ao100', 'bao5', 'wao5', 'mo5', 'bpa', 'wpa',
+];
+
 const ROLLING_KEYS = new Set(getRollingConfigs().map(config => config.key));
 
 export interface WcaMetricRound {
