@@ -21,7 +21,7 @@ import { statsUrl } from '@/lib/stats-base';
 import Top10HistoryPage from '@/components/wca-stats/Top10HistoryPage';
 import type { Metric as Top10Metric } from '@/lib/top10-axis';
 import type { StatData, StatSection, StatPanel, MetricPanel } from './WcaStatView.types';
-import { getAllPanelsFromMetric } from './WcaStatView.cells';
+import { getAllPanelsFromMetric, metricIdsWithDataForEvent } from './WcaStatView.cells';
 import {
   WrByCountryYearView, StatsTable, SectionsView, PanelsView, MetricPanelsView,
 } from './WcaStatView.views';
@@ -42,7 +42,7 @@ interface WcaStatViewProps {
   metricId?: string | null;
   /** 插在「项目选择器」与 note 之间的内容。/wca/results 指标视图把顶层「类型」下拉放这,
    *  实现 项目选择器 在 类型下拉 上方。 */
-  afterEventSelector?: React.ReactNode;
+  afterEventSelector?: React.ReactNode | ((availableMetricIds: ReadonlySet<string>) => React.ReactNode);
 }
 
 // useDocumentTitle 必须无条件调用 —— 包成子组件,只在 headerMode='full' 时挂载;
@@ -174,6 +174,11 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
     return ids;
   }, [data]);
 
+  const availableMetricIds = useMemo(
+    () => metricIdsWithDataForEvent(data?.metricPanels ?? [], selectedEvent || undefined),
+    [data?.metricPanels, selectedEvent],
+  );
+
   useEffect(() => {
     if (availableEvents.size > 0 && !selectedEvent) {
       const urlEvent = new URLSearchParams(window.location.search).get(k('event'));
@@ -240,7 +245,9 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
           isZh={isZh}
         />
       )}
-      {afterEventSelector}
+      {typeof afterEventSelector === 'function'
+        ? afterEventSelector(availableMetricIds)
+        : afterEventSelector}
       {headerMode === 'note' && data.note && (
         <p className="wca-stats-note wca-stats-embedded-note">{tr({ zh: data.noteZh ?? data.note, en: data.note })}</p>
       )}
@@ -286,6 +293,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
           searchTerm={searchTerm}
           isZh={isZh}
           selectedEvent={showEventSelector ? selectedEvent : undefined}
+          availableMetricIds={availableMetricIds}
           hideSelector={metricId != null}
           activeMetric={activeMetric}
           onSetActiveMetric={(idx) => handleSetActiveMetric(idx, data.metricPanels!)}

@@ -5,7 +5,8 @@
 // 21 个 WCA event 全覆盖(含已废除 333ft / magic / mmagic / 333mbo)
 //   - single:所有 event
 //   - average:除 333mbf / 333mbo 外所有 event
-//   - bao5/wao5/mo5/bpa/wpa/median/best_counting/worst_counting/worst:仅 EVENTS_WITH_AO5(13 个)
+//   - median/worst:所有官方 Mo3 + Ao5 项目
+//   - bao5/wao5/mo5/bpa/wpa/best_counting/worst_counting:仅 EVENTS_WITH_AO5(13 个)
 //
 // 性能:Ao5 events 用 LEFT JOIN result_attempts + GROUP BY + GROUP_CONCAT 一次拉全;
 // JS 端 per-metric 顺序构建 byDate(每 event 内存峰值约一个 byDate 大小)。
@@ -43,7 +44,7 @@ const SINGLE_ONLY_EVENTS = new Set<string>(['333mbf', '333mbo']);
 // NOTE: 用非官方 Mo3 平均的 multi-blind 项目(需拉 attempts 从 3 次算 Mo3,而非读 r.average)
 const MBF_AVG_EVENTS = new Set<string>(['333mbf']);
 
-// NOTE: Mo3 项目(一轮 3 次,无 ao5 衍生指标)
+// NOTE: Mo3 项目(一轮 3 次,支持 median/worst，不支持 ao5 专属衍生指标)
 const MO3_EVENTS = new Set<string>(['666', '777', '333bf', '333fm', '444bf', '555bf']);
 
 // NOTE: 9 个 ao5 衍生指标只对 Ao5 events 计算
@@ -61,6 +62,7 @@ const ATTEMPT_METRICS: MetricKey[] = [
   'bao5', 'wao5', 'mo5', 'bpa', 'wpa',
   'median', 'best_counting', 'worst_counting', 'worst',
 ];
+const MO3_ATTEMPT_METRICS: MetricKey[] = ['median', 'worst'];
 
 interface PbEvent { d: string; p: string; v: number; c: string }
 interface PersonInfo { name: string; country: string; iso2: string | null }
@@ -74,10 +76,10 @@ interface CompactRow {
   best: number;   // 0 = 无效
   avg: number;    // 0 = 无效
   comp: string;
-  vals: number[] | null;  // length 5,只 Ao5 events 有
+  vals: number[] | null;  // Mo3 为 3 次，Ao5 为 5 次；333mbf 保留原始 attempts
 }
 
-// NOTE: 从 5 次 attempt 计算指标(对齐 wr_metric/wr_*.ts 实现)
+// NOTE: 从一轮 attempts 计算指标(对齐 wr_metric/wr_*.ts 实现)
 function computeAttemptMetric(key: MetricKey, vals: number[]): number | null {
   switch (key) {
     case 'bao5': {
@@ -109,10 +111,12 @@ function computeAttemptMetric(key: MetricKey, vals: number[]): number | null {
       return worst3.reduce((s, v) => s + v, 0) / 3;
     }
     case 'median': {
-      const valid = vals.filter(v => v > 0).sort((a, b) => a - b);
-      const invalid = vals.length - valid.length;
-      if (invalid >= 3) return null;
-      return valid[2] ?? null;
+      if (vals.length < 3 || vals.length % 2 === 0) return null;
+      const sorted = vals
+        .map(v => v > 0 ? v : Number.POSITIVE_INFINITY)
+        .sort((a, b) => a - b);
+      const median = sorted[Math.floor(sorted.length / 2)];
+      return Number.isFinite(median) ? median : null;
     }
     case 'best_counting': {
       const valid = vals.filter(v => v > 0).sort((a, b) => a - b);
@@ -176,12 +180,13 @@ export class Top10History extends Statistic {
       const t = Date.now();
       const singleOnly = SINGLE_ONLY_EVENTS.has(eventId);
       const isAo5 = AO5_EVENTS.has(eventId);
+      const isMo3 = MO3_EVENTS.has(eventId);
       const isMbf = MBF_AVG_EVENTS.has(eventId);   // 333mbf:非官方 Mo3 平均(从 attempts 算)
-      const needsAttempts = isAo5 || isMbf;        // 需拉 attempts(Ao5 5 次衍生指标 / 333mbf Mo3)
-      const tag = isMbf ? 'single+mbfAvg' : (singleOnly ? 'single' : (isAo5 ? 'all' : 'single+avg'));
+      const needsAttempts = isAo5 || isMo3 || isMbf;
+      const tag = isMbf ? 'single+mbfAvg' : (singleOnly ? 'single' : (isAo5 ? 'all' : 'single+avg+median+worst'));
       if (VERBOSE) process.stdout.write(`  Top10 history ${eventId} (${tag})...`);
 
-      // NOTE: SQL — 需 attempts 的 event(Ao5 / 333mbf)加 LEFT JOIN result_attempts + GROUP_CONCAT
+      // NOTE: SQL — 需 attempts 的 event(Ao5 / Mo3 / 333mbf)加 LEFT JOIN result_attempts + GROUP_CONCAT
       // r.country_id = 参赛时代表国(对齐 wca_results_flat.person_country_id),供「按国家」bar race 分组
       const sql = needsAttempts
         ? `SELECT r.person_id, r.country_id AS rc, r.best, r.average, r.competition_id AS comp_id, c.start_date AS d,
@@ -220,8 +225,8 @@ export class Top10History extends Statistic {
           best: Number(r['best']) || 0,
           avg: Number(r['average']) || 0,
           comp: String(r['comp_id']),
-          // Ao5 须满 5 次(衍生指标按 5 算);333mbf(Mo3)保留 1-3 次原样,交 computeMbfMo3 判定
-          vals: vals ? (isMbf ? vals : (vals.length === 5 ? vals : null)) : null,
+          // Ao5 须满 5 次，Mo3 须满 3 次；333mbf 保留 1-3 次原样，交 computeMbfMo3 判定
+          vals: vals ? (isMbf ? vals : (vals.length === (isMo3 ? 3 : 5) ? vals : null)) : null,
         };
       });
       rawRows = null;
@@ -234,6 +239,7 @@ export class Top10History extends Statistic {
       const metricsToRun: MetricKey[] = ['single'];
       if (!singleOnly || isMbf) metricsToRun.push('average');  // 333mbf:非官方 Mo3 平均
       if (isAo5) metricsToRun.push(...ATTEMPT_METRICS);
+      if (isMo3) metricsToRun.push(...MO3_ATTEMPT_METRICS);
 
       const summary: string[] = [];
       for (const mk of metricsToRun) {
