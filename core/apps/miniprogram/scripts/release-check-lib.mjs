@@ -149,7 +149,6 @@ export const EXPECTED_APP_PAGES = [
   'pages/smart-cube/index',
   'pages/tools/index',
   'pages/account/index',
-  'pages/share/index',
   'pages/web/index',
 ];
 

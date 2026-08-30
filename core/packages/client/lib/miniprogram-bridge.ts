@@ -13,7 +13,6 @@ declare global {
 }
 
 const ENVIRONMENT_TIMEOUT_MS = 2_000;
-const NAVIGATION_TIMEOUT_MS = 4_000;
 
 export function isMiniProgramWebView(): boolean {
   if (typeof window === 'undefined') return false;
@@ -70,38 +69,6 @@ export async function confirmMiniProgramEnvironment(
     const timeout = window.setTimeout(() => finish(false), ENVIRONMENT_TIMEOUT_MS);
     try {
       getEnv.call(miniProgram, (result) => finish(result.miniprogram === true));
-    } catch {
-      finish(false);
-    }
-  });
-}
-
-export async function resolveVerifiedMiniProgramNavigationApi(): Promise<WeChatMiniProgramApi | null> {
-  if (!mayUseMiniProgramBridge()) return null;
-  const miniProgram = await loadMiniProgramNavigationApi();
-  if (!miniProgram) return null;
-  return (await confirmMiniProgramEnvironment(miniProgram)) ? miniProgram : null;
-}
-
-export function navigateToMiniProgramPage(
-  miniProgram: WeChatMiniProgramApi,
-  url: string,
-): Promise<boolean> {
-  return new Promise<boolean>((resolve) => {
-    let settled = false;
-    const finish = (succeeded: boolean): void => {
-      if (settled) return;
-      settled = true;
-      window.clearTimeout(timeout);
-      resolve(succeeded);
-    };
-    const timeout = window.setTimeout(() => finish(false), NAVIGATION_TIMEOUT_MS);
-    try {
-      miniProgram.navigateTo({
-        url,
-        fail: () => finish(false),
-        success: () => finish(true),
-      });
     } catch {
       finish(false);
     }

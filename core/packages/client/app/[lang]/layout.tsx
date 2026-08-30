@@ -2,7 +2,6 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import I18nProvider from '@/i18n/I18nProvider';
 import PageNoticeBar from '@/components/PageNoticeBar';
-import MiniProgramTimelineShare from '@/components/MiniProgramTimelineShare';
 import WeChatShareSync from '@/components/WeChatShareSync';
 
 const SUPPORTED = ['en', 'zh'] as const;
@@ -32,7 +31,6 @@ export default async function LangLayout({
         {children}
       </Suspense>
       <WeChatShareSync />
-      <MiniProgramTimelineShare />
     </I18nProvider>
   );
 }
