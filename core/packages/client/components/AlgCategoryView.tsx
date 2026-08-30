@@ -80,6 +80,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
+import { firstAlgorithmAverageStm } from '@/lib/alg-metrics';
 import BoolToggle from '@/components/BoolToggle';
 import { hasOhAlgsForHand, OH_HANDS, ohAlgsForCase, supportsOhHands, type OhHand } from '@/lib/alg_oh_hand';
 import {
@@ -833,6 +834,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     });
   }, [orderedCases, subgroupSlug, slugLevel]);
 
+  const averageFirstAlgorithmStm = useMemo(
+    () => isPuzzle(puzzleParam) ? firstAlgorithmAverageStm(puzzleParam, scopedCases) : null,
+    [puzzleParam, scopedCases],
+  );
+
   const availableMetrics = useMemo(() => availableOptimalMetrics(scopedCases), [scopedCases]);
   const resolvedOptimalMetric = availableMetrics.includes(optimalMetric)
     ? optimalMetric
@@ -1042,9 +1048,17 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         {(collection || meta.short) && (
           <p className="alg-cat-intro">{collection ? tr(collection.intro) : tr(meta.intro ?? meta)}</p>
         )}
-        {data && !showSubgroupPicker && (
-          <span className="alg-cat-count">{visibleCases.length} {tr({ zh: '个', en: 'cases'
-        })}</span>
+        {data && (!showSubgroupPicker || averageFirstAlgorithmStm != null) && (
+          <div className="alg-cat-metrics">
+            {!showSubgroupPicker && (
+              <span className="alg-cat-metric">
+                {visibleCases.length}{tr({ zh: '个', en: ' cases' })}
+              </span>
+            )}
+            {averageFirstAlgorithmStm != null && (
+              <span className="alg-cat-metric">{averageFirstAlgorithmStm.toFixed(1)} STM</span>
+            )}
+          </div>
         )}
         {data && canShowAllCases && (
           <BoolToggle

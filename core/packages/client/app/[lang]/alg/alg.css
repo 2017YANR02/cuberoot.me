@@ -116,6 +116,20 @@ html[data-theme=dark] .alg-root {
   color: var(--muted-foreground);
   font-size: 13px;
 }
+.alg-cat-metrics {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.alg-cat-metric {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
 .alg-cat-intro {
   margin: 0;
   font-size: 13px;
