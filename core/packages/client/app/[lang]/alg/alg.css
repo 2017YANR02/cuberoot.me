@@ -1246,8 +1246,6 @@ a.alg-community-author:hover {
   .alg-subgroup-grid .alg-card-foot { gap: 2px 4px; }
   .alg-bento .alg-card-title,
   .alg-subgroup-grid .alg-card-title { font-size: 12px; letter-spacing: 0; }
-  .alg-bento .alg-card-count,
-  .alg-subgroup-grid .alg-card-count { font-size: 10px; }
   .alg-subgroup-grid .alg-card-sub { font-size: 10px; }
   .alg-subgroup-grid .alg-card-chevron { top: 4px; left: 4px; }
 }
