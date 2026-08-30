@@ -50,6 +50,7 @@
       "./forum": "runtime-neutral",
       "./drive": "runtime-neutral",
       "./platform": "runtime-neutral",
+      "./site-directory": "runtime-neutral",
       "./cube-unfolded-svg": "runtime-neutral",
       "./nnn-sim": "runtime-neutral",
       "./tz": "runtime-neutral",
@@ -198,6 +199,7 @@
     "./forum": "./src/forum.ts",
     "./drive": "./src/drive.ts",
     "./platform": "./src/platform.ts",
+    "./site-directory": "./src/site_directory.ts",
     "./cube-unfolded-svg": {
       "node": "./dist/cube_unfolded_svg.js",
       "default": "./src/cube_unfolded_svg.ts"

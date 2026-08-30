@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
+import { SITE_DIRECTORY_GROUPS } from '@cuberoot/shared/site-directory';
 
 import { resolveWorkspacePath } from '../../../scripts/resolve-workspace-path.mjs';
 
@@ -9,29 +10,32 @@ import {
   WEB_ROUTES,
   WEB_ROUTE_SHARE_IMAGE,
   createWebSessionHandoffUrl,
+  listWebToolGroups,
   listWebTools,
   resolveWebRoute,
   resolveWebRouteShare,
   resolveAccountPageShare,
   resolveToolsPageShare,
+  resolveWebTool,
 } from '../src/lib/web-routes';
 
 const TICKET = 'A'.repeat(43);
 const coreRoot = resolve(import.meta.dirname, '..', '..', '..');
 const websiteRoot = resolve(coreRoot, resolveWorkspacePath('@cuberoot/client'));
 const websiteConfigSource = readFileSync(join(websiteRoot, 'next.config.ts'), 'utf8');
+const trackingSource = readFileSync(join(coreRoot, 'docs', 'MINIPROGRAM.md'), 'utf8');
 
 describe('mini program web routes', () => {
   it('resolves the website timer route', () => {
     expect(resolveWebRoute('timer')).toEqual({
-      title: '计时器',
+      title: '计时',
       path: '/zh/timer',
       sessionHandoff: true,
       url: 'https://cuberoot.me/zh/timer',
     });
   });
 
-  it('keeps account and privacy destinations in the registry without showing them as discovery tools', () => {
+  it('keeps account and privacy destinations outside the homepage directory', () => {
     expect(resolveWebRoute('account')).toEqual({
       title: '账号管理',
       path: '/zh/account',
@@ -51,7 +55,7 @@ describe('mini program web routes', () => {
 
   it('resolves only allowlisted website destinations', () => {
     expect(resolveWebRoute('alg')).toEqual({
-      title: '公式库',
+      title: '公式',
       path: '/zh/alg',
       sessionHandoff: true,
       url: 'https://cuberoot.me/zh/alg',
@@ -59,6 +63,15 @@ describe('mini program web routes', () => {
     expect(resolveWebRoute('https://example.com')).toBeNull();
     expect(resolveWebRoute('__proto__')).toBeNull();
     expect(resolveWebRoute(null)).toBeNull();
+  });
+
+  it('opens the blog through the canonical main-domain redirect without a session ticket', () => {
+    expect(resolveWebRoute('blog')).toEqual({
+      title: '博客',
+      path: '/zh/blog',
+      sessionHandoff: false,
+      url: 'https://cuberoot.me/zh/blog',
+    });
   });
 
   it('keeps cross-platform logout in the allowlist without creating another login handoff', () => {
@@ -81,14 +94,40 @@ describe('mini program web routes', () => {
     expect(() => createWebSessionHandoffUrl('/zh/timer', 'short')).toThrow();
   });
 
-  it('derives the discovery list from the route registry', () => {
-    expect(listWebTools()).toEqual([
-      { key: 'alg', title: '公式库', description: 'OLL、PLL、ZBLL 等公式查询与训练' },
-      { key: 'competitions', title: 'WCA 比赛', description: '查比赛、赛程与成绩' },
-      { key: 'wiki', title: '魔方百科', description: '教程、术语与方法资料' },
-      { key: 'courses', title: '课程', description: '系统学习与试学内容' },
+  it('derives all 53 homepage destinations from the shared ordered catalog', () => {
+    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 4, 6, 9, 16, 10, 3]);
+    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 4, 6, 9, 16, 10, 3]);
+    expect(listWebTools()).toHaveLength(53);
+    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 53);
+    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(51);
+    expect(resolveWebTool('algdb')).toMatchObject({ id: 'algdb', key: 'alg', action: 'web' });
+    expect(resolveWebTool('timer')).toMatchObject({ id: 'timer', key: 'timer', action: 'native' });
+    expect(resolveWebTool('alg')).toMatchObject({ id: 'alg', key: null, action: 'disabled' });
+    expect(resolveWebTool('github')).toMatchObject({ id: 'github', key: null, action: 'copy' });
+    expect(resolveWebTool('__proto__')).toBeNull();
+  });
+
+  it('keeps every shared destination visible in the audited tracking checklist', () => {
+    for (const tool of listWebTools()) {
+      expect(trackingSource, tool.id).toContain(`| \`${tool.id}\` |`);
+    }
+    expect(trackingSource).toContain('共 53 项：51 项有小程序路由键');
+  });
+
+  it('searches Chinese, English, ids and paths while preserving groups', () => {
+    expect(listWebToolGroups('纪录').map((group) => group.tools.map((tool) => tool.id))).toEqual([
+      ['wca-records'],
+      ['wb'],
     ]);
-    expect(Object.values(WEB_ROUTES).filter((route) => 'showInTools' in route)).toHaveLength(4);
+    expect(listWebToolGroups('Ruimin').map((group) => group.tools.map((tool) => tool.id))).toEqual([
+      ['creator'],
+      ['github'],
+    ]);
+    expect(listWebToolGroups('/teachers').flatMap((group) => group.tools.map((tool) => tool.id))).toEqual([
+      'teachers',
+      'live-scripts',
+    ]);
+    expect(listWebToolGroups('not-a-cuberoot-entry')).toEqual([]);
   });
 
   it('derives share targets from public entries without exposing account routes', () => {
@@ -104,20 +143,17 @@ describe('mini program web routes', () => {
     });
     expect(resolveWebRouteShare('timer')).toEqual({
       imageUrl: WEB_ROUTE_SHARE_IMAGE,
-      title: 'CubeRoot 魔方根：计时器',
+      title: 'CubeRoot 魔方根：计时',
       path: '/pages/timer/index',
     });
     expect(resolveWebRouteShare('alg')).toEqual({
       imageUrl: WEB_ROUTE_SHARE_IMAGE,
-      title: 'CubeRoot 魔方根：公式库',
+      title: 'CubeRoot 魔方根：公式',
       path: '/pages/web/index?key=alg',
     });
-    expect(listWebTools().map(({ key }) => resolveWebRouteShare(key)?.path)).toEqual([
-      '/pages/web/index?key=alg',
-      '/pages/web/index?key=competitions',
-      '/pages/web/index?key=wiki',
-      '/pages/web/index?key=courses',
-    ]);
+    const routeBackedTools = listWebTools().filter((tool) => tool.key !== null);
+    expect(routeBackedTools).toHaveLength(51);
+    expect(routeBackedTools.every((tool) => resolveWebRouteShare(tool.key) !== null)).toBe(true);
     expect(resolveWebRouteShare('account')).toBeNull();
     expect(resolveWebRouteShare('privacy')).toBeNull();
     expect(resolveWebRouteShare('logout')).toBeNull();
