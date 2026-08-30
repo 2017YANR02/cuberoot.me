@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { classifySq1EpParity, partitionSq1EpCases } from '@/lib/sq1-ep-parity';
+import {
+  classifySq1EpParity,
+  partitionSq1EpCases,
+  sq1EpNumericCaseName,
+  sq1EpNumericLayerName,
+} from '@/lib/sq1-ep-parity';
 
 const EVEN = ['Solved', 'Ua', 'Ub', 'Z', 'H'];
 const ODD = ['Adj', 'Opp', 'O+', 'O-', 'W'];
@@ -47,5 +52,14 @@ describe('SQ1 EP parity classification', () => {
       parity: [source[0], source[4]],
       unclassified: [source[2]],
     });
+  });
+
+  it('uses a standalone half-width plus sign for the numeric H name', () => {
+    expect(sq1EpNumericLayerName('H')).toBe('+');
+    expect(sq1EpNumericCaseName('Solved / Solved')).toBe('0.0');
+    expect(sq1EpNumericCaseName('Ua / H')).toBe('3+.+');
+    expect(sq1EpNumericCaseName('H & Opp')).toBe('+.1');
+    expect(sq1EpNumericCaseName('O+ & Z')).toBe('4+.//');
+    expect(sq1EpNumericCaseName('Mystery / H')).toBeNull();
   });
 });
