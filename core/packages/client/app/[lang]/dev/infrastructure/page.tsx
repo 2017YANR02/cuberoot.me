@@ -7,6 +7,18 @@ import './infrastructure.css';
 
 type Lang = 'zh' | 'en';
 
+type LocalizedText = { zh: string; en: string };
+
+type EquipmentGroup = {
+  category: LocalizedText;
+  items: readonly {
+    name: LocalizedText;
+    detail: LocalizedText;
+    amount: LocalizedText;
+    href?: string;
+  }[];
+};
+
 const LAYERS = [
   {
     index: '01',
@@ -100,6 +112,120 @@ const EXPENSES = [
       zh: '维持网站应用的微信扫码登录与电脑端直发微信能力',
       en: 'Maintains WeChat QR sign-in and direct desktop sharing for the Website App',
     },
+  },
+  {
+    name: { zh: '剪映', en: 'CapCut Chinese version' },
+    amount: { zh: '¥208/年', en: 'CN¥208/year' },
+    purpose: { zh: '视频剪辑软件', en: 'Video editing software' },
+  },
+] as const;
+
+const EQUIPMENT_GROUPS: readonly EquipmentGroup[] = [
+  {
+    category: { zh: '影像设备', en: 'Imaging' },
+    items: [
+      {
+        name: { zh: 'Canon EOS R5 Mark II', en: 'Canon EOS R5 Mark II' },
+        detail: { zh: '当前相机机身', en: 'Current camera body' },
+        amount: { zh: '¥24,000', en: 'CN¥24,000' },
+      },
+      {
+        name: { zh: 'Canon EOS R6', en: 'Canon EOS R6' },
+        detail: { zh: '曾用相机机身，由 Yihong 的妈妈提供', en: "Former camera body, provided by Yihong's mom" },
+        amount: { zh: '¥14,000', en: 'CN¥14,000' },
+      },
+      {
+        name: { zh: 'Canon EF 100–400mm f/4.5–5.6L IS II USM', en: 'Canon EF 100–400mm f/4.5–5.6L IS II USM' },
+        detail: { zh: '长焦镜头', en: 'Telephoto lens' },
+        amount: { zh: '约 ¥16,000', en: 'Approx. CN¥16,000' },
+      },
+      {
+        name: { zh: '丛林迷彩炮衣', en: 'Jungle-camouflage lens cover' },
+        detail: { zh: '镜头保护与伪装', en: 'Lens protection and camouflage' },
+        amount: { zh: '¥300', en: 'CN¥300' },
+      },
+      {
+        name: { zh: 'Canon EF–EOS R 卡口适配器', en: 'Canon EF–EOS R mount adapter' },
+        detail: { zh: 'EF 镜头转 RF 卡口', en: 'Adapts EF lenses to the RF mount' },
+        amount: { zh: '¥600', en: 'CN¥600' },
+      },
+      {
+        name: { zh: 'Canon BR-E1 无线遥控快门', en: 'Canon BR-E1 wireless remote control' },
+        detail: { zh: '无线相机快门控制', en: 'Wireless camera shutter control' },
+        amount: { zh: '¥278', en: 'CN¥278' },
+      },
+      {
+        name: { zh: 'SmallRig 斯莫格 CT210', en: 'SmallRig CT210' },
+        detail: { zh: '三脚架', en: 'Tripod' },
+        amount: { zh: '¥677', en: 'CN¥677' },
+      },
+    ],
+  },
+  {
+    category: { zh: '收音与监听', en: 'Audio and monitoring' },
+    items: [
+      {
+        name: { zh: 'DJI Mic 3', en: 'DJI Mic 3' },
+        detail: { zh: '两收一发', en: 'Two receivers and one transmitter' },
+        amount: { zh: '¥2,299', en: 'CN¥2,299' },
+      },
+      {
+        name: { zh: 'DJI Mic Mini', en: 'DJI Mic Mini' },
+        detail: { zh: '两发一收', en: 'Two transmitters and one receiver' },
+        amount: { zh: '¥1,096.5', en: 'CN¥1,096.5' },
+      },
+      {
+        name: { zh: 'DJI Mic 2', en: 'DJI Mic 2' },
+        detail: { zh: '一收一发', en: 'One receiver and one transmitter' },
+        amount: { zh: '¥1,499', en: 'CN¥1,499' },
+      },
+      {
+        name: { zh: 'Newmine 无线监听耳机', en: 'Newmine wireless monitoring headphones' },
+        detail: { zh: '无线音频监听', en: 'Wireless audio monitoring' },
+        amount: { zh: '¥399', en: 'CN¥399' },
+      },
+    ],
+  },
+  {
+    category: { zh: '手机与电脑', en: 'Phones and computers' },
+    items: [
+      {
+        name: { zh: 'iPhone 15 Pro Max 512 GB', en: 'iPhone 15 Pro Max 512 GB' },
+        detail: { zh: '手机', en: 'Phone' },
+        amount: { zh: '未标价', en: 'Price not listed' },
+      },
+      {
+        name: { zh: 'iPhone 12 Pro Max 512 GB', en: 'iPhone 12 Pro Max 512 GB' },
+        detail: { zh: '手机', en: 'Phone' },
+        amount: { zh: '未标价', en: 'Price not listed' },
+      },
+      {
+        name: { zh: 'LEAPLIGHT 力普莱多功能手机夹', en: 'LEAPLIGHT multifunction phone holder' },
+        detail: { zh: '双冷靴口', en: 'Dual cold-shoe mounts' },
+        amount: { zh: '¥57.5', en: 'CN¥57.5' },
+      },
+      {
+        name: { zh: 'Alienware M17 R4', en: 'Alienware M17 R4' },
+        detail: { zh: 'Windows 11 笔记本电脑', en: 'Windows 11 laptop' },
+        amount: { zh: '¥25,000', en: 'CN¥25,000' },
+      },
+    ],
+  },
+  {
+    category: { zh: '播放与剪辑软件', en: 'Playback and editing software' },
+    items: [
+      {
+        name: { zh: 'K-Lite Codec Pack', en: 'K-Lite Codec Pack' },
+        detail: { zh: '媒体播放解码包', en: 'Media playback codec bundle' },
+        amount: { zh: '未标价', en: 'Price not listed' },
+        href: 'https://codecguide.com/download_kl.htm',
+      },
+      {
+        name: { zh: '剪映', en: 'CapCut Chinese version' },
+        detail: { zh: '视频剪辑软件，费用已计入固定支出', en: 'Video editing software; cost included in recurring expenses' },
+        amount: { zh: '¥208/年', en: 'CN¥208/year' },
+      },
+    ],
   },
 ] as const;
 
@@ -246,7 +372,7 @@ export default function InfrastructurePage() {
           <div className="infra-expense-total">
             <span>{localize(lang, { zh: '年度固定支出', en: 'Annual recurring total' })}</span>
             <strong>
-              {localize(lang, { zh: '约 ¥22,498/年', en: 'Approx. US$3,316/year' })}
+              {localize(lang, { zh: '约 ¥22,706/年', en: 'Approx. US$3,347/year' })}
             </strong>
           </div>
           <p className="infra-expense-note">
@@ -257,9 +383,50 @@ export default function InfrastructurePage() {
           </p>
         </section>
 
-        <section className="infra-section" aria-labelledby="infra-path-title">
+        <section className="infra-section" aria-labelledby="infra-equipment-title">
           <div className="infra-section-heading">
             <span>03</span>
+            <div>
+              <h2 id="infra-equipment-title">{localize(lang, { zh: '创作设备与软件', en: 'Production equipment and software' })}</h2>
+              <p>
+                {localize(lang, {
+                  zh: 'CubeRoot 用于拍摄、收音、剪辑与日常开发的设备。价格按现有记录展示；“约”表示近似金额，未标价项目不据此推算。',
+                  en: 'Equipment used for CubeRoot filming, audio capture, editing, and day-to-day development. Prices follow the available records; “approx.” marks estimates, and missing prices are not inferred.',
+                })}
+              </p>
+            </div>
+          </div>
+          <div className="infra-equipment-groups">
+            {EQUIPMENT_GROUPS.map((group) => (
+              <section className="infra-equipment-group" key={group.category.en} aria-label={localize(lang, group.category)}>
+                <h3>{localize(lang, group.category)}</h3>
+                <dl className="infra-expenses infra-equipment-list">
+                  {group.items.map((item) => (
+                    <div key={item.name.en}>
+                      <dt>
+                        <span>
+                          {item.href ? (
+                            <a href={item.href} target="_blank" rel="noreferrer">
+                              {localize(lang, item.name)}
+                            </a>
+                          ) : (
+                            localize(lang, item.name)
+                          )}
+                        </span>
+                        <small>{localize(lang, item.detail)}</small>
+                      </dt>
+                      <dd>{localize(lang, item.amount)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            ))}
+          </div>
+        </section>
+
+        <section className="infra-section" aria-labelledby="infra-path-title">
+          <div className="infra-section-heading">
+            <span>04</span>
             <div>
               <h2 id="infra-path-title">{localize(lang, { zh: '一次请求经过哪里', en: 'The request path' })}</h2>
               <p>
@@ -288,7 +455,7 @@ export default function InfrastructurePage() {
 
         <section className="infra-section" aria-labelledby="infra-ops-title">
           <div className="infra-section-heading">
-            <span>04</span>
+            <span>05</span>
             <div>
               <h2 id="infra-ops-title">{localize(lang, { zh: '怎样保持可恢复', en: 'How recovery works' })}</h2>
               <p>
@@ -317,7 +484,7 @@ export default function InfrastructurePage() {
 
         <section className="infra-section infra-disclosure" aria-labelledby="infra-disclosure-title">
           <div className="infra-section-heading">
-            <span>05</span>
+            <span>06</span>
             <div>
               <h2 id="infra-disclosure-title">{localize(lang, { zh: '公开边界', en: 'Disclosure boundary' })}</h2>
               <p>

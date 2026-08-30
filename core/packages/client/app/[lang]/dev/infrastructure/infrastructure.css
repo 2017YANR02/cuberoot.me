@@ -219,6 +219,28 @@
   line-height: 1.65;
 }
 
+.infra-equipment-groups {
+  display: grid;
+  gap: 44px;
+  max-width: 880px;
+  margin-left: 66px;
+}
+
+.infra-equipment-group h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 680;
+}
+
+.infra-equipment-list {
+  margin-left: 0;
+}
+
+.infra-equipment-list a {
+  color: inherit;
+  text-underline-offset: 4px;
+}
+
 .infra-flow {
   position: relative;
   max-width: 850px;
@@ -353,6 +375,7 @@
   .infra-expenses,
   .infra-expense-total,
   .infra-expense-note,
+  .infra-equipment-groups,
   .infra-flow,
   .infra-operations,
   .infra-disclosure ul,
