@@ -1917,15 +1917,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/tests/cubingapp-roux-pyraminx-port.test.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/tests/fto_eif_image.test.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
