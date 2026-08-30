@@ -490,14 +490,26 @@ export function formatSolveResult(s: Solve, precision: 0 | 1 | 2 | 3 = 2): strin
   return formatEventMs(s.event, effectiveMs(s), precision);
 }
 
+export interface NumericStats {
+  mean: number;
+  sd: number;
+  cv: number | null;
+}
+
+/** Population statistics for finite numeric values — null if < 2 valid. */
+export function summarizeNumericValues(values: number[]): NumericStats | null {
+  const valid = values.filter(value => Number.isFinite(value));
+  if (valid.length < 2) return null;
+  const mean = valid.reduce((a, b) => a + b, 0) / valid.length;
+  let sq = 0;
+  for (const value of valid) sq += (value - mean) * (value - mean);
+  const sd = Math.sqrt(sq / valid.length);
+  return { mean, sd, cv: mean > 0 ? (sd / mean) * 100 : null };
+}
+
 /** Standard deviation (ms) of an array of effective times — null if < 2 valid. */
 function sdOfTimes(times: number[]): number | null {
-  const valid = times.filter(t => Number.isFinite(t));
-  if (valid.length < 2) return null;
-  const m = valid.reduce((a, b) => a + b, 0) / valid.length;
-  let sq = 0;
-  for (const t of valid) sq += (t - m) * (t - m);
-  return Math.sqrt(sq / valid.length);
+  return summarizeNumericValues(times)?.sd ?? null;
 }
 
 /** Standard deviation of all *valid* (non-DNF) effective times. */
@@ -527,12 +539,7 @@ export function sdOfBestAoN(solves: Solve[], n: number): number | null {
 
 /** Coefficient of variation (σ / μ) as a percentage (0..100+). */
 export function coefficientOfVariation(solves: Solve[]): number | null {
-  const valid = solves.map(effectiveMs).filter(t => Number.isFinite(t));
-  if (valid.length < 2) return null;
-  const m = valid.reduce((a, b) => a + b, 0) / valid.length;
-  const sd = stdDev(solves);
-  if (m <= 0 || sd === null) return null;
-  return (sd / m) * 100;
+  return summarizeNumericValues(solves.map(effectiveMs))?.cv ?? null;
 }
 
 /** Format a percentage with one decimal place, "—" for null. */
