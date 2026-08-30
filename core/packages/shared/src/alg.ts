@@ -145,6 +145,65 @@ export interface AlgFile {
   cases: AlgCase[];
 }
 
+/** CubingApp OH CMLL names mapped onto the canonical CMLL case names. */
+const OH_CMLL_TARGETS: Readonly<Record<string, string>> = {
+  'Pi Backslash': 'Pi Down Slash',
+  'Pi Forward Slash': 'Pi Up Slash',
+  'U Forward Slash': 'U Up Slash',
+  'U Backslash': 'U Down Slash',
+  'U Front Row': 'U Bottom Row',
+  'U Back Row': 'U Upper Row',
+  'T Front Row': 'T Bottom Row',
+  'T Back Row': 'T Top Row',
+  'Sune Forward Slash': 'Sune Up Slash',
+  'Sune Backslash': 'Sune Down Slash',
+  'Antisune Right Bar': 'Anti Sune Right Bar',
+  'Antisune Columns': 'Anti Sune Columns',
+  'Antisune Backslash': 'Anti Sune Down Slash',
+  'Antisune X': 'Anti Sune X',
+  'Antisune Forward Slash': 'Anti Sune Up Slash',
+  'Antisune Left Bar': 'Anti Sune Left Bar',
+};
+
+const algKey = (entry: AlgEntry) => entry.alg.trim().replace(/\s+/g, ' ').replace(/2'/g, '2');
+
+/** Merge source-only OH CMLL formulas into their canonical CMLL cases. */
+export function mergeOhCmll(base: AlgFile, oneHanded: AlgFile): AlgFile {
+  if (base.puzzle !== '3x3' || base.set !== 'cmll') return base;
+  if (oneHanded.puzzle !== '3x3' || oneHanded.set !== 'oh-cmll') return base;
+
+  const cases = base.cases.map(item => ({ ...item, algs: item.algs.map(entries => [...entries]) }));
+  const byName = new Map(cases.map(item => [item.name, item]));
+
+  for (const sourceCase of oneHanded.cases) {
+    const canonicalName = OH_CMLL_TARGETS[sourceCase.name] ?? sourceCase.name;
+    const target = byName.get(canonicalName);
+    if (!target) throw new Error(`OH CMLL source case has no canonical target: ${sourceCase.name}`);
+    const targetAlgs = target.algs[0] ?? (target.algs[0] = []);
+    const targetIndexByAlg = new Map(targetAlgs.map((entry, index) => [algKey(entry), index]));
+    for (const entry of sourceCase.algs.flat()) {
+      const key = algKey(entry);
+      const existingIndex = targetIndexByAlg.get(key);
+      if (existingIndex !== undefined) {
+        const existing = targetAlgs[existingIndex];
+        targetAlgs[existingIndex] = {
+          ...existing,
+          tags: [...new Set([...(existing.tags ?? []), 'oh' as const])],
+        };
+        continue;
+      }
+      targetIndexByAlg.set(key, targetAlgs.length);
+      targetAlgs.push({
+        ...entry,
+        setup: entry.setup ?? sourceCase.setup,
+        tags: [...new Set([...(entry.tags ?? []), 'oh' as const])],
+      });
+    }
+  }
+
+  return { ...base, cases };
+}
+
 /**
  * 三阶公式的展示边界兜底。数据库与 API 写入会做同一规范化，这里再处理一次，
  * 避免旧缓存或外部导入数据把 `Rw` / `Fw` 带回任一公式库界面。
@@ -467,11 +526,18 @@ export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: b
   const queryString = query.toString();
   const url = `${base}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}`
     + (queryString ? `?${queryString}` : '');
+  const oneHandedCmll = puzzle === '3x3' && set === 'cmll'
+    ? loadAlg('3x3', 'oh-cmll', opts).catch(() => null)
+    : null;
   const res = await fetch(url, opts?.fresh ? { cache: 'no-cache' } : undefined);
   if (!res.ok) {
     throw new Error(`Failed to load alg ${puzzle}/${set}: HTTP ${res.status}`);
   }
-  const file = canonicalize3x3AlgFile((await res.json()) as AlgFile);
+  let file = canonicalize3x3AlgFile((await res.json()) as AlgFile);
+  if (oneHandedCmll) {
+    const source = await oneHandedCmll;
+    if (source) file = mergeOhCmll(file, source);
+  }
   // Skewb algs are full solves with no AUF, so a case's scramble is exactly the
   // inverse of its (first) alg. The scraped `setup` strings are buggy WCA-ified
   // inverses (some even contain cancellations like `R' R`), which then feed the
