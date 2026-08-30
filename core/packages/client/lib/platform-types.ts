@@ -132,6 +132,9 @@ export type PlatformActionId =
   | 'admin-payout-generate'
   | 'admin-payout-approve'
   | 'redeem-invite'
+  | 'admin-invite-batch'
+  | 'admin-invite-order'
+  | 'admin-invite-revoke'
   | 'qr-duplicate'
   | 'qr-card-job'
   | 'qr-toggle'
@@ -189,6 +192,9 @@ export interface PlatformActionResult {
   expiresAt?: string;
   checkoutUrl?: string;
   qrCodeDataUrl?: string;
+  batchReference?: string;
+  count?: number;
+  codes?: Array<{ id: string; code: string }>;
 }
 
 export interface PlatformPaymentAttemptResult extends PlatformActionResult {

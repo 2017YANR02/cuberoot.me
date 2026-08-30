@@ -141,7 +141,8 @@ describe('Platform route and security contract', () => {
     for (const path of [
       '/learning/lessons/:lessonId/quiz', '/lessons/:lessonId/media',
       '/certificates/:code', '/certificates/:code/image', '/me/privacy/consents',
-      '/analytics', '/admin/retention-jobs',
+      '/analytics', '/admin/retention-jobs', '/admin/invites/batch',
+      '/admin/invites/:id/order-reference', '/admin/invites/:id/revoke',
     ]) expect(learning.has(path), path).toBe(true);
     for (const path of [
       '/qr/:code', '/admin/qr', '/admin/qr/:id/duplicate', '/admin/qr/:id/disabled',
@@ -160,6 +161,16 @@ describe('Platform route and security contract', () => {
     const qrArchive = routeBlock(qrSource, 'platformQrRoutes', 'delete', '/admin/qr/:id');
     expect(qrArchive).toContain('requirePlatformAdmin(c)');
     expect(qrArchive).toContain('withIdempotency(c, actor');
+    const inviteBatch = routeBlock(learningSource, 'platformLearningRoutes', 'post', '/admin/invites/batch');
+    expect(inviteBatch).toContain('requirePlatformAdmin(c)');
+    expect(inviteBatch).toContain('withIdempotency(c, actor');
+    expect(inviteBatch).toContain("'physical_bundle'");
+    expect(inviteBatch).toContain('max_redemptions');
+    const inviteRevoke = routeBlock(learningSource, 'platformLearningRoutes', 'post', '/admin/invites/:id/revoke');
+    expect(inviteRevoke).toContain('requirePlatformAdmin(c)');
+    expect(inviteRevoke).toContain('withIdempotency(c, actor');
+    expect(inviteRevoke).toContain('reversal_of_ledger_id');
+    expect(inviteRevoke).toContain("status = 'revoked'");
   });
 
   it('preserves quiz privacy, media entitlement, analytics consent, and certificate image safety', () => {
