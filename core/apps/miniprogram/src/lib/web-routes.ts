@@ -239,7 +239,7 @@ export function resolveWebRoute(key: unknown): {
     title: route.title,
     path: route.path,
     sessionHandoff: route.sessionHandoff !== false,
-    url: `${SITE_ORIGIN}${route.path}`,
+    url: withWechatRedirect(`${SITE_ORIGIN}${route.path}`),
   };
   if (route.loadFailureMessage) {
     return { ...resolved, loadFailureMessage: route.loadFailureMessage };
@@ -251,6 +251,19 @@ export function createWebSessionHandoffUrl(path: string, ticket: string): string
   if (!isSafeWebSessionDestination(path) || !isWebSessionTicket(ticket)) {
     throw new Error('invalid Mini Program web session handoff');
   }
-  const fragment = `ticket=${ticket}&next=${encodeURIComponent(path)}`;
+  const fragment = `wechat_redirect&ticket=${ticket}&next=${encodeURIComponent(path)}`;
   return `${SITE_ORIGIN}/auth/miniprogram#${fragment}`;
+}
+
+function withWechatRedirect(url: string): string {
+  const fragmentIndex = url.indexOf('#');
+  if (fragmentIndex < 0) return `${url}#wechat_redirect`;
+
+  const base = url.slice(0, fragmentIndex);
+  const fragment = url.slice(fragmentIndex + 1);
+  const hasRedirectMarker = fragment.split('&').some(
+    (part) => part === 'wechat_redirect' || part.startsWith('wechat_redirect='),
+  );
+  if (hasRedirectMarker) return url;
+  return `${base}#wechat_redirect${fragment ? `&${fragment}` : ''}`;
 }

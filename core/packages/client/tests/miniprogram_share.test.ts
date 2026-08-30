@@ -44,6 +44,7 @@ describe('Mini Program timeline share entry', () => {
 
     expect(layout).toContain('<MiniProgramTimelineShare />');
     expect(component).toContain('resolveVerifiedMiniProgramNavigationApi');
+    expect(component).toContain('navigateToMiniProgramPage');
     expect(component).toContain('/pages/share/index?key=');
     expect(component).toContain('type="button"');
     expect(styles).toContain('right: max(16px');

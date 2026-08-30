@@ -45,7 +45,7 @@ describe('mini program tools page', () => {
       errorTitle: '',
       loadingTitle: '正在打开魔方工具',
       routeKey: 'home',
-      src: 'https://cuberoot.me/zh',
+      src: 'https://cuberoot.me/zh#wechat_redirect',
     });
     expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '魔方工具' });
     expect(showShareMenu).toHaveBeenCalledWith({
