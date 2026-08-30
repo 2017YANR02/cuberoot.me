@@ -1649,14 +1649,31 @@ CREATE TABLE platform_invite_codes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code_hash BYTEA NOT NULL UNIQUE CHECK (octet_length(code_hash) = 32),
   label VARCHAR(160) NOT NULL DEFAULT '',
-  status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'expired', 'archived')),
+  status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'expired', 'archived', 'revoked')),
+  distribution_type VARCHAR(24) NOT NULL DEFAULT 'invitation' CHECK (distribution_type IN ('invitation', 'physical_bundle')),
+  batch_reference VARCHAR(160) CHECK (batch_reference IS NULL OR (batch_reference = BTRIM(batch_reference) AND batch_reference <> '')),
+  external_order_reference VARCHAR(240) CHECK (external_order_reference IS NULL OR (external_order_reference = BTRIM(external_order_reference) AND external_order_reference <> '')),
   max_redemptions INTEGER CHECK (max_redemptions BETWEEN 1 AND 1000000000),
   expires_at TIMESTAMPTZ,
   benefit_snapshot JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(benefit_snapshot) = 'object'),
   created_by_user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+  revoked_at TIMESTAMPTZ,
+  revoked_reason TEXT NOT NULL DEFAULT '',
+  revoked_by_user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
+  revoked_by_actor_key VARCHAR(160)
+    CHECK (revoked_by_actor_key IS NULL OR (revoked_by_actor_key = BTRIM(revoked_by_actor_key) AND revoked_by_actor_key <> '')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (distribution_type <> 'physical_bundle' OR max_redemptions = 1),
+  CHECK (
+    (status = 'revoked' AND revoked_at IS NOT NULL AND BTRIM(revoked_reason) <> '' AND revoked_by_actor_key IS NOT NULL)
+    OR (status <> 'revoked' AND revoked_at IS NULL AND revoked_reason = '' AND revoked_by_user_id IS NULL AND revoked_by_actor_key IS NULL)
+  )
 );
+CREATE INDEX idx_platform_invite_codes_distribution_batch
+  ON platform_invite_codes(distribution_type, batch_reference, created_at DESC, id);
+CREATE INDEX idx_platform_invite_codes_external_order_reference
+  ON platform_invite_codes(external_order_reference) WHERE external_order_reference IS NOT NULL;
 CREATE TRIGGER platform_invite_codes_set_updated_at BEFORE UPDATE ON platform_invite_codes
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
@@ -1665,6 +1682,7 @@ CREATE TABLE platform_invite_redemptions (
   invite_code_id UUID NOT NULL REFERENCES platform_invite_codes(id) ON DELETE RESTRICT,
   user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
   entitlement_id UUID REFERENCES platform_course_entitlements(id) ON DELETE RESTRICT,
+  entitlement_grant_ledger_id UUID UNIQUE REFERENCES platform_entitlement_ledger(id) ON DELETE RESTRICT,
   membership_id UUID REFERENCES platform_memberships(id) ON DELETE RESTRICT,
   redeemed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (invite_code_id, user_id),

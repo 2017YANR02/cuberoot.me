@@ -58,6 +58,8 @@ Platform 账号注销增量 `0168_platform_account_deletion.sql` 由 `app_users`
 
 WCA 好友条目增量 `0178_wca_friend_contacts.sql` 允许账号把尚未注册 CubeRoot 的 WCA 选手保存到自己的好友列表；该条目不会伪造双向好友或已发送申请，账号删除时级联清理。
 
+Platform 实体捆绑兑换码增量 `0183_platform_physical_bundle_codes.sql` 在既有邀请兑换表上增加实体随包批次、外部订单号和单码单兑约束，并记录授予课程权益的账本行；售后撤销通过精确反转该账本行收回对应权益，不影响同账号的其他独立授予。
+
 ## 已应用 migration 不能改
 
 `apply_migrations.sh` 会把每个文件的 SHA-256 写入 ledger。已应用文件的摘要发生变化时会终止执行。修正已上线结构只能新增 migration；需要恢复数据时使用已验证的备份。

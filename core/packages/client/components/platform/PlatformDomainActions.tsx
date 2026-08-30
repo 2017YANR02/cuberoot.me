@@ -7,7 +7,7 @@ import { DateInput } from '@/components/DateInput';
 import { useT } from '@/hooks/useT';
 import { apiUrl } from '@/lib/api-base';
 import { useAuthUser } from '@/lib/auth-store';
-import { loadPlatformManagedQuizzes, loadPlatformMembershipPlans, loadPlatformMemberships, loadPlatformShippingAddresses, PLATFORM_ACTION_LABELS } from '@/lib/platform-gateway';
+import { loadPlatformManagedQuizzes, loadPlatformMembershipPlans, loadPlatformMemberships, loadPlatformResource, loadPlatformShippingAddresses, PLATFORM_ACTION_LABELS } from '@/lib/platform-gateway';
 import type {
   PlatformCourseWrite,
   PlatformEventWrite,
@@ -327,13 +327,14 @@ function validatePayload(routeId: string, payload: Record<string, unknown>, t: R
   return null;
 }
 
-function DomainForm({ spec, definition, entity, resourceId, busy, runAction }: {
+function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onResult }: {
   spec: DomainFormSpec;
   definition: PlatformRouteDefinition;
   entity?: PlatformEntity;
   resourceId?: string;
   busy: string | null;
   runAction: RunAction;
+  onResult?: (result: PlatformActionResult) => void;
 }) {
   const t = useT();
   const initial = useMemo(() => Object.fromEntries(spec.fields.map((item) => [item.key, initialValue(item, entity)])), [entity, spec.fields]);
@@ -347,18 +348,21 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction }: {
     setValidation(null);
   }, [initial]);
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    let payload: Record<string, unknown>;
     try {
-      const payload = { ...spec.payloadBase, ...Object.fromEntries(spec.fields.map((item) => [item.key, payloadValue(item, values[item.key] ?? '')])) };
+      payload = { ...spec.payloadBase, ...Object.fromEntries(spec.fields.map((item) => [item.key, payloadValue(item, values[item.key] ?? '')])) };
       if (spec.resourceIdField) delete payload[spec.resourceIdField];
       const problem = validatePayload(definition.id, payload, t);
       if (problem) { setValidation(problem); return; }
       setValidation(null);
-      void runAction(spec.action, submittedResourceId || undefined, payload);
     } catch {
       setValidation(t('JSON 字段格式不正确。', 'A JSON field is not valid.'));
+      return;
     }
+    const result = await runAction(spec.action, submittedResourceId || undefined, payload);
+    if (result) onResult?.(result);
   };
 
   return (
@@ -717,6 +721,123 @@ function PlatformAdminCollectionManager({ definition, entities = [], busy, runAc
   );
 }
 
+function escapeCsv(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAction }: CommonProps) {
+  const t = useT();
+  const [courses, setCourses] = useState<PlatformEntity[] | null>(null);
+  const [courseError, setCourseError] = useState<Error | null>(null);
+  const [generated, setGenerated] = useState<PlatformActionResult | null>(null);
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setCourseError(null);
+    void loadPlatformResource('admin-courses', { routeId: 'admin-courses', params: {}, signal: controller.signal })
+      .then((result) => setCourses(result.items.filter((item) => item.status === 'published' || item.status === 'unlisted')))
+      .catch((reason: unknown) => {
+        if (!controller.signal.aborted) setCourseError(reason instanceof Error ? reason : new Error(String(reason)));
+      });
+    return () => controller.abort();
+  }, []);
+
+  const codeLines = generated?.codes?.map((item) => item.code).join('\n') ?? '';
+  const downloadCsv = () => {
+    if (!generated?.codes?.length) return;
+    const csv = ['code,internal_id', ...generated.codes.map((item) => `${escapeCsv(item.code)},${escapeCsv(item.id)}`)].join('\r\n');
+    const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `redemption-codes-${(generated.batchReference ?? 'batch').replace(/[^A-Za-z0-9_-]+/g, '-')}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+  const copyCodes = async () => {
+    try {
+      await navigator.clipboard.writeText(codeLines);
+      setCopyMessage(t('兑换码已复制。', 'Redemption codes copied.'));
+    } catch {
+      setCopyMessage(t('复制失败，请手动选择文本。', 'Copy failed; select the text manually.'));
+    }
+  };
+
+  const base = ADMIN_FORMS['admin-invites'];
+  const courseOptions = (courses ?? []).map((course) => ({ value: course.id, label: text(course.title, course.title) }));
+  return (
+    <div className="platform-domain-stack">
+      {courseError ? <PlatformState kind="error" message={courseError.message} /> : courses === null ? <PlatformState kind="loading" /> : courseOptions.length === 0 ? (
+        <p className="platform-domain-note">{t('请先发布或设为不公开列出的课程，再生成实体捆绑兑换码。', 'Publish or unlist a course before generating physical-bundle codes.')}</p>
+      ) : (
+        <DomainForm
+          definition={definition}
+          busy={busy}
+          runAction={runAction}
+          onResult={(result) => { setGenerated(result); setCopyMessage(null); }}
+          spec={{
+            title: text('生成实体魔方随包兑换码', 'Generate physical-bundle redemption codes'),
+            action: 'admin-invite-batch',
+            fields: [
+              field('courseId', '赠送课程', 'Gifted course', { kind: 'select', required: true, options: courseOptions }),
+              field('count', '生成数量', 'Quantity', { kind: 'number', min: 1, max: 200, step: 1, required: true, defaultValue: 20 }),
+              field('batchReference', '批次编号', 'Batch reference', { required: true, maxLength: 160, placeholder: text('例如：DY-20260829-A', 'For example: DY-20260829-A') }),
+              field('label', '备注', 'Label', { maxLength: 160 }),
+              field('expiresAt', '有效期至', 'Expires at', { kind: 'datetime-local' }),
+            ],
+          }}
+        />
+      )}
+      <p className="platform-domain-note">{t('明文兑换码只在生成成功后显示一次。离开页面前请复制或下载 CSV，并把兑换卡随实体魔方放入包裹。', 'Plaintext codes are shown only after creation. Copy or download the CSV before leaving, then place a redemption card inside the physical cube package.')}</p>
+      {generated?.codes?.length ? (
+        <section className="platform-domain-actions">
+          <h2>{t(`已生成 ${generated.codes.length} 个兑换码`, `${generated.codes.length} redemption codes generated`)}</h2>
+          <textarea className="platform-field-control platform-field-textarea" rows={Math.min(12, generated.codes.length + 1)} readOnly value={codeLines} aria-label={t('新生成的兑换码', 'New redemption codes')} />
+          <div className="platform-write-actions">
+            <button type="button" className="platform-button platform-button-primary" onClick={() => void copyCodes()}>{t('复制全部兑换码', 'Copy all codes')}</button>
+            <button type="button" className="platform-button" onClick={downloadCsv}>{t('下载 CSV', 'Download CSV')}</button>
+          </div>
+          {copyMessage ? <p className="platform-domain-note" role="status">{copyMessage}</p> : null}
+        </section>
+      ) : null}
+      {entities.map((raw) => {
+        const entity = editableEntity(raw);
+        const physical = entity.data?.distributionType === 'physical_bundle';
+        if (!physical) {
+          return (
+            <section className="platform-domain-actions" key={entity.id}>
+              <DomainForm definition={definition} entity={entity} resourceId={entity.id} busy={busy} runAction={runAction} spec={{ ...base, title: text(`编辑：${entity.title}`, `Edit: ${entity.title}`) }} />
+              <ActionButton action="admin-delete" resourceId={entity.id} label={text('归档', 'Archive')} confirm={text('确定归档这条记录吗？', 'Archive this record?')} busy={busy} runAction={runAction} />
+            </section>
+          );
+        }
+        const revoked = entity.status === 'revoked';
+        return (
+          <section className="platform-domain-actions" key={entity.id}>
+            <h2>{entity.title}</h2>
+            <p className="platform-domain-note">{t(
+              `批次：${String(entity.data?.batchReference ?? '—')}，状态：${entity.status ?? '—'}，兑换次数：${String(entity.data?.redemptionCount ?? 0)}`,
+              `Batch: ${String(entity.data?.batchReference ?? '—')}, status: ${entity.status ?? '—'}, redemptions: ${String(entity.data?.redemptionCount ?? 0)}`,
+            )}</p>
+            {!revoked ? <DomainForm definition={definition} entity={entity} resourceId={entity.id} busy={busy} runAction={runAction} spec={{
+              title: text('绑定抖店订单号', 'Bind Douyin order reference'),
+              action: 'admin-invite-order',
+              fields: [field('externalOrderReference', '订单号（留空可解除）', 'Order reference (clear to unbind)', { maxLength: 240 })],
+            }} /> : null}
+            {!revoked ? <DomainForm definition={definition} resourceId={entity.id} busy={busy} runAction={runAction} spec={{
+              title: text('售后撤销', 'After-sales revocation'),
+              action: 'admin-invite-revoke',
+              fields: [field('reason', '撤销原因', 'Revocation reason', { kind: 'textarea', rows: 3, required: true, maxLength: 500 })],
+              submit: text('撤销兑换码并收回对应权益', 'Revoke code and reverse its entitlement'),
+            }} /> : <p className="platform-domain-note">{t(`撤销原因：${String(entity.data?.revokedReason ?? '')}`, `Revocation reason: ${String(entity.data?.revokedReason ?? '')}`)}</p>}
+          </section>
+        );
+      })}
+      <DomainForm definition={definition} busy={busy} runAction={runAction} spec={base} />
+    </div>
+  );
+}
+
 function PlatformPayoutManager({ definition, entities = [], busy, runAction }: CommonProps) {
   return (
     <div className="platform-domain-stack">
@@ -774,7 +895,7 @@ export function PlatformLearningActions(props: CommonProps) {
     );
   }
   if (definition.id === 'account-invites') {
-    return <DomainForm definition={definition} entity={entity} busy={busy} runAction={runAction} spec={{ title: text('兑换邀请码', 'Redeem invitation code'), action: 'redeem-invite', fields: [field('code', '邀请码', 'Invitation code', { required: true, minLength: 3, maxLength: 128 })] }} />;
+    return <DomainForm definition={definition} entity={entity} busy={busy} runAction={runAction} spec={{ title: text('兑换课程码', 'Redeem course code'), action: 'redeem-invite', fields: [field('code', '兑换码', 'Redemption code', { required: true, minLength: 3, maxLength: 128 })] }} />;
   }
   if (definition.id === 'progress') {
     return <DomainForm definition={definition} busy={busy} runAction={runAction} spec={{ title: text('每日签到', 'Daily check-in'), action: 'check-in', fields: [field('localDate', '本地日期（留空使用今天）', 'Local date (leave blank for today)', { kind: 'date' })] }} />;
@@ -1204,7 +1325,8 @@ export function PlatformAdminActions(props: CommonProps) {
   const { definition, params, entity, busy, runAction, entities } = props;
   const t = useT();
   if (definition.id === 'admin-order') return <PlatformAdminOrderActions {...props} />;
-  if (['admin-paths', 'admin-coupons', 'admin-invites', 'admin-qr-prompts', 'admin-qr-cards'].includes(definition.id)) {
+  if (definition.id === 'admin-invites') return <PlatformRedemptionCodeManager {...props} />;
+  if (['admin-paths', 'admin-coupons', 'admin-qr-prompts', 'admin-qr-cards'].includes(definition.id)) {
     return <PlatformAdminCollectionManager {...props} />;
   }
   if (definition.id === 'admin-payouts') return <PlatformPayoutManager {...props} />;

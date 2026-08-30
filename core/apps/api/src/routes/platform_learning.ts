@@ -31,6 +31,7 @@ import {
   integerField,
   isObject,
   isoTimestampField,
+  nullableStringField,
   objectField,
   pagination,
   readJsonObject,
@@ -424,6 +425,10 @@ function inviteCodeHash(code: string): string {
   return createHash('sha256').update(code.trim().toUpperCase(), 'utf8').digest('hex');
 }
 
+function physicalBundleCode(): string {
+  return `CR-${randomBytes(8).toString('hex').toUpperCase().match(/.{1,4}/g)!.join('-')}`;
+}
+
 function inviteBenefit(body: Record<string, unknown>): { courseId?: string; membershipPlanId?: string } {
   const raw = objectField(body, 'benefitSnapshot') ?? objectField(body, 'benefit', { required: true })!;
   const courseId = stringField(raw, 'courseId', { max: 128 });
@@ -475,6 +480,7 @@ platformLearningRoutes.post('/invites/redeem', async (c) => {
     }
     const benefit = invite.benefit_snapshot;
     let entitlementId: string | null = null;
+    let entitlementGrantLedgerId: string | null = null;
     let membershipId: string | null = null;
     if (typeof benefit.courseId === 'string') {
       const courseId = resourceId(benefit.courseId, 'courseId');
@@ -487,10 +493,12 @@ platformLearningRoutes.post('/invites/redeem', async (c) => {
         RETURNING id::text
       `, [actor.userId, courseId]);
       entitlementId = entitlements[0].id;
-      await platformQuery(db, `
+      const grants = await platformQuery<{ id: string }>(db, `
         INSERT INTO platform_entitlement_ledger (entitlement_id, entry_type, delta_access, valid_from, reason, actor_user_id)
         VALUES ($1::uuid, 'grant', 1, NOW(), 'invitation redemption', $2)
+        RETURNING id::text
       `, [entitlementId, actor.userId]);
+      entitlementGrantLedgerId = grants[0].id;
     } else if (typeof benefit.membershipPlanId === 'string') {
       const planId = resourceId(benefit.membershipPlanId, 'membershipPlanId');
       const plans = await platformQuery<{ period_unit: string; period_count: number }>(db, `
@@ -520,9 +528,10 @@ platformLearningRoutes.post('/invites/redeem', async (c) => {
       throw new PlatformApiError('INVALID_STATE', 409, 'Invitation benefit is not supported');
     }
     const redemptions = await platformQuery<{ id: string }>(db, `
-      INSERT INTO platform_invite_redemptions (invite_code_id, user_id, entitlement_id, membership_id)
-      VALUES ($1::uuid, $2, $3::uuid, $4::uuid) RETURNING id::text
-    `, [invite.id, actor.userId, entitlementId, membershipId]);
+      INSERT INTO platform_invite_redemptions (
+        invite_code_id, user_id, entitlement_id, entitlement_grant_ledger_id, membership_id
+      ) VALUES ($1::uuid, $2, $3::uuid, $4::uuid, $5::uuid) RETURNING id::text
+    `, [invite.id, actor.userId, entitlementId, entitlementGrantLedgerId, membershipId]);
     return {
       status: 201,
       body: { id: redemptions[0].id, entitlementId, membershipId },
@@ -538,8 +547,13 @@ platformLearningRoutes.get('/admin/invites', async (c) => {
   const { page, pageSize, offset } = pagination(c);
   const rows = await platformQuery(platformDb(), `
     SELECT invite.id::text, invite.label, invite.status,
+           invite.distribution_type AS "distributionType",
+           invite.batch_reference AS "batchReference",
+           invite.external_order_reference AS "externalOrderReference",
            invite.max_redemptions AS "maxRedemptions", invite.expires_at AS "expiresAt",
            invite.benefit_snapshot AS "benefitSnapshot", invite.created_at AS "createdAt",
+           invite.revoked_at AS "revokedAt", invite.revoked_reason AS "revokedReason",
+           MAX(redemption.redeemed_at) AS "redeemedAt",
            COUNT(redemption.id)::integer AS "redemptionCount"
     FROM platform_invite_codes invite
     LEFT JOIN platform_invite_redemptions redemption ON redemption.invite_code_id = invite.id
@@ -578,6 +592,141 @@ platformLearningRoutes.post('/admin/invites', async (c) => {
   return sendMutation(c, result);
 });
 
+platformLearningRoutes.post('/admin/invites/batch', async (c) => {
+  const actor = await requirePlatformAdmin(c);
+  const body = await readJsonObject(c);
+  const courseId = resourceId(stringField(body, 'courseId', { required: true, max: 128 })!, 'courseId');
+  const count = integerField(body, 'count', { required: true, min: 1, max: 200 })!;
+  const batchReference = stringField(body, 'batchReference', { required: true, max: 160 })!;
+  const label = stringField(body, 'label', { max: 160 }) ?? '';
+  const expiresAt = isoTimestampField(body, 'expiresAt');
+  const codes = Array.from({ length: count }, () => physicalBundleCode());
+  const hashes = codes.map(inviteCodeHash);
+  const codeByHash = new Map(hashes.map((hash, index) => [hash, codes[index]!]));
+  const result = await withIdempotency(c, actor, 'learning.admin.invite.batch', body, async (db) => {
+    const courses = await platformQuery(db, `
+      SELECT id::text FROM platform_courses
+      WHERE id = $1::uuid AND status IN ('published', 'unlisted') FOR SHARE
+    `, [courseId]);
+    if (!courses[0]) notFound('Published course');
+    const rows = await platformQuery<{ id: string; code_hash: string }>(db, `
+      INSERT INTO platform_invite_codes (
+        code_hash, label, status, distribution_type, batch_reference, max_redemptions,
+        expires_at, benefit_snapshot, created_by_user_id
+      )
+      SELECT decode(code_hash, 'hex'), $2, 'active', 'physical_bundle', $3, 1,
+             $4::timestamptz, $5::jsonb, $6
+      FROM unnest($1::text[]) AS generated(code_hash)
+      RETURNING id::text, encode(code_hash, 'hex') AS code_hash
+    `, [hashes, label, batchReference, expiresAt ?? null, JSON.stringify({ courseId }), actor.userId]);
+    const generated = rows.map((row) => ({ id: row.id, code: codeByHash.get(row.code_hash)! }));
+    return {
+      status: 201,
+      body: { batchReference, count: generated.length, codes: generated },
+      resourceType: 'platform_invite_code_batch',
+      resourceId: batchReference,
+    };
+  });
+  return sendMutation(c, result);
+});
+
+platformLearningRoutes.patch('/admin/invites/:id/order-reference', async (c) => {
+  const actor = await requirePlatformAdmin(c);
+  const id = resourceId(c.req.param('id'));
+  const body = await readJsonObject(c);
+  const externalOrderReference = nullableStringField(body, 'externalOrderReference', { max: 240 });
+  if (externalOrderReference === undefined) badRequest('externalOrderReference is required');
+  const result = await withIdempotency(c, actor, `learning.admin.invite.order-reference:${id}`, body, async (db) => {
+    const rows = await platformQuery(db, `
+      UPDATE platform_invite_codes
+      SET external_order_reference = $2
+      WHERE id = $1::uuid AND distribution_type = 'physical_bundle' AND status <> 'revoked'
+      RETURNING id::text, external_order_reference AS "externalOrderReference"
+    `, [id, externalOrderReference]);
+    if (!rows[0]) notFound('Active physical bundle code');
+    return { status: 200, body: rows[0], resourceType: 'platform_invite_code', resourceId: id };
+  });
+  return sendMutation(c, result);
+});
+
+platformLearningRoutes.post('/admin/invites/:id/revoke', async (c) => {
+  const actor = await requirePlatformAdmin(c);
+  const id = resourceId(c.req.param('id'));
+  const body = await readJsonObject(c);
+  const reason = stringField(body, 'reason', { required: true, max: 500 })!;
+  const result = await withIdempotency(c, actor, `learning.admin.invite.revoke:${id}`, body, async (db) => {
+    const invites = await platformQuery<{
+      id: string; status: string; distribution_type: string; revoked_at: string | null; revoked_reason: string;
+    }>(db, `
+      SELECT id::text, status, distribution_type, revoked_at, revoked_reason
+      FROM platform_invite_codes WHERE id = $1::uuid FOR UPDATE
+    `, [id]);
+    const invite = invites[0];
+    if (!invite) notFound('Physical bundle code');
+    if (invite.distribution_type !== 'physical_bundle') conflict('Only physical bundle codes can use this revocation flow');
+    if (invite.status === 'revoked') {
+      return {
+        status: 200,
+        body: { id, status: invite.status, revokedAt: invite.revoked_at, revokedReason: invite.revoked_reason },
+        resourceType: 'platform_invite_code', resourceId: id,
+      };
+    }
+    const redemptions = await platformQuery<{
+      entitlement_id: string | null; entitlement_grant_ledger_id: string | null;
+    }>(db, `
+      SELECT entitlement_id::text, entitlement_grant_ledger_id::text
+      FROM platform_invite_redemptions WHERE invite_code_id = $1::uuid FOR UPDATE
+    `, [id]);
+    const redemption = redemptions[0];
+    if (redemption?.entitlement_id) {
+      if (!redemption.entitlement_grant_ledger_id) {
+        conflict('Redeemed physical bundle code is missing its entitlement ledger reference');
+      }
+      await platformQuery(db, `
+        INSERT INTO platform_entitlement_ledger (
+          entitlement_id, entry_type, delta_access, valid_from, valid_until,
+          reversal_of_ledger_id, reason, actor_user_id, actor_key
+        )
+        SELECT entitlement_id, 'reversal', -delta_access, valid_from, valid_until,
+               id, $2, $3, $4
+        FROM platform_entitlement_ledger WHERE id = $1::uuid
+      `, [redemption.entitlement_grant_ledger_id, reason, actor.userId, actor.ownerKey]);
+      await platformQuery(db, `
+        WITH remaining AS (
+          SELECT MIN(grant_entry.valid_from) AS valid_from,
+                 CASE WHEN BOOL_OR(grant_entry.valid_until IS NULL) THEN NULL
+                      ELSE MAX(grant_entry.valid_until) END AS valid_until,
+                 COUNT(*) > 0 AS active
+          FROM platform_entitlement_ledger grant_entry
+          WHERE grant_entry.entitlement_id = $1::uuid AND grant_entry.delta_access = 1
+            AND NOT EXISTS (
+              SELECT 1 FROM platform_entitlement_ledger reversal
+              WHERE reversal.reversal_of_ledger_id = grant_entry.id
+            )
+        )
+        UPDATE platform_course_entitlements entitlement
+        SET status = CASE WHEN remaining.active THEN 'active' ELSE 'revoked' END,
+            valid_from = COALESCE(remaining.valid_from, entitlement.valid_from),
+            valid_until = CASE WHEN remaining.active THEN remaining.valid_until ELSE entitlement.valid_until END
+        FROM remaining WHERE entitlement.id = $1::uuid
+      `, [redemption.entitlement_id]);
+    }
+    const rows = await platformQuery(db, `
+      UPDATE platform_invite_codes
+      SET status = 'revoked', revoked_at = NOW(), revoked_reason = $2,
+          revoked_by_user_id = $3, revoked_by_actor_key = $4
+      WHERE id = $1::uuid
+      RETURNING id::text, status, revoked_at AS "revokedAt", revoked_reason AS "revokedReason"
+    `, [id, reason, actor.userId, actor.ownerKey]);
+    return {
+      status: 200,
+      body: { ...rows[0], entitlementReversed: Boolean(redemption?.entitlement_id) },
+      resourceType: 'platform_invite_code', resourceId: id,
+    };
+  });
+  return sendMutation(c, result);
+});
+
 platformLearningRoutes.patch('/admin/invites/:id', async (c) => {
   const actor = await requirePlatformAdmin(c);
   const id = resourceId(c.req.param('id'));
@@ -589,6 +738,13 @@ platformLearningRoutes.patch('/admin/invites/:id', async (c) => {
   const benefit = body.benefit != null || body.benefitSnapshot != null ? inviteBenefit(body) : undefined;
   if (label == null && status == null && maxRedemptions == null && expiresAt === undefined && benefit == null) badRequest('No invitation fields were provided');
   const result = await withIdempotency(c, actor, `learning.admin.invite.update:${id}`, body, async (db) => {
+    const current = await platformQuery<{ distribution_type: string }>(db, `
+      SELECT distribution_type FROM platform_invite_codes WHERE id = $1::uuid FOR UPDATE
+    `, [id]);
+    if (!current[0]) notFound('Invitation');
+    if (current[0].distribution_type === 'physical_bundle') {
+      conflict('Physical bundle codes are managed through order-reference and revoke operations');
+    }
     const rows = await platformQuery(db, `
       UPDATE platform_invite_codes SET
         label = CASE WHEN $2 THEN $3 ELSE label END,
@@ -612,6 +768,13 @@ platformLearningRoutes.delete('/admin/invites/:id', async (c) => {
   const actor = await requirePlatformAdmin(c);
   const id = resourceId(c.req.param('id'));
   const result = await withIdempotency(c, actor, `learning.admin.invite.archive:${id}`, {}, async (db) => {
+    const current = await platformQuery<{ distribution_type: string }>(db, `
+      SELECT distribution_type FROM platform_invite_codes WHERE id = $1::uuid FOR UPDATE
+    `, [id]);
+    if (!current[0]) notFound('Invitation');
+    if (current[0].distribution_type === 'physical_bundle') {
+      conflict('Physical bundle codes must use the audited revocation flow');
+    }
     const rows = await platformQuery(db, `UPDATE platform_invite_codes SET status = 'archived' WHERE id = $1::uuid RETURNING id::text`, [id]);
     if (!rows[0]) notFound('Invitation');
     return { status: 200, body: { id, status: 'archived' }, resourceType: 'platform_invite_code', resourceId: id };
