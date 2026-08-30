@@ -789,6 +789,13 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           activeCategory={activeCategory}
           title={tr({ zh: '连接后的行为', en: 'Connected cube behavior' })}
         >
+          {process.env.NODE_ENV !== 'production' && (
+            <BooleanRow
+              label={tr({ zh: '假魔方', en: 'Fake cube' })}
+              value={s.showDevFakeCube}
+              onChange={(v) => updateSettings({ showDevFakeCube: v })}
+            />
+          )}
           <Row label={tr({ zh: '智能魔方自动预备', en: 'Smart-cube auto-ready'
         })}>
             <select
