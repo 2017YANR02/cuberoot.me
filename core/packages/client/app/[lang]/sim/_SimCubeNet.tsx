@@ -106,8 +106,10 @@ interface Props {
 /** Narrow world.cube to the NxN Cube (the only kind with serialize()/table). */
 function nxnCube(world: World | null): CubeType | null {
   if (!world) return null;
-  if (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy') return null;
-  return world.cube as CubeType;
+  if (typeof world.puzzleKind === 'number' || world.puzzleKind === 'mirror' || world.puzzleKind === 'mirror2') {
+    return world.cube as CubeType;
+  }
+  return null;
 }
 
 export default function SimCubeNet({

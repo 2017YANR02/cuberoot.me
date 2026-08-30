@@ -19,3 +19,17 @@ describe('sim NxN order', () => {
     expect(world.cube.order).toBe(12);
   });
 });
+
+describe('sim square-family settings', () => {
+  it.each(['sq2', 'sq4'] as const)('applies default settings to %s', (kind) => {
+    const world = attachInteraction(new World());
+    try {
+      world.setPuzzle(kind);
+      expect(() => applySettings(world, DEFAULT_SETTINGS)).not.toThrow();
+      expect(world.puzzleKind).toBe(kind);
+    } finally {
+      world.controller.stop();
+      world.cube.dispose();
+    }
+  });
+});

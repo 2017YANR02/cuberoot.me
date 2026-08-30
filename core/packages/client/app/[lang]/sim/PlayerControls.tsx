@@ -43,7 +43,17 @@ import World from './engine/world';
 import { TwistAction } from './engine/nxn/twister';
 import { timing } from './engine/tweenTiming';
 import tweener from './engine/tweener';
-import { parseSq1Scramble, movesToString, type Sq1Move } from './engine/sq1/sq1State';
+import { parseSq1Scramble } from './engine/sq1/sq1State';
+import {
+  SQUARE_FAMILY_SPECS,
+  invertSquareFamilyMoves,
+  randomSquareFamilyScramble,
+  simplifySquareFamilyAlg,
+  squareFamilyMovesToString,
+  tryParseSquareFamilyMoves,
+  type SquareFamilyKind,
+  type SquareFamilyMove,
+} from './engine/squareFamily/squareFamilyState';
 import { parseIvyMoves } from './engine/ivy/IvyTwister';
 import type { IvyMove } from './engine/ivy/IvyCube';
 import { classifyIvyTokens } from '@/lib/ivy-solver';
@@ -307,10 +317,12 @@ function convertSq1Text(text: string, convert: (s: string) => string): string {
 // WCA-standard event names reuse the site-wide single source (lib/wca-events
 // eventDisplayName — same labels the /wca/records page renders: 三阶/3×3, SQ1,
 // 金字塔/Pyra, 斜转/Skewb, 五魔/Mega...). Non-WCA puzzles below keep bespoke names.
-const PUZZLE_TYPE_OPTIONS = [
+export const SIM_FIXED_PUZZLE_OPTIONS = [
   { value: 'nxn',      iconClass: 'event-333', labelZh: 'NxN',    labelEn: 'NxN' },
   { value: 'custom',   iconClass: 'event-333', labelZh: '自定义切割', labelEn: 'Puzzle Cuts' },
   { value: 'sq1',      iconClass: 'event-sq1', labelZh: eventDisplayName('sq1', true), labelEn: eventDisplayName('sq1', false) },
+  { value: 'sq2',      iconClass: 'unofficial-sq2', labelZh: 'SQ2', labelEn: 'SQ2' },
+  { value: 'sq4',      iconClass: 'unofficial-sq4', labelZh: 'SQ4', labelEn: 'SQ4' },
   { value: 'ivy',      iconClass: 'unofficial-ivy', labelZh: '枫叶', labelEn: 'Ivy' },
   { value: 'pyraminx', iconClass: 'event-pyram', labelZh: eventDisplayName('pyram', true), labelEn: eventDisplayName('pyram', false) },
   { value: 'skewb',    iconClass: 'event-skewb', labelZh: eventDisplayName('skewb', true), labelEn: eventDisplayName('skewb', false) },
@@ -330,7 +342,7 @@ const PUZZLE_TYPE_OPTIONS = [
 // via TwistyPlayer — see pgCatalog.ts). The PG entries are appended at runtime so
 // the catalog stays the single source of truth.
 const ALL_PUZZLE_TYPE_OPTIONS: { value: string; iconClass: string; labelZh: string; labelEn: string }[] = [
-  ...PUZZLE_TYPE_OPTIONS,
+  ...SIM_FIXED_PUZZLE_OPTIONS,
   ...PG_PUZZLES.map((p) => ({ value: p.id, iconClass: p.icon, labelZh: p.zh, labelEn: p.en })),
 ];
 
@@ -400,7 +412,16 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'clock' | 'custom' | PgPuzzleId;
+export type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'clock' | 'custom' | PgPuzzleId;
+
+interface SquarePlaybackCube {
+  twister: {
+    finish(): void;
+    setup(scramble: string): void;
+    twist(move: SquareFamilyMove, fast: boolean, force: boolean): boolean;
+  };
+  applyMoveInstant(move: SquareFamilyMove): void;
+}
 
 function isTwistyPuzzle(p: SimPuzzle): p is 'pyraminx' | 'skewb' | 'megaminx' | 'fto' {
   return p === 'pyraminx' || p === 'skewb' || p === 'megaminx' || p === 'fto';
@@ -412,15 +433,6 @@ const SAME_AXIS_1X1: Record<string, 'x' | 'y' | 'z'> = {
 const OPP_AXIS_1X1: Record<string, 'x' | 'y' | 'z'> = {
   L: 'x', D: 'y', B: 'z', M: 'x', E: 'y',
 };
-
-function invertSq1Moves(moves: Sq1Move[]): Sq1Move[] {
-  const out: Sq1Move[] = [];
-  for (let i = moves.length - 1; i >= 0; i--) {
-    const m = moves[i];
-    out.push(m.kind === 'slice' ? m : { kind: 'turn', top: -m.top, bot: -m.bot });
-  }
-  return out;
-}
 
 function invertDinoMoves(moves: DinoMove[]): DinoMove[] {
   const out: DinoMove[] = [];
@@ -980,6 +992,11 @@ export default function PlayerControls({
   customRest = 'ignored', onCustomRestChange,
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
+  const squareFamilyKind: SquareFamilyKind | null = puzzleKind === 'sq2' || puzzleKind === 'sq4'
+    ? puzzleKind
+    : null;
+  const squareFamilySpec = squareFamilyKind ? SQUARE_FAMILY_SPECS[squareFamilyKind] : null;
+  const isSquarePuzzle = isSq1 || squareFamilySpec !== null;
   const isIvy = puzzleKind === 'ivy';
   // Skewb on the in-house engine — a corner-turn engine puzzle, NOT the cubing.js
   // twisty path. The cubing.js skewb stays a twisty puzzle (renderer 'cubing').
@@ -1046,7 +1063,7 @@ export default function PlayerControls({
   const algAutoSpace: boolean | 'simple' =
     algAutoSpaceSafe ? true : cornerKind === 'gear' ? 'simple' : false;
   // "Derive scramble from solution" (cubedb-style) is 3x3-only — the solver is.
-  const is3x3 = !isSq1 && !isIvy && !corner && !isTwistyMode && order === 3;
+  const is3x3 = !isSquarePuzzle && !isIvy && !corner && !isTwistyMode && order === 3;
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -1234,19 +1251,32 @@ export default function PlayerControls({
 
   // NxN 播放项 = move + 换握记号(↑/↓/·,占一步驱动手部,不动魔方)。
   const nxnItems = useMemo<NxnPlayItem[]>(() => {
-    if (isSq1 || isIvy || corner) return [];
+    if (isSquarePuzzle || isIvy || corner) return [];
     if (!algDraft.trim()) return [];
     try {
       return parseNxnItems(algDraft);
     } catch {
       return [];
     }
-  }, [algDraft, isSq1, isIvy, corner]);
+  }, [algDraft, isSquarePuzzle, isIvy, corner]);
 
-  const sq1Actions = useMemo<Sq1Move[]>(() => {
-    if (!isSq1) return [];
-    return parseSq1Scramble(algDraft);
-  }, [algDraft, isSq1]);
+  const squareFamilyAlgMoves = useMemo<SquareFamilyMove[] | null>(() => {
+    if (!squareFamilySpec) return null;
+    return tryParseSquareFamilyMoves(algDraft, squareFamilySpec);
+  }, [algDraft, squareFamilySpec]);
+  const squareFamilySetupMoves = useMemo<SquareFamilyMove[] | null>(() => {
+    if (!squareFamilySpec) return null;
+    return tryParseSquareFamilyMoves(setupDraft, squareFamilySpec);
+  }, [setupDraft, squareFamilySpec]);
+  const squareFamilyAlgValid = !squareFamilySpec || squareFamilyAlgMoves !== null;
+  const squareFamilySetupValid = !squareFamilySpec || squareFamilySetupMoves !== null;
+  const squareFamilyCanPlay = squareFamilyAlgValid && squareFamilySetupValid;
+
+  const squareActions = useMemo<SquareFamilyMove[]>(() => {
+    if (isSq1) return parseSq1Scramble(algDraft);
+    if (squareFamilySpec) return squareFamilyAlgMoves ?? [];
+    return [];
+  }, [algDraft, isSq1, squareFamilySpec, squareFamilyAlgMoves]);
 
   const ivyActions = useMemo<IvyMove[]>(() => {
     if (!isIvy) return [];
@@ -1260,6 +1290,14 @@ export default function PlayerControls({
   const ivyAlgSpans = useMemo(() => (isIvy ? classifyIvyTokens(algDraft) : null), [isIvy, algDraft]);
   const ivyCanPlay = !isIvy
     || (!ivySetupSpans!.some((s) => s.bad) && !ivyAlgSpans!.some((s) => s.bad));
+  const squareSetupSpans = squareFamilySpec && !squareFamilySetupValid
+    ? [{ text: setupDraft, bad: true }]
+    : null;
+  const squareAlgSpans = squareFamilySpec && !squareFamilyAlgValid
+    ? [{ text: algDraft, bad: true }]
+    : null;
+  const setupValidationSpans = ivySetupSpans ?? squareSetupSpans;
+  const algValidationSpans = ivyAlgSpans ?? squareAlgSpans;
 
   // One move list for whichever corner-turn engine puzzle is active (empty otherwise).
   // algDraft 是**正在打字**的文本 → 随时可能停在半个 token 上,解析器严格会抛;兜住当空
@@ -1274,7 +1312,7 @@ export default function PlayerControls({
   // index) read from. SQ1's tuple notation isn't one-move-per-token and the
   // cubing.js twisty path has its own native scrubber, so both stay empty.
   const itemPositions = useMemo<TokenPosition[]>(() => {
-    if (isSq1 || isTwistyMode) return [];
+    if (isSquarePuzzle || isTwistyMode) return [];
     if (isIvy) return ivyCanPlay ? findWhitespaceTokenPositions(algDraft) : [];
     // 半个 token(还在打)解析不了 → 不算一项,别让它抛出去炸掉整页。
     if (corner) {
@@ -1286,7 +1324,7 @@ export default function PlayerControls({
     const moves = findTokenPositions(algDraft);
     const grips = findGripMarkPositions(algDraft).map((p) => ({ start: p, end: p + 1, text: algDraft[p] }));
     return [...moves, ...grips].sort((a, b) => a.start - b.start);
-  }, [algDraft, isSq1, isTwistyMode, isIvy, ivyCanPlay, corner]);
+  }, [algDraft, isSquarePuzzle, isTwistyMode, isIvy, ivyCanPlay, corner]);
 
   // Which play-item to paint orange. While the user navigates text (caretChar set,
   // not playing) it's the move on the caret's own line — the last item at/before
@@ -1323,17 +1361,17 @@ export default function PlayerControls({
   }, [playing, caretChar, itemPositions, step, algDraft]);
 
   const algHlBaseSpans = useMemo<AlgHlSpan[]>(
-    () => ivyAlgSpans ?? [{ text: algDraft }],
-    [ivyAlgSpans, algDraft],
+    () => algValidationSpans ?? [{ text: algDraft }],
+    [algValidationSpans, algDraft],
   );
   const algHlSpans = useMemo(
     () => applyAlgHighlight(algHlBaseSpans, highlightRange),
     [algHlBaseSpans, highlightRange],
   );
-  const showAlgOverlay = !!ivyAlgSpans || !!highlightRange;
+  const showAlgOverlay = !!algValidationSpans || !!highlightRange;
 
-  const totalSteps = isSq1
-    ? sq1Actions.length
+  const totalSteps = isSquarePuzzle
+    ? (squareFamilyCanPlay ? squareActions.length : 0)
     : isIvy
       ? (ivyCanPlay ? ivyActions.length : 0)
       : corner
@@ -1345,18 +1383,26 @@ export default function PlayerControls({
     // Release any held-partial (debug) turn first: an NxN frozen layer holds the
     // cube lock, which would make the replay's group.twist below spin forever.
     world.controller.clearFrozen();
-    if (isSq1) {
-      const sq1Cube = world.cube as unknown as import('./engine/sq1/Sq1Cube').default;
-      sq1Cube.twister.finish();
+    if (isSquarePuzzle) {
+      if (!squareFamilyCanPlay) {
+        setPlaying(false);
+        stepRef.current = 0;
+        setStep(0);
+        return;
+      }
+      const squareCube = world.cube as unknown as SquarePlaybackCube;
+      squareCube.twister.finish();
       const effSetup = settings.playbackMode === 'algorithm'
-        ? (setupDraft + ' ' + movesToString(invertSq1Moves(sq1Actions))).trim()
+        ? (setupDraft + ' ' + squareFamilyMovesToString(
+          invertSquareFamilyMoves(squareActions, squareFamilySpec ?? undefined),
+        )).trim()
         : setupDraft;
       // setup() applies the scramble as the base state; layer the first `target`
       // solution moves on top WITHOUT resetting (applyMovesInstant would snap
       // back to solved first, wiping the scramble). Mirrors the NxN path below.
-      sq1Cube.twister.setup(effSetup);
-      const target = Math.max(0, Math.min(n, sq1Actions.length));
-      for (let i = 0; i < target; i++) sq1Cube.applyMoveInstant(sq1Actions[i]);
+      squareCube.twister.setup(effSetup);
+      const target = Math.max(0, Math.min(n, squareActions.length));
+      for (let i = 0; i < target; i++) squareCube.applyMoveInstant(squareActions[i]);
       setStep(target);
       return;
     }
@@ -1435,7 +1481,7 @@ export default function PlayerControls({
       hands.setGrips(g.R, g.L);
     }
     setStep(target);
-  }, [world, setupDraft, algDraft, nxnItems, sq1Actions, ivyActions, cornerActions, corner, toEngineText, isSq1, isIvy, ivyCanPlay, settings.playbackMode]);
+  }, [world, setupDraft, algDraft, nxnItems, squareActions, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isIvy, ivyCanPlay, settings.playbackMode]);
 
   // Notation guide (engine skewb): play ONE token on the main cube from solved so the
   // user sees which corner a letter turns. It only borrows the cube — setup/alg text is
@@ -1458,7 +1504,7 @@ export default function PlayerControls({
   const prevAlgTextRef = useRef(alg);
 
   useEffect(() => {
-    const actions = isSq1 ? sq1Actions : isIvy ? ivyActions : corner ? cornerActions : nxnItems;
+    const actions = isSquarePuzzle ? squareActions : isIvy ? ivyActions : corner ? cornerActions : nxnItems;
     const prevText = prevAlgTextRef.current;
     prevAlgTextRef.current = algDraft;
     if (skipAutoResetRef.current) {
@@ -1483,7 +1529,7 @@ export default function PlayerControls({
         // 的先例保持瞬切。
         if (
           settings.animatePlayback !== false && settings.playbackMode !== 'algorithm'
-          && !isSq1 && !isIvy && world
+          && !isSquarePuzzle && !isIvy && world
           && n === actions.length && stepRef.current === n - 1
           && algDraft.startsWith(prevText)
         ) {
@@ -1511,18 +1557,19 @@ export default function PlayerControls({
     }
     jumpToStep(stepRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setupDraft, nxnItems, sq1Actions, ivyActions, cornerActions, settings.playbackMode]);
+  }, [setupDraft, nxnItems, squareActions, ivyActions, cornerActions, settings.playbackMode]);
 
   /** 光标位置 → 光标前的完整步数(各拼图各自的 parser);解析不了返回 null。 */
   const caretStepOf = useCallback((text: string, caretIndex: number): number | null => {
     const before = text.slice(0, caretIndex);
-    if (!isSq1 && !isIvy && !corner) {
+    if (!isSquarePuzzle && !isIvy && !corner) {
       // NxN 直接喂原文(parseNxnItems 自己剥注释):extractAlgFromText 会把
       // ↑/↓/· 当装饰剥掉,经它一遍换握步就数丢了。
       try { return parseNxnItems(before).length; } catch { return null; }
     }
     const algBefore = extractAlgFromText(before);
     if (isSq1) return parseSq1Scramble(algBefore).length;
+    if (squareFamilySpec) return tryParseSquareFamilyMoves(algBefore, squareFamilySpec)?.length ?? null;
     if (isIvy) {
       try { return parseIvyMoves(algBefore).length; } catch { return null; }
     }
@@ -1533,7 +1580,7 @@ export default function PlayerControls({
       try { return parseCornerGroups(corner, algBefore).length; } catch { return null; }
     }
     return null;
-  }, [isSq1, isIvy, corner]);
+  }, [isSquarePuzzle, isSq1, squareFamilySpec, isIvy, corner]);
 
   const handleCaretSync = useCallback((text: string, caretIndex: number) => {
     // Remember the caret so the highlight can follow the move it sits on (twizzle
@@ -1556,7 +1603,7 @@ export default function PlayerControls({
   const stepForward = useCallback(() => {
     setCaretChar(null); // hand the highlight back to the playback position
     const animate = settings.animatePlayback !== false;
-    if (animate && !isSq1 && !isIvy && !corner && world && step < nxnItems.length) {
+    if (animate && !isSquarePuzzle && !isIvy && !corner && world && step < nxnItems.length) {
       const cube = world.cube as import('./engine/nxn/cube').default;
       const it = nxnItems[step];
       if (it.kind === 'grip') {
@@ -1576,12 +1623,12 @@ export default function PlayerControls({
       return;
     }
     jumpToStep(step + 1);
-  }, [jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSq1, isIvy, corner, world, nxnItems]);
+  }, [jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, corner, world, nxnItems]);
 
   const stepBack = useCallback(() => {
     setCaretChar(null); // hand the highlight back to the playback position
     const animate = settings.animatePlayback !== false;
-    if (animate && !isSq1 && !isIvy && !corner && world && step > 0 && step <= nxnItems.length) {
+    if (animate && !isSquarePuzzle && !isIvy && !corner && world && step > 0 && step <= nxnItems.length) {
       const cube = world.cube as import('./engine/nxn/cube').default;
       const it = nxnItems[step - 1];
       if (it.kind === 'grip') {
@@ -1613,7 +1660,7 @@ export default function PlayerControls({
       return;
     }
     jumpToStep(step - 1);
-  }, [jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSq1, isIvy, corner, world, nxnItems]);
+  }, [jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, corner, world, nxnItems]);
 
   // Play/pause toggle for the shared PlaybackBar. Pausing is instant; starting
   // from the end first复位到第 0 步(并同步 stepRef,否则播放轮询读到 step≥total
@@ -1641,7 +1688,7 @@ export default function PlayerControls({
     // the eased animation, which 120° corner turns — Redi/Dino/Ivy ≈567ms vs the
     // old 600ms interval — hit on the slightest frame-rate jank.) Speed scales the
     // animation length via CubeGroup.frames (separate effect), not the poll rate.
-    const total = isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : corner ? cornerActions.length : nxnItems.length;
+    const total = isSquarePuzzle ? squareActions.length : isIvy ? ivyActions.length : corner ? cornerActions.length : nxnItems.length;
     // 动画开关(设置面板「动画」):关 → 不逐步转动,瞬切到下一步。瞬切没有动画完成可等,
     // 故节拍由 interval 周期给:timing.frames 帧 @60fps ≈ 该步本应播放的时长,瞬切后等同节拍
     // (否则一帧就冲到底,看不到逐步)。开 → 16ms 高频轮询,按动画完成逐步推进(原行为)。
@@ -1656,8 +1703,8 @@ export default function PlayerControls({
       if (!animatePlayback) {
         // 瞬切:走跟「下一步」按钮同一条 instant 落子路径(fast+force / applyMoveInstant),
         // 不产生 tween;节拍由 interval 周期 stepDelayMs 控制。
-        if (isSq1) {
-          (world.cube as unknown as import('./engine/sq1/Sq1Cube').default).applyMoveInstant(sq1Actions[s]);
+        if (isSquarePuzzle) {
+          (world.cube as unknown as SquarePlaybackCube).applyMoveInstant(squareActions[s]);
         } else if (isIvy) {
           (world.cube as unknown as import('./engine/ivy/IvyCube').default).applyMoveInstant(ivyActions[s]);
         } else if (corner) {
@@ -1674,9 +1721,9 @@ export default function PlayerControls({
         return;
       }
       let started = false;
-      if (isSq1) {
-        const sq1Cube = world.cube as unknown as import('./engine/sq1/Sq1Cube').default;
-        started = sq1Cube.twister.twist(sq1Actions[s], false, false);
+      if (isSquarePuzzle) {
+        const squareCube = world.cube as unknown as SquarePlaybackCube;
+        started = squareCube.twister.twist(squareActions[s], false, false);
       } else if (isIvy) {
         const ivyCube = world.cube as unknown as import('./engine/ivy/IvyCube').default;
         started = ivyCube.twister.twist(ivyActions[s], false, false);
@@ -1716,7 +1763,7 @@ export default function PlayerControls({
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
       timing.frames = mapFrames(settings.speed);
     };
-  }, [playing, nxnItems, sq1Actions, ivyActions, cornerActions, corner, world, playbackFrames, isSq1, isIvy, settings.animatePlayback, settings.speed]);
+  }, [playing, nxnItems, squareActions, ivyActions, cornerActions, corner, world, playbackFrames, isSquarePuzzle, isIvy, settings.animatePlayback, settings.speed]);
 
   const tool = (transform: (s: string) => string) => () => {
     // 镜像/转体变换先剥手部记号(cubing.js Alg 解析不了会 catch 返 '',静默清空解法框)。
@@ -1735,6 +1782,7 @@ export default function PlayerControls({
   // Corner-turn engine puzzles fold via their descriptor.
   const simplifyForPuzzle = useCallback((s: string): string => {
     if (isSq1) return simplifySq1Alg(s, sq1Format);
+    if (squareFamilySpec) return simplifySquareFamilyAlg(s, squareFamilySpec);
     if (isIvy) return s; // ivy R R = R' (not R2) — NxN fold doesn't apply
     // 文本可能还没打完 / 有错字 → 原样返回,别抛(按钮点在半截文本上不该炸页)。
     if (corner) {
@@ -1758,7 +1806,7 @@ export default function PlayerControls({
         .join(' ');
     }
     return fold(s);
-  }, [isSq1, isIvy, corner, isTwistyMode, sq1Format, order]);
+  }, [isSq1, squareFamilySpec, isIvy, corner, isTwistyMode, sq1Format, order]);
 
   const invertForPuzzle = useCallback((s: string): string => {
     if (corner) {
@@ -1766,10 +1814,17 @@ export default function PlayerControls({
         return corner.invertText?.(s) ?? corner.toString(corner.invert(corner.parse(s)));
       } catch { return s; }
     }
-    if (!isSq1) return invertAlg(stripHandMarks(s)); // 倒序后换握/推法位点失义,直接剥
-    const inv = invertSq1Alg(s);
-    return sq1Format === 'wca' ? canonicalSq1Alg(inv) : compactSq1Alg(inv);
-  }, [isSq1, corner, sq1Format]);
+    if (isSq1) {
+      const inv = invertSq1Alg(s);
+      return sq1Format === 'wca' ? canonicalSq1Alg(inv) : compactSq1Alg(inv);
+    }
+    if (squareFamilySpec) {
+      const parsed = tryParseSquareFamilyMoves(s, squareFamilySpec);
+      if (!parsed) return s;
+      return squareFamilyMovesToString(invertSquareFamilyMoves(parsed, squareFamilySpec));
+    }
+    return invertAlg(stripHandMarks(s)); // 倒序后换握/推法位点失义,直接剥
+  }, [isSq1, squareFamilySpec, corner, sq1Format]);
 
   // 消步 = 实时消步开关(settings.liveReduce);开启时手势 / 键盘追加自动消步。
   // 拨到开还顺手把当前解法消一次步(兼顾原一次性按钮:手敲 / 粘贴后开开关即整理)。
@@ -1800,7 +1855,7 @@ export default function PlayerControls({
 
   const appendUserMove = useCallback((action: TwistAction | string) => {
     let moveText = typeof action === 'string' ? action : action.value;
-    if (typeof action !== 'string' && !isSq1 && !isTwistyMode && world && world.cube.order === 1) {
+    if (typeof action !== 'string' && !isSquarePuzzle && !isTwistyMode && world && world.cube.order === 1) {
       const norm = normalizeTo1x1(action);
       if (!norm) return;
       moveText = norm.value;
@@ -1810,10 +1865,10 @@ export default function PlayerControls({
     if (!algEl) return;
     const current = algEl.value;
     // SQ1: glue slices to adjacent turns (`(1,0)/(2,0)`), but NEVER glue two
-    // slices — `//` is the comment marker and parseSq1Tokens would drop it, so
+    // slices — `//` is the comment marker in Square notation, so
     // a dragged double-slice must read as `/ /`.
     const endsSlash = current.trimEnd().endsWith('/');
-    const glue = isSq1 && (moveText === '/' || endsSlash) && !(moveText === '/' && endsSlash);
+    const glue = isSquarePuzzle && (moveText === '/' || endsSlash) && !(moveText === '/' && endsSlash);
     const sep = current.trim() ? (glue ? '' : ' ') : '';
     let next = current.trimEnd() + sep + moveText + ' ';
     // 实时消步:追加后立即 fold/抵消重复转动(R 后做 R' → 框里清空)。魔方本身已被
@@ -1833,7 +1888,7 @@ export default function PlayerControls({
     // current above; the URL can lag, so land it once the turn animation has settled
     // (idle-gated) and coalesce rapid turns into one write.
     commitAlgDebounced(next);
-  }, [commitAlgDebounced, isSq1, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle]);
+  }, [commitAlgDebounced, isSquarePuzzle, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle]);
 
   useEffect(() => {
     if (!userMoveRef) return;
@@ -1843,7 +1898,7 @@ export default function PlayerControls({
 
   // QWERTY: keymap → twist + append (hard keys + the on-screen keymap keypad).
   const applyMove = useCallback((k: KeyMove) => {
-    if (isSq1 || isIvy || isTwistyMode) return;
+    if (isSquarePuzzle || isIvy || isTwistyMode) return;
     if (corner) {
       // corner-registry engines (gear/dino/…): route the keys the puzzle's own
       // grammar parses (gear: U R F D L B + x/y/z rotations); everything else is
@@ -1881,7 +1936,7 @@ export default function PlayerControls({
     skipAutoResetRef.current = true;
     setAlgDraft(next);
     onAlgChange(next);
-  }, [world, isSq1, isIvy, corner, isTwistyMode, onAlgChange, settings.animatePlayback, appendUserMove]);
+  }, [world, isSquarePuzzle, isIvy, corner, isTwistyMode, onAlgChange, settings.animatePlayback, appendUserMove]);
 
   // QWERTY 键盘展开时,实体按键按 keymap 走(捕获阶段,连解法框聚焦时也接管);
   // 打乱框聚焦时放行(让字符正常落进打乱框)。capture + stopPropagation 同时挡掉
@@ -1963,6 +2018,8 @@ export default function PlayerControls({
         // shows on /scramble/gen and that parseSq1Tokens also accepts.
         const raw = await tnoodleRandomScramble('sq1');
         scramble = raw ? formatScrambleForEvent('sq1', raw) : '';
+      } else if (squareFamilySpec) {
+        scramble = randomSquareFamilyScramble(squareFamilySpec);
       } else if (isIvy) {
         scramble = randomIvyScramble();
       } else if (corner) {
@@ -1978,14 +2035,22 @@ export default function PlayerControls({
       }
     } catch (err) {
       console.warn('[sim] scramble failed:', err);
-      scramble = isSq1 ? '' : isIvy ? randomIvyScramble() : corner ? '' : randomMoveScrambleNxN(order);
+      scramble = isSq1
+        ? ''
+        : squareFamilySpec
+          ? randomSquareFamilyScramble(squareFamilySpec)
+          : isIvy
+            ? randomIvyScramble()
+            : corner
+              ? ''
+              : randomMoveScrambleNxN(order);
     }
     if (reqId !== scrambleReqIdRef.current) return;
     if (!scramble) return;
     world.controller.clearFrozen(); // release any debug held-partial turn first
     // SQ1 / Ivy / corner-turn puzzles always animate — instant apply would be
     // visually indistinguishable from no rotation. The animation is the whole point.
-    const animate = isSq1 || isIvy || !!corner || settings.animateScramble;
+    const animate = isSquarePuzzle || isIvy || !!corner || settings.animateScramble;
     if (animate) {
       animatingScrambleRef.current = true;
       world.cube.twister.setup('');
@@ -2005,7 +2070,7 @@ export default function PlayerControls({
     }
     setSetupDraft(scramble);
     onSetupChange(scramble);
-  }, [world, order, isSq1, isIvy, corner, isTwistyMode, puzzleKind, settings.animateScramble, onSetupChange, onAlgChange, twistyPlayerRef]);
+  }, [world, order, isSq1, squareFamilySpec, isSquarePuzzle, isIvy, corner, isTwistyMode, puzzleKind, settings.animateScramble, onSetupChange, onAlgChange, twistyPlayerRef]);
 
   // ▶ Play button: animate the CURRENT scramble (the text already in the box) from
   // solved, on demand. Reuses the same animation paths as the auto-animate scramble:
@@ -2013,7 +2078,7 @@ export default function PlayerControls({
   // alg track and jumpToStart + play.
   const handlePlayScramble = useCallback(async () => {
     const scramble = setupDraft.trim();
-    if (!scramble) return;
+    if (!scramble || !squareFamilySetupValid) return;
     if (isTwistyMode) {
       if (setupElRef.current) { setupElRef.current.value = ''; autosize(setupElRef.current); }
       setSetupDraft('');
@@ -2056,7 +2121,7 @@ export default function PlayerControls({
     world.controller.clearFrozen();
     tw.setup('');
     tw.push(engScramble);
-  }, [setupDraft, isTwistyMode, world, corner, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText]);
+  }, [setupDraft, squareFamilySetupValid, isTwistyMode, world, corner, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText]);
 
   // 点解法框时,若打乱动画仍在逐步播放(高阶打乱可达 400+ 步 ≈ 分钟级),立即落到完整打乱态,
   // 让用户马上能在打乱好的魔方上输解法。走快速整体应用 setup(打乱文本):它清空待播队列后用
@@ -2066,14 +2131,14 @@ export default function PlayerControls({
     const tw = (world.cube as unknown as CornerCube).twister;
     const scr = setupDraft.trim();
     const hasPendingAnimation = corner?.parseGroups ? tw?.busy : (tw?.length ?? 0) > 0;
-    if (!tw || !hasPendingAnimation || !scr) return;
+    if (!tw || !hasPendingAnimation || !scr || !squareFamilySetupValid) return;
     const engScramble = toEngineText(scr);
     if (corner?.parseGroups && tw.setupMoves) {
       try { tw.setupMoves(parseCornerGroups(corner, engScramble).flat(), engScramble); } catch { /* keep last legal state */ }
       return;
     }
     tw.setup(engScramble);
-  }, [world, isTwistyMode, corner, setupDraft, toEngineText]);
+  }, [world, isTwistyMode, corner, setupDraft, squareFamilySetupValid, toEngineText]);
 
   // cubedb-style "反推打乱": invert + re-orient + solve the current solution to
   // recover the clean rotation-free scramble it solves, drop it into the
@@ -2212,9 +2277,9 @@ export default function PlayerControls({
     <div className="sim-player">
       <div className="sim-player-row sim-player-row--top">
         <div className="sim-player-hlwrap">
-          {ivySetupSpans && (
+          {setupValidationSpans && (
             <div className="sim-player-hl" aria-hidden="true">
-              {ivySetupSpans.map((s, i) => (
+              {setupValidationSpans.map((s, i) => (
                 <span key={i} className={s.bad ? 'bad' : undefined}>{s.text}</span>
               ))}
             </div>
@@ -2224,7 +2289,8 @@ export default function PlayerControls({
             defaultValue={setupDraft}
             rows={1}
             spellCheck={false}
-            className={ivySetupSpans ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
+            className={setupValidationSpans ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
+            aria-invalid={squareFamilySpec ? !squareFamilySetupValid : undefined}
             placeholder={t('打乱', 'Scramble')}
             onInput={(e) => {
               const el = e.currentTarget;
@@ -2273,7 +2339,7 @@ export default function PlayerControls({
           type="button"
           className="sim-player-scramble"
           onClick={handlePlayScramble}
-          disabled={!setupDraft.trim()}
+          disabled={!setupDraft.trim() || !squareFamilySetupValid}
           title={t('动画展示打乱', 'Animate scramble')}
           aria-label={t('动画展示打乱', 'Animate scramble')}
         >
@@ -2486,8 +2552,8 @@ export default function PlayerControls({
             onChange={setLiveReduce}
           />
         )}
-        {!isSq1 && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
-        {!isSq1 && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
+        {!isSquarePuzzle && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
+        {!isSquarePuzzle && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
         <button onClick={tool(() => '')} title={t('清空', 'Clear')}><Eraser size={13} />{t('清空', 'Clear')}</button>
         <button
           onClick={handleCopyLink}
@@ -2821,7 +2887,7 @@ function PercentRow({
  *    所以左右按渲染路径二选一。上下正值 = 俯视(相机在上)。
  *  - TPS → 每秒公式 token 数:引擎按真实 elapsed time 推进;cubing.js 使用相同精确倍率。 */
 // 灵敏度 → 相对默认(滑杆 50)的倍率。它同时驱动三种手感 —— 拖贴纸转层的角速度
-// (controller.sensitivity)、拖空白转视角的 rad/px(mapOrbitK)、SQ1 拖拽(mapTurnDragFactor)
+// (controller.sensitivity)、拖空白转视角的 rad/px(mapOrbitK)、SQ1 / SQ2 / SQ4 拖拽(mapTurnDragFactor)
 // —— 三者都是 mapSensitivity(v) 的常数倍,所以只有"相对默认几倍"对三条路径同时精确;
 // 标成 °/px 之类的物理量只有转视角那条对得上,拖贴纸会对不上(它还受透视/缩放影响)。
 // mapSensitivity 是几何映射(每 25 格 ×2),倍率 = 2^((v-50)/25),0.25×~4×。
@@ -3714,7 +3780,7 @@ function PuzzleSettings({
                 value={typeof puzzleKind === 'number' ? 'nxn' : String(puzzleKind)}
                 isZh={isZh}
                 onChange={(v) => {
-                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'mirror2' || v === 'clock' || v === 'custom') onPuzzleChange(v);
+                  if (v === 'sq1' || v === 'sq2' || v === 'sq4' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'mirror2' || v === 'clock' || v === 'custom') onPuzzleChange(v);
                   else if (isPgPuzzleId(v)) onPuzzleChange(v as PgPuzzleId);
                   else onPuzzleChange(order || 3);
                 }}
@@ -3767,7 +3833,7 @@ function PuzzleSettings({
               title={hint(caps.supports.sensitivity) ?? (settings.pointerTurns === false
                 // 手拧关 → 拖层/SQ1 两条路径不再产生 move,只剩转视角,单位含义随之收窄(仍然可调)。
                 ? t('跟手倍率(相对默认):手拧已关,当前只作用于拖动转视角', 'Responsiveness relative to the default — with drag-turn off it only scales view rotation')
-                : t('跟手倍率(相对默认):同时作用于拖层转动、拖空白转视角、SQ1 拖拽', 'Responsiveness relative to the default — scales layer drags, view drags and SQ1 drags alike'))} />
+                : t('跟手倍率(相对默认):同时作用于拖层转动、拖空白转视角、SQ1 / SQ2 / SQ4 拖拽', 'Responsiveness relative to the default — scales layer drags, view drags and SQ1 / SQ2 / SQ4 drags alike'))} />
             <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} disabled={!caps.supports.scale} unit={UNIT_SCALE} title={hint(caps.supports.scale) ?? t('缩放倍率', 'Zoom factor')} />
             <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} disabled={!caps.supports.perspective} unit={UNIT_FOCAL} title={hint(caps.supports.perspective) ?? t('35mm 等效焦距(小 = 广角畸变强,大 = 接近正交)', '35mm-equivalent focal length (low = wide-angle distortion, high = near-orthographic)')} />
             <Slider label={t('TPS', 'TPS')} value={settings.speed} onChange={(v) => set('speed', v)} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />

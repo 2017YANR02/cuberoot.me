@@ -8,6 +8,7 @@ import * as THREE from "three";
 // 注入 Controller;SimPage 另注入 handsFactory / smplxLoader(只有它有手/全身 UI)。
 import type Controller from "./nxn/controller";
 import Sq1Cube from "./sq1/Sq1Cube";
+import SquareFamilyCube from "./squareFamily/SquareFamilyCube";
 import IvyCube from "./ivy/IvyCube";
 import DinoCube from "./dino/DinoCube";
 import RediCube from "./redi/RediCube";
@@ -38,7 +39,7 @@ export interface SmplxBodyAsset { geometry: THREE.BufferGeometry; heightM: numbe
  *  mesh-less Group; the picture comes from the DOM overlay `SimClockBoard`. It still
  *  lives here so `world.cube` / the twister contract hold and the player controls drive
  *  it unchanged. */
-export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'clock';
+export type PuzzleKind = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'clock';
 
 export default class World {
   public width = 1;
@@ -50,7 +51,7 @@ export default class World {
   /** Polymorphic cube. NxN puzzles use Cube; SQ1 uses Sq1Cube; Ivy uses IvyCube;
    *  Dino uses DinoCube. Consumers that reach into NxN-specific fields
    *  (instancedRenderer, table, locks) must first check `world.puzzleKind` is a number. */
-  public cube!: Cube | Sq1Cube | IvyCube | DinoCube | RediCube | RexCube | HeliCube | GearCube | SkewbCube | PyraCube | MegaminxCube | FtoCube | ClockBoard;
+  public cube!: Cube | Sq1Cube | SquareFamilyCube | IvyCube | DinoCube | RediCube | RexCube | HeliCube | GearCube | SkewbCube | PyraCube | MegaminxCube | FtoCube | ClockBoard;
 
   public ambient: THREE.AmbientLight;
   public directional: THREE.DirectionalLight;
@@ -60,6 +61,7 @@ export default class World {
 
   private cubes: Cube[] = [];
   private sq1Cube: Sq1Cube | null = null;
+  private squareFamilyCubes: Partial<Record<'sq2' | 'sq4', SquareFamilyCube>> = {};
   private ivyCube: IvyCube | null = null;
   private dinoCube: DinoCube | null = null;
   private rediCube: RediCube | null = null;
@@ -196,9 +198,12 @@ export default class World {
     return this.cube.dirty;
   }
 
-  /** Unified puzzle switch. Pass a number for NxN, 'sq1' for Square-1. */
+  /** Unified puzzle switch. Pass a number for NxN or a named in-house puzzle. */
   setPuzzle(kind: PuzzleKind): void {
     if (this.cube) {
+      // SQ2/SQ4 instances are cached. Settle their global tween before taking the
+      // cube off-scene so it cannot keep mutating invisibly and reappear polluted.
+      if (this.cube instanceof SquareFamilyCube) this.cube.finishAnimations();
       this.scene.remove(this.cube);
     }
     if (kind === 'sq1') {
@@ -210,6 +215,15 @@ export default class World {
       // SQ1: Controller reaches into cube.table.groups (NxN layer state) on
       // empty-space drag, which Sq1Cube doesn't have. Disable it; SimPage
       // installs a separate sq1 drag-rotate handler that updates this.cube.rotation.
+      if (this.controller) this.controller.disable = true;
+      this._ensureSq1Lights();
+    } else if (kind === 'sq2' || kind === 'sq4') {
+      if (this.squareFamilyCubes[kind] == null) {
+        const cube = new SquareFamilyCube(kind);
+        cube.callbacks.push(this.callback);
+        this.squareFamilyCubes[kind] = cube;
+      }
+      this.cube = this.squareFamilyCubes[kind];
       if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
     } else if (kind === 'ivy') {
@@ -367,6 +381,12 @@ export default class World {
     // width/height default to 1, so this is safe before SimPage sets the real size.
     this.resize();
     this.dirty = true;
+  }
+
+  /** Release only the SQ2/SQ4 resources owned by this World instance. */
+  disposeSquareFamilyCubes(): void {
+    for (const cube of Object.values(this.squareFamilyCubes)) cube?.dispose();
+    this.squareFamilyCubes = {};
   }
 
   /** Legacy property — kept for back-compat. Number kinds only. */
@@ -529,7 +549,7 @@ export default class World {
     // ~166) — so at the NxN reference it overflows the viewport. SIZE*4.6 pulls
     // it back to the same ~0.85 fill the NxN view has. NxN path unchanged.
     const handsOn = this.hands?.isEnabled === true && this.puzzleKind === 3;
-    const isSq1 = this.puzzleKind === 'sq1';
+    const isSquare = this.puzzleKind === 'sq1' || this.puzzleKind === 'sq2' || this.puzzleKind === 'sq4';
     const isDino = this.puzzleKind === 'dino';
     const isRedi = this.puzzleKind === 'redi';
     const isRex = this.puzzleKind === 'rex';
@@ -542,7 +562,7 @@ export default class World {
     // dodecahedron reaches ~3.0·SIZE at its vertices; the FTO octahedron ~3.2·SIZE; ~4.0
     // frames them to the NxN-3 fill.
     // 手开着时把 3x3 取景拉宽(手/前臂环在魔方外围,SIZE*3 会顶出画框)。
-    const refHalf = isSq1 ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto) ? SIZE * 4.0 : handsOn ? SIZE * 3.9 : SIZE * 3;
+    const refHalf = isSquare ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto) ? SIZE * 4.0 : handsOn ? SIZE * 3.9 : SIZE * 3;
     const distance = refHalf * this.perspective * dolly;
     this.camera.position.x = this.panX;
     this.camera.position.y = this.panY;
@@ -559,7 +579,7 @@ export default class World {
     // = 魔方前 960)会把整个躯干裁掉只剩残臂。near 面位于世界 z=+margin×SIZE
     // (轴向情形,与 dolly 无关)—— 人体最深点(肩背/头后)z 可达 ~50×SIZE,
     // margin 40 恰在头中间切一刀(2026-07-12 拉远「无头人」实测),58 整体罩住。
-    const nearMargin = handsOn ? (this.handsFullBodyWanted ? 58 : 15) : isSq1 || isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto ? 5 : 4;
+    const nearMargin = handsOn ? (this.handsFullBodyWanted ? 58 : 15) : isSquare || isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto ? 5 : 4;
     this.camera.near = Math.max(distance - SIZE * nearMargin, SIZE * 0.4);
     // 全身人物:人体站在魔方后方(−z 纵深 ~1m ≈ 数十 SIZE),far 随开关放宽
     // (按意愿而非加载完成算 —— 资产异步就位时不再有 resize 时机)。swap 背视

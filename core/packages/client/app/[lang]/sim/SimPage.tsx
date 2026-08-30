@@ -52,11 +52,22 @@ import CubeGroup from './engine/nxn/group';
 import Sq1Cube from './engine/sq1/Sq1Cube';
 import tweener, { type Tween } from './engine/tweener';
 import {
-  sq1DragStart, sq1DragDelta, sq1DragApply, sq1DragCommit, sq1DragSnapBack,
-  sq1SliceLiveStart, sq1SliceLiveApply, sq1SliceLiveSnapBack,
-  type Sq1DragStart, type Sq1TurnDrag, type Sq1SliceLive,
-} from './engine/sq1/sq1Drag';
-import { moveToString as sq1MoveToString, isSlashValid as sq1SlashValid } from './engine/sq1/sq1State';
+  isSquarePuzzleCube,
+  isSquarePuzzleKind,
+  squareDragApply,
+  squareDragCommit,
+  squareDragDelta,
+  squareDragSnapBack,
+  squareDragStart,
+  squareSlashValid,
+  squareSliceLiveApply,
+  squareSliceLiveSnapBack,
+  squareSliceLiveStart,
+  squareTwistSlice,
+  type SquareDragStart,
+  type SquareSliceLive,
+  type SquareTurnDrag,
+} from './engine/squareDragRouter';
 import GearCube from './engine/gear/GearCube';
 import { gearMoveToString, parseGearMoves } from './engine/gear/gearState';
 import {
@@ -304,7 +315,7 @@ export default function SimPage() {
     if (imageMode) return 'fto';
     const raw = query.puzzle;
     if (!raw) return NXN_ORDER_DEFAULT;
-    if (raw === 'sq1') return 'sq1';
+    if (raw === 'sq1' || raw === 'sq2' || raw === 'sq4') return raw;
     if (raw === 'ivy') return 'ivy';
     if (raw === 'dino') return 'dino';
     if (raw === 'redi') return 'redi';
@@ -902,12 +913,12 @@ export default function SimPage() {
     let sq1Rotating = false;
     let sq1LastX = 0;
     let sq1LastY = 0;
-    let sq1Drag: Sq1DragStart | null = null;
+    let sq1Drag: SquareDragStart | null = null;
     let sq1DragLastDelta = 0;
     // Debug hold-partial: live-tracked SQ1 slice flip. While set, pointermove maps
     // vertical drag → v∈[0,1] and flips the east half live; pointerup freezes it
     // (no commit). Only the slice needs this — turns ride sq1Drag (sq1DragApply).
-    let sq1Slice: Sq1SliceLive | null = null;
+    let sq1Slice: SquareSliceLive | null = null;
     const SQ1_DRAG_THRESHOLD_PX = 4;
     let sq1Pending = false;
     let sq1DownX = 0;
@@ -939,7 +950,7 @@ export default function SimPage() {
         renderer.domElement.setPointerCapture(e.pointerId);
         return;
       }
-      if (worldRef.current?.puzzleKind === 'sq1' && (e.pointerType !== 'mouse' || e.button === 0)) {
+      if (isSquarePuzzleKind(worldRef.current?.puzzleKind) && (e.pointerType !== 'mouse' || e.button === 0)) {
         const isTouchMulti = e.pointerType === 'touch' && activePointers.size >= 1;
         if (!isTouchMulti) {
           const r0 = renderer.domElement.getBoundingClientRect();
@@ -958,7 +969,7 @@ export default function SimPage() {
         if (e.pointerType === 'touch') {
           activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
           if (activePointers.size === 2) {
-            if (sq1Slice) { sq1SliceLiveSnapBack(sq1Slice); sq1Slice = null; } // pinch cancels a live slice
+            if (sq1Slice) { squareSliceLiveSnapBack(sq1Slice); sq1Slice = null; } // pinch cancels a live slice
             sq1Drag = null;
             sq1Rotating = false;
             sq1Pending = false;
@@ -1002,22 +1013,22 @@ export default function SimPage() {
         world.resize();
         return;
       }
-      if (worldRef.current?.puzzleKind === 'sq1') {
+      if (isSquarePuzzleKind(worldRef.current?.puzzleKind)) {
         const rmove = renderer.domElement.getBoundingClientRect();
         const localX = e.clientX - rmove.left;
         const localY = e.clientY - rmove.top;
         if (sq1Slice) {
-          sq1SliceLiveApply(sq1Slice, localY);
+          squareSliceLiveApply(sq1Slice, localY);
           worldRef.current.dirty = true;
           return;
         }
         if (sq1Drag && sq1Drag.kind === 'turn') {
           const w = worldRef.current;
-          const d = sq1DragDelta(sq1Drag, w.scene, w.camera, localX, localY, w.width, w.height);
+          const d = squareDragDelta(sq1Drag, w.scene, w.camera, localX, localY, w.width, w.height);
           if (d != null) {
             const scaled = d * mapTurnDragFactor(settingsRef.current.sensitivity);
             sq1DragLastDelta = scaled;
-            sq1DragApply(sq1Drag, scaled);
+            squareDragApply(sq1Drag, scaled);
             w.dirty = true;
           }
           return;
@@ -1038,51 +1049,53 @@ export default function SimPage() {
             const w = worldRef.current;
             const c = w.cube;
             // 手拧锁:不解析抓取 → sq1Drag 留 null → 落到下方 orbit 分支。
-            if (c instanceof Sq1Cube && settingsRef.current.pointerTurns !== false) {
+            if (isSquarePuzzleCube(c) && settingsRef.current.pointerTurns !== false) {
               c.twister.finish();
               tweener.finish();
-              sq1Drag = sq1DragStart(c, w.scene, w.camera, sq1DownX, sq1DownY, w.width, w.height);
+              sq1Drag = squareDragStart(c, w.scene, w.camera, sq1DownX, sq1DownY, w.width, w.height);
               // If a prior hold-partial freeze is live, sq1DragStart just captured
               // its rotated pivots as the start pose — snap back & re-capture clean.
               // (Orbit returns null → freeze preserved so you can inspect it.)
               if (sq1Drag && partialSnapBackRef.current) {
                 clearPartialFreeze();
                 if (sq1Drag.kind === 'turn') {
-                  sq1Drag = sq1DragStart(c, w.scene, w.camera, sq1DownX, sq1DownY, w.width, w.height);
+                  sq1Drag = squareDragStart(c, w.scene, w.camera, sq1DownX, sq1DownY, w.width, w.height);
                 }
               }
             }
             if (sq1Drag?.kind === 'slice') {
-              const c2 = w.cube as Sq1Cube;
+              const c2 = w.cube;
+              if (!isSquarePuzzleCube(c2)) return;
               const sliceDir: 1 | -1 = (localY < sq1DownY) ? -1 : 1;
-              if (settingsRef.current.holdPartialTurn && sq1SlashValid(c2.state)) {
+              if (settingsRef.current.holdPartialTurn && squareSlashValid(c2)) {
                 clearPartialFreeze();
-                sq1Slice = sq1SliceLiveStart(c2, sliceDir, sq1DownY);
+                sq1Slice = squareSliceLiveStart(c2, sliceDir, sq1DownY);
               } else {
-                const ok = c2.twister.twist({ kind: 'slice' }, false, true, sliceDir);
-                if (ok) userMoveRef.current?.(new TwistAction('/', false, 1));
+                const ok = squareTwistSlice(c2, sliceDir);
+                if (ok) userMoveRef.current?.('/');
               }
               sq1Drag = null;
             } else if (sq1Drag) {
               if (sq1Drag.startEastHalf && Math.abs(dy) > Math.abs(dx) * 1.5) {
-                const c2 = w.cube as Sq1Cube;
+                const c2 = w.cube;
+                if (!isSquarePuzzleCube(c2)) return;
                 const sliceDir: 1 | -1 = (dy < 0) ? -1 : 1;
-                if (settingsRef.current.holdPartialTurn && sq1SlashValid(c2.state)) {
-                  sq1DragSnapBack(sq1Drag); // undo the small cap rotation before flipping
+                if (settingsRef.current.holdPartialTurn && squareSlashValid(c2)) {
+                  squareDragSnapBack(sq1Drag); // undo the small cap rotation before flipping
                   clearPartialFreeze();
-                  sq1Slice = sq1SliceLiveStart(c2, sliceDir, sq1DownY);
+                  sq1Slice = squareSliceLiveStart(c2, sliceDir, sq1DownY);
                 } else {
-                  const ok = c2.twister.twist({ kind: 'slice' }, false, true, sliceDir);
-                  if (ok) userMoveRef.current?.(new TwistAction('/', false, 1));
+                  const ok = squareTwistSlice(c2, sliceDir);
+                  if (ok) userMoveRef.current?.('/');
                 }
                 sq1Drag = null;
                 return;
               }
-              const d = sq1DragDelta(sq1Drag, w.scene, w.camera, localX, localY, w.width, w.height);
+              const d = squareDragDelta(sq1Drag, w.scene, w.camera, localX, localY, w.width, w.height);
               if (d != null) {
                 const scaled = d * mapTurnDragFactor(settingsRef.current.sensitivity);
                 sq1DragLastDelta = scaled;
-                sq1DragApply(sq1Drag, scaled);
+                squareDragApply(sq1Drag, scaled);
                 w.dirty = true;
               }
             } else {
@@ -1128,15 +1141,15 @@ export default function SimPage() {
         const w = worldRef.current;
         if (w) {
           const c = w.cube;
-          if (c instanceof Sq1Cube) {
+          if (isSquarePuzzleCube(c)) {
             if (settingsRef.current.holdPartialTurn) {
               // Hold-partial: freeze where released (pivots already live-dragged),
               // register snap-back, do NOT commit.
-              const frozen: Sq1TurnDrag = sq1Drag;
-              partialSnapBackRef.current = () => sq1DragSnapBack(frozen);
+              const frozen: SquareTurnDrag = sq1Drag;
+              partialSnapBackRef.current = () => squareDragSnapBack(frozen);
             } else {
-              const move = sq1DragCommit(c, sq1Drag, sq1DragLastDelta);
-              if (move) userMoveRef.current?.(new TwistAction(sq1MoveToString(move), false, 1));
+              const move = squareDragCommit(c, sq1Drag, sq1DragLastDelta);
+              if (move) userMoveRef.current?.(move);
             }
           }
         }
@@ -1150,7 +1163,7 @@ export default function SimPage() {
         // Hold-partial: freeze the flip where released — keep the live pivots,
         // register a snap-back (next gesture / toggle-off restores them), no commit.
         const frozen = sq1Slice;
-        partialSnapBackRef.current = () => sq1SliceLiveSnapBack(frozen);
+        partialSnapBackRef.current = () => squareSliceLiveSnapBack(frozen);
         sq1Slice = null;
         sq1MovedPastThreshold = false;
         sq1Pending = false;
@@ -1163,14 +1176,14 @@ export default function SimPage() {
         if (settingsRef.current?.dragEmpty === 'rotate') snapViewToQuadrant(world);
         try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
       }
-      if (sq1Pending && !sq1MovedPastThreshold && worldRef.current?.puzzleKind === 'sq1'
+      if (sq1Pending && !sq1MovedPastThreshold && isSquarePuzzleKind(worldRef.current?.puzzleKind)
         && settingsRef.current.pointerTurns !== false) {
         const w = worldRef.current;
-        if (w.cube instanceof Sq1Cube) {
-          const hit = sq1DragStart(w.cube, w.scene, w.camera, sq1DownX, sq1DownY, w.width, w.height);
+        if (isSquarePuzzleCube(w.cube)) {
+          const hit = squareDragStart(w.cube, w.scene, w.camera, sq1DownX, sq1DownY, w.width, w.height);
           if (hit?.kind === 'slice') {
-            const ok = w.cube.twister.twist({ kind: 'slice' }, false, true, 1);
-            if (ok) userMoveRef.current?.(new TwistAction('/', false, 1));
+            const ok = squareTwistSlice(w.cube, 1);
+            if (ok) userMoveRef.current?.('/');
           }
         }
       }
@@ -1264,6 +1277,7 @@ export default function SimPage() {
 
       cleanup = () => {
         cancelAnimationFrame(raf);
+        world.disposeSquareFamilyCubes();
         window.removeEventListener('resize', resize);
         ro.disconnect();
         renderer.domElement.removeEventListener('wheel', onWheel);
