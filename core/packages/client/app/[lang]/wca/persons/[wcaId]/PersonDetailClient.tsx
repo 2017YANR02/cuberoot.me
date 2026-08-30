@@ -20,6 +20,7 @@ import {
 import { loadFlagData } from '@/lib/country-flags';
 import { listRecons } from '@/lib/recon-api';
 import { buildReconAttemptMap, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import PersonHero from '@/components/persons/sections/PersonHero';
 import PersonUpcomingComps from '@/components/persons/sections/PersonUpcomingComps';
 import PersonPRTable from '@/components/persons/sections/PersonPRTable';
@@ -117,8 +118,8 @@ export default function PersonDetailClient() {
     return () => { cancelled = true; };
   }, [wcaId, reloadKey]);
 
-  const personName = profile?.person?.name ?? '';
-  useDocumentTitle(personName ? `${personName} · WCA` : '', personName ? `${personName} · WCA` : '');
+  const personTitle = profile ? displayCuberName(profile.person.name, isZh) : '';
+  useDocumentTitle(personTitle, personTitle);
 
   if (error) {
     return (
