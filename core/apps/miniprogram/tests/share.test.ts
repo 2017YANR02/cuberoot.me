@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { showPublicShareMenu, toTimelineShare } from '../src/lib/share';
+import { showFriendShareMenu, showPublicShareMenu, toTimelineShare } from '../src/lib/share';
 
 describe('mini program sharing', () => {
   afterEach(() => {
@@ -16,6 +16,15 @@ describe('mini program sharing', () => {
     expect(showShareMenu).toHaveBeenCalledWith({
       menus: ['shareAppMessage', 'shareTimeline'],
     });
+  });
+
+  it('keeps web-view pages on friend sharing only', () => {
+    const showShareMenu = vi.fn();
+    vi.stubGlobal('wx', { showShareMenu });
+
+    showFriendShareMenu();
+
+    expect(showShareMenu).toHaveBeenCalledWith({ menus: ['shareAppMessage'] });
   });
 
   it('keeps only the current-page query in timeline share content', () => {

@@ -9,6 +9,7 @@ export interface WeChatMiniProgramApi {
   navigateTo(options: {
     url: string;
     fail?(error: { errMsg?: string }): void;
+    success?(): void;
   }): void;
 }
 

@@ -209,21 +209,34 @@ const EQUIPMENT_GROUPS: readonly EquipmentGroup[] = [
         detail: { zh: 'Windows 11 笔记本电脑', en: 'Windows 11 laptop' },
         amount: { zh: '¥25,000', en: 'CN¥25,000' },
       },
+      {
+        name: { zh: 'Mac mini（M5 Pro）', en: 'Mac mini (M5 Pro)' },
+        detail: {
+          zh: '18 核 CPU、20 核 GPU、64GB 统一内存、1TB 存储',
+          en: '18-core CPU, 20-core GPU, 64GB unified memory, 1TB storage',
+        },
+        amount: { zh: '¥24,249', en: 'CN¥24,249' },
+        href: 'https://www.apple.com.cn/shop/buy-mac/mac-mini/m5-pro-chip-18-core-cpu-20-core-gpu-64gb-memory-1tb-storage',
+      },
+      {
+        name: { zh: 'MacBook Pro 13 英寸（2020）', en: '13-inch MacBook Pro (2020)' },
+        detail: {
+          zh: '四个雷雳 3 端口；2 GHz 四核 Intel Core i5、16GB LPDDR4X、Intel Iris Plus Graphics；截图未显示存储容量',
+          en: 'Four Thunderbolt 3 ports; 2GHz quad-core Intel Core i5, 16GB LPDDR4X, Intel Iris Plus Graphics; storage capacity not shown',
+        },
+        amount: { zh: '首发 ¥14,499 起', en: 'Launched from CN¥14,499' },
+        href: 'https://support.apple.com/zh-cn/111339',
+      },
     ],
   },
   {
-    category: { zh: '播放与剪辑软件', en: 'Playback and editing software' },
+    category: { zh: '播放软件', en: 'Playback software' },
     items: [
       {
         name: { zh: 'K-Lite Codec Pack', en: 'K-Lite Codec Pack' },
         detail: { zh: '媒体播放解码包', en: 'Media playback codec bundle' },
-        amount: { zh: '未标价', en: 'Price not listed' },
+        amount: { zh: '免费', en: 'Free' },
         href: 'https://codecguide.com/download_kl.htm',
-      },
-      {
-        name: { zh: '剪映', en: 'CapCut Chinese version' },
-        detail: { zh: '视频剪辑软件，费用已计入固定支出', en: 'Video editing software; cost included in recurring expenses' },
-        amount: { zh: '¥208/年', en: 'CN¥208/year' },
       },
     ],
   },
@@ -349,15 +362,28 @@ export default function InfrastructurePage() {
           <div className="infra-section-heading">
             <span>02</span>
             <div>
-              <h2 id="infra-expenses-title">{localize(lang, { zh: '固定支出', en: 'Recurring expenses' })}</h2>
+              <h2 id="infra-expenses-title">{localize(lang, { zh: '支出总览', en: 'Expense overview' })}</h2>
               <p>
                 {localize(lang, {
-                  zh: '当前已知的服务器、开发工具、应用发布与平台认证费用。',
-                  en: 'Known recurring costs for servers, development tooling, app distribution, and platform verification.',
+                  zh: '一次性设备费用与年度固定支出分开统计。',
+                  en: 'One-time equipment costs and annual recurring expenses are tracked separately.',
                 })}
               </p>
             </div>
           </div>
+          <dl className="infra-specs infra-cost-summary">
+            <div>
+              <dt>{localize(lang, { zh: '一次性总费用', en: 'One-time total' })}</dt>
+              <dd>{localize(lang, { zh: '¥124,954 起', en: 'From CN¥124,954' })}</dd>
+            </div>
+            <div>
+              <dt>{localize(lang, { zh: '年度固定支出', en: 'Annual recurring total' })}</dt>
+              <dd>{localize(lang, { zh: '约 ¥22,706/年', en: 'Approx. US$3,347/year' })}</dd>
+            </div>
+          </dl>
+          <h3 className="infra-expense-detail-title">
+            {localize(lang, { zh: '年度支出明细', en: 'Annual expense details' })}
+          </h3>
           <dl className="infra-expenses">
             {EXPENSES.map((expense) => (
               <div key={expense.name.en}>
@@ -369,16 +395,10 @@ export default function InfrastructurePage() {
               </div>
             ))}
           </dl>
-          <div className="infra-expense-total">
-            <span>{localize(lang, { zh: '年度固定支出', en: 'Annual recurring total' })}</span>
-            <strong>
-              {localize(lang, { zh: '约 ¥22,706/年', en: 'Approx. US$3,347/year' })}
-            </strong>
-          </div>
           <p className="infra-expense-note">
             {localize(lang, {
-              zh: '美元支出按 2026-08-27 人民币汇率中间价 1 美元 = 6.7840 元换算；实际支出会随汇率变动，不含用量计费、税费与一次性支出。',
-              en: 'CNY costs use the 2026-08-27 RMB central parity rate of US$1 = CN¥6.7840. Actual costs vary with exchange rates; usage charges, taxes, and one-time costs are excluded.',
+              zh: '一次性总费用按下方所有已标价设备合计，包含曾用 Canon EOS R6 与 Mac mini。MacBook Pro 按同配置 512GB 基础机型首发价 ¥14,499 计入；截图未显示存储容量，因此总额为最低值。两台未标价手机与免费软件不计入。年度费用按 2026-08-27 人民币汇率中间价 1 美元 = 6.7840 元换算，实际支出会随汇率变动，不含用量计费与税费。',
+              en: 'The one-time total includes every priced item below, including the former Canon EOS R6 and Mac mini. The MacBook Pro is counted at the CN¥14,499 launch price of the 512GB base configuration; because the screenshot does not show its storage capacity, this is a minimum total. The two unpriced phones and free software are excluded. Annual costs use the 2026-08-27 RMB central parity rate of US$1 = CN¥6.7840 and vary with exchange rates; usage charges and taxes are excluded.',
             })}
           </p>
         </section>

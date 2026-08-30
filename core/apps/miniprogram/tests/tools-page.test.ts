@@ -6,7 +6,6 @@ interface ToolsPage {
   data: WebViewPageData;
   onLoad(options: Record<string, unknown>): void;
   onShareAppMessage(): WechatMiniprogram.Page.ICustomShareContent;
-  onShareTimeline(): WechatMiniprogram.Page.ICustomTimelineContent;
   setData(data: Partial<WebViewPageData>): void;
 }
 
@@ -50,8 +49,9 @@ describe('mini program tools page', () => {
     });
     expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '魔方工具' });
     expect(showShareMenu).toHaveBeenCalledWith({
-      menus: ['shareAppMessage', 'shareTimeline'],
+      menus: ['shareAppMessage'],
     });
+    expect(page).not.toHaveProperty('onShareTimeline');
   });
 
   it('shares the tools tab instead of a nested generic web page', async () => {
@@ -68,10 +68,6 @@ describe('mini program tools page', () => {
       imageUrl: '/assets/share-cover.png',
       title: 'CubeRoot 魔方根：魔方工具',
       path: '/pages/tools/index',
-    });
-    expect(page.onShareTimeline()).toEqual({
-      imageUrl: '/assets/share-cover.png',
-      title: 'CubeRoot 魔方根：魔方工具',
     });
   });
 });

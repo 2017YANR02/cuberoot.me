@@ -4,6 +4,7 @@
     "pages/smart-cube/index",
     "pages/tools/index",
     "pages/account/index",
+    "pages/share/index",
     "pages/web/index"
   ],
   "darkmode": true,

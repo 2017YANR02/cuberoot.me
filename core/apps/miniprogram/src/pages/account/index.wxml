@@ -1,99 +1,43 @@
-<view class="page account-page">
+<import src="../../templates/web-route-view.wxml" />
+<view wx:if="{{loginRequired}}" class="page account-login-page">
+  <text class="eyebrow">ACCOUNT</text>
   <text class="page-title">我的</text>
-
-  <block wx:if="{{storageUnavailable && !loggedIn}}">
-    <text class="page-intro account-intro">设备存储暂时不可用，当前无法确认登录状态。请重新读取后再继续。</text>
-  </block>
-
-  <block wx:elif="{{loggedIn}}">
-    <view class="identity">
-      <text class="identity-mark" aria-hidden="true">{{initial}}</text>
-      <view class="identity-copy">
-        <text class="identity-name">{{displayName}}</text>
-        <text class="identity-wca" wx:if="{{wcaId}}">{{wcaId}}</text>
-        <text class="identity-wca" wx:else>尚未绑定 WCA ID</text>
-      </view>
-    </view>
-
-    <button
-      class="account-link"
-      hover-class="press-feedback"
-      bindtap="openAccount"
-      aria-label="账号与登录"
-    >
-      <text class="account-link-title">账号与登录</text>
-      <text class="account-link-arrow" aria-hidden="true">›</text>
-    </button>
-  </block>
-
-  <block wx:else>
-    <text class="page-intro account-intro">登录后使用与网站相同的 CubeRoot 账号。已在网站通过微信登录过时，会自动识别为同一账号。</text>
-    <button
-      class="primary-button login-button"
-      hover-class="press-feedback"
-      disabled="{{busy}}"
-      bindtap="login"
-      aria-busy="{{busy}}"
-      aria-label="{{busy ? '微信登录处理中' : '微信登录'}}"
-    >
-      {{busy ? '登录中…' : '微信登录'}}
-    </button>
-    <text class="union-note">不会读取你的微信昵称或手机号。无法取得 UnionID 时会停止登录，避免创建重复账号。</text>
-  </block>
-
-  <view class="account-utility-row">
-    <button
-      class="text-button account-utility-action"
-      hover-class="press-feedback"
-      wx:if="{{loggedIn}}"
-      bindtap="logout"
-    >退出登录</button>
-    <text
-      class="account-utility-status {{statusError ? 'status-text--error' : ''}}"
-      wx:if="{{status}}"
-      aria-role="status"
-      aria-live="polite"
-      aria-atomic="true"
-    >{{status}}</text>
-    <button
-      class="text-button account-utility-action"
-      hover-class="press-feedback"
-      bindtap="openPrivacy"
-    >隐私说明</button>
-  </view>
+  <text class="page-intro">
+    登录后使用与网站相同的 CubeRoot 账号。已在网站通过微信登录过时，会自动识别为同一账号。
+  </text>
+  <button
+    wx:if="{{!loginStorageUnavailable}}"
+    class="primary-button account-login-button"
+    aria-busy="{{loginBusy}}"
+    aria-label="{{loginBusy ? '微信登录处理中' : '微信登录'}}"
+    disabled="{{loginBusy}}"
+    hover-class="press-feedback"
+    bindtap="loginWithWechat"
+  >
+    {{loginBusy ? '正在登录' : '微信登录'}}
+  </button>
+  <button
+    wx:else
+    class="primary-button account-login-button"
+    aria-label="重新读取设备登录状态"
+    hover-class="press-feedback"
+    bindtap="retryMiniProgramSession"
+  >
+    重新读取
+  </button>
   <text
-    class="status-text status-text--error account-action-status"
-    wx:if="{{actionStatus}}"
+    wx:if="{{loginError}}"
+    class="status-text status-text--error"
     aria-role="status"
     aria-live="polite"
     aria-atomic="true"
-  >{{actionStatus}}</text>
-  <button
-    class="text-button sync-retry-button"
-    hover-class="press-feedback"
-    wx:if="{{syncState === 'error'}}"
-    bindtap="retrySync"
-    aria-label="{{storageUnavailable ? '重新读取设备登录状态' : '重新确认账号状态'}}"
-  >{{storageUnavailable ? '重新读取' : '重新确认'}}</button>
-
-  <view class="account-contact">
-    <text class="account-contact-title">联系我</text>
-    <text class="account-contact-copy">微信：扫描二维码添加我</text>
-    <button
-      class="account-contact-site"
-      hover-class="press-feedback"
-      bindtap="openSupport"
-      aria-label="打开 CubeRoot 网站"
-    >
-      <text>网站：{{siteHost}}</text>
-      <text class="account-link-arrow" aria-hidden="true">›</text>
-    </button>
-    <image
-      class="account-contact-qr"
-      src="/assets/ruimin-wechat-qr.jpg"
-      mode="widthFix"
-      show-menu-by-longpress="{{true}}"
-      aria-label="微信二维码：魔方根"
-    />
-  </view>
+  >{{loginError}}</text>
+  <text class="account-login-note">
+    不会读取微信昵称或手机号。无法获得 UnionID 时会停止登录，避免创建重复账号。
+  </text>
 </view>
+<template
+  wx:else
+  is="web-route-view"
+  data="{{src: src, viewAttempt: viewAttempt, loadingTitle: loadingTitle, errorTitle: errorTitle, errorMessage: errorMessage, canRetry: canRetry}}"
+/>
