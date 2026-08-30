@@ -437,6 +437,10 @@ export function collectReleaseFailures({
     failures.push('src/app.json 必须开启 darkmode 并将 themeLocation 设为 theme.json。');
   }
 
+  if (appConfig?.lazyCodeLoading !== 'requiredComponents') {
+    failures.push('src/app.json 必须将 lazyCodeLoading 设为 requiredComponents。');
+  }
+
   const invalidThemeReferences = nativeThemeReferences
     .filter(([path, expected]) => valueAtPath(appConfig, path) !== expected)
     .map(([path]) => path);
