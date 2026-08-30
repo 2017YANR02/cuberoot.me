@@ -19,8 +19,8 @@ C++ 端的 6 个 analyzer + 表生成器已全部移植为 Rust,均 golden bit-e
 | pseudo_analyzer | XXXCross       | OK,env CUBE_ALLOW_HUGE_TABLES=1 | + pscross_E0E1E2 957 MB + C4C5C6 822 MB + mt_edge3/corn3 |
 | pair_analyzer   | 全 4 阶段      | OK,**golden bit-exact**(前 20 scramble),需 CUBE_ALLOW_HUGE_TABLES=1 | ~20 GB(2 张 huge + ins_C4 + pair) |
 | pseudo_pair_analyzer | 全 4 阶段 | OK,**golden bit-exact**(前 20 scramble),需 CUBE_ALLOW_HUGE_TABLES=1 | ~3 GB(全 pseudo 表 + 16 × ins/pspair) |
-| eo_cross_analyzer | 全 5 阶段    | OK,**golden bit-exact**(前 20 scramble),需 CUBE_ALLOW_HUGE_TABLES=1 | ~25 GB(全 cross 表 + EO 专属表) |
-| table_generator | -              | OK,批量顺序生成全 73 张表 | 全部 ~25 GB                   |
+| eo_cross_analyzer | 全 5 阶段    | 默认档 OK,**golden bit-exact**(前 20 scramble),需 CUBE_ALLOW_HUGE_TABLES=1；high-memory 档代码就绪、待 64 GB 机器验收 | 默认加载约 23.1 GB；含可选 diagonal 的默认 full 33.8 GB；high-memory full 43.2 GB |
+| table_generator | -              | 默认档批量顺序生成 73 张表；high-memory 自动追加 5 张，待硬件验收 | 默认档 ~25 GB；high-memory 另加 9.35 GB |
 
 底层 (cube_common / move_tables / prune_tables / prune_create / executor /
 cross_solver / xcross_solver) 全部完成,golden bit-exact。
@@ -149,7 +149,7 @@ pwsh verify.ps1 -Inputs scramble_5.txt   # 只跑某个输入
 | `CUBE_TABLE_DIR=<path>`    | 覆盖默认表目录 `./tables/`                        |
 | `CUBE_RUN_FULL_STD=1`      | 启用 std_analyzer XCross 阶段(+52 MB)           |
 | `CUBE_ALLOW_HUGE_TABLES=1` | 解锁 ≥800 MB pt 表的生成(默认 panic);pseudo XXXCross / std XXCross+ 都需要 |
-| `CUBE_TABLE_PROFILE=high-memory` | 配合现有 huge 开关为 `eo_cross_analyzer` 显式加载 64 GB 机器档；默认路径不探测该档文件 |
+| `CUBE_TABLE_PROFILE=auto\|default\|high-memory` | 表档位；默认 `auto`，总物理内存 ≥56 GiB 自动选择高内存档，识别失败回落默认档；另两值用于强制覆盖 |
 | `CUBE_PSEUDO_SKIP_XCROSS=1` | pseudo_analyzer 跳过 XCross + 下游               |
 | `CUBE_PSEUDO_SKIP_XXCROSS=1` | pseudo_analyzer 跳过 XXCross + 下游             |
 | `CUBE_PSEUDO_SKIP_XXXCROSS=1` | pseudo_analyzer 跳过 XXXCross(默认 skip 除非 huge 已开) |
@@ -170,7 +170,7 @@ pwsh verify.ps1 -Inputs scramble_5.txt   # 只跑某个输入
 | pair_analyzer | 完整 cascade | OK,golden bit-exact(前 20 scramble) |
 | eo_cross_analyzer | 完整 5 cascade | OK,golden bit-exact(前 20 scramble) |
 | pseudo_pair_analyzer | 完整 cascade | OK,golden bit-exact(前 20 scramble) |
-| table_generator | 独立 binary,顺序生成 36+ 表 | 独立 binary,顺序生成全 73 表 + C++ 式进度 |
+| table_generator | 独立 binary,顺序生成 36+ 表 | 独立 binary,默认档顺序生成 73 表；high-memory 档追加 5 表 + C++ 式进度 |
 
 详细差异和翻译决策见 `PORTING_NOTES.md`。
 
@@ -187,4 +187,4 @@ solver 系列(6 analyzer + table_generator)全部移植并 golden bit-exact。�
 - pair_analyzer:Phase 7,golden bit-exact(前 20 scramble,pair 25 列)
 - eo_cross_analyzer:Phase 8,golden bit-exact(前 20 scramble,eo 31 列)
 - pseudo_pair_analyzer:Phase 9,golden bit-exact(前 20 scramble,25 列;修了 ins_C_diff/pspair_CE 数组 corner/edge 转置 bug)
-- table_generator:顺序生成全 73 表,大表 C++ 式分布进度 + 原位打包(峰值 ~21GB)
+- table_generator:默认档顺序生成 73 表；high-memory 档追加 5 表（代码就绪、待 64 GB 机器验收）；既有大表使用 C++ 式分布进度 + 原位打包(默认档峰值 ~21GB)

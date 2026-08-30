@@ -285,7 +285,7 @@ mod manager {
         PspairCEStart = 45,
         _Last = 46, // 占位
 
-        // --- 显式 high-memory profile（默认生成/加载路径绝不触碰）---
+        // --- 自动或显式 high-memory profile ---
         EoXcrossSlot0HighMemory = 47,
         EoXcrossSlot1HighMemory = 48,
         EoXcrossSlot2HighMemory = 49,
@@ -463,12 +463,9 @@ mod manager {
     }
 
     fn high_memory_profile_check(id: usize) {
-        let enabled = std::env::var("CUBE_TABLE_PROFILE")
-            .map(|v| v == "high-memory")
-            .unwrap_or(false);
-        if !enabled {
+        if !crate::table_profile::high_memory_enabled() {
             panic!(
-                "{} belongs to the optional high-memory profile; set CUBE_TABLE_PROFILE=high-memory to opt in",
+                "{} requires a detected 64 GB-class machine or CUBE_TABLE_PROFILE=high-memory",
                 TABLE_FILES[id]
             );
         }
