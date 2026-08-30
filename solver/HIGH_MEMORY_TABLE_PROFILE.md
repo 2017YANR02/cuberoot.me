@@ -2,7 +2,7 @@
 
 ## 背景与边界
 
-现有 32 GB 机器仍是未来一个月的正常计算环境。默认表集、`CUBE_ALLOW_HUGE_TABLES`、统计管道、内存口径、已有生成器和吞吐快照全部保留。新表只属于显式 `CUBE_TABLE_PROFILE=high-memory` 档；默认档即使看到文件也不探测、不生成、不加载。
+现有 32 GB 机器仍是未来一个月的正常计算环境。默认表集、`CUBE_ALLOW_HUGE_TABLES`、统计管道、内存口径、已有生成器和吞吐快照全部保留。程序按总物理内存自动选档：低于 56 GiB 使用默认档，达到 56 GiB 使用 `high-memory` 档；识别失败时安全回落默认档。默认档即使看到新文件也不探测、不生成、不加载。
 
 本轮只扩大 `333-eo`。现有快照中它仅 `0.9/s`，明显低于 `333` 整解的 `4.5/s`、`333-f2leo` 的 `31/s`、`333-pseudo_pair` 的 `47/s` 和 `333-pseudo_f2leo` 的 `81/s`。容量变大不是每个求解器都加表的理由；其他候选先留在待办，等 EO 实测证明收益后再审核。
 
@@ -22,25 +22,37 @@
 
 这是会被加载的完整表文件口径，不等于 RSS，mmap 工作集和生成峰值。后两者必须在新机器上独立测量，不用文件大小代替。
 
-## 启用和生成
+## 自动选档和生成
 
-只在 64 GB 机器到位后，从 `solver/` 运行：
+`CUBE_TABLE_PROFILE` 是可选覆盖，而不是日常必填开关：
 
-```powershell
-$env:CUBE_TABLE_PROFILE = 'high-memory'
-$env:RAYON_NUM_THREADS = '14'
-cargo run -j 14 --release --bin table_generator_high_memory
+- 未设置或设为 `auto`：按总物理内存自动选择。
+- `default`：强制原始档，用于 64 GB 机器上的基线对照。
+- `high-memory`：强制大档，仅用于人工验收或识别失败时。
+
+64 GB Mac 到位后，在未设置 `CUBE_DISABLE_HUGE_TABLES=1` 的前提下，从 `solver/` 运行普通总生成器即可自动追加 5 张新表：
+
+```bash
+RAYON_NUM_THREADS=14 cargo run -j 14 --release --bin table_generator
 ```
 
-专用生成器会串行生成四张 PDB，且将 Rayon 上限锁在 14 线程。`eo_cross_analyzer` 仍按现有约束要求 `CUBE_ALLOW_HUGE_TABLES=1`，并仅在 `CUBE_TABLE_PROFILE=high-memory` 同时存在时加载新表；去掉 profile 即回到当前默认路径。
+PowerShell 等价命令：
+
+```powershell
+$env:RAYON_NUM_THREADS = '14'
+cargo run -j 14 --release --bin table_generator
+```
+
+已有默认表、只需补这 5 张新表时，可把 binary 改为 `table_generator_high_memory`。两种入口都会把 Rayon 上限钳在 14 线程，并串行生成四张 PDB。`eo_cross_analyzer` 仍按现有约束要求 `CUBE_ALLOW_HUGE_TABLES=1`，但表档位由同一套自动识别选择。
 
 ## 状态
 
 | 项目 | 状态 | 验收证据 |
 | --- | --- | --- |
-| 默认 32 GB 路径 | 保留 | 未设置 `CUBE_TABLE_PROFILE` 时不访问任何新表文件 |
+| 默认 32 GB 路径 | 保留 | 自动识别低于 56 GiB 时不访问任何新表文件 |
 | EO XCross 高内存坐标 | 代码就绪 | 四张物理槽表，搜索使用全局对称帧更新 |
-| 专用生成器 | 代码就绪 | 显式 profile、串行 PDB、14 线程上限 |
+| 自动选档 | 代码就绪 | Windows、macOS、Linux 读取总物理内存；识别失败回落默认档 |
+| 生成器 | 代码就绪 | 普通生成器按档追加，专用生成器可单独补表；PDB 串行生成 |
 | 表文件生成 | 未执行 | 等待 64 GB 机器 |
 | 正确性和性能验收 | 未执行 | 按要求本轮不测试 |
 | `/dev/solvers` | 已登记计划 | 保留当前快照，计划档与实测档分开 |
@@ -48,7 +60,8 @@ cargo run -j 14 --release --bin table_generator_high_memory
 ## 新机器到位后的验收清单
 
 - 核对 5 个新文件的 header、精确字节数和 SHA-256。
-- 不设 profile 时，在新文件已存在的情况下确认默认分析器不打开它们。
+- 在 32 GB 机器自动档和 64 GB 机器强制 `CUBE_TABLE_PROFILE=default` 两种情况下，确认新文件已存在也不会被打开。
+- 在 64 GB Mac 确认未设置 profile 时日志选择 `high-memory`，且报告的来源是物理内存自动识别。
 - 对同一固定 fixture 比较默认档与历史 CSV，必须逐位一致。
 - 高内存档对同一 fixture 输出也必须逐位一致，只允许节点数和用时改变。
 - 分别记录生成峰值、稳态 RSS、mmap 工作集、页面错误和冷热表吞吐。

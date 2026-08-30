@@ -50,9 +50,13 @@ pub mod xcross_restrict_solver;
 
 // --- native-only(依赖 rayon / 磁盘表生成 / mmap manager,WASM 不编)---
 #[cfg(not(target_arch = "wasm32"))]
+pub mod high_memory_tables;
+#[cfg(not(target_arch = "wasm32"))]
 pub mod logo;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod prune_create;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod table_profile;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod dist;

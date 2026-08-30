@@ -98,7 +98,7 @@ const BROWSER_BY_KEY: Record<string, string> = {
 };
 const BROWSER_MAP: Record<string, BrowserSolver> = Object.fromEntries(BROWSER.map((b) => [b.key, b]));
 
-// 每个原生分析器实际 mmap 的磁盘表 (D:\cube\cuberoot.me\solver\tables\, 大小为真实文件字节).
+// 每个原生分析器 mmap 的磁盘表；现有项为真实文件字节，plan 项为格式推导的预期字节数。
 // 源码核实自 solver/ (std_analyzer.rs / eo_cross_solver.rs / pseudo_analyzer.rs /
 // pseudo_pair_solver.rs / pair_solver.rs / f2leo_solver.rs / pseudo_f2leo_solver.rs),
 // 口径 = 权威 full 全模式 (CUBE_ALLOW_HUGE_TABLES=1, 无 *_NO_DIAG / *_SKIP)。
@@ -134,7 +134,7 @@ const TABLES: Record<string, SolverTbls> = {
       { n: 'pt_cross_C4C5C6', b: 1313832976 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 },
       { n: 'pt_cross_C4C6E0E2', b: 10729635856, cond: true }],
     plan: {
-      profile: 'high-memory',
+      profile: 'high-memory (auto ≥56 GiB)',
       move: [{ n: 'mt_ep5_high_memory', b: 6842892 }],
       prune: [
         { n: 'pt_eo_xcross_slot0_high_memory', b: 2335703056 },
@@ -143,8 +143,8 @@ const TABLES: Record<string, SolverTbls> = {
         { n: 'pt_eo_xcross_slot3_high_memory', b: 2335703056 },
       ],
       note: {
-        zh: '仅代码就绪，等待 64 GB 机器生成。默认档不探测、不加载这些文件；SHA-256、构建峰值、RSS、mmap 工作集和新吞吐量均待实测。',
-        en: 'Code only, awaiting generation on the 64 GB machine. The default tier neither probes nor loads these files; SHA-256, build peak, RSS, mmap working set, and new throughput all remain unmeasured.',
+        zh: '仅代码就绪，等待 64 GB 机器生成。总物理内存达到 56 GiB 时自动选择；32 GB 或识别失败时保持默认档，不探测、不加载这些文件。SHA-256、构建峰值、RSS、mmap 工作集和新吞吐量均待实测。',
+        en: 'Code only, awaiting generation on the 64 GB machine. It is selected automatically at 56 GiB total physical memory; 32 GB machines and detection failures stay on the default tier without probing or loading these files. SHA-256, build peak, RSS, mmap working set, and new throughput all remain unmeasured.',
       },
     },
   },
@@ -274,8 +274,8 @@ const TABLES: Record<string, SolverTbls> = {
 
 // 内存档共享文案 (原「内存与剪枝表」三卡: huge / small / mid + 并行约束).
 const MEM_HUGE = {
-  zh: 'mmap GB 级联合/电池剪枝表 (CEE/CCE/C4C5C6 / pair huge / E0E1E2 等)。eo 工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap。f2leo 复用 std 的 pair huge 表 (各 ~10GB);pseudo_f2leo 用 pseudo 电池 (corner3 862MB + edge3 1GB 等), 各仅多叶子自由棱 EO 门控。333 整解最优是例外:离线统计的 Tronto h48 opt9 15G 表分块拷入 emscripten 堆 (非 mmap 共享);16GB 线上服务另驻留 opt8 7.8GB 表,两者都与 Rust 表无关。sq1 用 13G jsq_full + 双 283MB 投影磁盘表 (slash 口径另零盘 ~43MB 现场建)。',
-  en: 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. eo peaks ~24GB working set but only ~0.1GB private — read-only shared mmap. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating. 333 whole-cube optimal is the exception: offline statistics copy the Tronto h48 opt9 15G table into the emscripten heap in chunks (not a shared mmap); the 16GB online service separately keeps the 7.8GB opt8 table resident. Both are independent of the Rust tables. sq1 uses a 13G jsq_full + two 283MB projection disk tables (the slash metric is a separate ~43MB zero-disk in-RAM build).',
+  zh: 'mmap GB 级联合/电池剪枝表 (CEE/CCE/C4C5C6 / pair huge / E0E1E2 等)。eo 默认档工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap；high-memory 档尚未实测。f2leo 复用 std 的 pair huge 表 (各 ~10GB);pseudo_f2leo 用 pseudo 电池 (corner3 862MB + edge3 1GB 等), 各仅多叶子自由棱 EO 门控。333 整解最优是例外:离线统计的 Tronto h48 opt9 15G 表分块拷入 emscripten 堆 (非 mmap 共享);16GB 线上服务另驻留 opt8 7.8GB 表,两者都与 Rust 表无关。sq1 用 13G jsq_full + 双 283MB 投影磁盘表 (slash 口径另零盘 ~43MB 现场建)。',
+  en: 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. The default eo tier peaks at ~24GB working set but only ~0.1GB private — read-only shared mmap; the high-memory tier remains unmeasured. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating. 333 whole-cube optimal is the exception: offline statistics copy the Tronto h48 opt9 15G table into the emscripten heap in chunks (not a shared mmap); the 16GB online service separately keeps the 7.8GB opt8 table resident. Both are independent of the Rust tables. sq1 uses a 13G jsq_full + two 283MB projection disk tables (the slash metric is a separate ~43MB zero-disk in-RAM build).',
 };
 const MEM_SMALL = {
   zh: '333-daisy 与 333-first_layer 的 native 分析器复用 mt_edge4 (17.4MB)并现场建距离/PDB；first_layer 实测稳定约 107MiB、建表峰值约 258MiB。浏览器 first_layer 另拉 26.3MiB gzip 的预构建 bundle（54.7MiB 解压,4-bit PDB）,零现场 BFS。333-222/333-123/333-223 仅微移动表；其余 small 变体按各自微表现场建。无 GB 级依赖,可与任意 huge 变体并发。',
@@ -293,9 +293,9 @@ const MEM_LIST_HUGE = '333-std / 333-eo / 333-pseudo / 333-pseudo_pair / 333-pai
 const MEM_LIST_SMALL = '333-daisy / 333-first_layer / 333-222 / 333-123 / 333-223 / 333-eoline / 333-dr / 333-htr / 333-htr2 / 333-fr / 222 / pyraminx / skewb';
 
 function fmtBytes(b: number): string {
-  if (b >= 1_073_741_824) return (b / 1_073_741_824).toFixed(1) + ' GB';
-  if (b >= 1_048_576) return (b / 1_048_576).toFixed(b < 10_485_760 ? 1 : 0) + ' MB';
-  if (b >= 1024) return (b / 1024).toFixed(0) + ' KB';
+  if (b >= 1_073_741_824) return (b / 1_073_741_824).toFixed(1) + ' GiB';
+  if (b >= 1_048_576) return (b / 1_048_576).toFixed(b < 10_485_760 ? 1 : 0) + ' MiB';
+  if (b >= 1024) return (b / 1024).toFixed(0) + ' KiB';
   return b + ' B';
 }
 function tblTotal(t: SolverTbls): number {
@@ -575,8 +575,8 @@ export default function SolversPage() {
       title: zh ? '每个求解器的表' : 'Tables per analyzer',
       sub: zh ? '源码核实 · full 全模式 · mmap' : 'source-verified · full mode · mmap',
       body: <p className="solv-modal-p">{zh
-        ? '每个原生分析器实际 mmap 的移动表 (mt_*, 状态转移) 与剪枝表 (pt_*, 启发式可采纳下界);大小为磁盘真实文件字节。零盘表的求解器启动或首查时内存现场 BFS, 不落盘。† 对角剪枝表 (各 ~10GB) 可选, 不计入总和。点任一「表」单元看该求解器完整表清单 + 构造说明。'
-        : 'The move tables (mt_*, state transitions) and prune tables (pt_*, admissible heuristics) each native analyzer actually mmaps; sizes are real on-disk file bytes. Zero-disk solvers BFS-build everything in RAM at startup or first query. † diagonal prune tables (~10GB each) are optional, excluded from the total. Tap any “tables” cell for the full per-solver list + build notes.'}</p>,
+        ? '每个原生分析器 mmap 的移动表 (mt_*, 状态转移) 与剪枝表 (pt_*, 启发式可采纳下界);现有项为磁盘真实文件字节，未生成的计划档为格式推导的预期字节数。零盘表的求解器启动或首查时内存现场 BFS, 不落盘。† 对角剪枝表 (各 ~10GB) 可选, 不计入总和。点任一「表」单元看该求解器完整表清单 + 构造说明。'
+        : 'The move tables (mt_*, state transitions) and prune tables (pt_*, admissible heuristics) each native analyzer mmaps. Existing entries use real on-disk file bytes; ungenerated planned tiers use format-derived expected bytes. Zero-disk solvers BFS-build everything in RAM at startup or first query. † diagonal prune tables (~10GB each) are optional, excluded from the total. Tap any “tables” cell for the full per-solver list + build notes.'}</p>,
     }),
     brow: () => ({
       title: zh ? '浏览器端 WASM' : 'Browser WASM',
@@ -628,7 +628,7 @@ export default function SolversPage() {
           </p>
           <div className="solv-herostats">
             <div className="solv-stat"><span className="solv-stat-num">{NATIVE.length}</span><span className="solv-stat-label">{zh ? '原生分析器' : 'native analyzers'}</span></div>
-            <div className="solv-stat"><span className="solv-stat-num">~51<small>GB</small></span><span className="solv-stat-label">{zh ? '剪枝表' : 'pruning tables'}</span></div>
+            <div className="solv-stat"><span className="solv-stat-num">~51<small>GB</small></span><span className="solv-stat-label">{zh ? '现有剪枝表' : 'current prune tables'}</span></div>
             <div className="solv-stat"><span className="solv-stat-num">{completeN}<small>/{NATIVE.length}</small></span><span className="solv-stat-label">{zh ? '已补齐' : 'fully covered'}</span></div>
             <div className="solv-stat"><span className="solv-stat-num">0.9–1.25M<small>/s</small></span><span className="solv-stat-label">{zh ? '吞吐跨度' : 'throughput span'}</span></div>
             <div className="solv-stat"><span className="solv-stat-num">{NONWCA_TS.length}</span><span className="solv-stat-label">{zh ? '纯 TS 非 WCA' : 'pure-TS non-WCA'}</span></div>

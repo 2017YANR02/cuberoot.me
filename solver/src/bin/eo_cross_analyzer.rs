@@ -13,6 +13,7 @@
 use cube_solver::cube_common::Move;
 use cube_solver::eo_cross_solver::eo_cross_get_stats;
 use cube_solver::executor::{run_analyzer_app, SolverWrapper};
+use cube_solver::table_profile;
 
 const SUFFIXES: [&str; 6] = ["_z0", "_z2", "_z3", "_z1", "_x3", "_x1"];
 
@@ -20,6 +21,17 @@ struct EoCrossWrapper;
 
 impl SolverWrapper for EoCrossWrapper {
     fn global_init() {
+        let profile = table_profile::selection();
+        let detected_memory = profile
+            .total_memory_bytes
+            .map(|bytes| format!("{:.1} GiB", bytes as f64 / 1024_f64.powi(3)))
+            .unwrap_or_else(|| "unknown".to_string());
+        eprintln!(
+            "[INFO] table profile = {} (source: {}; physical memory: {})",
+            profile.profile.as_str(),
+            profile.source.as_str(),
+            detected_memory
+        );
         let huge_ok = std::env::var("CUBE_ALLOW_HUGE_TABLES")
             .map(|v| v == "1")
             .unwrap_or(false);

@@ -219,9 +219,7 @@ impl EOXCrossSolver {
         } else {
             None
         };
-        let high_memory_profile = std::env::var("CUBE_TABLE_PROFILE")
-            .map(|v| v == "high-memory")
-            .unwrap_or(false);
+        let high_memory_profile = crate::table_profile::high_memory_enabled();
         let mt_ep5_high_memory = high_memory_profile.then(|| mtm.ensure_ep5_high_memory());
         let pt_eo_xcross_high_memory = high_memory_profile
             .then(|| std::array::from_fn(|slot| ptm.ensure_pt_eo_xcross_high_memory(slot)));
