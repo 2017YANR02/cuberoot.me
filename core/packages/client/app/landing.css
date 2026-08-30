@@ -623,7 +623,8 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     gap: 5px;
 }
 
-/* 致谢链接的爱心:站内统一爱心红(DeskPet .heart-icon 同款),hover 文字变 accent 时心仍红 */
+/* 致谢链接的爱心:站内统一爱心红(DeskPet .heart-icon 同款),hover 时仍保持红色 */
+.landing-page .landing-auth-icon svg,
 .landing-page .footer-credits svg {
     color: #ff5a5f;
     fill: #ff5a5f;
