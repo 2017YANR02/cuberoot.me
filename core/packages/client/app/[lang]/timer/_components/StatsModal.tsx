@@ -142,7 +142,6 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
   if (pbDate) lines.push([tr({ zh: 'PB 日期', en: 'PB date' }), pbDate.toLocaleDateString()]);
   lines.push([tr({ zh: '平均', en: 'Mean' }), summary.mean]);
   lines.push(['σ', summary.sd]);
-  lines.push(['CV', summary.cv]);
   // σ suffix (cstimer-style): the std-dev of the times composing an average.
   const sdSuffix = (ms: number | null): string =>
     (ms === null || !Number.isFinite(ms)) ? '' : ` (σ ${f(Math.round(ms))})`;
