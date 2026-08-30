@@ -7,6 +7,7 @@
     "pages/share/index",
     "pages/web/index"
   ],
+  "lazyCodeLoading": "requiredComponents",
   "darkmode": true,
   "themeLocation": "theme.json",
   "window": {

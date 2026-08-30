@@ -99,6 +99,10 @@ describe('mini program app structure', () => {
     });
   });
 
+  it('enables official on-demand code injection', () => {
+    expect(appConfig.lazyCodeLoading).toBe('requiredComponents');
+  });
+
   it('keeps shared text colors readable and native chrome visually aligned', () => {
     const appStyles = sourceFiles['../src/app.wxss'];
     const pageBlocks = [...appStyles.matchAll(/^\s*page\s*\{([^}]+)\}/gm)]

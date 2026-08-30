@@ -59,6 +59,7 @@ const validInput = {
   privateConfig: {},
   appConfig: {
     pages: EXPECTED_APP_PAGES,
+    lazyCodeLoading: 'requiredComponents',
     darkmode: true,
     themeLocation: 'theme.json',
     sitemapLocation: 'sitemap.json',
@@ -502,6 +503,20 @@ describe('mini program release check', () => {
       '原生窗口和 tabBar 必须完整引用 theme.json 变量：tabBar.selectedColor。',
       'theme.json 必须完整定义浅色和深色原生主题：dark.navigationBarTextStyle。',
     ]));
+  });
+
+  it('blocks disabling official on-demand code injection', () => {
+    const failures = collectReleaseFailures({
+      ...validInput,
+      appConfig: {
+        ...validInput.appConfig,
+        lazyCodeLoading: 'all',
+      },
+    });
+
+    expect(failures).toContain(
+      'src/app.json 必须将 lazyCodeLoading 设为 requiredComponents。',
+    );
   });
 
   it('blocks credentials from entering the upload package', () => {
