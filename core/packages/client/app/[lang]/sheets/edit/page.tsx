@@ -22,6 +22,7 @@ import {
   sortSpreadsheetRangeRows, type CellFontFamily, type CellNumberFormat,
   type CellRange, type CellStyle, type CellValidation, type ConditionalFormatRule, type SpreadsheetSheet,
 } from '@/lib/spreadsheet-model';
+import { repairSpreadsheetSheets } from '@/lib/spreadsheet-yjs';
 import './spreadsheet.css';
 
 type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
@@ -107,9 +108,10 @@ interface ClipboardPayload {
   validations: Array<Array<CellValidation | undefined>>;
 }
 
-function SpreadsheetGrid({ session, readOnly, activeSheetId, onActiveSheet, onError, onExport, onPrint }: {
+function SpreadsheetGrid({ session, readOnly, activeSheetId, onActiveSheet, onError, onFormulaError, onExport, onPrint }: {
   session: EditorSession; readOnly: boolean; activeSheetId: string; onActiveSheet: (id: string) => void;
-  onError: (message: string) => void; onExport: (format: 'xlsx' | 'csv' | 'pdf') => void; onPrint: () => void;
+  onError: (message: string) => void; onFormulaError: (message: string) => void;
+  onExport: (format: 'xlsx' | 'csv' | 'pdf') => void; onPrint: () => void;
 }) {
   const user = useAuthUser();
   const [version, setVersion] = useState(0);
@@ -132,9 +134,8 @@ function SpreadsheetGrid({ session, readOnly, activeSheetId, onActiveSheet, onEr
   useEffect(() => {
     const update = () => setVersion((value) => value + 1);
     ySheets.observeDeep(update);
-    if (ySheets.length === 0 && !readOnly) session.ydoc.transact(() => ySheets.push([newSheet('Sheet 1')]));
     return () => ySheets.unobserveDeep(update);
-  }, [readOnly, session.ydoc, ySheets]);
+  }, [ySheets]);
   const sheets = useMemo(() => ySheets.toArray(), [version, ySheets]);
   const snapshots = useMemo(() => sheets.map(snapshot), [sheets]);
   const activeIndex = Math.max(0, sheets.findIndex((sheet) => String(sheet.get('id')) === activeSheetId));
@@ -143,9 +144,7 @@ function SpreadsheetGrid({ session, readOnly, activeSheetId, onActiveSheet, onEr
   useEffect(() => { if (sheets.length && !activeSheetId) onActiveSheet(String(sheets[0].get('id'))); }, [activeSheetId, onActiveSheet, sheets]);
 
   const calculated = useMemo(() => calculateSpreadsheetFormulas(snapshots), [snapshots]);
-  useEffect(() => {
-    if (calculated.error) onError(calculated.error);
-  }, [calculated.error, onError]);
+  useEffect(() => { onFormulaError(calculated.error); }, [calculated.error, onFormulaError]);
 
   const focus = selection.end;
   const focusAddress = cellAddress(focus.row, focus.column);
@@ -793,6 +792,7 @@ export default function SpreadsheetEditorPage() {
   const [exportOpen, setExportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState('');
+  const [formulaError, setFormulaError] = useState('');
   const load = useCallback(async () => {
     if (!id || !user) return;
     try {
@@ -808,6 +808,9 @@ export default function SpreadsheetEditorPage() {
     const provider = new HocuspocusProvider({
       url: websocketApiUrl('/v1/documents/realtime'), name: `document.${id}`, document: ydoc, token: getSessionToken() || getWcaToken(),
       onStatus: ({ status: next }) => setStatus(next),
+      onSynced: ({ state }) => {
+        if (state && details.document.role !== 'viewer') repairSpreadsheetSheets(ydoc);
+      },
       onAuthenticationFailed: ({ reason }) => setError(reason || tr({ zh: '表格认证失败', en: 'Spreadsheet authentication failed' })),
       onAwarenessChange: ({ states }) => setPeopleOnline(states.map((state) => typeof state.user === 'object' && state.user && typeof state.user.name === 'string' ? state.user.name : '').filter((name, index, all) => name && all.indexOf(name) === index)),
     });
@@ -854,10 +857,10 @@ export default function SpreadsheetEditorPage() {
   if (!id) return <main className="sheet-workspace"><p className="docs-error"><T zh="缺少表格 ID。" en="Missing spreadsheet ID." /></p></main>;
   return <main className="sheet-workspace">
     <header className="sheet-topbar"><AppLink href="/sheets" prefetch={false} className="sheet-back" aria-label={tr({ zh: '返回表格列表', en: 'Back to spreadsheets' })}><ChevronLeft size={20} /></AppLink><input className="sheet-title-input" value={title} readOnly={!details?.canManage} onChange={(event) => setTitle(event.target.value)} onBlur={() => void saveTitle()} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} aria-label={tr({ zh: '表格标题', en: 'Spreadsheet title' })} /><div className={`sheet-sync is-${status}`}><span />{status === 'connected' ? <T zh="已同步" en="Synced" /> : status === 'connecting' ? <T zh="连接中" en="Connecting" /> : <T zh="离线，等待重连" en="Offline, retrying" />}</div>{peopleOnline.length > 0 && <span className="sheet-presence" title={peopleOnline.join(', ')}>{peopleOnline.length}<T zh=" 人在线" en=" online" /></span>}<div className="sheet-export-wrap"><button type="button" className="sheet-action" onClick={() => setExportOpen((open) => !open)} disabled={exporting}><Download size={16} /><T zh="导出" en="Export" /></button>{exportOpen && <div className="sheet-export-menu"><button type="button" className="sheet-export-option" onClick={() => void exportFile('xlsx')}><Download size={15} />Excel (.xlsx)</button><button type="button" className="sheet-export-option" onClick={() => void exportFile('csv')}><Download size={15} />CSV</button><button type="button" className="sheet-export-option" onClick={() => void exportFile('pdf')}><FileDown size={15} />PDF</button></div>}</div>{details?.canManage && <button type="button" className="sheet-action" onClick={() => setShareOpen(true)}><Share2 size={16} /><T zh="共享" en="Share" /></button>}<WcaAuth /></header>
-    {error && <p className="sheet-page-error" role="alert">{error}</p>}
+    {(error || formulaError) && <p className="sheet-page-error" role="alert">{error || formulaError}</p>}
     {!user && !details && <div className="sheet-auth-needed"><T zh="请先登录，再打开共享给你的表格。" en="Sign in to open a spreadsheet shared with you." /></div>}
     {user && !details && !error && <p className="sheet-loading"><T zh="正在加载表格…" en="Loading spreadsheet…" /></p>}
-    {details && session && <SpreadsheetGrid session={session} readOnly={details.document.role === 'viewer'} activeSheetId={activeSheetId} onActiveSheet={setActiveSheetId} onError={setError} onExport={(format) => { void exportFile(format); }} onPrint={() => { void printFile(); }} />}
+    {details && session && <SpreadsheetGrid session={session} readOnly={details.document.role === 'viewer'} activeSheetId={activeSheetId} onActiveSheet={setActiveSheetId} onError={setError} onFormulaError={setFormulaError} onExport={(format) => { void exportFile(format); }} onPrint={() => { void printFile(); }} />}
     {shareOpen && details && <CollaborativeSharePanel id={id} kind="spreadsheet" details={details} reload={load} close={() => setShareOpen(false)} />}
   </main>;
 }
