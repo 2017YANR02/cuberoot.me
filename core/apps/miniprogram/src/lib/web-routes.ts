@@ -9,7 +9,7 @@ import { SITE_ORIGIN } from './runtime-config';
 import { isSafeWebSessionDestination, isWebSessionTicket } from './web-session-contract';
 
 type DiscoveryRouteKey = Exclude<SiteDirectoryEntryId, 'algdb' | 'alg' | 'github'> | 'alg';
-export type WebRouteKey = DiscoveryRouteKey | 'account' | 'privacy' | 'logout';
+export type WebRouteKey = DiscoveryRouteKey | 'home' | 'account' | 'privacy' | 'logout';
 
 interface WebRouteDefinition {
   title: string;
@@ -111,6 +111,13 @@ for (const group of SITE_DIRECTORY_GROUPS) {
 
 export const WEB_ROUTES: Record<WebRouteKey, WebRouteDefinition> = {
   ...discoveryRoutes,
+  home: {
+    title: '魔方工具',
+    description: 'CubeRoot 网站主页',
+    path: '/zh',
+    publicEntry: true,
+    nativeTabPath: '/pages/tools/index',
+  },
   account: {
     title: '账号管理',
     description: '管理 WCA 账号与登录方式',

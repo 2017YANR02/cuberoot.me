@@ -19,6 +19,7 @@ import {
 } from './build-state.mjs';
 import { validateJsonObjectFiles } from './json-object-file.mjs';
 import { publishStagedDirectory } from './staged-output.mjs';
+import { validateWxmlExpressionFiles } from './wxml-expression.mjs';
 
 const packageRoot = resolve(import.meta.dirname, '..');
 const sourceRoot = join(packageRoot, 'src');
@@ -86,6 +87,10 @@ async function buildProject() {
   await validateJsonObjectFiles(sourceJsonFiles, {
     labelForPath: (file) => normalizedRelativePath(packageRoot, file),
   });
+  await validateWxmlExpressionFiles(
+    sourceFiles.filter((file) => extname(file) === '.wxml'),
+    { labelForPath: (file) => normalizedRelativePath(packageRoot, file) },
+  );
   await prepareOutput(sourceFiles);
   const buildResult = await build({
     absWorkingDir: packageRoot,
