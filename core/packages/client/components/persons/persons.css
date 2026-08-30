@@ -609,6 +609,16 @@ html[data-theme=dark] .wp-page {
     text-decoration: none;
 }
 .wp-student-manage-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.wp-student-overview-head { display: inline-flex; align-items: center; gap: 8px; margin: 0 16px 10px; }
+.wp-student-name-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin: 0 16px;
+    padding: 0;
+    list-style: none;
+}
+.wp-student-name-list > li { min-width: 0; }
 .wp-student-identity { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .wp-student-link { color: var(--wp-text); font-weight: 500; text-decoration: none; }
 .wp-student-link:hover { color: var(--wp-accent); text-decoration: underline; }
