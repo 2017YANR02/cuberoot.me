@@ -407,6 +407,7 @@ html[data-theme=dark] .alg-root {
   letter-spacing: 0;
 }
 
+.alg-ep-options,
 .alg-ep-parity-note,
 .alg-ep-parity-section {
   max-width: 1200px;
@@ -414,6 +415,18 @@ html[data-theme=dark] .alg-root {
   margin-left: auto;
   padding-right: 24px;
   padding-left: 24px;
+}
+.alg-ep-options {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+}
+.alg-ep-options .alg-ep-parity-note {
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 .alg-ep-parity-note {
   margin-top: 14px;

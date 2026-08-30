@@ -664,6 +664,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 184, slug: 'drive', desc: { zh: '新增 20 GB 共享配额的私人网盘、访问白名单、7 天断点上传会话、回收站与磁盘对象元数据。', en: 'Add a private Drive with a shared 20 GB quota, access list, seven-day resumable uploads, Trash, and disk-object metadata.' } },
   { n: 185, slug: 'wca_self_taught', desc: { zh: 'WCA 选手可按项目明确登记为自学，并与尚未填写老师区分。', en: 'Allow WCA cubers to mark individual events as self-taught, distinct from having no learning source set.' } },
   { n: 186, slug: 'account_basic_profile', desc: { zh: '账号增加私密生日、性别和国籍；WCA 绑定账号的国籍由认证资料同步。', en: 'Add private birth date, gender, and nationality fields, with WCA-linked nationality synced from the verified profile.' } },
+  { n: 187, slug: 'sq1_ep_pkfeng_complete', desc: { zh: '补全 SQ1 EP 的 100 个 case 和来源文档中的 118 条公式，固定 50 个无特与 50 个有特，并保留已有学习进度。', en: 'Complete SQ1 EP with 100 cases and all 118 source-document algorithms, lock the 50/50 parity split, and preserve existing learning progress.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
