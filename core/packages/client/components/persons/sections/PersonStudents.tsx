@@ -37,6 +37,7 @@ interface StudentSeed {
   wcaId?: string;
   namedStudent?: WcaNamedStudent;
   name?: string;
+  average333: number | null;
   eventIds: string[];
 }
 
@@ -56,10 +57,11 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
   const [relations, setRelations] = useState<WcaTeacher[] | null>(null);
   const [namedStudents, setNamedStudents] = useState<WcaNamedStudent[] | null>(null);
   const [studentMeta, setStudentMeta] = useState<Map<string, StudentMeta>>(() => new Map());
+  const [studentMetaKey, setStudentMetaKey] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
-  const [selectedEventId, setSelectedEventId] = useState('');
+  const [selectedEventId, setSelectedEventId] = useState('333');
   const [resultSort, setResultSort] = useState<{ kind: ResultKind; dir: 'asc' | 'desc' }>({
-    kind: 'single',
+    kind: 'average',
     dir: 'asc',
   });
 
@@ -91,6 +93,7 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
           key: `wca:${relation.studentWcaId}`,
           wcaId: relation.studentWcaId,
           name: relation.studentName,
+          average333: relation.student333Average ?? null,
           eventIds: [relation.eventId],
         });
       }
@@ -100,6 +103,7 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
         key: `named:${student.id}`,
         namedStudent: student,
         name: student.studentName,
+        average333: null,
         eventIds: [...student.eventIds],
       });
     }
@@ -109,9 +113,17 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
         ...student,
         eventIds: student.eventIds.sort((a, b) => (eventOrder.get(a) ?? 999) - (eventOrder.get(b) ?? 999)),
       }))
-      .sort((a, b) => displayCuberName(a.name ?? a.wcaId ?? '', isZh).localeCompare(
-        displayCuberName(b.name ?? b.wcaId ?? '', isZh),
-      ));
+      .sort((a, b) => {
+        const aMissing = a.average333 === null || a.average333 <= 0;
+        const bMissing = b.average333 === null || b.average333 <= 0;
+        if (aMissing !== bMissing) return aMissing ? 1 : -1;
+        if (a.average333 !== null && b.average333 !== null && a.average333 !== b.average333) {
+          return a.average333 - b.average333;
+        }
+        return displayCuberName(a.name ?? a.wcaId ?? '', isZh).localeCompare(
+          displayCuberName(b.name ?? b.wcaId ?? '', isZh),
+        );
+      });
   }, [isZh, namedStudents, relations]);
 
   const studentIds = useMemo(() => studentSeeds.flatMap((student) => student.wcaId ? [student.wcaId] : []), [studentSeeds]);
@@ -124,12 +136,17 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
   useEffect(() => {
     if (mode !== 'manage') {
       setStudentMeta(new Map());
+      setStudentMetaKey(studentIdsKey);
       return;
     }
     const ids = studentIdsKey ? studentIdsKey.split(',') : [];
     let cancelled = false;
     setStudentMeta(new Map());
-    if (ids.length === 0) return;
+    setStudentMetaKey('');
+    if (ids.length === 0) {
+      setStudentMetaKey(studentIdsKey);
+      return;
+    }
     Promise.all(ids.map(async (wcaId) => {
       try {
         const [profile, results] = await Promise.all([
@@ -148,6 +165,7 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
     })).then((entries) => {
       if (cancelled) return;
       setStudentMeta(new Map(entries.filter((entry): entry is readonly [string, StudentMeta] => entry[1] !== null)));
+      setStudentMetaKey(studentIdsKey);
     });
     return () => { cancelled = true; };
   }, [mode, studentIdsKey]);
@@ -177,10 +195,11 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
   )), [students]);
 
   useEffect(() => {
+    if (relations === null || namedStudents === null || (mode === 'manage' && studentMetaKey !== studentIdsKey)) return;
     setSelectedEventId((current) => (
       !current || availableEventIds.includes(current) ? current : ''
     ));
-  }, [availableEventIds]);
+  }, [availableEventIds, mode, namedStudents, relations, studentIdsKey, studentMetaKey]);
 
   const visibleStudents = useMemo(() => students
     .filter((student) => !selectedEventId || (

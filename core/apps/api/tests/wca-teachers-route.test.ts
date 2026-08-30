@@ -27,6 +27,7 @@ describe('GET /v1/wca/teachers', () => {
     mocks.query.mockResolvedValueOnce([{
       student_wca_id: '2026FANG02',
       student_name: 'Leede Fang',
+      student_333_average: 1234,
       event_id: '333',
       teacher_wca_id: '2017YANR02',
       teacher_name: 'Ruimin Yan (颜瑞民)',
@@ -39,6 +40,7 @@ describe('GET /v1/wca/teachers', () => {
     expect(await response.json()).toEqual({ teachers: [{
       studentWcaId: '2026FANG02',
       studentName: 'Leede Fang',
+      student333Average: 1234,
       eventId: '333',
       teacherWcaId: '2017YANR02',
       teacherName: 'Ruimin Yan (颜瑞民)',
@@ -53,6 +55,9 @@ describe('GET /v1/wca/teachers', () => {
       'LEFT JOIN wca_countries teacher_country ON teacher_country.id = teacher.country_id',
     );
     expect(sql).toContain('teacher_country.iso2 AS teacher_country_iso2');
+    expect(sql).toContain('MIN(result.average) AS best_average');
+    expect(sql).toContain("result.event_id = '333'");
+    expect(sql).toContain('result.average > 0');
     expect(sql).not.toContain('teacher.country_iso2');
     expect(sql).not.toContain('wt.event_id IN');
   });
