@@ -1,17 +1,47 @@
-.account-login-page {
+.account-entry-page,
+.account-login-page,
+.account-user-page {
   padding-top: 72rpx;
 }
 
-.account-login-button {
+.account-entry-guide {
+  margin-top: 72rpx;
+}
+
+.account-entry-title {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 680;
+  line-height: 1.3;
+}
+
+.account-entry-copy,
+.account-note,
+.account-user-meta {
+  color: var(--cr-muted);
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.account-entry-copy {
+  font-size: 28rpx;
+  line-height: 1.65;
+  margin-top: 20rpx;
+}
+
+.account-primary-button {
   margin-top: 64rpx;
   width: 100%;
 }
 
-.account-login-note {
-  color: var(--cr-muted);
-  display: block;
+.account-note {
   font-size: 24rpx;
   line-height: 1.6;
   margin-top: 28rpx;
-  overflow-wrap: anywhere;
+}
+
+.account-user-meta {
+  font-size: 28rpx;
+  line-height: 1.5;
+  margin-top: 12rpx;
 }

@@ -1,15 +1,29 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { WebViewPageData } from '../src/lib/web-view-page';
 import accountConfig from '../src/pages/account/index.json';
 
+interface AccountPageData {
+  accountError: string;
+  displayName: string;
+  isTimelineEntry: boolean;
+  loginBusy: boolean;
+  loginError: string;
+  loginRequired: boolean;
+  loginStorageUnavailable: boolean;
+  uidText: string;
+  wcaId: string;
+}
+
 interface AccountPage {
-  data: WebViewPageData;
+  data: AccountPageData;
   loginWithWechat(): Promise<void>;
-  onLoad(options: Record<string, unknown>): void;
+  onLoad(): void;
+  onShareAppMessage(): WechatMiniprogram.Page.ICustomShareContent;
+  onShareTimeline(): WechatMiniprogram.Page.ICustomTimelineContent;
   onShow(): void;
+  openAccount(): void;
   retryMiniProgramSession(): void;
-  setData(data: Partial<WebViewPageData>): void;
+  setData(data: Partial<AccountPageData>): void;
 }
 
 async function loadPage(wxApi: Record<string, unknown>): Promise<AccountPage> {
@@ -26,209 +40,246 @@ async function loadPage(wxApi: Record<string, unknown>): Promise<AccountPage> {
   return page;
 }
 
+function normalLaunchOptions() {
+  return { scene: 1001 };
+}
+
 describe('mini program account page', () => {
   afterEach(() => {
     vi.resetModules();
     vi.unstubAllGlobals();
   });
 
-  it('requires native WeChat login instead of opening the generic website login page', async () => {
-    const hideShareMenu = vi.fn();
-    const request = vi.fn();
+  it('shows native WeChat login and enables both share targets', async () => {
     const setNavigationBarTitle = vi.fn();
+    const showShareMenu = vi.fn();
     const page = await loadPage({
+      getLaunchOptionsSync: normalLaunchOptions,
       getStorageSync: () => null,
-      hideShareMenu,
-      request,
       setNavigationBarTitle,
+      showShareMenu,
     });
 
-    page.onLoad({ key: 'home' });
-    await Promise.resolve();
+    page.onLoad();
 
-    expect('enablePullDownRefresh' in accountConfig).toBe(false);
+    expect(accountConfig).toEqual({ navigationBarTitleText: 'CubeRoot 登录入口' });
     expect(page.data).toMatchObject({
-      errorTitle: '',
+      isTimelineEntry: false,
       loginRequired: true,
       loginStorageUnavailable: false,
-      loadingTitle: '正在打开账号管理',
-      routeKey: 'account',
-      src: '',
     });
+    expect(showShareMenu).toHaveBeenCalledWith({
+      menus: ['shareAppMessage', 'shareTimeline'],
+    });
+    expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '我的' });
+  });
+
+  it('renders the Moments login landing without using unavailable single-page APIs', async () => {
+    const getStorageSync = vi.fn();
+    const login = vi.fn();
+    const navigateTo = vi.fn();
+    const request = vi.fn();
+    const setNavigationBarTitle = vi.fn();
+    const showShareMenu = vi.fn();
+    const page = await loadPage({
+      getLaunchOptionsSync: () => ({ scene: 1154 }),
+      getStorageSync,
+      login,
+      navigateTo,
+      request,
+      setNavigationBarTitle,
+      showShareMenu,
+    });
+
+    page.onLoad();
+    page.onShow();
+    await page.loginWithWechat();
+    page.openAccount();
+
+    expect(page.data).toMatchObject({
+      isTimelineEntry: true,
+      loginBusy: false,
+      loginRequired: true,
+    });
+    expect(getStorageSync).not.toHaveBeenCalled();
+    expect(login).not.toHaveBeenCalled();
+    expect(navigateTo).not.toHaveBeenCalled();
     expect(request).not.toHaveBeenCalled();
-    expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '账号管理' });
-    expect(hideShareMenu).toHaveBeenCalledWith({
+    expect(setNavigationBarTitle).not.toHaveBeenCalled();
+    expect(showShareMenu).not.toHaveBeenCalled();
+    expect(page.onShareTimeline()).toEqual({
+      imageUrl: '/assets/share-cover.png',
+      title: 'CubeRoot 魔方根',
+    });
+  });
+
+  it('treats scene 1155 from the Moments forward action as the full Mini Program', async () => {
+    const getStorageSync = vi.fn(() => null);
+    const showShareMenu = vi.fn();
+    const page = await loadPage({
+      getLaunchOptionsSync: () => ({ scene: 1155 }),
+      getStorageSync,
+      showShareMenu,
+    });
+
+    page.onLoad();
+
+    expect(page.data).toMatchObject({
+      isTimelineEntry: false,
+      loginRequired: true,
+    });
+    expect(getStorageSync).toHaveBeenCalledOnce();
+    expect(showShareMenu).toHaveBeenCalledWith({
       menus: ['shareAppMessage', 'shareTimeline'],
     });
   });
 
-  it('hands an existing Mini Program session to the website account page once', async () => {
-    const ticket = 'A'.repeat(43);
-    const token = 't'.repeat(20);
-    const request = vi.fn((options: {
-      header: Record<string, string>;
-      success(response: unknown): void;
-    }) => {
-      expect(options.header.Authorization).toBe(`Bearer ${token}`);
-      options.success({ statusCode: 200, data: { ticket, expiresIn: 90 } });
-    });
+  it('shows an existing session natively without opening a web view or creating a ticket', async () => {
+    const request = vi.fn();
     const page = await loadPage({
+      getLaunchOptionsSync: normalLaunchOptions,
       getStorageSync: () => ({
-        token,
+        token: 't'.repeat(20),
         user: {
           uid: 42,
-          name: 'CubeRoot 用户',
-          wcaId: null,
+          name: 'Ruimin Yan (颜瑞民)',
+          wcaId: '2017YANR02',
           avatar: '',
         },
       }),
-      hideShareMenu: vi.fn(),
-      removeStorageSync: vi.fn(),
       request,
-      setNavigationBarTitle: vi.fn(),
+      showShareMenu: vi.fn(),
     });
 
-    page.onLoad({});
-    await vi.waitFor(() => expect(page.data.src).toContain('/auth/miniprogram#'));
+    page.onLoad();
 
-    expect(request).toHaveBeenCalledOnce();
-    expect(page.data.src).toBe(
-      `https://cuberoot.me/auth/miniprogram#wechat_redirect&ticket=${ticket}&next=%2Fzh%2Faccount`,
-    );
-  });
-
-  it('returns an expired Mini Program session to native WeChat login', async () => {
-    const token = 'x'.repeat(20);
-    let storedSession: unknown = {
-      token,
-      user: { uid: 42, name: 'CubeRoot 用户', wcaId: null, avatar: '' },
-    };
-    const page = await loadPage({
-      getStorageSync: () => storedSession,
-      hideShareMenu: vi.fn(),
-      removeStorageSync() {
-        storedSession = null;
-      },
-      request(options: { success(response: unknown): void }) {
-        options.success({ statusCode: 401, data: { error: 'expired' } });
-      },
-      setNavigationBarTitle: vi.fn(),
+    expect(page.data).toMatchObject({
+      displayName: 'Ruimin Yan (颜瑞民)',
+      loginRequired: false,
+      uidText: '42',
+      wcaId: '2017YANR02',
     });
-
-    page.onLoad({});
-    await vi.waitFor(() => expect(page.data.loginRequired).toBe(true));
-
-    expect(page.data.src).toBe('');
-    expect(storedSession).toBeNull();
+    expect(request).not.toHaveBeenCalled();
   });
 
-  it('logs in with WeChat and hands the new session to the website account page', async () => {
-    const ticket = 'B'.repeat(43);
+  it('logs in with WeChat and keeps the user on the shareable native account page', async () => {
     const token = 'n'.repeat(20);
     let storedSession: unknown = null;
     const request = vi.fn((options: {
       data?: { code?: string };
-      header?: Record<string, string>;
       success(response: unknown): void;
       url: string;
     }) => {
-      if (options.url.endsWith('/auth/wechat/miniprogram')) {
-        expect(options.data).toEqual({ code: 'login-code' });
-        options.success({
-          statusCode: 200,
-          data: {
-            token,
-            user: { uid: 52, name: '', wcaId: null, avatar: '' },
-            isNew: true,
-          },
-        });
-        return;
-      }
-      expect(options.url).toBe('https://api.cuberoot.me/v1/auth/web-session/ticket');
-      expect(options.header?.Authorization).toBe(`Bearer ${token}`);
-      options.success({ statusCode: 200, data: { ticket, expiresIn: 90 } });
+      expect(options.url).toBe('https://api.cuberoot.me/v1/auth/wechat/miniprogram');
+      expect(options.data).toEqual({ code: 'login-code' });
+      options.success({
+        statusCode: 200,
+        data: {
+          token,
+          user: { uid: 52, name: '', wcaId: null, avatar: '' },
+          isNew: true,
+        },
+      });
     });
     const page = await loadPage({
+      getLaunchOptionsSync: normalLaunchOptions,
       getStorageSync: () => storedSession,
-      hideShareMenu: vi.fn(),
       login(options: { success(result: { code: string }): void }) {
         options.success({ code: ' login-code ' });
       },
-      onNetworkStatusChange: vi.fn(),
       removeStorageSync: vi.fn(),
       request,
-      setNavigationBarTitle: vi.fn(),
       setStorageSync(_key: string, value: unknown) {
         storedSession = value;
       },
+      showShareMenu: vi.fn(),
     });
 
-    page.onLoad({});
-    page.onShow();
+    page.onLoad();
     await page.loginWithWechat();
 
-    expect(request).toHaveBeenCalledTimes(2);
+    expect(request).toHaveBeenCalledOnce();
     expect(page.data).toMatchObject({
+      displayName: 'CubeRoot 用户',
       loginBusy: false,
       loginError: '',
       loginRequired: false,
-      src: `https://cuberoot.me/auth/miniprogram#wechat_redirect&ticket=${ticket}&next=%2Fzh%2Faccount`,
+      uidText: '52',
+      wcaId: '',
     });
   });
 
   it('keeps the native login gate actionable when WeChat login fails', async () => {
     const page = await loadPage({
+      getLaunchOptionsSync: normalLaunchOptions,
       getStorageSync: () => null,
-      hideShareMenu: vi.fn(),
       login(options: { fail(result: { errMsg: string }): void }) {
         options.fail({ errMsg: 'login failed' });
       },
-      onNetworkStatusChange: vi.fn(),
-      setNavigationBarTitle: vi.fn(),
+      showShareMenu: vi.fn(),
     });
 
-    page.onLoad({});
-    page.onShow();
+    page.onLoad();
     await page.loginWithWechat();
 
     expect(page.data).toMatchObject({
       loginBusy: false,
       loginError: '网络连接失败，请检查网络',
       loginRequired: true,
-      src: '',
     });
   });
 
   it('offers a local-session retry when device storage cannot be read', async () => {
     let storageAvailable = false;
     const page = await loadPage({
+      getLaunchOptionsSync: normalLaunchOptions,
       getStorageSync() {
         if (!storageAvailable) throw new Error('storage unavailable');
         return null;
       },
-      hideShareMenu: vi.fn(),
-      setNavigationBarTitle: vi.fn(),
+      showShareMenu: vi.fn(),
     });
 
-    page.onLoad({});
-    await Promise.resolve();
+    page.onLoad();
 
     expect(page.data).toMatchObject({
       loginError: '暂时无法读取设备上的登录状态，请重新读取。',
       loginRequired: true,
       loginStorageUnavailable: true,
-      src: '',
     });
 
     storageAvailable = true;
     page.retryMiniProgramSession();
-    await Promise.resolve();
 
     expect(page.data).toMatchObject({
       loginError: '',
       loginRequired: true,
       loginStorageUnavailable: false,
-      src: '',
+    });
+  });
+
+  it('opens canonical website account management only after native login', async () => {
+    const navigateTo = vi.fn((options: { complete?(): void }) => options.complete?.());
+    const page = await loadPage({
+      getLaunchOptionsSync: normalLaunchOptions,
+      getStorageSync: () => ({
+        token: 't'.repeat(20),
+        user: { uid: 42, name: 'CubeRoot 用户', wcaId: null, avatar: '' },
+      }),
+      navigateTo,
+      showShareMenu: vi.fn(),
+    });
+
+    page.onLoad();
+    page.openAccount();
+
+    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({
+      url: '/pages/web/index?key=account',
+    }));
+    expect(page.onShareAppMessage()).toEqual({
+      imageUrl: '/assets/share-cover.png',
+      path: '/pages/account/index',
+      title: 'CubeRoot 魔方根',
     });
   });
 });
