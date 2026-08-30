@@ -3,6 +3,7 @@
 // 注意 best/average 分别判断,DNF/DNS/0 一律不是 PB(且不参与最佳值更新).
 
 import { wcaResultRowKey, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
+import { CompetitionRankTracker } from '@/lib/competition-rank';
 
 export interface ProgressFlag {
   bestIsPb: boolean;
@@ -78,35 +79,6 @@ export interface RankFlag {
 const CHRONO_ROUND_ORDER: Record<string, number> = {
   'h': 0, '1': 1, 'd': 1, '2': 2, 'g': 2, '3': 3, 'sf': 3, 'b': 4, 'c': 4, 'f': 5,
 };
-
-/** 标准竞赛排名跟踪器:rank(v)=此前严格更优的成绩条数+1;并列同名次但分别占后续位置。
- *  值域从完整输入预建坐标,Fenwick tree 让单次、逐把、平均共用同一套 O(log n) 计数。 */
-class CompetitionRankTracker {
-  private readonly indexByValue: Map<number, number>;
-  private readonly tree: Uint32Array;
-  count = 0;
-
-  constructor(values: number[]) {
-    const coordinates = [...new Set(values)].sort((a, b) => a - b);
-    this.indexByValue = new Map(coordinates.map((value, index) => [value, index + 1]));
-    this.tree = new Uint32Array(coordinates.length + 1);
-  }
-
-  rank(value: number): number {
-    const index = this.indexByValue.get(value);
-    if (index === undefined) return 1;
-    let better = 0;
-    for (let i = index - 1; i > 0; i -= i & -i) better += this.tree[i];
-    return better + 1;
-  }
-
-  add(value: number): void {
-    const index = this.indexByValue.get(value);
-    if (index === undefined) return;
-    for (let i = index; i < this.tree.length; i += i & -i) this.tree[i]++;
-    this.count++;
-  }
-}
 
 function rankTrackers(results: WcaResultRow[]): {
   single: Map<string, CompetitionRankTracker>;

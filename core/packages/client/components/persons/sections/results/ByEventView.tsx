@@ -51,6 +51,7 @@ import { tr } from '@/i18n/tr';
 import { summarizeNumericValues } from '@cuberoot/shared/timer';
 import {
   computeWcaMetricByRound,
+  computeWcaMetricStatsByRound,
   WCA_AVERAGE_METRIC_KEYS,
   WCA_RESULT_METRIC_OPTIONS,
   WCA_SINGLE_METRIC_KEYS,
@@ -256,19 +257,34 @@ function EventRoundsList({
       roundOrder: roundChronologicalOrder(result.round_type_id),
       attempts: trimEmptyAttempts(result.attempts ?? []),
       average: result.average,
+      live: result.live,
     })), [effResultsForRank, eventId, compById]);
-  const metricValues = useMemo(() => {
+  const metricData = useMemo(() => {
     if (mbld) {
       return {
-        single: new Map<string, number | null>(),
-        average: new Map<string, number | null>(),
+        values: {
+          single: new Map<string, number | null>(),
+          average: new Map<string, number | null>(),
+        },
+        singleOfficialRanks: new Map<string, number | null>(),
+        singleLiveRanks: new Map<string, number | null>(),
       };
     }
+    const single = computeWcaMetricStatsByRound(metricRounds, singleMetricMode);
+    const hasLiveRounds = metricRounds.some(round => round.live);
+    const singleOfficialRanks = hasLiveRounds
+      ? computeWcaMetricStatsByRound(metricRounds.filter(round => !round.live), singleMetricMode).ranks
+      : single.ranks;
     return {
-      single: computeWcaMetricByRound(metricRounds, singleMetricMode),
-      average: computeWcaMetricByRound(metricRounds, averageMetricMode),
+      values: {
+        single: single.values,
+        average: computeWcaMetricByRound(metricRounds, averageMetricMode),
+      },
+      singleOfficialRanks,
+      singleLiveRanks: single.ranks,
     };
   }, [mbld, metricRounds, singleMetricMode, averageMetricMode]);
+  const metricValues = metricData.values;
   // PR / 名次染色只算官方成绩:直播(非官方)行不参与
   const prRank = useMemo(() => computePrRank(effResultsForRank.filter((r) => !r.live), comps), [effResultsForRank, comps]);
   // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同一口径
@@ -522,6 +538,7 @@ function EventRoundsList({
             const liveInfoReady = !r.live || livePrRanks.has(rowKey);
             const singleRank = liveInfoReady ? (rank?.singleRank ?? liveRank?.pS ?? null) : null;
             const averageRank = liveInfoReady ? (rank?.averageRank ?? liveRank?.pA ?? null) : null;
+            const metricRank = (r.live ? metricData.singleLiveRanks : metricData.singleOfficialRanks).get(rowKey) ?? null;
             // 直播行的区域纪录(NR/WR/CR)与 /wca/comp 结果表同口径,优先于 PR 标志。
             const singleRecord = r.regional_single_record || (liveRank?.singleTag || null);
             // 多盲非官方平均:WCA 无 regional_average_record,改查站内自算的 WR/大洲/NR 标签。
@@ -616,7 +633,14 @@ function EventRoundsList({
                             ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
                             : null}
                     </span>
-                  ) : formatMetricValue(metricValues.single.get(rowKey), eventId, singleMetricMode)}
+                  ) : (
+                    <span className="record-num-cell">
+                      {formatMetricValue(metricValues.single.get(rowKey), eventId, singleMetricMode)}
+                      {metricRank
+                        ? <RecordBadge record={metricRank === 1 ? 'PR' : `PR${metricRank}`} variant="inline" />
+                        : null}
+                    </span>
+                  )}
                 </td>
                 <td className={`wp-cell-result ${(mbld || averageMetricMode === 'avg') && oldAvg.length > 0 ? 'wp-cell-changed' : ''}`}>
                   {!mbld && averageMetricMode !== 'avg' ? (
