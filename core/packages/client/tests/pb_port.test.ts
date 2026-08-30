@@ -108,10 +108,14 @@ describe('CubePB WCA person integration', () => {
     expect(personDetail).toContain(".withDefault('pr')");
     expect(personDetail).toContain("withOptions({ history: 'push' })");
     expect(personDetail).toContain("resultView === 'pb'");
-    expect(personDetail).toContain('<PersonPbTable wcaId={profile.person.wca_id} isZh={isZh} />');
+    expect(personDetail).toContain('onVisibilityControlChange={setPbVisibilityControl}');
     expect(personHero).toContain('<CompactSelect');
+    expect(personHero).toContain('<BoolToggle');
+    expect(personHero).toContain("resultView === 'pb' && pbVisibilityControl");
     expect(personHero).toContain("{ value: 'historical'");
     expect(personHero).toContain("resultView !== 'pb'");
+    expect(personPbTable).not.toContain('公开设置已保存。');
+    expect(personPbTable).not.toContain('Visibility saved.');
   });
 });
 

@@ -3,6 +3,7 @@
 
 import { Mars, Venus } from 'lucide-react';
 import AppLink from '@/components/AppLink';
+import BoolToggle from '@/components/BoolToggle';
 import { CompactSelect } from '@/components/CompactSelect';
 import { Flag } from '@/components/Flag';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -20,6 +21,11 @@ interface Props {
   onResultViewChange: (view: 'pr' | 'historical' | 'pb') => void;
   inclCancelled: boolean;
   onInclCancelledChange: (value: boolean) => void;
+  pbVisibilityControl: {
+    value: boolean;
+    disabled: boolean;
+    onChange: (value: boolean) => void;
+  } | null;
 }
 
 export default function PersonHero({
@@ -31,6 +37,7 @@ export default function PersonHero({
   onResultViewChange,
   inclCancelled,
   onInclCancelledChange,
+  pbVisibilityControl,
 }: Props) {
   const p = profile.person;
   // 选手主页展示完整 WCA 名(拉丁名 + 括号内本地名),中英文一致;与 WCA 官网对齐。
@@ -178,6 +185,14 @@ export default function PersonHero({
             onChange={onInclCancelledChange}
             onLabel={t('废止项', 'Cancelled')}
             offLabel={t('废止项', 'Cancelled')}
+          />
+        )}
+        {resultView === 'pb' && pbVisibilityControl && (
+          <BoolToggle
+            value={pbVisibilityControl.value}
+            onChange={pbVisibilityControl.onChange}
+            label={t('公开', 'Public')}
+            disabled={pbVisibilityControl.disabled}
           />
         )}
       </div>
