@@ -796,6 +796,12 @@ html[data-theme=dark] .wp-page {
     color: var(--wp-blue); border-bottom-color: var(--wp-blue);
     font-weight: 600;
 }
+.wp-attempt-stats {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px;
+    margin: 0 4px 8px;
+    color: var(--wp-text-sub); font-size: 0.78rem;
+    font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+}
 
 /* 「比赛」视图工具行:成绩/赛事 PillToggle + (# PR 名次 / 编辑)同一行,左对齐 + 与下方表格留白 */
 .wp-comp-subtoggle { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
