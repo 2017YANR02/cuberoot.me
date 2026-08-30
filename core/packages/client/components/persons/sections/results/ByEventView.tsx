@@ -51,7 +51,9 @@ import { tr } from '@/i18n/tr';
 import { summarizeNumericValues } from '@cuberoot/shared/timer';
 import {
   computeWcaMetricByRound,
+  WCA_AVERAGE_METRIC_KEYS,
   WCA_RESULT_METRIC_OPTIONS,
+  WCA_SINGLE_METRIC_KEYS,
   type WcaResultMetricMode,
 } from '@/lib/wca-result-metrics';
 
@@ -195,7 +197,8 @@ function EventRoundsList({
   // 多盲非官方平均的区域纪录(WR/大洲/NR)查表;仅本项目是多盲时拉取。
   const mbldAvgRecords = useMbldAvgRecords(isMbldEvent(eventId));
   const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
-  const [metricMode, setMetricMode] = useState<WcaResultMetricMode>('ao5');
+  const [singleMetricMode, setSingleMetricMode] = useState<WcaResultMetricMode>('singles');
+  const [averageMetricMode, setAverageMetricMode] = useState<WcaResultMetricMode>('avg');
   // 排序:点列头(单次/平均/第 N 把)切 升序→降序→取消;无效成绩(DNF/DNS/空位)永远垫底。
   // key=null → 默认按比赛日期倒序分组;key 非空 → 拉平本项目所有轮次重排,逐行显示比赛名。
   const [sort, setSort] = useState<{ key: string | null; dir: 'asc' | 'desc' }>({ key: null, dir: 'asc' });
@@ -242,24 +245,30 @@ function EventRoundsList({
       average: { count: averageValues.length, stats: summarizeNumericValues(averageValues) },
     };
   }, [effResultsForRank, eventId]);
-  const showMetricColumn = !isMbldEvent(eventId);
+  const mbld = isMbldEvent(eventId);
+  const metricRounds = useMemo(() => effResultsForRank
+    .filter(result => result.event_id === eventId)
+    .map(result => ({
+      key: wcaResultRowKey(result),
+      competition: result.competition_id,
+      date: compById.get(result.competition_id)?.start_date ?? '',
+      roundType: result.round_type_id,
+      roundOrder: roundChronologicalOrder(result.round_type_id),
+      attempts: trimEmptyAttempts(result.attempts ?? []),
+      average: result.average,
+    })), [effResultsForRank, eventId, compById]);
   const metricValues = useMemo(() => {
-    if (!showMetricColumn) return new Map<string, number | null>();
-    return computeWcaMetricByRound(
-      effResultsForRank
-        .filter(result => result.event_id === eventId)
-        .map(result => ({
-          key: wcaResultRowKey(result),
-          competition: result.competition_id,
-          date: compById.get(result.competition_id)?.start_date ?? '',
-          roundType: result.round_type_id,
-          roundOrder: roundChronologicalOrder(result.round_type_id),
-          attempts: trimEmptyAttempts(result.attempts ?? []),
-          average: result.average,
-        })),
-      metricMode,
-    );
-  }, [showMetricColumn, effResultsForRank, eventId, compById, metricMode]);
+    if (mbld) {
+      return {
+        single: new Map<string, number | null>(),
+        average: new Map<string, number | null>(),
+      };
+    }
+    return {
+      single: computeWcaMetricByRound(metricRounds, singleMetricMode),
+      average: computeWcaMetricByRound(metricRounds, averageMetricMode),
+    };
+  }, [mbld, metricRounds, singleMetricMode, averageMetricMode]);
   // PR / 名次染色只算官方成绩:直播(非官方)行不参与
   const prRank = useMemo(() => computePrRank(effResultsForRank.filter((r) => !r.live), comps), [effResultsForRank, comps]);
   // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同一口径
@@ -295,9 +304,8 @@ function EventRoundsList({
     const key = sort.key, dir = sort.dir;
     const valOf = (r: WcaResultRow): number => {
       if (key === 'pos') return r.pos;            // 名次:数字越小越好,与单次/平均同向(≤0 垫底)
-      if (key === 'single') return r.best;
-      if (key === 'average') return effectiveAverage(r, eventId);
-      if (key === 'metric') return metricValues.get(wcaResultRowKey(r)) ?? 0;
+      if (key === 'single') return mbld ? r.best : (metricValues.single.get(wcaResultRowKey(r)) ?? 0);
+      if (key === 'average') return mbld ? effectiveAverage(r, eventId) : (metricValues.average.get(wcaResultRowKey(r)) ?? 0);
       return r.attempts?.[Number(key.slice(3))] ?? 0;
     };
     return baseSorted.slice().sort((a, b) => {
@@ -308,11 +316,11 @@ function EventRoundsList({
       if (ib) return -1;
       return dir === 'asc' ? va - vb : vb - va;
     });
-  }, [baseSorted, sort, eventId, metricValues]);
+  }, [baseSorted, sort, eventId, mbld, metricValues]);
 
   // 渐进渲染:先挂前 N 行,其余趁 idle 补齐(顶级选手单项目可 500+ 行,一次性挂 = 单个长任务卡顿)。
   // 切项目 / 改排序 → displayRows 重排 → 重置重新渐进。
-  const { count, ensureIndex } = useProgressiveCount(displayRows.length, `${eventId}|${sort.key ?? ''}|${sort.dir}|${metricMode}`);
+  const { count, ensureIndex } = useProgressiveCount(displayRows.length, `${eventId}|${sort.key ?? ''}|${sort.dir}|${singleMetricMode}|${averageMetricMode}`);
 
   // 行级 hash 锚点(#r-{comp}-{event}-{round}):点整行 → URL 片段更新,该行黄色高亮持续到
   // 换行。reveal 处理渐进渲染——目标行还没挂到 DOM 时先 ensureIndex 纳入并返回 false,count
@@ -371,12 +379,16 @@ function EventRoundsList({
   // 列头排序按钮的方向箭头(全站统一 components/SortArrow)。
   const sortArrow = (key: string) =>
     <SortArrow active={sort.key === key} dir={sort.dir} size={11} />;
-  const metricItems = WCA_RESULT_METRIC_OPTIONS.map(option => ({
+  const metricItemsByKey = new Map(WCA_RESULT_METRIC_OPTIONS.map(option => [option.key, {
     value: option.key,
     label: t(option.zh, option.en),
-  }));
-  const selectedMetric = metricItems.find(item => item.value === metricMode)
-    ?? { value: 'ao5' as const, label: 'Ao5' };
+  }]));
+  const singleMetricItems = WCA_SINGLE_METRIC_KEYS.map(key => metricItemsByKey.get(key) ?? { value: key, label: key });
+  const averageMetricItems = WCA_AVERAGE_METRIC_KEYS.map(key => metricItemsByKey.get(key) ?? { value: key, label: key });
+  const selectedSingleMetric = metricItemsByKey.get(singleMetricMode)
+    ?? { value: 'singles' as const, label: t('单次', 'Single') };
+  const selectedAverageMetric = metricItemsByKey.get(averageMetricMode)
+    ?? { value: 'avg' as const, label: t('平均', 'Average') };
 
   return (
     <>
@@ -420,40 +432,61 @@ function EventRoundsList({
               </button>
             </th>
             <th>
-              <button type="button" className={`wp-sort-th ${sort.key === 'single' ? 'is-active' : ''}`}
-                onClick={() => toggleSort('single')} title={t('按单次排序', 'Sort by single')}>
-                {t('单次', 'Single')}{sortArrow('single')}
-              </button>
-            </th>
-            <th>
-              <button type="button" className={`wp-sort-th ${sort.key === 'average' ? 'is-active' : ''}`}
-                onClick={() => toggleSort('average')} title={t('按平均排序', 'Sort by average')}>
-                {t('平均', 'Avg')}{isMbldEvent(eventId) && <UnofficialMark />}{sortArrow('average')}
-              </button>
-            </th>
-            {showMetricColumn && (
-              <th className="wp-th-metric">
+              {mbld ? (
+                <button type="button" className={`wp-sort-th ${sort.key === 'single' ? 'is-active' : ''}`}
+                  onClick={() => toggleSort('single')} title={t('按单次排序', 'Sort by single')}>
+                  {t('单次', 'Single')}{sortArrow('single')}
+                </button>
+              ) : (
                 <span className="wp-metric-th">
                   <CompactSelect<WcaResultMetricMode>
-                    label={selectedMetric.label}
-                    items={metricItems}
-                    value={metricMode}
-                    onChange={setMetricMode}
-                    ariaLabel={t('选择统计列', 'Select statistics column')}
+                    label={selectedSingleMetric.label}
+                    items={singleMetricItems}
+                    value={singleMetricMode}
+                    onChange={setSingleMetricMode}
+                    ariaLabel={t('选择单次统计', 'Select single metric')}
                     variant="plain"
                   />
                   <button
                     type="button"
-                    className={`wp-sort-th wp-metric-sort ${sort.key === 'metric' ? 'is-active' : ''}`}
-                    onClick={() => toggleSort('metric')}
-                    title={t(`按${selectedMetric.label}排序`, `Sort by ${selectedMetric.label}`)}
-                    aria-label={t(`按${selectedMetric.label}排序`, `Sort by ${selectedMetric.label}`)}
+                    className={`wp-sort-th wp-metric-sort ${sort.key === 'single' ? 'is-active' : ''}`}
+                    onClick={() => toggleSort('single')}
+                    title={t(`按${selectedSingleMetric.label}排序`, `Sort by ${selectedSingleMetric.label}`)}
+                    aria-label={t(`按${selectedSingleMetric.label}排序`, `Sort by ${selectedSingleMetric.label}`)}
                   >
-                    {sortArrow('metric')}
+                    {sortArrow('single')}
                   </button>
                 </span>
-              </th>
-            )}
+              )}
+            </th>
+            <th>
+              {mbld ? (
+                <button type="button" className={`wp-sort-th ${sort.key === 'average' ? 'is-active' : ''}`}
+                  onClick={() => toggleSort('average')} title={t('按平均排序', 'Sort by average')}>
+                  {t('平均', 'Avg')}<UnofficialMark />{sortArrow('average')}
+                </button>
+              ) : (
+                <span className="wp-metric-th">
+                  <CompactSelect<WcaResultMetricMode>
+                    label={selectedAverageMetric.label}
+                    items={averageMetricItems}
+                    value={averageMetricMode}
+                    onChange={setAverageMetricMode}
+                    ariaLabel={t('选择平均统计', 'Select average metric')}
+                    variant="plain"
+                  />
+                  <button
+                    type="button"
+                    className={`wp-sort-th wp-metric-sort ${sort.key === 'average' ? 'is-active' : ''}`}
+                    onClick={() => toggleSort('average')}
+                    title={t(`按${selectedAverageMetric.label}排序`, `Sort by ${selectedAverageMetric.label}`)}
+                    aria-label={t(`按${selectedAverageMetric.label}排序`, `Sort by ${selectedAverageMetric.label}`)}
+                  >
+                    {sortArrow('average')}
+                  </button>
+                </span>
+              )}
+            </th>
             <th className="wp-th-aoxr">
               <span className="wp-th-info">
                 AoXR
@@ -570,21 +603,25 @@ function EventRoundsList({
                     {effPos > 0 ? effPos : '—'}
                   </span>
                 </td>
-                <td className={`wp-cell-result ${isMbldEvent(eventId) ? 'wp-cell-result--mbld' : ''} ${oldBest.length > 0 ? 'wp-cell-changed' : ''}`}>
-                  <span className="record-num-cell">
-                    <ResultChangeChain oldValues={oldBest} eventId={eventId} kind="single" note={chain?.[chain.length - 1]?.note} />
-                    {formatWcaResult(effBest, eventId, 'single')}
-                    {singleKeatoned
-                      ? <RecordBadge record={singleRecord} iso2={personCountry} keatoned={singleKeatoned} keatonedEventId={eventId} variant="inline" />
-                      : singleRecord
-                        ? <RecordBadge record={singleRecord} iso2={personCountry} variant="inline" />
-                        : singleRank
-                          ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
-                          : null}
-                  </span>
+                <td className={`wp-cell-result ${mbld ? 'wp-cell-result--mbld' : ''} ${(mbld || singleMetricMode === 'singles') && oldBest.length > 0 ? 'wp-cell-changed' : ''}`}>
+                  {mbld || singleMetricMode === 'singles' ? (
+                    <span className="record-num-cell">
+                      <ResultChangeChain oldValues={oldBest} eventId={eventId} kind="single" note={chain?.[chain.length - 1]?.note} />
+                      {formatWcaResult(effBest, eventId, 'single')}
+                      {singleKeatoned
+                        ? <RecordBadge record={singleRecord} iso2={personCountry} keatoned={singleKeatoned} keatonedEventId={eventId} variant="inline" />
+                        : singleRecord
+                          ? <RecordBadge record={singleRecord} iso2={personCountry} variant="inline" />
+                          : singleRank
+                            ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
+                            : null}
+                    </span>
+                  ) : formatMetricValue(metricValues.single.get(rowKey), eventId, singleMetricMode)}
                 </td>
-                <td className={`wp-cell-result ${oldAvg.length > 0 ? 'wp-cell-changed' : ''}`}>
-                  {roundAvg ? (
+                <td className={`wp-cell-result ${(mbld || averageMetricMode === 'avg') && oldAvg.length > 0 ? 'wp-cell-changed' : ''}`}>
+                  {!mbld && averageMetricMode !== 'avg' ? (
+                    formatMetricValue(metricValues.average.get(rowKey), eventId, averageMetricMode)
+                  ) : roundAvg ? (
                     <span className="wp-avg-cell">
                       <AverageValueCell
                         effAvg={effAvg}
@@ -615,11 +652,6 @@ function EventRoundsList({
                     />
                   )}
                 </td>
-                {showMetricColumn && (
-                  <td className="wp-cell-metric">
-                    {formatMetricValue(metricValues.get(rowKey), eventId, metricMode)}
-                  </td>
-                )}
                 {aoxrSpans[ri] > 0 && (
                   <td className="wp-cell-aoxr" rowSpan={aoxrSpans[ri]}>
                     <AoxrValue cell={aoxrMap.get(aoxrKey(r.competition_id, eventId))} eventId={eventId} />

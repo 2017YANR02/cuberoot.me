@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   computeWcaMetricByRound,
+  WCA_AVERAGE_METRIC_KEYS,
   WCA_RESULT_METRIC_OPTIONS,
+  WCA_SINGLE_METRIC_KEYS,
   type WcaMetricRound,
 } from '@/lib/wca-result-metrics';
 
@@ -39,5 +41,14 @@ describe('WCA result metrics', () => {
     expect(WCA_RESULT_METRIC_OPTIONS.find(option => option.key === 'singles')).toMatchObject({ zh: '单次', en: 'Single' });
     expect(WCA_RESULT_METRIC_OPTIONS.find(option => option.key === 'median')).toMatchObject({ zh: '中位数', en: 'Median' });
     expect(WCA_RESULT_METRIC_OPTIONS.find(option => option.key === 'bestc')).toMatchObject({ zh: '最佳有效', en: 'Best Counting' });
+  });
+
+  it('splits single-value and average metrics between the two result columns', () => {
+    expect(WCA_SINGLE_METRIC_KEYS).toEqual(['singles', 'median', 'bestc', 'worstc', 'worst']);
+    expect(WCA_AVERAGE_METRIC_KEYS).toEqual([
+      'avg', 'mo3', 'ao5', 'ao12', 'ao25', 'ao50', 'ao100', 'bao5', 'wao5', 'mo5', 'bpa', 'wpa',
+    ]);
+    expect(new Set([...WCA_SINGLE_METRIC_KEYS, ...WCA_AVERAGE_METRIC_KEYS]))
+      .toEqual(new Set(WCA_RESULT_METRIC_OPTIONS.map(option => option.key)));
   });
 });
