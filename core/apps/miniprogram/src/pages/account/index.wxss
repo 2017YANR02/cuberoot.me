@@ -4,17 +4,6 @@
   padding-top: 72rpx;
 }
 
-.account-entry-guide {
-  margin-top: 72rpx;
-}
-
-.account-entry-title {
-  display: block;
-  font-size: 36rpx;
-  font-weight: 680;
-  line-height: 1.3;
-}
-
 .account-entry-copy,
 .account-note,
 .account-user-meta {
@@ -26,7 +15,7 @@
 .account-entry-copy {
   font-size: 28rpx;
   line-height: 1.65;
-  margin-top: 20rpx;
+  margin-top: 64rpx;
 }
 
 .account-primary-button {
