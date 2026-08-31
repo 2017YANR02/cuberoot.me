@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import {
   assignLocalBattlePlayerKey,
+  decodeLocalBattleRounds,
   groupLocalBattlePlayersByEvent,
   isLocalBattleScrambleHidden,
   localBattlePlayerForKey,
   localBattlePlayerSlots,
+  localBattleRoundWinners,
   localBattleWinnerIndices,
   normalizeLocalBattlePlayerCount,
 } from '@cuberoot/shared/timer';
@@ -57,5 +59,67 @@ describe('shared local-battle foundation', () => {
       { time: 8_000, penalty: 'dnf' },
       { time: 9_000, penalty: 'dnf' },
     ])).toEqual([]);
+  });
+
+  it('decodes atomic rounds and rejects duplicate players or non-battle events', () => {
+    const round = {
+      id: 'round-1',
+      ts: 1_000,
+      attempts: [
+        { playerId: 0, solve: { id: 'a', timeMs: 8_000, penalty: '+2', scramble: 'R U', event: '222', ts: 1_000 } },
+        { playerId: 1, solve: { id: 'b', timeMs: 10_000, penalty: 'ok', scramble: 'F R', event: '333', ts: 1_000 } },
+      ],
+      winners: [0, 1],
+    };
+    const decoded = decodeLocalBattleRounds([round]);
+    expect(decoded).toEqual([round]);
+    expect(localBattleRoundWinners(decoded![0])).toEqual([0, 1]);
+    expect(decodeLocalBattleRounds([{
+      ...round,
+      attempts: [round.attempts[0], { ...round.attempts[1], playerId: 0 }],
+    }])).toBeNull();
+    expect(decodeLocalBattleRounds([{
+      ...round,
+      attempts: [round.attempts[0], {
+        ...round.attempts[1], solve: { ...round.attempts[1].solve, event: 'custom' },
+      }],
+    }])).toBeNull();
+    expect(decodeLocalBattleRounds([{ ...round, winners: [0] }])?.[0].winners).toEqual([0, 1]);
+    expect(decodeLocalBattleRounds([{
+      ...round,
+      attempts: [round.attempts[0], {
+        ...round.attempts[1], solve: { ...round.attempts[1].solve, ts: 999 },
+      }],
+    }])).toBeNull();
+  });
+
+  it('preserves canonical solve metadata while decoding a round', () => {
+    const decoded = decodeLocalBattleRounds([{
+      id: 'round-meta',
+      ts: 2_000,
+      attempts: [0, 1].map((playerId) => ({
+        playerId,
+        solve: {
+          id: `solve-${playerId}`,
+          timeMs: 9_000 + playerId,
+          penalty: 'ok',
+          scramble: 'R U',
+          scrambleSource: { kind: 'wca', identity: `slot-${playerId}` },
+          event: '333',
+          ts: 2_000,
+          moves: [{ m: 'R', ts: 100 }],
+          device: { model: 'gan-v4', name: 'GAN 16 UI' },
+          reconstruction: ['R'],
+        },
+      })),
+      winners: [1],
+    }]);
+    expect(decoded?.[0].attempts[0].solve).toMatchObject({
+      scrambleSource: { kind: 'wca', identity: 'slot-0' },
+      moves: [{ m: 'R', ts: 100 }],
+      device: { model: 'gan-v4', name: 'GAN 16 UI' },
+      reconstruction: ['R'],
+    });
+    expect(decoded?.[0].winners).toEqual([0]);
   });
 });

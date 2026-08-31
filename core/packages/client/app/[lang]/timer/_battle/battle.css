@@ -655,8 +655,8 @@
     border: 1px solid var(--border-strong);
     border-radius: 6px;
     color: var(--muted-foreground);
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
     font-size: 1rem;
     cursor: pointer;
     display: flex;
@@ -999,6 +999,7 @@ body.solo .scramble-img {
     width: 100%;
     /* NOTE: 全屏高度，底部为导航栏留 56px 空间 */
     height: calc(100vh - 56px);
+    height: calc(100dvh - 56px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1007,6 +1008,8 @@ body.solo .scramble-img {
 /* NOTE: 1v1 对战历史面板 — 全屏（无底部导航栏） */
 .vs-history-panel {
     height: 100vh;
+    height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 .vs-history-panel .history-header {
@@ -1114,7 +1117,11 @@ body.solo .scramble-img {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px;
+    padding:
+        max(16px, env(safe-area-inset-top))
+        max(16px, env(safe-area-inset-right))
+        max(16px, env(safe-area-inset-bottom))
+        max(16px, env(safe-area-inset-left));
 }
 
 .round-modal {
@@ -1125,6 +1132,7 @@ body.solo .scramble-img {
     width: 100%;
     max-width: 560px;
     max-height: 90vh;
+    max-height: 90dvh;
     overflow-y: auto;
     box-shadow: 0 8px 32px color-mix(in srgb, var(--foreground) 28%, transparent);
     display: flex;
@@ -1251,6 +1259,7 @@ body.solo .scramble-img {
 .round-modal-actions {
     display: flex;
     justify-content: flex-end;
+    gap: 8px;
 }
 
 .round-modal-delete {
@@ -1260,8 +1269,8 @@ body.solo .scramble-img {
     background: transparent;
     border: 1px solid color-mix(in srgb, var(--destructive) 35%, transparent);
     color: var(--destructive);
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     border-radius: 6px;
     cursor: pointer;
@@ -1282,7 +1291,7 @@ body.solo .scramble-img {
     background: transparent;
     border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
     color: var(--accent);
-    height: 36px;
+    min-height: 44px;
     padding: 0 12px;
     border-radius: 6px;
     cursor: pointer;
@@ -1419,7 +1428,9 @@ body.solo .scramble-img {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 2px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
     opacity: 0.55;
     transition: opacity 0.15s, color 0.15s, background 0.15s;
     color: var(--muted-foreground);

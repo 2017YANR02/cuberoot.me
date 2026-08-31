@@ -135,10 +135,14 @@ const BATTLE_AVAILABLE_EVENTS = new Set<string>(PUZZLES.map(p => p.id));
 
 // NOTE: 键盘控制 hook — 1:1 翻译自 battle.js handleKeyDown/handleKeyUp（行 755~783）
 // 输入控件聚焦时跳过(设置面板里有比赛搜索输入框,空格/字母不能被计时器吃掉)
-function isTypingTarget(e: KeyboardEvent): boolean {
-  const t = e.target as HTMLElement | null;
-  if (!t) return false;
-  return t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable;
+export function isBattleKeyboardExcludedTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const t = target;
+  return t.tagName === 'INPUT'
+    || t.tagName === 'TEXTAREA'
+    || t.tagName === 'SELECT'
+    || t.isContentEditable
+    || Boolean(t.closest('[data-no-timer]'));
 }
 
 // NOTE: playerKeys 里存的是 KeyboardEvent.key 原样值,这里转成人类可读的按钮文案。
@@ -148,17 +152,25 @@ function formatKeyLabel(key: string): string {
   return key;
 }
 
-function useKeyboardControls() {
+export function useKeyboardControls(suppressed: boolean) {
   const keyPressedRef = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
+    keyPressedRef.current = {};
+    if (suppressed) {
+      const store = useBattleStore.getState();
+      for (let playerId = 0; playerId < store.playerCount; playerId++) {
+        store.playerCancel(playerId);
+      }
+      return;
+    }
     const handleKeyDown = (e: KeyboardEvent) => {
       const store = useBattleStore.getState();
       if (store.recordingKeyFor !== null) return; // 设置面板正在录键,这次按键归它处理
 
       const playerId = keyToPlayer(store.playerKeys, e.key);
       if (playerId === undefined) return;
-      if (isTypingTarget(e)) return;
+      if (isBattleKeyboardExcludedTarget(e.target)) return;
 
       if (store.mode === 'solo' && playerId !== 0) return;
       // 未参战槽位的键不拦(4 人键位默认 Q/P,自定义后同理,在 2 人模式下保持正常输入行为)
@@ -177,7 +189,7 @@ function useKeyboardControls() {
       if (store.recordingKeyFor !== null) return;
       const playerId = keyToPlayer(store.playerKeys, e.key);
       if (playerId === undefined) return;
-      if (isTypingTarget(e)) return;
+      if (isBattleKeyboardExcludedTarget(e.target)) return;
       if (store.mode !== 'solo' && playerId >= store.playerCount) return;
 
       e.preventDefault();
@@ -192,7 +204,7 @@ function useKeyboardControls() {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [suppressed]);
 }
 
 // NOTE: 计时器动画 hook — 通过 RAF 直接写 DOM（不走 React state）
@@ -939,7 +951,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
   }, [visible]);
 
   return (
-    <div className={`settings-overlay${visible ? ' visible' : ''}`} onClick={(e) => {
+    <div className={`settings-overlay${visible ? ' visible' : ''}`} data-no-timer onClick={(e) => {
       if (e.target === e.currentTarget) onClose();
     }}>
       <div className="settings-panel">
@@ -1207,14 +1219,13 @@ interface BattleViewProps {
 }
 
 export default function BattleView({ playerCount, playersControl, presenceControl, onPresenceChange }: BattleViewProps) {
-  useKeyboardControls();
-
   const { i18n } = useTranslation();
   const store = useBattleStore();
   const { mode } = store;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [vsHistoryOpen, setVsHistoryOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  useKeyboardControls(settingsOpen || vsHistoryOpen);
 
   // NOTE: 人数由 URL 驱动(TimerShell),store 跟随同步
   useEffect(() => {
