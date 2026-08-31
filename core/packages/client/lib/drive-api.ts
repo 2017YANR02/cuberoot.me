@@ -14,6 +14,19 @@ export interface DriveAccess {
   inline: boolean;
 }
 
+export interface DriveDownloadSink {
+  write(data: ArrayBuffer): Promise<void>;
+  close(): Promise<void>;
+  abort?(reason?: unknown): Promise<void>;
+}
+
+export interface DriveDownloadOptions {
+  offset?: number;
+  signal?: AbortSignal;
+  onProgress?: (downloadedBytes: number) => void;
+  keepPartialOnError?: () => boolean;
+}
+
 interface DriveChunkResponse {
   offset: number;
   complete: boolean;
@@ -137,6 +150,54 @@ export const deleteDriveNode = (nodeId: string) => (
 export const createDriveAccess = (nodeId: string, inline: boolean) => (
   write<DriveAccess>(`/v1/drive/files/${encodeURIComponent(nodeId)}/access`, 'POST', { inline })
 );
+
+export async function downloadDriveFile(
+  url: string,
+  expectedBytes: number,
+  sink: DriveDownloadSink,
+  options: DriveDownloadOptions = {},
+): Promise<number> {
+  if (!Number.isSafeInteger(expectedBytes) || expectedBytes < 0) {
+    throw new TypeError('Expected download size must be a non-negative safe integer');
+  }
+  const offset = options.offset ?? 0;
+  if (!Number.isSafeInteger(offset) || offset < 0 || offset > expectedBytes) {
+    throw new TypeError('Download offset must be within the expected file size');
+  }
+
+  let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+  let downloadedBytes = offset;
+  try {
+    const response = await fetch(url, {
+      signal: options.signal,
+      cache: 'no-store',
+      headers: offset > 0 ? { Range: `bytes=${offset}-` } : undefined,
+    });
+    if (!response.ok || (offset > 0 && response.status !== 206)) {
+      throw new Error(`Download failed with status ${response.status}`);
+    }
+    if (!response.body) throw new Error('Download response did not include a readable body');
+    reader = response.body.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (downloadedBytes + value.byteLength > expectedBytes) throw new Error('Download exceeded the expected file size');
+      const chunk = new Uint8Array(value.byteLength);
+      chunk.set(value);
+      await sink.write(chunk.buffer);
+      downloadedBytes += value.byteLength;
+      options.onProgress?.(downloadedBytes);
+    }
+    if (downloadedBytes !== expectedBytes) throw new Error('Download ended before the expected file size');
+    await sink.close();
+    return downloadedBytes;
+  } catch (cause) {
+    await reader?.cancel(cause).catch(() => {});
+    if (options.keepPartialOnError?.()) await sink.close().catch(() => {});
+    else await sink.abort?.(cause).catch(() => {});
+    throw cause;
+  }
+}
 
 export async function fetchDriveMembers(): Promise<DriveMember[]> {
   const response = await fetch(apiUrl('/v1/drive/members'), {

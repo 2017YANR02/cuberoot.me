@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { uploadDriveChunk } from '@/lib/drive-api';
+import { downloadDriveFile, uploadDriveChunk } from '@/lib/drive-api';
 
 class FakeEventTarget {
   private readonly listeners = new Map<string, EventListener[]>();
@@ -104,5 +104,80 @@ describe('Drive chunk upload', () => {
 
     await rejection;
     expect(request.aborted).toBe(true);
+  });
+});
+
+describe('Drive streaming download', () => {
+  it('writes response chunks directly to the destination and reports downloaded bytes', async () => {
+    const chunks = [new Uint8Array([1, 2]), new Uint8Array([3, 4, 5])];
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(new ReadableStream({
+      start(controller) {
+        chunks.forEach((chunk) => controller.enqueue(chunk));
+        controller.close();
+      },
+    }))));
+    const sink = {
+      write: vi.fn(async () => {}),
+      close: vi.fn(async () => {}),
+      abort: vi.fn(async () => {}),
+    };
+    const onProgress = vi.fn();
+
+    await expect(downloadDriveFile('https://api.cuberoot.me/file', 5, sink, { onProgress })).resolves.toBe(5);
+    expect(sink.write).toHaveBeenCalledTimes(2);
+    expect(sink.close).toHaveBeenCalledOnce();
+    expect(sink.abort).not.toHaveBeenCalled();
+    expect(onProgress.mock.calls.map(([bytes]) => bytes)).toEqual([2, 5]);
+  });
+
+  it('aborts the destination when the response ends before the expected size', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(new Uint8Array([1, 2]))));
+    const sink = {
+      write: vi.fn(async () => {}),
+      close: vi.fn(async () => {}),
+      abort: vi.fn(async () => {}),
+    };
+
+    await expect(downloadDriveFile('https://api.cuberoot.me/file', 3, sink)).rejects.toThrow('before the expected file size');
+    expect(sink.close).not.toHaveBeenCalled();
+    expect(sink.abort).toHaveBeenCalledOnce();
+  });
+
+  it('resumes with a byte range and keeps a valid partial file after interruption', async () => {
+    const fetchMock = vi.fn(async () => new Response(new Uint8Array([3, 4]), { status: 206 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const sink = {
+      write: vi.fn(async () => {}),
+      close: vi.fn(async () => {}),
+      abort: vi.fn(async () => {}),
+    };
+
+    await expect(downloadDriveFile('https://api.cuberoot.me/file', 5, sink, {
+      offset: 2,
+      keepPartialOnError: () => true,
+    })).rejects.toThrow('before the expected file size');
+    expect(fetchMock).toHaveBeenCalledWith('https://api.cuberoot.me/file', expect.objectContaining({
+      headers: { Range: 'bytes=2-' },
+    }));
+    expect(sink.close).toHaveBeenCalledOnce();
+    expect(sink.abort).not.toHaveBeenCalled();
+  });
+
+  it('completes a resumed byte-range download from the existing offset', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(new Uint8Array([3, 4, 5]), { status: 206 })));
+    const sink = {
+      write: vi.fn(async () => {}),
+      close: vi.fn(async () => {}),
+      abort: vi.fn(async () => {}),
+    };
+    const onProgress = vi.fn();
+
+    await expect(downloadDriveFile('https://api.cuberoot.me/file', 5, sink, {
+      offset: 2,
+      onProgress,
+    })).resolves.toBe(5);
+    expect(onProgress).toHaveBeenLastCalledWith(5);
+    expect(sink.close).toHaveBeenCalledOnce();
+    expect(sink.abort).not.toHaveBeenCalled();
   });
 });
