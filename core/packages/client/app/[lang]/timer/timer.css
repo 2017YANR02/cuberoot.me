@@ -3,86 +3,6 @@
    设计目标：单屏、无干扰、键盘/触摸两套交互无缝。
    ============================================================= */
 
-/* Same scramble font as /scramble/gen sheet rows */
-@font-face {
-  font-family: 'LiberationMono';
-  src: url('/fonts/LiberationMono-Regular.ttf') format('truetype');
-  font-display: block;
-}
-
-/* --- More menu (collapsed toolbar overflow) --- */
-.more-menu {
-  position: relative;
-  display: inline-flex;
-}
-.more-menu-btn.open {
-  background: var(--shell-hover);
-  border-color: var(--border-strong);
-}
-.more-menu-panel {
-  /* anchored-panel: clamped (usePanelClamp in MoreMenu) */
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  min-width: 200px;
-  max-width: 240px;
-  max-height: min(70dvh, 560px);
-  overflow-y: auto;
-  background: var(--popover);
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--foreground) 40%, transparent);
-  padding: 4px;
-  z-index: 50;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.more-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  background: transparent;
-  border: 0;
-  border-radius: 4px;
-  color: var(--foreground);
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-decoration: none;
-}
-.more-menu-item:hover:not(:disabled) {
-  background: var(--shell-hover);
-}
-.more-menu-item:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-.more-menu-item.danger {
-  color: var(--destructive);
-}
-.more-menu-item.danger:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--destructive) 14%, transparent);
-}
-.more-menu-icon {
-  display: inline-flex;
-  width: 16px;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  color: var(--muted-foreground);
-}
-.more-menu-item.danger .more-menu-icon { color: var(--destructive); }
-.more-menu-label {
-  flex: 1 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .timer-presence {
   position: relative;
   display: inline-flex;
@@ -220,22 +140,8 @@
   font-size: 12px;
 }
 
-/* --- Scramble strip ----------------------------------------- */
-/* 内距 / 字体 / 字号 / 底色 / 下边框都由 shell.css 的 .timing-surface-scramble .scramble-strip
-   接管(它把底色改成 transparent、边框去掉,让打乱区直接坐在壳背景上)。 */
-.scramble-strip {
-  text-align: center;
-  line-height: 1.5;
-  word-spacing: 0.25em;
-  color: var(--foreground);
-  flex: 0 0 auto;
-  cursor: pointer;
-  white-space: pre-wrap;
-}
-.scramble-strip .scramble-empty { font-style: italic; }
-
 /* WCA 真实打乱来源行(国旗 + 比赛名 + 项目 + 轮次 + 打卡 chip),复刻首页 RecentScrambles 的来源行。
-   父 .scramble-strip 是 flex-wrap 行容器(见 shell.css),所以本行必须 flex-basis:100% 独占整行,
+   父 .scramble-strip 是 flex-wrap 行容器(见 @cuberoot/timer-ui/scramble-strip.css),所以本行必须 flex-basis:100% 独占整行,
    才能永远换到打乱公式下一行;否则短打乱(2×2/金字塔)会和公式挤在同一行。内部再用 flex 居中排布
    来源徽标 + 打卡 chip。非等宽、word-spacing 复位避免 CJK 被撑开。 */
 .scramble-src-row {
@@ -470,111 +376,6 @@
 /* 停表脉冲(target-pulse-good/bad)不在这里 —— SoloView 把这两个类挂在 .timing-surface 上,
    shell.css 用一次性换色实现,没有 @keyframes。 */
 
-/* Stats summary */
-.stats-panel {
-  padding: 14px 0;
-  overflow-y: auto;
-}
-.stats-panel h3 {
-  font-size: 12px;
-  color: var(--muted-foreground);
-  margin: 0 0 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-/* cstimer-style current/best table: label | current | best, one row per
-   window (time + each ao). Token-only, theme-correct. */
-.stats-table { font-family: var(--font-mono); margin-bottom: 8px; }
-.stats-table-head,
-.stats-row {
-  display: grid;
-  grid-template-columns: 1fr 4.8em 4.8em;
-  align-items: center;
-  gap: 8px;
-}
-.stats-table-head {
-  font-family: inherit;
-  font-size: 11px;
-  color: var(--muted-foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding-bottom: 5px;
-  border-bottom: 1px solid var(--shell-divider);
-}
-.stats-table-head .st-col { text-align: right; }
-.stats-row {
-  padding: 6px 0;
-  border-bottom: 1px solid var(--shell-divider);
-}
-.stats-row .st-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: var(--muted-foreground);
-}
-.stats-row .st-cur,
-.stats-row .st-best {
-  text-align: right;
-  font-size: 15px;
-  color: var(--foreground);
-}
-.stats-row .st-cur.muted,
-.stats-row .st-best.muted { color: var(--faint-foreground); }
-.rolling-stats-custom {
-  display: flex;
-  gap: 6px;
-  padding-top: 6px;
-  border-top: 1px solid var(--border-default);
-}
-.rolling-stats-custom-input-wrap {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-}
-.rolling-stats-custom-input {
-  width: 5em;
-  font-size: 13px;
-  padding: 5px 28px 5px 8px;
-  border-radius: 7px;
-  border: 1px solid var(--input);
-  background: transparent;
-  color: var(--foreground);
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-.rolling-stats-custom-input::-webkit-inner-spin-button,
-.rolling-stats-custom-input::-webkit-outer-spin-button {
-  margin: 0;
-  appearance: none;
-}
-.rolling-stats-custom-add {
-  font-size: 12px;
-  padding: 5px 12px;
-  border-radius: 7px;
-  border: 1px solid var(--border-default);
-  background: var(--shell-chip);
-  color: var(--foreground);
-  cursor: pointer;
-}
-.rolling-stats-custom-add:hover { background: var(--shell-hover); }
-.rolling-stats-custom-add:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.rolling-stats-custom-add:disabled:hover { background: var(--shell-chip); }
-
-/* σ / count footer line under the table */
-.stats-foot {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--muted-foreground);
-  padding: 2px 0 6px;
-}
-
 /* Times-panel action row (full stats / cross-session toggle) */
 .shell-times-actions {
   display: flex;
@@ -582,31 +383,6 @@
   gap: 8px;
   margin: 4px 0 10px;
 }
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 6px 16px;
-  font-family: var(--font-mono);
-}
-.stats-grid .row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding: 5px 0;
-  border-bottom: 1px solid var(--shell-divider);
-}
-.stats-grid .row .lbl {
-  font-size: 11px;
-  color: var(--muted-foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.stats-grid .row .val {
-  font-size: 14px;
-  color: var(--foreground);
-}
-.stats-grid .row .val.muted { color: var(--faint-foreground); }
-
 /* Per-case stats panel (OLL/PLL/COLL/CMLL/ZBLL/EG trainers) */
 .case-stats-panel {
   padding: 14px 18px;
@@ -680,62 +456,11 @@
   justify-content: space-between;
   align-items: center;
 }
-.rolling-stats-column-pickers {
-  display: grid;
-  align-self: stretch;
-  width: auto;
-  margin-bottom: 0;
-  gap: 8px;
-}
-.rolling-stats-column-select {
-  width: 100%;
-  min-width: 0;
-}
-.rolling-stats-column-pickers--header .compact-select-trigger {
-  justify-content: flex-end;
-  gap: 4px;
-  padding-right: 22px;
-  color: var(--signal-info);
-}
-.rolling-stats-column-pickers .compact-select-arrow {
-  display: none;
-}
-.rolling-stats-column-pickers--row {
-  display: inline-grid;
-  width: fit-content;
-}
-.rolling-stats-column-pickers--row .compact-select-trigger {
-  justify-content: flex-start;
-  color: var(--muted-foreground);
-  font-size: 13px;
-}
-.rolling-stats-menu {
-  font-family: var(--font-mono);
-  text-transform: none;
-  letter-spacing: normal;
-}
 .history-list {
   flex: 1;
   overflow-y: auto;
   font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   font-size: 13px;
-}
-.history-row {
-  display: grid;
-  grid-template-columns: 32px 1fr auto;
-  gap: 8px;
-  align-items: center;
-  padding: 6px 14px;
-  border-bottom: 1px solid var(--shell-divider);
-  cursor: pointer;
-  transition: background 0.1s;
-}
-.history-row:hover { background: var(--shell-hover); }
-.history-row .idx { color: var(--faint-foreground); font-size: 11px; text-align: right; }
-.history-row .time .penalty-flag {
-  color: var(--muted-foreground);
-  margin-left: 6px;
-  font-size: 11px;
 }
 .history-row .actions {
   display: none;
@@ -761,13 +486,6 @@
 .history-cols-head .idx { text-align: right; }
 /* Match .record-num-cell's badge reserve so the label sits over the numbers. */
 .history-cols-head .hao-head { text-align: right; color: var(--signal-info); padding-right: 22px; }
-.history-row .hao {
-  text-align: right;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-
 .history-empty {
   padding: 30px 20px;
   text-align: center;
@@ -813,42 +531,6 @@
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
-.history-row .comment-flag {
-  margin-left: 6px;
-  color: var(--signal-info);
-  font-weight: 700;
-  font-size: 14px;
-  cursor: help;
-}
-
-/* --- Sub-X breakdown --- */
-.subx-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-family: var(--font-mono);
-}
-.subx-row {
-  display: grid;
-  grid-template-columns: 64px 1fr 36px;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-}
-.subx-lbl { color: var(--muted-foreground); }
-.subx-pct { color: var(--foreground); text-align: right; }
-.subx-bar {
-  height: 6px;
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.subx-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--signal-info), var(--signal-success));
-  transition: width 0.3s;
-}
-
 /* --- Modal -------------------------------------------------- */
 .timer-modal-overlay {
   position: fixed;
@@ -985,23 +667,6 @@
 .solver-modal-x:hover { background: var(--shell-hover); color: var(--foreground); }
 
 /* --- SolveModal additions --- */
-.timer-modal .comment-textarea {
-  width: 100%;
-  margin-top: 4px;
-  padding: 8px 10px;
-  background: var(--background);
-  border: 1px solid var(--shell-divider);
-  border-radius: 4px;
-  color: var(--foreground);
-  font-family: inherit;
-  font-size: 13px;
-  resize: vertical;
-  box-sizing: border-box;
-}
-.timer-modal .comment-textarea:focus {
-  outline: none;
-  border-color: color-mix(in srgb, var(--signal-info) 45%, transparent);
-}
 .timer-modal .modal-cube-row {
   display: flex;
   justify-content: center;
@@ -1571,26 +1236,6 @@
   letter-spacing: 0.02em;
 }
 
-/* --- Stats panel expand toggle (compact mode).
-   Shown when fewer than 4 average rows are populated. Click to reveal the
-   full ao/mo grid. */
-.stats-expand-toggle {
-  margin-top: 8px;
-  background: transparent;
-  border: 1px solid var(--shell-divider);
-  color: var(--muted-foreground);
-  border-radius: 4px;
-  padding: 4px 10px;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-}
-.stats-expand-toggle:hover {
-  background: var(--popover);
-  color: var(--foreground);
-  border-color: var(--border-strong);
-}
-
 /* --- Practice heatmap "Show calendar" toggle (sparse mode).
    Lives inside the heatmap header next to the streak pill when the user has
    < 7 solves total; clicking expands the 12-month grid. */
@@ -1685,8 +1330,6 @@
   }
   /* .settings-row flex-wrap override lives in _components/wca-source.css */
 
-  /* Wider tap target on history rows. */
-  .history-row { padding: 10px 14px; }
 }
 
 @media (max-width: 480px) {
@@ -2070,98 +1713,6 @@
 .bulk-scramble { color: var(--foreground); word-break: break-word; }
 
 /* PB single in history list is marked by the "PB" badge only (no star / gold). */
-
-/* --- Print-only header --- */
-.print-only-header { display: none; }
-
-/* --- Print styles --- */
-/* 打印:白纸黑字,硬码 #fff/#000 是对的(纸张不跟主题)。选择器用的是 shell 重构后的类名
-   —— 旧的 .timer-root / .timer-topbar / .timer-center / .timer-bottom 那批已经不存在于 DOM,
-   留着只是静默失效的死规则。 */
-@media print {
-  .timer-shell {
-    background: #fff !important;
-    color: #000 !important;
-    overflow: visible !important;
-    height: auto !important;
-    min-height: 0 !important;
-    padding: 0 !important;
-    user-select: text !important;
-  }
-  .shell-topbar,
-  .shell-corner-net,
-  .timer-stage-splits,
-  .timer-live-tps,
-  .timer-hint,
-  .case-stats-panel,
-  .timer-modal-overlay {
-    display: none !important;
-  }
-  .print-only-header {
-    display: block;
-    padding: 12px 16px 4px;
-    border-bottom: 1px solid #ccc;
-  }
-  .print-only-header h1 {
-    margin: 0;
-    font-size: 20px;
-    color: #000;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  }
-  .print-only-header .print-meta {
-    color: #555;
-    font-size: 11px;
-    margin-top: 2px;
-  }
-  .scramble-strip {
-    background: #fff !important;
-    color: #000 !important;
-    border-bottom: 1px solid #ccc !important;
-    padding: 8px 16px !important;
-  }
-  /* 可见的打乱文字在 .scramble-text 里(shell.css 接管),不给它上色打印会是屏幕上的浅灰。 */
-  .scramble-text { color: #000 !important; }
-  .timing-surface {
-    display: block !important;
-    padding: 10px 16px;
-  }
-  .timer-display {
-    color: #000 !important;
-    font-size: 48px !important;
-  }
-  .shell-panel {
-    display: block !important;
-    grid-template-columns: none !important;
-    grid-template-rows: none !important;
-    max-height: none !important;
-    overflow: visible !important;
-    border-top: 1px solid #ccc !important;
-    background: #fff !important;
-  }
-  .stats-panel,
-  .history-panel {
-    border: 0 !important;
-    overflow: visible !important;
-    page-break-inside: auto;
-    background: #fff !important;
-  }
-  .stats-grid .row .lbl { color: #555 !important; }
-  .stats-grid .row .val { color: #000 !important; }
-  .history-list {
-    overflow: visible !important;
-    max-height: none !important;
-    height: auto !important;
-  }
-  .history-row {
-    border-bottom: 1px solid #eee !important;
-    cursor: default !important;
-    background: #fff !important;
-    page-break-inside: avoid;
-  }
-  .history-row .actions { display: none !important; }
-  .history-row .idx { color: #888 !important; }
-  .history-row .time { color: #000 !important; }
-}
 
 /* 按天统计(DailyStatsPanel):◀ 日期 ▶ + 日/总,下面是「项 / 值 / 较上次」三列。
    数值列给的是 em 而不是 px —— 微信里 CJK 会被放大,贴着内容量的定宽必折行。 */

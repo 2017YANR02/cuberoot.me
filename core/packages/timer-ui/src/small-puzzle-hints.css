@@ -1,0 +1,131 @@
+.timer-small-hints {
+  display: flex;
+  max-width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  transition: opacity 140ms ease;
+}
+
+.timer-small-hints[data-timing='true'] {
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.timer-small-hints-trigger {
+  display: inline-flex;
+  width: auto;
+  min-height: 32px;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid var(--shell-divider);
+  border-radius: 999px;
+  background: var(--shell-chip);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+
+.timer-small-hints-trigger:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.timer-small-hints-trigger:disabled {
+  cursor: default;
+}
+
+.timer-small-hints-chevron {
+  margin-inline-start: auto;
+  opacity: 0.7;
+  transition: transform 120ms ease;
+}
+
+.timer-small-hints-chevron[data-open='true'] {
+  transform: rotate(90deg);
+}
+
+.timer-small-hints-body {
+  display: flex;
+  width: min(100%, 48rem);
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 10px 8px;
+}
+
+.timer-small-hints-status,
+.timer-small-hints-section {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+.timer-small-hints-status {
+  padding-block: 4px;
+}
+
+.timer-small-hints-section {
+  margin-block-start: 2px;
+}
+
+.timer-small-hints-row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(6.25rem, 7rem) 2rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px;
+  color: var(--muted-foreground);
+}
+
+.timer-small-hints-row.is-best {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.timer-small-hints-label {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 3px;
+}
+
+.timer-small-hints-count {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-small-hints-alg {
+  min-width: 0;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.78125rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 560px) {
+  .timer-small-hints {
+    width: 100%;
+  }
+
+  .timer-small-hints-body {
+    padding-inline: 2px;
+  }
+
+  .timer-small-hints-row {
+    grid-template-columns: minmax(5.25rem, 0.75fr) 1.75rem minmax(0, 2fr);
+    gap: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer-small-hints,
+  .timer-small-hints-chevron {
+    transition: none;
+  }
+}

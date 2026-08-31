@@ -224,6 +224,146 @@ export function solvePyraV(scramble: string): { face: string; moves: string[] }[
   return out;
 }
 
+export type PyramMetric = 'v' | 'cube';
+
+export const PYRAM_METRIC_RANGE: Readonly<Record<PyramMetric, readonly [number, number]>> = {
+  v: [0, 7],
+  cube: [0, 11],
+};
+
+const PYRA_FACES = ['R', 'U', 'L', 'B'] as const;
+const PYRA_SUFFIXES = ['', "'"] as const;
+
+function checkedRandom(rng: () => number): number {
+  const value = rng();
+  if (!Number.isFinite(value) || value < 0 || value >= 1) {
+    throw new Error('pyra-solver: rng must return a number in [0,1)');
+  }
+  return value;
+}
+
+function pickRandom<T>(values: readonly T[], rng: () => number): T {
+  return values[Math.floor(checkedRandom(rng) * values.length)]!;
+}
+
+function invertSolverMove(move: string): string {
+  return move[0] + (move.length > 1 && move[1] === "'" ? ' ' : "'");
+}
+
+function formatSolverMove(move: string): string {
+  return move[1] === "'" ? move : move[0];
+}
+
+/** Canonical random-state Pyraminx provider used by every Timer host. */
+export function generatePyraTimerScramble(rng: () => number = Math.random): string {
+  const mixed: string[] = [];
+  let previousFace = '';
+  for (let index = 0; index < 30; index++) {
+    let face = '';
+    let attempts = 0;
+    do {
+      face = pickRandom(PYRA_FACES, rng);
+      attempts++;
+    } while (face === previousFace && attempts <= 30);
+    mixed.push(face + pickRandom(PYRA_SUFFIXES, rng));
+    previousFace = face;
+  }
+
+  const solution = solvePyra(mixed.join(' ')).moves.filter((move) => /^[RULB]/.test(move));
+  const body = solution.reverse().map(invertSolverMove).map(formatSolverMove);
+  const tips: string[] = [];
+  for (const tip of ['u', 'l', 'r', 'b'] as const) {
+    const turn = Math.floor(checkedRandom(rng) * 3);
+    if (turn > 0) tips.push(tip + (turn === 2 ? "'" : ''));
+  }
+  const scramble = [...body, ...tips].join(' ');
+  return scramble || "R R'";
+}
+
+/** Body-only full solve HTM or shortest V-first opening; tips never count. */
+export function pyramMetricOf(scramble: string, metric: PyramMetric): number {
+  if (metric === 'cube') {
+    return solvePyra(scramble).moves.filter((move) => /^[RULB]/.test(move)).length;
+  }
+  let best = Number.POSITIVE_INFINITY;
+  for (const face of solvePyraV(scramble)) best = Math.min(best, face.moves.length);
+  return Number.isFinite(best) ? best : 0;
+}
+
+// Verified representatives keep ultra-rare exact shells (for example V=7)
+// available offline without ever returning a nearest-but-wrong state.
+const PYRA_EXACT_SEEDS: Readonly<Record<PyramMetric, readonly string[]>> = {
+  v: [
+    "R R'",
+    "R L' B' U' L R B L' U",
+    "R B' U R' U R' U L' R U'",
+    "L' U' R L' U L' U R' L' U'",
+    "R B' U B L B U' L U' L' U'",
+    "R' U L' R' L' U R' L' U L' U'",
+    "L R' L U' L R' B' L U' L' U'",
+    "L' B L' U R' B' L B U' L' U'",
+  ],
+  cube: [
+    "R R'",
+    'U',
+    'U L',
+    'U L R',
+    'U L R B',
+    'L R B L U',
+    "U L R B' U' L",
+    "U L U R L U' L",
+    "U' B' L R B L' B U'",
+    "B L' U' B L' U' B L' U'",
+    "R L' U R' L R B' U L U'",
+    "L' B L' U R' B' L B U' L' U'",
+  ],
+};
+
+function appendRandomTips(scramble: string, rng: () => number): string {
+  const tips: string[] = [];
+  for (const tip of ['u', 'l', 'r', 'b'] as const) {
+    const turn = Math.floor(checkedRandom(rng) * 3);
+    if (turn > 0) tips.push(tip + (turn === 2 ? "'" : ''));
+  }
+  return [scramble, ...tips].filter(Boolean).join(' ');
+}
+
+/**
+ * Generate a random state whose selected metric is exactly inside [lo, hi].
+ * Common bands retain the previous near-uniform rejection path; rare shells
+ * use a solver-verified representative rather than an out-of-range fallback.
+ */
+export function generatePyramByMetric(
+  metric: PyramMetric,
+  lo: number,
+  hi: number,
+  rng: () => number = Math.random,
+  maxTries = 4_000,
+): string {
+  const range = PYRAM_METRIC_RANGE[metric];
+  if (!range) throw new Error(`pyra-solver: unknown metric ${metric}`);
+  if (!Number.isInteger(lo) || !Number.isInteger(hi) || lo < range[0] || hi > range[1] || lo > hi) {
+    throw new Error(`pyra-solver: difficulty range must be integers within ${range[0]}..${range[1]}`);
+  }
+  if (!Number.isInteger(maxTries) || maxTries < 0) {
+    throw new Error('pyra-solver: maxTries must be a non-negative integer');
+  }
+
+  for (let attempt = 0; attempt < maxTries; attempt++) {
+    const scramble = generatePyraTimerScramble(rng);
+    const distance = pyramMetricOf(scramble, metric);
+    if (distance >= lo && distance <= hi) return scramble;
+  }
+
+  const distance = lo + Math.floor(checkedRandom(rng) * (hi - lo + 1));
+  const fallback = appendRandomTips(PYRA_EXACT_SEEDS[metric][distance]!, rng);
+  const measured = pyramMetricOf(fallback, metric);
+  if (measured < lo || measured > hi) {
+    throw new Error(`pyra-solver: exact ${metric} seed failed verification (${measured})`);
+  }
+  return fallback;
+}
+
 // --- Self-test ---
 
 export function __pyraSelfTest(): string {

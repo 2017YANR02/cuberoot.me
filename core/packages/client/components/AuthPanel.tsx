@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Loader2, Eye, EyeOff, Mail, Smartphone, KeyRound } from 'lucide-react';
 import { SiWechat, SiQq, SiAlipay } from 'react-icons/si';
 import { primaryHandle } from '@cuberoot/shared/account';
+import type { MobileAuthProvider } from '@cuberoot/shared/auth/web-session';
 import AppLink from '@/components/AppLink';
 import { useAuthStore, applySession } from '@/lib/auth-store';
 import { useLang } from '@/i18n/tr';
@@ -533,11 +534,21 @@ function OrDivider() {
 }
 
 /** 第三方「用 X 登录」按钮:整行、图标定位左侧、文字居中(Google/Apple 官方按钮范式)。 */
-function SsoButton({ icon, label, busy, onClick }: {
-  icon: React.ReactNode; label: string; busy?: boolean; onClick: () => void;
+function SsoButton({ icon, label, busy, mobileAuthProvider, onClick }: {
+  icon: React.ReactNode;
+  label: string;
+  busy?: boolean;
+  mobileAuthProvider?: MobileAuthProvider;
+  onClick: () => void;
 }) {
   return (
-    <button type="button" className="auth-sso" disabled={busy} onClick={onClick}>
+    <button
+      type="button"
+      className="auth-sso"
+      data-mobile-auth-provider={mobileAuthProvider}
+      disabled={busy}
+      onClick={onClick}
+    >
       <span className="auth-sso-icon">{busy ? <Loader2 size={ICON} className="auth-spin" /> : icon}</span>
       <span className="auth-sso-label">{label}</span>
     </button>
@@ -773,13 +784,13 @@ export function LoginForm({
       {hasSso && (
         <div className="auth-sso-list">
           {avail.wca && (
-            <SsoButton icon={<WcaGlyph size={ICON} />} label={t('用 WCA 登录', 'Continue with WCA')} onClick={() => loginWithWca()} />
+            <SsoButton icon={<WcaGlyph size={ICON} />} label={t('用 WCA 登录', 'Continue with WCA')} mobileAuthProvider="wca" onClick={() => loginWithWca()} />
           )}
           {googleOn && (
-            <SsoButton icon={<GoogleGlyph size={ICON} />} busy={gBusy} label={t('用 Google 登录', 'Continue with Google')} onClick={() => void handleGoogleLogin()} />
+            <SsoButton icon={<GoogleGlyph size={ICON} />} busy={gBusy} label={t('用 Google 登录', 'Continue with Google')} mobileAuthProvider="google" onClick={() => void handleGoogleLogin()} />
           )}
           {activeSocials.map((s) => (
-            <SsoButton key={s.key} icon={<s.Glyph size={ICON} />} busy={socialBusy === s.key} label={t(`用${s.name.zh}登录`, `Continue with ${s.name.en}`)} onClick={() => void startSocial(s.key)} />
+            <SsoButton key={s.key} icon={<s.Glyph size={ICON} />} busy={socialBusy === s.key} label={t(`用${s.name.zh}登录`, `Continue with ${s.name.en}`)} mobileAuthProvider={s.key} onClick={() => void startSocial(s.key)} />
           ))}
         </div>
       )}

@@ -10,60 +10,31 @@
  */
 import { useEffect, useState } from 'react';
 import { persistItem } from './safe-storage';
-import { CUBE222_STATE_TYPES, type Cube222StateType } from '@cuberoot/puzzle-solvers/cube222';
+import {
+  DEFAULT_SCRAMBLE_222_MODE,
+  DEFAULT_SCRAMBLE_222_TYPE,
+  isScramble222Mode,
+  isScramble222Type,
+  type Scramble222Mode,
+  type Scramble222Type,
+} from '@cuberoot/shared/timer';
 
-export type Scramble222Mode = 'wca' | 'optimal';
-
-export const SCRAMBLE_222_TYPES = [
-  'full',
-  '3gen',
-  'eg',
-  'cll',
-  'eg1',
-  'eg2',
-  'tcllp',
-  'tclln',
-  'tcll',
-  'ls',
-  'nobar',
-] as const;
-export type Scramble222Type = (typeof SCRAMBLE_222_TYPES)[number];
-/** WCA 真题可按最终状态精确判定的类型；3-gen 只描述生成过程，不能用于真题筛选。 */
-export const WCA_SCRAMBLE_222_TYPES = ['full', ...CUBE222_STATE_TYPES] as const;
-
-export function isCube222StateType(type: Scramble222Type): type is Cube222StateType {
-  return CUBE222_STATE_TYPES.includes(type as Cube222StateType);
-}
-
-interface Scramble222TypeMeta {
-  label: { zh: string; en: string };
-  /** 空 = 完整状态,继续走本站 2x2 WCA / optimal 生成链。 */
-  cstimer?: { key: string; length?: number };
-}
-
-const TYPE_META: Record<Scramble222Type, Scramble222TypeMeta> = {
-  full:  { label: { zh: '完整状态', en: 'Full state' } },
-  '3gen': { label: { zh: '三面随机转', en: '3-gen' }, cstimer: { key: '2223', length: 25 } },
-  eg:    { label: { zh: 'EG', en: 'EG' }, cstimer: { key: '222eg' } },
-  cll:   { label: { zh: 'CLL', en: 'CLL' }, cstimer: { key: '222eg0' } },
-  eg1:   { label: { zh: 'EG1', en: 'EG1' }, cstimer: { key: '222eg1' } },
-  eg2:   { label: { zh: 'EG2', en: 'EG2' }, cstimer: { key: '222eg2' } },
-  tcllp: { label: { zh: 'TCLL+', en: 'TCLL+' }, cstimer: { key: '222tcp' } },
-  tclln: { label: { zh: 'TCLL-', en: 'TCLL-' }, cstimer: { key: '222tcn' } },
-  tcll:  { label: { zh: 'TCLL', en: 'TCLL' }, cstimer: { key: '222tc' } },
-  ls:    { label: { zh: 'LS', en: 'LS' }, cstimer: { key: '222lsall' } },
-  nobar: { label: { zh: '无连色', en: 'No Bar' }, cstimer: { key: '222nb' } },
-};
+export {
+  cstimer222Spec,
+  isCube222StateType,
+  SCRAMBLE_222_TYPE_CATALOG,
+  SCRAMBLE_222_TYPES,
+  WCA_SCRAMBLE_222_TYPES,
+} from '@cuberoot/shared/timer';
+export type { Scramble222Mode, Scramble222Type } from '@cuberoot/shared/timer';
 
 const KEY = 'cuberoot.gen.222_mode';
 const TYPE_KEY = 'cuberoot.gen.222_type';
 const EVENT = 'cuberoot:222-mode-change';
-const DEFAULT: Scramble222Mode = 'optimal';
-const DEFAULT_TYPE: Scramble222Type = 'full';
-
 export function get222Mode(): Scramble222Mode {
-  if (typeof localStorage === 'undefined') return DEFAULT;
-  return localStorage.getItem(KEY) === 'wca' ? 'wca' : DEFAULT;
+  if (typeof localStorage === 'undefined') return DEFAULT_SCRAMBLE_222_MODE;
+  const stored = localStorage.getItem(KEY);
+  return isScramble222Mode(stored) ? stored : DEFAULT_SCRAMBLE_222_MODE;
 }
 
 export function set222Mode(mode: Scramble222Mode): void {
@@ -74,11 +45,9 @@ export function set222Mode(mode: Scramble222Mode): void {
 }
 
 export function get222Type(): Scramble222Type {
-  if (typeof localStorage === 'undefined') return DEFAULT_TYPE;
+  if (typeof localStorage === 'undefined') return DEFAULT_SCRAMBLE_222_TYPE;
   const stored = localStorage.getItem(TYPE_KEY);
-  return SCRAMBLE_222_TYPES.includes(stored as Scramble222Type)
-    ? stored as Scramble222Type
-    : DEFAULT_TYPE;
+  return isScramble222Type(stored) ? stored : DEFAULT_SCRAMBLE_222_TYPE;
 }
 
 export function set222Type(type: Scramble222Type): void {
@@ -86,16 +55,6 @@ export function set222Type(type: Scramble222Type): void {
   if (get222Type() === type) return;
   persistItem(TYPE_KEY, type);
   window.dispatchEvent(new CustomEvent(EVENT));
-}
-
-export function scramble222TypeLabel(key: string, isZh: boolean): string {
-  const meta = TYPE_META[key as Scramble222Type] ?? TYPE_META.full;
-  return isZh ? meta.label.zh : meta.label.en;
-}
-
-/** null 表示完整状态,由既有 WCA / optimal 引擎生成。 */
-export function cstimer222Spec(type: Scramble222Type): Readonly<{ key: string; length?: number }> | null {
-  return TYPE_META[type].cstimer ?? null;
 }
 
 export function on222ModeChange(handler: () => void): () => void {

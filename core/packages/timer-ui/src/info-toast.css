@@ -1,0 +1,53 @@
+.timer-info-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom) + var(--timer-info-toast-bottom-inset, 0px));
+  z-index: 70;
+  display: inline-flex;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  padding: 8px 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--popover);
+  color: var(--popover-foreground, var(--foreground));
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--foreground) 18%, transparent);
+  font-size: 13px;
+  line-height: 1.35;
+  transform: translateX(-50%);
+}
+
+.timer-info-toast-message {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.timer-info-toast-undo {
+  flex: 0 0 auto;
+  padding: 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.timer-info-toast-undo:hover { background: var(--shell-hover); }
+
+.timer-info-toast-undo:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+@media (max-width: 360px) {
+  .timer-info-toast {
+    align-items: flex-start;
+    border-radius: 12px;
+  }
+}

@@ -1,0 +1,42 @@
+.timer-by-steps-config { display: contents; }
+
+.timer-by-steps-top-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.timer-by-steps-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timer-by-steps-label {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.timer-by-steps-metric {
+  align-self: flex-start;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--input, var(--border-default));
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+}
+
+.timer-by-steps-range {
+  width: min(100%, 440px);
+  padding: 0 8px 14px;
+}
+
+@media (max-width: 768px) {
+  .timer-by-steps-metric { font-size: 16px; }
+}

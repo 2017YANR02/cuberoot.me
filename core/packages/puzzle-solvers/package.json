@@ -5,6 +5,9 @@
   "type": "module",
   "cuberoot": {
     "kind": "library",
+    "externalRuntime": {
+      "cstimer_module": "runtime-neutral"
+    },
     "runtime": {
       "./bicube": "runtime-neutral",
       "./bsq": "runtime-neutral",
@@ -12,8 +15,11 @@
       "./clock": "runtime-neutral",
       "./crz3a": "runtime-neutral",
       "./ctico": "runtime-neutral",
+      "./cstimer-nonwca": "runtime-neutral",
       "./cstimer-gsolver": "runtime-neutral",
+      "./cube-moves": "runtime-neutral",
       "./cube222": "runtime-neutral",
+      "./gear": "runtime-neutral",
       "./cuboid233": "runtime-neutral",
       "./cuboid334": "runtime-neutral",
       "./cuboid335": "runtime-neutral",
@@ -21,6 +27,14 @@
       "./cuboid337": "runtime-neutral",
       "./heli": "runtime-neutral",
       "./helicv": "runtime-neutral",
+      "./ivy": "runtime-neutral",
+      "./piece-blocks": "runtime-neutral",
+      "./skewb": "runtime-neutral",
+      "./timer-by-steps": "runtime-neutral",
+      "./timer-333-cube": "runtime-neutral",
+      "./timer-333-step": "runtime-neutral",
+      "./timer-333-thistle": "runtime-neutral",
+      "./timer-small-hints": "runtime-neutral",
       "./kociemba/cube": "runtime-neutral",
       "./kociemba/coords": "runtime-neutral",
       "./kociemba/movetables": "runtime-neutral",
@@ -68,15 +82,30 @@
       "node": "./dist/ctico.js",
       "default": "./src/ctico.ts"
     },
+    "./cstimer-nonwca": {
+      "types": "./src/cstimer-nonwca.ts",
+      "node": "./dist/cstimer-nonwca.js",
+      "default": "./src/cstimer-nonwca.ts"
+    },
     "./cstimer-gsolver": {
       "types": "./src/cstimer-gsolver.ts",
       "node": "./dist/cstimer-gsolver.js",
       "default": "./src/cstimer-gsolver.ts"
     },
+    "./cube-moves": {
+      "types": "./src/cube-moves.ts",
+      "node": "./dist/cube-moves.js",
+      "default": "./src/cube-moves.ts"
+    },
     "./cube222": {
       "types": "./src/cube222.ts",
       "node": "./dist/cube222.js",
       "default": "./src/cube222.ts"
+    },
+    "./gear": {
+      "types": "./src/gear.ts",
+      "node": "./dist/gear.js",
+      "default": "./src/gear.ts"
     },
     "./cuboid233": {
       "types": "./src/cuboid233.ts",
@@ -112,6 +141,46 @@
       "types": "./src/helicv.ts",
       "node": "./dist/helicv.js",
       "default": "./src/helicv.ts"
+    },
+    "./ivy": {
+      "types": "./src/ivy.ts",
+      "node": "./dist/ivy.js",
+      "default": "./src/ivy.ts"
+    },
+    "./piece-blocks": {
+      "types": "./src/piece-blocks.ts",
+      "node": "./dist/piece-blocks.js",
+      "default": "./src/piece-blocks.ts"
+    },
+    "./skewb": {
+      "types": "./src/skewb.ts",
+      "node": "./dist/skewb.js",
+      "default": "./src/skewb.ts"
+    },
+    "./timer-by-steps": {
+      "types": "./src/timer-by-steps.ts",
+      "node": "./dist/timer-by-steps.js",
+      "default": "./src/timer-by-steps.ts"
+    },
+    "./timer-333-cube": {
+      "types": "./src/timer-333-cube.ts",
+      "node": "./dist/timer-333-cube.js",
+      "default": "./src/timer-333-cube.ts"
+    },
+    "./timer-333-step": {
+      "types": "./src/timer-333-step.ts",
+      "node": "./dist/timer-333-step.js",
+      "default": "./src/timer-333-step.ts"
+    },
+    "./timer-333-thistle": {
+      "types": "./src/timer-333-thistle.ts",
+      "node": "./dist/timer-333-thistle.js",
+      "default": "./src/timer-333-thistle.ts"
+    },
+    "./timer-small-hints": {
+      "types": "./src/timer-small-hints.ts",
+      "node": "./dist/timer-small-hints.js",
+      "default": "./src/timer-small-hints.ts"
     },
     "./kociemba/cube": {
       "types": "./src/kociemba/cube.ts",
@@ -187,5 +256,8 @@
   "devDependencies": {
     "typescript": "^5",
     "vitest": "^4.1.6"
+  },
+  "dependencies": {
+    "cstimer_module": "^0.1.5"
   }
 }

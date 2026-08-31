@@ -1,17 +1,10 @@
-// Ported from packages/client-vite/src/utils/date_range.ts.
+// Web adapter over the runtime-neutral ISO date/range helpers shared with Mobile.
+import { formatDateRangeIso, toLocalIsoDate } from '@cuberoot/shared/iso-date';
 
-export function formatDateRangeIso(startISO: string, endISO?: string | null): string {
-  const end = endISO || startISO;
-  if (startISO === end) return startISO;
-  const [sy, sm] = startISO.split('-');
-  const [ey, em, ed] = end.split('-');
-  if (sy === ey && sm === em) return `${startISO}~${ed}`;
-  if (sy === ey) return `${startISO}~${em}-${ed}`;
-  return `${startISO}~${end}`;
-}
+export { formatDateRangeIso };
 
 export function toIsoDate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return toLocalIsoDate(d);
 }
 
 /** ISO 时间戳 → 本地时区 'YYYY-MM-DD HH:MM'(报名起止等需要时分的场合,不带秒);非法输入返回 ''。 */

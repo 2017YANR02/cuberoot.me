@@ -1,55 +1,66 @@
 import {
   initialTimerMachineState,
+  timerCanHandleAttemptPress,
   transitionTimer,
   type SolveResult,
   type TimerMachineAction,
   type TimerMachineConfig,
   type TimerMachineState,
+  type TimerMachineTransition,
 } from '@cuberoot/shared/timer';
 import {
   useCallback,
   useEffect,
   useRef,
   useState,
-  type PointerEvent as ReactPointerEvent,
 } from 'react';
 
 interface TimerControllerOptions {
+  canStart?: boolean;
+  enabled?: boolean;
   holdMs: number;
   inspectionSec: number;
   onComplete(result: SolveResult): void;
+  onStart?(): void;
 }
 
 export interface TimerController {
+  armFromCube(): boolean;
+  cancelArm(): boolean;
   machine: TimerMachineState;
   nowMs: number;
-  pointerCancel(event: ReactPointerEvent<HTMLDivElement>): void;
-  pointerDown(event: ReactPointerEvent<HTMLDivElement>): void;
-  pointerUp(event: ReactPointerEvent<HTMLDivElement>): void;
-}
-
-function eventTargetsControl(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) return false;
-  if (target.closest('[data-no-timer]')) return true;
-  if (target.closest('[data-timer-pad]')) return false;
-  return target.closest('a, button, input, select, textarea, [contenteditable="true"]') !== null;
+  cancelPress(): boolean;
+  pressDown(atMs?: number): boolean;
+  pressUp(atMs?: number): boolean;
+  reset(): boolean;
+  startFromCube(atMs?: number): boolean;
+  stopFromCube(atMs?: number): boolean;
 }
 
 export function useTimerController({
+  canStart = true,
+  enabled = true,
   holdMs,
   inspectionSec,
   onComplete,
+  onStart,
 }: TimerControllerOptions): TimerController {
   const [machine, setMachine] = useState(initialTimerMachineState);
   const [nowMs, setNowMs] = useState(() => performance.now());
   const machineRef = useRef(machine);
   const holdTimeoutRef = useRef<number | undefined>(undefined);
   const onCompleteRef = useRef(onComplete);
+  const onStartRef = useRef(onStart);
+  const canStartRef = useRef(canStart);
+  const enabledRef = useRef(enabled);
   const configRef = useRef<TimerMachineConfig>({
     inspectionSec,
   });
 
   onCompleteRef.current = onComplete;
+  onStartRef.current = onStart;
+  canStartRef.current = canStart;
+  enabledRef.current = enabled;
   configRef.current = { inspectionSec };
 
   const clearHoldTimeout = useCallback(() => {
@@ -59,7 +70,7 @@ export function useTimerController({
     }
   }, []);
 
-  const apply = useCallback((action: TimerMachineAction) => {
+  const apply = useCallback((action: TimerMachineAction): TimerMachineTransition => {
     const transition = transitionTimer(machineRef.current, action, configRef.current);
     machineRef.current = transition.state;
     setMachine(transition.state);
@@ -76,10 +87,24 @@ export function useTimerController({
     if (transition.effects.includes('hold-cancelled') || transition.effects.includes('run-started')) {
       clearHoldTimeout();
     }
+    if (transition.effects.includes('run-started')) onStartRef.current?.();
     if (transition.solve) onCompleteRef.current(transition.solve);
+    return transition;
   }, [clearHoldTimeout, holdMs]);
 
   useEffect(() => clearHoldTimeout, [clearHoldTimeout]);
+
+  useEffect(() => {
+    if (enabled) return;
+    clearHoldTimeout();
+    apply({ type: 'cancel-arm' });
+  }, [apply, clearHoldTimeout, enabled]);
+
+  useEffect(() => {
+    if (canStart || machineRef.current.phase === 'running') return;
+    clearHoldTimeout();
+    apply({ type: 'cancel-arm' });
+  }, [apply, canStart, clearHoldTimeout]);
 
   useEffect(() => {
     if (machine.phase !== 'running' && machine.phase !== 'inspecting') return undefined;
@@ -92,50 +117,71 @@ export function useTimerController({
     return () => window.cancelAnimationFrame(frame);
   }, [machine.phase]);
 
-  useEffect(() => {
-    const keyDown = (event: KeyboardEvent) => {
-      if (event.code !== 'Space' || event.repeat || eventTargetsControl(event.target)) return;
-      event.preventDefault();
-      apply({ type: 'press-down', nowMs: performance.now() });
-    };
-    const keyUp = (event: KeyboardEvent) => {
-      if (event.code !== 'Space' || eventTargetsControl(event.target)) return;
-      event.preventDefault();
-      apply({ type: 'press-up', nowMs: performance.now() });
-    };
-    const cancelPress = () => {
+  const pressDown = useCallback((atMs = performance.now()): boolean => (
+    enabledRef.current
+    && timerCanHandleAttemptPress(machineRef.current.phase, canStartRef.current)
+    && apply({ type: 'press-down', nowMs: atMs }).accepted === true
+  ), [apply]);
+
+  const pressUp = useCallback((atMs = performance.now()): boolean => {
+    if (!enabledRef.current) return false;
+    if (!canStartRef.current && machineRef.current.phase !== 'running') {
       clearHoldTimeout();
-      apply({ type: 'cancel-press' });
-    };
-    window.addEventListener('keydown', keyDown);
-    window.addEventListener('keyup', keyUp);
-    window.addEventListener('blur', cancelPress);
-    return () => {
-      window.removeEventListener('keydown', keyDown);
-      window.removeEventListener('keyup', keyUp);
-      window.removeEventListener('blur', cancelPress);
-    };
+      apply({ type: 'cancel-arm' });
+      return false;
+    }
+    clearHoldTimeout();
+    return apply({ type: 'press-up', nowMs: atMs }).accepted === true;
   }, [apply, clearHoldTimeout]);
 
-  const pointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.button !== 0 || eventTargetsControl(event.target)) return;
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
+  const cancelPress = useCallback((): boolean => {
+    clearHoldTimeout();
+    return apply({ type: 'cancel-press' }).accepted === true;
+  }, [apply, clearHoldTimeout]);
+
+  const armFromCube = useCallback((): boolean => {
+    if (!enabledRef.current || !canStartRef.current) return false;
+    const phase = machineRef.current.phase;
+    if (phase !== 'idle' && phase !== 'stopped') return false;
     apply({ type: 'press-down', nowMs: performance.now() });
+    return true;
   }, [apply]);
 
-  const pointerUp = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.button !== 0 || eventTargetsControl(event.target)) return;
-    event.preventDefault();
+  const cancelArm = useCallback((): boolean => {
     clearHoldTimeout();
-    apply({ type: 'press-up', nowMs: performance.now() });
+    return apply({ type: 'cancel-arm' }).accepted === true;
   }, [apply, clearHoldTimeout]);
 
-  const pointerCancel = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    event.preventDefault();
+  const startFromCube = useCallback((atMs?: number): boolean => (
+    enabledRef.current && canStartRef.current && apply({
+      type: 'start-from-cube',
+      nowMs: performance.now(),
+      atMs,
+    }).accepted === true
+  ), [apply]);
+
+  const stopFromCube = useCallback((atMs?: number): boolean => apply({
+    type: 'stop-from-cube',
+    nowMs: performance.now(),
+    atMs,
+  }).accepted === true, [apply]);
+
+  const reset = useCallback((): boolean => {
     clearHoldTimeout();
-    apply({ type: 'cancel-press' });
+    apply({ type: 'reset' });
+    return true;
   }, [apply, clearHoldTimeout]);
 
-  return { machine, nowMs, pointerCancel, pointerDown, pointerUp };
+  return {
+    armFromCube,
+    cancelPress,
+    cancelArm,
+    machine,
+    nowMs,
+    pressDown,
+    pressUp,
+    reset,
+    startFromCube,
+    stopFromCube,
+  };
 }

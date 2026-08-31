@@ -249,9 +249,24 @@ describe('shared timer machine', () => {
     expect(stopped.solve?.timeMs).toBe(9876);
   });
 
-  it('reset and cancel clear active inspection state', () => {
+  it('cancel-arm clears every pre-run phase when a scramble identity changes', () => {
     const inspecting = apply(initialTimerMachineState(), { type: 'press-down', nowMs: 0 }, inspection).state;
-    expect(apply(inspecting, { type: 'cancel-arm' }, inspection).state).toEqual(initialTimerMachineState());
+    const holding = apply(inspecting, { type: 'press-down', nowMs: 100 }, inspection).state;
+    const ready = apply(holding, { type: 'hold-ready' }, inspection).state;
+
+    expect(inspecting.phase).toBe('inspecting');
+    expect(holding.phase).toBe('holding');
+    expect(ready.phase).toBe('ready');
+    for (const state of [inspecting, holding, ready]) {
+      const cancelled = apply(state, { type: 'cancel-arm' }, inspection);
+      expect(cancelled.accepted).toBe(true);
+      expect(cancelled.state).toEqual(initialTimerMachineState());
+      expect(cancelled.effects).toEqual(['arm-cancelled']);
+    }
+  });
+
+  it('reset clears active inspection state', () => {
+    const inspecting = apply(initialTimerMachineState(), { type: 'press-down', nowMs: 0 }, inspection).state;
     expect(apply(inspecting, { type: 'reset' }, inspection).state).toEqual(initialTimerMachineState());
   });
 });

@@ -35,7 +35,19 @@ export default function PrivacyPage() {
             'The app automatically downloads public 3×3 competition scrambles from the CubeRoot API and caches at most 50 on the device for up to seven days. Requests do not include your solve times, comments, or settings. The server processes and logs standard request information such as IP address and device or client type to deliver the service, protect it, and diagnose failures.',
           )}
         </li>
-        <li>{t('App 不包含广告或分析 SDK,也不使用摄像头、麦克风或定位权限。', 'The app contains no advertising or analytics SDK and does not use camera, microphone, or location permissions.')}</li>
+        <li>{t('App 不包含广告或分析 SDK,也不使用摄像头、麦克风或位置数据。Android 11 及以下版本可能按系统要求把蓝牙扫描兼容授权显示为定位权限,但 App 不会读取、推断、保存或上传你的位置。', 'The app contains no advertising or analytics SDK and does not use camera, microphone, or location data. On Android 11 and earlier, the operating system may present the Bluetooth scanning compatibility permission as location access, but the app does not read, infer, store, or upload your location.')}</li>
+        <li>
+          {t(
+            '只有在你点击连接智能魔方后,App 才会请求附近设备或蓝牙权限,扫描并连接你选择的兼容魔方。蓝牙扫描不用于确定或记录位置;拒绝授权不会影响普通计时。',
+            'Only after you tap Connect smart cube does the app request Nearby devices or Bluetooth access to scan for and connect to a compatible cube you select. Bluetooth scanning is not used to determine or record location, and denying access does not affect ordinary timing.',
+          )}
+        </li>
+        <li>
+          {t(
+            '连接期间,App 在设备本地读取并处理魔方名称、蓝牙地址、转动和状态,用于协议解密、显示打乱进度和自动计时。扫描列表、蓝牙地址和实时魔方数据不会上传到 CubeRoot 服务器,也不会写入 App 数据库;断开连接或关闭 App 后会从运行内存清除。',
+            'While connected, the app processes the cube name, Bluetooth address, turns, and state locally on your device for protocol decryption, scramble progress, and automatic timing. Scan results, Bluetooth addresses, and live cube data are not uploaded to CubeRoot servers or written to the app database; they are cleared from runtime memory after disconnection or app exit.',
+          )}
+        </li>
       </ul>
 
       <h2>{t('App、小程序与账号数据', 'App, Mini Program, and account data')}</h2>

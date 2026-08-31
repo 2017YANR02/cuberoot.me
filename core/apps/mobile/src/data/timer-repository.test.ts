@@ -3,24 +3,32 @@ import { describe, expect, it } from 'vitest';
 import {
   MAX_TIMER_BACKUP_BYTES,
   activeTimerSolves,
+  createTimerManualEntryDraft,
+  timerWcaCompetitionScrambleSlotIdentity,
+  validateTimerManualEntry,
   type TimerDatabase,
   type TimerStoreData,
 } from '@cuberoot/shared/timer';
 import {
   CorruptTimerStoreError,
   TimerRepository,
+  TimerSessionRepositoryError,
   type TimerStoreDriver,
 } from './timer-repository';
 
 class MemoryDriver implements TimerStoreDriver {
   data: TimerStoreData | unknown | undefined;
   recovery: unknown | undefined;
+  failWrites = false;
+  writeCount = 0;
 
   async read(): Promise<unknown | undefined> {
     return structuredClone(this.data);
   }
 
   async write(data: TimerStoreData): Promise<void> {
+    if (this.failWrites) throw new Error('disk full');
+    this.writeCount += 1;
     this.data = structuredClone(data);
   }
 
@@ -29,6 +37,8 @@ class MemoryDriver implements TimerStoreDriver {
   }
 
   async writeWithRecovery(data: TimerStoreData, recovery: unknown): Promise<void> {
+    if (this.failWrites) throw new Error('disk full');
+    this.writeCount += 1;
     this.recovery = structuredClone(recovery);
     this.data = structuredClone(data);
   }
@@ -64,6 +74,78 @@ describe('mobile timer repository contract', () => {
     expect(activeTimerSolves(await repo.load(), '333').map((solve) => solve.timeMs)).toEqual([1_000, 2_000]);
   });
 
+  it('persists the exact reviewed WCA occurrence identity even when move text repeats', async () => {
+    const { repo } = repository();
+    const firstSlot = timerWcaCompetitionScrambleSlotIdentity({
+      competitionId: 'BrockportBolt2025', eventId: '333', roundTypeId: '1',
+      groupId: 'A', isExtra: false, scrambleNumber: 1,
+    });
+    const secondSlot = timerWcaCompetitionScrambleSlotIdentity({
+      competitionId: 'BrockportBolt2025', eventId: '333', roundTypeId: '1',
+      groupId: 'A', isExtra: false, scrambleNumber: 2,
+    });
+    expect(firstSlot).not.toBe(secondSlot);
+
+    await repo.addSolve({
+      timeMs: 1_234,
+      penalty: 'ok',
+      scramble: "R U R'",
+      event: '333',
+      scrambleSource: { kind: 'wca', identity: firstSlot },
+    });
+    const saved = activeTimerSolves(await repo.load(), '333')[0]!;
+    expect(saved.scramble).toBe("R U R'");
+    expect(saved.scrambleSource).toEqual({ kind: 'wca', identity: firstSlot });
+    expect(saved.scrambleSource?.identity).not.toBe(secondSlot);
+  });
+
+  it('persists every shared manual-entry result shape without losing metadata', async () => {
+    const { repo } = repository();
+    const normal = validateTimerManualEntry({
+      ...createTimerManualEntryDraft('333', "R U R'"),
+      comment: 'judge note',
+      penalty: 'DNS',
+      time: '12.34',
+    }).value;
+    const fmc = validateTimerManualEntry({
+      ...createTimerManualEntryDraft('333fm', "R U R' U'"),
+      comment: 'transcribed',
+      fmcSolution: "U R U' R'",
+    }).value;
+    const mbld = validateTimerManualEntry({
+      ...createTimerManualEntryDraft('333mbld', 'multi scramble'),
+      mbldAttempted: '2',
+      mbldSolved: '1',
+      time: '10:00',
+    }).value;
+    if (!normal || !fmc || !mbld) throw new Error('valid shared manual-entry fixture rejected');
+
+    await repo.addSolve(normal);
+    await repo.addSolve(fmc);
+    await repo.addSolve(mbld);
+
+    const data = await repo.load();
+    expect(activeTimerSolves(data, '333')[0]).toMatchObject({
+      comment: 'judge note',
+      event: '333',
+      penalty: 'DNS',
+      scramble: "R U R'",
+      timeMs: 12_340,
+    });
+    expect(activeTimerSolves(data, '333fm')[0]).toMatchObject({
+      comment: "U R U' R'\ntranscribed",
+      event: '333fm',
+      penalty: 'ok',
+      timeMs: 4_000,
+    });
+    expect(activeTimerSolves(data, '333mbld')[0]).toMatchObject({
+      event: '333mbld',
+      mbld: { solved: 1, attempted: 2 },
+      penalty: 'DNF',
+      timeMs: 600_000,
+    });
+  });
+
   it('persists a flat v1 app envelope as nested v2 on load', async () => {
     const driver = new MemoryDriver();
     driver.data = {
@@ -77,16 +159,71 @@ describe('mobile timer repository contract', () => {
 
     await expect(repo.load()).resolves.toMatchObject({ schemaVersion: 2, database: { version: 3 } });
     expect(driver.data).toMatchObject({ schemaVersion: 2, database: { version: 3 } });
+    expect((driver.data as TimerStoreData).settings.statsRollingColumns).toEqual(['ao5', 'ao12']);
   });
 
   it('updates penalty/comment and deletes one solve', async () => {
     const { repo } = repository();
     let data = await repo.addSolve({ timeMs: 1_000, penalty: 'ok', scramble: 'R', event: '333' });
+    const sessionId = data.database.activeSessionId;
     const solve = activeTimerSolves(data, '333')[0];
     data = await repo.updateSolve('333', solve.id, { penalty: 'DNF', comment: 'turn' });
     expect(activeTimerSolves(data, '333')[0]).toMatchObject({ penalty: 'DNF', comment: 'turn' });
     data = await repo.deleteSolve('333', solve.id);
     expect(activeTimerSolves(data, '333')).toEqual([]);
+    data = await repo.restoreSolve(sessionId, solve);
+    expect(activeTimerSolves(data, '333')).toEqual([solve]);
+    await expect(repo.restoreSolve(sessionId, solve)).resolves.toEqual(data);
+  });
+
+  it('clears only the requested event in the active session', async () => {
+    const { repo } = repository();
+    await repo.addSolve({ timeMs: 2_220, penalty: 'ok', scramble: "R U R'", event: '222' });
+    let data = await repo.addSolve({ timeMs: 3_330, penalty: 'ok', scramble: 'R U', event: '333' });
+    const activeSessionId = data.database.activeSessionId;
+
+    data = await repo.clearSessionEvent(activeSessionId, '222');
+    expect(activeTimerSolves(data, '222')).toEqual([]);
+    expect(activeTimerSolves(data, '333').map((solve) => solve.timeMs)).toEqual([3_330]);
+
+    const unchanged = await repo.clearSessionEvent(activeSessionId, '222');
+    expect(activeTimerSolves(unchanged, '333').map((solve) => solve.timeMs)).toEqual([3_330]);
+  });
+
+  it('persists the active event and isolates solve mutations by event bucket', async () => {
+    const { repo } = repository();
+    await repo.updateSettings({
+      event: '222',
+      manualScrambles: "R U R'\nF2",
+      scramble222Mode: 'wca',
+      scramble222Type: 'eg1',
+      genByStepsOn: true,
+      genStepsMetric: 'qtm',
+      genSteps: [10, 11, 12],
+    });
+    await repo.addSolve({ timeMs: 2_220, penalty: 'ok', scramble: "R U R'", event: '222' });
+    await repo.addSolve({ timeMs: 3_330, penalty: 'ok', scramble: 'R U', event: '333' });
+
+    let data = await repo.load();
+    expect(data.settings.event).toBe('222');
+    expect(data.settings.manualScrambles).toBe("R U R'\nF2");
+    expect(data.settings.scramble222Mode).toBe('wca');
+    expect(data.settings.scramble222Type).toBe('eg1');
+    expect(data.settings.genByStepsOn).toBe(true);
+    expect(data.settings.genStepsMetric).toBe('qtm');
+    expect(data.settings.genSteps).toEqual([10, 11, 12]);
+    expect(activeTimerSolves(data, '222').map((solve) => solve.timeMs)).toEqual([2_220]);
+    expect(activeTimerSolves(data, '333').map((solve) => solve.timeMs)).toEqual([3_330]);
+
+    const twoByTwo = activeTimerSolves(data, '222')[0];
+    data = await repo.updateSolve(twoByTwo.event, twoByTwo.id, { penalty: '+2', comment: '222 only' });
+    expect(activeTimerSolves(data, '222')[0]).toMatchObject({ penalty: '+2', comment: '222 only' });
+    expect(activeTimerSolves(data, '333')[0].penalty).toBe('ok');
+    expect(activeTimerSolves(data, '333')[0]).not.toHaveProperty('comment');
+
+    data = await repo.deleteSolve(twoByTwo.event, twoByTwo.id);
+    expect(activeTimerSolves(data, '222')).toEqual([]);
+    expect(activeTimerSolves(data, '333')).toHaveLength(1);
   });
 
   it('round-trips export/import and rejects corrupt data without overwriting it', async () => {
@@ -163,5 +300,220 @@ describe('mobile timer repository contract', () => {
   it('validates setting ranges at the repository boundary', async () => {
     const { repo } = repository();
     await expect(repo.updateSettings({ holdMs: -1 })).rejects.toBeInstanceOf(CorruptTimerStoreError);
+    await expect(repo.updateSettings({ runningPrecision: 4 as 3 })).rejects.toBeInstanceOf(CorruptTimerStoreError);
+  });
+
+  it('persists all eight shared timing settings without a Mobile-only schema', async () => {
+    const { repo } = repository();
+    const data = await repo.updateSettings({
+      timingEnabled: false,
+      inspectionSec: 15,
+      holdMs: 650,
+      autoSessionForEvent: true,
+      autoEventForSession: true,
+      hideTime: true,
+      runningPrecision: 1,
+      precision: 2,
+    });
+    expect(data.settings).toMatchObject({
+      timingEnabled: false,
+      inspectionSec: 15,
+      holdMs: 650,
+      autoSessionForEvent: true,
+      autoEventForSession: true,
+      hideTime: true,
+      runningPrecision: 1,
+      precision: 2,
+    });
+    await expect(repo.load()).resolves.toMatchObject({ settings: data.settings });
+  });
+
+  it('persists and normalizes the same compact rolling-stat columns as the website', async () => {
+    const { repo } = repository();
+    const data = await repo.updateSettings({ statsRollingColumns: ['ao100', 'mo3'] });
+    expect(data.settings.statsRollingColumns).toEqual(['mo3', 'ao100']);
+    await expect(repo.load()).resolves.toMatchObject({
+      settings: { statsRollingColumns: ['mo3', 'ao100'] },
+    });
+
+    const restoredDefaults = await repo.updateSettings({ statsRollingColumns: [] });
+    expect(restoredDefaults.settings.statsRollingColumns).toEqual(['ao5', 'ao12']);
+    await expect(repo.updateSettings({ statsRollingColumns: ['invalid' as 'ao5'] }))
+      .rejects.toBeInstanceOf(CorruptTimerStoreError);
+  });
+
+  it('persists create/switch/rename/clear/delete with active fallback and event isolation', async () => {
+    const { driver, repo } = repository();
+    await repo.addSolve({ timeMs: 3_000, penalty: 'ok', scramble: 'R', event: '333' });
+    const initial = await repo.load();
+    const firstId = initial.database.activeSessionId;
+
+    let data = await repo.createSession('  Pocket  ', '222');
+    const pocketId = data.database.activeSessionId;
+    expect(pocketId).not.toBe(firstId);
+    expect(data.database.sessions.find((session) => session.id === pocketId)).toMatchObject({
+      name: 'Pocket', event: '222',
+    });
+    expect(activeTimerSolves(data, '333')).toEqual([]);
+
+    data = await repo.addSolve({ timeMs: 2_000, penalty: 'ok', scramble: 'U', event: '222' });
+    expect(activeTimerSolves(data, '222')).toHaveLength(1);
+    data = await repo.activateSession(firstId);
+    expect(data.database.activeSessionId).toBe(firstId);
+    expect(activeTimerSolves(data, '333').map((solve) => solve.timeMs)).toEqual([3_000]);
+    expect(activeTimerSolves(data, '222')).toEqual([]);
+
+    data = await repo.renameSession(pocketId, '  Two by two  ');
+    expect(data.database.sessions.find((session) => session.id === pocketId)?.name).toBe('Two by two');
+    data = await repo.clearSession(pocketId);
+    expect(data.database.dataBySession[pocketId]).toEqual({});
+
+    await repo.activateSession(pocketId);
+    data = await repo.deleteSession(pocketId);
+    expect(data.database.activeSessionId).toBe(firstId);
+    expect(data.database.sessions.map((session) => session.id)).toEqual([firstId]);
+    expect(data.database.dataBySession).not.toHaveProperty(pocketId);
+
+    const restarted = new TimerRepository(driver, {
+      now: () => 999,
+      createId: () => 'restart-id',
+      language: () => 'en',
+    });
+    const restored = await restarted.load();
+    expect(restored.database.activeSessionId).toBe(firstId);
+    expect(activeTimerSolves(restored, '333').map((solve) => solve.timeMs)).toEqual([3_000]);
+  });
+
+  it('surfaces unknown/last-session/write failures without replacing valid data', async () => {
+    const { driver, repo } = repository();
+    const initial = await repo.load();
+    const activeId = initial.database.activeSessionId;
+
+    await expect(repo.activateSession('missing')).rejects.toMatchObject({
+      failure: 'unknown-session',
+    });
+    await expect(repo.renameSession('missing', 'X')).rejects.toMatchObject({
+      failure: 'unknown-session',
+    });
+    await expect(repo.deleteSession(activeId)).rejects.toMatchObject({
+      failure: 'last-session',
+    });
+    expect(driver.data).toEqual(initial);
+
+    driver.failWrites = true;
+    await expect(repo.renameSession(activeId, 'Renamed')).rejects.toMatchObject({
+      failure: 'write-failure',
+    });
+    expect(driver.data).toEqual(initial);
+    await expect(repo.renameSession(activeId, 'Renamed')).rejects.toBeInstanceOf(
+      TimerSessionRepositoryError,
+    );
+  });
+
+  it('serializes concurrent session creates and an activate-then-add sequence', async () => {
+    const { driver, repo } = repository();
+    const initial = await repo.load();
+    const firstId = initial.database.activeSessionId;
+
+    await Promise.all([
+      repo.createSession('Second', '222'),
+      repo.createSession('Third', '333oh'),
+    ]);
+    let data = await repo.load();
+    expect(data.database.sessions.map((session) => session.name)).toEqual([
+      'Default', 'Second', 'Third',
+    ]);
+    expect(data.database.activeSessionId).toBe(
+      data.database.sessions.find((session) => session.name === 'Third')?.id,
+    );
+
+    const writesBefore = driver.writeCount;
+    const [, added, latest] = await Promise.all([
+      repo.activateSession(firstId),
+      repo.addSolve({ timeMs: 4_000, penalty: 'ok', scramble: 'F', event: '333' }),
+      repo.load(),
+    ]);
+    expect(added.database.activeSessionId).toBe(firstId);
+    expect(activeTimerSolves(added, '333').map((solve) => solve.timeMs)).toEqual([4_000]);
+    expect(latest).toEqual(added);
+    expect(driver.writeCount - writesBefore).toBe(2);
+    data = await repo.load();
+    expect(data).toEqual(added);
+  });
+
+  it('persists canonical association/select/activate-for-event semantics', async () => {
+    const { driver, repo } = repository();
+    let data = await repo.load();
+    const firstId = data.database.activeSessionId;
+
+    data = await repo.selectEvent('222');
+    expect(data.settings.event).toBe('222');
+    expect(data.database.sessions[0]?.event).toBe('222');
+    const second = await repo.createSession('OH', '333oh');
+    const secondId = second.database.activeSessionId;
+    await repo.activateSession(firstId);
+
+    const matched = await repo.activateSessionForEvent('333oh');
+    expect(matched.sessionId).toBe(secondId);
+    expect(matched.data.database.activeSessionId).toBe(secondId);
+    const noMatch = await repo.activateSessionForEvent('fto');
+    expect(noMatch.sessionId).toBeNull();
+    expect(noMatch.data.database.activeSessionId).toBe(secondId);
+
+    const restarted = new TimerRepository(driver, {
+      now: () => 999,
+      createId: () => 'restart-id',
+      language: () => 'en',
+    });
+    const restored = await restarted.load();
+    expect(restored.settings.event).toBe('222');
+    expect(restored.database.activeSessionId).toBe(secondId);
+    expect(restored.database.sessions.find((session) => session.id === firstId)?.event).toBe('222');
+  });
+
+  it('matches Web auto event/session coupling in one persisted transaction', async () => {
+    const { repo } = repository();
+    let data = await repo.load();
+    const firstId = data.database.activeSessionId;
+    await repo.setSessionEvent(firstId, '333');
+    data = await repo.createSession('Pocket', '222');
+    const pocketId = data.database.activeSessionId;
+
+    await repo.updateSettings({
+      autoSessionForEvent: true,
+      autoEventForSession: true,
+    });
+    data = await repo.activateSession(firstId);
+    expect(data.settings.event).toBe('333');
+    data = await repo.activateSession(pocketId);
+    expect(data.settings.event).toBe('222');
+
+    data = await repo.selectEvent('333');
+    expect(data.database.activeSessionId).toBe(firstId);
+    expect(data.settings.event).toBe('333');
+
+    data = await repo.selectEvent('fto');
+    expect(data.database.activeSessionId).toBe(firstId);
+    expect(data.database.sessions.find((session) => session.id === firstId)?.event).toBe('fto');
+    expect(data.settings.event).toBe('fto');
+  });
+
+  it('moves a solve through the same shared operation and rejects stale ids', async () => {
+    const { repo } = repository();
+    let data = await repo.addSolve({
+      timeMs: 1_000, penalty: 'ok', scramble: 'R', event: '333',
+    });
+    const sourceId = data.database.activeSessionId;
+    const solveId = activeTimerSolves(data, '333')[0]!.id;
+    data = await repo.createSession('Target', '333');
+    const targetId = data.database.activeSessionId;
+    await repo.activateSession(sourceId);
+
+    data = await repo.moveSolveToSession(solveId, targetId);
+    expect(activeTimerSolves(data, '333')).toEqual([]);
+    expect(data.database.dataBySession[targetId]?.['333']?.[0]?.id).toBe(solveId);
+    await expect(repo.moveSolveToSession('missing', targetId)).rejects.toMatchObject({
+      failure: 'unknown-solve',
+    });
   });
 });

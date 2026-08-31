@@ -76,11 +76,22 @@ export interface WebSessionTicketEnvelope {
   expiresIn: number;
 }
 
+export const MOBILE_AUTH_PROVIDERS = [
+  'wca',
+  'google',
+  'wechat',
+  'qq',
+  'alipay',
+] as const;
+
+export type MobileAuthProvider = typeof MOBILE_AUTH_PROVIDERS[number];
+
 export interface MobileAuthRequest {
   codeChallenge: string;
   state: string;
   callbackUrl: string;
   language: 'en' | 'zh';
+  provider: MobileAuthProvider | null;
 }
 
 export interface MobileAuthCallback {
@@ -134,6 +145,11 @@ export const isMobileAuthCodeChallenge = isMobileAuthRandomValue;
 export const isMobileAuthCodeVerifier = isMobileAuthRandomValue;
 export const isMobileAuthState = isMobileAuthRandomValue;
 
+export function isMobileAuthProvider(value: unknown): value is MobileAuthProvider {
+  return typeof value === 'string'
+    && MOBILE_AUTH_PROVIDERS.includes(value as MobileAuthProvider);
+}
+
 export function isMobileAuthCallbackUrl(value: unknown): value is string {
   if (typeof value !== 'string') return false;
   try {
@@ -159,12 +175,15 @@ export function decodeMobileAuthRequest(search: string): MobileAuthRequest | nul
   const state = params.get('state')?.trim() ?? '';
   const callbackUrl = params.get('callback_url')?.trim() ?? '';
   const language = params.get('lang') === 'zh' ? 'zh' : 'en';
+  const rawProvider = params.get('provider');
+  const provider = rawProvider === null ? null : rawProvider.trim();
   if (!isMobileAuthCodeChallenge(codeChallenge)
     || !isMobileAuthState(state)
-    || !isMobileAuthCallbackUrl(callbackUrl)) {
+    || !isMobileAuthCallbackUrl(callbackUrl)
+    || (provider !== null && !isMobileAuthProvider(provider))) {
     return null;
   }
-  return { codeChallenge, state, callbackUrl, language };
+  return { codeChallenge, state, callbackUrl, language, provider };
 }
 
 export function decodeMobileAuthCallback(value: string): MobileAuthCallback | null {

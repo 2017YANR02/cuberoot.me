@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { applySession, getSessionToken, markWcaLinkPrompt } from '@/lib/auth-store';
 import { loginSocial, linkSocial, SOCIAL_PROVIDERS, type SocialProvider } from '@/lib/account-api';
-import { SOCIAL_RETURN_KEY } from '@/lib/social-auth';
+import { takeSocialReturnUrl } from '@/lib/social-auth';
 import { tr } from '@/i18n/tr';
 import { AuthCallbackStatus } from '../../_components/AuthCallbackStatus';
 
@@ -38,8 +38,8 @@ export default function SocialCallbackPage() {
     const parts = state.split('.');
     const provider = parts[1] as SocialProvider | undefined;
     const intent = parts[2];
-    // returnUrl 是同上下文回来时的便利项,丢了就回首页,不影响登录成败。
-    const returnUrl = (() => { try { const v = sessionStorage.getItem(SOCIAL_RETURN_KEY); sessionStorage.removeItem(SOCIAL_RETURN_KEY); return v; } catch { return null; } })();
+    // sessionStorage 优先；OAuth App 把回调送回新的 tab 时用同源 localStorage 兜底。
+    const returnUrl = takeSocialReturnUrl();
 
     if (err) { setErrorMsg(tr({ zh: `授权被拒绝:${err}`, en: `Authorization denied: ${err}` })); return; }
     if (!code) { setErrorMsg(tr({ zh: '未获取到授权码', en: 'No authorization code received' })); return; }

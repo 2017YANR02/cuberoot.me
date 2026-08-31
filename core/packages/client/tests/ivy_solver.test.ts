@@ -9,7 +9,7 @@ import {
   ivyAllScramblesByLength,
   IVY_GODS_NUMBER,
   IVY_LENGTH_DISTRIBUTION,
-} from '@/lib/ivy-solver';
+} from '@cuberoot/puzzle-solvers/ivy';
 import { renderIvyScrambleSvg, IVY_DEFAULT_COLORS } from '@/app/[lang]/scramble/gen/_svg/ivy_svg';
 
 // ── Independent reference model ───────────────────────────────────────────────

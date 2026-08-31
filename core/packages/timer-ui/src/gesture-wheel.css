@@ -1,0 +1,80 @@
+/* Radial gesture wheel shared by every timer surface. Theme tokens only. */
+.gesture-wheel {
+  position: fixed;
+  z-index: 60;
+  font-size: 15px;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: var(--wheel-op);
+  --wheel-op: 0;
+}
+
+.gesture-wheel.is-visible {
+  visibility: visible;
+}
+
+.gesture-wheel-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.gesture-wheel-item {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 2.6em;
+  padding: 0.3em 0.55em;
+  border-radius: 999px;
+  font-size: 0.85em;
+  font-weight: 600;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+  background: var(--popover);
+  border: 1px solid var(--border-default);
+  box-shadow: 0 2px 8px color-mix(in srgb, black 30%, transparent);
+  transition: transform 80ms ease, background 80ms ease, color 80ms ease, box-shadow 80ms ease;
+}
+
+.gesture-wheel-item.disabled {
+  color: var(--faint-foreground);
+  background: var(--muted);
+}
+
+.gesture-wheel-item.hit {
+  color: var(--accent-foreground);
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: translate(-50%, -50%) scale(1.18);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.gesture-wheel-item--icon {
+  min-width: 0;
+  width: 2.1em;
+  height: 2.1em;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gesture-wheel-x {
+  width: 1.1em;
+  height: 1.1em;
+  display: block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gesture-wheel-item {
+    transition: none;
+  }
+}

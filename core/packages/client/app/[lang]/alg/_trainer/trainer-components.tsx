@@ -11,7 +11,7 @@ import { VisualCube } from '@/components/VisualCube';
 import { SegmentTime } from '@cuberoot/timer-ui';
 import { TimerState } from '@/lib/trainer-store';
 import type { TrainerSolve, TrainerPenalty, TrainerHistEntry } from '@/lib/trainer-store';
-import type { ScrambleHist } from '@/lib/scramble-history';
+import type { ScrambleHist } from '@cuberoot/shared/timer';
 import {
   useTrainerMarks, markStatus, MARK_STATUS_LABEL,
   type CaseMarks, type TrainerMarkBrush, type CaseMarkStatus,

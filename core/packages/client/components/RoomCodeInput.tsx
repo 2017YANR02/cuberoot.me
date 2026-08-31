@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useRef, type InputHTMLAttributes, type KeyboardEvent } from 'react';
+import { NET_BATTLE_ROOM_CODE_LENGTH, normalizeNetBattleRoomCode } from '@cuberoot/shared/timer';
 import { tr } from '@/i18n/tr';
 
 /** 训练协同房与计时器联机房的服务端都生成 4 位数字房间码。 */
-export const ROOM_CODE_LENGTH = 4;
+export const ROOM_CODE_LENGTH = NET_BATTLE_ROOM_CODE_LENGTH;
 
 export function normalizeRoomCode(raw: string): string {
-  return raw.replace(/\D/g, '').slice(0, ROOM_CODE_LENGTH);
+  return normalizeNetBattleRoomCode(raw);
 }
 
 interface RoomCodeInputProps extends Omit<

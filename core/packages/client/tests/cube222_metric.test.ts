@@ -6,7 +6,14 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { _test, generate222ByMetric, create222MetricEvaluator, type Cube222Metric } from '@cuberoot/puzzle-solvers/cube222';
+import {
+  _test,
+  cube222MetricOfScramble,
+  cube222StateFlagsOfScramble,
+  generate222ByMetric,
+  create222MetricEvaluator,
+  type Cube222Metric,
+} from '@cuberoot/puzzle-solvers/cube222';
 
 const casesPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../stats/scramble/2x2_essential_cases.json');
 // stats/scramble/*.json 不在 CI 的稀疏检出内(test.yml 只拉 core/),缺失时跳过 oracle 对比用例;
@@ -100,6 +107,7 @@ describe('cube222-metric vs essential-case oracle', () => {
       { metric: 'layer', lo: 4, hi: 4 },
       { metric: 'htm', lo: 9, hi: 9 },
       { metric: 'htm', lo: 6, hi: 7 },
+      { metric: 'qtm', lo: 14, hi: 14 },
     ];
     for (const { metric, lo, hi } of checks) {
       for (let k = 0; k < 6; k++) {
@@ -111,6 +119,16 @@ describe('cube222-metric vs essential-case oracle', () => {
         // scramble must only use U/R/F tokens
         expect(/^[URF2' ]*$/.test(scr)).toBe(true);
       }
+    }
+  });
+
+  it('rejects every non-exact U/R/F token before metric or type evaluation', () => {
+    const invalid = [
+      'Ufoo', 'Rbar', 'U2junk', "U''", "R2'", 'u', 'x', 'U Rw', 'U2F',
+    ];
+    for (const scramble of invalid) {
+      expect(cube222MetricOfScramble(scramble, 'htm'), scramble).toBeNull();
+      expect(cube222StateFlagsOfScramble(scramble), scramble).toBeNull();
     }
   });
 });

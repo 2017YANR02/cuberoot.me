@@ -92,6 +92,15 @@ describe('mobile auth', () => {
     expect(opened.toString()).not.toContain(pending.codeVerifier);
   });
 
+  it('preserves an explicitly requested website provider in the browser handoff', async () => {
+    const { client, openBrowser } = setup();
+
+    await client.start('zh', 'wechat');
+
+    const opened = new URL(openBrowser.mock.calls[0][0]);
+    expect(opened.searchParams.get('provider')).toBe('wechat');
+  });
+
   it('exchanges a matching callback and stores the canonical session', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
       response({ token: token(), user: USER }),
@@ -152,5 +161,25 @@ describe('mobile auth', () => {
     await client.logout();
 
     expect(storage.values.size).toBe(0);
+  });
+
+  it('issues a short-lived web ticket from the secure native session', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      response({ ticket: TICKET, expiresIn: 90 }),
+    );
+    const { client, storage } = setup(fetcher);
+    const sessionToken = token();
+    storage.values.set('session', JSON.stringify({ token: sessionToken, user: USER }));
+
+    await expect(client.issueWebSessionTicket()).resolves.toEqual({
+      ticket: TICKET,
+      expiresIn: 90,
+    });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher.mock.calls[0][0]).toBe('https://api.cuberoot.me/v1/auth/web-session/ticket');
+    const init = fetcher.mock.calls[0][1] as RequestInit;
+    expect(init.method).toBe('POST');
+    expect((init.headers as Record<string, string>).Authorization).toBe(`Bearer ${sessionToken}`);
+    expect(init.cache).toBe('no-store');
   });
 });

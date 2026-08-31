@@ -23,6 +23,19 @@ import {
   type TimerSessionMeta,
   type TimerSolvesByEvent,
 } from '../types';
+import {
+  activateTimerSession,
+  activateTimerSessionForEvent as activateSharedTimerSessionForEvent,
+  associateTimerSessionEvent,
+  clearTimerSession as clearSharedTimerSession,
+  createTimerSession as createSharedTimerSession,
+  deleteTimerSession as deleteSharedTimerSession,
+  moveTimerSolveToSession,
+  renameTimerSession as renameSharedTimerSession,
+  timerSessionEvent,
+  type TimerSessionMutationResult,
+  type TimerSessionSelectionResult,
+} from '@cuberoot/shared/timer';
 import { getSettings } from '../settings';
 import { BACKUP_LS_PREFIX, idbBackupGet, idbBackupList, idbBackupPut } from './backup-idb';
 import { persistItem } from '@/lib/safe-storage';
@@ -95,6 +108,18 @@ function loadRaw(): DbShapeV3 {
 function saveRaw(db: DbShapeV3): boolean {
   // 活库写入:配额满时 persistItem 会先驱逐可再生缓存再重试,尽量保住真实数据。
   return persistItem(KEY, JSON.stringify(db));
+}
+
+export class TimerSessionWriteError extends Error {
+  constructor() {
+    super('Could not persist timer session change');
+    this.name = 'TimerSessionWriteError';
+  }
+}
+
+function persistSessionMutation<T extends TimerSessionMutationResult>(result: T): T {
+  if (result.changed && !saveRaw(result.database)) throw new TimerSessionWriteError();
+  return result;
 }
 
 /** Read the active session's byEvent map (always an object). */
@@ -172,28 +197,15 @@ export function getActiveSessionId(): string {
   return loadRaw().activeSessionId;
 }
 
-function sessionEventIn(db: DbShapeV3, session: SessionMeta): EventId | null {
-  if (session.event) return session.event;
-  const populated = Object.entries(db.dataBySession[session.id] ?? {})
-    .filter(([, solves]) => (solves?.length ?? 0) > 0)
-    .map(([event]) => event as EventId);
-  return populated.length === 1 ? populated[0] : null;
-}
-
 /** Explicit association, or a safe inference for a legacy single-event session. */
 export function getSessionEvent(id: string): EventId | null {
-  const db = loadRaw();
-  const session = db.sessions.find(s => s.id === id);
-  return session ? sessionEventIn(db, session) : null;
+  return timerSessionEvent(loadRaw(), id);
 }
 
 /** Update the event that should be selected when this session is activated. */
 export function setSessionEvent(id: string, event: EventId): void {
   const db = loadRaw();
-  const session = db.sessions.find(s => s.id === id);
-  if (!session || session.event === event) return;
-  session.event = event;
-  saveRaw(db);
+  persistSessionMutation(associateTimerSessionEvent(db, id, event));
 }
 
 /**
@@ -202,47 +214,65 @@ export function setSessionEvent(id: string, event: EventId): void {
  */
 export function activateSessionForEvent(event: EventId): string | null {
   const db = loadRaw();
-  const active = db.sessions.find(s => s.id === db.activeSessionId);
-  const ordered = active
-    ? [active, ...db.sessions.filter(s => s.id !== active.id)]
-    : db.sessions;
-  const match = ordered.find(session => sessionEventIn(db, session) === event);
-  if (!match) return null;
-
-  let changed = false;
-  if (!match.event) {
-    match.event = event;
-    changed = true;
-  }
-  if (db.activeSessionId !== match.id) {
-    db.activeSessionId = match.id;
-    changed = true;
-  }
-  if (changed) saveRaw(db);
-  return match.id;
+  const result = persistSessionMutation<TimerSessionSelectionResult>(
+    activateSharedTimerSessionForEvent(db, event),
+  );
+  return result.sessionId;
 }
 
 export function setActiveSession(id: string): void {
   const db = loadRaw();
-  if (!db.sessions.some(s => s.id === id)) return;
-  if (db.activeSessionId === id) return;
-  db.activeSessionId = id;
-  saveRaw(db);
+  persistSessionMutation(activateTimerSession(db, id));
 }
 
 /** Create a new (empty) session and return its id. Does NOT switch to it. */
 export function createSession(name: string, event?: EventId): string {
   const db = loadRaw();
-  const id = genSessionId();
-  const trimmed = name.trim();
-  db.sessions.push({
+  let id = genSessionId();
+  let result = createSharedTimerSession(db, {
     id,
-    name: trimmed || defaultSessionName(),
+    name,
+    fallbackName: defaultSessionName(),
     createdTs: Date.now(),
     ...(event ? { event } : {}),
   });
-  db.dataBySession[id] = {};
-  saveRaw(db);
+  while (result.failure === 'duplicate-session-id') {
+    id = genSessionId();
+    result = createSharedTimerSession(db, {
+      id,
+      name,
+      fallbackName: defaultSessionName(),
+      createdTs: Date.now(),
+      ...(event ? { event } : {}),
+    });
+  }
+  persistSessionMutation(result);
+  return id;
+}
+
+/** Create and activate with one durable write for the shared switcher host. */
+export function createAndActivateSession(name: string, event: EventId): string {
+  const db = loadRaw();
+  let id = genSessionId();
+  let created = createSharedTimerSession(db, {
+    id,
+    name,
+    fallbackName: defaultSessionName(),
+    createdTs: Date.now(),
+    event,
+  });
+  while (created.failure === 'duplicate-session-id') {
+    id = genSessionId();
+    created = createSharedTimerSession(db, {
+      id,
+      name,
+      fallbackName: defaultSessionName(),
+      createdTs: Date.now(),
+      event,
+    });
+  }
+  const activated = activateTimerSession(created.database, id);
+  persistSessionMutation(activated);
   return id;
 }
 
@@ -304,21 +334,12 @@ export function importNamedSessions(
 }
 
 export function renameSession(id: string, name: string): void {
-  const db = loadRaw();
-  const s = db.sessions.find(x => x.id === id);
-  if (!s) return;
-  const trimmed = name.trim();
-  if (!trimmed) return;
-  s.name = trimmed;
-  saveRaw(db);
+  persistSessionMutation(renameSharedTimerSession(loadRaw(), id, name));
 }
 
 /** Wipe a session's solves (keep the session). */
 export function clearSession(id: string): void {
-  const db = loadRaw();
-  if (!db.sessions.some(s => s.id === id)) return;
-  db.dataBySession[id] = {};
-  saveRaw(db);
+  persistSessionMutation(clearSharedTimerSession(loadRaw(), id));
 }
 
 /**
@@ -328,13 +349,13 @@ export function clearSession(id: string): void {
  */
 export function deleteSession(id: string): string | null {
   const db = loadRaw();
-  if (db.sessions.length <= 1) return null;
-  if (!db.sessions.some(s => s.id === id)) return db.activeSessionId;
-  db.sessions = db.sessions.filter(s => s.id !== id);
-  delete db.dataBySession[id];
-  if (db.activeSessionId === id) db.activeSessionId = db.sessions[0].id;
-  saveRaw(db);
-  return db.activeSessionId;
+  const result = deleteSharedTimerSession(db, id);
+  if (result.failure === 'last-session') return null;
+  // Preserve the legacy adapter contract: deleting an unknown id is a no-op
+  // that reports the current active id.
+  if (result.failure === 'unknown-session') return db.activeSessionId;
+  persistSessionMutation(result);
+  return result.activeSessionId;
 }
 
 /**
@@ -345,36 +366,9 @@ export function deleteSession(id: string): string | null {
  */
 export function moveSolveToSession(solveId: string, targetSessionId: string): boolean {
   const db = loadRaw();
-  const fromId = db.activeSessionId;
-  if (targetSessionId === fromId) return false;
-  if (!db.sessions.some(s => s.id === targetSessionId)) return false;
-
-  const fromBe = db.dataBySession[fromId] ?? {};
-  let moved: Solve | null = null;
-  let movedEvent: EventId | null = null;
-  for (const ev of Object.keys(fromBe) as EventId[]) {
-    const list = fromBe[ev];
-    if (!list) continue;
-    const i = list.findIndex(s => s.id === solveId);
-    if (i >= 0) {
-      moved = list[i];
-      movedEvent = ev;
-      fromBe[ev] = list.slice(0, i).concat(list.slice(i + 1));
-      break;
-    }
-  }
-  if (!moved || !movedEvent) return false;
-  db.dataBySession[fromId] = fromBe;
-
-  const toBe = db.dataBySession[targetSessionId] ?? {};
-  const existing = toBe[movedEvent] ?? [];
-  toBe[movedEvent] = [...existing, moved].sort((a, b) => a.ts - b.ts);
-  db.dataBySession[targetSessionId] = toBe;
-  const targetSession = db.sessions.find(s => s.id === targetSessionId);
-  if (targetSession && !targetSession.event) targetSession.event = movedEvent;
-
-  saveRaw(db);
-  return true;
+  const result = moveTimerSolveToSession(db, solveId, targetSessionId);
+  if (!result.changed) return false;
+  return saveRaw(result.database);
 }
 
 /* ---------- Auto-backup ----------
@@ -505,14 +499,13 @@ export function importJson(json: string): boolean {
  * are untouched. Used by csTimer per-session import.
  */
 export function replaceSolves(eventId: EventId, solves: Solve[]): void {
-  const db = loadRaw();
+  let db = loadRaw();
   const be = activeByEvent(db);
   be[eventId] = solves
     .map(solve => solve.event === eventId ? solve : { ...solve, event: eventId })
     .sort((a, b) => a.ts - b.ts);
   db.dataBySession[db.activeSessionId] = be;
-  const active = db.sessions.find(s => s.id === db.activeSessionId);
-  if (active) active.event = eventId;
+  db = associateTimerSessionEvent(db, db.activeSessionId, eventId).database;
   saveRaw(db);
 }
 
@@ -521,14 +514,13 @@ export function replaceSolves(eventId: EventId, solves: Solve[]): void {
  * chronological order. Used by csTimer per-session import.
  */
 export function appendSolves(eventId: EventId, solves: Solve[]): void {
-  const db = loadRaw();
+  let db = loadRaw();
   const be = activeByEvent(db);
   const existing = be[eventId] ?? [];
   const normalized = solves.map(solve => solve.event === eventId ? solve : { ...solve, event: eventId });
   be[eventId] = [...existing, ...normalized].sort((a, b) => a.ts - b.ts);
   db.dataBySession[db.activeSessionId] = be;
-  const active = db.sessions.find(s => s.id === db.activeSessionId);
-  if (active) active.event = eventId;
+  db = associateTimerSessionEvent(db, db.activeSessionId, eventId).database;
   saveRaw(db);
 }
 

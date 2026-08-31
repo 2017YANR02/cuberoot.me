@@ -32,6 +32,8 @@ export interface TimerHandle {
   lastMs: number | null;
   onPressDown: () => void;
   onPressUp: () => void;
+  /** Cancel a pointer press while preserving an active inspection. */
+  cancelPress: () => void;
   reset: () => void;
   /** Start immediately for a synchronized countdown, optionally backdated. */
   startNow: (elapsedMs?: number) => void;
@@ -50,7 +52,7 @@ const TICK_MS = 30;
 function machineConfig(): TimerMachineConfig {
   const settings = getSettings();
   return {
-    inspectionSec: settings.inspection,
+    inspectionSec: settings.inspectionSec,
   };
 }
 
@@ -200,6 +202,10 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     dispatch({ type: 'press-up', nowMs: performance.now() });
   }, [dispatch]);
 
+  const cancelPress = useCallback(() => {
+    dispatch({ type: 'cancel-press' });
+  }, [dispatch]);
+
   const startNow = useCallback((elapsedMs = 0) => {
     dispatch({ type: 'start-now', nowMs: performance.now(), elapsedMs });
   }, [dispatch]);
@@ -247,6 +253,7 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     lastMs,
     onPressDown,
     onPressUp,
+    cancelPress,
     reset,
     startNow,
     stopExternal,

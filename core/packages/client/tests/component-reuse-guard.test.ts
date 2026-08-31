@@ -116,11 +116,10 @@ describe('component reuse rule registry', () => {
       </main>`)).toEqual([]);
   });
 
-  it('keeps the named product surfaces on the shared PuzzlePicker', () => {
+  it('keeps the named product surfaces on a shared project picker', () => {
     const surfaces = [
       join(ROOT, 'components', 'RecentScrambles.tsx'),
       join(ROOT, 'app', '[lang]', 'predict', 'page.tsx'),
-      join(ROOT, 'app', '[lang]', 'timer', '_shell', 'SoloView.tsx'),
       join(ROOT, 'app', '[lang]', 'sim', 'PlayerControls.tsx'),
       join(ROOT, 'app', '[lang]', 'scramble', '_components', 'SolveTabs.tsx'),
       join(ROOT, 'app', '[lang]', 'alg', '_components', 'AlgPuzzleSelect.tsx'),
@@ -132,6 +131,13 @@ describe('component reuse rule registry', () => {
       expect(source, relative(ROOT, file)).toContain("from '@/components/PuzzlePicker/PuzzlePicker'");
       expect(source, relative(ROOT, file)).toContain('<PuzzlePicker');
     }
+
+    const timer = join(ROOT, 'app', '[lang]', 'timer', '_shell', 'SoloView.tsx');
+    const timerSource = readFileSync(timer, 'utf8');
+    expect(timerSource, relative(ROOT, timer)).toContain("from '@cuberoot/timer-ui'");
+    expect(timerSource, relative(ROOT, timer)).toContain('<TimerPuzzlePicker');
+    expect(timerSource, relative(ROOT, timer)).toContain('<TimerScrambleSourceSelect');
+    expect(timerSource, relative(ROOT, timer)).not.toContain("from '@/components/CompactSelect'");
   });
 
   it('keeps the shared selected-puzzle trigger icon-only by default and frameless', () => {
@@ -152,16 +158,22 @@ describe('component reuse rule registry', () => {
     expect(activeRule).not.toContain('background');
   });
 
-  it('keeps WCA metrics and timer rolling statistics on CompactSelect', () => {
-    const surfaces = [
+  it('keeps CompactSelect canonical in timer-ui and timer rolling statistics on shared UI', () => {
+    const wca = readFileSync(
       join(ROOT, 'components', 'wca-stats', 'WcaStatView.views.tsx'),
+      'utf8',
+    );
+    const compact = readFileSync(join(ROOT, 'components', 'CompactSelect.tsx'), 'utf8');
+    const rolling = readFileSync(
       join(ROOT, 'app', '[lang]', 'timer', '_components', 'RollingStatsPicker.tsx'),
-    ];
-    for (const file of surfaces) {
-      const source = readFileSync(file, 'utf8');
-      expect(source, relative(ROOT, file)).toContain("from '@/components/CompactSelect'");
-      expect(source, relative(ROOT, file)).toContain('<CompactSelect');
-    }
+      'utf8',
+    );
+    expect(wca).toContain("from '@/components/CompactSelect'");
+    expect(wca).toContain('<CompactSelect');
+    expect(compact).toContain("from '@cuberoot/timer-ui/compact-select'");
+    expect(rolling).toContain("from '@cuberoot/timer-ui'");
+    expect(rolling).toContain('<TimerRollingStatsPicker');
+    expect(rolling).not.toContain('<CompactSelect');
   });
 
   it('allows status crosses, text buttons, the shared component, and reasoned exceptions', () => {

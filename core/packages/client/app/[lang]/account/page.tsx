@@ -35,6 +35,10 @@ import {
 } from '@cuberoot/shared/account';
 import { CLAWD_AVATAR_PRESETS, DEFAULT_CLAWD_AVATAR_PRESET, type ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 import {
+  isMobileAuthProvider,
+  type MobileAuthProvider,
+} from '@cuberoot/shared/auth/web-session';
+import {
   fetchAdminUser,
   fetchAccountBasicProfile,
   updateAdminDisplayName,
@@ -625,7 +629,23 @@ export default function AccountPage() {
   // 'onboard' = 刚注册完的那一步「你有 WCA ID 吗」,挡在回跳 next 之前。
   const [mode, setMode] = useState<'wait' | 'login' | 'onboard' | 'me'>('wait');
   const [mobileAuth, setMobileAuth] = useState(false);
+  const [mobileAuthProvider, setMobileAuthProvider] = useState<MobileAuthProvider | null>(null);
   const next = useRef<string | null>(null);
+
+  // The native Apps reuse this page instead of maintaining a second account UI.
+  // A provider-tagged system-Browser handoff may expose the canonical SSO buttons;
+  // preserve that provider and the PKCE continuation across account-local hops.
+  const accountHref = (nextView?: 'signin' | 'delete' | 'submissions') => {
+    const params = new URLSearchParams();
+    if (nextView) params.set('view', nextView);
+    if (mobileAuth) {
+      params.set('auth', 'mobile');
+      if (mobileAuthProvider) params.set('provider', mobileAuthProvider);
+      if (next.current) params.set('next', next.current);
+    }
+    const search = params.toString();
+    return `/account${search ? `?${search}` : ''}`;
+  };
 
   useDocumentTitle(
     mode !== 'me' ? '登录' : view === 'delete' ? '注销账号' : view === 'submissions' ? '公式投稿' : view === 'user' ? '编辑用户' : '我的',
@@ -652,11 +672,21 @@ export default function AccountPage() {
   // 但人还得留在表单里设新密码 —— 一盯 user 就会把那一步抽走。何时算完成由表单的 onDone 说了算。
   useEffect(() => {
     const search = new URLSearchParams(window.location.search);
-    setMobileAuth(search.get('auth') === 'mobile');
+    const isMobileAuth = search.get('auth') === 'mobile';
+    const provider = search.get('provider');
+    setMobileAuth(isMobileAuth);
+    setMobileAuthProvider(isMobileAuth && isMobileAuthProvider(provider) ? provider : null);
     const fragmentNext = new URLSearchParams(window.location.hash.slice(1)).get('next');
     next.current = safeNext(fragmentNext) ?? safeNext(search.get('next'));
     const u = useAuthStore.getState().user;
     if (!u) { setMode('login'); return; }
+    // The system Browser can already hold a canonical website session (for example after
+    // returning from WCA/social OAuth). Continue to /auth/mobile immediately so that page
+    // can mint the PKCE-bound one-time ticket and deep-link back to the native App.
+    if (isMobileAuth && next.current) {
+      router.replace(next.current);
+      return;
+    }
     // 三方(微信/QQ/支付宝)注册那条路:授权是整页跳走再回来的,回来时人已不在 LoginForm 里,
     // 拿不到 onDone —— 靠回调页留下的标记把同一步引导接上。
     setMode(takeWcaLinkPrompt() && !u.wcaId ? 'onboard' : 'me');
@@ -686,7 +716,7 @@ export default function AccountPage() {
     ] : [
       {
         key: 'link-wca',
-        href: '/account?view=signin',
+        href: accountHref('signin'),
         icon: <img src="/icons/wca.svg" alt="" width={22} height={22} className="account-card-icon" />,
         title: tr({ zh: '绑定 WCA 账号', en: 'Link your WCA account' }),
         desc: tr({ zh: '把比赛成绩、个人纪录和复盘接进来', en: 'Bring your results, records and reconstructions here' }),
@@ -736,7 +766,7 @@ export default function AccountPage() {
     },
     ...(isAdmin ? [{
       key: 'submissions',
-      href: '/account?view=submissions',
+      href: accountHref('submissions'),
       icon: <Inbox size={22} className="account-card-icon" />,
       title: tr({ zh: '公式投稿', en: 'Algorithm submissions' }),
     }] : []),
@@ -754,13 +784,13 @@ export default function AccountPage() {
             <span>{t('好友', 'Friends')}</span>
           </AppLink>
         ) : view === 'signin' || view === 'submissions' ? (
-          <AppLink href="/account" className="account-back" prefetch={false}>
+          <AppLink href={accountHref()} className="account-back" prefetch={false}>
             <ChevronLeft size={16} />
             <span>{t('我的', 'My account')}</span>
           </AppLink>
         ) : view === 'delete' ? (
           /* 注销是设置里再往里一层,退一步回设置(而不是一路弹回「我的」)—— 面包屑跟着层级走。 */
-          <AppLink href="/account?view=signin" className="account-back" prefetch={false}>
+          <AppLink href={accountHref('signin')} className="account-back" prefetch={false}>
             <ChevronLeft size={16} />
             <span>{t('账号设置', 'Account settings')}</span>
           </AppLink>
@@ -772,7 +802,7 @@ export default function AccountPage() {
         )}
         {mode === 'me' && view === 'main' && (
           <AppLink
-            href="/account?view=signin"
+            href={accountHref('signin')}
             className="account-gear"
             title={t('账号设置', 'Account settings')}
             aria-label={t('账号设置', 'Account settings')}
@@ -784,7 +814,9 @@ export default function AccountPage() {
       </header>
 
       {mode === 'login' ? (
-        <LoginForm firstPartyOnly={mobileAuth} onDone={settle} />
+        <div data-mobile-auth-entry>
+          <LoginForm firstPartyOnly={mobileAuth && !mobileAuthProvider} onDone={settle} />
+        </div>
       ) : mode === 'onboard' ? (
         /* 注册流程的最后一步。这里不渲染账号页本体(名字、卡片)—— 人还在「注册」这件事里,
            把「我的」摊开会让人以为已经结束了,而这一步恰恰要他做个选择。 */
@@ -792,7 +824,7 @@ export default function AccountPage() {
       ) : view === 'delete' ? (
         /* 同理,注销这一屏也只有它自己:名字和入口卡片留在这儿,读起来像「你的东西都还在」,
            正好和这一屏要说的话相反。 */
-        <DeleteAccountPanel backHref="/account?view=signin" />
+        <DeleteAccountPanel backHref={accountHref('signin')} />
       ) : view === 'user' ? (
         isAdmin && managedUserId && managedUserId > 0
           ? <AdminUserEditor userId={managedUserId} />
@@ -816,7 +848,7 @@ export default function AccountPage() {
               </button>
               {/* 注销入口:压在设置最底、与上面拉开一大段,存在但不招手 —— 真要找的人找得到,
                   顺着往下读的人不会误触。真 <a>,进的是独立一屏(?view=delete),不是弹窗。 */}
-              <AppLink href="/account?view=delete" className="account-delete" prefetch={false}>
+              <AppLink href={accountHref('delete')} className="account-delete" prefetch={false}>
                 {t('注销账号', 'Delete account')}
               </AppLink>
             </section>

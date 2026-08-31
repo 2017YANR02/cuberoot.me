@@ -16,11 +16,12 @@ const STATE = 'S'.repeat(43);
 const TICKET = 'T'.repeat(43);
 const CALLBACK = 'me.cuberoot.app://auth/callback';
 
-function request(language: 'en' | 'zh' = 'en') {
+function request(language: 'en' | 'zh' = 'en', provider: 'wca' | null = null) {
   return {
     callbackUrl: CALLBACK,
     codeChallenge: CHALLENGE,
     language,
+    provider,
     state: STATE,
   } as const;
 }
@@ -42,6 +43,13 @@ describe('mobile auth browser handoff', () => {
       state: STATE,
     });
     expect(decodeMobileAuthRequest(search.toString())).toEqual(request('zh'));
+    search.set('provider', 'wechat');
+    expect(decodeMobileAuthRequest(search.toString())).toEqual({
+      ...request('zh'),
+      provider: 'wechat',
+    });
+    search.set('provider', 'github');
+    expect(decodeMobileAuthRequest(search.toString())).toBeNull();
     search.set('code_challenge', 'short');
     expect(decodeMobileAuthRequest(search.toString())).toBeNull();
   });
@@ -52,6 +60,15 @@ describe('mobile auth browser handoff', () => {
     expect(account.pathname).toBe('/zh/account');
     expect(account.searchParams.get('auth')).toBe('mobile');
     expect(account.searchParams.get('next')).toBe(path);
+  });
+
+  it('preserves an explicitly requested provider without exposing the verifier', () => {
+    const path = mobileAuthRequestPath(request('zh', 'wca'));
+    const account = new URL(mobileAuthAccountHref(request('zh', 'wca')), 'https://cuberoot.me');
+    expect(new URL(path, 'https://cuberoot.me').searchParams.get('provider')).toBe('wca');
+    expect(account.searchParams.get('provider')).toBe('wca');
+    expect(account.searchParams.get('next')).toBe(path);
+    expect(account.toString()).not.toContain('codeVerifier');
   });
 
   it('returns only a one-time ticket and state to the app', () => {

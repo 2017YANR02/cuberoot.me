@@ -5,10 +5,15 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import type { Solve, Penalty } from '../_lib/types';
 import { formatEventMs, formatMs, formatSolveResult, isMbldDnf, mbldPoints } from '../_lib/stats';
+import {
+  timerSolveDetailActionStates,
+  type TimerSolveDetailActionId,
+} from '../_lib/history';
 import CubePreview from '../_lib/cube/CubePreview';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 import { onIdle } from '@/lib/on-idle';
+import { TimerHistoryCommentEditor } from '@cuberoot/timer-ui';
 
 /** 复盘报告。整份报告 200 KB 起步(还牵三维魔方和 cubing.js),而没录动作的那些
  *  成绩根本不渲染它 —— 所以留在自己的 chunk 里,别拖累「点一条成绩」这一下。 */
@@ -196,6 +201,17 @@ export default function SolveModal({
   }, [hasMoves]);
 
   const dt = new Date(solve.ts);
+  const detailActionStates = timerSolveDetailActionStates({
+    canChangePenalty: true,
+    canComment: true,
+    canMove: !!onMoveToSession,
+    canDelete: true,
+    canClose: true,
+    moveTargetCount: moveTargets?.length ?? 0,
+  });
+  const detailAction = (id: TimerSolveDetailActionId) => (
+    detailActionStates.find((action) => action.id === id)!
+  );
 
   /**
    * 罚时。四个并排的按钮换成一个下拉(2026-08-03 用户提的)。
@@ -210,6 +226,8 @@ export default function SolveModal({
       <select
         ref={firstControlRef}
         className="solve-penalty-select"
+        data-history-action-id="solve.detail.penalty"
+        disabled={detailAction('solve.detail.penalty').disabled}
         value={solve.penalty}
         onChange={(e) => onChangePenalty(e.target.value as Penalty)}
         title={tr({
@@ -265,31 +283,30 @@ export default function SolveModal({
     <div className="modal-section">
       <label>
         {tr({ zh: '注释', en: 'Comment' })}
-        <textarea
+        <TimerHistoryCommentEditor
+          ariaLabel={tr({ zh: '注释', en: 'Comment' })}
           className="comment-textarea"
+          disabled={detailAction('solve.detail.comment').disabled}
           value={comment}
-          rows={3}
-          style={isMobile
-            ? ({ width: '100%', minHeight: 88, fontSize: 15, lineHeight: 1.5, boxSizing: 'border-box' as const })
-            : undefined}
-          onChange={(e) => setComment(e.target.value)}
-          onFocus={() => setEditing(true)}
-          onBlur={() => {
-            setEditing(false);
-            if (comment !== (solve.comment ?? '')) onChangeComment(comment);
+          onBlurSave={(nextComment) => {
+            setComment(nextComment);
+            onChangeComment(nextComment);
           }}
+          onEditingChange={setEditing}
           placeholder={tr({ zh: '记录此次成绩的备注…', en: 'Notes for this solve…' })}
         />
       </label>
     </div>
   );
 
-  const moveSection = moveTargets && moveTargets.length > 0 && onMoveToSession ? (
+  const moveSection = detailAction('solve.detail.move-session').visible && moveTargets && onMoveToSession ? (
     <div className="modal-section">
       <div className="solve-move-row">
         <span className="solve-move-label">{tr({ zh: '移到分组', en: 'Move to session' })}</span>
         <select
           className="solve-move-select"
+          data-history-action-id="solve.detail.move-session"
+          disabled={detailAction('solve.detail.move-session').disabled}
           value=""
           onChange={(e) => { const id = e.target.value; if (id) onMoveToSession(id); }}
         >
@@ -324,6 +341,8 @@ export default function SolveModal({
               <button
                 type="button"
                 className="solver-modal-x solve-full-x"
+                data-history-action-id="solve.detail.close"
+                disabled={detailAction('solve.detail.close').disabled}
                 onClick={onClose}
                 aria-label={tr({ zh: '关闭', en: 'Close' })}
               >
@@ -353,7 +372,12 @@ export default function SolveModal({
 
               {/* 整屏这一形态里内容整体靠左,一个孤零零右浮的删除会脱队。 */}
               <div className="modal-actions solve-full-danger">
-                <button className="danger modal-action-btn" onClick={onDelete}>
+                <button
+                  className="danger modal-action-btn"
+                  data-history-action-id="solve.detail.delete"
+                  disabled={detailAction('solve.detail.delete').disabled}
+                  onClick={onDelete}
+                >
                   {tr({ zh: '删除', en: 'Delete' })}
                 </button>
               </div>
@@ -400,10 +424,20 @@ export default function SolveModal({
         {commentSection}
         {moveSection}
         <div className={`modal-actions${isMobile ? ' solve-actions-stacked' : ''}`} style={actionsStyle}>
-          <button className="danger modal-action-btn" onClick={onDelete}>
+          <button
+            className="danger modal-action-btn"
+            data-history-action-id="solve.detail.delete"
+            disabled={detailAction('solve.detail.delete').disabled}
+            onClick={onDelete}
+          >
             {tr({ zh: '删除', en: 'Delete' })}
           </button>
-          <button className="modal-action-btn" onClick={onClose}>{tr({ zh: '关闭', en: 'Close' })}</button>
+          <button
+            className="modal-action-btn"
+            data-history-action-id="solve.detail.close"
+            disabled={detailAction('solve.detail.close').disabled}
+            onClick={onClose}
+          >{tr({ zh: '关闭', en: 'Close' })}</button>
         </div>
       </div>
     </div>

@@ -34,6 +34,8 @@
 | Recon API | [recon-api.md](./recon-api.md) | `REFERENCE` | Recon 接口契约 |
 | SEO/GEO | [seo-geo-plan.md](./seo-geo-plan.md) | `REFERENCE` | metadata、索引和内容策略 |
 | Mobile | [mobile-app-roadmap.md](./mobile-app-roadmap.md) | `ACTIVE` | Android 当前实现与 iOS 后续规划 |
+| Mobile 三栏合同 | [mobile-three-tab-contract.md](./mobile-three-tab-contract.md) | `ACTIVE` | 计时/工具/我的结构、网站复用策略和 Android/iOS 协作边界 |
+| Mobile `/timer` 一致性 | [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md) | `ACTIVE` | Web/Android/iOS 计时器完整 UI/UX、复用边界与逐项验收 |
 | 小程序 | [../core/docs/MINIPROGRAM.md](../core/docs/MINIPROGRAM.md) | `REFERENCE` | 小程序实现、构建和发布契约 |
 
 未列出的专题文档仍可作为局部证据；涉及继续实施前，先核对其日期、状态和对应现役代码。

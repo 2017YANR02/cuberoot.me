@@ -10,9 +10,11 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   METHOD_REGISTRY,
   solveByMethodId,
+  timer333MethodLabel,
+  timer333StageLabel,
   type MethodId,
   type SolveResult,
-} from '../_lib/solver/methods';
+} from '@cuberoot/puzzle-solvers/timer-333-step';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 
@@ -162,6 +164,7 @@ interface CardProps {
 
 function MethodCard({ outcome, isZh, bestTotal }: CardProps) {
   const entry = METHOD_REGISTRY.find(m => m.id === outcome.id)!;
+  const language = isZh ? 'zh' : 'en';
   const r = outcome.result;
   const failed = r ? r.stages.some(s => s.failed) : false;
   const isBest = r != null && !failed && bestTotal != null && r.totalMoves === bestTotal;
@@ -169,11 +172,11 @@ function MethodCard({ outcome, isZh, bestTotal }: CardProps) {
     <div style={isBest ? cardBestStyle : cardStyle}>
       <div style={cardHeadStyle}>
         <span style={isBest ? cardTitleBestStyle : cardTitleStyle}>
-          {(isZh ? entry.nameZh : entry.nameEn)}
+          {timer333MethodLabel(entry, language)}
         </span>
         <span style={cardTotalStyle}>
           {!r
-            ? (isZh ? '…' : '…')
+            ? '…'
             : failed
               ? tr({ zh: '失败', en: 'failed'
                                       })
@@ -185,7 +188,7 @@ function MethodCard({ outcome, isZh, bestTotal }: CardProps) {
         <div style={stagesStyle}>
           {r.stages.map(s => (
             <div key={s.head} style={stageRowStyle}>
-              <span style={stageLabelStyle}>{s.head}</span>
+              <span style={stageLabelStyle}>{timer333StageLabel(outcome.id, s.head, language)}</span>
               <span style={stageCountStyle}>
                 {s.failed ? '—' : s.moves.length}
               </span>
@@ -213,6 +216,7 @@ interface AccordionProps extends CardProps {
 
 function MethodAccordion({ outcome, isZh, bestTotal, open, onToggle }: AccordionProps) {
   const entry = METHOD_REGISTRY.find(m => m.id === outcome.id)!;
+  const language = isZh ? 'zh' : 'en';
   const r = outcome.result;
   const failed = r ? r.stages.some(s => s.failed) : false;
   const isBest = r != null && !failed && bestTotal != null && r.totalMoves === bestTotal;
@@ -225,11 +229,11 @@ function MethodAccordion({ outcome, isZh, bestTotal, open, onToggle }: Accordion
         aria-expanded={open}
       >
         <span style={isBest ? cardTitleBestStyle : cardTitleStyle}>
-          {(isZh ? entry.nameZh : entry.nameEn)}
+          {timer333MethodLabel(entry, language)}
         </span>
         <span style={cardTotalStyle}>
           {!r
-            ? (isZh ? '…' : '…')
+            ? '…'
             : failed
               ? tr({ zh: '失败', en: 'failed'
                                       })
@@ -244,7 +248,7 @@ function MethodAccordion({ outcome, isZh, bestTotal, open, onToggle }: Accordion
             <div style={stagesStyle}>
               {r.stages.map(s => (
                 <div key={s.head} style={stageRowStyle}>
-                  <span style={stageLabelStyle}>{s.head}</span>
+                  <span style={stageLabelStyle}>{timer333StageLabel(outcome.id, s.head, language)}</span>
                   <span style={stageCountStyle}>
                     {s.failed ? '—' : s.moves.length}
                   </span>

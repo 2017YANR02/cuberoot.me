@@ -173,7 +173,7 @@ export const CATALOG: UtilEntry[] = [
   },
   {
     name: 'usePopoverDismiss',
-    sig: 'usePopoverDismiss(open: boolean, close: () => void, panel: RefObject<HTMLElement | null>, trigger?: RefObject<HTMLElement | null>): void',
+    sig: "usePopoverDismiss(open: boolean, close: (reason: 'outside' | 'escape') => void, panel: RefObject<HTMLElement | null>, trigger?: RefObject<HTMLElement | null>): void",
     imp: "import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';",
     usage: 'usePopoverDismiss(open, () => setOpen(false), panelRef, btnRef);',
     category: 'hook',
@@ -200,8 +200,8 @@ export const CATALOG: UtilEntry[] = [
   {
     name: 'useGestureWheel',
     sig: 'useGestureWheel(opts: UseGestureWheelOptions): { wheelRef }',
-    imp: "import { useGestureWheel } from '@/hooks/useGestureWheel';",
-    usage: 'const { wheelRef } = useGestureWheel({ surfaceRef, canGesture, enabledFor, fireAction, onPressDown, onPressUp, onArmCancel });',
+    imp: "import { useGestureWheel } from '@cuberoot/timer-ui';",
+    usage: 'const { wheelRef } = useGestureWheel({ surfaceRef, canGesture, enabledFor, fireAction, onPressDown, onPressCancel, onPressUp, onArmCancel });',
     category: 'hook',
     zh: 'cstimer 式按住拖动径向轮盘:绑定计时面板,普通按压照常计时,拖过死区切手势模式并触发对应方向。配 <GestureWheel>,/timer 与 /alg 训练页共用。',
     en: 'cstimer-style press-and-drag radial dial on a timing surface: a hold still times, a drag fires the nearest direction. Pairs with <GestureWheel>; shared by /timer and the /alg trainer pages.',

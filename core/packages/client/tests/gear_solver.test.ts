@@ -14,7 +14,7 @@ import {
   GEAR_GODS_NUMBER,
   GEAR_LENGTH_DISTRIBUTION,
   GEAR_TOTAL_STATES,
-} from '@/lib/gear-solver';
+} from '@cuberoot/puzzle-solvers/gear';
 import { renderGearScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/gear_svg';
 
 // ── Independent reference: rebuild the gear move model FROM cstimer's gearcube.js semantics ───

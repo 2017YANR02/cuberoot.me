@@ -6,27 +6,50 @@
   "cuberoot": {
     "kind": "library",
     "externalRuntime": {
+      "flag-icons": "react-dom",
       "lucide-react": "react-dom",
-      "react": "react-dom"
+      "react": "react-dom",
+      "react-dom": "react-dom"
     },
     "runtime": {
-      ".": "react-dom"
+      ".": "react-dom",
+      "./compact-select": "react-dom",
+      "./compact-select.css": "react-dom",
+      "./country-flag": "react-dom",
+      "./country-flag.css": "react-dom",
+      "./gesture-wheel.css": "react-dom",
+      "./scramble-strip.css": "react-dom"
     }
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./compact-select": "./src/CompactSelect.tsx",
+    "./compact-select.css": "./src/compact-select.css",
+    "./country-flag": "./src/CountryFlag.tsx",
+    "./country-flag.css": "./src/country-flag.css",
+    "./gesture-wheel.css": "./src/gesture-wheel.css",
+    "./scramble-strip.css": "./src/scramble-strip.css"
   },
   "sideEffects": true,
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@cuberoot/event-icon": "workspace:*",
+    "@cuberoot/puzzle-solvers": "workspace:*",
+    "@cuberoot/shared": "workspace:*",
+    "flag-icons": "^7.5.0"
+  },
   "peerDependencies": {
     "lucide-react": "1.8.0",
-    "react": "19.2.4"
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@types/react": "^19",
+    "@types/react-dom": "^19",
     "lucide-react": "1.8.0",
+    "react-dom": "19.2.4",
     "typescript": "^5"
   }
 }

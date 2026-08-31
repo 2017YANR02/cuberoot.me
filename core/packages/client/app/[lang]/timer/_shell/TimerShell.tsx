@@ -32,6 +32,7 @@ import { tr } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
 import TimerPresencePanel from '../_components/TimerPresencePanel';
 import { useTimerPresence, type TimerPresenceReport } from '../_lib/presence';
+import { TimerPlayersSelect, type TimerPlayersValue } from '@cuberoot/timer-ui';
 
 // 首帧恒 Solo(见下面的 mounted gate),对战两个视图连同 _battle 引擎和 battle.css
 // 只在真的切到 players>=2 / net 时才下载 —— 静态 import 会把它们焊进首屏那个 chunk。
@@ -89,25 +90,18 @@ export default function TimerShell() {
   }, []);
 
   const playersControl = (
-    <select
-      className="shell-players-select"
-      data-no-timer
-      value={isNet ? 'net' : playerCount}
-      onChange={(e) => {
-        const v = e.target.value;
+    <TimerPlayersSelect
+      value={(isNet ? 'net' : playerCount) as TimerPlayersValue}
+      onChange={(value) => {
         // 切离联机模式顺手清 ?room(否则 room 参数会把 players=1 又拽回联机);
         // 服务端玩家条目靠心跳超时标离线、24h TTL 清理,无需显式退房。
-        if (v !== 'net') void setRoomParam(null);
-        void setPlayersParam(v === 'net' ? 'net' : parseInt(v));
+        if (value !== 'net') void setRoomParam(null);
+        void setPlayersParam(value);
       }}
-      title={tr({ zh: '人数', en: 'Players' })}
-      aria-label={tr({ zh: '人数', en: 'Players' })}
-    >
-      {[1, 2, 3, 4].map(n => (
-        <option key={n} value={n}>{tr({ zh: `${n}人`, en: `${n}P` })}</option>
-      ))}
-      <option value="net">{tr({ zh: '联机', en: 'Online' })}</option>
-    </select>
+      ariaLabel={tr({ zh: '人数', en: 'Players' })}
+      playerLabel={(count) => tr({ zh: `${count}人`, en: `${count}P` })}
+      onlineLabel={tr({ zh: '联机', en: 'Online' })}
+    />
   );
   const presenceSnapshot = useTimerPresence(presenceReport, canViewPresence);
   const presenceControl = canViewPresence

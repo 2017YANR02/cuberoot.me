@@ -1,8 +1,29 @@
 import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
-import { query } from '../db/connection.js';
+import { query, withTransaction } from '../db/connection.js';
 import { checkRateLimit } from '../utils/recon_helpers.js';
-import { generateRoomCode, ROOM_CODE_CREATE_ATTEMPTS, ROOM_CODE_RE } from '../utils/room_code.js';
+import { generateRoomCode, ROOM_CODE_CREATE_ATTEMPTS } from '../utils/room_code.js';
+import {
+  NET_BATTLE_TOKEN_HEADER,
+  OFFLINE_MS,
+  isNetBattleEventId,
+  isNetBattleRoomCode,
+  pendingCount,
+  settleNetRound,
+  type NetBattleEventId,
+  type NetPenalty,
+  type NetPhase,
+  type NetPlayerEntry,
+  type NetResult,
+  type NetRoundHistory,
+} from '@cuberoot/shared/timer';
+import {
+  battlePlayerTokenMatches,
+  generateBattlePlayerId,
+  generateBattlePlayerToken,
+  hashBattlePlayerToken,
+} from '../utils/battle_room_auth.js';
+import { evictBattleVideoParticipant } from './video_rooms.js';
 
 /**
  * /v1/battle/rooms — /timer 联机对战房间(多设备,各自设备计时)。
@@ -17,7 +38,7 @@ import { generateRoomCode, ROOM_CODE_CREATE_ATTEMPTS, ROOM_CODE_RE } from '../ut
  *   POST /battle/rooms/:code/status       — 实时状态:{pid,ph}(idle|ready|inspecting|solving)
  *   POST /battle/rooms/:code/name         — 改自己的名字/身份:{pid,name,wcaId?,iso2?}(重名同样加后缀)
  *   POST /battle/rooms/:code/event        — 改自己项目:{pid,event,scramble}(顺带 lazy 填该项目打乱)
- *   POST /battle/rooms/:code/scramble     — lazy 填某项目当前轮打乱:{event,scramble}(set-if-absent)
+ *   POST /battle/rooms/:code/scramble     — lazy 填某项目当前轮打乱:{pid,event,scramble}(set-if-absent)
  *   POST /battle/rooms/:code/result       — 交成绩:{pid,round,t,p};轮次落后 → {advanced,...state}
  *   POST /battle/rooms/:code/next         — 开下一轮(CAS 只第一个成功):{pid,round,scramble}
  *                                           服务端按项目分组结算胜者进 scores + 压历史
@@ -34,8 +55,10 @@ import { generateRoomCode, ROOM_CODE_CREATE_ATTEMPTS, ROOM_CODE_RE } from '../ut
  * 准备(ph='ready'),服务端才落 start_at = now + 3s;各端用轮询估出的时钟偏移把它换算成
  * 本机时刻,倒计时归零同时起表。开下一轮 / 关掉开关即清 start_at。
  *
- * 无需登录 —— 房间码即房间身份,随机 playerId 即玩家身份。成绩/状态都是单行 jsonb 原子合并
- * (行锁串行化),实时性 = 客户端 1s 轮询 GET(no-store)。响应都带 now(服务器毫秒),客户端
+ * 无需账号登录 —— 房间码可公开分享;create/join 另发只属于该玩家的随机 capability token,
+ * 数据库只存 SHA-256 摘要。所有心跳和写操作都必须同时给 pid + token,因此看见房间状态不能
+ * 冒充其他玩家。成绩/状态都是单行 jsonb 原子合并(行锁串行化),实时性 = 客户端 1s 轮询
+ * GET(no-store)。响应都带 now(服务器毫秒),客户端
  * 据此估时钟偏移,把对手 solving 的 at 换算成本地滚动计时。
  *
  * 注意:query() 会把 SQL 里所有 `?` 重写成 $n,jsonb 存在性判断必须用 jsonb_exists() 函数形式,
@@ -53,31 +76,22 @@ const MAX_HISTORY = 50;
 const MAX_SCRAMBLE_EVENTS = 16;
 /** 过期房间:24h 无活动惰性清理。 */
 const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
-/** 心跳超时:与客户端 OFFLINE_MS 同口径(轮询 1s,给足抖动余量)。 */
-const OFFLINE_MS = 15_000;
 /** 「同时开始」倒计时:全员准备到起表的提前量(> 轮询周期,慢的一端也来得及看到)。 */
 const COUNTDOWN_MS = 3_000;
 
-const EVENT_RE = /^[A-Za-z0-9]{2,16}$/;
 const PID_RE = /^[a-z0-9]{6,16}$/;
 const WCA_ID_RE = /^\d{4}[A-Z]{4}\d{2}$/;
 const ISO2_RE = /^[A-Za-z]{2}$/;
-const PHASES = new Set(['idle', 'ready', 'inspecting', 'solving']);
-const PENALTIES = new Set(['ok', '+2', 'dnf']);
-
-function randPid(): string {
-  let s = '';
-  for (let i = 0; i < 10; i++) s += 'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random() * 36)];
-  return s;
-}
+const PHASES: ReadonlySet<Exclude<NetPhase, 'done'>> = new Set(['idle', 'ready', 'inspecting', 'solving']);
+const PENALTIES: ReadonlySet<NetPenalty> = new Set(['ok', '+2', 'dnf']);
 
 function parseCode(raw: string | undefined): string | null {
   const s = (raw ?? '').trim();
-  return ROOM_CODE_RE.test(s) ? s : null;
+  return isNetBattleRoomCode(s) ? s : null;
 }
 
-function parseEvent(raw: unknown): string | null {
-  return typeof raw === 'string' && EVENT_RE.test(raw) ? raw : null;
+function parseEvent(raw: unknown): NetBattleEventId | null {
+  return isNetBattleEventId(raw) ? raw : null;
 }
 
 /** 玩家名:去首尾空白、压缩连续空白、截断;空的给默认名。 */
@@ -118,32 +132,26 @@ function uniqueName(base: string, takenLower: Set<string>): string {
   return base; // 兜底(几乎不可能:玩家数 ≤ MAX_PLAYERS)
 }
 
-interface PlayerEntry { name: string; wcaId?: string; iso2?: string; joined: number; seen: number; ph: string; at: number; event: string }
-interface RoomResult { t: number; p: string }
-interface RoomHistoryEntry {
-  round: number;
-  /** 该轮各项目的打乱(玩家按当轮 playerEvents 里的自己项目取用)。 */
-  scrambles: Record<string, string>;
-  /** 该轮各玩家所选项目快照(玩家可能中途改项目,历史要按当轮记)。 */
-  playerEvents: Record<string, string>;
-  results: Record<string, RoomResult>;
-  winners: string[];
-}
+type PlayerEntry = NetPlayerEntry & { event: NetBattleEventId };
+type RoomResult = NetResult;
+type RoomHistoryEntry = NetRoundHistory;
 interface RoomRow {
   code: string;
-  event: string;                                   // 房间默认项目(新加入者的默认)
+  revision: number;
+  event: NetBattleEventId;                         // 房间默认项目(新加入者的默认)
   round: number;
   scrambles: Record<string, string>;               // 当前轮各项目打乱 {event: scramble}
   players: Record<string, PlayerEntry>;
   results: Record<string, Record<string, RoomResult>>;
   history: RoomHistoryEntry[];
   scores: Record<string, number>;
+  player_auth: Record<string, string>;              // {pid: sha256(capability token)}; never serialized
   admin: string | null;                            // 房主 pid(不在房里则读时回落最早加入者)
   sync_start: boolean;                             // 是否要求全员同时起表
   start_at: string | number | null;                // 本轮同时起表时刻(BIGINT,driver 可能给字符串)
 }
 
-const ROOM_COLS = 'code, event, round, scrambles, players, results, history, scores, admin, sync_start, start_at';
+const ROOM_COLS = 'code, revision, event, round, scrambles, players, results, history, scores, player_auth, admin, sync_start, start_at';
 
 /**
  * 当前房主:admin 仍在房里就是他;否则最早加入者接任(加入时刻相同按 pid 定序)。
@@ -163,7 +171,7 @@ function effectiveAdmin(r: RoomRow): string {
 /** 统一的状态响应(轮询/各写操作都回它,客户端一把同步)。 */
 function stateJson(r: RoomRow) {
   return {
-    code: r.code, event: r.event, round: r.round, scrambles: r.scrambles ?? {},
+    code: r.code, revision: Number(r.revision), event: r.event, round: r.round, scrambles: r.scrambles ?? {},
     players: r.players, results: r.results, history: r.history ?? [], scores: r.scores,
     admin: effectiveAdmin(r), syncStart: !!r.sync_start,
     startAt: r.start_at == null ? null : Number(r.start_at),
@@ -183,44 +191,45 @@ function allReady(r: RoomRow, now: number): boolean {
 }
 
 async function getRoomRow(code: string): Promise<RoomRow | null> {
-  const rows = await query<RoomRow>(`SELECT ${ROOM_COLS} FROM battle_rooms WHERE code = ?`, [code]);
+  // Pre-token rooms intentionally become inaccessible and expire naturally in 24h. There is no
+  // safe way to mint the old browser a secret after the fact, and a compatibility bypass would
+  // preserve the impersonation vulnerability this column closes.
+  const rows = await query<RoomRow>(
+    `SELECT ${ROOM_COLS} FROM battle_rooms
+     WHERE code = ? AND jsonb_object_length(player_auth) = jsonb_object_length(players)`,
+    [code],
+  );
   return rows[0] ?? null;
 }
 
+function requestPlayerToken(c: { req: { header(name: string): string | undefined } }): string | undefined {
+  return c.req.header(NET_BATTLE_TOKEN_HEADER);
+}
+
+function authorizedPlayer(room: RoomRow, pid: string, token: unknown): boolean {
+  return !!room.players[pid] && battlePlayerTokenMatches(room.player_auth, pid, token);
+}
+
+async function requirePlayer(code: string, pid: string | null, token: unknown): Promise<
+  { room: RoomRow; pid: string; tokenHash: string } | { error: string; status: 400 | 403 | 404 }
+> {
+  if (!pid) return { error: 'invalid pid', status: 400 };
+  const room = await getRoomRow(code);
+  if (!room) return { error: 'room not found', status: 404 };
+  if (!authorizedPlayer(room, pid, token)) return { error: 'invalid player capability', status: 403 };
+  return { room, pid, tokenHash: hashBattlePlayerToken(token as string) };
+}
+
+/** SQL form of effectiveAdmin(); used inside UPDATE so admin races cannot pass a stale read check. */
+const EFFECTIVE_ADMIN_SQL = `COALESCE(
+  CASE WHEN admin IS NOT NULL AND jsonb_exists(players, admin) THEN admin END,
+  (SELECT e.key FROM jsonb_each(players) AS e(key, value)
+   ORDER BY (e.value ->> 'joined')::bigint, e.key LIMIT 1)
+)`;
+
 /** 玩家当前项目(缺省回落房间默认项目,兼容早期无 event 字段的行)。 */
-function playerEvent(pl: PlayerEntry | undefined, roomDefault: string): string {
+function playerEvent(pl: PlayerEntry | undefined, roomDefault: NetBattleEventId): NetBattleEventId {
   return pl?.event || roomDefault;
-}
-
-/** 有效成绩:dnf → Infinity,+2 → t+2000。 */
-function effectiveMs(r: { t: number; p: string }): number {
-  if (r.p === 'dnf') return Infinity;
-  return r.p === '+2' ? r.t + 2000 : r.t;
-}
-
-/**
- * 按「同项目分组」结算一轮:各组最快有效成绩者(可并列)是该组胜者。
- * 返回 { winners: 全部组胜者, scored: 应计胜场者(仅 ≥2 人的组) }。
- */
-function settleRound(
-  results: Record<string, RoomResult>,
-  playerEvents: Record<string, string>,
-): { winners: string[]; scored: string[] } {
-  const byEvent: Record<string, Array<[string, RoomResult]>> = {};
-  for (const [id, r] of Object.entries(results)) {
-    if (!playerEvents[id]) continue; // 已离场玩家不计
-    (byEvent[playerEvents[id]] ??= []).push([id, r]);
-  }
-  const winners: string[] = [];
-  const scored: string[] = [];
-  for (const grp of Object.values(byEvent)) {
-    const best = Math.min(...grp.map(([, r]) => effectiveMs(r)));
-    if (!Number.isFinite(best)) continue;
-    const w = grp.filter(([, r]) => effectiveMs(r) === best).map(([id]) => id);
-    winners.push(...w);
-    if (grp.length >= 2) scored.push(...w);
-  }
-  return { winners, scored };
 }
 
 // POST /battle/rooms — 建房(建房者即首位玩家,项目 = 建房项目)
@@ -242,7 +251,9 @@ battleRoomsRoutes.post('/battle/rooms', async (c) => {
   // 惰性清理:顺手删掉过期房间(不阻塞主流程)
   query('DELETE FROM battle_rooms WHERE updated_at < ?', [now - ROOM_TTL_MS]).catch(() => {});
 
-  const pid = randPid();
+  const pid = generateBattlePlayerId();
+  const playerToken = generateBattlePlayerToken();
+  const playerAuth = { [pid]: hashBattlePlayerToken(playerToken) };
   const players: Record<string, PlayerEntry> = {
     [pid]: { name, ...(wcaId ? { wcaId } : {}), ...(iso2 ? { iso2 } : {}), joined: now, seen: now, ph: 'idle', at: now, event },
   };
@@ -252,12 +263,12 @@ battleRoomsRoutes.post('/battle/rooms', async (c) => {
     const code = generateRoomCode();
     try {
       await query(
-        `INSERT INTO battle_rooms (code, event, round, scrambles, players, results, history, scores, admin, created_at, updated_at)
-         VALUES (?, ?, 1, ?::jsonb, ?::jsonb, '{}'::jsonb, '[]'::jsonb, '{}'::jsonb, ?, ?, ?)`,
-        [code, event, scrambles, players, pid, now, now],
+        `INSERT INTO battle_rooms (code, revision, event, round, scrambles, players, results, history, scores, player_auth, admin, created_at, updated_at)
+         VALUES (?, 1, ?, 1, ?::jsonb, ?::jsonb, '{}'::jsonb, '[]'::jsonb, '{}'::jsonb, ?::jsonb, ?, ?, ?)`,
+        [code, event, scrambles, players, playerAuth, pid, now, now],
       );
       return c.json({
-        playerId: pid, code, event, round: 1, scrambles, players, results: {}, history: [], scores: {},
+        playerId: pid, playerToken, code, revision: 1, event, round: 1, scrambles, players, results: {}, history: [], scores: {},
         admin: pid, syncStart: false, startAt: null, now,
       });
     } catch (e) {
@@ -282,12 +293,17 @@ battleRoomsRoutes.post('/battle/rooms/:code/join', async (c) => {
   const iso2 = parseIso2(body.iso2);
 
   const now = Date.now();
-  const pid = randPid();
   // 重名不拒绝,自动加后缀去重:同一 WCA ID 两台设备也能同房对战,名字用「名 (2)」区分。
   // 每次算出的唯一名再用 NOT EXISTS 原子写入(行锁下),并发抢到同名则重读重算,最多试几次。
   for (let attempt = 0; attempt < MAX_PLAYERS + 4; attempt++) {
+    const pid = generateBattlePlayerId();
+    const playerToken = generateBattlePlayerToken();
+    const playerTokenHash = hashBattlePlayerToken(playerToken);
     const cur = await getRoomRow(code);
     if (!cur) return c.json({ error: 'room not found' }, 404);
+    // A synchronized countdown/round has a fixed roster. Joining midway would make the new
+    // player auto-start from an old start_at and then block completion; wait for /next instead.
+    if (cur.start_at != null) return c.json({ error: 'round in progress' }, 409);
     // 软上限:并发同时挤进来可能略过 8,无伤大雅
     if (Object.keys(cur.players).length >= MAX_PLAYERS) return c.json({ error: 'room full' }, 409);
 
@@ -300,16 +316,22 @@ battleRoomsRoutes.post('/battle/rooms/:code/join', async (c) => {
     // 仅当选定名此刻仍无人占用时才写入(行锁下原子);抢名失败 → 0 行 → 循环重算。
     const rows = await query<RoomRow>(
       `UPDATE battle_rooms b
-       SET players = players || jsonb_build_object(?::text, ?::jsonb), updated_at = ?
+       SET players = players || jsonb_build_object(?::text, ?::jsonb),
+           player_auth = player_auth || jsonb_build_object(?::text, ?::jsonb),
+           revision = revision + 1, updated_at = ?
        WHERE code = ?
+         AND jsonb_object_length(players) < ?
+         AND jsonb_object_length(player_auth) = jsonb_object_length(players)
+         AND NOT jsonb_exists(players, ?)
+         AND start_at IS NULL
          AND NOT EXISTS (
            SELECT 1 FROM jsonb_each(b.players) AS e(k, v)
            WHERE lower(v ->> 'name') = lower(?)
          )
        RETURNING ${ROOM_COLS}`,
-      [pid, entry, now, code, finalName],
+      [pid, entry, pid, playerTokenHash, now, code, MAX_PLAYERS, pid, finalName],
     );
-    if (rows[0]) return c.json({ playerId: pid, ...stateJson(rows[0]) });
+    if (rows[0]) return c.json({ playerId: pid, playerToken, ...stateJson(rows[0]) });
   }
   // 极端并发下反复抢名失败(几乎不可能:玩家数 ≤ MAX_PLAYERS)
   return c.json({ error: 'name taken' }, 409);
@@ -324,17 +346,37 @@ battleRoomsRoutes.get('/battle/rooms/:code', async (c) => {
   const pid = PID_RE.test(pidRaw) ? pidRaw : null;
 
   if (pid) {
+    const gate = await requirePlayer(code, pid, requestPlayerToken(c));
+    if ('error' in gate) return c.json({ error: gate.error }, gate.status);
     const now = Date.now();
-    // 心跳合并 + 读取一次往返;pid 不在房里(被清/伪造)则不 touch,走下面纯读。
+    // SQL 再验 capability，避免校验后恰好被踢/离开的 TOCTOU。
     const rows = await query<RoomRow>(
       `UPDATE battle_rooms
-       SET players = players || jsonb_build_object(?::text, (players -> ?) || jsonb_build_object('seen', ?::bigint)),
-           updated_at = ?
-       WHERE code = ? AND jsonb_exists(players, ?)
+       SET players = players || jsonb_build_object(
+             ?::text,
+             (players -> ?)
+               || jsonb_build_object('seen', ?::bigint)
+               || CASE
+                    WHEN COALESCE((players -> ? ->> 'seen')::bigint, 0) < ?
+                      THEN jsonb_build_object('ph', 'idle', 'at', ?::bigint)
+                    ELSE '{}'::jsonb
+                  END
+           ),
+           start_at = CASE
+             WHEN start_at > ? AND COALESCE((players -> ? ->> 'seen')::bigint, 0) < ? THEN NULL
+             ELSE start_at
+           END,
+           revision = revision + 1, updated_at = ?
+       WHERE code = ? AND jsonb_exists(players, ?) AND player_auth ->> ? = ?
        RETURNING ${ROOM_COLS}`,
-      [pid, pid, now, now, code, pid],
+      [
+        pid, pid, now, pid, now - OFFLINE_MS, now,
+        now, pid, now - OFFLINE_MS,
+        now, code, pid, pid, gate.tokenHash,
+      ],
     );
     if (rows[0]) return c.json(stateJson(rows[0]));
+    return c.json({ error: 'invalid player capability' }, 403);
   }
 
   const room = await getRoomRow(code);
@@ -352,35 +394,62 @@ battleRoomsRoutes.post('/battle/rooms/:code/status', async (c) => {
   let body: { pid?: unknown; ph?: unknown };
   try { body = await c.req.json(); } catch { body = {}; }
   const pid = typeof body.pid === 'string' && PID_RE.test(body.pid) ? body.pid : null;
-  const ph = typeof body.ph === 'string' && PHASES.has(body.ph) ? body.ph : null;
+  const ph = typeof body.ph === 'string' && PHASES.has(body.ph as Exclude<NetPhase, 'done'>)
+    ? body.ph as Exclude<NetPhase, 'done'> : null;
   if (!pid || !ph) return c.json({ error: 'invalid pid/ph' }, 400);
 
+  const playerToken = requestPlayerToken(c);
   const now = Date.now();
-  const rows = await query<RoomRow>(
-    `UPDATE battle_rooms
-     SET players = players || jsonb_build_object(?::text, (players -> ?) || ?::jsonb), updated_at = ?
-     WHERE code = ? AND jsonb_exists(players, ?)
-     RETURNING ${ROOM_COLS}`,
-    [pid, pid, { ph, at: now, seen: now }, now, code, pid],
-  );
-  let room = rows[0];
-  if (!room) return c.json({ error: 'room or player not found' }, 404);
-
-  // 「同时开始」:这一跳把最后一个人置成 ready 了 → 落倒计时起点(set-if-null,并发只一个生效)。
-  if (ph === 'ready' && room.sync_start && room.start_at == null && allReady(room, now)) {
-    const upd = await query<RoomRow>(
-      `UPDATE battle_rooms SET start_at = ?, updated_at = ?
-       WHERE code = ? AND start_at IS NULL
-       RETURNING ${ROOM_COLS}`,
-      [now + COUNTDOWN_MS, now, code],
+  const outcome = await withTransaction<
+    { room: RoomRow } | { error: string; status: 403 | 404 }
+  >(async (transactionQuery) => {
+    // Lock across both the player phase transition and the all-ready decision. A concurrent
+    // settings update must happen wholly before or after this transaction, so sync_start=false
+    // can never be paired with a stale start_at written by this request.
+    const locked = await transactionQuery<RoomRow>(
+      `SELECT ${ROOM_COLS} FROM battle_rooms
+       WHERE code = ? AND jsonb_object_length(player_auth) = jsonb_object_length(players)
+       FOR UPDATE`,
+      [code],
     );
-    if (upd[0]) room = upd[0];
-  }
-  return c.json(stateJson(room));
+    const room = locked[0];
+    if (!room) return { error: 'room not found', status: 404 };
+    if (!authorizedPlayer(room, pid, playerToken)) {
+      return { error: 'invalid player capability', status: 403 };
+    }
+
+    const players = {
+      ...room.players,
+      [pid]: { ...room.players[pid], ph, at: now, seen: now },
+    };
+    const candidate = { ...room, players };
+    let startAt = candidate.start_at;
+    if (startAt != null && Number(startAt) > now && ph !== 'ready') {
+      startAt = null;
+    } else if (ph === 'ready'
+      && candidate.sync_start
+      && candidate.start_at == null
+      && allReady(candidate, now)) {
+      startAt = now + COUNTDOWN_MS;
+    }
+    const rows = await transactionQuery<RoomRow>(
+      `UPDATE battle_rooms
+       SET players = ?::jsonb, start_at = ?, revision = revision + 1, updated_at = ?
+       WHERE code = ? AND jsonb_exists(players, ?) AND player_auth ->> ? = ?
+       RETURNING ${ROOM_COLS}`,
+      [players, startAt, now, code, pid, pid, hashBattlePlayerToken(playerToken as string)],
+    );
+    return rows[0]
+      ? { room: rows[0] }
+      : { error: 'invalid player capability', status: 403 };
+  });
+
+  if ('error' in outcome) return c.json({ error: outcome.error }, outcome.status);
+  return c.json(stateJson(outcome.room));
 });
 
 // POST /battle/rooms/:code/name — 玩家改自己的名字(顺带可换 WCA 身份:国旗 / WCA ID)
-// 只改自己:pid 就是身份凭据,改不到别人。不限流,理由同 /status(同一 WiFi 共享出口 IP)。
+// 只改自己:pid 选定玩家、私有 capability 授权。不限流,理由同 /status(同一 WiFi 共享出口 IP)。
 battleRoomsRoutes.post('/battle/rooms/:code/name', async (c) => {
   c.header('Cache-Control', 'no-store');
   const code = parseCode(c.req.param('code'));
@@ -393,6 +462,8 @@ battleRoomsRoutes.post('/battle/rooms/:code/name', async (c) => {
   const name = sanitizeName(body.name);
   const wcaId = parseWcaId(body.wcaId);
   const iso2 = parseIso2(body.iso2);
+  const gate = await requirePlayer(code, pid, requestPlayerToken(c));
+  if ('error' in gate) return c.json({ error: gate.error }, gate.status);
 
   const now = Date.now();
   // 与 join 同一套抢名循环:算唯一名(**排除自己**,否则改成自己现在的名字会被自己挡成
@@ -400,8 +471,7 @@ battleRoomsRoutes.post('/battle/rooms/:code/name', async (c) => {
   for (let attempt = 0; attempt < MAX_PLAYERS + 4; attempt++) {
     const cur = await getRoomRow(code);
     if (!cur) return c.json({ error: 'room not found' }, 404);
-    const me = cur.players[pid];
-    if (!me) return c.json({ error: 'player not in room' }, 404);
+    if (!cur.players[pid]) return c.json({ error: 'player not in room' }, 404);
 
     const takenLower = new Set(
       Object.entries(cur.players)
@@ -411,21 +481,29 @@ battleRoomsRoutes.post('/battle/rooms/:code/name', async (c) => {
     const finalName = uniqueName(name, takenLower);
     // 身份三件套整体替换:访客把选中的 WCA 选手清掉后,国旗 / WCA ID 也要跟着消失,
     // 留着上一次的就成了「名字是甲、国旗还是乙」。
-    const entry: PlayerEntry = { ...me, name: finalName, seen: now };
-    if (wcaId) entry.wcaId = wcaId; else delete entry.wcaId;
-    if (iso2) entry.iso2 = iso2; else delete entry.iso2;
+    const identityPatch = {
+      name: finalName,
+      seen: now,
+      ...(wcaId ? { wcaId } : {}),
+      ...(iso2 ? { iso2 } : {}),
+    };
 
     const rows = await query<RoomRow>(
       `UPDATE battle_rooms b
-       SET players = players || jsonb_build_object(?::text, ?::jsonb), updated_at = ?
+       SET players = players || jsonb_build_object(
+             ?::text,
+             ((players -> ?) - 'wcaId' - 'iso2') || ?::jsonb
+           ),
+           revision = revision + 1, updated_at = ?
        WHERE code = ?
          AND jsonb_exists(b.players, ?)
+         AND b.player_auth ->> ? = ?
          AND NOT EXISTS (
            SELECT 1 FROM jsonb_each(b.players) AS e(k, v)
            WHERE e.k <> ?::text AND lower(v ->> 'name') = lower(?)
          )
        RETURNING ${ROOM_COLS}`,
-      [pid, entry, now, code, pid, pid, finalName],
+      [pid, pid, identityPatch, now, code, pid, pid, gate.tokenHash, pid, finalName],
     );
     if (rows[0]) return c.json(stateJson(rows[0]));
   }
@@ -445,26 +523,36 @@ battleRoomsRoutes.post('/battle/rooms/:code/event', async (c) => {
   const scramble = parseScramble(body.scramble);
   if (!pid || !event || !scramble) return c.json({ error: 'invalid body' }, 400);
 
-  const room = await getRoomRow(code);
-  if (!room) return c.json({ error: 'room not found' }, 404);
-  if (!room.players[pid]) return c.json({ error: 'player not in room' }, 404);
-
+  const gate = await requirePlayer(code, pid, requestPlayerToken(c));
+  if ('error' in gate) return c.json({ error: gate.error }, gate.status);
   const now = Date.now();
-  const scrambles = { ...(room.scrambles ?? {}) };
-  // lazy 填该项目打乱(已有则沿用,不覆盖 —— 同项目玩家共享;上限内才加防刷)
-  if (!(event in scrambles) && Object.keys(scrambles).length < MAX_SCRAMBLE_EVENTS) {
-    scrambles[event] = scramble;
-  }
-  const player: PlayerEntry = { ...room.players[pid], event, seen: now };
 
   const rows = await query<RoomRow>(
     `UPDATE battle_rooms
-     SET players = players || jsonb_build_object(?::text, ?::jsonb), scrambles = ?::jsonb, updated_at = ?
-     WHERE code = ? AND jsonb_exists(players, ?)
+     SET players = players || jsonb_build_object(
+           ?::text,
+           (players -> ?) || jsonb_build_object('event', ?::text, 'seen', ?::bigint)
+         ),
+         scrambles = CASE
+           WHEN jsonb_exists(scrambles, ?) OR (SELECT count(*) FROM jsonb_object_keys(scrambles)) >= ?
+             THEN scrambles
+           ELSE scrambles || jsonb_build_object(?::text, ?::jsonb)
+         END,
+         revision = revision + 1, updated_at = ?
+     WHERE code = ?
+       AND jsonb_exists(players, ?)
+       AND player_auth ->> ? = ?
+       AND NOT jsonb_exists(COALESCE(results -> round::text, '{}'::jsonb), ?)
      RETURNING ${ROOM_COLS}`,
-    [pid, player, scrambles, now, code, pid],
+    [pid, pid, event, now, event, MAX_SCRAMBLE_EVENTS, event, scramble, now, code, pid, pid, gate.tokenHash, pid],
   );
-  if (!rows[0]) return c.json({ error: 'room or player not found' }, 404);
+  if (!rows[0]) {
+    const current = await getRoomRow(code);
+    if (!current) return c.json({ error: 'room not found' }, 404);
+    if (!authorizedPlayer(current, pid, requestPlayerToken(c))) return c.json({ error: 'invalid player capability' }, 403);
+    if (current.results[String(current.round)]?.[pid]) return c.json({ error: 'round already submitted' }, 409);
+    return c.json({ error: 'player not in room' }, 404);
+  }
   return c.json(stateJson(rows[0]));
 });
 
@@ -474,28 +562,37 @@ battleRoomsRoutes.post('/battle/rooms/:code/scramble', async (c) => {
   const code = parseCode(c.req.param('code'));
   if (!code) return c.json({ error: 'invalid code' }, 400);
 
-  let body: { event?: unknown; scramble?: unknown };
+  let body: { pid?: unknown; event?: unknown; scramble?: unknown };
   try { body = await c.req.json(); } catch { body = {}; }
+  const pid = typeof body.pid === 'string' && PID_RE.test(body.pid) ? body.pid : null;
   const event = parseEvent(body.event);
   const scramble = parseScramble(body.scramble);
-  if (!event || !scramble) return c.json({ error: 'invalid event/scramble' }, 400);
+  if (!pid || !event || !scramble) return c.json({ error: 'invalid event/scramble' }, 400);
+
+  const gate = await requirePlayer(code, pid, requestPlayerToken(c));
+  if ('error' in gate) return c.json({ error: gate.error }, gate.status);
 
   const now = Date.now();
   // set-if-absent:仅当该项目当前轮尚无打乱且未超上限时写入(行锁下原子,并发只一个生效)。
   const rows = await query<RoomRow>(
     `UPDATE battle_rooms
-     SET scrambles = scrambles || jsonb_build_object(?::text, ?::jsonb), updated_at = ?
+     SET scrambles = scrambles || jsonb_build_object(?::text, ?::jsonb),
+         revision = revision + 1, updated_at = ?
      WHERE code = ?
        AND NOT jsonb_exists(scrambles, ?)
        AND (SELECT count(*) FROM jsonb_object_keys(scrambles)) < ?
+       AND players -> ? ->> 'event' = ?
+       AND player_auth ->> ? = ?
      RETURNING ${ROOM_COLS}`,
-    [event, scramble, now, code, event, MAX_SCRAMBLE_EVENTS],
+    [event, scramble, now, code, event, MAX_SCRAMBLE_EVENTS, pid, event, pid, gate.tokenHash],
   );
   if (rows[0]) return c.json(stateJson(rows[0]));
 
   // 已被别人填了 / 超上限 / 房间不存在 —— 读当前状态返回(客户端自会采用已有的那条)
   const room = await getRoomRow(code);
   if (!room) return c.json({ error: 'room not found' }, 404);
+  if (!authorizedPlayer(room, pid, requestPlayerToken(c))) return c.json({ error: 'invalid player capability' }, 403);
+  if (playerEvent(room.players[pid], room.event) !== event) return c.json({ error: 'event does not match player' }, 409);
   return c.json(stateJson(room));
 });
 
@@ -511,8 +608,11 @@ battleRoomsRoutes.post('/battle/rooms/:code/result', async (c) => {
   const reqRound = Number.isInteger(body.round) && (body.round as number) >= 1 ? (body.round as number) : null;
   const t = Number.isFinite(body.t) && (body.t as number) >= 0 && (body.t as number) < 24 * 3600_000
     ? Math.round(body.t as number) : null;
-  const p = typeof body.p === 'string' && PENALTIES.has(body.p) ? body.p : null;
+  const p = typeof body.p === 'string' && PENALTIES.has(body.p as NetPenalty) ? body.p as NetPenalty : null;
   if (!pid || !reqRound || t == null || !p) return c.json({ error: 'invalid body' }, 400);
+
+  const gate = await requirePlayer(code, pid, requestPlayerToken(c));
+  if ('error' in gate) return c.json({ error: gate.error }, gate.status);
 
   const now = Date.now();
   const roundKey = String(reqRound);
@@ -521,13 +621,13 @@ battleRoomsRoutes.post('/battle/rooms/:code/result', async (c) => {
     `UPDATE battle_rooms
      SET results = results || jsonb_build_object(?::text, COALESCE(results -> ?, '{}'::jsonb) || jsonb_build_object(?::text, ?::jsonb)),
          players = players || jsonb_build_object(?::text, (players -> ?) || ?::jsonb),
-         updated_at = ?
-     WHERE code = ? AND round = ? AND jsonb_exists(players, ?)
+         revision = revision + 1, updated_at = ?
+     WHERE code = ? AND round = ? AND jsonb_exists(players, ?) AND player_auth ->> ? = ?
      RETURNING ${ROOM_COLS}`,
     [
       roundKey, roundKey, pid, { t, p },
       pid, pid, { ph: 'done', at: now, seen: now },
-      now, code, reqRound, pid,
+      now, code, reqRound, pid, pid, gate.tokenHash,
     ],
   );
   if (rows[0]) return c.json(stateJson(rows[0]));
@@ -535,7 +635,7 @@ battleRoomsRoutes.post('/battle/rooms/:code/result', async (c) => {
   // 没写进去:房间没了 / 玩家没了 / 轮次已被别人推进 —— 复查区分
   const room = await getRoomRow(code);
   if (!room) return c.json({ error: 'room not found' }, 404);
-  if (!room.players[pid]) return c.json({ error: 'player not in room' }, 404);
+  if (!authorizedPlayer(room, pid, requestPlayerToken(c))) return c.json({ error: 'invalid player capability' }, 403);
   return c.json({ advanced: true, ...stateJson(room) });
 });
 
@@ -552,64 +652,87 @@ battleRoomsRoutes.post('/battle/rooms/:code/next', async (c) => {
   const scramble = parseScramble(body.scramble);
   if (!pid || !reqRound || !scramble) return c.json({ error: 'invalid body' }, 400);
 
-  const room = await getRoomRow(code);
-  if (!room) return c.json({ error: 'room not found' }, 404);
-  if (!room.players[pid]) return c.json({ error: 'player not in room' }, 404);
-  // 已被别人推进 → 幂等返回当前状态(客户端直接用房间里的新打乱)
-  if (room.round !== reqRound) return c.json(stateJson(room));
+  const playerToken = requestPlayerToken(c);
+  const outcome = await withTransaction<
+    { room: RoomRow } | { error: string; status: 403 | 404 | 409 }
+  >(async (transactionQuery) => {
+    // The room row must stay locked while the full JSON snapshots are derived and replaced.
+    // Otherwise a concurrent join/kick/leave can be silently overwritten or resurrected.
+    const locked = await transactionQuery<RoomRow>(
+      `SELECT ${ROOM_COLS} FROM battle_rooms
+       WHERE code = ? AND jsonb_object_length(player_auth) = jsonb_object_length(players)
+       FOR UPDATE`,
+      [code],
+    );
+    const room = locked[0];
+    if (!room) return { error: 'room not found', status: 404 };
+    if (!authorizedPlayer(room, pid, playerToken)) {
+      return { error: 'invalid player capability', status: 403 };
+    }
+    // 已被别人推进 → 幂等返回当前状态(客户端直接用房间里的新打乱)
+    if (reqRound < room.round) return { room };
+    if (reqRound > room.round) return { error: 'round is ahead of room', status: 409 };
+    if (!room.results[String(reqRound)]?.[pid]) {
+      return { error: 'submit a result before advancing', status: 409 };
+    }
+    // Web 的 waiting===0 只是交互门；服务端必须用同一个 shared 规则强制执行，
+    // 否则持有合法 capability 的客户端仍可在别人计时中清空整轮。
+    if (pendingCount(stateJson(room)) !== 0) {
+      return { error: 'players are still solving', status: 409 };
+    }
 
-  // 该轮各玩家项目快照(玩家可能中途改项目,历史与结算都按当轮记)。
-  const playerEvents: Record<string, string> = {};
-  for (const [id, pl] of Object.entries(room.players)) playerEvents[id] = playerEvent(pl, room.event);
+    // 该轮各玩家项目快照(玩家可能中途改项目,历史与结算都按当轮记)。
+    const playerEvents: Record<string, NetBattleEventId> = {};
+    for (const [id, pl] of Object.entries(room.players)) playerEvents[id] = playerEvent(pl, room.event);
 
-  // 按项目分组结算:各组最快计胜场(仅 ≥2 人的组)。winners 全存历史供展示。
-  const roundResults = room.results[String(reqRound)] ?? {};
-  const { winners, scored } = settleRound(roundResults, playerEvents);
-  const scores = { ...room.scores };
-  for (const id of scored) scores[id] = (scores[id] ?? 0) + 1;
+    // 按项目分组结算:各组最快计胜场(仅 ≥2 人的组)。winners 全存历史供展示。
+    const roundResults = room.results[String(reqRound)] ?? {};
+    const { winners, scored } = settleNetRound(roundResults, playerEvents);
+    const scores = { ...room.scores };
+    for (const id of scored) scores[id] = (scores[id] ?? 0) + 1;
 
-  // 把刚结束的一轮 {各项目打乱, 各人项目, 成绩, 胜者} 压进 history;超上限丢最旧。
-  const historyEntry: RoomHistoryEntry = {
-    round: reqRound, scrambles: room.scrambles ?? {}, playerEvents, results: roundResults, winners,
-  };
-  const history = [...(room.history ?? []), historyEntry].slice(-MAX_HISTORY);
+    // 把刚结束的一轮 {各项目打乱, 各人项目, 成绩, 胜者} 压进 history;超上限丢最旧。
+    const historyEntry: RoomHistoryEntry = {
+      round: reqRound, scrambles: room.scrambles ?? {}, playerEvents, results: roundResults, winners,
+    };
+    const history = [...(room.history ?? []), historyEntry].slice(-MAX_HISTORY);
 
-  // 新一轮:results 清空,scrambles 只保留开轮者项目的新打乱(其余项目由各自玩家 lazy 填);
-  // 全员 ph 重置回 idle,免得上一轮徽章串到新一轮。
-  const now = Date.now();
-  const advancerEvent = playerEvent(room.players[pid], room.event);
-  const scrambles: Record<string, string> = { [advancerEvent]: scramble };
-  const players: Record<string, PlayerEntry> = {};
-  for (const [id, pl] of Object.entries(room.players)) players[id] = { ...pl, ph: 'idle', at: now };
+    // 新一轮:results 清空,scrambles 只保留开轮者项目的新打乱(其余项目由各自玩家 lazy 填);
+    // 全员 ph 重置回 idle,免得上一轮徽章串到新一轮。
+    const now = Date.now();
+    const advancerEvent = playerEvent(room.players[pid], room.event);
+    const scrambles: Record<string, string> = { [advancerEvent]: scramble };
+    const players: Record<string, PlayerEntry> = {};
+    for (const [id, pl] of Object.entries(room.players)) players[id] = { ...pl, ph: 'idle', at: now };
 
-  const upd = await query<RoomRow>(
-    `UPDATE battle_rooms
-     SET round = round + 1, scrambles = ?::jsonb, results = '{}'::jsonb, history = ?::jsonb,
-         scores = ?::jsonb, players = ?::jsonb, start_at = NULL, updated_at = ?
-     WHERE code = ? AND round = ?
-     RETURNING ${ROOM_COLS}`,
-    [scrambles, history, scores, players, now, code, reqRound],
-  );
-  if (upd[0]) return c.json(stateJson(upd[0]));
+    const updated = await transactionQuery<RoomRow>(
+      `UPDATE battle_rooms
+       SET round = round + 1, scrambles = ?::jsonb, results = '{}'::jsonb, history = ?::jsonb,
+           scores = ?::jsonb, players = ?::jsonb, start_at = NULL,
+           revision = revision + 1, updated_at = ?
+       WHERE code = ? AND round = ? AND player_auth ->> ? = ?
+       RETURNING ${ROOM_COLS}`,
+      [scrambles, history, scores, players, now, code, reqRound, pid, hashBattlePlayerToken(playerToken as string)],
+    );
+    if (!updated[0]) return { error: 'invalid player capability', status: 403 };
+    return { room: updated[0] };
+  });
 
-  // CAS 落空(SELECT 与 UPDATE 之间被别人抢先)→ 读当前状态返回
-  const after = await getRoomRow(code);
-  if (!after) return c.json({ error: 'room not found' }, 404);
-  return c.json(stateJson(after));
+  if ('error' in outcome) return c.json({ error: outcome.error }, outcome.status);
+  return c.json(stateJson(outcome.room));
 });
 
 /**
  * 房主操作的公共前置:取房 + 校验请求者就是当前房主。
  * 客户端隐藏按钮只是装饰,授权一律在这里做。
  */
-async function requireAdmin(code: string, pid: string | null): Promise<
-  { room: RoomRow } | { error: string; status: 400 | 403 | 404 }
+async function requireAdmin(code: string, pid: string | null, token: unknown): Promise<
+  { room: RoomRow; pid: string; tokenHash: string } | { error: string; status: 400 | 403 | 404 }
 > {
-  if (!pid) return { error: 'invalid pid', status: 400 };
-  const room = await getRoomRow(code);
-  if (!room) return { error: 'room not found', status: 404 };
-  if (effectiveAdmin(room) !== pid) return { error: 'not admin', status: 403 };
-  return { room };
+  const gate = await requirePlayer(code, pid, token);
+  if ('error' in gate) return gate;
+  if (effectiveAdmin(gate.room) !== gate.pid) return { error: 'not admin', status: 403 };
+  return gate;
 }
 
 // POST /battle/rooms/:code/settings — 房主改房设(目前只有「同时开始计时」)
@@ -624,18 +747,19 @@ battleRoomsRoutes.post('/battle/rooms/:code/settings', async (c) => {
   if (typeof body.syncStart !== 'boolean') return c.json({ error: 'invalid body' }, 400);
   const syncStart = body.syncStart;
 
-  const gate = await requireAdmin(code, pid);
+  const gate = await requireAdmin(code, pid, requestPlayerToken(c));
   if ('error' in gate) return c.json({ error: gate.error }, gate.status);
 
   // 关掉开关同时清 start_at:别把已经在倒计时的人挂在半空。
   const rows = await query<RoomRow>(
     `UPDATE battle_rooms
-     SET sync_start = ?, start_at = CASE WHEN ? THEN start_at ELSE NULL END, updated_at = ?
-     WHERE code = ?
+     SET sync_start = ?, start_at = CASE WHEN ? THEN start_at ELSE NULL END,
+         revision = revision + 1, updated_at = ?
+     WHERE code = ? AND player_auth ->> ? = ? AND ${EFFECTIVE_ADMIN_SQL} = ?
      RETURNING ${ROOM_COLS}`,
-    [syncStart, syncStart, Date.now(), code],
+    [syncStart, syncStart, Date.now(), code, gate.pid, gate.tokenHash, gate.pid],
   );
-  if (!rows[0]) return c.json({ error: 'room not found' }, 404);
+  if (!rows[0]) return c.json({ error: 'not admin' }, 403);
   return c.json(stateJson(rows[0]));
 });
 
@@ -651,15 +775,16 @@ battleRoomsRoutes.post('/battle/rooms/:code/admin', async (c) => {
   const target = typeof body.target === 'string' && PID_RE.test(body.target) ? body.target : null;
   if (!target) return c.json({ error: 'invalid target' }, 400);
 
-  const gate = await requireAdmin(code, pid);
+  const gate = await requireAdmin(code, pid, requestPlayerToken(c));
   if ('error' in gate) return c.json({ error: gate.error }, gate.status);
   if (!gate.room.players[target]) return c.json({ error: 'player not in room' }, 404);
 
   const rows = await query<RoomRow>(
-    `UPDATE battle_rooms SET admin = ?, updated_at = ?
+    `UPDATE battle_rooms SET admin = ?, revision = revision + 1, updated_at = ?
      WHERE code = ? AND jsonb_exists(players, ?)
+       AND player_auth ->> ? = ? AND ${EFFECTIVE_ADMIN_SQL} = ?
      RETURNING ${ROOM_COLS}`,
-    [target, Date.now(), code, target],
+    [target, Date.now(), code, target, gate.pid, gate.tokenHash, gate.pid],
   );
   if (!rows[0]) return c.json({ error: 'player not in room' }, 404);
   return c.json(stateJson(rows[0]));
@@ -678,17 +803,21 @@ battleRoomsRoutes.post('/battle/rooms/:code/kick', async (c) => {
   if (!target) return c.json({ error: 'invalid target' }, 400);
   if (target === pid) return c.json({ error: 'cannot kick yourself' }, 400);
 
-  const gate = await requireAdmin(code, pid);
+  const gate = await requireAdmin(code, pid, requestPlayerToken(c));
   if ('error' in gate) return c.json({ error: gate.error }, gate.status);
+  if (!gate.room.players[target]) return c.json({ error: 'player not in room' }, 404);
 
   // 被踢者的成绩留在 results/history(战绩回放不该出现空洞),只摘玩家与胜场。
   const rows = await query<RoomRow>(
-    `UPDATE battle_rooms SET players = players - ?, scores = scores - ?, updated_at = ?
-     WHERE code = ?
+    `UPDATE battle_rooms SET players = players - ?, scores = scores - ?, player_auth = player_auth - ?,
+         revision = revision + 1, updated_at = ?
+     WHERE code = ? AND jsonb_exists(players, ?)
+       AND player_auth ->> ? = ? AND ${EFFECTIVE_ADMIN_SQL} = ?
      RETURNING ${ROOM_COLS}`,
-    [target, target, Date.now(), code],
+    [target, target, target, Date.now(), code, target, gate.pid, gate.tokenHash, gate.pid],
   );
-  if (!rows[0]) return c.json({ error: 'room not found' }, 404);
+  if (!rows[0]) return c.json({ error: 'not admin' }, 403);
+  void evictBattleVideoParticipant(code, target);
   return c.json(stateJson(rows[0]));
 });
 
@@ -703,16 +832,21 @@ battleRoomsRoutes.post('/battle/rooms/:code/leave', async (c) => {
   const pid = typeof body.pid === 'string' && PID_RE.test(body.pid) ? body.pid : null;
   if (!pid) return c.json({ error: 'invalid pid' }, 400);
 
+  const gate = await requirePlayer(code, pid, requestPlayerToken(c));
+  if ('error' in gate) return c.json({ error: gate.error }, gate.status);
+
   const rows = await query<{ players: Record<string, PlayerEntry> }>(
     `UPDATE battle_rooms
-     SET players = players - ?, scores = scores - ?, updated_at = ?
-     WHERE code = ?
+     SET players = players - ?, scores = scores - ?, player_auth = player_auth - ?, updated_at = ?
+         , revision = revision + 1
+     WHERE code = ? AND jsonb_exists(players, ?) AND player_auth ->> ? = ?
      RETURNING players`,
-    [pid, pid, Date.now(), code],
+    [pid, pid, pid, Date.now(), code, pid, pid, gate.tokenHash],
   );
-  if (!rows[0]) return c.json({ error: 'room not found' }, 404);
+  if (!rows[0]) return c.json({ error: 'invalid player capability' }, 403);
   if (Object.keys(rows[0].players).length === 0) {
-    await query('DELETE FROM battle_rooms WHERE code = ?', [code]);
+    await query(`DELETE FROM battle_rooms WHERE code = ? AND players = '{}'::jsonb`, [code]);
   }
+  void evictBattleVideoParticipant(code, pid);
   return c.json({ ok: true });
 });

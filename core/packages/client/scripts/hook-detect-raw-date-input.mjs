@@ -14,7 +14,10 @@ export function scanRawDateInputs(source) {
 export function violationsFromHookPayload(payload) {
   const input = payload?.tool_input || {};
   const filePath = String(input.file_path || '').replace(/\\/g, '/');
-  if (!/client\/(app|components)\//.test(filePath) || !/\.tsx$/.test(filePath) || /DateInput\.tsx$/.test(filePath)) return [];
+  const guardedApp = /packages\/client\/(app|components)\//.test(filePath)
+    || /apps\/mobile\/src\//.test(filePath);
+  const canonicalInput = /packages\/timer-ui\/src\/DateInput\.tsx$/.test(filePath);
+  if (!guardedApp || !/\.tsx$/.test(filePath) || canonicalInput) return [];
   const content = [input.content, input.new_string]
     .concat(Array.isArray(input.edits) ? input.edits.map((edit) => edit?.new_string) : [])
     .filter((part) => typeof part === 'string')
@@ -43,7 +46,7 @@ if (isMain) {
     let payload;
     try { payload = JSON.parse(raw || '{}'); } catch { process.exit(0); }
     if (violationsFromHookPayload(payload).length) {
-      deny('日期输入禁止重复造轮:单值用 components/DateInput,范围用 components/DateRangeInput;今天和 API 日期走 lib/iso-date。');
+      deny('日期输入禁止重复造轮:Web 用 components/DateInput 或 DateRangeInput,App 用 @cuberoot/timer-ui;本地/API 日期走 @cuberoot/shared/iso-date。');
     }
     process.exit(0);
   });
