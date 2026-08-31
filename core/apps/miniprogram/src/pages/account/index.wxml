@@ -1,15 +1,9 @@
 <view wx:if="{{isTimelineEntry}}" class="page account-entry-page">
   <text class="eyebrow">CUBEROOT</text>
   <text class="page-title">CubeRoot 登录入口</text>
-  <text class="page-intro">
-    使用微信登录 CubeRoot，继续使用计时、成绩、复盘与学习功能。
+  <text class="account-entry-copy" aria-role="status">
+    点击右下角“前往小程序”，登录 CubeRoot。
   </text>
-  <view class="account-entry-guide" aria-role="status">
-    <text class="account-entry-title">微信登录</text>
-    <text class="account-entry-copy">
-      朋友圈单页不提供登录能力。微信会在页面底部提供“前往小程序”入口，进入完整小程序后可使用微信登录。
-    </text>
-  </view>
 </view>
 
 <view wx:elif="{{loginRequired}}" class="page account-login-page">
