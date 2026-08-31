@@ -194,7 +194,8 @@ describe('mini program app structure', () => {
     expect(toolsTemplate).toBe(genericWebTemplate);
     expect(accountTemplate).toContain('bindtap="loginWithWechat"');
     expect(accountTemplate).toContain('wx:if="{{isTimelineEntry}}"');
-    expect(accountTemplate).toContain('前往小程序');
+    expect(accountTemplate).toContain('点击右下角“前往小程序”，登录 CubeRoot。');
+    expect(accountTemplate).not.toContain('朋友圈单页不提供登录能力');
     expect(accountTemplate).toContain('aria-busy="{{loginBusy}}"');
     expect(accountTemplate).toContain('aria-label="重新读取设备登录状态"');
     expect(accountTemplate).toContain('aria-role="status"');
