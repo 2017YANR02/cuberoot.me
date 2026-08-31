@@ -11,6 +11,8 @@ import {
   type DragEvent,
 } from 'react';
 import {
+  Check,
+  Copy,
   Download,
   Eye,
   File,
@@ -22,11 +24,13 @@ import {
   Folder,
   FolderPlus,
   HardDrive,
+  Link2,
   Loader2,
   Pause,
   Pencil,
   Play,
   RotateCcw,
+  Share2,
   Trash2,
   Upload,
   UserMinus,
@@ -44,7 +48,10 @@ import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { ClearButton } from '@/components/ClearButton';
 import HeaderToggles from '@/components/HeaderToggles';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { SearchInput } from '@/components/SearchInput';
+import { useCopy } from '@/hooks/useCopy';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { useLang } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
 import { useAuthStore } from '@/lib/auth-store';
@@ -54,12 +61,14 @@ import {
   cancelDriveUpload,
   createDriveAccess,
   createDriveFolder,
+  createDriveShare,
   createDriveUpload,
   deleteDriveNode,
   downloadDriveFile,
   fetchDrive,
   fetchDriveMembers,
   removeDriveMember,
+  revokeDriveShare,
   restoreDriveNode,
   trashDriveNode,
   updateDriveNode,
@@ -105,6 +114,63 @@ type DriveWindow = Window & {
 interface PreviewState {
   node: DriveNode;
   url: string;
+}
+
+interface DriveShareDialogProps {
+  node: DriveNode;
+  url: string | null;
+  busy: boolean;
+  onVisibilityChange: (shared: boolean) => void;
+  onClose: () => void;
+}
+
+function DriveShareDialog({ node, url, busy, onVisibilityChange, onClose }: DriveShareDialogProps) {
+  const t = useT();
+  const { copied, copy } = useCopy();
+  useModalDismiss(onClose, busy);
+
+  return (
+    <div
+      className="drive-preview-backdrop"
+      onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose(); }}
+    >
+      <div className="drive-preview drive-share-dialog" role="dialog" aria-modal="true" aria-label={t('分享下载链接', 'Share download link')}>
+        <div className="drive-preview-head">
+          <strong>{node.name}</strong>
+          <ClearButton variant="standalone" ariaLabel={t('关闭分享设置', 'Close sharing settings')} onClick={onClose} />
+        </div>
+        <div className="drive-share-body">
+          <div className="drive-share-mode">
+            <span>{t('访问权限', 'Access')}</span>
+            <PillToggle
+              value={node.shared}
+              onChange={onVisibilityChange}
+              onLabel={t('任何获得链接的人', 'Anyone with the link')}
+              offLabel={t('仅自己', 'Restricted')}
+              ariaLabel={t('文件分享权限', 'File sharing access')}
+              disabled={busy}
+            />
+          </div>
+          <p>
+            {node.shared
+              ? t('无需登录即可下载，也支持断点续传。链接不会出现在公开目录或搜索页。', 'No sign-in is required, and resumable downloads are supported. The link is not listed in a public directory or search page.')
+              : t('只有你自己可以访问此文件。', 'Only you can access this file.')}
+          </p>
+          {node.shared && url && (
+            <div className="drive-share-link">
+              <input className="drive-text-control" value={url} readOnly aria-label={t('公开下载链接', 'Public download link')} />
+              <button type="button" className="drive-control" disabled={busy} onClick={() => copy(url)}>
+                {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+                {copied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}
+              </button>
+            </div>
+          )}
+          {node.shared && !url && <div className="drive-loading drive-share-loading"><Loader2 className="drive-spin" />{t('正在生成链接…', 'Preparing link…')}</div>}
+          <small>{t('停止分享后旧链接立即失效；重新公开会生成新链接。移入回收站也会停止分享。', 'Stopping sharing invalidates the old link immediately. Enabling it again creates a new link. Moving the file to Trash also stops sharing.')}</small>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function formatBytes(bytes: number): string {
@@ -155,6 +221,9 @@ function DrivePageContent() {
   const [downloadTasks, setDownloadTasks] = useState<DownloadTask[]>([]);
   const [dragging, setDragging] = useState(false);
   const [preview, setPreview] = useState<PreviewState | null>(null);
+  const [shareNode, setShareNode] = useState<DriveNode | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareBusy, setShareBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const tasksRef = useRef(tasks);
   const downloadTasksRef = useRef(downloadTasks);
@@ -397,9 +466,60 @@ function DrivePageContent() {
     }
   };
 
+  const replaceNode = (node: DriveNode) => {
+    setSnapshot((current) => current ? {
+      ...current,
+      nodes: current.nodes.map((item) => item.id === node.id ? node : item),
+    } : current);
+    setShareNode((current) => current?.id === node.id ? node : current);
+  };
+
+  const openShare = async (node: DriveNode) => {
+    setShareNode(node);
+    setShareUrl(null);
+    if (!node.shared) return;
+    setShareBusy(true);
+    try {
+      const share = await createDriveShare(node.id);
+      setShareUrl(share.url);
+    } catch {
+      setError(t('分享链接加载失败。', 'Could not load the share link.'));
+    } finally {
+      setShareBusy(false);
+    }
+  };
+
+  const changeShareVisibility = async (shared: boolean) => {
+    if (!shareNode || shareBusy || shareNode.shared === shared) return;
+    setShareBusy(true);
+    try {
+      if (shared) {
+        const share = await createDriveShare(shareNode.id);
+        replaceNode({ ...shareNode, shared: true });
+        setShareUrl(share.url);
+      } else {
+        await revokeDriveShare(shareNode.id);
+        replaceNode({ ...shareNode, shared: false });
+        setShareUrl(null);
+      }
+    } catch {
+      setError(t('分享设置保存失败。', 'Could not save the sharing setting.'));
+    } finally {
+      setShareBusy(false);
+    }
+  };
+
   const moveToTrash = async (node: DriveNode) => {
+    if ((node.shared || node.kind === 'folder') && !window.confirm(t(
+      `将“${node.name}”移入回收站？其中的公开下载链接会立即失效。`,
+      `Move “${node.name}” to Trash? Public download links inside it will stop working immediately.`,
+    ))) return;
     try {
       await trashDriveNode(node.id);
+      if (shareNode?.id === node.id) {
+        setShareNode(null);
+        setShareUrl(null);
+      }
       await load();
     } catch {
       setError(t('移入回收站失败；如果其中有上传任务，请先取消上传。', 'Could not move this item to Trash. Cancel any uploads inside it first.'));
@@ -649,7 +769,7 @@ function DrivePageContent() {
       <header className="drive-header">
         <div>
           <div className="drive-title-line"><HardDrive aria-hidden="true" /><h1>{t('网盘', 'Drive')}</h1></div>
-          <p>{t('20GB 共享容量，每人文件彼此私有；照片、视频和文档支持断点续传。', '20 GB shared capacity with private files per member and resumable uploads for photos, videos, and documents.')}</p>
+          <p>{t('20GB 共享容量，文件默认私有；支持断点传输和可撤销的公开下载链接。', '20 GB shared capacity with private-by-default files, resumable transfers, and revocable public download links.')}</p>
         </div>
         {quota && (
           <div className="drive-quota" aria-label={t('存储空间用量', 'Storage usage')}>
@@ -784,6 +904,7 @@ function DrivePageContent() {
             <time dateTime={node.updatedAt}>{new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(node.updatedAt))}</time>
             <div className="drive-file-actions">
               {view === 'files' && node.kind === 'file' && isDrivePreviewableMime(node.mimeType) && <button type="button" className="drive-icon-action" onClick={() => void setPreviewId(node.id)} aria-label={t(`预览 ${node.name}`, `Preview ${node.name}`)}><Eye aria-hidden="true" /></button>}
+              {view === 'files' && node.kind === 'file' && <button type="button" className="drive-icon-action" onClick={() => void openShare(node)} aria-label={node.shared ? t(`管理 ${node.name} 的公开链接`, `Manage the public link for ${node.name}`) : t(`分享 ${node.name}`, `Share ${node.name}`)}>{node.shared ? <Link2 aria-hidden="true" /> : <Share2 aria-hidden="true" />}</button>}
               {view === 'files' && node.kind === 'file' && <button type="button" className="drive-icon-action" onClick={() => void downloadNode(node)} aria-label={t(`下载 ${node.name}`, `Download ${node.name}`)}><Download aria-hidden="true" /></button>}
               {view === 'files' && <button type="button" className="drive-icon-action" onClick={() => void renameNode(node)} aria-label={t(`重命名 ${node.name}`, `Rename ${node.name}`)}><Pencil aria-hidden="true" /></button>}
               {view === 'files' && <button type="button" className="drive-icon-action drive-danger" onClick={() => void moveToTrash(node)} aria-label={t(`移入回收站 ${node.name}`, `Move ${node.name} to Trash`)}><Trash2 aria-hidden="true" /></button>}
@@ -809,6 +930,16 @@ function DrivePageContent() {
             </div>
           </div>
         </div>
+      )}
+
+      {shareNode && (
+        <DriveShareDialog
+          node={shareNode}
+          url={shareUrl}
+          busy={shareBusy}
+          onVisibilityChange={(shared) => void changeShareVisibility(shared)}
+          onClose={() => { if (!shareBusy) { setShareNode(null); setShareUrl(null); } }}
+        />
       )}
     </main>
   );

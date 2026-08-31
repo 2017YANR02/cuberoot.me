@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { downloadDriveFile, uploadDriveChunk } from '@/lib/drive-api';
+import {
+  createDriveShare,
+  downloadDriveFile,
+  revokeDriveShare,
+  uploadDriveChunk,
+} from '@/lib/drive-api';
 
 class FakeEventTarget {
   private readonly listeners = new Map<string, EventListener[]>();
@@ -179,5 +184,37 @@ describe('Drive streaming download', () => {
     expect(onProgress).toHaveBeenLastCalledWith(5);
     expect(sink.close).toHaveBeenCalledOnce();
     expect(sink.abort).not.toHaveBeenCalled();
+  });
+});
+
+describe('Drive sharing', () => {
+  it('turns an opaque share id into a canonical copyable download URL', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ id: 'share-id' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(createDriveShare('file/id')).resolves.toEqual({
+      url: 'https://api.cuberoot.me/v1/drive/shared/share-id',
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.cuberoot.me/v1/drive/files/file%2Fid/share',
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('revokes the same file share without requiring a request body', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(revokeDriveShare('file/id')).resolves.toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.cuberoot.me/v1/drive/files/file%2Fid/share',
+      expect.objectContaining({ method: 'DELETE', body: undefined }),
+    );
   });
 });

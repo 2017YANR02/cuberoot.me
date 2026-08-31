@@ -168,11 +168,14 @@ const TABLES: Table[] = [
   { name: 'drive_members', domain: 'storage', origin: '0184', purpose: { zh: '管理员维护的小规模网盘访问白名单；管理员账号无需重复登记', en: 'Admin-managed access list for the small private Drive; admin accounts need no duplicate row' }, cols: [
     { name: 'user_id (PK/FK), enabled' }, { name: 'created_by_user_id, created_at, updated_at' },
   ] },
-  { name: 'drive_nodes', domain: 'storage', origin: '0184', purpose: { zh: '每个账号私有的文件夹树与文件元数据；回收站仍计入共享 20 GB 配额', en: 'Per-account private folder trees and file metadata; Trash still counts toward the shared 20 GB quota' }, cols: [
+  { name: 'drive_nodes', domain: 'storage', origin: '0184', evolved: [189], purpose: { zh: '每个账号私有的文件夹树与文件元数据；回收站仍计入共享 20 GB 配额', en: 'Per-account private folder trees and file metadata; Trash still counts toward the shared 20 GB quota' }, cols: [
     { name: 'id UUID (PK), owner_user_id, parent_id' }, { name: 'name, kind, mime_type, size_bytes' }, { name: 'storage_key, status, trashed_at, trash_root_id' },
   ] },
   { name: 'drive_uploads', domain: 'storage', origin: '0184', purpose: { zh: '7 天有效的顺序分块上传会话；保存已收偏移并为完整文件预留共享配额', en: 'Seven-day sequential chunk-upload sessions with persisted offsets and full-file shared-quota reservations' }, cols: [
     { name: 'id UUID (PK), node_id (UNIQUE/FK), owner_user_id' }, { name: 'expected_bytes, received_bytes, chunk_bytes' }, { name: 'client_last_modified, expires_at, created_at, updated_at' },
+  ] },
+  { name: 'drive_shares', domain: 'storage', origin: '0189', purpose: { zh: '文件级不可枚举下载链接；删除记录即撤销，文件进入回收站时同步停止分享', en: 'Unlisted file-download capabilities; deleting the row revokes access, including when a file enters Trash' }, cols: [
+    { name: 'id UUID (PK), node_id (UNIQUE/FK)' }, { name: 'created_at' },
   ] },
 
   // ── teaching SaaS ──────────────────────────────────────
@@ -667,6 +670,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 186, slug: 'account_basic_profile', desc: { zh: '账号增加私密生日、性别和国籍；WCA 绑定账号的国籍由认证资料同步。', en: 'Add private birth date, gender, and nationality fields, with WCA-linked nationality synced from the verified profile.' } },
   { n: 187, slug: 'sq1_ep_pkfeng_complete', desc: { zh: '补全 SQ1 EP 的 100 个 case 和来源文档中的 118 条公式，固定 50 个无特与 50 个有特，并保留已有学习进度。', en: 'Complete SQ1 EP with 100 cases and all 118 source-document algorithms, lock the 50/50 parity split, and preserve existing learning progress.' } },
   { n: 188, slug: 'sponsor_claims', desc: { zh: '赞助记录增加账号认领、WCA 精确匹配自动通过、管理员审核与可撤销审计链。', en: 'Add account claims for supporter entries, exact-WCA auto-approval, administrator review, and a revocable audit trail.' } },
+  { n: 189, slug: 'drive_shares', desc: { zh: '网盘文件增加可撤销的公开下载链接；移入回收站时立即停止分享。', en: 'Add revocable public download links for Drive files and revoke them immediately when moved to Trash.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
