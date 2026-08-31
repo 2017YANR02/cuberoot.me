@@ -15,7 +15,7 @@ import { startsWithYRotation } from '@cuberoot/shared/alg-notation';
 import PersonLink from '@/components/PersonLink';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { addSubmission, updateSubmission, deleteSubmission } from '@/lib/alg_api';
-import { validateAlgCase, setupForCase } from '@/lib/alg_validation';
+import { validateAlgCase, validateStoredAlgCase, setupForCase } from '@/lib/alg_validation';
 import { caseViewAlg, displayAlg, type CaseViewAngle } from '@/lib/alg_display';
 import { formatAlgNotation, type AlgNotationStyle } from '@/lib/alg-notation-display';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
@@ -80,7 +80,18 @@ export async function prepareCommunityAlgForSubmission({
     if (!result.ok) {
       return { ok: false, kind: 'invalid', reason: result.reason ?? '' };
     }
-    return { ok: true, alg: result.auf ? `${bare} ${result.auf}` : bare };
+    const completed = result.auf ? `${bare} ${result.auf}` : bare;
+    const stored = await validateStoredAlgCase(
+      setupForCase(puzzle, setup, firstAlg),
+      completed,
+      sticker,
+      puzzle,
+      setSlug,
+    );
+    if (!stored.ok) {
+      return { ok: false, kind: 'invalid', reason: stored.reason ?? '' };
+    }
+    return { ok: true, alg: completed };
   } catch (error) {
     return {
       ok: false,

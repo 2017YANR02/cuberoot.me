@@ -7,7 +7,7 @@
  * **纯客户端**(cubing.js KPuzzle),后端没有批量校验接口。全库一遍 ≈ 1.6 万条,数秒。
  */
 import { ALG_CATALOG, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
-import { validateAlgCase, setupForCase } from '@/lib/alg_validation';
+import { validateStoredAlgCase, setupForCase } from '@/lib/alg_validation';
 
 export interface AlgFailure {
   puzzle: AlgPuzzle;
@@ -55,7 +55,7 @@ export async function scanCases(
       for (let ai = 0; ai < c.algs[oi].length; ai++) {
         if (opts.shouldCancel?.()) return out;
         const entry = c.algs[oi][ai];
-        const r = await validateAlgCase(entry.setup ?? setup, entry.alg, c.sticker, puzzle, set);
+        const r = await validateStoredAlgCase(entry.setup ?? setup, entry.alg, c.sticker, puzzle, set);
         if (!r.ok) {
           out.push({ puzzle, set, caseObj: c, oriIdx: oi, algIdx: ai, alg: entry.alg, reason: r.reason ?? 'unknown' });
         }
@@ -88,7 +88,7 @@ export async function scanTargets(targets: ScanTarget[], opts: ScanOpts = {}): P
         for (let ai = 0; ai < c.algs[oi].length; ai++) {
           if (opts.shouldCancel?.()) return out;
           const entry = c.algs[oi][ai];
-          const r = await validateAlgCase(entry.setup ?? setup, entry.alg, c.sticker, sd.puzzle, sd.set);
+          const r = await validateStoredAlgCase(entry.setup ?? setup, entry.alg, c.sticker, sd.puzzle, sd.set);
           if (!r.ok) {
             out.push({
               puzzle: sd.puzzle, set: sd.set, caseObj: c,

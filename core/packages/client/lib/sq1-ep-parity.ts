@@ -57,6 +57,13 @@ export function sq1EpNumericCaseName(caseName: string): string | null {
   return top && bottom ? `${top}.${bottom}` : null;
 }
 
+/** PDF 数据里的子组名形如 `Top Ua`；数字命名时统一显示成 `3+.*`。 */
+export function sq1EpNumericGroupName(subgroup: string): string | null {
+  const layerName = subgroup.trim().replace(/^top\s+/i, '');
+  const numeric = sq1EpNumericLayerName(layerName);
+  return numeric ? `${numeric}.*` : null;
+}
+
 export function sq1EpTopLayerName(caseName: string): string | null {
   const parts = casePatterns(caseName);
   return parts?.[0].trim() || null;

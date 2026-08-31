@@ -463,19 +463,6 @@ html[data-theme=dark] .alg-root {
 .alg-ep-parity-section.is-parity h2 {
   color: var(--signal-warning);
 }
-.alg-ep-parity-badge {
-  flex: none;
-  padding: 1px 6px;
-  border: 1px solid color-mix(in srgb, var(--signal-warning) 45%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--signal-warning) 12%, transparent);
-  color: color-mix(in srgb, var(--signal-warning) 76%, var(--foreground));
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.5;
-  white-space: nowrap;
-}
-
 /* ── puzzle index (top-level /alg) ── */
 .alg-cat-title {
   display: inline-flex;

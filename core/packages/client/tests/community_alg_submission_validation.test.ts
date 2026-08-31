@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { validateAlgCaseMock, setupForCaseMock } = vi.hoisted(() => ({
+const { validateAlgCaseMock, validateStoredAlgCaseMock, setupForCaseMock } = vi.hoisted(() => ({
   validateAlgCaseMock: vi.fn(),
+  validateStoredAlgCaseMock: vi.fn(),
   setupForCaseMock: vi.fn(() => 'computed setup'),
 }));
 
 vi.mock('@/lib/alg_validation', () => ({
   validateAlgCase: validateAlgCaseMock,
+  validateStoredAlgCase: validateStoredAlgCaseMock,
   setupForCase: setupForCaseMock,
 }));
 
@@ -31,6 +33,8 @@ const input = {
 describe('community alg submission validation', () => {
   beforeEach(() => {
     validateAlgCaseMock.mockReset();
+    validateStoredAlgCaseMock.mockReset();
+    validateStoredAlgCaseMock.mockResolvedValue({ ok: true, auf: '' });
     setupForCaseMock.mockClear();
   });
 
@@ -68,6 +72,24 @@ describe('community alg submission validation', () => {
       '3x3',
       'pll',
     );
+    expect(validateStoredAlgCaseMock).toHaveBeenCalledWith(
+      'computed setup',
+      "R U R' U2",
+      input.sticker,
+      '3x3',
+      'pll',
+    );
+  });
+
+  it('rejects a stage-valid alg when its final stored state is incomplete', async () => {
+    validateAlgCaseMock.mockResolvedValue({ ok: true, auf: '' });
+    validateStoredAlgCaseMock.mockResolvedValue({ ok: false, reason: 'layers not aligned' });
+
+    await expect(prepareCommunityAlgForSubmission(input)).resolves.toEqual({
+      ok: false,
+      kind: 'invalid',
+      reason: 'layers not aligned',
+    });
   });
 
   it.each(['y', 'y2', "y'"])('rejects a %s-led top-layer alg before state validation', async (lead) => {

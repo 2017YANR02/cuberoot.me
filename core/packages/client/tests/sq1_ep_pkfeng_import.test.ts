@@ -4,6 +4,7 @@ import { applySq1Scramble } from '@cuberoot/shared/sq1-notation';
 import { classifySq1EpParity, sq1EpNumericCaseName } from '@/lib/sq1-ep-parity';
 import { sq1StateShapes } from '@/lib/sq1-shapes';
 import { traceSq1Algorithm } from '@/lib/sq1-tools';
+import { validateStoredAlgCase } from '@/lib/alg_validation';
 import { workspaceFixturePath } from './workspace-fixture-path';
 
 type SourceAlg = {
@@ -77,6 +78,16 @@ describe('Pk Feng SQ1 EP complete import', () => {
       }
       for (const entry of item.algs) {
         expect(applySq1Scramble(`${entry.setup} ${entry.alg}`), item.numericName).toEqual(solved);
+      }
+    }
+  });
+
+  it('passes strict stored-formula validation for all 118 imported formulas', async () => {
+    const sticker = { kind: 'raw' as const, tag: 'sqcube', attrs: {} };
+    for (const item of fixture.cases) {
+      for (const entry of item.algs) {
+        const result = await validateStoredAlgCase(entry.setup, entry.alg, sticker, 'sq1', 'ep');
+        expect(result, `${item.numericName}: ${entry.alg}`).toEqual({ ok: true, auf: '' });
       }
     }
   });
