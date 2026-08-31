@@ -290,6 +290,14 @@ Web `BattleView` 是完整产品面，不是“一个外部网址”。Mobile �
 - `pointerId`、timer handle、RAF、语音、震动、BLE channel 属于平台 adapter，不进入持久化共享 DTO；Mobile “每人一颗”还需要最多四路 native BLE channel pool。
 - 首个用户可见版本必须让 Web 与 Mobile 同时消费同一个 `LocalBattleView`；在此之前 Mobile 人数入口继续诚实禁用，不能外跳网站或显示半成品。
 
+共享 reducer 的强制边界（独立 Agent 于 2026-08-31 对照现有 timer 架构复核）：
+
+- `@cuberoot/shared/timer` 新入口应为 `initialLocalBattleState()` + `transitionLocalBattle(state, action, config)`；玩家计时动作统一包装为 `{ type: 'player-timer', playerId, action: TimerMachineAction }`，内部必须复用现有 `transitionTimer()`，不得重新定义 idle/inspection/holding/ready/running/stopped。
+- reducer 只返回不可变 `state / effects / accepted`；同步开始只负责用同一 `nowMs` 向合格玩家分发既有 `start-now`。过期打乱通过 revision/source identity 拒绝，异步请求本身不进 reducer。
+- `@cuberoot/timer-ui` 只承接共用 React 视图和 hold timeout/RAF/清理 controller；localStorage/IndexedDB、BLE、震动、声音、路由、认证、联网和 scramble provider 全部由 Web/Mobile host adapter 注入。
+- 依赖方向固定为 `apps → timer-ui → shared`。shared 禁 React/Next/nuqs/Zustand/DOM/timer/storage/Capacitor/BLE/API；timer-ui 禁依赖任一 app 源码或平台插件。`RoundResult` 是 WCA 单人赛制，不能冒充本地多人 round。
+- 迁移测试必须显式覆盖 2/3/4 人、各自/同步开始、提前松手/系统取消、最后一人完成才结算、并列/+2/全 DNF/改罚时、活动期上下文锁、过期打乱、智能魔方只影响目标玩家、controller 卸载清理和 repository 重启/失败/损坏恢复；架构守卫要求 Web 与 Mobile 都导入同一个 shared transition。
+
 ## 6. 联机模式
 
 Web `NetBattleView` 同样是完整产品面。Mobile 当前仍不渲染联机入口，因此本节 UI/UX 与设备验收全部未完成。2026-08-31 已先完成不得绕过的共享安全底座：Web/API/Mobile 复用 `@cuberoot/shared/timer` 的房间 DTO、13 项白名单、runtime decoder、结算和注入式 transport；create/join 单次签发私有玩家 capability，服务端只存 SHA-256 摘要，所有心跳/写操作/视频凭证都同时验证 pid + capability，Mobile session 复用现有 SecureStorage。该底座不等于大厅、房间或计时 UI 已进入 App。
