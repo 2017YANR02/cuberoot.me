@@ -8,7 +8,7 @@
 
 若某项只能通过高成本原生重写实现，优先补通用 capability port 并如实记录平台限制；只有所有者明确接受的高成本豁免可以保留未完成，且当时不得声称“完整一致”。
 
-“完整一致”必须按 [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md) 的零遗漏笛卡尔积验收。实现者无权自行把网站已有功能判成“代价高所以不做”；必须先列明成本与方案并取得所有者明确批准。当前 App 远未完成，43 项菜单或某个子功能通过都不能代表计时栏完成。
+“完整一致”必须按 [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md) 的零遗漏笛卡尔积验收。实现者无权自行把网站已有功能判成“代价高所以不做”；必须先列明成本与方案并取得所有者明确批准。菜单数量或某个子功能通过都不能代表计时栏完成。
 
 ## 1. 唯一产品结构
 
@@ -53,9 +53,9 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（计划，同一 Taur
 
 ## 3. Web surface 决策与成本上限
 
-### 3.1 当前首选：同 App 内嵌真实网站
+### 3.1 默认架构：同 App 内嵌真实网站
 
-2026-08-30 对生产 `/`、`/zh`、`/account`、`/zh/account` 的响应头检查未发现 `X-Frame-Options` 或 CSP `frame-ancestors` 禁止，因此先采用 App 内 iframe Web surface：
+只要生产 `/`、`/zh`、`/account`、`/zh/account` 未通过 `X-Frame-Options` 或 CSP `frame-ancestors` 禁止嵌入，就采用 App 内 iframe Web surface；每次发布前重新验证响应头：
 
 - 工具和我的各自拥有持久 browsing context，切换底栏不丢失当前子页面。
 - iframe 直接访问 `https://cuberoot.me` 的真实路由，站内卡片与子页面无需 Mobile 路由表。
@@ -70,15 +70,15 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（计划，同一 Taur
 ### 3.2 账号功能与会话一致性
 
 - 页面显示相同按钮只是视觉验收；每个当前已配置的登录、注册、绑定、解绑、退出和注销流程都要 Android/iOS 真实账号端到端通过。
-- Account iframe、系统浏览器和 Keychain/Keystore 是三个不同的会话容器。源码已接上“Account 所有登录入口 → 系统浏览器 PKCE → 原生安全会话 → 90 秒 web ticket → Account iframe”，并同步 iframe logout/删除与 App logout；部署、Android/iOS 全 provider 真实账号和异常恢复仍未验收。预存的 iframe-only 会话不会自动变成原生会话，直接在外部浏览器退出也无法主动通知休眠 App，必须如实保留为 P0 边界。
-- WCA 登录页已确认返回 `X-Frame-Options: SAMEORIGIN`，不能在当前 Capacitor iframe 内完成；源码已改走 Browser，Google 弹窗、微信/QQ/支付宝 App 唤起与回调仍不得未经真机实测就标记完成。
-- 最低重复的实现已落在 `@cuberoot/shared/mobile-embed` 认证消息，并复用现有 `/v1/auth/mobile-session/*` 与 `/v1/auth/web-session/*` 单次票据衔接系统浏览器、原生安全会话和 Account iframe。长期 JWT 不进入 URL 或 `postMessage`；没有复制 `LoginForm`，Mobile 也没有 import client 私有源码。
+- Account iframe、系统浏览器和 Keychain/Keystore 是三个不同的会话容器。验收必须覆盖“Account 登录入口 → 系统浏览器 PKCE → 原生安全会话 → 90 秒 web ticket → Account iframe”、双向退出/删除、预存 iframe-only 会话和休眠 App 外部退出等边界。
+- 第三方登录若通过 `X-Frame-Options`、CSP、弹窗或 App 唤起限制 iframe，必须打开同一个 canonical 网站流程的 Browser 回退；每个 provider 仍需 Android/iOS 真实账号端到端验收。
+- 认证消息必须走 `@cuberoot/shared/mobile-embed`，并复用 `/v1/auth/mobile-session/*` 与 `/v1/auth/web-session/*` 单次票据。长期 JWT 不得进入 URL 或 `postMessage`；不得复制 `LoginForm` 或 import client 私有源码。
 
-### 3.3 iOS Apple 4.8 发布阻塞
+### 3.3 iOS Apple 4.8 发布门槛
 
-纯 `/account` 会在 iOS App 内展示网站现有 Google、微信等第三方主账号登录。[Apple App Review Guidelines 4.8](https://developer.apple.com/app-store/review/guidelines/#login-services) 对这类登录要求同时提供满足其隐私条件的等价登录；现有邮箱/手机方式尚无证据满足“可隐藏邮箱”等全部条件，WCA 也不得未经审核就假定为公民电子身份例外。
+若纯 `/account` 在 iOS App 内展示 Google、微信等第三方主账号登录，[Apple App Review Guidelines 4.8](https://developer.apple.com/app-store/review/guidelines/#login-services) 要求同时提供满足其隐私条件的等价登录；邮箱/手机方式必须逐项证明满足要求，WCA 也不得未经审核就假定为公民电子身份例外。
 
-因此，iOS App Store 发布必须保持 `BLOCKED`，直到网站唯一 `LoginForm` 和后端提供满足 4.8 的等价方式（实施优先考虑 Sign in with Apple），并完成真实 iOS 登录与审核取证。该能力应加入网站的 canonical 账号系统，让 Web/Android/iOS 自动同源；不另写 iOS 表单，也不通过隐藏网站已有 provider 来冒充“完整一致”。
+因此，iOS App Store 发布前，网站唯一 `LoginForm` 和后端必须提供满足 4.8 的等价方式（实施优先考虑 Sign in with Apple），并完成真实 iOS 登录与审核取证。该能力应加入网站的 canonical 账号系统，让 Web/Android/iOS 自动同源；不另写 iOS 表单，也不通过隐藏网站已有 provider 来冒充“完整一致”。
 
 ### 3.4 必须实测的嵌入风险
 
@@ -93,7 +93,7 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（计划，同一 Taur
 
 ### 3.5 低维护回退
 
-若某个页面或动作在 iframe 中被浏览器安全模型阻止，使用仓库已有 Capacitor Browser 打开同一个线上 URL。该回退仍复用网站，但底栏会暂时不可见，所以只能标记为“Web 回退”，不能冒充同 App 内完全一致。登录回退的源码闭环已经接线，但在生产部署与每个真实 provider 双平台验收前仍不得声称 OAuth 回退已完成。
+若某个页面或动作在 iframe 中被浏览器安全模型阻止，使用 Capacitor Browser 打开同一个线上 URL。该回退仍复用网站，但底栏会暂时不可见，所以只能标记为“Web 回退”，不能冒充同 App 内完全一致；生产部署与每个真实 provider 的双平台验收仍是完成条件。
 
 自建 Android WebView + iOS WKWebView 双原生容器、完整 Cookie bridge、下载/权限/导航代理属于高成本方案。除非 iframe/Browser 两条低维护路径都无法满足关键工作流且所有者再次授权，不启动该方案。
 
@@ -108,48 +108,27 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（计划，同一 Taur
 - 任一 AI 修改共享 App/宿主文件前先检查同文件是否有未提交改动；发现并行重叠时保留对方工作，不覆盖。
 - 新增平台差异必须登记到本文；未登记的五端 UI 或业务分叉视为回归。
 
-## 5. 执行矩阵
+## 5. 稳定验收 ID
 
-| ID | 任务 | 优先级 | 状态 | 验收证据 |
-| --- | --- | --- | --- | --- |
-| NAV-01 | 底部“计时 / 工具 / 我的”三等分导航，共用 React 实现 | P0 | `待 iOS` | OPPO 三栏逐项点击通过；同一 React 源码待 iOS 本轮同步截图 |
-| NAV-02 | 切换栏保留计时状态与两个 Web browsing context | P0 | `进行中` | 两个 iframe 持久挂载；共享返回协议已接线，待部署后双平台系统返回回归 |
-| WEB-01 | 工具栏加载当前语言网站首页 | P0 | `待 iOS` | OPPO 内加载生产 `/zh`，底栏保持可见；待 iOS |
-| WEB-02 | 首页所有站内卡片可进入真实子页面 | P0 | `进行中` | OPPO 实点“模拟”进入 `/zh/sim?puzzle=3&img_dist=6`；50 个公开目标 GET 200 只证明路由存活，不等于所有卡片和页内功能已通过，待 Android/iOS 真实点击矩阵 |
-| WEB-03 | 站内返回、外链、下载、分享、文件和全屏策略 | P1 | `进行中` | shared 导航协议 + Native back 已实现；下载/分享/文件/全屏与部署后真机仍待验 |
-| WEB-04 | 特殊页面能力与 Browser 回退 | P1 | `未开始` | 受限页面清单与明确提示 |
-| ACC-01 | 我的栏加载未改写的当前语言 `/account` | P0 | `待 iOS` | OPPO 重装实证 iframe 为 `/zh/account`；邮箱/手机/WCA/Google/微信/支付宝与当前生产 provider 配置一致；待 iOS 同状态确认 |
-| ACC-02 | 网站当前邮箱、手机、WCA、Google、微信、QQ、支付宝登录/绑定能力全部可用 | P0 | `进行中` | canonical LoginForm 的所有登录交互已委托 Browser；provider 保留与 social return fallback 有定向测试，待生产部署和 Android/iOS 每个真实账号端到端；绑定/解绑仍需单列验收 |
-| ACC-03 | Account iframe、系统浏览器与 Mobile 安全会话的登录/退出/注销状态一致 | P0 | `进行中` | 源码已完成 Browser PKCE→secure session→web ticket→iframe、iframe logout/delete→native clear、App logout→iframe clear；不传长期 JWT。待生产/双平台 E2E；iframe-only 旧会话与外部 Browser 独立 logout 仍是已知边界 |
-| IOS-01 | iOS AI 复用同一三栏和 Web surface，不出现业务 UI 分叉 | P0 | `进行中` | 业务代码只有 `core/apps/mobile/src` 一份；本文已进入 README/路线图，待 iOS 同步验证 |
-| XPLAT-01 | 第二宿主落地时提取 `@cuberoot/app-ui`，五端消费同一三栏 React 产品层 | P0 | `未开始` | 至少两个真实宿主消费者、无 app→app import、共享契约测试 |
-| DESKTOP-01 | 一个 `core/apps/desktop` 同时产出 Windows 和 macOS 客户端 | P0 | `未开始` | 两端 build/install、窗口与系统 adapter、实体电脑矩阵；PWA 不算完成 |
-| HARMONY-01 | `core/apps/harmony` 以 ArkWeb 本地 bundle 消费共享 React App | P0 | `未开始` | DevEco build、模拟器/真机、BLE/存储/深链 adapter；Android 兼容包不算完成 |
-| IOS-LOGIN-01 | iOS 提供满足 Apple 4.8 的等价登录，同时保持 canonical `/account` provider parity | P0 | `BLOCKED` | 网站唯一 `LoginForm`/后端尚无已验证的等价方式；优先同源实现 Sign in with Apple 并取得 iOS 端到端/审核证据 |
-| QA-01 | 断网、弱网、网站 5xx、frame 被拒时不影响本地计时 | P0 | `未开始` | 故障注入与恢复 |
-| QA-02 | TalkBack/VoiceOver、动态字号、横竖屏、安全区、软键盘、无遮挡与无溢出 | P0 | `进行中` | 双平台逐状态截图 + overflow/可见性断言；系统栏、手势区、底栏、键盘和弹层均不遮挡 |
+本文只定义不会随进度变化的验收含义；状态、勾选和证据只在 [mobile-app-roadmap.md](./mobile-app-roadmap.md) 第 0 节维护。
 
-P0/P1 表示实施顺序，不表示 P1 可以在声称“三栏完全一致”时省略。只有明确记录的高成本平台豁免可以保留未完成。
+| ID | 验收合同 |
+| --- | --- |
+| NAV-01 | 五端消费同一份“计时 / 工具 / 我的”React 导航；紧凑窗口为三等分底栏 |
+| NAV-02 | 切换栏保留计时状态及工具/我的两个 browsing context |
+| WEB-01 | 工具栏加载当前语言的网站 canonical 首页 |
+| WEB-02 | 首页全部真实卡片可进入正确子页面，页内核心功能可用 |
+| WEB-03 | 站内返回、外链、下载、分享、文件和全屏按统一策略工作 |
+| WEB-04 | iframe 受限能力使用同一 URL 的 Browser 或原生 adapter 回退，并明确告知状态 |
+| ACC-01 | 我的栏加载未改写的当前语言 `/account` |
+| ACC-02 | 网站当前全部登录、注册、绑定和解绑 provider 在 App 可用 |
+| ACC-03 | Account iframe、系统浏览器和安全会话的登录、退出、注销状态一致 |
+| IOS-01 | iOS 复用同一三栏和 Web surface，不出现 SwiftUI 或第二套 React 业务树 |
+| IOS-LOGIN-01 | iOS 满足 Apple 4.8 等价登录，同时保持 canonical provider parity |
+| QA-01 | 断网、弱网、网站 5xx 和 frame 被拒不影响本地计时，并可恢复 |
+| QA-02 | 全平台无系统栏、挖孔、键盘、底栏、toast、菜单或对话框遮挡、溢出和不可点击 |
+| XPLAT-01 | 第二个真实宿主落地时提取 `@cuberoot/app-ui`，无 app→app import |
+| DESKTOP-01 | 一个 `core/apps/desktop` 工程产出 Windows 和 macOS build/install 证据 |
+| HARMONY-01 | `core/apps/harmony` 通过 ArkWeb 本地 bundle 消费共享 React App |
 
-## 6. 当前证据日志
-
-| 日期 | 证据 | 结论 |
-| --- | --- | --- |
-| 2026-08-30 | 生产四个目标 URL 均 HTTP 200，未返回 X-Frame-Options/CSP frame-ancestors | 可以先做低成本 iframe 真机 spike |
-| 2026-08-30 | Mobile 已有 Capacitor Browser plugin、PKCE mobile ticket 和 web-session ticket 端点 | provider Browser handoff、secure session→Account iframe web ticket、双向 logout clear 已在源码接线；不新建账号系统，待部署/真实 provider 验收 |
-| 2026-08-30 | 独立 agent 只读审计 | 计时器完整 parity 尚未成立；共享边界正确但覆盖面不足 |
-| 2026-08-30 | OPPO 真机加载生产 `/zh`，从首页真实“模拟”卡片进入 `/zh/sim?puzzle=3&img_dist=6` | 工具栏直接复用网站，首个真实子路由 smoke 通过，未复制首页或模拟器 |
-| 2026-08-30 | OPPO 曾加载 `/zh/account?auth=mobile`，DOM 只剩邮箱/手机相关按钮 | 已定位 parity 回归：`auth=mobile` 会隐藏网站第三方 provider，Account tab 必须改用纯 `/account` |
-| 2026-08-30 | Chrome 103 WebView 不支持 `100dvh`，`.app-shell` 高度少 90px；改用 `window.innerHeight` 后重装 | 老 OPPO WebView 的底栏已贴合可见视口，未为 Android 复制布局 |
-| 2026-08-30 | `@cuberoot/shared/mobile-embed`、网站 `MobileEmbedBridge` 与 Capacitor back listener | 返回协议单源；两个 Web context 可持久保留且不会把返回动作发给隐藏栏 |
-| 2026-08-30 | Account auth 单元：client 定向 18 tests、Mobile 全测 38 tests；shared build 与 Mobile typecheck 通过 | provider/null 请求、PKCE 参数、一次性 web ticket、social return fallback、登录区全入口委托及 logout clear 消息契约通过；这些不是全 provider 真机端到端证据，client 全 typecheck 仍被既有 `.next/types` 的已删除 `/pb` 残留阻断 |
-| 2026-08-30 | 从 `listSiteDirectoryEntries()` 读取唯一首页目录，对 50 个非锁定内部卡片的生产中文 URL 并发 GET | 50/50 返回成功，证明目标路由存活且 Mobile 没有第二份卡片路由表；不证明卡片点击后的全部 UI/功能已验收 |
-| 2026-08-30 | OPPO 当前构建：`/zh/sim` 深度消息 → 物理 Back → `/zh` | 原生 back listener 正确把返回动作发给当前工具 iframe；网站 bridge 正式生效仍随 Web 部署 |
-| 2026-08-30 | `core/apps/mobile/src/App.tsx` 的 Account URL 已恢复纯 `/account` | 源码方向与网站一致；尚需重装 OPPO、iOS 和全 provider 端到端验证 |
-| 2026-08-30 | WCA 登录页响应头包含 `X-Frame-Options: SAMEORIGIN` | 当前 Account iframe 不能完成 WCA OAuth；要复用 Browser + 单次 ticket 交接，按钮可见不等于功能完成 |
-| 2026-08-30 | Apple 当前 App Review Guidelines 4.8 要求第三方主账号登录同时提供满足隐私条件的等价方式 | iOS App Store 登录合规保持 P0 `BLOCKED`，不以隐藏 provider 代替完整 parity |
-| 2026-08-30 | 用户明确要求 UI/UX 逐状态检查遮挡、可读性和溢出 | QA-02 升为 P0 硬门槛；单张相似截图和“能点击”均不足以验收三栏一致性 |
-| 2026-08-30 | OPPO 项目菜单首轮视觉审计发现透明浮层与计时内容重叠；修复宿主 token/旧 WebView 窄屏布局后重装复验 | UI/UX 门槛已实际拦下一次“功能能用但看不清”的回归；同类菜单、键盘、横屏和三栏 Web surface 仍须逐状态验收 |
-| 2026-08-30 | OPPO Account iframe CDP：URL 为原始 `/zh/account`；视口/文档宽均 360，无横向溢出；当前 7 个登录操作均完整落在可见宽度内，最下按钮底部 555 < iframe 底部 689 | ACC-01 的 Android 页面/provider/无遮挡验收通过；ACC-02/03 已有源码和单元证据，但 OAuth、邮箱/手机真实账号与会话同步仍必须部署后另验，不能随 ACC-01 一起宣称完成 |
-| 2026-08-30 | 独立 no-dup agent 扫描包边界、43 项能力与 Web/Mobile adapter | app→app/deep import guard 通过，并消除非法 event→333 与 NXN 映射重复；Web 私有 scramble fallback、通用/计时 PuzzlePicker primitive、real-source 映射及除 2×2 外的生成 runtime 仍是明确待治理项 |
-| 2026-08-31 | 所有者把正式客户端目标扩展为 Android/iOS/HarmonyOS NEXT/Windows/macOS，并要求一次到位 | 五端共享层、三个宿主和总体完成口径已写入合同；新三端仍为未实现，不得把设计完成误报为平台适配完成 |
+P0/P1 实施顺序与所有阶段证据统一由路线图维护；稳定合同不得用平台暂时缺失来改写。

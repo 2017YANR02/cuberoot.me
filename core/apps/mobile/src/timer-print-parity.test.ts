@@ -71,8 +71,8 @@ describe('shared timer print document', () => {
     expect(english).toContain('U2 R2 F2 D2');
     expect(chinese).toContain('F2 L2 D2 B2');
     expect(chinese).toContain('U2 R2 F2 D2');
-    const englishRows = english.match(/<tbody>[\s\S]*<\/tbody>/)?.[0] ?? '';
-    expect(englishRows.match(/<tr/g)).toHaveLength(3);
+    const englishRows = english.match(/timer-print-table-body[\s\S]*<\/div><\/div>/)?.[0] ?? '';
+    expect(englishRows.match(/class="timer-print-row"/g)).toHaveLength(3);
     expect(englishRows.indexOf('U2 R2 F2 D2')).toBeLessThan(englishRows.indexOf('F2 L2 D2 B2'));
     expect(englishRows.indexOf('F2 L2 D2 B2')).toBeLessThan(englishRows.indexOf("R U R&#x27; U&#x27;"));
   });
@@ -117,12 +117,30 @@ describe('shared timer print document', () => {
       solves: [],
     }));
 
-    expect(fmc).toContain('class="timer-print-result">28</td>');
+    expect(fmc).toContain('class="timer-print-result">28</span>');
     expect(mbld).toContain('11/13 58:02 (+2)');
-    expect(dns).toContain('class="timer-print-result">DNS</td>');
-    expect(dns).toContain('class="timer-print-scramble">-</td>');
+    expect(dns).toContain('class="timer-print-result">DNS</span>');
+    expect(dns).toContain('class="timer-print-scramble">-</span>');
     expect(empty).toContain('No solves in this event.');
-    expect(empty).not.toContain('<table>');
+    expect(empty).not.toContain('timer-print-table');
+  });
+
+  it('chunks long reports into independently laid out A4 row groups', () => {
+    const longReport = renderToStaticMarkup(createElement(TimerPrintDocument, {
+      currentResult: '12.34',
+      currentScramble: "R U R' U'",
+      event: '333',
+      generatedAt: Date.UTC(2026, 7, 30, 19, 0, 0),
+      language: 'en',
+      solves: Array.from({ length: 7 }, (_, index) => ({
+        ...solves[0],
+        id: `paged-${index}`,
+        ts: solves[0].ts + index,
+      })),
+    }));
+
+    expect(longReport.match(/timer-print-page-group--paged/g)).toHaveLength(2);
+    expect(longReport.match(/role="columnheader"/g)).toHaveLength(10);
   });
 
   it('keeps Mobile native code limited to print transport', () => {

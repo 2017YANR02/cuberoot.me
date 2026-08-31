@@ -60,6 +60,10 @@ export function TimerPrintDocument({
     index: index + 1,
     solve,
   })).reverse();
+  const rowGroups = Array.from(
+    { length: Math.ceil(rows.length / 6) },
+    (_, groupIndex) => rows.slice(groupIndex * 6, groupIndex * 6 + 6),
+  );
   const summaryRows = [
     [copy.solves, String(stats.count)],
     [copy.solved, `${stats.solved}/${stats.count}`],
@@ -128,35 +132,36 @@ export function TimerPrintDocument({
         {rows.length === 0 ? (
           <p className="timer-print-empty">{copy.empty}</p>
         ) : (
-          <table>
-            <colgroup>
-              <col className="timer-print-col-number" />
-              <col className="timer-print-col-result" />
-              <col className="timer-print-col-date" />
-              <col className="timer-print-col-scramble" />
-              <col className="timer-print-col-comment" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th scope="col">{copy.number}</th>
-                <th scope="col">{copy.result}</th>
-                <th scope="col">{copy.date}</th>
-                <th scope="col">{copy.scramble}</th>
-                <th scope="col">{copy.comment}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(({ index, solve }) => (
-                <tr key={solve.id}>
-                  <td>{index}</td>
-                  <td className="timer-print-result">{formatPrintResult(solve)}</td>
-                  <td>{formatPrintDate(solve.ts, language)}</td>
-                  <td className="timer-print-scramble">{solve.scramble || '-'}</td>
-                  <td className="timer-print-comment">{solve.comment || '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="timer-print-table" role="table" aria-label={copy.results}>
+            {rowGroups.map((group) => (
+              <div
+                className={`timer-print-page-group${rows.length > 6 ? ' timer-print-page-group--paged' : ''}`}
+                role="none"
+                key={group[0]?.solve.id}
+              >
+                <div className="timer-print-table-head" role="rowgroup">
+                  <div className="timer-print-row" role="row">
+                    <span role="columnheader">{copy.number}</span>
+                    <span role="columnheader">{copy.result}</span>
+                    <span role="columnheader">{copy.date}</span>
+                    <span role="columnheader">{copy.scramble}</span>
+                    <span role="columnheader">{copy.comment}</span>
+                  </div>
+                </div>
+                <div className="timer-print-table-body" role="rowgroup">
+                  {group.map(({ index, solve }) => (
+                    <div className="timer-print-row" role="row" key={solve.id}>
+                      <span role="cell">{index}</span>
+                      <span role="cell" className="timer-print-result">{formatPrintResult(solve)}</span>
+                      <span role="cell">{formatPrintDate(solve.ts, language)}</span>
+                      <span role="cell" className="timer-print-scramble">{solve.scramble || '-'}</span>
+                      <span role="cell" className="timer-print-comment">{solve.comment || '-'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </section>
     </article>

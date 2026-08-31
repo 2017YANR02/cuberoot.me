@@ -23,14 +23,18 @@ describe('Mobile timer settings parity ledger', () => {
   });
 
   it('locks the canonical category gap counts so a new Web field fails here', () => {
-    expect(TIMER_SETTING_FIELD_IDS).toHaveLength(63);
+    expect(TIMER_SETTING_FIELD_IDS).toHaveLength(64);
     expect(TIMER_SETTING_CATEGORY_IDS.map((category) => (
       TIMER_SETTING_FIELD_CONTRACTS.filter((field) => field.category === category).length
-    ))).toEqual([8, 4, 5, 9, 11, 6, 15, 5]);
+    ))).toEqual([8, 5, 5, 9, 11, 6, 15, 5]);
 
     const parity = new Set<string>(MOBILE_TIMER_SETTING_PARITY_FIELD_IDS);
     expect(TIMER_SETTING_CATEGORY_IDS.map((category) => (
-      TIMER_SETTING_FIELD_CONTRACTS.filter((field) => field.category === category && !parity.has(field.id)).length
+      TIMER_SETTING_FIELD_CONTRACTS.filter((field) => (
+        field.category === category
+        && field.visibility !== 'development-only'
+        && !parity.has(field.id)
+      )).length
     ))).toEqual([8, 4, 5, 9, 11, 6, 15, 5]);
   });
 

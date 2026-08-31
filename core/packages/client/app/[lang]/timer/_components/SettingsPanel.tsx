@@ -635,6 +635,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
   const settingStates = timerSettingFieldStates({
     event,
     source: s.scrambleSource,
+    development: process.env.NODE_ENV !== 'production',
     signedIn: !!user,
     optimalAvailable,
     roundEnabled: s.round.on,
@@ -753,14 +754,12 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           activeCategory={activeCategory}
           title={tr({ zh: '连接后的行为', en: 'Connected cube behavior' })}
         >
-          {process.env.NODE_ENV !== 'production' && (
-            <Row label={tr({ zh: '假魔方', en: 'Fake cube' })}>
-              <SharedBoolToggle
-                label={tr({ zh: '假魔方', en: 'Fake cube' })}
-                value={s.showDevFakeCube}
-                onChange={(v) => updateSettings({ showDevFakeCube: v })}
-              />
-            </Row>
+          {settingState('settings.smart-cube.fake-cube').visible && (
+            <BooleanSettingRow
+              id="settings.smart-cube.fake-cube"
+              value={s.showDevFakeCube}
+              onChange={(v) => updateSettings({ showDevFakeCube: v })}
+            />
           )}
           <SettingRow id="settings.smart-cube.auto-ready">
             <select
