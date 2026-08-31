@@ -79,7 +79,7 @@ jobs:
           cache-dependency-path: core/pnpm-lock.yaml
 
       # 与 test.yml 同一套。`--frozen-lockfile`:新 pnpm 想改 lockfile 就直接失败。
-      # (shared/visualcube 的 dist 是 typecheck 的前置 —— 原因见 test.yml 的注释。)
+      # client workspace 依赖的 dist 是 typecheck 的前置 —— 原因见 test.yml 的注释。
       - name: 拿候选 pnpm 真跑一遍
         id: verify
         if: steps.check.outputs.changed == 'true' && steps.setup.outcome == 'success'
@@ -87,8 +87,7 @@ jobs:
         working-directory: core
         run: |
           pnpm install --frozen-lockfile
-          pnpm --filter @cuberoot/shared build
-          pnpm --filter @cuberoot/visualcube build
+          pnpm --filter @cuberoot/client build:deps
           pnpm --filter @cuberoot/client typecheck
           pnpm --filter @cuberoot/server typecheck
           pnpm --filter @cuberoot/client test
@@ -102,10 +101,10 @@ jobs:
           CURRENT: ${{ steps.check.outputs.current }}
         run: |
           WHERE=$([ "${{ steps.setup.outcome }}" != 'success' ] && echo '装不上(action-setup)' || echo '装上了但构建/测试没过')
-          echo "## pnpm $LATEST 没通过验证 —— 跳过本周" >> "$GITHUB_SUMMARY"
-          echo "" >> "$GITHUB_SUMMARY"
-          echo "卡在:**$WHERE**。仓库仍留在 pnpm \`$CURRENT\`,主干不受影响。" >> "$GITHUB_SUMMARY"
-          echo "上游修好后,下周会自动再试一次。" >> "$GITHUB_SUMMARY"
+          echo "## pnpm $LATEST 没通过验证 —— 跳过本周" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "卡在:**$WHERE**。仓库仍留在 pnpm \`$CURRENT\`,主干不受影响。" >> "$GITHUB_STEP_SUMMARY"
+          echo "上游修好后,下周会自动再试一次。" >> "$GITHUB_STEP_SUMMARY"
           curl -sS -m 10 -X POST "https://api.day.app/$BARK_KEY" \
             --data-urlencode "title=pnpm $LATEST 没过验证" \
             --data-urlencode "body=$WHERE;仓库留在 $CURRENT,主干没事。下周自动重试。" \
