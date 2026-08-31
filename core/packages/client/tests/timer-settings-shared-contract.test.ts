@@ -28,6 +28,7 @@ const EXPECTED_FIELDS_BY_CATEGORY = {
     'settings.timer.result-precision',
   ],
   'smart-cube': [
+    'settings.smart-cube.fake-cube',
     'settings.smart-cube.auto-ready',
     'settings.smart-cube.live-view',
     'settings.smart-cube.record-orientation',
@@ -101,6 +102,7 @@ const EXPECTED_FIELDS_BY_CATEGORY = {
 const BASE_CONTEXT: TimerSettingFieldContext = {
   event: '333',
   source: 'wca',
+  development: true,
   signedIn: false,
   optimalAvailable: true,
   roundEnabled: false,
@@ -120,13 +122,13 @@ const BASE_CONTEXT: TimerSettingFieldContext = {
 };
 
 describe('canonical timer settings surface manifest', () => {
-  it('locks all eight categories, all 63 reachable fields/commands, and their order', () => {
+  it('locks all eight categories, all 64 reachable fields/commands, and their order', () => {
     expect(TIMER_SETTING_CATEGORY_IDS).toEqual([
       'timer', 'smart-cube', 'scramble', 'training', 'appearance', 'sound', 'data', 'advanced',
     ]);
     expect(TIMER_SETTING_CATEGORY_CONTRACTS.map((category) => category.id))
       .toEqual(TIMER_SETTING_CATEGORY_IDS);
-    expect(new Set(TIMER_SETTING_FIELD_IDS).size).toBe(63);
+    expect(new Set(TIMER_SETTING_FIELD_IDS).size).toBe(64);
     expect(TIMER_SETTING_FIELD_IDS).toEqual(Object.values(EXPECTED_FIELDS_BY_CATEGORY).flat());
     for (const category of TIMER_SETTING_CATEGORY_IDS) {
       expect(TIMER_SETTING_FIELD_CONTRACTS
@@ -194,6 +196,8 @@ describe('canonical timer settings surface manifest', () => {
   });
 
   it('exhaustively resolves event/source visibility and contextual disabled states', () => {
+    expect(timerSettingFieldStates({ ...BASE_CONTEXT, development: false })
+      .find((field) => field.id === 'settings.smart-cube.fake-cube')?.visible).toBe(false);
     const stageEvents = new Set(['222', '333', '444', '555', '666', '777', '333oh', '333fm']);
     const bldEvents = new Set(['333bld', '333mbld', '333ni', '444bld', '555bld', '666bld', '777bld']);
     const colorNeutralEvents = new Set(['333', '333oh', '333fm', '333bld', '333ni', '333mbld']);

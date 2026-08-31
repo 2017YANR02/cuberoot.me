@@ -35,7 +35,7 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 - 第二个非 Capacitor 宿主落地时，在同一变更中把五端共用的 React App 组合提取为有两个真实消费者的 `@cuberoot/app-ui`。此前不建空包；此后禁止 app→app 源码、CSS 或 `dist` 依赖。
 - 稳定、无运行时依赖且已有多端消费者的数据模型、校验、算法、状态机放 `core/packages/shared`；不要从网站或 Android 复制到 iOS。
 - 网站专属 Next 路由、SEO、服务端组件留在 client；移动导航、离线仓储和原生桥留在 mobile。
-- 五端只分别实现权限、BLE transport、安全存储、通知、深链、分享、文件、打印、窗口和生命周期等 platform adapters；协议解析、账号契约、数据规则、对战状态和 React 功能必须共享。
+- 五端只分别实现权限、BLE transport、安全存储、通知、深链、分享、文件、打印、窗口和生命周期等 platform adapters；协议解析、账号契约、数据规则、对战状态和 React 功能必须共享。新 capability contract 只在第二个真实消费者落地时逐项提取，不为计划中宿主预建空接口。
 - `dist/` 和 Capacitor 同步进去的 Web 产物是生成物，不是源码；改 React/shared 后重新 build + sync。
 - 不把远程网站设为 App 的启动运行代码，也不把整站 WebView 当正式产品。
 
@@ -100,7 +100,7 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 - App 登录复用网站唯一账号和 `LoginForm`：系统浏览器 → 90 秒单次 mobile ticket → PKCE S256 + state → App deep link。长期 JWT 与 verifier 不得进入 URL；请求、回调、session 契约统一走 `@cuberoot/shared/auth/web-session`。
 - 底栏 Account 始终加载原始 `/account`，不加 `auth=mobile`。iframe 内整个 canonical `LoginForm`（邮箱/手机/密码及 SSO）通过 `@cuberoot/shared/mobile-embed` 委托系统 Browser；native secure session 再申请 90 秒 `web-session` ticket 回灌 iframe。iframe logout/删除与 App logout 要互相清会话；生产/双平台 provider E2E 未验收前不得只凭按钮或单测宣称闭环，外部 Browser 独立 logout 也不能假装会主动通知休眠 App。
 - Android/iOS 共用 `apps/mobile/src/auth/mobile-auth.ts`，会话通过 `@aparajita/capacitor-secure-storage` 进入 iOS Keychain / Android Keystore 保护的存储；不要添加原生凭据表单、第二套账号表或平台各自的 token 管理。
-- 移动交接登录当前只显示网站现有邮箱/手机号。启用 WCA、Google、微信、QQ、支付宝等第三方登录前，必须重新核对当时的 Apple 4.8，并先完成需要的 Sign in with Apple 等价路径。
+- 移动交接中，provider-null 路径只显示网站现有邮箱/手机号，provider-tagged 路径显示 canonical SSO 列表并继续同一 PKCE 流。启用 WCA、Google、微信、QQ、支付宝等第三方主账号登录前，必须重新核对当时的 Apple 4.8，并先完成需要的 Sign in with Apple 等价路径。
 - 登录与同步是两个里程碑。当前计时、备注、设置仍只在本机；没有完成匿名数据合并、冲突、删除和多设备验证前，不得把登录文案或路线图写成“已同步”。账号资料、身份绑定和账号注销继续打开网站统一管理页。
 - 修改回跳时同时核对 shared callback allowlist、Android Manifest、iOS URL Types、release/debug application ID 和冷启动 `appUrlOpen` 竞态；不得只修一个平台。
 - Android 复用 `core/apps/mobile/package.json` 的现有 scripts；先从 `core/` 运行 build/sync/run，不手写第二套构建流程。

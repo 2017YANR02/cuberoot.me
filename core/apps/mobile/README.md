@@ -2,7 +2,7 @@
 
 React + Vite + Capacitor 8 host. Android and iOS use the same React UI and shared business logic. CubeRoot's committed product target also includes HarmonyOS NEXT, Windows and macOS under the [five-platform single-source contract](../../../docs/cross-platform-app-contract.md); those platforms add thin hosts and must not fork this app's business UI.
 
-Status: active native app. `package.json`, `capacitor.config.ts`, `android/` and this README are its local sources of truth; the website is not its source tree.
+Status: active native app. `src/`, `package.json`, `capacitor.config.ts`, `android/`, `ios/` and this README are its local implementation sources of truth; progress is recorded only in `docs/mobile-app-roadmap.md`, and the website is not this app's source tree.
 
 The bundled Timer surface is local-first: timing, statistics, settings and history work from the packaged `dist/` without a network connection. Real competition scrambles use a bounded per-event online/cache hybrid (50 entries, seven-day TTL). For one of the 19 Timer events mapped to a real WCA pool, a cold offline miss is an explicit loading/error state and never silently substitutes a random scramble. For an event with no WCA mapping, the canonical Web behavior keeps “Real” selected but uses that same event's local provider; it must never fall back to 3×3. Tools and Account are explicit online surfaces that display the real website inside the shared three-tab shell; the remote website is not the app's automatic start screen and is never copied into Mobile source.
 
@@ -21,7 +21,7 @@ Android and iOS smart-cube access use a thin `@capacitor-community/bluetooth-le`
 - Fetch changing content through versioned APIs or static data instead of copying it into the app.
 - Do not copy or independently reimplement the website inside this package; Tools and Account display its canonical online routes.
 - Keep Web Bluetooth and Capacitor BLE as thin platform transports over the same shared protocol, state and clock modules.
-- Render controls only when the Mobile host has a real adapter/effect. Until shared in-App multiplayer and microphone adapters exist, Mobile must show read-only one-player state and omit Stackmat rather than opening `/timer` or displaying a coming-soon action.
+- Every capability reachable on website `/timer` remains a parity obligation. A missing Mobile adapter/effect keeps the corresponding roadmap item incomplete; temporary capability guards must not be documented as acceptance, silently turn multiplayer into read-only one-player state, or make an omitted Stackmat entry count as complete.
 
 ## Five-platform target
 
@@ -31,7 +31,7 @@ The five target platforms deliberately use three host boundaries rather than fiv
 - `core/apps/harmony`: the planned ArkTS + ArkWeb host for HarmonyOS NEXT.
 - `core/apps/desktop`: the planned single Tauri host for both Windows and macOS.
 
-When the first non-Capacitor host is implemented, extract the shared three-surface React composition from this app into a real multi-consumer `@cuberoot/app-ui` package in the same change. Do not create an empty abstraction in advance, and do not let another app import `core/apps/mobile/src`, this app's CSS, or `dist`. Timer UI continues to live in `@cuberoot/timer-ui`; domain rules, schemas, protocols, state machines, and capability contracts continue to live in `@cuberoot/shared`.
+When the first non-Capacitor host is implemented, extract the shared three-surface React composition from this app into a real multi-consumer `@cuberoot/app-ui` package in the same change. Do not create an empty abstraction in advance, and do not let another app import `core/apps/mobile/src`, this app's CSS, or `dist`. Timer UI continues to migrate into `@cuberoot/timer-ui`; domain rules, schemas, protocols, and state machines with real cross-runtime consumers live in `@cuberoot/shared`. A single-host capability interface stays in its app until the same change introduces a second real consumer.
 
 Harmony and Desktop hosts may implement only system adapters such as BLE transport, secure storage, auth/deep-link handoff, files, sharing, printing, wake lock, windowing, and lifecycle. A PWA remains a useful website entry, but it is not evidence that the committed Windows or macOS client target is complete.
 
