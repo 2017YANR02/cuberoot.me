@@ -489,7 +489,7 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
       newPlayers[playerId] = { ...p, pointerId: null };
       useBattleStore.setState({ players: newPlayers });
 
-      curr.playerUp(playerId);
+      curr.playerCancel(playerId);
     };
 
     const onCancel = (e: PointerEvent) => {
@@ -507,11 +507,21 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
     el.addEventListener('pointerdown', onDown);
     el.addEventListener('pointerup', onUp);
     el.addEventListener('pointercancel', onCancel);
+    el.addEventListener('lostpointercapture', onCancel);
 
     return () => {
       el.removeEventListener('pointerdown', onDown);
       el.removeEventListener('pointerup', onUp);
       el.removeEventListener('pointercancel', onCancel);
+      el.removeEventListener('lostpointercapture', onCancel);
+      const curr = useBattleStore.getState();
+      const p = curr.players[playerId];
+      if (p.pointerId !== null) {
+        const newPlayers = [...curr.players];
+        newPlayers[playerId] = { ...p, pointerId: null };
+        useBattleStore.setState({ players: newPlayers });
+        curr.playerCancel(playerId);
+      }
     };
   }, [playerId]);
 
@@ -1299,7 +1309,7 @@ export default function BattleView({ playerCount, playersControl, presenceContro
 
   // NOTE: 自动检测横竖屏 — 横屏自动切 side 布局，竖屏自动切 versus
   useEffect(() => {
-    if (mode !== '1v1') return;
+    if (mode !== '1v1' || playerCount !== 2) return;
 
     const mql = window.matchMedia('(orientation: landscape)');
     const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
@@ -1311,7 +1321,7 @@ export default function BattleView({ playerCount, playersControl, presenceContro
 
     mql.addEventListener('change', handleChange);
     return () => mql.removeEventListener('change', handleChange);
-  }, [mode]);
+  }, [mode, playerCount]);
 
   const closeSettings = useCallback(() => {
     setSettingsOpen(false);
