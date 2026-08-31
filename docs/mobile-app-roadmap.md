@@ -1,4 +1,6 @@
-# CubeRoot Android / iOS App 完整路线图
+# CubeRoot 五端 App 完整路线图
+
+> Android、iOS、HarmonyOS NEXT、Windows 和 macOS 已由仓库所有者于 2026-08-31 确认为同一个完整产品目标。五端一次设计，但绝不维护五套业务代码；宿主、共享层、能力接口、总体完成口径和当前状态以 [cross-platform-app-contract.md](./cross-platform-app-contract.md) 为最高优先级合同。网站继续作为第六个在线 surface 与内容事实源。
 
 > 顶层产品结构已由仓库所有者于 2026-08-30 明确为“计时 / 工具 / 我的”三栏，且 Android/iOS 共用同一 React 实现；网站首页、子页面和未改写的 `/account` 必须直接复用，不在 App 复制。页面或按钮可见不等于完成；所有当前已配置登录方式、子页交互与会话状态都要真机端到端验收。唯一合同与成本回退规则见 [mobile-three-tab-contract.md](./mobile-three-tab-contract.md)。
 >
@@ -6,11 +8,11 @@
 
 > 状态：执行中
 >
-> 更新日期：2026-08-30
+> 更新日期：2026-08-31
 >
-> 目标：以最低长期维护成本，把 CubeRoot 的高频能力发布到 Google Play 和 Apple App Store，并逐步覆盖全球可用地区。
+> 目标：以最低长期维护成本，把同一个 CubeRoot 产品发布到 Android、iOS、HarmonyOS NEXT、Windows 和 macOS，并逐步覆盖对应商店和安装渠道。
 >
-> 原则：网站继续是完整产品和内容源；App 只承担高频、离线和原生能力，不复制整站。
+> 原则：网站继续是完整产品和内容源；五端共享业务、React UI、账号、数据和协议，只由薄宿主提供系统能力，不复制整站或平台专用业务实现。
 
 ## 0. 执行进度（唯一事实源）
 
@@ -78,6 +80,21 @@
 - 版本化 schema、IndexedDB 仓储和 adapter contract tests 提交：`ac5a88bf39`。
 - 共享三阶打乱生成器和边界回归测试提交：`968d330692`。
 - 2026-08-30 BLE 复用边界：Mobile 只保留 Capacitor `BleTransport`；GAN v4、补帧、`MoveClock` 和 `SmartCubeStateTracker` 位于 `@cuberoot/shared`，网站旧路径只作兼容导出。移动端 28 项与网站智能魔方/时钟定向 30 项测试通过。
+
+### 阶段 2A：五端一次到位架构
+
+- [x] 仓库所有者确认 Android、iOS、HarmonyOS NEXT、Windows、macOS 均为正式客户端目标；PWA 不替代 Windows/macOS 客户端完成口径。
+- [x] 建立 [五端 App 单一来源合同](./cross-platform-app-contract.md)，锁定 Capacitor Mobile、Harmony ArkWeb、Tauri Desktop 与共享层的依赖方向。
+- [ ] 完成现有 Web/Mobile 计时器迁移，使 `@cuberoot/timer-ui` 覆盖网站 `/timer` 的完整可达功能，不留宿主私有业务副本。
+- [ ] 第二个非 Capacitor 宿主落地时，从 Mobile 提取有两个真实消费者的 `@cuberoot/app-ui`；不得提前建空包，也不得让新宿主 import Mobile 源码或 `dist`。
+- [ ] 建立 `core/apps/desktop`，由同一个 Tauri 工程构建 Windows 和 macOS。
+- [ ] 建立 `core/apps/harmony`，由 ArkTS/ArkWeb 薄宿主加载本地共享 React App。
+- [ ] 统一 BLE、安全存储、认证、文件、分享、打印、保亮和生命周期 capability ports，并为每个宿主提供薄 adapter。
+- [ ] 建立五端 build/安装/真机或实体电脑/签名/发布矩阵；五端全部通过前总体状态保持 `NOT COMPLETE`。
+
+当前证据：
+
+- 2026-08-31 只有五端目标与边界合同已经确定；HarmonyOS、Windows、macOS 宿主尚未创建，不得把本节的架构决定误报为三个平台已经适配。
 
 ### 阶段 3：PWA 补强和网站兜底
 
@@ -202,20 +219,23 @@
 ### 阶段 10：全球发布和长期维护
 
 - [x] 建立仓库内 `cuberoot-mobile` Codex skill，统一单代码库、双机交接、iOS 发版与签名安全流程。（结构校验、成对 eval 和独立审计通过）
+- [x] 将 skill 和路线图升级为五端单一来源合同；未来 AI 不得为 HarmonyOS、Windows 或 macOS 新建业务 UI 分叉。
+- [ ] 五端宿主、统一 capability ports、跨端 CI 和完整验收矩阵全部落地。
 - [ ] 按地区和质量指标逐步扩大可用范围。
 - [ ] 发布 runbook、版本支持矩阵、政策/证书日历和质量看板完成。
 - [ ] 建立每月发版、季度兼容测试、半年隐私复核和年度账号维护节奏。
 
 ## 1. 先说结论
 
-CubeRoot 最适合的路线不是把 App 启动运行时整体改成远程网站 WebView，也不是重新用 Flutter、Swift 和 Kotlin 各写一遍，而是：本地计时保留离线与原生能力，工具/我的在共享底栏内显示网站唯一页面。
+CubeRoot 最适合的路线不是把 App 启动运行时整体改成远程网站 WebView，也不是为五个平台各写一遍，而是：一个共享 React 产品层负责完整三栏体验，网站继续提供 canonical Tools/Account 页面，每个平台只有薄宿主和系统能力 adapter。
 
 1. 网站继续负责完整内容、SEO、后台、长文和重型工具。
-2. 新建一个独立的 React + Vite + Capacitor 移动端壳，先做 Android，再做 iOS。
-3. 从现有网站提取计时、训练、公式、同步和智能魔方协议中的纯逻辑，网站和 App 共用。
-4. Android 和 iOS 只分别实现少量必须原生化的能力：BLE、权限、通知、震动、保亮、深链、分享、文件和相机。
-5. 公式、统计、比赛、公告等内容继续由现有 API/静态数据提供；这些内容更新后无需重新上架。
-6. 只有打包进 App 的界面或代码发生变化时，才构建新版本并经过商店审核。
+2. Android/iOS 继续使用同一个 React + Vite + Capacitor 宿主；不迁移或重写已经成立的移动端工程。
+3. HarmonyOS NEXT 使用 ArkTS + ArkWeb 薄宿主，Windows/macOS 使用同一个 Tauri 桌面宿主；三者消费同一 React App 和共享包。
+4. 从现有网站提取计时、训练、公式、同步和智能魔方协议中的纯逻辑，网站和五端共用。
+5. 五个平台只分别实现必须原生化的能力：BLE、权限、安全存储、通知、震动、保亮、深链、分享、文件和生命周期。
+6. 公式、统计、比赛、公告等内容继续由现有 API/静态数据提供；这些内容更新后无需重新上架。
+7. 只有打包进 App 的界面、宿主或原生代码发生变化时，才构建对应平台新版本并经过其发布流程。
 
 推荐首发范围：
 
@@ -237,8 +257,9 @@ CubeRoot 最适合的路线不是把 App 启动运行时整体改成远程网站
 
 ### 2.1 目标
 
-- Windows 环境下先完成 Android 开发、测试和上架。
-- 将 Android 的架构做成可以平滑迁移到 iOS，而不是 Android 一次性工程。
+- 从现在起按 Android、iOS、HarmonyOS NEXT、Windows、macOS 五端一次设计和追踪，不把后三端留作模糊的远期可能性。
+- Android/iOS 共用 Capacitor Mobile；Windows/macOS 共用 Tauri Desktop；HarmonyOS 只增加 ArkWeb 薄宿主。
+- 五端共用同一业务、React 产品层、账号、数据、对战和智能魔方协议，不从任一 app 复制到另一 app。
 - 网站内容更新时，App 尽量自动读取新内容，不要求同步改两份。
 - App 离线时仍能计时、查看已缓存公式、训练和保存记录。
 - iOS 用户能直接连接智能魔方，不再依赖 Bluefy。
@@ -248,8 +269,8 @@ CubeRoot 最适合的路线不是把 App 启动运行时整体改成远程网站
 
 ### 2.2 非目标
 
-- 不追求第一版覆盖网站 100% 功能。
-- 不在第一版同时维护 React Web、Kotlin Android、Swift iOS 三套业务 UI。
+- 不用“先做一个删减版，以后再补”降低已纳入合同的三栏或 `/timer` 完整度。
+- 不维护 React Web、Android、iOS、HarmonyOS、Windows、macOS 六套业务 UI。
 - 不把远程网站 URL 当成 App 的主要运行代码。
 - 不在没有实体设备验证的情况下承诺支持某个智能魔方型号。
 - 不把“中国大陆 Android 全渠道分发”误认为勾选一个国家即可完成。
@@ -330,9 +351,11 @@ CubeRoot 最适合的路线不是把 App 启动运行时整体改成远程网站
 | React Native / Expo | 中低 | 可用 | 可用 | 中 | 低 | 会重写较多 DOM/CSS 组件 |
 | Flutter | 低 | 可用 | 可用 | 高 | 低 | 对本项目复用率太低 |
 | 原生 Kotlin + Swift | 最低 | 最强 | 最强 | 最高 | 低 | 团队规模不合适 |
-| React + Vite + Capacitor | 高 | 通过插件或自有桥可用 | 可用 | 较低 | 低到中 | 推荐 |
+| React + Vite + Capacitor | 高 | 通过插件或自有桥可用 | 可用 | 较低 | 低到中 | Android/iOS 既定宿主 |
+| 共享 React + Tauri Desktop | 高 | 通过插件或自有桥可用 | 不用于本项目 iOS | 较低 | 低到中 | Windows/macOS 共用宿主 |
+| ArkTS + ArkWeb 薄宿主 | 高 | 通过鸿蒙 adapter | 不适用 | 中 | 待鸿蒙实测 | HarmonyOS NEXT 既定宿主，禁止 ArkUI 重写业务 UI |
 
-### 5.2 为什么推荐 Capacitor
+### 5.2 为什么 Android/iOS 继续使用 Capacitor
 
 - 继续使用 TypeScript、React、CSS 和现有前端知识。
 - Android 可完全在 Windows 上开发和构建。
@@ -348,18 +371,32 @@ CubeRoot 最适合的路线不是把 App 启动运行时整体改成远程网站
 - Capacitor 每次发布仍需把 Web bundle 复制到原生工程并重新构建。
 - 原生插件、权限或打包代码变化仍需经过商店审核。
 
+### 5.3 为什么不是一个原生框架强行覆盖五端
+
+- 当前 Capacitor Android/iOS 已有真实构建和设备证据，迁移只会重做宿主，不会减少业务代码。
+- Windows 和 macOS 需要的是一个共享桌面宿主；Tauri 可以复用同一 Web 前端，同时保留桌面窗口和系统 API 边界。
+- HarmonyOS NEXT 需要 ArkTS/ArkWeb 与鸿蒙系统能力；不假定 Capacitor 或 Tauri 提供未经验证的一方正式支持。
+- 真正的单一来源位于 `@cuberoot/shared`、`@cuberoot/timer-ui` 和第二宿主落地时提取的 `@cuberoot/app-ui`，而不是要求所有平台使用同一个原生打包工具。
+
 ## 6. 推荐架构
 
 ```mermaid
 flowchart TD
   DB[(PostgreSQL / 静态数据)] --> API[现有 Hono API]
   API --> WEB[Next.js 网站]
-  API --> APP[React + Vite 移动端]
+  API --> APP[共享 React App]
   CORE[共享 TypeScript 核心] --> WEB
   CORE --> APP
-  APP --> BRIDGE[Capacitor 原生桥]
-  BRIDGE --> ANDROID[Android BLE / 通知 / 分享]
-  BRIDGE --> IOS[iOS Core Bluetooth / 通知 / 分享]
+  UI[@cuberoot/timer-ui / app-ui] --> WEB
+  UI --> APP
+  APP --> MOBILE[Capacitor Mobile]
+  APP --> HARMONY[ArkWeb Harmony]
+  APP --> DESKTOP[Tauri Desktop]
+  MOBILE --> ANDROID[Android adapters]
+  MOBILE --> IOS[iOS adapters]
+  HARMONY --> HOS[HarmonyOS adapters]
+  DESKTOP --> WINDOWS[Windows adapters]
+  DESKTOP --> MACOS[macOS adapters]
   APP --> LOCAL[(本地数据库 / outbox)]
   LOCAL <--> API
 ```
@@ -370,13 +407,15 @@ flowchart TD
 
 ```text
 core/
+  apps/
+    mobile/             # 现有 React + Vite + Capacitor，Android/iOS 宿主
+    harmony/            # 计划：ArkTS + ArkWeb HarmonyOS NEXT 薄宿主
+    desktop/            # 计划：一个 Tauri 工程产出 Windows/macOS
   packages/
     client/             # 现有 Next 网站
-    mobile/             # 新 React + Vite + Capacitor App
     shared/             # 已有共享类型和轻量纯函数
-    timer-core/         # 未来按需要提取：计时状态机、统计、序列化
-    smartcube-core/     # 未来按需要提取：协议解析、解密、状态恢复
-    sync-core/          # 未来按需要提取：变更队列、冲突规则
+    timer-ui/           # Web/五端唯一计时 React UI
+    app-ui/             # 第二宿主落地时提取：五端三栏 React 产品组合
 ```
 
 不要一开始空建很多抽象包。正确顺序是：
@@ -1474,9 +1513,11 @@ Android Studio 官方支持 Windows，安装要求见[官方文档](https://deve
 
 | 决策 | 当前推荐 | 何时可改变 |
 |---|---|---|
-| Android 先行 | 是 | 不需要改变 |
-| Windows 开发 Android | 是 | iOS 阶段才需要 macOS |
-| 移动框架 | React + Vite + Capacitor | BLE spike 证明确实不可行时才重评 |
+| 五端总体目标 | Android/iOS/HarmonyOS NEXT/Windows/macOS 一次到位 | 仅所有者明确修改产品范围时改变 |
+| Android/iOS 宿主 | React + Vite + Capacitor | 出现不可修复的官方平台阻断才重评 |
+| HarmonyOS 宿主 | ArkTS + ArkWeb 薄壳 | 官方能力实测出现硬阻断才重评，禁止先重写 UI |
+| Windows/macOS 宿主 | 同一个 Tauri Desktop | 桌面原生能力实测出现硬阻断才重评，禁止两套工程 |
+| 共享 React 产品层 | 第二宿主落地时提取 `@cuberoot/app-ui` | 不允许 app→app import 或复制源码 |
 | 网站地位 | 完整内容和 SEO 主站 | 不改变 |
 | App 地位 | 高频、离线、原生能力 | 按真实使用数据扩展 |
 | 业务逻辑 | 共享 TypeScript 核心 | 不复制三套 |
@@ -1523,28 +1564,21 @@ Android Studio 官方支持 Windows，安装要求见[官方文档](https://deve
 
 ```text
 现在
-  1. 注册并验证 Google Play 组织账号
-  2. 确认公开组织名称、地址、电话和发布密钥保管人
-  3. 用实体 Android 手机补齐竖屏截图和基础真机测试
-  4. 上传同一签名 AAB 到 internal track，验证安装、升级和回滚
-
-接下来
-  5. 按组织账号控制台实际要求完成测试者验证
-  6. 补齐 feature graphic、内容评级和最终商店问卷
-  7. 真机验证 BLE transport，再决定原生 BLE 实现
-  8. Google Play 分阶段发布
-  9. 按需求优先级继续训练、BLE、账号和同步
-
-Android 稳定后
- 10. 准备 Mac、iPhone 和 Apple 账号
- 11. 实现 iOS adapter 和合规项
- 12. TestFlight
- 13. App Store 审核和全球分阶段发布
+  1. 完成网站/Mobile 计时器零遗漏迁移，关闭共享层中的已知重复和缺口
+  2. 定义并测试 BLE、storage、auth、file、share、print、lifecycle capability ports
+  3. 保持现有 Android/iOS 同一 Capacitor 宿主，完成双平台真机与发布门槛
+  4. 第二宿主落地时提取有真实消费者的 @cuberoot/app-ui
+  5. 建立一个 core/apps/desktop，同时产出 Windows 和 macOS
+  6. 建立 core/apps/harmony，以 ArkWeb 本地 bundle 接入同一 React App
+  7. 五端接入同一账号、同步、多人、智能魔方和三栏完整功能
+  8. 建立五端 CI、安装产物、依赖方向和生成物漂移守卫
+  9. 完成五端输入/窗口/离线/生命周期/辅助功能/BLE/升级矩阵
+ 10. 各平台按商店或安装渠道独立分阶段发布，但五端总体全部通过前保持 NOT COMPLETE
 
 长期
- 14. 内容继续走网站/API即时更新
- 15. App 代码按月集中发布
- 16. 旧版兼容、隐私、SDK和证书定期复核
+ 11. 内容继续走网站/API 即时更新
+ 12. 客户端代码按兼容发布节奏集中发布
+ 13. 旧版兼容、隐私、SDK、证书和五端系统版本定期复核
 ```
 
 最省心不是永远不更新 App，而是把“每天会变的内容”和“必须审核的客户端代码”分开。只要这个边界从第一天守住，CubeRoot 网站继续快速迭代，App 不需要跟着每次手工改一遍。

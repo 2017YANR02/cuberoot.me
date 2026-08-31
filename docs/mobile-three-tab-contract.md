@@ -1,10 +1,12 @@
-# Mobile 三栏产品合同
+# CubeRoot 五端三栏产品合同
 
 状态：`ACTIVE`
 
-最后更新：2026-08-30
+最后更新：2026-08-31
 
-所有者决定：Android 与 iOS App 底部固定为“计时 / 工具 / 我的”三栏；三栏的内容、视觉、交互、状态和功能完整一致是验收目标，第一原则是不复制网站页面形成多端维护。若某项只能通过高成本原生重写实现，优先保留网站单一来源并如实记录平台限制；只有所有者明确接受的高成本豁免可以保留未完成，且当时不得声称“完整一致”。
+所有者决定：Android、iOS、HarmonyOS NEXT、Windows 和 macOS 共用“计时 / 工具 / 我的”三个产品 surface；紧凑窗口使用底栏，桌面窗口仍消费同一个 React 导航与三栏状态，不得建立平台专用功能树。三栏的内容、视觉、交互、状态和功能完整一致是验收目标，第一原则是不复制网站页面形成多端维护。五端宿主与单一来源的最高优先级边界见 [cross-platform-app-contract.md](./cross-platform-app-contract.md)。
+
+若某项只能通过高成本原生重写实现，优先补通用 capability port 并如实记录平台限制；只有所有者明确接受的高成本豁免可以保留未完成，且当时不得声称“完整一致”。
 
 “完整一致”必须按 [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md) 的零遗漏笛卡尔积验收。实现者无权自行把网站已有功能判成“代价高所以不做”；必须先列明成本与方案并取得所有者明确批准。当前 App 远未完成，43 项菜单或某个子功能通过都不能代表计时栏完成。
 
@@ -24,14 +26,18 @@
 计时领域逻辑              → @cuberoot/shared
 Web + Mobile 计时 React UI → @cuberoot/timer-ui
 工具/我的页面与路由         → core/packages/client（线上网站唯一实现）
-Android/iOS 底栏与 Web 容器  → core/apps/mobile（同一份 React + Capacitor 代码）
-原生 BLE/权限/分享/安全存储  → Mobile platform adapter
+五端三栏 React 产品组合       → @cuberoot/app-ui（第二宿主落地时从 Mobile 提取）
+Android/iOS 宿主与 Web 容器   → core/apps/mobile（同一份 React + Capacitor 代码）
+HarmonyOS NEXT 薄宿主         → core/apps/harmony（计划，ArkTS + ArkWeb）
+Windows/macOS 共享桌面宿主    → core/apps/desktop（计划，同一 Tauri 工程）
+原生 BLE/权限/分享/安全存储   → 各宿主 platform adapter
 ```
 
 禁止：
 
 - 在 Mobile 重写网站首页卡片、目录、搜索、账号页面或任一工具子页面。
-- Android 和 iOS 各写一套底栏、工具页或账号页。
+- Android、iOS、HarmonyOS、Windows 和 macOS 各写一套底栏、工具页或账号页。
+- 让 Harmony/Desktop import Mobile 源码或 `dist`，或先复制再承诺以后合并。
 - Mobile import `core/packages/client` 私有源码或 CSS。
 - 把网站页面抓取、复制或静态导出进 App 后再单独维护。
 - 建设第二套登录表单、账号模型或 token 生命周期。
@@ -42,7 +48,7 @@ Android/iOS 底栏与 Web 容器  → core/apps/mobile（同一份 React + Capac
 允许：
 
 - Web 内容继续由网站部署独立更新，无需每次重新上架 App。
-- Mobile 只维护通用 Web 容器、底栏、网络/返回/外链等薄适配。
+- 共享 React 产品层只维护一套 Web 容器、三栏、网络/返回/外链状态；各宿主只维护系统薄适配。
 - 网站页面需要 BLE、文件、相机、下载、OAuth 或其他 iframe 受限能力时，对该动作回退到系统浏览器或原生 adapter；不得复制整页。
 
 ## 3. Web surface 决策与成本上限
@@ -91,13 +97,16 @@ Android/iOS 底栏与 Web 容器  → core/apps/mobile（同一份 React + Capac
 
 自建 Android WebView + iOS WKWebView 双原生容器、完整 Cookie bridge、下载/权限/导航代理属于高成本方案。除非 iframe/Browser 两条低维护路径都无法满足关键工作流且所有者再次授权，不启动该方案。
 
-## 4. Android 与 iOS 协作合同
+## 4. 五端协作合同
 
-- 两个平台唯一业务入口是 `core/apps/mobile`；iOS AI 和 Android AI 都必须先读本文、`core/apps/mobile/README.md` 与 `cuberoot-mobile` skill。
+- Android/iOS 当前唯一业务入口是 `core/apps/mobile`；所有平台 AI 都必须先读本文、[cross-platform-app-contract.md](./cross-platform-app-contract.md)、`core/apps/mobile/README.md` 与 `cuberoot-mobile` skill。
 - iOS 只补 URL scheme、WKWebView/权限等平台 adapter，不另建 SwiftUI 三栏或复制 React 页面。
 - Android 只补系统返回、WebView/权限等平台 adapter，不另建 Compose 三栏。
-- 任一 AI 修改 `core/apps/mobile/src` 前先检查同文件是否有未提交改动；发现并行重叠时保留对方工作，不覆盖。
-- 新增平台差异必须登记到本文；未登记的 Android/iOS UI 分叉视为回归。
+- HarmonyOS 只补 ArkWeb、权限、BLE、安全存储和系统生命周期 adapter，不用 ArkUI 重写三栏或计时器。
+- Windows/macOS 必须由同一个 `core/apps/desktop` 工程输出，只补各自窗口、BLE、凭据、文件、深链、签名/公证 adapter。
+- 第二宿主落地时，同一改动必须从 Mobile 提取有真实消费者的 `@cuberoot/app-ui`；禁止任何 app→app 源码或生成物依赖。
+- 任一 AI 修改共享 App/宿主文件前先检查同文件是否有未提交改动；发现并行重叠时保留对方工作，不覆盖。
+- 新增平台差异必须登记到本文；未登记的五端 UI 或业务分叉视为回归。
 
 ## 5. 执行矩阵
 
@@ -113,6 +122,9 @@ Android/iOS 底栏与 Web 容器  → core/apps/mobile（同一份 React + Capac
 | ACC-02 | 网站当前邮箱、手机、WCA、Google、微信、QQ、支付宝登录/绑定能力全部可用 | P0 | `进行中` | canonical LoginForm 的所有登录交互已委托 Browser；provider 保留与 social return fallback 有定向测试，待生产部署和 Android/iOS 每个真实账号端到端；绑定/解绑仍需单列验收 |
 | ACC-03 | Account iframe、系统浏览器与 Mobile 安全会话的登录/退出/注销状态一致 | P0 | `进行中` | 源码已完成 Browser PKCE→secure session→web ticket→iframe、iframe logout/delete→native clear、App logout→iframe clear；不传长期 JWT。待生产/双平台 E2E；iframe-only 旧会话与外部 Browser 独立 logout 仍是已知边界 |
 | IOS-01 | iOS AI 复用同一三栏和 Web surface，不出现业务 UI 分叉 | P0 | `进行中` | 业务代码只有 `core/apps/mobile/src` 一份；本文已进入 README/路线图，待 iOS 同步验证 |
+| XPLAT-01 | 第二宿主落地时提取 `@cuberoot/app-ui`，五端消费同一三栏 React 产品层 | P0 | `未开始` | 至少两个真实宿主消费者、无 app→app import、共享契约测试 |
+| DESKTOP-01 | 一个 `core/apps/desktop` 同时产出 Windows 和 macOS 客户端 | P0 | `未开始` | 两端 build/install、窗口与系统 adapter、实体电脑矩阵；PWA 不算完成 |
+| HARMONY-01 | `core/apps/harmony` 以 ArkWeb 本地 bundle 消费共享 React App | P0 | `未开始` | DevEco build、模拟器/真机、BLE/存储/深链 adapter；Android 兼容包不算完成 |
 | IOS-LOGIN-01 | iOS 提供满足 Apple 4.8 的等价登录，同时保持 canonical `/account` provider parity | P0 | `BLOCKED` | 网站唯一 `LoginForm`/后端尚无已验证的等价方式；优先同源实现 Sign in with Apple 并取得 iOS 端到端/审核证据 |
 | QA-01 | 断网、弱网、网站 5xx、frame 被拒时不影响本地计时 | P0 | `未开始` | 故障注入与恢复 |
 | QA-02 | TalkBack/VoiceOver、动态字号、横竖屏、安全区、软键盘、无遮挡与无溢出 | P0 | `进行中` | 双平台逐状态截图 + overflow/可见性断言；系统栏、手势区、底栏、键盘和弹层均不遮挡 |
@@ -140,3 +152,4 @@ P0/P1 表示实施顺序，不表示 P1 可以在声称“三栏完全一致”�
 | 2026-08-30 | OPPO 项目菜单首轮视觉审计发现透明浮层与计时内容重叠；修复宿主 token/旧 WebView 窄屏布局后重装复验 | UI/UX 门槛已实际拦下一次“功能能用但看不清”的回归；同类菜单、键盘、横屏和三栏 Web surface 仍须逐状态验收 |
 | 2026-08-30 | OPPO Account iframe CDP：URL 为原始 `/zh/account`；视口/文档宽均 360，无横向溢出；当前 7 个登录操作均完整落在可见宽度内，最下按钮底部 555 < iframe 底部 689 | ACC-01 的 Android 页面/provider/无遮挡验收通过；ACC-02/03 已有源码和单元证据，但 OAuth、邮箱/手机真实账号与会话同步仍必须部署后另验，不能随 ACC-01 一起宣称完成 |
 | 2026-08-30 | 独立 no-dup agent 扫描包边界、43 项能力与 Web/Mobile adapter | app→app/deep import guard 通过，并消除非法 event→333 与 NXN 映射重复；Web 私有 scramble fallback、通用/计时 PuzzlePicker primitive、real-source 映射及除 2×2 外的生成 runtime 仍是明确待治理项 |
+| 2026-08-31 | 所有者把正式客户端目标扩展为 Android/iOS/HarmonyOS NEXT/Windows/macOS，并要求一次到位 | 五端共享层、三个宿主和总体完成口径已写入合同；新三端仍为未实现，不得把设计完成误报为平台适配完成 |

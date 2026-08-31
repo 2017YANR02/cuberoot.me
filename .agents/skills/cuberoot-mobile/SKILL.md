@@ -1,17 +1,18 @@
 ---
 name: cuberoot-mobile
-description: "Use for CubeRoot native App work rooted at core/apps/mobile: Capacitor Android/iOS implementation, Windows-Mac handoff, Xcode/TestFlight/App Store or Google Play release, or deciding whether a CubeRoot website/mobile change requires a store release. Do not use for ordinary responsive web work or unrelated Mac setup."
+description: "Use for CubeRoot installed-client work across Android, iOS, HarmonyOS NEXT, Windows, and macOS: shared React App architecture, Capacitor/Harmony/Tauri hosts, native adapters, device testing, signing, stores, or deciding whether a website/App change requires a client release. Do not use for ordinary responsive web work or unrelated computer setup."
 ---
 
 # CubeRoot 移动端开发与发布
 
-维护 `core/apps/mobile` 时遵循本流程，让 Android 和 iOS 共用一套 React 业务代码，并让 Windows、Mac 上的 Codex 从同一仓库事实继续工作。
+维护 CubeRoot 已安装客户端时遵循本流程，让 Android、iOS、HarmonyOS NEXT、Windows 和 macOS 共用一套 React 产品与业务代码；平台工程只做宿主和系统能力适配。
 
 ## 按任务读取事实源
 
 先读仓库根 `AGENTS.md`，再只加载本次需要的资料：
 
 - 日常实现：`core/apps/mobile/README.md`、`package.json`、`capacitor.config.ts` 和相关源码。
+- 五端架构、HarmonyOS 或桌面客户端：必须完整读取 `docs/cross-platform-app-contract.md`；进度再读 `docs/mobile-app-roadmap.md`。五端目标已确定不等于后三端已实现。
 - 修改 App `/timer`：必须完整读取 `docs/mobile-timer-parity-tracker.md` 与
   `docs/mobile-timer-zero-omission-audit.md`；涉及真题、随机或手动来源时再读
   `docs/mobile-timer-source-adversarial-audit.md`。这些文件仍标记 `NOT COMPLETE` 时，
@@ -25,12 +26,16 @@ description: "Use for CubeRoot native App work rooted at core/apps/mobile: Capac
 
 以当前源码和工具输出为准，不凭旧对话硬编码 Node、pnpm、Capacitor、Xcode、SDK 或商店政策版本。政策、费用、审核规则、SDK 提交门槛可能变化；需要回答或执行时查官方最新资料。
 
-## 守住唯一架构
+## 守住五端唯一架构
 
-- 唯一移动 App 是 `core/apps/mobile` 的 React + Vite + Capacitor 工程；Android 和 iOS 不各写一套业务 UI。
+- 五端是一个产品，不是五套业务实现。最高优先级合同是 `docs/cross-platform-app-contract.md`。
+- `core/apps/mobile` 是现有 Android/iOS React + Vite + Capacitor 宿主；两端不各写一套业务 UI，也不为统一原生框架而迁移已经成立的 Capacitor 工程。
+- HarmonyOS NEXT 使用计划中的 `core/apps/harmony` ArkTS + ArkWeb 薄宿主；不得用 ArkUI 重写三栏、计时器或账号。
+- Windows/macOS 使用计划中的同一个 `core/apps/desktop` Tauri 宿主；不得建两个桌面 React 工程。PWA 可作网站入口，但不算桌面客户端完成证据。
+- 第二个非 Capacitor 宿主落地时，在同一变更中把五端共用的 React App 组合提取为有两个真实消费者的 `@cuberoot/app-ui`。此前不建空包；此后禁止 app→app 源码、CSS 或 `dist` 依赖。
 - 稳定、无运行时依赖且已有多端消费者的数据模型、校验、算法、状态机放 `core/packages/shared`；不要从网站或 Android 复制到 iOS。
 - 网站专属 Next 路由、SEO、服务端组件留在 client；移动导航、离线仓储和原生桥留在 mobile。
-- Android/iOS 只分别实现权限、BLE transport、Keychain/Keystore、通知、深链、分享等平台适配；协议解析和业务规则尽量共享。
+- 五端只分别实现权限、BLE transport、安全存储、通知、深链、分享、文件、打印、窗口和生命周期等 platform adapters；协议解析、账号契约、数据规则、对战状态和 React 功能必须共享。
 - `dist/` 和 Capacitor 同步进去的 Web 产物是生成物，不是源码；改 React/shared 后重新 build + sync。
 - 不把远程网站设为 App 的启动运行代码，也不把整站 WebView 当正式产品。
 
@@ -64,7 +69,9 @@ description: "Use for CubeRoot native App work rooted at core/apps/mobile: Capac
   真机证据；关键结论再由独立 agent 做反例审查。Android 通过不替代 iOS，二者均通过前整体仍是
   `NOT COMPLETE`。
 
-## Windows 与 Mac
+## 开发电脑与 Windows/macOS 客户端
+
+“在 Windows/Mac 上开发”与“构建 Windows/macOS 客户端”是两件事。前者遵循下面的 Git 交接；后者必须遵循 `docs/cross-platform-app-contract.md`，由同一个 `core/apps/desktop` 工程输出两端，不得复制 Mobile。
 
 - 两台电脑各自完整 clone 同一仓库，并通过 Git 同步源码。
 - 两台电脑可同时在 `main` 开发，每项任务形成 commit。
@@ -118,6 +125,8 @@ description: "Use for CubeRoot native App work rooted at core/apps/mobile: Capac
 ## 验证与进度记账
 
 按变更范围做相关 tests、mobile typecheck/build、目标平台 sync 和 native diff；权限、BLE、分享、后台、升级与 release 需要真机/控制台证据。登录、SDK、数据流或付费变化还要复核商店隐私声明。
+
+五端总体状态只有在 Android/iOS/HarmonyOS NEXT/Windows/macOS 都具备各自 build、安装、系统 adapter、设备/实体电脑和发布证据后才能完成。某一端通过、PWA 可安装、Android 兼容层运行或共享代码存在，都不能替代其他平台证据。
 
 `docs/mobile-app-roadmap.md` 是唯一进度账本。只在有实现与验证证据时把 `[ ]` 改为 `[x]`，并在“当前证据”写命令、设备/控制台结果或 commit。用户口头确认设备、安装或付款可记作已具备条件，但不能替代 build、真机、签名或商店状态证据。
 
