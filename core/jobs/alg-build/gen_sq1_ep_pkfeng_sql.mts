@@ -1,5 +1,7 @@
-/** Complete SQ1 EP from the Pk Feng DOC fixture -> 0187 data migration. */
+/** Complete SQ1 EP from the Pk Feng DOC fixture into an explicit new migration. */
+import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serverMigrationPath } from './server-migration-path.mts';
 
@@ -27,8 +29,18 @@ function invariant(value: unknown, message: string): asserts value {
 
 const fixturePath = fileURLToPath(new URL('./fixtures/sq1-ep-pkfeng.json', import.meta.url));
 const fixture = JSON.parse(readFileSync(fixturePath, 'utf8')) as Fixture;
-const output = serverMigrationPath(process.argv[2] ?? '0187_sq1_ep_pkfeng_complete.sql');
+const historicalMigration = serverMigrationPath('0187_sq1_ep_pkfeng_complete.sql');
+const historicalMigrationSha256 = 'bd569ddbcc28b11e25d0d60c17ccfff6fd8fe66bcc5416769d533fe2f9c47824';
+const outputFilename = process.argv[2];
 const expectedOrder = ['0', '1', '2', '3+', '3-', '4+', '4-', '7', '+', '//'];
+
+invariant(
+  createHash('sha256').update(readFileSync(historicalMigration)).digest('hex') === historicalMigrationSha256,
+  '0187 is an applied immutable migration and no longer matches its registered SHA-256',
+);
+invariant(outputFilename, 'pass an explicit new migration filename; applied migration 0187 is immutable');
+const output = serverMigrationPath(outputFilename);
+invariant(resolve(output) !== resolve(historicalMigration), 'applied migration 0187 is immutable; create a later migration');
 
 invariant(fixture.schemaVersion === 1, `unsupported fixture schema ${fixture.schemaVersion}`);
 invariant(JSON.stringify(fixture.naming.layerOrder) === JSON.stringify(expectedOrder), 'unexpected numeric layer order');

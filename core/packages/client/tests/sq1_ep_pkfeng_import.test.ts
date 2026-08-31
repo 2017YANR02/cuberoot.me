@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { applySq1Scramble } from '@cuberoot/shared/sq1-notation';
@@ -35,8 +36,10 @@ type Fixture = {
 
 const fixturePath = workspaceFixturePath('@cuberoot/alg-build', 'fixtures', 'sq1-ep-pkfeng.json');
 const fixture = JSON.parse(readFileSync(fixturePath, 'utf8')) as Fixture;
-const migrationPath = workspaceFixturePath('@cuberoot/server', 'migrations', '0187_sq1_ep_pkfeng_complete.sql');
-const migration = readFileSync(migrationPath, 'utf8');
+const importMigrationPath = workspaceFixturePath('@cuberoot/server', 'migrations', '0187_sq1_ep_pkfeng_complete.sql');
+const importMigration = readFileSync(importMigrationPath, 'utf8');
+const alignmentMigrationPath = workspaceFixturePath('@cuberoot/server', 'migrations', '0190_sq1_ep_complete_layer_alignment.sql');
+const alignmentMigration = readFileSync(alignmentMigrationPath, 'utf8');
 const solved = applySq1Scramble('');
 
 describe('Pk Feng SQ1 EP complete import', () => {
@@ -126,11 +129,40 @@ describe('Pk Feng SQ1 EP complete import', () => {
     ]);
   });
 
-  it('keeps the generated migration tied to the source hash and final-count guards', () => {
-    expect(migration).toContain(fixture.source.sha256);
-    expect(migration).toContain('SQ1 EP expected 100 cases');
-    expect(migration).toContain('SQ1 EP expected 50 no-parity cases');
-    expect(migration).toContain('SQ1 EP expected 50 parity cases');
-    expect(migration).toContain("name = 'Ua & Ua'");
+  it('keeps applied migration 0187 byte-for-byte immutable', () => {
+    expect(createHash('sha256').update(importMigration).digest('hex')).toBe(
+      'bd569ddbcc28b11e25d0d60c17ccfff6fd8fe66bcc5416769d533fe2f9c47824',
+    );
+    expect(importMigration).toContain(fixture.source.sha256);
+    expect(importMigration).toContain('SQ1 EP expected 100 cases');
+    expect(importMigration).toContain('SQ1 EP expected 50 no-parity cases');
+    expect(importMigration).toContain('SQ1 EP expected 50 parity cases');
+    expect(importMigration).toContain("name = 'Ua & Ua'");
+  });
+
+  it('repairs only the five exact legacy alignments and rejects unknown states', () => {
+    const completedEntries = [
+      [
+        '1,0/3,0/-1,0/3,3/5,0/-2,0/-4,0/-4,0/0,-4/0,-2/0,1/3,3/-2,0/-3,0/',
+        '1,0/3,0/-1,0/3,3/5,0/-2,0/-4,0/-4,0/0,-4/0,-2/0,1/3,3/-2,0/-3,0/-1',
+      ],
+      ['1,0/0,3/-1,-1/1,-2/', '1,0/0,3/-1,-1/1,-2/-1'],
+      ['0,-1/-3,0/1,1/2,-1/', '0,-1/-3,0/1,1/2,-1/0,1'],
+      ['1,0/3,0/-1,-1/-2,1/', '1,0/3,0/-1,-1/-2,1/-1'],
+      [
+        '1,0/0,3/-1,-1/1,-2/3,0/3,0/-1,-1/-2,1/',
+        '1,0/0,3/-1,-1/1,-2/3,0/3,0/-1,-1/-2,1/-1',
+      ],
+    ] as const;
+
+    for (const [oldAlg, newAlg] of completedEntries) {
+      expect(alignmentMigration).toContain(`\"oldAlg\": \"${oldAlg}\"`);
+      expect(alignmentMigration).toContain(`\"newAlg\": \"${newAlg}\"`);
+    }
+    expect(alignmentMigration).toContain('ORDER BY ord');
+    expect(alignmentMigration).toContain('old_count = 1 AND new_count = 0');
+    expect(alignmentMigration).toContain('old_count = 0 AND new_count = 1');
+    expect(alignmentMigration).toContain('ambiguous formula state');
+    expect(alignmentMigration).toContain('ambiguous case setup');
   });
 });
