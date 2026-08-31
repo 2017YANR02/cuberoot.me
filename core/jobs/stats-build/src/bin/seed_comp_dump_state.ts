@@ -88,7 +88,7 @@ COMMIT;
   execSync(`scp "${tsvLocal}" "${sqlLocal}" root@cuberoot:/tmp/`, { stdio: 'inherit' });
 
   console.log('[seed] applying on server PG');
-  const remoteDbEnv = 'if [ -z "${PGPASSWORD:-}" ]; then if [ -z "${DB_PASS:-}" ]; then DB_ENV_FILE="${CUBEROOT_DB_ENV_FILE:-/root/core-api/.env}"; [ -r "$DB_ENV_FILE" ] || { echo "database credentials unavailable" >&2; exit 1; }; set -a; . "$DB_ENV_FILE"; set +a; fi; : "${DB_PASS:?database credentials unavailable}"; export PGPASSWORD="$DB_PASS"; fi';
+  const remoteDbEnv = 'if [ -z "${PGPASSWORD:-}" ]; then if [ -z "${DB_PASS:-}" ]; then DB_ENV_FILE="${CUBEROOT_DB_ENV_FILE:-/root/core-api/.env}"; [ -r "$DB_ENV_FILE" ] || { echo "database credentials unavailable" >&2; exit 1; }; command -v node >/dev/null 2>&1 || { echo "node is required to read CUBEROOT_DB_ENV_FILE" >&2; exit 1; }; DB_PASS="$(env -u DB_PASS node --env-file="$DB_ENV_FILE" -e "process.stdout.write(process.env.DB_PASS || \'\')")"; fi; : "${DB_PASS:?database credentials unavailable}"; export PGPASSWORD="$DB_PASS"; fi';
   execFileSync(
     'ssh',
     ['root@cuberoot', `${remoteDbEnv}; psql -U recon_user -h 127.0.0.1 -d cuberoot_db -f /tmp/comp_dump_state_seed.sql && rm -f /tmp/comp_dump_state_seed.tsv /tmp/comp_dump_state_seed.sql`],
