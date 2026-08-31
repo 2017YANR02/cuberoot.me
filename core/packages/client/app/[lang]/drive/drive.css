@@ -207,7 +207,8 @@
 }
 
 .drive-members,
-.drive-uploads {
+.drive-uploads,
+.drive-downloads {
   margin: 24px 0 30px;
   padding-top: 18px;
   border-top: 1px solid var(--border-default);

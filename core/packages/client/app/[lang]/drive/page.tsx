@@ -56,6 +56,7 @@ import {
   createDriveFolder,
   createDriveUpload,
   deleteDriveNode,
+  downloadDriveFile,
   fetchDrive,
   fetchDriveMembers,
   removeDriveMember,
@@ -69,6 +70,7 @@ import './drive.css';
 
 type DriveView = 'files' | 'trash';
 type UploadState = 'queued' | 'uploading' | 'paused' | 'done' | 'error';
+type DownloadState = 'downloading' | 'pausing' | 'paused' | 'done' | 'error';
 
 interface UploadTask {
   id: string;
@@ -81,6 +83,24 @@ interface UploadTask {
   state: UploadState;
   error: string | null;
 }
+
+interface DownloadTask {
+  id: string;
+  node: DriveNode;
+  handle: DriveSaveFileHandle;
+  downloadedBytes: number;
+  speedBytesPerSecond: number | null;
+  state: DownloadState;
+  error: string | null;
+}
+
+interface DriveSaveFileHandle {
+  createWritable(options?: { keepExistingData?: boolean }): Promise<FileSystemWritableFileStream>;
+}
+
+type DriveWindow = Window & {
+  showSaveFilePicker?: (options?: { suggestedName?: string }) => Promise<DriveSaveFileHandle>;
+};
 
 interface PreviewState {
   node: DriveNode;
@@ -132,20 +152,33 @@ function DrivePageContent() {
   const [memberResults, setMemberResults] = useState<FriendSearchUser[]>([]);
   const [memberBusy, setMemberBusy] = useState<number | null>(null);
   const [tasks, setTasks] = useState<UploadTask[]>([]);
+  const [downloadTasks, setDownloadTasks] = useState<DownloadTask[]>([]);
   const [dragging, setDragging] = useState(false);
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const tasksRef = useRef(tasks);
+  const downloadTasksRef = useRef(downloadTasks);
   const activeRef = useRef(new Set<string>());
   const controllersRef = useRef(new Map<string, AbortController>());
+  const downloadControllersRef = useRef(new Map<string, AbortController>());
+  const discardedDownloadsRef = useRef(new Set<string>());
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { tasksRef.current = tasks; }, [tasks]);
+  useEffect(() => { downloadTasksRef.current = downloadTasks; }, [downloadTasks]);
 
   const updateTask = useCallback((id: string, changes: Partial<UploadTask>) => {
     setTasks((current) => {
       const next = current.map((item) => item.id === id ? { ...item, ...changes } : item);
       tasksRef.current = next;
+      return next;
+    });
+  }, []);
+
+  const updateDownloadTask = useCallback((id: string, changes: Partial<DownloadTask>) => {
+    setDownloadTasks((current) => {
+      const next = current.map((item) => item.id === id ? { ...item, ...changes } : item);
+      downloadTasksRef.current = next;
       return next;
     });
   }, []);
@@ -392,18 +425,126 @@ function DrivePageContent() {
     }
   };
 
-  const downloadNode = async (node: DriveNode) => {
+  const runDownload = useCallback(async (taskId: string) => {
+    if (downloadControllersRef.current.has(taskId)) return;
+    const current = downloadTasksRef.current.find((task) => task.id === taskId);
+    if (!current || current.state === 'done') return;
+    const controller = new AbortController();
+    downloadControllersRef.current.set(taskId, controller);
+    discardedDownloadsRef.current.delete(taskId);
+    updateDownloadTask(taskId, { state: 'downloading', speedBytesPerSecond: null, error: null });
+
+    const offset = current.downloadedBytes;
+    const speedSamples = [{ at: performance.now(), bytes: offset }];
+    let lastProgressRender = 0;
+    let latestDownloadedBytes = offset;
     try {
-      const access = await createDriveAccess(node.id, false);
-      const anchor = document.createElement('a');
-      anchor.href = access.url;
-      anchor.download = node.name;
-      document.body.append(anchor);
-      anchor.click();
-      anchor.remove();
-    } catch {
-      setError(t('下载链接生成失败。', 'Could not prepare the download.'));
+      const access = await createDriveAccess(current.node.id, false);
+      const writable = await current.handle.createWritable({ keepExistingData: offset > 0 });
+      if (offset > 0) await writable.seek(offset);
+      await downloadDriveFile(access.url, current.node.sizeBytes, writable, {
+        offset,
+        signal: controller.signal,
+        keepPartialOnError: () => !discardedDownloadsRef.current.has(taskId),
+        onProgress: (downloadedBytes) => {
+          latestDownloadedBytes = downloadedBytes;
+          const now = performance.now();
+          speedSamples.push({ at: now, bytes: downloadedBytes });
+          const cutoff = now - 3_000;
+          while (speedSamples.length > 2 && speedSamples[1].at < cutoff) speedSamples.shift();
+          const oldest = speedSamples[0];
+          const elapsedSeconds = (now - oldest.at) / 1_000;
+          const speedBytesPerSecond = elapsedSeconds > 0
+            ? Math.max(0, (downloadedBytes - oldest.bytes) / elapsedSeconds)
+            : null;
+          if (now - lastProgressRender >= 100 || downloadedBytes === current.node.sizeBytes) {
+            lastProgressRender = now;
+            updateDownloadTask(taskId, { downloadedBytes, speedBytesPerSecond });
+          }
+        },
+      });
+      updateDownloadTask(taskId, {
+        downloadedBytes: current.node.sizeBytes,
+        speedBytesPerSecond: null,
+        state: 'done',
+      });
+    } catch (cause) {
+      if (!discardedDownloadsRef.current.has(taskId)) {
+        updateDownloadTask(taskId, {
+          downloadedBytes: latestDownloadedBytes,
+          speedBytesPerSecond: null,
+          state: (cause as Error).name === 'AbortError' ? 'paused' : 'error',
+          error: (cause as Error).name === 'AbortError'
+            ? null
+            : t('下载中断，可从当前进度继续。', 'Download interrupted. You can continue from the current progress.'),
+        });
+      }
+    } finally {
+      downloadControllersRef.current.delete(taskId);
+      discardedDownloadsRef.current.delete(taskId);
     }
+  }, [t, updateDownloadTask]);
+
+  const downloadNode = async (node: DriveNode) => {
+    const picker = (window as DriveWindow).showSaveFilePicker;
+    if (!picker) {
+      try {
+        const access = await createDriveAccess(node.id, false);
+        const anchor = document.createElement('a');
+        anchor.href = access.url;
+        anchor.download = node.name;
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+      } catch {
+        setError(t('下载链接生成失败。', 'Could not prepare the download.'));
+      }
+      return;
+    }
+
+    let handle: DriveSaveFileHandle;
+    try {
+      handle = await picker.call(window, { suggestedName: node.name });
+    } catch (cause) {
+      if ((cause as Error).name !== 'AbortError') {
+        setError(t('无法打开文件保存位置。', 'Could not open a file save location.'));
+      }
+      return;
+    }
+
+    const taskId = crypto.randomUUID();
+    const task: DownloadTask = {
+      id: taskId,
+      node,
+      handle,
+      downloadedBytes: 0,
+      speedBytesPerSecond: null,
+      state: 'downloading',
+      error: null,
+    };
+    setDownloadTasks((current) => {
+      const next = [...current, task];
+      downloadTasksRef.current = next;
+      return next;
+    });
+    void runDownload(taskId);
+  };
+
+  const pauseDownloadTask = (task: DownloadTask) => {
+    updateDownloadTask(task.id, { state: 'pausing', speedBytesPerSecond: null });
+    downloadControllersRef.current.get(task.id)?.abort();
+  };
+
+  const resumeDownloadTask = (task: DownloadTask) => void runDownload(task.id);
+
+  const removeDownloadTask = (task: DownloadTask) => {
+    discardedDownloadsRef.current.add(task.id);
+    downloadControllersRef.current.get(task.id)?.abort();
+    setDownloadTasks((current) => {
+      const next = current.filter((item) => item.id !== task.id);
+      downloadTasksRef.current = next;
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -594,6 +735,34 @@ function DrivePageContent() {
               <ClearButton variant="standalone" ariaLabel={t(`取消 ${upload.name}`, `Cancel ${upload.name}`)} onClick={() => void cancelDriveUpload(upload.id).then(load).catch(() => setError(t('取消上传失败。', 'Could not cancel the upload.')))} />
             </div>
           ))}
+        </section>
+      )}
+
+      {downloadTasks.length > 0 && (
+        <section className="drive-downloads" aria-labelledby="drive-downloads-title">
+          <div className="drive-section-title"><h2 id="drive-downloads-title">{t('下载任务', 'Downloads')}</h2><span>{downloadTasks.length}</span></div>
+          {downloadTasks.map((task) => {
+            const progress = task.node.sizeBytes ? Math.min(100, task.downloadedBytes / task.node.sizeBytes * 100) : 100;
+            return (
+              <div className="drive-upload-row" key={task.id}>
+                <div className="drive-upload-main">
+                  <strong>{task.node.name}</strong>
+                  <span>
+                    {formatBytes(task.downloadedBytes)} / {formatBytes(task.node.sizeBytes)}{' '}
+                    {task.state === 'done' ? t('已完成', 'Complete') : `${progress.toFixed(0)}%`}
+                    {task.state === 'downloading' && <> {' '}{task.speedBytesPerSecond == null ? t('测速中…', 'Measuring…') : `${formatBytes(task.speedBytesPerSecond)}/s`}</>}
+                  </span>
+                  <div className="drive-upload-track"><span style={{ width: `${progress}%` }} /></div>
+                  {task.error && <small className="drive-danger-text">{task.error}</small>}
+                </div>
+                <div className="drive-upload-actions">
+                  {task.state === 'downloading' && <button type="button" className="drive-icon-action" onClick={() => pauseDownloadTask(task)} aria-label={t(`暂停下载 ${task.node.name}`, `Pause download of ${task.node.name}`)}><Pause aria-hidden="true" /></button>}
+                  {(task.state === 'paused' || task.state === 'error') && <button type="button" className="drive-icon-action" onClick={() => resumeDownloadTask(task)} aria-label={t(`继续下载 ${task.node.name}`, `Resume download of ${task.node.name}`)}><Play aria-hidden="true" /></button>}
+                  <ClearButton variant="standalone" ariaLabel={task.state === 'downloading' || task.state === 'pausing' ? t(`取消下载 ${task.node.name}`, `Cancel download of ${task.node.name}`) : t('移除下载任务', 'Dismiss download')} onClick={() => removeDownloadTask(task)} />
+                </div>
+              </div>
+            );
+          })}
         </section>
       )}
 
