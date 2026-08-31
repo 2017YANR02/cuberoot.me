@@ -22,7 +22,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import mysql from 'mysql2';
 import { scrambleMoveSamples, scrambleLengthUnit } from '@cuberoot/shared/scramble-length';
-import { DB_CONFIG } from '../core/database.js';
+import { getDbConfig } from '../core/database.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(__dirname, '../../../../../stats/scramble/event_lengths.json');
@@ -73,11 +73,12 @@ interface ScrambleRow {
 }
 
 async function main() {
+  const dbConfig = getDbConfig();
   const conn = mysql.createConnection({
-    host: DB_CONFIG.host,
-    user: DB_CONFIG.username,
-    password: DB_CONFIG.password,
-    database: DB_CONFIG.database,
+    host: dbConfig.host,
+    user: dbConfig.username,
+    password: dbConfig.password,
+    database: dbConfig.database,
   });
 
   // 先全量拉比赛日期(~1.8 万行)。「首次出现」需在单次扫描里按日期取最早,故必须先有日期表;
