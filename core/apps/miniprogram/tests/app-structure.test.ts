@@ -194,7 +194,9 @@ describe('mini program app structure', () => {
     expect(toolsTemplate).toBe(genericWebTemplate);
     expect(accountTemplate).toContain('bindtap="loginWithWechat"');
     expect(accountTemplate).toContain('wx:if="{{isTimelineEntry}}"');
-    expect(accountTemplate).toContain('点击右下角“前往小程序”，登录 CubeRoot。');
+    expect(accountTemplate).toContain('点击右下角进入魔方根');
+    expect(accountTemplate).not.toContain('<text class="eyebrow">CUBEROOT</text>');
+    expect(accountTemplate).not.toContain('<text class="page-title">CubeRoot 登录入口</text>');
     expect(accountTemplate).not.toContain('朋友圈单页不提供登录能力');
     expect(accountTemplate).toContain('aria-busy="{{loginBusy}}"');
     expect(accountTemplate).toContain('aria-label="重新读取设备登录状态"');
@@ -216,7 +218,7 @@ describe('mini program app structure', () => {
     expect(accountPage).toContain('onShareTimeline');
     expect(accountPage).toContain('TIMELINE_SCENE = 1154');
     expect(accountTemplate).not.toContain('<web-view');
-    expect(accountTemplate).toContain('CubeRoot 登录入口');
+    expect(accountTemplate).toContain('点击右下角进入魔方根');
     expect(pageFiles['../src/pages/share/index.ts']).toBeUndefined();
   });
 
