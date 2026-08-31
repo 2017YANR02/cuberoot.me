@@ -10,6 +10,7 @@ export interface DriveNode {
   parentId: string | null;
   name: string;
   kind: DriveNodeKind;
+  shared: boolean;
   mimeType: string | null;
   sizeBytes: number;
   createdAt: string;
