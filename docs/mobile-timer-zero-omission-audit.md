@@ -268,7 +268,7 @@ Web 当前有 8 类、63 个可达偏好/命令 surface；稳定 ID 与交互策
 
 ## 5. 本地多人模式（2～4 人）
 
-Web `BattleView` 是完整产品面，不是“一个外部网址”。Mobile 当前不渲染 2～4 人入口，因此本节 UI/UX 与设备能力全部未完成。2026-08-31 第一批 runtime-neutral 规则已经由 Web 真正改用 `@cuberoot/shared/timer`：2～4 人、active slots、按键映射/冲突交换、同项目分组、共享打乱显隐、罚时与并列胜者；旋转不再重置业务态，pointer cancel 也不再误起表。这只是未来 Web/Mobile 共用 reducer 的起点，不是 Mobile 页面完成。
+Web `BattleView` 是完整产品面，不是“一个外部网址”。Mobile 当前不渲染 2～4 人入口，因此本节 UI/UX 与设备能力全部未完成。2026-08-31 第一批 runtime-neutral 规则已经由 Web 真正改用 `@cuberoot/shared/timer`：2～4 人、active slots、按键映射/冲突交换、同项目分组、共享打乱显隐、罚时与并列胜者；旋转不再重置业务态，pointer cancel 也不再误起表。第二批增加共享 `LocalBattleRound` codec，Web 每次结算原子保存所有玩家的项目/打乱/成绩/胜者，不再按平行数组下标拼轮；损坏恢复、写失败、旧版未配对记录和 CSV 也有显式边界。这仍只是未来 Web/Mobile 共用 reducer 的起点，不是 Mobile 页面完成。
 
 - 2 人左右对战，3/4 人田字格，3/4 人上排翻转，手机/横屏布局。
 - 每人独立项目、计时状态、OK/+2/DNF、分数、ao5、按键、打乱图、背景。
@@ -283,7 +283,7 @@ Web `BattleView` 是完整产品面，不是“一个外部网址”。Mobile �
 
 对抗审查已锁定以下迁移前阻断项，不得把旧实现原样复制到 Mobile：
 
-- 历史必须改成原子 `LocalBattleRound`；当前每位玩家按 `session + event + playerIndex` 各存数组、再按下标拼轮，换项目后可能把不同日期/对局拼成假轮次。
+- 新历史已改用原子 `LocalBattleRound`；旧 `session + event + playerIndex` 数据只作为个人统计镜像和只读 legacy 分区，不按下标迁移。下一步须把原子 rounds 接进现有 IndexedDB timer repository，并让个人统计从它可靠派生，最终退役非事务双写。
 - Web WCA 异步打乱必须增加 source identity + revision，旧请求不得覆盖新请求；网络失败、确认无题、耗尽都不能静默随机回退，未知项目也不能回退 3×3。
 - 任一玩家活动时必须锁定项目/source 等上下文变更；目前换项目会重置其他玩家当前轮。
 - 多人设置中的观察、语音、分段必须在共用 reducer 中产生真实 effect，或 Web/Mobile 同时移除；当前可见 no-op 不能成为 App 验收范围。
