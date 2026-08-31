@@ -1,9 +1,5 @@
 <view wx:if="{{isTimelineEntry}}" class="page account-entry-page">
-  <text class="eyebrow">CUBEROOT</text>
-  <text class="page-title">CubeRoot 登录入口</text>
-  <text class="account-entry-copy" aria-role="status">
-    点击右下角“前往小程序”，登录 CubeRoot。
-  </text>
+  <text class="account-entry-copy" aria-role="status">点击右下角进入魔方根</text>
 </view>
 
 <view wx:elif="{{loginRequired}}" class="page account-login-page">
