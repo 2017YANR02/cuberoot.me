@@ -1,6 +1,6 @@
 # CubeRoot Mobile
 
-React + Vite + Capacitor 8 app. Android and iOS use the same React UI and shared business logic.
+React + Vite + Capacitor 8 host. Android and iOS use the same React UI and shared business logic. CubeRoot's committed product target also includes HarmonyOS NEXT, Windows and macOS under the [five-platform single-source contract](../../../docs/cross-platform-app-contract.md); those platforms add thin hosts and must not fork this app's business UI.
 
 Status: active native app. `package.json`, `capacitor.config.ts`, `android/` and this README are its local sources of truth; the website is not its source tree.
 
@@ -12,7 +12,8 @@ Android and iOS smart-cube access use a thin `@capacitor-community/bluetooth-le`
 
 ## Maintenance rule
 
-- The top-level product contract is `docs/mobile-three-tab-contract.md`: Android and iOS share one bottom navigation with Timer, Tools, and Account. Timer follows the dedicated parity tracker; Tools and Account display the real website instead of copying its cards, routes, or account UI into Mobile.
+- The highest-level installed-client contract is `docs/cross-platform-app-contract.md`: Android, iOS, HarmonyOS NEXT, Windows, and macOS are one product backed by shared domain/UI code and thin platform hosts. This package remains the Android/iOS Capacitor host; it must not become a source dependency of future Harmony/Desktop apps.
+- The three-surface contract is `docs/mobile-three-tab-contract.md`: all installed clients share Timer, Tools, and Account. Timer follows the dedicated parity tracker; Tools and Account display the real website instead of copying its cards, routes, or account UI into a host.
 - Tools and Account keep separate website browsing contexts inside the shared React shell. Their system-back behavior uses the runtime-neutral `@cuberoot/shared/mobile-embed` message contract plus the website's no-UI `MobileEmbedBridge`; never replace that with Android-only or iOS-only route tables.
 - The complete timer product must track the website `/timer` UI and behavior through `docs/mobile-timer-parity-tracker.md`, with `docs/mobile-timer-zero-omission-audit.md` as its mandatory adversarial inventory. Visual similarity alone is not completion: every visible control needs the same real interaction and state, and Web/Mobile shared React UI belongs in `@cuberoot/timer-ui` instead of being copied into this app.
 - Keep framework-free timer, scramble, validation, statistics and serialization logic in `@cuberoot/shared` so the website and app import the same implementation.
@@ -21,6 +22,18 @@ Android and iOS smart-cube access use a thin `@capacitor-community/bluetooth-le`
 - Do not copy or independently reimplement the website inside this package; Tools and Account display its canonical online routes.
 - Keep Web Bluetooth and Capacitor BLE as thin platform transports over the same shared protocol, state and clock modules.
 - Render controls only when the Mobile host has a real adapter/effect. Until shared in-App multiplayer and microphone adapters exist, Mobile must show read-only one-player state and omit Stackmat rather than opening `/timer` or displaying a coming-soon action.
+
+## Five-platform target
+
+The five target platforms deliberately use three host boundaries rather than five business implementations:
+
+- `core/apps/mobile`: the existing Capacitor host for Android and iOS.
+- `core/apps/harmony`: the planned ArkTS + ArkWeb host for HarmonyOS NEXT.
+- `core/apps/desktop`: the planned single Tauri host for both Windows and macOS.
+
+When the first non-Capacitor host is implemented, extract the shared three-surface React composition from this app into a real multi-consumer `@cuberoot/app-ui` package in the same change. Do not create an empty abstraction in advance, and do not let another app import `core/apps/mobile/src`, this app's CSS, or `dist`. Timer UI continues to live in `@cuberoot/timer-ui`; domain rules, schemas, protocols, state machines, and capability contracts continue to live in `@cuberoot/shared`.
+
+Harmony and Desktop hosts may implement only system adapters such as BLE transport, secure storage, auth/deep-link handoff, files, sharing, printing, wake lock, windowing, and lifecycle. A PWA remains a useful website entry, but it is not evidence that the committed Windows or macOS client target is complete.
 
 ## Commands
 
