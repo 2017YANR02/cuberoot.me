@@ -21,6 +21,27 @@ export interface DbConfig {
 
 let DB_CONFIG: DbConfig | null = null;
 
+export function validateDbConfig(value: unknown): DbConfig {
+  if (typeof value !== 'object' || value === null) {
+    throw new Error('database.yml must contain a mapping');
+  }
+
+  const config = value as Record<string, unknown>;
+  const requiredFields = ['database', 'username', 'password', 'host'] as const;
+  for (const field of requiredFields) {
+    if (typeof config[field] !== 'string') {
+      throw new Error(`database.yml field ${field} must be a string`);
+    }
+  }
+
+  return {
+    database: config.database as string,
+    username: config.username as string,
+    password: config.password as string,
+    host: config.host as string,
+  };
+}
+
 function loadDbConfigFromEnv(): DbConfig | null {
   const host = process.env.MYSQL_HOST;
   const username = process.env.MYSQL_USER;
@@ -54,7 +75,7 @@ export function getDbConfig(): DbConfig {
     );
   }
 
-  DB_CONFIG = parseYaml(readFileSync(CONFIG_PATH, 'utf-8'));
+  DB_CONFIG = validateDbConfig(parseYaml(readFileSync(CONFIG_PATH, 'utf-8')));
   return DB_CONFIG;
 }
 
